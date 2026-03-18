@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.backends._legacy:_Backend"
+
+[project]
+name = "mixture-of-memory"
+version = "0.1.0"
+description = "Agent Memory System v0: Mixture of Memory for LLM generation augmentation"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+
+dependencies = [
+    "torch>=2.1.0",
+    "transformers>=4.36.0",
+    "datasets>=2.16.0",
+    "omegaconf>=2.3.0",
+    "pyyaml>=6.0",
+    "tqdm>=4.66.0",
+    "wandb>=0.16.0",
+    "numpy>=1.24.0",
+    "einops>=0.7.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "black>=23.0",
+    "ruff>=0.1.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
+
+[tool.black]
+line-length = 100
+
+[tool.ruff]
+line-length = 100

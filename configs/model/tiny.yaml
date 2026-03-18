@@ -1,0 +1,28 @@
+# tiny 模型配置 - 用于快速测试和调试
+backbone:
+  model_name: "gpt2"           # 最小的 GPT-2 (~124M)
+  freeze: true
+  dtype: "float32"
+
+memory:
+  num_memories: 3
+  mem_dim: 32
+  mem_slots: 16
+
+anchor:
+  top_k: 2
+  evaluator_hidden: 64
+
+gather:
+  gather_dim: 32
+
+write:
+  head_hidden: 64
+
+readout:
+  query_dim: 32
+
+training:
+  batch_size: 4
+  max_steps: 1000
+  eval_every: 200

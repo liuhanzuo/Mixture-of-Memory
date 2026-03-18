@@ -1,0 +1,15 @@
+# Ablation: 单一 memory + 立即写入
+# Baseline: 每个 token 或小块立即写入单一 memory
+defaults:
+  - ../base
+
+memory:
+  num_memories: 1
+  mem_dim: 64
+  mem_slots: 32
+
+anchor:
+  top_k: -1                    # -1 表示所有 token 都是 anchor（即立即写入）
+
+write:
+  immediate_write: true        # 跳过 evaluator，每个 token 直接写入

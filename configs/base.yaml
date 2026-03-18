@@ -1,0 +1,84 @@
+# ============================================================
+# Mixture-of-Memory v0 - 基础配置
+# ============================================================
+
+# --- 模型骨干 ---
+backbone:
+  model_name: "gpt2"          # HuggingFace 模型名称
+  freeze: true                 # v0 始终冻结骨干
+  dtype: "float32"             # float32 | float16 | bfloat16
+
+# --- 分块处理 ---
+block:
+  block_size: 64               # 每个块的 token 数
+  overlap: 0                   # 块间重叠（v0 默认 0）
+
+# --- Memory (MOM) ---
+memory:
+  num_memories: 3              # fast / medium / slow
+  mem_dim: 64                  # 每个 memory 矩阵的 key/value 维度
+  mem_slots: 32                # 每个 memory 矩阵的 slot 数 (M ∈ R^{slots x dim})
+  init_retention:              # 初始 retention λ 偏置（越高保留越久）
+    - 0.5                      # fast
+    - 0.8                      # medium
+    - 0.95                     # slow
+
+# --- Anchor 评估器 ---
+anchor:
+  top_k: 4                     # 每块选出的 anchor 数
+  evaluator_type: "mlp"        # mlp | transformer
+  evaluator_layers: 2          # 评估器层数
+  evaluator_hidden: 128        # 评估器隐藏维度
+
+# --- Retrospective Gather ---
+gather:
+  gather_dim: 64               # q/k/v 投影维度
+  num_heads: 1                 # v0 单头
+
+# --- Write / Route / Retain Heads ---
+write:
+  head_hidden: 128             # MLP head 隐藏维度
+  head_layers: 2               # MLP head 层数
+
+# --- Readout ---
+readout:
+  query_dim: 64                # 读出查询投影维度
+
+# --- Fusion ---
+fusion:
+  fusion_type: "gated_residual" # gated_residual | add
+  gate_init_bias: -2.0          # 初始 gate 偏置（接近 0，让模型渐进学习使用 memory）
+
+# --- 训练 ---
+training:
+  stage: 1                     # 当前训练阶段
+  lr: 1.0e-4
+  weight_decay: 0.01
+  warmup_steps: 200
+  max_steps: 5000
+  batch_size: 8
+  gradient_accumulation: 1
+  max_grad_norm: 1.0
+  eval_every: 500
+  save_every: 1000
+  log_every: 50
+  seed: 42
+
+# --- 损失 ---
+loss:
+  lm_weight: 1.0               # 语言模型损失权重
+  utility_weight: 0.1           # utility 辅助损失权重
+  utility_method: "drop_write"  # drop_write
+  utility_future_tokens: 32     # 用于估计 utility 的未来 token 数
+
+# --- 日志 ---
+logging:
+  use_wandb: false
+  project: "mixture-of-memory"
+  run_name: null                # 为 null 则自动生成
+
+# --- 路径 ---
+paths:
+  output_dir: "./outputs"
+  checkpoint_dir: "./checkpoints"
+  data_dir: "./data"

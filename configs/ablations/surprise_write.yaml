@@ -1,0 +1,12 @@
+# Ablation: Surprise-based write (类似 Titans 风格)
+# 使用 surprise（损失突增）作为写入信号，替代 evaluator
+defaults:
+  - ../base
+
+anchor:
+  evaluator_type: "surprise"    # 基于 surprise 的写入策略
+  surprise_threshold: 0.5       # surprise 阈值
+
+write:
+  immediate_write: false
+  surprise_based: true          # 启用 surprise-based writing

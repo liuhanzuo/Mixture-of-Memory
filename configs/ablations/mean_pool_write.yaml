@@ -1,0 +1,17 @@
+# Ablation: 单一 memory + 延迟写入 + mean pooling
+# 没有 evaluator，没有 retrospective attention
+# 每块结束后用 mean pooling 写入
+defaults:
+  - ../base
+
+memory:
+  num_memories: 1
+
+anchor:
+  top_k: 0                     # 不选 anchor
+
+gather:
+  method: "mean_pool"          # 使用 mean pooling 而非 retrospective attention
+
+write:
+  immediate_write: false
