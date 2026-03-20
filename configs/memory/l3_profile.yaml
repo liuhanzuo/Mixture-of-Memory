@@ -1,0 +1,49 @@
+# L3 语义/画像级长期记忆配置
+# 从 L2 对象摘要抽象而来，低频异步更新
+
+l3:
+  enabled: true
+  
+  # 画像类别
+  categories:
+    - "research_interest"    # 研究兴趣
+    - "preference"           # 偏好风格
+    - "long_term_project"    # 长期项目
+    - "expertise"            # 专业领域
+    - "personality"          # 性格/交互风格
+    - "factual"              # 事实性长期记忆
+  
+  # 摘要器配置
+  summarizer:
+    type: "rule_based"        # "rule_based" | "llm_backed"
+    max_l2_objects_per_batch: 20   # 每批处理的 L2 对象数
+    min_confidence: 0.3       # 最低置信度才纳入摘要
+    
+    # LLM 后端（stub，未来扩展）
+    llm_provider:
+      type: "stub"
+      model_name: null
+      temperature: 0.2
+  
+  # 修订器配置
+  reviser:
+    strategy: "revision"      # "revision" | "overwrite" | "append"
+    conflict_resolution: "newer_wins"  # "newer_wins" | "higher_confidence" | "manual"
+    max_entries_per_category: 10       # 每类别最多条目数
+  
+  # 存储配置
+  store:
+    backend: "in_memory"      # "in_memory" | "json_file" | "sqlite"
+    persistence_path: "outputs/profiles"  # 持久化路径
+    auto_save: true           # 是否自动保存
+  
+  # 格式化输出
+  formatter:
+    formats:
+      - "markdown"
+      - "json"
+    output_dir: "outputs/profiles"
+  
+  # 更新频率
+  update_trigger: "session_end"   # "session_end" | "every_n_turns" | "manual"
+  update_every_n_turns: 20        # 当 trigger 为 every_n_turns 时的间隔

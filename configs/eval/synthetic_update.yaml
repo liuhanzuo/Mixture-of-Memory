@@ -1,0 +1,25 @@
+# 合成更新任务评测配置
+# 测试记忆的覆写、过期处理、临时状态 vs 长期状态
+
+eval:
+  task: "synthetic_update"
+  
+  # 数据生成
+  data:
+    num_sessions: 10          # 生成多少个 session
+    turns_per_session: 30     # 每个 session 多少轮
+    num_updates: 5            # 每个 session 中插入多少次状态更新
+    num_overwrites: 3         # 其中多少次是覆写（同 key 不同 value）
+    num_stale_probes: 5       # 过期记忆探测次数
+    seed: 42
+
+  # 评测指标
+  metrics:
+    - "overwrite_accuracy"        # 覆写后能否正确回忆最新值
+    - "stale_memory_error_rate"   # 是否错误地回忆旧值
+    - "contradiction_handling"    # 矛盾信息处理率
+    - "temporal_precision"        # 时间顺序正确率
+
+  # 输出
+  output_dir: "outputs/metrics/synthetic_update"
+  save_traces: true

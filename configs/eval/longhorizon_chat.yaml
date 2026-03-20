@@ -1,0 +1,27 @@
+# 长程对话任务评测配置
+# 测试长距离实体/事实回忆、跨轮目标追踪、长程记忆访问
+
+eval:
+  task: "longhorizon_chat"
+  
+  # 数据生成
+  data:
+    num_sessions: 5               # 生成多少个 session
+    turns_per_session: 100        # 每个 session 多少轮（长对话）
+    entity_injection_interval: 10 # 每隔多少轮注入一个关键实体
+    num_recall_probes: 15         # 回忆探测次数
+    num_goal_tracking_probes: 10  # 目标追踪探测次数
+    max_recall_distance: 80       # 最大回忆距离（轮数）
+    seed: 42
+
+  # 评测指标
+  metrics:
+    - "entity_recall_accuracy"    # 实体回忆准确率
+    - "fact_recall_accuracy"      # 事实回忆准确率
+    - "goal_tracking_accuracy"    # 跨轮目标追踪准确率
+    - "recall_vs_distance"        # 回忆准确率 vs 回忆距离的曲线
+    - "memory_hit_at_k"           # hit@k
+
+  # 输出
+  output_dir: "outputs/metrics/longhorizon_chat"
+  save_traces: true

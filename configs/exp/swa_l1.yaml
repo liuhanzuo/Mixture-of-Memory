@@ -1,0 +1,33 @@
+# SWA + L1 实验配置
+# SWA backbone + L1 关联矩阵记忆
+# 用于验证 L1 能恢复部分因 local attention 丢失的历史访问
+
+defaults:
+  - /model: swa_qwen
+  - /memory: l1_assoc
+
+experiment:
+  name: "swa_l1"
+  description: "SWA + L1 associative memory, no L2/L3"
+  
+  # 记忆配置
+  memory:
+    l1:
+      enabled: true
+    l2:
+      enabled: false
+    l3:
+      enabled: false
+  
+  # 评测任务
+  eval_tasks:
+    - "synthetic_update"
+    - "profile_bench"
+    - "longhorizon_chat"
+  
+  # 运行参数
+  run:
+    seed: 42
+    num_sessions: 10
+    output_dir: "outputs/runs/swa_l1"
+    log_level: "INFO"

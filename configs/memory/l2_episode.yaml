@@ -1,0 +1,51 @@
+# L2 情节/状态级记忆对象配置
+# 从近期消息直接聚合，异步在 chunk/turn 边界更新
+
+l2:
+  enabled: true
+  
+  # 对象类型定义
+  object_types:
+    - "topic"         # 当前讨论主题
+    - "state"         # 任务/对话状态
+    - "preference"    # 用户偏好
+    - "task"          # 进行中的任务
+    - "entity"        # 实体与关系
+  
+  # 聚合器配置
+  aggregator:
+    type: "rule_based"           # "rule_based" | "llm_backed"
+    chunk_size: 5                # 每次聚合多少轮对话
+    min_turns_to_aggregate: 2    # 最少累积多少轮才触发聚合
+    max_objects_per_type: 20     # 每种类型最多保留多少个对象
+    
+    # LLM 后端（stub，未来扩展）
+    llm_provider:
+      type: "stub"               # "stub" | "openai" | "local"
+      model_name: null
+      temperature: 0.3
+  
+  # 合并策略
+  merger:
+    similarity_threshold: 0.75   # 文本相似度阈值，超过则合并
+    merge_strategy: "replace"    # "replace" | "append" | "weighted_avg"
+    max_merge_candidates: 5      # 每次合并最多考虑的候选数
+  
+  # 检索器配置
+  retriever:
+    type: "embedding"            # "embedding" | "keyword" | "hybrid"
+    top_k: 5                     # 返回 top-k 个对象
+    score_threshold: 0.3         # 最低相关性分数
+    
+  # 存储配置
+  store:
+    backend: "in_memory"         # "in_memory" | "sqlite" | "faiss"
+    max_total_objects: 200       # 总对象数上限
+    decay_interval_turns: 50     # 每多少轮做一次衰减/归档
+    archive_confidence_below: 0.2  # 置信度低于此值则归档
+  
+  # 嵌入配置（用于相似度计算和检索）
+  embedding:
+    type: "simple"               # "simple" | "sentence_transformer"
+    model_name: null             # sentence-transformer 模型名
+    dim: 128                     # 嵌入维度

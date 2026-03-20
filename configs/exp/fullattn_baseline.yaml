@@ -1,0 +1,32 @@
+# Full Attention 基准实验配置
+# 使用 Full Attention backbone，不启用外部记忆
+# 作为上界基准（upper-bound baseline）
+
+defaults:
+  - /model: fullattn_qwen
+
+experiment:
+  name: "fullattn_baseline"
+  description: "Full attention baseline as upper-bound reference"
+  
+  # 记忆配置：全部禁用（full attention 自身已能访问全部上下文）
+  memory:
+    l1:
+      enabled: false
+    l2:
+      enabled: false
+    l3:
+      enabled: false
+  
+  # 评测任务
+  eval_tasks:
+    - "synthetic_update"
+    - "profile_bench"
+    - "longhorizon_chat"
+  
+  # 运行参数
+  run:
+    seed: 42
+    num_sessions: 10
+    output_dir: "outputs/runs/fullattn_baseline"
+    log_level: "INFO"

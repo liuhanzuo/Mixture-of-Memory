@@ -1,15 +1,18 @@
-"""训练模块。"""
+"""
+training: 各层记忆组件的训练脚本和工具。
 
-from src.training.losses import MemoryAugmentedLoss
-from src.training.trainer import MemoryTrainer
-from src.training.stages import TrainingStageManager
-from src.training.utils import count_trainable_params, get_optimizer, get_scheduler
+包括:
+- train_gate: L1 门控网络的训练
+- train_l2_aggregator: L2 聚合器 (LLM-based) 的微调
+- train_l3_summarizer: L3 总结器 (LLM-based) 的微调
+"""
+
+from .train_gate import L1GateTrainer
+from .train_l2_aggregator import L2AggregatorTrainer
+from .train_l3_summarizer import L3SummarizerTrainer
 
 __all__ = [
-    "MemoryAugmentedLoss",
-    "MemoryTrainer",
-    "TrainingStageManager",
-    "count_trainable_params",
-    "get_optimizer",
-    "get_scheduler",
+    "L1GateTrainer",
+    "L2AggregatorTrainer",
+    "L3SummarizerTrainer",
 ]

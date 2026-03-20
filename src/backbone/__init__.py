@@ -1,11 +1,21 @@
-"""Backbone 模块：冻结的 HuggingFace 因果语言模型封装。"""
+"""
+Backbone 模块 —— 提供统一的模型前向接口。
 
-from src.backbone.lm_wrapper import FrozenLMWrapper
-from src.backbone.hidden_extractor import HiddenStateExtractor
-from src.backbone.generation import MemoryAugmentedGenerator
+支持:
+- Full Attention 基线 (上界参照)
+- SWA / Local Attention 骨干 (主实验)
+- Memory-Readable 扩展接口 (用于 L1 记忆读出集成)
+"""
+
+from src.backbone.hidden_state_types import BackboneOutput
+from src.backbone.interfaces import BackboneModel, MemoryReadableBackbone
+from src.backbone.swa_model import SWABackbone
+from src.backbone.full_attention_model import FullAttentionBackbone
 
 __all__ = [
-    "FrozenLMWrapper",
-    "HiddenStateExtractor",
-    "MemoryAugmentedGenerator",
+    "BackboneOutput",
+    "BackboneModel",
+    "MemoryReadableBackbone",
+    "SWABackbone",
+    "FullAttentionBackbone",
 ]

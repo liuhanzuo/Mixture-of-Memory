@@ -1,0 +1,34 @@
+# SWA + L1 + L2 实验配置
+# SWA backbone + L1 关联矩阵记忆 + L2 情节记忆
+# 用于验证 L2 能改善跨轮和跨 chunk 的状态追踪
+
+defaults:
+  - /model: swa_qwen
+  - /memory: l1_assoc
+  - /memory: l2_episode
+
+experiment:
+  name: "swa_l1_l2"
+  description: "SWA + L1 + L2 episodic memory, no L3"
+  
+  # 记忆配置
+  memory:
+    l1:
+      enabled: true
+    l2:
+      enabled: true
+    l3:
+      enabled: false
+  
+  # 评测任务
+  eval_tasks:
+    - "synthetic_update"
+    - "profile_bench"
+    - "longhorizon_chat"
+  
+  # 运行参数
+  run:
+    seed: 42
+    num_sessions: 10
+    output_dir: "outputs/runs/swa_l1_l2"
+    log_level: "INFO"

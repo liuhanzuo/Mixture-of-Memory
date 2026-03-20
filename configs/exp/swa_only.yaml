@@ -1,0 +1,32 @@
+# SWA-only 实验配置
+# 仅使用 SWA backbone，不启用任何记忆层
+# 用于证明 SWA-only 对长程记忆和长距离依赖不足
+
+defaults:
+  - /model: swa_qwen
+
+experiment:
+  name: "swa_only"
+  description: "SWA-only baseline without any memory augmentation"
+  
+  # 记忆配置：全部禁用
+  memory:
+    l1:
+      enabled: false
+    l2:
+      enabled: false
+    l3:
+      enabled: false
+  
+  # 评测任务
+  eval_tasks:
+    - "synthetic_update"
+    - "profile_bench"
+    - "longhorizon_chat"
+  
+  # 运行参数
+  run:
+    seed: 42
+    num_sessions: 10
+    output_dir: "outputs/runs/swa_only"
+    log_level: "INFO"

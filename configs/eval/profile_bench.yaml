@@ -1,0 +1,28 @@
+# 画像任务评测配置
+# 测试用户画像建模：研究兴趣、偏好风格、长期项目
+
+eval:
+  task: "profile_bench"
+  
+  # 数据生成
+  data:
+    num_users: 5              # 模拟多少个用户
+    sessions_per_user: 3      # 每个用户多少个 session
+    turns_per_session: 20     # 每个 session 多少轮
+    profile_dimensions:
+      - "research_interest"   # 最近在研究什么
+      - "response_style"      # 偏好的回复风格
+      - "project_identity"    # 长期项目身份
+      - "expertise_level"     # 专业水平
+    seed: 42
+
+  # 评测指标
+  metrics:
+    - "summary_coverage"          # 画像覆盖率
+    - "summary_precision"         # 画像精确率
+    - "profile_consistency"       # 跨 session 画像一致性
+    - "profile_update_accuracy"   # 画像更新准确率
+
+  # 输出
+  output_dir: "outputs/metrics/profile_bench"
+  save_traces: true

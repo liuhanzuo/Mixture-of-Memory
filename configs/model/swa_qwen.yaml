@@ -1,0 +1,26 @@
+# SWA (Sliding Window Attention) Qwen 模型配置
+# 用于主实验，作为 local-attention backbone
+
+backbone:
+  type: "swa"
+  model_name_or_path: "Qwen/Qwen2.5-1.5B"
+  dtype: "bfloat16"
+  device: "cuda"
+
+  # SWA 特定参数
+  swa:
+    window_size: 1024          # 滑动窗口大小（tokens）
+    use_flash_attention: true   # 是否使用 Flash Attention
+    sink_tokens: 4              # attention sink tokens 数量
+
+  # 生成参数
+  generation:
+    max_new_tokens: 512
+    temperature: 0.7
+    top_p: 0.9
+    do_sample: true
+
+  # 隐藏层维度（用于 memory 集成）
+  hidden_size: 1536
+  num_heads: 12
+  head_dim: 128

@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+eggs/
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Hydra / OmegaConf outputs
+outputs/runs/
+outputs/metrics/
+outputs/traces/
+multirun/
+
+# Data
+data/raw/*
+data/processed/*
+data/cache/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/cache/.gitkeep
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Model weights
+*.bin
+*.safetensors
+*.pt
+*.ckpt
+
+# Logs
+*.log
+wandb/

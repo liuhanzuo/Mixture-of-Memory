@@ -1,0 +1,33 @@
+# SWA + MoM (L1 + L2 + L3) 完整实验配置
+# SWA backbone + 完整 Mixture-of-Memory
+# 用于验证完整 MoM 系统在长期画像/摘要/长程记忆上的提升
+
+defaults:
+  - /model: swa_qwen
+  - /memory: mom_full
+
+experiment:
+  name: "swa_mom"
+  description: "SWA + full MoM (L1 + L2 + L3) hierarchical memory"
+  
+  # 记忆配置：全部启用
+  memory:
+    l1:
+      enabled: true
+    l2:
+      enabled: true
+    l3:
+      enabled: true
+  
+  # 评测任务
+  eval_tasks:
+    - "synthetic_update"
+    - "profile_bench"
+    - "longhorizon_chat"
+  
+  # 运行参数
+  run:
+    seed: 42
+    num_sessions: 10
+    output_dir: "outputs/runs/swa_mom"
+    log_level: "INFO"

@@ -1,216 +1,247 @@
 """
-评估指标模块。
+通用评估指标计算工具。
 
-包含:
-  - exact match 精确匹配
-  - update accuracy (偏好更新后查询正确率)
-  - temporal accuracy (旧值/新值查询正确率)
-  - 按任务类型分组统计
+提供基础的 precision / recall / F1 / hit@k / recall@k 等计算函数，
+供各个专项评估器 (UpdateEvaluator, SummaryEvaluator 等) 复用。
 """
 
 from __future__ import annotations
 
 import logging
-import re
-from collections import defaultdict
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Sequence
 
 logger = logging.getLogger(__name__)
 
 
-class MemoryMetrics:
-    """记忆系统评估指标计算器。
+# ------------------------------------------------------------------ #
+#  基础分类指标
+# ------------------------------------------------------------------ #
 
-    支持:
-      - exact_match: 答案完全匹配（不区分大小写）
-      - contains_match: 答案包含在生成文本中
-      - 按 task_type 分组统计
-    """
-
-    def __init__(self, normalize: bool = True) -> None:
-        """
-        Args:
-            normalize: 是否对答案做规范化处理（小写、去空格）。
-        """
-        self.normalize = normalize
-        self.reset()
-
-    def reset(self) -> None:
-        """清空所有累积结果。"""
-        self._results: List[Dict[str, Any]] = []
-
-    @staticmethod
-    def _normalize(text: str) -> str:
-        """规范化文本: 小写、去除首尾空格、压缩连续空格。"""
-        text = text.lower().strip()
-        text = re.sub(r"\s+", " ", text)
-        return text
-
-    def add_result(
-        self,
-        prediction: str,
-        answer: str,
-        task_type: str,
-        metadata: Optional[Dict[str, Any]] = None,
-    ) -> None:
-        """添加一条评估结果。
-
-        Args:
-            prediction: 模型生成的文本。
-            answer: 正确答案。
-            task_type: 任务类型。
-            metadata: 可选的额外信息。
-        """
-        if self.normalize:
-            pred_norm = self._normalize(prediction)
-            ans_norm = self._normalize(answer)
-        else:
-            pred_norm = prediction
-            ans_norm = answer
-
-        exact = pred_norm == ans_norm
-        contains = ans_norm in pred_norm
-
-        self._results.append({
-            "prediction": prediction,
-            "answer": answer,
-            "task_type": task_type,
-            "exact_match": exact,
-            "contains_match": contains,
-            "metadata": metadata or {},
-        })
-
-    def add_batch_results(
-        self,
-        predictions: Sequence[str],
-        answers: Sequence[str],
-        task_types: Sequence[str],
-        metadata_list: Optional[Sequence[Dict[str, Any]]] = None,
-    ) -> None:
-        """批量添加评估结果。
-
-        Args:
-            predictions: 预测文本列表。
-            answers: 答案列表。
-            task_types: 任务类型列表。
-            metadata_list: 可选的 metadata 列表。
-        """
-        meta_list = metadata_list or [{}] * len(predictions)
-        for pred, ans, tt, meta in zip(predictions, answers, task_types, meta_list):
-            self.add_result(pred, ans, tt, meta)
-
-    def compute(self) -> Dict[str, Any]:
-        """计算所有指标。
-
-        Returns:
-            metrics: 包含总体指标和按任务分组指标的字典。
-        """
-        if not self._results:
-            return {"total_samples": 0}
-
-        metrics: Dict[str, Any] = {}
-
-        # ---- 总体指标 ----
-        total = len(self._results)
-        exact_correct = sum(r["exact_match"] for r in self._results)
-        contains_correct = sum(r["contains_match"] for r in self._results)
-
-        metrics["total_samples"] = total
-        metrics["exact_match"] = exact_correct / total
-        metrics["contains_match"] = contains_correct / total
-
-        # ---- 按任务类型分组 ----
-        by_task: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
-        for r in self._results:
-            by_task[r["task_type"]].append(r)
-
-        metrics["per_task"] = {}
-        for task_type, results in by_task.items():
-            n = len(results)
-            em = sum(r["exact_match"] for r in results) / n
-            cm = sum(r["contains_match"] for r in results) / n
-            metrics["per_task"][task_type] = {
-                "num_samples": n,
-                "exact_match": em,
-                "contains_match": cm,
-            }
-
-        # ---- 特殊指标: update accuracy ----
-        update_tasks = by_task.get("updated_preference", [])
-        if update_tasks:
-            metrics["update_accuracy"] = (
-                sum(r["exact_match"] for r in update_tasks)
-                / len(update_tasks)
-            )
-        else:
-            metrics["update_accuracy"] = 0.0
-
-        # ---- 特殊指标: temporal accuracy ----
-        temporal_tasks = by_task.get("past_value_query", [])
-        if temporal_tasks:
-            metrics["temporal_accuracy"] = (
-                sum(r["exact_match"] for r in temporal_tasks)
-                / len(temporal_tasks)
-            )
-        else:
-            metrics["temporal_accuracy"] = 0.0
-
-        return metrics
-
-    def log_metrics(self, metrics: Optional[Dict[str, Any]] = None) -> None:
-        """格式化打印指标。
-
-        Args:
-            metrics: 如果为 None 则自动计算。
-        """
-        if metrics is None:
-            metrics = self.compute()
-
-        logger.info("=" * 60)
-        logger.info("评估结果汇总")
-        logger.info("=" * 60)
-        logger.info(f"  总样本数: {metrics['total_samples']}")
-        logger.info(f"  Exact Match: {metrics.get('exact_match', 0):.4f}")
-        logger.info(f"  Contains Match: {metrics.get('contains_match', 0):.4f}")
-        logger.info(f"  Update Accuracy: {metrics.get('update_accuracy', 0):.4f}")
-        logger.info(f"  Temporal Accuracy: {metrics.get('temporal_accuracy', 0):.4f}")
-
-        per_task = metrics.get("per_task", {})
-        if per_task:
-            logger.info("-" * 40)
-            logger.info("按任务类型:")
-            for task_type, task_metrics in sorted(per_task.items()):
-                logger.info(
-                    f"  [{task_type}] "
-                    f"n={task_metrics['num_samples']}, "
-                    f"EM={task_metrics['exact_match']:.4f}, "
-                    f"CM={task_metrics['contains_match']:.4f}"
-                )
-        logger.info("=" * 60)
+def compute_precision(tp: int, fp: int) -> float:
+    """计算精确率。"""
+    if tp + fp == 0:
+        return 0.0
+    return tp / (tp + fp)
 
 
-def extract_answer_from_generation(text: str) -> str:
-    """从模型生成文本中提取 Answer 部分。
+def compute_recall(tp: int, fn: int) -> float:
+    """计算召回率。"""
+    if tp + fn == 0:
+        return 0.0
+    return tp / (tp + fn)
 
-    尝试匹配 'Answer: ...' 模式。
+
+def compute_f1(precision: float, recall: float) -> float:
+    """计算 F1 分数。"""
+    if precision + recall == 0.0:
+        return 0.0
+    return 2.0 * precision * recall / (precision + recall)
+
+
+def compute_accuracy(correct: int, total: int) -> float:
+    """计算准确率。"""
+    if total == 0:
+        return 0.0
+    return correct / total
+
+
+# ------------------------------------------------------------------ #
+#  检索指标
+# ------------------------------------------------------------------ #
+
+def compute_hit_at_k(
+    retrieved_ids: Sequence[str],
+    relevant_ids: set[str],
+    k: int,
+) -> float:
+    """计算 Hit@K: 前 k 个检索结果中是否包含至少一个相关项。
 
     Args:
-        text: 模型生成的完整文本。
+        retrieved_ids: 检索结果 ID 列表 (按排名排序).
+        relevant_ids: 真正相关的 ID 集合.
+        k: 截断位置.
 
     Returns:
-        answer: 提取出的答案字符串。
+        1.0 如果命中, 否则 0.0.
     """
-    # 尝试匹配 "Answer: xxx" 模式
-    patterns = [
-        r"Answer:\s*(.+?)(?:\.|$)",
-        r"answer:\s*(.+?)(?:\.|$)",
-        r"Answer:\s*(\S+)",
-    ]
-    for pattern in patterns:
-        match = re.search(pattern, text)
-        if match:
-            return match.group(1).strip()
+    top_k = retrieved_ids[:k]
+    for rid in top_k:
+        if rid in relevant_ids:
+            return 1.0
+    return 0.0
 
-    # 如果没有匹配到，返回最后一行
-    lines = text.strip().split("\n")
-    return lines[-1].strip() if lines else ""
+
+def compute_recall_at_k(
+    retrieved_ids: Sequence[str],
+    relevant_ids: set[str],
+    k: int,
+) -> float:
+    """计算 Recall@K: 前 k 个检索结果覆盖了多少相关项。
+
+    Args:
+        retrieved_ids: 检索结果 ID 列表 (按排名排序).
+        relevant_ids: 真正相关的 ID 集合.
+        k: 截断位置.
+
+    Returns:
+        Recall@K 值 [0, 1].
+    """
+    if not relevant_ids:
+        return 0.0
+    top_k = set(retrieved_ids[:k])
+    hits = top_k & relevant_ids
+    return len(hits) / len(relevant_ids)
+
+
+def compute_precision_at_k(
+    retrieved_ids: Sequence[str],
+    relevant_ids: set[str],
+    k: int,
+) -> float:
+    """计算 Precision@K: 前 k 个检索结果中有多少是相关的。
+
+    Args:
+        retrieved_ids: 检索结果 ID 列表.
+        relevant_ids: 真正相关的 ID 集合.
+        k: 截断位置.
+
+    Returns:
+        Precision@K 值 [0, 1].
+    """
+    top_k = retrieved_ids[:k]
+    if not top_k:
+        return 0.0
+    hits = sum(1 for rid in top_k if rid in relevant_ids)
+    return hits / len(top_k)
+
+
+def compute_mrr(
+    retrieved_ids: Sequence[str],
+    relevant_ids: set[str],
+) -> float:
+    """计算 Mean Reciprocal Rank (MRR)。
+
+    返回第一个相关项的倒数排名。
+
+    Args:
+        retrieved_ids: 检索结果 ID 列表 (按排名排序).
+        relevant_ids: 真正相关的 ID 集合.
+
+    Returns:
+        1/rank 或 0.0 (如果没有命中).
+    """
+    for i, rid in enumerate(retrieved_ids):
+        if rid in relevant_ids:
+            return 1.0 / (i + 1)
+    return 0.0
+
+
+# ------------------------------------------------------------------ #
+#  文本重叠指标
+# ------------------------------------------------------------------ #
+
+def compute_token_overlap(
+    prediction: str,
+    reference: str,
+    tokenize_fn: Any | None = None,
+) -> dict[str, float]:
+    """计算 token 级别的 precision / recall / F1。
+
+    简单实现: 按空白分词。可传入自定义 tokenize_fn。
+
+    Args:
+        prediction: 预测文本.
+        reference: 参考文本.
+        tokenize_fn: 自定义分词函数, 签名: str -> list[str].
+
+    Returns:
+        {"precision": float, "recall": float, "f1": float}
+    """
+    if tokenize_fn is None:
+        tokenize_fn = lambda s: s.lower().split()
+
+    pred_tokens = set(tokenize_fn(prediction))
+    ref_tokens = set(tokenize_fn(reference))
+
+    if not pred_tokens and not ref_tokens:
+        return {"precision": 1.0, "recall": 1.0, "f1": 1.0}
+    if not pred_tokens or not ref_tokens:
+        return {"precision": 0.0, "recall": 0.0, "f1": 0.0}
+
+    overlap = pred_tokens & ref_tokens
+    precision = len(overlap) / len(pred_tokens)
+    recall = len(overlap) / len(ref_tokens)
+    f1 = compute_f1(precision, recall)
+
+    return {"precision": precision, "recall": recall, "f1": f1}
+
+
+def compute_keyword_coverage(
+    text: str,
+    keywords: Sequence[str],
+    case_sensitive: bool = False,
+) -> float:
+    """计算文本对关键词列表的覆盖率。
+
+    Args:
+        text: 待检查文本.
+        keywords: 关键词列表.
+        case_sensitive: 是否区分大小写.
+
+    Returns:
+        覆盖率 [0, 1].
+    """
+    if not keywords:
+        return 0.0
+
+    check_text = text if case_sensitive else text.lower()
+    hits = 0
+    for kw in keywords:
+        check_kw = kw if case_sensitive else kw.lower()
+        if check_kw in check_text:
+            hits += 1
+
+    return hits / len(keywords)
+
+
+# ------------------------------------------------------------------ #
+#  聚合工具
+# ------------------------------------------------------------------ #
+
+def aggregate_metrics(
+    metric_dicts: Sequence[dict[str, float]],
+) -> dict[str, float]:
+    """对多个指标字典取平均值。
+
+    Args:
+        metric_dicts: 指标字典列表, 每个字典的 key 应一致.
+
+    Returns:
+        各 key 的平均值字典.
+    """
+    if not metric_dicts:
+        return {}
+
+    all_keys = set()
+    for d in metric_dicts:
+        all_keys.update(d.keys())
+
+    result: dict[str, float] = {}
+    for key in sorted(all_keys):
+        values = [d[key] for d in metric_dicts if key in d]
+        result[key] = sum(values) / len(values) if values else 0.0
+
+    return result
+
+
+def format_metrics(
+    metrics: dict[str, float],
+    prefix: str = "",
+    decimal: int = 4,
+) -> str:
+    """将指标字典格式化为人类可读的字符串。"""
+    lines: list[str] = []
+    for k, v in sorted(metrics.items()):
+        key_str = f"{prefix}{k}" if prefix else k
+        lines.append(f"  {key_str}: {v:.{decimal}f}")
+    return "\n".join(lines)

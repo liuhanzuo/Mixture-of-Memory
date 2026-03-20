@@ -1,0 +1,33 @@
+# L1 关联矩阵记忆配置
+# 衰减关联矩阵记忆，在线同步更新
+
+l1:
+  enabled: true
+  
+  # 记忆矩阵维度
+  d_key: 128          # key 维度
+  d_value: 128        # value 维度
+  num_heads: 4        # 多头变体
+  
+  # 衰减参数
+  decay: 0.95         # λ，指数衰减因子
+  
+  # 写入控制
+  write_interval: 1          # 每隔多少步写入一次（1=每步写入）
+  write_gate_type: "sigmoid"  # 写入门控类型: "sigmoid" | "fixed" | "learned"
+  write_strength: 1.0         # ρ 的缩放因子
+  
+  # 读取配置
+  read_normalize: true   # 是否对读取结果归一化
+  
+  # 投影层（从 hidden states 映射到 K/V/Q）
+  projection:
+    type: "linear"       # "linear" | "mlp"
+    input_dim: null      # 从 backbone hidden_size 自动推断
+    bias: false
+  
+  # 门控输出
+  gating:
+    enabled: true
+    type: "sigmoid"      # "sigmoid" | "tanh" | "learned_scalar"
+    output_proj: true    # 是否使用 W_o 投影

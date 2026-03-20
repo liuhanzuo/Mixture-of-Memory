@@ -1,0 +1,26 @@
+# Debug Tiny 模型配置
+# 用于本地调试和单元测试，极小模型
+
+backbone:
+  type: "swa"
+  model_name_or_path: "sshleifer/tiny-gpt2"  # HF 上的极小模型
+  dtype: "float32"
+  device: "cpu"
+
+  # SWA 特定参数（调试用小窗口）
+  swa:
+    window_size: 64
+    use_flash_attention: false
+    sink_tokens: 2
+
+  # 生成参数
+  generation:
+    max_new_tokens: 32
+    temperature: 1.0
+    top_p: 1.0
+    do_sample: false
+
+  # 隐藏层维度（tiny-gpt2）
+  hidden_size: 64
+  num_heads: 2
+  head_dim: 32

@@ -1,7 +1,0 @@
-# Ablation: Full MOM (完整方法)
-# MOM + evaluator-guided write + retrospective gather
-defaults:
-  - ../base
-
-# 使用 base.yaml 的所有默认值（完整 MOM 管线）
-# 此文件仅作为显式标记

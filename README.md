@@ -1,255 +1,469 @@
-# Mixture-of-Memory (MOM) — Agent Memory System v0
+# 🧠 MoM-Agent: Mixture-of-Memory for Local-Attention Agents
 
-> 一个最小但可运行的研究原型，用于验证基于 **Mixture-of-Memory** 的 LLM 长期记忆策略。
-
----
-
-## 项目概述
-
-本项目围绕**冻结的 HuggingFace 因果语言模型**构建一套外部记忆系统，通过以下核心机制增强模型的长程记忆能力：
-
-1. **Block Evaluator** — 在每个固定长度 block 结束时，评估哪些 token 位置是有价值的 anchor
-2. **Anchor-guided Retrospective Gather** — 对选中的 anchor 使用注意力机制聚合 block 级别的潜在信息
-3. **Mixture of Memory (MOM)** — 维护 3 个具有不同更新/保留动态的潜在矩阵记忆（fast / medium / slow）
-4. **Write / Route / Retain Policy** — 学习决定写入强度、路由目标和保留率
-5. **Memory Readout + Fusion** — 在每个 token 步从记忆中读取并通过门控残差融合影响生成
-
-### v0 设计假设
-
-- **不修改** transformer 内部架构
-- **不做** 全量 SFT
-- **冻结** backbone 模型，所有新功能作为外部模块添加
-- 记忆保持**潜在化**（latent）且**注意力兼容**（attention-compatible）
-- 记忆仅通过轻量级 readout + fusion head 影响生成（不注入每一层 transformer）
-- 使用冻结 backbone 的 hidden states 作为短期分支（SWA）的代理
-
-### 为什么冻结 Backbone？
-
-v0 的目标是**验证记忆策略本身是否有效**，而非重新训练语言模型。冻结 backbone：
-- 将实验变量隔离到记忆模块
-- 大幅减少训练参数和计算量
-- 确保 backbone 的语言能力不会在训练中退化
-- 后续可通过 LoRA / partial unfreezing 逐步解锁
+> **Hierarchical Memory for Local-Attention Agents**
+>
+> 三级层次化记忆系统，补偿 SWA（Sliding-Window Attention）/ 局部注意力骨干模型丢失的长程上下文访问能力。
 
 ---
 
-## 架构流程
+## 📋 目录
+
+- [研究动机](#研究动机)
+- [系统架构](#系统架构)
+- [安装](#安装)
+- [快速开始](#快速开始)
+- [项目结构](#项目结构)
+- [配置系统](#配置系统)
+- [评测任务](#评测任务)
+- [训练](#训练)
+- [测试](#测试)
+- [License](#license)
+
+---
+
+## 研究动机
+
+大型语言模型（LLM）在长上下文对话中依赖全注意力（Full Attention）来维持上下文一致性，
+但全注意力的 **O(n²)** 复杂度在超长序列场景下代价极高。滑动窗口注意力（SWA）
+将复杂度降至 **O(n·w)**，但代价是**丢失窗口之外的长程信息**。
+
+**MoM（Mixture-of-Memory）** 引入三级层次化记忆，在保持 SWA 高效推理的同时，
+恢复对长程上下文的访问能力，使 **SWA + MoM ≈ Full Attention 基线性能**。
+
+---
+
+## 系统架构
 
 ```
-输入序列 → [冻结 Backbone] → hidden states
-                                    │
-                          ┌─────────┼─────────┐
-                          ▼                   ▼
-                   按 block 切分          Memory Readout
-                          │                   ▲
-                   ┌──────┴──────┐           │
-                   ▼             ▼           │
-              Evaluator    Block Hidden      │
-                   │             │           │
-                   ▼             │           │
-             AnchorSelector     │       ┌───┴───┐
-                   │             │       │  MOM  │
-                   ▼             ▼       │ (3×)  │
-            Retrospective ──────┘       └───┬───┘
-              Gather                        ▲
-                   │                        │
-                   ▼                        │
-              MemoryWriter ─── update ──────┘
-                   │
-              (key, value, α, ρ, λ)
+┌─────────────────────────────────────────────────────────────┐
+│                      MemoryAgent                            │
+│  ┌───────────────┐  ┌────────────────┐  ┌───────────────┐  │
+│  │  TurnProcessor │  │ SessionRunner  │  │   Backbone    │  │
+│  │  (单轮处理)    │  │ (会话编排)     │  │  (SWA/Full)   │  │
+│  └───────┬───────┘  └───────┬────────┘  └───────────────┘  │
+│          │                  │                               │
+│          ▼                  ▼                               │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │              MemoryScheduler (调度器)                │   │
+│  │  ┌─────────┐   ┌──────────┐   ┌──────────────────┐ │   │
+│  │  │   L1    │   │    L2    │   │       L3         │ │   │
+│  │  │ 关联矩阵 │   │ 事件记忆  │   │   语义/画像记忆   │ │   │
+│  │  │ (在线)   │   │ (turn级) │   │   (session级)    │ │   │
+│  │  └─────────┘   └──────────┘   └──────────────────┘ │   │
+│  └─────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────┘
+```
 
-Memory Readout → FusionHead → fused hidden → lm_head → logits
+### 三级记忆
+
+| 层级 | 名称 | 更新频率 | 存储内容 | 模块 |
+|------|------|---------|---------|------|
+| **L1** | 关联矩阵记忆 | 每 token step（在线同步） | 衰减关联矩阵 (key→value)，门控融合到隐藏状态 | `src/memory/l1/` |
+| **L2** | 事件级记忆对象 | 每 turn / chunk 边界（异步） | 从最近消息直接聚合的结构化事件对象，支持合并与检索 | `src/memory/l2/` |
+| **L3** | 语义/画像记忆 | 每 session 结束（异步） | 从 L2 抽象总结而来的长期画像条目，支持冲突修订 | `src/memory/l3/` |
+
+### 信息流
+
+```
+用户消息 ──→ L1 在线写入 ──→ 门控融合到骨干隐藏状态
+         ──→ 消息缓冲区 ──→ chunk/turn 边界 ──→ L2 聚合 ──→ L2 存储
+                                              └──→ session 结束 ──→ L3 总结 ──→ L3 存储
+检索方向:  Query ──→ L2 检索 (top-k 事件) ──→ L3 检索 (top-k 画像) ──→ 注入 Prompt
 ```
 
 ---
 
-## 各模块说明
+## 安装
 
-| 模块 | 路径 | 功能 |
-|------|------|------|
-| **FrozenLMWrapper** | `src/backbone/lm_wrapper.py` | 加载并冻结 HuggingFace 模型，暴露 hidden states |
-| **BlockEvaluator** | `src/anchor/evaluator.py` | 对 block 内每个 token 打分，支持 MLP / Transformer |
-| **AnchorSelector** | `src/anchor/selector.py` | 从评分中选 top-k anchor，支持确定性和随机采样 |
-| **RetrospectiveGather** | `src/gather/retrospective_attn.py` | 对每个 anchor 做单头注意力聚合 block 信息 |
-| **MixtureOfMemory** | `src/memory/mom.py` | 管理 3 个潜在矩阵记忆 (fast/medium/slow) |
-| **MemoryWriter** | `src/memory/update.py` | 生成写入决策: key, value, α, ρ, λ |
-| **RetentionScheduler** | `src/memory/retention.py` | 为不同记忆提供保留率先验和调度 |
-| **MemoryReadout** | `src/memory/readout.py` | 从所有记忆读取并通过学习路由融合 |
-| **FusionHead** | `src/fusion/fusion_head.py` | 门控残差融合: h̃ = h + g ⊙ Wᵣr |
-| **MemoryAugmentedLoss** | `src/training/losses.py` | 组合 LM loss + utility 辅助 loss |
-| **MemoryTrainer** | `src/training/trainer.py` | 完整的 block-wise 训练循环 |
+### 环境要求
+
+- Python ≥ 3.11
+- PyTorch ≥ 2.1.0
+- CUDA (可选, 用于 GPU 加速)
+
+### 安装步骤
+
+```bash
+# 1. 克隆仓库
+git clone <repo-url> mom-agent
+cd mom-agent
+
+# 2. 创建虚拟环境
+python -m venv .venv
+source .venv/bin/activate
+
+# 3. 安装项目 (可编辑模式, 含开发依赖)
+pip install -e ".[dev]"
+
+# 或使用 requirements.txt
+pip install -r requirements.txt
+```
 
 ---
 
 ## 快速开始
 
-### 1. 安装依赖
+### 1. 交互式对话
 
 ```bash
-pip install -e .
-# 或
-pip install -r requirements.txt
+# 使用 SWA + 完整 MoM 记忆
+python -m scripts.run_chat \
+    --config-name swa_mom \
+    model=swa_qwen \
+    memory=mom_full
+
+# 使用 Hydra 配置覆盖
+python -m scripts.run_chat \
+    --config-name swa_mom \
+    memory.scheduler.l2_chunk_size=3 \
+    experiment.run.seed=123
 ```
 
-### 2. 在合成数据上训练
+### 2. 运行评测
 
 ```bash
-# 使用默认配置（tiny GPT-2）
-bash scripts/train_stage1.sh --device cuda --seed 42
+# 完整评测 (所有任务)
+python -m scripts.run_eval \
+    --config-name swa_mom \
+    experiment.eval_tasks='[synthetic_update,profile_bench,longhorizon_chat]'
 
-# 使用 CPU 快速测试
-bash scripts/train_stage1.sh --device cpu --seed 42
-
-# 使用特定 ablation 配置
-bash scripts/train_stage1.sh --ablation full_mom --device cuda
+# 单任务评测
+python -m scripts.run_eval \
+    --config-name swa_mom \
+    experiment.eval_tasks='[profile_bench]'
 ```
 
-### 3. 评估合成基准
+### 3. 消融实验
 
 ```bash
-bash scripts/eval_synthetic.sh --checkpoint checkpoints/checkpoint_best.pt --device cuda
+# 运行全部消融实验 (SWA-only → +L1 → +L1+L2 → +L1+L2+L3 → FullAttn)
+python -m scripts.run_ablation \
+    experiment.run.seed=42 \
+    experiment.run.num_sessions=10
 ```
 
----
-
-## 基线配置 (Ablations)
-
-通过 `--ablation` 参数切换不同基线，所有 ablation 配置位于 `configs/ablations/`：
-
-| 配置 | 说明 |
-|------|------|
-| `no_memory` | 仅 backbone，无长期记忆 |
-| `single_memory` | 单记忆 + 即时写入 |
-| `mean_pool_write` | 单记忆 + 延迟写入（block 均值池化，无 evaluator） |
-| `full_mom` | 完整 MOM + evaluator-guided write（完整方法） |
-| `surprise_write` | 基于 surprise 的写入策略（对比 Titans 风格） |
+### 4. 数据构建
 
 ```bash
-# 运行 no_memory 基线
-bash scripts/train_stage1.sh --ablation no_memory
+# 从原始消息日志构建 L2 事件记忆
+python -m scripts.build_l2_from_messages \
+    --input data/raw/chat_logs.jsonl \
+    --output data/processed/l2_objects.jsonl
 
-# 运行完整方法
-bash scripts/train_stage1.sh --ablation full_mom
+# 从 L2 事件构建 L3 画像记忆
+python -m scripts.build_l3_from_l2 \
+    --input data/processed/l2_objects.jsonl \
+    --output data/processed/l3_profiles.jsonl
 ```
-
----
-
-## 合成数据集
-
-5 种任务类型用于快速验证记忆能力：
-
-| 任务 | 说明 |
-|------|------|
-| `simple_recall` | 简单关联回忆 |
-| `updated_preference` | 偏好更新后查询最新值 |
-| `past_value_query` | 偏好更新后查询旧值 |
-| `long_distance_recall` | 长距离从句式回忆 |
-| `distractor_heavy` | 大量干扰项中的回忆 |
-
-### 评估指标
-
-- **Exact Match / Accuracy**: 总体准确率
-- **Update Accuracy**: 偏好更新后的准确率
-- **Temporal Accuracy**: 时序查询准确率
-- **Per-task Accuracy**: 各任务类型的细粒度准确率
-
----
-
-## 训练日志
-
-训练过程中记录以下信息：
-
-- `train_loss` / `val_loss`: 训练和验证损失
-- `lm_loss` / `utility_loss`: LM 损失和 utility 辅助损失
-- `avg_anchors_per_block`: 每 block 平均选择的 anchor 数
-- `write_alpha_mean`: 平均写入强度
-- `write_route_entropy`: 路由分布熵
-- `rho_mem{i}_mean`: 各记忆的平均路由权重
-- `lam_mem{i}_mean`: 各记忆的平均保留因子
-- `base_retention_mem{i}`: 基础保留率
-- `mem_{name}_frobenius_norm`: 记忆矩阵范数
 
 ---
 
 ## 项目结构
 
 ```
-Mixture-of-Memory/
-├── configs/
-│   ├── base.yaml                    # 基础配置
-│   ├── synthetic.yaml               # 合成数据集配置
-│   ├── model/tiny.yaml              # Tiny 模型配置
-│   └── ablations/                   # Ablation 配置
-├── src/
-│   ├── backbone/                    # 冻结 backbone 包装器
-│   ├── memory/                      # MOM 核心: mom, update, readout, retention
-│   ├── anchor/                      # Block evaluator + anchor selector
-│   ├── gather/                      # Retrospective attention gather
-│   ├── fusion/                      # 门控残差融合
-│   ├── data/                        # 数据集: synthetic, RULER, LongMemEval
-│   ├── training/                    # 训练: losses, trainer, stages, utils
-│   ├── eval/                        # 评估: synthetic, RULER, LongMemEval, metrics
-│   └── common/                      # 通用: config, logging, seed, typing
-├── scripts/                         # Shell 脚本
-├── tests/                           # 单元测试
-├── requirements.txt
-└── pyproject.toml
+mom-agent/
+├── configs/                        # Hydra 配置文件
+│   ├── eval/                       # 评测任务配置
+│   │   ├── longhorizon_chat.yaml   #   长程对话评测
+│   │   ├── profile_bench.yaml      #   画像准确度评测
+│   │   └── synthetic_update.yaml   #   合成更新评测
+│   ├── exp/                        # 实验组合配置
+│   │   ├── fullattn_baseline.yaml  #   全注意力基线
+│   │   ├── swa_only.yaml           #   仅 SWA (无记忆)
+│   │   ├── swa_l1.yaml             #   SWA + L1
+│   │   ├── swa_l1_l2.yaml          #   SWA + L1 + L2
+│   │   └── swa_mom.yaml            #   SWA + 完整 MoM
+│   ├── memory/                     # 记忆层配置
+│   │   ├── l1_assoc.yaml           #   L1 关联矩阵配置
+│   │   ├── l2_episode.yaml         #   L2 事件记忆配置
+│   │   ├── l3_profile.yaml         #   L3 画像记忆配置
+│   │   └── mom_full.yaml           #   完整 MoM 调度器配置
+│   └── model/                      # 骨干模型配置
+│       ├── debug_tiny.yaml         #   调试用小模型
+│       ├── fullattn_qwen.yaml      #   Qwen 全注意力
+│       └── swa_qwen.yaml           #   Qwen SWA
+│
+├── src/                            # 核心源码
+│   ├── agents/                     # Agent 层
+│   │   ├── memory_agent.py         #   MemoryAgent 主类
+│   │   ├── session_runner.py       #   SessionRunner 会话编排
+│   │   └── turn_processor.py       #   TurnProcessor 单轮处理
+│   │
+│   ├── backbone/                   # 骨干模型抽象
+│   │   ├── interfaces.py           #   BackboneModel 抽象接口
+│   │   ├── swa_model.py            #   SWA 骨干实现
+│   │   ├── full_attention_model.py #   全注意力骨干实现
+│   │   └── hidden_state_types.py   #   隐藏状态类型定义
+│   │
+│   ├── memory/                     # 三级记忆系统
+│   │   ├── l1/                     #   L1: 关联矩阵记忆
+│   │   │   ├── assoc_memory.py     #     AssociativeMemoryL1 主类
+│   │   │   ├── gating.py           #     门控网络 (选择性融合)
+│   │   │   ├── reader.py           #     矩阵读取器
+│   │   │   └── writer.py           #     矩阵写入器
+│   │   ├── l2/                     #   L2: 事件级记忆
+│   │   │   ├── aggregator.py       #     消息→事件聚合器
+│   │   │   ├── merger.py           #     事件合并器
+│   │   │   ├── object_store.py     #     L2ObjectStore 存储
+│   │   │   ├── retriever.py        #     L2 检索器
+│   │   │   └── types.py            #     ChatMessage / MemoryObject 类型
+│   │   ├── l3/                     #   L3: 语义/画像记忆
+│   │   │   ├── summarizer.py       #     L2→L3 摘要总结器
+│   │   │   ├── profile_store.py    #     ProfileStore 存储
+│   │   │   ├── reviser.py          #     冲突检测与修订器
+│   │   │   └── formatter.py        #     画像格式化输出
+│   │   ├── scheduler.py            #   MemoryScheduler 统一调度器
+│   │   └── state.py                #   MoMState / MoMStats 状态管理
+│   │
+│   ├── eval/                       # 评测模块
+│   │   ├── metrics.py              #   基础指标 (ROUGE, BERTScore 等)
+│   │   ├── update_eval.py          #   信息更新准确度评测
+│   │   ├── summary_eval.py         #   摘要质量评测
+│   │   ├── retrieval_eval.py       #   检索效果评测 (Recall@k, MRR)
+│   │   └── cost_eval.py            #   开销评测 (延迟, 内存, FLOPS)
+│   │
+│   ├── tasks/                      # 评测任务定义
+│   │   ├── longhorizon_chat_task.py#   长程对话任务
+│   │   ├── profile_task.py         #   画像构建任务
+│   │   └── synthetic_update_task.py#   合成信息更新任务
+│   │
+│   ├── training/                   # 训练脚本
+│   │   ├── train_gate.py           #   L1 门控网络训练
+│   │   ├── train_l2_aggregator.py  #   L2 聚合器训练
+│   │   └── train_l3_summarizer.py  #   L3 总结器训练
+│   │
+│   └── utils/                      # 工具库
+│       ├── io.py                   #   文件 I/O (JSON/JSONL/YAML)
+│       ├── logging.py              #   日志配置 (Rich)
+│       ├── seeds.py                #   随机种子管理
+│       ├── text.py                 #   文本处理 (截断/token计数)
+│       └── time.py                 #   计时器与时间工具
+│
+├── scripts/                        # 可执行脚本
+│   ├── run_chat.py                 #   交互式对话
+│   ├── run_eval.py                 #   评测流水线
+│   ├── run_ablation.py             #   消融实验
+│   ├── build_l2_from_messages.py   #   离线构建 L2
+│   └── build_l3_from_l2.py         #   离线构建 L3
+│
+├── tests/                          # 单元测试
+│   ├── test_l1.py                  #   L1 关联矩阵测试
+│   ├── test_l2.py                  #   L2 事件记忆测试
+│   ├── test_l3.py                  #   L3 画像记忆测试
+│   ├── test_scheduler.py           #   MemoryScheduler 测试
+│   └── test_agent_smoke.py         #   Agent 端到端烟雾测试
+│
+├── data/                           # 数据目录
+│   ├── raw/                        #   原始数据
+│   ├── processed/                  #   处理后数据
+│   └── cache/                      #   缓存
+│
+├── outputs/                        # 输出目录
+│   ├── runs/                       #   实验运行记录
+│   ├── metrics/                    #   评测指标
+│   └── traces/                     #   对话轨迹
+│
+├── pyproject.toml                  # 项目配置与依赖
+├── requirements.txt                # 依赖列表
+└── .gitignore                      # Git 忽略规则
 ```
 
 ---
 
-## 运行单元测试
+## 配置系统
+
+项目使用 [Hydra](https://hydra.cc/) + [OmegaConf](https://omegaconf.readthedocs.io/) 进行配置管理，
+支持 **YAML 组合** 和 **命令行覆盖**。
+
+### 配置层级
+
+```
+configs/
+├── exp/swa_mom.yaml          # 实验配置 (顶层入口)
+│   ├── defaults:
+│   │   ├── /model: swa_qwen  # 引用模型配置
+│   │   └── /memory: mom_full # 引用记忆配置 (组合 l1+l2+l3)
+│   └── experiment: ...       # 实验参数
+└── memory/mom_full.yaml      # MoM 调度器配置
+    ├── defaults:
+    │   ├── l1_assoc           # L1 配置
+    │   ├── l2_episode         # L2 配置
+    │   └── l3_profile         # L3 配置
+    └── scheduler: ...         # 调度参数
+```
+
+### 调度器关键参数
+
+| 参数 | 默认值 | 说明 |
+|------|--------|------|
+| `l1_sync` | `true` | L1 同步更新 |
+| `l2_update_on` | `turn_end` | L2 更新触发时机 |
+| `l2_chunk_size` | `5` | L2 聚合的 chunk 大小 |
+| `l3_update_on` | `session_end` | L3 更新触发时机 |
+| `context_budget.max_memory_tokens` | `512` | 记忆注入最大 token 预算 |
+| `context_budget.l2_token_ratio` | `0.6` | L2 在预算中的占比 |
+| `context_budget.l3_token_ratio` | `0.4` | L3 在预算中的占比 |
+
+### 命令行覆盖示例
 
 ```bash
-pytest tests/ -v
+# 调整 L2 chunk 大小 和 L1 衰减率
+python -m scripts.run_eval \
+    --config-name swa_mom \
+    memory.scheduler.l2_chunk_size=3 \
+    memory.l1.decay=0.95
+
+# 切换到全注意力基线
+python -m scripts.run_eval \
+    --config-name fullattn_baseline
 ```
 
-测试覆盖：
-- 记忆更新形状和数值稳定性
-- Anchor 选择正确性
-- Retrospective gather 输出形状和注意力权重
-- Readout 形状和路由权重
-- Fusion 输出形状、残差连接和门控初始化
+---
+
+## 评测任务
+
+### Synthetic Update (合成更新)
+
+测试记忆系统对**信息更新**的追踪能力。注入一系列属性声明，后续声明可能更新、推翻前面的值，
+评估系统在多轮后是否能正确反映最新状态。
+
+```bash
+python -m scripts.run_eval --config-name swa_mom \
+    experiment.eval_tasks='[synthetic_update]'
+```
+
+### Profile Bench (画像准确度)
+
+测试 L3 画像记忆的**长期一致性**。经过多 session 交互后，评估从 L3 检索到的用户画像
+是否与真实画像匹配（Precision / Recall / F1）。
+
+```bash
+python -m scripts.run_eval --config-name swa_mom \
+    experiment.eval_tasks='[profile_bench]'
+```
+
+### Long-Horizon Chat (长程对话)
+
+测试**长对话场景**下的上下文一致性。在 100+ 轮对话中，随机插入需要引用早期信息的问题，
+评估系统的回答质量（ROUGE / BERTScore）。
+
+```bash
+python -m scripts.run_eval --config-name swa_mom \
+    experiment.eval_tasks='[longhorizon_chat]'
+```
+
+### 消融实验
+
+系统地对比不同记忆层级组合的效果：
+
+| 配置 | L1 | L2 | L3 | 说明 |
+|------|:--:|:--:|:--:|------|
+| `swa_only` | ✗ | ✗ | ✗ | 纯 SWA (下界) |
+| `swa_l1` | ✓ | ✗ | ✗ | + 关联矩阵 |
+| `swa_l1_l2` | ✓ | ✓ | ✗ | + 事件记忆 |
+| `swa_mom` | ✓ | ✓ | ✓ | 完整 MoM |
+| `fullattn_baseline` | ✗ | ✗ | ✗ | 全注意力 (上界) |
+
+```bash
+python -m scripts.run_ablation --multirun \
+    experiment.run.seed=42,123,456
+```
 
 ---
 
-## 扩展路线
+## 训练
 
-### 短期（v0.1）
-- [ ] 集成 RULER 基准评估
-- [ ] 集成 LongMemEval 基准评估
-- [ ] 添加 wandb 日志支持
+### L1 门控网络
 
-### 中期（v1）
-- [ ] 实现真正的 SWA (Sliding Window Attention) 短期分支
-- [ ] 添加 LoRA adapter 支持（Stage 2）
-- [ ] 支持多 GPU 训练（FSDP）
-- [ ] 实现 per-anchor utility target（更精细的 evaluator 监督）
+训练 L1 门控，学习何时从关联矩阵读取、何时信任骨干输出：
 
-### 长期（v2）
-- [ ] 跨 block 注意力
-- [ ] 将记忆注入 transformer 层（per-layer injection）
-- [ ] 端到端联合训练（Stage 3）
-- [ ] KV cache 感知的记忆融合
+```bash
+python -m src.training.train_gate \
+    --d-model 2048 \
+    --hidden-dim 512 \
+    --lr 1e-4 \
+    --epochs 10 \
+    --data-path data/processed/gate_train.pt
+```
+
+### L2 聚合器
+
+训练 L2 聚合器，从消息 chunk 中提取结构化事件对象：
+
+```bash
+python -m src.training.train_l2_aggregator \
+    --lr 2e-5 \
+    --epochs 20 \
+    --data-path data/processed/l2_train.jsonl
+```
+
+### L3 总结器
+
+训练 L3 总结器，从 L2 事件中抽象出长期画像条目：
+
+```bash
+python -m src.training.train_l3_summarizer \
+    --lr 2e-5 \
+    --epochs 15 \
+    --data-path data/processed/l3_train.jsonl
+```
 
 ---
 
-## 核心公式
+## 测试
 
-### 记忆更新
-$$M_t^{(i)} = \lambda_t^{(i)} M_{t-1}^{(i)} + \rho_t^{(i)} \alpha_t (k_t v_t^\top)$$
+```bash
+# 运行全部测试
+pytest
 
-### 记忆读取
-$$r_t^{(i)} = q_t^\top M_t^{(i)}, \quad r_t = \sum_i \gamma_t^{(i)} r_t^{(i)}$$
+# 运行特定模块测试
+pytest tests/test_l1.py -v
+pytest tests/test_l2.py -v
+pytest tests/test_l3.py -v
+pytest tests/test_scheduler.py -v
+pytest tests/test_agent_smoke.py -v
 
-### 融合
-$$\tilde{h}_t = h_t + g_t \odot W_r r_t$$
+# 带覆盖率报告
+pytest --cov=src --cov-report=html
 
-### Utility Target
-$$u_n = L_{\text{future}}^{(-n)} - L_{\text{future}}^{(+n)}$$
+# 仅运行快速测试 (跳过需要模型的测试)
+pytest -m "not slow"
+```
+
+---
+
+## 开发
+
+### 代码风格
+
+```bash
+# Lint
+ruff check src/ tests/ scripts/
+
+# 自动修复
+ruff check --fix src/ tests/ scripts/
+
+# 类型检查
+mypy src/
+```
+
+### 添加新的记忆层
+
+1. 在 `src/memory/` 下创建新目录 (如 `l4/`)
+2. 实现存储、聚合/总结、检索三个核心组件
+3. 在 `MemoryScheduler` 中注册新层的初始化和调度逻辑
+4. 在 `configs/memory/` 下添加对应 YAML 配置
+5. 编写单元测试于 `tests/test_l4.py`
+
+### 添加新的评测任务
+
+1. 在 `src/tasks/` 下创建任务类 (继承 `BaseTask`)
+2. 在 `src/eval/` 下添加任务专属评测器
+3. 在 `configs/eval/` 下添加任务配置
+4. 在 `scripts/run_eval.py` 中注册新任务
 
 ---
 
 ## License
 
-Research prototype — for academic and experimental use.
+MIT License. See [pyproject.toml](pyproject.toml) for details.
