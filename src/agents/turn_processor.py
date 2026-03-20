@@ -15,6 +15,7 @@ TurnProcessor: 单轮对话处理器。
 from __future__ import annotations
 
 import logging
+import re
 import time
 from dataclasses import dataclass, field
 from typing import Any
@@ -259,15 +260,15 @@ class TurnProcessor:
     ) -> tuple[str, BackboneOutput | None]:
         """调用 backbone 生成回复。
 
-        如果 backbone 为 None, 返回简单的回显回复 (用于测试/调试)。
+        如果 backbone 为 None, 使用记忆感知的规则回复。
 
         Returns:
             (response_text, backbone_output_or_None)
         """
         if self.backbone is None:
-            # 无 backbone: 回显模式 (用于测试)
-            response = f"[Echo] I received your message. Memory context was injected."
-            logger.debug("[TurnProcessor] No backbone, using echo mode.")
+            # 无 backbone: 记忆感知的规则回复模式
+            response = self._rule_based_reply(prompt)
+            logger.debug("[TurnProcessor] No backbone, using memory-aware rule reply.")
             return response, None
 
         # 有 backbone: 真实推理
@@ -341,3 +342,245 @@ class TurnProcessor:
             "content": response_text,
             "turn_id": turn_id,
         })
+
+    # ------------------------------------------------------------------ #
+    #  记忆感知的规则回复 (无 backbone 时使用)
+    # ------------------------------------------------------------------ #
+
+    def _rule_based_reply(self, prompt: str) -> str:
+        """基于记忆上下文和对话历史生成规则回复。
+
+        核心策略:
+        1. 从 prompt 中提取用户的最后一条消息 (query)
+        2. 检查是否有 stale/temporary 类型的无效化声明
+        3. 从 prompt 中提取记忆上下文内容 (已由 L2 Retriever 排序)
+        4. 从对话历史中搜索与 query 相关的事实
+        5. 组合成有意义的回复
+        """
+        # 提取 user 最后的消息
+        user_query = self._extract_last_user_message(prompt)
+
+        # 首先检查是否有无效化/临时状态 (stale/temporary)
+        invalidation_reply = self._check_invalidation(prompt, user_query)
+        if invalidation_reply:
+            return invalidation_reply
+
+        # 提取记忆上下文 (由 L2 Retriever 已按相关度排过序)
+        memory_info = self._extract_memory_from_prompt(prompt)
+
+        # 从对话历史中提取相关事实 (排除 query 本身)
+        history_facts = self._extract_facts_from_history(prompt, user_query)
+
+        # 组合回复
+        reply_parts: list[str] = []
+
+        # 优先使用对话历史中提取的最新事实
+        if history_facts:
+            # 取最后出现的（最新的）事实
+            reply_parts.append(history_facts[-1])
+
+        # 其次使用记忆上下文中的信息 (已按相关度排序，直接取前几条)
+        if memory_info:
+            for info in memory_info[:3]:
+                # 去重：如果和 history_facts 有较大重叠就跳过
+                if reply_parts and any(
+                    info[:10] in existing or existing[:10] in info
+                    for existing in reply_parts
+                ):
+                    continue
+                reply_parts.append(info)
+
+        # 如果没有任何记忆/历史信息，回复无信息
+        if not reply_parts:
+            reply_parts.append("这个信息我目前没有记录。")
+
+        return "。".join(reply_parts)
+
+    def _extract_last_user_message(self, prompt: str) -> str:
+        """从 prompt 中提取最后一条 user 消息。"""
+        lines = prompt.split("\n")
+        for line in reversed(lines):
+            line = line.strip()
+            if line.startswith("user:"):
+                return line[5:].strip()
+        return ""
+
+    def _extract_memory_from_prompt(self, prompt: str) -> list[str]:
+        """从 prompt 的记忆上下文部分提取信息。"""
+        info_items: list[str] = []
+        in_memory_section = False
+
+        for line in prompt.split("\n"):
+            line = line.strip()
+            if line in ("[Long-term Profile]", "[Recent Memory Objects]"):
+                in_memory_section = True
+                continue
+            if line.startswith("[") and not line.startswith("- "):
+                in_memory_section = False
+                continue
+            if in_memory_section and line.startswith("- "):
+                # 提取记忆条目的内容部分
+                content = line[2:].strip()
+                # 去掉类型标签 [xxx]
+                content = re.sub(r"^\[.*?\]\s*", "", content)
+                # 去掉尾部的 (score=xxx) 或 (conf=xxx)
+                content = re.sub(r"\s*\((?:score|conf)=[\d.]+\)\s*$", "", content)
+                # 过滤掉 "Discussion topic:" 前缀的低信息量条目
+                if content.startswith("Discussion topic:"):
+                    content = content[len("Discussion topic:"):].strip()
+                if content and len(content) > 3:
+                    info_items.append(content)
+        return info_items
+
+    def _filter_relevant(self, items: list[str], query: str) -> list[str]:
+        """根据 query 从 items 中筛选相关的条目。"""
+        if not items or not query:
+            return items
+
+        query_lower = query.lower()
+        # 提取 query 关键词
+        keywords = set()
+        for w in re.split(r"[\s，。？?！!、]+", query_lower):
+            if w and len(w) >= 2:
+                keywords.add(w)
+
+        # 按与 query 的关键词重叠数排序
+        scored: list[tuple[str, int]] = []
+        for item in items:
+            item_lower = item.lower()
+            score = sum(1 for kw in keywords if kw in item_lower)
+            # 如果 query 中的实体子串出现在 item 中，额外加分
+            entities = re.findall(r"[\u4e00-\u9fffA-Za-z_]{2,}", query)
+            for e in entities:
+                if e.lower() in item_lower:
+                    score += 2
+            scored.append((item, score))
+
+        scored.sort(key=lambda x: x[1], reverse=True)
+        return [item for item, sc in scored if sc > 0]
+
+    def _check_invalidation(self, prompt: str, query: str) -> str | None:
+        """检查对话历史中是否有对 query 主题的无效化/临时状态声明。
+
+        如果检测到:
+        - 明确的失效/遗忘声明 → 回答 "不确定"
+        - 临时状态声明 → 回答 "不确定"
+        """
+        history_text = ""
+        for line in prompt.split("\n"):
+            stripped = line.strip()
+            if stripped.startswith("user:"):
+                history_text += stripped[5:] + " "
+
+        # 提取 query 中的关键词
+        query_keywords = set()
+        for w in re.split(r"[\s，。？?！!、]+", query.lower()):
+            if w and len(w) >= 2:
+                query_keywords.add(w)
+
+        # 检查无效化声明
+        invalidation_patterns = [
+            r"已经不准", r"忘掉", r"不再有效", r"清除", r"过期",
+        ]
+        for pat in invalidation_patterns:
+            if re.search(pat, history_text):
+                # 确保失效声明和 query 主题相关
+                for kw in query_keywords:
+                    if kw in history_text.lower():
+                        return "这个信息已经过期了，我不确定当前的状态。"
+
+        # 检查临时状态声明
+        temporary_patterns = [
+            r"暂时", r"临时", r"一会儿就好", r"不过一会",
+        ]
+        for pat in temporary_patterns:
+            if re.search(pat, history_text):
+                for kw in query_keywords:
+                    if kw in history_text.lower():
+                        return "之前提到的是临时状态，可能已经过去了，我不确定现在的情况。"
+
+        return None
+
+    def _extract_facts_from_history(self, prompt: str, query: str) -> list[str]:
+        """从 prompt 中的对话历史部分搜索与 query 相关的事实。
+
+        核心逻辑:
+        - 扫描对话历史中 user 消息包含的事实声明
+        - 与 query 进行关键词匹配
+        - 返回最相关的事实
+        """
+        facts: list[str] = []
+        history_lines: list[str] = []
+        in_history = False
+
+        for line in prompt.split("\n"):
+            stripped = line.strip()
+            if stripped == "[Conversation History]":
+                in_history = True
+                continue
+            if stripped.startswith("[") and not stripped.startswith("user:") and not stripped.startswith("assistant:"):
+                if in_history:
+                    in_history = False
+                continue
+            if in_history and (stripped.startswith("user:") or stripped.startswith("assistant:")):
+                history_lines.append(stripped)
+
+        # 从历史中提取事实声明
+        query_lower = query.lower()
+
+        # 提取 query 中的关键词 (去除常见疑问词)
+        stop_words = {
+            "什么", "怎么", "哪里", "哪个", "多少", "如何", "为什么", "吗",
+            "是", "的", "了", "在", "我", "你", "他", "她", "它",
+            "现在", "目前", "最近", "请问", "告诉",
+            "what", "where", "how", "which", "who", "when", "is", "are",
+            "the", "a", "an", "my", "your", "do", "does",
+        }
+        query_keywords = set()
+        for w in re.split(r"[\s，。？?！!、]+", query_lower):
+            if w and w not in stop_words and len(w) >= 2:
+                query_keywords.add(w)
+
+        # 扫描历史，找与 query 关键词匹配的 user 声明
+        # 排除 query 本身 (最后一条 user 消息)
+        last_user_line = ""
+        for line in reversed(history_lines):
+            if line.startswith("user:"):
+                last_user_line = line
+                break
+
+        for line in history_lines:
+            # 跳过 query 本身和 assistant 消息
+            if line == last_user_line:
+                continue
+            if not line.startswith("user:"):
+                continue
+            content = line[5:].strip()
+            content_lower = content.lower()
+            # 检查关键词匹配
+            for kw in query_keywords:
+                if kw in content_lower:
+                    facts.append(content)
+                    break
+
+        # 如果没有找到直接关键词匹配，做更宽泛的搜索:
+        # 检查 query 中的实体名是否出现在历史中
+        if not facts:
+            entity_pattern = r"[A-Za-z0-9\u4e00-\u9fff]{2,}"
+            query_entities = set(re.findall(entity_pattern, query))
+            for line in history_lines:
+                if line == last_user_line:
+                    continue
+                if not line.startswith("user:"):
+                    continue
+                content = line[5:].strip()
+                for entity in query_entities:
+                    if entity in content:
+                        facts.append(content)
+                        break
+
+        return facts
+
+    def _echo_relevant_from_prompt(self, prompt: str, query: str) -> str:
+        """最后的回退策略: 尝试从 prompt 中提取一些有用信息。"""
+        return ""

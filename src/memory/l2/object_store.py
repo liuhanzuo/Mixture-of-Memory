@@ -178,3 +178,49 @@ class L2ObjectStore:
     def to_dict_list(self) -> list[dict]:
         """将所有活跃对象转为字典列表 (用于序列化)。"""
         return [obj.to_dict() for obj in self.objects]
+
+    def clear(self) -> None:
+        """清空所有对象 (活跃 + 归档)。"""
+        self.objects.clear()
+        self.archived.clear()
+        logger.info("[L2 Store] Cleared all objects.")
+
+    def __len__(self) -> int:
+        """返回活跃对象数量。"""
+        return len(self.objects)
+
+    def save(self, path: str | Path) -> None:
+        """保存所有活跃对象到 JSON 文件。"""
+        import json
+        from pathlib import Path
+        path = Path(path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(self.to_dict_list(), f, ensure_ascii=False, indent=2)
+        logger.info(f"[L2 Store] Saved {len(self.objects)} objects to {path}")
+
+    def load(self, path: str | Path) -> None:
+        """从 JSON 文件加载对象。"""
+        import json
+        from pathlib import Path
+        path = Path(path)
+        if not path.exists():
+            logger.warning(f"[L2 Store] File not found: {path}")
+            return
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        for d in data:
+            obj = L2MemoryObject(
+                object_id=d["object_id"],
+                object_type=d["object_type"],
+                summary_text=d["summary_text"],
+                confidence=d.get("confidence", 1.0),
+                source_turn_ids=d.get("source_turn_ids", []),
+                created_at=d.get("created_at", ""),
+                last_updated_at=d.get("last_updated_at", ""),
+                last_accessed_turn=d.get("last_accessed_turn", 0),
+                metadata=d.get("metadata", {}),
+                is_archived=d.get("is_archived", False),
+            )
+            self.objects.append(obj)
+        logger.info(f"[L2 Store] Loaded {len(data)} objects from {path}")

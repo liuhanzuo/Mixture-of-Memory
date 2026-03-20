@@ -185,3 +185,31 @@ class L3ProfileStore:
             )
             self._store[entry.entry_id] = entry
         logger.info(f"[L3 ProfileStore] Loaded {len(data)} entries from dicts.")
+
+    # ---- 文件级序列化 ----
+
+    def save(self, path: str | Path) -> None:
+        """保存所有条目到 JSON 文件。"""
+        import json
+        from pathlib import Path as _Path
+        path = _Path(path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(self.to_list_of_dicts(), f, ensure_ascii=False, indent=2)
+        logger.info(f"[L3 ProfileStore] Saved {len(self._store)} entries to {path}")
+
+    def load(self, path: str | Path) -> None:
+        """从 JSON 文件加载条目。"""
+        import json
+        from pathlib import Path as _Path
+        path = _Path(path)
+        if not path.exists():
+            logger.warning(f"[L3 ProfileStore] File not found: {path}")
+            return
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        self.load_from_dicts(data)
+
+    def __len__(self) -> int:
+        """返回当前存储条目数。"""
+        return len(self._store)

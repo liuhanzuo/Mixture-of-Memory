@@ -90,14 +90,13 @@ class MoMState:
     # ------------------------------------------------------------------ #
 
     def reset(self) -> None:
-        """重置全部状态 (开启新会话时调用)。"""
+        """重置全部状态 (包括 L3)。"""
         if self.l1 is not None:
             self.l1.reset()
         if self.l2_store is not None:
             self.l2_store.clear()
         if self.l3_store is not None:
-            # L3 通常不跨会话清空，只在显式要求时重置
-            pass
+            self.l3_store.clear()
         self.stats.reset()
         self.session_id = ""
         self.current_turn = 0
@@ -132,7 +131,7 @@ class MoMState:
 
         # L1 快照: 记忆矩阵的 Frobenius 范数作为摘要
         if self.l1 is not None:
-            snap["l1_norm"] = float(torch.norm(self.l1.memory_matrix).item())
+            snap["l1_norm"] = float(torch.norm(self.l1.memory).item())
             snap["l1_step"] = self.l1.step_count
         else:
             snap["l1_norm"] = 0.0
@@ -187,7 +186,7 @@ class MoMState:
 
         # 保存 L1 记忆矩阵
         if self.l1 is not None:
-            torch.save(self.l1.memory_matrix, directory / "l1_matrix.pt")
+            torch.save(self.l1.memory, directory / "l1_matrix.pt")
 
         # 保存 L2 对象
         if self.l2_store is not None:
@@ -219,7 +218,7 @@ class MoMState:
         # 恢复 L1
         l1_path = directory / "l1_matrix.pt"
         if l1_path.exists() and self.l1 is not None:
-            self.l1.memory_matrix = torch.load(l1_path, weights_only=True)
+            self.l1._memory = torch.load(l1_path, weights_only=True)
 
         # 恢复 L2
         l2_path = directory / "l2_objects.json"

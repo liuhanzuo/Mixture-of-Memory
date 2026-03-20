@@ -3,7 +3,7 @@
 
 backbone:
   type: "full_attention"
-  model_name_or_path: "Qwen/Qwen2.5-1.5B"
+  model_name_or_path: "Qwen/Qwen3-1.7B"
   dtype: "bfloat16"
   device: "cuda"
 
@@ -20,6 +20,6 @@ backbone:
     do_sample: true
 
   # 隐藏层维度
-  hidden_size: 1536
-  num_heads: 12
+  hidden_size: 2048
+  num_heads: 16
   head_dim: 128

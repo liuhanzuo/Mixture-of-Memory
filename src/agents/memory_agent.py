@@ -39,6 +39,7 @@ class AgentConfig:
     l1_d_value: int = 64
     l1_num_heads: int = 4
     l1_decay: float = 0.95
+    l1_write_strength: float = 1.0
     l1_gate_d_model: int = 64
     l1_gate_hidden_dim: int = 64
     l2_max_objects: int = 200
@@ -116,6 +117,7 @@ class MemoryAgent:
             l1_d_value=config.l1_d_value,
             l1_num_heads=config.l1_num_heads,
             l1_decay=config.l1_decay,
+            l1_write_strength=config.l1_write_strength,
             l1_gate_d_model=config.l1_gate_d_model,
             l1_gate_hidden_dim=config.l1_gate_hidden_dim,
             l2_max_objects=config.l2_max_objects,

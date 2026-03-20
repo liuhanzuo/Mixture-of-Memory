@@ -46,7 +46,7 @@ class L3SummarizerTrainConfig:
     weight_decay: float = 0.01
 
     # 模型
-    base_model: str = "Qwen/Qwen2-1.5B"
+    base_model: str = "Qwen/Qwen3-1.7B"
     use_lora: bool = True
     lora_rank: int = 16
     lora_alpha: int = 32

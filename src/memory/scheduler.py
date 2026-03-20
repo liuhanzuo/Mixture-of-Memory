@@ -19,7 +19,7 @@ from typing import Any
 
 import torch
 
-from src.memory.l1.assoc_memory import AssociativeMemoryL1
+from src.memory.l1.assoc_memory import AssociativeMemoryL1, L1Config
 from src.memory.l1.writer import L1Writer
 from src.memory.l1.reader import L1Reader
 from src.memory.l1.gating import L1Gate
@@ -108,25 +108,19 @@ class MemoryScheduler:
         self._l1_gate: L1Gate | None = None
 
         if config.enable_l1:
-            self._l1 = AssociativeMemoryL1(
+            l1_cfg = L1Config(
                 d_key=config.l1_d_key,
                 d_value=config.l1_d_value,
-                num_heads=config.l1_num_heads,
+                n_heads=config.l1_num_heads,
                 decay=config.l1_decay,
+                write_strength=config.l1_write_strength,
             )
-            self._l1_writer = L1Writer(
-                d_model=config.l1_gate_d_model,
-                d_key=config.l1_d_key,
-                d_value=config.l1_d_value,
-            )
-            self._l1_reader = L1Reader(
-                d_model=config.l1_gate_d_model,
-                d_key=config.l1_d_key,
-            )
-            self._l1_gate = L1Gate(
-                d_model=config.l1_gate_d_model,
-                d_readout=config.l1_d_value,
-            )
+            self._l1 = AssociativeMemoryL1(l1_cfg)
+            # L1Writer / L1Reader / L1Gate 已在 AssociativeMemoryL1 内部创建
+            # scheduler 只需通过 self._l1 调用即可
+            self._l1_writer = self._l1.writer
+            self._l1_reader = self._l1.reader
+            self._l1_gate = self._l1.gate
 
         # L2
         self._l2_aggregator: L2Aggregator | None = None
@@ -135,12 +129,21 @@ class MemoryScheduler:
         self._l2_retriever: L2Retriever | None = None
 
         if config.enable_l2:
-            self._l2_aggregator = L2Aggregator()
-            self._l2_store = L2ObjectStore(max_objects=config.l2_max_objects)
-            self._l2_merger = L2Merger(
-                similarity_threshold=config.l2_similarity_threshold,
-            )
-            self._l2_retriever = L2Retriever(store=self._l2_store)
+            l2_agg_cfg = {"aggregator_backend": "rule_based"}
+            l2_store_cfg = {
+                "max_objects": config.l2_max_objects,
+                "max_age_turns": 50,
+            }
+            l2_merger_cfg = {
+                "merge_similarity_threshold": config.l2_similarity_threshold,
+            }
+            l2_retriever_cfg = {
+                "retrieval_top_k": 5,
+            }
+            self._l2_aggregator = L2Aggregator(l2_agg_cfg)
+            self._l2_store = L2ObjectStore(l2_store_cfg)
+            self._l2_merger = L2Merger(l2_merger_cfg)
+            self._l2_retriever = L2Retriever(l2_retriever_cfg)
 
         # L3
         self._l3_summarizer: L3Summarizer | None = None
@@ -148,11 +151,16 @@ class MemoryScheduler:
         self._l3_reviser: L3Reviser | None = None
 
         if config.enable_l3:
-            self._l3_summarizer = L3Summarizer()
-            self._l3_store = L3ProfileStore(max_entries=config.l3_max_entries)
-            self._l3_reviser = L3Reviser(
-                conflict_threshold=config.l3_conflict_threshold,
-            )
+            l3_summ_cfg = {"summarizer_backend": "rule_based"}
+            l3_store_cfg = {
+                "max_entries": config.l3_max_entries,
+            }
+            l3_reviser_cfg = {
+                "contradiction_threshold": config.l3_conflict_threshold,
+            }
+            self._l3_summarizer = L3Summarizer(l3_summ_cfg)
+            self._l3_store = L3ProfileStore(l3_store_cfg)
+            self._l3_reviser = L3Reviser(l3_reviser_cfg)
 
         # 全局状态
         self._state = MoMState(
@@ -214,25 +222,19 @@ class MemoryScheduler:
         Returns:
             门控后的 memory readout, 与 hidden_states 同 shape; 或 None (L1 未启用)
         """
-        if self._l1 is None or self._l1_writer is None or self._l1_reader is None:
+        if self._l1 is None:
             return None
 
-        # 写入
-        keys, values, strengths = self._l1_writer(hidden_states)
-        self._l1.write(keys, values, write_strengths=strengths)
-        self._state.stats.l1_write_count += 1
+        # 确保投影层已初始化
+        d_model = hidden_states.shape[-1]
+        self._l1.set_hidden_dim(d_model)
 
-        # 读出
-        queries = self._l1_reader.compute_queries(hidden_states)
-        readout = self._l1.read(queries)
+        # 使用 AssociativeMemoryL1 的 forward 方法：写入 + 读取 + 门控
+        output = self._l1.forward(hidden_states, update=True)
+        self._state.stats.l1_write_count += 1
         self._state.stats.l1_read_count += 1
 
-        # 门控
-        if self._l1_gate is not None:
-            gated = self._l1_gate(hidden_states, readout)
-            return gated
-
-        return readout
+        return output
 
     # ------------------------------------------------------------------ #
     #  事件: on_chunk_end (L2 异步聚合)
@@ -275,10 +277,24 @@ class MemoryScheduler:
 
         # 合并到 store
         if self._l2_merger is not None:
-            for obj in new_objects:
-                merged = self._l2_merger.merge_or_add(obj, self._l2_store)
-                if merged:
+            existing = self._l2_store.get_all_active()
+            decisions = self._l2_merger.decide_and_merge(new_objects, existing)
+            for new_obj, action, merge_target in decisions:
+                if action == "merge" and merge_target is not None:
+                    self._l2_store.merge(
+                        merge_target.object_id,
+                        new_obj.object_id if self._l2_store.get(new_obj.object_id) else "",
+                        self._l2_merger.merge_texts(
+                            merge_target.summary_text, new_obj.summary_text
+                        ),
+                    )
                     self._state.stats.l2_merge_count += 1
+                elif action == "replace" and merge_target is not None:
+                    self._l2_store.remove(merge_target.object_id)
+                    self._l2_store.add(new_obj)
+                    self._state.stats.l2_merge_count += 1
+                else:  # append
+                    self._l2_store.add(new_obj)
         else:
             for obj in new_objects:
                 self._l2_store.add(obj)
@@ -331,7 +347,7 @@ class MemoryScheduler:
             return
 
         # 获取 L2 对象
-        l2_objects = self._l2_store.get_all()
+        l2_objects = self._l2_store.get_all_active()
 
         # L3 总结
         new_entries = self._l3_summarizer.summarize(l2_objects)
@@ -339,10 +355,11 @@ class MemoryScheduler:
 
         # 修订冲突
         if self._l3_reviser is not None:
-            for entry in new_entries:
-                revised = self._l3_reviser.revise_or_add(entry, self._l3_store)
-                if revised:
-                    self._state.stats.l3_revise_count += 1
+            final_entries = self._l3_reviser.apply_revisions(new_entries, self._l3_store)
+            for entry in final_entries:
+                self._l3_store.add(entry)
+            if len(new_entries) != len(final_entries):
+                self._state.stats.l3_revise_count += 1
         else:
             for entry in new_entries:
                 self._l3_store.add(entry)
@@ -363,10 +380,11 @@ class MemoryScheduler:
         top_k: int = 5,
     ) -> list[Any]:
         """检索 L2 中与 query 相关的记忆对象。"""
-        if self._l2_retriever is None:
+        if self._l2_retriever is None or self._l2_store is None:
             return []
         self._state.stats.l2_retrieve_count += 1
-        return self._l2_retriever.retrieve(query=query, top_k=top_k)
+        objects = self._l2_store.get_all_active()
+        return self._l2_retriever.retrieve(query=query, objects=objects, top_k=top_k)
 
     def retrieve_l3(
         self,
@@ -379,9 +397,8 @@ class MemoryScheduler:
             return []
         if category is not None:
             return self._l3_store.get_by_category(category)
-        if query is not None:
-            return self._l3_store.search(query, top_k=top_k)
-        return self._l3_store.get_all()[:top_k]
+        # L3ProfileStore 没有 search 方法, 返回按置信度排序的所有条目
+        return self._l3_store.list_all()[:top_k]
 
     # ------------------------------------------------------------------ #
     #  缓冲区: 供外部推送消息

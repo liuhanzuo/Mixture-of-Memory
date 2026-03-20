@@ -83,7 +83,8 @@ class RuleBasedSummarizer(SummarizerBackend):
 
     策略:
     - 按 object_type 分组 L2 对象
-    - 对每组生成一个摘要性 profile entry
+    - 对每组生成摘要性 profile entry
+    - 同时为每个 L2 对象单独生成细粒度条目 (保留关键词)
     - 偏好类对象 → preference 类 entry
     - 话题类对象 → research_interest 类 entry
     - 任务类对象 → long_term_project 类 entry
@@ -107,7 +108,12 @@ class RuleBasedSummarizer(SummarizerBackend):
         l2_objects: list[L2MemoryObject],
         existing_entries: list[L3ProfileEntry] | None = None,
     ) -> list[L3ProfileEntry]:
-        """基于规则从 L2 对象生成 L3 条目。"""
+        """基于规则从 L2 对象生成 L3 条目。
+
+        生成两种粒度的条目:
+        1. 按类型分组的汇总条目 (概括性)
+        2. 单个 L2 对象的细粒度条目 (保留原始关键词，用于精确检索)
+        """
         if not l2_objects:
             return []
 
@@ -122,11 +128,10 @@ class RuleBasedSummarizer(SummarizerBackend):
         for obj_type, objs in grouped.items():
             category = self.TYPE_TO_CATEGORY.get(obj_type, "factual")
 
-            # 合并同类对象的摘要文本
+            # ---- 1. 汇总条目 ----
             summaries = [obj.summary_text for obj in objs]
-            combined = "; ".join(summaries[:10])  # 最多取 10 条
+            combined = "; ".join(summaries[:10])
 
-            # 生成描述
             if category == "research_interest":
                 value = f"The user has been discussing: {combined}"
                 key = "recent_research_topics"
@@ -155,6 +160,27 @@ class RuleBasedSummarizer(SummarizerBackend):
                 category=category,
             )
             entries.append(entry)
+
+            # ---- 2. 细粒度条目 (每个 L2 对象独立生成) ----
+            for i, obj in enumerate(objs):
+                detail_text = obj.summary_text
+                # 去掉 "Discussion topic:" 等前缀
+                for prefix in ("Discussion topic:", "[INVALIDATED]"):
+                    detail_text = detail_text.replace(prefix, "").strip()
+
+                if len(detail_text) < 5:
+                    continue
+
+                detail_key = f"{key}_detail_{i}"
+                detail_entry = L3ProfileEntry(
+                    entry_id=self._generate_id(detail_key),
+                    key=detail_key,
+                    value=detail_text,
+                    confidence=obj.confidence,
+                    evidence_ids=[obj.object_id],
+                    category=category,
+                )
+                entries.append(detail_entry)
 
         logger.info(f"[L3 Summarizer] Generated {len(entries)} profile entries from {len(l2_objects)} L2 objects.")
         return entries

@@ -2,6 +2,7 @@
 
 支持:
 - 文本匹配检索 (基于关键词/相似度)
+- 中文关键词/子串匹配
 - 向量检索 (基于 latent, TODO)
 - 类型过滤
 """
@@ -9,6 +10,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from difflib import SequenceMatcher
 from typing import Any
 
@@ -23,9 +25,10 @@ class L2Retriever:
     从 L2ObjectStore 的对象列表中检索与当前 query 最相关的对象。
 
     检索策略:
-    1. 文本相似度匹配 (默认, 使用 SequenceMatcher)
-    2. 向量相似度匹配 (TODO, 使用 latent 向量)
-    3. 类型过滤 + 时间排序
+    1. 中文关键词/子串匹配 (高优先级)
+    2. 文本相似度匹配 (SequenceMatcher)
+    3. 向量相似度匹配 (TODO, 使用 latent 向量)
+    4. 类型过滤 + 时间排序
     """
 
     def __init__(self, config: dict[str, Any]):
@@ -83,31 +86,84 @@ class L2Retriever:
         """计算 query 与对象的相关度分数。
 
         综合考虑:
-        - 文本相似度 (0.7 权重)
+        - 关键词/子串匹配 (0.5 权重, 最重要)
+        - 文本相似度 (0.2 权重)
         - 置信度 (0.2 权重)
-        - 新鲜度 (0.1 权重, 基于 last_accessed_turn)
+        - 新鲜度 (0.1 权重)
         """
-        # 文本相似度
-        text_sim = SequenceMatcher(
-            None, query.lower(), obj.summary_text.lower()
-        ).ratio()
+        query_lower = query.lower()
+        obj_text_lower = obj.summary_text.lower()
 
-        # 关键词命中检查 (简单的词重叠)
-        query_words = set(query.lower().split())
-        obj_words = set(obj.summary_text.lower().split())
-        if query_words and obj_words:
-            keyword_overlap = len(query_words & obj_words) / max(len(query_words), 1)
-        else:
-            keyword_overlap = 0.0
+        # 1. 中文/通用关键词匹配
+        keyword_score = self._keyword_match_score(query_lower, obj_text_lower)
+
+        # 2. 子串匹配 (query 中的关键短语是否出现在 obj 中, 反之亦然)
+        substring_score = self._substring_match_score(query_lower, obj_text_lower)
+
+        # 3. 文本相似度 (SequenceMatcher)
+        text_sim = SequenceMatcher(None, query_lower, obj_text_lower).ratio()
+
+        # 4. 也检查 metadata 中的 raw_text
+        raw_text = obj.metadata.get("raw_text", "").lower()
+        if raw_text:
+            raw_keyword = self._keyword_match_score(query_lower, raw_text)
+            raw_substr = self._substring_match_score(query_lower, raw_text)
+            keyword_score = max(keyword_score, raw_keyword)
+            substring_score = max(substring_score, raw_substr)
+
+        # 取关键词匹配和子串匹配的最大值
+        match_score = max(keyword_score, substring_score)
 
         # 综合分数
-        text_score = max(text_sim, keyword_overlap)
         confidence_score = obj.confidence
-        # 新鲜度: 简单归一化 (假设 turn < 1000)
         freshness = min(obj.last_accessed_turn / 1000.0, 1.0)
 
-        score = 0.7 * text_score + 0.2 * confidence_score + 0.1 * freshness
+        score = 0.5 * match_score + 0.2 * text_sim + 0.2 * confidence_score + 0.1 * freshness
         return score
+
+    def _keyword_match_score(self, query: str, text: str) -> float:
+        """关键词匹配分数。
+
+        提取 query 中有意义的关键词，计算在 text 中的命中率。
+        """
+        # 中文分词: 按标点/空格切分 + 2-gram
+        stop_words = {
+            "什么", "怎么", "哪里", "哪个", "多少", "如何", "为什么", "吗", "呢",
+            "是", "的", "了", "在", "我", "你", "他", "她", "它", "吗",
+            "现在", "目前", "最近", "请问", "告诉", "一下",
+            "what", "where", "how", "which", "who", "when", "is", "are",
+            "the", "a", "an", "my", "your", "do", "does", "this", "that",
+        }
+
+        # 提取关键词
+        words = re.split(r"[\s，。？?！!、：:；;（）()]+", query)
+        keywords = [w for w in words if w and w not in stop_words and len(w) >= 2]
+
+        if not keywords:
+            return 0.0
+
+        hits = sum(1 for kw in keywords if kw in text)
+        return hits / len(keywords)
+
+    def _substring_match_score(self, query: str, text: str) -> float:
+        """子串匹配分数。
+
+        检查 query 的关键部分是否作为子串出现在 text 中, 或者反过来。
+        对中文效果较好。
+        """
+        score = 0.0
+
+        # 提取 query 中的实体级子串 (2~8 字的连续中文或字母数字)
+        entities = re.findall(r"[\u4e00-\u9fffA-Za-z0-9]{2,8}", query)
+
+        if not entities:
+            return 0.0
+
+        for entity in entities:
+            if entity in text:
+                score += 1.0 / len(entities)
+
+        return min(score, 1.0)
 
     def retrieve_by_type(
         self,
