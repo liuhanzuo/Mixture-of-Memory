@@ -29,6 +29,7 @@ from omegaconf import DictConfig, OmegaConf
 
 from src.agents.memory_agent import MemoryAgent, AgentConfig
 from src.agents.session_runner import SessionRunner
+from src.backbone import build_backbone_from_config
 from src.tasks.synthetic_update_task import SyntheticUpdateTask
 from src.tasks.profile_task import ProfileTask
 from src.tasks.longhorizon_chat_task import LongHorizonChatTask
@@ -49,13 +50,32 @@ DEFAULT_CONFIGS = [
 
 
 def build_agent(cfg: DictConfig) -> MemoryAgent:
-    """从配置构建 agent。"""
+    """从配置构建 agent (含 backbone 加载)。"""
+    # 加载 backbone
+    config_dir = _PROJECT_ROOT / "configs"
+    try:
+        backbone = build_backbone_from_config(cfg, config_dir=config_dir)
+        tokenizer = backbone.get_tokenizer()
+        logger.info(
+            f"Backbone 加载完成: type={type(backbone).__name__}, "
+            f"debug={backbone.is_debug()}, tokenizer={'✓' if tokenizer else '✗'}"
+        )
+    except Exception as e:
+        logger.error(f"Backbone 加载失败: {e}", exc_info=True)
+        logger.warning("将使用无 backbone 的规则模式运行。")
+        backbone = None
+        tokenizer = None
+
     mem_cfg = cfg.get("experiment", {}).get("memory", {})
-    return MemoryAgent(config=AgentConfig(
-        enable_l1=mem_cfg.get("l1", {}).get("enabled", False),
-        enable_l2=mem_cfg.get("l2", {}).get("enabled", False),
-        enable_l3=mem_cfg.get("l3", {}).get("enabled", False),
-    ))
+    return MemoryAgent(
+        config=AgentConfig(
+            enable_l1=mem_cfg.get("l1", {}).get("enabled", False),
+            enable_l2=mem_cfg.get("l2", {}).get("enabled", False),
+            enable_l3=mem_cfg.get("l3", {}).get("enabled", False),
+        ),
+        backbone=backbone,
+        tokenizer=tokenizer,
+    )
 
 
 def run_single_config(

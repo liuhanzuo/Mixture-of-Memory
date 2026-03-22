@@ -3,7 +3,7 @@
 
 backbone:
   type: "full_attention"
-  model_name_or_path: "Qwen/Qwen3-1.7B"
+  model_name_or_path: "/apdcephfs/pig_data/Adaptive-Sparse-Trainer/models/Qwen--Qwen3-1.7b"
   dtype: "bfloat16"
   device: "cuda"
 

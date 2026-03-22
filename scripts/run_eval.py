@@ -31,6 +31,7 @@ from omegaconf import DictConfig, OmegaConf
 
 from src.agents.memory_agent import MemoryAgent, AgentConfig
 from src.agents.session_runner import SessionRunner
+from src.backbone import build_backbone_from_config
 from src.tasks.synthetic_update_task import SyntheticUpdateTask
 from src.tasks.profile_task import ProfileTask
 from src.tasks.longhorizon_chat_task import LongHorizonChatTask
@@ -42,7 +43,29 @@ logger = logging.getLogger(__name__)
 
 
 def build_agent_from_config(cfg: DictConfig) -> MemoryAgent:
-    """从配置构建 MemoryAgent。"""
+    """从配置构建 MemoryAgent (含 backbone 加载)。
+
+    流程:
+    1. 从实验配置解析 backbone 配置并加载模型 + tokenizer
+    2. 从实验配置提取记忆层开关
+    3. 构建 MemoryAgent 并注入 backbone
+    """
+    # ---- Step 1: 加载 backbone ---- #
+    config_dir = _PROJECT_ROOT / "configs"
+    try:
+        backbone = build_backbone_from_config(cfg, config_dir=config_dir)
+        tokenizer = backbone.get_tokenizer()
+        logger.info(
+            f"Backbone 加载完成: type={type(backbone).__name__}, "
+            f"debug={backbone.is_debug()}, tokenizer={'✓' if tokenizer else '✗'}"
+        )
+    except Exception as e:
+        logger.error(f"Backbone 加载失败: {e}", exc_info=True)
+        logger.warning("将使用无 backbone 的规则模式运行。")
+        backbone = None
+        tokenizer = None
+
+    # ---- Step 2: 提取记忆层开关 ---- #
     mem_cfg = cfg.get("experiment", {}).get("memory", {})
     enable_l1 = mem_cfg.get("l1", {}).get("enabled", True)
     enable_l2 = mem_cfg.get("l2", {}).get("enabled", True)
@@ -53,7 +76,13 @@ def build_agent_from_config(cfg: DictConfig) -> MemoryAgent:
         enable_l2=enable_l2,
         enable_l3=enable_l3,
     )
-    return MemoryAgent(config=agent_config)
+
+    # ---- Step 3: 构建 agent ---- #
+    return MemoryAgent(
+        config=agent_config,
+        backbone=backbone,
+        tokenizer=tokenizer,
+    )
 
 
 # ------------------------------------------------------------------ #

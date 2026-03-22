@@ -60,10 +60,12 @@ class TurnProcessor:
     Args:
         scheduler: MoM 记忆调度器.
         backbone: 骨干模型 (可选, 若为 None 则使用规则生成).
-        tokenizer: HuggingFace tokenizer (可选).
+        tokenizer: HuggingFace tokenizer (可选, 若 backbone 有 tokenizer 则自动使用).
         max_context_chars: 记忆上下文的最大字符数.
+        max_input_tokens: 输入 prompt 的最大 token 数.
         l2_top_k: L2 检索的 top-k.
         l3_top_k: L3 检索的 top-k.
+        generation_config: 生成参数 (可覆盖 backbone 默认).
     """
 
     def __init__(
@@ -72,15 +74,33 @@ class TurnProcessor:
         backbone: BackboneModel | None = None,
         tokenizer: Any | None = None,
         max_context_chars: int = 3000,
+        max_input_tokens: int = 4096,
         l2_top_k: int = 5,
         l3_top_k: int = 10,
+        generation_config: dict[str, Any] | None = None,
     ):
         self.scheduler = scheduler
         self.backbone = backbone
-        self.tokenizer = tokenizer
+        # 优先使用显式传入的 tokenizer，否则从 backbone 获取
+        self.tokenizer = tokenizer or (backbone.get_tokenizer() if backbone else None)
         self.max_context_chars = max_context_chars
+        self.max_input_tokens = max_input_tokens
         self.l2_top_k = l2_top_k
         self.l3_top_k = l3_top_k
+        self.generation_config = generation_config or {}
+
+        # 检测 backbone 是否为 debug 模式
+        self._is_debug = backbone.is_debug() if backbone else True
+
+        if self.backbone and self.tokenizer:
+            logger.info(
+                f"[TurnProcessor] 使用真实 backbone 生成, "
+                f"debug={self._is_debug}, tokenizer={'✓' if self.tokenizer else '✗'}"
+            )
+        elif self.backbone and not self.tokenizer:
+            logger.warning("[TurnProcessor] Backbone 可用但无 tokenizer，将回退到规则生成")
+        else:
+            logger.info("[TurnProcessor] 无 backbone，使用规则生成")
 
     # ------------------------------------------------------------------ #
     #  主流程
@@ -217,38 +237,52 @@ class TurnProcessor:
         memory_context: str,
         conversation_history: list[dict[str, str]] | None = None,
         system_prompt: str | None = None,
-    ) -> str:
+    ) -> str | list[dict[str, str]]:
         """构建最终发送给 backbone 的完整 prompt。
 
+        如果 tokenizer 支持 chat_template (如 Qwen3)，返回 messages list；
+        否则返回纯文本 prompt。
+
         结构:
-        1. system prompt
-        2. memory context (L3 profile + L2 objects)
-        3. conversation history (recent turns)
-        4. current user message
+        1. system prompt + memory context
+        2. conversation history (recent turns)
+        3. current user message
         """
-        parts: list[str] = []
-
-        # 系统提示
+        # 构建系统提示 (合并 system_prompt + memory_context)
+        system_parts: list[str] = []
         if system_prompt:
-            parts.append(f"[System]\n{system_prompt}")
-
-        # 记忆上下文
+            system_parts.append(system_prompt)
         if memory_context:
-            parts.append(f"\n{memory_context}")
+            system_parts.append(f"\n以下是你从记忆中检索到的相关信息，请参考:\n{memory_context}")
+        system_text = "\n".join(system_parts) if system_parts else "你是一个有记忆的智能助手。"
 
-        # 对话历史
+        # 如果 tokenizer 支持 chat template，使用 messages 格式
+        if self.tokenizer and not self._is_debug and hasattr(self.tokenizer, 'apply_chat_template'):
+            messages: list[dict[str, str]] = [
+                {"role": "system", "content": system_text}
+            ]
+            if conversation_history:
+                for msg in conversation_history[-10:]:
+                    messages.append({
+                        "role": msg.get("role", "user"),
+                        "content": msg.get("content", ""),
+                    })
+            messages.append({"role": "user", "content": user_message})
+            return messages
+
+        # 回退到纯文本 prompt
+        parts: list[str] = []
+        if system_text:
+            parts.append(f"[System]\n{system_text}")
         if conversation_history:
             history_lines: list[str] = ["[Conversation History]"]
-            for msg in conversation_history[-10:]:  # 最近 10 轮
+            for msg in conversation_history[-10:]:
                 role = msg.get("role", "user")
                 content = msg.get("content", "")
                 history_lines.append(f"{role}: {content}")
             parts.append("\n".join(history_lines))
-
-        # 当前消息
         parts.append(f"user: {user_message}")
         parts.append("assistant:")
-
         return "\n\n".join(parts)
 
     # ------------------------------------------------------------------ #
@@ -256,58 +290,130 @@ class TurnProcessor:
     # ------------------------------------------------------------------ #
 
     def _generate(
-        self, prompt: str,
+        self, prompt: str | list[dict[str, str]],
     ) -> tuple[str, BackboneOutput | None]:
         """调用 backbone 生成回复。
 
-        如果 backbone 为 None, 使用记忆感知的规则回复。
+        支持三种模式:
+        1. 无 backbone → 规则回复
+        2. debug backbone → debug greedy 生成
+        3. 真实 backbone + tokenizer → HF model.generate() 自回归生成
+
+        Args:
+            prompt: 纯文本字符串或 chat messages list (由 _build_prompt 返回)。
 
         Returns:
             (response_text, backbone_output_or_None)
         """
-        if self.backbone is None:
-            # 无 backbone: 记忆感知的规则回复模式
-            response = self._rule_based_reply(prompt)
-            logger.debug("[TurnProcessor] No backbone, using memory-aware rule reply.")
+        # 模式 1: 无 backbone —— 规则回复
+        if self.backbone is None or (self.backbone is not None and self.tokenizer is None):
+            prompt_str = prompt if isinstance(prompt, str) else self._messages_to_text(prompt)
+            response = self._rule_based_reply(prompt_str)
+            logger.debug("[TurnProcessor] 使用规则回复模式")
             return response, None
 
-        # 有 backbone: 真实推理
-        if self.tokenizer is None:
-            logger.warning("[TurnProcessor] Backbone provided but no tokenizer. Using echo mode.")
-            return "[Echo] No tokenizer available.", None
-
+        # 模式 2 & 3: 有 backbone + tokenizer
         try:
-            # Tokenize
-            inputs = self.tokenizer(
-                prompt,
-                return_tensors="pt",
-                truncation=True,
-                max_length=4096,
+            # Tokenize prompt
+            input_ids, attention_mask = self._tokenize_prompt(prompt)
+            prompt_len = input_ids.shape[1]
+
+            # 先做一次 forward pass 获取隐藏状态 (用于 L1 更新)
+            backbone_output = None
+            try:
+                with torch.no_grad():
+                    backbone_output = self.backbone.forward(
+                        input_ids=input_ids,
+                        attention_mask=attention_mask,
+                    )
+            except Exception as e:
+                logger.warning(f"[TurnProcessor] Forward pass 失败 (不影响生成): {e}")
+
+            # 自回归生成
+            gen_kwargs = dict(self.generation_config)
+            gen_kwargs.setdefault("max_new_tokens", 512)
+            gen_kwargs.setdefault("temperature", 0.7)
+            gen_kwargs.setdefault("top_p", 0.9)
+            gen_kwargs.setdefault("do_sample", True)
+
+            output_ids = self.backbone.generate(
+                input_ids=input_ids,
+                attention_mask=attention_mask,
+                **gen_kwargs,
             )
-            input_ids = inputs["input_ids"].to(self.backbone.get_device())
-            attention_mask = inputs.get("attention_mask")
-            if attention_mask is not None:
-                attention_mask = attention_mask.to(self.backbone.get_device())
 
-            # Forward
-            with torch.no_grad():
-                output = self.backbone.forward(
-                    input_ids=input_ids,
-                    attention_mask=attention_mask,
-                )
+            # 解码: 只取新生成的部分
+            new_token_ids = output_ids[:, prompt_len:]
+            response = self.tokenizer.decode(
+                new_token_ids[0],
+                skip_special_tokens=True,
+                clean_up_tokenization_spaces=True,
+            ).strip()
 
-            # 简单的 greedy decode (取最后一个 token 的 logits)
-            if output.logits is not None:
-                next_token_id = output.logits[:, -1, :].argmax(dim=-1)
-                response = self.tokenizer.decode(next_token_id[0], skip_special_tokens=True)
-            else:
-                response = "[No logits available]"
+            if not response:
+                response = "[模型生成了空回复]"
 
-            return response, output
+            logger.debug(
+                f"[TurnProcessor] 生成完成: prompt_tokens={prompt_len}, "
+                f"new_tokens={new_token_ids.shape[1]}, response_len={len(response)}"
+            )
+
+            return response, backbone_output
 
         except Exception as e:
-            logger.error(f"[TurnProcessor] Generation failed: {e}")
-            return f"[Error] Generation failed: {e}", None
+            logger.error(f"[TurnProcessor] 生成失败: {e}", exc_info=True)
+            # 回退到规则回复
+            prompt_str = prompt if isinstance(prompt, str) else self._messages_to_text(prompt)
+            response = self._rule_based_reply(prompt_str)
+            return f"[生成失败，回退到规则回复] {response}", None
+
+    def _tokenize_prompt(
+        self, prompt: str | list[dict[str, str]],
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        """将 prompt (文本或 messages) tokenize 为 input_ids + attention_mask。"""
+        device = self.backbone.get_device()
+
+        if isinstance(prompt, list):
+            # Chat messages → apply_chat_template
+            if hasattr(self.tokenizer, 'apply_chat_template'):
+                prompt_text = self.tokenizer.apply_chat_template(
+                    prompt,
+                    tokenize=False,
+                    add_generation_prompt=True,
+                )
+            else:
+                prompt_text = self._messages_to_text(prompt)
+        else:
+            prompt_text = prompt
+
+        inputs = self.tokenizer(
+            prompt_text,
+            return_tensors="pt",
+            truncation=True,
+            max_length=self.max_input_tokens,
+        )
+        input_ids = inputs["input_ids"].to(device)
+        attention_mask = inputs.get("attention_mask")
+        if attention_mask is not None:
+            attention_mask = attention_mask.to(device)
+        else:
+            attention_mask = torch.ones_like(input_ids)
+
+        return input_ids, attention_mask
+
+    @staticmethod
+    def _messages_to_text(messages: list[dict[str, str]]) -> str:
+        """将 messages list 转换为纯文本 (用于回退)。"""
+        parts: list[str] = []
+        for msg in messages:
+            role = msg.get("role", "user")
+            content = msg.get("content", "")
+            if role == "system":
+                parts.append(f"[System]\n{content}")
+            else:
+                parts.append(f"{role}: {content}")
+        parts.append("assistant:")
+        return "\n\n".join(parts)
 
     # ------------------------------------------------------------------ #
     #  Step 4: L1 在线更新

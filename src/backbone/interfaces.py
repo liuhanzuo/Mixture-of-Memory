@@ -61,6 +61,42 @@ class BackboneModel(ABC):
         ...
 
     # ------------------------------------------------------------------
+    # 生成
+    # ------------------------------------------------------------------
+
+    def generate(
+        self,
+        input_ids: torch.Tensor,
+        attention_mask: Optional[torch.Tensor] = None,
+        max_new_tokens: int = 256,
+        temperature: float = 0.7,
+        top_p: float = 0.9,
+        do_sample: bool = True,
+        **kwargs: Any,
+    ) -> torch.Tensor:
+        """自回归生成。
+
+        默认实现使用 HuggingFace model.generate()。
+        子类可以覆盖此方法以实现自定义生成逻辑。
+
+        Args:
+            input_ids: 输入 token id, shape ``(B, T)``。
+            attention_mask: 注意力掩码。
+            max_new_tokens: 最大生成 token 数。
+            temperature: 采样温度。
+            top_p: nucleus sampling 的 p 值。
+            do_sample: 是否采样。
+            **kwargs: 传递给底层 generate 的额外参数。
+
+        Returns:
+            生成的完整 token 序列 (包含 prompt), shape ``(B, T + new_tokens)``。
+        """
+        raise NotImplementedError(
+            f"{self.__class__.__name__} 未实现 generate() 方法。"
+            "请使用支持生成的子类 (如 SWABackbone / FullAttentionBackbone)。"
+        )
+
+    # ------------------------------------------------------------------
     # 辅助
     # ------------------------------------------------------------------
 
@@ -77,6 +113,18 @@ class BackboneModel(ABC):
     def get_device(self) -> torch.device:
         """返回模型所在设备（默认实现: CPU）。"""
         return torch.device("cpu")
+
+    def get_tokenizer(self) -> Any:
+        """返回关联的 tokenizer (若有)。默认返回 None。"""
+        return None
+
+    def get_hf_model(self) -> Any:
+        """返回底层 HuggingFace 模型 (若有)。默认返回 None。"""
+        return None
+
+    def is_debug(self) -> bool:
+        """是否为 debug 模式 (随机权重小模型)。默认返回 False。"""
+        return False
 
 
 class MemoryReadableBackbone(BackboneModel):

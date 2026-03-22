@@ -5,7 +5,7 @@ SWA (Sliding Window Attention) 骨干模型实现。
 需要依赖外部记忆层（L1/L2/L3）来补偿长程信息缺失。
 
 当前实现提供两种模式:
-1. 基于 HuggingFace Transformers 加载真实 SWA 模型（如 Qwen2/Mistral）
+1. 基于 HuggingFace Transformers 加载真实 SWA 模型（如 Qwen3-1.7B）
 2. Debug 模式: 使用轻量随机 Transformer 用于单元测试
 """
 
@@ -28,9 +28,10 @@ class SWABackbone(MemoryReadableBackbone):
     """基于滑动窗口注意力的骨干模型。
 
     支持:
-    - 从 HuggingFace 加载真实预训练模型
+    - 从 HuggingFace 加载真实预训练模型 (Qwen3-1.7B 等)
     - Debug tiny 模式（随机权重小 Transformer）
     - 外部 L1 记忆读出注入
+    - 真实的自回归生成 (通过 HF model.generate)
     """
 
     def __init__(
@@ -41,6 +42,9 @@ class SWABackbone(MemoryReadableBackbone):
         window_size: int = 4096,
         device: torch.device | str = "cpu",
         dtype: torch.dtype = torch.float32,
+        tokenizer: Any = None,
+        is_debug_mode: bool = False,
+        generation_config: dict[str, Any] | None = None,
     ):
         self._model = model
         self._hidden_dim = hidden_dim
@@ -48,6 +52,9 @@ class SWABackbone(MemoryReadableBackbone):
         self._window_size = window_size
         self._device = torch.device(device) if isinstance(device, str) else device
         self._dtype = dtype
+        self._tokenizer = tokenizer
+        self._is_debug = is_debug_mode
+        self._generation_config = generation_config or {}
 
         # 记忆注入的线性门控（延迟初始化）
         self._memory_gate: Optional[nn.Linear] = None
@@ -68,14 +75,26 @@ class SWABackbone(MemoryReadableBackbone):
             debug: 是否使用 debug tiny 模型
             device: 设备
             dtype: 数据类型
+            generation: 生成参数字典
         """
         device = cfg.get("device", "cpu")
         dtype_str = cfg.get("dtype", "float32")
         dtype = getattr(torch, dtype_str, torch.float32)
         window_size = cfg.get("window_size", 4096)
 
+        # 提取生成配置
+        gen_cfg = cfg.get("generation", {})
+        generation_config = {}
+        if gen_cfg:
+            from omegaconf import OmegaConf
+            generation_config = OmegaConf.to_container(gen_cfg, resolve=True) if not isinstance(gen_cfg, dict) else dict(gen_cfg)
+
+        tokenizer = None
+        is_debug_mode = False
+
         if cfg.get("debug", False):
             # Debug tiny 模型 —— 随机权重小 Transformer
+            is_debug_mode = True
             hidden_dim = cfg.get("hidden_dim", 128)
             num_layers = cfg.get("num_layers", 2)
             model = _build_debug_transformer(
@@ -90,11 +109,12 @@ class SWABackbone(MemoryReadableBackbone):
                 f"(d={hidden_dim}, L={num_layers}, W={window_size})"
             )
         else:
-            # 从 HuggingFace 加载真实模型
-            model, hidden_dim, num_layers = _load_hf_model(cfg)
+            # 从 HuggingFace 加载真实模型 + tokenizer
+            model, hidden_dim, num_layers, tokenizer = _load_hf_model(cfg)
             logger.info(
                 f"SWABackbone: 加载模型 {cfg.model_name_or_path} "
-                f"(d={hidden_dim}, L={num_layers}, W={window_size})"
+                f"(d={hidden_dim}, L={num_layers}, W={window_size}, "
+                f"tokenizer={'✓' if tokenizer else '✗'})"
             )
 
         model = model.to(device=device, dtype=dtype)
@@ -105,6 +125,9 @@ class SWABackbone(MemoryReadableBackbone):
             window_size=window_size,
             device=device,
             dtype=dtype,
+            tokenizer=tokenizer,
+            is_debug_mode=is_debug_mode,
+            generation_config=generation_config,
         )
 
     # ------------------------------------------------------------------
@@ -165,6 +188,84 @@ class SWABackbone(MemoryReadableBackbone):
         )
 
     # ------------------------------------------------------------------
+    # 生成
+    # ------------------------------------------------------------------
+
+    def generate(
+        self,
+        input_ids: torch.Tensor,
+        attention_mask: Optional[torch.Tensor] = None,
+        max_new_tokens: int = 256,
+        temperature: float = 0.7,
+        top_p: float = 0.9,
+        do_sample: bool = True,
+        **kwargs: Any,
+    ) -> torch.Tensor:
+        """自回归生成。
+
+        对于真实 HF 模型，调用 model.generate()；
+        对于 debug 模型，使用简单的 greedy/sampling 循环。
+
+        Returns:
+            生成的完整 token 序列 (包含 prompt), shape ``(B, T + new_tokens)``。
+        """
+        input_ids = input_ids.to(self._device)
+        if attention_mask is not None:
+            attention_mask = attention_mask.to(self._device)
+
+        if self._is_debug:
+            return self._debug_generate(
+                input_ids, attention_mask, max_new_tokens=max_new_tokens
+            )
+
+        # 合并配置中的默认生成参数
+        gen_kwargs = {
+            "max_new_tokens": max_new_tokens,
+            "temperature": temperature,
+            "top_p": top_p,
+            "do_sample": do_sample,
+        }
+        # 配置文件中的参数作为默认值，函数参数优先
+        for k, v in self._generation_config.items():
+            if k not in gen_kwargs:
+                gen_kwargs[k] = v
+        gen_kwargs.update(kwargs)
+
+        # 设置 pad_token_id 避免警告
+        if self._tokenizer is not None and self._tokenizer.pad_token_id is not None:
+            gen_kwargs.setdefault("pad_token_id", self._tokenizer.pad_token_id)
+        elif self._tokenizer is not None and self._tokenizer.eos_token_id is not None:
+            gen_kwargs.setdefault("pad_token_id", self._tokenizer.eos_token_id)
+
+        with torch.no_grad():
+            output_ids = self._model.generate(
+                input_ids=input_ids,
+                attention_mask=attention_mask,
+                **gen_kwargs,
+            )
+        return output_ids
+
+    def _debug_generate(
+        self,
+        input_ids: torch.Tensor,
+        attention_mask: Optional[torch.Tensor],
+        max_new_tokens: int = 32,
+    ) -> torch.Tensor:
+        """Debug 模型的简单 greedy 生成。"""
+        generated = input_ids.clone()
+        for _ in range(max_new_tokens):
+            with torch.no_grad():
+                output = self._model(generated, attention_mask=attention_mask)
+            next_token = output.logits[:, -1, :].argmax(dim=-1, keepdim=True)
+            generated = torch.cat([generated, next_token], dim=-1)
+            # 更新 attention_mask
+            if attention_mask is not None:
+                attention_mask = torch.cat(
+                    [attention_mask, torch.ones_like(next_token)], dim=-1
+                )
+        return generated
+
+    # ------------------------------------------------------------------
     # 接口实现
     # ------------------------------------------------------------------
 
@@ -177,9 +278,26 @@ class SWABackbone(MemoryReadableBackbone):
     def get_device(self) -> torch.device:
         return self._device
 
+    def get_tokenizer(self) -> Any:
+        """返回关联的 tokenizer (真实模型模式下可用)。"""
+        return self._tokenizer
+
+    def get_hf_model(self) -> Any:
+        """返回底层 HuggingFace 模型 (debug 模式下返回 _DebugTransformer)。"""
+        return self._model
+
+    def is_debug(self) -> bool:
+        """是否为 debug 模式。"""
+        return self._is_debug
+
     @property
     def window_size(self) -> int:
         return self._window_size
+
+    @property
+    def tokenizer(self) -> Any:
+        """便捷属性: 访问 tokenizer。"""
+        return self._tokenizer
 
     # ------------------------------------------------------------------
     # 内部方法
@@ -308,30 +426,34 @@ def _build_debug_transformer(
     )
 
 
-def _load_hf_model(cfg: DictConfig) -> tuple[nn.Module, int, int]:
-    """从 HuggingFace 加载预训练模型。
+def _load_hf_model(cfg: DictConfig) -> tuple[nn.Module, int, int, Any]:
+    """从 HuggingFace 加载预训练模型和 tokenizer。
 
     Returns:
-        (model, hidden_dim, num_layers)
+        (model, hidden_dim, num_layers, tokenizer)
     """
     try:
-        from transformers import AutoModelForCausalLM, AutoConfig
+        from transformers import AutoModelForCausalLM, AutoConfig, AutoTokenizer
     except ImportError as e:
         raise ImportError("需要安装 transformers: pip install transformers") from e
 
     model_path = cfg.model_name_or_path
+    logger.info(f"正在加载模型配置: {model_path}")
     hf_config = AutoConfig.from_pretrained(model_path, trust_remote_code=True)
 
     # 设置滑动窗口（如果模型支持）
     window_size = cfg.get("window_size", 4096)
     if hasattr(hf_config, "sliding_window"):
         hf_config.sliding_window = window_size
+        logger.info(f"SWA: 设置 sliding_window={window_size}")
     if hasattr(hf_config, "max_window_layers"):
-        # Qwen2 风格: 仅前 N 层使用 SWA
+        # Qwen2/Qwen3 风格: 仅前 N 层使用 SWA
         hf_config.max_window_layers = cfg.get(
             "max_window_layers", hf_config.num_hidden_layers
         )
+        logger.info(f"SWA: 设置 max_window_layers={hf_config.max_window_layers}")
 
+    logger.info(f"正在加载模型权重: {model_path}")
     model = AutoModelForCausalLM.from_pretrained(
         model_path,
         config=hf_config,
@@ -339,6 +461,25 @@ def _load_hf_model(cfg: DictConfig) -> tuple[nn.Module, int, int]:
         torch_dtype=getattr(torch, cfg.get("dtype", "float32")),
     )
 
+    # 加载 tokenizer
+    tokenizer = None
+    try:
+        logger.info(f"正在加载 tokenizer: {model_path}")
+        tokenizer = AutoTokenizer.from_pretrained(
+            model_path,
+            trust_remote_code=True,
+        )
+        # 确保 pad_token 存在
+        if tokenizer.pad_token is None:
+            tokenizer.pad_token = tokenizer.eos_token
+            logger.info("Tokenizer: pad_token 未设置，已设为 eos_token")
+        logger.info(
+            f"Tokenizer 加载完成: vocab_size={tokenizer.vocab_size}, "
+            f"pad_token='{tokenizer.pad_token}'"
+        )
+    except Exception as e:
+        logger.warning(f"Tokenizer 加载失败: {e}. 将在无 tokenizer 模式下运行。")
+
     hidden_dim = hf_config.hidden_size
     num_layers = hf_config.num_hidden_layers
-    return model, hidden_dim, num_layers
+    return model, hidden_dim, num_layers, tokenizer
