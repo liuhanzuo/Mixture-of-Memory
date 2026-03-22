@@ -1,0 +1,42 @@
+# SWA + MoM + MAG 完整实验配置
+# SWA backbone + Mixture-of-Memory + Memory-Augmented Generation
+# 用于验证 MAG 在 hidden state 注入记忆的效果 (vs RAG prompt 注入)
+
+defaults:
+  - /model: swa_qwen
+  - /memory: mom_full
+
+experiment:
+  name: "swa_mom_mag"
+  description: "SWA + full MoM (L1 + L2 + L3) + MAG (memory gate injection into middle layers)"
+  
+  # 记忆配置：全部启用 + MAG
+  memory:
+    l1:
+      enabled: true
+    l2:
+      enabled: true
+    l3:
+      enabled: true
+    mag:
+      enabled: true
+      num_heads: 8
+      injection_layers: []  # 自动选择
+      share_parameters: true
+      gate_init_bias: -2.0
+      selector_hidden_dim: 256
+      selector_top_k: 5
+      max_memory_tokens: 64
+  
+  # 评测任务
+  eval_tasks:
+    - "synthetic_update"
+    - "profile_bench"
+    - "longhorizon_chat"
+  
+  # 运行参数
+  run:
+    seed: 42
+    num_sessions: 10
+    output_dir: "outputs/runs/swa_mom_mag"
+    log_level: "INFO"

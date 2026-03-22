@@ -21,6 +21,11 @@ from omegaconf import DictConfig
 from src.backbone.hidden_state_types import BackboneOutput
 from src.backbone.interfaces import MemoryReadableBackbone
 
+try:
+    from src.memory.mag.mag_gate import MAGGate
+except ImportError:
+    MAGGate = None  # MAG 模块未安装时回退
+
 logger = logging.getLogger(__name__)
 
 
@@ -58,6 +63,9 @@ class SWABackbone(MemoryReadableBackbone):
 
         # 记忆注入的线性门控（延迟初始化）
         self._memory_gate: Optional[nn.Linear] = None
+
+        # MAG 门控模块 (外部设置)
+        self._mag_gate: Optional[nn.Module] = None
 
     # ------------------------------------------------------------------
     # 工厂方法
@@ -186,6 +194,123 @@ class SWABackbone(MemoryReadableBackbone):
             loss=outputs.loss,
             extra={**outputs.extra, "memory_gate_values": gate},
         )
+
+    def forward_with_mag(
+        self,
+        input_ids: torch.Tensor,
+        mag_memory_vectors: torch.Tensor,
+        mag_memory_mask: Optional[torch.Tensor] = None,
+        mag_selection_weights: Optional[torch.Tensor] = None,
+        memory_readout: Optional[torch.Tensor] = None,
+        attention_mask: Optional[torch.Tensor] = None,
+        labels: Optional[torch.Tensor] = None,
+        **kwargs: Any,
+    ) -> BackboneOutput:
+        """带 MAG 记忆注入的前向传播。
+
+        在 Transformer 中间若干层通过 CrossAttn + Gate 注入 L2/L3 记忆向量。
+        可同时接收 L1 memory_readout 在最后一层做门控融合。
+
+        流程:
+        1. 运行 backbone 获取所有层的 hidden states
+        2. 在配置的中间层通过 MAGGate 注入记忆
+        3. (可选) 在最后一层融合 L1 readout
+        4. 用修改后的 last_hidden_state 重新计算 logits
+
+        Args:
+            input_ids: (B, T) 输入 token ids.
+            mag_memory_vectors: (B, K, D) 编码后的 L2/L3 记忆向量.
+            mag_memory_mask: (B, K) 记忆有效性 mask.
+            mag_selection_weights: (B, K) Context Selector 选择权重.
+            memory_readout: (B, T, D) 或 (B, D), 可选的 L1 readout.
+            attention_mask: (B, T) 注意力 mask.
+            labels: (B, T) 目标 token ids.
+
+        Returns:
+            BackboneOutput, 其中 last_hidden_state 已经过 MAG 注入.
+        """
+        if self._mag_gate is None:
+            logger.warning("[SWABackbone] MAG gate 未设置, 回退到标准 forward")
+            return self.forward(input_ids, attention_mask, labels, **kwargs)
+
+        # Step 1: 获取所有层的 hidden states
+        outputs = self._run_model(input_ids, attention_mask, labels, **kwargs)
+
+        extra = dict(outputs.extra)
+
+        # Step 2: MAG 注入 — 在中间层注入记忆
+        if outputs.all_hidden_states is not None and mag_memory_vectors.shape[1] > 0:
+            modified_hidden = self._mag_gate.inject_into_all_hidden_states(
+                all_hidden_states=outputs.all_hidden_states,
+                memory_vectors=mag_memory_vectors,
+                memory_mask=mag_memory_mask,
+                selection_weights=mag_selection_weights,
+            )
+            # 使用 MAG 注入后的最后一层 hidden state
+            h = modified_hidden[-1]
+            extra["mag_injected"] = True
+            extra["mag_stats"] = self._mag_gate.get_stats()
+        else:
+            h = outputs.last_hidden_state
+            extra["mag_injected"] = False
+
+        # Step 3: (可选) L1 readout 融合
+        if memory_readout is not None:
+            if memory_readout.dim() == 2:
+                memory_readout = memory_readout.unsqueeze(1).expand_as(h)
+            if self._memory_gate is None:
+                self._memory_gate = nn.Linear(self._hidden_dim, self._hidden_dim).to(
+                    device=h.device, dtype=h.dtype
+                )
+                nn.init.zeros_(self._memory_gate.bias)
+            l1_gate = torch.sigmoid(self._memory_gate(h))
+            h = h + l1_gate * memory_readout
+            extra["l1_gate_values"] = l1_gate
+
+        # Step 4: 重新计算 logits (使用修改后的 h)
+        logits = self._compute_logits(h)
+
+        # 重新计算 loss (如果需要)
+        loss = outputs.loss
+        if labels is not None and logits is not None:
+            loss = nn.functional.cross_entropy(
+                logits.view(-1, logits.shape[-1]),
+                labels.to(logits.device).view(-1),
+                ignore_index=-100,
+            )
+
+        return BackboneOutput(
+            last_hidden_state=h,
+            logits=logits,
+            all_hidden_states=outputs.all_hidden_states,
+            attention_mask=outputs.attention_mask,
+            loss=loss,
+            extra=extra,
+        )
+
+    def set_mag_gate(self, mag_gate: nn.Module) -> None:
+        """设置 MAG 门控模块。
+
+        Args:
+            mag_gate: MAGGate 实例.
+        """
+        self._mag_gate = mag_gate
+        logger.info(
+            f"[SWABackbone] 已设置 MAG gate: "
+            f"injection_layers={getattr(mag_gate, 'injection_layers', 'N/A')}"
+        )
+
+    def _compute_logits(self, hidden_states: torch.Tensor) -> Optional[torch.Tensor]:
+        """从 hidden states 计算 logits (使用 lm_head)。"""
+        if isinstance(self._model, _DebugTransformer):
+            return self._model.lm_head(hidden_states)
+
+        # HuggingFace 模型: model.lm_head
+        if hasattr(self._model, "lm_head"):
+            return self._model.lm_head(hidden_states)
+
+        logger.warning("[SWABackbone] 未找到 lm_head, 无法重新计算 logits")
+        return None
 
     # ------------------------------------------------------------------
     # 生成

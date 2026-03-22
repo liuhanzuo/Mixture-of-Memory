@@ -79,7 +79,7 @@ class L3ProfileStore:
             return True
         return False
 
-    def search(self, query: str, top_k: int = 10) -> list[L3ProfileEntry]:
+    def search(self, query: str, top_k: int = 3, min_score: float = 1.0) -> list[L3ProfileEntry]:
         """基于关键词匹配检索与 query 相关的条目。
 
         评分策略:
@@ -87,9 +87,12 @@ class L3ProfileStore:
         2. entry 的 key/value 中的子串在 query 中出现 → 加分
         3. 基础置信度作为兜底排序因子
 
+        只返回 score >= min_score 的条目（避免注入大量无关噪声）。
+
         Args:
             query: 检索查询文本.
             top_k: 返回最相关的 top-k 条目.
+            min_score: 最低相关度分数阈值, 低于此分数的条目不返回.
 
         Returns:
             按相关度排序的条目列表.
@@ -97,7 +100,7 @@ class L3ProfileStore:
         import re
 
         if not self._store or not query:
-            return self.list_all()[:top_k]
+            return []
 
         query_lower = query.lower()
 
@@ -147,9 +150,9 @@ class L3ProfileStore:
 
             scored.append((entry, score))
 
-        # 按分数排序，取 top_k
+        # 按分数排序，过滤低分条目，取 top_k
         scored.sort(key=lambda x: x[1], reverse=True)
-        return [entry for entry, _ in scored[:top_k]]
+        return [entry for entry, score in scored[:top_k] if score >= min_score]
 
     def list_all(self) -> list[L3ProfileEntry]:
         """列出所有条目, 按置信度降序排列。"""

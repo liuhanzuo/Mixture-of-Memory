@@ -1,0 +1,34 @@
+# MAG (Memory-Augmented Generation) 配置
+# Titans 风格的记忆向量注入到 Transformer 中间层
+
+mag:
+  enabled: true
+  
+  # MemoryEncoder: 使用 backbone embedding 编码记忆
+  encoder:
+    max_memory_tokens: 64        # 每条记忆的最大 token 数
+    pooling: "mean"              # 池化策略: mean / last / first
+    projection_dim: 0            # 0 = 直接使用 embedding 维度, >0 = 投影到指定维度
+
+  # ContextSelector: Learned Scorer 选择有用记忆
+  selector:
+    hidden_dim: 256              # Scorer MLP 隐藏层维度
+    num_mlp_layers: 3            # MLP 层数
+    top_k: 5                     # 推理时选出的 top-k 记忆数
+    temperature: 1.0             # 训练时 soft selection 温度
+    dropout: 0.1                 # MLP dropout
+    use_query_memory_interaction: true  # 是否使用 q ⊙ m 交互特征
+
+  # MAGGate: CrossAttn + Sigmoid Gate + Residual
+  gate:
+    num_heads: 8                 # CrossAttention 头数
+    injection_layers: []         # 注入的 Transformer 层 (空=自动选择均匀分布的 4 层)
+    share_parameters: true       # 不同注入层是否共享参数
+    gate_init_bias: -2.0         # gate 偏置初始值 (负值→初始 gate 接近 0, 保守注入)
+    dropout: 0.0                 # 注意力和输出 dropout
+    use_layer_norm: true         # CrossAttn 后是否用 LayerNorm
+
+  # 训练好的权重路径 (为空则使用随机初始化)
+  checkpoint:
+    selector_path: ""            # ContextSelector 权重路径
+    gate_path: ""                # MAGGate 权重路径

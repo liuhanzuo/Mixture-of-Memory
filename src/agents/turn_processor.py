@@ -76,7 +76,7 @@ class TurnProcessor:
         max_context_chars: int = 3000,
         max_input_tokens: int = 4096,
         l2_top_k: int = 5,
-        l3_top_k: int = 10,
+        l3_top_k: int = 3,
         generation_config: dict[str, Any] | None = None,
     ):
         self.scheduler = scheduler
@@ -136,6 +136,23 @@ class TurnProcessor:
         result.memory_context = memory_context
         result.retrieval_time_ms = (time.monotonic() - t0) * 1000
 
+        # ---- Step 1.5: MAG 记忆编码 + 选择 (如果启用) ---- #
+        mag_memory_vectors = None
+        mag_selection_weights = None
+        mag_memory_texts: list[str] = []
+        if self.scheduler.mag_initialized:
+            try:
+                mag_memory_vectors, mag_selection_weights, mag_memory_texts = (
+                    self.scheduler.encode_memories_for_mag(query=user_message)
+                )
+                logger.debug(
+                    f"[TurnProcessor] MAG 编码: {mag_memory_vectors.shape[1]} 条记忆, "
+                    f"selection={'✓' if mag_selection_weights is not None else '✗'}"
+                )
+            except Exception as e:
+                logger.warning(f"[TurnProcessor] MAG 编码失败: {e}")
+                mag_memory_vectors = None
+
         # ---- Step 2: 构建 prompt ---- #
         prompt = self._build_prompt(
             user_message=user_message,
@@ -149,6 +166,8 @@ class TurnProcessor:
         response_text, backbone_output = self._generate(
             prompt,
             full_history=full_conversation_history or conversation_history,
+            mag_memory_vectors=mag_memory_vectors,
+            mag_selection_weights=mag_selection_weights,
         )
         result.response_text = response_text
         result.backbone_output = backbone_output
@@ -169,7 +188,8 @@ class TurnProcessor:
             f"retrieval={result.retrieval_time_ms:.1f}ms, "
             f"generation={result.generation_time_ms:.1f}ms, "
             f"update={result.update_time_ms:.1f}ms, "
-            f"L2_retrieved={len(retrieved_l2)}, L3_retrieved={len(retrieved_l3)}"
+            f"L2_retrieved={len(retrieved_l2)}, L3_retrieved={len(retrieved_l3)}, "
+            f"MAG_memories={len(mag_memory_texts)}"
         )
 
         return result
@@ -297,17 +317,22 @@ class TurnProcessor:
     def _generate(
         self, prompt: str | list[dict[str, str]],
         full_history: list[dict[str, str]] | None = None,
+        mag_memory_vectors: torch.Tensor | None = None,
+        mag_selection_weights: torch.Tensor | None = None,
     ) -> tuple[str, BackboneOutput | None]:
         """调用 backbone 生成回复。
 
-        支持三种模式:
+        支持四种模式:
         1. 无 backbone → 规则回复
         2. debug backbone → debug greedy 生成
         3. 真实 backbone + tokenizer → HF model.generate() 自回归生成
+        4. 真实 backbone + MAG → forward_with_mag 获取 hidden states + generate
 
         Args:
             prompt: 纯文本字符串或 chat messages list (由 _build_prompt 返回)。
             full_history: 完整对话历史 (用于规则回复模式的全量搜索)。
+            mag_memory_vectors: (1, K, D) MAG 记忆向量 (可选).
+            mag_selection_weights: (1, K) MAG 选择权重 (可选).
 
         Returns:
             (response_text, backbone_output_or_None)
@@ -319,20 +344,40 @@ class TurnProcessor:
             logger.debug("[TurnProcessor] 使用规则回复模式")
             return response, None
 
-        # 模式 2 & 3: 有 backbone + tokenizer
+        # 模式 2, 3, 4: 有 backbone + tokenizer
         try:
             # Tokenize prompt
             input_ids, attention_mask = self._tokenize_prompt(prompt)
             prompt_len = input_ids.shape[1]
 
             # 先做一次 forward pass 获取隐藏状态 (用于 L1 更新)
+            # 如果有 MAG 记忆, 使用 forward_with_mag 同时注入记忆
             backbone_output = None
             try:
                 with torch.no_grad():
-                    backbone_output = self.backbone.forward(
-                        input_ids=input_ids,
-                        attention_mask=attention_mask,
-                    )
+                    if (
+                        mag_memory_vectors is not None
+                        and mag_memory_vectors.shape[1] > 0
+                        and hasattr(self.backbone, "forward_with_mag")
+                    ):
+                        # 模式 4: MAG 记忆注入
+                        backbone_output = self.backbone.forward_with_mag(
+                            input_ids=input_ids,
+                            mag_memory_vectors=mag_memory_vectors,
+                            mag_memory_mask=None,  # 所有记忆都有效
+                            mag_selection_weights=mag_selection_weights,
+                            attention_mask=attention_mask,
+                        )
+                        logger.debug(
+                            f"[TurnProcessor] MAG forward: "
+                            f"injected={backbone_output.extra.get('mag_injected', False)}"
+                        )
+                    else:
+                        # 模式 2/3: 标准 forward
+                        backbone_output = self.backbone.forward(
+                            input_ids=input_ids,
+                            attention_mask=attention_mask,
+                        )
             except Exception as e:
                 logger.warning(f"[TurnProcessor] Forward pass 失败 (不影响生成): {e}")
 

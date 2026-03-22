@@ -33,6 +33,14 @@ from src.memory.l3.profile_store import L3ProfileStore
 from src.memory.l3.reviser import L3Reviser
 from src.memory.state import MoMState, MoMStats
 
+try:
+    from src.memory.mag.memory_encoder import MemoryEncoder, MemoryEncoderConfig
+    from src.memory.mag.context_selector import ContextSelector, ContextSelectorConfig
+    from src.memory.mag.mag_gate import MAGGate, MAGGateConfig
+    _MAG_AVAILABLE = True
+except ImportError:
+    _MAG_AVAILABLE = False
+
 logger = logging.getLogger(__name__)
 
 
@@ -64,6 +72,16 @@ class SchedulerConfig:
     # Gate 配置
     l1_gate_hidden_dim: int = 64
     l1_gate_d_model: int = 64
+
+    # MAG 配置
+    enable_mag: bool = False
+    mag_num_heads: int = 8
+    mag_injection_layers: list[int] = field(default_factory=list)
+    mag_share_parameters: bool = True
+    mag_gate_init_bias: float = -2.0
+    mag_selector_hidden_dim: int = 256
+    mag_selector_top_k: int = 5
+    mag_max_memory_tokens: int = 64
 
 
 class MemoryScheduler:
@@ -169,11 +187,18 @@ class MemoryScheduler:
             l3_store=self._l3_store,
         )
 
+        # MAG 组件 (延迟初始化, 需要 backbone 信息)
+        self._mag_encoder: Any = None
+        self._mag_selector: Any = None
+        self._mag_gate: Any = None
+        self._mag_initialized: bool = False
+
         logger.info(
             f"MemoryScheduler 初始化完成: "
             f"L1={'✓' if config.enable_l1 else '✗'}, "
             f"L2={'✓' if config.enable_l2 else '✗'}, "
-            f"L3={'✓' if config.enable_l3 else '✗'}"
+            f"L3={'✓' if config.enable_l3 else '✗'}, "
+            f"MAG={'✓' if config.enable_mag else '✗'}"
         )
 
     # ------------------------------------------------------------------ #
@@ -390,17 +415,190 @@ class MemoryScheduler:
         self,
         query: str | None = None,
         category: str | None = None,
-        top_k: int = 10,
+        top_k: int = 3,
+        min_score: float = 1.0,
     ) -> list[Any]:
-        """检索 L3 中与 query/category 相关的 profile entries。"""
+        """检索 L3 中与 query/category 相关的 profile entries。
+
+        Args:
+            query: 检索查询文本.
+            category: 按类别检索 (优先于 query).
+            top_k: 返回最相关的 top-k 条目.
+            min_score: 最低相关度分数阈值, 低于此分数的条目不返回.
+        """
         if self._l3_store is None:
             return []
         if category is not None:
             return self._l3_store.get_by_category(category)
-        # 使用语义检索（关键词匹配 + 置信度加权）
+        # 使用语义检索（关键词匹配 + 置信度加权），设置最低分数门槛过滤噪声
         if query:
-            return self._l3_store.search(query=query, top_k=top_k)
+            return self._l3_store.search(query=query, top_k=top_k, min_score=min_score)
         return self._l3_store.list_all()[:top_k]
+
+    # ------------------------------------------------------------------ #
+    #  MAG: 记忆编码与选择
+    # ------------------------------------------------------------------ #
+
+    def init_mag(
+        self,
+        backbone_model: Any,
+        tokenizer: Any,
+        hidden_dim: int,
+        device: str | torch.device = "cpu",
+        dtype: torch.dtype = torch.float32,
+    ) -> Any:
+        """初始化 MAG 组件 (MemoryEncoder + ContextSelector + MAGGate)。
+
+        需要在 backbone 构建之后调用。
+
+        Args:
+            backbone_model: HuggingFace 模型或 Debug 模型.
+            tokenizer: HuggingFace tokenizer.
+            hidden_dim: backbone 隐藏维度.
+            device: 设备.
+            dtype: 数据类型.
+
+        Returns:
+            MAGGate 实例 (供 backbone.set_mag_gate() 使用).
+        """
+        if not _MAG_AVAILABLE:
+            logger.warning("MAG 模块不可用, 跳过 MAG 初始化")
+            return None
+
+        if not self.config.enable_mag:
+            logger.info("MAG 未启用, 跳过初始化")
+            return None
+
+        # 1. MemoryEncoder
+        enc_cfg = MemoryEncoderConfig(
+            max_memory_tokens=self.config.mag_max_memory_tokens,
+            pooling="mean",
+        )
+        self._mag_encoder = MemoryEncoder(enc_cfg)
+        self._mag_encoder.set_backbone(
+            backbone_model=backbone_model,
+            tokenizer=tokenizer,
+            hidden_dim=hidden_dim,
+            device=device,
+            dtype=dtype,
+        )
+
+        # 2. ContextSelector
+        sel_cfg = ContextSelectorConfig(
+            input_dim=hidden_dim,
+            hidden_dim=self.config.mag_selector_hidden_dim,
+            top_k=self.config.mag_selector_top_k,
+        )
+        self._mag_selector = ContextSelector(sel_cfg)
+        self._mag_selector = self._mag_selector.to(device=device)
+
+        # 3. MAGGate
+        # 确定注入层: 如果配置为空, 默认均匀选取 4 层
+        injection_layers = self.config.mag_injection_layers
+        if not injection_layers:
+            # 默认: 在 1/4, 1/2, 3/4, 最后一层 注入
+            num_layers = 24  # 默认值, 后续可从 backbone 获取
+            injection_layers = [
+                num_layers // 4,
+                num_layers // 2,
+                num_layers * 3 // 4,
+                num_layers - 1,
+            ]
+
+        gate_cfg = MAGGateConfig(
+            hidden_dim=hidden_dim,
+            num_heads=self.config.mag_num_heads,
+            memory_dim=hidden_dim,  # encoder output_dim = hidden_dim (无投影)
+            injection_layers=injection_layers,
+            share_parameters=self.config.mag_share_parameters,
+            gate_init_bias=self.config.mag_gate_init_bias,
+        )
+        self._mag_gate = MAGGate(gate_cfg)
+        self._mag_gate = self._mag_gate.to(device=device)
+
+        self._mag_initialized = True
+        logger.info(
+            f"[MemoryScheduler] MAG 初始化完成: "
+            f"encoder_dim={hidden_dim}, "
+            f"selector_top_k={self.config.mag_selector_top_k}, "
+            f"injection_layers={injection_layers}"
+        )
+        return self._mag_gate
+
+    def encode_memories_for_mag(
+        self, query: str,
+    ) -> tuple[torch.Tensor, torch.Tensor | None, list[str]]:
+        """编码 L2/L3 记忆为向量 (供 MAG forward 使用)。
+
+        Args:
+            query: 当前用户查询 (用于 context selection).
+
+        Returns:
+            (memory_vectors, selection_weights, memory_texts):
+                memory_vectors: (1, K, D) 编码后的记忆向量.
+                selection_weights: (1, K) 选择权重, 或 None.
+                memory_texts: 对应的文本列表.
+        """
+        if not self._mag_initialized or self._mag_encoder is None:
+            return torch.zeros(1, 0, 1), None, []
+
+        # 获取 L2/L3 记忆对象
+        l2_objects = []
+        l3_entries = []
+        if self._l2_store is not None:
+            l2_results = self.retrieve_l2(query=query, top_k=10)  # 多取一些, selector 会筛选
+            l2_objects = [obj for obj, _score in l2_results]
+        if self._l3_store is not None:
+            l3_entries = self.retrieve_l3(query=query, top_k=5)
+
+        if not l2_objects and not l3_entries:
+            D = self._mag_encoder.output_dim
+            return torch.zeros(1, 0, D), None, []
+
+        # 编码
+        memory_vectors, memory_texts = self._mag_encoder.encode(
+            l2_objects=l2_objects,
+            l3_entries=l3_entries,
+        )
+
+        if memory_vectors.shape[0] == 0:
+            D = self._mag_encoder.output_dim
+            return torch.zeros(1, 0, D), None, []
+
+        # 添加 batch 维度: (K, D) → (1, K, D)
+        memory_vectors = memory_vectors.unsqueeze(0)
+
+        # Context Selection
+        selection_weights = None
+        if self._mag_selector is not None:
+            # 编码 query
+            query_emb = self._mag_encoder.encode_texts([query])  # (1, D)
+            selection_weights = self._mag_selector.soft_select(
+                query_emb=query_emb,
+                memory_embs=memory_vectors,
+            )  # (1, K)
+
+        return memory_vectors, selection_weights, memory_texts
+
+    @property
+    def mag_gate(self) -> Any:
+        """返回 MAGGate 实例 (供外部使用)。"""
+        return self._mag_gate
+
+    @property
+    def mag_encoder(self) -> Any:
+        """返回 MemoryEncoder 实例。"""
+        return self._mag_encoder
+
+    @property
+    def mag_selector(self) -> Any:
+        """返回 ContextSelector 实例。"""
+        return self._mag_selector
+
+    @property
+    def mag_initialized(self) -> bool:
+        """MAG 是否已初始化。"""
+        return self._mag_initialized
 
     # ------------------------------------------------------------------ #
     #  缓冲区: 供外部推送消息

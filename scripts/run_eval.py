@@ -308,8 +308,8 @@ def main() -> None:
     all_reports: dict[str, Any] = {}
     t_start = time.monotonic()
 
-    # 判断是否启用了 L3，决定是否跨 sample 保留 L3 画像
-    l3_enabled = cfg.get("experiment", {}).get("memory", {}).get("l3", {}).get("enabled", False)
+    # L3 不应跨独立 sample 累积：每个 sample 是独立测试用例
+    # L3 的跨 session 积累应在同一 sample 的多轮对话内生效
 
     for task_name in task_names:
         if task_name not in TASK_REGISTRY:
@@ -317,7 +317,7 @@ def main() -> None:
             continue
 
         eval_fn = TASK_REGISTRY[task_name]
-        report = eval_fn(agent, seed=args.seed, num_samples=args.num_samples, keep_l3=l3_enabled)
+        report = eval_fn(agent, seed=args.seed, num_samples=args.num_samples, keep_l3=False)
         all_reports[task_name] = report
 
     total_time = time.monotonic() - t_start

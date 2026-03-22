@@ -51,7 +51,7 @@ class AgentConfig:
     # ---- TurnProcessor 参数 ----
     max_context_chars: int = 3000
     l2_top_k: int = 5
-    l3_top_k: int = 10
+    l3_top_k: int = 3
 
     # ---- Agent 参数 ----
     system_prompt: str = "You are a helpful assistant with long-term memory."
