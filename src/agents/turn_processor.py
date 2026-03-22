@@ -111,6 +111,7 @@ class TurnProcessor:
         user_message: str,
         turn_id: str,
         conversation_history: list[dict[str, str]] | None = None,
+        full_conversation_history: list[dict[str, str]] | None = None,
         system_prompt: str | None = None,
     ) -> TurnResult:
         """处理一个完整的对话轮次。
@@ -118,7 +119,8 @@ class TurnProcessor:
         Args:
             user_message: 当前用户输入.
             turn_id: 当前轮次 ID.
-            conversation_history: 之前的对话历史 (可选, 用于 prompt 构建).
+            conversation_history: 最近的对话历史 (用于 prompt 构建, 受 max_history_turns 截断).
+            full_conversation_history: 完整的对话历史 (用于规则回复的全量搜索, 不截断).
             system_prompt: 系统提示词 (可选).
 
         Returns:
@@ -144,7 +146,10 @@ class TurnProcessor:
 
         # ---- Step 3: 生成回复 ---- #
         t1 = time.monotonic()
-        response_text, backbone_output = self._generate(prompt)
+        response_text, backbone_output = self._generate(
+            prompt,
+            full_history=full_conversation_history or conversation_history,
+        )
         result.response_text = response_text
         result.backbone_output = backbone_output
         result.generation_time_ms = (time.monotonic() - t1) * 1000
@@ -291,6 +296,7 @@ class TurnProcessor:
 
     def _generate(
         self, prompt: str | list[dict[str, str]],
+        full_history: list[dict[str, str]] | None = None,
     ) -> tuple[str, BackboneOutput | None]:
         """调用 backbone 生成回复。
 
@@ -301,6 +307,7 @@ class TurnProcessor:
 
         Args:
             prompt: 纯文本字符串或 chat messages list (由 _build_prompt 返回)。
+            full_history: 完整对话历史 (用于规则回复模式的全量搜索)。
 
         Returns:
             (response_text, backbone_output_or_None)
@@ -308,7 +315,7 @@ class TurnProcessor:
         # 模式 1: 无 backbone —— 规则回复
         if self.backbone is None or (self.backbone is not None and self.tokenizer is None):
             prompt_str = prompt if isinstance(prompt, str) else self._messages_to_text(prompt)
-            response = self._rule_based_reply(prompt_str)
+            response = self._rule_based_reply(prompt_str, full_history=full_history)
             logger.debug("[TurnProcessor] 使用规则回复模式")
             return response, None
 
@@ -364,7 +371,7 @@ class TurnProcessor:
             logger.error(f"[TurnProcessor] 生成失败: {e}", exc_info=True)
             # 回退到规则回复
             prompt_str = prompt if isinstance(prompt, str) else self._messages_to_text(prompt)
-            response = self._rule_based_reply(prompt_str)
+            response = self._rule_based_reply(prompt_str, full_history=full_history)
             return f"[生成失败，回退到规则回复] {response}", None
 
     def _tokenize_prompt(
@@ -453,7 +460,9 @@ class TurnProcessor:
     #  记忆感知的规则回复 (无 backbone 时使用)
     # ------------------------------------------------------------------ #
 
-    def _rule_based_reply(self, prompt: str) -> str:
+    def _rule_based_reply(
+        self, prompt: str, full_history: list[dict[str, str]] | None = None,
+    ) -> str:
         """基于记忆上下文和对话历史生成规则回复。
 
         核心策略:
@@ -461,21 +470,46 @@ class TurnProcessor:
         2. 检查是否有 stale/temporary 类型的无效化声明
         3. 从 prompt 中提取记忆上下文内容 (已由 L2 Retriever 排序)
         4. 从对话历史中搜索与 query 相关的事实
-        5. 组合成有意义的回复
+        5. 从完整对话历史 (full_history) 中做全量搜索 (覆盖窗口外的事实)
+        6. 组合成有意义的回复
+
+        Args:
+            prompt: 纯文本 prompt (含截断后的对话历史).
+            full_history: 完整的对话历史列表 (不受 max_history_turns 截断).
         """
         # 提取 user 最后的消息
         user_query = self._extract_last_user_message(prompt)
 
         # 首先检查是否有无效化/临时状态 (stale/temporary)
-        invalidation_reply = self._check_invalidation(prompt, user_query)
+        # 用完整历史检查（如果有的话），否则回退到 prompt
+        invalidation_source = prompt
+        if full_history:
+            # 将完整历史的 user 消息合并为文本，用于无效化检测
+            full_user_text = " ".join(
+                msg["content"] for msg in full_history if msg.get("role") == "user"
+            )
+            invalidation_source = f"user: {full_user_text}\nuser: {user_query}"
+        invalidation_reply = self._check_invalidation(invalidation_source, user_query)
         if invalidation_reply:
             return invalidation_reply
 
         # 提取记忆上下文 (由 L2 Retriever 已按相关度排过序)
         memory_info = self._extract_memory_from_prompt(prompt)
 
-        # 从对话历史中提取相关事实 (排除 query 本身)
+        # 从 prompt 中的对话历史提取相关事实 (排除 query 本身)
         history_facts = self._extract_facts_from_history(prompt, user_query)
+
+        # 从完整对话历史中做全量搜索 (覆盖 prompt 窗口外的事实)
+        if full_history:
+            full_history_facts = self._extract_facts_from_full_history(
+                full_history, user_query
+            )
+            # 合并: 全量搜索的事实放在前面，prompt 内的更近的事实放后面
+            seen = set(history_facts)
+            for fact in full_history_facts:
+                if fact not in seen:
+                    history_facts.insert(0, fact)
+                    seen.add(fact)
 
         # 组合回复
         reply_parts: list[str] = []
@@ -680,6 +714,71 @@ class TurnProcessor:
                 if not line.startswith("user:"):
                     continue
                 content = line[5:].strip()
+                for entity in query_entities:
+                    if entity in content:
+                        facts.append(content)
+                        break
+
+        return facts
+
+    def _extract_facts_from_full_history(
+        self,
+        full_history: list[dict[str, str]],
+        query: str,
+    ) -> list[str]:
+        """从完整对话历史 (不受窗口截断) 中搜索与 query 相关的事实。
+
+        这是对 _extract_facts_from_history (只搜 prompt 中截断的历史) 的补充，
+        确保无 L2 的配置也能回忆起窗口外的事实。
+
+        Args:
+            full_history: 完整的对话历史列表 [{"role": "user/assistant", "content": "..."}].
+            query: 当前用户查询.
+
+        Returns:
+            与 query 相关的事实列表 (按原始顺序).
+        """
+        if not full_history or not query:
+            return []
+
+        facts: list[str] = []
+        query_lower = query.lower()
+
+        # 提取 query 关键词
+        stop_words = {
+            "什么", "怎么", "哪里", "哪个", "多少", "如何", "为什么", "吗",
+            "是", "的", "了", "在", "我", "你", "他", "她", "它",
+            "现在", "目前", "最近", "请问", "告诉",
+            "what", "where", "how", "which", "who", "when", "is", "are",
+            "the", "a", "an", "my", "your", "do", "does",
+        }
+        query_keywords = set()
+        for w in re.split(r"[\s，。？?！!、]+", query_lower):
+            if w and w not in stop_words and len(w) >= 2:
+                query_keywords.add(w)
+
+        # 提取 query 中的实体
+        entity_pattern = r"[A-Za-z0-9\u4e00-\u9fff]{2,}"
+        query_entities = set(re.findall(entity_pattern, query))
+
+        # 扫描全量历史中的 user 消息（排除最后一条，即 query 本身）
+        user_messages = [
+            msg["content"] for msg in full_history if msg.get("role") == "user"
+        ]
+
+        for content in user_messages:
+            content_lower = content.lower()
+
+            # 关键词匹配
+            matched = False
+            for kw in query_keywords:
+                if kw in content_lower:
+                    facts.append(content)
+                    matched = True
+                    break
+
+            # 实体匹配（关键词未命中时）
+            if not matched:
                 for entity in query_entities:
                     if entity in content:
                         facts.append(content)

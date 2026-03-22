@@ -397,7 +397,9 @@ class MemoryScheduler:
             return []
         if category is not None:
             return self._l3_store.get_by_category(category)
-        # L3ProfileStore 没有 search 方法, 返回按置信度排序的所有条目
+        # 使用语义检索（关键词匹配 + 置信度加权）
+        if query:
+            return self._l3_store.search(query=query, top_k=top_k)
         return self._l3_store.list_all()[:top_k]
 
     # ------------------------------------------------------------------ #

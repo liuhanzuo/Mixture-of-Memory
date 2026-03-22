@@ -99,11 +99,14 @@ def run_single_config(
     agent = build_agent(cfg)
     results: dict[str, Any] = {"config": config_name}
 
+    # 判断是否启用了 L3，决定是否跨 sample 保留 L3 画像
+    l3_enabled = cfg.get("experiment", {}).get("memory", {}).get("l3", {}).get("enabled", False)
+
     # ---- Synthetic Update ----
     logger.info(f"[{config_name}] Running synthetic_update...")
     task_update = SyntheticUpdateTask(num_samples=num_samples, seed=seed)
     samples = task_update.generate_samples()
-    predictions = _run_task_samples(agent, samples)
+    predictions = _run_task_samples(agent, samples, keep_l3=l3_enabled)
     report = task_update.evaluate_batch(samples, predictions)
     results["update_accuracy"] = report["overall_accuracy"]
     results["update_type_accuracy"] = report.get("type_accuracy", {})
@@ -112,7 +115,7 @@ def run_single_config(
     logger.info(f"[{config_name}] Running profile_bench...")
     task_profile = ProfileTask(num_samples=num_samples, seed=seed)
     p_samples = task_profile.generate_samples()
-    p_predictions = _run_task_samples(agent, p_samples, sample_type="profile")
+    p_predictions = _run_task_samples(agent, p_samples, sample_type="profile", keep_l3=l3_enabled)
     p_report = task_profile.evaluate_batch(p_samples, p_predictions)
     results["profile_precision"] = p_report["avg_precision"]
     results["profile_type_precision"] = p_report.get("type_avg_precision", {})
@@ -121,7 +124,7 @@ def run_single_config(
     logger.info(f"[{config_name}] Running longhorizon_chat...")
     task_lh = LongHorizonChatTask(num_samples=num_samples, seed=seed)
     lh_samples = task_lh.generate_samples()
-    lh_predictions = _run_task_samples(agent, lh_samples, sample_type="longhorizon")
+    lh_predictions = _run_task_samples(agent, lh_samples, sample_type="longhorizon", keep_l3=l3_enabled)
     lh_report = task_lh.evaluate_batch(lh_samples, lh_predictions)
     results["longhorizon_accuracy"] = lh_report["overall_accuracy"]
     results["longhorizon_type_accuracy"] = lh_report.get("type_accuracy", {})
@@ -137,8 +140,16 @@ def _run_task_samples(
     agent: MemoryAgent,
     samples: list[Any],
     sample_type: str = "update",
+    keep_l3: bool = False,
 ) -> list[str]:
-    """通用的样本运行函数：将样本对话喂给 agent，返回预测列表。"""
+    """通用的样本运行函数：将样本对话喂给 agent，返回预测列表。
+
+    Args:
+        agent: MemoryAgent 实例.
+        samples: 任务样本列表.
+        sample_type: 样本类型标识.
+        keep_l3: 是否在 sample 间保留 L3 长期画像 (启用 L3 时应为 True).
+    """
     predictions: list[str] = []
 
     for sample in samples:
@@ -168,7 +179,7 @@ def _run_task_samples(
         else:
             predictions.append("")
 
-        agent.reset(keep_l3=False)
+        agent.reset(keep_l3=keep_l3)
 
     return predictions
 

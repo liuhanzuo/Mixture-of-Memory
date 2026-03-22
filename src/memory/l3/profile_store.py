@@ -79,6 +79,78 @@ class L3ProfileStore:
             return True
         return False
 
+    def search(self, query: str, top_k: int = 10) -> list[L3ProfileEntry]:
+        """基于关键词匹配检索与 query 相关的条目。
+
+        评分策略:
+        1. query 中的关键词在 entry 的 key/value/category 中出现 → 加分
+        2. entry 的 key/value 中的子串在 query 中出现 → 加分
+        3. 基础置信度作为兜底排序因子
+
+        Args:
+            query: 检索查询文本.
+            top_k: 返回最相关的 top-k 条目.
+
+        Returns:
+            按相关度排序的条目列表.
+        """
+        import re
+
+        if not self._store or not query:
+            return self.list_all()[:top_k]
+
+        query_lower = query.lower()
+
+        # 提取 query 中的关键词 (去除常见停用词)
+        stop_words = {
+            "什么", "怎么", "哪里", "哪个", "多少", "如何", "为什么", "吗",
+            "是", "的", "了", "在", "我", "你", "他", "她", "它",
+            "现在", "目前", "最近", "请问", "告诉", "记得",
+            "what", "where", "how", "which", "who", "when", "is", "are",
+            "the", "a", "an", "my", "your", "do", "does",
+        }
+        query_keywords = set()
+        for w in re.split(r"[\s，。？?！!、:：]+", query_lower):
+            if w and w not in stop_words and len(w) >= 2:
+                query_keywords.add(w)
+
+        # 提取 query 中的实体 (连续中文/英文)
+        query_entities = set(re.findall(r"[\u4e00-\u9fffA-Za-z_]{2,}", query))
+
+        scored: list[tuple[L3ProfileEntry, float]] = []
+        for entry in self._store.values():
+            score = 0.0
+            entry_text = f"{entry.key} {entry.value} {entry.category}".lower()
+
+            # 关键词匹配: query 关键词出现在 entry 中
+            for kw in query_keywords:
+                if kw in entry_text:
+                    score += 2.0
+
+            # 实体匹配: query 实体出现在 entry 中
+            for entity in query_entities:
+                if entity.lower() in entry_text:
+                    score += 3.0
+
+            # 反向匹配: entry 的 key 出现在 query 中
+            if entry.key.lower() in query_lower:
+                score += 2.0
+
+            # entry value 中的短语出现在 query 中
+            value_words = set(re.findall(r"[\u4e00-\u9fffA-Za-z_]{2,}", entry.value))
+            for vw in value_words:
+                if vw.lower() in query_lower:
+                    score += 1.5
+
+            # 置信度加权 (作为 tie-breaker)
+            score += entry.confidence * 0.1
+
+            scored.append((entry, score))
+
+        # 按分数排序，取 top_k
+        scored.sort(key=lambda x: x[1], reverse=True)
+        return [entry for entry, _ in scored[:top_k]]
+
     def list_all(self) -> list[L3ProfileEntry]:
         """列出所有条目, 按置信度降序排列。"""
         return sorted(self._store.values(), key=lambda e: e.confidence, reverse=True)

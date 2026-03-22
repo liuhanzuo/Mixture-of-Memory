@@ -93,6 +93,7 @@ def eval_synthetic_update(
     agent: MemoryAgent,
     seed: int = 42,
     num_samples: int = 50,
+    keep_l3: bool = False,
 ) -> dict[str, Any]:
     """运行 synthetic_update 评测。"""
     logger.info("=" * 50)
@@ -123,7 +124,7 @@ def eval_synthetic_update(
         else:
             predictions.append("")
 
-        agent.reset(keep_l3=False)
+        agent.reset(keep_l3=keep_l3)
 
         if (i + 1) % 10 == 0:
             logger.info(f"  进度: {i+1}/{len(samples)}")
@@ -144,6 +145,7 @@ def eval_profile(
     agent: MemoryAgent,
     seed: int = 42,
     num_samples: int = 30,
+    keep_l3: bool = False,
 ) -> dict[str, Any]:
     """运行 profile 评测。"""
     logger.info("=" * 50)
@@ -172,7 +174,7 @@ def eval_profile(
         else:
             predictions.append("")
 
-        agent.reset(keep_l3=False)
+        agent.reset(keep_l3=keep_l3)
 
         if (i + 1) % 10 == 0:
             logger.info(f"  进度: {i+1}/{len(samples)}")
@@ -191,6 +193,7 @@ def eval_longhorizon_chat(
     agent: MemoryAgent,
     seed: int = 42,
     num_samples: int = 30,
+    keep_l3: bool = False,
 ) -> dict[str, Any]:
     """运行 longhorizon_chat 评测。"""
     logger.info("=" * 50)
@@ -219,7 +222,7 @@ def eval_longhorizon_chat(
         else:
             predictions.append("")
 
-        agent.reset(keep_l3=False)
+        agent.reset(keep_l3=keep_l3)
 
         if (i + 1) % 10 == 0:
             logger.info(f"  进度: {i+1}/{len(samples)}")
@@ -305,13 +308,16 @@ def main() -> None:
     all_reports: dict[str, Any] = {}
     t_start = time.monotonic()
 
+    # 判断是否启用了 L3，决定是否跨 sample 保留 L3 画像
+    l3_enabled = cfg.get("experiment", {}).get("memory", {}).get("l3", {}).get("enabled", False)
+
     for task_name in task_names:
         if task_name not in TASK_REGISTRY:
             logger.warning(f"未知任务: {task_name}, 跳过。")
             continue
 
         eval_fn = TASK_REGISTRY[task_name]
-        report = eval_fn(agent, seed=args.seed, num_samples=args.num_samples)
+        report = eval_fn(agent, seed=args.seed, num_samples=args.num_samples, keep_l3=l3_enabled)
         all_reports[task_name] = report
 
     total_time = time.monotonic() - t_start

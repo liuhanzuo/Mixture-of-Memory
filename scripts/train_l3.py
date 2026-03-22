@@ -32,6 +32,10 @@ def main() -> None:
     parser.add_argument("--base-model", type=str, default=None, help="基础模型路径")
     parser.add_argument("--train-data", type=str, default=None, help="训练数据路径 (JSONL)")
     parser.add_argument("--val-data", type=str, default=None, help="验证数据路径 (JSONL)")
+    parser.add_argument("--dataset", type=str, default=None,
+                        help="HuggingFace 数据集名称 (如 'msc')，设置后优先使用真实数据集")
+    parser.add_argument("--max-samples", type=int, default=2000,
+                        help="从 HF 数据集转换的最大样本数 (默认 2000)")
     parser.add_argument("--epochs", type=int, default=3)
     parser.add_argument("--batch-size", type=int, default=4)
     parser.add_argument("--lr", type=float, default=2e-5)
@@ -58,13 +62,18 @@ def main() -> None:
 
     if args.base_model:
         config.base_model = args.base_model
+    if args.dataset:
+        config.dataset_name = args.dataset
+        config.dataset_max_samples = args.max_samples
     if args.train_data:
         config.train_data_path = args.train_data
     if args.val_data:
         config.val_data_path = args.val_data
 
+    data_source = f"HF:{config.dataset_name}" if config.dataset_name else config.train_data_path
     logger.info(f"L3 训练配置: epochs={config.epochs}, lr={config.lr}, "
                 f"lora_rank={config.lora_rank}, batch_size={config.batch_size}")
+    logger.info(f"L3 数据源: {data_source}")
 
     trainer = L3SummarizerTrainer(config)
     results = trainer.train()

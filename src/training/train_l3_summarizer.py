@@ -47,6 +47,8 @@ class L3SummarizerTrainConfig:
     # 数据
     train_data_path: str = "data/processed/l3_train.jsonl"
     val_data_path: str = "data/processed/l3_val.jsonl"
+    dataset_name: str = ""  # HuggingFace 数据集名称 (如 "msc")，非空时优先使用
+    dataset_max_samples: int = 2000  # 从 HF 数据集转换的最大样本数
 
     # 训练参数
     lr: float = 2e-5
@@ -59,7 +61,7 @@ class L3SummarizerTrainConfig:
     max_grad_norm: float = 1.0
 
     # 模型
-    base_model: str = "/apdcephfs/pig_data/Adaptive-Sparse-Trainer/models/Qwen--Qwen3-1.7b"
+    base_model: str = "models/Qwen--Qwen3-1.7b"  # 相对路径，运行时会通过 --base-model 覆盖
     use_lora: bool = True
     lora_rank: int = 16
     lora_alpha: int = 32
@@ -156,6 +158,152 @@ class L3SummarizerDataset(Dataset):
                     except json.JSONDecodeError as e:
                         logger.warning(f"[L3 Dataset] 跳过无效行: {e}")
         logger.info(f"[L3 Dataset] 加载了 {len(self.samples)} 条训练样本")
+
+    @classmethod
+    def from_hf_dataset(
+        cls, dataset_name: str, max_samples: int = 500, max_seq_len: int = 2048
+    ) -> "L3SummarizerDataset":
+        """从 HuggingFace 数据集创建训练数据集。
+
+        支持的数据集:
+          - "msc": Facebook Multi-Session Chat (利用 persona 标注)
+
+        Args:
+            dataset_name: 数据集名称
+            max_samples: 最大样本数
+            max_seq_len: 最大序列长度
+        """
+        instance = cls.__new__(cls)
+        instance.data_path = Path(f"hf://{dataset_name}")
+        instance.max_seq_len = max_seq_len
+        instance.samples = []
+
+        if dataset_name == "msc":
+            instance._load_from_msc(max_samples)
+        else:
+            raise ValueError(f"不支持的 HF 数据集: {dataset_name}，当前支持: msc")
+
+        return instance
+
+    def _load_from_msc(self, max_samples: int = 500) -> None:
+        """从 MSC 数据集加载并转换为 L3 训练格式。"""
+        try:
+            from datasets import load_dataset
+        except ImportError:
+            logger.error("[L3 Dataset] datasets 未安装，请运行: pip install datasets")
+            logger.warning("[L3 Dataset] 退回到合成数据")
+            self._generate_synthetic()
+            return
+
+        logger.info("[L3 Dataset] 从 HuggingFace 加载 MSC 数据集...")
+        try:
+            dataset = load_dataset("facebook/msc", "session_1", split="train",
+                                   trust_remote_code=True)
+            logger.info(f"[L3 Dataset] MSC 加载成功: {len(dataset)} 条对话")
+        except Exception as e:
+            logger.error(f"[L3 Dataset] MSC 加载失败: {e}")
+            logger.warning("[L3 Dataset] 退回到合成数据")
+            self._generate_synthetic()
+            return
+
+        # 使用 prepare_data 中的转换函数
+        try:
+            from scripts.prepare_data import convert_msc_to_l3
+            self.samples = convert_msc_to_l3(dataset, max_samples=max_samples)
+        except ImportError:
+            # 内联简化版转换
+            self._convert_msc_inline(dataset, max_samples)
+
+        logger.info(f"[L3 Dataset] 从 MSC 加载了 {len(self.samples)} 条训练样本")
+
+        if not self.samples:
+            logger.warning("[L3 Dataset] MSC 转换结果为空，退回到合成数据")
+            self._generate_synthetic()
+
+    def _convert_msc_inline(self, dataset, max_samples: int) -> None:
+        """MSC → L3 内联转换 (无需 prepare_data 模块)。"""
+        import random
+
+        PREF_KW = ["prefer", "like", "love", "enjoy", "favorite", "hate", "always"]
+        IDENT_KW = ["my name", "i am", "i'm", "i work", "i live", "my job"]
+
+        def classify(text: str) -> str:
+            t = text.lower()
+            for kw in IDENT_KW:
+                if kw in t:
+                    return "entity"
+            for kw in PREF_KW:
+                if kw in t:
+                    return "preference"
+            return "topic"
+
+        def persona_to_entries(personas: list[str]) -> list[dict]:
+            entries = []
+            for p in personas:
+                p = p.strip()
+                if not p:
+                    continue
+                p_lower = p.lower()
+                if any(kw in p_lower for kw in ["prefer", "like", "love", "enjoy", "hate"]):
+                    cat, key = "preference", "preference"
+                elif any(kw in p_lower for kw in ["i am", "i'm", "my name", "i work"]):
+                    cat, key = "identity", "identity"
+                elif any(kw in p_lower for kw in ["hobby", "interest", "study", "research"]):
+                    cat, key = "research_interest", "interest"
+                else:
+                    cat, key = "factual", "factual_info"
+                entries.append({"key": key, "value": p, "confidence": 0.9, "category": cat})
+            return entries
+
+        for example in dataset:
+            if len(self.samples) >= max_samples:
+                break
+
+            personas = example.get("personas", example.get("persona", []))
+            if personas and isinstance(personas[0], list):
+                personas = personas[0]
+            if not personas:
+                continue
+
+            dialog = example.get("dialog", example.get("dialogue", []))
+            messages = []
+            for j, utt in enumerate(dialog):
+                if isinstance(utt, str):
+                    messages.append({"role": "user" if j % 2 == 0 else "assistant", "content": utt})
+                elif isinstance(utt, dict):
+                    messages.append({
+                        "role": utt.get("role", "user" if j % 2 == 0 else "assistant"),
+                        "content": utt.get("text", utt.get("content", "")),
+                    })
+
+            # 提取 L2 对象
+            l2_objects = []
+            seen = set()
+            for msg in messages:
+                if msg["role"] != "user":
+                    continue
+                content = msg["content"].strip()
+                if not content or len(content) < 10:
+                    continue
+                key = content[:50].lower()
+                if key in seen:
+                    continue
+                seen.add(key)
+                l2_objects.append({
+                    "object_type": classify(content),
+                    "summary_text": content[:200],
+                    "confidence": round(random.uniform(0.7, 0.95), 2),
+                })
+
+            if not l2_objects:
+                continue
+
+            profile_entries = persona_to_entries(personas)
+            if profile_entries:
+                self.samples.append({
+                    "l2_objects": l2_objects,
+                    "profile_entries": profile_entries,
+                })
 
     def _generate_synthetic(self) -> None:
         """生成合成训练数据。"""
@@ -302,6 +450,16 @@ class L3SummarizerTrainer:
         """加载基础模型并应用 LoRA。"""
         from transformers import AutoModelForCausalLM, AutoTokenizer
 
+        # 解析相对路径 (相对于项目根目录)
+        model_path = self.config.base_model
+        if model_path and not Path(model_path).is_absolute():
+            _project_root = Path(__file__).resolve().parent.parent.parent
+            resolved = (_project_root / model_path).resolve()
+            if resolved.exists():
+                logger.info(f"[L3 Trainer] 解析相对模型路径: {model_path} → {resolved}")
+                model_path = str(resolved)
+        self.config.base_model = model_path
+
         logger.info(f"[L3 Trainer] 加载基础模型: {self.config.base_model}")
 
         self.tokenizer = AutoTokenizer.from_pretrained(
@@ -367,18 +525,30 @@ class L3SummarizerTrainer:
     # ------------------------------------------------------------------ #
 
     def prepare_data(self) -> tuple[L3SummarizerDataset, L3SummarizerDataset | None]:
-        """准备训练和验证数据集。"""
-        train_dataset = L3SummarizerDataset(
-            self.config.train_data_path,
-            self.config.max_seq_len,
-        )
+        """准备训练和验证数据集。
 
-        val_dataset = None
-        if Path(self.config.val_data_path).exists():
-            val_dataset = L3SummarizerDataset(
-                self.config.val_data_path,
+        优先使用 HuggingFace 数据集（如果配置了 dataset_name），
+        否则从本地 JSONL 文件加载。
+        """
+        if self.config.dataset_name:
+            logger.info(f"[L3 Trainer] 使用 HuggingFace 数据集: {self.config.dataset_name}")
+            train_dataset = L3SummarizerDataset.from_hf_dataset(
+                self.config.dataset_name,
+                max_samples=self.config.dataset_max_samples,
+                max_seq_len=self.config.max_seq_len,
+            )
+            val_dataset = None
+        else:
+            train_dataset = L3SummarizerDataset(
+                self.config.train_data_path,
                 self.config.max_seq_len,
             )
+            val_dataset = None
+            if Path(self.config.val_data_path).exists():
+                val_dataset = L3SummarizerDataset(
+                    self.config.val_data_path,
+                    self.config.max_seq_len,
+                )
 
         return train_dataset, val_dataset
 

@@ -234,11 +234,12 @@ class MemoryAgent:
         # 准备最近的对话历史 (不超过 max_history_turns)
         recent_history = self._conversation_history[-self.config.max_history_turns:]
 
-        # 调用 TurnProcessor
+        # 调用 TurnProcessor (传入完整历史用于全量搜索)
         result = self.turn_processor.process_turn(
             user_message=user_message,
             turn_id=turn_id,
             conversation_history=recent_history,
+            full_conversation_history=list(self._conversation_history),
             system_prompt=self.config.system_prompt,
         )
 
@@ -262,6 +263,7 @@ class MemoryAgent:
             user_message=user_message,
             turn_id=turn_id,
             conversation_history=recent_history,
+            full_conversation_history=list(self._conversation_history),
             system_prompt=self.config.system_prompt,
         )
 

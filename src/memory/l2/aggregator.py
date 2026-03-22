@@ -61,7 +61,8 @@ class RuleBasedAggregator(AggregatorBackend):
 
     # 任务相关的模式
     TASK_PATTERNS = [
-        r"(?:help me|please|could you|can you|帮我|请|能否)\s*([^。.！？\n]{2,60})",
+        # 排除 "帮我记一下" 等记忆请求，避免丢失前面的事实内容
+        r"(?:help me|please|could you|can you|帮我|请|能否)\s*(?!记一下|记住|记下)([^。.！？\n]{2,60})",
         r"(?:I need to|I want to|我需要|我想要|目标是)\s*([^。.！？\n]{2,60})",
     ]
 
@@ -76,12 +77,18 @@ class RuleBasedAggregator(AggregatorBackend):
     FACT_PATTERNS = [
         # "X是Y" / "X变成Y" / "X现在变成Y了"
         r"([\u4e00-\u9fffA-Za-z_]{2,20})(?:是|变成了?|改为|更新为|现在(?:变成了?|是))([^。.！？\n]{1,50})",
-        # "告诉你一下，X是Y"
+        # "告诉你一下，X是Y" / "顺便说一下，X是Y"
         r"(?:告诉你|顺便说|说一下|记一下)[，,]\s*([^。.！？\n]{3,80})",
         # "我的项目叫X" / "我在XX工作"
         r"我(?:的)?(?:项目|工作|城市|编辑器)(?:叫|是|在|用)\s*([^。.！？\n]{1,50})",
         # "更新一下，X现在是Y"
         r"(?:更新一下|纠正一下|修改一下)[，,]\s*([^。.！？\n]{3,80})",
+        # "对了，X...，帮我记一下" — long_range_access 句式
+        r"对了[，,]\s*([^。.！？\n]{3,80})[，,]\s*帮我记一下",
+        # "X...帮我记一下" / "X...帮我记住" — 通用记忆请求前的事实
+        r"([^。.！？\n]{3,80})[，,]\s*(?:帮我记一下|帮我记住|记一下|记住这个)",
+        # "X的Y是Z" — 更宽泛的属性声明 (如 "张教授的研究方向是量子计算")
+        r"([\u4e00-\u9fffA-Za-z_]{2,15})(?:的)([\u4e00-\u9fffA-Za-z_]{2,10})(?:是|为)([^。.！？\n,，]{1,30})",
     ]
 
     # 无效化/过期模式
@@ -190,15 +197,26 @@ class RuleBasedAggregator(AggregatorBackend):
     def _extract_facts(self, text: str, turn_id: str) -> list[L2MemoryObject]:
         """从消息中提取事实声明 (如 'X是Y')。"""
         objects = []
+        seen_texts: set[str] = set()  # 去重
         for pattern in self.FACT_PATTERNS:
             matches = re.findall(pattern, text, re.IGNORECASE)
             for match in matches:
                 if isinstance(match, tuple):
-                    match_text = " ".join(m.strip() for m in match if m.strip())
+                    parts = [m.strip() for m in match if m.strip()]
+                    if len(parts) == 3:
+                        # "X的Y是Z" 模式 → 生成结构化 summary
+                        match_text = f"{parts[0]}的{parts[1]}是{parts[2]}"
+                    else:
+                        match_text = " ".join(parts)
                 else:
                     match_text = match.strip()
                 if len(match_text) < 3:
                     continue
+                # 去重：避免同一事实被多个 pattern 重复提取
+                norm = match_text.replace(" ", "")
+                if norm in seen_texts:
+                    continue
+                seen_texts.add(norm)
                 obj = L2MemoryObject(
                     object_id=self._generate_id(match_text, "entity"),
                     object_type="entity",

@@ -88,9 +88,18 @@ def build_backbone_from_config(
             "window_size": 64,
         })
 
+    # ---- 解析相对路径 (相对于项目根目录) ---- #
+    _project_root = Path(__file__).resolve().parent.parent.parent  # src/backbone/__init__.py → 项目根
+    model_path = backbone_cfg.get("model_name_or_path", "")
+    if model_path and not Path(model_path).is_absolute():
+        resolved = (_project_root / model_path).resolve()
+        if resolved.exists():
+            logger.info(f"[build_backbone] 解析相对模型路径: {model_path} → {resolved}")
+            backbone_cfg = OmegaConf.merge(backbone_cfg, {"model_name_or_path": str(resolved)})
+            model_path = str(resolved)
+
     # ---- 自动检测是否需要 debug 模式 ---- #
     if not backbone_cfg.get("debug", False):
-        model_path = backbone_cfg.get("model_name_or_path", "")
         if model_path and not Path(model_path).exists():
             logger.warning(
                 f"[build_backbone] 模型路径不存在: {model_path}，"

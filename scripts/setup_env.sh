@@ -25,7 +25,7 @@ fail()  { echo -e "${RED}[FAIL]${NC} $*"; }
 ENV_NAME="mom"
 PYTHON_VERSION="3.11"
 PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-MODEL_PATH="/apdcephfs/pig_data/Adaptive-Sparse-Trainer/models/Qwen--Qwen3-1.7b"
+MODEL_PATH="$(cd "${PROJECT_ROOT}/../models/Qwen--Qwen3-1.7b" 2>/dev/null && pwd || echo "${PROJECT_ROOT}/../models/Qwen--Qwen3-1.7b")"
 
 echo ""
 echo "============================================================"
@@ -179,7 +179,7 @@ print(f'  CUDA 版本: {torch.version.cuda}')
 print(f'  GPU 数量: {torch.cuda.device_count()}')
 for i in range(torch.cuda.device_count()):
     name = torch.cuda.get_device_name(i)
-    mem_gb = torch.cuda.get_device_properties(i).total_mem / 1024**3
+    mem_gb = torch.cuda.get_device_properties(i).total_memory / 1024**3
     print(f'  GPU {i}: {name} ({mem_gb:.1f} GB)')
 "
 else
