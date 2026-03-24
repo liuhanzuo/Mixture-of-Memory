@@ -150,6 +150,11 @@ class ContextSelector(nn.Module):
         else:
             features = torch.cat([q_expanded, memory_embs], dim=-1)  # (B, K, 2D)
 
+        # 统一 dtype: embedding 可能是 bf16, 而 MLP 参数是 float32
+        # 将输入转为 MLP 参数的 dtype
+        scorer_dtype = next(self.scorer.parameters()).dtype
+        features = features.to(dtype=scorer_dtype)
+
         # 通过 MLP scorer
         scores = self.scorer(features).squeeze(-1)  # (B, K)
 

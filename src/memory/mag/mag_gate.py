@@ -111,7 +111,10 @@ class _MAGCrossAttnBlock(nn.Module):
         memory_vectors: torch.Tensor,
         memory_mask: torch.Tensor | None = None,
         selection_weights: torch.Tensor | None = None,
-    ) -> torch.Tensor:
+        return_gate: bool = False,
+        detach_value: bool = False,
+        gate_scale: float = 1.0,
+    ) -> torch.Tensor | tuple[torch.Tensor, torch.Tensor]:
         """MAG 注入: CrossAttn + Gate + Residual。
 
         Args:
@@ -120,9 +123,19 @@ class _MAGCrossAttnBlock(nn.Module):
             memory_mask: (B, K) 记忆 mask (1=有效, 0=padding).
             selection_weights: (B, K) Context Selector 的选择权重, ∈ [0, 1].
                               如果提供, 会与 attention weights 相乘实现 soft selection.
+            return_gate: 是否同时返回 gate 激活值 (用于 gate regularization).
+            detach_value: 是否对 V 分支做 stop-gradient, 防止 lm_loss 梯度
+                         通过 V 直接优化"从记忆中抄答案"的路径。
+                         启用后, Q/K 仍有梯度 (学习"去哪查"), 但 V 无梯度
+                         (不学习"抄什么"), 从根源上解决 teacher forcing 泄露。
+            gate_scale: 推理时残差增量缩放因子 (0~1, 默认 1.0 即不缩放).
+                       用于推理阶段降低记忆注入强度, 防止自回归生成时
+                       hidden state 偏移累积导致重复/乱码。
+                       公式: h' = h + gate_scale * (g ⊙ W_o m_agg)
 
         Returns:
             output: (B, T, D) 融合记忆后的隐藏状态.
+            gate (可选): (B, T, D) sigmoid gate 激活值, 仅在 return_gate=True 时返回.
         """
         B, T, D = hidden_states.shape
         K = memory_vectors.shape[1]
@@ -130,13 +143,22 @@ class _MAGCrossAttnBlock(nn.Module):
         if K == 0:
             return hidden_states
 
+        # 统一 dtype: hidden_states 可能是 bf16, 而 proj 权重是 fp32 (或反之)
+        param_dtype = self.q_proj.weight.dtype
+        hidden_states = hidden_states.to(dtype=param_dtype)
+        memory_vectors = memory_vectors.to(dtype=param_dtype)
+
         # ---- Cross Attention ---- #
         # Q: (B, T, D) → (B, n_heads, T, head_dim)
         Q = self.q_proj(hidden_states).view(B, T, self.n_heads, self.head_dim).transpose(1, 2)
         # K: (B, K, D) → (B, n_heads, K, head_dim)
         K_mem = self.k_proj(memory_vectors).view(B, K, self.n_heads, self.head_dim).transpose(1, 2)
         # V: (B, K, D) → (B, n_heads, K, head_dim)
-        V_mem = self.v_proj(memory_vectors).view(B, K, self.n_heads, self.head_dim).transpose(1, 2)
+        # 如果 detach_value=True, 对 V 做 stop-gradient:
+        #   Q/K 仍有梯度 → gate 学习"关注哪些记忆"
+        #   V 无梯度 → 阻止 lm_loss 驱动 CrossAttn 学习"从 V 中精准复制答案"
+        v_input = memory_vectors.detach() if detach_value else memory_vectors
+        V_mem = self.v_proj(v_input).view(B, K, self.n_heads, self.head_dim).transpose(1, 2)
 
         # Attention scores: (B, n_heads, T, K)
         attn_weights = torch.matmul(Q, K_mem.transpose(-2, -1)) / self._scale
@@ -154,7 +176,7 @@ class _MAGCrossAttnBlock(nn.Module):
         # 实现 soft gating: 被 selector 判断为无用的记忆, attention 权重被压低
         if selection_weights is not None:
             # (B, K) → (B, 1, 1, K)
-            sel_w = selection_weights.unsqueeze(1).unsqueeze(2)
+            sel_w = selection_weights.unsqueeze(1).unsqueeze(2).to(dtype=attn_weights.dtype)
             attn_weights = attn_weights * sel_w
 
         # Attention output: (B, n_heads, T, head_dim)
@@ -176,8 +198,13 @@ class _MAGCrossAttnBlock(nn.Module):
 
         # ---- Residual ---- #
         m_agg = self.output_dropout(m_agg)
-        output = hidden_states + gate * m_agg  # (B, T, D)
+        residual = gate * m_agg
+        if gate_scale != 1.0:
+            residual = residual * gate_scale
+        output = hidden_states + residual  # (B, T, D)
 
+        if return_gate:
+            return output, gate
         return output
 
 
@@ -271,7 +298,10 @@ class MAGGate(nn.Module):
         memory_vectors: torch.Tensor,
         memory_mask: torch.Tensor | None = None,
         selection_weights: torch.Tensor | None = None,
-    ) -> torch.Tensor:
+        return_gate: bool = False,
+        detach_value: bool = False,
+        gate_scale: float = 1.0,
+    ) -> torch.Tensor | tuple[torch.Tensor, torch.Tensor | None]:
         """在指定层注入 MAG 记忆。
 
         如果该层不在 injection_layers 中, 直接返回原始 hidden_states。
@@ -282,14 +312,23 @@ class MAGGate(nn.Module):
             memory_vectors: (B, K, D) 编码后的记忆向量.
             memory_mask: (B, K) 记忆有效性 mask.
             selection_weights: (B, K) Context Selector 选择权重.
+            return_gate: 是否同时返回 gate 激活值.
+            detach_value: 是否对 V 分支做 stop-gradient (透传到 _MAGCrossAttnBlock).
+            gate_scale: 推理时残差增量缩放因子 (0~1, 默认 1.0).
+                       直接缩放 gate * m_agg, 从根源上控制注入强度。
 
         Returns:
             output: (B, T, D) 可能注入记忆后的隐藏状态.
+            gate (可选): gate 激活值, 仅在 return_gate=True 时返回.
         """
         if not self.should_inject(layer_idx):
+            if return_gate:
+                return hidden_states, None
             return hidden_states
 
         if memory_vectors.shape[1] == 0:
+            if return_gate:
+                return hidden_states, None
             return hidden_states
 
         # 选择对应的注入块
@@ -304,14 +343,31 @@ class MAGGate(nn.Module):
                 return hidden_states
             block = self._layer_blocks[block_key]
 
-        output = block(
+        # 保存原始 dtype (block 内部可能转成 float32 计算)
+        original_dtype = hidden_states.dtype
+
+        result = block(
             hidden_states=hidden_states,
             memory_vectors=memory_vectors,
             memory_mask=memory_mask,
             selection_weights=selection_weights,
+            return_gate=return_gate,
+            detach_value=detach_value,
+            gate_scale=gate_scale,
         )
 
+        if return_gate:
+            output, gate_val = result
+        else:
+            output = result
+            gate_val = None
+
+        # 转回原始 dtype, 确保与 backbone 后续层兼容
+        output = output.to(dtype=original_dtype)
+
         self._inject_count += 1
+        if return_gate:
+            return output, gate_val
         return output
 
     def inject_into_all_hidden_states(

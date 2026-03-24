@@ -36,11 +36,14 @@ class MemoryEncoderConfig:
         projection_dim: 如果 > 0, 则在 embedding 后加一个线性投影.
                         设为 0 则直接使用 embedding 维度 (= hidden_dim).
         dropout: 编码后的 dropout 比例.
+        deep_encode_layers: 深层编码使用的 backbone 层数 (0=禁用, 仅用 embedding).
+                            推荐设为 backbone 总层数的 1/4 ~ 1/3, 如 Qwen3-8B (36层) 设 8~12.
     """
     max_memory_tokens: int = 64
     pooling: str = "mean"
     projection_dim: int = 0
     dropout: float = 0.0
+    deep_encode_layers: int = 0  # 0=使用原始 embedding mean pooling
 
 
 class MemoryEncoder(nn.Module):
@@ -78,6 +81,11 @@ class MemoryEncoder(nn.Module):
         self._hidden_dim: int = 0
         self._device: torch.device = torch.device("cpu")
         self._dtype: torch.dtype = torch.float32
+
+        # 深层编码所需的 backbone 组件 (在 set_backbone 中初始化)
+        self._backbone_layers: nn.ModuleList | None = None
+        self._backbone_norm: nn.Module | None = None  # 用于 deep encode 后的 RMSNorm
+        self._rotary_emb: Any = None  # rotary position embedding
 
         # 可选的投影层
         self._projection: nn.Linear | None = None
@@ -133,11 +141,46 @@ class MemoryEncoder(nn.Module):
                 self._hidden_dim, self.config.projection_dim, bias=False
             ).to(device=self._device, dtype=self._dtype)
 
+        # 深层编码: 保存 backbone layers 和 rotary_emb 的引用
+        if self.config.deep_encode_layers > 0:
+            self._setup_deep_encoding(backbone_model)
+
         logger.info(
             f"[MemoryEncoder] 绑定 backbone: hidden_dim={self._hidden_dim}, "
             f"output_dim={self.output_dim}, pooling={self.config.pooling}, "
             f"max_tokens={self.config.max_memory_tokens}"
+            + (f", deep_layers={self.config.deep_encode_layers}" if self.config.deep_encode_layers > 0 else "")
         )
+
+    def _setup_deep_encoding(self, backbone_model: nn.Module) -> None:
+        """从 backbone 提取 transformer layers 和 rotary_emb 的引用 (不复制参数)。"""
+        # HuggingFace CausalLM: model.model.layers, model.model.rotary_emb
+        if hasattr(backbone_model, "model") and hasattr(backbone_model.model, "layers"):
+            self._backbone_layers = backbone_model.model.layers
+            if hasattr(backbone_model.model, "rotary_emb"):
+                self._rotary_emb = backbone_model.model.rotary_emb
+            # 尝试获取 norm (用于对 deep encoding 的输出做归一化)
+            if hasattr(backbone_model.model, "norm"):
+                self._backbone_norm = backbone_model.model.norm
+            num_available = len(self._backbone_layers)
+            actual_layers = min(self.config.deep_encode_layers, num_available)
+            if actual_layers != self.config.deep_encode_layers:
+                logger.warning(
+                    f"[MemoryEncoder] deep_encode_layers={self.config.deep_encode_layers} "
+                    f"> backbone 层数 {num_available}, 实际使用 {actual_layers} 层"
+                )
+                self.config.deep_encode_layers = actual_layers
+            logger.info(
+                f"[MemoryEncoder] 深层编码已启用: 使用 backbone 前 {actual_layers} 层 "
+                f"(共 {num_available} 层)"
+            )
+        # Debug 模型: model.layers
+        elif hasattr(backbone_model, "layers"):
+            self._backbone_layers = backbone_model.layers
+            logger.info(f"[MemoryEncoder] 深层编码已启用 (Debug 模型)")
+        else:
+            logger.warning("[MemoryEncoder] 未找到 backbone layers, 深层编码不可用, 退回 embedding 模式")
+            self.config.deep_encode_layers = 0
 
     def _extract_embedding(self, model: nn.Module) -> nn.Embedding | None:
         """从 HuggingFace 模型或 Debug 模型中提取 embedding 层。"""
@@ -241,6 +284,122 @@ class MemoryEncoder(nn.Module):
                 pooled = embeddings[:, -1]
         elif self.config.pooling == "first":
             pooled = embeddings[:, 0]
+        else:
+            raise ValueError(f"未知的 pooling 策略: {self.config.pooling}")
+
+        # (可选) 投影
+        if self._projection is not None:
+            pooled = self._projection(pooled)
+
+        # (可选) Dropout
+        if self._dropout is not None:
+            pooled = self._dropout(pooled)
+
+        return pooled  # (B, output_dim)
+
+    def encode_texts_deep(self, texts: list[str]) -> torch.Tensor:
+        """用 backbone 前 N 层 Transformer 对记忆文本做深层编码。
+
+        与 encode_texts (仅 embedding mean pooling) 不同, 此方法将文本
+        过 backbone 的前 deep_encode_layers 层, 得到携带上下文语义的
+        hidden states, 再做 mean pooling。
+
+        这样得到的记忆向量语义质量远高于纯 embedding 平均, 能让
+        ContextSelector 有效区分相关/不相关记忆, 也让 CrossAttention
+        的 K/V 携带真正有意义的信息。
+
+        注意: 此方法始终在 no_grad 下运行, 不影响 backbone 参数。
+              如果 deep_encode_layers=0 或 backbone layers 不可用,
+              自动 fallback 到 encode_texts。
+
+        Args:
+            texts: 文本列表.
+
+        Returns:
+            memory_vectors: (num_texts, output_dim) 深层语义向量.
+        """
+        # Fallback: 没有配置深层编码或 backbone layers 不可用
+        if self.config.deep_encode_layers <= 0 or self._backbone_layers is None:
+            return self.encode_texts(texts)
+
+        if not texts:
+            return torch.zeros(0, self.output_dim, device=self._device, dtype=self._dtype)
+
+        if self._embedding is None or self._tokenizer is None:
+            logger.warning("[MemoryEncoder] 未初始化，返回零向量")
+            return torch.zeros(
+                len(texts), self.output_dim, device=self._device, dtype=self._dtype
+            )
+
+        # Tokenize
+        encoded = self._tokenizer(
+            texts,
+            padding=True,
+            truncation=True,
+            max_length=self.config.max_memory_tokens,
+            return_tensors="pt",
+        )
+        input_ids = encoded["input_ids"].to(self._device)
+        attention_mask = encoded.get("attention_mask")
+        if attention_mask is not None:
+            attention_mask = attention_mask.to(self._device)
+
+        with torch.no_grad():
+            # Step 1: Embedding
+            h = self._embedding(input_ids)  # (B, T, D)
+
+            B, T, D = h.shape
+
+            # Step 2: 计算 position embeddings (rotary)
+            position_ids = torch.arange(T, device=self._device).unsqueeze(0).expand(B, -1)
+            position_embeddings = None
+            if self._rotary_emb is not None:
+                position_embeddings = self._rotary_emb(h, position_ids)
+
+            # 构造 layer kwargs
+            # causal_mask 对于 encoder 场景不需要 (记忆编码不需要因果性),
+            # 但 HF DecoderLayer 默认需要 attention_mask, 这里传入全 1
+            layer_kwargs = {}
+            if attention_mask is not None:
+                # HF 的 attention_mask 格式: (B, T) 的 bool/int
+                # 部分 HF 版本需要 4D mask, 部分需要 2D, 这里传 4D 以兼容
+                # 转换为 (B, 1, T, T) 的 causal mask
+                attn_mask_4d = attention_mask[:, None, None, :].expand(B, 1, T, T).to(h.dtype)
+                # 将 padding 位置设为极大负数
+                attn_mask_4d = (1.0 - attn_mask_4d) * torch.finfo(h.dtype).min
+                layer_kwargs["attention_mask"] = attn_mask_4d
+
+            if position_embeddings is not None:
+                layer_kwargs["position_embeddings"] = position_embeddings
+            else:
+                layer_kwargs["position_ids"] = position_ids
+
+            # Step 3: 过前 N 层 Transformer
+            num_layers = self.config.deep_encode_layers
+            for layer_idx in range(num_layers):
+                layer_output = self._backbone_layers[layer_idx](h, **layer_kwargs)
+                h = layer_output[0] if isinstance(layer_output, tuple) else layer_output
+
+            # Step 4: (可选) 对最后一层输出做 RMSNorm
+            # 只有使用了全部层才需要 final norm; 使用部分层时, 中间层的输出
+            # 分布和 final norm 前的分布一致, 直接 pooling 即可
+            # 这里不做 norm, 保持和 backbone 中间层 hidden states 一致
+
+        # Step 5: Pooling
+        if self.config.pooling == "mean":
+            if attention_mask is not None:
+                mask = attention_mask.unsqueeze(-1).to(h.dtype)  # (B, T, 1)
+                pooled = (h * mask).sum(dim=1) / mask.sum(dim=1).clamp(min=1e-9)
+            else:
+                pooled = h.mean(dim=1)
+        elif self.config.pooling == "last":
+            if attention_mask is not None:
+                lengths = attention_mask.sum(dim=1).long() - 1
+                pooled = h[torch.arange(h.size(0)), lengths]
+            else:
+                pooled = h[:, -1]
+        elif self.config.pooling == "first":
+            pooled = h[:, 0]
         else:
             raise ValueError(f"未知的 pooling 策略: {self.config.pooling}")
 
