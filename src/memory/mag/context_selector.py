@@ -238,6 +238,10 @@ class ContextSelector(nn.Module):
         Returns:
             total_loss: 标量 loss.
         """
+        # ★ 统一转为 float32 计算 loss (避免 bfloat16 精度不足和 dtype 混合问题)
+        predicted_scores = predicted_scores.float()
+        target_utilities = target_utilities.float()
+
         # MSE Loss: 直接拟合 utility 值
         mse_loss = F.mse_loss(
             torch.sigmoid(predicted_scores),

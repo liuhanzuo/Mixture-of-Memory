@@ -33,13 +33,8 @@ from src.memory.l3.profile_store import L3ProfileStore
 from src.memory.l3.reviser import L3Reviser
 from src.memory.state import MoMState, MoMStats
 
-try:
-    from src.memory.mag.memory_encoder import MemoryEncoder, MemoryEncoderConfig
-    from src.memory.mag.context_selector import ContextSelector, ContextSelectorConfig
-    from src.memory.mag.mag_gate import MAGGate, MAGGateConfig
-    _MAG_AVAILABLE = True
-except ImportError:
-    _MAG_AVAILABLE = False
+# MAG 导入已改为延迟导入 (在 init_mag 方法内部按需导入)
+# 避免 scheduler → mag.context_selector 的循环导入链
 
 logger = logging.getLogger(__name__)
 
@@ -461,12 +456,17 @@ class MemoryScheduler:
         Returns:
             MAGGate 实例 (供 backbone.set_mag_gate() 使用).
         """
-        if not _MAG_AVAILABLE:
-            logger.warning("MAG 模块不可用, 跳过 MAG 初始化")
-            return None
-
         if not self.config.enable_mag:
             logger.info("MAG 未启用, 跳过初始化")
+            return None
+
+        # 延迟导入 MAG 模块 (避免循环导入)
+        try:
+            from src.memory.mag.memory_encoder import MemoryEncoder, MemoryEncoderConfig
+            from src.memory.mag.context_selector import ContextSelector, ContextSelectorConfig
+            from src.memory.mag.mag_gate import MAGGate, MAGGateConfig
+        except ImportError:
+            logger.warning("MAG 模块不可用, 跳过 MAG 初始化")
             return None
 
         # 1. MemoryEncoder

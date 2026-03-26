@@ -349,6 +349,8 @@ def eval_ppl(
             prefix_len = prefix_tokens.shape[1]
 
             # ---- 有记忆 PPL ---- #
+            # 统一 dtype: prefix_tokens 可能是 float32, prompt_embeds 是 bfloat16
+            prefix_tokens = prefix_tokens.to(dtype=prompt_embeds.dtype)
             full_embeds = torch.cat([prefix_tokens, prompt_embeds], dim=1)
             total_len = full_embeds.shape[1]
             labels_with = torch.full((1, total_len), -100, dtype=torch.long, device=args.device)
@@ -496,31 +498,38 @@ def eval_generation(
             else:
                 prompt_embeds = model.get_input_embeddings()(input_ids)
 
+            # 统一 dtype: prefix_tokens 可能是 float32, prompt_embeds 是 bfloat16
+            prefix_tokens = prefix_tokens.to(dtype=prompt_embeds.dtype)
             full_embeds = torch.cat([prefix_tokens, prompt_embeds], dim=1)
             full_attn = torch.ones((1, full_embeds.shape[1]), dtype=torch.long, device=args.device)
 
             out_with_mem = model.generate(
                 inputs_embeds=full_embeds, attention_mask=full_attn, **gen_kwargs
             )
-            # generate 输出包含 full_embeds 对应的 token, 截取新生成的部分
-            text_with_mem = tokenizer.decode(out_with_mem[0][full_embeds.shape[1]:], skip_special_tokens=True)
+            # generate 输出截取新生成的部分
+            # 注意: 使用 inputs_embeds 时, 某些 HF 版本的 generate 输出
+            # 可能不包含 prefix 对应的 token, 需要做长度判断
+            gen_ids = out_with_mem[0]
+            if gen_ids.shape[0] > full_embeds.shape[1]:
+                gen_ids = gen_ids[full_embeds.shape[1]:]
+            text_with_mem = tokenizer.decode(gen_ids, skip_special_tokens=True)
 
         logger.info(f"  生成 (无记忆):  {text_no_mem[:200]}...")
         logger.info(f"  生成 (有记忆): {text_with_mem[:200]}...")
 
-        # 词重叠率
+        # 字级别重叠率 (中文没有空格分词, 改用字符级别)
         gt = sample.get("target_text", "")
         if gt:
-            gt_words = set(gt.split())
-            no_mem_words = set(text_no_mem.split())
-            with_mem_words = set(text_with_mem.split())
+            gt_chars = set(gt.replace(" ", ""))
+            no_mem_chars = set(text_no_mem.replace(" ", ""))
+            with_mem_chars = set(text_with_mem.replace(" ", ""))
 
-            ov_no = len(gt_words & no_mem_words) / max(len(gt_words), 1)
-            ov_with = len(gt_words & with_mem_words) / max(len(gt_words), 1)
+            ov_no = len(gt_chars & no_mem_chars) / max(len(gt_chars), 1)
+            ov_with = len(gt_chars & with_mem_chars) / max(len(gt_chars), 1)
             overlap_without.append(ov_no)
             overlap_with.append(ov_with)
-            logger.info(f"  词重叠 (无记忆 vs GT): {ov_no:.4f}")
-            logger.info(f"  词重叠 (有记忆 vs GT): {ov_with:.4f}")
+            logger.info(f"  字重叠 (无记忆 vs GT): {ov_no:.4f}")
+            logger.info(f"  字重叠 (有记忆 vs GT): {ov_with:.4f}")
 
         # 差异判断
         is_diff = text_no_mem.strip() != text_with_mem.strip()
@@ -530,8 +539,8 @@ def eval_generation(
     logger.info(f"\n  生成结果汇总:")
     logger.info(f"  两种生成有差异的比例: {diff_count / max(num_samples, 1) * 100:.1f}%")
     if overlap_without:
-        logger.info(f"  平均词重叠 (无记忆): {np.mean(overlap_without):.4f}")
-        logger.info(f"  平均词重叠 (有记忆): {np.mean(overlap_with):.4f}")
+        logger.info(f"  平均字重叠 (无记忆): {np.mean(overlap_without):.4f}")
+        logger.info(f"  平均字重叠 (有记忆): {np.mean(overlap_with):.4f}")
 
     return {
         "diff_ratio": diff_count / max(num_samples, 1),

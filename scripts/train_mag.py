@@ -62,6 +62,7 @@ sys.path.insert(0, str(_project_root))
 from src.memory.mag.memory_encoder import MemoryEncoder, MemoryEncoderConfig
 from src.memory.mag.context_selector import ContextSelector, ContextSelectorConfig
 from src.memory.mag.mag_gate import MAGGate, MAGGateConfig
+from src.memory.mag.compressed_memory import CompressedMemoryCache, CompressedMemoryConfig
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(levelname)s: %(message)s")
 logger = logging.getLogger("train_mag")
@@ -245,6 +246,19 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--num_hard_negatives", type=int, default=3,
                         help="每个样本的硬负例数 (来自同一 session 的非相关轮)")
     parser.add_argument("--seed", type=int, default=42)
+
+    # ★ SVD 压缩记忆配置
+    parser.add_argument("--use_compressed_memory", action="store_true", default=False,
+                        help="启用 SVD 压缩记忆 (替代 pooled memory vectors). "
+                             "记忆编码流程: encode_texts_deep_unpooled → SVD 压缩 → 虚拟 KV pairs → MAGGate 注入")
+    parser.add_argument("--svd_rank", type=int, default=8,
+                        help="SVD 保留的秩 (每个 chunk 压缩为 rank 个虚拟 token, 推荐 4~16)")
+    parser.add_argument("--svd_chunk_size", type=int, default=0,
+                        help="SVD 压缩的 chunk 大小 (0=整条记忆作为一个 chunk)")
+    parser.add_argument("--svd_normalize", action="store_true", default=True,
+                        help="是否对虚拟 KV pairs 做 L2 归一化")
+    parser.add_argument("--no_svd_normalize", action="store_true", default=False,
+                        help="禁用 SVD 归一化")
 
     return parser.parse_args()
 
@@ -1193,6 +1207,7 @@ def train_phase2_joint(
     args: argparse.Namespace,
     rank: int = 0,
     world_size: int = 1,
+    compressed_cache: CompressedMemoryCache | None = None,
 ) -> None:
     """Phase 2: 联合训练 Selector + MAGGate (端到端 LM loss)。
 
@@ -1235,6 +1250,10 @@ def train_phase2_joint(
             f"backbone 共 {num_backbone_layers} 层, "
             f"从第 {first_injection_layer} 层开始带梯度 forward"
         )
+        if compressed_cache is not None:
+            logger.info(f"★ 记忆模式: SVD 压缩记忆 (rank={compressed_cache.config.rank})")
+        else:
+            logger.info(f"  记忆模式: 原始 pooled vectors")
 
     # 只训练 selector + gate 的参数
     trainable_params = list(selector.parameters()) + list(mag_gate.parameters())
@@ -1310,10 +1329,41 @@ def train_phase2_joint(
                 memory_embs = encoder.encode_texts_deep(sample["memory_texts"])  # (K, D)
                 memory_embs = memory_embs.unsqueeze(0)  # (1, K, D)
 
+                # ★ SVD 压缩记忆: 获取 unpooled hidden states → SVD 压缩 → 虚拟 tokens
+                memory_vectors_for_inject = memory_embs  # 默认: pooled vectors
+                memory_mask_for_inject = None
+                if compressed_cache is not None:
+                    # 获取 unpooled hidden states (所有记忆拼接)
+                    unpooled_hs, unpooled_mask = encoder.encode_texts_deep_unpooled(
+                        sample["memory_texts"]
+                    )  # (K, T, D), (K, T)
+                    # 拼接所有记忆的 hidden states 为一个序列
+                    K_mem, T_mem, D_mem = unpooled_hs.shape
+                    unpooled_hs_flat = unpooled_hs.view(1, K_mem * T_mem, D_mem)  # (1, K*T, D)
+                    if unpooled_mask is not None:
+                        unpooled_mask_flat = unpooled_mask.view(1, K_mem * T_mem)  # (1, K*T)
+                    else:
+                        unpooled_mask_flat = None
+                    # SVD 压缩
+                    compressed_cache.compress_and_store(
+                        unpooled_hs_flat, attention_mask=unpooled_mask_flat
+                    )
+                    # 获取虚拟 tokens 作为 memory vectors
+                    mem_result = compressed_cache.get_virtual_tokens_as_memory()
+                    if mem_result is not None:
+                        memory_vectors_for_inject, memory_mask_for_inject = mem_result
+                        # memory_mask 转为 bool
+                        if memory_mask_for_inject is not None:
+                            memory_mask_for_inject = memory_mask_for_inject.bool()
+
             # ★ 关键: selection_weights 需要有梯度 (通过 selector 参数)
+            # 注意: selector 仍然用 pooled memory_embs 打分 (语义级别选择)
             selection_weights = selector_module.soft_select(
                 query_emb.detach(), memory_embs.detach()
             )  # (1, K), 有梯度通过 selector 参数
+            # 如果使用 SVD 压缩记忆, selection_weights 不直接用于 inject
+            # (因为虚拟 tokens 数量 != K), 改为 None
+            selection_weights_for_inject = selection_weights if compressed_cache is None else None
 
             # ---- Tokenize: 构造 [query | target] 序列 ---- #
             # Phase 2 的关键改进: 如果有 target_text (assistant 回复), 则:
@@ -1453,10 +1503,12 @@ def train_phase2_joint(
 
                 # ★ MAG 注入 (返回 gate 激活值用于 regularization)
                 # detach_value=True: V 分支不回传梯度, 阻止 lm_loss 驱动"抄答案"
+                # 如果启用 SVD 压缩记忆, memory_vectors_for_inject 是虚拟 tokens
                 if layer_idx in mag_gate_module.injection_layers:
                     h, gate_val = mag_gate_module.inject(
-                        layer_idx, h, memory_embs.detach(),
-                        selection_weights=selection_weights,
+                        layer_idx, h, memory_vectors_for_inject.detach(),
+                        memory_mask=memory_mask_for_inject,
+                        selection_weights=selection_weights_for_inject,
                         return_gate=True,
                         detach_value=use_detach_value,
                     )
@@ -1723,6 +1775,22 @@ def main() -> None:
     )
     mag_gate = MAGGate(gate_cfg).to(args.device)
 
+    # 5. (可选) 初始化 CompressedMemoryCache (SVD 压缩记忆)
+    compressed_cache = None
+    if args.use_compressed_memory:
+        svd_normalize = args.svd_normalize and not args.no_svd_normalize
+        cm_cfg = CompressedMemoryConfig(
+            hidden_dim=hidden_dim,
+            num_heads=args.mag_num_heads,
+            rank=args.svd_rank,
+            chunk_size=args.svd_chunk_size,
+            normalize=svd_normalize,
+        )
+        compressed_cache = CompressedMemoryCache(cm_cfg).to(args.device)
+        if is_main_process(rank):
+            logger.info(f"★ SVD 压缩记忆已启用: rank={args.svd_rank}, "
+                        f"chunk_size={args.svd_chunk_size}, normalize={svd_normalize}")
+
     # ====== DDP 包装可训练模块 ======
     # 注意: backbone 冻结不做 DDP, 只包装 selector 和 mag_gate
     if world_size > 1:
@@ -1782,6 +1850,7 @@ def main() -> None:
     train_phase2_joint(
         model, tokenizer, encoder, selector, mag_gate, train_data, args,
         rank=rank, world_size=world_size,
+        compressed_cache=compressed_cache,
     )
     dist_barrier()
 
@@ -1810,6 +1879,11 @@ def main() -> None:
             "total_trainable_params": total_trainable,
             "training_time_s": total_time,
             "world_size": world_size,
+            # SVD 压缩记忆配置
+            "use_compressed_memory": args.use_compressed_memory,
+            "svd_rank": args.svd_rank if args.use_compressed_memory else None,
+            "svd_chunk_size": args.svd_chunk_size if args.use_compressed_memory else None,
+            "svd_normalize": (args.svd_normalize and not args.no_svd_normalize) if args.use_compressed_memory else None,
         }
         with open(save_path / "mag_config.json", "w") as f:
             json.dump(config_info, f, indent=2, ensure_ascii=False)

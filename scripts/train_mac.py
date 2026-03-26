@@ -52,9 +52,35 @@ from torch.utils.data import DataLoader, Dataset, DistributedSampler
 _project_root = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(_project_root))
 
-from src.memory.mag.memory_encoder import MemoryEncoder, MemoryEncoderConfig
-from src.memory.mag.context_selector import ContextSelector, ContextSelectorConfig
-from src.memory.mag.prefix_projector import PrefixProjector, PrefixProjectorConfig
+# 延迟导入 MAG 子模块 (避免 mag → memory → scheduler → mag 循环导入链)
+# 实际导入在 _lazy_import_mag() 中按需触发
+MemoryEncoder = None
+MemoryEncoderConfig = None
+ContextSelector = None
+ContextSelectorConfig = None
+PrefixProjector = None
+PrefixProjectorConfig = None
+
+
+def _lazy_import_mag():
+    """延迟导入 MAG 子模块, 避免模块加载时的循环导入。"""
+    global MemoryEncoder, MemoryEncoderConfig
+    global ContextSelector, ContextSelectorConfig
+    global PrefixProjector, PrefixProjectorConfig
+
+    if MemoryEncoder is None:
+        from src.memory.mag.memory_encoder import MemoryEncoder as _ME, MemoryEncoderConfig as _MEC
+        MemoryEncoder = _ME
+        MemoryEncoderConfig = _MEC
+    if ContextSelector is None:
+        from src.memory.mag.context_selector import ContextSelector as _CS, ContextSelectorConfig as _CSC
+        ContextSelector = _CS
+        ContextSelectorConfig = _CSC
+    if PrefixProjector is None:
+        from src.memory.mag.prefix_projector import PrefixProjector as _PP, PrefixProjectorConfig as _PPC
+        PrefixProjector = _PP
+        PrefixProjectorConfig = _PPC
+
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(levelname)s: %(message)s")
 logger = logging.getLogger("train_mac")
@@ -129,7 +155,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu")
 
     # MAC 架构配置
-    parser.add_argument("--tokens_per_memory", type=int, default=4,
+    parser.add_argument("--tokens_per_memory", type=int, default=8,
                         help="每条记忆映射为多少个 soft token (推荐 2~8)")
     parser.add_argument("--projector_layers", type=int, default=2,
                         help="PrefixProjector MLP 层数")
@@ -156,7 +182,7 @@ def parse_args() -> argparse.Namespace:
 
     # 训练配置
     parser.add_argument("--output_dir", type=str, default="outputs/mac_trained")
-    parser.add_argument("--num_epochs", type=int, default=3)
+    parser.add_argument("--num_epochs", type=int, default=8)
     parser.add_argument("--batch_size", type=int, default=4)
     parser.add_argument("--lr", type=float, default=1e-4, help="学习率")
     parser.add_argument("--weight_decay", type=float, default=0.01)
@@ -347,9 +373,9 @@ def train_phase1_selector(
         # Selector 打分 (有梯度)
         scores = selector_module(query_emb.detach(), memory_embs.detach())
 
-        # 构造 target
+        # 构造 target (dtype 必须与 scores 一致)
         K = len(sample["memory_texts"])
-        target = torch.zeros(1, K, device=scores.device)
+        target = torch.zeros(1, K, device=scores.device, dtype=scores.dtype)
         for idx in sample["relevant_indices"]:
             if idx < K:
                 target[0, idx] = 1.0
@@ -506,6 +532,10 @@ def train_phase2_joint(
             # ★ 核心: 拼接 [prefix_tokens | prompt_embeds]
             # prefix_tokens 有梯度 → 梯度流回 PrefixProjector + Selector
             # prompt_embeds 无梯度 → backbone embedding 不被修改
+            # 确保 dtype 与 backbone 一致 (prefix 可能是 float32, backbone 是 bfloat16)
+            backbone_dt = prompt_embeds.dtype
+            if prefix_tokens.dtype != backbone_dt:
+                prefix_tokens = prefix_tokens.to(dtype=backbone_dt)
             full_embeds = torch.cat([prefix_tokens, prompt_embeds], dim=1)  # (1, P+T, D)
 
             prefix_len = prefix_tokens.shape[1]
@@ -581,7 +611,7 @@ def train_phase2_joint(
                     if idx < K:
                         sel_target[0, idx] = 1.0
                 raw_scores = selector_module(query_emb.detach(), memory_embs.detach())
-                aux_loss = F.binary_cross_entropy_with_logits(raw_scores, sel_target)
+                aux_loss = F.binary_cross_entropy_with_logits(raw_scores.float(), sel_target)
 
             # 总 loss
             loss = 1.0 * lm_loss + args.kl_beta * kl_loss + 0.1 * aux_loss
@@ -654,6 +684,9 @@ def train_phase2_joint(
 # ======================================================================
 
 def main() -> None:
+    # 延迟导入 MAG 子模块 (避免循环导入)
+    _lazy_import_mag()
+
     args = parse_args()
     torch.manual_seed(args.seed)
 
@@ -710,7 +743,8 @@ def main() -> None:
         hidden_dim=args.selector_hidden_dim,
         top_k=args.selector_top_k,
     )
-    selector = ContextSelector(sel_cfg).to(args.device)
+    backbone_dtype = getattr(torch, args.dtype, torch.float32)
+    selector = ContextSelector(sel_cfg).to(device=args.device, dtype=backbone_dtype)
 
     # 可选: 从 MAG 训练中加载预训练的 selector 权重
     if args.pretrained_selector and Path(args.pretrained_selector).exists():
@@ -730,7 +764,7 @@ def main() -> None:
         use_gating=use_gating,
         init_scale=args.projector_init_scale,
     )
-    projector = PrefixProjector(proj_cfg).to(args.device)
+    projector = PrefixProjector(proj_cfg).to(device=args.device, dtype=backbone_dtype)
 
     # DDP 包装
     if world_size > 1:

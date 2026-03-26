@@ -39,6 +39,10 @@ fail()  { echo -e "${RED}[FAIL]${NC} $*"; exit 1; }
 PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 export PYTHONPATH="${PROJECT_ROOT}:${PYTHONPATH:-}"
 
+# ---- 清理旧字节码缓存 (防止循环导入等问题) ---- #
+find "${PROJECT_ROOT}" -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
+find "${PROJECT_ROOT}" -name "*.pyc" -delete 2>/dev/null || true
+
 # ---- 模型路径 ---- #
 MODEL_PATH="${MODEL_PATH:-${PROJECT_ROOT}/../models/Qwen--Qwen3-8b}"
 
@@ -148,7 +152,8 @@ fi
 # ============================================================
 export NCCL_IB_DISABLE="${NCCL_IB_DISABLE:-0}"
 export NCCL_DEBUG="${NCCL_DEBUG:-WARN}"
-export NCCL_SOCKET_IFNAME="${NCCL_SOCKET_IFNAME:-eth0}"
+export NCCL_SOCKET_IFNAME=bond1
+export GLOO_SOCKET_IFNAME=${GLOO_SOCKET_IFNAME:-bond1}
 export NCCL_BLOCKING_WAIT="${NCCL_BLOCKING_WAIT:-1}"
 export TORCH_NCCL_BLOCKING_WAIT="${TORCH_NCCL_BLOCKING_WAIT:-1}"
 

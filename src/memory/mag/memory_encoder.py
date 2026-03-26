@@ -413,6 +413,98 @@ class MemoryEncoder(nn.Module):
 
         return pooled  # (B, output_dim)
 
+    def encode_texts_deep_unpooled(self, texts: list[str]) -> tuple[torch.Tensor, torch.Tensor | None]:
+        """用 backbone 前 N 层 Transformer 对记忆文本做深层编码, 返回未 pooled 的 hidden states。
+
+        与 encode_texts_deep 的区别: 不做 pooling, 直接返回所有 token 的 hidden states。
+        用于 CompressedMemoryCache 的 SVD 压缩 (需要完整的 token-level 信息)。
+
+        Args:
+            texts: 文本列表.
+
+        Returns:
+            (hidden_states, attention_mask):
+                hidden_states: (num_texts, max_len, hidden_dim) 深层语义 hidden states.
+                attention_mask: (num_texts, max_len) 有效性 mask (1=有效, 0=padding).
+        """
+        # Fallback: 没有配置深层编码或 backbone layers 不可用
+        if self.config.deep_encode_layers <= 0 or self._backbone_layers is None:
+            # 退回 embedding 模式
+            if not texts or self._embedding is None or self._tokenizer is None:
+                return (
+                    torch.zeros(len(texts) if texts else 0, 1, self._hidden_dim,
+                                device=self._device, dtype=self._dtype),
+                    None,
+                )
+            encoded = self._tokenizer(
+                texts, padding=True, truncation=True,
+                max_length=self.config.max_memory_tokens, return_tensors="pt",
+            )
+            input_ids = encoded["input_ids"].to(self._device)
+            attention_mask = encoded.get("attention_mask")
+            if attention_mask is not None:
+                attention_mask = attention_mask.to(self._device)
+            with torch.no_grad():
+                h = self._embedding(input_ids)
+            return h, attention_mask
+
+        if not texts:
+            return (
+                torch.zeros(0, 1, self._hidden_dim or self.output_dim,
+                            device=self._device, dtype=self._dtype),
+                None,
+            )
+
+        if self._embedding is None or self._tokenizer is None:
+            logger.warning("[MemoryEncoder] 未初始化，返回零向量")
+            return (
+                torch.zeros(len(texts), 1, self._hidden_dim or self.output_dim,
+                            device=self._device, dtype=self._dtype),
+                None,
+            )
+
+        # Tokenize
+        encoded = self._tokenizer(
+            texts, padding=True, truncation=True,
+            max_length=self.config.max_memory_tokens, return_tensors="pt",
+        )
+        input_ids = encoded["input_ids"].to(self._device)
+        attention_mask = encoded.get("attention_mask")
+        if attention_mask is not None:
+            attention_mask = attention_mask.to(self._device)
+
+        with torch.no_grad():
+            # Step 1: Embedding
+            h = self._embedding(input_ids)  # (B, T, D)
+
+            B, T, D = h.shape
+
+            # Step 2: 计算 position embeddings (rotary)
+            position_ids = torch.arange(T, device=self._device).unsqueeze(0).expand(B, -1)
+            position_embeddings = None
+            if self._rotary_emb is not None:
+                position_embeddings = self._rotary_emb(h, position_ids)
+
+            # 构造 layer kwargs
+            layer_kwargs = {}
+            if attention_mask is not None:
+                attn_mask_4d = attention_mask[:, None, None, :].expand(B, 1, T, T).to(h.dtype)
+                attn_mask_4d = (1.0 - attn_mask_4d) * torch.finfo(h.dtype).min
+                layer_kwargs["attention_mask"] = attn_mask_4d
+
+            if position_embeddings is not None:
+                layer_kwargs["position_embeddings"] = position_embeddings
+            else:
+                layer_kwargs["position_ids"] = position_ids
+
+            # Step 3: 过前 N 层 Transformer
+            num_layers = self.config.deep_encode_layers
+            for layer_idx in range(num_layers):
+                layer_output = self._backbone_layers[layer_idx](h, **layer_kwargs)
+                h = layer_output[0] if isinstance(layer_output, tuple) else layer_output
+
+        return h, attention_mask  # (B, T, D), (B, T)
+
     def encode(
         self,
         l2_objects: list[L2MemoryObject] | None = None,

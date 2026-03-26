@@ -10,25 +10,6 @@ MemoryScheduler 负责协调三级记忆的读写时机。
 MoMState 封装整个记忆系统的运行时状态。
 """
 
-from src.memory.l1 import AssociativeMemoryL1, L1Writer, L1Reader, L1Gate
-from src.memory.l2 import (
-    L2MemoryObject,
-    ChatMessage,
-    L2Aggregator,
-    L2ObjectStore,
-    L2Merger,
-    L2Retriever,
-)
-from src.memory.l3 import (
-    L3ProfileEntry,
-    L3Summarizer,
-    L3ProfileStore,
-    L3Reviser,
-    L3Formatter,
-)
-from src.memory.scheduler import MemoryScheduler
-from src.memory.state import MoMState
-
 __all__ = [
     # L1
     "AssociativeMemoryL1",
@@ -52,3 +33,38 @@ __all__ = [
     "MemoryScheduler",
     "MoMState",
 ]
+
+# ---- 延迟导入: 避免 scheduler → mag.context_selector 循环导入链 ---- #
+_LAZY_IMPORTS = {
+    # L1
+    "AssociativeMemoryL1": ("src.memory.l1", "AssociativeMemoryL1"),
+    "L1Writer": ("src.memory.l1", "L1Writer"),
+    "L1Reader": ("src.memory.l1", "L1Reader"),
+    "L1Gate": ("src.memory.l1", "L1Gate"),
+    # L2
+    "L2MemoryObject": ("src.memory.l2", "L2MemoryObject"),
+    "ChatMessage": ("src.memory.l2", "ChatMessage"),
+    "L2Aggregator": ("src.memory.l2", "L2Aggregator"),
+    "L2ObjectStore": ("src.memory.l2", "L2ObjectStore"),
+    "L2Merger": ("src.memory.l2", "L2Merger"),
+    "L2Retriever": ("src.memory.l2", "L2Retriever"),
+    # L3
+    "L3ProfileEntry": ("src.memory.l3", "L3ProfileEntry"),
+    "L3Summarizer": ("src.memory.l3", "L3Summarizer"),
+    "L3ProfileStore": ("src.memory.l3", "L3ProfileStore"),
+    "L3Reviser": ("src.memory.l3", "L3Reviser"),
+    "L3Formatter": ("src.memory.l3", "L3Formatter"),
+    # 顶层
+    "MemoryScheduler": ("src.memory.scheduler", "MemoryScheduler"),
+    "MoMState": ("src.memory.state", "MoMState"),
+}
+
+
+def __getattr__(name: str):
+    """延迟导入: 避免包初始化时 scheduler → mag 的循环导入。"""
+    if name in _LAZY_IMPORTS:
+        module_path, attr_name = _LAZY_IMPORTS[name]
+        import importlib
+        module = importlib.import_module(module_path)
+        return getattr(module, attr_name)
+    raise AttributeError(f"module 'src.memory' has no attribute {name!r}")
