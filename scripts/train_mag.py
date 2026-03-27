@@ -61,8 +61,13 @@ sys.path.insert(0, str(_project_root))
 
 from src.memory.mag.memory_encoder import MemoryEncoder, MemoryEncoderConfig
 from src.memory.mag.context_selector import ContextSelector, ContextSelectorConfig
-from src.memory.mag.mag_gate import MAGGate, MAGGateConfig
-from src.memory.mag.compressed_memory import CompressedMemoryCache, CompressedMemoryConfig
+from src.memory.mag.kv_memory_injector import (
+    KVMemoryInjector, KVMemoryInjectorConfig,
+    KVAdapterInjector, RawKVInjector,
+    create_kv_injector,
+    compress_memory_for_kv_injection,
+    extract_raw_kv_for_injection,
+)
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(levelname)s: %(message)s")
 logger = logging.getLogger("train_mag")
@@ -168,13 +173,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu")
 
     # MAG 架构配置
-    parser.add_argument("--mag_num_heads", type=int, default=8, help="CrossAttention 头数")
     parser.add_argument("--mag_injection_layers", type=int, nargs="+", default=None,
-                        help="注入的 Transformer 层索引 (如 6 12 18 23)")
-    parser.add_argument("--mag_share_parameters", action="store_true", default=True,
-                        help="注入层之间是否共享参数")
-    parser.add_argument("--mag_gate_init_bias", type=float, default=-2.0,
-                        help="Gate 偏置初始值 (负值使初始 gate 接近 0)")
+                        help="注入的 Transformer 层索引 (如 9 18 27 35)")
     parser.add_argument("--selector_hidden_dim", type=int, default=256,
                         help="Selector MLP 隐藏层维度")
     parser.add_argument("--selector_top_k", type=int, default=5, help="选出的 top-k 记忆数")
@@ -248,22 +248,32 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--seed", type=int, default=42)
 
     # ★ SVD 压缩记忆配置
-    parser.add_argument("--use_compressed_memory", action="store_true", default=False,
-                        help="启用 SVD 压缩记忆 (替代 pooled memory vectors). "
-                             "记忆编码流程: encode_texts_deep_unpooled → SVD 压缩 → 虚拟 KV pairs → MAGGate 注入")
     parser.add_argument("--svd_rank", type=int, default=8,
                         help="SVD 保留的秩 (每个 chunk 压缩为 rank 个虚拟 token, 推荐 4~16)")
-    parser.add_argument("--svd_chunk_size", type=int, default=0,
-                        help="SVD 压缩的 chunk 大小 (0=整条记忆作为一个 chunk)")
     parser.add_argument("--svd_normalize", action="store_true", default=True,
-                        help="是否对虚拟 KV pairs 做 L2 归一化")
+                        help="是否对虚拟 KV keys 做 L2 归一化")
     parser.add_argument("--no_svd_normalize", action="store_true", default=False,
                         help="禁用 SVD 归一化")
-    parser.add_argument("--use_per_layer_memory", action="store_true", default=False,
-                        help="启用 Per-Layer Multi-Chunk SVD 记忆. "
-                             "记忆文本过 backbone 全部层, 每层独立做 SVD 压缩, "
-                             "推理时第 l 层用第 l 层的虚拟 KV pairs. "
-                             "自动启用 --use_compressed_memory.")
+
+    # ★ KV 注入强度配置
+    parser.add_argument("--kv_init_alpha", type=float, default=0.1,
+                        help="KV 注入的初始 alpha 值 (0~max_alpha, 推荐 0.05~0.2)")
+    parser.add_argument("--kv_max_alpha", type=float, default=0.5,
+                        help="KV 注入的最大 alpha 值 (推荐 0.3~0.8)")
+
+    # ★ 注入模式选择
+    parser.add_argument("--injection_mode", type=str, default="svd_adapter",
+                        choices=["svd_only", "svd_adapter", "raw_kv"],
+                        help="KV 注入模式: svd_only=原始SVD+alpha, "
+                             "svd_adapter=SVD+LoRA适配器(推荐), raw_kv=直接token-level KV")
+    parser.add_argument("--lora_rank", type=int, default=16,
+                        help="LoRA 适配器的秩 (仅 svd_adapter 模式, 推荐 8~32)")
+    parser.add_argument("--lora_share_params", action="store_true", default=True,
+                        help="跨注入层共享 LoRA 参数 (减少参数量)")
+    parser.add_argument("--no_lora_share_params", action="store_true", default=False,
+                        help="每层独立 LoRA 参数")
+    parser.add_argument("--max_raw_kv_tokens", type=int, default=128,
+                        help="raw_kv 模式下最大虚拟 token 数 (超过则 mean-pool 压缩)")
 
     return parser.parse_args()
 
@@ -560,7 +570,11 @@ def load_locomo_dataset(data_path: str, max_samples: int = 2000) -> list[dict]:
         raise FileNotFoundError(f"LoCoMo 数据文件不存在: {data_path}")
 
     with open(path, "r", encoding="utf-8") as f:
-        raw = _json.load(f)
+        # 支持 .jsonl (每行一个 JSON) 和 .json (单个 JSON 数组/对象) 两种格式
+        if path.suffix == ".jsonl":
+            raw = [_json.loads(line) for line in f if line.strip()]
+        else:
+            raw = _json.load(f)
 
     if isinstance(raw, dict):
         raw = list(raw.values())
@@ -1207,46 +1221,43 @@ def train_phase2_joint(
     tokenizer: Any,
     encoder: MemoryEncoder,
     selector: ContextSelector,
-    mag_gate: MAGGate,
+    kv_injector: KVMemoryInjector,
     train_data: list[dict[str, Any]],
     args: argparse.Namespace,
     rank: int = 0,
     world_size: int = 1,
-    compressed_cache: CompressedMemoryCache | None = None,
 ) -> None:
-    """Phase 2: 联合训练 Selector + MAGGate (端到端 LM loss)。
+    """Phase 2: 联合训练 Selector + KVMemoryInjector (端到端 LM loss)。
 
-    核心策略: 分段 forward + 正确的梯度链路。
-    DDP 模式下, mag_gate 已被 DDP 包装, 但 Phase 2 使用手动逐层 forward,
-    因此 DDP 包装只用于自动梯度同步, 实际 inject 调用底层 module。
+    核心策略: 分段 forward + 直接 KV 拼接。
     
     梯度流路径:
       LM Loss → logits → lm_head → final_norm → backbone 后续层
-               → MAG inject (gate params 有梯度)
-                 → CrossAttn(h, memory_vecs, selection_weights)
-                   → selection_weights ← selector.soft_select (selector params 有梯度)
+               → KV 拼接注入 (alpha params 有梯度, 通过缩放虚拟 KV)
+               → selection_weights ← selector.soft_select (selector params 有梯度)
 
     关键点:
     1. memory_embs 不需要梯度 (冻结的 backbone embedding 生成)
     2. selection_weights 需要梯度 (通过 selector 参数)
-    3. MAGGate 的 inject 输出需要梯度 (通过 gate 参数)
-    4. backbone 层冻结但仍参与前向传播 (只有 MAG/Selector 参数更新)
+    3. KVMemoryInjector 的 alpha 参数有梯度 (控制注入强度)
+    4. backbone 层冻结但仍参与前向传播 (只有 Selector/Alpha 参数更新)
+    5. 虚拟 KV 直接拼到 backbone self-attention 的 KV 上, 无需额外 cross-attention
     """
     if is_main_process(rank):
         logger.info("=" * 60)
-        logger.info("Phase 2: 联合训练 Selector + MAGGate (端到端)")
+        logger.info("Phase 2: 联合训练 Selector + KVInjector (端到端)")
         logger.info("=" * 60)
 
     # 获取底层 module (DDP 包装后)
     selector_module = selector.module if isinstance(selector, DDP) else selector
-    mag_gate_module = mag_gate.module if isinstance(mag_gate, DDP) else mag_gate
+    injector_module = kv_injector.module if isinstance(kv_injector, DDP) else kv_injector
 
     # 获取 backbone 内部结构
     backbone_layers, final_norm, lm_head, rotary_emb = _get_backbone_layers(model)
     num_backbone_layers = len(backbone_layers)
 
     # 确定注入层
-    sorted_injection = sorted(mag_gate_module.injection_layers)
+    sorted_injection = sorted(injector_module.injection_layers)
     first_injection_layer = sorted_injection[0] if sorted_injection else 0
     last_injection_layer = sorted_injection[-1] if sorted_injection else num_backbone_layers - 1
     if is_main_process(rank):
@@ -1255,17 +1266,13 @@ def train_phase2_joint(
             f"backbone 共 {num_backbone_layers} 层, "
             f"从第 {first_injection_layer} 层开始带梯度 forward"
         )
-        if compressed_cache is not None:
-            mode = "Per-Layer Multi-Chunk SVD" if compressed_cache.config.store_per_layer else "Shared SVD"
-            logger.info(f"★ 记忆模式: {mode} (rank={compressed_cache.config.rank})")
-        else:
-            logger.info(f"  记忆模式: 原始 pooled vectors")
+        logger.info(f"★ 注入模式: {args.injection_mode} (SVD rank={args.svd_rank})")
 
-    # 只训练 selector + gate 的参数
-    trainable_params = list(selector.parameters()) + list(mag_gate.parameters())
+    # 只训练 selector + kv_injector 的参数
+    trainable_params = list(selector.parameters()) + list(kv_injector.parameters())
     optimizer = optim.AdamW(
         trainable_params,
-        lr=args.lr,  # 使用完整学习率
+        lr=args.lr,
         weight_decay=args.weight_decay,
     )
 
@@ -1306,7 +1313,7 @@ def train_phase2_joint(
                     f"(start_epoch={args.ss_start_epoch}, max_ratio={args.ss_max_ratio})")
 
     selector.train()
-    mag_gate.train()
+    kv_injector.train()
     num_steps = 0
     prev_epoch_loss = None
 
@@ -1335,72 +1342,53 @@ def train_phase2_joint(
                 memory_embs = encoder.encode_texts_deep(sample["memory_texts"])  # (K, D)
                 memory_embs = memory_embs.unsqueeze(0)  # (1, K, D)
 
-                # ★ SVD 压缩记忆: 获取 unpooled hidden states → SVD 压缩 → 虚拟 tokens
-                memory_vectors_for_inject = memory_embs  # 默认: pooled vectors
-                memory_mask_for_inject = None
-                use_per_layer = getattr(args, 'use_per_layer_memory', False)
+                # ★ Per-Layer KV 注入: 记忆文本过 backbone 全部层, 每层独立处理
+                # 根据 injection_mode 选择不同的压缩方式
+                per_layer_hs, per_layer_mask = encoder.encode_texts_deep_all_layers(
+                    sample["memory_texts"],
+                    target_layers=sorted_injection,
+                )
+                virtual_kv_cache = {}
+                if per_layer_hs:
+                    # 拼接每层的记忆 hidden states (多条记忆拼成一个序列)
+                    per_layer_hs_flat = {}
+                    flat_mask = None
+                    for l_idx, hs in per_layer_hs.items():
+                        K_mem, T_mem, D_mem = hs.shape
+                        per_layer_hs_flat[l_idx] = hs.view(1, K_mem * T_mem, D_mem)
+                        if per_layer_mask is not None and flat_mask is None:
+                            flat_mask = per_layer_mask.view(1, K_mem * T_mem)
 
-                if compressed_cache is not None and use_per_layer:
-                    # ★ Per-Layer Multi-Chunk SVD 模式:
-                    # 记忆文本过 backbone 全部层, 每层独立做 SVD 压缩
-                    per_layer_hs, per_layer_mask = encoder.encode_texts_deep_all_layers(
-                        sample["memory_texts"],
-                        target_layers=sorted(mag_gate_module.injection_layers),
-                    )
-                    if per_layer_hs:
-                        # 拼接每层的记忆 hidden states (多条记忆拼成一个序列)
-                        per_layer_hs_flat = {}
-                        flat_mask = None
-                        for l_idx, hs in per_layer_hs.items():
-                            K_mem, T_mem, D_mem = hs.shape
-                            per_layer_hs_flat[l_idx] = hs.view(1, K_mem * T_mem, D_mem)
-                            if per_layer_mask is not None and flat_mask is None:
-                                flat_mask = per_layer_mask.view(1, K_mem * T_mem)
-                        # 对每层独立做 SVD 压缩
-                        compressed_cache.clear_cache()
-                        compressed_cache.compress_and_store_per_layer(
-                            per_layer_hs_flat, attention_mask=flat_mask
+                    svd_normalize = args.svd_normalize and not args.no_svd_normalize
+                    if args.injection_mode == "raw_kv":
+                        # RawKV: 直接用 token-level KV (不做 SVD)
+                        virtual_kv_cache = extract_raw_kv_for_injection(
+                            memory_hidden_states=per_layer_hs_flat,
+                            backbone_layers=backbone_layers,
+                            attention_mask=flat_mask,
+                            max_tokens=args.max_raw_kv_tokens,
                         )
-                    # Per-layer 模式下, memory_vectors_for_inject 不直接使用
-                    # 而是通过 compressed_cache 在 inject 时按层获取
-                    # 但仍保留 pooled memory_embs 作为 fallback
-
-                elif compressed_cache is not None:
-                    # 原有的 shared SVD 压缩模式
-                    unpooled_hs, unpooled_mask = encoder.encode_texts_deep_unpooled(
-                        sample["memory_texts"]
-                    )  # (K, T, D), (K, T)
-                    K_mem, T_mem, D_mem = unpooled_hs.shape
-                    unpooled_hs_flat = unpooled_hs.view(1, K_mem * T_mem, D_mem)  # (1, K*T, D)
-                    if unpooled_mask is not None:
-                        unpooled_mask_flat = unpooled_mask.view(1, K_mem * T_mem)  # (1, K*T)
                     else:
-                        unpooled_mask_flat = None
-                    compressed_cache.compress_and_store(
-                        unpooled_hs_flat, attention_mask=unpooled_mask_flat
-                    )
-                    mem_result = compressed_cache.get_virtual_tokens_as_memory()
-                    if mem_result is not None:
-                        memory_vectors_for_inject, memory_mask_for_inject = mem_result
-                        if memory_mask_for_inject is not None:
-                            memory_mask_for_inject = memory_mask_for_inject.bool()
+                        # svd_only / svd_adapter: 先做 SVD 压缩
+                        virtual_kv_cache = compress_memory_for_kv_injection(
+                            memory_hidden_states=per_layer_hs_flat,
+                            backbone_layers=backbone_layers,
+                            attention_mask=flat_mask,
+                            svd_rank=args.svd_rank,
+                            normalize_keys=svd_normalize,
+                        )
 
             # ★ 关键: selection_weights 需要有梯度 (通过 selector 参数)
             # 注意: selector 仍然用 pooled memory_embs 打分 (语义级别选择)
             selection_weights = selector_module.soft_select(
                 query_emb.detach(), memory_embs.detach()
             )  # (1, K), 有梯度通过 selector 参数
-            # 如果使用 SVD 压缩记忆, selection_weights 不直接用于 inject
-            # (因为虚拟 tokens 数量 != K), 改为 None
-            selection_weights_for_inject = selection_weights if compressed_cache is None else None
-            # Per-layer 模式下, compressed_cache 会在 inject 时按层自动获取虚拟 KV
-            compressed_cache_for_inject = compressed_cache if use_per_layer else None
 
             # ---- Tokenize: 构造 [query | target] 序列 ---- #
             # Phase 2 的关键改进: 如果有 target_text (assistant 回复), 则:
             #   input_ids = [query_tokens, target_tokens]
             #   labels    = [-100...-100, target_tokens]  (只在 target 部分计算 loss)
-            # 这样 backbone 无法仅靠 query 预测 target, 必须利用 MAG 注入的记忆
+            # 这样 backbone 无法仅靠 query 预测 target, 必须利用注入的记忆
             has_target = "target_text" in sample and sample["target_text"]
 
             if has_target:
@@ -1520,32 +1508,41 @@ def train_phase2_joint(
             else:
                 layer_kwargs_grad["position_ids"] = position_ids
 
-            # 收集 gate 值用于 gate activation regularization
-            gate_values_for_reg: list[torch.Tensor] = []
+            # 收集 alpha 值用于日志
+            alpha_values_for_log: list[tuple[int, float]] = []
 
             # 保存 inject 前的 hidden states (用于 contrastive loss)
             h_before_inject = h.detach().clone()
 
-            # 从第一个注入层到最后一层, 逐层 forward + 注入
-            for layer_idx in range(first_injection_layer, num_backbone_layers):
-                # Backbone layer forward (backbone 冻结, 但张量流有梯度)
-                layer_output = backbone_layers[layer_idx](h, **layer_kwargs_grad)
-                h = layer_output[0] if isinstance(layer_output, tuple) else layer_output
+            # ★ 构造 4D causal mask (用于自定义 attention forward)
+            B_seq, T_seq, D_seq = h.shape
+            with torch.no_grad():
+                causal_mask_4d = torch.zeros(B_seq, 1, T_seq, T_seq, device=h.device, dtype=h.dtype)
+                # 上三角为 -inf (causal: 不能看到未来)
+                causal_mask_4d.masked_fill_(
+                    torch.triu(torch.ones(T_seq, T_seq, device=h.device, dtype=torch.bool), diagonal=1)
+                    .unsqueeze(0).unsqueeze(0),
+                    float("-inf"),
+                )
 
-                # ★ MAG 注入 (返回 gate 激活值用于 regularization)
-                # detach_value=True: V 分支不回传梯度, 阻止 lm_loss 驱动"抄答案"
-                # 如果启用 SVD 压缩记忆, memory_vectors_for_inject 是虚拟 tokens
-                if layer_idx in mag_gate_module.injection_layers:
-                    h, gate_val = mag_gate_module.inject(
-                        layer_idx, h, memory_vectors_for_inject.detach(),
-                        memory_mask=memory_mask_for_inject,
-                        selection_weights=selection_weights_for_inject,
-                        return_gate=True,
-                        detach_value=use_detach_value,
-                        compressed_cache=compressed_cache_for_inject,
+            # 从第一个注入层到最后一层, 逐层 forward + KV 注入
+            for layer_idx in range(first_injection_layer, num_backbone_layers):
+                if layer_idx in injector_module.injection_layers and virtual_kv_cache:
+                    # ★ 使用 KVMemoryInjector 的自定义 forward (拼接虚拟 KV)
+                    h, alpha_val = injector_module.forward_decoder_layer(
+                        layer_idx=layer_idx,
+                        decoder_layer=backbone_layers[layer_idx],
+                        hidden_states=h,
+                        attention_mask=causal_mask_4d,
+                        position_embeddings=position_embeddings,
+                        virtual_kv_cache=virtual_kv_cache,
                     )
-                    if gate_val is not None:
-                        gate_values_for_reg.append(gate_val)
+                    if alpha_val is not None:
+                        alpha_values_for_log.append((layer_idx, alpha_val.item()))
+                else:
+                    # 标准 backbone layer forward (无注入)
+                    layer_output = backbone_layers[layer_idx](h, **layer_kwargs_grad)
+                    h = layer_output[0] if isinstance(layer_output, tuple) else layer_output
 
             # Final norm + lm_head
             h = final_norm(h)
@@ -1614,13 +1611,11 @@ def train_phase2_joint(
                 raw_scores = selector_module(query_emb.detach(), memory_embs.detach())
                 aux_loss = F.binary_cross_entropy_with_logits(raw_scores, sel_target)
 
-            # ★ 辅助统计: gate 激活值 (仅用于日志, 不参与 loss)
-            gate_reg_loss = torch.tensor(0.0, device=lm_loss.device)  # 保留变量, 不参与 loss
+            # ★ 辅助统计: alpha 值 (仅用于日志, 不参与 loss)
+            gate_reg_loss = torch.tensor(0.0, device=lm_loss.device)  # 保留变量兼容
             gate_mean_val = 0.0
-            if gate_values_for_reg:
-                all_gate_means = [g.mean() for g in gate_values_for_reg]
-                avg_gate = torch.stack(all_gate_means).mean()
-                gate_mean_val = avg_gate.item()
+            if alpha_values_for_log:
+                gate_mean_val = sum(v for _, v in alpha_values_for_log) / len(alpha_values_for_log)
 
             # ★ 总 loss 组合:
             # gap_loss:  DPO 风格, 鼓励记忆注入降低 lm_loss
@@ -1666,21 +1661,20 @@ def train_phase2_joint(
                 eta = elapsed / (step_i + 1) * (len(indices) - step_i - 1)
                 lr_now = optimizer.param_groups[0]['lr']
 
-                # 计算 gate 统计信息 (诊断用)
-                gate_info = ""
+                # 计算 alpha 统计信息 (诊断用)
+                alpha_info = ""
                 try:
-                    if mag_gate_module.config.share_parameters and mag_gate_module._shared_block is not None:
-                        gate_bias = mag_gate_module._shared_block.gate_proj.bias.data.mean().item()
-                        gate_info = f"  gate_mean={gate_mean_val:.4f} bias={gate_bias:.3f}"
+                    alpha_strs = [f"L{l}={v:.3f}" for l, v in alpha_values_for_log]
+                    alpha_info = f"  alpha=[{','.join(alpha_strs)}]"
                 except Exception:
-                    gate_info = f"  gate_mean={gate_mean_val:.4f}"
+                    alpha_info = f"  alpha_mean={gate_mean_val:.4f}"
 
                 logger.info(
                     f"  [P2] Epoch {epoch+1} [{step_i+1}/{len(indices)}] "
                     f"loss={avg_loss:.4f} (lm={lm_loss.item():.4f} gap={gap_loss.item():.4f} "
                     f"kl={kl_loss.item():.4f} aux={aux_loss.item():.4f} "
                     f"lm_nm={lm_loss_no_mem.item():.4f} Δ={lm_loss_no_mem.item()-lm_loss.item():.4f})"
-                    f"  lr={lr_now:.2e}{gate_info}  ETA={eta:.0f}s"
+                    f"  lr={lr_now:.2e}{alpha_info}  ETA={eta:.0f}s"
                 )
 
         avg_epoch_loss = epoch_loss / max(epoch_steps, 1)
@@ -1728,7 +1722,8 @@ def main() -> None:
         logging.getLogger("train_mag").setLevel(logging.WARNING)
         logging.getLogger("src.memory.mag.memory_encoder").setLevel(logging.WARNING)
         logging.getLogger("src.memory.mag.context_selector").setLevel(logging.WARNING)
-        logging.getLogger("src.memory.mag.mag_gate").setLevel(logging.WARNING)
+    logging.getLogger("src.memory.mag.mag_gate").setLevel(logging.WARNING)
+    logging.getLogger("src.memory.mag.kv_memory_injector").setLevel(logging.WARNING)
 
     # 创建输出目录 (只 rank 0)
     if is_main_process(rank):
@@ -1786,7 +1781,7 @@ def main() -> None:
     )
     selector = ContextSelector(sel_cfg).to(args.device)
 
-    # 4. 初始化 MAGGate
+    # 4. 初始化 KVMemoryInjector (替代 MAGGate)
     injection_layers = args.mag_injection_layers
     if injection_layers is None:
         # 默认: 均匀选择 4 个层
@@ -1797,40 +1792,41 @@ def main() -> None:
             num_layers - 1,
         ]
 
-    gate_cfg = MAGGateConfig(
-        hidden_dim=hidden_dim,
-        num_heads=args.mag_num_heads,
-        memory_dim=hidden_dim,
-        injection_layers=injection_layers,
-        share_parameters=args.mag_share_parameters,
-        gate_init_bias=args.mag_gate_init_bias,
-    )
-    mag_gate = MAGGate(gate_cfg).to(args.device)
+    # 从 backbone config 获取 GQA 参数
+    backbone_config = model.config
+    num_kv_heads = getattr(backbone_config, 'num_key_value_heads', getattr(backbone_config, 'num_attention_heads', 32))
+    head_dim = getattr(backbone_config, 'head_dim', hidden_dim // getattr(backbone_config, 'num_attention_heads', 32))
 
-    # 5. (可选) 初始化 CompressedMemoryCache (SVD 压缩记忆)
-    compressed_cache = None
-    # Per-layer 模式自动启用 compressed_memory
-    if args.use_per_layer_memory:
-        args.use_compressed_memory = True
-    if args.use_compressed_memory:
-        svd_normalize = args.svd_normalize and not args.no_svd_normalize
-        cm_cfg = CompressedMemoryConfig(
-            hidden_dim=hidden_dim,
-            num_heads=args.mag_num_heads,
-            rank=args.svd_rank,
-            chunk_size=args.svd_chunk_size,
-            normalize=svd_normalize,
-            store_per_layer=args.use_per_layer_memory,
-        )
-        compressed_cache = CompressedMemoryCache(cm_cfg).to(args.device)
-        if is_main_process(rank):
-            mode_str = "Per-Layer Multi-Chunk SVD" if args.use_per_layer_memory else "Shared SVD"
-            logger.info(f"★ SVD 压缩记忆已启用 ({mode_str}): rank={args.svd_rank}, "
-                        f"chunk_size={args.svd_chunk_size}, normalize={svd_normalize}, "
-                        f"per_layer={args.use_per_layer_memory}")
+    lora_share = args.lora_share_params and not args.no_lora_share_params
+    injector_cfg = KVMemoryInjectorConfig(
+        hidden_dim=hidden_dim,
+        num_layers=num_layers,
+        injection_layers=injection_layers,
+        num_attention_heads=getattr(backbone_config, 'num_attention_heads', 32),
+        num_key_value_heads=num_kv_heads,
+        head_dim=head_dim,
+        init_alpha=args.kv_init_alpha,
+        max_alpha=args.kv_max_alpha,
+        injection_mode=args.injection_mode,
+        lora_rank=args.lora_rank,
+        lora_share_params=lora_share,
+        max_raw_kv_tokens=args.max_raw_kv_tokens,
+    )
+    kv_injector = create_kv_injector(injector_cfg).to(args.device)
+
+    # SVD 压缩配置
+    svd_normalize = args.svd_normalize and not args.no_svd_normalize
+    if is_main_process(rank):
+        logger.info(f"★ 注入模式: {args.injection_mode}, SVD rank={args.svd_rank}, "
+                    f"normalize_keys={svd_normalize}, "
+                    f"init_alpha={args.kv_init_alpha}, max_alpha={args.kv_max_alpha}")
+        if args.injection_mode == "svd_adapter":
+            logger.info(f"  LoRA: rank={args.lora_rank}, share_params={lora_share}")
+        elif args.injection_mode == "raw_kv":
+            logger.info(f"  RawKV: max_tokens={args.max_raw_kv_tokens}")
 
     # ====== DDP 包装可训练模块 ======
-    # 注意: backbone 冻结不做 DDP, 只包装 selector 和 mag_gate
+    # 注意: backbone 冻结不做 DDP, 只包装 selector 和 kv_injector
     if world_size > 1:
         # Phase 1 对 selector 做 DDP (标准 forward 调用)
         selector = DDP(
@@ -1839,28 +1835,26 @@ def main() -> None:
             output_device=local_rank,
             find_unused_parameters=False,
         )
-        # Phase 2 对 mag_gate 做 DDP
-        # 注意: Phase 2 使用手动逐层 forward + inject,
-        # DDP 包装主要用于保持参数同步 (初始化时 broadcast),
-        # 梯度同步在 Phase 2 中通过手动 all_reduce 完成
-        mag_gate = DDP(
-            mag_gate,
+        # Phase 2 对 kv_injector 做 DDP
+        # KVMemoryInjector 只有 per-layer alpha 参数 (极少量)
+        kv_injector = DDP(
+            kv_injector,
             device_ids=[local_rank],
             output_device=local_rank,
-            find_unused_parameters=True,  # inject 不走标准 forward
+            find_unused_parameters=True,
         )
         if is_main_process(rank):
-            logger.info(f"DDP 包装完成: selector + mag_gate (world_size={world_size})")
+            logger.info(f"DDP 包装完成: selector + kv_injector (world_size={world_size})")
 
     # 打印参数量 (只 rank 0)
     selector_module = selector.module if isinstance(selector, DDP) else selector
-    mag_gate_module = mag_gate.module if isinstance(mag_gate, DDP) else mag_gate
+    injector_module = kv_injector.module if isinstance(kv_injector, DDP) else kv_injector
     total_trainable = sum(p.numel() for p in selector_module.parameters()) + \
-                      sum(p.numel() for p in mag_gate_module.parameters())
+                      sum(p.numel() for p in injector_module.parameters())
     if is_main_process(rank):
         logger.info(f"可训练参数量: {total_trainable:,}")
         logger.info(f"  Selector: {sum(p.numel() for p in selector_module.parameters()):,}")
-        logger.info(f"  MAGGate: {sum(p.numel() for p in mag_gate_module.parameters()):,}")
+        logger.info(f"  KVInjector: {sum(p.numel() for p in injector_module.parameters()):,}")
         logger.info(f"注入层: {injection_layers}")
 
     # 5. 加载训练数据 (所有进程都加载全量数据, DistributedSampler 负责分片)
@@ -1884,11 +1878,10 @@ def main() -> None:
     )
     dist_barrier()
 
-    # Phase 2: 联合训练 Selector + Gate
+    # Phase 2: 联合训练 Selector + KVInjector
     train_phase2_joint(
-        model, tokenizer, encoder, selector, mag_gate, train_data, args,
+        model, tokenizer, encoder, selector, kv_injector, train_data, args,
         rank=rank, world_size=world_size,
-        compressed_cache=compressed_cache,
     )
     dist_barrier()
 
@@ -1900,7 +1893,7 @@ def main() -> None:
 
         # 保存底层 module 的 state_dict (去掉 DDP 的 "module." 前缀)
         torch.save(selector_module.state_dict(), save_path / "context_selector.pt")
-        torch.save(mag_gate_module.state_dict(), save_path / "mag_gate.pt")
+        torch.save(injector_module.state_dict(), save_path / "kv_injector.pt")
 
         # 保存配置
         config_info = {
@@ -1908,20 +1901,24 @@ def main() -> None:
             "hidden_dim": hidden_dim,
             "num_layers": num_layers,
             "injection_layers": injection_layers,
-            "mag_num_heads": args.mag_num_heads,
-            "mag_share_parameters": args.mag_share_parameters,
-            "mag_gate_init_bias": args.mag_gate_init_bias,
+            "num_attention_heads": getattr(backbone_config, 'num_attention_heads', 32),
+            "num_key_value_heads": num_kv_heads,
+            "head_dim": head_dim,
             "selector_hidden_dim": args.selector_hidden_dim,
             "selector_top_k": args.selector_top_k,
             "max_memory_tokens": args.max_memory_tokens,
             "total_trainable_params": total_trainable,
             "training_time_s": total_time,
             "world_size": world_size,
-            # SVD 压缩记忆配置
-            "use_compressed_memory": args.use_compressed_memory,
-            "svd_rank": args.svd_rank if args.use_compressed_memory else None,
-            "svd_chunk_size": args.svd_chunk_size if args.use_compressed_memory else None,
-            "svd_normalize": (args.svd_normalize and not args.no_svd_normalize) if args.use_compressed_memory else None,
+            # KV 注入配置
+            "injection_mode": args.injection_mode,
+            "kv_init_alpha": args.kv_init_alpha,
+            "kv_max_alpha": args.kv_max_alpha,
+            "svd_rank": args.svd_rank,
+            "svd_normalize": svd_normalize,
+            "lora_rank": args.lora_rank,
+            "lora_share_params": lora_share,
+            "max_raw_kv_tokens": args.max_raw_kv_tokens,
         }
         with open(save_path / "mag_config.json", "w") as f:
             json.dump(config_info, f, indent=2, ensure_ascii=False)
@@ -1929,7 +1926,7 @@ def main() -> None:
         logger.info(f"训练完成! 总耗时: {total_time:.1f}s")
         logger.info(f"权重已保存到: {args.output_dir}")
         logger.info(f"  context_selector.pt: {(save_path / 'context_selector.pt').stat().st_size / 1024:.1f} KB")
-        logger.info(f"  mag_gate.pt: {(save_path / 'mag_gate.pt').stat().st_size / 1024:.1f} KB")
+        logger.info(f"  kv_injector.pt: {(save_path / 'kv_injector.pt').stat().st_size / 1024:.1f} KB")
 
     # 清理分布式环境
     cleanup_distributed()

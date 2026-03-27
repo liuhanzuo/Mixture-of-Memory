@@ -20,6 +20,9 @@ __all__ = [
     "MAGGate",
     "PrefixProjector",
     "CompressedMemoryCache",
+    "KVMemoryInjector",
+    "KVAdapterInjector",
+    "RawKVInjector",
 ]
 
 
@@ -44,4 +47,13 @@ def __getattr__(name: str):
     if name == "CompressedMemoryCache":
         from src.memory.mag.compressed_memory import CompressedMemoryCache
         return CompressedMemoryCache
+    if name == "KVMemoryInjector":
+        from src.memory.mag.kv_memory_injector import KVMemoryInjector
+        return KVMemoryInjector
+    if name == "KVAdapterInjector":
+        from src.memory.mag.kv_memory_injector import KVAdapterInjector
+        return KVAdapterInjector
+    if name == "RawKVInjector":
+        from src.memory.mag.kv_memory_injector import RawKVInjector
+        return RawKVInjector
     raise AttributeError(f"module 'src.memory.mag' has no attribute {name!r}")

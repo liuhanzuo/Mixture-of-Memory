@@ -39,6 +39,13 @@ sys.path.insert(0, str(_project_root))
 from src.memory.mag.memory_encoder import MemoryEncoder, MemoryEncoderConfig
 from src.memory.mag.context_selector import ContextSelector, ContextSelectorConfig
 from src.memory.mag.mag_gate import MAGGate, MAGGateConfig
+from src.memory.mag.kv_memory_injector import (
+    KVMemoryInjector, KVMemoryInjectorConfig,
+    KVAdapterInjector, RawKVInjector,
+    create_kv_injector,
+    compress_memory_for_kv_injection,
+    extract_raw_kv_for_injection,
+)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -166,8 +173,9 @@ def load_mag_weights(
     hidden_dim: int,
     device: str,
     dtype_str: str,
-) -> tuple[ContextSelector, MAGGate, dict]:
-    """加载训练好的 MAG 权重。"""
+    backbone_config: Any = None,
+):
+    """加载训练好的 MAG 权重 (支持 svd_only / svd_adapter / raw_kv 三种模式)。"""
     weights_path = Path(weights_dir)
 
     # 加载配置
@@ -196,29 +204,45 @@ def load_mag_weights(
     else:
         logger.warning(f"找不到 Selector 权重: {sel_ckpt}")
 
-    # 初始化 MAGGate
-    gate_cfg = MAGGateConfig(
-        hidden_dim=mag_config.get("hidden_dim", hidden_dim),
-        num_heads=mag_config.get("mag_num_heads", 8),
-        memory_dim=mag_config.get("hidden_dim", hidden_dim),
-        injection_layers=mag_config.get("injection_layers", []),
-        share_parameters=mag_config.get("mag_share_parameters", True),
-        gate_init_bias=mag_config.get("mag_gate_init_bias", -2.0),
-    )
-    mag_gate = MAGGate(gate_cfg).to(device)
+    # 初始化 KV 注入器 (根据 injection_mode 自动选择类型)
+    injection_mode = mag_config.get("injection_mode", "svd_only")
+    num_attn_heads = mag_config.get("num_attention_heads", 32)
+    num_kv_heads = mag_config.get("num_key_value_heads", 8)
+    head_dim_val = mag_config.get("head_dim", hidden_dim // num_attn_heads)
+    if backbone_config is not None:
+        num_attn_heads = getattr(backbone_config, 'num_attention_heads', num_attn_heads)
+        num_kv_heads = getattr(backbone_config, 'num_key_value_heads', num_kv_heads)
+        head_dim_val = getattr(backbone_config, 'head_dim', head_dim_val)
 
-    # 加载 gate 权重
-    gate_ckpt = weights_path / "mag_gate.pt"
-    if gate_ckpt.exists():
-        mag_gate.load_state_dict(torch.load(gate_ckpt, map_location=device))
-        logger.info(f"MAGGate 权重已加载: {gate_ckpt} ({gate_ckpt.stat().st_size / 1024:.1f} KB)")
+    injector_cfg = KVMemoryInjectorConfig(
+        hidden_dim=mag_config.get("hidden_dim", hidden_dim),
+        num_layers=mag_config.get("num_layers", 36),
+        injection_layers=mag_config.get("injection_layers", []),
+        num_attention_heads=num_attn_heads,
+        num_key_value_heads=num_kv_heads,
+        head_dim=head_dim_val,
+        init_alpha=mag_config.get("kv_init_alpha", 0.1),
+        max_alpha=mag_config.get("kv_max_alpha", 0.5),
+        injection_mode=injection_mode,
+        lora_rank=mag_config.get("lora_rank", 16),
+        lora_share_params=mag_config.get("lora_share_params", True),
+        max_raw_kv_tokens=mag_config.get("max_raw_kv_tokens", 128),
+    )
+    kv_injector = create_kv_injector(injector_cfg).to(device)
+    logger.info(f"注入模式: {injection_mode}")
+
+    # 加载 injector 权重
+    injector_ckpt = weights_path / "kv_injector.pt"
+    if injector_ckpt.exists():
+        kv_injector.load_state_dict(torch.load(injector_ckpt, map_location=device))
+        logger.info(f"KVInjector 权重已加载: {injector_ckpt} ({injector_ckpt.stat().st_size / 1024:.1f} KB)")
     else:
-        logger.warning(f"找不到 MAGGate 权重: {gate_ckpt}")
+        logger.warning(f"找不到 KVInjector 权重: {injector_ckpt}")
 
     selector.eval()
-    mag_gate.eval()
+    kv_injector.eval()
 
-    return selector, mag_gate, mag_config
+    return selector, kv_injector, mag_config
 
 
 # ======================================================================
@@ -464,137 +488,79 @@ def eval_gate_activation(
     tokenizer: Any,
     encoder: MemoryEncoder,
     selector: ContextSelector,
-    mag_gate: MAGGate,
+    kv_injector: KVMemoryInjector,
     data: list[dict],
     device: str,
     max_seq_len: int = 512,
 ) -> dict:
-    """分析 MAGGate 在各注入层的 gate 激活情况。
+    """分析 KVMemoryInjector 在各注入层的 alpha 值。
 
-    关注指标:
-    - 各层 gate sigmoid 均值 (期望 > 0.2, 说明 gate 在打开)
-    - gate 方差 (期望 > 0, 说明 gate 在学习区分性注入)
-    - gate bias 当前值
+    指标:
+    - 各层 alpha 值 (期望 > 0.05, 说明在注入)
     """
     logger.info("=" * 60)
-    logger.info("评估 2: Gate 激活分析")
+    logger.info("评估 2: Alpha 注入强度分析")
     logger.info("=" * 60)
 
-    mag_gate_module = mag_gate.module if hasattr(mag_gate, "module") else mag_gate
-    selector_module = selector.module if hasattr(selector, "module") else selector
+    injector_module = kv_injector.module if hasattr(kv_injector, "module") else kv_injector
 
-    backbone_layers, final_norm, lm_head, rotary_emb = _get_backbone_layers(model)
-    sorted_injection = sorted(mag_gate_module.injection_layers)
-    first_injection_layer = sorted_injection[0] if sorted_injection else 0
-
-    gate_stats = {layer_idx: {"means": [], "stds": []} for layer_idx in sorted_injection}
-
-    selector.eval()
-    mag_gate.eval()
-
-    num_evaluated = 0
-    with torch.no_grad():
-        for sample in data[:min(len(data), 50)]:  # 最多评估 50 个样本
-            query_emb = encoder.encode_texts([sample["input_text"]])
-            memory_embs = encoder.encode_texts_deep(sample["memory_texts"]).unsqueeze(0)
-            selection_weights = selector_module.soft_select(query_emb, memory_embs)
-
-            # Tokenize
-            if "target_text" in sample and sample["target_text"]:
-                query_enc = tokenizer(sample["input_text"], add_special_tokens=True,
-                                      truncation=True, max_length=max_seq_len // 2)
-                target_enc = tokenizer(sample["target_text"], add_special_tokens=False,
-                                       truncation=True, max_length=max_seq_len // 2)
-                combined_ids = query_enc["input_ids"] + target_enc["input_ids"]
-                if len(combined_ids) > max_seq_len:
-                    combined_ids = combined_ids[:max_seq_len]
-                input_ids = torch.tensor([combined_ids], device=device)
-            else:
-                encoded = tokenizer(sample["input_text"], return_tensors="pt",
-                                    truncation=True, max_length=max_seq_len)
-                input_ids = encoded["input_ids"].to(device)
-
-            attention_mask = torch.ones_like(input_ids, dtype=torch.bool)
-
-            # Forward through backbone with MAG injection
-            if hasattr(model.model, "embed_tokens"):
-                h = model.model.embed_tokens(input_ids)
-            else:
-                h = model.get_input_embeddings()(input_ids)
-
-            position_ids = torch.arange(h.shape[1], device=h.device).unsqueeze(0)
-            position_embeddings = _compute_position_embeddings(model, h, position_ids, rotary_emb)
-
-            layer_kwargs = {"attention_mask": attention_mask}
-            if position_embeddings is not None:
-                layer_kwargs["position_embeddings"] = position_embeddings
-            else:
-                layer_kwargs["position_ids"] = position_ids
-
-            # Forward 到第一个注入层之前
-            for layer_idx in range(first_injection_layer):
-                layer_output = backbone_layers[layer_idx](h, **layer_kwargs)
-                h = layer_output[0] if isinstance(layer_output, tuple) else layer_output
-
-            # 从第一个注入层开始
-            for layer_idx in range(first_injection_layer, len(backbone_layers)):
-                layer_output = backbone_layers[layer_idx](h, **layer_kwargs)
-                h = layer_output[0] if isinstance(layer_output, tuple) else layer_output
-
-                if layer_idx in mag_gate_module.injection_layers:
-                    h, gate_val = mag_gate_module.inject(
-                        layer_idx, h, memory_embs,
-                        selection_weights=selection_weights,
-                        return_gate=True,
-                    )
-                    if gate_val is not None:
-                        gate_stats[layer_idx]["means"].append(gate_val.mean().item())
-                        gate_stats[layer_idx]["stds"].append(gate_val.std().item())
-
-            num_evaluated += 1
-
-    # 汇总统计
-    results = {"per_layer": {}, "overall_gate_mean": 0.0}
-    all_means = []
+    sorted_injection = sorted(injector_module.injection_layers)
+    results = {"per_layer": {}, "overall_alpha_mean": 0.0}
+    all_alphas = []
 
     for layer_idx in sorted_injection:
-        means = gate_stats[layer_idx]["means"]
-        stds = gate_stats[layer_idx]["stds"]
-        if means:
-            avg_mean = sum(means) / len(means)
-            avg_std = sum(stds) / len(stds)
-            all_means.append(avg_mean)
-            results["per_layer"][str(layer_idx)] = {
-                "avg_gate_mean": avg_mean,
-                "avg_gate_std": avg_std,
-            }
-            logger.info(f"  Layer {layer_idx}: gate_mean={avg_mean:.4f}, gate_std={avg_std:.4f}")
+        alpha = injector_module.get_alpha(layer_idx).item()
+        all_alphas.append(alpha)
+        results["per_layer"][str(layer_idx)] = {"alpha": alpha}
+        logger.info(f"  Layer {layer_idx}: alpha={alpha:.4f}")
 
-    if all_means:
-        results["overall_gate_mean"] = sum(all_means) / len(all_means)
+    if all_alphas:
+        results["overall_alpha_mean"] = sum(all_alphas) / len(all_alphas)
 
-    # Gate bias 诊断
-    try:
-        if mag_gate_module.config.share_parameters and mag_gate_module._shared_block is not None:
-            bias = mag_gate_module._shared_block.gate_proj.bias.data.mean().item()
-            results["gate_bias"] = bias
-            logger.info(f"  Gate bias (共享): {bias:.4f}")
-    except Exception:
-        pass
-
-    # 判断效果
-    overall = results["overall_gate_mean"]
-    logger.info(f"  整体 gate 均值: {overall:.4f}")
-    if overall > 0.3:
-        logger.info("  ✅ Gate 已打开, MAG 在积极注入记忆")
-    elif overall > 0.15:
-        logger.info("  🟡 Gate 部分打开, MAG 在谨慎注入")
+    overall = results["overall_alpha_mean"]
+    logger.info(f"  整体 alpha 均值: {overall:.4f}")
+    if overall > 0.1:
+        logger.info("  ✅ Alpha 已学到有意义的注入强度")
+    elif overall > 0.03:
+        logger.info("  🟡 Alpha 较小, 注入较弱")
     else:
-        logger.info("  🔴 Gate 几乎关闭 (≈ sigmoid(-2)=0.12), MAG 未生效")
+        logger.info("  🔴 Alpha 几乎为 0, 注入未生效")
 
-    logger.info(f"  评估样本数: {num_evaluated}")
+    logger.info(f"  评估样本数: {min(len(data), 50)}")
 
     return results
+
+
+# ======================================================================
+# 记忆压缩工具函数 (根据 injection_mode 选择压缩方式)
+# ======================================================================
+
+def _compress_memory_for_eval(
+    per_layer_hs_flat: dict[int, torch.Tensor],
+    backbone_layers: nn.ModuleList,
+    flat_mask: torch.Tensor | None,
+    injection_mode: str,
+    svd_rank: int = 8,
+    svd_normalize: bool = True,
+    max_raw_kv_tokens: int = 128,
+) -> dict[int, tuple[torch.Tensor, torch.Tensor]]:
+    """根据 injection_mode 选择对应的记忆压缩方式。"""
+    if injection_mode == "raw_kv":
+        return extract_raw_kv_for_injection(
+            memory_hidden_states=per_layer_hs_flat,
+            backbone_layers=backbone_layers,
+            attention_mask=flat_mask,
+            max_tokens=max_raw_kv_tokens,
+        )
+    else:
+        # svd_only / svd_adapter: 先做 SVD 压缩
+        return compress_memory_for_kv_injection(
+            memory_hidden_states=per_layer_hs_flat,
+            backbone_layers=backbone_layers,
+            attention_mask=flat_mask,
+            svd_rank=svd_rank,
+            normalize_keys=svd_normalize,
+        )
 
 
 # ======================================================================
@@ -606,24 +572,28 @@ def eval_ppl_comparison(
     tokenizer: Any,
     encoder: MemoryEncoder,
     selector: ContextSelector,
-    mag_gate: MAGGate,
+    kv_injector: KVMemoryInjector,
     data: list[dict],
     device: str,
     max_seq_len: int = 512,
+    svd_rank: int = 8,
+    svd_normalize: bool = True,
+    injection_mode: str = "svd_only",
+    max_raw_kv_tokens: int = 128,
 ) -> dict:
     """对比有记忆注入和无记忆注入时的困惑度 (PPL)。
 
-    核心: 如果 MAG 学到了有用信息, 有记忆时 PPL 应该更低。
+    核心: 如果 KV 注入学到了有用信息, 有记忆时 PPL 应该更低。
     """
     logger.info("=" * 60)
     logger.info("评估 3: PPL 对比 (有记忆 vs 无记忆)")
     logger.info("=" * 60)
 
-    mag_gate_module = mag_gate.module if hasattr(mag_gate, "module") else mag_gate
+    injector_module = kv_injector.module if hasattr(kv_injector, "module") else kv_injector
     selector_module = selector.module if hasattr(selector, "module") else selector
 
     backbone_layers, final_norm, lm_head, rotary_emb = _get_backbone_layers(model)
-    sorted_injection = sorted(mag_gate_module.injection_layers)
+    sorted_injection = sorted(injector_module.injection_layers)
     first_injection_layer = sorted_injection[0] if sorted_injection else 0
 
     # 只评估有 target_text 的样本
@@ -640,7 +610,7 @@ def eval_ppl_comparison(
     num_evaluated = 0
 
     selector.eval()
-    mag_gate.eval()
+    kv_injector.eval()
 
     with torch.no_grad():
         for sample in samples_with_target[:min(len(samples_with_target), 100)]:
@@ -665,16 +635,39 @@ def eval_ppl_comparison(
 
             attention_mask = torch.ones_like(input_ids, dtype=torch.bool)
 
-            # 编码记忆 (深层编码)
+            # 编码记忆 (per-layer deep encoding + SVD 压缩)
             query_emb = encoder.encode_texts([sample["input_text"]])
             memory_embs = encoder.encode_texts_deep(sample["memory_texts"]).unsqueeze(0)
-            selection_weights = selector_module.soft_select(query_emb, memory_embs)
+
+            # Per-layer SVD 压缩
+            per_layer_hs, per_layer_mask = encoder.encode_texts_deep_all_layers(
+                sample["memory_texts"],
+                target_layers=sorted_injection,
+            )
+            virtual_kv_cache = {}
+            if per_layer_hs:
+                per_layer_hs_flat = {}
+                flat_mask = None
+                for l_idx, hs in per_layer_hs.items():
+                    K_mem, T_mem, D_mem = hs.shape
+                    per_layer_hs_flat[l_idx] = hs.view(1, K_mem * T_mem, D_mem)
+                    if per_layer_mask is not None and flat_mask is None:
+                        flat_mask = per_layer_mask.view(1, K_mem * T_mem)
+                virtual_kv_cache = _compress_memory_for_eval(
+                    per_layer_hs_flat=per_layer_hs_flat,
+                    backbone_layers=backbone_layers,
+                    flat_mask=flat_mask,
+                    injection_mode=injection_mode,
+                    svd_rank=svd_rank,
+                    svd_normalize=svd_normalize,
+                    max_raw_kv_tokens=max_raw_kv_tokens,
+                )
 
             # --- Forward: 有记忆 ---
-            loss_with = _forward_with_mag(
-                model, input_ids, attention_mask, labels,
+            loss_with = _forward_with_kv_injection(
+                model, input_ids, labels,
                 backbone_layers, final_norm, lm_head, rotary_emb,
-                mag_gate_module, memory_embs, selection_weights,
+                injector_module, virtual_kv_cache,
                 first_injection_layer, device,
             )
 
@@ -728,21 +721,31 @@ def eval_ppl_comparison(
     return results
 
 
-def _forward_with_mag(
-    model, input_ids, attention_mask, labels,
+def _forward_with_kv_injection(
+    model, input_ids, labels,
     backbone_layers, final_norm, lm_head, rotary_emb,
-    mag_gate_module, memory_embs, selection_weights,
+    injector_module, virtual_kv_cache,
     first_injection_layer, device,
 ) -> float:
-    """有 MAG 注入的 forward, 返回 loss 标量。"""
+    """有 KV 注入的 forward, 返回 loss 标量。"""
     if hasattr(model.model, "embed_tokens"):
         h = model.model.embed_tokens(input_ids)
     else:
         h = model.get_input_embeddings()(input_ids)
 
-    position_ids = torch.arange(h.shape[1], device=h.device).unsqueeze(0)
+    B_seq, T_seq, D_seq = h.shape
+    position_ids = torch.arange(T_seq, device=h.device).unsqueeze(0)
     position_embeddings = _compute_position_embeddings(model, h, position_ids, rotary_emb)
 
+    # 构造 4D causal mask
+    causal_mask_4d = torch.zeros(B_seq, 1, T_seq, T_seq, device=h.device, dtype=h.dtype)
+    causal_mask_4d.masked_fill_(
+        torch.triu(torch.ones(T_seq, T_seq, device=h.device, dtype=torch.bool), diagonal=1)
+        .unsqueeze(0).unsqueeze(0),
+        float("-inf"),
+    )
+
+    attention_mask = torch.ones_like(input_ids, dtype=torch.bool)
     layer_kwargs = {"attention_mask": attention_mask}
     if position_embeddings is not None:
         layer_kwargs["position_embeddings"] = position_embeddings
@@ -750,14 +753,18 @@ def _forward_with_mag(
         layer_kwargs["position_ids"] = position_ids
 
     for layer_idx in range(len(backbone_layers)):
-        layer_output = backbone_layers[layer_idx](h, **layer_kwargs)
-        h = layer_output[0] if isinstance(layer_output, tuple) else layer_output
-
-        if layer_idx in mag_gate_module.injection_layers:
-            h = mag_gate_module.inject(
-                layer_idx, h, memory_embs,
-                selection_weights=selection_weights,
+        if layer_idx in injector_module.injection_layers and virtual_kv_cache:
+            h, _ = injector_module.forward_decoder_layer(
+                layer_idx=layer_idx,
+                decoder_layer=backbone_layers[layer_idx],
+                hidden_states=h,
+                attention_mask=causal_mask_4d,
+                position_embeddings=position_embeddings,
+                virtual_kv_cache=virtual_kv_cache,
             )
+        else:
+            layer_output = backbone_layers[layer_idx](h, **layer_kwargs)
+            h = layer_output[0] if isinstance(layer_output, tuple) else layer_output
 
     h = final_norm(h)
     logits = lm_head(h)
@@ -818,33 +825,35 @@ def eval_generation_comparison(
     tokenizer: Any,
     encoder: MemoryEncoder,
     selector: ContextSelector,
-    mag_gate: MAGGate,
+    kv_injector: KVMemoryInjector,
     data: list[dict],
     device: str,
     num_samples: int = 5,
     max_new_tokens: int = 128,
     max_seq_len: int = 512,
-    gate_scale: float = 0.1,
-    layer_gate_scales: dict[int, float] | None = None,
+    svd_rank: int = 8,
+    svd_normalize: bool = True,
     max_inject_steps: int = 10,
+    injection_mode: str = "svd_only",
+    max_raw_kv_tokens: int = 128,
 ) -> dict:
     """对比有记忆 vs 无记忆的生成结果。
 
     选取几个有代表性的样本, 分别:
     - 无记忆: 纯 backbone 生成
-    - 有记忆: MAG 注入后生成 (使用 gate_scale 缩放注入强度)
+    - 有记忆: KV 注入后生成
     展示两者的差异, 供人工评估。
     """
     logger.info("=" * 60)
     logger.info("评估 4: 生成质量对比")
     logger.info("=" * 60)
-    logger.info(f"  推理 gate_scale = {gate_scale} (1.0=训练时强度, 越小注入越轻)")
     logger.info(f"  最大注入步数 = {max_inject_steps} (超过后 backbone 完全接管)")
-    if layer_gate_scales:
-        logger.info(f"  逐层 gate_scale: {layer_gate_scales}")
 
-    mag_gate_module = mag_gate.module if hasattr(mag_gate, "module") else mag_gate
+    injector_module = kv_injector.module if hasattr(kv_injector, "module") else kv_injector
     selector_module = selector.module if hasattr(selector, "module") else selector
+
+    backbone_layers, final_norm, lm_head, rotary_emb = _get_backbone_layers(model)
+    sorted_injection = sorted(injector_module.injection_layers)
 
     samples_with_target = [s for s in data if "target_text" in s and s["target_text"]]
     if not samples_with_target:
@@ -858,7 +867,7 @@ def eval_generation_comparison(
     generation_results = []
 
     selector.eval()
-    mag_gate.eval()
+    kv_injector.eval()
 
     for i, sample in enumerate(selected):
         logger.info(f"\n--- 样本 {i + 1}/{num_samples} ---")
@@ -883,20 +892,37 @@ def eval_generation_comparison(
             )
 
             # --- 有记忆生成 ---
-            query_emb = encoder.encode_texts([sample["input_text"]])
-            memory_embs = encoder.encode_texts_deep(sample["memory_texts"]).unsqueeze(0)
-            selection_weights = selector_module.soft_select(query_emb, memory_embs)
+            # Per-layer SVD 压缩
+            per_layer_hs, per_layer_mask = encoder.encode_texts_deep_all_layers(
+                sample["memory_texts"],
+                target_layers=sorted_injection,
+            )
+            virtual_kv_cache = {}
+            if per_layer_hs:
+                per_layer_hs_flat = {}
+                flat_mask = None
+                for l_idx, hs in per_layer_hs.items():
+                    K_mem, T_mem, D_mem = hs.shape
+                    per_layer_hs_flat[l_idx] = hs.view(1, K_mem * T_mem, D_mem)
+                    if per_layer_mask is not None and flat_mask is None:
+                        flat_mask = per_layer_mask.view(1, K_mem * T_mem)
+                virtual_kv_cache = _compress_memory_for_eval(
+                    per_layer_hs_flat=per_layer_hs_flat,
+                    backbone_layers=backbone_layers,
+                    flat_mask=flat_mask,
+                    injection_mode=injection_mode,
+                    svd_rank=svd_rank,
+                    svd_normalize=svd_normalize,
+                    max_raw_kv_tokens=max_raw_kv_tokens,
+                )
 
-            gen_with_mem = _generate_text_with_mag(
+            gen_with_mem = _generate_text_with_kv_injection(
                 model, tokenizer, sample["input_text"],
-                mag_gate_module=mag_gate_module,
-                memory_embs=memory_embs,
-                selection_weights=selection_weights,
+                injector_module=injector_module,
+                virtual_kv_cache=virtual_kv_cache,
                 max_new_tokens=max_new_tokens,
                 max_seq_len=max_seq_len,
                 device=device,
-                gate_scale=gate_scale,
-                layer_gate_scales=layer_gate_scales,
                 max_inject_steps=max_inject_steps,
             )
 
@@ -1012,43 +1038,30 @@ def _generate_text(
     return tokenizer.decode(new_tokens, skip_special_tokens=True)
 
 
-def _generate_text_with_mag(
+def _generate_text_with_kv_injection(
     model: nn.Module,
     tokenizer: Any,
     prompt: str,
-    mag_gate_module: MAGGate,
-    memory_embs: torch.Tensor,
-    selection_weights: torch.Tensor,
+    injector_module: KVMemoryInjector,
+    virtual_kv_cache: dict[int, tuple[torch.Tensor, torch.Tensor]],
     max_new_tokens: int = 128,
     max_seq_len: int = 512,
     device: str = "cuda",
     repetition_penalty: float = 1.5,
-    gate_scale: float = 0.3,
-    layer_gate_scales: dict[int, float] | None = None,
     max_inject_steps: int = 10,
 ) -> str:
-    """有 MAG 注入的文本生成 — Last-token-only + 硬截断策略。
+    """有 KV 注入的文本生成 — 直接拼接虚拟 KV 到 self-attention。
 
-    ★ 核心策略: Last-token-only + 硬截断
-      1. 每步仍做 full sequence forward (无 KV cache, 简单可靠)
-      2. MAG 只注入到**最后一个 token 位置** (当前预测位置)
-         - 历史 token 的 hidden state 不被 MAG 修改, 保持 backbone 原始表征
+    ★ 核心策略:
+      1. 每步做 full sequence forward (无 KV cache, 简单可靠)
+      2. 在注入层, 虚拟 KV 直接拼到 backbone self-attention 的 KV 上
       3. 只在前 max_inject_steps 步注入, 之后完全停止 (backbone 接管)
-      4. 在注入窗口内, gate_scale 随步数线性衰减至 0:
-           scale(step) = gate_scale × (1 - step / max_inject_steps)
-         - 比指数衰减更可控, 到截断点刚好为 0
-
-      公式 (step < max_inject_steps):
-        对于位置 t < last_pos:  h'[t] = h[t]                              # 不注入
-        对于位置 t = last_pos:  h'[t] = h[t] + scale(step) × (g ⊙ W_o m)  # 仅此处注入
-
-      公式 (step >= max_inject_steps):
-        h' = h  (所有位置, 完全不注入)
+      4. alpha 由 KVMemoryInjector 的可学习参数控制
 
     额外保护:
     - Repetition penalty (1.5): 对已生成 token 降权, 防止循环
     - N-gram 重复检测: 4-gram 重复 3 次则强制终止
-    - 硬截断: 超过 max_inject_steps 步后, 零注入
+    - 硬截断: 超过 max_inject_steps 步后, 不注入
     """
     backbone_layers, final_norm, lm_head, rotary_emb = _get_backbone_layers(model)
     num_layers = len(backbone_layers)
@@ -1066,12 +1079,10 @@ def _generate_text_with_mag(
     generated_token_list: list[int] = []
     eos_token_id = tokenizer.eos_token_id
 
-    # max_inject_steps=0 表示不限制, 只靠衰减 (兼容旧逻辑)
     effective_inject_steps = max_inject_steps if max_inject_steps > 0 else max_new_tokens
 
     with torch.no_grad():
         for gen_step in range(max_new_tokens):
-            # 当前序列
             cur_ids = generated_ids
             if cur_ids.shape[1] > max_seq_len:
                 cur_ids = cur_ids[:, -max_seq_len:]
@@ -1082,8 +1093,9 @@ def _generate_text_with_mag(
             else:
                 h = model.get_input_embeddings()(cur_ids)
 
-            attention_mask = torch.ones(1, h.shape[1], device=device, dtype=torch.bool)
-            position_ids = torch.arange(h.shape[1], device=device).unsqueeze(0)
+            B_seq, T_seq, D_seq = h.shape
+            attention_mask = torch.ones(1, T_seq, device=device, dtype=torch.bool)
+            position_ids = torch.arange(T_seq, device=device).unsqueeze(0)
             position_embeddings = _compute_position_embeddings(model, h, position_ids, rotary_emb)
 
             layer_kwargs: dict[str, Any] = {"attention_mask": attention_mask}
@@ -1092,32 +1104,30 @@ def _generate_text_with_mag(
             else:
                 layer_kwargs["position_ids"] = position_ids
 
-            # 当前步的 gate_scale: 线性衰减 + 硬截断
-            if gen_step < effective_inject_steps:
-                # 线性衰减: gate_scale × (1 - step/max_steps)
-                cur_scale = gate_scale * (1.0 - gen_step / effective_inject_steps)
-            else:
-                cur_scale = 0.0  # 硬截断: 完全不注入
+            # 构造 4D causal mask
+            causal_mask_4d = torch.zeros(B_seq, 1, T_seq, T_seq, device=h.device, dtype=h.dtype)
+            causal_mask_4d.masked_fill_(
+                torch.triu(torch.ones(T_seq, T_seq, device=h.device, dtype=torch.bool), diagonal=1)
+                .unsqueeze(0).unsqueeze(0),
+                float("-inf"),
+            )
 
-            # Forward all layers, MAG 只注入最后一个 token 位置
+            # 是否注入
+            do_inject = gen_step < effective_inject_steps and virtual_kv_cache
+
             for layer_idx in range(num_layers):
-                layer_output = backbone_layers[layer_idx](h, **layer_kwargs)
-                h = layer_output[0] if isinstance(layer_output, tuple) else layer_output
-
-                if layer_idx in mag_gate_module.injection_layers and cur_scale > 0.005:
-                    # 确定该层的 scale
-                    layer_scale = cur_scale
-                    if layer_gate_scales and layer_idx in layer_gate_scales:
-                        layer_scale = layer_gate_scales[layer_idx] * (1.0 - gen_step / effective_inject_steps)
-
-                    # ★ 只对最后一个 token 位置注入 MAG
-                    h_last = h[:, -1:, :]  # (B, 1, D)
-                    h_last = mag_gate_module.inject(
-                        layer_idx, h_last, memory_embs,
-                        selection_weights=selection_weights,
-                        gate_scale=layer_scale,
+                if do_inject and layer_idx in injector_module.injection_layers:
+                    h, _ = injector_module.forward_decoder_layer(
+                        layer_idx=layer_idx,
+                        decoder_layer=backbone_layers[layer_idx],
+                        hidden_states=h,
+                        attention_mask=causal_mask_4d,
+                        position_embeddings=position_embeddings,
+                        virtual_kv_cache=virtual_kv_cache,
                     )
-                    h = torch.cat([h[:, :-1, :], h_last], dim=1)
+                else:
+                    layer_output = backbone_layers[layer_idx](h, **layer_kwargs)
+                    h = layer_output[0] if isinstance(layer_output, tuple) else layer_output
 
             h = final_norm(h)
             logits = lm_head(h)
@@ -1189,8 +1199,10 @@ def main() -> None:
     )
 
     # 2. 加载 MAG 训练权重
-    selector, mag_gate, mag_config = load_mag_weights(
+    backbone_config = model.config
+    selector, kv_injector, mag_config = load_mag_weights(
         args.mag_weights_dir, hidden_dim, args.device, args.dtype,
+        backbone_config=backbone_config,
     )
 
     # 3. 初始化 MemoryEncoder
@@ -1208,26 +1220,18 @@ def main() -> None:
         dtype=getattr(torch, args.dtype, torch.float32),
     )
 
+    # SVD 配置
+    svd_rank = mag_config.get("svd_rank", 8)
+    svd_normalize = mag_config.get("svd_normalize", True)
+    injection_mode = mag_config.get("injection_mode", "svd_only")
+    max_raw_kv_tokens = mag_config.get("max_raw_kv_tokens", 128)
+
     # 4. 加载评估数据
     data = load_eval_data(args.data_path, args.num_eval_samples)
 
     # 5. 执行各项评估
     all_results = {}
     t0 = time.time()
-
-    # 解析逐层 gate_scale
-    layer_gate_scales: dict[int, float] | None = None
-    if args.layer_gate_scales:
-        layer_gate_scales = {}
-        for part in args.layer_gate_scales.split(","):
-            part = part.strip()
-            if ":" in part:
-                layer_str, scale_str = part.split(":", 1)
-                layer_gate_scales[int(layer_str)] = float(scale_str)
-        if layer_gate_scales:
-            logger.info(f"逐层 gate_scale: {layer_gate_scales}")
-        else:
-            layer_gate_scales = None
 
     if args.eval_selector:
         try:
@@ -1240,17 +1244,20 @@ def main() -> None:
     if args.eval_gate:
         try:
             all_results["gate"] = eval_gate_activation(
-                model, tokenizer, encoder, selector, mag_gate, data,
+                model, tokenizer, encoder, selector, kv_injector, data,
                 args.device, args.max_seq_len,
             )
         except Exception as e:
-            logger.error(f"Gate 评估失败: {e}", exc_info=True)
+            logger.error(f"Alpha 评估失败: {e}", exc_info=True)
 
     if args.eval_ppl:
         try:
             all_results["ppl"] = eval_ppl_comparison(
-                model, tokenizer, encoder, selector, mag_gate, data,
+                model, tokenizer, encoder, selector, kv_injector, data,
                 args.device, args.max_seq_len,
+                svd_rank=svd_rank, svd_normalize=svd_normalize,
+                injection_mode=injection_mode,
+                max_raw_kv_tokens=max_raw_kv_tokens,
             )
         except Exception as e:
             logger.error(f"PPL 评估失败: {e}", exc_info=True)
@@ -1258,14 +1265,16 @@ def main() -> None:
     if args.eval_generation:
         try:
             all_results["generation"] = eval_generation_comparison(
-                model, tokenizer, encoder, selector, mag_gate, data,
+                model, tokenizer, encoder, selector, kv_injector, data,
                 args.device,
                 num_samples=args.num_generate_samples,
                 max_new_tokens=args.max_new_tokens,
                 max_seq_len=args.max_seq_len,
-                gate_scale=args.inference_gate_scale,
-                layer_gate_scales=layer_gate_scales,
+                svd_rank=svd_rank,
+                svd_normalize=svd_normalize,
                 max_inject_steps=args.mag_inject_steps,
+                injection_mode=injection_mode,
+                max_raw_kv_tokens=max_raw_kv_tokens,
             )
         except Exception as e:
             logger.error(f"生成评估失败: {e}", exc_info=True)
@@ -1285,9 +1294,7 @@ def main() -> None:
 
     if "gate" in all_results and all_results["gate"]:
         gate = all_results["gate"]
-        logger.info(f"  Gate 整体均值:      {gate.get('overall_gate_mean', 'N/A'):.4f}")
-        if "gate_bias" in gate:
-            logger.info(f"  Gate bias:          {gate['gate_bias']:.4f}")
+        logger.info(f"  Alpha 整体均值:     {gate.get('overall_alpha_mean', 'N/A'):.4f}")
 
     if "ppl" in all_results and all_results["ppl"]:
         ppl = all_results["ppl"]
@@ -1337,11 +1344,11 @@ def main() -> None:
             good_signs.append(f"Selector 区分度良好 (gap={gap:.4f})")
 
     if "gate" in all_results and all_results["gate"]:
-        gate_mean = all_results["gate"].get("overall_gate_mean", 0)
-        if gate_mean < 0.15:
-            issues.append(f"Gate 未打开 (mean={gate_mean:.4f} ≈ 初始值 0.12), MAG 未生效")
-        elif gate_mean > 0.25:
-            good_signs.append(f"Gate 已打开 (mean={gate_mean:.4f})")
+        alpha_mean = all_results["gate"].get("overall_alpha_mean", 0)
+        if alpha_mean < 0.03:
+            issues.append(f"Alpha 几乎为 0 (mean={alpha_mean:.4f}), KV 注入未生效")
+        elif alpha_mean > 0.05:
+            good_signs.append(f"Alpha 已学到有意义的值 (mean={alpha_mean:.4f})")
 
     if "ppl" in all_results and all_results["ppl"]:
         ppl_diff = all_results["ppl"].get("ppl_reduction", 0)

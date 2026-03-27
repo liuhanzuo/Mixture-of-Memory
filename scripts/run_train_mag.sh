@@ -61,12 +61,23 @@ SEED="${SEED:-42}"
 SLIDING_WINDOW="${SLIDING_WINDOW:-0}"
 
 # ---- MAG 架构 ---- #
-# 注入层: 默认让代码自动决定, 或手动指定 (如 "6 12 18 23")
+# 注入层: 默认让代码自动决定, 或手动指定 (如 "9 18 27 35")
 MAG_INJECTION_LAYERS="${MAG_INJECTION_LAYERS:-}"
-MAG_NUM_HEADS="${MAG_NUM_HEADS:-8}"
 DEEP_ENCODE_LAYERS="${DEEP_ENCODE_LAYERS:-8}"
-# Per-Layer Multi-Chunk SVD: 记忆文本过 backbone 全部层, 每层独立 SVD 压缩
-USE_PER_LAYER_MEMORY="${USE_PER_LAYER_MEMORY:-false}"
+
+# ---- KV 注入配置 ---- #
+KV_INIT_ALPHA="${KV_INIT_ALPHA:-0.1}"
+KV_MAX_ALPHA="${KV_MAX_ALPHA:-0.5}"
+
+# ---- 注入模式 ---- #
+# INJECTION_MODE: svd_only | svd_adapter | raw_kv
+#   svd_only:    原始 SVD + per-layer alpha 标量 (参数极少, 但效果有限)
+#   svd_adapter: SVD + LoRA 适配器 (推荐, 让虚拟 KV 学会匹配 backbone KV 空间)
+#   raw_kv:      直接用记忆 token 的原始 KV (不做 SVD, trivial baseline)
+INJECTION_MODE="${INJECTION_MODE:-svd_adapter}"
+LORA_RANK="${LORA_RANK:-16}"
+LORA_SHARE_PARAMS="${LORA_SHARE_PARAMS:-true}"  # true | false
+MAX_RAW_KV_TOKENS="${MAX_RAW_KV_TOKENS:-128}"
 
 # ---- Anti-Teacher-Forcing 配置 ---- #
 LABEL_SMOOTHING="${LABEL_SMOOTHING:-0.1}"
@@ -84,7 +95,6 @@ MASTER_ADDR="${MASTER_ADDR:-localhost}"
 MASTER_PORT="${MASTER_PORT:-29500}"
 NODE_RANK="${NODE_RANK:-0}"
 SVD_RANK="${SVD_RANK:-8}"
-SVD_CHUNK_SIZE="${SVD_CHUNK_SIZE:-0}"
 
 # ---- 运行模式 ---- #
 # MODE: full (正式训练) | test (小数据测试) | debug (单卡合成数据)
@@ -202,10 +212,18 @@ echo "  Max Seq Len:    ${MAX_SEQ_LEN}"
 echo "  Seed:           ${SEED}"
 [[ "${SLIDING_WINDOW}" -gt 0 ]] && echo "  SWA Window:     ${SLIDING_WINDOW}"
 echo ""
-echo "  --- SVD 压缩记忆 ---"
+echo "  --- KV 注入 ---"
+echo "  注入模式:       ${INJECTION_MODE}"
 echo "  SVD Rank:        ${SVD_RANK}"
-echo "  SVD Chunk Size:  ${SVD_CHUNK_SIZE}"
-echo "  Per-Layer SVD:   ${USE_PER_LAYER_MEMORY}"
+echo "  KV Init Alpha:   ${KV_INIT_ALPHA}"
+echo "  KV Max Alpha:    ${KV_MAX_ALPHA}"
+if [[ "${INJECTION_MODE}" == "svd_adapter" ]]; then
+    echo "  LoRA Rank:       ${LORA_RANK}"
+    echo "  LoRA Share:      ${LORA_SHARE_PARAMS}"
+fi
+if [[ "${INJECTION_MODE}" == "raw_kv" ]]; then
+    echo "  Max Raw Tokens:  ${MAX_RAW_KV_TOKENS}"
+fi
 echo ""
 echo "  --- Anti-Teacher-Forcing ---"
 echo "  Label Smoothing:     ${LABEL_SMOOTHING}"
@@ -250,15 +268,18 @@ TRAIN_ARGS+=" --grad_accumulation_steps ${GRAD_ACCUM}"
 TRAIN_ARGS+=" --max_seq_len ${MAX_SEQ_LEN}"
 TRAIN_ARGS+=" --max_real_samples ${MAX_REAL_SAMPLES}"
 TRAIN_ARGS+=" --seed ${SEED}"
-TRAIN_ARGS+=" --mag_num_heads ${MAG_NUM_HEADS}"
 TRAIN_ARGS+=" --deep_encode_layers ${DEEP_ENCODE_LAYERS}"
-TRAIN_ARGS+=" --use_compressed_memory"
 TRAIN_ARGS+=" --svd_rank ${SVD_RANK}"
-TRAIN_ARGS+=" --svd_chunk_size ${SVD_CHUNK_SIZE}"
+TRAIN_ARGS+=" --kv_init_alpha ${KV_INIT_ALPHA}"
+TRAIN_ARGS+=" --kv_max_alpha ${KV_MAX_ALPHA}"
+TRAIN_ARGS+=" --injection_mode ${INJECTION_MODE}"
+TRAIN_ARGS+=" --lora_rank ${LORA_RANK}"
+TRAIN_ARGS+=" --max_raw_kv_tokens ${MAX_RAW_KV_TOKENS}"
 
-# Per-Layer Multi-Chunk SVD
-if [[ "${USE_PER_LAYER_MEMORY}" == "true" ]]; then
-    TRAIN_ARGS+=" --use_per_layer_memory"
+if [[ "${LORA_SHARE_PARAMS}" == "true" ]]; then
+    TRAIN_ARGS+=" --lora_share_params"
+else
+    TRAIN_ARGS+=" --no_lora_share_params"
 fi
 
 # MAG 注入层 (手动指定或自动)
