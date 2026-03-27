@@ -259,6 +259,11 @@ def parse_args() -> argparse.Namespace:
                         help="是否对虚拟 KV pairs 做 L2 归一化")
     parser.add_argument("--no_svd_normalize", action="store_true", default=False,
                         help="禁用 SVD 归一化")
+    parser.add_argument("--use_per_layer_memory", action="store_true", default=False,
+                        help="启用 Per-Layer Multi-Chunk SVD 记忆. "
+                             "记忆文本过 backbone 全部层, 每层独立做 SVD 压缩, "
+                             "推理时第 l 层用第 l 层的虚拟 KV pairs. "
+                             "自动启用 --use_compressed_memory.")
 
     return parser.parse_args()
 
@@ -1251,7 +1256,8 @@ def train_phase2_joint(
             f"从第 {first_injection_layer} 层开始带梯度 forward"
         )
         if compressed_cache is not None:
-            logger.info(f"★ 记忆模式: SVD 压缩记忆 (rank={compressed_cache.config.rank})")
+            mode = "Per-Layer Multi-Chunk SVD" if compressed_cache.config.store_per_layer else "Shared SVD"
+            logger.info(f"★ 记忆模式: {mode} (rank={compressed_cache.config.rank})")
         else:
             logger.info(f"  记忆模式: 原始 pooled vectors")
 
@@ -1332,27 +1338,50 @@ def train_phase2_joint(
                 # ★ SVD 压缩记忆: 获取 unpooled hidden states → SVD 压缩 → 虚拟 tokens
                 memory_vectors_for_inject = memory_embs  # 默认: pooled vectors
                 memory_mask_for_inject = None
-                if compressed_cache is not None:
-                    # 获取 unpooled hidden states (所有记忆拼接)
+                use_per_layer = getattr(args, 'use_per_layer_memory', False)
+
+                if compressed_cache is not None and use_per_layer:
+                    # ★ Per-Layer Multi-Chunk SVD 模式:
+                    # 记忆文本过 backbone 全部层, 每层独立做 SVD 压缩
+                    per_layer_hs, per_layer_mask = encoder.encode_texts_deep_all_layers(
+                        sample["memory_texts"],
+                        target_layers=sorted(mag_gate_module.injection_layers),
+                    )
+                    if per_layer_hs:
+                        # 拼接每层的记忆 hidden states (多条记忆拼成一个序列)
+                        per_layer_hs_flat = {}
+                        flat_mask = None
+                        for l_idx, hs in per_layer_hs.items():
+                            K_mem, T_mem, D_mem = hs.shape
+                            per_layer_hs_flat[l_idx] = hs.view(1, K_mem * T_mem, D_mem)
+                            if per_layer_mask is not None and flat_mask is None:
+                                flat_mask = per_layer_mask.view(1, K_mem * T_mem)
+                        # 对每层独立做 SVD 压缩
+                        compressed_cache.clear_cache()
+                        compressed_cache.compress_and_store_per_layer(
+                            per_layer_hs_flat, attention_mask=flat_mask
+                        )
+                    # Per-layer 模式下, memory_vectors_for_inject 不直接使用
+                    # 而是通过 compressed_cache 在 inject 时按层获取
+                    # 但仍保留 pooled memory_embs 作为 fallback
+
+                elif compressed_cache is not None:
+                    # 原有的 shared SVD 压缩模式
                     unpooled_hs, unpooled_mask = encoder.encode_texts_deep_unpooled(
                         sample["memory_texts"]
                     )  # (K, T, D), (K, T)
-                    # 拼接所有记忆的 hidden states 为一个序列
                     K_mem, T_mem, D_mem = unpooled_hs.shape
                     unpooled_hs_flat = unpooled_hs.view(1, K_mem * T_mem, D_mem)  # (1, K*T, D)
                     if unpooled_mask is not None:
                         unpooled_mask_flat = unpooled_mask.view(1, K_mem * T_mem)  # (1, K*T)
                     else:
                         unpooled_mask_flat = None
-                    # SVD 压缩
                     compressed_cache.compress_and_store(
                         unpooled_hs_flat, attention_mask=unpooled_mask_flat
                     )
-                    # 获取虚拟 tokens 作为 memory vectors
                     mem_result = compressed_cache.get_virtual_tokens_as_memory()
                     if mem_result is not None:
                         memory_vectors_for_inject, memory_mask_for_inject = mem_result
-                        # memory_mask 转为 bool
                         if memory_mask_for_inject is not None:
                             memory_mask_for_inject = memory_mask_for_inject.bool()
 
@@ -1364,6 +1393,8 @@ def train_phase2_joint(
             # 如果使用 SVD 压缩记忆, selection_weights 不直接用于 inject
             # (因为虚拟 tokens 数量 != K), 改为 None
             selection_weights_for_inject = selection_weights if compressed_cache is None else None
+            # Per-layer 模式下, compressed_cache 会在 inject 时按层自动获取虚拟 KV
+            compressed_cache_for_inject = compressed_cache if use_per_layer else None
 
             # ---- Tokenize: 构造 [query | target] 序列 ---- #
             # Phase 2 的关键改进: 如果有 target_text (assistant 回复), 则:
@@ -1511,6 +1542,7 @@ def train_phase2_joint(
                         selection_weights=selection_weights_for_inject,
                         return_gate=True,
                         detach_value=use_detach_value,
+                        compressed_cache=compressed_cache_for_inject,
                     )
                     if gate_val is not None:
                         gate_values_for_reg.append(gate_val)
@@ -1777,6 +1809,9 @@ def main() -> None:
 
     # 5. (可选) 初始化 CompressedMemoryCache (SVD 压缩记忆)
     compressed_cache = None
+    # Per-layer 模式自动启用 compressed_memory
+    if args.use_per_layer_memory:
+        args.use_compressed_memory = True
     if args.use_compressed_memory:
         svd_normalize = args.svd_normalize and not args.no_svd_normalize
         cm_cfg = CompressedMemoryConfig(
@@ -1785,11 +1820,14 @@ def main() -> None:
             rank=args.svd_rank,
             chunk_size=args.svd_chunk_size,
             normalize=svd_normalize,
+            store_per_layer=args.use_per_layer_memory,
         )
         compressed_cache = CompressedMemoryCache(cm_cfg).to(args.device)
         if is_main_process(rank):
-            logger.info(f"★ SVD 压缩记忆已启用: rank={args.svd_rank}, "
-                        f"chunk_size={args.svd_chunk_size}, normalize={svd_normalize}")
+            mode_str = "Per-Layer Multi-Chunk SVD" if args.use_per_layer_memory else "Shared SVD"
+            logger.info(f"★ SVD 压缩记忆已启用 ({mode_str}): rank={args.svd_rank}, "
+                        f"chunk_size={args.svd_chunk_size}, normalize={svd_normalize}, "
+                        f"per_layer={args.use_per_layer_memory}")
 
     # ====== DDP 包装可训练模块 ======
     # 注意: backbone 冻结不做 DDP, 只包装 selector 和 mag_gate

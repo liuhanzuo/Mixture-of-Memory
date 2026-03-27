@@ -505,6 +505,112 @@ class MemoryEncoder(nn.Module):
 
         return h, attention_mask  # (B, T, D), (B, T)
 
+    def encode_texts_deep_all_layers(
+        self,
+        texts: list[str],
+        target_layers: list[int] | None = None,
+    ) -> tuple[dict[int, torch.Tensor], torch.Tensor | None]:
+        """用 backbone **全部层** 对记忆文本做深层编码, 返回每层的 unpooled hidden states。
+
+        这是 Per-Layer Multi-Chunk SVD 方案的核心编码方法:
+        - 把记忆文本完整过 backbone 所有层
+        - 收集每个目标层的 hidden states
+        - 每层的 hidden states 将独立做 SVD 压缩
+
+        与 encode_texts_deep_unpooled 的区别:
+        - encode_texts_deep_unpooled: 只过前 deep_encode_layers 层, 返回最后一层
+        - encode_texts_deep_all_layers: 过全部层, 返回每个目标层的 hidden states
+
+        Args:
+            texts: 文本列表.
+            target_layers: 需要收集 hidden states 的层索引列表.
+                          如果为 None, 收集所有层.
+
+        Returns:
+            (per_layer_hidden_states, attention_mask):
+                per_layer_hidden_states: {layer_idx: (num_texts, max_len, hidden_dim)}
+                    每个目标层的 unpooled hidden states.
+                attention_mask: (num_texts, max_len) 有效性 mask (1=有效, 0=padding).
+        """
+        if self._backbone_layers is None:
+            logger.warning(
+                "[MemoryEncoder] backbone layers 不可用, "
+                "encode_texts_deep_all_layers 退回 encode_texts_deep_unpooled"
+            )
+            h, mask = self.encode_texts_deep_unpooled(texts)
+            # 将单层结果包装为 dict
+            result = {}
+            if target_layers:
+                for l in target_layers:
+                    result[l] = h
+            else:
+                result[0] = h
+            return result, mask
+
+        if not texts:
+            return {}, None
+
+        if self._embedding is None or self._tokenizer is None:
+            logger.warning("[MemoryEncoder] 未初始化，返回空 dict")
+            return {}, None
+
+        num_all_layers = len(self._backbone_layers)
+        if target_layers is None:
+            target_layer_set = set(range(num_all_layers))
+        else:
+            target_layer_set = set(target_layers)
+
+        # Tokenize
+        encoded = self._tokenizer(
+            texts, padding=True, truncation=True,
+            max_length=self.config.max_memory_tokens, return_tensors="pt",
+        )
+        input_ids = encoded["input_ids"].to(self._device)
+        attention_mask = encoded.get("attention_mask")
+        if attention_mask is not None:
+            attention_mask = attention_mask.to(self._device)
+
+        per_layer_hidden: dict[int, torch.Tensor] = {}
+
+        with torch.no_grad():
+            # Step 1: Embedding
+            h = self._embedding(input_ids)  # (B, T, D)
+            B, T, D = h.shape
+
+            # Step 2: 计算 position embeddings (rotary)
+            position_ids = torch.arange(T, device=self._device).unsqueeze(0).expand(B, -1)
+            position_embeddings = None
+            if self._rotary_emb is not None:
+                position_embeddings = self._rotary_emb(h, position_ids)
+
+            # 构造 layer kwargs
+            layer_kwargs = {}
+            if attention_mask is not None:
+                attn_mask_4d = attention_mask[:, None, None, :].expand(B, 1, T, T).to(h.dtype)
+                attn_mask_4d = (1.0 - attn_mask_4d) * torch.finfo(h.dtype).min
+                layer_kwargs["attention_mask"] = attn_mask_4d
+
+            if position_embeddings is not None:
+                layer_kwargs["position_embeddings"] = position_embeddings
+            else:
+                layer_kwargs["position_ids"] = position_ids
+
+            # Step 3: 逐层 forward, 收集目标层的 hidden states
+            for layer_idx in range(num_all_layers):
+                layer_output = self._backbone_layers[layer_idx](h, **layer_kwargs)
+                h = layer_output[0] if isinstance(layer_output, tuple) else layer_output
+
+                if layer_idx in target_layer_set:
+                    per_layer_hidden[layer_idx] = h.clone()
+
+        logger.debug(
+            f"[MemoryEncoder] encode_texts_deep_all_layers: "
+            f"{len(texts)} texts, {num_all_layers} layers, "
+            f"collected {len(per_layer_hidden)} target layers"
+        )
+
+        return per_layer_hidden, attention_mask
+
     def encode(
         self,
         l2_objects: list[L2MemoryObject] | None = None,

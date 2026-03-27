@@ -573,6 +573,133 @@ class CompressedMemoryCache(nn.Module):
         return stats
 
     # ------------------------------------------------------------------ #
+    #  Per-Layer Multi-Chunk SVD 压缩 (核心新功能)
+    # ------------------------------------------------------------------ #
+
+    def compress_and_store_per_layer(
+        self,
+        per_layer_hidden_states: dict[int, torch.Tensor],
+        attention_mask: torch.Tensor | None = None,
+    ) -> dict[str, Any]:
+        """对每层的 hidden states 独立做 multi-chunk SVD 压缩并存入缓存。
+
+        这是 Per-Layer Multi-Chunk SVD 方案的核心方法:
+        - 接收 MemoryEncoder.encode_texts_deep_all_layers() 的输出
+        - 对每个目标层独立做 chunk 切分 + M=K^TV + SVD 压缩
+        - 每层的虚拟 KV pairs 独立存储, 推理时第 l 层用第 l 层的 KV
+
+        数学:
+            对每层 l, 每个 chunk c:
+                M_{c,h}^{(l)} = Σ_i k_{h,i}^{(l)} v_{h,i}^{(l)T}
+                SVD: M ≈ U_r Σ_r V_r^T
+                K̃_{c}^{(l)} = U_r √Σ_r, Ṽ_{c}^{(l)} = V_r √Σ_r
+            推理时拼接所有 chunk:
+                K̃_all^{(l)} = [K̃_1^{(l)}; K̃_2^{(l)}; ...; K̃_C^{(l)}]
+
+        Args:
+            per_layer_hidden_states: {layer_idx: (B, N, D)} 每层的 unpooled hidden states.
+                                    来自 MemoryEncoder.encode_texts_deep_all_layers().
+            attention_mask: (B, N) token 级别的 mask (1=有效, 0=padding).
+                           所有层共享同一个 mask.
+
+        Returns:
+            stats: 压缩统计信息 (每层的 chunk 数, 压缩率等).
+        """
+        if not per_layer_hidden_states:
+            return {"error": "empty per_layer_hidden_states"}
+
+        all_stats = {}
+        total_layers = 0
+        total_virtual_tokens = 0
+
+        # 确保 per-layer 存储模式开启
+        original_store_per_layer = self.config.store_per_layer
+        self.config.store_per_layer = True
+
+        for layer_idx, hidden_states in per_layer_hidden_states.items():
+            # 对每层调用已有的 compress_and_store, 使用 per-layer 存储
+            layer_stats = self.compress_and_store(
+                hidden_states=hidden_states,
+                attention_mask=attention_mask,
+                layer_idx=layer_idx,
+            )
+            all_stats[f"layer_{layer_idx}"] = layer_stats
+            total_layers += 1
+            total_virtual_tokens += layer_stats.get("virtual_tokens", 0)
+
+        # 恢复原始配置 (保持向后兼容)
+        self.config.store_per_layer = original_store_per_layer
+
+        all_stats["summary"] = {
+            "total_layers": total_layers,
+            "total_virtual_tokens_all_layers": total_virtual_tokens,
+            "layers": sorted(per_layer_hidden_states.keys()),
+        }
+
+        logger.debug(
+            f"[CompressedMemoryCache] Per-layer 压缩完成: "
+            f"{total_layers} 层, 每层 {total_virtual_tokens // max(total_layers, 1)} 虚拟 tokens"
+        )
+
+        return all_stats
+
+    def get_virtual_tokens_for_layer(
+        self,
+        layer_idx: int,
+    ) -> tuple[torch.Tensor, torch.Tensor] | None:
+        """获取指定层的虚拟 KV pairs (Per-Layer 模式专用)。
+
+        与 get_virtual_tokens 的区别:
+        - get_virtual_tokens: 通用接口, 根据 store_per_layer 配置决定行为
+        - get_virtual_tokens_for_layer: 专门用于 per-layer 模式, 直接按层索引查询
+
+        Args:
+            layer_idx: backbone 层索引.
+
+        Returns:
+            (virtual_keys, virtual_values): 各 (B, C*r, D), 或 None (该层无缓存).
+        """
+        cache_key = str(layer_idx)
+        if cache_key not in self._cache:
+            return None
+        virtual_keys, virtual_values, _ = self._cache[cache_key]
+        return virtual_keys, virtual_values
+
+    def get_virtual_tokens_as_memory_for_layer(
+        self,
+        layer_idx: int,
+    ) -> tuple[torch.Tensor, torch.Tensor] | None:
+        """获取指定层的虚拟 tokens, 格式兼容 MAGGate.inject() 的 memory_vectors 参数。
+
+        将 virtual_keys 和 virtual_values 合并为一个 tensor,
+        以便直接传给 MAGGate。
+
+        Args:
+            layer_idx: backbone 层索引.
+
+        Returns:
+            (memory_vectors, memory_mask):
+                memory_vectors: (B, C*r, D) 虚拟记忆向量.
+                memory_mask: (B, C*r) 有效性 mask.
+            或 None (该层无缓存).
+        """
+        cache_key = str(layer_idx)
+        if cache_key not in self._cache:
+            return None
+        virtual_keys, virtual_values, chunk_mask = self._cache[cache_key]
+        # 用 (key + value) / 2 作为 memory_vectors
+        memory_vectors = (virtual_keys + virtual_values) / 2.0
+        return memory_vectors, chunk_mask
+
+    def has_per_layer_cache(self) -> bool:
+        """检查是否有 per-layer 缓存 (即缓存 key 是数字而非 'shared')。"""
+        return any(k.isdigit() for k in self._cache.keys())
+
+    def get_cached_layers(self) -> list[int]:
+        """返回所有有缓存的层索引列表。"""
+        return sorted(int(k) for k in self._cache.keys() if k.isdigit())
+
+    # ------------------------------------------------------------------ #
     #  工具方法
     # ------------------------------------------------------------------ #
 

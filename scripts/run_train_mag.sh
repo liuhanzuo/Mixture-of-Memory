@@ -65,6 +65,8 @@ SLIDING_WINDOW="${SLIDING_WINDOW:-0}"
 MAG_INJECTION_LAYERS="${MAG_INJECTION_LAYERS:-}"
 MAG_NUM_HEADS="${MAG_NUM_HEADS:-8}"
 DEEP_ENCODE_LAYERS="${DEEP_ENCODE_LAYERS:-8}"
+# Per-Layer Multi-Chunk SVD: 记忆文本过 backbone 全部层, 每层独立 SVD 压缩
+USE_PER_LAYER_MEMORY="${USE_PER_LAYER_MEMORY:-false}"
 
 # ---- Anti-Teacher-Forcing 配置 ---- #
 LABEL_SMOOTHING="${LABEL_SMOOTHING:-0.1}"
@@ -81,6 +83,8 @@ NPROC="${NPROC:-$(nvidia-smi -L 2>/dev/null | wc -l || echo 1)}"
 MASTER_ADDR="${MASTER_ADDR:-localhost}"
 MASTER_PORT="${MASTER_PORT:-29500}"
 NODE_RANK="${NODE_RANK:-0}"
+SVD_RANK="${SVD_RANK:-8}"
+SVD_CHUNK_SIZE="${SVD_CHUNK_SIZE:-0}"
 
 # ---- 运行模式 ---- #
 # MODE: full (正式训练) | test (小数据测试) | debug (单卡合成数据)
@@ -157,7 +161,7 @@ fi
 # 参考用户的分布式训练经验: 共享文件系统(CephFS)上多 Rank 同时读写会 I/O 竞争
 export NCCL_IB_DISABLE="${NCCL_IB_DISABLE:-0}"
 export NCCL_DEBUG="${NCCL_DEBUG:-WARN}"
-export NCCL_SOCKET_IFNAME="${NCCL_SOCKET_IFNAME:-eth0}"
+export NCCL_SOCKET_IFNAME="${NCCL_SOCKET_IFNAME:-bond1}"
 # 减少 NCCL 超时风险
 export NCCL_BLOCKING_WAIT="${NCCL_BLOCKING_WAIT:-1}"
 export TORCH_NCCL_BLOCKING_WAIT="${TORCH_NCCL_BLOCKING_WAIT:-1}"
@@ -197,6 +201,11 @@ echo "  Grad Accum:     ${GRAD_ACCUM}"
 echo "  Max Seq Len:    ${MAX_SEQ_LEN}"
 echo "  Seed:           ${SEED}"
 [[ "${SLIDING_WINDOW}" -gt 0 ]] && echo "  SWA Window:     ${SLIDING_WINDOW}"
+echo ""
+echo "  --- SVD 压缩记忆 ---"
+echo "  SVD Rank:        ${SVD_RANK}"
+echo "  SVD Chunk Size:  ${SVD_CHUNK_SIZE}"
+echo "  Per-Layer SVD:   ${USE_PER_LAYER_MEMORY}"
 echo ""
 echo "  --- Anti-Teacher-Forcing ---"
 echo "  Label Smoothing:     ${LABEL_SMOOTHING}"
@@ -243,6 +252,14 @@ TRAIN_ARGS+=" --max_real_samples ${MAX_REAL_SAMPLES}"
 TRAIN_ARGS+=" --seed ${SEED}"
 TRAIN_ARGS+=" --mag_num_heads ${MAG_NUM_HEADS}"
 TRAIN_ARGS+=" --deep_encode_layers ${DEEP_ENCODE_LAYERS}"
+TRAIN_ARGS+=" --use_compressed_memory"
+TRAIN_ARGS+=" --svd_rank ${SVD_RANK}"
+TRAIN_ARGS+=" --svd_chunk_size ${SVD_CHUNK_SIZE}"
+
+# Per-Layer Multi-Chunk SVD
+if [[ "${USE_PER_LAYER_MEMORY}" == "true" ]]; then
+    TRAIN_ARGS+=" --use_per_layer_memory"
+fi
 
 # MAG 注入层 (手动指定或自动)
 if [[ -n "${MAG_INJECTION_LAYERS}" ]]; then

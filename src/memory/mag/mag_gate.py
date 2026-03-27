@@ -295,27 +295,37 @@ class MAGGate(nn.Module):
         self,
         layer_idx: int,
         hidden_states: torch.Tensor,
-        memory_vectors: torch.Tensor,
+        memory_vectors: torch.Tensor | None = None,
         memory_mask: torch.Tensor | None = None,
         selection_weights: torch.Tensor | None = None,
         return_gate: bool = False,
         detach_value: bool = False,
         gate_scale: float = 1.0,
+        compressed_cache: Any | None = None,
     ) -> torch.Tensor | tuple[torch.Tensor, torch.Tensor | None]:
         """在指定层注入 MAG 记忆。
 
         如果该层不在 injection_layers 中, 直接返回原始 hidden_states。
 
+        支持两种记忆来源:
+        1. 直接传入 memory_vectors (原有方式, 所有层共享同一组记忆向量)
+        2. 传入 compressed_cache (Per-Layer 模式, 每层自动获取对应层的虚拟 KV pairs)
+
+        当同时提供 compressed_cache 和 memory_vectors 时, 优先使用 compressed_cache
+        中对应层的虚拟 KV pairs; 如果该层在 cache 中没有数据, 则 fallback 到 memory_vectors。
+
         Args:
             layer_idx: 当前 Transformer 层索引.
             hidden_states: (B, T, D) 当前层的隐藏状态.
-            memory_vectors: (B, K, D) 编码后的记忆向量.
+            memory_vectors: (B, K, D) 编码后的记忆向量 (可选, 与 compressed_cache 二选一).
             memory_mask: (B, K) 记忆有效性 mask.
             selection_weights: (B, K) Context Selector 选择权重.
             return_gate: 是否同时返回 gate 激活值.
             detach_value: 是否对 V 分支做 stop-gradient (透传到 _MAGCrossAttnBlock).
             gate_scale: 推理时残差增量缩放因子 (0~1, 默认 1.0).
                        直接缩放 gate * m_agg, 从根源上控制注入强度。
+            compressed_cache: CompressedMemoryCache 实例 (Per-Layer 模式).
+                             如果提供, 自动从中获取 layer_idx 对应的虚拟 KV pairs.
 
         Returns:
             output: (B, T, D) 可能注入记忆后的隐藏状态.
@@ -326,7 +336,22 @@ class MAGGate(nn.Module):
                 return hidden_states, None
             return hidden_states
 
-        if memory_vectors.shape[1] == 0:
+        # Per-Layer 模式: 从 compressed_cache 获取对应层的虚拟 KV pairs
+        actual_memory_vectors = memory_vectors
+        actual_memory_mask = memory_mask
+        actual_selection_weights = selection_weights
+
+        if compressed_cache is not None:
+            cache_result = compressed_cache.get_virtual_tokens_as_memory_for_layer(layer_idx)
+            if cache_result is not None:
+                actual_memory_vectors, actual_memory_mask = cache_result
+                if actual_memory_mask is not None:
+                    actual_memory_mask = actual_memory_mask.bool()
+                # Per-layer 模式下, selection_weights 不适用
+                # (虚拟 tokens 数量 != 原始记忆条数)
+                actual_selection_weights = None
+
+        if actual_memory_vectors is None or actual_memory_vectors.shape[1] == 0:
             if return_gate:
                 return hidden_states, None
             return hidden_states
@@ -348,9 +373,9 @@ class MAGGate(nn.Module):
 
         result = block(
             hidden_states=hidden_states,
-            memory_vectors=memory_vectors,
-            memory_mask=memory_mask,
-            selection_weights=selection_weights,
+            memory_vectors=actual_memory_vectors,
+            memory_mask=actual_memory_mask,
+            selection_weights=actual_selection_weights,
             return_gate=return_gate,
             detach_value=detach_value,
             gate_scale=gate_scale,
@@ -373,9 +398,10 @@ class MAGGate(nn.Module):
     def inject_into_all_hidden_states(
         self,
         all_hidden_states: list[torch.Tensor],
-        memory_vectors: torch.Tensor,
+        memory_vectors: torch.Tensor | None = None,
         memory_mask: torch.Tensor | None = None,
         selection_weights: torch.Tensor | None = None,
+        compressed_cache: Any | None = None,
     ) -> list[torch.Tensor]:
         """对一组 hidden states (来自 backbone output) 批量注入。
 
@@ -384,16 +410,21 @@ class MAGGate(nn.Module):
 
         所以注入第 i 层 = 修改 all_hidden_states[i+1]。
 
+        支持两种模式:
+        1. 传入 memory_vectors: 所有层共享同一组记忆向量 (原有方式)
+        2. 传入 compressed_cache: Per-Layer 模式, 每层自动获取对应的虚拟 KV pairs
+
         Args:
             all_hidden_states: [h_embed, h_layer0, h_layer1, ...] 共 L+1 个.
-            memory_vectors: (B, K, D).
-            memory_mask: (B, K).
-            selection_weights: (B, K).
+            memory_vectors: (B, K, D) (可选).
+            memory_mask: (B, K) (可选).
+            selection_weights: (B, K) (可选).
+            compressed_cache: CompressedMemoryCache 实例 (Per-Layer 模式, 可选).
 
         Returns:
             modified_hidden_states: 注入记忆后的 hidden states 列表.
         """
-        if memory_vectors.shape[1] == 0:
+        if memory_vectors is not None and memory_vectors.shape[1] == 0 and compressed_cache is None:
             return all_hidden_states
 
         result = list(all_hidden_states)  # 浅拷贝
@@ -407,6 +438,7 @@ class MAGGate(nn.Module):
                     memory_vectors=memory_vectors,
                     memory_mask=memory_mask,
                     selection_weights=selection_weights,
+                    compressed_cache=compressed_cache,
                 )
 
         return result
