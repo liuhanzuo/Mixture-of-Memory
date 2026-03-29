@@ -114,6 +114,12 @@ def parse_args() -> argparse.Namespace:
                         help="评估结果 JSON 输出路径 (可选)")
     parser.add_argument("--seed", type=int, default=42)
 
+    # LLM-as-Judge 评估
+    parser.add_argument("--eval_llm_judge", action="store_true", default=False,
+                        help="使用 LLM-as-Judge 评估记忆利用质量 (用 backbone 自身打分)")
+    parser.add_argument("--judge_model_path", type=str, default="",
+                        help="Judge 模型路径 (默认空=使用 backbone 自身)")
+
     return parser.parse_args()
 
 
@@ -261,19 +267,63 @@ def load_eval_data(data_path: str, num_samples: int) -> list[dict]:
 
     # 如果是 JSONL 且含有 messages 字段, 先转换为 MAG 格式
     raw_data = []
+    _decoder = json.JSONDecoder()
+    n_skipped = 0
     with open(path, "r", encoding="utf-8") as f:
         for line in f:
             line = line.strip()
             if not line:
                 continue
-            raw_data.append(json.loads(line))
+            try:
+                obj = json.loads(line)
+                if isinstance(obj, dict):
+                    raw_data.append(obj)
+                # 非 dict 类型直接跳过
+            except json.JSONDecodeError as e:
+                if "Extra data" in e.msg:
+                    # 多个 JSON 对象拼在同一行, 用 raw_decode 逐个拆分
+                    pos = 0
+                    try:
+                        while pos < len(line):
+                            while pos < len(line) and line[pos] in " \t":
+                                pos += 1
+                            if pos >= len(line):
+                                break
+                            obj, end = _decoder.raw_decode(line, pos)
+                            if isinstance(obj, dict):
+                                raw_data.append(obj)
+                            pos = end
+                    except json.JSONDecodeError:
+                        n_skipped += 1
+                else:
+                    n_skipped += 1
+                continue
             if len(raw_data) >= num_samples * 5:  # 多读一些, 转换后筛选
                 break
+    if n_skipped > 0:
+        logger.warning(f"JSONL 加载时跳过 {n_skipped} 行格式错误的数据")
 
     # 检查格式
     if raw_data and "input_text" in raw_data[0] and "memory_texts" in raw_data[0]:
         # 已经是 MAG 格式
-        data = raw_data[:num_samples]
+        data = raw_data
+
+        # ★ 因果化改造: 如果有 dialogue_id, 将对话前文原文作为记忆
+        has_dialogue_id = any("dialogue_id" in d for d in data)
+        if has_dialogue_id:
+            logger.info("检测到 dialogue_id 字段, 执行因果化改造 (Causal Memory Training)")
+            try:
+                from scripts.train_mag import causalize_mag_samples
+                data = causalize_mag_samples(
+                    data,
+                    num_memories_per_sample=15,
+                    num_hard_negatives=3,
+                    seed=42,
+                )
+            except ImportError:
+                logger.warning("无法导入 causalize_mag_samples, 使用原始数据")
+
+        data = data[:num_samples]
     elif raw_data and "messages" in raw_data[0]:
         # 对话格式, 需要转换
         # 从 train_mag.py 导入转换函数
@@ -580,6 +630,7 @@ def eval_ppl_comparison(
     svd_normalize: bool = True,
     injection_mode: str = "svd_only",
     max_raw_kv_tokens: int = 128,
+    inference_scale: float = 0.3,
 ) -> dict:
     """对比有记忆注入和无记忆注入时的困惑度 (PPL)。
 
@@ -669,6 +720,7 @@ def eval_ppl_comparison(
                 backbone_layers, final_norm, lm_head, rotary_emb,
                 injector_module, virtual_kv_cache,
                 first_injection_layer, device,
+                inference_scale=inference_scale,
             )
 
             # --- Forward: 无记忆 (纯 backbone) ---
@@ -726,6 +778,7 @@ def _forward_with_kv_injection(
     backbone_layers, final_norm, lm_head, rotary_emb,
     injector_module, virtual_kv_cache,
     first_injection_layer, device,
+    inference_scale: float = 0.3,
 ) -> float:
     """有 KV 注入的 forward, 返回 loss 标量。"""
     if hasattr(model.model, "embed_tokens"):
@@ -746,7 +799,7 @@ def _forward_with_kv_injection(
     )
 
     attention_mask = torch.ones_like(input_ids, dtype=torch.bool)
-    layer_kwargs = {"attention_mask": attention_mask}
+    layer_kwargs = {"attention_mask": causal_mask_4d}
     if position_embeddings is not None:
         layer_kwargs["position_embeddings"] = position_embeddings
     else:
@@ -761,6 +814,7 @@ def _forward_with_kv_injection(
                 attention_mask=causal_mask_4d,
                 position_embeddings=position_embeddings,
                 virtual_kv_cache=virtual_kv_cache,
+                inference_scale=inference_scale,
             )
         else:
             layer_output = backbone_layers[layer_idx](h, **layer_kwargs)
@@ -836,6 +890,8 @@ def eval_generation_comparison(
     max_inject_steps: int = 10,
     injection_mode: str = "svd_only",
     max_raw_kv_tokens: int = 128,
+    inference_scale: float = 0.3,
+    layer_gate_scales: dict[int, float] | None = None,
 ) -> dict:
     """对比有记忆 vs 无记忆的生成结果。
 
@@ -848,6 +904,7 @@ def eval_generation_comparison(
     logger.info("评估 4: 生成质量对比")
     logger.info("=" * 60)
     logger.info(f"  最大注入步数 = {max_inject_steps} (超过后 backbone 完全接管)")
+    logger.info(f"  inference_scale = {inference_scale} (注入强度缩放, 逐步衰减)")
 
     injector_module = kv_injector.module if hasattr(kv_injector, "module") else kv_injector
     selector_module = selector.module if hasattr(selector, "module") else selector
@@ -924,25 +981,52 @@ def eval_generation_comparison(
                 max_seq_len=max_seq_len,
                 device=device,
                 max_inject_steps=max_inject_steps,
+                inference_scale=inference_scale,
+                layer_gate_scales=layer_gate_scales,
             )
 
         logger.info(f"  生成 (无记忆): {gen_no_mem[:150]}...")
         logger.info(f"  生成 (有记忆): {gen_with_mem[:150]}...")
 
-        # 简单文本相似度 (词重叠率)
-        gt_words = set(sample["target_text"].lower().split())
-        no_mem_words = set(gen_no_mem.lower().split())
-        with_mem_words = set(gen_with_mem.lower().split())
+        # 简单文本相似度 (字符 bigram 重叠率, 兼容中英文)
+        import re as _re
+        def _char_bigrams(text: str) -> set[str]:
+            t = _re.sub(r'\s+', '', text.lower().strip())
+            if len(t) < 2:
+                return {t} if t else set()
+            return {t[i:i+2] for i in range(len(t) - 1)}
 
-        overlap_no = len(gt_words & no_mem_words) / max(len(gt_words), 1)
-        overlap_with = len(gt_words & with_mem_words) / max(len(gt_words), 1)
+        gt_ngrams = _char_bigrams(sample["target_text"])
+        no_mem_ngrams = _char_bigrams(gen_no_mem)
+        with_mem_ngrams = _char_bigrams(gen_with_mem)
+
+        overlap_no = len(gt_ngrams & no_mem_ngrams) / max(len(gt_ngrams), 1)
+        overlap_with = len(gt_ngrams & with_mem_ngrams) / max(len(gt_ngrams), 1)
 
         logger.info(f"  词重叠 (无记忆 vs GT): {overlap_no:.4f}")
         logger.info(f"  词重叠 (有记忆 vs GT): {overlap_with:.4f}")
 
+        # 记忆关键词命中率 (Memory Keyword Recall)
+        # 从记忆文本中提取关键 bigram, 检查生成文本是否包含
+        selected_mems = sample.get("memory_texts", [])
+        relevant_indices = sample.get("relevant_indices", list(range(len(selected_mems))))
+        relevant_mems = [selected_mems[j] for j in relevant_indices if j < len(selected_mems)]
+        mem_text_combined = " ".join(relevant_mems[:5])  # 取前5条相关记忆
+        mem_ngrams = _char_bigrams(mem_text_combined)
+
+        mem_recall_no = len(mem_ngrams & no_mem_ngrams) / max(len(mem_ngrams), 1) if mem_ngrams else 0
+        mem_recall_with = len(mem_ngrams & with_mem_ngrams) / max(len(mem_ngrams), 1) if mem_ngrams else 0
+        logger.info(f"  记忆关键词召回 (无记忆): {mem_recall_no:.4f}")
+        logger.info(f"  记忆关键词召回 (有记忆): {mem_recall_with:.4f}")
+
         # 检查生成是否有差异
         is_different = gen_no_mem.strip() != gen_with_mem.strip()
         logger.info(f"  两种生成是否不同: {'是 ✅' if is_different else '否 🔴'}")
+
+        # 构造记忆摘要文本 (供 LLM judge 使用)
+        memories_summary = "\n".join(
+            f"- {mem[:100]}" for mem in relevant_mems[:5]
+        )
 
         generation_results.append({
             "query": sample["input_text"],
@@ -951,13 +1035,18 @@ def eval_generation_comparison(
             "gen_with_memory": gen_with_mem,
             "overlap_no_mem": overlap_no,
             "overlap_with_mem": overlap_with,
+            "mem_recall_no": mem_recall_no,
+            "mem_recall_with": mem_recall_with,
             "is_different": is_different,
+            "memories_text": memories_summary,
         })
 
     # 汇总
     n_different = sum(1 for r in generation_results if r["is_different"])
     avg_overlap_no = sum(r["overlap_no_mem"] for r in generation_results) / max(len(generation_results), 1)
     avg_overlap_with = sum(r["overlap_with_mem"] for r in generation_results) / max(len(generation_results), 1)
+    avg_mem_recall_no = sum(r["mem_recall_no"] for r in generation_results) / max(len(generation_results), 1)
+    avg_mem_recall_with = sum(r["mem_recall_with"] for r in generation_results) / max(len(generation_results), 1)
 
     results = {
         "num_samples": len(generation_results),
@@ -965,6 +1054,8 @@ def eval_generation_comparison(
         "pct_different": n_different / max(len(generation_results), 1) * 100,
         "avg_word_overlap_no_mem": avg_overlap_no,
         "avg_word_overlap_with_mem": avg_overlap_with,
+        "avg_mem_recall_no_mem": avg_mem_recall_no,
+        "avg_mem_recall_with_mem": avg_mem_recall_with,
         "samples": generation_results,
     }
 
@@ -972,6 +1063,266 @@ def eval_generation_comparison(
     logger.info(f"  两种生成有差异的比例: {results['pct_different']:.1f}%")
     logger.info(f"  平均词重叠 (无记忆): {avg_overlap_no:.4f}")
     logger.info(f"  平均词重叠 (有记忆): {avg_overlap_with:.4f}")
+    logger.info(f"  平均记忆召回 (无记忆): {avg_mem_recall_no:.4f}")
+    logger.info(f"  平均记忆召回 (有记忆): {avg_mem_recall_with:.4f}")
+
+    return results
+
+
+# ======================================================================
+# 评估 5: LLM-as-Judge 记忆利用质量评估
+# ======================================================================
+
+# --- Prompt 模板 (RAGAS 风格) ---
+
+_JUDGE_PROMPT_MEMORY_FAITHFULNESS = """你是一个严格的评估专家。请评估以下回答是否利用了提供的记忆信息。
+
+【记忆内容】
+{memories}
+
+【用户问题】
+{query}
+
+【模型回答】
+{answer}
+
+请从以下维度打分 (1-5分):
+1. 记忆利用度: 回答是否引用或利用了记忆中的具体信息(人名、事件、数据、建议等)?
+   - 1分: 完全没有利用记忆, 回答是通用的
+   - 2分: 可能间接涉及记忆内容, 但不明确
+   - 3分: 利用了部分记忆信息
+   - 4分: 较好地利用了记忆中的关键信息
+   - 5分: 充分利用了记忆, 回答明显基于记忆内容
+
+2. 回答质量: 回答是否流畅、有条理、有实质内容?
+   - 1分: 乱码/重复/无意义
+   - 2分: 能读懂但质量差
+   - 3分: 基本合格
+   - 4分: 质量较好
+   - 5分: 质量优秀
+
+请严格按以下JSON格式输出, 不要输出其他内容:
+{{"memory_utilization": <1-5>, "answer_quality": <1-5>}}"""
+
+_JUDGE_PROMPT_COMPARATIVE = """你是一个严格的评估专家。请对比以下两个回答, 判断哪个更好地利用了记忆信息来回答问题。
+
+【记忆内容】
+{memories}
+
+【用户问题】
+{query}
+
+【回答A (无记忆辅助)】
+{answer_no_mem}
+
+【回答B (有记忆辅助)】
+{answer_with_mem}
+
+请评估:
+1. 哪个回答更好地利用了记忆中的信息? (A/B/平局)
+2. 哪个回答整体质量更高? (A/B/平局)
+
+请严格按以下JSON格式输出, 不要输出其他内容:
+{{"memory_winner": "<A|B|tie>", "quality_winner": "<A|B|tie>", "reason": "<简短理由>"}}"""
+
+
+def _llm_judge_score(
+    model: nn.Module,
+    tokenizer: Any,
+    prompt: str,
+    device: str = "cuda",
+    max_new_tokens: int = 200,
+) -> str:
+    """用 LLM 生成评估结果 (JSON 格式)。"""
+    # 构造 chat 格式 (如果 tokenizer 支持)
+    if hasattr(tokenizer, "apply_chat_template"):
+        messages = [{"role": "user", "content": prompt}]
+        input_text = tokenizer.apply_chat_template(
+            messages, tokenize=False, add_generation_prompt=True,
+            enable_thinking=False,  # Qwen3 关闭思考模式, 直接输出
+        )
+    else:
+        input_text = prompt
+
+    encoded = tokenizer(
+        input_text,
+        return_tensors="pt",
+        truncation=True,
+        max_length=2048,
+    ).to(device)
+
+    with torch.no_grad():
+        outputs = model.generate(
+            **encoded,
+            max_new_tokens=max_new_tokens,
+            do_sample=False,
+            temperature=1.0,
+            pad_token_id=tokenizer.pad_token_id,
+        )
+
+    new_tokens = outputs[0][encoded["input_ids"].shape[1]:]
+    return tokenizer.decode(new_tokens, skip_special_tokens=True).strip()
+
+
+def _parse_judge_scores(response: str) -> dict:
+    """从 LLM judge 的回复中解析 JSON 分数。"""
+    import re as _re
+    # 尝试提取 JSON
+    json_match = _re.search(r'\{[^{}]+\}', response)
+    if json_match:
+        try:
+            return json.loads(json_match.group())
+        except json.JSONDecodeError:
+            pass
+    return {}
+
+
+def eval_llm_judge(
+    model: nn.Module,
+    tokenizer: Any,
+    generation_results: list[dict],
+    device: str = "cuda",
+) -> dict:
+    """使用 LLM-as-Judge 评估记忆利用质量。
+
+    评估维度 (参考 RAGAS 框架):
+    1. Memory Faithfulness (记忆忠实度): 回答是否利用了记忆信息
+    2. Answer Quality (回答质量): 回答是否流畅有条理
+    3. Comparative (对比评估): 有记忆 vs 无记忆哪个更好
+
+    使用 backbone 模型自身作为 judge, 无需外部 API。
+    """
+    logger.info("=" * 60)
+    logger.info("评估 5: LLM-as-Judge 记忆利用质量")
+    logger.info("=" * 60)
+
+    if not generation_results:
+        logger.warning("没有生成结果可供评估!")
+        return {}
+
+    scores_with_mem = []   # 有记忆的 faithfulness 分数
+    scores_no_mem = []     # 无记忆的 faithfulness 分数
+    quality_with = []      # 有记忆的质量分数
+    quality_no = []        # 无记忆的质量分数
+    comparative_results = []  # 对比结果
+
+    for i, result in enumerate(generation_results):
+        query = result["query"][:300]
+        gt = result.get("ground_truth", "")[:200]
+        gen_no = result["gen_no_memory"][:500]
+        gen_with = result["gen_with_memory"][:500]
+
+        # 从 result 中获取记忆文本 (如果有的话)
+        # 注意: generation_results 中可能没有 memory_texts, 需要从原始数据获取
+        memories_text = result.get("memories_text", "")
+        if not memories_text and gt:
+            # 用 GT 作为记忆参考 (因为 GT 就是基于记忆生成的)
+            memories_text = f"参考答案: {gt}"
+
+        logger.info(f"\n  --- Judge 样本 {i+1}/{len(generation_results)} ---")
+
+        # 1. 评估有记忆的回答
+        prompt_with = _JUDGE_PROMPT_MEMORY_FAITHFULNESS.format(
+            memories=memories_text,
+            query=query,
+            answer=gen_with,
+        )
+        resp_with = _llm_judge_score(model, tokenizer, prompt_with, device)
+        scores_w = _parse_judge_scores(resp_with)
+
+        mem_util_with = scores_w.get("memory_utilization", 0)
+        qual_with = scores_w.get("answer_quality", 0)
+        scores_with_mem.append(mem_util_with)
+        quality_with.append(qual_with)
+        logger.info(f"    有记忆: 记忆利用={mem_util_with}/5, 质量={qual_with}/5")
+
+        # 2. 评估无记忆的回答
+        prompt_no = _JUDGE_PROMPT_MEMORY_FAITHFULNESS.format(
+            memories=memories_text,
+            query=query,
+            answer=gen_no,
+        )
+        resp_no = _llm_judge_score(model, tokenizer, prompt_no, device)
+        scores_n = _parse_judge_scores(resp_no)
+
+        mem_util_no = scores_n.get("memory_utilization", 0)
+        qual_no = scores_n.get("answer_quality", 0)
+        scores_no_mem.append(mem_util_no)
+        quality_no.append(qual_no)
+        logger.info(f"    无记忆: 记忆利用={mem_util_no}/5, 质量={qual_no}/5")
+
+        # 3. 对比评估
+        prompt_cmp = _JUDGE_PROMPT_COMPARATIVE.format(
+            memories=memories_text,
+            query=query,
+            answer_no_mem=gen_no,
+            answer_with_mem=gen_with,
+        )
+        resp_cmp = _llm_judge_score(model, tokenizer, prompt_cmp, device)
+        cmp_result = _parse_judge_scores(resp_cmp)
+        comparative_results.append(cmp_result)
+
+        mem_winner = cmp_result.get("memory_winner", "?")
+        qual_winner = cmp_result.get("quality_winner", "?")
+        reason = cmp_result.get("reason", "")
+        logger.info(f"    对比: 记忆利用胜={mem_winner}, 质量胜={qual_winner}")
+        if reason:
+            logger.info(f"    理由: {reason[:100]}")
+
+    # 汇总
+    valid_with = [s for s in scores_with_mem if s > 0]
+    valid_no = [s for s in scores_no_mem if s > 0]
+    valid_q_with = [s for s in quality_with if s > 0]
+    valid_q_no = [s for s in quality_no if s > 0]
+
+    avg_mem_util_with = sum(valid_with) / max(len(valid_with), 1)
+    avg_mem_util_no = sum(valid_no) / max(len(valid_no), 1)
+    avg_qual_with = sum(valid_q_with) / max(len(valid_q_with), 1)
+    avg_qual_no = sum(valid_q_no) / max(len(valid_q_no), 1)
+
+    # 对比统计
+    n_mem_win_b = sum(1 for r in comparative_results if r.get("memory_winner") == "B")
+    n_mem_win_a = sum(1 for r in comparative_results if r.get("memory_winner") == "A")
+    n_mem_tie = sum(1 for r in comparative_results if r.get("memory_winner") == "tie")
+    n_qual_win_b = sum(1 for r in comparative_results if r.get("quality_winner") == "B")
+    n_qual_win_a = sum(1 for r in comparative_results if r.get("quality_winner") == "A")
+    n_qual_tie = sum(1 for r in comparative_results if r.get("quality_winner") == "tie")
+
+    total = len(generation_results)
+
+    results = {
+        "num_samples": total,
+        "avg_memory_utilization_with_mem": avg_mem_util_with,
+        "avg_memory_utilization_no_mem": avg_mem_util_no,
+        "memory_utilization_lift": avg_mem_util_with - avg_mem_util_no,
+        "avg_quality_with_mem": avg_qual_with,
+        "avg_quality_no_mem": avg_qual_no,
+        "quality_lift": avg_qual_with - avg_qual_no,
+        "comparative_memory_win_B": n_mem_win_b,
+        "comparative_memory_win_A": n_mem_win_a,
+        "comparative_memory_tie": n_mem_tie,
+        "comparative_quality_win_B": n_qual_win_b,
+        "comparative_quality_win_A": n_qual_win_a,
+        "comparative_quality_tie": n_qual_tie,
+        "comparative_details": comparative_results,
+    }
+
+    logger.info(f"\n  LLM Judge 汇总:")
+    logger.info(f"  记忆利用度 (有记忆): {avg_mem_util_with:.2f}/5")
+    logger.info(f"  记忆利用度 (无记忆): {avg_mem_util_no:.2f}/5")
+    logger.info(f"  记忆利用提升:        {avg_mem_util_with - avg_mem_util_no:+.2f}")
+    logger.info(f"  回答质量 (有记忆):   {avg_qual_with:.2f}/5")
+    logger.info(f"  回答质量 (无记忆):   {avg_qual_no:.2f}/5")
+    logger.info(f"  质量提升:            {avg_qual_with - avg_qual_no:+.2f}")
+    logger.info(f"  对比-记忆利用: 有记忆胜={n_mem_win_b}, 无记忆胜={n_mem_win_a}, 平局={n_mem_tie}")
+    logger.info(f"  对比-整体质量: 有记忆胜={n_qual_win_b}, 无记忆胜={n_qual_win_a}, 平局={n_qual_tie}")
+
+    if avg_mem_util_with > avg_mem_util_no + 0.5:
+        logger.info("  ✅ 有记忆注入时模型更好地利用了记忆信息!")
+    elif avg_mem_util_with < avg_mem_util_no:
+        logger.info("  🔴 有记忆注入反而降低了记忆利用度, MAG 注入可能有害")
+    else:
+        logger.info("  ⚠️ 记忆利用度提升不明显, 需要进一步调优")
 
     return results
 
@@ -1049,6 +1400,8 @@ def _generate_text_with_kv_injection(
     device: str = "cuda",
     repetition_penalty: float = 1.5,
     max_inject_steps: int = 10,
+    inference_scale: float = 0.3,
+    layer_gate_scales: dict[int, float] | None = None,
 ) -> str:
     """有 KV 注入的文本生成 — 直接拼接虚拟 KV 到 self-attention。
 
@@ -1056,9 +1409,12 @@ def _generate_text_with_kv_injection(
       1. 每步做 full sequence forward (无 KV cache, 简单可靠)
       2. 在注入层, 虚拟 KV 直接拼到 backbone self-attention 的 KV 上
       3. 只在前 max_inject_steps 步注入, 之后完全停止 (backbone 接管)
-      4. alpha 由 KVMemoryInjector 的可学习参数控制
+      4. 注入强度随步数线性衰减: scale * (1 - step/max_inject_steps)
+      5. alpha 由 KVMemoryInjector 的可学习参数控制
 
     额外保护:
+    - inference_scale: 全局注入强度缩放 (推荐 0.2~0.5)
+    - 逐步衰减: 注入强度随生成步数线性递减, 防止累积偏移
     - Repetition penalty (1.5): 对已生成 token 降权, 防止循环
     - N-gram 重复检测: 4-gram 重复 3 次则强制终止
     - 硬截断: 超过 max_inject_steps 步后, 不注入
@@ -1112,11 +1468,23 @@ def _generate_text_with_kv_injection(
                 float("-inf"),
             )
 
-            # 是否注入
+            # 是否注入 + 逐步衰减
             do_inject = gen_step < effective_inject_steps and virtual_kv_cache
+
+            # 计算当前步的注入强度: 基础 scale × 线性衰减
+            if do_inject:
+                decay = 1.0 - gen_step / effective_inject_steps  # 从 1.0 线性衰减到 0
+                step_scale = inference_scale * decay
+            else:
+                step_scale = 0.0
 
             for layer_idx in range(num_layers):
                 if do_inject and layer_idx in injector_module.injection_layers:
+                    # 逐层差异化缩放
+                    layer_scale = step_scale
+                    if layer_gate_scales and layer_idx in layer_gate_scales:
+                        layer_scale = layer_gate_scales[layer_idx] * decay
+
                     h, _ = injector_module.forward_decoder_layer(
                         layer_idx=layer_idx,
                         decoder_layer=backbone_layers[layer_idx],
@@ -1124,9 +1492,15 @@ def _generate_text_with_kv_injection(
                         attention_mask=causal_mask_4d,
                         position_embeddings=position_embeddings,
                         virtual_kv_cache=virtual_kv_cache,
+                        inference_scale=layer_scale,
                     )
                 else:
-                    layer_output = backbone_layers[layer_idx](h, **layer_kwargs)
+                    # ★ 非注入层也使用 4D causal mask, 保持一致性
+                    layer_output = backbone_layers[layer_idx](
+                        h,
+                        attention_mask=causal_mask_4d,
+                        position_embeddings=position_embeddings,
+                    )
                     h = layer_output[0] if isinstance(layer_output, tuple) else layer_output
 
             h = final_norm(h)
@@ -1258,12 +1632,22 @@ def main() -> None:
                 svd_rank=svd_rank, svd_normalize=svd_normalize,
                 injection_mode=injection_mode,
                 max_raw_kv_tokens=max_raw_kv_tokens,
+                inference_scale=args.inference_gate_scale,
             )
         except Exception as e:
             logger.error(f"PPL 评估失败: {e}", exc_info=True)
 
     if args.eval_generation:
         try:
+            # 解析逐层 gate_scale
+            layer_gate_scales_dict = None
+            if args.layer_gate_scales:
+                layer_gate_scales_dict = {}
+                for item in args.layer_gate_scales.split(","):
+                    parts = item.strip().split(":")
+                    if len(parts) == 2:
+                        layer_gate_scales_dict[int(parts[0])] = float(parts[1])
+
             all_results["generation"] = eval_generation_comparison(
                 model, tokenizer, encoder, selector, kv_injector, data,
                 args.device,
@@ -1275,9 +1659,44 @@ def main() -> None:
                 max_inject_steps=args.mag_inject_steps,
                 injection_mode=injection_mode,
                 max_raw_kv_tokens=max_raw_kv_tokens,
+                inference_scale=args.inference_gate_scale,
+                layer_gate_scales=layer_gate_scales_dict,
             )
         except Exception as e:
             logger.error(f"生成评估失败: {e}", exc_info=True)
+
+    # LLM-as-Judge 评估 (依赖 generation 结果)
+    if args.eval_llm_judge:
+        gen_samples = []
+        if "generation" in all_results and all_results["generation"]:
+            gen_samples = all_results["generation"].get("samples", [])
+
+        if gen_samples:
+            try:
+                # 使用 backbone 自身或指定的 judge 模型
+                if args.judge_model_path:
+                    from transformers import AutoModelForCausalLM, AutoTokenizer as AT
+                    judge_dtype = getattr(torch, args.dtype, torch.bfloat16)
+                    logger.info(f"加载 Judge 模型: {args.judge_model_path}")
+                    judge_model = AutoModelForCausalLM.from_pretrained(
+                        args.judge_model_path, torch_dtype=judge_dtype,
+                        device_map="auto", trust_remote_code=True,
+                    )
+                    judge_tokenizer = AT.from_pretrained(
+                        args.judge_model_path, trust_remote_code=True,
+                    )
+                    all_results["llm_judge"] = eval_llm_judge(
+                        judge_model, judge_tokenizer, gen_samples, args.device,
+                    )
+                    del judge_model  # 释放显存
+                else:
+                    all_results["llm_judge"] = eval_llm_judge(
+                        model, tokenizer, gen_samples, args.device,
+                    )
+            except Exception as e:
+                logger.error(f"LLM Judge 评估失败: {e}", exc_info=True)
+        else:
+            logger.warning("没有生成结果, 跳过 LLM Judge 评估 (需要先启用 --eval_generation)")
 
     total_time = time.time() - t0
 
@@ -1305,6 +1724,20 @@ def main() -> None:
     if "generation" in all_results and all_results["generation"]:
         gen = all_results["generation"]
         logger.info(f"  生成差异比例:       {gen.get('pct_different', 'N/A'):.1f}%")
+        logger.info(f"  记忆召回 (有记忆):  {gen.get('avg_mem_recall_with_mem', 'N/A'):.4f}")
+        logger.info(f"  记忆召回 (无记忆):  {gen.get('avg_mem_recall_no_mem', 'N/A'):.4f}")
+
+    if "llm_judge" in all_results and all_results["llm_judge"]:
+        judge = all_results["llm_judge"]
+        logger.info(f"  [Judge] 记忆利用 (有记忆): {judge.get('avg_memory_utilization_with_mem', 0):.2f}/5")
+        logger.info(f"  [Judge] 记忆利用 (无记忆): {judge.get('avg_memory_utilization_no_mem', 0):.2f}/5")
+        logger.info(f"  [Judge] 记忆利用提升:      {judge.get('memory_utilization_lift', 0):+.2f}")
+        logger.info(f"  [Judge] 质量 (有记忆):     {judge.get('avg_quality_with_mem', 0):.2f}/5")
+        logger.info(f"  [Judge] 质量 (无记忆):     {judge.get('avg_quality_no_mem', 0):.2f}/5")
+        n_b = judge.get('comparative_memory_win_B', 0)
+        n_a = judge.get('comparative_memory_win_A', 0)
+        n_t = judge.get('comparative_memory_tie', 0)
+        logger.info(f"  [Judge] 对比胜率:          有记忆胜={n_b}, 无记忆胜={n_a}, 平局={n_t}")
 
     logger.info(f"  总耗时: {total_time:.1f}s")
 
@@ -1356,6 +1789,28 @@ def main() -> None:
             issues.append("PPL 未降低, 记忆注入无效或有害")
         elif ppl_diff > 0.5:
             good_signs.append(f"PPL 显著降低 ({ppl_diff:.4f})")
+
+    if "generation" in all_results and all_results["generation"]:
+        gen = all_results["generation"]
+        mr_with = gen.get("avg_mem_recall_with_mem", 0)
+        mr_no = gen.get("avg_mem_recall_no_mem", 0)
+        if mr_with > mr_no + 0.02:
+            good_signs.append(f"记忆关键词召回提升 ({mr_no:.4f} → {mr_with:.4f})")
+        elif mr_with < mr_no:
+            issues.append(f"记忆关键词召回反而下降 ({mr_no:.4f} → {mr_with:.4f})")
+
+    if "llm_judge" in all_results and all_results["llm_judge"]:
+        judge = all_results["llm_judge"]
+        lift = judge.get("memory_utilization_lift", 0)
+        if lift > 0.5:
+            good_signs.append(f"[Judge] 记忆利用度提升 ({lift:+.2f})")
+        elif lift < -0.5:
+            issues.append(f"[Judge] 记忆利用度下降 ({lift:+.2f})")
+        q_lift = judge.get("quality_lift", 0)
+        if q_lift < -0.5:
+            issues.append(f"[Judge] 回答质量下降 ({q_lift:+.2f})")
+        elif q_lift > 0.5:
+            good_signs.append(f"[Judge] 回答质量提升 ({q_lift:+.2f})")
 
     if good_signs:
         logger.info("  ✅ 积极信号:")

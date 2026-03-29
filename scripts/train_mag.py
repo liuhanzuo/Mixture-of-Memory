@@ -198,31 +198,13 @@ def parse_args() -> argparse.Namespace:
                         help="每隔多少步打印一次日志 (0=自动根据数据量调整)")
     parser.add_argument("--save_every", type=int, default=500)
 
-    # ★ Anti-Teacher-Forcing 配置 (解决 lm_loss → 0 的问题)
-    parser.add_argument("--label_smoothing", type=float, default=0.1,
-                        help="Label Smoothing 系数 (0=不使用, 推荐 0.1). "
-                             "从 loss 端阻止模型过度自信, 即使 CrossAttn 能从记忆中读到答案, "
-                             "也不会被鼓励把概率推到 1.0")
-    parser.add_argument("--kl_beta", type=float, default=0.5,
-                        help="KL 约束系数 (0=不使用, 推荐 0.1~1.0). "
-                             "限制有记忆/无记忆输出分布的差距, 确保记忆只起辅助作用而非主导生成")
-    parser.add_argument("--kl_temperature", type=float, default=2.0,
-                        help="KL 约束的温度参数 (推荐 1.0~4.0). "
-                             "较高温度使分布更平滑, 聚焦于整体分布形状而非极端值")
-    parser.add_argument("--detach_value", action="store_true", default=True,
-                        help="对 CrossAttention 的 V 分支做 stop-gradient. "
-                             "Q/K 仍有梯度 (学习'去哪查'), V 无梯度 (阻止'抄什么'), "
-                             "从根源上解耦 MAG 注入答案的路径")
-    parser.add_argument("--no_detach_value", action="store_true", default=False,
-                        help="禁用 detach_value (调试用)")
-    parser.add_argument("--scheduled_sampling", action="store_true", default=False,
-                        help="启用 Scheduled Sampling (训练后期逐步用模型自回归 token 替代 ground truth). "
-                             "缓解训练/推理分布不匹配 (exposure bias)")
-    parser.add_argument("--ss_start_epoch", type=int, default=1,
-                        help="Scheduled Sampling 生效的起始 epoch (0-based, 推荐从第 2 个 epoch 开始)")
-    parser.add_argument("--ss_max_ratio", type=float, default=0.5,
-                        help="Scheduled Sampling 的最大替换比例 (0.0~1.0, 推荐 0.3~0.5). "
-                             "最终训练时最多有 ss_max_ratio 比例的 token 用模型自己的生成替代 ground truth")
+    # ★ Loss 配置
+    parser.add_argument("--label_smoothing", type=float, default=0.0,
+                        help="Label Smoothing 系数 (0=不使用). 新 loss 设计下建议设为 0")
+    parser.add_argument("--gap_beta", type=float, default=1.0,
+                        help="[已废弃] Causal Memory Training 不再使用 Gap Loss")
+    parser.add_argument("--gap_margin", type=float, default=0.5,
+                        help="[已废弃] Causal Memory Training 不再使用 Gap Loss")
 
     # 分布式训练配置 (torchrun 自动设置 LOCAL_RANK)
     parser.add_argument("--local_rank", type=int, default=-1,
@@ -239,7 +221,7 @@ def parse_args() -> argparse.Namespace:
                         help="MSC 子集名称")
     parser.add_argument("--num_synthetic_samples", type=int, default=1000,
                         help="合成训练样本数量 (仅 data_source=synthetic)")
-    parser.add_argument("--max_real_samples", type=int, default=10000,
+    parser.add_argument("--max_real_samples", type=int, default=0,
                         help="真实数据最大样本数")
     parser.add_argument("--num_memories_per_sample", type=int, default=10,
                         help="每个训练样本的候选记忆条数")
@@ -410,7 +392,7 @@ def load_msc_dataset(subset: str = "session_1", max_samples: int = 2000,
 
     conversations = []
     for i, example in enumerate(dataset):
-        if len(conversations) >= max_samples:
+        if max_samples > 0 and len(conversations) >= max_samples:
             break
 
         dialog = example.get("dialog", example.get("dialogue", []))
@@ -455,7 +437,7 @@ def _load_msc_from_local(path, max_samples: int = 2000) -> list[dict]:
                 conv = _parse_msc_example(obj)
                 if conv:
                     conversations.append(conv)
-                if len(conversations) >= max_samples:
+                if max_samples > 0 and len(conversations) >= max_samples:
                     break
     else:
         with open(path, "r", encoding="utf-8") as f:
@@ -467,7 +449,7 @@ def _load_msc_from_local(path, max_samples: int = 2000) -> list[dict]:
                 conv = _parse_msc_example(obj)
                 if conv:
                     conversations.append(conv)
-                if len(conversations) >= max_samples:
+                if max_samples > 0 and len(conversations) >= max_samples:
                     break
 
     logger.info(f"从本地加载 MSC: {len(conversations)} 条对话")
@@ -524,7 +506,7 @@ def _load_dailydialog_fallback(max_samples: int = 2000) -> list[dict]:
 
     conversations = []
     for i, example in enumerate(dataset):
-        if len(conversations) >= max_samples:
+        if max_samples > 0 and len(conversations) >= max_samples:
             break
 
         dialog = example.get("dialog", example.get("dialogue", []))
@@ -653,7 +635,7 @@ def load_locomo_dataset(data_path: str, max_samples: int = 2000) -> list[dict]:
 
         conversations.append({"messages": all_messages, "personas": personas})
 
-        if len(conversations) >= max_samples:
+        if max_samples > 0 and len(conversations) >= max_samples:
             break
 
     total_turns = sum(len(c["messages"]) for c in conversations)
@@ -676,17 +658,213 @@ def load_jsonl_dataset(data_path: str, max_samples: int = 2000) -> list[dict]:
         raise FileNotFoundError(f"JSONL 文件不存在: {data_path}")
 
     data = []
+    n_skipped = 0
+    n_non_dict = 0  # 非 dict 类型的对象数
+    n_recovered = 0  # 从拼接行恢复的对象数
+    _decoder = _json.JSONDecoder()
     with open(path, "r", encoding="utf-8") as f:
-        for line in f:
+        for line_no, line in enumerate(f, 1):
             line = line.strip()
             if not line:
                 continue
-            data.append(_json.loads(line))
-            if len(data) >= max_samples:
+            try:
+                obj = _json.loads(line)
+                if not isinstance(obj, dict):
+                    n_non_dict += 1
+                    continue
+                data.append(obj)
+            except _json.JSONDecodeError as e:
+                if "Extra data" in e.msg:
+                    # 多个 JSON 对象拼在同一行, 用 raw_decode 逐个拆分
+                    pos = 0
+                    recovered_in_line = 0
+                    try:
+                        while pos < len(line):
+                            # 跳过空白
+                            while pos < len(line) and line[pos] in " \t":
+                                pos += 1
+                            if pos >= len(line):
+                                break
+                            obj, end = _decoder.raw_decode(line, pos)
+                            if isinstance(obj, dict):
+                                data.append(obj)
+                                recovered_in_line += 1
+                            else:
+                                n_non_dict += 1
+                            pos = end
+                        n_recovered += recovered_in_line
+                        if n_recovered <= 5 or recovered_in_line > 2:
+                            logger.info(
+                                f"JSONL 第 {line_no} 行: 拆分恢复 {recovered_in_line} 个 JSON 对象"
+                            )
+                    except _json.JSONDecodeError:
+                        # 拆分到中途失败, 保留已恢复的部分
+                        n_recovered += recovered_in_line
+                        n_skipped += 1
+                        if n_skipped <= 5:
+                            logger.warning(
+                                f"JSONL 第 {line_no} 行: 部分恢复 {recovered_in_line} 个对象后仍有损坏数据"
+                            )
+                else:
+                    n_skipped += 1
+                    if n_skipped <= 5:
+                        logger.warning(f"JSONL 第 {line_no} 行解析失败, 跳过: {e.msg} (col {e.pos})")
+                continue
+            if max_samples > 0 and len(data) >= max_samples:
                 break
 
+    if n_recovered > 0:
+        logger.info(f"JSONL 从拼接行恢复了 {n_recovered} 条数据")
+    if n_non_dict > 0:
+        logger.warning(f"JSONL 跳过 {n_non_dict} 个非 dict 类型的 JSON 对象")
+    if n_skipped > 0:
+        logger.warning(f"JSONL 共跳过 {n_skipped} 行格式错误的数据 (成功加载 {len(data)} 条)")
     logger.info(f"JSONL 加载完成: {len(data)} 条记录")
     return data
+
+
+def causalize_mag_samples(
+    data: list[dict[str, Any]],
+    num_memories_per_sample: int = 15,
+    num_hard_negatives: int = 3,
+    seed: int = 42,
+) -> list[dict[str, Any]]:
+    """将 MAG 格式数据进行因果化改造 (Causal Memory Training)。
+
+    核心思路 (借鉴 MemoryLLM):
+    - 对同一 dialogue_id 的样本, 将**前面轮次的对话原文** (input_text + target_text)
+      作为记忆, 而非独立的摘要事实
+    - 这样 target 天然依赖前文对话内容, NTP loss 自然包含"利用记忆"的梯度信号
+    - 不需要额外的 contrastive/gap loss, 纯 NTP 就是端到端的
+
+    改造前:
+      memory_texts = ["小李从北京理工大学毕业", "老张负责订单系统", ...]  (摘要事实)
+      input_text = "张老师，我刚到公司..."
+      target_text = "小李你好，欢迎加入..."
+
+    改造后:
+      memory_texts = [
+        "用户: 张老师，我刚到公司... 助手: 小李你好，欢迎加入...",  (第1轮原文)
+        "用户: 谢谢张老师，我在学校... 助手: 不用太担心...",         (第2轮原文)
+        ...
+        "小李从北京理工大学毕业",  (原始摘要记忆, 作为补充)
+      ]
+      input_text = "好的张老师，我看到文档了..."  (第3轮 query)
+      target_text = "确实一开始会觉得复杂..."    (第3轮 target, 天然依赖前文)
+      relevant_indices = [0, 1, ...]  (前文轮次都是相关的)
+
+    Args:
+        data: MAG 格式数据列表 (需要有 dialogue_id 字段)
+        num_memories_per_sample: 每个样本的候选记忆总数
+        num_hard_negatives: 硬负例数量 (来自其他对话)
+        seed: 随机种子
+
+    Returns:
+        因果化后的训练样本列表
+    """
+    import random
+    random.seed(seed)
+
+    # 按 dialogue_id + session_idx 分组
+    from collections import defaultdict
+    dialogue_groups: dict[str, list[dict]] = defaultdict(list)
+    for d in data:
+        dial_id = d.get("dialogue_id", "unknown")
+        sess_idx = d.get("session_idx", 0)
+        key = f"{dial_id}_sess{sess_idx}"
+        dialogue_groups[key].append(d)
+
+    # 收集所有对话轮次文本, 用作跨对话负例
+    all_turn_texts: list[str] = []
+    for group in dialogue_groups.values():
+        for d in group:
+            turn_text = f"用户: {d['input_text']}"
+            if d.get("target_text"):
+                turn_text += f" 助手: {d['target_text']}"
+            all_turn_texts.append(turn_text)
+
+    samples: list[dict[str, Any]] = []
+    n_skipped = 0
+
+    for group_key, group in dialogue_groups.items():
+        if len(group) < 2:
+            n_skipped += 1
+            continue
+
+        # 对每个 t >= 1 的轮构建一个训练样本
+        for t in range(1, len(group)):
+            current = group[t]
+            if not current.get("target_text"):
+                continue
+
+            query = current["input_text"]
+            target = current["target_text"]
+
+            # --- 相关记忆: 前面轮次的对话原文 ---
+            causal_memories = []
+            for prev_idx in range(t):
+                prev = group[prev_idx]
+                turn_text = f"用户: {prev['input_text']}"
+                if prev.get("target_text"):
+                    turn_text += f" 助手: {prev['target_text']}"
+                causal_memories.append(turn_text)
+
+            # 限制因果记忆数量 (保留最近的轮次)
+            max_causal = num_memories_per_sample - num_hard_negatives
+            if len(causal_memories) > max_causal:
+                # 保留最近的 max_causal 条 (最相关的)
+                causal_memories = causal_memories[-max_causal:]
+
+            relevant_count = len(causal_memories)
+
+            # --- 硬负例: 来自其他对话的轮次 ---
+            hard_negs = []
+            other_turns = [
+                t_text for t_text in all_turn_texts
+                if t_text not in causal_memories and query not in t_text
+            ]
+            if other_turns:
+                n_hard = min(num_hard_negatives, len(other_turns))
+                hard_negs = random.sample(other_turns, n_hard)
+
+            # 组装记忆列表: [因果记忆 (相关)] + [硬负例 (不相关)]
+            all_memories = causal_memories + hard_negs
+            relevant_indices = list(range(relevant_count))
+
+            # 打乱顺序
+            indices = list(range(len(all_memories)))
+            random.shuffle(indices)
+            shuffled_memories = [all_memories[i] for i in indices]
+            # 映射 relevant_indices 到打乱后的位置
+            index_map = {old: new for new, old in enumerate(indices)}
+            shuffled_relevant = [index_map[r] for r in relevant_indices]
+
+            sample = {
+                "input_text": query,
+                "target_text": target,
+                "memory_texts": shuffled_memories,
+                "relevant_indices": shuffled_relevant,
+                "dialogue_id": current.get("dialogue_id", "unknown"),
+                "session_idx": current.get("session_idx", 0),
+            }
+            samples.append(sample)
+
+    # 全局打乱
+    random.shuffle(samples)
+
+    n_with_target = sum(1 for s in samples if "target_text" in s)
+    avg_mem = sum(len(s['memory_texts']) for s in samples) / max(len(samples), 1)
+    avg_rel = sum(len(s['relevant_indices']) for s in samples) / max(len(samples), 1)
+    logger.info(
+        f"因果化改造完成: {len(data)} → {len(samples)} 条样本 "
+        f"(跳过 {n_skipped} 个过短对话组, "
+        f"平均 {avg_mem:.1f} 条记忆, {avg_rel:.1f} 条相关, "
+        f"{n_with_target} 条含 target_text)"
+    )
+    logger.info(
+        f"  ★ 记忆内容: 对话前文原文 (因果依赖), 非独立摘要事实"
+    )
+    return samples
 
 
 def conversations_to_mag_samples(
@@ -891,7 +1069,57 @@ def load_training_data(args: argparse.Namespace) -> list[dict[str, Any]]:
         data = load_jsonl_dataset(args.data_path, max_samples=args.max_real_samples)
         # 检测格式: 如果已经是 MAG 格式 (有 input_text + memory_texts), 直接用
         if data and "input_text" in data[0] and "memory_texts" in data[0]:
-            logger.info(f"JSONL 数据已是 MAG 格式, 直接使用 {len(data)} 条样本")
+            # ---- 数据验证与清洗 ----
+            required_keys = {"input_text", "target_text", "memory_texts", "relevant_indices"}
+            raw_count = len(data)
+            cleaned = []
+            n_missing_keys = 0
+            n_bad_types = 0
+            n_clamped = 0
+            for d in data:
+                # 1) 必须字段检查
+                if not required_keys.issubset(d.keys()):
+                    n_missing_keys += 1
+                    continue
+                # 2) 类型检查
+                if (not isinstance(d["memory_texts"], list)
+                        or not isinstance(d["relevant_indices"], list)
+                        or len(d["memory_texts"]) == 0):
+                    n_bad_types += 1
+                    continue
+                # 3) clamp relevant_indices: 过滤越界索引
+                n_mem = len(d["memory_texts"])
+                valid_indices = [i for i in d["relevant_indices"]
+                                 if isinstance(i, int) and 0 <= i < n_mem]
+                if len(valid_indices) != len(d["relevant_indices"]):
+                    n_clamped += 1
+                if not valid_indices:
+                    # 没有有效的相关索引, 随机选一个作为正例 (避免全负样本)
+                    valid_indices = [0]
+                d["relevant_indices"] = valid_indices
+                cleaned.append(d)
+            data = cleaned
+            if is_main_process(get_rank()):
+                logger.info(
+                    f"JSONL 数据验证: {raw_count} → {len(data)} 条有效 "
+                    f"(缺字段={n_missing_keys}, 类型错误={n_bad_types}, "
+                    f"索引修正={n_clamped})"
+                )
+            logger.info(f"JSONL 数据已是 MAG 格式, {len(data)} 条有效样本")
+
+            # ★ 因果化改造: 将对话前文原文作为记忆 (MemoryLLM 风格端到端训练)
+            # 检查数据是否有 dialogue_id 字段 (支持按对话分组)
+            has_dialogue_id = any("dialogue_id" in d for d in data)
+            if has_dialogue_id:
+                logger.info("检测到 dialogue_id 字段, 执行因果化改造 (Causal Memory Training)")
+                data = causalize_mag_samples(
+                    data,
+                    num_memories_per_sample=args.num_memories_per_sample,
+                    num_hard_negatives=args.num_hard_negatives,
+                    seed=args.seed,
+                )
+            else:
+                logger.info("未检测到 dialogue_id 字段, 使用原始 MAG 格式数据")
             return data
         # 否则当作对话格式处理
         conversations = [
@@ -1113,6 +1341,12 @@ def train_phase1_scorer(
         for step_i, data_idx in enumerate(indices):
             sample = dataset[data_idx]
 
+            # ★ 防御性检查: 跳过缺失必要字段的样本
+            if not all(k in sample for k in ("input_text", "memory_texts", "relevant_indices")):
+                continue
+            if not isinstance(sample["memory_texts"], list) or len(sample["memory_texts"]) == 0:
+                continue
+
             # 编码 query (浅层 embedding 即可, 用于 selector 打分)
             query_emb = encoder.encode_texts([sample["input_text"]])  # (1, D)
 
@@ -1124,7 +1358,8 @@ def train_phase1_scorer(
             K = len(sample["memory_texts"])
             target = torch.zeros(1, K, device=query_emb.device)
             for idx in sample["relevant_indices"]:
-                target[0, idx] = 1.0
+                if 0 <= idx < K:
+                    target[0, idx] = 1.0
 
             # Forward (通过 DDP 包装的 selector)
             scores = selector(query_emb, memory_embs)  # (1, K)
@@ -1298,19 +1533,12 @@ def train_phase2_joint(
     if is_main_process(rank):
         logger.info(f"数据量: {len(train_data)} (每卡约 {steps_per_epoch}), 每 {log_interval} 步打印一次")
 
-    # ★ Anti-Teacher-Forcing: 解析参数
-    use_detach_value = args.detach_value and not args.no_detach_value
-    use_label_smoothing = args.label_smoothing > 0
-    use_kl_constraint = args.kl_beta > 0
-    use_scheduled_sampling = args.scheduled_sampling
-
     if is_main_process(rank):
-        logger.info(f"★ Anti-Teacher-Forcing 配置:")
+        logger.info(f"★ Loss 配置 (Causal Memory Training):")
+        logger.info(f"  LM Loss: 纯 NTP (因果化数据保证 target 依赖记忆前文)")
         logger.info(f"  Label Smoothing: {args.label_smoothing}")
-        logger.info(f"  KL 约束: beta={args.kl_beta}, T={args.kl_temperature}")
-        logger.info(f"  Detach V: {use_detach_value}")
-        logger.info(f"  Scheduled Sampling: {use_scheduled_sampling} "
-                    f"(start_epoch={args.ss_start_epoch}, max_ratio={args.ss_max_ratio})")
+        logger.info(f"  Aux Loss: 0.1 (selector 打分辅助)")
+        logger.info(f"  Gap Loss: 已移除 (不再需要, NTP 本身包含记忆利用信号)")
 
     selector.train()
     kv_injector.train()
@@ -1333,6 +1561,12 @@ def train_phase2_joint(
 
         for step_i, data_idx in enumerate(indices):
             sample = dataset[data_idx]
+
+            # ★ 防御性检查: 跳过缺失必要字段的样本
+            if not all(k in sample for k in ("input_text", "target_text", "memory_texts", "relevant_indices")):
+                continue
+            if not isinstance(sample["memory_texts"], list) or len(sample["memory_texts"]) == 0:
+                continue
 
             # 编码 query (无梯度, backbone embedding 冻结)
             with torch.no_grad():
@@ -1439,35 +1673,6 @@ def train_phase2_joint(
                 else:
                     attention_mask = torch.ones_like(input_ids, dtype=torch.bool)
 
-            # ★ Scheduled Sampling: 训练后期逐步在 target 部分引入 token corruption
-            # 原理: 将 target 部分的部分 token (在 input_ids 中) 随机替换为其他 token,
-            #        但 labels 保持原始 ground truth 不变。这样即使 CrossAttention 能
-            #        从 V 中读到答案, 它看到的 input context 已经被"污染"了一部分,
-            #        模型必须学会在不完美输入下也能正确预测, 缓解 exposure bias。
-            # 替换策略: 80% 随机词, 10% 保持原词, 10% mask token (类似 BERT)
-            if use_scheduled_sampling and has_target and epoch >= args.ss_start_epoch:
-                # 替换比例: 从 0 线性增长到 ss_max_ratio
-                progress = (epoch - args.ss_start_epoch) / max(args.num_epochs - args.ss_start_epoch, 1)
-                ss_ratio = min(args.ss_max_ratio * progress, args.ss_max_ratio)
-
-                if ss_ratio > 0 and query_len < input_ids.shape[1]:
-                    target_length = input_ids.shape[1] - query_len
-                    num_corrupt = max(1, int(target_length * ss_ratio))
-                    # 在 target 部分随机选择要替换的位置
-                    corrupt_positions = torch.randperm(target_length)[:num_corrupt] + query_len
-                    vocab_size = tokenizer.vocab_size or 32000
-                    for pos in corrupt_positions:
-                        r = torch.rand(1).item()
-                        if r < 0.8:
-                            # 80%: 替换为随机 token
-                            input_ids[0, pos] = torch.randint(0, vocab_size, (1,), device=args.device)
-                        elif r < 0.9:
-                            # 10%: 保持原词不变 (do nothing)
-                            pass
-                        else:
-                            # 10%: 替换为 pad token (类似 mask)
-                            input_ids[0, pos] = tokenizer.pad_token_id or 0
-
             # ---- 分段 Forward ---- #
             # Step 1: backbone embedding + 注入层之前的层 (no_grad)
             with torch.no_grad():
@@ -1511,9 +1716,6 @@ def train_phase2_joint(
             # 收集 alpha 值用于日志
             alpha_values_for_log: list[tuple[int, float]] = []
 
-            # 保存 inject 前的 hidden states (用于 contrastive loss)
-            h_before_inject = h.detach().clone()
-
             # ★ 构造 4D causal mask (用于自定义 attention forward)
             B_seq, T_seq, D_seq = h.shape
             with torch.no_grad():
@@ -1548,57 +1750,15 @@ def train_phase2_joint(
             h = final_norm(h)
             logits = lm_head(h)
 
-            # ★ 计算 LM loss (Label Smoothing 防止过度自信)
+            # ★ 计算 LM loss (有记忆注入)
             shift_logits = logits[..., :-1, :].contiguous()
             shift_labels = labels[..., 1:].contiguous()
             lm_loss = F.cross_entropy(
                 shift_logits.view(-1, shift_logits.size(-1)),
                 shift_labels.view(-1),
                 ignore_index=-100,
-                label_smoothing=args.label_smoothing,  # ★ Label Smoothing: 阻止 lm_loss → 0
+                label_smoothing=args.label_smoothing,
             )
-
-            # ★ 核心改进 1: KL 约束 (有记忆 vs 无记忆输出分布不能差太远)
-            # 原理: 如同知识蒸馏, "有记忆的你"不能和"无记忆的你"差太远,
-            #       强制记忆只起辅助作用而非主导生成
-            # 公式: kl_loss = KL(softmax(logits_with_mem / T) || softmax(logits_no_mem / T))
-            kl_loss = torch.tensor(0.0, device=lm_loss.device)
-            gap_loss = torch.tensor(0.0, device=lm_loss.device)
-            lm_loss_no_mem = torch.tensor(0.0, device=lm_loss.device)
-            if has_target:
-                with torch.no_grad():
-                    # 无记忆 baseline: 从 inject 之前的 hidden state 开始
-                    h_no_mem = h_before_inject.clone()
-                    for layer_idx_c in range(first_injection_layer, num_backbone_layers):
-                        layer_output_c = backbone_layers[layer_idx_c](h_no_mem, **layer_kwargs_grad)
-                        h_no_mem = layer_output_c[0] if isinstance(layer_output_c, tuple) else layer_output_c
-                    h_no_mem = final_norm(h_no_mem)
-                    logits_no_mem = lm_head(h_no_mem)
-
-                    # 计算无记忆 lm_loss (用于对比, 无梯度)
-                    shift_logits_nm = logits_no_mem[..., :-1, :].contiguous()
-                    lm_loss_no_mem = F.cross_entropy(
-                        shift_logits_nm.view(-1, shift_logits_nm.size(-1)),
-                        shift_labels.view(-1),
-                        ignore_index=-100,
-                    )
-
-                # DPO 风格 Gap Loss (保留, 鼓励记忆有帮助)
-                beta = 2.0
-                gap = lm_loss_no_mem.detach() - lm_loss  # 正值 = 好
-                gap_loss = -F.logsigmoid(beta * gap)
-
-                # ★ KL 约束: 限制记忆注入对输出分布的影响幅度
-                if use_kl_constraint:
-                    T = args.kl_temperature
-                    # 只在 target 部分 (有效 label 位置) 计算 KL
-                    valid_mask = (shift_labels.view(-1) != -100)
-                    if valid_mask.any():
-                        # logits_with_mem (有梯度) vs logits_no_mem (无梯度, 作为 target 分布)
-                        log_p_with = F.log_softmax(shift_logits.view(-1, shift_logits.size(-1))[valid_mask] / T, dim=-1)
-                        p_without = F.softmax(shift_logits_nm.view(-1, shift_logits_nm.size(-1))[valid_mask] / T, dim=-1)
-                        # KL(P_with_mem || P_no_mem): 有记忆输出不能偏离无记忆输出太远
-                        kl_loss = F.kl_div(log_p_with, p_without.detach(), reduction="batchmean") * (T * T)
 
             # ★ 辅助 loss: 鼓励 selector 给相关记忆更高权重
             aux_loss = torch.tensor(0.0, device=lm_loss.device)
@@ -1612,25 +1772,23 @@ def train_phase2_joint(
                 aux_loss = F.binary_cross_entropy_with_logits(raw_scores, sel_target)
 
             # ★ 辅助统计: alpha 值 (仅用于日志, 不参与 loss)
-            gate_reg_loss = torch.tensor(0.0, device=lm_loss.device)  # 保留变量兼容
             gate_mean_val = 0.0
             if alpha_values_for_log:
                 gate_mean_val = sum(v for _, v in alpha_values_for_log) / len(alpha_values_for_log)
 
-            # ★ 总 loss 组合:
-            # gap_loss:  DPO 风格, 鼓励记忆注入降低 lm_loss
-            # lm_loss:   直接最小化 (带 Label Smoothing, 防止趋于 0)
-            # kl_loss:   KL 约束, 记忆只能辅助不能主导
-            # aux_loss:  selector 打分辅助
-            loss = 1.0 * gap_loss + 0.3 * lm_loss + args.kl_beta * kl_loss + 0.1 * aux_loss
+            # ★ 总 loss 组合 (Causal Memory Training 风格):
+            # lm_loss:   纯 NTP loss — 因果化数据中 target 天然依赖记忆前文,
+            #            所以 NTP 本身就是端到端的记忆利用信号
+            # aux_loss:  selector 打分辅助 (权重 0.1)
+            # 不需要 gap_loss: 因果化数据保证了 target 依赖记忆, NTP 已包含信号
+            loss = 1.0 * lm_loss + 0.1 * aux_loss
 
             # nan guard
             if torch.isnan(loss) or torch.isinf(loss):
                 if is_main_process(rank) and step_i < 10:
                     logger.warning(
                         f"  [P2] Step {step_i}: loss={loss.item():.4f} 跳过 (nan/inf), "
-                        f"lm={lm_loss.item():.4f} gap={gap_loss.item():.4f} "
-                        f"aux={aux_loss.item():.4f} g_reg={gate_reg_loss.item():.4f}"
+                        f"lm={lm_loss.item():.4f} aux={aux_loss.item():.4f}"
                     )
                 optimizer.zero_grad()
                 continue
@@ -1671,9 +1829,8 @@ def train_phase2_joint(
 
                 logger.info(
                     f"  [P2] Epoch {epoch+1} [{step_i+1}/{len(indices)}] "
-                    f"loss={avg_loss:.4f} (lm={lm_loss.item():.4f} gap={gap_loss.item():.4f} "
-                    f"kl={kl_loss.item():.4f} aux={aux_loss.item():.4f} "
-                    f"lm_nm={lm_loss_no_mem.item():.4f} Δ={lm_loss_no_mem.item()-lm_loss.item():.4f})"
+                    f"loss={avg_loss:.4f} (lm={lm_loss.item():.4f} "
+                    f"aux={aux_loss.item():.4f})"
                     f"  lr={lr_now:.2e}{alpha_info}  ETA={eta:.0f}s"
                 )
 

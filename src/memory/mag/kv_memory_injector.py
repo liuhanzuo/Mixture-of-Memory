@@ -498,6 +498,18 @@ class KVAdapterInjector(nn.Module):
         key = str(layer_idx)
         return self.adapters.get(key, None)
 
+    def get_alpha(self, layer_idx: int) -> torch.Tensor:
+        """获取第 layer_idx 层的等效注入强度 (LoRA scale_k 和 scale_v 的均值)。
+
+        KVAdapterInjector 没有显式的 alpha 参数，但 LoRA adapter 的
+        scale_k/scale_v 起到了类似的作用。返回它们的均值作为等效 alpha，
+        以兼容 eval_mag.py 中的 eval_gate_activation 评估。
+        """
+        adapter = self.get_adapter(layer_idx)
+        if adapter is None:
+            return torch.tensor(0.0)
+        return (adapter.scale_k.abs() + adapter.scale_v.abs()) / 2
+
     def forward_decoder_layer(
         self,
         layer_idx: int,
