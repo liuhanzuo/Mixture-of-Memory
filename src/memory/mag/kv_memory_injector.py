@@ -606,18 +606,21 @@ class KVAdapterInjector(nn.Module):
 # ======================================================================
 
 class RawKVInjector(nn.Module):
-    """直接用记忆 token 的原始 KV 注入 (不做 SVD 压缩)。
+    """MemoryLLM 风格的原始 KV 直接注入 (不做 SVD 压缩, 不做 alpha 缩放)。
 
-    核心思想:
-        既然 SVD 虚拟 KV 和正常 KV 语义不匹配, 那干脆不做 SVD,
-        直接用记忆文本过 backbone 各层后得到的 token-level KV。
+    核心思想 (借鉴 MemoryLLM: https://arxiv.org/abs/2402.04624):
+        直接将记忆文本过 backbone 各层后得到的 token-level KV concat 到
+        正常 token 的 KV 前面, 不做任何缩放或变换。
 
-        每个虚拟 KV 都对应一个真实的记忆 token, 和正常 KV 在同一空间,
-        softmax 竞争是公平的。
+        每个虚拟 KV 都对应一个真实的记忆 token, 和正常 KV 在同一语义空间,
+        softmax 竞争天然公平, 不需要 alpha 缩放。
 
-    可训练参数:
-        - per-layer α 标量 (控制注入强度)
-        - 共 len(injection_layers) 个参数
+    与原始 MemoryLLM 的区别:
+        - MemoryLLM: 记忆池是固定大小的 hidden state buffer, 通过 surprise layer 自动写入
+        - 本实现: 记忆来自外部 memory_texts, 通过 backbone 编码后直接注入
+        - 共同点: 直接 concat 到 KV, 不做缩放, 端到端训练
+
+    可训练参数: 无 (纯 concat, 梯度通过 KV 投影层流回 backbone LoRA)
 
     代价:
         - 虚拟 token 数 = 记忆 token 数 (可能几百个)
@@ -636,23 +639,14 @@ class RawKVInjector(nn.Module):
         self.config = config
         self._injection_layers = set(config.injection_layers)
 
-        # Per-layer 可学习标量 α
-        if config.max_alpha > 0 and config.init_alpha > 0:
-            init_logit = math.log(config.init_alpha / (config.max_alpha - config.init_alpha + 1e-8))
-        else:
-            init_logit = -2.0
+        # MemoryLLM 风格: 不使用 alpha 缩放, 直接 concat
+        # 保留一个 dummy parameter 以便 DDP 不报错 (find_unused_parameters)
+        self._dummy = nn.Parameter(torch.zeros(1), requires_grad=False)
 
-        self.alpha_logits = nn.ParameterDict({
-            str(layer_idx): nn.Parameter(torch.tensor(init_logit))
-            for layer_idx in config.injection_layers
-        })
-
-        num_params = sum(p.numel() for p in self.parameters())
         logger.info(
-            f"[RawKVInjector] 初始化: injection_layers={config.injection_layers}, "
-            f"init_alpha={config.init_alpha:.3f}, max_alpha={config.max_alpha:.3f}, "
+            f"[RawKVInjector] MemoryLLM 风格初始化: injection_layers={config.injection_layers}, "
             f"max_raw_kv_tokens={config.max_raw_kv_tokens}, "
-            f"total_params={num_params}"
+            f"无 alpha 缩放 (直接 concat)"
         )
 
     @property
@@ -663,10 +657,8 @@ class RawKVInjector(nn.Module):
         return layer_idx in self._injection_layers
 
     def get_alpha(self, layer_idx: int) -> torch.Tensor:
-        key = str(layer_idx)
-        if key not in self.alpha_logits:
-            return torch.tensor(0.0)
-        return self.config.max_alpha * torch.sigmoid(self.alpha_logits[key])
+        """兼容接口: MemoryLLM 风格不使用 alpha, 始终返回 1.0。"""
+        return torch.tensor(1.0)
 
     def forward_decoder_layer(
         self,
@@ -678,31 +670,29 @@ class RawKVInjector(nn.Module):
         virtual_kv_cache: dict[int, tuple[torch.Tensor, torch.Tensor]] | None = None,
         inference_scale: float = 1.0,
     ) -> tuple[torch.Tensor, torch.Tensor | None]:
-        """替代 Qwen3DecoderLayer.forward, 注入原始 token-level KV。"""
-        alpha_value = None
+        """替代 Qwen3DecoderLayer.forward, 直接 concat 原始 token-level KV。
 
+        MemoryLLM 风格: 不做 alpha 缩放, 直接拼接。
+        梯度可以通过 KV 投影层流回 backbone (如果 backbone 有 LoRA)。
+        """
         if (self.should_inject(layer_idx)
                 and virtual_kv_cache is not None
                 and layer_idx in virtual_kv_cache):
 
             raw_keys, raw_values = virtual_kv_cache[layer_idx]
             # raw_keys: (B, num_kv_heads, N_tokens, head_dim)
-
-            alpha = self.get_alpha(layer_idx) * inference_scale
-            alpha_value = alpha.detach()
-
-            scaled_keys = raw_keys * alpha
-            scaled_values = raw_values * alpha
+            # ★ MemoryLLM 风格: 直接 concat, 不缩放
 
             hidden_states = _forward_decoder_layer_with_kv(
                 layer_idx=layer_idx,
                 decoder_layer=decoder_layer,
                 hidden_states=hidden_states,
-                key_states_extra=scaled_keys,
-                value_states_extra=scaled_values,
+                key_states_extra=raw_keys,
+                value_states_extra=raw_values,
                 attention_mask=attention_mask,
                 position_embeddings=position_embeddings,
             )
+            return hidden_states, torch.tensor(1.0)  # alpha=1.0 (无缩放)
         else:
             residual = hidden_states
             hidden_states = decoder_layer.input_layernorm(hidden_states)
@@ -717,18 +707,14 @@ class RawKVInjector(nn.Module):
             hidden_states = decoder_layer.mlp(hidden_states)
             hidden_states = residual + hidden_states
 
-        return hidden_states, alpha_value
+        return hidden_states, None
 
     def get_stats(self) -> dict[str, Any]:
-        stats = {}
-        for layer_idx in sorted(self._injection_layers):
-            alpha = self.get_alpha(layer_idx)
-            stats[f"alpha_layer_{layer_idx}"] = alpha.item()
-        return stats
+        """MemoryLLM 风格: 无 alpha 参数, 返回空统计。"""
+        return {f"alpha_layer_{l}": 1.0 for l in sorted(self._injection_layers)}
 
     def __repr__(self) -> str:
-        alphas = {int(k): f"{self.get_alpha(int(k)).item():.4f}" for k in self.alpha_logits}
-        return f"RawKVInjector(injection_layers={sorted(self._injection_layers)}, alphas={alphas})"
+        return f"RawKVInjector(MemoryLLM-style, injection_layers={sorted(self._injection_layers)}, no_alpha)"
 
 
 # ======================================================================
@@ -856,10 +842,11 @@ def extract_raw_kv_for_injection(
     backbone_layers: nn.ModuleList,
     attention_mask: torch.Tensor | None = None,
     max_tokens: int = 128,
+    with_grad: bool = False,
 ) -> dict[int, tuple[torch.Tensor, torch.Tensor]]:
     """将 per-layer 记忆 hidden states 直接投影为 token-level KV pairs (不做 SVD)。
 
-    用于 raw_kv 模式。
+    用于 raw_kv 模式 (MemoryLLM 风格)。
 
     核心流程 (对每层 l):
         1. 用第 l 层的 k_proj/v_proj/k_norm 投影 hidden states → K, V
@@ -874,6 +861,7 @@ def extract_raw_kv_for_injection(
         backbone_layers: backbone 的 nn.ModuleList.
         attention_mask: (B, N) token 级别 mask (1=有效, 0=padding).
         max_tokens: 最大虚拟 token 数, 超过则 mean-pool 压缩.
+        with_grad: 是否保留梯度 (端到端训练时设为 True, 让梯度流过 KV 投影).
 
     Returns:
         raw_kv_cache: {layer_idx: (raw_keys, raw_values)}
@@ -889,7 +877,10 @@ def extract_raw_kv_for_injection(
         head_dim = attn.head_dim
         num_kv_heads = attn.k_proj.out_features // head_dim
 
-        with torch.no_grad():
+        # ★ MemoryLLM 风格: with_grad=True 时保留梯度, 让端到端训练的梯度
+        #   流过 k_proj/v_proj → backbone LoRA 参数
+        ctx = torch.no_grad() if not with_grad else torch.enable_grad()
+        with ctx:
             k_all = attn.k_proj(hidden_states)  # (B, N, num_kv_heads * head_dim)
             v_all = attn.v_proj(hidden_states)  # (B, N, num_kv_heads * head_dim)
 
@@ -947,6 +938,7 @@ def extract_raw_kv_for_injection(
             f"[extract_raw_kv] Layer {layer_idx}: "
             f"{N} tokens → {k_heads.shape[2]} raw KV pairs "
             f"(num_kv_heads={num_kv_heads}, head_dim={head_dim})"
+            f"{' [with_grad]' if with_grad else ''}"
         )
 
     return raw_kv_cache

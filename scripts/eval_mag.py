@@ -75,7 +75,7 @@ def parse_args() -> argparse.Namespace:
                         help="评估数据路径 (JSONL, 与训练数据格式相同)")
     parser.add_argument("--num_eval_samples", type=int, default=100,
                         help="评估样本数量 (从数据文件中取前 N 条)")
-    parser.add_argument("--max_seq_len", type=int, default=512)
+    parser.add_argument("--max_seq_len", type=int, default=1024)
 
     # 评估选项
     parser.add_argument("--eval_selector", action="store_true", default=True,
@@ -111,7 +111,9 @@ def parse_args() -> argparse.Namespace:
 
     # 输出
     parser.add_argument("--output_file", type=str, default="",
-                        help="评估结果 JSON 输出路径 (可选)")
+                        help="评估结果 JSON 输出路径 (默认自动生成到 mag_weights_dir 下)")
+    parser.add_argument("--output_report", type=str, default="",
+                        help="评估详细报告 TXT 输出路径 (默认自动生成到 mag_weights_dir 下, 包含所有样本的实际输出)")
     parser.add_argument("--seed", type=int, default=42)
 
     # LLM-as-Judge 评估
@@ -308,20 +310,18 @@ def load_eval_data(data_path: str, num_samples: int) -> list[dict]:
         # 已经是 MAG 格式
         data = raw_data
 
-        # ★ 因果化改造: 如果有 dialogue_id, 将对话前文原文作为记忆
-        has_dialogue_id = any("dialogue_id" in d for d in data)
-        if has_dialogue_id:
-            logger.info("检测到 dialogue_id 字段, 执行因果化改造 (Causal Memory Training)")
-            try:
-                from scripts.train_mag import causalize_mag_samples
-                data = causalize_mag_samples(
-                    data,
-                    num_memories_per_sample=15,
-                    num_hard_negatives=3,
-                    seed=42,
-                )
-            except ImportError:
-                logger.warning("无法导入 causalize_mag_samples, 使用原始数据")
+        # ★ 检测数据是否已因果化 (记忆以 "用户: " 开头)
+        is_causal = False
+        for d in data[:10]:
+            if d.get("memory_texts") and d["memory_texts"][0].startswith("用户: "):
+                is_causal = True
+                break
+        if is_causal:
+            logger.info(f"数据已因果化 (Causal Memory Training), {len(data)} 条样本")
+        else:
+            logger.info(f"数据为原始 MAG 格式, {len(data)} 条样本, 自动执行因果化...")
+            data = _causalize_mag_data(data)
+            logger.info(f"因果化完成: {len(data)} 条样本")
 
         data = data[:num_samples]
     elif raw_data and "messages" in raw_data[0]:
@@ -344,6 +344,115 @@ def load_eval_data(data_path: str, num_samples: int) -> list[dict]:
 
     logger.info(f"加载了 {len(data)} 条评估样本")
     return data
+
+
+def _causalize_mag_data(
+    data: list[dict],
+    num_hard_negatives: int = 3,
+    seed: int = 42,
+) -> list[dict]:
+    """将原始 MAG 格式数据因果化: 用对话前文原文替代摘要记忆。
+
+    与 prepare_causal_data.py 逻辑一致:
+    - 按 dialogue_id + session_idx 分组
+    - 每个样本的记忆 = 同组前面轮次的 "用户: ... 助手: ..." 原文
+    - 加入少量硬负例 (其他对话组的轮次)
+    """
+    import random as _rng
+    from collections import defaultdict
+
+    _rng.seed(seed)
+
+    # 0. 过滤: 只保留有 input_text 的条目
+    data = [d for d in data if d.get("input_text")]
+
+    # 1. 按对话分组
+    dialogue_groups: dict[str, list[dict]] = defaultdict(list)
+    for d in data:
+        dial_id = d.get("dialogue_id", "unknown")
+        sess_idx = d.get("session_idx", 0)
+        key = f"{dial_id}_sess{sess_idx}"
+        dialogue_groups[key].append(d)
+
+    group_keys_list = list(dialogue_groups.keys())
+    logger.info(f"  因果化: {len(group_keys_list)} 个对话组")
+
+    # 2. 构建轮次文本
+    group_turn_texts: dict[str, list[str]] = {}
+    for group_key, group in dialogue_groups.items():
+        turns = []
+        for d in group:
+            turn_text = f"用户: {d['input_text']}"
+            if d.get("target_text"):
+                turn_text += f" 助手: {d['target_text']}"
+            turns.append(turn_text)
+        group_turn_texts[group_key] = turns
+
+    # 3. 因果化构造
+    group_key_to_idx = {k: i for i, k in enumerate(group_keys_list)}
+    samples = []
+
+    for group_key, group in dialogue_groups.items():
+        if len(group) < 2:
+            continue
+
+        turns = group_turn_texts[group_key]
+        my_idx = group_key_to_idx[group_key]
+
+        for t in range(1, len(group)):
+            current = group[t]
+            if not current.get("target_text"):
+                continue
+
+            query = current["input_text"]
+            target = current["target_text"]
+
+            # 相关记忆: 前面轮次的对话原文
+            causal_memories = turns[:t]
+            max_causal = 15 - num_hard_negatives
+            if len(causal_memories) > max_causal:
+                causal_memories = causal_memories[-max_causal:]
+
+            relevant_count = len(causal_memories)
+
+            # 硬负例
+            hard_negs = []
+            n_hard = min(num_hard_negatives, len(group_keys_list) - 1)
+            if n_hard > 0:
+                neg_indices = []
+                while len(neg_indices) < n_hard:
+                    idx = _rng.randint(0, len(group_keys_list) - 1)
+                    if idx != my_idx:
+                        neg_indices.append(idx)
+                for gi in neg_indices:
+                    neg_turns = group_turn_texts[group_keys_list[gi]]
+                    if neg_turns:
+                        hard_negs.append(neg_turns[_rng.randint(0, len(neg_turns) - 1)])
+
+            # 组装 + 打乱
+            all_memories = causal_memories + hard_negs
+            relevant_indices = list(range(relevant_count))
+
+            indices = list(range(len(all_memories)))
+            _rng.shuffle(indices)
+            shuffled_memories = [all_memories[i] for i in indices]
+            index_map = {old: new for new, old in enumerate(indices)}
+            shuffled_relevant = [index_map[r] for r in relevant_indices]
+
+            samples.append({
+                "input_text": query,
+                "target_text": target,
+                "memory_texts": shuffled_memories,
+                "relevant_indices": shuffled_relevant,
+                "dialogue_id": current.get("dialogue_id", "unknown"),
+                "session_idx": current.get("session_idx", 0),
+            })
+
+    _rng.shuffle(samples)
+    avg_mem = sum(len(s["memory_texts"]) for s in samples) / max(len(samples), 1)
+    avg_rel = sum(len(s["relevant_indices"]) for s in samples) / max(len(samples), 1)
+    logger.info(f"  因果化: 平均 {avg_mem:.1f} 条记忆, {avg_rel:.1f} 条相关")
+    return samples
 
 
 def _simple_conversation_to_mag(
@@ -446,6 +555,14 @@ def eval_selector_accuracy(
     irrelevant_count = 0
     total = 0
 
+    # ★ 精准打分分析: 收集所有分数用于 AUC-ROC、分布统计、统计检验
+    all_relevant_scores: list[float] = []    # 所有相关记忆的 sigmoid 分数
+    all_irrelevant_scores: list[float] = []  # 所有不相关记忆的 sigmoid 分数
+    all_labels: list[int] = []               # 二分类标签 (1=相关, 0=不相关)
+    all_probs: list[float] = []              # 对应的 sigmoid 概率
+    per_sample_gaps: list[float] = []        # 每个样本内的 score_gap
+    per_sample_auc: list[float] = []         # 每个样本内的 AUC
+
     selector.eval()
     with torch.no_grad():
         for sample in data:
@@ -463,13 +580,40 @@ def eval_selector_accuracy(
             K = len(sample["memory_texts"])
 
             # 相关 vs 不相关得分
+            sample_rel_scores = []
+            sample_irrel_scores = []
             for idx in range(K):
+                p = probs[idx].item()
                 if idx in relevant_set:
-                    relevant_score_sum += probs[idx].item()
+                    relevant_score_sum += p
                     relevant_count += 1
+                    all_relevant_scores.append(p)
+                    sample_rel_scores.append(p)
+                    all_labels.append(1)
                 else:
-                    irrelevant_score_sum += probs[idx].item()
+                    irrelevant_score_sum += p
                     irrelevant_count += 1
+                    all_irrelevant_scores.append(p)
+                    sample_irrel_scores.append(p)
+                    all_labels.append(0)
+                all_probs.append(p)
+
+            # 每个样本内的 gap
+            if sample_rel_scores and sample_irrel_scores:
+                s_gap = sum(sample_rel_scores) / len(sample_rel_scores) - sum(sample_irrel_scores) / len(sample_irrel_scores)
+                per_sample_gaps.append(s_gap)
+
+                # 每个样本内的 AUC (相关分数 > 不相关分数的比例)
+                correct_pairs = 0
+                total_pairs = 0
+                for rs in sample_rel_scores:
+                    for irs in sample_irrel_scores:
+                        total_pairs += 1
+                        if rs > irs:
+                            correct_pairs += 1
+                        elif rs == irs:
+                            correct_pairs += 0.5
+                per_sample_auc.append(correct_pairs / max(total_pairs, 1))
 
             # Top-K 指标
             actual_k = min(top_k, K)
@@ -499,13 +643,16 @@ def eval_selector_accuracy(
         logger.warning("没有包含 relevant_indices 的评估样本!")
         return {}
 
+    avg_rel = relevant_score_sum / max(relevant_count, 1)
+    avg_irrel = irrelevant_score_sum / max(irrelevant_count, 1)
+
     results = {
         f"Hit@{top_k}": hit_at_k / total,
         f"Precision@{top_k}": precision_at_k_sum / total,
         f"NDCG@{top_k}": ndcg_at_k_sum / total,
-        "avg_relevant_score": relevant_score_sum / max(relevant_count, 1),
-        "avg_irrelevant_score": irrelevant_score_sum / max(irrelevant_count, 1),
-        "score_gap": (relevant_score_sum / max(relevant_count, 1)) - (irrelevant_score_sum / max(irrelevant_count, 1)),
+        "avg_relevant_score": avg_rel,
+        "avg_irrelevant_score": avg_irrel,
+        "score_gap": avg_rel - avg_irrel,
         "num_samples": total,
     }
 
@@ -516,6 +663,126 @@ def eval_selector_accuracy(
     logger.info(f"  相关记忆平均分:    {results['avg_relevant_score']:.4f}")
     logger.info(f"  不相关记忆平均分:  {results['avg_irrelevant_score']:.4f}")
     logger.info(f"  区分度 (gap):      {results['score_gap']:.4f}")
+
+    # ★ 精准打分分析
+    logger.info(f"\n  ---- 精准打分分析 ----")
+
+    # 1. 分数分布统计
+    import numpy as np
+    rel_arr = np.array(all_relevant_scores) if all_relevant_scores else np.array([0.0])
+    irrel_arr = np.array(all_irrelevant_scores) if all_irrelevant_scores else np.array([0.0])
+
+    logger.info(f"  [分数分布]")
+    logger.info(f"    相关记忆:   mean={rel_arr.mean():.4f}  std={rel_arr.std():.4f}  "
+                f"min={rel_arr.min():.4f}  max={rel_arr.max():.4f}  "
+                f"median={np.median(rel_arr):.4f}  (N={len(all_relevant_scores)})")
+    logger.info(f"    不相关记忆: mean={irrel_arr.mean():.4f}  std={irrel_arr.std():.4f}  "
+                f"min={irrel_arr.min():.4f}  max={irrel_arr.max():.4f}  "
+                f"median={np.median(irrel_arr):.4f}  (N={len(all_irrelevant_scores)})")
+
+    results["relevant_score_std"] = float(rel_arr.std())
+    results["irrelevant_score_std"] = float(irrel_arr.std())
+    results["relevant_score_median"] = float(np.median(rel_arr))
+    results["irrelevant_score_median"] = float(np.median(irrel_arr))
+
+    # 2. 分数分布直方图 (文本形式)
+    bins = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+    rel_hist, _ = np.histogram(rel_arr, bins=bins)
+    irrel_hist, _ = np.histogram(irrel_arr, bins=bins)
+    logger.info(f"  [分数分布直方图]")
+    logger.info(f"    区间        相关    不相关")
+    for i in range(len(bins) - 1):
+        bar_rel = "█" * min(rel_hist[i], 30)
+        bar_irrel = "█" * min(irrel_hist[i], 30)
+        logger.info(f"    [{bins[i]:.1f}-{bins[i+1]:.1f})  {rel_hist[i]:>5d}   {irrel_hist[i]:>5d}  "
+                     f"R|{bar_rel}  I|{bar_irrel}")
+
+    # 3. 全局 AUC-ROC (Wilcoxon-Mann-Whitney 统计量)
+    if all_relevant_scores and all_irrelevant_scores:
+        correct_pairs = 0
+        total_pairs = len(all_relevant_scores) * len(all_irrelevant_scores)
+        # 高效计算: 排序法
+        combined = [(s, 1) for s in all_relevant_scores] + [(s, 0) for s in all_irrelevant_scores]
+        combined.sort(key=lambda x: x[0])
+        # 计算 AUC: 相关分数排名之和
+        rank_sum = 0.0
+        for rank_idx, (score, label) in enumerate(combined):
+            if label == 1:
+                rank_sum += rank_idx + 1  # 1-based rank
+        n_pos = len(all_relevant_scores)
+        n_neg = len(all_irrelevant_scores)
+        auc_roc = (rank_sum - n_pos * (n_pos + 1) / 2) / (n_pos * n_neg) if (n_pos * n_neg) > 0 else 0.5
+
+        results["auc_roc"] = auc_roc
+        logger.info(f"  [AUC-ROC]: {auc_roc:.4f}  (0.5=随机, 1.0=完美)")
+        if auc_roc < 0.55:
+            logger.info(f"    🔴 AUC ≈ 0.5, Selector 打分接近随机, 未学到有效区分能力")
+        elif auc_roc < 0.70:
+            logger.info(f"    🟡 AUC 偏低, Selector 有微弱区分能力但不足")
+        elif auc_roc < 0.85:
+            logger.info(f"    🟢 AUC 尚可, Selector 有一定区分能力")
+        else:
+            logger.info(f"    ✅ AUC 优秀, Selector 区分能力强")
+
+    # 4. 统计显著性检验 (Mann-Whitney U 检验)
+    if len(all_relevant_scores) >= 5 and len(all_irrelevant_scores) >= 5:
+        try:
+            from scipy import stats as sp_stats
+            u_stat, p_value = sp_stats.mannwhitneyu(
+                all_relevant_scores, all_irrelevant_scores,
+                alternative="greater",  # 检验: 相关分数 > 不相关分数
+            )
+            results["mannwhitney_u"] = float(u_stat)
+            results["mannwhitney_p"] = float(p_value)
+            logger.info(f"  [Mann-Whitney U 检验]: U={u_stat:.1f}, p={p_value:.6f}")
+            if p_value < 0.001:
+                logger.info(f"    ✅ p < 0.001, 相关/不相关分数差异极显著")
+            elif p_value < 0.05:
+                logger.info(f"    🟢 p < 0.05, 差异显著")
+            else:
+                logger.info(f"    🔴 p ≥ 0.05, 差异不显著 — Selector 未学到有效区分")
+
+            # Cohen's d 效应量
+            pooled_std = np.sqrt((rel_arr.std()**2 + irrel_arr.std()**2) / 2)
+            if pooled_std > 1e-9:
+                cohens_d = (rel_arr.mean() - irrel_arr.mean()) / pooled_std
+                results["cohens_d"] = float(cohens_d)
+                logger.info(f"  [Cohen's d 效应量]: {cohens_d:.4f}")
+                if abs(cohens_d) < 0.2:
+                    logger.info(f"    🔴 效应量极小 (|d| < 0.2), 实际区分能力可忽略")
+                elif abs(cohens_d) < 0.5:
+                    logger.info(f"    🟡 效应量小 (0.2 ≤ |d| < 0.5)")
+                elif abs(cohens_d) < 0.8:
+                    logger.info(f"    🟢 效应量中等 (0.5 ≤ |d| < 0.8)")
+                else:
+                    logger.info(f"    ✅ 效应量大 (|d| ≥ 0.8), 区分能力强")
+        except ImportError:
+            logger.info(f"  [统计检验]: scipy 未安装, 跳过 Mann-Whitney U 检验")
+
+    # 5. 每样本 AUC 分布
+    if per_sample_auc:
+        ps_auc_arr = np.array(per_sample_auc)
+        results["per_sample_auc_mean"] = float(ps_auc_arr.mean())
+        results["per_sample_auc_std"] = float(ps_auc_arr.std())
+        results["per_sample_auc_min"] = float(ps_auc_arr.min())
+        n_good = int((ps_auc_arr >= 0.7).sum())
+        n_bad = int((ps_auc_arr <= 0.5).sum())
+        logger.info(f"  [每样本 AUC]: mean={ps_auc_arr.mean():.4f}  std={ps_auc_arr.std():.4f}  "
+                     f"min={ps_auc_arr.min():.4f}  max={ps_auc_arr.max():.4f}")
+        logger.info(f"    AUC≥0.7 的样本: {n_good}/{len(per_sample_auc)} ({n_good/len(per_sample_auc)*100:.1f}%)")
+        logger.info(f"    AUC≤0.5 的样本: {n_bad}/{len(per_sample_auc)} ({n_bad/len(per_sample_auc)*100:.1f}%) ← 等于或差于随机")
+
+    # 6. 每样本 gap 分布
+    if per_sample_gaps:
+        ps_gap_arr = np.array(per_sample_gaps)
+        n_positive = int((ps_gap_arr > 0).sum())
+        n_negative = int((ps_gap_arr <= 0).sum())
+        results["per_sample_gap_mean"] = float(ps_gap_arr.mean())
+        results["per_sample_gap_std"] = float(ps_gap_arr.std())
+        results["pct_positive_gap"] = float(n_positive / len(per_sample_gaps) * 100)
+        logger.info(f"  [每样本 Gap]: mean={ps_gap_arr.mean():.4f}  std={ps_gap_arr.std():.4f}")
+        logger.info(f"    gap>0 (相关>不相关): {n_positive}/{len(per_sample_gaps)} ({n_positive/len(per_sample_gaps)*100:.1f}%)")
+        logger.info(f"    gap≤0 (相关≤不相关): {n_negative}/{len(per_sample_gaps)} ({n_negative/len(per_sample_gaps)*100:.1f}%) ← 排序错误")
 
     # 判断效果
     gap = results["score_gap"]
@@ -541,7 +808,7 @@ def eval_gate_activation(
     kv_injector: KVMemoryInjector,
     data: list[dict],
     device: str,
-    max_seq_len: int = 512,
+    max_seq_len: int = 1024,
 ) -> dict:
     """分析 KVMemoryInjector 在各注入层的 alpha 值。
 
@@ -625,7 +892,7 @@ def eval_ppl_comparison(
     kv_injector: KVMemoryInjector,
     data: list[dict],
     device: str,
-    max_seq_len: int = 512,
+    max_seq_len: int = 1024,
     svd_rank: int = 8,
     svd_normalize: bool = True,
     injection_mode: str = "svd_only",
@@ -844,10 +1111,19 @@ def _forward_without_mag(
     else:
         h = model.get_input_embeddings()(input_ids)
 
-    position_ids = torch.arange(h.shape[1], device=h.device).unsqueeze(0)
+    B_seq, T_seq, D_seq = h.shape
+    position_ids = torch.arange(T_seq, device=h.device).unsqueeze(0)
     position_embeddings = _compute_position_embeddings(model, h, position_ids, rotary_emb)
 
-    layer_kwargs = {"attention_mask": attention_mask}
+    # 构造 4D causal mask (与 _forward_with_kv_injection 保持一致)
+    causal_mask_4d = torch.zeros(B_seq, 1, T_seq, T_seq, device=h.device, dtype=h.dtype)
+    causal_mask_4d.masked_fill_(
+        torch.triu(torch.ones(T_seq, T_seq, device=h.device, dtype=torch.bool), diagonal=1)
+        .unsqueeze(0).unsqueeze(0),
+        float("-inf"),
+    )
+
+    layer_kwargs = {"attention_mask": causal_mask_4d}
     if position_embeddings is not None:
         layer_kwargs["position_embeddings"] = position_embeddings
     else:
@@ -884,7 +1160,7 @@ def eval_generation_comparison(
     device: str,
     num_samples: int = 5,
     max_new_tokens: int = 128,
-    max_seq_len: int = 512,
+    max_seq_len: int = 1024,
     svd_rank: int = 8,
     svd_normalize: bool = True,
     max_inject_steps: int = 10,
@@ -1023,6 +1299,90 @@ def eval_generation_comparison(
         is_different = gen_no_mem.strip() != gen_with_mem.strip()
         logger.info(f"  两种生成是否不同: {'是 ✅' if is_different else '否 🔴'}")
 
+        # ★ 精准打分: ROUGE-L (最长公共子序列)
+        def _rouge_l(hypothesis: str, reference: str) -> float:
+            """计算 ROUGE-L F1 (基于字符级 LCS, 兼容中英文)。"""
+            hyp = _re.sub(r'\s+', '', hypothesis.strip())
+            ref = _re.sub(r'\s+', '', reference.strip())
+            if not hyp or not ref:
+                return 0.0
+            m, n = len(hyp), len(ref)
+            # 空间优化的 LCS
+            prev = [0] * (n + 1)
+            for i in range(1, m + 1):
+                curr = [0] * (n + 1)
+                for j in range(1, n + 1):
+                    if hyp[i-1] == ref[j-1]:
+                        curr[j] = prev[j-1] + 1
+                    else:
+                        curr[j] = max(curr[j-1], prev[j])
+                prev = curr
+            lcs_len = prev[n]
+            precision = lcs_len / m if m > 0 else 0
+            recall = lcs_len / n if n > 0 else 0
+            if precision + recall == 0:
+                return 0.0
+            return 2 * precision * recall / (precision + recall)
+
+        rouge_l_no = _rouge_l(gen_no_mem, sample["target_text"])
+        rouge_l_with = _rouge_l(gen_with_mem, sample["target_text"])
+        logger.info(f"  ROUGE-L (无记忆 vs GT): {rouge_l_no:.4f}")
+        logger.info(f"  ROUGE-L (有记忆 vs GT): {rouge_l_with:.4f}")
+
+        # ★ 精准打分: 实体/关键词精确匹配
+        # 从 GT 和记忆中提取关键实体 (中文: 2-6字连续非标点; 英文: 完整单词)
+        def _extract_entities(text: str) -> set[str]:
+            """提取文本中的关键实体 (人名、地名、数字、专有名词等)。"""
+            entities = set()
+            # 中文: 提取 2-6 字的连续汉字片段 (作为候选实体)
+            cn_matches = _re.findall(r'[\u4e00-\u9fff]{2,6}', text)
+            # 过滤掉常见停用词
+            cn_stopwords = {'我们', '你们', '他们', '这个', '那个', '什么', '怎么', '可以', '已经',
+                           '但是', '因为', '所以', '如果', '虽然', '而且', '或者', '不过', '还是',
+                           '一个', '一些', '这些', '那些', '自己', '现在', '时候', '问题', '方面',
+                           '需要', '应该', '能够', '可能', '比较', '非常', '确实', '觉得', '认为',
+                           '建议', '考虑', '关于', '方面', '情况', '进行', '提供', '使用', '通过'}
+            for w in cn_matches:
+                if w not in cn_stopwords:
+                    entities.add(w)
+            # 英文: 提取完整单词 (排除常见停用词)
+            en_words = _re.findall(r'[a-zA-Z]{3,}', text)
+            en_stopwords = {'the', 'and', 'for', 'are', 'but', 'not', 'you', 'all', 'can',
+                           'had', 'her', 'was', 'one', 'our', 'out', 'has', 'have', 'been',
+                           'will', 'with', 'this', 'that', 'from', 'they', 'were', 'some'}
+            for w in en_words:
+                if w.lower() not in en_stopwords:
+                    entities.add(w.lower())
+            # 数字 (含小数、百分比)
+            numbers = _re.findall(r'\d+(?:\.\d+)?%?', text)
+            entities.update(numbers)
+            return entities
+
+        gt_entities = _extract_entities(sample["target_text"])
+        mem_entities = _extract_entities(mem_text_combined)
+        no_mem_entities = _extract_entities(gen_no_mem)
+        with_mem_entities = _extract_entities(gen_with_mem)
+
+        # GT 实体命中率
+        gt_entity_hit_no = len(gt_entities & no_mem_entities) / max(len(gt_entities), 1) if gt_entities else 0
+        gt_entity_hit_with = len(gt_entities & with_mem_entities) / max(len(gt_entities), 1) if gt_entities else 0
+        logger.info(f"  GT实体命中 (无记忆): {gt_entity_hit_no:.4f} ({len(gt_entities & no_mem_entities)}/{len(gt_entities)})")
+        logger.info(f"  GT实体命中 (有记忆): {gt_entity_hit_with:.4f} ({len(gt_entities & with_mem_entities)}/{len(gt_entities)})")
+
+        # ★ 精准打分: 记忆信息渗透率 (Memory Penetration Rate)
+        # 记忆中的实体有多少出现在了生成文本中 (但不在 query 中)
+        query_entities = _extract_entities(sample["input_text"])
+        # 记忆独有实体 = 记忆实体 - query实体 (排除 query 本身就包含的)
+        mem_unique_entities = mem_entities - query_entities
+        if mem_unique_entities:
+            penetration_no = len(mem_unique_entities & no_mem_entities) / len(mem_unique_entities)
+            penetration_with = len(mem_unique_entities & with_mem_entities) / len(mem_unique_entities)
+        else:
+            penetration_no = 0.0
+            penetration_with = 0.0
+        logger.info(f"  记忆渗透率 (无记忆): {penetration_no:.4f} ({len(mem_unique_entities & no_mem_entities)}/{len(mem_unique_entities)} 独有实体)")
+        logger.info(f"  记忆渗透率 (有记忆): {penetration_with:.4f} ({len(mem_unique_entities & with_mem_entities)}/{len(mem_unique_entities)} 独有实体)")
+
         # 构造记忆摘要文本 (供 LLM judge 使用)
         memories_summary = "\n".join(
             f"- {mem[:100]}" for mem in relevant_mems[:5]
@@ -1037,34 +1397,94 @@ def eval_generation_comparison(
             "overlap_with_mem": overlap_with,
             "mem_recall_no": mem_recall_no,
             "mem_recall_with": mem_recall_with,
+            "rouge_l_no": rouge_l_no,
+            "rouge_l_with": rouge_l_with,
+            "gt_entity_hit_no": gt_entity_hit_no,
+            "gt_entity_hit_with": gt_entity_hit_with,
+            "mem_penetration_no": penetration_no,
+            "mem_penetration_with": penetration_with,
             "is_different": is_different,
             "memories_text": memories_summary,
         })
 
     # 汇总
     n_different = sum(1 for r in generation_results if r["is_different"])
-    avg_overlap_no = sum(r["overlap_no_mem"] for r in generation_results) / max(len(generation_results), 1)
-    avg_overlap_with = sum(r["overlap_with_mem"] for r in generation_results) / max(len(generation_results), 1)
-    avg_mem_recall_no = sum(r["mem_recall_no"] for r in generation_results) / max(len(generation_results), 1)
-    avg_mem_recall_with = sum(r["mem_recall_with"] for r in generation_results) / max(len(generation_results), 1)
+    n = max(len(generation_results), 1)
+    avg_overlap_no = sum(r["overlap_no_mem"] for r in generation_results) / n
+    avg_overlap_with = sum(r["overlap_with_mem"] for r in generation_results) / n
+    avg_mem_recall_no = sum(r["mem_recall_no"] for r in generation_results) / n
+    avg_mem_recall_with = sum(r["mem_recall_with"] for r in generation_results) / n
+    avg_rouge_l_no = sum(r["rouge_l_no"] for r in generation_results) / n
+    avg_rouge_l_with = sum(r["rouge_l_with"] for r in generation_results) / n
+    avg_entity_hit_no = sum(r["gt_entity_hit_no"] for r in generation_results) / n
+    avg_entity_hit_with = sum(r["gt_entity_hit_with"] for r in generation_results) / n
+    avg_penetration_no = sum(r["mem_penetration_no"] for r in generation_results) / n
+    avg_penetration_with = sum(r["mem_penetration_with"] for r in generation_results) / n
 
     results = {
         "num_samples": len(generation_results),
         "num_different_outputs": n_different,
-        "pct_different": n_different / max(len(generation_results), 1) * 100,
+        "pct_different": n_different / n * 100,
         "avg_word_overlap_no_mem": avg_overlap_no,
         "avg_word_overlap_with_mem": avg_overlap_with,
         "avg_mem_recall_no_mem": avg_mem_recall_no,
         "avg_mem_recall_with_mem": avg_mem_recall_with,
+        "avg_rouge_l_no_mem": avg_rouge_l_no,
+        "avg_rouge_l_with_mem": avg_rouge_l_with,
+        "avg_gt_entity_hit_no_mem": avg_entity_hit_no,
+        "avg_gt_entity_hit_with_mem": avg_entity_hit_with,
+        "avg_mem_penetration_no_mem": avg_penetration_no,
+        "avg_mem_penetration_with_mem": avg_penetration_with,
         "samples": generation_results,
     }
 
-    logger.info(f"\n  生成结果汇总:")
-    logger.info(f"  两种生成有差异的比例: {results['pct_different']:.1f}%")
-    logger.info(f"  平均词重叠 (无记忆): {avg_overlap_no:.4f}")
-    logger.info(f"  平均词重叠 (有记忆): {avg_overlap_with:.4f}")
-    logger.info(f"  平均记忆召回 (无记忆): {avg_mem_recall_no:.4f}")
-    logger.info(f"  平均记忆召回 (有记忆): {avg_mem_recall_with:.4f}")
+    logger.info(f"\n  ---- 生成结果汇总 ----")
+    logger.info(f"  样本数:               {len(generation_results)}")
+    logger.info(f"  两种生成有差异比例:   {results['pct_different']:.1f}%")
+
+    logger.info(f"\n  {'指标':<22s} {'无记忆':>8s}  {'有记忆':>8s}  {'Δ':>8s}  {'判断'}")
+    logger.info(f"  {'-'*70}")
+
+    def _fmt_row(name: str, v_no: float, v_with: float) -> str:
+        delta = v_with - v_no
+        sign = "+" if delta > 0 else ""
+        if delta > 0.01:
+            verdict = "✅ 提升"
+        elif delta < -0.01:
+            verdict = "🔴 下降"
+        else:
+            verdict = "— 持平"
+        return f"  {name:<22s} {v_no:>8.4f}  {v_with:>8.4f}  {sign}{delta:>7.4f}  {verdict}"
+
+    logger.info(_fmt_row("字符Bigram重叠", avg_overlap_no, avg_overlap_with))
+    logger.info(_fmt_row("ROUGE-L", avg_rouge_l_no, avg_rouge_l_with))
+    logger.info(_fmt_row("GT实体命中率", avg_entity_hit_no, avg_entity_hit_with))
+    logger.info(_fmt_row("记忆关键词召回", avg_mem_recall_no, avg_mem_recall_with))
+    logger.info(_fmt_row("记忆信息渗透率", avg_penetration_no, avg_penetration_with))
+
+    # 综合判断
+    improvements = 0
+    regressions = 0
+    for v_no, v_with in [
+        (avg_rouge_l_no, avg_rouge_l_with),
+        (avg_entity_hit_no, avg_entity_hit_with),
+        (avg_mem_recall_no, avg_mem_recall_with),
+        (avg_penetration_no, avg_penetration_with),
+    ]:
+        if v_with > v_no + 0.005:
+            improvements += 1
+        elif v_with < v_no - 0.005:
+            regressions += 1
+
+    logger.info(f"\n  综合: {improvements}/4 项指标提升, {regressions}/4 项下降")
+    if improvements >= 3:
+        logger.info(f"  ✅ 记忆注入对生成质量有明显正面影响")
+    elif improvements >= 2 and regressions == 0:
+        logger.info(f"  🟢 记忆注入有一定正面影响")
+    elif regressions >= 2:
+        logger.info(f"  🔴 记忆注入对生成质量有负面影响, 需要调优")
+    else:
+        logger.info(f"  🟡 记忆注入效果不明显, 需要更多样本或调优参数")
 
     return results
 
@@ -1362,7 +1782,7 @@ def _generate_text(
     tokenizer: Any,
     prompt: str,
     max_new_tokens: int = 128,
-    max_seq_len: int = 512,
+    max_seq_len: int = 1024,
     device: str = "cuda",
     repetition_penalty: float = 1.3,
 ) -> str:
@@ -1396,7 +1816,7 @@ def _generate_text_with_kv_injection(
     injector_module: KVMemoryInjector,
     virtual_kv_cache: dict[int, tuple[torch.Tensor, torch.Tensor]],
     max_new_tokens: int = 128,
-    max_seq_len: int = 512,
+    max_seq_len: int = 1024,
     device: str = "cuda",
     repetition_penalty: float = 1.5,
     max_inject_steps: int = 10,
@@ -1556,6 +1976,164 @@ def _compute_position_embeddings(model, h, position_ids, rotary_emb=None):
 
 
 # ======================================================================
+# 详细报告保存
+# ======================================================================
+
+def _save_detailed_report(
+    report_path: str,
+    all_results: dict,
+    total_time: float,
+    args: argparse.Namespace,
+) -> None:
+    """保存人类可读的详细评估报告, 包含所有样本的实际输出。"""
+    lines: list[str] = []
+    sep = "=" * 80
+
+    lines.append(sep)
+    lines.append("MAG 评估详细报告")
+    lines.append(sep)
+    lines.append(f"模型路径:       {args.model_path}")
+    lines.append(f"MAG 权重目录:   {args.mag_weights_dir}")
+    lines.append(f"数据路径:       {args.data_path}")
+    lines.append(f"评估样本数:     {args.num_eval_samples}")
+    lines.append(f"生成样本数:     {args.num_generate_samples}")
+    lines.append(f"inference_scale: {args.inference_gate_scale}")
+    lines.append(f"mag_inject_steps: {args.mag_inject_steps}")
+    lines.append(f"总耗时:         {total_time:.1f}s")
+    lines.append("")
+
+    # ---- Selector 评估 ----
+    if "selector" in all_results and all_results["selector"]:
+        sel = all_results["selector"]
+        lines.append(sep)
+        lines.append("评估 1: ContextSelector 准确率")
+        lines.append(sep)
+        for k, v in sel.items():
+            if isinstance(v, float):
+                lines.append(f"  {k}: {v:.4f}")
+            else:
+                lines.append(f"  {k}: {v}")
+        lines.append("")
+
+    # ---- Gate/Alpha 评估 ----
+    if "gate" in all_results and all_results["gate"]:
+        gate = all_results["gate"]
+        lines.append(sep)
+        lines.append("评估 2: Alpha 注入强度分析")
+        lines.append(sep)
+        for k, v in gate.items():
+            if isinstance(v, float):
+                lines.append(f"  {k}: {v:.4f}")
+            else:
+                lines.append(f"  {k}: {v}")
+        lines.append("")
+
+    # ---- PPL 评估 ----
+    if "ppl" in all_results and all_results["ppl"]:
+        ppl = all_results["ppl"]
+        lines.append(sep)
+        lines.append("评估 3: PPL 对比 (有记忆 vs 无记忆)")
+        lines.append(sep)
+        for k, v in ppl.items():
+            if isinstance(v, float):
+                lines.append(f"  {k}: {v:.4f}")
+            else:
+                lines.append(f"  {k}: {v}")
+        lines.append("")
+
+    # ---- 生成质量对比 (逐样本详细输出) ----
+    if "generation" in all_results and all_results["generation"]:
+        gen = all_results["generation"]
+        lines.append(sep)
+        lines.append("评估 4: 生成质量对比 (逐样本详细输出)")
+        lines.append(sep)
+        lines.append(f"  样本数:           {gen.get('num_samples', 0)}")
+        lines.append(f"  生成差异比例:     {gen.get('pct_different', 0):.1f}%")
+        lines.append(f"  平均词重叠 (无记忆): {gen.get('avg_word_overlap_no_mem', 0):.4f}")
+        lines.append(f"  平均词重叠 (有记忆): {gen.get('avg_word_overlap_with_mem', 0):.4f}")
+        lines.append(f"  平均记忆召回 (无记忆): {gen.get('avg_mem_recall_no_mem', 0):.4f}")
+        lines.append(f"  平均记忆召回 (有记忆): {gen.get('avg_mem_recall_with_mem', 0):.4f}")
+        lines.append("")
+
+        samples = gen.get("samples", [])
+        for i, s in enumerate(samples):
+            lines.append("-" * 80)
+            lines.append(f"样本 {i + 1}/{len(samples)}")
+            lines.append("-" * 80)
+            lines.append(f"[Query]")
+            lines.append(f"  {s.get('query', '')}")
+            lines.append("")
+            lines.append(f"[Ground Truth]")
+            lines.append(f"  {s.get('ground_truth', '')}")
+            lines.append("")
+            lines.append(f"[记忆内容]")
+            lines.append(f"  {s.get('memories_text', '(无)')}")
+            lines.append("")
+            lines.append(f"[生成 - 无记忆]")
+            lines.append(f"  {s.get('gen_no_memory', '')}")
+            lines.append("")
+            lines.append(f"[生成 - 有记忆]")
+            lines.append(f"  {s.get('gen_with_memory', '')}")
+            lines.append("")
+            lines.append(f"  词重叠 (无记忆 vs GT): {s.get('overlap_no_mem', 0):.4f}")
+            lines.append(f"  词重叠 (有记忆 vs GT): {s.get('overlap_with_mem', 0):.4f}")
+            lines.append(f"  记忆关键词召回 (无记忆): {s.get('mem_recall_no', 0):.4f}")
+            lines.append(f"  记忆关键词召回 (有记忆): {s.get('mem_recall_with', 0):.4f}")
+            lines.append(f"  两种生成是否不同: {'是 ✅' if s.get('is_different') else '否 🔴'}")
+            lines.append("")
+
+    # ---- LLM Judge ----
+    if "llm_judge" in all_results and all_results["llm_judge"]:
+        judge = all_results["llm_judge"]
+        lines.append(sep)
+        lines.append("评估 5: LLM-as-Judge")
+        lines.append(sep)
+        for k, v in judge.items():
+            if k == "samples":
+                continue
+            if isinstance(v, float):
+                lines.append(f"  {k}: {v:.4f}")
+            else:
+                lines.append(f"  {k}: {v}")
+        lines.append("")
+
+        judge_samples = judge.get("samples", [])
+        for i, js in enumerate(judge_samples):
+            lines.append(f"  --- Judge 样本 {i + 1} ---")
+            for jk, jv in js.items():
+                lines.append(f"    {jk}: {jv}")
+            lines.append("")
+
+    # ---- 汇总 ----
+    lines.append(sep)
+    lines.append("汇总")
+    lines.append(sep)
+
+    if "selector" in all_results and all_results["selector"]:
+        sel = all_results["selector"]
+        lines.append(f"  Selector Hit@5: {sel.get('Hit@5', sel.get('Hit@3', 'N/A'))}")
+        lines.append(f"  Selector 区分度: {sel.get('score_gap', 'N/A')}")
+    if "gate" in all_results and all_results["gate"]:
+        lines.append(f"  Alpha 均值: {all_results['gate'].get('overall_alpha_mean', 'N/A')}")
+    if "ppl" in all_results and all_results["ppl"]:
+        ppl = all_results["ppl"]
+        lines.append(f"  PPL (有记忆): {ppl.get('ppl_with_memory', 'N/A')}")
+        lines.append(f"  PPL (无记忆): {ppl.get('ppl_without_memory', 'N/A')}")
+        lines.append(f"  PPL 降低: {ppl.get('ppl_reduction_pct', 'N/A')}%")
+    if "generation" in all_results and all_results["generation"]:
+        gen = all_results["generation"]
+        lines.append(f"  记忆召回 (有记忆): {gen.get('avg_mem_recall_with_mem', 'N/A')}")
+        lines.append(f"  记忆召回 (无记忆): {gen.get('avg_mem_recall_no_mem', 'N/A')}")
+
+    lines.append("")
+
+    report_p = Path(report_path)
+    report_p.parent.mkdir(parents=True, exist_ok=True)
+    with open(report_p, "w", encoding="utf-8") as f:
+        f.write("\n".join(lines))
+
+
+# ======================================================================
 # 主函数
 # ======================================================================
 
@@ -1710,6 +2288,12 @@ def main() -> None:
         top_k = selector.config.top_k if not hasattr(selector, "module") else selector.module.config.top_k
         logger.info(f"  Selector Hit@{top_k}: {sel.get(f'Hit@{top_k}', 'N/A'):.4f}")
         logger.info(f"  Selector 区分度:    {sel.get('score_gap', 'N/A'):.4f}")
+        if "auc_roc" in sel:
+            logger.info(f"  Selector AUC-ROC:   {sel['auc_roc']:.4f}")
+        if "cohens_d" in sel:
+            logger.info(f"  Selector Cohen's d: {sel['cohens_d']:.4f}")
+        if "per_sample_auc_mean" in sel:
+            logger.info(f"  Selector 样本AUC:   {sel['per_sample_auc_mean']:.4f} ± {sel.get('per_sample_auc_std', 0):.4f}")
 
     if "gate" in all_results and all_results["gate"]:
         gate = all_results["gate"]
@@ -1726,6 +2310,15 @@ def main() -> None:
         logger.info(f"  生成差异比例:       {gen.get('pct_different', 'N/A'):.1f}%")
         logger.info(f"  记忆召回 (有记忆):  {gen.get('avg_mem_recall_with_mem', 'N/A'):.4f}")
         logger.info(f"  记忆召回 (无记忆):  {gen.get('avg_mem_recall_no_mem', 'N/A'):.4f}")
+        if "avg_rouge_l_with_mem" in gen:
+            logger.info(f"  ROUGE-L (有记忆):   {gen['avg_rouge_l_with_mem']:.4f}")
+            logger.info(f"  ROUGE-L (无记忆):   {gen['avg_rouge_l_no_mem']:.4f}")
+        if "avg_gt_entity_hit_with_mem" in gen:
+            logger.info(f"  GT实体命中 (有记忆):{gen['avg_gt_entity_hit_with_mem']:.4f}")
+            logger.info(f"  GT实体命中 (无记忆):{gen['avg_gt_entity_hit_no_mem']:.4f}")
+        if "avg_mem_penetration_with_mem" in gen:
+            logger.info(f"  记忆渗透率 (有记忆):{gen['avg_mem_penetration_with_mem']:.4f}")
+            logger.info(f"  记忆渗透率 (无记忆):{gen['avg_mem_penetration_no_mem']:.4f}")
 
     if "llm_judge" in all_results and all_results["llm_judge"]:
         judge = all_results["llm_judge"]
@@ -1742,24 +2335,32 @@ def main() -> None:
     logger.info(f"  总耗时: {total_time:.1f}s")
 
     # 7. 保存结果
-    if args.output_file:
-        output_path = Path(args.output_file)
-        output_path.parent.mkdir(parents=True, exist_ok=True)
+    # 自动生成输出路径
+    output_json_path = args.output_file or str(Path(args.mag_weights_dir) / "eval_results.json")
+    output_report_path = args.output_report or str(Path(args.mag_weights_dir) / "eval_report.txt")
 
-        # 移除不可序列化的字段
-        save_results = {}
-        for k, v in all_results.items():
-            if isinstance(v, dict):
-                save_results[k] = {
-                    kk: vv for kk, vv in v.items()
-                    if not isinstance(vv, (torch.Tensor,))
-                }
-            else:
-                save_results[k] = v
+    # 7a. 保存 JSON 结果
+    output_path = Path(output_json_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(output_path, "w", encoding="utf-8") as f:
-            json.dump(save_results, f, indent=2, ensure_ascii=False, default=str)
-        logger.info(f"  结果已保存到: {output_path}")
+    # 移除不可序列化的字段
+    save_results = {}
+    for k, v in all_results.items():
+        if isinstance(v, dict):
+            save_results[k] = {
+                kk: vv for kk, vv in v.items()
+                if not isinstance(vv, (torch.Tensor,))
+            }
+        else:
+            save_results[k] = v
+
+    with open(output_path, "w", encoding="utf-8") as f:
+        json.dump(save_results, f, indent=2, ensure_ascii=False, default=str)
+    logger.info(f"  JSON 结果已保存到: {output_path}")
+
+    # 7b. 保存详细文本报告 (包含所有样本的实际输出)
+    _save_detailed_report(output_report_path, all_results, total_time, args)
+    logger.info(f"  详细报告已保存到: {output_report_path}")
 
     # 8. 综合判断
     logger.info("\n" + "=" * 60)
@@ -1770,14 +2371,46 @@ def main() -> None:
     good_signs = []
 
     if "selector" in all_results and all_results["selector"]:
-        gap = all_results["selector"].get("score_gap", 0)
+        sel = all_results["selector"]
+        gap = sel.get("score_gap", 0)
+        auc = sel.get("auc_roc", 0.5)
+        cohens_d = sel.get("cohens_d", 0)
+
+        if auc < 0.55:
+            issues.append(f"Selector AUC-ROC={auc:.4f} ≈ 随机, 完全没有学到区分能力")
+        elif auc < 0.70:
+            issues.append(f"Selector AUC-ROC={auc:.4f} 偏低, 区分能力不足")
+        elif auc >= 0.85:
+            good_signs.append(f"Selector AUC-ROC={auc:.4f} 优秀")
+        else:
+            good_signs.append(f"Selector AUC-ROC={auc:.4f} 尚可")
+
         if gap < 0.05:
-            issues.append("Selector 区分度差 (gap < 0.05), 无法有效区分相关/不相关记忆")
+            issues.append(f"Selector 区分度差 (gap={gap:.4f} < 0.05)")
         elif gap > 0.15:
             good_signs.append(f"Selector 区分度良好 (gap={gap:.4f})")
 
+        if abs(cohens_d) < 0.2 and cohens_d != 0:
+            issues.append(f"Cohen's d={cohens_d:.4f}, 效应量极小, 实际区分可忽略")
+
+        # 检查分数是否坍缩到同一区间
+        rel_std = sel.get("relevant_score_std", 0)
+        irrel_std = sel.get("irrelevant_score_std", 0)
+        if rel_std < 0.05 and irrel_std < 0.05:
+            issues.append(f"分数方差极小 (rel_std={rel_std:.4f}, irrel_std={irrel_std:.4f}), "
+                         f"所有记忆得分坍缩到同一区间, Selector 未学到有效打分")
+
     if "gate" in all_results and all_results["gate"]:
-        alpha_mean = all_results["gate"].get("overall_alpha_mean", 0)
+        gate = all_results["gate"]
+        alpha_mean = gate.get("overall_alpha_mean", 0)
+        # 检查是否所有层 alpha 一样 (未学到层间差异)
+        per_layer = gate.get("per_layer", {})
+        if per_layer:
+            alphas = [v.get("alpha", 0) for v in per_layer.values()]
+            alpha_range = max(alphas) - min(alphas) if alphas else 0
+            if alpha_range < 0.01 and len(alphas) > 1:
+                issues.append(f"所有层 Alpha 完全一致 ({alphas[0]:.4f}), Gate 未学到层间差异化注入")
+
         if alpha_mean < 0.03:
             issues.append(f"Alpha 几乎为 0 (mean={alpha_mean:.4f}), KV 注入未生效")
         elif alpha_mean > 0.05:
@@ -1786,7 +2419,7 @@ def main() -> None:
     if "ppl" in all_results and all_results["ppl"]:
         ppl_diff = all_results["ppl"].get("ppl_reduction", 0)
         if ppl_diff <= 0:
-            issues.append("PPL 未降低, 记忆注入无效或有害")
+            issues.append(f"PPL 未降低 (Δ={ppl_diff:.4f}), 记忆注入无效或有害")
         elif ppl_diff > 0.5:
             good_signs.append(f"PPL 显著降低 ({ppl_diff:.4f})")
 
@@ -1798,6 +2431,28 @@ def main() -> None:
             good_signs.append(f"记忆关键词召回提升 ({mr_no:.4f} → {mr_with:.4f})")
         elif mr_with < mr_no:
             issues.append(f"记忆关键词召回反而下降 ({mr_no:.4f} → {mr_with:.4f})")
+
+        # ROUGE-L 对比
+        rl_with = gen.get("avg_rouge_l_with_mem", 0)
+        rl_no = gen.get("avg_rouge_l_no_mem", 0)
+        if rl_with > rl_no + 0.01:
+            good_signs.append(f"ROUGE-L 提升 ({rl_no:.4f} → {rl_with:.4f})")
+        elif rl_with < rl_no - 0.01:
+            issues.append(f"ROUGE-L 下降 ({rl_no:.4f} → {rl_with:.4f})")
+
+        # 记忆渗透率
+        pen_with = gen.get("avg_mem_penetration_with_mem", 0)
+        pen_no = gen.get("avg_mem_penetration_no_mem", 0)
+        if pen_with > pen_no + 0.02:
+            good_signs.append(f"记忆渗透率提升 ({pen_no:.4f} → {pen_with:.4f})")
+        elif pen_with < pen_no:
+            issues.append(f"记忆渗透率下降 ({pen_no:.4f} → {pen_with:.4f})")
+
+        # GT 实体命中
+        ent_with = gen.get("avg_gt_entity_hit_with_mem", 0)
+        ent_no = gen.get("avg_gt_entity_hit_no_mem", 0)
+        if ent_with > ent_no + 0.02:
+            good_signs.append(f"GT实体命中提升 ({ent_no:.4f} → {ent_with:.4f})")
 
     if "llm_judge" in all_results and all_results["llm_judge"]:
         judge = all_results["llm_judge"]
@@ -1823,13 +2478,70 @@ def main() -> None:
     if not issues and not good_signs:
         logger.info("  评估数据不足, 无法做出判断")
 
-    if issues and not good_signs:
-        logger.info("\n  建议: 训练效果不佳, 可能原因:")
-        logger.info("    1. 训练数据太简单 (DailyDialog 对话太短, backbone 不需要记忆)")
-        logger.info("    2. 训练轮数不够 (lm_loss ≈ 0 说明数据太简单)")
-        logger.info("    3. 建议换用更有挑战性的数据 (如 LoCoMo, MSC 长对话)")
+    # 详细诊断和改进建议
+    if issues:
+        logger.info(f"\n  ---- 诊断与改进建议 ----")
+
+        # 诊断 1: Selector 问题
+        sel_issues = [i for i in issues if "Selector" in i or "区分度" in i or "Cohen" in i or "坍缩" in i]
+        if sel_issues:
+            logger.info(f"\n  📋 Selector 诊断:")
+            logger.info(f"    问题: Selector 无法区分相关/不相关记忆")
+            logger.info(f"    可能原因:")
+            logger.info(f"      1. 训练数据中的硬负例不够难 (随机负例太容易区分)")
+            logger.info(f"      2. 深层编码层数不够 (当前 deep_encode_layers 可能太浅)")
+            logger.info(f"      3. Selector MLP 容量不足 (hidden_dim 太小)")
+            logger.info(f"    建议:")
+            logger.info(f"      - 增加 --num_hard_negatives (从同一 session 采样更多硬负例)")
+            logger.info(f"      - 增加 --deep_encode_layers 到 12 (更深的语义编码)")
+            logger.info(f"      - 增加 --selector_hidden_dim 到 512")
+
+        # 诊断 2: Gate/Alpha 问题
+        gate_issues = [i for i in issues if "Alpha" in i or "层间" in i]
+        if gate_issues:
+            logger.info(f"\n  📋 Gate 诊断:")
+            logger.info(f"    问题: Gate 未学到有效的注入强度控制")
+            logger.info(f"    可能原因:")
+            logger.info(f"      1. 训练数据太简单, backbone 不需要记忆就能预测 (lm_loss ≈ 0)")
+            logger.info(f"      2. 注入层选择不合理 (层间距太均匀)")
+            logger.info(f"    建议:")
+            logger.info(f"      - 使用更长的对话数据, 让 target 真正依赖记忆中的信息")
+            logger.info(f"      - 手动指定 --mag_injection_layers (如只在高层注入: 21 27 35)")
+
+        # 诊断 3: PPL 问题
+        ppl_issues = [i for i in issues if "PPL" in i]
+        if ppl_issues:
+            logger.info(f"\n  📋 PPL 诊断:")
+            logger.info(f"    问题: 记忆注入后 PPL 反而上升")
+            logger.info(f"    可能原因:")
+            logger.info(f"      1. 注入强度过大, 干扰了 backbone 的正常推理")
+            logger.info(f"      2. SVD 压缩损失了关键信息")
+            logger.info(f"    建议:")
+            logger.info(f"      - 降低 --inference_gate_scale (如 0.1~0.3)")
+            logger.info(f"      - 增加 --svd_rank (如 16 或 32)")
+
+        # 诊断 4: 生成质量问题
+        gen_issues = [i for i in issues if "召回" in i or "ROUGE" in i or "渗透" in i]
+        if gen_issues:
+            logger.info(f"\n  📋 生成质量诊断:")
+            logger.info(f"    问题: 记忆注入未改善生成质量")
+            logger.info(f"    可能原因:")
+            logger.info(f"      1. Backbone 本身生成能力差 (base 模型没有对话能力)")
+            logger.info(f"      2. 记忆信息未被有效编码到 KV cache 中")
+            logger.info(f"    建议:")
+            logger.info(f"      - 使用 chat/instruct 版本的 backbone (如 Qwen3-1.7B-Instruct)")
+            logger.info(f"      - 增加 --max_inject_steps (让记忆影响更多生成步)")
+
+        if len(issues) >= 3 and len(good_signs) == 0:
+            logger.info(f"\n  ⚠️ 多项指标均不理想, 建议优先排查:")
+            logger.info(f"    1. 确认 backbone 是否为 chat 模型 (base 模型无法正常对话)")
+            logger.info(f"    2. 确认训练数据质量 (target 是否真正依赖记忆信息)")
+            logger.info(f"    3. 考虑增加训练轮数或调整学习率")
+
     elif good_signs and not issues:
         logger.info("\n  MAG 训练效果良好! 可以集成到 MemoryAgent 使用。")
+    else:
+        logger.info("\n  训练效果有好有坏, 建议针对性调优上述问题项。")
 
 
 if __name__ == "__main__":

@@ -774,14 +774,25 @@ def causalize_mag_samples(
         key = f"{dial_id}_sess{sess_idx}"
         dialogue_groups[key].append(d)
 
-    # 收集所有对话轮次文本, 用作跨对话负例
-    all_turn_texts: list[str] = []
-    for group in dialogue_groups.values():
+    # 预构建每个对话组的轮次文本
+    group_keys_list = list(dialogue_groups.keys())
+    group_turn_texts: dict[str, list[str]] = {}
+    for group_key, group in dialogue_groups.items():
+        turns = []
         for d in group:
             turn_text = f"用户: {d['input_text']}"
             if d.get("target_text"):
                 turn_text += f" 助手: {d['target_text']}"
-            all_turn_texts.append(turn_text)
+            turns.append(turn_text)
+        group_turn_texts[group_key] = turns
+
+    # 构建"其他组"的负例池索引 (按组索引采样, 完全避免字符串比较)
+    # 构建"其他组"的负例池索引 (按组索引采样, 完全避免字符串比较)
+    group_key_to_idx = {k: i for i, k in enumerate(group_keys_list)}
+    all_group_indices = list(range(len(group_keys_list)))
+
+    logger.info(f"因果化: {len(dialogue_groups)} 个对话组, "
+                f"{sum(len(g) for g in dialogue_groups.values())} 条轮次文本")
 
     samples: list[dict[str, Any]] = []
     n_skipped = 0
@@ -790,6 +801,9 @@ def causalize_mag_samples(
         if len(group) < 2:
             n_skipped += 1
             continue
+
+        turns = group_turn_texts[group_key]
+        my_idx = group_key_to_idx[group_key]
 
         # 对每个 t >= 1 的轮构建一个训练样本
         for t in range(1, len(group)):
@@ -801,32 +815,29 @@ def causalize_mag_samples(
             target = current["target_text"]
 
             # --- 相关记忆: 前面轮次的对话原文 ---
-            causal_memories = []
-            for prev_idx in range(t):
-                prev = group[prev_idx]
-                turn_text = f"用户: {prev['input_text']}"
-                if prev.get("target_text"):
-                    turn_text += f" 助手: {prev['target_text']}"
-                causal_memories.append(turn_text)
+            causal_memories = turns[:t]  # 直接切片
 
             # 限制因果记忆数量 (保留最近的轮次)
             max_causal = num_memories_per_sample - num_hard_negatives
             if len(causal_memories) > max_causal:
-                # 保留最近的 max_causal 条 (最相关的)
                 causal_memories = causal_memories[-max_causal:]
 
             relevant_count = len(causal_memories)
 
-            # --- 硬负例: 来自其他对话的轮次 ---
+            # --- 硬负例: 按组索引随机采样 (O(k), 无字符串比较) ---
             hard_negs = []
-            other_turns = [
-                t_text for t_text in all_turn_texts
-                if t_text not in causal_memories and query not in t_text
-            ]
-            if other_turns:
-                n_hard = min(num_hard_negatives, len(other_turns))
-                hard_negs = random.sample(other_turns, n_hard)
-
+            n_hard = min(num_hard_negatives, len(group_keys_list) - 1)
+            if n_hard > 0:
+                # 随机选 n_hard 个索引, 跳过自身
+                neg_indices = []
+                while len(neg_indices) < n_hard:
+                    idx = random.randint(0, len(group_keys_list) - 1)
+                    if idx != my_idx:
+                        neg_indices.append(idx)
+                for gi in neg_indices:
+                    neg_turns = group_turn_texts[group_keys_list[gi]]
+                    if neg_turns:
+                        hard_negs.append(neg_turns[random.randint(0, len(neg_turns) - 1)])
             # 组装记忆列表: [因果记忆 (相关)] + [硬负例 (不相关)]
             all_memories = causal_memories + hard_negs
             relevant_indices = list(range(relevant_count))
@@ -1107,19 +1118,30 @@ def load_training_data(args: argparse.Namespace) -> list[dict[str, Any]]:
                 )
             logger.info(f"JSONL 数据已是 MAG 格式, {len(data)} 条有效样本")
 
-            # ★ 因果化改造: 将对话前文原文作为记忆 (MemoryLLM 风格端到端训练)
-            # 检查数据是否有 dialogue_id 字段 (支持按对话分组)
-            has_dialogue_id = any("dialogue_id" in d for d in data)
-            if has_dialogue_id:
-                logger.info("检测到 dialogue_id 字段, 执行因果化改造 (Causal Memory Training)")
-                data = causalize_mag_samples(
-                    data,
-                    num_memories_per_sample=args.num_memories_per_sample,
-                    num_hard_negatives=args.num_hard_negatives,
-                    seed=args.seed,
-                )
+            # ★ 因果化检测: 检查数据是否已经过因果化预处理
+            # 因果化数据的记忆以 "用户: " 开头 (对话原文), 原始数据则是摘要事实
+            is_causal = False
+            for d in data[:10]:
+                if d.get("memory_texts") and d["memory_texts"][0].startswith("用户: "):
+                    is_causal = True
+                    break
+
+            if is_causal:
+                logger.info(f"★ 数据已因果化 (Causal Memory Training), 直接使用 {len(data)} 条样本")
             else:
-                logger.info("未检测到 dialogue_id 字段, 使用原始 MAG 格式数据")
+                has_dialogue_id = any("dialogue_id" in d for d in data[:10])
+                if has_dialogue_id:
+                    logger.warning(
+                        "数据未因果化! 请先运行预处理脚本:\n"
+                        "  python scripts/prepare_causal_data.py \\\n"
+                        f"    --input {args.data_path} \\\n"
+                        f"    --output {args.data_path.replace('.jsonl', '_causal.jsonl')} \\\n"
+                        "    --num_memories 15 --num_hard_negatives 3\n"
+                        "然后使用因果化后的文件训练."
+                    )
+                    logger.info("当前使用原始 MAG 格式数据继续训练 (效果可能不佳)")
+                else:
+                    logger.info("使用原始 MAG 格式数据 (无 dialogue_id 字段)")
             return data
         # 否则当作对话格式处理
         conversations = [
@@ -1374,7 +1396,8 @@ def train_phase1_scorer(
             if (step_i + 1) % args.grad_accumulation_steps == 0:
                 torch.nn.utils.clip_grad_norm_(selector.parameters(), max_norm=1.0)
                 optimizer.step()
-                scheduler.step()
+                if num_steps < total_steps:
+                    scheduler.step()
                 optimizer.zero_grad()
                 num_steps += 1
 
@@ -1503,8 +1526,29 @@ def train_phase2_joint(
         )
         logger.info(f"★ 注入模式: {args.injection_mode} (SVD rank={args.svd_rank})")
 
-    # 只训练 selector + kv_injector 的参数
+    # ★ MemoryLLM 风格: raw_kv 模式下, 训练 backbone 的 k_proj/v_proj (通过 LoRA)
+    #   + selector + kv_injector 的参数
+    # 非 raw_kv 模式: 只训练 selector + kv_injector
+    is_memoryllm_style = (args.injection_mode == "raw_kv")
+    
     trainable_params = list(selector.parameters()) + list(kv_injector.parameters())
+    
+    if is_memoryllm_style:
+        # ★ 端到端训练: 解冻注入层的 k_proj 和 v_proj, 让梯度流过
+        # 这是 MemoryLLM 的核心: 让 backbone 学会为记忆 token 生成有意义的 KV
+        backbone_kv_params = []
+        for l_idx in sorted_injection:
+            layer = backbone_layers[l_idx]
+            for name, param in layer.self_attn.named_parameters():
+                if 'k_proj' in name or 'v_proj' in name:
+                    param.requires_grad = True
+                    backbone_kv_params.append(param)
+        trainable_params.extend(backbone_kv_params)
+        if is_main_process(rank):
+            num_backbone_kv = sum(p.numel() for p in backbone_kv_params)
+            logger.info(f"★ MemoryLLM 端到端: 解冻注入层 k_proj/v_proj, "
+                        f"额外 {num_backbone_kv:,} 参数参与训练")
+    
     optimizer = optim.AdamW(
         trainable_params,
         lr=args.lr,
@@ -1534,10 +1578,14 @@ def train_phase2_joint(
         logger.info(f"数据量: {len(train_data)} (每卡约 {steps_per_epoch}), 每 {log_interval} 步打印一次")
 
     if is_main_process(rank):
-        logger.info(f"★ Loss 配置 (Causal Memory Training):")
+        logger.info(f"★ Loss 配置 ({'MemoryLLM 端到端' if is_memoryllm_style else 'Causal Memory Training'}):")
         logger.info(f"  LM Loss: 纯 NTP (因果化数据保证 target 依赖记忆前文)")
         logger.info(f"  Label Smoothing: {args.label_smoothing}")
-        logger.info(f"  Aux Loss: 0.1 (selector 打分辅助)")
+        if is_memoryllm_style:
+            logger.info(f"  Aux Loss: 已移除 (MemoryLLM 风格纯 NTP 端到端)")
+            logger.info(f"  记忆 KV 投影: 带梯度 (端到端训练)")
+        else:
+            logger.info(f"  Aux Loss: 0.1 (selector 打分辅助)")
         logger.info(f"  Gap Loss: 已移除 (不再需要, NTP 本身包含记忆利用信号)")
 
     selector.train()
@@ -1582,28 +1630,41 @@ def train_phase2_joint(
                     sample["memory_texts"],
                     target_layers=sorted_injection,
                 )
-                virtual_kv_cache = {}
-                if per_layer_hs:
-                    # 拼接每层的记忆 hidden states (多条记忆拼成一个序列)
-                    per_layer_hs_flat = {}
-                    flat_mask = None
-                    for l_idx, hs in per_layer_hs.items():
-                        K_mem, T_mem, D_mem = hs.shape
-                        per_layer_hs_flat[l_idx] = hs.view(1, K_mem * T_mem, D_mem)
-                        if per_layer_mask is not None and flat_mask is None:
-                            flat_mask = per_layer_mask.view(1, K_mem * T_mem)
 
-                    svd_normalize = args.svd_normalize and not args.no_svd_normalize
-                    if args.injection_mode == "raw_kv":
-                        # RawKV: 直接用 token-level KV (不做 SVD)
-                        virtual_kv_cache = extract_raw_kv_for_injection(
-                            memory_hidden_states=per_layer_hs_flat,
-                            backbone_layers=backbone_layers,
-                            attention_mask=flat_mask,
-                            max_tokens=args.max_raw_kv_tokens,
-                        )
-                    else:
-                        # svd_only / svd_adapter: 先做 SVD 压缩
+            # ★ MemoryLLM 风格: raw_kv 模式下 KV 投影带梯度
+            virtual_kv_cache = {}
+            if per_layer_hs:
+                # 拼接每层的记忆 hidden states (多条记忆拼成一个序列)
+                per_layer_hs_flat = {}
+                flat_mask = None
+                for l_idx, hs in per_layer_hs.items():
+                    K_mem, T_mem, D_mem = hs.shape
+                    per_layer_hs_flat[l_idx] = hs.view(1, K_mem * T_mem, D_mem)
+                    if per_layer_mask is not None and flat_mask is None:
+                        flat_mask = per_layer_mask.view(1, K_mem * T_mem)
+
+                svd_normalize = args.svd_normalize and not args.no_svd_normalize
+                if is_memoryllm_style:
+                    # ★ MemoryLLM 端到端: KV 投影带梯度, 让梯度流过 k_proj/v_proj
+                    virtual_kv_cache = extract_raw_kv_for_injection(
+                        memory_hidden_states=per_layer_hs_flat,
+                        backbone_layers=backbone_layers,
+                        attention_mask=flat_mask,
+                        max_tokens=args.max_raw_kv_tokens,
+                        with_grad=True,  # ★ 关键: 带梯度
+                    )
+                elif args.injection_mode == "raw_kv":
+                    # 非端到端的 raw_kv (fallback)
+                    virtual_kv_cache = extract_raw_kv_for_injection(
+                        memory_hidden_states=per_layer_hs_flat,
+                        backbone_layers=backbone_layers,
+                        attention_mask=flat_mask,
+                        max_tokens=args.max_raw_kv_tokens,
+                        with_grad=False,
+                    )
+                else:
+                    # svd_only / svd_adapter: 先做 SVD 压缩 (无梯度)
+                    with torch.no_grad():
                         virtual_kv_cache = compress_memory_for_kv_injection(
                             memory_hidden_states=per_layer_hs_flat,
                             backbone_layers=backbone_layers,
@@ -1612,11 +1673,12 @@ def train_phase2_joint(
                             normalize_keys=svd_normalize,
                         )
 
-            # ★ 关键: selection_weights 需要有梯度 (通过 selector 参数)
-            # 注意: selector 仍然用 pooled memory_embs 打分 (语义级别选择)
-            selection_weights = selector_module.soft_select(
-                query_emb.detach(), memory_embs.detach()
-            )  # (1, K), 有梯度通过 selector 参数
+            # ★ Selector: MemoryLLM 模式下不使用 selector (所有记忆直接注入)
+            #   非 MemoryLLM 模式下仍然用 selector 打分
+            if not is_memoryllm_style:
+                selection_weights = selector_module.soft_select(
+                    query_emb.detach(), memory_embs.detach()
+                )  # (1, K), 有梯度通过 selector 参数
 
             # ---- Tokenize: 构造 [query | target] 序列 ---- #
             # Phase 2 的关键改进: 如果有 target_text (assistant 回复), 则:
@@ -1760,28 +1822,30 @@ def train_phase2_joint(
                 label_smoothing=args.label_smoothing,
             )
 
-            # ★ 辅助 loss: 鼓励 selector 给相关记忆更高权重
+            # ★ 辅助 loss: MemoryLLM 模式下不使用 aux_loss (纯 NTP 端到端)
             aux_loss = torch.tensor(0.0, device=lm_loss.device)
-            if "relevant_indices" in sample and sample["relevant_indices"]:
-                K = len(sample["memory_texts"])
-                sel_target = torch.zeros(1, K, device=lm_loss.device)
-                for idx in sample["relevant_indices"]:
-                    if idx < K:
-                        sel_target[0, idx] = 1.0
-                raw_scores = selector_module(query_emb.detach(), memory_embs.detach())
-                aux_loss = F.binary_cross_entropy_with_logits(raw_scores, sel_target)
+            if not is_memoryllm_style:
+                if "relevant_indices" in sample and sample["relevant_indices"]:
+                    K = len(sample["memory_texts"])
+                    sel_target = torch.zeros(1, K, device=lm_loss.device)
+                    for idx in sample["relevant_indices"]:
+                        if idx < K:
+                            sel_target[0, idx] = 1.0
+                    raw_scores = selector_module(query_emb.detach(), memory_embs.detach())
+                    aux_loss = F.binary_cross_entropy_with_logits(raw_scores, sel_target)
 
             # ★ 辅助统计: alpha 值 (仅用于日志, 不参与 loss)
             gate_mean_val = 0.0
             if alpha_values_for_log:
                 gate_mean_val = sum(v for _, v in alpha_values_for_log) / len(alpha_values_for_log)
 
-            # ★ 总 loss 组合 (Causal Memory Training 风格):
-            # lm_loss:   纯 NTP loss — 因果化数据中 target 天然依赖记忆前文,
-            #            所以 NTP 本身就是端到端的记忆利用信号
-            # aux_loss:  selector 打分辅助 (权重 0.1)
-            # 不需要 gap_loss: 因果化数据保证了 target 依赖记忆, NTP 已包含信号
-            loss = 1.0 * lm_loss + 0.1 * aux_loss
+            # ★ 总 loss 组合:
+            # MemoryLLM 模式: 纯 NTP loss (端到端, 梯度流过 KV 投影到 backbone)
+            # 其他模式: NTP + 0.1 * aux_loss
+            if is_memoryllm_style:
+                loss = lm_loss  # 纯 NTP, MemoryLLM 风格
+            else:
+                loss = 1.0 * lm_loss + 0.1 * aux_loss
 
             # nan guard
             if torch.isnan(loss) or torch.isinf(loss):
@@ -1806,7 +1870,8 @@ def train_phase2_joint(
 
                 torch.nn.utils.clip_grad_norm_(trainable_params, max_norm=1.0)
                 optimizer.step()
-                scheduler.step()
+                if num_steps < total_steps:
+                    scheduler.step()
                 optimizer.zero_grad()
                 num_steps += 1
 
