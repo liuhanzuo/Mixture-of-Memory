@@ -496,14 +496,9 @@ class MemoryScheduler:
         # 确定注入层: 如果配置为空, 默认均匀选取 4 层
         injection_layers = self.config.mag_injection_layers
         if not injection_layers:
-            # 默认: 在 1/4, 1/2, 3/4, 最后一层 注入
+            # 默认: 注入所有层 (MemoryLLM 风格, 让 attention softmax 自然竞争)
             num_layers = 24  # 默认值, 后续可从 backbone 获取
-            injection_layers = [
-                num_layers // 4,
-                num_layers // 2,
-                num_layers * 3 // 4,
-                num_layers - 1,
-            ]
+            injection_layers = list(range(num_layers))
 
         gate_cfg = MAGGateConfig(
             hidden_dim=hidden_dim,

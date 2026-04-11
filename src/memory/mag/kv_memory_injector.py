@@ -606,25 +606,21 @@ class KVAdapterInjector(nn.Module):
 # ======================================================================
 
 class RawKVInjector(nn.Module):
-    """MemoryLLM 风格的原始 KV 直接注入 (不做 SVD 压缩, 不做 alpha 缩放)。
+    """MemoryLLM 风格的原始 KV 直接注入，支持可学习的 per-layer alpha 缩放。
 
     核心思想 (借鉴 MemoryLLM: https://arxiv.org/abs/2402.04624):
         直接将记忆文本过 backbone 各层后得到的 token-level KV concat 到
-        正常 token 的 KV 前面, 不做任何缩放或变换。
+        正常 token 的 KV 前面。
 
-        每个虚拟 KV 都对应一个真实的记忆 token, 和正常 KV 在同一语义空间,
-        softmax 竞争天然公平, 不需要 alpha 缩放。
+    改进 (v2): 添加可学习的 per-layer alpha 缩放
+        - 初始化为极小值 (sigmoid(-5) ≈ 0.007)，从极弱注入开始
+        - 训练时 alpha 可以逐步增大，但受 max_alpha 限制
+        - 解决原始版本全量注入 (alpha=1.0) 导致 PPL 爆炸的问题
+        - 设置 learnable_alpha=False 可退回原始 MemoryLLM 行为 (alpha=1.0)
 
-    与原始 MemoryLLM 的区别:
-        - MemoryLLM: 记忆池是固定大小的 hidden state buffer, 通过 surprise layer 自动写入
-        - 本实现: 记忆来自外部 memory_texts, 通过 backbone 编码后直接注入
-        - 共同点: 直接 concat 到 KV, 不做缩放, 端到端训练
-
-    可训练参数: 无 (纯 concat, 梯度通过 KV 投影层流回 backbone LoRA)
-
-    代价:
-        - 虚拟 token 数 = 记忆 token 数 (可能几百个)
-        - 如果超过 max_raw_kv_tokens, 则做 chunk mean-pooling 压缩
+    可训练参数:
+        - learnable_alpha=True: per-layer alpha logit (每层 1 个标量)
+        - learnable_alpha=False: 无 (纯 concat)
     """
 
     def __init__(self, config: KVMemoryInjectorConfig | dict[str, Any] | None = None):
@@ -639,15 +635,34 @@ class RawKVInjector(nn.Module):
         self.config = config
         self._injection_layers = set(config.injection_layers)
 
-        # MemoryLLM 风格: 不使用 alpha 缩放, 直接 concat
-        # 保留一个 dummy parameter 以便 DDP 不报错 (find_unused_parameters)
-        self._dummy = nn.Parameter(torch.zeros(1), requires_grad=False)
+        # ★ 可学习 alpha: 从极小值开始，逐步增强
+        # init_alpha 和 max_alpha 控制注入强度范围
+        # 如果 init_alpha > 0 且 max_alpha > 0，启用可学习 alpha
+        self._learnable_alpha = (config.init_alpha > 0 and config.max_alpha > 0)
 
-        logger.info(
-            f"[RawKVInjector] MemoryLLM 风格初始化: injection_layers={config.injection_layers}, "
-            f"max_raw_kv_tokens={config.max_raw_kv_tokens}, "
-            f"无 alpha 缩放 (直接 concat)"
-        )
+        if self._learnable_alpha:
+            # 计算初始 logit: sigmoid(logit) * max_alpha = init_alpha
+            # → logit = log(init_alpha / (max_alpha - init_alpha))
+            init_alpha_clamped = min(config.init_alpha, config.max_alpha - 1e-6)
+            init_logit = math.log(init_alpha_clamped / (config.max_alpha - init_alpha_clamped + 1e-8))
+
+            self.alpha_logits = nn.ParameterDict({
+                str(layer_idx): nn.Parameter(torch.tensor(init_logit))
+                for layer_idx in config.injection_layers
+            })
+            logger.info(
+                f"[RawKVInjector] 可学习 alpha 已启用: "
+                f"init_alpha={config.init_alpha:.4f}, max_alpha={config.max_alpha:.3f}, "
+                f"init_logit={init_logit:.3f}, "
+                f"injection_layers={config.injection_layers}"
+            )
+        else:
+            self.alpha_logits = nn.ParameterDict()  # 空的，兼容 state_dict
+            logger.info(
+                f"[RawKVInjector] MemoryLLM 风格初始化 (无 alpha 缩放): "
+                f"injection_layers={config.injection_layers}, "
+                f"max_raw_kv_tokens={config.max_raw_kv_tokens}"
+            )
 
     @property
     def injection_layers(self) -> set[int]:
@@ -657,8 +672,17 @@ class RawKVInjector(nn.Module):
         return layer_idx in self._injection_layers
 
     def get_alpha(self, layer_idx: int) -> torch.Tensor:
-        """兼容接口: MemoryLLM 风格不使用 alpha, 始终返回 1.0。"""
-        return torch.tensor(1.0)
+        """获取第 layer_idx 层的注入强度 alpha。
+
+        - learnable_alpha=True: alpha = sigmoid(logit) * max_alpha ∈ [0, max_alpha]
+        - learnable_alpha=False: alpha = 1.0 (原始 MemoryLLM 行为)
+        """
+        if not self._learnable_alpha:
+            return torch.tensor(1.0)
+        key = str(layer_idx)
+        if key not in self.alpha_logits:
+            return torch.tensor(1.0)
+        return self.config.max_alpha * torch.sigmoid(self.alpha_logits[key])
 
     def forward_decoder_layer(
         self,
@@ -672,8 +696,7 @@ class RawKVInjector(nn.Module):
     ) -> tuple[torch.Tensor, torch.Tensor | None]:
         """替代 Qwen3DecoderLayer.forward, 直接 concat 原始 token-level KV。
 
-        MemoryLLM 风格: 不做 alpha 缩放, 直接拼接。
-        梯度可以通过 KV 投影层流回 backbone (如果 backbone 有 LoRA)。
+        改进: 支持可学习的 alpha 缩放，从极弱注入开始。
         """
         if (self.should_inject(layer_idx)
                 and virtual_kv_cache is not None
@@ -681,7 +704,15 @@ class RawKVInjector(nn.Module):
 
             raw_keys, raw_values = virtual_kv_cache[layer_idx]
             # raw_keys: (B, num_kv_heads, N_tokens, head_dim)
-            # ★ MemoryLLM 风格: 直接 concat, 不缩放
+
+            # ★ 应用 alpha 缩放 (可学习 or 固定 1.0)
+            alpha = self.get_alpha(layer_idx)
+            effective_scale = alpha * inference_scale
+            alpha_value = alpha.detach()
+
+            if effective_scale != 1.0:
+                raw_keys = raw_keys * effective_scale
+                raw_values = raw_values * effective_scale
 
             hidden_states = _forward_decoder_layer_with_kv(
                 layer_idx=layer_idx,
@@ -692,7 +723,7 @@ class RawKVInjector(nn.Module):
                 attention_mask=attention_mask,
                 position_embeddings=position_embeddings,
             )
-            return hidden_states, torch.tensor(1.0)  # alpha=1.0 (无缩放)
+            return hidden_states, alpha_value
         else:
             residual = hidden_states
             hidden_states = decoder_layer.input_layernorm(hidden_states)
@@ -710,10 +741,17 @@ class RawKVInjector(nn.Module):
         return hidden_states, None
 
     def get_stats(self) -> dict[str, Any]:
-        """MemoryLLM 风格: 无 alpha 参数, 返回空统计。"""
-        return {f"alpha_layer_{l}": 1.0 for l in sorted(self._injection_layers)}
+        """返回每层的 alpha 值统计。"""
+        stats = {}
+        for layer_idx in sorted(self._injection_layers):
+            alpha = self.get_alpha(layer_idx)
+            stats[f"alpha_layer_{layer_idx}"] = alpha.item()
+        return stats
 
     def __repr__(self) -> str:
+        if self._learnable_alpha:
+            alphas = {int(k): f"{self.get_alpha(int(k)).item():.4f}" for k in self.alpha_logits}
+            return f"RawKVInjector(learnable_alpha, injection_layers={sorted(self._injection_layers)}, alphas={alphas})"
         return f"RawKVInjector(MemoryLLM-style, injection_layers={sorted(self._injection_layers)}, no_alpha)"
 
 

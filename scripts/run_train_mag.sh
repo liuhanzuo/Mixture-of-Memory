@@ -42,13 +42,15 @@ MODEL_PATH="${MODEL_PATH:-${PROJECT_ROOT}/../models/Qwen--Qwen3-8b}"
 
 # ---- 数据配置 ---- #
 # 数据源: locomo | jsonl | msc | synthetic
-DATA_SOURCE="${DATA_SOURCE:-locomo}"
-# LoCoMo 数据集 (7050条, 正式训练用)
+DATA_SOURCE="${DATA_SOURCE:-jsonl}"
+# MAG 训练数据 (75K条, 格式: {input_text, target_text, memory_texts})
+MAG_TRAIN_DATA="${PROJECT_ROOT}/data/mag_train_generated.jsonl"
+# LoCoMo 数据集 (备用)
 LOCOMO_DATA="${PROJECT_ROOT}/data/raw/locomo_train.jsonl"
 # 自己生成的长对话数据 (62条, 小规模测试/追加训练)
 LONG_DIALOGUE_DATA="${PROJECT_ROOT}/data/raw/long_dialogue_test.jsonl"
 # 实际使用的数据路径 (根据 DATA_SOURCE 和 MODE 决定)
-DATA_PATH="${DATA_PATH:-${LOCOMO_DATA}}"
+DATA_PATH="${DATA_PATH:-${MAG_TRAIN_DATA}}"
 
 # ---- 训练超参 ---- #
 NUM_EPOCHS="${NUM_EPOCHS:-3}"
@@ -58,35 +60,34 @@ GRAD_ACCUM="${GRAD_ACCUM:-4}"
 MAX_SEQ_LEN="${MAX_SEQ_LEN:-512}"
 MAX_REAL_SAMPLES="${MAX_REAL_SAMPLES:-0}"
 SEED="${SEED:-42}"
-SLIDING_WINDOW="${SLIDING_WINDOW:-0}"
+SLIDING_WINDOW="${SLIDING_WINDOW:-4096}"
 
 # ---- MAG 架构 ---- #
-# 注入层: 默认让代码自动决定, 或手动指定 (如 "9 18 27 35")
+# 注入层: 默认注入所有层 (MemoryLLM 风格), 或手动指定 (如 "9 18 27 35")
 MAG_INJECTION_LAYERS="${MAG_INJECTION_LAYERS:-}"
 DEEP_ENCODE_LAYERS="${DEEP_ENCODE_LAYERS:-8}"
 
 # ---- KV 注入配置 ---- #
-KV_INIT_ALPHA="${KV_INIT_ALPHA:-0.1}"
-KV_MAX_ALPHA="${KV_MAX_ALPHA:-0.5}"
+KV_INIT_ALPHA="${KV_INIT_ALPHA:-0.01}"    # v2: 从极小值开始 (sigmoid(-4.6) ≈ 0.01)
+KV_MAX_ALPHA="${KV_MAX_ALPHA:-0.3}"       # v2: 上限更保守, 防止 PPL 爆炸
 
 # ---- 注入模式 ---- #
 # INJECTION_MODE: svd_only | svd_adapter | raw_kv
 #   svd_only:    原始 SVD + per-layer alpha 标量 (参数极少, 但效果有限)
 #   svd_adapter: SVD + LoRA 适配器 (推荐, 让虚拟 KV 学会匹配 backbone KV 空间)
 #   raw_kv:      直接用记忆 token 的原始 KV (不做 SVD, trivial baseline)
-INJECTION_MODE="${INJECTION_MODE:-svd_adapter}"
+INJECTION_MODE="${INJECTION_MODE:-raw_kv}"
 LORA_RANK="${LORA_RANK:-16}"
 LORA_SHARE_PARAMS="${LORA_SHARE_PARAMS:-true}"  # true | false
 MAX_RAW_KV_TOKENS="${MAX_RAW_KV_TOKENS:-128}"
 
-# ---- Anti-Teacher-Forcing 配置 ---- #
+# ---- Loss 配置 ---- #
 LABEL_SMOOTHING="${LABEL_SMOOTHING:-0.1}"
-KL_BETA="${KL_BETA:-0.5}"
-KL_TEMPERATURE="${KL_TEMPERATURE:-2.0}"
-DETACH_VALUE="${DETACH_VALUE:-true}"        # true | false
-SCHEDULED_SAMPLING="${SCHEDULED_SAMPLING:-false}"  # true | false
-SS_START_EPOCH="${SS_START_EPOCH:-1}"
-SS_MAX_RATIO="${SS_MAX_RATIO:-0.3}"
+
+# ---- 对比学习 + 渐进式注入 (v2 修复) ---- #
+CONTRASTIVE_WEIGHT="${CONTRASTIVE_WEIGHT:-1.0}"     # 对比学习 loss 权重 (0=禁用)
+SELECTOR_WARMUP="${SELECTOR_WARMUP:-200}"            # Phase 2 前 N 步只训练 selector
+PROGRESSIVE_WARMUP="${PROGRESSIVE_WARMUP:-500}"      # 渐进式注入 warmup 步数
 
 # ---- 分布式配置 ---- #
 NNODES="${NNODES:-1}"
@@ -118,7 +119,6 @@ case "${MODE}" in
         NUM_EPOCHS=1
         MAX_REAL_SAMPLES=100
         GRAD_ACCUM=1
-        SCHEDULED_SAMPLING="false"
         ;;
     test)
         info "🧪 Test 模式: 使用自己生成的 long_dialogue 数据"
@@ -169,11 +169,10 @@ fi
 # NCCL 优化 (CephFS 多节点环境)
 # ============================================================
 # 参考用户的分布式训练经验: 共享文件系统(CephFS)上多 Rank 同时读写会 I/O 竞争
-export NCCL_IB_DISABLE="${NCCL_IB_DISABLE:-0}"
+export NCCL_IB_DISABLE="${NCCL_IB_DISABLE:-1}"
 export NCCL_DEBUG="${NCCL_DEBUG:-WARN}"
 export NCCL_SOCKET_IFNAME="${NCCL_SOCKET_IFNAME:-bond1}"
-# 减少 NCCL 超时风险
-export NCCL_BLOCKING_WAIT="${NCCL_BLOCKING_WAIT:-1}"
+# 减少 NCCL 超时风险 (使用新版环境变量名, 避免 deprecation warning)
 export TORCH_NCCL_BLOCKING_WAIT="${TORCH_NCCL_BLOCKING_WAIT:-1}"
 
 # 避免 HuggingFace 多进程同时下载
@@ -225,13 +224,11 @@ if [[ "${INJECTION_MODE}" == "raw_kv" ]]; then
     echo "  Max Raw Tokens:  ${MAX_RAW_KV_TOKENS}"
 fi
 echo ""
-echo "  --- Anti-Teacher-Forcing ---"
+echo "  --- Loss ---"
 echo "  Label Smoothing:     ${LABEL_SMOOTHING}"
-echo "  KL Beta:             ${KL_BETA}"
-echo "  KL Temperature:      ${KL_TEMPERATURE}"
-echo "  Detach Value (V):    ${DETACH_VALUE}"
-echo "  Scheduled Sampling:  ${SCHEDULED_SAMPLING}"
-[[ "${SCHEDULED_SAMPLING}" == "true" ]] && echo "    start_epoch=${SS_START_EPOCH}, max_ratio=${SS_MAX_RATIO}"
+echo "  Contrastive Weight:  ${CONTRASTIVE_WEIGHT}"
+echo "  Selector Warmup:     ${SELECTOR_WARMUP}"
+echo "  Progressive Warmup:  ${PROGRESSIVE_WARMUP}"
 echo "============================================================"
 echo ""
 
@@ -292,22 +289,14 @@ if [[ "${SLIDING_WINDOW}" -gt 0 ]]; then
     TRAIN_ARGS+=" --sliding_window ${SLIDING_WINDOW}"
 fi
 
-# Anti-Teacher-Forcing 参数
+# Label Smoothing
 TRAIN_ARGS+=" --label_smoothing ${LABEL_SMOOTHING}"
-TRAIN_ARGS+=" --kl_beta ${KL_BETA}"
-TRAIN_ARGS+=" --kl_temperature ${KL_TEMPERATURE}"
 
-if [[ "${DETACH_VALUE}" == "true" ]]; then
-    TRAIN_ARGS+=" --detach_value"
-else
-    TRAIN_ARGS+=" --no_detach_value"
-fi
-
-if [[ "${SCHEDULED_SAMPLING}" == "true" ]]; then
-    TRAIN_ARGS+=" --scheduled_sampling"
-    TRAIN_ARGS+=" --ss_start_epoch ${SS_START_EPOCH}"
-    TRAIN_ARGS+=" --ss_max_ratio ${SS_MAX_RATIO}"
-fi
+# 对比学习 + 渐进式注入 (v2 修复)
+TRAIN_ARGS+=" --contrastive_weight ${CONTRASTIVE_WEIGHT}"
+TRAIN_ARGS+=" --selector_warmup_steps ${SELECTOR_WARMUP}"
+TRAIN_ARGS+=" --progressive_warmup_steps ${PROGRESSIVE_WARMUP}"
+TRAIN_ARGS+=" --progressive_injection"
 
 # ============================================================
 # 启动训练

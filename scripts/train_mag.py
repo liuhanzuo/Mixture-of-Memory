@@ -174,7 +174,7 @@ def parse_args() -> argparse.Namespace:
 
     # MAG 架构配置
     parser.add_argument("--mag_injection_layers", type=int, nargs="+", default=None,
-                        help="注入的 Transformer 层索引 (如 9 18 27 35)")
+                        help="注入的 Transformer 层索引 (默认注入所有层; 可手动指定如 9 18 27 35)")
     parser.add_argument("--selector_hidden_dim", type=int, default=256,
                         help="Selector MLP 隐藏层维度")
     parser.add_argument("--selector_top_k", type=int, default=5, help="选出的 top-k 记忆数")
@@ -205,6 +205,20 @@ def parse_args() -> argparse.Namespace:
                         help="[已废弃] Causal Memory Training 不再使用 Gap Loss")
     parser.add_argument("--gap_margin", type=float, default=0.5,
                         help="[已废弃] Causal Memory Training 不再使用 Gap Loss")
+
+    # ★ 对比学习 + 渐进式注入 (v2 修复)
+    parser.add_argument("--contrastive_weight", type=float, default=1.0,
+                        help="对比学习 loss 权重 (相对于 NTP loss). 0=禁用对比学习")
+    parser.add_argument("--contrastive_margin", type=float, default=1.0,
+                        help="对比学习 margin ranking loss 的间距")
+    parser.add_argument("--contrastive_temperature", type=float, default=0.1,
+                        help="对比学习 InfoNCE 温度")
+    parser.add_argument("--selector_warmup_steps", type=int, default=200,
+                        help="Phase 2 前 N 步只训练 selector (不注入记忆), 让 selector 先学会区分")
+    parser.add_argument("--progressive_injection", action="store_true", default=True,
+                        help="启用渐进式注入: 训练初期用极小 gate_scale, 逐步增大")
+    parser.add_argument("--progressive_warmup_steps", type=int, default=500,
+                        help="渐进式注入的 warmup 步数 (从 0.01 线性增长到 1.0)")
 
     # 分布式训练配置 (torchrun 自动设置 LOCAL_RANK)
     parser.add_argument("--local_rank", type=int, default=-1,
@@ -1383,11 +1397,19 @@ def train_phase1_scorer(
                 if 0 <= idx < K:
                     target[0, idx] = 1.0
 
-            # Forward (通过 DDP 包装的 selector)
-            scores = selector(query_emb, memory_embs)  # (1, K)
-
-            # 直接用 BCE loss: sigmoid(scores) vs target(0/1)
-            loss = F.binary_cross_entropy_with_logits(scores, target)
+            # Forward: 使用对比学习 loss (直接监督, 比 BCE 更强的梯度信号)
+            if args.contrastive_weight > 0:
+                loss = selector_module.compute_contrastive_loss(
+                    query_emb=query_emb,
+                    memory_embs=memory_embs,
+                    relevance_labels=target,
+                    margin=args.contrastive_margin,
+                    temperature=args.contrastive_temperature,
+                )
+            else:
+                # fallback: 原始 BCE loss
+                scores = selector(query_emb, memory_embs)  # (1, K)
+                loss = F.binary_cross_entropy_with_logits(scores, target)
 
             # 梯度累积
             loss = loss / args.grad_accumulation_steps
@@ -1673,8 +1695,9 @@ def train_phase2_joint(
                             normalize_keys=svd_normalize,
                         )
 
-            # ★ Selector: MemoryLLM 模式下不使用 selector (所有记忆直接注入)
-            #   非 MemoryLLM 模式下仍然用 selector 打分
+            # ★ Selector: MemoryLLM 模式下也使用 selector 打分 (v2 修复)
+            #   之前 MemoryLLM 模式跳过 selector, 导致 selector 完全没有梯度
+            #   现在统一使用 selector, 让对比学习 loss 驱动 selector 学习
             if not is_memoryllm_style:
                 selection_weights = selector_module.soft_select(
                     query_emb.detach(), memory_embs.detach()
@@ -1839,13 +1862,40 @@ def train_phase2_joint(
             if alpha_values_for_log:
                 gate_mean_val = sum(v for _, v in alpha_values_for_log) / len(alpha_values_for_log)
 
+            # ★ 对比学习 loss: 直接监督 selector 区分相关/不相关记忆
+            contrastive_loss = torch.tensor(0.0, device=lm_loss.device)
+            if args.contrastive_weight > 0 and "relevant_indices" in sample and sample["relevant_indices"]:
+                K = len(sample["memory_texts"])
+                relevance_labels = torch.zeros(1, K, device=lm_loss.device)
+                for idx in sample["relevant_indices"]:
+                    if idx < K:
+                        relevance_labels[0, idx] = 1.0
+                contrastive_loss = selector_module.compute_contrastive_loss(
+                    query_emb=query_emb.detach(),
+                    memory_embs=memory_embs.detach(),
+                    relevance_labels=relevance_labels,
+                    margin=args.contrastive_margin,
+                    temperature=args.contrastive_temperature,
+                )
+
+            # ★ 渐进式注入: 训练初期用极小 gate_scale, 逐步增大
+            # 前 selector_warmup_steps 步: 只训练 selector (不注入记忆, lm_loss 权重=0)
+            # 之后: 逐步增大 lm_loss 权重
+            lm_weight = 1.0
+            if args.selector_warmup_steps > 0 and num_steps < args.selector_warmup_steps:
+                lm_weight = 0.0  # 前 N 步只训练 selector
+            elif args.progressive_injection and num_steps < args.selector_warmup_steps + args.progressive_warmup_steps:
+                # 线性增长: 从 0.01 到 1.0
+                progress = (num_steps - args.selector_warmup_steps) / max(args.progressive_warmup_steps, 1)
+                lm_weight = 0.01 + 0.99 * progress
+
             # ★ 总 loss 组合:
-            # MemoryLLM 模式: 纯 NTP loss (端到端, 梯度流过 KV 投影到 backbone)
-            # 其他模式: NTP + 0.1 * aux_loss
+            # NTP loss (有记忆注入) + 对比学习 loss (直接监督 selector)
+            # MemoryLLM 模式也加对比学习 loss (v2 修复)
             if is_memoryllm_style:
-                loss = lm_loss  # 纯 NTP, MemoryLLM 风格
+                loss = lm_weight * lm_loss + args.contrastive_weight * contrastive_loss
             else:
-                loss = 1.0 * lm_loss + 0.1 * aux_loss
+                loss = lm_weight * lm_loss + 0.1 * aux_loss + args.contrastive_weight * contrastive_loss
 
             # nan guard
             if torch.isnan(loss) or torch.isinf(loss):
@@ -2006,13 +2056,8 @@ def main() -> None:
     # 4. 初始化 KVMemoryInjector (替代 MAGGate)
     injection_layers = args.mag_injection_layers
     if injection_layers is None:
-        # 默认: 均匀选择 4 个层
-        injection_layers = [
-            num_layers // 4,
-            num_layers // 2,
-            num_layers * 3 // 4,
-            num_layers - 1,
-        ]
+        # 默认: 注入所有层 (MemoryLLM 风格, 让 attention softmax 自然竞争)
+        injection_layers = list(range(num_layers))
 
     # 从 backbone config 获取 GQA 参数
     backbone_config = model.config
@@ -2048,7 +2093,7 @@ def main() -> None:
             logger.info(f"  RawKV: max_tokens={args.max_raw_kv_tokens}")
 
     # ====== DDP 包装可训练模块 ======
-    # 注意: backbone 冻结不做 DDP, 只包装 selector 和 kv_injector
+    # 注意: backbone 冻结不做 DDP, 只包装有可训练参数的模块
     if world_size > 1:
         # Phase 1 对 selector 做 DDP (标准 forward 调用)
         selector = DDP(
@@ -2057,16 +2102,22 @@ def main() -> None:
             output_device=local_rank,
             find_unused_parameters=False,
         )
-        # Phase 2 对 kv_injector 做 DDP
-        # KVMemoryInjector 只有 per-layer alpha 参数 (极少量)
-        kv_injector = DDP(
-            kv_injector,
-            device_ids=[local_rank],
-            output_device=local_rank,
-            find_unused_parameters=True,
-        )
-        if is_main_process(rank):
-            logger.info(f"DDP 包装完成: selector + kv_injector (world_size={world_size})")
+        # Phase 2 对 kv_injector 做 DDP (仅当它有可训练参数时)
+        # raw_kv 模式下 RawKVInjector 是纯逻辑模块, 无可训练参数, 跳过 DDP
+        injector_has_params = any(p.requires_grad for p in kv_injector.parameters())
+        if injector_has_params:
+            kv_injector = DDP(
+                kv_injector,
+                device_ids=[local_rank],
+                output_device=local_rank,
+                find_unused_parameters=True,
+            )
+            if is_main_process(rank):
+                logger.info(f"DDP 包装完成: selector + kv_injector (world_size={world_size})")
+        else:
+            if is_main_process(rank):
+                logger.info(f"DDP 包装完成: selector (world_size={world_size}), "
+                            f"kv_injector 无可训练参数, 跳过 DDP")
 
     # 打印参数量 (只 rank 0)
     selector_module = selector.module if isinstance(selector, DDP) else selector

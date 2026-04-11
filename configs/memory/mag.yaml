@@ -19,6 +19,14 @@ mag:
     dropout: 0.1                 # MLP dropout
     use_query_memory_interaction: true  # 是否使用 q ⊙ m 交互特征
 
+  # ContextSelector 对比学习训练 (直接监督, 解决 NTP loss 间接梯度不足问题)
+  contrastive:
+    enabled: true                # 是否启用对比学习 loss
+    weight: 1.0                  # 对比学习 loss 权重 (相对于 NTP loss)
+    margin: 1.0                  # margin ranking loss 的间距
+    temperature: 0.1             # InfoNCE 温度
+    warmup_steps: 100            # 前 N 步只训练 selector (不注入记忆), 让 selector 先学会区分
+
   # MAGGate: CrossAttn + Sigmoid Gate + Residual
   gate:
     num_heads: 8                 # CrossAttention 头数
@@ -27,6 +35,13 @@ mag:
     gate_init_bias: -2.0         # gate 偏置初始值 (负值→初始 gate 接近 0, 保守注入)
     dropout: 0.0                 # 注意力和输出 dropout
     use_layer_norm: true         # CrossAttn 后是否用 LayerNorm
+
+  # KV Injector: 记忆 KV 注入到 self-attention
+  kv_injector:
+    injection_mode: "raw_kv"     # 注入模式: svd_only / svd_adapter / raw_kv
+    init_alpha: 0.01             # raw_kv 模式: alpha 初始值 (极小值, 从弱注入开始)
+    max_alpha: 0.5               # raw_kv 模式: alpha 上限 (防止过度注入)
+    # 设 init_alpha=0, max_alpha=0 退回原始 MemoryLLM 行为 (alpha=1.0, 无缩放)
 
   # 训练好的权重路径 (为空则使用随机初始化)
   checkpoint:
