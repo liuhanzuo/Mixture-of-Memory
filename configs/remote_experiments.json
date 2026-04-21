@@ -1,0 +1,93 @@
+{
+  "_description": "Remote L20A cluster experiment assignments. Read this file on heartbeat to know what each node should be running.",
+  "_updated": "2026-04-21T12:21:00",
+  "_verified": "All 3 crashed nodes have clean GPU state, processes dead from KeyboardInterrupt, ready to relaunch. Node 143 running unrelated llama_baseline.",
+  "_project": "/root/Mixture-of-Memory/",
+  "_base_model": "/root/Mixture-of-Memory/models/Llama--Llama2-7b",
+  "_ssh": {
+    "password_file": "configs/password.txt",
+    "options": "-o PubkeyAuthentication=no -o IdentitiesOnly=yes",
+    "python": "/opt/conda/envs/torch-base/bin/python3",
+    "torchrun": "/opt/conda/envs/torch-base/bin/torchrun"
+  },
+  "shared_params": {
+    "base_model": "/root/Mixture-of-Memory/models/Llama--Llama2-7b",
+    "data": "data/rmt_train_mixed.jsonl",
+    "segment_length": 1024,
+    "max_segments": 4,
+    "bptt_depth": 2,
+    "num_mem_tokens": 16,
+    "lr": 2e-05,
+    "rmt_lr": 5e-05,
+    "epochs": 5,
+    "batch_size": 1,
+    "grad_accumulation_steps": 8,
+    "warmup_steps": 30,
+    "seed": 42,
+    "gradient_checkpointing": true,
+    "ddp": true,
+    "master_port": 29510,
+    "log_every": 10,
+    "save_every": 200,
+    "recon_loss_coef": 0.1,
+    "use_importance_routing": true,
+    "vary_n_segments": true
+  },
+  "nodes": {
+    "28.89.17.143": {
+      "name": "b200-1",
+      "experiment": "sparse_l01_mem64_lr1e4",
+      "description": "L0+L1: mem_tokens=64, LR=1e-4, higher LR for faster convergence",
+      "extra_args": "--use_l1 --num_mem_tokens 64 --l1_num_tokens 16 --lr 1e-4 --rmt_lr 1e-4 --recon_loss_coef 0.2",
+      "status": "blocked",
+      "status_reason": "GPU busy \u2014 llama_baseline running (PID 1343570, started Apr21 11:32, step 1050+)",
+      "output_dir": "outputs/sparse_l01_mem64_lr1e4",
+      "base_model": "/root/Mixture-of-Memory/models/Qwen--Qwen3-8b"
+    },
+    "28.89.17.144": {
+      "name": "b200-2",
+      "experiment": "sparse_l01_lora32_seg512",
+      "description": "L0+L1: lora_r=32, alpha=64, segment=512, more segments per doc",
+      "extra_args": "--use_l1 --num_mem_tokens 32 --l1_num_tokens 8 --segment_length 512 --max_segments 8 --warmup_steps 50 --lr 3e-5 --recon_loss_coef 0.2",
+      "status": "running_unverified",
+      "launched": "2026-04-21T09:30:00",
+      "pid": 303129,
+      "output_dir": "outputs/sparse_l01_seg512_mem32",
+      "base_model": "/root/Mixture-of-Memory/models/Qwen--Qwen3-8b",
+      "crashed": false,
+      "crash_time": null,
+      "crash_reason": "KeyboardInterrupt \u2014 process killed externally before any training step completed",
+      "actual_status": "launched via torchrun at 2026-04-21T13:29:53"
+    },
+    "28.89.17.85": {
+      "name": "b200-3",
+      "experiment": "sparse_l01_mem128_recon05",
+      "description": "L0+L1: mem_tokens=128, recon_loss=0.5, strong memory reconstruction",
+      "extra_args": "--use_l1 --num_mem_tokens 128 --l1_num_tokens 32 --recon_loss_coef 0.5 --lr 5e-5",
+      "status": "running_unverified",
+      "launched": "2026-04-21T09:30:00",
+      "pid": 323017,
+      "output_dir": "outputs/sparse_l01_mem128_recon05",
+      "base_model": "/root/Mixture-of-Memory/models/Qwen--Qwen3-8b",
+      "crashed": false,
+      "crash_time": null,
+      "crash_reason": "KeyboardInterrupt \u2014 process killed externally before any training step completed",
+      "actual_status": "launched via torchrun at 2026-04-21T13:30:19"
+    },
+    "28.89.19.134": {
+      "name": "b200-4",
+      "experiment": "sparse_l01_lora32_mem64_bptt4",
+      "description": "L0+L1: best combo \u2014 lora_r=32, mem=64, bptt_depth=4, recon=0.3, LR=5e-5",
+      "extra_args": "--use_l1 --num_mem_tokens 64 --l1_num_tokens 16 --bptt_depth 4 --recon_loss_coef 0.3 --lr 5e-5 --warmup_steps 60",
+      "status": "running_unverified",
+      "launched": "2026-04-21T09:30:00",
+      "pid": 308146,
+      "output_dir": "outputs/sparse_l01_mem64_bptt4",
+      "base_model": "/root/Mixture-of-Memory/models/Qwen--Qwen3-8b",
+      "crashed": false,
+      "crash_time": null,
+      "crash_reason": "KeyboardInterrupt \u2014 process killed externally before any training step completed",
+      "actual_status": "launched via torchrun at 2026-04-21T13:30:46"
+    }
+  }
+}
