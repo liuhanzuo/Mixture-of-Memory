@@ -205,21 +205,36 @@ if [[ "${SWEEP_GATE_SCALE}" == "true" ]]; then
             SWEEP_ARGS+=" --sliding_window ${SLIDING_WINDOW}"
         fi
 
-        # 运行并提取 PPL 结果
-        RESULT=$(python3 "${PROJECT_ROOT}/scripts/eval_mag.py" ${SWEEP_ARGS} 2>&1 | \
-                 grep -E "PPL \(有记忆\)|PPL \(无记忆\)" || echo "ERROR")
+        # 运行并提取 PPL 结果 (先存到临时文件, 保留错误信息)
+        SWEEP_LOG="/tmp/mag_sweep_${SCALE}.log"
+        python3 "${PROJECT_ROOT}/scripts/eval_mag.py" ${SWEEP_ARGS} > "${SWEEP_LOG}" 2>&1 || true
 
-        if [[ "${RESULT}" == "ERROR" ]]; then
-            printf "  %-12s %-15s %-15s %-10s\n" "${SCALE}" "ERROR" "-" "-"
+        # 用 Python 从日志中提取 PPL 值 (比 awk 更可靠)
+        PPL_WITH=$(python3 -c "
+import re
+text = open('${SWEEP_LOG}').read()
+m = re.search(r'PPL \(有记忆\):\s+([\d.]+)', text)
+print(m.group(1) if m else '')
+" 2>/dev/null)
+        PPL_WITHOUT=$(python3 -c "
+import re
+text = open('${SWEEP_LOG}').read()
+m = re.search(r'PPL \(无记忆\):\s+([\d.]+)', text)
+print(m.group(1) if m else '')
+" 2>/dev/null)
+
+        if [[ -n "${PPL_WITH}" && -n "${PPL_WITHOUT}" ]]; then
+            RATIO=$(python3 -c "print(f'{float(${PPL_WITH})/float(${PPL_WITHOUT}):.2f}x')" 2>/dev/null || echo "?")
+            printf "  %-12s %-15.2f %-15.2f %-10s\n" "${SCALE}" "${PPL_WITH}" "${PPL_WITHOUT}" "${RATIO}"
+            rm -f "${SWEEP_LOG}"
         else
-            PPL_WITH=$(echo "${RESULT}" | grep "PPL (有记忆)" | awk -F'[: ]+' '{for(i=1;i<=NF;i++) if($i+0==$i && $i>0) print $i}' | head -1)
-            PPL_WITHOUT=$(echo "${RESULT}" | grep "PPL (无记忆)" | awk -F'[: ]+' '{for(i=1;i<=NF;i++) if($i+0==$i && $i>0) print $i}' | head -1)
-            if [[ -n "${PPL_WITH}" && -n "${PPL_WITHOUT}" ]]; then
-                RATIO=$(python3 -c "print(f'{float(${PPL_WITH})/float(${PPL_WITHOUT}):.2f}x')" 2>/dev/null || echo "?")
-                printf "  %-12s %-15.2f %-15.2f %-10s\n" "${SCALE}" "${PPL_WITH}" "${PPL_WITHOUT}" "${RATIO}"
-            else
-                printf "  %-12s %-15s %-15s %-10s\n" "${SCALE}" "${PPL_WITH:-?}" "${PPL_WITHOUT:-?}" "?"
-            fi
+            # 提取失败: 打印完整错误日志
+            printf "  %-12s %-15s %-15s %-10s\n" "${SCALE}" "ERROR" "-" "-"
+            warn "gate_scale=${SCALE} 失败, 日志保留在: ${SWEEP_LOG}"
+            echo "  ---- 日志尾部 (${SWEEP_LOG}) ----"
+            tail -30 "${SWEEP_LOG}" 2>/dev/null | sed 's/^/  | /'
+            echo "  ---- 日志尾部结束 ----"
+            # 失败时保留日志文件, 不删除
         fi
     done
 

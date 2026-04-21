@@ -84,8 +84,17 @@ def _custom_attention_forward(
     value_states_extra: torch.Tensor,
     attention_mask: torch.Tensor | None = None,
     position_embeddings: tuple[torch.Tensor, torch.Tensor] | None = None,
+    gate_bias: torch.Tensor | float = 0.0,
 ) -> torch.Tensor:
     """自定义 attention forward: 在 KV 前面拼接额外的虚拟 KV tokens。
+
+    通过 gate_bias 控制虚拟 KV 的注入强度:
+        - gate_bias = 0.0  → 虚拟 KV 完全参与 attention (等价于 alpha=1)
+        - gate_bias = -inf → 虚拟 KV 被完全屏蔽 (等价于原模型, alpha=0)
+        - 中间值          → 平滑控制注入强度
+
+    典型用法: gate_bias = log(alpha), 其中 alpha ∈ (0, max_alpha]。
+    当 alpha→0 时 gate_bias→-inf, softmax 自然忽略虚拟 KV, 输出等于原模型。
 
     Args:
         attn_module: backbone 的 Qwen3Attention 模块.
@@ -94,6 +103,7 @@ def _custom_attention_forward(
         value_states_extra: (B, num_kv_heads, r, head_dim) 额外的 value states.
         attention_mask: (B, 1, T, T) causal mask.
         position_embeddings: (cos, sin) rotary embeddings.
+        gate_bias: 标量或 Tensor, 加到虚拟 KV 位置的 attention mask 上.
 
     Returns:
         attn_output: (B, T, D) attention 输出.
@@ -118,9 +128,13 @@ def _custom_attention_forward(
     key_states = torch.cat([key_states_extra.to(key_states.dtype), key_states], dim=2)
     value_states = torch.cat([value_states_extra.to(value_states.dtype), value_states], dim=2)
 
-    # 扩展 attention_mask
+    # 扩展 attention_mask: 虚拟 KV 位置用 gate_bias 控制可见度
+    # gate_bias=0 → 完全可见; gate_bias=-inf → 完全屏蔽 (等价于不注入)
     if attention_mask is not None:
-        virtual_mask = torch.zeros(B, 1, T, r, device=attention_mask.device, dtype=attention_mask.dtype)
+        virtual_mask = torch.full(
+            (B, 1, T, r), float(gate_bias),
+            device=attention_mask.device, dtype=attention_mask.dtype,
+        )
         attention_mask = torch.cat([virtual_mask, attention_mask], dim=-1)
 
     # GQA: repeat KV heads
@@ -157,12 +171,16 @@ def _forward_decoder_layer_with_kv(
     value_states_extra: torch.Tensor,
     attention_mask: torch.Tensor | None = None,
     position_embeddings: tuple[torch.Tensor, torch.Tensor] | None = None,
+    gate_bias: torch.Tensor | float = 0.0,
 ) -> torch.Tensor:
     """替代 Qwen3DecoderLayer.forward, 在 self-attention 中注入额外 KV。
 
     完整复现 DecoderLayer 逻辑:
         residual = h → layernorm → self_attn (带虚拟 KV) → + residual
         residual = h → layernorm → mlp → + residual
+
+    Args:
+        gate_bias: 加到虚拟 KV 位置的 attention mask bias, 控制注入强度.
     """
     # Pre-attention LayerNorm
     residual = hidden_states
@@ -176,6 +194,7 @@ def _forward_decoder_layer_with_kv(
         value_states_extra=value_states_extra,
         attention_mask=attention_mask,
         position_embeddings=position_embeddings,
+        gate_bias=gate_bias,
     )
     hidden_states = residual + attn_output
 
@@ -275,15 +294,19 @@ class KVMemoryInjector(nn.Module):
             alpha = self.get_alpha(layer_idx) * inference_scale
             alpha_value = alpha.detach()
 
-            scaled_vk = virtual_keys * alpha
-            scaled_vv = virtual_values * alpha
-            r = virtual_keys.shape[2]
+            # ★ 用 gate_bias = log(alpha) 控制注入强度 (通过 attention mask)
+            # alpha→0 时 gate_bias→-inf, softmax 自然忽略虚拟 KV
+            gate_bias = torch.log(alpha.clamp(min=1e-32))
 
-            key_states = torch.cat([scaled_vk.to(key_states.dtype), key_states], dim=2)
-            value_states = torch.cat([scaled_vv.to(value_states.dtype), value_states], dim=2)
+            r = virtual_keys.shape[2]
+            key_states = torch.cat([virtual_keys.to(key_states.dtype), key_states], dim=2)
+            value_states = torch.cat([virtual_values.to(value_states.dtype), value_states], dim=2)
 
             if attention_mask is not None:
-                virtual_mask = torch.zeros(B, 1, T, r, device=attention_mask.device, dtype=attention_mask.dtype)
+                virtual_mask = torch.full(
+                    (B, 1, T, r), gate_bias.item(),
+                    device=attention_mask.device, dtype=attention_mask.dtype,
+                )
                 attention_mask = torch.cat([virtual_mask, attention_mask], dim=-1)
 
         from transformers.models.qwen3.modeling_qwen3 import repeat_kv
@@ -536,16 +559,15 @@ class KVAdapterInjector(nn.Module):
             else:
                 adapted_keys, adapted_values = virtual_keys, virtual_values
 
-            # inference_scale 缩放
-            if inference_scale != 1.0:
-                adapted_keys = adapted_keys * inference_scale
-                adapted_values = adapted_values * inference_scale
-
             # 记录 scale 值用于日志
             if adapter is not None:
                 alpha_value = torch.tensor(
                     (adapter.scale_k.detach().item() + adapter.scale_v.detach().item()) / 2
                 )
+
+            # ★ 用 gate_bias = log(inference_scale) 控制注入强度 (通过 attention mask)
+            # inference_scale→0 时 gate_bias→-inf, softmax 自然忽略虚拟 KV
+            gate_bias = math.log(max(inference_scale, 1e-32))
 
             # 使用共用的 decoder layer forward
             hidden_states = _forward_decoder_layer_with_kv(
@@ -556,6 +578,7 @@ class KVAdapterInjector(nn.Module):
                 value_states_extra=adapted_values,
                 attention_mask=attention_mask,
                 position_embeddings=position_embeddings,
+                gate_bias=gate_bias,
             )
         else:
             # 标准 forward (无注入)
@@ -705,14 +728,14 @@ class RawKVInjector(nn.Module):
             raw_keys, raw_values = virtual_kv_cache[layer_idx]
             # raw_keys: (B, num_kv_heads, N_tokens, head_dim)
 
-            # ★ 应用 alpha 缩放 (可学习 or 固定 1.0)
             alpha = self.get_alpha(layer_idx)
             effective_scale = alpha * inference_scale
             alpha_value = alpha.detach()
 
-            if effective_scale != 1.0:
-                raw_keys = raw_keys * effective_scale
-                raw_values = raw_values * effective_scale
+            # ★ 用 gate_bias = log(effective_scale) 控制注入强度 (通过 attention mask)
+            # effective_scale→0 时 gate_bias→-inf, softmax 自然忽略虚拟 KV,
+            # 输出等价于原模型, 无需特判
+            gate_bias = torch.log(effective_scale.clamp(min=1e-32))
 
             hidden_states = _forward_decoder_layer_with_kv(
                 layer_idx=layer_idx,
@@ -722,21 +745,23 @@ class RawKVInjector(nn.Module):
                 value_states_extra=raw_values,
                 attention_mask=attention_mask,
                 position_embeddings=position_embeddings,
+                gate_bias=gate_bias,
             )
             return hidden_states, alpha_value
-        else:
-            residual = hidden_states
-            hidden_states = decoder_layer.input_layernorm(hidden_states)
-            attn_output, _ = decoder_layer.self_attn(
-                hidden_states=hidden_states,
-                attention_mask=attention_mask,
-                position_embeddings=position_embeddings,
-            )
-            hidden_states = residual + attn_output
-            residual = hidden_states
-            hidden_states = decoder_layer.post_attention_layernorm(hidden_states)
-            hidden_states = decoder_layer.mlp(hidden_states)
-            hidden_states = residual + hidden_states
+
+        # 无虚拟 KV 可注入, 正常 decoder layer forward
+        residual = hidden_states
+        hidden_states = decoder_layer.input_layernorm(hidden_states)
+        attn_output, _ = decoder_layer.self_attn(
+            hidden_states=hidden_states,
+            attention_mask=attention_mask,
+            position_embeddings=position_embeddings,
+        )
+        hidden_states = residual + attn_output
+        residual = hidden_states
+        hidden_states = decoder_layer.post_attention_layernorm(hidden_states)
+        hidden_states = decoder_layer.mlp(hidden_states)
+        hidden_states = residual + hidden_states
 
         return hidden_states, None
 
@@ -753,6 +778,134 @@ class RawKVInjector(nn.Module):
             alphas = {int(k): f"{self.get_alpha(int(k)).item():.4f}" for k in self.alpha_logits}
             return f"RawKVInjector(learnable_alpha, injection_layers={sorted(self._injection_layers)}, alphas={alphas})"
         return f"RawKVInjector(MemoryLLM-style, injection_layers={sorted(self._injection_layers)}, no_alpha)"
+
+
+# ======================================================================
+# 方案 4: Self-Update Function (MemoryLLM ICML 2024)
+# ======================================================================
+
+class SUInjector(nn.Module):
+    """基于 MemoryLLM Self-Update Function 的 KV 注入器。
+
+    核心思想 (vs RawKVInjector):
+        RawKVInjector: 直接 concat 原始 KV, backbone k_proj/v_proj 参与训练
+        SUInjector: 用可学习的 SU 函数更新记忆 KV, backbone 完全冻结
+
+    优势:
+        1. backbone 完全冻结, 不会破坏预训练语言能力 → 解决 loss 上升问题
+        2. SU 函数可学习何时保留旧记忆、何时注入新信息
+        3. 参数量可控 (SU 参数远小于 backbone)
+
+    工作流程:
+        1. 记忆文本过冻结的 backbone 得到 per-layer KV (同 raw_kv)
+        2. SU 函数更新 KV: K' = W_retain·K + W_inject·h_new
+        3. 更新后的 KV concat 到 backbone attention 中 (带 gate_bias 控制)
+    """
+
+    def __init__(self, config: KVMemoryInjectorConfig | dict[str, Any] | None = None):
+        super().__init__()
+        if config is None:
+            config = KVMemoryInjectorConfig()
+        elif isinstance(config, dict):
+            config = KVMemoryInjectorConfig(**{
+                k: v for k, v in config.items()
+                if k in KVMemoryInjectorConfig.__dataclass_fields__
+            })
+        self.config = config
+        self._injection_layers = set(config.injection_layers)
+
+        # Per-layer gate bias (控制注入强度)
+        if config.init_alpha > 0 and config.max_alpha > 0:
+            init_logit = math.log(config.init_alpha / (config.max_alpha - config.init_alpha + 1e-8))
+        else:
+            init_logit = -2.0
+
+        self.alpha_logits = nn.ParameterDict({
+            str(layer_idx): nn.Parameter(torch.tensor(init_logit))
+            for layer_idx in config.injection_layers
+        })
+
+        num_params = sum(p.numel() for p in self.parameters())
+        logger.info(
+            f"[SUInjector] MemoryLLM SU 初始化: "
+            f"injection_layers={config.injection_layers}, "
+            f"init_alpha={config.init_alpha:.3f}, max_alpha={config.max_alpha:.3f}, "
+            f"total_params={num_params}"
+        )
+
+    @property
+    def injection_layers(self) -> set[int]:
+        return self._injection_layers
+
+    def get_alpha(self, layer_idx: int) -> torch.Tensor:
+        key = str(layer_idx)
+        if key not in self.alpha_logits:
+            return torch.tensor(0.0)
+        return self.config.max_alpha * torch.sigmoid(self.alpha_logits[key])
+
+    def should_inject(self, layer_idx: int) -> bool:
+        return layer_idx in self._injection_layers
+
+    def forward_decoder_layer(
+        self,
+        layer_idx: int,
+        decoder_layer: nn.Module,
+        hidden_states: torch.Tensor,
+        attention_mask: torch.Tensor | None = None,
+        position_embeddings: tuple[torch.Tensor, torch.Tensor] | None = None,
+        virtual_kv_cache: dict[int, tuple[torch.Tensor, torch.Tensor]] | None = None,
+        inference_scale: float = 1.0,
+    ) -> tuple[torch.Tensor, torch.Tensor | None]:
+        """Forward with SU-updated KV injection. Backbone stays frozen."""
+        if (self.should_inject(layer_idx)
+                and virtual_kv_cache is not None
+                and layer_idx in virtual_kv_cache):
+
+            raw_keys, raw_values = virtual_kv_cache[layer_idx]
+            alpha = self.get_alpha(layer_idx)
+            effective_scale = alpha * inference_scale
+            alpha_value = alpha.detach()
+
+            gate_bias = torch.log(effective_scale.clamp(min=1e-32))
+
+            hidden_states = _forward_decoder_layer_with_kv(
+                layer_idx=layer_idx,
+                decoder_layer=decoder_layer,
+                hidden_states=hidden_states,
+                key_states_extra=raw_keys,
+                value_states_extra=raw_values,
+                attention_mask=attention_mask,
+                position_embeddings=position_embeddings,
+                gate_bias=gate_bias,
+            )
+            return hidden_states, alpha_value
+
+        # No injection
+        residual = hidden_states
+        hidden_states = decoder_layer.input_layernorm(hidden_states)
+        attn_output, _ = decoder_layer.self_attn(
+            hidden_states=hidden_states,
+            attention_mask=attention_mask,
+            position_embeddings=position_embeddings,
+        )
+        hidden_states = residual + attn_output
+        residual = hidden_states
+        hidden_states = decoder_layer.post_attention_layernorm(hidden_states)
+        hidden_states = decoder_layer.mlp(hidden_states)
+        hidden_states = residual + hidden_states
+
+        return hidden_states, None
+
+    def get_stats(self) -> dict[str, Any]:
+        stats = {}
+        for layer_idx in sorted(self._injection_layers):
+            alpha = self.get_alpha(layer_idx)
+            stats[f"alpha_layer_{layer_idx}"] = alpha.item()
+        return stats
+
+    def __repr__(self) -> str:
+        alphas = {int(k): f"{self.get_alpha(int(k)).item():.4f}" for k in self.alpha_logits}
+        return f"SUInjector(injection_layers={sorted(self._injection_layers)}, alphas={alphas})"
 
 
 # ======================================================================
@@ -783,8 +936,10 @@ def create_kv_injector(
         return KVAdapterInjector(config)
     elif mode == "raw_kv":
         return RawKVInjector(config)
+    elif mode == "su":
+        return SUInjector(config)
     else:
-        raise ValueError(f"未知的 injection_mode: {mode}, 可选: svd_only, svd_adapter, raw_kv")
+        raise ValueError(f"未知的 injection_mode: {mode}, 可选: svd_only, svd_adapter, raw_kv, su")
 
 
 # ======================================================================

@@ -139,6 +139,9 @@ def load_backbone(model_path: str, device: str, dtype_str: str, sliding_window: 
 
     dtype = getattr(torch, dtype_str, torch.float32)
 
+    # 解析路径中的 '..' 等相对引用，避免新版 transformers/huggingface_hub 报错
+    model_path = os.path.realpath(model_path)
+
     logger.info(f"加载 backbone: {model_path}")
     config = AutoConfig.from_pretrained(model_path, trust_remote_code=True)
 
@@ -239,11 +242,16 @@ def load_mag_weights(
     kv_injector = create_kv_injector(injector_cfg).to(device)
     logger.info(f"注入模式: {injection_mode}")
 
-    # 加载 injector 权重
+    # 加载 injector 权重 (strict=False: 允许 checkpoint 与模型结构部分不匹配)
     injector_ckpt = weights_path / "kv_injector.pt"
     if injector_ckpt.exists():
-        kv_injector.load_state_dict(torch.load(injector_ckpt, map_location=device))
+        ckpt_state = torch.load(injector_ckpt, map_location=device)
+        load_result = kv_injector.load_state_dict(ckpt_state, strict=False)
         logger.info(f"KVInjector 权重已加载: {injector_ckpt} ({injector_ckpt.stat().st_size / 1024:.1f} KB)")
+        if load_result.missing_keys:
+            logger.warning(f"KVInjector 缺失的 key (将使用初始值): {load_result.missing_keys}")
+        if load_result.unexpected_keys:
+            logger.warning(f"KVInjector 多余的 key (已忽略): {load_result.unexpected_keys}")
     else:
         logger.warning(f"找不到 KVInjector 权重: {injector_ckpt}")
 
@@ -2546,3 +2554,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+xian

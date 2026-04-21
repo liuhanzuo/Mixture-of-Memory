@@ -41,6 +41,7 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import math
 import os
 import sys
 import time
@@ -63,11 +64,21 @@ from src.memory.mag.memory_encoder import MemoryEncoder, MemoryEncoderConfig
 from src.memory.mag.context_selector import ContextSelector, ContextSelectorConfig
 from src.memory.mag.kv_memory_injector import (
     KVMemoryInjector, KVMemoryInjectorConfig,
-    KVAdapterInjector, RawKVInjector,
+    KVAdapterInjector, RawKVInjector, SUInjector,
     create_kv_injector,
     compress_memory_for_kv_injection,
     extract_raw_kv_for_injection,
 )
+from src.memory.mag.self_update_function import SelfUpdateFunction, SelfUpdateConfig, LowRankSelfUpdateFunction
+from src.memory.mag.kv_su import KVSelfUpdate
+
+# Heartbeat monitor
+try:
+    from heartbeat_monitor import HeartbeatMonitor
+except ImportError:
+    import sys
+    sys.path.insert(0, str(_project_root))
+    from heartbeat_monitor import HeartbeatMonitor
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(levelname)s: %(message)s")
 logger = logging.getLogger("train_mag")
@@ -211,7 +222,7 @@ def parse_args() -> argparse.Namespace:
                         help="对比学习 loss 权重 (相对于 NTP loss). 0=禁用对比学习")
     parser.add_argument("--contrastive_margin", type=float, default=1.0,
                         help="对比学习 margin ranking loss 的间距")
-    parser.add_argument("--contrastive_temperature", type=float, default=0.1,
+    parser.add_argument("--contrastive_temperature", type=float, default=1.0,
                         help="对比学习 InfoNCE 温度")
     parser.add_argument("--selector_warmup_steps", type=int, default=200,
                         help="Phase 2 前 N 步只训练 selector (不注入记忆), 让 selector 先学会区分")
@@ -252,6 +263,13 @@ def parse_args() -> argparse.Namespace:
                         help="禁用 SVD 归一化")
 
     # ★ KV 注入强度配置
+    # ★ 两阶段训练配置
+    parser.add_argument("--train_stage", type=str, default="joint",
+                        choices=["joint", "stage1_sfu_only", "stage2_finetune"],
+                        help="训练阶段: joint=原始联合训练, "
+                             "stage1_sfu_only=Stage1 固定alpha只训练SU+Selector, "
+                             "stage2_finetune=Stage2 加载Stage1权重解冻alpha微调")
+
     parser.add_argument("--kv_init_alpha", type=float, default=0.1,
                         help="KV 注入的初始 alpha 值 (0~max_alpha, 推荐 0.05~0.2)")
     parser.add_argument("--kv_max_alpha", type=float, default=0.5,
@@ -259,9 +277,10 @@ def parse_args() -> argparse.Namespace:
 
     # ★ 注入模式选择
     parser.add_argument("--injection_mode", type=str, default="svd_adapter",
-                        choices=["svd_only", "svd_adapter", "raw_kv"],
+                        choices=["svd_only", "svd_adapter", "raw_kv", "su"],
                         help="KV 注入模式: svd_only=原始SVD+alpha, "
-                             "svd_adapter=SVD+LoRA适配器(推荐), raw_kv=直接token-level KV")
+                             "svd_adapter=SVD+LoRA适配器(推荐), raw_kv=直接token-level KV, "
+                             "su=MemoryLLM Self-Update Function(推荐解决loss上升)")
     parser.add_argument("--lora_rank", type=int, default=16,
                         help="LoRA 适配器的秩 (仅 svd_adapter 模式, 推荐 8~32)")
     parser.add_argument("--lora_share_params", action="store_true", default=True,
@@ -1279,8 +1298,18 @@ def generate_synthetic_data(
         shuffled_memories = [memories[i] for i in indices]
         shuffled_relevant = [indices.index(r) for r in relevant]
 
+        # 构造 target_text: 基于 query 和相关记忆生成简短回复
+        target_responses = [
+            f"根据之前的讨论，{random.choice(memories)}，相关的研究还在进行中。",
+            f"您之前提到过关于{topic_name}的内容，{random.choice([kw for _, _, kws in topics for kw in kws])}是一个重要方向。",
+            f"我记得您对{topic_name}很感兴趣，特别是{random.choice(keywords)}方面。",
+            f"是的，{random.choice(keywords)}是{topic_name}领域的核心技术之一。",
+        ]
+        target_text = random.choice(target_responses)
+
         samples.append({
             "input_text": query,
+            "target_text": target_text,
             "memory_texts": shuffled_memories,
             "relevant_indices": shuffled_relevant,
         })
@@ -1506,6 +1535,8 @@ def train_phase2_joint(
     args: argparse.Namespace,
     rank: int = 0,
     world_size: int = 1,
+    heartbeat: "HeartbeatMonitor | None" = None,
+    su_fn: nn.Module | None = None,
 ) -> None:
     """Phase 2: 联合训练 Selector + KVMemoryInjector (端到端 LM loss)。
 
@@ -1523,14 +1554,32 @@ def train_phase2_joint(
     4. backbone 层冻结但仍参与前向传播 (只有 Selector/Alpha 参数更新)
     5. 虚拟 KV 直接拼到 backbone self-attention 的 KV 上, 无需额外 cross-attention
     """
-    if is_main_process(rank):
-        logger.info("=" * 60)
-        logger.info("Phase 2: 联合训练 Selector + KVInjector (端到端)")
-        logger.info("=" * 60)
-
     # 获取底层 module (DDP 包装后)
     selector_module = selector.module if isinstance(selector, DDP) else selector
     injector_module = kv_injector.module if isinstance(kv_injector, DDP) else kv_injector
+
+    # ★ 两阶段训练逻辑
+    if args.train_stage == "stage1_sfu_only":
+        if is_main_process(rank):
+            logger.info("=" * 60)
+            logger.info("Stage 1: 训练 SU + Selector (alpha 固定=1.0)")
+            logger.info("=" * 60)
+        # 冻结 alpha 参数
+        if hasattr(injector_module, 'alpha_logits'):
+            for key in injector_module.alpha_logits:
+                injector_module.alpha_logits[key].requires_grad_(False)
+            if is_main_process(rank):
+                logger.info(f"  已冻结 {len(injector_module.alpha_logits)} 个 alpha 参数")
+    elif args.train_stage == "stage2_finetune":
+        if is_main_process(rank):
+            logger.info("=" * 60)
+            logger.info("Stage 2: 联合微调 (alpha 可学习)")
+            logger.info("=" * 60)
+    else:
+        if is_main_process(rank):
+            logger.info("=" * 60)
+            logger.info("Phase 2: 联合训练 Selector + KVInjector (端到端)")
+            logger.info("=" * 60)
 
     # 获取 backbone 内部结构
     backbone_layers, final_norm, lm_head, rotary_emb = _get_backbone_layers(model)
@@ -1548,12 +1597,20 @@ def train_phase2_joint(
         )
         logger.info(f"★ 注入模式: {args.injection_mode} (SVD rank={args.svd_rank})")
 
+    # ★ 判断是否为 MemoryLLM SU 模式
+    is_su_mode = (args.injection_mode == "su")
+    
     # ★ MemoryLLM 风格: raw_kv 模式下, 训练 backbone 的 k_proj/v_proj (通过 LoRA)
     #   + selector + kv_injector 的参数
     # 非 raw_kv 模式: 只训练 selector + kv_injector
     is_memoryllm_style = (args.injection_mode == "raw_kv")
     
     trainable_params = list(selector.parameters()) + list(kv_injector.parameters())
+    
+    # ★ SU 模式: 加入 SU 函数参数
+    if is_su_mode and su_fn is not None:
+        su_module = su_fn.module if isinstance(su_fn, DDP) else su_fn
+        trainable_params.extend(su_module.parameters())
     
     if is_memoryllm_style:
         # ★ 端到端训练: 解冻注入层的 k_proj 和 v_proj, 让梯度流过
@@ -1571,11 +1628,34 @@ def train_phase2_joint(
             logger.info(f"★ MemoryLLM 端到端: 解冻注入层 k_proj/v_proj, "
                         f"额外 {num_backbone_kv:,} 参数参与训练")
     
-    optimizer = optim.AdamW(
-        trainable_params,
-        lr=args.lr,
-        weight_decay=args.weight_decay,
-    )
+    # ★ Stage 2: alpha 参数用较小学习率 (1/10)
+    if args.train_stage == "stage2_finetune" and hasattr(injector_module, 'alpha_logits') and injector_module.alpha_logits:
+        # 分离 alpha 参数和非 alpha 参数
+        alpha_params = []
+        non_alpha_params = []
+        for p in trainable_params:
+            # 检查是否属于 alpha_logits
+            is_alpha = False
+            for key in injector_module.alpha_logits:
+                if p is injector_module.alpha_logits[key]:
+                    is_alpha = True
+                    alpha_params.append(p)
+                    break
+            if not is_alpha:
+                non_alpha_params.append(p)
+        optimizer = optim.AdamW([
+            {"params": non_alpha_params, "lr": args.lr},
+            {"params": alpha_params, "lr": args.lr / 10.0},
+        ], weight_decay=args.weight_decay)
+        if is_main_process(rank):
+            logger.info(f"  Stage 2 参数组: {len(non_alpha_params)} 常规 (lr={args.lr}), "
+                        f"{len(alpha_params)} alpha (lr={args.lr/10.0:.2e})")
+    else:
+        optimizer = optim.AdamW(
+            trainable_params,
+            lr=args.lr,
+            weight_decay=args.weight_decay,
+        )
 
     # 构建 Dataset + DistributedSampler
     dataset = MAGTrainDataset(train_data)
@@ -1612,6 +1692,7 @@ def train_phase2_joint(
 
     selector.train()
     kv_injector.train()
+
     num_steps = 0
     prev_epoch_loss = None
 
@@ -1675,6 +1756,23 @@ def train_phase2_joint(
                         max_tokens=args.max_raw_kv_tokens,
                         with_grad=True,  # ★ 关键: 带梯度
                     )
+                elif args.injection_mode == "su":
+                    # ★ SU 模式: backbone 冻结, 提取原始 KV, 然后 SU 修改
+                    with torch.no_grad():
+                        raw_kv = extract_raw_kv_for_injection(
+                            memory_hidden_states=per_layer_hs_flat,
+                            backbone_layers=backbone_layers,
+                            attention_mask=flat_mask,
+                            max_tokens=args.max_raw_kv_tokens,
+                            with_grad=False,
+                        )
+                    # ★ SU 更新 KV (有梯度, 训练 SU 参数)
+                    if su_fn is not None and raw_kv:
+                        su_module = su_fn.module if isinstance(su_fn, DDP) else su_fn
+                        query_h = {l_idx: per_layer_hs_flat[l_idx] for l_idx in sorted_injection if l_idx in per_layer_hs_flat}
+                        virtual_kv_cache = su_module(raw_kv, query_h)
+                    else:
+                        virtual_kv_cache = raw_kv
                 elif args.injection_mode == "raw_kv":
                     # 非端到端的 raw_kv (fallback)
                     virtual_kv_cache = extract_raw_kv_for_injection(
@@ -1884,7 +1982,7 @@ def train_phase2_joint(
             lm_weight = 1.0
             if args.selector_warmup_steps > 0 and num_steps < args.selector_warmup_steps:
                 lm_weight = 0.0  # 前 N 步只训练 selector
-            elif args.progressive_injection and num_steps < args.selector_warmup_steps + args.progressive_warmup_steps:
+            elif args.progressive_injection and args.progressive_warmup_steps > 0 and num_steps < args.selector_warmup_steps + args.progressive_warmup_steps:
                 # 线性增长: 从 0.01 到 1.0
                 progress = (num_steps - args.selector_warmup_steps) / max(args.progressive_warmup_steps, 1)
                 lm_weight = 0.01 + 0.99 * progress
@@ -1920,6 +2018,19 @@ def train_phase2_joint(
 
                 torch.nn.utils.clip_grad_norm_(trainable_params, max_norm=1.0)
                 optimizer.step()
+
+                # ★ Alpha warmup: 前 500 步强制线性增长 alpha
+                # 两阶段训练中跳过 warmup (Stage1 alpha 固定, Stage2 从 1.0 开始可学习)
+                ALPHA_WARMUP_STEPS = 500
+                if num_steps < ALPHA_WARMUP_STEPS and args.train_stage == "joint" and hasattr(injector_module, 'alpha_logits'):
+                    warmup_target = args.kv_init_alpha + (args.kv_max_alpha - args.kv_init_alpha) * (num_steps / ALPHA_WARMUP_STEPS)
+                    for key in injector_module.alpha_logits:
+                        # sigmoid^{-1}(target / max_alpha) = log(t / (1-t))
+                        t = warmup_target / injector_module.config.max_alpha
+                        t = max(min(t, 0.999), 0.001)
+                        new_logit = math.log(t / (1.0 - t))
+                        injector_module.alpha_logits[key].data.fill_(new_logit)
+
                 if num_steps < total_steps:
                     scheduler.step()
                 optimizer.zero_grad()
@@ -1927,6 +2038,24 @@ def train_phase2_joint(
 
             epoch_loss += loss.item() * args.grad_accumulation_steps
             epoch_steps += 1
+
+            # Heartbeat 更新 (每 50 步)
+            if heartbeat is not None and (step_i + 1) % 50 == 0:
+                total_steps_est = args.num_epochs * len(indices)
+                current_step = epoch * len(indices) + step_i
+                progress = current_step / max(total_steps_est, 1)
+                heartbeat.update(
+                    "running",
+                    progress=progress,
+                    metrics={
+                        "loss": loss.item(),
+                        "lm_loss": lm_loss.item(),
+                        "learning_rate": optimizer.param_groups[0]['lr'],
+                        "epoch": epoch + 1,
+                        "batch": step_i + 1,
+                        "total_epochs": args.num_epochs,
+                    },
+                )
 
             if is_main_process(rank) and (step_i + 1) % log_interval == 0:
                 avg_loss = epoch_loss / epoch_steps
@@ -1945,7 +2074,7 @@ def train_phase2_joint(
                 logger.info(
                     f"  [P2] Epoch {epoch+1} [{step_i+1}/{len(indices)}] "
                     f"loss={avg_loss:.4f} (lm={lm_loss.item():.4f} "
-                    f"aux={aux_loss.item():.4f})"
+                    f"aux={aux_loss.item():.4f} cl={contrastive_loss.item():.4f})"
                     f"  lr={lr_now:.2e}{alpha_info}  ETA={eta:.0f}s"
                 )
 
@@ -1974,6 +2103,9 @@ def train_phase2_joint(
 
     if is_main_process(rank):
         logger.info(f"Phase 2 完成: total_steps={num_steps}")
+
+    if heartbeat is not None:
+        heartbeat.mark_completed(extra={"total_steps": num_steps})
 
 
 def main() -> None:
@@ -2081,6 +2213,33 @@ def main() -> None:
     )
     kv_injector = create_kv_injector(injector_cfg).to(args.device)
 
+    # ★ 判断 SU 模式
+    is_su_mode = (args.injection_mode == "su")
+
+    # ★ 可训练参数列表
+    trainable_params = list(selector.parameters()) + list(kv_injector.parameters())
+
+    # ====== 初始化 KV-Level Self-Update Function (SU 模式) ======
+    su_fn = None
+    if is_su_mode:
+        # 获取 GQA 参数: Qwen3-8B 的 num_kv_heads=4, head_dim=128
+        # 直接从 model config 获取 (backbone_layers 尚未提取)
+        attn_config = getattr(model.config, 'model_type', None)
+        num_kv_heads = getattr(model.config, 'num_key_value_heads', 4)
+        head_dim_val = (getattr(model.config, 'hidden_size', 4096) 
+                       // getattr(model.config, 'num_attention_heads', 32))
+        su_fn = KVSelfUpdate(
+            num_layers=len(injection_layers),
+            num_kv_heads=num_kv_heads,
+            head_dim=head_dim_val,
+            use_gate=True,
+        ).to(args.device, dtype=next(model.parameters()).dtype)
+        trainable_params.extend(su_fn.parameters())
+        if is_main_process(rank):
+            su_params = sum(p.numel() for p in su_fn.parameters())
+            logger.info(f"★ SU 模式: KVSelfUpdate 参数量={su_params:,}")
+            logger.info(f"  backbone 完全冻结, 只训练 SU + selector + injector")
+
     # SVD 压缩配置
     svd_normalize = args.svd_normalize and not args.no_svd_normalize
     if is_main_process(rank):
@@ -2119,15 +2278,35 @@ def main() -> None:
                 logger.info(f"DDP 包装完成: selector (world_size={world_size}), "
                             f"kv_injector 无可训练参数, 跳过 DDP")
 
+        # SU 函数 DDP
+        if su_fn is not None:
+            su_fn = DDP(
+                su_fn,
+                device_ids=[local_rank],
+                output_device=local_rank,
+                find_unused_parameters=False,
+            )
+            if is_main_process(rank):
+                logger.info(f"DDP 包装完成: su_fn (world_size={world_size})")
+
+    # ====== Heartbeat Monitor ======
+    heartbeat = None
+    if is_main_process(rank):
+        heartbeat_path = os.path.join(args.output_dir, "heartbeat.json")
+        heartbeat = HeartbeatMonitor(heartbeat_path)
+        heartbeat.update("starting", extra={"mode": args.injection_mode})
+        logger.info(f"Heartbeat 监控已启动: {heartbeat_path}")
+
     # 打印参数量 (只 rank 0)
     selector_module = selector.module if isinstance(selector, DDP) else selector
     injector_module = kv_injector.module if isinstance(kv_injector, DDP) else kv_injector
-    total_trainable = sum(p.numel() for p in selector_module.parameters()) + \
-                      sum(p.numel() for p in injector_module.parameters())
+    total_trainable = sum(p.numel() for p in trainable_params)
     if is_main_process(rank):
         logger.info(f"可训练参数量: {total_trainable:,}")
         logger.info(f"  Selector: {sum(p.numel() for p in selector_module.parameters()):,}")
         logger.info(f"  KVInjector: {sum(p.numel() for p in injector_module.parameters()):,}")
+        if su_fn is not None:
+            logger.info(f"  SUFunction: {sum(p.numel() for p in su_fn.parameters()):,}")
         logger.info(f"注入层: {injection_layers}")
 
     # 5. 加载训练数据 (所有进程都加载全量数据, DistributedSampler 负责分片)
@@ -2144,17 +2323,23 @@ def main() -> None:
 
     t0 = time.time()
 
-    # Phase 1: 预训练 Scorer
+    # ====== Phase 1: 预训练 Scorer ======
+    if heartbeat is not None:
+        heartbeat.update("phase1", progress=0.0, extra={"phase": "scorer_pretrain"})
     train_phase1_scorer(
         model, tokenizer, encoder, selector, train_data, args,
         rank=rank, world_size=world_size,
     )
     dist_barrier()
 
-    # Phase 2: 联合训练 Selector + KVInjector
+    # ====== Phase 2: 联合训练 ======
+    if heartbeat is not None:
+        heartbeat.update("phase2", progress=0.0, extra={"phase": "joint_training"})
     train_phase2_joint(
         model, tokenizer, encoder, selector, kv_injector, train_data, args,
         rank=rank, world_size=world_size,
+        heartbeat=heartbeat,
+        su_fn=su_fn,
     )
     dist_barrier()
 
@@ -2167,6 +2352,12 @@ def main() -> None:
         # 保存底层 module 的 state_dict (去掉 DDP 的 "module." 前缀)
         torch.save(selector_module.state_dict(), save_path / "context_selector.pt")
         torch.save(injector_module.state_dict(), save_path / "kv_injector.pt")
+
+        # 保存 SU 函数权重 (如果使用 SU 模式)
+        if is_su_mode and su_fn is not None:
+            torch.save(su_fn.state_dict(), save_path / "self_update_function.pt")
+            if is_main_process(rank):
+                logger.info(f"  self_update_function.pt: {(save_path / 'self_update_function.pt').stat().st_size / 1024:.1f} KB")
 
         # 保存配置
         config_info = {

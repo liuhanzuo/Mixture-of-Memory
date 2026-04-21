@@ -280,25 +280,19 @@ class ContextSelector(nn.Module):
         memory_embs: torch.Tensor,
         relevance_labels: torch.Tensor,
         margin: float = 1.0,
-        temperature: float = 0.1,
+        temperature: float = 1.0,
     ) -> torch.Tensor:
-        """计算对比学习损失: 直接监督 selector 区分相关/不相关记忆。
+        """计算对比学习损失: BCE with Logits.
 
-        这是解决"NTP loss 间接梯度不足"问题的核心方法。
-        不依赖 NTP loss 的间接梯度，而是直接用 relevance_labels 监督。
-
-        损失函数: InfoNCE + Margin Ranking Loss
-            L_infonce = -log(exp(s_pos/τ) / Σ exp(s_i/τ))
-            L_margin  = Σ max(0, margin - s_pos + s_neg)
-            L_total   = L_infonce + 0.5 * L_margin
+        简化方案: 直接用 BCE 监督 selector scores，避免 InfoNCE 温度爆炸
+        和 margin loss 的量级问题。
 
         Args:
             query_emb: (B, D) query 编码.
             memory_embs: (B, K, D) 记忆编码.
             relevance_labels: (B, K) 相关性标签 (1=相关, 0=不相关).
-                             每个样本至少有一个 1 和一个 0.
-            margin: margin ranking loss 的间距.
-            temperature: InfoNCE 的温度参数.
+            margin: unused (kept for API compat).
+            temperature: unused (kept for API compat).
 
         Returns:
             contrastive_loss: 标量 loss.
@@ -307,45 +301,9 @@ class ContextSelector(nn.Module):
         scores = scores.float()
         relevance_labels = relevance_labels.float()
 
-        B, K = scores.shape
-        total_loss = torch.tensor(0.0, device=scores.device)
-        valid_samples = 0
-
-        for b in range(B):
-            pos_mask = relevance_labels[b] > 0.5  # 相关记忆
-            neg_mask = relevance_labels[b] < 0.5  # 不相关记忆
-
-            if pos_mask.sum() == 0 or neg_mask.sum() == 0:
-                continue  # 跳过没有正/负样本的 batch
-
-            pos_scores = scores[b][pos_mask]  # (num_pos,)
-            neg_scores = scores[b][neg_mask]  # (num_neg,)
-
-            # ---- InfoNCE Loss ---- #
-            # 对每个正样本，计算 softmax over all (正+负)
-            all_scores = scores[b] / temperature  # (K,)
-            for p_idx in range(pos_scores.shape[0]):
-                # 找到这个正样本在原始 scores 中的位置
-                pos_score_scaled = pos_scores[p_idx] / temperature
-                # log_softmax: -log(exp(s_pos) / sum(exp(s_all)))
-                log_sum_exp = torch.logsumexp(all_scores, dim=0)
-                infonce_loss = log_sum_exp - pos_score_scaled
-                total_loss = total_loss + infonce_loss
-
-            # ---- Margin Ranking Loss ---- #
-            # 对每对 (pos, neg)，要求 pos_score > neg_score + margin
-            # 高效实现: 广播
-            pos_expanded = pos_scores.unsqueeze(1)  # (num_pos, 1)
-            neg_expanded = neg_scores.unsqueeze(0)  # (1, num_neg)
-            margin_loss = F.relu(margin - pos_expanded + neg_expanded)  # (num_pos, num_neg)
-            total_loss = total_loss + 0.5 * margin_loss.mean()
-
-            valid_samples += 1
-
-        if valid_samples > 0:
-            total_loss = total_loss / valid_samples
-
-        return total_loss
+        # BCE with Logits: 直接监督
+        loss = F.binary_cross_entropy_with_logits(scores, relevance_labels)
+        return loss
 
     @torch.no_grad()
     def compute_counterfactual_utilities(
