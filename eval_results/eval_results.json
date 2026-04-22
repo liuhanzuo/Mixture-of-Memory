@@ -1,0 +1,772 @@
+{
+  "checkpoint_dir": "outputs/rmt_v10_8gpu_20260419_001626_20260419_001703/final/",
+  "eval_type": "nih",
+  "timestamp": "2026-04-19T11:16:30.245307",
+  "needle_in_haystack": {
+    "tests": [
+      {
+        "trial": 0,
+        "document_length": 4096,
+        "needle_position": 0.1,
+        "needle_text": "The secret code is X7K9.",
+        "question": "What is the secret code?",
+        "expected_answer": "X7K9",
+        "generated_answer": " 12342312345\n\nQ:1\n\nQ:1",
+        "accuracy": false
+      },
+      {
+        "trial": 1,
+        "document_length": 4096,
+        "needle_position": 0.1,
+        "needle_text": "The answer is 42.",
+        "question": "What is the answer?",
+        "expected_answer": "42",
+        "generated_answer": " 10\n\nQ: What is the answer is the answer?\nA:10\n\nQ",
+        "accuracy": false
+      },
+      {
+        "trial": 2,
+        "document_length": 4096,
+        "needle_position": 0.1,
+        "needle_text": "The password is password123.",
+        "question": "What is the password?",
+        "expected_answer": "password123",
+        "generated_answer": " 123234512345656\n\nQ:1",
+        "accuracy": false
+      },
+      {
+        "trial": 3,
+        "document_length": 4096,
+        "needle_position": 0.1,
+        "needle_text": "The magic number is 7.",
+        "question": "What is the magic number?",
+        "expected_answer": "7",
+        "generated_answer": " 13\n\nQ: 123\n\nQ: What is the number of the number",
+        "accuracy": false
+      },
+      {
+        "trial": 4,
+        "document_length": 4096,
+        "needle_position": 0.1,
+        "needle_text": "The hidden key is ALPHA.",
+        "question": "What is the hidden key?",
+        "expected_answer": "ALPHA",
+        "generated_answer": " The hidden key is the key is the word is the word is the word is the word that is",
+        "accuracy": false
+      },
+      {
+        "trial": 0,
+        "document_length": 4096,
+        "needle_position": 0.3,
+        "needle_text": "The secret code is X7K9.",
+        "question": "What is the secret code?",
+        "expected_answer": "X7K9",
+        "generated_answer": " 123423\n\nQ:1\n\nQ: What is the secret code is",
+        "accuracy": false
+      },
+      {
+        "trial": 1,
+        "document_length": 4096,
+        "needle_position": 0.3,
+        "needle_text": "The answer is 42.",
+        "question": "What is the answer?",
+        "expected_answer": "42",
+        "generated_answer": " 10\n\nQ: What is the answer is the answer?\nA:0\n\nQ:",
+        "accuracy": false
+      },
+      {
+        "trial": 2,
+        "document_length": 4096,
+        "needle_position": 0.3,
+        "needle_text": "The password is password123.",
+        "question": "What is the password?",
+        "expected_answer": "password123",
+        "generated_answer": " 12323\n\nQ: What is the password is the password is the password?\n\n",
+        "accuracy": false
+      },
+      {
+        "trial": 3,
+        "document_length": 4096,
+        "needle_position": 0.3,
+        "needle_text": "The magic number is 7.",
+        "question": "What is the magic number?",
+        "expected_answer": "7",
+        "generated_answer": " 13\n\nQ: 123\n\nQ: What is the number of the magic",
+        "accuracy": false
+      },
+      {
+        "trial": 4,
+        "document_length": 4096,
+        "needle_position": 0.3,
+        "needle_text": "The hidden key is ALPHA.",
+        "question": "What is the hidden key?",
+        "expected_answer": "ALPHA",
+        "generated_answer": " The hidden key is the key is the word is the word is the word \"key\n\nQ\n\n",
+        "accuracy": false
+      },
+      {
+        "trial": 0,
+        "document_length": 4096,
+        "needle_position": 0.5,
+        "needle_text": "The secret code is X7K9.",
+        "question": "What is the secret code?",
+        "expected_answer": "X7K9",
+        "generated_answer": " 123423\n\nQ: What is the secret code is the secret code is",
+        "accuracy": false
+      },
+      {
+        "trial": 1,
+        "document_length": 4096,
+        "needle_position": 0.5,
+        "needle_text": "The answer is 42.",
+        "question": "What is the answer?",
+        "expected_answer": "42",
+        "generated_answer": " 10\n\nQ: What is the answer is the answer?\nA:10\n\nQ",
+        "accuracy": false
+      },
+      {
+        "trial": 2,
+        "document_length": 4096,
+        "needle_position": 0.5,
+        "needle_text": "The password is password123.",
+        "question": "What is the password?",
+        "expected_answer": "password123",
+        "generated_answer": " 12323234512456\n\nQ:4\n\n",
+        "accuracy": false
+      },
+      {
+        "trial": 3,
+        "document_length": 4096,
+        "needle_position": 0.5,
+        "needle_text": "The magic number is 7.",
+        "question": "What is the magic number?",
+        "expected_answer": "7",
+        "generated_answer": " 13\n\nQ: 13\n\nQ: What is the number of the magic number",
+        "accuracy": false
+      },
+      {
+        "trial": 4,
+        "document_length": 4096,
+        "needle_position": 0.5,
+        "needle_text": "The hidden key is ALPHA.",
+        "question": "What is the hidden key?",
+        "expected_answer": "ALPHA",
+        "generated_answer": " The hidden key is the word is\n\nQ: the\n\nQ: What is the\n\nQ:",
+        "accuracy": false
+      },
+      {
+        "trial": 0,
+        "document_length": 4096,
+        "needle_position": 0.7,
+        "needle_text": "The secret code is X7K9.",
+        "question": "What is the secret code?",
+        "expected_answer": "X7K9",
+        "generated_answer": " 123123412345\n\nQ:1\n\nQ:",
+        "accuracy": false
+      },
+      {
+        "trial": 1,
+        "document_length": 4096,
+        "needle_position": 0.7,
+        "needle_text": "The answer is 42.",
+        "question": "What is the answer?",
+        "expected_answer": "42",
+        "generated_answer": " 10\n\nQ: 0000000000000",
+        "accuracy": false
+      },
+      {
+        "trial": 2,
+        "document_length": 4096,
+        "needle_position": 0.7,
+        "needle_text": "The password is password123.",
+        "question": "What is the password?",
+        "expected_answer": "password123",
+        "generated_answer": " 12323\n\nQ: What is the password is the password?\n\nQ: What",
+        "accuracy": false
+      },
+      {
+        "trial": 3,
+        "document_length": 4096,
+        "needle_position": 0.7,
+        "needle_text": "The magic number is 7.",
+        "question": "What is the magic number?",
+        "expected_answer": "7",
+        "generated_answer": " 13\n\nQ: 13\n\nQ: What is the number of the magic number",
+        "accuracy": false
+      },
+      {
+        "trial": 4,
+        "document_length": 4096,
+        "needle_position": 0.7,
+        "needle_text": "The hidden key is ALPHA.",
+        "question": "What is the hidden key?",
+        "expected_answer": "ALPHA",
+        "generated_answer": " The hidden key is the key is the word is the word is the word that is the word that",
+        "accuracy": false
+      },
+      {
+        "trial": 0,
+        "document_length": 4096,
+        "needle_position": 0.9,
+        "needle_text": "The secret code is X7K9.",
+        "question": "What is the secret code?",
+        "expected_answer": "X7K9",
+        "generated_answer": " 12342312345\n\nQ:1\n\nQ:1",
+        "accuracy": false
+      },
+      {
+        "trial": 1,
+        "document_length": 4096,
+        "needle_position": 0.9,
+        "needle_text": "The answer is 42.",
+        "question": "What is the answer?",
+        "expected_answer": "42",
+        "generated_answer": " 10\n\nQ: What is the answer is the answer?\nA:10\n\nQ",
+        "accuracy": false
+      },
+      {
+        "trial": 2,
+        "document_length": 4096,
+        "needle_position": 0.9,
+        "needle_text": "The password is password123.",
+        "question": "What is the password?",
+        "expected_answer": "password123",
+        "generated_answer": " 12323\n\nQ: What is the password is the password is the password?\n\n",
+        "accuracy": false
+      },
+      {
+        "trial": 3,
+        "document_length": 4096,
+        "needle_position": 0.9,
+        "needle_text": "The magic number is 7.",
+        "question": "What is the magic number?",
+        "expected_answer": "7",
+        "generated_answer": " 13\n\nQ: 123\n\nQ: What is the number of the magic",
+        "accuracy": false
+      },
+      {
+        "trial": 4,
+        "document_length": 4096,
+        "needle_position": 0.9,
+        "needle_text": "The hidden key is ALPHA.",
+        "question": "What is the hidden key?",
+        "expected_answer": "ALPHA",
+        "generated_answer": " The hidden key is the key is the word is the word is the word \"key\n\nQ\n\n",
+        "accuracy": false
+      },
+      {
+        "trial": 0,
+        "document_length": 8192,
+        "needle_position": 0.1,
+        "needle_text": "The secret code is X7K9.",
+        "question": "What is the secret code?",
+        "expected_answer": "X7K9",
+        "generated_answer": " 1231231234245\n\nQ:1\n\nQ",
+        "accuracy": false
+      },
+      {
+        "trial": 1,
+        "document_length": 8192,
+        "needle_position": 0.1,
+        "needle_text": "The answer is 42.",
+        "question": "What is the answer?",
+        "expected_answer": "42",
+        "generated_answer": " 1\n\nQ: What is the answer is the answer?\nA: 1\n\nQ:",
+        "accuracy": false
+      },
+      {
+        "trial": 2,
+        "document_length": 8192,
+        "needle_position": 0.1,
+        "needle_text": "The password is password123.",
+        "question": "What is the password?",
+        "expected_answer": "password123",
+        "generated_answer": " 1232323\n\nQ:2\n\nQ: What is the password is",
+        "accuracy": false
+      },
+      {
+        "trial": 3,
+        "document_length": 8192,
+        "needle_position": 0.1,
+        "needle_text": "The magic number is 7.",
+        "question": "What is the magic number?",
+        "expected_answer": "7",
+        "generated_answer": " 13\n\nQ: What is the number of the magic number is the number is the number",
+        "accuracy": false
+      },
+      {
+        "trial": 4,
+        "document_length": 8192,
+        "needle_position": 0.1,
+        "needle_text": "The hidden key is ALPHA.",
+        "question": "What is the hidden key?",
+        "expected_answer": "ALPHA",
+        "generated_answer": " 120\n\nQ: What is the hidden key\n\nQ: What is the hidden key",
+        "accuracy": false
+      },
+      {
+        "trial": 0,
+        "document_length": 8192,
+        "needle_position": 0.3,
+        "needle_text": "The secret code is X7K9.",
+        "question": "What is the secret code?",
+        "expected_answer": "X7K9",
+        "generated_answer": " 12312342345\n\nQ:1\n\nQ: What",
+        "accuracy": false
+      },
+      {
+        "trial": 1,
+        "document_length": 8192,
+        "needle_position": 0.3,
+        "needle_text": "The answer is 42.",
+        "question": "What is the answer?",
+        "expected_answer": "42",
+        "generated_answer": " 1\n\nQ: What is the answer is the answer? \n\nQ: What is the answer",
+        "accuracy": false
+      },
+      {
+        "trial": 2,
+        "document_length": 8192,
+        "needle_position": 0.3,
+        "needle_text": "The password is password123.",
+        "question": "What is the password?",
+        "expected_answer": "password123",
+        "generated_answer": " 12323\n\nQ:2\n\nQ: What is the password is the password",
+        "accuracy": false
+      },
+      {
+        "trial": 3,
+        "document_length": 8192,
+        "needle_position": 0.3,
+        "needle_text": "The magic number is 7.",
+        "question": "What is the magic number?",
+        "expected_answer": "7",
+        "generated_answer": " 13\n\nQ: What is the number of the magic number is the number of the number",
+        "accuracy": false
+      },
+      {
+        "trial": 4,
+        "document_length": 8192,
+        "needle_position": 0.3,
+        "needle_text": "The hidden key is ALPHA.",
+        "question": "What is the hidden key?",
+        "expected_answer": "ALPHA",
+        "generated_answer": " 120\n\nQ: What is the hidden key\n\nQ: What is the hidden key",
+        "accuracy": false
+      },
+      {
+        "trial": 0,
+        "document_length": 8192,
+        "needle_position": 0.5,
+        "needle_text": "The secret code is X7K9.",
+        "question": "What is the secret code?",
+        "expected_answer": "X7K9",
+        "generated_answer": " 1231231234124512456",
+        "accuracy": false
+      },
+      {
+        "trial": 1,
+        "document_length": 8192,
+        "needle_position": 0.5,
+        "needle_text": "The answer is 42.",
+        "question": "What is the answer?",
+        "expected_answer": "42",
+        "generated_answer": " 1\n\nQ: What is the answer is the answer?\n\nQ: What is the answer?\n",
+        "accuracy": false
+      },
+      {
+        "trial": 2,
+        "document_length": 8192,
+        "needle_position": 0.5,
+        "needle_text": "The password is password123.",
+        "question": "What is the password?",
+        "expected_answer": "password123",
+        "generated_answer": " 1232323\n\nQ:2\n\nQ: What is the password\n\n",
+        "accuracy": false
+      },
+      {
+        "trial": 3,
+        "document_length": 8192,
+        "needle_position": 0.5,
+        "needle_text": "The magic number is 7.",
+        "question": "What is the magic number?",
+        "expected_answer": "7",
+        "generated_answer": " 13\n\nQ: What is the number of the magic number is the number is the number",
+        "accuracy": false
+      },
+      {
+        "trial": 4,
+        "document_length": 8192,
+        "needle_position": 0.5,
+        "needle_text": "The hidden key is ALPHA.",
+        "question": "What is the hidden key?",
+        "expected_answer": "ALPHA",
+        "generated_answer": " 120\n\nQ: What is the hidden key\n\nQ: What is the hidden key",
+        "accuracy": false
+      },
+      {
+        "trial": 0,
+        "document_length": 8192,
+        "needle_position": 0.7,
+        "needle_text": "The secret code is X7K9.",
+        "question": "What is the secret code?",
+        "expected_answer": "X7K9",
+        "generated_answer": " 123123412345\n\nQ:1\n\nQ:",
+        "accuracy": false
+      },
+      {
+        "trial": 1,
+        "document_length": 8192,
+        "needle_position": 0.7,
+        "needle_text": "The answer is 42.",
+        "question": "What is the answer?",
+        "expected_answer": "42",
+        "generated_answer": " 1\n\nQ: What is the answer is the answer?\nA: 1\n\nQ:",
+        "accuracy": false
+      },
+      {
+        "trial": 2,
+        "document_length": 8192,
+        "needle_position": 0.7,
+        "needle_text": "The password is password123.",
+        "question": "What is the password?",
+        "expected_answer": "password123",
+        "generated_answer": " 1232323\n\nQ:2\n\nQ: What is the password\n\n",
+        "accuracy": false
+      },
+      {
+        "trial": 3,
+        "document_length": 8192,
+        "needle_position": 0.7,
+        "needle_text": "The magic number is 7.",
+        "question": "What is the magic number?",
+        "expected_answer": "7",
+        "generated_answer": " 13\n\nQ: What is the number of the magic number is the number of the number",
+        "accuracy": false
+      },
+      {
+        "trial": 4,
+        "document_length": 8192,
+        "needle_position": 0.7,
+        "needle_text": "The hidden key is ALPHA.",
+        "question": "What is the hidden key?",
+        "expected_answer": "ALPHA",
+        "generated_answer": " The hidden key is the word is the word \"key is the word \"key\" is the\"",
+        "accuracy": false
+      },
+      {
+        "trial": 0,
+        "document_length": 8192,
+        "needle_position": 0.9,
+        "needle_text": "The secret code is X7K9.",
+        "question": "What is the secret code?",
+        "expected_answer": "X7K9",
+        "generated_answer": " The secret code is the first letter is the first letter of the first letter of the name of the",
+        "accuracy": false
+      },
+      {
+        "trial": 1,
+        "document_length": 8192,
+        "needle_position": 0.9,
+        "needle_text": "The answer is 42.",
+        "question": "What is the answer?",
+        "expected_answer": "42",
+        "generated_answer": " 1\n\nQ: What is the answer is the answer?\nA: 1\n\nQ:",
+        "accuracy": false
+      },
+      {
+        "trial": 2,
+        "document_length": 8192,
+        "needle_position": 0.9,
+        "needle_text": "The password is password123.",
+        "question": "What is the password?",
+        "expected_answer": "password123",
+        "generated_answer": " 1232323\n\nQ:2\n\nQ: What is the password\n\n",
+        "accuracy": false
+      },
+      {
+        "trial": 3,
+        "document_length": 8192,
+        "needle_position": 0.9,
+        "needle_text": "The magic number is 7.",
+        "question": "What is the magic number?",
+        "expected_answer": "7",
+        "generated_answer": " 13\n\nQ: What is the number of the magic number is the number is the number",
+        "accuracy": false
+      },
+      {
+        "trial": 4,
+        "document_length": 8192,
+        "needle_position": 0.9,
+        "needle_text": "The hidden key is ALPHA.",
+        "question": "What is the hidden key?",
+        "expected_answer": "ALPHA",
+        "generated_answer": " The hidden key is the word is the word \"key is the word \"key\" is the\"",
+        "accuracy": false
+      },
+      {
+        "trial": 0,
+        "document_length": 12288,
+        "needle_position": 0.1,
+        "needle_text": "The secret code is X7K9.",
+        "question": "What is the secret code?",
+        "expected_answer": "X7K9",
+        "generated_answer": " 1232323232343445456",
+        "accuracy": false
+      },
+      {
+        "trial": 1,
+        "document_length": 12288,
+        "needle_position": 0.1,
+        "needle_text": "The answer is 42.",
+        "question": "What is the answer?",
+        "expected_answer": "42",
+        "generated_answer": " 120\n\nQ:20\n\nQ:20\n\nQ:2\n\nQ",
+        "accuracy": false
+      },
+      {
+        "trial": 2,
+        "document_length": 12288,
+        "needle_position": 0.1,
+        "needle_text": "The password is password123.",
+        "question": "What is the password?",
+        "expected_answer": "password123",
+        "generated_answer": " 1222222222222222333",
+        "accuracy": false
+      },
+      {
+        "trial": 3,
+        "document_length": 12288,
+        "needle_position": 0.1,
+        "needle_text": "The magic number is 7.",
+        "question": "What is the magic number?",
+        "expected_answer": "7",
+        "generated_answer": " 7777777777777777777",
+        "accuracy": true
+      },
+      {
+        "trial": 4,
+        "document_length": 12288,
+        "needle_position": 0.1,
+        "needle_text": "The hidden key is ALPHA.",
+        "question": "What is the hidden key?",
+        "expected_answer": "ALPHA",
+        "generated_answer": " 1232222222222222222",
+        "accuracy": false
+      },
+      {
+        "trial": 0,
+        "document_length": 12288,
+        "needle_position": 0.3,
+        "needle_text": "The secret code is X7K9.",
+        "question": "What is the secret code?",
+        "expected_answer": "X7K9",
+        "generated_answer": " 1232323232344455678",
+        "accuracy": false
+      },
+      {
+        "trial": 1,
+        "document_length": 12288,
+        "needle_position": 0.3,
+        "needle_text": "The answer is 42.",
+        "question": "What is the answer?",
+        "expected_answer": "42",
+        "generated_answer": " 1200000000000000000",
+        "accuracy": false
+      },
+      {
+        "trial": 2,
+        "document_length": 12288,
+        "needle_position": 0.3,
+        "needle_text": "The password is password123.",
+        "question": "What is the password?",
+        "expected_answer": "password123",
+        "generated_answer": " 1222222222222223233",
+        "accuracy": false
+      },
+      {
+        "trial": 3,
+        "document_length": 12288,
+        "needle_position": 0.3,
+        "needle_text": "The magic number is 7.",
+        "question": "What is the magic number?",
+        "expected_answer": "7",
+        "generated_answer": " 7777777777777777777",
+        "accuracy": true
+      },
+      {
+        "trial": 4,
+        "document_length": 12288,
+        "needle_position": 0.3,
+        "needle_text": "The hidden key is ALPHA.",
+        "question": "What is the hidden key?",
+        "expected_answer": "ALPHA",
+        "generated_answer": " 1232222222222222222",
+        "accuracy": false
+      },
+      {
+        "trial": 0,
+        "document_length": 12288,
+        "needle_position": 0.5,
+        "needle_text": "The secret code is X7K9.",
+        "question": "What is the secret code?",
+        "expected_answer": "X7K9",
+        "generated_answer": " 1232323232334445456",
+        "accuracy": false
+      },
+      {
+        "trial": 1,
+        "document_length": 12288,
+        "needle_position": 0.5,
+        "needle_text": "The answer is 42.",
+        "question": "What is the answer?",
+        "expected_answer": "42",
+        "generated_answer": " 12\n\nQ:2\n\n2\n\n2\n\n3\n\n3\n\n4\n\n4\n\n",
+        "accuracy": false
+      },
+      {
+        "trial": 2,
+        "document_length": 12288,
+        "needle_position": 0.5,
+        "needle_text": "The password is password123.",
+        "question": "What is the password?",
+        "expected_answer": "password123",
+        "generated_answer": " 1222222222222222334",
+        "accuracy": false
+      },
+      {
+        "trial": 3,
+        "document_length": 12288,
+        "needle_position": 0.5,
+        "needle_text": "The magic number is 7.",
+        "question": "What is the magic number?",
+        "expected_answer": "7",
+        "generated_answer": " 77777777\n\nQ:7\n\nQ:7\n\nQ:",
+        "accuracy": true
+      },
+      {
+        "trial": 4,
+        "document_length": 12288,
+        "needle_position": 0.5,
+        "needle_text": "The hidden key is ALPHA.",
+        "question": "What is the hidden key?",
+        "expected_answer": "ALPHA",
+        "generated_answer": " 1232222222222222222",
+        "accuracy": false
+      },
+      {
+        "trial": 0,
+        "document_length": 12288,
+        "needle_position": 0.7,
+        "needle_text": "The secret code is X7K9.",
+        "question": "What is the secret code?",
+        "expected_answer": "X7K9",
+        "generated_answer": " The secret code is the code is the code is the code is the code is the code\n\nQ",
+        "accuracy": false
+      },
+      {
+        "trial": 1,
+        "document_length": 12288,
+        "needle_position": 0.7,
+        "needle_text": "The answer is 42.",
+        "question": "What is the answer?",
+        "expected_answer": "42",
+        "generated_answer": " 12\n\nQ:2\n\nQ:2\n\n2\n\n2\n\n2\n\n2\n\n",
+        "accuracy": false
+      },
+      {
+        "trial": 2,
+        "document_length": 12288,
+        "needle_position": 0.7,
+        "needle_text": "The password is password123.",
+        "question": "What is the password?",
+        "expected_answer": "password123",
+        "generated_answer": " 1222222222222222222",
+        "accuracy": false
+      },
+      {
+        "trial": 3,
+        "document_length": 12288,
+        "needle_position": 0.7,
+        "needle_text": "The magic number is 7.",
+        "question": "What is the magic number?",
+        "expected_answer": "7",
+        "generated_answer": " 7777777777777777777",
+        "accuracy": true
+      },
+      {
+        "trial": 4,
+        "document_length": 12288,
+        "needle_position": 0.7,
+        "needle_text": "The hidden key is ALPHA.",
+        "question": "What is the hidden key?",
+        "expected_answer": "ALPHA",
+        "generated_answer": " 1222222222222222222",
+        "accuracy": false
+      },
+      {
+        "trial": 0,
+        "document_length": 12288,
+        "needle_position": 0.9,
+        "needle_text": "The secret code is X7K9.",
+        "question": "What is the secret code?",
+        "expected_answer": "X7K9",
+        "generated_answer": " 1222222222222222222",
+        "accuracy": false
+      },
+      {
+        "trial": 1,
+        "document_length": 12288,
+        "needle_position": 0.9,
+        "needle_text": "The answer is 42.",
+        "question": "What is the answer?",
+        "expected_answer": "42",
+        "generated_answer": " 12\n\nQ: What is the answer?\nA: What is the answer?\nA:",
+        "accuracy": false
+      },
+      {
+        "trial": 2,
+        "document_length": 12288,
+        "needle_position": 0.9,
+        "needle_text": "The password is password123.",
+        "question": "What is the password?",
+        "expected_answer": "password123",
+        "generated_answer": " 1222222222222222222",
+        "accuracy": false
+      },
+      {
+        "trial": 3,
+        "document_length": 12288,
+        "needle_position": 0.9,
+        "needle_text": "The magic number is 7.",
+        "question": "What is the magic number?",
+        "expected_answer": "7",
+        "generated_answer": " 7777777777777777777",
+        "accuracy": true
+      },
+      {
+        "trial": 4,
+        "document_length": 12288,
+        "needle_position": 0.9,
+        "needle_text": "The hidden key is ALPHA.",
+        "question": "What is the hidden key?",
+        "expected_answer": "ALPHA",
+        "generated_answer": " The hidden key is the key is the key is the key is the key\n\nQ\n\nQ:",
+        "accuracy": false
+      }
+    ],
+    "summary": {
+      "total_tests": 75,
+      "correct": 5,
+      "accuracy": 0.06666666666666667,
+      "accuracy_pos_10": 0.06666666666666667,
+      "accuracy_pos_30": 0.06666666666666667,
+      "accuracy_pos_50": 0.06666666666666667,
+      "accuracy_pos_70": 0.06666666666666667,
+      "accuracy_pos_90": 0.06666666666666667,
+      "accuracy_len_4096": 0.0,
+      "accuracy_len_8192": 0.0,
+      "accuracy_len_12288": 0.2
+    }
+  }
+}

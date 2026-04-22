@@ -1,9 +1,12 @@
-"""SparseMemoryAttention — Local sliding-window + memory retrieval + concat fusion.
+"""SparseMemoryAttention — Local sliding-window + per-chunk memory retrieval + gated fusion.
 
 Wraps LlamaAttention, replacing standard full-sequence attention with:
   1. Local path: flash_attn sliding window (size w)
-  2. Memory path: top-k retrieval from MemoryBank via shared W_K/W_V
-  3. Concat fusion: W_f [o_local ∥ o_mem] (Memorizing Transformers-style)
+  2. Memory path: 
+     a) Per-chunk retrieval: chunk query (mean pool) selects shared top-K memory slots
+     b) Per-token read: each token attends to shared K slots with its own query
+  3. Gated fusion: o = g · o_local + (1-g) · o_mem, where g = σ(W_g · h + b_g)
+  4. Memory write: per-chunk retrieve-then-update — chunk summary EMA-updates shared slots
 """
 
 from __future__ import annotations
@@ -22,7 +25,6 @@ class SparseMemoryConfig:
     num_mem_tokens: int = 128
     window_size: int = 256
     top_k: int = 8
-    gate_alpha: float = 0.1
 
 try:
     from flash_attn import flash_attn_func
@@ -41,7 +43,7 @@ class SparseMemoryAttention(nn.Module):
         original_attn: The LlamaAttention module being wrapped.
         memory_bank: Per-layer MemoryBank instance.
         window_size: Sliding window size w (default 256).
-        top_k: Top-k memory retrieval per token per head (default 8).
+        top_k: Top-K shared memory slots per chunk (default 8).
     """
 
     def __init__(
@@ -53,7 +55,12 @@ class SparseMemoryAttention(nn.Module):
     ) -> None:
         super().__init__()
         self.original_attn = original_attn
-        self.memory_bank = memory_bank
+        # Store memory_bank as a plain (non-submodule) attribute to avoid
+        # duplicating it in the state_dict.  It is already registered via
+        # self.memory_banks (nn.ModuleList) in the top-level model.
+        # nn.Module.__setattr__ would register it as a submodule, causing
+        # shared-tensor errors when saving checkpoints.
+        object.__setattr__(self, '_memory_bank', memory_bank)
         self.window_size = window_size
         self.top_k = top_k
 
@@ -75,16 +82,13 @@ class SparseMemoryAttention(nn.Module):
         # RoPE is applied via position_embeddings=(cos,sin) passed to forward.
         # No need to steal rotary_emb.
 
-        # Concat fusion projection: [o_local ∥ o_mem] → hidden_dim
-        # (Memorizing Transformers-style, avoids sigmoid gate gradient dilution)
+        # Gated two-path fusion: o = g * o_local + (1-g) * o_mem
+        # Gate is computed from hidden_states (not from concat)
         fusion_dtype = original_attn.q_proj.weight.dtype
-        self.fusion_proj = nn.Linear(self.hidden_size * 2, self.hidden_size, dtype=fusion_dtype)
-        # Identity pass-through at init: left half picks up local, right half ignores memory
-        # This preserves pre-trained base model outputs (base loss stays ~0.04 instead of 13.88)
+        self.gate_proj = nn.Linear(self.hidden_size, 1, dtype=fusion_dtype)
         with torch.no_grad():
-            self.fusion_proj.weight.zero_()
-            self.fusion_proj.weight[:, :self.hidden_size].copy_(torch.eye(self.hidden_size, dtype=fusion_dtype))
-            nn.init.zeros_(self.fusion_proj.bias)
+            nn.init.zeros_(self.gate_proj.weight)
+            self.gate_proj.bias.fill_(2.0)  # σ(2)≈0.88 → 88% local, 12% memory initially
 
     def forward(
         self,
@@ -132,11 +136,20 @@ class SparseMemoryAttention(nn.Module):
                 causal=True,
             )
         elif HAS_SDPA:
-            # PyTorch native SDPA with causal mask (O(T) memory)
+            # PyTorch native SDPA with explicit causal + sliding window mask
+            # NOTE: SDPA is_causal=True does NOT support windowing — we must
+            # provide the full mask ourselves.
+            w = self.window_size
+            row_idx = torch.arange(T, device=q.device).unsqueeze(1)  # [T, 1]
+            col_idx = torch.arange(T, device=q.device).unsqueeze(0)  # [1, T]
+            # Mask out: future tokens (j > i) AND tokens outside window (j < i - w + 1)
+            block_mask = (col_idx > row_idx) | (col_idx < row_idx - w + 1)  # [T, T]
+            attn_mask = torch.zeros(T, T, device=q.device, dtype=q.dtype)
+            attn_mask.masked_fill_(block_mask, float("-inf"))
             o_local = torch.nn.functional.scaled_dot_product_attention(
                 q, k_local, v_local,
-                is_causal=True,
-                attn_mask=None,  # causal window handled by SDPA internally
+                is_causal=False,
+                attn_mask=attn_mask,
             )
         else:
             o_local = self._windowed_attention_fallback(q, k_local, v_local, T)
@@ -145,27 +158,22 @@ class SparseMemoryAttention(nn.Module):
         o_local = o_local.transpose(1, 2).contiguous().view(B, T, D)
         o_local = self.original_attn.o_proj(o_local)
 
-        # ── Memory Path: top-k retrieval (batched) ────────────────────
-        # Memory buffer: [B, N, D], cloned to avoid inplace-modified-by-write errors.
-        # Even though write() uses clone()+replace, autograd can detect shared-storage
-        # version changes.  An explicit .clone() gives us an independent tensor.
-        mem = self.memory_bank.memory.detach().clone()  # [B, N, D]
-
-        # Cast memory to model dtype (buffer may be float32, model is bf16)
+        # ── Memory Path: per-chunk retrieval + per-token read ──────
+        # Memory buffer: [B, N, D], detached and cast to model dtype
+        mem = self._memory_bank.memory.detach().clone()  # [B, N, D]
         proj_dtype = self.original_attn.k_proj.weight.dtype
         if mem.dtype != proj_dtype:
             mem = mem.to(proj_dtype)
 
-        # Project memory through W_K, W_V (these projections have gradients)
-        # k_proj/v_proj: [B, N, D] → [B, N, num_kv_heads * d_h]
-        k_mem = self.original_attn.k_proj(mem)
-        v_mem = self.original_attn.v_proj(mem)
+        # Project memory through W_K, W_V (shared with local attention)
+        k_mem = self.original_attn.k_proj(mem)  # [B, N, KV_H*d_h]
+        v_mem = self.original_attn.v_proj(mem)  # [B, N, KV_H*d_h]
 
         # Reshape: [B, N, KV_H, d_h] → [B, KV_H, N, d_h]
-        k_mem = k_mem.view(B, self.memory_bank.num_slots, self.num_kv_heads, d_h).permute(0, 2, 1, 3)
-        v_mem = v_mem.view(B, self.memory_bank.num_slots, self.num_kv_heads, d_h).permute(0, 2, 1, 3)
+        k_mem = k_mem.view(B, self._memory_bank.num_slots, self.num_kv_heads, d_h).permute(0, 2, 1, 3)
+        v_mem = v_mem.view(B, self._memory_bank.num_slots, self.num_kv_heads, d_h).permute(0, 2, 1, 3)
 
-        # For GQA: expand KV heads to match Q heads
+        # GQA expand
         if self.num_kv_heads < self.num_heads:
             n_rep = self.num_heads // self.num_kv_heads
             k_mem = k_mem.unsqueeze(2).expand(B, self.num_kv_heads, n_rep, -1, d_h).reshape(B, self.num_heads, -1, d_h)
@@ -173,79 +181,57 @@ class SparseMemoryAttention(nn.Module):
 
         # Now: q [B, H, T, d_h], k_mem [B, H, N, d_h], v_mem [B, H, N, d_h]
         N = k_mem.shape[2]
-        # Guard: top_k cannot exceed number of available memory slots
         effective_top_k = min(self.top_k, N)
 
-        # ── Memory-efficient top-k retrieval (avoids [B,H,T,N,d_h] materialization) ──
-        # Old code expanded v_mem to [B,H,T,N,d_h] which is ~68GB for N=2048.
-        # Instead, we use chunked similarity + batched gather that only allocates
-        # [B,H,T,top_k,d_h] at peak.
+        # ── Step 1: Chunk-level retrieval — shared top-K slot indices ──
+        # Pool queries across sequence to get chunk representation
+        q_chunk = q.mean(dim=2)  # [B, H, d_h] — mean pool over T
 
-        # Chunked similarity to avoid [B,H,T,N] for very large N
-        CHUNK_SIZE = 512  # process 512 memory slots at a time
+        # Similarity: chunk query vs all memory slots
+        sim_chunk = torch.matmul(q_chunk, k_mem.transpose(-2, -1)) / (d_h ** 0.5)  # [B, H, N]
+        _, shared_idx = sim_chunk.topk(effective_top_k, dim=-1)  # [B, H, K]
 
-        if N <= CHUNK_SIZE:
-            sim = torch.matmul(q, k_mem.transpose(-2, -1)) / (d_h ** 0.5)  # [B, H, T, N]
-            topk_scores, topk_idx = sim.topk(effective_top_k, dim=-1)  # [B, H, T, k]
-        else:
-            # Chunked matmul + top-k to keep peak memory bounded
-            topk_scores = q.new_zeros(B, self.num_heads, T, effective_top_k)
-            topk_idx = q.new_zeros(B, self.num_heads, T, effective_top_k, dtype=torch.long)
-            topk_scores.fill_(float('-inf'))
+        # Gather K_mem and V_mem for shared slots
+        shared_idx_clamped = shared_idx.clamp(0, N - 1)
+        B_idx = torch.arange(B, device=v_mem.device)[:, None, None]  # [B,1,1]
+        H_idx = torch.arange(self.num_heads, device=v_mem.device)[None, :, None]  # [1,H,1]
+        k_shared = k_mem[B_idx, H_idx, shared_idx_clamped]  # [B, H, K, d_h]
+        v_shared = v_mem[B_idx, H_idx, shared_idx_clamped]  # [B, H, K, d_h]
 
-            for chunk_start in range(0, N, CHUNK_SIZE):
-                chunk_end = min(chunk_start + CHUNK_SIZE, N)
-                k_chunk = k_mem[:, :, chunk_start:chunk_end, :]  # [B,H,chunk,d_h]
-                sim_chunk = torch.matmul(q, k_chunk.transpose(-2, -1)) / (d_h ** 0.5)  # [B,H,T,chunk]
+        # ── Step 2: Per-token read on shared K slots ─────────────────
+        # Each token uses its own Q to attend to the shared K slots
+        sim_per_token = torch.matmul(q, k_shared.transpose(-2, -1)) / (d_h ** 0.5)  # [B, H, T, K]
+        attn_weights = F.softmax(sim_per_token, dim=-1)  # [B, H, T, K]
+        o_mem = torch.matmul(attn_weights, v_shared)  # [B, H, T, d_h]
 
-                # Merge this chunk's top-k with running top-k
-                cs_topk_scores, cs_topk_idx = sim_chunk.topk(effective_top_k, dim=-1)  # [B,H,T,k]
-                # Offset indices to global memory indices
-                cs_topk_idx = cs_topk_idx + chunk_start
-
-                # Combine with running top-k
-                combined_scores = torch.cat([topk_scores, cs_topk_scores], dim=-1)  # [B,H,T,2k]
-                combined_idx = torch.cat([topk_idx, cs_topk_idx], dim=-1)  # [B,H,T,2k]
-                topk_scores, merge_idx = combined_scores.topk(effective_top_k, dim=-1)  # [B,H,T,k]
-                topk_idx = combined_idx.gather(-1, merge_idx)  # [B,H,T,k]
-
-                # Free chunk tensors immediately
-                del sim_chunk, k_chunk, cs_topk_scores, cs_topk_idx, combined_scores, combined_idx, merge_idx
-
-        # Gather v_mem using top-k indices WITHOUT materializing [B,H,T,N,d_h]
-        # topk_idx: [B, H, T, k] → gather from v_mem [B, H, N, d_h]
-        # Use torch.gather on the N dimension with index expansion to [B, H, T, k, d_h]
-        topk_idx_exp = topk_idx.unsqueeze(-1).expand(-1, -1, -1, -1, d_h)  # [B, H, T, k, d_h]
-        # Expand v_mem to [B, H, T, N, d_h] only on the gather dimension — but this is OOM!
-        # Instead, gather per-(b,h,t) row using advanced indexing:
-        # v_mem: [B, H, N, d_h], topk_idx: [B, H, T, k]
-        # We need: topk_v[b,h,t,:] = v_mem[b,h,topk_idx[b,h,t,:],:]
-        B_idx = torch.arange(B, device=v_mem.device)[:, None, None, None]  # [B,1,1,1]
-        H_idx = torch.arange(self.num_heads, device=v_mem.device)[None, :, None, None]  # [1,H,1,1]
-        # Clamp indices to valid range to prevent CUDA index out-of-bounds
-        # (can happen when memory is uninitialized/all-zeros and topk ties produce edge indices)
-        topk_idx = topk_idx.clamp(0, N - 1)
-        topk_v = v_mem[B_idx, H_idx, topk_idx]  # [B, H, T, k, d_h] — no [B,H,T,N,d_h] needed!
-
-        # Softmax over top-k and weighted sum
-        attn_weights = F.softmax(topk_scores, dim=-1).unsqueeze(-1)  # [B, H, T, k, 1]
-        o_mem = (attn_weights * topk_v).sum(dim=3)  # [B, H, T, d_h]
-
-        # Free intermediate tensors
-        del topk_v, topk_idx_exp, topk_scores, topk_idx, attn_weights
+        # Save shared_idx for memory write
+        shared_idx_for_write = shared_idx_clamped  # [B, H, K]
 
         # [B, H, T, d_h] → [B, T, D]
         o_mem = o_mem.transpose(1, 2).contiguous().view(B, T, D)
-        # NOTE: no o_proj here — memory path must not go through the
-        # local-attention output projection a second time; v_proj + attention
-        # already produces the correct representation scale.
+        # NOTE: no o_proj — memory path already has correct scale from v_proj + attention
 
-        # ── Concat Fusion (Memorizing Transformers) ───────────────────
-        output = self.fusion_proj(torch.cat([o_local, o_mem], dim=-1))
+        # ── Gated Two-Path Fusion ───────────────────────────────────────
+        # g = σ(W_g · h + b_g),  o = g · o_local + (1-g) · o_mem
+        # Initial bias=+2.0 → σ(2)≈0.88 → 88% local, 12% memory
+        g = torch.sigmoid(self.gate_proj(hidden_states))  # [B, T, 1]
+        output = g * o_local + (1.0 - g) * o_mem
 
-        # ── Memory Write: EMA update (no grad), per batch item ────────
+        # ── Memory Write: per-chunk retrieve-then-update ──────────────
+        # Aggregate shared indices across heads
+        avg_shared_idx = shared_idx_for_write.float().mean(dim=1).long()  # [B, K]
+        avg_shared_idx = avg_shared_idx.clamp(0, self._memory_bank.num_slots - 1)
+
+        # Chunk summary: mean of all token hidden states
+        chunk_summary = hidden_states.mean(dim=1)  # [B, D]
+
         for b in range(B):
-            self.memory_bank.write(hidden_states[b], batch_idx=b)
+            self._memory_bank.update_slots(
+                chunk_summary[b].unsqueeze(0),    # [1, D]
+                batch_idx=b,
+                slot_indices=avg_shared_idx[b].unsqueeze(0),  # [1, K]
+            )
+        del shared_idx_for_write
 
         # LlamaDecoderLayer does `hidden_states, _ = self.self_attn(...)` → expects 2-tuple
         return (output, None)

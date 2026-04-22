@@ -500,10 +500,24 @@ class KVAdapterInjector(nn.Module):
                 for l in config.injection_layers
             })
 
+        # ★ Per-layer 可学习 alpha (控制注入强度, 通过 gate_bias 控制)
+        # 即使 LoRA 共享, 每层也需要独立的 alpha 避免均匀注入导致 loss 发散
+        if config.init_alpha > 0 and config.max_alpha > 0:
+            init_alpha_clamped = min(config.init_alpha, config.max_alpha - 1e-6)
+            init_logit = math.log(init_alpha_clamped / (config.max_alpha - init_alpha_clamped + 1e-8))
+        else:
+            init_logit = -2.0
+
+        self.alpha_logits = nn.ParameterDict({
+            str(layer_idx): nn.Parameter(torch.tensor(init_logit))
+            for layer_idx in config.injection_layers
+        })
+
         num_params = sum(p.numel() for p in self.parameters())
         logger.info(
             f"[KVAdapterInjector] 初始化: injection_layers={config.injection_layers}, "
             f"lora_rank={lora_rank}, share_params={config.lora_share_params}, "
+            f"init_alpha={config.init_alpha:.4f}, max_alpha={config.max_alpha:.3f}, "
             f"total_params={num_params:,}"
         )
 
@@ -522,16 +536,15 @@ class KVAdapterInjector(nn.Module):
         return self.adapters.get(key, None)
 
     def get_alpha(self, layer_idx: int) -> torch.Tensor:
-        """获取第 layer_idx 层的等效注入强度 (LoRA scale_k 和 scale_v 的均值)。
+        """获取第 layer_idx 层的注入强度 alpha (per-layer 可学习)。
 
-        KVAdapterInjector 没有显式的 alpha 参数，但 LoRA adapter 的
-        scale_k/scale_v 起到了类似的作用。返回它们的均值作为等效 alpha，
-        以兼容 eval_mag.py 中的 eval_gate_activation 评估。
+        alpha = sigmoid(logit) * max_alpha ∈ [0, max_alpha]
+        每层有独立的 logit 参数, 即使 LoRA 共享也能控制不同层的注入强度。
         """
-        adapter = self.get_adapter(layer_idx)
-        if adapter is None:
+        key = str(layer_idx)
+        if key not in self.alpha_logits:
             return torch.tensor(0.0)
-        return (adapter.scale_k.abs() + adapter.scale_v.abs()) / 2
+        return self.config.max_alpha * torch.sigmoid(self.alpha_logits[key])
 
     def forward_decoder_layer(
         self,
@@ -559,15 +572,14 @@ class KVAdapterInjector(nn.Module):
             else:
                 adapted_keys, adapted_values = virtual_keys, virtual_values
 
-            # 记录 scale 值用于日志
-            if adapter is not None:
-                alpha_value = torch.tensor(
-                    (adapter.scale_k.detach().item() + adapter.scale_v.detach().item()) / 2
-                )
+            # ★ Per-layer alpha 控制注入强度
+            alpha = self.get_alpha(layer_idx)
+            effective_scale = alpha * inference_scale
+            alpha_value = alpha.detach()
 
-            # ★ 用 gate_bias = log(inference_scale) 控制注入强度 (通过 attention mask)
-            # inference_scale→0 时 gate_bias→-inf, softmax 自然忽略虚拟 KV
-            gate_bias = math.log(max(inference_scale, 1e-32))
+            # ★ 用 gate_bias = log(effective_scale) 控制注入强度 (通过 attention mask)
+            # effective_scale→0 时 gate_bias→-inf, softmax 自然忽略虚拟 KV
+            gate_bias = torch.log(effective_scale.clamp(min=1e-32))
 
             # 使用共用的 decoder layer forward
             hidden_states = _forward_decoder_layer_with_kv(
@@ -600,6 +612,9 @@ class KVAdapterInjector(nn.Module):
     def get_stats(self) -> dict[str, Any]:
         stats = {}
         for layer_idx in sorted(self._injection_layers):
+            # Per-layer alpha
+            alpha = self.get_alpha(layer_idx)
+            stats[f"alpha_layer_{layer_idx}"] = alpha.item()
             adapter = self.get_adapter(layer_idx)
             if adapter is not None:
                 stats[f"scale_k_layer_{layer_idx}"] = adapter.scale_k.item()
@@ -614,14 +629,8 @@ class KVAdapterInjector(nn.Module):
         return stats
 
     def __repr__(self) -> str:
-        info_parts = []
-        for layer_idx in sorted(self._injection_layers):
-            adapter = self.get_adapter(layer_idx)
-            if adapter is not None:
-                info_parts.append(
-                    f"L{layer_idx}(sk={adapter.scale_k.item():.4f},sv={adapter.scale_v.item():.4f})"
-                )
-        return f"KVAdapterInjector(layers={sorted(self._injection_layers)}, {', '.join(info_parts)})"
+        alphas = {int(k): f"{self.get_alpha(int(k)).item():.4f}" for k in self.alpha_logits}
+        return f"KVAdapterInjector(layers={sorted(self._injection_layers)}, alphas={alphas}, share_lora={self.shared_adapter is not None})"
 
 
 # ======================================================================

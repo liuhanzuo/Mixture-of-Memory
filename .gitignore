@@ -50,3 +50,36 @@ wandb/
 
 data/
 RULER/
+
+# Secrets
+configs/password.txt
+configs/password_cluster2.txt
+configs/hosts.txt
+configs/b200_cluster.ini
+
+# Data and outputs
+data/
+outputs/
+models/
+*.safetensors
+*.bin
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+
+# Submodules (clone separately)
+third_party/HMT-pytorch/
+third_party/recurrent-memory-transformer/
+
+# Misc
+nohup*.out
+debug_run.sh

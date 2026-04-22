@@ -1,0 +1,11 @@
+{
+  "checkpoint_dir": "outputs/rmt_v4_simple_8gpu_10ep/final/",
+  "eval_type": "ppl",
+  "timestamp": "2026-04-16T18:13:57.303877",
+  "perplexity": {
+    "perplexity": 9.688550502760632,
+    "avg_loss": 2.2709448277950286,
+    "total_tokens": 614400,
+    "num_docs": 100
+  }
+}

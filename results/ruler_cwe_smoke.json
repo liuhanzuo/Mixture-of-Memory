@@ -1,0 +1,54 @@
+{
+  "model": "models/Qwen--Qwen3-8b",
+  "task": "cwe",
+  "context_length": 65536,
+  "num_samples": 2,
+  "num_cw": 10,
+  "freq_cw": 30,
+  "freq_ucw": 3,
+  "avg_accuracy": 0.0,
+  "scores": [
+    0.0,
+    0.0
+  ],
+  "details": [
+    {
+      "sample_idx": 0,
+      "score": 0.0,
+      "input_tokens": 65368,
+      "prediction": "  8 the.bunifuFlatButton683 10.    7883 ffffffff320.888772388783 or7,, and888 100.\n 52 8 878 7 8898882 6288727770882222 and and3888222976 3282 8 7 2,8872 78688 823 09 the 8822 88 7  00 to 87877",
+      "ground_truth": [
+        "aback",
+        "loutish",
+        "wary",
+        "imbalance",
+        "trophy",
+        "troop",
+        "inhibition",
+        "chess",
+        "kidney",
+        "housing"
+      ]
+    },
+    {
+      "sample_idx": 1,
+      "score": 0.0,
+      "input_tokens": 65563,
+      "prediction": ", 03 7. 3 041.bunifuFlatButton.bunifuFlatButton.bunifuFlatButton.bunifuFlatButton, \r\n and and.bunifuFlatButton.bunifuFlatButton.bunifuFlatButton, ********-2ffffffff 5 \r\nffffffff$arr.bunifuFlatButton.b",
+      "ground_truth": [
+        "stability",
+        "horseradish",
+        "cottage",
+        "futon",
+        "snap",
+        "platypus",
+        "raisin",
+        "illiteracy",
+        "eminent",
+        "fishing"
+      ]
+    }
+  ],
+  "elapsed_seconds": 50.50708222389221,
+  "optimal_num_words": 2850
+}

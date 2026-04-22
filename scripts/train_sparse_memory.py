@@ -38,70 +38,104 @@ from src.memory.sparse_memory.model import SparseMemoryLlamaForCausalLM
 
 @dataclass
 class PreTokenizedDataset(Dataset):
-    """Load pre-tokenized chunks from numpy file (fast loading, no re-tokenization).
+    """Load pre-tokenized chunks from numpy file.
 
-    Expects a numpy array of shape [N, seq_len] with dtype uint16.
+    All chunks are exactly max_seq_len tokens. No padding needed.
     """
     path: str
     max_seq_len: int = 4096
-    vocab_size: int = 32000  # clamp OOB tokens to this range
     _data: object = field(default=None, repr=False)
 
     def __post_init__(self):
         import numpy as np
-        arr = np.load(self.path)  # shape [N, seq_len]
-        self._data = torch.from_numpy(arr).long()  # [N, seq_len]
-        assert self._data.shape[1] == self.max_seq_len, \
-            f"Expected seq_len={self.max_seq_len}, got {self._data.shape[1]}"
-        # Clamp token IDs to valid vocab range to prevent CUDA OOB in embed_tokens.
-        # Can happen when data was tokenized with a different tokenizer (e.g. Qwen vs Llama2).
-        # Masked tokens become pad_id=0 (neutral for causal LM).
-        vocab_size = getattr(self, 'vocab_size', 32000)
-        oob_mask = self._data >= vocab_size
-        if oob_mask.any():
-            n_oob = oob_mask.sum().item()
-            total = self._data.numel()
-            print(f"[PreTokenizedDataset] WARNING: {n_oob}/{total} tokens ({100*n_oob/total:.2f}%) "
-                  f"exceed vocab_size={vocab_size}, clamping to 0")
-            self._data = self._data.clamp(0, vocab_size - 1)
+        arr = np.load(self.path)
+        self._data = torch.from_numpy(arr).long()
+        assert self._data.shape[1] == self.max_seq_len
 
     def __len__(self):
         return self._data.shape[0]
 
     def __getitem__(self, idx):
         tokens = self._data[idx]
-        # Shift for causal LM
-        return {
-            "input_ids": tokens[:-1],
-            "labels": tokens[1:],
-        }
+        return {"input_ids": tokens[:-1], "labels": tokens[1:]}
 
 
-class JsonlDataset(Dataset):
-    """Load and tokenize documents from a .jsonl file on-the-fly.
+class JSONLTextDataset(Dataset):
+    """Load text from .jsonl (or raw text) files and tokenize on the fly.
 
-    Each line should be: {"text": "..."}
-    Documents are tokenized, truncated/padded to seq_len, and stored.
-    Compatible with v5 training scripts.
+    Supports:
+      1. Raw text files (one chunk per line)
+      2. JSONL files with a "text" field
+      3. JSONL files with "tokens" or "input_ids" field (list of ints)
+
+    The entire file is tokenized into fixed-length chunks of max_seq_len+1 tokens
+    (the +1 allows the causal LM shift to produce seq_len-length sequences).
     """
-    def __init__(self, data_path, tokenizer, seq_len=4096):
-        self.seq_len = seq_len
-        docs = []
-        with open(data_path) as f:
-            for line in f:
-                text = json.loads(line)["text"]
-                tokens = tokenizer.encode(text, add_special_tokens=False)
-                if len(tokens) >= 64:  # skip very short docs
-                    docs.append(tokens)
-        self.docs = docs
+
+    def __init__(self, path: str, tokenizer, max_seq_len: int = 4096):
+        self.max_seq_len = max_seq_len
+        self.pad_token_id = tokenizer.pad_token_id or tokenizer.eos_token_id
+        self._chunks: List[List[int]] = []
+
+        # Detect format and collect text / token lists
+        texts: List[str] = []
+        token_lists: List[List[int]] = []
+
+        with open(path, "r", encoding="utf-8") as f:
+            first_line = f.readline()
+        # Try to parse as JSON
+        try:
+            obj = json.loads(first_line)
+            is_json = True
+        except (json.JSONDecodeError, ValueError):
+            is_json = False
+
+        if not is_json:
+            # Raw text file — each line is a document chunk
+            with open(path, "r", encoding="utf-8") as f:
+                texts = [line.rstrip("\n") for line in f if line.strip()]
+        else:
+            # JSONL — check for pre-tokenized or text field
+            with open(path, "r", encoding="utf-8") as f:
+                f.seek(0)
+                for line in f:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    obj = json.loads(line)
+                    if "tokens" in obj:
+                        token_lists.append(obj["tokens"])
+                    elif "input_ids" in obj:
+                        token_lists.append(obj["input_ids"])
+                    elif "text" in obj:
+                        texts.append(obj["text"])
+
+        # Build fixed-length chunks
+        chunk_len = max_seq_len + 1  # +1 for causal shift
+        if token_lists:
+            # Pre-tokenized: concatenate and split
+            import itertools
+            flat = list(itertools.chain.from_iterable(token_lists))
+            for i in range(0, len(flat) - chunk_len + 1, max_seq_len):
+                self._chunks.append(flat[i:i + chunk_len])
+        else:
+            # Text: tokenize, concatenate, split
+            all_token_ids: List[int] = []
+            for t in texts:
+                ids = tokenizer.encode(t, add_special_tokens=False)
+                all_token_ids.extend(ids)
+            for i in range(0, len(all_token_ids) - chunk_len + 1, max_seq_len):
+                self._chunks.append(all_token_ids[i:i + chunk_len])
+
+        if not self._chunks:
+            raise ValueError(f"No data chunks created from {path}")
 
     def __len__(self):
-        return len(self.docs)
+        return len(self._chunks)
 
     def __getitem__(self, idx):
-        tokens = self.docs[idx][:self.seq_len]
+        tokens = self._chunks[idx]
         t = torch.tensor(tokens, dtype=torch.long)
-        # Shift for causal LM
         return {
             "input_ids": t[:-1],
             "labels": t[1:],
@@ -109,18 +143,11 @@ class JsonlDataset(Dataset):
 
 
 def collate_fn(batch):
-    """Stack batch with padding to longest sequence in the batch."""
-    max_len = max(item["input_ids"].shape[0] for item in batch)
-    pad_id = 0
-    input_ids = torch.stack([
-        torch.cat([item["input_ids"], torch.full([max_len - item["input_ids"].shape[0]], pad_id, dtype=torch.long)])
-        for item in batch
-    ])
-    labels = torch.stack([
-        torch.cat([item["labels"], torch.full([max_len - item["labels"].shape[0]], -100, dtype=torch.long)])
-        for item in batch
-    ])
-    return {"input_ids": input_ids, "labels": labels}
+    """Stack batch. No padding needed for PreTokenizedDataset."""
+    return {
+        "input_ids": torch.stack([item["input_ids"] for item in batch]),
+        "labels": torch.stack([item["labels"] for item in batch]),
+    }
 
 
 # ── Argument Parsing ───────────────────────────────────────────────────────
@@ -136,6 +163,26 @@ def parse_args():
     parser.add_argument("--top_k", type=int, default=8)
     parser.add_argument("--sliding_window", type=int, default=256)
     parser.add_argument("--ema_alpha", type=float, default=0.1)
+    parser.add_argument("--gate_bias_init", type=float, default=2.0,
+                        help="[Deprecated] Legacy gate bias init, kept for launch script compat")
+
+    # L1 multi-level memory hyperparameters
+    parser.add_argument("--use_l1", action="store_true", default=False,
+                        help="Enable L1 memory compression layer")
+    parser.add_argument("--num_mem_tokens", type=int, default=16,
+                        help="Number of L0 memory tokens per segment")
+    parser.add_argument("--l1_num_tokens", type=int, default=16,
+                        help="Number of L1 compressed memory tokens")
+    parser.add_argument("--segment_length", type=int, default=1024,
+                        help="Segment length for multi-segment processing")
+    parser.add_argument("--max_segments", type=int, default=4,
+                        help="Maximum number of segments per document")
+    parser.add_argument("--bptt_depth", type=int, default=2,
+                        help="BPTT truncation depth across segments")
+    parser.add_argument("--recon_loss_coef", type=float, default=0.1,
+                        help="Coefficient for L1 reconstruction loss")
+    parser.add_argument("--use_importance_routing", action="store_true", default=False,
+                        help="Use importance-based routing between L0 and L1")
 
     # Training hyperparameters
     parser.add_argument("--lr", type=float, default=2e-5)
@@ -152,28 +199,6 @@ def parse_args():
     parser.add_argument("--mixed_precision", type=str, default="bf16",
                         choices=["bf16", "fp16", "none"],
                         help="Mixed precision mode: bf16 (recommended), fp16 (needs GradScaler), none (fp32)")
-
-    # L0/L1 multi-level memory
-    parser.add_argument("--use_l1", action="store_true",
-                        help="Enable L1 (higher-level) memory layer for multi-level memory compression")
-    parser.add_argument("--num_mem_tokens", type=int, default=16,
-                        help="Number of L0 memory tokens per segment")
-    parser.add_argument("--l1_num_tokens", type=int, default=16,
-                        help="Number of L1 memory tokens (compressed from L0)")
-    parser.add_argument("--segment_length", type=int, default=1024,
-                        help="Tokens per segment before memory compression")
-    parser.add_argument("--max_segments", type=int, default=4,
-                        help="Maximum segments per document")
-    parser.add_argument("--bptt_depth", type=int, default=2,
-                        help="How many segments of BPTT backprop to unroll")
-    parser.add_argument("--recon_loss_coef", type=float, default=0.1,
-                        help="Weight for memory reconstruction loss")
-    parser.add_argument("--rmt_lr", type=float, default=None,
-                        help="Separate LR for memory/RMT params (overrides per-param-group defaults)")
-    parser.add_argument("--use_importance_routing", action="store_true",
-                        help="Use importance-based routing for memory writes")
-    parser.add_argument("--vary_n_segments", action="store_true",
-                        help="Vary number of segments during training for robustness")
 
     # Backend
     parser.add_argument("--use_fsdp", action="store_true")
@@ -200,6 +225,10 @@ def main():
         print(f"=== SparseMemory Training ===")
         print(f"World size: {world_size}, Global rank: {global_rank}")
         print(f"Memory: slots={args.memory_slots}, top_k={args.top_k}, window={args.sliding_window}")
+        if args.use_l1:
+            print(f"L1 memory: num_mem_tokens={args.num_mem_tokens}, l1_num_tokens={args.l1_num_tokens}, "
+                  f"segment_length={args.segment_length}, max_segments={args.max_segments}, "
+                  f"bptt_depth={args.bptt_depth}, recon_loss_coef={args.recon_loss_coef}")
         print(f"Training: lr={args.lr}, batch={args.batch_size}, accum={args.grad_accumulation_steps}")
         os.makedirs(args.output_dir, exist_ok=True)
 
@@ -245,17 +274,10 @@ def main():
     # DDP wrapper
     model = DDP(model, device_ids=[local_rank], output_device=local_rank)
 
-    # Optimizer: separate param groups for gate (10x LR) vs other params
-    gate_params = [p for n, p in model.named_parameters() if p.requires_grad and 'gate_proj' in n]
-    other_params = [p for n, p in model.named_parameters() if p.requires_grad and 'gate_proj' not in n]
-    param_groups = [{'params': other_params, 'lr': args.lr}]
-    if gate_params:
-        param_groups.append({'params': gate_params, 'lr': args.lr * 10.0})
-        if global_rank == 0:
-            print(f"Gate LR: {args.lr * 10.0:.2e} ({len(gate_params)} params)")
-    if global_rank == 0:
-        print(f"Other LR: {args.lr:.2e} ({len(other_params)} params)")
-    optimizer = torch.optim.AdamW(param_groups, weight_decay=args.weight_decay)
+    # Optimizer: only train parameters (not memory buffers)
+    # Filter out frozen params
+    trainable_params = [p for p in model.parameters() if p.requires_grad]
+    optimizer = torch.optim.AdamW(trainable_params, lr=args.lr, weight_decay=args.weight_decay)
 
     import math
     def lr_lambda(step):
@@ -278,23 +300,15 @@ def main():
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 
-    # Dataset — auto-detect format: .jsonl → tokenize on-the-fly, .npy → pre-tokenized
-    if args.data_path.endswith(".jsonl"):
-        dataset = JsonlDataset(
-            data_path=args.data_path,
-            tokenizer=tokenizer,
-            seq_len=args.seq_len,
-        )
-    elif args.data_path.endswith(".npy"):
-        dataset = PreTokenizedDataset(
-            path=args.data_path,
-            max_seq_len=args.seq_len,
-            vocab_size=model.config.vocab_size,
-        )
+    # Dataset: auto-detect based on file extension
+    if args.data_path.endswith('.npy'):
+        dataset = PreTokenizedDataset(path=args.data_path, max_seq_len=args.seq_len)
     else:
-        raise ValueError(f"Unsupported data format: {args.data_path}. Use .jsonl or .npy")
-    if global_rank == 0:
-        print(f"Dataset: {type(dataset).__name__}, {len(dataset)} samples, seq_len={args.seq_len}")
+        dataset = JSONLTextDataset(
+            path=args.data_path,
+            tokenizer=tokenizer,
+            max_seq_len=args.seq_len,
+        )
     sampler = torch.utils.data.distributed.DistributedSampler(dataset)
     dataloader = DataLoader(
         dataset,
@@ -345,11 +359,11 @@ def main():
             if (step + 1) % args.grad_accumulation_steps == 0:
                 if grad_scaler is not None:
                     grad_scaler.unscale_(optimizer)
-                    torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+                    torch.nn.utils.clip_grad_norm_(trainable_params, 1.0)
                     grad_scaler.step(optimizer)
                     grad_scaler.update()
                 else:
-                    torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+                    torch.nn.utils.clip_grad_norm_(trainable_params, 1.0)
                     optimizer.step()
                 scheduler.step()
                 optimizer.zero_grad()
@@ -358,20 +372,16 @@ def main():
 
             # Logging
             if step % args.log_every == 0 and global_rank == 0:
-                fusion_grad = model.module.get_fusion_grad_norm()
-
                 log_entry = {
                     "step": step,
                     "loss": loss_scaled.item() * args.grad_accumulation_steps,
                     "lr": scheduler.get_last_lr()[0],
-                    "fusion_grad_norm": fusion_grad,
                     "timestamp": time.time(),
                 }
                 log_history.append(log_entry)
                 print(
                     f"[step {step:>5d}] loss={log_entry['loss']:.4f}  "
-                    f"lr={log_entry['lr']:.2e}  "
-                    f"fusion_grad={fusion_grad:.4f}"
+                    f"lr={log_entry['lr']:.2e}"
                 )
 
                 # Heartbeat file
