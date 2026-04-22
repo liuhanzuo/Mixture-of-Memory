@@ -1,0 +1,50 @@
+{
+  "node0": {
+    "ip": "28.89.17.143",
+    "name": "l0",
+    "experiment": "window_only_baseline",
+    "status": "running",
+    "pid": 1401092,
+    "log_path": "/root/Mixture-of-Memory/logs/train_window_only_baseline.log",
+    "output_dir": "/root/Mixture-of-Memory/outputs/window_only_baseline",
+    "eval_ppl": null,
+    "notes": "Sliding window baseline (seq_len=4096, sliding_window=256). Step 2700/5000, loss=3.7151, 8-GPU DDP. Base line for memory vs. sliding window comparison.",
+    "last_verified": "2026-04-22T01:35:00"
+  },
+  "node1": {
+    "ip": "28.89.17.144",
+    "name": "l0l1",
+    "experiment": "sparse_memory_sw64_large",
+    "status": "completed",
+    "pid": null,
+    "log_path": "/root/Mixture-of-Memory/logs/train_sparse_memory_sw64_large.log",
+    "output_dir": "/root/Mixture-of-Memory/outputs/sparse_memory_sw64_large",
+    "eval_ppl": 63.25,
+    "notes": "W=64 + 256 slots. PPL=63.25 — memory cannot compensate for 4x smaller window. +53% vs full_attn baseline.",
+    "last_verified": "2026-04-22T03:06:00"
+  },
+  "node2": {
+    "ip": "28.89.17.85",
+    "name": "l0l2",
+    "experiment": "sparse_memory_large",
+    "status": "completed",
+    "pid": null,
+    "log_path": "/root/Mixture-of-Memory/logs/train_sparse_memory_large.log",
+    "output_dir": "/root/Mixture-of-Memory/outputs/sparse_memory_large",
+    "eval_ppl": 49.39,
+    "notes": "W=256 + 256 slots. PPL=49.39 — 2x more slots only 0.4% better than 128 slots (49.60). Memory not effective.",
+    "last_verified": "2026-04-22T03:06:00"
+  },
+  "node3": {
+    "ip": "28.89.19.134",
+    "name": "l0l1l2",
+    "experiment": "sparse_memory_kvconcat",
+    "status": "completed",
+    "pid": null,
+    "log_path": "/root/Mixture-of-Memory/logs/train_sparse_memory_kvconcat.log",
+    "output_dir": "/root/Mixture-of-Memory/outputs/sparse_memory_fusion",
+    "eval_ppl": 49.88,
+    "notes": "SparseMemory with concat fusion. PPL=49.88 - REGRESSION +8.64 vs baseline.",
+    "last_verified": "2026-04-22T01:35:00"
+  }
+}
