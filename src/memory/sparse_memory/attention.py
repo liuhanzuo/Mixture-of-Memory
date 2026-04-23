@@ -185,10 +185,12 @@ class SparseMemoryAttention(nn.Module):
 
         # ── Step 1: Chunk-level retrieval — shared top-K slot indices ──
         # Pool queries across sequence to get chunk representation
-        q_chunk = q.mean(dim=2)  # [B, H, d_h] — mean pool over T
+        q_chunk = q.mean(dim=2).unsqueeze(2)  # [B, H, 1, d_h] — mean pool over T
+        # unsqueeze(2) needed: matmul([B,H,1,d_h], [B,H,d_h,N]) = [B,H,1,N]
+        # Without it, matmul([B,H,d_h], [B,H,d_h,N]) misaligns batch dims
 
         # Similarity: chunk query vs all memory slots
-        sim_chunk = torch.matmul(q_chunk, k_mem.transpose(-2, -1)) / (d_h ** 0.5)  # [B, H, N]
+        sim_chunk = (torch.matmul(q_chunk, k_mem.transpose(-2, -1)) / (d_h ** 0.5)).squeeze(2)  # [B, H, N]
         _, shared_idx = sim_chunk.topk(effective_top_k, dim=-1)  # [B, H, K]
 
         # Gather K_mem and V_mem for shared slots
@@ -217,19 +219,21 @@ class SparseMemoryAttention(nn.Module):
         g = torch.sigmoid(self.gate_proj(hidden_states))  # [B, T, 1]
         output = g * o_local + (1.0 - g) * o_mem
 
-        # ── Memory Write: per-chunk retrieve-then-update ──────────────
+        # ── Memory Write: importance-based top-K selective writing ─────
         # Aggregate shared indices across heads
         avg_shared_idx = shared_idx_for_write.float().mean(dim=1).long()  # [B, K]
         avg_shared_idx = avg_shared_idx.clamp(0, self._memory_bank.num_slots - 1)
 
-        # Chunk summary: mean of all token hidden states
-        chunk_summary = hidden_states.mean(dim=1)  # [B, D]
+        # Per-token attention weights for importance scoring
+        # attn_weights: [B, H, T, K] → mean over heads → [B, T, K]
+        per_token_attn = attn_weights.mean(dim=1)  # [B, T, K]
 
         for b in range(B):
             self._memory_bank.update_slots(
-                chunk_summary[b].unsqueeze(0),    # [1, D]
+                hidden_states[b],               # [T, D]
                 batch_idx=b,
                 slot_indices=avg_shared_idx[b].unsqueeze(0),  # [1, K]
+                attention_weights=per_token_attn[b],  # [T, K]
             )
         del shared_idx_for_write
 

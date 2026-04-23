@@ -114,4 +114,73 @@ The sparse memory injection approach is fundamentally flawed due to distribution
 
 ---
 
-**Recommendation**: Terminate current sparse memory experiments and implement Selective Context prompt compression as a zero-cost baseline within 24 hours.
+## Update 2026-04-23: Selective Context Evaluation Results
+
+### Finding: Token-level Compression Causes Severe PPL Degradation
+
+**Evaluation Date**: 2026-04-23 04:12  
+**Model**: OPT-125m (toy model)  
+**Compression Method**: Importance-based token pruning
+
+**Results**:
+- Medium context (117-127 tokens): PPL 2.90 → 18.01 (+521%)
+- Long context (193-252 tokens): PPL 1.73 → 92.35 (+5236%)
+- Baseline context (< 100 tokens): No compression (seq_length < window_size)
+
+**Root Cause Analysis**:
+- Current implementation uses simple heuristics: preserve first/last 10% tokens, sample middle regularly
+- For long sequences, this loses critical context information
+- Token-level deletion disrupts sequence structure, leading to poor predictions
+
+**Comparison with Alternative Approaches**:
+
+| Approach | PPL Change | Training Cost | Preservation | Status |
+|----------|------------|---------------|--------------|---------|
+| Sparse Memory Injection | +20% | High | No (modifies flow) | ❌ Failed |
+| Selective Context (token pruning) | +500-5000% | None | No (deletes tokens) | ❌ Failed |
+| **CCM (KV compression)** | Expected: 0-5% | Low (LoRA) | Yes (compresses KV) | ⏳ Pending |
+| **LM2 (cross-attention)** | Expected: -5% to +5% | High | Yes (separate module) | ⏳ Pending |
+
+**Recommendation**: 
+1. **Abandon** Selective Context token pruning approach
+2. **Pivot immediately** to CCM-style KV compression with conditional LoRA
+3. **CCM advantages**: 
+   - Compresses KV cache instead of deleting tokens
+   - Preserves sequence structure
+   - Uses lightweight LoRA (no full retraining)
+   - Proven at ICLR 2024
+
+---
+
+**Recommendation**: Implement KV cache compression as the next priority.
+
+---
+
+## Current Status (2026-04-23 04:15)
+
+### Completed Work
+1. ✅ Terminated sparse_memory_concat_fusion_v1_fixed (DDP hang at step 4014)
+2. ✅ Evaluated Selective Context (token pruning failed: +500-5000% PPL)
+3. ✅ Documented all findings in UPDATELOG.md and ISSUES.jsonl
+
+### Current Pivot
+**From**: Memory token injection approaches (sparse memory, RMT)  
+**To**: KV cache compression (inference-time compatible)
+
+### Next Action Plan
+1. **Research phase**: Study KV cache compression methods
+   - Activation Beacon (ICLR 2025)
+   - LESS (ICML 2024)
+   - NVIDIA DMS (Dynamic Memory Sparsification)
+2. **Implementation phase**: Choose and implement one method
+   - Priority: Inference-time compatible (no training required)
+   - Secondary: Low training cost (LoRA-based)
+3. **Evaluation phase**: Test on Llama-2-7b baseline
+   - Target: PPL ≤ 41.24 (no degradation)
+   - Success criterion: Near-zero PPL change with meaningful compression
+
+### Expected Timeline
+- Research: 1-2 days
+- Implementation: 2-3 days
+- Evaluation: 1-2 days
+- Total: 4-7 days to initial results

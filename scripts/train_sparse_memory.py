@@ -184,6 +184,13 @@ def parse_args():
     parser.add_argument("--use_importance_routing", action="store_true", default=False,
                         help="Use importance-based routing between L0 and L1")
 
+    # Selective memory writing
+    parser.add_argument("--write_top_k", type=int, default=0,
+                        help="Top-K important tokens to write to memory per chunk (0=all, legacy)")
+    parser.add_argument("--importance_mode", type=str, default="combined",
+                        choices=["magnitude", "attention_surprise", "combined"],
+                        help="Token importance scoring method for selective writing")
+
     # Training hyperparameters
     parser.add_argument("--lr", type=float, default=2e-5)
     parser.add_argument("--seq_len", type=int, default=4096)
@@ -252,6 +259,8 @@ def main():
         bptt_depth=args.bptt_depth,
         recon_loss_coef=args.recon_loss_coef,
         use_importance_routing=args.use_importance_routing,
+        write_top_k=args.write_top_k,
+        importance_mode=args.importance_mode,
     )
 
     if args.gradient_checkpointing:
@@ -272,7 +281,7 @@ def main():
         print(f"Model size: {param_bytes / 1e9:.2f} GB params + {buf_bytes / 1e9:.2f} GB buffers")
 
     # DDP wrapper
-    model = DDP(model, device_ids=[local_rank], output_device=local_rank)
+    model = DDP(model, device_ids=[local_rank], output_device=local_rank, find_unused_parameters=True)
 
     # Optimizer: only train parameters (not memory buffers)
     # Filter out frozen params

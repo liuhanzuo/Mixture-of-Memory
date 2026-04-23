@@ -166,6 +166,11 @@ def parse_args():
                         help="Top-k memory retrieval per token per head")
     parser.add_argument("--ema_alpha", type=float, default=0.1,
                         help="EMA decay rate for memory bank updates")
+    parser.add_argument("--write_top_k", type=int, default=0,
+                        help="Number of top-important tokens to write per chunk. 0 = write all (legacy)")
+    parser.add_argument("--importance_mode", type=str, default="combined",
+                        choices=["magnitude", "attention_surprise", "combined"],
+                        help="Token importance scoring method for selective writing")
 
     # Phase 2: Bypass gate initialization
     parser.add_argument("--bypass_bias_init", type=float, default=-2.0,
@@ -264,6 +269,7 @@ def main():
     print(f"Expected bypass at init: {torch.sigmoid(torch.tensor(args.bypass_bias_init)):.4f}")
     print(f"Bypass gate LR multiplier: {args.bypass_gate_lr_multiplier}")
     print(f"Num slots: {args.num_slots}, Window: {args.window_size}, Top-k: {args.top_k}")
+    print(f"Write top-k: {args.write_top_k}, Importance mode: {args.importance_mode}")
 
     model = base_model  # Keep PreTrainedModel for Trainer compatibility
 
@@ -286,6 +292,8 @@ def main():
             head_dim=head_dim,
             ema_alpha=args.ema_alpha,
             gate_bias_init=args.bypass_bias_init,
+            write_top_k=args.write_top_k,
+            importance_mode=args.importance_mode,
         )
         for _ in range(num_layers)
     ]

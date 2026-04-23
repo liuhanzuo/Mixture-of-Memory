@@ -50,7 +50,7 @@ def evaluate_ppl_with_compression(model, tokenizer, prompts: List[str], compress
     Returns:
         results: Dictionary with PPL metrics
     """
-    compressor = SelectiveContext(compression_ratio=compression_ratio, method="importance")
+    compressor = SelectiveContext(compression_ratio=compression_ratio, method="importance", window_size=100)
     
     original_ppls = []
     compressed_ppls = []
@@ -212,13 +212,31 @@ def compare_with_baseline():
 
 
 if __name__ == "__main__":
+    import argparse
+    
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--model", type=str, default="models/Llama--Llama2-7b", help="Model path")
+    parser.add_argument("--ratios", type=float, nargs='+', default=[0.3, 0.5, 0.7], help="Compression ratios to test")
+    parser.add_argument("--test_only", action="store_true", help="Only run quick test with toy model")
+    
+    args = parser.parse_args()
+    
     print("Starting Selective Context evaluation...")
     
-    # Run evaluations
-    results = run_evaluations(
-        model_name="facebook/opt-125m",
-        compression_ratios=[0.3, 0.5, 0.7]
-    )
+    if args.test_only:
+        # Quick test with toy model
+        print("\nRunning quick test with OPT-125m...")
+        results = run_evaluations(
+            model_name="facebook/opt-125m",
+            compression_ratios=[0.5]
+        )
+    else:
+        # Full evaluation with Llama-2-7b
+        print(f"\nRunning full evaluation with {args.model}...")
+        results = run_evaluations(
+            model_name=args.model,
+            compression_ratios=args.ratios
+        )
     
     # Compare with our sparse memory baseline
     baseline_comparison = compare_with_baseline()
@@ -228,4 +246,5 @@ if __name__ == "__main__":
     print("="*60)
     print("Selective Context provides a zero-cost alternative to sparse memory.")
     print("Expected results: No PPL degradation (unlike sparse memory's +20% regression)")
-    print("Next step: Test with actual Llama-2-7b model and standard benchmarks")
+    if not args.test_only:
+        print("Next step: Review results and decide on CCM-style KV compression")

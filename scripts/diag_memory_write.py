@@ -59,19 +59,22 @@ def main():
     bank = MemoryBank(num_slots=num_slots, hidden_dim=dim, ema_alpha=ema_alpha, dtype=torch.float32)
     bank.reset(batch_size=1)
     
+    # Simulate cyclic write: all tokens → all slots
+    slot_idx = torch.arange(seq_length) % num_slots  # cyclic mapping
+    
     # Segment 1: fill memory
     h1 = torch.randn(seq_length, dim)
-    bank.write(h1, batch_idx=0)
+    bank.update_slots(h1, batch_idx=0, slot_indices=slot_idx.unsqueeze(1))
     mem_after_1 = bank.memory[0].detach().clone()
     
     # Segment 2: different data
     h2 = torch.randn(seq_length, dim)
-    bank.write(h2, batch_idx=0)
+    bank.update_slots(h2, batch_idx=0, slot_indices=slot_idx.unsqueeze(1))
     mem_after_2 = bank.memory[0].detach().clone()
     
     # Segment 3: different data
     h3 = torch.randn(seq_length, dim)
-    bank.write(h3, batch_idx=0)
+    bank.update_slots(h3, batch_idx=0, slot_indices=slot_idx.unsqueeze(1))
     mem_after_3 = bank.memory[0].detach().clone()
     
     # Measure retention
@@ -102,32 +105,23 @@ def main():
     # === COMPARE: Selective write simulation ===
     print("\n--- SELECTIVE WRITE SIMULATION (top-K only) ---")
     
-    bank2 = MemoryBank(num_slots=num_slots, hidden_dim=dim, ema_alpha=ema_alpha, dtype=torch.float32)
+    bank2 = MemoryBank(num_slots=num_slots, hidden_dim=dim, ema_alpha=ema_alpha,
+                        write_top_k=top_k, importance_mode="magnitude", dtype=torch.float32)
     bank2.reset(batch_size=1)
     
-    # Write only top-K tokens per step (simulate by writing K non-overlapping tokens)
+    slot_idx = torch.arange(seq_length) % num_slots
     K = top_k
     
     h1 = torch.randn(seq_length, dim)
-    # Select top-K "important" tokens (by norm, as a simple proxy)
-    norms1 = h1.norm(dim=-1)
-    topk_idx1 = norms1.topk(K).indices
-    topk_h1 = h1[topk_idx1]
-    bank2.write(topk_h1, batch_idx=0)
+    bank2.update_slots(h1, batch_idx=0, slot_indices=slot_idx.unsqueeze(1))
     mem2_after_1 = bank2.memory[0].detach().clone()
     
     h2 = torch.randn(seq_length, dim)
-    norms2 = h2.norm(dim=-1)
-    topk_idx2 = norms2.topk(K).indices
-    topk_h2 = h2[topk_idx2]
-    bank2.write(topk_h2, batch_idx=0)
+    bank2.update_slots(h2, batch_idx=0, slot_indices=slot_idx.unsqueeze(1))
     mem2_after_2 = bank2.memory[0].detach().clone()
     
     h3 = torch.randn(seq_length, dim)
-    norms3 = h3.norm(dim=-1)
-    topk_idx3 = norms3.topk(K).indices
-    topk_h3 = h3[topk_idx3]
-    bank2.write(topk_h3, batch_idx=0)
+    bank2.update_slots(h3, batch_idx=0, slot_indices=slot_idx.unsqueeze(1))
     mem2_after_3 = bank2.memory[0].detach().clone()
     
     sel_ret_1_3 = avg_cos_sim(mem2_after_1, mem2_after_3)

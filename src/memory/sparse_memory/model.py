@@ -46,6 +46,9 @@ class SparseMemoryLlamaForCausalLM(nn.Module):
         bptt_depth: int = 2,
         recon_loss_coef: float = 0.1,
         use_importance_routing: bool = False,
+        # Selective memory writing params
+        write_top_k: int = 0,
+        importance_mode: str = "combined",
     ) -> None:
         super().__init__()
 
@@ -66,11 +69,9 @@ class SparseMemoryLlamaForCausalLM(nn.Module):
         # Memory dtype for banks (default: match model dtype)
         self._memory_dtype = memory_dtype if memory_dtype is not None else torch_dtype
 
-    def gradient_checkpointing_enable(self, **kwargs):
-        self.model.gradient_checkpointing_enable(**kwargs)
-
-    def gradient_checkpointing_disable(self):
-        self.model.gradient_checkpointing_disable()
+        # Importance-based selective writing params
+        self._write_top_k = write_top_k
+        self._importance_mode = importance_mode
 
         # Create per-layer memory banks
         num_layers = config.num_hidden_layers
@@ -80,6 +81,8 @@ class SparseMemoryLlamaForCausalLM(nn.Module):
                 hidden_dim=config.hidden_size,
                 ema_alpha=ema_alpha,
                 dtype=self._memory_dtype,
+                write_top_k=self._write_top_k,
+                importance_mode=self._importance_mode,
             )
             for _ in range(num_layers)
         ])
@@ -132,6 +135,12 @@ class SparseMemoryLlamaForCausalLM(nn.Module):
                 config.hidden_size * num_mem_tokens,
                 bias=False,
             )
+
+    def gradient_checkpointing_enable(self, **kwargs):
+        self.model.gradient_checkpointing_enable(**kwargs)
+
+    def gradient_checkpointing_disable(self):
+        self.model.gradient_checkpointing_disable()
 
     def reset_memory(self, batch_size: int = 1) -> None:
         """Reset all memory banks for given batch size."""

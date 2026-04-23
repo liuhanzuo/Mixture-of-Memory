@@ -35,6 +35,8 @@ class SparseMemoryBank(nn.Module):
         head_dim: Optional[int] = None,
         ema_alpha: float = 0.1,
         gate_bias_init: float = 0.0,
+        write_top_k: int = 0,
+        importance_mode: str = "combined",
     ) -> None:
         super().__init__()
         self.num_layers = num_layers
@@ -42,6 +44,8 @@ class SparseMemoryBank(nn.Module):
         self.hidden_dim = hidden_dim
         self.head_dim = head_dim or hidden_dim
         self.ema_alpha = ema_alpha
+        self.write_top_k = write_top_k
+        self.importance_mode = importance_mode
 
         # Memory tensor: [num_layers, N, hidden_dim]
         self.memory = nn.Parameter(
@@ -82,6 +86,21 @@ class SparseMemoryBank(nn.Module):
 
         # Compute write gate: sigmoid(W @ h + b) → [T, 1]
         g = torch.sigmoid(self.write_gate[layer_idx](values.float())).to(values.dtype)  # [T, 1]
+
+        # Selective writing: only write top-K important tokens
+        if self.write_top_k and self.write_top_k > 0 and self.write_top_k < T:
+            gate_importance = g.abs().squeeze(-1)  # [T]
+            value_importance = values.float().norm(dim=-1)  # [T]
+            if self.importance_mode == "magnitude":
+                importance = value_importance
+            elif self.importance_mode == "attention_surprise":
+                importance = gate_importance
+            else:  # combined
+                importance = gate_importance * value_importance
+            topk_vals, topk_idx = importance.topk(self.write_top_k)  # [write_top_k]
+            values = values[topk_idx]
+            g = g[topk_idx]
+            T = self.write_top_k
 
         # Gather current memory at target slots
         indices = torch.arange(T, device=values.device)
