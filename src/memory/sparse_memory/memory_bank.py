@@ -50,9 +50,13 @@ class MemoryBank(nn.Module):
         self.importance_mode = importance_mode
 
         # Memory buffer: [1, N, d] placeholder; expanded to [B, N, d] on reset()
-        self.register_parameter(
+        # Uses register_buffer (persistent=False) instead of nn.Parameter:
+        #   - Buffer does NOT participate in DDP allreduce → safe for multi-GPU
+        #   - persistent=False → not saved in state_dict (it's runtime state)
+        self.register_buffer(
             "memory",
-            nn.Parameter(torch.zeros(1, num_slots, hidden_dim, dtype=dtype), requires_grad=False),
+            torch.zeros(1, num_slots, hidden_dim, dtype=dtype),
+            persistent=False,
         )
 
         # Optional learnable importance scorer: maps hidden_dim → scalar score
@@ -63,19 +67,22 @@ class MemoryBank(nn.Module):
         )
         with torch.no_grad():
             nn.init.zeros_(self.importance_head[0].weight)
-            self.importance_head[0].bias.fill_(0.0)
+            self.importance_head[0].bias.fill_(2.0)    # σ(2) ≈ 0.88 — avoid crushing memory at init
 
         # Running stats for diagnostics
         self._write_count = 0
         self._total_tokens_seen = 0
 
     def reset(self, batch_size: int = 1) -> None:
-        """Zero out memory for given batch size."""
+        """Zero out memory for given batch size (in-place, DDP-safe)."""
         device = self.memory.device
-        self.memory = nn.Parameter(
-            torch.zeros(batch_size, self.num_slots, self.hidden_dim, device=device, dtype=self._dtype),
-            requires_grad=False,
-        )
+        if self.memory.shape[0] != batch_size:
+            self.memory = torch.zeros(
+                batch_size, self.num_slots, self.hidden_dim,
+                device=device, dtype=self._dtype,
+            )
+        else:
+            self.memory.zero_()
         self._write_count = 0
         self._total_tokens_seen = 0
 
@@ -129,6 +136,22 @@ class MemoryBank(nn.Module):
 
         return importance
 
+    def learned_importance(self, hidden_states: torch.Tensor) -> torch.Tensor:
+        """Compute the *learnable* part of importance only (with gradient).
+
+        This is called from the read path (attention.py) to create a gradient
+        path from LM loss → o_mem → importance_head.  The write path's
+        hard top-K selection in update_slots() is non-differentiable, so
+        this is the ONLY way importance_head receives training signal.
+
+        Args:
+            hidden_states: [B, T, D] or [T, D].
+        Returns:
+            [B, T] or [T]: sigmoid-squashed learnable importance in [0, 1].
+        """
+        score = self.importance_head(hidden_states.float()).squeeze(-1)  # [..., T]
+        return torch.sigmoid(score)
+
     def update_slots(
         self,
         hidden_states: torch.Tensor,  # [T, D]
@@ -173,22 +196,34 @@ class MemoryBank(nn.Module):
             slot_indices_selected = slot_indices
             self._write_count += T
 
-        # ── EMA update per unique slot (no_grad) ──
+        # ── EMA update — vectorized scatter (Bug E fix) ──
         with torch.no_grad():
-            new_mem = self.memory.clone()
-            unique_indices = torch.unique(slot_indices_selected.flatten())
+            Kp = slot_indices_selected.shape[0]
+            Ks = slot_indices_selected.shape[1]
+            D_dim = hidden_states_selected.shape[-1]
 
-            for idx in unique_indices:
-                mask = (slot_indices_selected == idx).any(dim=-1)
-                if mask.sum() == 0:
-                    continue
-                relevant_hiddens = hidden_states_selected[mask]  # [n, D]
-                aggregated = relevant_hiddens.mean(dim=0)  # [D]
-                current = self.memory[batch_idx, idx]  # [D]
-                updated = (alpha * aggregated + (1.0 - alpha) * current).to(self._dtype)
-                new_mem[batch_idx, idx] = updated
+            # Flatten to (flat_slot_idx, flat_hidden) pairs
+            flat_slots = slot_indices_selected.reshape(-1)                          # [Kp*Ks]
+            flat_hids = (hidden_states_selected
+                         .unsqueeze(1).expand(Kp, Ks, D_dim)
+                         .reshape(-1, D_dim)
+                         .to(self._dtype))                                      # [Kp*Ks, D]
 
-            self.memory = nn.Parameter(new_mem, requires_grad=False)
+            # Aggregate per-slot sums and counts via scatter_add
+            N = self.num_slots
+            slot_sum = torch.zeros(N, D_dim, device=flat_hids.device, dtype=self._dtype)
+            slot_cnt = torch.zeros(N, device=flat_hids.device, dtype=self._dtype)
+            slot_sum.index_add_(0, flat_slots, flat_hids)
+            slot_cnt.index_add_(0, flat_slots, torch.ones_like(flat_slots, dtype=self._dtype))
+
+            # In-place EMA for active slots only
+            active = slot_cnt > 0                                               # [N]
+            if active.any():
+                agg = slot_sum[active] / slot_cnt[active].unsqueeze(-1)         # [A, D]
+                cur = self.memory[batch_idx, active]                             # [A, D]
+                self.memory[batch_idx, active] = (
+                    alpha * agg + (1.0 - alpha) * cur
+                ).to(self._dtype)
 
     def get_write_stats(self) -> dict:
         """Return diagnostic stats about write behavior."""

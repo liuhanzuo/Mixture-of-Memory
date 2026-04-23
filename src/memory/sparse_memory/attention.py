@@ -213,6 +213,13 @@ class SparseMemoryAttention(nn.Module):
         o_mem = o_mem.transpose(1, 2).contiguous().view(B, T, D)
         # NOTE: no o_proj — memory path already has correct scale from v_proj + attention
 
+        # ── Bug B fix: learned importance as soft per-token gate on memory path ──
+        # This is the ONLY way importance_head receives gradient from the LM loss.
+        # importance_head was previously a dead parameter (gradient never flowed to it).
+        imp = self._memory_bank.learned_importance(hidden_states)  # [B, T], fp32
+        imp = imp.to(o_mem.dtype).unsqueeze(-1)                    # [B, T, 1]
+        o_mem = o_mem * imp                                        # broadcast to [B, T, D]
+
         # ── Gated Two-Path Fusion ───────────────────────────────────────
         # g = σ(W_g · h + b_g),  o = g · o_local + (1-g) · o_mem
         # Initial bias=+2.0 → σ(2)≈0.88 → 88% local, 12% memory
@@ -220,9 +227,9 @@ class SparseMemoryAttention(nn.Module):
         output = g * o_local + (1.0 - g) * o_mem
 
         # ── Memory Write: importance-based top-K selective writing ─────
-        # Aggregate shared indices across heads
-        avg_shared_idx = shared_idx_for_write.float().mean(dim=1).long()  # [B, K]
-        avg_shared_idx = avg_shared_idx.clamp(0, self._memory_bank.num_slots - 1)
+        # Aggregate shared indices across heads — use head-0's indices as write targets
+        # (Bug D fix: averaging categorical indices was semantically wrong)
+        avg_shared_idx = shared_idx_for_write[:, 0, :]  # [B, K]
 
         # Per-token attention weights for importance scoring
         # attn_weights: [B, H, T, K] → mean over heads → [B, T, K]

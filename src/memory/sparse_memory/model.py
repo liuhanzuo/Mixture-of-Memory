@@ -163,23 +163,31 @@ class SparseMemoryLlamaForCausalLM(nn.Module):
         input_ids: torch.Tensor,
         attention_mask: Optional[torch.Tensor] = None,
         labels: Optional[torch.Tensor] = None,
+        past_key_values=None,
         **kwargs,
     ) -> dict:
-        """Forward pass with memory reset per sample.
+        """Forward pass with memory reset at sample boundaries.
 
-        Memory is reset at the start of each forward call (each sample is independent).
+        Memory is reset only when past_key_values is None, i.e. at the start
+        of a new sample (training step) or at the first step of generate().
+        Subsequent generate() decode steps (past_key_values is not None) will
+        *preserve* memory built up from the prompt.
         """
         B = input_ids.shape[0]
-        self.reset_memory(batch_size=B)
+        if past_key_values is None:
+            self.reset_memory(batch_size=B)
         return self.model(
             input_ids=input_ids,
             attention_mask=attention_mask,
             labels=labels,
+            past_key_values=past_key_values,
             **kwargs,
         )
 
-    def generate(self, *args, **kwargs):
-        return self.model.generate(*args, **kwargs)
+    def generate(self, input_ids, *args, **kwargs):
+        B = input_ids.shape[0] if torch.is_tensor(input_ids) else 1
+        self.reset_memory(batch_size=B)
+        return self.model.generate(input_ids, *args, **kwargs)
 
     @property
     def lm_head(self):
