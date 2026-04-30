@@ -19,8 +19,12 @@ class PreTokenizedEvalDataset(torch.utils.data.Dataset):
         return len(self.data)
     
     def __getitem__(self, idx):
+        # Do NOT pre-shift: LlamaForCausalLM(labels=...) shifts internally.
+        # Pre-shifting here is a DOUBLE SHIFT (predict 2 ahead), which
+        # explodes PPL. Fixed 2026-04-25 after bare-forward baseline 1.14 on
+        # Llama-3 vs 5e7 under old (pre-shift) alignment.
         tokens = torch.tensor(self.data[idx], dtype=torch.long)
-        return {"input_ids": tokens[:-1], "labels": tokens[1:]}
+        return {"input_ids": tokens, "labels": tokens.clone()}
 
 def collate_fn(batch):
     return {

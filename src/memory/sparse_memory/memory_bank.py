@@ -38,7 +38,7 @@ class MemoryBank(nn.Module):
         hidden_dim: int = 4096,
         ema_alpha: float = 0.1,
         dtype: torch.dtype = torch.bfloat16,
-        write_top_k: int | None = 0,
+        write_top_k: int | None = 8,
         importance_mode: str = "combined",
     ) -> None:
         super().__init__()

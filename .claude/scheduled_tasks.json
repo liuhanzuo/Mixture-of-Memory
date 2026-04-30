@@ -1,0 +1,15 @@
+{
+  "tasks": [
+    {
+      "id": "98f86986",
+      "cron": "*/20 * * * *",
+      "prompt": "执行 Mixture-of-Memory 项目的 heartbeat 巡检流程（工作目录：/apdcephfs_wzc1/share_303098609/pighzliu_code/Mixture-of-Memory/）。\n\n步骤：\n1. 读取 status/TRAINER_ACTIVE.md 和 HEARTBEAT.md\n2. 运行 `nvidia-smi --query-gpu=index,memory.used,memory.total,utilization.gpu --format=csv,noheader`\n3. 运行 `nvidia-smi --query-compute-apps=pid,used_memory,process_name --format=csv,noheader`，对每个 PID 运行 `ps -fp <pid>` 和 `readlink /proc/<pid>/cwd`，与 status/gpu_runs.jsonl 比对，分类为 expected/small_debug/unknown/stale_orphan\n4. 如果 TRAINER_ACTIVE.md 显示有 running 训练，读取 log 末尾 15 行判断健康状态\n5. 读取 configs/remote_experiments.json，对 status=running 的节点 SSH 检查（sshpass -f configs/password.txt ssh -o StrictHostKeyChecking=no root@<IP> \"nvidia-smi --query-compute-apps=pid,used_memory --format=csv,noheader; tail -5 <log>\"）\n6. 读取 status/TRAINER_REQUESTS.jsonl 和 status/TRAINER_APPROVALS.jsonl，找出未批准的请求列给用户\n7. 追加一条记录到 status/TRAINER_ACTIVITY.jsonl（格式：{\"timestamp\":\"ISO8601\",\"event\":\"heartbeat\",\"gpu_summary\":\"...\",\"active_training\":\"...\",\"pending_requests\":N,\"conclusion\":\"OK|WARNING|CRITICAL\",\"note\":\"...\"}）\n8. 输出结论：一切正常末尾写 HEARTBEAT_OK，有问题明确描述\n\n始终使用 Asia/Shanghai (GMT+8) 时区。",
+      "createdAt": 1777480365217,
+      "lastFiredAt": 1777531060989,
+      "recurring": true,
+      "createdBySessionId": "9f29aff4-e819-4fb8-9327-c3a7b9b1c0e9",
+      "createdByPid": 468553,
+      "createdByProcStart": "258567682"
+    }
+  ]
+}

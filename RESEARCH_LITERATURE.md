@@ -3124,3 +3124,31 @@ class SlotAttention(nn.Module):
 **第二轮调研完成时间**: 2026-04-21 23:58 GMT+8
 **数据来源**: arXiv (直接访问), web-reader, GitHub (convergence-ai/lm2)
 **网络状态**: Brave API 不可用, web-reader 可用, zread 部分可用
+
+---
+
+## ⚠️ CRITICAL FINDING 2026-04-30 — SKRL (Slot Key Repulsion Loss) is ANTI-PRODUCTIVE
+
+**Summary**: Geometric key-key repulsion loss (pushing slot_keys toward uniform sphere-packing = ETF minimum) is mathematically ORTHOGONAL to, and empirically adversarial to, routing selectivity (top1_sim).
+
+### Evidence
+- fix_v_ablation: T=10, skrl={0.05,0.10,0.15}, 1200 fwd passes. top1_sim plateau 0.0036 (goal: >0.010 at fwd=500).
+- Monte Carlo simulation (d=128, N=512, ETF keys, 2000 trials): T=10 theoretical top1 = 0.020. Observed 0.0036 = **5.5× LOWER**.
+- Mathematical basis: ETF minimum = sum of keys → 0. For any query q, E[cos(q, k_i)] = 0 with tiny variance → softmax uniform.
+
+### Literature verification
+No successful MoE / slot-memory system in 2023-2025 literature uses geometric key-key repulsion:
+- **Switch Transformer** (Fedus 2021): load_balance_loss only. Experts differentiate via LM gradient alone.
+- **Soft MoE** (Puigcerver 2024): temperature-based soft routing, no key regularization.
+- **Mixtral** (Jiang 2024): top-k + load balance + router z-loss.
+- **DeepSeek-MoE** (2024): shared experts + fine-grained routing, no key repulsion.
+- **MCRM** (2024): InfoNCE on expert OUTPUTS (not keys) — query-aligned specialization.
+
+### Recommended replacement
+- **Option A (X.1)**: Remove SKRL entirely. Rely on LM gradient → slot_keys path (restore after undetaching at selector.py:159). Load balance prevents collapse.
+- **Option B (X.2)**: InfoNCE routing loss. Pulls top-1 key toward current query, pushes others away. Non-zero gradient at uniform fixed point.
+
+### Design principle going forward
+**"Key geometry should align with query distribution, NOT maximize pairwise key diversity."**
+
+See: `ops/research_notes/20260430_0520_fix_x_skrl_anti_productive.md`

@@ -63,8 +63,14 @@ class PreTokenizedDataset(Dataset):
         return self._data.shape[0]
 
     def __getitem__(self, idx):
+        # IMPORTANT: do NOT pre-shift. `LlamaForCausalLM.forward(labels=...)`
+        # applies its own `shift_logits=logits[..., :-1, :]` /
+        # `shift_labels=labels[..., 1:]`. Pre-shifting here is a DOUBLE SHIFT:
+        # training loss would correspond to predicting 2 tokens ahead instead
+        # of 1, producing silently-wrong gradients. See bug investigation
+        # 2026-04-25 and scripts/eval_qfilters.py reference fix.
         tokens = self._data[idx]
-        return {"input_ids": tokens[:-1], "labels": tokens[1:]}
+        return {"input_ids": tokens, "labels": tokens.clone()}
 
 
 def collate_fn(batch):

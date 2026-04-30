@@ -166,8 +166,9 @@ def parse_args():
                         help="Top-k memory retrieval per token per head")
     parser.add_argument("--ema_alpha", type=float, default=0.1,
                         help="EMA decay rate for memory bank updates")
-    parser.add_argument("--write_top_k", type=int, default=0,
-                        help="Number of top-important tokens to write per chunk. 0 = write all (legacy)")
+    parser.add_argument("--write_top_k", type=int, default=8,
+                        help="Number of top-important tokens to write per chunk. "
+                             "Default 8 matches read top_k; 0 = write all (legacy, wraps buffer every chunk).")
     parser.add_argument("--importance_mode", type=str, default="combined",
                         choices=["magnitude", "attention_surprise", "combined"],
                         help="Token importance scoring method for selective writing")

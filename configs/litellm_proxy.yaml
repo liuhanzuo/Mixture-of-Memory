@@ -1,0 +1,95 @@
+model_list:
+  # ── Sonnet slot: GLM-5.1 (main agent) ──────────────────────────────────────
+  - model_name: glm-5.1
+    litellm_params:
+      model: anthropic/glm-5.1
+      api_base: https://open.bigmodel.cn/api/anthropic
+      api_key: "6bf3ff9151a149ceb1bcec3fe9b357f3.yP0MMLQwGqVxtTTg"
+
+  - model_name: glm-5-turbo
+    litellm_params:
+      model: anthropic/glm-5-turbo
+      api_base: https://open.bigmodel.cn/api/anthropic
+      api_key: "6bf3ff9151a149ceb1bcec3fe9b357f3.yP0MMLQwGqVxtTTg"
+
+  - model_name: glm-5
+    litellm_params:
+      model: anthropic/glm-5
+      api_base: https://open.bigmodel.cn/api/anthropic
+      api_key: "6bf3ff9151a149ceb1bcec3fe9b357f3.yP0MMLQwGqVxtTTg"
+
+  # ── Sonnet fallback: native claude-sonnet-4-6 via Tencent ──────────────────
+  - model_name: claude-sonnet-4-6
+    litellm_params:
+      model: anthropic/claude-sonnet-4-6
+      api_base: https://copilot.code.woa.com/server/chat/codebuddy-gateway/codebuddy-code
+      api_key: "c371df8aea9f07bad42c89f3088e1688"
+      extra_headers:
+        user-agent: "Claude-Code-Internal/1.1.6"
+        x-request-platform: "CodeBuddy-Code"
+        x-request-platform-v2: "Claude-Code-Internal"
+        x-app-name: "codebuddy-code"
+        x-app-name-v2: "claude-code-internal"
+        x-app-version: "1.1.6"
+        x-scene-name: "common_chat"
+        x-claude-code-internal: "true"
+        x-channel: "claude-code-internal"
+        x-api-key: "c371df8aea9f07bad42c89f3088e1688"
+
+  # ── Opus slot: claude-opus-4-6 via Tencent ──────────────────────────────────
+  # Claude Code sends "claude-opus-4-6" (strips [1m]), so model_name must match.
+  # litellm_params.model keeps the real Tencent gateway name with [1m] context tag.
+  - model_name: claude-opus-4-6
+    litellm_params:
+      model: anthropic/claude-opus-4-6[1m]
+      api_base: https://copilot.code.woa.com/server/chat/codebuddy-gateway/codebuddy-code
+      api_key: "c371df8aea9f07bad42c89f3088e1688"
+      extra_headers:
+        user-agent: "Claude-Code-Internal/1.1.6"
+        x-request-platform: "CodeBuddy-Code"
+        x-request-platform-v2: "Claude-Code-Internal"
+        x-app-name: "codebuddy-code"
+        x-app-name-v2: "claude-code-internal"
+        x-app-version: "1.1.6"
+        x-scene-name: "common_chat"
+        x-claude-code-internal: "true"
+        x-channel: "claude-code-internal"
+        x-api-key: "c371df8aea9f07bad42c89f3088e1688"
+
+  # ── Haiku slot: GLM-4.7 ────────────────────────────────────────────────────
+  - model_name: glm-4.7
+    litellm_params:
+      model: anthropic/glm-4.7
+      api_base: https://open.bigmodel.cn/api/anthropic
+      api_key: "6bf3ff9151a149ceb1bcec3fe9b357f3.yP0MMLQwGqVxtTTg"
+
+  # ── Extra GLM models (available for direct use / fallback) ─────────────────
+  - model_name: glm-4-flash
+    litellm_params:
+      model: anthropic/glm-4-flash
+      api_base: https://open.bigmodel.cn/api/anthropic
+      api_key: "6bf3ff9151a149ceb1bcec3fe9b357f3.yP0MMLQwGqVxtTTg"
+
+  - model_name: glm-4-flash-250414
+    litellm_params:
+      model: anthropic/glm-4-flash-250414
+      api_base: https://open.bigmodel.cn/api/anthropic
+      api_key: "6bf3ff9151a149ceb1bcec3fe9b357f3.yP0MMLQwGqVxtTTg"
+
+litellm_settings:
+  set_verbose: false
+  # Fallback chains:
+  #   sonnet: glm-5.1 → glm-5-turbo → glm-5 → claude-sonnet-4-6 (Tencent)
+  #   opus:   (no fallback needed; Tencent is already reliable)
+  #   haiku:  glm-4.7 → glm-4-flash (lighter GLM)
+  # Triggered on: RateLimitError, ServiceUnavailableError, APIError (5xx)
+  fallbacks:
+    - {"glm-5.1": ["glm-5-turbo", "glm-5", "claude-sonnet-4-6"]}
+    - {"glm-4.7": ["glm-4-flash"]}
+  # GLM requires star-proxy for external network access.
+  # Start litellm with: http_proxy=http://star-proxy.oa.com:3128 litellm --config ...
+
+general_settings:
+  # master_key must match the x-api-key / ANTHROPIC_AUTH_TOKEN sent by claude-code-internal.
+  master_key: "c371df8aea9f07bad42c89f3088e1688"
+  port: 4000

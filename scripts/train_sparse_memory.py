@@ -56,8 +56,14 @@ class PreTokenizedDataset(Dataset):
         return self._data.shape[0]
 
     def __getitem__(self, idx):
+        # IMPORTANT: do NOT pre-shift. `LlamaForCausalLM.forward(labels=...)`
+        # applies its own `shift_logits=logits[..., :-1, :]` /
+        # `shift_labels=labels[..., 1:]`. Pre-shifting here is a DOUBLE SHIFT:
+        # training loss would correspond to predicting 2 tokens ahead instead
+        # of 1, producing silently-wrong gradients. See bug investigation
+        # 2026-04-25 and scripts/eval_qfilters.py reference fix.
         tokens = self._data[idx]
-        return {"input_ids": tokens[:-1], "labels": tokens[1:]}
+        return {"input_ids": tokens, "labels": tokens.clone()}
 
 
 class JSONLTextDataset(Dataset):
@@ -136,9 +142,15 @@ class JSONLTextDataset(Dataset):
     def __getitem__(self, idx):
         tokens = self._chunks[idx]
         t = torch.tensor(tokens, dtype=torch.long)
+        # IMPORTANT: do NOT pre-shift. `LlamaForCausalLM.forward(labels=...)`
+        # applies its own `shift_logits=logits[..., :-1, :]` /
+        # `shift_labels=labels[..., 1:]`. Pre-shifting here is a DOUBLE SHIFT:
+        # training loss would correspond to predicting 2 tokens ahead instead
+        # of 1, producing silently-wrong gradients. See bug investigation
+        # 2026-04-25 and scripts/eval_qfilters.py reference fix.
         return {
-            "input_ids": t[:-1],
-            "labels": t[1:],
+            "input_ids": t,
+            "labels": t.clone(),
         }
 
 
@@ -185,8 +197,9 @@ def parse_args():
                         help="Use importance-based routing between L0 and L1")
 
     # Selective memory writing
-    parser.add_argument("--write_top_k", type=int, default=0,
-                        help="Top-K important tokens to write to memory per chunk (0=all, legacy)")
+    parser.add_argument("--write_top_k", type=int, default=8,
+                        help="Top-K important tokens to write to memory per chunk "
+                             "(default 8; 0=all, legacy — wraps buffer every chunk)")
     parser.add_argument("--importance_mode", type=str, default="combined",
                         choices=["magnitude", "attention_surprise", "combined"],
                         help="Token importance scoring method for selective writing")

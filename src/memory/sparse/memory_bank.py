@@ -24,7 +24,15 @@ class SparseMemoryBank(nn.Module):
         hidden_dim: Full hidden dimension d.
         head_dim: Per-head dimension (default hidden_dim).
         ema_alpha: EMA decay rate (default 0.1).
-        gate_bias_init: Initial bias for write gate (default 0.0 so g ≈ 0.5, max gradient).
+        gate_bias_init: Initial bias for write gate (default 4.0 so σ(4)≈0.98,
+            making the gate ~pass-through. Since the gate is frozen (see below),
+            a high bias prevents the random Kaiming-init weight from halving
+            every EMA update. The old 0.0 default (σ(0)=0.5) caused writes to
+            be weighted by random noise — Bug #3, fixed 2026-04-25.
+        write_top_k: Number of top-K most-important tokens to write per forward
+            call (default 8, matches read top_k). The old 0 default wrote ALL
+            T tokens, which with T=4096 and num_slots=128 wrapped the buffer
+            ~32× per chunk and wiped all prior memory — Bug #1, fixed 2026-04-25.
     """
 
     def __init__(
@@ -34,8 +42,8 @@ class SparseMemoryBank(nn.Module):
         hidden_dim: int = 4096,
         head_dim: Optional[int] = None,
         ema_alpha: float = 0.1,
-        gate_bias_init: float = 0.0,
-        write_top_k: int = 0,
+        gate_bias_init: float = 4.0,
+        write_top_k: int = 8,
         importance_mode: str = "combined",
     ) -> None:
         super().__init__()
@@ -69,6 +77,14 @@ class SparseMemoryBank(nn.Module):
 
         # Write pointer (circular buffer) — not a parameter
         self.register_buffer("_write_ptr", torch.zeros(num_layers, dtype=torch.long))
+
+        # Write-frequency instrumentation (Bug-audit 2026-04-25).
+        # _write_tokens[l] counts how many tokens have been EMA-written into
+        # layer l's bank across the lifetime of this module. Useful for
+        # verifying write_top_k is actually in effect.
+        # _write_calls[l] counts how many .write() invocations happened.
+        self.register_buffer("_write_tokens", torch.zeros(num_layers, dtype=torch.long))
+        self.register_buffer("_write_calls", torch.zeros(num_layers, dtype=torch.long))
 
     @property
     def write_ptr(self) -> torch.Tensor:
@@ -115,7 +131,11 @@ class SparseMemoryBank(nn.Module):
         # Advance pointer (no gradient)
         self._write_ptr[layer_idx].fill_((ptr + T) % self.num_slots)
 
-    # ── Read ───────────────────────────────────────────────────────────
+        # Instrumentation: track write frequency (Bug-audit 2026-04-25)
+        self._write_tokens[layer_idx] += T
+        self._write_calls[layer_idx] += 1
+
+    # ── Read ──────────────────────────────────────────────────────────
     def read(
         self,
         layer_idx: int,
@@ -163,3 +183,25 @@ class SparseMemoryBank(nn.Module):
         """Reset memory and write pointers."""
         nn.init.normal_(self.memory, std=0.02)
         self._write_ptr.zero_()
+        self._write_tokens.zero_()
+        self._write_calls.zero_()
+
+    def write_stats(self) -> dict:
+        """Return per-layer write-frequency stats for instrumentation.
+
+        Returns dict with keys:
+            tokens_per_layer: LongTensor[num_layers]
+            calls_per_layer:  LongTensor[num_layers]
+            tokens_total:     int
+            calls_total:      int
+            tokens_per_call:  float (tokens_total / max(calls_total, 1))
+        """
+        total_tokens = int(self._write_tokens.sum().item())
+        total_calls = int(self._write_calls.sum().item())
+        return {
+            "tokens_per_layer": self._write_tokens.detach().clone(),
+            "calls_per_layer": self._write_calls.detach().clone(),
+            "tokens_total": total_tokens,
+            "calls_total": total_calls,
+            "tokens_per_call": total_tokens / max(total_calls, 1),
+        }

@@ -40,8 +40,15 @@ class PreTokenizedEvalDataset(Dataset):
         return len(self.data)
 
     def __getitem__(self, idx):
+        # IMPORTANT: do NOT pre-shift. `LlamaForCausalLM.forward(labels=...)`
+        # applies its own `shift_logits=logits[..., :-1, :]` /
+        # `shift_labels=labels[..., 1:]`. Pre-shifting here is a DOUBLE SHIFT:
+        # the model would be scored to predict 2 tokens ahead, which
+        # on Llama-3 (128K vocab, rope_theta=500000) explodes PPL to 4e7+ and
+        # on Llama-2 inflates it from ~60 to ~3600. See bug investigation
+        # 2026-04-25 and scripts/eval_qfilters.py reference fix.
         tokens = torch.tensor(self.data[idx], dtype=torch.long)
-        return {"input_ids": tokens[:-1], "labels": tokens[1:]}
+        return {"input_ids": tokens, "labels": tokens.clone()}
 
 
 def collate_fn(batch):

@@ -1,107 +1,258 @@
 {
+    "_comment": "Updated 2026-04-30 10:31 \u2014 fix_y_ablation LAUNCHED on b200-1/2/3 (Fix Y: dead slot revival). fix_x3_ablation KILLED 10:31 \u2014 Arm A collapsed (top1_sim=0.003, pairwise_cos=0.617 at fwd~6400); root cause: VQ-EMA dead slot revival missing. Fix Y implemented by coder, dead_slot_reset_threshold=0.5 added. Previously: fix_x3 BREAKTHROUGH all 3 arms passed STEP-500 criterion.",
+    "qfilters_s11_4_closure": {
+        "as_of": "2026-04-26 15:44",
+        "checklist_status": "15/15 \u2705 CLOSED",
+        "retraction_doc": "ops/research_notes/20260426_s11_retraction.md",
+        "updatelog_anchor": "2026-04-26 15:44 \u2014 \u00a711.4 retraction checklist CLOSED 15/15",
+        "headline_numbers_post_double_shift_fix": {
+            "llama3_wikitext_rank1_kv512_r64": {
+                "ppl": 8.57,
+                "anchor_section": "\u00a711.4.3"
+            },
+            "llama3_pg19_rank1_kv512_r64": {
+                "ppl": 4.245,
+                "anchor_section": "\u00a711.4.3 cross-dataset"
+            },
+            "llama3_pg19_rank1_kv2048": {
+                "ppl": 1.583,
+                "comment": "1.023\u00d7 dense floor 1.5468"
+            },
+            "llama3_pg19_rank1_kv4096": {
+                "ppl": 1.547,
+                "comment": "dense floor, T\u2264budget short-circuit"
+            },
+            "llama2_patchA_rank2_kv_bowl_true_min": {
+                "kv": 104,
+                "ppl": 164.85,
+                "anchor_section": "\u00a711.4.2 third revision"
+            },
+            "llama2_rank1_kv96": {
+                "ppl": 119.19,
+                "post_issue110_fix_ppl": 107.01,
+                "note": "Issue #110 exact-SVD fix applied 2026-04-26 16:47; kv<=128 stabilized."
+            },
+            "llama2_rank1_kv128": {
+                "pre_fix_ppl": 146.33,
+                "post_fix_ppl": 150.57,
+                "note": "Post-fix stable band."
+            },
+            "llama2_rank1_kv192": {
+                "pre_fix_ppl": 123.56,
+                "post_fix_ppl": 479.26,
+                "note": "PARTIAL FIX: pre-fix 123.56 was a lucky stochastic draw; post-fix deterministic PPL=479 reveals phase-transition at kv>=192 separate from SVD sign-ambiguity. 3rd-revision H1 rank=1 'shallower at kv=192' claim superseded. Follow-up multi-seed sweep queued."
+            },
+            "llama2_rank1_kv256_annotated_outlier": {
+                "pre_fix_ppl": 752.71,
+                "post_fix_ppl": 610.87,
+                "target_band": [
+                    140,
+                    220
+                ],
+                "target_hit": false,
+                "note": "Issue #110 fix PARTIAL (2026-04-26 16:47): exact SVD resolved sign-ambiguity at kv<=128 but did NOT collapse kv=256 outlier. PPL fell 752->611 but target band [140,220] not reached. Suspected residual channels: calibration data ordering, SDPA bf16 nondeterminism, rank=1 x deep-kv interaction. Issue #110 REOPENED as PARTIAL; see status/ISSUES.jsonl issue_20260426_110_reopen_partial. Pre-fix 4.9x spread across 161/752/788 ALSO recorded \u2014 both pre-fix and post-fix evidence retained for reproducibility."
+            },
+            "streaming_32k_llama3_rank1_kv512_r64": {
+                "qfilters_ppl": 4.5476,
+                "qfilters_ppl_raw": 4.293,
+                "sliding_window_ppl": 112.1625,
+                "sliding_window_ppl_raw": 98.3541,
+                "ratio_qf_sw": 0.0406,
+                "advantage": "24.7\u00d7 lower PPL for Q-Filters vs SWA over 524288 streaming tokens",
+                "anchor_section": "\u00a711.4.4"
+            }
+        },
+        "pre_fix_artifacts_DO_NOT_USE": {
+            "claim_16x_at_minus_27_3_percent": "Double-shift eval bug (Task #59 fix). Superseded \u2014 see task #60/#61 rerun tables.",
+            "notes": "Any headline quoting 41.24 / 49.60 / 49.88 / 464.28 PPL from this file's pre-2026-04-26 history is pre-fix and should not be used in publications."
+        },
+        "open_followups_not_blocking_s11_4": [
+            "researcher #110 fix application at src/memory/qfilters/calibration.py:219 (Option A, awaits user sign-off)",
+            "Task #111 memory-space v0 training dispatch (coder-complete 14:41)",
+            "H-rank-reg calibration-size disambiguation sweep (proposed)"
+        ]
+    },
     "node0": {
         "ip": "28.89.17.143",
-        "name": "llama_baseline",
-        "experiment": "llama_baseline",
-        "status": "completed",
-        "pid": null,
-        "log_path": "/root/Mixture-of-Memory/logs/train_llama_baseline.log",
-        "output_dir": "/root/Mixture-of-Memory/outputs/llama_baseline",
-        "eval_ppl": 41.24,
-        "notes": "Baseline completed successfully. PPL 41.24, loss 3.5798 at step 5000.",
-        "last_verified": "2026-04-23 00:15"
+        "cluster": 1,
+        "name": "b200-1",
+        "experiment": "fix_y_ablation_node0",
+        "status": "killed",
+        "prior_experiment_killed": "fix_x3_ablation_node0",
+        "node_rank": 0,
+        "role": "master",
+        "launcher_pid": 371370,
+        "started_at": "2026-04-30 10:40 CST",
+        "skrl_weight": 0.0,
+        "query_alignment_weight": 0.0,
+        "slot_value_norm_cap": 5.0,
+        "entropy_aux_weight": 0.0,
+        "load_balance_weight": 0.001,
+        "selector_temperature": 10.0,
+        "slot_init": "strided_token",
+        "slot_init_noise": 0.01,
+        "ema_update_weight": 1.0,
+        "ema_update_alpha": 0.9,
+        "dead_slot_reset_threshold": 0.5,
+        "skip_chunks": 200,
+        "max_chunks": 5000,
+        "fix_applied": "Fix Y (dead slot revival) + Fix X.3 (VQ-EMA) + Fix X.1 + Fix I + Fix J-A + Fix K + Fix L-1/L-2/L-3 + Fix M-1 + Fix N + Fix O + Fix P.1 + Fix P.2 + Fix S + Fix T + Fix U + Fix V + Fix W",
+        "fix_y_role": "Arm Y1 \u2014 dead_reset=0.5, norm_cap=5.0, qa=0.0, \u03b1=0.9. Pure dead-slot fix, no InfoNCE.",
+        "log_path": "/apdcephfs_wzc1/share_303098609/pighzliu_code/Mixture-of-Memory/logs/fix_y_ablation_node0_20260430_1031.log",
+        "output_dir": "/apdcephfs_wzc1/share_303098609/pighzliu_code/Mixture-of-Memory/outputs/fix_y_ablation_node0/",
+        "batch_size": 1,
+        "seq_len": 4096,
+        "n_gpus": 8,
+        "notes": "Fix Y ablation. Arm Y1: dead_slot_reset_threshold=0.5, norm_cap=5.0, qa=0.0. fwd=700 top1_sim=0.004974 pairwise_cos=0.5312 \u2014 borderline/collapsing. Without InfoNCE, dead-slot revival alone is insufficient to prevent key convergence. Compare to Y2 (InfoNCE) which passes.",
+        "last_verified": "2026-04-30 10:46",
+        "fix_x3_ablation_final_state": {
+            "killed_at": "2026-04-30 10:31 CST",
+            "kill_reason": "Fix Y implemented; Arm A collapsed (fwd=6400 top1_sim=0.003784, pairwise_cos=0.457). Root cause: dead slots never revived.",
+            "arm_a_final": "fwd=6400 top1_sim=0.003784 pairwise_cos=0.457 COLLAPSED",
+            "arm_b_final": "fwd=6250 top1_sim=0.006531 pairwise_cos=0.057 marginal",
+            "arm_c_final": "fwd=6100 top1_sim=0.007721 pairwise_cos=0.085 weakening"
+        }
     },
     "node1": {
         "ip": "28.89.17.144",
-        "name": "sparse_memory_v3",
-        "experiment": "sparse_memory_v3",
-        "status": "completed",
-        "pid": null,
-        "log_path": "/root/Mixture-of-Memory/logs/train_sparse_memory_rtu_v3.log",
-        "output_dir": "/root/Mixture-of-Memory/outputs/sparse_memory_rtu_v3",
-        "eval_ppl": 49.60,
-        "notes": "V3 completed with PPL 49.60 (+8.36 PPL regression vs baseline). Loss 3.8327 at step 5000.",
-        "last_verified": "2026-04-23 00:15"
+        "cluster": 1,
+        "name": "b200-2",
+        "experiment": "fix_y_ablation_node1",
+        "status": "killed",
+        "node_rank": 0,
+        "node_idx": 0,
+        "launcher_pid": 2477537,
+        "started_at": "2026-04-30 10:33 CST",
+        "skrl_weight": 0.0,
+        "query_alignment_weight": 0.05,
+        "slot_value_norm_cap": 5.0,
+        "entropy_aux_weight": 0.0,
+        "load_balance_weight": 0.001,
+        "selector_temperature": 10.0,
+        "slot_init": "strided_token",
+        "slot_init_noise": 0.01,
+        "ema_update_weight": 1.0,
+        "ema_update_alpha": 0.9,
+        "dead_slot_reset_threshold": 0.5,
+        "skip_chunks": 200,
+        "max_chunks": 5000,
+        "fix_applied": "Fix Y (dead slot revival) + Fix X.3 (VQ-EMA) + Fix X.2 (InfoNCE qa=0.05) + Fix X.1 + Fix I + Fix J-A + Fix K + Fix L-1/L-2/L-3 + Fix M-1 + Fix N + Fix O + Fix P.1 + Fix P.2 + Fix S + Fix T + Fix U + Fix V + Fix W",
+        "fix_y_role": "Arm Y2 \u2014 dead_reset=0.5, norm_cap=5.0, qa=0.05, \u03b1=0.9. Full Fix Y (recommended, confidence 90%).",
+        "log_path": "/apdcephfs_wzc1/share_303098609/pighzliu_code/Mixture-of-Memory/logs/fix_y_ablation_node1_20260430_1031.log",
+        "output_dir": "/apdcephfs_wzc1/share_303098609/pighzliu_code/Mixture-of-Memory/outputs/fix_y_ablation_node1/",
+        "batch_size": 1,
+        "seq_len": 4096,
+        "n_gpus": 8,
+        "notes": "Fix Y ablation. Arm Y2: FULL FIX (dead_reset=0.5 + norm_cap=5.0 + InfoNCE qa=0.05). fwd=1000 top1_sim=0.042236 (PASSED fwd=1000 criterion). FAILED fwd=2000 criterion: top1_sim=0.002991 at fwd=2000 (collapsed ~fwd=1350). InfoNCE delays but does not prevent VQ-EMA key convergence. dead_revived=0 because uniform routing maintains all ema_cluster_count > 0.5 threshold.",
+        "last_verified": "2026-04-30 11:06",
+        "killed_at": "2026-04-30 11:06 CST",
+        "kill_reason": "fwd=2000 FAILED: top1_sim=0.002991 (criterion >0.010). InfoNCE delayed but did not prevent collapse. dead_revived=0 throughout \u2014 uniform routing keeps all ema_cluster_count above 0.5 threshold; revival never fires. Fix Y INSUFFICIENT."
     },
     "node2": {
         "ip": "28.89.17.85",
-        "name": "sparse_memory_large",
-        "experiment": "sparse_memory_large",
-        "status": "dead",
-        "pid": null,
-        "log_path": "/root/Mixture-of-Memory/logs/train_sparse_memory_rtu_fusion.log",
-        "output_dir": "/root/Mixture-of-Memory/outputs/sparse_memory_rtu_fusion",
-        "eval_ppl": null,
-        "notes": "SSH auth failure, last known: step 850/5000, loss 4.27",
-        "last_verified": "2026-04-23 00:15"
+        "cluster": 1,
+        "name": "b200-3",
+        "experiment": "fix_y_ablation_node2",
+        "status": "killed",
+        "prior_experiment_killed": "fix_x3_ablation_node2",
+        "node_rank": 0,
+        "node_idx": 2,
+        "launcher_pid": 2466938,
+        "started_at": "2026-04-30 10:33 CST",
+        "skrl_weight": 0.0,
+        "query_alignment_weight": 0.0,
+        "slot_value_norm_cap": 10.0,
+        "entropy_aux_weight": 0.0,
+        "load_balance_weight": 0.001,
+        "selector_temperature": 10.0,
+        "slot_init": "strided_token",
+        "slot_init_noise": 0.01,
+        "ema_update_weight": 1.0,
+        "ema_update_alpha": 0.9,
+        "dead_slot_reset_threshold": 0.5,
+        "skip_chunks": 200,
+        "max_chunks": 5000,
+        "fix_applied": "Fix Y (dead slot revival) + Fix X.3 (VQ-EMA) + Fix X.1 + Fix I + Fix J-A + Fix K + Fix L-1/L-2/L-3 + Fix M-1 + Fix N + Fix O + Fix P.1 + Fix P.2 + Fix S + Fix T + Fix U + Fix V + Fix W",
+        "fix_y_role": "Arm Y3 \u2014 dead_reset=0.5, norm_cap=10.0, qa=0.0, \u03b1=0.9. Compare norm cap (10.0 vs Y1's 5.0), no InfoNCE.",
+        "log_path": "/apdcephfs_wzc1/share_303098609/pighzliu_code/Mixture-of-Memory/logs/fix_y_ablation_node2_20260430_1031.log",
+        "output_dir": "/apdcephfs_wzc1/share_303098609/pighzliu_code/Mixture-of-Memory/outputs/fix_y_ablation_node2/",
+        "batch_size": 1,
+        "seq_len": 4096,
+        "n_gpus": 8,
+        "notes": "Fix Y ablation. Arm Y3: dead_slot_reset_threshold=0.5, norm_cap=10.0, qa=0.0. fwd=50 top1_sim=0.761719 \ud83d\ude80 early peak. fwd=400 top1_sim=0.003387 COLLAPSED (pairwise_cos=0.8516). Without InfoNCE, norm_cap=10.0 collapses FASTER than Y1's norm_cap=5.0. CONCLUSION: InfoNCE is essential.",
+        "last_verified": "2026-04-30 10:46",
+        "fix_x3_ablation_final_state": {
+            "killed_at": "2026-04-30 10:31 CST",
+            "kill_reason": "Fix Y implemented; Arm C continuing but replaced by Y3 to test norm_cap=10.0 vs Y1's 5.0 without InfoNCE. Arm A/B had collapsed at fwd~6400/6250.",
+            "arm_c_final": "fwd=6100 top1_sim=0.007721 pairwise_cos=0.085 weakening"
+        }
     },
     "node3": {
         "ip": "28.89.19.134",
-        "name": "sparse_memory_fusion",
-        "experiment": "sparse_memory_fusion",
-        "status": "evaluated",
-        "pid": null,
-        "log_path": "/root/Mixture-of-Memory/logs/train_sparse_memory_rtu_fusion.log",
-        "output_dir": "/root/Mixture-of-Memory/outputs/sparse_memory_rtu_fusion",
-        "eval_ppl": 49.88,
-        "notes": "Fusion evaluated with PPL 49.88 (+8.64 PPL regression vs baseline). Loss 3.8369 at step 5000.",
-        "last_verified": "2026-04-23 00:15"
+        "cluster": 1,
+        "name": "b200-4",
+        "experiment": "fix_o_ablation_node2",
+        "status": "killed",
+        "node_rank": 0,
+        "node_idx": 2,
+        "launcher_pid": 1528701,
+        "worker_pids": [
+            1528781,
+            1528782,
+            1528783,
+            1528784,
+            1528785,
+            1528786,
+            1528787,
+            1528788
+        ],
+        "started_at": "2026-04-29 20:03",
+        "skrl_weight": 0.1,
+        "load_balance_weight": 0.001,
+        "entropy_aux_weight": 0.0,
+        "selector_temperature": 1.0,
+        "slot_init_noise": 0.01,
+        "log_path": "/apdcephfs_wzc1/share_303098609/pighzliu_code/Mixture-of-Memory/logs/fix_o_ablation_node2_20260429_2003.log",
+        "output_dir": "/apdcephfs_wzc1/share_303098609/pighzliu_code/Mixture-of-Memory/outputs/fix_o_ablation_node2/",
+        "fix_applied": "Fix I + Fix J-A + Fix K + Fix L-1/L-2/L-3 + Fix M-1 + Fix N + Fix O (T=1.0, skrl=0.10, lb=0.001, entropy=0.0)",
+        "notes": "IDLE (retired). 4th NaN incident on b200-4 \u2014 hardware instability suspected. Not reusing.",
+        "last_verified": "2026-04-30 03:27",
+        "killed_at": "2026-04-29 20:12",
+        "kill_reason": "NaN spiral step~357. Hardware instability (4th NaN incident on this node). Killed by main agent.",
+        "prior_experiment": {
+            "experiment": "fix_n_ablation_node2",
+            "killed_at": "2026-04-29 19:49",
+            "killed_at_step": "~930",
+            "kill_reason": "STEP-1000 CRITERION FAILED: top1_sim=0.002 floor, mean_pairwise_cos POSITIVE. Root cause: temperature=10.0. Fix O pending."
+        }
     },
-    "node4": {
+    "node4_DEPRECATED": {
         "ip": "28.89.18.19",
         "cluster": 2,
-        "name": "chunk_v3",
-        "experiment": "chunk_v3",
-        "status": "completed",
-        "pid": null,
-        "log_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/logs/train_sparse_memory_chunk_v3.log",
-        "output_dir": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/outputs/sparse_memory_chunk_v3",
-        "eval_ppl": null,
-        "key_config": {"memory_slots": 128, "top_k": 8, "sliding_window": 256, "ema_alpha": 0.1, "master_port": 29601},
-        "notes": "Chunk v3 run status unknown (not monitored in this check)",
-        "last_verified": "2026-04-23 00:15"
+        "status": "unreachable_deprecated",
+        "notes": "2026-04-24 17:15: Cluster-2 decommissioned. SSH connect fails (no response). User confirmed cluster-2 no longer exists.",
+        "last_verified": "2026-04-24 17:15"
     },
-    "node5": {
+    "node5_DEPRECATED": {
         "ip": "28.89.17.189",
         "cluster": 2,
-        "name": "chunk_large",
-        "experiment": "chunk_large",
-        "status": "completed",
-        "pid": null,
-        "log_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/logs/train_sparse_memory_chunk_large.log",
-        "output_dir": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/outputs/sparse_memory_chunk_large",
-        "eval_ppl": null,
-        "key_config": {"memory_slots": 256, "top_k": 16, "sliding_window": 256, "ema_alpha": 0.1, "master_port": 29502},
-        "notes": "Chunk large run status unknown (not monitored in this check)",
-        "last_verified": "2026-04-23 00:15"
+        "status": "unreachable_deprecated",
+        "notes": "2026-04-24 17:15: Cluster-2 decommissioned.",
+        "last_verified": "2026-04-24 17:15"
     },
-    "node6": {
+    "node6_DEPRECATED": {
         "ip": "28.89.20.126",
         "cluster": 2,
-        "name": "chunk_sw64",
-        "experiment": "chunk_sw64",
-        "status": "completed",
-        "pid": null,
-        "log_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/logs/train_sparse_memory_chunk_sw64.log",
-        "output_dir": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/outputs/sparse_memory_chunk_v3",
-        "eval_ppl": null,
-        "key_config": {"memory_slots": 256, "top_k": 16, "sliding_window": 64, "ema_alpha": 0.1, "master_port": 29603},
-        "notes": "Chunk sw64 run status unknown (not monitored in this check)",
-        "last_verified": "2026-04-23 00:15"
+        "status": "unreachable_deprecated",
+        "notes": "2026-04-24 17:15: Cluster-2 decommissioned.",
+        "last_verified": "2026-04-24 17:15"
     },
-    "node7": {
+    "node7_DEPRECATED": {
         "ip": "28.89.18.40",
         "cluster": 2,
-        "name": "chunk_k16",
-        "experiment": "chunk_k16",
-        "status": "completed",
-        "pid": null,
-        "log_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/logs/train_sparse_memory_chunk_k16.log",
-        "output_dir": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/outputs/sparse_memory_chunk_v3",
-        "eval_ppl": null,
-        "key_config": {"memory_slots": 128, "top_k": 16, "sliding_window": 256, "ema_alpha": 0.1, "master_port": 29604},
-        "notes": "Chunk k16 run status unknown (not monitored in this check)",
-        "last_verified": "2026-04-23 00:15"
+        "status": "unreachable_deprecated",
+        "notes": "2026-04-24 17:15: Cluster-2 decommissioned.",
+        "last_verified": "2026-04-24 17:15"
     },
     "local_TENCENT64": {
         "ip": "local",
@@ -112,9 +263,19 @@
         "pid": null,
         "log_path": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/outputs/dms_8x/train.log",
         "output_dir": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/outputs/dms_8x",
-        "eval_ppl": null,
-        "key_config": {"model": "Qwen3-8B", "compression_ratio": 8, "num_train_steps": 800, "per_device_train_batch_size": 1, "gradient_accumulation_steps": 8, "max_seq_length": 2048, "sliding_window": 256, "bf16": true, "num_gpus": 8},
-        "notes": "Training completed successfully at step 800/800 (2026-04-23 11:12). Final loss: 68.25, grad_norm: 0. Training time: ~2h 26m 51s. DMS parameters: 147,492. Checkpoint saved to outputs/dms_8x/final. Eval BLOCKED by CEPH/FUSE I/O stall - multiple attempts failed (11:28, 11:32, 11:44, 11:49). Processes stuck in D state (uninterruptible sleep). Filesystem shows directory exists but I/O hangs.",
-        "last_verified": "2026-04-23 11:49"
+        "eval_ppl": 464.28,
+        "key_config": {
+            "model": "Qwen3-8B",
+            "compression_ratio": 8,
+            "num_train_steps": 800,
+            "per_device_train_batch_size": 1,
+            "gradient_accumulation_steps": 8,
+            "max_seq_length": 2048,
+            "sliding_window": 256,
+            "bf16": true,
+            "num_gpus": 8
+        },
+        "notes": "Training completed 2026-04-23 11:12 (800/800 steps). Eval PPL 464.28 vs Qwen3-8B baseline 13.46 (+3348% degradation). Checkpoint at outputs/dms_8x/final (16 GB). NOTE: H20 node no longer exists as of 2026-04-28.",
+        "last_verified": "2026-04-24 17:15"
     }
 }
