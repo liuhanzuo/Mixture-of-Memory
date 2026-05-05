@@ -257,6 +257,7 @@ class CrossAttentionMemoryModel(nn.Module):
         cross_attn_dropout: float = 0.0,
         residual_scale: float = 0.01,
         swa_window: int = 0,
+        write_lr: float = 0.1,
     ) -> None:
         super().__init__()
         self.num_slots = num_slots
@@ -294,6 +295,7 @@ class CrossAttentionMemoryModel(nn.Module):
                     n_kv_heads=self.num_kv_heads,
                     num_slots=num_slots,
                     dropout=cross_attn_dropout,
+                    write_lr=write_lr,
                 )
                 for _ in range(self.num_layers)
             ])
@@ -651,6 +653,9 @@ def parse_args() -> argparse.Namespace:
                    help="Dropout for cross-attention")
     p.add_argument("--residual_scale", type=float, default=0.01,
                    help="Scale factor for cross-attn output before adding as residual (default 0.01)")
+    p.add_argument("--write_lr", type=float, default=0.1,
+                   help="Delta-rule write learning rate (default 0.1). "
+                        "write_lr=1.0 breaks gradient chain; 0.1 preserves ~3.4%% gradient over 32 chunks")
     p.add_argument("--swa_window", type=int, default=0,
                    help="Sliding window attention size. 0=full causal attention (default)")
     p.add_argument("--cross_attn_lr_factor", type=float, default=100,
@@ -754,6 +759,7 @@ def main() -> None:
         cross_attn_dropout=args.cross_attn_dropout,
         residual_scale=args.residual_scale,
         swa_window=args.swa_window,
+        write_lr=args.write_lr,
     ).to(device).to(dtype)
 
     trainable = sum(p.numel() for p in cm_model.parameters() if p.requires_grad)
@@ -764,8 +770,8 @@ def main() -> None:
             trainable, total, 100.0 * trainable / total,
         )
         logger.info(
-            "Config: num_slots=%d, seq_len=%d, chunks_per_doc=%d",
-            args.num_slots, args.seq_len, args.chunks_per_doc,
+            "Config: num_slots=%d, seq_len=%d, chunks_per_doc=%d, write_lr=%.4f",
+            args.num_slots, args.seq_len, args.chunks_per_doc, args.write_lr,
         )
         if args.swa_window > 0:
             logger.info("SWA enabled: window_size=%d", args.swa_window)
@@ -1201,6 +1207,7 @@ def main() -> None:
                     "metrics": metrics_history[-1] if metrics_history else {},
                     "use_cross_attn_memory": args.use_cross_attn_memory,
                     "num_slots": args.num_slots,
+                    "write_lr": args.write_lr,
                 }
                 torch.save(ckpt_data, ckpt_path)
                 logger.info("Saved checkpoint: %s", ckpt_path)
@@ -1247,6 +1254,7 @@ def main() -> None:
             "base_vanilla_ppl": base_vanilla_ppl,
             "use_cross_attn_memory": args.use_cross_attn_memory,
             "num_slots": args.num_slots,
+            "write_lr": args.write_lr,
         }
         torch.save(final_ckpt, final_path)
         logger.info("Saved final checkpoint: %s", final_path)
@@ -1266,6 +1274,7 @@ def main() -> None:
             "vanilla_delta_pct": 100 * (final_vanilla_ppl / base_vanilla_ppl - 1),
             "memory_ratio": final_memory_ppl / max(final_vanilla_ppl, 1e-8),
             "num_slots": args.num_slots,
+            "write_lr": args.write_lr,
             "lr": args.lr,
             "num_shards": args.num_shards,
             "chunks_per_doc": args.chunks_per_doc,
