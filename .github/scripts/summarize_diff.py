@@ -4,7 +4,12 @@ CI script: Generate a Chinese-language summary of the latest git commit's diff
 and append it to UPDATELOG.md.
 
 Called by .github/workflows/ci_code_summary.yml after every push to main.
-Requires: ANTHROPIC_API_KEY environment variable.
+Requires: ANTHROPIC_API_KEY (or ANTHROPIC_AUTH_TOKEN) environment variable.
+
+Supports Tencent Claude gateway via ANTHROPIC_BASE_URL env var.
+GitHub Secrets to configure:
+  - ANTHROPIC_API_KEY: Tencent token (e.g. c92b...8cB)
+  - ANTHROPIC_BASE_URL: https://copilot.code.woa.com/server/chat/codebuddy-gateway/codebuddy-code
 """
 
 import subprocess
@@ -23,10 +28,31 @@ def run(cmd):
     return subprocess.check_output(cmd, stderr=subprocess.DEVNULL).decode().strip()
 
 
-def main():
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
+def build_client():
+    """Build Anthropic client, supporting Tencent gateway via ANTHROPIC_BASE_URL."""
+    api_key = os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("ANTHROPIC_AUTH_TOKEN")
     if not api_key:
-        print("ANTHROPIC_API_KEY not set, skipping")
+        return None
+    base_url = os.environ.get("ANTHROPIC_BASE_URL")
+    kwargs = {"api_key": api_key}
+    if base_url:
+        kwargs["base_url"] = base_url
+        # Tencent gateway requires x-api-key custom header
+        kwargs["default_headers"] = {"x-api-key": api_key}
+    return anthropic.Anthropic(**kwargs)
+
+
+def get_model(tier="haiku"):
+    """Get model name, respecting Tencent gateway aliases."""
+    if tier == "haiku":
+        return os.environ.get("ANTHROPIC_DEFAULT_HAIKU_MODEL", "claude-3-5-haiku-20241022")
+    return os.environ.get("ANTHROPIC_DEFAULT_SONNET_MODEL", "claude-3-5-sonnet-20241022")
+
+
+def main():
+    client = build_client()
+    if not client:
+        print("No API key (ANTHROPIC_API_KEY or ANTHROPIC_AUTH_TOKEN) set, skipping")
         sys.exit(0)
 
     try:
@@ -38,12 +64,10 @@ def main():
 
     commit_msg = run(["git", "log", "-1", "--format=%s"])
     commit_hash = run(["git", "rev-parse", "--short", "HEAD"])
-    author = run(["git", "log", "-1", "--format=%an"])
     today = datetime.date.today().isoformat()
 
-    client = anthropic.Anthropic(api_key=api_key)
     resp = client.messages.create(
-        model="claude-3-5-haiku-20241022",
+        model=get_model("haiku"),
         max_tokens=400,
         messages=[{
             "role": "user",

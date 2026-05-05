@@ -19,7 +19,14 @@ Agent autonomy rules embedded in the doc:
   - confidence: low   → reference only, no action
 
 Called by .github/workflows/ci_cleanup_suggestions.yml
-Requires: ANTHROPIC_API_KEY environment variable.
+Requires: ANTHROPIC_API_KEY (or ANTHROPIC_AUTH_TOKEN) environment variable.
+
+Supports Tencent Claude gateway via ANTHROPIC_BASE_URL env var.
+GitHub Secrets to configure:
+  - ANTHROPIC_API_KEY: Tencent token (same as local ANTHROPIC_AUTH_TOKEN)
+  - ANTHROPIC_BASE_URL: https://copilot.code.woa.com/server/chat/codebuddy-gateway/codebuddy-code
+  - ANTHROPIC_DEFAULT_SONNET_MODEL: claude-sonnet-4-6 (Tencent model alias)
+  - ANTHROPIC_DEFAULT_HAIKU_MODEL: claude-haiku-4-5 (Tencent model alias)
 """
 
 import subprocess
@@ -87,11 +94,21 @@ def read_existing_suggestions():
 
 
 def main():
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    api_key = os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("ANTHROPIC_AUTH_TOKEN")
     if not api_key:
-        print("ANTHROPIC_API_KEY not set, writing placeholder")
+        print("No API key set, writing placeholder")
         write_placeholder()
         sys.exit(0)
+
+    # Support Tencent Claude gateway
+    base_url = os.environ.get("ANTHROPIC_BASE_URL")
+    client_kwargs = {"api_key": api_key}
+    if base_url:
+        client_kwargs["base_url"] = base_url
+        client_kwargs["default_headers"] = {"x-api-key": api_key}
+
+    # Use environment-aliased model names (supports Tencent gateway aliases)
+    sonnet_model = os.environ.get("ANTHROPIC_DEFAULT_SONNET_MODEL", "claude-3-5-sonnet-20241022")
 
     file_tree = get_file_tree()
     git_log = get_git_log_summary()
@@ -104,9 +121,9 @@ def main():
     if len(file_list_str) > 8000:
         file_list_str = file_list_str[:8000] + "\n... (truncated)"
 
-    client = anthropic.Anthropic(api_key=api_key)
+    client = anthropic.Anthropic(**client_kwargs)
     resp = client.messages.create(
-        model="claude-3-5-sonnet-20241022",
+        model=sonnet_model,
         max_tokens=2500,
         messages=[{
             "role": "user",
