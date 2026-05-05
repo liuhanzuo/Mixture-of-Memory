@@ -1,0 +1,39 @@
+name: LLM Code Summary → UPDATELOG
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  summarize:
+    runs-on: ubuntu-latest
+    # Skip if this is a CI-generated commit (avoid infinite loop)
+    if: "!contains(github.event.head_commit.message, '[skip ci]') && !contains(github.event.head_commit.message, 'CI diff summary')"
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+          # Use a PAT or deploy key so the CI push can trigger further Actions if needed
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install anthropic
+
+      - name: Generate diff summary
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python .github/scripts/summarize_diff.py
+
+      - name: Commit summary update
+        run: |
+          git config user.email "ci-bot@mixture-of-memory"
+          git config user.name "CI Bot"
+          git add UPDATELOG.md
+          git diff --cached --quiet && echo "No changes to commit" || \
+            git commit -m "chore: auto-append CI diff summary to UPDATELOG.md [skip ci]"
+          git push

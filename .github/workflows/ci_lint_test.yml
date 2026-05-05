@@ -1,0 +1,40 @@
+name: Lint + CPU Tests
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install transformers pytest ruff 2>/dev/null || true
+          pip install -e ".[dev]" 2>/dev/null || true
+
+      - name: Lint (non-blocking)
+        run: |
+          ruff check src/ scripts/ tests/ --ignore E501,E402,F401,F811 || true
+
+      - name: CPU Tests
+        env:
+          CUDA_VISIBLE_DEVICES: ""
+        run: |
+          # Run only tests that don't require GPU
+          # Tests may skip themselves when CUDA is unavailable — that's expected
+          pytest tests/ -x -q \
+            --ignore=tests/test_dms_qwen3.py \
+            -k "not gpu and not cuda and not b200 and not remote" \
+            --tb=short \
+            2>&1 | tail -50

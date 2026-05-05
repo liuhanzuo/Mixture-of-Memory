@@ -1,0 +1,47 @@
+name: Code Cleanup Suggestions
+
+on:
+  # Weekly: every Monday at 02:00 UTC
+  schedule:
+    - cron: "0 2 * * 1"
+  # On-demand: manually trigger from Actions tab
+  workflow_dispatch:
+  # On push to main that touches src/ or scripts/
+  push:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "scripts/**"
+
+jobs:
+  suggest-cleanup:
+    runs-on: ubuntu-latest
+    # Skip if triggered by our own CI commit
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install anthropic
+
+      - name: Generate cleanup suggestions
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python .github/scripts/generate_cleanup_suggestions.py
+
+      - name: Commit suggestions doc
+        run: |
+          git config user.email "ci-bot@mixture-of-memory"
+          git config user.name "CI Bot"
+          git add CODE_CLEANUP_SUGGESTIONS.md
+          git diff --cached --quiet && echo "No changes to commit" || \
+            git commit -m "chore: update CODE_CLEANUP_SUGGESTIONS.md [skip ci]"
+          git push
