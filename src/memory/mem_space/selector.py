@@ -24,7 +24,7 @@ doc.
 from __future__ import annotations
 
 import math
-from typing import Tuple
+from typing import Optional, Tuple
 
 import torch
 import torch.nn as nn
@@ -323,3 +323,558 @@ class TopKSelector(nn.Module):
         # Clamp to avoid log(0); 1e-8 is far below any real softmax value for N=512
         entropy = -(p * torch.log(p.clamp(min=1e-8))).sum()      # scalar ≥ 0
         return -entropy                                           # negate: minimise → maximise H
+
+
+# --------------------------------------------------------------------------- #
+# Cross-attention memory (Perceiver-IO / Block Recurrent Transformer style)
+# --------------------------------------------------------------------------- #
+
+
+class CrossAttentionMemory(nn.Module):
+    """Cross-attention based memory (Perceiver-IO / Block Recurrent Transformer style).
+
+    Replaces the top-k selector + KV-prepend pipeline with:
+    - Read: tokens cross-attend to slots (tokens=Q, slots=K/V)
+    - Write: slots cross-attend to tokens (slots=Q, tokens=K/V)
+
+    No routing degeneracy because attention softmax naturally peaks per-token.
+
+    Unlike TopKSelector, this module handles both the read and write phases.
+    The MemorySpaceLayer just needs to call forward() for read and
+    writeback() for write.
+
+    Args:
+        d_model: backbone hidden size.
+        n_slots: number of memory slots (N).
+        n_heads: number of attention heads for cross-attention.
+        slot_dim: slot vector dimensionality. None means d_model.
+    """
+
+    def __init__(
+        self,
+        d_model: int,
+        n_slots: int = 128,
+        n_heads: int = 8,
+        slot_dim: Optional[int] = None,
+    ) -> None:
+        super().__init__()
+        slot_dim = slot_dim or d_model
+        self.d_model = d_model
+        self.n_slots = n_slots
+        self.slot_dim = slot_dim
+        self.n_heads = n_heads
+
+        # Projections if slot_dim != d_model
+        self.need_proj = slot_dim != d_model
+        if self.need_proj:
+            self.slot_to_hidden = nn.Linear(slot_dim, d_model, bias=False)
+            self.hidden_to_slot = nn.Linear(d_model, slot_dim, bias=False)
+            nn.init.normal_(self.slot_to_hidden.weight, std=0.02)
+            nn.init.normal_(self.hidden_to_slot.weight, std=0.02)
+
+        # Read cross-attention: tokens attend to slots
+        self.read_attn = nn.MultiheadAttention(
+            d_model, n_heads, batch_first=True, bias=False,
+        )
+        # LoRA-style zero init on output projection: out_proj=0 means entire
+        # cross-attn path outputs exactly 0 at init → no disruption to pretrained LM.
+        # Gradient d(loss)/d(out_proj) = (d(loss)/d(hidden))^T @ attn_out ≠ 0 from step 1.
+        # After step 1, out_proj ≠ 0 → cascading activation: V → K → Q.
+        nn.init.zeros_(self.read_attn.out_proj.weight)
+
+        # LayerNorm on read attention output (before gating)
+        self.read_ln = nn.LayerNorm(d_model)
+
+        # Write cross-attention: slots attend to tokens
+        # Also zero-init out_proj so writeback output starts at 0 (same LoRA-B logic).
+        # Slots maintain their initial values until write_attn learns useful patterns.
+        self.write_attn = nn.MultiheadAttention(
+            d_model, n_heads, batch_first=True, bias=False,
+        )
+        nn.init.zeros_(self.write_attn.out_proj.weight)
+
+        # LayerNorm on write attention output
+        self.write_ln = nn.LayerNorm(d_model)
+
+        # No gate — out_proj=0 handles zero-start (LoRA-B style).
+        # out_proj grows naturally via gradient descent, controlling output magnitude.
+        # No tanh wrapper needed — removes the amplification problem.
+        self.output_gate = None  # unused, kept for checkpoint compat
+
+        # Writeback gate (init 0, sigmoid(0)=0.5 moderate writeback)
+        self.write_gate = nn.Parameter(torch.tensor(0.0))
+
+    def _project_slots_to_hidden(self, slots: torch.Tensor) -> torch.Tensor:
+        """Project slots from slot_dim to d_model if needed."""
+        if self.need_proj:
+            return self.slot_to_hidden(slots)
+        return slots
+
+    def _project_hidden_to_slot(self, hidden: torch.Tensor) -> torch.Tensor:
+        """Project hidden states from d_model to slot_dim if needed."""
+        if self.need_proj:
+            return self.hidden_to_slot(hidden)
+        return hidden
+
+    def forward(
+        self,
+        hidden_states: torch.Tensor,
+        slots: torch.Tensor,
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        """Read phase: tokens cross-attend to memory slots.
+
+        Args:
+            hidden_states: [B, T, d_model] current layer input.
+            slots: [B, N, slot_dim] current slot content (from MemoryBank).
+
+        Returns:
+            gated_hidden: [B, T, d_model] memory-augmented hidden states.
+            attn_weights: [B, n_heads, T, N] attention weights for diagnostics.
+        """
+        # Project slots to d_model space
+        slots_d = self._project_slots_to_hidden(slots)  # [B, N, d_model]
+
+        # Read: tokens (Q) attend to slots (K, V)
+        attn_out, attn_weights = self.read_attn(
+            query=hidden_states,
+            key=slots_d,
+            value=slots_d,
+            need_weights=True,
+            average_attn_weights=False,  # [B, n_heads, T, N]
+        )
+
+        # No gate — out_proj=0 ensures zero contribution at init.
+        # No LayerNorm — it would amplify the small out_proj output to unit scale,
+        # disrupting the pretrained model. out_proj controls magnitude directly.
+        gated = hidden_states + attn_out
+
+        return gated, attn_weights
+
+    def writeback(
+        self,
+        hidden_states: torch.Tensor,
+        slots: torch.Tensor,
+        beta: float = 0.1,
+    ) -> torch.Tensor:
+        """Write phase: slots cross-attend to hidden states, then EMA update.
+
+        Args:
+            hidden_states: [B, T, d_model] decoder output (post self-attention).
+            slots: [B, N, slot_dim] current slot content.
+            beta: EMA blend rate (how much new content to mix in).
+
+        Returns:
+            updated_slots: [B, N, slot_dim] new slot content.
+        """
+        # Project slots to d_model space
+        slots_d = self._project_slots_to_hidden(slots)  # [B, N, d_model]
+
+        # Write: slots (Q) attend to hidden states (K, V)
+        new_slot_content, _ = self.write_attn(
+            query=slots_d,
+            key=hidden_states,
+            value=hidden_states,
+            need_weights=False,
+        )
+        new_slot_content = self.write_ln(new_slot_content)  # [B, N, d_model]
+
+        # Project back to slot_dim
+        new_slot_projected = self._project_hidden_to_slot(new_slot_content)  # [B, N, slot_dim]
+
+        # Writeback gate (learnable, init 0)
+        gamma = torch.sigmoid(self.write_gate)  # [0, 1]
+
+        # EMA update with learnable gate + fixed beta
+        effective_beta = gamma * beta
+        updated_slots = (1.0 - effective_beta) * slots + effective_beta * new_slot_projected
+
+        return updated_slots
+
+    def compute_attn_entropy(self, attn_weights: torch.Tensor) -> torch.Tensor:
+        """Compute mean attention entropy across heads (diagnostic).
+
+        High entropy = spread attention (degenerate/uniform).
+        Low entropy = peaked attention (healthy, content-addressed).
+
+        Args:
+            attn_weights: [B, n_heads, T, N] from forward().
+
+        Returns:
+            scalar tensor: mean entropy (lower is better).
+        """
+        # Clamp to avoid log(0)
+        p = attn_weights.clamp(min=1e-8)
+        entropy = -(p * p.log()).sum(dim=-1)  # [B, n_heads, T]
+        return entropy.mean()  # scalar
+
+
+# --------------------------------------------------------------------------- #
+# Infini-attention compressive memory (Munkhdalai et al., 2024)
+# --------------------------------------------------------------------------- #
+
+
+class InfiniAttentionMemory(nn.Module):
+    """Infini-attention style compressive memory (Munkhdalai et al., 2024).
+
+    Uses linear attention (ELU+1 kernel) over an associative matrix M.
+    No softmax -> no routing degeneracy or uniform-attention problem.
+    Reuses pretrained Q, K, V projections from the wrapped decoder layer.
+
+    Trainable params: only beta (per-head gate scalar, ~32 per layer).
+    Memory state: M (associative matrix) and z (normalizer), updated in-place.
+    """
+
+    def __init__(self, d_model: int, n_heads: int = 32, n_kv_heads: Optional[int] = None, beta_init: float = -1.0, memory_scale_init: float = 1.0, trainable_proj: bool = False) -> None:
+        super().__init__()
+        self.d_model = d_model
+        self.n_heads = n_heads
+        self.n_kv_heads = n_kv_heads or n_heads
+        self.d_head = d_model // n_heads
+        self.trainable_proj = trainable_proj
+
+        # Per-head gate: init from beta_init (default -1.0 -> sigmoid(-1) ~ 0.27)
+        self.beta = nn.Parameter(torch.full((self.n_kv_heads,), beta_init))
+
+        # Per-head learnable scalar to amplify memory retrieval output.
+        # Shape [n_kv_heads, 1, 1] broadcasts over [B, H, T, d].
+        self.memory_scale = nn.Parameter(torch.full((self.n_kv_heads, 1, 1), memory_scale_init))
+
+        # v5: Trainable output projection to replace frozen o_proj for memory path.
+        # Zero-init: no disruption at start, identical to pretrained backbone.
+        # Gradient flows from step 1: d(loss)/d(weight) = d(loss)/d(hidden)^T @ input.
+        if self.trainable_proj:
+            self.mem_o_proj = nn.Linear(d_model, d_model, bias=False)
+            nn.init.zeros_(self.mem_o_proj.weight)
+
+        # Memory state (per-sample, lazily initialized to [B, ...] at runtime)
+        # Uses n_kv_heads for M/z to match K/V projection dimensions (GQA support).
+        self.M = None  # [B, n_kv_heads, d_head, d_head]
+        self.z = None  # [B, n_kv_heads, d_head]
+
+    def _sigma(self, x: torch.Tensor) -> torch.Tensor:
+        """Linear attention kernel: sigma(x) = ELU(x) + 1"""
+        return F.elu(x) + 1.0
+
+    def is_initialized(self, batch_size: int) -> bool:
+        return self.M is not None and self.M.shape[0] == batch_size
+
+    def init_state(self, batch_size: int, device: torch.device, dtype: torch.dtype) -> None:
+        """Initialize memory state for given batch size."""
+        self.M = torch.zeros(batch_size, self.n_kv_heads, self.d_head, self.d_head,
+                             device=device, dtype=dtype)
+        self.z = torch.zeros(batch_size, self.n_kv_heads, self.d_head,
+                             device=device, dtype=dtype)
+
+    def reset(self) -> None:
+        """Reset memory state to zero (called at document boundaries)."""
+        if self.M is not None:
+            self.M.zero_()
+            self.z.zero_()
+
+    def detach_(self) -> None:
+        """Detach memory state (break autograd graph across chunks)."""
+        if self.M is not None:
+            self.M = self.M.detach()
+            self.z = self.z.detach()
+
+    def retrieve(self, hidden_states: torch.Tensor,
+                 q_proj: nn.Linear, o_proj: nn.Linear) -> torch.Tensor:
+        """Linear attention memory retrieval.
+
+        Args:
+            hidden_states: [B, T, d_model]
+            q_proj: frozen backbone Q projection
+            o_proj: frozen backbone output projection
+
+        Returns:
+            gated_mem_output: [B, T, d_model] -- memory contribution, gated by beta
+        """
+        B, T, D = hidden_states.shape
+
+        # Compute Q using backbone's frozen projection (NO RoPE)
+        Q = q_proj(hidden_states)  # [B, T, n_heads * d_head]
+        Q_heads = Q.view(B, T, self.n_heads, self.d_head).permute(0, 2, 1, 3)  # [B, H, T, d]
+        sigma_Q = self._sigma(Q_heads)  # [B, H, T, d]
+
+        # GQA: Q has n_heads, M has n_kv_heads. Repeat Q heads to match KV groups.
+        n_rep = self.n_heads // self.n_kv_heads
+        if n_rep > 1:
+            # Average sigma_Q across heads in each KV group for memory retrieval
+            sigma_Q_kv = sigma_Q.view(B, self.n_kv_heads, n_rep, T, self.d_head).mean(dim=2)
+        else:
+            sigma_Q_kv = sigma_Q
+
+        # A_mem = sigma(Q) @ M / (sigma(Q) @ z + eps)
+        # M: [B, KV, d, d], sigma_Q_kv: [B, KV, T, d]
+        numer = torch.matmul(sigma_Q_kv, self.M)  # [B, KV, T, d]
+        denom = torch.matmul(sigma_Q_kv, self.z.unsqueeze(-1))  # [B, KV, T, 1]
+        A_mem_kv = numer / denom.clamp(min=1e-6)  # [B, KV, T, d]
+
+        # Expand back to n_heads for output
+        if n_rep > 1:
+            A_mem = A_mem_kv.unsqueeze(2).expand(B, self.n_kv_heads, n_rep, T, self.d_head).reshape(B, self.n_heads, T, self.d_head)
+        else:
+            A_mem = A_mem_kv
+
+        # Per-head gate (one per KV head, broadcast to all Q heads in group)
+        gate = torch.sigmoid(self.beta).view(1, self.n_kv_heads, 1, 1)
+        if n_rep > 1:
+            gate = gate.unsqueeze(2).expand(B, self.n_kv_heads, n_rep, 1, 1).reshape(B, self.n_heads, 1, 1)
+        A_mem_gated = gate * A_mem  # [B, H, T, d]
+        # Expand memory_scale from [n_kv_heads, 1, 1] to [1, n_heads, 1, 1]
+        mem_sc = self.memory_scale.repeat_interleave(n_rep, dim=0).unsqueeze(0)
+        A_mem_gated = A_mem_gated * mem_sc  # per-head amplification
+
+        # Reshape and project through output projection
+        A_flat = A_mem_gated.permute(0, 2, 1, 3).reshape(B, T, D)  # [B, T, D]
+        # v5: use trainable mem_o_proj when enabled, otherwise frozen backbone o_proj
+        proj = self.mem_o_proj if self.trainable_proj else o_proj
+        mem_output = proj(A_flat)  # [B, T, D]
+
+        return mem_output
+
+    def update(self, hidden_states: torch.Tensor,
+               k_proj: nn.Linear, v_proj: nn.Linear) -> None:
+        """Delta rule memory update (self-correcting).
+
+        Only stores the residual (new info - already stored), preventing
+        redundant overwriting and providing self-correction.
+        """
+        B, T, D = hidden_states.shape
+
+        K = k_proj(hidden_states)  # [B, T, n_kv_heads * d_head]
+        V = v_proj(hidden_states)  # [B, T, n_kv_heads * d_head]
+        K_heads = K.view(B, T, self.n_kv_heads, self.d_head).permute(0, 2, 1, 3)  # [B, KV, T, d]
+        V_heads = V.view(B, T, self.n_kv_heads, self.d_head).permute(0, 2, 1, 3)  # [B, KV, T, d]
+        sigma_K = self._sigma(K_heads)  # [B, KV, T, d]
+
+        # Delta rule: compute what memory already stores for these keys
+        existing_V = torch.matmul(sigma_K, self.M) / \
+                     torch.matmul(sigma_K, self.z.unsqueeze(-1)).clamp(min=1e-6)  # [B, H, T, d]
+        delta_V = V_heads - existing_V  # residual: only new information
+
+        # Update M and z (in-place)
+        # M += sigma_K^T @ delta_V (summed over batch and time)
+        delta_M = torch.einsum('bhti,bhtj->bhij', sigma_K, delta_V)  # [B, H, d, d]
+        delta_z = sigma_K.sum(dim=2)  # [B, H, d] -- sum over time
+
+        self.M = self.M + delta_M
+        self.z = self.z + delta_z
+
+    def compute_diagnostics(self, hidden_states: torch.Tensor,
+                            q_proj: nn.Linear) -> dict:
+        """Compute diagnostic metrics (for logging)."""
+        with torch.no_grad():
+            B, T, D = hidden_states.shape
+            Q = q_proj(hidden_states)
+            Q_heads = Q.view(B, T, self.n_heads, self.d_head).permute(0, 2, 1, 3)
+            sigma_Q = self._sigma(Q_heads)
+
+            # GQA: average across heads in each KV group
+            n_rep = self.n_heads // self.n_kv_heads
+            if n_rep > 1:
+                sigma_Q_kv = sigma_Q.view(B, self.n_kv_heads, n_rep, T, self.d_head).mean(dim=2)
+            else:
+                sigma_Q_kv = sigma_Q
+
+            # Memory utilization: how much of M is being used
+            M_norm = self.M.float().norm(dim=(-2, -1)).mean().item()  # scalar
+            z_norm = self.z.float().norm(dim=-1).mean().item()  # scalar
+
+            # Retrieval magnitude
+            numer = torch.matmul(sigma_Q_kv, self.M)
+            denom = torch.matmul(sigma_Q_kv, self.z.unsqueeze(-1)).clamp(min=1e-6)
+            A_mem = numer / denom
+            mem_norm = A_mem.float().norm(dim=-1).mean().item()
+
+            # Gate values
+            beta_vals = torch.sigmoid(self.beta)
+            beta_mean = beta_vals.mean().item()
+            beta_min = beta_vals.min().item()
+            beta_max = beta_vals.max().item()
+
+        return {
+            'M_norm': M_norm,
+            'z_norm': z_norm,
+            'mem_retrieval_norm': mem_norm,
+            'beta_mean': beta_mean,
+            'beta_min': beta_min,
+            'beta_max': beta_max,
+            'memory_scale_mean': self.memory_scale.mean().item(),
+            'memory_scale_min': self.memory_scale.min().item(),
+            'memory_scale_max': self.memory_scale.max().item(),
+        }
+
+
+# --------------------------------------------------------------------------- #
+# Cross-Attention Memory V2 (Scheme A: zero-init, no LayerNorm, no gate)
+# --------------------------------------------------------------------------- #
+
+
+class CrossAttentionMemoryV2(nn.Module):
+    """Independent cross-attention for memory read/write.
+
+    Scheme A implementation: replaces the ChunkMemoryBank prepend approach
+    with a standalone cross-attention module.
+
+    Key design choices (vs existing CrossAttentionMemory):
+    - NO LayerNorm (amplifies small outputs, disrupting pretrained model)
+    - NO gate (out_proj=0 handles zero-start, LoRA-B style)
+    - NO write cross-attention (uses simpler delta-rule from read attention weights)
+    - Supports GQA: n_kv_heads may differ from n_heads (Llama-3 compat)
+
+    Forward flow:
+        1. read(): Q=hidden_states, K/V=slot projections -> memory_output
+           out_proj is zero-initialized, so at step 0 output = 0
+        2. write(): delta-rule update using attention weights from read()
+    """
+
+    def __init__(
+        self,
+        d_model: int,
+        n_heads: int,
+        n_kv_heads: int,
+        num_slots: int,
+        dropout: float = 0.0,
+        write_lr: float = 1.0,
+    ) -> None:
+        super().__init__()
+        self.d_model = d_model
+        self.n_heads = n_heads
+        self.n_kv_heads = n_kv_heads
+        self.num_slots = num_slots
+        self.head_dim = d_model // n_heads
+        self.write_lr = write_lr
+
+        assert d_model % n_heads == 0, f"d_model={d_model} must be divisible by n_heads={n_heads}"
+        assert n_heads % n_kv_heads == 0, f"n_heads={n_heads} must be divisible by n_kv_heads={n_kv_heads}"
+
+        # GQA replication factor
+        self.n_rep = n_heads // n_kv_heads
+
+        # Q projection: from content hidden states
+        self.q_proj = nn.Linear(d_model, n_heads * self.head_dim, bias=False)
+        # K projection: from memory slots
+        self.k_proj = nn.Linear(d_model, n_kv_heads * self.head_dim, bias=False)
+        # V projection: from memory slots
+        self.v_proj = nn.Linear(d_model, n_kv_heads * self.head_dim, bias=False)
+        # Output projection: ZERO INITIALIZED (key requirement!)
+        self.out_proj = nn.Linear(n_heads * self.head_dim, d_model, bias=True)
+
+        # Zero initialization: ensures step 0 output = 0, equivalent to vanilla model
+        nn.init.zeros_(self.out_proj.weight)
+        nn.init.zeros_(self.out_proj.bias)
+
+        # Initialize Q/K/V with small random values (standard init)
+        nn.init.normal_(self.q_proj.weight, std=0.02)
+        nn.init.normal_(self.k_proj.weight, std=0.02)
+        nn.init.normal_(self.v_proj.weight, std=0.02)
+
+        self.attn_dropout = nn.Dropout(dropout) if dropout > 0 else nn.Identity()
+
+    def _repeat_kv(self, x: torch.Tensor) -> torch.Tensor:
+        """Repeat K/V heads to match Q heads for GQA. x: [B, n_kv_heads, S, D]"""
+        if self.n_rep == 1:
+            return x
+        B, H, S, D = x.shape
+        return x[:, :, None, :, :].expand(B, H, self.n_rep, S, D).reshape(B, H * self.n_rep, S, D)
+
+    def read(
+        self,
+        hidden_states: torch.Tensor,
+        slot_keys: torch.Tensor,
+        slot_values: torch.Tensor,
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        """Cross-attention read: Q=hidden, K=slot_keys, V=slot_values.
+
+        Args:
+            hidden_states: [B, T, d_model] content hidden states.
+            slot_keys: [B, num_slots, d_model] memory slot key projections.
+            slot_values: [B, num_slots, d_model] memory slot value content.
+
+        Returns:
+            memory_output: [B, T, d_model] cross-attention output (via zero-init out_proj).
+            attention_weights: [B, n_heads, T, num_slots] for delta-rule write-back.
+        """
+        B, T, _ = hidden_states.shape
+        N = slot_keys.shape[1]
+
+        # Project Q from hidden states, K/V from slots
+        Q = self.q_proj(hidden_states)  # [B, T, n_heads * head_dim]
+        K = self.k_proj(slot_keys)      # [B, N, n_kv_heads * head_dim]
+        V = self.v_proj(slot_values)    # [B, N, n_kv_heads * head_dim]
+
+        # Reshape to multi-head: [B, S, H, D] -> [B, H, S, D]
+        Q = Q.view(B, T, self.n_heads, self.head_dim).transpose(1, 2)        # [B, n_heads, T, D]
+        K = K.view(B, N, self.n_kv_heads, self.head_dim).transpose(1, 2)     # [B, n_kv_heads, N, D]
+        V = V.view(B, N, self.n_kv_heads, self.head_dim).transpose(1, 2)     # [B, n_kv_heads, N, D]
+
+        # GQA: repeat K/V to match Q heads
+        K = self._repeat_kv(K)  # [B, n_heads, N, D]
+        V = self._repeat_kv(V)  # [B, n_heads, N, D]
+
+        # Scaled dot-product attention
+        scale = self.head_dim ** -0.5
+        attn_weights = torch.matmul(Q, K.transpose(-2, -1)) * scale  # [B, n_heads, T, N]
+        attn_weights = F.softmax(attn_weights, dim=-1, dtype=torch.float32).to(V.dtype)
+        attn_weights = self.attn_dropout(attn_weights)
+
+        # Weighted sum
+        attn_output = torch.matmul(attn_weights, V)  # [B, n_heads, T, D]
+
+        # Reshape and project
+        attn_output = attn_output.transpose(1, 2).contiguous().view(B, T, -1)  # [B, T, d_model]
+        memory_output = self.out_proj(attn_output)  # [B, T, d_model]
+
+        return memory_output, attn_weights
+
+    def write(
+        self,
+        hidden_states: torch.Tensor,
+        slot_values: torch.Tensor,
+        attention_weights: torch.Tensor,
+    ) -> torch.Tensor:
+        """Delta-rule write: error-corrective update of slot values.
+
+        For each slot j, compute:
+            content_j = sum_i(attention_weights[:, :, i, j] * hidden_states[:, i, :])
+            error_j = content_j - slot_values[j]
+            slot_values[j] = slot_values[j] + write_lr * error_j
+
+        This is equivalent to:
+            updated_slots = (1 - write_lr) * slot_values + write_lr * content
+
+        With write_lr=1.0, slots are completely replaced by the new content.
+        With write_lr < 1.0, slots do a weighted average of old and new content.
+
+        Args:
+            hidden_states: [B, T, d_model] content hidden states.
+            slot_values: [B, num_slots, d_model] current slot values.
+            attention_weights: [B, n_heads, T, num_slots] from read().
+
+        Returns:
+            updated_slots: [B, num_slots, d_model] new slot values.
+        """
+        # Average attention weights across heads for write: [B, T, num_slots]
+        avg_weights = attention_weights.mean(dim=1)  # [B, T, N]
+
+        # Compute attention-weighted content: what each slot "sees"
+        # avg_weights: [B, T, N] -> [B, N, T]
+        # hidden_states: [B, T, d_model]
+        # Result: [B, N, d_model]
+        content = torch.bmm(avg_weights.transpose(1, 2), hidden_states)  # [B, N, d_model]
+
+        # Delta-rule: error = desired content - current slot value
+        error = content - slot_values  # [B, N, d_model]
+
+        # Apply learning rate to error
+        updated_slots = slot_values + self.write_lr * error
+
+        return updated_slots
+
+    @staticmethod
+    def compute_attn_entropy(attn_weights: torch.Tensor) -> float:
+        """Mean attention entropy across heads (diagnostic for peaked vs uniform)."""
+        p = attn_weights.clamp(min=1e-8)
+        entropy = -(p * p.log()).sum(dim=-1)  # [B, n_heads, T]
+        return entropy.mean().item()
