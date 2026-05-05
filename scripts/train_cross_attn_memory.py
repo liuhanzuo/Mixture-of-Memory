@@ -1114,7 +1114,7 @@ def main() -> None:
             if is_main and (global_step % 10 == 0 or global_step <= 5):
                 elapsed = time.time() - t0
                 # Log cross-attn out_proj norm growth (key diagnostic)
-                out_proj_norm = root_model.cross_attn_modules[0].out_proj.weight.norm().item()
+                out_proj_norm = root_model.cross_attn_modules[0].out_proj.weight.norm().item() if len(root_model.cross_attn_modules) > 0 else 0.0
                 niah_acc_str = f" niah_acc={niah_correct}/{niah_total}" if niah_total > 0 else ""
                 niah_loss_str = f" niah_loss={niah_loss_sum / max(niah_total, 1):.4f}" if niah_total > 0 else ""
                 logger.info(
@@ -1148,7 +1148,7 @@ def main() -> None:
 
                 if is_main:
                     ratio = memory_ppl / max(vanilla_ppl, 1e-8)
-                    out_proj_norm = root_model.cross_attn_modules[0].out_proj.weight.norm().item()
+                    out_proj_norm = root_model.cross_attn_modules[0].out_proj.weight.norm().item() if len(root_model.cross_attn_modules) > 0 else 0.0
                     niah_acc_str = f" niah_acc={niah_correct}/{niah_total}" if niah_total > 0 else ""
                     niah_loss_str = f" niah_loss={niah_loss_sum / max(niah_total, 1):.4f}" if niah_total > 0 else ""
                     logger.info(
