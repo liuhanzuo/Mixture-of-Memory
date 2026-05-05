@@ -261,16 +261,16 @@ configs/
 
 ## Subagent 使用准则
 
-> **⚠️ 严格禁止：Main agent（Sonnet）自己改代码。**
+> **⚠️ 严格禁止：Main agent（Sonnet/GLM5.1）自己改代码，除非满足以下唯一例外。**
 > Main agent 使用的是 Claude Sonnet/GLM5.1 模型，代码质量和推理能力不如 Opus。
-> **所有代码修改（包括 bug fix、新功能、脚本调整）必须派 `/coder` subagent 执行。**
-> `/coder` 使用 Claude Opus 模型，专门负责代码实现。
+> **所有代码修改必须派 coder subagent（Agent tool, subagent_type=general-purpose, model="opus"）执行。**
 > Main 只做调度、分析、状态记录，不写代码。
 
-**写代码派 subagent 的阈值**:
-- 代码量 > ~200 行 或 涉及 ≥ 3 个新文件 → **派 coder subagent**(Agent tool, subagent_type=general-purpose)
-- 代码量 < 100 行 且 在 1-2 个文件内 → **main 自己写**
-- 介于之间:看 main 当前有没有其他阻塞任务;有就派 subagent
+**写代码规则（2026-05-05 用户指令，强制执行）**:
+- **必须派 coder subagent（model="opus"）**：修改超过 1 个文件，或单文件修改超过 5 行
+- **唯一例外**：修改在 **1 个文件、5 行以内** → main 可以直接改
+- **无例外**：涉及架构设计、新功能、多文件修改 → **必须 opus coder**
+- coder subagent 调用时必须指定 `model="opus"`（之前因遗漏导致用 GLM-5.1 写代码，质量不达标）
 
 **训练派 subagent 的阈值**:
 - **每个 8-GPU 训练都派一个后台 subagent**(run_in_background=true)
