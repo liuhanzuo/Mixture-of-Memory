@@ -367,15 +367,31 @@ git rev-parse --short HEAD  # 获取 7 位 hash
 
 | 情况 | Push 目标 | 条件 |
 |------|-----------|------|
-| 实验有进展（ratio 改善、新功能可用、bug 修复完成） | `main` 分支 | 无 `*.pt` / `password.txt`，非 force push |
+| 实验有进展（ratio 改善、新功能可用、bug 修复完成） | `main` 分支 | 无 `*.pt` / `password.txt`，非 force push，审核通过 |
 | 实验无明显进展但代码值得保存 | 新 feature 分支（如 `archive/<exp_name>-<date>`） | 同上，方便以后回溯 |
 | CI chore / 状态文件更新 | `main` 分支 | 同上 |
 
-**Push 前必须检查：**
+**Push 流程（必须按顺序）：**
+
+1. **安全检查**（可自己执行）：
 ```bash
 git diff --name-only HEAD  # 确认无 *.pt / *.bin / password.txt
 git log --oneline -3       # 确认 commit 内容合理
 ```
+
+2. **派 subagent 审核（必须，不可跳过）**：
+   - 派一个 `general-purpose` subagent，prompt 包含：待推送的 `git log` + `git diff --stat`
+   - subagent 执行 `git diff origin/main..HEAD` 检查改动，给出 APPROVED / REJECTED 结论
+   - 只有 **APPROVED** 才能继续推送；REJECTED 则停止，写入 PENDING_TASKS.md
+
+3. **通过 star-proxy 推送**（审核通过后）：
+```bash
+export http_proxy=http://star-proxy.oa.com:3128
+export https_proxy=http://star-proxy.oa.com:3128
+git push origin main   # 或 archive/... 分支
+```
+
+> 推荐直接调用 `/gitpush` skill，它包含完整的审核→推送流程。
 
 **分支命名规范（无进展时）：**
 ```bash
