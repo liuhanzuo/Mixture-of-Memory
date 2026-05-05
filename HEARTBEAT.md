@@ -227,7 +227,7 @@ Agent(
 3. 无 import → 删除（如果是纯死代码）或移入 legacy/（如果有历史参考价值）
 4. 如果移入 legacy/，更新或创建 legacy/README.md，说明文件的历史作用
 5. git add <修改的文件> && git commit -m "chore: cleanup dead code per CODE_CLEANUP_SUGGESTIONS.md"
-6. 不要 git push
+6. git push origin main（chore 类 commit 可直接 push）
 7. 报告：删除了哪些文件，移动了哪些文件，commit hash 是多少
 绝对不能碰：src/memory/cross_attn/, configs/, status/, CLAUDE.md, HEARTBEAT.md, CODE_CLEANUP_SUGGESTIONS.md
 """

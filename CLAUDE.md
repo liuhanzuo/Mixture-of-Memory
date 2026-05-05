@@ -358,13 +358,37 @@ git rev-parse --short HEAD  # 获取 7 位 hash
 
 ### Heartbeat 对 git 的职责
 - 每次 heartbeat 开始时执行 `git status` — 如果有未提交的修改（非训练日志类文件），记录为 WARNING
-- 可以自主 `git commit`（提交代码改动），但**不能自主 `git push`**（需用户确认）
+- 可以自主 `git commit`（提交代码改动）
 - 在报告 HEARTBEAT_OK 前确认 git 状态干净或已知原因
+
+### Git Push 规则（2026-05-05 用户授权）
+
+**Agent（coder/heartbeat）在以下情况下可自主 `git push`，无需用户确认：**
+
+| 情况 | Push 目标 | 条件 |
+|------|-----------|------|
+| 实验有进展（ratio 改善、新功能可用、bug 修复完成） | `main` 分支 | 无 `*.pt` / `password.txt`，非 force push |
+| 实验无明显进展但代码值得保存 | 新 feature 分支（如 `archive/<exp_name>-<date>`） | 同上，方便以后回溯 |
+| CI chore / 状态文件更新 | `main` 分支 | 同上 |
+
+**Push 前必须检查：**
+```bash
+git diff --name-only HEAD  # 确认无 *.pt / *.bin / password.txt
+git log --oneline -3       # 确认 commit 内容合理
+```
+
+**分支命名规范（无进展时）：**
+```bash
+git checkout -b archive/<exp_name>-$(date +%Y%m%d)
+git push origin archive/<exp_name>-$(date +%Y%m%d)
+```
 
 ### 禁止
 - `git commit` 中加 `Co-Authored-By: Claude` 或任何 Anthropic/AI 署名
 - `git add .` 或 `git add -A`（可能包含 configs/password.txt、*.pt 等敏感/大文件）
 - `git commit --amend` 在已 push 的 commit 上（会破坏 CI 历史）
+- `git push --force` 或 `git push -f`（任何情况下均禁止）
+- Push 包含 `*.pt`、`*.bin`、`configs/password.txt` 的 commit
 
 ---
 
