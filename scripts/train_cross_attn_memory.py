@@ -44,6 +44,22 @@ from transformers import AutoTokenizer, LlamaForCausalLM
 from src.memory.mem_space.niah_dataset import NIAHIterableDataset, niah_collate_fn
 from src.memory.mem_space.selector import CrossAttentionMemoryV2
 
+
+def make_swa_mask(seq_len: int, window_size: int, dtype: torch.dtype, device: torch.device) -> torch.Tensor:
+    """Create a causal sliding window attention mask.
+
+    For position i, can attend to positions [max(0, i-window_size+1), i].
+    Returns additive mask: 0 where allowed, -inf where blocked. Shape [1, 1, T, T].
+    """
+    causal = torch.tril(torch.ones(seq_len, seq_len, device=device, dtype=torch.bool))
+    if window_size < seq_len:
+        window = torch.triu(causal, diagonal=-(window_size - 1))
+    else:
+        window = causal
+    additive = torch.where(window, torch.tensor(0.0, device=device, dtype=dtype), torch.tensor(float('-inf'), device=device, dtype=dtype))
+    return additive.unsqueeze(0).unsqueeze(0)  # [1, 1, T, T]
+
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [R%(rank)s] %(levelname)s %(message)s",
@@ -240,6 +256,7 @@ class CrossAttentionMemoryModel(nn.Module):
         gradient_checkpointing: bool = True,
         cross_attn_dropout: float = 0.0,
         residual_scale: float = 0.01,
+        swa_window: int = 0,
     ) -> None:
         super().__init__()
         self.num_slots = num_slots
@@ -247,6 +264,8 @@ class CrossAttentionMemoryModel(nn.Module):
         self.use_memory = use_memory
         self.use_cross_attn_memory = use_cross_attn_memory
         self.residual_scale = residual_scale
+        self._swa_window = swa_window
+        self._swa_mask_cache = None
 
         config = base_model.config
         self.num_layers = config.num_hidden_layers
@@ -363,9 +382,16 @@ class CrossAttentionMemoryModel(nn.Module):
             slot_values = self.slot_values[layer_idx]  # [B, num_slots, d_model]
 
             # Step 1: Vanilla self-attention (content tokens only)
+            if self._swa_window > 0:
+                if self._swa_mask_cache is None:
+                    self._swa_mask_cache = make_swa_mask(T, self._swa_window, hidden_states.dtype, hidden_states.device)
+                attn_mask = self._swa_mask_cache
+            else:
+                attn_mask = None
+
             layer_out = layer(
                 hidden_states,
-                attention_mask=None,  # plain causal, HF dispatches SDPA
+                attention_mask=attn_mask,
                 position_ids=position_ids,
                 past_key_value=None,
                 use_cache=False,
@@ -580,6 +606,8 @@ def parse_args() -> argparse.Namespace:
                    help="Dropout for cross-attention")
     p.add_argument("--residual_scale", type=float, default=0.01,
                    help="Scale factor for cross-attn output before adding as residual (default 0.01)")
+    p.add_argument("--swa_window", type=int, default=0,
+                   help="Sliding window attention size. 0=full causal attention (default)")
     p.add_argument("--cross_attn_lr_factor", type=float, default=100,
                    help="Divide main lr by this factor to get cross-attn lr (default 100, use 1 for same lr)")
     # Mode
@@ -680,6 +708,7 @@ def main() -> None:
         gradient_checkpointing=args.gradient_checkpointing,
         cross_attn_dropout=args.cross_attn_dropout,
         residual_scale=args.residual_scale,
+        swa_window=args.swa_window,
     ).to(device).to(dtype)
 
     trainable = sum(p.numel() for p in cm_model.parameters() if p.requires_grad)
@@ -693,6 +722,8 @@ def main() -> None:
             "Config: num_slots=%d, seq_len=%d, chunks_per_doc=%d",
             args.num_slots, args.seq_len, args.chunks_per_doc,
         )
+        if args.swa_window > 0:
+            logger.info("SWA enabled: window_size=%d", args.swa_window)
         # Verify zero-init on out_proj
         for i, ca in enumerate(cm_model.cross_attn_modules):
             w_norm = ca.out_proj.weight.norm().item()
