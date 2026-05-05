@@ -452,11 +452,56 @@ class CrossAttentionMemoryModel(nn.Module):
         input_ids: torch.Tensor,
         labels: torch.Tensor | None,
     ) -> dict:
-        """Standard transformer forward pass -- no memory interference."""
-        outputs = self.base_model(input_ids=input_ids, labels=labels)
-        result = {"logits": outputs.logits}
-        if outputs.loss is not None:
-            result["loss"] = outputs.loss
+        """Standard transformer forward pass -- no memory interference.
+
+        When swa_window > 0, applies sliding window mask to self-attention.
+        Otherwise delegates to base_model for full causal attention.
+        """
+        if self._swa_window <= 0:
+            outputs = self.base_model(input_ids=input_ids, labels=labels)
+            result = {"logits": outputs.logits}
+            if outputs.loss is not None:
+                result["loss"] = outputs.loss
+            return result
+
+        # SWA path: manual layer-by-layer forward with sliding window mask
+        B, T = input_ids.shape
+        device = input_ids.device
+        dtype = next(self.parameters()).dtype
+
+        embed_tokens = self._get_embed_tokens()
+        hidden_states = embed_tokens(input_ids).to(dtype)
+        position_ids = torch.arange(T, device=device).unsqueeze(0).expand(B, -1)
+        rotary_emb = self._get_rotary_emb()
+        position_embeddings = rotary_emb(hidden_states, position_ids)
+
+        if self._swa_mask_cache is None:
+            self._swa_mask_cache = make_swa_mask(T, self._swa_window, dtype, device)
+        attn_mask = self._swa_mask_cache
+
+        for layer in self._decoder_layers:
+            layer_out = layer(
+                hidden_states,
+                attention_mask=attn_mask,
+                position_ids=position_ids,
+                past_key_value=None,
+                use_cache=False,
+                position_embeddings=position_embeddings,
+            )
+            hidden_states = layer_out[0] if isinstance(layer_out, tuple) else layer_out
+
+        norm = self._get_norm()
+        lm_head = self._get_lm_head()
+        hidden_states = norm(hidden_states)
+        logits = lm_head(hidden_states)
+
+        result = {"logits": logits}
+        if labels is not None:
+            shift_logits = logits[..., :-1, :].contiguous()
+            shift_labels = labels[..., 1:].contiguous()
+            loss_fn = nn.CrossEntropyLoss(reduction="mean")
+            loss = loss_fn(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
+            result["loss"] = loss
         return result
 
     def forward(self, input_ids, labels=None, **kwargs):
