@@ -431,6 +431,16 @@ class CrossAttentionMemoryModel(nn.Module):
         else:
             self.cross_attn_modules = nn.ModuleList()
 
+        # Learnable slot embeddings for slot_forward mode
+        if slot_forward:
+            init_std = 0.02  # match typical embedding init
+            self.slot_embeddings = nn.ParameterList([
+                nn.Parameter(torch.randn(num_slots, config.hidden_size) * init_std)
+                for _ in range(self.num_layers)
+            ])
+        else:
+            self.slot_embeddings = nn.ParameterList()
+
     def _get_embed_tokens(self):
         return self.base_model.model.embed_tokens
 
@@ -468,24 +478,28 @@ class CrossAttentionMemoryModel(nn.Module):
         else:
             needs_init = self.slot_keys[layer_idx] is None or self.slot_keys[layer_idx].shape[0] != B
         if needs_init:
-            # Strided token sampling for diversity
-            stride = max(1, T // self.num_slots)
-            indices = torch.arange(0, T, stride)[:self.num_slots]
-            if len(indices) < self.num_slots:
-                # Pad with copies of the last selected token
-                pad_indices = indices[-1:].expand(self.num_slots - len(indices))
-                indices = torch.cat([indices, pad_indices])
-
-            # Sample tokens: [B, num_slots, D]
-            sampled = hidden_states[:, indices, :].detach()
-
-            # Add small noise for diversity
-            noise = torch.randn_like(sampled) * 0.02
-            if self.slot_forward:
-                self.slot_values[layer_idx] = (sampled + noise).clone()
+            if self.slot_forward and len(self.slot_embeddings) > 0:
+                # Use learnable slot embeddings, expand to batch
+                self.slot_values[layer_idx] = self.slot_embeddings[layer_idx].unsqueeze(0).expand(B, -1, -1).clone()
             else:
-                self.slot_keys[layer_idx] = (sampled + noise).clone()
-                self.slot_values[layer_idx] = sampled.clone()
+                # Original strided token sampling
+                stride = max(1, T // self.num_slots)
+                indices = torch.arange(0, T, stride)[:self.num_slots]
+                if len(indices) < self.num_slots:
+                    # Pad with copies of the last selected token
+                    pad_indices = indices[-1:].expand(self.num_slots - len(indices))
+                    indices = torch.cat([indices, pad_indices])
+
+                # Sample tokens: [B, num_slots, D]
+                sampled = hidden_states[:, indices, :].detach()
+
+                # Add small noise for diversity
+                noise = torch.randn_like(sampled) * 0.02
+                if self.slot_forward:
+                    self.slot_values[layer_idx] = (sampled + noise).clone()
+                else:
+                    self.slot_keys[layer_idx] = (sampled + noise).clone()
+                    self.slot_values[layer_idx] = sampled.clone()
 
     def _build_extended_attn_mask(self, S, T, dtype, device, batch_size):
         """Build [B, 1, S+T, S+T] additive attention mask.
@@ -597,7 +611,8 @@ class CrossAttentionMemoryModel(nn.Module):
             return self._forward_no_memory(input_ids, labels)
 
         if self.slot_forward:
-            return self._forward_slot_forward(input_ids, labels, enable_write_grad)
+            # Slot-forward always needs write gradient for slot_embeddings training
+            return self._forward_slot_forward(input_ids, labels, enable_write_grad=True)
 
         # ---- Forward with cross-attention memory ----
         embed_tokens = self._get_embed_tokens()
@@ -914,6 +929,8 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--slot_forward", action="store_true", default=False,
                    help="Forward memory slots through decoder layers like regular tokens "
                         "(instead of cross-attention read + delta-rule write)")
+    p.add_argument("--freeze_base_steps", type=int, default=0,
+                   help="Freeze base model for first N steps (only train slot embeddings). 0=disabled.")
     p.add_argument("--cross_attn_lr_factor", type=float, default=100,
                    help="Divide main lr by this factor to get cross-attn lr (default 100, use 1 for same lr)")
     # Mode
@@ -1050,6 +1067,15 @@ def main() -> None:
             )
             break  # only log first layer
 
+    # Freeze base model for Phase 1 (slot embedding warmup)
+    if args.freeze_base_steps > 0 and args.slot_forward:
+        for name, param in cm_model.named_parameters():
+            if 'slot_embeddings' not in name:
+                param.requires_grad = False
+        trainable = sum(p.numel() for p in cm_model.parameters() if p.requires_grad)
+        if is_main:
+            logger.info("Phase 1: Base model FROZEN, only training slot_embeddings (%d params)", trainable)
+
     ddp_model = DDP(cm_model, device_ids=[local_rank])
     root_model = ddp_model.module
 
@@ -1068,18 +1094,28 @@ def main() -> None:
     # Optimizer — separate lr for cross-attention params
     # ------------------------------------------------------------------
     if args.slot_forward:
-        # slot_forward: no cross_attn params, only base model
-        decay = [p for n, p in cm_model.named_parameters()
-                 if p.requires_grad and p.dim() >= 2 and 'norm' not in n.lower() and 'bias' not in n.lower()]
-        no_decay = [p for n, p in cm_model.named_parameters()
-                    if p.requires_grad and (p.dim() < 2 or 'norm' in n.lower() or 'bias' in n.lower())]
-        optimizer = torch.optim.AdamW([
-            {"params": decay, "weight_decay": args.weight_decay, "lr": args.lr},
-            {"params": no_decay, "weight_decay": 0.0, "lr": args.lr},
-        ], lr=args.lr, betas=(0.9, 0.95))
-        if is_main:
-            logger.info("Optimizer (slot_forward): AdamW, lr=%.2e, decay=%d, no_decay=%d",
-                        args.lr, sum(p.numel() for p in decay), sum(p.numel() for p in no_decay))
+        if args.freeze_base_steps > 0:
+            # Phase 1: only train slot_embeddings with high lr
+            slot_params = list(cm_model.slot_embeddings.parameters())
+            slot_lr = args.lr * 100
+            optimizer = torch.optim.AdamW([
+                {"params": slot_params, "weight_decay": 0.0, "lr": slot_lr},
+            ], lr=slot_lr, betas=(0.9, 0.95))
+            if is_main:
+                logger.info("Optimizer (Phase 1): only slot_embeddings, lr=%.2e", slot_lr)
+        else:
+            # slot_forward: no cross_attn params, only base model
+            decay = [p for n, p in cm_model.named_parameters()
+                     if p.requires_grad and p.dim() >= 2 and 'norm' not in n.lower() and 'bias' not in n.lower()]
+            no_decay = [p for n, p in cm_model.named_parameters()
+                        if p.requires_grad and (p.dim() < 2 or 'norm' in n.lower() or 'bias' in n.lower())]
+            optimizer = torch.optim.AdamW([
+                {"params": decay, "weight_decay": args.weight_decay, "lr": args.lr},
+                {"params": no_decay, "weight_decay": 0.0, "lr": args.lr},
+            ], lr=args.lr, betas=(0.9, 0.95))
+            if is_main:
+                logger.info("Optimizer (slot_forward): AdamW, lr=%.2e, decay=%d, no_decay=%d",
+                            args.lr, sum(p.numel() for p in decay), sum(p.numel() for p in no_decay))
     else:
         base_decay = []
         base_no_decay = []
@@ -1400,6 +1436,28 @@ def main() -> None:
             optimizer.zero_grad()
 
             global_step += 1
+
+            # Transition from Phase 1 (frozen) to Phase 2 (joint training)
+            if (args.freeze_base_steps > 0 and global_step == args.freeze_base_steps
+                    and not all(p.requires_grad for p in cm_model.base_model.parameters())):
+                for param in cm_model.base_model.parameters():
+                    param.requires_grad = True
+                # Rebuild optimizer with all parameters
+                decay = [p for n, p in cm_model.named_parameters()
+                         if p.requires_grad and p.dim() >= 2 and 'norm' not in n.lower() and 'bias' not in n.lower()]
+                no_decay = [p for n, p in cm_model.named_parameters()
+                            if p.requires_grad and (p.dim() < 2 or 'norm' in n.lower() or 'bias' in n.lower())]
+                slot_params = [p for n, p in cm_model.named_parameters() if 'slot_embeddings' in n]
+                optimizer = torch.optim.AdamW([
+                    {"params": decay, "weight_decay": args.weight_decay, "lr": args.lr},
+                    {"params": no_decay, "weight_decay": 0.0, "lr": args.lr},
+                    {"params": slot_params, "weight_decay": 0.0, "lr": args.lr},
+                ], lr=args.lr, betas=(0.9, 0.95))
+                trainable_params = [p for p in ddp_model.parameters() if p.requires_grad]
+                if is_main:
+                    trainable = sum(p.numel() for p in cm_model.parameters() if p.requires_grad)
+                    logger.info("Phase 2: Base model UNFROZEN, all %d params trainable", trainable)
+
             new_lr = get_lr(global_step, args.warmup_steps, args.max_steps, args.lr, args.min_lr)
             if args.slot_forward:
                 for pg in optimizer.param_groups:
