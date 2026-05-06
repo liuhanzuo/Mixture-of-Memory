@@ -784,17 +784,21 @@ class CrossAttentionMemoryV2(nn.Module):
         hidden_states: torch.Tensor,
         slot_keys: torch.Tensor,
         slot_values: torch.Tensor,
-    ) -> tuple[torch.Tensor, torch.Tensor]:
+        return_logits: bool = False,
+    ) -> tuple[torch.Tensor, torch.Tensor] | tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """Cross-attention read: Q=hidden, K=slot_keys, V=slot_values.
 
         Args:
             hidden_states: [B, T, d_model] content hidden states.
             slot_keys: [B, num_slots, d_model] memory slot key projections.
             slot_values: [B, num_slots, d_model] memory slot value content.
+            return_logits: if True, also return pre-softmax attention logits.
 
         Returns:
             memory_output: [B, T, d_model] cross-attention output (via zero-init out_proj).
             attention_weights: [B, n_heads, T, num_slots] for delta-rule write-back.
+            attn_logits (only when return_logits=True): [B, n_heads, T, num_slots]
+                pre-softmax scaled dot-product logits, for contrastive loss.
         """
         B, T, _ = hidden_states.shape
         N = slot_keys.shape[1]
@@ -815,8 +819,8 @@ class CrossAttentionMemoryV2(nn.Module):
 
         # Scaled dot-product attention
         scale = self.head_dim ** -0.5
-        attn_weights = torch.matmul(Q, K.transpose(-2, -1)) * scale  # [B, n_heads, T, N]
-        attn_weights = F.softmax(attn_weights, dim=-1, dtype=torch.float32).to(V.dtype)
+        attn_logits = torch.matmul(Q, K.transpose(-2, -1)) * scale  # [B, n_heads, T, N]
+        attn_weights = F.softmax(attn_logits, dim=-1, dtype=torch.float32).to(V.dtype)
         attn_weights = self.attn_dropout(attn_weights)
 
         # Weighted sum
@@ -826,6 +830,8 @@ class CrossAttentionMemoryV2(nn.Module):
         attn_output = attn_output.transpose(1, 2).contiguous().view(B, T, -1)  # [B, T, d_model]
         memory_output = self.out_proj(attn_output)  # [B, T, d_model]
 
+        if return_logits:
+            return memory_output, attn_weights, attn_logits
         return memory_output, attn_weights
 
     def write(

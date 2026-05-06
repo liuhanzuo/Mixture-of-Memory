@@ -173,7 +173,7 @@ def get_curriculum_params(step: int, warmup_steps: int) -> CurriculumParams:
 
 
 def contrastive_retrieval_loss(
-    query_attn_weights: torch.Tensor,
+    query_attn_logits: torch.Tensor,
     target_slot_idx: torch.Tensor,
     temperature: float = 0.1,
 ) -> torch.Tensor:
@@ -182,9 +182,13 @@ def contrastive_retrieval_loss(
     Encourages the query chunk's cross-attention to attend to the slot that
     received the needle information during the write phase.
 
+    Uses pre-softmax logits (not softmax probabilities) to avoid the Rényi
+    entropy bug: applying log() then logsumexp() on softmax output is a
+    double-softmax that penalises peaked attention when temperature < 1.
+
     Args:
-        query_attn_weights: [B, n_heads, T, num_slots] — attention from query
-            chunk to memory slots (from CrossAttentionMemoryV2.read()).
+        query_attn_logits: [B, n_heads, T, num_slots] — PRE-SOFTMAX logits
+            from CrossAttentionMemoryV2.read(return_logits=True).
         target_slot_idx: [B] — slot index that received the highest write
             attention from the needle chunk (detached, no gradient).
         temperature: scaling for logits before softmax. Lower = sharper focus.
@@ -193,20 +197,14 @@ def contrastive_retrieval_loss(
         scalar loss (mean over batch).
     """
     # Average across heads and time: [B, num_slots]
-    avg_attn = query_attn_weights.mean(dim=(1, 2))  # [B, num_slots]
-
-    # Scale by temperature (acts like logits for InfoNCE)
-    # Since avg_attn is already softmax output in [0,1], convert back to logits:
-    # logits = log(attn) / temperature.  But attn can be 0, so use logsumexp trick.
-    # Actually, the attn_weights are softmax outputs. For InfoNCE we want to treat
-    # them as logits. Use log-space to avoid numerical issues.
-    log_avg_attn = torch.log(avg_attn.clamp(min=1e-8)) / temperature  # [B, num_slots]
+    avg_logits = query_attn_logits.mean(dim=(1, 2))  # [B, num_slots]
+    avg_logits = avg_logits / temperature
 
     # Gather positive logits (attention to target slot)
-    positive_logits = log_avg_attn.gather(1, target_slot_idx.unsqueeze(1))  # [B, 1]
+    positive_logits = avg_logits.gather(1, target_slot_idx.unsqueeze(1))  # [B, 1]
 
     # InfoNCE: -log(exp(pos) / sum(exp(all))) = -pos + log(sum(exp(all)))
-    loss = -positive_logits + torch.logsumexp(log_avg_attn, dim=1, keepdim=True)  # [B, 1]
+    loss = -positive_logits + torch.logsumexp(avg_logits, dim=1, keepdim=True)  # [B, 1]
     return loss.mean()
 
 
@@ -248,7 +246,7 @@ def forward_niah_sample(
 
     # Storage for contrastive loss computation
     needle_write_attn_per_layer = None  # dict: layer_idx -> [B, n_heads, T, num_slots]
-    query_read_attn_per_layer = None    # dict: layer_idx -> [B, n_heads, T, num_slots]
+    query_read_logits_per_layer = None  # dict: layer_idx -> [B, n_heads, T, num_slots] PRE-SOFTMAX
 
     use_contrastive = contrastive_weight > 0 and needle_chunk_idx is not None
 
@@ -257,7 +255,11 @@ def forward_niah_sample(
         chunk_tensor = chunk_ids.unsqueeze(0).to(device)
 
         if use_contrastive and chunk_i == needle_chunk_idx:
-            # Capture write attention from needle chunk
+            # Capture write attention from needle chunk.
+            # In the delta-rule scheme, the same cross-attention weights are used
+            # for both read and write. So "which slot received the needle's write"
+            # is determined by the read attention argmax (the slot that most
+            # attended to the needle tokens).
             result = model.forward_chunk(
                 chunk_tensor, enable_write_grad=True,
                 capture_read_attn=True,
@@ -267,7 +269,7 @@ def forward_niah_sample(
         else:
             model.forward_chunk(chunk_tensor, enable_write_grad=True)
 
-    # Last chunk (query): compute loss with gradient + capture read attention
+    # Last chunk (query): compute loss with gradient + capture read logits
     last_ids = chunks[-1].unsqueeze(0).to(device)
     last_labels = label_chunks[-1].unsqueeze(0).to(device)
 
@@ -276,8 +278,8 @@ def forward_niah_sample(
             last_ids, enable_write_grad=True,
             capture_read_attn=True,
         )
-        if "read_attn_weights" in result:
-            query_read_attn_per_layer = result["read_attn_weights"]
+        if "read_attn_logits" in result:
+            query_read_logits_per_layer = result["read_attn_logits"]
     else:
         result = model.forward_chunk(last_ids, enable_write_grad=True)
 
@@ -294,23 +296,24 @@ def forward_niah_sample(
     contrastive_loss_val = 0.0
     if (use_contrastive
             and needle_write_attn_per_layer is not None
-            and query_read_attn_per_layer is not None):
+            and query_read_logits_per_layer is not None):
         # Aggregate across layers: for each layer, find the target slot from
-        # needle write attention, then compute InfoNCE with query read attention.
+        # needle write attention (softmax), then compute InfoNCE with query
+        # read logits (pre-softmax).
         contrastive_losses = []
         for layer_idx in needle_write_attn_per_layer:
             needle_attn = needle_write_attn_per_layer[layer_idx]  # [B, n_heads, T, N]
-            query_attn = query_read_attn_per_layer.get(layer_idx)
-            if query_attn is None:
+            query_logits = query_read_logits_per_layer.get(layer_idx)
+            if query_logits is None:
                 continue
 
-            # Target slot: slot with highest cumulative write attention from needle chunk
+            # Target slot: slot with highest cumulative write attention from needle chunk.
             # Average across heads and time -> [B, num_slots]
             avg_write_attn = needle_attn.mean(dim=(1, 2))  # [B, num_slots]
             target_slot_idx = avg_write_attn.argmax(dim=-1).detach()  # [B], no gradient
 
-            # InfoNCE loss for this layer
-            cl = contrastive_retrieval_loss(query_attn, target_slot_idx, contrastive_temperature)
+            # InfoNCE loss using pre-softmax logits (NOT softmax output)
+            cl = contrastive_retrieval_loss(query_logits, target_slot_idx, contrastive_temperature)
             contrastive_losses.append(cl)
 
         if contrastive_losses:
@@ -514,14 +517,23 @@ class CrossAttentionMemoryModel(nn.Module):
 
             # Step 2: Cross-attention read
             cross_attn = self.cross_attn_modules[layer_idx]
-            memory_output, attn_weights = cross_attn.read(
+            read_result = cross_attn.read(
                 decoder_output, slot_keys, slot_values,
+                return_logits=capture_read_attn,
             )
-
-            # Capture read attention weights for contrastive loss (detached to avoid memory leaks)
             if capture_read_attn:
+                memory_output, attn_weights, attn_logits = read_result
+            else:
+                memory_output, attn_weights = read_result
+
+            # Capture pre-softmax logits and post-softmax weights for contrastive loss
+            # (detached to avoid memory leaks)
+            if capture_read_attn:
+                if not hasattr(self, '_captured_read_logits') or self._captured_read_logits is None:
+                    self._captured_read_logits = {}
                 if not hasattr(self, '_captured_read_attn') or self._captured_read_attn is None:
                     self._captured_read_attn = {}
+                self._captured_read_logits[layer_idx] = attn_logits.detach()
                 self._captured_read_attn[layer_idx] = attn_weights.detach()
 
             # Step 3: Add memory output as residual (scaled to prevent early divergence)
@@ -555,10 +567,13 @@ class CrossAttentionMemoryModel(nn.Module):
         logits = lm_head(hidden_states)
 
         result = {"logits": logits}
-        # Include captured read attention weights if requested
+        # Include captured read attention weights and logits if requested
         if capture_read_attn and hasattr(self, '_captured_read_attn') and self._captured_read_attn:
             result["read_attn_weights"] = self._captured_read_attn
             self._captured_read_attn = None  # clear to avoid memory leaks
+        if capture_read_attn and hasattr(self, '_captured_read_logits') and self._captured_read_logits:
+            result["read_attn_logits"] = self._captured_read_logits
+            self._captured_read_logits = None  # clear to avoid memory leaks
         if labels is not None:
             shift_logits = logits[..., :-1, :].contiguous()
             shift_labels = labels[..., 1:].contiguous()
