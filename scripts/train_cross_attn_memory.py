@@ -377,6 +377,8 @@ class CrossAttentionMemoryModel(nn.Module):
         swa_window: int = 0,
         write_lr: float = 0.1,
         slot_forward: bool = False,
+        memory_init: str = "learnable",
+        recon_loss_weight: float = 0.0,
     ) -> None:
         super().__init__()
         self.num_slots = num_slots
@@ -388,6 +390,8 @@ class CrossAttentionMemoryModel(nn.Module):
         self._swa_mask_cache = None
         self.slot_forward = slot_forward
         self._ext_attn_mask_cache = None
+        self.memory_init = memory_init
+        self.recon_loss_weight = recon_loss_weight
 
         config = base_model.config
         self.num_layers = config.num_hidden_layers
@@ -431,15 +435,45 @@ class CrossAttentionMemoryModel(nn.Module):
         else:
             self.cross_attn_modules = nn.ModuleList()
 
-        # Learnable slot embeddings for slot_forward mode
+        # Memory slot initialization approaches for slot_forward mode
         if slot_forward:
-            init_std = 0.02  # match typical embedding init
-            self.slot_embeddings = nn.ParameterList([
-                nn.Parameter(torch.randn(num_slots, config.hidden_size) * init_std)
-                for _ in range(self.num_layers)
-            ])
+            self.memory_init = memory_init
+            self.recon_loss_weight = recon_loss_weight
+
+            if memory_init == 'learnable':
+                init_std = 0.02  # match typical embedding init
+                self.slot_embeddings = nn.ParameterList([
+                    nn.Parameter(torch.randn(num_slots, config.hidden_size) * init_std)
+                    for _ in range(self.num_layers)
+                ])
+                self.memory_write_mlp = None
+            elif memory_init == 'mlp':
+                self.slot_embeddings = nn.ParameterList()
+                self.memory_write_mlp = nn.Sequential(
+                    nn.Linear(config.hidden_size, config.hidden_size * 2),
+                    nn.GELU(),
+                    nn.Linear(config.hidden_size * 2, num_slots * config.hidden_size),
+                )
+                nn.init.zeros_(self.memory_write_mlp[-1].weight)
+                nn.init.zeros_(self.memory_write_mlp[-1].bias)
+            else:  # strided
+                self.slot_embeddings = nn.ParameterList()
+                self.memory_write_mlp = None
+
+            if recon_loss_weight > 0:
+                self.recon_decoder = nn.Sequential(
+                    nn.Linear(num_slots * config.hidden_size, config.hidden_size * 2),
+                    nn.GELU(),
+                    nn.Linear(config.hidden_size * 2, config.hidden_size),
+                )
+                nn.init.zeros_(self.recon_decoder[-1].weight)
+                nn.init.zeros_(self.recon_decoder[-1].bias)
+            else:
+                self.recon_decoder = None
         else:
             self.slot_embeddings = nn.ParameterList()
+            self.memory_write_mlp = None
+            self.recon_decoder = None
 
     def _get_embed_tokens(self):
         return self.base_model.model.embed_tokens
@@ -464,41 +498,50 @@ class CrossAttentionMemoryModel(nn.Module):
     def _init_slots(self, layer_idx: int, hidden_states: torch.Tensor) -> None:
         """Initialize slot keys and values for a layer from hidden states.
 
-        Uses strided token sampling: pick evenly spaced tokens from the
-        last chunk as initial slot content. This gives diversity instead
-        of copying the same pooled vector.
+        Supports three approaches:
+        - learnable: nn.Parameter embeddings (MemoryLLM style)
+        - mlp: trained MLP compression from hidden states
+        - strided: strided token sampling from current chunk
         """
         B, T, D = hidden_states.shape
         device = hidden_states.device
         dtype = hidden_states.dtype
 
-        # Always re-init from learnable embeddings (gradient-safe per chunk)
-        if self.slot_forward and len(self.slot_embeddings) > 0:
-            self.slot_values[layer_idx] = self.slot_embeddings[layer_idx].unsqueeze(0).expand(B, -1, -1).clone()
-        else:
-            if self.slot_forward:
-                needs_init = self.slot_values[layer_idx] is None or self.slot_values[layer_idx].shape[0] != B
+        if self.slot_forward:
+            # Slot-forward mode: three initialization approaches
+            if self.memory_init == 'learnable' and len(self.slot_embeddings) > 0:
+                # Learnable embeddings: re-expand per batch
+                self.slot_values[layer_idx] = self.slot_embeddings[layer_idx].unsqueeze(0).expand(B, -1, -1).clone()
+            elif self.memory_init == 'mlp' and self.memory_write_mlp is not None:
+                # MLP compression: mean-pool hidden states -> MLP -> slots
+                pooled = hidden_states.mean(dim=1)  # [B, D]
+                slots = self.memory_write_mlp(pooled)  # [B, S*D]
+                self.slot_values[layer_idx] = slots.view(B, self.num_slots, -1)
             else:
-                needs_init = self.slot_keys[layer_idx] is None or self.slot_keys[layer_idx].shape[0] != B
+                # Strided fallback: existing strided sampling logic
+                needs_init = self.slot_values[layer_idx] is None or self.slot_values[layer_idx].shape[0] != B
+                if needs_init:
+                    stride = max(1, T // self.num_slots)
+                    indices = torch.arange(0, T, stride)[:self.num_slots]
+                    if len(indices) < self.num_slots:
+                        pad_indices = indices[-1:].expand(self.num_slots - len(indices))
+                        indices = torch.cat([indices, pad_indices])
+                    sampled = hidden_states[:, indices, :].detach()
+                    noise = torch.randn_like(sampled) * 0.02
+                    self.slot_values[layer_idx] = (sampled + noise).clone()
+        else:
+            # Cross-attention mode: strided sampling for keys/values
+            needs_init = self.slot_keys[layer_idx] is None or self.slot_keys[layer_idx].shape[0] != B
             if needs_init:
-                # Strided token sampling for diversity
                 stride = max(1, T // self.num_slots)
                 indices = torch.arange(0, T, stride)[:self.num_slots]
                 if len(indices) < self.num_slots:
-                    # Pad with copies of the last selected token
                     pad_indices = indices[-1:].expand(self.num_slots - len(indices))
                     indices = torch.cat([indices, pad_indices])
-
-                # Sample tokens: [B, num_slots, D]
                 sampled = hidden_states[:, indices, :].detach()
-
-                # Add small noise for diversity
                 noise = torch.randn_like(sampled) * 0.02
-                if self.slot_forward:
-                    self.slot_values[layer_idx] = (sampled + noise).clone()
-                else:
-                    self.slot_keys[layer_idx] = (sampled + noise).clone()
-                    self.slot_values[layer_idx] = sampled.clone()
+                self.slot_keys[layer_idx] = (sampled + noise).clone()
+                self.slot_values[layer_idx] = sampled.clone()
 
     def _build_extended_attn_mask(self, S, T, dtype, device, batch_size):
         """Build [B, 1, S+T, S+T] additive attention mask.
@@ -554,6 +597,9 @@ class CrossAttentionMemoryModel(nn.Module):
         ext_pos_emb = self._extend_position_embeddings(position_embeddings, S)
         ext_attn_mask = self._build_extended_attn_mask(S, T, dtype, device, B)
 
+        # Capture hidden states before final norm for reconstruction loss
+        hidden_states_before_norm = None
+
         for layer_idx, layer in enumerate(self._decoder_layers):
             self._init_slots(layer_idx, hidden_states)
             slots = self.slot_values[layer_idx]  # [B, S, d_model]
@@ -580,6 +626,7 @@ class CrossAttentionMemoryModel(nn.Module):
 
         norm = self._get_norm()
         lm_head = self._get_lm_head()
+        hidden_states_before_norm = hidden_states  # Capture before final norm
         hidden_states = norm(hidden_states)
         logits = lm_head(hidden_states)
 
@@ -593,6 +640,19 @@ class CrossAttentionMemoryModel(nn.Module):
                 shift_labels.view(-1),
             )
             result["loss"] = loss
+
+        # Add reconstruction loss if enabled
+        if self.recon_decoder is not None and self.recon_loss_weight > 0 and hidden_states_before_norm is not None:
+            # Average slots across layers: [L, B, S, D] -> [B, S*D]
+            all_slots = torch.stack([self.slot_values[i] for i in range(self.num_layers)], dim=0)  # [L, B, S, D]
+            slot_flat = all_slots.mean(dim=0).reshape(B, -1)  # [B, S*D]
+
+            # Reconstruction target: mean-pooled hidden states before norm
+            recon_target = hidden_states_before_norm.mean(dim=1)  # [B, D]
+            recon_pred = self.recon_decoder(slot_flat)  # [B, D]
+
+            result["recon_loss"] = nn.functional.mse_loss(recon_pred, recon_target.detach())
+
         return result
 
     def forward_chunk(
@@ -932,6 +992,15 @@ def parse_args() -> argparse.Namespace:
                    help="Freeze base model for first N steps (only train slot embeddings). 0=disabled.")
     p.add_argument("--cross_attn_lr_factor", type=float, default=100,
                    help="Divide main lr by this factor to get cross-attn lr (default 100, use 1 for same lr)")
+    # Memory slot training approaches
+    p.add_argument("--memory_init", type=str, default="learnable",
+                   choices=["learnable", "mlp", "strided"],
+                   help="How to initialize memory slots per chunk: "
+                        "learnable=nn.Parameter embeddings (MemoryLLM style), "
+                        "mlp=trained MLP compression from hidden states, "
+                        "strided=strided token sampling from current chunk")
+    p.add_argument("--recon_loss_weight", type=float, default=0.0,
+                   help="Weight for slot-to-hidden reconstruction loss. 0=disabled.")
     # Mode
     p.add_argument("--full_finetune", action="store_true", default=True,
                    help="Full fine-tuning (all params trainable)")
@@ -1041,7 +1110,19 @@ def main() -> None:
         swa_window=args.swa_window,
         write_lr=args.write_lr,
         slot_forward=args.slot_forward,
+        memory_init=args.memory_init,
+        recon_loss_weight=args.recon_loss_weight,
     ).to(device).to(dtype)
+
+    # Warn if freeze_base_steps is set but memory_init is not 'learnable'
+    if args.slot_forward and args.freeze_base_steps > 0 and args.memory_init in ('mlp', 'strided'):
+        if is_main:
+            logger.warning(
+                "[WARN] --freeze_base_steps=%d ignored when --memory_init=%s (only applies to 'learnable' init)",
+                args.freeze_base_steps, args.memory_init
+            )
+        # Effectively disable freeze_base_steps for non-learnable init
+        args.freeze_base_steps = 0
 
     trainable = sum(p.numel() for p in cm_model.parameters() if p.requires_grad)
     total = sum(p.numel() for p in cm_model.parameters())
@@ -1051,8 +1132,8 @@ def main() -> None:
             trainable, total, 100.0 * trainable / total,
         )
         logger.info(
-            "Config: num_slots=%d, seq_len=%d, chunks_per_doc=%d, write_lr=%.4f",
-            args.num_slots, args.seq_len, args.chunks_per_doc, args.write_lr,
+            "Config: num_slots=%d, seq_len=%d, chunks_per_doc=%d, write_lr=%.4f, memory_init=%s, recon_loss_weight=%.4f",
+            args.num_slots, args.seq_len, args.chunks_per_doc, args.write_lr, args.memory_init, args.recon_loss_weight,
         )
         if args.swa_window > 0:
             logger.info("SWA enabled: window_size=%d", args.swa_window)
@@ -1368,6 +1449,13 @@ def main() -> None:
                 if is_main and global_step % 10 == 0:
                     logger.info("[step %d] NIAH forward done (%.1fs)", global_step, time.time() - _niah_fwd_t0)
 
+                # Add reconstruction loss if present (NIAH samples also go through slot-forward path)
+                if hasattr(root_model, 'recon_decoder') and root_model.recon_decoder is not None and args.recon_loss_weight > 0:
+                    # For NIAH, we'd need to capture reconstruction loss separately
+                    # Since forward_niah_sample doesn't return it, we'll skip for now
+                    # reconstruction loss would need to be computed within forward_niah_sample
+                    pass
+
                 if not torch.isfinite(niah_loss):
                     if is_main:
                         logger.warning("[step %d NIAH] Non-finite loss!", global_step)
@@ -1410,7 +1498,14 @@ def main() -> None:
                     result = ddp_model(input_ids=chunk_ids, labels=chunk_labels)
                     loss = result["loss"]
 
-                    if not torch.isfinite(loss):
+                    # Add reconstruction loss if present
+                    recon_loss = result.get("recon_loss", None)
+                    if recon_loss is not None and recon_loss.item() > 0:
+                        total_loss = loss + args.recon_loss_weight * recon_loss
+                    else:
+                        total_loss = loss
+
+                    if not torch.isfinite(total_loss):
                         if is_main:
                             logger.warning("[step %d doc %d chunk %d] Non-finite loss!", global_step, doc_idx, chunk_i)
                         continue
@@ -1422,7 +1517,7 @@ def main() -> None:
                     doc_tokens += n_tok
 
                     if ddp_model.training:
-                        (loss / args.gradient_accumulation_steps).backward()
+                        (total_loss / args.gradient_accumulation_steps).backward()
 
                 if doc_tokens == 0 or not ddp_model.training:
                     continue
