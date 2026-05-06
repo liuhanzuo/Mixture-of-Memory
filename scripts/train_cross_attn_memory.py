@@ -1178,17 +1178,25 @@ def main() -> None:
 
             if is_niah:
                 # --- NIAH streaming training ---
+                _niah_t0 = time.time()
                 try:
                     niah_sample = next(_niah_iter)
                 except StopIteration:
                     _niah_iter = iter(niah_loader)
                     niah_sample = next(_niah_iter)
 
+                if is_main and global_step % 10 == 0:
+                    logger.info("[step %d] NIAH data loaded (%.1fs)", global_step, time.time() - _niah_t0)
+
+                _niah_fwd_t0 = time.time()
                 niah_loss, niah_logits, niah_labels, contrastive_loss_val = forward_niah_sample(
                     root_model, niah_sample, device, args.seq_len, args.lambda_retrieve,
                     contrastive_weight=args.contrastive_weight,
                     contrastive_temperature=args.contrastive_temperature,
                 )
+
+                if is_main and global_step % 10 == 0:
+                    logger.info("[step %d] NIAH forward done (%.1fs)", global_step, time.time() - _niah_fwd_t0)
 
                 if not torch.isfinite(niah_loss):
                     if is_main:
@@ -1207,14 +1215,14 @@ def main() -> None:
                 contrastive_loss_sum += contrastive_loss_val
 
                 # Scale NIAH gradient to compensate for having fewer backward calls than Dolmino
+                # DDP gradient hooks fire on parameters during backward regardless of using
+                # root_model vs ddp_model for forward — no manual all_reduce needed.
                 niah_loss_scaled = niah_loss * args.chunks_per_doc
+                _niah_bwd_t0 = time.time()
                 (niah_loss_scaled / args.gradient_accumulation_steps).backward()
-
-                # Manual gradient sync since root_model bypasses DDP hooks
-                if world_size > 1:
-                    for p in trainable_params:
-                        if p.grad is not None:
-                            dist.all_reduce(p.grad, op=dist.ReduceOp.AVG)
+                if is_main and global_step % 10 == 0:
+                    logger.info("[step %d] NIAH backward done (%.1fs, total=%.1fs)",
+                                global_step, time.time() - _niah_bwd_t0, time.time() - _niah_t0)
             else:
                 # --- Standard Dolmino training (unchanged path) ---
                 input_ids = sample["input_ids"]  # [chunks_per_doc, seq_len]
