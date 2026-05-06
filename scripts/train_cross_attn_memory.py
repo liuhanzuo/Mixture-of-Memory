@@ -226,6 +226,8 @@ def forward_niah_sample(
         (loss, logits, last_labels, contrastive_loss_value)
         contrastive_loss_value is 0.0 when contrastive_weight == 0.
     """
+    is_slot_forward = getattr(model, 'slot_forward', False)
+
     input_ids = sample["input_ids"][0]   # shape [total_len]
     labels = sample["labels"][0]         # shape [total_len]
 
@@ -254,7 +256,9 @@ def forward_niah_sample(
     for chunk_i, chunk_ids in enumerate(chunks[:-1]):
         chunk_tensor = chunk_ids.unsqueeze(0).to(device)
 
-        if use_contrastive and chunk_i == needle_chunk_idx:
+        if is_slot_forward:
+            model.forward_chunk(chunk_tensor, enable_write_grad=True)
+        elif use_contrastive and chunk_i == needle_chunk_idx:
             # Capture write attention from needle chunk.
             # In the delta-rule scheme, the same cross-attention weights are used
             # for both read and write. So "which slot received the needle's write"
@@ -273,7 +277,7 @@ def forward_niah_sample(
     last_ids = chunks[-1].unsqueeze(0).to(device)
     last_labels = label_chunks[-1].unsqueeze(0).to(device)
 
-    if use_contrastive:
+    if use_contrastive and not is_slot_forward:
         result = model.forward_chunk(
             last_ids, enable_write_grad=True,
             capture_read_attn=True,
@@ -294,32 +298,33 @@ def forward_niah_sample(
 
     # Compute contrastive retrieval loss
     contrastive_loss_val = 0.0
-    if (use_contrastive
-            and needle_write_attn_per_layer is not None
-            and query_read_logits_per_layer is not None):
-        # Aggregate across layers: for each layer, find the target slot from
-        # needle write attention (softmax), then compute InfoNCE with query
-        # read logits (pre-softmax).
-        contrastive_losses = []
-        for layer_idx in needle_write_attn_per_layer:
-            needle_attn = needle_write_attn_per_layer[layer_idx]  # [B, n_heads, T, N]
-            query_logits = query_read_logits_per_layer.get(layer_idx)
-            if query_logits is None:
-                continue
+    if not is_slot_forward:
+        if (use_contrastive
+                and needle_write_attn_per_layer is not None
+                and query_read_logits_per_layer is not None):
+            # Aggregate across layers: for each layer, find the target slot from
+            # needle write attention (softmax), then compute InfoNCE with query
+            # read logits (pre-softmax).
+            contrastive_losses = []
+            for layer_idx in needle_write_attn_per_layer:
+                needle_attn = needle_write_attn_per_layer[layer_idx]  # [B, n_heads, T, N]
+                query_logits = query_read_logits_per_layer.get(layer_idx)
+                if query_logits is None:
+                    continue
 
-            # Target slot: slot with highest cumulative write attention from needle chunk.
-            # Average across heads and time -> [B, num_slots]
-            avg_write_attn = needle_attn.mean(dim=(1, 2))  # [B, num_slots]
-            target_slot_idx = avg_write_attn.argmax(dim=-1).detach()  # [B], no gradient
+                # Target slot: slot with highest cumulative write attention from needle chunk.
+                # Average across heads and time -> [B, num_slots]
+                avg_write_attn = needle_attn.mean(dim=(1, 2))  # [B, num_slots]
+                target_slot_idx = avg_write_attn.argmax(dim=-1).detach()  # [B], no gradient
 
-            # InfoNCE loss using pre-softmax logits (NOT softmax output)
-            cl = contrastive_retrieval_loss(query_logits, target_slot_idx, contrastive_temperature)
-            contrastive_losses.append(cl)
+                # InfoNCE loss using pre-softmax logits (NOT softmax output)
+                cl = contrastive_retrieval_loss(query_logits, target_slot_idx, contrastive_temperature)
+                contrastive_losses.append(cl)
 
-        if contrastive_losses:
-            contrastive_loss_val = torch.stack(contrastive_losses).mean().item()
-            contrastive_loss_tensor = torch.stack(contrastive_losses).mean()
-            loss = loss + contrastive_weight * contrastive_loss_tensor
+            if contrastive_losses:
+                contrastive_loss_val = torch.stack(contrastive_losses).mean().item()
+                contrastive_loss_tensor = torch.stack(contrastive_losses).mean()
+                loss = loss + contrastive_weight * contrastive_loss_tensor
 
     return loss * lambda_retrieve, logits, last_labels, contrastive_loss_val
 
@@ -371,6 +376,7 @@ class CrossAttentionMemoryModel(nn.Module):
         residual_scale: float = 0.01,
         swa_window: int = 0,
         write_lr: float = 0.1,
+        slot_forward: bool = False,
     ) -> None:
         super().__init__()
         self.num_slots = num_slots
@@ -380,6 +386,8 @@ class CrossAttentionMemoryModel(nn.Module):
         self.residual_scale = residual_scale
         self._swa_window = swa_window
         self._swa_mask_cache = None
+        self.slot_forward = slot_forward
+        self._ext_attn_mask_cache = None
 
         config = base_model.config
         self.num_layers = config.num_hidden_layers
@@ -399,8 +407,16 @@ class CrossAttentionMemoryModel(nn.Module):
 
         self._decoder_layers: list[nn.Module] = list(self.base_model.model.layers)
 
+        # Memory slot state: per-layer, per-sample.
+        # NOT nn.Parameters -- runtime state, detached at chunk boundaries.
+        # slot_keys and slot_values are [B, num_slots, d_model]
+        self.slot_keys: list[torch.Tensor | None] = [None] * self.num_layers
+        self.slot_values: list[torch.Tensor | None] = [None] * self.num_layers
+
         # Per-layer cross-attention memory modules
-        if use_cross_attn_memory and use_memory:
+        # When slot_forward=True, skip creating CrossAttentionMemoryV2 modules;
+        # slots are prepended to hidden_states and forwarded through decoder layers.
+        if use_cross_attn_memory and use_memory and not slot_forward:
             self.cross_attn_modules = nn.ModuleList([
                 CrossAttentionMemoryV2(
                     d_model=self.d_model,
@@ -412,12 +428,6 @@ class CrossAttentionMemoryModel(nn.Module):
                 )
                 for _ in range(self.num_layers)
             ])
-
-            # Memory slot state: per-layer, per-sample.
-            # NOT nn.Parameters -- runtime state, detached at chunk boundaries.
-            # slot_keys and slot_values are [B, num_slots, d_model]
-            self.slot_keys: list[torch.Tensor | None] = [None] * self.num_layers
-            self.slot_values: list[torch.Tensor | None] = [None] * self.num_layers
         else:
             self.cross_attn_modules = nn.ModuleList()
 
@@ -438,6 +448,8 @@ class CrossAttentionMemoryModel(nn.Module):
         for i in range(self.num_layers):
             self.slot_keys[i] = None
             self.slot_values[i] = None
+        # Clear cached extended attention mask (batch size might change)
+        self._ext_attn_mask_cache = None
 
     def _init_slots(self, layer_idx: int, hidden_states: torch.Tensor) -> None:
         """Initialize slot keys and values for a layer from hidden states.
@@ -451,7 +463,11 @@ class CrossAttentionMemoryModel(nn.Module):
         dtype = hidden_states.dtype
 
         # Initialize from hidden states with noise
-        if self.slot_keys[layer_idx] is None or self.slot_keys[layer_idx].shape[0] != B:
+        if self.slot_forward:
+            needs_init = self.slot_values[layer_idx] is None or self.slot_values[layer_idx].shape[0] != B
+        else:
+            needs_init = self.slot_keys[layer_idx] is None or self.slot_keys[layer_idx].shape[0] != B
+        if needs_init:
             # Strided token sampling for diversity
             stride = max(1, T // self.num_slots)
             indices = torch.arange(0, T, stride)[:self.num_slots]
@@ -465,8 +481,106 @@ class CrossAttentionMemoryModel(nn.Module):
 
             # Add small noise for diversity
             noise = torch.randn_like(sampled) * 0.02
-            self.slot_keys[layer_idx] = (sampled + noise).clone()
-            self.slot_values[layer_idx] = sampled.clone()
+            if self.slot_forward:
+                self.slot_values[layer_idx] = (sampled + noise).clone()
+            else:
+                self.slot_keys[layer_idx] = (sampled + noise).clone()
+                self.slot_values[layer_idx] = sampled.clone()
+
+    def _build_extended_attn_mask(self, S, T, dtype, device, batch_size):
+        """Build [B, 1, S+T, S+T] additive attention mask.
+        - Slots (rows 0..S-1): attend to everything (all zeros)
+        - Tokens (rows S..S+T-1): attend to all slots + causal mask on tokens
+        """
+        if (self._ext_attn_mask_cache is not None
+            and self._ext_attn_mask_cache.shape[-1] == S + T
+            and self._ext_attn_mask_cache.shape[0] == batch_size):
+            return self._ext_attn_mask_cache
+
+        L = S + T
+        mask = torch.zeros(L, L, dtype=dtype, device=device)
+        neg_inf = torch.finfo(dtype).min
+        causal = torch.triu(
+            torch.full((T, T), neg_inf, dtype=dtype, device=device),
+            diagonal=1,
+        )
+        mask[S:, S:] = causal
+        result = mask.view(1, 1, L, L).expand(batch_size, 1, L, L).contiguous()
+        self._ext_attn_mask_cache = result
+        return result
+
+    def _extend_position_embeddings(self, position_embeddings, S):
+        """Prepend S position-0 entries to RoPE cos/sin tables.
+        Position 0: cos=1, sin=0 -> no rotation, slots are position-agnostic.
+        """
+        cos, sin = position_embeddings  # each [B, T, head_dim]
+        cos0 = cos[:, :1, :]
+        sin0 = sin[:, :1, :]
+        cos_ext = torch.cat(
+            [cos0.expand(cos.shape[0], S, cos.shape[-1]), cos], dim=1
+        )
+        sin_ext = torch.cat(
+            [sin0.expand(sin.shape[0], S, sin.shape[-1]), sin], dim=1
+        )
+        return cos_ext, sin_ext
+
+    def _forward_slot_forward(self, input_ids, labels=None, enable_write_grad=False):
+        """Slot-forward mode: slots and hidden_states go through decoder layers together."""
+        B, T = input_ids.shape
+        device = input_ids.device
+        dtype = next(self.parameters()).dtype
+        S = self.num_slots
+
+        embed_tokens = self._get_embed_tokens()
+        hidden_states = embed_tokens(input_ids).to(dtype)
+
+        position_ids = torch.arange(T, device=device).unsqueeze(0).expand(B, -1)
+        rotary_emb = self._get_rotary_emb()
+        position_embeddings = rotary_emb(hidden_states, position_ids)
+
+        ext_pos_emb = self._extend_position_embeddings(position_embeddings, S)
+        ext_attn_mask = self._build_extended_attn_mask(S, T, dtype, device, B)
+
+        for layer_idx, layer in enumerate(self._decoder_layers):
+            self._init_slots(layer_idx, hidden_states)
+            slots = self.slot_values[layer_idx]  # [B, S, d_model]
+
+            extended = torch.cat([slots, hidden_states], dim=1)  # [B, S+T, d_model]
+
+            layer_out = layer(
+                extended,
+                attention_mask=ext_attn_mask,
+                position_ids=None,
+                past_key_value=None,
+                use_cache=False,
+                position_embeddings=ext_pos_emb,
+            )
+            output = layer_out[0] if isinstance(layer_out, tuple) else layer_out
+
+            new_slots = output[:, :S, :]
+            hidden_states = output[:, S:, :]
+
+            if enable_write_grad:
+                self.slot_values[layer_idx] = new_slots
+            else:
+                self.slot_values[layer_idx] = new_slots.detach()
+
+        norm = self._get_norm()
+        lm_head = self._get_lm_head()
+        hidden_states = norm(hidden_states)
+        logits = lm_head(hidden_states)
+
+        result = {"logits": logits}
+        if labels is not None:
+            shift_logits = logits[..., :-1, :].contiguous()
+            shift_labels = labels[..., 1:].contiguous()
+            loss_fn = nn.CrossEntropyLoss(reduction="mean")
+            loss = loss_fn(
+                shift_logits.view(-1, shift_logits.size(-1)),
+                shift_labels.view(-1),
+            )
+            result["loss"] = loss
+        return result
 
     def forward_chunk(
         self,
@@ -481,6 +595,9 @@ class CrossAttentionMemoryModel(nn.Module):
 
         if not self.use_memory or not self.use_cross_attn_memory:
             return self._forward_no_memory(input_ids, labels)
+
+        if self.slot_forward:
+            return self._forward_slot_forward(input_ids, labels, enable_write_grad)
 
         # ---- Forward with cross-attention memory ----
         embed_tokens = self._get_embed_tokens()
@@ -794,6 +911,9 @@ def parse_args() -> argparse.Namespace:
                         "write_lr=1.0 breaks gradient chain; 0.1 preserves ~3.4%% gradient over 32 chunks")
     p.add_argument("--swa_window", type=int, default=0,
                    help="Sliding window attention size. 0=full causal attention (default)")
+    p.add_argument("--slot_forward", action="store_true", default=False,
+                   help="Forward memory slots through decoder layers like regular tokens "
+                        "(instead of cross-attention read + delta-rule write)")
     p.add_argument("--cross_attn_lr_factor", type=float, default=100,
                    help="Divide main lr by this factor to get cross-attn lr (default 100, use 1 for same lr)")
     # Mode
@@ -904,6 +1024,7 @@ def main() -> None:
         residual_scale=args.residual_scale,
         swa_window=args.swa_window,
         write_lr=args.write_lr,
+        slot_forward=args.slot_forward,
     ).to(device).to(dtype)
 
     trainable = sum(p.numel() for p in cm_model.parameters() if p.requires_grad)
@@ -946,35 +1067,49 @@ def main() -> None:
     # ------------------------------------------------------------------
     # Optimizer — separate lr for cross-attention params
     # ------------------------------------------------------------------
-    base_decay = []
-    base_no_decay = []
-    cross_decay = []
-    cross_no_decay = []
-    for name, param in cm_model.named_parameters():
-        if not param.requires_grad:
-            continue
-        is_cross = 'cross_attn_modules' in name
-        bucket = (cross_decay if is_cross else base_decay) if param.dim() >= 2 and 'norm' not in name.lower() and 'bias' not in name.lower() else (cross_no_decay if is_cross else base_no_decay)
-        bucket.append(param)
-    cross_lr = args.lr / args.cross_attn_lr_factor  # smaller lr for new cross-attn params
-    optimizer_groups = [
-        {"params": base_decay, "weight_decay": args.weight_decay, "lr": args.lr},
-        {"params": base_no_decay, "weight_decay": 0.0, "lr": args.lr},
-        {"params": cross_decay, "weight_decay": args.weight_decay, "lr": cross_lr},
-        {"params": cross_no_decay, "weight_decay": 0.0, "lr": cross_lr},
-    ]
-    optimizer = torch.optim.AdamW(
-        optimizer_groups,
-        lr=args.lr,
-        betas=(0.9, 0.95),
-    )
-    if is_main:
-        n_base = sum(p.numel() for p in base_decay) + sum(p.numel() for p in base_no_decay)
-        n_cross = sum(p.numel() for p in cross_decay) + sum(p.numel() for p in cross_no_decay)
-        logger.info(
-            "Optimizer: AdamW, base_lr=%.2e, cross_attn_lr=%.2e (1/%g), base=%d, cross=%d, residual_scale=%g",
-            args.lr, cross_lr, args.cross_attn_lr_factor, n_base, n_cross, args.residual_scale,
+    if args.slot_forward:
+        # slot_forward: no cross_attn params, only base model
+        decay = [p for n, p in cm_model.named_parameters()
+                 if p.requires_grad and p.dim() >= 2 and 'norm' not in n.lower() and 'bias' not in n.lower()]
+        no_decay = [p for n, p in cm_model.named_parameters()
+                    if p.requires_grad and (p.dim() < 2 or 'norm' in n.lower() or 'bias' in n.lower())]
+        optimizer = torch.optim.AdamW([
+            {"params": decay, "weight_decay": args.weight_decay, "lr": args.lr},
+            {"params": no_decay, "weight_decay": 0.0, "lr": args.lr},
+        ], lr=args.lr, betas=(0.9, 0.95))
+        if is_main:
+            logger.info("Optimizer (slot_forward): AdamW, lr=%.2e, decay=%d, no_decay=%d",
+                        args.lr, sum(p.numel() for p in decay), sum(p.numel() for p in no_decay))
+    else:
+        base_decay = []
+        base_no_decay = []
+        cross_decay = []
+        cross_no_decay = []
+        for name, param in cm_model.named_parameters():
+            if not param.requires_grad:
+                continue
+            is_cross = 'cross_attn_modules' in name
+            bucket = (cross_decay if is_cross else base_decay) if param.dim() >= 2 and 'norm' not in name.lower() and 'bias' not in name.lower() else (cross_no_decay if is_cross else base_no_decay)
+            bucket.append(param)
+        cross_lr = args.lr / args.cross_attn_lr_factor  # smaller lr for new cross-attn params
+        optimizer_groups = [
+            {"params": base_decay, "weight_decay": args.weight_decay, "lr": args.lr},
+            {"params": base_no_decay, "weight_decay": 0.0, "lr": args.lr},
+            {"params": cross_decay, "weight_decay": args.weight_decay, "lr": cross_lr},
+            {"params": cross_no_decay, "weight_decay": 0.0, "lr": cross_lr},
+        ]
+        optimizer = torch.optim.AdamW(
+            optimizer_groups,
+            lr=args.lr,
+            betas=(0.9, 0.95),
         )
+        if is_main:
+            n_base = sum(p.numel() for p in base_decay) + sum(p.numel() for p in base_no_decay)
+            n_cross = sum(p.numel() for p in cross_decay) + sum(p.numel() for p in cross_no_decay)
+            logger.info(
+                "Optimizer: AdamW, base_lr=%.2e, cross_attn_lr=%.2e (1/%g), base=%d, cross=%d, residual_scale=%g",
+                args.lr, cross_lr, args.cross_attn_lr_factor, n_base, n_cross, args.residual_scale,
+            )
 
     # ------------------------------------------------------------------
     # Data loaders
@@ -1266,10 +1401,13 @@ def main() -> None:
 
             global_step += 1
             new_lr = get_lr(global_step, args.warmup_steps, args.max_steps, args.lr, args.min_lr)
-            new_cross_lr = new_lr / args.cross_attn_lr_factor
-            # Param groups: 0=base_decay, 1=base_no_decay, 2=cross_decay, 3=cross_no_decay
-            for pg_idx, pg in enumerate(optimizer.param_groups):
-                pg['lr'] = new_cross_lr if pg_idx >= 2 else new_lr
+            if args.slot_forward:
+                for pg in optimizer.param_groups:
+                    pg['lr'] = new_lr
+            else:
+                new_cross_lr = new_lr / args.cross_attn_lr_factor
+                for pg_idx, pg in enumerate(optimizer.param_groups):
+                    pg['lr'] = new_cross_lr if pg_idx >= 2 else new_lr
 
             doc_ppl = math.exp(min(doc_loss / max(doc_tokens, 1), 20)) if not is_niah and doc_tokens > 0 else 0.0
 
