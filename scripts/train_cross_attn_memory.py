@@ -472,17 +472,16 @@ class CrossAttentionMemoryModel(nn.Module):
         device = hidden_states.device
         dtype = hidden_states.dtype
 
-        # Initialize from hidden states with noise
-        if self.slot_forward:
-            needs_init = self.slot_values[layer_idx] is None or self.slot_values[layer_idx].shape[0] != B
+        # Always re-init from learnable embeddings (gradient-safe per chunk)
+        if self.slot_forward and len(self.slot_embeddings) > 0:
+            self.slot_values[layer_idx] = self.slot_embeddings[layer_idx].unsqueeze(0).expand(B, -1, -1).clone()
         else:
-            needs_init = self.slot_keys[layer_idx] is None or self.slot_keys[layer_idx].shape[0] != B
-        if needs_init:
-            if self.slot_forward and len(self.slot_embeddings) > 0:
-                # Use learnable slot embeddings, expand to batch
-                self.slot_values[layer_idx] = self.slot_embeddings[layer_idx].unsqueeze(0).expand(B, -1, -1).clone()
+            if self.slot_forward:
+                needs_init = self.slot_values[layer_idx] is None or self.slot_values[layer_idx].shape[0] != B
             else:
-                # Original strided token sampling
+                needs_init = self.slot_keys[layer_idx] is None or self.slot_keys[layer_idx].shape[0] != B
+            if needs_init:
+                # Strided token sampling for diversity
                 stride = max(1, T // self.num_slots)
                 indices = torch.arange(0, T, stride)[:self.num_slots]
                 if len(indices) < self.num_slots:
