@@ -172,14 +172,62 @@ def get_curriculum_params(step: int, warmup_steps: int) -> CurriculumParams:
         return CurriculumParams(mix_fraction=0.15, max_N=16, phase="full")
 
 
+def contrastive_retrieval_loss(
+    query_attn_weights: torch.Tensor,
+    target_slot_idx: torch.Tensor,
+    temperature: float = 0.1,
+) -> torch.Tensor:
+    """InfoNCE contrastive loss for retrieval supervision.
+
+    Encourages the query chunk's cross-attention to attend to the slot that
+    received the needle information during the write phase.
+
+    Args:
+        query_attn_weights: [B, n_heads, T, num_slots] — attention from query
+            chunk to memory slots (from CrossAttentionMemoryV2.read()).
+        target_slot_idx: [B] — slot index that received the highest write
+            attention from the needle chunk (detached, no gradient).
+        temperature: scaling for logits before softmax. Lower = sharper focus.
+
+    Returns:
+        scalar loss (mean over batch).
+    """
+    # Average across heads and time: [B, num_slots]
+    avg_attn = query_attn_weights.mean(dim=(1, 2))  # [B, num_slots]
+
+    # Scale by temperature (acts like logits for InfoNCE)
+    # Since avg_attn is already softmax output in [0,1], convert back to logits:
+    # logits = log(attn) / temperature.  But attn can be 0, so use logsumexp trick.
+    # Actually, the attn_weights are softmax outputs. For InfoNCE we want to treat
+    # them as logits. Use log-space to avoid numerical issues.
+    log_avg_attn = torch.log(avg_attn.clamp(min=1e-8)) / temperature  # [B, num_slots]
+
+    # Gather positive logits (attention to target slot)
+    positive_logits = log_avg_attn.gather(1, target_slot_idx.unsqueeze(1))  # [B, 1]
+
+    # InfoNCE: -log(exp(pos) / sum(exp(all))) = -pos + log(sum(exp(all)))
+    loss = -positive_logits + torch.logsumexp(log_avg_attn, dim=1, keepdim=True)  # [B, 1]
+    return loss.mean()
+
+
 def forward_niah_sample(
     model: CrossAttentionMemoryModel,
     sample: dict,
     device: torch.device,
     seq_len: int,
     lambda_retrieve: float = 1.0,
+    contrastive_weight: float = 0.0,
+    contrastive_temperature: float = 0.1,
 ):
-    """Forward a multi-chunk NIAH sample: stream haystack with no_grad, grad on last chunk."""
+    """Forward a multi-chunk NIAH sample: stream haystack with no_grad, grad on last chunk.
+
+    When contrastive_weight > 0, also computes InfoNCE contrastive retrieval loss
+    that supervises query->slot attention to focus on the needle-containing slot.
+
+    Returns:
+        (loss, logits, last_labels, contrastive_loss_value)
+        contrastive_loss_value is 0.0 when contrastive_weight == 0.
+    """
     input_ids = sample["input_ids"][0]   # shape [total_len]
     labels = sample["labels"][0]         # shape [total_len]
 
@@ -189,16 +237,50 @@ def forward_niah_sample(
 
     model.reset_slots()
 
-    # Stream haystack chunks with write-path gradient enabled
-    for chunk_ids in chunks[:-1]:
-        chunk_tensor = chunk_ids.unsqueeze(0).to(device)
-        model.forward_chunk(chunk_tensor, enable_write_grad=True)
+    # Determine which chunk contains the needle (from NIAH dataset metadata)
+    niah_N_gap = sample.get("N_gap", None)
+    if isinstance(niah_N_gap, (list, tuple)):
+        niah_N_gap = niah_N_gap[0] if niah_N_gap else None
+    # needle_chunk_pos = N_gap // 2 in the NIAH dataset (midpoint insertion)
+    needle_chunk_idx = None
+    if niah_N_gap is not None:
+        needle_chunk_idx = int(niah_N_gap) // 2
 
-    # Last chunk: compute loss with gradient
+    # Storage for contrastive loss computation
+    needle_write_attn_per_layer = None  # dict: layer_idx -> [B, n_heads, T, num_slots]
+    query_read_attn_per_layer = None    # dict: layer_idx -> [B, n_heads, T, num_slots]
+
+    use_contrastive = contrastive_weight > 0 and needle_chunk_idx is not None
+
+    # Stream haystack chunks with write-path gradient enabled
+    for chunk_i, chunk_ids in enumerate(chunks[:-1]):
+        chunk_tensor = chunk_ids.unsqueeze(0).to(device)
+
+        if use_contrastive and chunk_i == needle_chunk_idx:
+            # Capture write attention from needle chunk
+            result = model.forward_chunk(
+                chunk_tensor, enable_write_grad=True,
+                capture_read_attn=True,
+            )
+            if "read_attn_weights" in result:
+                needle_write_attn_per_layer = result["read_attn_weights"]
+        else:
+            model.forward_chunk(chunk_tensor, enable_write_grad=True)
+
+    # Last chunk (query): compute loss with gradient + capture read attention
     last_ids = chunks[-1].unsqueeze(0).to(device)
     last_labels = label_chunks[-1].unsqueeze(0).to(device)
 
-    result = model.forward_chunk(last_ids, enable_write_grad=True)
+    if use_contrastive:
+        result = model.forward_chunk(
+            last_ids, enable_write_grad=True,
+            capture_read_attn=True,
+        )
+        if "read_attn_weights" in result:
+            query_read_attn_per_layer = result["read_attn_weights"]
+    else:
+        result = model.forward_chunk(last_ids, enable_write_grad=True)
+
     logits = result["logits"]
     shift_logits = logits[..., :-1, :].contiguous()
     shift_labels = last_labels[..., 1:].contiguous()
@@ -208,7 +290,35 @@ def forward_niah_sample(
         shift_labels.view(-1),
     )
 
-    return loss * lambda_retrieve, logits, last_labels
+    # Compute contrastive retrieval loss
+    contrastive_loss_val = 0.0
+    if (use_contrastive
+            and needle_write_attn_per_layer is not None
+            and query_read_attn_per_layer is not None):
+        # Aggregate across layers: for each layer, find the target slot from
+        # needle write attention, then compute InfoNCE with query read attention.
+        contrastive_losses = []
+        for layer_idx in needle_write_attn_per_layer:
+            needle_attn = needle_write_attn_per_layer[layer_idx]  # [B, n_heads, T, N]
+            query_attn = query_read_attn_per_layer.get(layer_idx)
+            if query_attn is None:
+                continue
+
+            # Target slot: slot with highest cumulative write attention from needle chunk
+            # Average across heads and time -> [B, num_slots]
+            avg_write_attn = needle_attn.mean(dim=(1, 2))  # [B, num_slots]
+            target_slot_idx = avg_write_attn.argmax(dim=-1).detach()  # [B], no gradient
+
+            # InfoNCE loss for this layer
+            cl = contrastive_retrieval_loss(query_attn, target_slot_idx, contrastive_temperature)
+            contrastive_losses.append(cl)
+
+        if contrastive_losses:
+            contrastive_loss_val = torch.stack(contrastive_losses).mean().item()
+            contrastive_loss_tensor = torch.stack(contrastive_losses).mean()
+            loss = loss + contrastive_weight * contrastive_loss_tensor
+
+    return loss * lambda_retrieve, logits, last_labels, contrastive_loss_val
 
 
 def check_niah_accuracy(logits, labels, tokenizer, expected_code):
@@ -360,6 +470,7 @@ class CrossAttentionMemoryModel(nn.Module):
         input_ids: torch.Tensor,
         labels: torch.Tensor | None = None,
         enable_write_grad: bool = False,
+        capture_read_attn: bool = False,
     ) -> dict:
         B, T = input_ids.shape
         device = input_ids.device
@@ -407,6 +518,12 @@ class CrossAttentionMemoryModel(nn.Module):
                 decoder_output, slot_keys, slot_values,
             )
 
+            # Capture read attention weights for contrastive loss (detached to avoid memory leaks)
+            if capture_read_attn:
+                if not hasattr(self, '_captured_read_attn') or self._captured_read_attn is None:
+                    self._captured_read_attn = {}
+                self._captured_read_attn[layer_idx] = attn_weights.detach()
+
             # Step 3: Add memory output as residual (scaled to prevent early divergence)
             hidden_states = decoder_output + self.residual_scale * memory_output
 
@@ -438,6 +555,10 @@ class CrossAttentionMemoryModel(nn.Module):
         logits = lm_head(hidden_states)
 
         result = {"logits": logits}
+        # Include captured read attention weights if requested
+        if capture_read_attn and hasattr(self, '_captured_read_attn') and self._captured_read_attn:
+            result["read_attn_weights"] = self._captured_read_attn
+            self._captured_read_attn = None  # clear to avoid memory leaks
         if labels is not None:
             shift_logits = logits[..., :-1, :].contiguous()
             shift_labels = labels[..., 1:].contiguous()
@@ -695,6 +816,14 @@ def parse_args() -> argparse.Namespace:
                    help="Weight multiplier for NIAH retrieval loss")
     p.add_argument("--niah_warmup_steps", type=int, default=2000,
                    help="Steps of pure LM warmup before NIAH training begins")
+    # Contrastive retrieval loss
+    p.add_argument("--contrastive_weight", type=float, default=0.0,
+                   help="Weight for contrastive retrieval (InfoNCE) loss during NIAH training. "
+                        "0.0 = disabled (default). When > 0, supervises query->slot attention "
+                        "to attend to the slot that received the needle information.")
+    p.add_argument("--contrastive_temperature", type=float, default=0.1,
+                   help="Temperature for InfoNCE contrastive loss (default 0.1). "
+                        "Lower = sharper focus on target slot.")
     return p.parse_args()
 
 
@@ -1000,6 +1129,7 @@ def main() -> None:
     niah_total = 0
     niah_loss_sum = 0.0
     lm_loss_sum = 0.0
+    contrastive_loss_sum = 0.0
     prev_curriculum_phase = None
 
     while global_step < args.max_steps:
@@ -1039,8 +1169,10 @@ def main() -> None:
                     _niah_iter = iter(niah_loader)
                     niah_sample = next(_niah_iter)
 
-                niah_loss, niah_logits, niah_labels = forward_niah_sample(
+                niah_loss, niah_logits, niah_labels, contrastive_loss_val = forward_niah_sample(
                     root_model, niah_sample, device, args.seq_len, args.lambda_retrieve,
+                    contrastive_weight=args.contrastive_weight,
+                    contrastive_temperature=args.contrastive_temperature,
                 )
 
                 if not torch.isfinite(niah_loss):
@@ -1057,6 +1189,7 @@ def main() -> None:
                     niah_correct += 1
                 niah_total += 1
                 niah_loss_sum += niah_loss.item()
+                contrastive_loss_sum += contrastive_loss_val
 
                 # Scale NIAH gradient to compensate for having fewer backward calls than Dolmino
                 niah_loss_scaled = niah_loss * args.chunks_per_doc
@@ -1123,12 +1256,13 @@ def main() -> None:
                 out_proj_norm = root_model.cross_attn_modules[0].out_proj.weight.norm().item() if len(root_model.cross_attn_modules) > 0 else 0.0
                 niah_acc_str = f" niah_acc={niah_correct}/{niah_total}" if niah_total > 0 else ""
                 niah_loss_str = f" niah_loss={niah_loss_sum / max(niah_total, 1):.4f}" if niah_total > 0 else ""
+                contrastive_str = f" contrastive={contrastive_loss_sum / max(niah_total, 1):.4f}" if niah_total > 0 and args.contrastive_weight > 0 else ""
                 logger.info(
-                    "[step %d/%d] lr=%.2e doc_ppl=%.4f chunks=[%s] out_proj_norm=%.6f phase=%s%s%s %.1fs",
+                    "[step %d/%d] lr=%.2e doc_ppl=%.4f chunks=[%s] out_proj_norm=%.6f phase=%s%s%s%s %.1fs",
                     global_step, args.max_steps, new_lr, doc_ppl,
                     ",".join(f"{p:.2f}" for p in chunk_ppls[:4]) if not is_niah else "niah",
                     out_proj_norm, curriculum.phase,
-                    niah_acc_str, niah_loss_str, elapsed,
+                    niah_acc_str, niah_loss_str, contrastive_str, elapsed,
                 )
 
             # Periodic eval
@@ -1157,15 +1291,34 @@ def main() -> None:
                     out_proj_norm = root_model.cross_attn_modules[0].out_proj.weight.norm().item() if len(root_model.cross_attn_modules) > 0 else 0.0
                     niah_acc_str = f" niah_acc={niah_correct}/{niah_total}" if niah_total > 0 else ""
                     niah_loss_str = f" niah_loss={niah_loss_sum / max(niah_total, 1):.4f}" if niah_total > 0 else ""
+                    contrastive_str = f" contrastive={contrastive_loss_sum / max(niah_total, 1):.4f}" if niah_total > 0 and args.contrastive_weight > 0 else ""
                     logger.info(
                         "[EVAL step=%d] vanilla_ppl=%.4f memory_ppl=%.4f ratio=%.4f | "
-                        "base_vanilla=%.4f | wiki_ood=%s | out_proj_norm=%.6f phase=%s%s%s",
+                        "base_vanilla=%.4f | wiki_ood=%s | out_proj_norm=%.6f phase=%s%s%s%s",
                         global_step, vanilla_ppl, memory_ppl, ratio,
                         base_vanilla_ppl,
                         f"{wiki_ppl:.4f}" if wiki_ppl else "N/A",
                         out_proj_norm, curriculum.phase,
-                        niah_acc_str, niah_loss_str,
+                        niah_acc_str, niah_loss_str, contrastive_str,
                     )
+
+                    # Abort criteria for contrastive experiment:
+                    # - If NIAH accuracy still 0% at step 1000 and niah_loss > 5.5 -> experiment failed
+                    # - If PPL ratio > 1.05 -> contrastive loss hurting LM quality
+                    if args.contrastive_weight > 0 and niah_total > 0:
+                        avg_niah_loss = niah_loss_sum / niah_total
+                        niah_acc = niah_correct / niah_total
+                        if global_step >= 1000 and niah_acc == 0.0 and avg_niah_loss > 5.5:
+                            logger.warning(
+                                "ABORT CRITERIA: step=%d, niah_acc=0%%, niah_loss=%.4f > 5.5. "
+                                "Contrastive retrieval experiment failed.",
+                                global_step, avg_niah_loss,
+                            )
+                        if ratio > 1.05:
+                            logger.warning(
+                                "ABORT CRITERIA: PPL ratio=%.4f > 1.05. Contrastive loss hurting LM quality.",
+                                ratio,
+                            )
 
                     if vanilla_ppl > base_vanilla_ppl * 1.1:
                         logger.warning(
@@ -1188,6 +1341,8 @@ def main() -> None:
                         "niah_correct": niah_correct,
                         "niah_total": niah_total,
                         "niah_avg_loss": niah_loss_sum / max(niah_total, 1) if niah_total > 0 else 0.0,
+                        "contrastive_avg_loss": contrastive_loss_sum / max(niah_total, 1) if niah_total > 0 else 0.0,
+                        "contrastive_weight": args.contrastive_weight,
                         "curriculum_phase": curriculum.phase,
                     }
                     metrics_history.append(metrics)
