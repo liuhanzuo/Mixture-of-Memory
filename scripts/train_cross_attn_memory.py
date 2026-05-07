@@ -522,9 +522,8 @@ class CrossAttentionMemoryModel(nn.Module):
             else:
                 # Strided fallback
                 if self.cross_chunk_propagation and self.slot_values[layer_idx] is not None:
-                    # Cross-chunk propagation: reuse slots from previous chunk.
-                    # Slots are already detached from previous chunk's graph
-                    # (Dolmino path uses .detach() in _forward_slot_forward).
+                    # Detach to break computational graph between chunks (truncated BPTT)
+                    self.slot_values[layer_idx] = self.slot_values[layer_idx].detach()
                     return
                 # Original strided sampling code
                 stride = max(1, T // self.num_slots)
