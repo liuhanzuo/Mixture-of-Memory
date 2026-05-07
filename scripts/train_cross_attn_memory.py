@@ -379,6 +379,7 @@ class CrossAttentionMemoryModel(nn.Module):
         slot_forward: bool = False,
         memory_init: str = "learnable",
         recon_loss_weight: float = 0.0,
+        cross_chunk_propagation: bool = False,
     ) -> None:
         super().__init__()
         self.num_slots = num_slots
@@ -392,6 +393,7 @@ class CrossAttentionMemoryModel(nn.Module):
         self._ext_attn_mask_cache = None
         self.memory_init = memory_init
         self.recon_loss_weight = recon_loss_weight
+        self.cross_chunk_propagation = cross_chunk_propagation
 
         config = base_model.config
         self.num_layers = config.num_hidden_layers
@@ -518,17 +520,21 @@ class CrossAttentionMemoryModel(nn.Module):
                 slots = self.memory_write_mlp(pooled)  # [B, S*D]
                 self.slot_values[layer_idx] = slots.view(B, self.num_slots, -1)
             else:
-                # Strided fallback: existing strided sampling logic
-                needs_init = self.slot_values[layer_idx] is None or self.slot_values[layer_idx].shape[0] != B
-                if needs_init:
-                    stride = max(1, T // self.num_slots)
-                    indices = torch.arange(0, T, stride)[:self.num_slots]
-                    if len(indices) < self.num_slots:
-                        pad_indices = indices[-1:].expand(self.num_slots - len(indices))
-                        indices = torch.cat([indices, pad_indices])
-                    sampled = hidden_states[:, indices, :].detach()
-                    noise = torch.randn_like(sampled) * 0.02
-                    self.slot_values[layer_idx] = (sampled + noise).clone()
+                # Strided fallback
+                if self.cross_chunk_propagation and self.slot_values[layer_idx] is not None:
+                    # Cross-chunk propagation: reuse slots from previous chunk.
+                    # Slots are already detached from previous chunk's graph
+                    # (Dolmino path uses .detach() in _forward_slot_forward).
+                    return
+                # Original strided sampling code
+                stride = max(1, T // self.num_slots)
+                indices = torch.arange(0, T, stride)[:self.num_slots]
+                if len(indices) < self.num_slots:
+                    pad_indices = indices[-1:].expand(self.num_slots - len(indices))
+                    indices = torch.cat([indices, pad_indices])
+                sampled = hidden_states[:, indices, :].detach()
+                noise = torch.randn_like(sampled) * 0.02
+                self.slot_values[layer_idx] = (sampled + noise).clone()
         else:
             # Cross-attention mode: strided sampling for keys/values
             needs_init = self.slot_keys[layer_idx] is None or self.slot_keys[layer_idx].shape[0] != B
@@ -1001,6 +1007,11 @@ def parse_args() -> argparse.Namespace:
                         "strided=strided token sampling from current chunk")
     p.add_argument("--recon_loss_weight", type=float, default=0.0,
                    help="Weight for slot-to-hidden reconstruction loss. 0=disabled.")
+    # Cross-chunk slot propagation
+    p.add_argument("--cross_chunk_propagation", action="store_true", default=False,
+                   help="When set, slots carry over across chunks within a document "
+                        "(strided init only happens for the first chunk after reset_slots). "
+                        "Only effective with --slot_forward --memory_init strided.")
     # Mode
     p.add_argument("--full_finetune", action="store_true", default=True,
                    help="Full fine-tuning (all params trainable)")
@@ -1112,6 +1123,7 @@ def main() -> None:
         slot_forward=args.slot_forward,
         memory_init=args.memory_init,
         recon_loss_weight=args.recon_loss_weight,
+        cross_chunk_propagation=args.cross_chunk_propagation,
     ).to(device).to(dtype)
 
     # Warn if freeze_base_steps is set but memory_init is not 'learnable'
@@ -1536,11 +1548,11 @@ def main() -> None:
                     and not all(p.requires_grad for p in cm_model.base_model.parameters())):
                 for param in cm_model.base_model.parameters():
                     param.requires_grad = True
-                # Rebuild optimizer with all parameters
+                # Rebuild optimizer with all parameters (exclude slot_embeddings from decay/no_decay)
                 decay = [p for n, p in cm_model.named_parameters()
-                         if p.requires_grad and p.dim() >= 2 and 'norm' not in n.lower() and 'bias' not in n.lower()]
+                         if p.requires_grad and p.dim() >= 2 and 'norm' not in n.lower() and 'bias' not in n.lower() and 'slot_embeddings' not in n]
                 no_decay = [p for n, p in cm_model.named_parameters()
-                            if p.requires_grad and (p.dim() < 2 or 'norm' in n.lower() or 'bias' in n.lower())]
+                            if p.requires_grad and (p.dim() < 2 or 'norm' in n.lower() or 'bias' in n.lower()) and 'slot_embeddings' not in n]
                 slot_params = [p for n, p in cm_model.named_parameters() if 'slot_embeddings' in n]
                 optimizer = torch.optim.AdamW([
                     {"params": decay, "weight_decay": args.weight_decay, "lr": args.lr},
