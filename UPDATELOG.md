@@ -4050,3 +4050,15 @@ chunk isolation 两个原始 arm 均在 eval@200 回归（ratio > 1.0）：
 - Previous all-layer joint attention (Exp D/E/F) all hit NIAH=0%. If middle-layer hypothesis holds, Exp H should get NIAH ≥ 10% at step 200.
 - Baseline ratio at step 0: 1.022 (memory PPL 9.69 vs vanilla 9.48)
 - Commits: f3e8210 (diagnosis script), d10b8de (middle-layer impl)
+
+## [2026-05-08 15:27] Experiment H2 launched — deeper middle-layer ablation
+- Same architecture as H, but write_layer=20 (was 16), read={22,25,28,31} (was {18,22,26,30})
+- Purpose: A/B test "middle" = L/2 (MemLong) vs "deeper" = L*5/8 → test high-level semantics hypothesis
+- Node: b200-3 via SSH setsid detach (tmux non-interactive killed server; setsid + /tmp wrapper worked)
+- First eval: step 200, ~45-60 min from now
+
+## [2026-05-08 15:27] Experiment H2 launched — deeper middle-layer ablation
+- Same architecture as H, but write_layer=20 (was 16), read={22,25,28,31} (was {18,22,26,30})
+- Purpose: A/B test "middle" = L/2 (MemLong) vs "deeper" = L*5/8 → test high-level semantics hypothesis
+- Node: b200-3 via SSH setsid detach (tmux non-interactive killed server; setsid + /tmp wrapper worked)
+- First eval: step 200, ~45-60 min from now
