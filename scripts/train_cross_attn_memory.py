@@ -801,7 +801,7 @@ class CrossAttentionMemoryModel(nn.Module):
             return self._forward_slot_forward(input_ids, labels, enable_write_grad=True)
 
         if self.slot_isolated:
-            return self._forward_slot_isolated(input_ids, labels, enable_write_grad=enable_write_grad)
+            return self._forward_slot_isolated(input_ids, labels, enable_write_grad=True)
 
         # ---- Forward with cross-attention memory ----
         embed_tokens = self._get_embed_tokens()
@@ -1298,7 +1298,7 @@ def main() -> None:
         if is_main:
             logger.info("Phase 1: Base model FROZEN, only training slot_embeddings (%d params)", trainable)
 
-    ddp_model = DDP(cm_model, device_ids=[local_rank])
+    ddp_model = DDP(cm_model, device_ids=[local_rank], find_unused_parameters=True)
     root_model = ddp_model.module
 
     # Resume
