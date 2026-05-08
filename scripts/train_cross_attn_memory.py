@@ -1328,7 +1328,7 @@ def main() -> None:
             is_iso = any(x in name for x in ('write_proj', 'write_gate_proj', 'read_proj'))
             bucket = (iso_decay if is_iso else base_decay) if param.dim() >= 2 and 'norm' not in name.lower() and 'bias' not in name.lower() else (iso_no_decay if is_iso else base_no_decay)
             bucket.append(param)
-        iso_lr = args.lr / args.cross_attn_lr_factor  # same naming, means higher lr for new params
+        iso_lr = args.lr  # zero-init params need full lr, not lr/factor
         optimizer_groups = [
             {"params": base_decay, "weight_decay": args.weight_decay, "lr": args.lr},
             {"params": base_no_decay, "weight_decay": 0.0, "lr": args.lr},
