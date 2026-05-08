@@ -227,6 +227,7 @@ def forward_niah_sample(
         contrastive_loss_value is 0.0 when contrastive_weight == 0.
     """
     is_slot_forward = getattr(model, 'slot_forward', False)
+    is_slot_isolated = getattr(model, 'slot_isolated', False)
 
     input_ids = sample["input_ids"][0]   # shape [total_len]
     labels = sample["labels"][0]         # shape [total_len]
@@ -377,6 +378,7 @@ class CrossAttentionMemoryModel(nn.Module):
         swa_window: int = 0,
         write_lr: float = 0.1,
         slot_forward: bool = False,
+        slot_isolated: bool = False,
         memory_init: str = "learnable",
         recon_loss_weight: float = 0.0,
         cross_chunk_propagation: bool = False,
@@ -390,6 +392,7 @@ class CrossAttentionMemoryModel(nn.Module):
         self._swa_window = swa_window
         self._swa_mask_cache = None
         self.slot_forward = slot_forward
+        self.slot_isolated = slot_isolated
         self._ext_attn_mask_cache = None
         self.memory_init = memory_init
         self.recon_loss_weight = recon_loss_weight
@@ -420,9 +423,10 @@ class CrossAttentionMemoryModel(nn.Module):
         self.slot_values: list[torch.Tensor | None] = [None] * self.num_layers
 
         # Per-layer cross-attention memory modules
-        # When slot_forward=True, skip creating CrossAttentionMemoryV2 modules;
-        # slots are prepended to hidden_states and forwarded through decoder layers.
-        if use_cross_attn_memory and use_memory and not slot_forward:
+        # When slot_forward=True or slot_isolated=True, skip creating CrossAttentionMemoryV2 modules.
+        # slot_forward: slots prepended to hidden_states and forwarded through decoder layers.
+        # slot_isolated: independent read/write paths, no cross-attention module needed.
+        if use_cross_attn_memory and use_memory and not slot_forward and not slot_isolated:
             self.cross_attn_modules = nn.ModuleList([
                 CrossAttentionMemoryV2(
                     d_model=self.d_model,
@@ -436,6 +440,20 @@ class CrossAttentionMemoryModel(nn.Module):
             ])
         else:
             self.cross_attn_modules = nn.ModuleList()
+
+        # Slot Isolation modules: write_proj, write_gate_proj, read_proj
+        # Per-layer, shared across all layers (single set of params).
+        if slot_isolated:
+            self.write_proj = nn.Linear(self.d_model, self.d_model, bias=False)
+            self.write_gate_proj = nn.Linear(self.d_model, 1, bias=False)
+            self.read_proj = nn.Linear(self.d_model, self.d_model, bias=False)
+            # Zero-init read_proj and write_gate_proj so model starts as vanilla
+            nn.init.zeros_(self.read_proj.weight)
+            nn.init.zeros_(self.write_gate_proj.weight)
+        else:
+            self.write_proj = None
+            self.write_gate_proj = None
+            self.read_proj = None
 
         # Memory slot initialization approaches for slot_forward mode
         if slot_forward:
@@ -660,6 +678,110 @@ class CrossAttentionMemoryModel(nn.Module):
 
         return result
 
+    def _forward_slot_isolated(self, input_ids, labels=None, enable_write_grad=False):
+        """Slot Isolation mode: independent read/write paths per decoder layer.
+
+        Architecture per decoder layer:
+            1. hidden_states -> normal self_attention(hidden_states) -> hidden'
+               (slots do NOT participate in self-attention)
+            2. write_gate = sigmoid(write_gate_proj(hidden'))
+            3. write_signal = write_proj(hidden') * write_gate
+            4. slot_update = write_signal.mean(dim=1, keepdim=True).expand(B, S, -1)
+            5. slots = slots + slot_update  (residual update)
+            6. read_logits = einsum('btd,bsd->bts', hidden', slots)
+            7. read_weights = softmax(read_logits / sqrt(d), dim=-1)
+            8. read_out = einsum('bts,bsd->btd', read_weights, slots)
+            9. hidden_out = hidden' + residual_scale * read_proj(read_out)
+        """
+        B, T = input_ids.shape
+        device = input_ids.device
+        dtype = next(self.parameters()).dtype
+        S = self.num_slots
+        d_model = self.d_model
+        scale = 1.0 / math.sqrt(d_model)
+
+        embed_tokens = self._get_embed_tokens()
+        hidden_states = embed_tokens(input_ids).to(dtype)
+
+        position_ids = torch.arange(T, device=device).unsqueeze(0).expand(B, -1)
+        rotary_emb = self._get_rotary_emb()
+        position_embeddings = rotary_emb(hidden_states, position_ids)
+
+        for layer_idx, layer in enumerate(self._decoder_layers):
+            # Initialize slots on first chunk (strided init)
+            self._init_slots(layer_idx, hidden_states)
+            slots = self.slot_values[layer_idx]  # [B, S, d_model]
+
+            # Step 1: Normal self-attention (content tokens only, NO slots)
+            layer_out = layer(
+                hidden_states,
+                attention_mask=None,
+                position_ids=position_ids,
+                past_key_value=None,
+                use_cache=False,
+                position_embeddings=position_embeddings,
+            )
+            hidden_prime = layer_out[0] if isinstance(layer_out, tuple) else layer_out
+
+            # Step 2-5: Write path (linear projection + gating -> slot update)
+            if enable_write_grad:
+                write_gate = torch.sigmoid(self.write_gate_proj(hidden_prime))  # [B, T, 1]
+                write_signal = self.write_proj(hidden_prime) * write_gate        # [B, T, d_model]
+            else:
+                with torch.no_grad():
+                    write_gate = torch.sigmoid(self.write_gate_proj(hidden_prime.detach()))  # [B, T, 1]
+                    write_signal = self.write_proj(hidden_prime.detach()) * write_gate        # [B, T, d_model]
+
+            # Mean-pool write signal across time, broadcast to all S slots
+            slot_update = write_signal.mean(dim=1, keepdim=True)  # [B, 1, d_model]
+            slot_update = slot_update.expand(B, S, -1)            # [B, S, d_model]
+
+            # Residual update on slots
+            new_slots = slots + slot_update
+
+            # Clamp slot norms to prevent blowup
+            slot_norms = new_slots.norm(dim=-1, keepdim=True).clamp(min=1e-6)
+            max_norm = 10.0
+            clamp_scale = torch.where(slot_norms > max_norm, max_norm / slot_norms, torch.ones_like(slot_norms))
+            new_slots = new_slots * clamp_scale.detach()
+
+            if enable_write_grad:
+                self.slot_values[layer_idx] = new_slots
+            else:
+                self.slot_values[layer_idx] = new_slots.detach()
+
+            # Step 6-8: Read path (cross-attention from slots)
+            # Use the updated slots for reading
+            slots_for_read = self.slot_values[layer_idx]
+
+            # read_logits: [B, T, S]
+            read_logits = torch.einsum('btd,bsd->bts', hidden_prime, slots_for_read)
+            read_weights = F.softmax(read_logits * scale, dim=-1)  # [B, T, S]
+
+            # read_out: weighted sum of slot vectors -> [B, T, d_model]
+            read_out = torch.einsum('bts,bsd->btd', read_weights, slots_for_read)
+
+            # Step 9: Residual connection with scaled read output
+            hidden_states = hidden_prime + self.residual_scale * self.read_proj(read_out)
+
+        norm = self._get_norm()
+        lm_head = self._get_lm_head()
+        hidden_states = norm(hidden_states)
+        logits = lm_head(hidden_states)
+
+        result = {"logits": logits}
+        if labels is not None:
+            shift_logits = logits[..., :-1, :].contiguous()
+            shift_labels = labels[..., 1:].contiguous()
+            loss_fn = nn.CrossEntropyLoss(reduction="mean")
+            loss = loss_fn(
+                shift_logits.view(-1, shift_logits.size(-1)),
+                shift_labels.view(-1),
+            )
+            result["loss"] = loss
+
+        return result
+
     def forward_chunk(
         self,
         input_ids: torch.Tensor,
@@ -677,6 +799,9 @@ class CrossAttentionMemoryModel(nn.Module):
         if self.slot_forward:
             # Slot-forward always needs write gradient for slot_embeddings training
             return self._forward_slot_forward(input_ids, labels, enable_write_grad=True)
+
+        if self.slot_isolated:
+            return self._forward_slot_isolated(input_ids, labels, enable_write_grad=enable_write_grad)
 
         # ---- Forward with cross-attention memory ----
         embed_tokens = self._get_embed_tokens()
@@ -993,6 +1118,11 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--slot_forward", action="store_true", default=False,
                    help="Forward memory slots through decoder layers like regular tokens "
                         "(instead of cross-attention read + delta-rule write)")
+    p.add_argument("--slot_isolated", action="store_true", default=False,
+                   help="Slot Isolation: independent read/write paths per decoder layer. "
+                        "Self-attention runs on hidden_states only (no slots). Write: "
+                        "linear+gate projection -> slot update. Read: cross-attention "
+                        "from slots -> residual connection. Mutually exclusive with --slot_forward.")
     p.add_argument("--freeze_base_steps", type=int, default=0,
                    help="Freeze base model for first N steps (only train slot embeddings). 0=disabled.")
     p.add_argument("--cross_attn_lr_factor", type=float, default=100,
@@ -1120,6 +1250,7 @@ def main() -> None:
         swa_window=args.swa_window,
         write_lr=args.write_lr,
         slot_forward=args.slot_forward,
+        slot_isolated=args.slot_isolated,
         memory_init=args.memory_init,
         recon_loss_weight=args.recon_loss_weight,
         cross_chunk_propagation=args.cross_chunk_propagation,
@@ -1182,9 +1313,41 @@ def main() -> None:
             logger.info("Resumed from step %d", start_step)
 
     # ------------------------------------------------------------------
-    # Optimizer — separate lr for cross-attention params
+    # Optimizer — separate lr for cross-attention / slot-isolated params
     # ------------------------------------------------------------------
-    if args.slot_forward:
+    if args.slot_isolated:
+        # slot_isolated: base model + write_proj/write_gate_proj/read_proj
+        # The slot isolation modules are new params -> use higher lr (same as cross_attn lr)
+        base_decay = []
+        base_no_decay = []
+        iso_decay = []
+        iso_no_decay = []
+        for name, param in cm_model.named_parameters():
+            if not param.requires_grad:
+                continue
+            is_iso = any(x in name for x in ('write_proj', 'write_gate_proj', 'read_proj'))
+            bucket = (iso_decay if is_iso else base_decay) if param.dim() >= 2 and 'norm' not in name.lower() and 'bias' not in name.lower() else (iso_no_decay if is_iso else base_no_decay)
+            bucket.append(param)
+        iso_lr = args.lr / args.cross_attn_lr_factor  # same naming, means higher lr for new params
+        optimizer_groups = [
+            {"params": base_decay, "weight_decay": args.weight_decay, "lr": args.lr},
+            {"params": base_no_decay, "weight_decay": 0.0, "lr": args.lr},
+            {"params": iso_decay, "weight_decay": args.weight_decay, "lr": iso_lr},
+            {"params": iso_no_decay, "weight_decay": 0.0, "lr": iso_lr},
+        ]
+        optimizer = torch.optim.AdamW(
+            optimizer_groups,
+            lr=args.lr,
+            betas=(0.9, 0.95),
+        )
+        if is_main:
+            n_base = sum(p.numel() for p in base_decay) + sum(p.numel() for p in base_no_decay)
+            n_iso = sum(p.numel() for p in iso_decay) + sum(p.numel() for p in iso_no_decay)
+            logger.info(
+                "Optimizer (slot_isolated): AdamW, base_lr=%.2e, iso_lr=%.2e (1/%g), base=%d, iso=%d, residual_scale=%g",
+                args.lr, iso_lr, args.cross_attn_lr_factor, n_base, n_iso, args.residual_scale,
+            )
+    elif args.slot_forward:
         if args.freeze_base_steps > 0:
             # Phase 1: only train slot_embeddings with high lr
             slot_params = list(cm_model.slot_embeddings.parameters())
@@ -1567,6 +1730,11 @@ def main() -> None:
             if args.slot_forward:
                 for pg in optimizer.param_groups:
                     pg['lr'] = new_lr
+            elif args.slot_isolated:
+                # 4 param groups: base_decay, base_no_decay, iso_decay, iso_no_decay
+                new_iso_lr = new_lr / args.cross_attn_lr_factor
+                for pg_idx, pg in enumerate(optimizer.param_groups):
+                    pg['lr'] = new_iso_lr if pg_idx >= 2 else new_lr
             else:
                 new_cross_lr = new_lr / args.cross_attn_lr_factor
                 for pg_idx, pg in enumerate(optimizer.param_groups):
