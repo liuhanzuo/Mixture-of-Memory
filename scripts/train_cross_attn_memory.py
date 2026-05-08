@@ -382,6 +382,9 @@ class CrossAttentionMemoryModel(nn.Module):
         memory_init: str = "learnable",
         recon_loss_weight: float = 0.0,
         cross_chunk_propagation: bool = False,
+        middle_layer_memory: bool = False,
+        memory_write_layer: int = 16,
+        memory_read_layers: str = "18,22,26,30",
     ) -> None:
         super().__init__()
         self.num_slots = num_slots
@@ -397,6 +400,13 @@ class CrossAttentionMemoryModel(nn.Module):
         self.memory_init = memory_init
         self.recon_loss_weight = recon_loss_weight
         self.cross_chunk_propagation = cross_chunk_propagation
+        self.middle_layer_memory = middle_layer_memory
+        self.memory_write_layer = memory_write_layer
+        # Parse memory_read_layers from comma-separated string to set of ints
+        if isinstance(memory_read_layers, str):
+            self.memory_read_layers = set(int(x.strip()) for x in memory_read_layers.split(",") if x.strip())
+        else:
+            self.memory_read_layers = set(memory_read_layers)
 
         config = base_model.config
         self.num_layers = config.num_hidden_layers
@@ -678,6 +688,126 @@ class CrossAttentionMemoryModel(nn.Module):
 
         return result
 
+    def _forward_middle_layer_memory(self, input_ids, labels=None, enable_write_grad=True):
+        """MemLong-style middle-layer memory: write at one layer, read at select upper layers.
+
+        Unlike _forward_slot_forward which runs slots through ALL 32 layers, this method:
+        - Layers < memory_write_layer: vanilla forward (no slots)
+        - Layer == memory_write_layer: joint attention with slots, then UPDATE slots
+        - Layers in memory_read_layers: joint attention with slots (READ-ONLY, no update)
+        - All other layers: vanilla forward (no slots)
+
+        This reduces signal dilution and crowding from having memory at every layer.
+        """
+        B, T = input_ids.shape
+        device = input_ids.device
+        dtype = next(self.parameters()).dtype
+        S = self.num_slots
+
+        embed_tokens = self._get_embed_tokens()
+        hidden_states = embed_tokens(input_ids).to(dtype)
+
+        position_ids = torch.arange(T, device=device).unsqueeze(0).expand(B, -1)
+        rotary_emb = self._get_rotary_emb()
+        position_embeddings = rotary_emb(hidden_states, position_ids)
+
+        # Extended position embeddings and mask for memory layers (S+T)
+        ext_pos_emb = self._extend_position_embeddings(position_embeddings, S)
+        ext_attn_mask = self._build_extended_attn_mask(S, T, dtype, device, B)
+
+        write_layer = self.memory_write_layer
+        read_layers = self.memory_read_layers
+
+        for layer_idx, layer in enumerate(self._decoder_layers):
+            if layer_idx == write_layer:
+                # --- WRITE LAYER: init slots, joint attention, update slots ---
+                self._init_slots(write_layer, hidden_states)
+                slots = self.slot_values[write_layer]  # [B, S, d_model]
+
+                extended = torch.cat([slots, hidden_states], dim=1)  # [B, S+T, d_model]
+
+                layer_out = layer(
+                    extended,
+                    attention_mask=ext_attn_mask,
+                    position_ids=None,
+                    past_key_value=None,
+                    use_cache=False,
+                    position_embeddings=ext_pos_emb,
+                )
+                output = layer_out[0] if isinstance(layer_out, tuple) else layer_out
+
+                new_slots = output[:, :S, :]
+                hidden_states = output[:, S:, :]
+
+                # Update slot_values at write layer
+                if enable_write_grad:
+                    self.slot_values[write_layer] = new_slots
+                else:
+                    self.slot_values[write_layer] = new_slots.detach()
+
+            elif layer_idx in read_layers:
+                # --- READ LAYER: use write_layer's slots, joint attention, NO update ---
+                slots = self.slot_values[write_layer]  # read from write layer's slots
+                if slots is None:
+                    # If read layer is before write layer (shouldn't happen with defaults),
+                    # just do vanilla forward
+                    layer_out = layer(
+                        hidden_states,
+                        attention_mask=None,
+                        position_ids=None,
+                        past_key_value=None,
+                        use_cache=False,
+                        position_embeddings=position_embeddings,
+                    )
+                    hidden_states = layer_out[0] if isinstance(layer_out, tuple) else layer_out
+                else:
+                    # Detach slots for read-only (no gradient back to slot update)
+                    read_slots = slots.detach()
+                    extended = torch.cat([read_slots, hidden_states], dim=1)  # [B, S+T, d_model]
+
+                    layer_out = layer(
+                        extended,
+                        attention_mask=ext_attn_mask,
+                        position_ids=None,
+                        past_key_value=None,
+                        use_cache=False,
+                        position_embeddings=ext_pos_emb,
+                    )
+                    output = layer_out[0] if isinstance(layer_out, tuple) else layer_out
+
+                    # Discard slot outputs (read-only), keep only hidden_states
+                    hidden_states = output[:, S:, :]
+
+            else:
+                # --- VANILLA LAYER: no memory interaction ---
+                layer_out = layer(
+                    hidden_states,
+                    attention_mask=None,
+                    position_ids=None,
+                    past_key_value=None,
+                    use_cache=False,
+                    position_embeddings=position_embeddings,
+                )
+                hidden_states = layer_out[0] if isinstance(layer_out, tuple) else layer_out
+
+        norm = self._get_norm()
+        lm_head = self._get_lm_head()
+        hidden_states = norm(hidden_states)
+        logits = lm_head(hidden_states)
+
+        result = {"logits": logits}
+        if labels is not None:
+            shift_logits = logits[..., :-1, :].contiguous()
+            shift_labels = labels[..., 1:].contiguous()
+            loss_fn = nn.CrossEntropyLoss(reduction="mean")
+            loss = loss_fn(
+                shift_logits.view(-1, shift_logits.size(-1)),
+                shift_labels.view(-1),
+            )
+            result["loss"] = loss
+
+        return result
+
     def _forward_slot_isolated(self, input_ids, labels=None, enable_write_grad=False):
         """Slot Isolation mode: independent read/write paths per decoder layer.
 
@@ -798,6 +928,8 @@ class CrossAttentionMemoryModel(nn.Module):
 
         if self.slot_forward:
             # Slot-forward always needs write gradient for slot_embeddings training
+            if self.middle_layer_memory:
+                return self._forward_middle_layer_memory(input_ids, labels, enable_write_grad=True)
             return self._forward_slot_forward(input_ids, labels, enable_write_grad=True)
 
         if self.slot_isolated:
@@ -1141,6 +1273,14 @@ def parse_args() -> argparse.Namespace:
                    help="When set, slots carry over across chunks within a document "
                         "(strided init only happens for the first chunk after reset_slots). "
                         "Only effective with --slot_forward --memory_init strided.")
+    # Middle-layer memory (MemLong-style)
+    p.add_argument("--middle_layer_memory", action="store_true", default=False,
+                   help="MemLong-style: write memory at one middle layer, read at select upper layers. "
+                        "Mutually exclusive with --slot_forward vanilla (all-layer) mode.")
+    p.add_argument("--memory_write_layer", type=int, default=16,
+                   help="Layer index at which to write memory slots (default 16 for 32-layer model)")
+    p.add_argument("--memory_read_layers", type=str, default="18,22,26,30",
+                   help="Comma-separated layer indices for read-only memory retrieval (default '18,22,26,30')")
     # Mode
     p.add_argument("--full_finetune", action="store_true", default=True,
                    help="Full fine-tuning (all params trainable)")
@@ -1254,6 +1394,9 @@ def main() -> None:
         memory_init=args.memory_init,
         recon_loss_weight=args.recon_loss_weight,
         cross_chunk_propagation=args.cross_chunk_propagation,
+        middle_layer_memory=args.middle_layer_memory,
+        memory_write_layer=args.memory_write_layer,
+        memory_read_layers=args.memory_read_layers,
     ).to(device).to(dtype)
 
     # Warn if freeze_base_steps is set but memory_init is not 'learnable'
