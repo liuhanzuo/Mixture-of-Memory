@@ -4075,3 +4075,61 @@ chunk isolation 两个原始 arm 均在 eval@200 回归（ratio > 1.0）：
 - Fix 3: bge_embedder.get_embeddings — use self._pinned_device instead of
   embedder_model.device for output tensor placement.
 - Relaunched via setsid wrapper after each patch; current relaunch at 21:22.
+
+## [2026-05-08 22:13] MemLong NaN ROOT CAUSE FOUND + FIXED
+**Bug**: LlamaRotaryEmbedding.inv_freq was registered with persistent=False;
+during from_pretrained meta-device materialization the buffer was SKIPPED,
+leaving uninitialized GPU memory (garbage values) instead of the precomputed
+1/theta^(2i/d) table.
+
+**Evidence** (op-by-op probes L0-L15 in RetrievalCausalAttention.forward):
+- L0 inv_freq: max=1.43e-25, min=**-1.88e+38** (GARBAGE)
+- L1 inv_freq: max=**7.33e+14**, min=0.0 (GARBAGE)
+- L2 inv_freq: max=**3.78e+37**, min=-7.72e-29 (GARBAGE)
+- Expected: all in [2.6e-6, 1.0] with rope_theta=500000, head_dim=128
+
+Surprisingly L0/L1 accidentally produced finite cos/sin outputs
+(because garbage × arange(1..1024) happened to trigger float overflow to 0
+in some positions), but by L3 the garbage × larger positions overflowed
+to Inf, Inf × 0 = NaN, propagated forever.
+
+**Fix** (MemLong/src/modeling_llama_position.py, LlamaRotaryEmbedding.forward):
+Defensive re-init: if inv_freq has NaN/Inf or values outside [0, 1.0],
+recompute from (base, dim) at forward time.
+
+**Verification**: step 0 raw_loss = 16.95 (finite!), step 1-10 stable
+around 16.2-17.4 — exactly the expected Llama-3 initial CE loss.
+
+Training now stable on 8× L20A, grad_accum=8, 906 update steps,
+~46 hours wall-clock. Previous failed runs: 3× deepspeed NaN collapse,
+4× torchrun silent SIGTERM (FlagEmbedding pool fixed), 2× step-0 NaN
+(RoPE uninitialized — fixed here).
+
+## [2026-05-08 22:13] MemLong NaN ROOT CAUSE FOUND + FIXED
+**Bug**: LlamaRotaryEmbedding.inv_freq was registered with persistent=False;
+during from_pretrained meta-device materialization the buffer was SKIPPED,
+leaving uninitialized GPU memory (garbage values) instead of the precomputed
+1/theta^(2i/d) table.
+
+**Evidence** (op-by-op probes L0-L15 in RetrievalCausalAttention.forward):
+- L0 inv_freq: max=1.43e-25, min=**-1.88e+38** (GARBAGE)
+- L1 inv_freq: max=**7.33e+14**, min=0.0 (GARBAGE)
+- L2 inv_freq: max=**3.78e+37**, min=-7.72e-29 (GARBAGE)
+- Expected: all in [2.6e-6, 1.0] with rope_theta=500000, head_dim=128
+
+Surprisingly L0/L1 accidentally produced finite cos/sin outputs
+(because garbage × arange(1..1024) happened to trigger float overflow to 0
+in some positions), but by L3 the garbage × larger positions overflowed
+to Inf, Inf × 0 = NaN, propagated forever.
+
+**Fix** (MemLong/src/modeling_llama_position.py, LlamaRotaryEmbedding.forward):
+Defensive re-init: if inv_freq has NaN/Inf or values outside [0, 1.0],
+recompute from (base, dim) at forward time.
+
+**Verification**: step 0 raw_loss = 16.95 (finite!), step 1-10 stable
+around 16.2-17.4 — exactly the expected Llama-3 initial CE loss.
+
+Training now stable on 8× L20A, grad_accum=8, 906 update steps,
+~46 hours wall-clock. Previous failed runs: 3× deepspeed NaN collapse,
+4× torchrun silent SIGTERM (FlagEmbedding pool fixed), 2× step-0 NaN
+(RoPE uninitialized — fixed here).
