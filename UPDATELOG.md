@@ -4062,3 +4062,16 @@ chunk isolation 两个原始 arm 均在 eval@200 回归（ratio > 1.0）：
 - Purpose: A/B test "middle" = L/2 (MemLong) vs "deeper" = L*5/8 → test high-level semantics hypothesis
 - Node: b200-3 via SSH setsid detach (tmux non-interactive killed server; setsid + /tmp wrapper worked)
 - First eval: step 200, ~45-60 min from now
+
+## [2026-05-08 21:20] MemLong b200-4 — ret_embedder.py fixed (3 patches)
+- Root cause of silent SIGTERM after "use mem!!!": each of 8 DDP ranks called
+  `BGEM3FlagModel(device=...)` which FlagEmbedding 1.3 ignores (device is in **kwargs).
+  Default behavior starts a multi-process pool across **ALL** visible CUDA devices.
+  Result: 8 DDP ranks × 8-GPU pool = 64 BGE subprocesses fighting for VRAM → resource
+  exhaustion + NCCL timeout → silent rank exit code 1.
+- Fix 1: BGEM3FlagModel(..., devices=[str(device)]) to pin pool to 1 GPU per rank.
+- Fix 2: bge_embedder.to() — M3Embedder has no `.device` attr; skip move, just track
+  self._pinned_device.
+- Fix 3: bge_embedder.get_embeddings — use self._pinned_device instead of
+  embedder_model.device for output tensor placement.
+- Relaunched via setsid wrapper after each patch; current relaunch at 21:22.

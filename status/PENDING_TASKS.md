@@ -4,8 +4,9 @@
 
 ## Active Tasks
 
-- Experiment H (local b200-1): middle-layer memory, write=L16, read={18,22,26,30}, running.
-- Experiment H2 (remote b200-3): middle-layer memory, write=L20, read={22,25,28,31}, running.
+- Experiment H (local b200-1): middle-layer memory, write=L16, read={18,22,26,30}, running — step 1800, ratio=0.977, niah_loss=5.81 (monotonic improvement).
+- Experiment H2 (remote b200-3): middle-layer memory, write=L20, read={22,25,28,31}, running — step 1600+, ratio=0.989, niah_loss=5.83.
+- **H2 (L20) vs H (L16): H is slightly ahead on ratio**, suggesting strict middle (L/2) is better than deeper middle on this config. Both NIAH still 0 but loss descending.
 
 ## Pending Tasks
 
@@ -61,6 +62,37 @@
 - description: |
     git push fails: "refusing to allow a Personal Access Token to create or update workflow ... without `workflow` scope"
     User needs to update PAT at GitHub Settings → Developer Settings → Personal Access Tokens.
+    [2026-05-08 20:00] RESOLVED: user provided new PAT with workflow scope, all 34 commits pushed to main.
+
+### [PENDING] memlong_b200_4_nan_step0 — MemLong forward returns all-NaN logits on step 0
+- priority: low (baseline only — H/H2 is core research)
+- auto_launch: false (needs deeper debugging)
+- description: |
+    After fixing the FlagEmbedding multi-process pool bug (ret_embedder.py patched, see
+    2026-05-08 UPDATELOG), MemLong training passes init and reaches step 0, but:
+      - batch is clean (int64 ids 8..128001, no NaN)
+      - all sampled params clean (embed, norms, Layer 0 q/k/v — bf16, no NaN/Inf)
+      - outputs.logits shape=(1,1024,128256) dtype=float32 all NaN
+      - loss = NaN → forced abort
+    The forward path is LlamaForCausalLM.forward → _handle_long_input → model(...) with
+    toolkit.ret_attn_layers=[13,17,21,25], mem_layer=13, position_type="Zero",
+    attn_implementation="eager". First forward has empty memory (MemBankSize=0),
+    so should reduce to near-vanilla Llama forward — but still produces all-NaN logits.
+    Suspect: custom eager attention + position_type="Zero" + Llama3 GQA produce
+    a -inf-everywhere attention mask row → softmax = NaN. Needs targeted debugging
+    in src/modeling_llama_position.py forward path.
+
+    Path to fix (if/when we return to this):
+    1. Quick: try position_type="default" (use Llama's RoPE) — if that works, we
+       don't reproduce MemLong exactly but get a viable baseline.
+    2. Proper: bisect _handle_long_input — comment out memory/retrieval paths,
+       see if vanilla llama forward works; then add pieces back one by one.
+    3. Workaround: use Llama-2-7B (what MemLong upstream tests with) instead of
+       Llama-3-8B — may sidestep Llama-3-specific quirks.
+
+    Why low priority: H/H2 middle-layer memory is our actual research direction
+    and is making steady progress (step 1800, ratio 0.977, niah_loss 5.81).
+    MemLong is just a comparison baseline.
 
 ### [OBSOLETE] post_contrastive_analysis — V3 experiments killed (NIAH 0/486)
 - All 4 V3 arms killed 2026-05-06 ~15:00. Pivoted to slot-forward architecture.
