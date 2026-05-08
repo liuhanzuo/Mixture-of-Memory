@@ -262,16 +262,25 @@ configs/
 ## Subagent 使用准则
 
 > **⚠️ 严格禁止：Main agent（Sonnet/GLM5.1）自己改代码，除非满足以下唯一例外。**
-> Main agent 使用的是 Claude Sonnet/GLM5.1 模型，代码质量和推理能力不如 Sonnet-4.6。
-> **所有代码修改必须派 coder subagent（Agent tool, subagent_type=general-purpose, model="sonnet"）执行。**
-> Main 只做调度、分析、状态记录，不写代码。
+> **⚠️ 严格禁止：使用 Agent tool 派 coder subagent（model="sonnet"）。Sonnet 代码质量不够。**
+> **所有代码修改必须通过 claude.exe 调用 opus 模型执行。**
 
-**写代码规则（2026-05-05 用户指令，强制执行）**:
-- **必须派 coder subagent（model="sonnet"）**：修改超过 1 个文件，或单文件修改超过 5 行
-- **唯一例外**：修改在 **1 个文件、5 行以内** → main 可以直接改
-- **无例外**：涉及架构设计、新功能、多文件修改 → **必须 sonnet coder**
-- coder subagent 调用时必须指定 `model="sonnet"`
-- 注：opus 在当前环境不可用（API 限制），sonnet-4.6 是当前最强可用模型
+**写代码规则（2026-05-08 用户指令，强制执行）**:
+- **严令禁止**：Main agent 自己改代码（1 个文件 5 行以内的 bug fix 除外）
+- **严令禁止**：使用 `Agent(model="sonnet")` 派 coder subagent
+- **必须用 opus**：修改超过 1 个文件，或单文件修改超过 5 行，或涉及架构/新功能 → 必须通过 claude.exe 调用 opus
+- **唯一例外 1**：修改在 **1 个文件、5 行以内** 的简单 bug fix → main 可以直接改
+- **唯一例外 2（2026-05-08 用户指令）**：**在修改之前查看自己的模型，如果自己本身就是 opus（如 claude-opus-4-6 / claude-opus-4-7），那么可以自行修改**，无需再派子 agent。main 开场时通过 system 信息或运行 `env | grep ANTHROPIC_DEFAULT_OPUS_MODEL` 确认自己是否为 opus。
+- **Opus 调用方式**（详见 `opus_subagent_routing.md` memory 文件）：
+```bash
+echo "x" | ANTHROPIC_BASE_URL="https://copilot.code.woa.com/server/chat/codebuddy-gateway/codebuddy-code" \
+ANTHROPIC_AUTH_TOKEN="c371df8aea9f07bad42c89f3088e1688" \
+/root/.nvm/versions/node/v22.22.2/lib/node_modules/@tencent/claude-code-internal/node_modules/@anthropic-ai/claude-code/bin/claude.exe \
+  -p "<详细 prompt，包含文件路径、代码片段、修改要求>" \
+  --model "claude-opus-4-6" \
+  --max-turns 30
+```
+- sonnet/haiku 只用于非代码任务（researcher 调研、文件搜索等）
 
 **训练派 subagent 的阈值**:
 - **每个 8-GPU 训练都派一个后台 subagent**(run_in_background=true)
@@ -337,9 +346,16 @@ append-only 文件写错了**不要 edit**,追加一条 correction 行:
 
 ---
 
-## Git 提交规范（2026-05-05）
+## Git 提交规范（2026-05-05，2026-05-08 更新）
 
 **所有代码修改都必须有对应的 git commit，以便 CI 流程正常工作并保持实验可复现性。**
+
+### Committer 设置
+```
+git config --global user.name "LiuHanzuo"
+git config --global user.email "lhz24@mails.tsinghua.edu.cn"
+```
+**所有 commit 的 author 必须是 "LiuHanzuo"。**
 
 ### Coder 完成代码修改后必须：
 1. `git add <具体文件名>` — 不用 `git add .` 或 `git add -A`（防止意外提交密码/权重）

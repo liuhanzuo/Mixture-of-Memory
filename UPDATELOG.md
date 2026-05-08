@@ -176,7 +176,7 @@
   - `pkill -9 eval_qfilters.py` on b200-2 (.144). Verified 0 torchrun/eval_qfilters processes remain; GPUs drained to 4 MiB (GPU 0 shows 35GB residual from unrelated prior state).
   - b200-3 sweep untouched, continues: r1=8.5713, r2=21.7463 already written; r4 running at 14:55:44; r8 pending.
   - Appended append-only correction row to `status/ACTIVE_SWEEPS.jsonl` naming b200-3 as authoritative.
-**New script path**: `scripts/_run_llama3_wikitext_rank_sweep.sh` (present on both local zwfy6 and wzc1-shared — identical content).
+**New script path**: `scripts/_run_llama3_wikitext_rank_sweep.sh` (present on both local wzc1 canonical path — identical content).
 **ETA**: same as b200-3 sweep, ≈15:05 CST.
 
 ## 2026-04-26 14:52 - ACTION: Launched Llama-3 Q-Filters WikiText rank sweep (§11.4 retraction)
@@ -1418,7 +1418,7 @@ Parity within 2× vanilla proves wrapping/DDP/dtype are clean. 0.45 delta betwee
 2. **Fix 2 (3-line layer.py edit):** in `_build_extended_attn_mask`, after the causal H×H block, add `mask[k:k+T//2, :k] = neg_inf`. Architectural cap on oracle visibility (first half of chunk cannot read slots). Independent of init choice.
 3. **Combined (recommended):** both. Expected PPL close to parity (15-20).
 
-**Artifacts (committed to zwfy6):**
+**Artifacts (committed to wzc1 canonical path):**
 - `ops/research_notes/20260426_mem_space_v0_jointattn_diagnosis.md` — 250-line diagnosis report
 - `scripts/train_mem_space_pg19.py` — added `--bypass_memory` flag (L232-239 arg, L339-346 monkey-patch)
 - `scripts/_run_mem_space_parity_llama3.sh` — parity driver (port 29511, bypass ON)
@@ -1789,7 +1789,7 @@ Pre-fix recent=256 was 1685.88 (sliding-window fallback). Classification: ABRUPT
 the cliff was entirely the structural filter-disable discontinuity, not capacity
 exhaustion. 2-line fix validated. Published to RESEARCHER_REPORTS.jsonl.
 
-**Code changes (zwfy6 → b200-1 + b200-4 wzc1 rsync'd)**:
+**Code changes (wzc1 canonical → b200-1 + b200-4 rsync'd)**:
 - `src/memory/mem_space/config.py`: added `hidden_to_slot_frozen: bool = True` (default preserves Tier-3 behavior).
 - `src/memory/mem_space/layer.py` L218-219: freeze loop gated on `config.hidden_to_slot_frozen`.
 - `scripts/train_mem_space_pg19.py`: added `--unfreeze_hidden_to_slot` CLI flag mapping to `hidden_to_slot_frozen=False`.
@@ -1996,7 +1996,7 @@ Status updates: appended `gpu_runs.jsonl`, `ACTIVE_SWEEPS.jsonl`, `AUTO_CHAIN.js
 
 ## 2026-04-26 21:53 — §5.4 static probe dispatched to b200-2 GPU 0 (subagent a850aced5c79d3ee2)
 
-**Rationale**: Local zwfy6 `models/` tree has only Llama2-7b safetensors + Llama3-8b tokenizer;
+**Rationale**: Local `models/` tree has only Llama2-7b safetensors + Llama3-8b tokenizer;
 no Llama-3-8B weights are present locally. b200-2 has the full 4-shard Llama-3-8B
 in `/apdcephfs_wzc1/share_303098609/pighzliu_code/models/Llama--Llama3-8b/` and 8 idle
 GPUs. Dispatched the probe to b200-2 GPU 0 (pinned via `CUDA_VISIBLE_DEVICES=0`), leaving
@@ -2262,7 +2262,7 @@ Root cause: **H2 Writeback Gate Plateau** (50% probability)
 2. **Rsync**: `eval_niah_mem_space.py` + regression report → wzc1 canonical workdir.
 3. **NIAH with_memory** launched on b200-1 (PID 237122): champion config (σ=0.05, warmup=1000, N=512, k=64), 3 ctx lengths × 4 depths × 5 samples = 60 cells. Output: `outputs/niah_mem_space_champion/niah_results.json`
 4. **NIAH bypass_memory** launched on b200-2 (PID 756353): same grid, `--bypass_memory` flag. Output: `outputs/niah_bypass/niah_results.json`
-5. **Regression report** (`ops/research_notes/20260427_schedule_match_regression_analysis.md`) confirmed at local zwfy6 path and synced to wzc1. Root cause: H2 β plateau 5× too high (primary), H1 constant LR (secondary), H3 shared-bank gradient at step 13 (spike specific).
+5. **Regression report** (`ops/research_notes/20260427_schedule_match_regression_analysis.md`) confirmed at local wzc1 canonical path and synced to remote nodes. Root cause: H2 β plateau 5× too high (primary), H1 constant LR (secondary), H3 shared-bank gradient at step 13 (spike specific).
 6. **CLAUDE.md updated**: Added strict rule — main agent (Sonnet) must NOT write code; all code changes via /coder subagent (Opus).
 
 ### Key findings from regression analysis
@@ -3991,3 +3991,62 @@ This revises the research note rpt_20260430_1000_vqema_collapse:
 Y2 (PID 2477537, b200-2) continues toward fwd=2000 success criterion.
 
 **b200-1 and b200-3 now IDLE** — available for next experiment.
+
+## 2026-05-01 01:34 — v3 Infini-Attention 训练启动
+
+### 背景
+v2 cross-attention 全部 5 次初始化尝试失败 (PPL > 100)。
+根因：对称冷启动 + softmax 均匀注意力 + 写回 slot 污染 + 32 层噪声累积。
+
+### 研究结论
+Opus + Sonnet 双 researcher 一致推荐 **Infini-attention** (Munkhdalai et al., 2024):
+- 线性 attention (无 softmax) → 无均匀性陷阱
+- 重用预训练 Q/K/V projections → 无冷启动问题
+- Delta rule 写回 → 自纠错
+- 仅 ~1K 新参数 (32 beta scalars × 32 layers)
+
+### 实现
+- 新增 `InfiniAttentionMemory` class (selector.py)
+- 新增 `_forward_infini_attention` forward path (layer.py)
+- 修复 GQA 支持 (n_kv_heads=8 for Llama-3-8B)
+- 版本文档: versions/v3_infini_attention.md
+
+### 早期结果
+- PPL: 2.5-5.8 @ step 300 (STABLE, vs v2's 1200-2000)
+- M_norm 稳定增长 (无爆炸)
+- Beta gate 稳定 (~0.007)
+- GPU 利用率 92-98%
+
+## 2026-05-05 12:40 — chunk_isolation_lr_fix: 双 arm 已启动
+
+**根因确认 + LR Fix 启动**
+
+chunk isolation 两个原始 arm 均在 eval@200 回归（ratio > 1.0）：
+- arm1 (sl=256, factor=1): ratio 0.9852@100 → 1.0126@200, out_proj_norm=0.082 (doubling/100steps)
+- arm2 (sl=512, factor=1): ratio 0.9868@100 → 1.0165@400, out_proj_norm=0.129 (growing)
+
+**根因**：cross_attn_lr_factor=1 (full lr=5e-6), warmup 结束后 out_proj_norm 每百步翻倍，污染 LM 输出。
+**架构有效性**：step-100 warmup 期间 ratio=0.985-0.987，证明 cross-attn memory 确实有效。
+
+**已执行**：
+1. Kill 本地 chunk_isolation_arm1 (PIDs 3197310-3197317) ✅
+2. Kill b200-4 chunk_isolation_arm2 (PIDs 1599936-1599943) ✅
+3. 创建 scripts/launch_chunk_isolation_lr_fix.sh (arm1=factor10, arm2=factor50) ✅
+4. 启动 local arm1: factor=10 (lr=5e-7), sl=256, step~10, out_proj_norm=0.002060 ✅
+5. 启动 b200-4 arm2: factor=50 (lr=1e-7), sl=256, just launched ✅
+
+**观察点**: eval@200 (~15:30 GMT+8) — ratio 是否保持 < 1.0，out_proj_norm 是否在 warmup 后稳定
+
+同时 Unleashed CrossAttn 两臂接近完成 (~14:00 GMT+8)，完成后触发 direction_decision 分析。
+
+## [2026-05-05 0a4a6b7] chore: support Tencent Claude gateway in CI scripts via ANTHROPIC_BASE_URL
+- 主要改动：修改了 `.github` 目录下的脚本，添加腾讯云Coud API支持
+- 影响模块：影响持续集成流程和代码建议生成模块
+- 备注：无特殊注意事项
+
+## [2026-05-08 15:17] Experiment H launched — MemLong-style middle-layer memory
+- Architecture change: write memory at layer 16, read at {18,22,26,30}, other layers vanilla forward
+- Rationale: MemLong Table 3 evidence + slot diversity diagnosis (slots are NOT identical, ruling out broadcast hypothesis)
+- Previous all-layer joint attention (Exp D/E/F) all hit NIAH=0%. If middle-layer hypothesis holds, Exp H should get NIAH ≥ 10% at step 200.
+- Baseline ratio at step 0: 1.022 (memory PPL 9.69 vs vanilla 9.48)
+- Commits: f3e8210 (diagnosis script), d10b8de (middle-layer impl)
