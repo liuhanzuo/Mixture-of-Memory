@@ -1199,6 +1199,200 @@ def evaluate_memory_ppl(model, loader, device, world_size):
 
 
 # --------------------------------------------------------------------------- #
+# MemLong-protocol NIAH evaluation (apples-to-apples with the MemLong baseline)
+# --------------------------------------------------------------------------- #
+
+# MemLong's needle/question templates — copied verbatim from MemLong/eval_niah.py
+_MEMLONG_NEEDLE_TEMPLATES = [
+    "The special code for this document is {code}. Remember this code.",
+    "The secret identifier is {code}. You will need this later.",
+    "The hidden passcode in this text is {code}.",
+    "A unique reference number {code} is embedded in this document.",
+    "The magic number buried in this text is {code}.",
+]
+
+_MEMLONG_QUESTION_TEMPLATES = [
+    "What is the special code? The special code is",
+    "What is the secret identifier? The secret identifier is",
+    "What is the hidden passcode? The hidden passcode is",
+    "What is the unique reference number? The unique reference number is",
+    "What is the magic number? The magic number is",
+]
+
+_MEMLONG_HAYSTACK_REPEAT = (
+    "The grass is green. The sky is blue. The sun is bright. "
+    "We live in a world of many wonders. "
+)
+
+
+def _build_memlong_niah_sample(tokenizer, total_length: int, depth_ratio: float, rng: random.Random):
+    """Build a single MemLong-protocol NIAH sample.
+
+    Returns:
+        input_ids: LongTensor [1, total_length]
+        code_str:  The hidden 6-digit code (expected answer)
+        code_tokens: list[int], tokenised answer (1+ tokens)
+    """
+    code = f"{rng.randint(100000, 999999)}"
+    template_idx = rng.randint(0, len(_MEMLONG_NEEDLE_TEMPLATES) - 1)
+    needle_text = _MEMLONG_NEEDLE_TEMPLATES[template_idx].format(code=code)
+    question_text = _MEMLONG_QUESTION_TEMPLATES[template_idx]
+
+    needle_tokens = tokenizer.encode(needle_text, add_special_tokens=False)
+    question_tokens = tokenizer.encode(question_text, add_special_tokens=False)
+    code_tokens = tokenizer.encode(code, add_special_tokens=False)
+
+    repeat_tokens = tokenizer.encode(_MEMLONG_HAYSTACK_REPEAT, add_special_tokens=False)
+    num_repeats = total_length // max(len(repeat_tokens), 1) + 2
+    haystack = (repeat_tokens * num_repeats)[:total_length]
+
+    # Insert needle at requested depth ratio.
+    insert_pos = int(total_length * depth_ratio)
+    end_pos = min(insert_pos + len(needle_tokens), total_length)
+    actual_needle_len = end_pos - insert_pos
+    haystack[insert_pos:end_pos] = needle_tokens[:actual_needle_len]
+
+    # Tail: question + answer at the very end of the sequence.
+    question_with_code = question_tokens + code_tokens
+    q_start = max(0, total_length - len(question_with_code))
+    haystack[q_start:q_start + len(question_with_code)] = question_with_code[: total_length - q_start]
+
+    input_ids = torch.tensor([haystack], dtype=torch.long)
+    return input_ids, code, code_tokens
+
+
+@torch.no_grad()
+def evaluate_memlong_niah(
+    model,
+    tokenizer,
+    device,
+    *,
+    chunk_size: int,
+    lengths=(2048, 4096),
+    depths=(0.0, 0.25, 0.5, 0.75, 1.0),
+    num_trials: int = 3,
+    seed: int = 42,
+):
+    """MemLong-protocol NIAH accuracy for our chunk-based memory model.
+
+    Only runs on the calling rank (caller is responsible for guarding with
+    is_main / rank-0). Other ranks should hit a dist.barrier after to resync.
+
+    For sequences longer than `chunk_size`, the sequence is split into
+    contiguous `chunk_size`-token chunks and fed through `forward_chunk`
+    sequentially so the memory slots accumulate. The logits from the LAST
+    chunk are used to score the answer tokens.
+
+    Returns:
+        overall_acc: float in [0, 1]
+        breakdown: list of dicts, one per (length, depth) cell
+    """
+    root = model.module if hasattr(model, "module") else model
+    was_training = root.training
+    root.eval()
+
+    rng = random.Random(seed)
+    breakdown = []
+    total_correct = 0
+    total_trials = 0
+
+    for length in lengths:
+        for depth in depths:
+            cell_correct = 0
+            cell_loss_sum = 0.0
+            for _ in range(num_trials):
+                input_ids, code_str, code_tokens = _build_memlong_niah_sample(
+                    tokenizer, length, depth, rng,
+                )
+                input_ids = input_ids.to(device)
+
+                if not code_tokens:
+                    continue  # defensive: tokeniser returned empty (shouldn't happen)
+
+                # Reset memory state before each trial.
+                if hasattr(root, "reset_slots"):
+                    root.reset_slots()
+
+                n_tok = input_ids.shape[1]
+                # Split into chunks of size `chunk_size`; feed sequentially.
+                last_logits = None
+                for start in range(0, n_tok, chunk_size):
+                    end = min(start + chunk_size, n_tok)
+                    chunk = input_ids[:, start:end].contiguous()
+                    # forward_chunk expects a chunk-sized input; if the final
+                    # chunk is shorter than `chunk_size`, pass it as-is (the
+                    # model handles arbitrary lengths up to chunk_size).
+                    out = root.forward_chunk(chunk)
+                    last_logits = out["logits"]
+
+                if last_logits is None:
+                    continue
+
+                # The last `len(code_tokens)` positions of the whole sequence
+                # are the answer tokens. Because forward is chunked, those
+                # positions fall inside the final chunk. Compute the global
+                # index and map it back to the local chunk index.
+                final_chunk_len = last_logits.shape[1]
+                final_chunk_start = n_tok - final_chunk_len
+                # Global position where the answer starts
+                answer_global_start = n_tok - len(code_tokens)
+                # In the final chunk's local coordinates
+                ans_local_start = answer_global_start - final_chunk_start
+                # Causal LM: logits[i] predicts token i+1, so read one earlier
+                pred_start = max(0, ans_local_start - 1)
+                pred_slice = last_logits[0, pred_start : pred_start + len(code_tokens)]
+                if pred_slice.shape[0] < len(code_tokens):
+                    continue  # edge case; treat as miss
+                predicted = pred_slice.argmax(dim=-1).tolist()
+
+                # Accept if predicted token ids match OR decoded string contains code.
+                match_tokens = predicted == list(code_tokens)
+                if not match_tokens:
+                    try:
+                        pred_text = tokenizer.decode(predicted, skip_special_tokens=True)
+                        match_string = code_str in pred_text
+                    except Exception:
+                        match_string = False
+                else:
+                    match_string = True
+
+                is_correct = match_tokens or match_string
+                if is_correct:
+                    cell_correct += 1
+                    total_correct += 1
+
+                # Optional per-token loss on answer positions (cheap)
+                target = input_ids[0, answer_global_start : answer_global_start + len(code_tokens)]
+                try:
+                    loss_cell = nn.functional.cross_entropy(
+                        pred_slice.float(), target.to(pred_slice.device), reduction="mean",
+                    ).item()
+                except Exception:
+                    loss_cell = float("nan")
+                cell_loss_sum += loss_cell
+
+                total_trials += 1
+
+            acc = cell_correct / max(num_trials, 1)
+            avg_loss = cell_loss_sum / max(num_trials, 1)
+            breakdown.append({
+                "length": length,
+                "depth": depth,
+                "accuracy": acc,
+                "avg_loss": avg_loss,
+                "correct": cell_correct,
+                "total": num_trials,
+            })
+
+    if was_training:
+        root.train()
+
+    if total_trials == 0:
+        return 0.0, breakdown
+    return total_correct / total_trials, breakdown
+
+
+# --------------------------------------------------------------------------- #
 # Cosine LR schedule with warmup
 # --------------------------------------------------------------------------- #
 
@@ -1324,6 +1518,16 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--contrastive_temperature", type=float, default=0.1,
                    help="Temperature for InfoNCE contrastive loss (default 0.1). "
                         "Lower = sharper focus on target slot.")
+    # MemLong-protocol NIAH eval (apples-to-apples with MemLong baseline)
+    p.add_argument("--memlong_niah_interval", type=int, default=0,
+                   help="If > 0, run MemLong-protocol NIAH eval every N global steps. "
+                        "0 = disabled. Expensive: ~5-10s per (length, depth, trial) cell.")
+    p.add_argument("--memlong_niah_lengths", type=str, default="2048,4096",
+                   help="Comma-separated sequence lengths for MemLong NIAH eval.")
+    p.add_argument("--memlong_niah_depths", type=str, default="0.0,0.25,0.5,0.75,1.0",
+                   help="Comma-separated needle depth ratios for MemLong NIAH eval.")
+    p.add_argument("--memlong_niah_trials", type=int, default=3,
+                   help="Trials per (length, depth) cell for MemLong NIAH eval.")
     return p.parse_args()
 
 
@@ -1961,6 +2165,38 @@ def main() -> None:
                             vanilla_ppl, base_vanilla_ppl * 1.1,
                         )
 
+                # Optional MemLong-protocol NIAH eval (rank 0 only; other ranks barrier below)
+                memlong_niah_acc = None
+                memlong_niah_breakdown = None
+                if (args.memlong_niah_interval > 0
+                    and global_step % args.memlong_niah_interval == 0
+                    and is_main):
+                    try:
+                        ml_lengths = tuple(int(x) for x in args.memlong_niah_lengths.split(","))
+                        ml_depths = tuple(float(x) for x in args.memlong_niah_depths.split(","))
+                        memlong_niah_acc, memlong_niah_breakdown = evaluate_memlong_niah(
+                            ddp_model, tokenizer, device,
+                            chunk_size=args.seq_len,
+                            lengths=ml_lengths,
+                            depths=ml_depths,
+                            num_trials=args.memlong_niah_trials,
+                            seed=42 + global_step,
+                        )
+                        logger.info(
+                            "[MEMLONG-NIAH step=%d] overall_acc=%.4f breakdown=%s",
+                            global_step, memlong_niah_acc,
+                            json.dumps(memlong_niah_breakdown),
+                        )
+                    except Exception as e:
+                        logger.warning("MemLong NIAH eval failed: %s", e)
+
+                # Barrier so non-rank-0 workers resync after rank 0 runs memlong eval
+                if (world_size > 1
+                    and args.memlong_niah_interval > 0
+                    and global_step % args.memlong_niah_interval == 0):
+                    dist.barrier()
+
+                if is_main:
                     metrics = {
                         "step": global_step,
                         "vanilla_ppl": vanilla_ppl,
@@ -1979,6 +2215,8 @@ def main() -> None:
                         "contrastive_avg_loss": contrastive_loss_sum / max(niah_total, 1) if niah_total > 0 else 0.0,
                         "contrastive_weight": args.contrastive_weight,
                         "curriculum_phase": curriculum.phase,
+                        "memlong_niah_acc": memlong_niah_acc,
+                        "memlong_niah_breakdown": memlong_niah_breakdown,
                     }
                     metrics_history.append(metrics)
                     with open(os.path.join(args.output_dir, "metrics.jsonl"), "a") as f:
