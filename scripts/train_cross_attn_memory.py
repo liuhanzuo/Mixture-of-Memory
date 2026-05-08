@@ -746,13 +746,13 @@ class CrossAttentionMemoryModel(nn.Module):
             new_slots = new_slots * clamp_scale.detach()
 
             if enable_write_grad:
-                self.slot_values[layer_idx] = new_slots
+                slots_for_read = new_slots           # keep grad for current chunk's read path
+                self.slot_values[layer_idx] = new_slots.detach()  # detach for cross-chunk storage
             else:
                 self.slot_values[layer_idx] = new_slots.detach()
+                slots_for_read = self.slot_values[layer_idx]
 
             # Step 6-8: Read path (cross-attention from slots)
-            # Use the updated slots for reading
-            slots_for_read = self.slot_values[layer_idx]
 
             # read_logits: [B, T, S]
             read_logits = torch.einsum('btd,bsd->bts', hidden_prime, slots_for_read)
