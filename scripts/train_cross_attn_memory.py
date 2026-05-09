@@ -549,11 +549,11 @@ class CrossAttentionMemoryModel(nn.Module):
                 self.slot_values[layer_idx] = slots.view(B, self.num_slots, -1)
             else:
                 # Strided fallback
-                if self.cross_chunk_propagation and self.slot_values[layer_idx] is not None:
-                    # Detach to break computational graph between chunks (truncated BPTT)
+                # Always preserve existing slots across chunks (critical for cross-chunk retrieval)
+                if self.slot_values[layer_idx] is not None and self.slot_values[layer_idx].shape[0] == B:
                     self.slot_values[layer_idx] = self.slot_values[layer_idx].detach()
                     return
-                # Original strided sampling code
+                # Original strided sampling code (only runs on first chunk)
                 stride = max(1, T // self.num_slots)
                 indices = torch.arange(0, T, stride)[:self.num_slots]
                 if len(indices) < self.num_slots:
