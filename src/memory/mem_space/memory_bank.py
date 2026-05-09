@@ -186,24 +186,38 @@ class MemoryBank(nn.Module):
         idx: torch.Tensor,
         new_repr: torch.Tensor,
         gate,
+        *,
+        forget_gate: Optional[torch.Tensor] = None,
+        tanh_new: bool = False,
     ) -> None:
         """In-place EMA writeback on the selected slot positions.
 
-            slots[b, idx[b, j]] = (1 - gate) · slots[b, idx[b, j]]
-                                   + gate · new_repr[b, j]
+        Two modes:
 
-        Only positions in ``idx`` are touched; all other slots remain at
-        their previous value (this is the slot-identity-stability property).
+        **Single-gate (legacy, H/H5/H3)** when ``forget_gate is None``:
+
+            slots[idx] = (1 - gate) · slots[idx] + gate · new_repr
+
+        ``gate`` is a Python float or 0-dim Tensor (broadcast scalar).
+
+        **Dual-gate (H6, LM2-inspired)** when ``forget_gate`` is supplied:
+
+            new = tanh(new_repr) if tanh_new else new_repr
+            slots[idx] = gate · new + forget_gate · slots[idx]
+
+        ``gate`` and ``forget_gate`` are full ``[B, k, slot_dim]`` tensors (one
+        sigmoid value per feature, per selected slot). They are independent
+        — the dual-gate is NOT a (1-β, β) split; LM2 lets both gates move
+        freely so the network can choose to "fully remember + fully overwrite"
+        or "fully forget + write nothing".
 
         Args:
             idx: [B, k] long tensor of slot indices to update.
-            new_repr: [B, k, slot_dim] updated representation for each
-                selected slot.
-            gate: scalar β ∈ [0, 1], either a Python float (legacy, no grad)
-                or a 0-dim ``torch.Tensor`` (Branch-3 writeback-BPTT path —
-                grad flows back into ``gate_param``). The tensor path does
-                NOT short-circuit on β ≈ 0 so the graph stays intact during
-                warmup; the float path preserves the legacy early-exit.
+            new_repr: [B, k, slot_dim] new content for each selected slot.
+            gate: scalar β (legacy) OR per-feature input gate [B, k, slot_dim] (H6).
+            forget_gate: per-feature forget gate [B, k, slot_dim] (H6 only).
+            tanh_new: bound new content with tanh before mixing (LM2 default;
+                replaces the manual ``max_norm`` clamp when active).
         """
         if self.frozen:
             return
@@ -224,6 +238,41 @@ class MemoryBank(nn.Module):
                 f"new_repr dim {new_repr.shape[-1]} != slot_dim {self.slot_dim}"
             )
 
+        # ---- DUAL-GATE PATH (H6) ----
+        if forget_gate is not None:
+            if forget_gate.shape != new_repr.shape:
+                raise ValueError(
+                    f"forget_gate shape {tuple(forget_gate.shape)} must equal "
+                    f"new_repr shape {tuple(new_repr.shape)}"
+                )
+            if not isinstance(gate, torch.Tensor) or gate.shape != new_repr.shape:
+                raise ValueError(
+                    "Dual-gate write requires `gate` (the input gate) to also be a "
+                    f"[B,k,d] tensor; got {type(gate).__name__} "
+                    f"shape={getattr(gate, 'shape', None)}"
+                )
+            idx_exp = idx.unsqueeze(-1).expand(-1, -1, self.slot_dim)
+            current = self.slots.gather(1, idx_exp)                          # [B, k, d]
+            new_content = (
+                torch.tanh(new_repr) if tanh_new else new_repr
+            ).to(self.slots.dtype)
+            g_in = gate.to(device=self.slots.device, dtype=self.slots.dtype)
+            g_forget = forget_gate.to(device=self.slots.device, dtype=self.slots.dtype)
+            updated = g_in * new_content + g_forget * current
+
+            # tanh already bounds new_content to [-1, 1] per dim; we no longer
+            # need the manual max_norm clamp from H/H5 (that was a band-aid for
+            # 32-layer compounding writes blowing up bf16). Keep the global
+            # slot_value_norm_cap below as a safety net only.
+            self.slots = self.slots.scatter(1, idx_exp, updated)
+            if self._slot_value_norm_cap > 0.0:
+                with torch.no_grad():
+                    slot_norms_all = self.slots.norm(dim=-1, keepdim=True).clamp(min=1e-8)
+                    scale_all = (slot_norms_all / self._slot_value_norm_cap).clamp(min=1.0)
+                    self.slots = self.slots / scale_all
+            return
+
+        # ---- SINGLE-GATE LEGACY PATH (H/H5/H3) ----
         # Tensor-or-float gate (Branch-3 2026-04-26). A tensor gate threads
         # gradient back into gate_param; a float gate preserves the Tier-3
         # zero-BPTT path and still short-circuits when β is exactly 0 for

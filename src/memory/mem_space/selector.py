@@ -356,6 +356,12 @@ class CrossAttentionMemory(nn.Module):
         n_slots: int = 128,
         n_heads: int = 8,
         slot_dim: Optional[int] = None,
+        *,
+        use_dual_gate: bool = False,
+        forget_bias_init: float = 1.0,
+        input_bias_init: float = 0.0,
+        dual_gate_tanh_new: bool = True,
+        read_topk: int = 0,
     ) -> None:
         super().__init__()
         slot_dim = slot_dim or d_model
@@ -363,6 +369,9 @@ class CrossAttentionMemory(nn.Module):
         self.n_slots = n_slots
         self.slot_dim = slot_dim
         self.n_heads = n_heads
+        self.use_dual_gate = use_dual_gate
+        self.dual_gate_tanh_new = dual_gate_tanh_new
+        self.read_topk = read_topk
 
         # Projections if slot_dim != d_model
         self.need_proj = slot_dim != d_model
@@ -403,6 +412,31 @@ class CrossAttentionMemory(nn.Module):
 
         # Writeback gate (init 0, sigmoid(0)=0.5 moderate writeback)
         self.write_gate = nn.Parameter(torch.tensor(0.0))
+
+        # H6 (LM2-inspired): dual-gate (input + forget) writeback projections.
+        # When use_dual_gate=True, replace the single sigmoid(write_gate) blend
+        # with content-conditioned per-feature gates:
+        #     g_in, g_forget = sigmoid_split(W_n·new_repr + W_m·M_prev + bias)
+        #     slots = g_in * tanh(new_repr) + g_forget * M_prev
+        # Two separate projections (LM2 design) so gates condition on BOTH new
+        # content and prior slot state. forget_bias_init=1.0 makes g_forget
+        # start at sigmoid(1)≈0.73 ("remember by default", LSTM heuristic).
+        if use_dual_gate:
+            self.gate_proj_new = nn.Linear(slot_dim, 2 * slot_dim, bias=False)
+            self.gate_proj_mem = nn.Linear(slot_dim, 2 * slot_dim, bias=False)
+            bias_init = torch.cat([
+                torch.full((slot_dim,), float(input_bias_init)),
+                torch.full((slot_dim,), float(forget_bias_init)),
+            ])
+            self.gate_bias = nn.Parameter(bias_init)
+            # Small init on gate projections so initial gates ≈ sigmoid(bias):
+            # input ≈ sigmoid(0)=0.5, forget ≈ sigmoid(1)=0.73
+            nn.init.xavier_uniform_(self.gate_proj_new.weight, gain=0.5)
+            nn.init.xavier_uniform_(self.gate_proj_mem.weight, gain=0.5)
+        else:
+            self.gate_proj_new = None
+            self.gate_proj_mem = None
+            self.gate_bias = None
 
     def _project_slots_to_hidden(self, slots: torch.Tensor) -> torch.Tensor:
         """Project slots from slot_dim to d_model if needed."""
@@ -461,7 +495,8 @@ class CrossAttentionMemory(nn.Module):
         Args:
             hidden_states: [B, T, d_model] decoder output (post self-attention).
             slots: [B, N, slot_dim] current slot content.
-            beta: EMA blend rate (how much new content to mix in).
+            beta: EMA blend rate (how much new content to mix in). Ignored when
+                use_dual_gate=True (dual gate is fully content-conditioned).
 
         Returns:
             updated_slots: [B, N, slot_dim] new slot content.
@@ -481,6 +516,26 @@ class CrossAttentionMemory(nn.Module):
         # Project back to slot_dim
         new_slot_projected = self._project_hidden_to_slot(new_slot_content)  # [B, N, slot_dim]
 
+        # ---- H6 dual-gate path (LM2-inspired) ----
+        if self.use_dual_gate and self.gate_proj_new is not None:
+            # Both gates condition on (new_repr, prior memory). Per-feature.
+            gate_logits = (
+                self.gate_proj_new(new_slot_projected)
+                + self.gate_proj_mem(slots)
+                + self.gate_bias  # broadcast [2d] -> [B, N, 2d]
+            )
+            g_in_logit, g_forget_logit = gate_logits.chunk(2, dim=-1)
+            g_in = torch.sigmoid(g_in_logit)         # [B, N, slot_dim]
+            g_forget = torch.sigmoid(g_forget_logit) # [B, N, slot_dim]
+            new_content = (
+                torch.tanh(new_slot_projected)
+                if self.dual_gate_tanh_new
+                else new_slot_projected
+            )
+            updated_slots = g_in * new_content + g_forget * slots
+            return updated_slots
+
+        # ---- Legacy single-gate path (H/H5/H3) ----
         # Writeback gate (learnable, init 0)
         gamma = torch.sigmoid(self.write_gate)  # [0, 1]
 
@@ -737,6 +792,11 @@ class CrossAttentionMemoryV2(nn.Module):
         num_slots: int,
         dropout: float = 0.0,
         write_lr: float = 1.0,
+        *,
+        use_dual_gate: bool = False,
+        forget_bias_init: float = 1.0,
+        input_bias_init: float = 0.0,
+        dual_gate_tanh_new: bool = True,
     ) -> None:
         super().__init__()
         self.d_model = d_model
@@ -745,6 +805,8 @@ class CrossAttentionMemoryV2(nn.Module):
         self.num_slots = num_slots
         self.head_dim = d_model // n_heads
         self.write_lr = write_lr
+        self.use_dual_gate = use_dual_gate
+        self.dual_gate_tanh_new = dual_gate_tanh_new
 
         assert d_model % n_heads == 0, f"d_model={d_model} must be divisible by n_heads={n_heads}"
         assert n_heads % n_kv_heads == 0, f"n_heads={n_heads} must be divisible by n_kv_heads={n_kv_heads}"
@@ -771,6 +833,32 @@ class CrossAttentionMemoryV2(nn.Module):
         nn.init.normal_(self.v_proj.weight, std=0.02)
 
         self.attn_dropout = nn.Dropout(dropout) if dropout > 0 else nn.Identity()
+
+        # H6 (LM2-inspired): dual-gate (input + forget) writeback projections.
+        # When use_dual_gate=True, replace the single-rate delta-rule with
+        # content-conditioned per-feature gates:
+        #     g_in, g_forget = sigmoid_split(W_n·content + W_m·slot_prev + bias)
+        #     slots = g_in * tanh(content) + g_forget * slot_prev
+        # Both projections use slot dim = d_model (V2 has no separate slot_dim).
+        # forget_bias_init=1.0 → g_forget starts ≈ sigmoid(1)≈0.73 (LSTM heuristic
+        # "remember by default"). Per-feature gates → 2 * d_model dim per slot.
+        # Reference: LM2 (arXiv:2502.06049), src/memory.py:259-263 + create_gates.
+        if use_dual_gate:
+            self.gate_proj_new = nn.Linear(d_model, 2 * d_model, bias=False)
+            self.gate_proj_mem = nn.Linear(d_model, 2 * d_model, bias=False)
+            bias_init = torch.cat([
+                torch.full((d_model,), float(input_bias_init)),
+                torch.full((d_model,), float(forget_bias_init)),
+            ])
+            self.gate_bias = nn.Parameter(bias_init)
+            # Small init so initial gates ≈ sigmoid(bias) at step 0:
+            # input ≈ sigmoid(0)=0.5, forget ≈ sigmoid(1)≈0.73
+            nn.init.xavier_uniform_(self.gate_proj_new.weight, gain=0.5)
+            nn.init.xavier_uniform_(self.gate_proj_mem.weight, gain=0.5)
+        else:
+            self.gate_proj_new = None
+            self.gate_proj_mem = None
+            self.gate_bias = None
 
     def _repeat_kv(self, x: torch.Tensor) -> torch.Tensor:
         """Repeat K/V heads to match Q heads for GQA. x: [B, n_kv_heads, S, D]"""
@@ -853,6 +941,14 @@ class CrossAttentionMemoryV2(nn.Module):
         With write_lr=1.0, slots are completely replaced by the new content.
         With write_lr < 1.0, slots do a weighted average of old and new content.
 
+        H6 (LM2-inspired) — when use_dual_gate=True, replace the single write_lr
+        with content-conditioned per-feature gates:
+            g_in, g_forget = sigmoid_split(W_n·content + W_m·slot_prev + bias)
+            slots = g_in * tanh(content) + g_forget * slot_prev
+        Both gates float independently (NOT a 1-β split), so the network can
+        choose to fully remember + fully overwrite, or fully forget + write
+        nothing, on a per-slot per-feature basis.
+
         Args:
             hidden_states: [B, T, d_model] content hidden states.
             slot_values: [B, num_slots, d_model] current slot values.
@@ -870,6 +966,23 @@ class CrossAttentionMemoryV2(nn.Module):
         # Result: [B, N, d_model]
         content = torch.bmm(avg_weights.transpose(1, 2), hidden_states)  # [B, N, d_model]
 
+        # ---- H6 dual-gate path (LM2-inspired) ----
+        if self.use_dual_gate and self.gate_proj_new is not None:
+            gate_logits = (
+                self.gate_proj_new(content)
+                + self.gate_proj_mem(slot_values)
+                + self.gate_bias  # broadcast [2d] -> [B, N, 2d]
+            )
+            g_in_logit, g_forget_logit = gate_logits.chunk(2, dim=-1)
+            g_in = torch.sigmoid(g_in_logit)         # [B, N, d_model]
+            g_forget = torch.sigmoid(g_forget_logit) # [B, N, d_model]
+            new_content = (
+                torch.tanh(content) if self.dual_gate_tanh_new else content
+            )
+            updated_slots = g_in * new_content + g_forget * slot_values
+            return updated_slots
+
+        # ---- Legacy delta-rule path (H/H5/H3) ----
         # Delta-rule: error = desired content - current slot value
         error = content - slot_values  # [B, N, d_model]
 

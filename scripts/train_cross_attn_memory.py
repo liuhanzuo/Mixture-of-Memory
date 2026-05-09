@@ -385,6 +385,10 @@ class CrossAttentionMemoryModel(nn.Module):
         middle_layer_memory: bool = False,
         memory_write_layer: int = 16,
         memory_read_layers: str = "18,22,26,30",
+        use_dual_gate: bool = False,
+        forget_bias_init: float = 1.0,
+        input_bias_init: float = 0.0,
+        dual_gate_tanh_new: bool = True,
     ) -> None:
         super().__init__()
         self.num_slots = num_slots
@@ -402,6 +406,32 @@ class CrossAttentionMemoryModel(nn.Module):
         self.cross_chunk_propagation = cross_chunk_propagation
         self.middle_layer_memory = middle_layer_memory
         self.memory_write_layer = memory_write_layer
+
+        # H6 (LM2-inspired): dual-gate writeback flags + projections.
+        # In middle_layer_memory mode, slots are completely overwritten by the
+        # joint-attention output at write_layer. With dual-gate, we instead do:
+        #     g_in, g_forget = sigmoid_split(W_n·new_slots + W_m·old_slots + bias)
+        #     slots[write_layer] = g_in * tanh(new_slots) + g_forget * old_slots
+        # Per-feature gates, content-conditioned, LSTM-style.
+        # Reference: LM2 (arXiv:2502.06049), src/memory.py:259-263.
+        self.use_dual_gate = use_dual_gate
+        self.dual_gate_tanh_new = dual_gate_tanh_new
+        if use_dual_gate and middle_layer_memory:
+            d = self.d_model
+            self.dual_gate_proj_new = nn.Linear(d, 2 * d, bias=False)
+            self.dual_gate_proj_mem = nn.Linear(d, 2 * d, bias=False)
+            bias_init = torch.cat([
+                torch.full((d,), float(input_bias_init)),
+                torch.full((d,), float(forget_bias_init)),
+            ])
+            self.dual_gate_bias = nn.Parameter(bias_init)
+            nn.init.xavier_uniform_(self.dual_gate_proj_new.weight, gain=0.5)
+            nn.init.xavier_uniform_(self.dual_gate_proj_mem.weight, gain=0.5)
+        else:
+            self.dual_gate_proj_new = None
+            self.dual_gate_proj_mem = None
+            self.dual_gate_bias = None
+
         # Parse memory_read_layers from comma-separated string to set of ints
         if isinstance(memory_read_layers, str):
             self.memory_read_layers = set(int(x.strip()) for x in memory_read_layers.split(",") if x.strip())
@@ -445,6 +475,10 @@ class CrossAttentionMemoryModel(nn.Module):
                     num_slots=num_slots,
                     dropout=cross_attn_dropout,
                     write_lr=write_lr,
+                    use_dual_gate=use_dual_gate,
+                    forget_bias_init=forget_bias_init,
+                    input_bias_init=input_bias_init,
+                    dual_gate_tanh_new=dual_gate_tanh_new,
                 )
                 for _ in range(self.num_layers)
             ])
@@ -738,6 +772,29 @@ class CrossAttentionMemoryModel(nn.Module):
 
                 new_slots = output[:, :S, :]
                 hidden_states = output[:, S:, :]
+
+                # H6 (LM2-inspired): dual-gate writeback. Instead of full overwrite,
+                # blend old and new slot values via per-feature input/forget gates.
+                # Both gates are content-conditioned on (new_slots, old_slots).
+                # forget_gate ≈ 1 → preserve slot (e.g. needle slot under fresh chunk).
+                # input_gate  ≈ 1 → admit new content. Independent gates let the
+                # network choose any combination.
+                if self.use_dual_gate and self.dual_gate_proj_new is not None:
+                    old_slots = self.slot_values[write_layer]
+                    if old_slots is not None and old_slots.shape == new_slots.shape:
+                        # gate_logits: [B, S, 2*d]
+                        gate_logits = (
+                            self.dual_gate_proj_new(new_slots)
+                            + self.dual_gate_proj_mem(old_slots)
+                            + self.dual_gate_bias
+                        )
+                        g_in_logit, g_forget_logit = gate_logits.chunk(2, dim=-1)
+                        g_in = torch.sigmoid(g_in_logit)
+                        g_forget = torch.sigmoid(g_forget_logit)
+                        new_content = (
+                            torch.tanh(new_slots) if self.dual_gate_tanh_new else new_slots
+                        )
+                        new_slots = g_in * new_content + g_forget * old_slots
 
                 # Update slot_values at write layer
                 if enable_write_grad:
@@ -1475,6 +1532,18 @@ def parse_args() -> argparse.Namespace:
                    help="Layer index at which to write memory slots (default 16 for 32-layer model)")
     p.add_argument("--memory_read_layers", type=str, default="18,22,26,30",
                    help="Comma-separated layer indices for read-only memory retrieval (default '18,22,26,30')")
+    # H6: LM2-inspired dual-gate writeback
+    p.add_argument("--use_dual_gate", action="store_true", default=False,
+                   help="H6: enable LSTM-style dual-gate (input + forget) writeback in middle_layer_memory mode. "
+                        "Replaces full slot overwrite with content-conditioned per-feature gating. "
+                        "Reference: LM2 paper (arXiv:2502.06049)")
+    p.add_argument("--forget_bias_init", type=float, default=1.0,
+                   help="Initial bias on forget-gate logits (default 1.0 = LSTM 'remember by default')")
+    p.add_argument("--input_bias_init", type=float, default=0.0,
+                   help="Initial bias on input-gate logits (default 0.0 → sigmoid(0)=0.5)")
+    p.add_argument("--dual_gate_tanh_new", action="store_true", default=True,
+                   help="Apply tanh to new slot content before mixing (LM2 default)")
+    p.add_argument("--no_dual_gate_tanh_new", dest="dual_gate_tanh_new", action="store_false")
     # Mode
     p.add_argument("--full_finetune", action="store_true", default=True,
                    help="Full fine-tuning (all params trainable)")
@@ -1601,6 +1670,10 @@ def main() -> None:
         middle_layer_memory=args.middle_layer_memory,
         memory_write_layer=args.memory_write_layer,
         memory_read_layers=args.memory_read_layers,
+        use_dual_gate=args.use_dual_gate,
+        forget_bias_init=args.forget_bias_init,
+        input_bias_init=args.input_bias_init,
+        dual_gate_tanh_new=args.dual_gate_tanh_new,
     ).to(device).to(dtype)
 
     # Warn if freeze_base_steps is set but memory_init is not 'learnable'
@@ -1725,7 +1798,10 @@ def main() -> None:
         for name, param in cm_model.named_parameters():
             if not param.requires_grad:
                 continue
-            is_cross = 'cross_attn_modules' in name
+            # H6 dual-gate params live at top level (dual_gate_proj_*, dual_gate_bias).
+            # They are "new" params just like cross_attn_modules and should use the
+            # smaller cross_lr (otherwise they'd get base_lr ≈ 5e-6 and barely move).
+            is_cross = 'cross_attn_modules' in name or 'dual_gate' in name
             bucket = (cross_decay if is_cross else base_decay) if param.dim() >= 2 and 'norm' not in name.lower() and 'bias' not in name.lower() else (cross_no_decay if is_cross else base_no_decay)
             bucket.append(param)
         cross_lr = args.lr / args.cross_attn_lr_factor  # smaller lr for new cross-attn params

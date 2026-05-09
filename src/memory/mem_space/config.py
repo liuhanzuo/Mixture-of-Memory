@@ -115,6 +115,27 @@ class MemorySpaceConfig:
     # Recommended: swa_window = chunk_size // 8  (e.g. 512 for chunk_size=4096)
     # so the local window covers 12.5% of the chunk.
     # Reference: ops/research_notes/20260427_swa_memory_design.md §Stage1
+    # H6 (2026-05-09, LM2-inspired): LSTM-style dual-gate writeback.
+    # When True, replace the single global β with content-conditioned per-feature
+    # input + forget gates:
+    #     g_in, g_forget = sigmoid_split(W_m·M_prev + W_i·new_repr + bias)
+    #     slots[idx] = g_in * tanh(new_repr) + g_forget * slots[idx]
+    # forget_bias_init=1.0 makes g_forget≈sigmoid(1)≈0.73 at init (LSTM heuristic
+    # "remember by default"). Per-feature gates are slot_dim-dim each → 2 × slot_dim
+    # gate dims per slot (≈ 8M params for slot_dim=4096 with shared projection).
+    # Reference: LM2 paper (arXiv:2502.06049), src/memory.py:259-263 + create_gates.
+    use_dual_gate: bool = False
+    forget_bias_init: float = 1.0
+    input_bias_init: float = 0.0
+    dual_gate_tanh_new: bool = True   # apply tanh to new content (LM2 default)
+
+    # H6b (2026-05-09): hard top-k masking on cross-attn read.
+    # When > 0, each query only attends to the top read_topk slots (others get -inf
+    # before softmax). Forces the model to commit to specific slots rather than
+    # smear soft attention across all 64-128. Useful as ablation arm for H6.
+    # 0 = soft attention over all slots (default).
+    read_topk: int = 0
+
     swa_window: int = 0
 
     def __post_init__(self) -> None:
