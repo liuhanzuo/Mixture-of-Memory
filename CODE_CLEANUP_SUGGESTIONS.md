@@ -32,7 +32,7 @@
 | `src/memory/{l1,l2,l3}/`, `src/memory/scheduler.py`, `src/memory/state.py` | 原 MoM 三级记忆栈。最后 commit 2026-03-22。仅由 `src/agents/` (memory_agent / turn_processor) 和 `src/training/train_l{2,3}.py`、`tests/test_l{1,2,3}.py`、`tests/test_scheduler.py` 引用 — 这些自身也都 60 天以上没改动。 | 当前所有训练脚本（H 系列）只用 `src/memory/mem_space/`，所以这一栈是死代码，但删除会 break tests。建议先 retire 这些 tests 再 retire 模块 |
 | `src/agents/` (memory_agent.py, turn_processor.py, session_runner.py) + `tests/test_agent_smoke.py` + `scripts/run_chat.py`, `scripts/run_eval.py`, `scripts/run_ablation.py` | 同上，配套的 agent 框架 | 同上 |
 | `src/training/train_l{2,3}.py`, `src/training/train_gate.py` + `scripts/train_l{2,3}.py` | 同上 | 同上 |
-| `src/memory/qfilters/` + `scripts/eval_qfilters*.py` + `scripts/_issue110_smoke_calibration.py` | Q-Filters 相关。Q-Filters 仍是 CLAUDE.md "未停的旧线索"。最后 commit 2026-04-30。 | **目前不应删** — CLAUDE.md 明确说 "Q-Filters checklist 不能停" |
+| `src/memory/qfilters/` + `scripts/eval_qfilters*.py` + `scripts/_issue110_smoke_calibration.py` | ~~Q-Filters 相关，最后 commit 2026-04-30。~~ **2026-05-10: 已移入 `legacy/` per 用户授权 ("Q-Filters checklist 不能停"作废)** | RESOLVED |
 | `scripts/run_train_v8_*` 类未在 A 中处理但相关的旧 sweep 脚本 | 已在 A 中处理 | — |
 
 **建议处理流程**：上面这些条目用户确认后写入 `PENDING_TASKS.md` 为 `[PENDING]`、

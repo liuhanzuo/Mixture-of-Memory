@@ -159,12 +159,50 @@ configs/
 
 ## 计算资源
 
-### 本地&远程 B200/L20A 集群
+集群分为三类（2026-05-10 扩展）：
+
+### 1. 原始 B200/L20A 集群（稳定，主训练资源）
 - 4 节点，每节点 8× L20A (183 GiB)
-- IPs: 28.89.17.143(本地) / .144 / 28.89.17.85 / 28.89.19.134
+- IPs: b200-1=28.89.17.143（本地）/ b200-2=28.89.17.144 / b200-3=28.89.17.85 / b200-4=28.89.19.134
 - SSH: `sshpass -f configs/password.txt ssh -o StrictHostKeyChecking=no root@<IP>`
-- 远程工作目录：`/apdcephfs_wzc1/share_303098609/pighzliu_code/Mixture-of-Memory`, 与本地一致
-- 远程模型：`/apdcephfs_wzc1/share_303098609/pighzliu_code/models/`
+- 远程工作目录: `/apdcephfs_wzc1/share_303098609/pighzliu_code/Mixture-of-Memory/`（与本地完全一致，CEPH 共享）
+- 远程模型: `/apdcephfs_wzc1/share_303098609/pighzliu_code/models/`
+
+### 2. Ephemeral B200 集群（2026-05-10 加入，可能随时被关）
+- 4 节点共享 mount，每节点 8× L20A (183 GiB)
+- IPs: b200-5=28.89.18.132 / b200-6=28.89.18.190 / b200-7=28.89.20.82 / b200-8=28.88.184.252
+- SSH: `sshpass -f configs/password_b200_ephemeral.txt ssh -o StrictHostKeyChecking=no -o PreferredAuthentications=password root@<IP>`
+- 远程工作目录: `/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/`（**不同 share**，需 rsync 同步）
+- 远程模型: `/apdcephfs_wzc1/share_304376610/pighzliu_code/models/`
+- ⚠️ **节点可能随时被回收**：任务必须容忍掉线，不要在 ephemeral 上跑 > 30 min 不容易 resume 的任务
+- ⚠️ **不同 CEPH share**：ephemeral 节点看不到原始 share_303098609 的内容；首次使用前需 `rsync` 项目+模型+数据
+- ⚠️ **`/opt/conda/envs/torch-base` 是 per-node overlay FS**：4 节点的 conda env 互相独立，需在每节点单独 `pip install transformers ...`
+- 4 节点共享 mount → rsync 一次到任一节点，4 节点都能看到
+
+### 3. H20 集群（2026-05-10 加入）
+- 4 节点共享 mount，每节点 8× H20 (97.8 GiB)
+- IPs: h20-1=28.48.2.147 / h20-2=28.49.48.243 / h20-3=28.49.38.97 / h20-4=28.58.246.254
+- SSH: `sshpass -f configs/password_h20.txt ssh -o StrictHostKeyChecking=no -o PreferredAuthentications=password root@<IP>`
+- 远程工作目录: `/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/`（**不同 CEPH 集群**，与原始/ephemeral 都隔离）
+- 远程模型: `/apdcephfs_zwfy6/share_304376610/pighzliu_code/models/`
+- ⚠️ **VRAM 是 B200 的一半**：Llama-3-8B + memory + seq_len=4096 + gradient_checkpointing 在 B200 跑 98 GB，**直接搬到 H20 会 OOM**
+- ⚠️ **不同 CEPH 集群**：`/apdcephfs_zwfy6/...`（不是 `/apdcephfs_wzc1/...`），与 ephemeral B200 也是 **不同的物理 share**（虽然 share number 相同，但实际不通），需要单独 rsync
+- ⚠️ **`/opt/conda/envs/torch-base` 是 per-node overlay FS**：4 节点的 conda env 互相独立，需在每节点单独 `pip install transformers ...`
+- H20 训练规则：**完全自由**（用户 2026-05-10 授权）
+  - 跑训练时 OOM 就降 `seq_len` 到 2048 或 `chunks_per_doc` 到 16
+  - 实在装不下可以 2 节点 DDP（用 `--nnodes 2 --rdzv_backend c10d --rdzv_endpoint <h20-N>:29500`）
+  - 跑 eval / baseline / inference（< 30 GB / 8B fp16）完全没问题
+- 推荐用途：baseline 论文（MemoryLLM, Beacon, LongMem）、历史 ckpt BABILong eval、实时 ckpt 监控、slot 容量 sweep
+
+### 集群间分配指南
+
+| 任务类型 | 推荐节点 |
+|---------|----------|
+| 主训练（H 系列 8B + memory + seq=4096） | 原始 b200-1..4，1 节点 1 实验 |
+| 临时训练（H 系列短跑、ablation 1000 step） | ephemeral b200-5..8（接受被关风险） |
+| baseline / eval / inference | H20 优先（VRAM 够用，原始 B200 留给训练） |
+| 长期稳定的 sweep | 原始 B200 |
+| 一晚跑完即可丢的 sweep | ephemeral 或 H20 |
 
 ---
 
@@ -190,8 +228,9 @@ configs/
 
 - 有 4 个 B200 节点 + 1 个本地 8× H20 节点
 - **不同节点可以并行跑不同实验**(red line #5 说的是同一节点不能双开)
-- 当一类工作(例如 memory 架构实现)在推进时,**旧线索(Q-Filters checklist、WikiText rank sweep 等)不能停**
-- 如果架构训练需要 1 个 8-GPU 节点,就让剩下 3 个节点继续跑 Q-Filters / baseline / eval
+- 当一类工作(例如 memory 架构实现)在推进时,**旧线索(WikiText rank sweep 等)不能停**
+- 如果架构训练需要 1 个 8-GPU 节点,就让剩下 3 个节点继续跑 baseline / eval / sweep
+- ~~Q-Filters checklist~~ 已废弃 (2026-05-10 用户授权), `src/memory/qfilters/` 移入 `legacy/`
 - **每个训练开一个后台 subagent 跑,不要阻塞 main**,main 继续调度其他工作
 - subagent 返回的信息 main 必须处理(检查结果、决定下一步、落账)
 

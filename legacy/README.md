@@ -37,6 +37,11 @@ back to their original location with `git mv`.
 - Result: PPL degradation 500-5000%, abandoned (CLAUDE.md)
 - Last commit: 2026-04-22
 
+### `legacy/memory/qfilters/` — Q-Filters (arXiv:2503.02812), abandoned 2026-05-10
+- Last commit 2026-04-30. Closure documented in `ops/research_notes/20260426_s11_retraction.md`.
+- 2026-05-10: user explicitly authorized abandonment ("Q-Filters checklist 不能停" rule deprecated).
+- Associated scripts in `legacy/scripts/`: `eval_qfilters.py`, `eval_qfilters_streaming.py`, `_issue110_smoke_calibration.py`
+
 ### `legacy/scripts/` — training/eval/debug scripts for the abandoned directions
 - `train_sparse_memory.py`, `train_gated_sparse_memory.py`, `eval_sparse_memory_ppl.py`, `eval_nih_extended_sparse.py`, `eval_phase1_gate.py`, `test_sparse_memory_import.py`, `diag_memory_write.py`, `quick_diag.py`
 - `train_mag.py`, `eval_mag.py`, `eval_mac.py`, `train_mac.py`, `benchmark_mac.py`, `demo_compare.py`, `demo_single.py`
@@ -61,7 +66,7 @@ back to their original location with `git mv`.
 ## What was NOT moved (still active in `src/`)
 
 - `src/memory/mag/` — referenced by `src/memory/scheduler.py` (lazy-import) and `src/backbone/swa_model.py`. Removing it would require refactoring the scheduler/agent stack. Marked as **MEDIUM confidence** in `CODE_CLEANUP_SUGGESTIONS.md` — see that file for follow-up.
-- `src/memory/qfilters/` — used by `scripts/eval_qfilters*.py` and `scripts/_issue110_smoke_calibration.py` (last touched 2026-04-30). Left in place.
+- `src/memory/qfilters/` — ~~used by `scripts/eval_qfilters*.py` and `scripts/_issue110_smoke_calibration.py` (last touched 2026-04-30). Left in place.~~ **2026-05-10: moved to `legacy/memory/qfilters/` per user directive — Q-Filters direction officially abandoned**
 - `src/memory/{l1,l2,l3,scheduler.py,state.py}` and `src/agents/`, `src/training/` — three-tier memory stack from the original MoM design. Quiet since 2026-03-22 but tested in `tests/test_l{1,2,3}.py` and `tests/test_scheduler.py`. Marked **MEDIUM confidence** in `CODE_CLEANUP_SUGGESTIONS.md`.
 - `src/memory/slot/`, `src/memory/slot_memory/`, `src/memory/rmt_slot/`, `src/memory/mem_space/` — **active** (cross-attention H-series, slot infrastructure, RMT-Slot).
 
