@@ -1976,18 +1976,34 @@ def main() -> None:
     # Eval dataset: flat chunks from held-out Dolmino shards
     eval_shard_offset = args.shard_offset + args.num_shards
     eval_flat_data = []
+    eval_missing_shards = []
     for si in range(eval_shard_offset, eval_shard_offset + args.eval_shards):
         epath = os.path.join(args.shard_dir, f"shard_{si:04d}.npy")
         if os.path.exists(epath):
             edata = np.fromfile(epath, dtype=np.uint32)
             en = len(edata) // args.seq_len
             eval_flat_data.append(edata[:en * args.seq_len].reshape(en, args.seq_len).astype(np.int32))
+        else:
+            eval_missing_shards.append(epath)
     if eval_flat_data:
         eval_chunks = np.concatenate(eval_flat_data, axis=0)[:2000]
     else:
-        eval_chunks = np.zeros((100, args.seq_len), dtype=np.int32)
+        # Hard fail instead of silently feeding zeros to the model — that produces
+        # garbage PPL (~2620 for Llama-3-8B) and corrupts every eval downstream.
+        # Seen on ephemeral B200 clusters where only train shards were rsynced.
+        raise FileNotFoundError(
+            f"No eval shards found in {args.shard_dir} for indices "
+            f"[{eval_shard_offset}, {eval_shard_offset + args.eval_shards}). "
+            f"Missing files: {eval_missing_shards[:3]}{'...' if len(eval_missing_shards) > 3 else ''}. "
+            f"Either rsync more shards or pass --eval_shards 0 with a custom eval setup."
+        )
+    if eval_missing_shards and is_main:
+        logger.warning(
+            "Some eval shards missing (using %d of %d): %s",
+            len(eval_flat_data), args.eval_shards, eval_missing_shards[:3],
+        )
     if is_main:
-        logger.info("Eval chunks: %d from %d held-out shards", len(eval_chunks), args.eval_shards)
+        logger.info("Eval chunks: %d from %d held-out shards", len(eval_chunks), len(eval_flat_data))
 
     class DolminoFlatEval(Dataset):
         def __init__(self, data):
