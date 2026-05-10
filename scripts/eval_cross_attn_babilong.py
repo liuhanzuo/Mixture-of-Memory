@@ -54,6 +54,7 @@ def _find_babilong() -> str:
     candidates = [
         "/apdcephfs_zwfy6/share_304376610/pighzliu_code/babilong",
         "/apdcephfs_wzc1/share_303098609/pighzliu_code/babilong",
+        "/apdcephfs_wzc1/share_304376610/pighzliu_code/babilong",
     ]
     for c in candidates:
         if os.path.isdir(os.path.join(c, "babilong")):
@@ -190,7 +191,7 @@ def evaluate_single(ckpt_path: str, exp_name: str, step: int, length: str,
     # Map "4k" -> 4096
     LEN_MAP = {"0k": 0, "1k": 1024, "2k": 2048, "4k": 4096, "8k": 8192,
                "16k": 16384, "32k": 32768}
-    length_int = LEN_MAP.get(length, int(length))
+    length_int = LEN_MAP[length] if length in LEN_MAP else int(length)
 
     use_instruction = use_examples = use_post_prompt = True
     use_chat_template = False
