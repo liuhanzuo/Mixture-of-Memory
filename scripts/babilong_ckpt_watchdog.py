@@ -40,6 +40,7 @@ HOST = os.uname().nodename if hasattr(os, "uname") else ""
 # We're meant to run only on h20-3
 H20_PROJECT_ROOT = "/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory"
 B200_PROJECT_ROOT = "/apdcephfs_wzc1/share_303098609/pighzliu_code/Mixture-of-Memory"
+B200_EPHEMERAL_PROJECT_ROOT = "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory"
 LOCAL_CKPT_DIR = os.path.join(H20_PROJECT_ROOT, "watchdog_ckpts")
 STATUS_DIR_LOCAL = os.path.join(H20_PROJECT_ROOT, "status")
 STATE_FILE = os.path.join(H20_PROJECT_ROOT, ".watchdog_state.json")
@@ -58,19 +59,25 @@ PARALLEL_LIMIT = 4  # at most 4 evals running concurrently
 
 PASSWORD_B200 = os.path.join(B200_PROJECT_ROOT, "configs/password.txt")
 PASSWORD_B200_LOCAL_FALLBACK = os.path.join(H20_PROJECT_ROOT, "configs/password.txt")
+PASSWORD_B200_EPHEMERAL = os.path.join(B200_PROJECT_ROOT, "configs/password_b200_ephemeral.txt")
+PASSWORD_B200_EPHEMERAL_LOCAL_FALLBACK = os.path.join(H20_PROJECT_ROOT, "configs/password_b200_ephemeral.txt")
 EVAL_SCRIPT = os.path.join(H20_PROJECT_ROOT, "scripts/eval_cross_attn_babilong.py")
 PYTHON = "/opt/conda/envs/torch-base/bin/python"
 
 # B200 nodes: each H-series exp lives on a different node
 EXPERIMENTS = [
-    {"name": "H9", "node": "28.89.17.143",
+    {"name": "H9", "node": "28.89.17.143", "cluster": 1,
      "output_dir": "outputs/experiment_h9_contrastive"},
-    {"name": "H10", "node": "28.89.17.144",
+    {"name": "H10", "node": "28.89.17.144", "cluster": 1,
      "output_dir": "outputs/experiment_h10_aggressive_contrastive"},
-    {"name": "H11_v2", "node": "28.89.17.85",
+    {"name": "H11_v2", "node": "28.89.17.85", "cluster": 1,
      "output_dir": "outputs/experiment_h11_v2_pure_contrastive"},
-    {"name": "H12", "node": "28.89.19.134",
+    {"name": "H12", "node": "28.89.19.134", "cluster": 1,
      "output_dir": "outputs/experiment_h12_arch_only"},
+    {"name": "H13_isolate", "node": "28.89.17.143", "cluster": 1,
+     "output_dir": "outputs/experiment_h13_isolate_write"},
+    {"name": "H14_isolate_aggr", "node": "28.88.184.252", "cluster": 2,
+     "output_dir": "outputs/experiment_h14_isolate_aggressive_niah"},
 ]
 
 # We treat <name, step> as a unique evaluation unit. State maps to:
@@ -95,10 +102,23 @@ def log(msg: str):
     print(line, flush=True)
 
 
-def password_path() -> str:
+def password_path(cluster: int = 1) -> str:
+    """Return path to password file for the given cluster (1=original B200, 2=ephemeral)."""
+    if cluster == 2:
+        if os.path.isfile(PASSWORD_B200_EPHEMERAL):
+            return PASSWORD_B200_EPHEMERAL
+        return PASSWORD_B200_EPHEMERAL_LOCAL_FALLBACK
+    # default cluster 1
     if os.path.isfile(PASSWORD_B200):
         return PASSWORD_B200
     return PASSWORD_B200_LOCAL_FALLBACK
+
+
+def project_root_for_cluster(cluster: int = 1) -> str:
+    """Return remote project root for the given cluster."""
+    if cluster == 2:
+        return B200_EPHEMERAL_PROJECT_ROOT
+    return B200_PROJECT_ROOT
 
 
 def load_state() -> dict:
@@ -118,9 +138,9 @@ def save_state(state: dict):
     os.replace(tmp, STATE_FILE)
 
 
-def ssh_b200(node: str, cmd: str, timeout: int = 30) -> tuple[int, str, str]:
+def ssh_b200(node: str, cmd: str, timeout: int = 30, cluster: int = 1) -> tuple[int, str, str]:
     """Run a single command on a b200 node via sshpass+ssh."""
-    pw = password_path()
+    pw = password_path(cluster)
     full = [
         "sshpass", "-f", pw,
         "ssh", "-o", "StrictHostKeyChecking=no",
@@ -137,11 +157,11 @@ def ssh_b200(node: str, cmd: str, timeout: int = 30) -> tuple[int, str, str]:
         return 1, "", str(e)
 
 
-def ssh_b200_retry(node: str, cmd: str, timeout: int = 30, retries: int = 3):
+def ssh_b200_retry(node: str, cmd: str, timeout: int = 30, retries: int = 3, cluster: int = 1):
     """SSH with up to `retries` exponential-ish retries."""
     last = (1, "", "no attempt")
     for i in range(retries):
-        rc, out, err = ssh_b200(node, cmd, timeout=timeout)
+        rc, out, err = ssh_b200(node, cmd, timeout=timeout, cluster=cluster)
         if rc == 0:
             return rc, out, err
         last = (rc, out, err)
@@ -154,11 +174,13 @@ def ssh_b200_retry(node: str, cmd: str, timeout: int = 30, retries: int = 3):
 def list_remote_ckpts(exp: dict, state: dict) -> list[int]:
     """Return list of step numbers for which step_N.pt exists on b200 node."""
     name = exp["name"]
+    cluster = exp.get("cluster", 1)
     cooldown_until = state["ssh_lost"].get(name, 0)
     if time.time() < cooldown_until:
         return []
-    cmd = f"ls {os.path.join(B200_PROJECT_ROOT, exp['output_dir'])} 2>/dev/null"
-    rc, out, err = ssh_b200_retry(exp["node"], cmd)
+    proj_root = project_root_for_cluster(cluster)
+    cmd = f"ls {os.path.join(proj_root, exp['output_dir'])} 2>/dev/null"
+    rc, out, err = ssh_b200_retry(exp["node"], cmd, cluster=cluster)
     if rc != 0:
         log(f"ERROR ssh {exp['node']} for {name} failed after retries: {err.strip()[:200]}")
         state["ssh_lost"][name] = time.time() + SSH_LOST_COOLDOWN
@@ -181,7 +203,9 @@ def rsync_ckpt(exp: dict, step: int) -> str | None:
     (detected by the presence of a `.step_N.pt.*` partial file in the dir).
     """
     name = exp["name"]
-    remote = os.path.join(B200_PROJECT_ROOT, exp["output_dir"], f"step_{step}.pt")
+    cluster = exp.get("cluster", 1)
+    proj_root = project_root_for_cluster(cluster)
+    remote = os.path.join(proj_root, exp["output_dir"], f"step_{step}.pt")
     local_dir = os.path.join(LOCAL_CKPT_DIR, name)
     Path(local_dir).mkdir(parents=True, exist_ok=True)
     local = os.path.join(local_dir, f"step_{step}.pt")
@@ -194,13 +218,13 @@ def rsync_ckpt(exp: dict, step: int) -> str | None:
     if partials:
         log(f"rsync {name}/step_{step}: peer rsync in progress ({partials[0]}), waiting")
         return None
-    pw = password_path()
+    pw = password_path(cluster)
     rsh = ("ssh -o StrictHostKeyChecking=no "
            "-o PreferredAuthentications=password -o ConnectTimeout=15")
     cmd = ["sshpass", "-f", pw, "rsync", "-av", "--partial", "--inplace",
            "-e", rsh,
            f"root@{exp['node']}:{remote}", local]
-    log(f"rsync {name}/step_{step} from {exp['node']} ...")
+    log(f"rsync {name}/step_{step} from {exp['node']} (cluster={cluster}) ...")
     t0 = time.time()
     try:
         r = subprocess.run(cmd, capture_output=True, text=True, timeout=7200)
