@@ -175,24 +175,35 @@ def list_remote_ckpts(exp: dict, state: dict) -> list[int]:
 
 
 def rsync_ckpt(exp: dict, step: int) -> str | None:
-    """Rsync remote step_N.pt to local cache. Returns local path or None."""
+    """Rsync remote step_N.pt to local cache. Returns local path or None.
+
+    Skips if a peer rsync (or eval) is already in progress for this ckpt
+    (detected by the presence of a `.step_N.pt.*` partial file in the dir).
+    """
     name = exp["name"]
     remote = os.path.join(B200_PROJECT_ROOT, exp["output_dir"], f"step_{step}.pt")
     local_dir = os.path.join(LOCAL_CKPT_DIR, name)
     Path(local_dir).mkdir(parents=True, exist_ok=True)
     local = os.path.join(local_dir, f"step_{step}.pt")
-    if os.path.isfile(local) and os.path.getsize(local) > 1_000_000_000:
+    # Already fully synced
+    if os.path.isfile(local) and os.path.getsize(local) > 5_000_000_000:
         return local
+    # Detect concurrent rsync (rsync writes to .step_N.pt.<random>)
+    partials = [p for p in os.listdir(local_dir)
+                if p.startswith(f".step_{step}.pt.")]
+    if partials:
+        log(f"rsync {name}/step_{step}: peer rsync in progress ({partials[0]}), waiting")
+        return None
     pw = password_path()
     rsh = ("ssh -o StrictHostKeyChecking=no "
            "-o PreferredAuthentications=password -o ConnectTimeout=15")
-    cmd = ["sshpass", "-f", pw, "rsync", "-avz", "--partial",
+    cmd = ["sshpass", "-f", pw, "rsync", "-avz", "--partial", "--inplace",
            "-e", rsh,
            f"root@{exp['node']}:{remote}", local]
     log(f"rsync {name}/step_{step} from {exp['node']} ...")
     t0 = time.time()
     try:
-        r = subprocess.run(cmd, capture_output=True, text=True, timeout=3600)
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=7200)
         if r.returncode != 0:
             log(f"ERROR rsync {name}/step_{step} rc={r.returncode}: {r.stderr.strip()[:300]}")
             return None
@@ -254,8 +265,14 @@ def launch_eval(exp_name: str, step: int, length: str, ckpt_local: str, gpu: int
     env["CUDA_VISIBLE_DEVICES"] = str(gpu)
     env["PYTHONUNBUFFERED"] = "1"
     env["PYTHONPATH"] = f"{H20_PROJECT_ROOT}:{env.get('PYTHONPATH', '')}"
-    env["HF_DATASETS_OFFLINE"] = "1"  # use local arrow cache
+    # Point HF cache at the synced dir; force offline so evals don't need network.
+    hf_home = os.path.join(H20_PROJECT_ROOT, ".hf_cache")
+    env["HF_HOME"] = hf_home
+    env["HF_HUB_CACHE"] = os.path.join(hf_home, "hub")
+    env["HF_DATASETS_CACHE"] = os.path.join(hf_home, "datasets")
+    env["HF_DATASETS_OFFLINE"] = "1"
     env["TRANSFORMERS_OFFLINE"] = "1"
+    env["HF_HUB_OFFLINE"] = "1"
     log(f"LAUNCH gpu={gpu} {exp_name}/step_{step}/{length} -> {log_file}")
     f = open(log_file, "ab")
     return subprocess.Popen(cmd, stdout=f, stderr=subprocess.STDOUT, env=env)
