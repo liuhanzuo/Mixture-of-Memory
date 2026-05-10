@@ -620,9 +620,10 @@ class CrossAttentionMemoryModel(nn.Module):
                 # Strided fallback
                 # Always preserve existing slots across chunks (critical for cross-chunk retrieval)
                 if self.slot_values[layer_idx] is not None and self.slot_values[layer_idx].shape[0] == B:
-                    # H9 fix: do NOT detach unconditionally — allow gradient to flow
-                    # back through at least the current chunk's slot update.
-                    # The graph from earlier chunks is already freed after their backward().
+                    # Detach from previous chunk's (freed) graph. Gradient still flows
+                    # within the current chunk: write layer creates fresh graph → read
+                    # layers backprop through it → backward() frees it. Repeat.
+                    self.slot_values[layer_idx] = self.slot_values[layer_idx].detach()
                     return
                 # Original strided sampling code (only runs on first chunk)
                 stride = max(1, T // self.num_slots)
@@ -2163,6 +2164,14 @@ def main() -> None:
                 for chunk_i in range(n_chunks):
                     chunk_ids = input_ids[chunk_i].unsqueeze(0).to(device)
                     chunk_labels = labels[chunk_i].unsqueeze(0).to(device)
+
+                    # Truncated BPTT: detach all slot_values from previous chunk's
+                    # graph before running this chunk's forward. Prevents
+                    # "Trying to backward through the graph a second time" when
+                    # H9 read paths preserve gradient within a chunk (no .detach()).
+                    for li in range(len(root_model.slot_values)):
+                        if root_model.slot_values[li] is not None:
+                            root_model.slot_values[li] = root_model.slot_values[li].detach()
 
                     result = ddp_model(input_ids=chunk_ids, labels=chunk_labels)
                     loss = result["loss"]
