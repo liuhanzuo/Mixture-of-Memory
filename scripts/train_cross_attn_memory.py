@@ -407,30 +407,11 @@ class CrossAttentionMemoryModel(nn.Module):
         self.middle_layer_memory = middle_layer_memory
         self.memory_write_layer = memory_write_layer
 
-        # H6 (LM2-inspired): dual-gate writeback flags + projections.
-        # In middle_layer_memory mode, slots are completely overwritten by the
-        # joint-attention output at write_layer. With dual-gate, we instead do:
-        #     g_in, g_forget = sigmoid_split(W_n·new_slots + W_m·old_slots + bias)
-        #     slots[write_layer] = g_in * tanh(new_slots) + g_forget * old_slots
-        # Per-feature gates, content-conditioned, LSTM-style.
-        # Reference: LM2 (arXiv:2502.06049), src/memory.py:259-263.
+        # H6 (LM2-inspired) flags — projections instantiated below after d_model is known.
         self.use_dual_gate = use_dual_gate
         self.dual_gate_tanh_new = dual_gate_tanh_new
-        if use_dual_gate and middle_layer_memory:
-            d = self.d_model
-            self.dual_gate_proj_new = nn.Linear(d, 2 * d, bias=False)
-            self.dual_gate_proj_mem = nn.Linear(d, 2 * d, bias=False)
-            bias_init = torch.cat([
-                torch.full((d,), float(input_bias_init)),
-                torch.full((d,), float(forget_bias_init)),
-            ])
-            self.dual_gate_bias = nn.Parameter(bias_init)
-            nn.init.xavier_uniform_(self.dual_gate_proj_new.weight, gain=0.5)
-            nn.init.xavier_uniform_(self.dual_gate_proj_mem.weight, gain=0.5)
-        else:
-            self.dual_gate_proj_new = None
-            self.dual_gate_proj_mem = None
-            self.dual_gate_bias = None
+        self._dual_gate_input_bias_init = input_bias_init
+        self._dual_gate_forget_bias_init = forget_bias_init
 
         # Parse memory_read_layers from comma-separated string to set of ints
         if isinstance(memory_read_layers, str):
@@ -450,6 +431,29 @@ class CrossAttentionMemoryModel(nn.Module):
         if gradient_checkpointing:
             self.base_model.gradient_checkpointing_enable()
 
+        # H6 (LM2-inspired): dual-gate writeback projections.
+        # In middle_layer_memory mode, slots are completely overwritten by the
+        # joint-attention output at write_layer. With dual-gate, we instead do:
+        #     g_in, g_forget = sigmoid_split(W_n·new_slots + W_m·old_slots + bias)
+        #     slots[write_layer] = g_in * tanh(new_slots) + g_forget * old_slots
+        # Per-feature gates, content-conditioned, LSTM-style.
+        # Reference: LM2 (arXiv:2502.06049), src/memory.py:259-263.
+        if use_dual_gate and middle_layer_memory:
+            d = self.d_model
+            self.dual_gate_proj_new = nn.Linear(d, 2 * d, bias=False)
+            self.dual_gate_proj_mem = nn.Linear(d, 2 * d, bias=False)
+            bias_init = torch.cat([
+                torch.full((d,), float(self._dual_gate_input_bias_init)),
+                torch.full((d,), float(self._dual_gate_forget_bias_init)),
+            ])
+            self.dual_gate_bias = nn.Parameter(bias_init)
+            nn.init.xavier_uniform_(self.dual_gate_proj_new.weight, gain=0.5)
+            nn.init.xavier_uniform_(self.dual_gate_proj_mem.weight, gain=0.5)
+        else:
+            self.dual_gate_proj_new = None
+            self.dual_gate_proj_mem = None
+            self.dual_gate_bias = None
+
         # All params trainable for full finetune
         for p in self.base_model.parameters():
             p.requires_grad = True
@@ -463,27 +467,58 @@ class CrossAttentionMemoryModel(nn.Module):
         self.slot_values: list[torch.Tensor | None] = [None] * self.num_layers
 
         # Per-layer cross-attention memory modules
-        # When slot_forward=True or slot_isolated=True, skip creating CrossAttentionMemoryV2 modules.
-        # slot_forward: slots prepended to hidden_states and forwarded through decoder layers.
-        # slot_isolated: independent read/write paths, no cross-attention module needed.
-        if use_cross_attn_memory and use_memory and not slot_forward and not slot_isolated:
-            self.cross_attn_modules = nn.ModuleList([
-                CrossAttentionMemoryV2(
-                    d_model=self.d_model,
-                    n_heads=self.num_heads,
-                    n_kv_heads=self.num_kv_heads,
-                    num_slots=num_slots,
-                    dropout=cross_attn_dropout,
-                    write_lr=write_lr,
-                    use_dual_gate=use_dual_gate,
-                    forget_bias_init=forget_bias_init,
-                    input_bias_init=input_bias_init,
-                    dual_gate_tanh_new=dual_gate_tanh_new,
-                )
-                for _ in range(self.num_layers)
-            ])
+        # Build CrossAttentionMemoryV2 when:
+        #   (a) original all-layer path: use_cross_attn_memory AND NOT slot_forward AND NOT slot_isolated
+        #   (b) NEW middle-layer path: use_cross_attn_memory AND middle_layer_memory
+        #       -> only build for read_layers (write layer uses dual_gate writeback)
+        build_cross_attn = use_cross_attn_memory and use_memory and (
+            (not slot_forward and not slot_isolated)   # original all-layer path
+            or middle_layer_memory                      # H9+: middle-layer memory read path
+        )
+        if build_cross_attn:
+            if middle_layer_memory:
+                # Only build cross_attn modules for read layers (write layer uses dual_gate)
+                n_read_layers = len(self.memory_read_layers)
+                self.cross_attn_modules = nn.ModuleList([
+                    CrossAttentionMemoryV2(
+                        d_model=self.d_model,
+                        n_heads=self.num_heads,
+                        n_kv_heads=self.num_kv_heads,
+                        num_slots=num_slots,
+                        dropout=cross_attn_dropout,
+                        write_lr=write_lr,
+                        use_dual_gate=False,  # read-only, no gate needed
+                        forget_bias_init=forget_bias_init,
+                        input_bias_init=input_bias_init,
+                        dual_gate_tanh_new=dual_gate_tanh_new,
+                    )
+                    for _ in range(n_read_layers)
+                ])
+                # Map read layer indices to cross_attn_modules indices
+                self._read_layer_to_ca_idx = {
+                    layer_idx: i for i, layer_idx in enumerate(sorted(self.memory_read_layers))
+                }
+            else:
+                # Original all-layer path
+                self.cross_attn_modules = nn.ModuleList([
+                    CrossAttentionMemoryV2(
+                        d_model=self.d_model,
+                        n_heads=self.num_heads,
+                        n_kv_heads=self.num_kv_heads,
+                        num_slots=num_slots,
+                        dropout=cross_attn_dropout,
+                        write_lr=write_lr,
+                        use_dual_gate=use_dual_gate,
+                        forget_bias_init=forget_bias_init,
+                        input_bias_init=input_bias_init,
+                        dual_gate_tanh_new=dual_gate_tanh_new,
+                    )
+                    for _ in range(self.num_layers)
+                ])
+                self._read_layer_to_ca_idx = None
         else:
             self.cross_attn_modules = nn.ModuleList()
+            self._read_layer_to_ca_idx = None
 
         # Slot Isolation modules: write_proj, write_gate_proj, read_proj
         # Per-layer, shared across all layers (single set of params).
@@ -585,7 +620,9 @@ class CrossAttentionMemoryModel(nn.Module):
                 # Strided fallback
                 # Always preserve existing slots across chunks (critical for cross-chunk retrieval)
                 if self.slot_values[layer_idx] is not None and self.slot_values[layer_idx].shape[0] == B:
-                    self.slot_values[layer_idx] = self.slot_values[layer_idx].detach()
+                    # H9 fix: do NOT detach unconditionally — allow gradient to flow
+                    # back through at least the current chunk's slot update.
+                    # The graph from earlier chunks is already freed after their backward().
                     return
                 # Original strided sampling code (only runs on first chunk)
                 stride = max(1, T // self.num_slots)
@@ -803,7 +840,10 @@ class CrossAttentionMemoryModel(nn.Module):
                     self.slot_values[write_layer] = new_slots.detach()
 
             elif layer_idx in read_layers:
-                # --- READ LAYER: use write_layer's slots, joint attention, NO update ---
+                # --- READ LAYER: cross-attention from hidden_states (Q) to slots (K/V) ---
+                # H9 fix: use CrossAttentionMemoryV2 modules instead of joint self-attention.
+                # This gives proper cross-attention with zero-init out_proj (safe at init)
+                # and allows gradient to flow back to slot update via write_layer.
                 slots = self.slot_values[write_layer]  # read from write layer's slots
                 if slots is None:
                     # If read layer is before write layer (shouldn't happen with defaults),
@@ -818,22 +858,27 @@ class CrossAttentionMemoryModel(nn.Module):
                     )
                     hidden_states = layer_out[0] if isinstance(layer_out, tuple) else layer_out
                 else:
-                    # Detach slots for read-only (no gradient back to slot update)
-                    read_slots = slots.detach()
-                    extended = torch.cat([read_slots, hidden_states], dim=1)  # [B, S+T, d_model]
-
+                    # Step 1: Vanilla self-attention for this layer
                     layer_out = layer(
-                        extended,
-                        attention_mask=ext_attn_mask,
+                        hidden_states,
+                        attention_mask=None,
                         position_ids=None,
                         past_key_value=None,
                         use_cache=False,
-                        position_embeddings=ext_pos_emb,
+                        position_embeddings=position_embeddings,
                     )
-                    output = layer_out[0] if isinstance(layer_out, tuple) else layer_out
+                    hidden_states = layer_out[0] if isinstance(layer_out, tuple) else layer_out
 
-                    # Discard slot outputs (read-only), keep only hidden_states
-                    hidden_states = output[:, S:, :]
+                    # Step 2: Cross-attention read (Q=hidden_states, K=V=slots)
+                    # NO .detach() — gradient flows back through slots to write_layer
+                    ca_idx = self._read_layer_to_ca_idx[layer_idx]
+                    cross_attn = self.cross_attn_modules[ca_idx]
+                    memory_output, _attn_weights = cross_attn.read(
+                        hidden_states, slots, slots,  # slots serve as both K and V
+                    )
+
+                    # Step 3: Residual connection with scaled cross-attention output
+                    hidden_states = hidden_states + self.residual_scale * memory_output
 
             else:
                 # --- VANILLA LAYER: no memory interaction ---
@@ -1680,11 +1725,10 @@ def main() -> None:
     if args.slot_forward and args.freeze_base_steps > 0 and args.memory_init in ('mlp', 'strided'):
         if is_main:
             logger.warning(
-                "[WARN] --freeze_base_steps=%d ignored when --memory_init=%s (only applies to 'learnable' init)",
+                "[INFO] --freeze_base_steps=%d with --memory_init=%s: freezing base_model, training only cross_attn + dual_gate params",
                 args.freeze_base_steps, args.memory_init
             )
-        # Effectively disable freeze_base_steps for non-learnable init
-        args.freeze_base_steps = 0
+        # For non-learnable init, freeze base_model and train only memory components
 
     trainable = sum(p.numel() for p in cm_model.parameters() if p.requires_grad)
     total = sum(p.numel() for p in cm_model.parameters())
@@ -1709,14 +1753,20 @@ def main() -> None:
             )
             break  # only log first layer
 
-    # Freeze base model for Phase 1 (slot embedding warmup)
+    # Freeze base model for Phase 1
     if args.freeze_base_steps > 0 and args.slot_forward:
+        # Freeze base_model entirely; train only cross_attn / dual_gate / slot_embeddings (if exist)
         for name, param in cm_model.named_parameters():
-            if 'slot_embeddings' not in name:
-                param.requires_grad = False
+            is_memory_module = (
+                'cross_attn_modules' in name
+                or 'dual_gate' in name
+                or 'slot_embeddings' in name
+                or name.startswith('memory_bank')
+            )
+            param.requires_grad = bool(is_memory_module)
         trainable = sum(p.numel() for p in cm_model.parameters() if p.requires_grad)
         if is_main:
-            logger.info("Phase 1: Base model FROZEN, only training slot_embeddings (%d params)", trainable)
+            logger.info("Phase 1: Base model FROZEN, training only memory module params (%d trainable)", trainable)
 
     ddp_model = DDP(cm_model, device_ids=[local_rank], find_unused_parameters=True)
     root_model = ddp_model.module
@@ -1769,27 +1819,49 @@ def main() -> None:
             )
     elif args.slot_forward:
         if args.freeze_base_steps > 0:
-            # Phase 1: only train slot_embeddings with high lr
-            slot_params = list(cm_model.slot_embeddings.parameters())
-            slot_lr = args.lr * 100
+            # Phase 1: train all requires_grad params (slot_embeddings if any +
+            # cross_attn_modules + dual_gate when memory_init in mlp/strided).
+            phase1_params = [p for p in cm_model.parameters() if p.requires_grad]
+            phase1_lr = args.lr * 100
             optimizer = torch.optim.AdamW([
-                {"params": slot_params, "weight_decay": 0.0, "lr": slot_lr},
-            ], lr=slot_lr, betas=(0.9, 0.95))
+                {"params": phase1_params, "weight_decay": 0.0, "lr": phase1_lr},
+            ], lr=phase1_lr, betas=(0.9, 0.95))
             if is_main:
-                logger.info("Optimizer (Phase 1): only slot_embeddings, lr=%.2e", slot_lr)
+                logger.info("Optimizer (Phase 1, frozen base): %d trainable params, lr=%.2e",
+                            sum(p.numel() for p in phase1_params), phase1_lr)
         else:
-            # slot_forward: no cross_attn params, only base model
-            decay = [p for n, p in cm_model.named_parameters()
-                     if p.requires_grad and p.dim() >= 2 and 'norm' not in n.lower() and 'bias' not in n.lower()]
-            no_decay = [p for n, p in cm_model.named_parameters()
-                        if p.requires_grad and (p.dim() < 2 or 'norm' in n.lower() or 'bias' in n.lower())]
-            optimizer = torch.optim.AdamW([
-                {"params": decay, "weight_decay": args.weight_decay, "lr": args.lr},
-                {"params": no_decay, "weight_decay": 0.0, "lr": args.lr},
-            ], lr=args.lr, betas=(0.9, 0.95))
+            # slot_forward: separate base params from cross_attn/dual_gate params
+            # H9 fix: cross_attn_modules now exist in middle_layer_memory mode,
+            # give them a separate (potentially different) lr via cross_attn_lr_factor.
+            base_decay = []
+            base_no_decay = []
+            cross_decay = []
+            cross_no_decay = []
+            for name, param in cm_model.named_parameters():
+                if not param.requires_grad:
+                    continue
+                is_cross = 'cross_attn_modules' in name or 'dual_gate' in name
+                is_no_decay = param.dim() < 2 or 'norm' in name.lower() or 'bias' in name.lower()
+                if is_cross:
+                    (cross_no_decay if is_no_decay else cross_decay).append(param)
+                else:
+                    (base_no_decay if is_no_decay else base_decay).append(param)
+            cross_lr = args.lr * args.cross_attn_lr_factor  # higher lr for new cross-attn params
+            groups = [
+                {"params": base_decay, "weight_decay": args.weight_decay, "lr": args.lr},
+                {"params": base_no_decay, "weight_decay": 0.0, "lr": args.lr},
+            ]
+            if cross_decay or cross_no_decay:
+                groups.append({"params": cross_decay, "weight_decay": args.weight_decay, "lr": cross_lr})
+                groups.append({"params": cross_no_decay, "weight_decay": 0.0, "lr": cross_lr})
+            optimizer = torch.optim.AdamW(groups, lr=args.lr, betas=(0.9, 0.95))
             if is_main:
-                logger.info("Optimizer (slot_forward): AdamW, lr=%.2e, decay=%d, no_decay=%d",
-                            args.lr, sum(p.numel() for p in decay), sum(p.numel() for p in no_decay))
+                n_base = sum(p.numel() for p in base_decay) + sum(p.numel() for p in base_no_decay)
+                n_cross = sum(p.numel() for p in cross_decay) + sum(p.numel() for p in cross_no_decay)
+                logger.info(
+                    "Optimizer (slot_forward): AdamW, base_lr=%.2e, cross_lr=%.2e (%gx), base=%d, cross=%d",
+                    args.lr, cross_lr, args.cross_attn_lr_factor, n_base, n_cross,
+                )
     else:
         base_decay = []
         base_no_decay = []

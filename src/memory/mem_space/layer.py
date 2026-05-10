@@ -329,6 +329,30 @@ class MemorySpaceLayer(nn.Module):
             torch.tensor(float(config.writeback_gate_init))
         )
 
+        # H6 (LM2-inspired): dual-gate projections (input + forget).
+        # Each projection maps slot_dim → 2 * slot_dim, the two halves are
+        # interpreted as (g_in_logit, g_forget_logit) before sigmoid.
+        # Two separate projections (one for new_repr, one for current slot)
+        # match LM2's design: gates condition on BOTH new content and prior
+        # memory state. forget_bias is added to the second half so g_forget
+        # starts ≈ sigmoid(forget_bias_init).
+        if config.use_dual_gate:
+            self.gate_proj_new = nn.Linear(self.slot_dim, 2 * self.slot_dim, bias=False)
+            self.gate_proj_mem = nn.Linear(self.slot_dim, 2 * self.slot_dim, bias=False)
+            # Bias vector: zeros for input half, forget_bias_init for forget half
+            bias_init = torch.cat([
+                torch.full((self.slot_dim,), float(config.input_bias_init)),
+                torch.full((self.slot_dim,), float(config.forget_bias_init)),
+            ])
+            self.gate_bias = nn.Parameter(bias_init)
+            # Init projections small (xavier with fan-in) so initial gates ≈ sigmoid(bias)
+            nn.init.xavier_uniform_(self.gate_proj_new.weight, gain=0.5)
+            nn.init.xavier_uniform_(self.gate_proj_mem.weight, gain=0.5)
+        else:
+            self.gate_proj_new = None
+            self.gate_proj_mem = None
+            self.gate_bias = None
+
         # Step counter (incremented by the outer training loop).
         self.step_counter: int = 0
 
@@ -656,7 +680,36 @@ class MemorySpaceLayer(nn.Module):
         beta_t = self._current_beta()
         if cfg.enable_writeback:
             O_mem_slot = self.hidden_to_slot(O_mem_hidden)      # [B, k, slot_dim]
-            self.memory_bank.write(idx, O_mem_slot, beta_t)
+            if cfg.use_dual_gate and self.gate_proj_new is not None:
+                # H6 dual-gate (LM2-inspired). Both gates are content-conditioned
+                # on (new_repr, current_slot_value).
+                idx_exp = idx.unsqueeze(-1).expand(-1, -1, self.slot_dim)
+                # Read current slot values at selected positions for the gate
+                # projection input. Detach NOT applied — gates need grad through
+                # current memory to learn "this slot is stale, replace it".
+                if self.memory_bank.slots is None:
+                    # Should not happen post-init, but fall back to zeros if so.
+                    M_prev = torch.zeros_like(O_mem_slot)
+                else:
+                    M_prev = self.memory_bank.slots.gather(1, idx_exp)  # [B, k, d]
+                gate_logits = (
+                    self.gate_proj_new(O_mem_slot)
+                    + self.gate_proj_mem(M_prev)
+                    + self.gate_bias  # broadcast [2d] across [B, k, 2d]
+                )                                                     # [B, k, 2d]
+                g_in_logit, g_forget_logit = gate_logits.chunk(2, dim=-1)
+                g_in = torch.sigmoid(g_in_logit)                       # [B, k, d]
+                g_forget = torch.sigmoid(g_forget_logit)               # [B, k, d]
+                self.memory_bank.write(
+                    idx,
+                    O_mem_slot,
+                    gate=g_in,
+                    forget_gate=g_forget,
+                    tanh_new=cfg.dual_gate_tanh_new,
+                )
+            else:
+                # Legacy single-gate path (H/H5/H3).
+                self.memory_bank.write(idx, O_mem_slot, beta_t)
 
         # ---- WRITEBACK_DIAG (diagnostic log, no-op on computation) ----
         # Emit every 200 forward calls, rank-0 / layer-0 only.
