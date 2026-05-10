@@ -257,9 +257,7 @@ def forward_niah_sample(
     for chunk_i, chunk_ids in enumerate(chunks[:-1]):
         chunk_tensor = chunk_ids.unsqueeze(0).to(device)
 
-        if is_slot_forward:
-            model.forward_chunk(chunk_tensor, enable_write_grad=True)
-        elif use_contrastive and chunk_i == needle_chunk_idx:
+        if use_contrastive and chunk_i == needle_chunk_idx:
             # Capture write attention from needle chunk.
             # In the delta-rule scheme, the same cross-attention weights are used
             # for both read and write. So "which slot received the needle's write"
@@ -278,7 +276,7 @@ def forward_niah_sample(
     last_ids = chunks[-1].unsqueeze(0).to(device)
     last_labels = label_chunks[-1].unsqueeze(0).to(device)
 
-    if use_contrastive and not is_slot_forward:
+    if use_contrastive:
         result = model.forward_chunk(
             last_ids, enable_write_grad=True,
             capture_read_attn=True,
@@ -299,33 +297,32 @@ def forward_niah_sample(
 
     # Compute contrastive retrieval loss
     contrastive_loss_val = 0.0
-    if not is_slot_forward:
-        if (use_contrastive
-                and needle_write_attn_per_layer is not None
-                and query_read_logits_per_layer is not None):
-            # Aggregate across layers: for each layer, find the target slot from
-            # needle write attention (softmax), then compute InfoNCE with query
-            # read logits (pre-softmax).
-            contrastive_losses = []
-            for layer_idx in needle_write_attn_per_layer:
-                needle_attn = needle_write_attn_per_layer[layer_idx]  # [B, n_heads, T, N]
-                query_logits = query_read_logits_per_layer.get(layer_idx)
-                if query_logits is None:
-                    continue
+    if (use_contrastive
+            and needle_write_attn_per_layer is not None
+            and query_read_logits_per_layer is not None):
+        # Aggregate across layers: for each layer, find the target slot from
+        # needle write attention (softmax), then compute InfoNCE with query
+        # read logits (pre-softmax).
+        contrastive_losses = []
+        for layer_idx in needle_write_attn_per_layer:
+            needle_attn = needle_write_attn_per_layer[layer_idx]  # [B, n_heads, T, N]
+            query_logits = query_read_logits_per_layer.get(layer_idx)
+            if query_logits is None:
+                continue
 
-                # Target slot: slot with highest cumulative write attention from needle chunk.
-                # Average across heads and time -> [B, num_slots]
-                avg_write_attn = needle_attn.mean(dim=(1, 2))  # [B, num_slots]
-                target_slot_idx = avg_write_attn.argmax(dim=-1).detach()  # [B], no gradient
+            # Target slot: slot with highest cumulative write attention from needle chunk.
+            # Average across heads and time -> [B, num_slots]
+            avg_write_attn = needle_attn.mean(dim=(1, 2))  # [B, num_slots]
+            target_slot_idx = avg_write_attn.argmax(dim=-1).detach()  # [B], no gradient
 
-                # InfoNCE loss using pre-softmax logits (NOT softmax output)
-                cl = contrastive_retrieval_loss(query_logits, target_slot_idx, contrastive_temperature)
-                contrastive_losses.append(cl)
+            # InfoNCE loss using pre-softmax logits (NOT softmax output)
+            cl = contrastive_retrieval_loss(query_logits, target_slot_idx, contrastive_temperature)
+            contrastive_losses.append(cl)
 
-            if contrastive_losses:
-                contrastive_loss_val = torch.stack(contrastive_losses).mean().item()
-                contrastive_loss_tensor = torch.stack(contrastive_losses).mean()
-                loss = loss + contrastive_weight * contrastive_loss_tensor
+        if contrastive_losses:
+            contrastive_loss_val = torch.stack(contrastive_losses).mean().item()
+            contrastive_loss_tensor = torch.stack(contrastive_losses).mean()
+            loss = loss + contrastive_weight * contrastive_loss_tensor
 
     return loss * lambda_retrieve, logits, last_labels, contrastive_loss_val
 
@@ -389,6 +386,7 @@ class CrossAttentionMemoryModel(nn.Module):
         forget_bias_init: float = 1.0,
         input_bias_init: float = 0.0,
         dual_gate_tanh_new: bool = True,
+        isolate_write_layer: bool = False,
     ) -> None:
         super().__init__()
         self.num_slots = num_slots
@@ -406,6 +404,7 @@ class CrossAttentionMemoryModel(nn.Module):
         self.cross_chunk_propagation = cross_chunk_propagation
         self.middle_layer_memory = middle_layer_memory
         self.memory_write_layer = memory_write_layer
+        self.isolate_write_layer = isolate_write_layer
 
         # H6 (LM2-inspired) flags — projections instantiated below after d_model is known.
         self.use_dual_gate = use_dual_gate
@@ -760,7 +759,7 @@ class CrossAttentionMemoryModel(nn.Module):
 
         return result
 
-    def _forward_middle_layer_memory(self, input_ids, labels=None, enable_write_grad=True):
+    def _forward_middle_layer_memory(self, input_ids, labels=None, enable_write_grad=True, capture_read_attn=False):
         """MemLong-style middle-layer memory: write at one layer, read at select upper layers.
 
         Unlike _forward_slot_forward which runs slots through ALL 32 layers, this method:
@@ -874,9 +873,20 @@ class CrossAttentionMemoryModel(nn.Module):
                     # NO .detach() — gradient flows back through slots to write_layer
                     ca_idx = self._read_layer_to_ca_idx[layer_idx]
                     cross_attn = self.cross_attn_modules[ca_idx]
-                    memory_output, _attn_weights = cross_attn.read(
+                    read_result = cross_attn.read(
                         hidden_states, slots, slots,  # slots serve as both K and V
+                        return_logits=capture_read_attn,
                     )
+                    if capture_read_attn:
+                        memory_output, attn_weights, attn_logits = read_result
+                        if not hasattr(self, '_captured_read_logits') or self._captured_read_logits is None:
+                            self._captured_read_logits = {}
+                        if not hasattr(self, '_captured_read_attn') or self._captured_read_attn is None:
+                            self._captured_read_attn = {}
+                        self._captured_read_logits[layer_idx] = attn_logits.detach()
+                        self._captured_read_attn[layer_idx] = attn_weights.detach()
+                    else:
+                        memory_output, _attn_weights = read_result
 
                     # Step 3: Residual connection with scaled cross-attention output
                     hidden_states = hidden_states + self.residual_scale * memory_output
@@ -899,6 +909,13 @@ class CrossAttentionMemoryModel(nn.Module):
         logits = lm_head(hidden_states)
 
         result = {"logits": logits}
+        # Include captured read attention weights and logits if requested
+        if capture_read_attn and hasattr(self, '_captured_read_attn') and self._captured_read_attn:
+            result["read_attn_weights"] = self._captured_read_attn
+            self._captured_read_attn = None  # clear to avoid memory leaks
+        if capture_read_attn and hasattr(self, '_captured_read_logits') and self._captured_read_logits:
+            result["read_attn_logits"] = self._captured_read_logits
+            self._captured_read_logits = None  # clear to avoid memory leaks
         if labels is not None:
             shift_logits = logits[..., :-1, :].contiguous()
             shift_labels = labels[..., 1:].contiguous()
@@ -1032,7 +1049,7 @@ class CrossAttentionMemoryModel(nn.Module):
         if self.slot_forward:
             # Slot-forward always needs write gradient for slot_embeddings training
             if self.middle_layer_memory:
-                return self._forward_middle_layer_memory(input_ids, labels, enable_write_grad=True)
+                return self._forward_middle_layer_memory(input_ids, labels, enable_write_grad=True, capture_read_attn=capture_read_attn)
             return self._forward_slot_forward(input_ids, labels, enable_write_grad=True)
 
         if self.slot_isolated:
@@ -1578,6 +1595,9 @@ def parse_args() -> argparse.Namespace:
                    help="Layer index at which to write memory slots (default 16 for 32-layer model)")
     p.add_argument("--memory_read_layers", type=str, default="18,22,26,30",
                    help="Comma-separated layer indices for read-only memory retrieval (default '18,22,26,30')")
+    p.add_argument("--isolate_write_layer", action="store_true", default=False,
+                   help="Isolate write layer: run vanilla self-attn for hidden_states, then joint attn only to update slots. "
+                        "Prevents write-layer joint attention from polluting hidden_states.")
     # H6: LM2-inspired dual-gate writeback
     p.add_argument("--use_dual_gate", action="store_true", default=False,
                    help="H6: enable LSTM-style dual-gate (input + forget) writeback in middle_layer_memory mode. "
