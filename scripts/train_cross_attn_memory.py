@@ -795,20 +795,50 @@ class CrossAttentionMemoryModel(nn.Module):
                 self._init_slots(write_layer, hidden_states)
                 slots = self.slot_values[write_layer]  # [B, S, d_model]
 
-                extended = torch.cat([slots, hidden_states], dim=1)  # [B, S+T, d_model]
+                if self.isolate_write_layer:
+                    # Isolated mode: vanilla self-attn for hidden_states, joint attn only to update slots.
+                    # Step 1: vanilla self-attention on hidden_states only (no slot pollution)
+                    vanilla_out = layer(
+                        hidden_states,
+                        attention_mask=None,
+                        position_ids=None,
+                        past_key_value=None,
+                        use_cache=False,
+                        position_embeddings=position_embeddings,
+                    )
+                    clean_hidden_states = vanilla_out[0] if isinstance(vanilla_out, tuple) else vanilla_out
 
-                layer_out = layer(
-                    extended,
-                    attention_mask=ext_attn_mask,
-                    position_ids=None,
-                    past_key_value=None,
-                    use_cache=False,
-                    position_embeddings=ext_pos_emb,
-                )
-                output = layer_out[0] if isinstance(layer_out, tuple) else layer_out
+                    # Step 2: joint attention on [slots, clean_hidden_states] to get new_slots
+                    extended = torch.cat([slots, clean_hidden_states], dim=1)  # [B, S+T, d_model]
+                    joint_out = layer(
+                        extended,
+                        attention_mask=ext_attn_mask,
+                        position_ids=None,
+                        past_key_value=None,
+                        use_cache=False,
+                        position_embeddings=ext_pos_emb,
+                    )
+                    joint_output = joint_out[0] if isinstance(joint_out, tuple) else joint_out
+                    new_slots = joint_output[:, :S, :]
 
-                new_slots = output[:, :S, :]
-                hidden_states = output[:, S:, :]
+                    # hidden_states uses clean vanilla output (no joint-attention pollution)
+                    hidden_states = clean_hidden_states
+                else:
+                    # Original mode: joint attention on [slots, hidden_states]
+                    extended = torch.cat([slots, hidden_states], dim=1)  # [B, S+T, d_model]
+
+                    layer_out = layer(
+                        extended,
+                        attention_mask=ext_attn_mask,
+                        position_ids=None,
+                        past_key_value=None,
+                        use_cache=False,
+                        position_embeddings=ext_pos_emb,
+                    )
+                    output = layer_out[0] if isinstance(layer_out, tuple) else layer_out
+
+                    new_slots = output[:, :S, :]
+                    hidden_states = output[:, S:, :]
 
                 # H6 (LM2-inspired): dual-gate writeback. Instead of full overwrite,
                 # blend old and new slot values via per-feature input/forget gates.
@@ -1740,6 +1770,7 @@ def main() -> None:
         forget_bias_init=args.forget_bias_init,
         input_bias_init=args.input_bias_init,
         dual_gate_tanh_new=args.dual_gate_tanh_new,
+        isolate_write_layer=args.isolate_write_layer,
     ).to(device).to(dtype)
 
     # Warn if freeze_base_steps is set but memory_init is not 'learnable'
