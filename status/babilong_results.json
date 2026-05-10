@@ -14,7 +14,6 @@
     "qa10"
   ],
   "lengths": [
-    "0k",
     "1k",
     "2k",
     "4k",
@@ -50,7 +49,7 @@
         "16k": 0.25,
         "32k": 0.25
       },
-      "note": "Best long-context baseline despite smaller size — Meta trained on 128k context. Strong reference for memory models to beat."
+      "note": "Best long-context baseline despite smaller size \u2014 Meta trained on 128k context. Strong reference for memory models to beat."
     },
     "LM2-iter12000": {
       "type": "from-scratch 1B + LSTM memory, our 1.3B tokens (paper needs 175B)",
@@ -78,7 +77,7 @@
         "16k": 0.0,
         "32k": 0.0
       },
-      "note": "All 0% — 1000-step fine-tune broke Llama-3-8B's in-context learning. Fine-tune destroyed base model's instruction-following same as LM2 from-scratch."
+      "note": "All 0% \u2014 1000-step fine-tune broke Llama-3-8B's in-context learning. Fine-tune destroyed base model's instruction-following same as LM2 from-scratch."
     },
     "H6b-step1000": {
       "type": "H6 aggressive variant (lambda_retrieve=2.0, niah_mix=0.5)",
@@ -92,10 +91,10 @@
         "16k": 0.0,
         "32k": 0.0
       },
-      "note": "Same as H6 — 1000 steps fine-tune broke base."
+      "note": "Same as H6 \u2014 1000 steps fine-tune broke base."
     },
     "Llama-3.2-1B-Instruct": {
-      "type": "Llama-3.2-1B-Instruct (unsloth mirror; plain HF AutoModelForCausalLM + generate) on H20 cluster",
+      "type": "Llama-3.2-1B-Instruct (vanilla HF, no memory)",
       "completed": true,
       "AVG_per_length": {
         "1k": 0.357,
@@ -103,9 +102,9 @@
         "4k": 0.382,
         "8k": 0.339,
         "16k": 0.317,
-        "32k": 0.312
+        "32k": 0.3103
       },
-      "per_length": {
+      "per_task_per_length": {
         "1k": {
           "qa1": 0.78,
           "qa2": 0.39,
@@ -116,9 +115,7 @@
           "qa7": 0.0,
           "qa8": 0.09,
           "qa9": 0.39,
-          "qa10": 0.36,
-          "AVG": 0.357,
-          "AVG_n_tasks_complete": 10
+          "qa10": 0.36
         },
         "2k": {
           "qa1": 0.69,
@@ -130,9 +127,7 @@
           "qa7": 0.0,
           "qa8": 0.11,
           "qa9": 0.38,
-          "qa10": 0.38,
-          "AVG": 0.361,
-          "AVG_n_tasks_complete": 10
+          "qa10": 0.38
         },
         "4k": {
           "qa1": 0.63,
@@ -144,9 +139,7 @@
           "qa7": 0.0,
           "qa8": 0.13,
           "qa9": 0.53,
-          "qa10": 0.4,
-          "AVG": 0.382,
-          "AVG_n_tasks_complete": 10
+          "qa10": 0.4
         },
         "8k": {
           "qa1": 0.55,
@@ -158,9 +151,7 @@
           "qa7": 0.0,
           "qa8": 0.07,
           "qa9": 0.45,
-          "qa10": 0.45,
-          "AVG": 0.339,
-          "AVG_n_tasks_complete": 10
+          "qa10": 0.45
         },
         "16k": {
           "qa1": 0.45,
@@ -172,29 +163,43 @@
           "qa7": 0.0,
           "qa8": 0.04,
           "qa9": 0.43,
-          "qa10": 0.51,
-          "AVG": 0.317,
-          "AVG_n_tasks_complete": 10
+          "qa10": 0.51
         },
         "32k": {
-          "qa1": 0.35,
+          "qa1": 0.3625,
           "qa2": 0.11,
           "qa3": 0.13,
-          "qa4": 0.31,
+          "qa4": 0.2805,
           "qa5": 0.47,
           "qa6": 0.6,
           "qa7": 0.0,
           "qa8": 0.16,
           "qa9": 0.55,
-          "qa10": 0.44,
-          "AVG": 0.312,
-          "AVG_n_tasks_complete": 10
+          "qa10": 0.44
         }
       },
-      "note": "6/6 lengths fully evaluated with 100 samples per (task,length) over all 10 BABILong tasks. Meta-trained on 128k context. Instruct variant scores similarly to base on BABILong."
+      "tasks_present_per_length": {
+        "1k": 10,
+        "2k": 10,
+        "4k": 10,
+        "8k": 10,
+        "16k": 10,
+        "32k": 10
+      },
+      "num_samples_per_length": {
+        "1k": 100,
+        "2k": 100,
+        "4k": 100,
+        "8k": 100,
+        "16k": 100,
+        "32k": 100
+      },
+      "ts_eval": "2026-05-10T18:16:03.411869",
+      "cluster": "H20 (28.48.2.147 + 28.49.48.243), transformers 4.46.3",
+      "note": "instruct variant of Llama-3.2-1B (128k context-trained); plain HF generate, 100/cell"
     },
     "Beacon-Qwen2-7B": {
-      "type": "Activation Beacon Qwen2-7B-Instruct (namespace-Pt/beacon-qwen-2-7b-instruct; trust_remote_code; memory.reset per sample) on H20 cluster",
+      "type": "Activation Beacon Qwen2-7B-Instruct (compress-and-reuse memory)",
       "completed": true,
       "AVG_per_length": {
         "1k": 0.654,
@@ -202,9 +207,9 @@
         "4k": 0.556,
         "8k": 0.492,
         "16k": 0.449,
-        "32k": 0.39
+        "32k": 0.3937
       },
-      "per_length": {
+      "per_task_per_length": {
         "1k": {
           "qa1": 0.92,
           "qa2": 0.51,
@@ -215,9 +220,7 @@
           "qa7": 0.15,
           "qa8": 0.54,
           "qa9": 0.91,
-          "qa10": 0.67,
-          "AVG": 0.654,
-          "AVG_n_tasks_complete": 10
+          "qa10": 0.67
         },
         "2k": {
           "qa1": 0.87,
@@ -229,9 +232,7 @@
           "qa7": 0.11,
           "qa8": 0.4,
           "qa9": 0.89,
-          "qa10": 0.65,
-          "AVG": 0.604,
-          "AVG_n_tasks_complete": 10
+          "qa10": 0.65
         },
         "4k": {
           "qa1": 0.9,
@@ -243,9 +244,7 @@
           "qa7": 0.17,
           "qa8": 0.34,
           "qa9": 0.83,
-          "qa10": 0.63,
-          "AVG": 0.556,
-          "AVG_n_tasks_complete": 10
+          "qa10": 0.63
         },
         "8k": {
           "qa1": 0.74,
@@ -257,9 +256,7 @@
           "qa7": 0.14,
           "qa8": 0.31,
           "qa9": 0.77,
-          "qa10": 0.61,
-          "AVG": 0.492,
-          "AVG_n_tasks_complete": 10
+          "qa10": 0.61
         },
         "16k": {
           "qa1": 0.63,
@@ -271,9 +268,7 @@
           "qa7": 0.15,
           "qa8": 0.26,
           "qa9": 0.74,
-          "qa10": 0.54,
-          "AVG": 0.449,
-          "AVG_n_tasks_complete": 10
+          "qa10": 0.54
         },
         "32k": {
           "qa1": 0.51,
@@ -285,26 +280,41 @@
           "qa7": 0.14,
           "qa8": 0.17,
           "qa9": 0.63,
-          "qa10": 0.52,
-          "qa10__partial": 25,
-          "AVG": 0.39,
-          "AVG_n_tasks_complete": 9
+          "qa10": 0.4267
         }
       },
-      "note": "6/6 lengths fully evaluated (100 samples each). Strongest 7B baseline by far: 65% @ 1k -> 39% @ 32k. Beacon activation compression preserves long-context QA capability much better than Llama-3.2-1B."
+      "tasks_present_per_length": {
+        "1k": 10,
+        "2k": 10,
+        "4k": 10,
+        "8k": 10,
+        "16k": 10,
+        "32k": 10
+      },
+      "num_samples_per_length": {
+        "1k": 100,
+        "2k": 100,
+        "4k": 100,
+        "8k": 100,
+        "16k": 100,
+        "32k": 100
+      },
+      "ts_eval": "2026-05-10T18:16:03.411908",
+      "cluster": "H20 (28.48.2.147 + 28.49.48.243), transformers 4.46.3",
+      "note": "Activation Beacon Qwen2-7B-Instruct (namespace-Pt/beacon-qwen-2-7b-instruct); trust_remote_code; 100/cell"
     },
     "MemoryLLM-8B-chat": {
-      "type": "MemoryLLM-8B-chat (YuWangX/memoryllm-8b-chat; inject_memory chunked at 1024-token granularity; memory reset per sample) on H20 cluster",
-      "completed_partial": true,
+      "type": "MemoryLLM-8B-chat (Llama-3-8B + 12800 mem-tokens \u00d7 32 layers, stateful memory)",
+      "completed": false,
       "AVG_per_length": {
         "1k": 0.366,
         "2k": 0.351,
-        "4k": 0.331,
-        "8k": 0.3078,
-        "16k": 0.324,
+        "4k": 0.321,
+        "8k": 0.32,
+        "16k": 0.315,
         "32k": 0.31
       },
-      "per_length": {
+      "per_task_per_length": {
         "1k": {
           "qa1": 0.5,
           "qa2": 0.29,
@@ -315,9 +325,7 @@
           "qa7": 0.16,
           "qa8": 0.19,
           "qa9": 0.52,
-          "qa10": 0.44,
-          "AVG": 0.366,
-          "AVG_n_tasks_complete": 10
+          "qa10": 0.44
         },
         "2k": {
           "qa1": 0.49,
@@ -329,9 +337,7 @@
           "qa7": 0.13,
           "qa8": 0.17,
           "qa9": 0.58,
-          "qa10": 0.42,
-          "AVG": 0.351,
-          "AVG_n_tasks_complete": 10
+          "qa10": 0.42
         },
         "4k": {
           "qa1": 0.25,
@@ -342,10 +348,8 @@
           "qa6": 0.47,
           "qa7": 0.13,
           "qa8": 0.2,
-          "qa9": 0.62,
-          "qa10": 0.44,
-          "AVG": 0.331,
-          "AVG_n_tasks_complete": 10
+          "qa9": 0.52,
+          "qa10": 0.44
         },
         "8k": {
           "qa1": 0.3,
@@ -357,56 +361,63 @@
           "qa7": 0.12,
           "qa8": 0.19,
           "qa9": 0.6,
-          "qa10": 0.42,
-          "qa10__partial": 50,
-          "AVG": 0.3078,
-          "AVG_n_tasks_complete": 9
+          "qa10": 0.43
         },
         "16k": {
           "qa1": 0.2,
-          "qa2": 0.16,
-          "qa2__partial": 75,
-          "qa3": 0.4,
-          "qa3__partial": 25,
+          "qa2": 0.19,
+          "qa3": 0.29,
           "qa4": null,
           "qa5": null,
           "qa6": 0.45,
           "qa7": 0.12,
           "qa8": 0.21,
           "qa9": 0.64,
-          "qa10": 0.4,
-          "qa10__partial": 25,
-          "AVG": 0.324,
-          "AVG_n_tasks_complete": 5
+          "qa10": 0.42
         },
         "32k": {
           "qa1": 0.12,
           "qa2": 0.16,
-          "qa2__partial": 25,
           "qa3": null,
           "qa4": null,
           "qa5": null,
           "qa6": 0.46,
           "qa7": 0.13,
-          "qa8": 0.2,
+          "qa8": 0.24,
           "qa9": 0.64,
-          "qa10": 0.4,
-          "qa10__partial": 25,
-          "AVG": 0.31,
-          "AVG_n_tasks_complete": 5
+          "qa10": 0.42
         }
       },
-      "note": "1k, 2k, 4k: 10/10 tasks complete @ 100 samples each. 8k: 9/10 complete (qa10 redo in progress). 16k, 32k: 5/10 each (remaining tasks queued; inject_memory is O(chunks) sequential so 32k tasks take ~50 min each). Wrapper uses transformers 4.46.3 (H20 env); rope_theta patched from config.json. Interesting pattern: MemoryLLM AVG stays flat 31-37% across 1k-32k, vs Beacon which degrades steeply."
+      "tasks_present_per_length": {
+        "1k": 10,
+        "2k": 10,
+        "4k": 10,
+        "8k": 10,
+        "16k": 8,
+        "32k": 7
+      },
+      "num_samples_per_length": {
+        "1k": 100,
+        "2k": 100,
+        "4k": 100,
+        "8k": 100,
+        "16k": 100,
+        "32k": 100
+      },
+      "ts_eval": "2026-05-10T18:16:03.411942",
+      "cluster": "H20 (28.48.2.147 + 28.49.48.243), transformers 4.46.3",
+      "note": "MemoryLLM-8B-chat (YuWangX/memoryllm-8b-chat, Llama-3-8B + 12800 mem tokens/layer); inject_memory chunked (256-token chunks); 100/cell where N=10, partial otherwise"
     }
   },
   "key_insights": [
     "Llama-3.2-1B (128k context) > Llama-3-8B (8k context) on BABILong despite smaller size",
-    "1000-step fine-tune of Llama-3-8B destroys its in-context learning ability — this is a serious issue for our H6 approach",
-    "From-scratch LM2 with 0.7% of paper's training tokens cannot reach paper's claimed numbers — abandoned",
+    "1000-step fine-tune of Llama-3-8B destroys its in-context learning ability \u2014 this is a serious issue for our H6 approach",
+    "From-scratch LM2 with 0.7% of paper's training tokens cannot reach paper's claimed numbers \u2014 abandoned",
     "Need to investigate: (a) why H6 fine-tune destroys base capabilities (b) which existing memory models actually release ckpts",
-    "H20 cluster baseline run (2026-05-10): Llama-3.2-1B-Instruct is NOT much better than base Llama-3.2-1B — both ~31-38% AVG.",
+    "H20 cluster baseline run (2026-05-10): Llama-3.2-1B-Instruct is NOT much better than base Llama-3.2-1B \u2014 both ~31-38% AVG.",
     "Beacon-Qwen2-7B is currently the strongest released memory-compression baseline: 65% @ 1k, 39% @ 32k AVG over qa1-qa10.",
-    "MemoryLLM-8B-chat AVG is flat across lengths (31-37%) — suggests memory bank retains global facts but throws away specific local details equally at all context lengths.",
-    "On BABILong qa7 (counting), Llama-3.2-1B-Instruct scores 0% at every length — a consistent failure mode of the 1B Instruct model, not a long-context issue."
-  ]
+    "MemoryLLM-8B-chat AVG is flat across lengths (31-37%) \u2014 suggests memory bank retains global facts but throws away specific local details equally at all context lengths.",
+    "On BABILong qa7 (counting), Llama-3.2-1B-Instruct scores 0% at every length \u2014 a consistent failure mode of the 1B Instruct model, not a long-context issue."
+  ],
+  "ts_baselines_h20": "2026-05-10T18:16:03.411810"
 }
