@@ -197,7 +197,7 @@ def rsync_ckpt(exp: dict, step: int) -> str | None:
     pw = password_path()
     rsh = ("ssh -o StrictHostKeyChecking=no "
            "-o PreferredAuthentications=password -o ConnectTimeout=15")
-    cmd = ["sshpass", "-f", pw, "rsync", "-avz", "--partial", "--inplace",
+    cmd = ["sshpass", "-f", pw, "rsync", "-av", "--partial", "--inplace",
            "-e", rsh,
            f"root@{exp['node']}:{remote}", local]
     log(f"rsync {name}/step_{step} from {exp['node']} ...")
