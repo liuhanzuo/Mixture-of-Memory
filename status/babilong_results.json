@@ -1,6 +1,6 @@
 {
   "evaluator": "babilong-100 (RMT-team/babilong, 100 samples per task per length)",
-  "ts": "2026-05-10T18:37:07+08:00",
+  "ts": "2026-05-10T18:58:35+08:00",
   "tasks": [
     "qa1",
     "qa2",
@@ -201,7 +201,7 @@
         "4k": 0.556,
         "8k": 0.492,
         "16k": 0.449,
-        "32k": 0.39
+        "32k": 0.4
       },
       "per_length": {
         "1k": {
@@ -284,10 +284,9 @@
           "qa7": 0.14,
           "qa8": 0.17,
           "qa9": 0.63,
-          "qa10": 0.52,
-          "qa10__partial": 25,
-          "AVG": 0.39,
-          "AVG_n_tasks_complete": 9
+          "qa10": 0.49,
+          "AVG": 0.4,
+          "AVG_n_tasks_complete": 10
         }
       },
       "note": "6/6 lengths fully evaluated (100 samples each). Strongest 7B baseline by far: 65% @ 1k -> 40% @ 32k. Beacon activation compression preserves long-context QA capability much better than Llama-3.2-1B."
@@ -298,10 +297,10 @@
       "AVG_per_length": {
         "1k": 0.366,
         "2k": 0.351,
-        "4k": 0.331,
-        "8k": 0.3078,
-        "16k": 0.324,
-        "32k": 0.31
+        "4k": 0.33,
+        "8k": 0.32,
+        "16k": 0.3138,
+        "32k": 0.356
       },
       "per_length": {
         "1k": {
@@ -341,9 +340,9 @@
           "qa6": 0.47,
           "qa7": 0.13,
           "qa8": 0.2,
-          "qa9": 0.62,
+          "qa9": 0.61,
           "qa10": 0.44,
-          "AVG": 0.331,
+          "AVG": 0.33,
           "AVG_n_tasks_complete": 10
         },
         "8k": {
@@ -356,42 +355,39 @@
           "qa7": 0.12,
           "qa8": 0.19,
           "qa9": 0.6,
-          "qa10": 0.42,
-          "qa10__partial": 50,
-          "AVG": 0.3078,
-          "AVG_n_tasks_complete": 9
+          "qa10": 0.43,
+          "AVG": 0.32,
+          "AVG_n_tasks_complete": 10
         },
         "16k": {
           "qa1": 0.2,
-          "qa2": 0.16,
-          "qa2__partial": 75,
-          "qa3": 0.4,
-          "qa3__partial": 25,
-          "qa4": null,
+          "qa2": 0.19,
+          "qa3": 0.27,
+          "qa4": 0.12,
+          "qa4__partial": 25,
           "qa5": null,
           "qa6": 0.45,
           "qa7": 0.12,
           "qa8": 0.21,
           "qa9": 0.64,
-          "qa10": 0.4,
-          "qa10__partial": 25,
-          "AVG": 0.324,
-          "AVG_n_tasks_complete": 5
+          "qa10": 0.43,
+          "AVG": 0.3138,
+          "AVG_n_tasks_complete": 8
         },
         "32k": {
           "qa1": 0.12,
-          "qa2": 0.16,
-          "qa2__partial": 25,
+          "qa2": 0.1333,
+          "qa2__partial": 75,
           "qa3": null,
           "qa4": null,
           "qa5": null,
           "qa6": 0.46,
           "qa7": 0.13,
-          "qa8": 0.2,
+          "qa8": 0.18,
+          "qa8__partial": 50,
           "qa9": 0.64,
-          "qa10": 0.4,
-          "qa10__partial": 25,
-          "AVG": 0.31,
+          "qa10": 0.43,
+          "AVG": 0.356,
           "AVG_n_tasks_complete": 5
         }
       },
@@ -399,8 +395,8 @@
         "1k": 10,
         "2k": 10,
         "4k": 10,
-        "8k": 9,
-        "16k": 5,
+        "8k": 10,
+        "16k": 8,
         "32k": 5
       },
       "note": "1k, 2k, 4k, 8k: 10/10 tasks complete @ 100 samples each. 16k: 8/10 (qa5, partial). 32k: 5/10 (qa3,4,5,8,10 remaining; inject_memory at 32k is ~50 min/task). Wrapper uses transformers 4.46.3 (H20 env); rope_theta patched from config.json. AVG stays flat 31-37% across 1k-32k, much different from Beacon's steep degradation. MemoryLLM appears to give up specific token recall but retain ~30% baseline capability across all lengths."

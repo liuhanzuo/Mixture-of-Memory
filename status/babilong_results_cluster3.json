@@ -1,6 +1,6 @@
 {
   "evaluator": "babilong-100 baseline aggregation (eval_baseline_babilong.py + run_model_on_babilong.py)",
-  "ts": "2026-05-10T18:36:17+08:00",
+  "ts": "2026-05-10T18:58:03+08:00",
   "tasks": [
     "qa1",
     "qa2",
@@ -282,33 +282,34 @@
         "16k": {
           "qa1": 0.2,
           "qa2": 0.19,
-          "qa3": 0.27,
-          "qa4": 0.12,
-          "qa4__partial": 25,
-          "qa5": null,
+          "qa3": 0.3067,
+          "qa3__partial": 75,
+          "qa4": 0.3,
+          "qa5": 0.44,
+          "qa5__partial": 25,
           "qa6": 0.45,
           "qa7": 0.12,
-          "qa8": 0.21,
-          "qa9": 0.64,
-          "qa10": 0.43,
-          "AVG": 0.3138,
-          "AVG_n_tasks_complete": 8
-        },
-        "32k": {
-          "qa1": 0.12,
-          "qa2": 0.1333,
-          "qa2__partial": 75,
-          "qa3": null,
-          "qa4": null,
-          "qa5": null,
-          "qa6": 0.46,
-          "qa7": 0.13,
           "qa8": 0.18,
           "qa8__partial": 50,
           "qa9": 0.64,
           "qa10": 0.43,
-          "AVG": 0.356,
-          "AVG_n_tasks_complete": 5
+          "AVG": 0.3329,
+          "AVG_n_tasks_complete": 7
+        },
+        "32k": {
+          "qa1": 0.12,
+          "qa2": 0.16,
+          "qa3": 0.32,
+          "qa3__partial": 50,
+          "qa4": null,
+          "qa5": null,
+          "qa6": 0.46,
+          "qa7": 0.13,
+          "qa8": 0.21,
+          "qa9": 0.64,
+          "qa10": 0.43,
+          "AVG": 0.3071,
+          "AVG_n_tasks_complete": 7
         }
       },
       "AVG_per_length": {
@@ -316,8 +317,8 @@
         "2k": 0.351,
         "4k": 0.33,
         "8k": 0.32,
-        "16k": 0.3138,
-        "32k": 0.356
+        "16k": 0.3329,
+        "32k": 0.3071
       }
     }
   }
