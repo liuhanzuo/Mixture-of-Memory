@@ -346,6 +346,8 @@ def fill_gpu_slots(state: dict):
 
 def poll_and_sync(state: dict):
     """For each experiment, list new ckpts and rsync them locally."""
+    # Kick off evals for any already-synced ckpts before doing any (slow) rsync work.
+    fill_gpu_slots(state)
     for exp in EXPERIMENTS:
         steps = list_remote_ckpts(exp, state)
         for step in steps:
@@ -357,6 +359,8 @@ def poll_and_sync(state: dict):
                 state["ckpt_synced"][key] = local
                 state["evaluated"].setdefault(key, {"lengths_done": []})
                 save_state(state)
+                # Kick off evals immediately for this ckpt while the next one rsyncs.
+                fill_gpu_slots(state)
 
 
 def initial_sweep(state: dict):

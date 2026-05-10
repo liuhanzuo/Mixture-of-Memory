@@ -287,6 +287,7 @@ def main():
         for c in [
             "/apdcephfs_zwfy6/share_304376610/pighzliu_code/models/Llama--Llama3-8b",
             "/apdcephfs_wzc1/share_303098609/pighzliu_code/models/Llama--Llama3-8b",
+            "/apdcephfs_wzc1/share_304376610/pighzliu_code/models/Llama--Llama3-8b",
         ]:
             if os.path.isdir(c):
                 args.model_path = c
