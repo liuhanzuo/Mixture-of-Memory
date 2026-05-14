@@ -304,7 +304,13 @@ class MemoryBank(nn.Module):
         max_norm = math.sqrt(slot_dim_f) * 2.0          # e.g. ~90.5 for slot_dim=2048
         slot_norms = updated.norm(dim=-1, keepdim=True)  # [B, k, 1]
         scale = (slot_norms.clamp(max=max_norm) / slot_norms.clamp(min=1e-6))
-        updated = updated * scale
+        # FIX (2026-05-15): keep bf16 dtype after norm-clip multiply.
+        # `slot_norms` defaults to fp32 from .norm(), and `updated * scale`
+        # promotes back to fp32, breaking the subsequent scatter into bf16
+        # `self.slots`. Streaming chunked inference (16k+ context) is the
+        # first path that triggers a frozen-bank write outside autocast,
+        # which is when the dtype mismatch surfaces. Cast back explicitly.
+        updated = (updated * scale).to(self.slots.dtype)
 
         # scatter writes `updated` into `self.slots` at positions idx_exp
         # along dim=1.  We re-bind ``self.slots`` because ``Tensor.scatter``
