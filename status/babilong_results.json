@@ -1,6 +1,6 @@
 {
   "evaluator": "babilong-100 (RMT-team/babilong, 100 samples per task per length)",
-  "ts": "2026-05-10T18:58:35+08:00",
+  "ts": "2026-05-12T23:13:56+08:00",
   "tasks": [
     "qa1",
     "qa2",
@@ -190,7 +190,7 @@
           "AVG_n_tasks_complete": 10
         }
       },
-      "note": "6/6 lengths fully evaluated with 100 samples per (task,length) over all 10 BABILong tasks. Meta-trained on 128k context. Instruct variant scores similarly to base on BABILong (35-38% AVG)."
+      "note": "6/6 lengths fully evaluated with 100 samples per (task,length) over all 10 BABILong tasks. Meta-trained on 128k context. Instruct variant scores similarly to base on BABILong (31-38% AVG)."
     },
     "Beacon-Qwen2-7B": {
       "type": "Activation Beacon Qwen2-7B-Instruct (namespace-Pt/beacon-qwen-2-7b-instruct; trust_remote_code; memory.reset per sample) on H20 cluster",
@@ -289,7 +289,7 @@
           "AVG_n_tasks_complete": 10
         }
       },
-      "note": "6/6 lengths fully evaluated (100 samples each). Strongest 7B baseline by far: 65% @ 1k -> 40% @ 32k. Beacon activation compression preserves long-context QA capability much better than Llama-3.2-1B."
+      "note": "6/6 lengths fully evaluated (100 samples each). Strongest 7B baseline by far: 65% @ 1k -> 40% @ 32k."
     },
     "MemoryLLM-8B-chat": {
       "type": "MemoryLLM-8B-chat (YuWangX/memoryllm-8b-chat; inject_memory chunked at 1024-token granularity; memory reset per sample) on H20 cluster",
@@ -299,8 +299,8 @@
         "2k": 0.351,
         "4k": 0.33,
         "8k": 0.32,
-        "16k": 0.3138,
-        "32k": 0.356
+        "16k": 0.327,
+        "32k": 0.313
       },
       "per_length": {
         "1k": {
@@ -362,33 +362,30 @@
         "16k": {
           "qa1": 0.2,
           "qa2": 0.19,
-          "qa3": 0.27,
-          "qa4": 0.12,
-          "qa4__partial": 25,
-          "qa5": null,
+          "qa3": 0.32,
+          "qa4": 0.33,
+          "qa5": 0.38,
           "qa6": 0.45,
           "qa7": 0.12,
-          "qa8": 0.21,
-          "qa9": 0.64,
-          "qa10": 0.43,
-          "AVG": 0.3138,
-          "AVG_n_tasks_complete": 8
+          "qa8": 0.22,
+          "qa9": 0.62,
+          "qa10": 0.44,
+          "AVG": 0.327,
+          "AVG_n_tasks_complete": 10
         },
         "32k": {
           "qa1": 0.12,
-          "qa2": 0.1333,
-          "qa2__partial": 75,
-          "qa3": null,
-          "qa4": null,
-          "qa5": null,
+          "qa2": 0.16,
+          "qa3": 0.34,
+          "qa4": 0.28,
+          "qa5": 0.37,
           "qa6": 0.46,
           "qa7": 0.13,
-          "qa8": 0.18,
-          "qa8__partial": 50,
+          "qa8": 0.21,
           "qa9": 0.64,
-          "qa10": 0.43,
-          "AVG": 0.356,
-          "AVG_n_tasks_complete": 5
+          "qa10": 0.42,
+          "AVG": 0.313,
+          "AVG_n_tasks_complete": 10
         }
       },
       "completion_count": {
@@ -399,7 +396,107 @@
         "16k": 8,
         "32k": 5
       },
-      "note": "1k, 2k, 4k, 8k: 10/10 tasks complete @ 100 samples each. 16k: 8/10 (qa5, partial). 32k: 5/10 (qa3,4,5,8,10 remaining; inject_memory at 32k is ~50 min/task). Wrapper uses transformers 4.46.3 (H20 env); rope_theta patched from config.json. AVG stays flat 31-37% across 1k-32k, much different from Beacon's steep degradation. MemoryLLM appears to give up specific token recall but retain ~30% baseline capability across all lengths."
+      "note": "Heartbeat refreshed the full 60/60-task aggregation. AVG stays roughly 31-37% across 1k-32k after completing all lengths.",
+      "completed": true
+    },
+    "MPlus-8B": {
+      "AVG_per_length": {
+        "1k": 0.0,
+        "2k": 0.0,
+        "4k": 0.0,
+        "8k": 0.0,
+        "16k": 0.0,
+        "32k": 0.0
+      },
+      "per_length": {
+        "1k": {
+          "qa1": 0.0,
+          "qa2": 0.0,
+          "qa3": 0.0,
+          "qa4": 0.0,
+          "qa5": 0.0,
+          "qa6": 0.0,
+          "qa7": 0.0,
+          "qa8": 0.0,
+          "qa9": 0.0,
+          "qa10": 0.0,
+          "AVG": 0.0,
+          "AVG_n_tasks_complete": 10
+        },
+        "2k": {
+          "qa1": 0.0,
+          "qa2": 0.0,
+          "qa3": 0.0,
+          "qa4": 0.0,
+          "qa5": 0.0,
+          "qa6": 0.0,
+          "qa7": 0.0,
+          "qa8": 0.0,
+          "qa9": 0.0,
+          "qa10": 0.0,
+          "AVG": 0.0,
+          "AVG_n_tasks_complete": 10
+        },
+        "4k": {
+          "qa1": 0.0,
+          "qa2": 0.0,
+          "qa3": 0.0,
+          "qa4": 0.0,
+          "qa5": 0.0,
+          "qa6": 0.0,
+          "qa7": 0.0,
+          "qa8": 0.0,
+          "qa9": 0.0,
+          "qa10": 0.0,
+          "AVG": 0.0,
+          "AVG_n_tasks_complete": 10
+        },
+        "8k": {
+          "qa1": 0.0,
+          "qa2": 0.0,
+          "qa3": 0.0,
+          "qa4": 0.0,
+          "qa5": 0.0,
+          "qa6": 0.0,
+          "qa7": 0.0,
+          "qa8": 0.0,
+          "qa9": 0.0,
+          "qa10": 0.0,
+          "AVG": 0.0,
+          "AVG_n_tasks_complete": 10
+        },
+        "16k": {
+          "qa1": 0.0,
+          "qa2": 0.0,
+          "qa3": 0.0,
+          "qa4": 0.0,
+          "qa5": 0.0,
+          "qa6": 0.0,
+          "qa7": 0.0,
+          "qa8": 0.0,
+          "qa9": 0.0,
+          "qa10": 0.0,
+          "AVG": 0.0,
+          "AVG_n_tasks_complete": 10
+        },
+        "32k": {
+          "qa1": 0.0,
+          "qa2": 0.0,
+          "qa3": 0.0,
+          "qa4": 0.0,
+          "qa5": 0.0,
+          "qa6": 0.0,
+          "qa7": 0.0,
+          "qa8": 0.0,
+          "qa9": 0.0,
+          "qa10": 0.0,
+          "AVG": 0.0,
+          "AVG_n_tasks_complete": 10
+        }
+      },
+      "type": "M+ / MemoryLLM-source MPlus-8B baseline on H20 cluster",
+      "note": "6/6 lengths generated 60 csv files, but every sample hit runtime errors during memory injection/output conversion, so scored 0% on all tasks and lengths. See MPlus device issues in logs.",
+      "completed": true
     }
   },
   "key_insights": [
@@ -410,7 +507,8 @@
     "Llama-3.2-1B-Instruct is NOT clearly better than base Llama-3.2-1B — both ~31-38% AVG.",
     "Beacon-Qwen2-7B is currently the strongest released memory-compression baseline: 65% @ 1k, 40% @ 32k.",
     "MemoryLLM-8B-chat AVG is flat across lengths (31-37%) — suggests memory bank retains global facts but throws away specific local details equally at all context lengths.",
-    "On BABILong qa7 (counting), Llama-3.2-1B-Instruct scores 0% at every length — a consistent failure mode of the 1B Instruct model, not a long-context issue."
+    "On BABILong qa7 (counting), Llama-3.2-1B-Instruct scores 0% at every length — a consistent failure mode of the 1B Instruct model, not a long-context issue.",
+    "MPlus-8B full H20 wave produced 60/60 csv files but all samples errored, so aggregated accuracy is 0% at every BABILong length."
   ],
-  "ts_baselines_h20": "2026-05-10T18:16:03.411810"
+  "ts_baselines_h20": "2026-05-12T23:13:56+08:00"
 }

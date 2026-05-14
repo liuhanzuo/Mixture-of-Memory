@@ -32,7 +32,7 @@ from transformers import (
 )
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + "/..")
-from src.memory.rmt.rmt_v10 import RMTv10Model, RMTv10Config
+from memory.rmt.rmt_v10 import RMTv10Model, RMTv10Config
 
 
 # ====================== Dataset ======================

@@ -1,3 +1,5 @@
+import sys
+sys.path.insert(0, "/apdcephfs_wzc1/share_303098609/pighzliu_code/Mixture-of-Memory")
 #!/usr/bin/env python3
 """RMT-Slot hybrid training: top-k slot retrieval + RMT sandwich on Llama-3-8B.
 

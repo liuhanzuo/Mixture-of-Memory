@@ -1,0 +1,107 @@
+{
+  "_last_updated": "2026-05-01T13:10:00+08:00",
+  "experiments": {
+    "mem_scale_1.0_20260501_0506": {
+      "status": "running",
+      "node": "b200-2",
+      "node_ip": "28.89.17.144",
+      "log_path": "logs/mem_scale_1.0_20260501_0506.log",
+      "output_dir": "outputs/mem_scale_1.0/",
+      "launched_at": "2026-05-01T13:06:00+08:00",
+      "pid": 2338370,
+      "config": {
+        "use_infini_attention": true,
+        "infini_beta_init": -1.0,
+        "infini_beta_lr": 0.1,
+        "infini_memory_scale_init": 1.0,
+        "lr": 1e-3,
+        "max_steps": 3000,
+        "max_chunks": 500,
+        "skip_chunks": 0,
+        "seq_len": 4096,
+        "batch_size": 1,
+        "num_slots": 128,
+        "top_k": 64,
+        "slot_init": "random",
+        "slot_init_noise": 0.02
+      },
+      "progress": {
+        "last_checked_at": "2026-05-01T13:09:00+08:00",
+        "current_step": 300,
+        "max_steps": 3000,
+        "latest_ppl": 3.35,
+        "health": "healthy",
+        "note": "PYTHONUNBUFFERED working. Real-time logs. Step 300/3000."
+      },
+      "ablation_group": "memory_scale_ablation"
+    },
+    "mem_scale_5.0_20260501_0506": {
+      "status": "running",
+      "node": "b200-3",
+      "node_ip": "28.89.17.85",
+      "log_path": "logs/mem_scale_5.0_20260501_0506.log",
+      "output_dir": "outputs/mem_scale_5.0/",
+      "launched_at": "2026-05-01T13:06:00+08:00",
+      "pid": 2544043,
+      "config": {
+        "use_infini_attention": true,
+        "infini_beta_init": -1.0,
+        "infini_beta_lr": 0.1,
+        "infini_memory_scale_init": 5.0,
+        "lr": 1e-3,
+        "max_steps": 3000,
+        "max_chunks": 500,
+        "skip_chunks": 0,
+        "seq_len": 4096,
+        "batch_size": 1,
+        "num_slots": 128,
+        "top_k": 64,
+        "slot_init": "random",
+        "slot_init_noise": 0.02
+      },
+      "progress": {
+        "last_checked_at": "2026-05-01T13:09:00+08:00",
+        "current_step": 300,
+        "max_steps": 3000,
+        "latest_ppl": 3.49,
+        "health": "healthy",
+        "note": "PYTHONUNBUFFERED working. Real-time logs. Step 300/3000."
+      },
+      "ablation_group": "memory_scale_ablation"
+    },
+    "mem_scale_10.0_20260501_0506": {
+      "status": "running",
+      "node": "b200-4",
+      "node_ip": "28.89.19.134",
+      "log_path": "logs/mem_scale_10.0_20260501_0506.log",
+      "output_dir": "outputs/mem_scale_10.0/",
+      "launched_at": "2026-05-01T13:06:00+08:00",
+      "pid": 1334832,
+      "config": {
+        "use_infini_attention": true,
+        "infini_beta_init": -1.0,
+        "infini_beta_lr": 0.1,
+        "infini_memory_scale_init": 10.0,
+        "lr": 1e-3,
+        "max_steps": 3000,
+        "max_chunks": 500,
+        "skip_chunks": 0,
+        "seq_len": 4096,
+        "batch_size": 1,
+        "num_slots": 128,
+        "top_k": 64,
+        "slot_init": "random",
+        "slot_init_noise": 0.02
+      },
+      "progress": {
+        "last_checked_at": "2026-05-01T13:09:00+08:00",
+        "current_step": 300,
+        "max_steps": 3000,
+        "latest_ppl": 4.58,
+        "health": "healthy",
+        "note": "PYTHONUNBUFFERED working. Real-time logs. Step 300/3000."
+      },
+      "ablation_group": "memory_scale_ablation"
+    }
+  }
+}

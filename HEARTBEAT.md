@@ -4,12 +4,30 @@
 
 ---
 
+## ⚡ 执行计划书（2026-05-11 起）
+
+**首要任务：对照 `status/H_V2_PLAN.md` 推进 H-series v2 训练和基线复现。**
+
+每次 heartbeat 必须先读取 `CODEBUDDY.md` 和 `status/H_V2_PLAN.md`，理解当前阶段和下一步。计划书里明确列出：
+- 每个节点当前跑什么
+- 每个任务的完成标志
+- 完成后自动触发的下一步
+- 哪些操作无需审批（auto_launch=true）
+
+**`status/H_V2_PLAN.md` 现在视为常态化 / 持续维护的 plan 文件，不是一次性草案。**
+- heartbeat 在处理完问题、推进任务、确认新状态后，**可以直接更新 `H_V2_PLAN.md`**，把它当作当前执行面的主 plan 文档持续维护
+- 允许更新的内容包括：节点映射、正在运行/已完成状态、next action、H20 eval 进度、以及新的执行决议
+
+**不读 H_V2_PLAN.md 的 heartbeat = 无效 heartbeat。**
+
+---
+
 ## ⚡ 架构说明（必读）
 
 **Heartbeat session 本身就是 main agent，能力完全一致。**
 
 - Heartbeat 由 CronCreate 触发，启动一个新的 Claude Code agent session
-- 这个 session 自动读取 CLAUDE.md（通过 system prompt 注入），拥有所有工具：Bash、Read、Write、Edit、**Agent**
+- 这个 session 自动读取 CODEBUDDY.md（通过 system prompt 注入），拥有所有工具：Bash、Read、Write、Edit、**Agent**
 - **没有一个"独立的 main agent"在后台等待唤醒** — 每次对话（包括用户对话）都是独立 session
 - Heartbeat 发现问题 → 直接用 `Agent` tool 派 researcher/coder subagent → subagent 完成后返回结果 → heartbeat 继续执行
 
@@ -21,7 +39,7 @@ Agent(
     description="分析 chunk_isolation 实验结果",
     prompt="""你是 Mixture-of-Memory 项目的 researcher subagent。
     工作目录：/apdcephfs_wzc1/share_303098609/pighzliu_code/Mixture-of-Memory/
-    请先读取 CLAUDE.md 了解项目背景，然后分析以下实验数据...
+    请先读取 CODEBUDDY.md 了解项目背景，然后分析以下实验数据...
     [具体数据和问题]
     
     输出格式：
@@ -37,10 +55,11 @@ Agent(
 ```python
 Agent(
     subagent_type="general-purpose",
+    model="reasoning",
     description="修复 cross_attn_memory 中的 bug",
     prompt="""你是 Mixture-of-Memory 项目的 coder subagent。
     工作目录：/apdcephfs_wzc1/share_303098609/pighzliu_code/Mixture-of-Memory/
-    请先读取 CLAUDE.md 了解规范，然后修改以下代码...
+    请先读取 CODEBUDDY.md 了解规范，然后修改以下代码...
     [具体修改要求：文件路径、修改内容、不能碰哪些文件]
     
     完成后报告：修改了哪些文件、做了什么改动
@@ -54,16 +73,44 @@ Agent(
 
 ## ⚡ 遇到问题时的决策原则
 
-**发现任何问题或不确定如何处理时，读取 `CLAUDE.md`，按里面的规则决策和操作。**
+**发现任何问题或不确定如何处理时，读取 `CODEBUDDY.md`，按里面的规则决策和操作。**
 
-CLAUDE.md 包含完整的：
+CODEBUDDY.md 包含完整的：
 - 自主派发规则（哪些操作不需要用户审批）
 - 多节点并行调度准则
 - 实验生命周期自动化流程
 - Red Lines（不允许的操作）
 - Subagent 使用准则（何时派 researcher / coder）
 
-Heartbeat 拥有和 main agent 完全相同的权限和工具，**CLAUDE.md 里允许 main agent 做的事，heartbeat 全部可以做**。遇到边界情况，以 CLAUDE.md 为准，不要保守地等待用户。
+Heartbeat 拥有和 main agent 完全相同的权限和工具，**CODEBUDDY.md 里允许 main agent 做的事，heartbeat 全部可以做**。遇到边界情况，以 CODEBUDDY.md 为准，不要保守地等待用户。
+
+### 整改优先原则（2026-05-11 用户指令）
+
+**Heartbeat 的默认目标不是“汇报问题”，而是“发现问题后立即整改并形成闭环”。**
+
+**标准闭环：**
+1. 发现问题
+2. 派 researcher 分析（**optional**，仅当根因不清或需要判断下一步时）
+3. 派 coder 修复（**optional**，仅当需要改代码时）
+4. **继续训练 / 继续调度 / 继续执行 pending 任务**
+
+- **默认动作 = 诊断 → 整改 → 复查 → 记录 → 继续训练**，不是只描述现象
+- 只有以下三类情况允许“只汇报不整改”：
+  1. 需要用户审批的高风险/不可逆操作
+  2. 证据不足，继续动作可能误伤
+  3. 外部资源不可用（如账号权限、机器已被平台回收）
+- 如果只是 “某服务器 SSH 失败 / 某实验异常 / 某节点空闲” → **不够**；必须继续执行对应整改动作
+- researcher 不是必派：如果问题已经明显（如 stale pid、状态文件过期、GPU 空闲但有 auto_launch 任务），heartbeat 直接整改
+- coder 不是必派：如果不需要改代码（如重启训练、迁移节点、刷新状态、kill orphan、重调度任务），heartbeat 直接执行
+- 一旦 researcher / coder 给出高置信结论，heartbeat **同一轮内**继续推进到启动/恢复训练，不能停在“已分析”或“已修复待后续”
+- 典型整改动作包括：
+  - retry SSH / 交叉验证节点是否存活
+  - kill stale/orphan 进程
+  - 刷新 `TRAINER_ACTIVE.md` / `remote_experiments.json` / `PENDING_TASKS.md` / `H_V2_PLAN.md`
+  - researcher 分析根因后，直接派 coder 修复
+  - 修复完成后直接重启实验或把任务迁移到空闲节点
+  - 如果节点连续 3 次 heartbeat 无法访问，标记 `node_revoked` 并重新调度任务
+- Heartbeat 输出里必须明确写出 **action_taken**，不能只有 “发现了什么问题”
 
 ---
 
@@ -103,14 +150,38 @@ nvidia-smi --query-compute-apps=pid,gpu_index,used_memory,process_name \
 
 ### Step 2: 远程集群检查
 
-遍历 `configs/remote_experiments.json` 中 status=running 的节点：
+遍历 `configs/remote_experiments.json` 中 status=running 的节点。**集群分为三类，密码文件不同**：
+
+| 集群 | IP 列表 | 密码文件 | CEPH 共享 | 备注 |
+|------|---------|----------|-----------|------|
+| **b200-1..4 (原始)** | 28.89.17.143, .144, 28.89.17.85, 28.89.19.134 | `configs/password.txt` | `share_303098609` (项目主目录) | 稳定，主训练资源 |
+| **b200-5..8 (replacement B200)** | 28.89.18.252, 28.89.20.82, 28.89.20.27, 28.89.18.19 | `configs/password_b200_ephemeral.txt` | `share_303098609` (与主项目同一 share) | 当前 replacement B200 节点；密码文件已更新，可直接用于 heartbeat SSH |
+| **h20-1..4 (H20)** | 28.58.244.13, 28.85.54.125, 28.59.5.176, 28.83.52.26 | `configs/password_h20.txt` | `zwfy6/share_304376610` | 8x H20 (97.8 GB)，VRAM 是 B200 一半 |
+
+每类节点的 SSH 命令模板：
 
 ```bash
+# 原始 B200
 sshpass -f configs/password.txt ssh -o StrictHostKeyChecking=no \
   -o ConnectTimeout=10 root@<IP> \
   "nvidia-smi --query-compute-apps=pid,used_memory,process_name --format=csv,noheader; \
    tail -5 <log_path> 2>/dev/null"
+
+# ephemeral B200（注意 -o PreferredAuthentications=password 避免 pubkey 卡死）
+sshpass -f configs/password_b200_ephemeral.txt ssh -o StrictHostKeyChecking=no \
+  -o ConnectTimeout=10 -o PreferredAuthentications=password root@<IP> "<cmd>"
+
+# 检查 ephemeral 节点是否仍存活（先 ping 再 ssh）
+sshpass -f configs/password_b200_ephemeral.txt ssh -o StrictHostKeyChecking=no \
+  -o ConnectTimeout=10 -o PreferredAuthentications=password root@<IP> "echo alive" 2>&1 \
+  | grep -q alive && echo OK || echo DEAD
 ```
+
+**replacement B200 / H20 节点 SSH 失败时**：不要立即升级。在 `status/TRAINER_ACTIVITY.jsonl` 标记 `ssh_timeout`，连续 3 次（约 60 分钟）失败才视为节点不可用，再更新状态。
+
+**replacement B200 节点路径**：项目根 = `/apdcephfs_wzc1/share_303098609/pighzliu_code/Mixture-of-Memory/`，与主项目完全共享，不需要 rsync。
+
+**H20 节点路径**：项目根 = `/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/`，仍与主项目不同步；把任务派到 H20 时必须确认脚本/数据路径兼容。
 
 检查是否还在运行，loss 是否正常。
 
@@ -147,7 +218,7 @@ Agent(
     run_in_background=True,   # 训练在跑时可以并行，不阻塞 heartbeat
     prompt="""你是 Mixture-of-Memory 项目的 researcher。
     工作目录：/apdcephfs_wzc1/share_303098609/pighzliu_code/Mixture-of-Memory/
-    请先读取 CLAUDE.md 了解项目背景和当前方向，再读取 RESEARCH_LITERATURE.md 了解已调研内容。
+    请先读取 CODEBUDDY.md 了解项目背景和当前方向，再读取 RESEARCH_LITERATURE.md 了解已调研内容。
     
     当前正在运行的实验：[heartbeat 在这里填入当前实验摘要]
     
@@ -178,7 +249,7 @@ Agent(
     run_in_background=True,
     prompt="""你是 Mixture-of-Memory 项目的 coder，负责代码审查。
     工作目录：/apdcephfs_wzc1/share_303098609/pighzliu_code/Mixture-of-Memory/
-    请先读取 CLAUDE.md 了解项目规范。
+    请先读取 CODEBUDDY.md 了解项目规范。
     
     当前核心代码文件：[heartbeat 在这里填入当前实验使用的主要脚本]
     
@@ -231,7 +302,7 @@ Agent(
    - 或者手动流程：先派 general-purpose subagent 审核 git diff，APPROVED 后再 push
    - export http_proxy=http://star-proxy.oa.com:3128 && git push origin main
 7. 报告：删除了哪些文件，移动了哪些文件，commit hash 是多少
-绝对不能碰：src/memory/cross_attn/, configs/, status/, CLAUDE.md, HEARTBEAT.md, CODE_CLEANUP_SUGGESTIONS.md
+绝对不能碰：src/memory/cross_attn/, configs/, status/, CODEBUDDY.md, HEARTBEAT.md, CODE_CLEANUP_SUGGESTIONS.md
 """
 )
 ```
@@ -298,9 +369,10 @@ Agent(
 **操作（按顺序）**：
 1. 调查：读日志、SSH 检查、收集诊断信息
 2. 写入 ISSUES.jsonl
-3. **直接派 researcher subagent**（用 Agent tool，见上方 "架构说明" 的模板）
-4. researcher 返回结论后，如果 confidence: high/very_high → 直接执行（改代码派 coder，改参数直接改，启动实验直接启动）
-5. 在 PENDING_TASKS.md 记录分析结论和下一步
+3. 如果根因已经明显 → 直接整改；如果根因不清 → **派 researcher subagent**（用 Agent tool，见上方 "架构说明" 的模板）
+4. 如果整改需要改代码 → 派 coder；如果不需要改代码 → 直接改参数 / 迁移节点 / 重启任务
+5. **同一轮 heartbeat 内继续训练或继续调度**，不要停在分析阶段
+6. 在 PENDING_TASKS.md 记录分析结论和下一步
 
 ### 大问题 → 自主处理（含 kill + 修复 + 重启）
 
@@ -313,11 +385,12 @@ Agent(
 **操作（按顺序）**：
 1. 收集充分证据（≥3 个诊断点）
 2. 写入 ISSUES.jsonl（包含完整证据）
-3. 如果是显著 bug → 自主 kill 问题进程
-4. **派 researcher 分析根因**（run_in_background=false，等结果）
-5. researcher confidence: high → **派 coder 修复**（run_in_background=false，等完成）
-6. 代码修复完成 → **SSH 启动新实验**
+3. 如果是显著 bug / stale 进程 → 自主 kill 问题进程
+4. 如果根因不清 → **派 researcher 分析根因**（run_in_background=false，等结果）；如果根因已清楚可跳过 researcher
+5. 如果需要改代码 → **派 coder 修复**（run_in_background=false，等完成）；如果不需要改代码可跳过 coder
+6. 整改完成后 → **立即 SSH 启动/恢复训练，或把任务迁移到空闲节点继续跑**
 7. 更新 TRAINER_ACTIVE.md（write 覆盖）、gpu_runs.jsonl（append）、UPDATELOG.md（append）
+8. 复查新进程 / 新日志，确认 heartbeat 真正完成闭环
 ---
 
 ## TRAINER_ACTIVE.md 更新规则

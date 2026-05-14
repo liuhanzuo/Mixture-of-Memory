@@ -1,15 +1,240 @@
 {
-    "_comment": "Updated 2026-05-08 15:45 \u2014 Middle-Layer Memory (MemLong-style) A/B test. Experiment H (local): write=L16, read={18,22,26,30}. Experiment H2 (b200-3): write=L20, read={22,25,28,31}. Tests whether MemLong's middle-layer memory design (vs all-layer slot_forward) rescues NIAH=0%. First eval @ step 200 ~16:05 and ~16:20 respectively. Prior: fix_y_ablation all 3 arms killed 2026-04-30 (InfoNCE failed to prevent VQ-EMA collapse).",
+    "_comment": "Updated 2026-05-10 14:30 — Cluster expansion: original b200-1..4 (cluster=1, share_303098609) + ephemeral b200-5..8 (cluster=2, share_304376610, may be revoked) + h20-1..4 (cluster=3, TBD when opened). Active H-series: H9 contrastive (b200-1), H10 aggressive (b200-2), H11_v2 pure_contrastive with REAL contrastive fix (b200-3, commit 461d78c), H12 arch_only (b200-4). H11_v1 killed earlier today after architecture audit (SEV-1: contrastive silently bypassed under --slot_forward).",
+    "_clusters": {
+        "cluster_1_original": {
+            "nodes": [
+                "b200-1",
+                "b200-2",
+                "b200-3",
+                "b200-4"
+            ],
+            "ips": [
+                "28.89.17.143",
+                "28.89.17.144",
+                "28.89.17.85",
+                "28.89.19.134"
+            ],
+            "gpu": "L20A 183GB x 8",
+            "ceph_share": "share_303098609",
+            "password_file": "configs/password.txt",
+            "stable": true,
+            "purpose": "primary training resource"
+        },
+        "cluster_2_ephemeral": {
+            "nodes": [
+                "b200-5",
+                "b200-6",
+                "b200-7",
+                "b200-8"
+            ],
+            "ips": [
+                "28.89.18.252",
+                "28.89.20.82",
+                "28.89.20.27",
+                "28.89.18.19"
+            ],
+            "gpu": "L20A 183GB x 8",
+            "ceph_share": "share_304376610",
+            "password_file": "configs/password_b200_ephemeral.txt",
+            "ssh_extra": "-o PreferredAuthentications=password",
+            "stable": true,
+            "shared_mount": true,
+            "purpose": "replacement B200 pool; currently reachable but not ready for direct Mixture-of-Memory auto-launch",
+            "setup_status": "reachable_but_not_ready_for_mom",
+            "setup_started": "2026-05-12 13:05 GMT+8",
+            "setup_components": {
+                "code": "visible under /apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory",
+                "models": "visible under /apdcephfs_wzc1/share_304376610/pighzliu_code",
+                "data": "visible under share_304376610, not share_303098609",
+                "transformers_pip": "not yet audited per node",
+                "fla_dependency": "missing on probed nodes; last Variant C launch failed with ModuleNotFoundError"
+            }
+        },
+        "cluster_3_h20": {
+            "nodes": [
+                "h20-1",
+                "h20-2",
+                "h20-3",
+                "h20-4"
+            ],
+            "ips": [
+                "28.58.244.13",
+                "28.85.54.125",
+                "28.59.5.176",
+                "28.83.52.26"
+            ],
+            "gpu": "H20 97.8GB x 8",
+            "ceph_share": "apdcephfs_zwfy6/share_304376610",
+            "password_file": "configs/password_h20.txt",
+            "ssh_extra": "-o PreferredAuthentications=password",
+            "shared_mount": true,
+            "stable": true,
+            "purpose": "free for any task; OOM risk on 8B+memory+seq4096; recommended: baselines, eval, slot sweeps",
+            "vram_note": "half of B200; reduce seq_len to 2048 or chunks_per_doc to 16 for training",
+            "filesystem_note": "mounts /apdcephfs_zwfy6/... NOT /apdcephfs_wzc1/...; different physical share from ephemeral b200-5..8 despite same share number",
+            "setup_status": "reachable_existing_mirror",
+            "setup_started": "2026-05-12 13:05 GMT+8",
+            "setup_components": {
+                "code_path": "zwfy6 mirror visible on all 4 nodes",
+                "llama3_8b_model": "not re-audited in this turn",
+                "niah_npy_data": "not re-audited in this turn",
+                "transformers_pip_h20-1..4": "not re-audited per node"
+            }
+        }
+    },
+    "experiment_h9_contrastive_b200_1": {
+        "ip": "28.89.17.143",
+        "cluster": 1,
+        "name": "b200-1",
+        "experiment": "experiment_h9_contrastive",
+        "status": "completed",
+        "started_at": "2026-05-10 12:23 CST",
+        "commit_hash": "0f6b138",
+        "n_gpus": 8,
+        "max_steps": 5000,
+        "note": "H9 with contrastive_weight=1.0 — but contrastive was silent no-op pre-461d78c. Run continues as arch-fix baseline.",
+        "last_verified": "2026-05-11 11:23 CST"
+    },
+    "experiment_h10_aggressive_contrastive_b200_2": {
+        "ip": "28.89.17.144",
+        "cluster": 1,
+        "name": "b200-2",
+        "experiment": "experiment_h10_aggressive_contrastive",
+        "status": "completed",
+        "commit_hash": "0f6b138",
+        "note": "Aggressive NIAH (mix=0.50, lambda=2.0) + contrastive=1.0 (silent no-op pre-461d78c). Continues as arch-fix baseline.",
+        "last_verified": "2026-05-11 11:23 CST"
+    },
+    "experiment_h11_v2_pure_contrastive_b200_3": {
+        "ip": "28.89.17.85",
+        "cluster": 1,
+        "name": "b200-3",
+        "experiment": "experiment_h11_v2_pure_contrastive",
+        "status": "completed",
+        "started_at": "2026-05-10 13:32 CST",
+        "commit_hash": "461d78c",
+        "n_gpus": 8,
+        "max_steps": 5000,
+        "config": {
+            "lambda_retrieve": 0.1,
+            "contrastive_weight": 5.0,
+            "memory_write_layer": 16,
+            "memory_read_layers": "18,22,26,30",
+            "num_slots": 64
+        },
+        "note": "First H-series run with REAL contrastive. v1 (lambda=0.01, killed) had silent no-op.",
+        "last_verified": "2026-05-11 11:23 CST"
+    },
+    "experiment_h12_arch_only_b200_4": {
+        "ip": "28.89.19.134",
+        "cluster": 1,
+        "name": "b200-4",
+        "experiment": "experiment_h12_arch_only",
+        "status": "completed",
+        "commit_hash": "0f6b138",
+        "note": "contrastive_weight=0; pure arch-fix control.",
+        "last_verified": "2026-05-11 11:23 CST"
+    },
+    "experiment_h13_slot128_b200_5": {
+        "ip": "28.89.18.132",
+        "cluster": 2,
+        "name": "b200-5",
+        "experiment": "experiment_h13_slot128",
+        "status": "completed",
+        "started_at": "2026-05-10 16:00 CST",
+        "commit_hash": "4d62206",
+        "n_gpus": 8,
+        "max_steps": 5000,
+        "config": {
+            "lambda_retrieve": 0.1,
+            "contrastive_weight": 5.0,
+            "memory_write_layer": 16,
+            "memory_read_layers": "18,22,26,30",
+            "num_slots": 128,
+            "seq_len": 4096,
+            "chunks_per_doc": 32,
+            "freeze_base_steps": 0
+        },
+        "log_path": "logs/experiment_h13_slot128_20260510_1557.log",
+        "output_dir": "outputs/experiment_h13_slot128",
+        "vram_gb_per_gpu": 98,
+        "vram_pct": 54,
+        "gpu_util_pct": 99,
+        "note": "Capacity ablation: num_slots 64->128 vs H11_v2 baseline. Required torch 2.9.1+cu128 + transformers 4.46.3 reinstall on b200-5 to fix sm_100 incompat (original PyTorch 2.8.0 only supported sm_90, segfaulted on Llama load).",
+        "last_verified": "2026-05-11 11:23 CST"
+    },
+    "experiment_h13b_slot256_b200_6": {
+        "ip": "28.89.18.190",
+        "cluster": 2,
+        "name": "b200-6",
+        "experiment": "experiment_h13b_slot256",
+        "status": "completed",
+        "started_at": "2026-05-10 15:49 CST",
+        "commit_hash": "4d62206",
+        "n_gpus": 8,
+        "max_steps": 5000,
+        "config": {
+            "lambda_retrieve": 0.1,
+            "contrastive_weight": 5.0,
+            "memory_write_layer": 16,
+            "memory_read_layers": "18,22,26,30",
+            "num_slots": 256,
+            "seq_len": 4096,
+            "chunks_per_doc": 32,
+            "freeze_base_steps": 0
+        },
+        "log_path": "logs/experiment_h13b_slot256_20260510_1549.log",
+        "output_dir": "outputs/experiment_h13b_slot256",
+        "vram_gb_per_gpu": 117,
+        "vram_pct": 64,
+        "gpu_util_pct": 99,
+        "note": "Capacity ablation: num_slots 64->256 vs H11_v2 baseline. Same torch/transformers fix as b200-5.",
+        "last_verified": "2026-05-11 11:23 CST"
+    },
+    "experiment_h14_base_unfrozen_h20_4": {
+        "ip": "28.58.246.254",
+        "cluster": 3,
+        "name": "h20-4",
+        "experiment": "experiment_h14_base_unfrozen",
+        "status": "killed",
+        "started_at": "2026-05-10 15:29 CST",
+        "commit_hash": "4d62206",
+        "n_gpus": 8,
+        "max_steps": 5000,
+        "config": {
+            "lambda_retrieve": 0.1,
+            "contrastive_weight": 5.0,
+            "memory_write_layer": 16,
+            "memory_read_layers": "18,22,26,30",
+            "num_slots": 64,
+            "seq_len": 2048,
+            "chunks_per_doc": 64,
+            "freeze_base_steps": 1000
+        },
+        "log_path": "logs/experiment_h14_base_unfrozen_20260510_1529.log",
+        "output_dir": "outputs/experiment_h14_base_unfrozen",
+        "vram_gb_per_gpu": 39,
+        "vram_pct": 40,
+        "gpu_util_pct": 99,
+        "note": "Base unfreeze ablation: freeze_base_steps 99999->1000 vs H9 permanent freeze. H20 has half VRAM so seq_len 4096->2048, chunks_per_doc 32->64. Required rsync of dolmino-mix-1124-llama3 25 shards (9.4GB) to /apdcephfs_zwfy6/share_304376610/pighzliu_code/data/. Expect VRAM to ~double after step 1000 when base unfreezes (optimizer states for 8B added).",
+        "last_verified": "2026-05-11 11:23 CST"
+    },
+    "_legacy_h2_comment": "Pre-2026-05-10 entries retained below for archival reference. H2 long since completed.",
     "experiment_h2_node2": {
         "ip": "28.89.17.85",
         "cluster": 1,
         "name": "b200-3",
         "experiment": "experiment_h2_deeper",
-        "status": "running",
+        "status": "completed",
         "started_at": "2026-05-08 15:27 CST",
         "architecture": "middle_layer_memory (MemLong-style)",
         "memory_write_layer": 20,
-        "memory_read_layers": [22, 25, 28, 31],
+        "memory_read_layers": [
+            22,
+            25,
+            28,
+            31
+        ],
         "num_slots": 64,
         "seq_len": 4096,
         "memory_init": "strided",
@@ -22,35 +247,35 @@
         "commit_hash": "f4ad2e2",
         "notes": "Ablation vs Experiment H (local, write=L16). Tests whether deeper middle-layer (L20 ~ L*5/8) gives higher-level semantics than strict midpoint (L16 = L/2). Loaded via setsid detach on 28.89.17.85; tracked by main agent, not a standalone process.",
         "first_eval_at_step": 200,
-        "last_verified": "2026-05-08 15:45"
+        "last_verified": "2026-05-11 11:23 CST"
     },
     "_legacy_comment": "Pre-2026-05-08 entries retained below for archival reference.",
     "qfilters_s11_4_closure": {
         "as_of": "2026-04-26 15:44",
-        "checklist_status": "15/15 \u2705 CLOSED",
+        "checklist_status": "15/15 ✅ CLOSED",
         "retraction_doc": "ops/research_notes/20260426_s11_retraction.md",
-        "updatelog_anchor": "2026-04-26 15:44 \u2014 \u00a711.4 retraction checklist CLOSED 15/15",
+        "updatelog_anchor": "2026-04-26 15:44 — §11.4 retraction checklist CLOSED 15/15",
         "headline_numbers_post_double_shift_fix": {
             "llama3_wikitext_rank1_kv512_r64": {
                 "ppl": 8.57,
-                "anchor_section": "\u00a711.4.3"
+                "anchor_section": "§11.4.3"
             },
             "llama3_pg19_rank1_kv512_r64": {
                 "ppl": 4.245,
-                "anchor_section": "\u00a711.4.3 cross-dataset"
+                "anchor_section": "§11.4.3 cross-dataset"
             },
             "llama3_pg19_rank1_kv2048": {
                 "ppl": 1.583,
-                "comment": "1.023\u00d7 dense floor 1.5468"
+                "comment": "1.023× dense floor 1.5468"
             },
             "llama3_pg19_rank1_kv4096": {
                 "ppl": 1.547,
-                "comment": "dense floor, T\u2264budget short-circuit"
+                "comment": "dense floor, T≤budget short-circuit"
             },
             "llama2_patchA_rank2_kv_bowl_true_min": {
                 "kv": 104,
                 "ppl": 164.85,
-                "anchor_section": "\u00a711.4.2 third revision"
+                "anchor_section": "§11.4.2 third revision"
             },
             "llama2_rank1_kv96": {
                 "ppl": 119.19,
@@ -75,7 +300,7 @@
                     220
                 ],
                 "target_hit": false,
-                "note": "Issue #110 fix PARTIAL (2026-04-26 16:47): exact SVD resolved sign-ambiguity at kv<=128 but did NOT collapse kv=256 outlier. PPL fell 752->611 but target band [140,220] not reached. Suspected residual channels: calibration data ordering, SDPA bf16 nondeterminism, rank=1 x deep-kv interaction. Issue #110 REOPENED as PARTIAL; see status/ISSUES.jsonl issue_20260426_110_reopen_partial. Pre-fix 4.9x spread across 161/752/788 ALSO recorded \u2014 both pre-fix and post-fix evidence retained for reproducibility."
+                "note": "Issue #110 fix PARTIAL (2026-04-26 16:47): exact SVD resolved sign-ambiguity at kv<=128 but did NOT collapse kv=256 outlier. PPL fell 752->611 but target band [140,220] not reached. Suspected residual channels: calibration data ordering, SDPA bf16 nondeterminism, rank=1 x deep-kv interaction. Issue #110 REOPENED as PARTIAL; see status/ISSUES.jsonl issue_20260426_110_reopen_partial. Pre-fix 4.9x spread across 161/752/788 ALSO recorded — both pre-fix and post-fix evidence retained for reproducibility."
             },
             "streaming_32k_llama3_rank1_kv512_r64": {
                 "qfilters_ppl": 4.5476,
@@ -83,12 +308,12 @@
                 "sliding_window_ppl": 112.1625,
                 "sliding_window_ppl_raw": 98.3541,
                 "ratio_qf_sw": 0.0406,
-                "advantage": "24.7\u00d7 lower PPL for Q-Filters vs SWA over 524288 streaming tokens",
-                "anchor_section": "\u00a711.4.4"
+                "advantage": "24.7× lower PPL for Q-Filters vs SWA over 524288 streaming tokens",
+                "anchor_section": "§11.4.4"
             }
         },
         "pre_fix_artifacts_DO_NOT_USE": {
-            "claim_16x_at_minus_27_3_percent": "Double-shift eval bug (Task #59 fix). Superseded \u2014 see task #60/#61 rerun tables.",
+            "claim_16x_at_minus_27_3_percent": "Double-shift eval bug (Task #59 fix). Superseded — see task #60/#61 rerun tables.",
             "notes": "Any headline quoting 41.24 / 49.60 / 49.88 / 464.28 PPL from this file's pre-2026-04-26 history is pre-fix and should not be used in publications."
         },
         "open_followups_not_blocking_s11_4": [
@@ -122,13 +347,13 @@
         "skip_chunks": 200,
         "max_chunks": 5000,
         "fix_applied": "Fix Y (dead slot revival) + Fix X.3 (VQ-EMA) + Fix X.1 + Fix I + Fix J-A + Fix K + Fix L-1/L-2/L-3 + Fix M-1 + Fix N + Fix O + Fix P.1 + Fix P.2 + Fix S + Fix T + Fix U + Fix V + Fix W",
-        "fix_y_role": "Arm Y1 \u2014 dead_reset=0.5, norm_cap=5.0, qa=0.0, \u03b1=0.9. Pure dead-slot fix, no InfoNCE.",
+        "fix_y_role": "Arm Y1 — dead_reset=0.5, norm_cap=5.0, qa=0.0, α=0.9. Pure dead-slot fix, no InfoNCE.",
         "log_path": "/apdcephfs_wzc1/share_303098609/pighzliu_code/Mixture-of-Memory/logs/fix_y_ablation_node0_20260430_1031.log",
         "output_dir": "/apdcephfs_wzc1/share_303098609/pighzliu_code/Mixture-of-Memory/outputs/fix_y_ablation_node0/",
         "batch_size": 1,
         "seq_len": 4096,
         "n_gpus": 8,
-        "notes": "Fix Y ablation. Arm Y1: dead_slot_reset_threshold=0.5, norm_cap=5.0, qa=0.0. fwd=700 top1_sim=0.004974 pairwise_cos=0.5312 \u2014 borderline/collapsing. Without InfoNCE, dead-slot revival alone is insufficient to prevent key convergence. Compare to Y2 (InfoNCE) which passes.",
+        "notes": "Fix Y ablation. Arm Y1: dead_slot_reset_threshold=0.5, norm_cap=5.0, qa=0.0. fwd=700 top1_sim=0.004974 pairwise_cos=0.5312 — borderline/collapsing. Without InfoNCE, dead-slot revival alone is insufficient to prevent key convergence. Compare to Y2 (InfoNCE) which passes.",
         "last_verified": "2026-04-30 10:46",
         "fix_x3_ablation_final_state": {
             "killed_at": "2026-04-30 10:31 CST",
@@ -162,7 +387,7 @@
         "skip_chunks": 200,
         "max_chunks": 5000,
         "fix_applied": "Fix Y (dead slot revival) + Fix X.3 (VQ-EMA) + Fix X.2 (InfoNCE qa=0.05) + Fix X.1 + Fix I + Fix J-A + Fix K + Fix L-1/L-2/L-3 + Fix M-1 + Fix N + Fix O + Fix P.1 + Fix P.2 + Fix S + Fix T + Fix U + Fix V + Fix W",
-        "fix_y_role": "Arm Y2 \u2014 dead_reset=0.5, norm_cap=5.0, qa=0.05, \u03b1=0.9. Full Fix Y (recommended, confidence 90%).",
+        "fix_y_role": "Arm Y2 — dead_reset=0.5, norm_cap=5.0, qa=0.05, α=0.9. Full Fix Y (recommended, confidence 90%).",
         "log_path": "/apdcephfs_wzc1/share_303098609/pighzliu_code/Mixture-of-Memory/logs/fix_y_ablation_node1_20260430_1031.log",
         "output_dir": "/apdcephfs_wzc1/share_303098609/pighzliu_code/Mixture-of-Memory/outputs/fix_y_ablation_node1/",
         "batch_size": 1,
@@ -171,7 +396,7 @@
         "notes": "Fix Y ablation. Arm Y2: FULL FIX (dead_reset=0.5 + norm_cap=5.0 + InfoNCE qa=0.05). fwd=1000 top1_sim=0.042236 (PASSED fwd=1000 criterion). FAILED fwd=2000 criterion: top1_sim=0.002991 at fwd=2000 (collapsed ~fwd=1350). InfoNCE delays but does not prevent VQ-EMA key convergence. dead_revived=0 because uniform routing maintains all ema_cluster_count > 0.5 threshold.",
         "last_verified": "2026-04-30 11:06",
         "killed_at": "2026-04-30 11:06 CST",
-        "kill_reason": "fwd=2000 FAILED: top1_sim=0.002991 (criterion >0.010). InfoNCE delayed but did not prevent collapse. dead_revived=0 throughout \u2014 uniform routing keeps all ema_cluster_count above 0.5 threshold; revival never fires. Fix Y INSUFFICIENT."
+        "kill_reason": "fwd=2000 FAILED: top1_sim=0.002991 (criterion >0.010). InfoNCE delayed but did not prevent collapse. dead_revived=0 throughout — uniform routing keeps all ema_cluster_count above 0.5 threshold; revival never fires. Fix Y INSUFFICIENT."
     },
     "node2": {
         "ip": "28.89.17.85",
@@ -198,13 +423,13 @@
         "skip_chunks": 200,
         "max_chunks": 5000,
         "fix_applied": "Fix Y (dead slot revival) + Fix X.3 (VQ-EMA) + Fix X.1 + Fix I + Fix J-A + Fix K + Fix L-1/L-2/L-3 + Fix M-1 + Fix N + Fix O + Fix P.1 + Fix P.2 + Fix S + Fix T + Fix U + Fix V + Fix W",
-        "fix_y_role": "Arm Y3 \u2014 dead_reset=0.5, norm_cap=10.0, qa=0.0, \u03b1=0.9. Compare norm cap (10.0 vs Y1's 5.0), no InfoNCE.",
+        "fix_y_role": "Arm Y3 — dead_reset=0.5, norm_cap=10.0, qa=0.0, α=0.9. Compare norm cap (10.0 vs Y1's 5.0), no InfoNCE.",
         "log_path": "/apdcephfs_wzc1/share_303098609/pighzliu_code/Mixture-of-Memory/logs/fix_y_ablation_node2_20260430_1031.log",
         "output_dir": "/apdcephfs_wzc1/share_303098609/pighzliu_code/Mixture-of-Memory/outputs/fix_y_ablation_node2/",
         "batch_size": 1,
         "seq_len": 4096,
         "n_gpus": 8,
-        "notes": "Fix Y ablation. Arm Y3: dead_slot_reset_threshold=0.5, norm_cap=10.0, qa=0.0. fwd=50 top1_sim=0.761719 \ud83d\ude80 early peak. fwd=400 top1_sim=0.003387 COLLAPSED (pairwise_cos=0.8516). Without InfoNCE, norm_cap=10.0 collapses FASTER than Y1's norm_cap=5.0. CONCLUSION: InfoNCE is essential.",
+        "notes": "Fix Y ablation. Arm Y3: dead_slot_reset_threshold=0.5, norm_cap=10.0, qa=0.0. fwd=50 top1_sim=0.761719 🚀 early peak. fwd=400 top1_sim=0.003387 COLLAPSED (pairwise_cos=0.8516). Without InfoNCE, norm_cap=10.0 collapses FASTER than Y1's norm_cap=5.0. CONCLUSION: InfoNCE is essential.",
         "last_verified": "2026-04-30 10:46",
         "fix_x3_ablation_final_state": {
             "killed_at": "2026-04-30 10:31 CST",
@@ -240,7 +465,7 @@
         "log_path": "/apdcephfs_wzc1/share_303098609/pighzliu_code/Mixture-of-Memory/logs/fix_o_ablation_node2_20260429_2003.log",
         "output_dir": "/apdcephfs_wzc1/share_303098609/pighzliu_code/Mixture-of-Memory/outputs/fix_o_ablation_node2/",
         "fix_applied": "Fix I + Fix J-A + Fix K + Fix L-1/L-2/L-3 + Fix M-1 + Fix N + Fix O (T=1.0, skrl=0.10, lb=0.001, entropy=0.0)",
-        "notes": "IDLE (retired). 4th NaN incident on b200-4 \u2014 hardware instability suspected. Not reusing.",
+        "notes": "IDLE (retired). 4th NaN incident on b200-4 — hardware instability suspected. Not reusing.",
         "last_verified": "2026-04-30 03:27",
         "killed_at": "2026-04-29 20:12",
         "kill_reason": "NaN spiral step~357. Hardware instability (4th NaN incident on this node). Killed by main agent.",
@@ -302,5 +527,116 @@
         },
         "notes": "Training completed 2026-04-23 11:12 (800/800 steps). Eval PPL 464.28 vs Qwen3-8B baseline 13.46 (+3348% degradation). Checkpoint at outputs/dms_8x/final (16 GB). NOTE: H20 node no longer exists as of 2026-04-28.",
         "last_verified": "2026-04-24 17:15"
+    },
+    "lm2_b200_4": {
+        "ip": "28.89.19.134",
+        "cluster": 1,
+        "name": "b200-4",
+        "experiment": "lm2_paper_reproduction",
+        "status": "killed",
+        "started_at": "2026-05-09 15:00 CST",
+        "architecture": "LM2 (jamie-mcg/lm2, arXiv:2502.06049) — Llama-3.2-1B + per-layer memory module with cross-attention gating",
+        "model": "Llama-3.2-1B",
+        "total_params_M": 1773,
+        "memory_slots": 2048,
+        "num_mem_heads": 8,
+        "seq_len": 2048,
+        "batch_size_per_gpu": 4,
+        "effective_batch_size": 32,
+        "lr": "2e-4",
+        "warmup_iters": 700,
+        "max_iters": 20000,
+        "dtype": "bfloat16",
+        "n_gpus": 8,
+        "gpu_type": "L20A",
+        "env": "/opt/conda/envs/MemLong/bin/python (transformers 4.46.1, torch 2.7.0+cu128, hydra-core 1.3.2)",
+        "data": "dolmino-mix-1124-llama3 shard_0000..0199 (~20B Llama-3 tokens, reused from our MoM project)",
+        "niah_eval": {
+            "freq_iters": 500,
+            "num_samples": 24,
+            "depths": [
+                0.1,
+                0.5,
+                0.9
+            ],
+            "context_lengths": [
+                2048
+            ],
+            "module": "LM2/src/niah_eval.py",
+            "note": "We injected NIAH eval into LM2's on_batch_end callback so we can compare vs H/H5 baselines"
+        },
+        "log_path": "/apdcephfs_wzc1/share_303098609/pighzliu_code/Mixture-of-Memory/outputs/lm2_b200_4/train.log",
+        "output_dir": "/apdcephfs_wzc1/share_303098609/pighzliu_code/Mixture-of-Memory/outputs/lm2_b200_4",
+        "ckpt_dir": "/apdcephfs_wzc1/share_303098609/pighzliu_code/Mixture-of-Memory/outputs/lm2_b200_4/ckpts",
+        "launch_script": "/apdcephfs_wzc1/share_303098609/pighzliu_code/LM2/scripts/launch_lm2_b200_4.sh",
+        "lm2_commit": "b8e3db4",
+        "patches": [
+            "src/niah_eval.py new (passkey-style NIAH with depth/length sweep)",
+            "src/dataloader_raw.py new (load our project's headerless uint32 npy shards)",
+            "train.py patched: added on_batch_end NIAH callback (rank 0 only)",
+            "configs/model/llama3.2-1b-local.yaml new (local Llama-3.2-1B path)",
+            "configs/train.yaml + configs/train/default.yaml: added niah_eval_freq, niah_num_samples, raw_loader flags",
+            "scripts/launch_lm2_b200_4.sh new (8x L20A torchrun, hydra override escape for glob)"
+        ],
+        "step_at_start": 0,
+        "step_last_checked": 450,
+        "train_loss_at_check": 6.27,
+        "valid_loss_at_check": 6.1,
+        "eta_hours": 6,
+        "notes": "LM2 paper reproduction with NIAH eval injected. Resp. to user: 'LM2可以在B200上运行么? 如果可以你可以在B200上加上NIAH的eval然后运行'. Killed H4 (ratio 0.9933 dead) on b200-4 to free node. First NIAH eval at step 500.",
+        "last_verified": "2026-05-11 11:23 CST"
+    },
+    "memlong_paper_stage1_h20": {
+        "ip": "28.49.48.243",
+        "cluster": "H20 (user-provided)",
+        "name": "h20",
+        "experiment": "memlong_paper_stage1_reproduction",
+        "status": "completed",
+        "started_at": "2026-05-09 12:17 CST",
+        "architecture": "MemLong (Bui1dMySea/MemLong, arXiv:2408.16967) — OpenLLaMA 3B v2 + retrieval-based memory with ret_attn_layers injection",
+        "model": "openlm-research/open_llama_3b_v2",
+        "mem_layer": 13,
+        "ret_attn_layers": [
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25
+        ],
+        "memory_size": 32768,
+        "mem_group_size": 128,
+        "ret_group_size": 8,
+        "seq_len": 1024,
+        "train_mode": "lora-all",
+        "lr": "5e-5",
+        "warmup": 1000,
+        "max_steps": 6940,
+        "dtype": "bfloat16",
+        "n_gpus": 8,
+        "gpu_type": "H20 sm_90",
+        "env": "/opt/conda/envs/MemLong/bin/python (torch 2.5.1+cu124, transformers 4.46.1, faiss-cpu 1.9.0)",
+        "data": "yaofu/slimpajama-per-source-length-upsample 0.5B tokens, chunk=1024",
+        "patches": [
+            "src/align_memory.py: forced faiss-cpu on all GPU-faiss branches (sm_90 has no faiss-gpu binary, all faiss-gpu versions fail GLIBC 2.28 or lack sm_90 kernel)",
+            "Removed flash-attn (MemLong uses eager attention)",
+            "Downgraded huggingface-hub to 0.25.1 to match transformers 4.46.1"
+        ],
+        "log_path": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/MemLong-Reproduce/MemLong/logs/stage1_h20.log",
+        "output_dir": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/MemLong-Reproduce/MemLong/outputs/MemLong_stage1_h20",
+        "launch_script": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/MemLong-Reproduce/MemLong/run_stage1_h20.sh",
+        "speed_s_per_step": 1.8,
+        "step_last_checked": 5001,
+        "progress_pct": 72,
+        "eta_hours": 1.0,
+        "next_stage": "Stage 2 (lora-freeze, paper's main training, ~2h after Stage 1 finishes)",
+        "notes": "Faithful MemLong paper reproduction after the b200-4 attempt failed (PPL=15394 with Llama-3-8B + sm_100 + NaN). H20 was the only path that worked. Cannot use faiss-gpu on sm_90 so went with faiss-cpu — retrieval runs on CPU but model+training on GPU.",
+        "last_verified": "2026-05-11 11:23 CST"
     }
 }

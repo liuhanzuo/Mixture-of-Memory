@@ -4133,3 +4133,650 @@ Training now stable on 8× L20A, grad_accum=8, 906 update steps,
 ~46 hours wall-clock. Previous failed runs: 3× deepspeed NaN collapse,
 4× torchrun silent SIGTERM (FlagEmbedding pool fixed), 2× step-0 NaN
 (RoPE uninitialized — fixed here).
+
+## 2026-05-09 12:22 — MemLong paper reproduction launched on H20 (28.49.48.243)
+
+After b200-4 MemLong baseline crashed (PPL=15394), pivoted to faithful paper reproduction on H20.
+Key differences from b200 attempt:
+- **H20 GPU (sm_90)** instead of B200 (sm_100) — no faiss-gpu support for sm_100
+- **faiss-cpu 1.9.0** (patched align_memory.py to skip all GPU faiss branches)
+- **Paper's exact environment**: torch 2.5.1+cu124, transformers 4.46.1, peft 0.12.0, FlagEmbedding 1.2.11
+- **Paper's exact model**: OpenLLaMA 3B v2 (not Llama-3-8B)
+- **Paper's exact data**: slimpajama-per-source-length-upsample (0.5B tokens, chunk=1024)
+
+Setup completed:
+- Fresh clone of https://github.com/Bui1dMySea/MemLong.git @ 598fdf8
+- Downloaded OpenLLaMA 3B (6.4G), BGE-M3 (4.3G), slimpajama (19G), Llama-2 tokenizer via star-proxy
+- Processed 0.5B tokens via text_processing.py (23377 validation examples, 8 train shards)
+- Smoke test: 5 steps @ ~2s/step, no NaN, loss normal
+- Patched align_memory.py 6 sites to force `if False` on GPU-faiss branches
+
+Stage 1 (lora-all warmup, 8-GPU H20):
+- ret_attn_layers=(14..25), mem_layer=13, seq_len=1024, memory_size=32768
+- Launched 12:17, step 35/6940 at 1.79s/step → ETA ~3.5h
+- All 8 GPUs at 93-96% util, 26GB/97.8GB each (≈27% — room to grow batch but keep paper config)
+- Checkpoint every 500 steps
+- Log: /apdcephfs_zwfy6/share_304376610/pighzliu_code/MemLong-Reproduce/MemLong/logs/stage1_h20.log
+
+Next: wait for Stage 1 completion, then run Stage 2 (lora-freeze main training).
+
+## 2026-05-09 14:25 — LM2 reproduction setup completed on b200-4
+
+User asked to reproduce LM2 (jamie-mcg/lm2, arXiv:2502.06049) with NIAH eval injected.
+Decision: kill H4 (already done) and run LM2 on b200-4 (.134).
+
+Setup:
+- Cloned https://github.com/jamie-mcg/lm2.git → /apdcephfs_wzc1/share_303098609/pighzliu_code/LM2/
+- Downloaded Llama-3.2-1B from unsloth mirror (2.4G) to /apdcephfs_wzc1/share_303098609/pighzliu_code/models/Llama-3.2-1B
+- Identified env: /opt/conda/envs/MemLong/bin/python (transformers 4.46.1, torch 2.7.0+cu128) — needed since transformers 5.x removed _update_causal_mask used by LM2
+- Installed hydra-core + omegaconf into MemLong env
+
+Code changes (LM2 commit df26877):
+1. NEW src/niah_eval.py — passkey-style needle-in-haystack eval, depth+length sweep, returns aggregated stats
+2. NEW src/dataloader_raw.py — load our project's headerless uint32 .npy shards directly (Llama-3 tokenized dolmino-mix)
+3. PATCH train.py — register on_batch_end NIAH callback (rank 0 only); accept `raw_loader` flag
+4. PATCH configs/train.yaml + configs/train/default.yaml — added niah_eval_freq=500, niah_num_samples=24, raw_loader=false
+5. NEW configs/model/llama3.2-1b-local.yaml — local-path Llama-3.2-1B config
+6. NEW scripts/launch_lm2_b200_4.sh — 8x L20A torchrun
+
+Smoke test (1 GPU, 3 iters): PASSED
+- Train loss 12.24 → 11.65, val loss 12.01 → 10.81 over 3 iters
+- NIAH callback fires at iter 2: overall_acc=0.000 loss=11.696 (expected for untrained)
+- Memory module OK, forward+backward OK, ~24GB GPU mem at seq_len=2048
+
+Blocker: b200-4 currently has heartbeat-launched diagnostic_learnable_init (step 60/200, ETA ~14:55).
+Plan: wait for diagnostic to finish, then launch LM2 full run.
+
+LM2 full config:
+- Model: Llama-3.2-1B + memory module (1.77B total params, including 770M memory)
+- batch_size=4 per GPU, seq_len=2048, dtype=bf16, lr=2e-4, warmup=700, max_iters=20000
+- NIAH eval every 500 iters, 24 samples × (3 depths × 1 length=2048)
+- Output: outputs/lm2_b200_4/
+
+## 2026-05-09 15:25 — LM2 NIAH eval bug fixed + relaunched
+
+Bug: NIAH callback at step 500 errored "shape [1,2048,2048] invalid for size 16777216".
+Root cause: `model.memory` is initialized to shape (batch_size=4, 2048, 2048) at training time,
+but NIAH eval sends batch=1 forward. LM2's memory module does internal reshape assuming
+B matches → mismatch.
+
+Fix (LM2 commit 1f4c3d3): `_reshape_memory_to_batch()` re-inits memory to eye(D) at
+batch=1 before each NIAH sample. Verified locally: NIAH runs cleanly, memory shape
+(4,D,D) restored after eval.
+
+Action: killed running LM2 (was at step 600 — fast progress, low loss penalty),
+relaunched. Archived buggy v1 log → `outputs/lm2_b200_4/train_v1_niah_buggy.log`.
+Confirmed: 8x L20A all at 97-100% util, iter 50 loss=9.44 (matches v1 = seed reproducible).
+
+## 2026-05-09 16:25 — MemLong Stage 1 ✅ COMPLETED on H20
+
+100% (6940/6940 steps) in 4h 5m 22s. Final eval **perplexity = 7.167, eval_loss = 1.969**.
+
+This is a 2148× improvement over the failed b200-4 attempt (PPL=15394 with Llama-3-8B + sm_100 + NaN).
+
+Output dir: /apdcephfs_zwfy6/share_304376610/pighzliu_code/MemLong-Reproduce/MemLong/outputs/MemLong_stage1_h20/
+- 14 step checkpoints (step_0..step_6500) + best_checkpoint
+- Final LoRA adapter: adapter_model.safetensors (85 MB)
+- Total disk: 200 GB
+
+## 2026-05-09 16:31 — MemLong Stage 2 launched on H20
+
+Stage 2 = lora-freeze main training, continuing from Stage 1's adapter.
+Config: ret_attn_layers=(13,17,21,25), mem_layer=13, position_type=Zero,
+continual_finetuning, lr=5e-5, warmup=1000, 6940 steps.
+
+Bug encountered + fixed:
+- faiss-cpu IndexFlatIP rejected GPU tensors: `assert hasattr(self, 'getDevice')` failure.
+- Stage 1 didn't hit this because BGE embeddings stayed on CPU there.
+- Stage 2's `--continual_finetuning` path moves embeddings to GPU.
+- Fix: src/align_memory.py — convert `.cpu().numpy()` before faiss.add() and faiss.search();
+  wrap search results back to torch tensors for downstream consumers.
+- Old log archived: logs/stage2_h20_v1_faiss_gpu_tensor_bug.log
+
+Now running: step 30/6940 @ 2.28s/step, 8x H20 at 100% util, ~22GB / 97.8GB per GPU.
+ETA: ~4h22m.
+
+## 2026-05-09 19:00 — H6/H6b launched: LM2-inspired dual-gate writeback
+
+After H5/H5b were killed (ratio regressed monotonically 1.0414 → 1.0610 over 1800 steps),
+combined with deep LM2 paper analysis, we identified the root cause:
+
+H/H5 single-layer middle_layer_memory mode uses **full slot overwrite** (line 750-752 of
+train_cross_attn_memory.py): `self.slot_values[write_layer] = new_slots`. There is no gate
+at all in that path. With cross-chunk slot preservation (the H5 fix), useful needle slots
+got unconditionally replaced by the next chunk's joint-attention output. A single global
+EMA gate β (as used in CrossAttentionMemory and slot_isolated paths) is too coarse —
+no per-slot or per-feature selectivity.
+
+LM2's solution (arXiv:2502.06049, src/memory.py:259-263):
+    M_new = g_in * tanh(content) + g_forget * M_prev
+    g_in, g_forget = sigmoid_split(W_n*content + W_m*M_prev + bias)
+    forget_bias_init=1.0 → g_forget ≈ 0.73 at init (LSTM "remember by default")
+
+Both gates float independently → "fully remember + fully overwrite" or "fully forget +
+write nothing" or any per-feature mix is now learnable.
+
+Implementation (commit 27fefbe):
+- src/memory/mem_space/config.py: use_dual_gate, forget_bias_init, input_bias_init,
+  dual_gate_tanh_new fields.
+- src/memory/mem_space/memory_bank.py: MemoryBank.write() accepts forget_gate; tanh-bound
+  new content replaces manual max_norm clamp.
+- src/memory/mem_space/selector.py: CrossAttentionMemory + V2 extended with dual-gate path.
+- scripts/train_cross_attn_memory.py: dual-gate at the middle_layer_memory write site
+  (the actual H5 path); top-level dual_gate_proj_new/mem/bias join cross_attn_lr group.
+
+Smoke tested locally: forward+backward through dual-gate produces non-zero grad on both
+projections; legacy single-gate path preserved (backward compat for H/H3/H4 etc).
+
+LAUNCHED both arms in parallel:
+- **H6** (b200-1 .143): dual-gate, lambda_retrieve=1.0, niah_mix=0.30 (control vs H)
+- **H6b** (b200-3 .85): dual-gate, lambda_retrieve=2.0, niah_mix=0.50 (NIAH-aggressive)
+
+Both nodes 8x L20A @ 100% util, 65 GB / 183 GB. Step 5 reached.
+Initial baseline ratios: H6=1.1106, H6b=1.1278 (dual-gate adds new params not yet trained).
+
+First eval at step 200 — primary kill criterion: ratio < 1.05 by step 600 (H5 was 1.0414
+at step 600, regressed thereafter; we expect H6 to NOT regress thanks to selective forget).
+
+## 2026-05-09 23:00 — LM2 from-scratch bug 发现 + 全套重训决策
+
+**Root cause**: researcher confirmed LM2's `LlamaMem.from_config()` runs `LlamaForCausalLM.__init__(config)` which **random-inits weights** instead of loading Meta Llama-3.2-1B's 9T-token pretrained checkpoint. Our 20000-step run trained 1.3B tokens on a randomly-initialized 1B model from scratch — completely undertrained. This explains why LM2-iter12000 BABILong AVG = 1% while base Llama-3.2-1B AVG = 22-33%.
+
+**Researcher confidence**: very_high (P0 fix), high (P1 cosmopedia data switch).
+
+**User authorized full rebuild** (2026-05-09 ~23:00).
+
+### Killed
+- b200-2 GPU 0-3: 4 LM2 ckpt eval jobs (PIDs 2934534/2934666/2934805/2934938)
+- b200-2 GPU 4: Llama-3.2-1B baseline eval (was running, partial complete with 22-33% AVG already saved)
+- b200-4: LM2 training at iter ~13800/20000 (mid-stream)
+
+### Next
+1. opus: fix `LlamaMem.from_config()` to load real Meta weights (only memory module random-init)
+2. opus: tokenize cosmopedia-v2 with `data_proc/smollm.py -v cosmo -m llama-3` (research preference)
+3. relaunch LM2 training with cosmo data, 600000 max_iters per official train.sh
+4. H6 wrapper continues independently
+
+## 2026-05-10 00:30 — H series systemic failure root cause
+
+### Findings
+
+All H-series ckpts (H/H2/H3/H4/H5/H5b/H6/H6b) get **0% AVG** on BABILong qa1-5 across all lengths 0k-32k. Direct sample inspection of qa1@4k outputs:
+
+| ckpt | sample output (target=bathroom) |
+|------|--------------------------------|
+| H-step5000 | "Answer\n\nThe/" |
+| H2-step5000 | "Answer, the take the take be be be be..." |
+| H3-step5000 | "Answer, the the be the/" |
+| H4-step3000 | "Answer\n\nSkipSkipSkipSkipSkip..." |
+| H6-step1000 | "Answer to the the the the..." |
+
+All collapse to "Answer + repeating high-freq token". This is the classic NIAH-loss-overpowering-LM-loss failure pattern.
+
+### Root cause hypothesis (high confidence)
+
+`lambda_retrieve >= 1.0` makes niah_loss dominate gradient signal. niah_loss teacher-forces the model to complete needle "12345..." patterns. Combined with `niah_mix_fraction >= 0.30` (30% of training samples have NIAH), this teaches model to ignore real LM context and just generate repetitive tokens.
+
+Comparison: Llama-3-8B base (no fine-tune) gets qa1@8k=23%; our H-step5000 (5000 steps fine-tune) gets 0%. The fine-tune **regressed** the model.
+
+### Next steps
+
+1. Wait for full H series eval completion (~20 min more)
+2. Run paper-released MemoryLLM-8B-chat + Beacon-Qwen2-7B for proper comparison points
+3. Design fixed H7 with: lambda_retrieve=0.1, freeze base model, niah_mix_fraction=0.10
+
+## 2026-05-10 11:18 — H7 also failed; pivoted to H8 (frozen base)
+
+### H7 results
+
+H7 (lambda_retrieve=0.1, niah_mix=0.10) ckpts step_500/1000/1500/2000/2500/3000 all give 0% AVG on qa1@0k/1k/2k. Outputs are "Answer" (truncated, not collapsing to repeating tokens like H6, but still useless).
+
+### Root cause refined
+
+The collapse was NOT primarily NIAH-driven. Even with 10x reduced NIAH supervision, --full_finetune on dolmino-mix wipes Llama-3-8B's instruction-following ability within 500 steps. The mix of:
+1. dolmino-mix is pure pretraining text (no instruction format)
+2. Training format: chunks of 4096 tokens, 32 chunks per doc
+3. Loss = next-token prediction on continuous text
+
+… is too OOD from BABILong's "Question: X. Answer: Y" format. base 8B forgets it knows how to answer questions.
+
+### H8 design (launched 11:17 on b200-1)
+
+**FREEZE base model entirely**. Train only:
+- cross_attn_modules (write @ L16, read @ L18,22,26,30): 64 slots × 4096 hidden
+- dual_gate_proj_new / dual_gate_proj_mem / dual_gate_bias
+
+Total: 67M trainable / 8B (0.83%). Like LoRA-style adapter — base capabilities preserved.
+
+Code change: train_cross_attn_memory.py
+- freeze_base_steps now works for memory_init=strided (not just learnable)
+- Phase 1 optimizer captures all requires_grad params (not just slot_embeddings which doesn't exist for strided)
+- lr scaled to 1e-4 (10x larger than full-finetune lr=5e-6)
+
+### Predictions
+
+If H8 step_500 gives BABILong AVG > 5% (even rough), my hypothesis is correct. If H8 still 0%, the issue is in cross_attn architecture itself (write_lr=0.1, residual_scale=0.01 may be too conservative, or memory not actually retrieving anything).
+
+## 2026-05-10 11:35 — 🚨 H 系列架构最深根因找到
+
+### Researcher confirmed (high confidence)
+
+H 系列 (H1-H8) 的 ckpt **都没有 cross_attn_modules**。原因：
+
+```python
+# train_cross_attn_memory.py:473
+if use_cross_attn_memory and use_memory and not slot_forward and not slot_isolated:
+    self.cross_attn_modules = nn.ModuleList([CrossAttentionMemoryV2(...)])
+else:
+    self.cross_attn_modules = nn.ModuleList()  # ← H 系列走这里!
+```
+
+H 启动脚本一直用 `--slot_forward`，所以条件 False → 空 ModuleList。
+**5000 步训练实际是纯 base 8B fine-tune + 无效的 dual_gate**。
+
+### 三个独立 bug 串联
+
+1. cross_attn_modules 不构建（line 473 的 if 分支错）
+2. dual_gate 路径上有 `.detach()`，梯度切断（dual_gate weight std=0.0064 训 5000 步零位移）
+3. 跨 chunk slot_values 也 `.detach()`
+
+### Killed
+- b200-4 H7 (built on broken code)
+- b200-1 H8 (built on broken code)
+
+### Next
+- 派 opus 修 cross_attn_modules 构建条件 + 移除 detach
+- 重新 launch H9（first real cross-attn memory train）
+
+## 2026-05-10 12:00 — H9 真正启动了
+
+### Commit 0f6b138 fix verified
+
+test_h9_grad_flow.py:
+- Step 0: out_proj grad=0.0009 (LoRA-B 预期)
+- Step 1: dual_gate grad=3.9e-5, q/k/v grad=4.5e-7 (全部解锁)
+
+### H9 launched on b200-1 PID 3282625
+
+- Trainable: **235M** (vs H1-H8 实际只是 base 微调, dual_gate 67M 无梯度)
+- Frozen base 8B (preserve in-context learning)
+- lr=1e-4 (Phase 1 effective 1e-2 with x100 scale)
+- niah_mix=0.30, lambda_retrieve=1.0 (ON 因为现在 NIAH 真能学)
+- chunk_size=4096, 32 chunks/doc, 5000 steps total
+
+ETA step_500: ~30 min (12:30)
+
+## 2026-05-10 13:10 GMT+8 — Killed H11 (b200-3)
+
+SEV-1 架构 bug 发现：`forward_niah_sample` 在 `--slot_forward=True` 下完全跳过 contrastive 路径（L260, L281, L302 三处 `if/elif/not is_slot_forward` 守卫）。所有 H9-H11 contrastive 都是 silent no-op。
+
+- H11 (lambda_retrieve=0.01 + contrastive_weight=5.0) → 实际 = 几乎纯 LM finetune（最严重）→ killed
+- H9/H10 contrastive=1.0 等价于无 contrastive → 保留作为 arch-fix baseline
+- H12 contrastive=0 → 不受影响
+
+下一步：opus 修 contrastive 路径（让 capture_read_attn 在 _forward_middle_layer_memory 里也能传出 read attn weights），然后 b200-3 重启 H11_v2。
+
+## 2026-05-10 13:34 GMT+8 — Launched H11_v2 on b200-3
+
+Commit `461d78c` (claude-opus-4-7 subagent) fixed silent-no-op contrastive. test_contrastive_capture.py PASS.
+
+b200-3 cleared (also killed an unrelated `diagnostic_no_read_layers` orphan run that kept respawning; renamed `launch_diagnostic_no_read_layers.sh` to `.disabled` to prevent recurrence). H11_v2 PID 3220927, lambda_retrieve=0.1, contrastive_weight=5.0.
+
+Diff stat: scripts/train_cross_attn_memory.py +51/-31 lines, test_contrastive_capture.py +189 (new).
+
+## 2026-05-10 14:26 GMT+8 — Cluster Expansion: ephemeral B200 + H20 nodes
+
+User opened 4 ephemeral B200 nodes + plans 4 H20 nodes. Updated:
+- `configs/b200_cluster.ini` — added `[b200_ephemeral]` and `[h20_nodes]` sections, documented filesystem isolation between share_303098609 and share_304376610
+- `configs/password_b200_ephemeral.txt` — new password for ephemeral cluster (mode 600)
+- `configs/remote_experiments.json` — added `_clusters` registry with 3 cluster definitions; current H9-H12 marked
+- `CLAUDE.md` `## 计算资源` section — rewrote to describe 3 clusters with explicit usage rules
+- `HEARTBEAT.md` Step 2 — patrol now checks all 3 clusters with cluster-specific SSH templates; ephemeral SSH timeout policy (3 strikes = node_revoked)
+
+### Ephemeral nodes (b200-5..8)
+IPs: 28.89.18.132, 28.89.18.190, 28.89.20.82, 28.88.184.252. SSH verified, all 4 are L20A 183GB. Mount `share_304376610` (NOT our `share_303098609`). 4 nodes share their mount → rsync once, all 4 see it.
+
+### Setup in progress (background rsyncs)
+- ✅ pip install transformers/accelerate/datasets in `/opt/conda/envs/torch-base` (done)
+- ✅ NIAH npy files (180MB) (done)
+- 🔄 Project code via rsync (PID 3551607, in progress, dragging through 7.5GB .venv)
+- 🔄 Llama-3-8B safetensors via rsync (PID 3552087, in progress, on shard 1 of 4)
+
+ETA ~30min. Once done, b200-5..8 can run BABILong baseline / eval / short trainings.
+
+## 2026-05-10 14:32 GMT+8 — H20 nodes online
+
+4 H20 nodes (28.48.2.147, 28.49.48.243, 28.49.38.97, 28.58.246.254). All verified: NVIDIA H20 97.8GB × 8.
+
+### Important filesystem discovery
+- H20 mounts `/apdcephfs_zwfy6/share_304376610/...` — DIFFERENT cluster from b200 (which mounts `/apdcephfs_wzc1/...`)
+- Despite the same share number "304376610", H20 and ephemeral B200 see **different physical shares** (verified by writing test file on ephemeral, not visible on H20)
+- H20 4 nodes share mount among themselves (rsync once → all 4 see it)
+- `/opt/conda/envs/torch-base` is per-node overlay FS — pip install required on each of 4 H20 nodes
+
+### Setup launched in parallel
+- pip install on h20-1..4 (4 separate jobs)
+- pip install on b200-6/7/8 (only b200-5 had it earlier)
+- rsync project code + Llama-3-8B + NIAH npy to `/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/`
+
+Total background jobs: ~10 simultaneous. ETA ~30 min.
+
+### Total cluster inventory after setup
+- Cluster 1 (original B200): 4 nodes × 8 L20A = **32 GPUs** (training H9-H12)
+- Cluster 2 (ephemeral B200): 4 nodes × 8 L20A = **32 GPUs** (free, may be revoked)
+- Cluster 3 (H20): 4 nodes × 8 H20 = **32 GPUs** (free)
+
+**Total: 96 GPUs** once setup completes. 64 GPUs free for baselines/evals/sweeps.
+
+## 2026-05-10 15:09 GMT+8 — Pushed 14 commits to origin/main
+
+After subagent audit (APPROVED with notes), pushed:
+- 930b320 Q-Filters retirement
+- 211497e cleanup 138 files (sparse/MAG/DMS/RMT v3-v10/selective_context)
+- 461d78c contrastive InfoNCE fix
+- 0f6b138 cross_attn_modules built (the architecture bug fix)
+- 746cd93 truncated BPTT
+- + 9 older commits queued since last push
+
+Range: b626800..930b320 (168 files, +4758/-135)
+No PAT workflow scope error. Push via star-proxy.
+
+## 2026-05-10 16:01 GMT+8 — Ephemeral B200 sm_100 fix + H13/H13b/H14 launched
+
+### Root cause
+ephemeral B200 nodes are NVIDIA L20A reporting CUDA capability sm_100 (Blackwell). Their preinstalled torch-base env had `torch 2.8.0` only built for sm_80/86/87/90 — **CUDA error: no kernel image is available**.
+
+### Fix
+rsync local b200-1 `/opt/conda/envs/torch-base/` (9.2 GB, has `torch 2.9.1+cu128` with sm_70/75/80/86/90/100/120 support + transformers 5.5.4 + matched tokenizers/hub) to all 4 ephemeral nodes via:
+```
+rsync -avz --delete --exclude=__pycache__ --exclude=*.pyc \
+  /opt/conda/envs/torch-base/ root@<ip>:/opt/conda/envs/torch-base/
+```
+4 nodes × 9.2 GB ≈ 37 GB total, ~5 min in parallel.
+
+### Pitfall
+First attempt `pip install --force-reinstall --no-deps torch==2.9.1` broke ABI (libtorch_global_deps.so missing). Second attempt with deps still left `transformers-4.46.3.dist-info` and `tokenizers-0.20.3.dist-info` from earlier install which conflicted with newer rsyncd packages. Fix: full env rsync with `--delete` flag.
+
+### Result
+- H13 (b200-5, slot=128): step 5/5000, doc_ppl=10.8, out_proj_norm=1.88 ✅
+- H13b (b200-6, slot=256): step 30/5000, doc_ppl=9.9, out_proj_norm=1.88 ✅
+- H14 (h20-4, base unfrozen, seq=2048): step 60/5000, doc_ppl=10.7, out_proj_norm=2.05 ✅
+
+### Nodes status
+| Cluster | Use | Status |
+|---------|-----|--------|
+| b200-1..4 (orig) | H9/H10/H11_v2/H12 training | ✅ |
+| b200-5..8 (eph) | H13/H13b training; b200-7/8 spare with sm_100 env ready | ✅ |
+| h20-1..4 | h20-1/h20-2 baselines (Task A); h20-3 watchdog; h20-4 H14 | ✅ |
+
+All 96 GPUs in use or ready.
+
+## 2026-05-10 16:00 — H13/H13b/H14 ablation launches
+
+Launched 3 capacity/freeze ablations on free nodes (b200-1..4 still
+running H10/H12/H13_isolate/H11v2 from earlier):
+
+- **H13_slot128** on b200-5 (28.89.18.132 ephemeral): num_slots 64→128
+  - cmd: launch_experiment_h13_slot128.sh, log experiment_h13_slot128_20260510_1557.log
+  - VRAM 98 GB / 183 GB (54%), 99% GPU util, step 10
+- **H13b_slot256** on b200-6 (28.89.18.190 ephemeral): num_slots 64→256
+  - cmd: launch_experiment_h13b_slot256.sh, log experiment_h13b_slot256_20260510_1549.log
+  - VRAM 117 GB / 183 GB (64%), 99% GPU util, step 50
+- **H14_base_unfrozen** on h20-4 (28.58.246.254): freeze_base_steps 99999→1000
+  - cmd: launch_experiment_h14_base_unfrozen.sh, log experiment_h14_base_unfrozen_20260510_1529.log
+  - seq_len 4096→2048, chunks_per_doc 32→64 (H20 has 97 GB VRAM = half of B200)
+  - VRAM 39 GB / 98 GB (40%), 99% GPU util, step 60
+
+### Setup hurdles addressed during launch
+
+1. **b200-5/6 sm_100 incompat**: pre-installed PyTorch 2.8.0 only supported
+   sm_70..sm_90, but Blackwell L20A is sm_100 → "no kernel image" SIGSEGV.
+   Fixed via `pip install torch==2.9.0 --extra-index-url https://download.pytorch.org/whl/cu128 --proxy http://star-proxy.oa.com:3128`
+   (got 2.9.1+cu128 with sm_100/sm_120 in arch list).
+2. **Cascading dep conflicts after torch upgrade**: tokenizers 0.22.2,
+   huggingface-hub 1.11.0, transformers 5.5.4 broke transformers 4.46.3 APIs.
+   Recovery: `rm -rf` conflict dist-infos and reinstall pinned versions
+   `transformers==4.46.3 tokenizers==0.20.3 huggingface-hub==0.26.5`.
+3. **h20-4 missing dolmino dataset**: rsync'd 25 shards (9.4 GB) from
+   /apdcephfs_wzc1/share_303098609/.../data/dolmino-mix-1124-llama3 to
+   /apdcephfs_zwfy6/share_304376610/pighzliu_code/data/dolmino-mix-1124-llama3.
+
+### Caveat on H13/H13b/H14
+
+All 3 reuse H11v2's contrastive=5.0 + lambda_retrieve=0.1 hyperparams.
+H11v2 itself was just confirmed at step 600 to provide ZERO benefit over
+H12 (1.134 vs 1.131). So contrastive=5.0 is a no-op here — the only
+signals these new runs are getting are LM + (post-warmup, step≥500)
+retrieval λ=0.1. They still test orthogonal hypotheses (capacity scaling,
+base unfreeze) — the contrastive being absent just means they're a
+cleaner test of those two effects.
+
+### Commit
+- `4d62206 feat: add H13/H13b/H14 ablation launch scripts` (3 launch scripts)
+
+## 2026-05-10 17:03 GMT+8 — Bug fix: eval shard silent zeros (commit 8bb5841)
+
+### Bug discovered
+H13/H13b (ephemeral B200) and H14 (H20) reported `base_vanilla_ppl=2620` at step 200 vs original cluster runs (~9.48). 277× factor pointed to data not model.
+
+### Root cause
+`train_cross_attn_memory.py:1985-1988`: when held-out shards (eval_shard_offset..eval_shard_offset+5 = 25..29) didnt exist in --shard_dir, loader silently fell back to `np.zeros((100, seq_len), int32)`. Feeding all-zero token ids to Llama-3-8B → vanilla_ppl=2620 (gibberish but plausible-looking metrics because memory_ratio≈1.0 since both numerator and denominator are gibberish).
+
+### Fix
+1. **Data**: rsyncd shards 25-29 (~2GB) from b200-1 to ephemeral B200 share_304376610 + H20 share_304376610 (different physical share). Both clusters share mount across their 4 nodes.
+2. **Code**: replaced silent fallback with `raise FileNotFoundError`. Also log WARNING when partial shards present (less than args.eval_shards found). Commit 8bb5841 pushed to origin/main.
+3. **Sync**: pushed fixed train_cross_attn_memory.py to both remote clusters.
+4. **Restart**: killed H13/H13b/H14 (~30 min lost), relaunched. New baselines: H13=9.48, H13b=9.48, H14=9.55 — match original cluster ✓
+
+### Pre-existing runs unaffected
+H9/H10/H11_v2/H12 on original cluster (b200-1..4) had all 4698 shards available — never hit the bug. Their metrics are valid.
+
+## 2026-05-11 00:02 GMT+8 — 方案A 完成: H13/H14 BABILong 评估全部 0%
+
+**触发**: 用户 22:30 询问 "有 NIAH>0 的 ckpt 么"，调查发现 BABILong watchdog 缺失 H14/H13 配置。用户 22:35 选择方案 A（修复 watchdog 验证 PPL/NIAH trade-off）。
+
+**操作**:
+1. 派 opus 扩展 watchdog 支持 cluster-2 ephemeral B200 + 加 H13_isolate / H14_isolate_aggr 两个新 EXPERIMENTS（commit `d4f5723`）
+2. h20-3 daemon 重启，state.json reset
+3. 手动预拉 H13_isolate/step_2500.pt (49.6GB) 从 b200-1 + H14_isolate_aggr/step_1500.pt (49.6GB) 从 b200-8 (cluster 2) 到 h20-3
+4. 修复 eval_cross_attn_babilong.py 上 LEN_MAP 的 ValueError (rsync 修过的版本到 h20-3)
+5. 重启 daemon → 4 个 H13 eval (1k/2k/4k/8k, GPU 0-3) 启动
+6. 因 daemon 单线程被 H10 历史 ckpt rsync 阻塞，手动启 4 个 H14 eval (1k/2k/4k/8k, GPU 4-7)
+
+**结果（CRITICAL）**:
+- **H13_isolate step_2500** (PPL 1.035, niah_loss train 0.580): qa1=qa2=qa5=0/30 全 length (1k, 2k, 4k, 8k)
+- **H14_isolate_aggr step_1500** (PPL ~1.013 RECORD, niah_loss train 11.64): qa1=qa2=qa5=0/30 全 length
+
+**解读**:
+PPL/NIAH trade-off 假说被实证否决。training niah_loss 高低（0.58 vs 11.64）和 BABILong qa accuracy 完全脱钩，全部 0%。这不是 trade-off 边界问题，而是整个 H 系列 cross-attn memory 在 bAbI 风格 retrieval 任务上无法 generalize。
+
+**下一步**:
+- 已写 ISSUES.jsonl `issue_planA_niah_zero` (severity: CRITICAL)
+- 派 /researcher 分析 NIAH 训练任务（合成 needle）vs BABILong qa1/qa2/qa5（真实 bAbI tasks）的分布漂移
+- 评估 baseline Llama-3-8B（无 memory）BABILong 准确率作为对照
+
+**文件**:
+- 评估结果: status/babilong_realtime.jsonl (12 条 H10 历史 + 4 条 H13 + 6 条 H14 重复)
+- watchdog 改动: scripts/babilong_ckpt_watchdog.py (commit d4f5723)
+
+
+## 2026-05-11 11:23 — heartbeat remediated stalled H14 + stale watchdog
+- Killed `H14_base_unfrozen` on h20-4 after confirming user stop intent, 8xH20 GPU occupancy, and log staleness since 2026-05-10 16:54.
+- Killed stale `babilong_ckpt_watchdog.py` and leftover rsync on h20-3.
+- Refreshed `status/TRAINER_ACTIVE.md` and `configs/remote_experiments.json` to remove stale `running` state.
+- Reproduction queue remains pending user confirmation: M+ eval on BABILong, ARMT training, then HMT/RMT follow-ups.
+
+## 2026-05-12 04:03 — heartbeat continued H-v2/HMT pipeline
+- Confirmed `H-v2 A` Phase 1 finished on b200-1: `logs/h_v2_phase1_A_b2001.log` reached `50000/50000`, final checkpoint at `outputs/h_v2_phase1_A_b2001/checkpoint_final.pt`, and local 8×GPU were idle.
+- Confirmed `H-v2 B` healthy on b200-4 at step `41070/50000` and `H-v2 D` healthy on b200-3 at step `33350/50000`.
+- Diagnosed b200-2 `HMT` crash: original run died around step `11000` because validation exhausted `valid_gen` and raised `StopIteration` in `third_party/HMT-pytorch/tools/training/train_redpajama.py`.
+- Patched `third_party/HMT-pytorch/tools/training/train_redpajama.py` so validation recreates `valid_gen` on exhaustion and `.pth` resume checkpoints are loaded as plain state_dicts with `module.` prefix stripped.
+- Relaunched `hmt_full` on b200-2 in tmux from `outputs/hmt_pg19_full_b2002/model_weights_10000.pth`; new log is `logs/hmt_pg19_full_b2002_resume10000.log`, output dir `outputs/hmt_pg19_full_b2002_resume10000/`.
+- Refreshed `status/H_V2_PLAN.md`, `status/PENDING_TASKS.md`, and `status/TRAINER_ACTIVITY.jsonl` with the new state.
+- Remaining blocker: repository still does not expose a verified `H-v2 A/B/D Phase 2` BABILong qa1 training launcher; current discoverable paths are eval-only (`scripts/eval_cross_attn_babilong.py`, `scripts/babilong_ckpt_watchdog.py`) or unrelated training flows.
+
+## 2026-05-12 04:13 — heartbeat recheck after HMT recovery
+- Re-checked all required nodes b200-1/2/3/4/5/6/7/8 against `status/H_V2_PLAN.md`.
+- Confirmed `HMT` relaunch is alive on b200-2: tmux `hmt_full` present, 8 worker processes alive, resume log still advancing, observed progress about `173/40000`.
+- Confirmed `H-v2 D` healthy on b200-3 at step `35260/50000` and `H-v2 B` healthy on b200-4 at step `42930/50000`.
+- Confirmed b200-5/6/7/8 remain idle after ARMT full completion; no new auto-launchable task exists there from the current plan.
+- Overwrote `status/TRAINER_ACTIVE.md` to remove stale historical state and reflect the current active H-v2/HMT pipeline accurately.
+- Re-inspected likely Phase 2 candidates (`scripts/FULL_SFT_PLAN.md`, `scripts/train_v4_full_sft.py`, `scripts/launch_v4_full_sft.sh`) and verified they belong to the v4 full-SFT path, not an existing H-v2 A/B/D BABILong Phase 2 launcher.
+
+## 2026-05-12 12:34 — heartbeat confirmed B/D completion and local PG19 tokenization
+- Re-read `status/H_V2_PLAN.md`, `status/PENDING_TASKS.md`, and `CODEBUDDY.md` before acting, per heartbeat policy.
+- Confirmed local `H-v2 A` remained complete and idle on b200-1; log still ends at `50000/50000` with final checkpoint `outputs/h_v2_phase1_A_b2001/checkpoint_final.pt`.
+- Confirmed `HMT` on b200-2 is healthy and much farther along than the prior snapshot: observed resume progress about `15211/40000`, `tmux hmt_full` still present, and 8 worker processes still occupy GPU.
+- Confirmed `H-v2 D` on b200-3 and `H-v2 B` on b200-4 have both finished Phase 1: each log now ends with `50000/50000` plus final checkpoint writes, and both nodes are currently idle.
+- Attempted to re-verify ephemeral b200-5/6/7/8, but this heartbeat's SSH probes returned authentication failure on all four hosts; left their state as "last confirmed complete" instead of inventing fresh status.
+- Verified the local tokenized PG19 dataset expected by H-v2/ARMT is present at `data/armt_pg19_real_tokenized_full/` (~42 GB directory) alongside other PG19 artifacts such as `pg19_chunks_llama3.npy`.
+- Refreshed `status/TRAINER_ACTIVE.md`, `status/H_V2_PLAN.md`, `status/PENDING_TASKS.md`, and `status/TRAINER_ACTIVITY.jsonl` so repo-visible status now reflects A/B/D Phase 1 completion, HMT progress, and the ephemeral-auth caveat.
+- Next execution priority remains unchanged: implement the missing shared `H-v2 A/B/D` Phase 2 BABILong qa1 training path, then launch A first on free b200-1 while HMT continues on b200-2.
+
+## 2026-05-12 12:56 — heartbeat reclassified old ephemeral nodes and rechecked HMT
+- Re-read `HEARTBEAT.md`, `status/H_V2_PLAN.md`, `status/PENDING_TASKS.md`, and `Mixture-of-Memory/CODEBUDDY.md` before acting.
+- Re-checked local b200-1 plus remote b200-2/3/4 directly. Confirmed `H-v2 A/B/D` still all end at `50000/50000` with final checkpoints present, and b200-1/3/4 remain 8×GPU idle.
+- Confirmed `HMT` on b200-2 is still healthy: `tmux hmt_full` alive, 8 worker processes alive, current progress about `15819/40000` from `logs/hmt_pg19_full_b2002_resume10000.log`.
+- User clarified that the historical ephemeral set `b200-5/6/7/8` is not "temporarily SSH-broken" but actually **expired / closed**. Updated status files to treat them as retired nodes rather than active incidents.
+- Updated `status/TRAINER_ACTIVE.md`, `status/H_V2_PLAN.md`, `status/PENDING_TASKS.md`, and `status/TRAINER_ACTIVITY.jsonl` accordingly.
+- Immediate execution picture is now: b200-1/3/4 free, b200-2 busy with HMT, old b200-5/6/7/8 retired, waiting for user-provided replacement 4-IP B200 nodes that will share the current filesystem.
+- No auto-launchable recovery action was needed in this heartbeat beyond status refresh, because the remaining blocker is still the missing shared `H-v2 A/B/D` Phase 2 launcher implementation.
+
+## 2026-05-12 13:05 — replacement B200/H20 inventory activated
+- User provided a replacement 4-IP B200 set plus a new 4-IP H20 set and their passwords.
+- Updated `configs/password_b200_ephemeral.txt` to `xHZ4bniWstPwZ6F,` and `configs/password_h20.txt` to `tJKbs4OBhxbC5yL,`.
+- Verified all replacement B200 nodes are reachable and idle:
+  - `b200-5=28.89.17.104`
+  - `b200-6=28.89.16.108`
+  - `b200-7=28.89.17.47`
+  - `b200-8=28.89.16.60`
+  - All report `NVIDIA L20A 183359 MiB` and can directly see `/apdcephfs_wzc1/share_303098609/pighzliu_code/Mixture-of-Memory/`.
+- Verified all new H20 nodes are reachable and idle:
+  - `h20-1=28.58.244.13`
+  - `h20-2=28.85.54.125`
+  - `h20-3=28.59.5.176`
+  - `h20-4=28.83.52.26`
+  - All report `NVIDIA H20 97871 MiB` and currently see the `zwfy6/share_304376610` tree rather than the main `wzc1/share_303098609` tree.
+- Refreshed `status/TRAINER_ACTIVE.md`, `status/PENDING_TASKS.md`, `status/H_V2_PLAN.md`, and `HEARTBEAT.md` so future heartbeat runs use the new inventory instead of the retired node set.
+- Net effect: we now have 3 currently free original B200 nodes (`b200-1/3/4`), 4 additional free replacement B200 nodes (`b200-5..8`), 1 busy original B200 (`b200-2` running HMT), and 4 free H20 nodes suitable for baseline/eval jobs.
+
+## 2026-05-12 13:16 — queued heartbeat after new-node activation
+- Re-read `status/H_V2_PLAN.md`, `status/PENDING_TASKS.md`, `HEARTBEAT.md`, and `CODEBUDDY.md` before acting.
+- Re-checked b200-1/2/3/4/5/6/7/8 exactly as requested by the queued heartbeat.
+- Confirmed `H-v2 A`, `B`, and `D` remain Phase 1 complete and idle on b200-1/4/3 respectively.
+- Confirmed `HMT` on b200-2 is still alive and has advanced beyond the previous snapshot to about `16411/40000`; no crash and no stalled GPU signature was observed.
+- Confirmed all replacement B200 nodes b200-5/6/7/8 are reachable and idle.
+- Refreshed `status/TRAINER_ACTIVE.md`, `status/PENDING_TASKS.md`, `status/H_V2_PLAN.md`, `status/TRAINER_ACTIVITY.jsonl`, and `configs/remote_experiments.json` to remove remaining stale references to the retired old b200-5..8 IPs and record the new progress.
+- No launch/restart was executed in this heartbeat because the Phase 2 auto-advance remains blocked by the still-missing shared `H-v2 A/B/D` launcher implementation; that implementation work is already in progress in the main session.
+
+## 2026-05-12 13:31 — heartbeat launched H-v2 A/B/D Phase 2
+- Re-read `status/H_V2_PLAN.md`, `HEARTBEAT.md`, `CODEBUDDY.md`, and `status/PENDING_TASKS.md` before acting.
+- Re-checked b200-1/2/3/4/5/6/7/8 exactly as requested by the queued heartbeat.
+- Confirmed `HMT` on b200-2 remains healthy and has advanced to about `17007/40000`; `hmt_full` tmux and 8 worker processes are still alive.
+- Confirmed b200-1, b200-3, and b200-4 were idle with finished Phase 1 checkpoints present; confirmed replacement B200 nodes b200-5/6/7/8 remain reachable and idle.
+- Used the newly validated shared launcher to start:
+  - `H-v2 A Phase 2` on b200-1 via tmux `v2_phase2_A_b2001`
+  - `H-v2 D Phase 2` on b200-3 via tmux `v2_phase2_D_b2003`
+  - `H-v2 B Phase 2` on b200-4 via tmux `v2_phase2_B_b2004`
+- Verified all three new Phase 2 logs entered the `segments=2` curriculum startup and began loading the Llama-3.2-1B base model.
+- Refreshed `status/TRAINER_ACTIVE.md`, `status/PENDING_TASKS.md`, and `status/H_V2_PLAN.md` so repo-visible status now reflects the launched Phase 2 jobs and the latest HMT progress.
+
+## 2026-05-12 23:23 GMT+8 — Heartbeat: M+ aggregated, replacement B200 still blocked
+
+- h20-1 `MPlus-8B` six-wave BABILong run finished with 60/60 csv. Heartbeat refreshed `status/babilong_baselines_h20.json` and merged new baseline data into `status/babilong_results.json`.
+- Aggregation shows `MPlus-8B` scores 0% at every length because every sample hit runtime errors; logs show both `modeling_mplus.py` CPU/CUDA device mismatch and CUDA tensor→numpy conversion failures.
+- stable b200-1..4 remain healthy: H-v2 A/B/D Phase 2 and HMT all continue updating.
+- replacement b200-5..8 remain reachable+idle. b200-5 now has working `.venv + fla + CUDA`, but ARMT relaunch `logs/armt_pg19_full_b2005_20260512_2303.log` still crashes during initial evaluation at `third_party/associative-recurrent-memory-transformer/modeling_amt/language_modeling.py:733` (`past_key_values` is `None`).
+- Status files updated: `status/TRAINER_ACTIVE.md`, `status/H_V2_PLAN.md`, `status/PENDING_TASKS.md`, `status/ISSUES.jsonl`, `status/TRAINER_ACTIVITY.jsonl`.
+
+- 2026-05-13 09:54 CST — heartbeat found b200-2 HMT had finished training but crashed in final eval with StopIteration (`third_party/HMT-pytorch/tools/training/train_redpajama.py`). Patched the final eval/test loops to recycle dataloader iterators and relaunched b200-2 from `outputs/hmt_pg19_full_b2002_resume10000/model_weights_35000.pth` into tmux `hmt_full_resume35000`.
+
+## [2026-05-13 11:58 GMT+8] — Heartbeat refresh: stable B200 healthy, replacement B200 unavailable, M+ semantic bug persists
+
+**Actor**: heartbeat
+**Action**:
+  - Re-checked stable b200-1..4 and confirmed H-v2 A/B/D plus HMT resume35000 are still progressing
+  - Verified the HMT final-eval `StopIteration` fix is present in `third_party/HMT-pytorch/tools/training/train_redpajama.py` and the resumed run has progressed to ~3605/5000
+  - Re-probed replacement B200 pool: b200-5/6/8 returned `Permission denied`, b200-7 returned `Connection refused`; keep pool unavailable for auto-launch
+  - Re-checked h20-1 `MPlus-8B-smoke-fix3`: runtime crash no longer reproduces, but outputs remain punctuation-only (`!!!!!!!!!!!!!!!!!!!!`) so the blocker is now semantic generation, not device mismatch
+  - Refreshed `status/H_V2_PLAN.md`, `status/PENDING_TASKS.md`, and appended `status/TRAINER_ACTIVITY.jsonl`
+
+**Next step**: continue current stable-node training; do not relaunch M+ full wave until the punctuation-only generation bug is fixed; keep replacement B200 out of auto-launch rotation.
+
+## [2026-05-13 12:32 GMT+8] — Heartbeat refresh: stable B200 progressing, replacement B200 unavailable, H20 recheck failed
+
+**Actor**: heartbeat
+**Action**:
+  - Re-checked stable b200-1..4 and confirmed H-v2 A/D/B plus HMT resume35000 are still progressing
+  - Updated progress markers to A=5230, D=5190, B=5260, HMT=4718/5000
+  - Re-probed replacement B200 pool: b200-5/6 returned `Permission denied`, b200-7/8 returned `Connection refused`; keep pool unavailable for auto-launch
+  - Re-probed H20 nodes: h20-1/h20-4 returned `Connection refused`, h20-2/h20-3 returned `Permission denied`; did not change MPlus decision state based on a single failed round
+  - Refreshed `status/H_V2_PLAN.md`, `status/PENDING_TASKS.md`, `status/TRAINER_ACTIVE.md`, and appended `status/TRAINER_ACTIVITY.jsonl`
+
+**Next step**: keep current stable-node training running; keep replacement B200 out of auto-launch rotation; once H20 becomes reachable again, continue direct MPlus diagnosis on live import/source and RoPE re-init execution.
+
+## [2026-05-13 13:19 GMT+8] — Heartbeat refresh: HMT completed, b200-2 repurposed to H-v2 C
+
+**Actor**: heartbeat
+**Action**:
+  - Re-checked stable b200-1/3/4 and confirmed H-v2 A/D/B are still progressing (A=5550, D=5500, B=5580)
+  - Confirmed b200-2 HMT recovery run finished cleanly after the final-eval `StopIteration` fix; final tail shows `PPL on 100 test samples: 11.405261888504029` and the node went idle
+  - Immediately reused the freed stable b200-2 to launch `scripts/v2_phase1/train_v2_C_armt.sh` as `v2_phase1_C_b2002` on port `29613`
+  - Verified tmux, torchrun, and 8 worker processes for H-v2 C are up; first real train/eval progress and GPU ramp are still pending next-heartbeat verification
+  - Re-probed replacement B200 pool: b200-5/6 returned `Permission denied`, b200-7/8 returned `Connection refused`; keep pool unavailable for auto-launch
+  - Re-probed H20 nodes: h20-1/h20-4 returned `Connection refused`, h20-2/h20-3 returned `Permission denied`; MPlus decision state unchanged
+  - Refreshed `status/H_V2_PLAN.md`, `status/PENDING_TASKS.md`, `status/TRAINER_ACTIVE.md`, `status/ISSUES.jsonl`, and appended `status/TRAINER_ACTIVITY.jsonl`
+
+**Next step**: verify H-v2 C on b200-2 reaches its first real train/eval progress; keep current A/B/D running; continue treating replacement B200 as unavailable and H20 as temporarily unreachable for live M+ debugging.
+
+## [2026-05-13 13:33 GMT+8] — Heartbeat refresh: H-v2 C launch env fixed and relaunched on b200-2
+
+**Actor**: heartbeat
+**Action**:
+  - Re-checked stable b200-1/3/4 and confirmed H-v2 A/D/B are still progressing (A=5700, D=5660, B=5730)
+  - Diagnosed b200-2 H-v2 C startup failure from `logs/h_v2_phase1_C_b2002.log`: the initial Phase 1 launch died immediately with `ModuleNotFoundError: No module named 'fla'` because the script defaulted to the project `.venv`
+  - Verified on b200-2 that project `.venv` cannot import `fla`, while `/opt/conda/envs/torch-base/bin/python` can import `torch/transformers/accelerate/fla` plus `modeling_amt.online_armt`
+  - Relaunched `scripts/v2_phase1/train_v2_C_armt.sh` on b200-2 with `PYTHON_BIN=/opt/conda/envs/torch-base/bin/python` under the same tmux session `v2_phase1_C_b2002`
+  - Re-verified b200-2 after relaunch: tmux + torchrun + 8 worker processes are alive again; log has advanced through dataset prep, model weight loading, and `fla.utils` initialization; GPUs rose from 0 MiB to ~1.8 GiB each
+  - Re-probed replacement B200 pool: b200-5/6 returned `Permission denied`, b200-7/8 returned `Connection refused`; keep pool unavailable for auto-launch
+  - Re-probed H20 nodes: h20-1/h20-4 returned `Connection refused`, h20-2/h20-3 returned `Permission denied`; MPlus decision state unchanged
+  - Refreshed `status/H_V2_PLAN.md`, `status/PENDING_TASKS.md`, `status/TRAINER_ACTIVE.md`, `status/ISSUES.jsonl`, and appended `status/TRAINER_ACTIVITY.jsonl`
+
+**Next step**: verify the relaunched H-v2 C run on b200-2 reaches its first real train/eval progress line; keep A/B/D running; continue treating replacement B200 as unavailable and H20 as temporarily unreachable for live M+ debugging.
+
+## [2026-05-13 13:53 GMT+8] — Heartbeat correction: H20 pool is reachable on the newer IP set
+
+**Actor**: heartbeat
+**Action**:
+  - Re-probed H20 using the newer IP set from `HEARTBEAT.md` / `configs/remote_experiments.json` instead of the stale older addresses cited in some status docs
+  - Confirmed all four H20 nodes are reachable and fully idle: `28.58.244.13`, `28.85.54.125`, `28.59.5.176`, `28.83.52.26`
+  - Verified each H20 node can see `/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory` and the shared `models` path
+  - Reconfirmed `MPlus-8B-smoke-fix3` no longer crashes at runtime but still emits punctuation-only output (`!!!!!!!!!!!!!!!!!!!!`), so the remaining blocker is semantic generation / load integrity, not H20 connectivity
+  - Refreshed `status/TRAINER_ACTIVE.md`, `status/H_V2_PLAN.md`, `status/PENDING_TASKS.md`, and appended `status/TRAINER_ACTIVITY.jsonl` to reflect corrected H20 state
+
+**Next step**: treat H20 as available compute again; use it for direct eval/debug jobs, but keep `M+` on the current fail-fast debug path (live import/source + RoPE `inv_freq` re-init verification) instead of blindly rerunning the six-wave full eval.
+
+## [2026-05-13 14:27 GMT+8] — Heartbeat filled H20 with M+ and RMT smoke jobs
+
+**Actor**: heartbeat
+**Action**:
+  - User authorized direct fill, so H20 was switched from idle pool to active eval/debug pool
+  - `h20-1` launched `MPlus-8B-smoke-grid-20260513`: `qa1 × {1k,2k,4k,8k,16k,32k}`, `limit=1`, 6 parallel `eval_baseline_babilong.py --baseline mplus` workers on GPUs 0-5
+  - `h20-2/3/4` launched RMT smoke evals (`PPL / NIH / memory`) against `outputs/rmt_v10_20260419_182044/final`
+  - RMT launch required three environment remediations on H20: sync `legacy/` into the shared mount, switch from `/opt/conda/envs/torch-base` to project `.venv` because `torch-base` lacked `transformers`, and add compatibility shim `src/memory/rmt -> ../../legacy/memory/rmt` because project `src/` shadowed the legacy RMT modules
+  - In parallel, pushed `babilong/` and `data/armt_pg19_real_tokenized_full/` to H20 shared mount over SSH+rsync to unblock future ARMT eval work
+
+**Current state**:
+  - `h20-1`: M+ smoke-grid active
+  - `h20-2`: `logs/rmt_eval_ppl_h20_2_retry3_20260513.log` shows model loading with GPU0 ~15.9 GiB
+  - `h20-3`: `logs/rmt_eval_nih_h20_3_retry3_20260513.log` shows model loading with GPU0 ~15.9 GiB
+  - `h20-4`: `logs/rmt_eval_mem_h20_4_retry3_20260513.log` shows model loading with GPU0 ~15.9 GiB
+
+**Next step**: wait for the three RMT retry3 smokes to clear model load and produce first eval artifacts/log milestones; in parallel, watch whether the M+ smoke-grid reproduces the punctuation-only degeneration on all six lengths.
+
+- 2026-05-13 15:23 CST heartbeat:
+  - b200-2 `H-v2 C Phase 1` relaunch confirmed unhealthy: train progressed to ~step310 but eval emitted persistent `eval_loss=nan` from very early windows through ~epoch 0.028; killed tmux `v2_phase1_C_b2002` and verified node returned idle.
+  - b200-1/b200-3/b200-4 healthy and advancing in `segments=8` (`A~step180`, `D~step160`, `B~step200`).
+  - h20-1 `MPlus-8B-smoke-grid-20260513` rechecked directly on H20 shared mount: all 6 `qa1` lengths output `!!!!!!!!!!!!!!!!!!!!` with `correct=0`; failure mode is punctuation-only generation, not blank strings.
+  - h20-2/3/4 `RMT` retry3 logs rechecked: all failed in `legacy/scripts/eval_rmt.py` with legacy/v10 state_dict mismatch. Additional `legacy/scripts/debug_eval_rmt_v10.py --skip_model` on H20 confirmed `outputs/rmt_v10_20260419_182044` contains valid v10 memory keys, so the blocker is the evaluator entrypoint.
+  - replacement B200 unchanged (`b200-5/6` permission denied, `b200-7/8` connection refused). Launched background researcher/code-review follow-ups for MPlus and RMT eval path triage.

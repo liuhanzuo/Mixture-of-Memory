@@ -73,14 +73,15 @@ torchrun \
     --num_slots 64 \
     --full_finetune \
     --use_memory \
+    --freeze_base_steps 99999 \
     --gradient_checkpointing \
     --gradient_accumulation_steps 4 \
-    --lr 5e-6 \
-    --min_lr 1e-6 \
+    --lr 1e-4 \
+    --min_lr 1e-5 \
     --warmup_steps 200 \
     --max_steps 5000 \
     --eval_interval 200 \
-    --save_interval 1000 \
+    --save_interval 500 \
     --weight_decay 0.01 \
     --max_grad_norm 1.0 \
     2>&1 | tee $LOGFILE

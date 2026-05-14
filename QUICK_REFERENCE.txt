@@ -1,0 +1,278 @@
+================================================================================
+MIXTURE-OF-MEMORY PROJECT — QUICK REFERENCE FOR CI/CD + GIT PLANNING
+================================================================================
+
+📋 PROJECT OVERVIEW
+────────────────────────────────────────────────────────────────────────────
+Research Goal:        Long-context LLM compression (fixed-size KV buffer)
+Status:              Active (v4 chunk memory + cross-attention experiments)
+Code Root:           /apdcephfs_wzc1/share_303098609/pighzliu_code/Mixture-of-Memory/
+Current Best PPL:    2.5-5.8 (vs baseline ~1200-2000)
+Key Constraint:      ⚠️ NO "Co-Authored-By: Claude" in commits
+
+================================================================================
+📂 CRITICAL FILES FOR YOUR SYSTEM
+════════════════════════════════════════════════════════════════════════════
+
+1. CLAUDE.md (336 lines)
+   ├─ Auto-dispatch rules (researcher/coder without user approval)
+   ├─ PENDING_TASKS system (heartbeat input)
+   ├─ Git rules: NO Claude trailers ⚠️
+   ├─ Subagent thresholds: >200 lines → dispatch coder
+   └─ Version management: Every arch change → versions/vN_*.md
+
+2. HEARTBEAT.md (440 lines)
+   ├─ 6-step mandatory checks
+   ├─ Step 0 (CRITICAL): Read PENDING_TASKS.md
+   ├─ Experiment lifecycle automation (close the loop)
+   ├─ Autonomous decision rules
+   └─ Red lines (what NOT to do)
+
+3. status/PENDING_TASKS.md
+   ├─ [PENDING] / [RUNNING] / [DONE] tasks
+   ├─ auto_launch: true/false flag
+   ├─ Node availability table
+   └─ Heartbeat MUST check every cycle
+
+4. versions/vN_*.md
+   ├─ Architecture pseudocode
+   ├─ Initialization values
+   ├─ Related work comparison
+   └─ Known issues
+
+5. .gitignore (86 lines)
+   ├─ Ignores: data/, outputs/, models/, RULER/
+   ├─ Secrets: configs/password*.txt, configs/b200_cluster.ini
+   └─ Submodules: third_party/HMT-pytorch/
+
+================================================================================
+🎯 STATE FILES (Operational Hygiene)
+════════════════════════════════════════════════════════════════════════════
+
+Append-Only (+ correction lines):
+  ├─ status/TRAINER_REQUESTS.jsonl
+  ├─ status/TRAINER_APPROVALS.jsonl
+  ├─ status/RESEARCHER_REPORTS.jsonl
+  ├─ status/ISSUES.jsonl
+  ├─ status/gpu_runs.jsonl
+  ├─ status/TRAINER_ACTIVITY.jsonl
+  └─ UPDATELOG.md
+
+Write-Only (full replace, NO edit):
+  └─ status/TRAINER_ACTIVE.md
+
+Human-Readable Logs:
+  ├─ UPDATELOG.md (277 KB, ~5000+ entries)
+  ├─ RESEARCH_LITERATURE.md (277 KB)
+  └─ ops/research_notes/
+
+================================================================================
+🏗️ CODE STRUCTURE
+════════════════════════════════════════════════════════════════════════════
+
+src/memory/ (Core Engine)
+├─ l1/, l2/, l3/          — Hierarchical memory (L1/L2/L3)
+├─ mag/                   — Memory-Augmented Gating (inactive)
+├─ rmt/                   — Recurrent Memory Transformer (v3-v10)
+├─ dms/                   — Dynamic Memory Sparsification
+├─ sparse/, sparse_memory/— Sparse implementations (abandoned)
+├─ slot/, slot_memory/    — Slot-based compression
+├─ mem_space/             — Attention Matching (current focus)
+├─ qfilters/              — KV cache quantization
+├─ scheduler.py           — Memory operation scheduler
+└─ selective_context.py   — Context pruning
+
+scripts/ (200+ files)
+├─ eval_*.py (50+)        — Evaluation: needle_haystack, NIAH, RULER, PPL
+├─ train_*.py (40+)       — Training: cross_attn, swa, mem_space, slot, rmt
+├─ launch_*.sh (80+)      — Job launchers (remote + local)
+├─ debug_*.py (10+)       — Diagnostics
+└─ prepare_*.py           — Data preprocessing
+
+tests/ (16 files)
+├─ test_l1.py, test_l2.py, test_l3.py
+├─ test_scheduler.py
+├─ test_compressed_memory.py
+├─ test_e2e_compressed_memory.py
+└─ test_*_smoke.py, test_*_parity.py
+
+================================================================================
+🤖 AGENT ARCHITECTURE
+════════════════════════════════════════════════════════════════════════════
+
+CronCreate (every 20 min)
+    ↓
+  /heartbeat (main session)
+    ├─ Step 0: Check PENDING_TASKS.md
+    ├─ Step 1-5: GPU status, remote cluster, requests, training, issues
+    ├─ Step 6: Dispatch researcher/coder (async)
+    └─ Update state files (append + write semantics)
+
+/heartbeat can autonomously:
+  ✓ Kill PPL > 100 training
+  ✓ Kill stalled runs
+  ✓ Auto-launch tasks (auto_launch=true)
+  ✓ Dispatch /researcher and /coder
+  ✓ Execute researcher-confirmed hyperparameter changes
+  ✓ Decide next steps (close experiment loop)
+
+/heartbeat CANNOT:
+  ✗ Kill healthy training
+  ✗ Self-approve TRAINER_REQUESTS
+  ✗ Self-execute without researcher confirmation
+  ✗ Wait after experiment completion
+  ✗ Leave GPU idle + pending tasks
+
+Subagents (/researcher, /coder):
+  ├─ Dispatched by heartbeat (or user)
+  ├─ Result appended to RESEARCHER_REPORTS.jsonl / ISSUES.jsonl
+  ├─ Confidence: high/medium/low
+  ├─ high/very_high confidence → auto-execution allowed
+  └─ No user feedback needed
+
+================================================================================
+⚙️ MULTI-NODE ORCHESTRATION
+════════════════════════════════════════════════════════════════════════════
+
+Hardware:
+  ├─ b200-1 (28.89.17.143)   — 8× L20A, 183 GiB each
+  ├─ b200-2 (28.89.17.144)   — 8× L20A, 183 GiB each
+  ├─ b200-3 (28.89.17.85)    — 8× L20A, 183 GiB each
+  ├─ b200-4 (28.89.19.134)   — 8× L20A, 183 GiB each
+  └─ local (compute node)    — 8× H20, 97.8 GiB each
+
+Isolation Rules:
+  ├─ Same node = 1 serious experiment (8 GPU)
+  ├─ Different nodes = different algorithms (no interference)
+  ├─ Each algorithm: unique config names, output dirs, log files
+  ├─ Parallel coder dispatch: each coder claims specific files/classes
+  └─ Coder coordination via PENDING_TASKS.md to avoid conflicts
+
+Scheduling (heartbeat algorithm):
+  1. Scan idle nodes (GPU util = 0%)
+  2. Scan PENDING_TASKS.md auto_launch=true tasks
+  3. Match tasks to idle nodes
+  4. For code dependencies: dispatch coder first (async), assign node later
+  5. NO idle GPU + pending task allowed
+
+================================================================================
+🔍 CODE REVIEW INTEGRATION POINTS
+════════════════════════════════════════════════════════════════════════════
+
+Current (Manual):
+  ├─ HEARTBEAT Step 6b: Code audit every 4 hours
+  ├─ Researcher dispatch: Root cause analysis on failures
+  ├─ Coder dispatch: Bug fixes with high confidence
+
+For Your CI/CD System:
+  1. ENFORCE: Reject commits with Claude/Anthropic trailers ⚠️
+  2. VALIDATE: Require versions/vN_*.md for src/memory/ changes
+  3. CHECKLIST: Use HEARTBEAT Step 6b as code review template
+  4. LLM DISPATCH: Auto-trigger researcher on high PPL (>100)
+  5. SEMANTIC ANALYSIS: Flag "changes memory semantics" patterns
+  6. APPEND-ONLY: Keep UPDATELOG.md for commit context
+
+Researcher Checklist (from HEARTBEAT.md Step 6b):
+  ☑ Numerical precision issues (float32 vs float64)
+  ☑ Tensor shape mismatches
+  ☑ Gradient clipping bugs
+  ☑ Memory semantics vs design doc
+  ☑ Eval symmetry (vanilla_ppl vs memory_ppl)
+  ☑ Ratio false positives (eval doesn't corrupt vanilla baseline)
+
+================================================================================
+📊 KEY METRICS
+════════════════════════════════════════════════════════════════════════════
+
+Python Modules:        ~70 files (src/)
+Training Scripts:      40+
+Evaluation Scripts:    50+
+Launcher Scripts:      80+
+Test Files:            16
+Total Code Lines:      ~200K+
+Documentation:         277 KB
+Operation Log:         277 KB (5000+ entries)
+
+Infrastructure:
+  ├─ Remote GPUs:  32 (4 nodes × 8 L20A)
+  ├─ Local GPUs:   8 (H20)
+  ├─ Max Memory:   32×183 + 8×97.8 = 6024 GiB total
+  └─ Nodes:        5 independent
+
+Data & Artifacts:
+  ├─ Datasets:    40 GB
+  ├─ Logs:        43 GB
+  ├─ Checkpoints: 496 GB
+  ├─ Git:         2.4 GB
+  ├─ Venv:        8 GB
+  └─ Total:       ~600 GB
+
+Current Experiments (2026-05-05):
+  ├─ [RUNNING] unleashed_cross_attn (b200-2/3)
+  │  └─ Ratio: 0.9980-0.9995 (architecture ceiling ~0.998)
+  ├─ [IDLE] b200-1
+  └─ [IDLE] b200-4
+
+Best Results:
+  ├─ PPL: 2.5-5.8 @ step 300 (v3 Infini-attention)
+  ├─ Cross-attn ratio: 0.9982 (first success!)
+  ├─ Training time: ~44 hours (2000 steps on B200)
+  └─ GPU utilization: 92-98%
+
+================================================================================
+✅ CHECKLIST FOR GIT + CI/CD + LLM CODE REVIEW SYSTEM
+════════════════════════════════════════════════════════════════════════════
+
+Immediate (Week 1):
+  ☐ Read CLAUDE.md + HEARTBEAT.md (full)
+  ☐ Understand PENDING_TASKS.md structure
+  ☐ Map state file semantics (append-only, write-only)
+  ☐ Identify commit-message validation point (no Claude trailers)
+  ☐ Set up GitHub Actions to mirror heartbeat checks
+
+Medium-term (Week 2-3):
+  ☐ Structured researcher dispatch prompts (checklist-based)
+  ☐ Structured coder dispatch prompts (isolation rules)
+  ☐ Version doc validation on commits
+  ☐ Experiment tracking sync (JSONL → external DB)
+  ☐ PPL anomaly detection (>100 = escalate)
+
+Long-term (Month 1+):
+  ☐ Semantic code change tracking
+  ☐ LLM root-cause analysis pipeline
+  ☐ Checkpoint validation before evals
+  ☐ Multi-branch CI matrix (parallel algorithms)
+  ☐ Auto-commit from UPDATELOG.md entries
+
+================================================================================
+🎓 KEY LEARNINGS
+════════════════════════════════════════════════════════════════════════════
+
+1. **No Hybrid State**: CLAUDE.md explicitly forbids "Co-Authored-By: Claude"
+   → Your CI/CD must detect and reject these
+
+2. **Forced Closure**: Heartbeat MUST decide next step immediately (no waiting)
+   → LLM-powered agent loops need strong accountability
+
+3. **Isolation by Design**: Parallel algorithms need config namespacing
+   → Your multi-coder dispatch needs namespace awareness
+
+4. **Append-Only Safety**: Correction lines instead of edits prevent conflicts
+   → Consider this for distributed CI/CD logging
+
+5. **PPL as Signal**: PPL>100 = model broken (not just bad retrieval)
+   → Your LLM code review needs domain knowledge about failure modes
+
+6. **Version Docs Mandatory**: Every architecture change → versions/vN_*.md
+   → Your code review should enforce architecture documentation
+
+7. **Heartbeat IS Main**: No background entity waiting; each session is fresh
+   → Your orchestration can be stateless + request-driven
+
+================================================================================
+
+For full details, read:
+  → EXPLORATION_REPORT.md (446 lines, in project root)
+  → CLAUDE.md (336 lines)
+  → HEARTBEAT.md (440 lines)
+

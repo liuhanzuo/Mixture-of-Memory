@@ -3152,3 +3152,83 @@ No successful MoE / slot-memory system in 2023-2025 literature uses geometric ke
 **"Key geometry should align with query distribution, NOT maximize pairwise key diversity."**
 
 See: `ops/research_notes/20260430_0520_fix_x_skrl_anti_productive.md`
+
+---
+
+## 2026-05-12 Heartbeat refresh — post-M+ and H-v2 D
+
+**Context checked**:
+- `M+` is still the active H20-side blocker; once it reaches 60/60 csv, the plan's P0 is no longer more eval, but immediate baseline aggregation.
+- Stable B200 `b200-1..4` are occupied by healthy runs; replacement B200 `b200-5..8` are reachable but not ready for Mixture-of-Memory auto-launch because of mount mismatch + missing `fla`.
+
+**Highest-value action immediately after `M+` reaches 60/60 csv**:
+- **Immediately refresh the combined baseline summary** (`MPlus-8B` + already-finished `MemoryLLM-8B-chat`, alongside existing baselines) before launching any new eval.
+- Reason: this converts raw csv completion into a decision-ready scoreboard, avoids another "raw complete but summary stale" gap, and gives the clearest target for H-v2 follow-up decisions at minimal cost.
+
+**Re-check of D follow-up**:
+- **Yes — D's `qa1+qa2+qa3` multi-task follow-up is still the best next new training-side arm**, but it should be queued behind the current healthy D Phase 2 run rather than preempting it.
+- Reason: relative to another `qa1-only` extension, the multi-task mix is the most direct way to attack the already-identified task/instruction distribution gap while staying on the strongest current H-series recipe (`cross-attn slots + LoRA`).
+
+**Not the immediate next move**:
+- ARMT / RMT / C follow-up on replacement B200, because that lane is still blocked by environment readiness rather than by missing experimental priority.
+
+**Confidence**:
+- **High** on "aggregate immediately after 60/60 csv".
+- **Medium-high** on "D → `qa1+qa2+qa3` is still the best next training-side follow-up".
+
+## 2026-05-13 H-v2 refresh — curriculum & task-format alignment for BABILong
+
+**Why now**: H-v2 A/D Phase 2 are running on b200-1/3/4 with the recipe "PG19 LM pretrain → BABILong fine-tune" (per ARMT). The known v1 root cause was twofold: (1) Llama-3 base does not follow instructions, (2) NIAH train/eval distribution mismatch with BABILong. Phase 2 only addresses (1)+(2) at the data-mixture level; the **curriculum and task-format** level is still under-utilized and is where ARMT/RMT/BABILong-bench papers extract most of their gains.
+
+### 1. ARMT/RMT BABILong fine-tuning recipe — what we have not yet copied
+
+From the ARMT BABILong scripts (`third_party/associative-recurrent-memory-transformer/scripts/babilong/*.sh`) and the ARMT/RMT BABILong papers (Bulatov 2023; Rodkin 2024):
+
+- **Length curriculum is mandatory, not optional.** ARMT's published recipe trains on `qa1` first at 4k, then progressively raises segment count (4k → 16k → 64k → ≥128k) with the same `qa` task before introducing other `qa*`. RMT does the same. Skipping the short-length warmup is the single most cited cause of "non-zero PPL but 0% BABILong accuracy".
+  - Implication for **D (`qa1+qa2+qa3` multi-task follow-up)**: do **not** mix `qa2`/`qa3` from step 0. Run `qa1` only for the first ~25-50% of the budget at 4k, then add `qa2`/`qa3` while simultaneously stepping length up. This matches both ARMT's curriculum and the BABILong-bench finding that joint multi-task at full length collapses.
+- **Answer-only loss masking.** ARMT/RMT compute LM loss **only on the answer tokens** (after `\nAnswer:`), not on the whole BABILong prompt. Without this, the model spends most of the loss budget reconstructing distractor sentences and never learns to "look up the supporting fact". Worth checking that H-v2 A/D's BABILong head is doing this; if it is computing loss over the full sequence, that alone can explain a big chunk of the v1 0% result even after Phase 2 adaptation.
+- **Eval template must match training template exactly.** BABILong eval prompts use a fixed `Question: ... \nAnswer:` suffix. Any drift (extra system prompt, different newline, different "Answer:" capitalization) drops accuracy by 10-30 absolute points in the Beacon and ARMT papers. This is cheap to verify and has high payoff.
+
+### 2. Cross-chunk memory training tricks (relevant to A/D's cross-attn slots)
+
+- **Detach-on-write vs through-write.** ARMT/RMT both pass gradients **through** the recurrent memory across chunks (BPTT through 2-4 chunks at minimum). HMT explicitly trains with a 2-chunk BPTT window. If H-v2 A/D's slot write path is detached at the chunk boundary (e.g., `memory = memory.detach()` between chunks), the slots can never learn to **carry** information across chunks — the cross-attn read path will only ever see whatever a single chunk wrote. This is the "write_lr=1.0 broke gradient" failure mode we've already hit once on H-series; it is worth re-confirming it is not silently re-introduced for A/D.
+- **Curriculum on number of chunks, not just sequence length.** ARMT specifically schedules `num_segments` (1 → 2 → 4 → 8 → 16) rather than raw `seq_len`, because that is what stresses the memory mechanism. Sequence length alone can be padded into a single chunk and never exercises memory. For A/D this means: at fixed `chunk_size`, ramp `chunks_per_doc` from 2 upward; do not jump straight to the full 16 or 32 at the start of Phase 2 BABILong fine-tune.
+- **Mixing PG19 LM loss into the BABILong fine-tune phase.** ARMT keeps a small PG19 LM loss (≈10-20% of the batch) during BABILong fine-tune to prevent catastrophic forgetting of fluent language modeling. Beacon does the same (mixed corpus + retrieval task). Pure BABILong fine-tune from a PG19-only pretrain tends to degrade fluency, which then shows up as 0% accuracy because the answer head produces malformed tokens. This is a cheap mix to add to D if its current Phase 2 is BABILong-only.
+
+### 3. Practical priority for H-v2 (compact)
+
+Given A/D Phase 2 are already running and replacement B200 / H20 M+ are blocked on environment/runtime issues, the **highest-leverage low-cost checks** before any new training arm are:
+
+1. **Verify answer-only loss masking** in H-v2 A/D's BABILong fine-tune path. (read-only check, no retrain needed)
+2. **Verify eval prompt template** matches training template exactly (read-only check).
+3. **Verify the slot write path is not detached across chunks** (read-only check; high prior given prior `write_lr` incident).
+4. **For D's queued `qa1+qa2+qa3` follow-up**: schedule it as `qa1` warmup → add `qa2`/`qa3`, with explicit `num_segments` ramp, not joint-from-step-0.
+
+These four checks together address the most likely remaining causes of "Phase 2 still 0% despite correct base + correct data domain", and none of them require new compute.
+
+## 2026-05-13 MPlus follow-up — punctuation-only generation is most likely a RoPE buffer integrity bug
+
+**Context checked**:
+- The current MPlus blocker is no longer a loader crash but punctuation-only generations (`!!!!!!!!!!`) on BABILong qa1.
+- The repo imports `modeling_mplus` from the local MemoryLLM source path in `scripts/eval_baseline_babilong.py:413-427`.
+- Existing smoke output already shows the failure mode directly: `babilong_results/MPlus-8B-smoke/qa1_0k_instruction_yes_examples_yes_post_prompt_yes_chat_template_yes_system_prompt_no.csv:2` = `bathroom,!!!!!!!!!!!!!!!!!!!!,...`.
+
+### 1. Most likely root cause for repeated `!`
+
+- **Highest-prior diagnosis: corrupted / uninitialized RoPE `inv_freq`, not mainly prompt formatting.** In the imported MPlus source, `LlamaRotaryEmbedding` creates `inv_freq` via `rope_init_fn(...)` and registers it with `persistent=False` (`../MemoryLLM-source/modeling_mplus.py:202-207`), then uses it to build rotary `cos/sin` in forward (`../MemoryLLM-source/modeling_mplus.py:227-248`), and attention consumes those tensors via `apply_rotary_pos_emb` (`../MemoryLLM-source/modeling_mplus.py:283-307`). If `from_pretrained` + meta-device loading leaves that non-persistent buffer invalid, attention geometry collapses and generation degenerates to a single token; the eval script's own comment explicitly documents token-0 / `!` collapse from this path (`scripts/eval_baseline_babilong.py:560-590`).
+- **Prompt mismatch is lower prior.** The current eval path already uses the pretrained README-style prompt (`Question: ... Answer:` with `add_special_tokens=False`) for MPlus (`scripts/eval_baseline_babilong.py:628-659`), and the official chat example separately confirms that BOS stripping matters only for the chat variant (`scripts/run_babilong_memoryllm.py:128-147`). Since the observed failure is punctuation-only rather than semantically wrong answers, runtime RoPE corruption has much higher prior than template drift.
+
+### 2. Highest-value next step for the exact current state
+
+1. **Treat MPlus as a load-integrity bug first, not an eval-format bug.** Before launching another full H20 wave, add or enforce a fail-fast post-load sanity check: after the RoPE re-init block, assert `inv_freq` is finite/non-meta and its first few entries have sane descending values, then run a 1-sample no-memory generation sanity prompt. If that prompt still emits punctuation-only output, stop immediately and debug source/import mismatch instead of spending more eval time.
+2. **Verify the live H20 run is actually executing the patched code path.** If current qa1/1k and qa1/16k still emit `!` even though the repo contains the re-init workaround, the most likely explanations are: (a) the live H20 script copy predates `scripts/eval_baseline_babilong.py:560-590`, or (b) the runtime imported a different `modeling_mplus.py` than expected. So the next check should be the actual runtime stdout/import path, not more prompt ablations.
+
+### 3. Implication for H-v2 D follow-up
+
+- **Yes — D should finish the current qa1 curriculum before the multi-task `qa1+qa2+qa3` follow-up.** This is still the best next training-side arm, but only **after** the current healthy D phase completes; do not preempt it while stable B200 `b200-1..4` are already occupied and replacement B200 nodes are unavailable.
+- **When D follow-up launches, keep the curriculum shape:** `qa1` warmup first, then add `qa2`/`qa3` together with a `num_segments` ramp. ARMT/RMT-style evidence still argues against joint-from-step-0 multitask.
+
+**Confidence**:
+- **High** on "MPlus punctuation-only output is primarily a RoPE `inv_freq` integrity bug or a failure of that workaround to execute on the live import path".
+- **Medium-high** on "finish current D qa1 curriculum before launching the queued multi-task follow-up".
+

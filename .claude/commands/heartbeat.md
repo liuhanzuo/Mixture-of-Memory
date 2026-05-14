@@ -1,9 +1,5 @@
 ---
-model: glm-5.1
----
-
----
-model: glm-5.1
+model: claude-haiku-4-5
 ---
 
 # /heartbeat — 自动巡检 + 工作路由
