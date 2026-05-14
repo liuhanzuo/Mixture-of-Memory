@@ -1,0 +1,416 @@
+{
+  "metadata": {
+    "generated_at": "2026-05-15T05:54:00+08:00",
+    "scoring_metric": "babilong.metrics.compare_answers (official, label-aware, first-sentence)",
+    "samples_per_cell": 100,
+    "tasks": [
+      "qa1",
+      "qa2",
+      "qa5"
+    ],
+    "lengths": [
+      "0k",
+      "1k",
+      "2k",
+      "4k",
+      "8k",
+      "16k",
+      "32k"
+    ],
+    "models": {
+      "mem_space + Instruct": "Llama-3-8B-Instruct + outputs/champion_ckpt/mem_space_adapter.pt (chunked path)",
+      "vanilla 8B-Inst": "Meta-Llama-3-8B-Instruct (no memory)",
+      "Beacon-Qwen2-7B": "namespace-Pt/beacon-qwen-2-7b-instruct (reference)"
+    }
+  },
+  "by_cell": {
+    "qa1": {
+      "0k": {
+        "mem_space": {
+          "correct": 95,
+          "total": 100,
+          "acc": 95.0
+        },
+        "vanilla": {
+          "correct": 98,
+          "total": 100,
+          "acc": 98.0
+        },
+        "beacon": {
+          "correct": 94,
+          "total": 100,
+          "acc": 94.0
+        }
+      },
+      "1k": {
+        "mem_space": {
+          "correct": 92,
+          "total": 100,
+          "acc": 92.0
+        },
+        "vanilla": {
+          "correct": 90,
+          "total": 100,
+          "acc": 90.0
+        },
+        "beacon": {
+          "correct": 91,
+          "total": 100,
+          "acc": 91.0
+        }
+      },
+      "2k": {
+        "mem_space": {
+          "correct": 91,
+          "total": 100,
+          "acc": 91.0
+        },
+        "vanilla": {
+          "correct": 89,
+          "total": 100,
+          "acc": 89.0
+        },
+        "beacon": {
+          "correct": 88,
+          "total": 100,
+          "acc": 88.0
+        }
+      },
+      "4k": {
+        "mem_space": {
+          "correct": 82,
+          "total": 100,
+          "acc": 82.0
+        },
+        "vanilla": {
+          "correct": 85,
+          "total": 100,
+          "acc": 85.0
+        },
+        "beacon": {
+          "correct": 90,
+          "total": 100,
+          "acc": 90.0
+        }
+      },
+      "8k": {
+        "mem_space": {
+          "correct": 32,
+          "total": 100,
+          "acc": 32.0
+        },
+        "vanilla": {
+          "correct": 69,
+          "total": 100,
+          "acc": 69.0
+        },
+        "beacon": {
+          "correct": 76,
+          "total": 100,
+          "acc": 76.0
+        }
+      },
+      "16k": {
+        "mem_space": {
+          "correct": 19,
+          "total": 100,
+          "acc": 19.0
+        },
+        "vanilla": {
+          "correct": 0,
+          "total": 100,
+          "acc": 0.0
+        },
+        "beacon": {
+          "correct": null,
+          "total": 0,
+          "acc": null
+        }
+      },
+      "32k": {
+        "mem_space": {
+          "correct": 14,
+          "total": 100,
+          "acc": 14.0
+        },
+        "vanilla": {
+          "correct": 0,
+          "total": 100,
+          "acc": 0.0
+        },
+        "beacon": {
+          "correct": null,
+          "total": 0,
+          "acc": null
+        }
+      }
+    },
+    "qa2": {
+      "0k": {
+        "mem_space": {
+          "correct": 41,
+          "total": 100,
+          "acc": 41.0
+        },
+        "vanilla": {
+          "correct": 44,
+          "total": 100,
+          "acc": 44.0
+        },
+        "beacon": {
+          "correct": 57,
+          "total": 100,
+          "acc": 57.0
+        }
+      },
+      "1k": {
+        "mem_space": {
+          "correct": 38,
+          "total": 100,
+          "acc": 38.0
+        },
+        "vanilla": {
+          "correct": 41,
+          "total": 100,
+          "acc": 41.0
+        },
+        "beacon": {
+          "correct": 51,
+          "total": 100,
+          "acc": 51.0
+        }
+      },
+      "2k": {
+        "mem_space": {
+          "correct": 43,
+          "total": 100,
+          "acc": 43.0
+        },
+        "vanilla": {
+          "correct": 47,
+          "total": 100,
+          "acc": 47.0
+        },
+        "beacon": {
+          "correct": 49,
+          "total": 100,
+          "acc": 49.0
+        }
+      },
+      "4k": {
+        "mem_space": {
+          "correct": 41,
+          "total": 100,
+          "acc": 41.0
+        },
+        "vanilla": {
+          "correct": 44,
+          "total": 100,
+          "acc": 44.0
+        },
+        "beacon": {
+          "correct": 40,
+          "total": 100,
+          "acc": 40.0
+        }
+      },
+      "8k": {
+        "mem_space": {
+          "correct": 14,
+          "total": 100,
+          "acc": 14.0
+        },
+        "vanilla": {
+          "correct": 37,
+          "total": 100,
+          "acc": 37.0
+        },
+        "beacon": {
+          "correct": 36,
+          "total": 100,
+          "acc": 36.0
+        }
+      },
+      "16k": {
+        "mem_space": {
+          "correct": 6,
+          "total": 100,
+          "acc": 6.0
+        },
+        "vanilla": {
+          "correct": 1,
+          "total": 100,
+          "acc": 1.0
+        },
+        "beacon": {
+          "correct": null,
+          "total": 0,
+          "acc": null
+        }
+      },
+      "32k": {
+        "mem_space": {
+          "correct": 0,
+          "total": 100,
+          "acc": 0.0
+        },
+        "vanilla": {
+          "correct": 0,
+          "total": 100,
+          "acc": 0.0
+        },
+        "beacon": {
+          "correct": null,
+          "total": 0,
+          "acc": null
+        }
+      }
+    },
+    "qa5": {
+      "0k": {
+        "mem_space": {
+          "correct": 73,
+          "total": 100,
+          "acc": 73.0
+        },
+        "vanilla": {
+          "correct": 76,
+          "total": 100,
+          "acc": 76.0
+        },
+        "beacon": {
+          "correct": 84,
+          "total": 100,
+          "acc": 84.0
+        }
+      },
+      "1k": {
+        "mem_space": {
+          "correct": 72,
+          "total": 100,
+          "acc": 72.0
+        },
+        "vanilla": {
+          "correct": 74,
+          "total": 100,
+          "acc": 74.0
+        },
+        "beacon": {
+          "correct": 89,
+          "total": 100,
+          "acc": 89.0
+        }
+      },
+      "2k": {
+        "mem_space": {
+          "correct": 65,
+          "total": 100,
+          "acc": 65.0
+        },
+        "vanilla": {
+          "correct": 63,
+          "total": 100,
+          "acc": 63.0
+        },
+        "beacon": {
+          "correct": 86,
+          "total": 100,
+          "acc": 86.0
+        }
+      },
+      "4k": {
+        "mem_space": {
+          "correct": 75,
+          "total": 100,
+          "acc": 75.0
+        },
+        "vanilla": {
+          "correct": 70,
+          "total": 100,
+          "acc": 70.0
+        },
+        "beacon": {
+          "correct": 78,
+          "total": 100,
+          "acc": 78.0
+        }
+      },
+      "8k": {
+        "mem_space": {
+          "correct": 58,
+          "total": 100,
+          "acc": 58.0
+        },
+        "vanilla": {
+          "correct": 60,
+          "total": 100,
+          "acc": 60.0
+        },
+        "beacon": {
+          "correct": 63,
+          "total": 100,
+          "acc": 63.0
+        }
+      },
+      "16k": {
+        "mem_space": {
+          "correct": 44,
+          "total": 100,
+          "acc": 44.0
+        },
+        "vanilla": {
+          "correct": 1,
+          "total": 100,
+          "acc": 1.0
+        },
+        "beacon": {
+          "correct": null,
+          "total": 0,
+          "acc": null
+        }
+      },
+      "32k": {
+        "mem_space": {
+          "correct": 31,
+          "total": 100,
+          "acc": 31.0
+        },
+        "vanilla": {
+          "correct": 0,
+          "total": 100,
+          "acc": 0.0
+        },
+        "beacon": {
+          "correct": null,
+          "total": 0,
+          "acc": null
+        }
+      }
+    }
+  },
+  "summary": {
+    "short_context_0k_to_4k": {
+      "mem_space_avg": 67.3,
+      "vanilla_avg": 68.4,
+      "beacon_avg": 74.8
+    },
+    "mid_context_8k": {
+      "mem_space_avg": 34.7,
+      "vanilla_avg": 55.3,
+      "beacon_avg": 58.3
+    },
+    "long_context_16k_to_32k": {
+      "mem_space_avg": 19.0,
+      "vanilla_avg": 0.3,
+      "beacon_avg": null
+    },
+    "win_cells": [
+      "qa1/16k",
+      "qa1/32k",
+      "qa2/16k",
+      "qa5/16k",
+      "qa5/32k"
+    ],
+    "key_finding": "mem_space adapter + Llama-3-8B-Instruct retains language coherence at 16k+ context where vanilla 8B-Instruct produces gibberish (RoPE position-encoding limit 8192). Long-context average win: mem_space 19.0% vs vanilla 0.3% = +18.7 pp."
+  }
+}

@@ -4865,3 +4865,27 @@ PPL/NIAH trade-off 假说被实证否决。training niah_loss 高低（0.58 vs 1
 - Beacon reference: `babilong_results/Beacon-Qwen2-7B-full-repro/` (15 cells 0k-8k)
 
 **Decision pending from user**: commit+push results / launch Fix 2 SFT / lenient match rescoring.
+
+## [2026-05-15 05:25 GMT+8] ✅ Push to origin/main APPROVED + COMPLETED
+
+**Push summary**: 6 commits pushed (`266c183..12b8e88 main -> main`), via star-proxy.
+
+**Critical pre-push remediation**:
+- Subagent general-purpose-12 caught plaintext SSH password `<REDACTED-SEE-configs/password_h20_nodes.txt>` in `.claude/commands/heartbeat.md` lines 51 + 177 (commit 33786b2)
+- main remediated: created `configs/password_h20_nodes.txt` (gitignored), rewrote heartbeat.md to reference file path via `cat`, then `git commit --amend` → new hash `12b8e88` (no history pollution)
+- Subagent general-purpose-13 re-reviewed: 0 hits for password, APPROVED.
+
+**Pushed contents**:
+- `12b8e88` BABILong 21-cell eval results + heartbeat refactor
+- `645b493`, `3f2b850` node-2 baseline launchers
+- `59a39c2` mem_space.memory_bank dtype fix (bf16/fp32 scatter)
+- `51b1043` BABILong SFT pipeline (Fix 2)
+- `5ad010d` BABILong mem_space eval wrapper
+
+**Lessons learned**:
+- NEVER write actual passwords/tokens/API-keys in any git-tracked file (including .md, .json, .jsonl, .sh, .py). Always use `configs/password_*.txt` (gitignored).
+- Subagent review is non-optional — caught a security incident before public exposure.
+- Use `git commit --amend` for in-commit secret removal, not a follow-up "delete secret" commit (history pollution).
+
+**Suspicion note (not on remote)**: `.git/config` remote URL embeds a `ghp_*` GitHub PAT. This is NOT in any commit (git never pushes `.git/config`), but the token is visible in any shell that runs `git remote get-url origin`. User may want to rotate this token if concerned about local exposure.
+
