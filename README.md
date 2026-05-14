@@ -92,12 +92,23 @@ cd mom-agent
 python -m venv .venv
 source .venv/bin/activate
 
-# 3. 安装项目 (可编辑模式, 含开发依赖)
-pip install -e ".[dev]"
+# 3. 一键安装 (Python 包 + 第三方仓库)
+bash scripts/setup.sh
 
-# 或使用 requirements.txt
-pip install -r requirements.txt
+# —— 或者手动执行 ——
+# 3a. 安装项目 (可编辑模式, 含开发依赖)
+pip install -e ".[dev]"
+# 3b. 拉取第三方仓库 (MemLong / HMT / RMT / ARMT)
+bash scripts/setup_third_party.sh
+
+# 4. 准备数据 (大语料不在 git 中, 见脚本注释)
+bash scripts/setup_data.sh
 ```
+
+> **说明**: 大体量产物 (数据 `data/`、缓存 `cache/`、检查点 `checkpoints/`、
+> BABILong 结果 `babilong_results/`、第三方依赖 `MemLong/` 等) **不进 git**,
+> clone 之后通过上面的 `setup_*.sh` 脚本准备。
+
 
 ---
 

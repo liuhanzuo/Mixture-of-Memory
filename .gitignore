@@ -83,3 +83,36 @@ third_party/recurrent-memory-transformer/
 # Misc
 nohup*.out
 debug_run.sh
+
+# Secrets (extra)
+configs/password_*.txt
+configs/*.tmp
+*.append.tmp
+
+# Large local artifacts (not tracked, fetched via setup scripts)
+MemLong/
+cache/
+checkpoints/
+babilong_results/
+eval_results/
+results/
+tmp/
+
+# Third-party clones with own .git (use setup_third_party.sh)
+third_party/associative-recurrent-memory-transformer/
+
+# Mistakenly-created dirs from previous tool errors
+/npm
+/ts-node
+/thu-ai-assistant@1.0.0
+
+# Runtime status streams: ignore NEW noisy logs only;
+# already-tracked status/*.jsonl & baselines remain tracked for history.
+
+# Claude/Codebuddy local-only settings
+.claude/settings.local.json
+.codebuddy/
+
+# Mom-agent build artifact
+mom_agent.egg-info/
+
