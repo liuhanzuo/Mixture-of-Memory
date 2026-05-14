@@ -1,309 +1,186 @@
 ---
-model: claude-haiku-4-5
+model: claude-opus-4.7-1m
 ---
 
-# /heartbeat — 自动巡检 + 工作路由
+# /heartbeat — 闭环巡检与推进
 
-每次执行严格按本手册操作。时区：**Asia/Shanghai (GMT+8)**。
+每 20 分钟执行一次。**你是 main agent**，权限和能力完全相同（CODEBUDDY.md 里允许 main 做的事，你都可以做，无需用户审批）。
 
----
-
-## Step 0：时间戳与陈旧指令检测（每次必做）
-
-1. 用 `date "+%Y-%m-%d %H:%M:%S %Z"` 取当前本地时间（GMT+8）。
-2. 回复**第一行**必须写：`## HEARTBEAT [YYYY-MM-DD HH:MM GMT+8]`（精确到分钟）。
-3. **陈旧指令跳过规则**：cron 是链式的，如果上一条 `/heartbeat` 执行耗时 > 15 分钟，
-   下一条会排在当前时间之后立即触发，此时它实际上是 "被延迟的 15 分钟前那一拍"。
-   - 读 `status/TRAINER_ACTIVITY.jsonl` 最后一条 `event=heartbeat` 记录的 timestamp。
-   - 如果 `(current_time - last_heartbeat_timestamp) < 10 min`，说明刚刚才跑过一次，
-     本拍是陈旧触发 → **跳过本次**，只追加一行 `TRAINER_ACTIVITY.jsonl` 标记
-     `{event: heartbeat_skip, reason: stale_chain_trigger, age_sec: N}`，然后结束。
-   - 否则正常进入 Step 1。
+时区：**Asia/Shanghai (GMT+8)**。
 
 ---
 
-## Step 1：读取上下文（必须第一步）
+## 闭环（每次 heartbeat 必须走完）
 
 ```
-Read: status/AUTONOMOUS_MODE.md         ← 新增：检查是否启用全自动
-Read: status/TRAINER_ACTIVE.md
-Read: HEARTBEAT.md
-Read: status/TRAINER_REQUESTS.jsonl（全部）
-Read: status/TRAINER_APPROVALS.jsonl（全部）
-Read last 5 lines: status/TRAINER_ACTIVITY.jsonl
-Read last 10 lines: status/AUTO_CHAIN.jsonl  ← 新增：自动链状态
-Read: configs/remote_experiments.json
+[1] 查看 GPU 状态 & plan 目录
+        ↓
+[2] 处理错误（坏进程 / 卡死 / 训练崩溃）
+        ↓
+[3] 按 plan 推进（PENDING_TASKS / H_V2_PLAN）
+        ↓
+[4] 该开跑就开跑（GPU 空闲 + 有 auto_launch=true 任务 → 立刻派 worker）
+        ↓
+[5] 记录下一步到 plan（更新 PENDING_TASKS.md，写明白下一拍要做什么）
 ```
 
-对比 REQUESTS 和 APPROVALS，找出所有 request_id 尚无 APPROVALS 匹配的条目 → 待审批列表。
-
-**AUTONOMOUS_MODE=ENABLED 时**（见该文件白名单）：
-- 匹配白名单的待审批请求 → 本次 heartbeat 内 **直接自动 /approve**（追加 APPROVALS.jsonl + UPDATELOG.md），然后按 Step 6 自动链调度下一环节
-- 非白名单 → 仍列给用户
+**绝对禁止**：GPU 全空 + 有 PENDING 任务时只输出 `HEARTBEAT_OK`。这是空转，浪费一拍。
 
 ---
 
-## Step 2：本地 GPU 状态检查
+## Step 1：查看 GPU 状态 & plan 目录
 
 ```bash
-nvidia-smi --query-gpu=index,name,memory.used,memory.total,utilization.gpu \
-  --format=csv,noheader
+date "+%Y-%m-%d %H:%M:%S %Z"
+nvidia-smi --query-gpu=index,memory.used,utilization.gpu --format=csv,noheader
+ps aux | grep -E "python|nohup" | grep -v grep
 ```
 
+读以下文件（必读）：
+- `status/PENDING_TASKS.md` — 任务看板
+- `status/TRAINER_ACTIVE.md` — 当前活跃训练
+- `status/H_V2_PLAN.md`（如存在）— 当前计划
+- `status/ISSUES.jsonl` 末尾 5 行 — 未解决的问题
+
+**检查第二节点（28.59.80.196）GPU 状态**：
 ```bash
-nvidia-smi --query-compute-apps=pid,gpu_index,used_memory,process_name \
-  --format=csv,noheader
+PASS=$(cat configs/password_h20_nodes.txt)
+expect -c "
+set timeout 15
+spawn ssh -o StrictHostKeyChecking=no -o PreferredAuthentications=password -o ConnectTimeout=10 root@28.59.80.196 \"nvidia-smi --query-gpu=index,memory.used,utilization.gpu --format=csv,noheader\"
+expect \"password:\"
+send \"$PASS\\r\"
+expect eof
+"
+```
+（password 在 `configs/password_h20_nodes.txt`，已 gitignore；末尾逗号是密码一部分）
+
+回复**第一行**必须是：`## HEARTBEAT [YYYY-MM-DD HH:MM GMT+8]`
+
+---
+
+## Step 2：处理错误
+
+对每个发现的错误**立即修**，不要只记录：
+
+| 现象 | 行动（不需要审批） |
+|------|-------------------|
+| GPU 上有 `unknown` 或 `stale_orphan` 进程 | `kill <pid>` 并记录原因 |
+| 训练 log 显示 PPL > 100 | kill 训练，派 researcher 分析根因 |
+| 训练 log 连续 2 次 heartbeat 无新 step | kill stalled |
+| ckpt 写不出来 / 磁盘满 | `df -h` 排查，清理无用 outputs/ |
+| ssh 不通某节点 | 重试 1 次；不行就在 PENDING_TASKS 标记 unreachable |
+
+修完了 append 一行到 `status/UPDATELOG.md`。
+
+---
+
+## Step 3：按 plan 推进
+
+读 `status/PENDING_TASKS.md`，对每条任务判断：
+
+- **`[RUNNING]` + 进程还活着**：检查健康度（loss 下降？步数推进？），健康就跳过
+- **`[RUNNING]` + 进程死了**：标记为 `[FAILED]`，写明死亡原因，根据情况派 coder/researcher 或重启
+- **`[PENDING]` + auto_launch=true + GPU 有空闲**：**立即启动**（Step 4）
+- **`[PENDING]` + auto_launch=false**：列入"等用户确认"清单，不动
+
+---
+
+## Step 4：该开跑就开跑
+
+启动方式（按任务大小选）：
+
+### 单 GPU eval / 短 inference（< 30 GB VRAM）
+直接 `nohup ... &` + `tee` 到 `logs/<exp>_<ts>.log`，不派 subagent
+
+### 多 GPU 训练 / 长跑（> 1 h）
+派 background subagent：
+```python
+Agent(
+    subagent_type="general-purpose",
+    model="reasoning",
+    description="<short>",
+    prompt="<self-contained>",  # 必须包含工作目录、命令行、约束、输出要求
+    run_in_background=True
+)
 ```
 
-**对每个 GPU 占用 PID：**
-```bash
-ps -fp <pid>
-ps -o pid,ppid,etimes,stat,cmd -p <pid>
-readlink /proc/<pid>/cwd 2>/dev/null
-```
-
-与 `status/gpu_runs.jsonl` 对比，**给每个进程分类**：
-- `expected` — 与注册表中 running 条目匹配
-- `small_debug` — 单卡 debug / eval，已知且不影响
-- `unknown` — 无法确认来源，需调查
-- `stale_orphan` — 父进程已消失 + 注册表显示该运行已结束/放弃
+启动后**立即** append 到：
+- `status/gpu_runs.jsonl`：`{"ts": ..., "node": "h20-1", "exp": "...", "commit_hash": "...", "status": "running"}`
+- `status/TRAINER_ACTIVE.md`（Write 覆盖，不要 Edit）
 
 ---
 
-## Step 3：活跃训练日志检查
+## Step 5：记录下一步到 plan
 
-如果 TRAINER_ACTIVE.md 有 status=running 的训练：
+更新 `status/PENDING_TASKS.md`：
+- 这一拍启动的任务 → 标 `[RUNNING]`
+- 这一拍完成的任务 → 移到 `## [DONE]` 区（带完成时间）
+- 新发现的工作 → 添 `[PENDING]` 条目（标 auto_launch true/false）
+- **下一拍 heartbeat 要做什么**：在文件顶部 `## Next heartbeat actions` 区写明白
 
-```bash
-tail -20 <log_path>
-```
+如果 `H_V2_PLAN.md` 等其他 plan 文件需要更新（节点映射、执行决议），一并更新。
 
-判断健康状态：
-- ✅ 健康：loss 在下降，无 NaN，step 在递增
-- ⚠️ 警告：loss 停滞超过 50 steps，或 grad_norm 骤变
-- ❌ 崩溃：Python traceback、CUDA error、NCCL error、进程已退出
-
----
-
-## Step 4：远程集群检查
-
-遍历 `configs/remote_experiments.json`，**对 status=running 的每个节点**：
-
-```bash
-sshpass -f configs/password.txt ssh \
-  -o StrictHostKeyChecking=no -o ConnectTimeout=10 \
-  root@<IP> \
-  "nvidia-smi --query-compute-apps=pid,used_memory,process_name --format=csv,noheader 2>/dev/null; \
-   tail -5 <log_path> 2>/dev/null || echo 'LOG_NOT_FOUND'"
-```
-
-**SSH 失败**：最多重试 2 次，失败记为 `ssh_timeout`，不立即升级。
-
-**判断每个节点状态**：
-- `running_healthy` — 进程存在，log 有新内容，loss 正常
-- `running_stalled` — 进程存在，log 无更新 or loss 停滞
-- `completed` — 进程已退出，log 显示正常结束（loss 收敛）
-- `crashed` — 进程已退出，log 有 error / traceback
-- `ssh_timeout` — 连接失败
-
-节点状态变化时（running → completed/crashed），**立即用 Write 更新 `configs/remote_experiments.json`**。
-
----
-
-## Step 5：待审批请求处理
-
-如有未审批请求，在回复中**逐条列出**：
-
-```
-### 待审批：<request_id> [urgency: high]
-- 实验：<current_run>
-- 问题：<issue_type>
-- 证据：<evidence 摘要>
-- 建议方案：<proposed_action>
-→ 需要你运行 /approve <request_id>
-```
-
----
-
-## Step 6：问题判断与自主路由
-
-### 一切正常 → HEARTBEAT_OK
-
-条件：
-- 所有 GPU 进程 = expected 或 small_debug
-- 无待审批请求
-- 活跃训练健康（或无训练）
-- 无 running 远程节点出现异常
-
-回复末尾写 `HEARTBEAT_OK`，附简短状态表格。
-
----
-
-### 小问题 → 自主修复（无需用户确认）
-
-| 情况 | 动作 |
-|------|------|
-| TRAINER_ACTIVE.md 内容过时但进程健康 | Write 覆盖更新 |
-| 远程节点 running→completed/crashed，json 未更新 | Write 更新 remote_experiments.json |
-| gpu_runs.jsonl 条目为 launching，进程已健康运行 | 追加 updated 条目（原条目不动） |
-| 单卡 debug 进程占 1 个 GPU | 记录，不干涉 |
-
----
-
-### 中等问题 → 调查 + 提醒用户 + 建议派发 subagent
-
-| 情况 | 行动 |
-|------|------|
-| unknown GPU 进程 | 完整调查（ps tree, cwd, cmdline），写 ISSUES.jsonl，回复中描述 |
-| 远程节点 training stalled >50 steps | SSH 深度检查，写 ISSUES.jsonl，**建议 `/trainer 检查 <node>`** |
-| 实验刚 completed，PPL 未记录 | **建议 `/trainer 评估 <exp_name>`** |
-| GPU 全部空闲 + 有批准的实验待运行 | **建议 `/trainer 启动 <approved_exp>`** |
-
----
-
-### 大问题 → 升级，不自主处理
-
-列出完整证据，等用户决策：
-- 活跃训练 crash（traceback / OOM / NCCL error）
-- GPU 内存泄漏（进程已退出，内存仍占用）
-- stale/orphan 进程需要 kill → 列证据，让用户 confirm
-- 远程所有节点实验全部失败
-- 发现代码 bug 导致训练结果无效
-
----
-
-### 研究进展触发 → 建议 /researcher
-
-当发现以下情况时，**建议运行 `/researcher`**：
-- 实验结果出来了（新 PPL），需要分析和下一步建议
-- 某个方向连续失败（>= 3次），需要重新调研
-- `status/ISSUES.jsonl` 有 `type=research_decision` 的 open issue
-- 距上次 researcher 报告 > 48 小时且 GPU 空闲
-
----
-
-### 自动链调度（AUTONOMOUS_MODE=ENABLED）
-
-每次 heartbeat，读取 `status/AUTO_CHAIN.jsonl` 最后一条关于每个活跃 request_id 的记录：
-
-| 上一阶段 `stage` | 本次 heartbeat 自动执行 |
-|------------------|------------------------|
-| `approved` (new_experiment) | 通过 Agent 工具异步派发 `/researcher` 任务；完成后回写 `stage=researcher_done` |
-| `researcher_done` | 派发 `/coder` 实现模块+脚本，必须 smoke pass；完成后 `stage=coder_done` |
-| `coder_done` | 派发 `/trainer smoke`（单卡 10 step/10 chunk）；通过后 `stage=trainer_smoke_done` |
-| `trainer_smoke_done` | 派发 `/trainer full`（目标节点全量）；结果出后 `stage=trainer_full_done` |
-| `trainer_full_done` | 派发 `/researcher` 做结果分析；完成后 `stage=chain_complete` |
-| `chain_complete` | 不再处理，留作归档 |
-
-**异步原则**：
-- 每个 subagent 用 `run_in_background=true` 派发，避免 heartbeat 超时
-- subagent 完成时，它负责在 `AUTO_CHAIN.jsonl` 追加自己的完成记录
-- 下一次 heartbeat 看到新 stage，接力下一步
-
-**失败处理**：
-- subagent 报错（stage=<stage>_failed）→ 追加 ISSUES.jsonl，停止该链，不自动重试
-- 连续 2 次 heartbeat 无进展（same stage）→ 升级给用户
-
----
-
-### 自动链调度（AUTONOMOUS_MODE=ENABLED）
-
-每次 heartbeat，读取 `status/AUTO_CHAIN.jsonl` 最后一条关于每个活跃 request_id 的记录：
-
-| 上一阶段 `stage` | 本次 heartbeat 自动执行 |
-|------------------|------------------------|
-| `approved` (new_experiment) | 通过 Agent 工具异步派发 `/researcher` 任务；完成后回写 `stage=researcher_done` |
-| `researcher_done` | 派发 `/coder` 实现模块+脚本，必须 smoke pass；完成后 `stage=coder_done` |
-| `coder_done` | 派发 `/trainer smoke`（单卡 10 step/10 chunk）；通过后 `stage=trainer_smoke_done` |
-| `trainer_smoke_done` | 派发 `/trainer full`（目标节点全量）；结果出后 `stage=trainer_full_done` |
-| `trainer_full_done` | 派发 `/researcher` 做结果分析；完成后 `stage=chain_complete` |
-| `chain_complete` | 不再处理，留作归档 |
-
-**异步原则**：
-- 每个 subagent 用 `run_in_background=true` 派发，避免 heartbeat 超时
-- subagent 完成时，它负责在 `AUTO_CHAIN.jsonl` 追加自己的完成记录
-- 下一次 heartbeat 看到新 stage，接力下一步
-
-**失败处理**：
-- subagent 报错（stage=<stage>_failed）→ 追加 ISSUES.jsonl，停止该链，不自动重试
-- 连续 2 次 heartbeat 无进展（same stage）→ 升级给用户
-
----
-
-## Step 7：写入活动日志（每次必须）
-
-追加一条到 `status/TRAINER_ACTIVITY.jsonl`：
-
+最后追加一行到 `status/TRAINER_ACTIVITY.jsonl`：
 ```json
-{
-  "timestamp": "ISO8601 Asia/Shanghai",
-  "event": "heartbeat",
-  "trigger": "cron|manual",
-  "gpu_state": "idle|training|mixed|leaked|unknown",
-  "local_pids": ["<pid>:<classification>", ...],
-  "remote_status": {"node0": "running_healthy", "node1": "completed"},
-  "action_taken": "none|registry_update|issue_created|escalate",
-  "pending_requests": 0,
-  "issues_found": ["描述"],
-  "conclusion": "OK|WARNING|CRITICAL",
-  "note": "简短说明"
-}
+{"ts": "<iso>", "event": "heartbeat", "actions": [...], "next": "..."}
 ```
 
 ---
 
-## Step 8：输出格式
+## 报告格式（heartbeat 的最终输出）
 
 ```
-## HEARTBEAT [YYYY-MM-DD HH:MM GMT+8]
+## HEARTBEAT [2026-MM-DD HH:MM GMT+8]
 
-### 本地 GPU
-| GPU | 显存占用 | 利用率 | 进程 | 分类 |
-|-----|---------|--------|------|------|
-| 0   | 38 GB / 97.8 GB | 85% | PID 3842460 (torchrun) | expected |
-| ... |
+### Step 1: 状态
+- 本机 GPU: GPU 1 has process X (job Y, healthy, step 234/500)
+- 第二节点 GPU: all idle
+- Pending tasks: 3 ([PENDING] auto_launch=true × 1, [PENDING] auto_launch=false × 2)
 
-### 远程集群
-| 节点 | IP | 实验 | 状态 | 最新 log |
-|------|----|------|------|---------|
-| node0 | 28.89.17.143 | llama_baseline | completed | — |
+### Step 2: 错误处理
+- (none) 或 killed PID 12345 stale orphan
 
-### 活跃训练
-- <实验名>: step X/Y, loss Z → 健康/警告/崩溃
-  （无活跃训练：无）
+### Step 3: 推进决策
+- Task A is healthy, no action
+- Task B [PENDING auto_launch=true] → launching now
 
-### 待审批请求
-- <request_id>: <摘要> → /approve <id>
-  （无：无）
+### Step 4: 启动
+- Launched: <Agent ID 或 nohup PID>, log path
 
-### 发现的问题
-- [按 severity 列出，无则省略本节]
-
-### 建议行动
-- [具体建议，如 /trainer 评估 dms_8x，或 /researcher 分析结果]
-
-### 结论
-HEARTBEAT_OK
-或
-⚠️ WARNING: [描述]
-或
-❌ CRITICAL: [描述，需要立即处理]
+### Step 5: Plan 更新
+- PENDING_TASKS.md 写入 next heartbeat 要做的事
+- TRAINER_ACTIVITY.jsonl appended
 ```
 
 ---
 
-## Red Lines（永不违反，AUTONOMOUS_MODE 也不例外）
+## 自主授权速查（无需用户审批）
 
-- ❌ 不能 kill GPU 进程，除非用户明确授权
-- ❌ 不能修改训练脚本的 hyperparameters（只能按已 approved 的 request 照原样执行）
-- ❌ 不能假设 unknown = stale（先调查）
-- ❌ TRAINER_ACTIVE.md 只能 Write 覆盖，绝不能 Edit
-- ❌ gpu_runs.jsonl 只追加，不修改历史记录
-- ✅ **可以跨节点并行跑多个 8-GPU serious 实验**（2026-04-26 用户确认：多节点文件系统共享但 GPU 独立，不构成资源冲突）。启动前置条件：`nvidia-smi` 确认目标节点无 running 实验，或运行中的是僵尸 / 无主进程 / 可归属为 stale。单节点内仍不能叠两个 8-GPU。
-- ❌ 不能绕过 smoke test 启动 full training
+按 CODEBUDDY.md 的标准授权清单：
+- 派 researcher / coder subagent
+- researcher confidence:high 的代码/参数改动 → 直接执行
+- kill 不健康训练（PPL > 100、stalled 2 拍、crash）
+- 在空闲节点启动 PENDING auto_launch=true 任务
+- ablation / fix 延伸训练（同算法改参数、同代码新数据、ckpt eval）
+- 实验完成后自动决定下一步并立即执行
+- git commit / git push（带 subagent 审核）
 
-**AUTONOMOUS_MODE 下**可以自主做的（已显式授权）：
-- ✅ 自动批准白名单内的 request（见 AUTONOMOUS_MODE.md）
-- ✅ 自动启动 approved 实验（单实验；8-GPU 或 smoke）
-- ✅ 自动派发 /researcher /coder /trainer subagent
-- ✅ 自动更新 remote_experiments.json 的元数据
+仍需用户审批：全新方向训练（非延伸）、架构重大重构、kill 健康训练。
+
+---
+
+## 资源备忘
+
+**当前可用集群（2026-05-14 起，旧的 b200-1..8 全部已不在）**：
+- 本机 H20：`29.162.227.178`，8× H20 (97.8 GiB / 卡)
+- 第二节点 H20：`28.59.80.196`，8× H20
+- SSH 密码（两节点相同）：见 `configs/password_h20_nodes.txt`（gitignored，末尾逗号是密码一部分）
+- 共享文件系统：`/apdcephfs_zwfy6/share_303098609/`（两节点都看到同一份）
+- 工作目录：`/apdcephfs_zwfy6/share_303098609/pighzliu_code/Mixture-of-Memory/`
+- conda env：`/opt/conda/envs/torch-base`（torch 2.8 + transformers 5.8.1 + accelerate + peft）
+- HF proxy：`http_proxy=http://star-proxy.oa.com:3128`
+- 模型：`models/{Meta-Llama-3-8B,Meta-Llama-3-8B-Instruct,Llama-3.2-1B-Instruct,Qwen2-7B-Instruct,Beacon-Qwen2-7B}`
+- BABILong package：`third_party/babilong-pkg/`，需要 `PYTHONPATH=$(pwd)/third_party/babilong-pkg:$PYTHONPATH`
+
+旧的 `b200-1..8` 集群、`/apdcephfs_wzc1/...`、`share_304376610` 路径**全部失效**，遇到引用这些的脚本要把路径改成上面的。

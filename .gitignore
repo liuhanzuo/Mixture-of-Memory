@@ -100,6 +100,7 @@ tmp/
 
 # Third-party clones with own .git (use setup_third_party.sh)
 third_party/associative-recurrent-memory-transformer/
+third_party/babilong-pkg/
 
 # Mistakenly-created dirs from previous tool errors
 /npm
