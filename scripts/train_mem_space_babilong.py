@@ -851,6 +851,10 @@ def _save_adapter(model, args, step: int, final: bool = False) -> None:
     fragments = (
         "selector", "gate_param", "slot_output_gate",
         "slot_to_hidden", "hidden_to_slot", "memory_bank",
+        # Dual-gate (LM2-style) writeback params — only populated when
+        # --use_dual_gate is set, but always include in fragments so the
+        # ckpt round-trips dual-gate weights when present.
+        "gate_proj_new", "gate_proj_mem", "gate_bias",
     )
     state = {
         k: v.detach().cpu()
@@ -884,6 +888,12 @@ def _save_adapter(model, args, step: int, final: bool = False) -> None:
             "shared_memory_bank":      args.shared_memory_bank,
             "unfreeze_hidden_to_slot": args.unfreeze_hidden_to_slot,
             "swa_window":              args.swa_window,
+            # Dual-gate (LM2-style) writeback config — required at eval time
+            # so MemorySpaceConfig is built with the right gate path.
+            "use_dual_gate":           args.use_dual_gate,
+            "input_bias_init":         args.input_bias_init,
+            "forget_bias_init":        args.forget_bias_init,
+            "dual_gate_tanh_new":      args.dual_gate_tanh_new,
             "lr":                      args.lr,
             "total_steps":             args.total_steps,
             "babilong_tasks":          args.babilong_tasks,
