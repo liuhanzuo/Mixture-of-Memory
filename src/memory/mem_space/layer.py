@@ -450,137 +450,155 @@ class MemorySpaceLayer(nn.Module):
 
         cfg = self.config
 
+        # Effective k for L1: 0 when disable_l1_inject is set (pure-L3 ablation).
+        k_slots_effective = 0 if cfg.disable_l1_inject else cfg.top_k
+
         # 1. Lazy-init / re-init on batch-size change.
-        if not self.memory_bank.is_initialized(B):
-            # Slot dim may differ from d_model; project first if needed.
-            H_for_init = hidden_states
-            if self.slot_dim != self.d_model:
-                H_for_init = self.hidden_to_slot(hidden_states)
-            self.memory_bank.init_from_hidden(H_for_init, batch_size=B)
+        if not cfg.disable_l1_inject:
+            if not self.memory_bank.is_initialized(B):
+                # Slot dim may differ from d_model; project first if needed.
+                H_for_init = hidden_states
+                if self.slot_dim != self.d_model:
+                    H_for_init = self.hidden_to_slot(hidden_states)
+                self.memory_bank.init_from_hidden(H_for_init, batch_size=B)
 
-        slots = self.memory_bank.get()                         # [B, N, slot_dim]
+            slots = self.memory_bank.get()                         # [B, N, slot_dim]
 
-        # 2. Top-k select over hidden states (Fix Z.2: per-token routing).
-        # Pass full [B, T, d_model] instead of mean-pooled [B, d_model].
-        idx, scores, ste_weights = self.selector(hidden_states, slots)  # idx:[B,k], scores:[B,N]
-        k_slots = idx.shape[-1]
+            # 2. Top-k select over hidden states (Fix Z.2: per-token routing).
+            # Pass full [B, T, d_model] instead of mean-pooled [B, d_model].
+            idx, scores, ste_weights = self.selector(hidden_states, slots)  # idx:[B,k], scores:[B,N]
+            k_slots = idx.shape[-1]
 
-        # ---- QUERY_DIAG (diagnostic log, no-op on computation) ----
-        # Emit every 200 forward calls, rank-0 / layer-0 only.
-        _should_log_diag = (
-            self._layer_idx == 0
-            and self._fwd_count % 50 == 0  # Fix L-3 (2026-04-29): 200→50 for earlier norm explosion detection
-        )
-        try:
-            import torch.distributed as _dist_diag
-            if _dist_diag.is_available() and _dist_diag.is_initialized():
-                _should_log_diag = _should_log_diag and (_dist_diag.get_rank() == 0)
-        except Exception:
-            pass
-        if _should_log_diag:
-            with torch.no_grad():
-                # top-1 similarity scores (highest score per batch item)
-                _top1_sim = scores.max(dim=-1).values          # [B]
-                _top1_sim_mean = _top1_sim.float().mean().item()
-                # norm of the currently-selected slots (before projection)
-                _idx_exp_diag = idx.unsqueeze(-1).expand(-1, -1, self.slot_dim)
-                _M_sel_diag = slots.gather(1, _idx_exp_diag)   # [B, k, slot_dim]
-                _retrieved_norm = _M_sel_diag.float().norm(dim=-1).mean().item()
-                # Fix Z.2: per-token logit variance diagnostic
-                _pt_std = getattr(self.selector, '_last_per_token_logit_std', 0.0)
-                # Fix Z.2f: content-based key diversity
-                _K_content = F.normalize(self.selector.K_sel(slots), dim=-1)  # [B, N, S]
-                _K0 = _K_content[0]  # [N, S]
-                _key_sim = torch.mm(_K0, _K0.t()).fill_diagonal_(0.0)
-                _key_max_cos = _key_sim.abs().max().item()
-            print(
-                f"[QUERY_DIAG step={self.step_counter} fwd={self._fwd_count}]"
-                f" top1_sim_mean={_top1_sim_mean:.6f}"
-                f" retrieved_norm_mean={_retrieved_norm:.6f}"
-                f" per_tok_logit_std={_pt_std:.6f}"
-                f" key_max_cos={_key_max_cos:.4f}",
-                flush=True,
+            # ---- QUERY_DIAG (diagnostic log, no-op on computation) ----
+            # Emit every 200 forward calls, rank-0 / layer-0 only.
+            _should_log_diag = (
+                self._layer_idx == 0
+                and self._fwd_count % 50 == 0  # Fix L-3 (2026-04-29): 200→50 for earlier norm explosion detection
             )
-        # -----------------------------------------------------------
+            try:
+                import torch.distributed as _dist_diag
+                if _dist_diag.is_available() and _dist_diag.is_initialized():
+                    _should_log_diag = _should_log_diag and (_dist_diag.get_rank() == 0)
+            except Exception:
+                pass
+            if _should_log_diag:
+                with torch.no_grad():
+                    # top-1 similarity scores (highest score per batch item)
+                    _top1_sim = scores.max(dim=-1).values          # [B]
+                    _top1_sim_mean = _top1_sim.float().mean().item()
+                    # norm of the currently-selected slots (before projection)
+                    _idx_exp_diag = idx.unsqueeze(-1).expand(-1, -1, self.slot_dim)
+                    _M_sel_diag = slots.gather(1, _idx_exp_diag)   # [B, k, slot_dim]
+                    _retrieved_norm = _M_sel_diag.float().norm(dim=-1).mean().item()
+                    # Fix Z.2: per-token logit variance diagnostic
+                    _pt_std = getattr(self.selector, '_last_per_token_logit_std', 0.0)
+                    # Fix Z.2f: content-based key diversity
+                    _K_content = F.normalize(self.selector.K_sel(slots), dim=-1)  # [B, N, S]
+                    _K0 = _K_content[0]  # [N, S]
+                    _key_sim = torch.mm(_K0, _K0.t()).fill_diagonal_(0.0)
+                    _key_max_cos = _key_sim.abs().max().item()
+                print(
+                    f"[QUERY_DIAG step={self.step_counter} fwd={self._fwd_count}]"
+                    f" top1_sim_mean={_top1_sim_mean:.6f}"
+                    f" retrieved_norm_mean={_retrieved_norm:.6f}"
+                    f" per_tok_logit_std={_pt_std:.6f}"
+                    f" key_max_cos={_key_max_cos:.4f}",
+                    flush=True,
+                )
+            # -----------------------------------------------------------
 
-        # 2b. (Optional) slot dropout at train time.
-        if self.training and cfg.slot_dropout > 0.0:
-            drop_mask = (torch.rand_like(scores) < cfg.slot_dropout)  # True → drop
-            scores = scores.masked_fill(drop_mask, 0.0)
-            # Note: we do NOT re-pick idx — dropout affects the load-balance
-            # loss path only.  Slots themselves continue to be selected via the
-            # original idx to preserve hard top-k semantics.
+            # 2b. (Optional) slot dropout at train time.
+            if self.training and cfg.slot_dropout > 0.0:
+                drop_mask = (torch.rand_like(scores) < cfg.slot_dropout)  # True → drop
+                scores = scores.masked_fill(drop_mask, 0.0)
+                # Note: we do NOT re-pick idx — dropout affects the load-balance
+                # loss path only.  Slots themselves continue to be selected via the
+                # original idx to preserve hard top-k semantics.
 
-        # 3. Gather selected slots, project to hidden dim if needed.
-        idx_exp = idx.unsqueeze(-1).expand(-1, -1, self.slot_dim)
-        M_sel_slot = slots.gather(1, idx_exp)                   # [B, k, slot_dim]
-        # Fix E (2026-04-28): Do NOT attenuate M_sel_slot by w_gathered before projecting
-        # to hidden dim. The original code (M_sel_slot * w_gathered → slot_to_hidden) made
-        # M_sel_hidden ~40,000× smaller than H at init (w≈1/512 uniform × std=0.02 projection),
-        # rendering slot tokens invisible in cross-attention → slot_delta≈0 → zero gradient
-        # to slot_output_gate, Q_sel, and slot_keys → permanent routing degeneracy.
-        #
-        # Fix: project at full scale. STE gradient preserved via an additive zero-forward
-        # correction: (w_gathered - w_gathered.detach()) = 0 in forward, but contributes
-        # M_sel_hidden.detach() to d/d(w_gathered) backward → gradient flows to Q_sel/slot_keys.
-        # FIX H (2026-04-29): Differentiable soft routing proxy
-        # Fix F's STE had near-zero gradient: M_sel_centered≈0 because all slots init
-        # from same hidden_pool_mean → centering cancels the signal. Fix H replaces this
-        # with a soft weighted-sum proxy that has O(1) non-zero gradient regardless of
-        # slot content diversity.
-        #
-        # Forward:  uses M_sel_hard (exact hard-selected slot content, same as before)
-        # Backward: gradient flows through M_sel_soft (differentiable in scores)
-        #           d(loss)/d(scores[b,i]) = d(loss)/d(M_sel_soft) · slot_to_hidden(slots[b,i])
-        #           This is O(1) and non-zero as long as slots have non-zero norm.
+            # 3. Gather selected slots, project to hidden dim if needed.
+            idx_exp = idx.unsqueeze(-1).expand(-1, -1, self.slot_dim)
+            M_sel_slot = slots.gather(1, idx_exp)                   # [B, k, slot_dim]
+            # Fix E (2026-04-28): Do NOT attenuate M_sel_slot by w_gathered before projecting
+            # to hidden dim. The original code (M_sel_slot * w_gathered → slot_to_hidden) made
+            # M_sel_hidden ~40,000× smaller than H at init (w≈1/512 uniform × std=0.02 projection),
+            # rendering slot tokens invisible in cross-attention → slot_delta≈0 → zero gradient
+            # to slot_output_gate, Q_sel, and slot_keys → permanent routing degeneracy.
+            #
+            # Fix: project at full scale. STE gradient preserved via an additive zero-forward
+            # correction: (w_gathered - w_gathered.detach()) = 0 in forward, but contributes
+            # M_sel_hidden.detach() to d/d(w_gathered) backward → gradient flows to Q_sel/slot_keys.
+            # FIX H (2026-04-29): Differentiable soft routing proxy
+            # Fix F's STE had near-zero gradient: M_sel_centered≈0 because all slots init
+            # from same hidden_pool_mean → centering cancels the signal. Fix H replaces this
+            # with a soft weighted-sum proxy that has O(1) non-zero gradient regardless of
+            # slot content diversity.
+            #
+            # Forward:  uses M_sel_hard (exact hard-selected slot content, same as before)
+            # Backward: gradient flows through M_sel_soft (differentiable in scores)
+            #           d(loss)/d(scores[b,i]) = d(loss)/d(M_sel_soft) · slot_to_hidden(slots[b,i])
+            #           This is O(1) and non-zero as long as slots have non-zero norm.
 
-        # Hard path: exact selected slot content (no gradient through selection)
-        M_sel_hidden_hard = self.slot_to_hidden(M_sel_slot)            # [B, k, d]
+            # Hard path: exact selected slot content (no gradient through selection)
+            M_sel_hidden_hard = self.slot_to_hidden(M_sel_slot)            # [B, k, d]
 
-        # Soft proxy: differentiable weighted sum over ALL slots using softmax scores
-        # scores: [B, N]  (softmax probabilities from selector)
-        # Fix J-A (2026-04-29): REMOVED slots.detach(). The prior detach was from the
-        # old design when hidden_to_slot was permanently frozen and couldn't receive
-        # gradient. After Fix I (hidden_to_slot added to the optimizer via
-        # --unfreeze_hidden_to_slot), the ONLY differentiable path from the loss back
-        # to hidden_to_slot.weight goes through this einsum:
-        #   loss → next_hidden → M_sel_hidden → M_sel_slot_soft → slots → O_mem_slot
-        #                                                              ↑
-        #                                            hidden_to_slot(O_mem_hidden)
-        # Detaching `slots` severs this chain and keeps hidden_to_slot.weight.grad=None
-        # even when the param is registered in the optimizer (Fix I failure mode,
-        # trainable_with_grad=128/224). Do NOT reintroduce .detach() on `slots` here.
-        M_sel_slot_soft = torch.einsum(
-            "bn,bnd->bd",
-            scores,
-            slots
-        )                                                               # [B, slot_dim]
-        M_sel_hidden_soft = self.slot_to_hidden(
-            M_sel_slot_soft.unsqueeze(1).expand(-1, cfg.top_k, -1)
-        )                                                               # [B, k, d]
+            # Soft proxy: differentiable weighted sum over ALL slots using softmax scores
+            # scores: [B, N]  (softmax probabilities from selector)
+            # Fix J-A (2026-04-29): REMOVED slots.detach(). The prior detach was from the
+            # old design when hidden_to_slot was permanently frozen and couldn't receive
+            # gradient. After Fix I (hidden_to_slot added to the optimizer via
+            # --unfreeze_hidden_to_slot), the ONLY differentiable path from the loss back
+            # to hidden_to_slot.weight goes through this einsum:
+            #   loss → next_hidden → M_sel_hidden → M_sel_slot_soft → slots → O_mem_slot
+            #                                                              ↑
+            #                                            hidden_to_slot(O_mem_hidden)
+            # Detaching `slots` severs this chain and keeps hidden_to_slot.weight.grad=None
+            # even when the param is registered in the optimizer (Fix I failure mode,
+            # trainable_with_grad=128/224). Do NOT reintroduce .detach() on `slots` here.
+            M_sel_slot_soft = torch.einsum(
+                "bn,bnd->bd",
+                scores,
+                slots
+            )                                                               # [B, slot_dim]
+            M_sel_hidden_soft = self.slot_to_hidden(
+                M_sel_slot_soft.unsqueeze(1).expand(-1, cfg.top_k, -1)
+            )                                                               # [B, k, d]
 
-        # STE: forward=hard (correct slot content), backward=soft (non-zero gradient to Q_sel)
-        M_sel_hidden = M_sel_hidden_hard.detach() + (M_sel_hidden_soft - M_sel_hidden_soft.detach())
+            # STE: forward=hard (correct slot content), backward=soft (non-zero gradient to Q_sel)
+            M_sel_hidden = M_sel_hidden_hard.detach() + (M_sel_hidden_soft - M_sel_hidden_soft.detach())
 
-        # Fix L-1 (2026-04-29): Adaptive norm clip — prevents slot_to_hidden weight growth
-        # from generating M_sel_hidden vectors 20-44× above hidden_states scale, which
-        # overwhelms joint attention and causes NaN spirals (root cause of fix_j_ablation
-        # PPL explosion at step ~100). One-directional: only shrinks, never expands.
-        # Uses hidden_states.detach() so the reference does not create extra gradient paths.
-        _h_norm_ref = hidden_states.detach().norm(dim=-1).mean().clamp(min=1.0)
-        _m_norms = M_sel_hidden.norm(dim=-1, keepdim=True)
-        M_sel_hidden = M_sel_hidden * (_h_norm_ref / _m_norms.clamp(min=1e-6)).clamp(max=1.0)
+            # Fix L-1 (2026-04-29): Adaptive norm clip — prevents slot_to_hidden weight growth
+            # from generating M_sel_hidden vectors 20-44× above hidden_states scale, which
+            # overwhelms joint attention and causes NaN spirals (root cause of fix_j_ablation
+            # PPL explosion at step ~100). One-directional: only shrinks, never expands.
+            # Uses hidden_states.detach() so the reference does not create extra gradient paths.
+            _h_norm_ref = hidden_states.detach().norm(dim=-1).mean().clamp(min=1.0)
+            _m_norms = M_sel_hidden.norm(dim=-1, keepdim=True)
+            M_sel_hidden = M_sel_hidden * (_h_norm_ref / _m_norms.clamp(min=1e-6)).clamp(max=1.0)
+        else:
+            # disable_l1_inject=True: skip selector, slot gather, projection
+            k_slots = 0
+            idx = None
+            scores = None
+            _should_log_diag = False
 
         # 4. Build extended sequence + masks for the joint softmax.
         # Extended sequence layout: [L3(k_l3) | L1(k) | H(T)]
         k_l3 = 0
         if l3_summaries is not None:
             k_l3 = l3_summaries.shape[1]
-            extended_hidden = torch.cat(
-                [l3_summaries, M_sel_hidden, hidden_states], dim=1,
-            )  # [B, k_l3+k+T, d]
+            if k_slots > 0:
+                extended_hidden = torch.cat(
+                    [l3_summaries, M_sel_hidden, hidden_states], dim=1,
+                )  # [B, k_l3+k+T, d]
+            else:
+                extended_hidden = torch.cat(
+                    [l3_summaries, hidden_states], dim=1,
+                )  # [B, k_l3+T, d]
         else:
-            extended_hidden = torch.cat([M_sel_hidden, hidden_states], dim=1)  # [B, k+T, d]
+            if k_slots > 0:
+                extended_hidden = torch.cat([M_sel_hidden, hidden_states], dim=1)  # [B, k+T, d]
+            else:
+                extended_hidden = hidden_states  # [B, T, d] (pure bypass if no L3 either)
         ext_pos_emb = _extend_position_embeddings(position_embeddings, k_l3 + k_slots)
 
         # Always construct an explicit additive 4-D mask — attention_mask from
@@ -696,7 +714,7 @@ class MemorySpaceLayer(nn.Module):
         # boundary + init-time ``.detach()`` in ``MemoryBank.init_from_hidden``.
         # See ops/research_notes/20260426_mem_space_v0_branch3_writeback_bptt.md §3 (Option A.2).
         beta_t = self._current_beta()
-        if cfg.enable_writeback:
+        if cfg.enable_writeback and not cfg.disable_l1_inject:
             O_mem_slot = self.hidden_to_slot(O_mem_hidden)      # [B, k, slot_dim]
             if cfg.use_dual_gate and self.gate_proj_new is not None:
                 # H6 dual-gate (LM2-inspired). Both gates are content-conditioned
@@ -755,7 +773,7 @@ class MemorySpaceLayer(nn.Module):
 
         # 8. Stash side-channel outputs.
         aux: Dict[str, torch.Tensor] = {}
-        if cfg.return_aux_losses:
+        if cfg.return_aux_losses and not cfg.disable_l1_inject:
             lb = self.selector.load_balance_loss(scores, idx)
             aux["load_balance"] = lb * cfg.load_balance_weight
             ent = self.selector.entropy_aux_loss(scores)
@@ -771,8 +789,8 @@ class MemorySpaceLayer(nn.Module):
             one_hot = torch.zeros_like(scores).scatter_(-1, idx, 1.0)
             aux["slot_usage"] = one_hot.float().mean(dim=0).detach()
         self.last_aux_losses = aux
-        self.last_idx = idx.detach()
-        self.last_scores = scores.detach()
+        self.last_idx = idx.detach() if idx is not None else None
+        self.last_scores = scores.detach() if scores is not None else None
 
         if extra:
             return (next_hidden, *extra)

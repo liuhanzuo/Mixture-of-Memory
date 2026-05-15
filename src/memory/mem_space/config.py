@@ -147,6 +147,10 @@ class MemorySpaceConfig:
     l3_n_layers: int = 2
     l3_n_heads: int = 8
 
+    # Pure-L3 ablation (2026-05-15): If True, skip L1 slot prepending + dual-gate
+    # writeback. Used for pure-L3 ablation where only L3 summary tokens are active.
+    disable_l1_inject: bool = False
+
     def __post_init__(self) -> None:
         if self.num_slots <= 0:
             raise ValueError(f"num_slots must be > 0, got {self.num_slots}")

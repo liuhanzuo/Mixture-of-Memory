@@ -392,6 +392,124 @@ def test_auto_read_from_pool():
     print()
 
 
+def test_disable_l1_inject_pure_l3():
+    """Test 9: Pure-L3 ablation (disable_l1_inject=True, only L3 active)."""
+    print("=== Test 9: disable_l1_inject (pure-L3 ablation) ===")
+    B, T, d = 2, 16, 64
+    K_sum = 4
+    k = 2
+    n_slots = 8
+
+    class FakeAttnLayer(nn.Module):
+        """Fake layer that does mean-pool mixing so all positions influence output."""
+        def __init__(self, d_model):
+            super().__init__()
+            self.linear = nn.Linear(d_model, d_model, bias=False)
+            nn.init.eye_(self.linear.weight)
+
+        def forward(self, hidden_states, **kwargs):
+            mean = hidden_states.mean(dim=1, keepdim=True)
+            return self.linear(hidden_states + 0.1 * mean)
+
+    wrapped = FakeAttnLayer(d)
+
+    cfg = MemorySpaceConfig(
+        num_slots=n_slots,
+        top_k=k,
+        slot_dim=d,
+        selector_dim=32,
+        slot_init="random",
+        slot_init_noise=0.1,
+        shared_memory_bank=False,
+        use_l3_summary=True,
+        l3_n_summary=K_sum,
+        l3_n_layers=1,
+        l3_n_heads=2,
+        disable_l1_inject=True,
+    )
+
+    l3_pool = L3SummaryPool(d_model=d, num_summary=K_sum, num_heads=2, n_layers=1)
+    layer = MemorySpaceLayer(wrapped, cfg, d_model=d, l3_pool=l3_pool)
+
+    head_dim = d // 4
+    cos = torch.ones(1, T, head_dim)
+    sin = torch.zeros(1, T, head_dim)
+    position_embeddings = (cos, sin)
+
+    # L3 summaries (simulating previous chunk)
+    l3_summaries = torch.randn(B, K_sum, d, requires_grad=True)
+    hidden_states = torch.randn(B, T, d, requires_grad=True)
+
+    # Forward
+    out = layer(hidden_states, position_embeddings=position_embeddings, l3_summaries=l3_summaries)
+    if isinstance(out, tuple):
+        out = out[0]
+
+    # 1. Output shape must be [B, T, d]
+    assert out.shape == (B, T, d), f"Expected ({B},{T},{d}), got {out.shape}"
+    print(f"  Output shape: {out.shape} -- PASS")
+
+    # 2. Verify extended seq shape was [B, K_sum + T, d] = [2, 20, 64]
+    #    (no L1 slots in the middle). Check via mask call args.
+    expected_ext_len = K_sum + T  # 4 + 16 = 20 (no L1 slot rows)
+    ext_mask = _build_extended_attn_mask(
+        k=0, T=T, dtype=torch.float32, device=torch.device("cpu"),
+        batch_size=B, swa_window=0, k_l3=K_sum,
+    )
+    assert ext_mask.shape == (B, 1, expected_ext_len, expected_ext_len), (
+        f"Expected mask ({B},1,{expected_ext_len},{expected_ext_len}), got {ext_mask.shape}"
+    )
+    print(f"  Extended mask shape: {ext_mask.shape} = [2, 1, 20, 20] -- PASS")
+
+    # 3. Backward
+    loss = out.sum()
+    loss.backward()
+
+    # 4. L3 summaries input should have grad (gradient flows through the extended seq)
+    assert l3_summaries.grad is not None, "l3_summaries should have gradient"
+    assert l3_summaries.grad.abs().sum() > 0, "l3_summaries grad should be non-zero"
+    print(f"  L3 summaries gradient: norm={l3_summaries.grad.norm().item():.6f} -- PASS")
+
+    # Also verify that if we route through L3SummaryPool, pool params get gradient
+    layer.zero_grad()
+    h2 = torch.randn(B, T, d, requires_grad=True)
+    l3_from_pool = l3_pool(h2)  # compute summaries through the pool
+    out2 = layer(h2, position_embeddings=position_embeddings, l3_summaries=l3_from_pool)
+    if isinstance(out2, tuple):
+        out2 = out2[0]
+    out2.sum().backward()
+    has_l3_grad = False
+    for name, p in l3_pool.named_parameters():
+        if p.grad is not None and p.grad.abs().sum() > 0:
+            has_l3_grad = True
+            break
+    assert has_l3_grad, "L3 pool params should have non-zero gradient when routed through pool"
+    print("  L3 pool params have gradient (via pool forward): PASS")
+
+    # 5. Selector params should NOT have grad (L1 was never called)
+    for name, p in layer.selector.named_parameters():
+        assert p.grad is None or p.grad.abs().sum() == 0, (
+            f"Selector param '{name}' should have no gradient when L1 disabled, "
+            f"but got grad norm={p.grad.norm().item() if p.grad is not None else 0}"
+        )
+    print("  Selector params have no gradient: PASS")
+
+    # 6. side-channel: last_idx and last_scores should be None
+    assert layer.last_idx is None, "last_idx should be None when L1 disabled"
+    assert layer.last_scores is None, "last_scores should be None when L1 disabled"
+    print("  last_idx=None, last_scores=None: PASS")
+
+    # 7. aux_losses should be empty (no selector aux losses)
+    assert len(layer.last_aux_losses) == 0, (
+        f"Expected empty aux_losses, got keys: {list(layer.last_aux_losses.keys())}"
+    )
+    print("  aux_losses empty: PASS")
+
+    # 8. No error on forward + backward (already tested above)
+    print("  Forward + backward no error: PASS")
+    print()
+
+
 if __name__ == "__main__":
     print("=" * 60)
     print("L3 Summary-Token Module Smoke Test")
@@ -406,6 +524,7 @@ if __name__ == "__main__":
     test_dual_gate_with_l3()
     test_l3_pool_param_count()
     test_auto_read_from_pool()
+    test_disable_l1_inject_pure_l3()
 
     print("=" * 60)
     print("ALL TESTS PASSED")

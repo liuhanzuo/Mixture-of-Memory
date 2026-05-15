@@ -386,6 +386,9 @@ def parse_args() -> argparse.Namespace:
                    help="Number of cross-attn blocks in L3 pool (1=~50M, 2=~150M).")
     p.add_argument("--l3_n_heads", type=int, default=8,
                    help="Number of attention heads in L3 cross-attn blocks.")
+    p.add_argument("--disable_l1_inject", action="store_true", default=False,
+                   help="Skip L1 slot prepending + dual-gate writeback. "
+                        "Used for pure-L3 ablation (only L3 summary tokens active).")
 
     # Misc
     p.add_argument("--attn_impl", type=str, default="sdpa",
@@ -496,6 +499,7 @@ def build_model(args, device, dtype) -> torch.nn.Module:
         l3_n_summary=args.l3_n_summary,
         l3_n_layers=args.l3_n_layers,
         l3_n_heads=args.l3_n_heads,
+        disable_l1_inject=args.disable_l1_inject,
     )
 
     # Snapshot rotary inv_freq in fp32 BEFORE the .to(dtype=bf16) cast so the
@@ -927,6 +931,8 @@ def _save_adapter(model, args, step: int, final: bool = False) -> None:
             "l3_n_summary":            args.l3_n_summary,
             "l3_n_layers":             args.l3_n_layers,
             "l3_n_heads":              args.l3_n_heads,
+            # Pure-L3 ablation flag
+            "disable_l1_inject":       args.disable_l1_inject,
             "lr":                      args.lr,
             "total_steps":             args.total_steps,
             "babilong_tasks":          args.babilong_tasks,
