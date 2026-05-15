@@ -47,14 +47,10 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-# Add babilong to path — same locations as run_babilong_h6.py
-BABILONG_ROOTS = [
-    "/apdcephfs_zwfy6/share_303098609/pighzliu_code/babilong",
-    "/apdcephfs_wzc1/share_303098609/pighzliu_code/babilong",
-]
-for _root in BABILONG_ROOTS:
-    if os.path.isdir(_root) and _root not in sys.path:
-        sys.path.insert(0, _root)
+# Add babilong to path — relative to repo root
+_BABILONG_PKG = os.path.join(PROJECT_ROOT, "third_party", "babilong-pkg")
+if os.path.isdir(_BABILONG_PKG) and _BABILONG_PKG not in sys.path:
+    sys.path.insert(0, _BABILONG_PKG)
 
 import datasets  # noqa: E402
 from transformers import AutoTokenizer, LlamaForCausalLM  # noqa: E402
