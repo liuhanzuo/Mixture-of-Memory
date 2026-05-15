@@ -159,9 +159,40 @@ class BABILongTrainDataset(torch.utils.data.IterableDataset):
                 )
 
         # Cached HF dataset splits: {(task, length) -> list-like of rows}.
-        # Built lazily on first __iter__ in each worker so HuggingFace
-        # downloads happen only inside DataLoader workers (not in main proc).
+        # Built eagerly here at __init__ rather than lazily in _load_split.
+        # ----------------------------------------------------------------------
+        # Why eager: in distributed training, lazy loading caused the whole
+        # group to deadlock — when each rank lazily called load_dataset on the
+        # FIRST iter() of a (task, length) it had not seen, the 8 ranks would
+        # race the HF cache flock and stall (observed 2026-05-15: rank 1 + 7
+        # active, ranks 0,2-6 idle for 5+ min after the rank-0 prefetch
+        # barrier). Eagerly building the cache at __init__ time is sequential
+        # within each rank but predictable: all ranks run the same load
+        # sequence after the same outer barrier, so the work is bounded and
+        # cache contention is one-shot.
         self._cache: Dict[tuple, Any] = {}
+        self._eager_load_all_splits()
+
+    # --------------------------------------------------------------------- #
+    # Eager dataset loading at init
+    # --------------------------------------------------------------------- #
+
+    def _eager_load_all_splits(self) -> None:
+        """Load every (task, length) cell into ``self._cache`` once at init.
+
+        Avoids per-iter lazy loads that deadlock under distributed training.
+        """
+        import datasets  # noqa: WPS433
+        for length in self.lengths:
+            try:
+                data = datasets.load_dataset(self.dataset_name, length)
+            except Exception:
+                # Defer the error to first iter; some test envs may not need
+                # every (task, length) combination.
+                continue
+            for task in self.tasks:
+                if task in data:
+                    self._cache[(task, length)] = data[task]
 
     # --------------------------------------------------------------------- #
     # Lazy data loading

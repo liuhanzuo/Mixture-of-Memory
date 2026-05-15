@@ -635,17 +635,33 @@ def main() -> None:
     #
     # The babilong_dataset.py loader calls
     #     datasets.load_dataset(args.babilong_dataset, length)
-    # then indexes data[task], so prefetch is per-length (not per task).
+    # then indexes data[task].
+    #
+    # 2026-05-15 update: per-length prefetch is NOT enough. ``BABILongTrainDataset``
+    # lazy-loads in ``_load_split(task, length)``, and that triggers a
+    # ``load_dataset`` call PER (task, length) pair the first time each is
+    # iterated by each rank.  Even with HF_HUB_OFFLINE=1, cache lookups
+    # competing across 8 ranks deadlock.  Fix: rank-0 prefetches every
+    # (task, length) combination and indexes data[task] to force the per-task
+    # split to materialise in cache too.
     if world_size > 1:
         if rank == 0:
             logger.info("[rank 0] Pre-fetching BABILong dataset cache for "
-                        "lengths=%s ...", babilong_lengths)
+                        "tasks=%s lengths=%s ...", babilong_tasks, babilong_lengths)
             try:
                 import datasets as _hfds  # noqa: WPS433
                 for _length in babilong_lengths:
                     try:
-                        _ = _hfds.load_dataset(args.babilong_dataset, _length)
-                        logger.info("  cached length=%s", _length)
+                        _data = _hfds.load_dataset(args.babilong_dataset, _length)
+                        for _task in babilong_tasks:
+                            try:
+                                # Touch every per-task split so it materialises
+                                # in cache for the lazy loader path.
+                                _ = _data[_task]
+                            except Exception as _e_task:  # pragma: no cover
+                                logger.warning("  prefetch task=%s length=%s: %s",
+                                               _task, _length, _e_task)
+                        logger.info("  cached length=%s (tasks=%s)", _length, babilong_tasks)
                     except Exception as _e:  # pragma: no cover
                         logger.warning("  prefetch failed length=%s: %s",
                                        _length, _e)
