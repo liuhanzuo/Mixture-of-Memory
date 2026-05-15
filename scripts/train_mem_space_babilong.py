@@ -97,6 +97,15 @@ class PG19ChunksDataset(Dataset):
         data = np.load(npy_path, mmap_mode="r")
         self.data = data[skip_chunks: skip_chunks + max_chunks].astype(np.int32)
         self.seq_length = seq_length
+        if len(self.data) == 0:
+            total = len(np.load(npy_path, mmap_mode="r"))
+            raise RuntimeError(
+                f"PG19ChunksDataset is empty: skip={skip_chunks}, "
+                f"max={max_chunks}, npy total chunks={total}. "
+                f"Likely skip_chunks is past the end of the data. "
+                f"Reduce --pg19_skip_chunks (e.g. to 200) or set "
+                f"--pg19_mix_fraction 0.0 to skip PG-19 entirely."
+            )
         logger.info(
             "Loaded %d PG-19 chunks of %d tokens from %s",
             len(self.data), self.seq_length, npy_path,
@@ -282,7 +291,14 @@ def parse_args() -> argparse.Namespace:
                         "(0.0 = pure BABILong SFT).")
     p.add_argument("--pg19_max_chunks", type=int, default=2000,
                    help="How many PG-19 chunks to expose to the loader (mmap).")
-    p.add_argument("--pg19_skip_chunks", type=int, default=40000)
+    p.add_argument("--pg19_skip_chunks", type=int, default=200,
+                   help="Skip first N PG-19 chunks (hold-out window so we don't "
+                        "train on chunks the NIAH/BABILong eval might reuse). "
+                        "Default 200 matches the actual size of "
+                        "data/pg19_chunks_llama3.npy (~5916 chunks). Setting "
+                        "this higher than the dataset size makes "
+                        "PG19ChunksDataset empty and silently disables PG-19 "
+                        "mix — the dataset now raises if that happens.")
 
     # Training shape
     p.add_argument("--max_seq_len", type=int, default=4096,
@@ -605,6 +621,41 @@ def main() -> None:
     # --- BABILong dataset --- #
     babilong_tasks = [t.strip() for t in args.babilong_tasks.split(",") if t.strip()]
     babilong_lengths = [l.strip() for l in args.babilong_lengths.split(",") if l.strip()]
+
+    # Rank-0 prefetch of BABILong dataset cache.
+    # ----------------------------------------------------------------------
+    # The HF datasets library is NOT distributed-safe when the dataset has
+    # never been cached locally: every rank tries to download and call
+    # dataset_infos.json simultaneously, deadlocking on 404 retries while
+    # rank-0 holds the cache lock (observed 2026-05-15 — training stuck
+    # 5 min on RMT-team/babilong with rank-0 in sleep, rank-1+ in NCCL
+    # barrier).  HuggingFace's recommended pattern is: rank-0 fetches first,
+    # all other ranks wait on a torch.distributed barrier, then they read
+    # the populated cache.
+    #
+    # The babilong_dataset.py loader calls
+    #     datasets.load_dataset(args.babilong_dataset, length)
+    # then indexes data[task], so prefetch is per-length (not per task).
+    if world_size > 1:
+        if rank == 0:
+            logger.info("[rank 0] Pre-fetching BABILong dataset cache for "
+                        "lengths=%s ...", babilong_lengths)
+            try:
+                import datasets as _hfds  # noqa: WPS433
+                for _length in babilong_lengths:
+                    try:
+                        _ = _hfds.load_dataset(args.babilong_dataset, _length)
+                        logger.info("  cached length=%s", _length)
+                    except Exception as _e:  # pragma: no cover
+                        logger.warning("  prefetch failed length=%s: %s",
+                                       _length, _e)
+                logger.info("[rank 0] BABILong pre-fetch complete")
+            except Exception as _e:  # pragma: no cover
+                logger.warning("[rank 0] BABILong prefetch crashed: %s", _e)
+        # All ranks (0 and others) wait here; non-zero ranks block until the
+        # cache is populated, then read from it without re-downloading.
+        dist.barrier()
+
     babilong_ds = BABILongTrainDataset(
         tokenizer=tokenizer,
         dataset_name=args.babilong_dataset,
