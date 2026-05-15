@@ -72,17 +72,26 @@ def _reset_banks(model: torch.nn.Module) -> None:
     ``_mem_space_shared_bank`` on the root model; resetting that one object is
     equivalent to resetting every wrapper's bank (they all reference the same
     object).  Falls back to per-layer bank reset if no shared bank is present.
+
+    Also clears L3 summary state (prev_chunk_h, chunk cache, legacy
+    _current_summary) so each new sample starts cold.
     """
     root = getattr(model, "module", model)
     shared_bank = getattr(root, "_mem_space_shared_bank", None)
     if shared_bank is not None:
         shared_bank.reset()
-        return
-    mem_layers = getattr(root, "_mem_space_layers", None)
-    if not mem_layers:
-        return
-    for w in mem_layers:
-        w.memory_bank.reset()
+    else:
+        mem_layers = getattr(root, "_mem_space_layers", None)
+        if mem_layers:
+            for w in mem_layers:
+                w.memory_bank.reset()
+    # Reset L3 summary state (cold start for new sample)
+    l3_pool = getattr(root, "_l3_pool", None)
+    if l3_pool is not None:
+        l3_pool._current_summary = None
+        l3_pool._prev_chunk_h = None
+        if hasattr(l3_pool, "_chunk_summary_cache"):
+            l3_pool._chunk_summary_cache = None
 
 
 def _freeze_banks(model: torch.nn.Module) -> None:

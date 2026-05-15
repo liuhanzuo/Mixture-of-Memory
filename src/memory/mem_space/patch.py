@@ -185,6 +185,10 @@ def apply_mem_space_to_model(
                 # call pool(detached_H) to produce summary tokens with a fresh
                 # gradient path inside chunk i+1's graph.
                 pool._prev_chunk_h = h.detach()
+                # Clear per-chunk cache: chunk i+1's first MemorySpaceLayer
+                # forward will recompute, then cache for layers 1..31.
+                if hasattr(pool, "_chunk_summary_cache"):
+                    object.__setattr__(pool, "_chunk_summary_cache", None)
 
         _last_mem_layer.register_forward_hook(_l3_post_forward_hook)
 

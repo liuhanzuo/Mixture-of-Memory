@@ -441,10 +441,19 @@ class MemorySpaceLayer(nn.Module):
         # previous chunk's already-freed graph.
         # First chunk: _prev_chunk_h is None → l3_summaries stays None → no L3
         # prepend (cold start).
+        # Per-chunk cache: pool() is expensive (~50ms × 32 layers = 1.6s overhead).
+        # Cache on the pool itself; cleared by patch.py hook at end of chunk.
         if l3_summaries is None and self.l3_pool is not None:
-            prev_h = getattr(self.l3_pool, "_prev_chunk_h", None)
-            if prev_h is not None:
-                l3_summaries = self.l3_pool(prev_h)
+            cached = getattr(self.l3_pool, "_chunk_summary_cache", None)
+            if cached is not None:
+                l3_summaries = cached
+            else:
+                prev_h = getattr(self.l3_pool, "_prev_chunk_h", None)
+                if prev_h is not None:
+                    l3_summaries = self.l3_pool(prev_h)
+                    # Cache for the other 31 layers in this chunk; cleared at
+                    # end of chunk by post-forward hook in patch.py.
+                    object.__setattr__(self.l3_pool, "_chunk_summary_cache", l3_summaries)
 
         B, T, d = hidden_states.shape
         if d != self.d_model:

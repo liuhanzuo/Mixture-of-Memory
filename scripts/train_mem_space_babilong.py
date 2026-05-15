@@ -215,7 +215,11 @@ def _reset_banks(model: torch.nn.Module) -> None:
         root._l3_summary_for_next_chunk = None
     l3_pool = getattr(root, "_l3_pool", None)
     if l3_pool is not None:
+        # Old name (kept for backward compat) and new names from BPTT fix
         l3_pool._current_summary = None
+        l3_pool._prev_chunk_h = None
+        if hasattr(l3_pool, "_chunk_summary_cache"):
+            l3_pool._chunk_summary_cache = None
 
 
 def _detach_banks(model: torch.nn.Module) -> None:
