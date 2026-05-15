@@ -15,9 +15,11 @@ from __future__ import annotations
 
 from typing import List, Optional, Sequence, Tuple
 
+import torch
 import torch.nn as nn
 
 from .config import MemorySpaceConfig
+from .l3_summary import L3SummaryPool
 from .layer import MemorySpaceLayer
 from .memory_bank import MemoryBank
 
@@ -112,10 +114,24 @@ def apply_mem_space_to_model(
             slot_value_norm_cap=config.slot_value_norm_cap,
         )
 
+    # L3 Summary Pool (2026-05-15): if enabled, create a single shared
+    # L3SummaryPool and pass it to every MemorySpaceLayer. The pool computes
+    # summary tokens from the top-layer H at the end of each chunk; the
+    # summary is consumed by the NEXT chunk's joint attention at every layer.
+    l3_pool: Optional[L3SummaryPool] = None
+    if config.use_l3_summary:
+        l3_pool = L3SummaryPool(
+            d_model=d_model,
+            num_summary=config.l3_n_summary,
+            num_heads=config.l3_n_heads,
+            n_layers=config.l3_n_layers,
+        )
+
     for i in target_indices:
         orig = layers[i]
         wrapper = MemorySpaceLayer(
             orig, config, d_model=d_model, shared_bank=shared_bank,
+            l3_pool=l3_pool,
         )
         layers[i] = wrapper
         mem_layers.append(wrapper)
@@ -125,4 +141,39 @@ def apply_mem_space_to_model(
     # Expose the shared bank (or None) so the training loop's _reset_banks /
     # detach_ can touch a single bank instead of walking every layer.
     model._mem_space_shared_bank = shared_bank
+    # Expose L3 pool as a registered submodule on the model so its parameters
+    # appear in model.parameters() and state_dict. Also stash current L3
+    # summary state for the chunked forward path.
+    model._l3_pool = l3_pool
+    if l3_pool is not None:
+        # Register as a named module on root so it shows up in state_dict
+        root.add_module("l3_pool", l3_pool)
+        # Initialize L3 state: None (cold start on first chunk — layers will
+        # get l3_summaries=None and skip the L3 prepend).
+        l3_pool._current_summary = None
+        model._l3_summary_for_next_chunk = None
+
+        # Register a forward hook on the LAST patched layer to compute L3
+        # from the current chunk's final hidden states and stash it on the
+        # pool for the next chunk's layers to read.
+        _last_mem_layer = mem_layers[-1]
+
+        def _l3_post_forward_hook(module, args, output):
+            """After the last MemorySpaceLayer, compute L3 summary from its output."""
+            # Extract hidden states from output
+            if isinstance(output, tuple):
+                h = output[0]
+            else:
+                h = output
+            # h is [B, T, d] — the output of the last patched layer.
+            # Compute L3 summary for the NEXT chunk. Stash on the pool so all
+            # layers of the next chunk can read it via l3_pool._current_summary.
+            pool = model._l3_pool
+            if pool is not None:
+                new_summary = pool(h)
+                pool._current_summary = new_summary
+                model._l3_summary_for_next_chunk = new_summary
+
+        _last_mem_layer.register_forward_hook(_l3_post_forward_hook)
+
     return model, mem_layers

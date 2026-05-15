@@ -30,6 +30,7 @@ from .memory_bank import MemoryBank
 from .selector import TopKSelector
 from .layer import MemorySpaceLayer
 from .patch import apply_mem_space_to_model
+from .l3_summary import L3SummaryPool
 
 __all__ = [
     "MemorySpaceConfig",
@@ -37,4 +38,5 @@ __all__ = [
     "TopKSelector",
     "MemorySpaceLayer",
     "apply_mem_space_to_model",
+    "L3SummaryPool",
 ]

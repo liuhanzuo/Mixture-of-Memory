@@ -138,6 +138,15 @@ class MemorySpaceConfig:
 
     swa_window: int = 0
 
+    # L3 Summary-Token module (2026-05-15): Q-Former-style cross-attn pool that
+    # produces K dense summary tokens per chunk from the backbone's top-layer H.
+    # These are prepended to the joint-attn extended sequence alongside L1 slots.
+    # Reference: docs/L3_SUMMARY_RESEARCH.md §4-5.
+    use_l3_summary: bool = False
+    l3_n_summary: int = 64
+    l3_n_layers: int = 2
+    l3_n_heads: int = 8
+
     def __post_init__(self) -> None:
         if self.num_slots <= 0:
             raise ValueError(f"num_slots must be > 0, got {self.num_slots}")

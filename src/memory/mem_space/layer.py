@@ -103,58 +103,49 @@ def _build_extended_attn_mask(
     device: torch.device,
     batch_size: int,
     swa_window: int = 0,
+    k_l3: int = 0,
 ) -> torch.Tensor:
-    """Return [B, 1, k+T, k+T] additive mask for the joint-attn extended seq.
+    """Return [B, 1, L, L] additive mask for the joint-attn extended seq.
+
+    The extended sequence layout is: [L3(k_l3) | L1(k) | H(T)].
+    Total length L = k_l3 + k + T.
 
     Convention: 0 means "allowed", ``-inf`` means "masked out".
 
-    Attention pattern (swa_window == 0, default / full causal):
-        * rows 0..k-1 (slot queries): may attend to every position → 0 row.
-        * rows k..k+T-1 (H-queries): may attend to all slot positions (cols
-          0..k-1); among H-keys (cols k..k+T-1) the pattern is causal.
+    Attention pattern:
+        * L3 rows (0..k_l3-1): attend to everything (full row of zeros).
+        * L1 rows (k_l3..k_l3+k-1): attend to everything (full row of zeros).
+        * H rows (k_l3+k..L-1):
+          - cols 0..k_l3-1 (L3 keys): always allowed.
+          - cols k_l3..k_l3+k-1 (L1 keys): always allowed.
+          - cols k_l3+k..L-1 (H keys): causal (or SWA-causal if swa_window>0).
 
-    Attention pattern (swa_window > 0, sliding-window causal):
-        * rows 0..k-1 (slot queries): STILL attend everywhere — slots are
-          global memory tokens and must integrate the full context.
-        * rows k..k+T-1 (H-queries):
-          - cols 0..k-1 (slot keys): always allowed (memory access).
-          - cols k..k+T-1 (H keys):  causal AND within window, i.e., position
-            (i, j) in H-space is allowed iff j <= i AND (i - j) < swa_window.
-
-    When swa_window == 0: behaviour is IDENTICAL to the old implementation
-    (full causal within H), preserving backward compatibility.
+    When k_l3 == 0: behaviour is IDENTICAL to the pre-L3 implementation.
     """
-    L = k + T
+    prefix = k_l3 + k
+    L = prefix + T
     # Default to "allowed everywhere".
     mask = torch.zeros(L, L, dtype=dtype, device=device)
     neg_inf = torch.finfo(dtype).min
 
     if T > 0:
         if swa_window <= 0:
-            # Original full-causal behaviour: mask upper triangle of H×H block.
+            # Full-causal behaviour within H×H block.
             causal = torch.triu(
                 torch.full((T, T), neg_inf, dtype=dtype, device=device),
                 diagonal=1,
             )
-            mask[k:, k:] = causal
+            mask[prefix:, prefix:] = causal
         else:
             # SWA: for each pair (i, j) in H-space (0-indexed within H),
             # allow if j <= i AND (i - j) < swa_window; mask otherwise.
-            # Build an (T, T) mask first, then write into the k: block.
-            #
-            # Strategy: start from all-masked, then unmask the allowed band.
             hh = torch.full((T, T), neg_inf, dtype=dtype, device=device)
-            # Create row/col indices for the H×H block.
             rows = torch.arange(T, device=device).unsqueeze(1)  # [T, 1]
             cols = torch.arange(T, device=device).unsqueeze(0)  # [1, T]
-            # Allow: j <= i (causal) AND (i - j) < swa_window (within window).
             allowed = (cols <= rows) & ((rows - cols) < swa_window)
             hh[allowed] = 0.0
-            mask[k:, k:] = hh
-            # H-queries → slot-keys (cols 0..k-1): always allowed.
-            # These entries are already 0 in the initialised mask (all-zeros),
-            # so no write is needed.
-        # Slot-queries (rows [:k]) see everything → rows already all zeros.
+            mask[prefix:, prefix:] = hh
+        # L3/L1-queries and H-queries→L3/L1 keys: already 0 (allowed).
 
     # Broadcast to [B, 1, L, L].
     return mask.view(1, 1, L, L).expand(batch_size, 1, L, L).contiguous()
@@ -217,6 +208,7 @@ class MemorySpaceLayer(nn.Module):
         *,
         d_model: int,
         shared_bank: Optional[MemoryBank] = None,
+        l3_pool: Optional[nn.Module] = None,
     ) -> None:
         super().__init__()
         if not isinstance(config, MemorySpaceConfig):
@@ -264,6 +256,14 @@ class MemorySpaceLayer(nn.Module):
                 slot_value_norm_cap=config.slot_value_norm_cap,
             )
             self._owns_bank = True
+
+        # L3 summary pool — shared single instance across all layers (like
+        # shared_bank). Registered via object.__setattr__ to avoid duplicating
+        # in state_dict across 32 layers.
+        if l3_pool is not None:
+            object.__setattr__(self, "l3_pool", l3_pool)
+        else:
+            object.__setattr__(self, "l3_pool", None)
         self.selector = TopKSelector(
             d_model=d_model,
             slot_dim=slot_dim,
@@ -416,6 +416,7 @@ class MemorySpaceLayer(nn.Module):
         past_key_values=None,
         use_cache: Optional[bool] = False,
         position_embeddings: Optional[Tuple[torch.Tensor, torch.Tensor]] = None,
+        l3_summaries: Optional[torch.Tensor] = None,
         **kwargs: Any,
     ) -> torch.Tensor:
         # v0 does not integrate with HF's DynamicCache (Stage 2 work).  HF's
@@ -431,6 +432,12 @@ class MemorySpaceLayer(nn.Module):
                 "the outer LlamaModel forward. This is always provided by HF "
                 "transformers >= 4.45."
             )
+
+        # L3: if not explicitly provided, read from the shared l3_pool's stashed
+        # state (set by the post-forward hook on the last layer at end of previous
+        # chunk). This avoids needing HF's LlamaModel to pass the kwarg.
+        if l3_summaries is None and self.l3_pool is not None:
+            l3_summaries = getattr(self.l3_pool, "_current_summary", None)
 
         B, T, d = hidden_states.shape
         if d != self.d_model:
@@ -565,8 +572,16 @@ class MemorySpaceLayer(nn.Module):
         M_sel_hidden = M_sel_hidden * (_h_norm_ref / _m_norms.clamp(min=1e-6)).clamp(max=1.0)
 
         # 4. Build extended sequence + masks for the joint softmax.
-        extended_hidden = torch.cat([M_sel_hidden, hidden_states], dim=1)  # [B, k+T, d]
-        ext_pos_emb = _extend_position_embeddings(position_embeddings, k_slots)
+        # Extended sequence layout: [L3(k_l3) | L1(k) | H(T)]
+        k_l3 = 0
+        if l3_summaries is not None:
+            k_l3 = l3_summaries.shape[1]
+            extended_hidden = torch.cat(
+                [l3_summaries, M_sel_hidden, hidden_states], dim=1,
+            )  # [B, k_l3+k+T, d]
+        else:
+            extended_hidden = torch.cat([M_sel_hidden, hidden_states], dim=1)  # [B, k+T, d]
+        ext_pos_emb = _extend_position_embeddings(position_embeddings, k_l3 + k_slots)
 
         # Always construct an explicit additive 4-D mask — attention_mask from
         # the outer model may be None (SDPA path's implicit causal).  Our
@@ -579,6 +594,7 @@ class MemorySpaceLayer(nn.Module):
             device=hidden_states.device,
             batch_size=B,
             swa_window=cfg.swa_window,  # 0 = full causal (default, backward compat)
+            k_l3=k_l3,
         )
 
         # H2 FIX REVERTED (2026-04-26 22:30): the earlier H2 fix
@@ -647,16 +663,18 @@ class MemorySpaceLayer(nn.Module):
         else:
             ext_h = ext_out
             extra = ()
-        if ext_h.shape[1] != k_slots + T:
+        if ext_h.shape[1] != k_l3 + k_slots + T:
             raise RuntimeError(
-                f"expected wrapped layer output length {k_slots+T}, "
+                f"expected wrapped layer output length {k_l3+k_slots+T}, "
                 f"got {ext_h.shape[1]}"
             )
 
-        # 6. Split into memory-head (O_mem) and body, then apply Flamingo gate.
+        # 6. Split into L3 (discard), L1 memory-head (O_mem), and body.
+        #    Layout: [L3(k_l3) | L1(k) | H(T)]
+        #    L3 outputs are spurious (already computed externally) — discard.
         alpha = torch.tanh(self.slot_output_gate)               # scalar in (-1, 1)
-        O_mem_hidden = ext_h[:, :k_slots, :]                    # [B, k, d]
-        slot_delta = ext_h[:, k_slots:, :] - bypass_h           # [B, T, d]
+        O_mem_hidden = ext_h[:, k_l3:k_l3 + k_slots, :]        # [B, k, d]
+        slot_delta = ext_h[:, k_l3 + k_slots:, :] - bypass_h   # [B, T, d]
         # Fix M-1 (2026-04-29): clip slot_delta per-token norm to bypass_h norm scale.
         # Root cause: slot_delta_max=7.97 × alpha=0.462 × 32 layers → 117 effective residual shift.
         # Fix L-1 guards the INPUT side (M_sel_hidden). Fix M-1 guards the OUTPUT side (slot_delta).

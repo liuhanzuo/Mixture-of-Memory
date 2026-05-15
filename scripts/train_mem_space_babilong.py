@@ -175,6 +175,12 @@ def _mem_space_params(model: torch.nn.Module) -> List[torch.nn.Parameter]:
             for p in wrapper.hidden_to_slot.parameters():
                 if id(p) not in seen:
                     params.append(p); seen.add(id(p))
+    # L3 summary pool params (shared single module on root)
+    l3_pool = getattr(root, "_l3_pool", None)
+    if l3_pool is not None:
+        for p in l3_pool.parameters():
+            if id(p) not in seen:
+                params.append(p); seen.add(id(p))
     return params
 
 
@@ -199,12 +205,17 @@ def _reset_banks(model: torch.nn.Module) -> None:
     shared_bank = getattr(root, "_mem_space_shared_bank", None)
     if shared_bank is not None:
         shared_bank.reset()
-        return
-    mem_layers = getattr(root, "_mem_space_layers", None)
-    if not mem_layers:
-        return
-    for w in mem_layers:
-        w.memory_bank.reset()
+    else:
+        mem_layers = getattr(root, "_mem_space_layers", None)
+        if mem_layers:
+            for w in mem_layers:
+                w.memory_bank.reset()
+    # Reset L3 summary state (cold start for new example)
+    if hasattr(root, "_l3_summary_for_next_chunk"):
+        root._l3_summary_for_next_chunk = None
+    l3_pool = getattr(root, "_l3_pool", None)
+    if l3_pool is not None:
+        l3_pool._current_summary = None
 
 
 def _detach_banks(model: torch.nn.Module) -> None:
@@ -365,6 +376,17 @@ def parse_args() -> argparse.Namespace:
                    help="Apply tanh to O_mem_slot before gating "
                         "(LM2 default; bounds new content to [-1,1]).")
 
+    # L3 Summary-Token module (Q-Former-style cross-attn pool over top-layer H).
+    p.add_argument("--use_l3_summary", action="store_true", default=False,
+                   help="Enable L3 summary-token module (64 dense summary tokens "
+                        "per chunk via Q-Former-style cross-attn pool).")
+    p.add_argument("--l3_n_summary", type=int, default=64,
+                   help="Number of L3 summary tokens per chunk (K_sum).")
+    p.add_argument("--l3_n_layers", type=int, default=2,
+                   help="Number of cross-attn blocks in L3 pool (1=~50M, 2=~150M).")
+    p.add_argument("--l3_n_heads", type=int, default=8,
+                   help="Number of attention heads in L3 cross-attn blocks.")
+
     # Misc
     p.add_argument("--attn_impl", type=str, default="sdpa",
                    choices=["sdpa", "eager", "flash_attention_2"])
@@ -470,6 +492,10 @@ def build_model(args, device, dtype) -> torch.nn.Module:
         input_bias_init=args.input_bias_init,
         forget_bias_init=args.forget_bias_init,
         dual_gate_tanh_new=args.dual_gate_tanh_new,
+        use_l3_summary=args.use_l3_summary,
+        l3_n_summary=args.l3_n_summary,
+        l3_n_layers=args.l3_n_layers,
+        l3_n_heads=args.l3_n_heads,
     )
 
     # Snapshot rotary inv_freq in fp32 BEFORE the .to(dtype=bf16) cast so the
@@ -855,6 +881,8 @@ def _save_adapter(model, args, step: int, final: bool = False) -> None:
         # --use_dual_gate is set, but always include in fragments so the
         # ckpt round-trips dual-gate weights when present.
         "gate_proj_new", "gate_proj_mem", "gate_bias",
+        # L3 summary pool params (Q-Former-style cross-attn pool)
+        "l3_pool",
     )
     state = {
         k: v.detach().cpu()
@@ -894,6 +922,11 @@ def _save_adapter(model, args, step: int, final: bool = False) -> None:
             "input_bias_init":         args.input_bias_init,
             "forget_bias_init":        args.forget_bias_init,
             "dual_gate_tanh_new":      args.dual_gate_tanh_new,
+            # L3 summary-token config
+            "use_l3_summary":          args.use_l3_summary,
+            "l3_n_summary":            args.l3_n_summary,
+            "l3_n_layers":             args.l3_n_layers,
+            "l3_n_heads":              args.l3_n_heads,
             "lr":                      args.lr,
             "total_steps":             args.total_steps,
             "babilong_tasks":          args.babilong_tasks,
