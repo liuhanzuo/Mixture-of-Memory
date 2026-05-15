@@ -345,6 +345,26 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--shared_memory_bank", action="store_true", default=True)
     p.add_argument("--swa_window", type=int, default=0)
 
+    # Dual-gate (LM2-inspired) writeback ─ optional alternative to single-β EMA.
+    # When enabled, replaces ``slots ← (1-β)·slots + β·new`` with
+    # ``slots ← g_forget·slots + g_in·tanh(new)`` where g_in/g_forget are
+    # learnt sigmoid gates conditioned on (new_repr, current_slot).
+    # The new params (gate_proj_new, gate_proj_mem, gate_bias) are NOT in the
+    # champion adapter and start from xavier-uniform init; forget_bias_init
+    # should be ≥1.5 so initial g_forget is high (slots not wiped at step 0).
+    p.add_argument("--use_dual_gate", action="store_true", default=False,
+                   help="Replace EMA β with LM2-style dual gate (input + forget). "
+                        "Cold-starts new gate params; pair with high "
+                        "--forget_bias_init to keep slot content at step 0.")
+    p.add_argument("--input_bias_init", type=float, default=0.0,
+                   help="Bias on input gate logit (sigmoid → g_in at init).")
+    p.add_argument("--forget_bias_init", type=float, default=2.0,
+                   help="Bias on forget gate logit. Default 2.0 → "
+                        "sigmoid(2.0)=0.88, slots retained at step 0.")
+    p.add_argument("--dual_gate_tanh_new", action="store_true", default=True,
+                   help="Apply tanh to O_mem_slot before gating "
+                        "(LM2 default; bounds new content to [-1,1]).")
+
     # Misc
     p.add_argument("--attn_impl", type=str, default="sdpa",
                    choices=["sdpa", "eager", "flash_attention_2"])
@@ -446,6 +466,10 @@ def build_model(args, device, dtype) -> torch.nn.Module:
         shared_memory_bank=args.shared_memory_bank,
         swa_window=args.swa_window,
         slot_value_norm_cap=args.slot_value_norm_cap,
+        use_dual_gate=args.use_dual_gate,
+        input_bias_init=args.input_bias_init,
+        forget_bias_init=args.forget_bias_init,
+        dual_gate_tanh_new=args.dual_gate_tanh_new,
     )
 
     # Snapshot rotary inv_freq in fp32 BEFORE the .to(dtype=bf16) cast so the
