@@ -159,20 +159,32 @@ def apply_mem_space_to_model(
         _last_mem_layer = mem_layers[-1]
 
         def _l3_post_forward_hook(module, args, output):
-            """After the last MemorySpaceLayer, compute L3 summary from its output."""
+            """After the last MemorySpaceLayer, stash this chunk's final hidden
+            states (DETACHED) so the NEXT chunk's layers can compute fresh L3
+            summary tokens.
+
+            We stash detached H, not pre-computed summary tokens, for two
+            reasons:
+            (1) chunk-local BPTT — backward through pool() with chunk-i's graph
+                would re-enter graphs already freed by chunk-i's loss.backward(),
+                causing ``RuntimeError: Trying to backward through the graph a
+                second time``.
+            (2) The pool's parameters need a fresh gradient path inside chunk
+                i+1's own forward. By calling pool() inside chunk i+1 (with
+                chunk-i's detached H), the pool weights see chunk i+1's loss.
+            """
             # Extract hidden states from output
             if isinstance(output, tuple):
                 h = output[0]
             else:
                 h = output
             # h is [B, T, d] — the output of the last patched layer.
-            # Compute L3 summary for the NEXT chunk. Stash on the pool so all
-            # layers of the next chunk can read it via l3_pool._current_summary.
             pool = model._l3_pool
             if pool is not None:
-                new_summary = pool(h)
-                pool._current_summary = new_summary
-                model._l3_summary_for_next_chunk = new_summary
+                # Stash DETACHED H. Chunk i+1's MemorySpaceLayer.forward will
+                # call pool(detached_H) to produce summary tokens with a fresh
+                # gradient path inside chunk i+1's graph.
+                pool._prev_chunk_h = h.detach()
 
         _last_mem_layer.register_forward_hook(_l3_post_forward_hook)
 

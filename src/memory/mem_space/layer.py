@@ -433,11 +433,18 @@ class MemorySpaceLayer(nn.Module):
                 "transformers >= 4.45."
             )
 
-        # L3: if not explicitly provided, read from the shared l3_pool's stashed
-        # state (set by the post-forward hook on the last layer at end of previous
-        # chunk). This avoids needing HF's LlamaModel to pass the kwarg.
+        # L3: if not explicitly provided, compute fresh from the shared l3_pool
+        # using the PREVIOUS chunk's detached H (stashed by post-forward hook).
+        # Calling pool(_prev_chunk_h) here, inside the current chunk's forward,
+        # gives the pool's parameters a clean gradient path through this chunk's
+        # loss.backward(). _prev_chunk_h is detached so we never reach into the
+        # previous chunk's already-freed graph.
+        # First chunk: _prev_chunk_h is None → l3_summaries stays None → no L3
+        # prepend (cold start).
         if l3_summaries is None and self.l3_pool is not None:
-            l3_summaries = getattr(self.l3_pool, "_current_summary", None)
+            prev_h = getattr(self.l3_pool, "_prev_chunk_h", None)
+            if prev_h is not None:
+                l3_summaries = self.l3_pool(prev_h)
 
         B, T, d = hidden_states.shape
         if d != self.d_model:
