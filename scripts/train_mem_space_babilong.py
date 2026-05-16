@@ -181,6 +181,12 @@ def _mem_space_params(model: torch.nn.Module) -> List[torch.nn.Parameter]:
         for p in l3_pool.parameters():
             if id(p) not in seen:
                 params.append(p); seen.add(id(p))
+    # L2 token compressor params (shared single module on root, Phase 11)
+    l2_comp = getattr(root, "_l2_compressor", None)
+    if l2_comp is not None:
+        for p in l2_comp.parameters():
+            if id(p) not in seen:
+                params.append(p); seen.add(id(p))
     return params
 
 
@@ -394,6 +400,20 @@ def parse_args() -> argparse.Namespace:
                    help="Skip L1 slot prepending + dual-gate writeback. "
                         "Used for pure-L3 ablation (only L3 summary tokens active).")
 
+    # L2 Token-Compressed KV memory (NSA / DeepSeek-V4-CSA style learned-gated
+    # attention pool over groups of g=16 tokens). Phase 11 (2026-05-16).
+    p.add_argument("--use_l2", action="store_true", default=False,
+                   help="Enable L2 token-compressed KV memory (256 latents per "
+                        "4k chunk via learned-gated soft-pool over groups of g tokens).")
+    p.add_argument("--l2_compress_ratio", type=int, default=16,
+                   help="L2 group / window size g (chunk_size/g latents per chunk).")
+    p.add_argument("--l2_d_c", type=int, default=512,
+                   help="L2 latent / content dimension (matches V2 MLA).")
+    p.add_argument("--l2_d_h_rope", type=int, default=64,
+                   help="L2 decoupled-RoPE per-latent dimension.")
+    p.add_argument("--l2_init_scale", type=float, default=0.001,
+                   help="L2 kv_b weight init std (near-zero so L2 contribution starts ≈ 0).")
+
     # Misc
     p.add_argument("--attn_impl", type=str, default="sdpa",
                    choices=["sdpa", "eager", "flash_attention_2"])
@@ -504,6 +524,11 @@ def build_model(args, device, dtype) -> torch.nn.Module:
         l3_n_layers=args.l3_n_layers,
         l3_n_heads=args.l3_n_heads,
         disable_l1_inject=args.disable_l1_inject,
+        use_l2=args.use_l2,
+        l2_compress_ratio=args.l2_compress_ratio,
+        l2_d_c=args.l2_d_c,
+        l2_d_h_rope=args.l2_d_h_rope,
+        l2_init_scale=args.l2_init_scale,
     )
 
     # Snapshot rotary inv_freq in fp32 BEFORE the .to(dtype=bf16) cast so the
@@ -937,6 +962,12 @@ def _save_adapter(model, args, step: int, final: bool = False) -> None:
             "l3_n_heads":              args.l3_n_heads,
             # Pure-L3 ablation flag
             "disable_l1_inject":       args.disable_l1_inject,
+            # L2 token-compressed KV memory config (Phase 11)
+            "use_l2":                  args.use_l2,
+            "l2_compress_ratio":       args.l2_compress_ratio,
+            "l2_d_c":                  args.l2_d_c,
+            "l2_d_h_rope":             args.l2_d_h_rope,
+            "l2_init_scale":           args.l2_init_scale,
             "lr":                      args.lr,
             "total_steps":             args.total_steps,
             "babilong_tasks":          args.babilong_tasks,

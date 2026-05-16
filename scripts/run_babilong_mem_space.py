@@ -94,6 +94,18 @@ def _reset_banks(model: torch.nn.Module) -> None:
             l3_pool._chunk_summary_cache = None
 
 
+def _reset_l2(model: torch.nn.Module) -> None:
+    """Zero the L2 compressor's cross-chunk state (prev_latents).
+
+    Called at every document boundary alongside ``_reset_banks``. No-op if the
+    model was patched without ``use_l2``.
+    """
+    root = getattr(model, "module", model)
+    comp = getattr(root, "_l2_compressor", None)
+    if comp is not None:
+        comp.reset()
+
+
 def _freeze_banks(model: torch.nn.Module) -> None:
     """Freeze memory banks during greedy generation so writeback doesn't
     overwrite slots accumulated from the context."""
@@ -321,6 +333,7 @@ def generate_with_mem_space(
         device = next(model.parameters()).device
 
     _reset_banks(model)
+    _reset_l2(model)
 
     tokens = input_ids[0]  # [total_len]
     chunks = list(tokens.split(chunk_size))

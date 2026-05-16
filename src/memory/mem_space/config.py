@@ -151,6 +151,17 @@ class MemorySpaceConfig:
     # writeback. Used for pure-L3 ablation where only L3 summary tokens are active.
     disable_l1_inject: bool = False
 
+    # L2 token-compressed KV memory (2026-05-16, Phase 11): NSA / DeepSeek-V4-CSA
+    # learned-gated attention pool over groups of g=16 tokens, producing
+    # token-compressed KV latents that the next chunk reads. Cold-start near-zero
+    # init (kv_b std=l2_init_scale) so initial L2 contribution ≈ 0.
+    # Reference: docs/L2_DEEPSEEK_MLA_RESEARCH.md, docs/L2_IMPLEMENTATION_PLAN_20260516.md
+    use_l2: bool = False
+    l2_compress_ratio: int = 16  # g
+    l2_d_c: int = 512
+    l2_d_h_rope: int = 64
+    l2_init_scale: float = 0.001
+
     def __post_init__(self) -> None:
         if self.num_slots <= 0:
             raise ValueError(f"num_slots must be > 0, got {self.num_slots}")

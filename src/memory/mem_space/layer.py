@@ -151,6 +151,55 @@ def _build_extended_attn_mask(
     return mask.view(1, 1, L, L).expand(batch_size, 1, L, L).contiguous()
 
 
+def _build_extended_attn_mask_l2(
+    k_l3: int,
+    k_l2: int,
+    k_l1: int,
+    T: int,
+    dtype: torch.dtype,
+    device: torch.device,
+    batch_size: int,
+    swa_window: int = 0,
+) -> torch.Tensor:
+    """Return [B, 1, L, L] additive mask for the L2-extended joint-attn seq.
+
+    Extended layout: [L3(k_l3) | L2(k_l2) | L1(k_l1) | H(T)].
+    Total length L = k_l3 + k_l2 + k_l1 + T.
+
+    Attention pattern:
+        * L3 rows: attend to everything (full row of zeros).
+        * L2 rows: attend to everything.
+        * L1 rows: attend to everything.
+        * H rows:
+          - cols 0..prefix-1 (L3, L2, L1 keys): always allowed.
+          - cols prefix..L-1 (H keys): causal (or SWA-causal if swa_window>0).
+
+    When k_l2 == 0: collapses to the [L3 | L1 | H] layout (same as
+    ``_build_extended_attn_mask`` with the same k_l3/k_l1).
+    """
+    prefix = k_l3 + k_l2 + k_l1
+    L = prefix + T
+    mask = torch.zeros(L, L, dtype=dtype, device=device)
+    neg_inf = torch.finfo(dtype).min
+
+    if T > 0:
+        if swa_window <= 0:
+            causal = torch.triu(
+                torch.full((T, T), neg_inf, dtype=dtype, device=device),
+                diagonal=1,
+            )
+            mask[prefix:, prefix:] = causal
+        else:
+            hh = torch.full((T, T), neg_inf, dtype=dtype, device=device)
+            rows = torch.arange(T, device=device).unsqueeze(1)
+            cols = torch.arange(T, device=device).unsqueeze(0)
+            allowed = (cols <= rows) & ((rows - cols) < swa_window)
+            hh[allowed] = 0.0
+            mask[prefix:, prefix:] = hh
+
+    return mask.view(1, 1, L, L).expand(batch_size, 1, L, L).contiguous()
+
+
 def _extend_position_embeddings(
     position_embeddings: Tuple[torch.Tensor, torch.Tensor],
     k: int,
@@ -209,6 +258,7 @@ class MemorySpaceLayer(nn.Module):
         d_model: int,
         shared_bank: Optional[MemoryBank] = None,
         l3_pool: Optional[nn.Module] = None,
+        l2_compressor: Optional[nn.Module] = None,
     ) -> None:
         super().__init__()
         if not isinstance(config, MemorySpaceConfig):
@@ -264,6 +314,17 @@ class MemorySpaceLayer(nn.Module):
             object.__setattr__(self, "l3_pool", l3_pool)
         else:
             object.__setattr__(self, "l3_pool", None)
+
+        # L2 token compressor — shared single instance across all layers
+        # (peer to l3_pool). Registered via object.__setattr__ so the L2
+        # parameters are NOT duplicated in every layer's state_dict.
+        # patch.py registers l2_compressor as a named submodule on the model
+        # root so its parameters do appear in model.parameters() / state_dict
+        # exactly once.
+        if l2_compressor is not None:
+            object.__setattr__(self, "l2", l2_compressor)
+        else:
+            object.__setattr__(self, "l2", None)
         self.selector = TopKSelector(
             d_model=d_model,
             slot_dim=slot_dim,
@@ -598,38 +659,78 @@ class MemorySpaceLayer(nn.Module):
             _should_log_diag = False
 
         # 4. Build extended sequence + masks for the joint softmax.
-        # Extended sequence layout: [L3(k_l3) | L1(k) | H(T)]
+        # Extended sequence layout: [L3(k_l3) | L2(k_l2) | L1(k_slots) | H(T)]
+        # When L2 is None or has no prev_latents, k_l2=0 and the layout
+        # collapses to the legacy [L3 | L1 | H] form.
         k_l3 = 0
         if l3_summaries is not None:
             k_l3 = l3_summaries.shape[1]
-            if k_slots > 0:
-                extended_hidden = torch.cat(
-                    [l3_summaries, M_sel_hidden, hidden_states], dim=1,
-                )  # [B, k_l3+k+T, d]
-            else:
-                extended_hidden = torch.cat(
-                    [l3_summaries, hidden_states], dim=1,
-                )  # [B, k_l3+T, d]
+
+        # L2: read prev chunk's compressed latents (computed by the post-forward
+        # hook in patch.py at the LAST mem layer). Reconstruct K, V into
+        # model space via kv_b, then average them as a "pseudo-token" that the
+        # wrapped layer's K/V projections will re-project. Double-projection is
+        # wasteful but keeps the wrapped attention unchanged (Stage-2 cleanup).
+        l2_tokens = None
+        k_l2 = 0
+        if self.l2 is not None and self.l2.prev_latents.numel() > 0:
+            pl = self.l2.prev_latents  # [B, n_l2, d_c + d_h_R]
+            # If L2 was reset between forwards but a stale tensor with B==0 lingers,
+            # the numel() check above already guards. Now ensure batch matches.
+            if pl.shape[0] == B:
+                pl_content = pl[..., : self.l2.d_c]
+                kv_recon = self.l2.kv_b(pl_content)             # [B, n_l2, 2*n_kv*d_head]
+                K_recon, V_recon = kv_recon.chunk(2, dim=-1)
+                l2_tokens = 0.5 * (K_recon + V_recon)           # [B, n_l2, d_model]
+                # Cast to hidden_states dtype for downstream attention.
+                l2_tokens = l2_tokens.to(hidden_states.dtype)
+                k_l2 = l2_tokens.shape[1]
+
+        # Build extended_hidden.
+        parts = []
+        if k_l3 > 0:
+            parts.append(l3_summaries)
+        if k_l2 > 0:
+            parts.append(l2_tokens)
+        if k_slots > 0:
+            parts.append(M_sel_hidden)
+        parts.append(hidden_states)
+        if len(parts) == 1:
+            extended_hidden = hidden_states                      # pure bypass
         else:
-            if k_slots > 0:
-                extended_hidden = torch.cat([M_sel_hidden, hidden_states], dim=1)  # [B, k+T, d]
-            else:
-                extended_hidden = hidden_states  # [B, T, d] (pure bypass if no L3 either)
-        ext_pos_emb = _extend_position_embeddings(position_embeddings, k_l3 + k_slots)
+            extended_hidden = torch.cat(parts, dim=1)            # [B, k_l3+k_l2+k_slots+T, d]
+
+        # Position embeddings: L3, L2, L1 all use position 0 (memory tokens are
+        # position-less by design; v0 keeps L2 at position 0 — see L2 research §4.5).
+        ext_pos_emb = _extend_position_embeddings(
+            position_embeddings, k_l3 + k_l2 + k_slots,
+        )
 
         # Always construct an explicit additive 4-D mask — attention_mask from
         # the outer model may be None (SDPA path's implicit causal).  Our
         # extended sequence is NOT a plain causal sequence, so we cannot rely
         # on the implicit path.
-        ext_attn_mask = _build_extended_attn_mask(
-            k=k_slots,
-            T=T,
-            dtype=hidden_states.dtype,
-            device=hidden_states.device,
-            batch_size=B,
-            swa_window=cfg.swa_window,  # 0 = full causal (default, backward compat)
-            k_l3=k_l3,
-        )
+        if k_l2 > 0:
+            ext_attn_mask = _build_extended_attn_mask_l2(
+                k_l3=k_l3,
+                k_l2=k_l2,
+                k_l1=k_slots,
+                T=T,
+                dtype=hidden_states.dtype,
+                device=hidden_states.device,
+                batch_size=B,
+                swa_window=cfg.swa_window,
+            )
+        else:
+            ext_attn_mask = _build_extended_attn_mask(
+                k=k_slots,
+                T=T,
+                dtype=hidden_states.dtype,
+                device=hidden_states.device,
+                batch_size=B,
+                swa_window=cfg.swa_window,  # 0 = full causal (default, backward compat)
+                k_l3=k_l3,
+            )
 
         # H2 FIX REVERTED (2026-04-26 22:30): the earlier H2 fix
         # pre-computed a 4-D causal mask for the bypass call. Kwargs-level
@@ -697,18 +798,22 @@ class MemorySpaceLayer(nn.Module):
         else:
             ext_h = ext_out
             extra = ()
-        if ext_h.shape[1] != k_l3 + k_slots + T:
+        if ext_h.shape[1] != k_l3 + k_l2 + k_slots + T:
             raise RuntimeError(
-                f"expected wrapped layer output length {k_l3+k_slots+T}, "
+                f"expected wrapped layer output length {k_l3+k_l2+k_slots+T}, "
                 f"got {ext_h.shape[1]}"
             )
 
-        # 6. Split into L3 (discard), L1 memory-head (O_mem), and body.
-        #    Layout: [L3(k_l3) | L1(k) | H(T)]
+        # 6. Split into L3+L2 (discard), L1 memory-head (O_mem), and body.
+        #    Layout: [L3(k_l3) | L2(k_l2) | L1(k_slots) | H(T)]
         #    L3 outputs are spurious (already computed externally) — discard.
+        #    L2 outputs are also discarded — L2 is read-only at this layer;
+        #    the post-forward hook on the LAST mem layer recomputes
+        #    prev_latents from the post-stack hidden states for the next chunk.
         alpha = torch.tanh(self.slot_output_gate)               # scalar in (-1, 1)
-        O_mem_hidden = ext_h[:, k_l3:k_l3 + k_slots, :]        # [B, k, d]
-        slot_delta = ext_h[:, k_l3 + k_slots:, :] - bypass_h   # [B, T, d]
+        l1_start = k_l3 + k_l2
+        O_mem_hidden = ext_h[:, l1_start:l1_start + k_slots, :]   # [B, k_slots, d]
+        slot_delta = ext_h[:, l1_start + k_slots:, :] - bypass_h  # [B, T, d]
         # Fix M-1 (2026-04-29): clip slot_delta per-token norm to bypass_h norm scale.
         # Root cause: slot_delta_max=7.97 × alpha=0.462 × 32 layers → 117 effective residual shift.
         # Fix L-1 guards the INPUT side (M_sel_hidden). Fix M-1 guards the OUTPUT side (slot_delta).

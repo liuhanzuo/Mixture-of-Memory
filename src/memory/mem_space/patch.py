@@ -19,6 +19,7 @@ import torch
 import torch.nn as nn
 
 from .config import MemorySpaceConfig
+from .l2_compressor import L2Compressor
 from .l3_summary import L3SummaryPool
 from .layer import MemorySpaceLayer
 from .memory_bank import MemoryBank
@@ -127,11 +128,44 @@ def apply_mem_space_to_model(
             n_layers=config.l3_n_layers,
         )
 
+    # L2 Token Compressor (2026-05-16, Phase 11): if enabled, create a single
+    # shared L2Compressor (peer to L3SummaryPool). The compressor produces
+    # token-compressed KV latents at the END of each chunk via a post-forward
+    # hook on the LAST patched layer; the next chunk's layers read these
+    # latents to prepend pseudo-tokens to the joint-attn extended sequence.
+    l2_compressor: Optional[L2Compressor] = None
+    if config.use_l2:
+        n_h = model.config.num_attention_heads
+        # NOTE on n_kv_heads: in v0 we use L2 as PSEUDO-TOKENS (double-projection
+        # through the wrapped layer's K/V projections), so kv_b's output
+        # dimension must equal d_model (= n_h * d_head). For GQA models
+        # (Llama-3-8B-Instruct has num_key_value_heads=8 ≠ num_attention_heads=32)
+        # we force n_kv_heads = n_h here so K_recon/V_recon are [B, n_l2, d_model].
+        # Stage-2 (direct K/V injection into the attention's KV cache) would
+        # use the actual num_key_value_heads instead.
+        n_kv = n_h
+        d_head = d_model // n_h
+        # Place on the same device as the model parameters.
+        try:
+            device_ref = next(model.parameters()).device
+        except StopIteration:
+            device_ref = torch.device("cpu")
+        l2_compressor = L2Compressor(
+            d_model=d_model,
+            n_heads=n_h,
+            n_kv_heads=n_kv,
+            d_head=d_head,
+            compress_ratio=config.l2_compress_ratio,
+            d_c=config.l2_d_c,
+            d_h_rope=config.l2_d_h_rope,
+            init_scale=config.l2_init_scale,
+        ).to(device_ref)
+
     for i in target_indices:
         orig = layers[i]
         wrapper = MemorySpaceLayer(
             orig, config, d_model=d_model, shared_bank=shared_bank,
-            l3_pool=l3_pool,
+            l3_pool=l3_pool, l2_compressor=l2_compressor,
         )
         layers[i] = wrapper
         mem_layers.append(wrapper)
@@ -192,4 +226,47 @@ def apply_mem_space_to_model(
 
         _last_mem_layer.register_forward_hook(_l3_post_forward_hook)
 
+    # Expose L2 compressor as a registered submodule on the model root so its
+    # parameters appear in model.parameters() / state_dict (exactly once;
+    # MemorySpaceLayer attaches it via object.__setattr__ to avoid duplication).
+    model._l2_compressor = l2_compressor
+    if l2_compressor is not None:
+        root.add_module("l2_compressor", l2_compressor)
+
+        # Register a post-forward hook on the LAST patched layer that
+        # recomputes prev_latents from the current chunk's final hidden states
+        # (DETACHED — same chunk-locality reasoning as the L3 hook).
+        _last_mem_layer_l2 = mem_layers[-1]
+
+        def _l2_post_forward_hook(module, args, output):
+            """After the last MemorySpaceLayer, compress this chunk's final
+            hidden states into latent KV tokens for the next chunk to read.
+
+            We use detached H so backprop through `compress` only happens
+            inside the *current* chunk (where this hook fires) — there is no
+            cross-chunk BPTT through L2 (matches the design in
+            docs/L2_IMPLEMENTATION_PLAN_20260516.md §4.2).
+            """
+            if isinstance(output, tuple):
+                h = output[0]
+            else:
+                h = output
+            comp = model._l2_compressor
+            if comp is not None:
+                with torch.no_grad():
+                    comp.prev_latents = comp.compress(h.detach())
+
+        _last_mem_layer_l2.register_forward_hook(_l2_post_forward_hook)
+
     return model, mem_layers
+
+
+def _reset_l2(model: nn.Module) -> None:
+    """Zero the L2 compressor's cross-chunk state (prev_latents).
+
+    Called by the training/eval loop at document boundaries (parallel to
+    ``_reset_banks``). No-op if the model was patched without ``use_l2``.
+    """
+    comp = getattr(model, "_l2_compressor", None)
+    if comp is not None:
+        comp.reset()
