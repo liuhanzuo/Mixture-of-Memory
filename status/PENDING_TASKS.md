@@ -1,71 +1,60 @@
-# PENDING_TASKS.md — Pending Tasks
+# PENDING_TASKS.md — Task Board
+## Updated 2026-05-16 21:30 CST
 
-## ⏱ Next heartbeat actions
+---
 
-1. **All evals complete** ✅ - Final 21 cell × 3-way matrix ready
-2. **commit + push BABILong results** to git (CODEBUDDY.md 授权 push 流程：先 git diff 安全检查 + subagent 审核)
-3. **决策 Fix 2 SFT** - main 等用户决定是否启动训练，论文级 win 信号已经存在，可不必做 Fix 2
+## [RUNNING] P11 8B FSDP 训练
+- Node: Local H20 × 8
+- Step: ~2190/5000 (44%), ETA ~05:00 CST 2026-05-17
+- auto_launch: N/A (already running)
+- Next: eval on BABILong qa1/qa2/qa5 × 7 lengths when complete
 
-## 📊 FINAL RESULT MATRIX (21 cell × 3 model)
+## [RUNNING] 1B v4 L1+L2+L3 FSDP 训练
+- Node: 28.59.80.196 × 8
+- Step: ~2010/5000 (40%), ETA ~03:30 CST 2026-05-17
+- auto_launch: N/A (already running)
+- Next: eval + compare vs v2 (L1+L3 only, mean=37.29) to measure L2 contribution
 
-| cell | mem_space + Inst | vanilla 8B-Inst | Beacon-Qwen2-7B | Δ vs vanilla |
-|---|---|---|---|---|
-| qa1/0k | 95% | 98% | 94% | -3 |
-| qa1/1k | 92% | 90% | 91% | +2 |
-| qa1/2k | 91% | 89% | 88% | +2 |
-| qa1/4k | 82% | 85% | 90% | -3 |
-| qa1/8k | 39% | 69% | 76% | **-30** |
-| qa1/16k | **20%** | **0%** | - | **+20** 🎯 |
-| qa1/32k | **15%** | **0%** | - | **+15** 🎯 |
-| qa2/0k | 41% | 44% | 57% | -3 |
-| qa2/1k | 38% | 41% | 51% | -3 |
-| qa2/2k | 43% | 47% | 49% | -4 |
-| qa2/4k | 41% | 44% | 40% | -3 |
-| qa2/8k | 15% | 37% | 36% | **-22** |
-| qa2/16k | **6%** | **1%** | - | **+5** 🎯 |
-| qa2/32k | 0% | 0% | - | tied |
-| qa5/0k | 73% | 76% | 84% | -3 |
-| qa5/1k | 72% | 74% | 89% | -2 |
-| qa5/2k | 65% | 63% | 86% | +2 |
-| qa5/4k | 75% | 70% | 78% | +5 |
-| qa5/8k | **86%** | **71%** | **63%** | **+15** 🔥 (+23 vs Beacon) |
-| qa5/16k | **67%** | **1%** | - | **+66** 🎯🎯 |
-| qa5/32k | **44%** | **0%** | - | **+44** 🎯 |
+---
 
-## 🏆 故事总结
+## [PENDING] P11 8B eval（训练完成后）
+- 触发条件: P11 training reaches step 5000 / outputs final ckpt
+- 任务: 在空闲节点跑 BABILong eval qa1/qa2/qa5 × {0k,1k,2k,4k,8k,16k,32k}
+- 比较目标: vs 8B P8 (mean=59.14), vs LM2 paper 8B vanilla
+- auto_launch: true
+- 节点: 28.59.80.196 (if 1B v4 done by then) or any free node
 
-### Win region: **16k+ 长 context**
-- vanilla 8B-Inst 在 16k+ 完全 gibberish (max_position_embeddings=8192 限制)
-- mem_space chunked path 让每个 4k chunk RoPE 在训练范围内 → 保持语义能力
-- 6 个 clean win cells, avg 长 context win **+25%**
+## [PENDING] 1B v4 eval（训练完成后）
+- 触发条件: 1B v4 training reaches step 5000
+- 任务: eval qa1/qa2/qa5 × 7 lengths
+- 比较目标: vs v2 (mean=37.29, L1+L3 only) — does L2 help?
+- auto_launch: true
 
-### Bonus win: qa5/8k +15% vs vanilla, +23% vs Beacon
-- qa5 task entity-name 答案 + mem_space verbose output 反而抓更多正确 answer
+## [PENDING] v3 short-context fix 训练（1B）
+- 代码已就绪: `scripts/launch_phase1b_v3_shortfix.sh` (commit f9e3fa7)
+- 内容: length-weighted sampler (75% short) + skip_mem_when_short
+- 目标: 修复 qa5 短上下文 -20.5pp 问题
+- 节点: 需要空闲 H20 节点（目前两台都被占）
+- auto_launch: true（有空闲节点时）
+- 前置: 等 1B v4 或 P11 完成后用其节点
 
-### Persistent region: 0-4k
-- mem_space 接近 vanilla（-3 to +2），不破坏 instruction following
+## [PENDING] 更新 status/H_V2_PLAN.md
+- 内容: 用当前 Phase-1B 实验状态替换旧的 H-v2 内容
+- auto_launch: false（低优先级文档整理）
 
-### Cost region: 8k qa1/qa2 chunked overhead
-- qa1/8k -30, qa2/8k -22 — chunked path 输出风格漂移导致 substring match miss
+## [PENDING] Git push（5 commits ahead of origin）
+- 待 push commits: a6dcda3 / f9e3fa7 / c05b1c9 / 9b53360 / 0349264
+- 内容: FSDP fixes, v3 short-fix, v4 launch script, L2Compressor fix
+- 流程: git diff 安全检查 → subagent 审核 → push via star-proxy
+- auto_launch: false（需用户授权 or 等训练稳定后）
 
-## Active Tasks
+---
 
-- [DONE all] 全部 21 cell × 3 model BABILong eval 完成
-
-## [PENDING] 下一步选项
-
-### 选项 A: Commit + push 当前结果（不训练）
-- 把 babilong_results/ 下的 csv 加进 git, commit, push
-- 写一份 paper draft level 的 result summary
-- 用户决定是否进 Fix 2 训练
-
-### 选项 B: 启动 Fix 2 SFT 训练
-- 用 commit 51b1043 的 pipeline，bash scripts/launch_mem_space_babilong.sh DRY_RUN=0
-- ~24-48h on 8 H20，希望提升 8k chunked path overhead + 16k+ 中量
-- 风险：训练 might 反而破坏 0-4k persistence
-
-### 选项 C: Lenient match 重新评分
-- 现在用 strict substring match，输出风格漂移导致 8k cells 被低估
-- Lenient match (任何 location 候选词出现) 重评一次，看 8k 是否本来 win
-- 0 GPU cost, 5 分钟 CPU
-
+## [DONE]
+- 1B v1 训练 (500 steps) + eval ✅
+- 1B v2 训练 (10k steps) + multi-ckpt eval ✅
+- v2 multi-ckpt scoring (step1000/5000/final × qa1/qa2/qa5) ✅
+- P11 8B OOM 根因分析 (cuBLAS workspace fragmentation) ✅
+- FSDP migration (Coder-28, 3 commits) ✅
+- 1B v4 launch script + FSDP fix (Coder general-purpose-1) ✅
+- L2Compressor FSDP forward() fix ✅
