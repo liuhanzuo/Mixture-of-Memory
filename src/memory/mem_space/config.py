@@ -162,6 +162,13 @@ class MemorySpaceConfig:
     l2_d_h_rope: int = 64
     l2_init_scale: float = 0.001
 
+    # Gradient checkpointing on the wrapped LlamaDecoderLayer forward (Phase 11,
+    # 2026-05-16). Trades ~2x compute for ~50% activation memory reduction —
+    # required to fit L1+L2+L3 stack on H20 (97GB VRAM) at chunk_size=1024 +
+    # 4k context = 4 chunks/sample BPTT. P8 (L1+L3 only) didn't need this; L2's
+    # per-chunk kv_b activations push peak past 97GB.
+    gradient_checkpointing: bool = False
+
     def __post_init__(self) -> None:
         if self.num_slots <= 0:
             raise ValueError(f"num_slots must be > 0, got {self.num_slots}")

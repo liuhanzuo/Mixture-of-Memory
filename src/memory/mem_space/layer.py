@@ -44,6 +44,7 @@ from typing import Any, Dict, Optional, Tuple
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import torch.utils.checkpoint as _ckpt
 
 from .config import MemorySpaceConfig
 from .memory_bank import MemoryBank
@@ -451,6 +452,38 @@ class MemorySpaceLayer(nn.Module):
     # Ablation bypass
     # --------------------------------------------------------------------- #
 
+    def _maybe_ckpt_wrapped_layer(
+        self,
+        hidden_states: torch.Tensor,
+        **kwargs: Any,
+    ) -> Any:
+        """Call ``self.wrapped_layer(hidden_states, **kwargs)``, optionally under
+        ``torch.utils.checkpoint`` for activation-memory reduction.
+
+        Phase 11 (2026-05-16): the L1+L2+L3 stack at chunk_size=1024 + 4k
+        context = 4 chunks/sample BPTT pushes peak past H20's 97 GB. Wrapping
+        the wrapped LlamaDecoderLayer forward in checkpoint cuts activation
+        memory ~50% at ~2x compute. Only enabled when training (avoids the
+        compute hit + the no-grad / inference incompatibility) and when the
+        config flag is set.
+
+        We use a closure so kwargs (which include non-Tensor values like None
+        and tuples of Tensors) pass through cleanly — torch.utils.checkpoint
+        unrolls only positional Tensor args by default, but accepts kwargs via
+        a Python closure that captures them.
+        """
+        if not (self.config.gradient_checkpointing and self.training):
+            return self.wrapped_layer(hidden_states, **kwargs)
+
+        def _ckpt_fn(h: torch.Tensor) -> Any:
+            return self.wrapped_layer(h, **kwargs)
+
+        return _ckpt.checkpoint(_ckpt_fn, hidden_states, use_reentrant=False)
+
+    # --------------------------------------------------------------------- #
+    # Ablation bypass
+    # --------------------------------------------------------------------- #
+
     def forward_no_memory(
         self,
         hidden_states: torch.Tensor,
@@ -767,7 +800,7 @@ class MemorySpaceLayer(nn.Module):
         #    tanh(alpha) gate (alpha init = 0) structurally guarantees
         #    bypass parity regardless of any phantom-logit leakage.
         #    Reference: ops/research_notes/20260426_mem_space_v0_tier3_fix3_fail.md §5.
-        bypass_out = self.wrapped_layer(
+        bypass_out = self._maybe_ckpt_wrapped_layer(
             hidden_states,
             attention_mask=None,  # vanilla dispatch: HF installs SDPA is_causal=True
             position_ids=None,
@@ -781,7 +814,7 @@ class MemorySpaceLayer(nn.Module):
         else:
             bypass_h = bypass_out
 
-        ext_out = self.wrapped_layer(
+        ext_out = self._maybe_ckpt_wrapped_layer(
             extended_hidden,
             attention_mask=ext_attn_mask,
             position_ids=None,        # RoPE now driven by ext_pos_emb.

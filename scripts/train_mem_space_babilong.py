@@ -414,6 +414,13 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--l2_init_scale", type=float, default=0.001,
                    help="L2 kv_b weight init std (near-zero so L2 contribution starts ≈ 0).")
 
+    # Activation-memory reduction (Phase 11, 2026-05-16)
+    p.add_argument("--gradient_checkpointing", action="store_true", default=False,
+                   help="Wrap wrapped_layer.forward in torch.utils.checkpoint for "
+                        "L2-induced memory pressure (~50% activation memory cut at "
+                        "~2x compute). Required for L1+L2+L3 stack on H20 (97GB) at "
+                        "chunk_size=1024 + 4k context.")
+
     # Misc
     p.add_argument("--attn_impl", type=str, default="sdpa",
                    choices=["sdpa", "eager", "flash_attention_2"])
@@ -529,6 +536,7 @@ def build_model(args, device, dtype) -> torch.nn.Module:
         l2_d_c=args.l2_d_c,
         l2_d_h_rope=args.l2_d_h_rope,
         l2_init_scale=args.l2_init_scale,
+        gradient_checkpointing=args.gradient_checkpointing,
     )
 
     # Snapshot rotary inv_freq in fp32 BEFORE the .to(dtype=bf16) cast so the
@@ -968,6 +976,7 @@ def _save_adapter(model, args, step: int, final: bool = False) -> None:
             "l2_d_c":                  args.l2_d_c,
             "l2_d_h_rope":             args.l2_d_h_rope,
             "l2_init_scale":           args.l2_init_scale,
+            "gradient_checkpointing":  args.gradient_checkpointing,
             "lr":                      args.lr,
             "total_steps":             args.total_steps,
             "babilong_tasks":          args.babilong_tasks,
