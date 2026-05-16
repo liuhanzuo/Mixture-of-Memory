@@ -254,7 +254,7 @@ def apply_mem_space_to_model(
             comp = model._l2_compressor
             if comp is not None:
                 with torch.no_grad():
-                    comp.prev_latents = comp.compress(h.detach())
+                    comp.prev_latents = comp(h.detach())
 
         _last_mem_layer_l2.register_forward_hook(_l2_post_forward_hook)
 

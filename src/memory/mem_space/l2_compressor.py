@@ -119,6 +119,10 @@ class L2Compressor(nn.Module):
         """
         self.prev_latents = self.prev_latents.new_empty(0)
 
+    def forward(self, h: torch.Tensor) -> torch.Tensor:
+        """Forward pass — delegates to compress(). Required for FSDP to unshard params."""
+        return self.compress(h)
+
     def compress(self, h: torch.Tensor) -> torch.Tensor:
         """Compress a chunk of hidden states into per-window latents.
 
