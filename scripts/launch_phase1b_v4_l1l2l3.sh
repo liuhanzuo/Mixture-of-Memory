@@ -11,7 +11,7 @@
 
 set -euo pipefail
 
-cd /apdcephfs_zwfy6/share_303098609/pighzliu_code/Mixture-of-Memory
+cd "${WORKDIR:-/apdcephfs_zwfy6/share_303098609/pighzliu_code/Mixture-of-Memory}"
 
 MODE="${1:-full}"
 TS="$(date +%Y%m%d_%H%M)"
@@ -42,7 +42,7 @@ export OMP_NUM_THREADS=1
 CMD=(
     torchrun --nproc_per_node="$NPROC" --master_port="$MASTER_PORT"
     scripts/train_mem_space_babilong.py
-    --model_path models/Llama-3.2-1B-Instruct
+    --model_path "${MODEL_PATH:-models/Llama-3.2-1B-Instruct}"
     --output_dir "$OUTPUT_DIR"
     # ---- v2 flags (L1 + L3 baseline) ----
     --babilong_tasks qa1,qa2,qa5
@@ -79,6 +79,9 @@ CMD=(
     --l2_d_c 512
     --l2_d_h_rope 64
     --l2_init_scale 0.001
+    # ---- FSDP + gradient checkpointing (fix cuBLAS OOM) ----
+    --use_fsdp
+    --gradient_checkpointing
     # ---- saving ----
     --save_interval "$SAVE_INTERVAL"
 )
