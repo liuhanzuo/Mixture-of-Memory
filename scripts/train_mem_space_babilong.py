@@ -341,7 +341,45 @@ def _wrap_model_fsdp(
     mem_layers = getattr(model, "_mem_space_layers", None) or []
     layers_list = root.layers  # nn.ModuleList of MemorySpaceLayer
 
+    # 0) FSDP refuses 0-dim (scalar) Parameters (`numel() == 1` but `dim() == 0`).
+    #    MemorySpaceLayer has `slot_output_gate` and `gate_param` declared as
+    #    scalar nn.Parameter(torch.tensor(X)). Reshape them in-place to 1-D
+    #    shape (1,) — all uses (`torch.sigmoid(p) * ...`, `torch.tanh(p) * x`,
+    #    `.float().item()`) broadcast / work identically with a 1-element 1-D
+    #    tensor.  Re-loaded scalar checkpoints are handled separately by the
+    #    state_dict loader (load_state_dict with strict=False tolerates the
+    #    shape mismatch when reshaping during load).
+    for layer in mem_layers:
+        for _pname in ("slot_output_gate", "gate_param"):
+            _p = getattr(layer, _pname, None)
+            if _p is not None and _p.dim() == 0:
+                _new = torch.nn.Parameter(_p.detach().reshape(1).clone())
+                # Preserve requires_grad (these are trainable in v2).
+                _new.requires_grad_(_p.requires_grad)
+                setattr(layer, _pname, _new)
+
     # 1) Wrap each MemorySpaceLayer in-place inside root.layers.
+    #
+    # Activation-checkpointing strategy with FSDP:
+    #   - The trainable mem_space-only params are inside an FSDP unit; the
+    #     frozen LlamaDecoderLayer is inside the wrapper at `self.wrapped_layer`
+    #     and has NO FSDP wrap.
+    #   - MemorySpaceLayer._maybe_ckpt_wrapped_layer applies a manual
+    #     ``torch.utils.checkpoint(use_reentrant=False)`` around ONLY the
+    #     frozen wrapped_layer call (not the whole MemorySpaceLayer). Since
+    #     the frozen layer is not FSDP-managed, manual ckpt is safe — there
+    #     is no reshard_after_forward to fight with.
+    #   - We do NOT use FSDP-native ``checkpoint_wrapper`` on the outer
+    #     MemorySpaceLayer.  Initial trials with checkpoint_wrapper around the
+    #     FSDP unit caused state-machine errors during the BABILong chunked
+    #     training step (multi-chunk no_grad + grad sequence, see
+    #     ``_chunked_train_step``) of the form
+    #         "ValueError: expected to be in states [TrainingState.IDLE]
+    #          but current state is TrainingState.FORWARD_BACKWARD"
+    #     because each chunk re-enters _pre_backward_hook with stale state.
+    #   - Therefore: ``use_checkpoint_wrapper`` is interpreted as a request
+    #     to leave ``_inside_fsdp_unit`` UNSET so the manual ckpt path inside
+    #     MemorySpaceLayer is enabled.
     n_wrapped = 0
     for i, layer in enumerate(layers_list):
         # We only wrap MemorySpaceLayer instances; if for some reason a layer
@@ -349,16 +387,14 @@ def _wrap_model_fsdp(
         # leave it alone.
         if layer not in mem_layers:
             continue
-        # Mark the inner MemorySpaceLayer so its _maybe_ckpt_wrapped_layer
-        # skips the manual torch.utils.checkpoint (FSDP-native wrapper handles
-        # activation memory if requested).
-        layer._inside_fsdp_unit = True
-        wrapped = layer
-        if use_checkpoint_wrapper:
-            wrapped = checkpoint_wrapper(
-                wrapped, checkpoint_impl=CheckpointImpl.NO_REENTRANT,
-            )
-        wrapped = FSDP(wrapped, **common_fsdp_kwargs)
+        if not use_checkpoint_wrapper:
+            # Tell MemorySpaceLayer to skip the manual ckpt (it would be a
+            # no-op anyway since gradient_checkpointing flag is False).
+            layer._inside_fsdp_unit = True
+        # else: leave _inside_fsdp_unit unset → manual torch.utils.checkpoint
+        # is used inside MemorySpaceLayer.forward around the frozen
+        # wrapped_layer call only.
+        wrapped = FSDP(layer, **common_fsdp_kwargs)
         layers_list[i] = wrapped
         n_wrapped += 1
 
@@ -376,18 +412,23 @@ def _wrap_model_fsdp(
         setattr(root, "l2_compressor", wrapped_l2)
         model._l2_compressor = wrapped_l2
 
-    # 3) Top-level FSDP wrap of the whole model. This catches any straggler
-    #    trainable params not yet under an inner FSDP unit (there shouldn't be
-    #    any after the per-layer wrapping above) and provides a single root for
-    #    state_dict_type() gather context manager.
+    # 3) NO top-level FSDP wrap.
     #
-    #    Important: top-level FSDP must come AFTER inner FSDP wraps so
-    #    auto_wrap doesn't fight us. We use ShardingStrategy.NO_SHARD at the
-    #    top level so the frozen backbone is NOT sharded (only the inner units
-    #    we already wrapped have FULL_SHARD).
-    top_kwargs = dict(common_fsdp_kwargs)
-    top_kwargs["sharding_strategy"] = ShardingStrategy.NO_SHARD
-    model = FSDP(model, **top_kwargs)
+    # Earlier versions wrapped the whole model in a top-level FSDP with
+    # ShardingStrategy.NO_SHARD to provide a single root for state_dict gather.
+    # However, with ``use_orig_params=True`` a top-level NO_SHARD wrap tracks
+    # the FROZEN embedding/lm_head params in its flat-param table; on the second
+    # forward (or after an optimizer step) FSDP's `_writeback_orig_params`
+    # raises "Cannot writeback when the parameter shape changes" because the
+    # inner FSDP units have already replaced sub-modules' original Parameter
+    # objects. Skipping the top-level wrap avoids this entirely; the per-layer
+    # FSDP units still expose `state_dict_type()` correctly when the context
+    # manager is given the (un-wrapped) top-level model — FSDP walks
+    # ``m.modules()`` and applies the policy to each FSDP submodule.
+    #
+    # Tag the model so ``_save_adapter`` knows to use the FSDP gather path
+    # even though ``isinstance(model, FSDP)`` is now False.
+    setattr(model, "_uses_partial_fsdp", True)
 
     logger.info(
         "FSDP wrap complete: %d MemorySpaceLayer units + (l3_pool=%s, l2=%s); "
@@ -1179,7 +1220,9 @@ def _save_adapter(model, args, step: int, final: bool = False) -> None:
         "l2_compressor",
     )
 
-    is_fsdp = _FSDP_AVAILABLE and FSDP is not None and isinstance(model, FSDP)
+    is_fsdp = _FSDP_AVAILABLE and FSDP is not None and (
+        isinstance(model, FSDP) or getattr(model, "_uses_partial_fsdp", False)
+    )
 
     if is_fsdp:
         # FSDP path: gather full state_dict to rank 0 (CPU-offloaded). All ranks
