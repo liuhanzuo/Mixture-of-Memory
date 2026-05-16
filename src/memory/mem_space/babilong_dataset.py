@@ -127,6 +127,7 @@ class BABILongTrainDataset(torch.utils.data.IterableDataset):
         use_examples: bool = True,
         use_post_prompt: bool = True,
         limit_per_cell: int = 0,
+        length_weights: Optional[List[float]] = None,
     ) -> None:
         super().__init__()
         if _BABILONG_IMPORT_ERROR is not None:
@@ -146,6 +147,24 @@ class BABILongTrainDataset(torch.utils.data.IterableDataset):
         self.use_examples = bool(use_examples)
         self.use_post_prompt = bool(use_post_prompt)
         self.limit_per_cell = int(limit_per_cell)
+
+        # Optional non-uniform sampling weights over self.lengths.  When None
+        # we fall back to uniform (matches v2 / pre-v3 behavior).  Used by the
+        # phase-1B v3 short-fix run to oversample short-context cells (0k,1k)
+        # to recover the qa5 short-range regression observed in v2.
+        if length_weights is not None:
+            if len(length_weights) != len(self.lengths):
+                raise ValueError(
+                    f"length_weights has {len(length_weights)} entries but "
+                    f"lengths has {len(self.lengths)} entries."
+                )
+            _w = [float(w) for w in length_weights]
+            _total = sum(_w)
+            if _total <= 0.0:
+                raise ValueError("length_weights must sum to > 0.")
+            self.length_weights: Optional[List[float]] = [w / _total for w in _w]
+        else:
+            self.length_weights = None
 
         if tokenizer.pad_token is None:
             tokenizer.pad_token = tokenizer.eos_token
@@ -298,7 +317,10 @@ class BABILongTrainDataset(torch.utils.data.IterableDataset):
 
         while True:
             task = rng.choice(self.tasks)
-            length = rng.choice(self.lengths)
+            if self.length_weights is not None:
+                length = rng.choices(self.lengths, weights=self.length_weights, k=1)[0]
+            else:
+                length = rng.choice(self.lengths)
 
             try:
                 split = self._load_split(task, length)

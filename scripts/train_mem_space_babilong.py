@@ -54,6 +54,22 @@ import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data import DataLoader, Dataset, DistributedSampler
 
+# FSDP imports (lazy-imported below for the FSDP path only; reside at top level
+# so type checks `isinstance(model, FSDP)` work in helpers without re-importing).
+try:
+    from torch.distributed.fsdp import (
+        FullyShardedDataParallel as FSDP,
+        ShardingStrategy,
+        MixedPrecision,
+        BackwardPrefetch,
+        StateDictType,
+        FullStateDictConfig,
+    )
+    _FSDP_AVAILABLE = True
+except ImportError:  # pragma: no cover — pre-2.0 PyTorch (we require 2.x)
+    FSDP = None  # type: ignore[assignment]
+    _FSDP_AVAILABLE = False
+
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
@@ -256,6 +272,134 @@ def _collect_aux_loss(model: torch.nn.Module, device: torch.device) -> torch.Ten
 
 
 # --------------------------------------------------------------------------- #
+# FSDP helpers (Phase 11 retry, 2026-05-16)
+# --------------------------------------------------------------------------- #
+
+
+def _is_distributed_wrapper(m: torch.nn.Module) -> bool:
+    """True if ``m`` is wrapped in DDP or top-level FSDP (i.e. ``m.module`` is
+    the user model)."""
+    if isinstance(m, DDP):
+        return True
+    if _FSDP_AVAILABLE and FSDP is not None and isinstance(m, FSDP):
+        return True
+    return False
+
+
+def _wrap_model_fsdp(
+    model: torch.nn.Module,
+    local_rank: int,
+    use_checkpoint_wrapper: bool,
+) -> torch.nn.Module:
+    """Wrap each MemorySpaceLayer (and L3 pool + L2 compressor if present) in
+    FSDP. Frozen Llama backbone stays replicated.
+
+    Strategy (Option (b) from FSDP_MIGRATION_PLAN_20260516.md §2):
+      * Wrap each ``MemorySpaceLayer`` as its own FSDP unit (FULL_SHARD).
+      * Wrap the shared L3 pool and L2 compressor as separate FSDP units.
+      * Leave the frozen backbone replicated (no sharding overhead, read-only).
+      * use_orig_params=True so the optimizer keeps original Parameter objects
+        and no rewrite of `_mem_space_params` / optimizer step is needed.
+
+    Args:
+        model: model after ``apply_mem_space_to_model`` + ``_freeze_backbone``.
+        local_rank: GPU index for ``device_id``.
+        use_checkpoint_wrapper: if True, wrap each MemorySpaceLayer in
+            FSDP-native ``checkpoint_wrapper`` BEFORE the FSDP wrap so
+            activations are recomputed on backward without conflicting with
+            FSDP's reshard_after_forward.
+
+    Returns:
+        The same ``model`` object with in-place layer-list replacement plus a
+        top-level FSDP wrap (so ``model.module`` is the original model).
+    """
+    if not _FSDP_AVAILABLE or FSDP is None:
+        raise RuntimeError(
+            "torch.distributed.fsdp is not available. Need PyTorch >= 2.0."
+        )
+
+    from torch.distributed.algorithms._checkpoint.checkpoint_wrapper import (
+        checkpoint_wrapper,
+        CheckpointImpl,
+    )
+
+    mp_policy = MixedPrecision(
+        param_dtype=torch.bfloat16,
+        reduce_dtype=torch.float32,
+        buffer_dtype=torch.float32,
+    )
+    common_fsdp_kwargs = dict(
+        sharding_strategy=ShardingStrategy.FULL_SHARD,
+        mixed_precision=mp_policy,
+        backward_prefetch=BackwardPrefetch.BACKWARD_PRE,
+        device_id=local_rank,
+        use_orig_params=True,
+        sync_module_states=False,  # all ranks already hold identical init
+    )
+
+    root = getattr(model, "model", model)
+    mem_layers = getattr(model, "_mem_space_layers", None) or []
+    layers_list = root.layers  # nn.ModuleList of MemorySpaceLayer
+
+    # 1) Wrap each MemorySpaceLayer in-place inside root.layers.
+    n_wrapped = 0
+    for i, layer in enumerate(layers_list):
+        # We only wrap MemorySpaceLayer instances; if for some reason a layer
+        # was not patched (layer_indices=None patches all, but be defensive),
+        # leave it alone.
+        if layer not in mem_layers:
+            continue
+        # Mark the inner MemorySpaceLayer so its _maybe_ckpt_wrapped_layer
+        # skips the manual torch.utils.checkpoint (FSDP-native wrapper handles
+        # activation memory if requested).
+        layer._inside_fsdp_unit = True
+        wrapped = layer
+        if use_checkpoint_wrapper:
+            wrapped = checkpoint_wrapper(
+                wrapped, checkpoint_impl=CheckpointImpl.NO_REENTRANT,
+            )
+        wrapped = FSDP(wrapped, **common_fsdp_kwargs)
+        layers_list[i] = wrapped
+        n_wrapped += 1
+
+    # 2) Wrap shared L3 pool / L2 compressor (these hold trainable params too).
+    l3_pool = getattr(model, "_l3_pool", None)
+    if l3_pool is not None:
+        # l3_pool was added via root.add_module("l3_pool", l3_pool) in patch.py
+        wrapped_l3 = FSDP(l3_pool, **common_fsdp_kwargs)
+        setattr(root, "l3_pool", wrapped_l3)
+        model._l3_pool = wrapped_l3
+
+    l2_comp = getattr(model, "_l2_compressor", None)
+    if l2_comp is not None:
+        wrapped_l2 = FSDP(l2_comp, **common_fsdp_kwargs)
+        setattr(root, "l2_compressor", wrapped_l2)
+        model._l2_compressor = wrapped_l2
+
+    # 3) Top-level FSDP wrap of the whole model. This catches any straggler
+    #    trainable params not yet under an inner FSDP unit (there shouldn't be
+    #    any after the per-layer wrapping above) and provides a single root for
+    #    state_dict_type() gather context manager.
+    #
+    #    Important: top-level FSDP must come AFTER inner FSDP wraps so
+    #    auto_wrap doesn't fight us. We use ShardingStrategy.NO_SHARD at the
+    #    top level so the frozen backbone is NOT sharded (only the inner units
+    #    we already wrapped have FULL_SHARD).
+    top_kwargs = dict(common_fsdp_kwargs)
+    top_kwargs["sharding_strategy"] = ShardingStrategy.NO_SHARD
+    model = FSDP(model, **top_kwargs)
+
+    logger.info(
+        "FSDP wrap complete: %d MemorySpaceLayer units + (l3_pool=%s, l2=%s); "
+        "top-level NO_SHARD over backbone.",
+        n_wrapped,
+        "yes" if l3_pool is not None else "no",
+        "yes" if l2_comp is not None else "no",
+    )
+    return model
+
+
+# --------------------------------------------------------------------------- #
 # Args
 # --------------------------------------------------------------------------- #
 
@@ -298,6 +442,12 @@ def parse_args() -> argparse.Namespace:
                    help="Comma-separated qa-task list: e.g. qa1 or qa1,qa2,qa5")
     p.add_argument("--babilong_lengths", type=str, default="1k,2k",
                    help="Comma-separated length splits: e.g. 1k,2k or 1k,2k,4k,8k")
+    p.add_argument("--babilong_length_weights", type=str, default="",
+                   help="Optional comma-separated non-negative weights, one per "
+                        "entry in --babilong_lengths, controlling the per-step "
+                        "length sampling distribution. Empty (default) = uniform. "
+                        "Example for v3 short-fix: --babilong_lengths=0k,1k,2k,4k "
+                        "--babilong_length_weights=3,3,1,1 oversamples 0k+1k.")
     p.add_argument("--babilong_limit_per_cell", type=int, default=0,
                    help="0 = use all rows; >0 = sample only first N rows per cell")
     p.add_argument("--use_chat_template", action="store_true",
@@ -421,6 +571,16 @@ def parse_args() -> argparse.Namespace:
                         "~2x compute). Required for L1+L2+L3 stack on H20 (97GB) at "
                         "chunk_size=1024 + 4k context.")
 
+    # FSDP migration (Phase 11 retry, 2026-05-16): shard trainable mem_space
+    # adapter (~1.4 GB params + 16.6 GB AdamW + 5.5 GB grads) across ranks via
+    # FSDP option (b) — keep frozen Llama-3-8B backbone replicated. Saves ~22
+    # GB/rank vs DDP, enabling P11 training on H20 (97 GB) which kept OOM'ing
+    # under DDP at ~48 GB peak due to fragmentation + cuBLAS workspace failure.
+    p.add_argument("--use_fsdp", action="store_true", default=False,
+                   help="Use FullyShardedDataParallel (ZeRO-3) on trainable "
+                        "mem_space layers instead of DDP. Frozen backbone stays "
+                        "replicated. Required for L1+L2+L3 stack on H20 (97 GB).")
+
     # Misc
     p.add_argument("--attn_impl", type=str, default="sdpa",
                    choices=["sdpa", "eager", "flash_attention_2"])
@@ -431,6 +591,13 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--save_interval", type=int, default=100,
                    help="Save intermediate adapter checkpoint every N steps "
                         "(0 = only save at end).")
+    p.add_argument("--skip_mem_when_short", action="store_true", default=False,
+                   help="v3 short-fix (2026-05-16): when the whole sample fits "
+                        "in one chunk (n_chunks==1), suppress L1/L3 writeback "
+                        "for that step. The forward still goes through the "
+                        "mem_space layer (selector + joint-attn) but slots are "
+                        "not written back, so the model learns to ignore the "
+                        "memory bank at short range.")
 
     return p.parse_args()
 
@@ -602,12 +769,25 @@ def build_model(args, device, dtype) -> torch.nn.Module:
 # --------------------------------------------------------------------------- #
 
 
+def _set_skip_writeback(model: torch.nn.Module, value: bool) -> None:
+    """Toggle the per-call ``_skip_writeback_this_call`` flag on every
+    MemorySpaceLayer wrapper. Used by ``_chunked_train_step`` to suppress
+    L1/L3 writeback when the whole sample fits in one chunk (v3 short-fix)."""
+    root = getattr(model, "module", model)
+    mem_layers = getattr(root, "_mem_space_layers", None)
+    if not mem_layers:
+        return
+    for w in mem_layers:
+        w._skip_writeback_this_call = bool(value)
+
+
 def _chunked_train_step(
     model: torch.nn.Module,
     input_ids: torch.Tensor,   # [1, total_len]
     labels:    torch.Tensor,   # [1, total_len]
     chunk_size: int,
     device: torch.device,
+    skip_mem_when_short: bool = False,
 ):
     """Stream input through mem_space in chunks of ``chunk_size``.
 
@@ -629,7 +809,18 @@ def _chunked_train_step(
     n_chunks = max(1, math.ceil(total_len / chunk_size))
 
     if n_chunks == 1:
-        out = model(input_ids=input_ids, labels=labels, use_cache=False)
+        # v3 short-fix: optionally suppress L1/L3 writeback so the model
+        # learns to rely on standard self-attn at short range.  Selector +
+        # joint-attn still run, but the bank is not updated this call —
+        # which combined with _reset_banks() above means slots stay at the
+        # init/random distribution and the model effectively bypasses memory.
+        if skip_mem_when_short:
+            _set_skip_writeback(model, True)
+        try:
+            out = model(input_ids=input_ids, labels=labels, use_cache=False)
+        finally:
+            if skip_mem_when_short:
+                _set_skip_writeback(model, False)
         return out
 
     # Chunk-split.  We make sure ALL answer-bearing tokens land in the last
@@ -706,12 +897,53 @@ def main() -> None:
         model.register_forward_hook(_slot_key_aux_hook)
 
     if world_size > 1:
-        model = DDP(model, device_ids=[local_rank], output_device=local_rank,
-                    find_unused_parameters=True)
+        if args.use_fsdp:
+            if not _FSDP_AVAILABLE:
+                raise RuntimeError(
+                    "--use_fsdp set but torch.distributed.fsdp is unavailable."
+                )
+            # FSDP path: wrap trainable mem_space units. Use FSDP-native
+            # checkpoint_wrapper when --gradient_checkpointing is set (manual
+            # torch.utils.checkpoint is incompatible with FSDP's
+            # reshard_after_forward). MemorySpaceLayer._maybe_ckpt_wrapped_layer
+            # is told to skip the manual ckpt path via _inside_fsdp_unit=True.
+            model = _wrap_model_fsdp(
+                model,
+                local_rank=local_rank,
+                use_checkpoint_wrapper=args.gradient_checkpointing,
+            )
+            if is_main(rank):
+                logger.info("Using FSDP (Option b): trainable mem_space sharded, "
+                            "backbone replicated. use_ckpt_wrapper=%s",
+                            args.gradient_checkpointing)
+        else:
+            model = DDP(model, device_ids=[local_rank], output_device=local_rank,
+                        find_unused_parameters=True)
 
     # --- BABILong dataset --- #
     babilong_tasks = [t.strip() for t in args.babilong_tasks.split(",") if t.strip()]
     babilong_lengths = [l.strip() for l in args.babilong_lengths.split(",") if l.strip()]
+    babilong_length_weights: Optional[List[float]] = None
+    if args.babilong_length_weights.strip():
+        try:
+            babilong_length_weights = [
+                float(w) for w in args.babilong_length_weights.split(",") if w.strip()
+            ]
+        except ValueError as _e:
+            raise ValueError(
+                f"--babilong_length_weights={args.babilong_length_weights!r} "
+                f"must be comma-separated floats"
+            ) from _e
+        if len(babilong_length_weights) != len(babilong_lengths):
+            raise ValueError(
+                f"--babilong_length_weights has {len(babilong_length_weights)} "
+                f"entries but --babilong_lengths has {len(babilong_lengths)}."
+            )
+        if is_main(rank):
+            logger.info(
+                "BABILong length-weighted sampling: %s",
+                ", ".join(f"{l}={w:g}" for l, w in zip(babilong_lengths, babilong_length_weights)),
+            )
 
     # Rank-0 prefetch of BABILong dataset cache.
     # ----------------------------------------------------------------------
@@ -772,6 +1004,7 @@ def main() -> None:
         seed=args.seed + rank,
         use_chat_template=args.use_chat_template,
         limit_per_cell=args.babilong_limit_per_cell,
+        length_weights=babilong_length_weights,
     )
     babilong_loader = DataLoader(
         babilong_ds, batch_size=1,
@@ -819,7 +1052,9 @@ def main() -> None:
     mix_rng = random.Random(args.seed + rank)
 
     # --- optimiser --- #
-    trainable = _mem_space_params(model.module if isinstance(model, DDP) else model)
+    trainable = _mem_space_params(
+        model.module if _is_distributed_wrapper(model) else model
+    )
     if not trainable:
         raise RuntimeError("No mem_space trainable params found.")
     optimizer = torch.optim.AdamW(trainable, lr=args.lr, weight_decay=0.0,
@@ -860,6 +1095,7 @@ def main() -> None:
             # BABILong step: chunked stream, answer-only loss handled by labels.
             out = _chunked_train_step(
                 model, input_ids, labels, args.chunk_size, device,
+                skip_mem_when_short=args.skip_mem_when_short,
             )
             n_babilong += 1
 
@@ -880,7 +1116,8 @@ def main() -> None:
         loss.backward()
 
         # Per-projection grad clip (Fix L-2).
-        for _n, _p in (model.module if isinstance(model, DDP) else model).named_parameters():
+        _grad_root = model.module if _is_distributed_wrapper(model) else model
+        for _n, _p in _grad_root.named_parameters():
             if _p.grad is not None and ("slot_to_hidden" in _n or "hidden_to_slot" in _n):
                 torch.nn.utils.clip_grad_norm_([_p], args.proj_grad_clip)
         torch.nn.utils.clip_grad_norm_(trainable, args.grad_clip)
@@ -898,13 +1135,23 @@ def main() -> None:
                 n_babilong, n_pg19, n_nonfinite, time.time() - t0,
             )
 
-        if (is_main(rank) and args.save_interval > 0
+        # FSDP state_dict gather is a collective: ALL ranks must enter the
+        # context manager (rank 0 then writes the gathered state). For DDP,
+        # only rank 0 needs to call _save_adapter. _save_adapter() handles
+        # the rank gating internally for FSDP.
+        if (args.save_interval > 0
                 and n_done % args.save_interval == 0
                 and n_done < args.total_steps):
-            _save_adapter(model, args, n_done)
+            if args.use_fsdp:
+                _save_adapter(model, args, n_done)
+            elif is_main(rank):
+                _save_adapter(model, args, n_done)
 
-    if is_main(rank):
+    if args.use_fsdp:
         _save_adapter(model, args, n_done, final=True)
+    elif is_main(rank):
+        _save_adapter(model, args, n_done, final=True)
+    if is_main(rank):
         logger.info("Training complete: steps=%d babilong=%d pg19=%d non-finite=%d",
                     n_done, n_babilong, n_pg19, n_nonfinite)
 
@@ -913,8 +1160,12 @@ def main() -> None:
 
 
 def _save_adapter(model, args, step: int, final: bool = False) -> None:
-    """Save mem_space adapter weights + config (matches train_mem_space_pg19 layout)."""
-    root = model.module if isinstance(model, DDP) else model
+    """Save mem_space adapter weights + config (matches train_mem_space_pg19 layout).
+
+    Supports both DDP and FSDP. For FSDP, gathers FULL_STATE_DICT to rank 0
+    (CPU-offloaded) via the FSDP.state_dict_type context manager. Only rank 0
+    writes the checkpoint.
+    """
     fragments = (
         "selector", "gate_param", "slot_output_gate",
         "slot_to_hidden", "hidden_to_slot", "memory_bank",
@@ -924,12 +1175,48 @@ def _save_adapter(model, args, step: int, final: bool = False) -> None:
         "gate_proj_new", "gate_proj_mem", "gate_bias",
         # L3 summary pool params (Q-Former-style cross-attn pool)
         "l3_pool",
+        # L2 token compressor params (Phase 11)
+        "l2_compressor",
     )
-    state = {
-        k: v.detach().cpu()
-        for k, v in root.state_dict().items()
-        if any(frag in k for frag in fragments)
-    }
+
+    is_fsdp = _FSDP_AVAILABLE and FSDP is not None and isinstance(model, FSDP)
+
+    if is_fsdp:
+        # FSDP path: gather full state_dict to rank 0 (CPU-offloaded). All ranks
+        # must execute the context, but only rank 0 receives the full state.
+        save_policy = FullStateDictConfig(offload_to_cpu=True, rank0_only=True)
+        with FSDP.state_dict_type(
+            model, StateDictType.FULL_STATE_DICT, save_policy
+        ):
+            full_state = model.state_dict()
+        if dist.is_initialized() and dist.get_rank() != 0:
+            return
+        # Strip any "module." / "_fsdp_wrapped_module." / "_checkpoint_wrapped_module."
+        # prefix added by FSDP / activation checkpoint wrapper, then filter by
+        # fragments so we only keep mem_space-related weights.
+        cleaned = {}
+        for k, v in full_state.items():
+            nk = k
+            for prefix_marker in (
+                "_fsdp_wrapped_module.",
+                "_checkpoint_wrapped_module.",
+                "module.",
+            ):
+                nk = nk.replace(prefix_marker, "")
+            cleaned[nk] = v
+        state = {
+            k: v.detach().cpu() if isinstance(v, torch.Tensor) else v
+            for k, v in cleaned.items()
+            if any(frag in k for frag in fragments)
+        }
+    else:
+        root = model.module if isinstance(model, DDP) else model
+        state = {
+            k: v.detach().cpu()
+            for k, v in root.state_dict().items()
+            if any(frag in k for frag in fragments)
+        }
+
     if final:
         ckpt_path = os.path.join(args.output_dir, "mem_space_adapter.pt")
     else:

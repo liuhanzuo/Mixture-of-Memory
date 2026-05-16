@@ -471,7 +471,19 @@ class MemorySpaceLayer(nn.Module):
         and tuples of Tensors) pass through cleanly — torch.utils.checkpoint
         unrolls only positional Tensor args by default, but accepts kwargs via
         a Python closure that captures them.
+
+        FSDP-mode (2026-05-16): when this MemorySpaceLayer is wrapped inside an
+        FSDP unit (see ``_wrap_model_fsdp`` in
+        ``scripts/train_mem_space_babilong.py``), manual ``torch.utils.checkpoint``
+        is incompatible with FSDP's reshard_after_forward (would recompute
+        without resharded params). FSDP-native activation checkpointing must be
+        applied at wrap time. The training script sets
+        ``self._inside_fsdp_unit = True`` after FSDP wrapping; when set, we
+        skip the manual checkpoint here and just call wrapped_layer directly
+        — FSDP / its checkpoint_wrapper (if applied) handles activation memory.
         """
+        if getattr(self, "_inside_fsdp_unit", False):
+            return self.wrapped_layer(hidden_states, **kwargs)
         if not (self.config.gradient_checkpointing and self.training):
             return self.wrapped_layer(hidden_states, **kwargs)
 
@@ -868,7 +880,13 @@ class MemorySpaceLayer(nn.Module):
         # boundary + init-time ``.detach()`` in ``MemoryBank.init_from_hidden``.
         # See ops/research_notes/20260426_mem_space_v0_branch3_writeback_bptt.md §3 (Option A.2).
         beta_t = self._current_beta()
-        if cfg.enable_writeback and not cfg.disable_l1_inject:
+        # v3 short-fix (2026-05-16): allow the trainer to suppress writeback
+        # for one forward call by setting ``self._skip_writeback_this_call=True``
+        # before invoking the layer.  Used when the entire sample fits in the
+        # chunk window (no streaming required) so the model learns to ignore
+        # the memory bank at short range.  Auto-cleared after the call below.
+        _skip_wb = bool(getattr(self, "_skip_writeback_this_call", False))
+        if cfg.enable_writeback and not cfg.disable_l1_inject and not _skip_wb:
             O_mem_slot = self.hidden_to_slot(O_mem_hidden)      # [B, k, slot_dim]
             if cfg.use_dual_gate and self.gate_proj_new is not None:
                 # H6 dual-gate (LM2-inspired). Both gates are content-conditioned
