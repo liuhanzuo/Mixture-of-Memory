@@ -639,6 +639,11 @@ def parse_args() -> argparse.Namespace:
                         "mem_space layer (selector + joint-attn) but slots are "
                         "not written back, so the model learns to ignore the "
                         "memory bank at short range.")
+    p.add_argument("--zero_alpha_on_cold_start", action="store_true", default=False,
+                   help="v5 cold-start alpha gating: on the first chunk of each "
+                        "sample, set output-side alpha=0 (bypass hidden states) "
+                        "while still allowing selector/writeback to populate "
+                        "the memory bank.")
 
     return p.parse_args()
 
@@ -682,6 +687,7 @@ def merge_adapter_config_into_args(args: argparse.Namespace) -> argparse.Namespa
         "unfreeze_hidden_to_slot":"unfreeze_hidden_to_slot",
         "shared_memory_bank":     "shared_memory_bank",
         "swa_window":             "swa_window",
+        "zero_alpha_on_cold_start": "zero_alpha_on_cold_start",
     }
     inherited = []
     for k_json, attr in cfg_to_attr.items():
@@ -745,6 +751,7 @@ def build_model(args, device, dtype) -> torch.nn.Module:
         l2_d_h_rope=args.l2_d_h_rope,
         l2_init_scale=args.l2_init_scale,
         gradient_checkpointing=args.gradient_checkpointing,
+        zero_alpha_on_cold_start=args.zero_alpha_on_cold_start,
     )
 
     # Snapshot rotary inv_freq in fp32 BEFORE the .to(dtype=bf16) cast so the
@@ -1345,6 +1352,7 @@ def _save_adapter(model, args, step: int, final: bool = False) -> None:
             "l2_d_h_rope":             args.l2_d_h_rope,
             "l2_init_scale":           args.l2_init_scale,
             "gradient_checkpointing":  args.gradient_checkpointing,
+            "zero_alpha_on_cold_start": args.zero_alpha_on_cold_start,
             "lr":                      args.lr,
             "total_steps":             args.total_steps,
             "babilong_tasks":          args.babilong_tasks,

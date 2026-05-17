@@ -577,7 +577,8 @@ class MemorySpaceLayer(nn.Module):
 
         # 1. Lazy-init / re-init on batch-size change.
         if not cfg.disable_l1_inject:
-            if not self.memory_bank.is_initialized(B):
+            cold_start_this_call = not self.memory_bank.is_initialized(B)
+            if cold_start_this_call:
                 # Slot dim may differ from d_model; project first if needed.
                 H_for_init = hidden_states
                 if self.slot_dim != self.d_model:
@@ -698,6 +699,7 @@ class MemorySpaceLayer(nn.Module):
             M_sel_hidden = M_sel_hidden * (_h_norm_ref / _m_norms.clamp(min=1e-6)).clamp(max=1.0)
         else:
             # disable_l1_inject=True: skip selector, slot gather, projection
+            cold_start_this_call = False
             k_slots = 0
             idx = None
             scores = None
@@ -856,6 +858,11 @@ class MemorySpaceLayer(nn.Module):
         #    the post-forward hook on the LAST mem layer recomputes
         #    prev_latents from the post-stack hidden states for the next chunk.
         alpha = torch.tanh(self.slot_output_gate)               # scalar in (-1, 1)
+        # v5 cold-start alpha gating: on cold start, zero alpha so the noisy
+        # initial slot content does not pollute hidden states; writeback still
+        # proceeds normally below.
+        if cold_start_this_call and cfg.zero_alpha_on_cold_start:
+            alpha = torch.zeros_like(alpha)
         l1_start = k_l3 + k_l2
         O_mem_hidden = ext_h[:, l1_start:l1_start + k_slots, :]   # [B, k_slots, d]
         slot_delta = ext_h[:, l1_start + k_slots:, :] - bypass_h  # [B, T, d]

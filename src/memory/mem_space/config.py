@@ -169,6 +169,14 @@ class MemorySpaceConfig:
     # per-chunk kv_b activations push peak past 97GB.
     gradient_checkpointing: bool = False
 
+    # v5 cold-start alpha gating (2026-05-17): on the first chunk of each
+    # sample (cold start — memory bank not yet initialized), set the output-
+    # side fusion coefficient alpha to 0 so that next_hidden = bypass_h
+    # (no noisy uninitialised slot content injected into hidden states).
+    # Selector / extended forward / writeback still execute normally, allowing
+    # the first chunk's content to be written into the memory bank.
+    zero_alpha_on_cold_start: bool = False
+
     def __post_init__(self) -> None:
         if self.num_slots <= 0:
             raise ValueError(f"num_slots must be > 0, got {self.num_slots}")
