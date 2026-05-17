@@ -1093,11 +1093,49 @@ def main() -> None:
     mix_rng = random.Random(args.seed + rank)
 
     # --- optimiser --- #
-    trainable = _mem_space_params(
-        model.module if _is_distributed_wrapper(model) else model
-    )
+    if args.use_fsdp:
+        # FIX (2026-05-17): under partial FSDP with use_orig_params=True, the
+        # attribute-walked Parameter handles produced by _mem_space_params() do
+        # NOT receive gradient writeback after backward() — FSDP attaches grads
+        # to its internal FlatParameter, not to those attribute-accessed
+        # handles. As a result 191/255 (75%) of trainable params silently
+        # received grad=None for the entire P11 5000-step run (eval mean=26.33
+        # vs P8 DDP 59.14 at 500 steps). Confirmed via synthetic-backward
+        # diagnostic in /tmp/fsdp_grad_diag.log.
+        #
+        # With use_orig_params=True, model.parameters() yields the original
+        # Parameter handles that FSDP writes grads to, so walk those after the
+        # FSDP wrap.
+        trainable = [p for p in model.parameters() if p.requires_grad]
+    else:
+        trainable = _mem_space_params(
+            model.module if _is_distributed_wrapper(model) else model
+        )
     if not trainable:
         raise RuntimeError("No mem_space trainable params found.")
+
+    # Sanity: optimizer param count must match the number of trainable
+    # parameters reported by named_parameters(). If FSDP somehow drops or
+    # duplicates a handle, fail loudly so we don't silently retrain a broken
+    # adapter again.
+    n_optim = len(trainable)
+    n_named_trainable = sum(
+        1 for _, p in model.named_parameters() if p.requires_grad
+    )
+    if is_main(rank):
+        logger.info(
+            "Optimizer param-collection sanity: optim_params=%d  "
+            "named_parameters(requires_grad)=%d  use_fsdp=%s",
+            n_optim, n_named_trainable, bool(args.use_fsdp),
+        )
+    if n_optim != n_named_trainable:
+        raise RuntimeError(
+            f"Optimizer param mismatch: collected {n_optim} but "
+            f"named_parameters() reports {n_named_trainable} trainable params. "
+            "Refusing to start training (would silently freeze some adapter "
+            "params under FSDP)."
+        )
+
     optimizer = torch.optim.AdamW(trainable, lr=args.lr, weight_decay=0.0,
                                   betas=(0.9, 0.95))
 
