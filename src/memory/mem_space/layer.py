@@ -929,9 +929,13 @@ class MemorySpaceLayer(nn.Module):
                 g_in_logit, g_forget_logit = gate_logits.chunk(2, dim=-1)
                 g_in = torch.sigmoid(g_in_logit)                       # [B, k, d]
                 g_forget = torch.sigmoid(g_forget_logit)               # [B, k, d]
+                # v8-A: apply per-group forget bias override for global slots
+                if cfg.num_global_slots > 0 and cfg.global_slot_forget_bias != cfg.forget_bias_init:
+                    _k_reg = idx.shape[1] - cfg.num_global_slots
+                    _bias_delta = cfg.global_slot_forget_bias - cfg.forget_bias_init
+                    g_forget_glob = torch.sigmoid(g_forget_logit[:, _k_reg:, :] + _bias_delta)
+                    g_forget = torch.cat([g_forget[:, :_k_reg, :], g_forget_glob], dim=1)
                 if cfg.num_global_slots > 0:
-                    # v7: split into regular slots (dual gate) and global
-                    # always-on slots (direct replacement, bypass dual gate).
                     _k_reg = idx.shape[1] - cfg.num_global_slots
                     _idx_reg  = idx[:, :_k_reg]
                     _idx_glob = idx[:, _k_reg:]
@@ -942,9 +946,25 @@ class MemorySpaceLayer(nn.Module):
                         forget_gate=g_forget[:, :_k_reg, :],
                         tanh_new=cfg.dual_gate_tanh_new,
                     )
-                    self.memory_bank.write(
-                        _idx_glob, O_mem_slot[:, _k_reg:, :], beta_t, replace=True
-                    )
+                    if cfg.global_slot_input_gate_only:
+                        # v8-C: slot ← g_in · tanh(s_new), no forget
+                        _g_forget_zero = torch.zeros_like(g_in[:, _k_reg:, :])
+                        self.memory_bank.write(
+                            _idx_glob,
+                            O_mem_slot[:, _k_reg:, :],
+                            gate=g_in[:, _k_reg:, :],
+                            forget_gate=_g_forget_zero,
+                            tanh_new=True,
+                        )
+                    else:
+                        # v8-A (or v7 when global_slot_forget_bias==forget_bias_init): dual gate
+                        self.memory_bank.write(
+                            _idx_glob,
+                            O_mem_slot[:, _k_reg:, :],
+                            gate=g_in[:, _k_reg:, :],
+                            forget_gate=g_forget[:, _k_reg:, :],
+                            tanh_new=cfg.dual_gate_tanh_new,
+                        )
                 else:
                     self.memory_bank.write(
                         idx,

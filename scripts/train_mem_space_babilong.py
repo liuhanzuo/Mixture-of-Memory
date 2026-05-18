@@ -600,6 +600,12 @@ def parse_args() -> argparse.Namespace:
                         "slot bank (e.g. slots[N-g..N-1]) that receive direct-replacement "
                         "writes unconditionally each chunk, bypassing top-k routing. "
                         "Regular top-k slots continue to use EMA. 0 = disabled.")
+    p.add_argument("--global_slot_forget_bias", type=float, default=1.0,
+                   help="v8-A: forget gate bias init override for global slots. "
+                        "Default=1.0 matches forget_bias_init. Set -5.0 for near-zero forgetting.")
+    p.add_argument("--global_slot_input_gate_only", action="store_true", default=False,
+                   help="v8-C: global slots use input-gate-only writeback (no forget). "
+                        "Requires --use_dual_gate.")
 
     # L2 Token-Compressed KV memory (NSA / DeepSeek-V4-CSA style learned-gated
     # attention pool over groups of g=16 tokens). Phase 11 (2026-05-16).
@@ -764,6 +770,8 @@ def build_model(args, device, dtype) -> torch.nn.Module:
         zero_alpha_on_cold_start=args.zero_alpha_on_cold_start,
         use_replace_writeback=args.use_replace_writeback,
         num_global_slots=args.num_global_slots,
+        global_slot_forget_bias=args.global_slot_forget_bias,
+        global_slot_input_gate_only=args.global_slot_input_gate_only,
     )
 
     # Snapshot rotary inv_freq in fp32 BEFORE the .to(dtype=bf16) cast so the
@@ -1368,6 +1376,8 @@ def _save_adapter(model, args, step: int, final: bool = False) -> None:
             # v6/v7 writeback experiments
             "use_replace_writeback":    args.use_replace_writeback,
             "num_global_slots":         args.num_global_slots,
+            "global_slot_forget_bias":  args.global_slot_forget_bias,
+            "global_slot_input_gate_only": args.global_slot_input_gate_only,
             "lr":                      args.lr,
             "total_steps":             args.total_steps,
             "babilong_tasks":          args.babilong_tasks,

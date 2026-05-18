@@ -142,6 +142,18 @@ class MemorySpaceConfig:
     input_bias_init: float = 0.0
     dual_gate_tanh_new: bool = True   # apply tanh to new content (LM2 default)
 
+    # v8-A (2026-05-18): Per-group forget bias override for global slots.
+    # When != forget_bias_init, the global slots' forget gate logit is shifted by
+    # (global_slot_forget_bias - forget_bias_init) at inference time, effectively
+    # giving global slots a different initial forget tendency.
+    # Default = forget_bias_init (no override, same as regular slots).
+    global_slot_forget_bias: float = 1.0  # matches forget_bias_init default
+
+    # v8-C (2026-05-18): Input-gate-only writeback for global slots.
+    # slot_global ← g_in · tanh(s_new)  (no forget term, pure write register)
+    # Requires use_dual_gate=True (reuses gate_proj_new/gate_proj_mem projections).
+    global_slot_input_gate_only: bool = False
+
     # H6b (2026-05-09): hard top-k masking on cross-attn read.
     # When > 0, each query only attends to the top read_topk slots (others get -inf
     # before softmax). Forces the model to commit to specific slots rather than
