@@ -1,5 +1,33 @@
 # Mixture-of-Memory — CodeBuddy Code 工作手册
 
+## 外网代理配置（2026-05-18 用户提供）
+
+访问 HuggingFace / arxiv / GitHub 等外网时，必须设置以下代理：
+
+```bash
+export http_proxy="http://hy-proxy.woa.com:3128"
+export https_proxy="http://hy-proxy.woa.com:3128"
+export all_proxy="http://hy-proxy.woa.com:3128"
+export no_proxy="mirrors.cloud.tencent.com,tlinux-mirror.tencent-cloud.com,localhost,127.0.0.1,.oa.com,.woa.com,.local"
+```
+
+> 注：`no_proxy` 已精简，完整版见 CODEBUDDY.md 历史。下载 HF 模型时也需要设置这些环境变量。
+
+---
+
+## Benchmark 结果汇总（2026-05-18）
+
+**`status/BENCHMARK_RESULTS.md`** 是所有实验结果的永久记录文件，包含：
+- 我们自己的实验结果（P8、v2、v2-base、plain baseline 等）
+- 其他论文的参考数字（LM2、BABILong paper 等）
+- 正在进行的实验（v6、v7、MemoryLLM eval）
+
+**格式**: 10 task (qa1-qa10) × 7 lengths (0k-32k) × n=100 samples，babilong.metrics 口径
+
+**heartbeat / 新实验完成后必须更新此文件**，把新结果追加进去，方便横向对比。
+
+---
+
 ## 自主派发规则（2026-04-29 用户指令，2026-04-30 更新）
 
 **派发 `/researcher` 和 `/coder` subagent 不需要用户审批，可随时自主执行。**
@@ -159,50 +187,43 @@ configs/
 
 ## 计算资源
 
-集群分为三类（2026-05-10 扩展）：
+**现有集群（2026-05-18 更新）：只有本机 + 远程 H20 + 原始 B200，其余节点均不可达。**
 
-### 1. 原始 B200/L20A 集群（稳定，主训练资源）
-- 4 节点，每节点 8× L20A (183 GiB)
-- IPs: b200-1=28.89.17.143（本地）/ b200-2=28.89.17.144 / b200-3=28.89.17.85 / b200-4=28.89.19.134
-- SSH: `sshpass -f configs/password.txt ssh -o StrictHostKeyChecking=no root@<IP>`
-- 远程工作目录: `/apdcephfs_wzc1/share_303098609/pighzliu_code/Mixture-of-Memory/`（与本地完全一致，CEPH 共享）
-- 远程模型: `/apdcephfs_wzc1/share_303098609/pighzliu_code/models/`
+### 1. 本机 H20（主力训练）
+- 8× H20 (97.8 GiB)，直接本地访问
+- 工作目录: `/apdcephfs_zwfy6/share_303098609/pighzliu_code/Mixture-of-Memory/`
+- 模型: `/apdcephfs_zwfy6/share_303098609/pighzliu_code/models/`
+- Python: 项目 `.venv/bin/python`（torch 兼容 H20）
+- ⚠️ **VRAM 97.8 GiB**，1B 模型训练完全没问题，8B+memory 需要 gradient_checkpointing
 
-### 2. Ephemeral / Replacement B200 集群（2026-05-10 加入，节点映射 2026-05-12 更新）
-- 4 节点共享 mount，每节点 8× L20A (183 GiB)
-- IPs: b200-5=28.89.18.252 / b200-6=28.89.20.82 / b200-7=28.89.20.27 / b200-8=28.89.18.19
-- SSH: `sshpass -f configs/password_b200_ephemeral.txt ssh -o StrictHostKeyChecking=no -o PreferredAuthentications=password root@<IP>`
-- 远程工作目录: `/apdcephfs_wzc1/share_303098609/pighzliu_code/Mixture-of-Memory/`（与主项目同一 share，可直接看到当前代码/模型/数据）
-- 远程模型: `/apdcephfs_wzc1/share_303098609/pighzliu_code/models/`
-- ⚠️ **节点可能随时被回收**：任务必须容忍掉线，不要在 replacement B200 上跑 > 30 min 不容易 resume 的任务
-- ⚠️ **密码文件**：当前使用 `configs/password_b200_ephemeral.txt`
-- ⚠️ **`/opt/conda/envs/torch-base` 是 per-node overlay FS**：4 节点的 conda env 互相独立，需按需逐节点检查 Python 依赖
-- 4 节点共享 mount，可直接访问主项目 share，无需 rsync
+### 2. 远程 H20 节点（28.59.80.196）（2026-05-18 更新）
+- 1 节点，8× H20 (97.8 GiB)，**全部空闲**
+- SSH: `ssh -o StrictHostKeyChecking=no -o PreferredAuthentications=password root@28.59.80.196`，密码保存在 `configs/password_h20_new.txt`
+- 工作目录: `/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/`（**zwfy6/share_304376610**，与本机不同 share）
+- 模型: `/apdcephfs_zwfy6/share_304376610/pighzliu_code/models/`
+- Python: `/opt/conda/envs/torch-base/bin/python`（torch 2.8.0，NVIDIA H20，确认可用）
+- ⚠️ **不同 CEPH 集群**：代码改动需要 rsync 或通过共享脚本同步
+- ⚠️ **v6/v7 launcher scripts 不在该节点**：需先 rsync 脚本过去再启动
 
-### 3. H20 集群（2026-05-10 加入）
-- 4 节点共享 mount，每节点 8× H20 (97.8 GiB)
-- IPs: h20-1=28.58.244.13 / h20-2=28.85.54.125 / h20-3=28.59.5.176 / h20-4=28.83.52.26
-- SSH: `sshpass -f configs/password_h20.txt ssh -o StrictHostKeyChecking=no -o PreferredAuthentications=password root@<IP>`
-- 远程工作目录: `/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/`（**不同 CEPH 集群**，与原始/ephemeral 都隔离）
-- 远程模型: `/apdcephfs_zwfy6/share_304376610/pighzliu_code/models/`
-- ⚠️ **VRAM 是 B200 的一半**：Llama-3-8B + memory + seq_len=4096 + gradient_checkpointing 在 B200 跑 98 GB，**直接搬到 H20 会 OOM**
-- ⚠️ **不同 CEPH 集群**：`/apdcephfs_zwfy6/...`（不是 `/apdcephfs_wzc1/...`），与 ephemeral B200 也是 **不同的物理 share**（虽然 share number 相同，但实际不通），需要单独 rsync
-- ⚠️ **`/opt/conda/envs/torch-base` 是 per-node overlay FS**：4 节点的 conda env 互相独立，需在每节点单独 `pip install transformers ...`
-- H20 训练规则：**完全自由**（用户 2026-05-10 授权）
-  - 跑训练时 OOM 就降 `seq_len` 到 2048 或 `chunks_per_doc` 到 16
-  - 实在装不下可以 2 节点 DDP（用 `--nnodes 2 --rdzv_backend c10d --rdzv_endpoint <h20-N>:29500`）
-  - 跑 eval / baseline / inference（< 30 GB / 8B fp16）完全没问题
-- 推荐用途：baseline 论文（MemoryLLM, Beacon, LongMem）、历史 ckpt BABILong eval、实时 ckpt 监控、slot 容量 sweep
+### 3. 原始 B200 集群（28.89.17.144 可用，其余不可达）
+- 28.89.17.144：8× L20A (183 GiB)，当前 GPU 2-7 跑 MemoryLLM eval，GPU 0/1 空闲
+- SSH: `ssh -o StrictHostKeyChecking=no -o PreferredAuthentications=password root@28.89.17.144`，密码 `configs/password.txt`
+- 工作目录: `/apdcephfs_wzc1/share_303098609/pighzliu_code/Mixture-of-Memory/`
+- ⚠️ 28.89.17.143 / 28.89.17.85 / 28.89.19.134 目前不可达
+- ⚠️ Ephemeral B200 (28.89.18.252/20.82/20.27/18.19) 密码被拒，不可用
+
+### ❌ 已确认不可用
+- h20-1/2/3/4（28.58.244.13 / 28.85.54.125 / 28.59.5.176 / 28.83.52.26）：密码被拒
+- ephemeral B200（b200-5..8）：密码被拒
 
 ### 集群间分配指南
 
 | 任务类型 | 推荐节点 |
 |---------|----------|
-| 主训练（H 系列 8B + memory + seq=4096） | 原始 b200-1..4，1 节点 1 实验 |
-| 临时训练（H 系列短跑、ablation 1000 step） | ephemeral b200-5..8（接受被关风险） |
-| baseline / eval / inference | H20 优先（VRAM 够用，原始 B200 留给训练） |
-| 长期稳定的 sweep | 原始 B200 |
-| 一晚跑完即可丢的 sweep | ephemeral 或 H20 |
+| 主训练（1B memory 实验） | **本机 H20**（8 卡） |
+| 并行第二个训练 | **远程 H20 28.59.80.196**（需先 rsync 脚本） |
+| baseline / eval / inference | 本机 H20 或远程 H20 |
+| 重型 8B+memory 训练 | **原始 B200 28.89.17.144**（L20A 183 GiB 空间更大）|
 
 ---
 
