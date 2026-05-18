@@ -61,6 +61,19 @@ class MemorySpaceConfig:
     writeback_gate_warmup_steps: int = 2000
     writeback_gate_max: float = 0.3
 
+    # v6 (2026-05-18): Direct-replacement writeback — skip EMA, write s_new
+    # directly into the selected slots.  Equivalent to β=1 but does not require
+    # the gate warmup ramp.  Default False = current EMA behaviour.
+    use_replace_writeback: bool = False
+
+    # v7 (2026-05-18): Always-on "global" slots that receive a replacement write
+    # (slot ← s_new) on every forward call regardless of top-k routing score.
+    # These are the LAST num_global_slots indices in the bank (e.g. slots[504..511]
+    # for num_global_slots=8 with num_slots=512). When 0 (default) this feature
+    # is disabled. Intended to provide an EMA-free accumulation register for
+    # tasks that require exact running state across many chunks (e.g. counting).
+    num_global_slots: int = 0
+
     slot_init: str = "hidden_pool"
     slot_init_noise: float = 1.0
 

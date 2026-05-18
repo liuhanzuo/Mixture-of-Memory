@@ -189,10 +189,15 @@ class MemoryBank(nn.Module):
         *,
         forget_gate: Optional[torch.Tensor] = None,
         tanh_new: bool = False,
+        replace: bool = False,
     ) -> None:
         """In-place EMA writeback on the selected slot positions.
 
-        Two modes:
+        Three modes:
+
+        **Replacement (v6/v7)** when ``replace=True``:
+
+            slots[idx] = new_repr  (no EMA, direct overwrite)
 
         **Single-gate (legacy, H/H5/H3)** when ``forget_gate is None``:
 
@@ -218,6 +223,8 @@ class MemoryBank(nn.Module):
             forget_gate: per-feature forget gate [B, k, slot_dim] (H6 only).
             tanh_new: bound new content with tanh before mixing (LM2 default;
                 replaces the manual ``max_norm`` clamp when active).
+            replace: v6/v7 direct-replacement mode — skip EMA and write new_repr
+                directly into the selected slots. Default False = EMA behaviour.
         """
         if self.frozen:
             return
@@ -237,6 +244,21 @@ class MemoryBank(nn.Module):
             raise ValueError(
                 f"new_repr dim {new_repr.shape[-1]} != slot_dim {self.slot_dim}"
             )
+
+        # ---- REPLACEMENT PATH (v6/v7) ----
+        # Direct overwrite: slot ← s_new (no EMA, no gate).
+        # Applied BEFORE the dual-gate check so that global-slot replacement in
+        # v7 (called with replace=True) also bypasses dual-gate logic cleanly.
+        if replace:
+            idx_exp = idx.unsqueeze(-1).expand(-1, -1, self.slot_dim)
+            updated = new_repr.to(self.slots.dtype)
+            # Apply norm cap before scatter to keep slots stable.
+            if self._slot_value_norm_cap > 0.0:
+                slot_norms = updated.norm(dim=-1, keepdim=True).clamp(min=1e-8)
+                scale = (slot_norms / self._slot_value_norm_cap).clamp(min=1.0)
+                updated = updated / scale
+            self.slots = self.slots.scatter(1, idx_exp, updated)
+            return
 
         # ---- DUAL-GATE PATH (H6) ----
         if forget_gate is not None:

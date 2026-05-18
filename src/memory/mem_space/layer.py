@@ -592,6 +592,20 @@ class MemorySpaceLayer(nn.Module):
             idx, scores, ste_weights = self.selector(hidden_states, slots)  # idx:[B,k], scores:[B,N]
             k_slots = idx.shape[-1]
 
+            # v7 (2026-05-18): Always-on global slots — append the last
+            # num_global_slots indices unconditionally (these bypass top-k routing
+            # so they are updated on every forward call regardless of relevance
+            # score; intended to provide EMA-free accumulation registers).
+            if cfg.num_global_slots > 0:
+                _g = cfg.num_global_slots
+                _N = cfg.num_slots
+                _glob_idx = torch.arange(_N - _g, _N, device=idx.device, dtype=idx.dtype)
+                _glob_idx = _glob_idx.unsqueeze(0).expand(B, -1)   # [B, g]
+                # Concatenate; keep duplicates (scatter will just overwrite twice
+                # which is fine — the replacement write for globals wins).
+                idx = torch.cat([idx, _glob_idx], dim=1)            # [B, k+g]
+                k_slots = idx.shape[-1]
+
             # ---- QUERY_DIAG (diagnostic log, no-op on computation) ----
             # Emit every 200 forward calls, rank-0 / layer-0 only.
             _should_log_diag = (
@@ -924,7 +938,23 @@ class MemorySpaceLayer(nn.Module):
                 )
             else:
                 # Legacy single-gate path (H/H5/H3).
-                self.memory_bank.write(idx, O_mem_slot, beta_t)
+                # v6/v7 (2026-05-18): choose writeback mode based on config.
+                if cfg.num_global_slots > 0:
+                    # v7: split idx into regular top-k slots (EMA) and global
+                    # always-on slots (replacement).
+                    _k_reg = idx.shape[1] - cfg.num_global_slots
+                    _idx_reg  = idx[:, :_k_reg]
+                    _idx_glob = idx[:, _k_reg:]
+                    _O_reg  = O_mem_slot[:, :_k_reg, :]
+                    _O_glob = O_mem_slot[:, _k_reg:, :]
+                    self.memory_bank.write(_idx_reg, _O_reg, beta_t)
+                    self.memory_bank.write(_idx_glob, _O_glob, beta_t, replace=True)
+                elif cfg.use_replace_writeback:
+                    # v6: direct replacement for ALL selected slots.
+                    self.memory_bank.write(idx, O_mem_slot, beta_t, replace=True)
+                else:
+                    # Default EMA path.
+                    self.memory_bank.write(idx, O_mem_slot, beta_t)
 
         # ---- WRITEBACK_DIAG (diagnostic log, no-op on computation) ----
         # Emit every 200 forward calls, rank-0 / layer-0 only.

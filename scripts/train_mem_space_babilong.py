@@ -591,6 +591,16 @@ def parse_args() -> argparse.Namespace:
                    help="Skip L1 slot prepending + dual-gate writeback. "
                         "Used for pure-L3 ablation (only L3 summary tokens active).")
 
+    # v6/v7 writeback experiments (2026-05-18)
+    p.add_argument("--use_replace_writeback", action="store_true", default=False,
+                   help="v6: Direct-replacement writeback — slot ← s_new (no EMA). "
+                        "Skips the (1-β)·current + β·new blending entirely.")
+    p.add_argument("--num_global_slots", type=int, default=0,
+                   help="v7: Number of always-on 'global' slots at the END of the "
+                        "slot bank (e.g. slots[N-g..N-1]) that receive direct-replacement "
+                        "writes unconditionally each chunk, bypassing top-k routing. "
+                        "Regular top-k slots continue to use EMA. 0 = disabled.")
+
     # L2 Token-Compressed KV memory (NSA / DeepSeek-V4-CSA style learned-gated
     # attention pool over groups of g=16 tokens). Phase 11 (2026-05-16).
     p.add_argument("--use_l2", action="store_true", default=False,
@@ -752,6 +762,8 @@ def build_model(args, device, dtype) -> torch.nn.Module:
         l2_init_scale=args.l2_init_scale,
         gradient_checkpointing=args.gradient_checkpointing,
         zero_alpha_on_cold_start=args.zero_alpha_on_cold_start,
+        use_replace_writeback=args.use_replace_writeback,
+        num_global_slots=args.num_global_slots,
     )
 
     # Snapshot rotary inv_freq in fp32 BEFORE the .to(dtype=bf16) cast so the
@@ -1353,6 +1365,9 @@ def _save_adapter(model, args, step: int, final: bool = False) -> None:
             "l2_init_scale":           args.l2_init_scale,
             "gradient_checkpointing":  args.gradient_checkpointing,
             "zero_alpha_on_cold_start": args.zero_alpha_on_cold_start,
+            # v6/v7 writeback experiments
+            "use_replace_writeback":    args.use_replace_writeback,
+            "num_global_slots":         args.num_global_slots,
             "lr":                      args.lr,
             "total_steps":             args.total_steps,
             "babilong_tasks":          args.babilong_tasks,
