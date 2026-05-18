@@ -697,8 +697,8 @@ class MemorySpaceLayer(nn.Module):
                 slots
             )                                                               # [B, slot_dim]
             M_sel_hidden_soft = self.slot_to_hidden(
-                M_sel_slot_soft.unsqueeze(1).expand(-1, cfg.top_k, -1)
-            )                                                               # [B, k, d]
+                M_sel_slot_soft.unsqueeze(1).expand(-1, k_slots, -1)
+            )                                                               # [B, k(+g), d]
 
             # STE: forward=hard (correct slot content), backward=soft (non-zero gradient to Q_sel)
             M_sel_hidden = M_sel_hidden_hard.detach() + (M_sel_hidden_soft - M_sel_hidden_soft.detach())
