@@ -26,7 +26,7 @@ export PYTHONUNBUFFERED=1
 export HF_HUB_OFFLINE=1
 
 PYTHON_BIN="${PYTHON_BIN:-$PROJECT_ROOT/.venv/bin/python}"
-MODEL_PATH="${MODEL_PATH:-models/Llama-3.2-1B}"
+MODEL_PATH="${MODEL_PATH:-/apdcephfs_wzc1/share_303098609/pighzliu_code/models/Llama-3.2-1B}"
 CKPT_DIR="${CKPT_DIR:-outputs/babilong_sft_phase1b_v2_llama32_1b_base_5k}"
 ADAPTER_CONFIG="${ADAPTER_CONFIG:-$CKPT_DIR/adapter_config.json}"
 TASKS=(qa1 qa2 qa3 qa4 qa5 qa6 qa7 qa8 qa9 qa10)

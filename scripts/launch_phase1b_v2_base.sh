@@ -33,7 +33,7 @@ export PYTHONUNBUFFERED=1
 export HF_HUB_OFFLINE=1
 
 EXP_TAG="${EXP_TAG:-phase1b_v2_llama32_1b_base_5k}"
-BACKBONE_PATH="${BACKBONE_PATH:-models/Llama-3.2-1B}"
+BACKBONE_PATH="${BACKBONE_PATH:-/apdcephfs_wzc1/share_303098609/pighzliu_code/models/Llama-3.2-1B}"
 PYTHON_BIN="${PYTHON_BIN:-$PROJECT_ROOT/.venv/bin/python}"
 
 NUM_GPUS="${NUM_GPUS:-8}"
