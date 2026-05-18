@@ -92,9 +92,6 @@ CMD="$PYTHON_BIN -m torch.distributed.run --nproc_per_node=${NUM_GPUS} scripts/t
   --slot_value_norm_cap ${SLOT_NORM_CAP} \
   --slot_init ${SLOT_INIT} \
   --slot_init_noise ${SLOT_INIT_NOISE} \
-  --use_dual_gate \
-  --forget_bias_init ${FORGET_BIAS} \
-  --input_bias_init ${INPUT_BIAS} \
   --use_l3_summary \
   --l3_n_summary ${L3_N_SUMMARY} \
   --l3_n_layers ${L3_N_LAYERS} \
