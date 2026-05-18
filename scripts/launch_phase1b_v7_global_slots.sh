@@ -98,6 +98,9 @@ CMD="$PYTHON_BIN -m torch.distributed.run --nproc_per_node=${NUM_GPUS} scripts/t
   --l3_n_heads ${L3_N_HEADS} \
   --shared_memory_bank \
   --num_global_slots ${NUM_GLOBAL_SLOTS} \
+  --use_dual_gate \
+  --forget_bias_init ${FORGET_BIAS} \
+  --input_bias_init ${INPUT_BIAS} \
   --output_dir ${OUTPUT_DIR}"
 
 LOG_FILE="${LOG_DIR}/${EXP_TAG}_$(date +%Y%m%d_%H%M).log"

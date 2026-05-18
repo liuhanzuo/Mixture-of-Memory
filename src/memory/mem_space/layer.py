@@ -929,13 +929,30 @@ class MemorySpaceLayer(nn.Module):
                 g_in_logit, g_forget_logit = gate_logits.chunk(2, dim=-1)
                 g_in = torch.sigmoid(g_in_logit)                       # [B, k, d]
                 g_forget = torch.sigmoid(g_forget_logit)               # [B, k, d]
-                self.memory_bank.write(
-                    idx,
-                    O_mem_slot,
-                    gate=g_in,
-                    forget_gate=g_forget,
-                    tanh_new=cfg.dual_gate_tanh_new,
-                )
+                if cfg.num_global_slots > 0:
+                    # v7: split into regular slots (dual gate) and global
+                    # always-on slots (direct replacement, bypass dual gate).
+                    _k_reg = idx.shape[1] - cfg.num_global_slots
+                    _idx_reg  = idx[:, :_k_reg]
+                    _idx_glob = idx[:, _k_reg:]
+                    self.memory_bank.write(
+                        _idx_reg,
+                        O_mem_slot[:, :_k_reg, :],
+                        gate=g_in[:, :_k_reg, :],
+                        forget_gate=g_forget[:, :_k_reg, :],
+                        tanh_new=cfg.dual_gate_tanh_new,
+                    )
+                    self.memory_bank.write(
+                        _idx_glob, O_mem_slot[:, _k_reg:, :], beta_t, replace=True
+                    )
+                else:
+                    self.memory_bank.write(
+                        idx,
+                        O_mem_slot,
+                        gate=g_in,
+                        forget_gate=g_forget,
+                        tanh_new=cfg.dual_gate_tanh_new,
+                    )
             else:
                 # Legacy single-gate path (H/H5/H3).
                 # v6/v7 (2026-05-18): choose writeback mode based on config.
