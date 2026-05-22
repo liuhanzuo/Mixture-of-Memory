@@ -202,6 +202,18 @@ class MemorySpaceConfig:
     # the first chunk's content to be written into the memory bank.
     zero_alpha_on_cold_start: bool = False
 
+    # FastMem (Gated Delta Rule continuous memory, 2026-05-21):
+    # Per-layer fast-weight memory that captures a continuous running summary
+    # of ALL tokens (complementing discrete top-k slot routing which only
+    # stores ~12.5%).  Uses the Gated Delta Rule update for high associative
+    # capacity with chunk-wise parallelism.
+    # Reference: ops/research_notes/20260521_fast_weight_memory_research.md §3.
+    use_fast_mem: bool = False
+    fast_mem_num_heads: int = 4         # H: number of fast-weight heads
+    fast_mem_d_state: int = 128         # d_k = d_v per head
+    fast_mem_chunk_size: int = 64       # BPTT window (gradient truncated at this many steps; forward is exact)
+    fast_mem_fusion_init: float = -2.0  # sigmoid(-2)≈0.12 initial contribution
+
     def __post_init__(self) -> None:
         if self.num_slots <= 0:
             raise ValueError(f"num_slots must be > 0, got {self.num_slots}")
