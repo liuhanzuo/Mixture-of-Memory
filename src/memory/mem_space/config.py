@@ -211,7 +211,7 @@ class MemorySpaceConfig:
     use_fast_mem: bool = False
     fast_mem_num_heads: int = 4         # H: number of fast-weight heads
     fast_mem_d_state: int = 128         # d_k = d_v per head
-    fast_mem_chunk_size: int = 64       # BPTT window (gradient truncated at this many steps; forward is exact)
+    fast_mem_chunk_size: int = 16       # BPTT window for sequential fallback (ignored when fla available)
     fast_mem_fusion_init: float = -2.0  # sigmoid(-2)≈0.12 initial contribution
 
     def __post_init__(self) -> None:

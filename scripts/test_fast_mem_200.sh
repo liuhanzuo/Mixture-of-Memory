@@ -34,7 +34,7 @@ export WANDB_MODE=disabled
     --use_fast_mem \
     --fast_mem_heads 4 \
     --fast_mem_d_state 128 \
-    --fast_mem_chunk_size 64 \
+    --fast_mem_chunk_size 16 \
     --fast_mem_fusion_init -2.0 \
     --gradient_checkpointing \
     --babilong_mix_fraction 0.0 \
