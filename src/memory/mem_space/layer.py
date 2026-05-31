@@ -47,6 +47,7 @@ import torch.nn.functional as F
 import torch.utils.checkpoint as _ckpt
 
 from .config import MemorySpaceConfig
+from .fast_mem import FastMemModule
 from .memory_bank import MemoryBank
 from .selector import TopKSelector
 
@@ -360,6 +361,21 @@ class MemorySpaceLayer(nn.Module):
         # (Q_sel, slot_keys), causing permanent routing degeneracy.
         self.slot_output_gate = nn.Parameter(torch.tensor(0.5, dtype=torch.float32))
 
+        # P1 (2026-05-31): content-conditioned per-token injection gate.
+        # Replaces the content-independent scalar alpha=tanh(slot_output_gate)
+        # in forward() with g=sigmoid(inject_gate(hidden_states)) so the model
+        # can learn to suppress injection when retrieval is irrelevant (e.g.
+        # LongBench top1_sim≈0.015). See ops/research_notes/
+        # 20260531_compression_memory_training_methods.md Part D 方案1.
+        #
+        # Initialization for smooth transition (no behavior break at step 0):
+        #   weight = 0  -> gate output is purely the bias at init
+        #   bias = logit(tanh(0.5)) = logit(0.462) ≈ -0.152
+        #   so sigmoid(bias) ≈ 0.462 == the prior scalar alpha.
+        self.inject_gate = nn.Linear(self.d_model, 1)
+        nn.init.zeros_(self.inject_gate.weight)
+        nn.init.constant_(self.inject_gate.bias, -0.1523)
+
         # hidden_to_slot: freeze gate controlled by ``config.hidden_to_slot_frozen``.
         #
         # Historical note (pre-Fix-J, 2026-04-29): the comment here used to claim
@@ -417,6 +433,17 @@ class MemorySpaceLayer(nn.Module):
 
         # Step counter (incremented by the outer training loop).
         self.step_counter: int = 0
+
+        # FastMem (Gated Delta Rule, 2026-05-21): per-layer continuous memory.
+        if config.use_fast_mem:
+            self.fast_mem = FastMemModule(
+                d_model=d_model,
+                num_heads=config.fast_mem_num_heads,
+                d_state=config.fast_mem_d_state,
+                chunk_size=config.fast_mem_chunk_size,
+                fusion_init=config.fast_mem_fusion_init,
+            )
+        self._fast_mem_state: Optional[torch.Tensor] = None
 
         # Internal forward-call counter (independent of step_counter;
         # incremented every forward() call; used for diagnostic log scheduling
@@ -556,9 +583,8 @@ class MemorySpaceLayer(nn.Module):
             else:
                 prev_h = getattr(self.l3_pool, "_prev_chunk_h", None)
                 if prev_h is not None:
-                    l3_summaries = self.l3_pool(prev_h)
-                    # Cache for the other 31 layers in this chunk; cleared at
-                    # end of chunk by post-forward hook in patch.py.
+                    prev_summary = getattr(self.l3_pool, "_prev_summary", None)
+                    l3_summaries = self.l3_pool(prev_h, prev_summary=prev_summary)
                     object.__setattr__(self.l3_pool, "_chunk_summary_cache", l3_summaries)
 
         B, T, d = hidden_states.shape
@@ -590,6 +616,7 @@ class MemorySpaceLayer(nn.Module):
             # 2. Top-k select over hidden states (Fix Z.2: per-token routing).
             # Pass full [B, T, d_model] instead of mean-pooled [B, d_model].
             idx, scores, ste_weights = self.selector(hidden_states, slots)  # idx:[B,k], scores:[B,N]
+            self._last_top1_sim = scores.max(dim=-1).values.float().mean().item()
             k_slots = idx.shape[-1]
 
             # v7 (2026-05-18): Always-on global slots — append the last
@@ -629,8 +656,11 @@ class MemorySpaceLayer(nn.Module):
                     _retrieved_norm = _M_sel_diag.float().norm(dim=-1).mean().item()
                     # Fix Z.2: per-token logit variance diagnostic
                     _pt_std = getattr(self.selector, '_last_per_token_logit_std', 0.0)
-                    # Fix Z.2f: content-based key diversity
-                    _K_content = F.normalize(self.selector.K_sel(slots), dim=-1)  # [B, N, S]
+                    # Fix Z.2f: content-based key diversity (includes slot_key_bias)
+                    _K_content = F.normalize(
+                        self.selector.K_sel(slots) + self.selector.slot_key_bias.unsqueeze(0),
+                        dim=-1,
+                    )  # [B, N, S]
                     _K0 = _K_content[0]  # [N, S]
                     _key_sim = torch.mm(_K0, _K0.t()).fill_diagonal_(0.0)
                     _key_max_cos = _key_sim.abs().max().item()
@@ -871,12 +901,17 @@ class MemorySpaceLayer(nn.Module):
         #    L2 outputs are also discarded — L2 is read-only at this layer;
         #    the post-forward hook on the LAST mem layer recomputes
         #    prev_latents from the post-stack hidden states for the next chunk.
-        alpha = torch.tanh(self.slot_output_gate)               # scalar in (-1, 1)
-        # v5 cold-start alpha gating: on cold start, zero alpha so the noisy
+        # P1 (2026-05-31): content-conditioned per-token injection gate.
+        # g = sigmoid(inject_gate(hidden_states)), shape [B, T, 1]. Uses the
+        # layer INPUT hidden_states (pre-attention representation entering this
+        # memory layer) so the gate is content-dependent and causal-safe. At
+        # init (weight=0, bias=-0.1523) g ≈ 0.462 == prior scalar alpha.
+        g = torch.sigmoid(self.inject_gate(hidden_states))       # [B, T, 1]
+        # v5 cold-start gating: on cold start, zero the gate so the noisy
         # initial slot content does not pollute hidden states; writeback still
         # proceeds normally below.
         if cold_start_this_call and cfg.zero_alpha_on_cold_start:
-            alpha = torch.zeros_like(alpha)
+            g = torch.zeros_like(g)
         l1_start = k_l3 + k_l2
         O_mem_hidden = ext_h[:, l1_start:l1_start + k_slots, :]   # [B, k_slots, d]
         slot_delta = ext_h[:, l1_start + k_slots:, :] - bypass_h  # [B, T, d]
@@ -887,7 +922,18 @@ class MemorySpaceLayer(nn.Module):
         _bypass_norms = bypass_h.norm(dim=-1, keepdim=True).clamp(min=1e-6)
         _sd_norms = slot_delta.norm(dim=-1, keepdim=True).clamp(min=1e-6)
         slot_delta = slot_delta * (_bypass_norms / _sd_norms).clamp(max=1.0)
-        next_hidden = bypass_h + alpha * slot_delta             # [B, T, d]; alpha=0 → bypass
+
+        # FastMem (Gated Delta Rule, 2026-05-21): continuous fast-weight
+        # contribution from ALL tokens.  Runs on post-attention bypass_h so it
+        # can learn what attention missed (complementary to attention, not parallel).
+        # The fusion_gate inside fast_mem starts near 0, so at init this adds ≈0.
+        fast_mem_out = torch.zeros_like(bypass_h)
+        if self.config.use_fast_mem and hasattr(self, 'fast_mem'):
+            fast_mem_out, self._fast_mem_state = self.fast_mem(
+                bypass_h, self._fast_mem_state
+            )
+
+        next_hidden = bypass_h + g * slot_delta + fast_mem_out
 
         # 7. Writeback (if enabled). Branch-3 (2026-04-26): gradient-bearing
         # writeback — O_mem_slot stays attached to the autograd graph and β is
@@ -998,14 +1044,16 @@ class MemorySpaceLayer(nn.Module):
         if _should_log_diag:
             with torch.no_grad():
                 _gate_val = beta_t.float().item() if isinstance(beta_t, torch.Tensor) else float(beta_t)
-                _alpha_val = torch.tanh(self.slot_output_gate).float().item()
+                _g_mean = g.float().mean().item()
+                _g_std = g.float().std().item()
                 _sd_abs_mean = slot_delta.float().abs().mean().item()
                 _sd_abs_max  = slot_delta.float().abs().max().item()
                 _msh_norm_mean = M_sel_hidden.float().norm(dim=-1).mean().item()
             print(
                 f"[WRITEBACK_DIAG step={self.step_counter} fwd={self._fwd_count}]"
                 f" gate_val(beta)={_gate_val:.6f}"
-                f" alpha(tanh_output_gate)={_alpha_val:.6f}"
+                f" alpha(inject_gate_mean)={_g_mean:.6f}"
+                f" inject_gate_std={_g_std:.6f}"
                 f" slot_delta_abs_mean={_sd_abs_mean:.6f}"
                 f" slot_delta_max={_sd_abs_max:.6f}"
                 f" M_sel_hidden_norm_mean={_msh_norm_mean:.6f}"
@@ -1025,11 +1073,12 @@ class MemorySpaceLayer(nn.Module):
             ent = self.selector.entropy_aux_loss(scores)
             aux["entropy"] = ent * cfg.entropy_aux_weight
             # Fix Z.2g: key repulsion prevents collapse
-            kr = self.selector.key_repulsion_loss(threshold=cfg.key_repulsion_threshold)
+            kr = self.selector.key_repulsion_loss(threshold=cfg.key_repulsion_threshold, slots=slots)
             aux["key_repulsion"] = kr * cfg.key_repulsion_weight
-            # Fix Z.2g: peak routing loss pushes per-chunk routing to be peaked
-            pk = self.selector.peak_routing_loss(scores)
-            aux["peak_routing"] = pk * cfg.peak_routing_weight
+            # K_sel weight orthogonality: prevents weight matrix rank collapse
+            # which causes all projected keys to be identical (key_max_cos=1.0).
+            wo = self.selector.weight_ortho_loss()
+            aux["weight_ortho"] = wo * cfg.key_repulsion_weight
             aux["beta"] = beta_t
             # Per-slot usage (fraction of batch that selected each slot).
             one_hot = torch.zeros_like(scores).scatter_(-1, idx, 1.0)
