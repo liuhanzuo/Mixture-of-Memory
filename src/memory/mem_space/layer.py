@@ -252,6 +252,11 @@ class MemorySpaceLayer(nn.Module):
     # 32× log spam from all patched decoder layers).
     _instance_counter: int = 0
 
+    # Per-model flag: when True, forward() bypasses all memory logic and
+    # calls the wrapped decoder layer directly (teacher mode for KD).
+    # Set via model-level helper; default False preserves P1 behaviour.
+    _memory_disabled: bool = False
+
     def __init__(
         self,
         wrapped_layer: nn.Module,
@@ -552,6 +557,20 @@ class MemorySpaceLayer(nn.Module):
         l3_summaries: Optional[torch.Tensor] = None,
         **kwargs: Any,
     ) -> torch.Tensor:
+        # Teacher-mode bypass: when _memory_disabled is set (e.g. for KD
+        # teacher pass), skip all memory logic and run the wrapped layer
+        # directly. This produces identical output to vanilla Llama.
+        if self._memory_disabled:
+            return self.forward_no_memory(
+                hidden_states,
+                attention_mask=attention_mask,
+                position_ids=position_ids,
+                past_key_values=past_key_values,
+                use_cache=use_cache,
+                position_embeddings=position_embeddings,
+                **kwargs,
+            )
+
         # v0 does not integrate with HF's DynamicCache (Stage 2 work).  HF's
         # outer LlamaModel forward flips ``use_cache`` on by default for
         # inference; we silently downgrade to ``False`` here so the smoke-test
