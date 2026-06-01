@@ -283,7 +283,7 @@ def _collect_aux_loss(model: torch.nn.Module, device: torch.device) -> torch.Ten
     if not mem_layers:
         return total
     for w in mem_layers:
-        for key in ("load_balance", "entropy", "key_repulsion", "weight_ortho", "l3_diversity"):
+        for key in ("load_balance", "entropy", "key_repulsion", "weight_ortho", "l3_diversity", "q_multi_diversity"):
             v = w.last_aux_losses.get(key)
             if v is not None:
                 total = total + v

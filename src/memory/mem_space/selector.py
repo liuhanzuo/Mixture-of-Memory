@@ -90,6 +90,20 @@ class TopKSelector(nn.Module):
         self.Q_sel = nn.Linear(d_model, selector_dim, bias=False)
         self.K_sel = nn.Linear(slot_dim, selector_dim, bias=False)
 
+        # v10 (2026-06-01): LayerNorm applied to the Q_sel projection output in
+        # the multi_query branch ONLY. Root cause of multi_query degeneration:
+        # the unconstrained linear Q_sel [d_model→selector_dim] collapses the
+        # diverse L3 summary tokens S (4096-dim, max_cos≈0.6) into nearly the
+        # SAME 128-dim direction+magnitude → after F.normalize the 64 routing
+        # queries become identical (summary_q_max_cos=1.0) → multi_query falls
+        # back to single_query → uniform routing. LayerNorm breaks the "all
+        # outputs share one direction + magnitude" collapse: it re-centers and
+        # re-scales each query independently before normalize, so two inputs
+        # that Q_sel mapped close together are pushed apart by their per-feature
+        # deviations. Scoped to multi_query so max_pool / chunk_query behaviour
+        # is unchanged.
+        self.q_sel_ln = nn.LayerNorm(selector_dim)
+
         # Small init to avoid biasing the early softmax toward any slot —
         # important because the slot bank is initialised from a pooled copy of
         # the same hidden states, which makes all slots near-identical at the
@@ -128,12 +142,27 @@ class TopKSelector(nn.Module):
         # v8 multi-query routing (2026-06-01): logsumexp aggregation temperature
         # over the M sub-query dimension (L3 summary tokens). Layer may override.
         self._multi_query_tau = 1.0
+        # v10 (2026-06-01): cosine threshold for the post-projection q_multi
+        # diversity loss. Penalise pairs with cos(q_i, q_j) > threshold. Reuses
+        # the L3 diversity threshold semantics (layer wires it from config).
+        self._q_multi_diversity_threshold = 0.5
 
         # v8 multi-query diagnostics (set during multi_query forward; layer
         # reads them via getattr with defaults so non-multi_query modes are safe).
         self._last_summary_query_max_cos = 0.0
         self._last_summary_query_mean_cos = 0.0
         self._last_unique_selected_slots = 0
+        # v10 (2026-06-01): pre-projection summary-token (S) diversity, measured
+        # on query_tokens[0] BEFORE Q_sel. Compared against
+        # _last_summary_query_max_cos (post-projection): if S_max_cos is low
+        # (e.g. 0.6) but summary_q_max_cos≈1.0 → Q_sel projection collapse is
+        # confirmed. Default 0.0 / safe for non-multi_query modes.
+        self._last_S_max_cos = 0.0
+        # v10: differentiable diversity loss computed on the post-projection,
+        # post-LayerNorm routing query q_multi (the space routing actually uses).
+        # Gradient flows back to Q_sel and q_sel_ln. Layer reads this via getattr
+        # and adds it to aux (replacing/augmenting the v9 S-space l3_diversity).
+        self._last_q_multi_diversity_loss = None
 
     # --------------------------------------------------------------------- #
     # Forward
@@ -159,6 +188,9 @@ class TopKSelector(nn.Module):
         ``_multi_query_tau``), then global top-k. If ``query_tokens is None``
         (cold start / L3 disabled), falls back to the max_pool branch.
         """
+        # v10: reset the per-forward multi_query diversity loss so a non-
+        # multi_query call (or cold-start fallback) does not leak a stale graph.
+        self._last_q_multi_diversity_loss = None
         if pool_of_H.dim() not in (2, 3):
             raise ValueError(
                 f"pool_of_H must be [B, d_model] or [B, T, d_model]; "
@@ -217,10 +249,35 @@ class TopKSelector(nn.Module):
                     f"query_tokens last-dim {query_tokens.shape[-1]} != "
                     f"d_model {self.d_model}"
                 )
-            q_multi = F.normalize(self.Q_sel(query_tokens), dim=-1)  # [B, M, S]
+            q_multi = F.normalize(self.q_sel_ln(self.Q_sel(query_tokens)), dim=-1)  # [B, M, S]
+            # v10: LayerNorm (q_sel_ln) sits between Q_sel and normalize. Without
+            # it the unconstrained Q_sel collapses diverse S into one direction
+            # (summary_q_max_cos=1.0); LayerNorm re-centers/re-scales per feature
+            # so distinct S stay distinct after normalize.
             score = torch.einsum("bms,bns->bmn", q_multi, k) * self.temperature  # [B, M, N]
             tau_q = self._multi_query_tau
             logits = torch.logsumexp(score / tau_q, dim=1) * tau_q   # [B, N]
+
+            # ---- v10 q_multi diversity loss (DIFFERENTIABLE — NOT in no_grad) ----
+            # The v9 l3_diversity loss acts on S (pre-projection, 4096-dim). But
+            # routing actually uses q_multi (post-Q_sel, post-LN, 128-dim). If
+            # Q_sel collapses S, an S-space loss can be satisfied while q_multi
+            # is still collapsed. So we add diversity pressure directly on the
+            # space routing uses: penalise pairs of routing queries with
+            # cos > threshold. Gradient flows back through F.normalize → q_sel_ln
+            # → Q_sel (q_multi is NOT detached). Computed per batch item, mean
+            # over b and over off-diagonal i<j pairs.
+            B_q, M_q, _ = q_multi.shape
+            if M_q >= 2:
+                qsim_loss = torch.bmm(q_multi, q_multi.transpose(1, 2))  # [B, M, M]
+                _iu = torch.triu(
+                    torch.ones(M_q, M_q, device=q_multi.device, dtype=torch.bool),
+                    diagonal=1,
+                )
+                _pair = F.relu(qsim_loss - self._q_multi_diversity_threshold)[:, _iu]
+                self._last_q_multi_diversity_loss = _pair.mean()
+            else:
+                self._last_q_multi_diversity_loss = q_multi.new_zeros(())
 
             # ---- multi-query diagnostics (no grad, cheap for M~64) ----
             with torch.no_grad():
@@ -237,6 +294,17 @@ class TopKSelector(nn.Module):
                 else:
                     self._last_summary_query_max_cos = 0.0
                     self._last_summary_query_mean_cos = 0.0
+                # v10: pre-projection diversity of the raw L3 summary tokens S
+                # (query_tokens[0], 4096-dim) — compare against the post-
+                # projection summary_q_max_cos above to confirm/deny Q_sel
+                # projection collapse.
+                S0 = F.normalize(query_tokens[0], dim=-1)        # [M, d_model]
+                if S0.shape[0] > 1:
+                    Ssim = torch.mm(S0, S0.t())                  # [M, M]
+                    Ssim.fill_diagonal_(0.0)
+                    self._last_S_max_cos = Ssim.abs().max().item()
+                else:
+                    self._last_S_max_cos = 0.0
                 # coverage: if each sub-query picked its single favourite slot,
                 # how many distinct slots would that cover (batch[0])?
                 per_q_argmax = score[0].argmax(dim=-1)           # [M]

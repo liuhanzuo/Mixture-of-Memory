@@ -345,6 +345,11 @@ class MemorySpaceLayer(nn.Module):
         self.selector._routing_pool_mode = config.routing_pool_mode
         # v8 multi-query routing (2026-06-01): logsumexp aggregation temperature.
         self.selector._multi_query_tau = getattr(config, "multi_query_tau", 1.0)
+        # v10 (2026-06-01): threshold for the post-projection q_multi diversity
+        # loss. Reuse the L3 diversity threshold so both losses share semantics.
+        self.selector._q_multi_diversity_threshold = getattr(
+            config, "l3_diversity_threshold", 0.5
+        )
 
         # Learnable slot↔hidden projections. We do NOT take the slot_dim==d_model
         # shortcut (Identity) because that path has zero trainable capacity and was
@@ -702,12 +707,17 @@ class MemorySpaceLayer(nn.Module):
                     _sq_max_cos = getattr(self.selector, "_last_summary_query_max_cos", 0.0)
                     _sq_mean_cos = getattr(self.selector, "_last_summary_query_mean_cos", 0.0)
                     _uniq_sel = getattr(self.selector, "_last_unique_selected_slots", 0)
+                    # v10: pre-projection S diversity (raw L3 summary tokens,
+                    # before Q_sel). Low S_max_cos + high summary_q_max_cos
+                    # ⇒ Q_sel projection collapse confirmed.
+                    _S_max_cos = getattr(self.selector, "_last_S_max_cos", 0.0)
                 print(
                     f"[QUERY_DIAG step={self.step_counter} fwd={self._fwd_count}]"
                     f" top1_sim_mean={_top1_sim_mean:.6f}"
                     f" retrieved_norm_mean={_retrieved_norm:.6f}"
                     f" per_tok_logit_std={_pt_std:.6f}"
                     f" key_max_cos={_key_max_cos:.4f}"
+                    f" S_max_cos={_S_max_cos:.4f}"
                     f" summary_q_max_cos={_sq_max_cos:.4f}"
                     f" summary_q_mean_cos={_sq_mean_cos:.4f}"
                     f" uniq_sel_slots={_uniq_sel}",
@@ -1137,6 +1147,22 @@ class MemorySpaceLayer(nn.Module):
             # singleton across all 32 layers, so collect this ONCE (layer_idx==0)
             # to avoid counting it 32×. Only when L3 summaries actually exist
             # (None on the cold-start first chunk).
+            #
+            # v10 (2026-06-01): the v9 l3_diversity loss acts on S (pre-Q_sel,
+            # 4096-dim), but routing actually uses q_multi (post-Q_sel + LN,
+            # 128-dim). Empirically S could be diverse (S_max_cos≈0.6) while
+            # q_multi was collapsed (summary_q_max_cos=1.0) → the S-space loss
+            # was blind to the real collapse. We therefore add a SECOND diversity
+            # term acting directly on q_multi (computed in selector.forward,
+            # gradient flows to Q_sel + q_sel_ln). DECISION: keep BOTH —
+            #   * S-loss (v9): harmless, keeps the L3 Q-Former output diverse so
+            #     the projection has diverse inputs to work with;
+            #   * q_multi-loss (v10): the load-bearing term, since it constrains
+            #     the exact space routing uses.
+            # Both share l3_diversity_weight. The q_multi term is collected on
+            # layer_idx==0 too (the selector is per-layer, but only layer 0 is
+            # the canonical diagnostic/aux layer here, matching the v9 guard;
+            # this keeps the loss magnitude comparable to v9 and avoids 32×).
             if (
                 self._layer_idx == 0
                 and self.l3_pool is not None
@@ -1146,6 +1172,10 @@ class MemorySpaceLayer(nn.Module):
                     l3_summaries, threshold=cfg.l3_diversity_threshold
                 )
                 aux["l3_diversity"] = l3_div * cfg.l3_diversity_weight
+                # v10 post-projection diversity on the actual routing query.
+                _q_div = getattr(self.selector, "_last_q_multi_diversity_loss", None)
+                if _q_div is not None:
+                    aux["q_multi_diversity"] = _q_div * cfg.l3_diversity_weight
             aux["beta"] = beta_t
             # Per-slot usage (fraction of batch that selected each slot).
             one_hot = torch.zeros_like(scores).scatter_(-1, idx, 1.0)
