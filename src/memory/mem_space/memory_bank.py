@@ -190,7 +190,7 @@ class MemoryBank(nn.Module):
         forget_gate: Optional[torch.Tensor] = None,
         tanh_new: bool = False,
         replace: bool = False,
-    ) -> None:
+    ):
         """In-place EMA writeback on the selected slot positions.
 
         Three modes:
@@ -225,9 +225,19 @@ class MemoryBank(nn.Module):
                 replaces the manual ``max_norm`` clamp when active).
             replace: v6/v7 direct-replacement mode — skip EMA and write new_repr
                 directly into the selected slots. Default False = EMA behaviour.
+
+        Returns:
+            The gradient-bearing written VALUES for the selected slots
+            ``[B, k, slot_dim]`` (the post-write content, BEFORE the global
+            ``slot_value_norm_cap`` no-grad rebind of ``self.slots``), or
+            ``None`` on a no-op (frozen / β≈0). P1/v12 uses this as ``M_write``
+            for the summary-reconstruction loss: it must stay attached to the
+            autograd graph so gradient flows back into the write path. (Reading
+            ``self.slots`` after the call would be detached because the norm-cap
+            rebinds it under ``torch.no_grad()``.)
         """
         if self.frozen:
-            return
+            return None
         if self.slots is None:
             raise RuntimeError("MemoryBank.write() called before initialisation.")
         if idx.dim() != 2 or new_repr.dim() != 3:
@@ -258,7 +268,7 @@ class MemoryBank(nn.Module):
                 scale = (slot_norms / self._slot_value_norm_cap).clamp(min=1.0)
                 updated = updated / scale
             self.slots = self.slots.scatter(1, idx_exp, updated)
-            return
+            return updated
 
         # ---- DUAL-GATE PATH (H6) ----
         if forget_gate is not None:
@@ -292,7 +302,7 @@ class MemoryBank(nn.Module):
                     slot_norms_all = self.slots.norm(dim=-1, keepdim=True).clamp(min=1e-8)
                     scale_all = (slot_norms_all / self._slot_value_norm_cap).clamp(min=1.0)
                     self.slots = self.slots / scale_all
-            return
+            return updated
 
         # ---- SINGLE-GATE LEGACY PATH (H/H5/H3) ----
         # Tensor-or-float gate (Branch-3 2026-04-26). A tensor gate threads
@@ -301,7 +311,7 @@ class MemoryBank(nn.Module):
         # perf parity.
         is_tensor_gate = isinstance(gate, torch.Tensor)
         if not is_tensor_gate and gate <= 0.0:
-            return  # β ≈ 0 → no-op (common during the early warmup phase).
+            return None  # β ≈ 0 → no-op (common during the early warmup phase).
 
         # Expand idx so we can gather along the N axis: [B, k, 1] -> [B, k, d].
         idx_exp = idx.unsqueeze(-1).expand(-1, -1, self.slot_dim)
@@ -350,3 +360,4 @@ class MemoryBank(nn.Module):
                 slot_norms_all = self.slots.norm(dim=-1, keepdim=True).clamp(min=1e-8)
                 scale_all = (slot_norms_all / self._slot_value_norm_cap).clamp(min=1.0)
                 self.slots = self.slots / scale_all
+        return updated

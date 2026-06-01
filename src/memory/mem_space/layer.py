@@ -266,6 +266,7 @@ class MemorySpaceLayer(nn.Module):
         shared_bank: Optional[MemoryBank] = None,
         l3_pool: Optional[nn.Module] = None,
         l2_compressor: Optional[nn.Module] = None,
+        recon_decoder: Optional[nn.Module] = None,
     ) -> None:
         super().__init__()
         if not isinstance(config, MemorySpaceConfig):
@@ -332,6 +333,15 @@ class MemorySpaceLayer(nn.Module):
             object.__setattr__(self, "l2", l2_compressor)
         else:
             object.__setattr__(self, "l2", None)
+
+        # MemoryReconDecoder (P1 / v12, 2026-06-01) — shared single instance
+        # across all layers (peer to l3_pool). Registered via object.__setattr__
+        # so the decoder params are NOT duplicated in every layer's state_dict;
+        # patch.py registers it once as a named submodule on the model root.
+        if recon_decoder is not None:
+            object.__setattr__(self, "recon_decoder", recon_decoder)
+        else:
+            object.__setattr__(self, "recon_decoder", None)
         self.selector = TopKSelector(
             d_model=d_model,
             slot_dim=slot_dim,
@@ -1021,6 +1031,18 @@ class MemorySpaceLayer(nn.Module):
         # chunk window (no streaming required) so the model learns to ignore
         # the memory bank at short range.  Auto-cleared after the call below.
         _skip_wb = bool(getattr(self, "_skip_writeback_this_call", False))
+        # P1 / v12 (2026-06-01): capture the gradient-bearing written slot
+        # VALUES (M_write) for the summary-reconstruction loss. We take the
+        # return value of the REGULAR top-k write (not the always-on global
+        # slots) so the recon target reflects content-routed writes. Stays None
+        # when writeback is skipped or l_recon is disabled.
+        M_write: Optional[torch.Tensor] = None
+        _want_recon = (
+            self._layer_idx == 0
+            and cfg.l_recon_weight > 0.0
+            and self.recon_decoder is not None
+            and l3_summaries is not None
+        )
         if cfg.enable_writeback and not cfg.disable_l1_inject and not _skip_wb:
             O_mem_slot = self.hidden_to_slot(O_mem_hidden)      # [B, k, slot_dim]
             if cfg.use_dual_gate and self.gate_proj_new is not None:
@@ -1053,7 +1075,7 @@ class MemorySpaceLayer(nn.Module):
                     _k_reg = idx.shape[1] - cfg.num_global_slots
                     _idx_reg  = idx[:, :_k_reg]
                     _idx_glob = idx[:, _k_reg:]
-                    self.memory_bank.write(
+                    M_write = self.memory_bank.write(
                         _idx_reg,
                         O_mem_slot[:, :_k_reg, :],
                         gate=g_in[:, :_k_reg, :],
@@ -1080,7 +1102,7 @@ class MemorySpaceLayer(nn.Module):
                             tanh_new=cfg.dual_gate_tanh_new,
                         )
                 else:
-                    self.memory_bank.write(
+                    M_write = self.memory_bank.write(
                         idx,
                         O_mem_slot,
                         gate=g_in,
@@ -1098,14 +1120,14 @@ class MemorySpaceLayer(nn.Module):
                     _idx_glob = idx[:, _k_reg:]
                     _O_reg  = O_mem_slot[:, :_k_reg, :]
                     _O_glob = O_mem_slot[:, _k_reg:, :]
-                    self.memory_bank.write(_idx_reg, _O_reg, beta_t)
+                    M_write = self.memory_bank.write(_idx_reg, _O_reg, beta_t)
                     self.memory_bank.write(_idx_glob, _O_glob, beta_t, replace=True)
                 elif cfg.use_replace_writeback:
                     # v6: direct replacement for ALL selected slots.
-                    self.memory_bank.write(idx, O_mem_slot, beta_t, replace=True)
+                    M_write = self.memory_bank.write(idx, O_mem_slot, beta_t, replace=True)
                 else:
                     # Default EMA path.
-                    self.memory_bank.write(idx, O_mem_slot, beta_t)
+                    M_write = self.memory_bank.write(idx, O_mem_slot, beta_t)
 
         # ---- WRITEBACK_DIAG (diagnostic log, no-op on computation) ----
         # Emit every 200 forward calls, rank-0 / layer-0 only.
@@ -1180,6 +1202,16 @@ class MemorySpaceLayer(nn.Module):
                 _q_div = getattr(self.selector, "_last_q_multi_diversity_loss", None)
                 if _q_div is not None:
                     aux["q_multi_diversity"] = _q_div * cfg.l3_diversity_weight
+            # P1 / v12 (2026-06-01): summary-reconstruction auxiliary loss.
+            # Reconstruct this chunk's L3 summary tokens from the slot VALUES
+            # written this chunk (M_write); MSE against stopgrad(S_L3) gives the
+            # write path a near-distance "store decodable content" objective.
+            # Computed only on layer_idx==0 (recon_decoder is a shared singleton,
+            # avoid 32×). M_write is None on cold-start / writeback-skip / β≈0.
+            if _want_recon and M_write is not None:
+                S_hat = self.recon_decoder(M_write)              # [B, num_summary, d]
+                l_recon = self.recon_decoder.recon_loss(S_hat, l3_summaries)
+                aux["recon"] = l_recon * cfg.l_recon_weight
             aux["beta"] = beta_t
             # Per-slot usage (fraction of batch that selected each slot).
             one_hot = torch.zeros_like(scores).scatter_(-1, idx, 1.0)

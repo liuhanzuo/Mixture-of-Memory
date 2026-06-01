@@ -23,6 +23,7 @@ from .l2_compressor import L2Compressor
 from .l3_summary import L3SummaryPool
 from .layer import MemorySpaceLayer
 from .memory_bank import MemoryBank
+from .recon_decoder import MemoryReconDecoder
 
 
 # --------------------------------------------------------------------------- #
@@ -128,6 +129,20 @@ def apply_mem_space_to_model(
             n_layers=config.l3_n_layers,
         )
 
+    # MemoryReconDecoder (P1 / v12, 2026-06-01): if l_recon_weight > 0, create a
+    # single shared decoder (peer to l3_pool) that reconstructs the chunk's L3
+    # summary tokens from the slot VALUES written this chunk. The loss gives the
+    # write path a near-distance "store decodable content" objective. Shared
+    # singleton (like l3_pool); the loss is computed only on layer_idx==0.
+    recon_decoder: Optional[MemoryReconDecoder] = None
+    if config.l_recon_weight > 0.0:
+        recon_decoder = MemoryReconDecoder(
+            d_model=d_model,
+            d_slot=slot_dim,
+            num_summary=config.l3_n_summary,
+            num_heads=config.l3_n_heads,
+        )
+
     # L2 Token Compressor (2026-05-16, Phase 11): if enabled, create a single
     # shared L2Compressor (peer to L3SummaryPool). The compressor produces
     # token-compressed KV latents at the END of each chunk via a post-forward
@@ -166,6 +181,7 @@ def apply_mem_space_to_model(
         wrapper = MemorySpaceLayer(
             orig, config, d_model=d_model, shared_bank=shared_bank,
             l3_pool=l3_pool, l2_compressor=l2_compressor,
+            recon_decoder=recon_decoder,
         )
         layers[i] = wrapper
         mem_layers.append(wrapper)
@@ -194,37 +210,37 @@ def apply_mem_space_to_model(
 
         def _l3_post_forward_hook(module, args, output):
             """After the last MemorySpaceLayer, stash this chunk's final hidden
-            states (DETACHED) so the NEXT chunk's layers can compute fresh L3
-            summary tokens.
+            states (DETACHED) and L3 summary output so the NEXT chunk's layers
+            can compute fresh recursive L3 summary tokens.
 
-            We stash detached H, not pre-computed summary tokens, for two
-            reasons:
-            (1) chunk-local BPTT — backward through pool() with chunk-i's graph
-                would re-enter graphs already freed by chunk-i's loss.backward(),
-                causing ``RuntimeError: Trying to backward through the graph a
-                second time``.
-            (2) The pool's parameters need a fresh gradient path inside chunk
-                i+1's own forward. By calling pool() inside chunk i+1 (with
-                chunk-i's detached H), the pool weights see chunk i+1's loss.
+            Recursive L3 (2026-05-25): also save the current chunk's L3 output
+            as prev_summary for the next chunk. This makes L3 a recurrent
+            summarizer that accumulates information across all chunks.
             """
-            # Extract hidden states from output
             if isinstance(output, tuple):
                 h = output[0]
             else:
                 h = output
-            # h is [B, T, d] — the output of the last patched layer.
             pool = model._l3_pool
             if pool is not None:
-                # Stash DETACHED H. Chunk i+1's MemorySpaceLayer.forward will
-                # call pool(detached_H) to produce summary tokens with a fresh
-                # gradient path inside chunk i+1's graph.
                 pool._prev_chunk_h = h.detach()
-                # Clear per-chunk cache: chunk i+1's first MemorySpaceLayer
-                # forward will recompute, then cache for layers 1..31.
+                # Save current L3 output as prev_summary for next chunk's
+                # recursive call. Detached to prevent cross-chunk BPTT.
+                cached_summary = getattr(pool, "_chunk_summary_cache", None)
+                if cached_summary is not None:
+                    pool._prev_summary = cached_summary.detach()
                 if hasattr(pool, "_chunk_summary_cache"):
                     object.__setattr__(pool, "_chunk_summary_cache", None)
 
         _last_mem_layer.register_forward_hook(_l3_post_forward_hook)
+
+    # Expose the MemoryReconDecoder as a registered submodule on the model root
+    # so its parameters appear in model.parameters() / state_dict exactly once
+    # (MemorySpaceLayer attaches it via object.__setattr__ to avoid duplication
+    # across all 32 layers, mirroring l3_pool / l2_compressor).
+    model._recon_decoder = recon_decoder
+    if recon_decoder is not None:
+        root.add_module("recon_decoder", recon_decoder)
 
     # Expose L2 compressor as a registered submodule on the model root so its
     # parameters appear in model.parameters() / state_dict (exactly once;
@@ -270,3 +286,35 @@ def _reset_l2(model: nn.Module) -> None:
     comp = getattr(model, "_l2_compressor", None)
     if comp is not None:
         comp.reset()
+
+
+def _reset_fast_mem(model: nn.Module) -> None:
+    """Reset per-layer FastMem states to None (for sample/document boundaries).
+
+    Called at sample boundaries so the fast weight doesn't carry stale state
+    across unrelated documents. At CHUNK boundaries within a document,
+    the state should be KEPT (detached) — this function is only for SAMPLE
+    boundaries.
+    """
+    root = getattr(model, "module", model)
+    mem_layers = getattr(root, "_mem_space_layers", None)
+    if not mem_layers:
+        return
+    for w in mem_layers:
+        w._fast_mem_state = None
+
+
+def _detach_fast_mem(model: nn.Module) -> None:
+    """Detach per-layer FastMem states (for chunk boundaries within a document).
+
+    At chunk boundaries we want to keep the fast_mem state (it accumulates
+    across the full document) but break the gradient graph. This is the
+    opposite of _reset_fast_mem which is for sample boundaries.
+    """
+    root = getattr(model, "module", model)
+    mem_layers = getattr(root, "_mem_space_layers", None)
+    if not mem_layers:
+        return
+    for w in mem_layers:
+        if w._fast_mem_state is not None:
+            w._fast_mem_state = w._fast_mem_state.detach()

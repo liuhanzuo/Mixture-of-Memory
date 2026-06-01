@@ -131,6 +131,10 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--routing_pool_mode", type=str, default="multi_query",
                    choices=["max_pool", "chunk_query", "multi_query", "slot_query"])
     p.add_argument("--selector_temperature", type=float, default=20.0)
+    p.add_argument("--l_recon_weight", type=float, default=0.0,
+                   help="P1/v12 summary-reconstruction aux loss weight. >0 "
+                        "enables the MemoryReconDecoder (requires L3 summary, "
+                        "which the toy always sets). 0 = disabled (default).")
     p.add_argument("--batch_size", type=int, default=8)
     p.add_argument("--seed", type=int, default=42)
     p.add_argument("--wandb_run_name", type=str, default=None)
@@ -174,6 +178,7 @@ def build_base_args(args: argparse.Namespace) -> argparse.Namespace:
     base.top_k = args.top_k
     base.selector_temperature = args.selector_temperature
     base.routing_pool_mode = args.routing_pool_mode
+    base.l_recon_weight = args.l_recon_weight
     base.attn_impl = args.attn_impl
     base.dtype = args.dtype
     base.seed = args.seed
@@ -548,12 +553,20 @@ def main() -> None:
         if step % args.log_interval == 0:
             lm_v = lm_loss.item() if lm_loss is not None else float("nan")
             aux_v = aux_loss.item() if aux_loss is not None else float("nan")
+            # P1/v12: surface the recon aux component (layer-0 singleton) so the
+            # smoke test can confirm it is finite and trending down.
+            recon_v = float("nan")
+            _rc = mem_layers[0].last_aux_losses.get("recon")
+            if _rc is not None:
+                recon_v = _rc.item()
             sps = (step + 1) / max(1e-9, time.time() - t0)
             print(f"[toy step {step}/{args.total_steps}] lm={lm_v:.4f} "
-                  f"aux={aux_v:.4f} nf={n_nonfinite} speed={sps:.2f} it/s",
+                  f"aux={aux_v:.4f} recon={recon_v:.4f} nf={n_nonfinite} "
+                  f"speed={sps:.2f} it/s",
                   flush=True)
             if use_wandb:
                 wandb.log({"train/lm_loss": lm_v, "train/aux_loss": aux_v,
+                           "train/recon_loss": recon_v,
                            "train/n_nonfinite": n_nonfinite}, step=step)
 
         if step % args.diag_interval == 0 or step == args.total_steps - 1:

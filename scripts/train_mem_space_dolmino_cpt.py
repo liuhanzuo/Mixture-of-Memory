@@ -200,6 +200,12 @@ def _mem_space_params(model: torch.nn.Module) -> List[torch.nn.Parameter]:
         for p in l2_comp.parameters():
             if id(p) not in seen:
                 params.append(p); seen.add(id(p))
+    # MemoryReconDecoder params (P1/v12)
+    recon_decoder = getattr(root, "_recon_decoder", None)
+    if recon_decoder is not None:
+        for p in recon_decoder.parameters():
+            if id(p) not in seen:
+                params.append(p); seen.add(id(p))
     return params
 
 
@@ -283,7 +289,7 @@ def _collect_aux_loss(model: torch.nn.Module, device: torch.device) -> torch.Ten
     if not mem_layers:
         return total
     for w in mem_layers:
-        for key in ("load_balance", "entropy", "key_repulsion", "weight_ortho", "l3_diversity", "q_multi_diversity"):
+        for key in ("load_balance", "entropy", "key_repulsion", "weight_ortho", "l3_diversity", "q_multi_diversity", "recon"):
             v = w.last_aux_losses.get(key)
             if v is not None:
                 total = total + v
@@ -375,6 +381,10 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--key_repulsion_threshold", type=float, default=0.3)
     p.add_argument("--l3_diversity_weight", type=float, default=0.1)
     p.add_argument("--l3_diversity_threshold", type=float, default=0.5)
+    p.add_argument("--l_recon_weight", type=float, default=0.0,
+                   help="P1/v12 summary-reconstruction aux loss weight. >0 "
+                        "enables the MemoryReconDecoder (requires use_l3_summary). "
+                        "0 = disabled (default).")
     p.add_argument("--peak_routing_weight", type=float, default=0.05)
     p.add_argument("--slot_value_norm_cap", type=float, default=5.0)
     p.add_argument("--slot_init", type=str, default="random",
@@ -511,6 +521,7 @@ def build_model(args, device, dtype) -> torch.nn.Module:
         key_repulsion_threshold=args.key_repulsion_threshold,
         l3_diversity_weight=args.l3_diversity_weight,
         l3_diversity_threshold=args.l3_diversity_threshold,
+        l_recon_weight=args.l_recon_weight,
         peak_routing_weight=args.peak_routing_weight,
         slot_init=args.slot_init,
         slot_init_noise=args.slot_init_noise,

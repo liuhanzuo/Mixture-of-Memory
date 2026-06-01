@@ -89,6 +89,17 @@ class MemorySpaceConfig:
     l3_diversity_weight: float = 0.1
     l3_diversity_threshold: float = 0.5
     peak_routing_weight: float = 0.1
+    # P1 / v12 (2026-06-01): summary-reconstruction auxiliary loss weight.
+    # When > 0, a small MemoryReconDecoder reconstructs the current chunk's L3
+    # summary tokens from the slot VALUES written this chunk; the loss
+    # MSE(S_hat, stopgrad(S_L3)) gives the write path a near-distance objective
+    # ("store content that is decodable"). 0 = disabled (default; back-compat).
+    # Requires use_l3_summary=True (L3 summary tokens are the recon target).
+    # The decoder is a shared singleton across all 32 layers; the loss is only
+    # computed on layer_idx==0. See versions/v12_summary_reconstruction.md and
+    # status/MEMORY_PROTOCOL_PLAN.md [P1]. Motivated by the toy passcode
+    # diagnostic (commit e5bb181): addressing worked but exact_acc stayed 0.
+    l_recon_weight: float = 0.0
     slot_dropout: float = 0.0
 
     use_rope_for_slots: bool = False
