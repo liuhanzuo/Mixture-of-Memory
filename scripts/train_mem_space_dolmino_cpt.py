@@ -400,6 +400,13 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--fast_mem_num_heads", type=int, default=4)
     p.add_argument("--fast_mem_d_state", type=int, default=128)
 
+    # P1-v2: break gate freeze deadlock
+    p.add_argument("--no_detach_slots_in_selector", action="store_true", default=False)
+    p.add_argument("--no_slot_delta_clip", action="store_true", default=False)
+    p.add_argument("--inject_gate_bias_init", type=float, default=-0.1523)
+    p.add_argument("--routing_pool_mode", type=str, default="max_pool",
+                   choices=["max_pool", "chunk_query"])
+
     # v6/v7 writeback (disabled by default for CPT)
     p.add_argument("--use_replace_writeback", action="store_true", default=False)
     p.add_argument("--num_global_slots", type=int, default=0)
@@ -522,6 +529,10 @@ def build_model(args, device, dtype) -> torch.nn.Module:
         use_fast_mem=args.use_fast_mem,
         fast_mem_num_heads=args.fast_mem_num_heads,
         fast_mem_d_state=args.fast_mem_d_state,
+        no_detach_slots_in_selector=args.no_detach_slots_in_selector,
+        no_slot_delta_clip=args.no_slot_delta_clip,
+        inject_gate_bias_init=args.inject_gate_bias_init,
+        routing_pool_mode=args.routing_pool_mode,
     )
 
     # H7 rotary fp32 fix — snapshot before bf16 cast

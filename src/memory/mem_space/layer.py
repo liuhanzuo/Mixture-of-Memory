@@ -340,6 +340,9 @@ class MemorySpaceLayer(nn.Module):
             num_slots=config.num_slots,
             temperature=config.selector_temperature,
         )
+        # P1-v2: wire config flag to selector
+        self.selector._no_detach_slots = config.no_detach_slots_in_selector
+        self.selector._routing_pool_mode = config.routing_pool_mode
 
         # Learnable slot↔hidden projections. We do NOT take the slot_dim==d_model
         # shortcut (Identity) because that path has zero trainable capacity and was
@@ -378,8 +381,13 @@ class MemorySpaceLayer(nn.Module):
         #   bias = logit(tanh(0.5)) = logit(0.462) ≈ -0.152
         #   so sigmoid(bias) ≈ 0.462 == the prior scalar alpha.
         self.inject_gate = nn.Linear(self.d_model, 1)
-        nn.init.zeros_(self.inject_gate.weight)
-        nn.init.constant_(self.inject_gate.bias, -0.1523)
+        # P1-v3: init weight with non-zero values so gate has per-token
+        # variation from step 0. With weight=0 the gate is constant (std=0)
+        # and receives zero gradient — a deadlock. Scale 0.1/sqrt(d_model)
+        # gives initial gate output std ≈ 0.017 in bf16 (enough to break symmetry
+        # while keeping initial behavior close to the constant-gate baseline).
+        nn.init.normal_(self.inject_gate.weight, std=10.0 / (self.d_model ** 0.5))
+        nn.init.constant_(self.inject_gate.bias, config.inject_gate_bias_init)
 
         # hidden_to_slot: freeze gate controlled by ``config.hidden_to_slot_frozen``.
         #
@@ -925,7 +933,18 @@ class MemorySpaceLayer(nn.Module):
         # layer INPUT hidden_states (pre-attention representation entering this
         # memory layer) so the gate is content-dependent and causal-safe. At
         # init (weight=0, bias=-0.1523) g ≈ 0.462 == prior scalar alpha.
-        g = torch.sigmoid(self.inject_gate(hidden_states))       # [B, T, 1]
+        # P1-v3 fix: compute gate in float32 to avoid bf16 precision loss.
+        # Root cause: hidden_states norm ≈ 0.45 (post-RMSNorm), weight_max ≈ 0.006
+        # → logit perturbation ≈ 0.003, below bf16 step size (0.0078) at bias=-2.0.
+        # Cast both input and weight to float32 for the gate computation.
+        _hs_f32 = hidden_states.float()
+        _gate_logit = torch.nn.functional.linear(_hs_f32, self.inject_gate.weight.float(), self.inject_gate.bias.float())
+        g = torch.sigmoid(_gate_logit).to(hidden_states.dtype)  # [B, T, 1]
+        # DEBUG: print gate diagnostics on early forward calls (layer 0 only)
+        if _should_log_diag and self._fwd_count <= 100:
+            _gw_norm = self.inject_gate.weight.float().norm().item()
+            _logit_std = _gate_logit.std().item()
+            print(f"[GATE_DEBUG fwd={self._fwd_count}] weight_norm={_gw_norm:.6f} logit_std={_logit_std:.6f} g_std={g.float().std().item():.6f}")
         # v5 cold-start gating: on cold start, zero the gate so the noisy
         # initial slot content does not pollute hidden states; writeback still
         # proceeds normally below.
@@ -938,9 +957,11 @@ class MemorySpaceLayer(nn.Module):
         # Root cause: slot_delta_max=7.97 × alpha=0.462 × 32 layers → 117 effective residual shift.
         # Fix L-1 guards the INPUT side (M_sel_hidden). Fix M-1 guards the OUTPUT side (slot_delta).
         # One-directional: only clips DOWN (never amplifies). Same pattern as Fix L-1.
-        _bypass_norms = bypass_h.norm(dim=-1, keepdim=True).clamp(min=1e-6)
-        _sd_norms = slot_delta.norm(dim=-1, keepdim=True).clamp(min=1e-6)
-        slot_delta = slot_delta * (_bypass_norms / _sd_norms).clamp(max=1.0)
+        # P1-v2: skip clipping when no_slot_delta_clip is set (stronger gate gradient).
+        if not cfg.no_slot_delta_clip:
+            _bypass_norms = bypass_h.norm(dim=-1, keepdim=True).clamp(min=1e-6)
+            _sd_norms = slot_delta.norm(dim=-1, keepdim=True).clamp(min=1e-6)
+            slot_delta = slot_delta * (_bypass_norms / _sd_norms).clamp(max=1.0)
 
         # FastMem (Gated Delta Rule, 2026-05-21): continuous fast-weight
         # contribution from ALL tokens.  Runs on post-attention bypass_h so it

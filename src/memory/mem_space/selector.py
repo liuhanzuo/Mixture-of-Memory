@@ -98,15 +98,32 @@ class TopKSelector(nn.Module):
         nn.init.normal_(self.Q_sel.weight, std=0.02)
         nn.init.normal_(self.K_sel.weight, std=0.02)
 
-        # Fix Z.2g: Learnable slot_keys with peak routing loss.
-        # Keys are learnable so they can specialize.
-        self.slot_keys = nn.Parameter(
-            F.normalize(torch.randn(num_slots, selector_dim), dim=-1),
+        # Content-based routing (2026-05-25): K_sel projects slot content to
+        # selector_dim for content-based addressing. Previous static slot_keys
+        # approach caused routing collapse (top1_sim stuck at 1/N uniform).
+        # K_sel is now TRAINABLE — no VQ-EMA, no InfoNCE, just LM loss +
+        # load_balance loss.
+        #
+        # Per-slot key bias (2026-05-25): With shared_memory_bank, writeback
+        # causes all slots to converge to similar values (32 layers write
+        # similar content with random routing). This makes K_sel(slots) collapse
+        # even when K_sel weights are healthy. The per-slot bias ensures key
+        # diversity regardless of slot content — it acts as a "topic prior"
+        # that content-based signal can override as training progresses.
+        self.slot_key_bias = nn.Parameter(
+            F.normalize(torch.randn(num_slots, selector_dim), dim=-1) * 2.0
         )
 
-        # K_sel frozen — not used in forward (keep for checkpoint compat).
-        for p in self.K_sel.parameters():
-            p.requires_grad = False
+        # Keep slot_keys for checkpoint backward compat (not used in forward).
+        self.slot_keys = nn.Parameter(
+            F.normalize(torch.randn(num_slots, selector_dim), dim=-1),
+            requires_grad=False,
+        )
+
+        # P1-v2 (2026-05-31): configurable detach behavior for slots in routing.
+        self._no_detach_slots = False
+        # P1-v3 (2026-05-31): routing pool mode — "max_pool" or "chunk_query".
+        self._routing_pool_mode = "max_pool"
 
     # --------------------------------------------------------------------- #
     # Forward
@@ -148,22 +165,31 @@ class TopKSelector(nn.Module):
                 f"slots.shape[1] {slots.shape[1]} != num_slots {self.num_slots}"
             )
 
-        # Fix Z.2 (2026-04-30): per-token routing.
-        # Fix Z.2f: Use learnable slot_keys for routing (reverted from content-based
-        # routing which caused DDP issues and K_sel collapse). Keys are learnable.
+        # Content-based routing (2026-05-25): per-token routing using K_sel(slots).
         q = F.normalize(self.Q_sel(pool_of_H), dim=-1)  # [B, T, S]
+        # Detach slots before K_sel: gradient trains K_sel weights only, not slot
+        # content. Slots get gradient from the read path (slot_to_hidden → output).
+        # Without detach, TBPTT gradient through routing destroys slot norms.
+        # P1-v2: config.no_detach_slots_in_selector skips detach to give K_sel
+        # direct gradient from the routing path.
+        _slots_for_key = slots if self._no_detach_slots else slots.detach()
         k = F.normalize(
-            self.slot_keys.unsqueeze(0).expand(B, -1, -1),
+            self.K_sel(_slots_for_key) + self.slot_key_bias.unsqueeze(0),
             dim=-1,
-        )                                                # [B, N, S], unit vectors
-        # Per-token logits: [B, T, N]
-        per_token_logits = torch.einsum("bts,bns->btn", q, k) * self.temperature
-        # Fix Z.2b: max-pool across tokens instead of softmax-then-mean.
-        # For each slot, take the highest logit across all T tokens. This means
-        # "this chunk has at least one token that strongly prefers this slot".
-        # Max-pool preserves diversity because different slots are championed
-        # by different tokens (unlike mean which averages to uniformity).
-        logits = per_token_logits.max(dim=1).values               # [B, N]
+        )                                                # [B, N, S]
+
+        if self._routing_pool_mode == "chunk_query":
+            # P1-v3 fix (2026-05-31): chunk-level single query routing.
+            # Mean-pool hidden states → single query per chunk → one logit per slot.
+            # This eliminates the max-pool uniformity problem where T>>N causes
+            # every slot to find a "champion token" → all max-logits similar → uniform.
+            q_chunk = q.mean(dim=1, keepdim=False)       # [B, S]
+            logits = torch.einsum("bs,bns->bn", q_chunk, k) * self.temperature  # [B, N]
+        else:
+            # Legacy max-pool: per-token logits then max over T.
+            per_token_logits = torch.einsum("bts,bns->btn", q, k) * self.temperature
+            logits = per_token_logits.max(dim=1).values  # [B, N]
+
         scores = F.softmax(logits, dim=-1)                        # [B, N]
 
         # Hard top-k indices (no gradient through this op).
@@ -189,38 +215,50 @@ class TopKSelector(nn.Module):
         # slot_keys are now frozen random orthogonal vectors, no need for EMA or alignment losses
         self.last_idx = idx  # [B, top_k], hard selection indices (kept for load balance loss)
 
-        # Fix Z.2 diagnostic: store per-token logit variance for monitoring
+        # Diagnostic: store logit std for monitoring
         with torch.no_grad():
-            self._last_per_token_logit_std = per_token_logits.std(dim=1).mean().item()
+            self._last_per_token_logit_std = logits.std(dim=-1).mean().item()
 
         return idx, scores, ste_weights
 
     # Fix Z.1 (2026-04-30): VQ-EMA and dead slot revival removed
 
     # --------------------------------------------------------------------- #
-    # Key diversity loss (Fix Z.2c)
+    # Key diversity loss (Fix Z.2c) + K_sel weight orthogonality (2026-05-25)
     # --------------------------------------------------------------------- #
 
-    def key_repulsion_loss(self, threshold: float = 0.3) -> torch.Tensor:
-        """Penalise high cosine similarity between slot key pairs.
+    def key_repulsion_loss(self, threshold: float = 0.3, slots: Optional[torch.Tensor] = None) -> torch.Tensor:
+        """Penalise high cosine similarity between projected slot key pairs.
 
-        Prevents key collapse where all slot_keys converge to the same
-        direction under LM loss gradient.  Only penalises cosines above
-        `threshold` so keys can be somewhat similar (near-orthogonal is fine)
-        but not identical.
+        With content-based routing, keys are K_sel(slots) + slot_key_bias.
+        Falls back to static slot_keys if slots not provided (legacy compat).
 
         Returns:
             scalar: mean of max(0, cos(K_i, K_j) - threshold) for i < j.
         """
-        # Normalize keys (they may have drifted from unit norm)
-        K = F.normalize(self.slot_keys, dim=-1)          # [N, S]
-        # Pairwise cosine similarity matrix
-        sim = torch.mm(K, K.t())                         # [N, N]
-        # Zero diagonal (self-similarity = 1)
+        if slots is not None:
+            K = F.normalize(
+                self.K_sel(slots[0].detach()) + self.slot_key_bias, dim=-1
+            )  # [N, S] — detach slots so gradient only trains K_sel weights
+        else:
+            K = F.normalize(self.slot_keys, dim=-1)         # [N, S] fallback
+        sim = torch.mm(K, K.t())                            # [N, N]
         sim.fill_diagonal_(0.0)
-        # Penalise similarities above threshold
         penalty = F.relu(sim - threshold)
         return penalty.mean()
+
+    def weight_ortho_loss(self) -> torch.Tensor:
+        """Prevent K_sel weight collapse by penalizing deviation from orthogonality.
+
+        Computes ||W^T W - I||_F^2 on the row-normalized K_sel weight.
+        When K_sel.weight rows are orthogonal, this is 0. When they collapse
+        to rank-1, this is maximally large. This directly prevents the failure
+        mode where load_balance_loss drives all projected keys to be identical.
+        """
+        W = F.normalize(self.K_sel.weight, dim=1)  # [selector_dim, slot_dim] row-normalized
+        WtW = torch.mm(W, W.t())                   # [S, S]
+        eye = torch.eye(WtW.shape[0], device=WtW.device, dtype=WtW.dtype)
+        return ((WtW - eye) ** 2).mean()
 
     def peak_routing_loss(self, scores: torch.Tensor) -> torch.Tensor:
         """Loss that pushes per-chunk routing to be peaked (low conditional entropy).

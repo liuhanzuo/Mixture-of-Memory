@@ -202,6 +202,26 @@ class MemorySpaceConfig:
     # the first chunk's content to be written into the memory bank.
     zero_alpha_on_cold_start: bool = False
 
+    # P1-v2 (2026-05-31): Break gate freeze deadlock by removing protective
+    # guards that prevent gradient flow to K_sel and inject_gate.
+    # no_detach_slots_in_selector: if True, do NOT detach slots before K_sel
+    #   → K_sel gets gradient from routing path (risk: slot norm instability)
+    # no_slot_delta_clip: if True, skip the norm-clipping of slot_delta
+    #   → inject_gate gets stronger gradient signal
+    # inject_gate_bias_init: override the inject_gate bias initial value
+    #   Default -0.1523 (g≈0.462). Set -2.0 for g≈0.12 (gate must learn to open).
+    no_detach_slots_in_selector: bool = False
+    no_slot_delta_clip: bool = False
+    inject_gate_bias_init: float = -0.1523
+
+    # P1-v3 routing mode (2026-05-31): controls how per-token logits are
+    # aggregated into per-slot scores.
+    # "max_pool" (default): max over T tokens per slot — structurally collapses
+    #   to uniform when T >> N (root cause of routing failure).
+    # "chunk_query": mean-pool hidden states first → single query per chunk →
+    #   one logit per slot. Eliminates the max-pool uniformity problem.
+    routing_pool_mode: str = "max_pool"
+
     # FastMem (Gated Delta Rule continuous memory, 2026-05-21):
     # Per-layer fast-weight memory that captures a continuous running summary
     # of ALL tokens (complementing discrete top-k slot routing which only
