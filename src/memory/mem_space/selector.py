@@ -122,8 +122,18 @@ class TopKSelector(nn.Module):
 
         # P1-v2 (2026-05-31): configurable detach behavior for slots in routing.
         self._no_detach_slots = False
-        # P1-v3 (2026-05-31): routing pool mode — "max_pool" or "chunk_query".
+        # P1-v3 (2026-05-31): routing pool mode — "max_pool" / "chunk_query" /
+        # "multi_query".
         self._routing_pool_mode = "max_pool"
+        # v8 multi-query routing (2026-06-01): logsumexp aggregation temperature
+        # over the M sub-query dimension (L3 summary tokens). Layer may override.
+        self._multi_query_tau = 1.0
+
+        # v8 multi-query diagnostics (set during multi_query forward; layer
+        # reads them via getattr with defaults so non-multi_query modes are safe).
+        self._last_summary_query_max_cos = 0.0
+        self._last_summary_query_mean_cos = 0.0
+        self._last_unique_selected_slots = 0
 
     # --------------------------------------------------------------------- #
     # Forward
@@ -133,6 +143,7 @@ class TopKSelector(nn.Module):
         self,
         pool_of_H: torch.Tensor,
         slots: torch.Tensor,
+        query_tokens: Optional[torch.Tensor] = None,
     ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """Forward pass with per-token routing (Fix Z.2).
 
@@ -140,6 +151,13 @@ class TopKSelector(nn.Module):
         (full hidden states).  When T > 1, each token independently votes
         for its preferred slots; softmax is applied per-token, then averaged
         across tokens to produce the aggregate routing distribution.
+
+        v8 multi-query (2026-06-01): when ``_routing_pool_mode == "multi_query"``
+        and ``query_tokens`` ([B, M, d_model], the L3 summary tokens) is given,
+        each of the M summary tokens acts as an independent sub-query; per-slot
+        relevance is aggregated across the M queries via logsumexp (temperature
+        ``_multi_query_tau``), then global top-k. If ``query_tokens is None``
+        (cold start / L3 disabled), falls back to the max_pool branch.
         """
         if pool_of_H.dim() not in (2, 3):
             raise ValueError(
@@ -178,7 +196,54 @@ class TopKSelector(nn.Module):
             dim=-1,
         )                                                # [B, N, S]
 
-        if self._routing_pool_mode == "chunk_query":
+        if self._routing_pool_mode == "multi_query" and query_tokens is not None:
+            # v8 multi-query routing (2026-06-01): use the M L3 summary tokens
+            # as M independent sub-queries instead of a single chunk query.
+            # Each sub-query scores all N slots; per-slot relevance is aggregated
+            # across the M queries via logsumexp (a soft-max between max and mean),
+            # preserving intra-chunk semantic heterogeneity → avoids the
+            # single-query "万金油" collapse.
+            if query_tokens.dim() != 3:
+                raise ValueError(
+                    f"query_tokens must be [B, M, d_model]; got "
+                    f"{tuple(query_tokens.shape)}"
+                )
+            if query_tokens.shape[0] != B:
+                raise ValueError(
+                    f"query_tokens batch {query_tokens.shape[0]} != pool batch {B}"
+                )
+            if query_tokens.shape[-1] != self.d_model:
+                raise ValueError(
+                    f"query_tokens last-dim {query_tokens.shape[-1]} != "
+                    f"d_model {self.d_model}"
+                )
+            q_multi = F.normalize(self.Q_sel(query_tokens), dim=-1)  # [B, M, S]
+            score = torch.einsum("bms,bns->bmn", q_multi, k) * self.temperature  # [B, M, N]
+            tau_q = self._multi_query_tau
+            logits = torch.logsumexp(score / tau_q, dim=1) * tau_q   # [B, N]
+
+            # ---- multi-query diagnostics (no grad, cheap for M~64) ----
+            with torch.no_grad():
+                q0 = q_multi[0]                                  # [M, S], normalized
+                if q0.shape[0] > 1:
+                    qsim = torch.mm(q0, q0.t())                  # [M, M]
+                    qsim.fill_diagonal_(0.0)
+                    M_q = q0.shape[0]
+                    self._last_summary_query_max_cos = qsim.abs().max().item()
+                    # mean over off-diagonal entries
+                    self._last_summary_query_mean_cos = (
+                        qsim.sum() / (M_q * (M_q - 1))
+                    ).item()
+                else:
+                    self._last_summary_query_max_cos = 0.0
+                    self._last_summary_query_mean_cos = 0.0
+                # coverage: if each sub-query picked its single favourite slot,
+                # how many distinct slots would that cover (batch[0])?
+                per_q_argmax = score[0].argmax(dim=-1)           # [M]
+                self._last_unique_selected_slots = int(
+                    per_q_argmax.unique().numel()
+                )
+        elif self._routing_pool_mode == "chunk_query":
             # P1-v3 fix (2026-05-31): chunk-level single query routing.
             # Mean-pool hidden states → single query per chunk → one logit per slot.
             # This eliminates the max-pool uniformity problem where T>>N causes

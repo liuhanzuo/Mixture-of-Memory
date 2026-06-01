@@ -405,7 +405,9 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--no_slot_delta_clip", action="store_true", default=False)
     p.add_argument("--inject_gate_bias_init", type=float, default=-0.1523)
     p.add_argument("--routing_pool_mode", type=str, default="max_pool",
-                   choices=["max_pool", "chunk_query"])
+                   choices=["max_pool", "chunk_query", "multi_query"])
+    p.add_argument("--multi_query_tau", type=float, default=1.0,
+                   help="logsumexp temperature for multi_query routing aggregation")
 
     # v6/v7 writeback (disabled by default for CPT)
     p.add_argument("--use_replace_writeback", action="store_true", default=False)
@@ -533,6 +535,7 @@ def build_model(args, device, dtype) -> torch.nn.Module:
         no_slot_delta_clip=args.no_slot_delta_clip,
         inject_gate_bias_init=args.inject_gate_bias_init,
         routing_pool_mode=args.routing_pool_mode,
+        multi_query_tau=args.multi_query_tau,
     )
 
     # H7 rotary fp32 fix — snapshot before bf16 cast

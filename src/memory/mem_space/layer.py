@@ -343,6 +343,8 @@ class MemorySpaceLayer(nn.Module):
         # P1-v2: wire config flag to selector
         self.selector._no_detach_slots = config.no_detach_slots_in_selector
         self.selector._routing_pool_mode = config.routing_pool_mode
+        # v8 multi-query routing (2026-06-01): logsumexp aggregation temperature.
+        self.selector._multi_query_tau = getattr(config, "multi_query_tau", 1.0)
 
         # Learnable slot↔hidden projections. We do NOT take the slot_dim==d_model
         # shortcut (Identity) because that path has zero trainable capacity and was
@@ -642,7 +644,12 @@ class MemorySpaceLayer(nn.Module):
 
             # 2. Top-k select over hidden states (Fix Z.2: per-token routing).
             # Pass full [B, T, d_model] instead of mean-pooled [B, d_model].
-            idx, scores, ste_weights = self.selector(hidden_states, slots)  # idx:[B,k], scores:[B,N]
+            # v8 (2026-06-01): also pass the L3 summary tokens as multi-query
+            # sub-queries (used only when routing_pool_mode=="multi_query"; the
+            # selector falls back to max_pool when l3_summaries is None).
+            idx, scores, ste_weights = self.selector(
+                hidden_states, slots, query_tokens=l3_summaries
+            )  # idx:[B,k], scores:[B,N]
             self._last_top1_sim = scores.max(dim=-1).values.float().mean().item()
             k_slots = idx.shape[-1]
 
@@ -691,12 +698,19 @@ class MemorySpaceLayer(nn.Module):
                     _K0 = _K_content[0]  # [N, S]
                     _key_sim = torch.mm(_K0, _K0.t()).fill_diagonal_(0.0)
                     _key_max_cos = _key_sim.abs().max().item()
+                    # v8 multi-query diagnostics (default 0.0 when not multi_query)
+                    _sq_max_cos = getattr(self.selector, "_last_summary_query_max_cos", 0.0)
+                    _sq_mean_cos = getattr(self.selector, "_last_summary_query_mean_cos", 0.0)
+                    _uniq_sel = getattr(self.selector, "_last_unique_selected_slots", 0)
                 print(
                     f"[QUERY_DIAG step={self.step_counter} fwd={self._fwd_count}]"
                     f" top1_sim_mean={_top1_sim_mean:.6f}"
                     f" retrieved_norm_mean={_retrieved_norm:.6f}"
                     f" per_tok_logit_std={_pt_std:.6f}"
-                    f" key_max_cos={_key_max_cos:.4f}",
+                    f" key_max_cos={_key_max_cos:.4f}"
+                    f" summary_q_max_cos={_sq_max_cos:.4f}"
+                    f" summary_q_mean_cos={_sq_mean_cos:.4f}"
+                    f" uniq_sel_slots={_uniq_sel}",
                     flush=True,
                 )
             # -----------------------------------------------------------

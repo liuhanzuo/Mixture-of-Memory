@@ -220,7 +220,16 @@ class MemorySpaceConfig:
     #   to uniform when T >> N (root cause of routing failure).
     # "chunk_query": mean-pool hidden states first → single query per chunk →
     #   one logit per slot. Eliminates the max-pool uniformity problem.
+    # "multi_query" (v8, 2026-06-01): use the M L3 summary tokens as M
+    #   independent sub-queries; per-slot relevance aggregated across queries
+    #   via logsumexp, then global top-k. Preserves intra-chunk semantic
+    #   heterogeneity (avoids single-query collapse). Falls back to max_pool
+    #   when L3 summaries are unavailable (cold start / L3 disabled).
     routing_pool_mode: str = "max_pool"
+    # v8 multi-query routing (2026-06-01): logsumexp temperature over the M
+    # sub-query (L3 summary) dimension. tau→0 ≈ max (one strong query wins),
+    # tau→∞ ≈ mean (all queries must agree). 1.0 is the balanced default.
+    multi_query_tau: float = 1.0
 
     # FastMem (Gated Delta Rule continuous memory, 2026-05-21):
     # Per-layer fast-weight memory that captures a continuous running summary
