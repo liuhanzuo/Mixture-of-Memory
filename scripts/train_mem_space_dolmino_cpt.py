@@ -184,6 +184,16 @@ def _mem_space_params(model: torch.nn.Module) -> List[torch.nn.Parameter]:
         for p in wrapper.slot_to_hidden.parameters():
             if id(p) not in seen:
                 params.append(p); seen.add(id(p))
+        # FIX v13 (2026-06-02): inject_gate (layer.py:400, the per-token fusion
+        # gate g=sigmoid(inject_gate(hidden))) was missing here, so _freeze_backbone
+        # set its requires_grad=False and never re-enabled it → g was frozen at
+        # its init (≈0.46) forever, blocking the model from learning when to
+        # inject memory. Collect it like slot_to_hidden.
+        inj = getattr(wrapper, "inject_gate", None)
+        if inj is not None:
+            for p in inj.parameters():
+                if id(p) not in seen:
+                    params.append(p); seen.add(id(p))
         if not getattr(wrapper.config, "hidden_to_slot_frozen", True):
             for p in wrapper.hidden_to_slot.parameters():
                 if id(p) not in seen:

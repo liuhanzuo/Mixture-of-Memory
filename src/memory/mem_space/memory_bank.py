@@ -229,12 +229,13 @@ class MemoryBank(nn.Module):
         Returns:
             The gradient-bearing written VALUES for the selected slots
             ``[B, k, slot_dim]`` (the post-write content, BEFORE the global
-            ``slot_value_norm_cap`` no-grad rebind of ``self.slots``), or
+            ``slot_value_norm_cap`` rebind of ``self.slots``), or
             ``None`` on a no-op (frozen / β≈0). P1/v12 uses this as ``M_write``
-            for the summary-reconstruction loss: it must stay attached to the
-            autograd graph so gradient flows back into the write path. (Reading
-            ``self.slots`` after the call would be detached because the norm-cap
-            rebinds it under ``torch.no_grad()``.)
+            for the summary-reconstruction loss. As of FIX v13 (2026-06-02) the
+            norm-cap rebind is gradient-PRESERVING (scaled outside ``no_grad``
+            with a detached scale), so both this ``updated`` return AND the
+            ``self.slots`` read by the next chunk stay attached to the graph —
+            cross-chunk gradient now flows.
         """
         if self.frozen:
             return None
@@ -297,11 +298,18 @@ class MemoryBank(nn.Module):
             # 32-layer compounding writes blowing up bf16). Keep the global
             # slot_value_norm_cap below as a safety net only.
             self.slots = self.slots.scatter(1, idx_exp, updated)
+            # FIX v13 (2026-06-02): gradient-PRESERVING norm cap. The previous
+            # `with torch.no_grad(): self.slots = self.slots / scale_all` rebound
+            # self.slots to a tensor DETACHED from the graph, so the slots read by
+            # the NEXT chunk carried no gradient → cross-chunk grad was severed
+            # (the whole "teach the writer to store readable content" signal was
+            # killed). We now scale WITHOUT no_grad, detaching only `scale_all`
+            # (a fixed-ratio clamp: limits magnitude without altering grad
+            # direction), so self.slots stays in the autograd graph.
             if self._slot_value_norm_cap > 0.0:
-                with torch.no_grad():
-                    slot_norms_all = self.slots.norm(dim=-1, keepdim=True).clamp(min=1e-8)
-                    scale_all = (slot_norms_all / self._slot_value_norm_cap).clamp(min=1.0)
-                    self.slots = self.slots / scale_all
+                slot_norms_all = self.slots.norm(dim=-1, keepdim=True).clamp(min=1e-8)
+                scale_all = (slot_norms_all / self._slot_value_norm_cap).clamp(min=1.0).detach()
+                self.slots = self.slots / scale_all
             return updated
 
         # ---- SINGLE-GATE LEGACY PATH (H/H5/H3) ----
@@ -355,9 +363,12 @@ class MemoryBank(nn.Module):
         # FIX X.1 (2026-04-30): slot value norm cap — applied globally to ALL slots
         # after the scatter, so even unselected slots that accumulated high norms
         # from prior steps are kept in check. Only active when slot_value_norm_cap > 0.
+        # FIX v13 (2026-06-02): made gradient-PRESERVING (see dual-gate path above).
+        # The old `with torch.no_grad(): self.slots = self.slots / scale_all`
+        # detached self.slots, cutting cross-chunk gradient. Now scale outside
+        # no_grad with a detached `scale_all` (fixed-ratio clamp).
         if self._slot_value_norm_cap > 0.0:
-            with torch.no_grad():
-                slot_norms_all = self.slots.norm(dim=-1, keepdim=True).clamp(min=1e-8)
-                scale_all = (slot_norms_all / self._slot_value_norm_cap).clamp(min=1.0)
-                self.slots = self.slots / scale_all
+            slot_norms_all = self.slots.norm(dim=-1, keepdim=True).clamp(min=1e-8)
+            scale_all = (slot_norms_all / self._slot_value_norm_cap).clamp(min=1.0).detach()
+            self.slots = self.slots / scale_all
         return updated
