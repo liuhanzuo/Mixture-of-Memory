@@ -407,7 +407,7 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--no_slot_delta_clip", action="store_true", default=False)
     p.add_argument("--inject_gate_bias_init", type=float, default=-0.1523)
     p.add_argument("--routing_pool_mode", type=str, default="max_pool",
-                   choices=["max_pool", "chunk_query", "multi_query"])
+                   choices=["max_pool", "chunk_query", "multi_query", "slot_query"])
     p.add_argument("--multi_query_tau", type=float, default=1.0,
                    help="logsumexp temperature for multi_query routing aggregation")
 

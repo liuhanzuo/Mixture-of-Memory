@@ -164,6 +164,14 @@ class TopKSelector(nn.Module):
         # and adds it to aux (replacing/augmenting the v9 S-space l3_diversity).
         self._last_q_multi_diversity_loss = None
 
+        # v11 slot_query routing (2026-06-01): mean over slots of the entropy of
+        # each slot's softmax attention distribution over the T chunk tokens.
+        # Low entropy ⇒ slots focus on a few tokens (healthy addressing); high
+        # entropy ⇒ attention smeared across all tokens (slot has not learned to
+        # locate content). Set during the slot_query forward; default 0.0 / safe
+        # for other modes. Layer reads it via getattr.
+        self._last_slot_attn_entropy = 0.0
+
     # --------------------------------------------------------------------- #
     # Forward
     # --------------------------------------------------------------------- #
@@ -311,6 +319,38 @@ class TopKSelector(nn.Module):
                 self._last_unique_selected_slots = int(
                     per_q_argmax.unique().numel()
                 )
+        elif self._routing_pool_mode == "slot_query":
+            # v11 slot-as-query cross-attention routing (2026-06-01).
+            # Invert the query/key roles to escape the single-query "万金油"
+            # collapse: instead of pooling the chunk into ONE query that scores
+            # N slots, let each slot act as a query and attend over the chunk's
+            # T tokens, computing "is the content I care about present in this
+            # chunk?". Query diversity (the death knell of L3-as-router) is no
+            # longer required — the N queries ARE the slots, whose diversity is
+            # already enforced by their content + key_repulsion_loss.
+            #   query = slots → q_slot [B, N, S]   (reuse K_sel + slot_key_bias)
+            #   key/value = chunk hidden states H → k_tok [B, T, S] (reuse Q_sel)
+            # Reuses the existing projections (no new params): K_sel projects
+            # slots [slot_dim→S], Q_sel projects H [d_model→S]; q_sel_ln (added
+            # in v10) re-centers/re-scales the slot queries to break projection
+            # collapse, mirroring its use in multi_query.
+            q_slot = self.K_sel(_slots_for_key) + self.slot_key_bias.unsqueeze(0)  # [B, N, S]
+            q_slot = F.normalize(self.q_sel_ln(q_slot), dim=-1)                    # [B, N, S]
+            k_tok = q                                                             # [B, T, S] reuse F.normalize(Q_sel(H))
+            attn = torch.einsum("bns,bts->bnt", q_slot, k_tok) * self.temperature  # [B, N, T]
+            # Aggregate [B,N,T] → slot relevance [B,N]. A hard max over T is a
+            # known collapse source (every slot finds a "champion token" → all
+            # logits saturate → uniform). Instead use a softmax-weighted
+            # similarity expectation (soft-max pooling, between mean and max):
+            # slots that match several tokens score higher than slots matching
+            # nothing, without the everyone-has-a-champion equalization.
+            attn_w = F.softmax(attn, dim=-1)                                       # [B, N, T]
+            logits = (attn_w * attn).sum(dim=-1)                                   # [B, N]
+            # Diagnostic: entropy of each slot's attention over T (mean over N,B).
+            # Smeared (high-entropy) attention ⇒ slot has not learned to address.
+            with torch.no_grad():
+                _ent = -(attn_w.clamp(min=1e-9) * attn_w.clamp(min=1e-9).log()).sum(dim=-1)  # [B, N]
+                self._last_slot_attn_entropy = _ent.mean().item()
         elif self._routing_pool_mode == "chunk_query":
             # P1-v3 fix (2026-05-31): chunk-level single query routing.
             # Mean-pool hidden states → single query per chunk → one logit per slot.

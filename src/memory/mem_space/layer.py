@@ -711,6 +711,9 @@ class MemorySpaceLayer(nn.Module):
                     # before Q_sel). Low S_max_cos + high summary_q_max_cos
                     # ⇒ Q_sel projection collapse confirmed.
                     _S_max_cos = getattr(self.selector, "_last_S_max_cos", 0.0)
+                    # v11: slot_query attention entropy (default 0.0 when not
+                    # slot_query). High ⇒ slots smear attention over all tokens.
+                    _slot_attn_entropy = getattr(self.selector, "_last_slot_attn_entropy", 0.0)
                 print(
                     f"[QUERY_DIAG step={self.step_counter} fwd={self._fwd_count}]"
                     f" top1_sim_mean={_top1_sim_mean:.6f}"
@@ -720,7 +723,8 @@ class MemorySpaceLayer(nn.Module):
                     f" S_max_cos={_S_max_cos:.4f}"
                     f" summary_q_max_cos={_sq_max_cos:.4f}"
                     f" summary_q_mean_cos={_sq_mean_cos:.4f}"
-                    f" uniq_sel_slots={_uniq_sel}",
+                    f" uniq_sel_slots={_uniq_sel}"
+                    f" slot_attn_entropy={_slot_attn_entropy:.4f}",
                     flush=True,
                 )
             # -----------------------------------------------------------

@@ -231,6 +231,12 @@ class MemorySpaceConfig:
     #   via logsumexp, then global top-k. Preserves intra-chunk semantic
     #   heterogeneity (avoids single-query collapse). Falls back to max_pool
     #   when L3 summaries are unavailable (cold start / L3 disabled).
+    # "slot_query" (v11, 2026-06-01): slot-as-query cross-attention routing.
+    #   Inverts query/key roles — each slot attends over the chunk's T tokens
+    #   and computes its own relevance via softmax-weighted similarity (soft-max
+    #   pooling). Sidesteps the single-query collapse entirely because the N
+    #   routing queries ARE the slots (diversity guaranteed by slot content +
+    #   key_repulsion_loss), not a pooled chunk query. Does not use L3.
     routing_pool_mode: str = "max_pool"
     # v8 multi-query routing (2026-06-01): logsumexp temperature over the M
     # sub-query (L3 summary) dimension. tau→0 ≈ max (one strong query wins),
