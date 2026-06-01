@@ -1133,6 +1133,19 @@ class MemorySpaceLayer(nn.Module):
             # which causes all projected keys to be identical (key_max_cos=1.0).
             wo = self.selector.weight_ortho_loss()
             aux["weight_ortho"] = wo * cfg.key_repulsion_weight
+            # v9 (2026-06-01): L3 summary-token diversity. l3_pool is a shared
+            # singleton across all 32 layers, so collect this ONCE (layer_idx==0)
+            # to avoid counting it 32×. Only when L3 summaries actually exist
+            # (None on the cold-start first chunk).
+            if (
+                self._layer_idx == 0
+                and self.l3_pool is not None
+                and l3_summaries is not None
+            ):
+                l3_div = self.l3_pool.query_diversity_loss(
+                    l3_summaries, threshold=cfg.l3_diversity_threshold
+                )
+                aux["l3_diversity"] = l3_div * cfg.l3_diversity_weight
             aux["beta"] = beta_t
             # Per-slot usage (fraction of batch that selected each slot).
             one_hot = torch.zeros_like(scores).scatter_(-1, idx, 1.0)

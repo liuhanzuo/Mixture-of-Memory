@@ -283,7 +283,7 @@ def _collect_aux_loss(model: torch.nn.Module, device: torch.device) -> torch.Ten
     if not mem_layers:
         return total
     for w in mem_layers:
-        for key in ("load_balance", "entropy", "key_repulsion", "weight_ortho"):
+        for key in ("load_balance", "entropy", "key_repulsion", "weight_ortho", "l3_diversity"):
             v = w.last_aux_losses.get(key)
             if v is not None:
                 total = total + v
@@ -373,6 +373,8 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--selector_temperature", type=float, default=20.0)
     p.add_argument("--key_repulsion_weight", type=float, default=0.05)
     p.add_argument("--key_repulsion_threshold", type=float, default=0.3)
+    p.add_argument("--l3_diversity_weight", type=float, default=0.1)
+    p.add_argument("--l3_diversity_threshold", type=float, default=0.5)
     p.add_argument("--peak_routing_weight", type=float, default=0.05)
     p.add_argument("--slot_value_norm_cap", type=float, default=5.0)
     p.add_argument("--slot_init", type=str, default="random",
@@ -461,6 +463,8 @@ def merge_adapter_config_into_args(args: argparse.Namespace) -> argparse.Namespa
         "selector_temperature": "selector_temperature",
         "key_repulsion_weight": "key_repulsion_weight",
         "key_repulsion_threshold": "key_repulsion_threshold",
+        "l3_diversity_weight": "l3_diversity_weight",
+        "l3_diversity_threshold": "l3_diversity_threshold",
         "peak_routing_weight": "peak_routing_weight",
         "slot_value_norm_cap": "slot_value_norm_cap",
         "slot_init": "slot_init", "slot_init_noise": "slot_init_noise",
@@ -505,6 +509,8 @@ def build_model(args, device, dtype) -> torch.nn.Module:
         selector_temperature=args.selector_temperature,
         key_repulsion_weight=args.key_repulsion_weight,
         key_repulsion_threshold=args.key_repulsion_threshold,
+        l3_diversity_weight=args.l3_diversity_weight,
+        l3_diversity_threshold=args.l3_diversity_threshold,
         peak_routing_weight=args.peak_routing_weight,
         slot_init=args.slot_init,
         slot_init_noise=args.slot_init_noise,

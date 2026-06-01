@@ -92,9 +92,17 @@ class L3SummaryPool(nn.Module):
         self.num_summary = num_summary
         self.n_layers = n_layers
 
-        # Learnable query bank
+        # Learnable query bank.
+        # v9 (2026-06-01): orthogonal init instead of normal_(std=0.02).
+        # The old std=0.02 init made all 64 queries highly similar from the
+        # start (tiny random offsets around 0), which is one root of the
+        # output-collapse: nearly-identical queries all attend to the chunk
+        # mean and produce 64 near-identical summary tokens (summary_q_*_cos
+        # ≈ 1.0). Orthogonal init guarantees the initial queries are mutually
+        # orthogonal / maximally diverse, giving the cross-attn a chance to
+        # specialize each query onto a different part of the chunk.
         self.queries = nn.Parameter(torch.empty(num_summary, d_model))
-        nn.init.normal_(self.queries, std=0.02)
+        nn.init.orthogonal_(self.queries)
 
         self.blocks = nn.ModuleList([
             _L3PoolBlock(d_model, num_heads, ffn_mult, dropout)
@@ -116,23 +124,71 @@ class L3SummaryPool(nn.Module):
     def forward(
         self,
         chunk_hidden: torch.Tensor,
+        prev_summary: torch.Tensor | None = None,
         chunk_mask: torch.Tensor | None = None,
     ) -> torch.Tensor:
         """Produce summary tokens from a chunk's top-layer hidden states.
 
+        When prev_summary is provided, uses it as the initial queries instead
+        of the learnable self.queries. This makes L3 recursive: each chunk's
+        output becomes the next chunk's queries, accumulating global context.
+
         Args:
             chunk_hidden: [B, T, d_model] — chunk's top-layer hidden states.
+            prev_summary: [B, K, d_model] — previous chunk's L3 output (optional).
             chunk_mask: [B, T] — 1=valid token, 0=padding (optional).
 
         Returns:
             S: [B, K, d_model] — summary tokens for this chunk.
         """
         B = chunk_hidden.shape[0]
-        # Expand learnable queries to batch
-        S = self.queries.unsqueeze(0).expand(B, -1, -1)  # [B, K, d]
+        if prev_summary is not None:
+            S = prev_summary
+        else:
+            S = self.queries.unsqueeze(0).expand(B, -1, -1)  # [B, K, d]
 
         for blk in self.blocks:
             S = blk(S, chunk_hidden, chunk_mask)
 
         S = self.ln_out(S)
         return S
+
+    @staticmethod
+    def query_diversity_loss(S: torch.Tensor, threshold: float = 0.5) -> torch.Tensor:
+        """Penalise high pairwise cosine similarity among the L3 summary tokens.
+
+        v9 (2026-06-01): the multi-query routing in the selector treats the M
+        summary tokens as M independent sub-queries. If those tokens collapse
+        to a single direction (Q-Former output collapse: every query attends to
+        the chunk mean → 64 near-identical vectors, summary_q_*_cos ≈ 1.0), the
+        logsumexp aggregation over identical rows is invariant up to an additive
+        constant → multi_query degenerates exactly back to single_query. This
+        loss applies diversity pressure *on the output S* (not on the learnable
+        queries, because under recursive L3 the queries are overwritten by
+        prev_summary and the collapse is observed at the output end).
+
+        Mechanism (analogous to selector.key_repulsion_loss):
+            normalize S → pairwise cosine → mean over b, i<j of
+            max(0, cos(S_i, S_j) - threshold).
+        threshold defaults to 0.5 (looser than the selector's 0.3, since summary
+        tokens legitimately share some common chunk-level content).
+
+        Args:
+            S: [B, M, d] — L3 output summary tokens.
+            threshold: cosine above which similarity is penalised.
+
+        Returns:
+            scalar loss (mean over batch). 0 when M < 2.
+        """
+        if S.dim() != 3:
+            raise ValueError(f"query_diversity_loss expects [B, M, d], got {tuple(S.shape)}")
+        B, M, _ = S.shape
+        if M < 2:
+            return S.new_zeros(())
+        Sn = torch.nn.functional.normalize(S, dim=-1)          # [B, M, d]
+        sim = torch.bmm(Sn, Sn.transpose(1, 2))                # [B, M, M]
+        # Upper-triangle (i < j) mask, excluding the diagonal.
+        iu = torch.triu(torch.ones(M, M, device=S.device, dtype=torch.bool), diagonal=1)
+        penalty = torch.nn.functional.relu(sim - threshold)    # [B, M, M]
+        pair_pen = penalty[:, iu]                              # [B, M*(M-1)/2]
+        return pair_pen.mean()

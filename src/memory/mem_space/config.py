@@ -82,6 +82,12 @@ class MemorySpaceConfig:
     selector_temperature: float = 1.0
     key_repulsion_weight: float = 0.01
     key_repulsion_threshold: float = 0.3
+    # v9 (2026-06-01): L3 summary-token diversity regularizer. Penalises the
+    # L3 Q-Former output tokens for collapsing to a single direction (which
+    # would degenerate multi_query routing back to single_query). Applied only
+    # on layer_idx==0 (l3_pool is a shared singleton across all 32 layers).
+    l3_diversity_weight: float = 0.1
+    l3_diversity_threshold: float = 0.5
     peak_routing_weight: float = 0.1
     slot_dropout: float = 0.0
 
