@@ -1162,11 +1162,21 @@ def main() -> None:
                 step_aux_loss += aux_loss.item()
                 step_valid_micros += 1
 
-        # Manual gradient allreduce (since we always use no_sync above)
-        if world_size > 1 and isinstance(model, DDP) and step_valid_micros > 0:
+        # Manual gradient allreduce (since we always use no_sync above).
+        # CRITICAL: every rank MUST issue the SAME sequence of all_reduce
+        # collectives (same order, same shapes). Previously this was guarded by
+        # `if p.grad is not None` AND `step_valid_micros > 0`, both of which are
+        # per-rank conditions: when a slot/memory param got no gradient on one
+        # rank (e.g. uniq_sel_slots=0) that rank skipped its all_reduce while
+        # other ranks issued it -> collective size mismatch (262144 vs 16777216)
+        # -> deterministic NCCL hang at step ~490-493 -> watchdog SIGABRT.
+        # Fix: iterate the FULL trainable list unconditionally on every rank,
+        # zero-filling any missing grad so the collective stays in lockstep.
+        if world_size > 1 and isinstance(model, DDP):
             for p in trainable:
-                if p.grad is not None:
-                    dist.all_reduce(p.grad, op=dist.ReduceOp.AVG)
+                if p.grad is None:
+                    p.grad = torch.zeros_like(p)
+                dist.all_reduce(p.grad, op=dist.ReduceOp.AVG)
 
         # Optimizer step (only if we got at least one valid micro-step)
         if step_valid_micros > 0:
