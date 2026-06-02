@@ -150,8 +150,13 @@ def init_distributed() -> Tuple[int, int, int]:
     rank = int(os.environ["RANK"])
     world_size = int(os.environ["WORLD_SIZE"])
     local_rank = int(os.environ.get("LOCAL_RANK", 0))
+    # NOTE: timeout must be far larger than the slowest collective gap. The
+    # step-500 checkpoint save writes a ~7.5GB adapter to shared CEPH FS on
+    # rank0 while ranks 1-7 wait on dist.barrier(); with the old 30min timeout
+    # this slow save was caught by the NCCL watchdog as a stuck collective and
+    # the whole job SIGABRT'd. Use 2h so save/barrier never trips the watchdog.
     dist.init_process_group(backend="nccl", rank=rank, world_size=world_size,
-                            timeout=timedelta(minutes=30))
+                            timeout=timedelta(hours=2))
     torch.cuda.set_device(local_rank)
     return rank, world_size, local_rank
 
@@ -1208,7 +1213,11 @@ def main() -> None:
                 and global_step % args.save_interval == 0
                 and global_step < args.total_steps):
             if is_main(rank):
+                logger.info("[save] start adapter save at step %d", global_step)
+                _t_save = time.time()
                 _save_adapter(model, args, global_step)
+                logger.info("[save] done adapter save at step %d (%.1fs)",
+                            global_step, time.time() - _t_save)
             if world_size > 1:
                 dist.barrier()
 
