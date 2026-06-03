@@ -106,6 +106,7 @@ def _build_extended_attn_mask(
     batch_size: int,
     swa_window: int = 0,
     k_l3: int = 0,
+    mask_h_to_l1: bool = False,
 ) -> torch.Tensor:
     """Return [B, 1, L, L] additive mask for the joint-attn extended seq.
 
@@ -149,6 +150,16 @@ def _build_extended_attn_mask(
             mask[prefix:, prefix:] = hh
         # L3/L1-queries and H-queries→L3/L1 keys: already 0 (allowed).
 
+    # P2 decoupled-read (2026-06-03): when mask_h_to_l1=True, BLOCK H-queries
+    # from attending to the L1 slot block (cols k_l3..k_l3+k-1). This removes
+    # the "injection dilution" — live tokens no longer share their softmax with
+    # the prepended slot KV. L1-queries→H attention is KEPT (so the writeback's
+    # O_mem_hidden is computed exactly as before); only the H→L1 read direction
+    # is severed. The memory READ contribution is instead produced by the
+    # standalone CrossAttentionMemoryV2.read path in forward().
+    if mask_h_to_l1 and k > 0 and T > 0:
+        mask[prefix:, k_l3:k_l3 + k] = neg_inf
+
     # Broadcast to [B, 1, L, L].
     return mask.view(1, 1, L, L).expand(batch_size, 1, L, L).contiguous()
 
@@ -162,6 +173,7 @@ def _build_extended_attn_mask_l2(
     device: torch.device,
     batch_size: int,
     swa_window: int = 0,
+    mask_h_to_l1: bool = False,
 ) -> torch.Tensor:
     """Return [B, 1, L, L] additive mask for the L2-extended joint-attn seq.
 
@@ -198,6 +210,10 @@ def _build_extended_attn_mask_l2(
             allowed = (cols <= rows) & ((rows - cols) < swa_window)
             hh[allowed] = 0.0
             mask[prefix:, prefix:] = hh
+
+    # P2 decoupled-read: sever H→L1 attention (cols k_l3+k_l2 .. prefix-1).
+    if mask_h_to_l1 and k_l1 > 0 and T > 0:
+        mask[prefix:, k_l3 + k_l2:prefix] = neg_inf
 
     return mask.view(1, 1, L, L).expand(batch_size, 1, L, L).contiguous()
 
@@ -267,6 +283,8 @@ class MemorySpaceLayer(nn.Module):
         l3_pool: Optional[nn.Module] = None,
         l2_compressor: Optional[nn.Module] = None,
         recon_decoder: Optional[nn.Module] = None,
+        n_heads: Optional[int] = None,
+        n_kv_heads: Optional[int] = None,
     ) -> None:
         super().__init__()
         if not isinstance(config, MemorySpaceConfig):
@@ -405,6 +423,30 @@ class MemorySpaceLayer(nn.Module):
         # while keeping initial behavior close to the constant-gate baseline).
         nn.init.normal_(self.inject_gate.weight, std=10.0 / (self.d_model ** 0.5))
         nn.init.constant_(self.inject_gate.bias, config.inject_gate_bias_init)
+
+        # P2 (2026-06-03): decoupled cross-attention READ module.
+        # When config.use_decoupled_read=True, the memory READ contribution to
+        # hidden states is produced by this standalone CrossAttentionMemoryV2
+        # (slots get their OWN softmax, out_proj zero-initialised) instead of
+        # diluting the live-token softmax via KV-prepend. We use ONLY its
+        # .read() (Q=hidden, K/V=slot projections) — writeback stays on the
+        # existing top-k path. out_proj=0 → step-0 read output = 0 so init
+        # behaviour is identical to "no memory injection". n_heads/n_kv_heads
+        # default to a single full-head config when not supplied (e.g. toy /
+        # tests that don't thread the model's GQA head counts).
+        if config.use_decoupled_read:
+            from .selector import CrossAttentionMemoryV2
+            _nh = n_heads if n_heads is not None else max(1, d_model // 128)
+            _nkv = n_kv_heads if n_kv_heads is not None else _nh
+            self.decoupled_read = CrossAttentionMemoryV2(
+                d_model=d_model,
+                n_heads=_nh,
+                n_kv_heads=_nkv,
+                num_slots=config.num_slots,
+                dropout=0.0,
+            )
+        else:
+            self.decoupled_read = None
 
         # hidden_to_slot: freeze gate controlled by ``config.hidden_to_slot_frozen``.
         #
@@ -876,6 +918,7 @@ class MemorySpaceLayer(nn.Module):
                 device=hidden_states.device,
                 batch_size=B,
                 swa_window=cfg.swa_window,
+                mask_h_to_l1=cfg.use_decoupled_read,
             )
         else:
             ext_attn_mask = _build_extended_attn_mask(
@@ -886,6 +929,7 @@ class MemorySpaceLayer(nn.Module):
                 batch_size=B,
                 swa_window=cfg.swa_window,  # 0 = full causal (default, backward compat)
                 k_l3=k_l3,
+                mask_h_to_l1=cfg.use_decoupled_read,
             )
 
         # H2 FIX REVERTED (2026-04-26 22:30): the earlier H2 fix
@@ -1001,6 +1045,27 @@ class MemorySpaceLayer(nn.Module):
             _sd_norms = slot_delta.norm(dim=-1, keepdim=True).clamp(min=1e-6)
             slot_delta = slot_delta * (_bypass_norms / _sd_norms).clamp(max=1.0)
 
+        # P2 (2026-06-03): decoupled cross-attention READ contribution.
+        # When use_decoupled_read=True the H→L1 prepend attention is masked off
+        # above, so `slot_delta` carries only the L3/L2 contributions (≈0 when
+        # neither is present). The memory READ-to-hidden signal is instead
+        # produced here by a standalone cross-attention: Q=hidden_states,
+        # K/V=ALL slots (decoupled from the top-k write routing), with the slots
+        # getting their OWN softmax (no live-token dilution) and out_proj
+        # zero-init (step-0 output = 0). Gated by the same content-conditioned
+        # inject_gate g so the model can learn to suppress irrelevant reads.
+        decoupled_read_out = None
+        if cfg.use_decoupled_read and self.decoupled_read is not None and not cfg.disable_l1_inject:
+            # slots: [B, N, slot_dim]; project to d_model for the read if needed.
+            if self.slot_dim != self.d_model:
+                read_slots = self.slot_to_hidden(slots)            # [B, N, d]
+            else:
+                read_slots = slots
+            read_out, _ = self.decoupled_read.read(
+                hidden_states, read_slots, read_slots,
+            )                                                       # [B, T, d]
+            decoupled_read_out = read_out
+
         # FastMem (Gated Delta Rule, 2026-05-21): continuous fast-weight
         # contribution from ALL tokens.  Runs on post-attention bypass_h so it
         # can learn what attention missed (complementary to attention, not parallel).
@@ -1012,6 +1077,8 @@ class MemorySpaceLayer(nn.Module):
             )
 
         next_hidden = bypass_h + g * slot_delta + fast_mem_out
+        if decoupled_read_out is not None:
+            next_hidden = next_hidden + g * decoupled_read_out
 
         # 7. Writeback (if enabled). Branch-3 (2026-04-26): gradient-bearing
         # writeback — O_mem_slot stays attached to the autograd graph and β is

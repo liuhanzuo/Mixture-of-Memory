@@ -12,9 +12,14 @@ FORCE_GATE_ARGS=""
 if [ -n "${FORCE_GATE_ALPHA:-}" ]; then
   FORCE_GATE_ARGS="--force_gate_alpha $FORCE_GATE_ALPHA --force_gate_steps ${FORCE_GATE_STEPS:-400}"
 fi
+# P2 decoupled-read switch (default off). Set DECOUPLED_READ=1 to enable.
+DECOUPLED_READ_ARGS=""
+if [ "${DECOUPLED_READ:-0}" = "1" ]; then
+  DECOUPLED_READ_ARGS="--use_decoupled_read"
+fi
 CUDA_VISIBLE_DEVICES=$GPU setsid bash -c "$PYBIN -u scripts/toy_memory_bootstrap.py \
   --total_steps $STEPS --routing_pool_mode $MODE --selector_temperature $TEMP \
-  --l_recon_weight $WEIGHT $FORCE_GATE_ARGS \
+  --l_recon_weight $WEIGHT $FORCE_GATE_ARGS $DECOUPLED_READ_ARGS \
   --seed $SEED --wandb_run_name $RUN --output_dir outputs/$RUN" \
   </dev/null >logs/$RUN.log 2>&1 &
-echo "launched $RUN on GPU$GPU (weight=$WEIGHT seed=$SEED steps=$STEPS mode=$MODE temp=$TEMP) pid=$!"
+echo "launched $RUN on GPU$GPU (weight=$WEIGHT seed=$SEED steps=$STEPS mode=$MODE temp=$TEMP decoupled_read=${DECOUPLED_READ:-0}) pid=$!"

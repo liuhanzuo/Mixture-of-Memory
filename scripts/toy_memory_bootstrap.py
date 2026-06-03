@@ -135,6 +135,11 @@ def parse_args() -> argparse.Namespace:
                    help="P1/v12 summary-reconstruction aux loss weight. >0 "
                         "enables the MemoryReconDecoder (requires L3 summary, "
                         "which the toy always sets). 0 = disabled (default).")
+    p.add_argument("--use_decoupled_read", action="store_true", default=False,
+                   help="P2: route the memory READ via a dedicated "
+                        "CrossAttentionMemoryV2 (slots single softmax, "
+                        "out_proj zero-init) and mask H->L1 prepend attention. "
+                        "False = legacy prepend path (default).")
     p.add_argument("--batch_size", type=int, default=8)
     p.add_argument("--seed", type=int, default=42)
     p.add_argument("--wandb_run_name", type=str, default=None)
@@ -179,6 +184,7 @@ def build_base_args(args: argparse.Namespace) -> argparse.Namespace:
     base.selector_temperature = args.selector_temperature
     base.routing_pool_mode = args.routing_pool_mode
     base.l_recon_weight = args.l_recon_weight
+    base.use_decoupled_read = args.use_decoupled_read
     base.attn_impl = args.attn_impl
     base.dtype = args.dtype
     base.seed = args.seed

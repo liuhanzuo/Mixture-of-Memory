@@ -254,6 +254,31 @@ class MemorySpaceConfig:
     # tau→∞ ≈ mean (all queries must agree). 1.0 is the balanced default.
     multi_query_tau: float = 1.0
 
+    # P2 (2026-06-03): decoupled cross-attention READ path.
+    # When True, the memory contribution to hidden states is produced by a
+    # dedicated CrossAttentionMemoryV2.read module (slots get their OWN softmax,
+    # out_proj zero-initialised, LoRA-B style) instead of the legacy
+    # KV-prepend joint-attention path. This bypasses the "injection dilution"
+    # root cause (researcher report 2026-06-03): in the prepend path the k=16
+    # slot KV tokens share a single softmax with up to 1024 live tokens, so
+    # memory receives only ~1.5% attention mass at long context, then gets
+    # further attenuated by slot_delta clip + inject_gate to ~0.2%.
+    #
+    # With use_decoupled_read=True:
+    #   * The slot KV-prepend block (M_sel_hidden) is NOT added to the extended
+    #     sequence — the wrapped layer runs on [L3 | L2 | H] (or pure bypass),
+    #     so slots no longer compete in the live-token softmax.
+    #   * A standalone cross-attn read (Q=hidden, K/V=slots) computes the memory
+    #     contribution over its OWN softmax and is added to next_hidden via the
+    #     same content-conditioned inject_gate g. out_proj=0 → step-0 output = 0
+    #     so behaviour at init is identical to "no memory injection".
+    #   * Top-k routing + writeback are UNCHANGED (still drive which slots get
+    #     written); only the READ-to-hidden path is decoupled.
+    #
+    # Default False = legacy prepend path, fully backward-compatible.
+    # See versions/v15_decoupled_read.md + status/MEMORY_PROTOCOL_PLAN.md [P2].
+    use_decoupled_read: bool = False
+
     # FastMem (Gated Delta Rule continuous memory, 2026-05-21):
     # Per-layer fast-weight memory that captures a continuous running summary
     # of ALL tokens (complementing discrete top-k slot routing which only

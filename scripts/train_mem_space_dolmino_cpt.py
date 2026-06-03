@@ -199,6 +199,12 @@ def _mem_space_params(model: torch.nn.Module) -> List[torch.nn.Parameter]:
             for p in inj.parameters():
                 if id(p) not in seen:
                     params.append(p); seen.add(id(p))
+        # P2 (2026-06-03): decoupled cross-attn READ module params.
+        dr = getattr(wrapper, "decoupled_read", None)
+        if dr is not None:
+            for p in dr.parameters():
+                if id(p) not in seen:
+                    params.append(p); seen.add(id(p))
         if not getattr(wrapper.config, "hidden_to_slot_frozen", True):
             for p in wrapper.hidden_to_slot.parameters():
                 if id(p) not in seen:
@@ -436,6 +442,14 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--multi_query_tau", type=float, default=1.0,
                    help="logsumexp temperature for multi_query routing aggregation")
 
+    # P2 (2026-06-03): decoupled cross-attention READ path.
+    p.add_argument("--use_decoupled_read", action="store_true", default=False,
+                   help="P2: route the memory READ via a dedicated "
+                        "CrossAttentionMemoryV2 (slots single softmax, out_proj "
+                        "zero-init) and mask H->L1 prepend attention, bypassing "
+                        "the injection-dilution root cause. False = legacy "
+                        "prepend path (backward-compatible).")
+
     # v6/v7 writeback (disabled by default for CPT)
     p.add_argument("--use_replace_writeback", action="store_true", default=False)
     p.add_argument("--num_global_slots", type=int, default=0)
@@ -568,6 +582,7 @@ def build_model(args, device, dtype) -> torch.nn.Module:
         inject_gate_bias_init=args.inject_gate_bias_init,
         routing_pool_mode=args.routing_pool_mode,
         multi_query_tau=args.multi_query_tau,
+        use_decoupled_read=args.use_decoupled_read,
     )
 
     # H7 rotary fp32 fix — snapshot before bf16 cast
