@@ -205,6 +205,30 @@ def _mem_space_params(model: torch.nn.Module) -> List[torch.nn.Parameter]:
             for p in dr.parameters():
                 if id(p) not in seen:
                     params.append(p); seen.add(id(p))
+        # Writeback-gate params (2026-06-04). Previously the dual_gate
+        # gate_proj_new/gate_proj_mem/gate_bias were NOT collected here, so with
+        # --use_dual_gate the gate projections never entered the optimizer (frozen
+        # at xavier init). Collect them now plus the lowrank / diag mode params.
+        # Robust approach: collect any of these attrs that exist and are not None.
+        #   dual_gate:    gate_proj_new, gate_proj_mem, gate_bias
+        #   lowrank_gate: lr_V_new, lr_V_mem, lr_U, lr_gate_bias
+        #   diag_gate:    diag_a_in, diag_c_in, diag_a_f, diag_c_f, diag_b_in, diag_b_f
+        #   scalar_beta:  none (uses gate_param, already collected above)
+        _gate_module_attrs = ("gate_proj_new", "gate_proj_mem",
+                              "lr_V_new", "lr_V_mem", "lr_U")
+        for _attr in _gate_module_attrs:
+            _mod = getattr(wrapper, _attr, None)
+            if _mod is not None:
+                for p in _mod.parameters():
+                    if id(p) not in seen:
+                        params.append(p); seen.add(id(p))
+        _gate_param_attrs = ("gate_bias", "lr_gate_bias",
+                            "diag_a_in", "diag_c_in", "diag_a_f", "diag_c_f",
+                            "diag_b_in", "diag_b_f")
+        for _attr in _gate_param_attrs:
+            _par = getattr(wrapper, _attr, None)
+            if _par is not None and id(_par) not in seen:
+                params.append(_par); seen.add(id(_par))
         if not getattr(wrapper.config, "hidden_to_slot_frozen", True):
             for p in wrapper.hidden_to_slot.parameters():
                 if id(p) not in seen:
@@ -393,6 +417,18 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--num_slots", type=int, default=512)
     p.add_argument("--top_k", type=int, default=64)
     p.add_argument("--selector_dim", type=int, default=128)
+    p.add_argument("--slot_dim", type=int, default=None,
+                   help="L1 slot vector dimensionality. None = backbone hidden "
+                        "size (d_model). Set e.g. 16384 for the large-slot "
+                        "writeback-mode experiment.")
+    p.add_argument("--writeback_mode", type=str, default="dual_gate",
+                   choices=["dual_gate", "lowrank_gate", "diag_gate", "scalar_beta"],
+                   help="Writeback gate parameterisation. dual_gate=full LM2 "
+                        "gate (4*slot_dim^2/layer); lowrank_gate=low-rank "
+                        "(4*slot_dim*r/layer); diag_gate=per-feature diagonal "
+                        "(6*slot_dim/layer); scalar_beta=legacy single-β EMA.")
+    p.add_argument("--lowrank_gate_rank", type=int, default=256,
+                   help="Rank r for --writeback_mode lowrank_gate.")
     p.add_argument("--writeback_gate_max", type=float, default=0.3)
     p.add_argument("--writeback_warmup_steps", type=int, default=0)
     p.add_argument("--load_balance_weight", type=float, default=0.01)
@@ -541,6 +577,9 @@ def build_model(args, device, dtype) -> torch.nn.Module:
         num_slots=args.num_slots,
         top_k=args.top_k,
         selector_dim=args.selector_dim,
+        slot_dim=args.slot_dim,
+        writeback_mode=args.writeback_mode,
+        lowrank_gate_rank=args.lowrank_gate_rank,
         writeback_gate_warmup_steps=args.writeback_warmup_steps,
         writeback_gate_max=args.writeback_gate_max,
         load_balance_weight=args.load_balance_weight,
@@ -887,6 +926,8 @@ def _save_adapter(model, args, step: int, final: bool = False) -> None:
         "selector", "gate_param", "slot_output_gate",
         "slot_to_hidden", "hidden_to_slot", "memory_bank",
         "gate_proj_new", "gate_proj_mem", "gate_bias",
+        "lr_V_new", "lr_V_mem", "lr_U", "lr_gate_bias",
+        "diag_a_in", "diag_c_in", "diag_a_f", "diag_c_f", "diag_b_in", "diag_b_f",
         "l3_pool", "l2_compressor",
     )
 
@@ -910,6 +951,9 @@ def _save_adapter(model, args, step: int, final: bool = False) -> None:
             "num_slots": args.num_slots,
             "top_k": args.top_k,
             "selector_dim": args.selector_dim,
+            "slot_dim": args.slot_dim,
+            "writeback_mode": args.writeback_mode,
+            "lowrank_gate_rank": args.lowrank_gate_rank,
             "writeback_gate_max": args.writeback_gate_max,
             "writeback_warmup_steps": args.writeback_warmup_steps,
             "load_balance_weight": args.load_balance_weight,

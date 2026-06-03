@@ -18,6 +18,7 @@ from typing import Optional
 
 
 _VALID_SLOT_INIT = {"zero", "random", "hidden_pool", "strided_token"}
+_VALID_WRITEBACK_MODE = {"dual_gate", "lowrank_gate", "diag_gate", "scalar_beta"}
 
 
 @dataclass
@@ -158,6 +159,22 @@ class MemorySpaceConfig:
     forget_bias_init: float = 1.0
     input_bias_init: float = 0.0
     dual_gate_tanh_new: bool = True   # apply tanh to new content (LM2 default)
+
+    # Writeback-gate mode selector (2026-06-04): cost-controlled alternatives to
+    # the LM2-style dual_gate, motivated by the large-slot_dim experiment
+    # (slot_dim=16384 makes dual_gate's two Linear(slot_dim, 2*slot_dim) blow up
+    # to ~34B params/layer → OOM). All modes produce per-feature input/forget
+    # gates g_in/g_forget and reuse memory_bank.write's dual-gate path; only the
+    # logit computation differs.
+    #   "dual_gate"   — current full-connected LM2 gate (4*slot_dim^2/layer).
+    #                   Selected automatically when use_dual_gate=True for back-compat.
+    #   "lowrank_gate"— two-stage low-rank projection: compress (s_new, M_prev)
+    #                   to rank r then expand to 2*slot_dim. ~4*slot_dim*r/layer.
+    #   "diag_gate"   — per-feature diagonal params (no full matrix). ~6*slot_dim/layer.
+    #   "scalar_beta" — no gate projection; fall back to the legacy single-scalar
+    #                   EMA writeback (gate_param β). Cheapest baseline.
+    writeback_mode: str = "dual_gate"
+    lowrank_gate_rank: int = 256
 
     # v8-A (2026-05-18): Per-group forget bias override for global slots.
     # When != forget_bias_init, the global slots' forget gate logit is shifted by
@@ -322,4 +339,13 @@ class MemorySpaceConfig:
         if self.swa_window < 0:
             raise ValueError(
                 f"swa_window must be >= 0 (0 = full causal), got {self.swa_window}"
+            )
+        if self.writeback_mode not in _VALID_WRITEBACK_MODE:
+            raise ValueError(
+                f"writeback_mode must be one of {_VALID_WRITEBACK_MODE}, "
+                f"got {self.writeback_mode!r}"
+            )
+        if self.writeback_mode == "lowrank_gate" and self.lowrank_gate_rank <= 0:
+            raise ValueError(
+                f"lowrank_gate_rank must be > 0, got {self.lowrank_gate_rank}"
             )

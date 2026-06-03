@@ -486,7 +486,17 @@ class MemorySpaceLayer(nn.Module):
         # match LM2's design: gates condition on BOTH new content and prior
         # memory state. forget_bias is added to the second half so g_forget
         # starts ≈ sigmoid(forget_bias_init).
-        if config.use_dual_gate:
+        # Writeback-mode resolution (2026-06-04). `writeback_mode` is the
+        # authoritative selector for the gate parameterisation. For backward
+        # compatibility a plain `use_dual_gate=True` with the DEFAULT mode
+        # ("dual_gate") still builds the full LM2 dual-gate projections, so all
+        # pre-existing checkpoints (which only ever set use_dual_gate) construct
+        # byte-identically. When the user explicitly selects a cheaper mode
+        # (lowrank_gate / diag_gate / scalar_beta) the dual-gate projections are
+        # NOT built — this is what avoids the slot_dim=16384 OOM (two
+        # Linear(16384, 32768) ≈ 34B params/model).
+        _dual_gate_active = (config.writeback_mode == "dual_gate") and config.use_dual_gate
+        if _dual_gate_active:
             self.gate_proj_new = nn.Linear(self.slot_dim, 2 * self.slot_dim, bias=False)
             self.gate_proj_mem = nn.Linear(self.slot_dim, 2 * self.slot_dim, bias=False)
             # Bias vector: zeros for input half, forget_bias_init for forget half
@@ -502,6 +512,55 @@ class MemorySpaceLayer(nn.Module):
             self.gate_proj_new = None
             self.gate_proj_mem = None
             self.gate_bias = None
+
+        # lowrank_gate (A, 2026-06-04): two-stage low-rank projection of
+        # (s_new, M_prev) → rank r → 2*slot_dim gate logits.
+        #   gate_logits = U( V_new(s_new) + V_mem(M_prev) ) + lr_gate_bias
+        # Cost ≈ (2*slot_dim*r + r*2*slot_dim) = 4*slot_dim*r per layer (vs
+        # 4*slot_dim^2 for dual_gate). bias halves seeded input/forget like
+        # dual_gate so g_forget starts ≈ sigmoid(forget_bias_init).
+        if config.writeback_mode == "lowrank_gate":
+            r = config.lowrank_gate_rank
+            self.lr_V_new = nn.Linear(self.slot_dim, r, bias=False)
+            self.lr_V_mem = nn.Linear(self.slot_dim, r, bias=False)
+            self.lr_U = nn.Linear(r, 2 * self.slot_dim, bias=False)
+            lr_bias_init = torch.cat([
+                torch.full((self.slot_dim,), float(config.input_bias_init)),
+                torch.full((self.slot_dim,), float(config.forget_bias_init)),
+            ])
+            self.lr_gate_bias = nn.Parameter(lr_bias_init)
+            nn.init.xavier_uniform_(self.lr_V_new.weight, gain=0.5)
+            nn.init.xavier_uniform_(self.lr_V_mem.weight, gain=0.5)
+            nn.init.xavier_uniform_(self.lr_U.weight, gain=0.5)
+        else:
+            self.lr_V_new = None
+            self.lr_V_mem = None
+            self.lr_U = None
+            self.lr_gate_bias = None
+
+        # diag_gate (B, 2026-06-04): per-feature diagonal (element-wise) gate.
+        #   g_in_logit     = a_in * s_new + c_in * M_prev + b_in
+        #   g_forget_logit = a_f  * s_new + c_f  * M_prev + b_f
+        # Cost = 6*slot_dim params/layer (no full matrix). a/c init N(0,0.02);
+        # bias halves seeded like dual_gate (b_in=input_bias_init, b_f=forget_bias_init).
+        if config.writeback_mode == "diag_gate":
+            self.diag_a_in = nn.Parameter(torch.empty(self.slot_dim).normal_(0.0, 0.02))
+            self.diag_c_in = nn.Parameter(torch.empty(self.slot_dim).normal_(0.0, 0.02))
+            self.diag_a_f = nn.Parameter(torch.empty(self.slot_dim).normal_(0.0, 0.02))
+            self.diag_c_f = nn.Parameter(torch.empty(self.slot_dim).normal_(0.0, 0.02))
+            self.diag_b_in = nn.Parameter(
+                torch.full((self.slot_dim,), float(config.input_bias_init))
+            )
+            self.diag_b_f = nn.Parameter(
+                torch.full((self.slot_dim,), float(config.forget_bias_init))
+            )
+        else:
+            self.diag_a_in = None
+            self.diag_c_in = None
+            self.diag_a_f = None
+            self.diag_c_f = None
+            self.diag_b_in = None
+            self.diag_b_f = None
 
         # Step counter (incremented by the outer training loop).
         self.step_counter: int = 0
@@ -1104,6 +1163,12 @@ class MemorySpaceLayer(nn.Module):
         # slots) so the recon target reflects content-routed writes. Stays None
         # when writeback is skipped or l_recon is disabled.
         M_write: Optional[torch.Tensor] = None
+        # WRITEBACK_DIAG (2026-06-04): capture the per-feature gate means for
+        # the dual_gate / lowrank_gate / diag_gate modes so the diagnostic can
+        # report g_in_mean / g_forget_mean. Stays None for scalar_beta (legacy
+        # single-β EMA path, which has no per-feature gates).
+        _wb_g_in_mean: Optional[float] = None
+        _wb_g_forget_mean: Optional[float] = None
         _want_recon = (
             self._layer_idx == 0
             and cfg.l_recon_weight > 0.0
@@ -1132,7 +1197,10 @@ class MemorySpaceLayer(nn.Module):
                 g_in_logit, g_forget_logit = gate_logits.chunk(2, dim=-1)
                 g_in = torch.sigmoid(g_in_logit)                       # [B, k, d]
                 g_forget = torch.sigmoid(g_forget_logit)               # [B, k, d]
-                # v8-A: apply per-group forget bias override for global slots
+                if _should_log_diag:
+                    with torch.no_grad():
+                        _wb_g_in_mean = g_in.float().mean().item()
+                        _wb_g_forget_mean = g_forget.float().mean().item()
                 if cfg.num_global_slots > 0 and cfg.global_slot_forget_bias != cfg.forget_bias_init:
                     _k_reg = idx.shape[1] - cfg.num_global_slots
                     _bias_delta = cfg.global_slot_forget_bias - cfg.forget_bias_init
@@ -1176,6 +1244,56 @@ class MemorySpaceLayer(nn.Module):
                         forget_gate=g_forget,
                         tanh_new=cfg.dual_gate_tanh_new,
                     )
+            elif cfg.writeback_mode == "lowrank_gate" and self.lr_U is not None:
+                # lowrank_gate (A): U(V_new(s_new)+V_mem(M_prev)) + bias → 2*slot_dim.
+                # Same content-conditioned dual-gate semantics as dual_gate, only
+                # the logit computation is low-rank. dolmino uses num_global_slots==0.
+                idx_exp = idx.unsqueeze(-1).expand(-1, -1, self.slot_dim)
+                if self.memory_bank.slots is None:
+                    M_prev = torch.zeros_like(O_mem_slot)
+                else:
+                    M_prev = self.memory_bank.slots.gather(1, idx_exp)  # [B, k, d]
+                _z = self.lr_V_new(O_mem_slot) + self.lr_V_mem(M_prev)  # [B, k, r]
+                gate_logits = self.lr_U(_z) + self.lr_gate_bias          # [B, k, 2d]
+                g_in_logit, g_forget_logit = gate_logits.chunk(2, dim=-1)
+                g_in = torch.sigmoid(g_in_logit)
+                g_forget = torch.sigmoid(g_forget_logit)
+                if _should_log_diag:
+                    with torch.no_grad():
+                        _wb_g_in_mean = g_in.float().mean().item()
+                        _wb_g_forget_mean = g_forget.float().mean().item()
+                M_write = self.memory_bank.write(
+                    idx,
+                    O_mem_slot,
+                    gate=g_in,
+                    forget_gate=g_forget,
+                    tanh_new=cfg.dual_gate_tanh_new,
+                )
+            elif cfg.writeback_mode == "diag_gate" and self.diag_a_in is not None:
+                # diag_gate (B): per-feature diagonal gate.
+                #   g_in_logit     = a_in*s_new + c_in*M_prev + b_in
+                #   g_forget_logit = a_f *s_new + c_f *M_prev + b_f
+                # dolmino uses num_global_slots==0.
+                idx_exp = idx.unsqueeze(-1).expand(-1, -1, self.slot_dim)
+                if self.memory_bank.slots is None:
+                    M_prev = torch.zeros_like(O_mem_slot)
+                else:
+                    M_prev = self.memory_bank.slots.gather(1, idx_exp)  # [B, k, d]
+                g_in_logit = self.diag_a_in * O_mem_slot + self.diag_c_in * M_prev + self.diag_b_in
+                g_forget_logit = self.diag_a_f * O_mem_slot + self.diag_c_f * M_prev + self.diag_b_f
+                g_in = torch.sigmoid(g_in_logit)
+                g_forget = torch.sigmoid(g_forget_logit)
+                if _should_log_diag:
+                    with torch.no_grad():
+                        _wb_g_in_mean = g_in.float().mean().item()
+                        _wb_g_forget_mean = g_forget.float().mean().item()
+                M_write = self.memory_bank.write(
+                    idx,
+                    O_mem_slot,
+                    gate=g_in,
+                    forget_gate=g_forget,
+                    tanh_new=cfg.dual_gate_tanh_new,
+                )
             else:
                 # Legacy single-gate path (H/H5/H3).
                 # v6/v7 (2026-05-18): choose writeback mode based on config.
@@ -1214,6 +1332,9 @@ class MemorySpaceLayer(nn.Module):
                 f" slot_delta_abs_mean={_sd_abs_mean:.6f}"
                 f" slot_delta_max={_sd_abs_max:.6f}"
                 f" M_sel_hidden_norm_mean={_msh_norm_mean:.6f}"
+                f" wb_mode={cfg.writeback_mode}"
+                f" g_in_mean={_wb_g_in_mean if _wb_g_in_mean is not None else float('nan'):.6f}"
+                f" g_forget_mean={_wb_g_forget_mean if _wb_g_forget_mean is not None else float('nan'):.6f}"
                 f" step_counter={self.step_counter}",
                 flush=True,
             )
