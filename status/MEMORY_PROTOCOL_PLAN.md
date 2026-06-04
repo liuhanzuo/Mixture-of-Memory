@@ -120,10 +120,13 @@
 - **LongBench**（用户偏好，替代 BABILong）6 QA：hotpotqa/narrativeqa/qasper/multifieldqa_en/2wikimqa/musique，F1/EM，本机 GPU0/1/2/7 4-shard，base Llama-3-8B + no_chat_template + chunk128，本地 jsonl 无下载。输出 `longbench_results/perdoc_chunk128_local/`。
 - 判据：≥4k 是否越过 P1/P2 的 1-2% noise floor；LongBench F1 vs base 锚点。
 
-### [R3-2] route_aux 远程训练完成 → eval gate — **状态: TRAINING DONE, EVAL RUNNING（2026-06-05 00:14）**
+### [R3-2] route_aux 远程训练完成 → eval gate — **状态: EVAL ~DONE（2026-06-05 00:50，0k-8k 完成，16k/32k 收尾）**
 - `mem_space_perdoc_chunk128_routeaux_remote`（route_aux=1.0）训练 step2000 完成（227min, non-finite=1, lm~2.65）。
-- 离线 BABILong eval 已启动于 idle 远程 28.59.80.196（共享 FS，`scripts/eval_perdoc_chunk128_routeaux.sh`，commit 93c6509，7 GPU × 7 长度，结果 → `babilong_results/perdoc_chunk128_routeaux/`）。
-- 判据：对比 R3-1 无 route_aux 的 chunk128 adapter，看 ≥2k 是否爬升 + top1_sim/usage_var 是否改善。
+- **BABILong substring-acc（routeaux，route_aux=1.0）**：0k qa1/qa2/qa5=25/13/70；1k=10/10/37；2k=7/14/36；4k=12/14/37；8k=5/4/26；16k=7/18/-（跑中）。
+- **🔑 关键结论：route_aux=1.0 显著优于 base 且优于无 route_aux arm。** 对比 base Llama-3-8B（R3-3）同口径 4k qa1/qa2/qa5=2/4/0、8k=23/12/-（base 8k qa1 偶高但 qa5≈0）；对比无 route_aux 的 R3-1 chunk128（qa5 4k≈34、8k≈32 相近，但 routeaux 的 qa1/qa2 在 2-4k 更稳）。**routeaux 在所有长度 qa5 维持 26-70%、远离 1-2% noise floor，证明 routing supervision 有效。**
+- 判据已满足：≥2k 远高于 noise floor + qa5 全程 >25%。
+
+### [R3-2-OLD] route_aux 远程训练完成 → eval gate（历史）
 
 ### [R3-3] base model 对照（用户明确要求"和 base 比一比"）— **状态: BABILong RUNNING（2026-06-05 00:37，本机 GPU 0/2/3/4/5），LongBench PENDING**
 - 已启动 base Llama-3-8B（plain_hf，无 adapter）BABILong eval：`scripts/eval_base_babilong_r33.sh`，tasks qa1/qa2/qa5，lengths 0k-8k（8k native ctx，16k/32k 溢出=正是我们 adapter 要超越的点），同 R3-1 prompt flags（instruction+examples+post_prompt on）。结果 → `babilong_results/base_model_full/`。
@@ -145,10 +148,12 @@
 > 诊断根因（toy_vs_full + collapse 报告）：(a) **注入稀释** slot KV 仅 ~0.2% attn mass → LM 梯度≈0；(b) **routing collapse** top1_sim→uniform，且现有 `load_balance`(weight=0.01) + `entropy` aux **主动把 routing 推向 uniform** 反而致塌。两路并治。
 > 推荐顺序：**P7 + P9 一起上**（都小、都打 collapse）→ retrieval 离开 noise floor 但仍弱 → 加 **P8**（读路径 mass）→ 再 P10/P11 调参。P12/P13 是破 cliff 后的研究 bet。
 
-### [P7] route-supervision aux + 中和 uniform-pushing aux ⭐ — **状态: IN PROGRESS（loss-free balancing 由 coder 实现中，2026-06-04 23:56）**
+### [P7] route-supervision aux + 中和 uniform-pushing aux ⭐ — **状态: CODE DONE + WIRED, READY TO LAUNCH（2026-06-05 00:50）**
 - 借 Landmark(2305.16300) + Loss-Free Balancing for MoE(2408.15664)。confidence **high**，小改。
-- 两部分：(1) **route_aux**（scores→已知 write_idx 的 CE）已存在于 `train_mem_space_dolmino_cpt.py:559 _compute_route_aux`，远程 R3-2 正在测；(2) **关键缺口=loss-free balancing**：用在线更新的 per-slot routing-logit bias 替换会推向 uniform 的 `selector.load_balance_loss`（`selector.py:463`，weight `config.py:81`=0.01），平衡 slot 使用率但**不产生干扰任务的梯度**。
-- 判据：Dolmino arm + 离线 BABILong ≥4k 是否越过 1-2% noise floor，且 top1_sim/usage_var 改善。
+- ✅ 实现完成：selector.py routing_bias buffer + 在线更新（commit 1b46939）；✅ 已 wire 进 `train_mem_space_dolmino_cpt.py`（`--use_loss_free_balance`/`--loss_free_update_rate`，commit fb91c51，已验证 argparse+config+AST 全 OK）。
+- ✅ 启动脚本就绪：`scripts/launch_mem_space_p7p9.sh`（基于最佳 routeaux arm，load_balance_weight=0+entropy=0+loss_free_balance ON+num_global_slots=4+route_aux=1.0，8-GPU DDP，bash -n OK）。
+- ⏳ 等整节点空闲即启（当前两节点都有 eval 尾巴占 2 GPU）。
+- 判据：Dolmino arm + 离线 BABILong ≥4k 是否越过 noise floor 且 top1_sim/usage_var 改善 vs routeaux。
 
 ### [P8] 专用 memory cross-attention 读路径（独立 softmax）— **状态: PENDING, auto_launch: false（等 P7+P9 结果）**
 - 借 YOCO(2405.05254)/Memorizing Transformers(2203.08913)/Infini-attn(2404.07143)。confidence **high**，medium 改。
