@@ -128,10 +128,11 @@
 
 ### [R3-2-OLD] route_aux 远程训练完成 → eval gate（历史）
 
-### [R3-3] base model 对照（用户明确要求"和 base 比一比"）— **状态: BABILong DONE + LongBench RUNNING（2026-06-05 02:59，远程 8-shard）**
-- ✅ base Llama-3-8B（plain_hf）BABILong 0k-8k 完成（4k qa1/qa2/qa5=2/4/0，8k=23/12/-；qa5≈0，远逊于 adapter 的 26-37%）。
-- ✅ base LongBench 锚点：给 `eval_longbench_mem_space.py` 加 `--base_mode`（无 adapter + LongBench 标准中间截断，commit 7feef6d），脚本 `scripts/eval_base_longbench_r33.sh`，远程 28.59.80.196 8-shard 跑中（Chat template=False 匹配 R3-1）。结果 → `longbench_results/base_model_full_lb/`。
-- ⚠️ **R3-1 adapter LongBench 已补算分**（之前漏跑 scoring）：avg F1=**2.94**（hotpotqa 2.51 / narrativeqa 1.08 / qasper 4.70 / multifieldqa 4.45 / 2wikimqa 3.27 / musique 1.61）——**adapter 在开放式 LongBench QA 上很弱**，待 base 对照确认是否 base 也同样低（即 LongBench 对该 setup 整体偏难）。
+### [R3-3] base model 对照（用户明确要求"和 base 比一比"）— **状态: DONE（2026-06-05 05:14，结论：adapter 在 LongBench 上 ~5× 劣于 base）**
+- ✅ base Llama-3-8B（plain_hf）BABILong 0k-8k 完成（4k qa1/qa2/qa5=2/4/0，8k=23/12/-；qa5≈0，远逊于 adapter 的 26-37% → **BABILong qa5 上 adapter 强于 base**）。
+- ✅ **base LongBench DONE**（`--base_mode` 无 adapter + 标准中间截断，commit 7feef6d，6 任务×200/150 样本）：avg F1=**13.95**（hotpotqa 9.76 / narrativeqa 16.01 / qasper 13.92 / multifieldqa 24.87 / 2wikimqa 12.17 / musique 6.97），`longbench_results/base_model_full_lb/scores.json`。
+- ⚠️ **R3-1 adapter LongBench = avg F1 2.94**（hotpotqa 2.51 / narrativeqa 1.08 / qasper 4.70 / multifieldqa 4.45 / 2wikimqa 3.27 / musique 1.61）。
+- 🔴 **关键对照结论**：base **13.95** vs adapter **2.94** —— **chunk128 memory-adapter 在开放式 LongBench QA 上把 base 的能力打掉了 ~5 倍**。LongBench 不是"整体偏难"（base 拿到合理分），是 **adapter 的中间 memory 压缩/读回严重丢信息**。与 toy/BABILong 的"adapter 在合成检索任务上更强"形成对立 —— adapter 学到的是 needle-style 精确检索，但牺牲了自然语言 QA 的上下文完整性。**这是给用户的核心 takeaway，需在下一步实验设计中正视（memory 压缩 vs 自然 QA 的 tradeoff）。**
 - 公平性：相同 prompt 截断策略；记录 base 在各长度的 F1/acc。研究员（general-purpose-22）会给标准对比 protocol，据此 finalize。
 - 写入 BENCHMARK_RESULTS.md 的 base-vs-ours 对照行。
 
