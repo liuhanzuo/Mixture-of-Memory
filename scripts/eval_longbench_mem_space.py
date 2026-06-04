@@ -676,6 +676,10 @@ def main():
 
     if args.no_chat_template:
         args.use_chat_template = False
+    if args.base_mode:
+        # Plain non-instruct Llama has no chat_template; always use raw prompts
+        # (also matches the R3-1 mem_space protocol which used no chat template).
+        args.use_chat_template = False
 
     datasets_list = args.datasets if args.datasets else DEFAULT_DATASETS
 
