@@ -825,6 +825,13 @@ class MemorySpaceLayer(nn.Module):
                     # v11: slot_query attention entropy (default 0.0 when not
                     # slot_query). High ⇒ slots smear attention over all tokens.
                     _slot_attn_entropy = getattr(self.selector, "_last_slot_attn_entropy", 0.0)
+                    # mode-agnostic slot-usage: how many DISTINCT slots the final
+                    # top-k actually selected (batch[0]). Computed from `idx`
+                    # directly so it is valid for ALL routing_pool_modes
+                    # (unlike uniq_sel_slots which is multi_query-only). This is
+                    # the primary "is the memory module routing to varied slots
+                    # vs collapsing to a few?" signal. Range [1, k_slots].
+                    _sel_slots = int(idx[0].unique().numel())
                 print(
                     f"[QUERY_DIAG step={self.step_counter} fwd={self._fwd_count}]"
                     f" top1_sim_mean={_top1_sim_mean:.6f}"
@@ -835,6 +842,7 @@ class MemorySpaceLayer(nn.Module):
                     f" summary_q_max_cos={_sq_max_cos:.4f}"
                     f" summary_q_mean_cos={_sq_mean_cos:.4f}"
                     f" uniq_sel_slots={_uniq_sel}"
+                    f" sel_slots={_sel_slots}"
                     f" slot_attn_entropy={_slot_attn_entropy:.4f}",
                     flush=True,
                 )
