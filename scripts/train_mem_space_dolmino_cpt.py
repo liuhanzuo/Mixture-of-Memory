@@ -638,6 +638,8 @@ def parse_args() -> argparse.Namespace:
 
     # L3 Summary
     p.add_argument("--use_l3_summary", action="store_true", default=True)
+    p.add_argument("--no_l3_summary", dest="use_l3_summary", action="store_false",
+                   help="Disable L3 summary pool (l3_pool=None). For L3-isolation ablation.")
     p.add_argument("--l3_n_summary", type=int, default=64)
     p.add_argument("--l3_n_layers", type=int, default=2)
     p.add_argument("--l3_n_heads", type=int, default=8)
