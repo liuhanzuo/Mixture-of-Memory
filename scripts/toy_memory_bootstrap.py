@@ -163,6 +163,23 @@ def parse_args() -> argparse.Namespace:
                         "bootstrap death spiral.")
     p.add_argument("--force_gate_steps", type=int, default=200,
                    help="Number of initial steps to hold the forced gate value.")
+    # E1: routing-weight gradient probe -------------------------------------- #
+    p.add_argument("--grad_probe", action="store_true", default=False,
+                   help="E1: after backward(), print the grad norms on the "
+                        "selector's Q_sel/K_sel weights, decomposed into the "
+                        "lm_loss-only and aux_loss-only contributions "
+                        "(separate retain_graph backward passes). Diagnoses "
+                        "whether decoupled-read starves the routing weights of "
+                        "task gradient. Adds ~2 extra backward passes/step.")
+    p.add_argument("--grad_probe_interval", type=int, default=10,
+                   help="Print a GRAD_PROBE line every N steps when --grad_probe.")
+    # E2: routing supervision aux ------------------------------------------- #
+    p.add_argument("--route_aux_weight", type=float, default=0.0,
+                   help="E2: weight W of a cross-entropy aux that supervises "
+                        "chunk-2's routing scores to point at the slot indices "
+                        "chunk-1 wrote (idx1). W=0 disables (default). >0 tests "
+                        "whether DIRECTLY supervising routing lets "
+                        "retrieval_exact_acc climb.")
     return p.parse_args()
 
 
@@ -318,8 +335,31 @@ class ForceGate:
 # --------------------------------------------------------------------------- #
 
 
+def _selector_weight_grad_norms(mem_layers) -> Tuple[float, float]:
+    """Sum (over all mem layers) the .grad.norm() of the selector's Q_sel and
+    K_sel weights. Returns (q_sel_grad_norm, k_sel_grad_norm). NaN-safe: a None
+    grad contributes 0. The selector projections live at
+    ``mem_layer.selector.Q_sel`` / ``.K_sel`` (both nn.Linear, bias=False)."""
+    q_sq = 0.0
+    k_sq = 0.0
+    for w in mem_layers:
+        sel = getattr(w, "selector", None)
+        if sel is None:
+            continue
+        qg = getattr(sel.Q_sel.weight, "grad", None)
+        kg = getattr(sel.K_sel.weight, "grad", None)
+        if qg is not None:
+            q_sq += float(qg.detach().float().norm().item()) ** 2
+        if kg is not None:
+            k_sq += float(kg.detach().float().norm().item()) ** 2
+    return math.sqrt(q_sq), math.sqrt(k_sq)
+
+
 def toy_train_step(model, ctx: torch.Tensor, tgt: torch.Tensor,
-                   labels: torch.Tensor, device: torch.device):
+                   labels: torch.Tensor, device: torch.device,
+                   *, mem_layers=None, route_aux_weight: float = 0.0,
+                   grad_probe: bool = False, grad_probe_now: bool = False,
+                   optimizer=None, step: int = 0):
     """One toy step with bptt_window=2 (whole sample = one autograd graph).
 
     chunk 1 forward (grad ON, no loss) writes the fact into memory; chunk 2
@@ -328,24 +368,100 @@ def toy_train_step(model, ctx: torch.Tensor, tgt: torch.Tensor,
     cross-chunk credit-assignment ``dolmino_train_step_tbptt`` provides at
     ``bptt_window=2``, so the chunk-1 writer gets the "you helped chunk 2"
     gradient.
+
+    E2 (--route_aux_weight W>0): after chunk 1 writes (capturing idx1 = the
+    chunk-1-selected slots from layer 0), chunk 2's differentiable routing
+    scores [B, N] are captured via a forward hook on ``mem_layers[0].selector``
+    (the layer detaches ``last_scores``, so a hook is the only way to get a
+    grad-bearing copy). A cross-entropy aux supervises those scores to put mass
+    on the idx1 slots: ``route_aux = -mean_b mean_{j in idx1} log scores[b, j]``.
+
+    E1 (--grad_probe): after the total backward that feeds the optimizer, two
+    extra retain_graph backward passes isolate the lm-only and aux-only grad on
+    the selector weights, surfacing whether decoupled-read starves routing of
+    task gradient.
+
+    Returns (total, lm_loss, aux_loss, route_aux, probe) where probe is a dict
+    (possibly empty) of GRAD_PROBE scalars.
     """
     T._reset_banks(model)
 
     # chunk 1: write the fact (gradient-bearing, no LM loss on context).
     model(input_ids=ctx, use_cache=False)
 
+    # E2: capture the chunk-1 selected slot indices (layer-0) as the routing
+    # target. last_idx is detached on the layer (safe to use as a CE target).
+    idx1 = None
+    if route_aux_weight > 0.0 and mem_layers is not None:
+        idx1 = getattr(mem_layers[0], "last_idx", None)
+
+    # E2: install a forward hook on the layer-0 selector so we capture the
+    # grad-bearing softmax scores [B, N] from the chunk-2 forward (selector
+    # returns (idx, scores, ste_weights); the layer detaches them afterwards).
+    captured_scores: Dict[str, torch.Tensor] = {}
+    hook_handle = None
+    if route_aux_weight > 0.0 and mem_layers is not None and idx1 is not None:
+        sel0 = getattr(mem_layers[0], "selector", None)
+
+        def _score_hook(_mod, _inp, _out):
+            # _out == (idx, scores, ste_weights); scores is differentiable.
+            if isinstance(_out, (tuple, list)) and len(_out) >= 2:
+                captured_scores["scores"] = _out[1]
+
+        if sel0 is not None:
+            hook_handle = sel0.register_forward_hook(_score_hook)
+
     # chunk 2: read + loss on answer tokens only (labels mask the prompt).
-    out = model(input_ids=tgt, labels=labels, use_cache=False)
+    try:
+        out = model(input_ids=tgt, labels=labels, use_cache=False)
+    finally:
+        if hook_handle is not None:
+            hook_handle.remove()
     lm_loss = out.loss
     aux_loss = T._collect_aux_loss(model, device)
 
-    if lm_loss is None or not torch.isfinite(lm_loss + aux_loss):
-        return None, lm_loss, aux_loss
+    # E2: routing-supervision cross-entropy on the chunk-2 scores.
+    route_aux = torch.zeros((), device=device)
+    if (route_aux_weight > 0.0 and idx1 is not None
+            and "scores" in captured_scores):
+        scores2 = captured_scores["scores"]            # [B, N], softmax, grad-bearing
+        if scores2.dim() == 2 and scores2.shape[0] == idx1.shape[0]:
+            # gather the scores at the chunk-1-written slot indices and apply a
+            # uniform-target CE: -mean over the k written slots of log p.
+            sel_p = scores2.gather(1, idx1.to(scores2.device))  # [B, k]
+            route_aux = -(sel_p.clamp(min=1e-9).log().mean())
 
-    total = lm_loss + aux_loss
-    total.backward()
+    if lm_loss is None or not torch.isfinite(lm_loss + aux_loss + route_aux):
+        return None, lm_loss, aux_loss, route_aux, {}
+
+    total = lm_loss + aux_loss + route_aux_weight * route_aux
+
+    probe: Dict[str, float] = {}
+    if grad_probe and grad_probe_now and mem_layers is not None and optimizer is not None:
+        # E1: isolate lm-only and aux-only grad on the routing weights via two
+        # extra retain_graph passes, then a clean total backward for the step.
+        optimizer.zero_grad(set_to_none=True)
+        lm_loss.backward(retain_graph=True)
+        lm_q, lm_k = _selector_weight_grad_norms(mem_layers)
+        optimizer.zero_grad(set_to_none=True)
+        aux_q = aux_k = 0.0
+        _aux_term = aux_loss + route_aux_weight * route_aux
+        if isinstance(_aux_term, torch.Tensor) and _aux_term.requires_grad:
+            _aux_term.backward(retain_graph=True)
+            aux_q, aux_k = _selector_weight_grad_norms(mem_layers)
+        optimizer.zero_grad(set_to_none=True)
+        total.backward()
+        tot_q, tot_k = _selector_weight_grad_norms(mem_layers)
+        probe = {
+            "Q_sel_grad": tot_q, "K_sel_grad": tot_k,
+            "lm_Q_grad": lm_q, "lm_K_grad": lm_k,
+            "aux_Q_grad": aux_q, "aux_K_grad": aux_k,
+        }
+    else:
+        total.backward()
+
     T._detach_banks(model)
-    return total, lm_loss, aux_loss
+    return total, lm_loss, aux_loss, route_aux, probe
 
 
 # --------------------------------------------------------------------------- #
@@ -542,8 +658,12 @@ def main() -> None:
 
         batch = data.make_batch(args.batch_size)
         optimizer.zero_grad(set_to_none=True)
-        total, lm_loss, aux_loss = toy_train_step(
-            model, batch["ctx"], batch["tgt"], batch["labels"], device
+        grad_probe_now = args.grad_probe and (step % args.grad_probe_interval == 0)
+        total, lm_loss, aux_loss, route_aux, probe = toy_train_step(
+            model, batch["ctx"], batch["tgt"], batch["labels"], device,
+            mem_layers=mem_layers, route_aux_weight=args.route_aux_weight,
+            grad_probe=args.grad_probe, grad_probe_now=grad_probe_now,
+            optimizer=optimizer, step=step,
         )
         if total is None:
             n_nonfinite += 1
@@ -552,6 +672,19 @@ def main() -> None:
             optimizer.step()
         T._step_counters_inc(model)
 
+        # E1: emit the GRAD_PROBE line (routing-weight task-gradient decomposition).
+        if probe:
+            print(
+                f"[GRAD_PROBE step={step}]"
+                f" Q_sel_grad={probe['Q_sel_grad']:.3e}"
+                f" K_sel_grad={probe['K_sel_grad']:.3e}"
+                f" lm_grad_contrib=(Q={probe['lm_Q_grad']:.3e},K={probe['lm_K_grad']:.3e})"
+                f" aux_grad_contrib=(Q={probe['aux_Q_grad']:.3e},K={probe['aux_K_grad']:.3e})",
+                flush=True,
+            )
+            if use_wandb:
+                wandb.log({f"grad_probe/{k}": v for k, v in probe.items()}, step=step)
+
         # keep the gate clamped during the forced window (optimizer may nudge).
         if force_gate is not None and force_gate._engaged:
             force_gate.reassert()
@@ -559,6 +692,7 @@ def main() -> None:
         if step % args.log_interval == 0:
             lm_v = lm_loss.item() if lm_loss is not None else float("nan")
             aux_v = aux_loss.item() if aux_loss is not None else float("nan")
+            route_v = route_aux.item() if isinstance(route_aux, torch.Tensor) else float("nan")
             # P1/v12: surface the recon aux component (layer-0 singleton) so the
             # smoke test can confirm it is finite and trending down.
             recon_v = float("nan")
@@ -567,11 +701,12 @@ def main() -> None:
                 recon_v = _rc.item()
             sps = (step + 1) / max(1e-9, time.time() - t0)
             print(f"[toy step {step}/{args.total_steps}] lm={lm_v:.4f} "
-                  f"aux={aux_v:.4f} recon={recon_v:.4f} nf={n_nonfinite} "
-                  f"speed={sps:.2f} it/s",
+                  f"aux={aux_v:.4f} route_aux={route_v:.4f} recon={recon_v:.4f} "
+                  f"nf={n_nonfinite} speed={sps:.2f} it/s",
                   flush=True)
             if use_wandb:
                 wandb.log({"train/lm_loss": lm_v, "train/aux_loss": aux_v,
+                           "train/route_aux": route_v,
                            "train/recon_loss": recon_v,
                            "train/n_nonfinite": n_nonfinite}, step=step)
 
