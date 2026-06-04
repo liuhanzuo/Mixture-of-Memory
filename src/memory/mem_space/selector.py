@@ -391,6 +391,17 @@ class TopKSelector(nn.Module):
         # Diagnostic: store logit std for monitoring
         with torch.no_grad():
             self._last_per_token_logit_std = logits.std(dim=-1).mean().item()
+            # uniq_sel_slots: distinct slots actually selected this chunk (batch[0]).
+            # multi_query sets a richer per-sub-query-argmax version above (line ~319);
+            # for every other mode (slot_query / chunk_query / max_pool) the field was
+            # never written and stuck at the init value 0, which read as "routing dead"
+            # in the diag even though routing was fine. Populate it generically here so
+            # slot_query runs report a meaningful number (== top_k when all selected
+            # slots are distinct, which topk guarantees for a single [N] score row, but
+            # >1 batch / future variants can differ). Slot-diversity ACROSS chunks is
+            # better tracked by usage_cov/usage_ent in layer.py.
+            if self._routing_pool_mode != "multi_query":
+                self._last_unique_selected_slots = int(idx[0].unique().numel())
 
         return idx, scores, ste_weights
 
