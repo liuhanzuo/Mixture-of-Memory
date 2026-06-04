@@ -128,10 +128,10 @@
 
 ### [R3-2-OLD] route_aux 远程训练完成 → eval gate（历史）
 
-### [R3-3] base model 对照（用户明确要求"和 base 比一比"）— **状态: BABILong RUNNING（2026-06-05 00:37，本机 GPU 0/2/3/4/5），LongBench PENDING**
-- 已启动 base Llama-3-8B（plain_hf，无 adapter）BABILong eval：`scripts/eval_base_babilong_r33.sh`，tasks qa1/qa2/qa5，lengths 0k-8k（8k native ctx，16k/32k 溢出=正是我们 adapter 要超越的点），同 R3-1 prompt flags（instruction+examples+post_prompt on）。结果 → `babilong_results/base_model_full/`。
-- 待 base BABILong 完成 + GPU 空闲后补 LongBench base 对照（同 4-shard 口径）。
-- 在 R3-1 eval 跑完后，用**同一 eval 脚本 + 同一 chunk/截断口径**跑 **base Llama-3-8B（无 memory adapter）** 的 LongBench + BABILong，作为对照锚点。
+### [R3-3] base model 对照（用户明确要求"和 base 比一比"）— **状态: BABILong DONE + LongBench RUNNING（2026-06-05 02:59，远程 8-shard）**
+- ✅ base Llama-3-8B（plain_hf）BABILong 0k-8k 完成（4k qa1/qa2/qa5=2/4/0，8k=23/12/-；qa5≈0，远逊于 adapter 的 26-37%）。
+- ✅ base LongBench 锚点：给 `eval_longbench_mem_space.py` 加 `--base_mode`（无 adapter + LongBench 标准中间截断，commit 7feef6d），脚本 `scripts/eval_base_longbench_r33.sh`，远程 28.59.80.196 8-shard 跑中（Chat template=False 匹配 R3-1）。结果 → `longbench_results/base_model_full_lb/`。
+- ⚠️ **R3-1 adapter LongBench 已补算分**（之前漏跑 scoring）：avg F1=**2.94**（hotpotqa 2.51 / narrativeqa 1.08 / qasper 4.70 / multifieldqa 4.45 / 2wikimqa 3.27 / musique 1.61）——**adapter 在开放式 LongBench QA 上很弱**，待 base 对照确认是否 base 也同样低（即 LongBench 对该 setup 整体偏难）。
 - 公平性：相同 prompt 截断策略；记录 base 在各长度的 F1/acc。研究员（general-purpose-22）会给标准对比 protocol，据此 finalize。
 - 写入 BENCHMARK_RESULTS.md 的 base-vs-ours 对照行。
 
