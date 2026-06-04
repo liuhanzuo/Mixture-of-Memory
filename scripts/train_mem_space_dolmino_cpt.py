@@ -506,6 +506,58 @@ def _collect_top1_sim(model: torch.nn.Module) -> float:
     return vals[0] if vals else 0.0
 
 
+def _install_score_hook(mem_layers):
+    """Install a forward hook on the layer-0 selector to capture the
+    grad-bearing softmax routing scores [B, N] from the next model forward.
+
+    The MemorySpaceLayer detaches ``last_scores`` after the forward, so a hook
+    on the selector module is the only way to obtain a gradient-bearing copy
+    (matches scripts/toy_memory_bootstrap.py:398-412). Returns
+    ``(captured_dict, handle)`` where ``captured_dict["scores"]`` is populated
+    once the forward runs, and ``handle`` must be ``.remove()``-d afterwards.
+    """
+    captured: Dict[str, torch.Tensor] = {}
+    handle = None
+    if not mem_layers:
+        return captured, handle
+    sel0 = getattr(mem_layers[0], "selector", None)
+    if sel0 is None:
+        return captured, handle
+
+    def _score_hook(_mod, _inp, _out):
+        # selector returns (idx, scores, ste_weights); scores is differentiable.
+        if isinstance(_out, (tuple, list)) and len(_out) >= 2:
+            captured["scores"] = _out[1]
+
+    handle = sel0.register_forward_hook(_score_hook)
+    return captured, handle
+
+
+def _compute_route_aux(scores2, idx1, device: torch.device):
+    """Cross-entropy routing supervision: push the grad-bearing chunk scores
+    ``scores2`` [B, N] to place probability mass on the slot indices ``idx1``
+    [B, k] that a prior chunk wrote into.
+
+    ``route_aux = -mean_b mean_{j in idx1} log scores2[b, j]`` with a 1e-9 clamp
+    for numerical safety (matches toy E2). Returns ``None`` when inputs are
+    unusable (missing scores/idx, shape mismatch, or non-finite)."""
+    if scores2 is None or idx1 is None:
+        return None
+    if scores2.dim() != 2 or scores2.shape[0] != idx1.shape[0]:
+        return None
+    sel_p = scores2.gather(1, idx1.to(scores2.device))      # [B, k]
+    ra = -(sel_p.clamp(min=1e-9).log().mean())
+    if not torch.isfinite(ra):
+        return None
+    return ra
+
+
+def _mem_layers(model: torch.nn.Module):
+    """Return the list of MemorySpaceLayer wrappers (or None)."""
+    root = getattr(model, "module", model)
+    return getattr(root, "_mem_space_layers", None)
+
+
 def _collect_aux_loss(model: torch.nn.Module, device: torch.device) -> torch.Tensor:
     root = getattr(model, "module", model)
     mem_layers = getattr(root, "_mem_space_layers", None)
@@ -622,6 +674,15 @@ def parse_args() -> argparse.Namespace:
                         "enables the MemoryReconDecoder (requires use_l3_summary). "
                         "0 = disabled (default).")
     p.add_argument("--peak_routing_weight", type=float, default=0.05)
+    p.add_argument("--route_aux_weight", type=float, default=0.0,
+                   help="E2 routing-supervision aux loss weight (2026-06-04). "
+                        ">0 enables a cross-entropy that supervises the current "
+                        "chunk's grad-bearing routing scores to put mass on the "
+                        "slots the PREVIOUS chunk wrote into (cross-chunk "
+                        "write->read routing supervision). Bootstraps content "
+                        "addressing that pure LM loss cannot (toy E2). 0 = "
+                        "disabled, training path identical to before. Toy used "
+                        "1.0.")
     p.add_argument("--slot_value_norm_cap", type=float, default=5.0)
     p.add_argument("--slot_init", type=str, default="random",
                    choices=["zero", "random", "hidden_pool", "strided_token"])
@@ -914,7 +975,8 @@ def dolmino_train_step_tbptt(
     device: torch.device,
     grad_accum: int = 1,
     bptt_window: int = 2,
-) -> Tuple[torch.Tensor, torch.Tensor]:
+    route_aux_weight: float = 0.0,
+) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     """Windowed-BPTT Dolmino CPT step: every chunk gets gradient, and gradients
     flow ACROSS chunk boundaries within a window of ``bptt_window`` chunks.
 
@@ -935,15 +997,29 @@ def dolmino_train_step_tbptt(
     per-chunk peak; window=2 ≈ ×2). gradient_checkpointing keeps this tractable
     on H20 (97.8 GiB) at window=2.
 
-    Returns: (total_lm * grad_accum, total_aux * grad_accum) — semantics
-    unchanged from the prior implementation.
+    Returns: (total_lm * grad_accum, total_aux * grad_accum,
+    total_route_aux * grad_accum) — the LM/aux semantics are unchanged from the
+    prior implementation; total_route_aux is the (unweighted) routing-supervision
+    CE summed over chunks for logging (always 0 when route_aux_weight == 0).
+
+    route_aux (E2, 2026-06-04): when ``route_aux_weight > 0``, for each chunk we
+    capture the grad-bearing routing scores [B, N] via a forward hook on the
+    layer-0 selector, and supervise them (cross-entropy) to place mass on the
+    slots the PREVIOUS chunk wrote into (``prev_idx1`` = that chunk's detached
+    last_idx). This is the real-path analogue of toy E2's cross-chunk
+    write->read routing supervision. The CE term is folded into the live window
+    loss so its gradient flows to the selector through the same backward.
     """
     _reset_banks(model)
+
+    mem_layers = _mem_layers(model) if route_aux_weight > 0.0 else None
+    use_route_aux = bool(route_aux_weight > 0.0 and mem_layers)
 
     n_chunks = len(context_chunks) + 1
     scale = n_chunks * grad_accum
     total_lm = torch.zeros((), device=device)
     total_aux = torch.zeros((), device=device)
+    total_route_aux = torch.zeros((), device=device)
 
     bptt_window = max(1, int(bptt_window))
 
@@ -956,9 +1032,24 @@ def dolmino_train_step_tbptt(
     # connecting consecutive chunks alive until we backward at the boundary).
     window_loss = None  # type: Optional[torch.Tensor]
 
+    # route_aux: detached slot indices written by the PREVIOUS chunk; used as
+    # the routing-supervision target for the current chunk's scores.
+    prev_idx1 = None  # type: Optional[torch.Tensor]
+
     for i, (chunk_ids, _is_target) in enumerate(all_inputs):
         chunk_input = chunk_ids.unsqueeze(0).to(device)
+
+        # route_aux: capture this chunk's grad-bearing routing scores via a
+        # forward hook on the layer-0 selector (last_scores is detached on the
+        # layer, so the hook is the only grad-bearing source).
+        captured = {}
+        hook_handle = None
+        if use_route_aux:
+            captured, hook_handle = _install_score_hook(mem_layers)
+
         out = model(input_ids=chunk_input, labels=chunk_input, use_cache=False)
+        if hook_handle is not None:
+            hook_handle.remove()
         chunk_lm = out.loss / scale
         chunk_aux = _collect_aux_loss(model, device) / scale
 
@@ -966,10 +1057,26 @@ def dolmino_train_step_tbptt(
         # the next chunk's memory read must stay connected to this chunk's
         # write graph for true cross-chunk BPTT).
         step_loss = chunk_lm + chunk_aux
+
+        # route_aux: supervise the current chunk's routing scores against the
+        # slots the previous chunk wrote into (cross-chunk write->read).
+        if use_route_aux and prev_idx1 is not None:
+            scores2 = captured.get("scores")
+            ra = _compute_route_aux(scores2, prev_idx1, device)
+            if ra is not None:
+                step_loss = step_loss + route_aux_weight * (ra / scale)
+                total_route_aux = total_route_aux + (ra / scale).detach()
+
         window_loss = step_loss if window_loss is None else (window_loss + step_loss)
 
         total_lm = total_lm + chunk_lm.detach()
         total_aux = total_aux + chunk_aux.detach()
+
+        # route_aux: record this chunk's written slots (detached) as the target
+        # for the NEXT chunk's routing supervision.
+        if use_route_aux:
+            li = getattr(mem_layers[0], "last_idx", None)
+            prev_idx1 = li.detach() if li is not None else None
 
         # Window boundary: either we've packed ``bptt_window`` chunks since the
         # last backward, or this is the final (target) chunk.
@@ -984,7 +1091,8 @@ def dolmino_train_step_tbptt(
             # in a clean detached state for any post-step inspection.
             _detach_banks(model)
 
-    return total_lm * grad_accum, total_aux * grad_accum
+    return (total_lm * grad_accum, total_aux * grad_accum,
+            total_route_aux * grad_accum)
 
 
 # --------------------------------------------------------------------------- #
@@ -998,15 +1106,29 @@ def babilong_train_step(
     labels: torch.Tensor,
     chunk_size: int,
     device: torch.device,
-) -> Tuple[torch.Tensor, torch.Tensor]:
-    """Stream BABILong sample through memory in chunks, gradient on last chunk."""
+    route_aux_weight: float = 0.0,
+) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    """Stream BABILong sample through memory in chunks, gradient on last chunk.
+
+    Returns (lm_loss, aux_loss, route_aux). route_aux (E2) supervises the
+    grad-bearing last chunk's routing scores against the slots the last context
+    chunk wrote into (cross-chunk write->read). It is returned UNWEIGHTED for
+    logging; the caller folds ``route_aux_weight * route_aux`` into the loss.
+    Always 0 when route_aux_weight == 0 or the sample is a single chunk (no
+    prior write to supervise against).
+    """
     _reset_banks(model)
     total_len = input_ids.shape[1]
     n_chunks = max(1, math.ceil(total_len / chunk_size))
 
+    zero = torch.zeros((), device=device)
+
     if n_chunks == 1:
         out = model(input_ids=input_ids, labels=labels, use_cache=False)
-        return out.loss, _collect_aux_loss(model, device)
+        return out.loss, _collect_aux_loss(model, device), zero
+
+    mem_layers = _mem_layers(model) if route_aux_weight > 0.0 else None
+    use_route_aux = bool(route_aux_weight > 0.0 and mem_layers)
 
     pieces_in = list(input_ids[0].split(chunk_size))
     pieces_lbl = list(labels[0].split(chunk_size))
@@ -1015,14 +1137,35 @@ def babilong_train_step(
         for ci in pieces_in[:-1]:
             model(input_ids=ci.unsqueeze(0).to(device), use_cache=False)
 
+    # route_aux: the slots the last context chunk wrote into (detached) are the
+    # routing-supervision target for the grad-bearing last chunk.
+    prev_idx1 = None
+    if use_route_aux:
+        li = getattr(mem_layers[0], "last_idx", None)
+        prev_idx1 = li.detach() if li is not None else None
+
     # Detach before the gradient-bearing last chunk
     _detach_banks(model)
 
     last_in = pieces_in[-1].unsqueeze(0).to(device)
     last_lbl = pieces_lbl[-1].unsqueeze(0).to(device)
-    out = model(input_ids=last_in, labels=last_lbl, use_cache=False)
 
-    return out.loss, _collect_aux_loss(model, device)
+    captured = {}
+    hook_handle = None
+    if use_route_aux and prev_idx1 is not None:
+        captured, hook_handle = _install_score_hook(mem_layers)
+
+    out = model(input_ids=last_in, labels=last_lbl, use_cache=False)
+    if hook_handle is not None:
+        hook_handle.remove()
+
+    route_aux = zero
+    if use_route_aux and prev_idx1 is not None:
+        ra = _compute_route_aux(captured.get("scores"), prev_idx1, device)
+        if ra is not None:
+            route_aux = ra
+
+    return out.loss, _collect_aux_loss(model, device), route_aux
 
 
 # --------------------------------------------------------------------------- #
@@ -1431,6 +1574,7 @@ def main() -> None:
         optimizer.zero_grad(set_to_none=True)
         step_lm_loss = 0.0
         step_aux_loss = 0.0
+        step_route_aux = 0.0
         step_valid_micros = 0
 
         for micro in range(grad_accum):
@@ -1457,8 +1601,9 @@ def main() -> None:
                     input_ids = batch["input_ids"].to(device, non_blocking=True)
                     labels = batch["labels"].to(device, non_blocking=True)
 
-                    lm_loss, aux_loss = babilong_train_step(
-                        model, input_ids, labels, args.chunk_size, device
+                    lm_loss, aux_loss, route_aux = babilong_train_step(
+                        model, input_ids, labels, args.chunk_size, device,
+                        route_aux_weight=args.route_aux_weight,
                     )
                     n_babilong += 1
                 else:
@@ -1472,9 +1617,10 @@ def main() -> None:
                     context_chunks = sample["context_chunks"]
                     target_ids = sample["target_ids"]
 
-                    lm_loss, aux_loss = dolmino_train_step_tbptt(
+                    lm_loss, aux_loss, route_aux = dolmino_train_step_tbptt(
                         model, context_chunks, target_ids, device,
                         grad_accum=grad_accum,
+                        route_aux_weight=args.route_aux_weight,
                     )
                     n_dolmino += 1
 
@@ -1486,14 +1632,18 @@ def main() -> None:
                     _zero.backward()
                     continue
 
-                # TBPTT already called backward() inside; for BABILong we still
-                # need the outer backward.
+                # TBPTT (dolmino) already called backward() inside, route_aux
+                # included; for BABILong we still need the outer backward and
+                # must fold route_aux into the loss here.
                 if use_babilong:
-                    loss = (lm_loss + aux_loss) / grad_accum
+                    loss = (lm_loss + aux_loss
+                            + args.route_aux_weight * route_aux) / grad_accum
                     loss.backward()
 
                 step_lm_loss += lm_loss.item()
                 step_aux_loss += aux_loss.item()
+                step_route_aux += float(route_aux.item()) if isinstance(
+                    route_aux, torch.Tensor) else float(route_aux)
                 step_valid_micros += 1
 
         # Manual gradient allreduce (since we always use no_sync above).
@@ -1530,12 +1680,13 @@ def main() -> None:
         if is_main(rank) and (global_step % args.log_interval == 0):
             avg_lm = step_lm_loss / max(1, step_valid_micros)
             avg_aux = step_aux_loss / max(1, step_valid_micros)
+            avg_route_aux = step_route_aux / max(1, step_valid_micros)
             elapsed = time.time() - t0
             steps_per_sec = global_step / elapsed if elapsed > 0 else 0.0
             logger.info(
-                "[step %d/%d] lm=%.4f aux=%.4f lr=%.2e n_ctx=%d "
+                "[step %d/%d] lm=%.4f aux=%.4f route_aux=%.4f lr=%.2e n_ctx=%d "
                 "dolmino=%d babi=%d nf=%d speed=%.2f steps/s",
-                global_step, args.total_steps, avg_lm, avg_aux, lr,
+                global_step, args.total_steps, avg_lm, avg_aux, avg_route_aux, lr,
                 current_n_ctx, n_dolmino, n_babilong, n_nonfinite,
                 steps_per_sec,
             )
@@ -1543,6 +1694,7 @@ def main() -> None:
                 wandb.log({
                     "train/lm_loss": avg_lm,
                     "train/aux_loss": avg_aux,
+                    "train/route_aux": avg_route_aux,
                     "train/lr": lr,
                     "train/n_ctx": current_n_ctx,
                     "train/speed_steps_s": steps_per_sec,
