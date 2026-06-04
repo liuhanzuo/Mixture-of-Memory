@@ -786,6 +786,22 @@ def parse_args() -> argparse.Namespace:
                         "the injection-dilution root cause. False = legacy "
                         "prepend path (backward-compatible).")
 
+    # P8 (2026-06-05): dedicated memory cross-attention READ with independent
+    # softmax + per-head content-dependent gate, ACTIVE at init.
+    p.add_argument("--use_memory_xattn", action="store_true", default=False,
+                   help="P8: route the memory READ via a dedicated "
+                        "MemoryCrossAttentionRead (slots get their OWN softmax) "
+                        "and mask H->L1 prepend, fixing the ~0.2%% attn-mass "
+                        "dilution. Unlike --use_decoupled_read (P2, zero-init "
+                        "out_proj + tiny shared gate ≈ dead at start), the read "
+                        "output is per-head content-gated and ACTIVE at init "
+                        "(out_proj small-random, gate≈memory_xattn_gate_init), "
+                        "so gradient flows through memory from step 0. "
+                        "False = legacy prepend path (backward-compatible).")
+    p.add_argument("--memory_xattn_gate_init", type=float, default=0.4,
+                   help="P8: effective per-head gate contribution at init "
+                        "(sigmoid space, 0.3-0.5 band). Default 0.4.")
+
     # v6/v7 writeback (disabled by default for CPT)
     p.add_argument("--use_replace_writeback", action="store_true", default=False)
     p.add_argument("--num_global_slots", type=int, default=0)
@@ -935,6 +951,8 @@ def build_model(args, device, dtype) -> torch.nn.Module:
         routing_pool_mode=args.routing_pool_mode,
         multi_query_tau=args.multi_query_tau,
         use_decoupled_read=args.use_decoupled_read,
+        use_memory_xattn=args.use_memory_xattn,
+        memory_xattn_gate_init=args.memory_xattn_gate_init,
     )
 
     # H7 rotary fp32 fix — snapshot before bf16 cast
@@ -1429,6 +1447,12 @@ def _save_adapter(model, args, step: int, final: bool = False) -> None:
             "l3_n_heads": args.l3_n_heads,
             "disable_l1_inject": args.disable_l1_inject,
             "use_replace_writeback": args.use_replace_writeback,
+            # P2/P8 read-path flags. These add/remove module params, so they MUST
+            # round-trip through adapter_config.json or eval reconstructs a model
+            # whose state_dict mismatches the checkpoint.
+            "use_decoupled_read": args.use_decoupled_read,
+            "use_memory_xattn": args.use_memory_xattn,
+            "memory_xattn_gate_init": args.memory_xattn_gate_init,
             "num_global_slots": args.num_global_slots,
             "global_slot_forget_bias": args.global_slot_forget_bias,
             "global_slot_input_gate_only": args.global_slot_input_gate_only,

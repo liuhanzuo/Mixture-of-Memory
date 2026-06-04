@@ -315,6 +315,46 @@ class MemorySpaceConfig:
     # See versions/v15_decoupled_read.md + status/MEMORY_PROTOCOL_PLAN.md [P2].
     use_decoupled_read: bool = False
 
+    # P8 (2026-06-05): dedicated memory cross-attention READ path with its OWN
+    # softmax + a per-head content-dependent gate that is ACTIVE at init.
+    # Motivation (researcher P2 root cause + the two hard data points
+    # 2026-06-05): the KV-prepend joint-attention path puts the ~16 slot KV
+    # tokens in the SAME softmax as up to ~1024 live tokens, so the slots get
+    # only ~0.2% of the attention mass — diluted to irrelevance. Even with the
+    # P7 routing fix (stable, learnable routing) BABILong stayed flat because
+    # there is no gradient/signal flowing through memory. LongBench QA F1 fell
+    # to 2.94 vs base 13.95 — the prepend read-back is destroying context.
+    #
+    # P8 vs P2 (use_decoupled_read):
+    #   * BOTH give slots a standalone cross-attention with an independent
+    #     softmax (Q=hidden, K/V=selected/all slots) and mask off the H->L1
+    #     prepend so live tokens no longer share their softmax with slot KV.
+    #   * P2 uses CrossAttentionMemoryV2 with out_proj ZERO-init and blends via
+    #     the shared scalar-ish inject_gate (g≈0.12 with inject_gate_bias_init
+    #     -2.0). The zero-init out_proj + tiny gate means the read path is
+    #     ~dead at init, so it inherits the same "no gradient through memory"
+    #     problem the dilution caused — just from the other side.
+    #   * P8 uses a DEDICATED MemoryCrossAttentionRead module whose output IS
+    #     active at init: out_proj is small-random (NOT zero) and the blend is a
+    #     per-head, content-dependent gate (sigmoid) initialised so the
+    #     effective contribution is ~memory_xattn_gate_init (default 0.4, in the
+    #     0.3-0.5 band). This guarantees real gradient flows through the memory
+    #     read from step 0. Reference designs: YOCO (2405.05254), Memorizing
+    #     Transformers (2203.08913), Infini-attention (2404.07143).
+    #
+    # When True: the slot KV-prepend (M_sel_hidden) is removed from the extended
+    # sequence (H->L1 masked, same mask_h_to_l1 plumbing as P2) and the memory
+    # READ contribution is produced by the dedicated cross-attn + per-head gate.
+    # Writeback + routing are UNCHANGED. Default False = legacy prepend path.
+    # use_memory_xattn takes precedence over use_decoupled_read if both are set.
+    # See status/MEMORY_PROTOCOL_PLAN.md [P8] + versions/v17_memory_xattn.md.
+    use_memory_xattn: bool = False
+    # Effective per-head gate contribution at init (sigmoid space). 0.4 sits in
+    # the 0.3-0.5 band the plan asks for: large enough that the read path is
+    # active from step 0 (real gradient), small enough not to swamp the residual
+    # stream of the frozen backbone before the gate learns to modulate.
+    memory_xattn_gate_init: float = 0.4
+
     # FastMem (Gated Delta Rule continuous memory, 2026-05-21):
     # Per-layer fast-weight memory that captures a continuous running summary
     # of ALL tokens (complementing discrete top-k slot routing which only
@@ -367,4 +407,9 @@ class MemorySpaceConfig:
         if self.writeback_mode == "lowrank_gate" and self.lowrank_gate_rank <= 0:
             raise ValueError(
                 f"lowrank_gate_rank must be > 0, got {self.lowrank_gate_rank}"
+            )
+        if not 0.0 < self.memory_xattn_gate_init < 1.0:
+            raise ValueError(
+                "memory_xattn_gate_init must be in (0, 1) (sigmoid space), got "
+                f"{self.memory_xattn_gate_init}"
             )

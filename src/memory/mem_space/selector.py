@@ -1257,3 +1257,165 @@ class CrossAttentionMemoryV2(nn.Module):
         p = attn_weights.clamp(min=1e-8)
         entropy = -(p * p.log()).sum(dim=-1)  # [B, n_heads, T]
         return entropy.mean().item()
+
+
+class MemoryCrossAttentionRead(nn.Module):
+    """P8 (2026-06-05): dedicated memory cross-attention READ with its OWN
+    softmax and a per-head, content-dependent gate that is ACTIVE at init.
+
+    This is the read path mandated by status/MEMORY_PROTOCOL_PLAN.md [P8]. It
+    differs from :class:`CrossAttentionMemoryV2` (the P2 ``use_decoupled_read``
+    module) in two deliberate ways that target the "no gradient flows through
+    memory" failure:
+
+    1. ``out_proj`` is small-RANDOM initialised (NOT zero). Zero-init out_proj
+       makes the read output exactly 0 at step 0, so — combined with P2's tiny
+       inject_gate (~0.12) — the read path is effectively dead and starves the
+       memory of gradient. P8 wants the read live from the start.
+    2. The blend back into the residual stream uses a PER-HEAD,
+       content-dependent gate ``g_h(x) = sigmoid(W_g x + b_g)`` (one scalar per
+       attention head, conditioned on the query token's hidden state). ``b_g``
+       is initialised to ``logit(gate_init)`` so the effective per-head
+       contribution starts at ``gate_init`` (default 0.4, in the 0.3-0.5 band).
+       This is the YOCO / Memorizing-Transformers / Infini-attention style of a
+       learnable, content-routed gate that can later learn to suppress reads
+       when retrieval is irrelevant.
+
+    Design choices shared with the rest of the codebase:
+        * NO LayerNorm on the read output (amplifies small signals, disrupts the
+          frozen pretrained backbone).
+        * GQA support: ``n_kv_heads`` may differ from ``n_heads`` (Llama-3-8B
+          has 32 query heads / 8 kv heads).
+        * Read-ONLY: this module never writes back to the slots; the existing
+          top-k EMA / dual-gate writeback path is untouched.
+
+    Forward (``read``): Q = live-token hidden states, K/V = projected memory
+    slots; standalone scaled-dot-product softmax over the N slots; per-head gate
+    multiplies the head outputs before ``out_proj`` projects back to d_model.
+    """
+
+    def __init__(
+        self,
+        d_model: int,
+        n_heads: int,
+        n_kv_heads: int,
+        *,
+        gate_init: float = 0.4,
+        out_proj_std: float = 0.02,
+        dropout: float = 0.0,
+    ) -> None:
+        super().__init__()
+        assert d_model % n_heads == 0, (
+            f"d_model={d_model} must be divisible by n_heads={n_heads}"
+        )
+        assert n_heads % n_kv_heads == 0, (
+            f"n_heads={n_heads} must be divisible by n_kv_heads={n_kv_heads}"
+        )
+        if not 0.0 < gate_init < 1.0:
+            raise ValueError(f"gate_init must be in (0, 1), got {gate_init}")
+
+        self.d_model = d_model
+        self.n_heads = n_heads
+        self.n_kv_heads = n_kv_heads
+        self.head_dim = d_model // n_heads
+        self.n_rep = n_heads // n_kv_heads
+
+        # Q from live-token hidden states; K/V from memory slots.
+        self.q_proj = nn.Linear(d_model, n_heads * self.head_dim, bias=False)
+        self.k_proj = nn.Linear(d_model, n_kv_heads * self.head_dim, bias=False)
+        self.v_proj = nn.Linear(d_model, n_kv_heads * self.head_dim, bias=False)
+        # Output projection: small-RANDOM init (NOT zero) — see class docstring.
+        self.out_proj = nn.Linear(n_heads * self.head_dim, d_model, bias=False)
+
+        nn.init.normal_(self.q_proj.weight, std=0.02)
+        nn.init.normal_(self.k_proj.weight, std=0.02)
+        nn.init.normal_(self.v_proj.weight, std=0.02)
+        nn.init.normal_(self.out_proj.weight, std=out_proj_std)
+
+        # Per-head content-dependent gate: maps the query hidden state to one
+        # logit per head. weight small-random (per-token variation from step 0);
+        # bias = logit(gate_init) so sigmoid(bias) == gate_init at init.
+        self.gate_proj = nn.Linear(d_model, n_heads, bias=True)
+        nn.init.normal_(self.gate_proj.weight, std=0.02 / (d_model ** 0.5))
+        _gate_bias = math.log(gate_init / (1.0 - gate_init))
+        nn.init.constant_(self.gate_proj.bias, _gate_bias)
+
+        self.attn_dropout = nn.Dropout(dropout) if dropout > 0 else nn.Identity()
+
+        # Diagnostics (refreshed each read; layer reads these for logging).
+        self._last_gate_mean: float = gate_init
+        self._last_attn_entropy: float = 0.0
+
+    def _repeat_kv(self, x: torch.Tensor) -> torch.Tensor:
+        """Repeat K/V heads to match Q heads for GQA. x: [B, n_kv_heads, S, D]."""
+        if self.n_rep == 1:
+            return x
+        B, H, S, D = x.shape
+        return (
+            x[:, :, None, :, :]
+            .expand(B, H, self.n_rep, S, D)
+            .reshape(B, H * self.n_rep, S, D)
+        )
+
+    def read(
+        self,
+        hidden_states: torch.Tensor,
+        slot_keys: torch.Tensor,
+        slot_values: torch.Tensor,
+    ) -> torch.Tensor:
+        """Gated memory cross-attention read.
+
+        Args:
+            hidden_states: [B, T, d_model] live-token queries.
+            slot_keys:   [B, N, d_model] memory slot key source (projected slots).
+            slot_values: [B, N, d_model] memory slot value source.
+
+        Returns:
+            read_out: [B, T, d_model] gated memory contribution to add to the
+                residual stream. NOT zero at init (out_proj small-random + gate
+                init ~0.4), so gradient flows through memory from step 0.
+        """
+        B, T, _ = hidden_states.shape
+        N = slot_keys.shape[1]
+
+        Q = self.q_proj(hidden_states)  # [B, T, n_heads*D]
+        K = self.k_proj(slot_keys)      # [B, N, n_kv_heads*D]
+        V = self.v_proj(slot_values)    # [B, N, n_kv_heads*D]
+
+        Q = Q.view(B, T, self.n_heads, self.head_dim).transpose(1, 2)     # [B,H,T,D]
+        K = K.view(B, N, self.n_kv_heads, self.head_dim).transpose(1, 2)  # [B,Hkv,N,D]
+        V = V.view(B, N, self.n_kv_heads, self.head_dim).transpose(1, 2)  # [B,Hkv,N,D]
+
+        K = self._repeat_kv(K)  # [B,H,N,D]
+        V = self._repeat_kv(V)  # [B,H,N,D]
+
+        # Independent softmax over the N slots (its OWN softmax — this is the
+        # whole point of P8; slots no longer share the live-token softmax).
+        scale = self.head_dim ** -0.5
+        attn_logits = torch.matmul(Q, K.transpose(-2, -1)) * scale  # [B,H,T,N]
+        attn_weights = F.softmax(attn_logits, dim=-1, dtype=torch.float32).to(V.dtype)
+        attn_weights = self.attn_dropout(attn_weights)
+        attn_output = torch.matmul(attn_weights, V)  # [B,H,T,D]
+
+        # Per-head content-dependent gate, conditioned on the query token's
+        # hidden state. Computed in float32 for bf16 stability (same rationale
+        # as layer.py's inject_gate). [B, T, H] -> [B, H, T, 1].
+        gate_logit = F.linear(
+            hidden_states.float(),
+            self.gate_proj.weight.float(),
+            self.gate_proj.bias.float(),
+        )                                               # [B, T, H]
+        gate = torch.sigmoid(gate_logit).to(attn_output.dtype)
+        gate = gate.permute(0, 2, 1).unsqueeze(-1)      # [B, H, T, 1]
+        attn_output = attn_output * gate
+
+        # Merge heads and project back to d_model.
+        attn_output = attn_output.transpose(1, 2).contiguous().view(B, T, -1)
+        read_out = self.out_proj(attn_output)           # [B, T, d_model]
+
+        with torch.no_grad():
+            self._last_gate_mean = gate.float().mean().item()
+            _p = attn_weights.float().clamp(min=1e-8)
+            self._last_attn_entropy = (-(_p * _p.log()).sum(dim=-1)).mean().item()
+
+        return read_out

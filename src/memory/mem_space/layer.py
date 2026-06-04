@@ -458,6 +458,31 @@ class MemorySpaceLayer(nn.Module):
         else:
             self.decoupled_read = None
 
+        # P8 (2026-06-05): dedicated memory cross-attention READ with its OWN
+        # softmax and a per-head content-dependent gate that is ACTIVE at init.
+        # When config.use_memory_xattn=True the H->L1 prepend is masked off (same
+        # mask_h_to_l1 plumbing as P2) and the memory READ contribution is
+        # produced here instead of via KV-prepend. Unlike P2's decoupled_read
+        # (zero-init out_proj + tiny shared inject_gate ≈ dead at start), this
+        # module's out_proj is small-random and the per-head gate inits to
+        # ~memory_xattn_gate_init (0.4) so real gradient flows through memory
+        # from step 0. Writeback + routing are untouched. n_heads/n_kv_heads
+        # default to a sane single-/full-head config for toy tests that don't
+        # thread the model's GQA head counts.
+        if config.use_memory_xattn:
+            from .selector import MemoryCrossAttentionRead
+            _nh = n_heads if n_heads is not None else max(1, d_model // 128)
+            _nkv = n_kv_heads if n_kv_heads is not None else _nh
+            self.memory_xattn = MemoryCrossAttentionRead(
+                d_model=d_model,
+                n_heads=_nh,
+                n_kv_heads=_nkv,
+                gate_init=config.memory_xattn_gate_init,
+                dropout=0.0,
+            )
+        else:
+            self.memory_xattn = None
+
         # hidden_to_slot: freeze gate controlled by ``config.hidden_to_slot_frozen``.
         #
         # Historical note (pre-Fix-J, 2026-04-29): the comment here used to claim
@@ -1114,7 +1139,7 @@ class MemorySpaceLayer(nn.Module):
                 device=hidden_states.device,
                 batch_size=B,
                 swa_window=cfg.swa_window,
-                mask_h_to_l1=cfg.use_decoupled_read,
+                mask_h_to_l1=cfg.use_decoupled_read or cfg.use_memory_xattn,
             )
         else:
             ext_attn_mask = _build_extended_attn_mask(
@@ -1125,7 +1150,7 @@ class MemorySpaceLayer(nn.Module):
                 batch_size=B,
                 swa_window=cfg.swa_window,  # 0 = full causal (default, backward compat)
                 k_l3=k_l3,
-                mask_h_to_l1=cfg.use_decoupled_read,
+                mask_h_to_l1=cfg.use_decoupled_read or cfg.use_memory_xattn,
             )
 
         # H2 FIX REVERTED (2026-04-26 22:30): the earlier H2 fix
@@ -1262,6 +1287,26 @@ class MemorySpaceLayer(nn.Module):
             )                                                       # [B, T, d]
             decoupled_read_out = read_out
 
+        # P8 (2026-06-05): dedicated memory cross-attention READ contribution.
+        # When use_memory_xattn=True the H->L1 prepend is masked off above (so
+        # `slot_delta` carries only L3/L2, ≈0 when neither present). The memory
+        # READ-to-hidden signal is produced here by MemoryCrossAttentionRead:
+        # Q=hidden, K/V=ALL slots, with its OWN softmax (no live-token dilution).
+        # The blend gate is PER-HEAD + content-dependent and lives INSIDE the
+        # module (init ~memory_xattn_gate_init), so — unlike the P2 decoupled
+        # read — we do NOT multiply by the shared scalar inject_gate g here; the
+        # read output is already gated and active at init. out_proj small-random
+        # (not zero) → real gradient flows through memory from step 0.
+        memory_xattn_out = None
+        if cfg.use_memory_xattn and self.memory_xattn is not None and not cfg.disable_l1_inject:
+            if self.slot_dim != self.d_model:
+                xattn_slots = self.slot_to_hidden(slots)           # [B, N, d]
+            else:
+                xattn_slots = slots
+            memory_xattn_out = self.memory_xattn.read(
+                hidden_states, xattn_slots, xattn_slots,
+            )                                                       # [B, T, d]
+
         # FastMem (Gated Delta Rule, 2026-05-21): continuous fast-weight
         # contribution from ALL tokens.  Runs on post-attention bypass_h so it
         # can learn what attention missed (complementary to attention, not parallel).
@@ -1275,6 +1320,14 @@ class MemorySpaceLayer(nn.Module):
         next_hidden = bypass_h + g * slot_delta + fast_mem_out
         if decoupled_read_out is not None:
             next_hidden = next_hidden + g * decoupled_read_out
+        if memory_xattn_out is not None:
+            # P8: the read output is already per-head gated inside the module, so
+            # it is added directly (NOT multiplied by the shared inject_gate g).
+            # On cold start the slots are noisy uninitialised content; honour the
+            # same zero_alpha_on_cold_start guard so we don't pollute hidden.
+            if cold_start_this_call and cfg.zero_alpha_on_cold_start:
+                memory_xattn_out = torch.zeros_like(memory_xattn_out)
+            next_hidden = next_hidden + memory_xattn_out
 
         # 7. Writeback (if enabled). Branch-3 (2026-04-26): gradient-bearing
         # writeback — O_mem_slot stays attached to the autograd graph and β is
