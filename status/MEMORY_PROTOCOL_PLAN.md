@@ -38,7 +38,20 @@
 ## 改动清单(按优先级,逐个实现)
 
 ### [P1] summary reconstruction auxiliary loss ⭐最高优先
-**状态: RUNNING（代码 v12/v13 已实现 commit d55b98c；Dolmino 对照实验进行中）**
+**状态: DONE — 裁决：recon 不帮助，REJECTED，转 P2/read-path（2026-06-03 17:43 eval 完成）**
+
+**★ 裁决结果（2026-06-03 17:43 eval 完成，substring-acc qa1-5 × 0k-32k × 100，3500 样本/臂）★**
+- **OVERALL：norecon 8.74%（306/3500） vs recon 6.89%（241/3500） → recon 反而更差。**
+- by task：qa1 recon4.9/norecon3.7、qa4 recon11.4/norecon9.6（recon 略优）；qa2 norecon8.6/recon2.7、qa3 norecon5.7/recon4.0、qa5 norecon16.1/recon11.4（norecon 明显优）→ 净效应 norecon 胜。
+- by length：**两臂均在 ≥4k 崩到 ~1-2%**（0k 33/32 → 1k 19.6/7.8 → 2k 3.2/1.6 → 4k 1.6/1.2 → 8k 1.8/2.2 → 16k 1.0/1.4 → 32k 1.0/2.0），recon 在 1k 大幅落后。输出多为退化重复两臂皆然。
+- **结论**：recon aux 真数据上**无正向作用、整体更差**，且**两臂 read-path 在 ≥4k 完全不提供可用长上下文检索**（塌到 noise floor）。→ P1 **REJECTED**，按判据**转 P2 / 查 read-path**。
+- 产物：`babilong_results/p1_verdict/{p1_norecon_g0,g1,p1_recon_g2,g3}`；`logs/eval_p1_verdict_driver.log`。
+
+---
+**（历史）状态: 训练完成，BABILong 裁决 eval RUNNING（2026-06-03 13:40）**
+- **2026-06-03 13:40 两臂训练完成**：`dolmino_norecon_local_v2`（l_recon=0，849min，step2000 @13:29）+ `dolmino_recon_diskA`（l_recon=0.1，858min，step2000 @13:40），均 commit 6b6b134，全程 0 crash / 0 non-finite（grad-desync fix + 2h timeout holding）。final adapter 均落盘。末期 lm 两臂均噪声 ~2.6-2.8 无决定性分离，top1_sim 0.01-0.03，inject_gate_std ~0.007（gate 平）。→ 仅凭 train lm 判不了 P1，靠离线 BABILong。
+- **2026-06-03 13:40 启动裁决 eval**：本机 8×H20 空闲，`scripts/eval_p1_verdict.sh` 并行跑两臂 final adapter BABILong（qa1-5 × 0k-32k × 100），GPU0-3（每臂 2 卡分 task）。判据：recon 臂 acc 明显更高 → P1 真数据成立；无差异/更差 → 转 P2 / 查 read-path。
+- **2026-06-03 01:37 里程碑**：两臂均到 step~535，**首次越过 step~490-493 确定性死点**。step500 adapter save 两臂均成功落盘。grad-desync fix (6b6b134) 确认生效。
 - **toy 阶段结果（2026-06-02 toy_r4，已 deprioritized）**：反直觉——recon 臂 exact_acc=0 vs base 0.125（即 toy 上 recon **未**帮助、甚至更差）。但 toy 已被判 inconclusive（loop 功能正常但加速器/指标信号弱），团队 03:33 pivot 到真数据。
 - **Dolmino 对照（2026-06-02 13:00 heartbeat 启动）**：
   - 本机 H20: `dolmino_bugfix_slotq_t2h`（slot_query temp40, **l_recon_weight=0**, seed42, 2000步）= no-recon control。
@@ -52,8 +65,10 @@
 - **判据**:exact_acc > 0(哪怕 0.3)就证明 reconstruction 是关键拼图。若仍 0 → 转去查 read-path(slot_to_hidden / α 融合把 slot value 注入 LM 的通路本身)。
 - **文件**:selector/layer(取 write slot value)、新增小 decoder 模块、config 加 `l_recon_weight`、train + toy 脚本接 aux key。
 
-### [P2] read selector / write allocator 接口分离
-**状态: PENDING(依赖 P1 结论)**
+### [P2] read selector / write allocator 接口分离（含专用 cross-attn READ 解耦）
+**状态: IN PROGRESS — DOLMINO VALIDATING（2026-06-03 21:00）。代码已 commit `7d76d59`（v15 doc + config.py:280 + layer.py:437-1081 + toy + Dolmino path）。Toy 配对验证 INCONCLUSIVE：ON/OFF 均 retrieval_exact_acc=0、tok_acc=0.375，ON top1_sim 0.247 < OFF 0.350——toy 是短上下文，无法触发 ≥4k dilution cliff，故 toy gate 不适用（已确认 toy 是错误仪器）。改用真正判据：Dolmino 8-GPU arm + 离线 BABILong ≥4k。已启动 `dolmino_p2_decoupled_local`（commit `2326565`，本机 8×H20，= norecon control 配置 + `--use_decoupled_read`，2000步，eval_interval 0，seed42），step5 lm=4.79 healthy ~60GB/GPU。判据：训完离线 BABILong ≥4k 是否越过 P1 的 1-2% noise floor（对比 baseline outputs/dolmino_norecon_local_v2）。**
+- **researcher 根因（RESEARCHER_REPORTS 2026-06-03，confidence medium）**：(1) 注入稀释——slot prepend KV 与最多 1024 live token 共享一个 softmax → memory 仅 ~1.5% attn mass，再被 slot_delta clip(layer.py:999-1002) + inject_gate(0.12, std0.007 flat) 压到 ~0.2%；(2) routing collapse(top1_sim 0.01-0.03)次要。≥4k cliff 主要由稀释造成。
+- **P2 验证判据**：toy retrieval_exact_acc 是否 >0；离线 BABILong ≥4k 是否越过 ~1-2% noise floor。
 - **改什么**:`read_idx = ReadSelector(current chunk query, slot_keys)`(选旧 slot 读);`write_idx = WriteAllocator(post-chunk summary, slot_keys, usage/age)`(选 slot 写新信息,含 allocation 行为而非纯 retrieval)。先用简单版:write_idx 暂时也用 slot_score topk,但**接口先拆开**。
 - **为什么**:读(需要过去什么)和写(产生了什么值得存、放哪)是两个不同问题。新 fact 写入时相关 slot 尚不存在,纯 content-based read router 找不到 → 需要 allocation。
 - **判据**:write_unique_slots_per_chunk 上升、新 fact 有稳定落点。
@@ -89,6 +104,66 @@
 - 读回:overlap = |W∩R|/|W|(已有 chunk1to2_overlap 雏形)
 - specialization:intra_slot vs inter_slot summary similarity(intra 应 > inter)
 - anti-generic:cos(slot_i, global_mean_slot)
+- **routing 诊断(2026-06-04 新增,QUERY_DIAG + wandb)**:`topk_mass`(被选 k 个 slot 的 softmax 概率和,→1=路由真集中)、`usage_var`(各 slot 选中频率 population variance,退化到少数 slot 时变大)、`chunk_idx_jaccard`(跨 chunk 选同一批 slot 程度,>0.5=退化)。commit c421147。
+
+---
+
+## ★ 当前推进队列(2026-06-04 23:40，main 自主执行，无需用户审批) ★
+
+> 底座:per-doc chunk_size ablation (chunk128 vs chunk256) + route_aux(routing supervision) 验证。
+> 32 卡 4 节点可用(盘B 需 rsync + 缺 transformers 暂不可训)。本机+盘A远程优先。
+
+### [R3-1] chunk128 final adapter 双 eval — **状态: PARTIAL（2026-06-04 23:55，BABILong 0k-8k 完成，16k/32k + LongBench 跑中）**
+- BABILong substring-acc (qa1/qa2/qa5)：0k=34/19/45, 1k=10/13/31, 2k=11/6/29, 4k=4/0/34, 8k=14/14/32, 16k=21/6/(跑中)。
+- **★ 关键正向信号**：qa1/qa5 在 4-16k 维持 14-34%，**明显高于 P1/P2 的 1-2% noise floor** → per-doc chunk128 训练似乎缓解 ≥4k 塌缩。但 top1_sim 仍≈0.016（routing 未真寻址）→ 效果可能来自 per-doc 训练让 memory 内容更可用，而非 routing 改善（待 R3-2 routeaux 对照验证）。
+- **BABILong** qa1-5 × 0k-32k × 100：本机 GPU3-6，0k/1k/2k 完成（0k 34/19/45%，2k 衰减 11/6/29%），4k-32k 进行中。
+- **LongBench**（用户偏好，替代 BABILong）6 QA：hotpotqa/narrativeqa/qasper/multifieldqa_en/2wikimqa/musique，F1/EM，本机 GPU0/1/2/7 4-shard，base Llama-3-8B + no_chat_template + chunk128，本地 jsonl 无下载。输出 `longbench_results/perdoc_chunk128_local/`。
+- 判据：≥4k 是否越过 P1/P2 的 1-2% noise floor；LongBench F1 vs base 锚点。
+
+### [R3-2] route_aux 远程训练完成 → eval gate — **状态: TRAINING DONE, EVAL RUNNING（2026-06-05 00:14）**
+- `mem_space_perdoc_chunk128_routeaux_remote`（route_aux=1.0）训练 step2000 完成（227min, non-finite=1, lm~2.65）。
+- 离线 BABILong eval 已启动于 idle 远程 28.59.80.196（共享 FS，`scripts/eval_perdoc_chunk128_routeaux.sh`，commit 93c6509，7 GPU × 7 长度，结果 → `babilong_results/perdoc_chunk128_routeaux/`）。
+- 判据：对比 R3-1 无 route_aux 的 chunk128 adapter，看 ≥2k 是否爬升 + top1_sim/usage_var 是否改善。
+
+### [R3-3] base model 对照（用户明确要求"和 base 比一比"）— **状态: BABILong RUNNING（2026-06-05 00:37，本机 GPU 0/2/3/4/5），LongBench PENDING**
+- 已启动 base Llama-3-8B（plain_hf，无 adapter）BABILong eval：`scripts/eval_base_babilong_r33.sh`，tasks qa1/qa2/qa5，lengths 0k-8k（8k native ctx，16k/32k 溢出=正是我们 adapter 要超越的点），同 R3-1 prompt flags（instruction+examples+post_prompt on）。结果 → `babilong_results/base_model_full/`。
+- 待 base BABILong 完成 + GPU 空闲后补 LongBench base 对照（同 4-shard 口径）。
+- 在 R3-1 eval 跑完后，用**同一 eval 脚本 + 同一 chunk/截断口径**跑 **base Llama-3-8B（无 memory adapter）** 的 LongBench + BABILong，作为对照锚点。
+- 公平性：相同 prompt 截断策略；记录 base 在各长度的 F1/acc。研究员（general-purpose-22）会给标准对比 protocol，据此 finalize。
+- 写入 BENCHMARK_RESULTS.md 的 base-vs-ours 对照行。
+
+### [R3-4] benchmark 扩展 + 改进调研 — **状态: DONE（2026-06-04 23:55，general-purpose-22）**
+- 产物 `ops/research_notes/benchmark_survey_and_improvements_20260604.md`（全 arXiv ID + HF dataset + confidence）。
+- **Benchmark 推荐**：① SCBench(2412.10319, HF `microsoft/SCBench`) = 唯一为 KV-cache 压缩/复用设计，最贴论点 [high]；② RULER(2404.06654, HF `simonjegou/ruler`) = 长度可控 multi-value/multi-query NIAH，直测 slot 容量，比 BABILong 区分度高 [high]；③ HELMET(2410.02694) 写论文时加 [medium]。BABILong 降级为连续性锚点。
+- **Base 对比 protocol**：同一冻结 Llama-3-8B「去掉 adapter」= base，跑 B0(截断到等 KV-budget token) / B1(sliding-window) / B2(full-if-fits≤8k)，核心**匹配 KV budget**，出 quality-vs-KV-budget 曲线证 128-slot 点高于等预算截断曲线。锚点 paper 2406.10149 Llama-3-8B-It qa1 4k=16/8k=7（4k 后断崖=我们要超越的）。⚠️ 勿用 Llama-3.1-8B 当 base（128k 原生已自解）。
+- **改进 backlog → 落入下方 [P7]-[P13]**。
+
+---
+
+## 改进 backlog（researcher 2026-06-04，benchmark_survey_and_improvements_20260604.md BLOCK 3）
+
+> 诊断根因（toy_vs_full + collapse 报告）：(a) **注入稀释** slot KV 仅 ~0.2% attn mass → LM 梯度≈0；(b) **routing collapse** top1_sim→uniform，且现有 `load_balance`(weight=0.01) + `entropy` aux **主动把 routing 推向 uniform** 反而致塌。两路并治。
+> 推荐顺序：**P7 + P9 一起上**（都小、都打 collapse）→ retrieval 离开 noise floor 但仍弱 → 加 **P8**（读路径 mass）→ 再 P10/P11 调参。P12/P13 是破 cliff 后的研究 bet。
+
+### [P7] route-supervision aux + 中和 uniform-pushing aux ⭐ — **状态: IN PROGRESS（loss-free balancing 由 coder 实现中，2026-06-04 23:56）**
+- 借 Landmark(2305.16300) + Loss-Free Balancing for MoE(2408.15664)。confidence **high**，小改。
+- 两部分：(1) **route_aux**（scores→已知 write_idx 的 CE）已存在于 `train_mem_space_dolmino_cpt.py:559 _compute_route_aux`，远程 R3-2 正在测；(2) **关键缺口=loss-free balancing**：用在线更新的 per-slot routing-logit bias 替换会推向 uniform 的 `selector.load_balance_loss`（`selector.py:463`，weight `config.py:81`=0.01），平衡 slot 使用率但**不产生干扰任务的梯度**。
+- 判据：Dolmino arm + 离线 BABILong ≥4k 是否越过 1-2% noise floor，且 top1_sim/usage_var 改善。
+
+### [P8] 专用 memory cross-attention 读路径（独立 softmax）— **状态: PENDING, auto_launch: false（等 P7+P9 结果）**
+- 借 YOCO(2405.05254)/Memorizing Transformers(2203.08913)/Infini-attn(2404.07143)。confidence **high**，medium 改。
+- 给 slots 独立 cross-attn 层（独立 softmax），不再 prepend 进 live-token KV → 治 ~0.2% mass 稀释。per-head content-dependent gate + 较大 init。隔离在 `--use_memory_xattn`。**不修这个，P7 路由修好也无梯度可学。**
+
+### [P9] always-on register slots — **状态: PENDING, auto_launch: true（与 P7 同 arm 启动）**
+- 借 ViT Need Registers(2309.16588)。confidence **high**，**无需新代码**——`--num_global_slots` 已存在（config.py:76 + train arg:598）。吸收 attention-sink 让可寻址 slot 做真路由。直接在 P7 训练 arm 上加 `--num_global_slots 4`（或 8）。
+
+### [P10] key_repulsion 1.0→0.05 + ST-Gumbel top-k — **状态: PENDING, auto_launch: false** — confidence medium，tiny。当前 key_repulsion=1.0（20× toy）可能 over-smear keys。
+### [P11] delta-rule + normalized writeback — **状态: PENDING** — confidence medium，medium 改。写残差 + 归一化 readout magnitude 使其可与 local attn 比较再 gate。
+### [P12] 重审 recon + live-token masking/bottleneck — **状态: PENDING** — confidence low-medium。ICAE(2307.06945)/Gist(2304.08467) 证 recon 只在 LM 被迫只读 slots 时有效；P1 失败疑因无 bottleneck。
+### [P13] surprise-gated write（写强度∝预测误差）— **状态: PENDING** — confidence low。借 Titans(2501.00663)，P7/P8 解锁 retrieval 后再做。
+
+### [R3-5] 效果归因（若 eval 仍差，查根因，用户要求"看一看到底因为什么"）— **状态: PENDING**
+- 若 R3-1/R3-2 ≥4k 仍塌到 noise floor：用 routing 诊断三件套（topk_mass/usage_var/chunk_idx_jaccard）+ inject_gate 轨迹判断是 routing collapse 还是注入稀释主导，对照 researcher P2 根因（注入稀释 ~0.2% attn mass），决定走 P3(key/value 分离) 还是专用 memory cross-attn 读路径。
 
 ---
 
