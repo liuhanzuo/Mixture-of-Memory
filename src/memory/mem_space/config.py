@@ -79,6 +79,25 @@ class MemorySpaceConfig:
     slot_init_noise: float = 1.0
 
     load_balance_weight: float = 0.01
+    # P7 / loss-free balancing (2026-06-05): online per-slot routing-logit bias
+    # that equalises slot usage WITHOUT producing an interfering aux-loss
+    # gradient. Borrowed from "Auxiliary-Loss-Free Load Balancing for MoE"
+    # (DeepSeek, arXiv:2408.15664). Unlike the Switch-Transformer
+    # `load_balance_weight` aux (which pushes routing toward uniform and can
+    # *worsen* the slot-collapse failure mode by injecting a task-interfering
+    # gradient), this maintains a per-slot bias that is added ONLY to the
+    # selection logits (top-k index choice). The returned `scores`/`ste_weights`
+    # — i.e. the gradient path — stay based on the *unbiased* logits, so the
+    # bias never perturbs the LM/task gradient. The bias is updated online in a
+    # no_grad block from the observed per-slot load (under-used → bias raised).
+    #   use_loss_free_balance: master switch (default False = back-compat; when
+    #     False the selector is byte-identical to the pre-P7 behaviour).
+    #   loss_free_update_rate: sign-update step size for the bias each batch.
+    # NOTE: when use_loss_free_balance=True you should set load_balance_weight=0
+    # to neutralise the uniform-pushing Switch aux — the two mechanisms target
+    # the same goal and should NOT both be non-zero simultaneously.
+    use_loss_free_balance: bool = False
+    loss_free_update_rate: float = 0.001
     entropy_aux_weight: float = 0.0
     selector_temperature: float = 1.0
     key_repulsion_weight: float = 0.01

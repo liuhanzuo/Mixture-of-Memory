@@ -544,6 +544,15 @@ def parse_args() -> argparse.Namespace:
                    help="0 = β fully ramped at step 0 (we are CONTINUING from a "
                         "trained adapter, not warming up from scratch).")
     p.add_argument("--load_balance_weight", type=float, default=0.01)
+    # P7 loss-free balancing (2026-06-05; arXiv:2408.15664): online per-slot
+    # routing bias that balances slot usage WITHOUT an interfering aux gradient.
+    # Pair with --load_balance_weight 0.0 (the two mechanisms should not both
+    # be non-zero). Default off → fully backward-compatible.
+    p.add_argument("--use_loss_free_balance", action="store_true",
+                   help="enable loss-free per-slot routing bias (P7); set "
+                        "--load_balance_weight 0.0 alongside this.")
+    p.add_argument("--loss_free_update_rate", type=float, default=0.001,
+                   help="sign-update step size for the loss-free routing bias.")
     p.add_argument("--entropy_aux_weight", type=float, default=0.001)
     p.add_argument("--selector_temperature", type=float, default=1.0)
     p.add_argument("--key_repulsion_weight", type=float, default=0.01)
@@ -739,6 +748,8 @@ def build_model(args, device, dtype) -> torch.nn.Module:
         writeback_gate_warmup_steps=args.writeback_warmup_steps,
         writeback_gate_max=args.writeback_gate_max,
         load_balance_weight=args.load_balance_weight,
+        use_loss_free_balance=args.use_loss_free_balance,
+        loss_free_update_rate=args.loss_free_update_rate,
         entropy_aux_weight=args.entropy_aux_weight,
         selector_temperature=args.selector_temperature,
         key_repulsion_weight=args.key_repulsion_weight,
@@ -1341,6 +1352,8 @@ def _save_adapter(model, args, step: int, final: bool = False) -> None:
             "writeback_gate_max":      args.writeback_gate_max,
             "writeback_warmup_steps":  args.writeback_warmup_steps,
             "load_balance_weight":     args.load_balance_weight,
+            "use_loss_free_balance":   args.use_loss_free_balance,
+            "loss_free_update_rate":   args.loss_free_update_rate,
             "entropy_aux_weight":      args.entropy_aux_weight,
             "selector_temperature":    args.selector_temperature,
             "key_repulsion_weight":    args.key_repulsion_weight,

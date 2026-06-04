@@ -378,6 +378,16 @@ class MemorySpaceLayer(nn.Module):
         self.selector._q_multi_diversity_threshold = getattr(
             config, "l3_diversity_threshold", 0.5
         )
+        # P7 loss-free balancing (2026-06-05; arXiv:2408.15664): wire config →
+        # selector. When enabled, an online per-slot bias steers top-k selection
+        # toward balanced slot usage WITHOUT an interfering aux gradient. Should
+        # be paired with load_balance_weight=0.
+        self.selector.use_loss_free_balance = getattr(
+            config, "use_loss_free_balance", False
+        )
+        self.selector.loss_free_update_rate = getattr(
+            config, "loss_free_update_rate", 0.001
+        )
 
         # Learnable slot↔hidden projections. We do NOT take the slot_dim==d_model
         # shortcut (Identity) because that path has zero trainable capacity and was

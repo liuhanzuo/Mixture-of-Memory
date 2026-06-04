@@ -87,6 +87,16 @@ class TopKSelector(nn.Module):
         self.num_slots = num_slots
         self.temperature = temperature  # Fix O (2026-04-29): configurable; was hardcoded 10.0
 
+        # P7 loss-free balancing (2026-06-05; arXiv:2408.15664). Per-slot bias
+        # added ONLY to the selection logits (which slots win top-k), never to
+        # the returned scores/ste_weights → the gradient path is bias-free. The
+        # bias is a buffer (no gradient), updated online in forward() under
+        # no_grad. Disabled by default (rate ignored when disabled) so the
+        # selector is byte-identical to pre-P7 when the layer leaves these off.
+        self.use_loss_free_balance = False
+        self.loss_free_update_rate = 0.001
+        self.register_buffer("routing_bias", torch.zeros(num_slots))
+
         self.Q_sel = nn.Linear(d_model, selector_dim, bias=False)
         self.K_sel = nn.Linear(slot_dim, selector_dim, bias=False)
 
@@ -365,9 +375,37 @@ class TopKSelector(nn.Module):
 
         scores = F.softmax(logits, dim=-1)                        # [B, N]
 
+        # P7 loss-free balancing (2026-06-05; arXiv:2408.15664). The selection
+        # (which slots win top-k) uses a *biased* score so under-used slots get
+        # promoted, but the returned `scores`/`ste_weights` — i.e. the entire
+        # gradient path — stay based on the UNBIASED `logits` above. So the
+        # bias only steers "which slots", never the task/LM gradient. When
+        # disabled (default) sel_scores IS scores → behaviour is byte-identical
+        # to pre-P7, and routing_bias stays at its init (all zeros).
+        if self.use_loss_free_balance:
+            sel_scores = F.softmax(logits + self.routing_bias, dim=-1)  # [B, N]
+        else:
+            sel_scores = scores
+
         # Hard top-k indices (no gradient through this op).
-        _, idx = torch.topk(scores, k=self.top_k, dim=-1, largest=True, sorted=False)
+        _, idx = torch.topk(sel_scores, k=self.top_k, dim=-1, largest=True, sorted=False)
         idx = idx.detach()                               # [B, top_k]
+
+        # P7: online per-slot bias update (no grad; train mode only). Raise the
+        # bias of under-used slots so they win selection next batch; lower
+        # over-used ones. Sign update (DeepSeek 2408.15664) is robust to the
+        # load scale. target_load = top_k / N (each slot's fair share).
+        if self.use_loss_free_balance and self.training:
+            with torch.no_grad():
+                B_b, N_b = scores.shape
+                sel_one_hot = torch.zeros_like(scores).scatter_(
+                    dim=-1, index=idx, value=1.0
+                )                                        # [B, N]
+                load = sel_one_hot.mean(dim=0)           # [N], in [0, 1]
+                target_load = float(self.top_k) / float(N_b)
+                err = target_load - load                 # under-used → positive
+                self.routing_bias += self.loss_free_update_rate * torch.sign(err)
+
 
         # Build the one-hot mask: [B, N].  Used both for the STE weights
         # (forward value) and for the load-balance aux loss.
