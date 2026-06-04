@@ -601,6 +601,17 @@ class MemorySpaceLayer(nn.Module):
         self._slot_usage_hist: Optional[torch.Tensor] = None
         self._slot_usage_chunks: int = 0
 
+        # Cross-chunk Jaccard accumulator (2026-06-04): tracks how much the
+        # routed slot SET changes from one chunk to the next. Distinguishes
+        # "every chunk picks a different 16 slots" (true content addressing,
+        # Jaccard->0) from "every chunk picks the SAME 16 slots" (degenerate
+        # shortcut, Jaccard->1). route_aux (uniform top-k supervision) cannot
+        # tell these apart, so this is the key signal for whether routing
+        # actually learned content-specific addressing.
+        self._prev_chunk_idx_set: Optional[torch.Tensor] = None
+        self._jaccard_sum: float = 0.0
+        self._jaccard_count: int = 0
+
         # Latest layer-0 diagnostic scalars, refreshed inside the QUERY_DIAG
         # block (every 50 fwd). The training loop reads these at log_interval
         # to push to wandb. Default 0.0 until the first diag emission.
@@ -819,6 +830,21 @@ class MemorySpaceLayer(nn.Module):
                     )
                     self._slot_usage_chunks += 1
 
+                    # ---- Cross-chunk Jaccard of the routed slot SET ----
+                    # Jaccard(prev_set, curr_set) = |∩| / |∪| over the unique
+                    # slot indices picked for batch[0]. Accumulate the mean
+                    # across chunks; reset together with usage at emission.
+                    # First chunk (no prev) just stores the set.
+                    _cur_set = idx[0].long().unique()  # dedup (globals may dup)
+                    if self._prev_chunk_idx_set is not None:
+                        _prev = self._prev_chunk_idx_set.to(_cur_set.device)
+                        _inter = torch.isin(_cur_set, _prev).sum().item()
+                        _union = _cur_set.numel() + _prev.numel() - _inter
+                        if _union > 0:
+                            self._jaccard_sum += _inter / _union
+                            self._jaccard_count += 1
+                    self._prev_chunk_idx_set = _cur_set
+
             # ---- QUERY_DIAG (diagnostic log, no-op on computation) ----
             # Emit every 200 forward calls, rank-0 / layer-0 only.
             _should_log_diag = (
@@ -836,6 +862,11 @@ class MemorySpaceLayer(nn.Module):
                     # top-1 similarity scores (highest score per batch item)
                     _top1_sim = scores.max(dim=-1).values          # [B]
                     _top1_sim_mean = _top1_sim.float().mean().item()
+                    # topk_mass (2026-06-04): total softmax mass captured by the
+                    # k (or k+g) selected slots. ->1.0 = mass concentrated on the
+                    # chosen set (hard routing is real); ->k/N (=16/128=0.125) =
+                    # mass smeared over all slots, top-k selection is meaningless.
+                    _topk_mass = scores.gather(1, idx).sum(dim=-1).float().mean().item()
                     # norm of the currently-selected slots (before projection)
                     _idx_exp_diag = idx.unsqueeze(-1).expand(-1, -1, self.slot_dim)
                     _M_sel_diag = slots.gather(1, _idx_exp_diag)   # [B, k, slot_dim]
@@ -893,6 +924,14 @@ class MemorySpaceLayer(nn.Module):
                     if self._slot_usage_hist is not None:
                         self._slot_usage_hist.zero_()
                         self._slot_usage_chunks = 0
+                    # cross-chunk Jaccard: mean over the accumulated window.
+                    # ->0 = each chunk routes to a different slot set (ideal
+                    # content addressing); ->1 = every chunk picks the same set
+                    # (degenerate). Reset window like usage; keep _prev set so
+                    # the chain stays continuous across emissions.
+                    _chunk_idx_jaccard = self._jaccard_sum / max(1, self._jaccard_count)
+                    self._jaccard_sum = 0.0
+                    self._jaccard_count = 0
                     # Stash scalars so the training loop can push them to wandb
                     # at log_interval (these are layer-0 only; the diag block
                     # only runs every 50 fwd, so the loop reads the latest).
@@ -902,6 +941,7 @@ class MemorySpaceLayer(nn.Module):
                 print(
                     f"[QUERY_DIAG step={self.step_counter} fwd={self._fwd_count}]"
                     f" top1_sim_mean={_top1_sim_mean:.6f}"
+                    f" topk_mass={_topk_mass:.6f}"
                     f" retrieved_norm_mean={_retrieved_norm:.6f}"
                     f" per_tok_logit_std={_pt_std:.6f}"
                     f" key_max_cos={_key_max_cos:.4f}"
@@ -912,6 +952,7 @@ class MemorySpaceLayer(nn.Module):
                     f" usage_cov={_usage_cov:.4f}"
                     f" usage_ent={_usage_ent:.4f}"
                     f" usage_chunks={_usage_chunks}"
+                    f" chunk_idx_jaccard={_chunk_idx_jaccard:.4f}"
                     f" slot_attn_entropy={_slot_attn_entropy:.4f}",
                     flush=True,
                 )
