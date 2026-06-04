@@ -35,6 +35,13 @@ Two modes
   cross-chunk dependency, which is what the memory bank needs in order to learn
   content addressing instead of collapsing to uniform.
 
+* ``per_doc=True`` (recommended): each Arrow row is ONE COMPLETE document
+  (produced by ``scripts/reprocess_dolmino_per_doc.py`` which re-slices the
+  packed stream on EOS boundaries). Each document is cut into consecutive
+  non-overlapping windows of ``(n_ctx+1)`` chunks (n_ctx context + 1 target,
+  all from the same document). This gives exact document boundaries (cleaner
+  than ``contiguous``, which only approximates them via EOS look-back).
+
 DDP sharding
 ------------
 * ``contiguous=False``: each consumer strides the shuffled index array.
@@ -360,5 +367,78 @@ class DolminoCurriculumDataset(torch.utils.data.IterableDataset):
                 yield sample
 
             # Advance epoch for next loop iteration (re-jitter for novel groups)
+            epoch += 1
+            self._epoch = epoch
+
+    def _iter_per_doc(self) -> Iterator[Dict[str, object]]:
+        """Per-document mode: each Arrow row is one complete (variable-length) doc.
+
+        Documents are sharded across (world_size * num_workers) consumers by
+        striding a per-epoch shuffled document-index permutation. Each consumer
+        slices its documents into consecutive non-overlapping windows of
+        ``(n_ctx+1)*chunk_size`` tokens: the first ``n_ctx`` chunks are context,
+        the next chunk is the target — all from the SAME document and adjacent,
+        so context and target have genuine intra-document cross-chunk dependency.
+
+        A document shorter than ``(n_ctx+1)*chunk_size`` (for the current n_ctx)
+        is skipped. Longer documents emit multiple disjoint groups (stride =
+        ``(n_ctx+1)*chunk_size``), fully using long documents. Document ORDER is
+        reshuffled every epoch; token order WITHIN a document is never shuffled.
+        """
+        worker_info = torch.utils.data.get_worker_info()
+        if worker_info is not None:
+            worker_id = worker_info.id
+            num_workers = worker_info.num_workers
+        else:
+            worker_id = 0
+            num_workers = 1
+
+        total_consumers = self.world_size * num_workers
+        consumer_id = self.rank * num_workers + worker_id
+
+        epoch = self._epoch
+        while True:  # infinite iteration across epochs
+            rng = random.Random(self.seed + epoch * 10007)
+
+            # Shuffle DOCUMENT order (same permutation across all consumers for a
+            # given epoch); each consumer then strides to get its disjoint shard.
+            doc_indices = list(range(self._num_samples))
+            rng.shuffle(doc_indices)
+            my_docs = doc_indices[consumer_id::total_consumers]
+
+            for doc_idx in my_docs:
+                tokens = self._ds[int(doc_idx)]["input_ids"]
+                doc_len = len(tokens)
+
+                # Slice this document into consecutive non-overlapping groups.
+                pos = 0
+                while True:
+                    n_ctx = self._n_context  # may change mid-epoch (curriculum)
+                    group_size = n_ctx + 1
+                    group_len = group_size * self.chunk_size
+
+                    if pos + group_len > doc_len:
+                        break  # not enough tokens left in this doc for a group
+
+                    context_chunks: List[torch.Tensor] = []
+                    target_ids: Optional[torch.Tensor] = None
+                    for k in range(group_size):
+                        chunk_start = pos + k * self.chunk_size
+                        toks = tokens[chunk_start: chunk_start + self.chunk_size]
+                        t = torch.tensor(toks, dtype=torch.long)
+                        if k < n_ctx:
+                            context_chunks.append(t)
+                        else:
+                            target_ids = t
+
+                    pos += group_len
+
+                    yield {
+                        "context_chunks": context_chunks,
+                        "target_ids": target_ids,
+                        "is_dolmino": True,
+                    }
+
+            # Advance epoch for next loop iteration (reshuffle document order)
             epoch += 1
             self._epoch = epoch

@@ -637,6 +637,20 @@ def parse_args() -> argparse.Namespace:
                         "token is EOS). The training loop resets the memory bank "
                         "BEFORE forwarding such a chunk so the BPTT graph never "
                         "spans a document boundary.")
+    p.add_argument("--per_doc_data", action="store_true", default=False,
+                   help="Use the per-document Dolmino dataset (each Arrow row is "
+                        "one complete document, produced by "
+                        "scripts/reprocess_dolmino_per_doc.py) and slice each "
+                        "document into intra-document (n_ctx context + 1 target) "
+                        "chunk groups. context and target are then consecutive "
+                        "chunks of the SAME document => genuine cross-chunk "
+                        "dependency. When set, point --dolmino_path at "
+                        "MemLong/data/processed/dolmino_per_doc/train. Takes "
+                        "precedence over --contiguous_chunks.")
+    p.add_argument("--min_doc_len", type=int, default=512,
+                   help="Minimum document length used when the per-document "
+                        "dataset was built (recorded for provenance; the actual "
+                        "filtering happens in reprocess_dolmino_per_doc.py).")
 
     # Curriculum
     p.add_argument("--curriculum", type=str,
@@ -1511,6 +1525,7 @@ def main() -> None:
         seed=args.seed,
         contiguous=args.contiguous_chunks,
         doc_reset=args.doc_reset,
+        per_doc=args.per_doc_data,
     )
     dolmino_loader = DataLoader(
         dolmino_ds, batch_size=None,  # dataset yields single samples
