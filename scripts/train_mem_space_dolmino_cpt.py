@@ -717,6 +717,11 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--writeback_warmup_steps", type=int, default=0)
     p.add_argument("--load_balance_weight", type=float, default=0.01)
     p.add_argument("--entropy_aux_weight", type=float, default=0.001)
+    # P7 loss-free balancing (arXiv 2408.15664): online per-slot routing-logit bias
+    # that balances slot usage WITHOUT injecting a uniform-pushing gradient. When
+    # enabled, set --load_balance_weight 0.0 (the two must not both be nonzero).
+    p.add_argument("--use_loss_free_balance", action="store_true")
+    p.add_argument("--loss_free_update_rate", type=float, default=0.001)
     p.add_argument("--selector_temperature", type=float, default=20.0)
     p.add_argument("--key_repulsion_weight", type=float, default=0.05)
     p.add_argument("--key_repulsion_threshold", type=float, default=0.3)
@@ -890,6 +895,8 @@ def build_model(args, device, dtype) -> torch.nn.Module:
         writeback_gate_max=args.writeback_gate_max,
         load_balance_weight=args.load_balance_weight,
         entropy_aux_weight=args.entropy_aux_weight,
+        use_loss_free_balance=args.use_loss_free_balance,
+        loss_free_update_rate=args.loss_free_update_rate,
         selector_temperature=args.selector_temperature,
         key_repulsion_weight=args.key_repulsion_weight,
         key_repulsion_threshold=args.key_repulsion_threshold,
@@ -1400,6 +1407,8 @@ def _save_adapter(model, args, step: int, final: bool = False) -> None:
             "writeback_warmup_steps": args.writeback_warmup_steps,
             "load_balance_weight": args.load_balance_weight,
             "entropy_aux_weight": args.entropy_aux_weight,
+            "use_loss_free_balance": args.use_loss_free_balance,
+            "loss_free_update_rate": args.loss_free_update_rate,
             "selector_temperature": args.selector_temperature,
             "key_repulsion_weight": args.key_repulsion_weight,
             "key_repulsion_threshold": args.key_repulsion_threshold,
