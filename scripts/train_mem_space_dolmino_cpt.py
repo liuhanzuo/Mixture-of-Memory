@@ -506,6 +506,28 @@ def _collect_top1_sim(model: torch.nn.Module) -> float:
     return vals[0] if vals else 0.0
 
 
+def _collect_mem_diag(model: torch.nn.Module) -> Dict[str, float]:
+    """Layer-0 memory routing diagnostics for wandb (mirrors QUERY_DIAG).
+
+    Returns key_max_cos (slot-key separability; ->1 = collapsed), usage_cov
+    (#slots used / N across the diag window), usage_ent (normalized usage
+    entropy in [0,1]; 1 = uniform load), and slot_attn_entropy (slot_query
+    mode; high = slots smear attention over tokens). Empty dict if no layers.
+    """
+    root = getattr(model, "module", model)
+    mem_layers = getattr(root, "_mem_space_layers", None)
+    if not mem_layers:
+        return {}
+    L0 = mem_layers[0]
+    sel0 = getattr(L0, "selector", None)
+    return {
+        "memory/key_max_cos": getattr(L0, "_last_key_max_cos", 0.0),
+        "memory/usage_cov": getattr(L0, "_last_usage_cov", 0.0),
+        "memory/usage_ent": getattr(L0, "_last_usage_ent", 0.0),
+        "memory/slot_attn_entropy": getattr(sel0, "_last_slot_attn_entropy", 0.0),
+    }
+
+
 def _install_score_hook(mem_layers):
     """Install a forward hook on the layer-0 selector to capture the
     grad-bearing softmax routing scores [B, N] from the next model forward.
@@ -1691,7 +1713,7 @@ def main() -> None:
                 steps_per_sec,
             )
             if _WANDB_AVAILABLE and args.wandb_project and wandb.run:
-                wandb.log({
+                _log_dict = {
                     "train/lm_loss": avg_lm,
                     "train/aux_loss": avg_aux,
                     "train/route_aux": avg_route_aux,
@@ -1702,7 +1724,9 @@ def main() -> None:
                     "train/dolmino_count": n_dolmino,
                     "train/babilong_count": n_babilong,
                     "memory/top1_sim": _collect_top1_sim(model),
-                }, step=global_step)
+                }
+                _log_dict.update(_collect_mem_diag(model))
+                wandb.log(_log_dict, step=global_step)
 
         # Save checkpoint.
         # FSDP state_dict gather is a collective: ALL ranks must enter

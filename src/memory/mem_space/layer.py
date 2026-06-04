@@ -601,6 +601,13 @@ class MemorySpaceLayer(nn.Module):
         self._slot_usage_hist: Optional[torch.Tensor] = None
         self._slot_usage_chunks: int = 0
 
+        # Latest layer-0 diagnostic scalars, refreshed inside the QUERY_DIAG
+        # block (every 50 fwd). The training loop reads these at log_interval
+        # to push to wandb. Default 0.0 until the first diag emission.
+        self._last_key_max_cos: float = 0.0
+        self._last_usage_cov: float = 0.0
+        self._last_usage_ent: float = 0.0
+
     # --------------------------------------------------------------------- #
     # Gate
     # --------------------------------------------------------------------- #
@@ -886,6 +893,12 @@ class MemorySpaceLayer(nn.Module):
                     if self._slot_usage_hist is not None:
                         self._slot_usage_hist.zero_()
                         self._slot_usage_chunks = 0
+                    # Stash scalars so the training loop can push them to wandb
+                    # at log_interval (these are layer-0 only; the diag block
+                    # only runs every 50 fwd, so the loop reads the latest).
+                    self._last_key_max_cos = _key_max_cos
+                    self._last_usage_cov = _usage_cov
+                    self._last_usage_ent = _usage_ent
                 print(
                     f"[QUERY_DIAG step={self.step_counter} fwd={self._fwd_count}]"
                     f" top1_sim_mean={_top1_sim_mean:.6f}"
