@@ -524,6 +524,7 @@ def _collect_mem_diag(model: torch.nn.Module) -> Dict[str, float]:
         "memory/key_max_cos": getattr(L0, "_last_key_max_cos", 0.0),
         "memory/usage_cov": getattr(L0, "_last_usage_cov", 0.0),
         "memory/usage_ent": getattr(L0, "_last_usage_ent", 0.0),
+        "memory/usage_var": getattr(L0, "_last_usage_var", 0.0),
         "memory/slot_attn_entropy": getattr(sel0, "_last_slot_attn_entropy", 0.0),
     }
 

@@ -908,6 +908,7 @@ class MemorySpaceLayer(nn.Module):
                     # key_max_cos (key-space separability).
                     _usage_cov = 0.0
                     _usage_ent = 0.0
+                    _usage_var = 0.0
                     _usage_chunks = self._slot_usage_chunks
                     if self._slot_usage_hist is not None and _usage_chunks > 0:
                         _h = self._slot_usage_hist.float()
@@ -920,6 +921,12 @@ class MemorySpaceLayer(nn.Module):
                             _ent = -(_nz * _nz.log()).sum()
                             import math as _math
                             _usage_ent = (_ent / _math.log(_N_slots)).item() if _N_slots > 1 else 0.0
+                            # usage_var (2026-06-04): population variance of the
+                            # per-slot selection-probability distribution over the
+                            # diag window. Uniform load (p_i=1/N) -> 0; routing
+                            # collapsed onto a few slots -> large. Complements
+                            # usage_ent (entropy) with a direct dispersion measure.
+                            _usage_var = _p.var(unbiased=False).item()
                     # reset window so each emission reflects fresh chunks
                     if self._slot_usage_hist is not None:
                         self._slot_usage_hist.zero_()
@@ -938,6 +945,7 @@ class MemorySpaceLayer(nn.Module):
                     self._last_key_max_cos = _key_max_cos
                     self._last_usage_cov = _usage_cov
                     self._last_usage_ent = _usage_ent
+                    self._last_usage_var = _usage_var
                 print(
                     f"[QUERY_DIAG step={self.step_counter} fwd={self._fwd_count}]"
                     f" top1_sim_mean={_top1_sim_mean:.6f}"
@@ -951,6 +959,7 @@ class MemorySpaceLayer(nn.Module):
                     f" uniq_sel_slots={_uniq_sel}"
                     f" usage_cov={_usage_cov:.4f}"
                     f" usage_ent={_usage_ent:.4f}"
+                    f" usage_var={_usage_var:.6f}"
                     f" usage_chunks={_usage_chunks}"
                     f" chunk_idx_jaccard={_chunk_idx_jaccard:.4f}"
                     f" slot_attn_entropy={_slot_attn_entropy:.4f}",
