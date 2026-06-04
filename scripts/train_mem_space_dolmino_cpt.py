@@ -621,6 +621,22 @@ def parse_args() -> argparse.Namespace:
                    help="Path to pre-tokenised Dolmino Arrow dataset.")
     p.add_argument("--chunk_size", type=int, default=1024,
                    help="Token count per chunk (must match Dolmino preprocessing).")
+    p.add_argument("--contiguous_chunks", action="store_true", default=False,
+                   help="Treat the Dolmino Arrow rows as one continuous "
+                        "STREAM-ORDERED token stream and re-slice it at "
+                        "--chunk_size granularity (e.g. 256), so consecutive "
+                        "context chunks + target fall inside the same document "
+                        "= genuine intra-document cross-chunk dependency. "
+                        "Default False = legacy random-row shuffle (context and "
+                        "target are unrelated docs -> memory routing collapses "
+                        "to uniform).")
+    p.add_argument("--doc_reset", action="store_true", default=False,
+                   help="Only meaningful with --contiguous_chunks. Attach a "
+                        "per-chunk reset_flags list to each sample (True where a "
+                        "chunk begins a new document, i.e. the preceding stream "
+                        "token is EOS). The training loop resets the memory bank "
+                        "BEFORE forwarding such a chunk so the BPTT graph never "
+                        "spans a document boundary.")
 
     # Curriculum
     p.add_argument("--curriculum", type=str,
@@ -998,6 +1014,7 @@ def dolmino_train_step_tbptt(
     grad_accum: int = 1,
     bptt_window: int = 2,
     route_aux_weight: float = 0.0,
+    reset_flags: Optional[List[bool]] = None,
 ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     """Windowed-BPTT Dolmino CPT step: every chunk gets gradient, and gradients
     flow ACROSS chunk boundaries within a window of ``bptt_window`` chunks.
@@ -1059,6 +1076,21 @@ def dolmino_train_step_tbptt(
     prev_idx1 = None  # type: Optional[torch.Tensor]
 
     for i, (chunk_ids, _is_target) in enumerate(all_inputs):
+        # doc_reset (contiguous mode): if this chunk begins a NEW document
+        # (reset_flags[i] True; i==0 is the group start whose bank is already
+        # fresh from _reset_banks above), flush the pending window so the BPTT
+        # graph never spans the document boundary, then reset the memory bank
+        # BEFORE forwarding this chunk. Cross-document credit assignment is
+        # meaningless, so we sever it here. No-op when reset_flags is None
+        # (doc_reset disabled) -> zero behaviour change.
+        if reset_flags is not None and i > 0 and i < len(reset_flags) and reset_flags[i]:
+            if window_loss is not None:
+                window_loss.backward()
+                window_loss = None
+                _detach_banks(model)
+            _reset_banks(model)
+            prev_idx1 = None  # previous doc's writes are gone; don't supervise across
+
         chunk_input = chunk_ids.unsqueeze(0).to(device)
 
         # route_aux: capture this chunk's grad-bearing routing scores via a
@@ -1477,6 +1509,8 @@ def main() -> None:
         rank=rank,
         world_size=world_size,
         seed=args.seed,
+        contiguous=args.contiguous_chunks,
+        doc_reset=args.doc_reset,
     )
     dolmino_loader = DataLoader(
         dolmino_ds, batch_size=None,  # dataset yields single samples
@@ -1638,11 +1672,13 @@ def main() -> None:
 
                     context_chunks = sample["context_chunks"]
                     target_ids = sample["target_ids"]
+                    reset_flags = sample.get("reset_flags", None)
 
                     lm_loss, aux_loss, route_aux = dolmino_train_step_tbptt(
                         model, context_chunks, target_ids, device,
                         grad_accum=grad_accum,
                         route_aux_weight=args.route_aux_weight,
+                        reset_flags=reset_flags,
                     )
                     n_dolmino += 1
 
