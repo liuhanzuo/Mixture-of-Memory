@@ -148,19 +148,18 @@
 > 诊断根因（toy_vs_full + collapse 报告）：(a) **注入稀释** slot KV 仅 ~0.2% attn mass → LM 梯度≈0；(b) **routing collapse** top1_sim→uniform，且现有 `load_balance`(weight=0.01) + `entropy` aux **主动把 routing 推向 uniform** 反而致塌。两路并治。
 > 推荐顺序：**P7 + P9 一起上**（都小、都打 collapse）→ retrieval 离开 noise floor 但仍弱 → 加 **P8**（读路径 mass）→ 再 P10/P11 调参。P12/P13 是破 cliff 后的研究 bet。
 
-### [P7] route-supervision aux + 中和 uniform-pushing aux ⭐ — **状态: CODE DONE + WIRED, READY TO LAUNCH（2026-06-05 00:50）**
+### [P7] route-supervision aux + 中和 uniform-pushing aux ⭐ — **状态: TRAINING RUNNING（2026-06-05 01:37，本机 8-GPU，step 10/2000 lm=2.93 nf=0）**
 - 借 Landmark(2305.16300) + Loss-Free Balancing for MoE(2408.15664)。confidence **high**，小改。
-- ✅ 实现完成：selector.py routing_bias buffer + 在线更新（commit 1b46939）；✅ 已 wire 进 `train_mem_space_dolmino_cpt.py`（`--use_loss_free_balance`/`--loss_free_update_rate`，commit fb91c51，已验证 argparse+config+AST 全 OK）。
-- ✅ 启动脚本就绪：`scripts/launch_mem_space_p7p9.sh`（基于最佳 routeaux arm，load_balance_weight=0+entropy=0+loss_free_balance ON+num_global_slots=4+route_aux=1.0，8-GPU DDP，bash -n OK）。
-- ⏳ 等整节点空闲即启（当前两节点都有 eval 尾巴占 2 GPU）。
-- 判据：Dolmino arm + 离线 BABILong ≥4k 是否越过 noise floor 且 top1_sim/usage_var 改善 vs routeaux。
+- ✅ 实现完成：selector.py routing_bias buffer + 在线更新（commit 1b46939）；✅ 已 wire 进 `train_mem_space_dolmino_cpt.py`（commit fb91c51）。✅ 启动脚本 `scripts/launch_mem_space_p7p9.sh`。
+- ✅ **已启动**（run `mem_space_perdoc_chunk128_p7p9`，本机 8-GPU，load_balance=0+entropy=0+LFB on+num_global_slots=4+route_aux=1.0）。早期诊断健康：**usage_cov 0.94-0.98 + usage_var~0.0001（loss-free balancing 平衡有效）**，top1_sim 0.23-0.41（远高于无 route_aux 塌缩值 0.017），slot_attn_entropy~2.1。
+- 判据：训完离线 BABILong ≥4k 是否越过 noise floor 且 routing 优于 routeaux。auto_launch eval 同 R3-2 口径。
 
 ### [P8] 专用 memory cross-attention 读路径（独立 softmax）— **状态: PENDING, auto_launch: false（等 P7+P9 结果）**
 - 借 YOCO(2405.05254)/Memorizing Transformers(2203.08913)/Infini-attn(2404.07143)。confidence **high**，medium 改。
 - 给 slots 独立 cross-attn 层（独立 softmax），不再 prepend 进 live-token KV → 治 ~0.2% mass 稀释。per-head content-dependent gate + 较大 init。隔离在 `--use_memory_xattn`。**不修这个，P7 路由修好也无梯度可学。**
 
-### [P9] always-on register slots — **状态: PENDING, auto_launch: true（与 P7 同 arm 启动）**
-- 借 ViT Need Registers(2309.16588)。confidence **high**，**无需新代码**——`--num_global_slots` 已存在（config.py:76 + train arg:598）。吸收 attention-sink 让可寻址 slot 做真路由。直接在 P7 训练 arm 上加 `--num_global_slots 4`（或 8）。
+### [P9] always-on register slots — **状态: RUNNING（与 P7 同 arm，2026-06-05 01:37）**
+- 借 ViT Need Registers(2309.16588)。confidence **high**，**无需新代码**——`--num_global_slots` 已存在。已在 P7 训练 arm 上加 `--num_global_slots 4`（run `mem_space_perdoc_chunk128_p7p9`）。判据随 P7 一同 eval。
 
 ### [P10] key_repulsion 1.0→0.05 + ST-Gumbel top-k — **状态: PENDING, auto_launch: false** — confidence medium，tiny。当前 key_repulsion=1.0（20× toy）可能 over-smear keys。
 ### [P11] delta-rule + normalized writeback — **状态: PENDING** — confidence medium，medium 改。写残差 + 归一化 readout magnitude 使其可与 local attn 比较再 gate。
