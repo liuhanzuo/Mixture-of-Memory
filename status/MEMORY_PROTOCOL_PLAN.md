@@ -149,13 +149,19 @@
 > 诊断根因（toy_vs_full + collapse 报告）：(a) **注入稀释** slot KV 仅 ~0.2% attn mass → LM 梯度≈0；(b) **routing collapse** top1_sim→uniform，且现有 `load_balance`(weight=0.01) + `entropy` aux **主动把 routing 推向 uniform** 反而致塌。两路并治。
 > 推荐顺序：**P7 + P9 一起上**（都小、都打 collapse）→ retrieval 离开 noise floor 但仍弱 → 加 **P8**（读路径 mass）→ 再 P10/P11 调参。P12/P13 是破 cliff 后的研究 bet。
 
-### [P7] route-supervision aux + 中和 uniform-pushing aux ⭐ — **状态: TRAIN DONE + BABILong EVAL RUNNING（2026-06-05 05:35，本机 7-GPU 0k-32k）**
+### [P7] route-supervision aux + 中和 uniform-pushing aux ⭐ — **状态: DONE（2026-06-05 06:14，gate=持平 routeaux，未碾压 → 进 P8）**
 - 借 Landmark(2305.16300) + Loss-Free Balancing for MoE(2408.15664)。confidence **high**，小改。
 - ✅ 实现完成：selector.py routing_bias buffer + 在线更新（commit 1b46939）；✅ 已 wire 进 `train_mem_space_dolmino_cpt.py`（commit fb91c51）。✅ 启动脚本 `scripts/launch_mem_space_p7p9.sh`。
 - ✅ **已启动**（run `mem_space_perdoc_chunk128_p7p9`，本机 8-GPU，load_balance=0+entropy=0+LFB on+num_global_slots=4+route_aux=1.0）。早期诊断健康：**usage_cov 0.94-0.98 + usage_var~0.0001（loss-free balancing 平衡有效）**，top1_sim 0.23-0.41（远高于无 route_aux 塌缩值 0.017），slot_attn_entropy~2.1。
 - 判据：训完离线 BABILong ≥4k 是否越过 noise floor 且 routing 优于 routeaux。auto_launch eval 同 R3-2 口径。
 - ✅ **训练完成**（2026-06-05 05:22，step2000，226.6min，non-finite=1，final lm~2.44）。adapter → `outputs/mem_space_perdoc_chunk128_p7p9/mem_space_adapter.pt`。
 - ⏳ **BABILong eval RUNNING**（2026-06-05 05:35，本机 7-GPU，0k-32k 各一 length，`scripts/eval_perdoc_chunk128_p7p9.sh`，qa1/qa2/qa5 limit100 chunk128，结果 → `babilong_results/perdoc_chunk128_p7p9/`）。对照基线：R3-2 routeaux qa5 0k-8k=70/37/36/37/26；R3-3 base 4k qa5≈0。
+- ✅ **BABILong DONE（substring-acc, limit100）**：
+  - qa1 0k-32k = 55/20/27/14/14/10/9
+  - qa2 0k-16k = 28/15/18/18/11/10
+  - qa5 0k-8k = 53/44/36/31/27（16k/32k 仍 0 样本未收齐，但趋势明确）
+- 🔑 **GATE 结论：P7+P9 ≈ 持平 R3-2 routeaux，未碾压。** qa5 对比 routeaux(70/37/36/37/26)：P7P9=53/44/36/31/27 —— 1k 略高、2k 持平、4k 略低、8k 持平。**route_aux + LFB + 4 register slots 没有比单纯 route_aux 带来额外增益**（register slots 在此 setup 无明显作用）。但 qa1/qa5 全长度稳在 noise floor 之上（≥9-55%），未塌缩，确认 routing supervision 本身有效。
+- → **判据"显著优于 routeaux"未满足**。结论：routing 已不是瓶颈（P7 证明 routing 可学且稳定）。**真正瓶颈应是注入/读回稀释（researcher P2：memory 仅占 ~0.2% attn mass，且 LongBench F1=2.94 vs base 13.95 印证读回严重丢信息）→ 直接进 [P8] 专用 memory cross-attn 读路径**（plan 既定下一步）。
 
 ### [P8] 专用 memory cross-attention 读路径（独立 softmax）— **状态: PENDING, auto_launch: false（等 P7+P9 结果）**
 - 借 YOCO(2405.05254)/Memorizing Transformers(2203.08913)/Infini-attn(2404.07143)。confidence **high**，medium 改。
