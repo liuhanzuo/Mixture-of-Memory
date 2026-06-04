@@ -591,6 +591,16 @@ class MemorySpaceLayer(nn.Module):
         self.last_idx: Optional[torch.Tensor] = None
         self.last_scores: Optional[torch.Tensor] = None
 
+        # Cross-chunk slot-usage histogram (diagnostic only, layer-0 use).
+        # Accumulates how often each of the N slots is picked by the routed
+        # top-k across the chunks BETWEEN two QUERY_DIAG emissions. Reset after
+        # each emission so the reported coverage/entropy reflect a fresh window.
+        # This answers "are slots being USED in a varied way across chunks?"
+        # (a routing-distribution signal), complementing key_max_cos which
+        # answers "are slot KEYS separable?" (a representation signal).
+        self._slot_usage_hist: Optional[torch.Tensor] = None
+        self._slot_usage_chunks: int = 0
+
     # --------------------------------------------------------------------- #
     # Gate
     # --------------------------------------------------------------------- #
@@ -783,6 +793,25 @@ class MemorySpaceLayer(nn.Module):
                 idx = torch.cat([idx, _glob_idx], dim=1)            # [B, k+g]
                 k_slots = idx.shape[-1]
 
+            # ---- Cross-chunk slot-usage accumulation (layer-0, no-op compute) ----
+            # Tally the top-k slot picks for batch[0] into a persistent
+            # histogram so the next QUERY_DIAG can report how the routing
+            # distributes load over the N slots across MANY chunks (not just
+            # within one). idx[0] holds the routed indices (k or k+g).
+            if self._layer_idx == 0:
+                with torch.no_grad():
+                    if (self._slot_usage_hist is None
+                            or self._slot_usage_hist.numel() != cfg.num_slots):
+                        self._slot_usage_hist = torch.zeros(
+                            cfg.num_slots, device=idx.device, dtype=torch.long
+                        )
+                        self._slot_usage_chunks = 0
+                    self._slot_usage_hist.scatter_add_(
+                        0, idx[0].long(),
+                        torch.ones_like(idx[0], dtype=torch.long),
+                    )
+                    self._slot_usage_chunks += 1
+
             # ---- QUERY_DIAG (diagnostic log, no-op on computation) ----
             # Emit every 200 forward calls, rank-0 / layer-0 only.
             _should_log_diag = (
@@ -825,13 +854,38 @@ class MemorySpaceLayer(nn.Module):
                     # v11: slot_query attention entropy (default 0.0 when not
                     # slot_query). High ⇒ slots smear attention over all tokens.
                     _slot_attn_entropy = getattr(self.selector, "_last_slot_attn_entropy", 0.0)
-                    # mode-agnostic slot-usage: how many DISTINCT slots the final
-                    # top-k actually selected (batch[0]). Computed from `idx`
-                    # directly so it is valid for ALL routing_pool_modes
-                    # (unlike uniq_sel_slots which is multi_query-only). This is
-                    # the primary "is the memory module routing to varied slots
-                    # vs collapsing to a few?" signal. Range [1, k_slots].
-                    _sel_slots = int(idx[0].unique().numel())
+                    # v11 fix (2026-06-04): cross-chunk slot-USAGE distribution.
+                    # The previous `sel_slots = idx[0].unique().numel()` was a
+                    # useless constant: top-k returns distinct indices by
+                    # construction, so with B=1 it ALWAYS equals k_slots and
+                    # tells us nothing about whether slots are "separable".
+                    # Replace it with two signals computed over the accumulated
+                    # multi-chunk histogram:
+                    #   usage_cov  = #slots picked at least once / N   (coverage)
+                    #   usage_ent  = normalized entropy of the usage distribution
+                    #                in [0,1]; 1.0 = perfectly uniform load,
+                    #                ->0 = routing collapsed onto a few slots.
+                    # Together these answer "is the router USING varied slots
+                    # across chunks?" — the real question, distinct from
+                    # key_max_cos (key-space separability).
+                    _usage_cov = 0.0
+                    _usage_ent = 0.0
+                    _usage_chunks = self._slot_usage_chunks
+                    if self._slot_usage_hist is not None and _usage_chunks > 0:
+                        _h = self._slot_usage_hist.float()
+                        _N_slots = _h.numel()
+                        _usage_cov = (_h > 0).float().mean().item()
+                        _tot = _h.sum()
+                        if _tot > 0:
+                            _p = _h / _tot
+                            _nz = _p[_p > 0]
+                            _ent = -(_nz * _nz.log()).sum()
+                            import math as _math
+                            _usage_ent = (_ent / _math.log(_N_slots)).item() if _N_slots > 1 else 0.0
+                    # reset window so each emission reflects fresh chunks
+                    if self._slot_usage_hist is not None:
+                        self._slot_usage_hist.zero_()
+                        self._slot_usage_chunks = 0
                 print(
                     f"[QUERY_DIAG step={self.step_counter} fwd={self._fwd_count}]"
                     f" top1_sim_mean={_top1_sim_mean:.6f}"
@@ -842,7 +896,9 @@ class MemorySpaceLayer(nn.Module):
                     f" summary_q_max_cos={_sq_max_cos:.4f}"
                     f" summary_q_mean_cos={_sq_mean_cos:.4f}"
                     f" uniq_sel_slots={_uniq_sel}"
-                    f" sel_slots={_sel_slots}"
+                    f" usage_cov={_usage_cov:.4f}"
+                    f" usage_ent={_usage_ent:.4f}"
+                    f" usage_chunks={_usage_chunks}"
                     f" slot_attn_entropy={_slot_attn_entropy:.4f}",
                     flush=True,
                 )
