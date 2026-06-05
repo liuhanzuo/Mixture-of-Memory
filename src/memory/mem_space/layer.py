@@ -397,6 +397,16 @@ class MemorySpaceLayer(nn.Module):
         self.selector.st_gumbel_temperature = getattr(
             config, "st_gumbel_temperature", 1.0
         )
+        # P11 (2026-06-06): delta-rule writeback + normalized readout. Both
+        # default off → byte-identical to pre-P11. delta_rule switches the gated
+        # writeback to a residual (slot + g·(new−slot)) update; normalize_readout
+        # rescales M_sel_hidden to the local hidden-state magnitude before
+        # injection. Read in forward() / passed to memory_bank.write().
+        self._use_delta_rule_writeback = getattr(
+            config, "use_delta_rule_writeback", False
+        )
+        self._normalize_readout = getattr(config, "normalize_readout", False)
+        self._readout_norm_scale = getattr(config, "readout_norm_scale", 1.0)
 
         # Learnable slot↔hidden projections. We do NOT take the slot_dim==d_model
         # shortcut (Identity) because that path has zero trainable capacity and was
@@ -1077,7 +1087,18 @@ class MemorySpaceLayer(nn.Module):
             # Uses hidden_states.detach() so the reference does not create extra gradient paths.
             _h_norm_ref = hidden_states.detach().norm(dim=-1).mean().clamp(min=1.0)
             _m_norms = M_sel_hidden.norm(dim=-1, keepdim=True)
-            M_sel_hidden = M_sel_hidden * (_h_norm_ref / _m_norms.clamp(min=1e-6)).clamp(max=1.0)
+            if self._normalize_readout:
+                # P11 (2026-06-06): normalized readout. Rescale M_sel_hidden so
+                # its per-token magnitude MATCHES the local hidden-state scale
+                # (× readout_norm_scale) — both shrinking AND amplifying — so the
+                # downstream gate sees a memory signal comparable to the
+                # local-attention output. Differs from the default shrink-only
+                # clamp below (which only attenuates). The target reference uses
+                # hidden_states.detach() so no extra gradient path is created.
+                _target = _h_norm_ref * float(self._readout_norm_scale)
+                M_sel_hidden = M_sel_hidden * (_target / _m_norms.clamp(min=1e-6))
+            else:
+                M_sel_hidden = M_sel_hidden * (_h_norm_ref / _m_norms.clamp(min=1e-6)).clamp(max=1.0)
         else:
             # disable_l1_inject=True: skip selector, slot gather, projection
             cold_start_this_call = False
@@ -1415,6 +1436,7 @@ class MemorySpaceLayer(nn.Module):
                         gate=g_in[:, :_k_reg, :],
                         forget_gate=g_forget[:, :_k_reg, :],
                         tanh_new=cfg.dual_gate_tanh_new,
+                        delta_rule=self._use_delta_rule_writeback,
                     )
                     if cfg.global_slot_input_gate_only:
                         # v8-C: slot ← g_in · tanh(s_new), no forget
@@ -1425,6 +1447,7 @@ class MemorySpaceLayer(nn.Module):
                             gate=g_in[:, _k_reg:, :],
                             forget_gate=_g_forget_zero,
                             tanh_new=True,
+                            delta_rule=self._use_delta_rule_writeback,
                         )
                     else:
                         # v8-A (or v7 when global_slot_forget_bias==forget_bias_init): dual gate
@@ -1434,6 +1457,7 @@ class MemorySpaceLayer(nn.Module):
                             gate=g_in[:, _k_reg:, :],
                             forget_gate=g_forget[:, _k_reg:, :],
                             tanh_new=cfg.dual_gate_tanh_new,
+                            delta_rule=self._use_delta_rule_writeback,
                         )
                 else:
                     M_write = self.memory_bank.write(
@@ -1442,6 +1466,7 @@ class MemorySpaceLayer(nn.Module):
                         gate=g_in,
                         forget_gate=g_forget,
                         tanh_new=cfg.dual_gate_tanh_new,
+                        delta_rule=self._use_delta_rule_writeback,
                     )
             elif cfg.writeback_mode == "lowrank_gate" and self.lr_U is not None:
                 # lowrank_gate (A): U(V_new(s_new)+V_mem(M_prev)) + bias → 2*slot_dim.
@@ -1467,6 +1492,7 @@ class MemorySpaceLayer(nn.Module):
                     gate=g_in,
                     forget_gate=g_forget,
                     tanh_new=cfg.dual_gate_tanh_new,
+                    delta_rule=self._use_delta_rule_writeback,
                 )
             elif cfg.writeback_mode == "diag_gate" and self.diag_a_in is not None:
                 # diag_gate (B): per-feature diagonal gate.
@@ -1492,6 +1518,7 @@ class MemorySpaceLayer(nn.Module):
                     gate=g_in,
                     forget_gate=g_forget,
                     tanh_new=cfg.dual_gate_tanh_new,
+                    delta_rule=self._use_delta_rule_writeback,
                 )
             else:
                 # Legacy single-gate path (H/H5/H3).

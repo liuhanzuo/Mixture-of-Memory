@@ -190,6 +190,7 @@ class MemoryBank(nn.Module):
         forget_gate: Optional[torch.Tensor] = None,
         tanh_new: bool = False,
         replace: bool = False,
+        delta_rule: bool = False,
     ):
         """In-place EMA writeback on the selected slot positions.
 
@@ -291,7 +292,18 @@ class MemoryBank(nn.Module):
             ).to(self.slots.dtype)
             g_in = gate.to(device=self.slots.device, dtype=self.slots.dtype)
             g_forget = forget_gate.to(device=self.slots.device, dtype=self.slots.dtype)
-            updated = g_in * new_content + g_forget * current
+            if delta_rule:
+                # P11 (2026-06-06) delta-rule writeback. Instead of the LM2
+                # two-independent-gate form (g_in·new + g_forget·current), write
+                # the RESIDUAL between the new value and what is already stored,
+                # scaled by the input gate only (forget tied to 1 − g_in):
+                #   slot_new = current + g_in · (new_content − current)
+                # The independent `g_forget` is intentionally ignored here.
+                # Default off → this branch is never entered and the dual-gate
+                # update below is byte-identical to pre-P11.
+                updated = current + g_in * (new_content - current)
+            else:
+                updated = g_in * new_content + g_forget * current
 
             # tanh already bounds new_content to [-1, 1] per dim; we no longer
             # need the manual max_norm clamp from H/H5 (that was a band-aid for

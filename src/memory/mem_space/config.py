@@ -113,6 +113,37 @@ class MemorySpaceConfig:
     #     it is added to the selection logits. 1.0 = standard ST-Gumbel.
     use_st_gumbel_topk: bool = False
     st_gumbel_temperature: float = 1.0
+    # P11 (2026-06-06): delta-rule writeback + normalized readout. Two
+    # independent sub-features, BOTH default off → byte-identical to pre-P11.
+    #
+    #   use_delta_rule_writeback: when True, the GATED writeback paths
+    #     (dual_gate / lowrank_gate / diag_gate — i.e. any write() call that
+    #     supplies a forget_gate) switch from the LM2 two-independent-gate form
+    #       slot_new = g_in · new_content + g_forget · slot_old
+    #     to the delta-rule (residual) form using ONLY the input gate:
+    #       slot_new = slot_old + g_in · (new_content − slot_old)
+    #     i.e. the gate scales the RESIDUAL between the new value and what is
+    #     already stored, tying forget = (1 − g_in). The independent forget gate
+    #     is ignored on this path. The legacy single-gate EMA path is ALREADY
+    #     this residual form, so it is unchanged. Applies in BOTH train and eval
+    #     (it changes stored state, so must be consistent). Default False.
+    #
+    #   normalize_readout: when True, the retrieved/readout memory vector
+    #     `M_sel_hidden` is L2-normalized per token and rescaled to the local
+    #     hidden-state reference norm (× readout_norm_scale) BEFORE it is gated /
+    #     injected, so the gate sees a memory signal whose magnitude is
+    #     comparable to the local-attention output. When False (default) the
+    #     existing SHRINK-ONLY clamp (only attenuates M_sel_hidden when it
+    #     exceeds the hidden-state scale, never amplifies) is preserved
+    #     byte-identically. Applies in BOTH train and eval (forward-path readout
+    #     scaling must be consistent). Default False.
+    #
+    #   readout_norm_scale: multiplier on the hidden-state reference norm used
+    #     as the target magnitude when normalize_readout is True. 1.0 = match the
+    #     local-attention scale exactly. Ignored when normalize_readout is False.
+    use_delta_rule_writeback: bool = False
+    normalize_readout: bool = False
+    readout_norm_scale: float = 1.0
     entropy_aux_weight: float = 0.0
     selector_temperature: float = 1.0
     key_repulsion_weight: float = 0.01

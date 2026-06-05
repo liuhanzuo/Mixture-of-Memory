@@ -560,6 +560,16 @@ def parse_args() -> argparse.Namespace:
                    help="enable ST-Gumbel top-k slot selection (P10).")
     p.add_argument("--st_gumbel_temperature", type=float, default=1.0,
                    help="scale on the Gumbel noise added to selection logits.")
+    # P11 (2026-06-06): delta-rule writeback + normalized readout. Both default
+    # off → byte-identical to pre-P11. delta-rule writes the residual
+    # slot + g·(new−slot) on the gated paths; normalize_readout rescales the
+    # readout memory vector to the local hidden-state magnitude before gating.
+    p.add_argument("--use_delta_rule_writeback", action="store_true",
+                   help="residual (delta-rule) gated writeback (P11).")
+    p.add_argument("--normalize_readout", action="store_true",
+                   help="normalize readout memory magnitude to local scale (P11).")
+    p.add_argument("--readout_norm_scale", type=float, default=1.0,
+                   help="target-magnitude multiplier when --normalize_readout (P11).")
     p.add_argument("--entropy_aux_weight", type=float, default=0.001)
     p.add_argument("--selector_temperature", type=float, default=1.0)
     p.add_argument("--key_repulsion_weight", type=float, default=0.01)
@@ -759,6 +769,9 @@ def build_model(args, device, dtype) -> torch.nn.Module:
         loss_free_update_rate=args.loss_free_update_rate,
         use_st_gumbel_topk=args.use_st_gumbel_topk,
         st_gumbel_temperature=args.st_gumbel_temperature,
+        use_delta_rule_writeback=args.use_delta_rule_writeback,
+        normalize_readout=args.normalize_readout,
+        readout_norm_scale=args.readout_norm_scale,
         entropy_aux_weight=args.entropy_aux_weight,
         selector_temperature=args.selector_temperature,
         key_repulsion_weight=args.key_repulsion_weight,
@@ -1365,6 +1378,9 @@ def _save_adapter(model, args, step: int, final: bool = False) -> None:
             "loss_free_update_rate":   args.loss_free_update_rate,
             "use_st_gumbel_topk":      args.use_st_gumbel_topk,
             "st_gumbel_temperature":   args.st_gumbel_temperature,
+            "use_delta_rule_writeback": args.use_delta_rule_writeback,
+            "normalize_readout":       args.normalize_readout,
+            "readout_norm_scale":      args.readout_norm_scale,
             "entropy_aux_weight":      args.entropy_aux_weight,
             "selector_temperature":    args.selector_temperature,
             "key_repulsion_weight":    args.key_repulsion_weight,

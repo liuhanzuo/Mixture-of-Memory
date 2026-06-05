@@ -770,6 +770,13 @@ def parse_args() -> argparse.Namespace:
     # Default off → selector byte-identical to pre-P10.
     p.add_argument("--use_st_gumbel_topk", action="store_true")
     p.add_argument("--st_gumbel_temperature", type=float, default=1.0)
+    # P11 (2026-06-06): delta-rule writeback + normalized readout. Both default
+    # off → byte-identical to pre-P11. delta-rule switches the gated writeback
+    # to a residual (slot + g·(new−slot)) update; normalize_readout rescales the
+    # readout memory vector to the local hidden-state magnitude before injection.
+    p.add_argument("--use_delta_rule_writeback", action="store_true")
+    p.add_argument("--normalize_readout", action="store_true")
+    p.add_argument("--readout_norm_scale", type=float, default=1.0)
     p.add_argument("--selector_temperature", type=float, default=20.0)
     p.add_argument("--key_repulsion_weight", type=float, default=0.05)
     p.add_argument("--key_repulsion_threshold", type=float, default=0.3)
@@ -963,6 +970,9 @@ def build_model(args, device, dtype) -> torch.nn.Module:
         loss_free_update_rate=args.loss_free_update_rate,
         use_st_gumbel_topk=args.use_st_gumbel_topk,
         st_gumbel_temperature=args.st_gumbel_temperature,
+        use_delta_rule_writeback=args.use_delta_rule_writeback,
+        normalize_readout=args.normalize_readout,
+        readout_norm_scale=args.readout_norm_scale,
         selector_temperature=args.selector_temperature,
         key_repulsion_weight=args.key_repulsion_weight,
         key_repulsion_threshold=args.key_repulsion_threshold,
@@ -1479,6 +1489,9 @@ def _save_adapter(model, args, step: int, final: bool = False) -> None:
             "loss_free_update_rate": args.loss_free_update_rate,
             "use_st_gumbel_topk": args.use_st_gumbel_topk,
             "st_gumbel_temperature": args.st_gumbel_temperature,
+            "use_delta_rule_writeback": args.use_delta_rule_writeback,
+            "normalize_readout": args.normalize_readout,
+            "readout_norm_scale": args.readout_norm_scale,
             "selector_temperature": args.selector_temperature,
             "key_repulsion_weight": args.key_repulsion_weight,
             "key_repulsion_threshold": args.key_repulsion_threshold,
