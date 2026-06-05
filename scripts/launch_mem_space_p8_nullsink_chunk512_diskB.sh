@@ -12,7 +12,15 @@ set -euo pipefail
 PROJECT_ROOT="${PROJECT_ROOT:-/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory}"
 cd "$PROJECT_ROOT"
 export WANDB_API_KEY="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"
-export WANDB_MODE="offline"
+export WANDB_MODE="online"
+# Proxy for babilong prefetch (HEAD check to huggingface.co); diskB nodes need it.
+export http_proxy="http://hy-proxy.woa.com:3128"
+export https_proxy="http://hy-proxy.woa.com:3128"
+export all_proxy="http://hy-proxy.woa.com:3128"
+export no_proxy="mirrors.cloud.tencent.com,tlinux-mirror.tencent-cloud.com,localhost,127.0.0.1,.oa.com,.woa.com,.local"
+# Use the babilong HF cache already present on diskB so load_dataset hits cache.
+export HF_HOME="$PROJECT_ROOT/.hf_cache"
+export HF_DATASETS_CACHE="$PROJECT_ROOT/.hf_cache/datasets"
 export PYTHONPATH="$PROJECT_ROOT/third_party/babilong-pkg:$PROJECT_ROOT:${PYTHONPATH:-}"
 export PYTHONUNBUFFERED=1
 PYBIN="${PYTHON_BIN:-$PROJECT_ROOT/.venv/bin/python}"
