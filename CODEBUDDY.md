@@ -1,5 +1,67 @@
 # Mixture-of-Memory — CodeBuddy Code 工作手册
 
+## 语言规则（2026-05-19 用户指令）
+
+**只使用中文和英文交流，禁止使用韩语或其他语言。**
+
+## 🖥️ 当前 GPU 集群（2026-06-05 更新，权威，覆盖旧记录）
+
+**6 个 H20 节点 = 48 卡。没有 H800 / B200 了（旧 IP 全失效，别再试）。**
+
+分两个 CEPH 盘，盘内共享 FS，**盘间需要 rsync 同步代码 + 数据**：
+
+| 盘 | 节点 IP | 角色 | share 路径 | 密码文件 |
+|----|---------|------|-----------|---------|
+| **盘 A** | `29.162.227.178` | **本机** | `/apdcephfs_zwfy6/share_303098609/` | — |
+| **盘 A** | `28.59.80.196` | 远程（与本机共享 FS，代码改动直接可见） | `/apdcephfs_zwfy6/share_303098609/` | `configs/password_diskA.txt` |
+| **盘 B** | `28.49.196.161` | 远程（旧，env 缺 transformers，见下） | `/apdcephfs_zwfy6/share_304376610/` | `configs/password_diskB.txt` |
+| **盘 B** | `29.162.241.149` | 远程（与 .161 共享 FS，env 缺 transformers） | `/apdcephfs_zwfy6/share_304376610/` | `configs/password_diskB.txt` |
+| **盘 B** | `28.49.57.76` | 远程（2026-06-05 新增，✅ 可训练） | `/apdcephfs_zwfy6/share_304376610/` | `configs/password_h20_new2.txt` |
+| **盘 B** | `28.59.33.249` | 远程（2026-06-05 新增，与 .76 共享 FS，✅ 可训练） | `/apdcephfs_zwfy6/share_304376610/` | `configs/password_h20_new2.txt` |
+
+- **2026-06-05 新增 2 节点（.76 / .249）**：8× H20 each，挂载**盘 B**（share_304376610，与 .161/.149 同一 ceph）。
+  - ✅ **与旧盘B节点不同：这俩节点用项目 `.venv/bin/python`（torch 2.10.0+cu128 + transformers 5.5.4，CUDA OK on H20）→ 可直接跑本项目训练，无需 pip install。** 启动脚本带 `PYTHON_BIN` 默认即 `.venv/bin/python`，不要用 torch-base。
+  - 模型已就位：`/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/models/Meta-Llama-3-8B`。
+  - 代码/数据用前需从盘A rsync（盘B 落后；dolmino 训练数据 `MemLong/data/processed/dolmino_per_doc` 需同步过去）。
+- **密码含末尾逗号**：盘A `OYzq28JQQ2aYTKF,`、盘B 旧 `2hc7jvACxF7ra4d,`、盘B 新（.76/.249）`Kom4eX2cdOllcx1,`（逗号是密码的一部分，已存入对应 password 文件，无换行）。
+- SSH：`sshpass -f configs/password_diskA.txt ssh -o StrictHostKeyChecking=no -o ConnectTimeout=15 -o PreferredAuthentications=password root@<IP>`
+- **盘 A 项目根**：`/apdcephfs_zwfy6/share_303098609/pighzliu_code/Mixture-of-Memory/`（本机 + .196 共享，代码无需同步）
+- **盘 B 项目根**：`/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/`（⚠️ 注意是 **304376610** 不是 303098609；代码落后，用前必须先 rsync 同步当前代码）
+- Python：盘A本机 `.venv/bin/python`；盘A 远程 .196 `/opt/conda/envs/torch-base/bin/python`；**盘B 新节点（.76/.249）用项目 `.venv/bin/python`**（torch 2.10+cu128，有 transformers）；盘B 旧节点（.161/.149）torch-base 缺 transformers，不能直接训。
+- **盘 A → 盘 B rsync**（跨盘同步代码，盘间不共享）：
+  ```bash
+  rsync -az --exclude '.git' --exclude '*.pt' --exclude '.venv' --exclude 'outputs' --exclude 'logs' \
+    -e "sshpass -f configs/password_diskB.txt ssh -o StrictHostKeyChecking=no -o PreferredAuthentications=password" \
+    /apdcephfs_zwfy6/share_303098609/pighzliu_code/Mixture-of-Memory/{src,scripts,configs} \
+    root@28.49.196.161:/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/
+  ```
+- 远程训练注意：远程连不上 wandb.ai → 必须 `export WANDB_MODE=offline`；用 launch 脚本（脚本内 cd 到 PROJECT_ROOT），盘B 旧节点要带 `PROJECT_ROOT=/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory PYTHON_BIN=/opt/conda/envs/torch-base/bin/python`。**盘B 新节点（.76/.249）的 chunk512/chunk1024 launch 脚本已把 PROJECT_ROOT/PYTHON_BIN 默认指向盘B + .venv**，直接 `bash scripts/launch_mem_space_p8_nullsink_chunk{512,1024}_diskB.sh` 即可。
+- **盘 A → 盘 B 新节点（.76/.249）rsync**（代码 + 数据，2026-06-05）：
+  ```bash
+  # 代码
+  rsync -az --exclude '.git' --exclude '*.pt' --exclude '.venv' --exclude 'outputs' --exclude 'logs' \
+    --exclude 'babilong_results' --exclude 'data' --exclude 'MemLong/data' --exclude 'models' \
+    -e "sshpass -f configs/password_h20_new2.txt ssh -o StrictHostKeyChecking=no -o PreferredAuthentications=password" \
+    src scripts configs third_party \
+    root@28.49.57.76:/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/
+  # dolmino 训练数据（1.6G，盘B 缺）
+  rsync -az -e "sshpass -f configs/password_h20_new2.txt ssh -o StrictHostKeyChecking=no -o PreferredAuthentications=password" \
+    MemLong/data/processed/dolmino_per_doc \
+    root@28.49.57.76:/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/MemLong/data/processed/
+  ```
+- ⚠️ **盘B 旧节点（28.49.196.161 / .241.149）的 `torch-base` env 没有 `transformers`**（2026-06-02 实测）→ 不能直接训。**盘B 新节点（.76/.249）有 `.venv`，可训。**
+- ⚠️ **盘B 节点（28.49.196.161 / .241.149）的 `torch-base` env 没有 `transformers` 模块**（2026-06-02 实测 ModuleNotFoundError）→ **目前无法在盘B 跑本项目训练**，除非先 pip install transformers 等依赖。盘A 节点 env 正常。
+- ⚠️ **内联 BABILong eval 会导致 NCCL 崩溃**（2026-06-02 实测）：`quick_eval_babilong` 在 DDP 循环里做变长 greedy generation 会让各 rank desync → ALLREDUCE 等满 30min watchdog timeout → 整个 job SIGABRT。**训练时务必 `--eval_interval 0`**（launch 脚本已默认 `EVAL_INTERVAL=0`），eval 改为离线单独跑 checkpoint。
+- ⚠️ 远程节点（尤其盘A 28.59.80.196）偶发**独立的 NCCL/CEPH hang**（非 eval、非边界），约 30min watchdog 后崩。本机节点更稳。重要 run 优先放本机。
+
+## Wandb 配置（2026-05-25）
+
+```bash
+export WANDB_API_KEY="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"
+```
+
+训练脚本默认 `--wandb_project mixture-of-memory`，启动训练时务必设置此环境变量。
+
 ## 外网代理配置（2026-05-18 用户提供）
 
 访问 HuggingFace / arxiv / GitHub 等外网时，必须设置以下代理：
@@ -25,6 +87,14 @@ export no_proxy="mirrors.cloud.tencent.com,tlinux-mirror.tencent-cloud.com,local
 **格式**: 10 task (qa1-qa10) × 7 lengths (0k-32k) × n=100 samples，babilong.metrics 口径
 
 **heartbeat / 新实验完成后必须更新此文件**，把新结果追加进去，方便横向对比。
+
+### `status/RUN_REGISTRY.md`（2026-06-05 新增）
+
+**`status/RUN_REGISTRY.md` 是 mem_space 系列每个训练 run 的「配置 + 离线 BABILong 结果」横向对照总账。**
+
+- 职责：记录每个 run 的关键超参（chunk_size、slot_dim、num_slots、route_aux、读路径、steps、节点、状态）+ 同口径 BABILong eval 结果（n=100，qa1/qa2/qa5 × 0k-32k，babilong.metrics）。
+- 与 `BENCHMARK_RESULTS.md` 分工：BENCHMARK_RESULTS 含外部论文数字、是大杂烩；**RUN_REGISTRY 只记我们自己的 mem_space run，强调配置可复现 + 严格同口径横向对照**。
+- **每启动一个新 run / 每跑完一次 eval，必须在 RUN_REGISTRY.md 追加或更新对应行**，便于快速回答"X 配置 vs Y 配置在 BABILong 上差多少"。
 
 ---
 
@@ -187,7 +257,7 @@ configs/
 
 ## 计算资源
 
-**现有集群（2026-05-18 更新）：只有本机 + 远程 H20 + 原始 B200，其余节点均不可达。**
+**现有集群（2026-05-20 更新）：本机 H20 + 远程 H20 + 新 B200 节点。**
 
 ### 1. 本机 H20（主力训练）
 - 8× H20 (97.8 GiB)，直接本地访问
@@ -196,23 +266,29 @@ configs/
 - Python: 项目 `.venv/bin/python`（torch 兼容 H20）
 - ⚠️ **VRAM 97.8 GiB**，1B 模型训练完全没问题，8B+memory 需要 gradient_checkpointing
 
-### 2. 远程 H20 节点（28.59.80.196）（2026-05-18 更新）
-- 1 节点，8× H20 (97.8 GiB)，**全部空闲**
-- SSH: `ssh -o StrictHostKeyChecking=no -o PreferredAuthentications=password root@28.59.80.196`，密码保存在 `configs/password_h20_new.txt`
-- 工作目录: `/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/`（**zwfy6/share_304376610**，与本机不同 share）
-- 模型: `/apdcephfs_zwfy6/share_304376610/pighzliu_code/models/`
-- Python: `/opt/conda/envs/torch-base/bin/python`（torch 2.8.0，NVIDIA H20，确认可用）
-- ⚠️ **不同 CEPH 集群**：代码改动需要 rsync 或通过共享脚本同步
-- ⚠️ **v6/v7 launcher scripts 不在该节点**：需先 rsync 脚本过去再启动
+### 2. 远程 H20 节点（28.59.80.196）（2026-05-20 更新）
+- 1 节点，8× H20 (97.8 GiB)
+- SSH: `sshpass -f configs/password_h20_new.txt ssh -o StrictHostKeyChecking=no -o PreferredAuthentications=password root@28.59.80.196`
+- 工作目录: `/apdcephfs_zwfy6/share_303098609/pighzliu_code/Mixture-of-Memory/`（**与本机共享 zwfy6/share_303098609**）
+- 模型: 使用共享路径 `models/Meta-Llama-3-8B-Instruct`（相对于 PROJECT_ROOT）
+- Python: `/opt/conda/envs/torch-base/bin/python`（torch OK，H20 兼容）
+- ✅ **与本机共享 CEPH FS**（zwfy6/share_303098609），代码/模型/数据无需同步
+- ⚠️ 启动脚本时需设置 `PROJECT_ROOT=/apdcephfs_zwfy6/share_303098609/pighzliu_code/Mixture-of-Memory PYTHON_BIN=/opt/conda/envs/torch-base/bin/python`
 
-### 3. 原始 B200 集群（28.89.17.144 可用，其余不可达）
-- 28.89.17.144：8× L20A (183 GiB)，当前 GPU 2-7 跑 MemoryLLM eval，GPU 0/1 空闲
-- SSH: `ssh -o StrictHostKeyChecking=no -o PreferredAuthentications=password root@28.89.17.144`，密码 `configs/password.txt`
-- 工作目录: `/apdcephfs_wzc1/share_303098609/pighzliu_code/Mixture-of-Memory/`
-- ⚠️ 28.89.17.143 / 28.89.17.85 / 28.89.19.134 目前不可达
-- ⚠️ Ephemeral B200 (28.89.18.252/20.82/20.27/18.19) 密码被拒，不可用
+### 3. 新 B200 节点（28.89.16.108）（2026-05-20 新增）
+- 1 节点，8× NVIDIA L20A (183 GiB/卡)，**全部空闲**
+- SSH: `sshpass -f configs/password_b200_new.txt ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 -o PreferredAuthentications=password root@28.89.16.108`
+- 密码保存在 `configs/password_b200_new.txt`（密码末尾有逗号 `,`，是密码的一部分）
+- 工作目录: `/apdcephfs_wzc1/share_303098609/pighzliu_code/Mixture-of-Memory/`（wzc1 共享 FS）
+- 模型: 同上 wzc1 路径下 `models/`
+- Python: **必须用 `.venv/bin/python`**（torch 2.10.0+cu128，支持 sm_100）
+  - ❌ `/opt/conda/envs/torch-base/bin/python` 不兼容 L20A (sm_100)
+- ⚠️ **不同 CEPH 集群**（wzc1 vs 本机 zwfy6）：代码改动需要 git push+pull 或 scp 同步
+- ⚠️ 当前 wzc1 代码版本落后本机（最新 commit: `ec09cef`），需要同步新脚本
 
 ### ❌ 已确认不可用
+- 原始 B200 集群（28.89.17.143/144/85/134）：Connection refused
+- H800 节点（29.185.88.158/89.190）：Connection refused
 - h20-1/2/3/4（28.58.244.13 / 28.85.54.125 / 28.59.5.176 / 28.83.52.26）：密码被拒
 - ephemeral B200（b200-5..8）：密码被拒
 
