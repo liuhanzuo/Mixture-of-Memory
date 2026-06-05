@@ -538,6 +538,40 @@ def _collect_mem_diag(model: torch.nn.Module) -> Dict[str, float]:
     }
 
 
+def _collect_xattn_diag(model: torch.nn.Module) -> Dict[str, float]:
+    """P8 memory cross-attention READ diagnostics for wandb (mirrors the
+    selector.py:1443 cache block of MemoryCrossAttentionRead).
+
+    Averages the per-layer cached scalars across all decoder layers that hold a
+    ``memory_xattn`` module:
+      - sink_mass: mean softmax mass on the learnable null/sink column. Rising
+        sink_mass on cold/irrelevant context == the model learned to "attend to
+        nothing" (the escape valve is working).
+      - gate_mean: mean per-head content gate (read magnitude).
+      - attn_entropy: mean entropy of the slot+sink softmax (high = smeared).
+    Returns an empty dict when no layer exposes memory_xattn (e.g. runs without
+    --use_memory_xattn), so non-P8 runs are unaffected and never error.
+    """
+    mem_layers = _mem_layers(model)
+    if not mem_layers:
+        return {}
+    sink_vals, gate_vals, ent_vals = [], [], []
+    for w in mem_layers:
+        mx = getattr(w, "memory_xattn", None)
+        if mx is None:
+            continue
+        sink_vals.append(float(getattr(mx, "_last_sink_mass", 0.0)))
+        gate_vals.append(float(getattr(mx, "_last_gate_mean", 0.0)))
+        ent_vals.append(float(getattr(mx, "_last_attn_entropy", 0.0)))
+    if not sink_vals:
+        return {}
+    return {
+        "memory/xattn_sink_mass": sum(sink_vals) / len(sink_vals),
+        "memory/xattn_gate_mean": sum(gate_vals) / len(gate_vals),
+        "memory/xattn_attn_entropy": sum(ent_vals) / len(ent_vals),
+    }
+
+
 def _install_score_hook(mem_layers):
     """Install a forward hook on the layer-0 selector to capture the
     grad-bearing softmax routing scores [B, N] from the next model forward.
@@ -1806,6 +1840,15 @@ def main() -> None:
                 current_n_ctx, n_dolmino, n_babilong, n_nonfinite,
                 steps_per_sec,
             )
+            _xattn_diag = _collect_xattn_diag(model)
+            if _xattn_diag:
+                logger.info(
+                    "[XATTN_DIAG step=%d] sink_mass=%.4f gate_mean=%.4f attn_entropy=%.4f",
+                    global_step,
+                    _xattn_diag["memory/xattn_sink_mass"],
+                    _xattn_diag["memory/xattn_gate_mean"],
+                    _xattn_diag["memory/xattn_attn_entropy"],
+                )
             if _WANDB_AVAILABLE and args.wandb_project and wandb.run:
                 _log_dict = {
                     "train/lm_loss": avg_lm,
@@ -1820,6 +1863,7 @@ def main() -> None:
                     "memory/top1_sim": _collect_top1_sim(model),
                 }
                 _log_dict.update(_collect_mem_diag(model))
+                _log_dict.update(_xattn_diag)
                 wandb.log(_log_dict, step=global_step)
 
         # Save checkpoint.
