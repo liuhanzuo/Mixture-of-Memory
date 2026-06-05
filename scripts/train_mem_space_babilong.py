@@ -553,6 +553,13 @@ def parse_args() -> argparse.Namespace:
                         "--load_balance_weight 0.0 alongside this.")
     p.add_argument("--loss_free_update_rate", type=float, default=0.001,
                    help="sign-update step size for the loss-free routing bias.")
+    # P10 (2026-06-06): straight-through Gumbel top-k. Adds Gumbel noise to the
+    # selection logits before top-k (training only). Default off → byte-identical
+    # to pre-P10.
+    p.add_argument("--use_st_gumbel_topk", action="store_true",
+                   help="enable ST-Gumbel top-k slot selection (P10).")
+    p.add_argument("--st_gumbel_temperature", type=float, default=1.0,
+                   help="scale on the Gumbel noise added to selection logits.")
     p.add_argument("--entropy_aux_weight", type=float, default=0.001)
     p.add_argument("--selector_temperature", type=float, default=1.0)
     p.add_argument("--key_repulsion_weight", type=float, default=0.01)
@@ -750,6 +757,8 @@ def build_model(args, device, dtype) -> torch.nn.Module:
         load_balance_weight=args.load_balance_weight,
         use_loss_free_balance=args.use_loss_free_balance,
         loss_free_update_rate=args.loss_free_update_rate,
+        use_st_gumbel_topk=args.use_st_gumbel_topk,
+        st_gumbel_temperature=args.st_gumbel_temperature,
         entropy_aux_weight=args.entropy_aux_weight,
         selector_temperature=args.selector_temperature,
         key_repulsion_weight=args.key_repulsion_weight,
@@ -1354,6 +1363,8 @@ def _save_adapter(model, args, step: int, final: bool = False) -> None:
             "load_balance_weight":     args.load_balance_weight,
             "use_loss_free_balance":   args.use_loss_free_balance,
             "loss_free_update_rate":   args.loss_free_update_rate,
+            "use_st_gumbel_topk":      args.use_st_gumbel_topk,
+            "st_gumbel_temperature":   args.st_gumbel_temperature,
             "entropy_aux_weight":      args.entropy_aux_weight,
             "selector_temperature":    args.selector_temperature,
             "key_repulsion_weight":    args.key_repulsion_weight,

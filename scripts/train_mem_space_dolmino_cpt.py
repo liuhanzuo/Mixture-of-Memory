@@ -765,6 +765,11 @@ def parse_args() -> argparse.Namespace:
     # enabled, set --load_balance_weight 0.0 (the two must not both be nonzero).
     p.add_argument("--use_loss_free_balance", action="store_true")
     p.add_argument("--loss_free_update_rate", type=float, default=0.001)
+    # P10 (arXiv ST-Gumbel-topk): inject Gumbel noise into the selection logits
+    # before top-k (training only) for exploration / reduced key over-smearing.
+    # Default off → selector byte-identical to pre-P10.
+    p.add_argument("--use_st_gumbel_topk", action="store_true")
+    p.add_argument("--st_gumbel_temperature", type=float, default=1.0)
     p.add_argument("--selector_temperature", type=float, default=20.0)
     p.add_argument("--key_repulsion_weight", type=float, default=0.05)
     p.add_argument("--key_repulsion_threshold", type=float, default=0.3)
@@ -956,6 +961,8 @@ def build_model(args, device, dtype) -> torch.nn.Module:
         entropy_aux_weight=args.entropy_aux_weight,
         use_loss_free_balance=args.use_loss_free_balance,
         loss_free_update_rate=args.loss_free_update_rate,
+        use_st_gumbel_topk=args.use_st_gumbel_topk,
+        st_gumbel_temperature=args.st_gumbel_temperature,
         selector_temperature=args.selector_temperature,
         key_repulsion_weight=args.key_repulsion_weight,
         key_repulsion_threshold=args.key_repulsion_threshold,
@@ -1470,6 +1477,8 @@ def _save_adapter(model, args, step: int, final: bool = False) -> None:
             "entropy_aux_weight": args.entropy_aux_weight,
             "use_loss_free_balance": args.use_loss_free_balance,
             "loss_free_update_rate": args.loss_free_update_rate,
+            "use_st_gumbel_topk": args.use_st_gumbel_topk,
+            "st_gumbel_temperature": args.st_gumbel_temperature,
             "selector_temperature": args.selector_temperature,
             "key_repulsion_weight": args.key_repulsion_weight,
             "key_repulsion_threshold": args.key_repulsion_threshold,

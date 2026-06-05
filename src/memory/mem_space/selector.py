@@ -97,6 +97,17 @@ class TopKSelector(nn.Module):
         self.loss_free_update_rate = 0.001
         self.register_buffer("routing_bias", torch.zeros(num_slots))
 
+        # P10 (2026-06-06) straight-through Gumbel top-k. When enabled (and only
+        # in training mode), Gumbel(0,1) noise is added to the SELECTION logits
+        # before torch.topk so which slots win the top-k becomes stochastic
+        # (exploration ↑, key over-smearing ↓). Mirrors the loss-free-balance
+        # convention: the noise affects ONLY the gradient-free index path, never
+        # the returned scores/ste_weights (computed from the noise-free logits),
+        # so the LM/task gradient is unperturbed. Disabled by default → selector
+        # is byte-identical to pre-P10 (no noise drawn, same code path).
+        self.use_st_gumbel_topk = False
+        self.st_gumbel_temperature = 1.0
+
         self.Q_sel = nn.Linear(d_model, selector_dim, bias=False)
         self.K_sel = nn.Linear(slot_dim, selector_dim, bias=False)
 
@@ -386,6 +397,33 @@ class TopKSelector(nn.Module):
             sel_scores = F.softmax(logits + self.routing_bias, dim=-1)  # [B, N]
         else:
             sel_scores = scores
+
+        # P10 (2026-06-06) straight-through Gumbel top-k. When enabled AND in
+        # training mode, draw i.i.d. Gumbel(0,1) noise g = -log(-log(U)),
+        # U~Uniform(0,1), shaped like the selection logits, and add
+        # `g * st_gumbel_temperature` to the SELECTION logits before topk
+        # (standard ST-Gumbel-topk convention: noise added to logits, scaled by
+        # the temperature; we do NOT divide the logits by the temperature). This
+        # makes WHICH slots win the top-k stochastic → better exploration / less
+        # key over-smearing. The branch is gated by `use_st_gumbel_topk and
+        # self.training`, so when the flag is OFF (default) — or at eval — it is
+        # never entered and `sel_scores` is exactly as before (byte-identical to
+        # pre-P10). Crucially this perturbs ONLY the selection (gradient-free
+        # index path); `scores`/`ste_weights` and the load-balance loss are
+        # computed from the ORIGINAL noise-free `logits` above and are untouched,
+        # mirroring the loss-free-balance bias convention. Softmax is monotonic
+        # so topk over softmax(noisy_logits) == topk over noisy_logits.
+        if self.use_st_gumbel_topk and self.training:
+            base_logits = (
+                logits + self.routing_bias
+                if self.use_loss_free_balance
+                else logits
+            )
+            u = torch.rand_like(base_logits)
+            gumbel = -torch.log(-torch.log(u + 1e-20) + 1e-20)
+            sel_scores = F.softmax(
+                base_logits + gumbel * self.st_gumbel_temperature, dim=-1
+            )
 
         # Hard top-k indices (no gradient through this op).
         _, idx = torch.topk(sel_scores, k=self.top_k, dim=-1, largest=True, sorted=False)

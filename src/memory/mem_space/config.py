@@ -98,6 +98,21 @@ class MemorySpaceConfig:
     # the same goal and should NOT both be non-zero simultaneously.
     use_loss_free_balance: bool = False
     loss_free_update_rate: float = 0.001
+    # P10 (2026-06-06): Straight-Through Gumbel top-k selection. When enabled
+    # (and only in training mode), i.i.d. Gumbel(0,1) noise is added to the
+    # SELECTION logits before torch.topk so the set of slots that win the top-k
+    # is stochastic — improving exploration and reducing key over-smearing.
+    # Mirrors the loss-free-balance convention: the noise touches ONLY which
+    # slots get selected (the gradient-free index path), NEVER the returned
+    # `scores`/`ste_weights` (which stay computed from the original noise-free
+    # logits), so the LM/task gradient is unperturbed. At eval (not self.training)
+    # no noise is added regardless of the flag. When False (default) the selector
+    # is byte-identical to pre-P10. See status/MEMORY_PROTOCOL_PLAN.md [P10].
+    #   use_st_gumbel_topk: master switch (default False = back-compat).
+    #   st_gumbel_temperature: scales the Gumbel noise (g * temperature) before
+    #     it is added to the selection logits. 1.0 = standard ST-Gumbel.
+    use_st_gumbel_topk: bool = False
+    st_gumbel_temperature: float = 1.0
     entropy_aux_weight: float = 0.0
     selector_temperature: float = 1.0
     key_repulsion_weight: float = 0.01

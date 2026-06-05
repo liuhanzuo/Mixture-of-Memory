@@ -388,6 +388,15 @@ class MemorySpaceLayer(nn.Module):
         self.selector.loss_free_update_rate = getattr(
             config, "loss_free_update_rate", 0.001
         )
+        # P10 (2026-06-06): straight-through Gumbel top-k. When enabled, Gumbel
+        # noise is added to the selection logits (training mode only) so which
+        # slots win top-k is stochastic. Default off → byte-identical to pre-P10.
+        self.selector.use_st_gumbel_topk = getattr(
+            config, "use_st_gumbel_topk", False
+        )
+        self.selector.st_gumbel_temperature = getattr(
+            config, "st_gumbel_temperature", 1.0
+        )
 
         # Learnable slot↔hidden projections. We do NOT take the slot_dim==d_model
         # shortcut (Identity) because that path has zero trainable capacity and was
