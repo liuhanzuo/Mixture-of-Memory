@@ -384,6 +384,15 @@ def _mem_space_params(model: torch.nn.Module) -> List[torch.nn.Parameter]:
             for p in dr.parameters():
                 if id(p) not in seen:
                     params.append(p); seen.add(id(p))
+        # P8 fix (2026-06-05): the dedicated cross-attn READ module (q/k/v/out_proj,
+        # per-head gate, and the null/sink slot from 1f46b4d) was never collected,
+        # so _freeze_backbone left the whole read path + zero-init null_value frozen
+        # -> the sink could never learn and the random-init read injected pure noise.
+        mx = getattr(wrapper, "memory_xattn", None)
+        if mx is not None:
+            for p in mx.parameters():
+                if id(p) not in seen:
+                    params.append(p); seen.add(id(p))
         # Writeback-gate params (2026-06-04). Previously the dual_gate
         # gate_proj_new/gate_proj_mem/gate_bias were NOT collected here, so with
         # --use_dual_gate the gate projections never entered the optimizer (frozen
@@ -1362,7 +1371,7 @@ def _save_adapter(model, args, step: int, final: bool = False) -> None:
         "gate_proj_new", "gate_proj_mem", "gate_bias",
         "lr_V_new", "lr_V_mem", "lr_U", "lr_gate_bias",
         "diag_a_in", "diag_c_in", "diag_a_f", "diag_c_f", "diag_b_in", "diag_b_f",
-        "l3_pool", "l2_compressor",
+        "l3_pool", "l2_compressor", "memory_xattn",
     )
 
     is_fsdp = _FSDP_AVAILABLE and FSDP is not None and (
