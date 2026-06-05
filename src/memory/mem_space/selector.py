@@ -1340,11 +1340,27 @@ class MemoryCrossAttentionRead(nn.Module):
         _gate_bias = math.log(gate_init / (1.0 - gate_init))
         nn.init.constant_(self.gate_proj.bias, _gate_bias)
 
+        # Learnable null / sink slot (one per kv-head), shaped
+        # [1, n_kv_heads, 1, head_dim]. Concatenated as an extra column in the
+        # read softmax so the attention can "attend to nothing":
+        #   * null_key  is small-random so it competes in the softmax from step 0.
+        #   * null_value starts at ZERO so routing mass to the sink contributes
+        #     ~0 to the read — the escape valve for cold/irrelevant slots. It is
+        #     still an nn.Parameter (learnable), so it can move during training;
+        #     it just begins neutral ("attend to nothing" == "add nothing").
+        # This is deliberately NOT P2's dead zero-init problem: the real slots'
+        # q/k/v/out_proj stay small-random so gradient keeps flowing through
+        # memory; only the SINK starts at zero.
+        self.null_key = nn.Parameter(torch.empty(1, n_kv_heads, 1, self.head_dim))
+        nn.init.normal_(self.null_key, std=0.02)
+        self.null_value = nn.Parameter(torch.zeros(1, n_kv_heads, 1, self.head_dim))
+
         self.attn_dropout = nn.Dropout(dropout) if dropout > 0 else nn.Identity()
 
         # Diagnostics (refreshed each read; layer reads these for logging).
         self._last_gate_mean: float = gate_init
         self._last_attn_entropy: float = 0.0
+        self._last_sink_mass: float = 0.0
 
     def _repeat_kv(self, x: torch.Tensor) -> torch.Tensor:
         """Repeat K/V heads to match Q heads for GQA. x: [B, n_kv_heads, S, D]."""
@@ -1389,10 +1405,21 @@ class MemoryCrossAttentionRead(nn.Module):
         K = self._repeat_kv(K)  # [B,H,N,D]
         V = self._repeat_kv(V)  # [B,H,N,D]
 
-        # Independent softmax over the N slots (its OWN softmax — this is the
-        # whole point of P8; slots no longer share the live-token softmax).
+        # Append the learnable null / sink column along the slot dim so the
+        # softmax can "attend to nothing". Repeat the per-kv-head sink to query
+        # heads via the GQA helper, then expand across the batch. At init
+        # null_value is zero, so sink mass contributes ~0 to the read.
+        null_k = self._repeat_kv(self.null_key.to(K.dtype))   # [1,H,1,D]
+        null_v = self._repeat_kv(self.null_value.to(V.dtype))  # [1,H,1,D]
+        null_k = null_k.expand(B, self.n_heads, 1, self.head_dim)
+        null_v = null_v.expand(B, self.n_heads, 1, self.head_dim)
+        K = torch.cat([K, null_k], dim=2)  # [B,H,N+1,D]
+        V = torch.cat([V, null_v], dim=2)  # [B,H,N+1,D]
+
+        # Independent softmax over the N slots + sink (its OWN softmax — this is
+        # the whole point of P8; slots no longer share the live-token softmax).
         scale = self.head_dim ** -0.5
-        attn_logits = torch.matmul(Q, K.transpose(-2, -1)) * scale  # [B,H,T,N]
+        attn_logits = torch.matmul(Q, K.transpose(-2, -1)) * scale  # [B,H,T,N+1]
         attn_weights = F.softmax(attn_logits, dim=-1, dtype=torch.float32).to(V.dtype)
         attn_weights = self.attn_dropout(attn_weights)
         attn_output = torch.matmul(attn_weights, V)  # [B,H,T,D]
@@ -1417,5 +1444,9 @@ class MemoryCrossAttentionRead(nn.Module):
             self._last_gate_mean = gate.float().mean().item()
             _p = attn_weights.float().clamp(min=1e-8)
             self._last_attn_entropy = (-(_p * _p.log()).sum(dim=-1)).mean().item()
+            # Mean softmax mass landing on the sink (last) column — the escape
+            # valve indicator. High sink mass == read is mostly "attending to
+            # nothing" (cold/irrelevant slots self-normalise away).
+            self._last_sink_mass = attn_weights[..., -1].float().mean().item()
 
         return read_out
