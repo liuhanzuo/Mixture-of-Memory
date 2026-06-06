@@ -38,6 +38,20 @@ export NCCL_IB_DISABLE="${NCCL_IB_DISABLE:-0}"
 export NCCL_IB_HCA="${NCCL_IB_HCA:-mlx5_bond_1,mlx5_bond_2,mlx5_bond_3,mlx5_bond_4,mlx5_bond_5,mlx5_bond_6,mlx5_bond_7,mlx5_bond_8}"
 export NCCL_SOCKET_IFNAME="${NCCL_SOCKET_IFNAME:-bond1}"
 export NCCL_IB_GID_INDEX="${NCCL_IB_GID_INDEX:-3}"
+# Taiji nodes pre-bake these RoCE QoS settings in the login profile; a non-login
+# (nohup/tmux) shell does NOT inherit them -> RoCE QP connect fails. Export here so
+# the script is self-contained regardless of how it's launched.
+export NCCL_IB_SL="${NCCL_IB_SL:-3}"
+export NCCL_IB_TC="${NCCL_IB_TC:-160}"
+export NCCL_IB_TIMEOUT="${NCCL_IB_TIMEOUT:-22}"
+export GLOO_SOCKET_IFNAME="${GLOO_SOCKET_IFNAME:-bond1}"
+# DMABUF GPU-direct MR registration fails on these H800 nodes' kernel/driver combo
+# ("ibv_reg_mr_iova2 failed with Invalid argument" -> ncclSystemError at first
+# DDP collective). Disabling DMABUF *and* GPUDirect-RDMA (GDR_LEVEL=0) falls back
+# to classic host-staged ib_reg_mr so RoCE transport works; verified the 16-rank
+# init otherwise succeeds (world_size=16, weights loaded on all ranks).
+export NCCL_DMABUF_ENABLE="${NCCL_DMABUF_ENABLE:-0}"
+export NCCL_NET_GDR_LEVEL="${NCCL_NET_GDR_LEVEL:-0}"
 export NCCL_DEBUG="${NCCL_DEBUG:-INFO}"
 
 export WANDB_API_KEY="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"
