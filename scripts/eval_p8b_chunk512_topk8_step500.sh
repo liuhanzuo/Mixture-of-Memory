@@ -15,6 +15,12 @@ PROJECT_ROOT="${PROJECT_ROOT:-/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mix
 cd "$PROJECT_ROOT"
 export PYTHONUNBUFFERED=1
 export PYTHONPATH="$PROJECT_ROOT:$PROJECT_ROOT/third_party/babilong-pkg:${PYTHONPATH:-}"
+# diskB nodes have NO internet; load_dataset must read the pre-warmed local Arrow
+# cache (0k-32k all warmed 2026-06-06) instead of hanging on huggingface.co HEAD.
+export HF_HOME="$PROJECT_ROOT/.hf_cache"
+export HF_DATASETS_CACHE="$PROJECT_ROOT/.hf_cache/datasets"
+export HF_HUB_OFFLINE=1
+export HF_DATASETS_OFFLINE=1
 PYBIN="${PYTHON_BIN:-$PROJECT_ROOT/.venv/bin/python}"
 MODEL=models/Meta-Llama-3-8B
 CKPT_DIR=outputs/mem_space_p8b_chunk512_topk8_diskB
