@@ -159,24 +159,80 @@
 - ✅ **BABILong DONE（substring-acc, limit100）**：
   - qa1 0k-32k = 55/20/27/14/14/10/9
   - qa2 0k-16k = 28/15/18/18/11/10
-  - qa5 0k-8k = 53/44/36/31/27（16k/32k 仍 0 样本未收齐，但趋势明确）
+  - qa5 0k-32k = 53/45/36/31/27/24/2（2026-06-05 07:53 全长度收齐：16k=24 仍守住，32k=2 塌陷疑似截断）；qa1 0k-32k=55/20/27/14/14/10/7；qa2 0k-32k=28/16/18/18/11/10/5
 - 🔑 **GATE 结论：P7+P9 ≈ 持平 R3-2 routeaux，未碾压。** qa5 对比 routeaux(70/37/36/37/26)：P7P9=53/44/36/31/27 —— 1k 略高、2k 持平、4k 略低、8k 持平。**route_aux + LFB + 4 register slots 没有比单纯 route_aux 带来额外增益**（register slots 在此 setup 无明显作用）。但 qa1/qa5 全长度稳在 noise floor 之上（≥9-55%），未塌缩，确认 routing supervision 本身有效。
 - → **判据"显著优于 routeaux"未满足**。结论：routing 已不是瓶颈（P7 证明 routing 可学且稳定）。**真正瓶颈应是注入/读回稀释（researcher P2：memory 仅占 ~0.2% attn mass，且 LongBench F1=2.94 vs base 13.95 印证读回严重丢信息）→ 直接进 [P8] 专用 memory cross-attn 读路径**（plan 既定下一步）。
 
-### [P8] 专用 memory cross-attention 读路径（独立 softmax）— **状态: PENDING, auto_launch: false（等 P7+P9 结果）**
+### [P8] 专用 memory cross-attention 读路径（独立 softmax）— **状态: NULL-SINK VALIDATED + 压缩阶梯完成（2026-06-05 23:30）。最佳臂 = chunk512 step500。**
+- **压缩阶梯 step500（公平同步对比，qa1/qa2/qa5 × 0k-32k，离线 BABILong limit=100）= chunk512 完胜**：
+  - chunk128: qa1 0k34 1k42 32k22；qa2 0k49 32k10；qa5 0k74 1k55 32k37
+  - chunk256: qa1 0k98 1k35 32k14；qa2 0k44 32k18；qa5 0k78 1k76 32k36
+  - chunk512: qa1 0k96 1k47 2k52 32k29；qa2 0k49 1k49 32k18；**qa5 0k85 1k76 2k77 4k54 8k48 16k45 32k41**（全长度最强）
+  - chunk1024: qa1 0k94 1k87 **2k7(异常孤立 trough，re-score 持续，非瞬态)** 32k15；qa5 0k78 1k47 16k42 32k43
+  - **裁决：chunk512 step500 = P8 最终交付 ckpt**（qa5 长程 45-54% 显著优于其余三臂；qa1 0k 96 与 chunk256 持平且长程更稳）。chunk1024 0k/1k 虽高但 2k 异常崩 + 长程不及 512。
+- **压缩阶梯 step1000（验证 researcher 因果链「chunk 越大越稳，崩溃=快照撞 loss-spike×注入频率」）= 完全坐实**：
+  - chunk128 step1000: 全 0-5%（token 重复死循环乱码，撞 step895-1010 loss spike，2× 注入频率放大）
+  - chunk256 step1000: qa1/qa2 ~14、qa5 ~30（部分退化，连贯续写非乱码）
+  - chunk512 step1000: qa1 1k67 2k54 16k15；qa5 1k88 2k59 8k25 → **健康未崩**
+  - chunk1024 step1000: qa1 1k86 2k63 16k20；qa5 2k71 8k48 16k32 → **健康未崩**
+  - **结论锁定**：注入频率 = seq_len/chunk_size，chunk 越小注入越频繁 → spike 期过量注入累积越狠 → 越偏 LM 崩坏。大 chunk（512/1024，total=5000 步，step1000 处早期谷底）安然。**最终模型一律取早 ckpt（step500），且优选大 chunk 臂。**
+- **v1 FAILED/REGRESSION（2026-06-05 11:35）**：train healthy（step2000 lm~2.22）但离线 BABILong 全面塌方：P8 qa5 0k-8k=3/15/17/0/3 vs P7P9 53/45/36/31/27；qa1 0k=11 vs 55；qa2 0k=0 vs 28。**关键诊断：0k（整样本入窗、memory 应无关）也崩** → 专用 xattn 读路径在**所有 32 层无差别注入**且 read 无 cold/短程跳过 guard（layer.py:1330 直加不乘 inject_gate g），独立 softmax 始终对 slots 归一化（无 null 选项）→ 即使 slot 为冷噪声也强行读入，逐层累积破坏冻结 backbone。subagent general-purpose-25 根因确认，最小修复 = null/sink slot。commit 1f46b4d(null/sink)+c69cd8d(trainer collect+save memory_xattn)。
+- **v1 FAILED/REGRESSION（2026-06-05 11:35）**：train healthy（step2000 lm~2.22）但离线 BABILong 全面塌方：P8 qa5 0k-8k=3/15/17/0/3 vs P7P9 53/45/36/31/27；qa1 0k=11 vs 55；qa2 0k=0 vs 28。**关键诊断：0k（整样本入窗、memory 应无关）也崩** → 专用 xattn 读路径在**所有 32 层无差别注入**且 read 无 cold/短程跳过 guard（layer.py:1330 直加不乘 inject_gate g），独立 softmax 始终对 slots 归一化（无 null 选项）→ 即使 slot 为冷噪声也强行读入，逐层累积破坏冻结 backbone。subagent general-purpose-25 根因确认，最小修复 = null/sink slot。commit 1f46b4d(null/sink)+c69cd8d(trainer collect+save memory_xattn)。
+- **v2 NULL-SINK 修复 step500 eval（2026-06-05 18:12 完成，babilong_results/perdoc_chunk128_p8_nullsink_step500/）= 修复成功**：qa1 0k-32k=34/42/29/26/21/21/22；qa2=49/21/11/16/14/11/10；qa5=74/55/54/42/36/38/37。**0k-collapse 完全消除**（qa5 0k 3→74，qa2 0k 0→49，qa1 0k 11→34），且 qa2/qa5 0k **超过 P7P9**（49 vs 28、74 vs 53）。null-sink 让 read 路径可学到「冷 slot 不读」。✅
+- **step1000 eval（2026-06-05 19:32 短长度完成，babilong_results/perdoc_chunk128_p8_nullsink_step1000/）= 臂内过训练拐点坐实**：qa1 0k-4k=0/1/0/1；qa2=1/0/0/0；qa5=0/0/0/0。**对比 step500（qa5 0k=74→step1000=0；qa2 0k=49→1；qa1 0k=34→0）全面塌方到 ~0%**。⚠️ **失败形态与 chunk256 不同**：chunk256 step1000 是"连贯续写 haystack 原文"（指令遵循丢失但语言正常），**chunk128 step1000 是 LM 本身退化成 token 重复死循环**（实测输出 'The the the the the the the is...'）——属 CODEBUDDY.md PPL>1000「模型不会说话了」档。**机制（推断，非铁证）**：训练侧诊断显示 inject_gate 全程稳 0.12、slot_delta 无爆炸、teacher-forcing lm 健康(~3.3)，但 per_tok_logit_std 长期偏高(4-5)→ adapter 后期把 backbone logit 分布推尖 → greedy(无 rep penalty, max_new=20) 下陷入 "the" 死循环；**0k 也崩说明与 memory 检索无关，是 adapter 污染了 backbone 自由生成稳定性**。lm 全程健康不矛盾——lm=teacher-forcing 续写 PPL，不衡量自由生成稳定性/指令遵循。**结论：(1) null-sink 是正确的代码修复（step500 已证）；(2) 最终模型必须用 step≈500 早 ckpt，绝不用末期 ckpt；(3) ALL 4 阶梯臂同理过训练，跑完只为拿 lm/压缩曲线，最终模型一律取早 ckpt。** **待查**：两种退化形态差异（chunk 越小注入越频繁→是否更偏 LM 崩坏），已记 PENDING 派 researcher。wave2（8k/16k/32k）评测进行中（GPU5-7）。
+- 借 YOCO(2405.05254)/Memorizing Transformers(2203.08913)/Infini-attn(2404.07143)。confidence **high**，medium 改。
+- 借 YOCO(2405.05254)/Memorizing Transformers(2203.08913)/Infini-attn(2404.07143)。confidence **high**，medium 改。
 - 借 YOCO(2405.05254)/Memorizing Transformers(2203.08913)/Infini-attn(2404.07143)。confidence **high**，medium 改。
 - 给 slots 独立 cross-attn 层（独立 softmax），不再 prepend 进 live-token KV → 治 ~0.2% mass 稀释。per-head content-dependent gate + 较大 init。隔离在 `--use_memory_xattn`。**不修这个，P7 路由修好也无梯度可学。**
+- **实现（subagent general-purpose-24, commit 5144286）**：新 `MemoryCrossAttentionRead`（独立 softmax + GQA 32q/8kv + per-head content gate `sigmoid(gate_proj)` bias=logit(0.4) + out_proj small-random 非 zero，从 step0 active 有梯度）。与 P2 `--use_decoupled_read`(v15, zero-init out_proj, g≈0.12 近死) 分离为独立 flag。launch `scripts/launch_mem_space_p8.sh`，run `mem_space_perdoc_chunk128_p8`，旋钮与 p7p9 一致仅多 `--use_memory_xattn --memory_xattn_gate_init 0.4` → 干净隔离读路径。eval off，离线 BABILong 判据。
+- **早期健康（step25）**：lm 6.95→4.84→3.06（step5 spike 仅 lr warmup，非 xattn gate；无需降 gate_init）。routing 健康 top1_sim=0.43 topk_mass=0.83 uniq_sel=16 usage_cov=0.98。✅ smoke 3/3 pass，legacy smoke 6/6 pass（flag off byte-for-byte）。
+- **判据**：step2000 完成 → 离线 BABILong 0k-32k 对比 P7P9 baseline，看 memory xattn 读路径是否解锁 retrieval（gate 显著优于 P7P9）。
 
 ### [P9] always-on register slots — **状态: RUNNING（与 P7 同 arm，2026-06-05 01:37）**
 - 借 ViT Need Registers(2309.16588)。confidence **high**，**无需新代码**——`--num_global_slots` 已存在。已在 P7 训练 arm 上加 `--num_global_slots 4`（run `mem_space_perdoc_chunk128_p7p9`）。判据随 P7 一同 eval。
 
-### [P10] key_repulsion 1.0→0.05 + ST-Gumbel top-k — **状态: PENDING, auto_launch: false** — confidence medium，tiny。当前 key_repulsion=1.0（20× toy）可能 over-smear keys。
-### [P11] delta-rule + normalized writeback — **状态: PENDING** — confidence medium，medium 改。写残差 + 归一化 readout magnitude 使其可与 local attn 比较再 gate。
+### [P10] key_repulsion 1.0→0.05 + ST-Gumbel top-k — **状态: DONE — REJECTED（2026-06-07 03:20 eval 评完，劣于 baseline）**。step500 BABILong：qa5 0k-32k=74/68/36/24/15/21/14，全面低于 top_k16 基线（85/76/77/54/48/45/41）。ST-Gumbel 硬路由把 eval top1_sim 推到 1.0 但 retrieval 反而退化（过度自信、选错 slot 无法纠正）。key_repulsion 0.05 未带来增益。**裁决：REJECTED，硬路由方向放弃。**
+- **早期诊断健康**：step16 top1_sim=0.29、**topk_mass=0.75（ST-Gumbel 让 routing mass 显著更集中，vs 旧 run 0.28-0.42）**、usage_cov 0.99、usage_var 9e-5。chunk512 配置（save_interval=500，total 5000，eval off）。判据同 P8 阶梯：step500 ckpt 离线 BABILong qa1/qa2/qa5 × 0k-32k vs chunk512 step500 baseline。
+- **代码完成（commit a937dab，coder general-purpose-36）**：新增 optional ST-Gumbel top-k 选择，flag `--use_st_gumbel_topk`(store_true) + `--st_gumbel_temperature`(float,default 1.0)，default OFF byte-inert。selector.py forward 新分支（`if use_st_gumbel_topk and self.training`）：给 selection logits 加 Gumbel 噪声 `g=-log(-log(U))` × temp，**仅影响 topk 选择路径**，返回的 scores/ste_weights/load-balance loss 仍用 noise-free logits。eval 不加噪。验证：import OK；pytest tests/test_mem_space_smoke.py 6 passed；flag-off byte-identical baseline、flag-on train 选择随机但 scores 不变、flag-on eval = flag-off。两个 trainer 都接好。
+- **launch 待办**：在 P8 最优底座（chunk512 配置）上加 `--key_repulsion_weight 0.05 --use_st_gumbel_topk`，做 ablation 对照 chunk512 step500 baseline。需用户 go-ahead（auto_launch: false）。
+### [P11] delta-rule + normalized writeback — **状态: DONE — ⭐新最佳臂（2026-06-07 03:20 eval 评完，超 top_k16 baseline）**。step500 BABILong：qa5 0k-8k=82/86/83/64/50 显著超 baseline（85/76/77/54/48），qa1/qa2 中长度持平或更好（qa2_32k=35 vs base 18）。**delta-rule 写残差 + 归一化 readout 提升长上下文检索保持。裁决：ADOPTED 为新基线配置，后续臂在此底座上叠加。** （32k qa5 cell 评测时仍在 .196 收尾，不影响裁决。）原 RUNNING 记录：（2026-06-06 10:49 起跑，远程 .196 8×H20，run mem_space_p11_chunk512_deltarule_normreadout，commit 9a9e3d0）— confidence medium，medium 改。写残差 + 归一化 readout magnitude 使其可与 local attn 比较再 gate。
+- **代码完成（commit 9a9e3d0，coder general-purpose-37，5 files +101/-2，author LiuHanzuo）**：一组 flag 全 default OFF byte-inert：`--use_delta_rule_writeback`、`--normalize_readout`、`--readout_norm_scale`(default 1.0)。
+  - **delta-rule**：当前默认 writeback 是 dual_gate（LM2 双独立门 `g_in·new + g_forget·old`，非残差）；flag-on 改为残差形式 `old + g_in·(new−old)`（forget 绑定为 1−g_in，忽略独立 g_forget），train+eval 都生效（改的是 stored state）。memory_bank.write() 加 `delta_rule` kwarg，layer.py 5 个 gated write 调用点都传入。legacy single-gate EMA 本就是残差，未动。
+  - **normalize_readout**：把现有「仅缩小」的 M_sel_hidden clamp 换成 L2-normalize+rescale 到 `h_norm_ref × readout_norm_scale`（可放大也可缩小），让 gate 看到与 local attn 同尺度的 memory 信号。用 hidden_states.detach() 做参考，无额外梯度路径。train+eval 都生效。
+  - 验证：import OK；pytest test_mem_space_smoke 6 passed；py_compile 5 文件 OK；flag-off forward+slots byte-identical baseline；delta-rule on slot 变化 max 4.3e-1；normalize_readout on forward 变化 + readout_norm_scale 有效。两 trainer 都接好。
+- **launch 待办**：在 P8 最优底座（chunk512）上加 `--use_delta_rule_writeback`（±`--normalize_readout`）做 ablation 对照 chunk512 step500 baseline。需用户 go-ahead（auto_launch: false）。
 ### [P12] 重审 recon + live-token masking/bottleneck — **状态: PENDING** — confidence low-medium。ICAE(2307.06945)/Gist(2304.08467) 证 recon 只在 LM 被迫只读 slots 时有效；P1 失败疑因无 bottleneck。
 ### [P13] surprise-gated write（写强度∝预测误差）— **状态: PENDING** — confidence low。借 Titans(2501.00663)，P7/P8 解锁 retrieval 后再做。
 
 ### [R3-5] 效果归因（若 eval 仍差，查根因，用户要求"看一看到底因为什么"）— **状态: PENDING**
 - 若 R3-1/R3-2 ≥4k 仍塌到 noise floor：用 routing 诊断三件套（topk_mass/usage_var/chunk_idx_jaccard）+ inject_gate 轨迹判断是 routing collapse 还是注入稀释主导，对照 researcher P2 根因（注入稀释 ~0.2% attn mass），决定走 P3(key/value 分离) 还是专用 memory cross-attn 读路径。
+
+---
+
+## Follow-up work（2026-06-05 用户提出，3 条思路）
+
+> 背景：当前并行的 P8-nullsink 阶梯（chunk128/256/512/1024 四臂，同起点 base，唯一变量 chunk_size）是干净 ablation，**先跑着不动**。下面三条是它之后的方向，F1→F2→F3 有先后依赖。
+
+### [F1] 系统的阶梯式（warm-start 链）训练 128→256→512→1024 — **状态: PENDING, auto_launch: false（依赖当前 4 臂 ablation 收尾 + 用户确认起跑）**
+- **动机**：与当前「同起点并行对照」互补。这里是**渐进式课程**——先在 chunk128 上把 write-read protocol 训稳，再用 `--init_checkpoint` 把上一级 adapter 暖启到下一级，逐级抬高压缩率（128→256→512→1024）。预期收敛更快、最终大 chunk 点更强（带着小 chunk 学到的寻址先验）。
+- **实现**：训练脚本已支持 `--init_checkpoint`（train_mem_space_dolmino_cpt.py:1009，strict=False 加载，自动剥 `module.` 前缀）。链式：阶段 n 的 `--init_checkpoint` = 阶段 n-1 的 `outputs/<stage_{n-1}>/mem_space_adapter.pt`。其余超参与当前 nullsink 阶梯一致（num_slots128/top_k16/selector_dim128/temp40/eff-batch32/eval off）。
+- **算力**：用 **2 个共享 IB 网口的节点 = 16 卡多机 DDP** 跑每一级，加速串行链。
+  - 网口用 `ibstat` 查 IB 设备名/状态，torchrun 多机：`--nnodes 2 --rdzv_backend c10d --rdzv_endpoint <master_ip>:29500`，设 `NCCL_IB_HCA=<ibstat设备>`、`NCCL_SOCKET_IFNAME=<网卡>`。
+  - 候选节点对：盘B 共享 FS 的 `.76 + .249`（都有 .venv 可训、同 ceph、Llama 已就位）最适合做 16 卡对，省去跨盘 rsync。需先 `ibstat` 确认两机 IB 互通。
+- **判据**：每级跑完离线 BABILong（n=100，同口径），看 warm-start 链的最终 1024 点 vs 当前并行 ablation 的 1024 点谁强 → 验证「课程是否有效」。
+- **依赖**：当前 4 臂 ablation 至少 1024 臂出 ckpt（做对照基线）后启动；启动前需用户确认（属新方向，非 ablation 延伸）。
+
+### [F2] 增大 #chunk（更长文本）— **状态: PENDING，接在 F1 之后**
+- **动机**：当前每样本 chunk 数太少（4 个量级太粗），memory 的「多 chunk 写入→保持→跨 chunk 读回」能力没被真正压力测试。需要专门从 Dolmino 里挑**很长的文本**，让单样本 chunk 数显著增大。
+- **实现待定**：(1) 写一个 filter 扫 `MemLong/data/processed/dolmino_per_doc`，按 token 长度筛 top-N 长文档建一个 long-doc 子集；(2) 训练时该子集单样本能产出几十~上百 chunk，真正考验 slot bank 的容量/覆盖。
+- **判据**：在长文档子集上，随 #chunk 增大 retrieval（usage_cov / chunk_idx_jaccard / 离线 BABILong 长上下文段 16k/32k）是否保持。
+- **依赖**：接在 F1（阶梯式训练打通）之后，用 F1 最优配置 + 长文档数据。
+
+### [F3] 改 training objective：加入简化 SWA（sliding-window attention）— **状态: PENDING**
+- **动机**：改训练目标，让生成不只依赖 slots。**我们的 SWA 更简单**：每个 chunk 在生成时可以看到「**前一个 chunk + slots**」（即 window=1 chunk 的局部注意力 + memory 读路径并存），而不是标准 SWA 的固定 token 窗。
+- **实现待定**：在 forward 里给当前 chunk 的 query 额外开一条对「前一 chunk hidden states」的注意力（KV = prev_chunk），与现有 slot 读路径融合（gate 或 concat）。需 coder 设计；注意不要破坏冻结 backbone（参考 P8 教训：read 路径要有 cold/gate guard，不能无差别全层注入）。
+- **判据**：加 SWA 后 lm 与 retrieval 是否同时改善；对照不加 SWA 的同配置。
+- **依赖**：独立改动，可在 F1/F2 之后或并行（不同节点）做；需用户确认（涉及架构）。
 
 ---
 
