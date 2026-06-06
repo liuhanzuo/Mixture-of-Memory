@@ -42,6 +42,14 @@ export NCCL_DEBUG="${NCCL_DEBUG:-INFO}"
 
 export WANDB_API_KEY="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"
 export WANDB_MODE="offline"
+# Proxy for babilong prefetch (HEAD check to huggingface.co); H800/diskB nodes need it.
+export http_proxy="http://hy-proxy.woa.com:3128"
+export https_proxy="http://hy-proxy.woa.com:3128"
+export all_proxy="http://hy-proxy.woa.com:3128"
+export no_proxy="mirrors.cloud.tencent.com,tlinux-mirror.tencent-cloud.com,localhost,127.0.0.1,.oa.com,.woa.com,.local"
+# Persist babilong HF cache so subsequent stages hit cache instead of re-downloading.
+export HF_HOME="$PROJECT_ROOT/.hf_cache"
+export HF_DATASETS_CACHE="$PROJECT_ROOT/.hf_cache/datasets"
 export PYTHONPATH="$PROJECT_ROOT/third_party/babilong-pkg:$PROJECT_ROOT:${PYTHONPATH:-}"
 export PYTHONUNBUFFERED=1
 
