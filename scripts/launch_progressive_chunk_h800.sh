@@ -75,6 +75,16 @@ export no_proxy="mirrors.cloud.tencent.com,tlinux-mirror.tencent-cloud.com,local
 # Persist babilong HF cache so subsequent stages hit cache instead of re-downloading.
 export HF_HOME="$PROJECT_ROOT/.hf_cache"
 export HF_DATASETS_CACHE="$PROJECT_ROOT/.hf_cache/datasets"
+# FULLY OFFLINE babilong (2026-06-06): the cache is pre-warmed by a standalone
+# process (all of 0k/1k/2k/4k x qa1/qa2/qa5 verified loadable offline). Forcing
+# offline mode makes every rank's load_dataset read straight from the local Arrow
+# cache instead of doing the slow online builder-resolve / 404+429 storm via the
+# woa proxy. That online path was what hung rank0 for >480s (holding the GIL),
+# which deadlocked the 16-rank barrier and tripped the NCCL monitor. With the
+# cache warm, offline mode is both faster AND removes the deadlock vector.
+# If a future run needs a NEW length not in cache, warm it standalone first.
+export HF_HUB_OFFLINE="${HF_HUB_OFFLINE:-1}"
+export HF_DATASETS_OFFLINE="${HF_DATASETS_OFFLINE:-1}"
 export PYTHONPATH="$PROJECT_ROOT/third_party/babilong-pkg:$PROJECT_ROOT:${PYTHONPATH:-}"
 export PYTHONUNBUFFERED=1
 
