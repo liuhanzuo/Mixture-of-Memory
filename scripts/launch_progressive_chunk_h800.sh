@@ -53,6 +53,17 @@ export GLOO_SOCKET_IFNAME="${GLOO_SOCKET_IFNAME:-bond1}"
 export NCCL_DMABUF_ENABLE="${NCCL_DMABUF_ENABLE:-0}"
 export NCCL_NET_GDR_LEVEL="${NCCL_NET_GDR_LEVEL:-0}"
 export NCCL_DEBUG="${NCCL_DEBUG:-INFO}"
+# CRITICAL (2026-06-06): the run died at "ProcessGroupNCCL's watchdog got stuck
+# for 480 seconds ... only active collectives: 0". This is NOT a collective
+# timeout (init_process_group already uses a 2h timeout); it's the SEPARATE NCCL
+# *heartbeat monitor* thread. During rank0's BABILong prefetch (load_dataset does
+# a slow online builder-resolve / 404 storm via the woa proxy, >480s) rank0 holds
+# the GIL so the watchdog thread can't heartbeat -> the monitor false-positive
+# SIGABRTs all 16 ranks while ranks 1-15 sit at dist.barrier(). Disable the
+# monitor (its own error message recommends this) and extend the heartbeat
+# timeout so the slow prefetch never trips it.
+export TORCH_NCCL_ENABLE_MONITORING="${TORCH_NCCL_ENABLE_MONITORING:-0}"
+export TORCH_NCCL_HEARTBEAT_TIMEOUT_SEC="${TORCH_NCCL_HEARTBEAT_TIMEOUT_SEC:-3600}"
 
 export WANDB_API_KEY="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"
 export WANDB_MODE="offline"
