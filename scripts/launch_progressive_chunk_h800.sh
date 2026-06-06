@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Progressive chunk_size warm-start chain (H800, single node, 8-GPU DDP).
+# Progressive chunk_size warm-start chain (H800, MULTI-NODE 2x8 = 16-GPU DDP over IB).
 #
 # Idea (user intent): grow chunk_size in stages so the memory architecture first
 # learns to compress short contexts, then is progressively challenged with longer
@@ -12,13 +12,33 @@
 #
 # Hyperparams mirror launch_mem_space_p8_nullsink_chunk512_diskB.sh EXACTLY; only
 # chunk_size, output_dir, total_steps, save_interval, init_checkpoint differ.
-#   - 8 GPUs x bs1 x ga4 = eff batch 32 (matches all sibling arms)
+#   - 2 nodes x 8 GPUs x bs1 x ga2 = eff batch 32 (matches all sibling 8x1x4 arms)
 #   - total_steps 800 / save_interval 200 / eval_interval 0 (inline eval -> NCCL crash)
+#
+# MULTI-NODE USAGE (run on BOTH nodes, only NODE_RANK differs):
+#   node0 (master): NODE_RANK=0 MASTER_ADDR=30.203.138.213 bash scripts/launch_progressive_chunk_h800.sh
+#   node1         : NODE_RANK=1 MASTER_ADDR=30.203.138.213 bash scripts/launch_progressive_chunk_h800.sh
+# Both nodes share the same ceph FS (apdcephfs_jn2/share_304376610) so the chain
+# checkpoints written by rank0 are visible to node1 as well.
 set -euo pipefail
 
 PROJECT_ROOT="${PROJECT_ROOT:-/apdcephfs_jn2/share_304376610/pighzliu_code/Mixture-of-Memory}"
 cd "$PROJECT_ROOT"
 PYBIN="${PYTHON_BIN:-$PROJECT_ROOT/.venv/bin/python}"
+
+# --- Multi-node DDP topology ---
+NNODES="${NNODES:-2}"
+NPROC_PER_NODE="${NPROC_PER_NODE:-8}"
+NODE_RANK="${NODE_RANK:-0}"
+MASTER_ADDR="${MASTER_ADDR:-30.203.138.213}"
+MASTER_PORT_BASE="${MASTER_PORT_BASE:-29500}"
+
+# --- NCCL over IB/RoCE (nodes pre-set these in env; export explicitly to be safe) ---
+export NCCL_IB_DISABLE="${NCCL_IB_DISABLE:-0}"
+export NCCL_IB_HCA="${NCCL_IB_HCA:-mlx5_bond_1,mlx5_bond_2,mlx5_bond_3,mlx5_bond_4,mlx5_bond_5,mlx5_bond_6,mlx5_bond_7,mlx5_bond_8}"
+export NCCL_SOCKET_IFNAME="${NCCL_SOCKET_IFNAME:-bond1}"
+export NCCL_IB_GID_INDEX="${NCCL_IB_GID_INDEX:-3}"
+export NCCL_DEBUG="${NCCL_DEBUG:-INFO}"
 
 export WANDB_API_KEY="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"
 export WANDB_MODE="offline"
@@ -42,7 +62,7 @@ run_stage () {
   local port="$3"         # master_port (unique per stage)
   local init_ckpt="$4"    # "" for scratch, else path to prior adapter
   local out_dir="$OUT_BASE/$stage_name"
-  local log="logs/progressive_chunk_h800_${stage_name}.log"
+  local log="logs/progressive_chunk_h800_${stage_name}_node${NODE_RANK}.log"
   mkdir -p "$out_dir"
 
   local init_arg=""
@@ -57,9 +77,11 @@ run_stage () {
     echo "[$stage_name] from scratch (no init_checkpoint)" | tee -a "$log"
   fi
 
-  echo "[$stage_name] chunk_size=$chunk total_steps=$TOTAL_STEPS out=$out_dir port=$port" | tee -a "$log"
+  echo "[$stage_name] chunk_size=$chunk total_steps=$TOTAL_STEPS out=$out_dir node_rank=$NODE_RANK master=$MASTER_ADDR:$port" | tee -a "$log"
 
-  CUDA_VISIBLE_DEVICES="$GPUS" "$PYBIN" -m torch.distributed.run --nproc_per_node=8 --master_port="$port" \
+  CUDA_VISIBLE_DEVICES="$GPUS" "$PYBIN" -m torch.distributed.run \
+    --nnodes="$NNODES" --nproc_per_node="$NPROC_PER_NODE" --node_rank="$NODE_RANK" \
+    --master_addr="$MASTER_ADDR" --master_port="$port" \
     scripts/train_mem_space_dolmino_cpt.py \
     --model_path models/Meta-Llama-3-8B \
     --per_doc_data --dolmino_path MemLong/data/processed/dolmino_per_doc/train \
@@ -71,7 +93,7 @@ run_stage () {
     --slot_init strided_token --slot_init_noise 0.0 --writeback_gate_max 1.0 \
     --unfreeze_hidden_to_slot --use_dual_gate --forget_bias_init 2.0 --input_bias_init 0.0 \
     --dual_gate_tanh_new --use_l3_summary --l3_n_summary 64 --l3_n_layers 2 --l3_n_heads 8 \
-    --shared_memory_bank --gradient_checkpointing --gradient_accumulation_steps 4 \
+    --shared_memory_bank --gradient_checkpointing --gradient_accumulation_steps 2 \
     --curriculum 0:3 --bptt_window 2 --no_detach_slots_in_selector \
     --no_slot_delta_clip --inject_gate_bias_init -2.0 --routing_pool_mode slot_query \
     --multi_query_tau 1.0 --l3_diversity_weight 0.0 --l3_diversity_threshold 0.5 \
