@@ -721,6 +721,12 @@ def parse_args() -> argparse.Namespace:
                    help="Resume from this step count (for curriculum and LR schedule).")
     p.add_argument("--grad_clip", type=float, default=1.0)
     p.add_argument("--proj_grad_clip", type=float, default=0.1)
+    p.add_argument("--loss_spike_skip", action="store_true",
+                   help="Skip optimizer.step() when the (DDP-averaged) lm_loss "
+                        "for a step exceeds running_mean + sigma*running_std. "
+                        "Default off (preserves existing behavior).")
+    p.add_argument("--loss_spike_sigma", type=float, default=3.0,
+                   help="Sigma threshold for --loss_spike_skip.")
     p.add_argument("--bptt_window", type=int, default=2,
                    help="Windowed BPTT: accumulate this many context chunks into "
                         "one gradient graph before backward+detach. window=1 "
@@ -1724,6 +1730,12 @@ def main() -> None:
     n_dolmino = 0
     n_babilong = 0
     n_nonfinite = 0
+    # --- loss-spike skip state (DDP-consistent: keyed off the all_reduced
+    # average lm_loss, identical on every rank) ---
+    spike_skip_count = 0
+    _spike_window = []  # sliding window of recent (post-warmup) avg lm_loss
+    _spike_window_max = 100
+    _spike_min_samples = 20
     accum_lm_loss = 0.0
     accum_aux_loss = 0.0
     t0 = time.time()
@@ -1834,8 +1846,36 @@ def main() -> None:
                     p.grad = torch.zeros_like(p)
                 dist.all_reduce(p.grad, op=dist.ReduceOp.AVG)
 
-        # Optimizer step (only if we got at least one valid micro-step)
-        if step_valid_micros > 0:
+        # --- Loss-spike skip decision (DDP-consistent) ---
+        # Compute a single avg lm_loss scalar that is IDENTICAL on every rank by
+        # all_reducing the per-rank average. The skip decision is derived purely
+        # from this shared scalar + a window that only ever ingests this shared
+        # scalar, so all ranks decide identically -> no collective desync.
+        # The whole block is a no-op (and issues no extra collectives) unless
+        # --loss_spike_skip is set, preserving prior behavior by default.
+        do_skip = False
+        if args.loss_spike_skip:
+            _avg_lm_local = step_lm_loss / max(1, step_valid_micros)
+            if world_size > 1 and dist.is_initialized():
+                _t = torch.tensor([_avg_lm_local], device=device)
+                dist.all_reduce(_t, op=dist.ReduceOp.AVG)
+                avg_lm_shared = float(_t.item())
+            else:
+                avg_lm_shared = _avg_lm_local
+
+            if (step_valid_micros > 0
+                    and global_step >= args.warmup_steps
+                    and len(_spike_window) >= _spike_min_samples
+                    and math.isfinite(avg_lm_shared)):
+                _mean = sum(_spike_window) / len(_spike_window)
+                _var = sum((x - _mean) ** 2 for x in _spike_window) / len(_spike_window)
+                _std = math.sqrt(max(_var, 0.0))
+                if avg_lm_shared > _mean + args.loss_spike_sigma * _std:
+                    do_skip = True
+
+        # Optimizer step (only if we got at least one valid micro-step and the
+        # step is not flagged as a loss spike).
+        if step_valid_micros > 0 and not do_skip:
             # Per-projection grad clip
             _grad_root = model.module if isinstance(model, DDP) else model
             for _n, _p in _grad_root.named_parameters():
@@ -1844,6 +1884,27 @@ def main() -> None:
             torch.nn.utils.clip_grad_norm_(trainable, args.grad_clip)
 
             optimizer.step()
+
+        if do_skip:
+            spike_skip_count += 1
+            optimizer.zero_grad(set_to_none=True)
+            if is_main(rank):
+                logger.warning(
+                    "[loss_spike_skip] step=%d avg_lm=%.4f exceeded "
+                    "mean+%.1f*std (n_skipped=%d) -> skipping optimizer.step()",
+                    global_step, avg_lm_shared, args.loss_spike_sigma,
+                    spike_skip_count,
+                )
+
+        # Update the spike baseline window AFTER the decision so the current
+        # step is judged against prior history only. Only ingest finite,
+        # post-warmup, non-skipped steps to keep the baseline clean.
+        if (args.loss_spike_skip and step_valid_micros > 0
+                and global_step >= args.warmup_steps
+                and math.isfinite(avg_lm_shared) and not do_skip):
+            _spike_window.append(avg_lm_shared)
+            if len(_spike_window) > _spike_window_max:
+                _spike_window.pop(0)
 
         _step_counters_inc(model)
         global_step += 1
@@ -1857,9 +1918,9 @@ def main() -> None:
             steps_per_sec = global_step / elapsed if elapsed > 0 else 0.0
             logger.info(
                 "[step %d/%d] lm=%.4f aux=%.4f route_aux=%.4f lr=%.2e n_ctx=%d "
-                "dolmino=%d babi=%d nf=%d speed=%.2f steps/s",
+                "dolmino=%d babi=%d nf=%d skip=%d speed=%.2f steps/s",
                 global_step, args.total_steps, avg_lm, avg_aux, avg_route_aux, lr,
-                current_n_ctx, n_dolmino, n_babilong, n_nonfinite,
+                current_n_ctx, n_dolmino, n_babilong, n_nonfinite, spike_skip_count,
                 steps_per_sec,
             )
             _xattn_diag = _collect_xattn_diag(model)
