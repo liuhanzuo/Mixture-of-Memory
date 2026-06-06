@@ -4,11 +4,11 @@
 
 **只使用中文和英文交流，禁止使用韩语或其他语言。**
 
-## 🖥️ 当前 GPU 集群（2026-06-05 更新，权威，覆盖旧记录）
+## 🖥️ 当前 GPU 集群（2026-06-06 更新，权威，覆盖旧记录）
 
-**6 个 H20 节点 = 48 卡。没有 H800 / B200 了（旧 IP 全失效，别再试）。**
+**6 个 H20 节点 = 48 卡（两个 ceph 盘 A/B）＋ 1 个 H800 2-node 16 卡集群（ceph jn2，独立盘）。**
 
-分两个 CEPH 盘，盘内共享 FS，**盘间需要 rsync 同步代码 + 数据**：
+分多个 CEPH 盘，盘内共享 FS，**盘间需要 rsync 同步代码 + 数据**：
 
 | 盘 | 节点 IP | 角色 | share 路径 | 密码文件 |
 |----|---------|------|-----------|---------|
@@ -18,6 +18,15 @@
 | **盘 B** | `29.162.241.149` | 远程（与 .161 共享 FS，env 缺 transformers） | `/apdcephfs_zwfy6/share_304376610/` | `configs/password_diskB.txt` |
 | **盘 B** | `28.49.57.76` | 远程（2026-06-05 新增，✅ 可训练） | `/apdcephfs_zwfy6/share_304376610/` | `configs/password_h20_new2.txt` |
 | **盘 B** | `28.59.33.249` | 远程（2026-06-05 新增，与 .76 共享 FS，✅ 可训练） | `/apdcephfs_zwfy6/share_304376610/` | `configs/password_h20_new2.txt` |
+| **盘 H800** | `30.203.138.213` | H800 node0 / master（✅ 一直活着，2-node 16 卡 DDP over IB） | `/apdcephfs_jn2/share_304376610/` | `configs/password_h800_new.txt` |
+| **盘 H800** | `30.203.131.102` | H800 node1 / worker（与 .213 共享 jn2 FS，无需跨节点 rsync） | `/apdcephfs_jn2/share_304376610/` | `configs/password_h800_new.txt` |
+
+- **H800 2-node 16卡集群（✅ 活跃，别再说"没有 H800"了）**：node0=`30.203.138.213`(master) + node1=`30.203.131.102`(worker)，8×H800 each。
+  - **两节点共享 ceph jn2 FS** `/apdcephfs_jn2/share_304376610/pighzliu_code/Mixture-of-Memory`（脚本/venv/model/data 在两节点都可见，**无需跨节点 rsync**），但与盘A/盘B 不共享，从盘A 同步代码/数据要 rsync 过去。
+  - 单一密码 `configs/password_h800_new.txt`（`OcC6XpZ8vQyhVIQ,` 含末尾逗号）对两节点都有效；旧 IP `30.203.132.121/.138.209` 已死，忽略。
+  - venv：`.venv/bin/python`（torch 2.27 NCCL）。
+  - ⚠️ **跨节点 DDP 必须 export `NCCL_DMABUF_ENABLE=0` + `NCCL_NET_GDR_LEVEL=0`**，否则第一个 collective 崩 `ibv_reg_mr_iova2 failed`（已 bake 进 `scripts/launch_progressive_chunk_h800.sh`）。启动顺序：先 master(`NODE_RANK=0`)，确认 listen master_port 后再 worker(`NODE_RANK=1`)。
+  - 详细拓扑/NCCL 修复见 memory `reference_h800_2node_topology.md`。
 
 - **2026-06-05 新增 2 节点（.76 / .249）**：8× H20 each，挂载**盘 B**（share_304376610，与 .161/.149 同一 ceph）。
   - ✅ **与旧盘B节点不同：这俩节点用项目 `.venv/bin/python`（torch 2.10.0+cu128 + transformers 5.5.4，CUDA OK on H20）→ 可直接跑本项目训练，无需 pip install。** 启动脚本带 `PYTHON_BIN` 默认即 `.venv/bin/python`，不要用 torch-base。
@@ -288,7 +297,7 @@ configs/
 
 ### ❌ 已确认不可用
 - 原始 B200 集群（28.89.17.143/144/85/134）：Connection refused
-- H800 节点（29.185.88.158/89.190）：Connection refused
+- 旧 H800 节点（29.185.88.158/89.190 及 30.203.132.121/.138.209）：Connection refused（⚠️ 注意：当前活跃 H800 是 `30.203.138.213/.131.102`，见顶部集群表，别混淆）
 - h20-1/2/3/4（28.58.244.13 / 28.85.54.125 / 28.59.5.176 / 28.83.52.26）：密码被拒
 - ephemeral B200（b200-5..8）：密码被拒
 
