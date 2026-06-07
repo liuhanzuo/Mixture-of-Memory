@@ -18,12 +18,14 @@
 | **盘 B** | `29.162.241.149` | 远程（与 .161 共享 FS，env 缺 transformers） | `/apdcephfs_zwfy6/share_304376610/` | `configs/password_diskB.txt` |
 | **盘 B** | `28.49.57.76` | 远程（2026-06-05 新增，✅ 可训练） | `/apdcephfs_zwfy6/share_304376610/` | `configs/password_h20_new2.txt` |
 | **盘 B** | `28.59.33.249` | 远程（2026-06-05 新增，与 .76 共享 FS，✅ 可训练） | `/apdcephfs_zwfy6/share_304376610/` | `configs/password_h20_new2.txt` |
-| **盘 H800** | `30.203.138.213` | H800 node0 / master（✅ 一直活着，2-node 16 卡 DDP over IB） | `/apdcephfs_jn2/share_304376610/` | `configs/password_h800_new.txt` |
-| **盘 H800** | `30.203.131.102` | H800 node1 / worker（与 .213 共享 jn2 FS，无需跨节点 rsync） | `/apdcephfs_jn2/share_304376610/` | `configs/password_h800_new.txt` |
+| **盘 H800** | `30.203.138.247` | H800 node0 / master（✅ 2026-06-07 回归，2-node 16 卡 DDP over IB） | `/apdcephfs_jn2/share_304376610/` | `configs/password_h800_returned.txt` |
+| **盘 H800** | `30.203.130.90` | H800 node1 / worker（与 .247 共享 jn2 FS，无需跨节点 rsync） | `/apdcephfs_jn2/share_304376610/` | `configs/password_h800_returned.txt` |
 
-- **H800 2-node 16卡集群（✅ 活跃，别再说"没有 H800"了）**：node0=`30.203.138.213`(master) + node1=`30.203.131.102`(worker)，8×H800 each。
-  - **两节点共享 ceph jn2 FS** `/apdcephfs_jn2/share_304376610/pighzliu_code/Mixture-of-Memory`（脚本/venv/model/data 在两节点都可见，**无需跨节点 rsync**），但与盘A/盘B 不共享，从盘A 同步代码/数据要 rsync 过去。
-  - 单一密码 `configs/password_h800_new.txt`（`OcC6XpZ8vQyhVIQ,` 含末尾逗号）对两节点都有效；旧 IP `30.203.132.121/.138.209` 已死，忽略。
+- **H800 2-node 16卡集群（✅ 2026-06-07 重新拿回，新 IP）**：node0=`30.203.138.247`(master) + node1=`30.203.130.90`(worker)，8×H800 each（来自 node env `NODE_IP_LIST=30.203.138.247:8,30.203.130.90:8`）。
+  - **两节点共享 ceph jn2 FS** `/apdcephfs_jn2/share_304376610/pighzliu_code/Mixture-of-Memory`（脚本/venv/model/data 在两节点都可见，**无需跨节点 rsync**），但与盘A/盘B 不共享，从盘A 同步代码/数据要 rsync 过去。env 已就绪：`.venv/bin/python` torch 2.10+cu128 + transformers 5.5.4，model/dolmino data 都在。
+  - 单一密码 `configs/password_h800_returned.txt`（`reRn3vHLFfXC3Bq,` 含末尾逗号）对两节点都有效。
+  - **历史 IP 全部已死，别再试**：`30.203.138.213/.131.102`（上一轮，已被回收）、`30.203.132.121/.138.209`（更早）。当前唯一活跃 H800 = `.138.247/.130.90`。
+  - 启动：master 先 `NNODES=2 NODE_RANK=0 MASTER_ADDR=30.203.138.247 bash scripts/launch_progressive_chunk_h800.sh`，确认 listen 29810 后再 worker `NODE_RANK=1 MASTER_ADDR=30.203.138.247`。NCCL DMABUF/GDR + 心跳监控 + 离线 babilong 修复均已 bake 进脚本。
   - venv：`.venv/bin/python`（torch 2.27 NCCL）。
   - ⚠️ **跨节点 DDP 必须 export `NCCL_DMABUF_ENABLE=0` + `NCCL_NET_GDR_LEVEL=0`**，否则第一个 collective 崩 `ibv_reg_mr_iova2 failed`（已 bake 进 `scripts/launch_progressive_chunk_h800.sh`）。启动顺序：先 master(`NODE_RANK=0`)，确认 listen master_port 后再 worker(`NODE_RANK=1`)。
   - 详细拓扑/NCCL 修复见 memory `reference_h800_2node_topology.md`。
