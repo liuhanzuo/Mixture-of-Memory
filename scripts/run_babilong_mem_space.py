@@ -441,6 +441,11 @@ def main():
     with open(args.adapter_config, "r") as f:
         adapter_cfg = json.load(f)
     mem_config = build_mem_space_config(adapter_cfg)
+    # L3 token-recon head builds pos_queries of shape [l3_recon_max_positions, d].
+    # At train time this is set to chunk_size (train_mem_space_dolmino_cpt.py:1088),
+    # but adapter_config.json carries no chunk_size, so the dataclass default (1024)
+    # would mismatch a ckpt trained with a different chunk_size. Mirror training here.
+    mem_config.l3_recon_max_positions = args.chunk_size
     print(f"[mem_space-BABILong] MemorySpaceConfig: num_slots={mem_config.num_slots}, "
           f"top_k={mem_config.top_k}, selector_dim={mem_config.selector_dim}, "
           f"warmup_steps={mem_config.writeback_gate_warmup_steps}, "
