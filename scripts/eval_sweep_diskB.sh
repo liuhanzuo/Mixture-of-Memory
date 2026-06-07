@@ -40,15 +40,26 @@ read -r -a GPUS <<< "${GPUS:-0 1 2 3 4 5 6 7}"
 LOGROOT="logs/eval_sweep_${RESULTS_PREFIX}"
 mkdir -p "$LOGROOT"
 
-# Build the full (step,length) job list, then round-robin across GPUs, launching
-# one background worker per GPU slot at a time (cap concurrency = #GPUs).
+# Build the full (step,length) job list. Order matters for the job-pool scheduler
+# below: emit LONGEST lengths first (32k -> 0k) so the slowest jobs start earliest
+# and short jobs fill the tail-end gaps, minimizing the long tail.
+declare -A LEN_RANK=([0k]=0 [1k]=1 [2k]=2 [4k]=4 [8k]=8 [16k]=16 [32k]=32)
 declare -a JOBS=()
 for S in $STEPS; do
   for L in "${LENGTHS[@]}"; do
     JOBS+=("${S}:${L}")
   done
 done
+# Sort JOBS by length descending (longest first). Stable enough: key by LEN_RANK.
+if ((${#JOBS[@]} > 1)); then
+  mapfile -t JOBS < <(
+    for j in "${JOBS[@]}"; do
+      L="${j##*:}"; printf '%d\t%s\n' "${LEN_RANK[$L]:-0}" "$j"
+    done | sort -rn -k1,1 -s | cut -f2-
+  )
+fi
 echo "[$(date)] sweep: ${#JOBS[@]} jobs ($(echo $STEPS|wc -w) steps x ${#LENGTHS[@]} lengths) over ${#GPUS[@]} GPUs"
+echo "[$(date)] job order (longest-first): ${JOBS[*]}"
 
 run_one () {
   local step=$1 len=$2 gpu=$3
@@ -66,14 +77,58 @@ run_one () {
     </dev/null >"$LOGROOT/step${sname}_${len}.log" 2>&1
 }
 
-i=0
-for job in "${JOBS[@]}"; do
-  S="${job%%:*}"; L="${job##*:}"
-  G=${GPUS[$((i % ${#GPUS[@]}))]}
-  run_one "$S" "$L" "$G" &
-  i=$((i+1))
-  # Throttle: once we've filled all GPU slots, wait for the batch to drain.
-  if (( i % ${#GPUS[@]} == 0 )); then wait; fi
+# ---------------------------------------------------------------------------
+# Job-pool scheduler (replaces the old batch-barrier `wait`-ALL every nGPU jobs).
+#
+# Each GPU is a worker slot. We keep all slots busy: launch one job per free GPU,
+# then whenever ANY job finishes we immediately hand its GPU to the next pending
+# job. This eliminates the old failure mode where a batch of 8 jobs blocked on the
+# single slowest one (e.g. 32k) while the other 7 GPUs idled.
+#
+# bash on the diskB nodes is 4.4.20, so `wait -n` exists but `wait -n -p VAR`
+# (which reports WHICH pid finished) needs bash 5.1+. We therefore track a
+# pid->gpu association map ourselves and, after each `wait -n` wakeup, reap every
+# pid that is no longer alive (`kill -0`) to recover its GPU slot. This is robust
+# even if multiple jobs finish between wakeups.
+# ---------------------------------------------------------------------------
+declare -A PID2GPU=()        # running pid -> gpu it occupies
+declare -a FREE_GPUS=("${GPUS[@]}")  # stack of currently-idle GPUs
+ji=0                          # index of next pending job
+NJOBS=${#JOBS[@]}
+
+reap_finished () {
+  # Move any finished pids' GPUs back into FREE_GPUS. Returns # reaped.
+  local reaped=0 pid
+  for pid in "${!PID2GPU[@]}"; do
+    if ! kill -0 "$pid" 2>/dev/null; then
+      wait "$pid" 2>/dev/null   # collect exit status, avoid zombie
+      FREE_GPUS+=("${PID2GPU[$pid]}")
+      unset 'PID2GPU[$pid]'
+      reaped=$((reaped+1))
+    fi
+  done
+  return 0
+}
+
+launch_pending () {
+  # Fill every free GPU with the next pending job (skips fire instantly and free
+  # the slot again on the next reap). Stops when no free GPU or no pending job.
+  while ((${#FREE_GPUS[@]} > 0)) && ((ji < NJOBS)); do
+    local job="${JOBS[$ji]}"; ji=$((ji+1))
+    local S="${job%%:*}" L="${job##*:}"
+    local G="${FREE_GPUS[-1]}"; unset 'FREE_GPUS[-1]'; FREE_GPUS=("${FREE_GPUS[@]}")
+    run_one "$S" "$L" "$G" &
+    local pid=$!
+    PID2GPU[$pid]=$G
+    echo "[$(date)] launch job $((ji))/$NJOBS  step=$S len=$L  gpu=$G  pid=$pid  (free_gpus=${#FREE_GPUS[@]})"
+  done
+}
+
+# Prime all GPU slots, then loop: wait for any job, reap freed slots, refill.
+launch_pending
+while ((${#PID2GPU[@]} > 0)); do
+  wait -n 2>/dev/null    # block until at least one background job exits
+  reap_finished
+  launch_pending
 done
-wait
 echo "[$(date)] sweep done -> babilong_results/${RESULTS_PREFIX}_step*"
