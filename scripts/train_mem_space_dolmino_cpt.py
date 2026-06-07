@@ -1073,6 +1073,91 @@ def build_model(args, device, dtype) -> torch.nn.Module:
 
 
 # --------------------------------------------------------------------------- #
+# Batch collation + batch-dim helpers (batch_size > 1 support, 2026-06-07)
+# --------------------------------------------------------------------------- #
+
+
+def dolmino_collate_fn(batch: List[Dict[str, object]]) -> Dict[str, object]:
+    """Stack ``batch_size`` Dolmino samples into batched tensors.
+
+    Each sample (from ``DolminoCurriculumDataset``) has:
+        ``context_chunks``: list of n_ctx tensors, each [chunk_size]
+        ``target_ids``:     tensor [chunk_size]
+        (optionally ``reset_flags``)
+
+    All samples in a batch share the SAME ``n_ctx`` (curriculum n_ctx is fixed
+    for the whole step) and the SAME ``chunk_size``. We stack the k-th context
+    chunk across the batch -> [B, chunk_size], and the target -> [B, chunk_size].
+
+    Returns a dict with:
+        ``context_chunks``: list of n_ctx tensors, each [B, chunk_size]
+        ``target_ids``:     tensor [B, chunk_size]
+        ``is_dolmino``:     True
+
+    Robustness: if samples disagree on chunk length (should not happen with the
+    uniform-1024 Dolmino rows), we truncate every chunk to the per-position
+    minimum length across the batch. Truncation (not padding) keeps numerical
+    correctness — we never feed fake pad tokens as NTP targets.
+
+    Per-sample ``reset_flags`` (only produced by ``--doc_reset`` contiguous
+    mode) are INCOMPATIBLE with batching: the memory bank cannot reset a single
+    batch element mid-rollout. We assert they are absent here; ``main`` only
+    uses this collate when ``batch_size > 1`` and rejects ``--doc_reset`` in
+    that case at startup.
+    """
+    if not batch:
+        raise ValueError("dolmino_collate_fn received an empty batch")
+
+    n_ctx = len(batch[0]["context_chunks"])
+    for s in batch:
+        if len(s["context_chunks"]) != n_ctx:
+            raise ValueError(
+                "dolmino_collate_fn: samples in a batch have different n_ctx "
+                f"({len(s['context_chunks'])} vs {n_ctx}); curriculum n_ctx must "
+                "be constant within a step."
+            )
+        if s.get("reset_flags") is not None:
+            raise ValueError(
+                "dolmino_collate_fn: reset_flags present (--doc_reset). "
+                "doc_reset is incompatible with batch_size > 1; the memory bank "
+                "cannot reset a single batch element mid-rollout."
+            )
+
+    # Stack the k-th context chunk across the batch -> [B, chunk_size].
+    context_chunks: List[torch.Tensor] = []
+    for k in range(n_ctx):
+        col = [s["context_chunks"][k] for s in batch]
+        min_len = min(t.shape[0] for t in col)
+        context_chunks.append(torch.stack([t[:min_len] for t in col], dim=0))
+
+    tgt_col = [s["target_ids"] for s in batch]
+    tgt_min = min(t.shape[0] for t in tgt_col)
+    target_ids = torch.stack([t[:tgt_min] for t in tgt_col], dim=0)
+
+    return {
+        "context_chunks": context_chunks,
+        "target_ids": target_ids,
+        "is_dolmino": True,
+    }
+
+
+def _ensure_batched(t: torch.Tensor, device: torch.device) -> torch.Tensor:
+    """Move ``t`` to ``device`` and guarantee a leading batch dim.
+
+    Accepts either a 1-D [chunk_size] tensor (legacy batch_size=1 path, where
+    the DataLoader yields single un-collated samples) or an already-batched
+    2-D [B, chunk_size] tensor (batch_size>1 path via ``dolmino_collate_fn``).
+    Returns [B, chunk_size]. This is the single replacement for the previously
+    hard-coded ``.unsqueeze(0)`` so both paths share one code path and the
+    batch_size=1 behavior stays byte-identical.
+    """
+    t = t.to(device)
+    if t.dim() == 1:
+        t = t.unsqueeze(0)
+    return t
+
+
+# --------------------------------------------------------------------------- #
 # Dolmino training step
 # --------------------------------------------------------------------------- #
 
@@ -1096,14 +1181,14 @@ def dolmino_train_step(
     # Stream context chunks through memory (no gradient)
     with torch.no_grad():
         for ctx in context_chunks:
-            ctx_input = ctx.unsqueeze(0).to(device)  # [1, chunk_size]
+            ctx_input = _ensure_batched(ctx, device)  # [B, chunk_size]
             model(input_ids=ctx_input, use_cache=False)
 
     # Detach memory banks to prevent gradient flow through context passes
     _detach_banks(model)
 
     # Forward target chunk with gradient
-    target_input = target_ids.unsqueeze(0).to(device)  # [1, chunk_size]
+    target_input = _ensure_batched(target_ids, device)  # [B, chunk_size]
     out = model(input_ids=target_input, labels=target_input, use_cache=False)
 
     lm_loss = out.loss
@@ -1197,7 +1282,7 @@ def dolmino_train_step_tbptt(
             _reset_banks(model)
             prev_idx1 = None  # previous doc's writes are gone; don't supervise across
 
-        chunk_input = chunk_ids.unsqueeze(0).to(device)
+        chunk_input = _ensure_batched(chunk_ids, device)
 
         # route_aux: capture this chunk's grad-bearing routing scores via a
         # forward hook on the layer-0 selector (last_scores is detached on the
@@ -1560,6 +1645,30 @@ def main() -> None:
     # Curriculum scheduler
     curriculum = CurriculumScheduler(args.curriculum)
 
+    # batch_size > 1 guards (2026-06-07). The memory bank holds per-sample slot
+    # state [B, N, slot_dim] and is fully batch-native, BUT two features cannot
+    # be combined with a batch dim:
+    #   * --doc_reset attaches per-sample reset_flags; the bank cannot reset a
+    #     single batch element mid-rollout (reset is whole-bank).
+    #   * --num_workers > 1 with an IterableDataset + mid-epoch set_n_context
+    #     curriculum updates would not propagate to worker processes; this is a
+    #     pre-existing constraint, but with batched collate a stale-n_ctx worker
+    #     would produce a batch the collate rejects. Keep workers at 0/1.
+    if args.batch_size > 1:
+        if args.doc_reset:
+            raise ValueError(
+                "--doc_reset is incompatible with --batch_size > 1 (the memory "
+                "bank cannot reset a single batch element mid-rollout). Use "
+                "--batch_size 1, or --per_doc_data / plain contiguous without "
+                "doc_reset for batched training."
+            )
+        if args.num_workers > 1:
+            raise ValueError(
+                "--batch_size > 1 requires --num_workers <= 1 so mid-epoch "
+                "curriculum set_n_context() updates reach the dataset iterator "
+                "(IterableDataset workers do not see them)."
+            )
+
     if is_main(rank):
         os.makedirs(args.output_dir, exist_ok=True)
         # Wandb init
@@ -1633,7 +1742,9 @@ def main() -> None:
         per_doc=args.per_doc_data,
     )
     dolmino_loader = DataLoader(
-        dolmino_ds, batch_size=None,  # dataset yields single samples
+        dolmino_ds,
+        batch_size=(args.batch_size if args.batch_size > 1 else None),
+        collate_fn=(dolmino_collate_fn if args.batch_size > 1 else None),
         num_workers=args.num_workers, pin_memory=False,
     )
     dolmino_iter = iter(dolmino_loader)
