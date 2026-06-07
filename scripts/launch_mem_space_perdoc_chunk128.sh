@@ -1,31 +1,31 @@
 #!/usr/bin/env bash
-# Per-doc CPT arm2 (remote H20-2, 28.59.80.196): chunk_size=128 + route_aux ON.
-# Replaces the prior chunk256_remote arm (killed 2026-06-04 per user). Now the
-# two arms differ ONLY in --route_aux_weight (local chunk128 = 0 / OFF, this = 1.0
-# / ON), turning the ablation into a clean routing-supervision on/off contrast.
-# Goal: route_aux should lift top1_sim off the noise floor (E2/E5: top1_sim
-# 0.015->0.10+, key_max_cos 0.47->0.58) where the OFF arm stays ~0.04-0.27.
-# wandb ONLINE: remote 28.59.80.196 CAN reach wandb.ai via hy-proxy:3128 (verified
-# 2026-06-04, HTTP 200/404), so this run shows up live on the web dashboard.
+# Per-doc CPT arm1 (local 8x H20): chunk_size=128, intra-document chunk groups.
+# Data = MemLong/data/processed/dolmino_per_doc/train (one complete doc per row).
+# n_ctx fixed at 3 via curriculum -> group_len = (3+1)*128 = 512 tokens, all from
+# the SAME document (context=3 chunks, target=1 chunk, adjacent in-doc).
+# Recipe mirrors the established P1 norecon control (launch_dolmino_norecon_local.sh),
+# only swapping chunk_size 1024->128 and adding --per_doc_data + per_doc path + curriculum 0:3.
+# Pairs with arm2 chunk256 on a remote node (run by another teammate).
 # eval_interval=0: inline BABILong eval causes NCCL desync/SIGABRT (CODEBUDDY.md).
 set -euo pipefail
 PROJECT_ROOT="/apdcephfs_zwfy6/share_303098609/pighzliu_code/Mixture-of-Memory"
 cd "$PROJECT_ROOT"
 export WANDB_API_KEY="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"
-export WANDB_MODE=online
 export http_proxy="http://hy-proxy.woa.com:3128"
 export https_proxy="http://hy-proxy.woa.com:3128"
-export all_proxy="http://hy-proxy.woa.com:3128"
-export no_proxy="mirrors.cloud.tencent.com,tlinux-mirror.tencent-cloud.com,localhost,127.0.0.1,.oa.com,.woa.com,.local"
 export PYTHONPATH="$PROJECT_ROOT/third_party/babilong-pkg:$PROJECT_ROOT:${PYTHONPATH:-}"
 export PYTHONUNBUFFERED=1
-PYBIN="${PYTHON_BIN:-/opt/conda/envs/torch-base/bin/python}"
-RUN="mem_space_perdoc_chunk128_routeaux_remote"
+PYBIN="$PROJECT_ROOT/.venv/bin/python"
+RUN="mem_space_perdoc_chunk128"
+TS="$(date +%Y%m%d_%H%M)"
+LOG="logs/${RUN}_${TS}.log"
+mkdir -p logs outputs/$RUN
 # H20 batch tuning (2026-06-07): physical bs4 x grad_accum1 x 8gpu = eff_batch 32, held constant
-# vs prior bs1 x grad_accum4. H20 chunk128 physical ceiling ~bs24 (88GiB; bs4=64GiB), but
-# eff_batch-constant rule caps physical bs at 4 (bs x ga must = 4 with integer ga). Identical
+# vs prior bs1 x grad_accum4. NOTE: physical H20 ceiling for chunk128 is much higher (~bs24, 88GiB;
+# bs4=64GiB), but eff_batch-constant rule caps physical bs at 4 since grad_accum was only 4 (bs x ga
+# must = 4 with integer ga). To go higher physical bs you'd have to raise eff_batch. Identical
 # optimization dynamics (bs2==2xbs1 verified rel<1e-4) -> pure throughput win.
-setsid bash -c "$PYBIN -m torch.distributed.run --nproc_per_node=8 --master_port=29782 \
+setsid bash -c "$PYBIN -m torch.distributed.run --nproc_per_node=8 --master_port=29780 \
   scripts/train_mem_space_dolmino_cpt.py \
   --model_path models/Meta-Llama-3-8B \
   --per_doc_data --dolmino_path MemLong/data/processed/dolmino_per_doc/train \
@@ -40,9 +40,9 @@ setsid bash -c "$PYBIN -m torch.distributed.run --nproc_per_node=8 --master_port
   --curriculum 0:3 --bptt_window 2 --no_detach_slots_in_selector \
   --no_slot_delta_clip --inject_gate_bias_init -2.0 --routing_pool_mode slot_query \
   --multi_query_tau 1.0 --l3_diversity_weight 0.0 --l3_diversity_threshold 0.5 \
-  --l_recon_weight 0.0 --route_aux_weight 1.0 \
+  --l_recon_weight 0.0 \
   --save_interval 500 --eval_interval 0 --eval_samples 30 --log_interval 5 \
   --grad_clip 1.0 --proj_grad_clip 0.1 --wandb_project mixture-of-memory \
   --wandb_run_name $RUN --dtype bfloat16 --attn_impl sdpa --seed 42" \
-  </dev/null >logs/$RUN.log 2>&1 &
-echo "launched $RUN pid=$!"
+  </dev/null >"$LOG" 2>&1 &
+echo "launched $RUN pid=$! log=$LOG"
