@@ -116,3 +116,32 @@ topk8 (P8b)                  qa1 |   91   34   33   15   16   17   17
 2. **slot_dim 4096→16384 对照缺失**：唯一的 16384 run 启动即崩、无 ckpt 无 eval。需修 wbmode 启动失败才能补这个对照。
 3. **eval 无 cross-chunk SWA**：可能系统性低估真实能力（前文只能走 slots）。用户已指出 eval 至少应保留 SWA — 待加 eval 选项重测。
 4. **slot 装 token 级 hidden 而非语义摘要** → BABILong（NIAH 式事实定位）相对行、LongEval（需全局总结）弱，符合预期。
+
+---
+
+## 5. 物理 batch_size 上限速查（2026-06-07 实测，commit ac2abe4 起支持 bs>1）
+
+**单卡显存上限**，P11 配置（8B + gradient_checkpointing + bf16 + num_slots128/top_k16/slot_dim4096 + L3 + dual_gate + curriculum 0:3 + bptt_window2），`torch.max_memory_allocated`，在 .249 空闲 H20（95 GiB usable）实测。每档跑 8 步 smoke，全部无 OOM / 无 non-finite / loss 正常。
+
+| chunk | bs | peak alloc (GiB) | free (GiB) | 状态 |
+|-------|----|------------------|------------|------|
+| 128   | 1  | 61.2 | 33.8 | ✅ |
+| 128   | 2  | 62.0 | 33.0 | ✅ |
+| 128   | 4  | 63.7 | 31.3 | ✅ |
+| 128   | 8  | 67.0 | 28.0 | ✅ |
+| 128   | 16 | 75.8 | 19.2 | ✅ |
+| 128   | 24 | 88.0 | 7.0  | ✅ 接近顶 |
+| 128   | 32 | —    | —    | ❌ OOM |
+| 512   | 1  | 63.2 | 31.8 | ✅ |
+| 512   | 2  | 65.9 | 29.1 | ✅ |
+| 512   | 4  | 71.4 | 23.6 | ✅ |
+| 512   | 6  | 80.9 | 14.1 | ✅ |
+| 512   | 7  | 85.8 | 9.2  | ✅ |
+| 512   | 8  | 90.7 | 4.3  | ⚠️ 能跑但余量极小，activation peak 抖动有风险 |
+
+**推荐物理 bs（留 ≥10 GiB 余量给 activation peak + NCCL buffer + DDP）：**
+- **H20 (97 GiB)**：chunk128 → **bs=16**（19GB free，再大边际递减）；chunk512 → **bs=6**（14GB free）。要更激进可 chunk128 bs=24 / chunk512 bs=7，但余量 <10GB。
+- **H800 (80 GiB)**：静态占用本身更高（实测 chunk128 bs=1 ≈74GB，比 H20 高，疑 attn/碎片差异）→ **chunk128/512 维持 bs=1，用 --gradient_accumulation_steps 提有效 batch**（grad_accum 不增峰值显存）。H800 不建议物理 bs>1。
+- 增量规律：~60GB 是冻结 backbone+adapter+optimizer 静态占用，bs 只加 activation；chunk128 每 +1 bs ≈ +0.5GB，chunk512 每 +1 bs ≈ +2.5GB（线性）。
+
+**落账目的**：未来 launch 直接查表设 `--batch_size`，无需重新 probe。验证脚本 `scripts/test_mem_space_batch_correctness.py`（bs2==2×bs1 loss 等价 rel<1e-4 + per-sample slot 独立）。
