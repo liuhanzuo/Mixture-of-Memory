@@ -149,3 +149,145 @@ class MemoryReconDecoder(nn.Module):
         the recon decoder and, through M_write, into the slot write path.
         """
         return F.mse_loss(S_hat.float(), S_L3.detach().float())
+
+
+class L3TokenReconHead(nn.Module):
+    """ICAE-style token-level reconstruction head (2026-06-07).
+
+    WHY THIS EXISTS
+    ---------------
+    ``MemoryReconDecoder`` (above) reconstructs the CONTINUOUS L3 summary hidden
+    and ``stopgrad``s the target, so the L3 pool feels no pressure to learn a
+    semantic compression — it can store generic token-level hidden and the MSE
+    still drops (trivial collapse). The diagnostic root-cause for LongBench
+    F1≈3 (vs base 13.9) is exactly this: L3/slots learn token-level hidden, not
+    semantic summaries.
+
+    ICAE (Ge et al., ICLR'24, arXiv:2307.06945) fixes this by training memory
+    slots to reconstruct the DISCRETE input TEXT via cross-entropy, with the
+    gradient flowing back into the compressor. The K-token summary is a real
+    information bottleneck, so the only way to drive CE down is to actually
+    encode the chunk's content in a recoverable way.
+
+    This head implements that. Given a (grad-bearing) L3 summary of the chunk
+    ``S`` ∈ [B, K, d], it cross-attends T learnable positional queries onto S
+    and produces per-position decoder hidden ``dec_h`` ∈ [B, T, d]. The caller
+    then maps ``dec_h`` through the FROZEN backbone ``lm_head`` to get vocab
+    logits [B, T, V] and computes ``CE(logits, chunk_input_ids)``. The target
+    is NOT detached: gradient flows summary→l3_pool, teaching L3 to compress
+    semantically.
+
+    ARCHITECTURE (n_layers cross-attn blocks, pre-LN, residual)
+    -----------------------------------------------------------
+        pos_queries Q ∈ [max_positions, d]   (learnable, one per position)
+        S = kv_proj(summary) ∈ [B, K, d]
+        dec = Q[:T] (broadcast to B)
+        for blk in blocks:
+            dec = dec + cross_attn(LN_q(dec), LN_kv(S), LN_kv(S))
+            dec = dec + FFN(LN_ffn(dec))
+        dec_h = LN_out(dec)                    ∈ [B, T, d]
+
+    The head outputs decoder HIDDEN (d_model), not logits — the (frozen, tied)
+    ``lm_head`` is applied by the caller so we reuse the backbone's vocab
+    projection and never train a fresh [d, V] matrix (V≈128k would dwarf the
+    adapter). Output goes straight into the LM cross-entropy.
+    """
+
+    def __init__(
+        self,
+        d_model: int,
+        max_positions: int,
+        num_heads: int = 8,
+        n_layers: int = 1,
+        ffn_mult: int = 2,
+        dropout: float = 0.0,
+    ) -> None:
+        super().__init__()
+        self.d_model = d_model
+        self.max_positions = max_positions
+        self.n_layers = n_layers
+
+        # One learnable query per decode position. Normal init (these are
+        # position embeddings, not a diversity-sensitive query bank).
+        self.pos_queries = nn.Parameter(torch.empty(max_positions, d_model))
+        nn.init.normal_(self.pos_queries, mean=0.0, std=0.02)
+
+        # Project the L3 summary into the head's working space for K/V. Summary
+        # is already d_model (L3SummaryPool output dim == backbone d_model), so
+        # this is d_model->d_model — kept so the head can re-map the summary
+        # without disturbing the shared L3 representation.
+        self.kv_proj = nn.Linear(d_model, d_model)
+
+        self.blocks = nn.ModuleList()
+        for _ in range(n_layers):
+            self.blocks.append(nn.ModuleDict({
+                "ln_q": nn.LayerNorm(d_model),
+                "ln_kv": nn.LayerNorm(d_model),
+                "attn": nn.MultiheadAttention(
+                    embed_dim=d_model,
+                    num_heads=num_heads,
+                    dropout=dropout,
+                    batch_first=True,
+                ),
+                "ln_ffn": nn.LayerNorm(d_model),
+                "ffn": nn.Sequential(
+                    nn.Linear(d_model, ffn_mult * d_model),
+                    nn.GELU(),
+                    nn.Linear(ffn_mult * d_model, d_model),
+                ),
+            }))
+        self.ln_out = nn.LayerNorm(d_model)
+
+        self._init_weights()
+
+    def _init_weights(self) -> None:
+        nn.init.xavier_uniform_(self.kv_proj.weight)
+        if self.kv_proj.bias is not None:
+            nn.init.zeros_(self.kv_proj.bias)
+        for blk in self.blocks:
+            for module in blk["ffn"]:
+                if isinstance(module, nn.Linear):
+                    nn.init.xavier_uniform_(module.weight)
+                    if module.bias is not None:
+                        nn.init.zeros_(module.bias)
+
+    def forward(self, summary: torch.Tensor, seq_len: int) -> torch.Tensor:
+        """Decode per-position hidden from the chunk's L3 summary.
+
+        Args:
+            summary: [B, K, d_model] — grad-bearing L3 summary of THIS chunk.
+                Gradient flows through this tensor back into the L3 pool.
+            seq_len: T — number of token positions to reconstruct (== the
+                chunk's token count).
+
+        Returns:
+            dec_h: [B, T, d_model] — per-position decoder hidden. Caller maps
+                this through the frozen lm_head to logits and computes CE.
+        """
+        if summary.dim() != 3:
+            raise ValueError(
+                f"summary must be [B, K, d_model], got {tuple(summary.shape)}"
+            )
+        if summary.shape[-1] != self.d_model:
+            raise ValueError(
+                f"summary last-dim {summary.shape[-1]} != d_model {self.d_model}"
+            )
+        if seq_len > self.max_positions:
+            raise ValueError(
+                f"seq_len {seq_len} exceeds max_positions {self.max_positions}; "
+                "increase config.l3_recon_max_positions (>= chunk_size)."
+            )
+        B = summary.shape[0]
+
+        kv = self.kv_proj(summary)                              # [B, K, d]
+        dec = self.pos_queries[:seq_len].unsqueeze(0).expand(B, -1, -1)  # [B,T,d]
+
+        for blk in self.blocks:
+            dn = blk["ln_q"](dec)
+            kvn = blk["ln_kv"](kv)
+            attn_out, _ = blk["attn"](dn, kvn, kvn, need_weights=False)
+            dec = dec + attn_out
+            dec = dec + blk["ffn"](blk["ln_ffn"](dec))
+
+        dec_h = self.ln_out(dec)                                # [B, T, d]
+        return dec_h

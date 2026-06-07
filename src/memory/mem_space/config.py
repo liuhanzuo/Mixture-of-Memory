@@ -166,6 +166,24 @@ class MemorySpaceConfig:
     # status/MEMORY_PROTOCOL_PLAN.md [P1]. Motivated by the toy passcode
     # diagnostic (commit e5bb181): addressing worked but exact_acc stayed 0.
     l_recon_weight: float = 0.0
+    # ICAE-style token-level reconstruction aux loss (2026-06-07).
+    # When > 0, an L3TokenReconHead reconstructs the CURRENT chunk's DISCRETE
+    # input token ids from a fresh (grad-bearing) L3 summary of that chunk:
+    #   hidden_C --l3_pool--> summary_C [B,K,d] --head--> dec_hidden [B,T,d]
+    #   --frozen lm_head--> logits [B,T,V];  loss = CE(logits, chunk_input_ids).
+    # Unlike l_recon_weight (which MSE-reconstructs the CONTINUOUS L3 hidden and
+    # detaches the target → trivial collapse, no semantic pressure), this loss
+    # (a) reconstructs DISCRETE tokens via cross-entropy, (b) does NOT detach,
+    # so gradient flows back INTO the L3 pool, forcing it to learn a genuine
+    # semantic compression that is decodable to text (ICAE, arXiv:2307.06945).
+    # The K-token summary is a real bottleneck (chunk_size/l3_n_summary× e.g.
+    # 512/64 = 8×). Requires use_l3_summary=True. 0 = disabled (back-compat).
+    # The decode head is computed in the TRAINING STEP (not in layer.forward),
+    # because decoder layers never receive the discrete token ids.
+    l3_recon_token_weight: float = 0.0
+    # Max sequence length the L3TokenReconHead's positional query bank supports.
+    # Set = chunk_size by build_model. Must be >= the longest chunk decoded.
+    l3_recon_max_positions: int = 1024
     slot_dropout: float = 0.0
 
     use_rope_for_slots: bool = False

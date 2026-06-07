@@ -322,6 +322,15 @@ def _wrap_model_fsdp(
         setattr(root, "recon_decoder", wrapped_recon)
         model._recon_decoder = wrapped_recon
 
+    # ICAE token-recon head (2026-06-07): wrap like recon_decoder so its params
+    # are sharded/trained/saved consistently. The training step accesses it via
+    # model._l3_token_recon_head, so keep that pointer in sync with the wrap.
+    l3_token_recon_head = getattr(model, "_l3_token_recon_head", None)
+    if l3_token_recon_head is not None:
+        wrapped_trh = FSDP(l3_token_recon_head, **common_fsdp_kwargs)
+        setattr(root, "l3_token_recon_head", wrapped_trh)
+        model._l3_token_recon_head = wrapped_trh
+
     # 3) NO top-level FSDP wrap (babilong lesson): with use_orig_params=True a
     #    top-level wrap tracks the FROZEN embedding/lm_head in its flat-param
     #    table and FSDP's _writeback_orig_params raises "Cannot writeback when
@@ -437,6 +446,15 @@ def _mem_space_params(model: torch.nn.Module) -> List[torch.nn.Parameter]:
     recon_decoder = getattr(root, "_recon_decoder", None)
     if recon_decoder is not None:
         for p in recon_decoder.parameters():
+            if id(p) not in seen:
+                params.append(p); seen.add(id(p))
+    # L3TokenReconHead params (ICAE token recon, 2026-06-07). Like recon_decoder,
+    # this is a shared singleton registered on the root; collect its params so
+    # _freeze_backbone re-enables their grad and they enter the optimizer (else
+    # the head would stay frozen at init and the CE loss would never improve).
+    l3_token_recon_head = getattr(root, "_l3_token_recon_head", None)
+    if l3_token_recon_head is not None:
+        for p in l3_token_recon_head.parameters():
             if id(p) not in seen:
                 params.append(p); seen.add(id(p))
     return params
@@ -618,6 +636,79 @@ def _compute_route_aux(scores2, idx1, device: torch.device):
     return ra
 
 
+def _compute_l3_token_recon(model: torch.nn.Module, chunk_input: torch.Tensor):
+    """ICAE-style token-level reconstruction CE loss (2026-06-07).
+
+    Reconstructs the CURRENT chunk's DISCRETE input tokens from a fresh,
+    grad-bearing L3 summary of that chunk, decoded through the frozen lm_head.
+
+    Pipeline (gradient path annotated):
+        cur_h = grad-bearing top-layer hidden of THIS chunk (stashed by the L3
+                post-forward hook; None under no_grad context passes)
+        summary = l3_pool(cur_h, prev_summary=None)      # [B, K, d]  GRAD→l3_pool
+        dec_h   = head(summary, seq_len=T)               # [B, T, d]  GRAD→head,summary
+        logits  = frozen_lm_head(dec_h)                  # [B, T, V]  (no grad to lm_head)
+        loss    = CE(logits[:, :T'], chunk_input[:, :T'])
+
+    The target ``chunk_input`` is NOT detached from the loss in the usual sense:
+    it is the integer label tensor, and the CE pulls the *predicted distribution*
+    toward it. Gradient flows back through ``summary`` into the L3 pool (the
+    whole point — forces semantic compression), and through ``cur_h`` into the
+    memory write/read path (also desirable; backbone params are frozen so they
+    do not move).
+
+    Returns ``None`` when the head is absent, no grad-bearing current-chunk
+    hidden is available (e.g. context pass under no_grad), or the result is
+    non-finite. The caller clears the stashed hidden after consumption.
+    """
+    root = getattr(model, "module", model)
+    head = getattr(root, "_l3_token_recon_head", None)
+    pool = getattr(root, "_l3_pool", None)
+    if head is None or pool is None:
+        return None
+    cur_h = getattr(root, "_l3_token_recon_cur_h", None)
+    if cur_h is None or not cur_h.requires_grad:
+        return None
+
+    # chunk_input: [B, T] token ids for THIS chunk. Align T with cur_h's seq len
+    # (they should match — both are the chunk's content length).
+    B, T_h, _ = cur_h.shape
+    if chunk_input.dim() == 1:
+        chunk_input = chunk_input.unsqueeze(0)
+    T = min(T_h, chunk_input.shape[1])
+    if T < 1:
+        return None
+    cur_h = cur_h[:, :T, :]
+    tgt = chunk_input[:, :T].to(cur_h.device)
+
+    # Fresh, INDEPENDENT summary of this chunk (prev_summary=None → use the
+    # pool's learnable queries; we want "summarize THIS chunk", not the
+    # recurrent accumulation used for routing). Grad flows into l3_pool.
+    summary = pool(cur_h, prev_summary=None)                 # [B, K, d]
+    dec_h = head(summary, seq_len=T)                         # [B, T, d]
+
+    # Frozen lm_head → vocab logits. lm_head requires_grad is False, so no param
+    # update; we only use it to project decoder hidden into vocab space.
+    lm_head = root.get_output_embeddings()
+    logits = lm_head(dec_h)                                  # [B, T, V]
+
+    loss = torch.nn.functional.cross_entropy(
+        logits.float().reshape(-1, logits.shape[-1]),
+        tgt.reshape(-1),
+    )
+    if not torch.isfinite(loss):
+        return None
+    return loss
+
+
+def _clear_l3_token_recon_cur_h(model: torch.nn.Module) -> None:
+    """Clear the stashed grad-bearing current-chunk hidden after consumption so
+    it is not accidentally reused on a later chunk / step."""
+    root = getattr(model, "module", model)
+    if hasattr(root, "_l3_token_recon_cur_h"):
+        root._l3_token_recon_cur_h = None
+
+
 def _mem_layers(model: torch.nn.Module):
     """Return the list of MemorySpaceLayer wrappers (or None)."""
     root = getattr(model, "module", model)
@@ -792,6 +883,14 @@ def parse_args() -> argparse.Namespace:
                    help="P1/v12 summary-reconstruction aux loss weight. >0 "
                         "enables the MemoryReconDecoder (requires use_l3_summary). "
                         "0 = disabled (default).")
+    p.add_argument("--l3_recon_token_weight", type=float, default=0.0,
+                   help="ICAE-style token-level reconstruction aux loss weight "
+                        "(2026-06-07). >0 enables an L3TokenReconHead that "
+                        "reconstructs the CURRENT chunk's DISCRETE input tokens "
+                        "(CE through the frozen lm_head) from a fresh grad-bearing "
+                        "L3 summary of that chunk; gradient flows back into the "
+                        "L3 pool, forcing genuine semantic compression. Requires "
+                        "use_l3_summary. 0 = disabled (default; back-compat).")
     p.add_argument("--peak_routing_weight", type=float, default=0.05)
     p.add_argument("--route_aux_weight", type=float, default=0.0,
                    help="E2 routing-supervision aux loss weight (2026-06-04). "
@@ -985,6 +1084,8 @@ def build_model(args, device, dtype) -> torch.nn.Module:
         l3_diversity_weight=args.l3_diversity_weight,
         l3_diversity_threshold=args.l3_diversity_threshold,
         l_recon_weight=args.l_recon_weight,
+        l3_recon_token_weight=args.l3_recon_token_weight,
+        l3_recon_max_positions=args.chunk_size,
         peak_routing_weight=args.peak_routing_weight,
         slot_init=args.slot_init,
         slot_init_noise=args.slot_init_noise,
@@ -1206,7 +1307,8 @@ def dolmino_train_step_tbptt(
     bptt_window: int = 2,
     route_aux_weight: float = 0.0,
     reset_flags: Optional[List[bool]] = None,
-) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    l3_recon_token_weight: float = 0.0,
+) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
     """Windowed-BPTT Dolmino CPT step: every chunk gets gradient, and gradients
     flow ACROSS chunk boundaries within a window of ``bptt_window`` chunks.
 
@@ -1250,6 +1352,9 @@ def dolmino_train_step_tbptt(
     total_lm = torch.zeros((), device=device)
     total_aux = torch.zeros((), device=device)
     total_route_aux = torch.zeros((), device=device)
+    total_l3recon = torch.zeros((), device=device)
+
+    use_l3_recon = bool(l3_recon_token_weight > 0.0)
 
     bptt_window = max(1, int(bptt_window))
 
@@ -1303,6 +1408,19 @@ def dolmino_train_step_tbptt(
         # write graph for true cross-chunk BPTT).
         step_loss = chunk_lm + chunk_aux
 
+        # ICAE token recon (2026-06-07): reconstruct THIS chunk's discrete tokens
+        # from a fresh grad-bearing L3 summary of this chunk. The L3 post-forward
+        # hook stashed the grad-bearing top-layer hidden during the forward
+        # above. Folded into the live window so its gradient flows to l3_pool +
+        # head through the same backward. Computed per chunk (every chunk here
+        # is grad-bearing). Scaled by 1/scale to match chunk_lm/chunk_aux.
+        if use_l3_recon:
+            l3r = _compute_l3_token_recon(model, chunk_input)
+            _clear_l3_token_recon_cur_h(model)
+            if l3r is not None:
+                step_loss = step_loss + l3_recon_token_weight * (l3r / scale)
+                total_l3recon = total_l3recon + (l3r / scale).detach()
+
         # route_aux: supervise the current chunk's routing scores against the
         # slots the previous chunk wrote into (cross-chunk write->read).
         if use_route_aux and prev_idx1 is not None:
@@ -1337,7 +1455,7 @@ def dolmino_train_step_tbptt(
             _detach_banks(model)
 
     return (total_lm * grad_accum, total_aux * grad_accum,
-            total_route_aux * grad_accum)
+            total_route_aux * grad_accum, total_l3recon * grad_accum)
 
 
 # --------------------------------------------------------------------------- #
@@ -1352,25 +1470,38 @@ def babilong_train_step(
     chunk_size: int,
     device: torch.device,
     route_aux_weight: float = 0.0,
-) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    l3_recon_token_weight: float = 0.0,
+) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
     """Stream BABILong sample through memory in chunks, gradient on last chunk.
 
-    Returns (lm_loss, aux_loss, route_aux). route_aux (E2) supervises the
-    grad-bearing last chunk's routing scores against the slots the last context
-    chunk wrote into (cross-chunk write->read). It is returned UNWEIGHTED for
-    logging; the caller folds ``route_aux_weight * route_aux`` into the loss.
+    Returns (lm_loss, aux_loss, route_aux, l3recon). route_aux (E2) supervises
+    the grad-bearing last chunk's routing scores against the slots the last
+    context chunk wrote into (cross-chunk write->read). It is returned UNWEIGHTED
+    for logging; the caller folds ``route_aux_weight * route_aux`` into the loss.
     Always 0 when route_aux_weight == 0 or the sample is a single chunk (no
     prior write to supervise against).
+
+    l3recon (ICAE token recon, 2026-06-07): the UNWEIGHTED token-level
+    reconstruction CE for the grad-bearing chunk; the caller folds
+    ``l3_recon_token_weight * l3recon`` into the loss. Always 0 when the head is
+    absent / weight 0.
     """
     _reset_banks(model)
     total_len = input_ids.shape[1]
     n_chunks = max(1, math.ceil(total_len / chunk_size))
 
     zero = torch.zeros((), device=device)
+    use_l3_recon = bool(l3_recon_token_weight > 0.0)
 
     if n_chunks == 1:
         out = model(input_ids=input_ids, labels=labels, use_cache=False)
-        return out.loss, _collect_aux_loss(model, device), zero
+        l3recon = zero
+        if use_l3_recon:
+            _l3r = _compute_l3_token_recon(model, input_ids)
+            _clear_l3_token_recon_cur_h(model)
+            if _l3r is not None:
+                l3recon = _l3r
+        return out.loss, _collect_aux_loss(model, device), zero, l3recon
 
     mem_layers = _mem_layers(model) if route_aux_weight > 0.0 else None
     use_route_aux = bool(route_aux_weight > 0.0 and mem_layers)
@@ -1410,7 +1541,15 @@ def babilong_train_step(
         if ra is not None:
             route_aux = ra
 
-    return out.loss, _collect_aux_loss(model, device), route_aux
+    # ICAE token recon on the grad-bearing last chunk.
+    l3recon = zero
+    if use_l3_recon:
+        _l3r = _compute_l3_token_recon(model, last_in)
+        _clear_l3_token_recon_cur_h(model)
+        if _l3r is not None:
+            l3recon = _l3r
+
+    return out.loss, _collect_aux_loss(model, device), route_aux, l3recon
 
 
 # --------------------------------------------------------------------------- #
@@ -1514,6 +1653,7 @@ def _save_adapter(model, args, step: int, final: bool = False) -> None:
         "lr_V_new", "lr_V_mem", "lr_U", "lr_gate_bias",
         "diag_a_in", "diag_c_in", "diag_a_f", "diag_c_f", "diag_b_in", "diag_b_f",
         "l3_pool", "l2_compressor", "memory_xattn",
+        "l3_token_recon_head",
     )
 
     is_fsdp = _FSDP_AVAILABLE and FSDP is not None and (
@@ -1601,6 +1741,7 @@ def _save_adapter(model, args, step: int, final: bool = False) -> None:
             "l3_n_summary": args.l3_n_summary,
             "l3_n_layers": args.l3_n_layers,
             "l3_n_heads": args.l3_n_heads,
+            "l3_recon_token_weight": args.l3_recon_token_weight,
             "disable_l1_inject": args.disable_l1_inject,
             "use_replace_writeback": args.use_replace_writeback,
             # P2/P8 read-path flags. These add/remove module params, so they MUST
@@ -1868,6 +2009,7 @@ def main() -> None:
         step_lm_loss = 0.0
         step_aux_loss = 0.0
         step_route_aux = 0.0
+        step_l3recon = 0.0
         step_valid_micros = 0
 
         for micro in range(grad_accum):
@@ -1894,9 +2036,10 @@ def main() -> None:
                     input_ids = batch["input_ids"].to(device, non_blocking=True)
                     labels = batch["labels"].to(device, non_blocking=True)
 
-                    lm_loss, aux_loss, route_aux = babilong_train_step(
+                    lm_loss, aux_loss, route_aux, l3recon = babilong_train_step(
                         model, input_ids, labels, args.chunk_size, device,
                         route_aux_weight=args.route_aux_weight,
+                        l3_recon_token_weight=args.l3_recon_token_weight,
                     )
                     n_babilong += 1
                 else:
@@ -1911,11 +2054,12 @@ def main() -> None:
                     target_ids = sample["target_ids"]
                     reset_flags = sample.get("reset_flags", None)
 
-                    lm_loss, aux_loss, route_aux = dolmino_train_step_tbptt(
+                    lm_loss, aux_loss, route_aux, l3recon = dolmino_train_step_tbptt(
                         model, context_chunks, target_ids, device,
                         grad_accum=grad_accum,
                         route_aux_weight=args.route_aux_weight,
                         reset_flags=reset_flags,
+                        l3_recon_token_weight=args.l3_recon_token_weight,
                     )
                     n_dolmino += 1
 
@@ -1927,18 +2071,21 @@ def main() -> None:
                     _zero.backward()
                     continue
 
-                # TBPTT (dolmino) already called backward() inside, route_aux
-                # included; for BABILong we still need the outer backward and
-                # must fold route_aux into the loss here.
+                # TBPTT (dolmino) already called backward() inside, route_aux +
+                # l3recon included; for BABILong we still need the outer backward
+                # and must fold route_aux + l3recon into the loss here.
                 if use_babilong:
                     loss = (lm_loss + aux_loss
-                            + args.route_aux_weight * route_aux) / grad_accum
+                            + args.route_aux_weight * route_aux
+                            + args.l3_recon_token_weight * l3recon) / grad_accum
                     loss.backward()
 
                 step_lm_loss += lm_loss.item()
                 step_aux_loss += aux_loss.item()
                 step_route_aux += float(route_aux.item()) if isinstance(
                     route_aux, torch.Tensor) else float(route_aux)
+                step_l3recon += float(l3recon.item()) if isinstance(
+                    l3recon, torch.Tensor) else float(l3recon)
                 step_valid_micros += 1
 
         # Manual gradient allreduce (since we always use no_sync above).
@@ -2025,12 +2172,14 @@ def main() -> None:
             avg_lm = step_lm_loss / max(1, step_valid_micros)
             avg_aux = step_aux_loss / max(1, step_valid_micros)
             avg_route_aux = step_route_aux / max(1, step_valid_micros)
+            avg_l3recon = step_l3recon / max(1, step_valid_micros)
             elapsed = time.time() - t0
             steps_per_sec = global_step / elapsed if elapsed > 0 else 0.0
             logger.info(
-                "[step %d/%d] lm=%.4f aux=%.4f route_aux=%.4f lr=%.2e n_ctx=%d "
+                "[step %d/%d] lm=%.4f aux=%.4f route_aux=%.4f l3recon=%.4f lr=%.2e n_ctx=%d "
                 "dolmino=%d babi=%d nf=%d skip=%d speed=%.2f steps/s",
-                global_step, args.total_steps, avg_lm, avg_aux, avg_route_aux, lr,
+                global_step, args.total_steps, avg_lm, avg_aux, avg_route_aux,
+                avg_l3recon, lr,
                 current_n_ctx, n_dolmino, n_babilong, n_nonfinite, spike_skip_count,
                 steps_per_sec,
             )
@@ -2048,6 +2197,7 @@ def main() -> None:
                     "train/lm_loss": avg_lm,
                     "train/aux_loss": avg_aux,
                     "train/route_aux": avg_route_aux,
+                    "train/l3recon": avg_l3recon,
                     "train/lr": lr,
                     "train/n_ctx": current_n_ctx,
                     "train/speed_steps_s": steps_per_sec,

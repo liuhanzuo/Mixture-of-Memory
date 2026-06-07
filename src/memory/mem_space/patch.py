@@ -23,7 +23,7 @@ from .l2_compressor import L2Compressor
 from .l3_summary import L3SummaryPool
 from .layer import MemorySpaceLayer
 from .memory_bank import MemoryBank
-from .recon_decoder import MemoryReconDecoder
+from .recon_decoder import MemoryReconDecoder, L3TokenReconHead
 
 
 # --------------------------------------------------------------------------- #
@@ -143,6 +143,27 @@ def apply_mem_space_to_model(
             num_heads=config.l3_n_heads,
         )
 
+    # L3TokenReconHead (ICAE-style, 2026-06-07): if l3_recon_token_weight > 0,
+    # create a single shared head (peer to l3_pool) that reconstructs the
+    # CURRENT chunk's DISCRETE input token ids from a fresh grad-bearing L3
+    # summary of that chunk. The loss is computed in the TRAINING STEP (the head
+    # output is mapped through the frozen lm_head to logits, then CE against the
+    # chunk's token ids), because decoder layers never see the discrete ids.
+    # Gradient flows back into l3_pool, forcing semantic compression.
+    l3_token_recon_head: Optional[L3TokenReconHead] = None
+    if config.l3_recon_token_weight > 0.0:
+        if not config.use_l3_summary:
+            raise ValueError(
+                "l3_recon_token_weight > 0 requires use_l3_summary=True "
+                "(the L3 summary is the reconstruction source)."
+            )
+        l3_token_recon_head = L3TokenReconHead(
+            d_model=d_model,
+            max_positions=config.l3_recon_max_positions,
+            num_heads=config.l3_n_heads,
+            n_layers=1,
+        )
+
     # L2 Token Compressor (2026-05-16, Phase 11): if enabled, create a single
     # shared L2Compressor (peer to L3SummaryPool). The compressor produces
     # token-compressed KV latents at the END of each chunk via a post-forward
@@ -182,6 +203,8 @@ def apply_mem_space_to_model(
             orig, config, d_model=d_model, shared_bank=shared_bank,
             l3_pool=l3_pool, l2_compressor=l2_compressor,
             recon_decoder=recon_decoder,
+            n_heads=getattr(model.config, "num_attention_heads", None),
+            n_kv_heads=getattr(model.config, "num_key_value_heads", None),
         )
         layers[i] = wrapper
         mem_layers.append(wrapper)
@@ -231,6 +254,18 @@ def apply_mem_space_to_model(
                     pool._prev_summary = cached_summary.detach()
                 if hasattr(pool, "_chunk_summary_cache"):
                     object.__setattr__(pool, "_chunk_summary_cache", None)
+            # ICAE token recon (2026-06-07): stash the GRAD-BEARING top-layer
+            # hidden of the CURRENT chunk (NOT detached) so the training step can
+            # run l3_pool on it to get a fresh grad-bearing summary of THIS chunk
+            # and CE-decode it back to this chunk's tokens. Only kept when the
+            # head exists; cleared each step after consumption. Skipped under
+            # torch.no_grad() context-chunk passes (h.requires_grad is False
+            # there, so we'd store a useless detached tensor — guard on it).
+            if getattr(model, "_l3_token_recon_head", None) is not None:
+                if h.requires_grad:
+                    model._l3_token_recon_cur_h = h
+                else:
+                    model._l3_token_recon_cur_h = None
 
         _last_mem_layer.register_forward_hook(_l3_post_forward_hook)
 
@@ -241,6 +276,18 @@ def apply_mem_space_to_model(
     model._recon_decoder = recon_decoder
     if recon_decoder is not None:
         root.add_module("recon_decoder", recon_decoder)
+
+    # Expose the L3TokenReconHead (ICAE-style) as a registered submodule on the
+    # model root so its params appear in model.parameters() / state_dict exactly
+    # once. The training step reads model._l3_token_recon_head + the grad-bearing
+    # current-chunk hidden stashed by the L3 hook (model._l3_token_recon_cur_h).
+    model._l3_token_recon_head = l3_token_recon_head
+    if l3_token_recon_head is not None:
+        root.add_module("l3_token_recon_head", l3_token_recon_head)
+    # Slot for the grad-bearing top-layer hidden of the CURRENT chunk (set by
+    # the L3 post-forward hook when token recon is enabled; consumed + cleared
+    # by the training step). None until the first chunk forward.
+    model._l3_token_recon_cur_h = None
 
     # Expose L2 compressor as a registered submodule on the model root so its
     # parameters appear in model.parameters() / state_dict (exactly once;
