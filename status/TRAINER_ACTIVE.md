@@ -1,46 +1,20 @@
-# TRAINER_ACTIVE.md — Active Training Runs
-## Updated 2026-05-16 21:30 CST (heartbeat)
+# TRAINER ACTIVE — 2026-06-07 22:05 +08:00
 
-## Active Runs
+## Local disk-A node (29.162.227.178), 8× H20 — P11 chunk1024 arm-1 (RUNNING, HEALTHY)
+- **run**: mem_space_p11_chunk1024_deltarule_normreadout, pid 4061522 (etime ~18h07m), master_port=29794
+- **progress**: step 3670/5000, lm=1.32, route_aux=1.09, nf=0, skip=0. top1_sim=0.087 chunk_idx_jaccard=0.80 usage_cov=0.34 (addressing healthy). 8 GPU 78-83% ~82 GiB. ckpt step500-3000 saved. HEALTHY.
 
-### Local H20 (8× H20, 97.8 GiB) — P11 8B FSDP
-- **Experiment**: Phase-1B P11 — Llama-3-8B-Instruct + L1+L3, 8B backbone
-- **Status**: RUNNING
-- **Script**: `scripts/train_mem_space_babilong.py --use_fsdp --gradient_checkpointing`
-- **Output dir**: `outputs/babilong_sft_phase11_fsdp_full/`
-- **Log**: `logs/p11_fsdp_full_20260516_181417.log`
-- **PID**: 898860 (torchrun launcher)
-- **Progress**: ~step 2190/5000 (44%), nf=0, BABI lm_loss ~0.006–1.1, PG19 lm_loss ~2.8–3.5
-- **Ckpts saved**: step 500/1000/1500/2000
-- **Config**: babilong_tasks=qa1,qa2,qa5; lengths=1k,2k,4k; lr=2e-5; num_slots=512; top_k=64; use_dual_gate; use_l3_summary; pg19_mix=0.2
-- **ETA**: ~05:00 CST 2026-05-17
-- **Notes**: FSDP needed to fix cuBLAS workspace OOM. Commit a6dcda3 fixes 3 FSDP bugs (scalar params, no top-level wrap, manual ckpt path).
+## Remote .196, 8× H20 — chunk512_l3recontoken_w0.3 train (RUNNING, HEALTHY)
+- **run**: `mem_space_p11_chunk512_l3recontoken_w0.3`, master_port=29793. step 2120/5000 lm=2.30 route_aux=2.32 l3recon=7.00 nf=0. 8 GPU 81-91% ~90 GiB. step500 ckpt on disk A.
 
-### Remote 28.59.80.196 (8× H20, 97.8 GiB) — 1B v4 L1+L2+L3 FSDP
-- **Experiment**: Phase-1B v4 — Llama-3.2-1B-Instruct + L1+L2+L3 full architecture
-- **Status**: RUNNING
-- **Script**: `scripts/launch_phase1b_v4_l1l2l3.sh full`
-- **Output dir**: `outputs/babilong_sft_phase1b_v4_l1l2l3/`
-- **Log**: `logs/phase1b_v4_20260516_2049.log`
-- **PID**: 234624
-- **Progress**: ~step 2010/5000 (40%), nf=0, BABI lm_loss ~0.05–0.9, aux ~10.6
-- **Ckpts saved**: step 500/1000/1500/2000
-- **Config**: model=Llama-3.2-1B-Instruct; babilong_tasks=qa1,qa2,qa5; lengths=1k,2k,4k; lr=2e-5; use_l2; l2_compress_ratio=16; l2_d_c=512; use_l3_summary; use_fsdp; gradient_checkpointing
-- **GPU**: 27-33 GiB/card (~30% of 97.8 GiB)
-- **ETA**: ~03:30 CST 2026-05-17
-- **Notes**: FSDP + fix for L2Compressor forward() needed (commit 0349264). Baseline comparison: v2 (L1+L3 only, 37.29 mean). This adds L2 to check if token-compressed KV helps.
+## diskB .249, 8× H20 — chunk512_l3recontoken_w1.0 train (RUNNING, HEALTHY)
+- **run**: `mem_space_p11_chunk512_l3recontoken_w1.0`, master_port=29794. step 2120/5000 lm=2.20 route_aux=2.09 l3recon=6.12 nf=0 skip=0. 8 GPU 81-91% ~90 GiB. step500 ckpt on disk B. Train continues to 5000 only for lm/recon curves — BABILong already adjudicated ❌ (see below).
 
-## Node Status Summary
-| Node | GPU | Status |
-|------|-----|--------|
-| Local H20 | 8× H20 97.8 GiB | P11 8B FSDP RUNNING |
-| 28.59.80.196 | 8× H20 97.8 GiB | 1B v4 L1+L2+L3 FSDP RUNNING |
-| b200-1..4 (28.89.17.x) | 8× L20A 183 GiB | SSH Connection refused / Permission denied — unavailable |
-| b200-5..8 (ephemeral) | 8× L20A 183 GiB | SSH Permission denied — unavailable |
-| h20-2..4 (28.85.x / 28.59.x / 28.83.x) | 8× H20 | SSH Permission denied — unavailable |
+## diskB .76, 8× H20 — BABILong evals
+- **★ w1.0 step500 eval DONE (21/21 CSV) → SCORED THIS HEARTBEAT ❌**: qa5 0k-32k=67/22/16/8/3/1/0; qa1=77/4/6/8/3/2/1; qa2=43/4/5/3/1/2/3. vs no-aux P11 chunk512 baseline (qa5=82/86/83/64/50/35) → **L3 token-recon aux weight=1.0 catastrophically destroys long-range addressing.** Real result (full n=100, not silent-fail). Locked into RUN_REGISTRY §3.
+- **w0.3 step500 eval (driver pid 242122, etime ~33m): RUNNING, HEALTHY** — 17 CSV, all lengths 0k-32k producing output (32k=2/3 filling), no network-unreachable. GPU0/1/2 busy.
 
-## Recent Completed (2026-05-16)
-- **1B v1** (500 steps): mean=35.19, ≥8K qa1/qa2/qa5 = 35.7/24.3/55.7 vs LM2 paper 19.0/8.0/36.5
-- **1B v2** (10k steps): mean=37.29, marginal +2.1 over v1 — 500 steps captures 94% of value
-- **v2 multi-ckpt eval**: step1000/step5000/final scored — results in `outputs/eval_phase1b_v2_*/`
-- **8B P8** (reference): mean=59.14, qa1≥8K=47.7 — 1B v4+L2 target is to approach this at ≥8K
+## H800 .247(master)/.130.90(worker), 16× H800 DDP — ❌ DEAD (lease reclaimed)
+- All H800 IPs dead (port 36000 refused). H800 stable-ladder suspended until fresh lease.
+
+## GPU UTILIZATION: 4 live H20 nodes — 3 training runs (chunk1024 arm-1 + l3recon w0.3/w1.0 sweep) all FULL/HEALTHY + .76 eval node (w1.0 DONE+scored ❌, w0.3 running). H800 dead. HEARTBEAT_OK (busy-healthy; w1.0 eval adjudicated token-recon aux ❌; w0.3 eval will close the sweep next cycle).

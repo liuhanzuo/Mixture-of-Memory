@@ -1,5 +1,153 @@
 # UPDATELOG.md
 
+## [2026-06-04 14:25 CST] — toy 诊断矩阵 E1/E2/E4 收官（决定性）→ 自动派 coder 实现 route_aux
+- 5 个 toy arm 全部完成（logs/toy_e*.log，~13:57-14:00 收尾，进程已退，本机 8 卡全 idle）。
+- **E1 confirmed**：decoupled-read 饿死 selector LM 梯度。decoupled OFF lm_grad→Q_sel≈8–15；ON 仅 0.3–4（~10–50× 衰减），selector 几乎只收 aux 梯度。
+- **E2 confirmed（关键杠杆）**：纯 LM loss 无法 bootstrap content addressing（aux_off retrieval_exact_acc 全程=0）；加 routing-supervision aux → exact_acc 爬到 0.25 仍上升。
+- **E4**：force-open inject gate 把 top1_sim 抬到 0.30 但 exact_acc 仍 0 → 冻结 α 非主因。
+- Gate 通过（E1/E2 confirmed + researcher confidence:high）→ 按自主派发规则**自动派 coder（Opus4.7）**把 toy 已验证的 route_aux 移植进 8B dolmino CPT 路径，无需用户审批。
+- 下一步：coder 完成 → main 起 E5 8B 验证 run（H20-2 8 卡 DDP，2000 step，--eval_interval 0，--route_aux_weight 1.0）。
+
+## [2026-05-18 00:43 GMT+8] — P8-temp20 final eval 纠偏完毕并评分；original B200 改用 .venv 已真实起跑
+
+**Actor**: heartbeat
+**Context**: 用户要求继续闭环两件事：一是把昨晚 `23:57` 那个已经过时的 heartbeat 快照纠正成实时事实；二是在 original B200 上不要再停留在“环境 blocker”口头判断，而是沿着刚找到的 project `.venv` 直接把 `v5 cold-start alpha` 真正拉起来。
+**Observation**:
+  - 远程 `28.59.80.196` 上的 `p8_temp20_final_eval_20260517_2342` 实际已经完整结束；tmux 与 eval worker 均已退出，远程 GPU 回到 `0 MiB / 0% util`
+  - 旧 heartbeat 误判“顶层目录 0 CSV / 仍在运行”的根因已查清：结果文件实际写在 `outputs/eval_p8_temp20_final_20260517_2342/p8_temp20_final_{qa1,qa2,qa5}_{short,long}/` 子目录里，而不是根目录
+  - 按 `babilong.metrics.compare_answers` 的 canonical 口径重算后，clean `P8 + selector_temperature=20` final = `qa1=65.00`, `qa2=31.57`, `qa5=67.29`, overall **54.62**, short avg **62.08**, long avg **44.67**
+  - original B200 `.144` 上的真实可用环境是 project `.venv/bin/python`，不是 `/opt/conda/envs/torch-base`；该 `.venv` 已确认 `torch 2.10.0+cu128`、arch 包含 `sm_100`，且 `torch.zeros(..., device="cuda")` 成功
+  - heartbeat 已据此在 `.144` 上启动 tmux `v5_coldstart_alpha_20260518_004122`；到 `00:43 CST` 训练已推进到 `BABI step 250/5000`，8 卡显存约 `27.7–30.8 GiB`，说明 run 真实进入训练循环
+  - 但 v5 的早期 routing 仍未明显脱离旧 flat floor：`QUERY_DIAG top1_sim_mean` 目前还在 `0.002106–0.002228`
+**Action**: 刷新 `TRAINER_ACTIVE.md`、`PENDING_TASKS.md`、`H_V2_PLAN.md`、`FORWARD_PLAN_20260515.md`，把 remote final eval 的完成/评分结果与 original B200 `.venv` launch 的真实进度一次性纠偏落账。
+**Next step**: 盯 original B200 这条 `v5` 到 `step 500` / 首个 checkpoint，再根据新的 `QUERY_DIAG` 决定是否继续；并把 clean `P8 + temp20 final=54.62` 作为新的 canonical 对照纳入后续比较。
+
+## [2026-05-17 23:57 GMT+8] — P8-temp20 final eval 已越过 startup；original B200 其余节点不可用现状写实
+
+**Actor**: heartbeat
+**Context**: 继续完成上一拍未收敛的两件事：一是确认远程 `p8_temp20_final_eval_20260517_2342` 是否真实进入 sample loop，而不是只停在模型加载；二是把 original B200 / cluster-1 其余节点的可用性探清，避免之后重复试同一组无效组合。
+**Observation**:
+  - 远程 `28.59.80.196` 上 tmux `p8_temp20_final_eval_20260517_2342` 仍存活，6 个 worker `417716`–`417721` 全在；GPU `0..5` 已占用约 `32/32/36/45/36/38 GiB`
+  - 结果目录 `outputs/eval_p8_temp20_final_20260517_2342/` 在这次快照下仍是 `0` 个 CSV，但日志已明确显示 run 不在 startup：`qa1_short` 已完成 `1k 100/100`，`qa2_short` 已进入 `2k`，`qa5_short` 到 `4k 16/100`，三路 long worker 已在 `16k 8–13/100`
+  - original cluster 进一步显式探针表明：当前 direct-root 路径下，只有 `28.89.17.144` 能登录；`28.89.17.143` 在 `22` 端口 password denied、`36000` 端口 connection refused；`28.89.17.85` 与 `28.89.19.134` 在 `22/36000` 都对当前凭据返回 password denied
+  - 因而 original B200 现阶段并不是“还有别的节点待试”状态，而是“唯一可达节点 `.144` 已确认环境不兼容，其余节点当前凭据不可用”
+**Action**: 刷新 `TRAINER_ACTIVE.md`、`PENDING_TASKS.md`、`H_V2_PLAN.md`、`FORWARD_PLAN_20260515.md`，把远程 eval 的真实活跃进度与 original-cluster 的访问/环境结论都写实落账，避免下一拍重复回到同一歧义。
+**Next step**: 下一拍继续盯 `outputs/eval_p8_temp20_final_20260517_2342/` 的首批 CSV materialize；original B200 若继续推进，应优先准备支持 `sm_100` 的独立 PyTorch 环境，而不是重复试密码/端口。
+
+## [2026-05-17 23:44 GMT+8] — clean P8-temp20 已转入 final eval；stale exp_b 清理；original B200 环境 blocker 坐实
+
+**Actor**: heartbeat
+**Context**: 本拍先完成三件高价值动作：复核当前实际运行面、清理明显失真的本地 stale wrapper，并在远程 clean `P8 + selector_temperature=20` 500-step 训练完成后立即接上 canonical 21-cell final eval。同时继续追 original B200 上 `v5 cold-start alpha` 的 launch blocker 到真正根因。
+**Observation**:
+  - 远程 `28.59.80.196` 的 `p8_temp20_500_20260517_105421` 已在 `11:20 CST` 干净完成；日志尾部给出 final `mem_space_adapter.pt` 与 `Training complete: steps=500 babilong=411 pg19=89 non-finite=0`
+  - 远程节点此时全空，因此 heartbeat 立即拉起 tmux `p8_temp20_final_eval_20260517_2342`，把该 checkpoint 接到 canonical 21-cell BABILong final eval；6 个 worker `417716`–`417721` 已成功起跑
+  - 本地 `exp_b_train` 被确认只是 stale tmux wrapper：真实命令仍指向缺失的 `scripts/exp_b_train.sh`，只剩 `sleep 99999`；当前本地 8×H20 全部 `0 MiB / 0% util`
+  - original B200 / cluster-1 上，`root@28.89.17.144` 的 SSH 已打通，但远端 `torch-base` 为 `torch 2.8.0 + cu128` 且 arch list 仅到 `sm_90`；节点报告 `L20A / sm_100`，即使 `torch.zeros(1, device="cuda")` 也会报 `no kernel image is available`
+**Action**: kill 本地 stale `exp_b_train` wrapper，并在远程节点空闲后立即启动 `P8 + temp20` final eval；同时把 original B200 问题从“认证不确定”收敛为“GPU 架构与 PyTorch 环境不兼容”的明确 blocker。
+**Next step**: 下一拍优先确认 `outputs/eval_p8_temp20_final_20260517_2342/` 的首批 CSV / parsed-row 进度；并行决定 original B200 是继续探测兼容节点，还是单独准备支持 `sm_100` 的 PyTorch 环境后再重启 v5。
+
+## [2026-05-17 10:58 GMT+8] — validate final eval 只剩最后 1 个尾巴，远程 P8-temp20 已健康起跑
+
+**Actor**: heartbeat
+**Context**: 用户要求并行推进两件事：一边确认 validate final eval 是否已经收尾到可正式评分，另一边在不污染本地 validate 执行面的前提下，启动 clean 的 `P8 + selector_temperature=20` 对照短跑并观察其机制信号。
+**Observation**:
+  - `outputs/eval_p11_500step_validate/` 现已 materialize 全部 `21/21` 个 result CSV，其中 `20/21` 已达到 `100 parsed rows`
+  - 当前唯一未完成的 validate cell 只剩 `qa1 32k=90/100`；本地 GPU 只剩 `3` 号卡仍忙（约 `55.0 GiB`、`99% util`），其余 `0/1/2/4/5/6/7` 均已空闲
+  - 剩余 validate 尾巴的最新 eval-side QUERY_DIAG 仍贴近旧的 flat-routing floor：`qa1 32k top1_sim_mean=0.002091`
+  - 远程 `28.59.80.196` 已被重新占用：tmux `p8_temp20_500_20260517_105421` 正在做 clean `P8 + selector_temperature=20` 500-step ablation，8 卡显存约 `90-95 GiB`、util `94-100%`
+  - 远程训练日志 `logs/p8_temp20_500_20260517_105421.log` 已健康推进到 `BABI step 40/500`；首个 QUERY_DIAG 给出 `top1_sim_mean=0.020874`，明显高于旧的 `~0.002` flat-routing floor
+  - `git status --short` 的 clean-tree 问题仍是独立 WARNING，本拍未把它误判为已解决
+**Action**: 刷新 heartbeat-facing 状态文件，把 validate final eval 的进度从 `18/21` 推进到 `20/21` complete，同时把远程 `P8 + temp20` 新短跑纳入活跃执行面。
+**Next step**: 先等本地 `qa1 32k` 补齐最后 10 个样本后立刻做 canonical scoring；并行继续盯 remote `p8_temp20_500_20260517_105421` 到训练完成，随后接上对应 21-cell BABILong eval。
+
+## [2026-05-17 10:36 GMT+8] — validate final eval 只剩 3 个 32k 长尾
+
+**Actor**: heartbeat
+**Context**: `p11_fsdp_500step_validate` 已在上一拍确认完成；这拍的唯一高价值动作就是复检 final validate eval 是否继续推进，并判断是否已经达到可正式评分的 `21/21 × 100 parsed rows`。
+**Observation**:
+  - `outputs/eval_p11_500step_validate/` 现已 materialize 全部 `21/21` 个 result CSV，其中 `18/21` 已达到 `100 parsed rows`
+  - 当前唯一未完成的 cell 只剩 `qa1 32k=20`、`qa2 32k=30`、`qa5 32k=40`
+  - 本地只剩 3 个 long worker 存活在 GPU `3..5`；对应显存约 `40.9-55.0 GiB`、util `99%`，而 GPU `0..2` 和 `6..7` 已空闲
+  - `outputs/eval_p11_500step_validate/p11_500step_validate_score.csv` 已出现部分产物，但其 `4k/16k/32k` 仍含未完成计数/空值，因此还不能视为 canonical final score
+  - 最新 `32k` eval-side QUERY_DIAG 仍贴近旧的 flat-routing floor：`qa1 32k=0.002205`、`qa2 32k=0.002200`、`qa5 32k=0.002113`
+  - 远程 `28.59.80.196` 继续保持 `0 MiB / 0% util` 空闲；`git status --short` 也仍显示 working tree 非干净，且不只状态文件
+**Action**: 刷新 heartbeat-facing 状态文件，把 validate eval 的进度从 `12/21 materialized` 推进到 `21/21 materialized, 18/21 complete`，并记录当前只剩 3 个 `32k` 长尾的收尾态。
+**Next step**: 继续盯住 `qa1/qa2/qa5 @ 32k` 三个尾部 worker 到 `100 parsed rows`，随后立刻做 canonical scoring，并与 `temp20 final=35.24`、`step500=33.81`、`step4500=27.43`、`P11 final=26.33`、`P8=59.14` 对比。
+
+## [2026-05-17 09:49 GMT+8] — validate training 已完成，final eval 已自动开跑
+
+**Actor**: heartbeat
+**Context**: `temp20 final=35.24` 与 `step500=33.81` 的评分闭环完成后，本地 `p11_fsdp_500step_validate` 是当前唯一主执行面；这一拍需要确认它是否已顺利收尾、final ckpt 是否落盘，以及随后的 validate final 21-cell eval 是否已经自动接上。
+**Observation**:
+  - local `p11_fsdp_500step_validate` finished cleanly at `step 500/500`; `logs/p11_fsdp_500step_validate_20260517_0851.log:280-282` shows final `mem_space_adapter.pt` and `Training complete: steps=500 babilong=411 pg19=89 non-finite=0`
+  - `outputs/babilong_sft_phase11_fsdp_500step_validate/` now contains `adapter_config.json`, `mem_space_adapter_step000250.pt`, and final `mem_space_adapter.pt`, so the optimizer-fix validation + checkpoint-save path is confirmed healthy
+  - `outputs/eval_p11_500step_validate/` is already active on local GPUs `0..5`; `12/21` CSVs have materialized so far, including `qa1 0k=100`, `qa1 1k=90`, `qa1 8k=40`, `qa2 0k=100`, `qa2 1k=100`, `qa2 2k=10`, `qa2 8k=40`, `qa5 0k=100`, `qa5 1k=100`, `qa5 2k=100`, `qa5 4k=20`, `qa5 8k=50`
+  - both the training tail and the eval-side QUERY_DIAG are still near the old flat-routing floor (`~0.00206-0.00222`), so this heartbeat confirms stability and save-path recovery more strongly than routing recovery
+  - local GPUs `0..5` are busy with eval while `6..7` are idle; remote `28.59.80.196` remains fully idle at `0 MiB / 0% util`
+  - `git status --short` is still dirty beyond status files (`.claude/commands/heartbeat.md`, `.gitignore`, `docs/`, `scripts/...`, `locomo`), so the clean-tree / push item remains open
+**Action**: Refreshed the heartbeat-facing status files to close out the validate training run, pivot the active frontier to the validate final eval, and record the partial `12/21` eval progress snapshot.
+**Next step**: monitor `outputs/eval_p11_500step_validate/` to `21/21 × 100 parsed rows`, then immediately score and compare it against `temp20 final`, `step500`, `step4500`, `P11 final`, and `P8`.
+
+## [2026-05-17 08:54 GMT+8] — 两路 eval 已完成评分，并自动切入 validate run
+
+**Actor**: heartbeat
+**Context**: 上一拍之后，本地 `temp20 final` 与远程 `step500` 两路 BABILong eval 都已收齐到 `100 parsed rows × 21 cells`，因此可以正式评分；与此同时，本地修复后的 `500-step validate` 训练已自动启动。
+**Observation**:
+  - local `temp20 final` scored `qa1=36.86`, `qa2=12.86`, `qa5=56.00`, overall **35.24**; short avg **45.42**, long avg **21.67**
+  - remote `step500` scored `qa1=35.71`, `qa2=13.29`, `qa5=52.43`, overall **33.81**; short avg **45.92**, long avg **17.67**
+  - `temp20 final` is now the best cheap 8B lever among the current postmortem arms, but it still trails `P8=59.14` by **23.90pp**
+  - local `p11_fsdp_500step_validate` is already active on 8×H20 and has reached `PG19 step 10/500`
+**Action**: Wrote score artifacts for `temp20 final`, refreshed all heartbeat-facing status files, and pivoted the main active run to the new validate training.
+**Next step**: monitor `p11_fsdp_500step_validate` to final ckpt, then immediately launch a fresh 21-cell BABILong eval for that validate checkpoint.
+
+## [2026-05-17 08:10 GMT+8] — 两路 eval 都进入最后长尾收尾
+
+**Actor**: heartbeat
+**Context**: 上一拍之后，本地 temp20 final eval 与远程 step500 eval 都继续推进，但都还没到“可评分”的 `100 parsed rows × 21 cells` 完成态。
+**Observation**:
+  - local `temp20 final` is now at `19/21` materialized CSVs; only `qa1 32k` and `qa2 32k` have not appeared yet
+  - remote `step500` is now at `21/21` materialized CSVs, but `qa1 32k=60`, `qa2 32k=80`, `qa5 32k=80` are still incomplete
+  - local active worker count has dropped from 6 to 5 because `qa5_short` finished and freed GPU2; remote remains at 3 long-workers on GPUs 3/4/5
+**Action**: Refreshed the heartbeat-facing status files to move the bottleneck from “missing CSV files” to “final 32k tails still below 100 parsed rows”.
+**Next step**: Wait for the remaining long-tail rows to finish, then immediately score remote `step500` first and local `temp20 final` second.
+
+## [2026-05-17 07:48 GMT+8] — temp20 final eval 已真实开跑；step500 eval 收尾到最后 2 个未现身 cell
+
+**Actor**: heartbeat
+**Context**: 上一拍已自动拉起本地 temp20 final eval，但当时仍处于 startup / model-load 窗口；这拍需要确认它是否真正进入 GPU 执行。同时继续跟远程 `step000500` checkpoint eval 的收尾进度。
+**Observation**:
+  - local temp20 final eval is genuinely active: GPU 0-5 now hold roughly `35-57 GiB` at `98-99% util`
+  - `outputs/eval_p11_temp20_final_20260517_073341/` now has `14` CSVs with parsed row counts `10-100`
+  - remote `outputs/eval_p11_step500/` now has `19` CSVs with parsed row counts `10-100`; `qa5 32k` has appeared with `10` rows, while `qa1 32k` and `qa2 32k` are still missing
+  - remote worker count has dropped from 5 to 3 (`302636`–`302638`), consistent with only the final long cells still running
+**Action**: refreshed heartbeat-facing status files to move temp20 final eval from “startup pending” to “healthy and progressing”, and updated remote step500 status to the new `19/21` state.
+**Next step**: (1) let remote step500 reach `21/21` and score immediately; (2) keep temp20 final running to `21/21` and then compare it against `P11 final=26.33`, `step4500=27.43`, and `P8=59.14`.
+
+## [2026-05-17 07:34 GMT+8] — temp20 训练完成并自动拉起 final eval
+
+**Actor**: heartbeat
+**Context**: detached tmux 版 8B `selector_temperature=20.0`、500-step 短消融已在 `logs/p11_temp20_500_20260517_063303.log:282-284` 干净完成；同时远程 `step000500` checkpoint eval 仍未收齐。
+**Observation**:
+  - temp20 training finished at `step 500/500`; final `mem_space_adapter.pt` saved; `non-finite=0`
+  - late `top1_sim_mean` remained `0.008911 / 0.013489 / 0.006653 / 0.012512` at steps `413/443/464/484`
+  - remote `outputs/eval_p11_step500/` currently has `18` CSVs with parsed row counts `30-100`; 5 workers are still active on GPUs 0/1/3/4/5
+**Action**: Because local 8×H20 became idle and this is an auto-launchable checkpoint-eval follow-up, launched 6-way local temp20 final BABILong eval in detached tmux `p11_temp20_final_eval_20260517_073341`, writing to `outputs/eval_p11_temp20_final_20260517_073341/`.
+**Startup check**: 6 local eval worker processes (`1246743`–`1246748`) are alive; per-worker logs already reached tokenizer load + base-model weight loading. Immediate `nvidia-smi` is still `0 MiB / 0% util`, so next heartbeat must confirm transition into GPU occupancy and first CSV materialization.
+**Next step**: (1) finish remote step500 eval and score it; (2) confirm temp20 final eval startup and then monitor it to 21/21 CSVs; (3) compare temp20 final against `P11 final=26.33`, `step4500=27.43`, and `P8=59.14`.
+
+## [2026-05-17 06:33 GMT+8] — temp20 改为 detached tmux 重拉
+
+**Actor**: heartbeat
+**Context**: 第二次 shell-based relaunch（`logs/p11_temp20_500_20260517_062148.log`）也在 step0 前收到外部 `SIGTERM`；该 run 在被杀前已完成 FSDP wrap、BABILong dataset cache prefetch 与 PG-19 chunk 加载，日志 `logs/p11_temp20_500_20260517_062148.log:173-261` 明确显示 `torch.distributed.elastic.multiprocessing.api.SignalException: Process 1200804 got signal: 15`。
+**Action**: 将同一条 8B `selector_temperature=20.0`、500-step 短消融改为 detached local tmux 方式重拉，session=`p11_temp20_500_20260517_063303`。
+**New run**:
+  - output_dir: `outputs/babilong_sft_phase11_temp20_500_20260517_063303/`
+  - log: `logs/p11_temp20_500_20260517_063303.log`
+  - config: 保持 `P11` 配方不变，仅继续验证 `selector_temperature=20.0`
+**Startup check**: tmux session 已存在；`torchrun` + 8 workers 已拉起；新日志已进入多 rank weight loading（`logs/p11_temp20_500_20260517_063303.log:1-9`）；本地 8×H20 当前各自约 `15.8 GiB` 显存占用；远程 `28.59.80.196` 维持空闲。
+**Reasoning**: 现阶段 blocker 更像 shell/session 生命周期导致的外部终止，而不是模型代码在 startup/init 阶段崩溃；因此优先用 detached tmux 绕开 launch lifetime 问题。
+**Next step**: detached tmux run 已越过历史 pre-step kill 窗口，并在 `logs/p11_temp20_500_20260517_063303.log:173-174` 产出最早 step 证据：`step 10/500` 与 `step 20/500`。接下来继续读取前 `100–200` steps 的 `QUERY_DIAG` / `top1_sim_mean`，判断 temp20 是否真的抬起 routing sharpness。
+
 ## [2026-04-30 05:57 GMT+8] — FIX X.1: Remove slot_keys.detach() + add slot_value_norm_cap
 
 **Actor**: coder
@@ -4889,3 +5037,585 @@ PPL/NIAH trade-off 假说被实证否决。training niah_loss 高低（0.58 vs 1
 
 **Suspicion note (not on remote)**: `.git/config` remote URL embeds a `ghp_*` GitHub PAT. This is NOT in any commit (git never pushes `.git/config`), but the token is visible in any shell that runs `git remote get-url origin`. User may want to rotate this token if concerned about local exposure.
 
+
+## [2026-05-16 21:55 GMT+8] — Heartbeat refresh: Phase-1B runs healthy, status files updated
+
+**Actor**: heartbeat
+**Action**: Re-read heartbeat control files, refreshed `status/TRAINER_ACTIVE.md`, refreshed `status/PENDING_TASKS.md`, appended `status/TRAINER_ACTIVITY.jsonl`, and updated `status/H_V2_PLAN.md` with the current Phase-1B execution front.
+**Observed state**:
+- Local P11 8B FSDP healthy at `step≈2530/5000`; latest saved ckpt `step2500`; 8/8 local H20 saturated.
+- Remote 1B v4 L1+L2+L3 FSDP healthy at `step≈3680/5000` on `28.59.80.196`; 8/8 remote H20 busy.
+- Both runs still show `top1_sim_mean≈1/512`, so heartbeat dispatched a proactive researcher diagnosis and a proactive code audit in background.
+- Current SSH probes still show non-primary nodes mostly unavailable (`connection refused` / `permission denied`), so no extra auto-launch fired in this heartbeat.
+**Next step**: auto-launch `1B v4` eval and `P11` eval as soon as their runs finish; launch `v3 short-context fix` when an H20 node becomes free.
+
+## [2026-05-16 22:05 GMT+8] — Heartbeat refresh: v4 nears completion
+
+**Actor**: heartbeat
+**Action**: Rechecked active runs, refreshed `TRAINER_ACTIVE.md` / `PENDING_TASKS.md`, updated `H_V2_PLAN.md`, appended `TRAINER_ACTIVITY.jsonl`, and retried the proactive Phase-1B code audit with a narrower scope after the first broad audit hit max-turn failure.
+**Observed state**:
+- Local P11 8B FSDP remains healthy at `step≈2670/5000`; 8/8 local H20 GPUs still occupied.
+- Remote 1B v4 L1+L2+L3 FSDP reached `step≈4540/5000`; `step4500` adapter ckpt confirmed on `28.59.80.196`.
+- `top1_sim_mean≈1/512` still persists on both runs; only the narrow researcher pass succeeded so far, while broader researcher/coder passes previously failed with `Max turns exceeded`.
+- No pending trainer approvals found. Other H20 nodes remain unavailable (`connection refused` or `permission denied`).
+**Next step**: wait for `1B v4` completion and auto-launch eval; keep `P11` running; use the retried narrow code audit only if it returns successfully.
+
+**Follow-up**: Narrow Phase-1B code audit succeeded. It found no obvious code-level bug making `top1_sim_mean≈1/512` misleading; the stronger reading is still flat routing / non-specialization. Audit also noted that `peak_routing_loss` is likely too weak in the uniform 512-way regime to break symmetry on its own.
+
+## [2026-05-16 22:50 GMT+8] — v4 training completed, BABILong eval auto-launched
+
+**Actor**: heartbeat
+**Action**: Confirmed that remote `1B v4 L1+L2+L3 FSDP` finished at 22:09 CST, auto-launched the 7-length BABILong eval on `28.59.80.196`, refreshed `status/TRAINER_ACTIVE.md`, `status/PENDING_TASKS.md`, `status/H_V2_PLAN.md`, and appended state/report logs.
+**Observed state**:
+- Remote `logs/phase1b_v4_20260516_2049.log` reached `step 5000/5000`; final adapter ckpt saved to `outputs/babilong_sft_phase1b_v4_l1l2l3/mem_space_adapter.pt`.
+- Three eval processes were launched for `qa1` / `qa2` / `qa5` across `{0k,1k,2k,4k,8k,16k,32k}`; initial logs show successful model/config load rather than immediate failure.
+- Local `P11 8B FSDP` remains healthy at `step≈2990/5000`, still with `top1_sim_mean≈1/512`.
+- New narrow L1-only analysis strengthens the interpretation that the current problem is a non-specializing L1 router, not evidence that the whole memory direction is useless.
+**Next step**: let `v4` eval finish and compare against v2; then finish `P11` and run its eval; after that prioritize the short `selector_temperature=20` diagnostic ablation.
+
+**Follow-up (2026-05-16 22:51 GMT+8)**: user asked to maximize parallelism. I expanded the remote `v4` eval from 3 GPUs to 6 GPUs total: the original three per-task jobs keep finishing `0k/1k/2k/4k`, while three new long-length jobs fan out `8k/16k/32k` on additional GPUs. A remote watcher will kill the original three jobs once all `4k` CSVs finish, so we avoid duplicate work on long lengths.
+
+## [2026-05-16 23:03 GMT+8] — Heartbeat repair: v4 eval row-count mismatch detected, qa1 4k relaunched
+
+**Actor**: heartbeat
+**Action**: Re-probed the remote `1B v4` eval on `28.59.80.196`, switched completion accounting from raw CSV line count to parsed CSV row count, confirmed that the long-length fanout had already finished, and launched a targeted repair run for the only incomplete cell: `qa1 4k`.
+**Observed state**:
+- Local `P11 8B FSDP` remains healthy; `logs/p11_fsdp_full_20260516_181417.log` has advanced through `step≈3350/5000`, and all 8 local H20 GPUs remain saturated.
+- Remote `v4` eval is effectively complete except for `qa1 4k`: parsed CSV counts show `qa2` and `qa5` are complete at all lengths, while `qa1` has `0k/1k/2k/8k/16k/32k = 100 rows` and `4k = 80 rows`.
+- The earlier raw-line heuristic was unsafe because several CSVs contain embedded newlines; physical line count overstated completion. Parsed row count (`csv.DictReader`) is now treated as the authoritative signal.
+- The 22:38 long-length fanout (`8k/16k/32k`) has already drained; only the targeted `qa1 4k` repair remains active.
+**Repair action**:
+- Launched tmux session `p1bv4_qa1_4k_repair_20260516_230151` on `28.59.80.196`
+- Active repair PID: `253556`
+- Log: `logs/eval_p1bv4_final_qa1_4k_repair_20260516_230151.log`
+- Command reruns only `qa1 --lengths 4k` into the same `outputs/eval_phase1b_v4_final/p1bv4_final_qa1/` folder, so it will overwrite the incomplete `qa1_4k` CSV with a fresh full pass
+**Next step**: let the `qa1 4k` repair finish to 100 parsed rows, then aggregate the full `v4` result against `v2`; keep monitoring `P11` and auto-launch its eval on completion.
+
+**Follow-up (2026-05-16 23:08 GMT+8)**: user asked whether the effect/result is out yet. Recheck shows the answer is still **not yet**: the targeted `qa1 4k` repair remains live as PID `253556`, remote GPU 0 is active (~28.8 GiB, 97% util), the repair log has advanced to about `68/100` examples, and the rewritten on-disk CSV currently contains `60` parsed rows. All other `v4` eval cells are already complete at `100` parsed rows.
+
+## [2026-05-16 23:25 GMT+8] — v4 final eval completed; temp20 short ablation auto-launched
+
+**Actor**: heartbeat
+**Action**: Rechecked the remote repair, confirmed the final missing `qa1 4k` cell finished cleanly, scored the full `v4_final` grid against `v2_final`, then used the now-idle remote H20 node to auto-launch the queued `selector_temperature=20.0` short diagnostic ablation.
+**Observed state**:
+- Local `P11 8B FSDP` remains healthy through `step≈3600/5000`; `step3500` adapter checkpoint is saved at `outputs/babilong_sft_phase11_fsdp_full/mem_space_adapter_step003500.pt`.
+- Remote `v4` final eval is now fully complete at `21/21` cells (`qa1/qa2/qa5 × 7 lengths`, all `100 parsed rows`).
+- Final score comparison:
+  - `v2_final` mean = **37.43**
+  - `v4_final` mean = **15.14**
+  - delta = **-22.29pp**
+  - strongest regressions are at long lengths: average delta `8k -52.3pp`, `16k -37.0pp`, `32k -28.7pp`
+- Interpretation: the current `L1+L2+L3` v4 recipe is **substantially worse** than the `L1+L3` v2 baseline, especially once contexts get long.
+**Auto-launch action**:
+- Launched tmux session `p1bv4_temp20_500_20260516_232449` on `28.59.80.196`
+- Torchrun PID: `256108`
+- Log: `logs/phase1b_v4_temp20_500_20260516_232449.log`
+- Output dir: `outputs/babilong_sft_phase1b_v4_temp20_500/`
+- Recipe: same v4 path, but shortened to `500` steps and with `--selector_temperature 20.0`
+- Initial verification: `torchrun` plus 8 rank workers are alive; log is in model-load/init stage and GPUs have started allocating memory
+**Next step**: monitor the first `100–200` steps of the temp20 run to see whether `top1_sim_mean` escapes the `~1/512` floor; continue monitoring local `P11` until completion and then auto-launch its eval.
+
+**Follow-up (2026-05-16 23:27 GMT+8)**: user asked to dispatch a researcher specifically on why adding `L2` made v4 worse. Researcher diagnosis came back with **high confidence**: the most likely explanation is not “L2 is useless in principle”, but that the current implementation poisons attention with low-signal compressed latents and may also leak stale L2 state across training samples. The two strongest code-level clues are `src/memory/mem_space/patch.py:256` (L2 hook runs compressor under `torch.no_grad()`) and the absence of an L2 reset in the training sample-reset path highlighted from `scripts/train_mem_space_babilong.py:225-244`. Cheapest suggested verification is: eval-only disable L2 on the finished v4 checkpoint and check whether BABILong rebounds toward v2.
+
+## [2026-05-16 23:56 GMT+8] — temp20 完成；heartbeat 自动接管空闲远程 H20 跑 v3 shortfix final eval
+
+**Actor**: heartbeat
+**Action**: Rechecked local `P11` and remote `28.59.80.196`, confirmed the `selector_temperature=20` short ablation had already finished cleanly, then immediately reused the freed remote H20 node to launch the missing `v3 shortfix` final BABILong eval in a 6-way parallel fanout.
+**Observed state**:
+- Local `P11 8B FSDP` remains healthy; `logs/p11_fsdp_full_20260516_181417.log` has advanced through `step≈3970/5000`, local 8×H20 remain saturated, and recent routing diagnostics are still `top1_sim_mean≈0.00206–0.00215`.
+- Remote `temp20` short ablation finished at about `23:33 CST` with final adapter saved to `outputs/babilong_sft_phase1b_v4_temp20_500/mem_space_adapter.pt` and no NaN/crash.
+- Most informative `temp20` signal: `top1_sim_mean` reached `0.034180` (step 443), then `0.007629` and `0.006226` near the end — above the earlier `~1/512` floor, so sharper selector temperature now looks like a real mechanism lever rather than noise.
+- Immediately before relaunch, the remote H20 node was fully idle (`0 MiB` on all 8 GPUs, no `torchrun` / eval workers alive).
+**Auto-launch action**:
+- Launched tmux session `p1bv3_shortfix_eval_20260516_235518` on `28.59.80.196`
+- Started 6 parallel eval workers covering `qa1/qa2/qa5 × {0k,1k,2k,4k}` and `qa1/qa2/qa5 × {8k,16k,32k}`
+- Checkpoint: `outputs/babilong_sft_phase1b_v3_shortfix/mem_space_adapter.pt`
+- Results folder: `outputs/eval_phase1b_v3_shortfix_final/`
+- Logs: `logs/eval_p1bv3_shortfix_final_{qa1,qa2,qa5}_{short,long}_20260516_235519.log`
+- Initial verification: all 6 `run_babilong_mem_space.py` processes are alive; logs show base-model and adapter loading with no immediate traceback
+**Next step**: wait for `v3 shortfix` eval to reach `21/21` cells at `100 parsed rows`, then aggregate against `v2_final=37.43` and `v4_final=15.14`; continue monitoring `P11` and auto-launch its eval when training finishes.
+
+## [2026-05-17 00:26 GMT+8] — 手动 heartbeat 验证通过；v3 shortfix final eval 汇总完成
+
+**Context**: 用户要求显式验证 20 分钟 cron 触发的 `/heartbeat` 是否会真正执行“读 plan / 检查状态 / 采取动作 / 更新 plan”。本轮手动跑了一次完整 heartbeat 来做端到端确认。
+
+**What happened**:
+- 重新读取并核对了 `status/TRAINER_ACTIVE.md`、`status/PENDING_TASKS.md`、`status/H_V2_PLAN.md`、`status/TRAINER_REQUESTS.jsonl`、`AGENTS.md`
+- 确认 cron 仍在：`67180e7d — 7,27,47 * * * * (recurring): /heartbeat`
+- 本地 `P11 8B FSDP` 仍健康运行：`logs/p11_fsdp_full_20260516_181417.log` 已推进到 `step≈4334/5000`，`mem_space_adapter_step004000.pt` 已写出，8/8 H20 维持高负载
+- `P11` 的 QUERY_DIAG 仍显示 `top1_sim_mean≈0.00198–0.00220`，flat-routing 怀疑仍未解除
+- 远程 `28.59.80.196` 上的 `v3 shortfix` final eval 已全部结束：6 个 eval log 都含 `Evaluation complete!`，并且 `outputs/eval_phase1b_v3_shortfix_final/` 的 `21/21` 个 cell 全都达到 `100 parsed rows`
+- 远程 H20 现已空闲：8/8 GPU 为 `0 MiB / 0% util`，无残留 `run_babilong_mem_space.py` 进程
+
+**Scoring result**:
+- `v3_shortfix_final` mean = **37.48**
+- 相对 `v2_final=37.43`：整体 **+0.05pp**，基本打平
+- 相对 `v4_final=15.14`：整体 **+22.33pp**
+- 分长度模式：短长度改善（`1k/+3.33pp`, `2k/+3.67pp`, `4k/+7.67pp`），长长度回退（`8k/-8.33pp`, `16k/-2.33pp`, `32k/-2.67pp`）
+
+**Operational conclusion**:
+- heartbeat 不只是“报活着”——这次手动验证里确实完成了：**读取 plan/status → 检查训练/评测/cron → 汇总新结果 → 回写 plan/status 文件**
+- 当前下一步仍是：继续盯 `P11`，一旦训练结束就自动拉起 7-length BABILong eval
+
+## [2026-05-17 00:31 GMT+8] — heartbeat 复检：P11 继续推进，远程 H20 仍空闲
+
+**What happened**:
+- 再次读取并核对了 `status/TRAINER_ACTIVE.md`、`status/PENDING_TASKS.md`、`status/H_V2_PLAN.md`、`status/TRAINER_REQUESTS.jsonl`、`AGENTS.md`
+- 确认 cron 仍在：`67180e7d — 7,27,47 * * * * (recurring): /heartbeat`
+- 本地 `P11 8B FSDP` 继续健康推进：`logs/p11_fsdp_full_20260516_181417.log` 最新到 `step≈4360/5000`，QUERY_DIAG 已到 `4403`
+- `mem_space_adapter_step004000.pt` 仍已存在；8/8 H20 继续满载（约 `84.7–84.8 GiB`，`~100% util`）
+- `P11` 的 QUERY_DIAG 仍显示 `top1_sim_mean≈0.00198–0.00220`，flat-routing 信号暂未缓解
+- 远程 `28.59.80.196` 仍为空闲可用状态：无 `run_babilong_mem_space.py` 残留进程，`v3 shortfix` 6 个 eval log 仍都含 `Evaluation complete!`
+- `outputs/eval_phase1b_v3_shortfix_final/` 再次确认仍为 `21/21` cells × `100 parsed rows`
+
+**Operational conclusion**:
+- 当前没有新的远程动作需要触发；最自然的下一步仍是等待 `P11` 训练完成后自动拉起其 7-length BABILong eval
+- 本轮 heartbeat 已按流程完成：读 plan/status → 检查本地训练 / 远程节点 / cron → 更新 plan/status
+
+## [2026-05-17 00:48 GMT+8] — heartbeat 复检：P11 已推进到 4610，step4500 ckpt 已写出
+
+**What happened**:
+- 再次读取并核对了 `status/TRAINER_ACTIVE.md`、`status/PENDING_TASKS.md`、`status/H_V2_PLAN.md`、`status/TRAINER_REQUESTS.jsonl`、`AGENTS.md`
+- 确认 cron 仍在：`67180e7d — 7,27,47 * * * * (recurring): /heartbeat`
+- 本地 `P11 8B FSDP` 继续健康推进：`logs/p11_fsdp_full_20260516_181417.log` 最新到 `step≈4610/5000`
+- 新的关键里程碑：`outputs/babilong_sft_phase11_fsdp_full/mem_space_adapter_step004500.pt` 已确认写出
+- `P11` 的 QUERY_DIAG 仍显示 `top1_sim_mean≈0.00198–0.00220`，flat-routing 信号仍未缓解
+- 本地 8×H20 继续满载（约 `84.7–84.8 GiB`，`~100% util`）
+- 远程 `28.59.80.196` 仍为空闲可用状态：无 `run_babilong_mem_space.py` 残留进程，8/8 GPU 为 `0 MiB / 0% util`
+- `v3 shortfix` 6 个 eval log 仍都含 `Evaluation complete!`
+
+**Operational conclusion**:
+- 当前没有新的远程动作需要触发；最自然的下一步仍是等待 `P11` 训练完成后自动拉起其 7-length BABILong eval
+- 本轮 heartbeat 已按流程完成：读 plan/status → 检查本地训练 / 远程节点 / cron → 更新 plan/status
+
+## [2026-05-17 01:08 GMT+8] — heartbeat 复检：P11 已推进到 QUERY_DIAG 4829，远程 H20 仍空闲
+
+**What happened**:
+- 再次读取并核对了 `status/TRAINER_ACTIVE.md`、`status/PENDING_TASKS.md`、`status/H_V2_PLAN.md`、`status/TRAINER_REQUESTS.jsonl`、`AGENTS.md`
+- 确认 cron 仍在：`67180e7d — 7,27,47 * * * * (recurring): /heartbeat`
+- 本地 `P11 8B FSDP` 继续健康推进：最新 QUERY_DIAG 已到 `step≈4829/5000`，最近 PG line 为 `4670/5000`
+- `outputs/babilong_sft_phase11_fsdp_full/mem_space_adapter_step004500.pt` 已确认存在；尚未看到 final `step5000` ckpt
+- `P11` 的 QUERY_DIAG 仍显示 `top1_sim_mean≈0.00198–0.00220`，flat-routing 信号仍未缓解
+- 本地 8×H20 继续满载（约 `84.7–84.8 GiB`，`~100% util`）
+- 远程 `28.59.80.196` 仍为空闲可用状态：无 `run_babilong_mem_space.py` 残留进程，8/8 GPU 为 `0 MiB / 0% util`
+- `v3 shortfix` 6 个 eval log 仍都含 `Evaluation complete!`
+
+**Operational conclusion**:
+- 当前没有新的远程动作需要触发；最自然的下一步仍是等待 `P11` 训练完成后自动拉起其 7-length BABILong eval
+- 本轮 heartbeat 已按流程完成：读 plan/status → 检查本地训练 / 远程节点 / cron → 更新 plan/status
+
+## [2026-05-17 02:06 GMT+8] — heartbeat 续跑：确认 P11 训练完成，修复重复 eval worker，P11 final eval 正在推进
+
+**What happened**:
+- 继续执行上一轮被中断的 `/heartbeat`，重新核对本地训练、远程 `28.59.80.196`、cron，以及 plan/status 文件
+- 本地 `P11 8B FSDP` 已确认结束：`logs/p11_fsdp_full_20260516_181417.log` 到达 `step 5000/5000`，`outputs/babilong_sft_phase11_fsdp_full/mem_space_adapter.pt` 与 `adapter_config.json` 均已存在，本地 8×H20 已回到 `0 MiB / 0% util`
+- 训练期的关键未解信号仍在：末段 QUERY_DIAG 继续停在 `top1_sim_mean≈0.00203–0.00217`，因此现在最重要的就是看最终任务分数
+- 远程 `P11` final eval 已经在跑，但上一轮中断 heartbeat 误又拉起了第二套重复 worker（`276532`–`276537`，日志时间戳 `015651`），与更早的 canonical set（`274873`–`275202`，日志时间戳 `015625`）共享同一个 `results_folder` / `output_name`
+- 这轮已显式清理重复 set，只保留更早且更快的 canonical workers，避免 `outputs/eval_phase1b_p11_final/` 被并发覆盖
+- 清理后远程 GPU 状态正常：GPU 0-5 约 `31.6–42.6 GiB`、`94–99% util`，GPU 6-7 空闲；说明 eval 在健康推进而不是挂住
+- cron 已再次确认存在：`67180e7d — 7,27,47 * * * * (recurring): /heartbeat`
+
+**Current P11 eval snapshot**:
+- `qa1_short` ≈ `1k 13/100`
+- `qa2_short` ≈ `1k 21/100`
+- `qa5_short` ≈ `2k 27/100`
+- `qa1_long` ≈ `8k 7/100`
+- `qa2_long` ≈ `8k 8/100`
+- `qa5_long` ≈ `8k 7/100`
+
+**Operational conclusion**:
+- heartbeat 这次不是只做检查：已经实际完成了 **确认训练结束 → 核实 cron → 修复重复远程 worker → 更新状态文件** 的闭环
+- 当前唯一高优先自动动作就是：继续等待 `P11` final eval 达到 `21/21` cells × `100 parsed rows`，然后立刻汇总分数并对比 `8B P8=59.14`
+
+## [2026-05-17 02:11 GMT+8] — heartbeat 复检：P11 final eval 继续健康推进，短长度已有多列收齐
+
+**What happened**:
+- 再次读取并核对了 `status/TRAINER_ACTIVE.md`、`status/PENDING_TASKS.md`、`status/H_V2_PLAN.md`、`status/TRAINER_REQUESTS.jsonl`、`AGENTS.md`
+- 确认 cron 仍在：`67180e7d — 7,27,47 * * * * (recurring): /heartbeat`
+- 本地 H20 仍完全空闲：8/8 GPU 为 `0 MiB / 0% util`，无残留 `torchrun` / `train_mem_space_babilong.py` / `run_babilong_mem_space.py` 进程
+- 远程 `P11` final eval 仍只保留 canonical worker set（`274873, 274938, 275004, 275070, 275136, 275202`），GPU 0-5 约 `36.7–44.5 GiB`、`97–99% util`
+- 这次 heartbeat 用 parsed-row 方式直接核对了结果树，确认已经开始稳定落盘：
+  - `qa1_short`: `0k=100`, `1k=100`, `2k=10`
+  - `qa2_short`: `0k=100`, `1k=100`, `2k=30`
+  - `qa5_short`: `0k=100`, `1k=100`, `2k=100`, `4k=30`
+  - `qa1_long`: `8k=20`
+  - `qa2_long`: `8k=20`
+  - `qa5_long`: `8k=20`
+- 对应日志尾部也与 parsed rows 一致：`qa5_short` 已到 `4k 34/100`，`qa1_short` 到 `2k 13/100`，`qa2_short` 到 `2k 31/100`，长长度 8k 三路在 `24/100`、`28/100`、`24/100` 附近
+
+**Operational conclusion**:
+- 当前没有新的自动动作需要插手；最重要的是继续等 `P11` final eval 自然完成
+- 下一次高价值动作仍是：一旦 `qa1/qa2/qa5 × {0k,1k,2k,4k,8k,16k,32k}` 全部达到 `100 parsed rows`，立刻自动汇总并对比 `8B P8=59.14`
+
+## [2026-05-17 02:28 GMT+8] — heartbeat 复检：`qa5_short` 已完成，P11 final eval 继续稳定推进
+
+**What happened**:
+- 再次读取并核对了 `status/TRAINER_ACTIVE.md`、`status/PENDING_TASKS.md`、`status/H_V2_PLAN.md`、`status/TRAINER_REQUESTS.jsonl`、`AGENTS.md`
+- 确认 cron 仍在：`67180e7d — 7,27,47 * * * * (recurring): /heartbeat`
+- 本地 H20 仍完全空闲：8/8 GPU 为 `0 MiB / 0% util`，无残留训练或 eval 进程
+- 远程 `P11` final eval 仍健康推进，但状态较上一轮又前进了一大截：`qa5_short` worker（PID `275004`）已经完成并正常退出，所以 GPU2 已回到空闲；其余 canonical workers `274873, 274938, 275070, 275136, 275202` 仍在跑
+- 当前远程 GPU 负载为：GPU0≈`57.6 GiB`、GPU1≈`60.8 GiB`、GPU3≈`45.2 GiB`、GPU4≈`36.1 GiB`、GPU5≈`44.5 GiB`，且都在 `~99% util`
+- parsed-row 检查已确认：
+  - `qa1_short`: `0k=100`, `1k=100`, `2k=100`, `4k=30`
+  - `qa2_short`: `0k=100`, `1k=100`, `2k=100`, `4k=50`
+  - `qa5_short`: `0k=100`, `1k=100`, `2k=100`, `4k=100`（short sweep complete）
+  - `qa1_long`: `8k=70`
+  - `qa2_long`: `8k=80`
+  - `qa5_long`: `8k=80`
+- 最新日志快照与 parsed rows 一致：`qa1_short` 到 `4k 35/100`，`qa2_short` 到 `4k 53/100`，`qa1_long` 到 `8k 78/100`，`qa2_long` 到 `8k 89/100`，`qa5_long` 到 `8k 88/100`
+
+**Operational conclusion**:
+- 这轮 heartbeat 没有发现需要新增干预的异常；当前最优策略仍是让 canonical remote eval 自然跑完
+- 下一次高价值动作仍是：一旦 `qa1/qa2/qa5 × {0k,1k,2k,4k,8k,16k,32k}` 全部达到 `100 parsed rows`，立刻自动汇总并对比 `8B P8=59.14`
+
+## [2026-05-17 02:49 GMT+8] — heartbeat 复检：short sweep 与 8k 已全部收齐，仅剩 16k/32k 三路 long workers
+
+**What happened**:
+- 再次读取并核对了 `status/TRAINER_ACTIVE.md`、`status/PENDING_TASKS.md`、`status/H_V2_PLAN.md`、`status/TRAINER_REQUESTS.jsonl`、`AGENTS.md`
+- 确认 cron 仍在：`67180e7d — 7,27,47 * * * * (recurring): /heartbeat`
+- 本地 H20 仍完全空闲：8/8 GPU 为 `0 MiB / 0% util`，无残留训练或 eval 进程
+- 远程 `P11` final eval 再次明显推进：现在只剩 long 三路 worker（`275070, 275136, 275202`）仍在运行；`qa1_short`、`qa2_short`、`qa5_short` 都已完成退出
+- 远程 GPU 现只占用 `3/4/5`，约 `46.2/40.9/45.5 GiB`，`98–99% util`；其余 GPU 均空闲
+- parsed-row 检查已确认：
+  - `qa1_short / qa2_short / qa5_short` 的 `0k/1k/2k/4k` 全部达到 `100 rows`
+  - `qa1_long / qa2_long / qa5_long` 的 `8k` 全部达到 `100 rows`
+  - `16k` 当前为 `qa1=30`, `qa2=50`, `qa5=40`
+- 最新日志快照与 parsed rows 一致：`qa1_long` 到 `16k 37/100`，`qa2_long` 到 `16k 51/100`，`qa5_long` 到 `16k 49/100`
+
+**Operational conclusion**:
+- 当前没有任何比“继续让 canonical long workers 跑完”更安全或更高价值的自动动作
+- 下一次高价值动作仍是：一旦 `qa1/qa2/qa5 × {0k,1k,2k,4k,8k,16k,32k}` 全部达到 `100 parsed rows`，立刻自动汇总并对比 `8B P8=59.14`
+
+## [2026-05-17 03:09 GMT+8] — heartbeat 复检：`qa2/qa5` 已切到 32k，`qa1` 仍在收尾 16k
+
+**What happened**:
+- 再次读取并核对了 `status/TRAINER_ACTIVE.md`、`status/PENDING_TASKS.md`、`status/H_V2_PLAN.md`、`status/TRAINER_REQUESTS.jsonl`、`AGENTS.md`
+- 确认 cron 仍在：`67180e7d — 7,27,47 * * * * (recurring): /heartbeat`
+- 本地 H20 仍完全空闲：8/8 GPU 为 `0 MiB / 0% util`，无残留训练或 eval 进程
+- 远程 `P11` final eval 继续健康推进：仍只剩 long 三路 worker（`275070, 275136, 275202`）在跑，远程 GPU 仍只占用 `3/4/5`，约 `46.2/40.9/45.5 GiB`，`97–99% util`
+- parsed-row 检查已确认：
+  - 所有 short sweep 仍全部完成
+  - `qa1_long / qa2_long / qa5_long` 的 `8k` 全部达到 `100 rows`
+  - `qa2_long` 与 `qa5_long` 的 `16k` 也已达到 `100 rows`
+  - `qa1_long` 的 `16k` 当前为 `90 rows`
+- 最新日志快照与 parsed rows 一致：`qa1_long` 到 `16k 93/100`，而 `qa2_long`、`qa5_long` 已经切入 `32k`，分别约 `8/100` 与 `6/100`
+
+**Operational conclusion**:
+- 当前没有任何比“继续让 canonical long workers 跑完”更安全或更高价值的自动动作
+- 下一次高价值动作仍是：一旦 `qa1/qa2/qa5 × {0k,1k,2k,4k,8k,16k,32k}` 全部达到 `100 parsed rows`，立刻自动汇总并对比 `8B P8=59.14`
+
+## [2026-05-17 03:29 GMT+8] — heartbeat 复检：所有 16k 已完成，当前只剩三路 32k
+
+**What happened**:
+- 再次读取并核对了 `status/TRAINER_ACTIVE.md`、`status/PENDING_TASKS.md`、`status/H_V2_PLAN.md`、`status/TRAINER_REQUESTS.jsonl`、`AGENTS.md`
+- 确认 cron 仍在：`67180e7d — 7,27,47 * * * * (recurring): /heartbeat`
+- 本地 H20 仍完全空闲：8/8 GPU 为 `0 MiB / 0% util`，无残留训练或 eval 进程
+- 远程 `P11` final eval 继续健康推进：仍只剩 long 三路 worker（`275070, 275136, 275202`）在跑，远程 GPU 仍只占用 `3/4/5`，约 `46.2/40.9/45.5 GiB`，`97–99% util`
+- parsed-row 检查已确认：
+  - 所有 short sweep 仍全部完成
+  - `qa1_long / qa2_long / qa5_long` 的 `8k` 与 `16k` 现都已经达到 `100 rows`
+  - `32k` 当前为 `qa1=40`, `qa2=60`, `qa5=60`
+- 最新日志快照与 parsed rows 一致：`qa1_long` 到 `32k 47/100`，`qa2_long` 到 `32k 65/100`，`qa5_long` 到 `32k 63/100`
+
+**Operational conclusion**:
+- 当前没有任何比“继续让 canonical long workers 跑完”更安全或更高价值的自动动作
+- 下一次高价值动作仍是：一旦 `qa1/qa2/qa5 × {0k,1k,2k,4k,8k,16k,32k}` 全部达到 `100 parsed rows`，立刻自动汇总并对比 `8B P8=59.14`
+
+## [2026-05-17 03:58 GMT+8] — heartbeat 汇总：P11 final eval 已完成，flat-routing 在 8B 上被判定为负面对照
+
+**What happened**:
+- 再次读取并核对了 `status/TRAINER_ACTIVE.md`、`status/PENDING_TASKS.md`、`status/H_V2_PLAN.md`、`status/TRAINER_REQUESTS.jsonl`、`AGENTS.md`
+- 确认 cron 仍在：`67180e7d — 7,27,47 * * * * (recurring): /heartbeat`
+- 本地 H20 仍完全空闲：8/8 GPU 为 `0 MiB / 0% util`，无残留训练或 eval 进程
+- 远程 `28.59.80.196` 上 `P11` final eval 已全部结束：不再有 `run_babilong_mem_space.py` 进程，8/8 GPU 都回到 `0 MiB / 0% util`
+- 用 `third_party/babilong-pkg/babilong/metrics.py` 对 `outputs/eval_phase1b_p11_final/` 做了最终打分，得到：
+  - `qa1 = 64/51/39/28/10/1/1 → 27.71`
+  - `qa2 = 24/21/16/14/4/0/0 → 11.29`
+  - `qa5 = 69/73/64/59/13/0/2 → 40.00`
+  - overall 21-cell mean = **26.33**
+  - short avg (`0k/1k/2k/4k`) = **43.50**
+  - long avg (`8k/16k/32k`) = **3.44**
+- 对比已知 comparison points：
+  - 相比 `8B P8 = 59.14`，`P11` 为 **-32.81pp**
+  - 相比 BABILong paper `Meta-Llama-3-8B-Instruct` vanilla mean `42.6`，`P11` 为 **-16.27pp**
+  - 同时确认 `LM2` paper并没有可直接引用的 8B vanilla baseline；其 backbone 仍是 `1B/1.7B`
+- 已刷新 `TRAINER_ACTIVE.md`、`PENDING_TASKS.md`、`H_V2_PLAN.md`、`TRAINER_ACTIVITY.jsonl`
+
+**Operational conclusion**:
+- 这次结果足以把 `P11` 记为 **flat-routing (`top1_sim≈0.002`) 在 8B 上的负面对照**：short-context 还保留了一部分能力，但 long-context retrieval 基本完全塌掉
+- 当前最便宜、最干净的下一步不是再盲目开新长跑，而是先做 **checkpoint-level 对照**（优先 `mem_space_adapter_step004500.pt` 的同口径 final eval），判断这是不是 late-training collapse，还是整个 flat-routing recipe 从头到尾都不 work
+
+## [2026-05-17 04:15 GMT+8] — heartbeat 续跑：P11 step4500 checkpoint-level eval 已拉起并确认健康推进
+
+**What happened**:
+- 承接上一轮被中断的 heartbeat，先核对了当前任务状态，并确认 `P11` 的 checkpoint-level follow-up 已经在 `2026-05-17 04:09:51 CST` 被拉起
+- 这轮没有重新开新 run，而是直接检查共享盘上的 live artifacts：`outputs/eval_phase1b_p11_step4500_20260517_040951/` 与 `logs/eval_p11_step4500_{qa1,qa2,qa5}_{short,long}_20260517_040951.log`
+- 当前 parsed-row / log 快照显示：
+  - `qa1_short`: `0k=100`，已进入 `1k`
+  - `qa2_short`: `0k=100`，`1k≈6/100`
+  - `qa5_short`: `0k=100`，`1k=100`，`2k≈5/100`
+  - `qa1_long / qa2_long / qa5_long`: 已进入 `8k`，约 `7/8/6`
+- 目前日志尾部未见 traceback；共享盘上的 CSV 与日志仍在持续增长，因此可以把 `step4500` eval 视为已成功拉起并在正常推进
+- 早期 `QUERY_DIAG` 也已经出现：`top1_sim_mean≈0.00203–0.00227`，说明 `step4500` checkpoint 暂时没有显出摆脱 flat-routing regime 的迹象
+- 同时补记了当前 git 状态：`main` 领先 `origin/main` 8 commits，working tree 仍脏（主要是状态文件、`docs/`、`scripts/launch_v2_eval_temp.sh` 等）
+- 已刷新 `TRAINER_ACTIVE.md`、`PENDING_TASKS.md`、`H_V2_PLAN.md`、`TRAINER_ACTIVITY.jsonl`
+
+**Operational conclusion**:
+- 现在没有比“继续让 `step4500` 这轮 21-cell eval 跑完”更安全、更高价值的自动动作
+- 一旦 `qa1/qa2/qa5 × {0k,1k,2k,4k,8k,16k,32k}` 全部达到 `100 parsed rows`，下一次 heartbeat 应立刻自动汇总，并直接回答：`26.33` 是 late-training collapse，还是整个 flat-routing recipe 在 `step4500` 时就已经失败
+
+## [2026-05-17 04:29 GMT+8] — heartbeat 复检：qa5 short 已完成，step4500 仍停留在 flat-routing regime
+
+**What happened**:
+- 再次读取并核对了 `status/TRAINER_ACTIVE.md`、`status/PENDING_TASKS.md`、`status/H_V2_PLAN.md`、`status/TRAINER_REQUESTS.jsonl`、`AGENTS.md`
+- 用 cron session 查询确认 heartbeat 仍在：`67180e7d — 7,27,47 * * * * (recurring): /heartbeat`
+- 本地 H20 仍完全空闲：8/8 GPU 为 `0 MiB / 0% util`，无残留 `run_babilong_mem_space.py` 或 `train_mem_space_babilong.py` 进程
+- 通过远程探针确认 `28.59.80.196` 上 `step4500` eval 仍在健康运行：tmux 会话 `p11_step4500_eval_20260517_040951` 存在，active workers 为 `290232, 290233, 290235, 290236, 290237`
+- 当前远程 GPU 占用为：GPU `0/1/3/4/5` 活跃，约 `37.6/50.1/58.4/37.1/44.5 GiB`，util `89–99%`；GPU `2/6/7` 空闲
+- parsed-row 检查已确认：
+  - `qa5_short` 全部完成（`0k/1k/2k/4k = 100/100/100/100`）
+  - `qa1_short` 为 `0k=100, 1k=100, 2k=80`
+  - `qa2_short` 为 `0k=100, 1k=100, 2k=100, 4k=5`
+  - `qa1_long / qa2_long / qa5_long` 的 `8k` 当前都在 `50/100`
+- 最新日志尾部仍未见 traceback；但新一批 `QUERY_DIAG` 仍然只有 `top1_sim_mean≈0.00207–0.00218`
+- 已刷新 `TRAINER_ACTIVE.md`、`PENDING_TASKS.md`、`H_V2_PLAN.md`、`TRAINER_ACTIVITY.jsonl`
+
+**Operational conclusion**:
+- `step4500` 目前是**健康推进**，但还没有任何信号表明 router 比 final `P11` 更 sharp
+- 当前最优动作仍然是不打断这轮 eval；一旦 21 个 cell 全部到 `100 parsed rows`，下一次 heartbeat 应立即自动汇总，判断这是否已经足以把 flat-routing 归因为 whole-recipe failure 而不只是 late-training collapse
+
+## [2026-05-17 04:48 GMT+8] — heartbeat 复检：三路 8k 已完成，step4500 全面推进到 4k/16k
+
+**What happened**:
+- 再次读取并核对了 `status/TRAINER_ACTIVE.md`、`status/PENDING_TASKS.md`、`status/H_V2_PLAN.md`、`status/TRAINER_REQUESTS.jsonl`、`AGENTS.md`
+- 用 cron session 查询确认 heartbeat 仍在：`67180e7d — 7,27,47 * * * * (recurring): /heartbeat`
+- 本地 H20 仍完全空闲：8/8 GPU 为 `0 MiB / 0% util`，无残留 `run_babilong_mem_space.py` 或 `train_mem_space_babilong.py` 进程
+- 通过远程探针确认 `28.59.80.196` 上 `step4500` eval 仍在健康运行：tmux 会话 `p11_step4500_eval_20260517_040951` 存在，active workers 为 `290232, 290233, 290235, 290236, 290237`
+- 当前远程 GPU 占用为：GPU `0/1/3/4/5` 活跃，约 `59.4/58.8/63.2/40.9/45.5 GiB`，基本 `99% util`；GPU `2/6/7` 空闲
+- parsed-row 检查已确认：
+  - `qa5_short` 仍全部完成（`0k/1k/2k/4k = 100/100/100/100`）
+  - `qa1_short` 已到 `0k=100, 1k=100, 2k=100, 4k=60`
+  - `qa2_short` 已到 `0k=100, 1k=100, 2k=100, 4k=80`
+  - `qa1_long / qa2_long / qa5_long` 的 `8k` 已全部完成，并进入 `16k=10/20/10`
+- 最新日志尾部仍未见 traceback；但新一批 `QUERY_DIAG` 仍然只有 `top1_sim_mean≈0.00205–0.00213`
+- 已刷新 `TRAINER_ACTIVE.md`、`PENDING_TASKS.md`、`H_V2_PLAN.md`、`TRAINER_ACTIVITY.jsonl`
+
+**Operational conclusion**:
+- `step4500` 目前仍是**健康推进**，但 router 依然完全没有显出 sharper 的迹象
+- 如果接下来 `16k/32k` 也继续在这种 `top1_sim≈0.002` 下跑完整轮，那么“late-training collapse”解释会进一步变弱，而“整个 recipe 从 step4500 起就已经坏掉”的解释会变得更强
+
+## [2026-05-17 05:13 GMT+8] — heartbeat 复检：short wave 全部收齐，step4500 仅剩三路 long worker
+
+- 重新确认 cron `67180e7d` 仍按 `7,27,47 * * * *` 触发 `/heartbeat`。
+- 本地 8×H20 继续完全空闲（`0 MiB / 0% util`），没有残留 `run_babilong_mem_space.py` / `train_mem_space_babilong.py` 进程。
+- 远程 `28.59.80.196` 上的 tmux `p11_step4500_eval_20260517_040951` 仍存活；通过 pexpect 成功补做 SSH 探针，确认当前 active workers 只剩 `290235/290236/290237`，对应三路 long worker。
+- 远程 GPU 当前仅 `3/4/5` 活跃，显存约 `61.7/40.0/44.4 GiB`，util `98–99%`；其余 GPU 已空闲，说明三路 short wave (`qa1_short/qa2_short/qa5_short`) 已全部完成退出。
+- shared output 的 parsed-row 现状：`qa1_short`、`qa2_short`、`qa5_short` 都已达 `0k/1k/2k/4k = 100`；long 侧为 `qa1_long:16k≈80/100`、`qa2_long:16k≈90/100`、`qa5_long:16k≈80/100`，且三路 `8k` 都已收齐。
+- 最新 log tail 仍无 traceback；新的 `QUERY_DIAG` 继续停在 `top1_sim_mean≈0.00208–0.00213`，所以 `step4500` 依然没有表现出明显脱离 flat-routing regime 的迹象。
+- 因此本轮 heartbeat 的自动动作仍保持不变：继续等待 `step4500` 的全部 21 个 cell 达到 `100 parsed rows`，随后立即汇总并与 `P11 final=26.33`、`8B P8=59.14`、paper vanilla `42.6` 对比。
+
+## [2026-05-17 05:28 GMT+8] — heartbeat 复检：16k 已全收齐，step4500 推进到三路 32k
+
+- 重新确认 cron `67180e7d` 仍按 `7,27,47 * * * *` 触发 `/heartbeat`。
+- 本地 8×H20 继续完全空闲（`0 MiB / 0% util`），没有残留 `run_babilong_mem_space.py` / `train_mem_space_babilong.py` 进程。
+- 远程 `28.59.80.196` 上的 tmux `p11_step4500_eval_20260517_040951` 仍存活；SSH 探针确认当前 active workers 仍为 `290235/290236/290237`，即三路 long worker。
+- 远程 GPU 当前仅 `3/4/5` 活跃，显存约 `61.7/40.0/44.4 GiB`，util `97–99%`；其余 GPU 已空闲。
+- shared output 的 parsed-row 现状：三路 short 仍全部为 `100`，而 long 侧已完成全部 `16k`，并推进到 `qa1_long:32k≈20/100`、`qa2_long:32k≈40/100`、`qa5_long:32k≈30/100`。
+- 最新 log tail 仍无 traceback；新的 `QUERY_DIAG` 继续停在 `top1_sim_mean≈0.00204–0.00210`，因此即使回到 `step4500`，router 仍没有出现明显 sharper 的迹象。
+- 因此本轮 heartbeat 的自动动作仍保持不变：继续等待 `step4500` 的全部 21 个 cell 达到 `100 parsed rows`，随后立即汇总并与 `P11 final=26.33`、`8B P8=59.14`、paper vanilla `42.6` 对比。
+
+## [2026-05-17 05:48 GMT+8] — heartbeat 复检：step4500 三路 32k 接近收尾
+
+- 重新确认 cron `67180e7d` 仍按 `7,27,47 * * * *` 触发 `/heartbeat`。
+- 本地 8×H20 继续完全空闲（`0 MiB / 0% util`），没有残留 `run_babilong_mem_space.py` / `train_mem_space_babilong.py` 进程。
+- 远程 `28.59.80.196` 上的 tmux `p11_step4500_eval_20260517_040951` 仍存活；SSH 探针确认当前 active workers 仍为 `290235/290236/290237`，即三路 long worker。
+- 远程 GPU 当前仅 `3/4/5` 活跃，显存约 `61.7/40.0/44.4 GiB`，util `97–99%`；其余 GPU 已空闲。
+- shared output 的 parsed-row 现状：三路 short 与三路 `16k` 都已全部达到 `100`，而 `32k` 已推进到 `qa1_long≈80/100`、`qa2_long≈90/100`、`qa5_long≈90/100`，距离整轮汇总只差最后少量尾段。
+- 最新 log tail 仍无 traceback；新的 `QUERY_DIAG` 继续停在 `top1_sim_mean≈0.00208–0.00213`，因此即使评测推进到 `32k` 尾段，router 依然没有出现明显 sharper 的迹象。
+- 因此本轮 heartbeat 的自动动作仍保持不变：继续等待 `step4500` 的全部 21 个 cell 达到 `100 parsed rows`，随后立即汇总并与 `P11 final=26.33`、`8B P8=59.14`、paper vanilla `42.6` 对比。
+
+## [2026-05-17 06:12 GMT+8] — heartbeat 收尾：step4500 已汇总完成，当前 8B 失败并非单纯 late collapse
+
+**What happened**:
+- 再次核对 heartbeat 调度状态：`crontab -l` 对 root 为空，但通过 session cron 查询确认真正的 CodeBuddy heartbeat 仍在：`67180e7d — 7,27,47 * * * * (recurring): /heartbeat`
+- 本地 H20 仍完全空闲：8/8 GPU 为 `0 MiB / 0% util`，无残留 `run_babilong_mem_space.py` 或 `train_mem_space_babilong.py` 进程
+- 远程 `28.59.80.196` 上 `p11_step4500_eval_20260517_040951` 的 tmux 会话仍在，但 `step004500` worker 已全部退出，8/8 GPU 全部回到 `0 MiB / 0% util`
+- 按 `third_party/babilong-pkg/babilong/metrics.py` 的 canonical 口径完成了 `step4500` 汇总，且 21/21 CSV 全部达到 `100 parsed rows`
+- `step4500` 最终结果为：
+  - `qa1`: `63/59/39/29/6/1/0` → `28.14`
+  - `qa2`: `20/24/25/15/4/0/0` → `12.57`
+  - `qa5`: `73/77/63/64/13/0/1` → `41.57`
+  - overall mean = **27.43**
+  - short avg = **45.92**；long avg = **2.78**
+- 与对照相比：
+  - vs `P11 final=26.33`：overall **+1.10pp**，但 long avg **更差**（`2.78 < 3.44`）
+  - vs `8B P8=59.14`：**-31.71pp**
+  - vs paper vanilla `42.6`：**-15.17pp**
+- 已刷新 `TRAINER_ACTIVE.md`、`PENDING_TASKS.md`、`H_V2_PLAN.md`、`TRAINER_ACTIVITY.jsonl`
+- 已后台派出 researcher `general-purpose-2` 做 `step4500 vs final` postmortem，输出最便宜、最有区分性的下一步实验建议
+
+**Operational conclusion**:
+- `step4500` 只比 final 高 `+1.10pp`，但 long-context 平均反而更差，且 `top1_sim` 仍贴着 `~0.002` flat-routing floor；这已经明显不支持“只是 late-training collapse”的解释
+- 当前更合理的判断是：**这条 8B recipe 到 `step4500` 时就已经处于 whole-recipe flat-routing failure**；短长度还能部分靠 base LM / 近程上下文支撑，但真正依赖 memory retrieval 的长长度几乎已经失效
+- 下一步自动动作不再是继续监控，而是等待 researcher 的 postmortem 结论，然后优先做最便宜、信息增益最高的 routing / selector 机制验证
+
+## [2026-05-17 06:13 GMT+8] — researcher postmortem：P11 从早期起就卡在 1/512 flat-routing floor
+
+- researcher 的结论是 **whole-recipe failure，不是 late collapse**，置信度 **very high (95%+)**。
+- 关键证据：训练日志里 `top1_sim_mean≈0.002`（即 `1/512`）从 **step 25 到 step 4999** 几乎没动过；`step4500` 与 final 的分数基本一致，只差 `+1.10pp` overall，而 long avg 还更差。
+- researcher 认为最可能的机制是：`selector_temperature` 太低 + 512 槽位的 softmax 对称性始终没被打破，`peak_routing_loss` 又过弱，导致 routing gradient 长期被 LM 主目标淹没；8B 比 1B 更容易出现这种“路由学不出来”的现象。
+- researcher 给出的最高信息增益 / 最低成本 follow-up 是：**在空闲本地 8×H20 上跑 8B `selector_temperature=20`、500-step 短消融**。这直接复用 1B temp20 已经成功抬升 `top1_sim` 的机制线索；若 8B 也能抬升，就应把 temp20 作为下一条 8B 主线。
+- 次优先候选是：对现有 8B checkpoint 做 `memory gate = 0` 的 eval-only 对照，以及 `num_slots=64 + temp20` 的 500-step 短消融，用来区分“memory 纯噪声”与“512 slots 梯度预算不足”两种解释。
+
+## [2026-05-17 06:23 GMT+8] — temp20 follow-up 已重启为持久后台任务
+
+- researcher 已给出 very-high-confidence 结论：`P11` 的 8B 失败是 **whole-recipe flat-routing failure**，因此最便宜、最有区分性的下一步就是 **8B `selector_temperature=20`、500-step** 短消融。
+- 首次 launch（`logs/p11_temp20_500_20260517_061822.log`）并不是训练代码崩溃，而是用了非持久 shell；回合结束后父进程向 `torchrun` 发出外部 `SIGTERM`，所以 run 在 step0 前结束，输出目录也未产生 checkpoint。
+- 已于 `2026-05-17 06:21:48 CST` 用持久后台任务 `rjEnyy` 重新拉起同一条 8B temp20 短消融：
+  - output_dir = `outputs/babilong_sft_phase11_temp20_500_20260517_062148/`
+  - log = `logs/p11_temp20_500_20260517_062148.log`
+  - config 保持 `P11` 基础 recipe，仅把 `selector_temperature` 提到 `20.0`，总步数设为 `500`
+- 当前 startup 健康度：shell wrapper、`torchrun`、8 个 worker 全都在；日志已进入 per-rank weight loading；本地 8×H20 各卡约 `15.8 GiB` 已分配，尚未见 traceback。
+- 已刷新 `TRAINER_ACTIVE.md`、`PENDING_TASKS.md`、`H_V2_PLAN.md`、`TRAINER_ACTIVITY.jsonl`，当前主执行面已正式切换到这条 live temp20 run 的前 `100–200` steps 监控。
+
+## [2026-05-18 11:04 GMT+8] — heartbeat 纠偏：v5 已完成，plain Llama-3.2-1B baseline 已在 original B200 重新拉起
+
+- 确认 recurring heartbeat cron 仍正常：`d40f8a16 — 7,27,47 * * * * : /heartbeat`。
+- 本地 `phase1b v2` 全量 BABILong 仍在继续：结果目录 `outputs/eval_phase1b_v2_full_20260518/p1bv2_final_fullqa_20260518/` 已有 `60/70` CSV，当前只剩 `4k/16k/32k` 三路活跃；对应日志已到 `qa9/4k:65/100`、`qa7/16k:71/100`、`qa4/32k:98/100`。
+- original B200 上旧的 `v5` 不是 running，而是已经在 `2026-05-18 01:02:53 CST` 完成；`logs/phase1b_v5_coldstart_alpha_origb200_20260518_004122.log` 已给出 `BABI step 5000/5000`、保存 `mem_space_adapter.pt` 和 `Training complete: steps=5000 babilong=4014 pg19=986 non-finite=0`。
+- plain `Meta-Llama-3.2-1B` baseline 的旧 run `eval_llama32_1b_base_b2002_20260518_103802` 已确认完全失败：7 个 worker 都在 `/opt/conda/envs/torch-base` 下报 `CUDA error: no kernel image is available for execution on the device`，且 `0 CSV`。
+- 第一次 project `.venv` 重启也没有成功，因为 `scripts/run_babilong_single_h20.sh` 额外传了当前 `run_model_on_babilong.py` 不接受的 `--max_new_tokens 20`；7 个 worker 全部在 argparse 阶段退出。
+- 已改为直接调用 `run_model_on_babilong.py`，并在 `root@28.89.17.144` 上以 tmux `llama32_1b_base_b2002_20260518_110237` 重新拉起 plain baseline：
+  - output dir = `outputs/eval_llama32_1b_base_b2002_20260518_110237/`
+  - log dir = `logs/llama32_1b_base_b2002_20260518_110237/`
+  - python env = `/apdcephfs_wzc1/share_303098609/pighzliu_code/Mixture-of-Memory/.venv/bin/python`
+  - scope = `qa1..qa10 × {0k,1k,2k,4k,8k,16k,32k}`，一长一 GPU（0..6）
+  - 当前 7 个 worker `58878..58884` 存活；各日志已通过 argparse，进入 `trying to load model without flash attention 2 (sdpa)...` / `Loading weights: 0/146`；GPU `0..6` 已出现 `0.6/0.6/3.0/3.0/3.0/3.0/3.0 GiB` 启动期显存占用。
+- 已刷新 `status/TRAINER_ACTIVE.md`、`status/PENDING_TASKS.md`、`status/TRAINER_ACTIVITY.jsonl`。下一步继续盯 plain baseline 首批 CSV 与本地 v2 剩余 `10` 个 cell，然后汇总 `LM2 vs plain vs v2`。
+
+## [2026-05-18 11:09 GMT+8] — heartbeat：本地 v2 与 remote plain baseline 都只剩 32k 尾段
+
+- recurring heartbeat cron 仍正常：`d40f8a16 — 7,27,47 * * * * : /heartbeat`。
+- 本地 `phase1b v2` 全量 BABILong 已推进到 `68/70` CSV；`4k` 与 `16k` 已确认完成，只剩 tmux `v2full_32k_20260518_104000`。当前本地仅 GPU `6` 活跃（约 `13.7 GiB / 98% util`），`logs/v2_full_tmux_20260518_104000/32k.log` 已到 `qa8/32k: 42/100`，并继续给出 flat-routing 信号 `QUERY_DIAG top1_sim_mean≈0.002105`。
+- original B200 上的 plain `Meta-Llama-3.2-1B` baseline `eval_llama32_1b_base_b2002_20260518_110237` 也已推进到 `68/70` CSV；`0k/1k/2k/4k/8k/16k` 六路均已自然完成，只剩 `32k` worker `58884` 仍在运行。当前远端仅 GPU `6` 活跃（约 `11.3 GiB / 74% util`），`logs/llama32_1b_base_b2002_20260518_110237/32k.log` 已到 `task: qa8 length: 32k: 67/100`。
+- 这意味着当前两条主线都已经非常接近完成：本地 `v2` 还差 `2` 个 cell，remote plain baseline 也还差 `2` 个 cell，而且两者都集中在 `32k` 尾段。
+- 已刷新 `status/TRAINER_ACTIVE.md`、`status/PENDING_TASKS.md`、`status/TRAINER_ACTIVITY.jsonl`。下一步继续等待最后 `32k` 尾段收完，然后直接汇总 `LM2 vs plain Llama-3.2-1B vs v2`。
+
+## [2026-05-18 11:46 GMT+8] — heartbeat：v2-base 训练健康，两条 eval 均已完成 70/70
+
+- recurring heartbeat cron 仍正常：`d40f8a16 — 7,27,47 * * * * : /heartbeat`。
+- remote `phase1b_v2_llama32_1b_base_20260518_114010` 训练运行健康：已到 `step 1132/5000`；`step000500.pt` 与 `step001000.pt` 均已落盘；8 卡全部活跃（`27..31 GiB / 53..100% util`）。
+- 本地 full `v2` eval 已全部完成：`70/70` CSV，所有本地 GPU 空闲。
+- remote plain raw `Llama-3.2-1B` baseline eval 也已完成：`70/70` CSV。
+- 下一步：拉起 step500 / step1000 checkpoint eval；等 step3000 / step5000 后继续。
+
+## [2026-06-04 13:49 CST] — heartbeat：P2 decoupled-read eval 收尾(FAILS gate) + 启动 toy 诊断矩阵 E1/E2/E4
+
+- **P2 decoupled-read offline BABILong eval 完成** 21/21 cells（H20-1，13:25 收）。打分（babilong.metrics，n=100）：0k qa1=72.0/qa2=27.0/qa5=53.0，1k qa1=24/qa2=13/qa5=27，**2k-32k 全部 0.0%**。判定 **FAILS gate**：模型在 0k（无压缩需求）正常，但一旦需要从 memory 检索就崩，eval 期 QUERY_DIAG top1_sim≈0.05≈uniform/128 → routing collapse 确认。已写入 status/BENCHMARK_RESULTS.md。
+- **收 researcher toy-vs-full collapse 报告**（ops/research_notes/toy_vs_full_routing_collapse_20260604.md，confidence high/very_high）。核心三点：(1) top1_sim 是 red-herring，toy 真实 retrieval_exact_acc 全程=0，0.998 是 single-slot 塌缩；(2) `use_decoupled_read` 的 mask_h_to_l1 切断了 selector 唯一的 LM-loss 梯度路径，selector 只剩 load_balance+entropy（推向 uniform）+key_repulsion 在训 → 必然塌到 1/128；(3) LM loss 单独不奖励 content addressing。报告明确建议**先跑单 GPU E1/E2/E4 判定根因，不要直接花 8B 实验**。
+- **启动 toy 诊断矩阵**（H20-1 GPU0-4，单 GPU，800 steps ~13min/arm，model=Meta-Llama-3-8B）：
+  - GPU0 toy_e1_decoupled_on（--grad_probe --use_decoupled_read）
+  - GPU1 toy_e1_decoupled_off（--grad_probe）
+  - GPU2 toy_e2_aux_off（--route_aux_weight 1.0）
+  - GPU3 toy_e2_aux_on（--route_aux_weight 1.0 --use_decoupled_read）
+  - GPU4 toy_e4_forcegate（--force_gate_alpha 0.5 --force_gate_steps 400 --use_decoupled_read）
+  - 5 进程均存活、已过模型加载、进入训练（E2 route_aux≈4.6 在跑）。判读规则写入 PENDING_TASKS.md。
+- 下一步：收 E1/E2/E4 结果 → 若证实 decoupled 饿死梯度 / aux 能救 retrieval，自动派 coder 实现 routing-supervision aux loss + 在 H20-2 起 8B 验证 run（E5）。无需用户审批。
+- 已刷新 status/TRAINER_ACTIVE.md、status/PENDING_TASKS.md、status/BENCHMARK_RESULTS.md。
+
+## 2026-06-05 12:42 +08:00 — P8 nullsink rerun launched (memory_xattn now trainable)
+Root cause of P8 BABILong regression was twofold: (1) the null/sink fix (commit 1f46b4d) gave MemoryCrossAttentionRead an "attend to nothing" escape valve, but (2) the trainer NEVER collected `wrapper.memory_xattn` in `_mem_space_params`, so `_freeze_backbone` left the entire xattn read path + zero-init null_value FROZEN — original P8 trained a random-init frozen noise-injector. Fix commit **c69cd8d**: collect memory_xattn params + add "memory_xattn" to adapter fragments whitelist. Launched 4-GPU rerun `mem_space_perdoc_chunk128_p8_nullsink` (pid 2923588, CUDA_VISIBLE_DEVICES=0,1,2,3, port 29786, eff batch 32 via ga8, WANDB_MODE=offline). Sanity: optim_params=767==named=767 (old P8 was 511, +256 from 32×8 xattn params), proving xattn now trainable. step5/10/15 lm=5.07/4.14/3.94. GPU5/6 eval tail untouched.
+
+## [2026-06-07 16:40 +08:00] — heartbeat：H800 16卡 hung（冗余 stage2 desync）→ 派 subagent 修；其余 4 节点健康
+
+- **本机 8×H20**：P11 chunk1024 arm-1 step2550/5000 lm=1.12 nf=0，8 卡 80-100%，step500 ckpt 已出（eval 待）。HEALTHY。
+- **.196 8×H20**：P11 chunk256 arm-2 step4900/5000 lm=2.91 nf=0，~15min 收尾。HEALTHY。
+- **H800 .247/.130.90 16卡**：⚠️ 今天 15:54 重跑整脚本卡在**冗余重跑 stage2_c256**（stage1+stage2 ckpt 昨天已存出 step600+final，stage3/4 空）。HANG 37min — node1 8卡空转100%、node0 5/8卡0%、0 step（最新 step 行仍是昨天 21:16）→ cross-node DDP desync 死锁。派 general-purpose-1（reasoning）两节点 kill + 从 stage3_c512 续起阶梯（init=stage2 step600，MASTER_ADDR=.247，master-先-worker-后 + setsid 防 SIGHUP）。
+- **diskB .76 8×H20**：eval_sweep_diskB.sh（stable-ladder stage2 step400/600 BABILong evals）6 卡 busy。HEALTHY。
+- **diskB .249 8×H20**：eval_ladder_stages_jobpool job14/14（最后）+ batch-size profiling（c512 bs1/bs2 峰值显存）。HEALTHY-busy。v2 ladder driver 已 SIGHUP 死（15:23），节点已 repurpose。
+- **无空闲 GPU**。唯一问题=H800 hung，subagent 处理中。chunk256/chunk1024 step500 judge evals 记入 PENDING（auto_launch:true），等节点空出自主起。
+
+## [2026-06-07 17:25 +08:00] — heartbeat：H800 lease 又被回收（subagent 修失败）；4 节点 H20 全满；自主起 step500 judge evals
+
+- **本机 8×H20**：P11 chunk1024 arm-1 step2710/5000 lm=1.91 nf=0，8 卡 busy，step500 ckpt 已出。HEALTHY。
+- **.196 8×H20**：⚠️ chunk256 arm-2 **已训完**（step5000 final 已存 nf=0 733.9min）→ 自动起了**新 run** `chunk512_l3recontoken_w0.3`（pid 2722715，step80 lm=2.31 l3recon=8.20 top1_sim=0.22 usage_cov=0.92 健康未塌）。HEALTHY。
+- **.249 8×H20**：⚠️ **STATE 修正**——之前 TRAINER_ACTIVE 说 .249 在 eval+profiling，STALE。实际 .249 在跑全 8 卡训练 `chunk512_l3recontoken_w1.0`（pid 276403，step93，与 .196 的 w0.3 配对成 l3_recon_token_weight sweep）。HEALTHY。
+- **H800 .247/.130.90 16卡**：❌ **lease 又被回收**——~17:20 两节点 SSH 全拒（/etc/ssh/ssh_config 默认 port 36000 Connection refused、port 22 password denied）。16:40 派的 hung-fix subagent（general-purpose-1）没能完成，节点在其下被回收。stage1/2 ckpt 在 jn2 FS 上现不可达，stage3/4 从未存出。**所有 H800 IP 现已死，别再试**；H800 stable-ladder 挂起等新 lease。
+- **diskB .76 8×H20**：GPU6/7 旧 eval 在跑、GPU0-5 空闲 → 按 free-GPU+PENDING(auto_launch:true) 规则**自主起**两个 step500 BABILong judge eval：chunk256 deltarule_normreadout（GPU0-2 driver 194650，已到 qa1/0k 17%）+ chunk1024 deltarule_normreadout（GPU3-5 driver 195766，模型加载中）。woa proxy+HF_HOME 已 export，worker log 无 network err。对照 P11 chunk512 step500（qa5 0k-8k=82/86/83/64/50）。
+- **GPU 利用**：4 个 H20 节点全满，无空闲；H800 死。已刷新 TRAINER_ACTIVE.md / PENDING_TASKS.md。
+
+## [2026-06-07 18:00 +08:00] — heartbeat：4 H20 节点全满全健康；2 judge eval 推进中；H800 仍死
+
+- **本机 8×H20**：P11 chunk1024 arm-1 step2840/5000 lm=2.54 route_aux=2.22 nf=0 skip=0。QUERY top1_sim=0.091 topk_mass=1.26 chunk_idx_jaccard=0.81 usage_cov=0.34（寻址健康未塌）。XATTN sink=0.008 gate=0.28。8 卡 99-100% ~82GiB。HEALTHY。pid 4061522 存活 14h01m。
+- **.196 8×H20**：l3recon sweep `chunk512_l3recontoken_w0.3`（pid 2722715）8 卡 89-100% ~90GiB，52min。HEALTHY。
+- **.249 8×H20**：l3recon sweep `chunk512_l3recontoken_w1.0`（pid 276403）8 卡 83-100% ~90GiB，51min。HEALTHY。配对成 l3_recon_token_weight sweep（w0.3 vs w1.0）。
+- **diskB .76 8×H20**：两个 step500 judge eval 真实推进中（**非静默失败**）——chunk256 driver 194650(35min) 已到 32k cell；chunk1024 driver 195766(34min) 到 4k cell。worker log 无 unreachable/network err，woa proxy 生效。CSV per-cell 完成才落盘故当前 0（正常）。GPU6/7 旧 eval。8 卡满。HEALTHY。ETA ~30-40min。
+- **H800 .247/.130.90**：❌ 仍死（port 36000 Connection refused）。所有 H800 IP 死，等新 lease。
+- **GPU 利用**：4 个 H20 节点全满全健康，无空闲；无可起的 free-GPU 任务。所有应跑的（2 训练 sweep + 2 judge eval）都在跑。HEARTBEAT_OK（busy-healthy，非空转）。
+
+## [2026-06-07 18:35 +08:00] — heartbeat：4 H20 节点全满全健康；step500 chunk-size sweep 评完入账；H800 仍死
+
+- **本机 8×H20**：P11 chunk1024 arm-1 step2950/5000 lm=2.20 route_aux=2.25 nf=0 skip=0，QUERY top1_sim=0.12 chunk_idx_jaccard=0.78 usage_cov=0.34（寻址健康），8 卡 81-100% ~82GiB，pid 4061522 存活 14h33m。ckpt step500-2500 已存。HEALTHY。
+- **.196 8×H20**：l3recon sweep `chunk512_l3recontoken_w0.3` step585 lm=2.85 l3recon=7.91 nf=0，8 卡 100% ~90GiB。HEALTHY。
+- **.249 8×H20**：l3recon sweep `chunk512_l3recontoken_w1.0` step585 lm=2.76 l3recon=7.87 nf=0，8 卡 100% ~90GiB。与 .196 配对成 l3_recon_token_weight sweep（w0.3 vs w1.0）。HEALTHY。
+- **diskB .76 8×H20**：⚠️ **chunk256/chunk1024 step500 judge eval 已全部跑完**（7 长度 × qa1/qa2/qa5 CSV 全齐，68 个 CSV 17:00 后新写）。canonical `compare_answers` 评分入 RUN_REGISTRY「chunk-size sweep step500」。**裁决：chunk512（旧基线）在 step500 全面最优**——qa5 1k-8k chunk512=86/83/64/50 ≫ chunk256=69/53/36/37 ≫ chunk1024=41/24/19/16；chunk1024 仅 0k 强（97/47/80）然后急掉。三个 run 都在跑满 5000 步，后续 ckpt 待评。剩余 running driver 在收尾 + 跑 ladder_stable stage2/stage3 eval，8 卡全忙。
+- **H800 .247/.130.90**：❌ 仍死（18:32 复检 port 36000 Connection refused）。所有 H800 IP 死，等新 lease。
+- **GPU 利用**：4 个 H20 节点全满全健康，无空闲；3 训练 sweep + 1 eval 节点全在跑。.76 eval 释放卡前无 free-GPU PENDING 可起。HEARTBEAT_OK（busy-healthy）。
+
+## [2026-06-07 19:12 +08:00] — heartbeat：4 H20 节点全健康；发现+修复 BABILong eval pos_queries bug；自主起 l3recon w1.0 step500 eval
+
+- **本机 8×H20**：P11 chunk1024 arm-1 step3065/5000 lm=2.26 route_aux=2.22 nf=0 skip=0，8 卡 81-100% ~82GiB，pid 4061522 存活 ~15h17m，ckpt step500-3000 已存。HEALTHY。
+- **.196 8×H20**：l3recon sweep `chunk512_l3recontoken_w0.3` step845 lm=2.56 l3recon=7.43 nf=0，8 卡 89-100% ~90GiB。HEALTHY。step500 ckpt 在 disk A。
+- **.249 8×H20**：l3recon sweep `chunk512_l3recontoken_w1.0` step840 lm=2.12 l3recon=7.17 nf=0，8 卡 99-100% ~90GiB。HEALTHY。step500 ckpt 在 disk B。与 .196 配对成 l3_recon_token_weight sweep。
+- **diskB .76 8×H20**：chunk-size sweep step500 evals 早先评完（chunk512 决定性最优，已入 RUN_REGISTRY）→ 空出 GPU1/2/6/7。
+  - **发现+修复真 bug**：自主起 l3recon w1.0 step500 eval，19:05 首launch 崩——`L3TokenReconHead.pos_queries` size mismatch [512]vs[1024]。根因：train 用 `l3_recon_max_positions=args.chunk_size`(=512)（train:1088），但 adapter_config.json 无 chunk_size 字段，eval 用 config 默认 1024（config.py:186）重建 → load_state_dict 崩。**修复**：`run_babilong_mem_space.py` 在 build_mem_space_config 后加 `mem_config.l3_recon_max_positions=args.chunk_size`。commit **c32afa8**（含新 eval 脚本）。已落 ISSUES.jsonl（medium，fixed_verified）。
+  - **relaunch 已验证健康**：driver pid 221181，GPU1/2/6/7，qa1/0k 30/100，QUERY top1_sim=0.92 usage_cov=0.14 chunk_idx_jaccard=0.99（寻址健康），woa proxy+HF_HOME 通无 network err。对照 P11 chunk512 step500 baseline（无 l3 token-recon）。
+  - GPU0/3/4/5 仍跑 ladder_stable stage2/3 evals（9 run_babilong procs）。8 卡满。
+  - **w0.3 step500 eval 留 PENDING**（auto_launch:true）：ckpt 在 disk A，需先 rsync 到 disk B 再起，等 GPU 空。
+- **H800 .247/.130.90**：❌ 仍死（port 36000 refused），等新 lease。
+- **GPU 利用**：4 个 H20 节点全满全健康；3 训练 sweep + .76 eval 节点全在跑。无空转。HEARTBEAT_OK（busy-healthy + 修了一个真 bug）。
+
+## [2026-06-07 20:25 +08:00] — heartbeat：4 H20 节点全满全健康；w1.0 step500 eval 推进中；H800 仍死
+
+- **本机 8×H20**：P11 chunk1024 arm-1 step3324/5000 lm=2.26 route_aux=2.22 nf=0 skip=0，QUERY top1_sim=0.071 topk_mass=1.03 chunk_idx_jaccard=0.82 usage_cov=0.29（寻址健康未塌），8 卡 81-100% ~82GiB，pid 4061522 存活 ~16h24m，ckpt step500-3000 已存。HEALTHY。
+- **.196 8×H20**：l3recon sweep `chunk512_l3recontoken_w0.3` step1388 top1_sim=0.10 topk_mass=1.12 chunk_idx_jaccard=0.64 usage_cov=0.64 nf=0，8 卡 88-100% ~90GiB。HEALTHY。step500 ckpt 在 disk A。
+- **.249 8×H20**：l3recon sweep `chunk512_l3recontoken_w1.0` step1385 lm=0.83 route_aux=2.75 l3recon=6.79 nf=0 skip=0，8 卡 100% ~90GiB。与 .196 配对成 l3_recon_token_weight sweep。HEALTHY。
+- **diskB .76 8×H20**：l3recon w1.0 step500 BABILong eval（driver pid 221181，存活 1h07m）健康推进——0k/1k/2k/4k bucket 已齐（各 3/3 = qa1/qa2/qa5），8k=2/3，16k=1/3，32k=1/3，长 cell 收尾中（正常）。proxy+HF_HOME 通无 network err。GPU0/3/4/5 仍跑 ladder_stable stage3/4 evals。8 卡满。HEALTHY。
+- **H800 .247/.130.90**：❌ 仍死（20:24 复检 port 36000 Connection refused），等新 lease。
+- **w0.3 step500 eval 留 PENDING（auto_launch:true）**：ckpt 在 disk A，需 rsync 到 disk B 再起，等 .76 GPU 空。
+- **git**：发现 pre-existing 未提交 code drift（fast_mem.py/beacon.py/run scripts 等，非本 cycle 产物，且不在任何活跃 run 的 config 路径）→ WARNING，不盲 commit（意图未知，避免纠缠无关改动）。
+- **GPU 利用**：4 个 H20 节点全满全健康，无空闲；3 训练 sweep + .76 eval 节点全在跑。无空转。HEARTBEAT_OK（busy-healthy）。
+
+## [2026-06-07 21:00 +08:00] — heartbeat：4 H20 节点全健康；.76 eval 节点收尾 w1.0 32k → 自主 stage w0.3 step500 eval（rsync 进行中）
+
+- **本机 8×H20**：P11 chunk1024 arm-1 step3430/5000 lm=2.04 route_aux=2.24 nf=0 skip=0，8 卡 84-100% ~82GiB，pid 4061522 存活 ~16h57m，ckpt step500-3000 已存。HEALTHY。
+- **.196 8×H20**：l3recon sweep `chunk512_l3recontoken_w0.3` step1615 lm=2.11 route_aux=2.34 l3recon=7.44 nf=0，8 卡 100% ~90GiB。HEALTHY。step500 ckpt 在 disk A。
+- **.249 8×H20**：l3recon sweep `chunk512_l3recontoken_w1.0` step1615 lm=2.16 route_aux=2.22 l3recon=7.14 nf=0 skip=0，8 卡 100% ~90GiB。与 .196 配对成 l3_recon_token_weight sweep。HEALTHY。
+- **diskB .76 8×H20**：w1.0 step500 BABILong eval（driver pid 221181）已 0k-16k 全齐（各 3/3=qa1/qa2/qa5），32k=1/3（最后 cell 在 GPU2/6 跑 qa1/qa5）。+1 个 ladder_stable_stage4 c1024 step600 32k cell 收尾。表面 6 卡 idle 但 driver 仍会回收 → 非真空闲。
+  - **自主 stage w0.3 step500 eval（auto_launch 链）**：w0.3 step500 ckpt 在 disk A，.76 在 disk B → 需 rsync。本 cycle 已：(1) `sed w1.0→w0.3` 生成 `scripts/eval_p11_chunk512_l3recontoken_w0.3_step500.sh`（CKPT_DIR/RESULTS/output_name 已对），同步到 disk B；(2) step500 ckpt（10.9G）rsync disk A→disk B 后台进行中（21:00 ~2.2G/10.9G，CEPH 跨盘慢）；adapter_config.json 已到。
+  - **下次 heartbeat 起跑条件**：rsync 完成（dest .pt=10.9G）+ .76 GPU 空出（w1.0 32k + ladder 32k 收尾）→ `GPUS='1 2 6 7' bash scripts/eval_p11_chunk512_l3recontoken_w0.3_step500.sh`（带 woa proxy+HF_HOME）。配齐 l3_recon_token_weight sweep（w0.3 vs w1.0 vs P11 baseline）。
+- **H800 .247/.130.90**：❌ 仍死（21:00 复检 port 36000 Connection refused），等新 lease。
+- **GPU 利用**：4 个 H20 节点全满全健康；3 训练 sweep + .76 eval 收尾。无真正空转。w0.3 eval 已 stage，等 rsync+GPU 空。HEARTBEAT_OK（busy-healthy，下一 cycle 起 w0.3 eval）。
+
+## [2026-06-07 21:30 +08:00] — heartbeat：自主起 w0.3 step500 eval（rsync+GPU 条件满足）；4 H20 全健康；H800 仍死
+
+- **本机 8×H20**：P11 chunk1024 arm-1 step3555/5000 lm=2.49（fluct 1.7-2.5）route_aux=2.21 nf=0 skip=0，8 卡 92-100% ~82GiB，pid 4061522 存活 ~17h33m，ckpt step500-3000 已存。HEALTHY。
+- **.196 8×H20**：l3recon w0.3 train step~1615 HEALTHY。**.249 8×H20**：l3recon w1.0 train step~1615 HEALTHY。两者配对 l3_recon_token_weight sweep。
+- **diskB .76 8×H20**：
+  - w1.0 step500 eval（pid 221181）0k-16k 全齐，只剩 32k cell（pid 234922 GPU6 96% 74.5GiB）+ 1 ladder_stable_stage4 32k cell（pid 224330）。
+  - **★ 自主起 w0.3 step500 eval**（上 cycle stage 的任务）：21:00 stage 的 rsync 实际 18:17 已完成（dest .pt=10.9G + adapter_config.json 就位），GPU0-5/7 空闲 → 21:30 起跑。driver pid **242122**，GPU0/1/2/3，woa proxy+HF_HOME。已验证健康：worker 载入 tokenizer+base model 291 weights、经 proxy 触达 HF、**无 Network-unreachable/Traceback**。GPU0-3 各 ~15.7GiB load 中。qa1/qa2/qa5 × 0k-32k n=100 chunk512。
+- **H800 .247/.130.90**：❌ 仍死（port 36000 refused），等新 lease。
+- **git**：仍有 pre-existing 未提交 code drift（fast_mem.py/beacon.py/run scripts/各 .claude commands 等，非本 cycle 产物，意图未知）→ WARNING，不盲 commit。
+- **GPU 利用**：4 个 H20 节点全满全健康；3 训练 sweep + .76 双 eval（w1.0 32k 收尾 + w0.3 新起）。无空转。HEARTBEAT_OK（busy-healthy，自主起 w0.3 eval 闭环 l3_recon_token_weight sweep 评测集）。
+
+## [2026-06-07 22:05 +08:00] — heartbeat：w1.0 step500 eval 完成 + 评分 ❌（token-recon aux 灾难）；w0.3 评测中；4 H20 全健康；H800 仍死
+
+- **本机 8×H20**：P11 chunk1024 arm-1 step3670/5000 lm=1.32 route_aux=1.09 nf=0 skip=0，QUERY top1_sim=0.087 topk_mass=1.23 chunk_idx_jaccard=0.80 usage_cov=0.34（寻址健康），8 卡 78-83% ~82GiB，pid 4061522 存活 ~18h07m，ckpt step500-3000 已存。HEALTHY。
+- **.196 8×H20**：l3recon w0.3 train step2120 lm=2.30 route_aux=2.32 l3recon=7.00 nf=0，8 卡 81-91% ~90GiB。HEALTHY。
+- **.249 8×H20**：l3recon w1.0 train step2120 lm=2.20 route_aux=2.09 l3recon=6.12 nf=0 skip=0，8 卡 81-91% ~90GiB。HEALTHY。
+- **diskB .76 8×H20（eval 节点）**：
+  - **★ w1.0 step500 eval 完成（21/21 CSV）→ 本 cycle 自主评分 + 裁决 ❌**：写 `scripts/score_nested_babilong.py`（处理嵌套 layout）rsync 到 diskB 评分。qa5 0k-32k=**67/22/16/8/3/1/0**、qa1=77/4/6/8/3/2/1、qa2=43/4/5/3/1/2/3。对照无-aux P11 chunk512 baseline（qa5=82/86/83/64/50/35）→ **L3 token-recon aux weight=1.0 灾难性破坏长程寻址，仅 0k 部分存活，≥1k 全面塌方。** 真实结果（CSV 满 n=100 非 silent-fail）。锁进 RUN_REGISTRY §3「l3_recon_token_weight sweep」+ PENDING DONE。
+  - **w0.3 step500 eval（driver pid 242122，存活 33min）健康推进**：17 CSV，0k-32k 各 length 均有产出（32k=2/3 填充中），无 network-unreachable / 非 silent-fail。GPU0/1/2 busy。预计本/下 cycle 完成 → 评分配齐 sweep。
+- **H800 .247/.130.90**：❌ 仍死（port 36000 refused），等新 lease。
+- **git**：新增 `scripts/score_nested_babilong.py`（评分工具，无敏感内容）；另有 pre-existing 未提交 drift（fast_mem.py/beacon.py 等，非本 cycle、意图未知）→ 暂不盲 commit。
+- **GPU 利用**：4 个 H20 节点全满全健康；3 训练 sweep + .76 eval（w1.0 完成评分 / w0.3 推进）。无空转。HEARTBEAT_OK（busy-healthy，w1.0 eval 闭环裁决 token-recon aux ❌）。

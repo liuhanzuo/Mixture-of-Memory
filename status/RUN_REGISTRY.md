@@ -108,6 +108,41 @@ topk8 (P8b)                  qa1 |   91   34   33   15   16   17   17
 ```
 → **裁决：P11 delta-rule + normalized writeback 是新最佳臂**。qa5 1k-8k（86/83/64/50）显著超 top_k16 基线（76/77/54/48），qa1/qa2 中长度也持平或更好。**delta-rule 写残差 + 归一化 readout 提升了长上下文检索保持。** P10（ST-Gumbel 硬路由 top1_sim=1.0 但 retrieval 反而退化）和 topk8（top_k 减半→检索覆盖不足，qa5_0k=16 异常低）均劣于基线，REJECTED。
 
+### chunk-size sweep step500（2026-06-07 评完，P11 delta-rule + normreadout 同架构，仅 chunk_size 不同）
+同口径 canonical `compare_answers(target,output,question,TASK_LABELS[task])`，n=100，step500 ckpt：
+
+```
+chunk                        qa  |   0k   1k   2k   4k   8k  16k  32k
+chunk256 deltarule+normro    qa1 |   91   22   22   17   17   15   15
+                             qa2 |   40   17   18   17   18   18   18
+                             qa5 |   77   69   53   36   37   10   34
+chunk512 deltarule+normro★   qa1 |   98   68   51   32   21   26   20
+                             qa2 |   59   42   32   24   18   21   --
+                             qa5 |   82   86   83   64   50   35   --
+chunk1024 deltarule+normro   qa1 |   97   45    7   21   11   11    6
+                             qa2 |   47   31    9    7    0    4    9
+                             qa5 |   80   41   24   19   16    5    4
+```
+→ **裁决：chunk512 是同架构下的甜区**。qa5 中长度（1k-8k）chunk512=86/83/64/50 ≫ chunk256=69/53/36/37 ≫ chunk1024=41/24/19/16。chunk1024 仅 0k 强（97/47/80），>0k 急剧掉分（每步局部窗口被 1024 token 稀释 + 注入太稀疏）。chunk256 在 32k 偶有回升（qa5=34）但整体不及 512。
+> ⚠️ 与早期 "chunk1024 >> chunk128"（§4-1）不矛盾：那是 **p8_nullsink** 谱系、且对照的是 chunk128。本次是 **P11 delta-rule+normreadout** 谱系 chunk{256,512,1024} 三点对照，512 居中最优。**step500 早 ckpt，三个 run 都在跑满 5000 步，后续 ckpt 待评。**
+
+### l3_recon_token_weight sweep step500（2026-06-07 评测中，P11 chunk512 底座 + L3 token-recon aux）
+同口径 canonical scorer（`scripts/score_nested_babilong.py`，`compare_answers`），n=100，step500 ckpt：
+
+```
+arm                          qa  |   0k   1k   2k   4k   8k  16k  32k
+P11 chunk512 baseline (无aux)★qa1 |   98   68   51   32   21   26   20
+                             qa2 |   59   42   32   24   18   21   --
+                             qa5 |   82   86   83   64   50   35   --
+l3recontoken w1.0 ❌          qa1 |   77    4    6    8    3    2    1
+                             qa2 |   43    4    5    3    1    2    3
+                             qa5 |   67   22   16    8    3    1    0
+l3recontoken w0.3            qa1 |  评测中（.76 driver pid242122，0k-32k CSV 填充中，32k=2/3）
+                             qa2 |  评测中
+                             qa5 |  评测中
+```
+→ **w1.0 裁决：L3 token-recon aux 权重 1.0 = 灾难性。** 仅 0k 部分存活（qa5=67 vs baseline 82），≥1k 全面塌方（qa5 1k=22 vs 86、2k=16 vs 83、≥8k≈0）。强 token-recon aux 把 P11 baseline 原有的长程寻址彻底破坏。**这是真实实验结果（CSV 满 n=100、无 silent-fail）非 bug。** w0.3（弱权重）评测中，看弱 aux 是否破坏更小 / 仍劣于无 aux baseline。
+
 ---
 
 ## 4. 关键观察 & 待办
