@@ -316,6 +316,7 @@ def generate_with_mem_space(
     chunk_size: int,
     max_new_tokens: int,
     device: torch.device,
+    swa_eval_chunks: int = 0,
 ) -> str:
     """Streaming generation for a single BABILong sample.
 
@@ -337,8 +338,23 @@ def generate_with_mem_space(
     chunk already contains the question text + the right context, so logit
     quality at its tail is what we want to read.
 
+    eval-only cross-chunk SWA (``swa_eval_chunks`` = W, D2a, 2026-06-09):
+        Default W=0 reproduces the original behaviour bit-for-bit — the
+        generation window is exactly the last chunk, and only the memory bank
+        carries information about the earlier chunks. When W>0, the generation
+        window becomes the concatenation of the last (W+1) chunks, so the final
+        forward's self-attention can attend DIRECTLY to the previous W chunks'
+        raw KV (sliding window), *in addition to* the memory readback. The bank
+        streaming loop is unchanged (still ``chunks[:-1]``), i.e. those W chunks
+        remain in the bank too — SWA is purely additive direct attention. This
+        tests whether the no-cross-chunk-SWA eval systematically under-estimates
+        the model's true long-context ability. Note that the combined window
+        gives those tokens correct *relative* RoPE positions (within the window)
+        instead of each chunk restarting at position 0.
+
     Args:
         input_ids: [1, total_len] tensor on `device`.
+        swa_eval_chunks: W >= 0. 0 = original (no cross-chunk SWA, default).
 
     Returns:
         Decoded text of `max_new_tokens` generated tokens (skip_special_tokens=True).
@@ -352,7 +368,10 @@ def generate_with_mem_space(
     tokens = input_ids[0]  # [total_len]
     chunks = list(tokens.split(chunk_size))
 
-    # Stream all-but-last chunks (memory accumulation only — no logit reads)
+    # Stream all-but-last chunks (memory accumulation only — no logit reads).
+    # NOTE: unchanged by SWA — the bank always accumulates chunks[:-1] exactly
+    # as before, so W>0 only ADDS direct attention, it never removes context
+    # from the bank.
     if len(chunks) > 1:
         for chunk in chunks[:-1]:
             chunk_tensor = chunk.unsqueeze(0).to(device)  # [1, <=chunk_size]
@@ -361,7 +380,14 @@ def generate_with_mem_space(
     # Freeze the bank — generation should not pollute the slots that hold the context.
     _freeze_banks(model)
     try:
-        cur = chunks[-1].unsqueeze(0).to(device)  # [1, last_chunk_len]
+        if swa_eval_chunks > 0 and len(chunks) > 1:
+            # Cross-chunk SWA window: last (W+1) chunks concatenated.
+            start = max(0, len(chunks) - (swa_eval_chunks + 1))
+            window = torch.cat(list(chunks[start:]), dim=0)  # [<= (W+1)*chunk_size]
+            cur = window.unsqueeze(0).to(device)
+        else:
+            # W=0 (or single chunk): byte-identical to the original path.
+            cur = chunks[-1].unsqueeze(0).to(device)  # [1, last_chunk_len]
         generated_ids: list[int] = []
         for step in range(max_new_tokens):
             outputs = model(input_ids=cur, use_cache=False)
@@ -588,6 +614,17 @@ def main():
                              "n=100). Use >1 only for fast triage, not final numbers.")
     parser.add_argument("--device", type=str, default="cuda:0",
                         help="Device to run on")
+    parser.add_argument("--swa_eval_chunks", type=int, default=0,
+                        help="Eval-only cross-chunk sliding-window attention "
+                             "(D2a). W=0 (default) = original behaviour, "
+                             "bit-identical: the generation window is the last "
+                             "chunk only and earlier chunks reach the final "
+                             "forward solely via the memory bank. W>0 makes the "
+                             "generation window the last (W+1) chunks "
+                             "concatenated, so the final forward attends "
+                             "DIRECTLY to the previous W chunks' raw KV (in "
+                             "addition to memory readback). Bank streaming is "
+                             "unchanged. Only supported on the bsz=1 path.")
     parser.add_argument("--dtype", type=str, default="bfloat16",
                         choices=["bfloat16", "float16", "float32"])
     parser.add_argument("--attn_impl", type=str, default="sdpa",
@@ -602,6 +639,15 @@ def main():
                         help="Include BABILong DEFAULT_PROMPTS[task]['post_prompt']")
     args = parser.parse_args()
 
+    if args.swa_eval_chunks < 0:
+        parser.error("--swa_eval_chunks must be >= 0")
+    if args.swa_eval_chunks > 0 and args.batch_size > 1:
+        parser.error(
+            "--swa_eval_chunks > 0 is only supported on the bsz=1 path "
+            "(use --batch_size 1). The batched generation path does not "
+            "implement the cross-chunk SWA window."
+        )
+
     print(f"[mem_space-BABILong] Configuration:")
     print(f"  Base model:      {args.model_path}")
     print(f"  Checkpoint:      {args.checkpoint}")
@@ -611,6 +657,7 @@ def main():
     print(f"  Chunk size:      {args.chunk_size}")
     print(f"  Max new tokens:  {args.max_new_tokens}")
     print(f"  Limit/cell:      {args.limit}")
+    print(f"  SWA eval chunks: {args.swa_eval_chunks}")
     print(f"  Device:          {args.device}")
 
     device = torch.device(args.device)
@@ -699,6 +746,7 @@ def main():
                         "checkpoint":      args.checkpoint,
                         "adapter_config":  args.adapter_config,
                         "chunk_size":      args.chunk_size,
+                        "swa_eval_chunks": args.swa_eval_chunks,
                         "num_slots":       mem_config.num_slots,
                         "top_k":           mem_config.top_k,
                         "shared_memory_bank": mem_config.shared_memory_bank,
@@ -747,6 +795,7 @@ def main():
                             chunk_size=args.chunk_size,
                             max_new_tokens=args.max_new_tokens,
                             device=device,
+                            swa_eval_chunks=args.swa_eval_chunks,
                         )
                     df.loc[len(df)] = [target, output, question]
                     if (idx + 1) % 10 == 0 or idx == num_samples - 1:
@@ -779,6 +828,7 @@ def main():
                             chunk_size=args.chunk_size,
                             max_new_tokens=args.max_new_tokens,
                             device=device,
+                            swa_eval_chunks=args.swa_eval_chunks,
                         )
                     results[idx] = out
 
