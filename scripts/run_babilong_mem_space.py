@@ -353,6 +353,16 @@ def generate_with_mem_space(
         gives those tokens correct *relative* RoPE positions (within the window)
         instead of each chunk restarting at position 0.
 
+        Short-doc fallback (2026-06-09): SWA only activates when there is at
+        least one chunk the window does NOT cover, i.e. ``len(chunks) > W+1``.
+        If the whole document fits in the window (``len(chunks) <= W+1``) we
+        fall back to the W0 single-chunk path. Otherwise the earlier chunks
+        would be counted twice (streamed into the bank AND directly attended in
+        the window) and the forward window would balloon to (W+1)*chunk_size,
+        well past the training-time single-chunk window — pure OOD damage on
+        short docs (0k ~97% single-chunk, 1k ~100% two-chunk) with no remote
+        chunk to actually benefit.
+
     Args:
         input_ids: [1, total_len] tensor on `device`.
         swa_eval_chunks: W >= 0. 0 = original (no cross-chunk SWA, default).
@@ -381,13 +391,32 @@ def generate_with_mem_space(
     # Freeze the bank — generation should not pollute the slots that hold the context.
     _freeze_banks(model)
     try:
-        if swa_eval_chunks > 0 and len(chunks) > 1:
+        if swa_eval_chunks > 0 and len(chunks) > swa_eval_chunks + 1:
             # Cross-chunk SWA window: last (W+1) chunks concatenated.
+            #
+            # GUARD ``len(chunks) > W+1`` (not just ``> 1``): we only take this
+            # path when there is at least one EARLIER chunk that the window does
+            # NOT cover (chunk index < start). Those uncovered chunks reach the
+            # final forward solely via the memory bank, while the last (W+1)
+            # chunks get direct attention — the genuine remote-SWA benefit, no
+            # double counting (each earlier chunk is either bank-only or
+            # window-only, never both).
+            #
+            # When ``len(chunks) <= W+1`` the whole document already fits inside
+            # the window, so concatenating "last (W+1) chunks" would re-attend
+            # EVERY chunk that was also streamed into the bank (double counting)
+            # AND blow the forward window up to (W+1)*chunk_size, far past the
+            # training-time single-chunk window (OOD). For short docs (0k is
+            # ~97% single-chunk, 1k ~100% two-chunk) that is pure OOD damage.
+            # We therefore fall through to the W0 path below, which is
+            # byte-identical to no-SWA: chunks[:-1] live only in the bank and
+            # the generation window is exactly the last chunk.
             start = max(0, len(chunks) - (swa_eval_chunks + 1))
             window = torch.cat(list(chunks[start:]), dim=0)  # [<= (W+1)*chunk_size]
             cur = window.unsqueeze(0).to(device)
         else:
-            # W=0 (or single chunk): byte-identical to the original path.
+            # W=0, single chunk, OR SWA fallback (doc fits in window):
+            # byte-identical to the original no-SWA path.
             cur = chunks[-1].unsqueeze(0).to(device)  # [1, last_chunk_len]
         generated_ids: list[int] = []
         for step in range(max_new_tokens):
