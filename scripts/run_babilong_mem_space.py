@@ -34,6 +34,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import csv
 import json
 import os
 import sys
@@ -572,6 +573,45 @@ def generate_batch_with_mem_space(
 
 
 # --------------------------------------------------------------------------- #
+# CSV writing (robust against model outputs that contain newlines)
+# --------------------------------------------------------------------------- #
+
+
+def _sanitize_output(text: str) -> str:
+    """Flatten embedded newlines/carriage returns in a model output before it
+    is written to the result CSV.
+
+    BABILong scoring (``compare_answers``) only checks whether the gold target
+    label appears as a substring of the (lower-cased, sentence-truncated)
+    output, so collapsing ``\\n``/``\\r`` to a single space is verdict-preserving
+    (verified: 0 verdict changes over a polluted n=100 cell). Doing this at
+    write time means a single physical CSV line == one record, which keeps the
+    file readable by *any* downstream consumer (not just csv.DictReader, which
+    already handles quoted multi-line fields, but also naive line-counters and
+    quirky pandas paths). We additionally write with QUOTE_ALL as a second line
+    of defence.
+    """
+    if not isinstance(text, str):
+        return text
+    return text.replace("\r", " ").replace("\n", " ")
+
+
+def _write_results_csv(df: pd.DataFrame, outfile) -> None:
+    """Write the (target, output, question) frame to ``outfile`` with embedded
+    newlines flattened and every field quoted.
+
+    Both safeguards are intentional and independent:
+      * ``_sanitize_output`` guarantees one physical line per record.
+      * ``quoting=csv.QUOTE_ALL`` guarantees correct parsing even if some other
+        field (e.g. ``question``) ever grows a delimiter/newline.
+    """
+    safe = df.copy()
+    if "output" in safe.columns:
+        safe["output"] = safe["output"].map(_sanitize_output)
+    safe.to_csv(outfile, index=False, quoting=csv.QUOTE_ALL)
+
+
+# --------------------------------------------------------------------------- #
 # Main
 # --------------------------------------------------------------------------- #
 
@@ -799,7 +839,7 @@ def main():
                         )
                     df.loc[len(df)] = [target, output, question]
                     if (idx + 1) % 10 == 0 or idx == num_samples - 1:
-                        df.to_csv(outfile, index=False)
+                        _write_results_csv(df, outfile)
             else:
                 # ---- batched path: bucket by chunk-count, then batch ----
                 # Encode everything first so we can group by chunk count. Each
@@ -865,9 +905,9 @@ def main():
                 # Reassemble in original order.
                 for (idx, target, question, _toks, _nc) in rows:
                     df.loc[len(df)] = [target, results[idx], question]
-                df.to_csv(outfile, index=False)
+                _write_results_csv(df, outfile)
 
-            df.to_csv(outfile, index=False)
+            _write_results_csv(df, outfile)
             print(f"[mem_space-BABILong] Saved {len(df)} results to {outfile}")
 
     print("\n[mem_space-BABILong] Evaluation complete!")

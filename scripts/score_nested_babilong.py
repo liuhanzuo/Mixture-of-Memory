@@ -3,10 +3,18 @@
   <root>/<run>/<run>_<length>/<task>_<length>_<suffix>.csv
 using third_party/babilong-pkg/babilong/metrics.compare_answers.
 
-Usage: python scripts/score_nested_babilong.py <result_dir>
+Usage: python scripts/score_nested_babilong.py <result_dir> [--expect N]
 Prints a qa x length accuracy grid (correct/total).
+
+A row-count guard (default --expect 100) prints a loud WARNING to stderr when a
+cell parses to a different number of records than expected. This surfaces CSV
+corruption (e.g. multi-line model outputs that an upstream writer failed to
+quote, splitting one record across several physical lines) instead of letting
+it silently skew the score. Pass ``--expect -1`` to disable the check (e.g.
+when cells were produced with a non-default ``--limit``).
 """
 from __future__ import annotations
+import argparse
 import csv
 import sys
 from pathlib import Path
@@ -19,7 +27,7 @@ TASKS = ["qa1", "qa2", "qa5"]
 LENGTHS = ["0k", "1k", "2k", "4k", "8k", "16k", "32k"]
 
 
-def score_cell(path: Path, task: str):
+def score_cell(path: Path, task: str, expect: int = 100):
     correct = total = 0
     labels = TASK_LABELS[task]
     with open(path, newline="") as f:
@@ -30,11 +38,27 @@ def score_cell(path: Path, task: str):
             question = (row.get("question") or "").strip()
             if compare_answers(target, output, question, labels):
                 correct += 1
+    if expect is not None and expect > 0 and total != expect:
+        print(
+            f"WARNING: {path} parsed {total} records, expected {expect}. "
+            f"Possible CSV corruption (unquoted multi-line output?) — the score "
+            f"for this cell may be unreliable.",
+            file=sys.stderr,
+        )
     return correct, total
 
 
 def main():
-    rdir = Path(sys.argv[1])
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("result_dir", type=str, help="Nested BABILong result dir")
+    parser.add_argument(
+        "--expect", type=int, default=100,
+        help="Expected records per cell (default 100). Mismatch prints a "
+             "stderr WARNING. Pass -1 to disable the check.",
+    )
+    args = parser.parse_args()
+
+    rdir = Path(args.result_dir)
     run = rdir.name
     print(f"=== {run} ===")
     print("task   " + "  ".join(f"{l:>6s}" for l in LENGTHS))
@@ -50,7 +74,7 @@ def main():
             if hit is None:
                 cells.append("   -- ")
             else:
-                c, n = score_cell(hit, t)
+                c, n = score_cell(hit, t, expect=args.expect)
                 pct = 100.0 * c / n if n else 0.0
                 cells.append(f"{pct:5.0f} ")
         print(f"{t:5s}  " + " ".join(cells))
