@@ -225,9 +225,10 @@
 - **算力**：当前 .76 单节点 8×H20 空闲（.249 仍跑 w1.0 train 到 5000）→ 先 single-node .76 起 v3 链；待 .249 空出可改 2-node 16 卡。
 - **下一步**：coder 脚本就绪 → rsync 代码到 .76 → 起 v3 链 → 每 stage step500 离线 BABILong 对照 v1 stable 链 + 单 chunk1024。
 
-### [F2] 增大 #chunk（更长文本）— **状态: TRAIN RUNNING（2026-06-08 10:31，.196 8xH20 long-doc chunk512）**
+### [F2] 增大 #chunk（更长文本）— **状态: TRAIN RUNNING 2-ARM（chunk512 @.196 + chunk1024 @.249，2026-06-08 11:11 起）**
 - **数据 build DONE（2026-06-08 10:09）**：`MemLong/data/processed/dolmino_longdoc_wiki_min4k`（train=99899, val=2039，wiki ≥4096-tok docs，dolmino_per_doc schema 兼容）。
-- **TRAIN 已起（2026-06-08 10:31）**：`.196`（盘A 共享 FS，数据无需 rsync）8xH20 跑 `scripts/launch_f2_longdoc_chunk512_diskA.sh`（F1-best=P11 delta-rule+normalize_readout @ chunk512，warmup600/accum4/sigma3.5，唯一变量=数据换成 long-doc 子集，per-doc chunk 数显著增大）。out=`outputs/f2_longdoc_chunk512`，log `logs/f2_longdoc_chunk512.log`，step3 lm-ok usage_cov0.95 usage_chunks50 nf=0 8GPU 78GB/100%。判据：每 step500 离线 BABILong 16k/32k 对照 F1 chunk512，看 usage_cov/chunk_idx_jaccard 随 #chunk 增大是否保持。
+- **arm chunk512 @.196（2026-06-08 10:31）**：`.196`（盘A 共享 FS，数据无需 rsync）8xH20 跑 `scripts/launch_f2_longdoc_chunk512_diskA.sh`（F1-best=P11 delta-rule+normalize_readout @ chunk512，warmup600/accum4/sigma3.5，唯一变量=数据换成 long-doc 子集，per-doc chunk 数显著增大）。out=`outputs/f2_longdoc_chunk512`，log `logs/f2_longdoc_chunk512.log`，step205 usage_cov0.92 usage_chunks50 nf=0 8GPU healthy。
+- **arm chunk1024 @.249（2026-06-08 11:11，本 HB 自主起）**：`.249`（盘B 独立 ceph，long-doc data 已 rsync 2.7G + code synced）8xH20 跑 `scripts/launch_f2_longdoc_chunk1024_diskB.sh`（同 F1-best P11 配置，唯一变量 chunk_size 512→1024；按 F1 v3 约定 warmup600→300、accum4→2 保持有效 grad-token/step 恒定、sigma3.5→3.0）。out=`outputs/f2_longdoc_chunk1024`，log `logs/f2_longdoc_chunk1024.log`，step5 lm=6.36 route_aux2.48 nf=0 8GPU 100%/81GB healthy。**对照 chunk512 arm：在同一 long-doc 数据上测 chunk_size×#chunk 交互（chunk1024 → 每 doc chunk 数减半但写入粒度更粗）。** 判据：每 step500 离线 BABILong 16k/32k 对照 chunk512 arm + F1 chunk512/chunk1024，看 usage_cov/chunk_idx_jaccard 随 #chunk 与 chunk_size 的取舍。
 - **动机**：当前每样本 chunk 数太少（4 个量级太粗），memory 的「多 chunk 写入→保持→跨 chunk 读回」能力没被真正压力测试。需要专门从 Dolmino 里挑**很长的文本**，让单样本 chunk 数显著增大。
 - **★ 数据来源裁决（2026-06-08 dry_run）**：filter `dolmino_per_doc` 路线 **DEAD**（4096 硬截断）。改 raw re-tokenize：
   - **pes2o = DEAD**：扫 3.86M docs，0 docs ≥8192 tok（全是短摘要）。
