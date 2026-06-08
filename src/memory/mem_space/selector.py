@@ -202,8 +202,16 @@ class TopKSelector(nn.Module):
         pool_of_H: torch.Tensor,
         slots: torch.Tensor,
         query_tokens: Optional[torch.Tensor] = None,
+        token_mask: Optional[torch.Tensor] = None,
     ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """Forward pass with per-token routing (Fix Z.2).
+
+        token_mask (batched-eval padding support, 2026-06-09): optional [B, T]
+        tensor (1/True = real token, 0/False = pad). When given, padded token
+        positions are excluded from the per-token pooling (max_pool /
+        chunk_query / slot_query branches) so a right-/left-padded eval batch
+        routes EXACTLY as the unpadded single-sample path. Default None →
+        byte-identical to pre-2026-06-09 behaviour.
 
         Accepts either [B, d_model] (legacy mean-pool) or [B, T, d_model]
         (full hidden states).  When T > 1, each token independently votes
@@ -256,6 +264,17 @@ class TopKSelector(nn.Module):
             self.K_sel(_slots_for_key) + self.slot_key_bias.unsqueeze(0),
             dim=-1,
         )                                                # [B, N, S]
+
+        # Batched-eval padding mask prep (2026-06-09). `_tok_keep` is a bool
+        # [B, T] (True = real token) used to exclude pad positions from the
+        # per-token pooling reductions below. None → no masking (default).
+        _tok_keep = None
+        if token_mask is not None:
+            if token_mask.shape[0] != B or token_mask.shape[1] != T:
+                raise ValueError(
+                    f"token_mask {tuple(token_mask.shape)} must be [B, T]=[{B}, {T}]"
+                )
+            _tok_keep = token_mask.bool().to(pool_of_H.device)  # [B, T]
 
         if self._routing_pool_mode == "multi_query" and query_tokens is not None:
             # v8 multi-query routing (2026-06-01): use the M L3 summary tokens
@@ -359,6 +378,10 @@ class TopKSelector(nn.Module):
             q_slot = F.normalize(self.q_sel_ln(q_slot), dim=-1)                    # [B, N, S]
             k_tok = q                                                             # [B, T, S] reuse F.normalize(Q_sel(H))
             attn = torch.einsum("bns,bts->bnt", q_slot, k_tok) * self.temperature  # [B, N, T]
+            if _tok_keep is not None:
+                # Mask pad tokens out of the slot→token attention.
+                _neg = torch.finfo(attn.dtype).min
+                attn = attn.masked_fill((~_tok_keep).unsqueeze(1), _neg)          # [B, N, T]
             # Aggregate [B,N,T] → slot relevance [B,N]. A hard max over T is a
             # known collapse source (every slot finds a "champion token" → all
             # logits saturate → uniform). Instead use a softmax-weighted
@@ -378,10 +401,22 @@ class TopKSelector(nn.Module):
             # This eliminates the max-pool uniformity problem where T>>N causes
             # every slot to find a "champion token" → all max-logits similar → uniform.
             q_chunk = q.mean(dim=1, keepdim=False)       # [B, S]
+            if _tok_keep is not None:
+                # Masked mean over real tokens only.
+                _m = _tok_keep.unsqueeze(-1).to(q.dtype)            # [B, T, 1]
+                _denom = _m.sum(dim=1).clamp(min=1.0)               # [B, 1]
+                q_chunk = (q * _m).sum(dim=1) / _denom              # [B, S]
             logits = torch.einsum("bs,bns->bn", q_chunk, k) * self.temperature  # [B, N]
         else:
             # Legacy max-pool: per-token logits then max over T.
             per_token_logits = torch.einsum("bts,bns->btn", q, k) * self.temperature
+            if _tok_keep is not None:
+                # Exclude pad tokens from the max so a padded batch matches the
+                # unpadded single-sample routing exactly. Set masked positions
+                # to -inf before the max over T.
+                _neg = torch.finfo(per_token_logits.dtype).min
+                _mask = (~_tok_keep).unsqueeze(-1)                 # [B, T, 1]
+                per_token_logits = per_token_logits.masked_fill(_mask, _neg)
             logits = per_token_logits.max(dim=1).values  # [B, N]
 
         scores = F.softmax(logits, dim=-1)                        # [B, N]

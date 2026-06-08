@@ -92,6 +92,20 @@ def _reset_banks(model: torch.nn.Module) -> None:
         l3_pool._prev_chunk_h = None
         if hasattr(l3_pool, "_chunk_summary_cache"):
             l3_pool._chunk_summary_cache = None
+        # Batched-eval padding (2026-06-09): clear the previous-chunk token mask
+        # consumed by the L3 pool. No-op for bsz=1 (mask never set).
+        if hasattr(l3_pool, "_prev_chunk_token_mask"):
+            l3_pool._prev_chunk_token_mask = None
+        if hasattr(l3_pool, "_prev_summary"):
+            l3_pool._prev_summary = None
+    # Batched-eval padding: clear the per-chunk token mask stashed on the bank.
+    if shared_bank is not None and hasattr(shared_bank, "_active_token_mask"):
+        shared_bank._active_token_mask = None
+    else:
+        for w in getattr(root, "_mem_space_layers", []) or []:
+            _b = getattr(w, "memory_bank", None)
+            if _b is not None and hasattr(_b, "_active_token_mask"):
+                _b._active_token_mask = None
 
 
 def _reset_l2(model: torch.nn.Module) -> None:
@@ -369,6 +383,169 @@ def generate_with_mem_space(
 
 
 # --------------------------------------------------------------------------- #
+# Batched (cell-internal) generation — opt-in via --batch_size > 1
+# --------------------------------------------------------------------------- #
+
+
+def _set_active_token_mask(model, mask) -> None:
+    """Stash the current chunk's [B, T] token mask (1=real, 0=pad) on the
+    memory bank(s) so MemorySpaceLayer's selector pooling can exclude pads.
+    ``mask=None`` clears it (full/streaming chunks)."""
+    root = getattr(model, "module", model)
+    shared_bank = getattr(root, "_mem_space_shared_bank", None)
+    if shared_bank is not None:
+        shared_bank._active_token_mask = mask
+        return
+    for w in getattr(root, "_mem_space_layers", []) or []:
+        _b = getattr(w, "memory_bank", None)
+        if _b is not None:
+            _b._active_token_mask = mask
+
+
+def _set_prev_chunk_token_mask(model, mask) -> None:
+    """Stash the PREVIOUS chunk's [B, T] token mask on the L3 pool so the
+    recursive L3 summary reduces over real tokens only. ``mask=None`` clears."""
+    root = getattr(model, "module", model)
+    l3_pool = getattr(root, "_l3_pool", None)
+    if l3_pool is not None:
+        l3_pool._prev_chunk_token_mask = mask
+
+
+@torch.no_grad()
+def generate_batch_with_mem_space(
+    model,
+    token_list,
+    tokenizer,
+    chunk_size: int,
+    max_new_tokens: int,
+    device: torch.device,
+) -> list[str]:
+    """Batched streaming generation for several BABILong samples at once.
+
+    All samples in ``token_list`` MUST share the same number of chunks
+    (``ceil(len/chunk_size)``) and that number MUST be >= 2 — the caller
+    (``main``) buckets samples by chunk-count and routes single-chunk samples
+    to the bsz=1 path. Under that contract every "streaming" chunk
+    (``chunks[:-1]``) is EXACTLY ``chunk_size`` long for every sample (because
+    ``Tensor.split`` only shortens the final chunk), so the streaming forwards
+    are unpadded and byte-identical to the bsz=1 path. ONLY the final
+    generation chunk varies in length and is RIGHT-padded; right-padding is
+    free under causal self-attention (real tokens never attend to trailing
+    pads), so the wrapped decoder needs no mask change — only the two
+    non-causal pooling reductions (selector routing + the recursive L3 summary)
+    receive an explicit token mask so they ignore pad positions.
+
+    Args:
+        token_list: list of 1-D LongTensors (variable length), same chunk-count.
+
+    Returns:
+        list[str]: decoded answer for each input, in the same order.
+    """
+    B = len(token_list)
+    if B == 0:
+        return []
+    if device is None:
+        device = next(model.parameters()).device
+    pad_id = tokenizer.pad_token_id
+    if pad_id is None:
+        pad_id = tokenizer.eos_token_id if tokenizer.eos_token_id is not None else 0
+    eos_id = tokenizer.eos_token_id
+
+    _reset_banks(model)
+    _reset_l2(model)
+
+    # Split each sample into chunks; verify the shared-chunk-count contract.
+    per_sample_chunks = [list(t.split(chunk_size)) for t in token_list]
+    n_chunks = len(per_sample_chunks[0])
+    assert n_chunks >= 2, "batched path requires >=2 chunks; caller must bucket"
+    for c in per_sample_chunks:
+        assert len(c) == n_chunks, "batched samples must share chunk count"
+
+    # ---- Stream all-but-last chunks (full chunk_size, unpadded) ----
+    _set_active_token_mask(model, None)
+    _set_prev_chunk_token_mask(model, None)
+    for j in range(n_chunks - 1):
+        stacked = torch.stack([per_sample_chunks[b][j] for b in range(B)], dim=0)
+        assert stacked.shape[1] == chunk_size  # streaming chunks are always full
+        stacked = stacked.to(device)
+        _ = model(input_ids=stacked, use_cache=False)
+
+    # ---- Build the (right-padded) generation chunk ----
+    last_chunks = [per_sample_chunks[b][-1] for b in range(B)]
+    last_lens = [int(c.shape[0]) for c in last_chunks]
+    width = max(last_lens)
+    cur = torch.full((B, width), pad_id, dtype=torch.long, device=device)
+    for b in range(B):
+        cur[b, : last_lens[b]] = last_chunks[b].to(device)
+    cur_len = list(last_lens)                      # per-sample real length
+    rows = torch.arange(B, device=device)
+
+    def _mask_for(W: int) -> torch.Tensor:
+        # [B, W] bool: True for positions < cur_len[b].
+        ar = torch.arange(W, device=device).unsqueeze(0)       # [1, W]
+        lens = torch.tensor(cur_len, device=device).unsqueeze(1)  # [B, 1]
+        return ar < lens
+
+    _freeze_banks(model)
+    generated: list[list[int]] = [[] for _ in range(B)]
+    finished = [False] * B
+    prev_mask = None  # mask of the chunk currently held in l3_pool._prev_chunk_h
+    try:
+        for step in range(max_new_tokens):
+            cur_mask = _mask_for(cur.shape[1])                 # [B, W]
+            _set_active_token_mask(model, cur_mask)
+            _set_prev_chunk_token_mask(model, prev_mask)
+
+            outputs = model(input_ids=cur, use_cache=False)
+            logits_all = outputs.logits                        # [B, W, V]
+            # Read each row's logits at its OWN last real position.
+            read_pos = torch.tensor(
+                [cur_len[b] - 1 for b in range(B)], device=device
+            )
+            logits = logits_all[rows, read_pos, :]             # [B, V]
+            if step == 0 and eos_id is not None:
+                logits[:, eos_id] = float("-inf")
+            next_tok = logits.argmax(dim=-1)                   # [B]
+
+            # After this forward, l3_pool._prev_chunk_h == this cur's hidden;
+            # remember the mask that matches it for the next step's L3 reduce.
+            prev_mask = cur_mask
+
+            # Place tokens / update lengths for unfinished samples.
+            need_grow = False
+            for b in range(B):
+                if finished[b]:
+                    continue
+                tok = int(next_tok[b].item())
+                if eos_id is not None and tok == eos_id and step > 0:
+                    finished[b] = True
+                    continue
+                generated[b].append(tok)
+                if cur_len[b] >= cur.shape[1]:
+                    need_grow = True
+            if all(finished):
+                break
+            # Grow the buffer by one pad column if any sample needs the slot.
+            if need_grow:
+                pad_col = torch.full((B, 1), pad_id, dtype=torch.long, device=device)
+                cur = torch.cat([cur, pad_col], dim=1)
+            for b in range(B):
+                if finished[b]:
+                    continue
+                # Write the just-generated token at this sample's next position.
+                cur[b, cur_len[b]] = generated[b][-1]
+                cur_len[b] += 1
+    finally:
+        _unfreeze_banks(model)
+        _set_active_token_mask(model, None)
+        _set_prev_chunk_token_mask(model, None)
+
+    return [
+        tokenizer.decode(g, skip_special_tokens=True).strip() for g in generated
+    ]
+
+
+# --------------------------------------------------------------------------- #
 # Main
 # --------------------------------------------------------------------------- #
 
@@ -399,6 +576,16 @@ def main():
                         help="Maximum new tokens to generate per sample")
     parser.add_argument("--limit", type=int, default=100,
                         help="Maximum samples per task/length cell (default 100; -1 = all)")
+    parser.add_argument("--batch_size", type=int, default=1,
+                        help="Cell-internal sample batch size. 1 (default) = the "
+                             "original byte-for-byte per-sample path. >1 batches "
+                             "same-chunk-count samples through a single forward "
+                             "(~1.4x/cell); single-chunk samples always use the "
+                             "bsz=1 path. NOTE: batching is numerically correct "
+                             "(B=1 batched == bsz=1 exactly) but >1 under bf16 + "
+                             "hard top-k routing + greedy decode does NOT preserve "
+                             "the exact BABILong score (qa2/2k drifted 27->21 over "
+                             "n=100). Use >1 only for fast triage, not final numbers.")
     parser.add_argument("--device", type=str, default="cuda:0",
                         help="Device to run on")
     parser.add_argument("--dtype", type=str, default="bfloat16",
@@ -527,48 +714,108 @@ def main():
             if args.limit > 0:
                 num_samples = min(num_samples, args.limit)
 
-            for idx in tqdm(range(num_samples), desc=f"{task}/{split_name}", leave=False):
+            def _encode_sample(idx):
                 sample = task_data[idx]
-                target = sample["target"]
-                context = sample["input"]
-                question = sample["question"]
-
-                # Build formatted text
                 input_text = get_formatted_input(
-                    context,
-                    question,
+                    sample["input"],
+                    sample["question"],
                     prompt_cfg["examples"],
                     prompt_cfg["instruction"],
                     prompt_cfg["post_prompt"],
                     template=prompt_cfg["template"],
                 )
-
                 if args.use_chat_template:
                     messages = [{"role": "user", "content": input_text}]
                     input_text = tokenizer.apply_chat_template(
                         messages, tokenize=False, add_generation_prompt=True
                     )
+                ids = tokenizer.encode(input_text, add_special_tokens=True, return_tensors="pt")
+                if isinstance(ids, list):
+                    ids = torch.tensor([ids], dtype=torch.long)
+                return sample["target"], sample["question"], ids
 
-                input_ids = tokenizer.encode(input_text, add_special_tokens=True, return_tensors="pt")
-                if isinstance(input_ids, list):
-                    input_ids = torch.tensor([input_ids], dtype=torch.long)
-                input_ids = input_ids.to(device)
+            if args.batch_size <= 1:
+                # ---- bsz=1 path: byte-for-byte the original per-sample loop ----
+                for idx in tqdm(range(num_samples), desc=f"{task}/{split_name}", leave=False):
+                    target, question, input_ids = _encode_sample(idx)
+                    input_ids = input_ids.to(device)
+                    with torch.amp.autocast(device_type="cuda", dtype=dtype):
+                        output = generate_with_mem_space(
+                            model=model,
+                            input_ids=input_ids,
+                            tokenizer=tokenizer,
+                            chunk_size=args.chunk_size,
+                            max_new_tokens=args.max_new_tokens,
+                            device=device,
+                        )
+                    df.loc[len(df)] = [target, output, question]
+                    if (idx + 1) % 10 == 0 or idx == num_samples - 1:
+                        df.to_csv(outfile, index=False)
+            else:
+                # ---- batched path: bucket by chunk-count, then batch ----
+                # Encode everything first so we can group by chunk count. Each
+                # row keeps its original index so the CSV order is preserved.
+                import math as _math
+                rows = []  # (orig_idx, target, question, tokens_1d, n_chunks)
+                for idx in range(num_samples):
+                    target, question, input_ids = _encode_sample(idx)
+                    toks = input_ids[0]
+                    n_chunks = max(1, _math.ceil(toks.shape[0] / args.chunk_size))
+                    rows.append((idx, target, question, toks, n_chunks))
 
-                # Generate (handles _reset_banks + _freeze_banks internally)
-                with torch.amp.autocast(device_type="cuda", dtype=dtype):
-                    output = generate_with_mem_space(
-                        model=model,
-                        input_ids=input_ids,
-                        tokenizer=tokenizer,
-                        chunk_size=args.chunk_size,
-                        max_new_tokens=args.max_new_tokens,
-                        device=device,
-                    )
+                results: dict = {}  # orig_idx -> output text
 
-                df.loc[len(df)] = [target, output, question]
+                # Single-chunk samples: must use the bsz=1 cold-start path.
+                singles = [r for r in rows if r[4] <= 1]
+                multis = [r for r in rows if r[4] > 1]
+                for (idx, target, question, toks, _nc) in tqdm(
+                    singles, desc=f"{task}/{split_name}/single", leave=False
+                ):
+                    with torch.amp.autocast(device_type="cuda", dtype=dtype):
+                        out = generate_with_mem_space(
+                            model=model,
+                            input_ids=toks.unsqueeze(0).to(device),
+                            tokenizer=tokenizer,
+                            chunk_size=args.chunk_size,
+                            max_new_tokens=args.max_new_tokens,
+                            device=device,
+                        )
+                    results[idx] = out
 
-                if (idx + 1) % 10 == 0 or idx == num_samples - 1:
-                    df.to_csv(outfile, index=False)
+                # Multi-chunk samples: group by exact chunk count, then split
+                # into batches of <= batch_size.
+                from collections import defaultdict as _dd
+                by_nc = _dd(list)
+                for r in multis:
+                    by_nc[r[4]].append(r)
+                for nc, group in by_nc.items():
+                    # Sort the group by total token length so each <=batch_size
+                    # slice has similar last-chunk lengths → minimal right-pad
+                    # (less wasted compute, and padded rows stay numerically
+                    # closer to the unpadded last chunk).
+                    group = sorted(group, key=lambda r: int(r[3].shape[0]))
+                    for s in tqdm(
+                        range(0, len(group), args.batch_size),
+                        desc=f"{task}/{split_name}/nc{nc}", leave=False,
+                    ):
+                        batch = group[s:s + args.batch_size]
+                        tok_list = [b[3] for b in batch]
+                        with torch.amp.autocast(device_type="cuda", dtype=dtype):
+                            outs = generate_batch_with_mem_space(
+                                model=model,
+                                token_list=tok_list,
+                                tokenizer=tokenizer,
+                                chunk_size=args.chunk_size,
+                                max_new_tokens=args.max_new_tokens,
+                                device=device,
+                            )
+                        for b, o in zip(batch, outs):
+                            results[b[0]] = o
+
+                # Reassemble in original order.
+                for (idx, target, question, _toks, _nc) in rows:
+                    df.loc[len(df)] = [target, results[idx], question]
+                df.to_csv(outfile, index=False)
 
             df.to_csv(outfile, index=False)
             print(f"[mem_space-BABILong] Saved {len(df)} results to {outfile}")

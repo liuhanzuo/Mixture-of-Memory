@@ -811,7 +811,15 @@ class MemorySpaceLayer(nn.Module):
                 prev_h = getattr(self.l3_pool, "_prev_chunk_h", None)
                 if prev_h is not None:
                     prev_summary = getattr(self.l3_pool, "_prev_summary", None)
-                    l3_summaries = self.l3_pool(prev_h, prev_summary=prev_summary)
+                    # Batched-eval padding (2026-06-09): the L3 pool reduces over
+                    # the PREVIOUS chunk's tokens; if that chunk was right-padded
+                    # (the growing last/generation chunk), mask the pads so the
+                    # summary matches the unpadded single-sample path. None for
+                    # full (streaming) chunks → byte-identical to pre-2026-06-09.
+                    _prev_tok_mask = getattr(self.l3_pool, "_prev_chunk_token_mask", None)
+                    l3_summaries = self.l3_pool(
+                        prev_h, prev_summary=prev_summary, chunk_mask=_prev_tok_mask
+                    )
                     object.__setattr__(self.l3_pool, "_chunk_summary_cache", l3_summaries)
 
         B, T, d = hidden_states.shape
@@ -824,6 +832,19 @@ class MemorySpaceLayer(nn.Module):
         self._fwd_count += 1
 
         cfg = self.config
+
+        # Batched-eval padding mask (2026-06-09). The eval driver stashes the
+        # current chunk's [B, T] token mask on the shared memory bank as
+        # ``_active_token_mask`` (1=real token, 0=pad). It is consumed ONLY by
+        # the non-causal pooling reductions (selector routing here, and the L3
+        # pool over the *previous* chunk above). None during training / bsz=1
+        # eval → all reductions are byte-identical to pre-2026-06-09.
+        _active_token_mask = getattr(self.memory_bank, "_active_token_mask", None)
+        if _active_token_mask is not None and (
+            _active_token_mask.shape[0] != B or _active_token_mask.shape[1] != T
+        ):
+            # Stale mask (e.g. left over from a differently-shaped chunk) — ignore.
+            _active_token_mask = None
 
         # Effective k for L1: 0 when disable_l1_inject is set (pure-L3 ablation).
         k_slots_effective = 0 if cfg.disable_l1_inject else cfg.top_k
@@ -846,7 +867,8 @@ class MemorySpaceLayer(nn.Module):
             # sub-queries (used only when routing_pool_mode=="multi_query"; the
             # selector falls back to max_pool when l3_summaries is None).
             idx, scores, ste_weights = self.selector(
-                hidden_states, slots, query_tokens=l3_summaries
+                hidden_states, slots, query_tokens=l3_summaries,
+                token_mask=_active_token_mask,
             )  # idx:[B,k], scores:[B,N]
             self._last_top1_sim = scores.max(dim=-1).values.float().mean().item()
             k_slots = idx.shape[-1]
