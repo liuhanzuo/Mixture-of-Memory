@@ -195,7 +195,13 @@
 - **早期诊断健康**：step16 top1_sim=0.29、**topk_mass=0.75（ST-Gumbel 让 routing mass 显著更集中，vs 旧 run 0.28-0.42）**、usage_cov 0.99、usage_var 9e-5。chunk512 配置（save_interval=500，total 5000，eval off）。判据同 P8 阶梯：step500 ckpt 离线 BABILong qa1/qa2/qa5 × 0k-32k vs chunk512 step500 baseline。
 - **代码完成（commit a937dab，coder general-purpose-36）**：新增 optional ST-Gumbel top-k 选择，flag `--use_st_gumbel_topk`(store_true) + `--st_gumbel_temperature`(float,default 1.0)，default OFF byte-inert。selector.py forward 新分支（`if use_st_gumbel_topk and self.training`）：给 selection logits 加 Gumbel 噪声 `g=-log(-log(U))` × temp，**仅影响 topk 选择路径**，返回的 scores/ste_weights/load-balance loss 仍用 noise-free logits。eval 不加噪。验证：import OK；pytest tests/test_mem_space_smoke.py 6 passed；flag-off byte-identical baseline、flag-on train 选择随机但 scores 不变、flag-on eval = flag-off。两个 trainer 都接好。
 - **launch 待办**：在 P8 最优底座（chunk512 配置）上加 `--key_repulsion_weight 0.05 --use_st_gumbel_topk`，做 ablation 对照 chunk512 step500 baseline。需用户 go-ahead（auto_launch: false）。
-### [P11] delta-rule + normalized writeback — **状态: DONE — ⭐新最佳臂（2026-06-07 03:20 eval 评完，超 top_k16 baseline）**。step500 BABILong：qa5 0k-8k=82/86/83/64/50 显著超 baseline（85/76/77/54/48），qa1/qa2 中长度持平或更好（qa2_32k=35 vs base 18）。**delta-rule 写残差 + 归一化 readout 提升长上下文检索保持。裁决：ADOPTED 为新基线配置，后续臂在此底座上叠加。** （32k qa5 cell 评测时仍在 .196 收尾，不影响裁决。）原 RUNNING 记录：（2026-06-06 10:49 起跑，远程 .196 8×H20，run mem_space_p11_chunk512_deltarule_normreadout，commit 9a9e3d0）— confidence medium，medium 改。写残差 + 归一化 readout magnitude 使其可与 local attn 比较再 gate。
+### [P11] delta-rule + normalized writeback — **状态: DONE — ⭐新最佳臂（2026-06-07 03:20 eval 评完，超 top_k16 baseline）**。step500 BABILong：qa5 0k-8k=82/86/83/64/50 显著超 baseline（85/76/77/54/48），qa1/qa2 中长度持平或更好（qa2_32k=35 vs base 18）。**delta-rule 写残差 + 归一化 readout 提升长上下文检索保持。裁决：ADOPTED 为新基线配置，后续臂在此底座上叠加。** （32k qa5 cell 评测时仍在 .196 收尾，不影响裁决。）
+- **chunk 阶梯三点齐（2026-06-07 13:00 评完，diskB .76 step500 ckpt 同口径 n=100）→ chunk512 决定性最佳**：
+  - chunk256: qa5 0k-8k=78/66/47/28/42；qa1 0k=85 32k=16；qa2 0k=38 32k=18
+  - **chunk512 (ADOPTED baseline)**: qa5 0k-8k=82/86/83/64/50 ⭐
+  - chunk1024: qa5 0k-8k=82/43/20/29/16；qa1 0k=95 但 2k 崩到 4；长程全面塌（16k=5 32k=4）
+  - **裁决：chunk512 是 P11 最佳 chunk。256 中长度明显弱，1024 1k 后断崖（同 P8 chunk1024 的 2k-trough/长程塌方形态）。后续臂一律 chunk512 底座。**
+- 原 RUNNING 记录：（2026-06-06 10:49 起跑，远程 .196 8×H20，run mem_space_p11_chunk512_deltarule_normreadout，commit 9a9e3d0）— confidence medium，medium 改。写残差 + 归一化 readout magnitude 使其可与 local attn 比较再 gate。
 - **代码完成（commit 9a9e3d0，coder general-purpose-37，5 files +101/-2，author LiuHanzuo）**：一组 flag 全 default OFF byte-inert：`--use_delta_rule_writeback`、`--normalize_readout`、`--readout_norm_scale`(default 1.0)。
   - **delta-rule**：当前默认 writeback 是 dual_gate（LM2 双独立门 `g_in·new + g_forget·old`，非残差）；flag-on 改为残差形式 `old + g_in·(new−old)`（forget 绑定为 1−g_in，忽略独立 g_forget），train+eval 都生效（改的是 stored state）。memory_bank.write() 加 `delta_rule` kwarg，layer.py 5 个 gated write 调用点都传入。legacy single-gate EMA 本就是残差，未动。
   - **normalize_readout**：把现有「仅缩小」的 M_sel_hidden clamp 换成 L2-normalize+rescale 到 `h_norm_ref × readout_norm_scale`（可放大也可缩小），让 gate 看到与 local attn 同尺度的 memory 信号。用 hidden_states.detach() 做参考，无额外梯度路径。train+eval 都生效。
@@ -213,18 +219,19 @@
 
 > 背景：当前并行的 P8-nullsink 阶梯（chunk128/256/512/1024 四臂，同起点 base，唯一变量 chunk_size）是干净 ablation，**先跑着不动**。下面三条是它之后的方向，F1→F2→F3 有先后依赖。
 
-### [F1] 系统的阶梯式（warm-start 链）训练 128→256→512→1024 — **状态: PENDING, auto_launch: false（依赖当前 4 臂 ablation 收尾 + 用户确认起跑）**
-- **动机**：与当前「同起点并行对照」互补。这里是**渐进式课程**——先在 chunk128 上把 write-read protocol 训稳，再用 `--init_checkpoint` 把上一级 adapter 暖启到下一级，逐级抬高压缩率（128→256→512→1024）。预期收敛更快、最终大 chunk 点更强（带着小 chunk 学到的寻址先验）。
-- **实现**：训练脚本已支持 `--init_checkpoint`（train_mem_space_dolmino_cpt.py:1009，strict=False 加载，自动剥 `module.` 前缀）。链式：阶段 n 的 `--init_checkpoint` = 阶段 n-1 的 `outputs/<stage_{n-1}>/mem_space_adapter.pt`。其余超参与当前 nullsink 阶梯一致（num_slots128/top_k16/selector_dim128/temp40/eff-batch32/eval off）。
-- **算力**：用 **2 个共享 IB 网口的节点 = 16 卡多机 DDP** 跑每一级，加速串行链。
-  - 网口用 `ibstat` 查 IB 设备名/状态，torchrun 多机：`--nnodes 2 --rdzv_backend c10d --rdzv_endpoint <master_ip>:29500`，设 `NCCL_IB_HCA=<ibstat设备>`、`NCCL_SOCKET_IFNAME=<网卡>`。
-  - 候选节点对：盘B 共享 FS 的 `.76 + .249`（都有 .venv 可训、同 ceph、Llama 已就位）最适合做 16 卡对，省去跨盘 rsync。需先 `ibstat` 确认两机 IB 互通。
-- **判据**：每级跑完离线 BABILong（n=100，同口径），看 warm-start 链的最终 1024 点 vs 当前并行 ablation 的 1024 点谁强 → 验证「课程是否有效」。
-- **依赖**：当前 4 臂 ablation 至少 1024 臂出 ckpt（做对照基线）后启动；启动前需用户确认（属新方向，非 ablation 延伸）。
+### [F1] 系统的阶梯式（warm-start 链）训练 — **状态: v1 stable 链 DONE（裁决「渐进 ≫ 单 chunk1024」）；v3 改进版 RUNNING（2026-06-07 23:51 起在 diskB .76 单节点 8×H20，stage1 c256 from-scratch step8/5000 lm=3.0 nf=0 healthy，commit ee8baa8，log progressive_chunk_diskB_v3_stage1_c256.log）**
+- **v1 结论（已锁）**：stable 渐进链 128→256→512→1024 全链完成，同口径 chunk1024 eval 下 qa1 2k=45 vs 单chunk1024=4、qa5 2k=82 vs 20、长程 qa5 16k=32/32k=29 vs 单 5/4。**渐进 warm-start 彻底修复单 chunk1024 的 1k 后断崖。**
+- **v3 改进（research note `small_chunk_training_and_slot_capacity_20260607.md` high-conf）**：跳过最不稳 chunk128 从 c256 起步（3 stage）；warmup ∝ 1/chunk（c256:1200/c512:600/c1024:300，各 stage 热身 token 量级一致）；grad_accum ∝ 1/chunk（c256:8/c512:4/c1024:2，有效梯度 token/step 恒定）；loss_spike_sigma 小 chunk 放宽（4.0/3.5/3.0）。其余超参与 v1 逐字一致。脚本由 coder 写入 `scripts/launch_progressive_chunk_diskB_v3_improved.sh`（进行中）。
+- **算力**：当前 .76 单节点 8×H20 空闲（.249 仍跑 w1.0 train 到 5000）→ 先 single-node .76 起 v3 链；待 .249 空出可改 2-node 16 卡。
+- **下一步**：coder 脚本就绪 → rsync 代码到 .76 → 起 v3 链 → 每 stage step500 离线 BABILong 对照 v1 stable 链 + 单 chunk1024。
 
-### [F2] 增大 #chunk（更长文本）— **状态: PENDING，接在 F1 之后**
+### [F2] 增大 #chunk（更长文本）— **状态: TRAIN RUNNING（2026-06-08 10:31，.196 8xH20 long-doc chunk512）**
+- **数据 build DONE（2026-06-08 10:09）**：`MemLong/data/processed/dolmino_longdoc_wiki_min4k`（train=99899, val=2039，wiki ≥4096-tok docs，dolmino_per_doc schema 兼容）。
+- **TRAIN 已起（2026-06-08 10:31）**：`.196`（盘A 共享 FS，数据无需 rsync）8xH20 跑 `scripts/launch_f2_longdoc_chunk512_diskA.sh`（F1-best=P11 delta-rule+normalize_readout @ chunk512，warmup600/accum4/sigma3.5，唯一变量=数据换成 long-doc 子集，per-doc chunk 数显著增大）。out=`outputs/f2_longdoc_chunk512`，log `logs/f2_longdoc_chunk512.log`，step3 lm-ok usage_cov0.95 usage_chunks50 nf=0 8GPU 78GB/100%。判据：每 step500 离线 BABILong 16k/32k 对照 F1 chunk512，看 usage_cov/chunk_idx_jaccard 随 #chunk 增大是否保持。
 - **动机**：当前每样本 chunk 数太少（4 个量级太粗），memory 的「多 chunk 写入→保持→跨 chunk 读回」能力没被真正压力测试。需要专门从 Dolmino 里挑**很长的文本**，让单样本 chunk 数显著增大。
-- **实现待定**：(1) 写一个 filter 扫 `MemLong/data/processed/dolmino_per_doc`，按 token 长度筛 top-N 长文档建一个 long-doc 子集；(2) 训练时该子集单样本能产出几十~上百 chunk，真正考验 slot bank 的容量/覆盖。
+- **★ 数据来源裁决（2026-06-08 dry_run）**：filter `dolmino_per_doc` 路线 **DEAD**（4096 硬截断）。改 raw re-tokenize：
+  - **pes2o = DEAD**：扫 3.86M docs，0 docs ≥8192 tok（全是短摘要）。
+  - **wiki = 唯一可用源**：≥2048-tok docs 的 token min/median/mean/p90/p99/max = 2048/3141/4256/7530/16699/61969；4.7% ≥10k tok、0.4% ≥20k tok。6.1G raw（2 files）→ 全量 ≥4k-tok 长尾足够建 F2 子集（虽无纯 32k 量级，但远超 4096-capped per_doc）。
 - **判据**：在长文档子集上，随 #chunk 增大 retrieval（usage_cov / chunk_idx_jaccard / 离线 BABILong 长上下文段 16k/32k）是否保持。
 - **依赖**：接在 F1（阶梯式训练打通）之后，用 F1 最优配置 + 长文档数据。
 
