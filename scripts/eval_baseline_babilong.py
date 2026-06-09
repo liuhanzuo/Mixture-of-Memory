@@ -842,6 +842,9 @@ def _eval_loop(args, prepare_input, generate, per_sample_setup):
     ]
     suffix = "_".join(suffix_parts)
 
+    sharded = args.num_shards > 1
+    shard_tag = f".shard{args.shard_index}of{args.num_shards}" if sharded else ""
+
     out_dir = Path(args.results_folder) / args.output_name
     out_dir.mkdir(parents=True, exist_ok=True)
 
@@ -851,8 +854,10 @@ def _eval_loop(args, prepare_input, generate, per_sample_setup):
         post = DEFAULT_PROMPTS[task].get("post_prompt", "") if args.use_post_prompt else ""
 
         for length in tqdm(args.lengths, desc=f"{task}", leave=False):
-            outfile = out_dir / f"{task}_{length}_{suffix}.csv"
-            if outfile.exists() and not args.overwrite:
+            outfile = out_dir / f"{task}_{length}_{suffix}{shard_tag}.csv"
+            # Resume-skip only applies to non-sharded (full-cell) runs; sharded
+            # runs always (re)write their own shard file to avoid dirty resume.
+            if not sharded and outfile.exists() and not args.overwrite:
                 # resume: count existing rows
                 try:
                     existing = pd.read_csv(outfile)
@@ -867,6 +872,8 @@ def _eval_loop(args, prepare_input, generate, per_sample_setup):
             samples = list(data)
             if args.limit:
                 samples = samples[: args.limit]
+            if sharded:
+                samples = samples[args.shard_index :: args.num_shards]
 
             rows = []
             for sample in tqdm(samples, desc=f"{task}/{length}", leave=False):
@@ -928,6 +935,10 @@ def main():
     p.add_argument("--max_new_tokens", type=int, default=20)
     p.add_argument("--limit", type=int, default=100)
     p.add_argument("--overwrite", action="store_true")
+    p.add_argument("--num_shards", type=int, default=1,
+                   help="split the (post-limit) sample set into this many stride shards")
+    p.add_argument("--shard_index", type=int, default=0,
+                   help="which stride shard to run (0-based); requires --num_shards > 1")
 
     args = p.parse_args()
     _set_proxy()
