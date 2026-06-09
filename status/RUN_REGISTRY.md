@@ -32,6 +32,7 @@
 | **perdoc_chunk128_p8_nullsink** | launch_mem_space_p8_nullsink.sh | 128 | 4096 | 1.0 | P8 + null/sink slot + memory_xattn 可训练+存盘（修 P8 regression）| 2000 | local GPU0-3 | **RUNNING**（step560，ckpt500 已 eval，见 §3）|
 | **perdoc_chunk256_p8_nullsink_r196** | launch_mem_space_p8_nullsink_chunk256_remote196.sh | 256 | 4096 | 1.0 | 同 nullsink，chunk 128→256 scale-up | 5000 | .196 8-GPU | **RUNNING**（step230/5000）|
 | **wbmode_lowrank (slot_dim 16384)** | launch_mem_space_wbmode_lowrank_local.sh | 1024 | **16384** | — | lowrank_gate r=256 | — | — | **CRASHED**（2026-06-04 00:39 rank3 exit1，无 ckpt，无 eval）|
+| **d2b_swa_train_w2** | launch_d2b_swa_train_w2_remote196.sh | 512 | 4096 | 1.0 | P11 deltarule+normreadout 底座 + **cross-chunk SWA TRAIN window W=2**（target forward 扩成 last-2-ctx+target 拼接1536tok，prefix labels-100，bank frozen 防二次写）；eval-side D2a 的训练侧对称版；bs2 eff16（bs4 OOM）| 5000 | .196 8-GPU | **RUNNING**（commit 9d2417f，2026-06-09 16:08 起，step15+ nf=0 健康）|
 
 ---
 
@@ -97,8 +98,8 @@ top_k16 (baseline P8)        qa1 |   96   47   52   37   30   28   29
                              qa2 |   49   49   35   25   22   22   18
                              qa5 |   85   76   77   54   48   45   41
 P11 delta-rule+normreadout★  qa1 |   98   68   51   32   21   26   20
-                             qa2 |   59   42   32   24   18   21   35
-                             qa5 |   82   86   83   64   50   35   --(32k draining)
+                             qa2 |   59   42   32   24   18   21   21
+                             qa5 |   82   86   83   64   50   46   41
 P10 keyrep0.05+ST-Gumbel     qa1 |   85   61   27   22   19   26   10
                              qa2 |   44   17    8   16   17    7   11
                              qa5 |   74   68   36   24   15   21   14
@@ -126,7 +127,7 @@ chunk1024 deltarule+normro   qa1 |   97   45    7   21   11   11    6
 → **裁决：chunk512 是同架构下的甜区**。qa5 中长度（1k-8k）chunk512=86/83/64/50 ≫ chunk256=69/53/36/37 ≫ chunk1024=41/24/19/16。chunk1024 仅 0k 强（97/47/80），>0k 急剧掉分（每步局部窗口被 1024 token 稀释 + 注入太稀疏）。chunk256 在 32k 偶有回升（qa5=34）但整体不及 512。
 > ⚠️ 与早期 "chunk1024 >> chunk128"（§4-1）不矛盾：那是 **p8_nullsink** 谱系、且对照的是 chunk128。本次是 **P11 delta-rule+normreadout** 谱系 chunk{256,512,1024} 三点对照，512 居中最优。**step500 早 ckpt，三个 run 都在跑满 5000 步，后续 ckpt 待评。**
 
-### l3_recon_token_weight sweep step500（2026-06-07 评测中，P11 chunk512 底座 + L3 token-recon aux）
+### l3_recon_token_weight sweep step500（2026-06-07 ✅ 评完 REJECTED，P11 chunk512 底座 + L3 token-recon aux）
 同口径 canonical scorer（`scripts/score_nested_babilong.py`，`compare_answers`），n=100，step500 ckpt：
 
 ```
@@ -137,11 +138,34 @@ P11 chunk512 baseline (无aux)★qa1 |   98   68   51   32   21   26   20
 l3recontoken w1.0 ❌          qa1 |   77    4    6    8    3    2    1
                              qa2 |   43    4    5    3    1    2    3
                              qa5 |   67   22   16    8    3    1    0
-l3recontoken w0.3            qa1 |  评测中（.76 driver pid242122，0k-32k CSV 填充中，32k=2/3）
-                             qa2 |  评测中
-                             qa5 |  评测中
+l3recontoken w0.3 ❌         qa1 |   78   26   42   31   22   21   14
+                             qa2 |   33    3   15   14   14    9   11
+                             qa5 |   54   61   56   34   25   21   10
 ```
-→ **w1.0 裁决：L3 token-recon aux 权重 1.0 = 灾难性。** 仅 0k 部分存活（qa5=67 vs baseline 82），≥1k 全面塌方（qa5 1k=22 vs 86、2k=16 vs 83、≥8k≈0）。强 token-recon aux 把 P11 baseline 原有的长程寻址彻底破坏。**这是真实实验结果（CSV 满 n=100、无 silent-fail）非 bug。** w0.3（弱权重）评测中，看弱 aux 是否破坏更小 / 仍劣于无 aux baseline。
+→ **w1.0 裁决：L3 token-recon aux 权重 1.0 = 灾难性。** 仅 0k 部分存活（qa5=67 vs baseline 82），≥1k 全面塌方（qa5 1k=22 vs 86、2k=16 vs 83、≥8k≈0）。强 token-recon aux 把 P11 baseline 原有的长程寻址彻底破坏。
+→ **w0.3 裁决（2026-06-07 23:15 评完）：弱权重 token-recon aux 仍一致劣于无-aux baseline。** qa5 全长度低于 baseline（54<82 / 61<86 / 56<83 / 34<64 / 25<50 / 21<35 / 10<41），qa1/qa2 同样下移。弱 aux 破坏比 w1.0 温和（≥1k 未塌成 0，仍有 20-60 区间），但**没有任何长度优于 baseline**。
+→ **★sweep 终裁：L3 token-level reconstruction aux 在 w0.3 与 w1.0 两个权重下均 REJECTED。token-level recon 目标与 routing/检索目标冲突——权重越大破坏越烈，弱权重也只是「破坏更小」而非「有益」。最佳配置仍是 P11 无-aux（delta-rule+normreadout）baseline。** 两 train run（.196 w0.3 / .249 w1.0）继续跑满 5000 仅留 lm/recon 曲线，BABILong 已定论。均为真实结果（CSV 满 n=100，无 silent-fail）。
+
+### l3_recon w0.3 CONVERGED（step5000）eval（2026-06-08 05:xx，diskA .196，确认非翻案）
+同口径 scorer，n=100，final adapter（step5000）：
+```
+arm                          qa  |   0k   1k   2k   4k   8k  16k  32k
+l3recontoken w0.3 (step5000) qa1 |   80   27   43   15    3    1    2
+                             qa2 |   50    2   25    7   11    2    4
+                             qa5 |   50   59   45   20   19    9   13
+```
+→ 收敛点与 step500 同向（一致劣于无-aux baseline，长程崩塌），**确认 REJECTED 裁决在收敛点成立，不翻案**。（2026-06-08 15:xx 用 third_party/babilong-pkg scorer 补全此前 `--` 的 qa2-32k=4 / qa5-16k=9 / qa5-32k=13，结论不变：≥4k 全面塌方。）
+→ **w1.0 converged eval（之前因 .249 silent-fail 0 CSV 缺失）：2026-06-08 15:23 起在空闲 B200 .188（L20A，env OK）补跑，bg agent general-purpose-1 进行中——纯粹补全 sweep 表格，裁决已终裁 REJECTED 不会翻案。**
+
+### P11 chunk1024 deltarule_normreadout FINAL（step5000）eval（2026-06-08 04:37 起，本机 7-GPU，确认断崖在满训仍持续）
+同口径 scorer，n=100，final adapter（step5000，1478min nf=0）：
+```
+arm                          qa  |   0k   1k   2k   4k   8k  16k  32k
+P11 chunk1024 FINAL(step5000)qa1 |   56   56   15   15    7    5    0
+                             qa2 |   37   31   11    5    5    1    2
+                             qa5 |   29   68   29   15    7    4   --
+```
+→ **★裁决确认：chunk1024 的 1k 后断崖在满 5000 步训练后依然持续。** 对照 chunk512 baseline（qa5=82/86/83/64/50/35）：chunk1024 即便满训，qa5 2k=29 vs 512=83、8k=7 vs 50，长程几乎归零。**满训没有修复单 chunk1024 的稀释/注入太稀疏问题——chunk512 仍是决定性甜区，且渐进 warm-start（F1 v1）才是修单 chunk1024 断崖的正解。**（32k qa5 cell 收尾中，方向已定。）
 
 ---
 
@@ -195,3 +219,102 @@ l3recontoken w0.3            qa1 |  评测中（.76 driver pid242122，0k-32k CS
 - 每个脚本头部加了 H20 ceiling + margin 注释，注释在 `bash -c "..."` 引号外（`bash -n` 已校验语法 OK）。
 - **chunk1024 / H800 脚本保持 bs=1 不变**：chunk1024 未在本次 probe 覆盖范围；H800 静态占用更高，维持 bs=1 + grad_accum。
 - 未触碰任何在跑训练（local chunk256 step4945 / chunk1024 step2560 都是 bs=1 mid-flight），改动只对未来 launch 生效。
+
+### P11 chunk512 delta-rule normreadout — FINAL step5000 离线 BABILong（2026-06-08 20:50，B200 .188 L20A，n=100，babilong.metrics）
+
+口径：qa1/qa2/qa5 × 0k-32k，acc%。
+
+| len | qa1 | qa2 | qa5 |
+|-----|-----|-----|-----|
+| 0k  | 93  | 53  | 36  |
+| 1k  | 44  | 21  | 47  |
+| 2k  | 42  | 18  | 42  |
+| 4k  | 24  | 22  | 23  |
+| 8k  | 22  | 12  | 18  |
+| 16k | 20  | 15  | 19  |
+| 32k | 18  | 19  | 20  |
+
+对照 P11 同配置 l3recon 变体（step5000 final，仅 qa1 部分跑全）：
+- l3recontoken **w0.3**：qa1 0k-32k = 71/25/40/17/6/5/1（全面劣于 deltarule_normreadout）。
+- l3recontoken **w1.0**：qa1 0k=4，1k+=0（**recon 权重 1.0 破坏检索，确认 recon 高权重有害**）。
+
+**结论**：delta-rule + normalized readout（无 recon）= F1 最佳 final 配置，confirms P11 step500 裁决在 step5000 仍成立。recon aux 在此底座上有害（w1.0 灾难、w0.3 劣化），P12 recon 方向 confidence 进一步下调。
+
+### F2 long-doc chunk1024 — FINAL step5000 离线 BABILong（2026-06-09 00:5x，.249 diskB H20，n=100，babilong.metrics）
+
+F2 = 真实长文（wiki re-tokenize min4k，单样本多 chunk 压力测）+ F1 最佳底座（delta-rule normreadout chunk1024）训满 5000。口径 qa1/qa2/qa5 × 0k-32k，acc%。
+
+| len | qa1 | qa2 | qa5 |
+|-----|-----|-----|-----|
+| 0k  | 90  | 40  | 32  |
+| 1k  | 80  | 57  | 56  |
+| 2k  | 39  | 24  | 64  |
+| 4k  | 17  | 8   | 39  |
+| 8k  | 15  | 2   | 29  |
+| 16k | 12  | 3   | 16  |
+| 32k | 17  | 10  | 12  |
+
+对照 chunk1024 标准 dolmino-perdoc FINAL（qa5=29/68/29/15/7/4/--）：F2 长文训练后 qa5 在 2k-8k（64/39/29）明显优于标准 perdoc（29/15/7），qa1 0-1k（90/80）也更强 → **长文档训练数据对 mid-range（1k-8k）检索保持有正面作用**，但 ≥16k 仍随长度衰减。ckpt `outputs/f2_longdoc_chunk1024/mem_space_adapter.pt`。
+
+### F2 long-doc chunk512 — FINAL step5000 离线 BABILong（2026-06-09 03:5x，.196 diskA H20，n=100，babilong.metrics）
+
+F2 长文（wiki re-tokenize min4k）+ F1 最佳底座（delta-rule normreadout chunk512）训满 5000。口径 qa1/qa2/qa5 × 0k-32k，acc%。
+
+| len | qa1 | qa2 | qa5 |
+|-----|-----|-----|-----|
+| 0k  | 74  | 67  | 45  |
+| 1k  | 30  | 18  | 34  |
+| 2k  | 22  | 15  | 32  |
+| 4k  | 22  | 15  | 22  |
+| 8k  | 16  | 8   | 18  |
+| 16k | 13  | 5   | 20  |
+| 32k | 15  | 14  | 20  |
+
+⚠️ **OVERTRAINING-DEGRADATION 确认**：FINAL（qa5=45/34/32/22/18/20/20）显著弱于训练早期 step3000 估计（~84/64/61/54/46/35）——与 P11 chunk512 base 同样的「早期 ckpt >> final」满训退化模式。**已起 step3000 ckpt 离线 eval（.196 diskA zero-transfer，7 GPU）以 canonical 标定峰值。** ckpt `outputs/f2_longdoc_chunk512/mem_space_adapter.pt`（final），peak 候选 `..._step003000.pt`。
+
+### P11 chunk512 step500（SOTA 峰值 ckpt）× cross-chunk SWA W0/W1/W2 离线 BABILong（2026-06-09 17:18-18:37，本机盘A 8×H20 全速 jobpool，n=100，babilong.metrics）
+
+P11 deltarule_normreadout chunk512 的 **step500 早期峰值 ckpt**（`outputs/mem_space_p11_chunk512_deltarule_normreadout/mem_space_adapter_step000500.pt`）配 eval-only cross-chunk SWA（D2a fix，含短文档 W0 回退）。21 cell = W{0,1,2}×7 length，单节点同批跑（消除跨进程噪声）。调度脚本 `scripts/eval_p11_step500_swa_local_jobpool.sh`（LPT job-pool，cell-level resumable）。results `babilong_results/p11_step500_local_swa{0,1,2}`。acc%：
+
+**qa5（主指标，长程检索）**
+
+| len | W0 | W1 | W2 |
+|-----|----|----|----|
+| 0k  | 74 | 70 | 79 |
+| 1k  | 89 | 85 | 89 |
+| 2k  | 81 | 89 | 86 |
+| 4k  | 60 | 75 | 88 |
+| 8k  | 48 | 67 | 72 |
+| 16k | 45 | 57 | 67 |
+| 32k | 44 | 46 | 49 |
+
+**qa1**
+
+| len | W0 | W1 | W2 |
+|-----|----|----|----|
+| 0k  | 97 | 96 | 97 |
+| 1k  | 67 | 61 | 64 |
+| 2k  | 53 | 74 | 85 |
+| 4k  | 37 | 46 | 59 |
+| 8k  | 20 | 35 | 42 |
+| 16k | 25 | 33 | 40 |
+| 32k | 18 | 23 | 20 |
+
+**qa2**
+
+| len | W0 | W1 | W2 |
+|-----|----|----|----|
+| 0k  | 51 | 52 | 56 |
+| 1k  | 42 | 39 | 40 |
+| 2k  | 33 | 49 | 48 |
+| 4k  | 24 | 34 | 46 |
+| 8k  | 20 | 25 | 25 |
+| 16k | 18 | 22 | 22 |
+| 32k | 21 | 18 | 21 |
+
+**结论（SOTA step500 配 SWA 的天花板）**：
+- **SWA 单调放大长程增益，W2 是 qa5 全程最优**。qa5 4k-16k 上 W2 vs W0 = +28/+24/+22（88 vs 60、72 vs 48、67 vs 45），mid-range（2k-8k）增幅最大；32k 收敛到 49/46/44（仍 W2 略优但增益变小，超长靠少数 chunk 难补）。
+- qa1/qa2 同向：W2 在 2k-16k 普遍领先 W0 ~+15~+22（如 qa1 2k 85 vs 53、4k 59 vs 37）。
+- **对照 step5000+SWA W2（qa5=58/29/68/62/42/39/39）**：step500（峰值）+W2（79/89/86/88/72/67/49）在几乎所有长度全面碾压 step5000+W2，尤其 1k-16k（89/86/88/72/67 vs 29/68/62/42/39）→ **再次确认「早期峰值 ckpt >> 满训」+ SWA 叠加是当前最强组合**。
+- **对照 step500 canonical W0（之前 qa5=82/86/83/64/50/46/41）**：本次本机 W0=74/89/81/60/48/45/44 与之同档（0k/4k/8k 小幅差异属跨批/进程方差）；短长度（0k/1k）有高方差，**仅供参考**。
+- 长程（4k-32k）SWA 增益坐实：mid-range 显著，超长（32k）受限于可回看 chunk 数。
