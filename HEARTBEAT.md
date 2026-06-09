@@ -424,6 +424,58 @@ Agent(
 
 ---
 
+## 告警上报通道（2026-06-09 用户指令）
+
+**独立 heartbeat 进程（`scripts/heartbeat_daemon.sh` → `scripts/heartbeat_cron.sh` → fresh `codebuddy --print "/heartbeat"`）是孤立的：零对话历史、token 有界、很省钱，但发现重要事件时没有通道通知主会话。**
+
+为此新增一个 alert 上报通道：heartbeat **常规巡检保持静默**（只写 `status/TRAINER_ACTIVITY.jsonl` 流水），**只有下面三类事件**才往 `status/HEARTBEAT_ALERTS.jsonl` 追加一条结构化告警。主会话用独立 cron probe 读取 `ack:false` 的行决定是否唤醒处理。
+
+### 何时写 alert（且仅这三类）
+
+| event_class | severity | 触发条件 | detail 内容 |
+|-------------|----------|---------|------------|
+| `train_done` | `info` | 某 run 到达 total_steps 完成 / 出 final ckpt | exp 名、ckpt 路径、最终指标、建议动作（如"可起 eval"）|
+| `train_anomaly` | `critical` | run 崩溃 / 连续两次巡检无新 step（卡死）/ loss NaN / PPL>100 等 | 诊断证据 + heartbeat 已采取的自主动作（如已 kill 并重启 / 已迁移节点）|
+| `needs_code` | `warning` | heartbeat 判断需写新代码/改配置，但**超出 heartbeat 自主权限**、需主会话决策 | 需要做什么、为什么超出 heartbeat 自主权限 |
+
+**常规健康巡检（GPU 正常训练 / 空闲已被自主调度 / stale 状态文件已自主刷新 / researcher 已确认的延伸实验已自主启动）→ 不写 alert，只写 TRAINER_ACTIVITY.jsonl 流水。** 这是省钱的关键：alert 是给主会话 probe 的稀缺唤醒信号，不是流水账。
+
+### 去重规则（必须）
+
+`id` 是去重键，**必须是稳定 key**，使同一事件被多次 heartbeat 观测时只产生一条 alert：
+- `train_done:<exp_name>:<step>`
+- `train_anomaly:<exp_name>:<step_or_symptom>`（symptom 如 `nan` / `stall` / `crash`）
+- `needs_code:<short_slug>`
+
+写入前先 grep 该 `id` 是否已在文件里，已存在则跳过。**推荐用辅助脚本 `scripts/hb_emit_alert.sh`，它自动做 fixed-string 去重 + 安全 JSON 转义**：
+
+```bash
+scripts/hb_emit_alert.sh \
+  --event-class train_done \
+  --severity   info \
+  --id         "train_done:dolmino_bugfix_slotq_t2h:2000" \
+  --summary    "dolmino_bugfix_slotq_t2h 训练完成 (step 2000)" \
+  --detail     "ckpt=outputs/dolmino_bugfix_slotq_t2h/final; lm=2.31; 建议起离线 BABILong eval" \
+  --node       local
+```
+
+脚本退出码：`0` = 已写入或因重复跳过（都算成功），`2` = 参数错误。`bash -n` 通过，去重已自测。
+
+### alert JSONL 格式 spec（`status/HEARTBEAT_ALERTS.jsonl`，append-only，每行一个 JSON）
+
+```json
+{"ts":"2026-06-09T15:00:00+08:00","id":"train_done:<exp>:<step>","severity":"info|warning|critical","event_class":"train_done|train_anomaly|needs_code","node":"<node/run>","summary":"<一行人类可读>","detail":"<run/step/loss/log路径/建议动作>","ack":false}
+```
+
+### ack 字段读写约定（写给 main reader）
+
+- **`ack:false` 由写入端（heartbeat / `hb_emit_alert.sh`）写**：每条新 alert 恒为 `false`，表示"未被主会话处理"。
+- **`ack:true` 由读取端（主会话 / probe reader）写**：主会话 probe 读到 `ack:false` 行、处理完后把它翻转为 `true`。
+- **heartbeat 永不写 `ack:true`，也不修改任何已有行**——只 append 新行。主会话 reader 负责 ack 翻转（read→modify→write 整个文件，或按 id 定位行更新）。
+- 文件若不存在，`hb_emit_alert.sh` 首次调用会自动 `touch` 创建（已初始化为空文件）。
+
+---
+
 ## 实验生命周期自动化（2026-05-03 用户指令）
 
 **核心原则：实验完成不是终点，是下一步的起点。Heartbeat 必须形成闭环。**
