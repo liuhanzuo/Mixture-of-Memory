@@ -961,6 +961,11 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--memory_xattn_gate_init", type=float, default=0.4,
                    help="P8: effective per-head gate contribution at init "
                         "(sigmoid space, 0.3-0.5 band). Default 0.4.")
+    p.add_argument("--memory_xattn_disable_null_sink", action="store_true", default=False,
+                   help="D6: disable the learnable null/sink slot inside "
+                        "MemoryCrossAttentionRead (single-variable ablation). "
+                        "The read softmax then has NO 'attend to nothing' escape "
+                        "column. Default False = sink ON (P8/P11 baseline).")
 
     # v6/v7 writeback (disabled by default for CPT)
     p.add_argument("--use_replace_writeback", action="store_true", default=False)
@@ -1120,6 +1125,7 @@ def build_model(args, device, dtype) -> torch.nn.Module:
         use_decoupled_read=args.use_decoupled_read,
         use_memory_xattn=args.use_memory_xattn,
         memory_xattn_gate_init=args.memory_xattn_gate_init,
+        memory_xattn_disable_null_sink=args.memory_xattn_disable_null_sink,
     )
 
     # H7 rotary fp32 fix — snapshot before bf16 cast
@@ -1750,6 +1756,7 @@ def _save_adapter(model, args, step: int, final: bool = False) -> None:
             "use_decoupled_read": args.use_decoupled_read,
             "use_memory_xattn": args.use_memory_xattn,
             "memory_xattn_gate_init": args.memory_xattn_gate_init,
+            "memory_xattn_disable_null_sink": args.memory_xattn_disable_null_sink,
             "num_global_slots": args.num_global_slots,
             "global_slot_forget_bias": args.global_slot_forget_bias,
             "global_slot_input_gate_only": args.global_slot_input_gate_only,

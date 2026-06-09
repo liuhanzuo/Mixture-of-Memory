@@ -1376,6 +1376,7 @@ class MemoryCrossAttentionRead(nn.Module):
         gate_init: float = 0.4,
         out_proj_std: float = 0.02,
         dropout: float = 0.0,
+        disable_null_sink: bool = False,
     ) -> None:
         super().__init__()
         assert d_model % n_heads == 0, (
@@ -1424,9 +1425,16 @@ class MemoryCrossAttentionRead(nn.Module):
         # This is deliberately NOT P2's dead zero-init problem: the real slots'
         # q/k/v/out_proj stay small-random so gradient keeps flowing through
         # memory; only the SINK starts at zero.
-        self.null_key = nn.Parameter(torch.empty(1, n_kv_heads, 1, self.head_dim))
-        nn.init.normal_(self.null_key, std=0.02)
-        self.null_value = nn.Parameter(torch.zeros(1, n_kv_heads, 1, self.head_dim))
+        # D6 (2026-06-09): disable_null_sink removes this escape column entirely
+        # (single-variable ablation) — no params created, no concat in read().
+        self.disable_null_sink = disable_null_sink
+        if not disable_null_sink:
+            self.null_key = nn.Parameter(torch.empty(1, n_kv_heads, 1, self.head_dim))
+            nn.init.normal_(self.null_key, std=0.02)
+            self.null_value = nn.Parameter(torch.zeros(1, n_kv_heads, 1, self.head_dim))
+        else:
+            self.null_key = None
+            self.null_value = None
 
         self.attn_dropout = nn.Dropout(dropout) if dropout > 0 else nn.Identity()
 
@@ -1482,12 +1490,15 @@ class MemoryCrossAttentionRead(nn.Module):
         # softmax can "attend to nothing". Repeat the per-kv-head sink to query
         # heads via the GQA helper, then expand across the batch. At init
         # null_value is zero, so sink mass contributes ~0 to the read.
-        null_k = self._repeat_kv(self.null_key.to(K.dtype))   # [1,H,1,D]
-        null_v = self._repeat_kv(self.null_value.to(V.dtype))  # [1,H,1,D]
-        null_k = null_k.expand(B, self.n_heads, 1, self.head_dim)
-        null_v = null_v.expand(B, self.n_heads, 1, self.head_dim)
-        K = torch.cat([K, null_k], dim=2)  # [B,H,N+1,D]
-        V = torch.cat([V, null_v], dim=2)  # [B,H,N+1,D]
+        # D6: when disable_null_sink, skip this so the softmax is over the real
+        # slots only (no escape column).
+        if not self.disable_null_sink:
+            null_k = self._repeat_kv(self.null_key.to(K.dtype))   # [1,H,1,D]
+            null_v = self._repeat_kv(self.null_value.to(V.dtype))  # [1,H,1,D]
+            null_k = null_k.expand(B, self.n_heads, 1, self.head_dim)
+            null_v = null_v.expand(B, self.n_heads, 1, self.head_dim)
+            K = torch.cat([K, null_k], dim=2)  # [B,H,N+1,D]
+            V = torch.cat([V, null_v], dim=2)  # [B,H,N+1,D]
 
         # Independent softmax over the N slots + sink (its OWN softmax — this is
         # the whole point of P8; slots no longer share the live-token softmax).
@@ -1519,7 +1530,11 @@ class MemoryCrossAttentionRead(nn.Module):
             self._last_attn_entropy = (-(_p * _p.log()).sum(dim=-1)).mean().item()
             # Mean softmax mass landing on the sink (last) column — the escape
             # valve indicator. High sink mass == read is mostly "attending to
-            # nothing" (cold/irrelevant slots self-normalise away).
-            self._last_sink_mass = attn_weights[..., -1].float().mean().item()
+            # nothing" (cold/irrelevant slots self-normalise away). When the
+            # sink is disabled (D6) there is no escape column → report 0.
+            if not self.disable_null_sink:
+                self._last_sink_mass = attn_weights[..., -1].float().mean().item()
+            else:
+                self._last_sink_mass = 0.0
 
         return read_out

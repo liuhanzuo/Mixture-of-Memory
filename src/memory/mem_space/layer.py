@@ -498,6 +498,7 @@ class MemorySpaceLayer(nn.Module):
                 n_kv_heads=_nkv,
                 gate_init=config.memory_xattn_gate_init,
                 dropout=0.0,
+                disable_null_sink=config.memory_xattn_disable_null_sink,
             )
         else:
             self.memory_xattn = None

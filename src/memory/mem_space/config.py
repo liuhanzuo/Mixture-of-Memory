@@ -418,6 +418,13 @@ class MemorySpaceConfig:
     # active from step 0 (real gradient), small enough not to swamp the residual
     # stream of the frozen backbone before the gate learns to modulate.
     memory_xattn_gate_init: float = 0.4
+    # D6 (2026-06-09): single-variable ablation flag to DISABLE the learnable
+    # null/sink slot inside MemoryCrossAttentionRead. Default False = sink ON
+    # (backward-compatible; matches P8-nullsink / P11 baseline). When True the
+    # read softmax has NO "attend to nothing" escape column — every query must
+    # distribute all of its mass across the real slots. Isolates the null-sink's
+    # contribution while holding the dedicated xattn read mechanism fixed.
+    memory_xattn_disable_null_sink: bool = False
 
     # FastMem (Gated Delta Rule continuous memory, 2026-05-21):
     # Per-layer fast-weight memory that captures a continuous running summary
