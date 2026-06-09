@@ -33,8 +33,19 @@ PROJECT_ROOT="${PROJECT_ROOT:-/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixt
 cd "$PROJECT_ROOT"
 export WANDB_API_KEY="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"
 export WANDB_MODE="offline"
+# B200 wzc1 has no direct internet; babilong cache (0k-32k) is already complete
+# under .hf_cache, so force HF fully offline to avoid the metadata-fetch hang at
+# "Pre-fetching BABILong cache..." (observed 2026-06-09: rank0 hung w/o proxy).
+# Proxy still exported as a belt-and-suspenders fallback (woa proxy reaches HF).
+export http_proxy="http://hy-proxy.woa.com:3128"
+export https_proxy="http://hy-proxy.woa.com:3128"
+export all_proxy="http://hy-proxy.woa.com:3128"
+export no_proxy="mirrors.cloud.tencent.com,tlinux-mirror.tencent-cloud.com,localhost,127.0.0.1,.oa.com,.woa.com,.local"
 export HF_HOME="$PROJECT_ROOT/.hf_cache"
 export HF_DATASETS_CACHE="$PROJECT_ROOT/.hf_cache/datasets"
+export HF_HUB_OFFLINE=1
+export HF_DATASETS_OFFLINE=1
+export TRANSFORMERS_OFFLINE=1
 export PYTHONPATH="$PROJECT_ROOT/third_party/babilong-pkg:$PROJECT_ROOT:${PYTHONPATH:-}"
 export PYTHONUNBUFFERED=1
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
