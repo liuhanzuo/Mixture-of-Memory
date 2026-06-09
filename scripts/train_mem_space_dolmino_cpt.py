@@ -524,6 +524,30 @@ def _detach_banks(model: torch.nn.Module) -> None:
                 w._fast_mem_state = w._fast_mem_state.detach()
 
 
+def _set_banks_frozen(model: torch.nn.Module, frozen: bool) -> None:
+    """Toggle the memory bank(s) ``frozen`` flag (mirrors run_babilong_mem_space
+    _freeze_banks/_unfreeze_banks). When frozen, MemoryBank.write() is a no-op
+    (early return), so a forward READS the slots without WRITING them.
+
+    Used by the cross-chunk SWA TRAIN window (``--swa_train_chunks``): the last
+    W context chunks are streamed into the bank by the normal TBPTT loop, then
+    the target forward concatenates those W chunks + target into one window so
+    the target tokens can directly attend their raw KV. We freeze the bank
+    around that window forward so the re-presented W chunks do NOT get written a
+    second time (they are already in the bank) — frozen blocks writes only, the
+    read path is unaffected, so the SWA window still reads the accumulated bank.
+    """
+    root = getattr(model, "module", model)
+    shared_bank = getattr(root, "_mem_space_shared_bank", None)
+    if shared_bank is not None:
+        shared_bank.frozen = frozen
+        return
+    for w in getattr(root, "_mem_space_layers", []) or []:
+        b = getattr(w, "memory_bank", None)
+        if b is not None:
+            b.frozen = frozen
+
+
 def _collect_top1_sim(model: torch.nn.Module) -> float:
     root = getattr(model, "module", model)
     mem_layers = getattr(root, "_mem_space_layers", None)
@@ -828,6 +852,23 @@ def parse_args() -> argparse.Namespace:
                         "(roughly ×window).")
     p.add_argument("--batch_size", type=int, default=1,
                    help="Per-rank batch size (1 for Dolmino, BABILong is always 1).")
+    p.add_argument("--swa_train_chunks", type=int, default=0,
+                   help="Cross-chunk SWA TRAIN window W (D2b, 2026-06-09). "
+                        "Default 0 = current behavior, bit-identical. W>0: the "
+                        "TARGET chunk's grad-bearing forward is widened from a "
+                        "single chunk to the concatenation of the last W context "
+                        "chunks + the target, so target tokens directly attend "
+                        "those W chunks' raw KV (sliding window) IN ADDITION to "
+                        "the memory bank. Prefix (W*chunk_size) labels are masked "
+                        "(-100) so LM loss is computed ONLY on the target tokens "
+                        "(no double-counting of context loss; context chunks keep "
+                        "their own per-chunk loss exactly as in the W0 TBPTT "
+                        "path). The bank is frozen around the window forward so "
+                        "the re-presented W chunks (already streamed in) are not "
+                        "written twice. Train-side analogue of the eval-side "
+                        "--swa_eval_chunks (D2a). Falls back to W0 when there are "
+                        "fewer than W context chunks, or under doc_reset "
+                        "(reset_flags) to avoid spanning a document boundary.")
 
     # Logging / saving / eval
     p.add_argument("--log_interval", type=int, default=10)
@@ -1314,6 +1355,7 @@ def dolmino_train_step_tbptt(
     route_aux_weight: float = 0.0,
     reset_flags: Optional[List[bool]] = None,
     l3_recon_token_weight: float = 0.0,
+    swa_train_chunks: int = 0,
 ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
     """Windowed-BPTT Dolmino CPT step: every chunk gets gradient, and gradients
     flow ACROSS chunk boundaries within a window of ``bptt_window`` chunks.
@@ -1395,6 +1437,45 @@ def dolmino_train_step_tbptt(
 
         chunk_input = _ensure_batched(chunk_ids, device)
 
+        # D2b cross-chunk SWA TRAIN window (2026-06-09): for the TARGET chunk
+        # only, optionally widen the grad-bearing forward from a single chunk to
+        # the concatenation of the last W context chunks' raw tokens + the
+        # target, so the target tokens can directly attend those W chunks' raw KV
+        # (sliding window) IN ADDITION to the memory bank. Train-side analogue of
+        # the eval-side --swa_eval_chunks (D2a). The prefix (re-presented context)
+        # labels are masked to -100 so the LM loss is computed ONLY on the target
+        # tokens — context chunks already contributed their own per-chunk loss
+        # earlier in this loop, so masking avoids double-counting and keeps the
+        # loss magnitude / scale identical to the W0 path. The bank is frozen
+        # around this forward so the re-presented W chunks (already streamed in
+        # by the loop above) are NOT written a second time; frozen blocks writes
+        # only, so the read path still reads the fully-accumulated bank and the
+        # cross-chunk BPTT credit (target read -> prior chunk writes) is intact.
+        # Concatenation gives the window correct RELATIVE RoPE positions (the
+        # whole point), instead of the target restarting at position 0.
+        swa_active = (
+            _is_target
+            and swa_train_chunks > 0
+            and reset_flags is None          # never span a doc_reset boundary
+            and len(context_chunks) >= 1     # need >=1 context chunk to attend
+        )
+        fwd_labels = chunk_input
+        swa_froze = False
+        if swa_active:
+            w = min(swa_train_chunks, len(context_chunks))
+            win_pieces = [
+                _ensure_batched(context_chunks[j], device)
+                for j in range(len(context_chunks) - w, len(context_chunks))
+            ]
+            win_pieces.append(chunk_input)
+            window = torch.cat(win_pieces, dim=1)   # [B, w*chunk_size + T]
+            prefix_len = window.shape[1] - chunk_input.shape[1]
+            fwd_labels = window.clone()
+            fwd_labels[:, :prefix_len] = -100       # loss only on target tokens
+            chunk_input = window
+            _set_banks_frozen(model, True)
+            swa_froze = True
+
         # route_aux: capture this chunk's grad-bearing routing scores via a
         # forward hook on the layer-0 selector (last_scores is detached on the
         # layer, so the hook is the only grad-bearing source).
@@ -1403,9 +1484,11 @@ def dolmino_train_step_tbptt(
         if use_route_aux:
             captured, hook_handle = _install_score_hook(mem_layers)
 
-        out = model(input_ids=chunk_input, labels=chunk_input, use_cache=False)
+        out = model(input_ids=chunk_input, labels=fwd_labels, use_cache=False)
         if hook_handle is not None:
             hook_handle.remove()
+        if swa_froze:
+            _set_banks_frozen(model, False)
         chunk_lm = out.loss / scale
         chunk_aux = _collect_aux_loss(model, device) / scale
 
@@ -2067,6 +2150,7 @@ def main() -> None:
                         route_aux_weight=args.route_aux_weight,
                         reset_flags=reset_flags,
                         l3_recon_token_weight=args.l3_recon_token_weight,
+                        swa_train_chunks=args.swa_train_chunks,
                     )
                     n_dolmino += 1
 
