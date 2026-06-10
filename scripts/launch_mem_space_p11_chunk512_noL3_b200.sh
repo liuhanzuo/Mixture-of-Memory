@@ -5,9 +5,12 @@
 # GOAL: isolate the net contribution of the L3 summary pool. There is currently NO
 #   data on whether the L3 summary channel helps at all. This is a clean single-variable
 #   ablation: IDENTICAL to launch_mem_space_p11_chunk512_remote196.sh EXCEPT the L3
-#   summary group is removed:
+#   summary channel is disabled:
 #     - DROPPED: --use_l3_summary --l3_n_summary 64 --l3_n_layers 2 --l3_n_heads 8
-#       (use_l3_summary is an action flag; not passing it => L3 off.)
+#     - ADDED:   --no_l3_summary  (REQUIRED: argparse sets use_l3_summary default=True,
+#                so merely omitting --use_l3_summary leaves L3 ON. The explicit
+#                --no_l3_summary flag sets use_l3_summary=False => l3_pool=None,
+#                patch.py:124/155.)
 #     - --l3_diversity_weight 0.0 / --l_recon_weight 0.0 kept (already 0, inert w/ L3 off).
 #   Every other hyperparameter is byte-for-byte identical to P11 chunk512.
 #
@@ -52,7 +55,7 @@ setsid bash -c "CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 $PYBIN -m torch.distributed
   --use_delta_rule_writeback --normalize_readout \
   --slot_init strided_token --slot_init_noise 0.0 --writeback_gate_max 1.0 \
   --unfreeze_hidden_to_slot --use_dual_gate --forget_bias_init 2.0 --input_bias_init 0.0 \
-  --dual_gate_tanh_new \
+  --dual_gate_tanh_new --no_l3_summary \
   --shared_memory_bank --gradient_checkpointing --gradient_accumulation_steps 1 \
   --curriculum 0:3 --bptt_window 2 --no_detach_slots_in_selector \
   --no_slot_delta_clip --inject_gate_bias_init -2.0 --routing_pool_mode slot_query \
