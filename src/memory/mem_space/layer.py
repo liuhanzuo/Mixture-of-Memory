@@ -1016,6 +1016,83 @@ class MemorySpaceLayer(nn.Module):
                     _chunk_idx_jaccard = self._jaccard_sum / max(1, self._jaccard_count)
                     self._jaccard_sum = 0.0
                     self._jaccard_count = 0
+                    # ---- EXP-D (2026-06-11): L3 telemetry (no_grad, layer-0) ----
+                    # L3 is the long-range主力 but ran as a black box (no read-mass
+                    # or redundancy signal). Two scalars make EXP-1/EXP-2/EXP-3
+                    # interpretable instead of blind. Fully guarded: any failure
+                    # falls back to 0.0 and can never perturb training.
+                    #   l3_attn_mass : mean fraction of the H-query joint-attention
+                    #                  softmax mass that lands on the L3 summary key
+                    #                  block (i.e. "does H actually USE L3?"). Faithfully
+                    #                  replicates the wrapped layer's attention
+                    #                  (input_layernorm -> q/k proj -> RoPE -> GQA) over
+                    #                  keys [L3(pos0) | H(causal)] — matching the real
+                    #                  joint softmax (H->L1 is masked under use_memory_xattn).
+                    #   l3_tok_cos   : mean pairwise cosine of the K L3 summary tokens
+                    #                  (1.0 => collapsed to one direction; the exact
+                    #                  redundancy EXP-1's --l3_diversity_weight treats).
+                    _l3_attn_mass = 0.0
+                    _l3_tok_cos = 0.0
+                    if l3_summaries is not None and l3_summaries.shape[1] > 0:
+                        try:
+                            _k_l3 = l3_summaries.shape[1]
+                            # (ii) L3 summary-token pairwise cosine redundancy
+                            _l3b0 = F.normalize(l3_summaries[0].float(), dim=-1)  # [k_l3, d]
+                            _l3sim = torch.mm(_l3b0, _l3b0.t())                   # [k_l3, k_l3]
+                            if _k_l3 > 1:
+                                _l3_tok_cos = (
+                                    (_l3sim.sum() - _k_l3) / (_k_l3 * (_k_l3 - 1))
+                                ).item()
+                            # (i) H->L3 joint-attention mass
+                            _attn = self.wrapped_layer.self_attn
+                            _ln = self.wrapped_layer.input_layernorm
+                            _hd = _attn.head_dim
+                            _nh = _attn.q_proj.out_features // _hd
+                            _nkv = _attn.k_proj.out_features // _hd
+                            _grp = _nh // _nkv
+                            _scl = _attn.scaling
+                            _cos_e, _sin_e = position_embeddings  # [*, T, head_dim]
+                            _Bd = hidden_states.shape[0]
+                            _h_ln = _ln(hidden_states)            # [B, T, d]
+                            _l3_ln = _ln(l3_summaries)            # [B, k_l3, d]
+                            _q = _attn.q_proj(_h_ln).view(_Bd, T, _nh, _hd).transpose(1, 2)
+                            _kH = _attn.k_proj(_h_ln).view(_Bd, T, _nkv, _hd).transpose(1, 2)
+                            _kL = _attn.k_proj(_l3_ln).view(_Bd, _k_l3, _nkv, _hd).transpose(1, 2)
+
+                            def _rope(_x, _c, _s):
+                                _c = _c.unsqueeze(1)  # [*,1,S,hd]
+                                _s = _s.unsqueeze(1)
+                                _half = _x.shape[-1] // 2
+                                _x1 = _x[..., :_half]
+                                _x2 = _x[..., _half:]
+                                _rot = torch.cat((-_x2, _x1), dim=-1)
+                                return _x * _c + _rot * _s
+
+                            # H uses its actual positions; L3 sits at RoPE position 0.
+                            _q = _rope(_q.float(), _cos_e.float(), _sin_e.float())
+                            _kH = _rope(_kH.float(), _cos_e.float(), _sin_e.float())
+                            _cos0 = _cos_e[:, :1, :].float().expand(-1, _k_l3, -1)
+                            _sin0 = _sin_e[:, :1, :].float().expand(-1, _k_l3, -1)
+                            _kL = _rope(_kL.float(), _cos0, _sin0)
+                            # GQA: expand kv heads to query heads
+                            if _grp > 1:
+                                _kH = _kH.repeat_interleave(_grp, dim=1)
+                                _kL = _kL.repeat_interleave(_grp, dim=1)
+                            _lg_L3 = torch.matmul(_q, _kL.transpose(2, 3)) * _scl  # [B,nh,T,k_l3]
+                            _lg_H = torch.matmul(_q, _kH.transpose(2, 3)) * _scl   # [B,nh,T,T]
+                            _causal = torch.triu(
+                                torch.ones(T, T, dtype=torch.bool, device=_lg_H.device),
+                                diagonal=1,
+                            )
+                            _lg_H = _lg_H.masked_fill(_causal, float("-inf"))
+                            _lg = torch.cat([_lg_L3, _lg_H], dim=-1)              # [B,nh,T,k_l3+T]
+                            _aw = torch.softmax(_lg, dim=-1)
+                            _l3_attn_mass = _aw[..., :_k_l3].sum(dim=-1).mean().item()
+                        except Exception:
+                            _l3_attn_mass = 0.0
+                            _l3_tok_cos = 0.0
+                    self._last_l3_attn_mass = _l3_attn_mass
+                    self._last_l3_tok_cos = _l3_tok_cos
                     # Stash scalars so the training loop can push them to wandb
                     # at log_interval (these are layer-0 only; the diag block
                     # only runs every 50 fwd, so the loop reads the latest).
@@ -1039,7 +1116,9 @@ class MemorySpaceLayer(nn.Module):
                     f" usage_var={_usage_var:.6f}"
                     f" usage_chunks={_usage_chunks}"
                     f" chunk_idx_jaccard={_chunk_idx_jaccard:.4f}"
-                    f" slot_attn_entropy={_slot_attn_entropy:.4f}",
+                    f" slot_attn_entropy={_slot_attn_entropy:.4f}"
+                    f" l3_attn_mass={_l3_attn_mass:.4f}"
+                    f" l3_tok_cos={_l3_tok_cos:.4f}",
                     flush=True,
                 )
             # -----------------------------------------------------------
