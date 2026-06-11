@@ -577,6 +577,10 @@ def _collect_mem_diag(model: torch.nn.Module) -> Dict[str, float]:
         "memory/usage_ent": getattr(L0, "_last_usage_ent", 0.0),
         "memory/usage_var": getattr(L0, "_last_usage_var", 0.0),
         "memory/slot_attn_entropy": getattr(sel0, "_last_slot_attn_entropy", 0.0),
+        # EXP-R1 / EXP-D2 dead-slot recycling telemetry (no-op / 0.0 when disabled).
+        "memory/dead_slot_frac": getattr(L0, "_last_dead_slot_frac", 0.0),
+        "memory/max_slot_select_count": getattr(L0, "_last_max_slot_select_count", 0.0),
+        "memory/recycle_resets": getattr(L0, "_last_recycle_resets", 0.0),
     }
 
 
@@ -2307,6 +2311,17 @@ def main() -> None:
                     _xattn_diag["memory/xattn_sink_mass"],
                     _xattn_diag["memory/xattn_gate_mean"],
                     _xattn_diag["memory/xattn_attn_entropy"],
+                )
+            if getattr(args, "dead_slot_reset_interval", 0) and args.dead_slot_reset_interval > 0:
+                _mem_diag = _collect_mem_diag(model)
+                logger.info(
+                    "[DEADSLOT_DIAG step=%d] dead_slot_frac=%.4f usage_cov=%.4f "
+                    "max_slot_select_count=%.1f recycle_resets=%.0f",
+                    global_step,
+                    _mem_diag.get("memory/dead_slot_frac", 0.0),
+                    _mem_diag.get("memory/usage_cov", 0.0),
+                    _mem_diag.get("memory/max_slot_select_count", 0.0),
+                    _mem_diag.get("memory/recycle_resets", 0.0),
                 )
             if _WANDB_AVAILABLE and args.wandb_project and wandb.run:
                 _log_dict = {
