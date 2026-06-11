@@ -438,6 +438,43 @@ class MemorySpaceConfig:
     fast_mem_chunk_size: int = 16       # BPTT window for sequential fallback (ignored when fla available)
     fast_mem_fusion_init: float = -2.0  # sigmoid(-2)≈0.12 initial contribution
 
+    # EXP-R1 (2026-06-11): two-stage dead-slot recycling.
+    # Breaks the L1 cold-start "rich-get-richer" deadlock (gp-59 root-cause
+    # 20260611_dead_slot_recycling.md): with strided_token init + selected-only
+    # delta-write, ~91/128 slots stay frozen at their chunk-0 token snapshot
+    # forever while the same ~32 live slots monopolise all content. This is a
+    # WRITE-SIDE content-staleness loop — the selector is greedy and noise-free
+    # and must STAY that way (the read-side ROUTE-A arm4 noise experiment
+    # collapsed top1_sim 0.99→0.11; do NOT perturb selection).
+    #
+    # Mechanism (VQ-VAE "random restart" precedent, Dhariwal Jukebox 2020):
+    #   ① RESET: every `dead_slot_reset_interval` chunks (per-sample), detect
+    #      slots that were NEVER selected by top-k in the last interval window
+    #      (per-sample zero-usage counter), and OVERWRITE their CONTENT with
+    #      strided tokens from the CURRENT chunk's hidden states, picking the
+    #      tokens whose content is MOST cosine-distant from the existing LIVE
+    #      slots (maximise diversity, occupy the content region live slots do not
+    #      cover). NEVER pooled-mean broadcast (that homogenises → key collapse).
+    #      Only dead-slot rows are touched; live slots' content/keys/selection
+    #      are byte-identical. Because K_sel(slot_content) is recomputed every
+    #      forward (selector.py:263-266), a reset slot's key changes immediately
+    #      → it "re-enters view" and can be selected by natural content match.
+    #   ② GRACE-WINDOW FORCED WRITE: for the next `dead_slot_grace_chunks`
+    #      chunks, FORCE the just-reset slots into the top-k WRITE set (the
+    #      memory-bank write idx), so delta-rule gives them real content and
+    #      refines their key from "raw token snapshot" onto the manifold. This
+    #      is WRITE-ONLY: under use_memory_xattn the read attends ALL slots via a
+    #      separate softmax and the H→L1 prepend is masked, so forcing the write
+    #      idx never forces the query to READ these slots (the key discriminator
+    #      vs arm4: arm4 forced "which slots are read" and destroyed precise
+    #      hits; here the selector still decides reads by content similarity).
+    #
+    # Default OFF (interval=0): every code path below is a no-op when
+    # dead_slot_reset_interval <= 0, so the layer is byte-identical to P11.
+    dead_slot_reset_interval: int = 0
+    dead_slot_reset_mode: str = "strided_current"   # {"strided_current", "zero"}
+    dead_slot_grace_chunks: int = 1
+
     def __post_init__(self) -> None:
         if self.num_slots <= 0:
             raise ValueError(f"num_slots must be > 0, got {self.num_slots}")
@@ -483,4 +520,20 @@ class MemorySpaceConfig:
             raise ValueError(
                 "memory_xattn_gate_init must be in (0, 1) (sigmoid space), got "
                 f"{self.memory_xattn_gate_init}"
+            )
+        # EXP-R1 dead-slot recycling.
+        if self.dead_slot_reset_interval < 0:
+            raise ValueError(
+                "dead_slot_reset_interval must be >= 0 (0 = disabled), got "
+                f"{self.dead_slot_reset_interval}"
+            )
+        if self.dead_slot_grace_chunks < 0:
+            raise ValueError(
+                "dead_slot_grace_chunks must be >= 0, got "
+                f"{self.dead_slot_grace_chunks}"
+            )
+        if self.dead_slot_reset_mode not in {"strided_current", "zero"}:
+            raise ValueError(
+                "dead_slot_reset_mode must be one of {'strided_current', "
+                f"'zero'}}, got {self.dead_slot_reset_mode!r}"
             )

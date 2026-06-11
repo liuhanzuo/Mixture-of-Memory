@@ -181,6 +181,99 @@ class MemoryBank(nn.Module):
             )
         return self.slots
 
+    # --------------------------------------------------------------------- #
+    # EXP-R1 (2026-06-11): dead-slot recycling — grad-preserving row ops.
+    # --------------------------------------------------------------------- #
+
+    def recycle_reset(
+        self,
+        dead_mask: torch.Tensor,
+        new_content: torch.Tensor,
+    ) -> None:
+        """Stage-① RESET: overwrite ONLY the dead-slot rows with fresh content.
+
+        ``dead_mask``  : [B, N] bool — True where the slot is "dead" (never
+                         selected in the last reset window) and should be
+                         re-initialised.
+        ``new_content``: [B, N, slot_dim] — the replacement content for every
+                         row (only the dead rows are actually used). Caller is
+                         responsible for choosing diverse, on-manifold content
+                         (strided current-chunk tokens, NOT pooled-mean).
+
+        Implementation note (graph safety): we use ``torch.where`` instead of an
+        in-place / no_grad scatter so the LIVE rows keep their autograd graph
+        (cross-chunk BPTT within a bptt_window must survive). The dead rows take
+        ``new_content.detach()`` — a fresh re-initialisation, like
+        ``init_from_hidden`` which is also detached. A no_grad reassignment of
+        ``self.slots`` would detach the WHOLE tensor and sever the live slots'
+        cross-chunk gradient, which is why we route through ``torch.where``.
+        """
+        if self.frozen or self.slots is None:
+            return
+        if dead_mask.dim() != 2 or new_content.dim() != 3:
+            raise ValueError(
+                f"dead_mask must be [B,N], new_content [B,N,d]; got "
+                f"dead_mask={tuple(dead_mask.shape)} new_content={tuple(new_content.shape)}"
+            )
+        _m = dead_mask.to(device=self.slots.device).unsqueeze(-1)          # [B,N,1]
+        _new = new_content.detach().to(device=self.slots.device, dtype=self.slots.dtype)
+        self.slots = torch.where(_m, _new, self.slots)
+        # Keep the global norm cap consistent with the gated write paths
+        # (gradient-preserving fixed-ratio clamp; only shrinks).
+        if self._slot_value_norm_cap > 0.0:
+            slot_norms_all = self.slots.norm(dim=-1, keepdim=True).clamp(min=1e-8)
+            scale_all = (slot_norms_all / self._slot_value_norm_cap).clamp(min=1.0).detach()
+            self.slots = self.slots / scale_all
+
+    def force_write(
+        self,
+        force_mask: torch.Tensor,
+        content: torch.Tensor,
+        beta,
+    ) -> None:
+        """Stage-② GRACE forced delta-write on the recycled (masked) rows.
+
+        Delta-rule nudge of ONLY the masked rows toward ``content``:
+
+            slot_row ← slot_row + beta · (content_row − slot_row)
+
+        ``force_mask``: [B, N] bool — the slots just recycled (in the grace
+                        window) that must receive a forced write this chunk.
+        ``content``   : [B, N, slot_dim] — per-slot target content (strided
+                        current-chunk tokens; per-slot distinct, on-manifold).
+        ``beta``      : float / 0-d tensor blend rate.
+
+        This is WRITE-ONLY: it mutates stored content but does NOT touch the
+        selector or the read path. Under ``use_memory_xattn`` the read attends
+        ALL slots through a separate softmax, so refreshing a recycled slot's
+        content lets it later be READ purely by natural content match — never
+        forced — which is the key discriminator vs. the rejected ROUTE-A arm4
+        (which forced WHICH slots are read and collapsed top1_sim).
+
+        Graph safety: same ``torch.where`` rationale as ``recycle_reset`` — the
+        blended value is a function of ``self.slots`` so every row (live AND
+        recycled) keeps its graph; only the recycled rows are nudged.
+        """
+        if self.frozen or self.slots is None:
+            return
+        if force_mask.dim() != 2 or content.dim() != 3:
+            raise ValueError(
+                f"force_mask must be [B,N], content [B,N,d]; got "
+                f"force_mask={tuple(force_mask.shape)} content={tuple(content.shape)}"
+            )
+        if isinstance(beta, torch.Tensor):
+            _b = beta.to(device=self.slots.device, dtype=self.slots.dtype)
+        else:
+            _b = float(beta)
+        _c = content.to(device=self.slots.device, dtype=self.slots.dtype)
+        blended = self.slots + _b * (_c - self.slots)
+        _m = force_mask.to(device=self.slots.device).unsqueeze(-1)         # [B,N,1]
+        self.slots = torch.where(_m, blended, self.slots)
+        if self._slot_value_norm_cap > 0.0:
+            slot_norms_all = self.slots.norm(dim=-1, keepdim=True).clamp(min=1e-8)
+            scale_all = (slot_norms_all / self._slot_value_norm_cap).clamp(min=1.0).detach()
+            self.slots = self.slots / scale_all
+
     def write(
         self,
         idx: torch.Tensor,

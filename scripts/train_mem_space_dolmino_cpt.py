@@ -915,6 +915,22 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--use_delta_rule_writeback", action="store_true")
     p.add_argument("--normalize_readout", action="store_true")
     p.add_argument("--readout_norm_scale", type=float, default=1.0)
+    # EXP-R1 (2026-06-11): two-stage dead-slot recycling. Default off
+    # (interval=0) → byte-identical to P11. See config.py for the mechanism.
+    p.add_argument("--dead_slot_reset_interval", type=int, default=0,
+                   help="EXP-R1: every R chunks (per-sample), reset slots that "
+                        "were never top-k-selected in the last R chunks to "
+                        "diverse strided current-chunk content, then force-write "
+                        "them for the next --dead_slot_grace_chunks chunks. "
+                        "0 = disabled (byte-identical to P11).")
+    p.add_argument("--dead_slot_reset_mode", type=str, default="strided_current",
+                   choices=["strided_current", "zero"],
+                   help="EXP-R1: content source for reset dead slots. "
+                        "strided_current = diverse strided current-chunk tokens "
+                        "(maximise distance from live slots); zero = zero them.")
+    p.add_argument("--dead_slot_grace_chunks", type=int, default=1,
+                   help="EXP-R1: # chunks after a reset to force the recycled "
+                        "slots into the WRITE set (write-only; read unchanged).")
     p.add_argument("--selector_temperature", type=float, default=20.0)
     p.add_argument("--key_repulsion_weight", type=float, default=0.05)
     p.add_argument("--key_repulsion_threshold", type=float, default=0.3)
@@ -1167,6 +1183,9 @@ def build_model(args, device, dtype) -> torch.nn.Module:
         use_memory_xattn=args.use_memory_xattn,
         memory_xattn_gate_init=args.memory_xattn_gate_init,
         memory_xattn_disable_null_sink=args.memory_xattn_disable_null_sink,
+        dead_slot_reset_interval=args.dead_slot_reset_interval,
+        dead_slot_reset_mode=args.dead_slot_reset_mode,
+        dead_slot_grace_chunks=args.dead_slot_grace_chunks,
     )
 
     # H7 rotary fp32 fix — snapshot before bf16 cast
@@ -1840,6 +1859,12 @@ def _save_adapter(model, args, step: int, final: bool = False) -> None:
             "use_memory_xattn": args.use_memory_xattn,
             "memory_xattn_gate_init": args.memory_xattn_gate_init,
             "memory_xattn_disable_null_sink": args.memory_xattn_disable_null_sink,
+            # EXP-R1 (2026-06-11): dead-slot recycling. No new params, but it
+            # changes STORED slot state, so eval-haystack ingestion must apply
+            # the same recycling as training → round-trip these flags.
+            "dead_slot_reset_interval": args.dead_slot_reset_interval,
+            "dead_slot_reset_mode": args.dead_slot_reset_mode,
+            "dead_slot_grace_chunks": args.dead_slot_grace_chunks,
             "num_global_slots": args.num_global_slots,
             "global_slot_forget_bias": args.global_slot_forget_bias,
             "global_slot_input_gate_only": args.global_slot_input_gate_only,

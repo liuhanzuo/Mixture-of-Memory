@@ -408,6 +408,18 @@ class MemorySpaceLayer(nn.Module):
         self._normalize_readout = getattr(config, "normalize_readout", False)
         self._readout_norm_scale = getattr(config, "readout_norm_scale", 1.0)
 
+        # EXP-R1 (2026-06-11): dead-slot recycling knobs. All default off
+        # (interval<=0) → byte-identical to P11.
+        self._dead_slot_reset_interval = int(
+            getattr(config, "dead_slot_reset_interval", 0)
+        )
+        self._dead_slot_reset_mode = getattr(
+            config, "dead_slot_reset_mode", "strided_current"
+        )
+        self._dead_slot_grace_chunks = int(
+            getattr(config, "dead_slot_grace_chunks", 1)
+        )
+
         # Learnable slot↔hidden projections. We do NOT take the slot_dim==d_model
         # shortcut (Identity) because that path has zero trainable capacity and was
         # empirically responsible for the residual-gap pathology after fix1+fix2
@@ -674,6 +686,33 @@ class MemorySpaceLayer(nn.Module):
         self._last_usage_cov: float = 0.0
         self._last_usage_ent: float = 0.0
 
+        # EXP-R1 / EXP-D2 (2026-06-11): per-sample dead-slot recycling state.
+        # All layer-0 only (the recycler drives the SHARED bank from one layer
+        # so 32 layers don't fight; matches the layer-0 usage-histogram pattern).
+        # Lazily materialised [B, N] on device at first use; re-allocated on
+        # batch-size change; reset at sample/document cold start.
+        #   _recycle_usage : selections per slot since the last reset window
+        #                    began (window-scoped; zeroed after each reset event)
+        #                    → dead = (_recycle_usage == 0) at a reset boundary.
+        #   _cum_usage     : selections per slot over the WHOLE sample (never
+        #                    window-reset) → EXP-D2 cumulative dead-slot frac.
+        #   _recycle_chunk_count : chunks processed since cold start (layer-0
+        #                    forward count within the current sample).
+        #   _recycle_grace_mask  : [B, N] bool — slots in the grace window that
+        #                    must be force-written this/next chunk(s).
+        #   _recycle_grace_remaining : int — grace chunks left.
+        # Defaults make every path a no-op when dead_slot_reset_interval <= 0.
+        self._recycle_usage: Optional[torch.Tensor] = None
+        self._cum_usage: Optional[torch.Tensor] = None
+        self._recycle_chunk_count: int = 0
+        self._recycle_grace_mask: Optional[torch.Tensor] = None
+        self._recycle_grace_remaining: int = 0
+        # EXP-D2 latest scalars (layer-0; pushed to wandb by the loop).
+        self._last_dead_slot_frac: float = 0.0
+        self._last_max_slot_select_count: float = 0.0
+        # Count of recycle reset events this sample (diagnostic).
+        self._last_recycle_resets: int = 0
+
     # --------------------------------------------------------------------- #
     # Gate
     # --------------------------------------------------------------------- #
@@ -688,6 +727,76 @@ class MemorySpaceLayer(nn.Module):
             warmup_frac = min(float(self.step_counter) / float(warmup), 1.0)
         # σ in (0, 1), times warmup in [0, 1], times cap.
         return torch.sigmoid(self.gate_param) * warmup_frac * cfg.writeback_gate_max
+
+    # --------------------------------------------------------------------- #
+    # EXP-R1 (2026-06-11): dead-slot recycling helpers
+    # --------------------------------------------------------------------- #
+
+    def _select_diverse_strided_content(
+        self,
+        H_slot: torch.Tensor,
+        slots: torch.Tensor,
+        dead_mask: torch.Tensor,
+    ) -> torch.Tensor:
+        """Build replacement content for dead slots from CURRENT-chunk tokens.
+
+        For each sample we take a strided pool of candidate tokens from the
+        current chunk (in slot_dim space, `H_slot = hidden_to_slot(hidden)` or
+        hidden when slot_dim==d_model), score each candidate by its MAXIMUM
+        cosine similarity to the LIVE slots, and greedily assign the
+        LEAST-similar (most diverse) candidates to the dead slots. This occupies
+        the content region the live slots do NOT cover, instead of duplicating
+        them — the explicit "diversity maximisation" the design asks for, and
+        the protection against the pooled-mean homogenisation that would
+        collapse top1_sim.
+
+        Args:
+            H_slot:    [B, T, slot_dim] current chunk hidden states in slot space.
+            slots:     [B, N, slot_dim] current slot content.
+            dead_mask: [B, N] bool, True for dead slots.
+
+        Returns:
+            new_content: [B, N, slot_dim] — content for EVERY row (only the dead
+            rows are consumed by recycle_reset; live rows are placeholder copies
+            of the current slots so the tensor shape matches).
+        """
+        B, T, d = H_slot.shape
+        N = slots.shape[1]
+        device = H_slot.device
+        # Candidate pool: strided tokens from the current chunk. Use up to 4N
+        # candidates (cap by T) so there is room to pick diverse ones.
+        n_cand = min(T, max(N, 4 * N))
+        stride = max(1, T // n_cand)
+        cand_idx = (torch.arange(n_cand, device=device) * stride) % T       # [n_cand]
+        cand = H_slot[:, cand_idx, :]                                       # [B, n_cand, d]
+
+        new_content = slots.detach().clone()                               # [B, N, d]
+        cand_n = F.normalize(cand.float(), dim=-1)                         # [B, n_cand, d]
+        slots_n = F.normalize(slots.float(), dim=-1)                       # [B, N, d]
+
+        for b in range(B):
+            dead_b = torch.nonzero(dead_mask[b], as_tuple=False).flatten()
+            if dead_b.numel() == 0:
+                continue
+            live_b = torch.nonzero(~dead_mask[b], as_tuple=False).flatten()
+            if live_b.numel() > 0:
+                live_keys = slots_n[b, live_b]                             # [L, d]
+                # max cosine of each candidate to ANY live slot → lower = more
+                # diverse / less covered by the live set.
+                sim = cand_n[b] @ live_keys.t()                           # [n_cand, L]
+                cov = sim.max(dim=-1).values                              # [n_cand]
+            else:
+                # No live slots (degenerate) → all candidates equally fine.
+                cov = torch.zeros(cand_n.shape[1], device=device)
+            order = torch.argsort(cov)                                     # ascending: most diverse first
+            n_fill = int(dead_b.numel())
+            chosen = order[:n_fill]
+            if chosen.numel() < n_fill:
+                # Fewer candidates than dead slots — repeat (wrap) the order.
+                reps = (n_fill + order.numel() - 1) // order.numel()
+                chosen = order.repeat(reps)[:n_fill]
+            new_content[b, dead_b] = cand[b, chosen].to(new_content.dtype)
+        return new_content
 
     # --------------------------------------------------------------------- #
     # Ablation bypass
@@ -887,6 +996,116 @@ class MemorySpaceLayer(nn.Module):
                 # which is fine — the replacement write for globals wins).
                 idx = torch.cat([idx, _glob_idx], dim=1)            # [B, k+g]
                 k_slots = idx.shape[-1]
+
+            # ---- EXP-R1 dead-slot recycling + EXP-D2 telemetry (layer-0) ----
+            # Driven from layer-0 only (the bank is SHARED across all 32 layers,
+            # so a single driver avoids 32 layers fighting — mirrors the layer-0
+            # usage-histogram pattern). Runs whenever the bank is writable (NOT
+            # frozen): like normalize_readout, it changes STORED state so it must
+            # be consistent across train AND eval-haystack ingestion (eval
+            # question-time generation freezes the bank → skipped automatically).
+            # Every step is a no-op when dead_slot_reset_interval <= 0 → P11.
+            _do_recycle = (
+                self._layer_idx == 0
+                and self._dead_slot_reset_interval > 0
+                and not self.memory_bank.frozen
+                and not cfg.disable_l1_inject
+            )
+            _track_cum = (
+                self._layer_idx == 0
+                and not cfg.disable_l1_inject
+            )
+            if _track_cum:
+                with torch.no_grad():
+                    _Ncfg = cfg.num_slots
+                    # (Re)allocate per-sample counters on cold start / shape change.
+                    _need_alloc = (
+                        self._cum_usage is None
+                        or self._cum_usage.shape[0] != B
+                        or self._cum_usage.shape[1] != _Ncfg
+                    )
+                    if cold_start_this_call or _need_alloc:
+                        self._cum_usage = torch.zeros(
+                            B, _Ncfg, device=idx.device, dtype=torch.long
+                        )
+                        self._recycle_usage = torch.zeros(
+                            B, _Ncfg, device=idx.device, dtype=torch.long
+                        )
+                        self._recycle_chunk_count = 0
+                        self._recycle_grace_mask = None
+                        self._recycle_grace_remaining = 0
+                        self._last_recycle_resets = 0
+                    # Per-sample selection indicator for THIS chunk (dedup the
+                    # global-slot duplicates via clamp to 1).
+                    _sel = torch.zeros(
+                        B, _Ncfg, device=idx.device, dtype=torch.long
+                    ).scatter_(1, idx.long(), 1)               # [B, N], 0/1
+                    self._cum_usage += _sel
+                    if self._recycle_usage is not None:
+                        self._recycle_usage += _sel
+                    # EXP-D2 scalars (cumulative, sample-scoped). Mean over batch.
+                    self._last_dead_slot_frac = (
+                        (self._cum_usage == 0).float().mean().item()
+                    )
+                    self._last_max_slot_select_count = (
+                        self._cum_usage.max().float().item()
+                    )
+
+            if _do_recycle and self._recycle_usage is not None:
+                self._recycle_chunk_count += 1
+                # H in slot space, shared by force-write + reset (detached: the
+                # recycled content is a re-initialisation, like init_from_hidden,
+                # and must not build a giant graph).
+                _need_content = (
+                    self._recycle_grace_remaining > 0
+                    or (self._recycle_chunk_count % self._dead_slot_reset_interval == 0)
+                )
+                if _need_content:
+                    with torch.no_grad():
+                        if self.slot_dim != self.d_model:
+                            _H_slot = self.hidden_to_slot(hidden_states).detach()
+                        else:
+                            _H_slot = hidden_states.detach()
+                # ① grace force-write FIRST (applies to slots reset on a PRIOR
+                # chunk, so a brand-new reset below grants its grace to the NEXT
+                # chunks, giving exactly G post-reset writes). WRITE-ONLY: nudges
+                # only the recycled rows via delta-rule toward fresh, diverse,
+                # on-manifold current-chunk content — the selector + read path
+                # are untouched (key discriminator vs ROUTE-A arm4).
+                if (
+                    self._recycle_grace_remaining > 0
+                    and self._recycle_grace_mask is not None
+                ):
+                    with torch.no_grad():
+                        _gmask = self._recycle_grace_mask.to(idx.device)
+                        _gcontent = self._select_diverse_strided_content(
+                            _H_slot, self.memory_bank.get(), _gmask
+                        )
+                    self.memory_bank.force_write(_gmask, _gcontent, beta=self._current_beta())
+                    self._recycle_grace_remaining -= 1
+                    if self._recycle_grace_remaining <= 0:
+                        self._recycle_grace_mask = None
+                # ② periodic RESET at the window boundary: dead = zero selections
+                # over the last `interval` chunks. Overwrite ONLY dead rows with
+                # diverse strided current-chunk content, then open a grace window.
+                if self._recycle_chunk_count % self._dead_slot_reset_interval == 0:
+                    with torch.no_grad():
+                        _dead = (self._recycle_usage == 0)         # [B, N] bool
+                        _n_dead = int(_dead.sum().item())
+                    if _n_dead > 0:
+                        if self._dead_slot_reset_mode == "zero":
+                            _content = torch.zeros_like(self.memory_bank.get())
+                        else:
+                            with torch.no_grad():
+                                _content = self._select_diverse_strided_content(
+                                    _H_slot, self.memory_bank.get(), _dead
+                                )
+                        self.memory_bank.recycle_reset(_dead, _content)
+                        self._recycle_grace_mask = _dead.clone()
+                        self._recycle_grace_remaining = self._dead_slot_grace_chunks
+                        self._last_recycle_resets += 1
+                    # Open a fresh window.
+                    self._recycle_usage.zero_()
 
             # ---- Cross-chunk slot-usage accumulation (layer-0, no-op compute) ----
             # Tally the top-k slot picks for batch[0] into a persistent
@@ -1118,7 +1337,17 @@ class MemorySpaceLayer(nn.Module):
                     f" chunk_idx_jaccard={_chunk_idx_jaccard:.4f}"
                     f" slot_attn_entropy={_slot_attn_entropy:.4f}"
                     f" l3_attn_mass={_l3_attn_mass:.4f}"
-                    f" l3_tok_cos={_l3_tok_cos:.4f}",
+                    f" l3_tok_cos={_l3_tok_cos:.4f}"
+                    # EXP-D2 (2026-06-11): cumulative (sample-scoped) dead-slot
+                    # telemetry. dead_slot_frac = frac of slots NEVER selected
+                    # over the whole sample (the deadlock metric usage_cov can't
+                    # see because it window-resets); max_slot_select_count = how
+                    # many times the "richest" slot was picked (rich-get-richer).
+                    # recycle_resets = #reset events this sample (0 when EXP-R1
+                    # off → no behaviour change to the line when disabled).
+                    f" dead_slot_frac={self._last_dead_slot_frac:.4f}"
+                    f" max_slot_select_count={self._last_max_slot_select_count:.1f}"
+                    f" recycle_resets={self._last_recycle_resets}",
                     flush=True,
                 )
             # -----------------------------------------------------------
