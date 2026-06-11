@@ -1538,3 +1538,106 @@ class MemoryCrossAttentionRead(nn.Module):
                 self._last_sink_mass = 0.0
 
         return read_out
+
+
+# --------------------------------------------------------------------------- #
+# EXP-W2 (2026-06-11): dense soft-write content module
+# --------------------------------------------------------------------------- #
+
+
+class SoftWriteContent(nn.Module):
+    """EXP-W2: per-slot-DISTINCT write content via slots-as-query attention.
+
+    Produces a ``[B, N, slot_dim]`` content tensor for the dense all-slot soft
+    delta-write (``MemoryBank.soft_write``). Each slot acts as a QUERY and
+    attends over the current chunk's tokens (K/V), so every slot reads its OWN
+    summary of the chunk — content is per-slot distinct by construction. This is
+    exactly the anti-homogenisation property the EXP-W2 design relies on
+    (``ops/research_notes/20260611_native_write_mechanism.md`` §2 candidate-1):
+    a broad write of *undifferentiated* content collapses the read peak (arm4);
+    a broad write of per-slot distinct content does not.
+
+    It mirrors the slots-Q→tokens-KV pattern of
+    :meth:`CrossAttentionMemory.writeback` but is a standalone, single-purpose
+    module (no gate / no EMA — the delta blend + λ live in ``soft_write``). To
+    keep the dense trickle gentle and on-manifold at init, the output projection
+    is small-random; the resulting content has a modest norm so a small λ moves
+    a dead slot by only a fraction of a residual per chunk.
+
+    Args:
+        d_model:  backbone hidden size (chunk-token K/V dim).
+        slot_dim: slot vector dimensionality (query + output dim).
+        n_heads:  attention heads for the slot-query attention.
+        out_proj_std: std for the output projection init (small → gentle write).
+    """
+
+    def __init__(
+        self,
+        d_model: int,
+        slot_dim: int,
+        n_heads: int = 8,
+        *,
+        out_proj_std: float = 0.02,
+        dropout: float = 0.0,
+    ) -> None:
+        super().__init__()
+        # Internal attention runs in slot_dim space. Pick a head count that
+        # divides slot_dim (fall back to 1 head if the requested count doesn't).
+        if slot_dim % n_heads != 0:
+            n_heads = 1
+        self.d_model = d_model
+        self.slot_dim = slot_dim
+        self.n_heads = n_heads
+        self.head_dim = slot_dim // n_heads
+
+        # Q from slots (slot_dim), K/V from chunk tokens (d_model → slot_dim).
+        self.q_proj = nn.Linear(slot_dim, slot_dim, bias=False)
+        self.k_proj = nn.Linear(d_model, slot_dim, bias=False)
+        self.v_proj = nn.Linear(d_model, slot_dim, bias=False)
+        self.out_proj = nn.Linear(slot_dim, slot_dim, bias=False)
+        nn.init.normal_(self.q_proj.weight, std=0.02)
+        nn.init.normal_(self.k_proj.weight, std=0.02)
+        nn.init.normal_(self.v_proj.weight, std=0.02)
+        nn.init.normal_(self.out_proj.weight, std=out_proj_std)
+        self.attn_dropout = nn.Dropout(dropout) if dropout > 0 else nn.Identity()
+
+        # Diagnostic: mean attention entropy of the slot-query attention
+        # (high == slots smear over all tokens → content collapses toward a
+        # shared mean → homogenisation risk). Refreshed each forward.
+        self._last_attn_entropy: float = 0.0
+
+    def forward(
+        self,
+        slots: torch.Tensor,
+        chunk_hidden: torch.Tensor,
+    ) -> torch.Tensor:
+        """Compute per-slot content from the current chunk.
+
+        Args:
+            slots:        [B, N, slot_dim] current slot content (the queries).
+            chunk_hidden: [B, T, d_model] current chunk hidden states (K/V).
+
+        Returns:
+            content: [B, N, slot_dim] per-slot distinct write content.
+        """
+        B, N, _ = slots.shape
+        T = chunk_hidden.shape[1]
+        H, Dh = self.n_heads, self.head_dim
+
+        q = self.q_proj(slots).view(B, N, H, Dh).transpose(1, 2)          # [B,H,N,Dh]
+        k = self.k_proj(chunk_hidden).view(B, T, H, Dh).transpose(1, 2)   # [B,H,T,Dh]
+        v = self.v_proj(chunk_hidden).view(B, T, H, Dh).transpose(1, 2)   # [B,H,T,Dh]
+
+        scale = 1.0 / math.sqrt(Dh)
+        logits = torch.matmul(q, k.transpose(-1, -2)) * scale             # [B,H,N,T]
+        attn = torch.softmax(logits, dim=-1)
+        attn = self.attn_dropout(attn)
+        out = torch.matmul(attn, v)                                       # [B,H,N,Dh]
+        out = out.transpose(1, 2).contiguous().view(B, N, self.slot_dim)  # [B,N,slot_dim]
+        content = self.out_proj(out)                                      # [B,N,slot_dim]
+
+        with torch.no_grad():
+            _p = attn.float().clamp(min=1e-8)
+            self._last_attn_entropy = (-(_p * _p.log()).sum(dim=-1)).mean().item()
+
+        return content

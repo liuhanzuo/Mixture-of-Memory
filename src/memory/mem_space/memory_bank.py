@@ -274,6 +274,80 @@ class MemoryBank(nn.Module):
             scale_all = (slot_norms_all / self._slot_value_norm_cap).clamp(min=1.0).detach()
             self.slots = self.slots / scale_all
 
+    def soft_write(
+        self,
+        content: torch.Tensor,
+        weight,
+        gate=None,
+    ) -> None:
+        """EXP-W2 (2026-06-11): DENSE all-slot soft delta-write.
+
+        Applies a *weak* delta-rule nudge to **every** slot row (no mask /
+        no top-k):
+
+            slot_n ← slot_n + weight · g_n · (content_n − slot_n)
+
+        This is the "native" dense fast-weight write (DeltaNet / Titans style):
+        every memory cell is touched each chunk, weighted by a small global λ
+        (``weight``) and an optional per-slot gate ``g_n``. It is meant to run
+        IN ADDITION to the existing top-k hard ``write`` (which is left
+        completely untouched) so that dead slots receive a slow trickle of their
+        OWN per-slot-distinct content and can re-enter the routing distribution,
+        breaking the cold-start "rich-get-richer" deadlock.
+
+        Isolation guarantee: this method is INDEPENDENT of ``write`` (top-k hard
+        write), ``force_write`` (EXP-R1 grace write), and ``recycle_reset``
+        (EXP-R1 reset). It mirrors ``force_write``'s graph-safe blend but with
+        ``mask = ALL N rows`` and ``weight = λ``. Callers gate it on
+        ``soft_write_weight > 0``; when off, it is never invoked → P11 behaviour
+        is byte-identical.
+
+        Args:
+            content: [B, N, slot_dim] per-slot target content (per-slot DISTINCT,
+                e.g. slots-as-query write-attention over the chunk tokens). Must
+                NOT be a broadcast/pooled vector — undifferentiated content
+                homogenises the bank (the arm4 failure).
+            weight:  λ — float / 0-d tensor global soft-write rate (small, e.g.
+                0.02-0.05).
+            gate:    optional per-slot gate. None → 1.0 (pure λ delta). A scalar,
+                [B, N, 1], or [B, N, slot_dim] tensor is broadcast against the
+                residual.
+
+        Graph safety: same rationale as ``force_write`` / ``recycle_reset`` —
+        the blended value is a function of ``self.slots`` so every row keeps its
+        autograd graph (cross-chunk BPTT within a bptt_window survives). The
+        norm cap (if any) is applied gradient-preservingly (detached scale).
+        """
+        if self.frozen or self.slots is None:
+            return
+        if content.dim() != 3:
+            raise ValueError(
+                f"content must be [B,N,d]; got {tuple(content.shape)}"
+            )
+        if content.shape[1] != self.num_slots or content.shape[-1] != self.slot_dim:
+            raise ValueError(
+                f"content shape {tuple(content.shape)} incompatible with "
+                f"(num_slots={self.num_slots}, slot_dim={self.slot_dim})"
+            )
+        if isinstance(weight, torch.Tensor):
+            _w = weight.to(device=self.slots.device, dtype=self.slots.dtype)
+        else:
+            _w = float(weight)
+        _c = content.to(device=self.slots.device, dtype=self.slots.dtype)
+        if gate is None:
+            _eff = _w
+        elif isinstance(gate, torch.Tensor):
+            _eff = _w * gate.to(device=self.slots.device, dtype=self.slots.dtype)
+        else:
+            _eff = _w * float(gate)
+        # Dense delta-rule update over ALL rows (no scatter/mask): every slot is
+        # nudged toward its own content_n by the (per-slot-gated) global rate.
+        self.slots = self.slots + _eff * (_c - self.slots)
+        if self._slot_value_norm_cap > 0.0:
+            slot_norms_all = self.slots.norm(dim=-1, keepdim=True).clamp(min=1e-8)
+            scale_all = (slot_norms_all / self._slot_value_norm_cap).clamp(min=1.0).detach()
+            self.slots = self.slots / scale_all
+
     def write(
         self,
         idx: torch.Tensor,

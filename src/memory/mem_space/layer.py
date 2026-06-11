@@ -420,6 +420,20 @@ class MemorySpaceLayer(nn.Module):
             getattr(config, "dead_slot_grace_chunks", 1)
         )
 
+        # EXP-W2 (2026-06-11): dense all-slot soft delta-write knobs. Default
+        # off (weight<=0) → byte-identical to P11. When >0, every chunk applies
+        # a weak per-slot-gated delta nudge to ALL N slots (see config.py +
+        # MemoryBank.soft_write). The content module is built below (it needs
+        # d_model / n_heads). Orthogonal to EXP-R1; the soft-write block in
+        # forward() is gated by soft_write_weight>0 and lives OUTSIDE the
+        # _do_recycle block, so the two switches compose independently.
+        self._soft_write_weight = float(
+            getattr(config, "soft_write_weight", 0.0)
+        )
+        self._soft_write_content = getattr(
+            config, "soft_write_content", "slot_query"
+        )
+
         # Learnable slot↔hidden projections. We do NOT take the slot_dim==d_model
         # shortcut (Identity) because that path has zero trainable capacity and was
         # empirically responsible for the residual-gap pathology after fix1+fix2
@@ -515,6 +529,25 @@ class MemorySpaceLayer(nn.Module):
         else:
             self.memory_xattn = None
 
+        # EXP-W2 (2026-06-11): dense soft-write content module. When
+        # soft_write_weight>0 (and soft_write_content=="slot_query"), build a
+        # slots-as-query write-attention that produces per-slot DISTINCT content
+        # from the current chunk tokens (anti-homogenisation; see
+        # selector.SoftWriteContent). Default off → no module, no params, no
+        # behaviour change (byte-identical to P11). n_heads defaults like the
+        # other xattn modules when not threaded by the model's GQA head counts.
+        if self._soft_write_weight > 0.0 and self._soft_write_content == "slot_query":
+            from .selector import SoftWriteContent
+            _swc_heads = n_heads if n_heads is not None else 8
+            self.soft_write_content_mod = SoftWriteContent(
+                d_model=d_model,
+                slot_dim=slot_dim,
+                n_heads=_swc_heads,
+                out_proj_std=0.02,
+                dropout=0.0,
+            )
+        else:
+            self.soft_write_content_mod = None
         # hidden_to_slot: freeze gate controlled by ``config.hidden_to_slot_frozen``.
         #
         # Historical note (pre-Fix-J, 2026-04-29): the comment here used to claim
@@ -685,6 +718,11 @@ class MemorySpaceLayer(nn.Module):
         self._last_key_max_cos: float = 0.0
         self._last_usage_cov: float = 0.0
         self._last_usage_ent: float = 0.0
+        # EXP-D3 (2026-06-11): mean pairwise cosine of slot CONTENT (off-diag),
+        # the direct homogenisation signal for any broad-write method (W1/W2/R1).
+        # Refreshed in QUERY_DIAG; ->1 == all slots' content collapsed onto one
+        # direction (the failure mode a dense soft-write risks). Default 0.0.
+        self._last_slot_content_cos: float = 0.0
 
         # EXP-R1 / EXP-D2 (2026-06-11): per-sample dead-slot recycling state.
         # All layer-0 only (the recycler drives the SHARED bank from one layer
@@ -1177,6 +1215,23 @@ class MemorySpaceLayer(nn.Module):
                     _K0 = _K_content[0]  # [N, S]
                     _key_sim = torch.mm(_K0, _K0.t()).fill_diagonal_(0.0)
                     _key_max_cos = _key_sim.abs().max().item()
+                    # EXP-D3 (2026-06-11): mean pairwise cosine of slot CONTENT
+                    # (off-diagonal), the direct homogenisation signal for any
+                    # broad-write method (W1/W2/R1). key_max_cos above measures
+                    # key-space separability; this measures the slot VALUE space
+                    # the read softmax actually attends over. ->1 == all slots'
+                    # content collapsed onto one direction → the all-N read can
+                    # no longer discriminate → top1_sim flattens. We use the
+                    # MEAN (not max) off-diagonal cosine of slots[0] so a slow
+                    # drift toward homogenisation is visible early.
+                    _slot_content_cos = 0.0
+                    _Nsl = slots.shape[1]
+                    if _Nsl > 1:
+                        _Sc = F.normalize(slots[0].float(), dim=-1)   # [N, slot_dim]
+                        _Scs = torch.mm(_Sc, _Sc.t())                 # [N, N]
+                        _slot_content_cos = (
+                            (_Scs.sum() - _Nsl) / (_Nsl * (_Nsl - 1))
+                        ).item()
                     # v8 multi-query diagnostics (default 0.0 when not multi_query)
                     _sq_max_cos = getattr(self.selector, "_last_summary_query_max_cos", 0.0)
                     _sq_mean_cos = getattr(self.selector, "_last_summary_query_mean_cos", 0.0)
@@ -1319,6 +1374,7 @@ class MemorySpaceLayer(nn.Module):
                     self._last_usage_cov = _usage_cov
                     self._last_usage_ent = _usage_ent
                     self._last_usage_var = _usage_var
+                    self._last_slot_content_cos = _slot_content_cos
                 print(
                     f"[QUERY_DIAG step={self.step_counter} fwd={self._fwd_count}]"
                     f" top1_sim_mean={_top1_sim_mean:.6f}"
@@ -1326,6 +1382,7 @@ class MemorySpaceLayer(nn.Module):
                     f" retrieved_norm_mean={_retrieved_norm:.6f}"
                     f" per_tok_logit_std={_pt_std:.6f}"
                     f" key_max_cos={_key_max_cos:.4f}"
+                    f" slot_content_cos={_slot_content_cos:.4f}"
                     f" S_max_cos={_S_max_cos:.4f}"
                     f" summary_q_max_cos={_sq_max_cos:.4f}"
                     f" summary_q_mean_cos={_sq_mean_cos:.4f}"
@@ -1870,6 +1927,42 @@ class MemorySpaceLayer(nn.Module):
                 else:
                     # Default EMA path.
                     M_write = self.memory_bank.write(idx, O_mem_slot, beta_t)
+
+            # ---- EXP-W2 (2026-06-11): DENSE all-slot soft delta-write ----
+            # AFTER (in addition to) the top-k hard write above, apply a weak
+            # delta-rule nudge to ALL N slots, each toward its OWN per-slot
+            # DISTINCT content (slots-as-query attention over the chunk tokens):
+            #     slot_n ← slot_n + λ·g_n·(content_n − slot_n)   (g_n ≡ 1 here)
+            # This is the "native" dense fast-weight write (DeltaNet/Titans):
+            # dead slots that never enter the top-k idx still receive a slow
+            # trickle of their own content, breaking the rich-get-richer
+            # deadlock. Per-slot DISTINCT content (NOT a pooled/broadcast vector)
+            # avoids the arm4 homogenisation trap. λ small (≤0.05) so live
+            # slots' precise content drifts negligibly → the all-N read peak is
+            # preserved. ISOLATION: gated by soft_write_weight>0, lives OUTSIDE
+            # the _do_recycle block, and uses a NEW MemoryBank.soft_write (does
+            # NOT touch write()/force_write()/recycle_reset()), so EXP-R1 and
+            # EXP-W2 compose as independent on/off switches. When weight<=0 (or
+            # the module is absent) this block is a no-op → byte-identical to P11.
+            # Skipped automatically at eval question-time (bank frozen →
+            # soft_write returns early), matching the force_write semantics.
+            if (
+                self._soft_write_weight > 0.0
+                and self.soft_write_content_mod is not None
+                and not self.memory_bank.frozen
+                and self.memory_bank.slots is not None
+            ):
+                # Per-slot distinct content from the CURRENT chunk tokens
+                # (hidden_states, [B, T, d_model]); slots act as queries.
+                _sw_content = self.soft_write_content_mod(
+                    self.memory_bank.slots, hidden_states
+                )                                                  # [B, N, slot_dim]
+                # g_n ≡ 1.0 (gate=None): a clean single-variable λ-only arm. A
+                # learnable per-slot gate (Titans-style forget) is the reserved
+                # candidate-4 refinement if homogenisation appears.
+                self.memory_bank.soft_write(
+                    _sw_content, weight=self._soft_write_weight, gate=None
+                )
 
         # ---- WRITEBACK_DIAG (diagnostic log, no-op on computation) ----
         # Emit every 200 forward calls, rank-0 / layer-0 only.

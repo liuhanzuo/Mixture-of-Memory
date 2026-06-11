@@ -402,6 +402,15 @@ def _mem_space_params(model: torch.nn.Module) -> List[torch.nn.Parameter]:
             for p in mx.parameters():
                 if id(p) not in seen:
                     params.append(p); seen.add(id(p))
+        # EXP-W2 (2026-06-11): dense soft-write content module (slots-as-query
+        # write-attention). Only present when soft_write_weight>0; collect its
+        # q/k/v/out_proj params so _freeze_backbone re-enables grad and they
+        # enter the optimizer (else the content head stays frozen at init).
+        swc = getattr(wrapper, "soft_write_content_mod", None)
+        if swc is not None:
+            for p in swc.parameters():
+                if id(p) not in seen:
+                    params.append(p); seen.add(id(p))
         # Writeback-gate params (2026-06-04). Previously the dual_gate
         # gate_proj_new/gate_proj_mem/gate_bias were NOT collected here, so with
         # --use_dual_gate the gate projections never entered the optimizer (frozen
@@ -571,12 +580,23 @@ def _collect_mem_diag(model: torch.nn.Module) -> Dict[str, float]:
         return {}
     L0 = mem_layers[0]
     sel0 = getattr(L0, "selector", None)
+    swc0 = getattr(L0, "soft_write_content_mod", None)
     return {
         "memory/key_max_cos": getattr(L0, "_last_key_max_cos", 0.0),
         "memory/usage_cov": getattr(L0, "_last_usage_cov", 0.0),
         "memory/usage_ent": getattr(L0, "_last_usage_ent", 0.0),
         "memory/usage_var": getattr(L0, "_last_usage_var", 0.0),
         "memory/slot_attn_entropy": getattr(sel0, "_last_slot_attn_entropy", 0.0),
+        # EXP-D3 (2026-06-11): mean pairwise cosine of slot CONTENT — the direct
+        # homogenisation signal for broad-write methods (W1/W2/R1). ->1 == bank
+        # collapsed onto one direction (the failure mode W2's dense write risks).
+        "memory/slot_content_cos": getattr(L0, "_last_slot_content_cos", 0.0),
+        # EXP-W2 (2026-06-11): slot-query write-attention entropy of the dense
+        # soft-write content module (high == slots smear over all tokens →
+        # content converges → homogenisation). 0.0 when soft-write disabled.
+        "memory/soft_write_attn_entropy": (
+            getattr(swc0, "_last_attn_entropy", 0.0) if swc0 is not None else 0.0
+        ),
         # EXP-R1 / EXP-D2 dead-slot recycling telemetry (no-op / 0.0 when disabled).
         "memory/dead_slot_frac": getattr(L0, "_last_dead_slot_frac", 0.0),
         "memory/max_slot_select_count": getattr(L0, "_last_max_slot_select_count", 0.0),
@@ -935,6 +955,18 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--dead_slot_grace_chunks", type=int, default=1,
                    help="EXP-R1: # chunks after a reset to force the recycled "
                         "slots into the WRITE set (write-only; read unchanged).")
+    # EXP-W2 (2026-06-11): dense all-slot soft delta-write. Default off
+    # (weight=0.0) → byte-identical to P11. Orthogonal to EXP-R1; see config.py.
+    p.add_argument("--soft_write_weight", type=float, default=0.0,
+                   help="EXP-W2: λ for the dense all-slot soft delta-write "
+                        "(slot_n += λ·g_n·(content_n − slot_n) over ALL N slots, "
+                        "IN ADDITION to the top-k hard write). 0.0 = disabled "
+                        "(byte-identical to P11). Recommended 0.02-0.05.")
+    p.add_argument("--soft_write_content", type=str, default="slot_query",
+                   choices=["slot_query"],
+                   help="EXP-W2: per-slot content source for the dense write. "
+                        "slot_query = slots-as-query cross-attention over the "
+                        "chunk tokens (per-slot distinct, anti-homogenisation).")
     p.add_argument("--selector_temperature", type=float, default=20.0)
     p.add_argument("--key_repulsion_weight", type=float, default=0.05)
     p.add_argument("--key_repulsion_threshold", type=float, default=0.3)
@@ -1190,6 +1222,8 @@ def build_model(args, device, dtype) -> torch.nn.Module:
         dead_slot_reset_interval=args.dead_slot_reset_interval,
         dead_slot_reset_mode=args.dead_slot_reset_mode,
         dead_slot_grace_chunks=args.dead_slot_grace_chunks,
+        soft_write_weight=args.soft_write_weight,
+        soft_write_content=args.soft_write_content,
     )
 
     # H7 rotary fp32 fix — snapshot before bf16 cast
@@ -1869,6 +1903,11 @@ def _save_adapter(model, args, step: int, final: bool = False) -> None:
             "dead_slot_reset_interval": args.dead_slot_reset_interval,
             "dead_slot_reset_mode": args.dead_slot_reset_mode,
             "dead_slot_grace_chunks": args.dead_slot_grace_chunks,
+            # EXP-W2 (2026-06-11): dense all-slot soft delta-write. Changes
+            # STORED slot state, so eval-haystack ingestion must apply the same
+            # soft-write as training → round-trip these flags.
+            "soft_write_weight": args.soft_write_weight,
+            "soft_write_content": args.soft_write_content,
             "num_global_slots": args.num_global_slots,
             "global_slot_forget_bias": args.global_slot_forget_bias,
             "global_slot_input_gate_only": args.global_slot_input_gate_only,

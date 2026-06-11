@@ -475,6 +475,33 @@ class MemorySpaceConfig:
     dead_slot_reset_mode: str = "strided_current"   # {"strided_current", "zero"}
     dead_slot_grace_chunks: int = 1
 
+    # EXP-W2 (2026-06-11): dense all-slot soft delta-write (the "native" fix for
+    # the top-k write-coverage deadlock). In ADDITION to the existing top-k hard
+    # write, every chunk applies a *weak* delta nudge to ALL N slots:
+    #     slot_n ← slot_n + soft_write_weight · g_n · (content_n − slot_n)
+    # where `content_n` is per-slot DISTINCT (slots-as-query write-attention over
+    # the chunk tokens) so the bank does NOT homogenise (the lesson of arm4:
+    # broad write of *undifferentiated* content collapsed top1_sim). This returns
+    # the delta-rule write to the textbook DeltaNet/Titans dense form, removing
+    # the anomalous top-k sparsity. See ops/research_notes/
+    # 20260611_native_write_mechanism.md §2 candidate-1 / EXP-W2.
+    #
+    # Isolation: orthogonal to EXP-R1 (dead_slot_reset_interval). The layer's
+    # soft-write block is gated by soft_write_weight>0 and lives OUTSIDE the
+    # _do_recycle block; the bank op is a NEW MemoryBank.soft_write (mask=all N,
+    # mirrors force_write) that does NOT touch write()/force_write()/
+    # recycle_reset(). So {R1 on/W2 off}, {R1 off/W2 on}, {both off} each
+    # reproduce the prior behaviour exactly.
+    #
+    #   soft_write_weight  : λ. 0.0 (default) = OFF → byte-identical to P11.
+    #                        Recommended sweep λ∈{0.02, 0.05}; ≥0.1 risks
+    #                        homogenisation (watch slot_content_cos telemetry).
+    #   soft_write_content : per-slot content source for the dense write.
+    #                        "slot_query" = slots-as-query cross-attention over
+    #                        the chunk tokens (per-slot distinct, on-manifold).
+    soft_write_weight: float = 0.0
+    soft_write_content: str = "slot_query"
+
     def __post_init__(self) -> None:
         if self.num_slots <= 0:
             raise ValueError(f"num_slots must be > 0, got {self.num_slots}")
@@ -536,4 +563,15 @@ class MemorySpaceConfig:
             raise ValueError(
                 "dead_slot_reset_mode must be one of {'strided_current', "
                 f"'zero'}}, got {self.dead_slot_reset_mode!r}"
+            )
+        # EXP-W2 dense soft delta-write.
+        if self.soft_write_weight < 0.0:
+            raise ValueError(
+                "soft_write_weight must be >= 0 (0 = disabled), got "
+                f"{self.soft_write_weight}"
+            )
+        if self.soft_write_content not in {"slot_query"}:
+            raise ValueError(
+                "soft_write_content must be one of {'slot_query'}, got "
+                f"{self.soft_write_content!r}"
             )
