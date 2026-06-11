@@ -27,22 +27,32 @@ TASKS = ["qa1", "qa2", "qa5"]
 LENGTHS = ["0k", "1k", "2k", "4k", "8k", "16k", "32k"]
 
 
-def score_cell(path: Path, task: str, expect: int = 100):
+def score_cell(paths, task: str, expect: int = 100):
+    """Score one cell. ``paths`` is a list of CSV files whose rows are summed
+    together — this is what makes sample-level shards (``..._shard{i}of{N}.csv``)
+    merge transparently into a single cell score (their row sets partition the
+    full sample set, so summing correct/total over all shards == scoring the
+    full cell).
+    """
+    if not isinstance(paths, (list, tuple)):
+        paths = [paths]
     correct = total = 0
     labels = TASK_LABELS[task]
-    with open(path, newline="") as f:
-        for row in csv.DictReader(f):
-            total += 1
-            target = (row.get("target") or "").strip()
-            output = (row.get("output") or "").strip()
-            question = (row.get("question") or "").strip()
-            if compare_answers(target, output, question, labels):
-                correct += 1
+    for path in paths:
+        with open(path, newline="") as f:
+            for row in csv.DictReader(f):
+                total += 1
+                target = (row.get("target") or "").strip()
+                output = (row.get("output") or "").strip()
+                question = (row.get("question") or "").strip()
+                if compare_answers(target, output, question, labels):
+                    correct += 1
     if expect is not None and expect > 0 and total != expect:
+        shown = paths[0] if len(paths) == 1 else f"{len(paths)} shard files for cell"
         print(
-            f"WARNING: {path} parsed {total} records, expected {expect}. "
-            f"Possible CSV corruption (unquoted multi-line output?) — the score "
-            f"for this cell may be unreliable.",
+            f"WARNING: {shown} parsed {total} records, expected {expect}. "
+            f"Possible CSV corruption (unquoted multi-line output?) or an "
+            f"incomplete shard set — the score for this cell may be unreliable.",
             file=sys.stderr,
         )
     return correct, total
@@ -66,15 +76,17 @@ def main():
         cells = []
         for L in LENGTHS:
             sub = rdir / f"{run}_{L}"
-            hit = None
+            hits = []
             if sub.exists():
-                for f in sub.glob(f"{t}_{L}_*.csv"):
-                    hit = f
-                    break
-            if hit is None:
+                # Collect ALL CSVs for this cell. With sample-level sharding the
+                # cell is split across ``{task}_{L}_..._shard{i}of{N}.csv`` files;
+                # globbing + summing merges them. A non-sharded run yields exactly
+                # one file here, so behaviour is unchanged.
+                hits = sorted(sub.glob(f"{t}_{L}_*.csv"))
+            if not hits:
                 cells.append("   -- ")
             else:
-                c, n = score_cell(hit, t, expect=args.expect)
+                c, n = score_cell(hits, t, expect=args.expect)
                 pct = 100.0 * c / n if n else 0.0
                 cells.append(f"{pct:5.0f} ")
         print(f"{t:5s}  " + " ".join(cells))

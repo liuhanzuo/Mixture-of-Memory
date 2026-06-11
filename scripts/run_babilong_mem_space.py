@@ -671,6 +671,16 @@ def main():
                         help="Maximum new tokens to generate per sample")
     parser.add_argument("--limit", type=int, default=100,
                         help="Maximum samples per task/length cell (default 100; -1 = all)")
+    parser.add_argument("--num_shards", type=int, default=1,
+                        help="Split the (post-limit) sample set of each cell into "
+                             "this many stride shards for sample-level parallelism. "
+                             "1 (default) = no sharding, byte-identical to the "
+                             "original single-process behaviour.")
+    parser.add_argument("--shard_index", type=int, default=0,
+                        help="Which stride shard to evaluate (0-based; "
+                             "requires --num_shards > 1). Shard i runs samples "
+                             "[i::num_shards] so every shard gets an evenly "
+                             "interleaved subset (no shard is all-hard samples).")
     parser.add_argument("--batch_size", type=int, default=1,
                         help="Cell-internal sample batch size. 1 (default) = the "
                              "original byte-for-byte per-sample path. >1 batches "
@@ -710,6 +720,13 @@ def main():
 
     if args.swa_eval_chunks < 0:
         parser.error("--swa_eval_chunks must be >= 0")
+    if args.num_shards < 1:
+        parser.error("--num_shards must be >= 1")
+    if not (0 <= args.shard_index < args.num_shards):
+        parser.error(
+            f"--shard_index must be in [0, num_shards) = [0, {args.num_shards}); "
+            f"got {args.shard_index}"
+        )
     if args.swa_eval_chunks > 0 and args.batch_size > 1:
         parser.error(
             "--swa_eval_chunks > 0 is only supported on the bsz=1 path "
@@ -726,6 +743,9 @@ def main():
     print(f"  Chunk size:      {args.chunk_size}")
     print(f"  Max new tokens:  {args.max_new_tokens}")
     print(f"  Limit/cell:      {args.limit}")
+    if args.num_shards > 1:
+        print(f"  Sharding:        shard {args.shard_index} of {args.num_shards} "
+              f"(stride slice [{args.shard_index}::{args.num_shards}])")
     print(f"  SWA eval chunks: {args.swa_eval_chunks}")
     print(f"  Device:          {args.device}")
 
@@ -799,8 +819,18 @@ def main():
 
             outdir = Path(args.results_folder) / args.output_name
             outdir.mkdir(parents=True, exist_ok=True)
-            outfile = outdir / f"{task}_{split_name}_{prompt_name}.csv"
-            cfg_file = outdir / f"{task}_{split_name}_{prompt_name}.json"
+            # Sharded runs write to a per-shard CSV so concurrent shards never
+            # clobber each other; num_shards==1 keeps the original filename
+            # exactly (byte-identical, no suffix). The scorer
+            # (score_nested_babilong.py) globs ``{task}_{length}_*.csv`` so it
+            # transparently picks up either the single full cell or the set of
+            # shard files and merges them.
+            sharded = args.num_shards > 1
+            shard_tag = (
+                f"_shard{args.shard_index}of{args.num_shards}" if sharded else ""
+            )
+            outfile = outdir / f"{task}_{split_name}_{prompt_name}{shard_tag}.csv"
+            cfg_file = outdir / f"{task}_{split_name}_{prompt_name}{shard_tag}.json"
 
             json.dump(
                 {
@@ -831,6 +861,17 @@ def main():
             if args.limit > 0:
                 num_samples = min(num_samples, args.limit)
 
+            # Sample-level sharding: take a stride slice of the post-limit index
+            # range so this process only evaluates its shard. Stride slicing
+            # ([i::N]) interleaves samples across shards, so no single shard gets
+            # a contiguous (potentially all-hard) block. num_shards==1 yields
+            # exactly list(range(num_samples)) — byte-identical to the original.
+            sample_indices = list(range(num_samples))[args.shard_index::args.num_shards]
+            if sharded:
+                print(f"[mem_space-BABILong] shard {args.shard_index}/{args.num_shards}: "
+                      f"{len(sample_indices)} of {num_samples} samples "
+                      f"(indices {sample_indices[:3]}{'...' if len(sample_indices) > 3 else ''})")
+
             def _encode_sample(idx):
                 sample = task_data[idx]
                 input_text = get_formatted_input(
@@ -853,7 +894,7 @@ def main():
 
             if args.batch_size <= 1:
                 # ---- bsz=1 path: byte-for-byte the original per-sample loop ----
-                for idx in tqdm(range(num_samples), desc=f"{task}/{split_name}", leave=False):
+                for idx in tqdm(sample_indices, desc=f"{task}/{split_name}", leave=False):
                     target, question, input_ids = _encode_sample(idx)
                     input_ids = input_ids.to(device)
                     with torch.amp.autocast(device_type="cuda", dtype=dtype):
@@ -867,7 +908,7 @@ def main():
                             swa_eval_chunks=args.swa_eval_chunks,
                         )
                     df.loc[len(df)] = [target, output, question]
-                    if (idx + 1) % 10 == 0 or idx == num_samples - 1:
+                    if len(df) % 10 == 0 or idx == sample_indices[-1]:
                         _write_results_csv(df, outfile)
             else:
                 # ---- batched path: bucket by chunk-count, then batch ----
@@ -875,7 +916,7 @@ def main():
                 # row keeps its original index so the CSV order is preserved.
                 import math as _math
                 rows = []  # (orig_idx, target, question, tokens_1d, n_chunks)
-                for idx in range(num_samples):
+                for idx in sample_indices:
                     target, question, input_ids = _encode_sample(idx)
                     toks = input_ids[0]
                     n_chunks = max(1, _math.ceil(toks.shape[0] / args.chunk_size))
