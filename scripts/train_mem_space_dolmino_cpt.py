@@ -601,6 +601,7 @@ def _collect_mem_diag(model: torch.nn.Module) -> Dict[str, float]:
         "memory/dead_slot_frac": getattr(L0, "_last_dead_slot_frac", 0.0),
         "memory/max_slot_select_count": getattr(L0, "_last_max_slot_select_count", 0.0),
         "memory/recycle_resets": getattr(L0, "_last_recycle_resets", 0.0),
+        "memory/n_recycled": getattr(L0, "_last_n_recycled", 0.0),
     }
 
 
@@ -2364,13 +2365,15 @@ def main() -> None:
             if getattr(args, "dead_slot_reset_interval", 0) and args.dead_slot_reset_interval > 0:
                 _mem_diag = _collect_mem_diag(model)
                 logger.info(
-                    "[DEADSLOT_DIAG step=%d] dead_slot_frac=%.4f usage_cov=%.4f "
-                    "max_slot_select_count=%.1f recycle_resets=%.0f",
+                    "[DEADSLOT_DIAG step=%d] criterion=%s dead_slot_frac=%.4f usage_cov=%.4f "
+                    "max_slot_select_count=%.1f recycle_resets=%.0f n_recycled=%.0f",
                     global_step,
+                    getattr(args, "dead_slot_criterion", "window"),
                     _mem_diag.get("memory/dead_slot_frac", 0.0),
                     _mem_diag.get("memory/usage_cov", 0.0),
                     _mem_diag.get("memory/max_slot_select_count", 0.0),
                     _mem_diag.get("memory/recycle_resets", 0.0),
+                    _mem_diag.get("memory/n_recycled", 0.0),
                 )
             if _WANDB_AVAILABLE and args.wandb_project and wandb.run:
                 _log_dict = {
