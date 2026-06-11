@@ -474,6 +474,20 @@ class MemorySpaceConfig:
     dead_slot_reset_interval: int = 0
     dead_slot_reset_mode: str = "strided_current"   # {"strided_current", "zero"}
     dead_slot_grace_chunks: int = 1
+    # EXP-R1c (2026-06-11): how a slot is judged "dead" at a reset boundary.
+    #   "window"     (default, R1 behaviour, byte-identical): dead = slot got
+    #                ZERO selections in the last `dead_slot_reset_interval`
+    #                chunks (window-scoped `_recycle_usage`). PROBLEM: a slot
+    #                that stored an early fact and is queried much later is only
+    #                temporarily silent, yet the window judge calls it dead and
+    #                recycle_reset OVERWRITES its long-range content → BABILong
+    #                8k-32k collapses ~3x as the sequence grows.
+    #   "cumulative" (R1c fix): dead = slot got ZERO selections over the WHOLE
+    #                sample so far (sample-scoped `_cum_usage`, never window-
+    #                zeroed). Only recycles slots that have NEVER once been
+    #                selected since cold start — strictly fewer recycles than
+    #                "window", and never erases a long-range memory slot.
+    dead_slot_criterion: str = "window"   # {"window", "cumulative"}
 
     # EXP-W2 (2026-06-11): dense all-slot soft delta-write (the "native" fix for
     # the top-k write-coverage deadlock). In ADDITION to the existing top-k hard
@@ -563,6 +577,11 @@ class MemorySpaceConfig:
             raise ValueError(
                 "dead_slot_reset_mode must be one of {'strided_current', "
                 f"'zero'}}, got {self.dead_slot_reset_mode!r}"
+            )
+        if self.dead_slot_criterion not in {"window", "cumulative"}:
+            raise ValueError(
+                "dead_slot_criterion must be one of {'window', "
+                f"'cumulative'}}, got {self.dead_slot_criterion!r}"
             )
         # EXP-W2 dense soft delta-write.
         if self.soft_write_weight < 0.0:

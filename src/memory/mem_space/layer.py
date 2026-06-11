@@ -419,6 +419,12 @@ class MemorySpaceLayer(nn.Module):
         self._dead_slot_grace_chunks = int(
             getattr(config, "dead_slot_grace_chunks", 1)
         )
+        # EXP-R1c (2026-06-11): dead-slot judge. "window" (default) = R1
+        # window-scoped `_recycle_usage==0`; "cumulative" = sample-scoped
+        # `_cum_usage==0` (never erases a long-range memory slot).
+        self._dead_slot_criterion = getattr(
+            config, "dead_slot_criterion", "window"
+        )
 
         # EXP-W2 (2026-06-11): dense all-slot soft delta-write knobs. Default
         # off (weight<=0) → byte-identical to P11. When >0, every chunk applies
@@ -750,6 +756,9 @@ class MemorySpaceLayer(nn.Module):
         self._last_max_slot_select_count: float = 0.0
         # Count of recycle reset events this sample (diagnostic).
         self._last_recycle_resets: int = 0
+        # EXP-R1c (2026-06-11): #slots judged dead at the LAST reset boundary
+        # (sums over batch). Lets us compare window vs cumulative judges.
+        self._last_n_recycled: int = 0
 
     # --------------------------------------------------------------------- #
     # Gate
@@ -1128,7 +1137,22 @@ class MemorySpaceLayer(nn.Module):
                 # diverse strided current-chunk content, then open a grace window.
                 if self._recycle_chunk_count % self._dead_slot_reset_interval == 0:
                     with torch.no_grad():
-                        _dead = (self._recycle_usage == 0)         # [B, N] bool
+                        # EXP-R1c: choose the dead-slot judge.
+                        #   "window"     → R1: zero selections in the last
+                        #                  `interval` chunks (window-scoped).
+                        #   "cumulative" → R1c: zero selections over the WHOLE
+                        #                  sample so far (sample-scoped, never
+                        #                  window-zeroed) — only ever recycle a
+                        #                  slot that has NEVER been selected,
+                        #                  so a long-range memory slot that is
+                        #                  merely temporarily silent is spared.
+                        if (
+                            self._dead_slot_criterion == "cumulative"
+                            and self._cum_usage is not None
+                        ):
+                            _dead = (self._cum_usage == 0)         # [B, N] bool
+                        else:
+                            _dead = (self._recycle_usage == 0)     # [B, N] bool
                         _n_dead = int(_dead.sum().item())
                     if _n_dead > 0:
                         if self._dead_slot_reset_mode == "zero":
@@ -1142,6 +1166,7 @@ class MemorySpaceLayer(nn.Module):
                         self._recycle_grace_mask = _dead.clone()
                         self._recycle_grace_remaining = self._dead_slot_grace_chunks
                         self._last_recycle_resets += 1
+                    self._last_n_recycled = _n_dead
                     # Open a fresh window.
                     self._recycle_usage.zero_()
 
@@ -1404,7 +1429,8 @@ class MemorySpaceLayer(nn.Module):
                     # off → no behaviour change to the line when disabled).
                     f" dead_slot_frac={self._last_dead_slot_frac:.4f}"
                     f" max_slot_select_count={self._last_max_slot_select_count:.1f}"
-                    f" recycle_resets={self._last_recycle_resets}",
+                    f" recycle_resets={self._last_recycle_resets}"
+                    f" n_recycled={self._last_n_recycled}",
                     flush=True,
                 )
             # -----------------------------------------------------------

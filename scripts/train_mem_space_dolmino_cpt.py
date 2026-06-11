@@ -955,6 +955,14 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--dead_slot_grace_chunks", type=int, default=1,
                    help="EXP-R1: # chunks after a reset to force the recycled "
                         "slots into the WRITE set (write-only; read unchanged).")
+    p.add_argument("--dead_slot_criterion", type=str, default="window",
+                   choices=["window", "cumulative"],
+                   help="EXP-R1c: dead-slot judge at a reset boundary. "
+                        "window (default, R1, byte-identical) = zero selections "
+                        "in the last --dead_slot_reset_interval chunks; "
+                        "cumulative (R1c) = zero selections over the WHOLE "
+                        "sample so far (spares long-range memory slots, recycles "
+                        "strictly fewer).")
     # EXP-W2 (2026-06-11): dense all-slot soft delta-write. Default off
     # (weight=0.0) → byte-identical to P11. Orthogonal to EXP-R1; see config.py.
     p.add_argument("--soft_write_weight", type=float, default=0.0,
@@ -1222,6 +1230,7 @@ def build_model(args, device, dtype) -> torch.nn.Module:
         dead_slot_reset_interval=args.dead_slot_reset_interval,
         dead_slot_reset_mode=args.dead_slot_reset_mode,
         dead_slot_grace_chunks=args.dead_slot_grace_chunks,
+        dead_slot_criterion=args.dead_slot_criterion,
         soft_write_weight=args.soft_write_weight,
         soft_write_content=args.soft_write_content,
     )
@@ -1903,6 +1912,7 @@ def _save_adapter(model, args, step: int, final: bool = False) -> None:
             "dead_slot_reset_interval": args.dead_slot_reset_interval,
             "dead_slot_reset_mode": args.dead_slot_reset_mode,
             "dead_slot_grace_chunks": args.dead_slot_grace_chunks,
+            "dead_slot_criterion": args.dead_slot_criterion,
             # EXP-W2 (2026-06-11): dense all-slot soft delta-write. Changes
             # STORED slot state, so eval-haystack ingestion must apply the same
             # soft-write as training → round-trip these flags.
