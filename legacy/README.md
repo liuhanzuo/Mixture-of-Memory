@@ -70,6 +70,33 @@ back to their original location with `git mv`.
 - `src/memory/{l1,l2,l3,scheduler.py,state.py}` and `src/agents/`, `src/training/` — three-tier memory stack from the original MoM design. Quiet since 2026-03-22 but tested in `tests/test_l{1,2,3}.py` and `tests/test_scheduler.py`. Marked **MEDIUM confidence** in `CODE_CLEANUP_SUGGESTIONS.md`.
 - `src/memory/slot/`, `src/memory/slot_memory/`, `src/memory/rmt_slot/`, `src/memory/mem_space/` — **active** (cross-attention H-series, slot infrastructure, RMT-Slot).
 
+## Archived 2026-06-12 — repo cleanup (abandoned/superseded directions)
+
+This batch corresponds to abandoned/superseded directions (RMT, sparse-memory,
+Q-Filters, h-series dual-gate, SWA, P2/P8/P11 pre-capacity-sweep, routeA,
+attention-matching). Kept for git history/reference; **NOT imported by live
+code**. Active work is the `mem_space` capacity sweep (`expR1c*`) — see the
+top-level `README.md`.
+
+- `legacy/research_notes_pre0501/` — `ops/research_notes/*.md` with commit date
+  ≤ 2026-04-30 (RMT/sparse/Q-Filters/mem_space-v0 era). Notes from 2026-05-11
+  onward stay in `ops/research_notes/`.
+- `legacy/launchers/` — dead-direction `scripts/launch_*.sh`: h-series
+  (h2–h14), phase1b/phase8b, SWA, routeA, P2/P8 (pre-capacity-sweep), beacon,
+  mem_scale, wbmode, hmt, rmt_slot, infini, niah_v4, v4_full_sft, exp1–exp5 L3.
+- `legacy/eval_sched_dead/` — dead eval schedulers for exp2/W1/routeA/d6/diskB
+  (NOT any `expR1c*` scheduler, which stay live in `scripts/`).
+- `legacy/plans_superseded/` — superseded planning/design docs from `status/`
+  and the repo root (attention-matching, H/V2, RMT-slot, V4 feasibility, eval
+  design, locomo setup, cluster/command references, etc.).
+- `legacy/versions_pre_v8/` — architecture version docs v2–v7 (v8–v20 stay in
+  `versions/`).
+- `legacy/root_oneoff_scripts/` — loose root-level eval/debug/test scripts
+  (`run_eval_*.sh`, `run_nih_*.sh`, `eval_ruler_baseline.py`,
+  `heartbeat_monitor.py`, `test_*.py`, etc.).
+- `legacy/scripts_misfiled_docs/` — markdown docs that were living under
+  `scripts/` (FULL_SFT_PLAN, multisegment summaries, LOCOMO/nih READMEs).
+
 ## Restoring a direction
 
 ```bash
