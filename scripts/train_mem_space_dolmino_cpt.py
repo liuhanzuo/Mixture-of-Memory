@@ -976,6 +976,36 @@ def parse_args() -> argparse.Namespace:
                    help="EXP-W2: per-slot content source for the dense write. "
                         "slot_query = slots-as-query cross-attention over the "
                         "chunk tokens (per-slot distinct, anti-homogenisation).")
+    # v20 (2026-06-12): read-based slot lifecycle. Two INDEPENDENT arms, both
+    # default OFF → byte-identical to P11. See versions/
+    # v20_read_based_slot_lifecycle.md.
+    p.add_argument("--slot_read_decay_rate", type=float, default=0.0,
+                   help="v20 Arm A: R for soft read-decay. Every "
+                        "--slot_read_decay_interval chunks, multiply each slot's "
+                        "value by clamp(1-R·(1-recent_read_frac), min_keep, 1). "
+                        "0.0 = disabled (byte-identical to P11).")
+    p.add_argument("--slot_read_decay_interval", type=int, default=8,
+                   help="v20 Arm A: # chunks between read-decay applications.")
+    p.add_argument("--slot_read_decay_min_keep", type=float, default=0.5,
+                   help="v20 Arm A: floor on the per-interval decay factor so an "
+                        "unread slot cannot be zeroed in one step (password "
+                        "protection).")
+    p.add_argument("--slot_evict_mode", type=str, default="off",
+                   choices=["off", "readmass"],
+                   help="v20 Arm B: slot eviction policy. off (default) = "
+                        "existing dead_slot_criterion path unchanged; readmass = "
+                        "evict the coldest (lowest cumulative read-mass) slots "
+                        "that have stayed cold past the protection window.")
+    p.add_argument("--slot_evict_max_frac", type=float, default=0.1,
+                   help="v20 Arm B: max fraction of slots evicted per boundary "
+                        "(ceil(frac·N)).")
+    p.add_argument("--slot_evict_floor", type=float, default=0.0,
+                   help="v20 Arm B: recent read-mass threshold at/below which a "
+                        "slot counts as cold (eligible for the cold-streak).")
+    p.add_argument("--slot_evict_protect_chunks", type=int, default=2,
+                   help="v20 Arm B: # consecutive cold boundaries a slot must "
+                        "stay cold before it becomes evictable (protection "
+                        "window for rarely-read but critical slots).")
     p.add_argument("--selector_temperature", type=float, default=20.0)
     p.add_argument("--key_repulsion_weight", type=float, default=0.05)
     p.add_argument("--key_repulsion_threshold", type=float, default=0.3)
@@ -1234,6 +1264,13 @@ def build_model(args, device, dtype) -> torch.nn.Module:
         dead_slot_criterion=args.dead_slot_criterion,
         soft_write_weight=args.soft_write_weight,
         soft_write_content=args.soft_write_content,
+        slot_read_decay_rate=args.slot_read_decay_rate,
+        slot_read_decay_interval=args.slot_read_decay_interval,
+        slot_read_decay_min_keep=args.slot_read_decay_min_keep,
+        slot_evict_mode=args.slot_evict_mode,
+        slot_evict_max_frac=args.slot_evict_max_frac,
+        slot_evict_floor=args.slot_evict_floor,
+        slot_evict_protect_chunks=args.slot_evict_protect_chunks,
     )
 
     # H7 rotary fp32 fix — snapshot before bf16 cast
@@ -1919,6 +1956,16 @@ def _save_adapter(model, args, step: int, final: bool = False) -> None:
             # soft-write as training → round-trip these flags.
             "soft_write_weight": args.soft_write_weight,
             "soft_write_content": args.soft_write_content,
+            # v20 (2026-06-12): read-based slot lifecycle. Changes STORED slot
+            # state, so eval-haystack ingestion must apply the same lifecycle as
+            # training → round-trip these flags.
+            "slot_read_decay_rate": args.slot_read_decay_rate,
+            "slot_read_decay_interval": args.slot_read_decay_interval,
+            "slot_read_decay_min_keep": args.slot_read_decay_min_keep,
+            "slot_evict_mode": args.slot_evict_mode,
+            "slot_evict_max_frac": args.slot_evict_max_frac,
+            "slot_evict_floor": args.slot_evict_floor,
+            "slot_evict_protect_chunks": args.slot_evict_protect_chunks,
             "num_global_slots": args.num_global_slots,
             "global_slot_forget_bias": args.global_slot_forget_bias,
             "global_slot_input_gate_only": args.global_slot_input_gate_only,

@@ -348,6 +348,39 @@ class MemoryBank(nn.Module):
             scale_all = (slot_norms_all / self._slot_value_norm_cap).clamp(min=1.0).detach()
             self.slots = self.slots / scale_all
 
+    def decay_(self, factor) -> None:
+        """v20 (2026-06-12): Arm A soft read-decay — in-place value scaling.
+
+        Multiplies every slot's VALUE by a per-slot ``factor`` (detached,
+        no_grad), shrinking the norm of slots that have not been read recently:
+
+            slot_n ← slot_n · factor_n
+
+        ``factor``: float / 0-d tensor (uniform), or [B, N] / [B, N, 1] tensor
+                    (per-slot). Broadcast against ``slots`` [B, N, slot_dim].
+
+        This is NOT a hard delete — a value scaled by e.g. 0.5 still carries its
+        direction and can be read or revived by a later write. Guarded on
+        ``frozen`` / ``None`` like ``recycle_reset`` / ``force_write``; uses a
+        no_grad reassignment (the factor is detached telemetry-derived state, so
+        there is no gradient to preserve through it — the decay is a state
+        mutation analogous to the recycle ops, not a differentiable transform).
+        """
+        if self.frozen or self.slots is None:
+            return
+        with torch.no_grad():
+            if isinstance(factor, torch.Tensor):
+                _f = factor.to(device=self.slots.device, dtype=self.slots.dtype)
+                if _f.dim() == 2:                      # [B, N] -> [B, N, 1]
+                    _f = _f.unsqueeze(-1)
+            else:
+                _f = float(factor)
+            self.slots = (self.slots * _f).detach()
+            if self._slot_value_norm_cap > 0.0:
+                slot_norms_all = self.slots.norm(dim=-1, keepdim=True).clamp(min=1e-8)
+                scale_all = (slot_norms_all / self._slot_value_norm_cap).clamp(min=1.0).detach()
+                self.slots = self.slots / scale_all
+
     def write(
         self,
         idx: torch.Tensor,

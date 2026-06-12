@@ -426,6 +426,32 @@ class MemorySpaceLayer(nn.Module):
             config, "dead_slot_criterion", "window"
         )
 
+        # v20 (2026-06-12): read-based slot lifecycle knobs. All default OFF
+        # (rate<=0 / mode=="off") → byte-identical to P11.
+        #   Arm A — soft read-decay: every _slot_read_decay_interval chunks,
+        #     multiply each slot's value by a factor in [min_keep, 1] driven by
+        #     its recent read fraction (unread slots fade, never hard-deleted).
+        #   Arm B — readmass eviction: at each recycle boundary, evict the
+        #     coldest (lowest _cum_read_mass) slots that have stayed cold for
+        #     >= _slot_evict_protect_chunks boundaries, capped at max_frac·N.
+        self._slot_read_decay_rate = float(
+            getattr(config, "slot_read_decay_rate", 0.0)
+        )
+        self._slot_read_decay_interval = int(
+            getattr(config, "slot_read_decay_interval", 8)
+        )
+        self._slot_read_decay_min_keep = float(
+            getattr(config, "slot_read_decay_min_keep", 0.5)
+        )
+        self._slot_evict_mode = getattr(config, "slot_evict_mode", "off")
+        self._slot_evict_max_frac = float(
+            getattr(config, "slot_evict_max_frac", 0.1)
+        )
+        self._slot_evict_floor = float(getattr(config, "slot_evict_floor", 0.0))
+        self._slot_evict_protect_chunks = int(
+            getattr(config, "slot_evict_protect_chunks", 2)
+        )
+
         # EXP-W2 (2026-06-11): dense all-slot soft delta-write knobs. Default
         # off (weight<=0) → byte-identical to P11. When >0, every chunk applies
         # a weak per-slot-gated delta nudge to ALL N slots (see config.py +
@@ -751,6 +777,26 @@ class MemorySpaceLayer(nn.Module):
         self._recycle_chunk_count: int = 0
         self._recycle_grace_mask: Optional[torch.Tensor] = None
         self._recycle_grace_remaining: int = 0
+        # v20 (2026-06-12): read-based slot lifecycle accumulators (layer-0,
+        # no_grad telemetry; same alloc/cold-start lifecycle as _cum_usage).
+        #   _cum_read_mass    : [B, N] float — read-path softmax mass each slot
+        #                       has EVER drawn over the whole sample (the
+        #                       correct liveness measure: read≠write). Drives
+        #                       Arm B eviction (lowest cum read-mass evicted).
+        #   _recent_read_mass : [B, N] float — read mass over the CURRENT window
+        #                       (zeroed at each Arm A decay / Arm B reset
+        #                       boundary, mirroring _recycle_usage). Drives Arm A
+        #                       decay (recent-read fraction) + Arm B cold judge.
+        #   _evict_cold_streak: [B, N] long — consecutive reset boundaries a slot
+        #                       has stayed cold (Arm B protection window).
+        # All default to a no-op when both arms are off → telemetry only.
+        self._cum_read_mass: Optional[torch.Tensor] = None
+        self._recent_read_mass: Optional[torch.Tensor] = None
+        self._evict_cold_streak: Optional[torch.Tensor] = None
+        self._read_decay_chunk_count: int = 0
+        # Arm A/B latest scalars (layer-0; pushed to QUERY_DIAG).
+        self._last_cum_read_mass_cov: float = -1.0
+        self._last_n_evicted_readmass: int = -1
         # EXP-D2 latest scalars (layer-0; pushed to wandb by the loop).
         self._last_dead_slot_frac: float = 0.0
         self._last_max_slot_select_count: float = 0.0
@@ -1082,6 +1128,17 @@ class MemorySpaceLayer(nn.Module):
                         self._recycle_grace_mask = None
                         self._recycle_grace_remaining = 0
                         self._last_recycle_resets = 0
+                        # v20: read-mass accumulators share the same lifecycle.
+                        self._cum_read_mass = torch.zeros(
+                            B, _Ncfg, device=idx.device, dtype=torch.float32
+                        )
+                        self._recent_read_mass = torch.zeros(
+                            B, _Ncfg, device=idx.device, dtype=torch.float32
+                        )
+                        self._evict_cold_streak = torch.zeros(
+                            B, _Ncfg, device=idx.device, dtype=torch.long
+                        )
+                        self._read_decay_chunk_count = 0
                     # Per-sample selection indicator for THIS chunk (dedup the
                     # global-slot duplicates via clamp to 1).
                     _sel = torch.zeros(
@@ -1136,24 +1193,85 @@ class MemorySpaceLayer(nn.Module):
                 # over the last `interval` chunks. Overwrite ONLY dead rows with
                 # diverse strided current-chunk content, then open a grace window.
                 if self._recycle_chunk_count % self._dead_slot_reset_interval == 0:
+                    _n_evicted_readmass = -1
                     with torch.no_grad():
-                        # EXP-R1c: choose the dead-slot judge.
-                        #   "window"     → R1: zero selections in the last
-                        #                  `interval` chunks (window-scoped).
-                        #   "cumulative" → R1c: zero selections over the WHOLE
-                        #                  sample so far (sample-scoped, never
-                        #                  window-zeroed) — only ever recycle a
-                        #                  slot that has NEVER been selected,
-                        #                  so a long-range memory slot that is
-                        #                  merely temporarily silent is spared.
                         if (
-                            self._dead_slot_criterion == "cumulative"
-                            and self._cum_usage is not None
+                            self._slot_evict_mode == "readmass"
+                            and self._cum_read_mass is not None
+                            and self._recent_read_mass is not None
+                            and self._evict_cold_streak is not None
                         ):
-                            _dead = (self._cum_usage == 0)         # [B, N] bool
+                            # ---- v20 Arm B: read-mass eviction + protection ----
+                            # A slot is "cold" this boundary if its RECENT read
+                            # mass is <= floor AND it had zero recent WRITES
+                            # (selections). The cold-streak counter increments
+                            # while cold and resets the moment a slot is read or
+                            # written. Only slots cold for >= protect_chunks
+                            # consecutive boundaries are eligible; from those,
+                            # evict at most ceil(max_frac·N) with the LOWEST
+                            # cumulative read-mass. read≠write: this is the CORRECT
+                            # liveness judge (vs the write-based _cum_usage path).
+                            _Nb = cfg.num_slots
+                            _cold = (
+                                (self._recent_read_mass <= self._slot_evict_floor)
+                                & (self._recycle_usage == 0)
+                            )                                       # [B, N] bool
+                            self._evict_cold_streak = torch.where(
+                                _cold,
+                                self._evict_cold_streak + 1,
+                                torch.zeros_like(self._evict_cold_streak),
+                            )
+                            _eligible = _cold & (
+                                self._evict_cold_streak
+                                >= self._slot_evict_protect_chunks
+                            )                                       # [B, N] bool
+                            import math as _math_evict
+                            _max_evict = int(
+                                _math_evict.ceil(
+                                    self._slot_evict_max_frac * _Nb
+                                )
+                            )
+                            _dead = torch.zeros_like(_eligible)     # [B, N] bool
+                            if _max_evict > 0 and bool(_eligible.any()):
+                                # Rank by cumulative read-mass ascending; mask
+                                # ineligible to +inf so they never get picked.
+                                _score = self._cum_read_mass.clone()
+                                _score = _score.masked_fill(
+                                    ~_eligible, float("inf")
+                                )
+                                _k = min(_max_evict, _Nb)
+                                _vals, _topidx = torch.topk(
+                                    _score, _k, dim=1, largest=False
+                                )                                   # [B, _k]
+                                _finite = torch.isfinite(_vals)     # eligible only
+                                _dead.scatter_(1, _topidx, _finite)
+                            _n_dead = int(_dead.sum().item())
+                            _n_evicted_readmass = _n_dead
+                            # Evicted slots restart their cold streak (fresh).
+                            self._evict_cold_streak = torch.where(
+                                _dead,
+                                torch.zeros_like(self._evict_cold_streak),
+                                self._evict_cold_streak,
+                            )
                         else:
-                            _dead = (self._recycle_usage == 0)     # [B, N] bool
-                        _n_dead = int(_dead.sum().item())
+                            # EXP-R1c: existing dead-slot judge — byte-for-byte
+                            # unchanged when slot_evict_mode == "off".
+                            #   "window"     → R1: zero selections in the last
+                            #                  `interval` chunks (window-scoped).
+                            #   "cumulative" → R1c: zero selections over the WHOLE
+                            #                  sample so far (sample-scoped, never
+                            #                  window-zeroed) — only ever recycle a
+                            #                  slot that has NEVER been selected,
+                            #                  so a long-range memory slot that is
+                            #                  merely temporarily silent is spared.
+                            if (
+                                self._dead_slot_criterion == "cumulative"
+                                and self._cum_usage is not None
+                            ):
+                                _dead = (self._cum_usage == 0)     # [B, N] bool
+                            else:
+                                _dead = (self._recycle_usage == 0)  # [B, N] bool
+                            _n_dead = int(_dead.sum().item())
                     if _n_dead > 0:
                         if self._dead_slot_reset_mode == "zero":
                             _content = torch.zeros_like(self.memory_bank.get())
@@ -1167,8 +1285,56 @@ class MemorySpaceLayer(nn.Module):
                         self._recycle_grace_remaining = self._dead_slot_grace_chunks
                         self._last_recycle_resets += 1
                     self._last_n_recycled = _n_dead
+                    self._last_n_evicted_readmass = _n_evicted_readmass
                     # Open a fresh window.
                     self._recycle_usage.zero_()
+                    # Arm B owns the recent-read window at the recycle boundary;
+                    # only zero it when Arm B is active so Arm A's independent
+                    # decay window is not perturbed by R1 recycling running
+                    # alongside (each arm manages its own window otherwise).
+                    if (
+                        self._slot_evict_mode == "readmass"
+                        and self._recent_read_mass is not None
+                    ):
+                        self._recent_read_mass.zero_()
+
+
+            # ---- v20 Arm A: soft read-decay (layer-0, no_grad) ----
+            # Independent of EXP-R1 recycling: guarded ONLY by
+            # slot_read_decay_rate>0 + writable bank. Every
+            # slot_read_decay_interval chunks, multiply each slot's VALUE by a
+            # factor in [min_keep, 1] driven by its recent read fraction — slots
+            # read recently keep their norm, unread slots fade SLOWLY (never hard
+            # deleted). Uses _recent_read_mass accumulated over the window so far
+            # (this chunk's read mass is added AFTER, at the read call), then
+            # zeroes the window. No-op when rate<=0 → P11 byte-identical.
+            _do_read_decay = (
+                self._layer_idx == 0
+                and self._slot_read_decay_rate > 0.0
+                and not self.memory_bank.frozen
+                and not cfg.disable_l1_inject
+                and self._recent_read_mass is not None
+            )
+            if _do_read_decay:
+                self._read_decay_chunk_count += 1
+                if (
+                    self._read_decay_chunk_count
+                    % self._slot_read_decay_interval == 0
+                ):
+                    with torch.no_grad():
+                        _rrm = self._recent_read_mass               # [B, N] float
+                        _rmax = _rrm.max(dim=1, keepdim=True).values.clamp(min=1e-8)
+                        _recent_read_frac = _rrm / _rmax            # [B, N] in [0,1]
+                        _decay = (
+                            1.0
+                            - self._slot_read_decay_rate
+                            * (1.0 - _recent_read_frac)
+                        ).clamp(
+                            min=self._slot_read_decay_min_keep, max=1.0
+                        )                                           # [B, N]
+                    self.memory_bank.decay_(_decay.unsqueeze(-1))
+                    with torch.no_grad():
+                        self._recent_read_mass.zero_()
 
             # ---- Cross-chunk slot-usage accumulation (layer-0, no-op compute) ----
             # Tally the top-k slot picks for batch[0] into a persistent
@@ -1400,6 +1566,14 @@ class MemorySpaceLayer(nn.Module):
                     self._last_usage_ent = _usage_ent
                     self._last_usage_var = _usage_var
                     self._last_slot_content_cos = _slot_content_cos
+                    # v20 (2026-06-12): fraction of slots EVER read (cum read-mass
+                    # > 0). -1 == not measured (no read accumulator allocated).
+                    _cum_read_mass_cov = -1.0
+                    if self._cum_read_mass is not None:
+                        _cum_read_mass_cov = (
+                            (self._cum_read_mass > 0).float().mean().item()
+                        )
+                    self._last_cum_read_mass_cov = _cum_read_mass_cov
                 print(
                     f"[QUERY_DIAG step={self.step_counter} fwd={self._fwd_count}]"
                     f" top1_sim_mean={_top1_sim_mean:.6f}"
@@ -1429,8 +1603,22 @@ class MemorySpaceLayer(nn.Module):
                     # off → no behaviour change to the line when disabled).
                     f" dead_slot_frac={self._last_dead_slot_frac:.4f}"
                     f" max_slot_select_count={self._last_max_slot_select_count:.1f}"
+                    # EXP-D (2026-06-12): read-path softmax mass landing on
+                    # never-written (dead) vs ever-written (live) slots, from the
+                    # MemoryCrossAttentionRead no-grad telemetry. -1 == not
+                    # measured (no memory_xattn, or dead_mask absent). Answers
+                    # "do the ~330 frozen slots still passively get read?".
+                    f" dead_slot_read_mass={(self.memory_xattn._last_dead_slot_read_mass if self.memory_xattn is not None else -1.0):.4f}"
+                    f" live_slot_read_mass={(self.memory_xattn._last_live_slot_read_mass if self.memory_xattn is not None else -1.0):.4f}"
                     f" recycle_resets={self._last_recycle_resets}"
-                    f" n_recycled={self._last_n_recycled}",
+                    f" n_recycled={self._last_n_recycled}"
+                    # v20 (2026-06-12): read-based slot lifecycle telemetry.
+                    # cum_read_mass_cov = frac of slots EVER read (correct
+                    # liveness; -1 == not measured). n_evicted_readmass = #slots
+                    # Arm B evicted at the last boundary (-1 == Arm B off / no
+                    # boundary this emission).
+                    f" cum_read_mass_cov={self._last_cum_read_mass_cov:.4f}"
+                    f" n_evicted_readmass={self._last_n_evicted_readmass}",
                     flush=True,
                 )
             # -----------------------------------------------------------
@@ -1747,9 +1935,45 @@ class MemorySpaceLayer(nn.Module):
                 xattn_slots = self.slot_to_hidden(slots)           # [B, N, d]
             else:
                 xattn_slots = slots
+            # EXP-D (2026-06-12): dead-slot read-mass diagnostic. _cum_usage is
+            # [B, cfg.num_slots] and only layer-0 tracks it; xattn_slots is the
+            # SAME cfg.num_slots in identical index order (memory_bank.get() →
+            # [B, N, slot_dim], global slots are the last indices WITHIN
+            # num_slots). So (_cum_usage == 0) aligns with the first-N read
+            # columns. Non-owner layers (_cum_usage is None) pass None → no-op.
+            _dead_mask = (
+                (self._cum_usage == 0)
+                if self._cum_usage is not None
+                else None
+            )
             memory_xattn_out = self.memory_xattn.read(
                 hidden_states, xattn_slots, xattn_slots,
+                dead_mask=_dead_mask,
             )                                                       # [B, T, d]
+            # v20 (2026-06-12): accumulate per-slot read-mass into the layer-0
+            # cumulative + windowed accumulators (no_grad telemetry; index order
+            # matches _cum_usage since xattn_slots is the SAME cfg.num_slots in
+            # identical order). Guarded for shape / None — never raises.
+            if (
+                self._layer_idx == 0
+                and self._cum_read_mass is not None
+                and getattr(self.memory_xattn, "_last_read_mass_per_slot", None)
+                is not None
+            ):
+                with torch.no_grad():
+                    _rm = self.memory_xattn._last_read_mass_per_slot
+                    if (
+                        _rm.dim() == 2
+                        and _rm.shape[0] == self._cum_read_mass.shape[0]
+                        and _rm.shape[1] == self._cum_read_mass.shape[1]
+                    ):
+                        _rm = _rm.to(
+                            device=self._cum_read_mass.device,
+                            dtype=self._cum_read_mass.dtype,
+                        )
+                        self._cum_read_mass += _rm
+                        if self._recent_read_mass is not None:
+                            self._recent_read_mass += _rm
 
         # FastMem (Gated Delta Rule, 2026-05-21): continuous fast-weight
         # contribution from ALL tokens.  Runs on post-attention bypass_h so it

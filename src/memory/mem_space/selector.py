@@ -1442,6 +1442,18 @@ class MemoryCrossAttentionRead(nn.Module):
         self._last_gate_mean: float = gate_init
         self._last_attn_entropy: float = 0.0
         self._last_sink_mass: float = 0.0
+        # dead/live slot read-mass telemetry (EXP-D, 2026-06-12): fraction of the
+        # read-path softmax mass landing on slots NEVER written/selected over the
+        # whole sample (dead) vs ever-written (live). Sentinel -1.0 == not measured
+        # (caller passed no dead_mask, or a shape mismatch fell back to no-op).
+        self._last_dead_slot_read_mass: float = -1.0
+        self._last_live_slot_read_mass: float = -1.0
+        # v20 (2026-06-12): per-slot read-mass vector [B, N] (the read-path
+        # softmax mass summed over heads + query-tokens, per slot). Detached
+        # telemetry consumed by layer-0 to accumulate _cum_read_mass /
+        # _recent_read_mass for the read-based slot lifecycle (Arm A decay +
+        # Arm B eviction). None when not measured (read not run / failure).
+        self._last_read_mass_per_slot: Optional[torch.Tensor] = None
 
     def _repeat_kv(self, x: torch.Tensor) -> torch.Tensor:
         """Repeat K/V heads to match Q heads for GQA. x: [B, n_kv_heads, S, D]."""
@@ -1459,6 +1471,7 @@ class MemoryCrossAttentionRead(nn.Module):
         hidden_states: torch.Tensor,
         slot_keys: torch.Tensor,
         slot_values: torch.Tensor,
+        dead_mask: Optional[torch.Tensor] = None,
     ) -> torch.Tensor:
         """Gated memory cross-attention read.
 
@@ -1466,6 +1479,10 @@ class MemoryCrossAttentionRead(nn.Module):
             hidden_states: [B, T, d_model] live-token queries.
             slot_keys:   [B, N, d_model] memory slot key source (projected slots).
             slot_values: [B, N, d_model] memory slot value source.
+            dead_mask:   Optional [B, N] bool, True == slot NEVER written/selected
+                over the whole sample. When provided, the no-grad telemetry block
+                records the fraction of read-path softmax mass landing on dead vs
+                live slots. Purely diagnostic — does NOT affect the forward output.
 
         Returns:
             read_out: [B, T, d_model] gated memory contribution to add to the
@@ -1536,6 +1553,51 @@ class MemoryCrossAttentionRead(nn.Module):
                 self._last_sink_mass = attn_weights[..., -1].float().mean().item()
             else:
                 self._last_sink_mass = 0.0
+            # dead/live slot read-mass (EXP-D, 2026-06-12). attn_weights is
+            # [B,H,T,N+1] (or [B,H,T,N] when sink disabled); the first N columns
+            # are the N slots in slot-index order, aligned with dead_mask [B,N].
+            # For each (batch, head, query-token) sum the softmax mass over the
+            # never-written slots, then mean over all of them. Fully guarded: a
+            # shape mismatch or any failure falls back to the -1.0 sentinel and
+            # can never raise or perturb the forward.
+            if dead_mask is not None:
+                try:
+                    aw = attn_weights[..., :N].float()              # [B,H,T,N]
+                    dm = dead_mask
+                    if (
+                        dm.dim() == 2
+                        and dm.shape[0] == aw.shape[0]
+                        and dm.shape[1] == aw.shape[-1]
+                    ):
+                        dm = dm.to(torch.bool)
+                        dead_f = dm.float()[:, None, None, :]       # [B,1,1,N]
+                        live_f = (~dm).float()[:, None, None, :]
+                        self._last_dead_slot_read_mass = (
+                            (aw * dead_f).sum(dim=-1).mean().item()
+                        )
+                        self._last_live_slot_read_mass = (
+                            (aw * live_f).sum(dim=-1).mean().item()
+                        )
+                    else:
+                        self._last_dead_slot_read_mass = -1.0
+                        self._last_live_slot_read_mass = -1.0
+                except Exception:
+                    self._last_dead_slot_read_mass = -1.0
+                    self._last_live_slot_read_mass = -1.0
+            else:
+                self._last_dead_slot_read_mass = -1.0
+                self._last_live_slot_read_mass = -1.0
+            # v20 (2026-06-12): per-slot read-mass vector [B, N] for the
+            # read-based slot lifecycle. Sum the first-N softmax columns over
+            # heads (H) and query-tokens (T) → "how much mass each slot drew
+            # this read". Detached telemetry; guarded so it can never raise or
+            # change read_out. Left None on failure / when no slots present.
+            try:
+                self._last_read_mass_per_slot = (
+                    attn_weights[..., :N].float().sum(dim=(1, 2)).detach()
+                )                                                  # [B, N]
+            except Exception:
+                self._last_read_mass_per_slot = None
 
         return read_out
 

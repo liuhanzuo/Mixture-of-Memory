@@ -516,6 +516,45 @@ class MemorySpaceConfig:
     soft_write_weight: float = 0.0
     soft_write_content: str = "slot_query"
 
+    # v20 (2026-06-12): read-based slot lifecycle. Two INDEPENDENT arms, both
+    # default OFF → byte-identical to P11. Motivation (versions/
+    # v20_read_based_slot_lifecycle.md): the write-based dead-slot judge
+    # (_cum_usage==0) is the WRONG liveness signal — the read path puts 93-95%
+    # of its mass on never-written slots and is uniform over written vs unwritten
+    # (read≠write). The correct liveness measure is per-slot READ-mass. A new
+    # always-on layer-0 telemetry accumulator (_cum_read_mass / _recent_read_mass)
+    # feeds the two arms below; with both arms off it is pure telemetry that
+    # never touches the slots.
+    #
+    #   Arm A — soft read-decay (slot_read_decay_rate R, default 0 = off):
+    #     every `slot_read_decay_interval` chunks, multiply each slot's VALUE by
+    #       decay_i = clamp(1 - R·(1 - recent_read_frac_i), min_keep, 1.0)
+    #     where recent_read_frac_i = the slot's recent read mass / max over slots.
+    #     Slots read recently keep their norm; unread slots fade SLOWLY toward
+    #     zero (never hard-deleted — a later read can still pull a partially
+    #     decayed slot, and a future write revives it). `min_keep` bounds how far
+    #     one interval can decay a slot so an unlucky gap can't zero a "password"
+    #     slot in one step.
+    slot_read_decay_rate: float = 0.0
+    slot_read_decay_interval: int = 8
+    slot_read_decay_min_keep: float = 0.5
+    #
+    #   Arm B — explicit eviction + read-mass protection (slot_evict_mode, default
+    #     "off"): at each recycle boundary (reuses the dead_slot_reset_interval
+    #     plumbing), evict the slots with the LOWEST cumulative read-mass that are
+    #     ALSO cold (recent read mass <= slot_evict_floor AND zero recent writes)
+    #     and have stayed cold for >= slot_evict_protect_chunks CONSECUTIVE
+    #     boundaries (a per-slot cold-streak counter, reset whenever the slot is
+    #     read/written). Evict at most ceil(slot_evict_max_frac · num_slots) per
+    #     boundary. Evicted slots are re-initialised via the existing
+    #     recycle_reset + grace force_write path (fresh strided current-chunk
+    #     content). When "off", the existing dead_slot_criterion path runs
+    #     byte-for-byte unchanged.
+    slot_evict_mode: str = "off"            # {"off", "readmass"}
+    slot_evict_max_frac: float = 0.1
+    slot_evict_floor: float = 0.0
+    slot_evict_protect_chunks: int = 2
+
     def __post_init__(self) -> None:
         if self.num_slots <= 0:
             raise ValueError(f"num_slots must be > 0, got {self.num_slots}")
@@ -593,4 +632,40 @@ class MemorySpaceConfig:
             raise ValueError(
                 "soft_write_content must be one of {'slot_query'}, got "
                 f"{self.soft_write_content!r}"
+            )
+        # v20 read-based slot lifecycle.
+        if self.slot_read_decay_rate < 0.0:
+            raise ValueError(
+                "slot_read_decay_rate must be >= 0 (0 = disabled), got "
+                f"{self.slot_read_decay_rate}"
+            )
+        if self.slot_read_decay_interval <= 0:
+            raise ValueError(
+                "slot_read_decay_interval must be > 0, got "
+                f"{self.slot_read_decay_interval}"
+            )
+        if not 0.0 <= self.slot_read_decay_min_keep <= 1.0:
+            raise ValueError(
+                "slot_read_decay_min_keep must be in [0, 1], got "
+                f"{self.slot_read_decay_min_keep}"
+            )
+        if self.slot_evict_mode not in {"off", "readmass"}:
+            raise ValueError(
+                "slot_evict_mode must be one of {'off', 'readmass'}, got "
+                f"{self.slot_evict_mode!r}"
+            )
+        if not 0.0 <= self.slot_evict_max_frac <= 1.0:
+            raise ValueError(
+                "slot_evict_max_frac must be in [0, 1], got "
+                f"{self.slot_evict_max_frac}"
+            )
+        if self.slot_evict_floor < 0.0:
+            raise ValueError(
+                "slot_evict_floor must be >= 0, got "
+                f"{self.slot_evict_floor}"
+            )
+        if self.slot_evict_protect_chunks < 0:
+            raise ValueError(
+                "slot_evict_protect_chunks must be >= 0, got "
+                f"{self.slot_evict_protect_chunks}"
             )
