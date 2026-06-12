@@ -10,6 +10,40 @@ back to their original location with `git mv`.
 
 ## Contents
 
+### 2026-06-12 — `legacy/src_dead_subsystems/` — abandoned `src/` subsystems
+
+Archived because they are NOT reachable from the live `mem_space` training path
+(entry `scripts/train_mem_space_dolmino_cpt.py` → only `src/memory/mem_space/*`
++ `src/eval/*` + `src/utils/*`). They imported only each other and dead driver
+scripts. Reason: abandoned L1/L2/L3 agent-memory stack + MAG + slot/RMT-slot +
+Activation-Beacon / attention-matching baselines — superseded by `mem_space`.
+
+- `memory/mag/` — MAG (memory-augmented gate) EMA memory, abandoned.
+- `memory/slot_memory/`, `memory/slot/`, `memory/rmt_slot/` — slot / RMT-slot
+  compressors, abandoned (generation degradation).
+- `memory/l1/`, `memory/l2/`, `memory/l3/` — old three-tier agent-memory stack.
+- `memory/scheduler.py`, `memory/state.py` — orchestration/state for that stack.
+- `agents/`, `tasks/`, `training/` — agent/task/training glue for the L1/L2/L3
+  stack (turn_processor, memory_agent, session_runner, the synthetic/profile/
+  long-horizon tasks, L2-aggregator / L3-summarizer / gate trainers).
+- `memory/mem_space_baselines/{attention_matching,beacon,beacon_patch}.py` —
+  abandoned baselines that lived inside the otherwise-live `mem_space/` dir;
+  never re-exported by `mem_space/__init__.py` nor constructed by the trainer.
+- `drivers/` — their dead launch scripts: `train_slot_memory.py`,
+  `train_rmt_slot.py`, `train_beacon.py`, `train_l2.py`, `train_l3.py`,
+  `build_l2_from_messages.py`, `build_l3_from_l2.py`, `eval_slot_memory.py`,
+  `eval_attention_matching.py`.
+
+Also: `src/memory/__init__.py` was reduced to a stub (its lazy `__getattr__`
+re-exported the now-archived L1/L2/L3 + scheduler/state; no live code used it).
+
+NOT archived (kept live / excluded for safety):
+- `src/backbone/swa_model.py` — still eagerly imported by `src/backbone/__init__.py`
+  and `src/backbone/full_attention_model.py` (kept LIVE). Its `from src.memory.mag`
+  import is guarded by `try/except ImportError → MAGGate=None`, so MAG removal
+  does not break it. Flagged for separate manual review of the whole `backbone/`
+  package (not on the mem_space live path either, but out of this task's scope).
+
 ### `legacy/memory/sparse_memory/` — Sparse Memory (MAG-EMA), abandoned
 - EMA-based memory bank with 128/256 slots
 - Attention path: `attention.py`, `memory_bank.py`, `model.py`

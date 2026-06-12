@@ -210,15 +210,20 @@ class BeaconLayer(nn.Module):
             (beacon_k, beacon_v) each [B, n_kv_heads, n_beacon, d_head]
         """
         B, nb, D = beacon_embeds.shape
+        target_dtype = interval_k.dtype
+        beacon_embeds = beacon_embeds.to(target_dtype)
 
         # Beacon Q from beacon embeddings via beacon-specific projection
+        # beacon_proj is float32 (trainable), inputs are bf16 from base model.
+        # Cast input to float32 for projection, then cast output to target_dtype.
         beacon_normed = self.base_layer.input_layernorm(beacon_embeds)
-        bq = self.beacon_proj.q_proj(beacon_normed)
+        beacon_normed_f32 = beacon_normed.float()
+        bq = self.beacon_proj.q_proj(beacon_normed_f32).to(target_dtype)
         bq = bq.view(B, nb, self.n_heads, self.d_head).transpose(1, 2)
 
         # Beacon K/V (these become the compressed representation stored)
-        bk = self.beacon_proj.k_proj(beacon_normed)
-        bv = self.beacon_proj.v_proj(beacon_normed)
+        bk = self.beacon_proj.k_proj(beacon_normed_f32).to(target_dtype)
+        bv = self.beacon_proj.v_proj(beacon_normed_f32).to(target_dtype)
         bk = bk.view(B, nb, self.n_kv_heads, self.d_head).transpose(1, 2)
         bv = bv.view(B, nb, self.n_kv_heads, self.d_head).transpose(1, 2)
 
@@ -240,7 +245,7 @@ class BeaconLayer(nn.Module):
         # Aggregate interval values into beacon
         beacon_agg = torch.matmul(weights, iv)  # [B, n_heads, nb, d_head]
         beacon_agg = beacon_agg.transpose(1, 2).reshape(B, nb, -1)
-        beacon_agg = self.beacon_proj.o_proj(beacon_agg)
+        beacon_agg = self.beacon_proj.o_proj(beacon_agg.float()).to(target_dtype)
 
         # Add residual + MLP for beacon tokens
         beacon_out = beacon_embeds + beacon_agg
@@ -331,7 +336,7 @@ class BeaconModel(nn.Module):
             mean_embed = embed_weight.mean(dim=0)
             self.beacon_embedding.data.copy_(
                 mean_embed.unsqueeze(0).expand(n_beacon, -1)
-                + torch.randn(n_beacon, self.d_model) * 0.01
+                + torch.randn(n_beacon, self.d_model, device=embed_weight.device) * 0.01
             )
 
     def get_trainable_params(self) -> list:
