@@ -90,6 +90,10 @@ from src.memory.mem_space.babilong_dataset import (  # noqa: E402
     BABILongTrainDataset,
     babilong_collate_fn,
 )
+from src.memory.mem_space.niah_chunked_dataset import (  # noqa: E402
+    NIAHChunkedDataset,
+    niah_chunked_collate_fn,
+)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -877,6 +881,13 @@ def parse_args() -> argparse.Namespace:
                         "(roughly ×window).")
     p.add_argument("--batch_size", type=int, default=1,
                    help="Per-rank batch size (1 for Dolmino, BABILong is always 1).")
+    p.add_argument("--last_chunk_loss_only", action="store_true",
+                   help="HARDER objective (2026-06-13): stream context chunks "
+                        "no_grad into memory, compute LM loss ONLY on the target "
+                        "chunk (via dolmino_train_step). Forces the target's "
+                        "prediction to rely on the memory bank for prior context "
+                        "instead of local causal attn. Default off = tbptt "
+                        "(every chunk gets gradient, easy, memory barely needed).")
     p.add_argument("--swa_train_chunks", type=int, default=0,
                    help="Cross-chunk SWA TRAIN window W (D2b, 2026-06-09). "
                         "Default 0 = current behavior, bit-identical. W>0: the "
@@ -894,6 +905,30 @@ def parse_args() -> argparse.Namespace:
                         "--swa_eval_chunks (D2a). Falls back to W0 when there are "
                         "fewer than W context chunks, or under doc_reset "
                         "(reset_flags) to avoid spanning a document boundary.")
+
+    # T2 chunked associative-recall mix (2026-06-14, readout-pivot)
+    p.add_argument("--t2_recall_mix_fraction", type=float, default=0.0,
+                   help="Probability of sampling a T2 chunked associative-recall "
+                        "step (NIAHChunkedDataset) vs a Dolmino step. Default 0 "
+                        "= no T2 (bit-identical to prior behaviour). T2 samples "
+                        "go through dolmino_train_step with an answer_mask so LM "
+                        "loss falls ONLY on the answer digits — forcing precise "
+                        "memory readout. Mutually composed with "
+                        "--babilong_mix_fraction (BABILong checked first).")
+    p.add_argument("--t2_num_keys", type=int, default=1,
+                   help="Number of (name->code) mappings written into the T2 "
+                        "context. 1 = single needle; >1 adds distractor keys "
+                        "(T2b multi-key ablation).")
+    p.add_argument("--t2_gap_tokens", type=int, default=3584,
+                   help="T2 needle->query token distance, held CONSTANT across "
+                        "chunk_sizes for fair comparison. n_ctx is derived as "
+                        "round(t2_gap_tokens / chunk_size) (default 3584 = 7*512).")
+    p.add_argument("--t2_background_data", type=str,
+                   default="data/pg19_chunks_llama3.npy",
+                   help="Pre-tokenised [N, L] natural-text npy used to fill T2 "
+                        "non-needle context chunks (Llama-3 tokens).")
+    p.add_argument("--t2_background_skip", type=int, default=0,
+                   help="Skip the first N background chunks (train/eval split).")
 
     # Logging / saving / eval
     p.add_argument("--log_interval", type=int, default=10)
@@ -940,6 +975,21 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--use_delta_rule_writeback", action="store_true")
     p.add_argument("--normalize_readout", action="store_true")
     p.add_argument("--readout_norm_scale", type=float, default=1.0)
+    # Dead-slot-binding fix: pure learnable per-slot routing key (independent of
+    # slot content). Default off → content-based routing (byte-identical).
+    p.add_argument("--independent_slot_key", action="store_true")
+    # DeltaNet-style erase-then-write associative update on the gated writeback.
+    # Default off → existing EMA / delta-rule write (byte-identical).
+    p.add_argument("--delta_erase_write", action="store_true")
+    # L2 token-compressed KV memory (Phase 11). Default off → byte-identical to
+    # the L1(+L3) stack. When --use_l2 is set, a shared L2Compressor is
+    # instantiated in patch.py (gated on config.use_l2) producing token-
+    # compressed KV latents for the next chunk. Defaults mirror MemorySpaceConfig.
+    p.add_argument("--use_l2", action="store_true")
+    p.add_argument("--l2_compress_ratio", type=int, default=16)
+    p.add_argument("--l2_d_c", type=int, default=512)
+    p.add_argument("--l2_d_h_rope", type=int, default=64)
+    p.add_argument("--l2_init_scale", type=float, default=0.001)
     # EXP-R1 (2026-06-11): two-stage dead-slot recycling. Default off
     # (interval=0) → byte-identical to P11. See config.py for the mechanism.
     p.add_argument("--dead_slot_reset_interval", type=int, default=0,
@@ -1215,6 +1265,13 @@ def build_model(args, device, dtype) -> torch.nn.Module:
         use_delta_rule_writeback=args.use_delta_rule_writeback,
         normalize_readout=args.normalize_readout,
         readout_norm_scale=args.readout_norm_scale,
+        independent_slot_key=args.independent_slot_key,
+        delta_erase_write=args.delta_erase_write,
+        use_l2=args.use_l2,
+        l2_compress_ratio=args.l2_compress_ratio,
+        l2_d_c=args.l2_d_c,
+        l2_d_h_rope=args.l2_d_h_rope,
+        l2_init_scale=args.l2_init_scale,
         selector_temperature=args.selector_temperature,
         key_repulsion_weight=args.key_repulsion_weight,
         key_repulsion_threshold=args.key_repulsion_threshold,
@@ -1419,16 +1476,35 @@ def dolmino_train_step(
     context_chunks: List[torch.Tensor],
     target_ids: torch.Tensor,
     device: torch.device,
-) -> Tuple[torch.Tensor, torch.Tensor]:
-    """Execute one Dolmino CPT step:
+    grad_accum: int = 1,
+    answer_mask: Optional[torch.Tensor] = None,
+) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+    """HARDER objective (2026-06-13, last_chunk_loss_only): force memory to work.
     1. Reset banks
-    2. Stream context chunks through model (no grad) → memory accumulates
+    2. Stream context chunks through model (NO GRAD) → memory accumulates
     3. Detach banks (break gradient graph)
-    4. Forward target chunk with grad → compute NTP loss
+    4. Forward target chunk with grad → NTP loss ONLY on target chunk
 
-    Returns: (lm_loss, aux_loss)
+    Unlike dolmino_train_step_tbptt (every chunk predicts its own next-token via
+    local causal attn → memory barely needed), here the target chunk's prediction
+    can ONLY draw on prior context through the memory bank (context ran no_grad,
+    not in the target's attention window). This is the BABILong-style streaming
+    objective but on GENERIC dolmino text (no QA → no eval contamination), to
+    pressure the memory channel to actually carry long-range info.
+
+    answer_mask (T2, 2026-06-14): optional [chunk_size] (or [B, chunk_size]) bool
+    tensor. When provided (NIAHChunkedDataset associative-recall samples), LM loss
+    is restricted to ONLY the positions where answer_mask is True (the answer digit
+    tokens) — every other target position is set to -100. This sharpens the
+    "precise readout" pressure: the answer can ONLY be recovered by addressing the
+    exact memory slot that encoded the needle. When None (default), behaviour is
+    BIT-IDENTICAL to the original full-target-chunk NTP loss.
+
+    Returns: (lm_loss, aux_loss, route_aux=0, l3recon=0) — scaled by grad_accum.
+    Backward is done HERE (mirrors tbptt) so the caller just reads the losses.
     """
     _reset_banks(model)
+    scale = float(grad_accum)
 
     # Stream context chunks through memory (no gradient)
     with torch.no_grad():
@@ -1441,12 +1517,25 @@ def dolmino_train_step(
 
     # Forward target chunk with gradient
     target_input = _ensure_batched(target_ids, device)  # [B, chunk_size]
-    out = model(input_ids=target_input, labels=target_input, use_cache=False)
+    if answer_mask is None:
+        # Default path: full-target NTP loss (bit-identical to original).
+        labels = target_input
+    else:
+        # T2 path: keep labels only on answer-digit positions, -100 elsewhere.
+        # HF CausalLM shifts internally (labels[i] supervises the logits that
+        # predict token i), so we place the true token id at each answer
+        # position and mask everything else — matching niah_dataset.py's scheme.
+        mask = _ensure_batched(answer_mask, device).to(torch.bool)  # [B, chunk_size]
+        labels = torch.where(
+            mask, target_input, torch.full_like(target_input, -100)
+        )
+    out = model(input_ids=target_input, labels=labels, use_cache=False)
 
-    lm_loss = out.loss
-    aux_loss = _collect_aux_loss(model, device)
-
-    return lm_loss, aux_loss
+    lm_loss = out.loss / scale
+    aux_loss = _collect_aux_loss(model, device) / scale
+    _zero = torch.zeros((), device=device)
+    (lm_loss + aux_loss).backward()
+    return lm_loss.detach(), aux_loss.detach(), _zero, _zero
 
 
 def dolmino_train_step_tbptt(
@@ -1916,6 +2005,13 @@ def _save_adapter(model, args, step: int, final: bool = False) -> None:
             "use_delta_rule_writeback": args.use_delta_rule_writeback,
             "normalize_readout": args.normalize_readout,
             "readout_norm_scale": args.readout_norm_scale,
+            "independent_slot_key": args.independent_slot_key,
+            "delta_erase_write": args.delta_erase_write,
+            "use_l2": args.use_l2,
+            "l2_compress_ratio": args.l2_compress_ratio,
+            "l2_d_c": args.l2_d_c,
+            "l2_d_h_rope": args.l2_d_h_rope,
+            "l2_init_scale": args.l2_init_scale,
             "selector_temperature": args.selector_temperature,
             "key_repulsion_weight": args.key_repulsion_weight,
             "key_repulsion_threshold": args.key_repulsion_threshold,
@@ -2147,6 +2243,41 @@ def main() -> None:
         )
         babilong_iter = iter(babilong_loader)
 
+    # --- T2 chunked associative-recall dataset (for mix) --- #
+    t2_iter = None
+    t2_loader = None
+    if args.t2_recall_mix_fraction > 0.0:
+        import numpy as _np
+        if not os.path.isfile(args.t2_background_data):
+            raise FileNotFoundError(
+                f"--t2_background_data not found: {args.t2_background_data}"
+            )
+        t2_bg = _np.load(args.t2_background_data, mmap_mode="r")  # [N, L]
+        t2_ds = NIAHChunkedDataset(
+            background_data=t2_bg,
+            chunk_size=args.chunk_size,
+            gap_tokens=args.t2_gap_tokens,
+            tokenizer=tokenizer,
+            num_keys=args.t2_num_keys,
+            seed=args.seed + rank,
+            background_skip=args.t2_background_skip,
+        )
+        if is_main(rank):
+            logger.info(
+                "T2 recall mix: frac=%.2f num_keys=%d gap_tokens=%d "
+                "chunk_size=%d -> n_ctx=%d bg=%s",
+                args.t2_recall_mix_fraction, args.t2_num_keys,
+                args.t2_gap_tokens, args.chunk_size, t2_ds.n_ctx,
+                args.t2_background_data,
+            )
+        t2_loader = DataLoader(
+            t2_ds,
+            batch_size=(args.batch_size if args.batch_size > 1 else None),
+            collate_fn=(niah_chunked_collate_fn if args.batch_size > 1 else None),
+            num_workers=args.num_workers, pin_memory=False,
+        )
+        t2_iter = iter(t2_loader)
+
     mix_rng = random.Random(args.seed + rank)
 
     # --- optimizer + LR scheduler --- #
@@ -2197,6 +2328,7 @@ def main() -> None:
     micro_step = 0
     n_dolmino = 0
     n_babilong = 0
+    n_t2 = 0
     n_nonfinite = 0
     # --- loss-spike skip state (DDP-consistent: keyed off the all_reduced
     # average lm_loss, identical on every rank) ---
@@ -2237,9 +2369,13 @@ def main() -> None:
             ) else nullcontext()
 
             with sync_ctx:
-                # Decide: Dolmino or BABILong
+                # Decide step type. BABILong checked first, then T2 recall, then
+                # Dolmino. Each draws an independent Bernoulli so the fractions
+                # compose (P(T2) is over the remaining mass after BABILong).
                 use_babilong = (babilong_iter is not None and
                                 mix_rng.random() < args.babilong_mix_fraction)
+                use_t2 = (not use_babilong and t2_iter is not None and
+                          mix_rng.random() < args.t2_recall_mix_fraction)
 
                 if use_babilong:
                     # BABILong step
@@ -2258,6 +2394,26 @@ def main() -> None:
                         l3_recon_token_weight=args.l3_recon_token_weight,
                     )
                     n_babilong += 1
+                elif use_t2:
+                    # T2 chunked associative-recall step: always the HARDER
+                    # objective (dolmino_train_step) with an answer_mask so LM
+                    # loss falls ONLY on the answer digits. backward() is done
+                    # inside dolmino_train_step (no outer backward needed).
+                    try:
+                        sample = next(t2_iter)
+                    except StopIteration:
+                        t2_iter = iter(t2_loader)
+                        sample = next(t2_iter)
+
+                    context_chunks = sample["context_chunks"]
+                    target_ids = sample["target_ids"]
+                    answer_mask = sample["answer_mask"]
+
+                    lm_loss, aux_loss, route_aux, l3recon = dolmino_train_step(
+                        model, context_chunks, target_ids, device,
+                        grad_accum=grad_accum, answer_mask=answer_mask,
+                    )
+                    n_t2 += 1
                 else:
                     # Dolmino step
                     try:
@@ -2270,13 +2426,20 @@ def main() -> None:
                     target_ids = sample["target_ids"]
                     reset_flags = sample.get("reset_flags", None)
 
-                    lm_loss, aux_loss, route_aux, l3recon = dolmino_train_step_tbptt(
-                        model, context_chunks, target_ids, device,
-                        grad_accum=grad_accum,
-                        route_aux_weight=args.route_aux_weight,
-                        reset_flags=reset_flags,
-                        l3_recon_token_weight=args.l3_recon_token_weight,
-                        swa_train_chunks=args.swa_train_chunks,
+                    lm_loss, aux_loss, route_aux, l3recon = (
+                        dolmino_train_step(
+                            model, context_chunks, target_ids, device,
+                            grad_accum=grad_accum,
+                        )
+                        if args.last_chunk_loss_only
+                        else dolmino_train_step_tbptt(
+                            model, context_chunks, target_ids, device,
+                            grad_accum=grad_accum,
+                            route_aux_weight=args.route_aux_weight,
+                            reset_flags=reset_flags,
+                            l3_recon_token_weight=args.l3_recon_token_weight,
+                            swa_train_chunks=args.swa_train_chunks,
+                        )
                     )
                     n_dolmino += 1
 
@@ -2434,6 +2597,7 @@ def main() -> None:
                     "train/n_nonfinite": n_nonfinite,
                     "train/dolmino_count": n_dolmino,
                     "train/babilong_count": n_babilong,
+                    "train/t2_count": n_t2,
                     "memory/top1_sim": _collect_top1_sim(model),
                 }
                 _log_dict.update(_collect_mem_diag(model))
