@@ -195,8 +195,14 @@ class NIAHChunkedDataset(torch.utils.data.IterableDataset):
         cs = self.chunk_size
 
         # 1. Sample num_keys distinct (name -> code) mappings.
+        # codes are stored SPACE-SEPARATED ("8 0 4 0 2") so the Llama-3 BPE
+        # tokenizer emits ONE token per digit (5 independent answer tokens),
+        # rather than merging "80402" into ~2 BPE tokens. This gives a sharper
+        # precise-readout signal: each of the 5 digits is a separate retrieval
+        # target and the model cannot shortcut by predicting a later digit from
+        # an earlier one within a merged token.
         names: list[str] = []
-        codes: list[str] = []
+        codes: list[str] = []          # spaced form, e.g. "8 0 4 0 2"
         seen: set[str] = set()
         while len(names) < self.num_keys:
             nm = "".join(rng.choices(string.ascii_uppercase, k=6))
@@ -204,11 +210,13 @@ class NIAHChunkedDataset(torch.utils.data.IterableDataset):
                 continue
             seen.add(nm)
             names.append(nm)
-            codes.append("".join(rng.choices(string.digits, k=5)))
+            codes.append(" ".join(rng.choices(string.digits, k=5)))
 
         query_k = 0  # the FIRST mapping is the queried one (placed at chunk0/offset0)
 
         # 2. Tokenise needles, question, answer.
+        #    needle and query use the SAME spaced-code form so the written and
+        #    read-out token shapes match exactly.
         needle_ids_list: list[list[int]] = []
         for nm, cd in zip(names, codes):
             sent = f"MEMORIZE: The secret code for agent {nm} is {cd}. END_MEMORIZE"
@@ -216,11 +224,13 @@ class NIAHChunkedDataset(torch.utils.data.IterableDataset):
                 self.tokenizer.encode(" " + sent, add_special_tokens=False)
             )
         question_ids: list[int] = self.tokenizer.encode(
-            f"The secret code for agent {names[query_k]} is ",
+            f"The secret code for agent {names[query_k]} is",
             add_special_tokens=False,
         )
+        # Encode the answer as " 8 0 4 0 2" (leading space binds to the first
+        # digit token, so each digit -> its own token; 5 answer tokens total).
         answer_ids: list[int] = self.tokenizer.encode(
-            codes[query_k], add_special_tokens=False
+            " " + codes[query_k], add_special_tokens=False
         )
 
         # 3. Build context chunks filled with background text.
@@ -258,12 +268,18 @@ class NIAHChunkedDataset(torch.utils.data.IterableDataset):
         else:
             target_tokens = target_raw[:cs]
 
-        # 6. answer_mask: True only on the answer digit token positions.
+        # 6. answer_mask: True ONLY on the 5 digit-token positions.
+        # The spaced answer " 6 7 0 0 8" tokenizes to [' ','6',' ','7',...] —
+        # digit tokens interleaved with space tokens. We mask only the digit
+        # tokens (skip the spaces) so the LM loss falls purely on the 5 retrieval
+        # targets and is not diluted by trivial space-token prediction.
         answer_mask = [False] * cs
         ans_start = len(question_ids)
-        for j in range(len(answer_ids)):
+        for j, tid in enumerate(answer_ids):
             p = ans_start + j
-            if p < cs:
+            if p >= cs:
+                break
+            if self.tokenizer.decode([tid]).strip().isdigit():
                 answer_mask[p] = True
 
         sample = {
