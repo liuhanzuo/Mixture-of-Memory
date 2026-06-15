@@ -1586,6 +1586,62 @@ def distill_hidden_cosine(
     return per_layer.sum()  # sum over layers
 
 
+def assert_distill_cache_consistent(cache_dir, train_chunk_size, train_n_ctx,
+                                    train_layers):
+    """Guard against silently training on a mis-sliced teacher cache (v21).
+
+    The teacher cache is keyed by stable (doc_idx, group_pos) windows of length
+    (n_ctx+1)*chunk_size and stores per-layer hidden states for specific decoder
+    layers. If the training config does not match how the cache was built, the
+    (doc_idx, group_pos) keys point at DIFFERENT token windows and/or the hidden
+    layers misalign -> the teacher signal gets 张冠李戴 (mismatched) and we
+    silently train garbage. This reads <cache_dir>/meta.json (written by
+    build_distill_cache.py) and raises RuntimeError on any mismatch.
+
+    Args:
+        cache_dir: --distill_cache_dir.
+        train_chunk_size: args.chunk_size.
+        train_n_ctx: curriculum.get_n_ctx(0) (starting n_ctx; dolmino is locked).
+        train_layers: parsed list[int] of --distill_layers.
+
+    Returns the loaded meta dict on success.
+    """
+    meta_path = os.path.join(cache_dir, "meta.json")
+    if not os.path.exists(meta_path):
+        raise RuntimeError(
+            f"[distill] cache meta.json not found at {meta_path}. The distill "
+            "cache must be built first with scripts/build_distill_cache.py "
+            "(which writes meta.json). Run e.g. "
+            "`python scripts/build_distill_cache.py --dolmino_path ... "
+            "--chunk_size {cs} --n_ctx {n} --distill_layers {l} "
+            "--out_dir {d}`.".format(
+                cs=train_chunk_size, n=train_n_ctx,
+                l=",".join(str(x) for x in train_layers), d=cache_dir))
+    with open(meta_path) as f:
+        meta = json.load(f)
+    meta_n_ctx = int(meta.get("n_ctx"))
+    meta_chunk = int(meta.get("chunk_size"))
+    meta_layers = [int(x) for x in meta.get("distill_layers", [])]
+    train_layers = [int(x) for x in train_layers]
+    if (meta_chunk != int(train_chunk_size)
+            or meta_n_ctx != int(train_n_ctx)
+            or meta_layers != train_layers):
+        raise RuntimeError(
+            "[distill] cache/training config MISMATCH. The teacher cache at "
+            f"{cache_dir} was built with n_ctx={meta_n_ctx} "
+            f"chunk_size={meta_chunk} distill_layers={meta_layers}, but this "
+            f"training run uses n_ctx={int(train_n_ctx)} "
+            f"chunk_size={int(train_chunk_size)} distill_layers={train_layers}. "
+            "The cache is keyed by (doc_idx, group_pos) over windows of length "
+            "(n_ctx+1)*chunk_size and stores per-layer hidden states, so a "
+            "group-window / layer mismatch makes the teacher signal 张冠李戴 "
+            "(misaligned) and silently trains garbage. Rebuild the cache with "
+            "matching params (build_distill_cache.py) or change the training "
+            "config to match the cache."
+        )
+    return meta
+
+
 # --------------------------------------------------------------------------- #
 # Dolmino training step
 # --------------------------------------------------------------------------- #
@@ -2536,14 +2592,28 @@ def main() -> None:
     # and the dolmino step takes the byte-identical original path.
     distill_cfg = None
     if args.distill_cache_dir and (args.distill_logits or args.distill_hidden):
+        _distill_layers_parsed = [int(x) for x in args.distill_layers.split(",")
+                                  if x.strip() != ""]
+        # --- consistency guard (v21): refuse to start if the teacher cache was
+        # built with a different n_ctx/chunk_size/distill_layers than this run
+        # uses (else the (doc_idx, group_pos) keys张冠李戴). See
+        # assert_distill_cache_consistent for details. ---
+        _meta = assert_distill_cache_consistent(
+            args.distill_cache_dir, args.chunk_size, curriculum.get_n_ctx(0),
+            _distill_layers_parsed)
+        if is_main(rank):
+            logger.info(
+                "[distill] cache meta OK: n_ctx=%d chunk_size=%d layers=%s "
+                "(matches training config)",
+                int(_meta["n_ctx"]), int(_meta["chunk_size"]),
+                [int(x) for x in _meta["distill_layers"]])
         distill_cfg = {
             "distill_logits": args.distill_logits,
             "distill_hidden": args.distill_hidden,
             "distill_lambda": args.distill_lambda,
             "distill_weight": args.distill_weight,
             "distill_hidden_beta": args.distill_hidden_beta,
-            "distill_layers": [int(x) for x in args.distill_layers.split(",")
-                               if x.strip() != ""],
+            "distill_layers": _distill_layers_parsed,
         }
         if is_main(rank):
             logger.info("[distill] ENABLED cache_dir=%s logits=%s hidden=%s "

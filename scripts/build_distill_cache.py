@@ -96,6 +96,26 @@ def main():
     layers = [int(x) for x in args.distill_layers.split(",") if x.strip() != ""]
     os.makedirs(args.out_dir, exist_ok=True)
 
+    # Drop a meta.json describing exactly how this cache was sliced so the
+    # training script can assert n_ctx / chunk_size / distill_layers match.
+    # The group window length the cache is keyed by = (n_ctx+1)*chunk_size; if
+    # training uses a different n_ctx/chunk_size the (doc_idx, group_pos) keys
+    # would silently mismatch the teacher windows. Only rank 0 writes it.
+    if args.rank == 0:
+        import json
+        meta_path = os.path.join(args.out_dir, "meta.json")
+        meta = {
+            "n_ctx": int(args.n_ctx),
+            "chunk_size": int(args.chunk_size),
+            "distill_layers": layers,
+            "model_path": args.model_path,
+            "topk": int(args.topk),
+            "group_len": (int(args.n_ctx) + 1) * int(args.chunk_size),
+        }
+        with open(meta_path, "w") as f:
+            json.dump(meta, f, indent=2)
+        print(f"[rank 0] wrote cache meta {meta_path}: {meta}", flush=True)
+
     device = torch.device(
         f"cuda:{args.local_rank}" if torch.cuda.is_available() else "cpu")
     dtype = torch.bfloat16 if torch.cuda.is_available() else torch.float32

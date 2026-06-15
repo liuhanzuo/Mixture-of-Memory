@@ -35,6 +35,7 @@ load_distill_npz = train_mod.load_distill_npz
 distill_logits_kl = train_mod.distill_logits_kl
 distill_hidden_cosine = train_mod.distill_hidden_cosine
 _bf16_from_int16 = train_mod._bf16_from_int16
+assert_distill_cache_consistent = train_mod.assert_distill_cache_consistent
 
 
 def _write_fake_cache(out_dir, doc_idx, group_pos, A=8, topk=64, n_sel=3, D=16,
@@ -166,6 +167,56 @@ def test_distill_hidden_cosine_positive_and_stopgrad():
     print(f"test_distill_hidden_cosine_positive_and_stopgrad OK (loss={loss.item():.4f})")
 
 
+def _write_fake_meta(out_dir, n_ctx=3, chunk_size=512, layers=(12, 20, 28)):
+    import json
+    with open(os.path.join(out_dir, "meta.json"), "w") as f:
+        json.dump({
+            "n_ctx": int(n_ctx),
+            "chunk_size": int(chunk_size),
+            "distill_layers": [int(x) for x in layers],
+            "model_path": "models/Meta-Llama-3-8B",
+            "topk": 64,
+            "group_len": (int(n_ctx) + 1) * int(chunk_size),
+        }, f)
+
+
+def test_cache_consistency_guard():
+    """Mismatched n_ctx/chunk_size/layers -> RuntimeError; match -> ok; missing
+    meta.json -> RuntimeError (must build cache first)."""
+    with tempfile.TemporaryDirectory() as d:
+        # (a) missing meta.json -> raise
+        raised = False
+        try:
+            assert_distill_cache_consistent(d, 512, 3, [12, 20, 28])
+        except RuntimeError as e:
+            raised = True
+            assert "meta.json not found" in str(e)
+        assert raised, "missing meta.json must raise"
+
+        # write a matching meta.json
+        _write_fake_meta(d, n_ctx=3, chunk_size=512, layers=(12, 20, 28))
+
+        # (b) matching config -> no raise, returns meta
+        meta = assert_distill_cache_consistent(d, 512, 3, [12, 20, 28])
+        assert int(meta["n_ctx"]) == 3 and int(meta["chunk_size"]) == 512
+
+        # (c) chunk_size mismatch -> raise
+        for kwargs in (
+            dict(train_chunk_size=256, train_n_ctx=3, train_layers=[12, 20, 28]),
+            dict(train_chunk_size=512, train_n_ctx=7, train_layers=[12, 20, 28]),
+            dict(train_chunk_size=512, train_n_ctx=3, train_layers=[12, 20, 24]),
+            dict(train_chunk_size=512, train_n_ctx=3, train_layers=[12, 20]),
+        ):
+            raised = False
+            try:
+                assert_distill_cache_consistent(d, **kwargs)
+            except RuntimeError as e:
+                raised = True
+                assert "MISMATCH" in str(e)
+            assert raised, f"config {kwargs} must raise mismatch"
+    print("test_cache_consistency_guard OK")
+
+
 if __name__ == "__main__":
     test_npz_roundtrip_and_naming()
     test_bf16_int16_view_roundtrip()
@@ -174,4 +225,5 @@ if __name__ == "__main__":
     test_distill_logits_kl_nonneg_and_grad()
     test_distill_hidden_cosine_zero_when_aligned()
     test_distill_hidden_cosine_positive_and_stopgrad()
+    test_cache_consistency_guard()
     print("\nALL DISTILL UNIT TESTS PASSED")
