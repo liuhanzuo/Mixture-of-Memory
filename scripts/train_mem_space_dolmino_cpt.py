@@ -853,6 +853,30 @@ def parse_args() -> argparse.Namespace:
                         "is capped at 4096 tokens, so (n_ctx+1)*chunk_size>4096 "
                         "starves the dolmino loader and hangs DDP).")
 
+    # Self-study distillation (v21, 2026-06-15). All default OFF/empty → when no
+    # --distill_* flag is given the dolmino step is BYTE-IDENTICAL to before.
+    p.add_argument("--distill_logits", action="store_true", default=False,
+                   help="Enable scheme-A logits distillation (bidirectional KL on "
+                        "the teacher top-64 support) for dolmino steps. Requires "
+                        "--distill_cache_dir. Default off.")
+    p.add_argument("--distill_hidden", action="store_true", default=False,
+                   help="Enable scheme-B hidden matching (1-cos on selected layers) "
+                        "for dolmino steps. Requires --distill_cache_dir. Off.")
+    p.add_argument("--distill_lambda", type=float, default=0.6,
+                   help="Scheme-A bidirectional KL weight: "
+                        "lambda*KL(p||q)+(1-lambda)*KL(q||p). 0.6 = KV-Distill.")
+    p.add_argument("--distill_layers", type=str, default="12,20,28",
+                   help="Comma-separated DECODER-layer indices for scheme-B "
+                        "hidden matching. Must match the cache's meta_layers.")
+    p.add_argument("--distill_cache_dir", type=str, default="",
+                   help="Dir of teacher .npz cache from build_distill_cache.py. "
+                        "Empty = distillation disabled regardless of flags.")
+    p.add_argument("--distill_weight", type=float, default=1.0,
+                   help="Overall multiplier on the distill term: "
+                        "total = lm + aux + distill_weight*(L_A + beta*L_B).")
+    p.add_argument("--distill_hidden_beta", type=float, default=1.0,
+                   help="beta: relative weight of scheme-B (hidden) vs scheme-A.")
+
     # BABILong mix
     p.add_argument("--babilong_mix_fraction", type=float, default=0.15,
                    help="Probability of sampling a BABILong step vs Dolmino.")
@@ -1475,6 +1499,94 @@ def _ensure_batched(t: torch.Tensor, device: torch.device) -> torch.Tensor:
 
 
 # --------------------------------------------------------------------------- #
+# Self-study distillation helpers (v21, 2026-06-15)
+# --------------------------------------------------------------------------- #
+# numpy has no native bfloat16, so build_distill_cache.py stores bf16 tensors as
+# their raw int16 bit-pattern (tensor.view(torch.int16)). We reconstruct here by
+# reinterpreting the int16 bits back into bfloat16. This keeps full bf16 fidelity
+# and a single source of truth shared with the cache builder + unit tests.
+
+
+def _bf16_from_int16(arr) -> torch.Tensor:
+    """Reinterpret an int16 numpy array (bf16 bit-pattern) back to bfloat16."""
+    return torch.from_numpy(arr).view(torch.bfloat16)
+
+
+def load_distill_npz(path: str, device: torch.device):
+    """Load one teacher cache .npz and return a dict of tensors on ``device``.
+
+    Returns:
+        dict with
+          logit_idx  long  [A, topk]
+          logit_val  bf16  [A, topk]  (raw teacher logits)
+          hidden     bf16  [A, n_sel, 4096]
+          answer_mask bool [A]
+          layers     long  [n_sel]    (decoder-layer indices)
+    """
+    import numpy as _np
+    z = _np.load(path)
+    return {
+        "logit_idx": torch.from_numpy(z["logit_idx"]).to(device).long(),
+        "logit_val": _bf16_from_int16(z["logit_val"]).to(device),
+        "hidden": _bf16_from_int16(z["hidden"]).to(device),
+        "answer_mask": torch.from_numpy(z["answer_mask"]).to(device).bool(),
+        "layers": torch.from_numpy(z["meta_layers"]).long(),
+    }
+
+
+def distill_logits_kl(
+    student_logits: torch.Tensor,
+    teacher_idx: torch.Tensor,
+    teacher_val: torch.Tensor,
+    lam: float = 0.6,
+) -> torch.Tensor:
+    """Scheme-A bidirectional KL on the teacher top-k support.
+
+    For each answer token: teacher logits (top-k) are softmaxed over the k
+    support -> p; student logits gathered at the SAME k indices, softmaxed over
+    that support -> q. Loss = lam*KL(p||q) + (1-lam)*KL(q||p), averaged over
+    answer tokens. teacher (p) carries no grad (cache constant); grad flows only
+    through q -> the readout.
+
+    Args:
+        student_logits: [A, V] float (the student's answer-segment logits)
+        teacher_idx:    [A, k] long  (top-k vocab indices)
+        teacher_val:    [A, k] (teacher raw logits at those indices)
+    """
+    teacher_val = teacher_val.to(student_logits.dtype)
+    # Teacher distribution over its own top-k support (renormalised). Constant.
+    p = torch.softmax(teacher_val, dim=-1)  # [A, k]
+    # Student logits gathered at the same support, softmaxed over the support.
+    q_logits = torch.gather(student_logits, -1, teacher_idx)  # [A, k]
+    log_q = torch.log_softmax(q_logits, dim=-1)  # [A, k]
+    log_p = torch.log_softmax(teacher_val, dim=-1)  # [A, k]
+    # KL(p||q) = sum p*(log p - log q); KL(q||p) = sum q*(log q - log p).
+    q = log_q.exp()
+    kl_pq = (p * (log_p - log_q)).sum(dim=-1)  # [A]
+    kl_qp = (q * (log_q - log_p)).sum(dim=-1)  # [A]
+    loss = lam * kl_pq + (1.0 - lam) * kl_qp  # [A]
+    return loss.mean()
+
+
+def distill_hidden_cosine(
+    student_hidden: torch.Tensor,
+    teacher_hidden: torch.Tensor,
+) -> torch.Tensor:
+    """Scheme-B hidden matching: 1 - cos, averaged over answer tokens, summed
+    over layers. teacher_hidden is a cache constant (stopgrad — no grad anyway).
+
+    Args:
+        student_hidden: [A, n_sel, D] (selected student layers, answer segment)
+        teacher_hidden: [A, n_sel, D] (cached teacher hidden, same layers/tokens)
+    """
+    teacher_hidden = teacher_hidden.to(student_hidden.dtype).detach()
+    cos = torch.nn.functional.cosine_similarity(
+        student_hidden, teacher_hidden, dim=-1)  # [A, n_sel]
+    per_layer = (1.0 - cos).mean(dim=0)  # [n_sel] (avg over answer tokens)
+    return per_layer.sum()  # sum over layers
+
+
+# --------------------------------------------------------------------------- #
 # Dolmino training step
 # --------------------------------------------------------------------------- #
 
@@ -1486,7 +1598,10 @@ def dolmino_train_step(
     device: torch.device,
     grad_accum: int = 1,
     answer_mask: Optional[torch.Tensor] = None,
-) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+    teacher_cache: Optional[dict] = None,
+    distill_cfg: Optional[dict] = None,
+) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor,
+           torch.Tensor, torch.Tensor]:
     """HARDER objective (2026-06-13, last_chunk_loss_only): force memory to work.
     1. Reset banks
     2. Stream context chunks through model (NO GRAD) → memory accumulates
@@ -1508,8 +1623,19 @@ def dolmino_train_step(
     exact memory slot that encoded the needle. When None (default), behaviour is
     BIT-IDENTICAL to the original full-target-chunk NTP loss.
 
-    Returns: (lm_loss, aux_loss, route_aux=0, l3recon=0) — scaled by grad_accum.
-    Backward is done HERE (mirrors tbptt) so the caller just reads the losses.
+    Self-study distillation (v21, 2026-06-15): when ``teacher_cache`` AND
+    ``distill_cfg`` are provided (only for dolmino steps, never T2), the target
+    forward additionally requests ``output_hidden_states=True`` and we compute:
+      A) bidirectional KL between student answer logits and the cached teacher
+         top-64 distribution (distill_logits_kl);
+      B) 1-cos hidden matching on the selected layers (distill_hidden_cosine).
+    total = lm_loss + aux_loss + distill_weight*(L_A + beta*L_B), and THIS is
+    what gets backward'd. When teacher_cache/distill_cfg is None (default), NOT
+    a single extra kwarg is passed to model(...) → byte-identical to before.
+
+    Returns: (lm_loss, aux_loss, route_aux=0, l3recon=0, distill_kl, distill_hidden)
+    — all scaled by grad_accum where applicable; distill terms are detached and
+    returned only for logging. Backward is done HERE (mirrors tbptt).
     """
     _reset_banks(model)
     scale = float(grad_accum)
@@ -1537,13 +1663,63 @@ def dolmino_train_step(
         labels = torch.where(
             mask, target_input, torch.full_like(target_input, -100)
         )
-    out = model(input_ids=target_input, labels=labels, use_cache=False)
 
+    distill_on = teacher_cache is not None and distill_cfg is not None
+    _zero = torch.zeros((), device=device)
+
+    if not distill_on:
+        # ORIGINAL path — no output_hidden_states kwarg → byte-identical.
+        out = model(input_ids=target_input, labels=labels, use_cache=False)
+        lm_loss = out.loss / scale
+        aux_loss = _collect_aux_loss(model, device) / scale
+        (lm_loss + aux_loss).backward()
+        return lm_loss.detach(), aux_loss.detach(), _zero, _zero, _zero, _zero
+
+    # ----- distillation path (dolmino only) ----- #
+    want_hidden = bool(distill_cfg.get("distill_hidden", False))
+    out = model(input_ids=target_input, labels=labels, use_cache=False,
+                output_hidden_states=want_hidden)
     lm_loss = out.loss / scale
     aux_loss = _collect_aux_loss(model, device) / scale
-    _zero = torch.zeros((), device=device)
-    (lm_loss + aux_loss).backward()
-    return lm_loss.detach(), aux_loss.detach(), _zero, _zero
+
+    # Student answer-segment is the WHOLE target chunk (dolmino). Batch dim is 1
+    # for the distill path (cache is per-sample, batch_size=1 dolmino).
+    chunk_size = target_input.shape[1]
+    distill_kl = _zero
+    distill_hidden = _zero
+    L_A = torch.zeros((), device=device)
+    L_B = torch.zeros((), device=device)
+
+    if distill_cfg.get("distill_logits", False):
+        student_logits = out.logits[0]  # [chunk_size, V]
+        t_idx = teacher_cache["logit_idx"]  # [A, k]
+        t_val = teacher_cache["logit_val"]  # [A, k]
+        A = min(chunk_size, t_idx.shape[0])
+        L_A = distill_logits_kl(
+            student_logits[:A], t_idx[:A], t_val[:A],
+            lam=float(distill_cfg.get("distill_lambda", 0.6)),
+        )
+        distill_kl = L_A.detach()
+
+    if want_hidden:
+        # hidden_states is tuple len n_layers+1; decoder layer L -> index L+1.
+        layers = teacher_cache["layers"].tolist()
+        hs = out.hidden_states
+        student_layers = torch.stack(
+            [hs[L + 1][0] for L in layers], dim=1)  # [chunk_size, n_sel, D]
+        t_hidden = teacher_cache["hidden"]  # [A, n_sel, D]
+        A = min(chunk_size, t_hidden.shape[0])
+        L_B = distill_hidden_cosine(student_layers[:A], t_hidden[:A])
+        distill_hidden = L_B.detach()
+
+    distill_weight = float(distill_cfg.get("distill_weight", 1.0))
+    beta = float(distill_cfg.get("distill_hidden_beta", 1.0))
+    # distill term scaled by grad_accum to match lm_loss/aux_loss scaling.
+    distill_term = distill_weight * (L_A + beta * L_B) / scale
+    total = lm_loss + aux_loss + distill_term
+    total.backward()
+    return (lm_loss.detach(), aux_loss.detach(), _zero, _zero,
+            distill_kl, distill_hidden)
 
 
 def dolmino_train_step_tbptt(
@@ -2355,6 +2531,51 @@ def main() -> None:
     t0 = time.time()
     grad_accum = args.gradient_accumulation_steps
 
+    # Self-study distillation config (v21). Active ONLY when a cache dir is set
+    # AND at least one distill flag is on. When inactive, distill_cfg stays None
+    # and the dolmino step takes the byte-identical original path.
+    distill_cfg = None
+    if args.distill_cache_dir and (args.distill_logits or args.distill_hidden):
+        distill_cfg = {
+            "distill_logits": args.distill_logits,
+            "distill_hidden": args.distill_hidden,
+            "distill_lambda": args.distill_lambda,
+            "distill_weight": args.distill_weight,
+            "distill_hidden_beta": args.distill_hidden_beta,
+            "distill_layers": [int(x) for x in args.distill_layers.split(",")
+                               if x.strip() != ""],
+        }
+        if is_main(rank):
+            logger.info("[distill] ENABLED cache_dir=%s logits=%s hidden=%s "
+                        "lambda=%.2f weight=%.2f beta=%.2f layers=%s",
+                        args.distill_cache_dir, args.distill_logits,
+                        args.distill_hidden, args.distill_lambda,
+                        args.distill_weight, args.distill_hidden_beta,
+                        distill_cfg["distill_layers"])
+
+    # Small LRU cache of decoded teacher .npz (keyed by sample_id) to avoid
+    # re-reading hot samples; correctness does not depend on it.
+    from collections import OrderedDict as _OrderedDict
+    _distill_lru: "_OrderedDict[tuple, dict]" = _OrderedDict()
+    _DISTILL_LRU_MAX = 64
+
+    def _get_teacher_cache(sample_id):
+        """Return decoded teacher cache dict for sample_id, or None if missing."""
+        if distill_cfg is None or sample_id is None:
+            return None
+        key = tuple(int(x) for x in sample_id)
+        if key in _distill_lru:
+            _distill_lru.move_to_end(key)
+            return _distill_lru[key]
+        path = os.path.join(args.distill_cache_dir, f"{key[0]}_{key[1]}.npz")
+        if not os.path.exists(path):
+            return None  # not cached → fall back to plain dolmino step
+        data = load_distill_npz(path, device)
+        _distill_lru[key] = data
+        if len(_distill_lru) > _DISTILL_LRU_MAX:
+            _distill_lru.popitem(last=False)
+        return data
+
     while global_step < args.total_steps:
         # Update curriculum
         current_n_ctx = curriculum.get_n_ctx(global_step)
@@ -2381,6 +2602,8 @@ def main() -> None:
         step_aux_loss = 0.0
         step_route_aux = 0.0
         step_l3recon = 0.0
+        step_distill_kl = 0.0
+        step_distill_hidden = 0.0
         step_valid_micros = 0
 
         for micro in range(grad_accum):
@@ -2416,12 +2639,16 @@ def main() -> None:
                         route_aux_weight=args.route_aux_weight,
                         l3_recon_token_weight=args.l3_recon_token_weight,
                     )
+                    micro_distill_kl = 0.0
+                    micro_distill_hidden = 0.0
                     n_babilong += 1
                 elif use_t2:
                     # T2 chunked associative-recall step: always the HARDER
                     # objective (dolmino_train_step) with an answer_mask so LM
                     # loss falls ONLY on the answer digits. backward() is done
                     # inside dolmino_train_step (no outer backward needed).
+                    # T2 is NEVER distilled (technical point 3): teacher cache and
+                    # distill_cfg are both omitted → original path.
                     try:
                         sample = next(t2_iter)
                     except StopIteration:
@@ -2432,10 +2659,13 @@ def main() -> None:
                     target_ids = sample["target_ids"]
                     answer_mask = sample["answer_mask"]
 
-                    lm_loss, aux_loss, route_aux, l3recon = dolmino_train_step(
+                    (lm_loss, aux_loss, route_aux, l3recon,
+                     _dk, _dh) = dolmino_train_step(
                         model, context_chunks, target_ids, device,
                         grad_accum=grad_accum, answer_mask=answer_mask,
                     )
+                    micro_distill_kl = 0.0
+                    micro_distill_hidden = 0.0
                     n_t2 += 1
                 else:
                     # Dolmino step
@@ -2449,21 +2679,34 @@ def main() -> None:
                     target_ids = sample["target_ids"]
                     reset_flags = sample.get("reset_flags", None)
 
-                    lm_loss, aux_loss, route_aux, l3recon = (
-                        dolmino_train_step(
+                    # Distillation only applies to the last_chunk_loss_only
+                    # (dolmino_train_step) path; tbptt path is unchanged.
+                    teacher_cache = None
+                    if args.last_chunk_loss_only and distill_cfg is not None:
+                        teacher_cache = _get_teacher_cache(sample.get("sample_id"))
+
+                    if args.last_chunk_loss_only:
+                        (lm_loss, aux_loss, route_aux, l3recon,
+                         micro_distill_kl, micro_distill_hidden) = dolmino_train_step(
                             model, context_chunks, target_ids, device,
                             grad_accum=grad_accum,
+                            teacher_cache=teacher_cache,
+                            distill_cfg=(distill_cfg if teacher_cache is not None
+                                         else None),
                         )
-                        if args.last_chunk_loss_only
-                        else dolmino_train_step_tbptt(
-                            model, context_chunks, target_ids, device,
-                            grad_accum=grad_accum,
-                            route_aux_weight=args.route_aux_weight,
-                            reset_flags=reset_flags,
-                            l3_recon_token_weight=args.l3_recon_token_weight,
-                            swa_train_chunks=args.swa_train_chunks,
+                    else:
+                        lm_loss, aux_loss, route_aux, l3recon = (
+                            dolmino_train_step_tbptt(
+                                model, context_chunks, target_ids, device,
+                                grad_accum=grad_accum,
+                                route_aux_weight=args.route_aux_weight,
+                                reset_flags=reset_flags,
+                                l3_recon_token_weight=args.l3_recon_token_weight,
+                                swa_train_chunks=args.swa_train_chunks,
+                            )
                         )
-                    )
+                        micro_distill_kl = 0.0
+                        micro_distill_hidden = 0.0
                     n_dolmino += 1
 
                 # Check for non-finite
@@ -2489,6 +2732,12 @@ def main() -> None:
                     route_aux, torch.Tensor) else float(route_aux)
                 step_l3recon += float(l3recon.item()) if isinstance(
                     l3recon, torch.Tensor) else float(l3recon)
+                step_distill_kl += float(micro_distill_kl.item()) if isinstance(
+                    micro_distill_kl, torch.Tensor) else float(micro_distill_kl)
+                step_distill_hidden += (
+                    float(micro_distill_hidden.item())
+                    if isinstance(micro_distill_hidden, torch.Tensor)
+                    else float(micro_distill_hidden))
                 step_valid_micros += 1
 
         # Manual gradient allreduce (since we always use no_sync above).
@@ -2576,13 +2825,16 @@ def main() -> None:
             avg_aux = step_aux_loss / max(1, step_valid_micros)
             avg_route_aux = step_route_aux / max(1, step_valid_micros)
             avg_l3recon = step_l3recon / max(1, step_valid_micros)
+            avg_distill_kl = step_distill_kl / max(1, step_valid_micros)
+            avg_distill_hidden = step_distill_hidden / max(1, step_valid_micros)
             elapsed = time.time() - t0
             steps_per_sec = global_step / elapsed if elapsed > 0 else 0.0
             logger.info(
-                "[step %d/%d] lm=%.4f aux=%.4f route_aux=%.4f l3recon=%.4f lr=%.2e n_ctx=%d "
+                "[step %d/%d] lm=%.4f aux=%.4f route_aux=%.4f l3recon=%.4f "
+                "distill_kl=%.4f distill_hid=%.4f lr=%.2e n_ctx=%d "
                 "dolmino=%d babi=%d nf=%d skip=%d speed=%.2f steps/s",
                 global_step, args.total_steps, avg_lm, avg_aux, avg_route_aux,
-                avg_l3recon, lr,
+                avg_l3recon, avg_distill_kl, avg_distill_hidden, lr,
                 current_n_ctx, n_dolmino, n_babilong, n_nonfinite, spike_skip_count,
                 steps_per_sec,
             )
@@ -2614,6 +2866,8 @@ def main() -> None:
                     "train/aux_loss": avg_aux,
                     "train/route_aux": avg_route_aux,
                     "train/l3recon": avg_l3recon,
+                    "train/distill_kl": avg_distill_kl,
+                    "train/distill_hidden": avg_distill_hidden,
                     "train/lr": lr,
                     "train/n_ctx": current_n_ctx,
                     "train/speed_steps_s": steps_per_sec,

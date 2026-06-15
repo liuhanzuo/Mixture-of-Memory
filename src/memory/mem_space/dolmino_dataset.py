@@ -423,6 +423,7 @@ class DolminoCurriculumDataset(torch.utils.data.IterableDataset):
 
                     context_chunks: List[torch.Tensor] = []
                     target_ids: Optional[torch.Tensor] = None
+                    group_pos = pos // group_len  # window index within this doc
                     for k in range(group_size):
                         chunk_start = pos + k * self.chunk_size
                         toks = tokens[chunk_start: chunk_start + self.chunk_size]
@@ -439,6 +440,11 @@ class DolminoCurriculumDataset(torch.utils.data.IterableDataset):
                         "context_chunks": context_chunks,
                         "target_ids": target_ids,
                         "is_dolmino": True,
+                        # Stable distillation key (v21): invariant to per-epoch
+                        # shuffle / DDP sharding. doc_idx = original Arrow row
+                        # index; group_pos = window index within the document.
+                        # build_distill_cache.py names its .npz "{doc_idx}_{group_pos}".
+                        "sample_id": (int(doc_idx), int(group_pos)),
                     }
 
             # Defensive guard (2026-06-15): if an ENTIRE epoch over every doc in
