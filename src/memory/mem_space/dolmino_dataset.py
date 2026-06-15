@@ -406,6 +406,7 @@ class DolminoCurriculumDataset(torch.utils.data.IterableDataset):
             rng.shuffle(doc_indices)
             my_docs = doc_indices[consumer_id::total_consumers]
 
+            yielded_this_epoch = 0
             for doc_idx in my_docs:
                 tokens = self._ds[int(doc_idx)]["input_ids"]
                 doc_len = len(tokens)
@@ -433,11 +434,28 @@ class DolminoCurriculumDataset(torch.utils.data.IterableDataset):
 
                     pos += group_len
 
+                    yielded_this_epoch += 1
                     yield {
                         "context_chunks": context_chunks,
                         "target_ids": target_ids,
                         "is_dolmino": True,
                     }
+
+            # Defensive guard (2026-06-15): if an ENTIRE epoch over every doc in
+            # this consumer's shard produced zero groups, the loader is starved
+            # and the `while True` above would spin forever yielding nothing,
+            # which manifests as a silent DDP first-step hang (ranks that drew a
+            # T2/babilong step block in all_reduce while dolmino ranks spin here).
+            # Fail loudly instead.
+            if yielded_this_epoch == 0:
+                raise RuntimeError(
+                    f"Dolmino per-doc loader produced ZERO groups in a full epoch: "
+                    f"(n_ctx+1)*chunk_size = ({self._n_context}+1)*{self.chunk_size} "
+                    f"= {(self._n_context + 1) * self.chunk_size} tokens exceeds the "
+                    f"longest available document. per-doc dolmino data is capped at "
+                    f"~4096 tokens; lower --chunk_size or keep dolmino's n_ctx small "
+                    f"(grow long-context via the T2 stream / --t2_curriculum instead)."
+                )
 
             # Advance epoch for next loop iteration (reshuffle document order)
             epoch += 1

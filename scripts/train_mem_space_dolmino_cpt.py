@@ -844,6 +844,14 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--curriculum", type=str,
                    default="0:1,10000:2,15000:4,25000:8,40000:16",
                    help="Curriculum schedule: 'step:n_ctx,step:n_ctx,...'")
+    p.add_argument("--t2_curriculum", type=str, default="",
+                   help="Independent curriculum for the T2 recall needle->query "
+                        "distance: 'step:n_ctx,...'. Empty = T2 keeps the fixed "
+                        "n_ctx derived from --t2_gap_tokens. Use this to grow ONLY "
+                        "the T2 distance (pg19 long background supports it) while "
+                        "dolmino stays at a small fixed n_ctx (dolmino per-doc data "
+                        "is capped at 4096 tokens, so (n_ctx+1)*chunk_size>4096 "
+                        "starves the dolmino loader and hangs DDP).")
 
     # BABILong mix
     p.add_argument("--babilong_mix_fraction", type=float, default=0.15,
@@ -2097,6 +2105,12 @@ def main() -> None:
 
     # Curriculum scheduler
     curriculum = CurriculumScheduler(args.curriculum)
+    # Independent T2 recall curriculum (optional). When set, only the T2 needle
+    # distance grows with training; dolmino n_ctx stays on its own (small, fixed)
+    # schedule so the 4096-token-capped per-doc loader never starves.
+    t2_curriculum = (
+        CurriculumScheduler(args.t2_curriculum) if args.t2_curriculum else None
+    )
 
     # batch_size > 1 guards (2026-06-07). The memory bank holds per-sample slot
     # state [B, N, slot_dim] and is fully batch-native, BUT two features cannot
@@ -2345,13 +2359,15 @@ def main() -> None:
         # Update curriculum
         current_n_ctx = curriculum.get_n_ctx(global_step)
         dolmino_ds.set_n_context(current_n_ctx)
-        # T2 recall: grow the needle->query distance alongside the dolmino
-        # context length so the synthetic readout task also gets harder under
-        # the curriculum (n_ctx is the # of context chunks before the target;
-        # distance == n_ctx * chunk_size). Requires num_workers<=1 (enforced
-        # above for batch_size>1) so the update reaches the iterator.
-        if t2_iter is not None:
-            t2_ds.set_n_ctx(current_n_ctx)
+        # T2 recall distance follows its OWN curriculum (--t2_curriculum), kept
+        # independent of dolmino. The pg19 T2 background is long enough to grow
+        # n_ctx to 32+, whereas dolmino per-doc data is capped at 4096 tokens, so
+        # we must NOT push dolmino past a small n_ctx (else (n_ctx+1)*chunk_size
+        # >4096 -> zero eligible docs -> loader starves -> DDP first-step hang).
+        # If --t2_curriculum is unset, T2 keeps its fixed gap-derived n_ctx.
+        # Requires num_workers<=1 (default 0) so the update reaches the iterator.
+        if t2_iter is not None and t2_curriculum is not None:
+            t2_ds.set_n_ctx(t2_curriculum.get_n_ctx(global_step))
 
         # Update learning rate (cosine with warmup)
         lr = cosine_lr_schedule(global_step, args.total_steps, args.warmup_steps,
