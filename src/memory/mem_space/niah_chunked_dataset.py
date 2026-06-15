@@ -126,6 +126,17 @@ class NIAHChunkedDataset(torch.utils.data.IterableDataset):
         )
 
     # --------------------------------------------------------------------- #
+    # Curriculum support: let the needle->query distance grow during training.
+    # --------------------------------------------------------------------- #
+    def set_n_ctx(self, n_ctx: int) -> None:
+        """Override the number of context chunks (and hence the needle->query
+        distance = n_ctx * chunk_size). Used by curriculum schedules so the T2
+        recall distance grows alongside the dolmino context length, instead of
+        staying fixed at construction time. Safe to call mid-training; the next
+        sample built by ``_make_sample`` reads ``self.n_ctx`` fresh."""
+        self.n_ctx = max(1, int(n_ctx))
+
+    # --------------------------------------------------------------------- #
     # IterableDataset protocol
     # --------------------------------------------------------------------- #
     def __iter__(self) -> Iterator[Dict[str, Any]]:

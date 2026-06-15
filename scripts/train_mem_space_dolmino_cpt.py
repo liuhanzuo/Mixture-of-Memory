@@ -2345,6 +2345,13 @@ def main() -> None:
         # Update curriculum
         current_n_ctx = curriculum.get_n_ctx(global_step)
         dolmino_ds.set_n_context(current_n_ctx)
+        # T2 recall: grow the needle->query distance alongside the dolmino
+        # context length so the synthetic readout task also gets harder under
+        # the curriculum (n_ctx is the # of context chunks before the target;
+        # distance == n_ctx * chunk_size). Requires num_workers<=1 (enforced
+        # above for batch_size>1) so the update reaches the iterator.
+        if t2_iter is not None:
+            t2_ds.set_n_ctx(current_n_ctx)
 
         # Update learning rate (cosine with warmup)
         lr = cosine_lr_schedule(global_step, args.total_steps, args.warmup_steps,
