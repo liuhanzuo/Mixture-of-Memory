@@ -371,6 +371,13 @@ class MemorySpaceLayer(nn.Module):
         # P1-v2: wire config flag to selector
         self.selector._no_detach_slots = config.no_detach_slots_in_selector
         self.selector._routing_pool_mode = config.routing_pool_mode
+        # Dead-slot-binding fix: independent learnable slot key. When True, the
+        # selector uses a pure learnable per-slot key (slot_key_param) instead of
+        # the content-derived K_sel(slots)+slot_key_bias. Default False →
+        # byte-identical to content-based routing.
+        self.selector._independent_slot_key = getattr(
+            config, "independent_slot_key", False
+        )
         # v8 multi-query routing (2026-06-01): logsumexp aggregation temperature.
         self.selector._multi_query_tau = getattr(config, "multi_query_tau", 1.0)
         # v10 (2026-06-01): threshold for the post-projection q_multi diversity
@@ -407,6 +414,10 @@ class MemorySpaceLayer(nn.Module):
         )
         self._normalize_readout = getattr(config, "normalize_readout", False)
         self._readout_norm_scale = getattr(config, "readout_norm_scale", 1.0)
+        # DeltaNet-style erase-then-write. When True, the gated writeback applies
+        # the associative erase-then-write update instead of EMA / delta-rule.
+        # Default False → byte-identical to the existing write paths.
+        self._delta_erase_write = getattr(config, "delta_erase_write", False)
 
         # EXP-R1 (2026-06-11): dead-slot recycling knobs. All default off
         # (interval<=0) → byte-identical to P11.
@@ -1147,6 +1158,27 @@ class MemorySpaceLayer(nn.Module):
                     self._cum_usage += _sel
                     if self._recycle_usage is not None:
                         self._recycle_usage += _sel
+                    # Per-slot token-mass accumulation (2026-06-15). Routing is
+                    # PER-CHUNK: a slot that wins this chunk's top-k (_sel==1)
+                    # absorbs a write aggregated over ALL the chunk's real tokens,
+                    # so it gains exactly `tok_count[b]` mass this chunk. tok_count
+                    # = #real (non-pad) tokens per sample: T when no pad mask, else
+                    # the row-sum of _active_token_mask. Accumulated layer-0-only
+                    # on the shared bank (this block is layer-0 gated), so it is
+                    # not 32x over-counted, and stays in the SAME slot index order
+                    # the read aligns to. Gated on the flag so it is zero-overhead
+                    # when off. add_token_mass is a no_grad no-op while frozen.
+                    if cfg.use_readout_mass_bias:
+                        if _active_token_mask is not None:
+                            _tok_count = (
+                                _active_token_mask.to(torch.float32)
+                                .sum(dim=1)
+                            )                                      # [B]
+                        else:
+                            _tok_count = torch.full(
+                                (B,), float(T), device=idx.device, dtype=torch.float32
+                            )
+                        self.memory_bank.add_token_mass(_sel, _tok_count)
                     # EXP-D2 scalars (cumulative, sample-scoped). Mean over batch.
                     self._last_dead_slot_frac = (
                         (self._cum_usage == 0).float().mean().item()
@@ -1946,9 +1978,22 @@ class MemorySpaceLayer(nn.Module):
                 if self._cum_usage is not None
                 else None
             )
+            # Per-slot token-mass readout bias (2026-06-15). slot_token_mass is
+            # [B, cfg.num_slots] in the SAME index order as xattn_slots (it is
+            # accumulated layer-0-only on the shared bank, mirroring _cum_usage),
+            # so it aligns with the first-N read columns. Passed only when the
+            # flag is on AND the mass has been materialised; otherwise None →
+            # read() adds no bias and the softmax is byte-identical to P8/P11.
+            _read_mass = (
+                getattr(self.memory_bank, "slot_token_mass", None)
+                if cfg.use_readout_mass_bias
+                else None
+            )
             memory_xattn_out = self.memory_xattn.read(
                 hidden_states, xattn_slots, xattn_slots,
                 dead_mask=_dead_mask,
+                mass=_read_mass,
+                mass_coef=cfg.readout_mass_coef,
             )                                                       # [B, T, d]
             # v20 (2026-06-12): accumulate per-slot read-mass into the layer-0
             # cumulative + windowed accumulators (no_grad telemetry; index order
@@ -2075,6 +2120,7 @@ class MemorySpaceLayer(nn.Module):
                         forget_gate=g_forget[:, :_k_reg, :],
                         tanh_new=cfg.dual_gate_tanh_new,
                         delta_rule=self._use_delta_rule_writeback,
+                        delta_erase_write=self._delta_erase_write,
                     )
                     if cfg.global_slot_input_gate_only:
                         # v8-C: slot ← g_in · tanh(s_new), no forget
@@ -2086,6 +2132,7 @@ class MemorySpaceLayer(nn.Module):
                             forget_gate=_g_forget_zero,
                             tanh_new=True,
                             delta_rule=self._use_delta_rule_writeback,
+                            delta_erase_write=self._delta_erase_write,
                         )
                     else:
                         # v8-A (or v7 when global_slot_forget_bias==forget_bias_init): dual gate
@@ -2096,6 +2143,7 @@ class MemorySpaceLayer(nn.Module):
                             forget_gate=g_forget[:, _k_reg:, :],
                             tanh_new=cfg.dual_gate_tanh_new,
                             delta_rule=self._use_delta_rule_writeback,
+                            delta_erase_write=self._delta_erase_write,
                         )
                 else:
                     M_write = self.memory_bank.write(
@@ -2105,6 +2153,7 @@ class MemorySpaceLayer(nn.Module):
                         forget_gate=g_forget,
                         tanh_new=cfg.dual_gate_tanh_new,
                         delta_rule=self._use_delta_rule_writeback,
+                        delta_erase_write=self._delta_erase_write,
                     )
             elif cfg.writeback_mode == "lowrank_gate" and self.lr_U is not None:
                 # lowrank_gate (A): U(V_new(s_new)+V_mem(M_prev)) + bias → 2*slot_dim.
@@ -2131,6 +2180,7 @@ class MemorySpaceLayer(nn.Module):
                     forget_gate=g_forget,
                     tanh_new=cfg.dual_gate_tanh_new,
                     delta_rule=self._use_delta_rule_writeback,
+                    delta_erase_write=self._delta_erase_write,
                 )
             elif cfg.writeback_mode == "diag_gate" and self.diag_a_in is not None:
                 # diag_gate (B): per-feature diagonal gate.
@@ -2157,6 +2207,7 @@ class MemorySpaceLayer(nn.Module):
                     forget_gate=g_forget,
                     tanh_new=cfg.dual_gate_tanh_new,
                     delta_rule=self._use_delta_rule_writeback,
+                    delta_erase_write=self._delta_erase_write,
                 )
             else:
                 # Legacy single-gate path (H/H5/H3).

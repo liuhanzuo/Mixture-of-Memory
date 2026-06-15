@@ -1180,6 +1180,17 @@ def parse_args() -> argparse.Namespace:
                         "MemoryCrossAttentionRead (single-variable ablation). "
                         "The read softmax then has NO 'attend to nothing' escape "
                         "column. Default False = sink ON (P8/P11 baseline).")
+    p.add_argument("--use_readout_mass_bias", action="store_true", default=False,
+                   help="2026-06-15: add a per-slot token-mass bias "
+                        "(readout_mass_coef·log1p(mass)) to the P8 read softmax "
+                        "logits, so a slot that condensed MANY real tokens gets "
+                        "proportionally more read weight (mass = cumulative real "
+                        "tokens absorbed, tracked in MemoryBank.slot_token_mass). "
+                        "Default False = no bias (softmax byte-identical to P8/P11).")
+    p.add_argument("--readout_mass_coef", type=float, default=1.0,
+                   help="Scale on the log1p(mass) readout bias (1.0 = exact "
+                        "log1p; larger = stronger mass preference). Ignored when "
+                        "--use_readout_mass_bias is off.")
 
     # v6/v7 writeback (disabled by default for CPT)
     p.add_argument("--use_replace_writeback", action="store_true", default=False)
@@ -1347,6 +1358,8 @@ def build_model(args, device, dtype) -> torch.nn.Module:
         use_memory_xattn=args.use_memory_xattn,
         memory_xattn_gate_init=args.memory_xattn_gate_init,
         memory_xattn_disable_null_sink=args.memory_xattn_disable_null_sink,
+        use_readout_mass_bias=args.use_readout_mass_bias,
+        readout_mass_coef=args.readout_mass_coef,
         dead_slot_reset_interval=args.dead_slot_reset_interval,
         dead_slot_reset_mode=args.dead_slot_reset_mode,
         dead_slot_grace_chunks=args.dead_slot_grace_chunks,
@@ -2280,6 +2293,8 @@ def _save_adapter(model, args, step: int, final: bool = False) -> None:
             "use_memory_xattn": args.use_memory_xattn,
             "memory_xattn_gate_init": args.memory_xattn_gate_init,
             "memory_xattn_disable_null_sink": args.memory_xattn_disable_null_sink,
+            "use_readout_mass_bias": args.use_readout_mass_bias,
+            "readout_mass_coef": args.readout_mass_coef,
             # EXP-R1 (2026-06-11): dead-slot recycling. No new params, but it
             # changes STORED slot state, so eval-haystack ingestion must apply
             # the same recycling as training → round-trip these flags.

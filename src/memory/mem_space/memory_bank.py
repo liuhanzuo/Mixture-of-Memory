@@ -76,6 +76,19 @@ class MemoryBank(nn.Module):
         # Tracks the batch size we're currently initialised for; used to
         # auto-reinit when the caller changes batch size.
         self._batch_size: Optional[int] = None
+        # Per-slot token-mass (2026-06-15): [B, num_slots] float, no_grad. Tracks
+        # the cumulative number of REAL tokens each slot has absorbed over the
+        # whole sample. Lazily materialised on the first add_token_mass call
+        # (or stays None when use_readout_mass_bias is off → zero overhead).
+        # Semantics: routing is PER-CHUNK (the selector pools the whole chunk
+        # into [B,N] logits → top-k → idx:[B,k]; every selected slot receives a
+        # write aggregated over the chunk's tokens). So "tokens slot n absorbed
+        # this chunk" = (real-token count of the chunk) iff slot n was selected,
+        # else 0. Accumulated layer-0-only on the SHARED bank (mirrors the
+        # _cum_usage / dead_mask / _cum_read_mass layer-0 telemetry the read
+        # already aligns to), so it is NOT 32x over-counted by the per-layer
+        # write calls. Resets to None with the bank; recycled rows are zeroed.
+        self.slot_token_mass: Optional[torch.Tensor] = None
         # When True, write() is a no-op — used during greedy generation to
         # prevent question tokens from overwriting haystack-accumulated slots.
         self.frozen: bool = False
@@ -88,6 +101,9 @@ class MemoryBank(nn.Module):
         """Force a re-init on the next ``init_from_hidden`` call."""
         self.slots = None
         self._batch_size = batch_size
+        # Token-mass is per-sample state, like slots — drop it at the document /
+        # rollout boundary so a fresh sample starts every slot at zero mass.
+        self.slot_token_mass = None
 
     def detach_(self) -> None:
         """Break the autograd graph across a segment boundary.
@@ -169,6 +185,75 @@ class MemoryBank(nn.Module):
         self._batch_size = batch_size
 
     # --------------------------------------------------------------------- #
+    # Token-mass (2026-06-15): per-slot cumulative real-token count.
+    # --------------------------------------------------------------------- #
+
+    def add_token_mass(
+        self,
+        sel: torch.Tensor,
+        token_counts: torch.Tensor,
+    ) -> None:
+        """Accumulate per-slot token mass for the current chunk (no_grad).
+
+        Args:
+            sel: [B, N] tensor (0/1 or bool) — which slots were selected this
+                chunk (deduped; global-slot duplicates clamped to 1). Index
+                order MUST match ``slots`` (the same N-slot order the selector
+                and read path use).
+            token_counts: [B] (or [B, 1]) tensor — the number of REAL (non-pad)
+                tokens in this chunk, per sample. A selected slot gains exactly
+                ``token_counts[b]`` mass this chunk (routing is per-chunk: a slot
+                that wins the chunk's top-k absorbs a write aggregated over the
+                whole chunk's tokens — see class/__init__ note).
+
+        Lazily materialises ``slot_token_mass`` [B, N] on first call (after the
+        bank is initialised) and reallocates on a batch-size / N change. Pure
+        no_grad state mutation — never enters the autograd graph (the readout
+        bias consumes a detached copy). No-op while ``frozen`` (e.g. eval
+        question-time generation) so question tokens don't inflate mass, exactly
+        like ``write`` short-circuits when frozen.
+        """
+        if self.frozen or self.slots is None:
+            return
+        with torch.no_grad():
+            B, N = self.slots.shape[0], self.slots.shape[1]
+            if sel.shape[0] != B or sel.shape[1] != N:
+                # Shape mismatch (e.g. stale counter) — skip silently rather
+                # than corrupt the accumulator or raise in the hot path.
+                return
+            if (
+                self.slot_token_mass is None
+                or self.slot_token_mass.shape[0] != B
+                or self.slot_token_mass.shape[1] != N
+            ):
+                self.slot_token_mass = torch.zeros(
+                    B, N, device=self.slots.device, dtype=torch.float32
+                )
+            _sel = sel.to(device=self.slot_token_mass.device, dtype=torch.float32)
+            _tc = token_counts.to(
+                device=self.slot_token_mass.device, dtype=torch.float32
+            )
+            if _tc.dim() == 1:
+                _tc = _tc.unsqueeze(-1)                       # [B, 1]
+            self.slot_token_mass = self.slot_token_mass + _sel * _tc
+
+    def zero_token_mass(self, mask: torch.Tensor) -> None:
+        """Zero the token mass of the masked (recycled/evicted) slots (no_grad).
+
+        ``mask``: [B, N] bool — True where the slot was just recycled / evicted
+        and its accumulated history should be discarded (the slot now holds
+        brand-new content, so its old token mass no longer describes it).
+        No-op when mass is uninitialised or the shape mismatches.
+        """
+        if self.slot_token_mass is None:
+            return
+        with torch.no_grad():
+            m = mask.to(device=self.slot_token_mass.device)
+            if m.dim() != 2 or m.shape != self.slot_token_mass.shape:
+                return
+            self.slot_token_mass = self.slot_token_mass.masked_fill(m.bool(), 0.0)
+
+    # --------------------------------------------------------------------- #
     # Access
     # --------------------------------------------------------------------- #
 
@@ -218,6 +303,9 @@ class MemoryBank(nn.Module):
         _m = dead_mask.to(device=self.slots.device).unsqueeze(-1)          # [B,N,1]
         _new = new_content.detach().to(device=self.slots.device, dtype=self.slots.dtype)
         self.slots = torch.where(_m, _new, self.slots)
+        # A recycled slot now holds brand-new content, so its accumulated token
+        # mass no longer describes it — zero the masked rows (no-op if mass off).
+        self.zero_token_mass(dead_mask)
         # Keep the global norm cap consistent with the gated write paths
         # (gradient-preserving fixed-ratio clamp; only shrinks).
         if self._slot_value_norm_cap > 0.0:
@@ -391,6 +479,7 @@ class MemoryBank(nn.Module):
         tanh_new: bool = False,
         replace: bool = False,
         delta_rule: bool = False,
+        delta_erase_write: bool = False,
     ):
         """In-place EMA writeback on the selected slot positions.
 
@@ -492,7 +581,28 @@ class MemoryBank(nn.Module):
             ).to(self.slots.dtype)
             g_in = gate.to(device=self.slots.device, dtype=self.slots.dtype)
             g_forget = forget_gate.to(device=self.slots.device, dtype=self.slots.dtype)
-            if delta_rule:
+            if delta_erase_write:
+                # DeltaNet-style erase-then-write (associative update). For each
+                # selected slot, first ERASE the component of the current slot
+                # aligned with the new-content direction k_hat, then WRITE the
+                # new value, both scaled by the input gate beta = g_in:
+                #   k_hat   = new_content / (||new_content|| + eps)
+                #   updated = current - beta·(current·k_hat)·k_hat + beta·new
+                # The independent g_forget is intentionally ignored on this path
+                # (precedence over the delta_rule / two-gate forms). k_hat is
+                # normalized per-slot over the feature dim with an eps for
+                # numerical safety. Default off → never entered, byte-identical.
+                _eps = 1e-6
+                k_hat = new_content / (
+                    new_content.norm(dim=-1, keepdim=True) + _eps
+                )                                                       # [B, k, d]
+                proj = (current * k_hat).sum(dim=-1, keepdim=True)      # [B, k, 1]
+                updated = current - g_in * (proj * k_hat) + g_in * new_content
+                # FIX (2026-06-13): force back to slots dtype — k_hat division /
+                # eps can upcast to fp32, leaving `updated` fp32 while self.slots
+                # is bf16 → scatter() dtype-mismatch RuntimeError. Cast guards it.
+                updated = updated.to(self.slots.dtype)
+            elif delta_rule:
                 # P11 (2026-06-06) delta-rule writeback. Instead of the LM2
                 # two-independent-gate form (g_in·new + g_forget·current), write
                 # the RESIDUAL between the new value and what is already stored,

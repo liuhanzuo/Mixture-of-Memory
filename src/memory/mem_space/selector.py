@@ -149,6 +149,19 @@ class TopKSelector(nn.Module):
             F.normalize(torch.randn(num_slots, selector_dim), dim=-1) * 2.0
         )
 
+        # Dead-slot-binding fix (independent learnable slot key). A PURE
+        # learnable per-slot routing key, orthogonal-style init matching
+        # slot_key_bias (random unit directions). When self._independent_slot_key
+        # is True (wired from config), this is used DIRECTLY (after normalize) as
+        # the routing key instead of the content-derived K_sel(slots) +
+        # slot_key_bias, decoupling slot addressing from slot content. When False
+        # (default) this Parameter is unused in forward and the key computation is
+        # byte-identical to the content-based path.
+        self.slot_key_param = nn.Parameter(
+            F.normalize(torch.randn(num_slots, selector_dim), dim=-1) * 2.0
+        )
+        self._independent_slot_key = False
+
         # Keep slot_keys for checkpoint backward compat (not used in forward).
         self.slot_keys = nn.Parameter(
             F.normalize(torch.randn(num_slots, selector_dim), dim=-1),
@@ -260,10 +273,15 @@ class TopKSelector(nn.Module):
         # P1-v2: config.no_detach_slots_in_selector skips detach to give K_sel
         # direct gradient from the routing path.
         _slots_for_key = slots if self._no_detach_slots else slots.detach()
-        k = F.normalize(
-            self.K_sel(_slots_for_key) + self.slot_key_bias.unsqueeze(0),
-            dim=-1,
-        )                                                # [B, N, S]
+        if self._independent_slot_key:
+            # Dead-slot-binding fix: pure learnable per-slot key, independent of
+            # slot content, so never-written slots keep a stable distinct key.
+            k = F.normalize(self.slot_key_param.unsqueeze(0), dim=-1).expand(B, -1, -1)
+        else:
+            k = F.normalize(
+                self.K_sel(_slots_for_key) + self.slot_key_bias.unsqueeze(0),
+                dim=-1,
+            )                                                # [B, N, S]
 
         # Batched-eval padding mask prep (2026-06-09). `_tok_keep` is a bool
         # [B, T] (True = real token) used to exclude pad positions from the
@@ -375,7 +393,13 @@ class TopKSelector(nn.Module):
             # in v10) re-centers/re-scales the slot queries to break projection
             # collapse, mirroring its use in multi_query.
             q_slot = self.K_sel(_slots_for_key) + self.slot_key_bias.unsqueeze(0)  # [B, N, S]
-            q_slot = F.normalize(self.q_sel_ln(q_slot), dim=-1)                    # [B, N, S]
+            if self._independent_slot_key:
+                # Dead-slot-binding fix: the slot-as-query routing key is the pure
+                # learnable slot_key_param (normalized), independent of slot
+                # content — so never-written slots keep a stable distinct query.
+                q_slot = F.normalize(self.slot_key_param.unsqueeze(0), dim=-1).expand(B, -1, -1)
+            else:
+                q_slot = F.normalize(self.q_sel_ln(q_slot), dim=-1)                # [B, N, S]
             k_tok = q                                                             # [B, T, S] reuse F.normalize(Q_sel(H))
             attn = torch.einsum("bns,bts->bnt", q_slot, k_tok) * self.temperature  # [B, N, T]
             if _tok_keep is not None:
@@ -1472,6 +1496,8 @@ class MemoryCrossAttentionRead(nn.Module):
         slot_keys: torch.Tensor,
         slot_values: torch.Tensor,
         dead_mask: Optional[torch.Tensor] = None,
+        mass: Optional[torch.Tensor] = None,
+        mass_coef: float = 1.0,
     ) -> torch.Tensor:
         """Gated memory cross-attention read.
 
@@ -1483,6 +1509,15 @@ class MemoryCrossAttentionRead(nn.Module):
                 over the whole sample. When provided, the no-grad telemetry block
                 records the fraction of read-path softmax mass landing on dead vs
                 live slots. Purely diagnostic — does NOT affect the forward output.
+            mass:        Optional [B, N] float — cumulative real-token mass each
+                slot absorbed (MemoryBank.slot_token_mass), in the SAME N-slot
+                index order as slot_keys/slot_values. When provided, a per-slot
+                logit bias ``mass_coef · log1p(mass)`` is ADDED to the first-N
+                (real-slot) attention logits BEFORE the softmax, so a slot that
+                condensed many tokens gets proportionally more read weight. The
+                null/sink column (if present) is NOT biased. Default None → no
+                bias term is added and the softmax is byte-identical to before.
+            mass_coef:   scale on the log1p(mass) bias (ignored when mass is None).
 
         Returns:
             read_out: [B, T, d_model] gated memory contribution to add to the
@@ -1521,6 +1556,25 @@ class MemoryCrossAttentionRead(nn.Module):
         # the whole point of P8; slots no longer share the live-token softmax).
         scale = self.head_dim ** -0.5
         attn_logits = torch.matmul(Q, K.transpose(-2, -1)) * scale  # [B,H,T,N+1]
+        # Per-slot token-mass bias (2026-06-15). Add mass_coef·log1p(mass_n) to
+        # the logit of each REAL slot n (first N columns) so the softmax weight
+        # of a slot scales ≈ with the tokens it condensed; the null/sink column
+        # (the extra column when not disable_null_sink) is NOT biased. mass is
+        # [B, N] in the same slot order as K's first N columns; we build a
+        # full-width additive bias [B,1,1,S] (S = attn_logits.size(-1)) with the
+        # sink column left at 0 and add it OUT-OF-PLACE (no in-place slice write
+        # on a grad tensor). mass is detached telemetry (no_grad), so the bias is
+        # a constant additive term — gradient w.r.t. Q/K is unchanged. When mass
+        # is None (flag off) this block is skipped entirely → attn_logits is
+        # byte-identical to the pure Q·Kᵀ·scale path (backward compatibility).
+        if mass is not None:
+            _S = attn_logits.shape[-1]
+            _m = mass.to(device=attn_logits.device, dtype=attn_logits.dtype)
+            if _m.dim() == 2 and _m.shape[0] == B and _m.shape[1] == N and N <= _S:
+                _bias_real = float(mass_coef) * torch.log1p(_m.clamp(min=0.0))  # [B, N]
+                _bias = attn_logits.new_zeros(B, _S)                            # [B, S]
+                _bias[:, :N] = _bias_real
+                attn_logits = attn_logits + _bias[:, None, None, :]
         attn_weights = F.softmax(attn_logits, dim=-1, dtype=torch.float32).to(V.dtype)
         attn_weights = self.attn_dropout(attn_weights)
         attn_output = torch.matmul(attn_weights, V)  # [B,H,T,D]

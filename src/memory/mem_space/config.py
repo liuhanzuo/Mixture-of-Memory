@@ -75,6 +75,18 @@ class MemorySpaceConfig:
     # tasks that require exact running state across many chunks (e.g. counting).
     num_global_slots: int = 0
 
+    # Dead-slot-binding fix (independent learnable slot key). When True, the
+    # TopKSelector routing key for each slot is a PURE learnable nn.Parameter
+    # `slot_key_param` [num_slots, selector_dim] used DIRECTLY (normalized) as
+    # the key, instead of the content-derived `K_sel(slots) + slot_key_bias`.
+    # This decouples "which slot is addressed" from "what the slot currently
+    # stores", so empty/never-written slots keep a stable, distinct key and can
+    # still be selected to receive content (breaking the Catch-22 where a
+    # never-written slot keeps a stale content-derived key and is never picked).
+    # Applies at BOTH the content-routing key site and the slot_query key site.
+    # Default False = EXACT current content-based behaviour (byte-identical).
+    independent_slot_key: bool = False
+
     slot_init: str = "hidden_pool"
     slot_init_noise: float = 1.0
 
@@ -144,6 +156,23 @@ class MemorySpaceConfig:
     use_delta_rule_writeback: bool = False
     normalize_readout: bool = False
     readout_norm_scale: float = 1.0
+
+    # DeltaNet-style erase-then-write (associative memory update). When True,
+    # the GATED writeback paths (dual_gate / lowrank_gate / diag_gate — any
+    # write() call that supplies a forget_gate) apply, for each selected slot
+    # with new content `new` and current value `current`:
+    #     k_hat   = new / (||new|| + eps)            # unit new-content direction
+    #     updated = current - beta·(current·k_hat)·k_hat + beta·new
+    # i.e. first ERASE the component of the slot aligned with the new key
+    # direction, then WRITE the new value, with beta = the input gate g_in.
+    # This is the textbook DeltaNet associative update (erase-old-association,
+    # add-new), as opposed to the EMA / delta-rule residual
+    # (current + g_in·(new−current)). It composes with use_delta_rule_writeback:
+    # when delta_erase_write=True it takes precedence on the dual-gate path,
+    # regardless of the delta_rule residual form. Applies in BOTH train and eval
+    # (it changes stored state). Default False → EXACT current behaviour
+    # (byte-identical to pre-this-flag).
+    delta_erase_write: bool = False
     entropy_aux_weight: float = 0.0
     selector_temperature: float = 1.0
     key_repulsion_weight: float = 0.01
@@ -425,6 +454,21 @@ class MemorySpaceConfig:
     # distribute all of its mass across the real slots. Isolates the null-sink's
     # contribution while holding the dedicated xattn read mechanism fixed.
     memory_xattn_disable_null_sink: bool = False
+
+    # Per-slot token-mass readout bias (2026-06-15). The P8 read softmax logit
+    # is pure Q·Kᵀ·scale (selector.py read()), with NO per-slot prior — and the
+    # slot_value_norm_cap (5.0) flattens slot norms, so a slot that condensed
+    # MANY tokens and a slot that condensed FEW are treated identically at read
+    # time. When True, the read adds ``readout_mass_coef · log1p(mass_n)`` to the
+    # softmax logit of slot n (mass_n = cumulative REAL tokens absorbed by slot
+    # n over the sample, tracked in MemoryBank.slot_token_mass), so after softmax
+    # a slot's read weight scales ≈ proportionally to the tokens it represents.
+    # The bias is applied ONLY to the N real-slot columns, never the null/sink
+    # column. Default False → the read path passes mass=None and the softmax is
+    # byte-identical to pre-2026-06-15. readout_mass_coef scales the bias
+    # strength (1.0 = exact log1p; larger = stronger mass preference).
+    use_readout_mass_bias: bool = False
+    readout_mass_coef: float = 1.0
 
     # FastMem (Gated Delta Rule continuous memory, 2026-05-21):
     # Per-layer fast-weight memory that captures a continuous running summary
