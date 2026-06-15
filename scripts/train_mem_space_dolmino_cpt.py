@@ -2963,7 +2963,7 @@ def main() -> None:
                 "[step %d/%d] lm=%.4f aux=%.4f route_aux=%.4f l3recon=%.4f "
                 "distill_kl=%.4f distill_hid=%.4f lr=%.2e n_ctx=%d "
                 "dolmino=%d babi=%d nf=%d skip=%d speed=%.2f steps/s",
-                global_step, args.total_steps, avg_lm, avg_aux, avg_route_aux,
+                global_step, args.total_steps, avg_lm_shared, avg_aux, avg_route_aux,
                 avg_l3recon, avg_distill_kl, avg_distill_hidden, lr,
                 current_n_ctx, n_dolmino, n_babilong, n_nonfinite, spike_skip_count,
                 steps_per_sec,
@@ -2992,7 +2992,7 @@ def main() -> None:
                 )
             if _WANDB_AVAILABLE and args.wandb_project and wandb.run:
                 _log_dict = {
-                    "train/lm_loss": avg_lm,
+                    "train/lm_loss": avg_lm_shared,
                     "train/aux_loss": avg_aux,
                     "train/route_aux": avg_route_aux,
                     "train/l3recon": avg_l3recon,
