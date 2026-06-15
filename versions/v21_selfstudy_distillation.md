@@ -29,6 +29,8 @@
 
 所以 teacher 的 full-context 输出（answer 段每个 token 的软分布 + 每层 hidden）就是 student readout 应当复现的**金标准**——而且因为 backbone 冻结、teacher 不含可训练参数，teacher 的输出对每条固定语料是**确定的**，可以**离线缓存**，训练时零额外 forward。把 one-hot CE 升级成「逼近 full-context 行为」的稠密监督，直接对 W0 readout 施压。
 
+> **蒸馏的本质（用户 2026-06-15 强调）**：**让 student 在「只有 memory 这些信息、看不到原始 context」（闭卷）条件下的输出，接近原模型「看了完整 context」（开卷）的输出。** 这不是泛泛的知识蒸馏，而是精确攻击我们已诊断的 **W0(闭卷 readout 10–30) vs full-context/SWA(开卷 50–60) 的 gap**——直接拿「开卷答案」当监督，逼「闭卷的 memory readout」复现它。设计/实现的每个选择都应服务于这个目标。
+
 ---
 
 ## 2. 范式总览
@@ -251,4 +253,5 @@ if memory_xattn_out is not None:
 - **top-64 截断**：teacher 长尾 mass 丢失，`KL(q‖p)`（reverse）在 support 外无定义 → 实现时把 student 概率也重归一到 top-64 support，或对 support 外加小 floor。需在实现中明确（首批：teacher top-64 重归一为 `p_t`，student 同 support 上算 KL）。
 - **缓存体积**：hidden 是存盘大头（技术点1）。若 corpus 大到放不下，先减到 2 层 / 降采样 answer token / 只缓存 logits（先验证 A，B 后补）。
 - **teacher = 纯 backbone 还是 patch-but-memory-off**：本设计取**纯未 patch 的 frozen Llama-3-8B 全序列 forward** 作 teacher（最干净、可离线、层 ℓ 与 student 同深度对齐）。若日后想让 teacher 也带某种 full-context memory，再单议。
+- **teacher 必须是真正的 full-context 开卷 forward**（本质所系）：teacher 一定喂 `concat(全部 context chunks, target chunk)` 一次 forward，**绝不能也只喂 target chunk**——否则 teacher 自己也变成「闭卷」，失去「开卷监督」的全部意义，蒸馏退化为自蒸馏噪声。这也再次印证技术点3 为何 **T2 不蒸馏**：T2 的 answer-only one-hot CE 已经在逼 student「闭卷答对那个数字」，而 dolmino 通用文本的**开卷软分布**（看了全文才知道的合理续写结构）才是「闭卷 memory」最该学、one-hot CE 学不到的东西。
 - **curriculum 下 n_ctx 变化**（`--curriculum 0:3`）：target chunk 始终是最后一个 chunk，answer 段定义不变；但 n_ctx 增大会改变 teacher flat 序列长度 → 缓存须按训练实际用的 n_ctx 切分口径生成，避免 sample_id 错位。
