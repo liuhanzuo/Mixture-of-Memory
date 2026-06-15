@@ -2952,6 +2952,9 @@ def main() -> None:
             if is_main(rank):
                 logger.info("[distill] cache hit-rate @step50: %d hits / %d miss",
                             _h, _m)
+
+        # Logging
+        if is_main(rank) and (global_step % args.log_interval == 0):
             avg_lm = step_lm_loss / max(1, step_valid_micros)
             avg_aux = step_aux_loss / max(1, step_valid_micros)
             avg_route_aux = step_route_aux / max(1, step_valid_micros)
