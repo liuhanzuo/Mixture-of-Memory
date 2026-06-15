@@ -1600,7 +1600,7 @@ def distill_hidden_cosine(
 
 
 def assert_distill_cache_consistent(cache_dir, train_chunk_size, train_n_ctx,
-                                    train_layers):
+                                    train_layers, train_fingerprint=None):
     """Guard against silently training on a mis-sliced teacher cache (v21).
 
     The teacher cache is keyed by stable (doc_idx, group_pos) windows of length
@@ -1651,6 +1651,27 @@ def assert_distill_cache_consistent(cache_dir, train_chunk_size, train_n_ctx,
             "(misaligned) and silently trains garbage. Rebuild the cache with "
             "matching params (build_distill_cache.py) or change the training "
             "config to match the cache."
+        )
+    # Dataset-identity guard (2026-06-16): sample_id=(doc_idx,group_pos) is a
+    # POSITIONAL index into the Arrow the cache was built from. If training uses
+    # a dataset with a different _fingerprint (different row order — e.g. an
+    # independently reprocessed copy on another disk), every (doc_idx,group_pos)
+    # points at a DIFFERENT document -> 100% silent cache miss -> distill_kl/hid
+    # stay 0 and the run trains as if no distillation (wasted compute). Fail fast.
+    meta_fp = meta.get("dataset_fingerprint")
+    if train_fingerprint is not None and meta_fp is not None \
+            and str(meta_fp) != str(train_fingerprint):
+        raise RuntimeError(
+            "[distill] cache/dataset FINGERPRINT MISMATCH. The teacher cache at "
+            f"{cache_dir} was built from a dolmino dataset with "
+            f"_fingerprint={meta_fp}, but this training run's dolmino dataset has "
+            f"_fingerprint={train_fingerprint}. sample_id=(doc_idx,group_pos) is "
+            "a positional index into the Arrow, so a different row order makes "
+            "every key point at a different document -> 100% silent cache miss "
+            "(distill loss stays 0, no distillation actually happens). Use the "
+            "SAME physical Arrow that the cache was built from (rsync the dataset "
+            "+ cache together; never independently reprocess per node), or "
+            "rebuild the cache against this dataset."
         )
     return meta
 
@@ -2613,15 +2634,17 @@ def main() -> None:
         # built with a different n_ctx/chunk_size/distill_layers than this run
         # uses (else the (doc_idx, group_pos) keys张冠李戴). See
         # assert_distill_cache_consistent for details. ---
+        _train_fp = getattr(getattr(dolmino_ds, "_ds", None), "_fingerprint", None)
         _meta = assert_distill_cache_consistent(
             args.distill_cache_dir, args.chunk_size, curriculum.get_n_ctx(0),
-            _distill_layers_parsed)
+            _distill_layers_parsed, train_fingerprint=_train_fp)
         if is_main(rank):
             logger.info(
                 "[distill] cache meta OK: n_ctx=%d chunk_size=%d layers=%s "
-                "(matches training config)",
+                "fingerprint=%s (matches training config + dataset)",
                 int(_meta["n_ctx"]), int(_meta["chunk_size"]),
-                [int(x) for x in _meta["distill_layers"]])
+                [int(x) for x in _meta["distill_layers"]],
+                _meta.get("dataset_fingerprint"))
         distill_cfg = {
             "distill_logits": args.distill_logits,
             "distill_hidden": args.distill_hidden,
@@ -2644,6 +2667,12 @@ def main() -> None:
     _distill_lru: "_OrderedDict[tuple, dict]" = _OrderedDict()
     _DISTILL_LRU_MAX = 64
 
+    # distill cache hit/miss counters (fail-fast guard against silent 100% miss,
+    # e.g. wrong dataset fingerprint or incomplete cache — see 2026-06-16 incident
+    # where a whole 500-step run trained with distill_kl=0 because the cache was
+    # keyed to a different Arrow row order). [hits, misses].
+    _distill_hitmiss = [0, 0]
+
     def _get_teacher_cache(sample_id):
         """Return decoded teacher cache dict for sample_id, or None if missing."""
         if distill_cfg is None or sample_id is None:
@@ -2651,14 +2680,17 @@ def main() -> None:
         key = tuple(int(x) for x in sample_id)
         if key in _distill_lru:
             _distill_lru.move_to_end(key)
+            _distill_hitmiss[0] += 1
             return _distill_lru[key]
         path = os.path.join(args.distill_cache_dir, f"{key[0]}_{key[1]}.npz")
         if not os.path.exists(path):
+            _distill_hitmiss[1] += 1
             return None  # not cached → fall back to plain dolmino step
         data = load_distill_npz(path, device)
         _distill_lru[key] = data
         if len(_distill_lru) > _DISTILL_LRU_MAX:
             _distill_lru.popitem(last=False)
+        _distill_hitmiss[0] += 1
         return data
 
     while global_step < args.total_steps:
@@ -2904,9 +2936,22 @@ def main() -> None:
         _step_counters_inc(model)
         global_step += 1
 
-        # Logging
-        if is_main(rank) and (global_step % args.log_interval == 0):
-            avg_lm = step_lm_loss / max(1, step_valid_micros)
+        # Fail-fast: distill enabled but cache 100% missing after warmup (2026-06-16).
+        # Catches silent distillation no-op (wrong dataset fingerprint / incomplete
+        # cache) before wasting a whole run. Checked once at step 50.
+        if distill_cfg is not None and global_step == 50:
+            _h, _m = _distill_hitmiss
+            if _h == 0 and _m > 0:
+                raise RuntimeError(
+                    f"[distill] cache 100% MISS after 50 steps ({_m} dolmino "
+                    "lookups, 0 hits) -> distillation is a silent no-op. Likely "
+                    "wrong dataset fingerprint (cache built from a different Arrow "
+                    "row order) or an incomplete/empty cache dir. Check "
+                    f"{args.distill_cache_dir}/meta.json dataset_fingerprint vs the "
+                    "training dataset, and that the cache finished building.")
+            if is_main(rank):
+                logger.info("[distill] cache hit-rate @step50: %d hits / %d miss",
+                            _h, _m)
             avg_aux = step_aux_loss / max(1, step_valid_micros)
             avg_route_aux = step_route_aux / max(1, step_valid_micros)
             avg_l3recon = step_l3recon / max(1, step_valid_micros)

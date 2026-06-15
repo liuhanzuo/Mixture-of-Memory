@@ -96,25 +96,10 @@ def main():
     layers = [int(x) for x in args.distill_layers.split(",") if x.strip() != ""]
     os.makedirs(args.out_dir, exist_ok=True)
 
-    # Drop a meta.json describing exactly how this cache was sliced so the
-    # training script can assert n_ctx / chunk_size / distill_layers match.
-    # The group window length the cache is keyed by = (n_ctx+1)*chunk_size; if
-    # training uses a different n_ctx/chunk_size the (doc_idx, group_pos) keys
-    # would silently mismatch the teacher windows. Only rank 0 writes it.
-    if args.rank == 0:
-        import json
-        meta_path = os.path.join(args.out_dir, "meta.json")
-        meta = {
-            "n_ctx": int(args.n_ctx),
-            "chunk_size": int(args.chunk_size),
-            "distill_layers": layers,
-            "model_path": args.model_path,
-            "topk": int(args.topk),
-            "group_len": (int(args.n_ctx) + 1) * int(args.chunk_size),
-        }
-        with open(meta_path, "w") as f:
-            json.dump(meta, f, indent=2)
-        print(f"[rank 0] wrote cache meta {meta_path}: {meta}", flush=True)
+    # (meta.json is written AFTER the dataset is loaded below, so it can record
+    # the dataset _fingerprint — sample_id=(doc_idx,group_pos) is a POSITIONAL
+    # index into this exact Arrow, so the cache is only valid for a dataset with
+    # the identical fingerprint/row-order.)
 
     device = torch.device(
         f"cuda:{args.local_rank}" if torch.cuda.is_available() else "cpu")
@@ -151,6 +136,31 @@ def main():
         num_docs = min(num_docs, args.max_docs)
     print(f"[rank {args.rank}] dataset has {len(ds)} docs; scanning {num_docs}.",
           flush=True)
+
+    # Drop meta.json (rank 0 only) describing exactly how this cache was sliced,
+    # so the training script can assert n_ctx / chunk_size / distill_layers AND
+    # the dataset identity match. sample_id=(doc_idx,group_pos) is a POSITIONAL
+    # index into THIS Arrow; if training uses a dataset with a different
+    # _fingerprint (different row order, e.g. an independently reprocessed copy)
+    # every key points at a different document -> 100% silent cache miss. Record
+    # the fingerprint so training fails fast instead of training garbage.
+    if args.rank == 0:
+        import json
+        ds_fingerprint = getattr(ds, "_fingerprint", None)
+        meta_path = os.path.join(args.out_dir, "meta.json")
+        meta = {
+            "n_ctx": int(args.n_ctx),
+            "chunk_size": int(args.chunk_size),
+            "distill_layers": layers,
+            "model_path": args.model_path,
+            "topk": int(args.topk),
+            "group_len": (int(args.n_ctx) + 1) * int(args.chunk_size),
+            "dataset_fingerprint": ds_fingerprint,
+            "dataset_num_docs": int(len(ds)),
+        }
+        with open(meta_path, "w") as f:
+            json.dump(meta, f, indent=2)
+        print(f"[rank 0] wrote cache meta {meta_path}: {meta}", flush=True)
 
     chunk_size = args.chunk_size
     group_size = args.n_ctx + 1
