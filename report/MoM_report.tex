@@ -282,6 +282,32 @@ qasper（科学论文细节）保留 38\%；而多跳检索类（2wikimqa/hotpot
 恰是合成检索训练强化的“跨片段关联”能力。这把下一步要攻的短板明确指向
 “超长单一文档的连贯保持”与“细粒度信息保真”，而非关联检索。
 
+\subsection{真长文蒸馏：突破 16k 长程天花板（最新结果）}
+上述所有干预（mass / 蒸馏 / 课程 / 叠加）的 qa5 长程都卡在同一天花板：16k$\approx$13、32k$\approx$9。
+我们诊断其根因为\textbf{训练数据本身太短}——dolmino 单文档 $\le$16k token、且因 4096 上限被迫锁 n\_ctx=3，
+模型在训练期\textbf{从未见过真正的长文档}。据此我们改用 \textbf{PG19 真长书}（单本 60k--100k+ token，78\% $\ge$32k）
+做 self-study 蒸馏（chunk512，n\_ctx=7，有效训练窗口 4096），结果：
+\begin{center}\small
+\begin{tabular}{lccccccc}
+\toprule
+\textbf{qa5 W0} & \textbf{0k} & \textbf{1k} & \textbf{2k} & \textbf{4k} & \textbf{8k} & \textbf{16k} & \textbf{32k}\\
+\midrule
+现有方法天花板（mass/蒸馏/课程/叠加） & -- & -- & -- & -- & $\sim$15 & 13 & 9\\
+\textbf{PG19 真长文蒸馏（n\_ctx7）} & 75 & 73 & 51 & 29 & 19 & \textbf{16} & 9\\
+\bottomrule
+\end{tabular}
+\end{center}
+\noindent
+\textbf{16k 档稳定突破天花板（16 vs 13，$+3$）}，且 final 与 step250 一致、跨 seed 复现——\textbf{验证了“训练期见过真长文能破长程墙”的核心假设}。
+但 \textbf{32k 仍持平未破（9）}。我们进一步做了两个攻 32k 的消融，均为\textbf{负结果}：
+\begin{itemize}
+  \item \textbf{加大训练窗口}（n\_ctx=15，窗口 4096$\to$8192）：32k 仍 $\approx$9、16k 反略降（跨 seed 确认）。$\Rightarrow$ 不是训练长度问题。
+  \item \textbf{降低压缩比}（slot 数 128$\to$256，压缩比 250:1$\to$125:1）：32k 仍 9、16k 持平。$\Rightarrow$ 不是 2$\times$ 压缩比问题。
+\end{itemize}
+两个负结果共同表明：\textbf{32k 硬墙比预想更顽固，既非训练窗口也非线性扩容能解}，
+更可能是 32k$\to$百级 slot 在该架构下的信息论容量极限，需分层记忆 / 检索增强等更深层改动。
+\textbf{16k 是当前真长文蒸馏方案的稳健甜点。}
+
 % ================= 4 工程护栏 =================
 \section{工程实践与质量护栏}
 大模型驱动的高强度实验会遇到大量“看着在跑、其实没效果”的静默失效。本工作把每次踩坑都沉淀为代码级护栏，
@@ -304,8 +330,10 @@ qasper（科学论文细节）保留 38\%；而多跳检索类（2wikimqa/hotpot
 \begin{itemize}
   \item MoM 的 MoE 式 top-$k$ 路由能在有界 KV 下承载长上下文，但读写解耦带来“读不准”的核心瓶颈。
   \item 机制侧杠杆（mass、蒸馏）优于训练侧（容量/长度/课程）；弱 mass+蒸馏的组合在长程首次超过单独方法。
-  \item 长程 32k 仍是共同天花板（6$\to$9），未被根本突破；真实长文档上缺失集中于超长叙事与细粒度抽取。
-  \item 展望：沿最优弱叠加配置 + 针对“连贯/细粒度”的新机制，配合 LongBench 持续验证。
+  \item \textbf{真长文（PG19）蒸馏突破了 16k 长程天花板（13$\to$16，跨 seed 复现）}——证实长程瓶颈部分源于训练数据太短。
+  \item 但 \textbf{32k 仍是硬墙}：加大训练窗口（n\_ctx15）与降低压缩比（N256）两个消融均为负结果，
+        表明 32k 需分层/检索等更深层改动，非训练长度或线性扩容可解。
+  \item 展望：沿“真长文 + 弱 mass+蒸馏”的 16k 甜点配置，针对 32k 探索分层记忆 / 检索增强，配合 LongBench 持续验证。
 \end{itemize}
 方法论层面，本工作验证了大模型 Agent 可以自主驱动一个真实的多节点 ML 研究项目——
 从调度到排错到结论——并通过护栏沉淀保证工程可靠性。
