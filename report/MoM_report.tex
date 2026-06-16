@@ -5,6 +5,7 @@
 
 \usepackage[margin=2.3cm,top=2.2cm,bottom=2.2cm]{geometry}
 \usepackage{amsmath}
+\usepackage{amssymb}
 \usepackage{graphicx}
 \usepackage{xcolor}
 \usepackage{booktabs}
@@ -139,6 +140,61 @@ top-$k$ 路由决定的是“这一步该把信息写进/读出哪些记忆单�
 \end{itemize}
 这样记忆与当前 token 在\textbf{同一个注意力算子}里联合交互，读写都走骨干自身的表达力，
 避免了注入式方法的“稀释”问题——这是 MoM 能在冻结骨干上稳定训练的关键工程决策。
+
+\subsection{形式化：路由、读写、joint attention 与训练目标}
+记进入某 decoder 层的隐藏态为 $H_l\in\mathbb{R}^{B\times T\times d}$，该层共享记忆 bank 的 slot 为 $M\in\mathbb{R}^{N\times d}$（$N{=}128$）。
+
+\noindent\textbf{(1) Top-$k$ 路由（仿 MoE 门控）。} 用 mean-pooled 隐藏态 $\bar h=\frac1T\sum_t H_l[:,t,:]$ 对每个 slot 打分，
+带 loss-free 均衡偏置 $b_i$ 选 top-$k$：
+\begin{equation*}
+s_i=\frac{\langle W_q\bar h,\,W_k M_i\rangle}{\tau\sqrt{d}},\quad
+\mathcal{I}=\operatorname*{top\text{-}k}_i\big(s_i+b_i\big),\quad
+a=\mathrm{softmax}(s_{\mathcal I}),\quad k{=}16 .
+\end{equation*}
+偏置 $b_i$ 仅参与“选哪些”、不进入梯度，按 slot 历史负载在线增减以均衡利用率（DeepSeek loss-free balancing）。
+
+\noindent\textbf{(2) joint attention（KV-prepend 读出）。} 取选中 slot $M_{\mathcal I}\in\mathbb{R}^{k\times d}$ 与 L3 摘要 $S\in\mathbb{R}^{K\times d}$，
+拼成扩展序列后在\textbf{冻结}的 decoder 层里跑一次原生注意力：
+\begin{equation*}
+\tilde H=\big[\,\underbrace{S}_{K}\,;\;\underbrace{M_{\mathcal I}}_{k}\,;\;\underbrace{H_l}_{T}\,\big],\qquad
+\mathrm{Attn}(\tilde H)=\mathrm{softmax}\!\Big(\tfrac{Q\tilde H\,(K\tilde H)^\top}{\sqrt{d}}+\mathrm{Mask}\Big)\,V\tilde H .
+\end{equation*}
+记忆块位置用 position-0 的 RoPE（位置无关），$\mathrm{Mask}$ 让 $H$ 段内部因果、但所有 query 都能看见 $[S;M_{\mathcal I}]$ 块。
+输出按位置切分：前 $K{+}k$ 行为记忆输出 $O_{\text{mem}}$，后 $T$ 行 $O_{H}$ 即下一层隐藏态。
+开启 token-mass 读出加权时，对记忆列的注意力 logit 加偏置 $+\,\lambda_m\log(1{+}\text{mass}_i)$（slot 浓缩的真 token 数越多越易被读到）。
+
+\noindent\textbf{(3) L2 事件 slot 写入（dual-gate，LM2 风格）。} 把记忆输出投影回 slot 空间 $s_{\text{new}}=W_{\text{h2s}}O_{\text{mem}}^{\mathcal I}$，
+由输入/遗忘双门控做残差写回（每步只更新被选中的 $k$ 个 slot）：
+\begin{equation*}
+g_{\text{in}}=\sigma(W_n s_{\text{new}}{+}W_m M_{\mathcal I}{+}b_n),\;\;
+g_{\text{f}}=\sigma(W_n' s_{\text{new}}{+}W_m' M_{\mathcal I}{+}b_f),\;\;
+M_{\mathcal I}\leftarrow g_{\text{f}}\odot M_{\mathcal I}+g_{\text{in}}\odot\tanh(s_{\text{new}}).
+\end{equation*}
+
+\noindent\textbf{(4) L1 关联矩阵（per-token 门控 delta-rule，全 token 在线）。} L1 用一个快权重状态 $S_t\in\mathbb{R}^{d_k\times d_v}$
+对\textbf{每个} token 在线读写（互补于只存 $\sim$12.5\% token 的 top-$k$ 路由），读出门控融合进隐藏态：
+\begin{equation*}
+S_t=\alpha_t\,S_{t-1}+\beta_t\,\big(v_t-\alpha_t S_{t-1}k_t\big)\otimes k_t,\qquad
+o_t=S_t\,q_t,\qquad H_l\!\mathrel{+}=g_{\text{fuse}}\odot o_t,
+\end{equation*}
+其中 $\alpha_t=\sigma(\cdot)$ 是遗忘门、$\beta_t=\sigma(\cdot)$ 是 delta 学习率，误差项 $v_t-S_{t-1}k_t$ 使其自纠错（$O(d^2)$ 容量、无需 norm cap）。
+
+\noindent\textbf{(5) L3 语义摘要（Q-Former 式 cross-attn 池化）。} $K{=}64$ 个可学习 query 对 chunk 顶层隐藏态做 pre-LN 残差交叉注意力，
+产出长期摘要 $S$，供下一 chunk 的 joint attention 消费：
+\begin{equation*}
+S=\mathrm{LN}\big(Q+\mathrm{CrossAttn}(\mathrm{LN}_q Q,\,\mathrm{LN}_{kv}H,\,\mathrm{LN}_{kv}H)\big),\quad S\leftarrow S+\mathrm{FFN}(\mathrm{LN}\,S).
+\end{equation*}
+
+\noindent\textbf{(6) 训练目标。} 骨干冻结，只训练记忆适配器。基础为下一 token 语言建模 $\mathcal L_{\text{LM}}$ + 路由/均衡辅助项 $\mathcal L_{\text{aux}}$。
+self-study 蒸馏阶段再加两项（teacher = 同一骨干看\textbf{完整开卷}上下文，离线缓存、stopgrad）：
+对答案 token，在 teacher top-$k$ 词表支撑上做双向 KL（A），与选定层（12/20/28）的隐藏态 $1{-}\cos$ 匹配（B）：
+\begin{align*}
+\mathcal L_{A}&=\lambda\,\mathrm{KL}(p\Vert q)+(1{-}\lambda)\,\mathrm{KL}(q\Vert p),\quad \lambda{=}0.6,\quad
+\mathcal L_{B}=\textstyle\sum_{\ell\in\{12,20,28\}}\big(1-\cos(h^{\text{stu}}_\ell,h^{\text{tea}}_\ell)\big),\\
+\mathcal L&=\mathcal L_{\text{LM}}+\mathcal L_{\text{aux}}+w_d\,(\mathcal L_{A}+\beta\,\mathcal L_{B}),\quad w_d{=}1.0,\ \beta{=}1.0 .
+\end{align*}
+直觉：让“只有记忆信息（闭卷）”的 student 输出逼近“看到完整上下文（开卷）”的 teacher——直接攻“读不准”瓶颈。
+
 
 % ================= 3 主结果 + 相关工作 =================
 \section{主结果与相关工作比较}
