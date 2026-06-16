@@ -48,4 +48,22 @@ ax.bar([i+ww/2 for i in x],w0,ww,label='memory W0(闭卷)',color='salmon')
 ax.set_xticks(list(x)); ax.set_xticklabels(ds,rotation=30,ha='right',fontsize=7)
 ax.set_ylabel('F1'); ax.set_title('LongBench 真实长文档：能力缺失定位')
 ax.legend(fontsize=8); ax.grid(alpha=0.3,axis='y'); fig.tight_layout(); fig.savefig(OUT+'longbench_gap.pdf'); fig.savefig(OUT+'longbench_gap.png',dpi=130)
+
+# 图0(主结果): MoM(冻结8B+128slot) vs vanilla Llama-3-8B-Instruct, BABILong qa5
+fig,ax=plt.subplots(figsize=(5.6,3.3))
+L=[0,1,2,4,8,16,32]; xi=list(range(len(L)))
+mom =[82,86,83,70,64,46,41]
+# vanilla Llama-3-8B-It: 2k 处无该点, 用 None 断开
+base=[82,63,None,64,50,1,0]
+ax.plot(xi,mom,'o-',label='MoM (ours, 冻结 8B + 128 slot)',lw=2.4,ms=7,c='rebeccapurple')
+bx=[i for i,v in zip(xi,base) if v is not None]
+bv=[v for v in base if v is not None]
+ax.plot(bx,bv,'s--',label='Llama-3-8B-Instruct (vanilla)',lw=2,ms=6,c='darkgray')
+ax.axvline(xi[4],ls=':',c='salmon',lw=1.3)
+ax.text(xi[4]+0.1,90,'vanilla 训练窗口 8k',fontsize=7,c='salmon')
+ax.set_xticks(xi); ax.set_xticklabels([f'{x}k' for x in L])
+ax.set_xlabel('上下文长度'); ax.set_ylabel('BABILong qa5 准确率'); ax.set_ylim(-3,103)
+ax.set_title('固定 128-slot KV 预算下 MoM 逼近全注意力')
+ax.legend(fontsize=8,loc='lower left'); ax.grid(alpha=0.3)
+fig.tight_layout(); fig.savefig(OUT+'main_vs_base.pdf'); fig.savefig(OUT+'main_vs_base.png',dpi=130)
 print("figs done:", __import__('os').listdir(OUT))

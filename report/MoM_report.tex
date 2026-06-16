@@ -48,7 +48,7 @@
   {\LARGE\bfseries\color{titleblue} Mixture-of-Memory：用固定大小记忆缓冲\\[2pt]
    压缩长上下文的 LLM 适配器\par}
   \vspace{0.4cm}
-  {\large —— 一次由大模型 Agent 自主驱动的研发实践\par}
+  {\large —— 用类 MoE 的 top-$k$ 稀疏路由为冻结大模型补回长程记忆\par}
   \vspace{0.8cm}
   {\normalsize
    课程：大模型驱动的软件开发（2026 春季学期）成果报告\\[3pt]
@@ -61,60 +61,127 @@
 \vspace{0.2cm}
 \begin{center}{\large\bfseries\color{titleblue} 摘要}\end{center}
 \noindent
-本工作研究如何把超长上下文压缩进一个固定大小的记忆缓冲（memory bank），
-使 Llama-3-8B 在有界 KV 预算下处理长序列。我们提出的 mem\_space 适配器与混合专家（MoE）
-高度同构——可视为 \textbf{Mixture-of-Memory（MoM）}：$N$ 个记忆 slot 即“专家”，
-一个轻量 selector 对每个 chunk 做 top-$k$ 路由，写入只更新被选中的 top-$k$ slot（稀疏更新），
-读出则对全部 $N$ 个 slot 做独立 softmax。我们诊断出该架构的核心瓶颈是
-\textbf{“写得进、读不准”}（纯记忆读出 W0 仅 10--30，而开卷上限 50--60），
-并系统比较了四类干预：token-mass 读出加权、self-study 蒸馏、长度课程、以及二者叠加。
-关键发现是\textbf{弱 mass（强度 $\approx0.5$）与蒸馏在长程（16k/32k）上首次产生协同}，
-超过任一单独方法；mass 过强反而干扰。LongBench 真实长文档评测进一步把能力缺失定位到
-“超长叙事连贯”与“细粒度抽取”。尤为重要的是，整个研发过程——集群巡检、实验调度、代码实现、
-缺陷排查与质量护栏——由大模型 Agent 闭环自主驱动，本报告同时是这一研发范式的实证。
+本工作提出 \textbf{Mixture-of-Memory（MoM）}：一个为\textbf{冻结的} Llama-3-8B 骨干外挂的三级层次记忆适配器，
+在\textbf{固定 KV 预算}（128 个事件 slot）下把任意长的上下文压缩进记忆，使滑动窗口注意力（SWA，复杂度
+$O(n\cdot w)$）骨干恢复出近似全注意力的长程能力。其核心设计有三：
+（1）\textbf{三级层次记忆 L1/L2/L3} 按时间尺度分层——L1 per-token 衰减关联矩阵、L2 per-chunk 事件 slot、L3 per-段语义摘要；
+（2）\textbf{借鉴 MoE 的稀疏路由}——L2 的 128 个 slot 即“专家”，一个轻量 selector 对每个 chunk 做
+\textbf{top-$k$=16 路由}，写入只更新被选中的 top-$k$ slot（稀疏更新），与 MoE 只激活 top-$k$ 专家同构；
+（3）\textbf{joint attention（KV-prepend）}——把选中的记忆 slot 作为 KV 前缀拼进冻结 decoder 层，
+让记忆与当前 token 在原生注意力里联合交互，而非外部读出后再相加。
+在 BABILong qa5 上，\textbf{固定 128-slot 预算的 MoM 在 16k/32k 仍保持 46/41 分，而 vanilla Llama-3-8B-Instruct
+一旦超出其训练窗口（8k）即塌到 1/0}——这是本工作最直接的结论。
+报告后半部分进一步剖析了纯记忆读出（闭卷 W0）的“写得进、读不准”瓶颈与四类攻坚干预，
+并交代了整个研发由大模型 Agent 闭环自主驱动这一方法论。
 
 % ================= 1 引言 =================
-\section{引言：由大模型 Agent 自主驱动的研发}
-本课题的特别之处在于：从实验设计、五节点 GPU 集群调度、代码实现、到缺陷排查与结论分析，
-几乎全程由大模型 Agent 以闭环方式自主驱动，人类仅在关键方向上给出判断。具体工作流包括：
-\begin{itemize}
-  \item \textbf{Heartbeat 主动巡检闭环}：每 30 分钟一次定时巡检，真查 5 节点（本机 + 3×H20 + 1×B200）GPU 占用，
-        对在跑的训练/评测做健康检查（step 递增、nf=0、无 NCCL/OOM），空闲节点立即补任务、不留空转。
-  \item \textbf{多 Agent 并行协作}：研究调研、设计文档、代码实现、根因排查由多个子 Agent 分工并行，主 Agent 综合结论。
-  \item \textbf{双重验证原则}：仅看 GPU busy 快照会误判——busy=8/8 可能是 NCCL teardown 僵死、
-        proc=0 但 busy=8/8 是残留显存、4/8 可能是 eval 切任务的瞬时空隙；必须交叉验证进程状态与产物。
-  \item \textbf{踩坑$\to$护栏沉淀}：每个静默失效（数据饥饿、缓存失配、显存竞争）都被转化为代码级 fail-fast 护栏（见第 4 节）。
-\end{itemize}
-这种范式的价值在于：它能在长达数十小时的实验中保持高 GPU 利用率与实验连续性，
-同时把人类从重复的运维与监控中解放出来，只聚焦科学判断。下文先介绍方法（第 2 节），
-再展开核心科学问题与攻坚（第 3 节），最后总结工程护栏（第 4 节）与结论（第 5 节）。
+\section{引言：研究动机}
+\textbf{大模型 Agent 的上下文窗口撑不起真正的大型任务。} 当一个 Agent 连续工作数小时、跨越成百上千轮交互时，
+早期的关键信息（需求、踩过的坑、已验证的结论）会滑出有限的 context window；现行做法是用 RAG
+去检索“之前的 memory”，但这本质上是把记忆问题外包给了一个独立的检索系统。
+
+\textbf{而现行的（端到端可学习的）memory 机制，能力大多停留在“book summary”级别}：
+无论是 RMT 的循环 memory token、还是各类注入式 memory，它们倾向于把长上下文压成一份\textbf{粗粒度的全局摘要}，
+能回答“这本书大致讲了什么”，却\textbf{读不准}“第 37 章那个人名是什么”这类需要\textbf{细粒度、可定位检索}的问题。
+摘要式记忆的根本局限在于：它用\textbf{一个稠密通道}承载所有信息，没有“按需寻址到某条具体记忆”的机制。
+
+\textbf{我们的核心思路：用一种类似 MoE 的方式来加强记忆。} 既然 MoE 用 top-$k$ 稀疏门控让每个 token 只激活少数最相关的“专家”，
+我们就把记忆组织成\textbf{多个可寻址的 slot（记忆专家）}，用一个 selector 对每个上下文片段做 \textbf{top-$k$ 路由}，
+只把信息写进／读出最相关的少数 slot。这样记忆从“一份全局摘要”升级为“一组可稀疏寻址的细粒度记忆单元”，
+天然支持\textbf{可定位的检索}，而不只是 book-summary。这就是 \textbf{Mixture-of-Memory（MoM）} 的命名由来与设计主线。
+
+具体地，MoM 为一个\textbf{冻结的} Llama-3-8B（滑动窗口注意力骨干）外挂三级层次记忆，在\textbf{固定 128-slot KV 预算}下
+把任意长上下文压缩进去：L2 的 128 个 slot 即“记忆专家”，top-$k$=16 稀疏路由（仿 MoE）决定写／读哪些 slot，
+再用 joint attention 让记忆与当前 token 在原生注意力里联合交互（第 2 节）。
+其结果是：在 BABILong qa5 上，固定预算的 MoM 在 16k/32k 仍保持 46/41 分，而 vanilla Llama-3-8B 超出训练窗口即塌到 1/0（第 3 节）。
+本报告随后剖析了纯记忆读出的“写得进、读不准”瓶颈与四类攻坚（第 4 节），并交代工程护栏（第 5 节）与结论（第 6 节）。
+
+\paragraph{关于研发方式的说明。} 值得一提的是，本项目的实验设计、五节点 GPU 集群调度、代码实现与缺陷排查，
+几乎全程由大模型 Agent 以\textbf{闭环}方式自主驱动（定时巡检 5 节点、健康检查、空闲节点自动补实验、踩坑沉淀为代码级护栏，详见第 5 节），
+人类仅在关键科学方向上给出判断——这与本工作“为 Agent 补长程记忆”的主题恰好相互呼应。
 
 % ================= 2 方法 =================
 \section{方法：Mixture-of-Memory（MoM）}
 \subsection{动机：有界 KV 预算下的长上下文}
-标准 Transformer 的 KV cache 随序列长度线性增长，超长上下文下显存不可承受。
-我们的思路是把任意长的上下文压缩进一个固定大小（$N$ 个 slot）的记忆缓冲：输入流按 chunk\_size=512
-切块，逐块流式写入记忆；回答时只从记忆读出，KV 预算与序列长度无关。
+全注意力 Transformer 的 KV cache 随序列长度线性增长、计算随 $O(n^2)$ 膨胀，超长上下文下显存与算力不可承受；
+滑动窗口注意力（SWA）把复杂度降到 $O(n\cdot w)$，却丢失窗口外的长程信息。
+我们的目标是 \textbf{SWA + 记忆 $\approx$ 全注意力性能}：冻结一个 SWA 骨干（Llama-3-8B），
+外挂一个固定大小的记忆，把任意长上下文压缩进去，使 KV 预算与序列长度\textbf{解耦}。
 
-\subsection{核心类比：MoM $\approx$ MoE（top-$k$ 路由那一维的并行）}
-mem\_space 适配器与混合专家（MoE）在结构上高度同构，这是我们理解与设计该架构的主线：
+\subsection{三级层次记忆 L1 / L2 / L3}
+我们按\textbf{时间尺度}把记忆分成三级（类比人类记忆的瞬时／情景／语义），全部挂在冻结骨干之外：
 \begin{itemize}
-  \item $N$ 个 memory slot $\approx$ $N$ 个“专家”。一个所有 Transformer 层共享的 MemoryBank（每样本一份）持有这些 slot。
-  \item Selector $\approx$ 门控网络：对每个 chunk 给全部 $N$ 个 slot 打分，选出 top-$k$=16 个 slot 参与本步——这正是 MoE 的稀疏门控。
-  \item 写入（Write）= 仅对 top-$k$ 选中的 slot 做门控 delta-rule 更新（稀疏更新，每步至多触碰 $k$ 个 slot），对应 MoE 只激活 top-$k$ 专家。
-  \item 读出（Read）= 专用 MemoryCrossAttentionRead，对全部 $N$ 个 slot（含一个 null/sink）做独立 softmax。
-  \item 读写路径刻意解耦：写是 top-$k$ 稀疏，读是 all-$N$ 稠密——这点与标准 MoE“激活即输出”不同，也埋下了后文的核心瓶颈。
+  \item \textbf{L1 关联矩阵（per-token，在线）}：一个衰减的 key$\to$value 外积矩阵，每个 token 在线更新，门控融合进隐藏态——承载最近的细粒度关联。
+  \item \textbf{L2 事件 slot（per-chunk，核心）}：128 个 slot（排成 $16\times8$），输入流按 chunk\_size=512 切块，每个 chunk 边界用 \textbf{delta-rule 写残差 + 容量归一化} 聚合写入——这是 MoM 的主力记忆。
+  \item \textbf{L3 语义摘要（per-段）}：从 L2 抽象出 $K$=64 个长期 summary token，承载跨 chunk 的语义画像，支持冲突修订——长程主力。
 \end{itemize}
+骨干全程\textbf{冻结}，只训练这套记忆适配器（即插即用），训练成本远低于改动骨干。
 
-\subsection{架构细节}
+\subsection{核心设计一：借鉴 MoE 的 top-$k$ 稀疏路由}
+MoM 与混合专家（MoE）在“稀疏激活”这一维上高度同构，这是我们设计 L2 的主线：
 \begin{itemize}
-  \item Chunk 流式写入：context chunk 在 no\_grad 下逐块写入并 detach，目标 chunk 带梯度——逼记忆通道真正承载长程信息。
-  \item Dual-gate delta-rule 写回：输入门 + 遗忘门控制写入，可选残差 delta-rule 更新（按输入门加权）。
-  \item L3 summary：共享的 L3 交叉注意力路径产出 $K$=64 个 summary token，承载长程信息，是长程主力。
-  \item 代码：\texttt{src/memory/mem\_space/}（config / layer / selector / memory\_bank / l3\_summary）。架构迭代见 \texttt{versions/}。
+  \item \textbf{128 个 L2 slot $\approx$ 128 个“专家”}。一个所有 Transformer 层共享的 MemoryBank（每样本一份）持有这些 slot。
+  \item \textbf{Selector $\approx$ 门控网络}：对每个 chunk 用 mean-pooled 隐藏态给全部 128 个 slot 打分，选出 \textbf{top-$k$=16} 个 slot 参与本步——这正是 MoE 的稀疏门控（router）。
+  \item \textbf{写入 = 稀疏更新}：只对 top-$k$ 选中的 slot 做门控 delta-rule 更新，每步至多触碰 $k$=16 个 slot，对应 MoE 只激活 top-$k$ 专家、其余不动。
+  \item \textbf{loss-free 负载均衡}：借鉴 MoE 的无辅助损失均衡（loss-free balancing），用在线偏置项避免 slot 路由塌缩到少数“热点专家”，让 128 个 slot 的利用率均衡（usage\_cov 是我们重点监控的指标）。
 \end{itemize}
+与标准 MoE 的关键区别：MoE 的专家是\textbf{无状态}的前馈网络，而 MoM 的 slot 是\textbf{有状态}的记忆——
+top-$k$ 路由决定的是“这一步该把信息写进/读出哪些记忆单元”，而非“用哪个 FFN 算这一步”。
 
-% ================= 3 readout 攻坚 =================
+\subsection{核心设计二：joint attention（KV-prepend）}
+如何让记忆真正参与计算？我们不采用“外部读出再相加”的注入式设计（易被主干信号淹没、产生 NaN 螺旋），
+而是用 \textbf{joint attention}：把 top-$k$ 选中的 slot 作为 \textbf{KV 前缀拼接}进被包裹的冻结 decoder 层，
+在扩展序列 $[M_{\text{sel}}, H_l]$ 上跑原生注意力。具体地：
+\begin{itemize}
+  \item slot 位置继承 position-0 的 RoPE（位置无关的记忆 token），H 段保持原位置；
+  \item 用显式加性 mask 让 H 段内部保持因果，但 slot-query 与 H-query 都能\textbf{完整看到 slot 块}；
+  \item 输出按位置切分：$[k:]$ 是下一层隐藏态，$[0:k]$ 是记忆输出 $O_{\text{mem}}$，再做门控 delta-rule 写回。
+\end{itemize}
+这样记忆与当前 token 在\textbf{同一个注意力算子}里联合交互，读写都走骨干自身的表达力，
+避免了注入式方法的“稀释”问题——这是 MoM 能在冻结骨干上稳定训练的关键工程决策。
+
+% ================= 3 主结果 + 相关工作 =================
+\section{主结果与相关工作比较}
+\subsection{主结果：固定 KV 预算下逼近全注意力}
+我们最核心的对照是 \textbf{MoM（冻结 Llama-3-8B + 128-slot 记忆）vs vanilla Llama-3-8B-Instruct} 在 BABILong qa5
+（事实链问答）上的长度外推曲线（图 1）。vanilla 模型训练窗口为 8k，一旦超出便几乎完全失效；
+MoM 在\textbf{固定 128-slot KV 预算}下把长程能力撑住：
+\begin{figure}[H]\centering
+  \includegraphics[width=0.78\textwidth]{figs/main_vs_base.pdf}
+  \caption{BABILong qa5：MoM（冻结 Llama-3-8B + 128 slot 记忆）vs vanilla Llama-3-8B-Instruct。
+  vanilla 超出 8k 训练窗口即塌到 1/0；MoM 在固定 KV 预算下 16k/32k 仍保持 46/41。}
+\end{figure}
+\noindent
+\begin{center}\small
+\begin{tabular}{lccccccc}
+\toprule
+\textbf{BABILong qa5} & \textbf{0k} & \textbf{1k} & \textbf{2k} & \textbf{4k} & \textbf{8k} & \textbf{16k} & \textbf{32k}\\
+\midrule
+\textbf{MoM（ours, 冻结 8B + 128 slot）} & 82 & 86 & 83 & 70 & 64 & \textbf{46} & \textbf{41}\\
+Llama-3-8B-Instruct（vanilla, 全注意力） & 82 & 63 & -- & 64 & 50 & \textbf{1} & \textbf{0}\\
+\bottomrule
+\end{tabular}
+\end{center}
+\noindent
+关键意义：MoM 不是靠更大的 KV 预算取胜——它的预算\textbf{固定}为 128 个 slot，与序列长度无关；
+却在 vanilla 全注意力彻底失效的 16k/32k 区间维持了 46/41 分。这印证了“SWA + 记忆 $\approx$ 全注意力”的设计目标。
+
+\subsection{与已有记忆增强工作的比较}
+\begin{itemize}
+  \item \textbf{vs RMT（Recurrent Memory Transformer, 2022）}：RMT 用少量 recurrent memory token 在 segment 间循环传递，
+        信息靠单一窄通道串行流动、易遗忘早期内容；MoM 用 \textbf{128 个可寻址 slot + top-$k$ 路由}，
+        是\textbf{并行可检索}的记忆，而非串行循环态，且不要求改动/重训骨干。
+  \item \textbf{vs LM2（Large Memory Models, 2025）}：LM2 在一个\textbf{从零预训练}的定制骨干里加双门记忆模块，
+        其 BABILong 数字基于 1.7B 自训骨干，不能直接与 Meta 开源模型比较；
+        MoM 则\textbf{完全冻结 Meta 官方 Llama-3-8B}、只训练外挂适配器，即插即用、训练成本极低，定位是“给现成 SWA 大模型补长程”。
+  \item \textbf{vs Infini-attention / MemoryLLM 等注入式记忆}：它们把记忆读出后\textbf{相加}注入主干，易被主干信号稀释；
+        MoM 用 \textbf{joint attention（KV-prepend）}让记忆在原生注意力里联合参与，读写都走骨干表达力，训练更稳。
+  \item \textbf{vs MoE}：借用了 top-$k$ 稀疏路由 + loss-free 均衡的\textbf{思想}，但专家换成了\textbf{有状态的记忆 slot}，路由决定的是“写/读哪块记忆”。
+\end{itemize}
+一句话定位：\textbf{MoM = 冻结 SWA 骨干 + MoE 式 top-$k$ 路由的层次记忆 + joint-attention 读写}，
+在固定 KV 预算下为现成大模型补回长程上下文。
+
+% ================= 4 readout 攻坚 =================
 \section{核心问题与攻坚：readout 瓶颈}
 \subsection{诊断：“写得进，读不准”}
 我们用 BABILong（qa1/qa2/qa5，0k--32k）评测，并区分两种读出口径：开卷 SWA（query 段局部 attention 直接看原始 KV）
