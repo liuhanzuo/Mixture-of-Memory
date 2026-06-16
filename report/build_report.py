@@ -75,6 +75,7 @@ pdf.ln(6)
 pdf.set_font("noto", "", 10.5)
 pdf.multi_cell(0, 5.5,
     "课程：大模型驱动的软件开发（2026 春季学期）成果报告\n"
+    "姓名：刘涵祚    班级：计科 41\n"
     "源码：https://github.com/liuhanzuo/Mixture-of-Memory", align="C")
 pdf.ln(5)
 pdf.set_draw_color(180); pdf.set_line_width(0.3)
