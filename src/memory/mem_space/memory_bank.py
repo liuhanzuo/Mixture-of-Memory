@@ -19,7 +19,7 @@ Design decisions
 from __future__ import annotations
 
 import math
-from typing import Optional
+from typing import Optional, Tuple
 
 import torch
 import torch.nn as nn
@@ -119,6 +119,23 @@ class MemoryBank(nn.Module):
         # prevent question tokens from overwriting haystack-accumulated slots.
         self.frozen: bool = False
 
+        # Parallel raw-KV retrieval channel (2026-06-18). A per-sequence store of
+        # UNCOMPRESSED original-token hidden states, INDEPENDENT of the slot bank
+        # (the slots compress; this never does). As chunks stream through the
+        # designated rawkv_layer we APPEND that chunk's token hidden states here
+        # along with a query-side scoring key and the token's source in-chunk
+        # position; at readout the current query scores every stored entry by
+        # dot-product and the top-k original tokens are re-injected into the
+        # frozen decoder's joint attention (via the EV prefix path). Lazily
+        # materialised on the first append_rawkv call; dropped on reset().
+        #   rawkv_hidden : [B, M, d_model]  bf16 stored token hidden states
+        #   rawkv_key    : [B, M, S]        fp32 query-side scoring key per entry
+        #   rawkv_pos    : [B, M]           long  source absolute (in-chunk) pos
+        # M grows with every ingested chunk (≈ total real tokens seen).
+        self.rawkv_hidden: Optional[torch.Tensor] = None
+        self.rawkv_key: Optional[torch.Tensor] = None
+        self.rawkv_pos: Optional[torch.Tensor] = None
+
     # --------------------------------------------------------------------- #
     # Lifecycle
     # --------------------------------------------------------------------- #
@@ -135,6 +152,10 @@ class MemoryBank(nn.Module):
         self.slot_evidence_score = None
         self.slot_evidence_count = None
         self.slot_evidence_pos = None
+        # Raw-KV store is per-sample state too — drop at the rollout boundary.
+        self.rawkv_hidden = None
+        self.rawkv_key = None
+        self.rawkv_pos = None
 
     def detach_(self) -> None:
         """Break the autograd graph across a segment boundary.
@@ -413,6 +434,116 @@ class MemoryBank(nn.Module):
                 self.slot_evidence_pos = self.slot_evidence_pos.masked_fill(
                     mb.unsqueeze(-1), -1
                 )
+
+    # --------------------------------------------------------------------- #
+    # Parallel raw-KV retrieval channel (2026-06-18).
+    # --------------------------------------------------------------------- #
+
+    def append_rawkv(
+        self,
+        token_hidden: torch.Tensor,
+        token_key: torch.Tensor,
+        token_pos: Optional[torch.Tensor] = None,
+    ) -> None:
+        """Append a chunk's UNCOMPRESSED token hidden states to the raw-KV store.
+
+        Args:
+            token_hidden: [B, T, d_model] — the chunk's original token hidden
+                states (will be detached + stored; never enters the graph).
+            token_key: [B, T, S] — the query-side scoring key for each token
+                (used to score this entry against a future query at readout).
+            token_pos: [B, T] long — the SOURCE in-chunk position of each token
+                (the RoPE phase the frozen decoder originally encoded it at). When
+                None, defaults to 0..T-1.
+
+        Pure no_grad state mutation. No-op while ``frozen`` (eval question-time —
+        question tokens must not pollute the haystack store). Lazily materialises
+        the store on the first call and reallocates on a batch-size mismatch.
+        """
+        if self.frozen:
+            return
+        if token_hidden.dim() != 3 or token_key.dim() != 3:
+            return
+        with torch.no_grad():
+            B, T, _d = token_hidden.shape
+            if token_key.shape[0] != B or token_key.shape[1] != T:
+                return
+            dev = token_hidden.device
+            _h = token_hidden.detach()
+            _k = token_key.detach().to(dtype=torch.float32)
+            if token_pos is not None:
+                _p = token_pos.to(device=dev, dtype=torch.long)
+                if _p.dim() == 1:
+                    _p = _p.unsqueeze(0).expand(B, -1)
+            else:
+                _p = (
+                    torch.arange(T, device=dev, dtype=torch.long)
+                    .unsqueeze(0)
+                    .expand(B, -1)
+                )
+            if (
+                self.rawkv_hidden is None
+                or self.rawkv_hidden.shape[0] != B
+                or self.rawkv_hidden.shape[-1] != _h.shape[-1]
+            ):
+                # Fresh store (cold start / batch change): seed with this chunk.
+                self.rawkv_hidden = _h
+                self.rawkv_key = _k.to(device=dev)
+                self.rawkv_pos = _p
+            else:
+                self.rawkv_hidden = torch.cat([self.rawkv_hidden, _h], dim=1)
+                self.rawkv_key = torch.cat(
+                    [self.rawkv_key, _k.to(device=self.rawkv_key.device)], dim=1
+                )
+                self.rawkv_pos = torch.cat([self.rawkv_pos, _p], dim=1)
+
+    def retrieve_rawkv(
+        self,
+        query_key: torch.Tensor,
+        topk: int,
+    ) -> Optional[Tuple[torch.Tensor, torch.Tensor]]:
+        """Brute-force dot-product retrieval of the top-k stored raw tokens.
+
+        For each batch element, score every stored entry by max over the current
+        query tokens of dot(query_key_t, rawkv_key_m) (MVP raw inner product — no
+        normalization, mirroring the attention-internal score; OOD risk noted in
+        config). Return the top-k entries' hidden states + their source positions.
+
+        Args:
+            query_key: [B, Tq, S] — the query-side scoring key of the CURRENT
+                chunk's tokens (same projection used to build the stored keys).
+            topk: number of stored entries to retrieve per batch element.
+
+        Returns:
+            (hidden, pos):
+              hidden : [B, R, d_model] — top-R stored token hidden states.
+              pos    : [B, R]          long — their source positions.
+            R = min(topk, M). Returns None when the store is empty / mismatched.
+        """
+        if (
+            self.rawkv_hidden is None
+            or self.rawkv_key is None
+            or query_key.dim() != 3
+        ):
+            return None
+        B, M, d = self.rawkv_hidden.shape
+        if query_key.shape[0] != B or self.rawkv_key.shape[1] != M or M == 0:
+            return None
+        with torch.no_grad():
+            _qk = query_key.to(dtype=torch.float32)                  # [B, Tq, S]
+            # Affinity of every stored entry to the closest current-query token.
+            _aff = torch.einsum("bqs,bms->bqm", _qk, self.rawkv_key)  # [B, Tq, M]
+            _score = _aff.max(dim=1).values                          # [B, M]
+            R = min(int(topk), M)
+            _top_s, _top_i = torch.topk(_score, k=R, dim=1)          # [B, R]
+            _idx_h = _top_i.unsqueeze(-1).expand(B, R, d)
+            _hid = self.rawkv_hidden.gather(1, _idx_h)               # [B, R, d]
+            _pos = self.rawkv_pos.gather(1, _top_i)                  # [B, R]
+            return _hid, _pos
+
+    def rawkv_size(self) -> int:
+        """Number of stored raw-KV entries (per sequence). 0 when empty."""
+        return 0 if self.rawkv_hidden is None else int(self.rawkv_hidden.shape[1])
 
     # --------------------------------------------------------------------- #
     # Access

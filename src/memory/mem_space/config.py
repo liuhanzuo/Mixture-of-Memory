@@ -507,6 +507,31 @@ class MemorySpaceConfig:
     # softmax over all prefix blocks. Only meaningful when use_slot_evidence.
     evidence_isolate_softmax: bool = False
 
+    # Parallel raw-KV retrieval channel (2026-06-18). A SLOT-INDEPENDENT memory
+    # channel that runs in parallel to the compressed slot bank: as each chunk
+    # streams through ``rawkv_layer``, that chunk's UNCOMPRESSED original token
+    # hidden states are appended (detached) to a per-sequence raw-KV store along
+    # with a query-side scoring key. At readout, the current query hidden states
+    # score every stored entry (brute-force dot-product ANNS, MVP — no FAISS),
+    # take the top-``rawkv_topk`` original tokens and inject them into the frozen
+    # decoder's joint attention via the SAME EV prefix machinery the slot-routed
+    # evidence uses ([... | rawkv | H], real source RoPE positions). The key
+    # distinction from use_slot_evidence: the slot evidence buffer is keyed by
+    # which SLOT won the chunk's top-k (compression-coupled); this channel never
+    # touches the slots — it keeps EVERY chunk's raw tokens and retrieves purely
+    # by query↔token similarity, so precise facts are NEVER compressed away.
+    # Designed as an eval-time training-free probe first (gate fixed, no new
+    # trainable params): can a frozen 8B answer precise-fact queries when the
+    # exact original KV is retrieved and re-injected? Default False → every
+    # raw-KV code path is a no-op (byte-identical to pre).
+    #   use_rawkv_retrieval : master switch.
+    #   rawkv_layer         : the SINGLE memory layer that writes + reads the
+    #                         raw-KV store (single shared bank → one owner).
+    #   rawkv_topk          : entries retrieved + injected at readout (MVP 64).
+    use_rawkv_retrieval: bool = False
+    rawkv_layer: int = 16
+    rawkv_topk: int = 64
+
     # FastMem (Gated Delta Rule continuous memory, 2026-05-21):
     # Per-layer fast-weight memory that captures a continuous running summary
     # of ALL tokens (complementing discrete top-k slot routing which only
@@ -764,4 +789,13 @@ class MemorySpaceConfig:
         if self.use_slot_evidence and self.evidence_buffer_size <= 0:
             raise ValueError(
                 "use_slot_evidence=True requires evidence_buffer_size > 0"
+            )
+        # Parallel raw-KV retrieval channel.
+        if self.rawkv_topk <= 0:
+            raise ValueError(
+                f"rawkv_topk must be > 0, got {self.rawkv_topk}"
+            )
+        if self.rawkv_layer < 0:
+            raise ValueError(
+                f"rawkv_layer must be >= 0, got {self.rawkv_layer}"
             )

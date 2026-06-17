@@ -816,6 +816,14 @@ class MemorySpaceLayer(nn.Module):
             config.use_slot_evidence and self._layer_idx == config.evidence_layer
         )
 
+        # Parallel raw-KV retrieval channel (2026-06-18). This layer owns the
+        # raw-KV store's append + retrieve only when its index == rawkv_layer
+        # (single shared bank → one owner, mirroring the evidence layer). Default
+        # off → _is_rawkv_layer is False on every layer (byte-identical to pre).
+        self._is_rawkv_layer = (
+            config.use_rawkv_retrieval and self._layer_idx == config.rawkv_layer
+        )
+
         # Side-channel state (populated on each forward).
         self.last_aux_losses: Dict[str, torch.Tensor] = {}
         self.last_idx: Optional[torch.Tensor] = None
@@ -1229,6 +1237,24 @@ class MemorySpaceLayer(nn.Module):
                         self.memory_bank.write_evidence(
                             _idx_l, _tok_h, _top_s, token_pos=_top_t
                         )
+            # ---- Parallel raw-KV retrieval channel: WRITE (2026-06-18) ----
+            # SLOT-INDEPENDENT. On the designated rawkv_layer, append EVERY real
+            # token of this chunk's uncompressed hidden states to the per-sequence
+            # raw-KV store, keyed by its routing query (reused from the selector's
+            # stashed _last_routing_q so writer + retriever share one projection).
+            # No top-k, no slot coupling: precise facts are never compressed away.
+            # No-op while frozen (eval question-time) or when disabled.
+            if self._is_rawkv_layer and not self.memory_bank.frozen:
+                _rq = getattr(self.selector, "_last_routing_q", None)   # [B, T, S]
+                if _rq is not None and _rq.shape[0] == B and _rq.shape[1] == T:
+                    # Source positions = in-chunk offsets (each streaming chunk
+                    # resets RoPE to 0, so offset == the token's real phase).
+                    _rk_pos = torch.arange(
+                        T, device=hidden_states.device, dtype=torch.long
+                    ).unsqueeze(0).expand(B, -1)
+                    self.memory_bank.append_rawkv(
+                        hidden_states.detach(), _rq, token_pos=_rk_pos
+                    )
             # ---- EXP-R1 dead-slot recycling + EXP-D2 telemetry (layer-0) ----
             # Driven from layer-0 only (the bank is SHARED across all 32 layers,
             # so a single driver avoids 32 layers fighting — mirrors the layer-0
@@ -1939,6 +1965,25 @@ class MemorySpaceLayer(nn.Module):
                         torch.zeros(B, k_slots * _topr, device=hidden_states.device,
                                     dtype=torch.long)
                     )
+
+        # ---- Parallel raw-KV retrieval channel: READ (2026-06-18) ----
+        # SLOT-INDEPENDENT. On the rawkv_layer, score the per-sequence raw-KV
+        # store with the CURRENT query's routing key (selector._last_routing_q,
+        # the same projection used at write), take the top-rawkv_topk original
+        # tokens, and append them to the SAME EV prefix block the slot-routed
+        # evidence uses → [... | EV(slot-ev + rawkv) | H], injected at their real
+        # source RoPE positions. Reuses the existing k_ev / ext-mask / ext-pos
+        # plumbing, so no new attention machinery. No-op when the store is empty.
+        if self._is_rawkv_layer:
+            _rq_read = getattr(self.selector, "_last_routing_q", None)  # [B, T, S]
+            if _rq_read is not None and _rq_read.shape[0] == B:
+                _ret = self.memory_bank.retrieve_rawkv(
+                    _rq_read, cfg.rawkv_topk
+                )
+                if _ret is not None:
+                    _rk_h, _rk_pos = _ret                  # [B,R,d], [B,R]
+                    _ev_parts.append(_rk_h.to(hidden_states.dtype))
+                    _ev_pos_parts.append(_rk_pos.to(hidden_states.device))
 
         # ---- ORACLE evidence injection (eval-only, 2026-06-17) ----
         # Bypass routing entirely: if this layer is an oracle injection layer,

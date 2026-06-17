@@ -638,6 +638,14 @@ def main():
                         "(decoder's true in-context distribution, sliced at the "
                         "needle token offset) instead of running the needle span "
                         "in isolation. The faithful reader-ceiling probe.")
+    # Parallel raw-KV retrieval channel eval-time override (2026-06-18). Like the
+    # evidence flags, adapter_config carries no rawkv fields → default OFF; these
+    # turn the slot-independent raw-KV channel ON at eval to probe whether
+    # retrieving + re-injecting the EXACT original token KV lets a frozen 8B
+    # answer precise-fact queries (training-free).
+    p.add_argument("--use_rawkv_retrieval", action="store_true", default=False)
+    p.add_argument("--rawkv_layer", type=int, default=16)
+    p.add_argument("--rawkv_topk", type=int, default=64)
     args = p.parse_args()
 
     print(f"[ruler] model_type={args.model_type} tasks={args.tasks} "
@@ -676,6 +684,13 @@ def main():
                   f"topr={args.evidence_topr} layer={args.evidence_layer} "
                   f"isolate_softmax={args.evidence_isolate_softmax} "
                   f"real_positions={not args.evidence_pos0}")
+        # Eval-time raw-KV retrieval channel override (see CLI flags above).
+        if args.use_rawkv_retrieval:
+            mem_config.use_rawkv_retrieval = True
+            mem_config.rawkv_layer = args.rawkv_layer
+            mem_config.rawkv_topk = args.rawkv_topk
+            print(f"[ruler] RAW-KV RETRIEVAL ON: layer={args.rawkv_layer} "
+                  f"topk={args.rawkv_topk}")
         model = load_mem_space_model(
             model_path=args.model_path, checkpoint_path=args.checkpoint,
             mem_config=mem_config, device=device, dtype=dtype,
