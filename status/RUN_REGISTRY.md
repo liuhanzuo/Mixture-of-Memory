@@ -733,3 +733,25 @@ step1000(退化): qa1=92/10/11/14/4/3/1, qa2=42/8/7/6/4/5/1, qa5=53/32/32/16/13/
 | pg19 | 7.901 | 16.483 | **+109%** |
 - **★mem_space 付出一致的长上下文流畅度税**：code/math（低熵、局部结构）退化温和（+40%），叙事散文 pg19（长程依赖最强）退化 2×——记忆瓶颈在长程连贯最关键处伤最重，与对话 eval gap 同向。
 - ⚠️ **数据 bug 已修**：旧 data/pg19_chunks_llama3_noeos.npy 头部是 King James Bible（Llama-3 已记忆 → base PPL≈1.1 假信号）。已换 clean held-out Gutenberg 流 data/pg19_real_llama3_noeos.npy（4M tok，跳过 Bible 前缀）。任何用旧文件的历史 pg19 sliding-PPL 数字作废。single-forward sanity 验证（proofpile 6.30/codeparrot 2.35）后跑全量。
+
+### ★★ 新 ckpt eval：INSTRUCT 底座 c512 + Curriculum c1024（2026-06-17，eval-filler）
+两个刚训完未评的 ckpt，taskpool 2-group 同口径（n=100/cell，qa1/qa2/qa5 × 0k-32k，bf16 sdpa，babilong.metrics）。列顺序：0k/1k/2k/4k/8k/16k/32k。**对照基准 = P11 chunk512 step500（当前最佳）**：qa5=74/89/81/60/48/45/44，qa1=97/67/53/37/20/25/18。
+| run | base model | chunk | 配置 | 节点 |
+|-----|-----------|-------|------|------|
+| mem_space_p11_chunk512_INSTRUCT_final | **Meta-Llama-3-8B-Instruct** | 512 | P11 delta-rule+normreadout，128 slot，total_steps=1000 | 本机 diskA |
+| T2_recall_chunk1024_CURRIC_final | Meta-Llama-3-8B | 1024 | curriculum 4→32k，delta_rule=false+normreadout，128 slot | B200 28.88.184.52 |
+```
+INSTRUCT c512 final      qa1 |   98   33   28   23   14   12   17
+                         qa2 |   49   17   16   15    8    7    9
+                         qa5 |   81   50   52   29   25   32   27
+Curriculum c1024 final   qa1 |   97   88   43   26   14    9    7
+                         qa2 |   44   53   19   19    4    1    3
+                         qa5 |   80   69   44   42   25   12    7
+对照 P11 c512 step500     qa1 |   97   67   53   37   20   25   18
+                         qa5 |   74   89   81   60   48   45   44
+对照 P11 c1024 FINAL      qa1 |   56   56   15   15    7    5    0
+```
+**裁决：**
+1. **INSTRUCT 底座未带来提升，反而劣于 base-model P11 chunk512**：INSTRUCT qa5 中长度（1k=50/2k=52/4k=29/8k=25）全面低于 P11 c512 step500 base（89/81/60/48），仅 0k（81 vs 74）和 16k/32k（32/27 vs 45/44）持平偏弱。qa1 同样 1k=33≪67。**Instruct 对齐底座对 mem_space 长程检索无益甚至有害**——可能 chat-tuned 表征与 memory readout 训练目标不契合，且该 run 仅训 1000 步（vs P11 5000 步早停 step500），数据量更少。
+2. **★Curriculum 4→32k 训练显著修复了单 chunk1024 的「1k 后断崖」**：Curriculum c1024 qa1=97/88/43/26/14/9/7 vs 此前 P11 c1024 FINAL=56/56/15/15/7/5/0——0k/1k 从 56/56 飙到 97/88，2k-8k 也翻倍（43/26/14 vs 15/15/7）。qa5 同样 80/69/44/42 vs c1024 FINAL 长程近零。**渐进 curriculum（warm-start 短上下文再拉长）是修 chunk1024 稀释/注入太稀疏的正解**，与 §3「F1 渐进 warm-start 才是修单 chunk1024 断崖的正解」假设一致并实证落地。但绝对值仍略逊 chunk512 甜区（curriculum c1024 qa5 2k=44 vs P11 c512 81），chunk512 仍是同架构最优 chunk。
+- 全程无 OOM / NCCL / Traceback；两节点开跑前均确认真空（未碰 .249 训练 / .196 蒸馏缓存）。
