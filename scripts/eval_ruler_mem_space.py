@@ -617,6 +617,10 @@ def main():
                    help="Landmark EV-isolation: restrict H's prefix softmax to "
                         "the EV block (sever H->L3/L2/L1) so evidence isn't "
                         "diluted by the compressed prefix.")
+    p.add_argument("--evidence_pos0", action="store_true", default=False,
+                   help="Force LEGACY pos-0 EV injection (evidence_real_positions"
+                        "=False) for A/B vs the real-position fix. Default off = "
+                        "EV injected at real source RoPE position.")
     # ORACLE evidence probe (eval-only). When set, force the gold needle span's
     # hidden states into the evidence prefix at --oracle_layers (comma list),
     # bypassing routing entirely. Decisive go/no-go for the reader interface.
@@ -667,9 +671,11 @@ def main():
             mem_config.evidence_topr = args.evidence_topr
             mem_config.evidence_layer = args.evidence_layer
             mem_config.evidence_isolate_softmax = args.evidence_isolate_softmax
+            mem_config.evidence_real_positions = not args.evidence_pos0
             print(f"[ruler] EVIDENCE ON: buffer_size={args.evidence_buffer_size} "
                   f"topr={args.evidence_topr} layer={args.evidence_layer} "
-                  f"isolate_softmax={args.evidence_isolate_softmax}")
+                  f"isolate_softmax={args.evidence_isolate_softmax} "
+                  f"real_positions={not args.evidence_pos0}")
         model = load_mem_space_model(
             model_path=args.model_path, checkpoint_path=args.checkpoint,
             mem_config=mem_config, device=device, dtype=dtype,

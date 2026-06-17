@@ -500,13 +500,7 @@ class MemorySpaceConfig:
     # True so any evidence run gets the corrected interface, False reproduces
     # the legacy pos-0 behaviour for A/B comparison.
     evidence_real_positions: bool = True
-    # Isolated-softmax for the EV block (2026-06-17): when True, H-queries are
-    # additionally severed from the L3 (and L1) prefix blocks while evidence is
-    # active, so the needle's EV keys do not share H's softmax denominator with
-    # the other prefix blocks (Landmark grouped-softmax intent, approximated via
-    # masking — no attention-internals surgery). Default False (opt-in probe).
-    evidence_isolate_softmax: bool = False
-    # Landmark-style EV-block isolation (2026-06-17): when True, H-query softmax
+    # Isolated-softmax for the EV block (2026-06-17): when True, H-query softmax
     # over the prefix is restricted to the EV block only (H→{L3,L2,L1} severed),
     # so the precise evidence tokens are not diluted by the compressed L3/L2/L1
     # prefix competing for the same softmax mass. Default False = legacy joint
