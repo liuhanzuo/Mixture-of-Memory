@@ -1,0 +1,13 @@
+{
+  "benchmark": "longmemeval",
+  "n_samples": 10,
+  "overall_f1": 6.300137903861308,
+  "overall_acc": 30.0,
+  "by_type": {
+    "temporal-reasoning": {
+      "acc": 30.0,
+      "f1": 6.300137903861308,
+      "n": 10
+    }
+  }
+}
