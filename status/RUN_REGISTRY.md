@@ -723,3 +723,13 @@ step1000(退化): qa1=92/10/11/14/4/3/1, qa2=42/8/7/6/4/5/1, qa5=53/32/32/16/13/
 - **mem_space 输出在跑（非崩溃）**：抽样确认生成连贯、主题相关，但事实细节错（如"4年3个月" vs gold"4年9个月"）→ 记忆保留 gist、丢失精确事实，与 RULER/BABILong 32k 墙的"精确读出失效"根因一致。
 - LME 中 single-session(用户/助手单段事实)差距最大(11→74, 12→66)：单段精确事实记忆都丢，印证读出端而非容量问题。LOCOMO 对抗类(cat5)base 反而 0(不拒答硬答错)，mem 偶尔拒答得分。
 - 注：LOCOMO base 中段截断到 7900 token（原文 ~14.7k），是受限上限对照而非全开卷。
+
+### ★★ Sliding-window 32k 长上下文 PPL（2026-06-17，commit fe0f28d，节点 .76）
+脚本 scripts/eval_sliding_ppl.py + run_sliding_ppl_matrix.sh。每 cell 40 seq × 32768 tok（1.31M scored tok）。base = sliding window=8192/stride=4096（每 token 取最大左上下文打分一次）；mem_space = chunk=1024 流式过 128-slot persistent bank（chunk 内 LM loss，镜像训练 TBPTT 目标）。同一批 seq → 直接可比。ckpt=P11 chunk1024 deltarule normreadout。
+| 数据集 | base PPL | mem_space PPL | Δ (mem/base) |
+|--------|---------|--------------|-------------|
+| codeparrot | 2.160 | 3.122 | +44% |
+| proofpile | 4.234 | 5.975 | +41% |
+| pg19 | 7.901 | 16.483 | **+109%** |
+- **★mem_space 付出一致的长上下文流畅度税**：code/math（低熵、局部结构）退化温和（+40%），叙事散文 pg19（长程依赖最强）退化 2×——记忆瓶颈在长程连贯最关键处伤最重，与对话 eval gap 同向。
+- ⚠️ **数据 bug 已修**：旧 data/pg19_chunks_llama3_noeos.npy 头部是 King James Bible（Llama-3 已记忆 → base PPL≈1.1 假信号）。已换 clean held-out Gutenberg 流 data/pg19_real_llama3_noeos.npy（4M tok，跳过 Bible 前缀）。任何用旧文件的历史 pg19 sliding-PPL 数字作废。single-forward sanity 验证（proofpile 6.30/codeparrot 2.35）后跑全量。
