@@ -653,6 +653,11 @@ def main():
     p.add_argument("--use_inattn_kv", action="store_true", default=False)
     p.add_argument("--inattn_kv_layer", type=int, default=16)
     p.add_argument("--inattn_kv_topk", type=int, default=64)
+    p.add_argument("--inattn_oracle_only", action="store_true", default=False,
+                   help="On the in-attn layer, inject ONLY the oracle needle "
+                        "(skip the scorer-based retrieval) so the readout "
+                        "mechanism is isolated from the known-0% retrieval "
+                        "quality. Requires --use_inattn_kv + --oracle_evidence.")
     args = p.parse_args()
 
     print(f"[ruler] model_type={args.model_type} tasks={args.tasks} "
@@ -710,6 +715,15 @@ def main():
             mem_config=mem_config, device=device, dtype=dtype,
             attn_impl=args.attn_impl,
         )
+        # In-attn oracle-only flag: stash on the shared bank so the in-attn read
+        # injects ONLY the oracle needle (skips the scorer-based retrieval).
+        if args.inattn_oracle_only:
+            _root = getattr(model, "module", model)
+            _bk = getattr(_root, "_mem_space_shared_bank", None)
+            if _bk is not None:
+                _bk._inattn_oracle_only = True
+            print("[ruler] IN-ATTN ORACLE-ONLY: scorer retrieval skipped on "
+                  "in-attn layer; only oracle needle injected.")
     else:
         print(f"[ruler] loading base Llama-3 (full attention, window={args.base_max_window})")
         model = LlamaForCausalLM.from_pretrained(
