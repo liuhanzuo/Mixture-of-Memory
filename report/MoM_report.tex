@@ -369,7 +369,26 @@ mass coef2 (seed1234) & 63 & 58 & 46 & 26 & 12 & 10 & 8\\
 \end{tabular}
 \end{center}
 
-\section{弱叠加 coef 精扫（长程 qa5）}
+\section{PG19 真长文蒸馏与攻 32k 消融（BABILong qa5，W0）}
+\begin{center}\small
+\begin{tabular}{lccccccc}
+\toprule
+\textbf{配置} & \textbf{0k} & \textbf{1k} & \textbf{2k} & \textbf{4k} & \textbf{8k} & \textbf{16k} & \textbf{32k}\\
+\midrule
+现有方法天花板（mass/蒸馏/叠加） & -- & -- & -- & -- & $\sim$15 & 13 & 9\\
+\textbf{PG19 蒸馏 n\_ctx7 N128（final）} & 75 & 73 & 51 & 29 & 19 & \textbf{16} & 9\\
+\quad 攻 32k：n\_ctx15 N128（final，seed42） & 77 & 73 & 55 & 31 & 17 & 15 & 8\\
+\quad 攻 32k：n\_ctx15 N128（final，seed1234） & 79 & 71 & 59 & 31 & 18 & 15 & 10\\
+\quad 攻 32k：N256 降压缩比（final） & 77 & 71 & 58 & 30 & 17 & 16 & 9\\
+\bottomrule
+\end{tabular}
+\end{center}
+\noindent\footnotesize
+PG19 真长文蒸馏在 16k 稳定破天花板（16 vs 13，$+3$）；攻 32k 的两条路线——加大训练窗口（n\_ctx15，窗口 4096$\to$8192）
+与降低压缩比（N256，250:1$\to$125:1）——\textbf{均为负结果}（32k 仍 $\approx$9），跨 seed/ckpt 确认。
+\normalsize
+
+
 \begin{center}
 \begin{tabular}{cccc}
 \toprule
