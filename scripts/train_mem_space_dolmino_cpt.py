@@ -3007,6 +3007,28 @@ def main() -> None:
                     _xattn_diag["memory/xattn_gate_mean"],
                     _xattn_diag["memory/xattn_attn_entropy"],
                 )
+            # Slot-Routed Evidence activity probe: confirm the evidence buffer is
+            # actually populated DURING training (not silently inactive), so the
+            # decoder read pathway is being exercised. Reads the shared bank's
+            # per-slot evidence count populated by write_evidence each chunk.
+            if getattr(args, "use_slot_evidence", False):
+                _root = getattr(model, "module", model)
+                _bank = getattr(_root, "_mem_space_shared_bank", None)
+                _ev_cnt = getattr(_bank, "slot_evidence_count", None) if _bank else None
+                if _ev_cnt is not None:
+                    logger.info(
+                        "[EVIDENCE_DIAG step=%d] alloc=True max_count=%d "
+                        "mean_count=%.2f nonempty_slots=%d",
+                        global_step,
+                        int(_ev_cnt.max().item()),
+                        float(_ev_cnt.float().mean().item()),
+                        int((_ev_cnt > 0).sum().item()),
+                    )
+                else:
+                    logger.info(
+                        "[EVIDENCE_DIAG step=%d] alloc=False (evidence buffer NOT "
+                        "populated — write path may be inactive!)", global_step,
+                    )
             if getattr(args, "dead_slot_reset_interval", 0) and args.dead_slot_reset_interval > 0:
                 _mem_diag = _collect_mem_diag(model)
                 logger.info(
