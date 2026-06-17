@@ -1209,6 +1209,10 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--evidence_layer", type=int, default=0,
                    help="The single memory layer index that caches + reads the "
                         "evidence buffer (shared bank → one owner). Default 0.")
+    p.add_argument("--evidence_isolate_softmax", action="store_true", default=False,
+                   help="Landmark EV-isolation: restrict H's prefix softmax to "
+                        "the EV block (sever H->L3/L2/L1) so the precise evidence "
+                        "tokens are not diluted by the compressed prefix.")
 
     # v6/v7 writeback (disabled by default for CPT)
     p.add_argument("--use_replace_writeback", action="store_true", default=False)
@@ -1382,6 +1386,7 @@ def build_model(args, device, dtype) -> torch.nn.Module:
         evidence_buffer_size=args.evidence_buffer_size,
         evidence_topr=args.evidence_topr,
         evidence_layer=args.evidence_layer,
+        evidence_isolate_softmax=args.evidence_isolate_softmax,
         dead_slot_reset_interval=args.dead_slot_reset_interval,
         dead_slot_reset_mode=args.dead_slot_reset_mode,
         dead_slot_grace_chunks=args.dead_slot_grace_chunks,
@@ -2330,6 +2335,7 @@ def _save_adapter(model, args, step: int, final: bool = False) -> None:
             "evidence_buffer_size": args.evidence_buffer_size,
             "evidence_topr": args.evidence_topr,
             "evidence_layer": args.evidence_layer,
+            "evidence_isolate_softmax": args.evidence_isolate_softmax,
             "l3_recon_token_weight": args.l3_recon_token_weight,
             "disable_l1_inject": args.disable_l1_inject,
             "use_replace_writeback": args.use_replace_writeback,
