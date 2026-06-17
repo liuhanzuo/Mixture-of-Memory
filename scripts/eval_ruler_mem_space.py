@@ -84,6 +84,75 @@ from scripts.run_babilong_mem_space import (  # noqa: E402
 
 
 # --------------------------------------------------------------------------- #
+# ORACLE evidence (eval-only, 2026-06-17)
+# --------------------------------------------------------------------------- #
+# The decisive go/no-go probe: bypass routing/write/retrieval entirely and force
+# the GOLD needle span's hidden states into the evidence prefix at chosen layers.
+# Isolates "can the frozen reader USE evidence?" from "did we capture the right
+# span?". We capture the gold span's INPUT hidden states at each target layer by
+# running just that span through the model with memory DISABLED (so the wrapped
+# layer behaves as vanilla Llama and the captured states are the exact residual-
+# stream representation the decoder would project as K/V), then stash them on the
+# shared bank for the read hook in layer.py to prepend.
+
+
+def _set_memory_disabled(model, flag: bool) -> None:
+    root = getattr(model, "module", model)
+    for w in getattr(root, "_mem_space_layers", []) or []:
+        w._memory_disabled = flag
+
+
+def _capture_oracle_hidden(model, gold_ids, layers, device):
+    """Run the gold span (no memory) and capture the INPUT hidden states to each
+    decoder layer in ``layers``. Returns {layer_idx: [1, S, d]}.
+
+    The input to MemorySpaceLayer.forward IS the residual stream the layer would
+    normally consume, so these are exactly the representations the frozen decoder
+    re-projects as K/V — the faithful "raw KV" of the gold span at that depth.
+    """
+    root = getattr(model, "module", model)
+    layer_mods = {w._layer_idx: w for w in getattr(root, "_mem_space_layers", [])}
+    captured: dict = {}
+    handles = []
+
+    def _mk_hook(li):
+        def _hook(mod, args, kwargs):
+            h = args[0] if args else kwargs.get("hidden_states")
+            captured[li] = h.detach().clone()
+        return _hook
+
+    for li in layers:
+        if li in layer_mods:
+            handles.append(
+                layer_mods[li].register_forward_pre_hook(_mk_hook(li), with_kwargs=True)
+            )
+    _set_memory_disabled(model, True)
+    try:
+        with torch.no_grad():
+            _ = model(input_ids=gold_ids.to(device), use_cache=False)
+    finally:
+        _set_memory_disabled(model, False)
+        for h in handles:
+            h.remove()
+    return captured
+
+
+def _set_oracle_evidence(model, hidden_by_layer, layers) -> None:
+    """Stash the captured oracle hidden states on the shared bank so layer.py's
+    read hook prepends them. ``hidden_by_layer``=None clears the oracle path."""
+    root = getattr(model, "module", model)
+    bank = getattr(root, "_mem_space_shared_bank", None)
+    targets = [bank] if bank is not None else [
+        getattr(w, "memory_bank", None) for w in getattr(root, "_mem_space_layers", [])
+    ]
+    for b in targets:
+        if b is None:
+            continue
+        b._oracle_layers = set(layers) if hidden_by_layer else None
+        b._oracle_hidden_by_layer = hidden_by_layer
+
+
+# --------------------------------------------------------------------------- #
 # RULER constants (verbatim from NVIDIA/RULER data/synthetic/constants.py)
 # --------------------------------------------------------------------------- #
 
@@ -219,7 +288,12 @@ def _make_niah(num_haystack: int, type_haystack: str, num_needle_k: int,
     # Query the first key; answer = its value list.
     query = keys[0]
     answers = values[0]
-    return context, query, answers
+    # Gold needle for the QUERIED key (oracle-evidence span). Built the same way
+    # the needle was inserted into the haystack above (verbatim).
+    gold_needle = NIAH_NEEDLE.format(
+        type_needle_v="numbers", key=keys[0], value=values[0][0]
+    )
+    return context, query, answers, gold_needle
 
 
 def _render_niah(context: str, query: str) -> str:
@@ -290,13 +364,16 @@ def _render_vt(context: str, query: str, num_v: int, icl_block: str) -> str:
 
 def _build_sample(task: str, target_tokens: int, tokenizer, rng: random.Random,
                   vt_icl: str | None):
-    """Return (prompt_text, answers:list[str]) sized to ~target_tokens."""
+    """Return (prompt_text, answers:list[str], gold_needle:str|None) sized to
+    ~target_tokens. gold_needle is the verbatim needle sentence for the queried
+    key (NIAH tasks only; None for variable_tracking) — used by the oracle path.
+    """
     if task == "variable_tracking":
         num_hops = 4
         incremental = 5
         def render(n):
             ctx, val, vars_all, num_v = _make_vt(n, num_hops, rng)
-            return _render_vt(ctx, val, num_v, vt_icl or ""), vars_all
+            return _render_vt(ctx, val, num_v, vt_icl or ""), vars_all, None
     else:
         if task == "niah_single_1":
             type_haystack, num_k = "noise", 1
@@ -308,31 +385,31 @@ def _build_sample(task: str, target_tokens: int, tokenizer, rng: random.Random,
             raise ValueError(f"unknown task {task}")
         incremental = 25 if type_haystack == "noise" else 500
         def render(n):
-            ctx, query, answers = _make_niah(n, type_haystack, num_k, rng)
-            return _render_niah(ctx, query), answers
+            ctx, query, answers, gold = _make_niah(n, type_haystack, num_k, rng)
+            return _render_niah(ctx, query), answers, gold
 
     # Grow geometrically until we exceed the target, then back off.
     n = incremental
     last_ok = None
     while True:
-        text, answers = render(n)
+        text, answers, gold = render(n)
         ntok = len(tokenizer.encode(text, add_special_tokens=True))
         if ntok >= target_tokens:
             break
-        last_ok = (text, answers)
+        last_ok = (text, answers, gold)
         n += incremental if n < incremental * 8 else incremental * 4
         if n > 400_000:
             break
     # Pick the largest size whose token count does not blow far past target:
     # binary-refine between (n - step) and n.
     lo, hi = max(incremental, n // 2), n
-    best = last_ok or (text, answers)
+    best = last_ok or (text, answers, gold)
     while lo <= hi:
         mid = (lo + hi) // 2
-        text, answers = render(mid)
+        text, answers, gold = render(mid)
         ntok = len(tokenizer.encode(text, add_special_tokens=True))
         if ntok <= target_tokens:
-            best = (text, answers)
+            best = (text, answers, gold)
             lo = mid + incremental
         else:
             hi = mid - incremental
@@ -410,6 +487,17 @@ def main():
     p.add_argument("--evidence_buffer_size", type=int, default=8)
     p.add_argument("--evidence_topr", type=int, default=0)
     p.add_argument("--evidence_layer", type=int, default=0)
+    # ORACLE evidence probe (eval-only). When set, force the gold needle span's
+    # hidden states into the evidence prefix at --oracle_layers (comma list),
+    # bypassing routing entirely. Decisive go/no-go for the reader interface.
+    p.add_argument("--oracle_evidence", action="store_true", default=False)
+    p.add_argument("--oracle_layers", type=str, default="0",
+                   help="comma-separated decoder layer indices to inject the "
+                        "oracle gold-span hidden states at (e.g. '0' or '16' or "
+                        "'16,20,24'). Mid layers test the user's raw-KV hunch.")
+    p.add_argument("--oracle_plus_slot", action="store_true", default=False,
+                   help="oracle arm 4: oracle span PLUS the normally-routed "
+                        "heuristic evidence (requires --use_slot_evidence too).")
     args = p.parse_args()
 
     print(f"[ruler] model_type={args.model_type} tasks={args.tasks} "
@@ -419,6 +507,11 @@ def main():
     device = torch.device(args.device)
     dtype = {"bfloat16": torch.bfloat16, "float16": torch.float16,
              "float32": torch.float32}[args.dtype]
+
+    oracle_layers = [int(x) for x in args.oracle_layers.split(",") if x.strip() != ""]
+    if args.oracle_evidence:
+        print(f"[ruler] ORACLE evidence ON: inject gold-span hidden states at "
+              f"layers {oracle_layers} (plus_slot={args.oracle_plus_slot})")
 
     tokenizer = AutoTokenizer.from_pretrained(args.model_path, trust_remote_code=True)
     if tokenizer.pad_token is None:
@@ -480,13 +573,21 @@ def main():
             n_tok_seen = 0
             for i in tqdm(range(args.num_samples), desc=f"{task}/{length}", leave=False):
                 rng = random.Random(base_seed * 1000 + i)
-                prompt, answers = _build_sample(task, target_tokens, tokenizer, rng, vt_icl)
+                prompt, answers, gold_needle = _build_sample(
+                    task, target_tokens, tokenizer, rng, vt_icl)
                 if i not in sample_indices:
                     continue
                 ids = tokenizer.encode(prompt, add_special_tokens=True,
                                        return_tensors="pt").to(device)
                 n_tok_seen = ids.shape[1]
                 mnt = args.max_new_tokens if task != "variable_tracking" else max(args.max_new_tokens, 60)
+                # ORACLE: capture the gold span's hidden states at the injection
+                # layers (memory disabled) and stash them for the read hook.
+                if args.oracle_evidence and gold_needle is not None:
+                    gold_ids = tokenizer.encode(
+                        gold_needle, add_special_tokens=False, return_tensors="pt")
+                    oh = _capture_oracle_hidden(model, gold_ids, oracle_layers, device)
+                    _set_oracle_evidence(model, oh, oracle_layers)
                 with torch.amp.autocast(device_type="cuda", dtype=dtype):
                     if args.model_type == "mem_space":
                         out = generate_with_mem_space(
@@ -498,6 +599,8 @@ def main():
                         out = _generate_base(
                             model, ids, tokenizer, mnt, device, args.base_max_window,
                         )
+                if args.oracle_evidence:
+                    _set_oracle_evidence(model, None, oracle_layers)
                 rec = _string_match_all_one(out, answers)
                 recall_sum += rec
                 total += 1

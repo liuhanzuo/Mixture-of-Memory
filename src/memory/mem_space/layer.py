@@ -1835,6 +1835,7 @@ class MemorySpaceLayer(nn.Module):
         # through its own K/V proj, so H can recall the precise original tokens.
         ev_tokens = None
         k_ev = 0
+        _ev_parts = []
         if (
             self._is_evidence_layer
             and k_slots > 0
@@ -1850,10 +1851,29 @@ class MemorySpaceLayer(nn.Module):
                 )                                                   # [B, k, Bcnt, d_ev]
                 _gathered = _se.gather(1, _idx_g)                   # [B, k, Bcnt, d_ev]
                 _gathered = _gathered[:, :, :_topr, :]              # [B, k, topr, d_ev]
-                ev_tokens = _gathered.reshape(B, k_slots * _topr, _d_ev).to(
+                _heur = _gathered.reshape(B, k_slots * _topr, _d_ev).to(
                     hidden_states.dtype
                 )                                                   # [B, k*topr, d_ev]
-                k_ev = ev_tokens.shape[1]
+                _ev_parts.append(_heur)
+
+        # ---- ORACLE evidence injection (eval-only, 2026-06-17) ----
+        # Bypass routing entirely: if this layer is an oracle injection layer,
+        # prepend the GOLD needle span's pre-captured hidden states as an extra
+        # evidence prefix block, regardless of what the selector routed. This is
+        # the decisive go/no-go probe: it isolates "can the frozen reader USE
+        # evidence?" from "did write/retrieval capture the right span?". Set by
+        # the eval harness via set_oracle_evidence(); None on the default path.
+        _oracle_layers = getattr(self.memory_bank, "_oracle_layers", None)
+        if _oracle_layers and self._layer_idx in _oracle_layers:
+            _ohbl = getattr(self.memory_bank, "_oracle_hidden_by_layer", None)
+            _oh = _ohbl.get(self._layer_idx) if _ohbl else None
+            if _oh is not None and _oh.shape[0] == B:
+                _ev_parts.append(_oh.to(device=hidden_states.device,
+                                        dtype=hidden_states.dtype))
+
+        if _ev_parts:
+            ev_tokens = torch.cat(_ev_parts, dim=1) if len(_ev_parts) > 1 else _ev_parts[0]
+            k_ev = ev_tokens.shape[1]
 
         parts = []
         if k_l3 > 0:
