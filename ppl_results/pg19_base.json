@@ -1,0 +1,16 @@
+{
+  "mode": "base",
+  "data": "pg19",
+  "model": "models/Meta-Llama-3-8B",
+  "adapter_config": null,
+  "checkpoint": null,
+  "seq_length": 32768,
+  "window": 8192,
+  "stride": 4096,
+  "chunk_size": 1024,
+  "seqs": 40,
+  "scored_tokens": 1310680,
+  "avg_nll": 2.066979570538338,
+  "ppl": 7.900922861315517,
+  "skip_first_chunk": false
+}

@@ -1,0 +1,16 @@
+{
+  "mode": "base",
+  "data": "codeparrot",
+  "model": "models/Meta-Llama-3-8B",
+  "adapter_config": null,
+  "checkpoint": null,
+  "seq_length": 32768,
+  "window": 8192,
+  "stride": 4096,
+  "chunk_size": 1024,
+  "seqs": 40,
+  "scored_tokens": 1310680,
+  "avg_nll": 0.7702508262437934,
+  "ppl": 2.16030804778706,
+  "skip_first_chunk": false
+}

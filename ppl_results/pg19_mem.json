@@ -1,0 +1,16 @@
+{
+  "mode": "mem_space",
+  "data": "pg19",
+  "model": "models/Meta-Llama-3-8B",
+  "adapter_config": "outputs/mem_space_p11_chunk1024_deltarule_normreadout/adapter_config.json",
+  "checkpoint": "outputs/mem_space_p11_chunk1024_deltarule_normreadout/mem_space_adapter.pt",
+  "seq_length": 32768,
+  "window": 8192,
+  "stride": 4096,
+  "chunk_size": 1024,
+  "seqs": 40,
+  "scored_tokens": 1309440,
+  "avg_nll": 2.802339796954766,
+  "ppl": 16.483168955003944,
+  "skip_first_chunk": false
+}
