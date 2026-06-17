@@ -2032,8 +2032,12 @@ class MemorySpaceLayer(nn.Module):
         # the decisive go/no-go probe: it isolates "can the frozen reader USE
         # evidence?" from "did write/retrieval capture the right span?". Set by
         # the eval harness via set_oracle_evidence(); None on the default path.
+        # Skipped on the in-attn layer when in-attn is active: that layer injects
+        # the oracle through the TRUE in-attention K/V path instead of this EV
+        # prefix, so we must NOT also prepend it here (would double-inject).
         _oracle_layers = getattr(self.memory_bank, "_oracle_layers", None)
-        if _oracle_layers and self._layer_idx in _oracle_layers:
+        _inattn_owns_oracle = self._is_inattn_kv_layer
+        if _oracle_layers and self._layer_idx in _oracle_layers and not _inattn_owns_oracle:
             _ohbl = getattr(self.memory_bank, "_oracle_hidden_by_layer", None)
             _oh = _ohbl.get(self._layer_idx) if _ohbl else None
             if _oh is not None and _oh.shape[0] == B:
@@ -2169,36 +2173,86 @@ class MemorySpaceLayer(nn.Module):
         #    Reference: ops/research_notes/20260426_mem_space_v0_tier3_fix3_fail.md §5.
 
         # ---- TRUE in-attention K/V concat: READ + stash (2026-06-18) ----
-        # Retrieve the top-inattn_kv_topk raw tokens for the current chunk's
-        # query, project them through the wrapped layer's NATIVE k/v_proj, RoPE
-        # the keys at their REAL source positions, and stash on self_attn so the
-        # installed wrapper concatenates them onto the native K/V of BOTH the
-        # bypass and extended calls below. Because the SAME K_raw/V_raw is added
-        # to both, its contribution cancels in slot_delta (= ext_h - bypass_h)
-        # and survives in bypass_h → it enters next_hidden at FULL strength
-        # (weight 1.0), the clean training-free read we want to probe. Diagnostic
-        # counters (last retrieved positions / R) are stashed for the smoke +
-        # needle-precision check. No-op when the store is empty / off.
+        # Retrieve raw tokens for the current chunk's query, project them through
+        # the wrapped layer's NATIVE k/v_proj (after input_layernorm so they live
+        # in the native K/V distribution), RoPE the keys at their REAL source
+        # positions, and stash on self_attn so the installed wrapper concatenates
+        # them onto the native K/V of BOTH the bypass and extended calls below.
+        # Because the SAME K_raw/V_raw is added to both, its contribution cancels
+        # in slot_delta (= ext_h - bypass_h) and survives in bypass_h → it enters
+        # next_hidden at FULL strength (weight 1.0), the clean training-free read.
+        #
+        # Two retrieval sources (independent, may compose):
+        #   * RETRIEVED: top-inattn_kv_topk from the raw-KV store, scored by the
+        #     query routing key (the realistic channel).
+        #   * ORACLE (eval-only): the gold needle span's pre-captured layer-input
+        #     hidden, stashed on the bank as _oracle_hidden_by_layer (bypasses
+        #     the scorer). Used to cleanly isolate the READOUT mechanism from the
+        #     known-0% retrieval-quality failure — mirrors the oracle-evidence
+        #     control, but injected through the TRUE in-attention path this time.
+        # Diagnostic counters stashed for the smoke. No-op when both empty / off.
         self._last_inattn_R = 0
         self._last_inattn_pos = None
         _inattn_attn = None
         if self._is_inattn_kv_layer:
             _inattn_attn = getattr(self.wrapped_layer, "self_attn", None)
+            _pre_norm = getattr(self.wrapped_layer, "input_layernorm", None)
+            _src_h_parts = []
+            _src_pos_parts = []
+            # ORACLE source (eval-only; bypasses the scorer).
+            _orc_layers = getattr(self.memory_bank, "_oracle_layers", None)
+            if _orc_layers and self._layer_idx in _orc_layers:
+                _ohbl = getattr(self.memory_bank, "_oracle_hidden_by_layer", None)
+                _oh = _ohbl.get(self._layer_idx) if _ohbl else None
+                if _oh is not None and _oh.shape[0] == B:
+                    _src_h_parts.append(_oh.to(hidden_states.dtype))
+                    _opbl = getattr(self.memory_bank, "_oracle_pos_by_layer", None)
+                    _op = _opbl.get(self._layer_idx) if _opbl else None
+                    _So = _oh.shape[1]
+                    if _op is not None:
+                        _op = _op.to(device=hidden_states.device, dtype=torch.long)
+                        if _op.dim() == 1:
+                            _op = _op.unsqueeze(0)
+                        if _op.shape[0] != B:
+                            _op = _op[:1].expand(B, -1)
+                        _src_pos_parts.append(_op[:, :_So])
+                    else:
+                        _src_pos_parts.append(
+                            torch.arange(_So, device=hidden_states.device,
+                                         dtype=torch.long).unsqueeze(0).expand(B, -1)
+                        )
+            # RETRIEVED source (realistic channel) — skipped when oracle-only is
+            # requested via _inattn_oracle_only on the bank.
+            _oracle_only = bool(getattr(self.memory_bank, "_inattn_oracle_only", False))
             _iq_read = getattr(self.selector, "_last_routing_q", None)  # [B,T,S]
-            if _inattn_attn is not None and _iq_read is not None and _iq_read.shape[0] == B:
+            if (
+                not (_oracle_only and _src_h_parts)
+                and _inattn_attn is not None
+                and _iq_read is not None
+                and _iq_read.shape[0] == B
+            ):
                 _iret = self.memory_bank.retrieve_rawkv(_iq_read, cfg.inattn_kv_topk)
                 if _iret is not None:
-                    from .inattn_kv import build_retrieved_kv
                     _ik_h, _ik_pos = _iret                  # [B,R,d], [B,R]
-                    _K_raw, _V_raw = build_retrieved_kv(
-                        _inattn_attn,
-                        _ik_h.to(hidden_states.dtype),
-                        _ik_pos,
-                        position_embeddings,
-                    )
-                    _inattn_attn._inattn_kv = (_K_raw, _V_raw)
-                    self._last_inattn_R = int(_K_raw.shape[2])
-                    self._last_inattn_pos = _ik_pos
+                    _src_h_parts.append(_ik_h.to(hidden_states.dtype))
+                    _src_pos_parts.append(_ik_pos.to(hidden_states.device))
+            if _inattn_attn is not None and _src_h_parts:
+                from .inattn_kv import build_retrieved_kv
+                _src_h = (
+                    torch.cat(_src_h_parts, dim=1) if len(_src_h_parts) > 1
+                    else _src_h_parts[0]
+                )
+                _src_pos = (
+                    torch.cat(_src_pos_parts, dim=1) if len(_src_pos_parts) > 1
+                    else _src_pos_parts[0]
+                )
+                _K_raw, _V_raw = build_retrieved_kv(
+                    _inattn_attn, _src_h, _src_pos, position_embeddings,
+                    pre_norm=_pre_norm,
+                )
+                _inattn_attn._inattn_kv = (_K_raw, _V_raw)
+                self._last_inattn_R = int(_K_raw.shape[2])
+                self._last_inattn_pos = _src_pos
 
         bypass_out = self._maybe_ckpt_wrapped_layer(
             hidden_states,

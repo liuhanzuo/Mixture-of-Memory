@@ -54,15 +54,23 @@ def build_retrieved_kv(
     retrieved_hidden: torch.Tensor,
     retrieved_pos: torch.Tensor,
     position_embeddings: Tuple[torch.Tensor, torch.Tensor],
+    pre_norm: Optional[torch.nn.Module] = None,
 ) -> Tuple[torch.Tensor, torch.Tensor]:
     """Project retrieved raw token hidden states through the layer's NATIVE
     k_proj / v_proj and RoPE the keys at their REAL source positions.
 
     Args:
         self_attn: the wrapped LlamaAttention (provides k_proj/v_proj/head_dim).
-        retrieved_hidden: [B, R, d_model] retrieved raw token hidden states.
+        retrieved_hidden: [B, R, d_model] retrieved raw token hidden states
+            (the LAYER-INPUT, pre-LayerNorm hidden — same representation the
+            store / oracle capture hold).
         retrieved_pos: [B, R] long source in-chunk positions (RoPE phase).
         position_embeddings: (cos, sin) of the CURRENT chunk, each [B|1, T, hd].
+        pre_norm: the wrapped decoder layer's ``input_layernorm``. Native K/V are
+            computed as ``k_proj(input_layernorm(h))``; the retrieved hidden are
+            pre-LN layer inputs too, so we MUST apply the same norm before
+            projecting for the injected K/V to live in the native distribution.
+            When None (smoke / debug) the norm is skipped.
 
     Returns:
         (K_raw, V_raw): each [B, n_kv_heads, R, head_dim]; K_raw is RoPE'd at the
@@ -70,8 +78,11 @@ def build_retrieved_kv(
     """
     B, R, _ = retrieved_hidden.shape
     hd = self_attn.head_dim
-    K_raw = self_attn.k_proj(retrieved_hidden).view(B, R, -1, hd).transpose(1, 2)
-    V_raw = self_attn.v_proj(retrieved_hidden).view(B, R, -1, hd).transpose(1, 2)
+    _h = retrieved_hidden
+    if pre_norm is not None:
+        _h = pre_norm(_h)
+    K_raw = self_attn.k_proj(_h).view(B, R, -1, hd).transpose(1, 2)
+    V_raw = self_attn.v_proj(_h).view(B, R, -1, hd).transpose(1, 2)
 
     cos, sin = position_embeddings                       # [B|1, T, hd]
     T = cos.shape[1]
