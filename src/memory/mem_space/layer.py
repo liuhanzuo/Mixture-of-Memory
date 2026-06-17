@@ -108,6 +108,7 @@ def _build_extended_attn_mask(
     k_l3: int = 0,
     mask_h_to_l1: bool = False,
     k_ev: int = 0,
+    isolate_ev: bool = False,
 ) -> torch.Tensor:
     """Return [B, 1, L, L] additive mask for the joint-attn extended seq.
 
@@ -164,6 +165,15 @@ def _build_extended_attn_mask(
     if mask_h_to_l1 and k > 0 and T > 0:
         mask[prefix:, k_l3:k_l3 + k] = neg_inf
 
+    # Landmark EV-isolation (2026-06-17): restrict H's prefix softmax to the EV
+    # block only by severing H→{L3, L1}. EV cols are [k_l3+k .. k_l3+k+k_ev-1];
+    # everything before EV in the prefix (L3 cols 0..k_l3-1, L1 cols k_l3..k_l3+k-1)
+    # is masked for H rows, so the precise evidence tokens own the prefix softmax
+    # denominator (vs the compressed L3/L1 prefix). No-op when k_ev==0.
+    if isolate_ev and k_ev > 0 and T > 0:
+        ev_start = k_l3 + k
+        mask[prefix:, 0:ev_start] = neg_inf
+
     # Broadcast to [B, 1, L, L].
     return mask.view(1, 1, L, L).expand(batch_size, 1, L, L).contiguous()
 
@@ -179,6 +189,7 @@ def _build_extended_attn_mask_l2(
     swa_window: int = 0,
     mask_h_to_l1: bool = False,
     k_ev: int = 0,
+    isolate_ev: bool = False,
 ) -> torch.Tensor:
     """Return [B, 1, L, L] additive mask for the L2-extended joint-attn seq.
 
@@ -219,18 +230,43 @@ def _build_extended_attn_mask_l2(
     if mask_h_to_l1 and k_l1 > 0 and T > 0:
         mask[prefix:, k_l3 + k_l2:k_l3 + k_l2 + k_l1] = neg_inf
 
+    # Landmark EV-isolation: restrict H's prefix softmax to the EV block only by
+    # severing H→{L3, L2, L1}. EV cols start at k_l3+k_l2+k_l1. No-op when k_ev==0.
+    if isolate_ev and k_ev > 0 and T > 0:
+        ev_start = k_l3 + k_l2 + k_l1
+        mask[prefix:, 0:ev_start] = neg_inf
+
     return mask.view(1, 1, L, L).expand(batch_size, 1, L, L).contiguous()
 
 
 def _extend_position_embeddings(
     position_embeddings: Tuple[torch.Tensor, torch.Tensor],
     k: int,
+    ev_pos: Optional[torch.Tensor] = None,
+    k_pos0: Optional[int] = None,
 ) -> Tuple[torch.Tensor, torch.Tensor]:
-    """Prepend k "position-0" entries to the (cos, sin) rotary tables.
+    """Prepend k prefix entries to the (cos, sin) rotary tables.
 
-    Each of cos, sin has shape ``[1 or B, T, head_dim]``.  We slice the
-    position-0 entry and tile it k times.  Result has shape
+    Each of cos, sin has shape ``[1 or B, T, head_dim]``.  Result has shape
     ``[*, k+T, head_dim]``.
+
+    Legacy behaviour (``ev_pos is None``): all k prefix entries reuse the
+    position-0 rotary phase (memory tokens treated as position-less).
+
+    Landmark position fix (2026-06-17, ``ev_pos`` given): the EV (evidence)
+    sub-block of the prefix is injected at its REAL source RoPE phase instead
+    of position 0, so the frozen decoder re-projects the evidence K/V at the
+    position it actually saw the token (each streaming chunk resets positions
+    to 0, so the source position == the token's in-chunk offset). Layout of the
+    k prefix entries: ``[ k_pos0 position-0 entries (L3|L2|L1) | EV at ev_pos ]``.
+
+    Args:
+        ev_pos: ``[B, k_ev]`` or ``[k_ev]`` long — source position of each EV
+            token. Clamped to ``[0, T-1]`` and used to index the current chunk's
+            cos/sin table (positions beyond the current window fall back to the
+            last available phase).
+        k_pos0: number of leading prefix entries that stay at position 0
+            (k_l3 + k_l2 + k_slots). ``k_ev = k - k_pos0``.
     """
     cos, sin = position_embeddings
     # Handle both [1, T, D] and [B, T, D] layouts.
@@ -239,10 +275,44 @@ def _extend_position_embeddings(
             f"position_embeddings must be 3-D tensors; got cos={tuple(cos.shape)}, "
             f"sin={tuple(sin.shape)}"
         )
-    cos0 = cos[:, :1, :]                                       # [*, 1, D]
+    if ev_pos is None or k_pos0 is None:
+        # Legacy pos-0 prefix (default path; byte-identical to pre-fix).
+        cos0 = cos[:, :1, :]                                       # [*, 1, D]
+        sin0 = sin[:, :1, :]
+        cos_ext = torch.cat([cos0.expand(cos.shape[0], k, cos.shape[-1]), cos], dim=1)
+        sin_ext = torch.cat([sin0.expand(sin.shape[0], k, sin.shape[-1]), sin], dim=1)
+        return cos_ext, sin_ext
+
+    # Real-position EV injection.
+    Bc, T, D = cos.shape
+    k_ev = k - k_pos0
+    # ev_pos -> [Bc, k_ev] long, clamped into the available rotary window.
+    _ep = ev_pos
+    if _ep.dim() == 1:
+        _ep = _ep.unsqueeze(0)
+    _ep = _ep.to(device=cos.device, dtype=torch.long).clamp_(0, T - 1)
+    if _ep.shape[0] != Bc:
+        # Broadcast a single-row ev_pos across the cos batch (or vice versa).
+        if _ep.shape[0] == 1:
+            _ep = _ep.expand(Bc, -1)
+        elif Bc == 1:
+            cos = cos.expand(_ep.shape[0], T, D)
+            sin = sin.expand(_ep.shape[0], T, D)
+            Bc = _ep.shape[0]
+        else:
+            # Shape mismatch we can't reconcile — fall back to pos-0 for EV.
+            _ep = torch.zeros(Bc, k_ev, device=cos.device, dtype=torch.long)
+    _gather_idx = _ep.unsqueeze(-1).expand(Bc, k_ev, D)            # [Bc, k_ev, D]
+    cos_ev = cos.gather(1, _gather_idx)                            # [Bc, k_ev, D]
+    sin_ev = sin.gather(1, _gather_idx)
+    cos0 = cos[:, :1, :]
     sin0 = sin[:, :1, :]
-    cos_ext = torch.cat([cos0.expand(cos.shape[0], k, cos.shape[-1]), cos], dim=1)
-    sin_ext = torch.cat([sin0.expand(sin.shape[0], k, sin.shape[-1]), sin], dim=1)
+    cos_ext = torch.cat(
+        [cos0.expand(Bc, k_pos0, D), cos_ev, cos], dim=1
+    )                                                              # [Bc, k+T, D]
+    sin_ext = torch.cat(
+        [sin0.expand(Bc, k_pos0, D), sin_ev, sin], dim=1
+    )
     return cos_ext, sin_ext
 
 
@@ -1157,7 +1227,7 @@ class MemorySpaceLayer(nn.Module):
                             _top_t.reshape(B, -1).unsqueeze(-1).expand(-1, -1, _hd),
                         ).reshape(B, k_slots, _C, _hd)                 # [B,k,C,d]
                         self.memory_bank.write_evidence(
-                            _idx_l, _tok_h, _top_s
+                            _idx_l, _tok_h, _top_s, token_pos=_top_t
                         )
             # ---- EXP-R1 dead-slot recycling + EXP-D2 telemetry (layer-0) ----
             # Driven from layer-0 only (the bank is SHARED across all 32 layers,
@@ -1835,7 +1905,9 @@ class MemorySpaceLayer(nn.Module):
         # through its own K/V proj, so H can recall the precise original tokens.
         ev_tokens = None
         k_ev = 0
+        _ev_pos = None
         _ev_parts = []
+        _ev_pos_parts = []   # parallel source-position lists for the EV tokens
         if (
             self._is_evidence_layer
             and k_slots > 0
@@ -1855,6 +1927,18 @@ class MemorySpaceLayer(nn.Module):
                     hidden_states.dtype
                 )                                                   # [B, k*topr, d_ev]
                 _ev_parts.append(_heur)
+                # Landmark fix (2026-06-17): gather the SOURCE positions of those
+                # evidence tokens so they inject at their real RoPE phase, not 0.
+                _sep = getattr(self.memory_bank, "slot_evidence_pos", None)
+                if _sep is not None and _sep.shape[0] == B:
+                    _idx_p = idx.long().unsqueeze(-1).expand(-1, -1, _sep.shape[2])
+                    _gpos = _sep.gather(1, _idx_p)[:, :, :_topr]    # [B, k, topr]
+                    _ev_pos_parts.append(_gpos.reshape(B, k_slots * _topr))
+                else:
+                    _ev_pos_parts.append(
+                        torch.zeros(B, k_slots * _topr, device=hidden_states.device,
+                                    dtype=torch.long)
+                    )
 
         # ---- ORACLE evidence injection (eval-only, 2026-06-17) ----
         # Bypass routing entirely: if this layer is an oracle injection layer,
@@ -1868,12 +1952,34 @@ class MemorySpaceLayer(nn.Module):
             _ohbl = getattr(self.memory_bank, "_oracle_hidden_by_layer", None)
             _oh = _ohbl.get(self._layer_idx) if _ohbl else None
             if _oh is not None and _oh.shape[0] == B:
-                _ev_parts.append(_oh.to(device=hidden_states.device,
-                                        dtype=hidden_states.dtype))
+                _oh = _oh.to(device=hidden_states.device, dtype=hidden_states.dtype)
+                _ev_parts.append(_oh)
+                # Oracle source positions: the needle span's REAL in-chunk offsets
+                # (Landmark fix). Stashed by the harness as _oracle_pos_by_layer;
+                # fall back to a contiguous 0..S-1 run if absent.
+                _opbl = getattr(self.memory_bank, "_oracle_pos_by_layer", None)
+                _op = _opbl.get(self._layer_idx) if _opbl else None
+                _S = _oh.shape[1]
+                if _op is not None:
+                    _op = _op.to(device=hidden_states.device, dtype=torch.long)
+                    if _op.dim() == 1:
+                        _op = _op.unsqueeze(0)
+                    if _op.shape[0] != B:
+                        _op = _op[:1].expand(B, -1)
+                    _ev_pos_parts.append(_op[:, :_S])
+                else:
+                    _ev_pos_parts.append(
+                        torch.arange(_S, device=hidden_states.device,
+                                     dtype=torch.long).unsqueeze(0).expand(B, -1)
+                    )
 
         if _ev_parts:
             ev_tokens = torch.cat(_ev_parts, dim=1) if len(_ev_parts) > 1 else _ev_parts[0]
             k_ev = ev_tokens.shape[1]
+            _ev_pos = (
+                torch.cat(_ev_pos_parts, dim=1) if len(_ev_pos_parts) > 1
+                else _ev_pos_parts[0]
+            ) if _ev_pos_parts else None
 
         parts = []
         if k_l3 > 0:
@@ -1890,12 +1996,24 @@ class MemorySpaceLayer(nn.Module):
         else:
             extended_hidden = torch.cat(parts, dim=1)            # [B, k_l3+k_l2+k_slots+k_ev+T, d]
 
-        # Position embeddings: L3, L2, L1, EV all use position 0 (memory tokens
-        # are position-less by design; v0 keeps L2 at position 0 — see L2
-        # research §4.5; evidence inherits the same position-0 prefix treatment).
-        ext_pos_emb = _extend_position_embeddings(
-            position_embeddings, k_l3 + k_l2 + k_slots + k_ev,
-        )
+        # Position embeddings: L3, L2, L1 use position 0 (memory tokens are
+        # position-less by design). EV (evidence) is injected at its REAL source
+        # RoPE phase (Landmark fix, 2026-06-17) instead of position 0, so the
+        # frozen decoder re-projects evidence K/V at the position it actually saw
+        # the token — and the EV tokens no longer collide their RoPE phases with
+        # the L3/L2/L1 prefix at position 0. Gated on use_slot_evidence: when EV
+        # is absent (k_ev==0) the call is byte-identical to the legacy pos-0 path.
+        # cfg.evidence_real_positions=False forces the legacy pos-0 EV injection
+        # (kept as the A/B control arm against the real-position fix).
+        if k_ev > 0 and _ev_pos is not None and cfg.evidence_real_positions:
+            ext_pos_emb = _extend_position_embeddings(
+                position_embeddings, k_l3 + k_l2 + k_slots + k_ev,
+                ev_pos=_ev_pos, k_pos0=k_l3 + k_l2 + k_slots,
+            )
+        else:
+            ext_pos_emb = _extend_position_embeddings(
+                position_embeddings, k_l3 + k_l2 + k_slots + k_ev,
+            )
 
         # Always construct an explicit additive 4-D mask — attention_mask from
         # the outer model may be None (SDPA path's implicit causal).  Our
@@ -1913,6 +2031,7 @@ class MemorySpaceLayer(nn.Module):
                 swa_window=cfg.swa_window,
                 mask_h_to_l1=cfg.use_decoupled_read or cfg.use_memory_xattn,
                 k_ev=k_ev,
+                isolate_ev=cfg.evidence_isolate_softmax,
             )
         else:
             ext_attn_mask = _build_extended_attn_mask(
@@ -1925,6 +2044,7 @@ class MemorySpaceLayer(nn.Module):
                 k_l3=k_l3,
                 mask_h_to_l1=cfg.use_decoupled_read or cfg.use_memory_xattn,
                 k_ev=k_ev,
+                isolate_ev=cfg.evidence_isolate_softmax,
             )
 
         # H2 FIX REVERTED (2026-04-26 22:30): the earlier H2 fix

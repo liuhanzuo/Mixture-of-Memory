@@ -491,6 +491,27 @@ class MemorySpaceConfig:
     evidence_buffer_size: int = 8
     evidence_topr: int = 0
     evidence_layer: int = 0
+    # Landmark position fix (2026-06-17): when True, EV (evidence) tokens are
+    # injected at their SOURCE within-chunk RoPE position (the position the
+    # frozen decoder originally encoded them at) instead of the legacy
+    # position-0. Stacking every prefix block at pos-0 collides their RoPE
+    # phases and is OOD for the frozen reader (the needle hidden state was
+    # produced at its real position). Gated behind use_slot_evidence; default
+    # True so any evidence run gets the corrected interface, False reproduces
+    # the legacy pos-0 behaviour for A/B comparison.
+    evidence_real_positions: bool = True
+    # Isolated-softmax for the EV block (2026-06-17): when True, H-queries are
+    # additionally severed from the L3 (and L1) prefix blocks while evidence is
+    # active, so the needle's EV keys do not share H's softmax denominator with
+    # the other prefix blocks (Landmark grouped-softmax intent, approximated via
+    # masking — no attention-internals surgery). Default False (opt-in probe).
+    evidence_isolate_softmax: bool = False
+    # Landmark-style EV-block isolation (2026-06-17): when True, H-query softmax
+    # over the prefix is restricted to the EV block only (H→{L3,L2,L1} severed),
+    # so the precise evidence tokens are not diluted by the compressed L3/L2/L1
+    # prefix competing for the same softmax mass. Default False = legacy joint
+    # softmax over all prefix blocks. Only meaningful when use_slot_evidence.
+    evidence_isolate_softmax: bool = False
 
     # FastMem (Gated Delta Rule continuous memory, 2026-05-21):
     # Per-layer fast-weight memory that captures a continuous running summary

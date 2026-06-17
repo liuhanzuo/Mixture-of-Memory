@@ -139,9 +139,11 @@ def _capture_oracle_hidden(model, gold_ids, layers, device):
     return captured
 
 
-def _set_oracle_evidence(model, hidden_by_layer, layers) -> None:
+def _set_oracle_evidence(model, hidden_by_layer, layers, pos_by_layer=None) -> None:
     """Stash the captured oracle hidden states on the shared bank so layer.py's
-    read hook prepends them. ``hidden_by_layer``=None clears the oracle path."""
+    read hook prepends them. ``hidden_by_layer``=None clears the oracle path.
+    ``pos_by_layer``: {layer: [1, S] long} source positions for the EV RoPE
+    phase (Landmark fix); None → layer.py falls back to a 0..S-1 run."""
     root = getattr(model, "module", model)
     bank = getattr(root, "_mem_space_shared_bank", None)
     targets = [bank] if bank is not None else [
@@ -152,6 +154,7 @@ def _set_oracle_evidence(model, hidden_by_layer, layers) -> None:
             continue
         b._oracle_layers = set(layers) if hidden_by_layer else None
         b._oracle_hidden_by_layer = hidden_by_layer
+        b._oracle_pos_by_layer = pos_by_layer if hidden_by_layer else None
 
 
 def _find_subsequence(haystack_ids, needle_ids):
@@ -223,7 +226,7 @@ def _capture_oracle_incontext(model, full_ids, gold_ids, chunk_size, layers,
     gold = gold_ids[0].tolist() if gold_ids.dim() == 2 else gold_ids.tolist()
     loc = _find_subsequence(full, gold)
     if loc is None:
-        return None  # caller falls back / skips oracle for this sample
+        return None, None  # caller falls back / skips oracle for this sample
     p0, S = loc
 
     # Per-chunk capture buffers for each target layer.
@@ -264,7 +267,15 @@ def _capture_oracle_incontext(model, full_ids, gold_ids, chunk_size, layers,
             # Should not happen (we streamed ALL chunks) — guard anyway.
             continue
         out[li] = glob[:, p0:p0 + S, :].contiguous()
-    return out or None
+    if not out:
+        return None, None
+    # Source positions for the EV RoPE phase (Landmark fix): each streaming
+    # chunk resets RoPE to 0, so a token's source position == its in-chunk
+    # offset = global_pos % chunk_size. Build [1, S] for the needle span.
+    glob_pos = torch.arange(p0, p0 + S, dtype=torch.long)
+    inchunk_pos = (glob_pos % chunk_size).unsqueeze(0)              # [1, S]
+    pos = {li: inchunk_pos.clone() for li in out}
+    return out, pos
 
 
 # --------------------------------------------------------------------------- #
@@ -602,6 +613,10 @@ def main():
     p.add_argument("--evidence_buffer_size", type=int, default=8)
     p.add_argument("--evidence_topr", type=int, default=0)
     p.add_argument("--evidence_layer", type=int, default=0)
+    p.add_argument("--evidence_isolate_softmax", action="store_true", default=False,
+                   help="Landmark EV-isolation: restrict H's prefix softmax to "
+                        "the EV block (sever H->L3/L2/L1) so evidence isn't "
+                        "diluted by the compressed prefix.")
     # ORACLE evidence probe (eval-only). When set, force the gold needle span's
     # hidden states into the evidence prefix at --oracle_layers (comma list),
     # bypassing routing entirely. Decisive go/no-go for the reader interface.
@@ -651,8 +666,10 @@ def main():
             mem_config.evidence_buffer_size = args.evidence_buffer_size
             mem_config.evidence_topr = args.evidence_topr
             mem_config.evidence_layer = args.evidence_layer
+            mem_config.evidence_isolate_softmax = args.evidence_isolate_softmax
             print(f"[ruler] EVIDENCE ON: buffer_size={args.evidence_buffer_size} "
-                  f"topr={args.evidence_topr} layer={args.evidence_layer}")
+                  f"topr={args.evidence_topr} layer={args.evidence_layer} "
+                  f"isolate_softmax={args.evidence_isolate_softmax}")
         model = load_mem_space_model(
             model_path=args.model_path, checkpoint_path=args.checkpoint,
             mem_config=mem_config, device=device, dtype=dtype,
@@ -713,8 +730,9 @@ def main():
                 if args.oracle_evidence and gold_needle is not None:
                     gold_ids = tokenizer.encode(
                         gold_needle, add_special_tokens=False, return_tensors="pt")
+                    oh_pos = None
                     if args.oracle_incontext:
-                        oh = _capture_oracle_incontext(
+                        oh, oh_pos = _capture_oracle_incontext(
                             model, ids, gold_ids, args.chunk_size,
                             oracle_layers, device)
                     else:
@@ -722,7 +740,7 @@ def main():
                             model, gold_ids, oracle_layers, device)
                     if oh is not None:
                         oracle_hit += 1
-                    _set_oracle_evidence(model, oh, oracle_layers)
+                    _set_oracle_evidence(model, oh, oracle_layers, pos_by_layer=oh_pos)
                 with torch.amp.autocast(device_type="cuda", dtype=dtype):
                     if args.model_type == "mem_space":
                         out = generate_with_mem_space(

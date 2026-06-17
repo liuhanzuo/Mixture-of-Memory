@@ -84,9 +84,15 @@ class MemoryBank(nn.Module):
         #   slot_evidence_score : [B, N, Bcnt]   salience of each stored entry
         #                         (init -inf so empty slots lose to any candidate)
         #   slot_evidence_count : [B, N]   int   #valid entries per slot (telemetry)
+        #   slot_evidence_pos   : [B, N, Bcnt]   long  SOURCE absolute position of
+        #                         each stored evidence token (the in-chunk offset
+        #                         the frozen decoder actually saw it at; -1 = empty).
+        #                         Used at read to inject EV at its REAL RoPE phase
+        #                         instead of position 0 (Landmark fix, 2026-06-17).
         self.slot_evidence: Optional[torch.Tensor] = None
         self.slot_evidence_score: Optional[torch.Tensor] = None
         self.slot_evidence_count: Optional[torch.Tensor] = None
+        self.slot_evidence_pos: Optional[torch.Tensor] = None
 
         # Stateful buffer, lazily materialised on first forward.
         # We deliberately keep this as a plain attribute (not register_buffer)
@@ -128,6 +134,7 @@ class MemoryBank(nn.Module):
         self.slot_evidence = None
         self.slot_evidence_score = None
         self.slot_evidence_count = None
+        self.slot_evidence_pos = None
 
     def detach_(self) -> None:
         """Break the autograd graph across a segment boundary.
@@ -286,6 +293,7 @@ class MemoryBank(nn.Module):
         slot_idx: torch.Tensor,
         token_hidden: torch.Tensor,
         token_score: torch.Tensor,
+        token_pos: Optional[torch.Tensor] = None,
     ) -> None:
         """Append the highest-salience routed tokens into the per-slot evidence
         buffer, keeping the top ``Bcnt`` by salience (priority replacement).
@@ -296,6 +304,11 @@ class MemoryBank(nn.Module):
             token_hidden: [B, k, C, evidence_dim] — for each selected slot, C
                 candidate token hidden states routed into it this chunk.
             token_score: [B, k, C] — salience (routing weight) of each candidate.
+            token_pos: [B, k, C] long — the SOURCE absolute position (in-chunk
+                offset) each candidate token was seen at by the frozen decoder.
+                Stored in parallel so the read path can inject the evidence at
+                its real RoPE phase instead of position 0 (Landmark fix). When
+                None, positions default to 0 (legacy behaviour).
 
         Merge policy (MVP): for each selected slot, concatenate the C candidates
         with the slot's existing ``Bcnt`` stored entries along the entry axis,
@@ -338,26 +351,38 @@ class MemoryBank(nn.Module):
                 self.slot_evidence_count = torch.zeros(
                     B, N, device=dev, dtype=torch.long
                 )
+                # Source positions of stored evidence (-1 = empty / unknown).
+                self.slot_evidence_pos = torch.full(
+                    (B, N, Bcnt), -1, device=dev, dtype=torch.long
+                )
             _idx = slot_idx.to(device=dev, dtype=torch.long)            # [B, k]
             _cand_h = token_hidden.to(device=dev, dtype=self.slot_evidence.dtype)
             _cand_s = token_score.to(device=dev, dtype=torch.float32)   # [B, k, C]
+            if token_pos is not None:
+                _cand_p = token_pos.to(device=dev, dtype=torch.long)    # [B, k, C]
+            else:
+                _cand_p = torch.zeros(B, k, C, device=dev, dtype=torch.long)
             # Gather the existing entries for the selected slots.
             _idx_e = _idx.unsqueeze(-1).unsqueeze(-1).expand(B, k, Bcnt, self.evidence_dim)
             existing_h = self.slot_evidence.gather(1, _idx_e)           # [B, k, Bcnt, d]
             _idx_s = _idx.unsqueeze(-1).expand(B, k, Bcnt)
             existing_s = self.slot_evidence_score.gather(1, _idx_s)     # [B, k, Bcnt]
+            existing_p = self.slot_evidence_pos.gather(1, _idx_s)       # [B, k, Bcnt]
             # Concatenate existing + candidate, then keep top-Bcnt by score.
             merged_h = torch.cat([existing_h, _cand_h], dim=2)         # [B, k, Bcnt+C, d]
             merged_s = torch.cat([existing_s, _cand_s], dim=2)         # [B, k, Bcnt+C]
+            merged_p = torch.cat([existing_p, _cand_p], dim=2)         # [B, k, Bcnt+C]
             top_s, top_i = torch.topk(merged_s, k=Bcnt, dim=2)        # [B, k, Bcnt]
             top_h = merged_h.gather(
                 2, top_i.unsqueeze(-1).expand(B, k, Bcnt, self.evidence_dim)
             )                                                          # [B, k, Bcnt, d]
+            top_p = merged_p.gather(2, top_i)                          # [B, k, Bcnt]
             # Scatter the kept entries back into the global buffer at the
             # selected slots. NOTE: with duplicate slot indices (e.g. global
             # slots) scatter keeps the last write — acceptable for an MVP.
             self.slot_evidence.scatter_(1, _idx_e, top_h)
             self.slot_evidence_score.scatter_(1, _idx_s, top_s)
+            self.slot_evidence_pos.scatter_(1, _idx_s, top_p)
             # Update valid-entry count (telemetry): #finite scores per slot.
             new_count = (top_s > float("-inf")).sum(dim=2).to(torch.long)  # [B, k]
             self.slot_evidence_count.scatter_(1, _idx, new_count)
@@ -384,6 +409,10 @@ class MemoryBank(nn.Module):
                 mb.unsqueeze(-1), float("-inf")
             )
             self.slot_evidence_count = self.slot_evidence_count.masked_fill(mb, 0)
+            if self.slot_evidence_pos is not None:
+                self.slot_evidence_pos = self.slot_evidence_pos.masked_fill(
+                    mb.unsqueeze(-1), -1
+                )
 
     # --------------------------------------------------------------------- #
     # Access
