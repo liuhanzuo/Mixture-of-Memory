@@ -24,6 +24,11 @@ export HF_HOME="$PROJECT_ROOT/.hf_cache"
 export HF_DATASETS_CACHE="$PROJECT_ROOT/.hf_cache/datasets"
 export PYTHONPATH="$PROJECT_ROOT/third_party/babilong-pkg:$PROJECT_ROOT:${PYTHONPATH:-}"
 export PYTHONUNBUFFERED=1
+# Evidence@L16 inflates the extended-attn seq at the evidence layer
+# (T + k_ev = 1024 + (top_k16+global4)*topr); curriculum growth + bf16
+# fragmentation caused intermittent "Cuda failure 2 out of memory" mid-run.
+# expandable_segments reduces allocator fragmentation so the transient peak fits.
+export PYTORCH_CUDA_ALLOC_CONF="expandable_segments:True"
 PYBIN="${PYTHON_BIN:-$PROJECT_ROOT/.venv/bin/python}"
 P11="outputs/mem_space_p11_chunk1024_deltarule_normreadout/mem_space_adapter.pt"
 RUN="mem_space_p11_evidenceL16_ft500"
