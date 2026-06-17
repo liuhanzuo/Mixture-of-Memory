@@ -402,6 +402,14 @@ def main():
                    choices=["sdpa", "eager", "flash_attention_2"])
     p.add_argument("--num_shards", type=int, default=1)
     p.add_argument("--shard_index", type=int, default=0)
+    # Slot-Routed Evidence Memory eval-time override (2026-06-17). adapter_config
+    # carries no evidence fields, so they default OFF; these flags turn the
+    # evidence path ON at eval to probe whether routed raw evidence recovers the
+    # exact needle even with a frozen (evidence-naive) checkpoint.
+    p.add_argument("--use_slot_evidence", action="store_true", default=False)
+    p.add_argument("--evidence_buffer_size", type=int, default=8)
+    p.add_argument("--evidence_topr", type=int, default=0)
+    p.add_argument("--evidence_layer", type=int, default=0)
     args = p.parse_args()
 
     print(f"[ruler] model_type={args.model_type} tasks={args.tasks} "
@@ -423,6 +431,14 @@ def main():
             adapter_cfg = json.load(f)
         mem_config = build_mem_space_config(adapter_cfg)
         mem_config.l3_recon_max_positions = args.chunk_size
+        # Eval-time evidence override (see CLI flags above).
+        if args.use_slot_evidence:
+            mem_config.use_slot_evidence = True
+            mem_config.evidence_buffer_size = args.evidence_buffer_size
+            mem_config.evidence_topr = args.evidence_topr
+            mem_config.evidence_layer = args.evidence_layer
+            print(f"[ruler] EVIDENCE ON: buffer_size={args.evidence_buffer_size} "
+                  f"topr={args.evidence_topr} layer={args.evidence_layer}")
         model = load_mem_space_model(
             model_path=args.model_path, checkpoint_path=args.checkpoint,
             mem_config=mem_config, device=device, dtype=dtype,
