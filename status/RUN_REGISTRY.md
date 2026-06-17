@@ -719,9 +719,9 @@ step1000(退化): qa1=92/10/11/14/4/3/1, qa2=42/8/7/6/4/5/1, qa5=53/32/32/16/13/
 |-----------|-----------|------------|------|-----------|
 | LongMemEval oracle (n=500, 全6题型对齐) | 10.4/5.5 | 39.2/10.9 | **base≈3.8×** | multi-session 5.3 vs 18.8；single-user 18.6 vs 74.3；single-assistant 12.5 vs 66.1；knowledge-update 10.3 vs 56.4；temporal 12.8 vs 28.6；preference 0 vs 0 |
 | LOCOMO (n=400) | 2.75/2.7 | 19.25/16.9 | **base≈7×** | 单跳(cat4) 2.8 vs 29.9；多跳(cat1) 5.4 vs 21.6；时序(cat2) 0 vs 17.8；对抗(cat5,拒答) 2.8 vs 0 |
-- **★对话记忆是 mem_space 与 base 差距最大的场景**：base 全注意力即使中段截断仍 ~3.6×(LME)/~7×(LOCOMO) 领先。对话信息碎+需精确时序/说话人绑定，128-slot 记忆压缩丢失精确绑定。
+- **★对话记忆是 mem_space 与 base 差距最大的场景**：base 全注意力即使中段截断仍 ~3.8×(LME n=500 全对齐)/~7×(LOCOMO) 领先。对话信息碎+需精确时序/说话人绑定，128-slot 记忆压缩丢失精确绑定。
 - **mem_space 输出在跑（非崩溃）**：抽样确认生成连贯、主题相关，但事实细节错（如"4年3个月" vs gold"4年9个月"）→ 记忆保留 gist、丢失精确事实，与 RULER/BABILong 32k 墙的"精确读出失效"根因一致。
-- LME 中 single-session(用户/助手单段事实)差距最大(11→74, 12→66)：单段精确事实记忆都丢，印证读出端而非容量问题。LOCOMO 对抗类(cat5)base 反而 0(不拒答硬答错)，mem 偶尔拒答得分。
+- LME 中 single-session(用户/助手单段事实)差距最大(single-user 18.6→74.3, single-assistant 12.5→66.1，n=500 全对齐口径)：单段精确事实记忆都丢，印证读出端而非容量问题。LOCOMO 对抗类(cat5)base 反而 0(不拒答硬答错)，mem 偶尔拒答得分。
 - 注：LOCOMO base 中段截断到 7900 token（原文 ~14.7k），是受限上限对照而非全开卷。
 
 ### ★★ Sliding-window 32k 长上下文 PPL（2026-06-17，commit fe0f28d，节点 .76）
