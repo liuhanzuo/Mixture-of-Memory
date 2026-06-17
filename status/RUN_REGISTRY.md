@@ -716,6 +716,22 @@ step1000(退化): qa1=92/10/11/14/4/3/1, qa2=42/8/7/6/4/5/1, qa5=53/32/32/16/13/
 - **机理推断**：长训练窗口让每样本上下文更长、有效梯度信号更稀疏（同 500 步看到的「真长程依赖样本」反而更少 token-level 监督密度），中程（8k-16k）退化。**16k=16 的甜点仍是 n_ctx7（窗口 4096，约 8× 短于推理长度）**，再加窗口边际持续为负。
 - **裁决**：排除「加训练窗口」全部路线（4k→8k→32k 单调变差）。32k 需架构级改动（分层记忆/检索增强），非数据/训练长度旋钮。step500 final 出后可补点，但 step250 已收敛、方向已定，不抱翻案预期。
 
+### ★★ nctx63 + weak-mass(coef0.5)：训练侧 mass 杠杆也无效（2026-06-18，qa1/qa2/qa5 W0，n=100）
+动机：nctx63 plain（32k 训练窗口）未破墙后，叠加 weak-mass(coef≈0.5)——此前 readout-attack 结论中弱 mass 是长程最优杠杆——看训练侧 mass 是否在满 32k 窗口下抬升长程。配方完全同 nctx63 plain（pg19 蒸馏 chunk512/128 slot/distill λ0.6 layers12,20,28/seed42/500步），仅加 mass_coef≈0.5。eval 在 diskB .249，标准 2-group taskpool，HF offline，step250（与 plain 严格 step-matched）。
+| run（step250 严格对照）| 0k | 1k | 2k | 4k | 8k | 16k | 32k |
+|-----|----|----|----|----|----|----|----|
+| **nctx63 plain** qa5 | 61 | 73 | 47 | 27 | 14 | **12** | **9** |
+| **nctx63 mass0.5** qa5 | 62 | 69 | 55 | 28 | 15 | **13** | **7** |
+| nctx63 plain qa1 | 91 | 49 | 34 | 23 | 12 | 14 | 11 |
+| nctx63 mass0.5 qa1 | 93 | 48 | 34 | 21 | 10 | 13 | 12 |
+| nctx63 plain qa2 | 42 | 33 | 15 | 9 | 6 | 5 | 4 |
+| nctx63 mass0.5 qa2 | 48 | 22 | 16 | 13 | 2 | 1 | 3 |
+| pg19 n_ctx7 N128（基线，16k 破墙）qa5 | 75 | 73 | 51 | 29 | 19 | **16** | **9** |
+| 现有方法天花板 | — | — | — | — | ~15 | **13** | **9** |
+- **★负结果：mass0.5 在 nctx63 上未抬升长程，与 plain 噪声内持平。** qa5 16k=13(mass) vs 12(plain)（+1，噪声内）、32k=7(mass) vs 9(plain)（反降 2）；qa1/qa2 同样无系统性增益（qa2 8k-16k mass 反而塌到 2/1 < plain 6/5）。两臂均远低于 n_ctx7 基线 16k=16。
+- **结论：训练侧 mass 杠杆在 32k 训练窗口下失效。** readout-attack 中弱 mass 的长程增益是**机理侧（推理时 readout 软化）**现象，未能通过训练侧 mass_coef 复现到这个蒸馏配方——再次印证「机理侧 > 训练侧」（见 readout-attack 裁决）。**32k 墙对训练窗口、压缩比、训练侧 mass 三类旋钮全部免疫**，确认需架构级改动。
+- 真实结果（两臂 CSV 满 n=100，无 silent-fail；plain 在 .76、mass0.5 在 .249，严格一节点一 run 无 GPU 争用）。
+
 **pg19 LongBench 补点（2026-06-17）**：pg19 n_ctx7 final LongBench AVG=**6.5**（hotpotqa6.4/narrativeqa2.5/qasper4.9/multifieldqa12.7/2wikimqa8.5/musique3.9）。对照: mass_coef1=6.56、弱mass+蒸馏(s2026)=10.4。
 - **★关键发现：BABILong 长程突破 ≠ 真实长文档能力**。pg19 真长文蒸馏在 BABILong 16k 破墙（+3），但 LongBench 仅 6.5（≈mass_coef1，远低于弱mass+蒸馏的 10.4）。pg19 的 16k 突破是 **BABILong 合成事实链检索任务特定**，未迁移到真实长文档理解。真实长文档上**弱mass+蒸馏仍是最优**。两 benchmark 测不同能力，优化目标需分清。
 
