@@ -470,6 +470,28 @@ class MemorySpaceConfig:
     use_readout_mass_bias: bool = False
     readout_mass_coef: float = 1.0
 
+    # Slot-Routed Evidence Memory (2026-06-17). Each slot, besides its
+    # compressed semantic latent, keeps a small buffer of UNCOMPRESSED
+    # original-token hidden states ([d_model]) routed into it. At readout the
+    # top-k selected slots' evidence is gathered and prepended to the joint-
+    # attention extended sequence as a 4th segment ([L3|L2|L1|evidence|H]), so
+    # the frozen decoder can recall precise facts (numbers / names / ids) the
+    # compressed latent loses. Slots find the approximate location; evidence
+    # recalls the exact original tokens.
+    #   use_slot_evidence    : master switch. Default False → every evidence
+    #                          code path is a no-op (byte-identical to pre).
+    #   evidence_buffer_size : Bcnt — entries cached per slot (priority-replaced
+    #                          by salience when full).
+    #   evidence_topr        : entries retrieved per slot at readout. 0 →
+    #                          resolved to evidence_buffer_size (retrieve all).
+    #                          Clamped to <= evidence_buffer_size.
+    #   evidence_layer       : the SINGLE memory layer that caches + reads the
+    #                          evidence (single shared bank → one layer owns it).
+    use_slot_evidence: bool = False
+    evidence_buffer_size: int = 8
+    evidence_topr: int = 0
+    evidence_layer: int = 0
+
     # FastMem (Gated Delta Rule continuous memory, 2026-05-21):
     # Per-layer fast-weight memory that captures a continuous running summary
     # of ALL tokens (complementing discrete top-k slot routing which only
@@ -712,4 +734,19 @@ class MemorySpaceConfig:
             raise ValueError(
                 "slot_evict_protect_chunks must be >= 0, got "
                 f"{self.slot_evict_protect_chunks}"
+            )
+        # Slot-Routed Evidence Memory.
+        if self.evidence_buffer_size < 0:
+            raise ValueError(
+                "evidence_buffer_size must be >= 0, got "
+                f"{self.evidence_buffer_size}"
+            )
+        if self.evidence_topr < 0:
+            raise ValueError(
+                f"evidence_topr must be >= 0 (0 = use buffer_size), got "
+                f"{self.evidence_topr}"
+            )
+        if self.use_slot_evidence and self.evidence_buffer_size <= 0:
+            raise ValueError(
+                "use_slot_evidence=True requires evidence_buffer_size > 0"
             )

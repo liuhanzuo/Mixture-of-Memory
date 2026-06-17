@@ -107,25 +107,27 @@ def _build_extended_attn_mask(
     swa_window: int = 0,
     k_l3: int = 0,
     mask_h_to_l1: bool = False,
+    k_ev: int = 0,
 ) -> torch.Tensor:
     """Return [B, 1, L, L] additive mask for the joint-attn extended seq.
 
-    The extended sequence layout is: [L3(k_l3) | L1(k) | H(T)].
-    Total length L = k_l3 + k + T.
+    The extended sequence layout is: [L3(k_l3) | L1(k) | EV(k_ev) | H(T)].
+    Total length L = k_l3 + k + k_ev + T.
 
     Convention: 0 means "allowed", ``-inf`` means "masked out".
 
     Attention pattern:
         * L3 rows (0..k_l3-1): attend to everything (full row of zeros).
-        * L1 rows (k_l3..k_l3+k-1): attend to everything (full row of zeros).
-        * H rows (k_l3+k..L-1):
-          - cols 0..k_l3-1 (L3 keys): always allowed.
-          - cols k_l3..k_l3+k-1 (L1 keys): always allowed.
-          - cols k_l3+k..L-1 (H keys): causal (or SWA-causal if swa_window>0).
+        * L1 rows: attend to everything (full row of zeros).
+        * EV (evidence) rows: attend to everything (full row of zeros).
+        * H rows:
+          - L3 / L1 / EV keys: always allowed.
+          - H keys: causal (or SWA-causal if swa_window>0).
 
-    When k_l3 == 0: behaviour is IDENTICAL to the pre-L3 implementation.
+    When k_l3 == 0 and k_ev == 0: behaviour is IDENTICAL to the pre-L3/-EV
+    implementation.
     """
-    prefix = k_l3 + k
+    prefix = k_l3 + k + k_ev
     L = prefix + T
     # Default to "allowed everywhere".
     mask = torch.zeros(L, L, dtype=dtype, device=device)
@@ -148,7 +150,7 @@ def _build_extended_attn_mask(
             allowed = (cols <= rows) & ((rows - cols) < swa_window)
             hh[allowed] = 0.0
             mask[prefix:, prefix:] = hh
-        # L3/L1-queries and H-queries→L3/L1 keys: already 0 (allowed).
+        # L3/L1/EV-queries and H-queries→L3/L1/EV keys: already 0 (allowed).
 
     # P2 decoupled-read (2026-06-03): when mask_h_to_l1=True, BLOCK H-queries
     # from attending to the L1 slot block (cols k_l3..k_l3+k-1). This removes
@@ -157,6 +159,8 @@ def _build_extended_attn_mask(
     # O_mem_hidden is computed exactly as before); only the H→L1 read direction
     # is severed. The memory READ contribution is instead produced by the
     # standalone CrossAttentionMemoryV2.read path in forward().
+    # NOTE (evidence): we sever ONLY the L1 block; the evidence block (cols
+    # k_l3+k .. k_l3+k+k_ev-1) stays allowed so H can read the precise tokens.
     if mask_h_to_l1 and k > 0 and T > 0:
         mask[prefix:, k_l3:k_l3 + k] = neg_inf
 
@@ -174,24 +178,23 @@ def _build_extended_attn_mask_l2(
     batch_size: int,
     swa_window: int = 0,
     mask_h_to_l1: bool = False,
+    k_ev: int = 0,
 ) -> torch.Tensor:
     """Return [B, 1, L, L] additive mask for the L2-extended joint-attn seq.
 
-    Extended layout: [L3(k_l3) | L2(k_l2) | L1(k_l1) | H(T)].
-    Total length L = k_l3 + k_l2 + k_l1 + T.
+    Extended layout: [L3(k_l3) | L2(k_l2) | L1(k_l1) | EV(k_ev) | H(T)].
+    Total length L = k_l3 + k_l2 + k_l1 + k_ev + T.
 
     Attention pattern:
-        * L3 rows: attend to everything (full row of zeros).
-        * L2 rows: attend to everything.
-        * L1 rows: attend to everything.
+        * L3 / L2 / L1 / EV rows: attend to everything.
         * H rows:
-          - cols 0..prefix-1 (L3, L2, L1 keys): always allowed.
+          - cols 0..prefix-1 (L3, L2, L1, EV keys): always allowed.
           - cols prefix..L-1 (H keys): causal (or SWA-causal if swa_window>0).
 
-    When k_l2 == 0: collapses to the [L3 | L1 | H] layout (same as
+    When k_l2 == 0 and k_ev == 0: collapses to the [L3 | L1 | H] layout (same as
     ``_build_extended_attn_mask`` with the same k_l3/k_l1).
     """
-    prefix = k_l3 + k_l2 + k_l1
+    prefix = k_l3 + k_l2 + k_l1 + k_ev
     L = prefix + T
     mask = torch.zeros(L, L, dtype=dtype, device=device)
     neg_inf = torch.finfo(dtype).min
@@ -211,9 +214,10 @@ def _build_extended_attn_mask_l2(
             hh[allowed] = 0.0
             mask[prefix:, prefix:] = hh
 
-    # P2 decoupled-read: sever H→L1 attention (cols k_l3+k_l2 .. prefix-1).
+    # P2 decoupled-read: sever H→L1 attention (cols k_l3+k_l2 .. k_l3+k_l2+k_l1-1).
+    # The evidence block (immediately after L1) is NOT severed — H must read it.
     if mask_h_to_l1 and k_l1 > 0 and T > 0:
-        mask[prefix:, k_l3 + k_l2:prefix] = neg_inf
+        mask[prefix:, k_l3 + k_l2:k_l3 + k_l2 + k_l1] = neg_inf
 
     return mask.view(1, 1, L, L).expand(batch_size, 1, L, L).contiguous()
 
@@ -330,6 +334,10 @@ class MemorySpaceLayer(nn.Module):
                 init_noise=config.slot_init_noise,
                 slot_init=config.slot_init,
                 slot_value_norm_cap=config.slot_value_norm_cap,
+                evidence_buffer_size=(
+                    config.evidence_buffer_size if config.use_slot_evidence else 0
+                ),
+                evidence_dim=d_model if config.use_slot_evidence else None,
             )
             self._owns_bank = True
 
@@ -729,6 +737,15 @@ class MemorySpaceLayer(nn.Module):
         self._layer_idx: int = MemorySpaceLayer._instance_counter
         MemorySpaceLayer._instance_counter += 1
 
+        # Slot-Routed Evidence Memory (2026-06-17): resolve evidence_topr (0 →
+        # full buffer) and clamp to the buffer size. This layer owns the
+        # evidence read/write only when its index == config.evidence_layer.
+        _ev_topr = config.evidence_topr if config.evidence_topr > 0 else config.evidence_buffer_size
+        self._evidence_topr = min(int(_ev_topr), int(config.evidence_buffer_size))
+        self._is_evidence_layer = (
+            config.use_slot_evidence and self._layer_idx == config.evidence_layer
+        )
+
         # Side-channel state (populated on each forward).
         self.last_aux_losses: Dict[str, torch.Tensor] = {}
         self.last_idx: Optional[torch.Tensor] = None
@@ -1101,6 +1118,47 @@ class MemorySpaceLayer(nn.Module):
                 idx = torch.cat([idx, _glob_idx], dim=1)            # [B, k+g]
                 k_slots = idx.shape[-1]
 
+            # ---- Slot-Routed Evidence Memory: WRITE (2026-06-17) ----
+            # Only the designated evidence layer caches evidence (single shared
+            # bank → one owner). For each selected slot, score the chunk tokens
+            # by their routing affinity to that slot (q·kᵀ, reusing the EXISTING
+            # normalized routing projections stashed by the selector), take the
+            # top-Bcnt most-salient tokens, and store their UNCOMPRESSED hidden
+            # states. No-op while frozen (eval question-time) or when disabled.
+            if (
+                self._is_evidence_layer
+                and not self.memory_bank.frozen
+                and idx is not None
+            ):
+                _q = getattr(self.selector, "_last_routing_q", None)   # [B, T, S]
+                _k = getattr(self.selector, "_last_routing_k", None)   # [B, N, S]
+                if _q is not None and _k is not None and _q.shape[1] == T:
+                    with torch.no_grad():
+                        Bcnt = cfg.evidence_buffer_size
+                        _idx_l = idx.long()                            # [B, k]
+                        _S = _k.shape[-1]
+                        # Routing key of each selected slot.
+                        _k_sel = _k.gather(
+                            1, _idx_l.unsqueeze(-1).expand(-1, -1, _S)
+                        )                                              # [B, k, S]
+                        # Affinity of every token to each selected slot.
+                        _aff = torch.einsum("bts,bks->bkt", _q.float(), _k_sel.float())  # [B,k,T]
+                        if _active_token_mask is not None:
+                            _aff = _aff.masked_fill(
+                                (~_active_token_mask.bool()).unsqueeze(1),
+                                float("-inf"),
+                            )
+                        _C = min(Bcnt, T)
+                        _top_s, _top_t = torch.topk(_aff, k=_C, dim=2)  # [B,k,C]
+                        # Gather the chunk-token hidden states for those indices.
+                        _hd = hidden_states.shape[-1]
+                        _tok_h = hidden_states.detach().gather(
+                            1,
+                            _top_t.reshape(B, -1).unsqueeze(-1).expand(-1, -1, _hd),
+                        ).reshape(B, k_slots, _C, _hd)                 # [B,k,C,d]
+                        self.memory_bank.write_evidence(
+                            _idx_l, _tok_h, _top_s
+                        )
             # ---- EXP-R1 dead-slot recycling + EXP-D2 telemetry (layer-0) ----
             # Driven from layer-0 only (the bank is SHARED across all 32 layers,
             # so a single driver avoids 32 layers fighting — mirrors the layer-0
@@ -1770,6 +1828,33 @@ class MemorySpaceLayer(nn.Module):
                 k_l2 = l2_tokens.shape[1]
 
         # Build extended_hidden.
+        # ---- Slot-Routed Evidence Memory: READ (2026-06-17) ----
+        # On the evidence layer, gather the evidence of the top-k selected slots
+        # (idx) and insert it as a 4th prefix segment: [L3 | L2 | L1 | EV | H].
+        # The frozen decoder re-projects these uncompressed token hidden states
+        # through its own K/V proj, so H can recall the precise original tokens.
+        ev_tokens = None
+        k_ev = 0
+        if (
+            self._is_evidence_layer
+            and k_slots > 0
+            and idx is not None
+            and getattr(self.memory_bank, "slot_evidence", None) is not None
+        ):
+            _se = self.memory_bank.slot_evidence                    # [B, N, Bcnt, d_ev]
+            if _se.shape[0] == B:
+                _topr = max(1, min(self._evidence_topr, _se.shape[2]))
+                _d_ev = _se.shape[-1]
+                _idx_g = idx.long().unsqueeze(-1).unsqueeze(-1).expand(
+                    -1, -1, _se.shape[2], _d_ev
+                )                                                   # [B, k, Bcnt, d_ev]
+                _gathered = _se.gather(1, _idx_g)                   # [B, k, Bcnt, d_ev]
+                _gathered = _gathered[:, :, :_topr, :]              # [B, k, topr, d_ev]
+                ev_tokens = _gathered.reshape(B, k_slots * _topr, _d_ev).to(
+                    hidden_states.dtype
+                )                                                   # [B, k*topr, d_ev]
+                k_ev = ev_tokens.shape[1]
+
         parts = []
         if k_l3 > 0:
             parts.append(l3_summaries)
@@ -1777,16 +1862,19 @@ class MemorySpaceLayer(nn.Module):
             parts.append(l2_tokens)
         if k_slots > 0:
             parts.append(M_sel_hidden)
+        if k_ev > 0:
+            parts.append(ev_tokens)
         parts.append(hidden_states)
         if len(parts) == 1:
             extended_hidden = hidden_states                      # pure bypass
         else:
-            extended_hidden = torch.cat(parts, dim=1)            # [B, k_l3+k_l2+k_slots+T, d]
+            extended_hidden = torch.cat(parts, dim=1)            # [B, k_l3+k_l2+k_slots+k_ev+T, d]
 
-        # Position embeddings: L3, L2, L1 all use position 0 (memory tokens are
-        # position-less by design; v0 keeps L2 at position 0 — see L2 research §4.5).
+        # Position embeddings: L3, L2, L1, EV all use position 0 (memory tokens
+        # are position-less by design; v0 keeps L2 at position 0 — see L2
+        # research §4.5; evidence inherits the same position-0 prefix treatment).
         ext_pos_emb = _extend_position_embeddings(
-            position_embeddings, k_l3 + k_l2 + k_slots,
+            position_embeddings, k_l3 + k_l2 + k_slots + k_ev,
         )
 
         # Always construct an explicit additive 4-D mask — attention_mask from
@@ -1804,6 +1892,7 @@ class MemorySpaceLayer(nn.Module):
                 batch_size=B,
                 swa_window=cfg.swa_window,
                 mask_h_to_l1=cfg.use_decoupled_read or cfg.use_memory_xattn,
+                k_ev=k_ev,
             )
         else:
             ext_attn_mask = _build_extended_attn_mask(
@@ -1815,6 +1904,7 @@ class MemorySpaceLayer(nn.Module):
                 swa_window=cfg.swa_window,  # 0 = full causal (default, backward compat)
                 k_l3=k_l3,
                 mask_h_to_l1=cfg.use_decoupled_read or cfg.use_memory_xattn,
+                k_ev=k_ev,
             )
 
         # H2 FIX REVERTED (2026-04-26 22:30): the earlier H2 fix
@@ -1883,9 +1973,9 @@ class MemorySpaceLayer(nn.Module):
         else:
             ext_h = ext_out
             extra = ()
-        if ext_h.shape[1] != k_l3 + k_l2 + k_slots + T:
+        if ext_h.shape[1] != k_l3 + k_l2 + k_slots + k_ev + T:
             raise RuntimeError(
-                f"expected wrapped layer output length {k_l3+k_l2+k_slots+T}, "
+                f"expected wrapped layer output length {k_l3+k_l2+k_slots+k_ev+T}, "
                 f"got {ext_h.shape[1]}"
             )
 
@@ -1919,7 +2009,8 @@ class MemorySpaceLayer(nn.Module):
             g = torch.zeros_like(g)
         l1_start = k_l3 + k_l2
         O_mem_hidden = ext_h[:, l1_start:l1_start + k_slots, :]   # [B, k_slots, d]
-        slot_delta = ext_h[:, l1_start + k_slots:, :] - bypass_h  # [B, T, d]
+        # Skip the evidence block (k_ev) between L1 and H when slicing the body.
+        slot_delta = ext_h[:, l1_start + k_slots + k_ev:, :] - bypass_h  # [B, T, d]
         # Fix M-1 (2026-04-29): clip slot_delta per-token norm to bypass_h norm scale.
         # Root cause: slot_delta_max=7.97 × alpha=0.462 × 32 layers → 117 effective residual shift.
         # Fix L-1 guards the INPUT side (M_sel_hidden). Fix M-1 guards the OUTPUT side (slot_delta).

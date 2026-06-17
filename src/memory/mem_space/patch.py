@@ -114,6 +114,10 @@ def apply_mem_space_to_model(
             init_noise=config.slot_init_noise,
             slot_init=config.slot_init,
             slot_value_norm_cap=config.slot_value_norm_cap,
+            evidence_buffer_size=(
+                config.evidence_buffer_size if config.use_slot_evidence else 0
+            ),
+            evidence_dim=d_model if config.use_slot_evidence else None,
         )
 
     # L3 Summary Pool (2026-05-15): if enabled, create a single shared

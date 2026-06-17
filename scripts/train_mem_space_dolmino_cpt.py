@@ -1192,6 +1192,24 @@ def parse_args() -> argparse.Namespace:
                         "log1p; larger = stronger mass preference). Ignored when "
                         "--use_readout_mass_bias is off.")
 
+    # Slot-Routed Evidence Memory (2026-06-17)
+    p.add_argument("--use_slot_evidence", action="store_true", default=False,
+                   help="Enable Slot-Routed Evidence Memory: each slot keeps a "
+                        "small buffer of UNCOMPRESSED routed-token hidden states; "
+                        "at readout the top-k slots' evidence is prepended as a "
+                        "4th joint-attn segment [L3|L2|L1|evidence|H] so the "
+                        "frozen decoder can recall precise facts the compressed "
+                        "latent loses. Default False = no-op (byte-identical).")
+    p.add_argument("--evidence_buffer_size", type=int, default=8,
+                   help="Bcnt — evidence entries cached per slot (priority-"
+                        "replaced by routing salience when full).")
+    p.add_argument("--evidence_topr", type=int, default=0,
+                   help="Evidence entries retrieved per slot at readout. 0 = use "
+                        "evidence_buffer_size (retrieve all). Clamped to <= buffer.")
+    p.add_argument("--evidence_layer", type=int, default=0,
+                   help="The single memory layer index that caches + reads the "
+                        "evidence buffer (shared bank → one owner). Default 0.")
+
     # v6/v7 writeback (disabled by default for CPT)
     p.add_argument("--use_replace_writeback", action="store_true", default=False)
     p.add_argument("--num_global_slots", type=int, default=0)
@@ -1360,6 +1378,10 @@ def build_model(args, device, dtype) -> torch.nn.Module:
         memory_xattn_disable_null_sink=args.memory_xattn_disable_null_sink,
         use_readout_mass_bias=args.use_readout_mass_bias,
         readout_mass_coef=args.readout_mass_coef,
+        use_slot_evidence=args.use_slot_evidence,
+        evidence_buffer_size=args.evidence_buffer_size,
+        evidence_topr=args.evidence_topr,
+        evidence_layer=args.evidence_layer,
         dead_slot_reset_interval=args.dead_slot_reset_interval,
         dead_slot_reset_mode=args.dead_slot_reset_mode,
         dead_slot_grace_chunks=args.dead_slot_grace_chunks,
@@ -2304,6 +2326,10 @@ def _save_adapter(model, args, step: int, final: bool = False) -> None:
             "l3_n_summary": args.l3_n_summary,
             "l3_n_layers": args.l3_n_layers,
             "l3_n_heads": args.l3_n_heads,
+            "use_slot_evidence": args.use_slot_evidence,
+            "evidence_buffer_size": args.evidence_buffer_size,
+            "evidence_topr": args.evidence_topr,
+            "evidence_layer": args.evidence_layer,
             "l3_recon_token_weight": args.l3_recon_token_weight,
             "disable_l1_inject": args.disable_l1_inject,
             "use_replace_writeback": args.use_replace_writeback,

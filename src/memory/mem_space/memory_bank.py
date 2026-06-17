@@ -56,6 +56,8 @@ class MemoryBank(nn.Module):
         init_noise: float = 0.02,
         slot_init: str = "hidden_pool",
         slot_value_norm_cap: float = 0.0,
+        evidence_buffer_size: int = 0,
+        evidence_dim: Optional[int] = None,
     ) -> None:
         super().__init__()
         if num_slots <= 0:
@@ -67,6 +69,24 @@ class MemoryBank(nn.Module):
         self.init_noise = float(init_noise)
         self.slot_init = slot_init
         self._slot_value_norm_cap = float(slot_value_norm_cap)
+
+        # Slot-Routed Evidence Memory (2026-06-17). Per-slot buffer of UNCOMPRESSED
+        # original-token hidden states ([d_model]) routed into the slot, so the
+        # readout can recall precise facts the compressed latent loses. Bcnt =
+        # evidence_buffer_size entries per slot; evidence_dim = the hidden dim the
+        # evidence tokens live in (== d_model, NOT slot_dim, since they are灌进
+        # the wrapped frozen decoder as a joint-attention prefix). 0 / None =
+        # disabled → every evidence code path is a no-op (byte-identical to pre).
+        self.evidence_buffer_size = int(evidence_buffer_size)
+        self.evidence_dim = int(evidence_dim) if evidence_dim is not None else None
+        # Lazily materialised on the first write_evidence call (like slot_token_mass).
+        #   slot_evidence       : [B, N, Bcnt, evidence_dim]  bf16 token hidden states
+        #   slot_evidence_score : [B, N, Bcnt]   salience of each stored entry
+        #                         (init -inf so empty slots lose to any candidate)
+        #   slot_evidence_count : [B, N]   int   #valid entries per slot (telemetry)
+        self.slot_evidence: Optional[torch.Tensor] = None
+        self.slot_evidence_score: Optional[torch.Tensor] = None
+        self.slot_evidence_count: Optional[torch.Tensor] = None
 
         # Stateful buffer, lazily materialised on first forward.
         # We deliberately keep this as a plain attribute (not register_buffer)
@@ -104,6 +124,10 @@ class MemoryBank(nn.Module):
         # Token-mass is per-sample state, like slots — drop it at the document /
         # rollout boundary so a fresh sample starts every slot at zero mass.
         self.slot_token_mass = None
+        # Evidence buffers are per-sample state too — drop at the rollout boundary.
+        self.slot_evidence = None
+        self.slot_evidence_score = None
+        self.slot_evidence_count = None
 
     def detach_(self) -> None:
         """Break the autograd graph across a segment boundary.
@@ -254,6 +278,114 @@ class MemoryBank(nn.Module):
             self.slot_token_mass = self.slot_token_mass.masked_fill(m.bool(), 0.0)
 
     # --------------------------------------------------------------------- #
+    # Slot-Routed Evidence Memory (2026-06-17).
+    # --------------------------------------------------------------------- #
+
+    def write_evidence(
+        self,
+        slot_idx: torch.Tensor,
+        token_hidden: torch.Tensor,
+        token_score: torch.Tensor,
+    ) -> None:
+        """Append the highest-salience routed tokens into the per-slot evidence
+        buffer, keeping the top ``Bcnt`` by salience (priority replacement).
+
+        Args:
+            slot_idx: [B, k] long — the slots that won this chunk's top-k (the
+                slots whose evidence buffer should receive candidates).
+            token_hidden: [B, k, C, evidence_dim] — for each selected slot, C
+                candidate token hidden states routed into it this chunk.
+            token_score: [B, k, C] — salience (routing weight) of each candidate.
+
+        Merge policy (MVP): for each selected slot, concatenate the C candidates
+        with the slot's existing ``Bcnt`` stored entries along the entry axis,
+        then keep the top-``Bcnt`` by score. Empty entries carry score -inf so
+        any real candidate wins over them. Pure no_grad state mutation (evidence
+        is FROZEN hidden states — it never enters the autograd graph). No-op when
+        evidence is disabled, the bank is frozen, or uninitialised.
+        """
+        if self.evidence_buffer_size <= 0 or self.frozen or self.slots is None:
+            return
+        if slot_idx.dim() != 2 or token_hidden.dim() != 4 or token_score.dim() != 3:
+            return
+        with torch.no_grad():
+            B, N = self.slots.shape[0], self.slots.shape[1]
+            Bcnt = self.evidence_buffer_size
+            d_ev = token_hidden.shape[-1]
+            if self.evidence_dim is None:
+                self.evidence_dim = int(d_ev)
+            if slot_idx.shape[0] != B:
+                return
+            k = slot_idx.shape[1]
+            if token_hidden.shape[0] != B or token_hidden.shape[1] != k:
+                return
+            C = token_hidden.shape[2]
+            dev = self.slots.device
+            # Lazy / reshape-safe (re)allocation of the evidence buffers.
+            if (
+                self.slot_evidence is None
+                or self.slot_evidence.shape[0] != B
+                or self.slot_evidence.shape[1] != N
+                or self.slot_evidence.shape[2] != Bcnt
+                or self.slot_evidence.shape[3] != self.evidence_dim
+            ):
+                self.slot_evidence = torch.zeros(
+                    B, N, Bcnt, self.evidence_dim, device=dev, dtype=self.slots.dtype
+                )
+                self.slot_evidence_score = torch.full(
+                    (B, N, Bcnt), float("-inf"), device=dev, dtype=torch.float32
+                )
+                self.slot_evidence_count = torch.zeros(
+                    B, N, device=dev, dtype=torch.long
+                )
+            _idx = slot_idx.to(device=dev, dtype=torch.long)            # [B, k]
+            _cand_h = token_hidden.to(device=dev, dtype=self.slot_evidence.dtype)
+            _cand_s = token_score.to(device=dev, dtype=torch.float32)   # [B, k, C]
+            # Gather the existing entries for the selected slots.
+            _idx_e = _idx.unsqueeze(-1).unsqueeze(-1).expand(B, k, Bcnt, self.evidence_dim)
+            existing_h = self.slot_evidence.gather(1, _idx_e)           # [B, k, Bcnt, d]
+            _idx_s = _idx.unsqueeze(-1).expand(B, k, Bcnt)
+            existing_s = self.slot_evidence_score.gather(1, _idx_s)     # [B, k, Bcnt]
+            # Concatenate existing + candidate, then keep top-Bcnt by score.
+            merged_h = torch.cat([existing_h, _cand_h], dim=2)         # [B, k, Bcnt+C, d]
+            merged_s = torch.cat([existing_s, _cand_s], dim=2)         # [B, k, Bcnt+C]
+            top_s, top_i = torch.topk(merged_s, k=Bcnt, dim=2)        # [B, k, Bcnt]
+            top_h = merged_h.gather(
+                2, top_i.unsqueeze(-1).expand(B, k, Bcnt, self.evidence_dim)
+            )                                                          # [B, k, Bcnt, d]
+            # Scatter the kept entries back into the global buffer at the
+            # selected slots. NOTE: with duplicate slot indices (e.g. global
+            # slots) scatter keeps the last write — acceptable for an MVP.
+            self.slot_evidence.scatter_(1, _idx_e, top_h)
+            self.slot_evidence_score.scatter_(1, _idx_s, top_s)
+            # Update valid-entry count (telemetry): #finite scores per slot.
+            new_count = (top_s > float("-inf")).sum(dim=2).to(torch.long)  # [B, k]
+            self.slot_evidence_count.scatter_(1, _idx, new_count)
+
+    def zero_evidence(self, mask: torch.Tensor) -> None:
+        """Invalidate the evidence of the masked (recycled / evicted) slots.
+
+        ``mask``: [B, N] bool — True where the slot was just recycled and its
+        cached evidence no longer describes its content. Resets those rows'
+        entries to zero hidden / -inf score / 0 count. No-op when evidence is
+        uninitialised or the shape mismatches.
+        """
+        if self.slot_evidence is None:
+            return
+        with torch.no_grad():
+            m = mask.to(device=self.slot_evidence.device)
+            if m.dim() != 2 or m.shape != self.slot_evidence.shape[:2]:
+                return
+            mb = m.bool()
+            self.slot_evidence = self.slot_evidence.masked_fill(
+                mb.unsqueeze(-1).unsqueeze(-1), 0.0
+            )
+            self.slot_evidence_score = self.slot_evidence_score.masked_fill(
+                mb.unsqueeze(-1), float("-inf")
+            )
+            self.slot_evidence_count = self.slot_evidence_count.masked_fill(mb, 0)
+
+    # --------------------------------------------------------------------- #
     # Access
     # --------------------------------------------------------------------- #
 
@@ -306,6 +438,8 @@ class MemoryBank(nn.Module):
         # A recycled slot now holds brand-new content, so its accumulated token
         # mass no longer describes it — zero the masked rows (no-op if mass off).
         self.zero_token_mass(dead_mask)
+        # Its cached evidence is likewise stale — invalidate it (no-op if off).
+        self.zero_evidence(dead_mask)
         # Keep the global norm cap consistent with the gated write paths
         # (gradient-preserving fixed-ratio clamp; only shrinks).
         if self._slot_value_norm_cap > 0.0:

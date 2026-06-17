@@ -206,6 +206,13 @@ class TopKSelector(nn.Module):
         # for other modes. Layer reads it via getattr.
         self._last_slot_attn_entropy = 0.0
 
+        # Slot-Routed Evidence Memory (2026-06-17): normalized routing q/k from
+        # the last forward (detached). None until the first forward; the layer
+        # reads them via getattr to score token→slot salience for the evidence
+        # buffer. Default None → evidence write falls back gracefully.
+        self._last_routing_q = None
+        self._last_routing_k = None
+
     # --------------------------------------------------------------------- #
     # Forward
     # --------------------------------------------------------------------- #
@@ -282,6 +289,15 @@ class TopKSelector(nn.Module):
                 self.K_sel(_slots_for_key) + self.slot_key_bias.unsqueeze(0),
                 dim=-1,
             )                                                # [B, N, S]
+
+        # Slot-Routed Evidence Memory (2026-06-17): stash the normalized routing
+        # query / key as DETACHED side-channels so the layer can score which
+        # chunk tokens are most salient to each selected slot (affinity =
+        # q·kᵀ), reusing the EXISTING routing projections — no new scoring net.
+        # Computed before the routing-mode branch so it is mode-independent.
+        # Pure telemetry-style state (no grad; evidence is frozen hidden states).
+        self._last_routing_q = q.detach()                    # [B, T, S]
+        self._last_routing_k = k.detach()                    # [B, N, S]
 
         # Batched-eval padding mask prep (2026-06-09). `_tok_keep` is a bool
         # [B, T] (True = real token) used to exclude pad positions from the
