@@ -12,12 +12,14 @@ set -euo pipefail
 PROJECT_ROOT="${PROJECT_ROOT:-/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory}"
 cd "$PROJECT_ROOT"
 export WANDB_MODE="offline"
-# diskB has no direct internet — babilong prefetch must go through the woa proxy
-# or rank0 hangs retrying HF HEAD before step 1 (see reference_h800_babilong_proxy).
-export http_proxy="http://hy-proxy.woa.com:3128"
-export https_proxy="http://hy-proxy.woa.com:3128"
-export all_proxy="http://hy-proxy.woa.com:3128"
-export no_proxy="mirrors.cloud.tencent.com,tlinux-mirror.tencent-cloud.com,localhost,127.0.0.1,.oa.com,.woa.com,.local"
+# diskB has no direct internet. The babilong dataset is already in .hf_cache, so
+# force HF fully offline (local-cache-only) — this avoids the rank0 startup hang
+# where the babilong loader retries HF HEAD/dataset_infos 404s before step 1
+# (proxy reaches HF but the repeated 404 retries stall the prefetch). Offline is
+# simpler and the cache is present (see reference_h800_babilong_proxy).
+export HF_HUB_OFFLINE=1
+export HF_DATASETS_OFFLINE=1
+export TRANSFORMERS_OFFLINE=1
 export HF_HOME="$PROJECT_ROOT/.hf_cache"
 export HF_DATASETS_CACHE="$PROJECT_ROOT/.hf_cache/datasets"
 export PYTHONPATH="$PROJECT_ROOT/third_party/babilong-pkg:$PROJECT_ROOT:${PYTHONPATH:-}"
