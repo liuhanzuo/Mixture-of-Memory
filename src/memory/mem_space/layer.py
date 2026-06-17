@@ -825,6 +825,21 @@ class MemorySpaceLayer(nn.Module):
             config.use_rawkv_retrieval and self._layer_idx == config.rawkv_layer
         )
 
+        # TRUE in-attention K/V concat channel (2026-06-18). This layer owns the
+        # raw-KV store write + the in-attention injection only when its index ==
+        # inattn_kv_layer. Install the injection-aware wrapper on the wrapped
+        # decoder layer's self-attention NOW (idempotent; defaults to a no-op
+        # byte-identical pass until the layer stashes retrieved KV per-forward).
+        # Default off → never installed → byte-identical to pre.
+        self._is_inattn_kv_layer = (
+            config.use_inattn_kv and self._layer_idx == config.inattn_kv_layer
+        )
+        if self._is_inattn_kv_layer:
+            from .inattn_kv import install_inattn_wrapper
+            _attn = getattr(self.wrapped_layer, "self_attn", None)
+            if _attn is not None:
+                install_inattn_wrapper(_attn)
+
         # Side-channel state (populated on each forward).
         self.last_aux_losses: Dict[str, torch.Tensor] = {}
         self.last_idx: Optional[torch.Tensor] = None
@@ -1255,6 +1270,20 @@ class MemorySpaceLayer(nn.Module):
                     ).unsqueeze(0).expand(B, -1)
                     self.memory_bank.append_rawkv(
                         hidden_states.detach(), _rq, token_pos=_rk_pos
+                    )
+            # ---- TRUE in-attention K/V concat channel: WRITE (2026-06-18) ----
+            # Same per-sequence raw-KV store as the rawkv channel, but written by
+            # the inattn_kv_layer (independent owner). Appends EVERY real token's
+            # uncompressed hidden + routing-query key so the in-attention read can
+            # retrieve them and inject as native K/V. No-op while frozen / off.
+            if self._is_inattn_kv_layer and not self.memory_bank.frozen:
+                _iq = getattr(self.selector, "_last_routing_q", None)   # [B, T, S]
+                if _iq is not None and _iq.shape[0] == B and _iq.shape[1] == T:
+                    _ik_pos = torch.arange(
+                        T, device=hidden_states.device, dtype=torch.long
+                    ).unsqueeze(0).expand(B, -1)
+                    self.memory_bank.append_rawkv(
+                        hidden_states.detach(), _iq, token_pos=_ik_pos
                     )
             # ---- EXP-R1 dead-slot recycling + EXP-D2 telemetry (layer-0) ----
             # Driven from layer-0 only (the bank is SHARED across all 32 layers,
@@ -2138,6 +2167,39 @@ class MemorySpaceLayer(nn.Module):
         #    tanh(alpha) gate (alpha init = 0) structurally guarantees
         #    bypass parity regardless of any phantom-logit leakage.
         #    Reference: ops/research_notes/20260426_mem_space_v0_tier3_fix3_fail.md §5.
+
+        # ---- TRUE in-attention K/V concat: READ + stash (2026-06-18) ----
+        # Retrieve the top-inattn_kv_topk raw tokens for the current chunk's
+        # query, project them through the wrapped layer's NATIVE k/v_proj, RoPE
+        # the keys at their REAL source positions, and stash on self_attn so the
+        # installed wrapper concatenates them onto the native K/V of BOTH the
+        # bypass and extended calls below. Because the SAME K_raw/V_raw is added
+        # to both, its contribution cancels in slot_delta (= ext_h - bypass_h)
+        # and survives in bypass_h → it enters next_hidden at FULL strength
+        # (weight 1.0), the clean training-free read we want to probe. Diagnostic
+        # counters (last retrieved positions / R) are stashed for the smoke +
+        # needle-precision check. No-op when the store is empty / off.
+        self._last_inattn_R = 0
+        self._last_inattn_pos = None
+        _inattn_attn = None
+        if self._is_inattn_kv_layer:
+            _inattn_attn = getattr(self.wrapped_layer, "self_attn", None)
+            _iq_read = getattr(self.selector, "_last_routing_q", None)  # [B,T,S]
+            if _inattn_attn is not None and _iq_read is not None and _iq_read.shape[0] == B:
+                _iret = self.memory_bank.retrieve_rawkv(_iq_read, cfg.inattn_kv_topk)
+                if _iret is not None:
+                    from .inattn_kv import build_retrieved_kv
+                    _ik_h, _ik_pos = _iret                  # [B,R,d], [B,R]
+                    _K_raw, _V_raw = build_retrieved_kv(
+                        _inattn_attn,
+                        _ik_h.to(hidden_states.dtype),
+                        _ik_pos,
+                        position_embeddings,
+                    )
+                    _inattn_attn._inattn_kv = (_K_raw, _V_raw)
+                    self._last_inattn_R = int(_K_raw.shape[2])
+                    self._last_inattn_pos = _ik_pos
+
         bypass_out = self._maybe_ckpt_wrapped_layer(
             hidden_states,
             attention_mask=None,  # vanilla dispatch: HF installs SDPA is_causal=True
@@ -2169,6 +2231,10 @@ class MemorySpaceLayer(nn.Module):
         else:
             ext_h = ext_out
             extra = ()
+        # Clear the in-attention KV stash so it never leaks to a later forward
+        # (the wrapper falls back to the byte-identical native path when None).
+        if _inattn_attn is not None:
+            _inattn_attn._inattn_kv = None
         if ext_h.shape[1] != k_l3 + k_l2 + k_slots + k_ev + T:
             raise RuntimeError(
                 f"expected wrapped layer output length {k_l3+k_l2+k_slots+k_ev+T}, "

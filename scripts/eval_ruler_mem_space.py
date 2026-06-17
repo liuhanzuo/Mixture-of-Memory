@@ -646,6 +646,13 @@ def main():
     p.add_argument("--use_rawkv_retrieval", action="store_true", default=False)
     p.add_argument("--rawkv_layer", type=int, default=16)
     p.add_argument("--rawkv_topk", type=int, default=64)
+    # TRUE in-attention K/V concat channel eval-time override (2026-06-18). The
+    # architecturally-correct readout test: retrieved raw K,V are concatenated
+    # directly into layer inattn_kv_layer's native self-attention K/V (one
+    # softmax, real source RoPE positions), NOT a prefix block. Default OFF.
+    p.add_argument("--use_inattn_kv", action="store_true", default=False)
+    p.add_argument("--inattn_kv_layer", type=int, default=16)
+    p.add_argument("--inattn_kv_topk", type=int, default=64)
     args = p.parse_args()
 
     print(f"[ruler] model_type={args.model_type} tasks={args.tasks} "
@@ -691,6 +698,13 @@ def main():
             mem_config.rawkv_topk = args.rawkv_topk
             print(f"[ruler] RAW-KV RETRIEVAL ON: layer={args.rawkv_layer} "
                   f"topk={args.rawkv_topk}")
+        # Eval-time in-attention K/V concat override (see CLI flags above).
+        if args.use_inattn_kv:
+            mem_config.use_inattn_kv = True
+            mem_config.inattn_kv_layer = args.inattn_kv_layer
+            mem_config.inattn_kv_topk = args.inattn_kv_topk
+            print(f"[ruler] IN-ATTN K/V CONCAT ON: layer={args.inattn_kv_layer} "
+                  f"topk={args.inattn_kv_topk}")
         model = load_mem_space_model(
             model_path=args.model_path, checkpoint_path=args.checkpoint,
             mem_config=mem_config, device=device, dtype=dtype,

@@ -532,6 +532,30 @@ class MemorySpaceConfig:
     rawkv_layer: int = 16
     rawkv_topk: int = 64
 
+    # TRUE in-attention K/V concat channel (2026-06-18). The architecturally-
+    # correct readout test: instead of appending retrieved raw tokens to the
+    # EV/L1/L3 prefix BLOCK (a position-0/landmark prefix that two independent
+    # probes — rawkv +1.0, evidence-oracle +2.5 — proved the frozen reader
+    # CANNOT consume), inject the retrieved raw K,V DIRECTLY into the wrapped
+    # self-attention's native key/value tensors. The H-query tokens then attend
+    # over [native_KV ; retrieved_raw_KV] in ONE softmax, with the retrieved KV
+    # carrying their REAL source RoPE positions (landmark §4b: retrieved KV as
+    # native extra context, NOT a prefix). The retrieved KV are KEYS-ONLY (never
+    # queries), and an additive mask lets only the H-query rows see them.
+    #
+    # Retrieval source is REUSED from the raw-KV store (append_rawkv /
+    # retrieve_rawkv); the ONLY new thing is the injection mechanism (a wrapped
+    # attention forward at inattn_kv_layer that concatenates the retrieved K,V
+    # after the layer computes its native K/V). Default False → the attention
+    # wrap is never installed and behaviour is byte-identical to pre.
+    #   use_inattn_kv   : master switch (independent of use_rawkv_retrieval; when
+    #                     on it owns the store write + the in-attn read).
+    #   inattn_kv_layer : the SINGLE layer whose self-attention is wrapped.
+    #   inattn_kv_topk  : retrieved raw tokens concatenated onto the K/V axis.
+    use_inattn_kv: bool = False
+    inattn_kv_layer: int = 16
+    inattn_kv_topk: int = 64
+
     # FastMem (Gated Delta Rule continuous memory, 2026-05-21):
     # Per-layer fast-weight memory that captures a continuous running summary
     # of ALL tokens (complementing discrete top-k slot routing which only
@@ -798,4 +822,13 @@ class MemorySpaceConfig:
         if self.rawkv_layer < 0:
             raise ValueError(
                 f"rawkv_layer must be >= 0, got {self.rawkv_layer}"
+            )
+        # TRUE in-attention K/V concat channel.
+        if self.inattn_kv_topk <= 0:
+            raise ValueError(
+                f"inattn_kv_topk must be > 0, got {self.inattn_kv_topk}"
+            )
+        if self.inattn_kv_layer < 0:
+            raise ValueError(
+                f"inattn_kv_layer must be >= 0, got {self.inattn_kv_layer}"
             )
