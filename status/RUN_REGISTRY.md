@@ -755,3 +755,46 @@ Curriculum c1024 final   qa1 |   97   88   43   26   14    9    7
 1. **INSTRUCT 底座未带来提升，反而劣于 base-model P11 chunk512**：INSTRUCT qa5 中长度（1k=50/2k=52/4k=29/8k=25）全面低于 P11 c512 step500 base（89/81/60/48），仅 0k（81 vs 74）和 16k/32k（32/27 vs 45/44）持平偏弱。qa1 同样 1k=33≪67。**Instruct 对齐底座对 mem_space 长程检索无益甚至有害**——可能 chat-tuned 表征与 memory readout 训练目标不契合，且该 run 仅训 1000 步（vs P11 5000 步早停 step500），数据量更少。
 2. **★Curriculum 4→32k 训练显著修复了单 chunk1024 的「1k 后断崖」**：Curriculum c1024 qa1=97/88/43/26/14/9/7 vs 此前 P11 c1024 FINAL=56/56/15/15/7/5/0——0k/1k 从 56/56 飙到 97/88，2k-8k 也翻倍（43/26/14 vs 15/15/7）。qa5 同样 80/69/44/42 vs c1024 FINAL 长程近零。**渐进 curriculum（warm-start 短上下文再拉长）是修 chunk1024 稀释/注入太稀疏的正解**，与 §3「F1 渐进 warm-start 才是修单 chunk1024 断崖的正解」假设一致并实证落地。但绝对值仍略逊 chunk512 甜区（curriculum c1024 qa5 2k=44 vs P11 c512 81），chunk512 仍是同架构最优 chunk。
 - 全程无 OOM / NCCL / Traceback；两节点开跑前均确认真空（未碰 .249 训练 / .196 蒸馏缓存）。
+
+### ★★ self-study 蒸馏 AB / MASS0p5 + L2+pg19：dolmino 蒸馏未抬高 W0 readout（2026-06-17，qa5/qa1/qa2 W0，n=100，babilong.metrics）
+三个刚训完的 ckpt 离线 BABILong 打分（score_nested_babilong.py，4-shard×25=100/cell）。底座均 frozen Meta-Llama-3-8B chunk512 + 128 slot。
+- **distill_AB**：self-study 蒸馏 A(logits KL)+B(hidden MSE)，**dolmino 数据**（≤16k，n_ctx=3），不加 mass。本机 diskA。
+- **distill_MASS0p5**：同 AB + 弱 mass(coef≈0.5)。.196 diskA。
+- **L2ON_pg19**：L2 分层记忆开 + pg19 真长文。.249 diskB。
+```
+distill_AB step500       qa1 |   90   46   33   18   11    9    6
+                         qa2 |   47   28   18    8    4    1    2
+                         qa5 |   79   54   55   28   11   11    8
+distill_AB step250       qa1 |   91   43   31   20    8    9    5
+                         qa2 |   42   31   16    8    2    0    1
+                         qa5 |   80   53   49   26   15   11    8
+distill_MASS0p5 step500  qa1 |   92   40   28   18   11    8    3
+                         qa2 |   43   21   20   12    2    1    3
+                         qa5 |   79   48   50   25   11   14    9
+distill_MASS0p5 step250  qa1 |   90   40   32   18    9    7    5
+                         qa2 |   48   21   14    8    2    1    3
+                         qa5 |   81   43   42   18   14    9    7
+L2ON_pg19 step500        qa1 |   94   36   27   16    8    8    2
+                         qa2 |   47   22   14   11    3    3    2
+                         qa5 |   80   54   44   18   18   13    5
+对照 P11 c512 step500     qa5 |   74   89   81   60   48   45   44   (best chunk)
+对照 P11 c1024 deltarule  qa5 |   29   68   29   15    7    4    5   (SOTA)
+对照 pg19 真长文蒸馏 final qa5 |   75   73   51   29   19   16    9   (16k破墙)
+```
+**裁决：**
+1. **dolmino 自学蒸馏（AB / MASS0p5）未抬高 W0 readout——尤其中长程全面塌**。两 arm 的 qa5 在 4k-32k（AB=28/11/11/8、MASS0p5=25/11/14/9）远低于 P11 chunk512 step500（60/48/45/44），也低于 pg19 真长文蒸馏 8k-16k（19/16）。step250≈step500（无额外增益，250步已收敛）。**dolmino（≤16k 且 n_ctx=3 窗口仅 2048tok）数据是限制：见不到真长程依赖，蒸馏只复刻短档。** A+B 双蒸馏目标未补上 readout。
+2. **MASS0p5 ≈ AB**：弱 mass 无明显加成（16k 14 vs 11 在噪声内，32k 9 vs 8 持平）。weak-mass+distill 在此 dolmino 底座未复现 readout-attack 的长程优势——印证「真长文数据」比「训练侧旋钮」更关键。
+3. **L2+pg19 仅 8k 微正、整体无突破**：qa5 8k=18（略超 AB 的 11、与 pg19 蒸馏 19 持平），16k=13，但 32k=5（最差）。L2 分层 + pg19 长文没带来稳定长程增益，32k 反而更低。
+4. **三 arm 均仍撞 32k 墙**（8/9/5），无一突破天花板 9。**最佳长程仍是 pg19 真长文蒸馏（16k=16）**，dolmino 系 distill 不及。**结论：抬 readout 靠真长文训练数据，不靠蒸馏目标/mass 旋钮。**
+
+### ★★ n=200 RULER 5臂 evidence-injection probe：注入证据不抬 readout（2026-06-17，niah_single_1 4k，n=200）
+.76 diskB，读 ruler_results/5arm_p11frz_n200_*/_summary.json 直接汇总（不经 score_nested）。底座 = P11 frozen，5 臂只改 readout 阶段是否/如何把"证据 chunk"注入。oracle_hit=200 表示 oracle 臂 100% 命中目标 chunk。
+| 臂 | score (n=200) | Δ vs OFF | 说明 |
+|----|--------------|----------|------|
+| **OFF**（不注入，纯 128-slot readout） | 23.5 | — | 基线 |
+| heur_pos0（启发式检索，注入到 pos0） | 23.5 | **0.0** | 无变化 |
+| heur_realpos（启发式检索，注入到真实位置） | 25.5 | +2.0 | 噪声内 |
+| oracle_pos0（完美命中，注入 pos0） | 26.0 | +2.5 | 噪声内 |
+| oracle_realpos（完美命中，注入真实位置） | 21.0 | **−2.5** | 噪声内（反而降） |
+- **★核心负结果：没有任何 evidence arm 稳超 OFF（噪声阈 >3pt）**。最大正向 oracle_pos0=+2.5，仍 < 3pt；oracle_realpos 甚至 −2.5。**即便 oracle 100% 命中正确证据 chunk（oracle_hit=200/200），把它注入 readout 也几乎不动分**——说明 32k/长程墙的瓶颈**不在"找不到/注错位置证据"，而在 readout 端拿到正确证据也用不上**。
+- 与 LongEval（≥8k 精确检索归零）、对话记忆（保 gist 丢精确事实）三方互证：**问题是读出端精确事实绑定失效，给对证据也救不了**。evidence-injection 这条修补路线 REJECTED。pos0 vs realpos 差异（pos0 略优）在噪声内，不构成位置编码结论。
