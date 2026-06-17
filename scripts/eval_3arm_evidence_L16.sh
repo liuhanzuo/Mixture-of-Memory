@@ -28,9 +28,13 @@ EV_TOPR=${EV_TOPR:-64}
 EV_LAYER=${EV_LAYER:-16}
 TAG=${TAG:-p11frozen}
 G0=${G0:-0}; G1=${G1:-1}; G2=${G2:-2}
+# ISOLATE=1 -> add --evidence_isolate_softmax to the heuristic+oracle arms
+# (Landmark EV-block softmax isolation). OFF arm never gets it (no EV).
+ISO_ARG=""
+if [ "${ISOLATE:-0}" = "1" ]; then ISO_ARG="--evidence_isolate_softmax"; TAG="${TAG}_iso"; fi
 
 mkdir -p logs ruler_results
-echo "[3arm] ckpt=$CKPT tag=$TAG task=$TASK len=$LEN n=$NS L=$EV_LAYER chunk=$CHUNK"
+echo "[3arm] ckpt=$CKPT tag=$TAG task=$TASK len=$LEN n=$NS L=$EV_LAYER chunk=$CHUNK iso=${ISOLATE:-0}"
 
 # arm1 OFF
 CUDA_VISIBLE_DEVICES=$G0 $PYBIN scripts/eval_ruler_mem_space.py --model_type mem_space \
@@ -45,7 +49,7 @@ CUDA_VISIBLE_DEVICES=$G1 $PYBIN scripts/eval_ruler_mem_space.py --model_type mem
   --model_path "$MODEL" --checkpoint "$CKPT" --adapter_config "$ACFG" \
   --output_name 3arm_${TAG}_heurL${EV_LAYER} --chunk_size $CHUNK --swa_eval_chunks 0 \
   --use_slot_evidence --evidence_buffer_size $EV_BUF --evidence_topr $EV_TOPR \
-  --evidence_layer $EV_LAYER \
+  --evidence_layer $EV_LAYER $ISO_ARG \
   --tasks "$TASK" --lengths "$LEN" --num_samples $NS \
   >logs/3arm_${TAG}_heurL${EV_LAYER}.out 2>&1 &
 PID1=$!
@@ -55,7 +59,7 @@ CUDA_VISIBLE_DEVICES=$G2 $PYBIN scripts/eval_ruler_mem_space.py --model_type mem
   --model_path "$MODEL" --checkpoint "$CKPT" --adapter_config "$ACFG" \
   --output_name 3arm_${TAG}_oracleICL${EV_LAYER} --chunk_size $CHUNK --swa_eval_chunks 0 \
   --use_slot_evidence --evidence_buffer_size $EV_BUF --evidence_topr $EV_TOPR \
-  --evidence_layer $EV_LAYER \
+  --evidence_layer $EV_LAYER $ISO_ARG \
   --oracle_evidence --oracle_incontext --oracle_layers $EV_LAYER \
   --tasks "$TASK" --lengths "$LEN" --num_samples $NS \
   >logs/3arm_${TAG}_oracleICL${EV_LAYER}.out 2>&1 &
