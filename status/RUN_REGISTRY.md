@@ -714,10 +714,10 @@ step1000(退化): qa1=92/10/11/14/4/3/1, qa2=42/8/7/6/4/5/1, qa5=53/32/32/16/13/
 - ★新线索：8k 突变（16 chunk）暗示开关性失效（readout query 在 chunk 数超阈后分辨不出目标 slot，或 L3 summary 聚合糊化），非压缩比连续退化。下一步攻 readout 机制。
 
 ### ★★ 对话记忆 benchmark（2026-06-17 实测落地，mem_space P11 SOTA W0 vs Llama-3-8B base 开卷）
-脚本 scripts/eval_dialogmem_mem_space.py（chunk=1024，4/8-shard，节点 .196 diskA 共享FS）。判分 F1+子串近似+拒答检测（无 LLM-judge，时序类相对日期低估绝对分，但 mem-vs-base 相对差距可信）。**以下为真实全量跑出的权威数字（覆盖此前 n=100/150 的估算行）。**
+脚本 scripts/eval_dialogmem_mem_space.py（chunk=1024，节点 .196 diskA 共享FS）。判分 F1+子串近似+拒答检测（无 LLM-judge，时序类相对日期低估绝对分，但 mem-vs-base 相对差距可信）。**LongMemEval mem 已 n=500 全 6 题型与 base 完全对齐 rerun（2026-06-17，8-shard）；此前 n=100/2-题型 的不可比数字已作废。**
 | benchmark | mem acc/F1 | base acc/F1 | 差距 | 关键子任务对比 |
 |-----------|-----------|------------|------|-----------|
-| LongMemEval oracle (n=500) | 11.0/5.4 | 39.2/10.9 | base≈3.6× | multi-session 8.3 vs 18.8；single-user 11.4 vs 74.3；single-assistant 12.5 vs 66.1；knowledge-update 6.4 vs 56.4；temporal 18.1 vs 28.6 |
+| LongMemEval oracle (n=500, 全6题型对齐) | 10.4/5.5 | 39.2/10.9 | **base≈3.8×** | multi-session 5.3 vs 18.8；single-user 18.6 vs 74.3；single-assistant 12.5 vs 66.1；knowledge-update 10.3 vs 56.4；temporal 12.8 vs 28.6；preference 0 vs 0 |
 | LOCOMO (n=400) | 2.75/2.7 | 19.25/16.9 | **base≈7×** | 单跳(cat4) 2.8 vs 29.9；多跳(cat1) 5.4 vs 21.6；时序(cat2) 0 vs 17.8；对抗(cat5,拒答) 2.8 vs 0 |
 - **★对话记忆是 mem_space 与 base 差距最大的场景**：base 全注意力即使中段截断仍 ~3.6×(LME)/~7×(LOCOMO) 领先。对话信息碎+需精确时序/说话人绑定，128-slot 记忆压缩丢失精确绑定。
 - **mem_space 输出在跑（非崩溃）**：抽样确认生成连贯、主题相关，但事实细节错（如"4年3个月" vs gold"4年9个月"）→ 记忆保留 gist、丢失精确事实，与 RULER/BABILong 32k 墙的"精确读出失效"根因一致。
