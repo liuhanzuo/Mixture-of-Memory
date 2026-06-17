@@ -829,3 +829,14 @@ L2ON_pg19 step500        qa1 |   94   36   27   16    8    8    2
 | oracle_realpos（完美命中，注入真实位置） | 21.0 | **−2.5** | 噪声内（反而降） |
 - **★核心负结果：没有任何 evidence arm 稳超 OFF（噪声阈 >3pt）**。最大正向 oracle_pos0=+2.5，仍 < 3pt；oracle_realpos 甚至 −2.5。**即便 oracle 100% 命中正确证据 chunk（oracle_hit=200/200），把它注入 readout 也几乎不动分**——说明 32k/长程墙的瓶颈**不在"找不到/注错位置证据"，而在 readout 端拿到正确证据也用不上**。
 - 与 LongEval（≥8k 精确检索归零）、对话记忆（保 gist 丢精确事实）三方互证：**问题是读出端精确事实绑定失效，给对证据也救不了**。evidence-injection 这条修补路线 REJECTED。pos0 vs realpos 差异（pos0 略优）在噪声内，不构成位置编码结论。
+
+### ★★ Training-free raw-KV 检索通道 probe：并联未压缩 KV 也不破墙（2026-06-17，niah_single_1 4k，n=100）
+本机 H20（GPU0/1/2 各一臂，无 DDP）。底座 = P11 frozen（`mem_space_p11_chunk1024_deltarule_normreadout/mem_space_adapter.pt`，chunk_size=1024，swa=0），**不训练，只在 eval 开 `--use_rawkv_retrieval`**。机制：在 `rawkv_layer=16` 把每个 chunk 的**未压缩 token hidden states**全量 append 进 per-seq raw-KV store（slot 之外、不压缩），question 时用当前 query routing key 做 dot-product 检索 top-k 原始 token，注入到与 evidence 同一条 EV-prefix 注意力块。
+| 臂 | score (n=100) | Δ vs OFF | 说明 |
+|----|--------------|----------|------|
+| **OFF**（纯 128-slot readout，不开 rawkv） | 21.0 | — | 基线（hits 21/100） |
+| rawkv L16 topk64 | 22.0 | **+1.0** | 噪声内 |
+| rawkv L16 topk256 | 22.0 | **+1.0** | 噪声内（更多检索≠更好） |
+- **validity 确认（非 no-op）**：`RAWKV_DEBUG=1` 实测 store 随 chunk 增长（4k 下 store_M 1024→2048→3072，4 chunk 全量入库），retrieval 每步真触发（retrieved=64/256 token 注入 EV prefix）。append 在 ingest（unfrozen）发生、freeze 后 retrieve、reset 清空——时序正确。输出非退化（模型产出合理 "special magic number" 补全，部分精确命中）。
+- **★核心负结果：raw-KV 检索 NOT 破墙**。两臂仅 +1.0pt（≪ 决定性阈值 >10pt，也在 ~3-7pt 噪声内），4k 无任何信号 → **未扩 8k-32k**（无意义；32k 墙 qa5≈9 不受影响）。topk256 vs topk64 持平，说明"检索更多原始 KV"无加成。
+- **与 evidence-injection probe（OFF=23.5，oracle 100%命中仅 +2.5）互证**：raw-KV 用**相同 EV-prefix 注入接口**但**不同检索源**（未压缩原始 token vs slot-routed 启发式/oracle）。两条路线都落在 OFF 噪声内 → **瓶颈不是"检索源/找不到精确信息"，而是 readout 端的注入接口本身——frozen reader 即便拿到逐字原始 KV 也用不上精确事实**。training-free raw-KV **不值得推进到 trained 版本**（除非先解决 readout 端如何"消费"注入 KV 的绑定问题，而非继续换检索源）。

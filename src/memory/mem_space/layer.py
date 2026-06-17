@@ -39,6 +39,7 @@ Key decisions (documented in the spec)
 from __future__ import annotations
 
 import math
+import os
 from typing import Any, Dict, Optional, Tuple
 
 import torch
@@ -1984,6 +1985,16 @@ class MemorySpaceLayer(nn.Module):
                     _rk_h, _rk_pos = _ret                  # [B,R,d], [B,R]
                     _ev_parts.append(_rk_h.to(hidden_states.dtype))
                     _ev_pos_parts.append(_rk_pos.to(hidden_states.device))
+                    # Validity diagnostic (eval-only, env-gated): confirm the
+                    # raw-KV store is non-empty and retrieval actually injects
+                    # tokens — proves the channel is NOT a silent no-op.
+                    if os.environ.get("RAWKV_DEBUG") == "1":
+                        print(
+                            f"[rawkv] layer={self._layer_idx} store_M="
+                            f"{self.memory_bank.rawkv_size()} retrieved="
+                            f"{_rk_h.shape[1]} -> EV prefix",
+                            flush=True,
+                        )
 
         # ---- ORACLE evidence injection (eval-only, 2026-06-17) ----
         # Bypass routing entirely: if this layer is an oracle injection layer,
