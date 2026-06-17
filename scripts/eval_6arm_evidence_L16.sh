@@ -1,21 +1,22 @@
 #!/usr/bin/env bash
-# Consolidated 6-arm Slot-Routed Evidence probe on niah_single_1 4k (n=50),
-# evidence layer 16, with the Landmark position fix. Runs BOTH the non-isolated
-# and isolated-EV-softmax variants on DISJOINT GPUs so nothing collides:
-#   GPU 0  arm1 OFF                        (slot-only, no EV)
-#   GPU 1  arm2 heuristic@L16 realpos
-#   GPU 2  arm3 in-context-oracle@L16 realpos
-#   GPU 3  arm4 heuristic@L16 realpos + ISOLATE softmax
-#   GPU 4  arm5 in-context-oracle@L16 realpos + ISOLATE softmax
-# (OFF needs no EV so there is no iso variant of it.)
+# 6-arm Slot-Routed Evidence Memory probe on niah_single_1 4k (n=50), evidence
+# layer 16. ONE invocation, 6 GPUs, no double-fire. Six cells =
+#   {OFF, heuristic@L16, in-context-oracle@L16} x {isolate_softmax OFF, ON}.
 #
-# Usage: CKPT=... ACFG=... TAG=... bash scripts/eval_6arm_evidence_L16.sh
+# GPU map (non-overlapping):
+#   iso-OFF: GPU0 OFF, GPU1 heur, GPU2 oracle
+#   iso-ON : GPU3 OFF, GPU4 heur, GPU5 oracle
+# (OFF arm has no evidence so isolate_softmax is a no-op there, but we run both
+#  so the table is symmetric and the OFF cells confirm reproducibility.)
+#
+# Usage:
+#   CKPT=outputs/<run>/mem_space_adapter.pt ACFG=outputs/<run>/adapter_config.json \
+#   TAG=<short> PROJECT_ROOT=<root> PYTHON_BIN=<py> bash scripts/eval_6arm_evidence_L16.sh
 set -u
 RD=${PROJECT_ROOT:-/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory}
 PYBIN=${PYTHON_BIN:-$RD/.venv/bin/python}
 cd "$RD" || exit 1
 export WANDB_MODE=offline HF_HUB_OFFLINE=1 HF_DATASETS_OFFLINE=1
-export PYTHONPATH="$RD/third_party/babilong-pkg:$RD:${PYTHONPATH:-}"
 
 CKPT=${CKPT:-outputs/mem_space_p11_chunk1024_deltarule_normreadout/mem_space_adapter.pt}
 ACFG=${ACFG:-outputs/mem_space_p11_chunk1024_deltarule_normreadout/adapter_config.json}
@@ -24,31 +25,45 @@ CHUNK=${CHUNK:-1024}
 TASK=${TASK:-niah_single_1}
 LEN=${LEN:-4k}
 NS=${NUM_SAMPLES:-50}
-EV_BUF=${EV_BUF:-64}; EV_TOPR=${EV_TOPR:-64}; EV_LAYER=${EV_LAYER:-16}
-TAG=${TAG:-p11frozen}
+EV_BUF=${EV_BUF:-64}
+EV_TOPR=${EV_TOPR:-64}
+EV_LAYER=${EV_LAYER:-16}
+TAG=${TAG:-p11frz}
 
 mkdir -p logs ruler_results
 echo "[6arm] ckpt=$CKPT tag=$TAG task=$TASK len=$LEN n=$NS L=$EV_LAYER chunk=$CHUNK"
 
-run_arm() {  # $1=gpu $2=outname $3...=extra args
-  local gpu=$1 name=$2; shift 2
-  CUDA_VISIBLE_DEVICES=$gpu $PYBIN scripts/eval_ruler_mem_space.py --model_type mem_space \
+PIDS=()
+
+run_cell () {  # $1=gpu $2=cellname $3...=extra args
+  local gpu="$1"; local name="$2"; shift 2
+  CUDA_VISIBLE_DEVICES="$gpu" $PYBIN scripts/eval_ruler_mem_space.py --model_type mem_space \
     --model_path "$MODEL" --checkpoint "$CKPT" --adapter_config "$ACFG" \
-    --output_name "$name" --chunk_size $CHUNK --swa_eval_chunks 0 \
+    --output_name 6arm_${TAG}_${name} --chunk_size $CHUNK --swa_eval_chunks 0 \
     --tasks "$TASK" --lengths "$LEN" --num_samples $NS "$@" \
-    >logs/${name}.out 2>&1 &
+    >logs/6arm_${TAG}_${name}.out 2>&1 &
+  PIDS+=($!)
+  echo "  launched $name on GPU$gpu pid=${PIDS[-1]}"
 }
 
-EVA="--use_slot_evidence --evidence_buffer_size $EV_BUF --evidence_topr $EV_TOPR --evidence_layer $EV_LAYER"
-ORA="--oracle_evidence --oracle_incontext --oracle_layers $EV_LAYER"
+EV="--use_slot_evidence --evidence_buffer_size $EV_BUF --evidence_topr $EV_TOPR --evidence_layer $EV_LAYER"
+ORACLE="--oracle_evidence --oracle_incontext --oracle_layers $EV_LAYER"
+ISO="--evidence_isolate_softmax"
 
-run_arm 0 6arm_${TAG}_OFF
-run_arm 1 6arm_${TAG}_heurL${EV_LAYER}            $EVA
-run_arm 2 6arm_${TAG}_oracleICL${EV_LAYER}        $EVA $ORA
-run_arm 3 6arm_${TAG}_heurL${EV_LAYER}_iso        $EVA --evidence_isolate_softmax
-run_arm 4 6arm_${TAG}_oracleICL${EV_LAYER}_iso    $EVA $ORA --evidence_isolate_softmax
-wait
+# iso-OFF row (GPU 0/1/2)
+run_cell 0 OFF_isoOFF
+run_cell 1 heur_isoOFF $EV
+run_cell 2 oracle_isoOFF $EV $ORACLE
+# iso-ON row (GPU 3/4/5)
+run_cell 3 OFF_isoON
+run_cell 4 heur_isoON $EV $ISO
+run_cell 5 oracle_isoON $EV $ISO $ORACLE
+
+wait "${PIDS[@]}"
 echo "[6arm] DONE tag=$TAG"
-for n in OFF heurL${EV_LAYER} oracleICL${EV_LAYER} heurL${EV_LAYER}_iso oracleICL${EV_LAYER}_iso; do
-  echo "=== $n ==="; grep -E "score=|oracle needle" logs/6arm_${TAG}_${n}.out | tail -2
+
+echo "============ 6-ARM TABLE (tag=$TAG) ============"
+for name in OFF_isoOFF heur_isoOFF oracle_isoOFF OFF_isoON heur_isoON oracle_isoON; do
+  echo "--- $name ---"
+  grep -E "SUMMARY|niah_single_1|oracle needle|inject.*pos|EVIDENCE ON|ORACLE" logs/6arm_${TAG}_${name}.out | tail -4
 done
