@@ -80,6 +80,8 @@ from scripts.run_babilong_mem_space import (  # noqa: E402
     build_mem_space_config,
     load_mem_space_model,
     generate_with_mem_space,
+    _reset_banks,
+    _reset_l2,
 )
 
 
@@ -150,6 +152,119 @@ def _set_oracle_evidence(model, hidden_by_layer, layers) -> None:
             continue
         b._oracle_layers = set(layers) if hidden_by_layer else None
         b._oracle_hidden_by_layer = hidden_by_layer
+
+
+def _find_subsequence(haystack_ids, needle_ids):
+    """Locate ``needle_ids`` (1-D list[int]) as a contiguous subsequence of
+    ``haystack_ids`` (1-D list[int]). Returns (start, length) of the best match
+    or None. To survive whitespace-merge tokenisation differences at the
+    insertion boundary (the needle is encoded standalone but appears glued to
+    surrounding haystack text), we first try the full needle, then progressively
+    trim leading tokens (space-prefix artifacts), and finally fall back to the
+    longest trailing run that DOES match (which always contains the value)."""
+    H, N = haystack_ids, needle_ids
+    nH, nN = len(H), len(N)
+    if nN == 0 or nH == 0:
+        return None
+
+    def _scan(sub):
+        ns = len(sub)
+        if ns == 0 or ns > nH:
+            return None
+        for s in range(0, nH - ns + 1):
+            if H[s:s + ns] == sub:
+                return (s, ns)
+        return None
+
+    # 1) exact full needle
+    r = _scan(N)
+    if r:
+        return r
+    # 2) trim up to the first 3 leading tokens (BOS/space-prefix merge artifacts)
+    for drop in range(1, min(4, nN)):
+        r = _scan(N[drop:])
+        if r:
+            return r
+    # 3) longest trailing run (always ends with the numeric value we score on)
+    for keep in range(nN - 1, 0, -1):
+        r = _scan(N[-keep:])
+        if r:
+            return r
+    return None
+
+
+def _capture_oracle_incontext(model, full_ids, gold_ids, chunk_size, layers,
+                              device):
+    """IN-CONTEXT oracle capture (STEP-1, 2026-06-17 fix).
+
+    The original ``_capture_oracle_hidden`` ran the ~15-token gold needle span
+    *in isolation* (no haystack, RoPE pos 0..S, memory OFF) → an OOD probe that
+    UNDER-estimated the reader ceiling (oracle 34 < heuristic 42). Here we
+    instead capture the gold needle's layer-input hidden states from the SAME
+    chunked, memory-ON streaming forward the model actually runs — i.e. the
+    decoder's true in-context distribution, identical to what the heuristic
+    evidence path captures — then slice out exactly the needle's token offset.
+
+    Steps:
+      1. Locate the gold needle token span [p0, p0+S) inside ``full_ids``.
+      2. Reset banks, then stream every chunk (memory ON, in-place writes) with
+         a pre-hook on each target layer that records that chunk's INPUT hidden
+         states. Concatenate per-chunk captures into a global [1, L, d] aligned
+         to ``full_ids`` positions.
+      3. Slice [p0:p0+S] → the in-context oracle evidence {layer: [1, S, d]}.
+
+    The bank is mutated by this pass, but ``generate_with_mem_space`` calls
+    ``_reset_banks`` at its own start, so the subsequent real generation is
+    unaffected.
+    """
+    root = getattr(model, "module", model)
+    layer_mods = {w._layer_idx: w for w in getattr(root, "_mem_space_layers", [])}
+    full = full_ids[0].tolist()
+    gold = gold_ids[0].tolist() if gold_ids.dim() == 2 else gold_ids.tolist()
+    loc = _find_subsequence(full, gold)
+    if loc is None:
+        return None  # caller falls back / skips oracle for this sample
+    p0, S = loc
+
+    # Per-chunk capture buffers for each target layer.
+    captured_chunks: dict = {li: [] for li in layers}
+    handles = []
+
+    def _mk_hook(li):
+        def _hook(mod, args, kwargs):
+            h = args[0] if args else kwargs.get("hidden_states")
+            captured_chunks[li].append(h.detach().clone())
+        return _hook
+
+    for li in layers:
+        if li in layer_mods:
+            handles.append(
+                layer_mods[li].register_forward_pre_hook(_mk_hook(li), with_kwargs=True)
+            )
+
+    _reset_banks(model)
+    _reset_l2(model)
+    tokens = full_ids[0]
+    chunks = list(tokens.split(chunk_size))
+    try:
+        with torch.no_grad():
+            for ch in chunks:
+                _ = model(input_ids=ch.unsqueeze(0).to(device), use_cache=False)
+    finally:
+        for h in handles:
+            h.remove()
+
+    out: dict = {}
+    for li in layers:
+        parts = captured_chunks.get(li, [])
+        if not parts:
+            continue
+        glob = torch.cat(parts, dim=1)  # [1, L, d] aligned to full_ids
+        if glob.shape[1] < p0 + S:
+            # Should not happen (we streamed ALL chunks) — guard anyway.
+            continue
+        out[li] = glob[:, p0:p0 + S, :].contiguous()
+    return out or None
 
 
 # --------------------------------------------------------------------------- #
@@ -498,6 +613,12 @@ def main():
     p.add_argument("--oracle_plus_slot", action="store_true", default=False,
                    help="oracle arm 4: oracle span PLUS the normally-routed "
                         "heuristic evidence (requires --use_slot_evidence too).")
+    p.add_argument("--oracle_incontext", action="store_true", default=False,
+                   help="STEP-1 fix: capture the gold needle hidden states from "
+                        "the FULL-CONTEXT chunked memory-ON streaming forward "
+                        "(decoder's true in-context distribution, sliced at the "
+                        "needle token offset) instead of running the needle span "
+                        "in isolation. The faithful reader-ceiling probe.")
     args = p.parse_args()
 
     print(f"[ruler] model_type={args.model_type} tasks={args.tasks} "
@@ -571,6 +692,7 @@ def main():
             recall_sum = 0.0
             total = 0
             n_tok_seen = 0
+            oracle_hit = 0  # #samples where the in-context needle span was found
             for i in tqdm(range(args.num_samples), desc=f"{task}/{length}", leave=False):
                 rng = random.Random(base_seed * 1000 + i)
                 prompt, answers, gold_needle = _build_sample(
@@ -582,11 +704,24 @@ def main():
                 n_tok_seen = ids.shape[1]
                 mnt = args.max_new_tokens if task != "variable_tracking" else max(args.max_new_tokens, 60)
                 # ORACLE: capture the gold span's hidden states at the injection
-                # layers (memory disabled) and stash them for the read hook.
+                # layers and stash them for the read hook. Two capture modes:
+                #   * --oracle_incontext (STEP-1): slice the needle's hidden
+                #     states out of the full-context memory-ON streaming forward
+                #     (true in-context distribution — the faithful ceiling).
+                #   * default: run the needle span in isolation, memory disabled
+                #     (legacy OOD probe; under-estimates the ceiling).
                 if args.oracle_evidence and gold_needle is not None:
                     gold_ids = tokenizer.encode(
                         gold_needle, add_special_tokens=False, return_tensors="pt")
-                    oh = _capture_oracle_hidden(model, gold_ids, oracle_layers, device)
+                    if args.oracle_incontext:
+                        oh = _capture_oracle_incontext(
+                            model, ids, gold_ids, args.chunk_size,
+                            oracle_layers, device)
+                    else:
+                        oh = _capture_oracle_hidden(
+                            model, gold_ids, oracle_layers, device)
+                    if oh is not None:
+                        oracle_hit += 1
                     _set_oracle_evidence(model, oh, oracle_layers)
                 with torch.amp.autocast(device_type="cuda", dtype=dtype):
                     if args.model_type == "mem_space":
@@ -613,6 +748,10 @@ def main():
             summary[task][length] = {
                 "score": round(score, 2), "n": total, "approx_tokens": n_tok_seen,
             }
+            if args.oracle_evidence:
+                summary[task][length]["oracle_hit"] = oracle_hit
+                print(f"[ruler] {task}/{length}: oracle needle-span located in "
+                      f"{oracle_hit}/{total} samples")
             outfile = outdir / f"{task}_{length}{shard_tag}.json"
             with open(outfile, "w") as f:
                 json.dump({"task": task, "length": length,
