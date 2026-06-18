@@ -2196,6 +2196,16 @@ class MemorySpaceLayer(nn.Module):
         _inattn_attn = None
         if self._is_inattn_kv_layer:
             _inattn_attn = getattr(self.wrapped_layer, "self_attn", None)
+            # Reset the stash at the START of this forward (gradient-checkpoint
+            # safe). Under --gradient_checkpointing the wrapped_layer forward is
+            # recomputed during backward; if we cleared the stash at the END of
+            # the forward (old behaviour) the recompute would see native-only K/V
+            # (R=0) while the saved forward saw native+R injected keys → a
+            # CheckpointError metadata mismatch. By resetting here and NOT
+            # clearing at the end, the stash stays valid through the recompute,
+            # and a forward with no retrieval correctly falls back to None.
+            if _inattn_attn is not None:
+                _inattn_attn._inattn_kv = None
             _pre_norm = getattr(self.wrapped_layer, "input_layernorm", None)
             _src_h_parts = []
             _src_pos_parts = []
@@ -2250,6 +2260,15 @@ class MemorySpaceLayer(nn.Module):
                     _inattn_attn, _src_h, _src_pos, position_embeddings,
                     pre_norm=_pre_norm,
                 )
+                # Grad-flow diagnostic (2026-06-18): when the layer is asked to
+                # probe the injection's in-graph status (set by the training
+                # smoke via _inattn_grad_probe), retain grad on the injected K_raw
+                # so the smoke can assert K_raw.grad is non-None after backward —
+                # proving the injection path is differentiable (NOT detached) and
+                # the unfrozen backbone learns to consume it. Zero cost otherwise.
+                if getattr(self, "_inattn_grad_probe", False) and _K_raw.requires_grad:
+                    _K_raw.retain_grad()
+                    self._last_inattn_K_raw = _K_raw
                 _inattn_attn._inattn_kv = (_K_raw, _V_raw)
                 self._last_inattn_R = int(_K_raw.shape[2])
                 self._last_inattn_pos = _src_pos
@@ -2285,10 +2304,10 @@ class MemorySpaceLayer(nn.Module):
         else:
             ext_h = ext_out
             extra = ()
-        # Clear the in-attention KV stash so it never leaks to a later forward
-        # (the wrapper falls back to the byte-identical native path when None).
-        if _inattn_attn is not None:
-            _inattn_attn._inattn_kv = None
+        # NOTE (2026-06-18): the in-attention KV stash is NOT cleared here. It is
+        # reset to None at the START of the next forward's inattn block (see
+        # above) — clearing it here breaks gradient-checkpoint recompute (the
+        # recomputed wrapped_layer forward would see R=0 vs. the saved R>0).
         if ext_h.shape[1] != k_l3 + k_l2 + k_slots + k_ev + T:
             raise RuntimeError(
                 f"expected wrapped layer output length {k_l3+k_l2+k_slots+k_ev+T}, "

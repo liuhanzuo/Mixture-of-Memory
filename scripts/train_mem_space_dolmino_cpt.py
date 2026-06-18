@@ -205,17 +205,28 @@ def _wrap_model_fsdp(
     model: torch.nn.Module,
     local_rank: int,
     use_checkpoint_wrapper: bool,
+    unfreeze_backbone: bool = False,
 ) -> torch.nn.Module:
     """Wrap each MemorySpaceLayer (and L3 pool + L2 compressor + recon decoder
     if present) in FSDP. Frozen Llama backbone stays replicated.
 
     Strategy (Option (b) from FSDP_MIGRATION_PLAN_20260516.md §2):
-      * Wrap each ``MemorySpaceLayer`` as its own FSDP unit (FULL_SHARD).
+      * Wrap each ``MemorySpaceLayer`` as its own FSDP unit (FULL_SHARD). NOTE
+        the 32 frozen LlamaDecoderLayers live INSIDE the MemorySpaceLayers (as
+        ``wrapped_layer``), so they are sharded together with the adapter — this
+        is why full fine-tune (``unfreeze_backbone``) shards the ~7B decoder
+        stack for free.
       * Wrap the shared L3 pool / L2 compressor / recon decoder as separate
         FSDP units.
       * Leave the frozen backbone replicated (no sharding overhead, read-only).
       * use_orig_params=True so the optimizer keeps original Parameter objects
         and no rewrite of `_mem_space_params` / optimizer step is needed.
+
+    Full fine-tune (``unfreeze_backbone=True``, 2026-06-18): the embed_tokens,
+    final norm, and lm_head live at the model ROOT (outside every MemorySpaceLayer)
+    so without extra handling they stay replicated AND get NO gradient sync across
+    ranks under FSDP (FSDP only reduce-scatters the params it manages). We wrap
+    each of them as its own FSDP unit so their grads are reduced like the rest.
 
     Args:
         model: model after ``apply_mem_space_to_model`` + ``_freeze_backbone``.
@@ -225,6 +236,8 @@ def _wrap_model_fsdp(
             wraps ONLY the frozen wrapped_layer) stays active. We do NOT use
             FSDP-native checkpoint_wrapper — it caused state-machine errors with
             the chunked / TBPTT multi-backward training step (see babilong note).
+        unfreeze_backbone: if True, also wrap embed_tokens / norm / lm_head so the
+            full-FT root params get sharded + grad-synced.
 
     Returns:
         The same ``model`` object with in-place layer-list replacement (no
@@ -334,6 +347,20 @@ def _wrap_model_fsdp(
         wrapped_trh = FSDP(l3_token_recon_head, **common_fsdp_kwargs)
         setattr(root, "l3_token_recon_head", wrapped_trh)
         model._l3_token_recon_head = wrapped_trh
+
+    # 3b) Full fine-tune (2026-06-18): wrap the root-level backbone params
+    #     (embed_tokens, final norm, lm_head) so they are sharded + grad-synced.
+    #     Skipped when frozen (they stay replicated, read-only, no sync needed).
+    if unfreeze_backbone:
+        for _root_attr in ("embed_tokens", "norm"):
+            _mod = getattr(root, _root_attr, None)
+            if _mod is not None and not isinstance(_mod, FSDP):
+                setattr(root, _root_attr, FSDP(_mod, **common_fsdp_kwargs))
+        # lm_head is on the OUTER model (LlamaForCausalLM), not root (LlamaModel).
+        _lm_head = getattr(model, "lm_head", None)
+        if _lm_head is not None and not isinstance(_lm_head, FSDP):
+            model.lm_head = FSDP(_lm_head, **common_fsdp_kwargs)
+        logger.info("FSDP full-FT: wrapped root embed_tokens/norm/lm_head.")
 
     # 3) NO top-level FSDP wrap (babilong lesson): with use_orig_params=True a
     #    top-level wrap tracks the FROZEN embedding/lm_head in its flat-param
@@ -473,7 +500,23 @@ def _mem_space_params(model: torch.nn.Module) -> List[torch.nn.Parameter]:
     return params
 
 
-def _freeze_backbone(model: torch.nn.Module) -> None:
+def _freeze_backbone(model: torch.nn.Module, unfreeze_backbone: bool = False) -> None:
+    """Set requires_grad for training.
+
+    Default (unfreeze_backbone=False): freeze everything, then re-enable ONLY
+    the mem_space adapter params — byte-identical to the original behaviour.
+
+    Full fine-tune (unfreeze_backbone=True): make the ENTIRE model trainable
+    (Llama backbone attn+FFN+embed+lm_head + the mem_space adapter). This is the
+    Landmark-faithful path: training on the injection mechanism lets the model
+    recalibrate to the injected-KV distribution the frozen reader could not
+    consume. The mem_space params are explicitly re-enabled too (no-op since they
+    are already on, but keeps the contract that adapter always trains).
+    """
+    if unfreeze_backbone:
+        for p in model.parameters():
+            p.requires_grad = True
+        return
     for p in model.parameters():
         p.requires_grad = False
     for p in _mem_space_params(model):
@@ -891,6 +934,9 @@ def parse_args() -> argparse.Namespace:
     # Training
     p.add_argument("--total_steps", type=int, default=60000)
     p.add_argument("--lr", type=float, default=5e-6)
+    p.add_argument("--weight_decay", type=float, default=0.0,
+                   help="AdamW weight decay. 0.0 for adapter-only training "
+                        "(original); Landmark full FT uses 0.1.")
     p.add_argument("--warmup_steps", type=int, default=1000)
     p.add_argument("--gradient_accumulation_steps", type=int, default=4)
     p.add_argument("--start_step", type=int, default=0,
@@ -1234,6 +1280,50 @@ def parse_args() -> argparse.Namespace:
                         "mem_space layers instead of DDP. Frozen backbone stays "
                         "replicated. Required for large slot_dim on H20 (95 GiB).")
 
+    # ----- TRUE in-attention K/V concat readout (2026-06-18) ----- #
+    # The architecturally-correct injection channel: the inattn_kv_layer writes
+    # every chunk's uncompressed token hidden into a per-sequence raw-KV store,
+    # then at readout retrieves the top-inattn_kv_topk and concatenates their
+    # native-projected K/V directly onto layer-N self-attention's K/V so the
+    # H-query tokens attend over [native_KV ; retrieved_KV] in ONE softmax. The
+    # injection K/V are produced by the LIVE k_proj/v_proj and feed the
+    # differentiable softmax→o_proj path, so when the backbone is unfrozen
+    # (--unfreeze_backbone) gradient flows through the injection → the model
+    # learns to consume it (Landmark-faithful, fixes the OOD readout failure).
+    p.add_argument("--use_inattn_kv", action="store_true", default=False,
+                   help="Enable the TRUE in-attention K/V concat readout channel "
+                        "(retrieve raw KV → concat onto native K/V at "
+                        "inattn_kv_layer's self-attn). Injection path is in-graph; "
+                        "pair with --unfreeze_backbone so grad flows into it.")
+    p.add_argument("--inattn_kv_layer", type=int, default=16,
+                   help="Single layer whose self-attention is wrapped for the "
+                        "in-attention K/V concat (also the layer that writes the "
+                        "raw-KV store). Default 16.")
+    p.add_argument("--inattn_kv_topk", type=int, default=64,
+                   help="Number of retrieved raw tokens concatenated onto the "
+                        "K/V axis at readout. Default 64.")
+
+    # ----- Full fine-tune: unfreeze the entire Llama backbone (2026-06-18) ----- #
+    # Landmark-faithful SFT: the frozen reader cannot consume injected KV through
+    # an attention path it was never trained on (oracle-perfect needle still ≈OFF
+    # → OOD mismatch). The fix is to train ON the injection mechanism so the model
+    # recalibrates to the injected distribution. --unfreeze_backbone makes the
+    # ENTIRE Llama-3-8B backbone (attention + FFN + embed + lm_head) trainable
+    # alongside the memory adapter. Default False → byte-identical to the existing
+    # frozen-backbone pipeline (only mem_space params train).
+    p.add_argument("--unfreeze_backbone", action="store_true", default=False,
+                   help="Full fine-tune: unfreeze the ENTIRE Llama backbone "
+                        "(attn+FFN+embed+lm_head) in addition to the mem_space "
+                        "adapter. Default False keeps the frozen-backbone pipeline "
+                        "byte-identical. Use lr~2e-5 + FSDP for 8B full FT.")
+    # One-time grad-flow diagnostic: on the FIRST optimizer step, print backbone
+    # param grad norms + the injected K_raw grad status, then disable itself.
+    # Used by the unfreeze/in-graph smoke; no-op (and zero overhead) by default.
+    p.add_argument("--grad_flow_diag", action="store_true", default=False,
+                   help="Print a one-time grad-flow diagnostic on the first step "
+                        "(backbone param grad norms + injected-KV in-graph check) "
+                        "then disable. For the unfreeze/in-graph smoke only.")
+
     # Misc
     p.add_argument("--attn_impl", type=str, default="sdpa",
                    choices=["sdpa", "eager", "flash_attention_2"])
@@ -1400,6 +1490,9 @@ def build_model(args, device, dtype) -> torch.nn.Module:
         slot_evict_max_frac=args.slot_evict_max_frac,
         slot_evict_floor=args.slot_evict_floor,
         slot_evict_protect_chunks=args.slot_evict_protect_chunks,
+        use_inattn_kv=args.use_inattn_kv,
+        inattn_kv_layer=args.inattn_kv_layer,
+        inattn_kv_topk=args.inattn_kv_topk,
     )
 
     # H7 rotary fp32 fix — snapshot before bf16 cast
@@ -2243,6 +2336,12 @@ def _save_adapter(model, args, step: int, final: bool = False) -> None:
         isinstance(model, FSDP) or getattr(model, "_uses_partial_fsdp", False)
     )
 
+    # Full fine-tune (2026-06-18): the backbone is trainable, so the adapter-only
+    # fragment filter would silently drop the fine-tuned Llama weights. When
+    # --unfreeze_backbone, save the ENTIRE state dict (backbone + adapter) to a
+    # full_model checkpoint instead.
+    save_full_model = bool(getattr(args, "unfreeze_backbone", False))
+
     if is_fsdp:
         # FSDP path: gather full state_dict to rank 0 (CPU-offloaded). All ranks
         # must execute the context, but only rank 0 receives the full state.
@@ -2269,22 +2368,26 @@ def _save_adapter(model, args, step: int, final: bool = False) -> None:
         state = {
             k: v.detach().cpu() if isinstance(v, torch.Tensor) else v
             for k, v in cleaned.items()
-            if any(frag in k for frag in fragments)
+            if save_full_model or any(frag in k for frag in fragments)
         }
     else:
         root = model.module if isinstance(model, DDP) else model
         state = {
             k: v.detach().cpu()
             for k, v in root.state_dict().items()
-            if any(frag in k for frag in fragments)
+            if save_full_model or any(frag in k for frag in fragments)
         }
 
     if final:
-        ckpt_path = os.path.join(args.output_dir, "mem_space_adapter.pt")
+        _stem = "full_model" if save_full_model else "mem_space_adapter"
+        ckpt_path = os.path.join(args.output_dir, f"{_stem}.pt")
     else:
-        ckpt_path = os.path.join(args.output_dir, f"mem_space_adapter_step{step:06d}.pt")
+        _stem = "full_model" if save_full_model else "mem_space_adapter"
+        ckpt_path = os.path.join(args.output_dir, f"{_stem}_step{step:06d}.pt")
     torch.save(state, ckpt_path)
-    logger.info("Saved adapter ckpt: %s (%d keys)", ckpt_path, len(state))
+    logger.info("Saved %s ckpt: %s (%d keys)",
+                "full-model" if save_full_model else "adapter",
+                ckpt_path, len(state))
 
     cfg_path = os.path.join(args.output_dir, "adapter_config.json")
     with open(cfg_path, "w") as f:
@@ -2470,11 +2573,25 @@ def main() -> None:
 
     # --- model --- #
     model = build_model(args, device, dtype)
-    _freeze_backbone(model)
+    _freeze_backbone(model, unfreeze_backbone=args.unfreeze_backbone)
+
+    # Arm the one-time in-graph probe on the inattn layer(s) (no-op otherwise).
+    if args.grad_flow_diag:
+        for _w in getattr(model, "_mem_space_layers", []) or []:
+            _w._inattn_grad_probe = True
 
     if is_main(rank):
-        n_trainable = sum(p.numel() for p in _mem_space_params(model))
-        logger.info("mem_space trainable: %.2fM params", n_trainable / 1e6)
+        if args.unfreeze_backbone:
+            n_total = sum(p.numel() for p in model.parameters() if p.requires_grad)
+            n_mem = sum(p.numel() for p in _mem_space_params(model))
+            logger.info(
+                "FULL FINE-TUNE: %.2fM trainable params (backbone+adapter); "
+                "of which mem_space adapter = %.2fM",
+                n_total / 1e6, n_mem / 1e6,
+            )
+        else:
+            n_trainable = sum(p.numel() for p in _mem_space_params(model))
+            logger.info("mem_space trainable: %.2fM params", n_trainable / 1e6)
 
     # Distributed wrap: FSDP (shard optimizer state) or DDP (replicate).
     if world_size > 1:
@@ -2487,6 +2604,7 @@ def main() -> None:
                 model,
                 local_rank=local_rank,
                 use_checkpoint_wrapper=args.gradient_checkpointing,
+                unfreeze_backbone=args.unfreeze_backbone,
             )
             if is_main(rank):
                 logger.info("Using FSDP (Option b): trainable mem_space sharded, "
@@ -2605,6 +2723,12 @@ def main() -> None:
         # crash). With use_orig_params=True, model.parameters() yields the
         # original Parameter handles FSDP writes grads to, so walk those.
         trainable = [p for p in model.parameters() if p.requires_grad]
+    elif args.unfreeze_backbone:
+        # Full fine-tune (DDP / single-GPU): every requires_grad param trains —
+        # the whole backbone + the mem_space adapter. _mem_space_params() would
+        # collect ONLY the adapter, silently freezing the backbone, so walk
+        # model.parameters() instead.
+        trainable = [p for p in model.parameters() if p.requires_grad]
     else:
         trainable = _mem_space_params(
             model.module if isinstance(model, DDP) else model
@@ -2633,7 +2757,8 @@ def main() -> None:
             "params under FSDP)."
         )
 
-    optimizer = torch.optim.AdamW(trainable, lr=args.lr, weight_decay=0.0,
+    optimizer = torch.optim.AdamW(trainable, lr=args.lr,
+                                  weight_decay=args.weight_decay,
                                   betas=(0.9, 0.95))
 
     # --- training loop --- #
@@ -2904,6 +3029,50 @@ def main() -> None:
                 if p.grad is None:
                     p.grad = torch.zeros_like(p)
                 dist.all_reduce(p.grad, op=dist.ReduceOp.AVG)
+
+        # --- One-time grad-flow diagnostic (--grad_flow_diag) --- #
+        # Runs once, on the first step that produced gradients, then disables
+        # itself. Proves (a) backbone params receive non-zero gradient under
+        # --unfreeze_backbone, and (b) the injected in-attention K_raw is in-graph
+        # (its retained .grad is non-None). For the unfreeze/in-graph smoke only.
+        if args.grad_flow_diag and step_valid_micros > 0 and is_main(rank):
+            _root = model.module if isinstance(model, DDP) else model
+            # (a) backbone grad norms: sample a few decoder-layer weight params
+            #     that are NOT part of the mem_space adapter (i.e. the wrapped
+            #     frozen Llama layer's q/k/v/mlp). Under --unfreeze_backbone these
+            #     must have non-None, non-zero grads.
+            _bb_lines = []
+            _n_bb = 0
+            for _n, _p in _root.named_parameters():
+                if not _p.requires_grad:
+                    continue
+                if any(k in _n for k in ("self_attn.q_proj", "self_attn.k_proj",
+                                         "mlp.gate_proj", "mlp.down_proj")):
+                    _gn = (_p.grad.norm().item() if _p.grad is not None else None)
+                    _bb_lines.append(f"    {_n}: grad_norm={_gn}")
+                    _n_bb += 1
+                    if _n_bb >= 6:
+                        break
+            logger.info("[grad_flow_diag] backbone trainable sample grad norms "
+                        "(unfreeze_backbone=%s):\n%s",
+                        args.unfreeze_backbone,
+                        "\n".join(_bb_lines) if _bb_lines
+                        else "    (no backbone params requires_grad)")
+            # (b) injected in-attention K_raw in-graph check.
+            _inattn_ok = "n/a (use_inattn_kv off or no injection this step)"
+            for _w in getattr(_root, "_mem_space_layers", []) or []:
+                _kr = getattr(_w, "_last_inattn_K_raw", None)
+                if _kr is not None:
+                    _g = _kr.grad
+                    _inattn_ok = (
+                        f"K_raw.requires_grad={_kr.requires_grad} "
+                        f"grad={'None' if _g is None else f'norm={_g.norm().item():.3e}'} "
+                        f"(R={_kr.shape[2]})"
+                    )
+                    break
+            logger.info("[grad_flow_diag] injected in-attention KV in-graph: %s",
+                        _inattn_ok)
+            args.grad_flow_diag = False  # one-shot
 
         # --- Loss-spike skip decision (DDP-consistent) ---
         # Compute a single avg lm_loss scalar that is IDENTICAL on every rank by
