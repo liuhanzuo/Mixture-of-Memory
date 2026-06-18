@@ -824,13 +824,15 @@ L2ON_pg19 step500        qa1 |   94   36   27   16    8    8    2
 ckpt                         | mfqa_en  2wikimqa  musique | AVG(F1)
 distill_AB_dolmino  final    |  12.75    10.45     3.41   |  8.87
 distill_MASS0p5     final    |  14.13     9.36     3.46   |  8.98
+L2ON_pg19           final    |  11.25     9.55     2.57   |  7.79
 对照 P11 c512 step500(同3任务) |  15.83    11.31     3.46   | 10.20
 对照 base 开卷上界(中截断,同3任务)|  24.87    12.17     6.97   | 14.67
 ```
 **裁决（LongBench 真实长文档迁移）：**
-1. **两个 dolmino 蒸馏 ckpt 在真长文档 QA 上未发生正迁移**——AVG 8.87/8.98 < P11 baseline 10.20 < base 开卷上界 14.67。蒸馏不仅没补上 readout，反而略低于未蒸馏的 P11 mem_space baseline（−1.3 F1）。
+1. **三个 ckpt（dolmino AB / MASS0p5 / L2+pg19）在真长文档 QA 上均未发生正迁移**——AVG 8.87/8.98/7.79 < P11 baseline 10.20 < base 开卷上界 14.67。蒸馏/分层均未补上 readout，反而均略低于未蒸馏的 P11 mem_space baseline。
 2. **MASS0p5 ≈ AB**（8.98 vs 8.87，差异在噪声内），与 BABILong 结论一致：弱 mass 无加成。
-3. **远低于 base 开卷上界**（8.9 vs 14.67，仅 base 的 ~61%）：128-slot memory readout 在真实长文档 QA 上仍显著落后于直接中截断喂全文的 frozen backbone。**与 BABILong 同向——dolmino 蒸馏对真长文档任务无迁移收益，瓶颈是 readout/数据而非蒸馏目标。** EM 全 0（生成短答案 token-F1 口径下 EM 几乎不触发，与 P11/base 同样近 0，非异常）。
+3. **★L2+pg19 是三 arm 最低（AVG 7.79，2026-06-18 补评，.249 diskB，8-shard×~13）**：与其 BABILong 表现一致（仅 8k 微正、32k=5 最差），L2 分层 + pg19 长文在真长文档 QA 上也无迁移，全面落后 P11 baseline（−2.4 F1）与两 dolmino arm。三任务全线偏低（mfqa 11.25 / 2wiki 9.55 / musique 2.57），musique（多跳）尤其塌。
+4. **远低于 base 开卷上界**（7.8-9.0 vs 14.67，仅 base 的 53-61%）：128-slot memory readout 在真实长文档 QA 上仍显著落后于直接中截断喂全文的 frozen backbone。**与 BABILong 同向——蒸馏/分层/真长文训练数据对真长文档任务均无迁移收益，瓶颈是 frozen-reader readout 能力而非蒸馏目标/训练数据。** EM 全 0（生成短答案 token-F1 口径下 EM 几乎不触发，与 P11/base 同样近 0，非异常）。
 
 ### ★★ n=200 RULER 5臂 evidence-injection probe：注入证据不抬 readout（2026-06-17，niah_single_1 4k，n=200）
 .76 diskB，读 ruler_results/5arm_p11frz_n200_*/_summary.json 直接汇总（不经 score_nested）。底座 = P11 frozen，5 臂只改 readout 阶段是否/如何把"证据 chunk"注入。oracle_hit=200 表示 oracle 臂 100% 命中目标 chunk。

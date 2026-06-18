@@ -72,7 +72,7 @@
 |---|---|---|---|---|
 | dolmino self-study 蒸馏 AB（A=logits KL + B=hidden MSE）| dolmino ≤16k，n_ctx=3（窗 2048）| 11 / 11 / 8 | 8.87（3任务）| 中长程全面塌；LongBench < P11 baseline 10.20，无正迁移 |
 | dolmino 蒸馏 + weak-mass 0.5 | 同上 | 11 / 14 / 9 | 8.98（3任务）| ≈ AB，弱 mass 无加成（BABILong+LongBench 同向）|
-| L2 分层 + pg19 长文 | pg19 | 18 / 13 / 5 | 待补 | 仅 8k 微正，32k 最差 |
+| L2 分层 + pg19 长文 | pg19 | 18 / 13 / 5 | 7.79（3任务）| 仅 8k 微正，32k 最差；LongBench 三 arm 最低 |
 | **pg19 真长文蒸馏（n_ctx7 final）** | **pg19 78% ≥32k** | 19 / **16** / 9 | **6.5** | **★16k 破天花板（唯一）** |
 
 > dolmino 两 arm 的 LongBench AVG 为 3-任务子集（multifieldqa_en/2wikimqa/musique，n=100，W0，口径同 P11 baseline=10.20、base 开卷上界=14.67）；pg19 的 6.5 为 6-任务口径，二者不直接可比，但两 dolmino arm < 同口径 P11 baseline 已足够定性。
@@ -141,7 +141,7 @@
 
 ## 附录：证据缺口（数字对不上 / 缺失）
 
-1. ~~**LongBench AVG 缺 dolmino 蒸馏（AB / MASS0p5 / L2pg19）三 arm 的分**~~ **【已补 AB/MASS0p5，2026-06-18】**：dolmino 蒸馏 AB / MASS0p5 的 LongBench W0 已补评（3 任务 multifieldqa_en/2wikimqa/musique，n=100，口径同 P11 baseline）：AB AVG=8.87、MASS0p5 AVG=8.98，均 < P11 baseline 10.20 < base 开卷上界 14.67 → dolmino 蒸馏对真实长文档无正迁移。结果已写入 RUN_REGISTRY §「self-study 蒸馏 AB」LongBench 小节。**L2pg19 仍待补**（在 .249 diskB，本轮未评）。
+1. ~~**LongBench AVG 缺 dolmino 蒸馏（AB / MASS0p5 / L2pg19）三 arm 的分**~~ **【全部已补，2026-06-18】**：三个 ckpt 的 LongBench W0 已补评（3 任务 multifieldqa_en/2wikimqa/musique，n=100，口径同 P11 baseline）：dolmino AB AVG=8.87、MASS0p5 AVG=8.98、**L2+pg19 AVG=7.79（三 arm 最低，.249 diskB）**，均 < P11 baseline 10.20 < base 开卷上界 14.67 → 蒸馏 / 分层 / 真长文训练数据对真实长文档任务均无正迁移。L2+pg19 全线偏低（mfqa 11.25 / 2wiki 9.55 / musique 2.57），与其 BABILong 表现（仅 8k 微正、32k=5 最差）一致。结果已写入 RUN_REGISTRY §「self-study 蒸馏 AB」LongBench 小节。**证据缺口 1 现已完全闭合。**
 2. **n_ctx15 / N256 的 launch commit hash**：RUN_REGISTRY §3 有结果但未逐一记 hash（仅 n_ctx63=4812d70、mass0.5=db584a6 明确）。结果数字已核实，commit 待从 git log 回填。
 3. **外部文献 bibkey**：Based/Zoology、ACL2025 gist-token 的精确引用未在 RUN_REGISTRY 落 bibkey，需从 RESEARCH_LITERATURE.md 补全。
 4. **32k qa5 「天花板≈9 / 13」两个数字并存**：RUN_REGISTRY 在不同表用「现有方法天花板 ~15/13/9」（8k/16k/32k）作参照，文中 16k 天花板取 13、32k 取 9，与原表一致；若需统一口径建议在 RUN_REGISTRY 固化一处。
