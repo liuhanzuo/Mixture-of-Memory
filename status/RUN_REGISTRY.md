@@ -818,6 +818,20 @@ L2ON_pg19 step500        qa1 |   94   36   27   16    8    8    2
 3. **L2+pg19 仅 8k 微正、整体无突破**：qa5 8k=18（略超 AB 的 11、与 pg19 蒸馏 19 持平），16k=13，但 32k=5（最差）。L2 分层 + pg19 长文没带来稳定长程增益，32k 反而更低。
 4. **三 arm 均仍撞 32k 墙**（8/9/5），无一突破天花板 9。**最佳长程仍是 pg19 真长文蒸馏（16k=16）**，dolmino 系 distill 不及。**结论：抬 readout 靠真长文训练数据，不靠蒸馏目标/mass 旋钮。**
 
+#### ★ LongBench W0 补评（2026-06-18，填补 findings 证据缺口1）
+两个 dolmino 蒸馏 ckpt（之前只跑过 BABILong）补真长文档 QA。口径严格对齐 P11 baseline：base Meta-Llama-3-8B + 128 slot，chunk512，**W0（memory-only，无 SWA）**，no_chat_template，tasks={multifieldqa_en, 2wikimqa, musique} × n=100，babilong/LongBench F1 口径（4-shard×25 合并）。
+```
+ckpt                         | mfqa_en  2wikimqa  musique | AVG(F1)
+distill_AB_dolmino  final    |  12.75    10.45     3.41   |  8.87
+distill_MASS0p5     final    |  14.13     9.36     3.46   |  8.98
+对照 P11 c512 step500(同3任务) |  15.83    11.31     3.46   | 10.20
+对照 base 开卷上界(中截断,同3任务)|  24.87    12.17     6.97   | 14.67
+```
+**裁决（LongBench 真实长文档迁移）：**
+1. **两个 dolmino 蒸馏 ckpt 在真长文档 QA 上未发生正迁移**——AVG 8.87/8.98 < P11 baseline 10.20 < base 开卷上界 14.67。蒸馏不仅没补上 readout，反而略低于未蒸馏的 P11 mem_space baseline（−1.3 F1）。
+2. **MASS0p5 ≈ AB**（8.98 vs 8.87，差异在噪声内），与 BABILong 结论一致：弱 mass 无加成。
+3. **远低于 base 开卷上界**（8.9 vs 14.67，仅 base 的 ~61%）：128-slot memory readout 在真实长文档 QA 上仍显著落后于直接中截断喂全文的 frozen backbone。**与 BABILong 同向——dolmino 蒸馏对真长文档任务无迁移收益，瓶颈是 readout/数据而非蒸馏目标。** EM 全 0（生成短答案 token-F1 口径下 EM 几乎不触发，与 P11/base 同样近 0，非异常）。
+
 ### ★★ n=200 RULER 5臂 evidence-injection probe：注入证据不抬 readout（2026-06-17，niah_single_1 4k，n=200）
 .76 diskB，读 ruler_results/5arm_p11frz_n200_*/_summary.json 直接汇总（不经 score_nested）。底座 = P11 frozen，5 臂只改 readout 阶段是否/如何把"证据 chunk"注入。oracle_hit=200 表示 oracle 臂 100% 命中目标 chunk。
 | 臂 | score (n=200) | Δ vs OFF | 说明 |

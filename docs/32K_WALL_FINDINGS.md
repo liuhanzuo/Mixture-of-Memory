@@ -70,13 +70,16 @@
 
 | 实验 | 数据 | qa5 8k / 16k / 32k | LongBench AVG | 裁决 |
 |---|---|---|---|---|
-| dolmino self-study 蒸馏 AB（A=logits KL + B=hidden MSE）| dolmino ≤16k，n_ctx=3（窗 2048）| 11 / 11 / 8 | 待补 | 中长程全面塌（≤16k 窗见不到真长程依赖）|
-| dolmino 蒸馏 + weak-mass 0.5 | 同上 | 11 / 14 / 9 | 待补 | ≈ AB，弱 mass 无加成 |
+| dolmino self-study 蒸馏 AB（A=logits KL + B=hidden MSE）| dolmino ≤16k，n_ctx=3（窗 2048）| 11 / 11 / 8 | 8.87（3任务）| 中长程全面塌；LongBench < P11 baseline 10.20，无正迁移 |
+| dolmino 蒸馏 + weak-mass 0.5 | 同上 | 11 / 14 / 9 | 8.98（3任务）| ≈ AB，弱 mass 无加成（BABILong+LongBench 同向）|
 | L2 分层 + pg19 长文 | pg19 | 18 / 13 / 5 | 待补 | 仅 8k 微正，32k 最差 |
 | **pg19 真长文蒸馏（n_ctx7 final）** | **pg19 78% ≥32k** | 19 / **16** / 9 | **6.5** | **★16k 破天花板（唯一）** |
 
+> dolmino 两 arm 的 LongBench AVG 为 3-任务子集（multifieldqa_en/2wikimqa/musique，n=100，W0，口径同 P11 baseline=10.20、base 开卷上界=14.67）；pg19 的 6.5 为 6-任务口径，二者不直接可比，但两 dolmino arm < 同口径 P11 baseline 已足够定性。
+
 **裁决**：
 - **抬 readout 靠真长文训练数据，不靠蒸馏目标 / mass 旋钮**：dolmino（短窗）蒸馏只复刻短档；真长文（pg19）才把 16k 抬到 16（vs 所有现有方法天花板 13）。
+- **★dolmino 蒸馏对真实长文档任务无正迁移（2026-06-18 补评闭环）**：AB / MASS0p5 在 LongBench 3 任务 AVG=8.87/8.98，**低于未蒸馏的 P11 mem_space baseline（10.20）**，更远低于 base 开卷上界（14.67，仅 ~61%）。蒸馏既没补上 BABILong 中长程 readout，也没迁移到真实长文档——印证瓶颈是 readout/数据而非蒸馏目标。MASS0p5≈AB 再次确认弱 mass 无加成。
 - **★BABILong 长程突破 ≠ 真实长文档能力**：pg19 在 BABILong 16k 破墙，但 LongBench 仅 **6.5**（≈ mass_coef1 的 6.56，远低于 weak-mass+蒸馏的 10.4）。pg19 的 16k 突破是 **BABILong 合成事实链检索任务特定**，未迁移到真实长文档理解。两个 benchmark 测不同能力。
 - **32k 在所有蒸馏变体下仍 = 8/9/5，无一突破天花板 9。**
 
@@ -138,7 +141,7 @@
 
 ## 附录：证据缺口（数字对不上 / 缺失）
 
-1. **LongBench AVG 缺 dolmino 蒸馏（AB / MASS0p5 / L2pg19）三 arm 的分**：RUN_REGISTRY §「self-study 蒸馏 AB」只有 BABILong，无对应 LongBench AVG，表中标「待补」。
+1. ~~**LongBench AVG 缺 dolmino 蒸馏（AB / MASS0p5 / L2pg19）三 arm 的分**~~ **【已补 AB/MASS0p5，2026-06-18】**：dolmino 蒸馏 AB / MASS0p5 的 LongBench W0 已补评（3 任务 multifieldqa_en/2wikimqa/musique，n=100，口径同 P11 baseline）：AB AVG=8.87、MASS0p5 AVG=8.98，均 < P11 baseline 10.20 < base 开卷上界 14.67 → dolmino 蒸馏对真实长文档无正迁移。结果已写入 RUN_REGISTRY §「self-study 蒸馏 AB」LongBench 小节。**L2pg19 仍待补**（在 .249 diskB，本轮未评）。
 2. **n_ctx15 / N256 的 launch commit hash**：RUN_REGISTRY §3 有结果但未逐一记 hash（仅 n_ctx63=4812d70、mass0.5=db584a6 明确）。结果数字已核实，commit 待从 git log 回填。
 3. **外部文献 bibkey**：Based/Zoology、ACL2025 gist-token 的精确引用未在 RUN_REGISTRY 落 bibkey，需从 RESEARCH_LITERATURE.md 补全。
 4. **32k qa5 「天花板≈9 / 13」两个数字并存**：RUN_REGISTRY 在不同表用「现有方法天花板 ~15/13/9」（8k/16k/32k）作参照，文中 16k 天花板取 13、32k 取 9，与原表一致；若需统一口径建议在 RUN_REGISTRY 固化一处。
