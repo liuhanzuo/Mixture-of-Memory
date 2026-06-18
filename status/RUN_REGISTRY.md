@@ -880,3 +880,19 @@ L2ON_pg19           final    |  11.25     9.55     2.57   |  7.79
 - **validity 确认（非 no-op）**：`RAWKV_DEBUG=1` 实测 store 随 chunk 增长（4k 下 store_M 1024→2048→3072，4 chunk 全量入库），retrieval 每步真触发（retrieved=64/256 token 注入 EV prefix）。append 在 ingest（unfrozen）发生、freeze 后 retrieve、reset 清空——时序正确。输出非退化（模型产出合理 "special magic number" 补全，部分精确命中）。
 - **★核心负结果：raw-KV 检索 NOT 破墙**。两臂仅 +1.0pt（≪ 决定性阈值 >10pt，也在 ~3-7pt 噪声内），4k 无任何信号 → **未扩 8k-32k**（无意义；32k 墙 qa5≈9 不受影响）。topk256 vs topk64 持平，说明"检索更多原始 KV"无加成。
 - **与 evidence-injection probe（OFF=23.5，oracle 100%命中仅 +2.5）互证**：raw-KV 用**相同 EV-prefix 注入接口**但**不同检索源**（未压缩原始 token vs slot-routed 启发式/oracle）。两条路线都落在 OFF 噪声内 → **瓶颈不是"检索源/找不到精确信息"，而是 readout 端的注入接口本身——frozen reader 即便拿到逐字原始 KV 也用不上精确事实**。training-free raw-KV **不值得推进到 trained 版本**（除非先解决 readout 端如何"消费"注入 KV 的绑定问题，而非继续换检索源）。
+
+### ★★★ 解冻 reader 全量 SFT（in-attn 注入）决定性裁决：解冻 1000 步未破墙（2026-06-19，niah_single_1 4k，n=100）
+所有 training-side（mass/distill/curriculum）与 frozen training-free（evidence/raw-KV）路线穷尽后的**最后活线**：让 backbone 学会 attend 注入的 in-attention K/V（Landmark/RetrievalAttention 能 work 正因微调模型在注入机制上）。
+- **run**：`outputs/sft_unfreeze_inattn_full/`，`--unfreeze_backbone`（整 8B 解冻）+ in-graph in-attn 注入（L16，梯度流过 injection），lr=2e-5，chunk512，total_steps=1000（nf=0，100.5min，本机 8×H20 FSDP）。底座 Meta-Llama-3-8B。
+- **ckpt 格式**：`full_model.pt`（26GB，**整 8B 微调权重 + adapter**，非 adapter-only）。`_save_adapter` 在 `save_full_model=True` 时存完整 `model.state_dict()`（FSDP gather + 去 `_fsdp_wrapped_module./module.` 前缀）。
+- **★加载正确性已验证**：eval harness `load_mem_space_model` 走同一 `load_state_dict(strict=False)` 路径，载入日志 `Loaded 1153 keys | missing=0 unexpected=0`（整 model state dict 全载，无缺/无多）。直接 diff ckpt backbone vs 原始 Meta-Llama-3-8B safetensors（按 `wrapped_layer.` 前缀对齐）：L0 q_proj max|Δ|=0.0026、**L16（注入层）q_proj max|Δ|=0.0098（最大，微调确实集中在注入层）**、L31 q_proj=0.0041、embed=0.0021——**backbone 微调权重确实载入，eval 测的是微调后模型而非原始 frozen**。
+- 口径：`scripts/eval_ruler_mem_space.py`，niah_single_1 4k，n=100（4-shard×25 合并），chunk512（训练对齐），final step1000 ckpt。
+
+| 臂 | score (n=100) | oracle_hit | vs frozen baseline |
+|----|--------------|-----------|---------------------|
+| **OFF**（slot-only，不开 inattn） | **12** | — | frozen OFF~22（更低） |
+| **in-attn ORACLE@L16**（`--use_inattn_kv --inattn_kv_layer 16 --inattn_kv_topk 64 --inattn_oracle_only`，注入 gold needle 绕过 scorer） | **5** | **100/100** | frozen oracle~21（更低） |
+
+- **★★裁决：解冻全量 SFT（单层 L16 in-attn 注入，1000 步）NOT 破墙，且呈强负信号。** oracle=5 **低于** OFF=12（注入完美定位的 gold needle，oracle_hit=100/100 满命中，模型反而答得更差），远未达破墙阈值 >35。step500 中间 probe 同向（OFF=13、oracle=7，oracle<OFF）→ final 确认非偶然。
+- **双双 ≪ frozen baseline（OFF22/oracle21）**：解冻 1000 步后 OFF 从 22 掉到 12，说明全量 SFT 在 dolmino 短档（n_ctx 窗口小）上轻微损伤了 backbone 基础 NIAH 能力，而 in-attn 注入通道不仅没学会被 consume，反而成了干扰源（oracle<OFF）。
+- **意义**：frozen reader（28+ 实验）+ unfreeze reader（本次）**两大框架在"让模型 consume 注入精确 KV"上双双穷尽**。单层 in-attn 注入 + 全量解冻 1000 步训练不足以让 backbone 学会 attend 注入 KV——可能需要 (a) 多层注入、(b) 注入机制从训练第一步即在（而非微调后期引入）、(c) 更长/更长程的训练数据（dolmino 短档见不到长程依赖，与 §3a 蒸馏结论同源），或 (d) 换 readout 范式。**训练侧 + 注入接口侧均无活线 → 需主会话裁定换范式。**
