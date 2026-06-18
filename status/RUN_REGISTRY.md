@@ -311,6 +311,30 @@ arm4 gumbel(t=1)  step1000   qa1 |   71   13   23   21   15    7    8
 
 ---
 
+## 3e. READOUT mass-bias sweep（2026-06-18，coef0.5 vs coef1.0，2 节点并行）
+
+> 机制侧改动：在 normalized readout 上加 `--use_readout_mass_bias`，按检索质量给读出向量乘一个 mass 系数（coef = readout_mass_coef）。动机来自 readout-attack history 暗示"机制侧 mass 是长程最优"——验证是否能抬 W0 中长程（8k-32k）。
+> 底座 = P11 chunk512 delta-rule+normreadout，total_steps=1000（**与 §3d ROUTE-A 同为 1000 步 final ckpt，可直接互比；但 base 是 5000-step run 的 step500 早 ckpt，谱系/步数不完全可比**）。口径 n=100，qa1/qa2/qa5 × 0k-32k，chunk512，bf16 sdpa，_eval_taskpool_2group.sh，W0（无 eval-side SWA）。
+> 节点：coef1.0=本机盘A、coef0.5=.196 盘A，全 8×H20。两 run 唯一变量 = mass_coef。commit 9049469。
+> **对照基准 = P11 base step500（W0）**：qa5=74/89/81/60/48/45/44，qa1=97/67/53/37/20/25/18。
+
+```
+arm                          qa  |   0k   1k   2k   4k   8k  16k  32k
+P11 base step500★            qa1 |   97   67   53   37   20   25   18
+                             qa5 |   74   89   81   60   48   45   44
+massbias coef1.0 step1000    qa1 |   83    7    8    6    7    5    2
+                             qa2 |   43    5    3    1    6    6    7
+                             qa5 |   79   41   29   11    7    8    8
+massbias coef0.5 step1000    qa1 |   89   13    6    8   10    9    9
+                             qa2 |   45    6    5    1    4    4    2
+                             qa5 |   76   47   36   17   19   19   27
+```
+→ **★mass-bias 裁决（2026-06-18）：REJECTED，两 coef 均显著劣于 P11 base，长程尤甚。** 假说（机制侧 readout mass 抬 W0 长程）被证伪：
+- **长程全面塌方**：P11 base qa5 8k/16k/32k=48/45/44；coef1.0 仅 7/8/8（近乎全崩），coef0.5 仅 19/19/27（折半）。没有任何 cell 超 base。
+- **coef0.5 > coef1.0**：弱 mass-bias 破坏更小（qa5 长程 19/19/27 vs 7/8/8，qa1 1k 13 vs 7），与 readout-attack history 的"弱 mass 更优"方向一致，但**仍远低于 base**——弱化只是"破坏更小"，非"有益"，复刻 §3d/L3-recon-aux 的同款模式。
+- **仅 0k 近持平**：coef0.5 qa1 0k=89、qa5 0k=76（≈base 97/74），coef1.0 qa5 0k=79；≥1k 立刻断崖。短上下文（slots 几乎用不上）才不被 mass-bias 破坏。
+- **机制解读**：按检索质量缩放读出 mass 实际把"检索不确定"的长程 query 读出信号压弱，反而切断了长程寻址。这与 §3d/L3-recon 结论一致——在 P11 best 之上加任何"机制侧重整 readout/routing"的旋钮都损害长程检索。**最佳仍是 P11 base（delta-rule+normreadout，无 mass-bias）。** mass-bias 方向关闭。
+
 ## 4. 关键观察 & 待办
 
 1. **chunk1024 全面 >> chunk128**（qa1_0k 89 vs 55，qa5_2k 93 vs 36）→ 缩小 chunk 大幅削弱每步局部窗口（SWA），长句掉分是预期。**chunk size 是当前最大杠杆**。
