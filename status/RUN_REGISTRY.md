@@ -33,11 +33,21 @@
 | **perdoc_chunk256_p8_nullsink_r196** | launch_mem_space_p8_nullsink_chunk256_remote196.sh | 256 | 4096 | 1.0 | 同 nullsink，chunk 128→256 scale-up | 5000 | .196 8-GPU | **RUNNING**（step230/5000）|
 | **wbmode_lowrank (slot_dim 16384)** | launch_mem_space_wbmode_lowrank_local.sh | 1024 | **16384** | — | lowrank_gate r=256 | — | — | **CRASHED**（2026-06-04 00:39 rank3 exit1，无 ckpt，无 eval）|
 | **d2b_swa_train_w2** | launch_d2b_swa_train_w2_remote196.sh | 512 | 4096 | 1.0 | P11 deltarule+normreadout 底座 + **cross-chunk SWA TRAIN window W=2**（target forward 扩成 last-2-ctx+target 拼接1536tok，prefix labels-100，bank frozen 防二次写）；eval-side D2a 的训练侧对称版；bs2 eff16（bs4 OOM）| 5000 | .196 8-GPU | **RUNNING**（commit 9d2417f，2026-06-09 16:08 起，step15+ nf=0 健康）|
-| **rawkv_methodA_b200** | launch_rawkv_methodA_b200.sh | 512 | 4096 | — | **Method A raw-KV readout**：per-chunk 原始 KV + 可训练 emergent gist-key soft-attn（删 TopKSelector 出读路径），注入 L16/20/24，**解冻 reader L16-31**；数据 **T2 合成 needle（pg19 背景，frac0.5，gap3584/n_ctx7，单 needle）+ pg19 续写**（教检索且与 BABILong 不同源→eval 干净）；babilong_mix=0；gist soft-top-k=8 dim128 | 2000（诊断）| B200 8×L20A | **RUNNING**（commit ed56b09，2026-06-19 23:12 起 pid7830，step15+ nf=0 健康，t2_needle loss 已分离记录）|
+| **rawkv_methodA_b200** | launch_rawkv_methodA_b200.sh | 512 | 4096 | — | **Method A raw-KV readout**：per-chunk 原始 KV + 可训练 emergent gist-key soft-attn（删 TopKSelector 出读路径），注入 L16/20/24，**解冻 reader L16-31**；数据 **T2 合成 needle（pg19 背景，frac0.5，gap3584/n_ctx7，单 needle）+ pg19 续写**（教检索且与 BABILong 不同源→eval 干净）；babilong_mix=0；gist soft-top-k=8 dim128 | 2000（诊断）| B200 8×L20A | **DONE — 不破墙/长程崩**（2000步训完 nf=0；W0 qa1 eval 见 §3：final 0k92/1k17/2k5/4k5/8k1/16k1/32k2；step1000 0k93/1k18/2k9/4k5/8k1/16k1/32k0。0k 满分→reader/LM 完好无灾难遗忘；长档（4k+）≤死线 → raw-KV+解冻也读不出长程 needle，之前 train t2_needle loss≈0 是过拟合 train 格式非泛化检索）|
 
 ---
 
 ## 3. BABILong 结果（accuracy %，n=100，qa1/qa2/qa5 × 0k-32k）
+
+### rawkv_methodA_b200（Method A raw-KV readout + 解冻 L16-31）— W0 纯 memory 读出（swa_eval_chunks=0），2026-06-20
+```
+                  0k   1k   2k   4k   8k  16k  32k
+final     qa1     92   17    5    5    1    1    2
+step1000  qa1     93   18    9    5    1    1    0
+```
+- ★裁决：**不破墙**。0k=92-93%（reader/LM 完好，解冻 L16-31 无灾难遗忘）；但 4k+ 长档全部 ≤死线（in-attn oracle 21≈OFF22 / mem_space W0 长程天花板）→ raw-KV（无损内容）+ 解冻 reader **仍读不出长程 needle**。
+- ★train t2_needle loss≈0.0000 是**过拟合 train needle 格式**，非泛化检索：held-out 随机 needle 的 W0 长档崩证实。
+- final 与 step1000 同形（无过拟合后掉的额外信号，整段就低）。加载验证：901 keys missing=0 unexpected=0，架构与 ckpt 完美匹配。
 
 ### chunk1024_temp20（slot_dim=4096，chunk1024）— 最强基线，10 task 全测
 ```
