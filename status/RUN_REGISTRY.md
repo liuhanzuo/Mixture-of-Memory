@@ -931,10 +931,10 @@ L2ON_pg19           final    |  11.25     9.55     2.57   |  7.79
 team-lead 采纳「Part-Y-only」干净单轴框架（比早先 option A 更紧、回归安全）：
 - **机制**：`config.single_layer_mem`（默认 None = 全层 grouped-softmax = 字节级 anchor）。设为 layer idx → 仅该层跑 `landmark_grouped_softmax`，其余 31 层对**同一** attn_weights（含检索到的 prefix 列）跑 plain causal softmax。**KV/检索/窗口/数据全不动 → 不碰 S6**。landmark token 仍物理在 input_ids，非目标层把它当普通 key。把原作者写死的 dead `softmax` 行（旧 :466 ValueError 下面）变成真正 plain-softmax 路径。
 - **实现**：`LlamaAttention/DecoderLayer.__init__(..., layer_idx)` + `LlamaModel.__init__` 透传 enumerate idx；归一化处 `use_grouped=(single_layer_mem is None) or (layer_idx==single_layer_mem)` 门控。~30 行。
-- **CPU smoke PASS（diskB，隔离 _s5_smoke/ 目录，无 GPU）**：(1) 回归证明 single_layer_mem=None vs 未改 anchor forward **max-abs-diff=0.000e+00**；(2) None → grouped_layers[0,1,2,3]；(3) =1 → 仅 L1 grouped、[0,2,3] plain、**无 ValueError**、输出相对 anchor 改变(0.403)。
-- **产物（已 commit fd76d56，author LiuHanzuo）**：`external/landmark/s5_patch/`（llama_mem.S5.py/.diff、config.S5、apply_s5.sh、smoke 脚本、README）。
-- **⚠ 与 S4b 文件冲突**：`llama/llama_mem.py` 是 gitignore 的 vendored 嵌套 repo，与 S4b（learned_block_gate）改的是**同一物理文件同一归一化调用点**。S5 diff 对 anchor 6 hunk 全过，对 S4b 工作树 hunk#4（归一化处）FAIL、其余 5 hunk(layer_idx 透传)过 → 两轴正交可组合，但需对那一个 hunk 做手动 3-way merge（apply_s5.sh 会检测并报警，不盲目覆盖）。
-- **状态**：[READY] 待发射。**未启动训练**——按 team-lead，等某 16-GPU 组空出(Group-A ~S2 完成后)且 team-lead 确认(S2/S3/S4b 结果可能重塑计划)。launcher `external/landmark/train_landmark.sh` 已透传 `LM_SINGLE_LAYER` env，发射前把它接到 `from_pretrained(single_layer_mem=...)` config kwarg 即可。
+- **CPU smoke PASS（diskB，隔离目录，无 GPU）**：(1) 回归证明 single_layer_mem=None vs 未改 anchor forward **max-abs-diff=0.000e+00**；(2) None → 全层 grouped；(3) 指定层 → 仅该层 grouped、其余 plain、**无 ValueError**、输出相对 anchor 改变。
+- **产物（已 commit）**：`external/landmark/s5_patch/`（llama_mem.S5.py/.diff、config.S5、apply_s5.sh、s5_smoke_worker.py、README）fd76d56；`external/landmark/build_isolated_s5_tree.sh` 684c51f。
+- **✅ 隔离树已建（team-lead 要求 ISOLATION 而非 merge，2026-06-19）**：`external/landmark_s5_tree/llama/`（diskB）= 从嵌套 repo HEAD（d963e50=pristine anchor 99631a8）`git archive` 出干净 llama/ 包 + apply_s5.sh 干净打 patch（6/6 hunk）= 「anchor + single_layer_mem only」单轴树，与 S4b 的 live 文件 `external/landmark-attention/llama/llama_mem.py` **物理分离、零合并步、零共享文件竞争**。从该隔离树 re-smoke（32 层 toy 匹配真实 7B 深度）：single_layer_mem=None vs pristine anchor **max-abs-diff=0.000e+00**；single_layer_mem=16 → grouped_layers=[16]、其余 31 层 plain、输出改变(0.390)、ISOLATED_SMOKE_RESULT PASS。
+- **状态**：[READY] 真正零合并待发射。**未启动训练**——等某 16-GPU 组空出(Group-A ~S2 完成后)且 team-lead 确认。发射：从 `external/landmark_s5_tree/` 跑，`LM_SINGLE_LAYER=16` 接到 `from_pretrained(single_layer_mem=16)`。计划：S2 腾出 Group-A 后 S4b+S5 作为下一对并行(各占一组)，待 S2 裁决。
 - **待定配置**：base=LLaMA-1-7B、mem_freq=63、ctx512、lr2e-5 cosine+3%warmup、wd0.1、eff-batch128、full-FT、~15k步（或先 3k 步诊断）；目标层默认 L16（中层），守门=native passkey 70→32k。
 
 
