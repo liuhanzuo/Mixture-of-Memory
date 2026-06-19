@@ -896,3 +896,25 @@ L2ON_pg19           final    |  11.25     9.55     2.57   |  7.79
 - **★★裁决：解冻全量 SFT（单层 L16 in-attn 注入，1000 步）NOT 破墙，且呈强负信号。** oracle=5 **低于** OFF=12（注入完美定位的 gold needle，oracle_hit=100/100 满命中，模型反而答得更差），远未达破墙阈值 >35。step500 中间 probe 同向（OFF=13、oracle=7，oracle<OFF）→ final 确认非偶然。
 - **双双 ≪ frozen baseline（OFF22/oracle21）**：解冻 1000 步后 OFF 从 22 掉到 12，说明全量 SFT 在 dolmino 短档（n_ctx 窗口小）上轻微损伤了 backbone 基础 NIAH 能力，而 in-attn 注入通道不仅没学会被 consume，反而成了干扰源（oracle<OFF）。
 - **意义**：frozen reader（28+ 实验）+ unfreeze reader（本次）**两大框架在"让模型 consume 注入精确 KV"上双双穷尽**。单层 in-attn 注入 + 全量解冻 1000 步训练不足以让 backbone 学会 attend 注入 KV——可能需要 (a) 多层注入、(b) 注入机制从训练第一步即在（而非微调后期引入）、(c) 更长/更长程的训练数据（dolmino 短档见不到长程依赖，与 §3a 蒸馏结论同源），或 (d) 换 readout 范式。**训练侧 + 注入接口侧均无活线 → 需主会话裁定换范式。**
+
+### ★ Phase 1 S0 锚点：Landmark Attention passkey 复现成功（2026-06-19，landmark-repro）
+**目的**：在我司 infra 复现官方 Landmark（arXiv 2305.16300，epfml/landmark-attention）的 passkey 长程正面结果，建立"已知能破墙的 memory 方法"可信锚点（Phase 2/3 diff-based 迁移基线）。**零训练**：用官方 released weight-diff recover 出 tuned ckpt 直接 eval。
+
+- **base**：LLaMA-1-7B（`huggyllama/llama-7b`，非 LLaMA-2——官方 wdiff 是对 LLaMA-1 的 diff，recover backward-compat checksum 49798.7656=LLaMA-1-7B psum，已过完整性校验）。
+- **mem**：`epfml/landmark-attention-llama7b-wdiff` recover 出的 tuned ckpt（15k 步 RedPajama landmark-attn 微调，含 `<landmark>` token）。
+- **env**：独立 venv `external/landmark_venv`（torch2.1.0+cu121 + transformers4.28.1 + numpy1.26 + hf-hub0.14.1 + pyarrow<13），非主 .venv（避 transformers5.5 API 冲突）。non-triton 路径（use_flash=False）。H20 sm_90。
+- **eval**：passkey retrieval，50 tests/长度，top_k=5，n_garbage chars→token（garbage≈3.7 char/tok）。harness `external/landmark/run_passkey.py`（参数化+sharding），commit 1e66a16。
+
+| ~tokens | base LLaMA-1-7B | landmark-mem |
+|--------:|:--------------:|:-----------:|
+| 70   | 100% | 100% |
+| 1.1k | 100% | 100% |
+| 2.2k | 98%  | 94%  |
+| 4k   | **0%** | **100%** |
+| 8k   | **0%** | 96%  |
+| 16k  | OOM*   | 96%  |
+| 32k  | OOM*   | 96%  |
+
+\* base 全量 O(n²) attn，>2048 ctx（其 max_pos）passkey 已出训练窗→0%，≥16k 单卡 96GB OOM（base 本就无长程能力）。
+
+**★裁决：成功复现破墙。** base 在自身 2048 ctx 上限处断崖（2.2k→4k：98%→0%），landmark-mem 一路 94–100% 直到 **~31k tok（96%）**——landmark in-context memory 机制确实破长程墙，与论文 passkey 图吻合。**这是 Phase 2/3 迁移的可信锚点：eval 口径正确 + 已复现一个能破墙的方法。** 下一步 Phase 2 差异表（working Landmark → mem_space 7 维差异）。
