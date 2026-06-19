@@ -1,0 +1,106 @@
+--- llama_mem.py
++++ llama_mem.py
+@@ -19,6 +19,7 @@
+ # limitations under the License.
+ """ PyTorch LLaMA model."""
+ import math
++import os
+ from typing import List, Optional, Tuple, Union
+ 
+ import torch
+@@ -38,6 +39,21 @@
+ 
+ _CONFIG_FOR_DOC = "LlamaLandmarkConfig"
+ 
++# S5 readout-axis instrumentation. When the env var LM_S5_DEBUG_COUNTER=1 is set,
++# every attention forward bumps one of these counters so a smoke test can verify
++# that exactly the target layer takes the grouped-softmax branch and all others
++# take the plain-softmax branch. No effect on numerics; default-off is a no-op.
++_S5_READOUT_COUNTS = {"grouped": 0, "plain": 0}
++_S5_GROUPED_LAYERS = set()
++_S5_PLAIN_LAYERS = set()
++
++
++def _s5_reset_counters():
++    _S5_READOUT_COUNTS["grouped"] = 0
++    _S5_READOUT_COUNTS["plain"] = 0
++    _S5_GROUPED_LAYERS.clear()
++    _S5_PLAIN_LAYERS.clear()
++
+ 
+ # Copied from transformers.models.bart.modeling_bart._make_causal_mask
+ def _make_causal_mask(
+@@ -245,13 +261,18 @@
+ class LlamaAttention(nn.Module):
+     """Multi-headed attention from 'Attention Is All You Need' paper"""
+ 
+-    def __init__(self, config: LlamaLandmarkConfig):
++    def __init__(self, config: LlamaLandmarkConfig, layer_idx: Optional[int] = None):
+         super().__init__()
+         self.config = config
+         self.hidden_size = config.hidden_size
+         self.num_heads = config.num_attention_heads
+         self.head_dim = self.hidden_size // self.num_heads
+         self.max_position_embeddings = config.max_position_embeddings
++        # S5 readout-axis (Part Y only): which decoder layer this attention belongs to,
++        # and the config-level single-layer gate. When single_layer_mem is None (default),
++        # every layer runs the landmark grouped-softmax = byte-identical anchor behavior.
++        self.layer_idx = layer_idx
++        self.single_layer_mem = getattr(config, "single_layer_mem", None)
+ 
+         if (self.head_dim * self.num_heads) != self.hidden_size:
+             raise ValueError(
+@@ -464,9 +485,29 @@
+             # upcast attention to fp32
+             if is_mem is None:
+                 raise ValueError("Don't use this without landmarks")
+-                attn_weights = nn.functional.softmax(attn_weights, dim=-1, dtype=torch.float32).to(query_states.dtype)
+-            else:
++            # --- S5 readout-axis gate (Part Y only) -------------------------------
++            # single_layer_mem is None  -> EVERY layer runs the landmark grouped
++            #   softmax = byte-identical anchor behaviour (regression-safe default).
++            # single_layer_mem == idx   -> ONLY that layer runs grouped softmax;
++            #   all other layers normalize the SAME attn_weights (same retrieval+KV
++            #   key set, incl. retrieved prefix cols) with a plain causal softmax,
++            #   i.e. they see the <landmark> tokens as ordinary keys with no block
++            #   isolation. KV / retrieval / windowing / data are untouched.
++            _use_grouped = (self.single_layer_mem is None) or (self.layer_idx == self.single_layer_mem)
++            if os.environ.get("LM_S5_DEBUG_COUNTER") == "1":
++                if _use_grouped:
++                    _S5_READOUT_COUNTS["grouped"] += 1
++                    if self.layer_idx is not None:
++                        _S5_GROUPED_LAYERS.add(self.layer_idx)
++                else:
++                    _S5_READOUT_COUNTS["plain"] += 1
++                    if self.layer_idx is not None:
++                        _S5_PLAIN_LAYERS.add(self.layer_idx)
++            if _use_grouped:
+                 attn_weights = landmark_grouped_softmax(attn_weights, dim=-1, is_mem=is_mem.expand(-1, self.num_heads, -1, -1), last_section_mask=last_section_mask).to(query_states.dtype)
++            else:
++                attn_weights = nn.functional.softmax(attn_weights, dim=-1, dtype=torch.float32).to(query_states.dtype)
++            # ----------------------------------------------------------------------
+             if attn_prefix is not None:
+                 attn_prefix, attn_weights = torch.split(attn_weights, (attn_prefix.shape[-1], attn_weights.shape[-1] - attn_prefix.shape[-1]), dim=-1)
+             attn_output = torch.matmul(attn_weights, value_states)
+@@ -489,10 +530,10 @@
+ 
+ 
+ class LlamaDecoderLayer(nn.Module):
+-    def __init__(self, config: LlamaLandmarkConfig):
++    def __init__(self, config: LlamaLandmarkConfig, layer_idx: Optional[int] = None):
+         super().__init__()
+         self.hidden_size = config.hidden_size
+-        self.self_attn = LlamaAttention(config=config)
++        self.self_attn = LlamaAttention(config=config, layer_idx=layer_idx)
+         self.mlp = LlamaMLP(
+             hidden_size=self.hidden_size,
+             intermediate_size=config.intermediate_size,
+@@ -694,7 +735,7 @@
+         self.vocab_size = config.vocab_size
+ 
+         self.embed_tokens = nn.Embedding(config.vocab_size, config.hidden_size, self.padding_idx)
+-        self.layers = nn.ModuleList([LlamaDecoderLayer(config) for _ in range(config.num_hidden_layers)])
++        self.layers = nn.ModuleList([LlamaDecoderLayer(config, layer_idx=i) for i in range(config.num_hidden_layers)])
+         self.norm = LlamaRMSNorm(config.hidden_size, eps=config.rms_norm_eps)
+ 
+         self.gradient_checkpointing = False

@@ -1,0 +1,26 @@
+from transformers.models.llama.configuration_llama import LlamaConfig
+
+class LlamaLandmarkConfig(LlamaConfig):
+    model_type = "llama_with_landmark"
+
+    def __init__(
+        self,
+        mem_id=32001,
+        mem_freq=50,
+        train_context_length=512,
+        include_landmark_in_loss=True,
+        single_layer_mem=None,
+        **kwargs,
+    ):
+        self.mem_id = mem_id
+        self.mem_freq = mem_freq
+        self.train_context_length = train_context_length
+        self.include_landmark_in_loss = include_landmark_in_loss
+        # S5 readout-axis (Part Y only): if None, ALL layers run the landmark
+        # grouped-softmax (anchor, byte-identical). If set to an int layer index,
+        # ONLY that decoder layer runs grouped-softmax; every other layer runs a
+        # plain causal softmax over the exact same (retrieval+KV) key set. This
+        # touches only the attention-weight normalization; landmark tokens stay
+        # physical in input_ids and the KV/retrieval/windowing path is unchanged.
+        self.single_layer_mem = single_layer_mem
+        super().__init__(**kwargs)
