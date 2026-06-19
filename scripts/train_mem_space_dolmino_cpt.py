@@ -497,6 +497,15 @@ def _mem_space_params(model: torch.nn.Module) -> List[torch.nn.Parameter]:
         for p in l3_token_recon_head.parameters():
             if id(p) not in seen:
                 params.append(p); seen.add(id(p))
+    # Raw-KV readout gist scorer (Method A, 2026-06-19). Shared singleton on the
+    # root (peer to l3_pool); collect its query/key_proj params so the trainable
+    # gist-key soft attention enters the optimizer (else it stays frozen at init
+    # and the emergent selection never learns).
+    gist_readout = getattr(root, "_gist_readout", None)
+    if gist_readout is not None:
+        for p in gist_readout.parameters():
+            if id(p) not in seen:
+                params.append(p); seen.add(id(p))
     return params
 
 
@@ -1358,6 +1367,39 @@ def parse_args() -> argparse.Namespace:
                         "they can learn to attend the injection. Default None → "
                         "single-layer behaviour (byte-identical to v1).")
 
+    # Raw-KV READOUT — Method A (per-chunk raw-KV + emergent trainable gist-key
+    # soft attention). docs/RAWKV_READOUT_PROPOSAL.md §2. The structural
+    # successor to --use_inattn_kv: same in-attention raw-KV concat readout, but
+    # the retrieval is a DIFFERENTIABLE, TRAINABLE gist-key soft attention (the
+    # Landmark mechanism) instead of the non-differentiable TopKSelector hard
+    # top-k. MUST pair with --unfreeze_backbone --unfreeze_layers_from N so the
+    # reader learns to consume the injected raw KV AND the gist scorer (whose
+    # selection weight rides into the native softmax as a per-column log-bias)
+    # gets gradient. Default off → byte-identical to pre.
+    p.add_argument("--use_rawkv_readout", action="store_true", default=False,
+                   help="Enable Method A raw-KV readout (trainable gist-key soft "
+                        "attention + in-attention raw-KV concat). Pair with "
+                        "--unfreeze_layers_from so the reader + gist scorer train.")
+    p.add_argument("--rawkv_readout_layer", type=int, default=16,
+                   help="Single layer whose self-attn consumes the retrieved raw "
+                        "KV + writes the store. Default 16.")
+    p.add_argument("--rawkv_readout_layers", type=str, default=None,
+                   help="Multi-layer readout: comma-separated decoder layer "
+                        "indices that consume the retrieved raw KV, e.g. "
+                        "'16,20,24'. Overrides --rawkv_readout_layer; the store "
+                        "WRITE owner is the smallest index. All listed layers "
+                        "should be within the unfrozen range. Default None → "
+                        "single-layer.")
+    p.add_argument("--rawkv_gist_dim", type=int, default=128,
+                   help="Dim of the trainable gist-key scoring space. Default 128.")
+    p.add_argument("--rawkv_readout_topk_chunks", type=int, default=8,
+                   help="Soft-top-k: keep this many highest-weight chunks at "
+                        "read (0 / >= n_chunks → keep all = pure soft attention; "
+                        "weights stay differentiable either way). Default 8.")
+    p.add_argument("--rawkv_readout_temp", type=float, default=1.0,
+                   help="Softmax temperature for the gist soft selection. "
+                        "Default 1.0.")
+
     # ----- Full fine-tune: unfreeze the entire Llama backbone (2026-06-18) ----- #
     # Landmark-faithful SFT: the frozen reader cannot consume injected KV through
     # an attention path it was never trained on (oracle-perfect needle still ≈OFF
@@ -1419,6 +1461,13 @@ def parse_args() -> argparse.Namespace:
         })
     else:
         args.inattn_kv_layers = None
+    # Parse comma-separated --rawkv_readout_layers (Method A) → sorted list.
+    if isinstance(args.rawkv_readout_layers, str) and args.rawkv_readout_layers.strip():
+        args.rawkv_readout_layers = sorted({
+            int(x) for x in args.rawkv_readout_layers.split(",") if x.strip() != ""
+        })
+    else:
+        args.rawkv_readout_layers = None
     return args
 
 
@@ -1571,6 +1620,12 @@ def build_model(args, device, dtype) -> torch.nn.Module:
         inattn_kv_layer=args.inattn_kv_layer,
         inattn_kv_topk=args.inattn_kv_topk,
         inattn_kv_layers=args.inattn_kv_layers,
+        use_rawkv_readout=args.use_rawkv_readout,
+        rawkv_readout_layer=args.rawkv_readout_layer,
+        rawkv_readout_layers=args.rawkv_readout_layers,
+        rawkv_gist_dim=args.rawkv_gist_dim,
+        rawkv_readout_topk_chunks=args.rawkv_readout_topk_chunks,
+        rawkv_readout_temp=args.rawkv_readout_temp,
     )
 
     # H7 rotary fp32 fix — snapshot before bf16 cast
@@ -2561,6 +2616,14 @@ def _save_adapter(model, args, step: int, final: bool = False) -> None:
             "inattn_kv_layer": args.inattn_kv_layer,
             "inattn_kv_topk": args.inattn_kv_topk,
             "inattn_kv_layers": args.inattn_kv_layers,
+            # Raw-KV readout (Method A) — round-trip so eval rebuilds the same
+            # gist scorer + readout layers (adds the shared gist_readout module).
+            "use_rawkv_readout": args.use_rawkv_readout,
+            "rawkv_readout_layer": args.rawkv_readout_layer,
+            "rawkv_readout_layers": args.rawkv_readout_layers,
+            "rawkv_gist_dim": args.rawkv_gist_dim,
+            "rawkv_readout_topk_chunks": args.rawkv_readout_topk_chunks,
+            "rawkv_readout_temp": args.rawkv_readout_temp,
             # Partial-unfreeze metadata (v2): records which layers were trainable.
             "unfreeze_backbone": args.unfreeze_backbone,
             "unfreeze_layers_from": args.unfreeze_layers_from,

@@ -360,6 +360,7 @@ class MemorySpaceLayer(nn.Module):
         recon_decoder: Optional[nn.Module] = None,
         n_heads: Optional[int] = None,
         n_kv_heads: Optional[int] = None,
+        gist_readout: Optional[nn.Module] = None,
     ) -> None:
         super().__init__()
         if not isinstance(config, MemorySpaceConfig):
@@ -439,6 +440,17 @@ class MemorySpaceLayer(nn.Module):
             object.__setattr__(self, "recon_decoder", recon_decoder)
         else:
             object.__setattr__(self, "recon_decoder", None)
+
+        # Raw-KV READOUT — Method A (2026-06-19). The trainable gist scorer is a
+        # shared singleton (registered once on the model root by patch.py, like
+        # l3_pool). Registered via object.__setattr__ so its params are NOT
+        # duplicated in every layer's state_dict. None when use_rawkv_readout
+        # is off. The per-sequence raw-KV readout STORE is created/owned on the
+        # shared MemoryBank (reuses the bank's reset/detach lifecycle).
+        if gist_readout is not None:
+            object.__setattr__(self, "gist_readout", gist_readout)
+        else:
+            object.__setattr__(self, "gist_readout", None)
         self.selector = TopKSelector(
             d_model=d_model,
             slot_dim=slot_dim,
@@ -850,6 +862,32 @@ class MemorySpaceLayer(nn.Module):
             )
             self._is_inattn_write_owner = self._is_inattn_kv_layer
         if self._is_inattn_kv_layer:
+            from .inattn_kv import install_inattn_wrapper
+            _attn = getattr(self.wrapped_layer, "self_attn", None)
+            if _attn is not None:
+                install_inattn_wrapper(_attn)
+
+        # Raw-KV READOUT — Method A (2026-06-19). Layer ownership mirrors the
+        # inattn_kv channel: the READ/INJECT is owned by every layer in
+        # config.rawkv_readout_layers (or the single rawkv_readout_layer); the
+        # per-chunk STORE WRITE (raw tokens + gist source) is owned by exactly
+        # ONE layer (the smallest read index) so the shared store is populated
+        # once per chunk. We reuse the SAME inattn self-attn wrapper (it accepts
+        # the 3-tuple stash with a per-column gist log-bias). Default off →
+        # _is_rawkv_readout_layer is False everywhere (byte-identical to pre).
+        _ro_layers = list(getattr(config, "rawkv_readout_layers", None) or [])
+        if config.use_rawkv_readout and _ro_layers:
+            self._is_rawkv_readout_layer = self._layer_idx in _ro_layers
+            self._is_rawkv_readout_write_owner = (
+                self._layer_idx == min(_ro_layers)
+            )
+        else:
+            self._is_rawkv_readout_layer = (
+                config.use_rawkv_readout
+                and self._layer_idx == config.rawkv_readout_layer
+            )
+            self._is_rawkv_readout_write_owner = self._is_rawkv_readout_layer
+        if self._is_rawkv_readout_layer:
             from .inattn_kv import install_inattn_wrapper
             _attn = getattr(self.wrapped_layer, "self_attn", None)
             if _attn is not None:
@@ -1302,7 +1340,27 @@ class MemorySpaceLayer(nn.Module):
                     self.memory_bank.append_rawkv(
                         hidden_states.detach(), _iq, token_pos=_ik_pos
                     )
-            # ---- EXP-R1 dead-slot recycling + EXP-D2 telemetry (layer-0) ----
+            # ---- Raw-KV READOUT (Method A): WRITE (2026-06-19) ----
+            # The write owner appends this chunk's UNCOMPRESSED token hidden
+            # (pre-LN layer input) + source positions + a per-chunk gist source
+            # (mean-pooled chunk hidden) to the per-sequence readout store. NO
+            # compression, NO slot coupling, NO TopKSelector. The store lives on
+            # the shared bank (lazy-created) so it follows the bank's reset/detach
+            # lifecycle. No-op while frozen (eval question-time) or when off.
+            if self._is_rawkv_readout_write_owner and not self.memory_bank.frozen:
+                from .rawkv_readout import RawKVReadoutStore
+                _ro_store = getattr(self.memory_bank, "_rawkv_readout_store", None)
+                if _ro_store is None:
+                    _ro_store = RawKVReadoutStore()
+                    object.__setattr__(
+                        self.memory_bank, "_rawkv_readout_store", _ro_store
+                    )
+                _ro_pos = torch.arange(
+                    T, device=hidden_states.device, dtype=torch.long
+                ).unsqueeze(0).expand(B, -1)
+                _ro_store.append_chunk(
+                    hidden_states.detach(), token_pos=_ro_pos
+                )
             # Driven from layer-0 only (the bank is SHARED across all 32 layers,
             # so a single driver avoids 32 layers fighting — mirrors the layer-0
             # usage-histogram pattern). Runs whenever the bank is writable (NOT
@@ -2289,6 +2347,56 @@ class MemorySpaceLayer(nn.Module):
                 _inattn_attn._inattn_kv = (_K_raw, _V_raw)
                 self._last_inattn_R = int(_K_raw.shape[2])
                 self._last_inattn_pos = _src_pos
+
+        # ---- Raw-KV READOUT (Method A): READ / INJECT (2026-06-19) ----
+        # Differentiable, TRAINABLE gist-key soft attention (replaces the
+        # non-differentiable TopKSelector hard top-k of the inattn probe). The
+        # current chunk's query (the pre-LN layer input `hidden_states`,
+        # grad-bearing) scores every stored chunk's gist key via the shared
+        # trainable GistReadout; the soft-top-k chunks' raw token hidden are
+        # re-projected through THIS layer's native k/v_proj + RoPE
+        # (build_retrieved_kv) and concatenated in-attention, with the per-chunk
+        # gist weight injected as an additive log-bias on the retrieved columns
+        # (the 3-tuple stash the inattn wrapper consumes). gradient flows:
+        # loss → native softmax → col_bias → GistReadout.query/key_proj, so the
+        # scorer is trained on the read path (Landmark mechanism). No-op when the
+        # store is empty (e.g. the FIRST chunk, before any write).
+        self._last_rawkv_readout_R = 0
+        self._last_rawkv_readout_fired = False
+        if self._is_rawkv_readout_layer and self.gist_readout is not None:
+            _ro_attn = getattr(self.wrapped_layer, "self_attn", None)
+            if _ro_attn is not None:
+                # Reset the stash at the START (grad-ckpt safe; mirrors inattn).
+                _ro_attn._inattn_kv = None
+            _ro_store = getattr(self.memory_bank, "_rawkv_readout_store", None)
+            if (
+                _ro_attn is not None
+                and _ro_store is not None
+                and _ro_store.size() > 0
+            ):
+                _ro_ret = self.gist_readout.retrieve(
+                    hidden_states, _ro_store,
+                    topk_chunks=cfg.rawkv_readout_topk_chunks,
+                    temperature=cfg.rawkv_readout_temp,
+                )
+                if _ro_ret is not None:
+                    _ro_h, _ro_pos, _ro_bias = _ro_ret      # [B,R,d],[B,R],[B,Tq,R]
+                    from .inattn_kv import build_retrieved_kv
+                    _ro_pre_norm = getattr(
+                        self.wrapped_layer, "input_layernorm", None
+                    )
+                    _roK, _roV = build_retrieved_kv(
+                        _ro_attn, _ro_h.to(hidden_states.dtype), _ro_pos,
+                        position_embeddings, pre_norm=_ro_pre_norm,
+                    )
+                    # Grad-flow probe (mirrors inattn): retain grad on the bias so
+                    # the smoke can assert the gist scorer's path is in-graph.
+                    if getattr(self, "_inattn_grad_probe", False) and _ro_bias.requires_grad:
+                        _ro_bias.retain_grad()
+                        self._last_rawkv_readout_bias = _ro_bias
+                    _ro_attn._inattn_kv = (_roK, _roV, _ro_bias)
+                    self._last_rawkv_readout_R = int(_roK.shape[2])
+                    self._last_rawkv_readout_fired = True
 
         bypass_out = self._maybe_ckpt_wrapped_layer(
             hidden_states,

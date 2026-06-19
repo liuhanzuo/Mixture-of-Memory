@@ -201,6 +201,19 @@ def apply_mem_space_to_model(
             init_scale=config.l2_init_scale,
         ).to(device_ref)
 
+    # Raw-KV READOUT — Method A (2026-06-19). When use_rawkv_readout, create a
+    # single shared trainable GistReadout (peer to l3_pool / recon_decoder).
+    # Registered once as a named submodule on the model root below so its params
+    # appear in state_dict + _mem_space_params (NOT duplicated per layer). The
+    # per-sequence raw-KV readout STORE lives on the shared bank (lazy-created in
+    # the layer forward, follows the bank's reset/detach lifecycle).
+    gist_readout = None
+    if getattr(config, "use_rawkv_readout", False):
+        from .rawkv_readout import GistReadout
+        gist_readout = GistReadout(
+            d_model=d_model, gist_dim=config.rawkv_gist_dim,
+        )
+
     for i in target_indices:
         orig = layers[i]
         wrapper = MemorySpaceLayer(
@@ -209,12 +222,18 @@ def apply_mem_space_to_model(
             recon_decoder=recon_decoder,
             n_heads=getattr(model.config, "num_attention_heads", None),
             n_kv_heads=getattr(model.config, "num_key_value_heads", None),
+            gist_readout=gist_readout,
         )
         layers[i] = wrapper
         mem_layers.append(wrapper)
 
     model._mem_space_config = config
     model._mem_space_layers = mem_layers
+    # Raw-KV readout gist scorer: register on root so params enter state_dict +
+    # the optimizer (collected by _mem_space_params). None when feature is off.
+    model._gist_readout = gist_readout
+    if gist_readout is not None:
+        root.add_module("gist_readout", gist_readout)
     # Expose the shared bank (or None) so the training loop's _reset_banks /
     # detach_ can touch a single bank instead of walking every layer.
     model._mem_space_shared_bank = shared_bank

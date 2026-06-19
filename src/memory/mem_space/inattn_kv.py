@@ -125,7 +125,17 @@ def make_inattn_attention_forward(self_attn: torch.nn.Module) -> Callable:
                 **kwargs,
             )
 
-        K_raw, V_raw = injected                          # [B, n_kv, R, hd] each
+        # Stash is either (K_raw, V_raw) — the original eval-time probe — or
+        # (K_raw, V_raw, col_bias) — Method A's raw-KV readout, where col_bias is
+        # a grad-bearing additive LOG-weight per (query-token, retrieved-token)
+        # injected into the retrieved KV columns so the trainable gist scorer's
+        # selection weight participates in the ONE softmax (Landmark §4b:
+        # cross-block weight = token-score × landmark-score, in additive space).
+        col_bias = None
+        if len(injected) == 3:
+            K_raw, V_raw, col_bias = injected            # [B,n_kv,R,hd], [B,Tq,R]
+        else:
+            K_raw, V_raw = injected                      # [B, n_kv, R, hd] each
         input_shape = hidden_states.shape[:-1]
         hidden_shape = (*input_shape, -1, self.head_dim)
 
@@ -171,6 +181,16 @@ def make_inattn_attention_forward(self_attn: torch.nn.Module) -> Callable:
         allowed = torch.zeros(
             base.shape[0], 1, Lq, R, dtype=base.dtype, device=base.device
         )
+        if col_bias is not None:
+            # col_bias: [B, Tq, R] additive log-weight on the retrieved columns.
+            # Broadcast onto the [B, 1, Lq, R] allowed block (one head axis). Only
+            # applied when the query length matches (the bypass / real LM forward,
+            # Tq == Lq); the wrapped layer may also be invoked on a DIFFERENT
+            # extended sequence (Lq != Tq) where the per-token bias does not
+            # align — there the retrieved columns keep a uniform (zero) bias.
+            _cb = col_bias.to(dtype=base.dtype, device=base.device)
+            if _cb.dim() == 3 and _cb.shape[-1] == R and _cb.shape[1] == Lq:
+                allowed = allowed + _cb.unsqueeze(1)
         full_mask = torch.cat([base, allowed], dim=-1)   # [B, 1, Lq, Lk+R]
 
         from transformers.modeling_utils import ALL_ATTENTION_FUNCTIONS

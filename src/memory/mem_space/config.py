@@ -567,6 +567,65 @@ class MemorySpaceConfig:
     # → byte-identical to the single-layer inattn_kv_layer behaviour.
     inattn_kv_layers: Optional[List[int]] = None
 
+    # ---------------------------------------------------------------------- #
+    # Raw-KV READOUT — Method A (per-chunk raw-KV + EMERGENT trainable gist-key
+    # soft attention), docs/RAWKV_READOUT_PROPOSAL.md §2 Method A, 2026-06-19.
+    # ---------------------------------------------------------------------- #
+    # This is the structural successor to the eval-time `use_inattn_kv` probe.
+    # The probe proved the in-attention raw-KV concat mechanism is in-graph and
+    # multi-layer capable, but its RETRIEVAL is non-differentiable: it scores
+    # stored tokens by the TopKSelector routing-q under no_grad + hard top-k, so
+    # NO gradient ever reaches a selection scorer. Method A replaces that with an
+    # EMERGENT, TRAINABLE gist-key soft attention (the Landmark mechanism):
+    #
+    #   WRITE (per chunk c, NO compression): append the chunk's raw token hidden
+    #     states (pre-LN layer input) + source positions to a per-sequence store,
+    #     plus ONE gist vector per chunk (attention-pool / mean of the chunk
+    #     tokens through a small TRAINABLE projection) used purely as a retrieval
+    #     KEY (it indexes, never stores content — like Landmark's <landmark>).
+    #   READ (current query): score q against every chunk's gist-key, softmax →
+    #     a differentiable soft selection weight per chunk (soft-top-k: keep the
+    #     highest-weight chunks, renormalise — still differentiable, NO STE, NO
+    #     load-balance, NO separate selector head). The selected chunks' raw token
+    #     hidden are concatenated into the reader layer's self-attention via the
+    #     SAME inattn_kv path (build_retrieved_kv + the wrapped forward), and the
+    #     per-chunk gist weight is injected as an ADDITIVE LOG-BIAS on the
+    #     retrieved KV columns (Landmark §4b: cross-block weight = token-score ×
+    #     landmark-score, here token-score from the native softmax × gist-score
+    #     in additive log space). The gist projection therefore sits IN the loss
+    #     graph and gets gradient every time the read fires.
+    #
+    # The gist KEY is recomputed at READ time from the (detached) stored chunk
+    # token hidden via the shared trainable `_gist_readout` projection — the same
+    # trick the L3 pool uses to give a projection a clean gradient path under the
+    # streamed-context + detach training regime. TopKSelector is BYPASSED on this
+    # path (kept behind its own flags for backward compat).
+    #
+    # MUST be paired with reader unfreeze (`--unfreeze_layers_from 16`): the
+    # frozen-reader in-attn oracle negative (21.0 ≈ OFF 22.0) proves a frozen
+    # reader cannot consume even perfectly-injected raw KV. The reader has to be
+    # TRAINED on the raw-KV-concat path — that is Method A's whole novelty.
+    #
+    # Default False → every raw-KV-readout code path is a no-op (byte-identical
+    # to pre). Independent of use_inattn_kv / use_rawkv_retrieval.
+    #   use_rawkv_readout      : master switch.
+    #   rawkv_readout_layers   : decoder layers whose self-attn consumes the
+    #                            retrieved raw KV (list, e.g. [16,20,24]). The
+    #                            store WRITE + gist is owned by the SMALLEST index.
+    #                            None → single rawkv_readout_layer.
+    #   rawkv_readout_layer    : single-layer fallback when *_layers is None.
+    #   rawkv_gist_dim         : dim of the gist-key scoring space (projection out).
+    #   rawkv_readout_topk_chunks : soft-top-k — keep this many highest-weight
+    #                            chunks at read (0 / >= n_chunks → keep all, pure
+    #                            soft attention). Differentiable either way.
+    #   rawkv_readout_temp     : softmax temperature for the gist soft selection.
+    use_rawkv_readout: bool = False
+    rawkv_readout_layers: Optional[List[int]] = None
+    rawkv_readout_layer: int = 16
+    rawkv_gist_dim: int = 128
+    rawkv_readout_topk_chunks: int = 8
+    rawkv_readout_temp: float = 1.0
+
     # FastMem (Gated Delta Rule continuous memory, 2026-05-21):
     # Per-layer fast-weight memory that captures a continuous running summary
     # of ALL tokens (complementing discrete top-k slot routing which only

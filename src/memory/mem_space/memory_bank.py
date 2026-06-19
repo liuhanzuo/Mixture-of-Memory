@@ -156,6 +156,11 @@ class MemoryBank(nn.Module):
         self.rawkv_hidden = None
         self.rawkv_key = None
         self.rawkv_pos = None
+        # Raw-KV READOUT store (Method A, 2026-06-19) is per-sample state too —
+        # drop it at the document / rollout boundary. Lazily (re)created by the
+        # layer's write owner on the next forward.
+        if getattr(self, "_rawkv_readout_store", None) is not None:
+            self._rawkv_readout_store.reset()
 
     def detach_(self) -> None:
         """Break the autograd graph across a segment boundary.
