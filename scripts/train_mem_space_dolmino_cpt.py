@@ -3033,6 +3033,8 @@ def main() -> None:
         step_distill_kl = 0.0
         step_distill_hidden = 0.0
         step_valid_micros = 0
+        step_t2_lm_loss = 0.0   # T2 needle loss only (the "learning retrieval" signal)
+        step_t2_micros = 0
 
         for micro in range(grad_accum):
             # Always suppress DDP auto-sync: TBPTT does multiple backward()
@@ -3167,6 +3169,9 @@ def main() -> None:
                     if isinstance(micro_distill_hidden, torch.Tensor)
                     else float(micro_distill_hidden))
                 step_valid_micros += 1
+                if use_t2 and lm_loss is not None:
+                    step_t2_lm_loss += lm_loss.item()
+                    step_t2_micros += 1
 
         # Manual gradient allreduce (since we always use no_sync above).
         # CRITICAL: every rank MUST issue the SAME sequence of all_reduce
@@ -3316,15 +3321,16 @@ def main() -> None:
             avg_l3recon = step_l3recon / max(1, step_valid_micros)
             avg_distill_kl = step_distill_kl / max(1, step_valid_micros)
             avg_distill_hidden = step_distill_hidden / max(1, step_valid_micros)
+            avg_t2_lm = (step_t2_lm_loss / step_t2_micros) if step_t2_micros > 0 else -1.0
             elapsed = time.time() - t0
             steps_per_sec = global_step / elapsed if elapsed > 0 else 0.0
             logger.info(
-                "[step %d/%d] lm=%.4f aux=%.4f route_aux=%.4f l3recon=%.4f "
+                "[step %d/%d] lm=%.4f t2_needle=%.4f aux=%.4f route_aux=%.4f l3recon=%.4f "
                 "distill_kl=%.4f distill_hid=%.4f lr=%.2e n_ctx=%d "
-                "dolmino=%d babi=%d nf=%d skip=%d speed=%.2f steps/s",
-                global_step, args.total_steps, avg_lm, avg_aux, avg_route_aux,
+                "dolmino=%d babi=%d t2=%d nf=%d skip=%d speed=%.2f steps/s",
+                global_step, args.total_steps, avg_lm, avg_t2_lm, avg_aux, avg_route_aux,
                 avg_l3recon, avg_distill_kl, avg_distill_hidden, lr,
-                current_n_ctx, n_dolmino, n_babilong, n_nonfinite, spike_skip_count,
+                current_n_ctx, n_dolmino, n_babilong, n_t2, n_nonfinite, spike_skip_count,
                 steps_per_sec,
             )
             _xattn_diag = _collect_xattn_diag(model)
@@ -3386,6 +3392,7 @@ def main() -> None:
                     "train/dolmino_count": n_dolmino,
                     "train/babilong_count": n_babilong,
                     "train/t2_count": n_t2,
+                    "train/t2_needle_loss": avg_t2_lm,
                     "memory/top1_sim": _collect_top1_sim(model),
                 }
                 _log_dict.update(_collect_mem_diag(model))
