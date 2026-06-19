@@ -919,6 +919,25 @@ L2ON_pg19           final    |  11.25     9.55     2.57   |  7.79
 
 **★裁决：成功复现破墙。** base 在自身 2048 ctx 上限处断崖（2.2k→4k：98%→0%），landmark-mem 一路 94–100% 直到 **~31k tok（96%）**——landmark in-context memory 机制确实破长程墙，与论文 passkey 图吻合。**这是 Phase 2/3 迁移的可信锚点：eval 口径正确 + 已复现一个能破墙的方法。** 下一步 Phase 2 差异表（working Landmark → mem_space 7 维差异）。
 
+### ★ Phase 3 **S2（数据轴）**：dolmino 替 RedPajama — 训练+passkey eval 完成（2026-06-19，landmark-repro，Group-A）
+**目的（单轴）**：从 S0 锚点出发，**只换训练数据** RedPajama-1T-Sample（7源,~0.98B tok）→ dolmino（wiki+pes2o 2源, 260M LLaMA-1 token），其余严格=锚点（LLaMA-1-7B base、grouped-softmax 全层、mem_freq63、lr2e-5、ctx512、单 512 窗口、full-FT、全序列LM loss、3000 步）。测 damage-investigator 的 #1 嫌疑「窄 2 源数据是否破长程墙」。
+- **训练**：2-node FSDP full-FT（本机+.196 diskA，IB/RoCEv2 GID3 bond1，2.48s/it，2h7m，0 crash），train_loss 1.93。ckpt `external/landmark_ckpts/landmark_s2_dolmino/checkpoint-{1000,2000,3000}`（pytorch_model-0000{1,2,3}-of-00003.bin 齐全）。
+- **eval**：native `run_passkey.py`（S0 同口径：n_garbage 0/4k/8k/15k/30k/60k/115k chars → 70/1.1k/2.2k/4k/8k/16k/32k tok，50 tests/档，top_k=5，mem arm，8-shard 本机分档）。结果 `external/landmark/results_s2/s2_dolmino_step{1000,2000,3000}/pooled.csv`。
+
+| ~tokens | S0 锚点(RedPajama) | S2 step1000 | S2 step2000 | S2 step3000 |
+|--------:|:------------------:|:-----------:|:-----------:|:-----------:|
+| 70   | 100% | 0%* | 0%* | 0%* |
+| 1.1k | 100% | 64% | 78% | 92% |
+| 2.2k | 94%  | 68% | 72% | 82% |
+| 4k   | 100% | 58% | 60% | 78% |
+| 8k   | 96%  | 52% | 80% | 86% |
+| 16k  | 96%  | 60% | 74% | 72% |
+| 32k  | 96%  | 64% | 88% | 96% |
+
+\* n=0（~70 tok，无 garbage 退化 case）三步均 0%：模型答 "the number that you..." 而非数字，是窄 dolmino 数据轻微损伤短 prompt 格式跟随，**非长程检索测试**（passkey 长程墙看 ≥4k 档）。
+
+**★裁决：数据轴（RedPajama→dolmino）NOT 长程杀手，data-axis 排除。** 三步 step1000→3000 **单调上升、全程无断崖**：step3000 在 4k/8k/16k/32k = 78/86/72/96%，最长 32k 档 **96% 追平锚点**。换成窄 2 源 dolmino 后长程墙依然破（仅整体比 15k 步满训锚点低、且短 prompt 格式略损，符合 3k 步欠训 + 窄源）。→ damage-investigator 的「数据是 #1 嫌疑」**被证伪**，嫌疑转向机制轴（S3 ctx结构 / S4 检索 / S5 单层读出）。下一 round-2 轴 = S3（ctx/block 结构）。
+
 ### Phase 3 S5（单层读出轴）SCOPE 笔记（2026-06-19，landmark-s5，Group-B）
 **目标**：把 landmark grouped-softmax/检索从「全 32 层」限制到「仅 L16」，其余轴严格不动（LLaMA-1-7B base、landmark_venv tf4.28、RedPajama-1T-Sample、mem_freq=63、lr2e-5 cosine+3%warmup、wd0.1、eff-batch128、ctx512、full-FT、全序列LM loss、~15k步）。守门=native run_passkey.py（70/1.1k/2.2k/4k/8k/16k/32k tok，50/档，top_k5）；锚点 94-100%，长档断崖=单层读出即长程杀手。
 
@@ -978,6 +997,18 @@ team-lead 采纳「Part-Y-only」干净单轴框架（比早先 option A 更紧�
   - **死结**：可微检索路径**要求 use_cache=True**，但 grad-ckpt **强制 use_cache=False**（:820-825）→ 二者构造性互斥，无法用 grad-ckpt 压检索 activations 而不杀掉被测的检索路径本身。
   - **选项**：(A) **立即退 S4b**（跑安全的 grad-ckpt-on 忠实单窗配方，diff 已设计就绪）——最快出真结果；(B) chunked-retrieval：把 q_len=512 检索切成每 64 query-token 子批累积以封顶 per-layer 张量，保持可微、无需 grad-ckpt，但是对 :396-412 的真手术（超出"plumbing"），改数值风险，~半天；(C) 降 mem_freq/top_k 缩扩张 = 改 anchor 机制 = 第 2 轴，拒。s5 推荐 (A) 立即 S4b + (B) 留作 S3 工程决策。S3 gradient-flow 发现独立成立、有价值。等 team-lead 拍板。
   - **★landmark-s5 独立复现确认（2026-06-19，第二次 probe）**：用 external/landmark-attention/llama/s3_mem_probe.py（外部逐窗驱动 FSDP root，与真 S3 trainer 同形）独立跑出同一结论——M=4 与 M=2(cache_top_k=1) 均 OOM，单 GPU CUDA_LAUNCH_BLOCKING 精确定位到 **:410 `apply_rotary_pos_emb(selected_keys)`**（"Tried to allocate 512MiB, 94.77GiB in use"）。补充精确机制：便宜的 `aggregate="max_over_tokens"`（:373-377，token_retrievers=1）**仅在 offload_cache_to_cpu=True（推理 flag）激活**；训练 offload=off → 强制走 :378 `aggregate=None` → token_retrievers=q_len=512 扩张分支。8-GPU FSDP 的"index assert"是某 rank 先 OOM 的 async 表象（非真 indexing bug）。运维补充：本节点 8-GPU **intra-node NCCL 需 `NCCL_P2P_DISABLE=1`**（否则 init ncclInternalError）；venv torchrun shebang 硬编码 diskA python → 必须 `python -m torch.distributed.run` 启动。s5 同样推荐 (A) S4b。
+
+### ★ Phase 3 **S4b（学习软门控轴）** 执行（2026-06-19，landmark-s5，Group-B .76+.249，team-lead 拍板 A=S4b）
+**S3 已 banked**（检索路径 inference-shaped、训练显存不可行 = 结构性发现，与 gradient-flow 一起完整刻画「Landmark 从不训练 selection」）。**S4b = 唯一改 gating FUNCTION**：把 llama_mem.py:469 的 parameter-free `landmark_grouped_softmax` block-gate 换成 learned soft per-block 标量门，其余全同 anchor（LLaMA-1-7B、RedPajama mirror、mem_freq63、lr2e-5/wd0.1/eff-batch128/ctx512、单 512 窗、全层、landmark token 仍每 63 插、真 KV、grad-ckpt ON 安全——S4b 不激活检索显存爆炸）。
+- **实现**（config flag `learned_block_gate`，默认 OFF → 不影响 teammates 的忠实 run）：llama_mem.py:489-505，小 MLP(hidden→hidden/4→1, SiLU) 作用于每块 landmark-token hidden → 标量 → `gate=exp(MLP)` 乘到该块 grouped-softmax 概率上。**final Linear 零初始化 → exp(0)=1 → step0 与结构门 bit-identical**（起于工作点，测「能否学着离开」非「随机初始化破坏」）。
+- **★PHASE-A2 GRAD-CHECK PASSED**（tiny 2-layer，忠实单 512 窗，.76 实测）：(a) 起于工作点 ✓ gate-ON vs gate-OFF(同模型 toggle) logits max-abs-diff=5.07e-7≈0，且 MLP 原始输出 abs-max=0.0、exp=1.0 精确；(b) 门可训 ✓ step0=4/8 非零梯度（仅 final Linear——零初始化 adapter 标准行为，first layer 梯度过零权重=0），step1+ 优化器一步后 final 权重非零 → 8/8（3 步 AdamW 实测 4/8→8/8→8/8）；(c) loss 有限 ✓ 6.27。脚本 external/landmark-attention/llama/s4b_gradcheck.py。
+- **★发射关键 dtype**：gate MLP 必须 **fp32**（`lm_hidden.float()` 入、gate 转回 bf16）。bf16 下零初始化 MLP 输出非精确 0（舍入）→ exp≠1 → step0 偏离工作点 ~9e-3，且零初始化微小梯度 bf16 下溢为 0（0/8 训练）。FSDP bf16 训练时须保证 lm_gate 参数留 fp32（MixedPrecision 否则会 cast）→ launcher 用 FSDP 排除 lm_gate 出 bf16 wrap 或独立 fp32 unit，发射前在真 2-node FSDP 配置里验证 gate 仍 fp32+可训。
+- **⚠ 与 S5（landmark-s5-2）文件冲突**：S4b 改的 llama_mem.py:489-505 与 S5 的 :469 归一化点是同物理文件同区域 → 两 agent 不可同时编辑该文件的发射版本；node 也都要 Group-B。已与 s5-2 协调：S4b 优先占 .76+.249（team-lead 指派），S5 让出。
+- **状态**：[PHASE-A2 PASS] 待建 launcher + 1-step 2-node FSDP smoke（验 gate fp32+可训+无 NCCL hang）→ 报 PIDs/step/loss → 全 3k run。IB recipe + P2P_DISABLE=1 + static rdzv + `python -m torch.distributed.run` 已验证。**未启动训练**。
+- **★发射工程进展（2026-06-19 晚，landmark-s5）**：launcher `external/landmark/train_landmark_s4b.sh`（2-node static rdzv .76 node_rank0 + .249 node_rank1，port 自选避端口占用，`python -m torch.distributed.run`，IB+P2P_DISABLE=1，grad-ckpt ON，pd2×accum4×16，max_steps3000，save_steps1000）就绪。train.py 增 `--learned_block_gate` arg + `DATASET_MAP_NPROC` env（默认 8，原硬编码 32）。
+  - **数据**：train.py 硬编码的 `togethercomputer/RedPajama-Data-1T-Sample` 已死 → 改 `liang2kl/RedPajama-Data-1T-Sample-Backup`（team-lead 验证镜像，实测 diskB 经 proxy 加载 OK：split=train、930,514 行、cols[text,meta] 同 schema）。
+  - **16-rank 首发失败**：全 rank exit 1（error_file N/A 无 py traceback），且单 GPU run 也在第一个 map（tokenize_fn num_proc=32）后**无 traceback 静默消失**（非 CPU-OOM：节点 2.2TB RAM、2.1TB 空闲；疑 setsid/ssh 会话清理或 num_proc 过高 fork 风暴）。第一个 map 的 31 arrow shard 已落盘。
+  - **修复中**：用同一 train.py（保证 cache fingerprint 一致）单 GPU、`DATASET_MAP_NPROC=16`、同步 ssh（持连）预热 cache → 完成后 16-rank 命中 warm cache 免首建竞争。⚠ 运维坑：`pkill -f train.py` 会误杀含 "train.py" 的 ssh 自身命令串 → 用 `pkill -f "landmark_venv/bin/python train.py"`；`& disown` 后台发射经 sshpass 偶发 exit255 无输出 → 改用持连同步 ssh（Bash run_in_background）跑构建。**仍未启动训练**。
 
 ### ★ Phase 3 S2 数据轴迁移：RedPajama → dolmino(wiki+pes2o)（2026-06-19，landmark-repro，进行中）
 **目的**：单轴只换训练语料（RedPajama-1T-Sample 7源 → dolmino wiki+pes2o 2源），其余全同 Landmark working anchor，验证假设「窄单源数据是否杀长程墙」。守门=native passkey。
