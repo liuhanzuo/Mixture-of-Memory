@@ -87,6 +87,10 @@ debug_run.sh
 # Secrets (extra)
 configs/password_*.txt
 configs/*.tmp
+configs/hf_token.txt
+configs/*_token.txt
+configs/proxy_*.txt
+configs/proxy_*.sh
 *.append.tmp
 
 # Large local artifacts (not tracked, fetched via setup scripts)
@@ -117,3 +121,11 @@ third_party/babilong-pkg/
 # Mom-agent build artifact
 mom_agent.egg-info/
 
+password_h800.txt
+
+# Landmark reproduction (Phase 1): large weights, venv, cloned repo, eval cache
+external/landmark_venv/
+external/landmark_ckpts/
+external/landmark-attention/
+external/landmark/hf-cache/
+external/landmark/passkey_results.csv
