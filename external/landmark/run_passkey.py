@@ -13,10 +13,16 @@
 #   LM_OUT    : output CSV path (default ./passkey_results.csv)
 #   LM_BASE_DEVICE / LM_MEM_DEVICE : cuda devices (default cuda:0 / cuda:0)
 import os
+import sys
 import random
 import re
 import csv
 import torch
+
+# Make the official repo's llama_mem importable regardless of cwd.
+# Python adds the *script* dir to sys.path, not the repo dir.
+_repo = os.environ.get("LM_REPO", os.path.join(os.path.dirname(__file__), "..", "landmark-attention", "llama"))
+sys.path.insert(0, os.path.abspath(_repo))
 
 llama_weights_7b_base = os.environ.get("LM_BASE", "")
 llama_weights_7b_tuned = os.environ.get("LM_TUNED", "")
@@ -30,7 +36,11 @@ base_device = os.environ.get("LM_BASE_DEVICE", "cuda:0")
 mem_device = os.environ.get("LM_MEM_DEVICE", "cuda:0")
 out_csv = os.environ.get("LM_OUT", "./passkey_results.csv")
 seed = int(os.environ.get("LM_SEED", "1234"))
-random.seed(seed)
+# Sharding: run only global test indices where (idx % nshards == shard_index).
+# Each test's prompt is seeded by its GLOBAL index so prompts are identical across
+# shardings; results are merged by summing correct/total per (model,n).
+nshards = int(os.environ.get("LM_NSHARDS", "1"))
+shard_index = int(os.environ.get("LM_SHARD_INDEX", "0"))
 
 if "LM_NVALUES" in os.environ:
     n_values = [int(x) for x in os.environ["LM_NVALUES"].split(",")]
@@ -111,8 +121,13 @@ accuracies = {x: [] for x in models}
 rows = []
 for n in n_values:
     correct_count = {x: 0 for x in models}
+    done_count = {x: 0 for x in models}
     ntok = {x: 0 for x in models}
     for i in range(num_tests):
+        if (i % nshards) != shard_index:
+            continue
+        # Seed per global (n, i) so prompts are identical regardless of sharding.
+        random.seed(seed * 1000003 + n * 101 + i)
         prompt_text, pass_key = generate_prompt(n)
         for model_name in models:
             num_tokens = len(pipes[model_name].tokenizer.encode(prompt_text))
@@ -121,14 +136,17 @@ for n in n_values:
             ok = (pass_key == model_output)
             if ok:
                 correct_count[model_name] += 1
+            done_count[model_name] += 1
             print(f"n={n} test {i+1}/{num_tests} [{model_name}] tok={num_tokens} "
                   f"expect={pass_key} got={model_output} {'OK' if ok else 'FAIL'}", flush=True)
     for model in models:
-        acc = (correct_count[model] / num_tests) * 100
+        nd = done_count[model]
+        acc = (correct_count[model] / nd) * 100 if nd else 0.0
         accuracies[model].append(acc)
         rows.append({"model": model, "n_garbage": n, "num_tokens": ntok[model],
-                     "num_tests": num_tests, "correct": correct_count[model], "accuracy_pct": acc})
-        print(f"==> Accuracy {model} n={n} (tok~{ntok[model]}): {acc}%", flush=True)
+                     "num_tests": nd, "correct": correct_count[model], "accuracy_pct": acc})
+        print(f"==> Accuracy {model} n={n} (tok~{ntok[model]}) shard {shard_index}/{nshards} "
+              f"({correct_count[model]}/{nd}): {acc}%", flush=True)
 
 with open(out_csv, "w", newline="") as f:
     w = csv.DictWriter(f, fieldnames=["model", "n_garbage", "num_tokens", "num_tests", "correct", "accuracy_pct"])

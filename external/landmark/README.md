@@ -85,3 +85,32 @@ All weights downloaded via the woa proxy:
 
 Base LLaMA collapses to ~0% beyond ~2k tokens; landmark-mem stays near 100% (or
 far above base) at 8k/16k/32k. `n_garbage` chars 0→38000 ≈ up to ~32k tokens.
+
+## ★ RESULTS (2026-06-19) — WALL REPRODUCED
+
+Passkey retrieval, 50 tests/length, top_k=5, base=LLaMA-1-7B, mem=recovered
+landmark-tuned ckpt. n_garbage chars mapped to token lengths (garbage text ≈
+3.7 chars/tok). `mem` long lengths sharded ×3 across GPUs then merged.
+
+| ~tokens | base LLaMA-1-7B | landmark-mem |
+|--------:|:---------------:|:------------:|
+|     ~70 |          100%   |     100%     |
+|    1.1k |          100%   |     100%     |
+|    2.2k |           98%   |      94%     |
+|     4k  |       **0%**    |   **100%**   |
+|     8k  |       **0%**    |      96%     |
+|    16k  |    OOM*         |      96%     |
+|    32k  |    OOM*         |      96%     |
+
+\* base does full O(n²) attention; >2048 ctx (its `max_position_embeddings`)
+the passkey is already past the trained window → 0% accuracy, and ≥16k OOMs a
+single 96GB H20 (expected; base genuinely cannot do long ctx).
+
+**Verdict: SUCCESSFUL reproduction of the paper's long-range result.** base
+LLaMA collapses to 0% exactly at its 2048-token limit (2.2k→4k: 98%→0%), while
+landmark-mem stays 94–100% all the way to **~31k tokens (96%)** — i.e. the
+landmark memory mechanism breaks the long-range wall, matching the paper's
+passkey figure. This is our trusted anchor for the diff-based migration
+(Phase 2/3).
+
+Raw per-cell CSV: `results/passkey_full.csv`. Per-shard logs/CSVs in `results/`.
