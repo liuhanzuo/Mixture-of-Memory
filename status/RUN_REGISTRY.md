@@ -967,6 +967,16 @@ team-lead 采纳「Part-Y-only」干净单轴框架（比早先 option A 更紧�
 - **状态**：[READY] 真正零合并待发射。**未启动训练**——等某 16-GPU 组空出(Group-A ~S2 完成后)且 team-lead 确认。发射：从 `external/landmark_s5_tree/` 跑，`LM_SINGLE_LAYER=16` 接到 `from_pretrained(single_layer_mem=16)`。计划：S2 腾出 Group-A 后 S4b+S5 作为下一对并行(各占一组)，待 S2 裁决。
 - **待定配置**：base=LLaMA-1-7B、mem_freq=63、ctx512、lr2e-5 cosine+3%warmup、wd0.1、eff-batch128、full-FT、~15k步（或先 3k 步诊断）；目标层默认 L16（中层），守门=native passkey 70→32k。
 
+- **★Group-A 重建 + 2k 发射（2026-06-20，landmark-repro，接管 S5；S4b 已收口=门控不破长程，过训除外）**：diskB offline → S5 隔离 tree 在 diskB 没了，diskA 重建。
+  - **builder**：`external/landmark/build_isolated_s5_tree_diskA.sh`（diskA 路径版）。⚠️关键修正：nested repo HEAD 现已是 S4b commit a699e3e（非 anchor），故显式从 **d963e50**（pristine anchor=md5 99631a8）`git archive llama/` 而非 `git archive HEAD`，apply_s5.sh 干净打 patch → `external/landmark_s5_tree/`。
+  - **CPU re-smoke PASS**：single_layer_mem=None vs pristine-anchor **max-abs-diff=0.000e+00**（回归 byte-identical）；=16 → grouped_layers=[16]、其余 31 plain、max-abs-diff=0.390>0、无 ValueError。
+  - **2节点 FSDP smoke 修 1 blocker**：launcher 模板的 `--gradient_checkpointing True` 撞 landmark grad-ckpt bug（llama_mem :460 把 use_cache 当 tensor → "Boolean value of Tensor ambiguous"）→ **grad-ckpt OFF**（与 S2/S4b 忠实配方一致，7B ctx512 单窗 FSDP 放得下）。修后 3 步 loss 7.71→7.62 finite。S5 起点 loss 高(~7.7)是真实轴效应（31 层失去结构读出从远离工作点出发），非 bug。
+  - **train.S5.py 装入 S5 tree** 作 train.py（LM_SINGLE_LAYER env→config.single_layer_mem，liang2kl RedPajama mirror，num_proc 32→8 避 fork 风暴，加 S5_SMOKE_SUBSET）。
+  - **状态**：[2k RUNNING] 2026-06-20 06:14 起，Group-A 2节点（本机 master+.196 worker，IB GID3 P2P_DISABLE=1，**port29585**），LM_SINGLE_LAYER=16，**max_steps2000 save500**（按过训铁律取 step1000/2000），eff-batch128，其余全 anchor。master log `logs/landmark_S5_singlelayer_master_20260620_061452.log`，OUT=`external/landmark_ckpts/landmark_S5_L16_singlelayer`。step36 loss 7.7→2.59 健康，~6.5s/it ETA~3.6h。
+  - **runner** `scripts/run_landmark_S5_node.sh`（per-node setsid IB）。**eval** `scripts/eval_landmark_S5_passkey.sh`（关键：`LM_REPO` 指 S5 tree → run_passkey 用 single_layer_mem-aware llama_mem，否则 S4b-tree llama_mem 静默忽略 single_layer_mem 跑成全 32 层=错轴）；`scripts/auto_eval_S5_passkey.sh` 后台等训完(GPU 释放)依次 eval step1000/2000（S0/S2/S4b 同口径 70→32k/50/top_k5/8-shard）。
+  - **判读**：step1000/2000 长档维持高(类 S4b 78-100%)→单层读出无害,嫌疑转 S6 记忆单元；长档断崖→单层读出是杀手(呼应 mem_space 单层 L16 注入设计缺陷)。commit nested 无改动(隔离 tree 不在 nested)；parent: runner+builder、eval+driver、activity。
+
+
 
 ### Phase 3 **S4（检索轴）** SCOPE 笔记（2026-06-19，landmark-s5 被重定向到 S4，Group-B 2-node DDP .76+.249）
 **目标（单轴）**：把 anchor 的 landmark-token grouped-softmax 块打分换成 small learned selector head（linear/MLP over each block key-summary），保持 top_k=5 硬选 **真实 raw-KV 块**、全层参与、RedPajama、ctx512、同 lr/batch/steps 不变。launcher = `external/landmark/train_landmark.sh`（官方配方 per_device2×ga8×16rank=eff-batch128，2-node 需把 ga 调到保持 128）。
