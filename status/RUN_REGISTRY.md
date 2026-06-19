@@ -33,7 +33,7 @@
 | **perdoc_chunk256_p8_nullsink_r196** | launch_mem_space_p8_nullsink_chunk256_remote196.sh | 256 | 4096 | 1.0 | 同 nullsink，chunk 128→256 scale-up | 5000 | .196 8-GPU | **RUNNING**（step230/5000）|
 | **wbmode_lowrank (slot_dim 16384)** | launch_mem_space_wbmode_lowrank_local.sh | 1024 | **16384** | — | lowrank_gate r=256 | — | — | **CRASHED**（2026-06-04 00:39 rank3 exit1，无 ckpt，无 eval）|
 | **d2b_swa_train_w2** | launch_d2b_swa_train_w2_remote196.sh | 512 | 4096 | 1.0 | P11 deltarule+normreadout 底座 + **cross-chunk SWA TRAIN window W=2**（target forward 扩成 last-2-ctx+target 拼接1536tok，prefix labels-100，bank frozen 防二次写）；eval-side D2a 的训练侧对称版；bs2 eff16（bs4 OOM）| 5000 | .196 8-GPU | **RUNNING**（commit 9d2417f，2026-06-09 16:08 起，step15+ nf=0 健康）|
-| **rawkv_methodA_b200** | launch_rawkv_methodA_b200.sh | 512 | 4096 | — | **Method A raw-KV readout**：per-chunk 原始 KV + 可训练 emergent gist-key soft-attn（删 TopKSelector 出读路径），注入 L16/20/24，**解冻 reader L16-31**；数据 pg19 长书（防 base 损伤，非短 dolmino/非 babilong）；gist soft-top-k=8 dim128 | 2000（诊断）| B200 8×L20A | **[READY]** smoke PASS（commit 91f515f，2-GPU 12步 loss有限/read fire/grad通），等 team-lead 确认配方再起全量 |
+| **rawkv_methodA_b200** | launch_rawkv_methodA_b200.sh | 512 | 4096 | — | **Method A raw-KV readout**：per-chunk 原始 KV + 可训练 emergent gist-key soft-attn（删 TopKSelector 出读路径），注入 L16/20/24，**解冻 reader L16-31**；数据 **T2 合成 needle（pg19 背景，frac0.5，gap3584/n_ctx7，单 needle）+ pg19 续写**（教检索且与 BABILong 不同源→eval 干净）；babilong_mix=0；gist soft-top-k=8 dim128 | 2000（诊断）| B200 8×L20A | **RUNNING**（commit ed56b09，2026-06-19 23:12 起 pid7830，step15+ nf=0 健康，t2_needle loss 已分离记录）|
 
 ---
 
