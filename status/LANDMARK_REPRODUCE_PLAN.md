@@ -48,3 +48,15 @@
 - ⚠️ 跨盘(A↔B)需 rsync 同步代码/ckpt;组内不用。B200 offline 暂不计入。
 - **Phase 3 迁移并行化**: S1→S6 中相互独立的 diff 步两组并发(如 Group-A 跑换数据、Group-B 跑换检索),守门 eval 统一 passkey/qa1,一轮拿两个归因点;同一 diff 的两变体也可两组对比(如单层 vs 多层读出)。有因果依赖的步(如 S6 依赖 S5 结论)仍串行。
 - heartbeat 职责: 两组哪组空了就按 plan 补下一个独立迁移步,不留空转。
+
+## 守门 benchmark（2026-06-19 landmark-researcher 核实，带出处）
+Landmark **只有两种评测**,无任何下游QA/summ/LongBench:
+- **passkey retrieval**(论文§4.2+Fig3b+AppG, 代码run_test.py)= 唯一长程证明,**仅用于LLaMA-7B fine-tune线**。32k≈98%(50 prompts),base>2k崩0%。设置: garbage档[0..38000]chars(最长≈32k+ tok),top_k=5,num_tests=50/档,passkey=randint(1,50000)藏随机位,问法"What is the pass key? The pass key is",max_new_tokens=10正则抽数字。
+- **PPL(PG19/arXiv-Math)**= 仅from-scratch GPT-2(§4.1 Table1),★fine-tune线不报PPL → 不纳入迁移守门(口径不一致)。
+- 下游任务: 无。
+
+**Phase 3 守门清单(锁定)**:
+- 主守门 = **passkey(run_test.py原生)**: S0复现必达32k≈98%; 每迁移步跑passkey,准确率断崖处=该diff即长程杀手。
+- 对照守门 = **我们 BABILong qa1(NIAH,与passkey同语义单针检索)**, 确保迁移到我们infra口径可连续比较。
+- qa2/qa5 仅进阶观察(Landmark无对应基线),不作diff判定。
+- PPL不纳入。
