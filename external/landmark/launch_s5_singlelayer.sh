@@ -63,10 +63,13 @@ export NCCL_DMABUF_ENABLE=0
 export NCCL_NET_GDR_LEVEL=0
 export GLOO_SOCKET_IFNAME=bond1
 export WANDB_MODE=offline
-# diskB nodes need woa proxy ONLY if cache misses; data is pre-staged so offline-first.
+# RedPajama data files are pre-staged in CACHE, but HF `datasets` still resolves
+# the dataset metadata/readme from the Hub -> needs the woa proxy (verified: with
+# proxy the data is a cache hit, 930514 rows, no re-download). Model from_pretrained
+# reads a LOCAL path so it is unaffected. Do NOT set HF_HUB_OFFLINE here.
+export http_proxy="${http_proxy:-http://hy-proxy.woa.com:3128}"
+export https_proxy="${https_proxy:-http://hy-proxy.woa.com:3128}"
 export HF_HOME="${HF_HOME:-$CACHE/hf_home}"
-export TRANSFORMERS_OFFLINE="${TRANSFORMERS_OFFLINE:-1}"
-export HF_HUB_OFFLINE="${HF_HUB_OFFLINE:-1}"
 export TOKENIZERS_PARALLELISM=false
 
 mkdir -p "$OUT" "$PROJECT_ROOT/logs"
