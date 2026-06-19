@@ -348,31 +348,18 @@ def _wrap_model_fsdp(
         setattr(root, "l3_token_recon_head", wrapped_trh)
         model._l3_token_recon_head = wrapped_trh
 
-    # Raw-KV readout gist scorer (Method A, 2026-06-19). A root-level trainable
-    # singleton (peer to l3_pool). MUST be FSDP-wrapped like l3_pool — otherwise,
-    # under use_orig_params=True, its params live OUTSIDE every FSDP unit, never
-    # get gradient sync/flat-param management, and the optimizer step never moves
-    # them (the gist proj norm stayed EXACTLY at init 14.5 across 2000 steps in
-    # both Method A runs → the scorer never trained, needle precision random; the
-    # H1/H2 verdicts were confounded by THIS bug). Wrap before the readout layers
-    # access it so they see the same (wrapped) module instance.
-    gist_readout = getattr(model, "_gist_readout", None)
-    if gist_readout is not None:
-        wrapped_gist = FSDP(gist_readout, **common_fsdp_kwargs)
-        # patch.py registered it as the submodule `root.gist_readout`
-        # (add_module) AND the attribute `model._gist_readout`; keep BOTH in sync
-        # with the wrapped instance so model.parameters() (the optimizer walk)
-        # yields the FSDP flat-param and the read path uses the managed module.
-        setattr(root, "gist_readout", wrapped_gist)
-        model._gist_readout = wrapped_gist
-        # The MemorySpaceLayers hold a direct object reference to the gist scorer
-        # (registered via object.__setattr__ as `gist_readout`); repoint them to
-        # the wrapped instance so the forward read path uses the FSDP-managed
-        # params (else they'd call the unwrapped copy and grads would not sync).
-        for w in getattr(root, "_mem_space_layers", []) or []:
-            if getattr(w, "gist_readout", None) is not None:
-                object.__setattr__(w, "gist_readout", wrapped_gist)
-                object.__setattr__(w, "gist_readout", wrapped_gist)
+    # Raw-KV readout gist scorer (Method A, 2026-06-19; fix 2026-06-20).
+    # It is a root-level trainable singleton (peer to l3_pool) but is invoked via
+    # a CUSTOM method `gist_readout.retrieve(...)`, NOT `forward()`. FSDP's
+    # all-gather pre-hook only fires on __call__/forward, so FSDP-wrapping it
+    # leaves its params SHARDED at retrieve() time → "size mismatch mat(1x4096)
+    # vec(0)" on ranks holding empty shards. We therefore DO NOT FSDP-wrap it.
+    # Instead it stays REPLICATED across ranks; its tiny (2×gist_dim×d_model ≈ 1M)
+    # gradients are manually all-reduced (AVG) before optimizer.step() — see
+    # `_sync_gist_grads`. (The earlier bug was that the gist params got NO grad
+    # sync at all under partial-FSDP and the proj norm stayed EXACTLY at init
+    # 14.5 across 2000 steps in both runs → scorer never trained.)
+    # Nothing to do here at wrap time; left unwrapped on purpose.
 
     # 3b) Full fine-tune (2026-06-18): wrap the root-level backbone params
     #     (embed_tokens, final norm, lm_head) so they are sharded + grad-synced.
@@ -603,6 +590,37 @@ def _freeze_backbone(
         p.requires_grad = False
     for p in _mem_space_params(model):
         p.requires_grad = True
+
+
+def _gist_params(model: torch.nn.Module) -> List[torch.nn.Parameter]:
+    """Return the (replicated, un-FSDP-wrapped) gist scorer params, or []."""
+    root = getattr(model, "module", model)
+    g = getattr(root, "_gist_readout", None)
+    if g is None:
+        return []
+    return [p for p in g.parameters() if p.requires_grad]
+
+
+def _sync_gist_grads(model: torch.nn.Module) -> None:
+    """All-reduce (AVG) the gist scorer gradients across ranks.
+
+    The gist scorer is invoked via a custom ``.retrieve()`` method (not
+    ``forward()``), so it is intentionally NOT FSDP-wrapped (FSDP's all-gather
+    pre-hook only fires on forward → a wrapped gist would be sharded at
+    retrieve() time → size-mismatch crash). It is therefore REPLICATED and its
+    grads are computed independently per-rank; we average them here so every
+    rank applies the same optimizer update (mirrors DDP grad sync). No-op in
+    single-process runs.
+    """
+    if not (dist.is_available() and dist.is_initialized()):
+        return
+    ws = dist.get_world_size()
+    if ws <= 1:
+        return
+    for p in _gist_params(model):
+        if p.grad is not None:
+            dist.all_reduce(p.grad, op=dist.ReduceOp.SUM)
+            p.grad.div_(ws)
 
 
 def _step_counters_inc(model: torch.nn.Module) -> None:
@@ -3297,6 +3315,22 @@ def main() -> None:
         # Optimizer step (only if we got at least one valid micro-step and the
         # step is not flagged as a loss spike).
         if step_valid_micros > 0 and not do_skip:
+            # Manually all-reduce the replicated gist scorer grads (it is not
+            # FSDP-wrapped; see _sync_gist_grads). Must happen BEFORE clip+step.
+            _sync_gist_grads(model)
+            # One-time proof the gist scorer actually receives gradient now (the
+            # earlier silent-freeze bug left its proj norm pinned at init 14.5).
+            if global_step <= 1 and is_main(rank):
+                for _gn, _gp in (
+                    getattr(getattr(model, "module", model), "_gist_readout", None)
+                    or torch.nn.Module()
+                ).named_parameters():
+                    _gg = None if _gp.grad is None else float(_gp.grad.norm())
+                    logger.info(
+                        "[gist_grad_check step=%d] %s grad_norm=%s w_norm=%.4f",
+                        global_step, _gn, f"{_gg:.6f}" if _gg is not None else "None",
+                        float(_gp.norm()),
+                    )
             # Per-projection grad clip
             _grad_root = model.module if isinstance(model, DDP) else model
             for _n, _p in _grad_root.named_parameters():
