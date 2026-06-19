@@ -918,3 +918,11 @@ L2ON_pg19           final    |  11.25     9.55     2.57   |  7.79
 \* base 全量 O(n²) attn，>2048 ctx（其 max_pos）passkey 已出训练窗→0%，≥16k 单卡 96GB OOM（base 本就无长程能力）。
 
 **★裁决：成功复现破墙。** base 在自身 2048 ctx 上限处断崖（2.2k→4k：98%→0%），landmark-mem 一路 94–100% 直到 **~31k tok（96%）**——landmark in-context memory 机制确实破长程墙，与论文 passkey 图吻合。**这是 Phase 2/3 迁移的可信锚点：eval 口径正确 + 已复现一个能破墙的方法。** 下一步 Phase 2 差异表（working Landmark → mem_space 7 维差异）。
+
+### Phase 3 S5（单层读出轴）SCOPE 笔记（2026-06-19，landmark-s5，Group-B）
+**目标**：把 landmark grouped-softmax/检索从「全 32 层」限制到「仅 L16」，其余轴严格不动（LLaMA-1-7B base、landmark_venv tf4.28、RedPajama-1T-Sample、mem_freq=63、lr2e-5 cosine+3%warmup、wd0.1、eff-batch128、ctx512、full-FT、全序列LM loss、~15k步）。守门=native run_passkey.py（70/1.1k/2.2k/4k/8k/16k/32k tok，50/档，top_k5）；锚点 94-100%，长档断崖=单层读出即长程杀手。
+
+**★SCOPE 关键发现（已上报 team-lead，等 A/B/C 决策）**：Landmark 的长程 memory **不是可分离单元**——它就是每层自己的 KV cache（每 512 窗口 append，llama_mem.py:424）+ 该层的 grouped-softmax 读出（:469）+ 跨窗 top_k 检索（:318-430），全部由 `LlamaModel.forward:807-815` **一次性算出的 is_mem/last_section_mask 广播到所有 32 层**。与我们 mem_space「单层注入 128 slot」不同，这里没有可被「单层读出」的全局 bank。
+- **单轴冲突**：「仅 L16 读、其余 31 层 vanilla 局部 512」无法仅靠按 layer_idx 关 grouped-softmax 实现：(1) landmark token 物理插入 input_ids（每64 tok），所有层都把它当普通 token 见到，除非加 per-layer mask（第 2 轴）；(2) mem_freq=None 路径会 concat 全部 past KV（OOM，非"局部"），is_mem=None 撞 :466 ValueError。真正「其余层只看局部」要重构跨窗 KV 缓存 = 记忆单元轴（S6），故 S5-as-specified 实际耦合 S5×S6。
+- **选项**：A=软 S5（仅 L16 跑 grouped-softmax+检索，其余层 plain causal 看当前窗口、landmark token 在场但当普通 token、KV 仍缓存供 L16 用）——最接近单轴；B=完全局部隔离（其余层 KV 也重置/开窗）= 承认 S6 耦合；C=推迟 S5 到 S6 后（二者纠缠）。s5 建议 A。
+- **ENV/DATA BLOCKER（diskB .76，8×H20 全空，已实测）**：landmark_venv 不在 diskB（需 rsync 4.4G；其 interpreter /opt/conda/envs/torch-base/py3.11 在 diskB ✓ 可重定位）；base ckpt 13G + landmark 代码也缺 → rsync；RedPajama-1T-Sample 全集群（A/B）均无缓存 → 需经 woa proxy 下载（已验证 .76 proxy 可达 HF）；**尚无训练 launcher**（仅 S0 eval harness，S0 是零训练）→ full-FT 7B eff-batch128 需写 FSDP/ZeRO 启动脚本。
