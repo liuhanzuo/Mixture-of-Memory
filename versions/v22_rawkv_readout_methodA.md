@@ -136,3 +136,49 @@ frozen-reader in-attn oracle negative, `76efbd4`, 21.0 ≈ OFF 22.0).
   (scorer in graph); reader `o_proj` grad non-zero (reader trained on path);
   read path fires on both readout layers (R=64); store grows across chunks
   (cross-chunk read fires).
+
+---
+
+## 6. Real-model full-stack grad verification (2026-06-19, closes caveat #4/#1)
+
+`tests/probe_rawkv_readout_realmodel.py` — real **Llama-3-8B**, single GPU bf16,
+through the **production `dolmino_train_step`** (context chunks streamed under
+`torch.no_grad()` → `_detach_banks(model)` → grad-bearing target chunk), partial
+unfreeze from the smallest readout layer. This is the path the CPU smoke could
+NOT exercise (smoke ran multi-chunk WITH grad; the open risk was whether the
+target-chunk read still back-props to the gist scorer under the no_grad-context +
+detach-banks regime).
+
+Result (3 context chunks + 1 target, chunk_size=256, readout L16):
+
+| check | grad norm | verdict |
+|---|---|---|
+| (a) gist `query_proj` (query side) | 3.3e-3 | **PASS** |
+| (b) gist `key_proj` (★ KEY side — proj of DETACHED historical gist source) | 3.2e-3 | **PASS** |
+| (c) reader L16 `o_proj` / `q_proj` (unfrozen reader) | 12.4 / 2.8 | **PASS** |
+| (d) loss finite (14.59) + cross-chunk read fired (R=1024) | — | **PASS** |
+
+**★ KEY-side gradient is NOT broken.** The concern was that `_detach_banks` +
+the detached-on-write `gist_src` would starve the key side. It does not:
+`gist_src` is a *detached constant input*, but `key_proj` is a trainable
+`nn.Linear` applied to it **at read time inside the grad-bearing target forward**,
+so `key_proj.weight` still receives gradient (`d loss / d key_proj.weight ≠ 0`
+even with a detached input). The detach only stops BPTT *into* the historical
+chunk's hidden states (correct — we never want to backprop into the no_grad
+context pass); the scorer projection still learns. `_detach_banks` is irrelevant
+to the readout store (the store detaches on write, independent of the slot bank).
+
+**Memory (peak CUDA alloc, fwd+bwd, no optimizer states):**
+- readout L16 only:   **27.09 GB** (Δ over weights 10.30 GB)
+- readout L16 + L24:   **27.03 GB** (both fired, R=1024 each)
+- **per-extra-injection-layer increment ≈ 0 GB.** Each injection only appends R
+  retrieved KV columns to one attention — negligible vs the 8B weights + unfrozen
+  backbone activations. The real memory driver is *how many backbone layers are
+  unfrozen* (+ Adam states in real training), NOT how many readout layers inject.
+  → injecting at several layers (e.g. 16,20,24) is essentially free.
+
+**Method A is launch-ready from a gradient-flow standpoint.** Remaining
+prerequisites are training-recipe, not code: (1) `--unfreeze_backbone
+--unfreeze_layers_from 16` (mandatory, not auto-enforced — frozen reader
+reproduces the in-attn oracle negative); (2) sufficient data/steps on the
+unfrozen reader (axis-1 hazard: 1k narrow steps damaged base NIAH).
