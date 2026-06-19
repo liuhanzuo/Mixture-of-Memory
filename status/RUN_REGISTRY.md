@@ -926,3 +926,20 @@ L2ON_pg19           final    |  11.25     9.55     2.57   |  7.79
 - **单轴冲突**：「仅 L16 读、其余 31 层 vanilla 局部 512」无法仅靠按 layer_idx 关 grouped-softmax 实现：(1) landmark token 物理插入 input_ids（每64 tok），所有层都把它当普通 token 见到，除非加 per-layer mask（第 2 轴）；(2) mem_freq=None 路径会 concat 全部 past KV（OOM，非"局部"），is_mem=None 撞 :466 ValueError。真正「其余层只看局部」要重构跨窗 KV 缓存 = 记忆单元轴（S6），故 S5-as-specified 实际耦合 S5×S6。
 - **选项**：A=软 S5（仅 L16 跑 grouped-softmax+检索，其余层 plain causal 看当前窗口、landmark token 在场但当普通 token、KV 仍缓存供 L16 用）——最接近单轴；B=完全局部隔离（其余层 KV 也重置/开窗）= 承认 S6 耦合；C=推迟 S5 到 S6 后（二者纠缠）。s5 建议 A。
 - **ENV/DATA BLOCKER（diskB .76，8×H20 全空，已实测）**：landmark_venv 不在 diskB（需 rsync 4.4G；其 interpreter /opt/conda/envs/torch-base/py3.11 在 diskB ✓ 可重定位）；base ckpt 13G + landmark 代码也缺 → rsync；RedPajama-1T-Sample 全集群（A/B）均无缓存 → 需经 woa proxy 下载（已验证 .76 proxy 可达 HF）；**尚无训练 launcher**（仅 S0 eval harness，S0 是零训练）→ full-FT 7B eff-batch128 需写 FSDP/ZeRO 启动脚本。
+
+### Phase 3 **S4（检索轴）** SCOPE 笔记（2026-06-19，landmark-s5 被重定向到 S4，Group-B 2-node DDP .76+.249）
+**目标（单轴）**：把 anchor 的 landmark-token grouped-softmax 块打分换成 small learned selector head（linear/MLP over each block key-summary），保持 top_k=5 硬选 **真实 raw-KV 块**、全层参与、RedPajama、ctx512、同 lr/batch/steps 不变。launcher = `external/landmark/train_landmark.sh`（官方配方 per_device2×ga8×16rank=eff-batch128，2-node 需把 ga 调到保持 128）。
+
+**★SCOPE 关键发现（已上报 team-lead，等 S4a/b/c 决策）**：Landmark 的「检索」在**训练时根本不是 top_k selector**。
+- 硬 top_k=5 块打分+选择 = llama_mem.py:357-413，**仅在 `past_key_value is not None and mem_freq is not None`（=推理有 KV cache 时）**触发；打分 = query·该块 <landmark> token 自己的 key（:357 mem_key_nopos / :367 matmul / :384 topk）。
+- 训练（ctx512 单 512 窗口、无 past_key_value）走 `else` 分支（:432-439）→ **完全没有硬 top_k**，只跑 `landmark_grouped_softmax`（:469，def :222-243）：每块 <landmark> token 当软门控的 grouped-softmax。
+- ⇒ 「只换 scorer」对训练路径 ill-posed：anchor 训练期检索器不是可分离 scorer；<landmark> token 的 key 即隐式块摘要。换成 external MLP 会牵动 memory-unit/数据路径（第 2 轴）。
+- **选项**：S4a=只改推理打分（:357/367/384）换学习 scorer 重训（训练信号间接）；**S4b=把软 grouped-softmax 门控换成 learned per-block 标量门（landmark-token hidden 上的小 head），仍软、全层、真实 KV——训练期最真单轴，无硬 top_k、不动记忆单元**（s5 推荐）；S4c=reorder，S4 需 S6 式可分离摘要才干净 → 推迟。
+- **ENV/DDP 状态**：base ckpt 13G ✓ on diskB .76；venv 首轮只传 1.5G（torch CUDA .so 3.5G 缺）→ 重传中；RedPajama 未下（等 S4 定义确认后经 woa proxy 下）；**.76 跨节点 NIC = bond1**（28.49.57.76/26，route 到 worker .249 via bond1，同 diskA 约定）→ 2-node NCCL 用 `NCCL_SOCKET_IFNAME=bond1 NCCL_IB_DISABLE=1 NCCL_DMABUF_ENABLE=0 NCCL_NET_GDR_LEVEL=0`；16-rank allreduce smoke 待跑。
+
+**★SCOPE 关键发现（已上报 team-lead，等定义决策）——train/infer 不对称破坏单轴**：
+- 要换的「块打分 + top_k=5」在 Landmark 里只活在 **推理路径**（past_key_value≠None）：llama_mem.py:357 `mem_key_nopos`=landmark-token key、:367 `query·mem_key/√d`、:376-384 softmax+`topk(5)`→选真 KV 块。
+- **训练（ctx512 单 512 窗口，past_key_value IS None → :432-439 分支）从不执行 318-430 的检索/top_k**。训练只跑窗口内 `landmark_grouped_softmax`(:469)（8 个 64-块）。**训练期无 top_k 选择**——landmark token 纯靠 grouped-softmax loss 学成「gist 门」，top_k 检索是推理期对这些已训 KV 的涌现用法。
+- 故「只换 scorer、其余全同、ctx512 retrain」**不可单轴实现**：要让 learned selector 真的拿到梯度，必须把训练改成 multi-window+top_k（= 改 ctx/块结构 = S3 第 2 轴）；否则 selector head 训练期零信号、eval 时随机 = 无意义。
+- **选项**：(1) 重定义 S4=「训练就带 multi-window top_k + learned selector」(接受 S3+S4 耦合，像我们 mem_space 训练时就 select)；(2) 改顺序 S3→S4（先 multi-window ctx 让 selector 有训练路径，再换打分头）；(3) S4=纯推理期 scorer swap 在**已训 anchor ckpt** 上（零 retrain 纯 eval 消融，selector 头需轻量 scorer-only FT）。建议 (2) 或 scoped (3)。
+- **ENV/DATA 状态（diskB .76）**：首次 rsync 因 `tail -5` 管道吞错只传了目录骨架（venv lib 102K、base ckpt 空）→ 已重跑（~17.5G 进行中）。RedPajama 另一 worker（疑 landmark-repro S2）正在 diskA 现下载+tokenize（hf-cache/json 3.0G 增长中，32-shard arrow）；diskB 独立 FS 仍需各自拷/下。16-rank 跨节点 NCCL smoke 待 venv 落地后跑（NCCL_DMABUF_ENABLE=0 + NCCL_NET_GDR_LEVEL=0 + 验 NIC iface）。
