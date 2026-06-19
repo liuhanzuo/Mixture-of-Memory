@@ -943,3 +943,15 @@ L2ON_pg19           final    |  11.25     9.55     2.57   |  7.79
 - 故「只换 scorer、其余全同、ctx512 retrain」**不可单轴实现**：要让 learned selector 真的拿到梯度，必须把训练改成 multi-window+top_k（= 改 ctx/块结构 = S3 第 2 轴）；否则 selector head 训练期零信号、eval 时随机 = 无意义。
 - **选项**：(1) 重定义 S4=「训练就带 multi-window top_k + learned selector」(接受 S3+S4 耦合，像我们 mem_space 训练时就 select)；(2) 改顺序 S3→S4（先 multi-window ctx 让 selector 有训练路径，再换打分头）；(3) S4=纯推理期 scorer swap 在**已训 anchor ckpt** 上（零 retrain 纯 eval 消融，selector 头需轻量 scorer-only FT）。建议 (2) 或 scoped (3)。
 - **ENV/DATA 状态（diskB .76）**：首次 rsync 因 `tail -5` 管道吞错只传了目录骨架（venv lib 102K、base ckpt 空）→ 已重跑（~17.5G 进行中）。RedPajama 另一 worker（疑 landmark-repro S2）正在 diskA 现下载+tokenize（hf-cache/json 3.0G 增长中，32-shard arrow）；diskB 独立 FS 仍需各自拷/下。16-rank 跨节点 NCCL smoke 待 venv 落地后跑（NCCL_DMABUF_ENABLE=0 + NCCL_NET_GDR_LEVEL=0 + 验 NIC iface）。
+
+### ★ Phase 3 S2 数据轴迁移：RedPajama → dolmino(wiki+pes2o)（2026-06-19，landmark-repro，进行中）
+**目的**：单轴只换训练语料（RedPajama-1T-Sample 7源 → dolmino wiki+pes2o 2源），其余全同 Landmark working anchor，验证假设「窄单源数据是否杀长程墙」。守门=native passkey。
+- **单轴改动**：仅训练语料。机制/tokenizer/打包/loss 全保持 anchor：LLaMA-1-7B base、tf4.28 landmark_venv、llama_mem.py grouped-softmax、mem_freq=63、lr2e-5 cosine+3%warmup、wd0.1、bf16、FSDP full_shard、ctx512、全序列 LM loss、full-FT。
+- **数据 BLOCKER + 解法**：`MemLong/data/processed/dolmino_per_doc` 是 **Llama-3 tokenizer 预切**（vocab 128k，BOS=128000）→ LLaMA-1（vocab 32k）不可用。解法=取 raw 文本 `MemLong/data/raw/dolmino_pes2o_wiki/raw/data/{wiki,pes2o}/*.json.gz`，用**同一 LLaMA-1 tokenizer 重切**（保持单轴）。prepare_s2_dolmino.py 流式 gz、按源各 130M token early-stop、doc-by-doc interleave。
+- **token budget**：wiki 130.0M + pes2o 130.0M = **260M token**（50/50 平衡），503,077 docs，加 landmark token 后打包成 **509,065 个 512-block**。3k 步 ×128×512=196.6M 训练需求 < 260M（约 1 epoch 内）。
+- **eff-batch=128 保持单轴**：2节点16卡 = per_device2 × accum4 × 16。max_steps=3000、save_steps=1000（诊断预算，非全 15k）。
+- **2-node DDP（Group-A）**：master 本机 29.162.227.178 + worker .196。**验证可用的 NCCL recipe**：static rdzv（--master_addr/--master_port，**非 c10d**，c10d 在 diskA 节点 flaky/hang）+ `NCCL_SOCKET_IFNAME=bond1`（真 NIC 非 eth0）+ `NCCL_IB_DISABLE=1`（mlx5 RoCE 走 TCP）+ worker 在 master 起 store 后启动。16-rank allreduce smoke 通过（sum=120）。
+- **launcher**：scripts/run_landmark_S2_node.sh（per-node runner，绝对日志路径）+ scripts/launch_landmark_S2.sh。日志 logs/landmark_S2_dolmino_{master,worker}_20260619_170400.log。
+- **状态（步进确认）**：两节点均 100% GPU，step 计数器在两端递增（step 10/3000），loss 4.84→4.14 下降，跨节点 NCCL 集合通信端到端 OK 无 hang，landmark forward shape [2,1,520,520]（512+8 landmark@mem_freq63）正确。
+- **⚠ 吞吐**：~27.5 s/it → 3k 步 ETA ~23h（远超单节点估计 4-6h）。**原因：2-node FSDP full_shard 每层 all-gather 参数走 inter-node TCP（IB 禁用），通信受限。** 已上报 team-lead。
+- **待办**：1k/2k/3k ckpt 落地后跑 native passkey @70→32k、50 tests、top_k5、mem arm；记录断崖与否（断崖=数据是杀手；无断崖=数据非杀手，疑点转检索/分层）。
