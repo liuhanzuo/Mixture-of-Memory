@@ -831,9 +831,24 @@ class MemorySpaceLayer(nn.Module):
         # decoder layer's self-attention NOW (idempotent; defaults to a no-op
         # byte-identical pass until the layer stashes retrieved KV per-forward).
         # Default off → never installed → byte-identical to pre.
-        self._is_inattn_kv_layer = (
-            config.use_inattn_kv and self._layer_idx == config.inattn_kv_layer
-        )
+        #
+        # Multi-layer injection (v2, 2026-06-19): when config.inattn_kv_layers is
+        # a non-empty list, the READ/INJECT is owned by EVERY layer in the list
+        # (each re-projects retrieved hidden through its own k/v_proj). The store
+        # WRITE stays owned by exactly ONE layer (smallest index in the list) so
+        # the shared raw-KV store is appended once per chunk. Empty/None → the
+        # single inattn_kv_layer owns both write + read (byte-identical to v1).
+        _inattn_layers = list(getattr(config, "inattn_kv_layers", None) or [])
+        if config.use_inattn_kv and _inattn_layers:
+            self._is_inattn_kv_layer = self._layer_idx in _inattn_layers
+            self._is_inattn_write_owner = (
+                self._layer_idx == min(_inattn_layers)
+            )
+        else:
+            self._is_inattn_kv_layer = (
+                config.use_inattn_kv and self._layer_idx == config.inattn_kv_layer
+            )
+            self._is_inattn_write_owner = self._is_inattn_kv_layer
         if self._is_inattn_kv_layer:
             from .inattn_kv import install_inattn_wrapper
             _attn = getattr(self.wrapped_layer, "self_attn", None)
@@ -1276,7 +1291,9 @@ class MemorySpaceLayer(nn.Module):
             # the inattn_kv_layer (independent owner). Appends EVERY real token's
             # uncompressed hidden + routing-query key so the in-attention read can
             # retrieve them and inject as native K/V. No-op while frozen / off.
-            if self._is_inattn_kv_layer and not self.memory_bank.frozen:
+            # Multi-layer (v2): only the single write owner appends, so the shared
+            # store is populated once per chunk (all inject layers read from it).
+            if self._is_inattn_write_owner and not self.memory_bank.frozen:
                 _iq = getattr(self.selector, "_last_routing_q", None)   # [B, T, S]
                 if _iq is not None and _iq.shape[0] == B and _iq.shape[1] == T:
                     _ik_pos = torch.arange(

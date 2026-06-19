@@ -14,7 +14,7 @@ serialisable (useful for logging / CLI overrides in later stages).
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional
+from typing import List, Optional
 
 
 _VALID_SLOT_INIT = {"zero", "random", "hidden_pool", "strided_token"}
@@ -555,6 +555,17 @@ class MemorySpaceConfig:
     use_inattn_kv: bool = False
     inattn_kv_layer: int = 16
     inattn_kv_topk: int = 64
+    # Multi-layer injection (v2, 2026-06-19): inject the retrieved K/V at several
+    # decoder layers instead of one. Landmark trains the readout mechanism into
+    # many layers, so a single injection layer (v1 confound) under-parameterises
+    # what the unfrozen reader can learn. When non-empty, this list OVERRIDES the
+    # single inattn_kv_layer for which layers own the in-attn READ (injection).
+    # The store WRITE is owned by exactly one layer (the smallest index in the
+    # list, == the write owner) so the shared raw-KV store is populated once per
+    # chunk; every listed layer then re-projects the retrieved hidden through ITS
+    # OWN k/v_proj + RoPE and concatenates onto its native K/V. Empty list (None)
+    # → byte-identical to the single-layer inattn_kv_layer behaviour.
+    inattn_kv_layers: Optional[List[int]] = None
 
     # FastMem (Gated Delta Rule continuous memory, 2026-05-21):
     # Per-layer fast-weight memory that captures a continuous running summary

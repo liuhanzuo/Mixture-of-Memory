@@ -500,7 +500,11 @@ def _mem_space_params(model: torch.nn.Module) -> List[torch.nn.Parameter]:
     return params
 
 
-def _freeze_backbone(model: torch.nn.Module, unfreeze_backbone: bool = False) -> None:
+def _freeze_backbone(
+    model: torch.nn.Module,
+    unfreeze_backbone: bool = False,
+    unfreeze_layers_from: int = -1,
+) -> None:
     """Set requires_grad for training.
 
     Default (unfreeze_backbone=False): freeze everything, then re-enable ONLY
@@ -512,7 +516,50 @@ def _freeze_backbone(model: torch.nn.Module, unfreeze_backbone: bool = False) ->
     recalibrate to the injected-KV distribution the frozen reader could not
     consume. The mem_space params are explicitly re-enabled too (no-op since they
     are already on, but keeps the contract that adapter always trains).
+
+    Partial unfreeze (unfreeze_backbone=True, unfreeze_layers_from=N>=0, v2):
+    only decoder layers with index >= N are trainable; layers 0..N-1 and
+    embed_tokens stay FROZEN, protecting the base LM's lower-level competence
+    (v1 full-unfreeze on short data damaged niah OFF 22→11). The final norm +
+    lm_head + the mem_space adapter stay trainable so the readout can adapt.
+    The MemorySpaceLayer wraps each decoder layer; we identify a layer's index
+    via its `_layer_idx` and freeze/unfreeze the wrapped Llama params accordingly
+    while ALWAYS keeping that layer's mem_space adapter params trainable.
     """
+    if unfreeze_backbone and unfreeze_layers_from is not None and unfreeze_layers_from >= 0:
+        # Start fully frozen, then re-enable: (a) adapter params on every layer,
+        # (b) the WRAPPED Llama decoder params only for layers idx >= N,
+        # (c) final norm + lm_head.
+        for p in model.parameters():
+            p.requires_grad = False
+        for p in _mem_space_params(model):
+            p.requires_grad = True
+        root = getattr(model, "module", model)
+        mem_layers = getattr(root, "_mem_space_layers", None) or []
+        n_unfrozen_layers = 0
+        for w in mem_layers:
+            _idx = getattr(w, "_layer_idx", None)
+            _wrapped = getattr(w, "wrapped_layer", None)
+            if _idx is not None and _wrapped is not None and _idx >= unfreeze_layers_from:
+                for p in _wrapped.parameters():
+                    p.requires_grad = True
+                n_unfrozen_layers += 1
+        # Final norm + lm_head (the readout head) stay trainable.
+        _inner = getattr(model, "model", root)
+        _norm = getattr(_inner, "norm", None)
+        if _norm is not None:
+            for p in _norm.parameters():
+                p.requires_grad = True
+        _lm_head = getattr(model, "lm_head", None)
+        if _lm_head is not None:
+            for p in _lm_head.parameters():
+                p.requires_grad = True
+        logger.info(
+            "PARTIAL unfreeze: decoder layers idx>=%d trainable (%d layers) + "
+            "adapter + final-norm + lm_head; layers 0..%d + embed_tokens FROZEN.",
+            unfreeze_layers_from, n_unfrozen_layers, unfreeze_layers_from - 1,
+        )
+        return
     if unfreeze_backbone:
         for p in model.parameters():
             p.requires_grad = True
@@ -1302,6 +1349,14 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--inattn_kv_topk", type=int, default=64,
                    help="Number of retrieved raw tokens concatenated onto the "
                         "K/V axis at readout. Default 64.")
+    p.add_argument("--inattn_kv_layers", type=str, default=None,
+                   help="Multi-layer injection (v2): comma-separated decoder "
+                        "layer indices to inject the retrieved K/V at, e.g. "
+                        "'16,20,24'. Overrides the single --inattn_kv_layer for "
+                        "the READ/inject; the WRITE owner is the smallest index. "
+                        "All listed layers MUST be within the unfrozen range so "
+                        "they can learn to attend the injection. Default None → "
+                        "single-layer behaviour (byte-identical to v1).")
 
     # ----- Full fine-tune: unfreeze the entire Llama backbone (2026-06-18) ----- #
     # Landmark-faithful SFT: the frozen reader cannot consume injected KV through
@@ -1316,6 +1371,18 @@ def parse_args() -> argparse.Namespace:
                         "(attn+FFN+embed+lm_head) in addition to the mem_space "
                         "adapter. Default False keeps the frozen-backbone pipeline "
                         "byte-identical. Use lr~2e-5 + FSDP for 8B full FT.")
+    # Partial unfreeze (v2, 2026-06-19): unfreeze only the TOP decoder layers
+    # (>= this index) + the memory adapter; keep layers below + embed_tokens
+    # frozen. v1's full unfreeze on short dolmino DAMAGED the base LM (niah
+    # OFF 22→11). Protecting the lower layers + embed preserves the base LM's
+    # competence while still letting the upper layers (where injection happens)
+    # learn to consume injected KV. Requires --unfreeze_backbone. Default -1 →
+    # disabled (full unfreeze, byte-identical to v1 when set).
+    p.add_argument("--unfreeze_layers_from", type=int, default=-1,
+                   help="Partial unfreeze: only decoder layers with index >= N "
+                        "are trainable (plus the mem_space adapter + final norm "
+                        "+ lm_head); layers 0..N-1 and embed_tokens stay frozen. "
+                        "Requires --unfreeze_backbone. Default -1 = full unfreeze.")
     # One-time grad-flow diagnostic: on the FIRST optimizer step, print backbone
     # param grad norms + the injected K_raw grad status, then disable itself.
     # Used by the unfreeze/in-graph smoke; no-op (and zero overhead) by default.
@@ -1342,7 +1409,17 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--wandb_run_name", type=str, default=None,
                    help="Wandb run name (auto-generated if None).")
 
-    return p.parse_args()
+    args = p.parse_args()
+    # Parse comma-separated --inattn_kv_layers "16,20,24" → sorted unique list.
+    # Empty/None → None (single-layer behaviour). Validated against the unfrozen
+    # range later in main() once num_layers is known.
+    if isinstance(args.inattn_kv_layers, str) and args.inattn_kv_layers.strip():
+        args.inattn_kv_layers = sorted({
+            int(x) for x in args.inattn_kv_layers.split(",") if x.strip() != ""
+        })
+    else:
+        args.inattn_kv_layers = None
+    return args
 
 
 def merge_adapter_config_into_args(args: argparse.Namespace) -> argparse.Namespace:
@@ -1493,6 +1570,7 @@ def build_model(args, device, dtype) -> torch.nn.Module:
         use_inattn_kv=args.use_inattn_kv,
         inattn_kv_layer=args.inattn_kv_layer,
         inattn_kv_topk=args.inattn_kv_topk,
+        inattn_kv_layers=args.inattn_kv_layers,
     )
 
     # H7 rotary fp32 fix — snapshot before bf16 cast
@@ -2477,6 +2555,15 @@ def _save_adapter(model, args, step: int, final: bool = False) -> None:
             "global_slot_forget_bias": args.global_slot_forget_bias,
             "global_slot_input_gate_only": args.global_slot_input_gate_only,
             "gradient_checkpointing": args.gradient_checkpointing,
+            # In-attention K/V injection (round-trip so eval rebuilds the same
+            # injection layers; multi-layer v2 stores the explicit layer list).
+            "use_inattn_kv": args.use_inattn_kv,
+            "inattn_kv_layer": args.inattn_kv_layer,
+            "inattn_kv_topk": args.inattn_kv_topk,
+            "inattn_kv_layers": args.inattn_kv_layers,
+            # Partial-unfreeze metadata (v2): records which layers were trainable.
+            "unfreeze_backbone": args.unfreeze_backbone,
+            "unfreeze_layers_from": args.unfreeze_layers_from,
             # Training metadata
             "curriculum": args.curriculum,
             "lr": args.lr,
@@ -2573,7 +2660,11 @@ def main() -> None:
 
     # --- model --- #
     model = build_model(args, device, dtype)
-    _freeze_backbone(model, unfreeze_backbone=args.unfreeze_backbone)
+    _freeze_backbone(
+        model,
+        unfreeze_backbone=args.unfreeze_backbone,
+        unfreeze_layers_from=args.unfreeze_layers_from,
+    )
 
     # Arm the one-time in-graph probe on the inattn layer(s) (no-op otherwise).
     if args.grad_flow_diag:

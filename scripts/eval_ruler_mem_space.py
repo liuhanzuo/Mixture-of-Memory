@@ -653,6 +653,10 @@ def main():
     p.add_argument("--use_inattn_kv", action="store_true", default=False)
     p.add_argument("--inattn_kv_layer", type=int, default=16)
     p.add_argument("--inattn_kv_topk", type=int, default=64)
+    p.add_argument("--inattn_kv_layers", type=str, default=None,
+                   help="Multi-layer injection (v2): comma-separated layer "
+                        "indices, e.g. '16,20,24'. Overrides --inattn_kv_layer. "
+                        "Default None → use config / single layer.")
     p.add_argument("--inattn_oracle_only", action="store_true", default=False,
                    help="On the in-attn layer, inject ONLY the oracle needle "
                         "(skip the scorer-based retrieval) so the readout "
@@ -708,6 +712,12 @@ def main():
             mem_config.use_inattn_kv = True
             mem_config.inattn_kv_layer = args.inattn_kv_layer
             mem_config.inattn_kv_topk = args.inattn_kv_topk
+            if isinstance(args.inattn_kv_layers, str) and args.inattn_kv_layers.strip():
+                mem_config.inattn_kv_layers = sorted({
+                    int(x) for x in args.inattn_kv_layers.split(",") if x.strip() != ""
+                })
+                print(f"[ruler] IN-ATTN MULTI-LAYER inject at layers "
+                      f"{mem_config.inattn_kv_layers}")
             print(f"[ruler] IN-ATTN K/V CONCAT ON: layer={args.inattn_kv_layer} "
                   f"topk={args.inattn_kv_topk}")
         model = load_mem_space_model(
