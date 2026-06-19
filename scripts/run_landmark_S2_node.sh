@@ -29,7 +29,10 @@ PORT="29551"
 
 export NCCL_DEBUG=WARN
 export NCCL_SOCKET_IFNAME=bond1
-export NCCL_IB_DISABLE=1
+# Interconnect: default TCP (IB disabled). Override via env to use RoCE/IB:
+#   NCCL_IB_DISABLE=0 NCCL_IB_GID_INDEX=3  -> ~10x faster inter-node (verified smoke).
+export NCCL_IB_DISABLE="${NCCL_IB_DISABLE:-1}"
+if [ -n "${NCCL_IB_GID_INDEX:-}" ]; then export NCCL_IB_GID_INDEX; fi
 export WANDB_MODE=offline
 export S2_DATA_FILE="$DATA"
 
