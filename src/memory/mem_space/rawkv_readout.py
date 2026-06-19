@@ -73,6 +73,7 @@ class RawKVReadoutStore:
         token_hidden: torch.Tensor,
         token_pos: Optional[torch.Tensor] = None,
         token_mask: Optional[torch.Tensor] = None,
+        pool: str = "mean",
     ) -> None:
         """Append one chunk's raw token hidden states + derive its gist source.
 
@@ -86,6 +87,10 @@ class RawKVReadoutStore:
                 pad). When provided the gist source mean-pools over real tokens
                 only and pad tokens are still stored (their score will be low)
                 — kept simple for the MVP.
+            pool: per-chunk gist-source pooling. "mean" (original; dilutes a
+                small needle in a large chunk) or "max" (element-wise max over
+                chunk tokens; the salient token survives → anti-dilution, H1-fix
+                2026-06-20).
         """
         if token_hidden.dim() != 3:
             return
@@ -106,13 +111,24 @@ class RawKVReadoutStore:
             _cid = torch.full(
                 (B, T), self.n_chunks, device=dev, dtype=torch.long
             )
-            # Per-chunk gist source = mean over (real) chunk tokens, detached.
-            if token_mask is not None and token_mask.shape == (B, T):
-                _m = token_mask.to(device=dev, dtype=_h.dtype).unsqueeze(-1)
-                _denom = _m.sum(dim=1).clamp_min(1.0)
-                _gsrc = (_h * _m).sum(dim=1) / _denom            # [B, d]
+            # Per-chunk gist source, detached. mean (default) or max pooling.
+            if pool == "max":
+                if token_mask is not None and token_mask.shape == (B, T):
+                    # Mask pads to -inf so they never win the max.
+                    _neg = torch.finfo(_h.dtype).min
+                    _mh = _h.masked_fill(
+                        ~token_mask.to(device=dev).unsqueeze(-1), _neg
+                    )
+                    _gsrc = _mh.max(dim=1).values                # [B, d]
+                else:
+                    _gsrc = _h.max(dim=1).values                 # [B, d]
             else:
-                _gsrc = _h.mean(dim=1)                           # [B, d]
+                if token_mask is not None and token_mask.shape == (B, T):
+                    _m = token_mask.to(device=dev, dtype=_h.dtype).unsqueeze(-1)
+                    _denom = _m.sum(dim=1).clamp_min(1.0)
+                    _gsrc = (_h * _m).sum(dim=1) / _denom        # [B, d]
+                else:
+                    _gsrc = _h.mean(dim=1)                       # [B, d]
             _gsrc = _gsrc.unsqueeze(1)                           # [B, 1, d]
 
             if (

@@ -1399,6 +1399,12 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--rawkv_readout_temp", type=float, default=1.0,
                    help="Softmax temperature for the gist soft selection. "
                         "Default 1.0.")
+    p.add_argument("--rawkv_gist_pool", type=str, default="mean",
+                   choices=["mean", "max"],
+                   help="Per-chunk gist-source pooling. 'mean' (original; "
+                        "dilutes a small needle in a large chunk) or 'max' "
+                        "(element-wise max over chunk tokens → anti-dilution, "
+                        "H1-fix 2026-06-20). Default mean.")
 
     # ----- Full fine-tune: unfreeze the entire Llama backbone (2026-06-18) ----- #
     # Landmark-faithful SFT: the frozen reader cannot consume injected KV through
@@ -1626,6 +1632,7 @@ def build_model(args, device, dtype) -> torch.nn.Module:
         rawkv_gist_dim=args.rawkv_gist_dim,
         rawkv_readout_topk_chunks=args.rawkv_readout_topk_chunks,
         rawkv_readout_temp=args.rawkv_readout_temp,
+        rawkv_gist_pool=args.rawkv_gist_pool,
     )
 
     # H7 rotary fp32 fix — snapshot before bf16 cast
@@ -2624,6 +2631,7 @@ def _save_adapter(model, args, step: int, final: bool = False) -> None:
             "rawkv_gist_dim": args.rawkv_gist_dim,
             "rawkv_readout_topk_chunks": args.rawkv_readout_topk_chunks,
             "rawkv_readout_temp": args.rawkv_readout_temp,
+            "rawkv_gist_pool": args.rawkv_gist_pool,
             # Partial-unfreeze metadata (v2): records which layers were trainable.
             "unfreeze_backbone": args.unfreeze_backbone,
             "unfreeze_layers_from": args.unfreeze_layers_from,

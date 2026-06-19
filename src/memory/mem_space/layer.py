@@ -1359,7 +1359,8 @@ class MemorySpaceLayer(nn.Module):
                     T, device=hidden_states.device, dtype=torch.long
                 ).unsqueeze(0).expand(B, -1)
                 _ro_store.append_chunk(
-                    hidden_states.detach(), token_pos=_ro_pos
+                    hidden_states.detach(), token_pos=_ro_pos,
+                    pool=getattr(cfg, "rawkv_gist_pool", "mean"),
                 )
             # Driven from layer-0 only (the bank is SHARED across all 32 layers,
             # so a single driver avoids 32 layers fighting — mirrors the layer-0

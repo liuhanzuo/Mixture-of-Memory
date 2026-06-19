@@ -625,6 +625,12 @@ class MemorySpaceConfig:
     rawkv_gist_dim: int = 128
     rawkv_readout_topk_chunks: int = 8
     rawkv_readout_temp: float = 1.0
+    # Per-chunk gist SOURCE pooling (2026-06-20, H1-fix). "mean" = original
+    # mean-pool of the chunk hidden (dilutes a small needle inside a large
+    # chunk → cross-chunk gist cosine ~0.90, scorer can't discriminate). "max"
+    # = element-wise max over the chunk tokens (salient/peaky token survives the
+    # pooling → sharper per-chunk gist key, anti-dilution).
+    rawkv_gist_pool: str = "mean"
 
     # FastMem (Gated Delta Rule continuous memory, 2026-05-21):
     # Per-layer fast-weight memory that captures a continuous running summary
