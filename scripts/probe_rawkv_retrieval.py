@@ -72,6 +72,9 @@ def main():
     ap.add_argument("--background", default="data/pg19_chunks_llama3.npy")
     ap.add_argument("--chunk_size", type=int, default=512)
     ap.add_argument("--gap_tokens", type=int, default=3584)
+    ap.add_argument("--num_keys", type=int, default=1,
+                    help="T2 num_keys: 1 = single needle (orig); >1 adds "
+                         "distractor needles in other chunks (match training).")
     ap.add_argument("--n_samples", type=int, default=40)
     ap.add_argument("--device", default="cuda:0")
     cli = ap.parse_args()
@@ -98,7 +101,7 @@ def main():
     bg = np.load(cli.background)
     ds = NIAHChunkedDataset(
         background_data=bg, chunk_size=cli.chunk_size, gap_tokens=cli.gap_tokens,
-        tokenizer=tok, num_keys=1, seed=1234, background_skip=10000,
+        tokenizer=tok, num_keys=cli.num_keys, seed=1234, background_skip=10000,
     )
     it = iter(ds)
     C = ds.n_ctx  # needle at chunk 0; C context chunks total
@@ -190,8 +193,8 @@ def main():
             sr = score_raw[0, qpos].float().cpu().numpy()[:C]
             score_spread.append(float(sr.max() - sr.min()))
             rank_hits.append(1 if int(wq.argmax()) == 0 else 0)
-            top3 = set(np.argsort(wq)[-3:].tolist())
-            top3_hits.append(1 if 0 in top3 else 0)
+            top2 = set(np.argsort(wq)[-2:].tolist())
+            top3_hits.append(1 if 0 in top2 else 0)
             n += 1
 
     chunk0_w = np.array(chunk0_w)
@@ -200,9 +203,10 @@ def main():
     print(f"needle chunk = chunk 0 (always)")
     print(f"chunk0 gist weight: mean={chunk0_w.mean():.4f} std={chunk0_w.std():.4f} "
           f"(uniform={uniform:.4f})  ratio_to_uniform={chunk0_w.mean()/uniform:.2f}x")
-    print(f"needle precision @top1 (chunk0 == argmax): {np.mean(rank_hits)*100:.1f}%")
-    print(f"needle precision @top3 (chunk0 in top3) : {np.mean(top3_hits)*100:.1f}%  "
-          f"(random@top3 = {min(1.0,3.0/C)*100:.1f}%)")
+    print(f"needle precision @top1 (chunk0 == argmax): {np.mean(rank_hits)*100:.1f}%  "
+          f"(random@top1 = {100.0/C:.1f}%)")
+    print(f"needle precision @top2 (chunk0 in top2) : {np.mean(top3_hits)*100:.1f}%  "
+          f"(random@top2 = {min(1.0,2.0/C)*100:.1f}%)  <- matches trained topk=2")
     print(f"mean per-chunk weight vector (idx0=needle):")
     print("  " + " ".join(f"{x/n:.3f}" for x in per_chunk_w_accum))
     ss = np.array(score_spread)

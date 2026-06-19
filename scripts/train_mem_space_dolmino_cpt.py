@@ -348,6 +348,32 @@ def _wrap_model_fsdp(
         setattr(root, "l3_token_recon_head", wrapped_trh)
         model._l3_token_recon_head = wrapped_trh
 
+    # Raw-KV readout gist scorer (Method A, 2026-06-19). A root-level trainable
+    # singleton (peer to l3_pool). MUST be FSDP-wrapped like l3_pool — otherwise,
+    # under use_orig_params=True, its params live OUTSIDE every FSDP unit, never
+    # get gradient sync/flat-param management, and the optimizer step never moves
+    # them (the gist proj norm stayed EXACTLY at init 14.5 across 2000 steps in
+    # both Method A runs → the scorer never trained, needle precision random; the
+    # H1/H2 verdicts were confounded by THIS bug). Wrap before the readout layers
+    # access it so they see the same (wrapped) module instance.
+    gist_readout = getattr(model, "_gist_readout", None)
+    if gist_readout is not None:
+        wrapped_gist = FSDP(gist_readout, **common_fsdp_kwargs)
+        # patch.py registered it as the submodule `root.gist_readout`
+        # (add_module) AND the attribute `model._gist_readout`; keep BOTH in sync
+        # with the wrapped instance so model.parameters() (the optimizer walk)
+        # yields the FSDP flat-param and the read path uses the managed module.
+        setattr(root, "gist_readout", wrapped_gist)
+        model._gist_readout = wrapped_gist
+        # The MemorySpaceLayers hold a direct object reference to the gist scorer
+        # (registered via object.__setattr__ as `gist_readout`); repoint them to
+        # the wrapped instance so the forward read path uses the FSDP-managed
+        # params (else they'd call the unwrapped copy and grads would not sync).
+        for w in getattr(root, "_mem_space_layers", []) or []:
+            if getattr(w, "gist_readout", None) is not None:
+                object.__setattr__(w, "gist_readout", wrapped_gist)
+                object.__setattr__(w, "gist_readout", wrapped_gist)
+
     # 3b) Full fine-tune (2026-06-18): wrap the root-level backbone params
     #     (embed_tokens, final norm, lm_head) so they are sharded + grad-synced.
     #     Skipped when frozen (they stay replicated, read-only, no sync needed).
