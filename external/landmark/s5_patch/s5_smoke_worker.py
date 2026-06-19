@@ -18,6 +18,8 @@ out = sys.argv[2]
 single_layer_mem = None if arg.lower() == "none" else int(arg)
 
 # Tiny faithful config. 4 layers so a single target layer is unambiguous.
+# Tiny faithful config. 32 layers (matches the real LLaMA-1-7B depth) so a
+# single target layer (e.g. L16) is an unambiguous, representative test.
 MEM_FREQ = 7          # block size = 8
 MEM_ID = 300
 VOCAB = 320
@@ -25,7 +27,7 @@ cfg_kwargs = dict(
     vocab_size=VOCAB,
     hidden_size=128,
     intermediate_size=256,
-    num_hidden_layers=4,
+    num_hidden_layers=32,
     num_attention_heads=4,
     max_position_embeddings=512,
     mem_id=MEM_ID,
