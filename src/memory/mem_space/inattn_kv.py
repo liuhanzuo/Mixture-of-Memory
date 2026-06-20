@@ -214,10 +214,30 @@ def make_inattn_attention_forward(self_attn: torch.nn.Module) -> Callable:
             n_rep = q.shape[1] // k.shape[1]
             _kh = k.repeat_interleave(n_rep, dim=1) if n_rep > 1 else k
             _vh = v.repeat_interleave(n_rep, dim=1) if n_rep > 1 else v
+            # Variant B: stage-1 per-sub-block selection bias = the reader's own
+            # q.k salience for each 64-token sub-block (max over query tokens and
+            # over the sub-block's tokens), in LOG space, added to each group's
+            # top-level logit so mass concentrates on the needle sub-block (equal-
+            # weight grouping=variant A gives the needle only 1/n_sub mass). Pure
+            # inference, no trained scorer. Off when _rawkv_stage1_select=False.
+            _block_logbias = None
+            if getattr(self, "_rawkv_stage1_select", False):
+                n_sub = R // _gs
+                # retrieved key columns are the last R of _kh: [B,H,R,hd]
+                _kret = _kh[:, :, Lk_native:, :]                  # [B,H,R,hd]
+                _qk = torch.matmul(q, _kret.transpose(-1, -2)) * self.scaling
+                # [B,H,Lq,R] -> max over query tokens -> [B,H,R] -> per sub-block max
+                _qk = _qk.amax(dim=2)                             # [B,H,R]
+                _qk = _qk.amax(dim=1)                             # [B,R] max over heads
+                _qk = _qk.view(_qk.shape[0], n_sub, _gs).amax(dim=-1)  # [B,n_sub]
+                # broadcast to [B, Lq, n_sub] (same bias for every query token)
+                _block_logbias = _qk.unsqueeze(1).expand(
+                    _qk.shape[0], q.shape[2], n_sub
+                ).contiguous()
             attn_output, attn_weights = grouped_two_stage_attention(
                 q, _kh, _vh, base_mask=base, Lk_native=Lk_native, R=R,
                 group_size=_gs, scaling=self.scaling,
-                block_logbias=None,   # variant A (equal-weight grouping)
+                block_logbias=_block_logbias,
             )
             attn_output = attn_output.transpose(1, 2).reshape(
                 *input_shape, -1

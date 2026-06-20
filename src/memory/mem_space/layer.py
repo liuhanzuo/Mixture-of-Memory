@@ -902,6 +902,9 @@ class MemorySpaceLayer(nn.Module):
                 _attn._rawkv_subblock_size = int(
                     getattr(config, "rawkv_subblock_size", 64)
                 )
+                _attn._rawkv_stage1_select = bool(
+                    getattr(config, "rawkv_stage1_select", False)
+                )
 
         # Side-channel state (populated on each forward).
         self.last_aux_losses: Dict[str, torch.Tensor] = {}

@@ -642,6 +642,10 @@ class MemorySpaceConfig:
     # among its tokens (stage 2). Pure inference; off = byte-identical.
     rawkv_grouped_readout: bool = False
     rawkv_subblock_size: int = 64
+    # Variant B stage-1: add per-sub-block reader-attn q.k salience as a log
+    # selection bias on each group's top-level logit (concentrates mass on the
+    # needle sub-block; variant A = equal-weight gives only 1/n_sub). Pure infer.
+    rawkv_stage1_select: bool = False
     # Kept-chunk SELECTION mode for the rawkv readout (2026-06-20 dilution fix).
     # Level 1 proved the reader reads an ISOLATED needle chunk at 97.5% but 0%
     # when diluted among 16 chunks -> the wall is dilution, fixed by HARD

@@ -731,6 +731,10 @@ def main():
                              "softmax (stage2), avoiding within-block dilution.")
     parser.add_argument("--rawkv_subblock_size", type=int, default=64,
                         help="Sub-block size for --rawkv_grouped_readout (=Landmark mem_freq).")
+    parser.add_argument("--rawkv_stage1_select", action="store_true",
+                        help="(B variant B) add per-sub-block reader-attn q.k "
+                             "salience as stage-1 selection bias (concentrates "
+                             "mass on needle sub-block).")
     parser.add_argument("--use_chat_template", action="store_true",
                         help="Wrap the formatted input in the tokenizer's chat template")
     parser.add_argument("--use_instruction", action="store_true", default=True,
@@ -815,8 +819,10 @@ def main():
     if getattr(args, "rawkv_grouped_readout", False):
         mem_config.rawkv_grouped_readout = True
         mem_config.rawkv_subblock_size = int(args.rawkv_subblock_size)
+        mem_config.rawkv_stage1_select = bool(getattr(args, "rawkv_stage1_select", False))
         print(f"[mem_space-BABILong] rawkv_grouped_readout=True subblock="
-              f"{args.rawkv_subblock_size} (B: two-stage block-select x within-block softmax)")
+              f"{args.rawkv_subblock_size} stage1_select={mem_config.rawkv_stage1_select} "
+              f"(B: two-stage block-select x within-block softmax)")
     # L3 token-recon head builds pos_queries of shape [l3_recon_max_positions, d].
     # At train time this is set to chunk_size (train_mem_space_dolmino_cpt.py:1088),
     # but adapter_config.json carries no chunk_size, so the dataclass default (1024)
