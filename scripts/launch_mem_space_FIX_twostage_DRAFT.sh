@@ -85,7 +85,7 @@ setsid bash -c "CUDA_VISIBLE_DEVICES=$GPUS $PYBIN -m torch.distributed.run --npr
   --babilong_mix_fraction 0.0 \
   --t2_recall_mix_fraction 0.5 --t2_background_data data/pg19_chunks_llama3.npy \
   --t2_gap_tokens 8192 --t2_num_keys 3 \
-  --save_interval $SAVE_INTERVAL --eval_interval 0 --log_interval 5 \
+  --save_interval $SAVE_INTERVAL --eval_interval 0 --log_interval 5 --grad_flow_diag \
   --grad_clip 1.0 --proj_grad_clip 0.1 --wandb_project mixture-of-memory \
   --wandb_run_name $RUN --dtype bfloat16 --attn_impl sdpa --seed 42" \
   </dev/null >logs/$RUN.log 2>&1 &
