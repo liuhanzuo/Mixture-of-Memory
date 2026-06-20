@@ -197,6 +197,7 @@ class GistReadout(nn.Module):
         topk_chunks: int = 0,
         temperature: float = 1.0,
         disable_col_bias: bool = False,
+        keep_set_override: Optional[torch.Tensor] = None,
     ) -> Optional[Tuple[torch.Tensor, torch.Tensor, torch.Tensor]]:
         """Differentiable gist soft-attention retrieval.
 
@@ -246,7 +247,17 @@ class GistReadout(nn.Module):
         # the WEIGHTS over the kept chunks fully differentiable (softmax of the
         # per-query-token scores restricted to the kept set).
         keep_all = topk_chunks <= 0 or topk_chunks >= C
-        if keep_all:
+        if keep_set_override is not None and keep_set_override.numel() > 0:
+            # Explicit kept-chunk indices chosen by the CALLER (e.g. reader-attn
+            # salience or oracle), bypassing the gist-salience selection. HARD
+            # isolation: only these chunks' tokens enter attention (the others
+            # are physically gathered out below), so there is NO dilution from
+            # the excluded chunks. This is the keep_set_mode={reader_attn,oracle}
+            # path (2026-06-20 dilution fix).
+            kept = keep_set_override.to(dev).long().clamp_(0, C - 1)
+            kept = torch.unique(kept)
+            kept, _ = torch.sort(kept)
+        elif keep_all:
             kept = torch.arange(C, device=dev)
         else:
             chunk_sal = score.max(dim=1).values                  # [B, C]

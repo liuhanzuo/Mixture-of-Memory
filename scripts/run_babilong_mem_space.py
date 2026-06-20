@@ -718,6 +718,13 @@ def main():
                              "(candidate restriction): keep only top-k chunks by "
                              "gist salience. With --rawkv_disable_col_bias, attend "
                              "them with no trained weight bias. 0 = no override.")
+    parser.add_argument("--rawkv_keep_set_mode", type=str, default="",
+                        choices=["", "gist", "reader_attn", "oracle"],
+                        help="Kept-chunk selection mode for rawkv readout. "
+                             "'reader_attn' = pick top-k chunks by the reader's "
+                             "own native q.k salience (no trained scorer; HARD "
+                             "isolation gathers only those into attention). "
+                             "Empty = use adapter_config / default (gist).")
     parser.add_argument("--use_chat_template", action="store_true",
                         help="Wrap the formatted input in the tokenizer's chat template")
     parser.add_argument("--use_instruction", action="store_true", default=True,
@@ -795,6 +802,10 @@ def main():
         mem_config.rawkv_readout_topk_chunks = int(args.rawkv_eval_topk)
         print(f"[mem_space-BABILong] rawkv_eval_topk override -> "
               f"topk_chunks={args.rawkv_eval_topk} (candidate restriction)")
+    if getattr(args, "rawkv_keep_set_mode", ""):
+        mem_config.rawkv_keep_set_mode = args.rawkv_keep_set_mode
+        print(f"[mem_space-BABILong] rawkv_keep_set_mode={args.rawkv_keep_set_mode} "
+              f"(HARD isolation: gather only kept chunks into attention)")
     # L3 token-recon head builds pos_queries of shape [l3_recon_max_positions, d].
     # At train time this is set to chunk_size (train_mem_space_dolmino_cpt.py:1088),
     # but adapter_config.json carries no chunk_size, so the dataclass default (1024)

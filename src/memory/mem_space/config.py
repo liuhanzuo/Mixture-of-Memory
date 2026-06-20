@@ -635,6 +635,18 @@ class MemorySpaceConfig:
     # the reader attends raw-KV via its OWN native q·k only (no trained selection
     # head in the softmax). Tests "reader native attention IS the retriever".
     rawkv_disable_col_bias: bool = False
+    # Kept-chunk SELECTION mode for the rawkv readout (2026-06-20 dilution fix).
+    # Level 1 proved the reader reads an ISOLATED needle chunk at 97.5% but 0%
+    # when diluted among 16 chunks -> the wall is dilution, fixed by HARD
+    # isolation (gather only the kept chunks into attention, exclude the rest).
+    #   "gist"       : kept set = top-k by trained gist salience (H2: ~5-10% prec)
+    #   "reader_attn": kept set = top-k by the reader's OWN native q.k chunk
+    #                  salience (~55% prec; argmax, no trained scorer -> no H2)
+    #   "oracle"     : kept set = the chunk(s) containing the needle (upper bound)
+    rawkv_keep_set_mode: str = "gist"
+    # Eval-time oracle: 0-based index of the needle chunk (for keep_set_mode
+    # "oracle"); the harness sets this per sample. -1 = unknown (falls back).
+    rawkv_oracle_needle_chunk: int = -1
     # Eval-time ablation (2026-06-20): zero the gist col_bias so the reader
     # attends the retrieved raw-KV columns with NO trained-selection log-weight
     # — i.e. selection is purely the reader's own native q·k attention over the

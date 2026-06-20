@@ -1132,6 +1132,57 @@ class MemorySpaceLayer(nn.Module):
     # Main forward
     # --------------------------------------------------------------------- #
 
+    def _reader_attn_keep_set(self, hidden_states, store, self_attn, pre_norm,
+                              position_embeddings, k):
+        """Pick the top-k kept chunks by the READER's OWN native q.k salience
+        (2026-06-20 dilution fix, keep_set_mode='reader_attn'). No trained
+        scorer -> sidesteps H2. Returns a 1-D LongTensor of chunk indices.
+
+        Per chunk c: salience = max over (query token q, chunk token t) of
+        q_q . k_t / sqrt(hd), using THIS layer's native q_proj/k_proj + RoPE
+        (the same projections the reader attends with). The query is the LAST
+        real token's hidden (the readout position). Pure inference (no_grad).
+        """
+        try:
+            import torch as _t
+            from transformers.models.llama.modeling_llama import apply_rotary_pos_emb
+            with _t.no_grad():
+                B, M, d = store.token_hidden.shape
+                C = store.gist_src.shape[1]
+                dev = hidden_states.device
+                hd = self_attn.head_dim
+                # query = last query-token hidden, native q_proj + RoPE.
+                _hs = hidden_states
+                if pre_norm is not None:
+                    _hs = pre_norm(_hs)
+                q = self_attn.q_proj(_hs).view(B, _hs.shape[1], -1, hd).transpose(1, 2)
+                cos, sin = position_embeddings
+                q_r, _ = apply_rotary_pos_emb(q, q, cos, sin)
+                qv = q_r[:, :, -1, :]                                  # [B, nh, hd]
+                # chunk-token keys: native k_proj on stored hidden (no RoPE here;
+                # salience is a content match, position-agnostic for selection).
+                _kh = store.token_hidden.to(dev, dtype=_hs.dtype)
+                if pre_norm is not None:
+                    _kh = pre_norm(_kh)
+                kk = self_attn.k_proj(_kh).view(B, M, -1, hd).transpose(1, 2)  # [B,nkv,M,hd]
+                nh = qv.shape[1]
+                nkv = kk.shape[1]
+                kk = kk.repeat_interleave(nh // nkv, dim=1)            # [B,nh,M,hd]
+                aw = _t.einsum("bhd,bhmd->bhm", qv.float(), kk.float()) * (hd ** -0.5)
+                aw = aw.amax(dim=1)                                    # [B, M] max over heads
+                tok_chunk = store.token_chunk.to(dev)[0]              # [M]
+                sal = _t.full((C,), float("-inf"), device=dev)
+                # per-chunk max salience over its tokens (batch row 0; shared store)
+                for c in range(C):
+                    m = (tok_chunk == c)
+                    if m.any():
+                        sal[c] = aw[0][m].max()
+                kk_top = min(k, C)
+                idx = _t.topk(sal, k=kk_top, dim=0).indices
+                return idx
+        except Exception:
+            return None
+
     def forward(
         self,
         hidden_states: torch.Tensor,
@@ -2375,11 +2426,34 @@ class MemorySpaceLayer(nn.Module):
                 and _ro_store is not None
                 and _ro_store.size() > 0
             ):
+                # Kept-chunk SELECTION mode (2026-06-20 dilution fix). Default
+                # "gist" keeps the trained-scorer top-k. "reader_attn" picks the
+                # kept chunks by the reader's OWN native q.k salience (no trained
+                # scorer); "oracle" forces the needle chunk. The chosen indices
+                # are passed to retrieve() which HARD-isolates them (gathers only
+                # those chunks into attention, excluding the rest -> no dilution).
+                _keep_mode = getattr(cfg, "rawkv_keep_set_mode", "gist")
+                _keep_override = None
+                _topk_for_retrieve = cfg.rawkv_readout_topk_chunks
+                if _keep_mode in ("reader_attn", "oracle"):
+                    _kk = max(int(cfg.rawkv_readout_topk_chunks), 1)
+                    _Cc = _ro_store.gist_src.shape[1] if _ro_store.gist_src is not None else 0
+                    if _keep_mode == "oracle":
+                        _oc = int(getattr(cfg, "rawkv_oracle_needle_chunk", -1))
+                        if 0 <= _oc < _Cc:
+                            _keep_override = torch.tensor([_oc], device=hidden_states.device)
+                    else:  # reader_attn: score each chunk by native q.k
+                        _keep_override = self._reader_attn_keep_set(
+                            hidden_states, _ro_store, _ro_attn,
+                            getattr(self.wrapped_layer, "input_layernorm", None),
+                            position_embeddings, _kk,
+                        )
                 _ro_ret = self.gist_readout.retrieve(
                     hidden_states, _ro_store,
-                    topk_chunks=cfg.rawkv_readout_topk_chunks,
+                    topk_chunks=_topk_for_retrieve,
                     temperature=cfg.rawkv_readout_temp,
                     disable_col_bias=getattr(cfg, "rawkv_disable_col_bias", False),
+                    keep_set_override=_keep_override,
                 )
                 if _ro_ret is not None:
                     _ro_h, _ro_pos, _ro_bias = _ro_ret      # [B,R,d],[B,R],[B,Tq,R]
