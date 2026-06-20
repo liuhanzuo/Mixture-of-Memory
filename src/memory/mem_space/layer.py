@@ -2382,6 +2382,11 @@ class MemorySpaceLayer(nn.Module):
                 )
                 if _ro_ret is not None:
                     _ro_h, _ro_pos, _ro_bias = _ro_ret      # [B,R,d],[B,R],[B,Tq,R]
+                    # Eval ablation: zero the trained gist col_bias so the reader
+                    # attends raw-KV via its own native q·k only (pure emergent
+                    # selection, no trained-scorer log-weight). See config flag.
+                    if getattr(cfg, "rawkv_readout_zero_col_bias", False):
+                        _ro_bias = torch.zeros_like(_ro_bias)
                     from .inattn_kv import build_retrieved_kv
                     _ro_pre_norm = getattr(
                         self.wrapped_layer, "input_layernorm", None

@@ -631,6 +631,14 @@ class MemorySpaceConfig:
     # = element-wise max over the chunk tokens (salient/peaky token survives the
     # pooling → sharper per-chunk gist key, anti-dilution).
     rawkv_gist_pool: str = "mean"
+    # Eval-time ablation (2026-06-20): zero the gist col_bias so the reader
+    # attends the retrieved raw-KV columns with NO trained-selection log-weight
+    # — i.e. selection is purely the reader's own native q·k attention over the
+    # raw-KV (the "drop the trained scorer" go/no-go). Pair with
+    # rawkv_readout_topk_chunks<=0 (keep_all) so ALL chunks' raw-KV are present
+    # for the reader to attend (else the bad gist top-k would gate out the needle
+    # chunk before the reader sees it). Default False = original Method A path.
+    rawkv_readout_zero_col_bias: bool = False
 
     # FastMem (Gated Delta Rule continuous memory, 2026-05-21):
     # Per-layer fast-weight memory that captures a continuous running summary
