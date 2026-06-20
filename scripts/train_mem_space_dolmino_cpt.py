@@ -1467,6 +1467,18 @@ def parse_args() -> argparse.Namespace:
                         "optimizer param group at lr*mult). >1 to rule out the "
                         "'scorer only undertrained' hypothesis without changing "
                         "the backbone/adapter lr. Default 1.0 (single group).")
+    p.add_argument("--rawkv_grouped_readout", action="store_true", default=False,
+                   help="(B) Two-stage grouped-softmax readout (2026-06-20): replace "
+                        "the flat softmax over [native ; retrieved-KV] with a "
+                        "hierarchical block-select x within-block softmax. Retrieved "
+                        "columns are grouped into --rawkv_subblock_size-token sub-blocks; "
+                        "each sub-block normalizes internally (stage 2, no cross-block "
+                        "within-dilution) and competes as ONE unit at the top level "
+                        "(stage 1). Fixes within-block dilution (chunk-oracle 57.5 vs "
+                        "token-oracle 90). Default off = flat softmax (byte-identical).")
+    p.add_argument("--rawkv_subblock_size", type=int, default=64,
+                   help="Sub-block size for --rawkv_grouped_readout (= Landmark "
+                        "mem_freq+1). Retrieved R columns must be a multiple of this.")
 
     # ----- Full fine-tune: unfreeze the entire Llama backbone (2026-06-18) ----- #
     # Landmark-faithful SFT: the frozen reader cannot consume injected KV through
@@ -1695,6 +1707,8 @@ def build_model(args, device, dtype) -> torch.nn.Module:
         rawkv_readout_topk_chunks=args.rawkv_readout_topk_chunks,
         rawkv_readout_temp=args.rawkv_readout_temp,
         rawkv_gist_pool=args.rawkv_gist_pool,
+        rawkv_grouped_readout=args.rawkv_grouped_readout,
+        rawkv_subblock_size=args.rawkv_subblock_size,
     )
 
     # H7 rotary fp32 fix — snapshot before bf16 cast
