@@ -975,6 +975,12 @@ team-lead 采纳「Part-Y-only」干净单轴框架（比早先 option A 更紧�
   - **状态**：[2k RUNNING] 2026-06-20 06:14 起，Group-A 2节点（本机 master+.196 worker，IB GID3 P2P_DISABLE=1，**port29585**），LM_SINGLE_LAYER=16，**max_steps2000 save500**（按过训铁律取 step1000/2000），eff-batch128，其余全 anchor。master log `logs/landmark_S5_singlelayer_master_20260620_061452.log`，OUT=`external/landmark_ckpts/landmark_S5_L16_singlelayer`。step36 loss 7.7→2.59 健康，~6.5s/it ETA~3.6h。
   - **runner** `scripts/run_landmark_S5_node.sh`（per-node setsid IB）。**eval** `scripts/eval_landmark_S5_passkey.sh`（关键：`LM_REPO` 指 S5 tree → run_passkey 用 single_layer_mem-aware llama_mem，否则 S4b-tree llama_mem 静默忽略 single_layer_mem 跑成全 32 层=错轴）；`scripts/auto_eval_S5_passkey.sh` 后台等训完(GPU 释放)依次 eval step1000/2000（S0/S2/S4b 同口径 70→32k/50/top_k5/8-shard）。
   - **判读**：step1000/2000 长档维持高(类 S4b 78-100%)→单层读出无害,嫌疑转 S6 记忆单元；长档断崖→单层读出是杀手(呼应 mem_space 单层 L16 注入设计缺陷)。commit nested 无改动(隔离 tree 不在 nested)；parent: runner+builder、eval+driver、activity。
+  - **★★裁决（2026-06-20）：S5 = 长程杀手。单层读出彻底摧毁跨档检索。** passkey（n=50/档,8-shard,top_k5,与 S0/S2/S4b 同口径）：
+    - **step1000**: 70tok **100%** → 1.1k/2.2k/4k/8k/16k/32k **全 0%**（pooled.csv 确认 50/50 vs 0/50）。
+    - **step2000**: 70tok 100% → 4k 2%(1/50)、8k/16k/32k 0%（同断崖,过训未恶化也未恢复）。
+    - 对照 S4b step1000 = 4k100/8k96/16k96/32k84、S0 锚点 94-100%。**唯一变量=读出层数(单层L16 vs 全32层),结果从78-100%崩到0%。**
+    - **机制含义**：Landmark 跨档检索是**全层分布式读出**(32层每层都跑 grouped-softmax 读出),砍到单层即废。与 S4b(门控函数无害)合起来:怎么读不重要,但**读出的层覆盖广度**决定长程。**直接证实 mem_space "单层 L16 注入/读出" 是 0% precision 根因之一(非纯 selector 训练问题)。**
+    - 已同步 methodA-eval:raw-KV 嫁接必须**多层注入**(单层复现0%断崖,与其 probe 16/20/24 多层一致)。
 
 
 
