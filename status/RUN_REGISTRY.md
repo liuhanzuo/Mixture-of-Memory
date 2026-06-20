@@ -1089,3 +1089,13 @@ team-lead 采纳「Part-Y-only」干净单轴框架（比早先 option A 更紧�
 - **★裁决 = DILUTION**:墙是"太多 raw-KV 列(16×512=8192)在 attention softmax 里淹没 needle 的 25 token"。完整自洽:Level0 96-100% / Level1 干净 97.5% / full-haystack 0% / W0 gist-topk2 ≤14% / go/no-go keep_all 4k11/8k5 —— dilution 的不同剂量。
 - **破墙配方(无训练,不触 H2)**:硬 top-k **isolation**——选 1-2 chunk,**只拼 selected chunk 的 raw-KV,排除其余 14**。这正是 Landmark cache_top_k work 而我们 keep_all 崩的根因(隐式 isolation)。难点=选得准(gist 0-10% 选错→topk2 仍 14%;reader native attn 55%;oracle=97.5% 上限)。
 - **下一步(待 recipe 测试)**:full_haystack + reader-native-attn 驱动的 top-1~2 硬隔离,预测 W0 跳到接近 Level1 高位 = 破墙 demo。
+
+#### ★ Method A raw-KV 真任务验证(2026-06-20):破墙 demo 不转移
+- **clean T2 probe**(16 chunk,fixed code needle):chunk64 reader_attn-top2 + gather = **67.5%**(破 keep_all 0%)。
+- **真实 BABILong qa1**(n=100,自然语言 bAbI fact needle,正规 score_nested),chunk64:
+  | | 4k | 8k | 16k | 32k |
+  |--|--|--|--|--|
+  | reader_attn-top2 + gather | 7 | 5 | 7 | 8 |
+  | keep_all baseline | 4 | 2 | 5 | 3 |
+- 裁决:机制方向性有效(reader_attn ~1.5-2.7× keep_all)但**全 near-floor**,**clean-T2 67.5% 不转移**。真 gap = (a) selection precision 在 512-chunk scale 崩(probe 16 选 2 命中 85%,真 32k 512 选 2 远低);(b) bAbI fact 自然语言比 code 难定位;(c) within-block 两阶段读出缺失(平铺单一 softmax,缺 Landmark block 选×block 内 token attention)。
+- 下一步:移植 landmark-repro per-layer cache_top_k(32×nh 投票提 precision)+ 两阶段 grouped-softmax 读出(解 within-block 稀释)。均不训练选择器(H2-safe)。production 路径 rawkv-protoA 已搭(keep_set_mode/gather)。
