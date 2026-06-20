@@ -68,7 +68,7 @@ setsid bash -c "CUDA_VISIBLE_DEVICES=$GPUS $PYBIN -m torch.distributed.run --npr
   --weight_decay 0.1 \
   --unfreeze_backbone --unfreeze_layers_from 16 --use_fsdp \
   --use_rawkv_readout --rawkv_readout_layer 16 --rawkv_readout_layers $RO_LAYERS \
-  --rawkv_gist_dim 128 --rawkv_readout_topk_chunks 0 --rawkv_readout_temp 1.0 \
+  --rawkv_gist_dim 128 --rawkv_readout_topk_chunks $TOPK_CHUNKS --rawkv_readout_temp 1.0 \
   --rawkv_gist_pool max --rawkv_gist_lr_mult 1.0 \
   --rawkv_grouped_readout --rawkv_subblock_size 64 \
   --chunk_size $CHUNK --batch_size 1 --num_slots 128 --top_k 16 --selector_dim 128 \
