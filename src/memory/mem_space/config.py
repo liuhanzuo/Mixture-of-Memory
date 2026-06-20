@@ -646,6 +646,15 @@ class MemorySpaceConfig:
     # selection bias on each group's top-level logit (concentrates mass on the
     # needle sub-block; variant A = equal-weight gives only 1/n_sub). Pure infer.
     rawkv_stage1_select: bool = False
+    # (B in-window summary, 2026-06-20) Selection-side fix: a trainable per-block
+    # summary KEY trained via an IN-WINDOW bottleneck (within the current chunk,
+    # later tokens reach earlier rawkv_subblock_size-token sub-blocks ONLY via the
+    # sub-block's summary key — earlier individual tokens are not directly
+    # attendable). This gives summary_proj dense in-window gradient (Landmark
+    # <landmark>-style, NOT a side-path → no H2 revival) so the summary key learns
+    # to summarize its block; at inference the same key is the cross-block
+    # selection key. Reuses rawkv_subblock_size. off = byte-identical.
+    rawkv_inwindow_summary: bool = False
     # Kept-chunk SELECTION mode for the rawkv readout (2026-06-20 dilution fix).
     # Level 1 proved the reader reads an ISOLATED needle chunk at 97.5% but 0%
     # when diluted among 16 chunks -> the wall is dilution, fixed by HARD

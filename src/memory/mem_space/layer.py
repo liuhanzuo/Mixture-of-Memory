@@ -905,6 +905,12 @@ class MemorySpaceLayer(nn.Module):
                 _attn._rawkv_stage1_select = bool(
                     getattr(config, "rawkv_stage1_select", False)
                 )
+                # (B in-window summary, 2026-06-20) selection-side: when on,
+                # the current chunk's self-attn becomes an in-window bottleneck
+                # (later tokens reach earlier sub-blocks only via summary key).
+                _attn._rawkv_inwindow_summary = bool(
+                    getattr(config, "rawkv_inwindow_summary", False)
+                )
 
         # Side-channel state (populated on each forward).
         self.last_aux_losses: Dict[str, torch.Tensor] = {}
