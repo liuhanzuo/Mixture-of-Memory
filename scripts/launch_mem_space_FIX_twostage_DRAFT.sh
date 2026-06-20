@@ -57,6 +57,10 @@ CURRICULUM="${CURRICULUM:-0:16}"      # chunk512: n_ctx=16. chunk64 时改 0:128
 #   候选 → 选择无梯度=H2翻版. grouped(64 sub-block 分组归一)已解 keep_all 的 cross-block
 #   稀释(每块独立组内归一), 所以 grouped+keep_all 才是对的组合.
 TOPK_CHUNKS="${TOPK_CHUNKS:-0}"
+# T2 recall mix fraction. 0.5 = 混 dolmino(有 adjacent leak 风险, 见下); 1.0 = 纯 T2
+#   (dolmino_mix=0, 无 leak 源, methodA-eval 的"a 修正版"——合成 T2 target 单独 forward
+#   无 native carry, 跨块唯一通路=readout, 无 copy leak). 纯 T2 选 1.0.
+T2_MIX="${T2_MIX:-0.5}"
 
 
 mkdir -p logs outputs/$RUN
@@ -83,7 +87,7 @@ setsid bash -c "CUDA_VISIBLE_DEVICES=$GPUS $PYBIN -m torch.distributed.run --npr
   --no_slot_delta_clip --inject_gate_bias_init -2.0 --routing_pool_mode slot_query \
   --multi_query_tau 1.0 --l3_diversity_weight 0.0 --l_recon_weight 0.0 --route_aux_weight 0.0 \
   --babilong_mix_fraction 0.0 \
-  --t2_recall_mix_fraction 0.5 --t2_background_data data/pg19_chunks_llama3.npy \
+  --t2_recall_mix_fraction $T2_MIX --t2_background_data data/pg19_chunks_llama3.npy \
   --t2_gap_tokens 8192 --t2_num_keys 3 \
   --save_interval $SAVE_INTERVAL --eval_interval 0 --log_interval 5 --grad_flow_diag \
   --grad_clip 1.0 --proj_grad_clip 0.1 --wandb_project mixture-of-memory \
