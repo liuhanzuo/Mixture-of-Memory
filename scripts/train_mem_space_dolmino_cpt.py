@@ -2963,9 +2963,34 @@ def main() -> None:
             "params under FSDP)."
         )
 
-    optimizer = torch.optim.AdamW(trainable, lr=args.lr,
-                                  weight_decay=args.weight_decay,
-                                  betas=(0.9, 0.95))
+    # Optimizer param groups. By default a single group at args.lr. When
+    # --rawkv_gist_lr_mult != 1, the gist scorer's (tiny, zero-ish-init) proj
+    # params get their OWN group at lr * mult — to rule out the "scorer only
+    # undertrained" hypothesis (grad_norm~0.04 × lr2e-5 × 2000 steps only moves
+    # the proj ~0.02, possibly too little to learn discriminative selection from
+    # a near-random init) WITHOUT touching the backbone/adapter lr.
+    gist_mult = float(getattr(args, "rawkv_gist_lr_mult", 1.0))
+    if gist_mult != 1.0 and getattr(args, "use_rawkv_readout", False):
+        _gist_ps = _gist_params(model)
+        _gist_ids = {id(p) for p in _gist_ps}
+        _rest = [p for p in trainable if id(p) not in _gist_ids]
+        param_groups = [
+            {"params": _rest, "lr": args.lr},
+            {"params": _gist_ps, "lr": args.lr * gist_mult},
+        ]
+        if is_main(rank):
+            logger.info(
+                "Gist scorer separate LR group: %d gist params @ lr=%.2e "
+                "(mult=%.1fx), %d other params @ lr=%.2e",
+                len(_gist_ps), args.lr * gist_mult, gist_mult, len(_rest), args.lr,
+            )
+        optimizer = torch.optim.AdamW(param_groups, lr=args.lr,
+                                      weight_decay=args.weight_decay,
+                                      betas=(0.9, 0.95))
+    else:
+        optimizer = torch.optim.AdamW(trainable, lr=args.lr,
+                                      weight_decay=args.weight_decay,
+                                      betas=(0.9, 0.95))
 
     # --- training loop --- #
     model.train()
@@ -3318,19 +3343,21 @@ def main() -> None:
             # Manually all-reduce the replicated gist scorer grads (it is not
             # FSDP-wrapped; see _sync_gist_grads). Must happen BEFORE clip+step.
             _sync_gist_grads(model)
-            # One-time proof the gist scorer actually receives gradient now (the
-            # earlier silent-freeze bug left its proj norm pinned at init 14.5).
-            if global_step <= 1 and is_main(rank):
-                for _gn, _gp in (
-                    getattr(getattr(model, "module", model), "_gist_readout", None)
-                    or torch.nn.Module()
-                ).named_parameters():
-                    _gg = None if _gp.grad is None else float(_gp.grad.norm())
-                    logger.info(
-                        "[gist_grad_check step=%d] %s grad_norm=%s w_norm=%.4f",
-                        global_step, _gn, f"{_gg:.6f}" if _gg is not None else "None",
-                        float(_gp.norm()),
-                    )
+            # Gist-scorer training trajectory probe (2026-06-20). Capture the
+            # grad norm BEFORE the step; the weight norm is logged AFTER the step
+            # so we can watch the proj norm DRIFT AWAY from init (~14.470) — the
+            # decisive check that the scorer is actually learning (and how fast,
+            # vs the earlier run's ~0.02 over 2000 steps). 6 decimals so a real
+            # update is visible (the 4-dec "14.5000" earlier was just rounding).
+            _gist_probe = global_step in (0, 1, 20, 50, 100, 200, 500, 1000, 1500)
+            _gist_grad_cache = {}
+            if _gist_probe and is_main(rank):
+                _gmod = getattr(getattr(model, "module", model), "_gist_readout", None)
+                if _gmod is not None:
+                    for _gn, _gp in _gmod.named_parameters():
+                        _gist_grad_cache[_gn] = (
+                            None if _gp.grad is None else float(_gp.grad.norm())
+                        )
             # Per-projection grad clip
             _grad_root = model.module if isinstance(model, DDP) else model
             for _n, _p in _grad_root.named_parameters():
@@ -3339,6 +3366,19 @@ def main() -> None:
             torch.nn.utils.clip_grad_norm_(trainable, args.grad_clip)
 
             optimizer.step()
+
+            if _gist_probe and is_main(rank):
+                _gmod = getattr(getattr(model, "module", model), "_gist_readout", None)
+                if _gmod is not None:
+                    for _gn, _gp in _gmod.named_parameters():
+                        _gg = _gist_grad_cache.get(_gn)
+                        logger.info(
+                            "[gist_traj step=%d] %s grad_norm=%s w_norm=%.6f "
+                            "drift_from_init=%.6f",
+                            global_step, _gn,
+                            f"{_gg:.6f}" if _gg is not None else "None",
+                            float(_gp.norm()), float(_gp.norm()) - 14.470164,
+                        )
 
         if do_skip:
             spike_skip_count += 1
