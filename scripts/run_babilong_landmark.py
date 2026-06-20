@@ -166,7 +166,7 @@ def main():
     parser.add_argument("--top_k", type=int, default=5,
                         help="Landmark cache_top_k: number of landmark blocks to retrieve")
     parser.add_argument("--max_new_tokens", type=int, default=20)
-    parser.add_argument("--batch_size", type=int, default=2,
+    parser.add_argument("--batch_size", type=int, default=4,
                         help="Batch size passed to the text-generation pipeline.")
     parser.add_argument("--limit", type=int, default=100,
                         help="Max samples per (task, length) cell. -1 = all.")
@@ -281,6 +281,8 @@ def main():
                     )
                 except Exception as exc:
                     print(f"[ERROR] batch start={start} generation failed: {exc}")
+                    if torch.cuda.is_available():
+                        torch.cuda.empty_cache()
                     outputs = []
                     for idx, input_text in enumerate(input_texts, start=start):
                         try:
