@@ -1060,3 +1060,10 @@ team-lead 采纳「Part-Y-only」干净单轴框架（比早先 option A 更紧�
   - **W0 BABILong qa1(正规 score_nested,n=100)**:0k=**90%** 4k=14% 8k=7% 16k=8%(死线21)→长档崩。0k 高=格式/短读完好(非"未遗忘")。
   - **★裁决=H2**:gist scorer 确实训了(全精度 norm 14.470→14.49,grad_norm 0.04 非零;早期"FSDP freeze bug"判断已撤回——是 probe 2 位小数显示误导)。即便强迫选择+梯度正常,训练性 cross-chunk scorer 仍学不会区分 needle(precision≈随机)。**"训练一个 cross-chunk 选择器"这条路本身难** → 转 Landmark emergent 选择。
 - **rawkv_methodA_h1fix_v2_b200（方法学修正版，RUNNING pid71128）**:同 h1fix 配置,但 gist 不再(错误地)FSDP-wrap、改为 replicated + 手动 all-reduce 梯度(_sync_gist_grads)。作为"梯度正确同步下训练 scorer"的严格 H2 确认。预期 precision 仍随机。commit 6e48cd5。
+
+#### ★ Method A 最终裁决 = H2(2026-06-20,欠训已排除)
+- **撤回**:之前"FSDP grad-freeze bug"判断作废——全精度核验 gist norm 14.470→14.490 确实移动了,probe 显示"14.5000"只是 bf16/2位小数取整;gist 一直在训。
+- **v2(grad all-reduce 修复)**:step500 fp32 drift query+0.0203/key+0.0055,与旧 h1fix **完全相同** → grad-sync 修复无实质效果;且旧 run drift 在 step500 后冻结(1500步只挪0.00006)= 早期 plateau,非慢爬欠训。
+- **★欠训排除 run(rawkv_methodA_gistlr30_b200,gist lr×30=6e-4)**:step250 norm 大动 query 14.470→**15.438**(+0.948)key→**15.688**(+1.245),pre-softmax score spread 0.01→**3.5**(scorer 在做自信的非均匀选择,plateau 被突破)。**但 needle precision @top1=0.0% @top2=0.0%**(随机6.25/12.5%),chunk0 权重 0.61× uniform = 比随机还低。
+- **裁决**:**不是欠训**(给足 lr,scorer 训得猛并收敛到自信选择规则),而是**损失面对 gist 投影没有指向"选含 needle 的 chunk"的下坡**。训练性 cross-chunk scorer 学不出正确检索 = 干净的 **H2**。
+- **方向**:放弃可训练 gist scorer,转 **Landmark emergent 选择**(in-window grouped-softmax,不训练选择器)。建议与 landmark-repro 对齐:把 raw-KV 无损内容 + 解冻 reader 嫁接到 Landmark emergent 机制。
