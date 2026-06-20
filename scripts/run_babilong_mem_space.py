@@ -708,6 +708,11 @@ def main():
                         choices=["bfloat16", "float16", "float32"])
     parser.add_argument("--attn_impl", type=str, default="sdpa",
                         choices=["sdpa", "eager", "flash_attention_2"])
+    parser.add_argument("--rawkv_disable_col_bias", action="store_true",
+                        help="Eval-time ablation: zero the trained gist col_bias "
+                             "so the reader attends raw-KV via its OWN native q.k "
+                             "only (no trained selection head). Tests whether the "
+                             "reader's native attention is itself the retriever.")
     parser.add_argument("--use_chat_template", action="store_true",
                         help="Wrap the formatted input in the tokenizer's chat template")
     parser.add_argument("--use_instruction", action="store_true", default=True,
@@ -764,6 +769,17 @@ def main():
     with open(args.adapter_config, "r") as f:
         adapter_cfg = json.load(f)
     mem_config = build_mem_space_config(adapter_cfg)
+    # Eval-time ablation override (go/no-go): force pure reader attention over
+    # raw-KV by zeroing the trained gist col_bias.
+    if getattr(args, "rawkv_disable_col_bias", False):
+        mem_config.rawkv_disable_col_bias = True
+        # Keep ALL chunks so the reader attends the FULL historical raw-KV and
+        # selection is purely its own native q.k (not gist-salience top-k). 0 =
+        # keep_all in GistReadout.retrieve.
+        mem_config.rawkv_readout_topk_chunks = 0
+        print("[mem_space-BABILong] rawkv_disable_col_bias=True + topk_chunks=0 "
+              "(keep all) -> reader native attention over FULL raw-KV (no trained "
+              "selection head)")
     # L3 token-recon head builds pos_queries of shape [l3_recon_max_positions, d].
     # At train time this is set to chunk_size (train_mem_space_dolmino_cpt.py:1088),
     # but adapter_config.json carries no chunk_size, so the dataclass default (1024)

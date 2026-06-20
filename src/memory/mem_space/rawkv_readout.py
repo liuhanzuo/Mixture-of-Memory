@@ -196,6 +196,7 @@ class GistReadout(nn.Module):
         store: "RawKVReadoutStore",
         topk_chunks: int = 0,
         temperature: float = 1.0,
+        disable_col_bias: bool = False,
     ) -> Optional[Tuple[torch.Tensor, torch.Tensor, torch.Tensor]]:
         """Differentiable gist soft-attention retrieval.
 
@@ -292,6 +293,16 @@ class GistReadout(nn.Module):
         Tq = query_hidden.shape[1]
         ret_col_exp = ret_col.unsqueeze(1).expand(B, Tq, R)      # [B, Tq, R]
         col_bias = torch.gather(logw_k, 2, ret_col_exp)          # [B, Tq, R]
+
+        # ABLATION (2026-06-20, go/no-go): zero the trained selection bias so the
+        # reader attends the kept raw-KV columns through its OWN native q·k only
+        # (no trained gist weight in the softmax). Tests whether the reader's
+        # native attention over raw-KV (probed at 55% needle precision) is itself
+        # the retriever — i.e. the trained scorer is unnecessary. With
+        # topk_chunks>=C this keeps ALL chunks → pure reader attention over all
+        # historical raw-KV. col_bias is detached-zero so no grad path either.
+        if disable_col_bias:
+            col_bias = torch.zeros_like(col_bias)
 
         # Diagnostics.
         with torch.no_grad():

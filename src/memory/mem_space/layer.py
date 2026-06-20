@@ -2379,6 +2379,7 @@ class MemorySpaceLayer(nn.Module):
                     hidden_states, _ro_store,
                     topk_chunks=cfg.rawkv_readout_topk_chunks,
                     temperature=cfg.rawkv_readout_temp,
+                    disable_col_bias=getattr(cfg, "rawkv_disable_col_bias", False),
                 )
                 if _ro_ret is not None:
                     _ro_h, _ro_pos, _ro_bias = _ro_ret      # [B,R,d],[B,R],[B,Tq,R]
