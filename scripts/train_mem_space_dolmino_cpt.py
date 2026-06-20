@@ -1449,6 +1449,11 @@ def parse_args() -> argparse.Namespace:
                         "dilutes a small needle in a large chunk) or 'max' "
                         "(element-wise max over chunk tokens → anti-dilution, "
                         "H1-fix 2026-06-20). Default mean.")
+    p.add_argument("--rawkv_gist_lr_mult", type=float, default=1.0,
+                   help="LR multiplier for the gist scorer's proj params (own "
+                        "optimizer param group at lr*mult). >1 to rule out the "
+                        "'scorer only undertrained' hypothesis without changing "
+                        "the backbone/adapter lr. Default 1.0 (single group).")
 
     # ----- Full fine-tune: unfreeze the entire Llama backbone (2026-06-18) ----- #
     # Landmark-faithful SFT: the frozen reader cannot consume injected KV through
@@ -2975,8 +2980,8 @@ def main() -> None:
         _gist_ids = {id(p) for p in _gist_ps}
         _rest = [p for p in trainable if id(p) not in _gist_ids]
         param_groups = [
-            {"params": _rest, "lr": args.lr},
-            {"params": _gist_ps, "lr": args.lr * gist_mult},
+            {"params": _rest, "lr": args.lr, "lr_mult": 1.0},
+            {"params": _gist_ps, "lr": args.lr * gist_mult, "lr_mult": gist_mult},
         ]
         if is_main(rank):
             logger.info(
@@ -3095,11 +3100,12 @@ def main() -> None:
         if t2_iter is not None and t2_curriculum is not None:
             t2_ds.set_n_ctx(t2_curriculum.get_n_ctx(global_step))
 
-        # Update learning rate (cosine with warmup)
+        # Update learning rate (cosine with warmup). Respect any per-group
+        # lr_mult (gist scorer may run at a boosted lr to rule out undertraining).
         lr = cosine_lr_schedule(global_step, args.total_steps, args.warmup_steps,
                                 args.lr)
         for pg in optimizer.param_groups:
-            pg["lr"] = lr
+            pg["lr"] = lr * pg.get("lr_mult", 1.0)
 
         # Gradient accumulation loop
         optimizer.zero_grad(set_to_none=True)
