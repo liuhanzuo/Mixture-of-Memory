@@ -61,6 +61,12 @@ TOPK_CHUNKS="${TOPK_CHUNKS:-0}"
 #   (dolmino_mix=0, 无 leak 源, methodA-eval 的"a 修正版"——合成 T2 target 单独 forward
 #   无 native carry, 跨块唯一通路=readout, 无 copy leak). 纯 T2 选 1.0.
 T2_MIX="${T2_MIX:-0.5}"
+# (B in-window summary, selection-side) set INWINDOW=1 to add --rawkv_inwindow_summary
+#   (per-block trainable summary key trained via in-window bottleneck). Default empty
+#   = off (pure-T2/grouped runs unaffected). ⚠️ requires methodA-eval's inattn_kv +
+#   summary_proj integration landed + the in-window gradient-path design resolved.
+INWINDOW_FLAG=""
+if [ "${INWINDOW:-0}" = "1" ]; then INWINDOW_FLAG="--rawkv_inwindow_summary"; fi
 
 
 mkdir -p logs outputs/$RUN
@@ -74,7 +80,7 @@ setsid bash -c "CUDA_VISIBLE_DEVICES=$GPUS $PYBIN -m torch.distributed.run --npr
   --use_rawkv_readout --rawkv_readout_layer 16 --rawkv_readout_layers $RO_LAYERS \
   --rawkv_gist_dim 128 --rawkv_readout_topk_chunks $TOPK_CHUNKS --rawkv_readout_temp 1.0 \
   --rawkv_gist_pool max --rawkv_gist_lr_mult 1.0 \
-  --rawkv_grouped_readout --rawkv_subblock_size 64 \
+  --rawkv_grouped_readout --rawkv_subblock_size 64 $INWINDOW_FLAG \
   --chunk_size $CHUNK --batch_size 1 --num_slots 128 --top_k 16 --selector_dim 128 \
   --selector_temperature 40 --load_balance_weight 0.0 --entropy_aux_weight 0.0 \
   --use_loss_free_balance --loss_free_update_rate 0.001 --num_global_slots 4 \
