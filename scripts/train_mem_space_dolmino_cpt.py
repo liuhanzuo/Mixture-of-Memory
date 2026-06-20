@@ -1066,6 +1066,19 @@ def parse_args() -> argparse.Namespace:
                         "prediction to rely on the memory bank for prior context "
                         "instead of local causal attn. Default off = tbptt "
                         "(every chunk gets gradient, easy, memory barely needed).")
+    p.add_argument("--sliding_target_loss", action="store_true",
+                   help="B1 arm (2026-06-20, landmark-repro): full-sequence cross-"
+                        "chunk readout training without the x n_chunks cost. On the "
+                        "dolmino path, instead of always predicting the LAST chunk "
+                        "from memory of all prior chunks, pick a RANDOM target chunk "
+                        "j in [1, n_ctx] each step; stream chunks[0:j] no_grad into "
+                        "memory, detach, compute loss on chunk j. The reader thus "
+                        "trains to consume cross-chunk memory at VARYING query->needle "
+                        "distances every step (mirrors Landmark's full-sequence LM "
+                        "loss where every position practises reading from history), "
+                        "at the SAME per-step cost as last_chunk_loss_only. Requires "
+                        "--last_chunk_loss_only (reuses dolmino_train_step). No-op for "
+                        "T2 steps (those carry their own answer_mask layout).")
     p.add_argument("--swa_train_chunks", type=int, default=0,
                    help="Cross-chunk SWA TRAIN window W (D2b, 2026-06-09). "
                         "Default 0 = current behavior, bit-identical. W>0: the "
@@ -3192,10 +3205,26 @@ def main() -> None:
                     target_ids = sample["target_ids"]
                     reset_flags = sample.get("reset_flags", None)
 
+                    # B1 (sliding_target_loss): repartition the doc's chunks around
+                    # a RANDOM split so the reader trains to read from memory at
+                    # varying cross-chunk distances (not just last-chunk). Same cost.
+                    # all_chunks = context + original target; pick j in [1, len-1],
+                    # chunks[0:j] -> memory (no_grad), chunk j -> grad target.
+                    if args.sliding_target_loss and args.last_chunk_loss_only:
+                        _all_chunks = list(context_chunks) + [target_ids]
+                        if len(_all_chunks) >= 2:
+                            _j = random.randint(1, len(_all_chunks) - 1)
+                            context_chunks = _all_chunks[:_j]
+                            target_ids = _all_chunks[_j]
+
                     # Distillation only applies to the last_chunk_loss_only
                     # (dolmino_train_step) path; tbptt path is unchanged.
+                    # NOTE: when sliding_target_loss repartitioned the chunks, the
+                    # teacher cache (keyed to the ORIGINAL last chunk) is stale →
+                    # disable distill on this step.
                     teacher_cache = None
-                    if args.last_chunk_loss_only and distill_cfg is not None:
+                    if (args.last_chunk_loss_only and distill_cfg is not None
+                            and not args.sliding_target_loss):
                         teacher_cache = _get_teacher_cache(sample.get("sample_id"))
 
                     if args.last_chunk_loss_only:
