@@ -1067,3 +1067,10 @@ team-lead 采纳「Part-Y-only」干净单轴框架（比早先 option A 更紧�
 - **★欠训排除 run(rawkv_methodA_gistlr30_b200,gist lr×30=6e-4)**:step250 norm 大动 query 14.470→**15.438**(+0.948)key→**15.688**(+1.245),pre-softmax score spread 0.01→**3.5**(scorer 在做自信的非均匀选择,plateau 被突破)。**但 needle precision @top1=0.0% @top2=0.0%**(随机6.25/12.5%),chunk0 权重 0.61× uniform = 比随机还低。
 - **裁决**:**不是欠训**(给足 lr,scorer 训得猛并收敛到自信选择规则),而是**损失面对 gist 投影没有指向"选含 needle 的 chunk"的下坡**。训练性 cross-chunk scorer 学不出正确检索 = 干净的 **H2**。
 - **方向**:放弃可训练 gist scorer,转 **Landmark emergent 选择**(in-window grouped-softmax,不训练选择器)。建议与 landmark-repro 对齐:把 raw-KV 无损内容 + 解冻 reader 嫁接到 Landmark emergent 机制。
+
+#### ★ Method A 机制 probe(2026-06-20):reader native attn >> trained gist
+- 对比 gist 选择 / reader native q·k attention over raw-KV / needle 位置(C=16,num_keys=3,needle@chunk0):
+  - h1fix(lr1): gist needle prec@top1=**10%**,**reader-attn=55%**(8.8×随机6.2%),gist↔reader Pearson +0.07。
+  - lr30 step250: gist=**0%**,reader-attn=**27.5%**(4.4×随机),Pearson +0.00。
+- 结论:trained gist 与 needle、reader-attn **都不相关**(idiosyncratic)。但 **reader 自身注意力 over 无损 raw-KV 已能定位 needle(55%)**,远胜任何 trained 选择头。
+- ★架构启示:**去掉 trained gist scorer,reader native attention over raw-KV 就是最好的检索器**(selection 涌现、不进 loss)。嫁接草案:保留 raw-KV 无损 + 解冻 reader L16-31,删 gist,inattn concat 去掉 col_bias。注入层数待 landmark-repro S5 passkey 定。
