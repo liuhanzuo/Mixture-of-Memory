@@ -16,6 +16,13 @@
 #   6. 全序列/滑动 target loss(可选,B1 的 sliding_target_loss)— 已有但 Level1 证
 #      消费非瓶颈,默认 OFF;若两阶段后仍欠再开
 # ============================================================================
+# ★命门(2026-06-20 methodA-eval+landmark-repro): --rawkv_readout_topk_chunks 0
+#   (keep_all) 是训练时的硬要求——所有块进 group_lse 候选, needle 块一定在,
+#   内层选择(group_lse)才有梯度可学. hard topk(=2)会先 gather 2 块再 group_lse,
+#   若 needle 不在那 2 块(chunk512 ~27%)→ group_lse 候选无 needle → 选择无从学
+#   = H2 翻版. 选择 key = k_proj(detached stored hidden), k_proj L16-31 unfrozen
+#   在 group_lse 梯度路径 → answer 梯度学"抬 needle sub-block 的 group_lse".
+# ============================================================================
 set -euo pipefail
 PROJECT_ROOT="${PROJECT_ROOT:-/apdcephfs_zwfy6/share_303098609/pighzliu_code/Mixture-of-Memory}"
 cd "$PROJECT_ROOT"
@@ -45,6 +52,11 @@ RO_LAYERS="${RO_LAYERS:-16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31}"
 #   即 n_ctx<=63; 但 T2 recall 路径用独立 background(不受 4096 cap), T2 n_ctx=8192/64=128
 #   照跑 → chunk64 方案 dolmino 用小 n_ctx, 长距离靠 T2(n_ctx128)扛. chunk512 不涉及.
 CURRICULUM="${CURRICULUM:-0:16}"      # chunk512: n_ctx=16. chunk64 时改 0:128 (T2 路径)
+# ★keep_all readout (topk_chunks=0): grouped readout 必须 keep_all, 不能 topk2.
+#   理由: needle 块必须在 group_lse 候选里选择才学得到; topk2 会把 needle(27%样本)踢出
+#   候选 → 选择无梯度=H2翻版. grouped(64 sub-block 分组归一)已解 keep_all 的 cross-block
+#   稀释(每块独立组内归一), 所以 grouped+keep_all 才是对的组合.
+TOPK_CHUNKS="${TOPK_CHUNKS:-0}"
 
 
 mkdir -p logs outputs/$RUN
@@ -56,7 +68,7 @@ setsid bash -c "CUDA_VISIBLE_DEVICES=$GPUS $PYBIN -m torch.distributed.run --npr
   --weight_decay 0.1 \
   --unfreeze_backbone --unfreeze_layers_from 16 --use_fsdp \
   --use_rawkv_readout --rawkv_readout_layer 16 --rawkv_readout_layers $RO_LAYERS \
-  --rawkv_gist_dim 128 --rawkv_readout_topk_chunks 2 --rawkv_readout_temp 1.0 \
+  --rawkv_gist_dim 128 --rawkv_readout_topk_chunks 0 --rawkv_readout_temp 1.0 \
   --rawkv_gist_pool max --rawkv_gist_lr_mult 1.0 \
   --rawkv_grouped_readout --rawkv_subblock_size 64 \
   --chunk_size $CHUNK --batch_size 1 --num_slots 128 --top_k 16 --selector_dim 128 \
