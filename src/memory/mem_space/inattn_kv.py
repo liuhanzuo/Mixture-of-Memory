@@ -198,6 +198,33 @@ def make_inattn_attention_forward(self_attn: torch.nn.Module) -> Callable:
             eager_attention_forward,
         )
 
+        # (B) TWO-STAGE grouped-softmax readout (2026-06-20 within-block dilution
+        # fix). When enabled, the retrieved R columns are NOT flattened into one
+        # softmax with the native keys; instead each `group_size`-token sub-block
+        # competes as a single unit at the top level (stage 1) with an internal
+        # softmax among its own tokens (stage 2) → a 64-token block keeps the
+        # needle at ~40% mass instead of drowning it in a flat softmax. Pure
+        # inference (gated behind the flag); off → byte-identical native path.
+        _grouped = getattr(self, "_rawkv_grouped_readout", False)
+        _gs = int(getattr(self, "_rawkv_subblock_size", 64))
+        if _grouped and R > 0 and (R % _gs == 0):
+            from ._grouped_two_stage_attention_ref import (
+                grouped_two_stage_attention,
+            )
+            n_rep = q.shape[1] // k.shape[1]
+            _kh = k.repeat_interleave(n_rep, dim=1) if n_rep > 1 else k
+            _vh = v.repeat_interleave(n_rep, dim=1) if n_rep > 1 else v
+            attn_output, attn_weights = grouped_two_stage_attention(
+                q, _kh, _vh, base_mask=base, Lk_native=Lk_native, R=R,
+                group_size=_gs, scaling=self.scaling,
+                block_logbias=None,   # variant A (equal-weight grouping)
+            )
+            attn_output = attn_output.transpose(1, 2).reshape(
+                *input_shape, -1
+            ).contiguous()
+            attn_output = self.o_proj(attn_output)
+            return attn_output, attn_weights
+
         attention_interface = ALL_ATTENTION_FUNCTIONS.get_interface(
             self.config._attn_implementation, eager_attention_forward
         )

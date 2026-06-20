@@ -892,6 +892,16 @@ class MemorySpaceLayer(nn.Module):
             _attn = getattr(self.wrapped_layer, "self_attn", None)
             if _attn is not None:
                 install_inattn_wrapper(_attn)
+                # (B) two-stage grouped-softmax readout flags (2026-06-20). When
+                # rawkv_grouped_readout is on, inattn_kv replaces the flat softmax
+                # over [native ; retrieved] with a hierarchical block-select x
+                # within-block softmax (sub-block size = rawkv_subblock_size).
+                _attn._rawkv_grouped_readout = bool(
+                    getattr(config, "rawkv_grouped_readout", False)
+                )
+                _attn._rawkv_subblock_size = int(
+                    getattr(config, "rawkv_subblock_size", 64)
+                )
 
         # Side-channel state (populated on each forward).
         self.last_aux_losses: Dict[str, torch.Tensor] = {}

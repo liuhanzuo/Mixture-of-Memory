@@ -725,6 +725,12 @@ def main():
                              "own native q.k salience (no trained scorer; HARD "
                              "isolation gathers only those into attention). "
                              "Empty = use adapter_config / default (gist).")
+    parser.add_argument("--rawkv_grouped_readout", action="store_true",
+                        help="(B) two-stage grouped-softmax readout: retrieved "
+                             "sub-blocks compete as units (stage1) with internal "
+                             "softmax (stage2), avoiding within-block dilution.")
+    parser.add_argument("--rawkv_subblock_size", type=int, default=64,
+                        help="Sub-block size for --rawkv_grouped_readout (=Landmark mem_freq).")
     parser.add_argument("--use_chat_template", action="store_true",
                         help="Wrap the formatted input in the tokenizer's chat template")
     parser.add_argument("--use_instruction", action="store_true", default=True,
@@ -806,6 +812,11 @@ def main():
         mem_config.rawkv_keep_set_mode = args.rawkv_keep_set_mode
         print(f"[mem_space-BABILong] rawkv_keep_set_mode={args.rawkv_keep_set_mode} "
               f"(HARD isolation: gather only kept chunks into attention)")
+    if getattr(args, "rawkv_grouped_readout", False):
+        mem_config.rawkv_grouped_readout = True
+        mem_config.rawkv_subblock_size = int(args.rawkv_subblock_size)
+        print(f"[mem_space-BABILong] rawkv_grouped_readout=True subblock="
+              f"{args.rawkv_subblock_size} (B: two-stage block-select x within-block softmax)")
     # L3 token-recon head builds pos_queries of shape [l3_recon_max_positions, d].
     # At train time this is set to chunk_size (train_mem_space_dolmino_cpt.py:1088),
     # but adapter_config.json carries no chunk_size, so the dataclass default (1024)

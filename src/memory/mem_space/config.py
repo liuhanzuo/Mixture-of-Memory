@@ -635,6 +635,13 @@ class MemorySpaceConfig:
     # the reader attends raw-KV via its OWN native q·k only (no trained selection
     # head in the softmax). Tests "reader native attention IS the retriever".
     rawkv_disable_col_bias: bool = False
+    # (B) two-stage grouped-softmax readout (2026-06-20 within-block dilution fix).
+    # When True, inattn_kv replaces the flat softmax over [native ; retrieved] with
+    # a hierarchical block-select x within-block softmax: each rawkv_subblock_size-
+    # token sub-block competes as one unit (stage 1) with an internal softmax
+    # among its tokens (stage 2). Pure inference; off = byte-identical.
+    rawkv_grouped_readout: bool = False
+    rawkv_subblock_size: int = 64
     # Kept-chunk SELECTION mode for the rawkv readout (2026-06-20 dilution fix).
     # Level 1 proved the reader reads an ISOLATED needle chunk at 97.5% but 0%
     # when diluted among 16 chunks -> the wall is dilution, fixed by HARD
@@ -655,6 +662,15 @@ class MemorySpaceConfig:
     # for the reader to attend (else the bad gist top-k would gate out the needle
     # chunk before the reader sees it). Default False = original Method A path.
     rawkv_readout_zero_col_bias: bool = False
+    # Two-stage grouped-softmax readout (gap B, 2026-06-20). When True, the
+    # retrieved raw-KV columns are NOT flattened into a single softmax with the
+    # native keys; instead each `rawkv_subblock_size`-token sub-block is its own
+    # softmax group (Landmark grouped-softmax): top-level softmax over (native
+    # columns vs n_sub block-units) x within-sub-block softmax. Avoids the
+    # within-block dilution that drowns a ~25-token needle in a 512-token chunk
+    # (chunk-oracle 57.5% vs token-oracle 90%). Pure-eval capable (no retrain).
+    rawkv_grouped_readout: bool = False
+    rawkv_subblock_size: int = 64
 
     # FastMem (Gated Delta Rule continuous memory, 2026-05-21):
     # Per-layer fast-weight memory that captures a continuous running summary
