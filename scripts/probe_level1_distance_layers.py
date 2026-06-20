@@ -86,6 +86,13 @@ def main():
     ap.add_argument("--n_samples", type=int, default=40)
     ap.add_argument("--max_new_tokens", type=int, default=12)
     ap.add_argument("--far_pos", type=int, default=400)
+    ap.add_argument("--full_haystack", action="store_true",
+                    help="Populate the store with a FULL 16-chunk pg19 haystack "
+                         "(needle in chunk0) instead of only the needle chunk — "
+                         "tests whether read-out collapses due to DILUTION among "
+                         "many raw-KV columns (the real W0 condition).")
+    ap.add_argument("--background", default="data/pg19_chunks_llama3.npy")
+    ap.add_argument("--n_ctx", type=int, default=16)
     ap.add_argument("--device", default="cuda:0")
     cli = ap.parse_args()
 
@@ -108,6 +115,11 @@ def main():
     }
     positions = ["near", "far"]
     rng = random.Random(11)
+
+    bg = None
+    if cli.full_haystack:
+        import numpy as np
+        bg = np.load(cli.background)
     results = {f"{ls}|{p}": {"exact": 0, "n": 0} for ls in layer_sets for p in positions}
 
     for i in range(cli.n_samples):
@@ -115,18 +127,30 @@ def main():
         code = " ".join(rng.choices(string.digits, k=5))
         needle = f"MEMORIZE: The secret code for agent {name} is {code}. END_MEMORIZE"
         q_text = f"The secret code for agent {name} is"
-        needle_ids = torch.tensor([tok.encode(" " + needle, add_special_tokens=False)],
-                                  device=device)
+        needle_tok = tok.encode(" " + needle, add_special_tokens=False)
+        # needle chunk: needle at offset 0, padded/filled to chunk_size when
+        # full_haystack (so each streamed chunk is a real chunk_size chunk).
+        if cli.full_haystack:
+            bg0 = bg[(i + 700) % len(bg), :cli.chunk_size].tolist()
+            chunk0 = (needle_tok + bg0[len(needle_tok):])[:cli.chunk_size]
+            chunks = [torch.tensor([chunk0], device=device)]
+            for c in range(1, cli.n_ctx):
+                row = bg[(i + 700 + c) % len(bg), :cli.chunk_size].tolist()
+                chunks.append(torch.tensor([row[:cli.chunk_size]], device=device))
+        else:
+            chunks = [torch.tensor([needle_tok], device=device)]
+        needle_ids = chunks[0]
         q_ids = torch.tensor([tok.encode(q_text, add_special_tokens=False)], device=device)
         gold = code.split()
 
         for ls_name, ls in layer_sets.items():
             for pos in positions:
-                # 1) reset + stream the needle chunk (populate store at L16).
+                # 1) reset + stream the chunk(s) (populate store at L16).
                 _reset_banks(model)
                 _set_readout_layers(model, set(ls))
                 with torch.no_grad():
-                    model(input_ids=needle_ids, use_cache=False)
+                    for ch in chunks:
+                        model(input_ids=ch, use_cache=False)
                 # 2) grab store, overwrite token_pos for near/far.
                 store = None
                 for b in _banks(model):
@@ -137,12 +161,19 @@ def main():
                 if store is None:
                     continue
                 M = store.size()
-                if pos == "near":
+                if cli.full_haystack:
+                    # Keep the natural per-chunk positions written by the store
+                    # (each chunk 0..chunk_size-1). near/far is meaningless when
+                    # there are many chunks; we run only the realistic layout and
+                    # both 'positions' cells will be identical (dilution test).
+                    pass
+                elif pos == "near":
                     new_pos = torch.arange(M, device=device, dtype=torch.long)
+                    store.token_pos = new_pos.unsqueeze(0).expand(store.token_pos.shape[0], -1).clone()
                 else:
                     new_pos = torch.arange(cli.far_pos, cli.far_pos + M,
                                            device=device, dtype=torch.long)
-                store.token_pos = new_pos.unsqueeze(0).expand(store.token_pos.shape[0], -1).clone()
+                    store.token_pos = new_pos.unsqueeze(0).expand(store.token_pos.shape[0], -1).clone()
                 # 3) freeze + decode the answer from the question.
                 _freeze(model)
                 cur = q_ids.clone()
