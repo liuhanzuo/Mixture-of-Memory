@@ -1080,3 +1080,12 @@ team-lead 采纳「Part-Y-only」干净单轴框架（比早先 option A 更紧�
   - lr30 step250: gist=**0%**,reader-attn=**27.5%**(4.4×随机),Pearson +0.00。
 - 结论:trained gist 与 needle、reader-attn **都不相关**(idiosyncratic)。但 **reader 自身注意力 over 无损 raw-KV 已能定位 needle(55%)**,远胜任何 trained 选择头。
 - ★架构启示:**去掉 trained gist scorer,reader native attention over raw-KV 就是最好的检索器**(selection 涌现、不进 loss)。嫁接草案:保留 raw-KV 无损 + 解冻 reader L16-31,删 gist,inattn concat 去掉 col_bias。注入层数待 landmark-repro S5 passkey 定。
+
+#### ★★★ Method A 真墙 = DILUTION(2026-06-20,分层 oracle 诊断终点)
+分层 consumption 诊断(注入正确 needle raw-KV,bypass 选择,逐层定位):
+- **Level 0**(needle+question 同 512 chunk,纯窗口内):vanilla 100% / mem_space 96% → 基础 readout OK。
+- **Level 1**(跨块,store **仅 needle chunk**,col_bias=0):L16 单层 82-87%,L16/20/24+ **97.5%**(far≈near)→ 不是 distance/RoPE,不是 consumption 无能,reader **会**消费干净跨块 KV。
+- **full_haystack**(store **全 16 chunk**,needle 在 chunk0):**0.0%**(所有层集)→ 加 15 distractor chunk 把 97.5% 打到 0%。
+- **★裁决 = DILUTION**:墙是"太多 raw-KV 列(16×512=8192)在 attention softmax 里淹没 needle 的 25 token"。完整自洽:Level0 96-100% / Level1 干净 97.5% / full-haystack 0% / W0 gist-topk2 ≤14% / go/no-go keep_all 4k11/8k5 —— dilution 的不同剂量。
+- **破墙配方(无训练,不触 H2)**:硬 top-k **isolation**——选 1-2 chunk,**只拼 selected chunk 的 raw-KV,排除其余 14**。这正是 Landmark cache_top_k work 而我们 keep_all 崩的根因(隐式 isolation)。难点=选得准(gist 0-10% 选错→topk2 仍 14%;reader native attn 55%;oracle=97.5% 上限)。
+- **下一步(待 recipe 测试)**:full_haystack + reader-native-attn 驱动的 top-1~2 硬隔离,预测 W0 跳到接近 Level1 高位 = 破墙 demo。
