@@ -172,7 +172,8 @@ class GistReadout(nn.Module):
     (re-projected through the reader's own native k/v_proj), not from here.
     """
 
-    def __init__(self, d_model: int, gist_dim: int = 128) -> None:
+    def __init__(self, d_model: int, gist_dim: int = 128,
+                 inwindow_summary: bool = False) -> None:
         super().__init__()
         self.d_model = d_model
         self.gist_dim = gist_dim
@@ -184,11 +185,47 @@ class GistReadout(nn.Module):
         nn.init.normal_(self.query_proj.weight, std=0.02)
         nn.init.normal_(self.key_proj.weight, std=0.02)
         self._scale = gist_dim ** -0.5
+        # (B in-window summary, 2026-06-20) The "summarizer": maps a per-sub-block
+        # pooled hidden to a SUMMARY hidden that the reader's own k_proj/v_proj
+        # then project into the attention space (summary_key=k_proj(summary_proj(
+        # pool)), summary_val=v_proj(pool) — value uses raw pool, Landmark-faithful:
+        # the landmark token's value goes through the standard v_proj, the summary
+        # capacity lives in the hidden/key). summary_proj is the ONLY new trainable
+        # param; it learns to compress a sub-block into a selectable summary via the
+        # in-window bottleneck objective (dense gradient from the target chunk's LM
+        # loss; gradient source 2). Allocated ONLY when inwindow_summary is on so
+        # the off path keeps a byte-identical state_dict (no extra params).
+        self.inwindow_summary = bool(inwindow_summary)
+        if self.inwindow_summary:
+            self.summary_proj = nn.Linear(d_model, d_model, bias=False)
+            # init near identity so the un-trained summary ≈ mean-pool (a sane
+            # starting summary) and gradient can shape it from there.
+            nn.init.eye_(self.summary_proj.weight)
+        else:
+            self.summary_proj = None
         # Diagnostics (refreshed each retrieve; layer/smoke reads these).
         self._last_n_chunks: int = 0
         self._last_R: int = 0
         self._last_weight_max: float = 0.0
         self._last_weight_entropy: float = 0.0
+
+    def summarize(self, sub_block_hidden: torch.Tensor) -> torch.Tensor:
+        """Per-sub-block SUMMARY hidden for the in-window bottleneck (B4).
+
+        Args:
+            sub_block_hidden: [..., n_sub, d_model] the per-sub-block POOLED hidden
+                (mean over the sub-block's tokens). Grad-bearing when computed in
+                the target chunk's forward (gradient source 2 flows here).
+        Returns:
+            [..., n_sub, d_model] summary hidden. The caller (inattn_kv bottleneck)
+            applies the reader's k_proj to get the summary KEY and the reader's
+            v_proj to the RAW pool to get the summary VALUE (Landmark-faithful).
+        When inwindow_summary is off, returns the input unchanged (no-op).
+        """
+        if self.summary_proj is None:
+            return sub_block_hidden
+        return self.summary_proj(sub_block_hidden)
+
 
     def retrieve(
         self,

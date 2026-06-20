@@ -212,6 +212,7 @@ def apply_mem_space_to_model(
         from .rawkv_readout import GistReadout
         gist_readout = GistReadout(
             d_model=d_model, gist_dim=config.rawkv_gist_dim,
+            inwindow_summary=getattr(config, "rawkv_inwindow_summary", False),
         )
 
     for i in target_indices:
