@@ -1,0 +1,57 @@
+# 选择侧修复：in-window summary key（破墙第二步设计草案）
+
+**作者**: landmark-repro (Landmark 机制) + methodA-eval (mem_space 接入)  **日期**: 2026-06-20
+**状态**: DRAFT，待 methodA-eval 评估接入可行性 + chunk512 单轴消费结果。
+**前置**: chunk512 单轴 grouped-readout 重训(PID 4178815)在测「消费侧」；本设计攻「选择侧」。
+
+---
+
+## 0. 为什么需要这个（两难的解）
+
+- **H2**：显式训练选择器(gist scorer，跨块选择折进 LM loss)→ 学不出(LM loss 对"选含 needle 的块"无梯度压力)。
+- **变体B**：未训练的 reader-attn 选择(no_grad 固定)→ 选不准,硬 bias 到错 sub-block 比等权更糟。
+- **两难**：选择不能直接训(H2)、不训也不准(变体B)。
+
+**Landmark 的解(代码级证实,llama_mem.py + train.py)**：
+- 无任何 aux/selection loss——只有 LM loss。
+- `<landmark>` 是每 mem_freq 插入的**可训练 special token**,训练时**在窗口内**学:窗口内后续 token 经 grouped-softmax 通过 landmark-token 这个 bottleneck attend 回它代表的 mem_freq 段 → landmark-token 收**密集的 in-window 梯度**,学会"概括本段"。
+- 训练**不跑**跨块检索(cache_top_k=None,past_key_value=None)。跨块选择是**推理期涌现**:用 in-window 训好的概括 key 做 query·landmark-key。
+- **关键洞察**:选择 key 不是从"跨块选择"学的(H2,无梯度),是从"in-window 概括"学的(密集梯度)。绕开 H2 靠**代理目标**,不靠架构。
+
+## 1. 设计：可训练 per-block summary key + in-window 概括目标
+
+**与 Landmark 的对应(同构,不插 token 避免改 tokenize/label)**：
+- 不在 input_ids 插 `<landmark>`(那要改 tokenize + label 移位,大改 + 影响 dolmino/T2 数据管线)。
+- 改为**可训练投影 `summary_proj`**:per-block summary key = `summary_proj(block hidden 的 pool)`。`summary_proj` 是新可训练参数(类比 gist_proj,但训练目标不同)。
+
+**in-window 概括目标(绕 H2 的核心)**：
+- 训练时,**当前窗口**的 self-attention 里,块内后续 token 对**本块自己的 summary key** 做 grouped-softmax(bottleneck)→ summary_proj 收 in-window 密集梯度,学"概括本块"。
+- 梯度来源 = LM loss(经 in-window grouped-softmax),**无独立 aux loss**(保持 Landmark-faithful 纯 LM loss)。
+
+**推理涌现**：
+- 跨块检索:query · 各 block 的 summary key(in-window 训好的概括 key)→ 外层选 block。
+- 这就把外层选择 key 从"未训练 reader native q·k(73% ceiling)"换成"in-window 训练的 summary key",**预期外层命中率超 73%**。
+
+## 2. 两层最终架构（消费 + 选择都解）
+
+| 层 | 机制 | 训练 | 守 H2? |
+|---|---|---|---|
+| 外层选择(选哪些 block) | query · **summary key** topk + gather(硬) | summary_key 由 **in-window 概括**训(密集梯度);gather 硬 argmax 不进 loss | ✅ 不训跨块选择 |
+| 内层读出(block 内 token mass) | group_lse 顶层 + within-block softmax | answer 梯度经 grouped-softmax(= chunk512 单轴在测的) | ✅ 涌现 |
+
+## 3. 接入点（待 methodA-eval 评估改动量）
+
+1. **store**:写入加 `summary_proj(chunk_hidden_pool)` 存 per-block summary key(类比 gist_src 字段位置,但可训练 + in-window 目标)。
+2. **in-window 概括目标**:训练时当前 chunk self-attention 加对"本 chunk summary key"的 grouped-softmax bottleneck。⚠️ **碰当前窗口 attention(不只 retrieved),比 grouped readout 改动大**——这是最大工程点。
+3. **推理**:外层 topk 的 score 从 reader native q·k 换成 query·summary_key。
+
+## 4. 风险 / 开放问题
+- in-window 概括目标怎么不破坏当前窗口的正常 LM(landmark 是额外 token,我们是额外 attention 路径)——需 ablation 确认不退化短程。
+- summary_proj pool 方式(mean / attention-pool / 学习 query)。
+- 改动量大(碰当前窗口 attention)→ 先等 chunk512 单轴消费结果:若消费侧训练已把 4k 拉到 ~57.5(逼近 chunk-oracle 上限),说明内层够、瓶颈纯在外层选择 → 这个 summary key 值得做;若消费侧仍~14,问题更深,先排查消费。
+
+## 5. 执行顺序
+1. **[RUNNING]** chunk512 单轴 grouped-readout 重训(消费侧,PID 4178815)。
+2. step500 W0 → 判消费侧贡献(4k 14→?）。
+3. 若消费侧有效 + 本设计 methodA-eval 评估可行 → 实装 summary key(选择侧)→ 第二个重训。
+4. 仍不够 → (A) per-layer per-head 投票(我已给逻辑)进一步提外层命中。
