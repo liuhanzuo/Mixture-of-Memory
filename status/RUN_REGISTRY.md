@@ -1051,3 +1051,12 @@ team-lead 采纳「Part-Y-only」干净单轴框架（比早先 option A 更紧�
 - **⚠ 吞吐**：~27.5 s/it → 3k 步 ETA ~23h（远超单节点估计 4-6h）。**原因：2-node FSDP full_shard 每层 all-gather 参数走 inter-node TCP（IB 禁用），通信受限。** 已上报 team-lead。
 - **★ IB 修复（2026-06-19，11× 提速）**：2-rank allreduce bw smoke 对比 IB vs TCP：`NCCL_IB_DISABLE=0 NCCL_IB_GID_INDEX=3`（mlx5 RoCE v2）= **10.7 GB/s**，TCP（IB off）= 1.0 GB/s → **IB 快 ~10×，且干净无 hang**。据此 relaunch S2 2-node IB-enabled（弃 TCP run，其仅到 step25 无 ckpt，warm state 可忽略）。**新 IB run：2.48 s/it（vs TCP 26.5 → 11× 提速），3k 步 ETA ~2h。** 两节点 100% GPU，step 递增正常。IB run 日志 logs/landmark_S2_dolmino_IB_{master,worker}_20260619_172103.log。launcher run_landmark_S2_node.sh 已支持 `NCCL_IB_DISABLE=0 NCCL_IB_GID_INDEX=3` 环境覆盖。
 - **待办**：1k/2k/3k ckpt 落地后跑 native passkey @70→32k、50 tests、top_k5、mem arm；记录断崖与否（断崖=数据是杀手；无断崖=数据非杀手，疑点转检索/分层）。
+
+### ★ Method A raw-KV readout 诊断系列（2026-06-20, methodA-eval）
+**目的**：raw-KV(无损)+ 解冻 reader(L16-31) + 可训练 gist-key soft-attention 选择(readout 16/20/24),能否破长档墙。守门=needle precision probe(gist 是否选中含 needle 的 chunk)+ W0 BABILong。
+- **rawkv_methodA_b200（原始，topk8）**：chunk512,n_ctx7(gap3584),topk_chunks=8,num_keys=1,gist mean-pool。★配置缺陷:topk8≥n_ctx7→GistReadout keep_all 恒 True→top-k 选择全程 no-op,reader brute-force attend 全部 7 chunk→loss→0 但 scorer 无选择压力。probe: needle precision@top1=22.5%(随机)。诊断 commit 5b87057。
+- **rawkv_methodA_h1fix_b200（H1-fix，topk2）**：topk_chunks=2≪n_ctx16(gap8192,curriculum0:16),num_keys=3(2 distractor),gist **max-pool**(新增 --rawkv_gist_pool)。强迫选择。2000步 non-finite=0,4 ckpt 全在。
+  - **probe(num_keys=3/gap8192/n_ctx16,匹配难度)**:needle precision@top1=**5.0%**(随机6.25%)@top2=2.5%。gist 权重跨16 chunk 近均匀。
+  - **W0 BABILong qa1(正规 score_nested,n=100)**:0k=**90%** 4k=14% 8k=7% 16k=8%(死线21)→长档崩。0k 高=格式/短读完好(非"未遗忘")。
+  - **★裁决=H2**:gist scorer 确实训了(全精度 norm 14.470→14.49,grad_norm 0.04 非零;早期"FSDP freeze bug"判断已撤回——是 probe 2 位小数显示误导)。即便强迫选择+梯度正常,训练性 cross-chunk scorer 仍学不会区分 needle(precision≈随机)。**"训练一个 cross-chunk 选择器"这条路本身难** → 转 Landmark emergent 选择。
+- **rawkv_methodA_h1fix_v2_b200（方法学修正版，RUNNING pid71128）**:同 h1fix 配置,但 gist 不再(错误地)FSDP-wrap、改为 replicated + 手动 all-reduce 梯度(_sync_gist_grads)。作为"梯度正确同步下训练 scorer"的严格 H2 确认。预期 precision 仍随机。commit 6e48cd5。
