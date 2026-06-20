@@ -713,6 +713,11 @@ def main():
                              "so the reader attends raw-KV via its OWN native q.k "
                              "only (no trained selection head). Tests whether the "
                              "reader's native attention is itself the retriever.")
+    parser.add_argument("--rawkv_eval_topk", type=int, default=0,
+                        help="Eval-time override of rawkv_readout_topk_chunks "
+                             "(candidate restriction): keep only top-k chunks by "
+                             "gist salience. With --rawkv_disable_col_bias, attend "
+                             "them with no trained weight bias. 0 = no override.")
     parser.add_argument("--use_chat_template", action="store_true",
                         help="Wrap the formatted input in the tokenizer's chat template")
     parser.add_argument("--use_instruction", action="store_true", default=True,
@@ -780,6 +785,16 @@ def main():
         print("[mem_space-BABILong] rawkv_disable_col_bias=True + topk_chunks=0 "
               "(keep all) -> reader native attention over FULL raw-KV (no trained "
               "selection head)")
+    # Candidate-restriction override (2026-06-20): keep only top-k chunks by gist
+    # salience BUT (with --rawkv_disable_col_bias) attend them with NO trained
+    # weight bias — tests whether RESTRICTING candidates (vs keep_all=16) lets the
+    # reader's native attention isolate the needle (climbing toward the 82-97%
+    # isolated-injection ceiling). Applied AFTER the disable_col_bias block so it
+    # overrides the keep_all there.
+    if getattr(args, "rawkv_eval_topk", 0) and args.rawkv_eval_topk > 0:
+        mem_config.rawkv_readout_topk_chunks = int(args.rawkv_eval_topk)
+        print(f"[mem_space-BABILong] rawkv_eval_topk override -> "
+              f"topk_chunks={args.rawkv_eval_topk} (candidate restriction)")
     # L3 token-recon head builds pos_queries of shape [l3_recon_max_positions, d].
     # At train time this is set to chunk_size (train_mem_space_dolmino_cpt.py:1088),
     # but adapter_config.json carries no chunk_size, so the dataclass default (1024)
