@@ -40,6 +40,8 @@ GPUS="${CUDA_VISIBLE_DEVICES:-0,1,2,3,4,5,6,7}"
 TOTAL_STEPS="${TOTAL_STEPS:-2000}"
 WARMUP="${WARMUP:-60}"
 MASTER_PORT="${MASTER_PORT:-29873}"
+GIST_LR_MULT="${GIST_LR_MULT:-1.0}"   # >1 = undertraining-exclusion probe (gist proj own LR group)
+SAVE_INTERVAL="${SAVE_INTERVAL:-500}"
 mkdir -p logs outputs/$RUN
 setsid bash -c "CUDA_VISIBLE_DEVICES=$GPUS $PYBIN -m torch.distributed.run --nproc_per_node=$NPROC --master_port=$MASTER_PORT \
   scripts/train_mem_space_dolmino_cpt.py \
@@ -50,7 +52,7 @@ setsid bash -c "CUDA_VISIBLE_DEVICES=$GPUS $PYBIN -m torch.distributed.run --npr
   --unfreeze_backbone --unfreeze_layers_from 16 --use_fsdp \
   --use_rawkv_readout --rawkv_readout_layer 16 --rawkv_readout_layers 16,20,24 \
   --rawkv_gist_dim 128 --rawkv_readout_topk_chunks 2 --rawkv_readout_temp 1.0 \
-  --rawkv_gist_pool max \
+  --rawkv_gist_pool max --rawkv_gist_lr_mult $GIST_LR_MULT \
   --chunk_size 512 --batch_size 1 --num_slots 128 --top_k 16 --selector_dim 128 \
   --selector_temperature 40 --load_balance_weight 0.0 --entropy_aux_weight 0.0 \
   --use_loss_free_balance --loss_free_update_rate 0.001 --num_global_slots 4 \
@@ -65,7 +67,7 @@ setsid bash -c "CUDA_VISIBLE_DEVICES=$GPUS $PYBIN -m torch.distributed.run --npr
   --babilong_mix_fraction 0.0 \
   --t2_recall_mix_fraction 0.5 --t2_background_data data/pg19_chunks_llama3.npy \
   --t2_gap_tokens 8192 --t2_num_keys 3 \
-  --save_interval 500 --eval_interval 0 --log_interval 5 \
+  --save_interval $SAVE_INTERVAL --eval_interval 0 --log_interval 5 \
   --grad_clip 1.0 --proj_grad_clip 0.1 --wandb_project mixture-of-memory \
   --wandb_run_name $RUN --dtype bfloat16 --attn_impl sdpa --seed 42" \
   </dev/null >logs/$RUN.log 2>&1 &
