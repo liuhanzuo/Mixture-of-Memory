@@ -63,7 +63,7 @@
 - 改动量大(碰当前窗口 attention)→ **先等 chunk512 单轴消费结果**:若消费侧训练已把 4k 拉到 ~57.5(逼近 chunk-oracle 上限),说明内层够、瓶颈纯在外层选择 → summary key 值得做(走 B-插token);若消费侧仍~14,问题更深,先排查消费,B 缓。
 
 ## 5. 执行顺序
-1. **[RUNNING]** chunk512 单轴 grouped-readout 重训(消费侧,PID 4178815)。
-2. step500 W0 → 判消费侧贡献(4k 14→?）。
-3. 若消费侧有效 + 本设计 methodA-eval 评估可行 → 实装 summary key(选择侧)→ 第二个重训。
-4. 仍不够 → (A) per-layer per-head 投票(我已给逻辑)进一步提外层命中。
+1. **[RUNNING]** chunk512 单轴 grouped-readout 重训(消费侧 + detached k_proj 选择,PID **45405**,带 grad_flow_diag 已证 reader k_proj grad 非零=选择在学)。
+2. step500 W0(同口径 keep_all+grouped+chunk512 对 flat10/变体A14)→ 判消费/detached选择贡献(4k 14→?）。
+3. 若 4k→40-57(detached k_proj 重投影够)→ 可能不需 B。若长档卡 → 上 B(去 detach + **B-插token 真 bottleneck**,见 §4)。
+4. 仍不够 → (A) per-layer per-head 投票(已给逻辑)进一步提外层命中。
