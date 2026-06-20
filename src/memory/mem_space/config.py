@@ -662,15 +662,6 @@ class MemorySpaceConfig:
     # for the reader to attend (else the bad gist top-k would gate out the needle
     # chunk before the reader sees it). Default False = original Method A path.
     rawkv_readout_zero_col_bias: bool = False
-    # Two-stage grouped-softmax readout (gap B, 2026-06-20). When True, the
-    # retrieved raw-KV columns are NOT flattened into a single softmax with the
-    # native keys; instead each `rawkv_subblock_size`-token sub-block is its own
-    # softmax group (Landmark grouped-softmax): top-level softmax over (native
-    # columns vs n_sub block-units) x within-sub-block softmax. Avoids the
-    # within-block dilution that drowns a ~25-token needle in a 512-token chunk
-    # (chunk-oracle 57.5% vs token-oracle 90%). Pure-eval capable (no retrain).
-    rawkv_grouped_readout: bool = False
-    rawkv_subblock_size: int = 64
 
     # FastMem (Gated Delta Rule continuous memory, 2026-05-21):
     # Per-layer fast-weight memory that captures a continuous running summary
