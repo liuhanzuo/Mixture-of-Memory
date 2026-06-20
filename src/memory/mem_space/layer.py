@@ -2439,6 +2439,10 @@ class MemorySpaceLayer(nn.Module):
             if _ro_attn is not None:
                 # Reset the stash at the START (grad-ckpt safe; mirrors inattn).
                 _ro_attn._inattn_kv = None
+                # (B4) expose the shared GistReadout (holds summary_proj) so
+                # build_retrieved_kv can summarize sub-blocks when inwindow_summary
+                # is on. Cheap attr set; None-safe when feature off.
+                _ro_attn._gist_readout_ref = self.gist_readout
             _ro_store = getattr(self.memory_bank, "_rawkv_readout_store", None)
             if (
                 _ro_attn is not None
@@ -2489,12 +2493,34 @@ class MemorySpaceLayer(nn.Module):
                         _ro_attn, _ro_h.to(hidden_states.dtype), _ro_pos,
                         position_embeddings, pre_norm=_ro_pre_norm,
                     )
+                    # (B4 in-window summary) When the retrieved KV are summarized
+                    # into per-sub-block tokens, R changes (R_raw -> n_sub) so the
+                    # per-raw-token col_bias [B,Tq,R_raw] no longer aligns with the
+                    # summary columns. Selection now flows through summary_proj (a
+                    # trainable bottleneck), not the col_bias log-weight, so drop
+                    # the bias for the summary path (stash 2-tuple = no col_bias).
+                    _summary_on = (
+                        bool(getattr(_ro_attn, "_rawkv_inwindow_summary", False))
+                        and getattr(self.gist_readout, "summary_proj", None) is not None
+                        and _roK.shape[2] != _ro_h.shape[1]   # confirm summarization happened
+                    )
+                    if _summary_on:
+                        _ro_bias = None
                     # Grad-flow probe (mirrors inattn): retain grad on the bias so
                     # the smoke can assert the gist scorer's path is in-graph.
-                    if getattr(self, "_inattn_grad_probe", False) and _ro_bias.requires_grad:
+                    if (
+                        getattr(self, "_inattn_grad_probe", False)
+                        and _ro_bias is not None
+                        and _ro_bias.requires_grad
+                    ):
                         _ro_bias.retain_grad()
                         self._last_rawkv_readout_bias = _ro_bias
-                    _ro_attn._inattn_kv = (_roK, _roV, _ro_bias)
+                    if _ro_bias is None:
+                        # Summary path: 2-tuple (no col_bias) — selection is via
+                        # the trainable summary_proj bottleneck, not col_bias.
+                        _ro_attn._inattn_kv = (_roK, _roV)
+                    else:
+                        _ro_attn._inattn_kv = (_roK, _roV, _ro_bias)
                     self._last_rawkv_readout_R = int(_roK.shape[2])
                     self._last_rawkv_readout_fired = True
 

@@ -81,6 +81,52 @@ def build_retrieved_kv(
     _h = retrieved_hidden
     if pre_norm is not None:
         _h = pre_norm(_h)
+
+    # (B4 in-window summary, 2026-06-20) When rawkv_inwindow_summary is on, the
+    # reader does NOT attend the raw retrieved tokens directly. Instead each
+    # consecutive ``_gs``-token sub-block is compressed into ONE summary token via
+    # the trainable GistReadout.summary_proj — selection/consumption MUST pass
+    # through the summarizer (Landmark landmark-token semantics: a learnable
+    # bottleneck, not a raw-KV bypass). summary_proj therefore receives gradient
+    # from the readout/answer loss. summary_key = k_proj(summary_proj(pool)),
+    # summary_val = v_proj(raw pool) — Landmark-faithful: the value goes through
+    # the standard v_proj (summary capacity lives in the key/hidden, not the
+    # value). off → byte-identical (raw path below).
+    _gist = getattr(self_attn, "_gist_readout_ref", None)
+    _use_summary = (
+        bool(getattr(self_attn, "_rawkv_inwindow_summary", False))
+        and _gist is not None
+        and getattr(_gist, "summary_proj", None) is not None
+    )
+    if _use_summary:
+        _gs = int(getattr(self_attn, "_rawkv_subblock_size", 64))
+        n_sub = R // _gs
+        if n_sub >= 1:
+            R_use = n_sub * _gs                       # drop a partial tail sub-block
+            _hb = _h[:, :R_use, :].view(B, n_sub, _gs, -1)
+            pool = _hb.mean(dim=2)                    # [B, n_sub, d] mean-pool sub-block
+            summ_hidden = _gist.summarize(pool)       # summary_proj(pool), grad-bearing
+            K_raw = self_attn.k_proj(summ_hidden).view(B, n_sub, -1, hd).transpose(1, 2)
+            V_raw = self_attn.v_proj(pool).view(B, n_sub, -1, hd).transpose(1, 2)
+            # Representative RoPE position per sub-block = its LAST token's position
+            # (landmark sits at block end). retrieved_pos: [B, R].
+            _rp = retrieved_pos.to(device=K_raw.device, dtype=torch.long)
+            _last_idx = (torch.arange(n_sub, device=_rp.device) + 1) * _gs - 1  # [n_sub]
+            _last_idx = _last_idx.clamp_(0, R - 1)
+            sub_pos = _rp[:, _last_idx]               # [B, n_sub]
+            cos, sin = position_embeddings
+            T = cos.shape[1]
+            sub_pos = sub_pos.clamp_(0, T - 1)
+            if cos.shape[0] == 1 and B > 1:
+                cos = cos.expand(B, T, cos.shape[-1])
+                sin = sin.expand(B, T, sin.shape[-1])
+            _gi = sub_pos.unsqueeze(-1).expand(B, n_sub, cos.shape[-1])
+            cos_r = cos.gather(1, _gi)
+            sin_r = sin.gather(1, _gi)
+            K_raw = rope_keys_only(K_raw, cos_r.to(K_raw.dtype), sin_r.to(K_raw.dtype))
+            return K_raw, V_raw
+        # n_sub < 1 (R < _gs): fall through to raw path (too few tokens to summarize)
+
     K_raw = self_attn.k_proj(_h).view(B, R, -1, hd).transpose(1, 2)
     V_raw = self_attn.v_proj(_h).view(B, R, -1, hd).transpose(1, 2)
 
