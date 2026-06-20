@@ -1479,6 +1479,12 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--rawkv_subblock_size", type=int, default=64,
                    help="Sub-block size for --rawkv_grouped_readout (= Landmark "
                         "mem_freq+1). Retrieved R columns must be a multiple of this.")
+    p.add_argument("--rawkv_inwindow_summary", action="store_true", default=False,
+                   help="(B4 2026-06-20) Selection-side in-window summary bottleneck: "
+                        "retrieved KV are compressed per --rawkv_subblock_size sub-block "
+                        "via a trainable GistReadout.summary_proj before k_proj/v_proj "
+                        "(Landmark landmark-token: selection passes through the learnable "
+                        "summarizer, not a raw-KV bypass). off=byte-identical.")
 
     # ----- Full fine-tune: unfreeze the entire Llama backbone (2026-06-18) ----- #
     # Landmark-faithful SFT: the frozen reader cannot consume injected KV through
@@ -1709,6 +1715,7 @@ def build_model(args, device, dtype) -> torch.nn.Module:
         rawkv_gist_pool=args.rawkv_gist_pool,
         rawkv_grouped_readout=args.rawkv_grouped_readout,
         rawkv_subblock_size=args.rawkv_subblock_size,
+        rawkv_inwindow_summary=args.rawkv_inwindow_summary,
     )
 
     # H7 rotary fp32 fix — snapshot before bf16 cast
