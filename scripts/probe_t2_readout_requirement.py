@@ -97,7 +97,18 @@ def _answer_nll(model, ctx_chunks, target_ids, answer_mask, device, memory_off):
             for t in range(len(tgt) - 1):
                 if am[t + 1]:  # position t predicts the answer-digit at t+1
                     nlls.append(-lp[t, tgt[t + 1]].item())
-            return float(np.mean(nlls)) if nlls else float("nan")
+            # HARNESS-LEAK FIX (2026-06-20, methodA-eval): the target chunk is
+            # "<question> <d1> <d2> .. <d5>" with the answer teacher-forced INTO the
+            # window, so digits 2-5 are predicted with the PRECEDING digits already
+            # visible in the causal context — a partial leak that lets even a
+            # memory-OFF vanilla model score low on digits 2-5 (structural, not
+            # readout). Only the FIRST answer digit (predicted from "...is ", before
+            # any answer token is visible) is a CLEAN test of whether the readout is
+            # required. Return (mean_all, first_digit_nll); use first_digit_nll for
+            # the go/no-go verdict.
+            first_nll = nlls[0] if nlls else float("nan")
+            mean_nll = float(np.mean(nlls)) if nlls else float("nan")
+            return mean_nll, first_nll
     finally:
         if memory_off:
             _set_memory_disabled(model, False)
@@ -138,34 +149,45 @@ def main():
     )
     it = iter(ds)
 
-    on_nlls, off_nlls = [], []
+    on_nlls, off_nlls = [], []          # mean over 5 digits (PARTIALLY LEAKED)
+    on_d1, off_d1 = [], []              # FIRST digit only (CLEAN readout test)
     on_correct, off_correct = 0, 0
+    on_d1_correct, off_d1_correct = 0, 0
     n = 0
     for _ in range(cli.n_samples):
         s = next(it)
         ctx = s["context_chunks"]; tgt = s["target_ids"]; am = s["answer_mask"]
-        on = _answer_nll(model, ctx, tgt, am, device, memory_off=False)
-        off = _answer_nll(model, ctx, tgt, am, device, memory_off=True)
-        if not (np.isnan(on) or np.isnan(off)):
-            on_nlls.append(on); off_nlls.append(off)
-            on_correct += int(on < 0.05)   # ~exact digit
-            off_correct += int(off < 0.05)
+        on_m, on_f = _answer_nll(model, ctx, tgt, am, device, memory_off=False)
+        off_m, off_f = _answer_nll(model, ctx, tgt, am, device, memory_off=True)
+        if not (np.isnan(on_m) or np.isnan(off_m)):
+            on_nlls.append(on_m); off_nlls.append(off_m)
+            on_d1.append(on_f); off_d1.append(off_f)
+            on_correct += int(on_m < 0.05)
+            off_correct += int(off_m < 0.05)
+            on_d1_correct += int(on_f < 0.05)
+            off_d1_correct += int(off_f < 0.05)
             n += 1
 
     print("\n==== T2 readout-REQUIREMENT control (does answer need readout?) ====")
     print(f"n={n} chunk_size={cli.chunk_size} gap={cli.gap_tokens} n_ctx={ds.n_ctx} "
           f"num_keys={cli.num_keys} grouped={cli.grouped} keep_all=True")
-    print(f"answer-digit NLL  memory ON  (readout): {np.mean(on_nlls):.4f}")
-    print(f"answer-digit NLL  memory OFF (no readout): {np.mean(off_nlls):.4f}")
+    print("-- 5-digit mean (PARTIALLY LEAKED: digits 2-5 see teacher-forced prefix) --")
+    print(f"  NLL  ON {np.mean(on_nlls):.4f}  OFF {np.mean(off_nlls):.4f}   "
+          f"near-exact ON {100.0*on_correct/max(n,1):.1f}%  OFF {100.0*off_correct/max(n,1):.1f}%")
+    print("-- ★FIRST digit only (CLEAN: answer not yet in window, true readout test) --")
+    print(f"  NLL  ON {np.mean(on_d1):.4f}  OFF {np.mean(off_d1):.4f}   "
+          f"exact ON {100.0*on_d1_correct/max(n,1):.1f}%  OFF {100.0*off_d1_correct/max(n,1):.1f}%")
     print(f"  (random-digit baseline NLL ~= ln(10) = 2.303)")
-    print(f"near-exact frac   ON: {100.0*on_correct/max(n,1):.1f}%   OFF: {100.0*off_correct/max(n,1):.1f}%")
-    print("\nVERDICT:")
-    if np.mean(off_nlls) - np.mean(on_nlls) > 1.0:
-        print("  ✓ OFF >> ON: answer REQUIRES readout -> T2 task is VALID (loss->0 = real learning)")
-    elif np.mean(off_nlls) < 0.5:
-        print("  ✗ OFF also low: SHORTCUT/LEAK -> answer predictable WITHOUT readout -> task INVALID, fix before retrain")
+    print("\nVERDICT (based on CLEAN first-digit NLL):")
+    d_off, d_on = float(np.mean(off_d1)), float(np.mean(on_d1))
+    if d_off - d_on > 1.0:
+        print(f"  ✓ OFF({d_off:.2f}) >> ON({d_on:.2f}): first digit REQUIRES readout "
+              "-> readout genuinely retrieves the needle.")
+    elif d_off < 0.5:
+        print(f"  ✗ OFF({d_off:.2f}) also low: even WITHOUT readout the first digit is "
+              "predictable -> LEAK/shortcut, not real retrieval.")
     else:
-        print("  ~ partial: OFF elevated but not random -> some readout dependence, inspect")
+        print(f"  ~ partial: OFF({d_off:.2f}) elevated but not random -> inspect.")
 
 
 if __name__ == "__main__":
