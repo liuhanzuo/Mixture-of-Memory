@@ -24,23 +24,28 @@ export WANDB_MODE="offline"
 export PYTHONPATH="$PROJECT_ROOT/third_party/babilong-pkg:$PROJECT_ROOT:${PYTHONPATH:-}"
 export PYTHONUNBUFFERED=1
 PYBIN="${PYTHON_BIN:-$PROJECT_ROOT/.venv/bin/python}"
-RUN="${RUN:-mem_space_FIX_twostage_chunk64_diskA}"
+RUN="${RUN:-mem_space_FIX_twostage_chunk512_diskA}"
 NPROC="${NPROC:-8}"
 GPUS="${CUDA_VISIBLE_DEVICES:-0,1,2,3,4,5,6,7}"
 TOTAL_STEPS="${TOTAL_STEPS:-2000}"     # 取 step1000/2000 判据(过训铁律,避 3000)
 WARMUP="${WARMUP:-60}"
 MASTER_PORT="${MASTER_PORT:-29615}"
 SAVE_INTERVAL="${SAVE_INTERVAL:-500}"
-# ★细粒度 block: 512 -> 64 (= Landmark mem_freq+1; needle 占比 ~40% 避 within-block 稀释)
-CHUNK="${CHUNK:-64}"
-# 多层 readout (上半层全覆盖; per-layer 选择阶段1待 methodA-eval 512命中率数据再定加不加)
+# ★第一个重训 = chunk512(单轴: 只 +grouped_readout vs Method A h1fix, 避 per_doc cap).
+#   chunk64(粒度轴)留作后续: 变体A 已证 chunk512+grouped64 纯eval 边际有效(14 vs flat10),
+#   重训放大 grouped 效应;确认后再上 chunk64 加粒度增益(needle 占比~40%)。
+#   set CHUNK=64 切换到粒度轴(注意 per_doc cap, 见下).
+CHUNK="${CHUNK:-512}"
+# 多层 readout (上半层全覆盖). grouped readout(stage2)默认开, stage1_select 不开
+#   (变体B 显式 reader-attn 选择纯eval 已证有害; stage1 靠 grouped 顶层 group_lse 涌现).
 RO_LAYERS="${RO_LAYERS:-16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31}"
 
-# ⚠️ chunk_size=64 + curriculum: T2 needle->query 距离 = n_ctx*chunk. 要保持 ~8192
-#   总距离, n_ctx = 8192/64 = 128 (vs chunk512 的 16). 注意 (n_ctx+1)*chunk<=4096
-#   的 per-doc cap: 129*64=8256 > 4096 → 需 --t2_curriculum 渐进 或确认 per_doc 上限.
-#   §TBD: 和 methodA-eval 对齐 chunk64 下的 n_ctx/curriculum/gap 设置(ta 实验2 已跑通 chunk64).
-CURRICULUM="${CURRICULUM:-0:128}"      # §TBD 待 methodA-eval 确认 chunk64 的 n_ctx
+# n_ctx/curriculum: chunk512 → T2 n_ctx = t2_gap_tokens/chunk = 8192/512 = 16 (现成, 无 cap).
+#   ⚠️ chunk64 时: dolmino per_doc 单文档 capped 4096 → dolmino 路径 (n_ctx+1)*64<=4096
+#   即 n_ctx<=63; 但 T2 recall 路径用独立 background(不受 4096 cap), T2 n_ctx=8192/64=128
+#   照跑 → chunk64 方案 dolmino 用小 n_ctx, 长距离靠 T2(n_ctx128)扛. chunk512 不涉及.
+CURRICULUM="${CURRICULUM:-0:16}"      # chunk512: n_ctx=16. chunk64 时改 0:128 (T2 路径)
+
 
 mkdir -p logs outputs/$RUN
 setsid bash -c "CUDA_VISIBLE_DEVICES=$GPUS $PYBIN -m torch.distributed.run --nproc_per_node=$NPROC --master_port=$MASTER_PORT \
