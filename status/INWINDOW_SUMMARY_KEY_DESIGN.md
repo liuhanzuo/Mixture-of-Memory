@@ -39,16 +39,28 @@
 | 外层选择(选哪些 block) | query · **summary key** topk + gather(硬) | summary_key 由 **in-window 概括**训(密集梯度);gather 硬 argmax 不进 loss | ✅ 不训跨块选择 |
 | 内层读出(block 内 token mass) | group_lse 顶层 + within-block softmax | answer 梯度经 grouped-softmax(= chunk512 单轴在测的) | ✅ 涌现 |
 
-## 3. 接入点（待 methodA-eval 评估改动量）
+## 3. 接入点（methodA-eval 评估改动量,2026-06-20）
 
-1. **store**:写入加 `summary_proj(chunk_hidden_pool)` 存 per-block summary key(类比 gist_src 字段位置,但可训练 + in-window 目标)。
-2. **in-window 概括目标**:训练时当前 chunk self-attention 加对"本 chunk summary key"的 grouped-softmax bottleneck。⚠️ **碰当前窗口 attention(不只 retrieved),比 grouped readout 改动大**——这是最大工程点。
-3. **推理**:外层 topk 的 score 从 reader native q·k 换成 query·summary_key。
+1. **store**:写入加 `summary_proj(chunk_hidden_pool)` 存 per-block summary key。**低改动 ✓ ~20-30 行**(RawKVReadoutStore 加 Linear + 写入存字段,类比 gist_src)。
+2. **in-window 概括目标**:训练时当前 chunk self-attention 加对"本 chunk summary key"的 grouped-softmax bottleneck。⚠️ **高改动 + 深层可行性问题（核心,见 §4）**。inattn forward 只在 readout/injection 路径触发,当前 chunk 自己走原生 frozen self_attn,要加 in-window bottleneck 必须新 hook 进 frozen self_attn,碰当前窗口 attention(不只 retrieved)。
+3. **推理**:外层 topk 的 score 从 reader native q·k 换成 query·summary_key。**低改动 ✓ ~10 行**(layer.py:1135 _reader_attn_keep_set 换 score 来源)。
 
-## 4. 风险 / 开放问题
-- in-window 概括目标怎么不破坏当前窗口的正常 LM(landmark 是额外 token,我们是额外 attention 路径)——需 ablation 确认不退化短程。
+**★1+3 是壳,2 是魂**:点1+3 单独没用——只换 summary key 来源,但若 summary_proj 没被 in-window 目标训过,它就是**随机投影**,选不准。点2(用 in-window 概括目标训 summary_proj)是让 summary key 有意义的前提。B 的价值全压在点2 能否做出**真 bottleneck**。
+
+## 4. ★核心结论：旁路必败,必须真 bottleneck（2026-06-20,landmark-repro+methodA-eval 敲定）
+
+**Landmark 的 bottleneck 是「物理插 token + grouped-softmax 截断直连」实现的,不是「加一条旁路 attention」。** `<landmark>` 真在序列里,grouped-softmax(llama_mem.py:241 `full_access_mask`/`last_section_mask`)把"非当前段 token 直接 attend 更早段"的路径**截断**,强制经 landmark 中转 → landmark-token 收到**密集 in-window 梯度**(它是必经瓶颈)。
+
+→ **关键:bottleneck = 切断直连、只留经 summary 的路;NOT 加一条到 summary 的旁路。**
+- **summary_proj 旁路(加 attention 到 summary key,但 native 块内直连还在)= token 走 native 绕过 → summary_proj 拿不到密集梯度 = H2 旁路风险翻版。必败,别做。**
+- 真 bottleneck 两条路(都比旁路重,等 step500 消费结果定 + 优先 B-插token):
+  - **(B-插token)**:像 Landmark 物理插 summary token + grouped-softmax 截断块内直连。碰 tokenize + label 移位(大),但真 bottleneck,**优先试这个**。
+  - **(B-截断)**:不插 token,但在当前 chunk attention 里用 grouped-softmax 截断"token 直接 attend 块内更早 token"强制经 summary key。碰 frozen self_attn 结构,且要 ablation 确认不破坏正常 LM(短程不退化)。
+
+## 5. 风险 / 开放问题
+- in-window 概括目标怎么不破坏当前窗口正常 LM——需 ablation 确认不退化短程(B-截断 尤其要测)。
 - summary_proj pool 方式(mean / attention-pool / 学习 query)。
-- 改动量大(碰当前窗口 attention)→ 先等 chunk512 单轴消费结果:若消费侧训练已把 4k 拉到 ~57.5(逼近 chunk-oracle 上限),说明内层够、瓶颈纯在外层选择 → 这个 summary key 值得做;若消费侧仍~14,问题更深,先排查消费。
+- 改动量大(碰当前窗口 attention)→ **先等 chunk512 单轴消费结果**:若消费侧训练已把 4k 拉到 ~57.5(逼近 chunk-oracle 上限),说明内层够、瓶颈纯在外层选择 → summary key 值得做(走 B-插token);若消费侧仍~14,问题更深,先排查消费,B 缓。
 
 ## 5. 执行顺序
 1. **[RUNNING]** chunk512 单轴 grouped-readout 重训(消费侧,PID 4178815)。
