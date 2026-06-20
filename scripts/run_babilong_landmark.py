@@ -39,11 +39,14 @@ from tqdm.auto import tqdm
 # repo root for babilong and datasets.
 # ------------------------------------------------------------------ #
 
-# llama/ dir (cwd when running) is already in sys.path implicitly;
-# add repo root so we can import babilong third-party package.
+# The script is usually executed from external/landmark-attention/llama/;
+# add cwd explicitly because sys.path[0] is the script dir when invoked by path.
 _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))  # scripts/
 _REPO_ROOT = os.path.dirname(_SCRIPT_DIR)                 # Mixture-of-Memory/
+_LANDMARK_CWD = os.getcwd()
 _BABILONG_PKG = os.path.join(_REPO_ROOT, "third_party", "babilong-pkg")
+if _LANDMARK_CWD not in sys.path:
+    sys.path.insert(0, _LANDMARK_CWD)
 if _BABILONG_PKG not in sys.path:
     sys.path.insert(0, _BABILONG_PKG)
 if _REPO_ROOT not in sys.path:
