@@ -1001,24 +1001,38 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--distill_logits", action="store_true", default=False,
                    help="Enable scheme-A logits distillation (bidirectional KL on "
                         "the teacher top-64 support) for dolmino steps. Requires "
-                        "--distill_cache_dir. Default off.")
+                        "either --distill_cache_dir or --distill_swa_teacher. "
+                        "Default off.")
     p.add_argument("--distill_hidden", action="store_true", default=False,
                    help="Enable scheme-B hidden matching (1-cos on selected layers) "
-                        "for dolmino steps. Requires --distill_cache_dir. Off.")
+                        "for dolmino steps. Requires either --distill_cache_dir "
+                        "or --distill_swa_teacher. Off.")
     p.add_argument("--distill_lambda", type=float, default=0.6,
                    help="Scheme-A bidirectional KL weight: "
                         "lambda*KL(p||q)+(1-lambda)*KL(q||p). 0.6 = KV-Distill.")
     p.add_argument("--distill_layers", type=str, default="12,20,28",
                    help="Comma-separated DECODER-layer indices for scheme-B "
-                        "hidden matching. Must match the cache's meta_layers.")
+                        "hidden matching. Must match the cache's meta_layers "
+                        "for offline-cache distillation.")
     p.add_argument("--distill_cache_dir", type=str, default="",
                    help="Dir of teacher .npz cache from build_distill_cache.py. "
-                        "Empty = distillation disabled regardless of flags.")
+                        "Empty is allowed when --distill_swa_teacher is set.")
     p.add_argument("--distill_weight", type=float, default=1.0,
                    help="Overall multiplier on the distill term: "
                         "total = lm + aux + distill_weight*(L_A + beta*L_B).")
     p.add_argument("--distill_hidden_beta", type=float, default=1.0,
                    help="beta: relative weight of scheme-B (hidden) vs scheme-A.")
+    p.add_argument("--distill_swa_teacher", type=int, default=0,
+                   help="Online self-study teacher window W (Arm A, 2026-06-21). "
+                        "Default 0 = off/byte-identical. W>0: after streaming "
+                        "context into the same memory bank, run a no_grad teacher "
+                        "forward on last W context chunks + target with bank writes "
+                        "frozen, then train the student target-only forward to match "
+                        "teacher logits/hidden via the existing distill losses. "
+                        "Mutually exclusive with --distill_cache_dir.")
+    p.add_argument("--distill_swa_teacher_topk", type=int, default=64,
+                   help="Top-k teacher logits support used by --distill_swa_teacher "
+                        "for the existing bidirectional-KL distill loss.")
 
     # BABILong mix
     p.add_argument("--babilong_mix_fraction", type=float, default=0.15,
@@ -1942,6 +1956,41 @@ def distill_hidden_cosine(
     return per_layer.sum()  # sum over layers
 
 
+
+def _make_online_teacher_cache(
+    teacher_out,
+    prefix_len: int,
+    target_len: int,
+    layers: List[int],
+    topk: int,
+    device: torch.device,
+) -> dict:
+    """Convert an online teacher forward into the same dict shape as .npz cache.
+
+    The teacher may have seen a SWA prefix (last W context chunks) before the
+    target. Distillation is only on target positions, so logits/hidden are sliced
+    back to [target_len, ...]. Everything is detached: gradients must flow only
+    through the student forward.
+    """
+    s = int(prefix_len)
+    e = s + int(target_len)
+    logits = teacher_out.logits[0, s:e].detach()
+    k = min(int(topk), int(logits.shape[-1]))
+    t_val, t_idx = torch.topk(logits, k=k, dim=-1)
+    cache = {
+        "logit_idx": t_idx.detach().long(),
+        "logit_val": t_val.detach(),
+        "layers": torch.tensor([int(x) for x in layers], device=device).long(),
+    }
+    if getattr(teacher_out, "hidden_states", None) is not None and layers:
+        cache["hidden"] = torch.stack(
+            [teacher_out.hidden_states[int(L) + 1][0, s:e].detach() for L in layers],
+            dim=1,
+        )
+    return cache
+
+
+
 def assert_distill_cache_consistent(cache_dir, train_chunk_size, train_n_ctx,
                                     train_layers, train_fingerprint=None):
     """Guard against silently training on a mis-sliced teacher cache (v21).
@@ -2033,6 +2082,7 @@ def dolmino_train_step(
     answer_mask: Optional[torch.Tensor] = None,
     teacher_cache: Optional[dict] = None,
     distill_cfg: Optional[dict] = None,
+    swa_train_chunks: int = 0,
 ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor,
            torch.Tensor, torch.Tensor]:
     """HARDER objective (2026-06-13, last_chunk_loss_only): force memory to work.
@@ -2056,15 +2106,18 @@ def dolmino_train_step(
     exact memory slot that encoded the needle. When None (default), behaviour is
     BIT-IDENTICAL to the original full-target-chunk NTP loss.
 
-    Self-study distillation (v21, 2026-06-15): when ``teacher_cache`` AND
-    ``distill_cfg`` are provided (only for dolmino steps, never T2), the target
-    forward additionally requests ``output_hidden_states=True`` and we compute:
-      A) bidirectional KL between student answer logits and the cached teacher
-         top-64 distribution (distill_logits_kl);
+    Self-study distillation (v21, 2026-06-15; Arm A online teacher 2026-06-21):
+    when ``distill_cfg`` is provided (only for dolmino steps, never T2), the
+    student target forward additionally requests ``output_hidden_states=True``
+    and we compute:
+      A) bidirectional KL between student answer logits and teacher top-k
+         distribution (distill_logits_kl);
       B) 1-cos hidden matching on the selected layers (distill_hidden_cosine).
+    Teacher can come from either the offline ``teacher_cache`` or an online
+    no_grad ``--distill_swa_teacher`` forward over last W context chunks + target.
     total = lm_loss + aux_loss + distill_weight*(L_A + beta*L_B), and THIS is
-    what gets backward'd. When teacher_cache/distill_cfg is None (default), NOT
-    a single extra kwarg is passed to model(...) → byte-identical to before.
+    what gets backward'd. When distill_cfg is None (default), NOT a single extra
+    kwarg is passed to model(...) → byte-identical to before.
 
     Returns: (lm_loss, aux_loss, route_aux=0, l3recon=0, distill_kl, distill_hidden)
     — all scaled by grad_accum where applicable; distill terms are detached and
@@ -2082,27 +2135,85 @@ def dolmino_train_step(
     # Detach memory banks to prevent gradient flow through context passes
     _detach_banks(model)
 
-    # Forward target chunk with gradient
+    # Forward target chunk with gradient. Optionally widen the STUDENT forward
+    # with train-side SWA too (Arm C: cache teacher -> student swa2). Prefix labels
+    # are masked, and distill slices student logits/hidden back to target tokens.
     target_input = _ensure_batched(target_ids, device)  # [B, chunk_size]
+    target_len = target_input.shape[1]
     if answer_mask is None:
         # Default path: full-target NTP loss (bit-identical to original).
-        labels = target_input
+        target_labels = target_input
     else:
         # T2 path: keep labels only on answer-digit positions, -100 elsewhere.
         # HF CausalLM shifts internally (labels[i] supervises the logits that
         # predict token i), so we place the true token id at each answer
         # position and mask everything else — matching niah_dataset.py's scheme.
         mask = _ensure_batched(answer_mask, device).to(torch.bool)  # [B, chunk_size]
-        labels = torch.where(
+        target_labels = torch.where(
             mask, target_input, torch.full_like(target_input, -100)
         )
 
-    distill_on = teacher_cache is not None and distill_cfg is not None
+    def _make_swa_window(w_chunks: int) -> Tuple[torch.Tensor, torch.Tensor, int]:
+        w = min(max(0, int(w_chunks)), len(context_chunks))
+        if w <= 0:
+            return target_input, target_labels, 0
+        pieces = [
+            _ensure_batched(context_chunks[j], device)
+            for j in range(len(context_chunks) - w, len(context_chunks))
+        ]
+        pieces.append(target_input)
+        window = torch.cat(pieces, dim=1)
+        prefix_len = window.shape[1] - target_len
+        labels = window.clone()
+        labels[:, :prefix_len] = -100
+        if answer_mask is not None:
+            labels[:, prefix_len:] = target_labels
+        return window, labels, prefix_len
+
+    student_input, labels, student_prefix_len = _make_swa_window(swa_train_chunks)
+    online_teacher_w = int(distill_cfg.get("distill_swa_teacher", 0)) if distill_cfg else 0
+    distill_on = distill_cfg is not None and (teacher_cache is not None or online_teacher_w > 0)
     _zero = torch.zeros((), device=device)
 
+    if distill_on and teacher_cache is None:
+        # Online Arm-A teacher: same bank state as student, but teacher gets a
+        # small raw-token SWA window. Freeze writes and use no_grad so the teacher
+        # forward cannot mutate bank state or leak gradients.
+        want_hidden_t = bool(distill_cfg.get("distill_hidden", False))
+        teacher_input, _teacher_labels, teacher_prefix_len = _make_swa_window(online_teacher_w)
+        _set_banks_frozen(model, True)
+        try:
+            with torch.no_grad():
+                teacher_out = model(
+                    input_ids=teacher_input,
+                    use_cache=False,
+                    output_hidden_states=want_hidden_t,
+                )
+        finally:
+            _set_banks_frozen(model, False)
+        teacher_cache = _make_online_teacher_cache(
+            teacher_out,
+            prefix_len=teacher_prefix_len,
+            target_len=target_len,
+            layers=[int(x) for x in distill_cfg.get("distill_layers", [])],
+            topk=int(distill_cfg.get("distill_swa_teacher_topk", 64)),
+            device=device,
+        )
+
+    student_froze = False
+    if student_prefix_len > 0:
+        _set_banks_frozen(model, True)
+        student_froze = True
+
     if not distill_on:
-        # ORIGINAL path — no output_hidden_states kwarg → byte-identical.
-        out = model(input_ids=target_input, labels=labels, use_cache=False)
+        # ORIGINAL path when swa_train_chunks==0: no output_hidden_states kwarg →
+        # byte-identical. If swa_train_chunks>0, this is the explicit SWA-student
+        # path and labels already mask the prefix.
+        try:
+            out = model(input_ids=student_input, labels=labels, use_cache=False)
+        finally:
+            if student_froze:
+                _set_banks_frozen(model, False)
         lm_loss = out.loss / scale
         aux_loss = _collect_aux_loss(model, device) / scale
         (lm_loss + aux_loss).backward()
@@ -2110,21 +2221,25 @@ def dolmino_train_step(
 
     # ----- distillation path (dolmino only) ----- #
     want_hidden = bool(distill_cfg.get("distill_hidden", False))
-    out = model(input_ids=target_input, labels=labels, use_cache=False,
-                output_hidden_states=want_hidden)
+    try:
+        out = model(input_ids=student_input, labels=labels, use_cache=False,
+                    output_hidden_states=want_hidden)
+    finally:
+        if student_froze:
+            _set_banks_frozen(model, False)
     lm_loss = out.loss / scale
     aux_loss = _collect_aux_loss(model, device) / scale
 
     # Student answer-segment is the WHOLE target chunk (dolmino). Batch dim is 1
     # for the distill path (cache is per-sample, batch_size=1 dolmino).
-    chunk_size = target_input.shape[1]
+    chunk_size = target_len
     distill_kl = _zero
     distill_hidden = _zero
     L_A = torch.zeros((), device=device)
     L_B = torch.zeros((), device=device)
 
     if distill_cfg.get("distill_logits", False):
-        student_logits = out.logits[0]  # [chunk_size, V]
+        student_logits = out.logits[0, student_prefix_len:student_prefix_len + target_len]
         t_idx = teacher_cache["logit_idx"]  # [A, k]
         t_val = teacher_cache["logit_val"]  # [A, k]
         A = min(chunk_size, t_idx.shape[0])
@@ -2139,7 +2254,8 @@ def dolmino_train_step(
         layers = teacher_cache["layers"].tolist()
         hs = out.hidden_states
         student_layers = torch.stack(
-            [hs[L + 1][0] for L in layers], dim=1)  # [chunk_size, n_sel, D]
+            [hs[L + 1][0, student_prefix_len:student_prefix_len + target_len]
+             for L in layers], dim=1)  # [chunk_size, n_sel, D]
         t_hidden = teacher_cache["hidden"]  # [A, n_sel, D]
         A = min(chunk_size, t_hidden.shape[0])
         L_B = distill_hidden_cosine(student_layers[:A], t_hidden[:A])
@@ -3050,28 +3166,35 @@ def main() -> None:
     t0 = time.time()
     grad_accum = args.gradient_accumulation_steps
 
-    # Self-study distillation config (v21). Active ONLY when a cache dir is set
-    # AND at least one distill flag is on. When inactive, distill_cfg stays None
-    # and the dolmino step takes the byte-identical original path.
+    # Self-study distillation config (v21). Active when either an offline cache
+    # dir OR an online SWA teacher is set, and at least one distill flag is on.
+    # When inactive, distill_cfg stays None and the dolmino step takes the
+    # byte-identical original path.
     distill_cfg = None
-    if args.distill_cache_dir and (args.distill_logits or args.distill_hidden):
-        _distill_layers_parsed = [int(x) for x in args.distill_layers.split(",")
-                                  if x.strip() != ""]
-        # --- consistency guard (v21): refuse to start if the teacher cache was
-        # built with a different n_ctx/chunk_size/distill_layers than this run
-        # uses (else the (doc_idx, group_pos) keys张冠李戴). See
-        # assert_distill_cache_consistent for details. ---
-        _train_fp = getattr(getattr(dolmino_ds, "_ds", None), "_fingerprint", None)
-        _meta = assert_distill_cache_consistent(
-            args.distill_cache_dir, args.chunk_size, curriculum.get_n_ctx(0),
-            _distill_layers_parsed, train_fingerprint=_train_fp)
-        if is_main(rank):
-            logger.info(
-                "[distill] cache meta OK: n_ctx=%d chunk_size=%d layers=%s "
-                "fingerprint=%s (matches training config + dataset)",
-                int(_meta["n_ctx"]), int(_meta["chunk_size"]),
-                [int(x) for x in _meta["distill_layers"]],
-                _meta.get("dataset_fingerprint"))
+    if args.distill_cache_dir and args.distill_swa_teacher > 0:
+        raise RuntimeError(
+            "--distill_cache_dir and --distill_swa_teacher are mutually exclusive "
+            "teacher sources. Use cache teacher (Arm B/C) OR online SWA teacher (Arm A)."
+        )
+    _distill_layers_parsed = [int(x) for x in args.distill_layers.split(",")
+                              if x.strip() != ""]
+    if (args.distill_cache_dir or args.distill_swa_teacher > 0) and (args.distill_logits or args.distill_hidden):
+        if args.distill_cache_dir:
+            # --- consistency guard (v21): refuse to start if the teacher cache was
+            # built with a different n_ctx/chunk_size/distill_layers than this run
+            # uses (else the (doc_idx, group_pos) keys张冠李戴). See
+            # assert_distill_cache_consistent for details. ---
+            _train_fp = getattr(getattr(dolmino_ds, "_ds", None), "_fingerprint", None)
+            _meta = assert_distill_cache_consistent(
+                args.distill_cache_dir, args.chunk_size, curriculum.get_n_ctx(0),
+                _distill_layers_parsed, train_fingerprint=_train_fp)
+            if is_main(rank):
+                logger.info(
+                    "[distill] cache meta OK: n_ctx=%d chunk_size=%d layers=%s "
+                    "fingerprint=%s (matches training config + dataset)",
+                    int(_meta["n_ctx"]), int(_meta["chunk_size"]),
+                    [int(x) for x in _meta["distill_layers"]],
+                    _meta.get("dataset_fingerprint"))
         distill_cfg = {
             "distill_logits": args.distill_logits,
             "distill_hidden": args.distill_hidden,
@@ -3079,12 +3202,14 @@ def main() -> None:
             "distill_weight": args.distill_weight,
             "distill_hidden_beta": args.distill_hidden_beta,
             "distill_layers": _distill_layers_parsed,
+            "distill_swa_teacher": int(args.distill_swa_teacher),
+            "distill_swa_teacher_topk": int(args.distill_swa_teacher_topk),
         }
         if is_main(rank):
-            logger.info("[distill] ENABLED cache_dir=%s logits=%s hidden=%s "
+            logger.info("[distill] ENABLED cache_dir=%s swa_teacher=%d logits=%s hidden=%s "
                         "lambda=%.2f weight=%.2f beta=%.2f layers=%s",
-                        args.distill_cache_dir, args.distill_logits,
-                        args.distill_hidden, args.distill_lambda,
+                        args.distill_cache_dir, args.distill_swa_teacher,
+                        args.distill_logits, args.distill_hidden, args.distill_lambda,
                         args.distill_weight, args.distill_hidden_beta,
                         distill_cfg["distill_layers"])
 
@@ -3241,12 +3366,19 @@ def main() -> None:
                     # Distillation only applies to the last_chunk_loss_only
                     # (dolmino_train_step) path; tbptt path is unchanged.
                     # NOTE: when sliding_target_loss repartitioned the chunks, the
-                    # teacher cache (keyed to the ORIGINAL last chunk) is stale →
-                    # disable distill on this step.
+                    # offline teacher cache (keyed to the ORIGINAL last chunk) is
+                    # stale → disable distill on this step. Online SWA teacher is
+                    # also disabled for this arm to keep the objective unambiguous.
                     teacher_cache = None
+                    micro_distill_cfg = None
                     if (args.last_chunk_loss_only and distill_cfg is not None
                             and not args.sliding_target_loss):
-                        teacher_cache = _get_teacher_cache(sample.get("sample_id"))
+                        if args.distill_cache_dir:
+                            teacher_cache = _get_teacher_cache(sample.get("sample_id"))
+                            if teacher_cache is not None:
+                                micro_distill_cfg = distill_cfg
+                        elif args.distill_swa_teacher > 0:
+                            micro_distill_cfg = distill_cfg
 
                     if args.last_chunk_loss_only:
                         (lm_loss, aux_loss, route_aux, l3recon,
@@ -3254,8 +3386,8 @@ def main() -> None:
                             model, context_chunks, target_ids, device,
                             grad_accum=grad_accum,
                             teacher_cache=teacher_cache,
-                            distill_cfg=(distill_cfg if teacher_cache is not None
-                                         else None),
+                            distill_cfg=micro_distill_cfg,
+                            swa_train_chunks=args.swa_train_chunks,
                         )
                     else:
                         lm_loss, aux_loss, route_aux, l3recon = (
@@ -3463,7 +3595,7 @@ def main() -> None:
         # Fail-fast: distill enabled but cache 100% missing after warmup (2026-06-16).
         # Catches silent distillation no-op (wrong dataset fingerprint / incomplete
         # cache) before wasting a whole run. Checked once at step 50.
-        if distill_cfg is not None and global_step == 50:
+        if args.distill_cache_dir and distill_cfg is not None and global_step == 50:
             _h, _m = _distill_hitmiss
             if _h == 0 and _m > 0:
                 raise RuntimeError(
