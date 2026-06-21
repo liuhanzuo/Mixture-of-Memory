@@ -1,35 +1,8 @@
 """BABILong evaluation wrapper for the mem_space streaming memory architecture.
 
-This is the mem_space counterpart to ``scripts/run_babilong_h6.py``.  It evaluates
-a Llama-3-8B model patched with ``MemorySpaceLayer`` (the H7+/champion family) on
-BABILong qa1-qa5 tasks across multiple context lengths (0k-32k).
-
-mem_space is stateful:
-    1.  Input is chunked into ``chunk_size`` segments.
-    2.  Each chunk is run through ``model(input_ids=...)`` — the patched decoder
-        layers prepend slot tokens and EMA-write the memory bank in-place.  The
-        memory bank persists across chunks (no reset between them).
-    3.  Each new BABILong sample resets the bank via ``_reset_banks(model)``.
-
-Differences vs ``run_babilong_h6.py``:
-    * mem_space uses the **HF LlamaForCausalLM forward signature** (the patched
-      MemorySpaceLayer is transparent to the wrapping HF model).  We call
-      ``model(input_ids=...)`` directly, not ``model.forward_chunk(...)``.
-    * Reset is done via ``_reset_banks(model)`` (copied from
-      ``eval_niah_mem_space.py``), which prefers the shared memory bank.
-    * ``use_cache=False`` is mandatory because MemorySpaceLayer attention does
-      not support HF's KV cache code path.
-    * The adapter_config.json field names use the abbreviated form
-      (``writeback_warmup_steps``, ``unfreeze_hidden_to_slot``); we translate
-      them to the MemorySpaceConfig dataclass field names.
-
-Usage:
-    python scripts/run_babilong_mem_space.py \
-        --model_path /path/to/Llama-3-8B \
-        --checkpoint outputs/champion_ckpt/mem_space_adapter.pt \
-        --adapter_config outputs/champion_ckpt/adapter_config.json \
-        --output_name mem_space_champion \
-        [--tasks qa1 qa2 ...] [--lengths 0k 1k ...]
+Evaluates a Llama-3-8B model patched with MemorySpaceLayer on BABILong tasks.
+mem_space is stateful: stream chunks into the memory bank, reset per sample, and
+generate from the last chunk with use_cache=False.
 """
 from __future__ import annotations
 
@@ -62,21 +35,68 @@ from src.memory.mem_space import MemorySpaceConfig, apply_mem_space_to_model  # 
 
 
 # --------------------------------------------------------------------------- #
+# BABILong dataset loading
+# --------------------------------------------------------------------------- #
+
+
+def _candidate_babilong_cache_dirs(user_cache_dir: str | None) -> list[Path]:
+    roots = []
+    if user_cache_dir:
+        roots.append(Path(user_cache_dir).expanduser())
+    for env in ("HF_DATASETS_CACHE", "HF_HOME"):
+        if os.environ.get(env):
+            root = Path(os.environ[env]).expanduser()
+            roots.append(root if env == "HF_DATASETS_CACHE" else root / "datasets")
+    roots += [Path(PROJECT_ROOT) / ".cache/huggingface/datasets", Path.home() / ".cache/huggingface/datasets"]
+    seen, out = set(), []
+    for root in roots:
+        key = str(root.absolute())
+        if key not in seen:
+            seen.add(key)
+            out.append(root)
+    return out
+
+
+def _load_babilong_from_arrow_cache(dataset_name: str, split_name: str, cache_dir: Path):
+    root = cache_dir / dataset_name.replace("/", "___") / split_name
+    arrow_roots = [p for p in root.glob("*/*") if p.is_dir() and any(p.glob("babilong-*.arrow"))]
+    if not arrow_roots:
+        return None
+    arrow_root = max(arrow_roots, key=lambda p: p.stat().st_mtime)
+    data = {
+        p.stem.removeprefix("babilong-"): datasets.Dataset.from_file(str(p))
+        for p in sorted(arrow_root.glob("babilong-*.arrow"))
+    }
+    if data:
+        print(f"[mem_space-BABILong] Loaded {dataset_name}/{split_name} from local Arrow cache: {arrow_root}")
+    return data or None
+
+
+def load_babilong_dataset(dataset_name: str, split_name: str, cache_dir: str | None = None):
+    last_error = None
+    for candidate in _candidate_babilong_cache_dirs(cache_dir):
+        try:
+            data = datasets.load_dataset(dataset_name, split_name, cache_dir=str(candidate), download_mode="reuse_dataset_if_exists")
+            print(f"[mem_space-BABILong] Loaded {dataset_name}/{split_name} with cache_dir={candidate}")
+            return data
+        except Exception as e:
+            last_error = e
+            data = _load_babilong_from_arrow_cache(dataset_name, split_name, candidate)
+            if data is not None:
+                return data
+    try:
+        return datasets.load_dataset(dataset_name, split_name, download_mode="reuse_dataset_if_exists")
+    except Exception:
+        raise last_error
+
+
+# --------------------------------------------------------------------------- #
 # Memory helpers (copied verbatim from eval_niah_mem_space.py:82-101)
 # --------------------------------------------------------------------------- #
 
 
 def _reset_banks(model: torch.nn.Module) -> None:
-    """Wipe per-sample slot state between BABILong samples.
-
-    Under ``config.shared_memory_bank=True`` the patch exposes
-    ``_mem_space_shared_bank`` on the root model; resetting that one object is
-    equivalent to resetting every wrapper's bank (they all reference the same
-    object).  Falls back to per-layer bank reset if no shared bank is present.
-
-    Also clears L3 summary state (prev_chunk_h, chunk cache, legacy
-    _current_summary) so each new sample starts cold.
-    """
+    """Wipe per-sample slot and summary state between BABILong samples."""
     root = getattr(model, "module", model)
     shared_bank = getattr(root, "_mem_space_shared_bank", None)
     if shared_bank is not None:
@@ -192,20 +212,7 @@ def load_mem_space_model(
     dtype: torch.dtype = torch.bfloat16,
     attn_impl: str = "sdpa",
 ):
-    """Build base Llama + mem_space patch + load adapter ckpt.
-
-    Mirrors eval_niah_mem_space.py:472-620:
-      1. Load base LlamaForCausalLM in bfloat16.
-      2. Snapshot rotary inv_freq in fp32 (H7 fix v2 pre-step).
-      3. Apply mem_space patch to all decoder layers.
-      4. .to(device, dtype) — moves everything (including freshly-built CPU/fp32
-         mem_space modules) to the right place.
-      5. Restore rotary buffers to fp32 (H7 fix v2 post-step).
-      6. Load adapter checkpoint (strict=False; handle ddp `module.` prefix and
-         common state-dict-wrapper layouts).
-      7. Force step_counter = writeback_warmup_steps so warmup_frac=1.0 at eval
-         (Fix J from eval_niah_mem_space.py).
-    """
+    """Build base Llama + mem_space patch + load adapter ckpt."""
     print(f"[mem_space-BABILong] Loading base model from: {model_path}")
     model = LlamaForCausalLM.from_pretrained(
         model_path,
@@ -870,7 +877,7 @@ def main():
             print(f"\n[mem_space-BABILong] task={task}, length={split_name}")
 
             try:
-                data = datasets.load_dataset(args.dataset_name, split_name)
+                data = load_babilong_dataset(args.dataset_name, split_name)
                 task_data = data[task]
             except Exception as e:
                 print(f"[ERROR] Failed to load dataset {args.dataset_name}/{split_name}/{task}: {e}")
