@@ -1033,6 +1033,19 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--distill_swa_teacher_topk", type=int, default=64,
                    help="Top-k teacher logits support used by --distill_swa_teacher "
                         "for the existing bidirectional-KL distill loss.")
+    p.add_argument("--distill_conf_weighting", type=str, default="none",
+                   choices=["none", "teacher"],
+                   help="Confidence weighting for online SWA-teacher distillation. "
+                        "Default none preserves existing behavior.")
+    p.add_argument("--distill_conf_metric", type=str, default="margin",
+                   choices=["margin", "entropy", "pmax"],
+                   help="Teacher confidence metric for --distill_conf_weighting teacher.")
+    p.add_argument("--distill_conf_temp", type=float, default=0.1,
+                   help="Temperature applied to teacher top-k logits before computing confidence.")
+    p.add_argument("--distill_conf_min", type=float, default=0.25,
+                   help="Minimum token distillation weight before mean normalization.")
+    p.add_argument("--distill_conf_max", type=float, default=2.0,
+                   help="Maximum token distillation weight before mean normalization.")
 
     # BABILong mix
     p.add_argument("--babilong_mix_fraction", type=float, default=0.15,
@@ -1904,11 +1917,23 @@ def load_distill_npz(path: str, device: torch.device):
     }
 
 
+def _weighted_token_mean(loss: torch.Tensor,
+                         token_weight: Optional[torch.Tensor] = None) -> torch.Tensor:
+    """Average per-token loss, optionally with detached token weights."""
+    if token_weight is None:
+        return loss.mean()
+    w = token_weight[:loss.shape[0]].to(device=loss.device, dtype=loss.dtype).detach()
+    denom = w.sum().clamp_min(torch.finfo(loss.dtype).eps)
+    return (loss * w).sum() / denom
+
+
+
 def distill_logits_kl(
     student_logits: torch.Tensor,
     teacher_idx: torch.Tensor,
     teacher_val: torch.Tensor,
     lam: float = 0.6,
+    token_weight: Optional[torch.Tensor] = None,
 ) -> torch.Tensor:
     """Scheme-A bidirectional KL on the teacher top-k support.
 
@@ -1922,6 +1947,7 @@ def distill_logits_kl(
         student_logits: [A, V] float (the student's answer-segment logits)
         teacher_idx:    [A, k] long  (top-k vocab indices)
         teacher_val:    [A, k] (teacher raw logits at those indices)
+        token_weight:   optional [A] detached per-token distill weight
     """
     teacher_val = teacher_val.to(student_logits.dtype)
     # Teacher distribution over its own top-k support (renormalised). Constant.
@@ -1935,12 +1961,13 @@ def distill_logits_kl(
     kl_pq = (p * (log_p - log_q)).sum(dim=-1)  # [A]
     kl_qp = (q * (log_q - log_p)).sum(dim=-1)  # [A]
     loss = lam * kl_pq + (1.0 - lam) * kl_qp  # [A]
-    return loss.mean()
+    return _weighted_token_mean(loss, token_weight)
 
 
 def distill_hidden_cosine(
     student_hidden: torch.Tensor,
     teacher_hidden: torch.Tensor,
+    token_weight: Optional[torch.Tensor] = None,
 ) -> torch.Tensor:
     """Scheme-B hidden matching: 1 - cos, averaged over answer tokens, summed
     over layers. teacher_hidden is a cache constant (stopgrad — no grad anyway).
@@ -1948,12 +1975,45 @@ def distill_hidden_cosine(
     Args:
         student_hidden: [A, n_sel, D] (selected student layers, answer segment)
         teacher_hidden: [A, n_sel, D] (cached teacher hidden, same layers/tokens)
+        token_weight:   optional [A] detached per-token distill weight
     """
     teacher_hidden = teacher_hidden.to(student_hidden.dtype).detach()
     cos = torch.nn.functional.cosine_similarity(
         student_hidden, teacher_hidden, dim=-1)  # [A, n_sel]
-    per_layer = (1.0 - cos).mean(dim=0)  # [n_sel] (avg over answer tokens)
-    return per_layer.sum()  # sum over layers
+    token_loss = (1.0 - cos).sum(dim=-1)  # [A], sum over selected layers
+    return _weighted_token_mean(token_loss, token_weight)
+
+
+
+def _distill_teacher_conf_weights(
+    teacher_val: torch.Tensor,
+    metric: str = "margin",
+    temp: float = 0.1,
+    weight_min: float = 0.25,
+    weight_max: float = 2.0,
+) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+    """Build mean-normalized token weights from online teacher top-k logits."""
+    temp = max(float(temp), 1e-6)
+    k = int(teacher_val.shape[-1])
+    logits = teacher_val.float() / temp
+    p = torch.softmax(logits, dim=-1)
+    top = torch.topk(p, k=min(2, k), dim=-1).values
+    p1 = top[..., 0]
+    p2 = top[..., 1] if k > 1 else torch.zeros_like(p1)
+    if metric == "pmax":
+        conf = p1
+    elif metric == "entropy":
+        entropy = -(p * p.clamp_min(1e-12).log()).sum(dim=-1)
+        conf = 1.0 - entropy / math.log(max(k, 2))
+    else:
+        conf = p1 - p2
+    raw_conf = conf.detach().clamp(0.0, 1.0)
+    w = raw_conf.clamp(float(weight_min), float(weight_max))
+    w = w / w.mean().clamp_min(1e-6)
+    conf_mean = raw_conf.mean()
+    conf_p90 = torch.quantile(raw_conf.float(), 0.9)
+    conf_eff = (raw_conf > float(weight_min)).float().mean()
+    return w.detach(), conf_mean.detach(), conf_p90.detach(), conf_eff.detach()
 
 
 
@@ -2084,7 +2144,7 @@ def dolmino_train_step(
     distill_cfg: Optional[dict] = None,
     swa_train_chunks: int = 0,
 ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor,
-           torch.Tensor, torch.Tensor]:
+           torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
     """HARDER objective (2026-06-13, last_chunk_loss_only): force memory to work.
     1. Reset banks
     2. Stream context chunks through model (NO GRAD) → memory accumulates
@@ -2119,9 +2179,10 @@ def dolmino_train_step(
     what gets backward'd. When distill_cfg is None (default), NOT a single extra
     kwarg is passed to model(...) → byte-identical to before.
 
-    Returns: (lm_loss, aux_loss, route_aux=0, l3recon=0, distill_kl, distill_hidden)
-    — all scaled by grad_accum where applicable; distill terms are detached and
-    returned only for logging. Backward is done HERE (mirrors tbptt).
+    Returns: (lm_loss, aux_loss, route_aux=0, l3recon=0, distill_kl,
+    distill_hidden, distill_conf_mean, distill_conf_p90, distill_conf_eff_frac)
+    — all scaled by grad_accum where applicable; distill/conf terms are detached
+    and returned only for logging. Backward is done HERE (mirrors tbptt).
     """
     _reset_banks(model)
     scale = float(grad_accum)
@@ -2217,7 +2278,8 @@ def dolmino_train_step(
         lm_loss = out.loss / scale
         aux_loss = _collect_aux_loss(model, device) / scale
         (lm_loss + aux_loss).backward()
-        return lm_loss.detach(), aux_loss.detach(), _zero, _zero, _zero, _zero
+        return (lm_loss.detach(), aux_loss.detach(), _zero, _zero, _zero, _zero,
+                _zero, _zero, _zero)
 
     # ----- distillation path (dolmino only) ----- #
     want_hidden = bool(distill_cfg.get("distill_hidden", False))
@@ -2237,6 +2299,27 @@ def dolmino_train_step(
     distill_hidden = _zero
     L_A = torch.zeros((), device=device)
     L_B = torch.zeros((), device=device)
+    token_weight = None
+    distill_conf_mean = _zero
+    distill_conf_p90 = _zero
+    distill_conf_eff = _zero
+
+    use_teacher_conf = (
+        distill_cfg.get("distill_conf_weighting", "none") == "teacher"
+        and int(distill_cfg.get("distill_swa_teacher", 0)) > 0
+        and teacher_cache is not None
+    )
+    if use_teacher_conf:
+        conf_A = min(chunk_size, teacher_cache["logit_val"].shape[0])
+        token_weight, distill_conf_mean, distill_conf_p90, distill_conf_eff = (
+            _distill_teacher_conf_weights(
+                teacher_cache["logit_val"][:conf_A],
+                metric=str(distill_cfg.get("distill_conf_metric", "margin")),
+                temp=float(distill_cfg.get("distill_conf_temp", 0.1)),
+                weight_min=float(distill_cfg.get("distill_conf_min", 0.25)),
+                weight_max=float(distill_cfg.get("distill_conf_max", 2.0)),
+            )
+        )
 
     if distill_cfg.get("distill_logits", False):
         student_logits = out.logits[0, student_prefix_len:student_prefix_len + target_len]
@@ -2246,6 +2329,7 @@ def dolmino_train_step(
         L_A = distill_logits_kl(
             student_logits[:A], t_idx[:A], t_val[:A],
             lam=float(distill_cfg.get("distill_lambda", 0.6)),
+            token_weight=token_weight[:A] if token_weight is not None else None,
         )
         distill_kl = L_A.detach()
 
@@ -2258,7 +2342,10 @@ def dolmino_train_step(
              for L in layers], dim=1)  # [chunk_size, n_sel, D]
         t_hidden = teacher_cache["hidden"]  # [A, n_sel, D]
         A = min(chunk_size, t_hidden.shape[0])
-        L_B = distill_hidden_cosine(student_layers[:A], t_hidden[:A])
+        L_B = distill_hidden_cosine(
+            student_layers[:A], t_hidden[:A],
+            token_weight=token_weight[:A] if token_weight is not None else None,
+        )
         distill_hidden = L_B.detach()
 
     distill_weight = float(distill_cfg.get("distill_weight", 1.0))
@@ -2268,7 +2355,8 @@ def dolmino_train_step(
     total = lm_loss + aux_loss + distill_term
     total.backward()
     return (lm_loss.detach(), aux_loss.detach(), _zero, _zero,
-            distill_kl, distill_hidden)
+            distill_kl, distill_hidden,
+            distill_conf_mean, distill_conf_p90, distill_conf_eff)
 
 
 def dolmino_train_step_tbptt(
@@ -3204,14 +3292,20 @@ def main() -> None:
             "distill_layers": _distill_layers_parsed,
             "distill_swa_teacher": int(args.distill_swa_teacher),
             "distill_swa_teacher_topk": int(args.distill_swa_teacher_topk),
+            "distill_conf_weighting": args.distill_conf_weighting,
+            "distill_conf_metric": args.distill_conf_metric,
+            "distill_conf_temp": args.distill_conf_temp,
+            "distill_conf_min": args.distill_conf_min,
+            "distill_conf_max": args.distill_conf_max,
         }
         if is_main(rank):
             logger.info("[distill] ENABLED cache_dir=%s swa_teacher=%d logits=%s hidden=%s "
-                        "lambda=%.2f weight=%.2f beta=%.2f layers=%s",
+                        "lambda=%.2f weight=%.2f beta=%.2f layers=%s conf=%s/%s",
                         args.distill_cache_dir, args.distill_swa_teacher,
                         args.distill_logits, args.distill_hidden, args.distill_lambda,
                         args.distill_weight, args.distill_hidden_beta,
-                        distill_cfg["distill_layers"])
+                        distill_cfg["distill_layers"], args.distill_conf_weighting,
+                        args.distill_conf_metric)
 
     # Small LRU cache of decoded teacher .npz (keyed by sample_id) to avoid
     # re-reading hot samples; correctness does not depend on it.
@@ -3274,6 +3368,10 @@ def main() -> None:
         step_l3recon = 0.0
         step_distill_kl = 0.0
         step_distill_hidden = 0.0
+        step_distill_conf_mean = 0.0
+        step_distill_conf_p90 = 0.0
+        step_distill_conf_eff = 0.0
+        step_distill_conf_count = 0
         step_valid_micros = 0
         step_t2_lm_loss = 0.0   # T2 needle loss only (the "learning retrieval" signal)
         step_t2_micros = 0
@@ -3294,6 +3392,9 @@ def main() -> None:
                                 mix_rng.random() < args.babilong_mix_fraction)
                 use_t2 = (not use_babilong and t2_iter is not None and
                           mix_rng.random() < args.t2_recall_mix_fraction)
+                micro_distill_conf_mean = 0.0
+                micro_distill_conf_p90 = 0.0
+                micro_distill_conf_eff = 0.0
 
                 if use_babilong:
                     # BABILong step
@@ -3332,7 +3433,7 @@ def main() -> None:
                     answer_mask = sample["answer_mask"]
 
                     (lm_loss, aux_loss, route_aux, l3recon,
-                     _dk, _dh) = dolmino_train_step(
+                     _dk, _dh, _cm, _cp, _ce) = dolmino_train_step(
                         model, context_chunks, target_ids, device,
                         grad_accum=grad_accum, answer_mask=answer_mask,
                     )
@@ -3382,7 +3483,9 @@ def main() -> None:
 
                     if args.last_chunk_loss_only:
                         (lm_loss, aux_loss, route_aux, l3recon,
-                         micro_distill_kl, micro_distill_hidden) = dolmino_train_step(
+                         micro_distill_kl, micro_distill_hidden,
+                         micro_distill_conf_mean, micro_distill_conf_p90,
+                         micro_distill_conf_eff) = dolmino_train_step(
                             model, context_chunks, target_ids, device,
                             grad_accum=grad_accum,
                             teacher_cache=teacher_cache,
@@ -3433,6 +3536,21 @@ def main() -> None:
                     float(micro_distill_hidden.item())
                     if isinstance(micro_distill_hidden, torch.Tensor)
                     else float(micro_distill_hidden))
+                _conf_mean_val = (
+                    float(micro_distill_conf_mean.item())
+                    if isinstance(micro_distill_conf_mean, torch.Tensor)
+                    else float(micro_distill_conf_mean))
+                if _conf_mean_val > 0.0:
+                    step_distill_conf_mean += _conf_mean_val
+                    step_distill_conf_p90 += (
+                        float(micro_distill_conf_p90.item())
+                        if isinstance(micro_distill_conf_p90, torch.Tensor)
+                        else float(micro_distill_conf_p90))
+                    step_distill_conf_eff += (
+                        float(micro_distill_conf_eff.item())
+                        if isinstance(micro_distill_conf_eff, torch.Tensor)
+                        else float(micro_distill_conf_eff))
+                    step_distill_conf_count += 1
                 step_valid_micros += 1
                 if use_t2 and lm_loss is not None:
                     step_t2_lm_loss += lm_loss.item()
@@ -3617,16 +3735,21 @@ def main() -> None:
             avg_l3recon = step_l3recon / max(1, step_valid_micros)
             avg_distill_kl = step_distill_kl / max(1, step_valid_micros)
             avg_distill_hidden = step_distill_hidden / max(1, step_valid_micros)
+            avg_distill_conf_mean = step_distill_conf_mean / max(1, step_distill_conf_count)
+            avg_distill_conf_p90 = step_distill_conf_p90 / max(1, step_distill_conf_count)
+            avg_distill_conf_eff = step_distill_conf_eff / max(1, step_distill_conf_count)
             avg_t2_lm = (step_t2_lm_loss / step_t2_micros) if step_t2_micros > 0 else -1.0
             elapsed = time.time() - t0
             steps_per_sec = global_step / elapsed if elapsed > 0 else 0.0
             logger.info(
                 "[step %d/%d] lm=%.4f t2_needle=%.4f aux=%.4f route_aux=%.4f l3recon=%.4f "
-                "distill_kl=%.4f distill_hid=%.4f lr=%.2e n_ctx=%d "
+                "distill_kl=%.4f distill_hid=%.4f distill_conf_mean=%.4f "
+                "distill_conf_p90=%.4f distill_conf_eff_frac=%.4f lr=%.2e n_ctx=%d "
                 "dolmino=%d babi=%d t2=%d nf=%d skip=%d speed=%.2f steps/s",
                 global_step, args.total_steps, avg_lm, avg_t2_lm, avg_aux, avg_route_aux,
-                avg_l3recon, avg_distill_kl, avg_distill_hidden, lr,
-                current_n_ctx, n_dolmino, n_babilong, n_t2, n_nonfinite, spike_skip_count,
+                avg_l3recon, avg_distill_kl, avg_distill_hidden,
+                avg_distill_conf_mean, avg_distill_conf_p90, avg_distill_conf_eff,
+                lr, current_n_ctx, n_dolmino, n_babilong, n_t2, n_nonfinite, spike_skip_count,
                 steps_per_sec,
             )
             _xattn_diag = _collect_xattn_diag(model)
@@ -3681,6 +3804,9 @@ def main() -> None:
                     "train/l3recon": avg_l3recon,
                     "train/distill_kl": avg_distill_kl,
                     "train/distill_hidden": avg_distill_hidden,
+                    "train/distill_conf_mean": avg_distill_conf_mean,
+                    "train/distill_conf_p90": avg_distill_conf_p90,
+                    "train/distill_conf_eff_frac": avg_distill_conf_eff,
                     "train/lr": lr,
                     "train/n_ctx": current_n_ctx,
                     "train/speed_steps_s": steps_per_sec,
