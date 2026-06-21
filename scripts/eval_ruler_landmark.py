@@ -236,12 +236,18 @@ def main():
     p.add_argument("--dtype", choices=["bfloat16", "float16", "float32"], default="bfloat16")
     p.add_argument("--insert_landmarks", action="store_true", default=True)
     p.add_argument("--no_insert_landmarks", dest="insert_landmarks", action="store_false")
+    p.add_argument("--num_shards", type=int, default=1)
+    p.add_argument("--shard_index", type=int, default=0)
     args = p.parse_args()
 
     dtype = {"bfloat16": torch.bfloat16, "float16": torch.float16, "float32": torch.float32}[args.dtype]
     print(f"[ruler-landmark] ckpt={args.ckpt_path} tasks={args.tasks} lengths={args.lengths} n={args.num_samples} top_k={args.top_k}")
     pipe, tokenizer = load_landmark_pipeline(args.ckpt_path, args.top_k, args.device, dtype=dtype)
     mem_freq = pipe.model.config.mem_freq
+
+    if args.num_shards < 1 or not (0 <= args.shard_index < args.num_shards):
+        raise ValueError("require num_shards>=1 and 0<=shard_index<num_shards")
+    shard_tag = f"_shard{args.shard_index}of{args.num_shards}" if args.num_shards > 1 else ""
 
     outdir = Path(args.results_folder) / args.output_name
     outdir.mkdir(parents=True, exist_ok=True)
@@ -258,7 +264,8 @@ def main():
             records = []
             recall_sum = 0.0
             n_tok_seen = 0
-            for i in tqdm(range(args.num_samples), desc=f"{task}/{length}", leave=False):
+            sample_indices = set(range(args.num_samples)[args.shard_index::args.num_shards])
+            for i in tqdm(sorted(sample_indices), desc=f"{task}/{length}{shard_tag}", leave=False):
                 rng = random.Random(base_seed * 1000 + i)
                 prompt, answers = _build_sample(task, target_tokens, tokenizer, rng, vt_icl)
                 n_tok_seen = len(tokenizer.encode(prompt, add_special_tokens=True))
@@ -274,17 +281,17 @@ def main():
                     out = ""
                 rec = _string_match_all_one(out, answers)
                 recall_sum += rec
-                records.append({"answers": answers, "output": out, "recall": rec, "n_tokens": int(n_tok_seen)})
+                records.append({"sample_index": i, "answers": answers, "output": out, "recall": rec, "n_tokens": int(n_tok_seen)})
             score = recall_sum / len(records) * 100.0 if records else 0.0
             summary[task][length] = {"score": round(score, 2), "n": len(records), "approx_tokens": n_tok_seen}
-            outfile = outdir / f"{task}_{length}.json"
+            outfile = outdir / f"{task}_{length}{shard_tag}.json"
             with open(outfile, "w") as f:
                 json.dump({"task": task, "length": length, "summary": summary[task][length], "records": records}, f, indent=2)
             print(f"[ruler-landmark] {task}/{length}: score={score:.2f} ({len(records)} samples, ~{n_tok_seen} tok) -> {outfile}")
     print("\n[ruler-landmark] SUMMARY")
     for task, vals in summary.items():
         print(f"  {task:>20}: " + "  ".join(f"{L}={vals[L]['score']:.1f}" for L in vals))
-    with open(outdir / "_summary.json", "w") as f:
+    with open(outdir / f"_summary{shard_tag}.json", "w") as f:
         json.dump(summary, f, indent=2)
 
 

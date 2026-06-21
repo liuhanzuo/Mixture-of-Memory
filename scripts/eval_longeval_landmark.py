@@ -100,12 +100,18 @@ def main():
     p.add_argument("--dtype", choices=["bfloat16", "float16", "float32"], default="bfloat16")
     p.add_argument("--insert_landmarks", action="store_true", default=True)
     p.add_argument("--no_insert_landmarks", dest="insert_landmarks", action="store_false")
+    p.add_argument("--num_shards", type=int, default=1)
+    p.add_argument("--shard_index", type=int, default=0)
     args = p.parse_args()
 
     dtype = {"bfloat16": torch.bfloat16, "float16": torch.float16, "float32": torch.float32}[args.dtype]
     print(f"[longeval-landmark] ckpt={args.ckpt_path} lengths={args.lengths} n={args.num_samples} top_k={args.top_k}")
     pipe, tokenizer = load_landmark_pipeline(args.ckpt_path, args.top_k, args.device, dtype=dtype)
     mem_freq = pipe.model.config.mem_freq
+
+    if args.num_shards < 1 or not (0 <= args.shard_index < args.num_shards):
+        raise ValueError("require num_shards>=1 and 0<=shard_index<num_shards")
+    shard_tag = f"_shard{args.shard_index}of{args.num_shards}" if args.num_shards > 1 else ""
 
     outdir = Path(args.results_folder) / args.output_name
     outdir.mkdir(parents=True, exist_ok=True)
@@ -120,8 +126,11 @@ def main():
         correct = 0
         n_lines_seen = 0
         n_tok_seen = 0
-        for i in tqdm(range(args.num_samples), desc=length, leave=False):
+        sample_indices = set(range(args.num_samples)[args.shard_index::args.num_shards])
+        for i in tqdm(range(args.num_samples), desc=f"{length}{shard_tag}", leave=False):
             prompt, expected, label, n_lines = build_lines_prompt(target_tokens, tokenizer, rng)
+            if i not in sample_indices:
+                continue
             n_lines_seen = n_lines
             n_tok_seen = len(tokenizer.encode(prompt, add_special_tokens=True))
             if args.insert_landmarks:
@@ -137,6 +146,7 @@ def main():
             ok = pred == expected
             correct += int(ok)
             records.append({
+                "sample_index": i,
                 "label": label,
                 "expected": expected,
                 "output": out,
@@ -147,14 +157,14 @@ def main():
             })
         acc = correct / len(records) if records else 0.0
         summary[length] = {"accuracy": acc, "correct": correct, "total": len(records), "approx_lines": n_lines_seen, "approx_tokens": n_tok_seen}
-        outfile = outdir / f"longeval_{length}.json"
+        outfile = outdir / f"longeval_{length}{shard_tag}.json"
         with open(outfile, "w") as f:
             json.dump({"length": length, "summary": summary[length], "records": records}, f, indent=2)
         print(f"[longeval-landmark] {length}: acc={acc:.3f} ({correct}/{len(records)}) ~{n_lines_seen} lines / {n_tok_seen} tok -> {outfile}")
     print("\n[longeval-landmark] SUMMARY")
     for length, s in summary.items():
         print(f"  {length:>4}: acc={s['accuracy']:.3f} ({s['correct']}/{s['total']}) ~{s['approx_tokens']} tok")
-    with open(outdir / "_summary.json", "w") as f:
+    with open(outdir / f"_summary{shard_tag}.json", "w") as f:
         json.dump(summary, f, indent=2)
 
 
