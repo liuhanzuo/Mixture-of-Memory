@@ -23,7 +23,7 @@ CURRICULUM="${CURRICULUM:-0:15}"
 DOLMINO_PATH="${DOLMINO_PATH:-MemLong/data/processed/pg19_perbook_min8k/train}"
 
 mkdir -p logs outputs/$RUN
-setsid bash -c "CUDA_VISIBLE_DEVICES=$GPUS $PYBIN -m torch.distributed.run --nproc_per_node=$NPROC --master_port=$MASTER_PORT \
+setsid nohup bash -c "CUDA_VISIBLE_DEVICES=$GPUS $PYBIN -m torch.distributed.run --nproc_per_node=$NPROC --master_port=$MASTER_PORT \
   scripts/train_mem_space_dolmino_cpt.py \
   --model_path models/Meta-Llama-3-8B \
   --per_doc_data --dolmino_path $DOLMINO_PATH \
