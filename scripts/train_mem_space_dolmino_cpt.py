@@ -1774,7 +1774,10 @@ def build_model(args, device, dtype) -> torch.nn.Module:
     # Warm-start from existing adapter
     if args.init_checkpoint and os.path.isfile(args.init_checkpoint):
         logger.info("Loading warm-start adapter from %s", args.init_checkpoint)
-        ckpt = torch.load(args.init_checkpoint, map_location=device, weights_only=False)
+        # Load onto CPU first: under FSDP/DDP every rank would otherwise pull the
+        # full ckpt onto its own GPU simultaneously and OOM. load_state_dict moves
+        # tensors to the model's device as needed.
+        ckpt = torch.load(args.init_checkpoint, map_location="cpu", weights_only=False)
         if isinstance(ckpt, dict):
             if "model_state_dict" in ckpt:
                 state_dict = ckpt["model_state_dict"]
