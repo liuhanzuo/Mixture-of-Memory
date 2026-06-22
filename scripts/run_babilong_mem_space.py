@@ -711,6 +711,18 @@ def main():
                              "DIRECTLY to the previous W chunks' raw KV (in "
                              "addition to memory readback). Bank streaming is "
                              "unchanged. Only supported on the bsz=1 path.")
+    parser.add_argument("--use_slot_kv_cache", action="store_true", default=False,
+                        help="Enable per-slot raw-KV cache readout during eval. "
+                             "Streaming context chunks append raw hidden states "
+                             "under the selected slot ids, and the generation "
+                             "chunk retrieves raw KV from the currently selected "
+                             "slots via the existing in-attention KV concat path. "
+                             "Default off = existing W0/SWA behaviour unchanged.")
+    parser.add_argument("--slot_kv_cache_layer", type=int, default=None,
+                        help="Single decoder layer that owns per-slot raw-KV "
+                             "cache write/read at eval. Default: value from "
+                             "adapter_config.json if present, else 16. Only used "
+                             "when --use_slot_kv_cache is set.")
     parser.add_argument("--dtype", type=str, default="bfloat16",
                         choices=["bfloat16", "float16", "float32"])
     parser.add_argument("--attn_impl", type=str, default="sdpa",
@@ -754,6 +766,8 @@ def main():
 
     if args.swa_eval_chunks < 0:
         parser.error("--swa_eval_chunks must be >= 0")
+    if args.slot_kv_cache_layer is not None and args.slot_kv_cache_layer < 0:
+        parser.error("--slot_kv_cache_layer must be >= 0")
     if args.num_shards < 1:
         parser.error("--num_shards must be >= 1")
     if not (0 <= args.shard_index < args.num_shards):
@@ -798,6 +812,15 @@ def main():
     with open(args.adapter_config, "r") as f:
         adapter_cfg = json.load(f)
     mem_config = build_mem_space_config(adapter_cfg)
+    slot_kv_cache_layer = (
+        int(args.slot_kv_cache_layer)
+        if args.slot_kv_cache_layer is not None
+        else int(adapter_cfg.get("slot_kv_cache_layer", 16))
+    )
+    mem_config.use_slot_kv_cache = bool(args.use_slot_kv_cache)
+    mem_config.slot_kv_cache_layer = slot_kv_cache_layer
+    if args.use_slot_kv_cache:
+        print(f"[mem_space-BABILong] slot_kv_cache enabled at layer {slot_kv_cache_layer}")
     # Eval-time ablation override (go/no-go): force pure reader attention over
     # raw-KV by zeroing the trained gist col_bias.
     if getattr(args, "rawkv_disable_col_bias", False):
@@ -835,12 +858,22 @@ def main():
     # but adapter_config.json carries no chunk_size, so the dataclass default (1024)
     # would mismatch a ckpt trained with a different chunk_size. Mirror training here.
     mem_config.l3_recon_max_positions = args.chunk_size
-    print(f"[mem_space-BABILong] MemorySpaceConfig: num_slots={mem_config.num_slots}, "
-          f"top_k={mem_config.top_k}, selector_dim={mem_config.selector_dim}, "
-          f"warmup_steps={mem_config.writeback_gate_warmup_steps}, "
-          f"slot_init={mem_config.slot_init}, "
-          f"shared_bank={mem_config.shared_memory_bank}, "
-          f"hidden_to_slot_frozen={mem_config.hidden_to_slot_frozen}")
+    if mem_config.use_slot_kv_cache:
+        print(f"[mem_space-BABILong] MemorySpaceConfig: num_slots={mem_config.num_slots}, "
+              f"top_k={mem_config.top_k}, selector_dim={mem_config.selector_dim}, "
+              f"warmup_steps={mem_config.writeback_gate_warmup_steps}, "
+              f"slot_init={mem_config.slot_init}, "
+              f"shared_bank={mem_config.shared_memory_bank}, "
+              f"hidden_to_slot_frozen={mem_config.hidden_to_slot_frozen}, "
+              f"use_slot_kv_cache={mem_config.use_slot_kv_cache}, "
+              f"slot_kv_cache_layer={mem_config.slot_kv_cache_layer}")
+    else:
+        print(f"[mem_space-BABILong] MemorySpaceConfig: num_slots={mem_config.num_slots}, "
+              f"top_k={mem_config.top_k}, selector_dim={mem_config.selector_dim}, "
+              f"warmup_steps={mem_config.writeback_gate_warmup_steps}, "
+              f"slot_init={mem_config.slot_init}, "
+              f"shared_bank={mem_config.shared_memory_bank}, "
+              f"hidden_to_slot_frozen={mem_config.hidden_to_slot_frozen}")
 
     # Build + load model
     model = load_mem_space_model(
@@ -912,6 +945,10 @@ def main():
                         "adapter_config":  args.adapter_config,
                         "chunk_size":      args.chunk_size,
                         "swa_eval_chunks": args.swa_eval_chunks,
+                        **({
+                            "use_slot_kv_cache": mem_config.use_slot_kv_cache,
+                            "slot_kv_cache_layer": mem_config.slot_kv_cache_layer,
+                        } if mem_config.use_slot_kv_cache else {}),
                         "num_slots":       mem_config.num_slots,
                         "top_k":           mem_config.top_k,
                         "shared_memory_bank": mem_config.shared_memory_bank,
