@@ -1412,6 +1412,12 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--slot_kv_cache_layer", type=int, default=16,
                    help="Single decoder layer that owns per-slot raw-KV cache "
                         "write/read and in-attention injection. Default 16.")
+    p.add_argument("--slot_kv_select_mode", type=str, default="router",
+                   choices=["router", "recency", "all"],
+                   help="Which slot ids retrieve cached raw KV at train/eval time: "
+                        "router uses current top-k selection; recency uses the most "
+                        "recently written unique slots; all retrieves every cached "
+                        "slot. Default router.")
 
     # v6/v7 writeback (disabled by default for CPT)
     p.add_argument("--use_replace_writeback", action="store_true", default=False)
@@ -1628,6 +1634,7 @@ def merge_adapter_config_into_args(args: argparse.Namespace) -> argparse.Namespa
         "shared_memory_bank": "shared_memory_bank", "swa_window": "swa_window",
         "use_slot_kv_cache": "use_slot_kv_cache",
         "slot_kv_cache_layer": "slot_kv_cache_layer",
+        "slot_kv_select_mode": "slot_kv_select_mode",
     }
     inherited = []
     for k_json, attr in cfg_to_attr.items():
@@ -1764,6 +1771,7 @@ def build_model(args, device, dtype) -> torch.nn.Module:
     # coder edits adjacent distillation code.
     ms_cfg.use_slot_kv_cache = bool(args.use_slot_kv_cache)
     ms_cfg.slot_kv_cache_layer = int(args.slot_kv_cache_layer)
+    ms_cfg.slot_kv_select_mode = args.slot_kv_select_mode
 
     # H7 rotary fp32 fix — snapshot before bf16 cast
     _rope_snapshot = {}
@@ -2945,6 +2953,7 @@ def _save_adapter(model, args, step: int, final: bool = False) -> None:
             "evidence_isolate_softmax": args.evidence_isolate_softmax,
             "use_slot_kv_cache": args.use_slot_kv_cache,
             "slot_kv_cache_layer": args.slot_kv_cache_layer,
+            "slot_kv_select_mode": args.slot_kv_select_mode,
             "l3_recon_token_weight": args.l3_recon_token_weight,
             "disable_l1_inject": args.disable_l1_inject,
             "use_replace_writeback": args.use_replace_writeback,

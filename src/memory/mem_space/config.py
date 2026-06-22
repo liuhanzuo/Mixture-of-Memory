@@ -126,7 +126,9 @@ class MemorySpaceConfig:
     use_st_gumbel_topk: bool = False
     st_gumbel_temperature: float = 1.0
 
-    # Eval-only per-slot raw-KV cache selector override (2026-06-22).
+    # Per-slot raw-KV cache selector policy (2026-06-22). This can be used at
+    # train time or eval time, but mechanism verdicts should compare ckpts
+    # trained and evaluated with the same policy to avoid eval-only OOD effects.
     # "router" = existing behavior; "all" = retrieve every cached slot id;
     # "recency" = retrieve the most recently written top_k unique slots.
     slot_kv_select_mode: str = "router"
