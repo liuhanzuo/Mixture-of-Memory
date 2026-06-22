@@ -1034,14 +1034,15 @@ def parse_args() -> argparse.Namespace:
                    help="Top-k teacher logits support used by --distill_swa_teacher "
                         "for the existing bidirectional-KL distill loss.")
     p.add_argument("--distill_conf_weighting", type=str, default="none",
-                   choices=["none", "teacher"],
-                   help="Confidence weighting for online SWA-teacher distillation. "
+                   choices=["none", "teacher", "student", "teacher_student"],
+                   help="Confidence weighting for distillation. teacher uses teacher top-k logits; "
+                        "student uses agreement-gated student confidence; teacher_student multiplies both. "
                         "Default none preserves existing behavior.")
     p.add_argument("--distill_conf_metric", type=str, default="margin",
                    choices=["margin", "entropy", "pmax"],
-                   help="Teacher confidence metric for --distill_conf_weighting teacher.")
+                   help="Confidence metric for --distill_conf_weighting.")
     p.add_argument("--distill_conf_temp", type=float, default=0.1,
-                   help="Temperature applied to teacher top-k logits before computing confidence.")
+                   help="Temperature applied before computing confidence.")
     p.add_argument("--distill_conf_min", type=float, default=0.25,
                    help="Minimum token distillation weight before mean normalization.")
     p.add_argument("--distill_conf_max", type=float, default=2.0,
@@ -2014,7 +2015,7 @@ def _distill_teacher_conf_weights(
     weight_min: float = 0.25,
     weight_max: float = 2.0,
 ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
-    """Build mean-normalized token weights from online teacher top-k logits."""
+    """Build mean-normalized token weights from teacher top-k logits."""
     temp = max(float(temp), 1e-6)
     k = int(teacher_val.shape[-1])
     logits = teacher_val.float() / temp
@@ -2035,6 +2036,43 @@ def _distill_teacher_conf_weights(
     conf_mean = raw_conf.mean()
     conf_p90 = torch.quantile(raw_conf.float(), 0.9)
     conf_eff = (raw_conf > float(weight_min)).float().mean()
+    return w.detach(), conf_mean.detach(), conf_p90.detach(), conf_eff.detach()
+
+
+
+def _distill_student_conf_weights(
+    student_logits: torch.Tensor,
+    teacher_idx: torch.Tensor,
+    metric: str = "margin",
+    temp: float = 0.1,
+    weight_min: float = 0.25,
+    weight_max: float = 2.0,
+) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+    """Build student confidence weights only where teacher/student argmax agree."""
+    temp = max(float(temp), 1e-6)
+    logits = student_logits.float() / temp
+    probs = torch.softmax(logits, dim=-1)
+    top = torch.topk(probs, k=2 if probs.shape[-1] > 1 else 1, dim=-1)
+    p1 = top.values[..., 0]
+    p2 = top.values[..., 1] if probs.shape[-1] > 1 else torch.zeros_like(p1)
+    if metric == "pmax":
+        conf = p1
+    elif metric == "entropy":
+        entropy = -(probs * probs.clamp_min(1e-12).log()).sum(dim=-1)
+        conf = 1.0 - entropy / math.log(max(int(probs.shape[-1]), 2))
+    else:
+        conf = p1 - p2
+    raw_conf = conf.detach().clamp(0.0, 1.0)
+    agreement = (top.indices[..., 0] == teacher_idx[..., 0]).detach()
+    w = torch.ones_like(raw_conf)
+    if bool(agreement.any().item()):
+        agree_w = raw_conf[agreement].clamp(float(weight_min), float(weight_max))
+        agree_w = agree_w / agree_w.mean().clamp_min(1e-6)
+        w = w.clone()
+        w[agreement] = agree_w
+    conf_mean = raw_conf[agreement].mean() if bool(agreement.any().item()) else raw_conf.new_zeros(())
+    conf_p90 = torch.quantile(raw_conf[agreement].float(), 0.9) if bool(agreement.any().item()) else raw_conf.new_zeros(())
+    conf_eff = agreement.float().mean()
     return w.detach(), conf_mean.detach(), conf_p90.detach(), conf_eff.detach()
 
 
@@ -2325,29 +2363,46 @@ def dolmino_train_step(
     distill_conf_mean = _zero
     distill_conf_p90 = _zero
     distill_conf_eff = _zero
+    student_logits = out.logits[0, student_prefix_len:student_prefix_len + target_len]
+    t_idx = teacher_cache["logit_idx"]  # [A, k]
+    t_val = teacher_cache["logit_val"]  # [A, k]
 
-    use_teacher_conf = (
-        distill_cfg.get("distill_conf_weighting", "none") == "teacher"
-        and int(distill_cfg.get("distill_swa_teacher", 0)) > 0
-        and teacher_cache is not None
-    )
-    if use_teacher_conf:
-        conf_A = min(chunk_size, teacher_cache["logit_val"].shape[0])
-        token_weight, distill_conf_mean, distill_conf_p90, distill_conf_eff = (
-            _distill_teacher_conf_weights(
-                teacher_cache["logit_val"][:conf_A],
+    conf_mode = str(distill_cfg.get("distill_conf_weighting", "none"))
+    use_teacher_conf = conf_mode in {"teacher", "teacher_student"}
+    use_student_conf = conf_mode in {"student", "teacher_student"}
+    if use_teacher_conf or use_student_conf:
+        conf_A = min(chunk_size, t_idx.shape[0], t_val.shape[0], student_logits.shape[0])
+        if use_teacher_conf:
+            token_weight, distill_conf_mean, distill_conf_p90, distill_conf_eff = (
+                _distill_teacher_conf_weights(
+                    t_val[:conf_A],
+                    metric=str(distill_cfg.get("distill_conf_metric", "margin")),
+                    temp=float(distill_cfg.get("distill_conf_temp", 0.1)),
+                    weight_min=float(distill_cfg.get("distill_conf_min", 0.25)),
+                    weight_max=float(distill_cfg.get("distill_conf_max", 2.0)),
+                )
+            )
+        if use_student_conf:
+            student_weight, s_conf_mean, s_conf_p90, s_conf_eff = _distill_student_conf_weights(
+                student_logits[:conf_A],
+                t_idx[:conf_A],
                 metric=str(distill_cfg.get("distill_conf_metric", "margin")),
                 temp=float(distill_cfg.get("distill_conf_temp", 0.1)),
                 weight_min=float(distill_cfg.get("distill_conf_min", 0.25)),
                 weight_max=float(distill_cfg.get("distill_conf_max", 2.0)),
             )
-        )
+            if token_weight is None:
+                token_weight = student_weight
+                distill_conf_mean, distill_conf_p90, distill_conf_eff = s_conf_mean, s_conf_p90, s_conf_eff
+            else:
+                token_weight = token_weight[:conf_A] * student_weight
+                token_weight = token_weight / token_weight.mean().clamp_min(1e-6)
+                distill_conf_mean = token_weight.mean().detach()
+                distill_conf_p90 = torch.quantile(token_weight.float(), 0.9).detach()
+                distill_conf_eff = (token_weight > 1.0).float().mean().detach()
 
     if distill_cfg.get("distill_logits", False):
-        student_logits = out.logits[0, student_prefix_len:student_prefix_len + target_len]
-        t_idx = teacher_cache["logit_idx"]  # [A, k]
-        t_val = teacher_cache["logit_val"]  # [A, k]
-        A = min(chunk_size, t_idx.shape[0])
+        A = min(chunk_size, t_idx.shape[0], t_val.shape[0], student_logits.shape[0])
         L_A = distill_logits_kl(
             student_logits[:A], t_idx[:A], t_val[:A],
             lam=float(distill_cfg.get("distill_lambda", 0.6)),
