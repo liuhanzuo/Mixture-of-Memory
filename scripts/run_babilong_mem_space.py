@@ -647,6 +647,11 @@ def _write_results_csv(df: pd.DataFrame, outfile) -> None:
     safe.to_csv(outfile, index=False, quoting=csv.QUOTE_ALL)
 
 
+def _is_cuda_oom(exc: BaseException) -> bool:
+    text = str(exc).lower()
+    return isinstance(exc, torch.cuda.OutOfMemoryError) or "out of memory" in text or "cuda oom" in text
+
+
 # --------------------------------------------------------------------------- #
 # Main
 # --------------------------------------------------------------------------- #
@@ -723,6 +728,12 @@ def main():
                              "cache write/read at eval. Default: value from "
                              "adapter_config.json if present, else 16. Only used "
                              "when --use_slot_kv_cache is set.")
+    parser.add_argument("--slot_kv_select_mode", type=str, default="router",
+                        choices=["router", "all", "recency"],
+                        help="Which slot ids retrieve per-slot raw-KV at eval: "
+                             "router uses current selector top-k (default), all "
+                             "passes every slot id, recency uses the most recently "
+                             "written top_k unique slot ids.")
     parser.add_argument("--dtype", type=str, default="bfloat16",
                         choices=["bfloat16", "float16", "float32"])
     parser.add_argument("--attn_impl", type=str, default="sdpa",
@@ -819,8 +830,10 @@ def main():
     )
     mem_config.use_slot_kv_cache = bool(args.use_slot_kv_cache)
     mem_config.slot_kv_cache_layer = slot_kv_cache_layer
+    mem_config.slot_kv_select_mode = args.slot_kv_select_mode
     if args.use_slot_kv_cache:
-        print(f"[mem_space-BABILong] slot_kv_cache enabled at layer {slot_kv_cache_layer}")
+        print(f"[mem_space-BABILong] slot_kv_cache enabled at layer {slot_kv_cache_layer} "
+              f"select_mode={args.slot_kv_select_mode}")
     # Eval-time ablation override (go/no-go): force pure reader attention over
     # raw-KV by zeroing the trained gist col_bias.
     if getattr(args, "rawkv_disable_col_bias", False):
@@ -866,7 +879,8 @@ def main():
               f"shared_bank={mem_config.shared_memory_bank}, "
               f"hidden_to_slot_frozen={mem_config.hidden_to_slot_frozen}, "
               f"use_slot_kv_cache={mem_config.use_slot_kv_cache}, "
-              f"slot_kv_cache_layer={mem_config.slot_kv_cache_layer}")
+              f"slot_kv_cache_layer={mem_config.slot_kv_cache_layer}, "
+              f"slot_kv_select_mode={mem_config.slot_kv_select_mode}")
     else:
         print(f"[mem_space-BABILong] MemorySpaceConfig: num_slots={mem_config.num_slots}, "
               f"top_k={mem_config.top_k}, selector_dim={mem_config.selector_dim}, "
@@ -948,6 +962,7 @@ def main():
                         **({
                             "use_slot_kv_cache": mem_config.use_slot_kv_cache,
                             "slot_kv_cache_layer": mem_config.slot_kv_cache_layer,
+                            "slot_kv_select_mode": mem_config.slot_kv_select_mode,
                         } if mem_config.use_slot_kv_cache else {}),
                         "num_slots":       mem_config.num_slots,
                         "top_k":           mem_config.top_k,
@@ -1000,16 +1015,26 @@ def main():
                 for idx in tqdm(sample_indices, desc=f"{task}/{split_name}", leave=False):
                     target, question, input_ids = _encode_sample(idx)
                     input_ids = input_ids.to(device)
-                    with torch.amp.autocast(device_type="cuda", dtype=dtype):
-                        output = generate_with_mem_space(
-                            model=model,
-                            input_ids=input_ids,
-                            tokenizer=tokenizer,
-                            chunk_size=args.chunk_size,
-                            max_new_tokens=args.max_new_tokens,
-                            device=device,
-                            swa_eval_chunks=args.swa_eval_chunks,
-                        )
+                    try:
+                        with torch.amp.autocast(device_type="cuda", dtype=dtype):
+                            output = generate_with_mem_space(
+                                model=model,
+                                input_ids=input_ids,
+                                tokenizer=tokenizer,
+                                chunk_size=args.chunk_size,
+                                max_new_tokens=args.max_new_tokens,
+                                device=device,
+                                swa_eval_chunks=args.swa_eval_chunks,
+                            )
+                    except RuntimeError as e:
+                        if not _is_cuda_oom(e):
+                            raise
+                        output = "[OOM]"
+                        print(f"[OOM] sample_idx={idx} task={task} length={split_name}: {e}", flush=True)
+                        _reset_banks(model)
+                        _reset_l2(model)
+                        if torch.cuda.is_available():
+                            torch.cuda.empty_cache()
                     df.loc[len(df)] = [target, output, question]
                     if len(df) % 10 == 0 or idx == sample_indices[-1]:
                         _write_results_csv(df, outfile)

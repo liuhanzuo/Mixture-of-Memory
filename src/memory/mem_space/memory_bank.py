@@ -718,6 +718,30 @@ class MemoryBank(nn.Module):
                 kept_p.append(self.slot_kv_pos[b, mb])
             return torch.stack(kept_h, dim=0), torch.stack(kept_p, dim=0)
 
+    def recent_slot_kv_slots(self, k: int) -> Optional[torch.Tensor]:
+        """Return the last-written unique slot ids from the raw-KV cache.
+
+        The flat cache is append-only, so scanning slot_kv_slot from the end gives
+        a recency proxy over writes. Duplicate ids are skipped; if fewer than k
+        unique slots exist, the last id is repeated to keep a rectangular [B,k]
+        tensor for retrieve_slot_kv_cache().
+        """
+        if self.slot_kv_slot is None or self.slot_kv_slot.numel() == 0 or k <= 0:
+            return None
+        rows = []
+        for row in self.slot_kv_slot:
+            # append_slot_kv_cache writes each selected slot as one consecutive
+            # token block, so unique_consecutive over the reversed flat cache
+            # gives recently written slot blocks without Python-scanning M tokens.
+            recent = torch.unique_consecutive(torch.flip(row, dims=[0]))[:k]
+            if recent.numel() <= 0:
+                return None
+            if recent.numel() < k:
+                pad = recent[-1:].expand(k - int(recent.numel()))
+                recent = torch.cat([recent, pad], dim=0)
+            rows.append(recent)
+        return torch.stack(rows, dim=0).to(dtype=torch.long)
+
     def slot_kv_cache_size(self) -> int:
         """Number of flat per-slot raw-KV entries (per sequence)."""
         return 0 if self.slot_kv_hidden is None else int(self.slot_kv_hidden.shape[1])

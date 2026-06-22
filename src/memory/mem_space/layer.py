@@ -2446,7 +2446,18 @@ class MemorySpaceLayer(nn.Module):
             _sk_attn = getattr(self.wrapped_layer, "self_attn", None)
             if _sk_attn is not None:
                 _sk_attn._inattn_kv = None
-            _sk_ret = self.memory_bank.retrieve_slot_kv_cache(idx)
+            _sk_mode = getattr(cfg, "slot_kv_select_mode", "router")
+            if _sk_mode == "all":
+                _sk_idx = torch.arange(
+                    int(cfg.num_slots), device=idx.device, dtype=idx.dtype
+                ).unsqueeze(0).expand(idx.shape[0], -1)
+            elif _sk_mode == "recency":
+                _sk_idx = self.memory_bank.recent_slot_kv_slots(int(cfg.top_k))
+                if _sk_idx is not None:
+                    _sk_idx = _sk_idx.to(device=idx.device, dtype=idx.dtype)
+            else:
+                _sk_idx = idx
+            _sk_ret = None if _sk_idx is None else self.memory_bank.retrieve_slot_kv_cache(_sk_idx)
             if _sk_attn is not None and _sk_ret is not None:
                 _sk_h, _sk_pos = _sk_ret                    # [B,R,d], [B,R]
                 from .inattn_kv import build_retrieved_kv
@@ -2459,7 +2470,8 @@ class MemorySpaceLayer(nn.Module):
                 self._last_slot_kv_cache_R = int(_skK.shape[2])
                 if os.environ.get("SLOT_KV_DEBUG") == "1":
                     print(
-                        f"[slot_kv_cache] layer={self._layer_idx} "
+                        f"[slot_kv_cache] layer={self._layer_idx} mode={_sk_mode} "
+                        f"select_k={int(_sk_idx.shape[1]) if _sk_idx is not None else 0} "
                         f"store_M={self.memory_bank.slot_kv_cache_size()} "
                         f"retrieved={self._last_slot_kv_cache_R}",
                         flush=True,

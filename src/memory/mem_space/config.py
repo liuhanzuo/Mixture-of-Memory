@@ -125,6 +125,11 @@ class MemorySpaceConfig:
     #     it is added to the selection logits. 1.0 = standard ST-Gumbel.
     use_st_gumbel_topk: bool = False
     st_gumbel_temperature: float = 1.0
+
+    # Eval-only per-slot raw-KV cache selector override (2026-06-22).
+    # "router" = existing behavior; "all" = retrieve every cached slot id;
+    # "recency" = retrieve the most recently written top_k unique slots.
+    slot_kv_select_mode: str = "router"
     # P11 (2026-06-06): delta-rule writeback + normalized readout. Two
     # independent sub-features, BOTH default off → byte-identical to pre-P11.
     #
@@ -816,6 +821,11 @@ class MemorySpaceConfig:
             )
         if self.selector_dim <= 0:
             raise ValueError(f"selector_dim must be > 0, got {self.selector_dim}")
+        if self.slot_kv_select_mode not in {"router", "all", "recency"}:
+            raise ValueError(
+                "slot_kv_select_mode must be one of {'router', 'all', 'recency'}, "
+                f"got {self.slot_kv_select_mode!r}"
+            )
         if self.slot_init not in _VALID_SLOT_INIT:
             raise ValueError(
                 f"slot_init must be one of {_VALID_SLOT_INIT}, got {self.slot_init!r}"
