@@ -1400,6 +1400,18 @@ def parse_args() -> argparse.Namespace:
                         "the EV block (sever H->L3/L2/L1) so the precise evidence "
                         "tokens are not diluted by the compressed prefix.")
 
+    # Per-slot raw-KV cache (2026-06-22): upper-bound readout test. Unlike
+    # Method A, it reuses the normal slot selector and stores raw hidden under
+    # the selected slot ids. Default off → existing runs unchanged.
+    p.add_argument("--use_slot_kv_cache", action="store_true", default=False,
+                   help="Enable unlimited per-slot raw-KV cache: chunks append "
+                        "their raw token hidden states under the selected slot ids; "
+                        "later selected slots inject all cached raw KV via native "
+                        "in-attention concat. Default off.")
+    p.add_argument("--slot_kv_cache_layer", type=int, default=16,
+                   help="Single decoder layer that owns per-slot raw-KV cache "
+                        "write/read and in-attention injection. Default 16.")
+
     # v6/v7 writeback (disabled by default for CPT)
     p.add_argument("--use_replace_writeback", action="store_true", default=False)
     p.add_argument("--num_global_slots", type=int, default=0)
@@ -1613,6 +1625,8 @@ def merge_adapter_config_into_args(args: argparse.Namespace) -> argparse.Namespa
         "slot_init": "slot_init", "slot_init_noise": "slot_init_noise",
         "unfreeze_hidden_to_slot": "unfreeze_hidden_to_slot",
         "shared_memory_bank": "shared_memory_bank", "swa_window": "swa_window",
+        "use_slot_kv_cache": "use_slot_kv_cache",
+        "slot_kv_cache_layer": "slot_kv_cache_layer",
     }
     inherited = []
     for k_json, attr in cfg_to_attr.items():
@@ -1744,6 +1758,11 @@ def build_model(args, device, dtype) -> torch.nn.Module:
         rawkv_subblock_size=args.rawkv_subblock_size,
         rawkv_inwindow_summary=args.rawkv_inwindow_summary,
     )
+    # Per-slot raw-KV cache is an experimental no-param runtime path. Keep it as
+    # dynamic config attrs to avoid touching the shared dataclass while another
+    # coder edits adjacent distillation code.
+    ms_cfg.use_slot_kv_cache = bool(args.use_slot_kv_cache)
+    ms_cfg.slot_kv_cache_layer = int(args.slot_kv_cache_layer)
 
     # H7 rotary fp32 fix — snapshot before bf16 cast
     _rope_snapshot = {}
@@ -2869,6 +2888,8 @@ def _save_adapter(model, args, step: int, final: bool = False) -> None:
             "evidence_topr": args.evidence_topr,
             "evidence_layer": args.evidence_layer,
             "evidence_isolate_softmax": args.evidence_isolate_softmax,
+            "use_slot_kv_cache": args.use_slot_kv_cache,
+            "slot_kv_cache_layer": args.slot_kv_cache_layer,
             "l3_recon_token_weight": args.l3_recon_token_weight,
             "disable_l1_inject": args.disable_l1_inject,
             "use_replace_writeback": args.use_replace_writeback,

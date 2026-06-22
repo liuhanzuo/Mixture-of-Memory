@@ -136,6 +136,19 @@ class MemoryBank(nn.Module):
         self.rawkv_key: Optional[torch.Tensor] = None
         self.rawkv_pos: Optional[torch.Tensor] = None
 
+        # Per-slot raw-KV cache (2026-06-22). Unlike Method A's per-CHUNK
+        # global raw-KV store, this binds every chunk's original token hidden
+        # states to the slots selected by the normal selector. The cache is
+        # intentionally unlimited for the first upper-bound experiment: every
+        # selected slot gets a copy of every real token in the routed chunk.
+        # Stored flat for simplicity:
+        #   slot_kv_hidden : [B, M, d_model] detached original token hidden
+        #   slot_kv_slot   : [B, M] long slot id for each stored token
+        #   slot_kv_pos    : [B, M] long source within-chunk RoPE position
+        self.slot_kv_hidden: Optional[torch.Tensor] = None
+        self.slot_kv_slot: Optional[torch.Tensor] = None
+        self.slot_kv_pos: Optional[torch.Tensor] = None
+
     # --------------------------------------------------------------------- #
     # Lifecycle
     # --------------------------------------------------------------------- #
@@ -156,6 +169,10 @@ class MemoryBank(nn.Module):
         self.rawkv_hidden = None
         self.rawkv_key = None
         self.rawkv_pos = None
+        # Per-slot raw-KV cache is per-sample state too — drop at the rollout boundary.
+        self.slot_kv_hidden = None
+        self.slot_kv_slot = None
+        self.slot_kv_pos = None
         # Raw-KV READOUT store (Method A, 2026-06-19) is per-sample state too —
         # drop it at the document / rollout boundary. Lazily (re)created by the
         # layer's write owner on the next forward.
@@ -549,6 +566,161 @@ class MemoryBank(nn.Module):
     def rawkv_size(self) -> int:
         """Number of stored raw-KV entries (per sequence). 0 when empty."""
         return 0 if self.rawkv_hidden is None else int(self.rawkv_hidden.shape[1])
+
+    # --------------------------------------------------------------------- #
+    # Per-slot raw-KV cache (2026-06-22).
+    # --------------------------------------------------------------------- #
+
+    def append_slot_kv_cache(
+        self,
+        slot_idx: torch.Tensor,
+        token_hidden: torch.Tensor,
+        token_pos: Optional[torch.Tensor] = None,
+        token_mask: Optional[torch.Tensor] = None,
+    ) -> None:
+        """Append the current chunk's raw token hidden states under selected slots.
+
+        Args:
+            slot_idx: [B, k] selected slot ids from the normal selector.
+            token_hidden: [B, T, d_model] original token hidden states to cache.
+            token_pos: optional [B, T] source positions; defaults to 0..T-1.
+            token_mask: optional [B, T] bool/0-1 mask; false entries are skipped.
+
+        Unlimited upper-bound MVP: every selected slot receives every real token
+        of the chunk, so storage grows by ``k * real_tokens`` per chunk. Pure
+        no_grad state mutation; cached hidden states are detached and never enter
+        the writer graph. No-op while frozen so eval question/generation tokens
+        do not pollute the haystack cache.
+        """
+        if self.frozen or self.slots is None:
+            return
+        if slot_idx.dim() != 2 or token_hidden.dim() != 3:
+            return
+        with torch.no_grad():
+            B, T, d = token_hidden.shape
+            if slot_idx.shape[0] != B:
+                return
+            k = slot_idx.shape[1]
+            dev = token_hidden.device
+            _idx = slot_idx.to(device=dev, dtype=torch.long)
+            _h = token_hidden.detach()
+            if token_pos is not None:
+                _p = token_pos.to(device=dev, dtype=torch.long)
+                if _p.dim() == 1:
+                    _p = _p.unsqueeze(0).expand(B, -1)
+            else:
+                _p = (
+                    torch.arange(T, device=dev, dtype=torch.long)
+                    .unsqueeze(0)
+                    .expand(B, -1)
+                )
+            if _p.shape[0] != B or _p.shape[1] != T:
+                return
+
+            # Duplicate the chunk under each selected slot. Layout per batch row:
+            # [slot_0 token_0..T-1, slot_1 token_0..T-1, ...].
+            _h_dup = _h.unsqueeze(1).expand(B, k, T, d).reshape(B, k * T, d)
+            _slot_dup = _idx.unsqueeze(-1).expand(B, k, T).reshape(B, k * T)
+            _pos_dup = _p.unsqueeze(1).expand(B, k, T).reshape(B, k * T)
+
+            if token_mask is not None:
+                _m = token_mask.to(device=dev).bool()
+                if _m.dim() == 1:
+                    _m = _m.unsqueeze(0).expand(B, -1)
+                if _m.shape[0] != B or _m.shape[1] != T:
+                    return
+                _m_dup = _m.unsqueeze(1).expand(B, k, T).reshape(B, k * T)
+            else:
+                _m_dup = torch.ones(B, k * T, device=dev, dtype=torch.bool)
+
+            # The training/eval paths for this project use batch_size=1. Keep a
+            # conservative fallback for larger batches only when every row has the
+            # same number of real cached entries; otherwise skip rather than pad
+            # fake KV columns that would enter attention.
+            counts = _m_dup.sum(dim=1)
+            if not bool((counts == counts[0]).all().item()):
+                return
+            if int(counts[0].item()) <= 0:
+                return
+            if int(counts[0].item()) != _m_dup.shape[1]:
+                kept_h = []
+                kept_s = []
+                kept_p = []
+                for b in range(B):
+                    mb = _m_dup[b]
+                    kept_h.append(_h_dup[b, mb])
+                    kept_s.append(_slot_dup[b, mb])
+                    kept_p.append(_pos_dup[b, mb])
+                _h_dup = torch.stack(kept_h, dim=0)
+                _slot_dup = torch.stack(kept_s, dim=0)
+                _pos_dup = torch.stack(kept_p, dim=0)
+
+            if (
+                self.slot_kv_hidden is None
+                or self.slot_kv_hidden.shape[0] != B
+                or self.slot_kv_hidden.shape[-1] != d
+            ):
+                self.slot_kv_hidden = _h_dup
+                self.slot_kv_slot = _slot_dup
+                self.slot_kv_pos = _pos_dup
+            else:
+                self.slot_kv_hidden = torch.cat(
+                    [self.slot_kv_hidden, _h_dup.to(device=self.slot_kv_hidden.device)],
+                    dim=1,
+                )
+                self.slot_kv_slot = torch.cat(
+                    [self.slot_kv_slot, _slot_dup.to(device=self.slot_kv_slot.device)],
+                    dim=1,
+                )
+                self.slot_kv_pos = torch.cat(
+                    [self.slot_kv_pos, _pos_dup.to(device=self.slot_kv_pos.device)],
+                    dim=1,
+                )
+
+    def retrieve_slot_kv_cache(
+        self,
+        slot_idx: torch.Tensor,
+    ) -> Optional[Tuple[torch.Tensor, torch.Tensor]]:
+        """Return all cached raw tokens bound to the currently selected slots.
+
+        Args:
+            slot_idx: [B, k] slot ids selected for the current query chunk.
+
+        Returns:
+            (hidden, pos) where hidden is [B, R, d_model] and pos is [B, R].
+            R is the number of cached entries whose stored slot id is in the
+            selected slot set. Returns None when the cache is empty or when batch
+            rows would require different R (the project launch uses B=1).
+        """
+        if (
+            self.slot_kv_hidden is None
+            or self.slot_kv_slot is None
+            or self.slot_kv_pos is None
+            or slot_idx.dim() != 2
+        ):
+            return None
+        B, M, d = self.slot_kv_hidden.shape
+        if slot_idx.shape[0] != B or M == 0:
+            return None
+        with torch.no_grad():
+            _sel = slot_idx.to(device=self.slot_kv_slot.device, dtype=torch.long)
+            _mask = (self.slot_kv_slot.unsqueeze(2) == _sel.unsqueeze(1)).any(dim=2)  # [B,M]
+            counts = _mask.sum(dim=1)
+            if int(counts.max().item()) <= 0:
+                return None
+            if not bool((counts == counts[0]).all().item()):
+                return None
+            kept_h = []
+            kept_p = []
+            for b in range(B):
+                mb = _mask[b]
+                kept_h.append(self.slot_kv_hidden[b, mb])
+                kept_p.append(self.slot_kv_pos[b, mb])
+            return torch.stack(kept_h, dim=0), torch.stack(kept_p, dim=0)
+
+    def slot_kv_cache_size(self) -> int:
+        """Number of flat per-slot raw-KV entries (per sequence)."""
+        return 0 if self.slot_kv_hidden is None else int(self.slot_kv_hidden.shape[1])
 
     # --------------------------------------------------------------------- #
     # Access

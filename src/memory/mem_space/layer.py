@@ -912,6 +912,22 @@ class MemorySpaceLayer(nn.Module):
                     getattr(config, "rawkv_inwindow_summary", False)
                 )
 
+        # Per-slot raw-KV cache (2026-06-22). This is NOT Method A: retrieval is
+        # coupled to the normal slot selector. A single owner layer appends every
+        # chunk's raw hidden states under the selected slot ids, and the same layer
+        # injects all raw hidden cached under the CURRENT selected slots through
+        # the existing in-attention K/V concat wrapper. No capacity / eviction in
+        # v1; this is an upper-bound test.
+        self._is_slot_kv_cache_layer = (
+            bool(getattr(config, "use_slot_kv_cache", False))
+            and self._layer_idx == int(getattr(config, "slot_kv_cache_layer", 16))
+        )
+        if self._is_slot_kv_cache_layer:
+            from .inattn_kv import install_inattn_wrapper
+            _attn = getattr(self.wrapped_layer, "self_attn", None)
+            if _attn is not None:
+                install_inattn_wrapper(_attn)
+
         # Side-channel state (populated on each forward).
         self.last_aux_losses: Dict[str, torch.Tensor] = {}
         self.last_idx: Optional[torch.Tensor] = None
@@ -2419,6 +2435,36 @@ class MemorySpaceLayer(nn.Module):
                 self._last_inattn_R = int(_K_raw.shape[2])
                 self._last_inattn_pos = _src_pos
 
+        # ---- Per-slot raw-KV cache: READ / INJECT (2026-06-22) ----
+        # Different from Method A: there is no independent gist scorer and no
+        # chunk-level retrieval. We reuse the selector's CURRENT slot ids (idx),
+        # gather ALL raw hidden cached under those slots, and inject them through
+        # the same native in-attention K/V concat path. This tests the upper bound
+        # of "slot picked correctly + raw KV is available" with no capacity cap.
+        self._last_slot_kv_cache_R = 0
+        if self._is_slot_kv_cache_layer and idx is not None:
+            _sk_attn = getattr(self.wrapped_layer, "self_attn", None)
+            if _sk_attn is not None:
+                _sk_attn._inattn_kv = None
+            _sk_ret = self.memory_bank.retrieve_slot_kv_cache(idx)
+            if _sk_attn is not None and _sk_ret is not None:
+                _sk_h, _sk_pos = _sk_ret                    # [B,R,d], [B,R]
+                from .inattn_kv import build_retrieved_kv
+                _sk_pre_norm = getattr(self.wrapped_layer, "input_layernorm", None)
+                _skK, _skV = build_retrieved_kv(
+                    _sk_attn, _sk_h.to(hidden_states.dtype), _sk_pos,
+                    position_embeddings, pre_norm=_sk_pre_norm,
+                )
+                _sk_attn._inattn_kv = (_skK, _skV)
+                self._last_slot_kv_cache_R = int(_skK.shape[2])
+                if os.environ.get("SLOT_KV_DEBUG") == "1":
+                    print(
+                        f"[slot_kv_cache] layer={self._layer_idx} "
+                        f"store_M={self.memory_bank.slot_kv_cache_size()} "
+                        f"retrieved={self._last_slot_kv_cache_R}",
+                        flush=True,
+                    )
+
         # ---- Raw-KV READOUT (Method A): READ / INJECT (2026-06-19) ----
         # Differentiable, TRAINABLE gist-key soft attention (replaces the
         # non-differentiable TopKSelector hard top-k of the inattn probe). The
@@ -2941,6 +2987,27 @@ class MemorySpaceLayer(nn.Module):
                 self.memory_bank.soft_write(
                     _sw_content, weight=self._soft_write_weight, gate=None
                 )
+
+        # ---- Per-slot raw-KV cache: WRITE (2026-06-22) ----
+        # Append AFTER the current layer read/write so a target chunk cannot read
+        # its own just-cached raw tokens in the same forward. Context chunks then
+        # become available to later chunks via their selected slot ids. No capacity
+        # limit / replacement: this deliberately measures the upper bound.
+        if (
+            self._is_slot_kv_cache_layer
+            and cfg.enable_writeback
+            and not cfg.disable_l1_inject
+            and not _skip_wb
+            and idx is not None
+            and not self.memory_bank.frozen
+        ):
+            _sk_pos = torch.arange(
+                T, device=hidden_states.device, dtype=torch.long
+            ).unsqueeze(0).expand(B, -1)
+            self.memory_bank.append_slot_kv_cache(
+                idx.long(), hidden_states.detach(), token_pos=_sk_pos,
+                token_mask=_active_token_mask,
+            )
 
         # ---- WRITEBACK_DIAG (diagnostic log, no-op on computation) ----
         # Emit every 200 forward calls, rank-0 / layer-0 only.
