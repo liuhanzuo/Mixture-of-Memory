@@ -4,6 +4,12 @@ MemoryLLM is stateful: inject each BABILong context into its memory pool,
 generate from the question prompt, then reset to the checkpoint memory before the
 next sample. The reset restores both ``model.memory`` and ``model.initialized``;
 otherwise sample N+1 can leak state from sample N.
+
+ENV REQUIREMENT (verified 2026-06-23): run this with ``external/memoryllm_venv``
+(transformers==4.43.4, peft==0.10.0, torch==2.6.0+cu124). Under transformers 5.x the
+MemoryLLM custom forward produces degenerate token-0 output ("!!!!"/"MarcusMarcus...");
+under the pinned torch 2.5.1+cu121 the PEFT LoRA GEMM SIGFPEs on H20 (sm90). Use the
+launch script ``scripts/run_babilong_memoryllm.sh`` which points at that venv.
 """
 from __future__ import annotations
 
