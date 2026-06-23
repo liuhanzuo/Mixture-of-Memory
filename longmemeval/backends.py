@@ -27,7 +27,8 @@ import math
 import re
 from abc import ABC, abstractmethod
 from collections import Counter
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
+from datetime import date
 from typing import List, Optional, Sequence
 
 from .data import LongMemEvalExample, Round, iter_rounds
@@ -60,6 +61,32 @@ _TOKEN_RE = re.compile(r"[A-Za-z0-9]+")
 
 def simple_tokenize(text: str) -> List[str]:
     return _TOKEN_RE.findall(text.lower())
+
+
+_STOPWORDS = {
+    "a", "an", "and", "are", "as", "at", "be", "did", "do", "for", "i",
+    "in", "is", "it", "me", "my", "of", "on", "or", "the", "to", "was",
+    "were", "what", "when", "where", "which", "who", "why", "with",
+}
+_RECENCY_CUES = {
+    "current", "currently", "last", "latest", "newest", "now", "recent",
+    "recently", "today", "updated",
+}
+_EARLIEST_CUES = {"earliest", "first", "initial", "initially", "oldest", "original"}
+
+
+def _content_tokens(text: str) -> List[str]:
+    return [t for t in simple_tokenize(text) if t not in _STOPWORDS]
+
+
+def _safe_date_ordinal(value: str) -> Optional[int]:
+    match = re.search(r"\d{4}-\d{2}-\d{2}", value or "")
+    if not match:
+        return None
+    try:
+        return date.fromisoformat(match.group(0)).toordinal()
+    except ValueError:
+        return None
 
 
 # --------------------------------------------------------------------------- #
@@ -112,6 +139,122 @@ class IdentityReranker(Reranker):
         self, question: str, date: str, candidates: List[Evidence], top_k: int
     ) -> List[Evidence]:
         return candidates[:top_k]
+
+
+class KeywordOverlapReranker(Reranker):
+    """Cheap lexical second-stage reranker.
+
+    This is intentionally dependency-free: it boosts candidate rounds that cover
+    rare-ish content words from the question while retaining a small normalized
+    first-stage score contribution for tie-breaking.
+    """
+
+    def __init__(self, keyword_weight: float = 1.0, base_weight: float = 0.15):
+        self.keyword_weight = keyword_weight
+        self.base_weight = base_weight
+
+    @staticmethod
+    def _normalized_base_scores(candidates: List[Evidence]) -> List[float]:
+        if not candidates:
+            return []
+        scores = [ev.score for ev in candidates]
+        lo, hi = min(scores), max(scores)
+        if hi <= lo:
+            return [1.0] * len(scores)
+        return [(s - lo) / (hi - lo) for s in scores]
+
+    def _keyword_score(self, query_terms: Sequence[str], evidence: Evidence) -> float:
+        if not query_terms:
+            return 0.0
+        text_terms = set(_content_tokens(evidence.text))
+        if not text_terms:
+            return 0.0
+        overlap = sum(1 for term in query_terms if term in text_terms)
+        return overlap / max(len(set(query_terms)), 1)
+
+    def rerank(
+        self, question: str, date: str, candidates: List[Evidence], top_k: int
+    ) -> List[Evidence]:
+        query_terms = _content_tokens(question)
+        base_scores = self._normalized_base_scores(candidates)
+        scored = []
+        for rank, ev in enumerate(candidates):
+            score = (
+                self.keyword_weight * self._keyword_score(query_terms, ev)
+                + self.base_weight * base_scores[rank]
+            )
+            scored.append((score, -rank, replace(ev, score=score)))
+        scored.sort(key=lambda x: (x[0], x[1]), reverse=True)
+        return [ev for _, _, ev in scored[:top_k]]
+
+
+class TemporalAwareReranker(KeywordOverlapReranker):
+    """Keyword reranker with a temporal prior for recency/earliest questions."""
+
+    def __init__(
+        self,
+        keyword_weight: float = 0.5,
+        base_weight: float = 0.1,
+        temporal_weight: float = 1.0,
+    ):
+        super().__init__(keyword_weight=keyword_weight, base_weight=base_weight)
+        self.temporal_weight = temporal_weight
+
+    def _temporal_direction(self, question: str) -> int:
+        terms = set(simple_tokenize(question))
+        if terms & _RECENCY_CUES:
+            return 1
+        if terms & _EARLIEST_CUES:
+            return -1
+        return 0
+
+    def rerank(
+        self, question: str, date: str, candidates: List[Evidence], top_k: int
+    ) -> List[Evidence]:
+        direction = self._temporal_direction(question)
+        if direction == 0:
+            return super().rerank(question, date, candidates, top_k)
+
+        query_terms = _content_tokens(question)
+        base_scores = self._normalized_base_scores(candidates)
+        ordinals = [_safe_date_ordinal(ev.session_date) for ev in candidates]
+        known = [o for o in ordinals if o is not None]
+        lo, hi = (min(known), max(known)) if known else (0, 0)
+        span = max(hi - lo, 1)
+
+        scored = []
+        for rank, ev in enumerate(candidates):
+            ordinal = ordinals[rank]
+            temporal = 0.0
+            if ordinal is not None:
+                temporal = (ordinal - lo) / span
+                if direction < 0:
+                    temporal = 1.0 - temporal
+            score = (
+                self.keyword_weight * self._keyword_score(query_terms, ev)
+                + self.base_weight * base_scores[rank]
+                + self.temporal_weight * temporal
+            )
+            scored.append((score, -rank, replace(ev, score=score)))
+        scored.sort(key=lambda x: (x[0], x[1]), reverse=True)
+        return [ev for _, _, ev in scored[:top_k]]
+
+
+class MoMSlotReranker(KeywordOverlapReranker):
+    """Placeholder adapter for a future MoM slot/query-similarity reranker.
+
+    The intended production path is:
+      1. Encode each candidate round into MoM summary/slot keys during indexing.
+      2. Encode the LongMemEval question into a MoM query representation.
+      3. Rerank candidates by slot-query similarity, optionally fused with the
+         first-stage BM25/embedding score and temporal priors.
+
+    This stub deliberately does not load a GPU model or checkpoint. For recall
+    sweeps today it behaves as a keyword-overlap proxy while preserving the same
+    Reranker seam that real MoM inference can replace later.
+    """
+
+    pass
 
 
 # --------------------------------------------------------------------------- #

@@ -4,9 +4,10 @@ A modular, official-paper-compatible RAG **memory baseline** for the
 [LongMemEval](https://github.com/xiaowu0162/LongMemEval) benchmark
 (Wu et al. 2024, [arXiv:2410.10813](https://arxiv.org/abs/2410.10813)).
 
-This is the **baseline only** — no Mixture-of-Memory (MoM) yet. The interfaces
-are designed so MoM variants plug in later as a reranker / summary-key /
-compressor layer (see [MoM extension points](#mom-extension-points)).
+This is the **baseline plus a lightweight MoM-assisted extension seam**. The
+current MoM Track B variant is API-free/GPU-free: cheap rerankers and a
+`MoMSlotReranker` stub that preserves the future slot/query-similarity adapter
+surface (see [MoM extension points](#mom-extension-points)).
 
 ## What LongMemEval is
 
@@ -81,7 +82,28 @@ Checked against `.venv/bin/python`:
     --report outputs/longmemeval/bm25_stub.report.json
 ```
 
-### 2. Embedding retriever (local bge-m3) + stub reader
+### 2. BM25 + lightweight reranker recall sweeps (no API/GPU)
+
+Use `--reader stub` to measure retrieval recall only. Reranking happens over a
+larger first-stage pool (`--candidate_multiplier * --top_k`) before final
+`top_k` evidence is budgeted.
+
+```bash
+for reranker in none keyword temporal mom_stub; do
+  .venv/bin/python -m longmemeval.run_baseline \
+      --data data/longmemeval/longmemeval_s.json \
+      --retriever bm25 --reranker ${reranker} \
+      --top_k 10 --candidate_multiplier 8 --reader stub \
+      --out outputs/longmemeval/bm25_${reranker}_stub.jsonl \
+      --report outputs/longmemeval/bm25_${reranker}_stub.report.json
+done
+```
+
+`mom_stub` is intentionally cheap: it uses the `MoMSlotReranker` interface but
+falls back to keyword-overlap scoring until real MoM slot/query similarities are
+plugged in.
+
+### 3. Embedding retriever (local bge-m3) + stub reader
 
 ```bash
 .venv/bin/python -m longmemeval.run_baseline \
@@ -91,7 +113,7 @@ Checked against `.venv/bin/python`:
     --out outputs/longmemeval/embed_stub.jsonl
 ```
 
-### 3. Union (BM25 ⊕ embedding, reciprocal-rank fusion) + GPT-4o reader
+### 4. Union (BM25 ⊕ embedding, reciprocal-rank fusion) + GPT-4o reader
 
 ```bash
 export LONGMEMEVAL_READER_API_KEY=...        # never hardcode
@@ -143,13 +165,13 @@ Chain-of-Note / structured-JSON reader prompt.
 
 ## MoM extension points
 
-The interfaces deliberately leave clean seams for Mixture-of-Memory. None of
-these are implemented yet — they are documented in the code docstrings:
+The interfaces deliberately leave clean seams for Mixture-of-Memory:
 
 - **MoM-reranker** — subclass `backends.Reranker` to reorder
   `RoundFlatRetriever` candidates using the MoM memory representation; pass via
   `RoundFlatRetriever(reranker=...)` for an **MoM-hybrid** (sparse/dense recall
-  + MoM precision).
+  + MoM precision). Current CLI choices are `none`, `keyword`, `temporal`, and
+  `mom_stub`; `mom_stub` is the no-GPU `MoMSlotReranker` adapter placeholder.
 - **MoM-summary-key** — subclass `backends.MemoryBackend` so per-round keys are
   MoM gist summaries instead of raw-text BM25/embedding keys.
 - **MoM-compressor** — subclass `backends.MemoryBackend` to compress sessions
@@ -157,5 +179,6 @@ these are implemented yet — they are documented in the code docstrings:
 - **MoM-hybrid** — RoundFlatRetriever recall feeding an MoM-reranker.
 
 To add a variant: implement the relevant ABC, then register it in
-`run_baseline._build_retriever` / `build_reader` behind a new `--retriever` /
-`--reader` choice. The recall@k and submission machinery are reused unchanged.
+`run_baseline._build_reranker` / `_build_retriever` / `build_reader` behind a
+new `--reranker` / `--retriever` / `--reader` choice. The recall@k and
+submission machinery are reused unchanged.

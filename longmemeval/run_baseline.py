@@ -36,7 +36,14 @@ import os
 import sys
 from typing import List, Optional
 
-from .backends import Evidence, RoundFlatRetriever
+from .backends import (
+    Evidence,
+    IdentityReranker,
+    KeywordOverlapReranker,
+    MoMSlotReranker,
+    RoundFlatRetriever,
+    TemporalAwareReranker,
+)
 from .data import LongMemEvalExample, Round, load_longmemeval
 from .reader import build_reader
 from .scoring import aggregate_recall, recall_at_k, write_submission
@@ -61,11 +68,24 @@ def _apply_token_budget(evidence: List[Evidence], budget: int) -> List[Evidence]
     return out
 
 
+def _build_reranker(name: str):
+    if name == "none":
+        return IdentityReranker()
+    if name == "keyword":
+        return KeywordOverlapReranker()
+    if name == "temporal":
+        return TemporalAwareReranker()
+    if name == "mom_stub":
+        return MoMSlotReranker()
+    raise ValueError(f"unknown reranker: {name}")
+
+
 def _build_retriever(args) -> RoundFlatRetriever:
     return RoundFlatRetriever(
         mode=args.retriever,
         embed_model_path=args.embed_model,
         device=args.device,
+        reranker=_build_reranker(args.reranker),
         candidate_multiplier=args.candidate_multiplier,
     )
 
@@ -103,6 +123,7 @@ def _run(examples: List[LongMemEvalExample], args) -> dict:
         "degraded": retriever.degraded,
         "degraded_reason": retriever.degraded_reason,
         "reader": args.reader,
+        "reranker": args.reranker,
         "top_k": args.top_k,
         "evidence_token_budget": args.evidence_token_budget,
         "overall_recall": aggregate_recall(recalls),
@@ -156,6 +177,27 @@ def _make_synthetic() -> List[LongMemEvalExample]:
     return [ex1, ex2]
 
 
+def _self_test_reranker_probe(examples: List[LongMemEvalExample]) -> dict:
+    """Show that temporal reranking changes top-1 recall on synthetic data."""
+    ex = next(e for e in examples if e.question_id == "synthetic_2")
+    out = {}
+    for name in ("none", "temporal", "mom_stub"):
+        retriever = RoundFlatRetriever(
+            mode="bm25",
+            reranker=_build_reranker(name),
+            candidate_multiplier=4,
+        )
+        retriever.index_example(ex)
+        evidence = retriever.query(ex.question, date=ex.question_date, top_k=1)
+        rec = recall_at_k(evidence, ex.answer_session_ids, ex.question_id)
+        out[name] = {
+            "top1_session": evidence[0].session_id if evidence else None,
+            "top1_score": evidence[0].score if evidence else None,
+            "any_hit_recall": rec.any_hit,
+        }
+    return out
+
+
 def build_arg_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="python -m longmemeval.run_baseline",
@@ -169,6 +211,9 @@ def build_arg_parser() -> argparse.ArgumentParser:
     p.add_argument("--retriever", type=str, default="bm25",
                    choices=["bm25", "embedding", "union"],
                    help="First-stage retrieval over rounds.")
+    p.add_argument("--reranker", type=str, default="none",
+                   choices=["none", "keyword", "temporal", "mom_stub"],
+                   help="Second-stage reranker over the first-stage candidate pool.")
     p.add_argument("--embed_model", type=str, default="models/bge-m3",
                    help="Local HF / sentence-transformers embedding model "
                         "(used by embedding/union; degrades to BM25 if unloadable).")
@@ -211,6 +256,8 @@ def main(argv: Optional[List[str]] = None) -> int:
         examples = load_longmemeval(args.data, limit=args.limit)
 
     report = _run(examples, args)
+    if args.self_test:
+        report["self_test_reranker_probe"] = _self_test_reranker_probe(examples)
     print(json.dumps(report, indent=2, ensure_ascii=False))
 
     if args.report:
