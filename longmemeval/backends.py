@@ -448,6 +448,162 @@ class MoMModelReranker(Reranker):
         return [ev for _, _, ev in scored[:top_k]]
 
 
+class MoMReadoutReranker(MoMModelReranker):
+    """MoM precision reranker v2 — *slot-memory* relevance (``--reranker
+    mom_readout``).
+
+    Motivation
+    ----------
+    The v1 :class:`MoMModelReranker` (``--reranker mom_slot``) scores a
+    candidate round by the cosine between the question's mean-pooled
+    last-hidden-state and the round's mean-pooled last-hidden-state. That signal
+    was NEGATIVE vs pure BM25 on LongMemEval-S (overall 0.920/0.766 vs BM25
+    0.924/0.779). The diagnosis: a mean-pooled last hidden is a weak relevance
+    proxy and, crucially, it does NOT exploit the thing the mem_space model is
+    actually trained to produce — the **fixed-size slot memory** that the
+    readout cross-attention reads from.
+
+    Scoring (v2 — slot-readout cosine)
+    ----------------------------------
+    This variant scores relevance against the SLOT MEMORY STATE rather than the
+    raw last hidden:
+
+      1. ``_encode(question)`` (inherited from v1): reset bank, stream the
+         question, mean-pool the final forward's last-layer hidden over real
+         tokens, L2-normalize → ``q_vec`` (shape ``(H,)``).
+      2. ``_encode_round_slots(round_text)``: reset the bank, stream the WHOLE
+         round through it chunk-by-chunk with writeback ON, so the shared slot
+         bank now *encodes the round*. Read the populated slot tensor
+         ``model._mem_space_shared_bank.slots`` (shape ``[1, N, slot_dim]``),
+         detach, and L2-normalize every slot row → ``S`` (shape ``(N, H)``).
+      3. The MoM relevance score is the **max cosine** between ``q_vec`` and any
+         of the round's slot vectors (optionally blended with the mean cosine):
+
+             mom = (1 - slot_mean_mix) * max_n cos(q_vec, S_n)
+                   +     slot_mean_mix * mean_n cos(q_vec, S_n)
+
+         ``max`` answers "does this round have *a* slot that matches the
+         question?" — the natural relevance question for a fixed-size compressed
+         memory — and is robust to the many slots a round leaves near its
+         init content.
+
+    Why the slot tensor is in a comparable space to ``q_vec``
+    ---------------------------------------------------------
+    For this checkpoint ``slot_dim`` is ``null`` → it defaults to ``d_model``
+    (4096), and ``slot_init='strided_token'`` seeds each slot from a real token
+    hidden state; the dual-gate ``tanh``-bounded writeback + norm cap keep slots
+    on the Llama residual-stream manifold. The slot bank therefore lives in the
+    same 4096-d residual space as the question's last-layer hidden, so a cosine
+    between them is meaningful. (Absolute alignment need not be perfect — fusion
+    is min-max normalized and only the *within-candidate-pool ranking* matters.)
+    This is genuinely the model's compressed memory readout target, not a
+    mean-pool of raw text.
+
+    Bank reset / freeze reuse
+    -------------------------
+    Construction (model load, tokenizer, ``_reset_banks`` / ``_reset_l2`` /
+    ``_freeze_banks`` / ``_unfreeze_banks`` handles) is inherited verbatim from
+    :class:`MoMModelReranker`; only the per-candidate scoring representation
+    changes. v1 (``mom_slot``) is left fully intact for comparison.
+
+    Fusion with BM25 is identical to v1 (min-max convex blend via
+    ``fusion_weight``; ties break toward the original BM25 rank).
+    """
+
+    def __init__(self, *args, slot_mean_mix: float = 0.0, **kwargs):
+        if not (0.0 <= slot_mean_mix <= 1.0):
+            raise ValueError(f"slot_mean_mix must be in [0, 1]; got {slot_mean_mix}")
+        self.slot_mean_mix = slot_mean_mix
+        super().__init__(*args, **kwargs)
+
+    def _get_slot_bank(self):
+        """Return the populated shared slot tensor [1, N, slot_dim] or None.
+
+        Walks the same exposure points ``_reset_banks`` uses: a shared bank on
+        ``model._mem_space_shared_bank`` (this checkpoint, shared_memory_bank=
+        True), else the first per-layer ``memory_bank`` in ``_mem_space_layers``.
+        """
+        root = getattr(self.model, "module", self.model)
+        bank = getattr(root, "_mem_space_shared_bank", None)
+        if bank is None:
+            layers = getattr(root, "_mem_space_layers", None) or []
+            bank = getattr(layers[0], "memory_bank", None) if layers else None
+        if bank is None:
+            return None
+        return getattr(bank, "slots", None)
+
+    def _encode_round_slots(self, text: str):
+        """Stream ``text`` through the memory bank (writeback ON) and return the
+        round-populated slot vectors as an L2-normalized numpy array (N, H).
+
+        Returns ``None`` if the slot bank is not reachable / never initialized,
+        in which case the caller falls back to the v1 last-hidden vector.
+        """
+        torch = self._torch
+        ids = self.tokenizer(
+            text,
+            add_special_tokens=True,
+            truncation=True,
+            max_length=self.max_text_tokens,
+            return_tensors="pt",
+        )["input_ids"][0].to(self._device)
+        if ids.numel() == 0:
+            ids = self.tokenizer(" ", return_tensors="pt")["input_ids"][0].to(self._device)
+
+        # Fresh per-candidate state, then stream the WHOLE round with writeback
+        # ON so the slot bank ends up encoding the round (no freeze here — we
+        # want the writes; freeze only matters for a polluting readout forward).
+        self._reset_banks(self.model)
+        self._reset_l2(self.model)
+        self._unfreeze_banks(self.model)
+
+        chunks = list(ids.split(self.chunk_size))
+        with torch.no_grad():
+            for chunk in chunks:
+                self.model(input_ids=chunk.unsqueeze(0), use_cache=False)
+            slots = self._get_slot_bank()
+            if slots is None:
+                return None
+            S = slots[0].float()                                   # (N, H)
+            S = torch.nn.functional.normalize(S, p=2, dim=-1)
+        return S.detach().cpu().numpy()
+
+    def rerank(
+        self, question: str, date: str, candidates: List[Evidence], top_k: int
+    ) -> List[Evidence]:
+        if not candidates:
+            return []
+        import numpy as np
+
+        q_vec = self._encode(question)                             # (H,), L2-norm
+        mom_scores = []
+        for ev in candidates:
+            S = self._encode_round_slots(ev.text)                  # (N, H) or None
+            if S is None:
+                # Fall back to the v1 last-hidden cosine for this candidate so a
+                # missing slot bank degrades gracefully rather than crashing.
+                c_vec = self._encode(ev.text)
+                mom_scores.append(float(np.dot(q_vec, c_vec)))
+                continue
+            cos = S @ q_vec                                        # (N,) cosine per slot
+            score = (1.0 - self.slot_mean_mix) * float(cos.max())
+            if self.slot_mean_mix > 0.0:
+                score += self.slot_mean_mix * float(cos.mean())
+            mom_scores.append(score)
+
+        bm25_scores = [ev.score for ev in candidates]
+        mom_norm = self._minmax(mom_scores)
+        bm25_norm = self._minmax(bm25_scores)
+        w = self.fusion_weight
+
+        scored = []
+        for rank, ev in enumerate(candidates):
+            fused = w * mom_norm[rank] + (1.0 - w) * bm25_norm[rank]
+            scored.append((fused, -rank, replace(ev, score=fused)))
+        scored.sort(key=lambda x: (x[0], x[1]), reverse=True)
+        return [ev for _, _, ev in scored[:top_k]]
+
+
 # --------------------------------------------------------------------------- #
 # Pure-python Okapi BM25
 # --------------------------------------------------------------------------- #
