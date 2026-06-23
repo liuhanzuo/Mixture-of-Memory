@@ -40,6 +40,7 @@ from .backends import (
     Evidence,
     IdentityReranker,
     KeywordOverlapReranker,
+    MoMModelReranker,
     MoMSlotReranker,
     RoundFlatRetriever,
     TemporalAwareReranker,
@@ -68,7 +69,7 @@ def _apply_token_budget(evidence: List[Evidence], budget: int) -> List[Evidence]
     return out
 
 
-def _build_reranker(name: str):
+def _build_reranker(name: str, args=None):
     if name == "none":
         return IdentityReranker()
     if name == "keyword":
@@ -77,6 +78,22 @@ def _build_reranker(name: str):
         return TemporalAwareReranker()
     if name == "mom_stub":
         return MoMSlotReranker()
+    if name == "mom_slot":
+        if args is None:
+            raise ValueError("mom_slot reranker requires CLI args (checkpoint/config)")
+        if not args.mom_checkpoint or not args.mom_adapter_config:
+            raise ValueError(
+                "--reranker mom_slot requires --mom_checkpoint and "
+                "--mom_adapter_config"
+            )
+        return MoMModelReranker(
+            checkpoint=args.mom_checkpoint,
+            adapter_config=args.mom_adapter_config,
+            model_path=args.mom_model_path,
+            device=args.reranker_device,
+            fusion_weight=args.mom_fusion_weight,
+            chunk_size=args.mom_chunk_size,
+        )
     raise ValueError(f"unknown reranker: {name}")
 
 
@@ -85,7 +102,7 @@ def _build_retriever(args) -> RoundFlatRetriever:
         mode=args.retriever,
         embed_model_path=args.embed_model,
         device=args.device,
-        reranker=_build_reranker(args.reranker),
+        reranker=_build_reranker(args.reranker, args),
         candidate_multiplier=args.candidate_multiplier,
     )
 
@@ -212,8 +229,9 @@ def build_arg_parser() -> argparse.ArgumentParser:
                    choices=["bm25", "embedding", "union"],
                    help="First-stage retrieval over rounds.")
     p.add_argument("--reranker", type=str, default="none",
-                   choices=["none", "keyword", "temporal", "mom_stub"],
-                   help="Second-stage reranker over the first-stage candidate pool.")
+                   choices=["none", "keyword", "temporal", "mom_stub", "mom_slot"],
+                   help="Second-stage reranker over the first-stage candidate pool. "
+                        "'mom_slot' = real mem_space model-backed reranker.")
     p.add_argument("--embed_model", type=str, default="models/bge-m3",
                    help="Local HF / sentence-transformers embedding model "
                         "(used by embedding/union; degrades to BM25 if unloadable).")
@@ -237,6 +255,23 @@ def build_arg_parser() -> argparse.ArgumentParser:
                    help="Optional path to write the JSON metrics report.")
     p.add_argument("--self_test", action="store_true",
                    help="Run an internal synthetic smoke (no data/API needed).")
+    # -- MoM model-backed reranker (--reranker mom_slot) ------------------- #
+    p.add_argument("--mom_checkpoint", type=str, default=None,
+                   help="mem_space adapter .pt checkpoint for --reranker mom_slot.")
+    p.add_argument("--mom_adapter_config", type=str, default=None,
+                   help="adapter_config.json describing the MemorySpaceConfig "
+                        "for --reranker mom_slot.")
+    p.add_argument("--mom_model_path", type=str, default="models/Meta-Llama-3-8B",
+                   help="Base Llama model dir for the mem_space reranker backbone.")
+    p.add_argument("--mom_fusion_weight", type=float, default=0.5,
+                   help="Convex fusion weight w for the mom_slot reranker: "
+                        "final = w*mom_cosine + (1-w)*bm25 (both min-max "
+                        "normalized). 1.0 = pure MoM, 0.0 = BM25 order.")
+    p.add_argument("--mom_chunk_size", type=int, default=512,
+                   help="Chunk size for streaming text through the mem_space "
+                        "memory bank during reranking (match training seq_len).")
+    p.add_argument("--reranker_device", type=str, default="cuda:0",
+                   help="Device for the mom_slot mem_space reranker model.")
     return p
 
 
