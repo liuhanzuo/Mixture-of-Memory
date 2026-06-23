@@ -1,12 +1,18 @@
 # Mixture-of-Memory — CodeBuddy Code 工作手册
 
+## ⚡ 启动 / compact 后第一件事（2026-06-11 用户指令，最高优先级）
+
+**每次新会话启动、或上下文被 compact / 丢失后，第一件事必须读 `status/SESSION_HANDOFF.md`** —— 它是当前研究状态的交接文档（一句话现状 + 核心认知 + 在跑实验 + 待办 + 运维坑）。读完它 + `status/RUN_REGISTRY.md` §3/§4 + `status/TRAINER_ACTIVITY.jsonl` 尾部，就能无缝接上之前在干什么，不要重走已证伪的方向。
+
+**维护职责**：main agent 每当「方向切换 / 出新结论 / 在跑实验有重大变化」时，必须覆盖更新 `status/SESSION_HANDOFF.md` 的「当前快照」区（保持精简，旧结论沉淀到 RUN_REGISTRY），确保它始终反映最新状态——这样下一次 compact 后的 agent 才能接得上。
+
 ## 语言规则（2026-05-19 用户指令）
 
 **只使用中文和英文交流，禁止使用韩语或其他语言。**
 
 ## 🖥️ 当前 GPU 集群（2026-06-06 更新，权威，覆盖旧记录）
 
-**6 个 H20 节点 = 48 卡（两个 ceph 盘 A/B）＋ 1 个 H800 2-node 16 卡集群（ceph jn2，独立盘）。**
+**6 个 H20 节点 = 48 卡（两个 ceph 盘 A/B）＋ 1 个 B200 节点（28.89.18.188，8× L20A，ceph wzc1 独立盘）。H800 已下线。**
 
 分多个 CEPH 盘，盘内共享 FS，**盘间需要 rsync 同步代码 + 数据**：
 
@@ -18,23 +24,30 @@
 | **盘 B** | `29.162.241.149` | 远程（与 .161 共享 FS，env 缺 transformers） | `/apdcephfs_zwfy6/share_304376610/` | `configs/password_diskB.txt` |
 | **盘 B** | `28.49.57.76` | 远程（2026-06-05 新增，✅ 可训练） | `/apdcephfs_zwfy6/share_304376610/` | `configs/password_h20_new2.txt` |
 | **盘 B** | `28.59.33.249` | 远程（2026-06-05 新增，与 .76 共享 FS，✅ 可训练） | `/apdcephfs_zwfy6/share_304376610/` | `configs/password_h20_new2.txt` |
-| **盘 H800** | `30.203.138.247` | H800 node0 / master（✅ 2026-06-07 回归，2-node 16 卡 DDP over IB） | `/apdcephfs_jn2/share_304376610/` | `configs/password_h800_returned.txt` |
-| **盘 H800** | `30.203.130.90` | H800 node1 / worker（与 .247 共享 jn2 FS，无需跨节点 rsync） | `/apdcephfs_jn2/share_304376610/` | `configs/password_h800_returned.txt` |
+| **盘 B** | `28.48.7.53` | 远程 H20（2026-06-22 回归，✅ 可训练） | `/apdcephfs_zwfy6/share_304376610/` | `configs/password_h20_returned.txt` |
+| **盘 B** | `28.58.245.174` | 远程 H20（2026-06-22 回归，✅ 可训练） | `/apdcephfs_zwfy6/share_304376610/` | `configs/password_h20_returned.txt` |
+| **盘 wzc1** | `28.89.18.188` | B200/L20A 远程（✅ 2026-06-08 新增，8× L20A 183GB，全空可训/eval） | `/apdcephfs_wzc1/share_304376610/` | `configs/password_b200_188.txt` |
+| **盘 wzc1** | `28.89.16.18:36000` | B200/L20A 远程（✅ 可用，8× L20A 183GB，端口 36000） | `/apdcephfs_wzc1/share_304376610/` | `configs/password_b200_new.txt` |
+| **盘 wzc1** | `28.88.184.53` | B200/L20A 远程（✅ 2026-06-21 新增，8× L20A 183GB，22 端口直连，与 .18/.188 共享 wzc1 盘→资产无需 rsync） | `/apdcephfs_wzc1/share_304376610/` | `configs/password_b200_53.txt` |
 
-- **H800 2-node 16卡集群（✅ 2026-06-07 重新拿回，新 IP）**：node0=`30.203.138.247`(master) + node1=`30.203.130.90`(worker)，8×H800 each（来自 node env `NODE_IP_LIST=30.203.138.247:8,30.203.130.90:8`）。
-  - **两节点共享 ceph jn2 FS** `/apdcephfs_jn2/share_304376610/pighzliu_code/Mixture-of-Memory`（脚本/venv/model/data 在两节点都可见，**无需跨节点 rsync**），但与盘A/盘B 不共享，从盘A 同步代码/数据要 rsync 过去。env 已就绪：`.venv/bin/python` torch 2.10+cu128 + transformers 5.5.4，model/dolmino data 都在。
-  - 单一密码 `configs/password_h800_returned.txt`（`reRn3vHLFfXC3Bq,` 含末尾逗号）对两节点都有效。
-  - **历史 IP 全部已死，别再试**：`30.203.138.213/.131.102`（上一轮，已被回收）、`30.203.132.121/.138.209`（更早）。当前唯一活跃 H800 = `.138.247/.130.90`。
-  - 启动：master 先 `NNODES=2 NODE_RANK=0 MASTER_ADDR=30.203.138.247 bash scripts/launch_progressive_chunk_h800.sh`，确认 listen 29810 后再 worker `NODE_RANK=1 MASTER_ADDR=30.203.138.247`。NCCL DMABUF/GDR + 心跳监控 + 离线 babilong 修复均已 bake 进脚本。
-  - venv：`.venv/bin/python`（torch 2.27 NCCL）。
-  - ⚠️ **跨节点 DDP 必须 export `NCCL_DMABUF_ENABLE=0` + `NCCL_NET_GDR_LEVEL=0`**，否则第一个 collective 崩 `ibv_reg_mr_iova2 failed`（已 bake 进 `scripts/launch_progressive_chunk_h800.sh`）。启动顺序：先 master(`NODE_RANK=0`)，确认 listen master_port 后再 worker(`NODE_RANK=1`)。
-  - 详细拓扑/NCCL 修复见 memory `reference_h800_2node_topology.md`。
+- **新 B200 节点 .53（✅ 2026-06-21 新增）**：`28.88.184.53`，8× NVIDIA L20A（183GB/卡），密码 `BSH18oZsBWdTVsW,`（含末尾逗号，存 `configs/password_b200_53.txt`）。**22 端口直连**（非 36000）。
+  - 工作目录 `/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/`，**与 B200 .18:36000 / .188 共享同一 wzc1 盘**——代码/ckpt/数据共享，无需 rsync（一台传好另一台直接可见）。
+  - env：`.venv/bin/python`（torch 2.10.0+cu128，支持 L20A sm_100）；`external/landmark_venv` 也在（faithful landmark 用，但 L20A 跑不了 torch2.1，仅 H20 可用）。
+  - SSH：`sshpass -f configs/password_b200_53.txt ssh -o StrictHostKeyChecking=no -o ConnectTimeout=15 -o PreferredAuthentications=password root@28.88.184.53`
+  - ⚠️ L20A 不能跑 faithful Landmark（torch2.1 不支持 sm_100）；能跑本项目 mem_space 训练/eval（用 .venv torch2.10）。
 
+- **新 B200 节点（✅ 2026-06-08 新增）**：`28.89.18.188`，8× NVIDIA L20A（183GB/卡），密码 `acdhW564HMrnWAv,`（含末尾逗号，存 `configs/password_b200_188.txt`）。
+  - 工作目录 `/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/`（**CEPH=wzc1，与盘A/盘B/jn2 都不共享**，代码/ckpt/数据需 rsync 过去）。
+  - env 就绪：`.venv/bin/python`（torch 2.10.0+cu128 + transformers 5.5.4，L20A sm_100 兼容，CUDA OK）；model `models/Meta-Llama-3-8B`、`third_party/babilong-pkg` 都在。git head 落后（85366ea），代码用前先 rsync。
+  - SSH：`sshpass -f configs/password_b200_188.txt ssh -o StrictHostKeyChecking=no -o ConnectTimeout=15 -o PreferredAuthentications=password root@28.89.18.188`
+
+- **H800 已下线（2026-06-08）**：H800 节点已被回收，不再可用，已从集群移除。历史死 IP（别再试）：`30.203.138.247/.130.90`、`30.203.138.213/.131.102`、`30.203.132.121/.138.209`。
+- **2026-06-22 回归 2 个 H20 节点（28.48.7.53 / 28.58.245.174）**：8× H20 each，挂载**盘 B**（share_304376610）。SSH 已验证；项目 `.venv/bin/python` 可用（torch 2.10.0+cu128 + transformers 5.5.4）。密码存 `configs/password_h20_returned.txt`（不要在日志/回复中展开）。
 - **2026-06-05 新增 2 节点（.76 / .249）**：8× H20 each，挂载**盘 B**（share_304376610，与 .161/.149 同一 ceph）。
   - ✅ **与旧盘B节点不同：这俩节点用项目 `.venv/bin/python`（torch 2.10.0+cu128 + transformers 5.5.4，CUDA OK on H20）→ 可直接跑本项目训练，无需 pip install。** 启动脚本带 `PYTHON_BIN` 默认即 `.venv/bin/python`，不要用 torch-base。
   - 模型已就位：`/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/models/Meta-Llama-3-8B`。
   - 代码/数据用前需从盘A rsync（盘B 落后；dolmino 训练数据 `MemLong/data/processed/dolmino_per_doc` 需同步过去）。
-- **密码含末尾逗号**：盘A `OYzq28JQQ2aYTKF,`、盘B 旧 `2hc7jvACxF7ra4d,`、盘B 新（.76/.249）`Kom4eX2cdOllcx1,`（逗号是密码的一部分，已存入对应 password 文件，无换行）。
+- **密码含末尾逗号**：盘A/盘B/H20/B200 的密码均已存入对应 `configs/password*.txt` 文件；用 `sshpass -f`，不要 `tr -d` 或手写展开，逗号可能是密码的一部分。
 - SSH：`sshpass -f configs/password_diskA.txt ssh -o StrictHostKeyChecking=no -o ConnectTimeout=15 -o PreferredAuthentications=password root@<IP>`
 - **盘 A 项目根**：`/apdcephfs_zwfy6/share_303098609/pighzliu_code/Mixture-of-Memory/`（本机 + .196 共享，代码无需同步）
 - **盘 B 项目根**：`/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/`（⚠️ 注意是 **304376610** 不是 303098609；代码落后，用前必须先 rsync 同步当前代码）
@@ -98,6 +111,29 @@ export no_proxy="mirrors.cloud.tencent.com,tlinux-mirror.tencent-cloud.com,local
 **格式**: 10 task (qa1-qa10) × 7 lengths (0k-32k) × n=100 samples，babilong.metrics 口径
 
 **heartbeat / 新实验完成后必须更新此文件**，把新结果追加进去，方便横向对比。
+
+### ★ 标准 eval 方式（2026-06-13 用户指定，权威，覆盖旧的 LPT 静态预分配调度）
+
+**所有 BABILong 离线 eval 必须用 `scripts/_eval_taskpool_2group.sh`（2-组 task-pool 动态调度）。**
+
+调度范式:
+- 8 GPU 分 **2 组**:GROUP0=GPU0-3,GROUP1=GPU4-7。
+- 一个「任务」= (ckpt, task, length),如 qa1×16k,共 100 样本。
+- 一个任务在**一组内 4 卡各跑 25 样本**(`--num_shards 4 --shard_index {0..3}`,样本 `[i::4]` 均分)。
+- `{qa1,qa2,qa5} × {0k,1k,2k,4k,8k,16k,32k}`(× 多 ckpt)= 21+ 任务进**一个共享 pool**;哪组空闲就 `flock` 原子 pop 下一个 append 给它 → 动态负载均衡,最大化吞吐(长档 32k 慢任务不会拖死整组)。
+- `score_nested_babilong.py` 把 4 个 `_shard{i}of4` CSV 求和合并回单 cell。
+
+用法:
+```bash
+RUN_PREFIX=expXXX CKPT_FILES="path/step500.pt path/final.pt" \
+CK_NAMES="expXXX_step500 expXXX_step1000" \
+ADAPTER_CONFIG=outputs/expXXX/adapter_config.json \
+[EXTRA_ARGS="--swa_eval_chunks 6"] \
+PROJECT_ROOT=<节点root> PYTHON_BIN=<节点.venv或conda> \
+setsid nohup bash scripts/_eval_taskpool_2group.sh >logs/...sched.out 2>&1 &
+```
+- diskB(.76/.249/B200)PYBIN 用 `.venv`,diskA(本机/.196)用 conda 或 .venv;PROJECT_ROOT 指本节点 root。
+- 旧的 per-GPU LPT 静态预分配调度器(`_expR1c*_eval_sched.sh` 等)**已弃用**——它把任务静态切到 8 卡,长档 shard 会让某些卡空转。新 task-pool 动态补任务,无空转。
 
 ### `status/RUN_REGISTRY.md`（2026-06-05 新增）
 
@@ -527,6 +563,25 @@ append-only 文件写错了**不要 edit**,追加一条 correction 行:
 4. `AGENTS.md`(如存在) — 更详细的操作手册和历史教训
 
 如果这是 heartbeat 触发的会话,直接执行 `/heartbeat` 的检查流程。
+
+### ⚡ 关机恢复（2026-06-09，重要）
+
+**本机 `/root/.codebuddy/` 和 `/root/.claude/` 在关机后会被 reset**（跨会话 memory、config、session 历史、tasks/teams 全丢）。已全量备份到项目盘 `cc_state/`（随盘持久，不丢）：
+- `cc_state/codebuddy_full/`（~1.2G，`/root/.codebuddy` 全量快照）
+- `cc_state/claude_full/`（~42M，`/root/.claude` 全量快照）
+- `cc_state/memory/` + `cc_state/config/`（核心精简副本，便于人工查看）
+- `cc_state/restore_cc_state.sh` — 一键全量恢复脚本
+
+**新机器/关机重启后，第一件事在项目根执行：**
+```bash
+bash cc_state/restore_cc_state.sh   # 把 .codebuddy + .claude 拷回 /root/，恢复全部 cc 状态
+```
+
+⚠️ `cc_state/` 是**手动快照**，不会自动更新。**关机前**若想保留最新 memory/session，重跑一次备份：
+```bash
+cp -a /root/.codebuddy/. cc_state/codebuddy_full/ && cp -a /root/.claude/. cc_state/claude_full/
+```
+即使忘了备份，项目状态（`CODEBUDDY.md` / `status/` / `versions/` / `HEARTBEAT.md` / `.codebuddy/commands/`）随项目盘持久，不依赖 `cc_state/`——所以核心研究上下文永不丢，`cc_state/` 只是额外恢复 cc 自身的记忆/历史。
 
 ---
 

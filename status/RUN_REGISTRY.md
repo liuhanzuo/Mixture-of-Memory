@@ -3,6 +3,19 @@
 > **用途**：本文件是 mem_space 系列每个训练 run 的**配置 + 离线 BABILong eval 结果**的横向对照总账。
 > 每启动一个新 run / 跑完一次 eval，必须在此追加或更新对应行，方便快速回答"X 配置 vs Y 配置在 BABILong 上差多少"。
 > 评测口径统一：`scripts/run_babilong_mem_space.py`，n=100/length，babilong.metrics（`compare_answers`），qa1/qa2/qa5 × 0k-32k。
+
+### ★ lr5e5 长训不崩双 seed step250 vs step500 W0（2026-06-23 03:30，杠杆2 优化轨迹判据，n=100）
+动机：今晚 #1 假说「step250 最好、step500/1000 掉点 = lr 过冲」。lr 1e-4→5e-5 双 seed(s1234/s42)，pg19 nctx63 蒸馏，total 500 save250。
+
+| 配置 | 0k | 1k | 2k | 4k | 8k | 16k | 32k |
+|---|---|---|---|---|---|---|---|
+| s1234 step250 qa5 | 79 | 69 | 49 | 27 | 17 | 14 | 11 |
+| s1234 step500 qa5 | 77 | 67 | 48 | 25 | 16 | 12 | 11 |
+| s42   step500 qa5 | 60 | 73 | 41 | 22 |  9 |  8 |  7 |
+| s1234 step500 qa1 | 88 | 50 | 31 | 17 | 10 |  8 |  6 |
+| s42   step500 qa1 | 87 | 44 | 27 | 18 |  9 | 10 |  5 |
+
+- **裁决：lr5e5 step500 ≈ step250（噪声内，长程 16k 12 vs 14、32k 11 vs 11），lr 降到 5e-5 后「长训不崩」成立——但训练过 step250 也无增益。** s1234 长程稳于 s42（s42 8k-32k=9/8/7 偏低，seed 方差）。结合 nctx63 step500≈step250 结论：**杠杆2（训练侧优化轨迹/窗口/步数）全部耗尽，天花板未升**（16k≤14<n_ctx7 的 16，32k=11 持平 n_ctx7 的 9~11）。剩余唯一活跃机制杠杆 = 杠杆3（读出侧 SWA gap）→ 已起 lr5e5 step500 eval-SWA W2(local)/W6(.196) 量化读出鸿沟。
 > 与 `status/BENCHMARK_RESULTS.md` 的分工：BENCHMARK_RESULTS 是含外部论文数字的大杂烩；**本文件只记我们自己的 mem_space run，强调配置可复现 + 同口径对照**。
 
 最后更新：2026-06-05 15:10 GMT+8
@@ -38,6 +51,98 @@
 ---
 
 ## 3. BABILong 结果（accuracy %，n=100，qa1/qa2/qa5 × 0k-32k）
+
+### ★mem_space self-study 蒸馏 chunk512 — W0 纯 memory 读出 checkpoint ladder（swa_eval_chunks=0），2026-06-21 本机H20 bs2
+teacher=frozen Llama full-context，student=memory readout(rawkv grouped, 多层16-31注入, unfreeze L16-31)，distill_logits+hidden(layers12,20,28, λ0.6)。
+```
+ckpt          qa1: 4k   8k  16k  32k
+step500            17   19   12    8
+step1000           16   11    8    5
+step1900           13   12   10    -
+step2000(final)    14   15    7    -
+```
+- ★裁决：**self-study 蒸馏在 BABILong qa1 上确有真实长程信号** —— 4k/8k=14-19% 显著超官方 Landmark(S0 3/1) 与 pureT2(全0)，16k 仍有 7-12%、32k(step500) 8%。是迄今 raw-KV 读出系最好的真实 downstream 长程结果之一。
+- ★过训退化：step500 仍是最佳（17/19/12/8），step1000 退化(16/11/8/5)，step1900/2000 部分回升但不及 step500。蒸馏**未完全消除** step500>step1000 退化，**但缓解了崩盘**：step2000 仍 14/15/7（不像 B 系列 step2000 直接归 0）。→ 早 ckpt(step500) 仍是交付点，蒸馏让后期更平稳但非单调改善。
+- ★★**SWA 对照重磅发现**（step500，swa_eval_chunks=0/1/2）：加少量滑窗显著抬长程 —— qa1 32k: swa0=8 → swa2=15；qa1 16k: 12→19；qa5 32k: 7→18；qa5 16k: 11→26。**说明 memory 里确实存了长程信息，纯 W0 读出榨不干净，加 2 块直接注意原始 KV 就能多读出近 2×。** 与历史"SWA gap = 读出效率不足非范式问题"判据一致 → self-study 的下一杠杆是**读出侧**（让 W0 逼近 swa2），而非再堆训练。
+```
+self-study step500 SWA 对照:
+              qa1: 8k 16k 32k    qa5: 8k 16k 32k
+swa0(W0)          19  12   8         16  11   7
+swa1              15  16  10         31  19  11
+swa2              21  19  15         -   26  18
+```
+- 结果 csv: `babilong_results/selfstudy_w0_ladder_20260621_0540/` + `selfstudy_step500_swa_20260621_0705/` + `selfstudy_w0_qa25_ladder_20260621_0630/`。
+
+### ★★★ 蒸馏退化机制总账 + "长训不崩"杠杆（2026-06-21，权威小节）
+
+> 目的：把"为什么各种 self-study 蒸馏训久了会退化"讲清楚，并标出哪些杠杆能做到**长训不崩**（即后期 ckpt ≥ 早期 ckpt，而非 step500 永远最优）。这是当前主线的核心判据。
+
+**三种 teacher 的退化形态对照：**
+
+| teacher | qa1 W0 step500→后期（4k/8k/16k/32k） | 退化形态 | 根因 |
+|---------|--------------------------------------|----------|------|
+| **W2-teacher（近视，memory+最近2chunk raw-KV）** | 11/7/2/1 → step1000 5/0/1/1 | **急速塌缩，越训越崩** | 老师在"memory 读出"这条迁移轴上**不比学生强**；其优势全来自 1024-tok 局部窗口，而学生无窗口 → 逼学生拟合**不可见/不可学**的 target，读出通路被带歪。长档老师自己也瞎（窗口覆盖<6%），无可迁移信号。from-base 时读出弱→老师全压窗口→等于教"忽略 memory"，越训越退。 |
+| **全上下文-teacher（dolmino ≤16k，n_ctx=3）** | 17/19/12/8 → step1000 16/11/8/5（step1900/2000 部分回升 14/15/7） | **温和退化，step500 最优** | 老师是真强，但 (1) teacher–student **容量鸿沟固定**（32k 书压进 128 槽必丢信息）→ 后期 KL 持续逼一个学生结构上够不到的 target，侵蚀已学好的部分；(2) **训练长度分布（≤4k 有效窗口）≠ 评测长度（16k/32k）**→ 训久=在短训练长度上过拟合，长档外推变差（退化长档最明显，短档稳）。蒸馏把硬崩盘磨成软退化但**未根除**。 |
+| **全上下文-teacher + pg19 真长文（78%≥32k，n_ctx=7）** | step250 78/74/.../16k=16 ≈ final 75/73/.../16k=16 | **基本不退化（step250≈final）** | 训练长度分布对齐评测 → 消掉"过拟合短训练长度"那条退化通道。且 **16k 破长程天花板（=16 vs 所有现有方法≈13，+3）**。32k 仍硬墙（≈9），因 n_ctx=7 有效窗口 4096，32k 超训练分布 8×。 |
+
+**★核心结论：234 是真正有用、能"长训不崩"的杠杆，应作为主线。**
+1. **【杠杆2】训练长度对齐评测（pg19 真长文）** —— 唯一已验证能让"训久不退化"（step250≈final）+ 破 16k 墙的解。优先级最高。下一步：把有效训练窗口从 4096 推到 ≥32k（更大 n_ctx / chunk）去攻 32k 硬墙。
+2. **【杠杆3】读出侧补容量鸿沟（SWA gap）** —— memory 里**确实存了**长程信息（swa2 比 swa0 多读出近 2×：qa1 32k 8→15、16k 12→19；qa5 32k 7→18），退化部分来自"读不出"而非"没存" → 改进 W0 读出（让其逼近 swa2）比再堆训练更高效。机制侧 > 训练侧。
+3. **【杠杆4】confidence 加权蒸馏（confB1）** —— 过滤"老师自信但 memory 支撑不了"的不可学 token，理论上直接掐断"后期死磕不可实现 target"那条退化路径。warm-start（从 vanilla step500 续训）正在 .196 验证：续训能否修复退化、W0 超 17/19/12/8。
+- 【非杠杆1】单纯早停 / 交付早 ckpt（step500/250）：是当前的妥协交付点，但治标不治本——目标是让后期 ckpt 也能涨，故主攻 2/3/4。
+
+**判据（"长训不崩"达标线）**：某配置的 step1000（及更后）qa1 W0 ≥ step500，且长档（16k/32k）不随训练步数单调下降。当前仅"pg19 真长文"接近达标；W2/dolmino-全上下文均未达标。
+
+**★★ SWA-teacher 系全证伪（2026-06-22 收口）**：W1/W2/confB1（confidence 加权）三个 SWA-teacher 变体的 W0 qa1 全部 ≪ vanilla 17/19/12/8，且无法长训不崩：
+```
+qa1 W0           4k   8k  16k  32k     vs vanilla 17/19/12/8
+W2 seed1234 s500  11   7    2    1
+W2 seed1234 s1800  1   0    0    0     (越训越崩)
+W1 s500            2   3    0    0
+W1 s1200           1   2    0    0
+confB1-warm s500   2   1    1    0     (从 vanilla 17/19/12/8 续训→崩)
+```
+- **决定性证据**：confB1-warm 从 vanilla step500（17/19/12/8 的好初值）续训 500 步 confidence 加权 SWA-teacher，直接崩到 2/1/1/0 → 即便好 warm-start + confidence 过滤也救不回，**SWA/窗口 teacher 信号本身有害**（教学生抄它看不到的局部窗口，污染 memory 读出）。
+- **结论**：杠杆4（SWA-teacher 各形态）证伪并关闭。主线收敛到 **杠杆2（pg19 长文，长度对齐，唯一已验证长训不崩）+ 杠杆3（读出侧补 SWA gap）**。
+
+**★★ 杠杆2 决定性突破：32k 窗口 teacher（nctx63）破 32k 硬墙（2026-06-22）**
+nctx63 = pg19 真长文 teacher cache，group_len=(63+1)*512=32768=**32k 有效训练窗口**（nctx7 是 4k）。蒸馏 500 步，A/B = nomass vs mass05。W0 qa1 BABILong：
+```
+qa1 W0            4k   8k  16k  32k     基准:vanilla nctx7 16k≈12-16/32k≈8-9(硬墙)
+nctx63 nomass s250 18   12   14   12    ★32k=12 破墙(+3~4)
+nctx63 nomass s500 18   12    9   10
+nctx63 mass05 s250 17   15   16    9    ★16k=16(=pg19天花板)
+nctx63 mass05 s500 18   11   10    7
+```
+- **★破 32k 硬墙**：nomass step250 qa1 32k=**12**（vs 此前所有方法 ≈8-9 天花板，+3~4）。把训练窗口从 4k 推到 32k，直接抬高 32k 长程——**坐实杠杆2「训练长度对齐评测」是破长程墙的真实有效杠杆**。
+- **长训不崩成立**：step250 ≥ step500（与 pg19 nctx7 的 step250≈final 一致）→ 32k 对齐训练后期不退化，符合「长训不崩」达标线。
+- **nomass > mass05 on 32k**：更长窗口下弱 mass(coef0.5) 反而略拖长程（32k: nomass 12 vs mass05 9）→ 32k 窗口已够强，不需 mass 辅助。
+- **★dual-seed 确认（2026-06-22）**：seed1234 复现 32k 突破。nomass nctx63 qa1 32k: seed42 s250=12/s500=10, **seed1234 s250=10/s500=3** → 两 seed step250 qa1 32k 均 ≥10 > 8-9 天花板；qa5 32k: seed42 s250=9, **seed1234 s250=11**。step250≥step500 两 seed 都成立（长训不崩 + 早 ckpt 最佳稳健）。**→ 破 32k 墙非单 seed 运气，dual-seed validated。nomass nctx63 step250 = 新长程 SOTA（confirmed）。**
+- 在跑确认/扩展：seed2026（local，第三 seed）+ s1000/long1000（1000 步，测训练时长 headroom）。下一步：收齐三 seed + 长训 grid 后定稿。
+- **★triple-seed 定稿（2026-06-22）**：seed2026 step250 qa1 32k=11 → 三 seed step250 qa1 32k ∈{10,11,12}，全破 8-9 天花板。**nctx63 nomass step250 = triple-seed confirmed 长程 SOTA。** long1000(过训到1000步) qa1 32k=4 → **过训伤长程，step250 是甜点**，长训不是杠杆（负结果闭账）。
+
+### ★★★ 杠杆3（读出侧）三 arm 全负 + 关键诊断：长程瓶颈 = 检索非读出（2026-06-22 收口）
+SWA gap（W0 vs SWA2 在 SOTA 上仍巨大：qa1 4k 18→34、16k 14→23）曾被读作"memory 存了 W0 读不出"。为攻它做了 3 个 arm（均基于 nctx63 SOTA 底座）：
+```
+qa1 W0 step250    4k   8k  16k  32k    vs SOTA 18/12/14/12
+A teacher-conf    18   13   10    8    ≈SOTA,长档略降(无改善)
+B slot-kv(不限容量) 15   7    8    4    ★低于纯W0!(更远低于SWA上限34/25/23/11)
+C student-conf    17   12   15   11    ≈SOTA(16k略升),s500过训退化(15→6)
+```
+- **★关键诊断（arm B 决定性）**：给每个 slot 挂**不限容量**的原始 KV cache（理论上限实验），W0 不仅没逼近 SWA 上限，反而**低于纯 W0**。→ **瓶颈不是"slot 向量有损压缩/读出"，而是检索：selector 选错 slot，即便每个 slot 挂了完美 raw-KV 也取到错的。** SWA 有效是因为它**无条件取最近 chunk**（不需检索）；slot-kv 依赖 router 选对而它选不对。与历史 usage_cov≈0.25 / 富者愈富 / ROUTE-A 全证伪一致。
+- **A/C（confidence 加权）**：只重分配同一条 W0 通路的梯度，不碰容量/检索瓶颈 → 无改善（符合预期）。C 的 mean-teacher agreement 门控成功避免了 SWA-teacher confB1 式崩盘（没崩到 0），但也不涨。
+- **★结论**：**SWA gap ≠ 读出问题，= 检索问题（router 找不到对的 slot）。** 杠杆3"读出侧/confidence"子方向全部证伪。真正剩余杠杆 = **修 selector/检索**（可微检索 / Landmark train-time-emergent-selection 迁移），属架构级方向，已 emit needs_code 等主会话定夺。当前确定交付物 = nctx63 32k triple-seed SOTA。
+
+### ★Landmark 官方 ckpt BABILong qa1 — 首次 downstream eval（2026-06-21，本机 H20，landmark_venv torch2.1+tf4.28，top_k5 n=100 bs4）
+```
+                       qa1: 4k   8k  16k  32k
+S0  landmark_tuned          3    1    0    0
+S2  dolmino ckpt-3000      13    9   12    0
+S4b learned-gate ckpt1000  0    0    1    0
+```
+- ★★裁决：**Landmark 系列在 BABILong qa1 downstream 上长程几乎全 0**（最佳 S2 也仅 9-13%，且 32k=0）。对照同 ckpt 的 passkey 主门 90-100%（见 SESSION_HANDOFF §0 / external/landmark/results_s2）→ **坐实「passkey/NIAH 破墙 ≠ BABILong downstream 破墙」**。
+- ★方法论修正：此前用 passkey 当 Landmark→mem_space 迁移诊断守门（S2/S4b/S5 裁决）**有盲区** —— passkey 全程绿不代表该轴在真实长程 QA 上 work。迁移诊断守门判据应**升级为 BABILong qa1**（held-out 生成式），passkey 仅作机制是否 fire 的快速 sanity。
+- 运维：B200(L20A sm_100) 无法跑 faithful landmark（torch2.1 不支持 sm_100；.venv tf5.5 的 pipeline 与 landmark patched tf4.28 不兼容）→ 必须在 H20/sm_90 节点用 landmark_venv 跑。结果 csv: `babilong_results/landmark_h20_qa1_20260621_0050_h20/`。
 
 ### rawkv_methodA_b200（Method A raw-KV readout + 解冻 L16-31）— W0 纯 memory 读出（swa_eval_chunks=0），2026-06-20
 ```
@@ -765,6 +870,18 @@ step1000(退化): qa1=92/10/11/14/4/3/1, qa2=42/8/7/6/4/5/1, qa5=53/32/32/16/13/
 | 现有方法天花板 | — | — | — | — | ~15 | **13** | **9** |
 - **★负结果：mass0.5 在 nctx63 上未抬升长程，与 plain 噪声内持平。** qa5 16k=13(mass) vs 12(plain)（+1，噪声内）、32k=7(mass) vs 9(plain)（反降 2）；qa1/qa2 同样无系统性增益（qa2 8k-16k mass 反而塌到 2/1 < plain 6/5）。两臂均远低于 n_ctx7 基线 16k=16。
 - **结论：训练侧 mass 杠杆在 32k 训练窗口下失效。** readout-attack 中弱 mass 的长程增益是**机理侧（推理时 readout 软化）**现象，未能通过训练侧 mass_coef 复现到这个蒸馏配方——再次印证「机理侧 > 训练侧」（见 readout-attack 裁决）。**32k 墙对训练窗口、压缩比、训练侧 mass 三类旋钮全部免疫**，确认需架构级改动。
+
+### ★ nctx63 W0 step500 vs step250 双步确认（2026-06-22 06:00，mass05 + nomass 两臂 W0，qa1/qa2/qa5×0k-32k，n=100，B200 .53/.18 共享 wzc1 盘）
+判据二度确认：(a) 加大训练窗口未破 32k 墙；(b) step500≈step250「长训不崩」是否在 nctx63 成立。
+| run | 0k | 1k | 2k | 4k | 8k | 16k | 32k |
+|-----|----|----|----|----|----|----|----|
+| nctx63 mass05 step500 qa5 | 68 | 70 | 53 | 28 | 14 | 11 | 8 |
+| nctx63 mass05 step250 qa5 | 62 | 68 | 56 | 30 | 16 | 12 | 9 |
+| nctx63 nomass step500 qa5 | 56 | 69 | 50 | 24 | 14 | 11 | 7 |
+| nctx63 nomass step250 qa5 | 57 | 65 | 55 | 25 | 15 | 12 | 5 |
+| nctx63 mass05 step500 qa1 | 96 | 50 | 31 | 18 | 11 | 10 | 7 |
+| nctx63 nomass step500 qa1 | 95 | 53 | 32 | 18 | 12 | 9 | 10 |
+- **结论确认**：nctx63 两臂 W0 qa5 32k≈7-9（持平 n_ctx7 的 9）、16k≈11-12（**反低于** n_ctx7 天花板 16）。step500 与 step250 噪声内持平（长训不崩成立但天花板未升）→ **杠杆2（加大训练窗口攻 32k）作为 32k 杠杆彻底耗尽**，与 n_ctx15/N256/mass0.5 三路独立负结果一致。剩余候选回到机理侧（杠杆3 读出 / 换读出范式 / 架构级改动）。
 - 真实结果（两臂 CSV 满 n=100，无 silent-fail；plain 在 .76、mass0.5 在 .249，严格一节点一 run 无 GPU 争用）。
 
 **pg19 LongBench 补点（2026-06-17）**：pg19 n_ctx7 final LongBench AVG=**6.5**（hotpotqa6.4/narrativeqa2.5/qasper4.9/multifieldqa12.7/2wikimqa8.5/musique3.9）。对照: mass_coef1=6.56、弱mass+蒸馏(s2026)=10.4。
@@ -1099,3 +1216,17 @@ team-lead 采纳「Part-Y-only」干净单轴框架（比早先 option A 更紧�
   | keep_all baseline | 4 | 2 | 5 | 3 |
 - 裁决:机制方向性有效(reader_attn ~1.5-2.7× keep_all)但**全 near-floor**,**clean-T2 67.5% 不转移**。真 gap = (a) selection precision 在 512-chunk scale 崩(probe 16 选 2 命中 85%,真 32k 512 选 2 远低);(b) bAbI fact 自然语言比 code 难定位;(c) within-block 两阶段读出缺失(平铺单一 softmax,缺 Landmark block 选×block 内 token attention)。
 - 下一步:移植 landmark-repro per-layer cache_top_k(32×nh 投票提 precision)+ 两阶段 grouped-softmax 读出(解 within-block 稀释)。均不训练选择器(H2-safe)。production 路径 rawkv-protoA 已搭(keep_set_mode/gather)。
+
+#### ★ 变体B(stage1_select)+chunk64-grouped 纯eval裁决(2026-06-20, methodA-eval, B200 .18:36000)
+- **配置**:h1fix ckpt 不重训。变体B=chunk512+reader_attn top2+`--rawkv_grouped_readout --rawkv_subblock_size 64 --rawkv_stage1_select`(per-sub-block reader-attn salience 作阶段1 log 偏置,把质量集中到 needle sub-block)。chunk64=chunk_size64(选择也细粒度)+grouped subblock。真实 BABILong qa1 W0,n=100,4 shards×25 合并,md5 对 diskA byte-identical,stage1_select 代码确在。
+- **W0 结果(真实 BABILong qa1 n=100)**:
+  | 配置 | 4k | 8k | 16k | 32k |
+  |--|--|--|--|--|
+  | 变体B (grouped+stage1_select) | 5 | 2 | 4 | 2 |
+  | chunk64 (grouped) | 7 | 5 | 7 | 3 |
+  | 变体A (grouped 等权) | 14 | 7 | 4 | 3 |
+  | flat (reader_attn top2) | 7 | 5 | 7 | 8 |
+  | keep_all baseline | 4 | 2 | 5 | 3 |
+- **三数拆解(per-len chunk 选择命中率 readerattn-top2 probe n=50)**:命中率 4k=72%/8k=78%/16k=58%/32k=40%(选择尚可,远超随机)。条件 readout 质量(W0/命中):变体B 4k≈7%/8k≈3%/16k≈7%/32k≈5% —— **readout 灾难性低**。
+- **★裁决 = 纯 eval 到头,该转重训**:(1) 变体B(stage1 把质量集中)不仅没拉起长档,4k 反从变体A 的14崩到5 —— stage1 log-bias 把质量过度集中到 argmax 选错的 sub-block,选错时比等权平摊更糟。(2) chunk64 细粒度也没破墙(长档≤7)。(3) 两者长档(16k/32k)全卡 floor 2-4 ≪ 死线21。(4) 命中率 40-78% 证明**选择不是瓶颈**;瓶颈是 argmax-硬选中后 frozen-reader 无法从 raw-KV 读出(条件 readout~5%)+无可训练 bottleneck-key。**全配置 cap≤14%@4k、长档≤8 = 纯 eval 彻底穷尽。**
+- **建议**:起 Group-A(launcher 2350c53 就绪)作裁决实验。A 拉起长档(14→40+)=group_lse 自学够;A 只解 within(4k 升)长档仍卡 = 需 Landmark 式可训练 summary-token bottleneck(方案B,改训练 forward 加 in-window grouped-softmax 让 summary token 学概括)。

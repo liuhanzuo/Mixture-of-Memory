@@ -150,6 +150,15 @@ nvidia-smi --query-compute-apps=pid,gpu_index,used_memory,process_name \
 
 ### Step 2: 远程集群检查
 
+> ⚠️ **当前权威集群拓扑见 CODEBUDDY.md 顶部「当前 GPU 集群」表（2026-06-08 更新）**。下方旧表多为已回收 IP，仅作历史参考。
+>
+> **2026-06-08 活跃节点**：
+> - 盘A 本机 `29.162.227.178` + 远程 `28.59.80.196`（共享 FS，无需 rsync），`/apdcephfs_zwfy6/share_303098609/`
+> - 盘B `28.49.57.76` / `28.59.33.249`（共享 FS，可训），`configs/password_h20_new2.txt`，`/apdcephfs_zwfy6/share_304376610/`
+> - 盘B 回归 H20 `28.48.7.53` / `28.58.245.174`（共享 FS，可训），`configs/password_h20_returned.txt`，`/apdcephfs_zwfy6/share_304376610/`
+> - **B200 `28.89.18.188`**（8× L20A 183GB，✅ 2026-06-08 新增），`configs/password_b200_188.txt`，CEPH=`wzc1/share_304376610`（**独立盘，代码/ckpt 需 rsync**），用 `.venv/bin/python`
+> - **H800 已下线**（2026-06-08 回收）：不要再 ssh 探测 `30.203.138.247/.130.90`、`30.203.138.213/.131.102` 等任何 H800 IP。
+
 遍历 `configs/remote_experiments.json` 中 status=running 的节点。**集群分为三类，密码文件不同**：
 
 | 集群 | IP 列表 | 密码文件 | CEPH 共享 | 备注 |
@@ -157,6 +166,7 @@ nvidia-smi --query-compute-apps=pid,gpu_index,used_memory,process_name \
 | **b200-1..4 (原始)** | 28.89.17.143, .144, 28.89.17.85, 28.89.19.134 | `configs/password.txt` | `share_303098609` (项目主目录) | 稳定，主训练资源 |
 | **b200-5..8 (replacement B200)** | 28.89.18.252, 28.89.20.82, 28.89.20.27, 28.89.18.19 | `configs/password_b200_ephemeral.txt` | `share_303098609` (与主项目同一 share) | 当前 replacement B200 节点；密码文件已更新，可直接用于 heartbeat SSH |
 | **h20-1..4 (H20)** | 28.58.244.13, 28.85.54.125, 28.59.5.176, 28.83.52.26 | `configs/password_h20.txt` | `zwfy6/share_304376610` | 8x H20 (97.8 GB)，VRAM 是 B200 一半 |
+| **returned H20 (2026-06-22)** | 28.48.7.53, 28.58.245.174 | `configs/password_h20_returned.txt` | `zwfy6/share_304376610` | 8x H20 each，SSH/env 已验证，项目 `.venv/bin/python` 可用 |
 
 每类节点的 SSH 命令模板：
 

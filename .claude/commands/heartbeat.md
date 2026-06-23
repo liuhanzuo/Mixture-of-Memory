@@ -1,10 +1,10 @@
 ---
-model: claude-opus-4.7-1m
+model: claude-opus-4-7
 ---
 
 # /heartbeat — 闭环巡检与推进
 
-每 20 分钟执行一次。**你是 main agent**，权限和能力完全相同（CODEBUDDY.md 里允许 main 做的事，你都可以做，无需用户审批）。
+每 40 分钟执行一次。**你是 main agent**，权限和能力完全相同（CODEBUDDY.md 里允许 main 做的事，你都可以做，无需用户审批）。
 
 时区：**Asia/Shanghai (GMT+8)**。
 
@@ -13,47 +13,45 @@ model: claude-opus-4.7-1m
 ## 闭环（每次 heartbeat 必须走完）
 
 ```
-[1] 查看 GPU 状态 & plan 目录
+[1] 查看训练状态
         ↓
 [2] 处理错误（坏进程 / 卡死 / 训练崩溃）
         ↓
-[3] 按 plan 推进（PENDING_TASKS / H_V2_PLAN）
+[3] 按 plan 推进（GPU 空闲 + 有 auto_launch=true 任务 → 立刻启动）
         ↓
-[4] 该开跑就开跑（GPU 空闲 + 有 auto_launch=true 任务 → 立刻派 worker）
-        ↓
-[5] 记录下一步到 plan（更新 PENDING_TASKS.md，写明白下一拍要做什么）
+[4] 记录状态到 TRAINER_ACTIVITY.jsonl
 ```
-
-**绝对禁止**：GPU 全空 + 有 PENDING 任务时只输出 `HEARTBEAT_OK`。这是空转，浪费一拍。
 
 ---
 
-## Step 1：查看 GPU 状态 & plan 目录
+## Step 1：检查状态
 
+对每个节点检查训练 log 最新 step：
+
+**本机 H20**：
 ```bash
-date "+%Y-%m-%d %H:%M:%S %Z"
-nvidia-smi --query-gpu=index,memory.used,utilization.gpu --format=csv,noheader
-ps aux | grep -E "python|nohup" | grep -v grep
+grep "\[step" logs/prepend_all_fastmem_10k_h20.log 2>/dev/null | tail -2
 ```
 
-读以下文件（必读）：
-- `status/PENDING_TASKS.md` — 任务看板
-- `status/TRAINER_ACTIVE.md` — 当前活跃训练
-- `status/H_V2_PLAN.md`（如存在）— 当前计划
-- `status/ISSUES.jsonl` 末尾 5 行 — 未解决的问题
-
-**检查第二节点（28.59.80.196）GPU 状态**：
+**远程 H20**（28.59.80.196）：
 ```bash
-PASS=$(cat configs/password_h20_nodes.txt)
-expect -c "
-set timeout 15
-spawn ssh -o StrictHostKeyChecking=no -o PreferredAuthentications=password -o ConnectTimeout=10 root@28.59.80.196 \"nvidia-smi --query-gpu=index,memory.used,utilization.gpu --format=csv,noheader\"
-expect \"password:\"
-send \"$PASS\\r\"
-expect eof
-"
+sshpass -f configs/password_h20_new.txt ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 -o PreferredAuthentications=password root@28.59.80.196 "grep '\[step' /apdcephfs_zwfy6/share_303098609/pighzliu_code/Mixture-of-Memory/logs/prepend_all_fastmem_10k_remote_h20.log 2>/dev/null | tail -2"
 ```
-（password 在 `configs/password_h20_nodes.txt`，已 gitignore；末尾逗号是密码一部分）
+
+**H800 Node 1**（30.203.132.121）：
+```bash
+sshpass -f configs/password_h800_new.txt ssh -o StrictHostKeyChecking=no -o ConnectTimeout=60 -o PreferredAuthentications=password root@30.203.132.121 "grep '\[step' /apdcephfs_jn2/share_304376610/pighzliu_code/Mixture-of-Memory/logs/prepend_all_10k_node1.log 2>/dev/null | tail -2"
+```
+
+**H800 Node 2**（30.203.138.209）：
+```bash
+sshpass -f configs/password_h800_new.txt ssh -o StrictHostKeyChecking=no -o ConnectTimeout=60 -o PreferredAuthentications=password root@30.203.138.209 "grep '\[step' /apdcephfs_jn2/share_304376610/pighzliu_code/Mixture-of-Memory/logs/prepend_all_10k_node2.log 2>/dev/null | tail -2"
+```
+
+也检查 eval 结果：
+```bash
+grep "eval step" logs/prepend_all_fastmem_10k_h20.log 2>/dev/null | tail -1
+```
 
 回复**第一行**必须是：`## HEARTBEAT [YYYY-MM-DD HH:MM GMT+8]`
 
@@ -61,126 +59,82 @@ expect eof
 
 ## Step 2：处理错误
 
-对每个发现的错误**立即修**，不要只记录：
+对每个发现的错误**立即修**：
 
-| 现象 | 行动（不需要审批） |
-|------|-------------------|
-| GPU 上有 `unknown` 或 `stale_orphan` 进程 | `kill <pid>` 并记录原因 |
-| 训练 log 显示 PPL > 100 | kill 训练，派 researcher 分析根因 |
-| 训练 log 连续 2 次 heartbeat 无新 step | kill stalled |
-| ckpt 写不出来 / 磁盘满 | `df -h` 排查，清理无用 outputs/ |
-| ssh 不通某节点 | 重试 1 次；不行就在 PENDING_TASKS 标记 unreachable |
+| 现象 | 行动 |
+|------|------|
+| 训练 log 连续 2 次 heartbeat 无新 step | kill stalled，重启 |
+| 训练崩溃（log 有 Error/Traceback） | 诊断并重启 |
+| GPU 空闲 + PENDING_TASKS 有 auto_launch=true | 立即启动 |
+| GPU 空闲 + 据当前结论能推断有价值的下一步 | **直接派 coder 写代码 + 启动新实验**（2026-06-21 用户授权，无需 needs_code 审批）|
+| 训练完成（step 达到 total_steps） | 收集结果，决定下一步，立即启动延伸实验 |
 
-修完了 append 一行到 `status/UPDATELOG.md`。
+### ★写代码 + 启动新实验授权（2026-06-21 用户指令）
 
----
-
-## Step 3：按 plan 推进
-
-读 `status/PENDING_TASKS.md`，对每条任务判断：
-
-- **`[RUNNING]` + 进程还活着**：检查健康度（loss 下降？步数推进？），健康就跳过
-- **`[RUNNING]` + 进程死了**：标记为 `[FAILED]`，写明死亡原因，根据情况派 coder/researcher 或重启
-- **`[PENDING]` + auto_launch=true + GPU 有空闲**：**立即启动**（Step 4）
-- **`[PENDING]` + auto_launch=false**：列入"等用户确认"清单，不动
+**heartbeat 可自主写代码 + 启动新实验，无需 emit needs_code 等审批。** GPU 空闲时即使没有现成 PENDING 任务，只要能据当前结论推断有价值的下一步，就直接派 `/coder`（或 general-purpose，`model="reasoning"`，`run_in_background=true`）写代码 + 跑多卡实验，把空闲卡用起来。代码改动遵守 CODEBUDDY.md（committer=LiuHanzuo，不加 AI 署名，`git add <具体文件>`）。完成后落账 + emit train_done。**仅重大方向切换/架构重构仍 emit needs_code 等主会话。绝不允许有空闲卡却只报 HEARTBEAT_OK 不行动。**
 
 ---
 
-## Step 4：该开跑就开跑
+## Step 2.5：检查 GPU 监控前端（2026-06-20 新增，每次 heartbeat 必查）
 
-启动方式（按任务大小选）：
+监控前端是给用户实时看三节点显存/利用率/功耗+当前运行任务的网页，跑在**本机 8088 端口**。
 
-### 单 GPU eval / 短 inference（< 30 GB VRAM）
-直接 `nohup ... &` + `tee` 到 `logs/<exp>_<ts>.log`，不派 subagent
+**必须用 Bash `run_in_background=true` 启动**（不能用 setsid/nohup 脱离后台——codebuddy sandbox 会把脱离的进程隔离到独立 network namespace，导致端口在主环境不可达）。
 
-### 多 GPU 训练 / 长跑（> 1 h）
-派 background subagent：
-```python
-Agent(
-    subagent_type="general-purpose",
-    model="reasoning",
-    description="<short>",
-    prompt="<self-contained>",  # 必须包含工作目录、命令行、约束、输出要求
-    run_in_background=True
-)
+检查命令（主环境 curl，不是 ss——ss 看不到跨 netns）：
+```bash
+curl -s -m 8 -o /dev/null -w "%{http_code}" http://127.0.0.1:8088/api/data
 ```
-
-启动后**立即** append 到：
-- `status/gpu_runs.jsonl`：`{"ts": ..., "node": "h20-1", "exp": "...", "commit_hash": "...", "status": "running"}`
-- `status/TRAINER_ACTIVE.md`（Write 覆盖，不要 Edit）
-
----
-
-## Step 5：记录下一步到 plan
-
-更新 `status/PENDING_TASKS.md`：
-- 这一拍启动的任务 → 标 `[RUNNING]`
-- 这一拍完成的任务 → 移到 `## [DONE]` 区（带完成时间）
-- 新发现的工作 → 添 `[PENDING]` 条目（标 auto_launch true/false）
-- **下一拍 heartbeat 要做什么**：在文件顶部 `## Next heartbeat actions` 区写明白
-
-如果 `H_V2_PLAN.md` 等其他 plan 文件需要更新（节点映射、执行决议），一并更新。
-
-最后追加一行到 `status/TRAINER_ACTIVITY.jsonl`：
-```json
-{"ts": "<iso>", "event": "heartbeat", "actions": [...], "next": "..."}
-```
+- 返回 `200` → 前端正常，无需操作。
+- 返回 `000` / 非 200 / 超时 → 前端挂了，重启：
+  1. 先清理残留进程（注意 grep pattern 别匹配到当前 shell 命令本身）：
+     ```bash
+     ps -eo pid,cmd | grep "monitor/gpu_monitor_server.py --port" | grep -v grep | grep -v "ps -eo" | awk '{print $1}' | while read pid; do kill -9 "$pid" 2>/dev/null; done
+     ```
+  2. 用 Bash 工具的 `run_in_background=true` 重新启动（**关键：用这个，不要 setsid/nohup**）：
+     ```
+     cd <PROJECT_ROOT> && .venv/bin/python -u monitor/gpu_monitor_server.py --port 8088 --interval 5
+     ```
+  3. 等约 50s（首轮采集含 .196/B200 的 ssh,较慢）后再 curl 确认 200 + `/api/data` 的 tasks 字段有当前 run。
+- 报告里加一行：`- Monitor: http200 OK (local/.196/B200 tasks shown)` 或 `restarted`。
 
 ---
 
-## 报告格式（heartbeat 的最终输出）
+## Step 3：报告格式
 
 ```
-## HEARTBEAT [2026-MM-DD HH:MM GMT+8]
-
-### Step 1: 状态
-- 本机 GPU: GPU 1 has process X (job Y, healthy, step 234/500)
-- 第二节点 GPU: all idle
-- Pending tasks: 3 ([PENDING] auto_launch=true × 1, [PENDING] auto_launch=false × 2)
-
-### Step 2: 错误处理
-- (none) 或 killed PID 12345 stale orphan
-
-### Step 3: 推进决策
-- Task A is healthy, no action
-- Task B [PENDING auto_launch=true] → launching now
-
-### Step 4: 启动
-- Launched: <Agent ID 或 nohup PID>, log path
-
-### Step 5: Plan 更新
-- PENDING_TASKS.md 写入 next heartbeat 要做的事
-- TRAINER_ACTIVITY.jsonl appended
+## HEARTBEAT [YYYY-MM-DD HH:MM GMT+8]
+- H20 local: step X/10000, lm=Y, healthy
+- H20 remote: step X/10000, lm=Y, healthy
+- H800 node1: step X/10000, lm=Y, healthy
+- H800 node2: step X/10000, lm=Y, healthy
+- Action: none / <描述操作>
 ```
 
----
-
-## 自主授权速查（无需用户审批）
-
-按 CODEBUDDY.md 的标准授权清单：
-- 派 researcher / coder subagent
-- researcher confidence:high 的代码/参数改动 → 直接执行
-- kill 不健康训练（PPL > 100、stalled 2 拍、crash）
-- 在空闲节点启动 PENDING auto_launch=true 任务
-- ablation / fix 延伸训练（同算法改参数、同代码新数据、ckpt eval）
-- 实验完成后自动决定下一步并立即执行
-- git commit / git push（带 subagent 审核）
-
-仍需用户审批：全新方向训练（非延伸）、架构重大重构、kill 健康训练。
+最后追加一行到 `status/TRAINER_ACTIVITY.jsonl`。
 
 ---
 
 ## 资源备忘
 
-**当前可用集群（2026-05-14 起，旧的 b200-1..8 全部已不在）**：
-- 本机 H20：`29.162.227.178`，8× H20 (97.8 GiB / 卡)
-- 第二节点 H20：`28.59.80.196`，8× H20
-- SSH 密码（两节点相同）：见 `configs/password_h20_nodes.txt`（gitignored，末尾逗号是密码一部分）
-- 共享文件系统：`/apdcephfs_zwfy6/share_303098609/`（两节点都看到同一份）
-- 工作目录：`/apdcephfs_zwfy6/share_303098609/pighzliu_code/Mixture-of-Memory/`
-- conda env：`/opt/conda/envs/torch-base`（torch 2.8 + transformers 5.8.1 + accelerate + peft）
-- HF proxy：`http_proxy=http://star-proxy.oa.com:3128`
-- 模型：`models/{Meta-Llama-3-8B,Meta-Llama-3-8B-Instruct,Llama-3.2-1B-Instruct,Qwen2-7B-Instruct,Beacon-Qwen2-7B}`
-- BABILong package：`third_party/babilong-pkg/`，需要 `PYTHONPATH=$(pwd)/third_party/babilong-pkg:$PYTHONPATH`
+**当前可用集群（2026-06-21 更新，覆盖旧 H800 记录——H800 已下线）**：
+- 本机 H20：8× H20 (97.8 GiB/卡)，直接本地访问，`.venv/bin/python`
+- 第二节点 H20：`28.59.80.196`，8× H20，密码 `configs/password_diskA.txt`（与本机共享盘A FS）
+- 回归 H20：`28.48.7.53` / `28.58.245.174`，各 8× H20，密码 `configs/password_h20_returned.txt`，挂盘B `/apdcephfs_zwfy6/share_304376610/`，项目 `.venv/bin/python` 可用
+- B200 `28.89.16.18:36000`：8× L20A (183 GiB/卡)，密码 `configs/password_b200_new.txt`，端口 36000
+- B200 `28.88.184.53`：8× L20A (183 GiB/卡)，密码 `configs/password_b200_53.txt`，22 端口（2026-06-21 新增，与 .18 共享 wzc1 盘）
+- B200 用 `.venv/bin/python`(torch2.10 支持 L20A)；⚠️ L20A 跑不了 faithful Landmark(torch2.1)，但能跑 mem_space 训练/eval
+- SSH 命令：`sshpass -f <password_file> ssh -o StrictHostKeyChecking=no -o ConnectTimeout=12 -o PreferredAuthentications=password root@<IP> "<cmd>"`（.18 加 `-p 36000`）
+- 盘A FS（本机 + .196）：`/apdcephfs_zwfy6/share_303098609/`
+- 盘B FS（回归 H20 + .76/.249）：`/apdcephfs_zwfy6/share_304376610/`
+- wzc1 FS（两台 B200 共享）：`/apdcephfs_wzc1/share_304376610/`
+- 工作目录（盘A H20）：`/apdcephfs_zwfy6/share_303098609/pighzliu_code/Mixture-of-Memory/`；（盘B H20）：`/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/`；（B200）`/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/`
+- 工作目录（H800）：`/apdcephfs_jn2/share_304376610/pighzliu_code/Mixture-of-Memory/`
+- Python（本机）：`.venv/bin/python`
+- Python（远程 H20 / H800）：`/opt/conda/envs/torch-base/bin/python`
 
-旧的 `b200-1..8` 集群、`/apdcephfs_wzc1/...`、`share_304376610` 路径**全部失效**，遇到引用这些的脚本要把路径改成上面的。
+**当前活跃训练**：
+- 本机 H20: `prepend_all_fastmem_10k_h20` (seed=42, 10k steps)
+- 远程 H20: `prepend_all_fastmem_10k_remote_h20` (seed=44, 10k steps)
+- H800 Node 1: `prepend_all_10k_node1` (seed=42, 10k steps, wandb=xx72k497)
+- H800 Node 2: `prepend_all_10k_node2` (seed=44, 10k steps, wandb=9oljda98)
