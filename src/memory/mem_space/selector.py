@@ -1417,6 +1417,8 @@ class MemoryCrossAttentionRead(nn.Module):
         out_proj_std: float = 0.02,
         dropout: float = 0.0,
         disable_null_sink: bool = False,
+        learnable_mass_bias: bool = False,
+        learnable_mass_bias_init: float = -0.5108,
     ) -> None:
         super().__init__()
         assert d_model % n_heads == 0, (
@@ -1477,6 +1479,27 @@ class MemoryCrossAttentionRead(nn.Module):
             self.null_value = None
 
         self.attn_dropout = nn.Dropout(dropout) if dropout > 0 else nn.Identity()
+
+        # LEARNABLE per-head written-ness read bias (2026-06-23). Root cause of
+        # weak W0 long-range readout (telemetry): dead_slot_read_mass ~0.84 — the
+        # read spreads near-uniform mass over NEVER-WRITTEN slots. A fixed
+        # log1p(mass) bias toward written slots doubles mid-range (qa1/qa5 1k
+        # 31→58), but a single GLOBAL coef is the wrong knob (coef0.5 optimal,
+        # coef2 collapses 32k → inverted-U). So make the written-ness prior
+        # learnable and PER-HEAD: one logit per query head, mapped through
+        # softplus so the effective coefficient is ≥ 0 (written slots can only be
+        # up-weighted). When the read runs with this flag on, head h adds
+        # softplus(mass_bias_logit[h]) · log1p(mass_n) to its real-slot logits.
+        # default -0.5108 → softplus ≈ 0.47, inside the validated-good 0.4-0.5
+        # coef band. When off: no param created, the read softmax is
+        # byte-identical to the pre-change P8/P11 path.
+        self.learnable_mass_bias = learnable_mass_bias
+        if learnable_mass_bias:
+            self.mass_bias_logit = nn.Parameter(
+                torch.full((n_heads,), float(learnable_mass_bias_init))
+            )
+        else:
+            self.mass_bias_logit = None
 
         # Diagnostics (refreshed each read; layer reads these for logging).
         self._last_gate_mean: float = gate_init
@@ -1591,6 +1614,29 @@ class MemoryCrossAttentionRead(nn.Module):
                 _bias = attn_logits.new_zeros(B, _S)                            # [B, S]
                 _bias[:, :N] = _bias_real
                 attn_logits = attn_logits + _bias[:, None, None, :]
+        # LEARNABLE per-head written-ness read bias (2026-06-23). When the flag is
+        # on, ALWAYS add softplus(mass_bias_logit[h]) · log1p(mass_n) to head h's
+        # real-slot (first-N) logits — independent of the fixed use_readout_mass_bias
+        # path above (they can coexist; both just add to attn_logits). softplus
+        # keeps each head's coefficient ≥ 0 so a written slot can only be
+        # up-weighted. mass_n is the SAME per-slot write-mass tensor the fixed
+        # path uses (slot_token_mass, [B, N], detached telemetry → the bias is a
+        # constant additive term w.r.t. Q/K, but mass_bias_logit IS in the graph
+        # so gradient flows to it through the softmax). The null/sink column (the
+        # extra column when not disable_null_sink) is NOT biased. Skipped (no-op)
+        # when mass is None or shapes mismatch, so the param stays at init with a
+        # well-defined zero-contribution forward.
+        if self.learnable_mass_bias and self.mass_bias_logit is not None and mass is not None:
+            _S = attn_logits.shape[-1]
+            _ml = mass.to(device=attn_logits.device, dtype=attn_logits.dtype)
+            if _ml.dim() == 2 and _ml.shape[0] == B and _ml.shape[1] == N and N <= _S:
+                _coef = F.softplus(self.mass_bias_logit.to(attn_logits.dtype))   # [H]
+                _log1p = torch.log1p(_ml.clamp(min=0.0))                         # [B, N]
+                # [B, H, N] = coef[1,H,1] * log1p[B,1,N]
+                _bias_real_h = _coef[None, :, None] * _log1p[:, None, :]
+                _bias_h = attn_logits.new_zeros(B, self.n_heads, _S)             # [B, H, S]
+                _bias_h[:, :, :N] = _bias_real_h
+                attn_logits = attn_logits + _bias_h[:, :, None, :]
         attn_weights = F.softmax(attn_logits, dim=-1, dtype=torch.float32).to(V.dtype)
         attn_weights = self.attn_dropout(attn_weights)
         attn_output = torch.matmul(attn_weights, V)  # [B,H,T,D]

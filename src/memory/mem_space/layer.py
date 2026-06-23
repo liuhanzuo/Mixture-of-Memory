@@ -659,6 +659,8 @@ class MemorySpaceLayer(nn.Module):
                 gate_init=config.memory_xattn_gate_init,
                 dropout=0.0,
                 disable_null_sink=config.memory_xattn_disable_null_sink,
+                learnable_mass_bias=config.use_learnable_mass_bias,
+                learnable_mass_bias_init=config.learnable_mass_bias_init,
             )
         else:
             self.memory_xattn = None
@@ -1514,7 +1516,7 @@ class MemorySpaceLayer(nn.Module):
                     # not 32x over-counted, and stays in the SAME slot index order
                     # the read aligns to. Gated on the flag so it is zero-overhead
                     # when off. add_token_mass is a no_grad no-op while frozen.
-                    if cfg.use_readout_mass_bias:
+                    if cfg.use_readout_mass_bias or cfg.use_learnable_mass_bias:
                         if _active_token_mask is not None:
                             _tok_count = (
                                 _active_token_mask.to(torch.float32)
@@ -2716,19 +2718,27 @@ class MemorySpaceLayer(nn.Module):
             # Per-slot token-mass readout bias (2026-06-15). slot_token_mass is
             # [B, cfg.num_slots] in the SAME index order as xattn_slots (it is
             # accumulated layer-0-only on the shared bank, mirroring _cum_usage),
-            # so it aligns with the first-N read columns. Passed only when the
-            # flag is on AND the mass has been materialised; otherwise None →
-            # read() adds no bias and the softmax is byte-identical to P8/P11.
+            # so it aligns with the first-N read columns. Passed when EITHER the
+            # fixed (use_readout_mass_bias) OR the learnable per-head written-ness
+            # bias (use_learnable_mass_bias, 2026-06-23) is on AND the mass has
+            # been materialised; otherwise None → read() adds no bias and the
+            # softmax is byte-identical to P8/P11.
             _read_mass = (
                 getattr(self.memory_bank, "slot_token_mass", None)
-                if cfg.use_readout_mass_bias
+                if (cfg.use_readout_mass_bias or cfg.use_learnable_mass_bias)
                 else None
             )
             memory_xattn_out = self.memory_xattn.read(
                 hidden_states, xattn_slots, xattn_slots,
                 dead_mask=_dead_mask,
                 mass=_read_mass,
-                mass_coef=cfg.readout_mass_coef,
+                # The fixed log1p(mass) bias in read() fires whenever mass is not
+                # None. When ONLY the learnable per-head bias is on (fixed off) we
+                # still pass mass (the learnable path needs it) but must neutralise
+                # the fixed path → mass_coef=0.0 makes its added bias exactly 0,
+                # leaving only the learnable per-head term. When the fixed flag is
+                # on, use its configured coef.
+                mass_coef=(cfg.readout_mass_coef if cfg.use_readout_mass_bias else 0.0),
             )                                                       # [B, T, d]
             # v20 (2026-06-12): accumulate per-slot read-mass into the layer-0
             # cumulative + windowed accumulators (no_grad telemetry; index order

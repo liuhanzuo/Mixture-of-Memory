@@ -1378,6 +1378,22 @@ def parse_args() -> argparse.Namespace:
                    help="Scale on the log1p(mass) readout bias (1.0 = exact "
                         "log1p; larger = stronger mass preference). Ignored when "
                         "--use_readout_mass_bias is off.")
+    p.add_argument("--use_learnable_mass_bias", action="store_true", default=False,
+                   help="2026-06-23: LEARNABLE per-head written-ness read bias. "
+                        "Creates a per-head nn.Parameter in MemoryCrossAttentionRead "
+                        "and ALWAYS adds softplus(mass_bias_logit[h])·log1p(mass_n) "
+                        "to head h's real-slot read logits (null/sink unbiased), so "
+                        "each head/layer learns how much to trust the written-ness "
+                        "prior. Independent of --use_readout_mass_bias (fixed global "
+                        "coef). Fixes weak W0 long-range readout (dead_slot_read_mass "
+                        "~0.84) where a single global coef is the wrong knob "
+                        "(coef0.5 optimal, coef2 collapses 32k). Default False = no "
+                        "param (softmax byte-identical to P8/P11).")
+    p.add_argument("--learnable_mass_bias_init", type=float, default=-0.5108,
+                   help="Init value of every per-head mass_bias_logit entry. "
+                        "Default -0.5108 → softplus ≈ 0.47, inside the validated-"
+                        "good 0.4-0.5 coef band. Ignored when "
+                        "--use_learnable_mass_bias is off.")
 
     # Slot-Routed Evidence Memory (2026-06-17)
     p.add_argument("--use_slot_evidence", action="store_true", default=False,
@@ -1733,6 +1749,8 @@ def build_model(args, device, dtype) -> torch.nn.Module:
         memory_xattn_disable_null_sink=args.memory_xattn_disable_null_sink,
         use_readout_mass_bias=args.use_readout_mass_bias,
         readout_mass_coef=args.readout_mass_coef,
+        use_learnable_mass_bias=args.use_learnable_mass_bias,
+        learnable_mass_bias_init=args.learnable_mass_bias_init,
         use_slot_evidence=args.use_slot_evidence,
         evidence_buffer_size=args.evidence_buffer_size,
         evidence_topr=args.evidence_topr,
@@ -2966,6 +2984,12 @@ def _save_adapter(model, args, step: int, final: bool = False) -> None:
             "memory_xattn_disable_null_sink": args.memory_xattn_disable_null_sink,
             "use_readout_mass_bias": args.use_readout_mass_bias,
             "readout_mass_coef": args.readout_mass_coef,
+            # Learnable per-head written-ness read bias (2026-06-23). Adds a
+            # per-head nn.Parameter to MemoryCrossAttentionRead, so it MUST
+            # round-trip or eval reconstructs a state_dict that mismatches the
+            # checkpoint.
+            "use_learnable_mass_bias": args.use_learnable_mass_bias,
+            "learnable_mass_bias_init": args.learnable_mass_bias_init,
             # EXP-R1 (2026-06-11): dead-slot recycling. No new params, but it
             # changes STORED slot state, so eval-haystack ingestion must apply
             # the same recycling as training → round-trip these flags.

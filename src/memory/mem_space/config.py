@@ -477,6 +477,31 @@ class MemorySpaceConfig:
     use_readout_mass_bias: bool = False
     readout_mass_coef: float = 1.0
 
+    # LEARNABLE per-head written-ness read bias (2026-06-23). Phase-1 telemetry
+    # root cause: dead_slot_read_mass ~0.84 — 84% of the read softmax mass lands
+    # on NEVER-WRITTEN slots (raw chunk-0 token snapshots), attn_entropy near
+    # uniform → the read fails to concentrate on the few slots that actually
+    # condensed long-range info. The fixed log1p(mass) bias (use_readout_mass_bias
+    # above) FIXES the mid-range (qa1/qa5 1k 31→58) by pulling read weight toward
+    # written slots, but a SINGLE global coef is the wrong knob: coef0.5 is the
+    # long-range optimum while coef2 collapses 32k to 5 (inverted-U). Make the
+    # written-ness prior LEARNABLE and PER-HEAD instead: each read head/layer
+    # learns how much to trust the written-ness prior.
+    #   use_learnable_mass_bias : when True, MemoryCrossAttentionRead creates a
+    #       per-head nn.Parameter mass_bias_logit [n_heads] and ALWAYS adds
+    #       softplus(mass_bias_logit[h]) · log1p(mass_n) to head h's real-slot
+    #       read logits (null/sink column unbiased). The softplus keeps the
+    #       per-head coefficient ≥ 0 (a written slot can only be up-weighted,
+    #       never penalised). Independent of the fixed use_readout_mass_bias path,
+    #       which stays untouched. Default False → no param created, softmax
+    #       byte-identical to P8/P11.
+    #   learnable_mass_bias_init: init value of every mass_bias_logit entry.
+    #       Default -0.5108 → softplus(-0.5108) ≈ 0.47, i.e. starts inside the
+    #       validated-good 0.4-0.5 coef band (near the coef0.5 long-range optimum)
+    #       and lets each head move from there.
+    use_learnable_mass_bias: bool = False
+    learnable_mass_bias_init: float = -0.5108
+
     # Slot-Routed Evidence Memory (2026-06-17). Each slot, besides its
     # compressed semantic latent, keeps a small buffer of UNCOMPRESSED
     # original-token hidden states ([d_model]) routed into it. At readout the
