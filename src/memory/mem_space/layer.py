@@ -661,6 +661,9 @@ class MemorySpaceLayer(nn.Module):
                 disable_null_sink=config.memory_xattn_disable_null_sink,
                 learnable_mass_bias=config.use_learnable_mass_bias,
                 learnable_mass_bias_init=config.learnable_mass_bias_init,
+                use_shared_addressing=config.use_shared_addressing,
+                selector_dim=config.selector_dim,
+                address_temperature=config.selector_temperature,
             )
         else:
             self.memory_xattn = None
@@ -2728,10 +2731,30 @@ class MemorySpaceLayer(nn.Module):
                 if (cfg.use_readout_mass_bias or cfg.use_learnable_mass_bias)
                 else None
             )
+            _routing_keys = None
+            if cfg.use_shared_addressing:
+                _slots_for_key = (
+                    slots
+                    if getattr(self.selector, "_no_detach_slots", False)
+                    else slots.detach()
+                )
+                if getattr(self.selector, "_independent_slot_key", False):
+                    _routing_keys = F.normalize(
+                        self.selector.slot_key_param.unsqueeze(0), dim=-1
+                    ).expand(B, -1, -1)
+                else:
+                    _routing_keys = F.normalize(
+                        self.selector.K_sel(_slots_for_key)
+                        + self.selector.slot_key_bias.unsqueeze(0),
+                        dim=-1,
+                    )
+                if _routing_keys is None:
+                    _routing_keys = getattr(self.selector, "_last_routing_k", None)
             memory_xattn_out = self.memory_xattn.read(
                 hidden_states, xattn_slots, xattn_slots,
                 dead_mask=_dead_mask,
                 mass=_read_mass,
+                routing_keys=_routing_keys,
                 # The fixed log1p(mass) bias in read() fires whenever mass is not
                 # None. When ONLY the learnable per-head bias is on (fixed off) we
                 # still pass mass (the learnable path needs it) but must neutralise

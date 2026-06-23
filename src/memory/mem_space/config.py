@@ -462,6 +462,17 @@ class MemorySpaceConfig:
     # contribution while holding the dedicated xattn read mechanism fixed.
     memory_xattn_disable_null_sink: bool = False
 
+    # Shared write/read addressing (2026-06-23). Root cause: the write selector
+    # commits slots in the routing-key space K_sel(slots)+slot_key_bias
+    # (selector.py:289, stashed as _last_routing_k at selector.py:300), while the
+    # P8 read currently addresses slots in an unrelated q_proj·k_proj(slot_to_hidden)
+    # space (selector.py:1569-1571). They share slot content but not addressing
+    # geometry, which explains the observed ~84% dead-slot read mass. When True,
+    # MemoryCrossAttentionRead uses the write-selector routing key as its read key
+    # and learns only a query projection into selector_dim; default False preserves
+    # the existing read path byte-identically.
+    use_shared_addressing: bool = False
+
     # Per-slot token-mass readout bias (2026-06-15). The P8 read softmax logit
     # is pure Q·Kᵀ·scale (selector.py read()), with NO per-slot prior — and the
     # slot_value_norm_cap (5.0) flattens slot norms, so a slot that condensed

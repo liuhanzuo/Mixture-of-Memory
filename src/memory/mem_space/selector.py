@@ -1419,6 +1419,9 @@ class MemoryCrossAttentionRead(nn.Module):
         disable_null_sink: bool = False,
         learnable_mass_bias: bool = False,
         learnable_mass_bias_init: float = -0.5108,
+        use_shared_addressing: bool = False,
+        selector_dim: int = 128,
+        address_temperature: float = 1.0,
     ) -> None:
         super().__init__()
         assert d_model % n_heads == 0, (
@@ -1435,17 +1438,29 @@ class MemoryCrossAttentionRead(nn.Module):
         self.n_kv_heads = n_kv_heads
         self.head_dim = d_model // n_heads
         self.n_rep = n_heads // n_kv_heads
+        self.use_shared_addressing = bool(use_shared_addressing)
+        self.selector_dim = int(selector_dim)
+        self.address_temperature = float(address_temperature)
 
         # Q from live-token hidden states; K/V from memory slots.
         self.q_proj = nn.Linear(d_model, n_heads * self.head_dim, bias=False)
         self.k_proj = nn.Linear(d_model, n_kv_heads * self.head_dim, bias=False)
         self.v_proj = nn.Linear(d_model, n_kv_heads * self.head_dim, bias=False)
+        if self.use_shared_addressing:
+            # Shared write/read addressing: read queries live in the same selector
+            # space as TopKSelector._last_routing_k (normalized K_sel(slot)+bias).
+            self.q_proj_addr = nn.Linear(d_model, self.selector_dim)
+        else:
+            self.q_proj_addr = None
         # Output projection: small-RANDOM init (NOT zero) — see class docstring.
         self.out_proj = nn.Linear(n_heads * self.head_dim, d_model, bias=False)
 
         nn.init.normal_(self.q_proj.weight, std=0.02)
         nn.init.normal_(self.k_proj.weight, std=0.02)
         nn.init.normal_(self.v_proj.weight, std=0.02)
+        if self.q_proj_addr is not None:
+            nn.init.normal_(self.q_proj_addr.weight, std=0.02)
+            nn.init.zeros_(self.q_proj_addr.bias)
         nn.init.normal_(self.out_proj.weight, std=out_proj_std)
 
         # Per-head content-dependent gate: maps the query hidden state to one
@@ -1537,6 +1552,7 @@ class MemoryCrossAttentionRead(nn.Module):
         dead_mask: Optional[torch.Tensor] = None,
         mass: Optional[torch.Tensor] = None,
         mass_coef: float = 1.0,
+        routing_keys: Optional[torch.Tensor] = None,
     ) -> torch.Tensor:
         """Gated memory cross-attention read.
 
@@ -1557,6 +1573,11 @@ class MemoryCrossAttentionRead(nn.Module):
                 null/sink column (if present) is NOT biased. Default None → no
                 bias term is added and the softmax is byte-identical to before.
             mass_coef:   scale on the log1p(mass) bias (ignored when mass is None).
+            routing_keys: optional [B, N, selector_dim] normalized write-selector
+                routing keys (TopKSelector._last_routing_k). When shared
+                addressing is enabled and this is available, real-slot read logits
+                are computed in the write-selection key space; values still come
+                from slot_values.
 
         Returns:
             read_out: [B, T, d_model] gated memory contribution to add to the
@@ -1577,24 +1598,56 @@ class MemoryCrossAttentionRead(nn.Module):
         K = self._repeat_kv(K)  # [B,H,N,D]
         V = self._repeat_kv(V)  # [B,H,N,D]
 
-        # Append the learnable null / sink column along the slot dim so the
-        # softmax can "attend to nothing". Repeat the per-kv-head sink to query
-        # heads via the GQA helper, then expand across the batch. At init
-        # null_value is zero, so sink mass contributes ~0 to the read.
-        # D6: when disable_null_sink, skip this so the softmax is over the real
-        # slots only (no escape column).
-        if not self.disable_null_sink:
-            null_k = self._repeat_kv(self.null_key.to(K.dtype))   # [1,H,1,D]
-            null_v = self._repeat_kv(self.null_value.to(V.dtype))  # [1,H,1,D]
-            null_k = null_k.expand(B, self.n_heads, 1, self.head_dim)
-            null_v = null_v.expand(B, self.n_heads, 1, self.head_dim)
-            K = torch.cat([K, null_k], dim=2)  # [B,H,N+1,D]
-            V = torch.cat([V, null_v], dim=2)  # [B,H,N+1,D]
+        use_shared_addr = (
+            self.use_shared_addressing
+            and self.q_proj_addr is not None
+            and routing_keys is not None
+            and routing_keys.dim() == 3
+            and routing_keys.shape[0] == B
+            and routing_keys.shape[1] == N
+            and routing_keys.shape[2] == self.selector_dim
+        )
 
         # Independent softmax over the N slots + sink (its OWN softmax — this is
         # the whole point of P8; slots no longer share the live-token softmax).
         scale = self.head_dim ** -0.5
-        attn_logits = torch.matmul(Q, K.transpose(-2, -1)) * scale  # [B,H,T,N+1]
+        if use_shared_addr:
+            # Shared write/read addressing: real-slot logits use the SAME routing
+            # key space as the write selector (TopKSelector._last_routing_k), so
+            # the slot address that wins write selection is also the read address.
+            # Values remain content projections of slot_values below.
+            q_addr = F.normalize(self.q_proj_addr(hidden_states), dim=-1)  # [B,T,S]
+            k_addr = F.normalize(
+                routing_keys.to(device=hidden_states.device, dtype=q_addr.dtype),
+                dim=-1,
+            )                                                            # [B,N,S]
+            real_logits = torch.einsum("bts,bns->btn", q_addr, k_addr)
+            real_logits = real_logits * self.address_temperature          # [B,T,N]
+            attn_logits = real_logits[:, None, :, :].expand(
+                B, self.n_heads, T, N
+            )                                                            # [B,H,T,N]
+
+            # Keep today's q_proj/null_key sink geometry as the escape column.
+            if not self.disable_null_sink:
+                null_k = self._repeat_kv(self.null_key.to(K.dtype))       # [1,H,1,D]
+                null_v = self._repeat_kv(self.null_value.to(V.dtype))     # [1,H,1,D]
+                null_k = null_k.expand(B, self.n_heads, 1, self.head_dim)
+                null_v = null_v.expand(B, self.n_heads, 1, self.head_dim)
+                null_logits = torch.matmul(Q, null_k.transpose(-2, -1)) * scale
+                attn_logits = torch.cat(
+                    [attn_logits, null_logits.to(attn_logits.dtype)], dim=-1
+                )                                                        # [B,H,T,N+1]
+                V = torch.cat([V, null_v], dim=2)                         # [B,H,N+1,D]
+        else:
+            # Byte-identical P8/P11 path when shared addressing is disabled.
+            if not self.disable_null_sink:
+                null_k = self._repeat_kv(self.null_key.to(K.dtype))       # [1,H,1,D]
+                null_v = self._repeat_kv(self.null_value.to(V.dtype))     # [1,H,1,D]
+                null_k = null_k.expand(B, self.n_heads, 1, self.head_dim)
+                null_v = null_v.expand(B, self.n_heads, 1, self.head_dim)
+                K = torch.cat([K, null_k], dim=2)                         # [B,H,N+1,D]
+                V = torch.cat([V, null_v], dim=2)                         # [B,H,N+1,D]
+            attn_logits = torch.matmul(Q, K.transpose(-2, -1)) * scale    # [B,H,T,N(+1)]
         # Per-slot token-mass bias (2026-06-15). Add mass_coef·log1p(mass_n) to
         # the logit of each REAL slot n (first N columns) so the softmax weight
         # of a slot scales ≈ with the tokens it condensed; the null/sink column

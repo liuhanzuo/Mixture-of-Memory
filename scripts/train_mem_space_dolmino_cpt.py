@@ -1367,6 +1367,12 @@ def parse_args() -> argparse.Namespace:
                         "MemoryCrossAttentionRead (single-variable ablation). "
                         "The read softmax then has NO 'attend to nothing' escape "
                         "column. Default False = sink ON (P8/P11 baseline).")
+    p.add_argument("--use_shared_addressing", action="store_true", default=False,
+                   help="2026-06-23: make MemoryCrossAttentionRead address real "
+                        "slots with the write selector routing key "
+                        "(K_sel(slots)+slot_key_bias, TopKSelector._last_routing_k) "
+                        "instead of an unrelated q_proj·k_proj(slot_to_hidden) "
+                        "space. Default False = byte-identical P8/P11 read path.")
     p.add_argument("--use_readout_mass_bias", action="store_true", default=False,
                    help="2026-06-15: add a per-slot token-mass bias "
                         "(readout_mass_coef·log1p(mass)) to the P8 read softmax "
@@ -1651,6 +1657,7 @@ def merge_adapter_config_into_args(args: argparse.Namespace) -> argparse.Namespa
         "use_slot_kv_cache": "use_slot_kv_cache",
         "slot_kv_cache_layer": "slot_kv_cache_layer",
         "slot_kv_select_mode": "slot_kv_select_mode",
+        "use_shared_addressing": "use_shared_addressing",
     }
     inherited = []
     for k_json, attr in cfg_to_attr.items():
@@ -1747,6 +1754,7 @@ def build_model(args, device, dtype) -> torch.nn.Module:
         use_memory_xattn=args.use_memory_xattn,
         memory_xattn_gate_init=args.memory_xattn_gate_init,
         memory_xattn_disable_null_sink=args.memory_xattn_disable_null_sink,
+        use_shared_addressing=args.use_shared_addressing,
         use_readout_mass_bias=args.use_readout_mass_bias,
         readout_mass_coef=args.readout_mass_coef,
         use_learnable_mass_bias=args.use_learnable_mass_bias,
@@ -2982,6 +2990,7 @@ def _save_adapter(model, args, step: int, final: bool = False) -> None:
             "use_memory_xattn": args.use_memory_xattn,
             "memory_xattn_gate_init": args.memory_xattn_gate_init,
             "memory_xattn_disable_null_sink": args.memory_xattn_disable_null_sink,
+            "use_shared_addressing": args.use_shared_addressing,
             "use_readout_mass_bias": args.use_readout_mass_bias,
             "readout_mass_coef": args.readout_mass_coef,
             # Learnable per-head written-ness read bias (2026-06-23). Adds a
