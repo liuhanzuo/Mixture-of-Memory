@@ -41,10 +41,12 @@ from .backends import (
     IdentityReranker,
     KeywordOverlapReranker,
     MoMModelReranker,
+    MoMReadoutReranker,
     MoMSlotReranker,
     RoundFlatRetriever,
     TemporalAwareReranker,
 )
+from .compressor import build_compressor
 from .data import LongMemEvalExample, Round, load_longmemeval
 from .reader import build_reader
 from .scoring import aggregate_recall, recall_at_k, write_submission
@@ -94,6 +96,23 @@ def _build_reranker(name: str, args=None):
             fusion_weight=args.mom_fusion_weight,
             chunk_size=args.mom_chunk_size,
         )
+    if name == "mom_readout":
+        if args is None:
+            raise ValueError("mom_readout reranker requires CLI args (checkpoint/config)")
+        if not args.mom_checkpoint or not args.mom_adapter_config:
+            raise ValueError(
+                "--reranker mom_readout requires --mom_checkpoint and "
+                "--mom_adapter_config"
+            )
+        return MoMReadoutReranker(
+            checkpoint=args.mom_checkpoint,
+            adapter_config=args.mom_adapter_config,
+            model_path=args.mom_model_path,
+            device=args.reranker_device,
+            fusion_weight=args.mom_fusion_weight,
+            chunk_size=args.mom_chunk_size,
+            slot_mean_mix=args.mom_slot_mean_mix,
+        )
     raise ValueError(f"unknown reranker: {name}")
 
 
@@ -110,10 +129,12 @@ def _build_retriever(args) -> RoundFlatRetriever:
 def _run(examples: List[LongMemEvalExample], args) -> dict:
     reader = build_reader(args.reader, model=args.reader_model)
     retriever = _build_retriever(args)
+    compressor = build_compressor(args.compressor, args)
 
     submission = []
     recalls = []
     per_type_recall = {}
+    notes_examples = []
 
     for ex in examples:
         retriever.index_example(ex)
@@ -124,8 +145,28 @@ def _run(examples: List[LongMemEvalExample], args) -> dict:
         recalls.append(rec)
         per_type_recall.setdefault(ex.question_type, []).append(rec)
 
+        # MoM-compressor path: produce a compact, question-conditioned "notes"
+        # synopsis of the retrieved rounds and PREPEND it as an extra evidence
+        # block, while STILL keeping the budget-limited raw evidence below it.
+        # IdentityCompressor returns "" -> evidence unchanged (baseline).
+        reader_evidence = evidence
+        notes = compressor.compress(ex.question, ex.question_date, evidence)
+        if notes:
+            notes_block = Evidence(
+                round_id=f"{ex.question_id}_mom_notes",
+                session_id="MoM-NOTES",
+                session_date=ex.question_date,
+                text=f"MoM NOTES: {notes}",
+                score=float("inf"),
+            )
+            reader_evidence = [notes_block] + list(evidence)
+            if len(notes_examples) < 3:
+                notes_examples.append(
+                    {"question_id": ex.question_id, "question": ex.question, "notes": notes}
+                )
+
         hypothesis = reader.answer(
-            ex.question, ex.question_date, evidence, token_budget=0
+            ex.question, ex.question_date, reader_evidence, token_budget=0
         )
         submission.append({"question_id": ex.question_id, "hypothesis": hypothesis})
 
@@ -141,6 +182,7 @@ def _run(examples: List[LongMemEvalExample], args) -> dict:
         "degraded_reason": retriever.degraded_reason,
         "reader": args.reader,
         "reranker": args.reranker,
+        "compressor": args.compressor,
         "top_k": args.top_k,
         "evidence_token_budget": args.evidence_token_budget,
         "overall_recall": aggregate_recall(recalls),
@@ -149,6 +191,8 @@ def _run(examples: List[LongMemEvalExample], args) -> dict:
         },
         "submission_path": args.out,
     }
+    if notes_examples:
+        report["notes_examples"] = notes_examples
     return report
 
 
@@ -229,9 +273,13 @@ def build_arg_parser() -> argparse.ArgumentParser:
                    choices=["bm25", "embedding", "union"],
                    help="First-stage retrieval over rounds.")
     p.add_argument("--reranker", type=str, default="none",
-                   choices=["none", "keyword", "temporal", "mom_stub", "mom_slot"],
+                   choices=["none", "keyword", "temporal", "mom_stub", "mom_slot",
+                            "mom_readout"],
                    help="Second-stage reranker over the first-stage candidate pool. "
-                        "'mom_slot' = real mem_space model-backed reranker.")
+                        "'mom_slot' = real mem_space model-backed reranker "
+                        "(last-hidden cosine); 'mom_readout' = mem_space "
+                        "slot-memory cosine reranker (scores question vs the "
+                        "round-populated slot bank).")
     p.add_argument("--embed_model", type=str, default="models/bge-m3",
                    help="Local HF / sentence-transformers embedding model "
                         "(used by embedding/union; degrades to BM25 if unloadable).")
@@ -270,8 +318,29 @@ def build_arg_parser() -> argparse.ArgumentParser:
     p.add_argument("--mom_chunk_size", type=int, default=512,
                    help="Chunk size for streaming text through the mem_space "
                         "memory bank during reranking (match training seq_len).")
+    p.add_argument("--mom_slot_mean_mix", type=float, default=0.0,
+                   help="For --reranker mom_readout: blend of mean-cosine into "
+                        "the per-round slot relevance score. 0.0 = pure max "
+                        "cosine over slots (does this round have any slot that "
+                        "matches the question?); 1.0 = pure mean cosine.")
     p.add_argument("--reranker_device", type=str, default="cuda:0",
                    help="Device for the mom_slot mem_space reranker model.")
+    # -- MoM notes compressor (--compressor mom_notes) -------------------- #
+    p.add_argument("--compressor", type=str, default="none",
+                   choices=["none", "mom_notes"],
+                   help="Evidence compressor. 'none' = identity (baseline); "
+                        "'mom_notes' = mem_space model streams the retrieved "
+                        "rounds and generates a short question-conditioned "
+                        "notes block PREPENDED to the raw evidence.")
+    p.add_argument("--compressor_checkpoint", type=str, default=None,
+                   help="mem_space adapter .pt checkpoint for --compressor mom_notes.")
+    p.add_argument("--compressor_adapter_config", type=str, default=None,
+                   help="adapter_config.json (MemorySpaceConfig) for "
+                        "--compressor mom_notes.")
+    p.add_argument("--compressor_device", type=str, default="cuda:0",
+                   help="Device for the mom_notes mem_space compressor model.")
+    p.add_argument("--compressor_max_new_tokens", type=int, default=128,
+                   help="Max tokens to generate for the MoM notes synopsis.")
     return p
 
 

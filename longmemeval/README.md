@@ -175,10 +175,50 @@ The interfaces deliberately leave clean seams for Mixture-of-Memory:
 - **MoM-summary-key** — subclass `backends.MemoryBackend` so per-round keys are
   MoM gist summaries instead of raw-text BM25/embedding keys.
 - **MoM-compressor** — subclass `backends.MemoryBackend` to compress sessions
-  into a fixed-size MoM buffer and `query` that buffer directly.
+  into a fixed-size MoM buffer and `query` that buffer directly. A runnable,
+  inference-only realization ships in `compressor.py` (see below).
 - **MoM-hybrid** — RoundFlatRetriever recall feeding an MoM-reranker.
 
 To add a variant: implement the relevant ABC, then register it in
 `run_baseline._build_reranker` / `_build_retriever` / `build_reader` behind a
 new `--reranker` / `--retriever` / `--reader` choice. The recall@k and
 submission machinery are reused unchanged.
+
+## MoM notes compressor (`--compressor mom_notes`)
+
+A separate concern from the reranker: instead of re-ordering candidates, the
+**compressor** turns the retrieved rounds into a short, question-conditioned
+*notes* synopsis that is **prepended** to the raw evidence (the LongMemEval-V2
+"raw evidence + notes" pattern). The goal is answer quality at a fixed evidence
+token budget, not recall.
+
+`compressor.py` defines a `Compressor` ABC with:
+
+- `IdentityCompressor` — no-op (`--compressor none`, the default); evidence is
+  passed to the reader unchanged.
+- `MoMNotesCompressor` — loads the mem_space (MoM) model exactly like
+  `backends.MoMModelReranker` (reusing `scripts.run_babilong_mem_space`
+  loaders). It concatenates the retrieved rounds, appends an instruction to
+  summarize the facts relevant to the question, streams that through the memory
+  bank chunk-by-chunk, and decodes a short notes string via
+  `generate_with_mem_space` (default `--compressor_max_new_tokens 128`).
+
+When `mom_notes` is selected, the generated notes are prepended as an extra
+evidence block clearly labeled `MoM NOTES:` while the budget-limited top raw
+evidence rounds are still included beneath it; the reader (stub or openai) then
+sees notes + raw evidence. This path is meant to be run with `--reader openai`
+later; with `--reader stub` it just confirms notes get generated and prepended.
+
+```bash
+.venv/bin/python -m longmemeval.run_baseline \
+    --data data/longmemeval/longmemeval_s --retriever bm25 --top_k 5 \
+    --compressor mom_notes \
+    --compressor_checkpoint outputs/distill_pg19_chunk512_nctx63/mem_space_adapter_step000250.pt \
+    --compressor_adapter_config outputs/distill_pg19_chunk512_nctx63/adapter_config.json \
+    --compressor_device cuda:0 --reader stub --limit 10 \
+    --out outputs/longmemeval/mom_notes_smoke.jsonl \
+    --report outputs/longmemeval/mom_notes_smoke.report.json
+```
+
+The report includes a `notes_examples` array (first few generated notes) for a
+quick coherence sanity-check.
