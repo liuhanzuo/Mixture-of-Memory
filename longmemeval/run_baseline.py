@@ -226,8 +226,9 @@ def build_arg_parser() -> argparse.ArgumentParser:
     p.add_argument("--evidence_token_budget", type=int, default=0,
                    help="Approx token cap on total evidence (0 = no cap).")
     p.add_argument("--reader", type=str, default="stub",
-                   choices=["stub", "openai"],
-                   help="Reader LLM. 'stub' = no API (recall diagnostic).")
+                   choices=["stub", "openai", "local", "hf", "local_hf"],
+                   help="Reader LLM. 'stub' = no API (recall diagnostic); "
+                        "'local'/'hf'/'local_hf' = local HF causal LM.")
     p.add_argument("--reader_model", type=str, default=None,
                    help="Reader model id (e.g. gpt-4o). Defaults via env.")
     p.add_argument("--out", type=str, default=None,

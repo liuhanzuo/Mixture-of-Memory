@@ -168,10 +168,138 @@ class OpenAIChatReader(Reader):
         return content.strip()
 
 
+class LocalHFReader(Reader):
+    """Local HuggingFace causal-LM reader (e.g. Llama-3-8B).
+
+    Loads a local HF model with ``transformers`` and answers questions by
+    feeding the retrieved evidence rounds into a chat-style QA prompt and
+    greedily decoding a short hypothesis. No external API is needed; the model
+    weights are read from a local path.
+
+    The reader respects ``CUDA_VISIBLE_DEVICES`` (the caller pins a single GPU)
+    and loads in bfloat16 on cuda. To stay within memory, the evidence text is
+    truncated by the tokenizer so the full prompt is <= ``max_prompt_tokens``,
+    leaving room for ``max_new_tokens`` of generation.
+    """
+
+    def __init__(
+        self,
+        model_path: str = "models/Meta-Llama-3-8B",
+        max_new_tokens: int = 64,
+        max_prompt_tokens: int = 7000,
+    ):
+        self.model_path = model_path
+        self.max_new_tokens = max_new_tokens
+        self.max_prompt_tokens = max_prompt_tokens
+        try:
+            import torch  # type: ignore
+            from transformers import AutoModelForCausalLM, AutoTokenizer  # type: ignore
+        except Exception as e:  # pragma: no cover - env-dependent
+            raise RuntimeError(
+                "LocalHFReader requires torch + transformers in this venv "
+                "(import error: %r)" % (e,)
+            )
+        self._torch = torch
+        self.tokenizer = AutoTokenizer.from_pretrained(model_path)
+        if self.tokenizer.pad_token_id is None:
+            self.tokenizer.pad_token = self.tokenizer.eos_token
+        self.model = AutoModelForCausalLM.from_pretrained(
+            model_path,
+            torch_dtype=torch.bfloat16,
+            device_map="cuda",
+        )
+        self.model.eval()
+
+    def _truncate_evidence_block(self, evidence_text: str, reserve_tokens: int) -> str:
+        """Token-truncate the evidence section so the whole prompt fits.
+
+        ``reserve_tokens`` is the budget consumed by everything that is NOT the
+        evidence text (instruction, question, scaffolding). We cap the evidence
+        to ``max_prompt_tokens - reserve_tokens``.
+        """
+        cap = self.max_prompt_tokens - reserve_tokens
+        if cap <= 0:
+            cap = max(256, self.max_prompt_tokens // 2)
+        ids = self.tokenizer(evidence_text, add_special_tokens=False)["input_ids"]
+        if len(ids) <= cap:
+            return evidence_text
+        truncated = self.tokenizer.decode(ids[:cap], skip_special_tokens=True)
+        return truncated + "\n[... evidence truncated ...]"
+
+    def _build_prompt(self, question: str, question_date: str, evidence: List[Evidence]) -> str:
+        # Build the evidence section from ALL retrieved rounds (not just top-1).
+        blocks = [ev.as_block(i) for i, ev in enumerate(evidence, start=1)]
+        evidence_text = "\n\n".join(blocks) if blocks else "(no evidence retrieved)"
+
+        date_line = f"Today's date is {question_date}.\n" if question_date else ""
+        # Direct-completion QA prompt. Meta-Llama-3-8B is a *base* model, so a
+        # concise instruction ending in "ANSWER:" elicits a short answer far
+        # more reliably than a JSON / chain-of-note format (which the base model
+        # tends to ramble past the short token budget).
+        instruction = (
+            "You are a long-term memory assistant. Using ONLY the evidence "
+            "below from the user's past conversations, answer the question with "
+            "a short, direct answer. Pay attention to dates and prefer the most "
+            "recent information when facts were updated. If the evidence does "
+            "not contain the answer, reply \"I don't know\".\n"
+        )
+        head = instruction
+        tail = f"\n\n{date_line}QUESTION: {question}\nANSWER:"
+        reserve = (
+            len(self.tokenizer(head + "\n\nEVIDENCE:\n" + tail, add_special_tokens=False)["input_ids"])
+            + self.max_new_tokens
+            + 16
+        )
+        evidence_text = self._truncate_evidence_block(evidence_text, reserve)
+        return f"{head}\nEVIDENCE:\n{evidence_text}{tail}"
+
+    def _build_inputs(self, question: str, question_date: str, evidence: List[Evidence]):
+        prompt = self._build_prompt(question, question_date, evidence)
+        input_ids = self.tokenizer(prompt, return_tensors="pt")["input_ids"]
+        return input_ids.to(self.model.device)
+
+    def _extract_answer(self, text: str) -> str:
+        text = text.strip()
+        # Base model may keep generating extra turns; keep only the first line/
+        # sentence-ish span and stop at obvious continuation markers.
+        for marker in ("\nQUESTION:", "\nEVIDENCE:", "\nANSWER:", "\n\n"):
+            idx = text.find(marker)
+            if idx != -1:
+                text = text[:idx]
+        return text.strip()
+
+    def answer(
+        self,
+        question: str,
+        question_date: str,
+        evidence: List[Evidence],
+        token_budget: int = 0,
+    ) -> str:
+        torch = self._torch
+        input_ids = self._build_inputs(question, question_date, evidence)
+        attention_mask = torch.ones_like(input_ids)
+        with torch.no_grad():
+            out = self.model.generate(
+                input_ids,
+                attention_mask=attention_mask,
+                max_new_tokens=self.max_new_tokens,
+                do_sample=False,
+                num_beams=1,
+                pad_token_id=self.tokenizer.pad_token_id,
+            )
+        gen_ids = out[0][input_ids.shape[1]:]
+        text = self.tokenizer.decode(gen_ids, skip_special_tokens=True)
+        return self._extract_answer(text)
+
+
 def build_reader(reader_type: str, model: Optional[str] = None) -> Reader:
     reader_type = (reader_type or "stub").lower()
     if reader_type == "stub":
         return StubReader()
     if reader_type in ("openai", "gpt4o", "openai-chat"):
         return OpenAIChatReader(model=model)
-    raise ValueError(f"unknown reader type: {reader_type} (use 'stub' or 'openai')")
+    if reader_type in ("local", "hf", "local_hf"):
+        return LocalHFReader(model_path=model or "models/Meta-Llama-3-8B")
+    raise ValueError(
+        f"unknown reader type: {reader_type} (use 'stub', 'openai', or 'local')"
+    )
