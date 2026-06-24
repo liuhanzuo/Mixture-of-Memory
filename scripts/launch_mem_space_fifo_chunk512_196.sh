@@ -16,6 +16,7 @@ export HF_HOME="$PROJECT_ROOT/.hf_cache"
 export HF_DATASETS_CACHE="$PROJECT_ROOT/.hf_cache/datasets"
 export PYTHONPATH="$PROJECT_ROOT/third_party/babilong-pkg:$PROJECT_ROOT:${PYTHONPATH:-}"
 export PYTHONUNBUFFERED=1
+export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 PYBIN="${PYTHON_BIN:-/opt/conda/envs/torch-base/bin/python}"
 RUN="mem_space_fifo_b50_chunk512"
 mkdir -p logs
