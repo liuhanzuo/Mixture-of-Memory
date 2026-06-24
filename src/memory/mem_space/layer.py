@@ -1161,7 +1161,16 @@ class MemorySpaceLayer(nn.Module):
         def _ckpt_fn(h: torch.Tensor) -> Any:
             return self.wrapped_layer(h, **kwargs)
 
-        return _ckpt.checkpoint(_ckpt_fn, hidden_states, use_reentrant=False)
+        # FIX (2026-06-24): torch.utils.checkpoint(use_reentrant=False) skips
+        # grad tracking when hidden_states.requires_grad is False (frozen embed
+        # path), making the checkpoint output a leaf with no grad_fn.  This
+        # silently breaks the inject_gate gradient path even though the gate
+        # parameter has requires_grad=True.  We ensure the input carries a
+        # grad by requiring grad here — the backbone is frozen so no extra
+        # memory is committed for backbone weights; only the activation itself
+        # needs to be retained for inject_gate backprop.
+        _hs = hidden_states if hidden_states.requires_grad else hidden_states.requires_grad_(True)
+        return _ckpt.checkpoint(_ckpt_fn, _hs, use_reentrant=False)
 
     # --------------------------------------------------------------------- #
     # Ablation bypass
@@ -1324,7 +1333,10 @@ class MemorySpaceLayer(nn.Module):
             slot_delta = slot_delta * (_bypass_norms / _sd_norms).clamp(max=1.0)
 
         # Inject gate (same learned gate as the slot path).
-        _hs_f32 = hidden_states.detach().float()
+        # NOTE: do NOT detach hidden_states here — inject_gate is the only
+        # trainable parameter in the FIFO path, and its gradient must flow
+        # through hidden_states → gate logit → g → next_hidden → loss.
+        _hs_f32 = hidden_states.float()
         _gate_logit = torch.nn.functional.linear(
             _hs_f32,
             self.inject_gate.weight.float(),
