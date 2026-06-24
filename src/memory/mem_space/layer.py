@@ -568,6 +568,19 @@ class MemorySpaceLayer(nn.Module):
             config, "soft_write_content", "slot_query"
         )
 
+        # FIFO hidden-state memory (方案B, 2026-06-24).
+        # When use_fifo_memory=True, ALL slot routing is bypassed and the layer
+        # maintains a rolling FIFO buffer of past chunk hidden states. The
+        # current chunk attends these via full causal attention (no routing, no
+        # slot projection) — MemoryLLM write-direct / read-full style.
+        self._use_fifo_memory = getattr(config, "use_fifo_memory", False)
+        self._fifo_buffer_chunks = int(getattr(config, "fifo_buffer_chunks", 50))
+        self._fifo_detach = bool(getattr(config, "fifo_detach", True))
+        # The FIFO buffer is a list of [B, T_c, d] tensors (one per past chunk).
+        # Managed as a plain attribute (not registered as a parameter/buffer) so
+        # it does not appear in state_dict or interfere with DDP sync.
+        self._fifo_buf: list = []
+
         # Learnable slot↔hidden projections. We do NOT take the slot_dim==d_model
         # shortcut (Identity) because that path has zero trainable capacity and was
         # empirically responsible for the residual-gap pathology after fix1+fix2
@@ -1168,6 +1181,174 @@ class MemorySpaceLayer(nn.Module):
         """
         return self.wrapped_layer(hidden_states, **kwargs)
 
+    def _forward_fifo(
+        self,
+        hidden_states: torch.Tensor,
+        attention_mask=None,
+        position_ids=None,
+        past_key_values=None,
+        use_cache=False,
+        position_embeddings=None,
+        **kwargs,
+    ) -> torch.Tensor:
+        """FIFO hidden-state memory forward (方案B, MemoryLLM-style, 2026-06-24).
+
+        Maintains a rolling FIFO buffer of the past `fifo_buffer_chunks` chunks'
+        hidden states (detached). The current chunk H attends all buffered past
+        hiddens as a read-only causal prefix via the wrapped decoder layer's own
+        full attention — no routing, no slot projections.
+
+        Write: store current hidden_states (detached if fifo_detach=True) into
+               buffer, evicting the oldest entry when full.
+        Read:  concat [past_hiddens_prefix | current_H], build a causal-looking
+               extended attention mask (prefix tokens see each other causally,
+               H-tokens see all prefix + earlier H), run wrapped layer, slice
+               out H-portion, apply inject gate, return next_hidden.
+
+        The inject gate is shared with the slot path (self.inject_gate) so the
+        model can learn to suppress irrelevant prefix content.
+        """
+        B, T, d = hidden_states.shape
+
+        # ---- Step 1: Read — build prefix from FIFO buffer ----
+        if self._fifo_buf:
+            # Stack past chunks: each entry is [B, T_c, d]; cat along seq dim.
+            # Filter stale entries whose batch-size doesn't match (after reset).
+            valid = [h for h in self._fifo_buf if h.shape[0] == B]
+            if valid:
+                prefix = torch.cat(valid, dim=1)          # [B, P, d]
+                P = prefix.shape[1]
+                extended_hidden = torch.cat([prefix, hidden_states], dim=1)  # [B, P+T, d]
+            else:
+                # No valid past entries — cold start, run bypass.
+                P = 0
+                extended_hidden = hidden_states
+        else:
+            P = 0
+            extended_hidden = hidden_states
+
+        # ---- Step 2: Build extended position embeddings ----
+        if P > 0 and position_embeddings is not None:
+            cos, sin = position_embeddings              # each [B, T, hd/2] or [1, T, hd/2]
+            # Prefix entries keep their original temporal positions (0..P-1).
+            # We shift them to position 0 (like slot tokens) to avoid OOD positions.
+            # This matches the slot path's convention: prefix @ position 0.
+            # Current H tokens get their own cos/sin as-is.
+            # Build [P+T] position embeddings: prefix gets pos-0 cos/sin repeated.
+            if cos.dim() == 3:
+                pos0_cos = cos[:, :1, :].expand(B, P, -1)  # [B, P, hd/2]
+                pos0_sin = sin[:, :1, :].expand(B, P, -1)
+            else:
+                pos0_cos = cos[:1, :].expand(P, -1).unsqueeze(0).expand(B, -1, -1)
+                pos0_sin = sin[:1, :].expand(P, -1).unsqueeze(0).expand(B, -1, -1)
+            ext_cos = torch.cat([pos0_cos, cos], dim=1)  # [B, P+T, hd/2]
+            ext_sin = torch.cat([pos0_sin, sin], dim=1)
+            ext_pos_emb = (ext_cos, ext_sin)
+        else:
+            ext_pos_emb = position_embeddings
+
+        # ---- Step 3: Build causal attention mask ----
+        # Layout: [prefix P tokens | current H T tokens]
+        # mask[i,j] = True means token i CAN attend token j (True = attend).
+        # Prefix tokens: causal among themselves (prefix[i] sees prefix[0..i]).
+        # H tokens: attend all prefix + causal H.
+        S = P + T
+        if P > 0:
+            # Build [B, 1, S, S] additive mask (0 = attend, -inf = mask out).
+            # Using additive mask convention matching HF SDPA.
+            dev = hidden_states.device
+            dtype = hidden_states.dtype
+            mask_2d = torch.zeros(S, S, device=dev, dtype=dtype)
+            # Upper triangle (i < j) → -inf (causal masking)
+            mask_2d = torch.triu(
+                torch.full((S, S), float("-inf"), device=dev, dtype=dtype),
+                diagonal=1,
+            )
+            ext_attn_mask = mask_2d.unsqueeze(0).unsqueeze(0)   # [1, 1, S, S]
+        else:
+            # No prefix: use the original attention_mask unchanged.
+            ext_attn_mask = attention_mask
+
+        # ---- Step 4: Run bypass (current H only, for inject gate) ----
+        bypass_out = self._maybe_ckpt_wrapped_layer(
+            hidden_states,
+            attention_mask=None,
+            position_ids=None,
+            past_key_values=None,
+            use_cache=False,
+            position_embeddings=position_embeddings,
+            **kwargs,
+        )
+        if isinstance(bypass_out, tuple):
+            bypass_h = bypass_out[0]
+        else:
+            bypass_h = bypass_out
+
+        if P == 0:
+            # Cold start — nothing in buffer yet; just use bypass result.
+            # Write current hiddens to buffer and return.
+            h_stored = hidden_states.detach() if self._fifo_detach else hidden_states
+            self._fifo_buf.append(h_stored)
+            if len(self._fifo_buf) > self._fifo_buffer_chunks:
+                self._fifo_buf.pop(0)
+            return bypass_h
+
+        # ---- Step 5: Run extended attention (prefix + current H) ----
+        ext_out = self._maybe_ckpt_wrapped_layer(
+            extended_hidden,
+            attention_mask=ext_attn_mask,
+            position_ids=None,
+            past_key_values=None,
+            use_cache=False,
+            position_embeddings=ext_pos_emb,
+            **kwargs,
+        )
+        if isinstance(ext_out, tuple):
+            ext_h = ext_out[0]
+            extra = ext_out[1:]
+        else:
+            ext_h = ext_out
+            extra = ()
+
+        # Slice out the H-portion (last T tokens).
+        h_out = ext_h[:, P:, :]      # [B, T, d]
+
+        # ---- Step 6: Compute slot_delta + inject gate (same as slot path) ----
+        slot_delta = h_out - bypass_h
+
+        # Clip slot_delta per-token norm (same as slot path Fix M-1).
+        cfg = self.config
+        if not cfg.no_slot_delta_clip:
+            _bypass_norms = bypass_h.norm(dim=-1, keepdim=True).clamp(min=1e-6)
+            _sd_norms = slot_delta.norm(dim=-1, keepdim=True).clamp(min=1e-6)
+            slot_delta = slot_delta * (_bypass_norms / _sd_norms).clamp(max=1.0)
+
+        # Inject gate (same learned gate as the slot path).
+        _hs_f32 = hidden_states.detach().float()
+        _gate_logit = torch.nn.functional.linear(
+            _hs_f32,
+            self.inject_gate.weight.float(),
+            self.inject_gate.bias.float(),
+        )
+        g = torch.sigmoid(_gate_logit).to(hidden_states.dtype)  # [B, T, 1]
+
+        next_hidden = bypass_h + g * slot_delta
+
+        # ---- Step 7: Write current hidden_states to FIFO buffer ----
+        h_stored = hidden_states.detach() if self._fifo_detach else hidden_states
+        self._fifo_buf.append(h_stored)
+        if len(self._fifo_buf) > self._fifo_buffer_chunks:
+            self._fifo_buf.pop(0)
+
+        # Telemetry (re-use last_aux_losses slot so training loop can log it).
+        self.last_aux_losses = {}
+        self.last_idx = None
+        self.last_scores = None
+
+        if extra:
+            return (next_hidden, *extra)
+        return next_hidden
+
     # --------------------------------------------------------------------- #
     # Main forward
     # --------------------------------------------------------------------- #
@@ -1301,6 +1482,23 @@ class MemorySpaceLayer(nn.Module):
         self._fwd_count += 1
 
         cfg = self.config
+
+        # ------------------------------------------------------------------
+        # FIFO hidden-state memory (方案B, 2026-06-24).
+        # When use_fifo_memory=True, bypass ALL slot routing and use a
+        # MemoryLLM-style FIFO rolling buffer of raw past-chunk hiddens as
+        # a read-only prefix for the wrapped decoder layer.
+        # ------------------------------------------------------------------
+        if self._use_fifo_memory:
+            return self._forward_fifo(
+                hidden_states,
+                attention_mask=attention_mask,
+                position_ids=position_ids,
+                past_key_values=past_key_values,
+                use_cache=use_cache,
+                position_embeddings=position_embeddings,
+                **kwargs,
+            )
 
         # Batched-eval padding mask (2026-06-09). The eval driver stashes the
         # current chunk's [B, T] token mask on the shared memory bank as

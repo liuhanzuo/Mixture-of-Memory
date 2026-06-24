@@ -28,15 +28,20 @@ performance later.
 from .config import MemorySpaceConfig
 from .memory_bank import MemoryBank
 from .selector import TopKSelector
+from .fast_mem import FastMemModule
 from .layer import MemorySpaceLayer
-from .patch import apply_mem_space_to_model
+from .patch import apply_mem_space_to_model, _reset_fast_mem, _detach_fast_mem, _reset_fifo_memory
 from .l3_summary import L3SummaryPool
 
 __all__ = [
     "MemorySpaceConfig",
     "MemoryBank",
     "TopKSelector",
+    "FastMemModule",
     "MemorySpaceLayer",
     "apply_mem_space_to_model",
+    "_reset_fast_mem",
+    "_detach_fast_mem",
+    "_reset_fifo_memory",
     "L3SummaryPool",
 ]

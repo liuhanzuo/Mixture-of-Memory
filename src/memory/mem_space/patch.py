@@ -389,3 +389,20 @@ def _detach_fast_mem(model: nn.Module) -> None:
     for w in mem_layers:
         if w._fast_mem_state is not None:
             w._fast_mem_state = w._fast_mem_state.detach()
+
+
+def _reset_fifo_memory(model: nn.Module) -> None:
+    """Clear per-layer FIFO hidden-state buffer (方案B, for sample boundaries).
+
+    Called at sample boundaries so the FIFO buffer does not carry stale hidden
+    states from an unrelated document into the next. At CHUNK boundaries within
+    the SAME document the buffer should be KEPT (that is the whole point of the
+    FIFO mechanism). Calling this function has no effect when use_fifo_memory=False.
+    """
+    root = getattr(model, "module", model)
+    mem_layers = getattr(root, "_mem_space_layers", None)
+    if not mem_layers:
+        return
+    for w in mem_layers:
+        if hasattr(w, "_fifo_buf"):
+            w._fifo_buf = []

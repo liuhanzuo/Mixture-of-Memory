@@ -658,6 +658,9 @@ def _reset_banks(model: torch.nn.Module) -> None:
         for w in mem_layers:
             if hasattr(w, "_fast_mem_state"):
                 w._fast_mem_state = None
+            # Reset FIFO hidden-state buffer (方案B, 2026-06-24).
+            if hasattr(w, "_fifo_buf"):
+                w._fifo_buf = []
 
 
 def _detach_banks(model: torch.nn.Module) -> None:
@@ -1554,6 +1557,23 @@ def parse_args() -> argparse.Namespace:
                         "(Landmark landmark-token: selection passes through the learnable "
                         "summarizer, not a raw-KV bypass). off=byte-identical.")
 
+    # ----- FIFO hidden-state memory (方案B, MemoryLLM-style, 2026-06-24) ----- #
+    # Instead of routing to compressed slots, store the raw per-chunk hidden
+    # states in a rolling FIFO buffer and concat them as a prefix at read time.
+    # This is a zero-routing, zero-compression baseline that lets us check
+    # whether the slot bottleneck (128-slot routing) is the source of the
+    # readout gap vs. simply having access to exact past hiddens.
+    p.add_argument("--use_fifo_memory", action="store_true", default=False,
+                   help="Enable FIFO hidden-state memory (方案B, MemoryLLM-style). "
+                        "Replaces slot routing with a rolling FIFO buffer of raw "
+                        "past-chunk hidden states. Default False (byte-identical).")
+    p.add_argument("--fifo_buffer_chunks", type=int, default=50,
+                   help="Number of past chunks kept in the FIFO buffer. "
+                        "Default 50 (matches MemoryLLM num_blocks=50).")
+    p.add_argument("--fifo_detach", action="store_true", default=True,
+                   help="Detach FIFO buffer entries (break BPTT through past chunks). "
+                        "Default True (safe). Set False for full BPTT (higher OOM risk).")
+
     # ----- Full fine-tune: unfreeze the entire Llama backbone (2026-06-18) ----- #
     # Landmark-faithful SFT: the frozen reader cannot consume injected KV through
     # an attention path it was never trained on (oracle-perfect needle still ≈OFF
@@ -1791,6 +1811,10 @@ def build_model(args, device, dtype) -> torch.nn.Module:
         rawkv_grouped_readout=args.rawkv_grouped_readout,
         rawkv_subblock_size=args.rawkv_subblock_size,
         rawkv_inwindow_summary=args.rawkv_inwindow_summary,
+        # FIFO hidden-state memory (方案B, 2026-06-24).
+        use_fifo_memory=args.use_fifo_memory,
+        fifo_buffer_chunks=args.fifo_buffer_chunks,
+        fifo_detach=args.fifo_detach,
     )
     # Per-slot raw-KV cache is an experimental no-param runtime path. Keep it as
     # dynamic config attrs to avoid touching the shared dataclass while another
@@ -3040,6 +3064,10 @@ def _save_adapter(model, args, step: int, final: bool = False) -> None:
             "rawkv_readout_topk_chunks": args.rawkv_readout_topk_chunks,
             "rawkv_readout_temp": args.rawkv_readout_temp,
             "rawkv_gist_pool": args.rawkv_gist_pool,
+            # FIFO hidden-state memory (方案B, 2026-06-24).
+            "use_fifo_memory": args.use_fifo_memory,
+            "fifo_buffer_chunks": args.fifo_buffer_chunks,
+            "fifo_detach": args.fifo_detach,
             # Partial-unfreeze metadata (v2): records which layers were trainable.
             "unfreeze_backbone": args.unfreeze_backbone,
             "unfreeze_layers_from": args.unfreeze_layers_from,

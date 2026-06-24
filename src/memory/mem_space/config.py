@@ -848,6 +848,37 @@ class MemorySpaceConfig:
     slot_evict_floor: float = 0.0
     slot_evict_protect_chunks: int = 2
 
+    # ---------------------------------------------------------------------- #
+    # FIFO hidden-state memory (方案B, MemoryLLM-style, 2026-06-24).
+    # ---------------------------------------------------------------------- #
+    # When True, replaces the top-k slot routing + EMA writeback with a
+    # MemoryLLM-style FIFO buffer: each chunk's hidden states are stored
+    # directly (no compression/routing), and readout is full attention over
+    # all buffered hidden states (no routing, no slot projection). This is
+    # the "method B" of the MemoryLLM combination study — structurally simpler
+    # than the slot mechanism, and bounded above by method A (MemoryLLM full
+    # prefix). Default False → byte-identical to existing slot mechanism.
+    #
+    #   use_fifo_memory     : master switch. When True, ALL slot-routing code
+    #                         is bypassed; the wrapped decoder layer is called
+    #                         with past-chunk hidden states prepended as a
+    #                         read-only prefix (causal mask: prefix tokens see
+    #                         each other causally, current chunk H-tokens see
+    #                         all prefix tokens).
+    #   fifo_buffer_chunks  : number of past chunks to keep in the FIFO buffer.
+    #                         50 ≈ MemoryLLM's num_blocks × chunk_size tokens.
+    #                         With chunk_size=512 this is 50×512=25600 tokens
+    #                         of raw KV context (uncompressed).
+    #   fifo_detach         : whether to detach the FIFO buffer entries before
+    #                         prepending (breaks BPTT through previous chunks,
+    #                         identical to how the slot mechanism works under
+    #                         the outer training loop's _reset_banks detach).
+    #                         Default True (safe default; False = full BPTT,
+    #                         may OOM on very long sequences).
+    use_fifo_memory: bool = False
+    fifo_buffer_chunks: int = 50
+    fifo_detach: bool = True
+
     def __post_init__(self) -> None:
         if self.num_slots <= 0:
             raise ValueError(f"num_slots must be > 0, got {self.num_slots}")
