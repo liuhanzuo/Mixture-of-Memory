@@ -1642,6 +1642,24 @@ def parse_args() -> argparse.Namespace:
         })
     else:
         args.rawkv_readout_layers = None
+    # FIFO hidden-state memory (方案B) reads the buffered past-chunk hiddens
+    # through the WRAPPED decoder layer's own attention — the slot path is fully
+    # bypassed, so the only mem_space param on the graph is the tiny inject_gate,
+    # and even that vanishes on a cold-start (empty-buffer) chunk where
+    # _forward_fifo returns the frozen bypass output directly. A fully frozen
+    # backbone therefore (a) cannot learn to consume the FIFO prefix and
+    # (b) produces a loss with NO grad_fn on single-chunk / first-chunk steps
+    # → "element 0 of tensors does not require grad" at backward. Mirror the
+    # MemoryLLM-style readout channels (--use_rawkv_readout / --use_inattn_kv):
+    # FIFO MUST unfreeze the readout backbone.
+    if args.use_fifo_memory and not args.unfreeze_backbone:
+        raise ValueError(
+            "--use_fifo_memory requires --unfreeze_backbone (recommended: "
+            "--unfreeze_backbone --unfreeze_layers_from 16) so the reader can "
+            "consume the FIFO prefix and the loss always carries grad_fn. A "
+            "frozen backbone leaves only the inject_gate trainable, which is "
+            "absent on cold-start chunks → backward fails with no grad_fn."
+        )
     return args
 
 

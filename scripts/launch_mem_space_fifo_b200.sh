@@ -28,6 +28,7 @@ setsid bash -c "CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 $PYBIN -m torch.distributed
   --chunk_size 1024 --batch_size 1 --num_slots 128 --top_k 16 --selector_dim 128 \
   --selector_temperature 40 --load_balance_weight 0.0 --entropy_aux_weight 0.0 \
   --use_fifo_memory --fifo_buffer_chunks 50 --fifo_detach \
+  --unfreeze_backbone --unfreeze_layers_from 16 \
   --slot_init strided_token --slot_init_noise 0.0 --writeback_gate_max 1.0 \
   --gradient_checkpointing --gradient_accumulation_steps 4 \
   --curriculum 0:3 --bptt_window 2 \
