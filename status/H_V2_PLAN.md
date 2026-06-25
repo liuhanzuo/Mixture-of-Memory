@@ -66,19 +66,30 @@ SSH: `sshpass -f <pw> ssh -o StrictHostKeyChecking=no -o ConnectTimeout=12 -o Pr
 ## 4. PENDING 实验队列（auto_launch 规则）
 
 **节点空出时按此队列推进。所有训练强制 `--babilong_mix_fraction 0`。**
-**启动方式：staging 脚本已部署到两个 diskB 节点 `/tmp/stage_probes.sh`。**
-`bash /tmp/stage_probes.sh <PROBE> "<GPU列表>"`，PROBE ∈ {P2,P3,P4,P5,NOLEAK3000_W0,NOLEAK3000_W6,NOLEAK3000_packed,NOLEAK3000_keepset}。
-（B200.53/wzc1 无 b25/b100 ckpt，probe 只能在 diskB 节点跑；wzc1 跑则需先 rsync ckpt ~35min。）
 
-| 优先级 | 任务 | 触发条件 | auto_launch | 启动 |
+### ★ 给独立 daemon heartbeat 的自包含启动方法（fresh session 必读，不依赖 /tmp）
+staging 脚本持久存于 diskA repo：`scripts/_stage_fifo_probes.sh`。diskB 节点用前先 scp 过去（diskA/diskB 不共享 FS）：
+```bash
+# 从本机(diskA)推送 staging 脚本到 diskB 节点，再远程执行某个 probe：
+PW=configs/password_h20_returned.txt; IP=28.58.245.174   # 或 .7.53=28.48.7.53
+sshpass -f $PW scp -o StrictHostKeyChecking=no -o PreferredAuthentications=password \
+  scripts/_stage_fifo_probes.sh root@$IP:/tmp/stage_probes.sh
+sshpass -f $PW ssh -o StrictHostKeyChecking=no -o ConnectTimeout=15 -o PreferredAuthentications=password root@$IP \
+  'bash /tmp/stage_probes.sh <PROBE> "<GPU列表>"'
+```
+PROBE ∈ {P2,P3,P4,P5,NOLEAK3000_W0,NOLEAK3000_W6,NOLEAK3000_packed,NOLEAK3000_keepset}。
+脚本内已硬编码 ckpt 路径/flag/lengths，只需传 PROBE 名 + 空闲 GPU 列表（NSHARD 自动=GPU数,≤4）。
+（B200.53/wzc1 无 b25/b100 ckpt，probe 只能在 diskB 节点跑。）
+
+| 优先级 | 任务 | 触发条件 | auto_launch | PROBE 名 |
 |---|---|---|---|---|
-| P0 | **NOLEAK3000_W0**（史上第一个诚实 FIFO 测量）| .7.53 训练完成(full_model.pt 落盘) | true | `stage_probes.sh NOLEAK3000_W0 "0 1 2 3"` |
-| P0 | **NOLEAK3000_packed**（干净 ckpt 上测 H_POS，无 train/eval 失配）| 同上 + 节点空 | true | `stage_probes.sh NOLEAK3000_packed "4 5 6 7"` |
-| P0 | **NOLEAK3000_W6**（干净 W0/W6 gap）| 同上 + 节点空 | true | `stage_probes.sh NOLEAK3000_W6 "<空GPU>"` |
-| P1 | **P2 reader-attn keep-set@b100**（survey #1 方向，零训练，现成 ckpt）| 任一 diskB 节点空 ≥4 GPU | true | `stage_probes.sh P2 "<空GPU>"` |
-| P1 | **P3 packed+keepset@b25**（叠加，关 gap 全胜测试）| 节点空 | true | `stage_probes.sh P3 "<空GPU>"` |
-| P2 | P4 real-pos@b25 / P5 keepset-top10@b100 | 节点空 | true | `stage_probes.sh P4/P5 "<空GPU>"` |
-| P2 | 方向定夺后正式重训（赢家方向 mix=0 重训，成功线 qa5 16k>16 且 32k>9）| 5-probe 干净判据出 | false（等综合）| 可能需 coder |
+| P0 | **NOLEAK3000_W0**（史上第一个诚实 FIFO 测量）| .7.53 训练完成(`outputs/mem_space_fifo_b25_chunk512_noleak/full_model.pt` 落盘,非 step000500) | true | `NOLEAK3000_W0` |
+| P0 | **NOLEAK3000_packed**（干净 ckpt 测 H_POS，无 train/eval 失配）| 同上 + 节点空 | true | `NOLEAK3000_packed` |
+| P0 | **NOLEAK3000_W6**（干净 W0/W6 gap）| 同上 + 节点空 | true | `NOLEAK3000_W6` |
+| P1 | **P2 reader-attn keep-set@b100**（survey #1 方向，零训练，现成 ckpt）| 任一 diskB 节点空 ≥4 GPU | true | `P2` |
+| P1 | **P3 packed+keepset@b25**（叠加，关 gap 全胜测试）| 节点空 | true | `P3` |
+| P2 | P4 real-pos@b25 / P5 keepset-top10@b100 | 节点空 | true | `P4`/`P5` |
+| P2 | 方向定夺后正式重训（赢家方向 mix=0 重训，成功线 qa5 16k>16 且 32k>9）| 5-probe 干净判据出 | false（等综合）| — |
 
 详细 probe 背景见 `status/PENDING_TASKS.md` 末尾 + `status/CLEAN_SOTA_SURVEY_20260625.md`。
 
