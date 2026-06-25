@@ -316,6 +316,20 @@ def load_mem_space_model(
 # --------------------------------------------------------------------------- #
 
 
+def _set_memory_disabled(model, flag: bool) -> None:
+    """Toggle MemorySpaceLayer._memory_disabled on every wrapped layer.
+
+    When True, MemorySpaceLayer.forward() short-circuits to forward_no_memory
+    (vanilla Llama path), bypassing all memory bank writes and reads. Used by
+    --memory_disabled CLI flag as a falsification test: if BABILong scores stay
+    high with memory disabled, the high scores are an artifact (in-context leak
+    / few-shot prior) rather than evidence the memory bank is working.
+    """
+    root = getattr(model, "module", model)
+    for w in getattr(root, "_mem_space_layers", []) or []:
+        w._memory_disabled = flag
+
+
 @torch.no_grad()
 def generate_with_mem_space(
     model,
@@ -773,6 +787,14 @@ def main():
                         help="Include BABILong DEFAULT_PROMPTS[task]['examples']")
     parser.add_argument("--use_post_prompt", action="store_true", default=True,
                         help="Include BABILong DEFAULT_PROMPTS[task]['post_prompt']")
+    parser.add_argument("--memory_disabled", action="store_true", default=False,
+                        help="Falsification ablation: disable MemorySpaceLayer memory "
+                             "(bypass to vanilla Llama forward) for the ENTIRE "
+                             "per-sample inference, covering both the streaming "
+                             "chunk ingestion AND the final generation. If scores "
+                             "stay high with this flag, the result is an artifact "
+                             "(in-context leak / few-shot prior), not evidence the "
+                             "memory bank works.")
     args = parser.parse_args()
 
     if args.swa_eval_chunks < 0:
@@ -1016,16 +1038,22 @@ def main():
                     target, question, input_ids = _encode_sample(idx)
                     input_ids = input_ids.to(device)
                     try:
-                        with torch.amp.autocast(device_type="cuda", dtype=dtype):
-                            output = generate_with_mem_space(
-                                model=model,
-                                input_ids=input_ids,
-                                tokenizer=tokenizer,
-                                chunk_size=args.chunk_size,
-                                max_new_tokens=args.max_new_tokens,
-                                device=device,
-                                swa_eval_chunks=args.swa_eval_chunks,
-                            )
+                        if args.memory_disabled:
+                            _set_memory_disabled(model, True)
+                        try:
+                            with torch.amp.autocast(device_type="cuda", dtype=dtype):
+                                output = generate_with_mem_space(
+                                    model=model,
+                                    input_ids=input_ids,
+                                    tokenizer=tokenizer,
+                                    chunk_size=args.chunk_size,
+                                    max_new_tokens=args.max_new_tokens,
+                                    device=device,
+                                    swa_eval_chunks=args.swa_eval_chunks,
+                                )
+                        finally:
+                            if args.memory_disabled:
+                                _set_memory_disabled(model, False)
                     except RuntimeError as e:
                         if not _is_cuda_oom(e):
                             raise
@@ -1058,16 +1086,22 @@ def main():
                 for (idx, target, question, toks, _nc) in tqdm(
                     singles, desc=f"{task}/{split_name}/single", leave=False
                 ):
-                    with torch.amp.autocast(device_type="cuda", dtype=dtype):
-                        out = generate_with_mem_space(
-                            model=model,
-                            input_ids=toks.unsqueeze(0).to(device),
-                            tokenizer=tokenizer,
-                            chunk_size=args.chunk_size,
-                            max_new_tokens=args.max_new_tokens,
-                            device=device,
-                            swa_eval_chunks=args.swa_eval_chunks,
-                        )
+                    if args.memory_disabled:
+                        _set_memory_disabled(model, True)
+                    try:
+                        with torch.amp.autocast(device_type="cuda", dtype=dtype):
+                            out = generate_with_mem_space(
+                                model=model,
+                                input_ids=toks.unsqueeze(0).to(device),
+                                tokenizer=tokenizer,
+                                chunk_size=args.chunk_size,
+                                max_new_tokens=args.max_new_tokens,
+                                device=device,
+                                swa_eval_chunks=args.swa_eval_chunks,
+                            )
+                    finally:
+                        if args.memory_disabled:
+                            _set_memory_disabled(model, False)
                     results[idx] = out
 
                 # Multi-chunk samples: group by exact chunk count, then split
@@ -1088,15 +1122,21 @@ def main():
                     ):
                         batch = group[s:s + args.batch_size]
                         tok_list = [b[3] for b in batch]
-                        with torch.amp.autocast(device_type="cuda", dtype=dtype):
-                            outs = generate_batch_with_mem_space(
-                                model=model,
-                                token_list=tok_list,
-                                tokenizer=tokenizer,
-                                chunk_size=args.chunk_size,
-                                max_new_tokens=args.max_new_tokens,
-                                device=device,
-                            )
+                        if args.memory_disabled:
+                            _set_memory_disabled(model, True)
+                        try:
+                            with torch.amp.autocast(device_type="cuda", dtype=dtype):
+                                outs = generate_batch_with_mem_space(
+                                    model=model,
+                                    token_list=tok_list,
+                                    tokenizer=tokenizer,
+                                    chunk_size=args.chunk_size,
+                                    max_new_tokens=args.max_new_tokens,
+                                    device=device,
+                                )
+                        finally:
+                            if args.memory_disabled:
+                                _set_memory_disabled(model, False)
                         for b, o in zip(batch, outs):
                             results[b[0]] = o
 
