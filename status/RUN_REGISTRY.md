@@ -6,48 +6,35 @@
 
 ---
 
-### ★★★★ FIFO chunk512/b25 step3000 W0 — 全档破墙、超越 MemoryLLM（2026-06-25 13:35，方案B 决定性结果）
+### ⚠️ FIFO chunk512/b25 step3000 W0 — 高分受 BABILong 数据泄漏污染（2026-06-25，先标★★★★破墙，14:55 修正降级）
 
 **.7.53 chunk512/b25 step3000 W0 (n=100, _eval_taskpool_2group.sh, swa_eval_chunks=0)：**
 
-| task | 0k | 1k | 2k | 4k | 8k | 16k | 32k |
-|---|---|---|---|---|---|---|---|
-| **b25/c512 qa1** | 96 | 99 | 99 | 93 | 40 | 34 | 30 |
-| **b25/c512 qa2** | 99 | 100 | 100 | 95 | 23 | 32 | 32 |
-| **b25/c512 qa5** | **100** | **100** | **97** | **87** | **65** | **76** | **68** |
-| MemoryLLM teacher qa5 | 47 | 50 | 45 | 39 | 39 | 38 | **34** |
-| 历史 P11 step500 qa5 | 74 | 89 | 81 | 60 | 48 | 45 | 44 |
-| b50/c1024 step3000 W0 qa5 | 35 | 39 | 12 | 21 | 10 | 15 | 8 |
+| task | 0k | 1k | 2k | 4k | 8k | 16k | 32k | 备注 |
+|---|---|---|---|---|---|---|---|---|
+| **b25/c512 qa1** | 96 | 99 | 99 | 93 | 40 | 34 | 30 | 0k-4k 泄漏污染 |
+| **b25/c512 qa2** | 99 | 100 | 100 | 95 | 23 | 32 | 32 | 0k-4k 泄漏污染 |
+| **b25/c512 qa5** | 100 | 100 | 97 | 87 | 65 | 76 | 68 | 0k-4k 泄漏；8k-32k OOD 待验 |
+| MemoryLLM teacher qa5 | 47 | 50 | 45 | 39 | 39 | 38 | 34 | |
+| 历史 P11 step500 qa5 | 74 | 89 | 81 | 60 | 48 | 45 | 44 | 无泄漏 |
+| b50/c1024 step3000 W0 qa5 | 35 | 39 | 12 | 21 | 10 | 15 | 8 | 同泄漏但分低 |
 
-**★决定性裁决：**
-- **每一档全面超越 MemoryLLM teacher**：qa5 32k=68 vs 34（≈2×），8k=65 vs 39（1.7×），16k=76 vs 38（2×）。
-- **vs 历史最佳 P11 step500**：短档高（0k 100 vs 74，1k 100 vs 89），长档 32k=68 vs 44（**+24**）。**自项目开张以来从未见过这种全档碾压。**
-- **vs 同 eval 脚本同数据同口径的 b50/c1024（qa5 32k=8）：8.5× 差异** → 排除 scorer-bug、few-shot-prior、harness-leak；必是 ckpt 真贡献。
+**★★ 关键修正（2026-06-25 14:55，代码核实非口述）：b25 训练含 BABILong 数据，0k-4k 高分是数据泄漏，不是记忆能力。**
+- `train_mem_space_dolmino_cpt.py` 默认 `--babilong_mix_fraction=0.15`（15% 训练步是 BABILong SFT），`--babilong_tasks=qa1,qa2,qa5`（**与 eval 完全相同任务**），`--babilong_lengths=0k,1k,2k,4k`（**覆盖 eval 的 0k-4k**），`--babilong_dataset=RMT-team/babilong`（**与 eval 同一数据集**）。
+- `BABILongTrainDataset`（babilong_dataset.py:79）用 `load_dataset(name,length)[task]` 取样——该 HF 数据集每 length 只有 task split，**无 train/test 隔离 → 训练与 eval 样本池完全重叠**。
+- `max_seq_len=chunk_size*4=2048`（line 3284）：0k/1k 整故事 <2048 完整进入训练（背答案），2k/4k 部分泄漏。
+- b25 launch 脚本未 override 任何 babilong 参数 → 全 default。
+- **∴ qa5 0k=100/1k=100/2k=97/4k=87 这些史无前例满分 = 模型背过 eval 答案，非长程记忆。** 这解释了为何 P11（数据配方无此泄漏到同样程度，或 step500 早停）0k 仅 74——不是 b25 更强，是 b25 见过测试集。
 
-**Sanity 已验证（四重证据，不是 silent-fail）：**
-1. adapter_config.json 含 `use_fifo_memory=true, fifo_buffer_chunks=25, fifo_detach=true`
-2. eval cmdline 无 `--swa_eval_chunks`（默认 0 = W0），CHUNK_SIZE=512 与训练一致
-3. 每 cell 12 CSV × 25-26 行 = 完整 n=100，无 silent-fail
-4. 原始 CSV 输出与 target 字面一致（Jeff/Fred/Jeff/milk/Mary…），非乱码或 EOS-spam
-5. 同口径对照 b50/c1024 给出正常低分（qa5 32k=8）→ 排除评测体系污染
+**8k/16k/32k（65/76/68）= 训练 OOD（max_seq_len=2048 从未覆盖 8k+），仍需 memory-disabled 对照确认：**
+- 存疑点 1：驼峰形 8k=65 < 16k=76 > 32k=68 非单调，长档不应该更易。
+- 存疑点 2：b25 buffer=25 chunk=12800 tok；32k≈64 chunk → FIFO 只留最近 25 个，**前 39 个（61% facts）被淘汰**。只留 39% facts 却 qa5 68？暗示答案可能不靠被淘汰的 facts（=靠 few-shot prior + 最后 chunk + 泄漏的格式先验）。
+- **决定性判别 = memory-disabled 对照**（关 FIFO buffer，只喂最后 chunk+question 跑 8k-32k qa5）。若仍 60+ → 连"OOD 真长程"都不成立。`run_babilong_mem_space.py` 原无此开关，已派 workflow 加 `--memory_disabled`（wf_28a3f1c9）。
+- 对照线索：b50/c1024 同样有 babilong_mix 泄漏，但 qa5 8k-32k=10/15/8（低）→ 说明 c1024 配置下泄漏没帮上长档（或 backbone 训坏）；b25 8k-32k 高 **可能**是 chunk512+小buffer 的结构优势，**也可能**是别的 artifact。未定论。
 
-**★ 含义重大：**
-- 「读出鸿沟」在 chunk512/b25 FIFO 上**已自动消失**——不需要任何 Plan C 蒸馏。
-- **MemoryLLM 不再是 ceiling，而是 floor**：student 强于 teacher 时，蒸馏只会把性能压回 teacher 上限 → Plan C 蒸馏方向**已过时**。
-- 之前 50+ 次实验耗在 slot-routing + 蒸馏 + 路由旋钮 + 训练侧 mass 上，全部因架构选择错误（slot 体系有检索瓶颈，FIFO 体系没有）。
-- **新研究问题**：为什么 b25/c512 work，哪个旋钮是 load-bearing？
-  - H1: chunk_size=512 优于 1024（dilution 与 chunk 大小相关；c1024 W0 长档崩印证）
-  - H2: buffer_length=25 优于 50/100（更小 buffer = 更少 dilution = 隐式 isolation）
-  - H3: FIFO 写原始 chunk hidden >> MemoryLLM 压缩 slot（精确事实绑定不丢）
-  - H4: 训练细节（unfreeze_layers_from=24、bptt=1、lr1e-4、step3000）某项 load-bearing
+**∴ 之前"破墙/超越 MemoryLLM/Plan C 过时"的裁决暂缓**——需先做 (1) memory-disabled 对照隔离 8k-32k 真实性；(2) **用 held-out / 训练未见的 BABILong 长度或重新生成的 needle 重测**，排除泄漏。在此之前 b25 不能算 SOTA。Plan C 蒸馏方向**暂不作废**，待 8k-32k 真实性确认后再定。
 
-**待出炉 eval（同步进行）：本机 b50/c512 W0/W6（隔离 buffer=50 测 H2）、.245.174 b100/c512 W0/W6（隔离 buffer=100 测 H2 剂量曲线）、.7.53 b25 W6（测 W6/W0 gap 在破墙后是否消失）、b50/c1024 W6 (qa5 ≥8k=0 已崩，c1024 不 work)**
-
-**待启动：**
-1. b25 中间 ckpt 早评（step500/1000/1500/2000/2500）on .7.53 → 测过训退化、找峰值
-2. b25 LongBench / LongMemEval / LongEval → 验证迁移到真实长文档（不是 BABILong 过拟合）
-
-CSV：`babilong_results/fifo_b25_c512_final_W0/`（.7.53 diskB），84 个文件已 rsync 部分至本机 diskA。
+CSV：`babilong_results/fifo_b25_c512_final_W0/`（.7.53 diskB）。
 
 ---
 

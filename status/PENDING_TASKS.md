@@ -405,3 +405,99 @@ sshpass -f configs/password_diskA.txt ssh root@28.59.80.196 \
 - 动机：等本机 b50/c512 W0 + .245.174 b100/c512 W0 出炉后，若长档分数(8k-32k)显示 buffer_length 单调影响 → 确认 dilution 剂量曲线；若 b50/b100 也破墙 → buffer_length 不是 load-bearing → H3/H4 候选；若 b50/b100 不破 → b25 是 load-bearing → 探索更小 buffer (b10/b5)。
 - 跨臂中间 ckpt(b50/b100 各 5 个早 ckpt) 用于过训退化对照。
 - 优先级 P1(决定 H1/H2 假说裁决)。auto_launch: true。
+
+---
+
+## [PARTIAL-RUNNING] ★★ b25 数据泄漏判别 — 三个对照实验(auto_launch: true, 等节点空出)
+
+**背景**:b25 W0 qa5 0k=100/4k=87 受 BABILong 数据泄漏污染(train 默认 babilong_mix=0.15 掺 eval-split,全项目通病)。需三个对照隔离真实能力。脚本已写好 commit d03db24。
+
+1. **b25 NOLEAK 训练**[RUNNING 2026-06-25 20:37 @.48.7.53 pid775325](`scripts/launch_mem_space_fifo_b25_chunk512_NOLEAK_diskB.sh`,babilong_mix=0 纯 dolmino):零泄漏基线,产出 outputs/mem_space_fifo_b25_chunk512_noleak/。3000 steps@8H20。✅已启动(b25 W6 eval DONE 后空闲节点自主起,babilong_mix=0.00 已确认)。发射后离线 W0 eval → 真实 b25 长程能力(对比脏 b25 qa5 0k=100 的差值=泄漏贡献)。盘B 节点(.7.53)。auto_launch:true。
+
+2. **b25 T2-align 训练**(`scripts/launch_mem_space_fifo_b25_chunk512_T2_diskB.sh`,babilong_mix=0 + t2_recall_mix=0.15 合成 needle):合法 task-alignment(独立 needle 非 eval split),产出 outputs/mem_space_fifo_b25_chunk512_t2align/。验证"用独立 QA post-training 能否真提升 held-out BABILong"。若 T2 版 > NOLEAK 版(在干净 8k+ 长档)→ task-aligned post-training 有效。盘B 节点。auto_launch:true。
+
+3. **memory-disabled 对照**(等 workflow wf_28a3f1c9 加好 --memory_disabled 开关):用现有脏 b25 ckpt 跑 8k-32k qa5 关 memory。若仍 60+ → 连 OOD 长档都靠 prior 非 memory。脚本待 workflow 产出。盘B 节点(.7.53/.245.174 共享 b25 ckpt 零 rsync)。auto_launch:true。
+
+**裁决逻辑**:
+- 脏 b25(qa5 32k=68) vs NOLEAK b25 vs memory-disabled b25 → 三方对比定位 68 分里多少是泄漏/prior/真 memory
+- T2-align vs NOLEAK → task-aligned post-training 净增益
+- 全部 W0 口径,n=100,_eval_taskpool_2group.sh
+
+注:8k-32k 训练 max_seq_len=2048 不覆盖 → 这部分本来就是 OOD,相对干净;主要污染在 0k-4k。
+
+---
+
+## [PENDING] ★ 树形 hidden memory 方向(用户 2026-06-25 提出)— 设计中
+**用户想法**:把过去 chunk 的 hidden states 存成**树形结构**,query 时用树搜索/遍历决定用哪些 hidden。与 slot 压缩交叉(用户明确要探索 slot×tree)。
+**动机(今日发现驱动)**:
+- H2 dilution:flat buffer 全注意力→needle 被稀释;小 buffer 抗稀释但丢早期 needle
+- 树同时解决两者:叶子保留所有 chunk(不丢 needle),导航只 attend O(log N) 路径节点(不稀释)
+- slot×tree 解决"hidden 无压缩 vs slot 丢精度"矛盾:内部节点 slot 压缩(导航用,省算力),叶子原始 hidden(回答用,保精度)
+- 绕开选择器死路:树每层选 1-of-B(小分支)而非 1-of-64(flat),per-level 精度高
+**设计 workflow**: wiq6fz89m 进行中(5 角度 + 批判 + 综合)。出来后:派 coder 实现第一个 no-train probe(在现有 b25 ckpt 上做 tree-navigation eval),验证可行性再训练。
+**novelty**: vs MemWalker(文本树导航无 hidden)/RAPTOR(摘要树 RAG 外挂)/Compressive Transformer(2级)——我们 = hidden 树 + reader-attn 导航 + 集成 forward + slot 内部压缩 + 可训练,组合可能原创。auto_launch: false(等设计 + 用户确认架构)。
+
+---
+
+## [PENDING] ★★★ Design A: SnapKV-on-chunks 零训练淘汰实验(文献调研 wbr15ytio 推荐,最高优先级)
+**这是当前最优下一步**:实现"reader q·k attention 打分淘汰"替代"丢最老",**零训练 + 用现有 b100 ckpt**,直接验证用户"丢置信度最低 buffer"的想法 + 修复 b25 丢早期 needle 的盲区。
+**机制**:b100 全保留 → 每个 chunk 边界用 reader q·k(obs_window=当前 chunk 最后 64 token)给每个 buffered chunk 打分 score(c_i)=mean_h mean_{q in obs} max_{k in c_i}(q·k/√d),跨32层 mean pool,保留 top-25 + 前2 sink(StreamingLLM),其余淘汰。
+**零新参数**(用 frozen reader 自己 attention,避开所有 trained selector 死路 H2)。**eval-time only**,改 run_babilong_mem_space.py 的 FIFO readout 加 --evict_policy snapkv_chunks。
+**eval**: qa1/qa2/qa5 × {0k,8k,16k,32k} n=100,现有 b100 ckpt(在 .245.174 diskB)。
+**预测**:强成功 qa1 32k≥30(=b25,证明 attention 淘汰=隐式 isolation 且修复早期 needle);中等 >15;失败 ≤10。
+**证伪线**:不超 b50 qa1 32k=24(2/3 task)→ reader-attn chunk 级不 transfer → 转 softmax-sharpening(SSMax)。
+**complexity**: LOW(一次 obs-window query vs buffered keys + argsort,无训练)。
+**依赖**:coder 实现 eval-time evict policy(新代码,~1 文件)。等树形 workflow wiq6fz89m 出来一起综合(树导航 = SnapKV-on-chunks 的分层版,统一实现)。auto_launch: false(等综合 + 用户确认)。
+
+---
+
+## [PENDING] ★★★ FIFO eval-time probes(commit eddb4f1)— heartbeat 按节点空出顺序推进
+**目的**:用现有 b25/b50/b100 ckpt **零训练**验证 W0/W6 gap 的根因。两套 flag(可独立组合,9 个组合中重点跑下面 5 个):
+- `--fifo_pos_mode {none,packed,real}`:位置方案(pos-0 vs 重打包保序 vs 真实稀疏)
+- `--fifo_keep_set_mode {none,flat_readerattn}` + `--fifo_keep_topk 25 --fifo_keep_recency 2`:用 reader q·k 选 chunk
+- `--fifo_keep_all_buffer`:eval 时不淘汰 buffer(配 keep-set 测 keep-all-attend-few)
+
+**实验矩阵(按重要性排序,每个 = 现有 ckpt + 改 flag eval,无训练)**:
+
+| # | ckpt | flag 组合 | 测什么 | 预期 |
+|---|------|----------|--------|------|
+| P1 | b25(脏)  | `pos_mode=packed` | H_POS:packed 位置能否替代 pos-0 抬升 W0 | 8k-32k W0 跳升 → 位置是 gap 主因 |
+| P2 | b100(脏) | `keep_set=flat_readerattn keep_topk=25 keep_all_buffer` | H_DIL:reader-attn 选 25 chunk + keep-all 是否 = b25 长档 | 32k 从 5 → 30+ → dilution + 选择有效 |
+| P3 | b25(脏)  | `pos_mode=packed keep_set=flat_readerattn keep_topk=25 keep_all_buffer` | H_POS + H_DIL 叠加 | 8k-32k 大幅超 b25 baseline 或 ≈ W6 → 全胜 |
+| P4 | b25(脏)  | `pos_mode=real` | real vs packed:绝对距离是否额外有用 | ≈ packed → 只保序够;< packed → real OOD |
+| P5 | b100(脏) | `keep_set=flat_readerattn keep_topk=10 keep_all_buffer` | top-k 敏感度 | 看 K_keep 甜区 |
+
+**口径**:n=100, qa1/qa2/qa5 × {0k,4k,8k,16k,32k}(0k/2k/1k 可跳过省时间,反正泄漏饱和), `_eval_taskpool_2group.sh`, W0(`--swa_eval_chunks 0`)。CSV 路径 `babilong_results/probe_<ckpt>_<flagid>/`。
+
+**节点分配**(等节点空出按顺序):
+- diskA 任一(本机/.196):b25/b50 ckpt 在盘A,直接读
+- diskB 任一(.7.53/.245.174):b25/b100 ckpt 在盘B,直接读 ← P1/P3 最佳
+- B200.53:b50/c1024 ckpt 在 wzc1 盘
+- ⚠️ .7.53 正在跑 NOLEAK 训练,跑完之前不能用
+- ⚠️ NOLEAK b25 训练完成后(明早 ~07:30),先 W0 eval(task #7),然后立即让 .7.53 接 P1/P3 probe(NOLEAK ckpt 也可以做同样 probe,作为干净版对照)
+
+**裁决逻辑(根据 5 个 probe 的结果)**:
+- 若 P1(pos packed) 单独显著抬升 W0 → H_POS 成立,正式做 position-fix 重训
+- 若 P2(keep-set) 单独抬升 b100 → H_DIL 成立,正式做 reader-attn FIFO 重训
+- 若 P3 叠加 ≈ W6 → 两者结合彻底关闭 gap,顶级突破
+- 若 P1/P2 都不动 → 位置和 dilution 都不是 gap 主因,需要换假说(可能是 staleness 或 hidden 本身有损)
+
+**触发条件**:任一节点空出 + GPU 全空闲时 heartbeat 自动发射下一个未完成 probe。**auto_launch: true,优先级 P0**(这是当前最高价值的便宜实验,零训练判定理论假说)。
+
+**Eval launch 模板(diskB,以 P1 b25 packed 为例)**:
+```bash
+cd /apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory
+CKPT=outputs/mem_space_fifo_b25_chunk512/full_model.pt
+CFG=outputs/mem_space_fifo_b25_chunk512/adapter_config.json
+setsid nohup bash -c "
+  export WANDB_MODE=offline
+  RUN_PREFIX=probe_b25_P1_posPacked \
+  CKPT_FILES=\"$CKPT\" CK_NAMES=\"probe_b25_P1_posPacked\" \
+  ADAPTER_CONFIG=\"$CFG\" CHUNK_SIZE=512 \
+  EXTRA_ARGS=\"--swa_eval_chunks 0 --fifo_pos_mode packed\" \
+  PROJECT_ROOT=/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory \
+  PYTHON_BIN=/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/.venv/bin/python \
+  bash scripts/_eval_taskpool_2group.sh > logs/probe_b25_P1_posPacked.out 2>&1
+" > logs/probe_b25_P1_posPacked_driver.log 2>&1 &
+```
+(其他 probe 类比,改 EXTRA_ARGS 即可。注意 .7.53 / .245.174 / 本机 / .196 / B200 用各自的 PROJECT_ROOT 和 PYTHON_BIN。)

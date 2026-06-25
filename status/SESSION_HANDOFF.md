@@ -4,31 +4,40 @@
 > 维护规则：main agent 每当方向/结论/在跑实验有重大变化时，**覆盖更新本文件的「当前快照」区**（保持精简，旧结论沉淀到 RUN_REGISTRY）。
 > 最后更新：2026-06-25 13:35 GMT+8
 
+> **🆕 全新 agent 接手?先读 `status/HANDOFF_NEW_AGENT_20260625.md`(零上下文完整交接 + 决策树 + 运维)。**
+
+
 ---
 
-## 0. 一句话现状（重大突破）
+## 0. 一句话现状（结果存疑，正在验证）
 
-★★★ **2026-06-25 13:35 — 方案B FIFO chunk512/b25 step3000 W0 全面破墙，每一档都显著超越 MemoryLLM teacher。**
+⚠️ **2026-06-25 14:55 — 方案B FIFO chunk512/b25 step3000 W0 出了异常高分，但已查实训练含 BABILong 数据泄漏，0k-4k 高分作废，8k-32k 待 memory-disabled 对照验证。**
 
-**.7.53 chunk512/b25 step3000 W0（n=100，babilong.metrics，已 sanity verified）：**
+**.7.53 chunk512/b25 step3000 W0（n=100）：**
 ```
 task       0k      1k      2k      4k      8k     16k     32k
 qa1       96     99     99     93     40     34     30
 qa2       99    100    100     95     23     32     32
-qa5      100    100     97     87     65     76     68    ← 32k=68 vs MemoryLLM 34 (~2x)
+qa5      100    100     97     87     65     76     68
 ```
 
-vs **MemoryLLM teacher**：qa5=47/50/45/39/39/38/**34**（每档都被 student 显著超越）
-vs **历史 P11 SOTA(step500)**：qa5=74/89/81/60/48/45/44（短档高、32k 68 vs 44 大幅提升）
+**★★ 数据泄漏已坐实（代码核实，非旧 agent 口述）：**
+- `train_mem_space_dolmino_cpt.py` 默认 `--babilong_mix_fraction=0.15`：15% 训练步是 BABILong SFT。
+- 训练 `--babilong_tasks=qa1,qa2,qa5`（**= eval 任务**）、`--babilong_lengths=0k,1k,2k,4k`（**= eval 的 0k-4k**）、`--babilong_dataset=RMT-team/babilong`（**= eval 同一数据集**）。
+- `BABILongTrainDataset`（babilong_dataset.py:79）用 `load_dataset(name,length)[task]`——该 HF 数据集**无 train/test 隔离 → 训练与 eval 样本池完全重叠**。`max_seq_len=2048`：0k/1k 整故事完整泄漏，2k/4k 部分泄漏。
+- b25 launch 未 override 任何 babilong 参数 = 全 default。
+- **∴ qa5 0k=100/1k=100/2k=97/4k=87 = 背过测试答案，非记忆能力。** 史无前例满分（P11 仅 74）正是泄漏的信号。
 
-**Sanity verified（四重证据）：**
-1. adapter_config.json: `use_fifo_memory=true, fifo_buffer_chunks=25, fifo_detach=true`
-2. eval cmdline: `--swa_eval_chunks` 未传(W0 默认=0)，`CHUNK_SIZE=512`
-3. 每 cell 12 CSV × 25-26 行 = 完整 n=100，无 silent-fail
-4. 原始输出与 target 字面一致(Jeff/Fred/Jeff/milk/Mary)，非 EOS-spam 或乱码
-5. **同 eval 脚本同 BABILong 数据**对照 B200 b50/c1024 W0=qa5 35/39/12/21/10/15/**8** → 8.5× 差异排除 scorer-bug/few-shot-prior，必是 ckpt 真贡献
+**★★★ 8k/16k/32k=65/76/68 也几乎确定主要来自泄漏（2026-06-25 21:30 历史干净 run 锁定）：**
+- **历史所有 babilong=0 干净 run，qa5 W0 8k 从没超 ~19、32k 从没超 ~9**（grep 训练日志 "Training complete...babilong=0"，跨蒸馏/self-study/T2/HARDOBJ ~15+ run）：
+  - pg19 nctx7（干净 SOTA）= 75/73/51/29/**19/16/9**
+  - nctx63（干净）= 61/73/47/27/**14/12/9**
+  - **HARDOBJ_lastchunk（干净 + `--last_chunk_loss_only` = 几乎 FIFO 同机制）= 8k 12-15 / 16k 11-14 / 32k 8-9**（N96-N256 全程持平）
+- **同机制铁证**：HARDOBJ 用和 b25 几乎一样的 last-chunk memory readout，干净训练 → 8k=12-15/32k=8-9；b25 同机制掺 babilong → 8k=65/32k=68。**泄漏贡献 8k +46(3.4×)/16k +60(5×)/32k +60(7.5×)。**
+- ∴ **b25"破墙"约 ~85% 是泄漏幻觉，不是 FIFO 架构能力。真实干净天花板仍是 pg19 的 16k=16/32k=9（项目真 SOTA，一直干净）。**
+- **同架构最终归因实验在跑**：NOLEAK b25（.7.53，babilong_mix=0，同 FIFO 配置，ETA 明早 ~07:30 step3000）。预期 W0 落 8k≈15-25/32k≈8-12（干净簇）。task #7。
 
-**★ Plan C（MemoryLLM-as-teacher 蒸馏）已过时**：student 强于 teacher，蒸馏只会把性能压回 teacher 上限。研究问题转向："**为什么 b25/c512 work，哪个旋钮是 load-bearing？**"
+**∴ "破墙/超越 MemoryLLM/Plan C 过时" 裁决全部撤销。** b25 不是 SOTA；H2 buffer 单调关系（b25>b50>b100）仍成立但都在泄漏放大的尺度上，需 NOLEAK 重测确认 H2 在干净尺度是否还成立。真正的干净 SOTA = pg19 nctx7（16k=16）。Plan C / 树形 / SnapKV-on-chunks 等读出方向仍有效（因为读出鸿沟在干净 run 里从没解决：HARDOBJ W0 8-15 vs swa6 50-60 同款 gap）。
 
 ---
 
