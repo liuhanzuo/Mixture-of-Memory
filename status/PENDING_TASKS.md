@@ -1,5 +1,106 @@
 # PENDING_TASKS.md — Task Board
-## Updated 2026-06-22 23:30 CST
+## Updated 2026-06-25 00:15 CST
+
+---
+
+## 🌙 [TONIGHT-FIFO-EVAL][PLAN 2026-06-25] 方案B FIFO 消融 4臂 eval 计划（按依赖分类）
+
+### 依赖层级
+
+```
+[无需等待，立即可做]
+  T1. H20三臂 lm 曲线趋势分析（读远程日志，无GPU）
+  T2. 准备所有 eval 启动命令草稿（无GPU）
+
+[依赖 B200 step3000，约1h内]
+  T3. rsync B200 ckpt (wzc1→diskA)  ← 需要网络，无GPU
+  T4. 本机 H20 跑 B200 chunk1024/b50 W0+W6 eval  ← 需要 本机8×H20
+
+[依赖 H20三臂 step3000，约18.5h后（明天白天）]
+  T5. .196 b50/chunk512 W0+W6 eval  ← 训练结束后直接在.196跑（盘A共享）
+  T6. .7.53 b25/chunk512 W0+W6 eval  ← 在.7.53本机跑（ckpt在盘B）
+  T7. .245.174 b100/chunk512 W0+W6 eval  ← 在.245.174本机跑（ckpt在盘B）
+  （T5/T6/T7 三臂并行，各自训练结束后立即在原节点启动）
+```
+
+### T1 [PENDING, auto_launch:true, 无GPU] H20三臂 lm曲线趋势分析
+- 读 .7.53/.245.174 的训练日志（b25/b100），对比 b25/b50/b100 三臂 lm 收敛曲线
+- 判断 buffer_length 对 FIFO lm 的影响趋势
+- 无任何依赖，立即可做
+
+### T3 [DONE/SKIP 2026-06-24 23:53] rsync B200 ckpt — 不需要：T4 改在 B200 .53 本机跑（ckpt 已 native 在 wzc1 盘）。step3000 ckpt 也已 scp 回本机 outputs/mem_space_fifo_b50_chunk1024/mem_space_adapter_step003000.pt（7.1G）作备份。
+<details><summary>原 rsync 草稿</summary>
+
+```bash
+# wzc1→diskA，只同步 step3000 ckpt + adapter_config
+sshpass -f configs/password_b200_53.txt scp \
+  -o StrictHostKeyChecking=no -o PreferredAuthentications=password -P 36000 \
+  root@28.88.184.53:/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/outputs/mem_space_fifo_b50_chunk1024/mem_space_adapter_step003000.pt \
+  outputs/mem_space_fifo_b50_chunk1024/
+# adapter_config 已在本机（训练前同步过），若无：
+# sshpass ... scp ... adapter_config.json outputs/mem_space_fifo_b50_chunk1024/
+```
+</details>
+
+### T4 [RUNNING 2026-06-24 23:53 @B200 .53] B200 chunk1024/b50 W0+W6 eval
+- **改在 B200 .53 本机跑**（训练完成后节点全空闲，ckpt 在 wzc1 盘 native 无需 rsync，比等本机 H20 更快；本机 H20 仍占于 c512/b50 训练）。
+- ckpt=outputs/mem_space_fifo_b50_chunk1024/mem_space_adapter.pt（step3000 final, lm=3.849）
+- W0(swa0)→W6(swa6) 串行两次 scheduler 调用；wrap /tmp/fifo_c1024_eval_w0w6.sh pid 3806156
+- log: logs/fifo_b50_c1024_eval_W0.out / _W6.out（B200 .53）；结果 babilong_results/fifo_b50_c1024_step3000_W0|W6
+- W0 已起：21 tasks，8GPU 100% healthy。预计 W0+W6 共 ~5h。完成后 scp 结果回本机 score + 填 RUN_REGISTRY。
+- 原草稿（本机 H20，留档）：
+```bash
+# 本机执行（PROJECT_ROOT=diskA）
+RUN_PREFIX=fifo_b50_c1024 \
+CKPT_FILES="outputs/mem_space_fifo_b50_chunk1024/mem_space_adapter_step003000.pt outputs/mem_space_fifo_b50_chunk1024/mem_space_adapter_step003000.pt" \
+CK_NAMES="fifo_b50_c1024_step3000_W0 fifo_b50_c1024_step3000_W6" \
+ADAPTER_CONFIG=outputs/mem_space_fifo_b50_chunk1024/adapter_config.json \
+CHUNK_SIZE=1024 \
+EXTRA_ARGS="--swa_eval_chunks 0 --swa_eval_chunks 6" \
+setsid nohup bash scripts/_eval_taskpool_2group.sh >logs/fifo_b50_c1024_eval_sched.out 2>&1 &
+```
+⚠️ W0/W6 需分开两次调用（EXTRA_ARGS 不能合并），或传两个 ckpt + 两个 swa_eval_chunks 值——需检查脚本支持方式，见草稿。
+- 预计时长：~2.5h（42 tasks，2组并行，chunk1024 单task约10min）
+
+### ✅ 三臂训练完成 + eval 已启动（2026-06-25 07:11 heartbeat）
+- **b25/b50/b100 chunk512 三臂均 step3000 完成**（07:02-07:07，0 crash/0 non-finite，~622min），`full_model.pt` 落盘。
+- T5/T6/T7 **均已在各自原节点启动 W0+W6 BABILong eval**（ckpt=`full_model.pt`，loader strict=False 兼容；注意实际产物是 full_model.pt 而非草稿假设的 mem_space_adapter_final.pt）：
+  - **T5 b50 @ 本机 8×H20**（diskA，.venv）：driver /tmp/fifo_b50_c512_eval_w0w6.sh，log logs/fifo_b50_c512_eval_{W0,W6}.out，结果 babilong_results/fifo_b50_c512_final_{W0,W6}。
+  - **T6 b25 @ .48.7.53**（diskB，.venv）：driver /tmp/fifo_b25_c512_eval.sh，结果 babilong_results/fifo_b25_c512_final_{W0,W6}。
+  - **T7 b100 @ .58.245.174**（diskB，.venv）：driver /tmp/fifo_b100_c512_eval.sh，结果 babilong_results/fifo_b100_c512_final_{W0,W6}。
+- **完成后**：score_nested_babilong.py 聚合 → 填 RUN_REGISTRY（b25/b50/b100 × W0/W6）→ 与 B200 c1024/b50 + MemoryLLM baseline 对比 buffer_length×chunk_size 效应。
+
+### T5 [RUNNING 2026-06-25 07:11 @本机8×H20] b50/chunk512 W0+W6 eval
+```bash
+# .196 节点执行（PROJECT_ROOT=diskA，.venv PYBIN）
+sshpass -f configs/password_diskA.txt ssh root@28.59.80.196 \
+  "cd /apdcephfs_zwfy6/share_303098609/pighzliu_code/Mixture-of-Memory && \
+   RUN_PREFIX=fifo_b50_c512 \
+   CKPT_FILES='outputs/mem_space_fifo_b50_chunk512/mem_space_adapter_final.pt' \
+   CK_NAMES='fifo_b50_c512_final_W0' \
+   ADAPTER_CONFIG=outputs/mem_space_fifo_b50_chunk512/adapter_config.json \
+   CHUNK_SIZE=512 \
+   setsid nohup bash scripts/_eval_taskpool_2group.sh >logs/fifo_b50_c512_eval_sched.out 2>&1 &"
+# W6 另一次调用加 EXTRA_ARGS="--swa_eval_chunks 6"
+```
+
+### T6 [RUNNING 2026-06-25 07:13 @.48.7.53] b25/chunk512 W0+W6 eval
+```bash
+# .7.53 节点执行（PROJECT_ROOT=diskB，.venv PYBIN）
+# ckpt: /apdcephfs_zwfy6/share_304376610/.../outputs/mem_space_fifo_b25_chunk512/
+```
+
+### T7 [RUNNING 2026-06-25 07:15 @.58.245.174] b100/chunk512 W0+W6 eval
+```bash
+# .245.174 节点执行（PROJECT_ROOT=diskB，.venv PYBIN）
+# ckpt: /apdcephfs_zwfy6/share_304376610/.../outputs/mem_space_fifo_b100_chunk512/
+```
+
+### 并行策略总结
+- **现在**：T1立即做（无需GPU）+ T2 准备命令草稿
+- **~1h后**：T3 rsync → T4 本机启动 eval（本机全空闲等这个任务）
+- **~明天白天**：T5/T6/T7 三臂各自训练结束后，**在原节点立即启动**（不需要 rsync，ckpt 在本地）
+- **eval 完成后**：score_nested_babilong.py 聚合 → 填 RUN_REGISTRY → 与 MemoryLLM baseline (qa5 32k=34) 比较
 
 ---
 
@@ -284,3 +385,23 @@
 - node **.249** 8×H20（自有卡，非 .76），warm-start 链 stage1 c128(scratch)→s2 c256→s3 c512→s4 c1024，各 stage 从上一 stage step000600 adapter init。driver pid 230717，log `logs/progressive_chunk_diskB_v2.driver.log` + 各 stage `logs/progressive_chunk_diskB_v2_stage*.log`。total_steps800/stage save200 chain_step600 eval0 seed42。
 - **health**：stage1 c128 8 ranks 全载入权重（15.7→74GB/卡），util 38-100%，无 error/unreachable/nan。代码已从 diskA rsync 到 diskB（v2 脚本确认存在 + delta_rule flag）。
 - judge: 对照 v1 stable ladder（.76 已跑完，FINAL ckpt eval 收尾中）+ P11 单 chunk 各点 → 验证 per-stage 缩放是否改善小-chunk 稳定性 / 最终 retrieval。
+
+---
+
+## [PENDING] ★ b25/c512 中间 ckpt 早评（step500/1000/1500/2000/2500）— auto_launch: true (next-free-node)
+- 动机：.7.53 b25/c512 step3000 W0 全档破墙(qa5 32k=68 vs MemoryLLM 34)。过训退化铁律：历史 step500 普遍是甜区，step3000 可能已退化。早评中间 ckpt 找峰值。
+- ckpts: `outputs/mem_space_fifo_b25_chunk512/full_model_step00{500,1000,1500,2000,2500}.pt` on .7.53 (diskB)
+- eval: `_eval_taskpool_2group.sh`，W0+W6，CHUNK_SIZE=512，n=100，21 cells/ckpt × 5 ckpts × 2 modes = 210 tasks。可分批：先 step500/step1000，足够定形态。
+- 节点选择：等任一节点 free 即起。本机/.196 不持 b25 ckpt 需 rsync (~23GB/ckpt)；.7.53 自持 ckpt 但目前 W6 在跑；.245.174 共享 diskB 可直接读 .7.53 路径。
+- 优先级 P0(决定破墙结果时序稳定性)。auto_launch: true。
+
+## [PENDING] ★ b25/c512 step3000 真实长文档 benchmark（LongBench / LongMemEval / LongEval）— auto_launch: true (next-free-node-after-b25-ckpt-eval)
+- 动机：BABILong 破墙不等于真实长文档破墙(pg19 nctx7 案例：BABILong 16k +3 但 LongBench AVG 6.5；对话记忆 mem vs base 差 3.8-7×)。必须验证 b25 c512 不是 BABILong 过拟合。
+- benchmark：LongBench (hotpotqa/2wikimqa/musique/narrativeqa/qasper/multifieldqa_en)、LongMemEval (oracle n=500 全6题型)、LongEval (lines retrieval ≥8k)。
+- 脚本已有：`scripts/eval_longbench_mem_space.py`、`scripts/eval_longmemeval_mem_space.py`、`scripts/eval_dialogmem_mem_space.py`、`scripts/eval_longeval_mem_space.py`。
+- 优先级 P1(决定结果迁移性)。auto_launch: true，但排在 b25 中间 ckpt 早评之后。
+
+## [PENDING] b50/c512 + b100/c512 中间 ckpt + 跨臂 ckpt-curve 对照 — auto_launch: true (eval-after-final-W0)
+- 动机：等本机 b50/c512 W0 + .245.174 b100/c512 W0 出炉后，若长档分数(8k-32k)显示 buffer_length 单调影响 → 确认 dilution 剂量曲线；若 b50/b100 也破墙 → buffer_length 不是 load-bearing → H3/H4 候选；若 b50/b100 不破 → b25 是 load-bearing → 探索更小 buffer (b10/b5)。
+- 跨臂中间 ckpt(b50/b100 各 5 个早 ckpt) 用于过训退化对照。
+- 优先级 P1(决定 H1/H2 假说裁决)。auto_launch: true。

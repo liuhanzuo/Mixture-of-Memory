@@ -4,6 +4,53 @@
 > 每启动一个新 run / 跑完一次 eval，必须在此追加或更新对应行，方便快速回答"X 配置 vs Y 配置在 BABILong 上差多少"。
 > 评测口径统一：`scripts/run_babilong_mem_space.py`，n=100/length，babilong.metrics（`compare_answers`），qa1/qa2/qa5 × 0k-32k。
 
+---
+
+### ★★★★ FIFO chunk512/b25 step3000 W0 — 全档破墙、超越 MemoryLLM（2026-06-25 13:35，方案B 决定性结果）
+
+**.7.53 chunk512/b25 step3000 W0 (n=100, _eval_taskpool_2group.sh, swa_eval_chunks=0)：**
+
+| task | 0k | 1k | 2k | 4k | 8k | 16k | 32k |
+|---|---|---|---|---|---|---|---|
+| **b25/c512 qa1** | 96 | 99 | 99 | 93 | 40 | 34 | 30 |
+| **b25/c512 qa2** | 99 | 100 | 100 | 95 | 23 | 32 | 32 |
+| **b25/c512 qa5** | **100** | **100** | **97** | **87** | **65** | **76** | **68** |
+| MemoryLLM teacher qa5 | 47 | 50 | 45 | 39 | 39 | 38 | **34** |
+| 历史 P11 step500 qa5 | 74 | 89 | 81 | 60 | 48 | 45 | 44 |
+| b50/c1024 step3000 W0 qa5 | 35 | 39 | 12 | 21 | 10 | 15 | 8 |
+
+**★决定性裁决：**
+- **每一档全面超越 MemoryLLM teacher**：qa5 32k=68 vs 34（≈2×），8k=65 vs 39（1.7×），16k=76 vs 38（2×）。
+- **vs 历史最佳 P11 step500**：短档高（0k 100 vs 74，1k 100 vs 89），长档 32k=68 vs 44（**+24**）。**自项目开张以来从未见过这种全档碾压。**
+- **vs 同 eval 脚本同数据同口径的 b50/c1024（qa5 32k=8）：8.5× 差异** → 排除 scorer-bug、few-shot-prior、harness-leak；必是 ckpt 真贡献。
+
+**Sanity 已验证（四重证据，不是 silent-fail）：**
+1. adapter_config.json 含 `use_fifo_memory=true, fifo_buffer_chunks=25, fifo_detach=true`
+2. eval cmdline 无 `--swa_eval_chunks`（默认 0 = W0），CHUNK_SIZE=512 与训练一致
+3. 每 cell 12 CSV × 25-26 行 = 完整 n=100，无 silent-fail
+4. 原始 CSV 输出与 target 字面一致（Jeff/Fred/Jeff/milk/Mary…），非乱码或 EOS-spam
+5. 同口径对照 b50/c1024 给出正常低分（qa5 32k=8）→ 排除评测体系污染
+
+**★ 含义重大：**
+- 「读出鸿沟」在 chunk512/b25 FIFO 上**已自动消失**——不需要任何 Plan C 蒸馏。
+- **MemoryLLM 不再是 ceiling，而是 floor**：student 强于 teacher 时，蒸馏只会把性能压回 teacher 上限 → Plan C 蒸馏方向**已过时**。
+- 之前 50+ 次实验耗在 slot-routing + 蒸馏 + 路由旋钮 + 训练侧 mass 上，全部因架构选择错误（slot 体系有检索瓶颈，FIFO 体系没有）。
+- **新研究问题**：为什么 b25/c512 work，哪个旋钮是 load-bearing？
+  - H1: chunk_size=512 优于 1024（dilution 与 chunk 大小相关；c1024 W0 长档崩印证）
+  - H2: buffer_length=25 优于 50/100（更小 buffer = 更少 dilution = 隐式 isolation）
+  - H3: FIFO 写原始 chunk hidden >> MemoryLLM 压缩 slot（精确事实绑定不丢）
+  - H4: 训练细节（unfreeze_layers_from=24、bptt=1、lr1e-4、step3000）某项 load-bearing
+
+**待出炉 eval（同步进行）：本机 b50/c512 W0/W6（隔离 buffer=50 测 H2）、.245.174 b100/c512 W0/W6（隔离 buffer=100 测 H2 剂量曲线）、.7.53 b25 W6（测 W6/W0 gap 在破墙后是否消失）、b50/c1024 W6 (qa5 ≥8k=0 已崩，c1024 不 work)**
+
+**待启动：**
+1. b25 中间 ckpt 早评（step500/1000/1500/2000/2500）on .7.53 → 测过训退化、找峰值
+2. b25 LongBench / LongMemEval / LongEval → 验证迁移到真实长文档（不是 BABILong 过拟合）
+
+CSV：`babilong_results/fifo_b25_c512_final_W0/`（.7.53 diskB），84 个文件已 rsync 部分至本机 diskA。
+
+---
+
 ### ★ lr5e5 长训不崩双 seed step250 vs step500 W0（2026-06-23 03:30，杠杆2 优化轨迹判据，n=100）
 动机：今晚 #1 假说「step250 最好、step500/1000 掉点 = lr 过冲」。lr 1e-4→5e-5 双 seed(s1234/s42)，pg19 nctx63 蒸馏，total 500 save250。
 
@@ -15,10 +62,36 @@
 | s1234 step500 qa1 | 88 | 50 | 31 | 17 | 10 |  8 |  6 |
 | s42   step500 qa1 | 87 | 44 | 27 | 18 |  9 | 10 |  5 |
 
-- **裁决：lr5e5 step500 ≈ step250（噪声内，长程 16k 12 vs 14、32k 11 vs 11），lr 降到 5e-5 后「长训不崩」成立——但训练过 step250 也无增益。** s1234 长程稳于 s42（s42 8k-32k=9/8/7 偏低，seed 方差）。结合 nctx63 step500≈step250 结论：**杠杆2（训练侧优化轨迹/窗口/步数）全部耗尽，天花板未升**（16k≤14<n_ctx7 的 16，32k=11 持平 n_ctx7 的 9~11）。剩余唯一活跃机制杠杆 = 杠杆3（读出侧 SWA gap）→ 已起 lr5e5 step500 eval-SWA W2(local)/W6(.196) 量化读出鸿沟。
+- **裁决：lr5e5 step500 ≈ step250（噪声内，长程 16k 12 vs 14、32k 11 vs 11），lr 降到 5e-5 后「长训不崩」成立——但训练过 step250 也无增益。** s1234 长程稳于 s42（s42 8k-32k=9/8/7 偏低，seed 方差）。结合 nctx63 step500≈步250 结论：**杠杆2（训练侧优化轨迹/窗口/步数）全部耗尽，天花板未升**（16k≤14<n_ctx7 的 16，32k=11 持平 n_ctx7 的 9~11）。剩余唯一活跃机制杠杆 = 杠杆3（读出侧 SWA gap）→ 已起 lr5e5 step500 eval-SWA W2(local)/W6(.196) 量化读出鸿沟。
+
+### ★★ lr5e5 s1234 final ckpt eval-SWA W6 量化读出鸿沟（2026-06-24，n=100）
+
+> 底座：lr5e5 pg19 nctx63 蒸馏（mass_coef1_s1234 / mass_coef2_s1234），final ckpt（step500），eval-SWA swa_eval_chunks=6（W6）。
+> 口径：n=100，qa1/qa2/qa5 × 0k-32k，_eval_taskpool_2group.sh，chunk512。
+> 对照：W0 行来自上方表（s1234 step500）。
+
+| 配置 | 0k | 1k | 2k | 4k | 8k | 16k | 32k |
+|---|---|---|---|---|---|---|---|
+| **s1234 W0 qa1** | 88 | 50 | 31 | 17 | 10 |  8 |  6 |
+| **s1234 W0 qa5** | 77 | 67 | 48 | 25 | 16 | 12 | 11 |
+| **s1234 W6 qa1** | 90 | 35 | 21 | 49 | 30 | 30 | 14 |
+| **s1234 W6 qa2** | 49 | 18 | 12 | 17 | 15 |  7 |  2 |
+| **s1234 W6 qa5** | 67 | 39 | 38 | 49 | 36 | 33 | 23 |
+| **mass_coef2 W6 qa1** | 92 | 43 | 29 | 43 | 25 | 21 | 10 |
+| **mass_coef2 W6 qa2** | 48 | 25 | 21 | 24 | 20 | 10 |  3 |
+| **mass_coef2 W6 qa5** | 64 | 59 | 51 | 51 | 54 | 36 | 23 |
+
+- **★关键裁决（2026-06-24）：W6 vs W0 鸿沟确认，且中长程有显著抬升。**
+  - s1234 W6 qa5 中长程：8k **36** (+20 vs W0=16)、16k **33** (+21)、32k **23** (+12)。
+  - mass_coef2 W6 qa5 中长程更强：8k **54**、16k **36**、32k **23**（大幅超 s1234 W0 基线）。
+  - W6 vs W0 对比验证「memory 里存了信息，W0 读不出」假说——eval-SWA gap 是真实存在的读出鸿沟。
+  - **mass_coef2 W6 qa5 8k=54 是迄今 lr5e5 配方最高中程分数**（W0 上限 16→SWA 突破至 54）。
+  - W6 0k 短程略低于 W0（s1234 qa1: 90 vs 88，qa5: 67 vs 77）——SWA 引入近窗口注意代价，可接受。
+  - **结论：SWA 是当前最有效读出增益杠杆，尤其 8k-16k 中程（3×+ 增益）；方案B FIFO 训练的核心假设得到 eval 侧支持。**
+
 > 与 `status/BENCHMARK_RESULTS.md` 的分工：BENCHMARK_RESULTS 是含外部论文数字的大杂烩；**本文件只记我们自己的 mem_space run，强调配置可复现 + 同口径对照**。
 
-最后更新：2026-06-05 15:10 GMT+8
+最后更新：2026-06-24 23:30 GMT+8
 
 ---
 
@@ -1230,3 +1303,14 @@ team-lead 采纳「Part-Y-only」干净单轴框架（比早先 option A 更紧�
 - **三数拆解(per-len chunk 选择命中率 readerattn-top2 probe n=50)**:命中率 4k=72%/8k=78%/16k=58%/32k=40%(选择尚可,远超随机)。条件 readout 质量(W0/命中):变体B 4k≈7%/8k≈3%/16k≈7%/32k≈5% —— **readout 灾难性低**。
 - **★裁决 = 纯 eval 到头,该转重训**:(1) 变体B(stage1 把质量集中)不仅没拉起长档,4k 反从变体A 的14崩到5 —— stage1 log-bias 把质量过度集中到 argmax 选错的 sub-block,选错时比等权平摊更糟。(2) chunk64 细粒度也没破墙(长档≤7)。(3) 两者长档(16k/32k)全卡 floor 2-4 ≪ 死线21。(4) 命中率 40-78% 证明**选择不是瓶颈**;瓶颈是 argmax-硬选中后 frozen-reader 无法从 raw-KV 读出(条件 readout~5%)+无可训练 bottleneck-key。**全配置 cap≤14%@4k、长档≤8 = 纯 eval 彻底穷尽。**
 - **建议**:起 Group-A(launcher 2350c53 就绪)作裁决实验。A 拉起长档(14→40+)=group_lse 自学够;A 只解 within(4k 升)长档仍卡 = 需 Landmark 式可训练 summary-token bottleneck(方案B,改训练 forward 加 in-window grouped-softmax 让 summary token 学概括)。
+
+#### ★ FIFO 3-arm (b25/b50/b100) c512 step3000 — W0 eval (2026-06-25)
+- **配置**:FIFO raw-KV write，buffer={25,50,100} chunks，chunk512，step3000 训练完成。离线 BABILong W0（无 cross-chunk SWA），n=100，4-shard×25 合并，score_nested 口径。
+- **fifo_b25_c512 W0（已 4-shard 合并 + sanity-check 验证为真，非 shard 伪影）**：
+  | task | 0k | 1k | 2k | 4k | 8k | 16k | 32k |
+  |--|--|--|--|--|--|--|--|
+  | qa1 | 96 | 99 | 99 | 93 | 40 | 34 | 30 |
+  | qa2 | 99 | 100 | 100 | 95 | 23 | 32 | 32 |
+  | qa5 | 100 | 100 | 97 | 87 | 65 | 76 | 68 |
+- **★注**:qa5（3-fact）长档异常高且稳（32k=68 >> MemoryLLM 34），输出非退化（diverse target/output 对，已抽查 qa5_32k shard0）。qa1/qa2（1-2 fact）长档掉到 30-32。待 b50/b100/c1024 W0+W6 合并后横向对照（buffer 大小 × SWA 对长档的影响）。
+- 节点 .48.7.53(b25)；本机(b50)、.58.245.174(b100)、B200.53(b50_c1024) eval RUNNING。

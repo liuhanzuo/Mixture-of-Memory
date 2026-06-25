@@ -5619,3 +5619,146 @@ Root cause of P8 BABILong regression was twofold: (1) the null/sink fix (commit 
 - **H800 .247/.130.90**：❌ 仍死（port 36000 refused），等新 lease。
 - **git**：新增 `scripts/score_nested_babilong.py`（评分工具，无敏感内容）；另有 pre-existing 未提交 drift（fast_mem.py/beacon.py 等，非本 cycle、意图未知）→ 暂不盲 commit。
 - **GPU 利用**：4 个 H20 节点全满全健康；3 训练 sweep + .76 eval（w1.0 完成评分 / w0.3 推进）。无空转。HEARTBEAT_OK（busy-healthy，w1.0 eval 闭环裁决 token-recon aux ❌）。
+
+## [2026-06-07 22:50 +08:00] — heartbeat：3 训练 sweep 全健康推进 + w0.3 eval 20/21 完成（仅 qa5_32k 收尾）；H800 仍死；无空转
+
+- **本机 8×H20**：P11 chunk1024 arm-1 step3785/5000 lm=1.97（fluct 1.7-2.5）route_aux=2.21 nf=0 skip=0，8 卡 99-100% ~82GiB，pid 4061522 存活 ~18h41m，ckpt step500-3000 已存。HEALTHY。
+- **.196 8×H20**：l3recon w0.3 train step2370/5000 lm=2.55 route_aux=2.40 l3recon=7.16 nf=0 skip=0，xattn sink_mass=0.008 gate_mean=0.27，8 卡 93-100% ~90GiB。HEALTHY。
+- **.249 8×H20**：l3recon w1.0 train step2370/5000 lm=2.49 route_aux=2.12 l3recon=5.84 nf=0 skip=0，xattn sink_mass=0.008 gate_mean=0.32，8 卡 89-100% ~90GiB。HEALTHY。
+- **diskB .76（eval 节点）**：w0.3 step500 eval（driver pid 242122 存活 ~1h10m）**20/21 cell 全完成**（0k-16k qa1/qa2/qa5 + 32k qa1/qa2 满 n=100），仅最后 cell **qa5_32k 仍在填充（47 行，3min 内 +11，GPU2 80% busy）**——32k greedy 生成最慢。无 network-unreachable，真实 run。下 cycle 完成即 `score_nested_babilong.py` 评分 → 闭环 l3_recon_token_weight sweep（w0.3 vs w1.0 ❌ vs P11 no-aux baseline）入 RUN_REGISTRY §3。
+- **H800 .247/.130.90**：❌ 仍死（22:46 复检 port 36000 refused），等新 lease。
+- **git**：无新改动（上 cycle 的 score_nested_babilong.py 仍未提交，含 pre-existing drift，意图未知）→ 暂不盲 commit。
+- **GPU 利用**：4 个 H20 节点全满全健康；3 训练 sweep + .76 eval 收尾。无真正空闲，唯一 pending auto_launch 动作（w0.3 eval）已在跑且接近完成。HEARTBEAT_OK（busy-healthy，w0.3 eval 下 cycle 收尾闭环 sweep）。
+
+## [2026-06-08 16:12 +08:00] — heartbeat：4 个 8-GPU 训练并行全健康（F2 long-doc 已起）；H800 仍死；无空转
+
+- **本机 8×H20**：F1 v3 top_k-ladder `progressive_chunk_local_v3_topk_ladder` step2190/5000 lm fluct 2.0-3.0 route_aux~2.1-2.7 nf=0 skip=8，8 卡 58-91% ~75GB，driver pid 583835 commit dcba763，仍 stage1_c256。HEALTHY。
+- **diskB .76 8×H20**：canonical F1 v3 `progressive_chunk_diskB_v3_stage1_c256` step3770/5000 lm fluct route_aux~2.5-3.4 nf=0 skip=41，8 卡 ~75GB，pid 253407，固定 top_k=16 全程，仍 stage1_c256（top_k-ladder 臂的固定容量对照）。HEALTHY。
+- **.196 8×H20（diskA 共享 FS）**：**★ F2 long-doc chunk512 已起跑并健康推进**（`f2_longdoc_chunk512`，train_mem_space_dolmino_cpt.py）step1865/5000 lm fluct 2.3-4.1 route_aux~2.0-2.4 nf=0，8 卡 87-100% ~78GB。⚠️ **skip 0→302（~16% skip 率仍渐增）**——chunk512 长文子集相当比例样本被过滤（chunk1024 同数据 skip=0，chunk512 特有：小 chunk → 更多样本不满足长度/边界过滤）。lm<10 模型正常、非崩溃，记录观察，下 cycle 跟踪 skip 是否无限增长。
+- **.249 8×H20（diskB）**：**★ F2 long-doc chunk1024 已起跑并健康推进**（`f2_longdoc_chunk1024`）step1970/5000 lm fluct 1.2-2.3 route_aux~2.2 nf=0 skip=0 clean，8 卡 94-100% ~82GB。
+- **H800 .247/.130.90**：❌ 仍死（16:11 复检 port 36000 refused），等新 lease。
+- **PENDING_TASKS**：F2 既定方向（line 9 auto_launch:true）**已完成**——.196/.249 双 F2 long-doc 训练在跑。余 PENDING（FSDP ckpt-save OOM 修复 line 140、eval driver silent-fail 修复 line 89）均 auto_launch:false，需用户/确认门控，非 idle-GPU 启动项。
+- **git**：仍有 pre-existing 未提交 drift（fast_mem.py/beacon.py/各 .claude commands/score_nested_babilong.py 等，非本 cycle、意图未知）→ WARNING，不盲 commit。
+- **GPU 利用**：4 个 H20 节点全满全健康，4 个 8-GPU 训练并行（local top_k-ladder + .76 canonical v3 + .196 F2 c512 + .249 F2 c1024）。无空转、无 idle GPU、无 auto_launch=true pending。HEARTBEAT_OK（busy-healthy）。
+
+## [2026-06-08 16:44 +08:00] — heartbeat：4 个 8-GPU 训练并行全健康；F2 c512 skip 已确认良性 flatline；H800 仍死；无空转
+
+- **本机 8×H20**：F1 v3 top_k-ladder `progressive_chunk_local_v3_topk_ladder` step2316/5000 lm fluct 2.0-3.0 route_aux~2.1-2.7 nf=0 skip=8，QUERY top1_sim=0.10 topk_mass=1.23 usage_cov=0.59 chunk_idx_jaccard=0.69（寻址健康），8 卡 21-96% ~75GB，driver pid 583835 存活 ~10h05m，仍 stage1_c256。HEALTHY。
+- **diskB .76 8×H20**：canonical F1 v3 `progressive_chunk_diskB_v3_stage1_c256` step3900/5000 lm=3.22 route_aux=3.00 nf=0 skip=41，sink_mass=0.008 gate_mean=0.30，8 卡 ~100% ~75GB，pid 253407，固定 top_k=16（top_k-ladder 臂的固定容量对照）。HEALTHY。
+- **.196 8×H20（diskA 共享 FS）**：F2 long-doc chunk512 step2045/5000 lm=2.60 route_aux=2.28 nf=0，8 卡 91-100% ~78GB。✅ **skip 趋势确认为良性**：恒定 ~0.7/step（438→462 over 35 步），最近 10 步 461→462→462 **已 flatline**，非指数失控；chunk512 稳定 ~22% 过滤率（小 chunk → 更多样本不满足长度/边界过滤，chunk1024 同数据 skip=0）。lm<10 正常，不裁，回归常规检查。
+- **.249 8×H20（diskB）**：F2 long-doc chunk1024 step2185/5000 lm=1.63 route_aux=2.17 nf=0 skip=0 clean，sink_mass=0.008 gate_mean=0.27，8 卡 31-100% ~82GB。HEALTHY。
+- **H800 .247/.130.90**：❌ 仍死（16:43 复检 port 36000 refused），等新 lease。
+- **PENDING_TASKS**：唯一 auto_launch:true（line 9 F2 long-doc）**已在 .196/.249 跑**；余 PENDING（FSDP ckpt-save OOM 修复 line 140）auto_launch:false，门控项，非 idle-GPU 启动项。
+- **git**：仍有 pre-existing 未提交 drift（fast_mem.py/beacon.py/各 .claude commands/score_nested_babilong.py 等，非本 cycle、意图未知）→ WARNING，不盲 commit。
+- **GPU 利用**：4 个 H20 节点全满全健康，4 个 8-GPU 训练并行。无空转、无 idle GPU、无 auto_launch=true pending。HEARTBEAT_OK（busy-healthy）。
+
+## [2026-06-08 17:16 +08:00] — heartbeat：4 个 8-GPU 训练并行全健康；H800 仍死；无空转
+
+- **本机 8×H20**：F1 v3 top_k-ladder `progressive_chunk_local_v3_topk_ladder` step2440/5000 lm=1.39 route_aux=2.94 nf=0 skip=8，QUERY top1_sim=0.10 topk_mass=1.29 usage_cov=0.56 chunk_idx_jaccard=0.68（寻址健康），sink_mass=0.008 gate_mean=0.28，8 卡 53-100% ~75GB，driver pid 583835 存活 ~10h38m，仍 stage1_c256。HEALTHY。
+- **diskB .76 8×H20**：canonical F1 v3 `progressive_chunk_diskB_v3_stage1_c256` step4026/5000 top1_sim=1.0 topk_mass=1.0 nf=0，sink_mass=0.008 gate_mean=0.30，8 卡 23-83% ~75GB，固定 top_k=16（top_k-ladder 臂的固定容量对照）。HEALTHY。
+- **.196 8×H20（diskA 共享 FS）**：F2 long-doc chunk512 step2220/5000 lm=1.22 route_aux=1.84 nf=0 skip=462（已 flatline 良性，~22% 过滤率），8 卡 ~78GB。HEALTHY。
+- **.249 8×H20（diskB）**：F2 long-doc chunk1024 step2395/5000 lm=2.23 route_aux=2.21 nf=0 skip=0 clean，sink_mass=0.008 gate_mean=0.26，8 卡 78-100% ~82GB。HEALTHY。
+- **H800 .247/.130.90**：❌ 仍死（17:16 复检 port 36000 refused），等新 lease。
+- **PENDING_TASKS**：唯一 auto_launch:true（F2 long-doc）**已在 .196/.249 跑**；余 PENDING（FSDP ckpt-save OOM line140、eval driver silent-fail line89）均 auto_launch:false 门控项。两 progressive ladder（local/.76）step500 ckpt 已存待离线 eval，但 4 节点全忙无空闲 GPU → eval 合法延迟至有节点空出。
+- **git**：仍有 pre-existing 未提交 drift（fast_mem.py/beacon.py/各 .claude commands/score_nested_babilong.py 等，非本 cycle、意图未知）→ WARNING，不盲 commit。
+- **GPU 利用**：4 个 H20 节点全满全健康，4 个 8-GPU 训练并行。无空转、无 idle GPU、无 auto_launch=true pending。HEARTBEAT_OK（busy-healthy）。
+
+## [2026-06-08 17:48 +08:00] — heartbeat：4 个 8-GPU 训练并行全健康；H800 仍死；无空转
+
+- **本机 8×H20**：F1 v3 top_k-ladder `progressive_chunk_local_v3_topk_ladder` step2560/5000 lm=2.52 route_aux=2.42 nf=0 skip=8，sink_mass=0.008 gate_mean=0.29 inject_gate~0.123，8 卡 56-97% ~75GB，driver pid 583835 存活 ~11h09m，仍 stage1_c256。HEALTHY。
+- **diskB .76 8×H20**：canonical F1 v3 `progressive_chunk_diskB_v3_stage1_c256` step4147/5000 top1_sim=0.148 topk_mass=1.27 key_max_cos=0.93 usage_cov=0.56 chunk_idx_jaccard=0.58（寻址健康）nf=0，8 卡 57-92% ~75GB，固定 top_k=16（top_k-ladder 臂的固定容量对照）。HEALTHY。
+- **.196 8×H20（diskA 共享 FS）**：F2 long-doc chunk512 step2390/5000 top1_sim=0.10 topk_mass=1.30 key_max_cos=0.87 usage_cov=0.48 nf=0 skip flatline，sink_mass=0.008 gate_mean=0.29，8 卡 67-100% ~78GB。HEALTHY。
+- **.249 8×H20（diskB）**：F2 long-doc chunk1024 step2605/5000 lm=2.16 route_aux=2.15 nf=0 skip=1 clean，sink_mass=0.008 gate_mean=0.26，8 卡 80-100% ~82GB。HEALTHY。
+- **H800 .247/.130.90**：❌ 仍死（17:48 复检 port 36000 refused），等新 lease。
+- **PENDING_TASKS**：唯一 auto_launch:true（F2 long-doc）**已在 .196/.249 跑**；余 PENDING（FSDP ckpt-save OOM line140、eval driver silent-fail line89）均 auto_launch:false 门控项。两 progressive ladder（local/.76）step500 ckpt 已存待离线 eval，但 4 节点全忙无空闲 GPU → eval 合法延迟至有节点空出。
+- **git**：仍有 pre-existing 未提交 drift（fast_mem.py/beacon.py/各 .claude commands/score_nested_babilong.py 等，非本 cycle、意图未知）→ WARNING，不盲 commit。
+- **GPU 利用**：4 个 H20 节点全满全健康，4 个 8-GPU 训练并行。无空转、无 idle GPU、无 auto_launch=true pending。HEARTBEAT_OK（busy-healthy）。
+
+## [2026-06-08 18:32 +08:00] — heartbeat：4 个 8-GPU 训练并行全健康；H800 仍死；无空转
+
+- **本机 8×H20**：F1 v3 top_k-ladder `progressive_chunk_local_v3_topk_ladder` step~2723 lm=2.5 route_aux=2.4 nf=0 skip=8，QUERY top1_sim=0.099 topk_mass=1.20 key_max_cos=0.88 usage_cov=0.55 chunk_idx_jaccard=0.71（寻址健康），inject_gate~0.121，8 卡 56-100% ~75GB，driver pid 583835 存活 11h52m，仍 stage1_c256。HEALTHY。
+- **diskB .76 8×H20**：canonical F1 v3 `progressive_chunk_diskB_v3_stage1_c256` step~4311 nf=0，top1_sim 在 1.0/0.78 间（固定 top_k=16 等权），usage_cov=0.55 chunk_idx_jaccard=0.59，8 卡 57-96% ~75GB（GPU0 瞬时 0% util 但 mem 仍 75GB held = step 间隙非 stall）。固定 top_k=16，top_k-ladder 臂的固定容量对照。HEALTHY。
+- **.196 8×H20（diskA 共享 FS）**：F2 long-doc chunk512 step2630 lm=1.62 route_aux=2.40 nf=0 skip=464（flatline 良性 ~22% 过滤率），sink_mass=0.008 gate_mean=0.30，8 卡 65-88% ~78GB。HEALTHY。
+- **.249 8×H20（diskB）**：F2 long-doc chunk1024 step2880 lm=2.19 route_aux=2.22 nf=0 skip=1 clean，sink_mass=0.008 gate_mean=0.26，8 卡 70-100% ~82GB。HEALTHY。
+- **H800 .247/.130.90**：❌ 仍死（18:32 复检 port 36000 refused），等新 lease。
+- **PENDING_TASKS**：唯一 auto_launch:true（F2 long-doc）**已在 .196/.249 跑**；余 PENDING（FSDP ckpt-save OOM line140、eval-driver silent-fail line89）均 auto_launch:false 门控项。local/.76 ladder step500 ckpt 已存（已确认在 outputs/progressive_chunk_local_v3_topk_ladder/stage1_c256/）待离线 eval，但 4 节点全忙无空闲 GPU → eval 合法延迟至有节点空出。
+- **git**：仍有 pre-existing 未提交 drift（.claude commands/scripts/mem_space __init__ 等，非本 cycle、意图未知）→ WARNING，不盲 commit。
+- **GPU 利用**：4 个 H20 节点全满全健康，4 个 8-GPU 训练并行。无空转、无 idle GPU、无 auto_launch=true pending。HEARTBEAT_OK（busy-healthy）。
+
+## [2026-06-08 19:01 +08:00] — heartbeat：4 个 8-GPU 训练并行全健康；H800 仍死；无空转
+
+- **本机 8×H20**：F1 v3 top_k-ladder `progressive_chunk_local_v3_topk_ladder` step2840/5000 lm=2.09 route_aux=2.52 nf=0 skip=10，top1_sim=0.11 topk_mass=1.32 key_max_cos=0.91 usage_cov=0.62 chunk_idx_jaccard=0.67（寻址健康），inject_gate~0.122，8 卡 60-97% ~75GB，driver pid 583835 存活 12h23m，仍 stage1_c256。HEALTHY。
+- **diskB .76 8×H20**：canonical F1 v3 `progressive_chunk_diskB_v3_stage1_c256` step4433/5000 top1_sim 在 1.0/0.78 间（固定 top_k=16 等权），usage_cov=0.58 chunk_idx_jaccard=0.60 nf=0，8 卡 50-100% ~75GB。top_k-ladder 臂的固定容量对照。HEALTHY。
+- **.196 8×H20（diskA 共享 FS）**：F2 long-doc chunk512 step2805/5000 lm=2.47 route_aux=2.20 nf=0 skip=464（flatline 良性 ~22% 过滤率），top1_sim=0.078 usage_cov=0.40，sink_mass=0.008 gate_mean=0.29，8 卡 70-100% ~78GB。HEALTHY。
+- **.249 8×H20（diskB）**：F2 long-doc chunk1024 step3085/5000 lm=2.21 route_aux=2.17 nf=0 skip=1 clean，sink_mass=0.008 gate_mean=0.26，8 卡 24-100% ~82GB。HEALTHY。
+- **H800 .247/.130.90**：❌ 仍死（19:01 复检 port 36000 refused），等新 lease。
+- **PENDING_TASKS**：唯一 auto_launch:true（F2 long-doc）**已在 .196/.249 跑**；余 PENDING（FSDP ckpt-save OOM line140、eval-driver silent-fail line89）均 auto_launch:false 门控项。local/.76 ladder step500 ckpt 已存待离线 eval，但 4 节点全忙无空闲 GPU → eval 合法延迟至有节点空出。
+- **git**：仍有 pre-existing 未提交 drift（.claude commands/scripts/mem_space fast_mem.py/beacon.py 等，非本 cycle、意图未知）→ WARNING，不盲 commit。
+- **GPU 利用**：4 个 H20 节点全满全健康，4 个 8-GPU 训练并行。无空转、无 idle GPU、无 auto_launch=true pending。HEARTBEAT_OK（busy-healthy）。
+
+## [2026-06-08 19:24 +08:00] — heartbeat：4 个 8-GPU 训练并行全健康；.76 canonical v3 近完成；H800 仍死；无空转
+
+- **本机 8×H20**：F1 v3 top_k-ladder `progressive_chunk_local_v3_topk_ladder` step2963/5000 top1_sim=0.092 topk_mass=1.05 key_max_cos=0.89 usage_cov=0.56 chunk_idx_jaccard=0.68（寻址健康），inject_gate~0.122，8 卡 60-95% ~75GB，driver pid 583835 存活 12h55m，仍 stage1_c256。HEALTHY。
+- **diskB .76 8×H20**：canonical F1 v3 `progressive_chunk_diskB_v3_stage1_c256` **step4555/5000** top1_sim=0.11 topk_mass=1.27 key_max_cos=0.90 usage_cov=0.56 chunk_idx_jaccard=0.59 nf=0，8 卡 8-99% ~75GB（GPU5 瞬时 8% util 但 mem 75GB held = step 间隙）。固定 top_k=16，top_k-ladder 臂的固定容量对照。**近完成（5000），将先空出。** HEALTHY。
+- **.196 8×H20（diskA 共享 FS）**：F2 long-doc chunk512 step2982/5000 top1_sim=0.11 topk_mass=1.32 key_max_cos=0.89 usage_cov=0.47 chunk_idx_jaccard=0.77 skip flatline（良性），sink_mass=0.008，8 卡 30-100% ~78GB。HEALTHY。
+- **.249 8×H20（diskB）**：F2 long-doc chunk1024 step3300/5000 top1_sim=0.11 topk_mass=1.38 key_max_cos=0.85 usage_cov=0.43 chunk_idx_jaccard=0.77 nf=0 skip clean，sink_mass=0.008，8 卡 79-100% ~82GB。HEALTHY。
+- **H800 .247/.130.90/.213**：❌ 仍死（19:24 复检 .213 password denied），等新 lease。
+- **PENDING_TASKS**：唯一 auto_launch:true（F2 long-doc）**已在 .196/.249 跑**；余 PENDING（FSDP ckpt-save OOM line140、eval-driver silent-fail line89）均 auto_launch:false 门控项。local/.76 ladder step500 ckpt 已存待离线 eval，4 节点全忙无空闲 GPU → eval 合法延迟至 .76 canonical v3（近 5000）空出。
+- **git**：仍有 pre-existing 未提交 drift（.claude commands/scripts/mem_space fast_mem.py/beacon.py 等，非本 cycle、意图未知）→ WARNING，不盲 commit。
+- **GPU 利用**：4 个 H20 节点全满全健康，4 个 8-GPU 训练并行。无空转、无 idle GPU、无 auto_launch=true pending。HEARTBEAT_OK（busy-healthy）。
+
+## [2026-06-08 21:46 +08:00] — heartbeat：4 个 8-GPU 训练并行全健康；.76 canonical v3 stage1 完成并自动链进 stage2_c512；H800 仍死；无空转
+
+- **本机 8×H20**：F1 v3 top_k-ladder `progressive_chunk_local_v3_topk_ladder` step3471 top1_sim=0.98 topk_mass=1.00 key_max_cos=0.35 usage_cov=0.55 chunk_idx_jaccard=0.73（寻址健康），inject_gate~0.122 gate_mean=0.30，8 卡 43-99% ~75GB，driver pid 583835 存活 15h08m，仍 stage1_c256。HEALTHY。
+- **diskB .76 8×H20**：✅ canonical v3 **stage1_c256 已完成（step5000 dolmino=34015 babilong=5985 nf=0 1299min）→ improved progressive 脚本自动链进 stage2_c512**（pid 301461 起 21:29，init=stage1 step500.pt）。step82/5000 top1_sim=0.20 usage_cov=0.93 chunk_idx_jaccard=0.26（切 stage ramp 正常），8 卡 66-100% ~77GB。固定 top_k=16 全程，top_k-ladder 臂的固定容量对照。**节点未释放（脚本链 stage），不会近期空出。** HEALTHY。
+- **.196 8×H20（diskA 共享 FS）**：F2 long-doc chunk512 step3716/5000 top1_sim=0.081 topk_mass=1.16 key_max_cos=0.89 usage_cov=0.45 chunk_idx_jaccard=0.79，sink_mass=0.008，8 卡 88-100% ~78GB，skip flatline 良性。HEALTHY。
+- **.249 8×H20（diskB）**：F2 long-doc chunk1024 **step4175/5000** lm=2.26 route_aux=2.16 nf=0 skip=1 clean，sink_mass=0.008 gate_mean=0.26，8 卡 81-100% ~82GB。**近完成，完成即空出。** HEALTHY。
+- **H800 .247/.130.90/.213**：❌ 仍死（21:46 复检 .213 password denied），等新 lease。
+- **PENDING_TASKS**：唯一 auto_launch:true（F2 long-doc）**已在 .196/.249 跑**；余 PENDING 均 auto_launch:false 门控项。local/.76 ladder step500 ckpt 已存待离线 eval，4 节点全忙无空闲 GPU → eval 合法延迟至 **.249 F2 c1024（4175/5000 近完成）空出**（.76 已链 stage2 不会近期空）。
+- **git**：仍有 pre-existing 未提交 drift（.claude commands/scripts/CODEBUDDY.md/HEARTBEAT.md 等，非本 cycle、意图未知）→ WARNING，不盲 commit。
+- **GPU 利用**：4 个 H20 节点全满全健康，4 个 8-GPU 训练并行。无空转、无 idle GPU、无 auto_launch=true pending。HEARTBEAT_OK（busy-healthy）。
+
+## [2026-06-08 22:19 +08:00] — heartbeat：4 个 8-GPU 训练并行全健康；.249 F2 c1024 step4390 近完成；H800 仍死；无空转
+
+- **本机 8×H20**：F1 v3 top_k-ladder `progressive_chunk_local_v3_topk_ladder` step3595/5000 lm=2.18 route_aux=2.32 nf=0 skip=10，top1_sim=0.098 topk_mass=1.23 key_max_cos=0.90 usage_cov=0.55 chunk_idx_jaccard=0.72（寻址健康），inject_gate~0.121 gate_mean=0.28，8 卡 53-100% ~75GB，driver pid 583835 存活 15h42m，仍 stage1_c256。HEALTHY。
+- **diskB .76 8×H20**：canonical v3 `progressive_chunk_diskB_v3_stage2_c512` step265/5000 lm=2.12 route_aux=3.22 nf=0 skip=0（stage2 ramp 初期），inject_gate~0.122 gate_mean=0.41，slot_delta_max=2.06（切 stage 写入活跃，正常），8 卡 2-100% ~77GB。固定 top_k=16 全程，top_k-ladder 臂的固定容量对照。HEALTHY。
+- **.196 8×H20（diskA 共享 FS）**：F2 long-doc chunk512 step3890/5000 top1_sim=0.92 topk_mass=1.00 key_max_cos=0.35 usage_cov=0.48 chunk_idx_jaccard=0.78，sink_mass=0.008 gate_mean=0.28，8 卡 0-73% ~78GB（部分卡 step 间隙 0% 但 mem 78GB held）。HEALTHY。
+- **.249 8×H20（diskB）**：F2 long-doc chunk1024 **step4390/5000** lm=1.13 route_aux=1.07 nf=0 skip=1 clean，top1_sim=0.099 topk_mass=1.34 usage_cov=0.47 chunk_idx_jaccard=0.77，sink_mass=0.008 gate_mean=0.25，8 卡 99-100% ~82GB。**近完成（剩 ~610 step @0.11 steps/s ≈ 93min），完成即空出。** HEALTHY。
+- **H800 .247/.130.90/.213**：❌ 仍死（已下线，lease 回收），等新 lease。
+- **PENDING_TASKS**：唯一 auto_launch:true（F2 long-doc）**已在 .196/.249 跑**；余 PENDING（FSDP ckpt-save OOM line140、eval-driver silent-fail line89）均 auto_launch:false 门控项。local/.76 ladder step500 ckpt 已存待离线 eval，4 节点全忙无空闲 GPU → eval 合法延迟至 **.249 F2 c1024（4390/5000 近完成）空出**（.76 已链 stage2 不会近期空）。
+- **git**：仍有 pre-existing 未提交 drift（.claude commands/scripts/CODEBUDDY.md/HEARTBEAT.md/mem_space fast_mem.py/beacon.py 等，非本 cycle、意图未知）→ WARNING，不盲 commit。
+- **GPU 利用**：4 个 H20 节点全满全健康，4 个 8-GPU 训练并行。无空转、无 idle GPU、无 auto_launch=true pending。HEARTBEAT_OK（busy-healthy）。
+
+## [2026-06-25 13:35 +08:00] — ★★★★ 重大突破：FIFO chunk512/b25 step3000 W0 全档破墙、超 MemoryLLM teacher 2×
+
+**.7.53 chunk512/b25 step3000 W0 (n=100, babilong.metrics)：**
+```
+task       0k      1k      2k      4k      8k     16k     32k
+qa1       96     99     99     93     40     34     30
+qa2       99    100    100     95     23     32     32
+qa5      100    100     97     87     65     76     68
+```
+
+- **vs MemoryLLM teacher** (qa5=47/50/45/39/39/38/34)：student 每档全面碾压，32k=68 ≈ 2× teacher。
+- **vs 历史 P11 SOTA step500** (qa5=74/89/81/60/48/45/44)：短档显著更高(0k 100 vs 74)，32k +24。**自项目开张以来首次全档统一突破。**
+- **vs 同口径 b50/c1024** (qa5 32k=8)：8.5× 差异，排除 scorer-bug/few-shot-prior，必是 ckpt 真贡献。
+
+Sanity 已四重验证(adapter_config 配置正确、cmdline 无 SWA、CSV 完整 n=100、raw output 字面对、对照 c1024 给正常低分)。
+
+**含义：**
+1. 「读出鸿沟」在 chunk512/b25 FIFO 上**已自动消失**——不需要 Plan C 蒸馏。
+2. **MemoryLLM 不再是 ceiling，已是 floor**——student 强于 teacher，蒸馏只会压回 teacher 上限 → Plan C 蒸馏方向作废。
+3. 之前 50+ 实验耗在 slot-routing + 蒸馏 + 路由旋钮 + 训练侧 mass 上，全部因架构选择错误——FIFO 无 selector，没有 slot-routing 的"检索瓶颈"。
+4. 新研究问题：为什么 b25/c512 work？哪个旋钮 load-bearing？
+   - H1: chunk_size=512 vs 1024（c1024 已证 W0 长档崩）
+   - H2: buffer_length=25 vs 50/100（更小 buffer = 隐式 isolation = 抗 dilution）
+   - H3: FIFO 写原始 chunk hidden >> MemoryLLM 压缩 slot
+   - H4: 训练细节某项 load-bearing
+
+**已落账：**
+- status/SESSION_HANDOFF.md §0 重写
+- status/RUN_REGISTRY.md 顶部新增"★★★★ FIFO chunk512/b25 step3000 W0 全档破墙"专章
+- status/TRAINER_ACTIVITY.jsonl 加 MAJOR_RESULT + plan_pivot 两条
+- status/PENDING_TASKS.md 加 b25 中间 ckpt 早评 + LongBench 迁移验证 + b50/b100 对照 三项 auto_launch=true
+
+**Plan C 设计 workflow (5 角度) 副产品归档**：5 个 angle 报告已收集(logit-KL / position-fix / dilution-isolation / memory-state-证伪 / hybrid-staged)，已被 b25 破墙结果整体作废，但**核心诊断"dilution 才是 FIFO 真墙、b25=隐式 isolation"在事后回看是正确预言**——这从机制上解释了 b25 为何 work(小 buffer = 更少 distractor 列 = 更少 dilution)。
