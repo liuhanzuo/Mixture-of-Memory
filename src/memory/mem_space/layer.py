@@ -581,6 +581,27 @@ class MemorySpaceLayer(nn.Module):
         # it does not appear in state_dict or interfere with DDP sync.
         self._fifo_buf: list = []
 
+        # FIFO eval-time probes (2026-06-25, H_POS + H_DIL falsification).
+        # All default to None / False → _forward_fifo path is byte-identical to
+        # pre-probe behaviour. Set via run_babilong_mem_space.py CLI helpers.
+        #   _fifo_pos_mode: None | "packed" | "real"
+        #     None  -> legacy all-pos-0 prefix (current behaviour)
+        #     "packed" -> in-distribution positions = keep_idx_in_set * chunk + i
+        #     "real"   -> original chunk_idx * chunk + i (may be OOD; relies on
+        #                 Llama-3 RoPE theta=500000 extrapolation)
+        #   _fifo_keep_set_mode: None | "flat_readerattn"
+        #     None -> attend ALL buffered chunks (legacy)
+        #     "flat_readerattn" -> reader q.k top-K_keep + last R recency floor
+        #   _fifo_keep_topk:    int top-K for keep-set selection (default 25)
+        #   _fifo_keep_recency: int last-R recency floor (default 2)
+        #   _fifo_keep_all_buffer: bool — when True, eviction is suppressed so
+        #     buffer keeps the full history (only useful with keep_set_mode set).
+        self._fifo_pos_mode: Optional[str] = None
+        self._fifo_keep_set_mode: Optional[str] = None
+        self._fifo_keep_topk: int = 25
+        self._fifo_keep_recency: int = 2
+        self._fifo_keep_all_buffer: bool = False
+
         # Learnable slot↔hidden projections. We do NOT take the slot_dim==d_model
         # shortcut (Identity) because that path has zero trainable capacity and was
         # empirically responsible for the residual-gap pathology after fix1+fix2
@@ -1220,39 +1241,158 @@ class MemorySpaceLayer(nn.Module):
         B, T, d = hidden_states.shape
 
         # ---- Step 1: Read — build prefix from FIFO buffer ----
+        # We track, for each prefix token, BOTH:
+        #   - its in-keep-set index ("keep_idx_in_set", 0..K-1 over the kept
+        #     chunks only; used by pos_mode='packed' for in-distribution RoPE)
+        #   - its original chunk index in self._fifo_buf (0..len(_fifo_buf)-1;
+        #     used by pos_mode='real' and by the keep-set mask)
+        # Both are LongTensors of shape [P].
+        valid: list = []
+        valid_orig_idx: list = []      # chunk idx in self._fifo_buf for each valid entry
         if self._fifo_buf:
-            # Stack past chunks: each entry is [B, T_c, d]; cat along seq dim.
-            # Filter stale entries whose batch-size doesn't match (after reset).
-            valid = [h for h in self._fifo_buf if h.shape[0] == B]
-            if valid:
-                prefix = torch.cat(valid, dim=1)          # [B, P, d]
-                P = prefix.shape[1]
-                extended_hidden = torch.cat([prefix, hidden_states], dim=1)  # [B, P+T, d]
-            else:
-                # No valid past entries — cold start, run bypass.
-                P = 0
-                extended_hidden = hidden_states
+            for _ci, _h in enumerate(self._fifo_buf):
+                if _h.shape[0] == B:
+                    valid.append(_h)
+                    valid_orig_idx.append(_ci)
+        if valid:
+            # Decide which chunks to KEEP (Step 1b: keep-set probe). The default
+            # (mode=None) keeps ALL valid chunks → byte-identical to legacy.
+            kept_local_idx = list(range(len(valid)))   # indices into `valid`
+            _ks_mode = getattr(self, "_fifo_keep_set_mode", None)
+            if _ks_mode == "flat_readerattn":
+                _kept = self._fifo_select_keep_set_reader_attn(
+                    hidden_states=hidden_states,
+                    valid_chunks=valid,
+                    position_embeddings=position_embeddings,
+                    topk=int(getattr(self, "_fifo_keep_topk", 25)),
+                    recency=int(getattr(self, "_fifo_keep_recency", 2)),
+                )
+                if _kept is not None:
+                    kept_local_idx = _kept    # sorted list of local indices
+
+            # Concatenate the KEPT chunks in their original (causal) order.
+            kept_chunks = [valid[i] for i in kept_local_idx]
+            prefix = torch.cat(kept_chunks, dim=1)        # [B, P, d]
+            P = prefix.shape[1]
+            extended_hidden = torch.cat([prefix, hidden_states], dim=1)  # [B, P+T, d]
+
+            # Build per-prefix-token tags (LongTensors, length P).
+            # `keep_pos_per_tok[i]` = position of token i in the KEPT sequence
+            #     (== local kept-set index → used by pos_mode='packed')
+            # `orig_chunk_per_tok[i]` = original index into self._fifo_buf
+            #     (used by pos_mode='real' and by the keep-set mask)
+            dev = hidden_states.device
+            _keep_pos_pieces = []
+            _orig_pos_pieces = []
+            for _packed_idx, _local_idx in enumerate(kept_local_idx):
+                _tc = valid[_local_idx].shape[1]
+                _keep_pos_pieces.append(
+                    torch.full((_tc,), _packed_idx, dtype=torch.long, device=dev)
+                )
+                _orig_pos_pieces.append(
+                    torch.full(
+                        (_tc,), valid_orig_idx[_local_idx],
+                        dtype=torch.long, device=dev,
+                    )
+                )
+            keep_pos_per_tok = torch.cat(_keep_pos_pieces, dim=0)    # [P]
+            orig_chunk_per_tok = torch.cat(_orig_pos_pieces, dim=0)  # [P]
         else:
+            # No valid past entries — cold start, run bypass.
             P = 0
             extended_hidden = hidden_states
+            keep_pos_per_tok = None
+            orig_chunk_per_tok = None
 
         # ---- Step 2: Build extended position embeddings ----
+        # Three modes (all eval-only, default None == legacy pos-0):
+        #   None     -> all prefix tokens at RoPE pos-0 (legacy, current).
+        #   'packed' -> in-distribution: token in kept-chunk k @ in-chunk-offset i
+        #               gets RoPE pos = k * chunk_size + i (using KEPT index,
+        #               so positions stay within the trained window when
+        #               chunk_size*K_keep < trained context).
+        #   'real'   -> original sparse positions: token in chunk c @ offset i
+        #               gets RoPE pos = c * chunk_size + i (may exceed trained
+        #               window; relies on Llama-3 theta=500000 extrapolation).
+        # NOTE: cos/sin tables provided via position_embeddings are the cos/sin
+        # FOR THE CURRENT CHUNK ONLY (positions 0..T-1 of this chunk). To get
+        # cos/sin for arbitrary positions we re-compute via the model-level
+        # rotary_emb. We resolve the rotary_emb module lazily via the wrapped
+        # decoder layer's self_attn or the outer model handle stashed on the
+        # config; fall back to LEGACY pos-0 if we can't find it.
+        _pos_mode = getattr(self, "_fifo_pos_mode", None)
         if P > 0 and position_embeddings is not None:
-            cos, sin = position_embeddings              # each [B, T, hd/2] or [1, T, hd/2]
-            # Prefix entries keep their original temporal positions (0..P-1).
-            # We shift them to position 0 (like slot tokens) to avoid OOD positions.
-            # This matches the slot path's convention: prefix @ position 0.
-            # Current H tokens get their own cos/sin as-is.
-            # Build [P+T] position embeddings: prefix gets pos-0 cos/sin repeated.
-            if cos.dim() == 3:
-                pos0_cos = cos[:, :1, :].expand(B, P, -1)  # [B, P, hd/2]
-                pos0_sin = sin[:, :1, :].expand(B, P, -1)
+            cos, sin = position_embeddings              # each [B or 1, T, hd]
+            # Legacy path (default): all prefix tokens at pos-0.
+            if _pos_mode is None or _pos_mode == "pos0":
+                if cos.dim() == 3:
+                    pos0_cos = cos[:, :1, :].expand(cos.shape[0], P, -1)  # [*, P, hd]
+                    pos0_sin = sin[:, :1, :].expand(sin.shape[0], P, -1)
+                else:
+                    pos0_cos = cos[:1, :].expand(P, -1).unsqueeze(0).expand(B, -1, -1)
+                    pos0_sin = sin[:1, :].expand(P, -1).unsqueeze(0).expand(B, -1, -1)
+                ext_cos = torch.cat([pos0_cos, cos], dim=1)
+                ext_sin = torch.cat([pos0_sin, sin], dim=1)
+                ext_pos_emb = (ext_cos, ext_sin)
             else:
-                pos0_cos = cos[:1, :].expand(P, -1).unsqueeze(0).expand(B, -1, -1)
-                pos0_sin = sin[:1, :].expand(P, -1).unsqueeze(0).expand(B, -1, -1)
-            ext_cos = torch.cat([pos0_cos, cos], dim=1)  # [B, P+T, hd/2]
-            ext_sin = torch.cat([pos0_sin, sin], dim=1)
-            ext_pos_emb = (ext_cos, ext_sin)
+                # Build prefix RoPE positions per-token.
+                # chunk_size used here is the FIFO write chunk size — i.e. the
+                # length of each entry in self._fifo_buf (which may vary across
+                # entries; we use each entry's actual length). For 'packed' we
+                # pack by kept-index; for 'real' by original chunk index.
+                # In-chunk offset is the token's index within its source chunk.
+                dev = hidden_states.device
+                kept_chunks_local = [valid[i] for i in kept_local_idx]
+                if _pos_mode == "real":
+                    base_index_per_tok = orig_chunk_per_tok
+                elif _pos_mode in ("packed", "hierarchical"):
+                    base_index_per_tok = keep_pos_per_tok
+                else:
+                    base_index_per_tok = keep_pos_per_tok  # safe default
+                # Per-token in-chunk offset (0..T_c-1).
+                _offsets_pieces = []
+                for _kc in kept_chunks_local:
+                    _tc = _kc.shape[1]
+                    _offsets_pieces.append(
+                        torch.arange(_tc, dtype=torch.long, device=dev)
+                    )
+                _offsets = torch.cat(_offsets_pieces, dim=0)         # [P]
+                # We use the CURRENT-chunk length T as the stride (chunk_size)
+                # so the position arithmetic is uniform. This matches the
+                # write-time assumption that each chunk is T tokens wide.
+                pos_pre = base_index_per_tok * T + _offsets          # [P]
+                pos_pre = pos_pre.clamp_min_(0)
+                # Resolve rotary_emb to compute cos/sin at arbitrary positions.
+                _rot = self._fifo_resolve_rotary_emb()
+                if _rot is None:
+                    # No rotary_emb handle → fall back to legacy pos-0 prefix.
+                    if cos.dim() == 3:
+                        pos0_cos = cos[:, :1, :].expand(cos.shape[0], P, -1)
+                        pos0_sin = sin[:, :1, :].expand(sin.shape[0], P, -1)
+                    else:
+                        pos0_cos = cos[:1, :].expand(P, -1).unsqueeze(0).expand(B, -1, -1)
+                        pos0_sin = sin[:1, :].expand(P, -1).unsqueeze(0).expand(B, -1, -1)
+                    ext_cos = torch.cat([pos0_cos, cos], dim=1)
+                    ext_sin = torch.cat([pos0_sin, sin], dim=1)
+                else:
+                    # Call model rotary_emb(x, position_ids) → (cos, sin).
+                    # x is only used for dtype/device; pass extended_hidden.
+                    pos_ids_pre = pos_pre.unsqueeze(0)                # [1, P]
+                    _pcos, _psin = _rot(extended_hidden, pos_ids_pre) # each [1, P, hd]
+                    # Broadcast to match cos batch dim.
+                    if cos.dim() == 3:
+                        if cos.shape[0] != _pcos.shape[0]:
+                            _pcos = _pcos.expand(cos.shape[0], -1, -1)
+                            _psin = _psin.expand(sin.shape[0], -1, -1)
+                        ext_cos = torch.cat([_pcos.to(cos.dtype), cos], dim=1)
+                        ext_sin = torch.cat([_psin.to(sin.dtype), sin], dim=1)
+                    else:
+                        # cos is [T, hd] (rare path); upcast to [1, T, hd].
+                        cos2 = cos.unsqueeze(0)
+                        sin2 = sin.unsqueeze(0)
+                        ext_cos = torch.cat([_pcos.to(cos2.dtype), cos2], dim=1)
+                        ext_sin = torch.cat([_psin.to(sin2.dtype), sin2], dim=1)
+                ext_pos_emb = (ext_cos, ext_sin)
         else:
             ext_pos_emb = position_embeddings
 
@@ -1261,14 +1401,15 @@ class MemorySpaceLayer(nn.Module):
         # mask[i,j] = True means token i CAN attend token j (True = attend).
         # Prefix tokens: causal among themselves (prefix[i] sees prefix[0..i]).
         # H tokens: attend all prefix + causal H.
+        # (Keep-set mode pre-filters which chunks are present at all in the
+        # prefix; once selected, the prefix attends as before — no extra
+        # column-mask needed because non-kept chunks are physically absent.)
         S = P + T
         if P > 0:
             # Build [B, 1, S, S] additive mask (0 = attend, -inf = mask out).
             # Using additive mask convention matching HF SDPA.
             dev = hidden_states.device
             dtype = hidden_states.dtype
-            mask_2d = torch.zeros(S, S, device=dev, dtype=dtype)
-            # Upper triangle (i < j) → -inf (causal masking)
             mask_2d = torch.triu(
                 torch.full((S, S), float("-inf"), device=dev, dtype=dtype),
                 diagonal=1,
@@ -1298,7 +1439,11 @@ class MemorySpaceLayer(nn.Module):
             # Write current hiddens to buffer and return.
             h_stored = hidden_states.detach() if self._fifo_detach else hidden_states
             self._fifo_buf.append(h_stored)
-            if len(self._fifo_buf) > self._fifo_buffer_chunks:
+            # Eviction (skip when _fifo_keep_all_buffer is set → keep full history).
+            if (
+                not getattr(self, "_fifo_keep_all_buffer", False)
+                and len(self._fifo_buf) > self._fifo_buffer_chunks
+            ):
                 self._fifo_buf.pop(0)
             return bypass_h
 
@@ -1349,7 +1494,11 @@ class MemorySpaceLayer(nn.Module):
         # ---- Step 7: Write current hidden_states to FIFO buffer ----
         h_stored = hidden_states.detach() if self._fifo_detach else hidden_states
         self._fifo_buf.append(h_stored)
-        if len(self._fifo_buf) > self._fifo_buffer_chunks:
+        # Eviction (skip when _fifo_keep_all_buffer is set → keep full history).
+        if (
+            not getattr(self, "_fifo_keep_all_buffer", False)
+            and len(self._fifo_buf) > self._fifo_buffer_chunks
+        ):
             self._fifo_buf.pop(0)
 
         # Telemetry (re-use last_aux_losses slot so training loop can log it).
@@ -1360,6 +1509,117 @@ class MemorySpaceLayer(nn.Module):
         if extra:
             return (next_hidden, *extra)
         return next_hidden
+
+    # --------------------------------------------------------------------- #
+    # FIFO eval-time probes (2026-06-25): position-fix + keep-set helpers.
+    # All used ONLY by _forward_fifo when the corresponding probe flag is set.
+    # --------------------------------------------------------------------- #
+
+    def _fifo_resolve_rotary_emb(self):
+        """Return a callable rotary_emb(x, position_ids) -> (cos, sin) for
+        recomputing RoPE at arbitrary positions, or None if we can't find it.
+
+        Search order:
+          1. self.wrapped_layer.self_attn.rotary_emb (older HF Llama).
+          2. Outer model handle stashed on self.config._model_root (set by
+             the eval helper at load time, if available).
+          3. Walk parents via self._mem_space_model_root (set by patch.py)
+             — currently not guaranteed; treated as best-effort.
+        """
+        try:
+            _attn = getattr(self.wrapped_layer, "self_attn", None)
+            if _attn is not None:
+                _rot = getattr(_attn, "rotary_emb", None)
+                if _rot is not None:
+                    return _rot
+        except Exception:
+            pass
+        # Stashed root handle (set in run_babilong_mem_space.py helper).
+        _root = getattr(self, "_fifo_rotary_root", None)
+        if _root is not None:
+            _rot = getattr(_root, "rotary_emb", None)
+            if _rot is not None:
+                return _rot
+            # transformers >= 4.45 stashes rotary_emb on model.model.
+            _inner = getattr(_root, "model", None)
+            if _inner is not None:
+                _rot = getattr(_inner, "rotary_emb", None)
+                if _rot is not None:
+                    return _rot
+        return None
+
+    def _fifo_select_keep_set_reader_attn(
+        self,
+        hidden_states: torch.Tensor,
+        valid_chunks: list,
+        position_embeddings,
+        topk: int,
+        recency: int,
+    ):
+        """Pick which chunks of the FIFO buffer to KEEP using this layer's
+        native q.k salience (reader-attn). Returns a sorted list of local
+        indices into `valid_chunks` (the kept set), or None on failure.
+
+        Scoring per chunk c:
+            score = mean over query tokens q of (max over chunk tokens t of
+                    q_q · k_t / sqrt(hd))
+            pooled over heads via amax(head).
+        Then keep top-K_keep chunks by score, plus the last `recency` chunks
+        unconditionally (recency floor). Result is sorted to preserve causal
+        order in the prefix.
+        """
+        try:
+            import torch as _t
+            from transformers.models.llama.modeling_llama import apply_rotary_pos_emb
+            C = len(valid_chunks)
+            if C == 0:
+                return None
+            # If everything would be kept anyway, skip the work.
+            keep_n = max(1, min(int(topk), C))
+            recn = max(0, min(int(recency), C))
+            if keep_n + recn >= C:
+                return list(range(C))
+            _attn = getattr(self.wrapped_layer, "self_attn", None)
+            if _attn is None:
+                return None
+            _pre_norm = getattr(self.wrapped_layer, "input_layernorm", None)
+            with _t.no_grad():
+                _hs = hidden_states
+                B, Tq, d = _hs.shape
+                hd = _attn.head_dim
+                if _pre_norm is not None:
+                    _hs_q = _pre_norm(_hs)
+                else:
+                    _hs_q = _hs
+                q = _attn.q_proj(_hs_q).view(B, Tq, -1, hd).transpose(1, 2)  # [B,nh,Tq,hd]
+                cos, sin = position_embeddings
+                q_r, _ = apply_rotary_pos_emb(q, q, cos, sin)
+                # Use the LAST query token's hidden as the salience probe
+                # (matches _reader_attn_keep_set's convention).
+                qv = q_r[:, :, -1, :]                                      # [B, nh, hd]
+                nh = qv.shape[1]
+                sal = _t.empty(C, device=_hs.device, dtype=_t.float32)
+                for c, _kh in enumerate(valid_chunks):
+                    _kh_in = _kh.to(_hs.device, dtype=_hs.dtype)
+                    if _pre_norm is not None:
+                        _kh_in = _pre_norm(_kh_in)
+                    M = _kh_in.shape[1]
+                    kk = _attn.k_proj(_kh_in).view(B, M, -1, hd).transpose(1, 2)  # [B,nkv,M,hd]
+                    nkv = kk.shape[1]
+                    if nh != nkv:
+                        kk = kk.repeat_interleave(nh // nkv, dim=1)               # [B,nh,M,hd]
+                    aw = _t.einsum("bhd,bhmd->bhm", qv.float(), kk.float()) * (hd ** -0.5)
+                    aw = aw.amax(dim=1)                                          # [B, M]
+                    sal[c] = aw.amax(dim=-1).mean().float()                      # mean over batch
+                # Top-K by score.
+                top_idx = _t.topk(sal, k=keep_n, dim=0).indices.tolist()
+                kept = set(int(i) for i in top_idx)
+                # Recency floor: always keep last `recn` chunks.
+                for c in range(max(0, C - recn), C):
+                    kept.add(c)
+                return sorted(kept)
+        except Exception:
+            return None
 
     # --------------------------------------------------------------------- #
     # Main forward

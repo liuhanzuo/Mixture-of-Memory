@@ -330,6 +330,42 @@ def _set_memory_disabled(model, flag: bool) -> None:
         w._memory_disabled = flag
 
 
+def _set_fifo_pos_mode(model, mode):
+    """Set per-layer FIFO position-fix mode (None | 'packed' | 'real').
+
+    None reverts to legacy all-pos-0 prefix; 'packed' uses kept-index based
+    in-distribution positions; 'real' uses original chunk indices (may be OOD
+    but exercises Llama-3 RoPE extrapolation).
+    """
+    root = getattr(model, "module", model)
+    # Stash the outer model root on each layer so they can resolve rotary_emb
+    # without a global handle (best-effort; falls back to wrapped_layer.self_attn).
+    for w in getattr(root, "_mem_space_layers", []) or []:
+        w._fifo_pos_mode = mode
+        w._fifo_rotary_root = root
+
+
+def _set_fifo_keep_set_mode(model, mode, topk=25, recency=2):
+    """Set per-layer FIFO keep-set mode (None | 'flat_readerattn').
+
+    None keeps ALL buffered chunks (legacy); 'flat_readerattn' uses reader q.k
+    to score chunks and keeps the top-`topk` plus the last `recency` chunks.
+    """
+    root = getattr(model, "module", model)
+    for w in getattr(root, "_mem_space_layers", []) or []:
+        w._fifo_keep_set_mode = mode
+        w._fifo_keep_topk = int(topk)
+        w._fifo_keep_recency = int(recency)
+
+
+def _set_fifo_keep_all_buffer(model, flag: bool) -> None:
+    """When True, suppress FIFO eviction so the buffer holds ALL past chunks
+    (use only with a keep_set_mode → "keep-all-store, attend-few" probe)."""
+    root = getattr(model, "module", model)
+    for w in getattr(root, "_mem_space_layers", []) or []:
+        w._fifo_keep_all_buffer = bool(flag)
+
+
 @torch.no_grad()
 def generate_with_mem_space(
     model,
@@ -795,6 +831,35 @@ def main():
                              "stay high with this flag, the result is an artifact "
                              "(in-context leak / few-shot prior), not evidence the "
                              "memory bank works.")
+    # ------------------------------------------------------------------ #
+    # FIFO eval-time probes (2026-06-25, H_POS + H_DIL falsification).
+    # All default-OFF; off → byte-identical to legacy FIFO behaviour.
+    # ------------------------------------------------------------------ #
+    parser.add_argument("--fifo_pos_mode", type=str, default="none",
+                        choices=["none", "packed", "real"],
+                        help="H_POS probe: how to assign RoPE positions to the "
+                             "FIFO buffer prefix. 'none' = legacy all-pos-0 "
+                             "(current behaviour). 'packed' = kept-set index * "
+                             "chunk + in-chunk-offset (in-distribution). "
+                             "'real' = original chunk index * chunk + offset "
+                             "(may be OOD; relies on Llama-3 RoPE theta=500000 "
+                             "extrapolation).")
+    parser.add_argument("--fifo_keep_set_mode", type=str, default="none",
+                        choices=["none", "flat_readerattn"],
+                        help="H_DIL probe: how to select which buffered chunks "
+                             "to KEEP in the prefix. 'none' = attend ALL "
+                             "(legacy). 'flat_readerattn' = score each chunk "
+                             "by reader q.k salience, keep top-K + last R.")
+    parser.add_argument("--fifo_keep_topk", type=int, default=25,
+                        help="K for keep_set top-K (default 25).")
+    parser.add_argument("--fifo_keep_recency", type=int, default=2,
+                        help="R for keep_set recency floor (default 2 last "
+                             "chunks always kept).")
+    parser.add_argument("--fifo_keep_all_buffer", action="store_true",
+                        default=False,
+                        help="When set, suppress FIFO eviction (buffer holds "
+                             "ALL past chunks). Use with keep_set_mode to test "
+                             "'keep-all-store, attend-few'.")
     args = parser.parse_args()
 
     if args.swa_eval_chunks < 0:
@@ -920,6 +985,27 @@ def main():
         dtype=dtype,
         attn_impl=args.attn_impl,
     )
+
+    # ------------------------------------------------------------------ #
+    # Wire FIFO eval-time probes (no-op when all flags are at defaults).
+    # ------------------------------------------------------------------ #
+    _pos_mode_cli = getattr(args, "fifo_pos_mode", "none")
+    if _pos_mode_cli and _pos_mode_cli != "none":
+        _set_fifo_pos_mode(model, _pos_mode_cli)
+        print(f"[mem_space-BABILong] FIFO probe: fifo_pos_mode={_pos_mode_cli} "
+              f"(H_POS: RoPE positions for buffer prefix)")
+    _ks_mode_cli = getattr(args, "fifo_keep_set_mode", "none")
+    if _ks_mode_cli and _ks_mode_cli != "none":
+        _set_fifo_keep_set_mode(
+            model, _ks_mode_cli,
+            topk=args.fifo_keep_topk, recency=args.fifo_keep_recency,
+        )
+        print(f"[mem_space-BABILong] FIFO probe: fifo_keep_set_mode={_ks_mode_cli} "
+              f"topk={args.fifo_keep_topk} recency={args.fifo_keep_recency} (H_DIL)")
+    if getattr(args, "fifo_keep_all_buffer", False):
+        _set_fifo_keep_all_buffer(model, True)
+        print(f"[mem_space-BABILong] FIFO probe: fifo_keep_all_buffer=True "
+              f"(eviction suppressed)")
 
     # ------------------------------------------------------------------ #
     # BABILong eval loop (mirrors run_babilong_h6.py:406-512)
