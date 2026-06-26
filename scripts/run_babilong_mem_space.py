@@ -31,7 +31,7 @@ from transformers import AutoTokenizer, LlamaForCausalLM  # noqa: E402
 
 from babilong.prompts import DEFAULT_PROMPTS, DEFAULT_TEMPLATE, get_formatted_input  # noqa: E402
 
-from src.memory.mem_space import MemorySpaceConfig, apply_mem_space_to_model  # noqa: E402
+from src.memory.mem_space import MemorySpaceConfig, apply_mem_space_to_model, _reset_fifo_memory  # noqa: E402
 
 
 # --------------------------------------------------------------------------- #
@@ -473,6 +473,128 @@ def _fifo_oracle_fallback_total(model):
 
 
 @torch.no_grad()
+def _select_chunks_reader_attn(
+    model,
+    last_chunk: torch.Tensor,
+    n_chunks: int,
+    device: torch.device,
+    select_layer: int = 16,
+    topk: int = 4,
+):
+    """DEPLOYABLE reader-attn chunk selection (2026-06-27, for --swa_readerattn_token).
+
+    Returns a set of DOCUMENT-ABSOLUTE chunk indices (0-based, the same indexing
+    ``generate_with_mem_space`` uses for ``tokens.split(chunk_size)``) chosen by
+    the reader's OWN native q.k salience at ONE model-level selection layer — NO
+    oracle, NO gold answer, NO trained selector. Returns ``None`` on any failure
+    (caller then falls back to the plain last-chunk window).
+
+    Must be called AFTER the streaming-ingestion loop has run (so every FIFO
+    layer's ``_fifo_buf`` holds the per-chunk hidden snapshots of chunks
+    ``0..n_chunks-2``) and AFTER ``_freeze_banks`` (banks frozen for generation).
+
+    Mechanism
+    ---------
+      query   = the LAST (question) chunk's hidden at the input to ``select_layer``
+                (== output of layer ``select_layer-1``), grabbed with one extra
+                forward of the last chunk under ``output_hidden_states=True``.
+                This matches the FIFO write convention: ``_fifo_buf`` stores each
+                chunk's LAYER-INPUT hidden (``hidden_states`` arg of
+                ``_forward_fifo``, layer.py:1554), i.e. the output of the previous
+                layer. ``out.hidden_states[L]`` is exactly the input to layer L
+                (hidden_states[0] = embeddings = input to layer 0).
+      keys    = that same selection layer wrapper's ``_fifo_buf`` (one entry per
+                streamed context chunk).
+      scorer  = the layer's existing ``_fifo_select_keep_set_reader_attn``
+                (layer.py:1612): q_proj/k_proj + RoPE + per-chunk amax salience,
+                top-k. We pass ``recency=0`` (no recency floor — the last/question
+                chunk is always appended by the token-window builder downstream).
+
+    Buffer -> document mapping
+    --------------------------
+    The selector returns BUFFER-LOCAL indices into ``_fifo_buf``. In the deployable
+    (non-oracle) FIFO path the abs-idx bookkeeping (``_fifo_buf_abs_idx``) is NOT
+    maintained, so we map manually. After streaming chunks ``0..n_chunks-2``
+    (= ``n_chunks-1`` writes) with FIFO eviction at ``fifo_buffer_chunks`` (eval
+    default 25), the buffer holds only the MOST RECENT ``len(buf)`` of those
+    chunks, contiguously. Hence:
+
+        document_chunk_index(buffer_local_i) = ingested - len(buf) + i
+
+    where ``ingested = n_chunks - 1`` (number of context chunks streamed; the last
+    chunk is the question and is never streamed). This is exact for both the
+    no-eviction case (len(buf) == ingested → offset 0) and the evicted case
+    (len(buf) == fifo_buffer_chunks < ingested → offset > 0, drops the oldest).
+
+    Side-effect safety: the extra last-chunk forward FIFO-WRITES the last chunk
+    into every ``_fifo_buf`` (the write at layer.py:1554 is not frozen-gated). That
+    would corrupt the readout window's prefix (the readout forward reads
+    ``_fifo_buf`` too), so the CALLER snapshots+restores ``_fifo_buf`` around the
+    whole selection (see generate_with_mem_space). This helper itself only READS
+    the buffers; it does not mutate the model.
+    """
+    try:
+        root = getattr(model, "module", model)
+        mem_layers = getattr(root, "_mem_space_layers", None)
+        if not mem_layers:
+            return None
+        L = int(select_layer)
+        if L < 0 or L >= len(mem_layers):
+            return None
+        sel_wrapper = mem_layers[L]
+        buf = getattr(sel_wrapper, "_fifo_buf", None)
+        if not buf:
+            return None  # nothing streamed (e.g. short doc) → fall back
+
+        # ---- query hidden at the selection layer (input to layer L) ----
+        # out.hidden_states is a tuple of length (num_layers + 1): index 0 is the
+        # embedding output (= input to layer 0), index L is the input to layer L.
+        cur = last_chunk.unsqueeze(0).to(device)            # [1, last_len]
+        out = model(input_ids=cur, use_cache=False, output_hidden_states=True)
+        hs = getattr(out, "hidden_states", None)
+        if hs is None or L >= len(hs):
+            return None
+        q_hidden = hs[L]                                    # [1, last_len, d]
+
+        # ---- RoPE cos/sin for the last-chunk positions 0..T-1 ----
+        rot = None
+        inner = getattr(root, "model", None)
+        if inner is not None:
+            rot = getattr(inner, "rotary_emb", None)
+        if rot is None:
+            rot = sel_wrapper._fifo_resolve_rotary_emb()
+        if rot is None:
+            return None
+        Tq = q_hidden.shape[1]
+        pos_ids = torch.arange(Tq, device=q_hidden.device).unsqueeze(0)  # [1, Tq]
+        cos, sin = rot(q_hidden, pos_ids)
+
+        # ---- score + top-k via the layer's existing reader-attn scorer ----
+        # recency=0: no recency floor (last/question chunk is appended downstream).
+        kept_local = sel_wrapper._fifo_select_keep_set_reader_attn(
+            hidden_states=q_hidden,
+            valid_chunks=list(buf),
+            position_embeddings=(cos, sin),
+            topk=int(topk),
+            recency=0,
+        )
+        if kept_local is None:
+            return None
+
+        # ---- map buffer-local indices -> document-absolute chunk indices ----
+        ingested = n_chunks - 1                 # context chunks streamed (no last)
+        offset = ingested - len(buf)            # >=0; oldest evicted chunks dropped
+        sel_abs = set()
+        for i in kept_local:
+            abs_idx = offset + int(i)
+            if 0 <= abs_idx < ingested:         # exclude the last/question chunk
+                sel_abs.add(abs_idx)
+        return sel_abs or None
+    except Exception:
+        return None
+
+
+@torch.no_grad()
 def generate_with_mem_space(
     model,
     input_ids: torch.Tensor,
@@ -482,6 +604,9 @@ def generate_with_mem_space(
     device: torch.device,
     swa_eval_chunks: int = 0,
     oracle_token_chunks=None,
+    readerattn_token: bool = False,
+    readerattn_select_layer: int = 16,
+    readerattn_topk: int = 4,
 ) -> str:
     """Streaming generation for a single BABILong sample.
 
@@ -551,6 +676,14 @@ def generate_with_mem_space(
 
     _reset_banks(model)
     _reset_l2(model)
+    # READER-ATTN-TOKEN probe: the buffer->document chunk-index mapping
+    # (ingested - len(buf) + i, see _select_chunks_reader_attn) is only valid if
+    # _fifo_buf holds EXACTLY this document's chunks. The default FIFO eval path
+    # does NOT reset _fifo_buf between samples (only the oracle keep-set path
+    # does, via _set_fifo_oracle_needle), so we clear it per-sample HERE, gated
+    # on the flag → the default (flag off) path is byte-identical (no reset).
+    if readerattn_token:
+        _reset_fifo_memory(model)
 
     tokens = input_ids[0]  # [total_len]
     chunks = list(tokens.split(chunk_size))
@@ -566,6 +699,36 @@ def generate_with_mem_space(
 
     # Freeze the bank — generation should not pollute the slots that hold the context.
     _freeze_banks(model)
+    # READER-ATTN-TOKEN selection (2026-06-27, DEPLOYABLE): pick the chunk set by
+    # the reader's own native q.k salience at one selection layer, then feed those
+    # document-absolute indices into the EXISTING oracle-token window builder
+    # below (so the token-reforward readout path is byte-identical — only the
+    # chunk SOURCE differs: deployable selection vs the answer-cheating locator).
+    # When this yields no selection (short doc / failure) oracle_token_chunks stays
+    # falsy and we fall through to the plain last-chunk window unchanged.
+    if readerattn_token:
+        # The selection runs ONE extra forward of the last chunk, which would
+        # FIFO-write the last chunk into every layer's _fifo_buf (write at
+        # layer.py:1554 is not frozen-gated) and thereby change the readout
+        # window's prefix. Snapshot + restore _fifo_buf around it so the
+        # downstream readout sees the exact same buffer as the oracle-token path.
+        _root = getattr(model, "module", model)
+        _mem_layers = getattr(_root, "_mem_space_layers", []) or []
+        _buf_snapshot = [list(getattr(w, "_fifo_buf", []) or []) for w in _mem_layers]
+        try:
+            _sel = _select_chunks_reader_attn(
+                model=model,
+                last_chunk=chunks[-1],
+                n_chunks=len(chunks),
+                device=device,
+                select_layer=readerattn_select_layer,
+                topk=readerattn_topk,
+            )
+        finally:
+            for w, snap in zip(_mem_layers, _buf_snapshot):
+                w._fifo_buf = snap
+        if _sel:
+            oracle_token_chunks = _sel
     try:
         if oracle_token_chunks:
             # ORACLE-TOKEN-SWA: window = raw tokens of selected needle chunks
@@ -881,6 +1044,22 @@ def main():
                              "query-conditional, no dilution) instead of stored "
                              "hidden. Decisive 'live token >> frozen hidden "
                              "snapshot' test. Locates needle per-sample; bsz=1.")
+    parser.add_argument("--swa_readerattn_token", action="store_true", default=False,
+                        help="READER-ATTN-TOKEN probe (2026-06-27, DEPLOYABLE): "
+                             "identical token-reforward readout as --swa_oracle_token "
+                             "(same window builder + decode loop) but the selected "
+                             "chunk set comes from a DEPLOYABLE reader-attn top-k "
+                             "selection (the reader's own native q.k salience at one "
+                             "model-level selection layer L16 over the streamed FIFO "
+                             "hidden buffer) INSTEAD of the oracle needle-locator "
+                             "(which cheats by reading the gold answer). Measures the "
+                             "deployable upper bound = selection precision x "
+                             "token-reforward readout. Requires --batch_size 1; "
+                             "mutually exclusive with --swa_oracle_token.")
+    parser.add_argument("--swa_readerattn_topk", type=int, default=4,
+                        help="Top-k chunks to select for --swa_readerattn_token "
+                             "(default 4). No recency floor (the last/question chunk "
+                             "is always appended by the window builder).")
     parser.add_argument("--batch_size", type=int, default=1,
                         help="Cell-internal sample batch size. 1 (default) = the "
                              "original byte-for-byte per-sample path. >1 batches "
@@ -1033,6 +1212,19 @@ def main():
             "location + raw-token re-forward is only wired on the bsz=1 path)."
         )
 
+    if args.swa_readerattn_token and args.batch_size > 1:
+        parser.error(
+            "--swa_readerattn_token requires --batch_size 1 (per-sample "
+            "reader-attn chunk selection + raw-token re-forward is only wired "
+            "on the bsz=1 path)."
+        )
+    if args.swa_readerattn_token and args.swa_oracle_token:
+        parser.error(
+            "--swa_readerattn_token and --swa_oracle_token are mutually "
+            "exclusive (both drive the token-reforward window from a different "
+            "chunk source). Pick one."
+        )
+
     print(f"[mem_space-BABILong] Configuration:")
     print(f"  Base model:      {args.model_path}")
     print(f"  Checkpoint:      {args.checkpoint}")
@@ -1169,6 +1361,11 @@ def main():
         _set_fifo_keep_all_buffer(model, True)
         print(f"[mem_space-BABILong] FIFO probe: fifo_keep_all_buffer=True "
               f"(eviction suppressed)")
+    if args.swa_readerattn_token:
+        print(f"[mem_space-BABILong] READER-ATTN-TOKEN probe (deployable): "
+              f"select_layer=16 topk={args.swa_readerattn_topk} recency=0 "
+              f"(token-reforward readout identical to --swa_oracle_token; "
+              f"chunk source = reader-attn q.k selection, no oracle)")
 
     # ------------------------------------------------------------------ #
     # BABILong eval loop (mirrors run_babilong_h6.py:406-512)
@@ -1317,6 +1514,9 @@ def main():
                                     device=device,
                                     swa_eval_chunks=args.swa_eval_chunks,
                                     oracle_token_chunks=_oracle_tok,
+                                    readerattn_token=args.swa_readerattn_token,
+                                    readerattn_select_layer=16,
+                                    readerattn_topk=args.swa_readerattn_topk,
                                 )
                         finally:
                             if args.memory_disabled:
