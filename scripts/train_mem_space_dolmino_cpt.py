@@ -1595,6 +1595,42 @@ def parse_args() -> argparse.Namespace:
                         "packed=re-index kept chunks 0,1,2,..; real=original chunk index. "
                         "Mirrors the eval script's --fifo_pos_mode so we can retrain "
                         "with packed positions. Requires --use_fifo_memory.")
+    # FIFO reader-native top-k keep-set at TRAIN time (2026-06-25). The eval-time
+    # H_DIL probe proved that "isolation beats dilution": restricting the FIFO
+    # readout prefix to a few high-salience chunks (oracle) lifts qa5 8k from 16
+    # (full-buffer) to ~78. The bottleneck is CHUNK SELECTION, and the highest
+    # lever is to BAKE the isolation into TRAINING so the model learns to read
+    # out the needle when it only attends a few top-k chunks. This re-uses the
+    # SAME per-layer keep-set machinery the eval script already drives:
+    #   _forward_fifo reads self._fifo_keep_set_mode and, when == 'flat_readerattn',
+    #   calls _fifo_select_keep_set_reader_attn (reader q.k salience, no_grad
+    #   INDEX selection — STE-style: the SELECTED chunks' hidden states still flow
+    #   with gradients into the backbone attention, only the index choice is
+    #   non-differentiable). We do NOT use 'oracle' at train time (the model must
+    #   not see the needle position; we want a trainable reader-attn approximation).
+    #   none            = attend ALL buffered chunks (legacy, byte-identical default)
+    #   flat_readerattn = score each buffered chunk by this layer's native q.k
+    #                     salience, keep top-K + last R recency-floor chunks.
+    p.add_argument("--fifo_train_keep_set_mode", type=str, default="none",
+                   choices=["none", "flat_readerattn"],
+                   help="TRAIN-time FIFO keep-set isolation (anti-dilution). "
+                        "none = attend ALL buffered chunks (default, byte-identical). "
+                        "flat_readerattn = keep only reader q.k top-K + last R chunks "
+                        "(trainable reader-attn approximation of the oracle isolation; "
+                        "no_grad index selection, kept chunks still carry gradients). "
+                        "Requires --use_fifo_memory.")
+    p.add_argument("--fifo_train_keep_topk", type=int, default=8,
+                   help="K for TRAIN-time keep-set top-K (default 8). "
+                        "Only used when --fifo_train_keep_set_mode flat_readerattn.")
+    p.add_argument("--fifo_train_keep_recency", type=int, default=2,
+                   help="R for TRAIN-time keep-set recency floor: last R chunks "
+                        "always kept (default 2; the question/current context lives "
+                        "in the most recent chunk(s)).")
+    p.add_argument("--fifo_train_keep_all_buffer", action="store_true", default=False,
+                   help="When set with --fifo_train_keep_set_mode, suppress FIFO "
+                        "eviction so the buffer holds ALL past chunks while the "
+                        "readout still attends only top-K (= keep-all-store, "
+                        "attend-few). Default False.")
 
     # ----- Full fine-tune: unfreeze the entire Llama backbone (2026-06-18) ----- #
     # Landmark-faithful SFT: the frozen reader cannot consume injected KV through
@@ -3244,6 +3280,49 @@ def main() -> None:
                 "FIFO pos-fix (TRAIN): _fifo_pos_mode='%s' set on %d mem_space "
                 "layer(s); _fifo_rotary_root_ref stashed for RoPE recompute.",
                 args.fifo_pos_mode, _n_set,
+            )
+
+    # FIFO reader-native top-k keep-set isolation at TRAIN time (2026-06-25).
+    # Re-use the SAME per-layer keep-set attributes the eval script drives, so
+    # _forward_fifo's existing keep-set logic (read at layer.py ~line 1309,
+    # selection in _fifo_select_keep_set_reader_attn ~line 1612) fires during
+    # training automatically — no layer.py change needed. The model learns to
+    # read out the needle while attending only the top-K high-salience chunks
+    # (anti-dilution), but with a TRAINABLE reader-attn approximation (NOT the
+    # oracle: training does not know the needle position).
+    #
+    # GRADIENT (STE-style, verified): _fifo_select_keep_set_reader_attn runs the
+    # index selection under torch.no_grad() and returns a plain Python list of
+    # int indices. _forward_fifo then re-gathers `kept_chunks = [valid[i] ...]`
+    # from the LIVE `valid` tensors (NOT the no_grad copies) and cats them into
+    # `extended_hidden`, which is fed to the wrapped backbone attention. So the
+    # selected chunks' hidden states keep requires_grad and flow gradients into
+    # the backbone exactly as in the keep-all path; only the discrete index
+    # choice is non-differentiable. No .detach() in the keep-set path touches the
+    # kept-chunk hiddens (the only .detach() is the FIFO write-buffer store, which
+    # is governed by --fifo_detach and is identical to the keep-all path).
+    #
+    # All four attributes are scalars/str/bool (NOT nn.Module) → no model<->layer
+    # cycle, no RecursionError risk. Default 'none' leaves _fifo_keep_set_mode at
+    # its __init__ value (None) → keep-all → byte-identical to current training.
+    if args.fifo_train_keep_set_mode and args.fifo_train_keep_set_mode != "none":
+        _ks_root = getattr(model, "module", model)
+        _n_ks = 0
+        for _w in getattr(_ks_root, "_mem_space_layers", []) or []:
+            _w._fifo_keep_set_mode = args.fifo_train_keep_set_mode
+            _w._fifo_keep_topk = int(args.fifo_train_keep_topk)
+            _w._fifo_keep_recency = int(args.fifo_train_keep_recency)
+            _w._fifo_keep_all_buffer = bool(args.fifo_train_keep_all_buffer)
+            _n_ks += 1
+        if is_main(rank):
+            logger.info(
+                "FIFO keep-set ISOLATION (TRAIN): _fifo_keep_set_mode='%s' "
+                "topk=%d recency=%d keep_all_buffer=%s set on %d mem_space "
+                "layer(s); readout attends only reader-attn top-K + last-R chunks "
+                "(STE: no_grad index selection, kept chunks keep gradients).",
+                args.fifo_train_keep_set_mode, int(args.fifo_train_keep_topk),
+                int(args.fifo_train_keep_recency),
+                bool(args.fifo_train_keep_all_buffer), _n_ks,
             )
 
     if is_main(rank):
