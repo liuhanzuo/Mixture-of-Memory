@@ -17,6 +17,16 @@
 ---
 
 ## 1. 一句话现状
+### ★★★ 方向转折 (2026-06-26 17:35) — 稀释是元凶,非位置
+**FIFO-oracle 判据 + ArmC eval 钉死核心结论 (researcher a5fb370 裁决):**
+- **W0/W6 gap 元凶 = 稀释(dilution),不是位置坍缩。** layer.py:1327 pos-0 坍缩这个追了很久的头号嫌疑被证伪为次要。
+- 证据: FIFO-oracle(只 keep needle chunk)qa5 4k/8k/16k=99/78/70 ≈ W6 开卷天花板, 远超 full-buffer(qa5 16/7) → **raw hidden 完全可寻址**。且 oracle 在 legacy pos-0 下做到 → 稀释≫位置。
+- ArmC(训练时 real 位置)长档 qa1=13/8/5 ≈ NOLEAK 基线 16/12/8 → **训练修位置无效**, 坐实位置次要。
+- readout 本身 OK(隔离后能读到天花板), **瓶颈 = chunk selection**: 完美选(oracle)=70-99, 近似选(reader-attn keepset)=9-36。
+- **新最高杠杆方向 = 训练时 reader-native top-k 隔离**(把"选对 chunk 就能读"bake 进训练, babilong_mix=0)。coder a37179 实现中。
+- ArmB(packed)已停(位置证伪)。ArmA(格式对齐基线)保留跑完。位置消融(packed/real)降级。
+
+
 
 FIFO 方案B（per-layer hidden FIFO buffer，full-attention readout，RoPE 坍缩到 pos-0）。b25"破墙"已查实 ~85% 是 BABILong 数据泄漏。**真实干净长程天花板 = pg19 nctx7 qa5 16k=16/32k=9**（researcher 已复核确认）。核心未解 = **W0/W6 gap**（纯 memory 读出远差于给原始 token，证明 FIFO hidden 表示有损；头号嫌疑 = pos-0 坍缩 layer.py:1327）。
 
