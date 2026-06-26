@@ -369,6 +369,109 @@ def _set_fifo_keep_all_buffer(model, flag: bool) -> None:
         w._fifo_keep_all_buffer = bool(flag)
 
 
+def _find_subsequence_ids(haystack_ids, needle_ids):
+    """Locate ``needle_ids`` as a contiguous subsequence of ``haystack_ids``
+    (both 1-D list[int]). Returns the START token index of the match or None.
+
+    Robust to whitespace-merge tokenisation at the answer boundary: try the full
+    needle, then progressively trim leading tokens (space-prefix artifacts), then
+    fall back to the longest trailing run that matches. Mirrors the RULER oracle's
+    ``_find_subsequence`` (scripts/eval_ruler_mem_space.py:160) but returns only
+    the start offset (the FIFO oracle needs the token position, not the span)."""
+    H, N = haystack_ids, needle_ids
+    nH, nN = len(H), len(N)
+    if nN == 0 or nH == 0:
+        return None
+
+    def _scan(sub):
+        ns = len(sub)
+        if ns == 0 or ns > nH:
+            return None
+        # Search from the END so we find the LAST (most recent) occurrence — for
+        # bAbI the answer-bearing supporting fact is the latest mention.
+        for s in range(nH - ns, -1, -1):
+            if H[s:s + ns] == sub:
+                return s
+        return None
+
+    r = _scan(N)
+    if r is not None:
+        return r
+    for drop in range(1, min(4, nN)):
+        r = _scan(N[drop:])
+        if r is not None:
+            return r
+    for keep in range(nN - 1, 0, -1):
+        r = _scan(N[-keep:])
+        if r is not None:
+            return r
+    return None
+
+
+def _locate_needle_chunks(input_ids, target, tokenizer, chunk_size):
+    """Return the set of 0-based DOCUMENT-ABSOLUTE chunk indices that contain the
+    gold answer (``target``) in ``input_ids`` (a [1, L] LongTensor), or None if
+    the answer cannot be located.
+
+    chunk index = token_pos // chunk_size  (the same split used by
+    generate_with_mem_space: ``tokens.split(chunk_size)``). The answer string can
+    tokenise differently in isolation vs in-context (space-prefix merges), so we
+    try a few encodings and take the union of any matches. Multi-token answers
+    that straddle a chunk boundary contribute BOTH chunks (token span overlap).
+    Returns a set so multi-chunk / multi-mention needles are all kept."""
+    ids = input_ids[0].tolist()
+    L = len(ids)
+    tgt = (target or "").strip()
+    if not tgt:
+        return None
+    cands = []
+    for variant in (tgt, " " + tgt):
+        enc = tokenizer.encode(variant, add_special_tokens=False)
+        if enc:
+            cands.append(enc)
+    chunks = set()
+    for needle_ids in cands:
+        start = _find_subsequence_ids(ids, needle_ids)
+        if start is None:
+            continue
+        end = min(L - 1, start + len(needle_ids) - 1)  # last token of the span
+        for p in range(start, end + 1):
+            chunks.add(p // chunk_size)
+    return chunks or None
+
+
+def _set_fifo_oracle_needle(model, needle_chunks) -> None:
+    """Stash the per-sample needle absolute-chunk set on every FIFO layer AND
+    reset the per-document FIFO buffer bookkeeping so document-absolute chunk
+    indices restart at 0 for this sample.
+
+    NOTE: ``_reset_banks`` (the slot/summary reset) does NOT touch ``_fifo_buf``;
+    the FIFO oracle path needs a clean buffer + a 0-based absolute counter per
+    sample for ``needle_token_pos // chunk_size`` to be meaningful, so this
+    function also clears the buffer state. ``needle_chunks=None`` clears the
+    oracle channel (layer falls back to keep-all)."""
+    root = getattr(model, "module", model)
+    nset = set(int(c) for c in needle_chunks) if needle_chunks else None
+    for w in getattr(root, "_mem_space_layers", []) or []:
+        w._fifo_oracle_needle_chunks = nset
+        # Fresh per-document FIFO state (the oracle indexes by absolute chunk idx).
+        w._fifo_buf = []
+        w._fifo_buf_abs_idx = []
+        w._fifo_write_seq = 0
+
+
+def _fifo_oracle_fallback_total(model):
+    """Sum the per-layer oracle keep-all fallback counters → (fallback, evicted).
+    fallback = needle unknown OR evicted; evicted = subset where needle was in the
+    buffer's history but had been evicted. Counters are cumulative across the run."""
+    root = getattr(model, "module", model)
+    fb = ev = 0
+    for w in getattr(root, "_mem_space_layers", []) or []:
+        fb += int(getattr(w, "_fifo_oracle_fallback_count", 0))
+        ev += int(getattr(w, "_fifo_oracle_evicted_count", 0))
+    return fb, ev
+
+
 @torch.no_grad()
 def generate_with_mem_space(
     model,
@@ -848,11 +951,20 @@ def main():
                              "(may be OOD; relies on Llama-3 RoPE theta=500000 "
                              "extrapolation).")
     parser.add_argument("--fifo_keep_set_mode", type=str, default="none",
-                        choices=["none", "flat_readerattn"],
+                        choices=["none", "flat_readerattn", "oracle"],
                         help="H_DIL probe: how to select which buffered chunks "
                              "to KEEP in the prefix. 'none' = attend ALL "
                              "(legacy). 'flat_readerattn' = score each chunk "
-                             "by reader q.k salience, keep top-K + last R.")
+                             "by reader q.k salience, keep top-K + last R. "
+                             "'oracle' = PERFECT isolation: keep ONLY the "
+                             "chunk(s) whose token span contains the gold answer "
+                             "(needle) + last R recency floor (question). The "
+                             "needle's absolute chunk index is located per-sample "
+                             "by matching the target answer string in the token "
+                             "stream (token pos // chunk_size), mirroring the "
+                             "rawkv oracle's per-sample needle-chunk channel. "
+                             "Requires --batch_size 1; needle evicted/unknown "
+                             "falls back to keep-all (logged).")
     parser.add_argument("--fifo_keep_topk", type=int, default=25,
                         help="K for keep_set top-K (default 25).")
     parser.add_argument("--fifo_keep_recency", type=int, default=2,
@@ -1005,6 +1117,16 @@ def main():
         )
         print(f"[mem_space-BABILong] FIFO probe: fifo_keep_set_mode={_ks_mode_cli} "
               f"topk={args.fifo_keep_topk} recency={args.fifo_keep_recency} (H_DIL)")
+    # FIFO ORACLE keep-set (perfect isolation): needle chunk located per-sample
+    # in the bsz=1 loop. Requires --batch_size 1 (the batched path has no
+    # per-sample oracle wiring). When on we also reset the per-document FIFO
+    # buffer per sample (see _set_fifo_oracle_needle).
+    _fifo_oracle_on = (_ks_mode_cli == "oracle")
+    if _fifo_oracle_on and args.batch_size > 1:
+        parser.error(
+            "--fifo_keep_set_mode oracle requires --batch_size 1 "
+            "(per-sample needle location is only wired on the bsz=1 path)."
+        )
     if getattr(args, "fifo_keep_all_buffer", False):
         _set_fifo_keep_all_buffer(model, True)
         print(f"[mem_space-BABILong] FIFO probe: fifo_keep_all_buffer=True "
@@ -1126,6 +1248,16 @@ def main():
                 for idx in tqdm(sample_indices, desc=f"{task}/{split_name}", leave=False):
                     target, question, input_ids = _encode_sample(idx)
                     input_ids = input_ids.to(device)
+                    # FIFO ORACLE keep-set: locate the needle (gold answer) chunk
+                    # for THIS sample and stash it on the FIFO layers (mirrors the
+                    # rawkv oracle's per-sample needle-chunk channel). Also resets
+                    # the per-document FIFO buffer so absolute chunk indices are
+                    # valid. No-op unless --fifo_keep_set_mode oracle.
+                    if _fifo_oracle_on:
+                        _needle = _locate_needle_chunks(
+                            input_ids, target, tokenizer, args.chunk_size
+                        )
+                        _set_fifo_oracle_needle(model, _needle)
                     try:
                         if args.memory_disabled:
                             _set_memory_disabled(model, True)
@@ -1238,6 +1370,12 @@ def main():
             print(f"[mem_space-BABILong] Saved {len(df)} results to {outfile}")
 
     print("\n[mem_space-BABILong] Evaluation complete!")
+    if _fifo_oracle_on:
+        _fb, _ev = _fifo_oracle_fallback_total(model)
+        print(f"[mem_space-BABILong] FIFO oracle keep-all fallbacks (cumulative "
+              f"across all forwards/layers): {_fb} (of which needle-evicted: "
+              f"{_ev}). Non-zero = some chunks could not isolate the needle "
+              f"(e.g. needle in an evicted chunk at long lengths) and kept all.")
 
 
 if __name__ == "__main__":

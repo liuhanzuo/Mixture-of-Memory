@@ -601,6 +601,23 @@ class MemorySpaceLayer(nn.Module):
         self._fifo_keep_topk: int = 25
         self._fifo_keep_recency: int = 2
         self._fifo_keep_all_buffer: bool = False
+        # ORACLE keep-set probe (2026-06-25, decisive perfect-isolation test).
+        # When _fifo_keep_set_mode == "oracle", keep ONLY the buffered chunk(s)
+        # whose ORIGINAL (document-absolute) chunk index is in
+        # ``_fifo_oracle_needle_chunks`` (a set of 0-based absolute chunk indices
+        # set per-sample by the eval harness, mirroring the rawkv oracle's
+        # cfg.rawkv_oracle_needle_chunk channel) plus the recency floor. To map a
+        # buffer entry → its document-absolute chunk index under eviction we keep
+        # a parallel list ``_fifo_buf_abs_idx`` (entry i was the abs-idx-th chunk
+        # appended). The bookkeeping is maintained ONLY in oracle mode, so the
+        # None / "flat_readerattn" paths are byte-identical. None / empty needle
+        # set, or a needle that has been EVICTED from the buffer → fall back to
+        # keep-all (counted in _fifo_oracle_fallback_count) rather than crash.
+        self._fifo_oracle_needle_chunks: Optional[set] = None
+        self._fifo_buf_abs_idx: list = []          # parallel to _fifo_buf (oracle only)
+        self._fifo_write_seq: int = 0              # monotonic abs-chunk counter (reset per doc)
+        self._fifo_oracle_fallback_count: int = 0  # samples/forwards that kept-all
+        self._fifo_oracle_evicted_count: int = 0   # subset: needle was evicted
 
         # Learnable slot↔hidden projections. We do NOT take the slot_dim==d_model
         # shortcut (Identity) because that path has zero trainable capacity and was
@@ -1211,6 +1228,37 @@ class MemorySpaceLayer(nn.Module):
         """
         return self.wrapped_layer(hidden_states, **kwargs)
 
+    def _fifo_write_to_buffer(self, h_stored: torch.Tensor) -> None:
+        """Append ``h_stored`` to the FIFO buffer + apply eviction.
+
+        For the None / "flat_readerattn" paths this is byte-identical to the
+        legacy inline append+pop (the abs-idx bookkeeping below is GATED on
+        oracle mode, so it is completely inert — and allocates nothing — off the
+        oracle path; non-oracle behaviour and state are unchanged).
+
+        ORACLE bookkeeping (only when ``_fifo_keep_set_mode == "oracle"``): keep
+        a parallel ``_fifo_buf_abs_idx`` list naming each buffer entry's
+        DOCUMENT-ABSOLUTE chunk index, and a monotonic ``_fifo_write_seq``
+        counter (the absolute index of this write). Eviction pops the oldest
+        entry from BOTH lists so ``_fifo_buf_abs_idx[j]`` always names
+        ``_fifo_buf[j]``. ``_fifo_write_seq`` is reset to 0 at every document
+        boundary by the eval harness (``_set_fifo_oracle_needle``) alongside
+        ``_fifo_buf`` so ``needle_token_pos // chunk_size`` is meaningful.
+        """
+        _oracle = getattr(self, "_fifo_keep_set_mode", None) == "oracle"
+        self._fifo_buf.append(h_stored)
+        if _oracle:
+            self._fifo_buf_abs_idx.append(int(self._fifo_write_seq))
+            self._fifo_write_seq += 1
+        # Eviction (skip when _fifo_keep_all_buffer is set → keep full history).
+        if (
+            not getattr(self, "_fifo_keep_all_buffer", False)
+            and len(self._fifo_buf) > self._fifo_buffer_chunks
+        ):
+            self._fifo_buf.pop(0)
+            if _oracle and self._fifo_buf_abs_idx:
+                self._fifo_buf_abs_idx.pop(0)
+
     def _forward_fifo(
         self,
         hidden_states: torch.Tensor,
@@ -1265,6 +1313,23 @@ class MemorySpaceLayer(nn.Module):
                     valid_chunks=valid,
                     position_embeddings=position_embeddings,
                     topk=int(getattr(self, "_fifo_keep_topk", 25)),
+                    recency=int(getattr(self, "_fifo_keep_recency", 2)),
+                )
+                if _kept is not None:
+                    kept_local_idx = _kept    # sorted list of local indices
+            elif _ks_mode == "oracle":
+                # ORACLE perfect-isolation probe (2026-06-25). Keep ONLY the
+                # buffered chunk(s) whose document-absolute index is the needle's
+                # (set per-sample on self._fifo_oracle_needle_chunks, mirroring
+                # the rawkv oracle's cfg.rawkv_oracle_needle_chunk channel at
+                # layer.py:3005), plus the recency floor (last R chunks — the
+                # question lives in the last chunk). valid_orig_idx[i] is the
+                # local-buffer index; map it to the document-absolute chunk index
+                # via _fifo_buf_abs_idx. Falls back to keep-all (logged) when the
+                # needle position is unknown or the needle chunk has been evicted.
+                _kept = self._fifo_select_keep_set_oracle(
+                    valid_orig_idx=valid_orig_idx,
+                    n_valid=len(valid),
                     recency=int(getattr(self, "_fifo_keep_recency", 2)),
                 )
                 if _kept is not None:
@@ -1438,13 +1503,7 @@ class MemorySpaceLayer(nn.Module):
             # Cold start — nothing in buffer yet; just use bypass result.
             # Write current hiddens to buffer and return.
             h_stored = hidden_states.detach() if self._fifo_detach else hidden_states
-            self._fifo_buf.append(h_stored)
-            # Eviction (skip when _fifo_keep_all_buffer is set → keep full history).
-            if (
-                not getattr(self, "_fifo_keep_all_buffer", False)
-                and len(self._fifo_buf) > self._fifo_buffer_chunks
-            ):
-                self._fifo_buf.pop(0)
+            self._fifo_write_to_buffer(h_stored)
             return bypass_h
 
         # ---- Step 5: Run extended attention (prefix + current H) ----
@@ -1493,13 +1552,7 @@ class MemorySpaceLayer(nn.Module):
 
         # ---- Step 7: Write current hidden_states to FIFO buffer ----
         h_stored = hidden_states.detach() if self._fifo_detach else hidden_states
-        self._fifo_buf.append(h_stored)
-        # Eviction (skip when _fifo_keep_all_buffer is set → keep full history).
-        if (
-            not getattr(self, "_fifo_keep_all_buffer", False)
-            and len(self._fifo_buf) > self._fifo_buffer_chunks
-        ):
-            self._fifo_buf.pop(0)
+        self._fifo_write_to_buffer(h_stored)
 
         # Telemetry (re-use last_aux_losses slot so training loop can log it).
         self.last_aux_losses = {}
@@ -1628,6 +1681,57 @@ class MemorySpaceLayer(nn.Module):
                 return sorted(kept)
         except Exception:
             return None
+
+    def _fifo_select_keep_set_oracle(self, valid_orig_idx, n_valid, recency):
+        """ORACLE keep-set (2026-06-25): keep ONLY the buffered chunk(s) holding
+        the needle (perfect isolation) plus the recency floor. Returns a sorted
+        list of LOCAL indices into the `valid` list (the kept set), or None to
+        signal "keep all" fallback (so the caller leaves kept_local_idx == all).
+
+        Needle channel: ``self._fifo_oracle_needle_chunks`` is a set of 0-based
+        DOCUMENT-ABSOLUTE chunk indices, set per-sample by the eval harness — the
+        FIFO analogue of the rawkv oracle's ``cfg.rawkv_oracle_needle_chunk``
+        (read at layer.py ~3005). Empty/None → unknown → keep all (logged).
+
+        Chunk-index mapping (CRITICAL):
+          * The harness derives the needle's absolute chunk index as
+            ``needle_token_pos // chunk_size`` (token p lives in chunk p//cs).
+          * Each FIFO buffer entry's document-absolute chunk index is recorded in
+            ``self._fifo_buf_abs_idx`` at write time (entry j was the
+            abs_idx-th chunk appended). ``valid_orig_idx[i]`` maps the i-th
+            *valid* entry → its index into ``self._fifo_buf`` /
+            ``_fifo_buf_abs_idx``; we then look up its absolute index. This makes
+            the keep decision correct even after eviction (the buffer holds only
+            the most recent ``fifo_buffer_chunks`` entries unless
+            ``_fifo_keep_all_buffer`` is set).
+          * If NO valid buffer entry carries a needle absolute index (the needle
+            chunk has been evicted), we fall back to keep-all and bump the
+            evicted counter so the run log shows how many samples were affected.
+
+        The recency floor (last ``recency`` LOCAL entries) is always kept because
+        the question is in the most recent chunk(s); without it the reader would
+        have no query context.
+        """
+        needle_abs = getattr(self, "_fifo_oracle_needle_chunks", None)
+        if not needle_abs:
+            # Needle position unknown for this sample → keep all (logged).
+            self._fifo_oracle_fallback_count += 1
+            return None
+        abs_list = getattr(self, "_fifo_buf_abs_idx", None) or []
+        kept = set()
+        for _local_i, _buf_j in enumerate(valid_orig_idx):
+            if 0 <= _buf_j < len(abs_list) and abs_list[_buf_j] in needle_abs:
+                kept.add(_local_i)
+        if not kept:
+            # Needle chunk evicted (or never written) → keep all (logged).
+            self._fifo_oracle_fallback_count += 1
+            self._fifo_oracle_evicted_count += 1
+            return None
+        # Recency floor: always keep the last `recency` LOCAL entries (question).
+        recn = max(0, min(int(recency), n_valid))
+        for c in range(max(0, n_valid - recn), n_valid):
+            kept.add(c)
+        return sorted(kept)
 
     # --------------------------------------------------------------------- #
     # Main forward
