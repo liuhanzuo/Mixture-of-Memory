@@ -8,7 +8,7 @@
 
 ## 0. 用户 5 点指令（2026-06-25，最高优先级，冲突时压倒一切旧文本）
 
-1. **泄漏 run（babilong_mix>0）只看趋势，无指导意义** —— 0k-4k 分数一律 VOID，不作为能力结论。
+1. **泄漏 run（babilong_mix>0）= 完全不碰**（2026-06-26 用户强调收紧）：不在泄漏 ckpt(b50/b100/P2/c1024 等)上跑任何新 probe/eval，不引用其分数，**不拿它做任何"对照/上界"** —— 泄漏数字不是参照系，是噪音。所有判据只在干净（mix=0）ckpt 上做。（教训：在 b50 上跑 oracle 得 78、又花一轮"修正"，全是自找；干净 NOLEAK oracle 才 20-24。）
 2. **之后所有训练必须 `--babilong_mix_fraction 0`**，绝不掺任何 babilong 数据。违反 = red line。
 3. **梳理干净 babilong 结果**：memory-slots 历史最佳 vs 当前 FIFO buffer 到了多少 → 定方向。（researcher a9b7e4ee 进行中，产出 `status/CLEAN_SOTA_SURVEY_20260625.md`）
 4. **heartbeat 每轮**：读本文件，有空闲卡按计划自主推进（auto_launch）。
@@ -17,14 +17,15 @@
 ---
 
 ## 1. 一句话现状
-### ★★★ 方向转折 (2026-06-26 17:35) — 稀释是元凶,非位置
-**FIFO-oracle 判据 + ArmC eval 钉死核心结论 (researcher a5fb370 裁决):**
-- **W0/W6 gap 元凶 = 稀释(dilution),不是位置坍缩。** layer.py:1327 pos-0 坍缩这个追了很久的头号嫌疑被证伪为次要。
-- 证据: FIFO-oracle(只 keep needle chunk)qa5 4k/8k/16k=99/78/70 ≈ W6 开卷天花板, 远超 full-buffer(qa5 16/7) → **raw hidden 完全可寻址**。且 oracle 在 legacy pos-0 下做到 → 稀释≫位置。
-- ArmC(训练时 real 位置)长档 qa1=13/8/5 ≈ NOLEAK 基线 16/12/8 → **训练修位置无效**, 坐实位置次要。
-- readout 本身 OK(隔离后能读到天花板), **瓶颈 = chunk selection**: 完美选(oracle)=70-99, 近似选(reader-attn keepset)=9-36。
-- **新最高杠杆方向 = 训练时 reader-native top-k 隔离**(把"选对 chunk 就能读"bake 进训练, babilong_mix=0)。coder a37179 实现中。
-- ArmB(packed)已停(位置证伪)。ArmA(格式对齐基线)保留跑完。位置消融(packed/real)降级。
+### ★★★ 最新结论 (2026-06-27 04:00) — raw-hidden 到顶, 活token重forward是出路
+**完整排除链(全部干净 mix=0 ckpt, 泄漏数字已弃):**
+- **raw-hidden FIFO 到顶 ~20**: 干净 NOLEAK oracle(完美隔离 needle 的 hidden 快照) qa1=21/20/24/22, qa5=24/18/17/10, 仅比基线(qa1 16/12/8/2)温和正向。hidden-recall logit-lens: needle hidden 对答案 L31 rank=21(random 44)=**"存了但弱/不sharp"**。
+- **位置证伪**: ArmC(训练时 real 位置)长档 ≈ 基线 → 位置坍缩(layer.py:1327)是次要, 非主因。
+- **rawkv 撞同墙**: 历史干净 rawkv 长档全崩(DILUTION + 也存 hidden 快照)。
+- **★活 token 重 forward = 出路**: oracle-token-SWA(选中 chunk 的**原始 token 重 forward**, 非 hidden) qa1 8k=50/16k=28(hidden-oracle 仅 20/24), qa5 8k=20/16k=12 → 单跳大突破, 多跳温和正向。
+- **机制根因**: hidden 是"没 attend query 的冻结快照"; token 重 forward 让 needle 重新 attend query + 跨层重算 = 真正解法。
+- **新方向 = token-reforward + selection**(researcher a106e5e 设计可部署版中)。瓶颈转移到 chunk 选择精度(oracle 完美选 50 vs reader-attn 近似选低)。
+- ArmB(packed)/keepset 训练已停(raw-hidden 路线降级)。ArmA(格式对齐基线)保留跑完。
 
 
 
