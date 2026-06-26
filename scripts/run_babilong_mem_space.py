@@ -481,8 +481,21 @@ def generate_with_mem_space(
     max_new_tokens: int,
     device: torch.device,
     swa_eval_chunks: int = 0,
+    oracle_token_chunks=None,
 ) -> str:
     """Streaming generation for a single BABILong sample.
+
+    ORACLE-TOKEN-SWA probe (2026-06-27): when ``oracle_token_chunks`` is a
+    non-empty set of document-absolute chunk indices, the final-forward window is
+    built from the RAW TOKENS of those (oracle-selected needle) chunks + the last
+    chunk — instead of the last (W+1) contiguous chunks. This re-forwards the
+    needle's ORIGINAL TOKENS (not its stored hidden), so the needle content is
+    re-contextualized against the query at every layer (live, query-conditional)
+    with NO dilution. Decisive test of "live token re-forward >> frozen hidden
+    snapshot": the FIFO/rawkv readout tops out ~20 even with perfect hidden
+    isolation; if oracle-TOKEN re-forward scores far higher, the win is on the
+    token-reforward side, not raw-hidden. All-but-needle chunks still stream into
+    the bank exactly as W0 (no double counting beyond the selected needle chunks).
 
     Strategy (mirrors stream_haystack + F2 "last-chunk replay" trick from
     eval_niah_mem_space.py:858-901):
@@ -554,7 +567,19 @@ def generate_with_mem_space(
     # Freeze the bank — generation should not pollute the slots that hold the context.
     _freeze_banks(model)
     try:
-        if swa_eval_chunks > 0 and len(chunks) > swa_eval_chunks + 1:
+        if oracle_token_chunks:
+            # ORACLE-TOKEN-SWA: window = raw tokens of selected needle chunks
+            # (document-absolute idx in oracle_token_chunks, excluding the last
+            # chunk which is always appended) + the last chunk. Re-forwards the
+            # needle's ORIGINAL tokens so they re-attend the query at every layer.
+            n_chunks = len(chunks)
+            last_idx = n_chunks - 1
+            sel = sorted(c for c in oracle_token_chunks
+                         if 0 <= c < last_idx)  # needle chunks before the last
+            pieces = [chunks[c] for c in sel] + [chunks[-1]]
+            window = torch.cat(pieces, dim=0)   # [<= (len(sel)+1)*chunk_size]
+            cur = window.unsqueeze(0).to(device)
+        elif swa_eval_chunks > 0 and len(chunks) > swa_eval_chunks + 1:
             # Cross-chunk SWA window: last (W+1) chunks concatenated.
             #
             # GUARD ``len(chunks) > W+1`` (not just ``> 1``): we only take this
@@ -849,6 +874,13 @@ def main():
                              "requires --num_shards > 1). Shard i runs samples "
                              "[i::num_shards] so every shard gets an evenly "
                              "interleaved subset (no shard is all-hard samples).")
+    parser.add_argument("--swa_oracle_token", action="store_true", default=False,
+                        help="ORACLE-TOKEN-SWA probe (2026-06-27): final-forward "
+                             "window = RAW TOKENS of the oracle-located needle "
+                             "chunk(s) + last chunk, re-forwarded (live, "
+                             "query-conditional, no dilution) instead of stored "
+                             "hidden. Decisive 'live token >> frozen hidden "
+                             "snapshot' test. Locates needle per-sample; bsz=1.")
     parser.add_argument("--batch_size", type=int, default=1,
                         help="Cell-internal sample batch size. 1 (default) = the "
                              "original byte-for-byte per-sample path. >1 batches "
@@ -993,6 +1025,12 @@ def main():
             "--swa_eval_chunks > 0 is only supported on the bsz=1 path "
             "(use --batch_size 1). The batched generation path does not "
             "implement the cross-chunk SWA window."
+        )
+
+    if args.swa_oracle_token and args.batch_size > 1:
+        parser.error(
+            "--swa_oracle_token requires --batch_size 1 (per-sample needle "
+            "location + raw-token re-forward is only wired on the bsz=1 path)."
         )
 
     print(f"[mem_space-BABILong] Configuration:")
@@ -1258,6 +1296,13 @@ def main():
                             input_ids, target, tokenizer, args.chunk_size
                         )
                         _set_fifo_oracle_needle(model, _needle)
+                    # ORACLE-TOKEN-SWA: locate needle chunks to re-forward their
+                    # RAW TOKENS (independent of the FIFO-hidden oracle path).
+                    _oracle_tok = None
+                    if args.swa_oracle_token:
+                        _oracle_tok = _locate_needle_chunks(
+                            input_ids, target, tokenizer, args.chunk_size
+                        )
                     try:
                         if args.memory_disabled:
                             _set_memory_disabled(model, True)
@@ -1271,6 +1316,7 @@ def main():
                                     max_new_tokens=args.max_new_tokens,
                                     device=device,
                                     swa_eval_chunks=args.swa_eval_chunks,
+                                    oracle_token_chunks=_oracle_tok,
                                 )
                         finally:
                             if args.memory_disabled:
