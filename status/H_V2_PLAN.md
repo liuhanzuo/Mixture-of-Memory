@@ -45,21 +45,19 @@ SSH: `sshpass -f <pw> ssh -o StrictHostKeyChecking=no -o ConnectTimeout=12 -o Pr
 
 ---
 
-## 3. 在跑的判定性实验 + 完成后自动动作
+## 3. 当前状态（2026-06-26 12:15 更新）+ 完成后自动动作
 
-### 3.1 NOLEAK b25 step3000 训练（.7.53）— P0 泄漏归因终判
-- 完成标志：`grep "Training complete" logs/mem_space_fifo_b25_chunk512_noleak.log` 出现，或 `outputs/.../full_model.pt`（非 step000500）落盘。
-- **完成后自动**（auto_launch:true）：立即 W0 eval（`_eval_taskpool_2group.sh`, CHUNK_SIZE=512, swa0, qa1/qa2/qa5 × 0k-32k, n=100），CK_NAMES=noleak_b25_step3000_W0。
-- 判据：若 8k-32k 掉进干净簇(8k~15-25/32k~8-12) → 用户假说成立，b25 破墙=泄漏，干净 FIFO ≈ HARDOBJ 水平。
+### 3.0 ★★ NOLEAK b25 step3000 训练已完成（06:58）→ 第一个诚实 FIFO 结果已出
+**NOLEAK3000_W0（干净，史上第一个诚实 FIFO）qa5 W0 = 21/64/48/~12/~12/(跑)/(跑)，qa1=0/37/17/16/12/8/2，qa2=0/24/7/10/8/3/2。**
+- **结论：泄漏假说彻底坐实。** 干净 qa5 8k≈12-25 vs 脏 b25 8k=65 → b25"破墙"~95%泄漏，干净 FIFO≈pg19 SOTA(8k:~20 vs 19)，未超 slots。
+- **★发现格式 bug（非纯能力）**：干净模型在 babilong 上复读 PG19 语料`(Score:5,Insightful)by Anonymous Coward`、0k 复读 few-shot example → qa1/qa2 0k=0。根因：mix=0 训练没见过 babilong QA 格式。**NOLEAK 低分混了"记忆差"+"格式没对齐"两部分 → 需合法 task-alignment(T2)。**
 
-### 3.2 P1 packed-pos probe（.245.174 GPU0,3,4,5）— H_POS
-- 测 b25 脏 ckpt + `--fifo_pos_mode packed`，qa1/qa2/qa5 × 4k/8k/16k/32k。
-- ⚠️ 已观察：qa1 8k packed=25 < dirty baseline=40 → packed 在 pos-0 训练的 ckpt 上**反而掉**（train/eval mismatch）。**真正判据看 qa5**（时序推理，位置最敏感）。
-- ⚠️ b25 packed@32k positions=25*512=12800>8192 训练窗口=轻度 OOD，读 32k 留意。
-- 完成后：researcher 分析 H_POS 结论（packed 在脏 ckpt 上不是 clean test，最终判据应在 NOLEAK ckpt 上重跑 packed probe）。
+### 3.1 在跑 eval（diskB，2 节点合写 noleak_b25_step3000_W0 目录）
+- .7.53 原始 W0 driver(pid796534)跑 qa5 8k+32k 长尾；.245.174 resume 跑 qa5 16k + **NOLEAK3000_packed**(GPU4-7,干净 H_POS 判据)。无重复。
+- ⚠️ packed 干净 ckpt qa1 4k=2 << plain W0 16 → **eval-time packed 与 pos-0 训练权重失配，H_POS 只能靠训练时用 packed 测**（见 §4 训练）。
 
-### 3.3 NOLEAK b25 step-500 W0 早评（.245.174 GPU1,2,6,7）
-- step-500 ckpt 早读干净基线，~8h 早于 step3000。已观察 qa1 4k=25（vs 脏 b25=93，大跌，符合泄漏假说）。
+### 3.2 其余节点
+本机 b50 W6 eval；.196 b50 早评；B200.53 c1024 过训(剩~72)。
 
 ---
 
@@ -83,13 +81,24 @@ PROBE ∈ {P2,P3,P4,P5,NOLEAK3000_W0,NOLEAK3000_W6,NOLEAK3000_packed,NOLEAK3000_
 
 | 优先级 | 任务 | 触发条件 | auto_launch | PROBE 名 |
 |---|---|---|---|---|
-| P0 | **NOLEAK3000_W0**（史上第一个诚实 FIFO 测量）| .7.53 训练完成(`outputs/mem_space_fifo_b25_chunk512_noleak/full_model.pt` 落盘,非 step000500) | true | `NOLEAK3000_W0` |
-| P0 | **NOLEAK3000_packed**（干净 ckpt 测 H_POS，无 train/eval 失配）| 同上 + 节点空 | true | `NOLEAK3000_packed` |
-| P0 | **NOLEAK3000_W6**（干净 W0/W6 gap）| 同上 + 节点空 | true | `NOLEAK3000_W6` |
-| P1 | **P2 reader-attn keep-set@b100**（survey #1 方向，零训练，现成 ckpt）| 任一 diskB 节点空 ≥4 GPU | true | `P2` |
-| P1 | **P3 packed+keepset@b25**（叠加，关 gap 全胜测试）| 节点空 | true | `P3` |
+| **P0-train** | **★T2-align 训练(2 臂)**：解决格式没对齐 + 测训练时 position-fix。**任一 diskB 节点空出 8 卡即发**。脚本已部署+code已同步diskB(md5校验). | 任一 diskB 节点 8 卡空闲 | **true** | 见下方训练启动块 |
+| P0 | **NOLEAK3000_packed**（干净 H_POS）| 在跑(.245.174 GPU4-7) | — | running |
+| P1 | **P2 reader-attn keep-set@b100**（survey #1 方向，零训练）| diskB 节点空 ≥4 GPU 但 <8（不够训练）| true | `P2` |
+| P1 | **P3 packed+keepset@b25** | 节点空 | true | `P3` |
 | P2 | P4 real-pos@b25 / P5 keepset-top10@b100 | 节点空 | true | `P4`/`P5` |
-| P2 | 方向定夺后正式重训（赢家方向 mix=0 重训，成功线 qa5 16k>16 且 32k>9）| 5-probe 干净判据出 | false（等综合）| — |
+
+### ★ T2-align 训练启动块（diskB，需整 8 卡，babilong_mix=0 + 合成 needle）
+脚本 `scripts/_launch_t2_posfix.sh`（已部署 diskB），训练脚本已加 `--fifo_pos_mode` 支持(commit 5a2449b, md5校验diskA=diskB)。
+**两臂设计（隔离格式对齐 vs 位置修复）**：
+- **Arm A** = T2-align only（pos-0 readout）：`bash scripts/_launch_t2_posfix.sh none 29803` → run=`mem_space_fifo_b25_chunk512_t2align`
+- **Arm B** = T2-align + 训练时 packed 位置（测 H_POS）：`bash scripts/_launch_t2_posfix.sh packed 29804` → run=`..._t2align_packed`
+启动方法（在空出的 diskB 节点上,IP=.7.53 或 .245.174）：
+```bash
+PW=configs/password_h20_returned.txt; IP=<空节点IP>
+sshpass -f $PW ssh -o StrictHostKeyChecking=no -o ConnectTimeout=20 -o PreferredAuthentications=password root@$IP \
+  'cd /apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory && bash scripts/_launch_t2_posfix.sh none 29803'
+```
+**先发 Arm A**（最稳，纯格式对齐效果）；若有第二个 8 卡节点空出，发 Arm B。ETA ~10h/run(0.08 steps/s × 3000)。脚本内置 pgrep 防重复启动。完成后自动 W0+packed eval（同 NOLEAK 流程）。成功线：干净 W0 qa5 8k 显著>25 且格式 bug 消失(0k 正常出分)。
 
 详细 probe 背景见 `status/PENDING_TASKS.md` 末尾 + `status/CLEAN_SOTA_SURVEY_20260625.md`。
 
