@@ -1534,8 +1534,16 @@ class MemorySpaceLayer(nn.Module):
                     return _rot
         except Exception:
             pass
-        # Stashed root handle (set in run_babilong_mem_space.py helper).
-        _root = getattr(self, "_fifo_rotary_root", None)
+        # Stashed root handle. Stored list-wrapped (`[root]`) so that nn.Module
+        # does NOT register the outer model as a child submodule of this layer
+        # — a bare nn.Module attribute would create a model<->layer cycle and
+        # make model.train() recurse infinitely. Fall back to the legacy bare
+        # attr only if some old caller still set it.
+        _ref = getattr(self, "_fifo_rotary_root_ref", None)
+        if _ref:
+            _root = _ref[0]
+        else:
+            _root = getattr(self, "_fifo_rotary_root", None)
         if _root is not None:
             _rot = getattr(_root, "rotary_emb", None)
             if _rot is not None:

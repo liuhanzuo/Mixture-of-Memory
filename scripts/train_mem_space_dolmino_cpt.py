@@ -1579,7 +1579,7 @@ def parse_args() -> argparse.Namespace:
     # all-prefix-tokens-at-RoPE-pos-0 collapse. The forward path in
     # MemorySpaceLayer._forward_fifo is already train/eval agnostic (it only
     # reads self._fifo_pos_mode); we just need to set the per-layer attr +
-    # _fifo_rotary_root so _fifo_resolve_rotary_emb() can find model.model.rotary_emb.
+    # _fifo_rotary_root_ref so _fifo_resolve_rotary_emb() can find model.model.rotary_emb.
     #   none   = legacy (all prefix tokens at RoPE pos 0; byte-identical default)
     #   packed = re-index kept chunks 0,1,2,... (in-distribution positions)
     #   real   = original chunk index (may be OOD; exercises RoPE extrapolation)
@@ -3220,12 +3220,15 @@ def main() -> None:
 
     # FIFO RoPE position-fix at TRAIN time (2026-06-25). Mirror the eval helper
     # _set_fifo_pos_mode() in run_babilong_mem_space.py EXACTLY: set the per-layer
-    # mode AND stash _fifo_rotary_root so _fifo_resolve_rotary_emb() can find the
-    # model-level rotary_emb (transformers >= 4.45 stashes it on model.model).
-    # Without _fifo_rotary_root the packed/real recompute silently falls back to
-    # the legacy pos-0 path. This runs on ALL ranks, BEFORE the DDP/FSDP wrap, so
-    # `model` here is still the unwrapped root (getattr(.,'module',.) is a no-op
-    # but kept for parity with the eval helper).
+    # mode AND stash the model root (list-wrapped) so _fifo_resolve_rotary_emb()
+    # can find the model-level rotary_emb (transformers >= 4.45 stashes it on
+    # model.model). The root MUST be list-wrapped (`[root]`): a bare nn.Module
+    # attribute would be REGISTERED by nn.Module as a child submodule of the
+    # layer, creating a model<->layer cycle that makes model.train() recurse
+    # infinitely (RecursionError). Without the stash the packed/real recompute
+    # silently falls back to the legacy pos-0 path. This runs on ALL ranks,
+    # BEFORE the DDP/FSDP wrap, so `model` here is still the unwrapped root
+    # (getattr(.,'module',.) is a no-op but kept for parity with the eval helper).
     # CAVEAT: packed positions span up to fifo_buffer_chunks*chunk_size tokens,
     # which can exceed Llama-3's 8192 trained window for large buffers/chunks.
     # We do NOT change rotary theta here.
@@ -3234,12 +3237,12 @@ def main() -> None:
         _n_set = 0
         for _w in getattr(_fifo_root, "_mem_space_layers", []) or []:
             _w._fifo_pos_mode = args.fifo_pos_mode
-            _w._fifo_rotary_root = _fifo_root
+            _w._fifo_rotary_root_ref = [_fifo_root]
             _n_set += 1
         if is_main(rank):
             logger.info(
                 "FIFO pos-fix (TRAIN): _fifo_pos_mode='%s' set on %d mem_space "
-                "layer(s); _fifo_rotary_root stashed for RoPE recompute.",
+                "layer(s); _fifo_rotary_root_ref stashed for RoPE recompute.",
                 args.fifo_pos_mode, _n_set,
             )
 

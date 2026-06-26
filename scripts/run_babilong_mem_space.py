@@ -340,9 +340,12 @@ def _set_fifo_pos_mode(model, mode):
     root = getattr(model, "module", model)
     # Stash the outer model root on each layer so they can resolve rotary_emb
     # without a global handle (best-effort; falls back to wrapped_layer.self_attn).
+    # List-wrapped (`[root]`) so nn.Module does NOT register the outer model as a
+    # child submodule of the layer (a bare nn.Module attr would create a
+    # model<->layer cycle that makes model.train() recurse infinitely).
     for w in getattr(root, "_mem_space_layers", []) or []:
         w._fifo_pos_mode = mode
-        w._fifo_rotary_root = root
+        w._fifo_rotary_root_ref = [root]
 
 
 def _set_fifo_keep_set_mode(model, mode, topk=25, recency=2):
