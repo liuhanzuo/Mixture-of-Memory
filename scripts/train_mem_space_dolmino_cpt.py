@@ -1573,6 +1573,28 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--fifo_detach", action="store_true", default=True,
                    help="Detach FIFO buffer entries (break BPTT through past chunks). "
                         "Default True (safe). Set False for full BPTT (higher OOM risk).")
+    # FIFO RoPE position-fix at TRAIN time (2026-06-25). The eval script
+    # (run_babilong_mem_space.py) already supports this via --fifo_pos_mode;
+    # this lets us RETRAIN with packed/real RoPE positions instead of the legacy
+    # all-prefix-tokens-at-RoPE-pos-0 collapse. The forward path in
+    # MemorySpaceLayer._forward_fifo is already train/eval agnostic (it only
+    # reads self._fifo_pos_mode); we just need to set the per-layer attr +
+    # _fifo_rotary_root so _fifo_resolve_rotary_emb() can find model.model.rotary_emb.
+    #   none   = legacy (all prefix tokens at RoPE pos 0; byte-identical default)
+    #   packed = re-index kept chunks 0,1,2,... (in-distribution positions)
+    #   real   = original chunk index (may be OOD; exercises RoPE extrapolation)
+    # CAVEAT: with chunk_size=512 and fifo_buffer_chunks=K, packed positions span
+    # up to K*chunk_size tokens (e.g. 25*512=12800), which EXCEEDS Llama-3's 8192
+    # trained window. During the default curriculum (0:3, bptt_window 1) the live
+    # buffer stays small so positions remain modest, but a large buffer + large
+    # chunk_size can push past the trained window. We do NOT change rotary theta.
+    p.add_argument("--fifo_pos_mode", type=str, default="none",
+                   choices=["none", "packed", "real"],
+                   help="FIFO readout RoPE position mode at TRAIN time. "
+                        "none=legacy all-prefix-at-pos-0 (default, byte-identical); "
+                        "packed=re-index kept chunks 0,1,2,..; real=original chunk index. "
+                        "Mirrors the eval script's --fifo_pos_mode so we can retrain "
+                        "with packed positions. Requires --use_fifo_memory.")
 
     # ----- Full fine-tune: unfreeze the entire Llama backbone (2026-06-18) ----- #
     # Landmark-faithful SFT: the frozen reader cannot consume injected KV through
@@ -3195,6 +3217,31 @@ def main() -> None:
     if args.grad_flow_diag:
         for _w in getattr(model, "_mem_space_layers", []) or []:
             _w._inattn_grad_probe = True
+
+    # FIFO RoPE position-fix at TRAIN time (2026-06-25). Mirror the eval helper
+    # _set_fifo_pos_mode() in run_babilong_mem_space.py EXACTLY: set the per-layer
+    # mode AND stash _fifo_rotary_root so _fifo_resolve_rotary_emb() can find the
+    # model-level rotary_emb (transformers >= 4.45 stashes it on model.model).
+    # Without _fifo_rotary_root the packed/real recompute silently falls back to
+    # the legacy pos-0 path. This runs on ALL ranks, BEFORE the DDP/FSDP wrap, so
+    # `model` here is still the unwrapped root (getattr(.,'module',.) is a no-op
+    # but kept for parity with the eval helper).
+    # CAVEAT: packed positions span up to fifo_buffer_chunks*chunk_size tokens,
+    # which can exceed Llama-3's 8192 trained window for large buffers/chunks.
+    # We do NOT change rotary theta here.
+    if args.fifo_pos_mode and args.fifo_pos_mode != "none":
+        _fifo_root = getattr(model, "module", model)
+        _n_set = 0
+        for _w in getattr(_fifo_root, "_mem_space_layers", []) or []:
+            _w._fifo_pos_mode = args.fifo_pos_mode
+            _w._fifo_rotary_root = _fifo_root
+            _n_set += 1
+        if is_main(rank):
+            logger.info(
+                "FIFO pos-fix (TRAIN): _fifo_pos_mode='%s' set on %d mem_space "
+                "layer(s); _fifo_rotary_root stashed for RoPE recompute.",
+                args.fifo_pos_mode, _n_set,
+            )
 
     if is_main(rank):
         if args.unfreeze_backbone:
