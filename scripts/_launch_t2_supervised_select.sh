@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 # supervised-selection 训练: 学选对needle chunk + token-reforward读出 (mix=0)
-# MVP配置(LEARN_TO_SELECT_DESIGN §3). ★unfreeze_from=16(death-trap: 必须≤select_layer)
+# MVP配置(LEARN_TO_SELECT_DESIGN §3). ★unfreeze必须含select_layer(死陷阱: L16 q/k须可训)
+#
+# OOM-cut (2026-06-27): 原 --unfreeze_layers_from 16 解冻 16..31 共16层
+# (~4.0B 可训 → grad+AdamW+DDP-bucket ~40GB/卡) 叠加 6144-token token-reforward
+# 窗口前向 → 8xH20 95GB OOM. 改用 --unfreeze_layers_set 16,28,29,30,31 (稀疏解冻:
+# 选择层L16 + 末4层读出, ~1.6B 可训) 省 ~19GB/卡; 窗口前向 logits_to_keep 只算
+# target 区 logits (loss-byte-identical) 再省 ~4GB. 这两项是最高 ROI 杠杆.
 set -euo pipefail
 R="${PROJECT_ROOT:-/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory}"
 cd "$R"
@@ -12,7 +18,7 @@ PY="${PYTHON_BIN:-$R/.venv/bin/python}"
 RUN="mem_space_fifo_b25_c512_supervised_select"
 mkdir -p logs
 if pgrep -f "wandb_run_name $RUN" >/dev/null 2>&1; then echo "REFUSE: $RUN running"; exit 3; fi
-echo "[launch] $RUN (supervised-select, mix=0, unfreeze16, select_layer16 topk4 weight1.0, needle随机)"
+echo "[launch] $RUN (supervised-select, mix=0, sparse-unfreeze{16,28-31}, select_layer16 topk4 weight1.0, needle随机)"
 setsid bash -c "CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 $PY -m torch.distributed.run --nproc_per_node=8 --master_port=29807 \
   scripts/train_mem_space_dolmino_cpt.py \
   --model_path models/Meta-Llama-3-8B --per_doc_data --dolmino_path MemLong/data/processed/dolmino_per_doc/train \
@@ -20,7 +26,7 @@ setsid bash -c "CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 $PY -m torch.distributed.ru
   --chunk_size 512 --batch_size 1 --num_slots 128 --top_k 16 --selector_dim 128 --selector_temperature 40 \
   --load_balance_weight 0.0 --entropy_aux_weight 0.0 \
   --use_fifo_memory --fifo_buffer_chunks 25 --fifo_detach \
-  --unfreeze_backbone --unfreeze_layers_from 16 \
+  --unfreeze_backbone --unfreeze_layers_set 16,28,29,30,31 \
   --slot_init strided_token --slot_init_noise 0.0 --writeback_gate_max 1.0 \
   --gradient_checkpointing --gradient_accumulation_steps 4 --curriculum 0:3 --bptt_window 1 --inject_gate_bias_init -2.0 \
   --babilong_mix_fraction 0 \

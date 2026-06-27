@@ -526,6 +526,7 @@ def _freeze_backbone(
     model: torch.nn.Module,
     unfreeze_backbone: bool = False,
     unfreeze_layers_from: int = -1,
+    unfreeze_layers_set: Optional[set] = None,
 ) -> None:
     """Set requires_grad for training.
 
@@ -547,7 +548,61 @@ def _freeze_backbone(
     The MemorySpaceLayer wraps each decoder layer; we identify a layer's index
     via its `_layer_idx` and freeze/unfreeze the wrapped Llama params accordingly
     while ALWAYS keeping that layer's mem_space adapter params trainable.
+
+    SPARSE unfreeze (unfreeze_backbone=True, unfreeze_layers_set != None, OOM-cut
+    2026-06-27): trainable decoder layers are EXACTLY the indices in
+    ``unfreeze_layers_set`` (a contiguous "from N" range is NOT required). This
+    is the supervised-selection OOM lever (status/LEARN_TO_SELECT_DESIGN §4-C):
+    unfreezing only {select_layer} + the top readout layers (e.g. {16,28,29,30,31})
+    instead of the whole 16..31 contiguous block cuts the trainable param count
+    (and hence grad + AdamW state + DDP grad-bucket) from ~4.0B to ~1.6B → frees
+    ~19 GB/rank under DDP bf16. ``unfreeze_layers_set`` takes precedence over
+    ``unfreeze_layers_from`` when both are given. The selection layer MUST be in
+    the set (else L_select has no gradient — guarded in parse_args). Same
+    norm+lm_head+adapter-always-trainable contract as the range path.
     """
+    if unfreeze_backbone and unfreeze_layers_set:
+        # Sparse explicit set: trainable wrapped Llama params ONLY for the listed
+        # layer indices; everything else (other decoder layers + embed_tokens)
+        # stays frozen. Adapter + final norm + lm_head always train.
+        _want = {int(i) for i in unfreeze_layers_set}
+        for p in model.parameters():
+            p.requires_grad = False
+        for p in _mem_space_params(model):
+            p.requires_grad = True
+        root = getattr(model, "module", model)
+        mem_layers = getattr(root, "_mem_space_layers", None) or []
+        _got = []
+        for w in mem_layers:
+            _idx = getattr(w, "_layer_idx", None)
+            _wrapped = getattr(w, "wrapped_layer", None)
+            if _idx is not None and _wrapped is not None and _idx in _want:
+                for p in _wrapped.parameters():
+                    p.requires_grad = True
+                _got.append(int(_idx))
+        _inner = getattr(model, "model", root)
+        _norm = getattr(_inner, "norm", None)
+        if _norm is not None:
+            for p in _norm.parameters():
+                p.requires_grad = True
+        _lm_head = getattr(model, "lm_head", None)
+        if _lm_head is not None:
+            for p in _lm_head.parameters():
+                p.requires_grad = True
+        logger.info(
+            "SPARSE unfreeze: decoder layers %s trainable (%d layers; requested "
+            "%s) + adapter + final-norm + lm_head; ALL other layers + "
+            "embed_tokens FROZEN.",
+            sorted(_got), len(_got), sorted(_want),
+        )
+        _missing = sorted(_want - set(_got))
+        if _missing:
+            logger.warning(
+                "SPARSE unfreeze: requested layer indices %s were NOT found among "
+                "the wrapped decoder layers (max idx is layer-count-1) — they "
+                "stay frozen. Check --unfreeze_layers_set.", _missing,
+            )
+        return
     if unfreeze_backbone and unfreeze_layers_from is not None and unfreeze_layers_from >= 0:
         # Start fully frozen, then re-enable: (a) adapter params on every layer,
         # (b) the WRAPPED Llama decoder params only for layers idx >= N,
@@ -1683,6 +1738,25 @@ def parse_args() -> argparse.Namespace:
                         "are trainable (plus the mem_space adapter + final norm "
                         "+ lm_head); layers 0..N-1 and embed_tokens stay frozen. "
                         "Requires --unfreeze_backbone. Default -1 = full unfreeze.")
+    # SPARSE unfreeze (OOM-cut, 2026-06-27): unfreeze a comma-separated EXPLICIT
+    # set of decoder-layer indices instead of a contiguous "from N" block. The
+    # supervised-selection MVP needs the SELECTION layer (L16) trainable for
+    # L_select, but unfreezing the whole 16..31 block costs ~4.0B trainable
+    # params → grad + AdamW(2 moments, bf16) + DDP grad-bucket ≈ 40 GB/rank,
+    # which (stacked with the 6144-token token-reforward window forward) OOMs
+    # 8xH20 95 GB. Unfreezing only {16, 28, 29, 30, 31} (select layer + the top
+    # readout layers) drops trainable to ~1.6B → frees ~19 GB/rank, the single
+    # biggest memory lever. Overrides --unfreeze_layers_from when set. The
+    # --t2_select_layer MUST be in the set (else L_select has zero gradient;
+    # guarded in parse_args). Default empty = use --unfreeze_layers_from (byte-
+    # identical to the prior behaviour).
+    p.add_argument("--unfreeze_layers_set", type=str, default="",
+                   help="SPARSE unfreeze (OOM lever): comma-separated EXPLICIT "
+                        "decoder-layer indices to unfreeze, e.g. '16,28,29,30,31'. "
+                        "Overrides --unfreeze_layers_from. Requires "
+                        "--unfreeze_backbone. For --t2_select_loss_weight>0 the "
+                        "--t2_select_layer MUST be in this set. Default '' = "
+                        "disabled (use --unfreeze_layers_from, byte-identical).")
     # One-time grad-flow diagnostic: on the FIRST optimizer step, print backbone
     # param grad norms + the injected K_raw grad status, then disable itself.
     # Used by the unfreeze/in-graph smoke; no-op (and zero overhead) by default.
@@ -1726,6 +1800,14 @@ def parse_args() -> argparse.Namespace:
         })
     else:
         args.rawkv_readout_layers = None
+    # Parse comma-separated --unfreeze_layers_set "16,28,29,30,31" → set of ints
+    # (SPARSE unfreeze OOM lever). Empty/None → None (use --unfreeze_layers_from).
+    if isinstance(args.unfreeze_layers_set, str) and args.unfreeze_layers_set.strip():
+        args.unfreeze_layers_set = {
+            int(x) for x in args.unfreeze_layers_set.split(",") if x.strip() != ""
+        }
+    else:
+        args.unfreeze_layers_set = None
     # FIFO hidden-state memory (方案B) reads the buffered past-chunk hiddens
     # through the WRAPPED decoder layer's own attention — the slot path is fully
     # bypassed, so the only mem_space param on the graph is the tiny inject_gate,
@@ -1761,7 +1843,20 @@ def parse_args() -> argparse.Namespace:
                 "selection layer's q_proj/k_proj are trainable; otherwise L_select "
                 "has zero gradient (silent no-op)."
             )
-        if args.unfreeze_layers_from is not None and args.unfreeze_layers_from >= 0 \
+        # SPARSE unfreeze (OOM lever) takes precedence over the contiguous range:
+        # the selection layer MUST be in the explicit set, else L_select has zero
+        # gradient (the #1 death trap, status/LEARN_TO_SELECT_DESIGN §4-D).
+        if args.unfreeze_layers_set:
+            if int(args.t2_select_layer) not in args.unfreeze_layers_set:
+                raise ValueError(
+                    "DEATH-TRAP (status/LEARN_TO_SELECT_DESIGN §4-D): "
+                    f"--t2_select_layer={args.t2_select_layer} is NOT in "
+                    f"--unfreeze_layers_set={sorted(args.unfreeze_layers_set)}, so "
+                    "the selection layer's q_proj/k_proj are FROZEN and the "
+                    "supervised selection loss has ZERO gradient (silent failure). "
+                    f"Add {args.t2_select_layer} to --unfreeze_layers_set."
+                )
+        elif args.unfreeze_layers_from is not None and args.unfreeze_layers_from >= 0 \
                 and args.unfreeze_layers_from > args.t2_select_layer:
             raise ValueError(
                 "DEATH-TRAP (status/LEARN_TO_SELECT_DESIGN §4-D): "
@@ -2664,8 +2759,10 @@ def t2_select_train_step(
       4. L_lm (token-reforward): select top-k chunks by DETACHED argmax of sal
          (eval-consistent; selection is non-diff, supervised only via L_select),
          build window = cat([selected raw chunks] + target), freeze banks, forward
-         with answer-masked labels (same machinery as dolmino_train_step's
-         _make_swa_window but with arbitrary indices).
+         asking lm_head for ONLY the target-region logits (``logits_to_keep`` —
+         the prefix labels are all -100 so prefix logits are pure wasted memory),
+         and compute the answer-digit CE manually on that slice (loss-byte-
+         identical to a full-window labels forward; see the inline note).
       5. total = lm_loss + aux_loss + select_loss_weight * L_select ; backward.
 
     Returns: ``(lm_loss_det, aux_loss_det, select_ce_det, needle_rank, did_select)``
@@ -2769,19 +2866,38 @@ def t2_select_train_step(
               for c in sel_abs if 0 <= c < n_ingested]
     pieces.append(target_input)
     window = torch.cat(pieces, dim=1)
-    prefix_len = window.shape[1] - target_len
-    labels = window.clone()
-    labels[:, :prefix_len] = -100
-    labels[:, prefix_len:] = target_labels
 
     # Freeze banks around the window forward so re-presented chunks are not
     # double-written (mirrors dolmino_train_step's SWA-window contract).
+    #
+    # MEMORY (OOM-cut 2026-06-27): the LM loss only falls on the answer digits,
+    # which live in the TARGET region (the last ``target_len`` window positions).
+    # Every prefix label is -100, so the prefix logits contribute NOTHING to the
+    # loss. Materialising the lm_head logits over the WHOLE window
+    # ([B, prefix_len+target_len, vocab]=~6144x128256) — then upcasting that to
+    # fp32 inside the HF loss — is the single largest transient activation here
+    # (~1.5 GB bf16 + ~3 GB fp32 over a 6144-token window). We instead ask the
+    # backbone to compute lm_head logits for ONLY the last ``target_len``
+    # positions (``logits_to_keep``) and compute the answer-digit CE manually on
+    # that slice. This is LOSS-BYTE-IDENTICAL: lm_head is per-position, so the
+    # kept positions' logits are bit-identical to the full-window slice; the
+    # within-target shift (logit[i] predicts target token i+1) and the
+    # mean-over-non-ignored reduction exactly reproduce HF's ForCausalLMLoss
+    # (the dropped boundary logit predicts the FIRST target token, which is the
+    # question's masked -100 → contributes nothing). Saves ~4 GB peak.
     _set_banks_frozen(model, True)
     try:
-        out = model(input_ids=window, labels=labels, use_cache=False)
+        out = model(input_ids=window, use_cache=False,
+                    logits_to_keep=target_len)
     finally:
         _set_banks_frozen(model, False)
-    lm_loss = out.loss / scale
+    # out.logits: [B, target_len, vocab] aligned to the target region.
+    _logits = out.logits
+    # Shift WITHIN the target: logit at offset i predicts target token i+1.
+    _shift_logits = _logits[:, :-1, :].reshape(-1, _logits.shape[-1]).float()
+    _shift_labels = target_labels[:, 1:].reshape(-1)
+    lm_loss_raw = _F.cross_entropy(_shift_logits, _shift_labels, ignore_index=-100)
+    lm_loss = lm_loss_raw / scale
     aux_loss = _collect_aux_loss(model, device) / scale
 
     # ---- 5. total + backward ---- #
@@ -3368,6 +3484,10 @@ def _save_adapter(model, args, step: int, final: bool = False) -> None:
             # Partial-unfreeze metadata (v2): records which layers were trainable.
             "unfreeze_backbone": args.unfreeze_backbone,
             "unfreeze_layers_from": args.unfreeze_layers_from,
+            "unfreeze_layers_set": (
+                sorted(args.unfreeze_layers_set)
+                if args.unfreeze_layers_set else None
+            ),
             # Training metadata
             "curriculum": args.curriculum,
             "lr": args.lr,
@@ -3468,6 +3588,7 @@ def main() -> None:
         model,
         unfreeze_backbone=args.unfreeze_backbone,
         unfreeze_layers_from=args.unfreeze_layers_from,
+        unfreeze_layers_set=args.unfreeze_layers_set,
     )
 
     # Arm the one-time in-graph probe on the inattn layer(s) (no-op otherwise).
