@@ -32,9 +32,12 @@ Key construction guarantees
 ---------------------------
 * The queried needle sentence is placed ENTIRELY inside a single context chunk
   (``insert_at + len(needle_ids) <= chunk_size``); it never straddles a boundary.
-* The queried needle is placed at the START (offset 0) of the FIRST context chunk
-  so the needle->query token distance equals exactly ``n_ctx * chunk_size`` for
-  every chunk_size — giving a clean, reproducible fixed gap.
+* The queried needle is placed at the START (offset 0) of a context chunk. By
+  default that is the FIRST context chunk, so the needle->query token distance
+  equals exactly ``n_ctx * chunk_size`` for every chunk_size (clean fixed gap).
+  When ``random_needle_chunk=True`` (learn-to-select training) it is a RANDOM
+  context chunk (offset 0); the chosen index is returned as
+  ``needle_chunk_index`` so a selection loss can supervise against it.
 * ``answer_mask`` is True only on the answer's digit-token positions in the target
   chunk; everything else (question prefix + padding) is masked out of the loss.
 """
@@ -89,7 +92,20 @@ class NIAHChunkedDataset(torch.utils.data.IterableDataset):
         num_keys: int = 1,
         seed: int = 42,
         background_skip: int = 0,
+        random_needle_chunk: bool = False,
     ) -> None:
+        """random_needle_chunk (2026-06-27, learn-to-select):
+            False (default) -> the queried needle is ALWAYS at context chunk 0
+                (legacy behaviour; the produced samples are BYTE-IDENTICAL to the
+                prior dataset because no extra RNG calls are made).
+            True  -> the queried needle is placed at a RANDOM context chunk index
+                in [0, n_ctx-1] (offset 0 within that chunk). This is MANDATORY for
+                the supervised-selection training (status/LEARN_TO_SELECT_DESIGN):
+                with the needle always at chunk 0 a selector trivially learns
+                "always pick chunk 0", which does not transfer. The chosen index is
+                returned in the sample as ``needle_chunk_index`` so the train loop
+                can supervise the per-chunk salience against it.
+        """
         super().__init__()
         if background_data.ndim != 2:
             raise ValueError(
@@ -109,6 +125,7 @@ class NIAHChunkedDataset(torch.utils.data.IterableDataset):
         self.num_keys = num_keys
         self.seed = seed
         self.background_skip = background_skip
+        self.random_needle_chunk = bool(random_needle_chunk)
 
         # n_ctx derived so the needle (at chunk 0 offset 0) -> query (target chunk
         # start) distance == n_ctx * chunk_size ~= gap_tokens, for any chunk_size.
@@ -250,15 +267,26 @@ class NIAHChunkedDataset(torch.utils.data.IterableDataset):
             bg, pos = self._get_bg_chunk(worker_indices, pos)
             context_chunks.append(bg)
 
-        # 4a. Place the QUERIED needle at chunk 0, offset 0 -> fixed gap.
+        # 4a. Place the QUERIED needle. Legacy (random_needle_chunk=False): chunk 0,
+        #     offset 0 -> fixed gap == n_ctx*chunk_size (NO rng call, so byte-
+        #     identical to the prior dataset). Learn-to-select
+        #     (random_needle_chunk=True): a RANDOM context chunk, offset 0, so the
+        #     selector cannot shortcut to "always chunk 0". The chosen index is
+        #     returned as ``needle_chunk_index`` for the supervised-selection loss.
+        if self.random_needle_chunk and n_ctx > 1:
+            needle_chunk_index = rng.randint(0, n_ctx - 1)
+        else:
+            needle_chunk_index = 0
         q_needle = needle_ids_list[query_k]
         if len(q_needle) > cs:
             q_needle = q_needle[:cs]  # safety (should never trigger for ~25-token needle)
-        context_chunks[0] = self._embed_needle(context_chunks[0], q_needle, 0)
+        context_chunks[needle_chunk_index] = self._embed_needle(
+            context_chunks[needle_chunk_index], q_needle, 0
+        )
 
         # 4b. Scatter distractor needles into other context chunks (if num_keys>1).
         if self.num_keys > 1 and n_ctx > 1:
-            other_chunks = list(range(1, n_ctx))
+            other_chunks = [c for c in range(n_ctx) if c != needle_chunk_index]
             rng.shuffle(other_chunks)
             for ki in range(1, self.num_keys):
                 d_needle = needle_ids_list[ki]
@@ -301,6 +329,12 @@ class NIAHChunkedDataset(torch.utils.data.IterableDataset):
             "answer_mask": torch.tensor(answer_mask, dtype=torch.bool),
             "is_t2": True,
             "code": codes[query_k],
+            # Document-absolute context-chunk index holding the queried needle.
+            # 0 in the legacy (chunk-0) layout; a random index when
+            # random_needle_chunk=True. Used by the supervised-selection loss
+            # (status/LEARN_TO_SELECT_DESIGN) as the CE target for the per-chunk
+            # reader-attn salience.
+            "needle_chunk_index": int(needle_chunk_index),
         }
         return sample, pos
 
@@ -345,9 +379,16 @@ def niah_chunked_collate_fn(batch: list[Dict[str, Any]]) -> Dict[str, Any]:
     msk_col = [s["answer_mask"] for s in batch]
     answer_mask = torch.stack([t[:tgt_min] for t in msk_col], dim=0)
 
+    # needle_chunk_index: [B] long tensor (CE target for the selection loss).
+    # Absent in older samples -> default 0 (legacy chunk-0 layout).
+    needle_chunk_index = torch.tensor(
+        [int(s.get("needle_chunk_index", 0)) for s in batch], dtype=torch.long
+    )
+
     return {
         "context_chunks": context_chunks,
         "target_ids": target_ids,
         "answer_mask": answer_mask,
         "is_t2": True,
+        "needle_chunk_index": needle_chunk_index,
     }

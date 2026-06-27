@@ -1152,6 +1152,32 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--t2_background_skip", type=int, default=0,
                    help="Skip the first N background chunks (train/eval split).")
 
+    # ----- Supervised SELECTION training (learn-to-select, 2026-06-27) ----- #
+    # status/LEARN_TO_SELECT_DESIGN_20260627.md scheme (c): supervise the reader's
+    # OWN per-chunk q.k salience (the same signal the deployable --swa_readerattn_token
+    # eval ranks) to put the needle chunk on top, while the LM loss reads via a
+    # token-reforward window of the SELECTED (detached-argmax top-k) chunks + target.
+    # Default 0 -> DISABLED -> T2 takes the original dolmino_train_step path
+    # (byte-identical). Only active for T2 needle samples (--t2_recall_mix_fraction>0).
+    p.add_argument("--t2_select_loss_weight", type=float, default=0.0,
+                   help="Weight on the supervised per-chunk selection CE loss for "
+                        "T2 needle samples. 0 (default) = disabled, byte-identical "
+                        "to the prior T2 path. >0 routes T2 through the "
+                        "token-reforward + selection-supervision step. REQUIRES "
+                        "--unfreeze_backbone with --unfreeze_layers_from <= "
+                        "--t2_select_layer (else the selection layer's q/k_proj are "
+                        "frozen and L_select has zero gradient = silent no-op).")
+    p.add_argument("--t2_select_layer", type=int, default=16,
+                   help="Model-level decoder-layer index at which the reader-attn "
+                        "q.k salience is scored + supervised. MUST match the eval "
+                        "--swa_readerattn_select_layer (default 16). This layer's "
+                        "q_proj/k_proj must be trainable (unfreeze_layers_from<=N).")
+    p.add_argument("--t2_select_topk", type=int, default=4,
+                   help="Top-k chunks (by detached salience argmax) re-forwarded as "
+                        "the token-reforward LM window for T2 select steps. MUST "
+                        "match the eval --swa_readerattn_topk (default 4) for "
+                        "train/eval consistency.")
+
     # Logging / saving / eval
     p.add_argument("--log_interval", type=int, default=10)
     p.add_argument("--save_interval", type=int, default=5000)
@@ -1718,6 +1744,34 @@ def parse_args() -> argparse.Namespace:
             "frozen backbone leaves only the inject_gate trainable, which is "
             "absent on cold-start chunks → backward fails with no grad_fn."
         )
+    # ----- Supervised-selection death-trap guards (2026-06-27) ----- #
+    # status/LEARN_TO_SELECT_DESIGN §4-D: the selection loss supervises the
+    # q_proj/k_proj of decoder layer ``t2_select_layer``. If that layer is FROZEN
+    # (the default NOLEAK launch unfreezes from 24, well above 16) the CE has ZERO
+    # gradient and the whole experiment silently does nothing. Fail loudly.
+    if args.t2_select_loss_weight > 0.0:
+        if args.t2_recall_mix_fraction <= 0.0:
+            raise ValueError(
+                "--t2_select_loss_weight > 0 requires --t2_recall_mix_fraction > 0 "
+                "(the selection loss only fires on T2 needle samples)."
+            )
+        if not args.unfreeze_backbone:
+            raise ValueError(
+                "--t2_select_loss_weight > 0 requires --unfreeze_backbone so the "
+                "selection layer's q_proj/k_proj are trainable; otherwise L_select "
+                "has zero gradient (silent no-op)."
+            )
+        if args.unfreeze_layers_from is not None and args.unfreeze_layers_from >= 0 \
+                and args.unfreeze_layers_from > args.t2_select_layer:
+            raise ValueError(
+                "DEATH-TRAP (status/LEARN_TO_SELECT_DESIGN §4-D): "
+                f"--unfreeze_layers_from={args.unfreeze_layers_from} is ABOVE "
+                f"--t2_select_layer={args.t2_select_layer}, so the selection "
+                "layer's q_proj/k_proj are FROZEN and the supervised selection "
+                "loss has ZERO gradient (silent failure). Set "
+                f"--unfreeze_layers_from <= {args.t2_select_layer} (e.g. 16) so "
+                "the selection layer trains."
+            )
     return args
 
 
@@ -2568,6 +2622,173 @@ def dolmino_train_step(
     return (lm_loss.detach(), aux_loss.detach(), _zero, _zero,
             distill_kl, distill_hidden,
             distill_conf_mean, distill_conf_p90, distill_conf_eff)
+
+
+def t2_select_train_step(
+    model: torch.nn.Module,
+    context_chunks: List[torch.Tensor],
+    target_ids: torch.Tensor,
+    answer_mask: torch.Tensor,
+    needle_chunk_index: int,
+    device: torch.device,
+    grad_accum: int = 1,
+    select_layer: int = 16,
+    select_topk: int = 4,
+    select_loss_weight: float = 1.0,
+) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, int, int]:
+    """Supervised-SELECTION + token-reforward T2 step (2026-06-27).
+
+    Implements scheme (c) of status/LEARN_TO_SELECT_DESIGN_20260627.md: while the
+    LM loss reads through a token-reforward window of the SELECTED chunks + target,
+    an auxiliary CE supervises the reader's OWN per-chunk q.k salience (the same
+    signal the deployable ``--swa_readerattn_token`` eval ranks) to place the
+    needle chunk on top.
+
+    Pipeline (gradient path annotated)
+    ----------------------------------
+      1. _reset_banks → stream ``context_chunks`` (NO GRAD) into every layer's
+         ``_fifo_buf`` (exactly as dolmino_train_step). After this the selection
+         layer's buffer holds one detached hidden snapshot per context chunk.
+      2. Query hidden: one extra forward of the target chunk under no_grad with
+         output_hidden_states=True; ``hs[select_layer]`` is the input to layer
+         ``select_layer`` (matches the eval selector + the FIFO write convention).
+         The buffer is snapshot+restored around this forward (the forward FIFO-
+         WRITES the target, layer.py:1554 is not frozen-gated) so the LM window
+         below sees the clean context-only buffer. We slice the query hidden to
+         the QUESTION portion (positions before the first answer-mask token) so the
+         salience probe (last query token) is the question end, not a pad token.
+      3. L_select (GRAD-BEARING): ``_fifo_reader_attn_salience`` recomputes the
+         per-chunk salience WITHOUT no_grad → CE(sal, needle_local_idx). The
+         gradient flows sal → einsum → q_proj/k_proj of layer ``select_layer``
+         (which MUST be trainable; guarded in parse_args). detach-free.
+      4. L_lm (token-reforward): select top-k chunks by DETACHED argmax of sal
+         (eval-consistent; selection is non-diff, supervised only via L_select),
+         build window = cat([selected raw chunks] + target), freeze banks, forward
+         with answer-masked labels (same machinery as dolmino_train_step's
+         _make_swa_window but with arbitrary indices).
+      5. total = lm_loss + aux_loss + select_loss_weight * L_select ; backward.
+
+    Returns: ``(lm_loss_det, aux_loss_det, select_ce_det, needle_rank, did_select)``
+      * lm_loss_det / aux_loss_det: detached, already divided by grad_accum.
+      * select_ce_det: detached UNSCALED selection CE (for logging); 0 if skipped.
+      * needle_rank: # chunks scoring strictly above the needle (0 == needle is
+        top-1); -1 if the selection loss was skipped this step.
+      * did_select: 1 if L_select contributed gradient this step, else 0.
+    """
+    import torch.nn.functional as _F
+    _reset_banks(model)
+    scale = float(grad_accum)
+    _zero = torch.zeros((), device=device)
+
+    target_input = _ensure_batched(target_ids, device)         # [B, chunk_size]
+    target_len = target_input.shape[1]
+    mask = _ensure_batched(answer_mask, device).to(torch.bool)  # [B, chunk_size]
+    target_labels = torch.where(
+        mask, target_input, torch.full_like(target_input, -100)
+    )
+    B = target_input.shape[0]
+
+    # ---- 1. Stream context chunks (no grad) → populate FIFO buffers ---- #
+    with torch.no_grad():
+        for ctx in context_chunks:
+            model(input_ids=_ensure_batched(ctx, device), use_cache=False)
+    _detach_banks(model)
+
+    root = getattr(model, "module", model)
+    mem_layers = getattr(root, "_mem_space_layers", None) or []
+    L = int(select_layer)
+
+    # ---- 2-3. Grad-bearing salience + L_select (best-effort) ---- #
+    select_ce = _zero
+    needle_rank = -1
+    did_select = 0
+    sal_detached = None          # for the LM-window top-k selection below
+    n_ingested = len(context_chunks)
+    buf_len = 0
+    if 0 <= L < len(mem_layers) and B == 1 and n_ingested >= 1:
+        sel_w = mem_layers[L]
+        buf = [h for h in (getattr(sel_w, "_fifo_buf", None) or []) if h.shape[0] == B]
+        buf_len = len(buf)
+        if buf_len >= 2:
+            # Query hidden at the input to layer L (snapshot+restore buffers).
+            _buf_snap = [list(getattr(w, "_fifo_buf", []) or []) for w in mem_layers]
+            try:
+                with torch.no_grad():
+                    _out = model(input_ids=target_input, use_cache=False,
+                                 output_hidden_states=True)
+                hs = getattr(_out, "hidden_states", None)
+                q_hidden = hs[L] if (hs is not None and L < len(hs)) else None
+            finally:
+                for w, snap in zip(mem_layers, _buf_snap):
+                    w._fifo_buf = snap
+            if q_hidden is not None:
+                # Restrict the salience probe to the QUESTION end (last token
+                # before the first answer-mask position) so it is not a pad token.
+                _nz = mask[0].nonzero()
+                q_len = int(_nz[0].item()) if _nz.numel() > 0 else target_len
+                q_len = max(1, min(q_len, q_hidden.shape[1]))
+                q_hidden = q_hidden[:, :q_len, :]
+                # RoPE cos/sin for the question positions 0..q_len-1.
+                rot = getattr(getattr(root, "model", None), "rotary_emb", None)
+                if rot is None:
+                    rot = sel_w._fifo_resolve_rotary_emb()
+                if rot is not None:
+                    pos_ids = torch.arange(q_len, device=q_hidden.device).unsqueeze(0)
+                    cos, sin = rot(q_hidden, pos_ids)
+                    sal = sel_w._fifo_reader_attn_salience(
+                        hidden_states=q_hidden,
+                        chunk_hiddens=buf,
+                        position_embeddings=(cos, sin),
+                    )                                          # [C], grad-bearing
+                    if sal is not None and sal.numel() == buf_len:
+                        # Map the needle's DOCUMENT-absolute chunk index to its
+                        # buffer-local index (eval mapping: abs = offset + local,
+                        # offset = ingested - len(buf); >=0, oldest evicted).
+                        offset = n_ingested - buf_len
+                        local = int(needle_chunk_index) - offset
+                        if 0 <= local < buf_len:
+                            tgt = torch.tensor([local], device=sal.device)
+                            select_ce = _F.cross_entropy(sal.view(1, buf_len), tgt)
+                            needle_rank = int((sal > sal[local]).sum().item())
+                            sal_detached = sal.detach()
+                            did_select = 1
+
+    # ---- 4. Token-reforward LM window from the SELECTED (detached) chunks ---- #
+    if sal_detached is not None:
+        offset = n_ingested - buf_len
+        k = max(1, min(int(select_topk), buf_len))
+        top_local = torch.topk(sal_detached, k=k, dim=0).indices.tolist()
+        sel_abs = sorted({offset + int(i) for i in top_local})
+    else:
+        # No usable selection signal → fall back to the LAST k context chunks
+        # (mirrors _make_swa_window's last-W window; keeps the LM objective alive).
+        k = max(1, min(int(select_topk), n_ingested))
+        sel_abs = list(range(n_ingested - k, n_ingested))
+
+    pieces = [_ensure_batched(context_chunks[c], device)
+              for c in sel_abs if 0 <= c < n_ingested]
+    pieces.append(target_input)
+    window = torch.cat(pieces, dim=1)
+    prefix_len = window.shape[1] - target_len
+    labels = window.clone()
+    labels[:, :prefix_len] = -100
+    labels[:, prefix_len:] = target_labels
+
+    # Freeze banks around the window forward so re-presented chunks are not
+    # double-written (mirrors dolmino_train_step's SWA-window contract).
+    _set_banks_frozen(model, True)
+    try:
+        out = model(input_ids=window, labels=labels, use_cache=False)
+    finally:
+        _set_banks_frozen(model, False)
+    lm_loss = out.loss / scale
+    aux_loss = _collect_aux_loss(model, device) / scale
+
+    # ---- 5. total + backward ---- #
+    select_term = (float(select_loss_weight) * select_ce) / scale
+    (lm_loss + aux_loss + select_term).backward()
+    return (lm_loss.detach(), aux_loss.detach(), select_ce.detach(),
+            needle_rank, did_select)
 
 
 def dolmino_train_step_tbptt(
@@ -3430,6 +3651,11 @@ def main() -> None:
                 f"--t2_background_data not found: {args.t2_background_data}"
             )
         t2_bg = _np.load(args.t2_background_data, mmap_mode="r")  # [N, L]
+        # Supervised-selection training needs the needle at a RANDOM context chunk
+        # (else the selector learns "always pick chunk 0" and does not transfer —
+        # status/LEARN_TO_SELECT_DESIGN §3-data). Enabled iff the selection loss is
+        # on; otherwise the legacy chunk-0 placement is used (byte-identical).
+        _t2_random_needle = bool(args.t2_select_loss_weight > 0.0)
         t2_ds = NIAHChunkedDataset(
             background_data=t2_bg,
             chunk_size=args.chunk_size,
@@ -3438,14 +3664,18 @@ def main() -> None:
             num_keys=args.t2_num_keys,
             seed=args.seed + rank,
             background_skip=args.t2_background_skip,
+            random_needle_chunk=_t2_random_needle,
         )
         if is_main(rank):
             logger.info(
                 "T2 recall mix: frac=%.2f num_keys=%d gap_tokens=%d "
-                "chunk_size=%d -> n_ctx=%d bg=%s",
+                "chunk_size=%d -> n_ctx=%d bg=%s random_needle_chunk=%s "
+                "select_loss_weight=%.3f select_layer=%d select_topk=%d",
                 args.t2_recall_mix_fraction, args.t2_num_keys,
                 args.t2_gap_tokens, args.chunk_size, t2_ds.n_ctx,
-                args.t2_background_data,
+                args.t2_background_data, _t2_random_needle,
+                args.t2_select_loss_weight, args.t2_select_layer,
+                args.t2_select_topk,
             )
         t2_loader = DataLoader(
             t2_ds,
@@ -3671,6 +3901,9 @@ def main() -> None:
         step_valid_micros = 0
         step_t2_lm_loss = 0.0   # T2 needle loss only (the "learning retrieval" signal)
         step_t2_micros = 0
+        step_t2_select_ce = 0.0   # supervised selection CE (learn-to-select)
+        step_t2_select_rank = 0.0 # needle's salience rank (0 = top-1)
+        step_t2_select_count = 0  # micros where L_select actually fired
 
         for micro in range(grad_accum):
             # Always suppress DDP auto-sync: TBPTT does multiple backward()
@@ -3728,11 +3961,37 @@ def main() -> None:
                     target_ids = sample["target_ids"]
                     answer_mask = sample["answer_mask"]
 
-                    (lm_loss, aux_loss, route_aux, l3recon,
-                     _dk, _dh, _cm, _cp, _ce) = dolmino_train_step(
-                        model, context_chunks, target_ids, device,
-                        grad_accum=grad_accum, answer_mask=answer_mask,
-                    )
+                    if args.t2_select_loss_weight > 0.0:
+                        # Supervised-selection + token-reforward path (learn-to-
+                        # select). needle_chunk_index comes from the dataset (it
+                        # knows where it placed the needle); collate yields a [B]
+                        # tensor, the batch_size=1 loader yields a python int.
+                        _nci = sample.get("needle_chunk_index", 0)
+                        if isinstance(_nci, torch.Tensor):
+                            _nci = int(_nci.view(-1)[0].item())
+                        else:
+                            _nci = int(_nci)
+                        (lm_loss, aux_loss, _sel_ce, _needle_rank,
+                         _did_select) = t2_select_train_step(
+                            model, context_chunks, target_ids, answer_mask,
+                            needle_chunk_index=_nci, device=device,
+                            grad_accum=grad_accum,
+                            select_layer=args.t2_select_layer,
+                            select_topk=args.t2_select_topk,
+                            select_loss_weight=args.t2_select_loss_weight,
+                        )
+                        route_aux = torch.zeros((), device=device)
+                        l3recon = torch.zeros((), device=device)
+                        step_t2_select_ce += float(_sel_ce.item())
+                        if _did_select:
+                            step_t2_select_rank += float(_needle_rank)
+                            step_t2_select_count += 1
+                    else:
+                        (lm_loss, aux_loss, route_aux, l3recon,
+                         _dk, _dh, _cm, _cp, _ce) = dolmino_train_step(
+                            model, context_chunks, target_ids, device,
+                            grad_accum=grad_accum, answer_mask=answer_mask,
+                        )
                     micro_distill_kl = 0.0
                     micro_distill_hidden = 0.0
                     n_t2 += 1
@@ -4035,18 +4294,25 @@ def main() -> None:
             avg_distill_conf_p90 = step_distill_conf_p90 / max(1, step_distill_conf_count)
             avg_distill_conf_eff = step_distill_conf_eff / max(1, step_distill_conf_count)
             avg_t2_lm = (step_t2_lm_loss / step_t2_micros) if step_t2_micros > 0 else -1.0
+            avg_t2_select_ce = (
+                step_t2_select_ce / step_t2_select_count
+                if step_t2_select_count > 0 else -1.0)
+            avg_t2_select_rank = (
+                step_t2_select_rank / step_t2_select_count
+                if step_t2_select_count > 0 else -1.0)
             elapsed = time.time() - t0
             steps_per_sec = global_step / elapsed if elapsed > 0 else 0.0
             logger.info(
                 "[step %d/%d] lm=%.4f t2_needle=%.4f aux=%.4f route_aux=%.4f l3recon=%.4f "
                 "distill_kl=%.4f distill_hid=%.4f distill_conf_mean=%.4f "
                 "distill_conf_p90=%.4f distill_conf_eff_frac=%.4f lr=%.2e n_ctx=%d "
-                "dolmino=%d babi=%d t2=%d nf=%d skip=%d speed=%.2f steps/s",
+                "dolmino=%d babi=%d t2=%d nf=%d skip=%d speed=%.2f steps/s "
+                "t2_select_ce=%.4f t2_needle_rank=%.2f",
                 global_step, args.total_steps, avg_lm, avg_t2_lm, avg_aux, avg_route_aux,
                 avg_l3recon, avg_distill_kl, avg_distill_hidden,
                 avg_distill_conf_mean, avg_distill_conf_p90, avg_distill_conf_eff,
                 lr, current_n_ctx, n_dolmino, n_babilong, n_t2, n_nonfinite, spike_skip_count,
-                steps_per_sec,
+                steps_per_sec, avg_t2_select_ce, avg_t2_select_rank,
             )
             _xattn_diag = _collect_xattn_diag(model)
             if _xattn_diag:
@@ -4111,6 +4377,8 @@ def main() -> None:
                     "train/babilong_count": n_babilong,
                     "train/t2_count": n_t2,
                     "train/t2_needle_loss": avg_t2_lm,
+                    "train/t2_select_ce": avg_t2_select_ce,
+                    "train/t2_needle_rank": avg_t2_select_rank,
                     "memory/top1_sim": _collect_top1_sim(model),
                 }
                 _log_dict.update(_collect_mem_diag(model))

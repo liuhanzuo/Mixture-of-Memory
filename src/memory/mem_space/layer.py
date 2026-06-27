@@ -1682,6 +1682,70 @@ class MemorySpaceLayer(nn.Module):
         except Exception:
             return None
 
+    def _fifo_reader_attn_salience(
+        self,
+        hidden_states: torch.Tensor,
+        chunk_hiddens: list,
+        position_embeddings,
+    ):
+        """GRAD-BEARING per-chunk reader-attn salience (2026-06-27, learn-to-select).
+
+        This is the differentiable twin of the scoring block inside
+        ``_fifo_select_keep_set_reader_attn`` (layer.py:1647-1674). That method
+        wraps the einsum in ``torch.no_grad()`` because it is only used to pick a
+        keep-set; here we deliberately KEEP the graph so a supervised selection
+        loss can push gradient into this layer's ``q_proj`` / ``k_proj``.
+
+        Returns a ``[C]`` float32 tensor ``sal`` (C == len(chunk_hiddens)) where
+        ``sal[c]`` is the SAME quantity the eval selector ranks:
+            score(c) = mean_batch( max_token( max_head( q_last . k_t / sqrt(hd) ) ) )
+        ``q_last`` is the last query token's RoPE-rotated projection of
+        ``hidden_states``; ``k`` is ``k_proj(chunk_c)``. No top-k, no recency floor
+        — the caller (train step) applies a CE over the full ``sal`` vector with
+        the known needle-chunk index as the target. Returns ``None`` on any
+        structural failure (caller then skips the selection loss for that step).
+
+        CRITICAL: do NOT call this inside ``torch.no_grad()`` and make sure this
+        layer's ``q_proj`` / ``k_proj`` are trainable (``--unfreeze_layers_from``
+        must be <= this layer's index), otherwise the returned tensor carries no
+        grad and the selection loss is a silent no-op (the #1 death trap flagged
+        in status/LEARN_TO_SELECT_DESIGN §4-D).
+        """
+        from transformers.models.llama.modeling_llama import apply_rotary_pos_emb
+        C = len(chunk_hiddens)
+        if C == 0:
+            return None
+        _attn = getattr(self.wrapped_layer, "self_attn", None)
+        if _attn is None:
+            return None
+        _pre_norm = getattr(self.wrapped_layer, "input_layernorm", None)
+        _hs = hidden_states
+        B, Tq, d = _hs.shape
+        hd = _attn.head_dim
+        _hs_q = _pre_norm(_hs) if _pre_norm is not None else _hs
+        q = _attn.q_proj(_hs_q).view(B, Tq, -1, hd).transpose(1, 2)   # [B,nh,Tq,hd]
+        cos, sin = position_embeddings
+        q_r, _ = apply_rotary_pos_emb(q, q, cos, sin)
+        # Last query token's hidden as the salience probe (matches the no_grad
+        # scorer and the eval convention).
+        qv = q_r[:, :, -1, :]                                         # [B, nh, hd]
+        nh = qv.shape[1]
+        sal_list = []
+        for _kh in chunk_hiddens:
+            _kh_in = _kh.to(_hs.device, dtype=_hs.dtype)
+            if _pre_norm is not None:
+                _kh_in = _pre_norm(_kh_in)
+            M = _kh_in.shape[1]
+            kk = _attn.k_proj(_kh_in).view(B, M, -1, hd).transpose(1, 2)  # [B,nkv,M,hd]
+            nkv = kk.shape[1]
+            if nh != nkv:
+                kk = kk.repeat_interleave(nh // nkv, dim=1)               # [B,nh,M,hd]
+            aw = torch.einsum("bhd,bhmd->bhm", qv.float(), kk.float()) * (hd ** -0.5)
+            aw = aw.amax(dim=1)                                           # [B, M]
+            sal_list.append(aw.amax(dim=-1).mean().float())              # scalar
+        sal = torch.stack(sal_list, dim=0)                               # [C]
+        return sal
+
     def _fifo_select_keep_set_oracle(self, valid_orig_idx, n_valid, recency):
         """ORACLE keep-set (2026-06-25): keep ONLY the buffered chunk(s) holding
         the needle (perfect isolation) plus the recency floor. Returns a sorted
