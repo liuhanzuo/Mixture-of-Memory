@@ -22,9 +22,9 @@ setsid bash -c "CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 $PY -m torch.distributed.ru
   --use_fifo_memory --fifo_buffer_chunks 25 --fifo_detach \
   --unfreeze_backbone --unfreeze_layers_from 16 \
   --slot_init strided_token --slot_init_noise 0.0 --writeback_gate_max 1.0 \
-  --gradient_checkpointing --gradient_accumulation_steps 4 --curriculum 0:16 --bptt_window 1 --inject_gate_bias_init -2.0 \
+  --gradient_checkpointing --gradient_accumulation_steps 4 --curriculum 0:3 --bptt_window 1 --inject_gate_bias_init -2.0 \
   --babilong_mix_fraction 0 \
-  --t2_recall_mix_fraction 0.5 --t2_background_data data/pg19_chunks_llama3.npy --t2_num_keys 3 --t2_gap_tokens 8192 --t2_background_skip 0 \
+  --t2_recall_mix_fraction 0.5 --t2_background_data data/pg19_chunks_llama3.npy --t2_num_keys 3 --t2_gap_tokens 3584 --t2_background_skip 0 \
   --t2_select_loss_weight 1.0 --t2_select_layer 16 --t2_select_topk 4 \
   --save_interval 500 --eval_interval 0 --eval_samples 30 --log_interval 5 \
   --grad_clip 1.0 --proj_grad_clip 0.1 --wandb_project mixture-of-memory --wandb_run_name $RUN --dtype bfloat16 --attn_impl sdpa --seed 42" \
