@@ -223,6 +223,17 @@ git commit 只包含实际修改内容的描述，不附加任何 AI 署名行�
 - **GPU mem bandwidth < 50% 视为欠载**，必须在 heartbeat 报告中标注 WARNING 并提出扩展方案
 - kill 当前低效 run 并以更优配置重启是被允许的，不需要额外审批（用户指令优先）
 
+### ★★ 少实验就合成多节点 16 卡（2026-07-01 用户指令，强化）
+
+**当【待跑训练 ≤ 3 个】时，不要一实验一节点各自慢跑，而是把【同盘的两个节点合成一个 16 卡节点】做多机 DDP 加速单个关键实验。**
+
+- **同盘分组（合并前提=共享 FS，跨盘 ckpt/数据不可达）**：
+  - diskA (`share_303098609`) = {本机 local, `.196`=`28.59.80.196`}
+  - diskB (`share_304376610`) = {`.7.53`=`28.48.7.53`, `.245`=`28.58.245.174`}
+  - B200.55 wzc1（`28.89.16.55`，`configs/password_b200_55.txt`，实为真 B200，显示名 L20A）独立盘，不与上面合并
+- **配方**：现成 2-node 脚本 `scripts/launch_landmark_S2_dolmino_2node.sh` + `scripts/run_landmark_S2_node.sh`；两节点各跑一次 `torchrun --nnodes 2 --node_rank {0/1} --nproc_per_node 8 --rdzv_backend c10d --rdzv_endpoint <MASTER内网IP>:<PORT>`。NCCL 注意 bond1 + IB disabled（见 run_landmark_S2_node.sh verified recipe）。
+- **决策准则**：≤3 训练 + 有同盘空节点 → 合成 16 卡跑最关键那个（训练提速近 2×；慢的 16k eval 也可分片到 16 卡）。>3 独立实验 → 一实验一节点铺开。每轮判断"16 卡合起来加速一个 vs 分开跑多个"哪个总产出高。
+
 ## 项目概述
 
 研究方向：**固定大小 memory buffer 压缩长上下文**。

@@ -52,6 +52,26 @@ from .fast_mem import FastMemModule
 from .memory_bank import MemoryBank
 from .selector import TopKSelector
 
+# Reader-attn salience query-pooling mode (2026-06-29). The salience probe was
+# historically the query's LAST token hidden (qv=q_r[:,:,-1,:]). For BABILong qa5
+# the query ends in a function word ("is"/"?"), so q_last carries near-zero
+# entity info -> salience degenerates to query-agnostic ranking (recall@4≈0.17).
+# Mean-pooling the query tokens lifts qa5 needle recall@4 to ≈0.40 (n=30 probe,
+# pure inference, no retrain). Set MEM_SALIENCE_QPOOL=mean to use it everywhere
+# (train + eval must match). "last" = legacy default. Read fresh each call so a
+# training run and its eval stay consistent via one env var.
+def _salience_qpool_mode() -> str:
+    return os.environ.get("MEM_SALIENCE_QPOOL", "last").strip().lower()
+
+
+def _pool_query_probe(q_r):
+    """Reduce [B, nh, Tq, hd] query reps to the [B, nh, hd] salience probe.
+    'mean' = mean over real query tokens; 'last' = last token (legacy)."""
+    if _salience_qpool_mode() == "mean":
+        return q_r.mean(dim=2)
+    return q_r[:, :, -1, :]
+
+
 
 # --------------------------------------------------------------------------- #
 # Small helpers
@@ -618,6 +638,14 @@ class MemorySpaceLayer(nn.Module):
         self._fifo_write_seq: int = 0              # monotonic abs-chunk counter (reset per doc)
         self._fifo_oracle_fallback_count: int = 0  # samples/forwards that kept-all
         self._fifo_oracle_evicted_count: int = 0   # subset: needle was evicted
+
+        # Beacon pyramid (idea #3, 2026-07-01). list-wrapped shared-pool ref set
+        # by patch.py when use_beacon_pyramid=True; None -> raw FIFO (byte-ident).
+        # Band sizes are read from config here (all layers share them).
+        self._fifo_beacon_pyramid_ref = None
+        self._beacon_fine_chunks = int(getattr(config, "beacon_fine_chunks", 2))
+        self._beacon_mid_chunks = int(getattr(config, "beacon_mid_chunks", 6))
+        self._beacon_branch = int(getattr(config, "beacon_branch", 4))
 
         # Learnable slot↔hidden projections. We do NOT take the slot_dim==d_model
         # shortcut (Identity) because that path has zero trainable capacity and was
@@ -1286,6 +1314,20 @@ class MemorySpaceLayer(nn.Module):
         The inject gate is shared with the slot path (self.inject_gate) so the
         model can learn to suppress irrelevant prefix content.
         """
+        # Beacon-pyramid dispatch (idea #3): when a shared BeaconPyramid is
+        # attached, the prefix is a MULTI-SCALE COMPRESSED beacon set the reader
+        # consumes directly (not raw kept chunks). Self-contained variant so the
+        # raw-FIFO path below stays byte-identical for every other config.
+        if getattr(self, "_fifo_beacon_pyramid_ref", None) is not None:
+            return self._forward_fifo_beacon(
+                hidden_states,
+                attention_mask=attention_mask,
+                position_ids=position_ids,
+                past_key_values=past_key_values,
+                use_cache=use_cache,
+                position_embeddings=position_embeddings,
+                **kwargs,
+            )
         B, T, d = hidden_states.shape
 
         # ---- Step 1: Read — build prefix from FIFO buffer ----
@@ -1312,6 +1354,22 @@ class MemorySpaceLayer(nn.Module):
                     hidden_states=hidden_states,
                     valid_chunks=valid,
                     position_embeddings=position_embeddings,
+                    topk=int(getattr(self, "_fifo_keep_topk", 25)),
+                    recency=int(getattr(self, "_fifo_keep_recency", 2)),
+                )
+                if _kept is not None:
+                    kept_local_idx = _kept    # sorted list of local indices
+            elif _ks_mode == "tree":
+                # HNST tree keep-set (2026-06-25): recursive beam descent over a
+                # B-ary max-pool tree on the FIFO buffer. "keep all leaves, attend
+                # few" -- surfaces O(log N) chunks selected from ALL buffered
+                # chunks (use with --fifo_keep_all_buffer to keep full history).
+                _kept = self._fifo_select_keep_set_tree(
+                    hidden_states=hidden_states,
+                    valid_chunks=valid,
+                    position_embeddings=position_embeddings,
+                    branch=int(getattr(self, "_fifo_tree_branch", 8)),
+                    beam=int(getattr(self, "_fifo_tree_beam", 2)),
                     topk=int(getattr(self, "_fifo_keep_topk", 25)),
                     recency=int(getattr(self, "_fifo_keep_recency", 2)),
                 )
@@ -1564,6 +1622,140 @@ class MemorySpaceLayer(nn.Module):
         return next_hidden
 
     # --------------------------------------------------------------------- #
+    # Beacon pyramid FIFO forward (idea #3, 2026-07-01).
+    # --------------------------------------------------------------------- #
+    def _forward_fifo_beacon(
+        self,
+        hidden_states: torch.Tensor,
+        attention_mask=None,
+        position_ids=None,
+        past_key_values=None,
+        use_cache=False,
+        position_embeddings=None,
+        **kwargs,
+    ) -> torch.Tensor:
+        """Multi-scale BEACON-pyramid FIFO forward (Activation-Beacon-style).
+
+        Same read/inject-gate/write skeleton as ``_forward_fifo`` but the prefix
+        is a distance-stratified set of COMPRESSED beacon tokens (near-fine /
+        far-coarse) produced by the shared ``BeaconPyramid``, which the reader
+        (unfrozen layers) is trained to consume directly. The pool is applied to
+        the DETACHED FIFO buffer inside THIS chunk's forward, so ``.backward()``
+        from the LM loss reaches the pool weights (same clean-gradient trick as
+        the L3 pool). Positions: the whole beacon prefix + current chunk is
+        packed 0..(P+T-1) so every position is in-distribution (beacons compress
+        many tokens into few, keeping P small — the multi-scale win is a SHORT
+        prefix that still covers far context).
+        """
+        B, T, d = hidden_states.shape
+        pyramid = self._fifo_beacon_pyramid_ref[0]
+
+        # ---- Read: build the multi-scale beacon prefix from the buffer ----
+        valid = [h for h in self._fifo_buf if h.shape[0] == B]
+        if valid:
+            prefix, P = pyramid.build_prefix(
+                buffer_chunks=valid,
+                fine_chunks=self._beacon_fine_chunks,
+                mid_chunks=self._beacon_mid_chunks,
+                branch=self._beacon_branch,
+            )
+            extended_hidden = torch.cat([prefix, hidden_states], dim=1)  # [B,P+T,d]
+        else:
+            P = 0
+            extended_hidden = hidden_states
+
+        # ---- Positions: pack the [prefix | current] sequence at 0..P+T-1 ----
+        # (packed / in-distribution; beacons get contiguous positions like real
+        # tokens. This keeps the reader inside its trained RoPE window.)
+        if P > 0 and position_embeddings is not None:
+            cos, sin = position_embeddings                    # each [*, T, hd]
+            _rot = self._fifo_resolve_rotary_emb()
+            if _rot is not None:
+                pos_ids = torch.arange(P + T, device=hidden_states.device).unsqueeze(0)
+                _c, _s = _rot(extended_hidden, pos_ids)       # [1, P+T, hd]
+                if cos.dim() == 3 and cos.shape[0] != _c.shape[0]:
+                    _c = _c.expand(cos.shape[0], -1, -1)
+                    _s = _s.expand(sin.shape[0], -1, -1)
+                ext_pos_emb = (_c.to(cos.dtype), _s.to(sin.dtype))
+            else:
+                # Fallback: pos-0 prefix (legacy safety).
+                if cos.dim() == 3:
+                    p0c = cos[:, :1, :].expand(cos.shape[0], P, -1)
+                    p0s = sin[:, :1, :].expand(sin.shape[0], P, -1)
+                else:
+                    p0c = cos[:1, :].expand(P, -1).unsqueeze(0).expand(B, -1, -1)
+                    p0s = sin[:1, :].expand(P, -1).unsqueeze(0).expand(B, -1, -1)
+                ext_pos_emb = (torch.cat([p0c, cos], dim=1),
+                               torch.cat([p0s, sin], dim=1))
+        else:
+            ext_pos_emb = position_embeddings
+
+        # ---- Causal mask over [prefix P | current T] ----
+        S = P + T
+        if P > 0:
+            dev = hidden_states.device
+            dtype = hidden_states.dtype
+            mask_2d = torch.triu(
+                torch.full((S, S), float("-inf"), device=dev, dtype=dtype),
+                diagonal=1,
+            )
+            ext_attn_mask = mask_2d.unsqueeze(0).unsqueeze(0)
+        else:
+            ext_attn_mask = attention_mask
+
+        # ---- Bypass (current H only) for the inject gate ----
+        bypass_out = self._maybe_ckpt_wrapped_layer(
+            hidden_states, attention_mask=None, position_ids=None,
+            past_key_values=None, use_cache=False,
+            position_embeddings=position_embeddings, **kwargs,
+        )
+        bypass_h = bypass_out[0] if isinstance(bypass_out, tuple) else bypass_out
+
+        if P == 0:
+            h_stored = hidden_states.detach() if self._fifo_detach else hidden_states
+            self._fifo_write_to_buffer(h_stored)
+            return bypass_h
+
+        # ---- Extended attention (beacon prefix + current H) ----
+        ext_out = self._maybe_ckpt_wrapped_layer(
+            extended_hidden, attention_mask=ext_attn_mask, position_ids=None,
+            past_key_values=None, use_cache=False,
+            position_embeddings=ext_pos_emb, **kwargs,
+        )
+        if isinstance(ext_out, tuple):
+            ext_h = ext_out[0]
+            extra = ext_out[1:]
+        else:
+            ext_h = ext_out
+            extra = ()
+        h_out = ext_h[:, P:, :]                                # [B, T, d]
+
+        # ---- slot_delta + inject gate (identical to _forward_fifo) ----
+        slot_delta = h_out - bypass_h
+        cfg = self.config
+        if not cfg.no_slot_delta_clip:
+            _bn = bypass_h.norm(dim=-1, keepdim=True).clamp(min=1e-6)
+            _sn = slot_delta.norm(dim=-1, keepdim=True).clamp(min=1e-6)
+            slot_delta = slot_delta * (_bn / _sn).clamp(max=1.0)
+        _hs_f32 = hidden_states.float()
+        _gate_logit = torch.nn.functional.linear(
+            _hs_f32, self.inject_gate.weight.float(), self.inject_gate.bias.float(),
+        )
+        g = torch.sigmoid(_gate_logit).to(hidden_states.dtype)  # [B, T, 1]
+        next_hidden = bypass_h + g * slot_delta
+
+        # ---- Write current hidden_states to FIFO buffer ----
+        h_stored = hidden_states.detach() if self._fifo_detach else hidden_states
+        self._fifo_write_to_buffer(h_stored)
+
+        self.last_aux_losses = {}
+        self.last_idx = None
+        self.last_scores = None
+        if extra:
+            return (next_hidden, *extra)
+        return next_hidden
+
+    # --------------------------------------------------------------------- #
     # FIFO eval-time probes (2026-06-25): position-fix + keep-set helpers.
     # All used ONLY by _forward_fifo when the corresponding probe flag is set.
     # --------------------------------------------------------------------- #
@@ -1657,7 +1849,7 @@ class MemorySpaceLayer(nn.Module):
                 q_r, _ = apply_rotary_pos_emb(q, q, cos, sin)
                 # Use the LAST query token's hidden as the salience probe
                 # (matches _reader_attn_keep_set's convention).
-                qv = q_r[:, :, -1, :]                                      # [B, nh, hd]
+                qv = _pool_query_probe(q_r)                                      # [B, nh, hd]
                 nh = qv.shape[1]
                 sal = _t.empty(C, device=_hs.device, dtype=_t.float32)
                 for c, _kh in enumerate(valid_chunks):
@@ -1676,6 +1868,161 @@ class MemorySpaceLayer(nn.Module):
                 top_idx = _t.topk(sal, k=keep_n, dim=0).indices.tolist()
                 kept = set(int(i) for i in top_idx)
                 # Recency floor: always keep last `recn` chunks.
+                for c in range(max(0, C - recn), C):
+                    kept.add(c)
+                return sorted(kept)
+        except Exception:
+            return None
+
+    def _fifo_select_keep_set_tree(
+        self,
+        hidden_states: torch.Tensor,
+        valid_chunks: list,
+        position_embeddings,
+        branch: int,
+        beam: int,
+        topk: int,
+        recency: int,
+    ):
+        """HNST tree keep-set (2026-06-25, zero-training). Generalises the flat
+        reader-attn top-k selector (``_fifo_select_keep_set_reader_attn``) into a
+        RECURSIVE beam descent over a B-ary tree built on top of the FIFO buffer.
+
+        "keep all leaves, attend few": every buffered chunk is a LEAF (so early
+        needles are never structurally evicted when used with
+        ``--fifo_keep_all_buffer``); at query time we navigate the tree with the
+        reader's OWN native q.k salience and only surface O(log N) chunks into the
+        attention prefix. Returns a sorted list of LOCAL indices into
+        ``valid_chunks`` (the kept set), or None on failure (caller keeps all).
+
+        Tree:
+          * Leaf summary (L0): per chunk, MAX-pool the chunk-hidden over its M
+            tokens -> one [B, d] summary vector (H1 anti-dilution: max preserves
+            the peak/needle token instead of averaging it away).
+          * Internal node (L>=1): MAX-pool over its ``branch`` children summaries.
+            Nodes cover CONTIGUOUS leaf ranges (grouping consecutive children), so
+            child j of a node at level L maps to children [j*branch : ...] at
+            level L-1 -- no coverage bookkeeping needed beyond the branch stride.
+          * Built causally-agnostic in one shot at query time (v1 simplification;
+            eval-only, no future leakage because all leaves are past chunks).
+
+        Navigation (reader-native, no trained scorer -> sidesteps H2):
+          * q = RoPE(q_proj(norm(h_last)))  (last query-token probe, same
+            convention as the flat scorer / _reader_attn_keep_set).
+          * per node: k = k_proj(norm(summary)) (NO RoPE on k -- content match,
+            position-agnostic, identical to _reader_attn_keep_set).
+          * sal = mean_batch( amax_head( q . k / sqrt(hd) ) ).
+          * Descend from the root keeping the top-``beam`` nodes at each INTERNAL
+            level. At the level just above the leaves, expand the ``beam`` frontier
+            nodes into their (up to beam*branch) leaf children and keep the top-
+            ``topk`` of THOSE by leaf salience (so kept leaf count ~= min(topk,
+            beam*branch), selected from ALL chunks via O(log N) comparisons rather
+            than a flat 1-of-C scan). Recency floor (last ``recency`` chunks) is
+            always kept (the question lives in the most recent chunk).
+        """
+        try:
+            import torch as _t
+            from transformers.models.llama.modeling_llama import apply_rotary_pos_emb
+            C = len(valid_chunks)
+            if C == 0:
+                return None
+            B_ = max(2, int(branch))
+            beam_ = max(1, int(beam))
+            keep_n = max(1, min(int(topk), C))
+            recn = max(0, min(int(recency), C))
+            # Everything would be kept -> skip the work (byte-identical to keep-all).
+            if keep_n + recn >= C:
+                return list(range(C))
+            _attn = getattr(self.wrapped_layer, "self_attn", None)
+            if _attn is None:
+                return None
+            _pre_norm = getattr(self.wrapped_layer, "input_layernorm", None)
+            with _t.no_grad():
+                _hs = hidden_states
+                Bb, Tq, d = _hs.shape
+                hd = _attn.head_dim
+                dev = _hs.device
+                _hs_q = _pre_norm(_hs) if _pre_norm is not None else _hs
+                q = _attn.q_proj(_hs_q).view(Bb, Tq, -1, hd).transpose(1, 2)  # [Bb,nh,Tq,hd]
+                cos, sin = position_embeddings
+                q_r, _ = apply_rotary_pos_emb(q, q, cos, sin)
+                qv = _pool_query_probe(q_r)                                   # [Bb,nh,hd]
+                nh = qv.shape[1]
+
+                def _score_summaries(summ):
+                    # summ: [N, Bb, d] node summary vectors -> sal [N] (batch-mean
+                    # of amax-over-heads of q.k). Mirrors the flat scorer exactly
+                    # but each node contributes a SINGLE (pooled) key vector.
+                    N = summ.shape[0]
+                    _s = summ.to(dev, dtype=_hs.dtype)
+                    if _pre_norm is not None:
+                        _s = _pre_norm(_s)
+                    kk = _attn.k_proj(_s).view(N, Bb, -1, hd)                 # [N,Bb,nkv,hd]
+                    kk = kk.permute(1, 2, 0, 3)                               # [Bb,nkv,N,hd]
+                    nkv = kk.shape[1]
+                    if nh != nkv:
+                        kk = kk.repeat_interleave(nh // nkv, dim=1)           # [Bb,nh,N,hd]
+                    aw = _t.einsum("bhd,bhnd->bhn", qv.float(), kk.float()) * (hd ** -0.5)
+                    aw = aw.amax(dim=1)                                       # [Bb,N]
+                    return aw.mean(dim=0)                                     # [N]
+
+                # ---- Build the tree (level by level) ----
+                # HNST v2: if a trainable tree pool is attached, use its learned
+                # leaf/node aggregation (which was trained to preserve needle
+                # routing info); else fall back to v1 max-pool (KILLED baseline).
+                _tp_ref = getattr(self, "_fifo_tree_pool_ref", None)
+                _tree_pool = _tp_ref[0] if _tp_ref else None
+                if _tree_pool is not None:
+                    leaf_sum = []
+                    for _kh in valid_chunks:
+                        _kh_in = _kh.to(dev, dtype=_hs.dtype)                # [Bb,M,d]
+                        leaf_sum.append(_tree_pool.pool_leaf(_kh_in))        # [Bb,d]
+                    cur = _t.stack(leaf_sum, dim=0)                          # [C,Bb,d]
+                    levels = _tree_pool.build_levels(cur, B_)
+                else:
+                    leaf_sum = []
+                    for _kh in valid_chunks:
+                        _kh_in = _kh.to(dev, dtype=_hs.dtype)                # [Bb,M,d]
+                        leaf_sum.append(_kh_in.amax(dim=1))                  # [Bb,d]
+                    cur = _t.stack(leaf_sum, dim=0)                          # [C,Bb,d]
+                    levels = [cur]
+                    while cur.shape[0] > 1:
+                        n = cur.shape[0]
+                        groups = (n + B_ - 1) // B_
+                        parts = []
+                        for g in range(groups):
+                            s = g * B_
+                            e = min(n, (g + 1) * B_)
+                            parts.append(cur[s:e].amax(dim=0))               # [Bb,d]
+                        cur = _t.stack(parts, dim=0)                         # [groups,Bb,d]
+                        levels.append(cur)
+
+                # ---- Beam descent from the root down to the leaves ----
+                top = len(levels) - 1
+                frontier = [0]                                              # node idxs at `top`
+                lvl = top
+                while lvl > 0:
+                    child_lvl = lvl - 1
+                    n_child = levels[child_lvl].shape[0]
+                    children = []
+                    for j in frontier:
+                        for k in range(j * B_, min(n_child, (j + 1) * B_)):
+                            children.append(k)
+                    if not children:
+                        break
+                    idx_t = _t.tensor(children, device=dev, dtype=_t.long)
+                    sal = _score_summaries(levels[child_lvl][idx_t])         # [len(children)]
+                    if child_lvl == 0:
+                        # Leaf level: keep top-`keep_n` of the beam*branch cands.
+                        kk_top = min(keep_n, len(children))
+                    else:
+                        kk_top = min(beam_, len(children))
+                    order = _t.topk(sal, k=kk_top, dim=0).indices.tolist()
+                    frontier = [children[o] for o in order]
+                    lvl = child_lvl
+
+                kept = set(int(i) for i in frontier)                         # leaf local idxs
+                # Recency floor: always keep the last `recn` chunks (question).
                 for c in range(max(0, C - recn), C):
                     kept.add(c)
                 return sorted(kept)
@@ -1728,7 +2075,7 @@ class MemorySpaceLayer(nn.Module):
         q_r, _ = apply_rotary_pos_emb(q, q, cos, sin)
         # Last query token's hidden as the salience probe (matches the no_grad
         # scorer and the eval convention).
-        qv = q_r[:, :, -1, :]                                         # [B, nh, hd]
+        qv = _pool_query_probe(q_r)                                         # [B, nh, hd]
         nh = qv.shape[1]
         sal_list = []
         for _kh in chunk_hiddens:
@@ -1745,6 +2092,64 @@ class MemorySpaceLayer(nn.Module):
             sal_list.append(aw.amax(dim=-1).mean().float())              # scalar
         sal = torch.stack(sal_list, dim=0)                               # [C]
         return sal
+
+    def _fifo_query_probe(self, hidden_states, position_embeddings):
+        """RoPE'd last-token q_proj probe of ``hidden_states`` at THIS layer.
+
+        Returns ``qv`` of shape ``[B, nh, hd]`` (the pooled query probe used by
+        every FIFO salience path). Grad-bearing (no no_grad) so a navigation loss
+        can push gradient into this layer's ``q_proj``. Mirrors the probe
+        construction inside ``_fifo_reader_attn_salience`` / the v1 tree scorer.
+        Returns ``None`` on structural failure.
+        """
+        from transformers.models.llama.modeling_llama import apply_rotary_pos_emb
+        _attn = getattr(self.wrapped_layer, "self_attn", None)
+        if _attn is None:
+            return None
+        _pre_norm = getattr(self.wrapped_layer, "input_layernorm", None)
+        _hs = hidden_states
+        B, Tq, d = _hs.shape
+        hd = _attn.head_dim
+        _hs_q = _pre_norm(_hs) if _pre_norm is not None else _hs
+        q = _attn.q_proj(_hs_q).view(B, Tq, -1, hd).transpose(1, 2)   # [B,nh,Tq,hd]
+        cos, sin = position_embeddings
+        q_r, _ = apply_rotary_pos_emb(q, q, cos, sin)
+        return _pool_query_probe(q_r)                                    # [B, nh, hd]
+
+    def _fifo_score_node_summaries(self, qv, summ):
+        """GRAD-BEARING per-NODE reader-attn salience (HNST v2 navigation).
+
+        The differentiable twin of the v1 tree's ``_score_summaries`` (each node
+        contributes ONE pooled key vector, so this is per-vector not per-token —
+        the counterpart of ``_fifo_reader_attn_salience`` which scores full
+        chunk-token sets). ``qv`` is a query probe from ``_fifo_query_probe``;
+        ``summ`` is ``[N, B, d]`` node summary vectors (from the trainable tree
+        pool). Returns ``sal`` ``[N]`` = mean_batch( amax_head( q.k / sqrt(hd) ) ),
+        identical formula to the flat scorer but on single-vector node keys.
+
+        NO no_grad: gradient flows sal → k_proj (reader) AND → summ (tree pool),
+        so BOTH the reader's navigation keys and the tree's aggregation learn to
+        keep needle-routing information in the parent summaries. Returns ``None``
+        on structural failure.
+        """
+        _attn = getattr(self.wrapped_layer, "self_attn", None)
+        if _attn is None or qv is None:
+            return None
+        _pre_norm = getattr(self.wrapped_layer, "input_layernorm", None)
+        N, B, d = summ.shape
+        hd = _attn.head_dim
+        nh = qv.shape[1]
+        _s = summ.reshape(N * B, 1, d)
+        if _pre_norm is not None:
+            _s = _pre_norm(_s)
+        kk = _attn.k_proj(_s).view(N, B, -1, hd)                     # [N,B,nkv,hd]
+        kk = kk.permute(1, 2, 0, 3)                                  # [B,nkv,N,hd]
+        nkv = kk.shape[1]
+        if nh != nkv:
+            kk = kk.repeat_interleave(nh // nkv, dim=1)              # [B,nh,N,hd]
+        aw = torch.einsum("bhd,bhnd->bhn", qv.float(), kk.float()) * (hd ** -0.5)
+        aw = aw.amax(dim=1)                                          # [B, N]
+        return aw.mean(dim=0)                                        # [N]
 
     def _fifo_select_keep_set_oracle(self, valid_orig_idx, n_valid, recency):
         """ORACLE keep-set (2026-06-25): keep ONLY the buffered chunk(s) holding
@@ -1827,7 +2232,7 @@ class MemorySpaceLayer(nn.Module):
                 q = self_attn.q_proj(_hs).view(B, _hs.shape[1], -1, hd).transpose(1, 2)
                 cos, sin = position_embeddings
                 q_r, _ = apply_rotary_pos_emb(q, q, cos, sin)
-                qv = q_r[:, :, -1, :]                                  # [B, nh, hd]
+                qv = _pool_query_probe(q_r)                                  # [B, nh, hd]
                 # chunk-token keys: native k_proj on stored hidden (no RoPE here;
                 # salience is a content match, position-agnostic for selection).
                 _kh = store.token_hidden.to(dev, dtype=_hs.dtype)

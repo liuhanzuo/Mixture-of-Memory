@@ -29,12 +29,21 @@ declare -A DATAPATH=(
   [codeparrot]=data/codeparrot_llama3_noeos.npy
 )
 
+# Per-dataset start offset. PG19's stream begins with the King James Bible
+# (heavily memorized -> PPL ~1, unrepresentative), so skip 5M tokens into it.
+# proofpile/codeparrot are diverse from the start (4M tokens total) -> small skip.
+declare -A DSKIP=(
+  [pg19]=5000000
+  [proofpile]=200000
+  [codeparrot]=200000
+)
+
 run_base() {
   local DS=$1 GPU=$2
   CUDA_VISIBLE_DEVICES=$GPU $PYBIN scripts/eval_sliding_ppl.py \
     --data $DS --data_path ${DATAPATH[$DS]} --model_path $MODEL \
     --seq_length $SEQ --window $WINDOW --stride $STRIDE \
-    --skip_tokens $SKIP --max_tokens $MAXTOK --gpu 0 \
+    --skip_tokens ${DSKIP[$DS]} --max_tokens $MAXTOK --gpu 0 \
     --output_json $OUT/base_${DS}.json \
     >"$LOG/base_${DS}.log" 2>&1
 }
@@ -44,7 +53,7 @@ run_mem() {
     --data $DS --data_path ${DATAPATH[$DS]} --model_path $MODEL \
     --adapter_config $ADAPTER --checkpoint $CKPT \
     --seq_length $SEQ --chunk_size $CHUNK \
-    --skip_tokens $SKIP --max_tokens $MAXTOK --gpu 0 \
+    --skip_tokens ${DSKIP[$DS]} --max_tokens $MAXTOK --gpu 0 \
     --output_json $OUT/mem_${DS}.json \
     >"$LOG/mem_${DS}.log" 2>&1
 }

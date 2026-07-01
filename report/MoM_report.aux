@@ -1,0 +1,33 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand*\HyPL@Entry[1]{}
+\HyPL@Entry{0<</S/D>>}
+\@writefile{toc}{\contentsline {section}{\numberline {1}引言：研究动机}{1}{section.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{关于研发方式的说明。}{2}{paragraph*.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {2}方法：Mixture-of-Memory（MoM）}{2}{section.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}动机：有界 KV 预算下的长上下文}{2}{subsection.2.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}三级层次记忆 L1 / L2 / L3}{2}{subsection.2.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.3}核心设计一：借鉴 MoE 的 top-$k$ 稀疏路由}{2}{subsection.2.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.4}核心设计二：joint attention（KV-prepend）}{3}{subsection.2.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.5}形式化：路由、读写、joint attention 与训练目标}{3}{subsection.2.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {3}主结果与相关工作比较}{4}{section.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}主结果：固定 KV 预算下逼近全注意力}{4}{subsection.3.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces BABILong qa5：MoM（冻结 Llama-3-8B + 128 slot 记忆）vs vanilla Llama-3-8B-Instruct。 vanilla 超出 8k 训练窗口即塌到 1/0；MoM 在固定 KV 预算下 16k/32k 仍保持 46/41。}}{4}{figure.caption.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}与已有记忆增强工作的比较}{5}{subsection.3.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4}核心问题与攻坚：readout 瓶颈}{5}{section.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}诊断：“写得进，读不准”}{5}{subsection.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}四类杠杆}{5}{subsection.4.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}关键结果}{6}{subsection.4.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces 四类杠杆在 BABILong qa5（chunk512，W0）各长度上的对比。}}{6}{figure.caption.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces 弱叠加 coef 精扫：长程 qa5 随 mass 强度呈倒 U，峰值在 coef$\approx $0.5。}}{6}{figure.caption.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4}LongBench 真实长文档：能力缺失定位}{7}{subsection.4.4}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces LongBench 6 数据集：记忆模型 W0（F1）相对 base 开卷基线的保留率。}}{7}{figure.caption.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.5}真长文蒸馏：突破 16k 长程天花板（最新结果）}{7}{subsection.4.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{重要警示：合成 benchmark 突破 $\ne  $ 真实长文档能力。}{8}{paragraph*.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5}工程实践与质量护栏}{8}{section.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {6}结论与展望}{8}{section.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {A}完整 W0 对照表（BABILong qa5，chunk512，0--32k）}{10}{section.A}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {B}PG19 真长文蒸馏与攻 32k 消融（BABILong qa5，W0）}{10}{section.B}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {C}LongBench W0（F1）vs base 开卷基线}{10}{section.C}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {D}关键代码与脚本}{10}{section.D}\protected@file@percent }
+\gdef \@abspage@last{11}

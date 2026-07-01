@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+cd /apdcephfs_zwfy6/share_303098609/pighzliu_code/Mixture-of-Memory
+export WANDB_MODE=offline
+export RUN_PREFIX=confB1_warm_s900_W0
+export CKPT_FILES="outputs/mem_space_selfstudy_swateacher_confB1_warm_chunk512/full_model_step000900.pt"
+export CK_NAMES="confB1_warm_step900"
+export ADAPTER_CONFIG=outputs/mem_space_selfstudy_swateacher_confB1_warm_chunk512/adapter_config.json
+export MODEL=models/Meta-Llama-3-8B
+export PROJECT_ROOT=/apdcephfs_zwfy6/share_303098609/pighzliu_code/Mixture-of-Memory
+export PYTHON_BIN=/opt/conda/envs/torch-base/bin/python
+bash scripts/_eval_taskpool_2group.sh

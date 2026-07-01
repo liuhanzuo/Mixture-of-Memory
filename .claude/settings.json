@@ -7,8 +7,9 @@
       "Write(*)",
       "WebFetch(*)",
       "WebSearch(*)",
-      "WebFetch(*)",
-      "WebSearch(*)"
+      "Workflow(*)",
+      "Agent(*)",
+      "Task(*)"
     ]
   }
 }

@@ -1,12 +1,46 @@
 # HEARTBEAT.md — 自动监控操作手册
 
-每 20 分钟触发一次。目标：监控实验状态，发现问题，**像 main agent 一样自主行动**。
+每 30 分钟触发一次。目标：监控实验状态，发现问题，**像 main agent 一样自主行动**。
 
 ---
 
-## ⚡ 执行计划书（2026-05-11 起）
+## ⚡⚡ 当前阶段（2026-06-28 起，最高优先，覆盖下方旧计划）
 
-**首要任务：对照 `status/H_V2_PLAN.md` 推进 H-series v2 训练和基线复现。**
+**主线：supervised-selection 训练（run=mem_space_fifo_b25_c512_supervised_select on .7.53）。** 训练让可部署选择器学会选 needle chunk，配 token-reforward 读出。已验证有效且持续涨（干净 K2 部署，qa5 8k：C-probe 28→step500 39→step1000 46，朝 oracle 66 走；W0 raw hidden 也被训练改善 12→28）。
+
+**每轮必做的判据推进：**
+- A 训练 step 进度（目标 3000，健康 = babi=0）。新 ckpt 落盘（每 500 步）→ 立即 eval：token-reforward（`--swa_readerattn_token --swa_readerattn_topk 2 --swa_readerattn_select_layer 16`）+ W0（`--swa_eval_chunks 0`）两模式，qa1/qa5 × 8k/16k。
+- 锚点对照：C-probe（训练前零训练选择）、oracle-token（完美选中上界 66）。
+- ckpt 在 diskB，跨盘 eval 需先传 ckpt（adapter_config 单独验证传到，曾漏传）；远程 eval 用单命令自带 `HF_HOME=$R/.hf_cache` 绕过 taskpool 的 PROJECT_ROOT 覆盖坑。
+
+**红线（最高）：所有训练 `--babilong_mix_fraction 0`；泄漏 ckpt（b50/b100/P2/c1024/旧b25）完全不碰，不引用其分数。**
+
+### 🚀 效率三条铁律（2026-06-28 用户指令）
+
+1. **有需要探索的方向 → 直接派 Workflow 多 agent 并行探索，提高效率。** 不要一个个串行派 subagent。需要分解问题、覆盖多个子方向、或对比多方案时，用 Workflow 编排（fan-out 调研 → 验证 → 综合）。单点查证才用单个 Agent。
+
+2. **空闲节点要善用，但讲轻重缓急（不是机械填满每张卡）。** 每轮巡查显式列出 5 个节点占用（`[IP] 忙X/8 跑什么`），然后按优先级判断空卡怎么用：
+   - **有明确待跑任务时（最优先）**：新 ckpt 落盘要 eval、缺的长度档/step、待验证的 probe → 用空卡立刻跑。
+   - **没有待跑任务但有空节点时**：空闲是用来往前推的，几个用法（自己判断哪个最值）：
+     - (a) **robustness 保证**：多 seed / 更大样本量复核已得结论、回归测已修的 bug、长档/边界条件压测、ckpt 完整性校验，避免结论建在脆弱数据上。
+     - (b) **开新实验 / 探索主方向**：派 Workflow 多 agent 并行分析「当前主方向下一步该做什么、哪里能改进、有什么新实验值得开」，产出设计后直接执行。
+     - (c) 写/改代码推进（如实现待验证的机制、修工具链坑）。
+   - **不必为填而填**：不要塞低价值的零碎任务（如已知结论的冗余档）只为占满。判断这张卡这一轮拿来做什么最值。
+   - **跨盘约束**：A ckpt 在 diskB；diskA 节点（本机/.196）需 ckpt 传到 diskA 共享路径；L20A（wzc1）需单独 scp（含 adapter_config，曾漏传）。
+   - status 里写清：5 个 IP 各在跑什么 / 空的为什么空（无任务则说明在推进什么探索）。
+
+3. **关键实验 / 实验不多时 → 多节点并行加速（如 2 IP 16 卡）。** 当某个实验是关键判据、或当前待跑实验很少（多数节点空）时，不要让单个实验只占一台机慢慢跑——把它拆到多个节点并行（eval 按 shard 分到 2+ 节点；训练用多机 DDP，CODEBUDDY.md:221 的 `torchrun --nnodes N --rdzv_backend c10d` 配方，2 节点 16 卡可将训练提速近 2×）。判断点：实验关键且慢 + 有空闲节点 = 并行。注意跨盘 ckpt/数据可达性（同盘节点优先并行，跨盘需先同步）。
+
+   **★★ 少实验就合成多节点（2026-07-01 用户指令，强化上条）：当【待跑训练 ≤ 3 个】时，不要一实验一节点各自慢跑，而是把【同盘的两个节点合成一个 16 卡节点】做多机 DDP 加速单个实验。**
+   - **同盘分组（合并前提=共享盘）**：diskA = {本机 local, .196=28.59.80.196}；diskB = {.7.53=28.48.7.53, .245=28.58.245.174}。B200.55=wzc1 独立盘不与上面合并。**只有同盘的两节点能合成 16 卡**（跨盘 ckpt/数据不可达）。
+   - **配方**（现成 2node 脚本参考 `scripts/launch_landmark_S2_dolmino_2node.sh` + `run_landmark_S2_node.sh`）：两节点各跑一次 `torchrun --nnodes 2 --node_rank {0/1} --nproc_per_node 8 --rdzv_backend c10d --rdzv_endpoint <MASTER内网IP>:<PORT>`，master 用内网 IP，NCCL 注意 bond1 + IB disabled（见 run_landmark_S2_node.sh）。
+   - **决策**：≤3 训练 + 有同盘空节点 → 合成 16 卡跑最关键那个（训练提速近 2×，或让慢的 16k eval 分片到 16 卡）。>3 实验或都是独立小实验 → 一实验一节点铺开。判断"这一轮 16 卡合起来加速一个，还是分开跑多个"哪个总产出高。
+
+---
+
+## ⚡ 执行计划书（2026-05-11 起，已被上方「当前阶段」取代，保留作参考）
+
+**~~首要任务：对照 `status/H_V2_PLAN.md` 推进 H-series v2 训练和基线复现。~~（过时）**
 
 每次 heartbeat 必须先读取 `CODEBUDDY.md` 和 `status/H_V2_PLAN.md`，理解当前阶段和下一步。计划书里明确列出：
 - 每个节点当前跑什么

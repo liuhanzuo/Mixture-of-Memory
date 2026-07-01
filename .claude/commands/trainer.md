@@ -1,9 +1,5 @@
 ---
-model: glm-5.1
----
-
----
-model: glm-5.1
+model: claude-opus-4-7
 ---
 
 # /trainer — GPU 训练管理

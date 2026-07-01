@@ -2,10 +2,6 @@
 model: claude-opus-4-7
 ---
 
----
-model: claude-opus-4-7
----
-
 # /coder — 代码实现与修复
 
 负责：实现新功能、修复 bug、重构、优化性能。

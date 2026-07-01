@@ -24,6 +24,8 @@ from .l3_summary import L3SummaryPool
 from .layer import MemorySpaceLayer
 from .memory_bank import MemoryBank
 from .recon_decoder import MemoryReconDecoder, L3TokenReconHead
+from .tree_summary import TreeSummaryPool
+from .beacon_pyramid import BeaconPyramid
 
 
 # --------------------------------------------------------------------------- #
@@ -133,6 +135,37 @@ def apply_mem_space_to_model(
             n_layers=config.l3_n_layers,
         )
 
+    # HNST v2 tree-summary pool (2026-06-25): learnable leaf + internal-node
+    # aggregation for the FIFO navigation tree. Shared singleton (peer to
+    # l3_pool); registered on the root below so its params enter state_dict +
+    # _mem_space_params (collected by name-fragment 'tree_pool'). Consumed by
+    # MemorySpaceLayer._fifo_select_keep_set_tree (when the layer's
+    # _fifo_tree_pool_ref is set) and by the training step's navigation CE.
+    tree_pool: Optional[TreeSummaryPool] = None
+    if getattr(config, "use_tree_summary", False):
+        tree_pool = TreeSummaryPool(
+            d_model=d_model,
+            num_heads=config.tree_summary_heads,
+            ffn_mult=config.tree_summary_ffn_mult,
+            n_layers=config.tree_summary_layers,
+        )
+
+    # Hierarchical Beacon Pyramid (idea #3, 2026-07-01): shared multi-scale
+    # beacon pool consumed DIRECTLY by the FIFO reader (peer to tree_pool /
+    # l3_pool). Registered on the root below so its params enter state_dict +
+    # _mem_space_params (collected by the 'beacon_pyramid' getattr in
+    # _mem_space_params); a list-wrapped ref is stashed on every layer so
+    # _forward_fifo can call the shared poolers without a module cycle.
+    beacon_pyramid: Optional[BeaconPyramid] = None
+    if getattr(config, "use_beacon_pyramid", False):
+        beacon_pyramid = BeaconPyramid(
+            d_model=d_model,
+            beacon_k=config.beacon_k,
+            num_heads=config.beacon_heads,
+            ffn_mult=config.beacon_ffn_mult,
+            n_layers=config.beacon_layers,
+        )
+
     # MemoryReconDecoder (P1 / v12, 2026-06-01): if l_recon_weight > 0, create a
     # single shared decoder (peer to l3_pool) that reconstructs the chunk's L3
     # summary tokens from the slot VALUES written this chunk. The loss gives the
@@ -235,6 +268,25 @@ def apply_mem_space_to_model(
     model._gist_readout = gist_readout
     if gist_readout is not None:
         root.add_module("gist_readout", gist_readout)
+    # HNST v2 tree-summary pool: register on root so its params enter state_dict +
+    # _mem_space_params, and stash a list-wrapped ref on every mem layer so the
+    # tree keep-set path can call the learned leaf/node poolers without creating a
+    # model<->layer submodule cycle (list-wrap avoids nn.Module auto-registration,
+    # same pattern as _fifo_rotary_root_ref).
+    model._tree_pool = tree_pool
+    if tree_pool is not None:
+        root.add_module("tree_pool", tree_pool)
+        for _w in mem_layers:
+            _w._fifo_tree_pool_ref = [tree_pool]
+    # Beacon pyramid (idea #3): register on root + stash list-wrapped ref on
+    # every layer so _forward_fifo can build the multi-scale beacon prefix from
+    # that layer's own FIFO buffer. list-wrap avoids nn.Module auto-registration
+    # (same pattern as _fifo_tree_pool_ref).
+    model._beacon_pyramid = beacon_pyramid
+    if beacon_pyramid is not None:
+        root.add_module("beacon_pyramid", beacon_pyramid)
+        for _w in mem_layers:
+            _w._fifo_beacon_pyramid_ref = [beacon_pyramid]
     # Expose the shared bank (or None) so the training loop's _reset_banks /
     # detach_ can touch a single bank instead of walking every layer.
     model._mem_space_shared_bank = shared_bank

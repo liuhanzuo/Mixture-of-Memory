@@ -2,10 +2,6 @@
 model: claude-opus-4-7
 ---
 
----
-model: claude-opus-4-7
----
-
 # /researcher — 文献调研 + 实验分析
 
 负责：文献搜索、论文阅读、实验结果分析、假设验证、研究方向建议。

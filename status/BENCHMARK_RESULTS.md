@@ -190,3 +190,14 @@ qa5  32k     50             85
 **Config**: full qa1-10 × 0k-32k, no chat template
 **Expected**: ~10-20 hours to complete
 **Results**: TBD
+
+### P2 decoupled-read — Llama-3-8B, Dolmino CPT step2000 (2026-06-04)
+**Config**: mem_space adapter, use_decoupled_read=on, num_slots=128 top_k=16 temp=40, offline BABILong qa1/qa2/qa5 × 0k-32k, n=100, babilong.metrics
+**Checkpoint**: outputs/dolmino_p2_decoupled_local/mem_space_adapter.pt (commit 02561b4)
+**Accuracy (%)**:
+| task | 0k | 1k | 2k | 4k | 8k | 16k | 32k |
+|------|----|----|----|----|----|-----|-----|
+| qa1  | 72.0 | 24.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 |
+| qa2  | 27.0 | 13.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 |
+| qa5  | 53.0 | 27.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 |
+**Verdict**: FAILS gate. 0k healthy (model fine when no compression needed), but ≥2k collapses to 0.0% — routing collapse (eval top1_sim≈0.05≈uniform/128). Decoupled-read does NOT rescue compression. See ops/research_notes/toy_vs_full_routing_collapse_20260604.md for root cause (decoupled-read severs selector's LM-loss gradient; LM loss alone never bootstraps content addressing).

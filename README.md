@@ -1,5 +1,10 @@
 # Mixture-of-Memory
 
+> ### 🚀 新协作者？先读 **[`ONBOARDING.md`](ONBOARDING.md)** — 30 分钟上手（环境 / 当前方向 / 怎么训怎么评 / 三条红线）。
+> 权威**实时**状态在 **[`status/HEARTBEAT_LATEST.md`](status/HEARTBEAT_LATEST.md)**；集群/SSH 配置在 **[`CODEBUDDY.md`](CODEBUDDY.md)**。
+>
+> ⚠️ 本 README 以下"Current architecture"一节描述的是**较早的 slot 架构**；当前主攻已转向 **hidden 级路线**（hidden FIFO / HNST 树 / 多尺度 beacon）。以 `ONBOARDING.md` 和 `HEARTBEAT_LATEST.md` 为准。
+
 Research on compressing long context into a **fixed-size memory buffer** so that an
 8B LLM (Llama-3-8B) can handle very long sequences under a *bounded* KV budget —
 instead of letting the KV cache grow linearly with sequence length.

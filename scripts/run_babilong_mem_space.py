@@ -9,8 +9,10 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import math
 import os
 import sys
+from collections import Counter
 from pathlib import Path
 
 import pandas as pd
@@ -196,7 +198,22 @@ def build_mem_space_config(adapter_cfg: dict) -> MemorySpaceConfig:
         if target in valid_fields:
             kwargs[target] = v
         # else: silently ignore (training-only keys like lr, max_train_steps)
-    return MemorySpaceConfig(**kwargs)
+    cfg = MemorySpaceConfig(**kwargs)
+    # Dynamic (non-dataclass) config attrs that patch.py reads via getattr — must
+    # be set explicitly so eval reconstructs the same modules as training.
+    #   HNST v2 trainable tree-summary pool (2026-06-25): patch.py creates the
+    #   TreeSummaryPool only when cfg.use_tree_summary is truthy.
+    for _dyn, _default in (
+        ("use_tree_summary", False),
+        ("tree_summary_heads", 8),
+        ("tree_summary_layers", 1),
+        ("tree_summary_ffn_mult", 2),
+    ):
+        if _dyn in adapter_cfg:
+            setattr(cfg, _dyn, adapter_cfg[_dyn])
+        else:
+            setattr(cfg, _dyn, _default)
+    return cfg
 
 
 # --------------------------------------------------------------------------- #
@@ -348,17 +365,22 @@ def _set_fifo_pos_mode(model, mode):
         w._fifo_rotary_root_ref = [root]
 
 
-def _set_fifo_keep_set_mode(model, mode, topk=25, recency=2):
-    """Set per-layer FIFO keep-set mode (None | 'flat_readerattn').
+def _set_fifo_keep_set_mode(model, mode, topk=25, recency=2, tree_branch=8, tree_beam=2):
+    """Set per-layer FIFO keep-set mode (None | 'flat_readerattn' | 'tree').
 
     None keeps ALL buffered chunks (legacy); 'flat_readerattn' uses reader q.k
-    to score chunks and keeps the top-`topk` plus the last `recency` chunks.
+    to score chunks and keeps the top-`topk` plus the last `recency` chunks;
+    'tree' (HNST) runs a recursive beam descent over a B-ary max-pool tree on
+    the buffer (branch=`tree_branch`, beam=`tree_beam`), surfacing top-`topk`
+    leaves selected from ALL buffered chunks + last `recency`.
     """
     root = getattr(model, "module", model)
     for w in getattr(root, "_mem_space_layers", []) or []:
         w._fifo_keep_set_mode = mode
         w._fifo_keep_topk = int(topk)
         w._fifo_keep_recency = int(recency)
+        w._fifo_tree_branch = int(tree_branch)
+        w._fifo_tree_beam = int(tree_beam)
 
 
 def _set_fifo_keep_all_buffer(model, flag: bool) -> None:
@@ -367,6 +389,21 @@ def _set_fifo_keep_all_buffer(model, flag: bool) -> None:
     root = getattr(model, "module", model)
     for w in getattr(root, "_mem_space_layers", []) or []:
         w._fifo_keep_all_buffer = bool(flag)
+
+
+def _set_fifo_buffer_chunks(model, n: int) -> None:
+    """Eval-time override of the FIFO eviction buffer size (``fifo_buffer_chunks``).
+
+    Lets a single clean checkpoint (trained with e.g. buffer=50) be evaluated as a
+    SMALLER-buffer FIFO (e.g. 25) so early chunks are structurally EVICTED at long
+    lengths -> the "amnesia" baseline for the HNST position-stratified test. No-op
+    when n<=0 (keep the trained value). Ignored under --fifo_keep_all_buffer (that
+    flag suppresses eviction entirely)."""
+    if n is None or n <= 0:
+        return
+    root = getattr(model, "module", model)
+    for w in getattr(root, "_mem_space_layers", []) or []:
+        w._fifo_buffer_chunks = int(n)
 
 
 def _find_subsequence_ids(haystack_ids, needle_ids):
@@ -594,6 +631,252 @@ def _select_chunks_reader_attn(
         return None
 
 
+def _select_chunks_tree(
+    model,
+    last_chunk: torch.Tensor,
+    n_chunks: int,
+    device: torch.device,
+    select_layer: int = 16,
+    topk: int = 4,
+    branch: int = 4,
+    beam: int = 2,
+):
+    """DEPLOYABLE HNST v2 trainable-tree chunk selection (2026-06-25).
+
+    Drop-in parallel to ``_select_chunks_reader_attn`` but the selection is a
+    beam descent over the TRAINABLE tree (``model._tree_pool`` learned leaf/node
+    aggregation) using the trained reader's grad-free q.k salience at
+    ``select_layer``. Returns a set of DOCUMENT-ABSOLUTE chunk indices, or None on
+    failure (caller falls back to the plain last-chunk window).
+
+    Same buffer→document mapping and same query-hidden convention as
+    ``_select_chunks_reader_attn``: query = last-chunk hidden at the input to
+    layer L; keys = that layer's ``_fifo_buf``. The heavy lifting is delegated to
+    the layer's ``_fifo_select_keep_set_tree`` (which uses the tree pool when the
+    layer's ``_fifo_tree_pool_ref`` is set), so train/eval navigation is identical.
+    The caller snapshots+restores ``_fifo_buf`` around this (the extra last-chunk
+    forward FIFO-writes it).
+    """
+    try:
+        root = getattr(model, "module", model)
+        mem_layers = getattr(root, "_mem_space_layers", None)
+        if not mem_layers:
+            return None
+        L = int(select_layer)
+        if L < 0 or L >= len(mem_layers):
+            return None
+        sel_wrapper = mem_layers[L]
+        buf = getattr(sel_wrapper, "_fifo_buf", None)
+        if not buf:
+            return None
+        cur = last_chunk.unsqueeze(0).to(device)
+        out = model(input_ids=cur, use_cache=False, output_hidden_states=True)
+        hs = getattr(out, "hidden_states", None)
+        if hs is None or L >= len(hs):
+            return None
+        q_hidden = hs[L]
+        rot = None
+        inner = getattr(root, "model", None)
+        if inner is not None:
+            rot = getattr(inner, "rotary_emb", None)
+        if rot is None:
+            rot = sel_wrapper._fifo_resolve_rotary_emb()
+        if rot is None:
+            return None
+        Tq = q_hidden.shape[1]
+        pos_ids = torch.arange(Tq, device=q_hidden.device).unsqueeze(0)
+        cos, sin = rot(q_hidden, pos_ids)
+        kept_local = sel_wrapper._fifo_select_keep_set_tree(
+            hidden_states=q_hidden,
+            valid_chunks=list(buf),
+            position_embeddings=(cos, sin),
+            branch=int(branch),
+            beam=int(beam),
+            topk=int(topk),
+            recency=0,
+        )
+        if kept_local is None:
+            return None
+        ingested = n_chunks - 1
+        offset = ingested - len(buf)
+        sel_abs = set()
+        for i in kept_local:
+            abs_idx = offset + int(i)
+            if 0 <= abs_idx < ingested:
+                sel_abs.add(abs_idx)
+        return sel_abs or None
+    except Exception:
+        return None
+
+
+def _get_stop_ids(tokenizer):
+    """Token-id set of PURE generic English stopwords + punctuation (no qa/babi-
+    specific words). Used by content-only BM25 (--swa_bm25_content_only): filter
+    these out of the query before BM25 so high-IDF entity words drive selection.
+    Validated by selector probe: content-only BM25 recall@4 0.52->0.67-0.72."""
+    global _CONTENT_STOP_IDS
+    if _CONTENT_STOP_IDS is not None:
+        return _CONTENT_STOP_IDS
+    words = ("the a an of to in on at is was were are be been being and or "
+             "did do does done . , ? ! : ; \" ' who what where when how "
+             "this that these those i you he she it they we my your his her "
+             "their our s t").split()
+    sid = set()
+    for w in words:
+        for variant in (w, " " + w):
+            for t in tokenizer.encode(variant, add_special_tokens=False):
+                sid.add(int(t))
+    _CONTENT_STOP_IDS = sid
+    return sid
+
+
+def _bm25_scores(docs, query_ids, k1: float = 1.5, b: float = 0.75):
+    """BM25 of ``query_ids`` (list[int]) against each candidate document's token
+    IDs. Corpus == the candidate pool ``docs`` (list[list[int]]), so IDF is over
+    that pool. Query terms are de-duplicated. Returns a python list[float] of
+    length ``len(docs)`` (doc order preserved).
+
+    Copied verbatim (formula + k1/b defaults) from
+    ``scripts/e2_multiscorer_probe.py:score_S2_bm25`` so the deployable selection
+    ranks chunks by the SAME signal whose long-doc recall@4 was measured at
+    0.52-0.73. Pure CPU; no model forward (BM25 never touches the FIFO buffers,
+    so — unlike the reader-attn selector — no last-chunk forward / buffer
+    snapshot is needed)."""
+    N = len(docs)
+    if N <= 0:
+        return None
+    df = Counter()
+    doc_tf = []
+    doc_len = []
+    for d in docs:
+        c = Counter(d)
+        doc_tf.append(c)
+        doc_len.append(len(d))
+        for t in c:
+            df[t] += 1
+    avgdl = (sum(doc_len) / N) if N > 0 else 0.0
+    idf = {t: math.log((N - dft + 0.5) / (dft + 0.5) + 1.0) for t, dft in df.items()}
+    qterms = set(int(t) for t in query_ids)
+    scores = []
+    for i in range(N):
+        tf = doc_tf[i]
+        dl = doc_len[i]
+        s = 0.0
+        for t in qterms:
+            f = tf.get(t, 0)
+            if f == 0:
+                continue
+            it = idf.get(t, 0.0)
+            if avgdl > 0:
+                denom = f + k1 * (1.0 - b + b * dl / avgdl)
+            else:
+                denom = f + k1
+            s += it * (f * (k1 + 1.0)) / denom
+        scores.append(s)
+    return scores
+
+
+@torch.no_grad()
+def _select_chunks_bm25_token(
+    model,
+    chunks,
+    n_chunks: int,
+    select_layer: int = 16,
+    topk: int = 4,
+    query_ids=None,
+    content_only: bool = False,
+    tokenizer=None,
+):
+    """DEPLOYABLE BM25 chunk selection (for --swa_bm25_token).
+
+    Returns a set of DOCUMENT-ABSOLUTE chunk indices (0-based, the indexing
+    ``generate_with_mem_space`` uses for ``tokens.split(chunk_size)``) chosen by
+    pure lexical BM25 word-overlap between the question chunk and each candidate
+    context chunk's RAW tokens — NO oracle, NO gold answer, NO trained selector,
+    NO model forward. Returns ``None`` on any failure (caller then falls back to
+    the plain last-chunk window).
+
+    Drop-in parallel to ``_select_chunks_reader_attn``: it MUST be called from the
+    SAME point (after the streaming loop has filled ``_fifo_buf`` and after
+    ``_freeze_banks``) so the candidate pool == the reader-attn candidate pool,
+    and the buffer->document mapping is byte-identical.
+
+    Candidate pool / buffer->document mapping
+    -----------------------------------------
+    We read ``len(buf)`` at ``select_layer`` ONLY to recover the candidate pool
+    that the reader-attn path would see (post-eviction; the buffer holds the most
+    recent ``len(buf)`` of the ``n_chunks-1`` streamed context chunks). The
+    document-absolute index of buffer-local 0 is
+
+        offset = (n_chunks - 1) - len(buf)
+
+    exactly as ``_select_chunks_reader_attn`` and ``e2_multiscorer_probe.
+    _pool_from_buffer``. The BM25 corpus is then ``chunks[offset .. offset+C-1]``
+    (the SAME chunks the reader-attn selector ranks), so recall numbers measured
+    in the e2 probe transfer 1:1 to this selection.
+
+    Query
+    -----
+    query token IDs = ``query_ids`` when provided (the caller threads the BARE
+    question STRING's token IDs, ``tokenizer.encode(question, add_special_tokens=
+    False)``), EXACTLY matching the e2 BM25 probe (``score_S2_bm25`` query =
+    ``q_ids`` of the bare question), so the long-doc recall@4 measured at 0.52-0.73
+    transfers 1:1. When ``query_ids`` is None we fall back to the LAST (question)
+    chunk's raw tokens (``chunks[-1]`` = instruction + few-shot + post_prompt +
+    "Question: ..."); that prefix dilutes the word-overlap signal, so the threaded
+    pure-question query is preferred. The candidate-pool mapping is identical for
+    both query sources — only the query text differs.
+    """
+    try:
+        root = getattr(model, "module", model)
+        mem_layers = getattr(root, "_mem_space_layers", None)
+        if not mem_layers:
+            return None
+        L = int(select_layer)
+        if L < 0 or L >= len(mem_layers):
+            return None
+        sel_wrapper = mem_layers[L]
+        buf = getattr(sel_wrapper, "_fifo_buf", None)
+        if not buf:
+            return None  # nothing streamed (short doc) -> fall back
+
+        C = len(buf)
+        ingested = n_chunks - 1                  # context chunks streamed (no last)
+        offset = ingested - C                    # >=0; oldest evicted chunks dropped
+        if offset < 0 or C <= 0:
+            return None
+        # Candidate docs = the SAME pool the reader-attn selector ranks, in
+        # document-absolute (== buffer) order.
+        docs = [chunks[offset + i].tolist() for i in range(C)]
+        # Query = bare-question token IDs threaded from the caller (matches the e2
+        # probe's score_S2_bm25 query). Fall back to the whole last/question chunk
+        # only when no pure-question query was provided.
+        if query_ids is not None:
+            q = list(query_ids)
+        else:
+            q = chunks[-1].tolist()          # question chunk raw tokens (fallback)
+        # content-only: drop generic stopwords so high-IDF entity words drive BM25
+        # (validated: recall@4 0.52->0.67-0.72). Needs tokenizer for the stop set.
+        if content_only and tokenizer is not None:
+            _stop = _get_stop_ids(tokenizer)
+            q_filt = [t for t in q if int(t) not in _stop]
+            if q_filt:                       # guard: don't empty the query
+                q = q_filt
+        scores = _bm25_scores(docs, q)
+        if scores is None or len(scores) != C:
+            return None
+        keep_n = max(1, min(int(topk), C))
+        order = sorted(range(C), key=lambda i: scores[i], reverse=True)
+        sel_abs = set()
+        for i in order[:keep_n]:
+            abs_idx = offset + int(i)
+            if 0 <= abs_idx < ingested:          # exclude the last/question chunk
+                sel_abs.add(abs_idx)
+        return sel_abs or None
+    except Exception:
+        return None
+
+
 @torch.no_grad()
 def generate_with_mem_space(
     model,
@@ -604,9 +887,20 @@ def generate_with_mem_space(
     device: torch.device,
     swa_eval_chunks: int = 0,
     oracle_token_chunks=None,
+    needle_excluded_chunks=None,
     readerattn_token: bool = False,
     readerattn_select_layer: int = 16,
     readerattn_topk: int = 4,
+    tree_token: bool = False,
+    tree_select_layer: int = 16,
+    tree_topk: int = 4,
+    tree_branch: int = 4,
+    tree_beam: int = 2,
+    bm25_token: bool = False,
+    bm25_select_layer: int = 16,
+    bm25_topk: int = 4,
+    bm25_query_ids=None,
+    bm25_content_only: bool = False,
 ) -> str:
     """Streaming generation for a single BABILong sample.
 
@@ -676,13 +970,14 @@ def generate_with_mem_space(
 
     _reset_banks(model)
     _reset_l2(model)
-    # READER-ATTN-TOKEN probe: the buffer->document chunk-index mapping
-    # (ingested - len(buf) + i, see _select_chunks_reader_attn) is only valid if
-    # _fifo_buf holds EXACTLY this document's chunks. The default FIFO eval path
-    # does NOT reset _fifo_buf between samples (only the oracle keep-set path
-    # does, via _set_fifo_oracle_needle), so we clear it per-sample HERE, gated
-    # on the flag → the default (flag off) path is byte-identical (no reset).
-    if readerattn_token:
+    # READER-ATTN-TOKEN / BM25-TOKEN probe: the buffer->document chunk-index
+    # mapping (ingested - len(buf) + i, see _select_chunks_reader_attn /
+    # _select_chunks_bm25_token) is only valid if _fifo_buf holds EXACTLY this
+    # document's chunks. The default FIFO eval path does NOT reset _fifo_buf
+    # between samples (only the oracle keep-set path does, via
+    # _set_fifo_oracle_needle), so we clear it per-sample HERE, gated on the
+    # flags -> the default (both flags off) path is byte-identical (no reset).
+    if readerattn_token or bm25_token or tree_token:
         _reset_fifo_memory(model)
 
     tokens = input_ids[0]  # [total_len]
@@ -729,6 +1024,57 @@ def generate_with_mem_space(
                 w._fifo_buf = snap
         if _sel:
             oracle_token_chunks = _sel
+    # HNST v2 TREE-TOKEN selection (2026-06-25, DEPLOYABLE): pick the chunk set by
+    # a beam descent over the TRAINED navigation tree (learned leaf/node pool +
+    # reader q.k), then feed those doc-abs indices into the SAME token-reforward
+    # window builder. Same last-chunk-forward buffer snapshot/restore as
+    # readerattn. Mutually exclusive with readerattn_token / bm25_token / oracle.
+    if tree_token:
+        _root = getattr(model, "module", model)
+        _mem_layers = getattr(_root, "_mem_space_layers", []) or []
+        _buf_snapshot = [list(getattr(w, "_fifo_buf", []) or []) for w in _mem_layers]
+        try:
+            _sel = _select_chunks_tree(
+                model=model,
+                last_chunk=chunks[-1],
+                n_chunks=len(chunks),
+                device=device,
+                select_layer=tree_select_layer,
+                topk=tree_topk,
+                branch=tree_branch,
+                beam=tree_beam,
+            )
+        finally:
+            for w, snap in zip(_mem_layers, _buf_snapshot):
+                w._fifo_buf = snap
+        if _sel:
+            oracle_token_chunks = _sel
+    # BM25-TOKEN selection (DEPLOYABLE): pick the chunk set by pure lexical BM25
+    # word-overlap between the question chunk and each candidate chunk's raw
+    # tokens, then feed those document-absolute indices into the SAME oracle-token
+    # window builder below (token-reforward readout byte-identical — only the
+    # chunk SOURCE differs: BM25 word-overlap vs reader-attn q.k vs the
+    # answer-cheating locator). BM25 is pure-CPU and never forwards the model, so
+    # — unlike the reader-attn path — there is NO last-chunk forward and thus NO
+    # _fifo_buf mutation to snapshot/restore. It reads the SAME candidate pool
+    # (same offset/len(buf) arithmetic), so the recall measured in the e2 probe
+    # transfers 1:1. Mutually exclusive with readerattn_token (asserted in main).
+    if bm25_token:
+        _sel = _select_chunks_bm25_token(
+            model=model,
+            chunks=chunks,
+            n_chunks=len(chunks),
+            select_layer=bm25_select_layer,
+            topk=bm25_topk,
+            query_ids=bm25_query_ids,
+            content_only=bm25_content_only,
+            tokenizer=tokenizer,
+        )
+        print(f"[mem_space-BABILong] BM25-TOKEN selected chunks (doc-abs idx, "
+              f"of {len(chunks)} total, last={len(chunks) - 1} is question): "
+              f"{sorted(_sel) if _sel else _sel}", flush=True)
+        if _sel:
+            oracle_token_chunks = _sel
     try:
         if oracle_token_chunks:
             # ORACLE-TOKEN-SWA: window = raw tokens of selected needle chunks
@@ -742,7 +1088,7 @@ def generate_with_mem_space(
             pieces = [chunks[c] for c in sel] + [chunks[-1]]
             window = torch.cat(pieces, dim=0)   # [<= (len(sel)+1)*chunk_size]
             cur = window.unsqueeze(0).to(device)
-        elif swa_eval_chunks > 0 and len(chunks) > swa_eval_chunks + 1:
+        elif needle_excluded_chunks is None and swa_eval_chunks > 0 and len(chunks) > swa_eval_chunks + 1:
             # Cross-chunk SWA window: last (W+1) chunks concatenated.
             #
             # GUARD ``len(chunks) > W+1`` (not just ``> 1``): we only take this
@@ -764,6 +1110,46 @@ def generate_with_mem_space(
             # the generation window is exactly the last chunk.
             start = max(0, len(chunks) - (swa_eval_chunks + 1))
             window = torch.cat(list(chunks[start:]), dim=0)  # [<= (W+1)*chunk_size]
+            cur = window.unsqueeze(0).to(device)
+        elif needle_excluded_chunks is not None and swa_eval_chunks > 0 and len(chunks) > swa_eval_chunks + 1:
+            # SWA-NEEDLE-EXCLUDED: same as the plain W window (last W+1 chunks,
+            # same token count) but every needle chunk inside that window is
+            # SWAPPED OUT for the nearest earlier NON-needle chunk. The last
+            # chunk (the question) is always kept. This isolates the SWA gain
+            # that is NOT explained by the needle physically landing in the
+            # window: if score ~= W6 the gain is token-anchoring/OOD-repair; if
+            # score ~= W0 the gain was purely "saw the needle".
+            n_chunks = len(chunks)
+            last_idx = n_chunks - 1
+            needles = set(int(c) for c in needle_excluded_chunks)
+            W = swa_eval_chunks
+            # Target window = the W context chunks just before the last chunk,
+            # i.e. indices [last_idx - W, last_idx). Replace any needle (or
+            # already-picked) index by walking backwards to the nearest earlier
+            # non-needle, non-duplicate context chunk.
+            picked: list[int] = []
+            used = set(needles)            # never include a needle chunk
+            # candidate pointer starts just below the window and we also iterate
+            # the natural window slots, swapping as needed.
+            desired = list(range(max(0, last_idx - W), last_idx))
+            probe = min(desired) - 1 if desired else last_idx - 1
+            for slot in desired:
+                if slot not in needles and slot not in picked:
+                    picked.append(slot)
+                    used.add(slot)
+                else:
+                    # walk backwards to nearest earlier non-needle unused chunk
+                    while probe >= 0 and (probe in used or probe in picked):
+                        probe -= 1
+                    if probe >= 0:
+                        picked.append(probe)
+                        used.add(probe)
+                        probe -= 1
+                    # if we run out of earlier chunks, the window simply shrinks
+                    # (still needle-free, still no double-count)
+            picked = sorted(set(picked))
+            pieces = [chunks[c] for c in picked] + [chunks[-1]]
+            window = torch.cat(pieces, dim=0)
             cur = window.unsqueeze(0).to(device)
         else:
             # W=0, single chunk, OR SWA fallback (doc fits in window):
@@ -1044,6 +1430,18 @@ def main():
                              "query-conditional, no dilution) instead of stored "
                              "hidden. Decisive 'live token >> frozen hidden "
                              "snapshot' test. Locates needle per-sample; bsz=1.")
+    parser.add_argument("--swa_needle_excluded", action="store_true", default=False,
+                        help="SWA-NEEDLE-EXCLUDED probe (2026-06-27): identical to a "
+                             "plain --swa_eval_chunks W window, EXCEPT any needle chunk "
+                             "(located per-sample via the gold answer) that would fall "
+                             "inside the last (W+1) window is REPLACED by the nearest "
+                             "earlier non-needle chunk, so the SWA window has the SAME "
+                             "token count as plain W6 but provably does NOT contain the "
+                             "needle. Decisive test of WHY W6>>W0: if score stays high "
+                             "(near W6) the SWA gain is token-anchoring / OOD-repair "
+                             "(needle-independent); if it falls back to W0 the gain was "
+                             "purely from seeing the needle. Requires --swa_eval_chunks>0 "
+                             "and --batch_size 1.")
     parser.add_argument("--swa_readerattn_token", action="store_true", default=False,
                         help="READER-ATTN-TOKEN probe (2026-06-27, DEPLOYABLE): "
                              "identical token-reforward readout as --swa_oracle_token "
@@ -1060,6 +1458,59 @@ def main():
                         help="Top-k chunks to select for --swa_readerattn_token "
                              "(default 4). No recency floor (the last/question chunk "
                              "is always appended by the window builder).")
+    parser.add_argument("--swa_readerattn_select_layer", type=int, default=16,
+                        help="Which wrapped decoder layer's native q.k drives the "
+                             "reader-attn chunk selection for --swa_readerattn_token "
+                             "(default 16). Sweep target.")
+    parser.add_argument("--swa_tree_token", action="store_true", default=False,
+                        help="HNST v2 TREE-TOKEN probe (2026-06-25, DEPLOYABLE): "
+                             "identical token-reforward readout as "
+                             "--swa_readerattn_token but the chunk set comes from a "
+                             "beam descent over the TRAINED navigation tree "
+                             "(model._tree_pool learned aggregation + reader q.k). "
+                             "Requires a checkpoint trained with --use_tree_summary "
+                             "and --batch_size 1. Mutually exclusive with the other "
+                             "--swa_*_token probes.")
+    parser.add_argument("--swa_tree_topk", type=int, default=4,
+                        help="Top-k leaf chunks surfaced by the tree descent for "
+                             "--swa_tree_token (default 4).")
+    parser.add_argument("--swa_tree_select_layer", type=int, default=16,
+                        help="Selection layer for --swa_tree_token (default 16).")
+    parser.add_argument("--swa_tree_branch", type=int, default=4,
+                        help="B-ary branching factor of the navigation tree for "
+                             "--swa_tree_token (match training --t2_tree_branch).")
+    parser.add_argument("--swa_tree_beam", type=int, default=2,
+                        help="Beam width per internal level for --swa_tree_token "
+                             "(match training --t2_tree_beam).")
+    parser.add_argument("--swa_bm25_token", action="store_true", default=False,
+                        help="BM25-TOKEN probe (DEPLOYABLE): identical "
+                             "token-reforward readout as --swa_oracle_token / "
+                             "--swa_readerattn_token (same window builder + decode "
+                             "loop) but the selected chunk set comes from pure "
+                             "lexical BM25 word-overlap between the question chunk "
+                             "and each candidate context chunk's RAW tokens "
+                             "(zero-training, no model forward, no oracle). The "
+                             "candidate pool is the SAME post-eviction FIFO buffer "
+                             "the reader-attn path sees, so the long-doc recall@K "
+                             "measured for BM25 (0.52-0.73) transfers 1:1. Tests "
+                             "whether BM25-selected chunks beat the reader-attn "
+                             "deployment end-to-end. Requires --batch_size 1; "
+                             "mutually exclusive with --swa_oracle_token and "
+                             "--swa_readerattn_token.")
+    parser.add_argument("--swa_bm25_topk", type=int, default=4,
+                        help="Top-k chunks to select for --swa_bm25_token "
+                             "(default 4). No recency floor (the last/question "
+                             "chunk is always appended by the window builder).")
+    parser.add_argument("--swa_bm25_select_layer", type=int, default=16,
+                        help="Which wrapped decoder layer's FIFO buffer defines the "
+                             "candidate pool for --swa_bm25_token (default 16, "
+                             "matching --swa_readerattn_select_layer so both paths "
+                             "rank the identical pool).")
+    parser.add_argument("--swa_bm25_content_only", action="store_true", default=False,
+                        help="content-only BM25: filter generic stopwords out of the "
+                             "query before BM25 so high-IDF entity words drive chunk "
+                             "selection. Validated: recall@4 0.52->0.67-0.72 (qa5 16k). "
+                             "Zero-train improvement over plain --swa_bm25_token.")
     parser.add_argument("--batch_size", type=int, default=1,
                         help="Cell-internal sample batch size. 1 (default) = the "
                              "original byte-for-byte per-sample path. >1 batches "
@@ -1162,7 +1613,7 @@ def main():
                              "(may be OOD; relies on Llama-3 RoPE theta=500000 "
                              "extrapolation).")
     parser.add_argument("--fifo_keep_set_mode", type=str, default="none",
-                        choices=["none", "flat_readerattn", "oracle"],
+                        choices=["none", "flat_readerattn", "oracle", "tree"],
                         help="H_DIL probe: how to select which buffered chunks "
                              "to KEEP in the prefix. 'none' = attend ALL "
                              "(legacy). 'flat_readerattn' = score each chunk "
@@ -1186,6 +1637,28 @@ def main():
                         help="When set, suppress FIFO eviction (buffer holds "
                              "ALL past chunks). Use with keep_set_mode to test "
                              "'keep-all-store, attend-few'.")
+    parser.add_argument("--fifo_tree_branch", type=int, default=8,
+                        help="HNST (--fifo_keep_set_mode tree) branching factor B "
+                             "of the max-pool navigation tree (default 8).")
+    parser.add_argument("--fifo_tree_beam", type=int, default=2,
+                        help="HNST beam width b kept at each internal tree level "
+                             "(default 2; b>=2 lets a wrong high-level turn "
+                             "recover).")
+    parser.add_argument("--fifo_buffer_chunks_eval", type=int, default=0,
+                        help="Eval-time override of the FIFO eviction buffer size "
+                             "(0 = keep the trained fifo_buffer_chunks). Use to "
+                             "evaluate a clean large-buffer ckpt as a SMALLER-buffer "
+                             "FIFO so early chunks are EVICTED at long lengths (the "
+                             "'amnesia' baseline for the HNST position test). "
+                             "Ignored under --fifo_keep_all_buffer.")
+    parser.add_argument("--record_needle_pos", action="store_true", default=False,
+                        help="Position-stratified eval (HNST decisive test): for "
+                             "every bsz=1 sample, locate the gold-answer needle "
+                             "chunk(s) and write two extra CSV columns "
+                             "'needle_chunks' (';'-joined 0-based doc-absolute "
+                             "chunk indices) and 'n_chunks' (total chunks). Lets "
+                             "the scorer bucket accuracy by needle position "
+                             "(early/mid/late). Default off -> byte-identical CSV.")
     args = parser.parse_args()
 
     if args.swa_eval_chunks < 0:
@@ -1223,6 +1696,31 @@ def main():
             "--swa_readerattn_token and --swa_oracle_token are mutually "
             "exclusive (both drive the token-reforward window from a different "
             "chunk source). Pick one."
+        )
+
+    if args.swa_bm25_token and args.batch_size > 1:
+        parser.error(
+            "--swa_bm25_token requires --batch_size 1 (per-sample BM25 chunk "
+            "selection + raw-token re-forward is only wired on the bsz=1 path)."
+        )
+    if args.swa_bm25_token and (args.swa_oracle_token or args.swa_readerattn_token):
+        parser.error(
+            "--swa_bm25_token is mutually exclusive with --swa_oracle_token and "
+            "--swa_readerattn_token (each drives the token-reforward window from a "
+            "different chunk source). Pick one."
+        )
+
+    if args.swa_tree_token and args.batch_size > 1:
+        parser.error(
+            "--swa_tree_token requires --batch_size 1 (per-sample tree navigation "
+            "+ raw-token re-forward is only wired on the bsz=1 path)."
+        )
+    if args.swa_tree_token and (args.swa_oracle_token or args.swa_readerattn_token
+                                or args.swa_bm25_token):
+        parser.error(
+            "--swa_tree_token is mutually exclusive with the other --swa_*_token "
+            "probes (each drives the token-reforward window from a different chunk "
+            "source). Pick one."
         )
 
     print(f"[mem_space-BABILong] Configuration:")
@@ -1344,9 +1842,16 @@ def main():
         _set_fifo_keep_set_mode(
             model, _ks_mode_cli,
             topk=args.fifo_keep_topk, recency=args.fifo_keep_recency,
+            tree_branch=args.fifo_tree_branch, tree_beam=args.fifo_tree_beam,
         )
-        print(f"[mem_space-BABILong] FIFO probe: fifo_keep_set_mode={_ks_mode_cli} "
-              f"topk={args.fifo_keep_topk} recency={args.fifo_keep_recency} (H_DIL)")
+        if _ks_mode_cli == "tree":
+            print(f"[mem_space-BABILong] FIFO probe: fifo_keep_set_mode=tree "
+                  f"branch={args.fifo_tree_branch} beam={args.fifo_tree_beam} "
+                  f"topk={args.fifo_keep_topk} recency={args.fifo_keep_recency} "
+                  f"(HNST tree beam descent)")
+        else:
+            print(f"[mem_space-BABILong] FIFO probe: fifo_keep_set_mode={_ks_mode_cli} "
+                  f"topk={args.fifo_keep_topk} recency={args.fifo_keep_recency} (H_DIL)")
     # FIFO ORACLE keep-set (perfect isolation): needle chunk located per-sample
     # in the bsz=1 loop. Requires --batch_size 1 (the batched path has no
     # per-sample oracle wiring). When on we also reset the per-document FIFO
@@ -1361,11 +1866,21 @@ def main():
         _set_fifo_keep_all_buffer(model, True)
         print(f"[mem_space-BABILong] FIFO probe: fifo_keep_all_buffer=True "
               f"(eviction suppressed)")
+    if getattr(args, "fifo_buffer_chunks_eval", 0) and not getattr(args, "fifo_keep_all_buffer", False):
+        _set_fifo_buffer_chunks(model, args.fifo_buffer_chunks_eval)
+        print(f"[mem_space-BABILong] FIFO probe: fifo_buffer_chunks_eval="
+              f"{args.fifo_buffer_chunks_eval} (eviction buffer size override; "
+              f"early chunks evicted at long lengths -> amnesia baseline)")
     if args.swa_readerattn_token:
         print(f"[mem_space-BABILong] READER-ATTN-TOKEN probe (deployable): "
-              f"select_layer=16 topk={args.swa_readerattn_topk} recency=0 "
+              f"select_layer={args.swa_readerattn_select_layer} topk={args.swa_readerattn_topk} recency=0 "
               f"(token-reforward readout identical to --swa_oracle_token; "
               f"chunk source = reader-attn q.k selection, no oracle)")
+    if args.swa_bm25_token:
+        print(f"[mem_space-BABILong] BM25-TOKEN probe (deployable): "
+              f"select_layer={args.swa_bm25_select_layer} topk={args.swa_bm25_topk} "
+              f"(token-reforward readout identical to --swa_oracle_token; "
+              f"chunk source = lexical BM25 word-overlap, no oracle, no forward)")
 
     # ------------------------------------------------------------------ #
     # BABILong eval loop (mirrors run_babilong_h6.py:406-512)
@@ -1441,7 +1956,11 @@ def main():
                 indent=4,
             )
 
-            df = pd.DataFrame({"target": [], "output": [], "question": []})
+            if getattr(args, "record_needle_pos", False):
+                df = pd.DataFrame({"target": [], "output": [], "question": [],
+                                   "needle_chunks": [], "n_chunks": []})
+            else:
+                df = pd.DataFrame({"target": [], "output": [], "question": []})
 
             num_samples = len(task_data)
             if args.limit > 0:
@@ -1483,6 +2002,15 @@ def main():
                 for idx in tqdm(sample_indices, desc=f"{task}/{split_name}", leave=False):
                     target, question, input_ids = _encode_sample(idx)
                     input_ids = input_ids.to(device)
+                    # CROSS-DOC SAFETY: with --fifo_keep_all_buffer eviction is
+                    # OFF, so the FIFO buffer would otherwise ACCUMULATE chunks
+                    # across documents (generate_with_mem_space's _reset_banks
+                    # does NOT clear _fifo_buf). The oracle path already resets via
+                    # _set_fifo_oracle_needle; for every other keep-all-buffer mode
+                    # (tree / flat_readerattn) we must clear the buffer per sample
+                    # so each document builds its tree from a clean slate.
+                    if getattr(args, "fifo_keep_all_buffer", False) and not _fifo_oracle_on:
+                        _reset_fifo_memory(model)
                     # FIFO ORACLE keep-set: locate the needle (gold answer) chunk
                     # for THIS sample and stash it on the FIFO layers (mirrors the
                     # rawkv oracle's per-sample needle-chunk channel). Also resets
@@ -1493,12 +2021,41 @@ def main():
                             input_ids, target, tokenizer, args.chunk_size
                         )
                         _set_fifo_oracle_needle(model, _needle)
+                    # POSITION-STRATIFIED recording (HNST decisive test): locate
+                    # the needle chunk(s) so the scorer can bucket by position.
+                    _rec_needle = None
+                    _rec_nchunks = None
+                    if getattr(args, "record_needle_pos", False):
+                        import math as _m
+                        _rec_nchunks = max(1, _m.ceil(input_ids.shape[1] / args.chunk_size))
+                        _rec_needle = _locate_needle_chunks(
+                            input_ids, target, tokenizer, args.chunk_size
+                        )
                     # ORACLE-TOKEN-SWA: locate needle chunks to re-forward their
                     # RAW TOKENS (independent of the FIFO-hidden oracle path).
                     _oracle_tok = None
                     if args.swa_oracle_token:
                         _oracle_tok = _locate_needle_chunks(
                             input_ids, target, tokenizer, args.chunk_size
+                        )
+                    _needle_excl = None
+                    if args.swa_needle_excluded:
+                        # locate needle so the SWA window can EXCLUDE it; if it
+                        # can't be located, pass empty set (window = plain SWA)
+                        _nx = _locate_needle_chunks(
+                            input_ids, target, tokenizer, args.chunk_size
+                        )
+                        _needle_excl = _nx if _nx is not None else set()
+                    # BM25-TOKEN query: encode the BARE question STRING (no
+                    # special tokens, no instruction/few-shot/post_prompt) so the
+                    # deployable BM25 chunk selection ranks by the SAME query the
+                    # e2 probe's score_S2_bm25 used (q_ids = pure question). Only
+                    # built when the flag is on; otherwise stays None and the
+                    # selector falls back to chunks[-1] (byte-identical to before).
+                    _bm25_q_ids = None
+                    if args.swa_bm25_token:
+                        _bm25_q_ids = tokenizer.encode(
+                            (question or "").strip(), add_special_tokens=False
                         )
                     try:
                         if args.memory_disabled:
@@ -1514,9 +2071,20 @@ def main():
                                     device=device,
                                     swa_eval_chunks=args.swa_eval_chunks,
                                     oracle_token_chunks=_oracle_tok,
+                                    needle_excluded_chunks=_needle_excl,
                                     readerattn_token=args.swa_readerattn_token,
-                                    readerattn_select_layer=16,
+                                    readerattn_select_layer=args.swa_readerattn_select_layer,
                                     readerattn_topk=args.swa_readerattn_topk,
+                                    tree_token=args.swa_tree_token,
+                                    tree_select_layer=args.swa_tree_select_layer,
+                                    tree_topk=args.swa_tree_topk,
+                                    tree_branch=args.swa_tree_branch,
+                                    tree_beam=args.swa_tree_beam,
+                                    bm25_token=args.swa_bm25_token,
+                                    bm25_select_layer=args.swa_bm25_select_layer,
+                                    bm25_topk=args.swa_bm25_topk,
+                                    bm25_query_ids=_bm25_q_ids,
+                                    bm25_content_only=args.swa_bm25_content_only,
                                 )
                         finally:
                             if args.memory_disabled:
@@ -1530,7 +2098,13 @@ def main():
                         _reset_l2(model)
                         if torch.cuda.is_available():
                             torch.cuda.empty_cache()
-                    df.loc[len(df)] = [target, output, question]
+                    if getattr(args, "record_needle_pos", False):
+                        _nc_str = (";".join(str(int(c)) for c in sorted(_rec_needle))
+                                   if _rec_needle else "")
+                        df.loc[len(df)] = [target, output, question,
+                                           _nc_str, int(_rec_nchunks or 0)]
+                    else:
+                        df.loc[len(df)] = [target, output, question]
                     if len(df) % 10 == 0 or idx == sample_indices[-1]:
                         _write_results_csv(df, outfile)
             else:

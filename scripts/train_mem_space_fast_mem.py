@@ -34,6 +34,7 @@ import os
 import random
 import sys
 import time
+from contextlib import nullcontext
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
@@ -430,6 +431,9 @@ def parse_args() -> argparse.Namespace:
     # Wandb
     p.add_argument("--wandb_project", type=str, default="mixture-of-memory")
     p.add_argument("--wandb_run_name", type=str, default=None)
+    p.add_argument("--wandb_run_id", type=str, default=None,
+                   help="Wandb run ID for resuming into the same run. "
+                        "If set, wandb.init(resume='allow', id=...) is used.")
 
     return p.parse_args()
 
@@ -517,10 +521,15 @@ def build_model(args, device, dtype) -> torch.nn.Module:
         logger.warning("H7 fix v2: rotary_emb not accessible")
 
     # Warm-start from existing adapter
+    _resumed_training_state = None
     if args.init_checkpoint and os.path.isfile(args.init_checkpoint):
         logger.info("Loading warm-start adapter from %s", args.init_checkpoint)
         ckpt = torch.load(args.init_checkpoint, map_location=device, weights_only=False)
         if isinstance(ckpt, dict):
+            # Extract training state if present (for resume)
+            if "__training_state__" in ckpt:
+                _resumed_training_state = ckpt.pop("__training_state__")
+                logger.info("Resumed training state: %s", _resumed_training_state)
             if "model_state_dict" in ckpt:
                 state_dict = ckpt["model_state_dict"]
             elif "state_dict" in ckpt:
@@ -531,6 +540,8 @@ def build_model(args, device, dtype) -> torch.nn.Module:
             state_dict = ckpt
         cleaned = {}
         for k, v in state_dict.items():
+            if k == "__training_state__":
+                continue
             cleaned[k[7:] if k.startswith("module.") else k] = v
         missing, unexpected = model.load_state_dict(cleaned, strict=False)
         logger.info("init_checkpoint loaded: %d keys, missing=%d, unexpected=%d",
@@ -538,7 +549,7 @@ def build_model(args, device, dtype) -> torch.nn.Module:
     elif args.init_checkpoint:
         logger.warning("init_checkpoint=%s not found — random init", args.init_checkpoint)
 
-    return model
+    return model, _resumed_training_state
 
 
 # --------------------------------------------------------------------------- #
@@ -705,8 +716,9 @@ def quick_eval_babilong(
 # --------------------------------------------------------------------------- #
 
 
-def _save_adapter(model, args, step: int, final: bool = False) -> None:
-    """Save mem_space + fast_mem adapter weights + config."""
+def _save_adapter(model, args, step: int, final: bool = False,
+                   training_state: dict = None) -> None:
+    """Save mem_space + fast_mem adapter weights + config + training state."""
     fragments = (
         "selector", "gate_param", "slot_output_gate",
         "slot_to_hidden", "hidden_to_slot", "memory_bank",
@@ -721,6 +733,10 @@ def _save_adapter(model, args, step: int, final: bool = False) -> None:
         for k, v in root.state_dict().items()
         if any(frag in k for frag in fragments)
     }
+
+    # Include training state for resume (counters, optimizer not included for size)
+    if training_state:
+        state["__training_state__"] = training_state
 
     if final:
         ckpt_path = os.path.join(args.output_dir, "mem_space_adapter.pt")
@@ -805,13 +821,19 @@ def main() -> None:
         os.makedirs(args.output_dir, exist_ok=True)
         if _WANDB_AVAILABLE and args.wandb_project:
             wandb_name = args.wandb_run_name or os.path.basename(args.output_dir)
-            wandb.init(
+            wandb_kwargs = dict(
                 project=args.wandb_project,
                 name=wandb_name,
                 config=vars(args),
                 dir=args.output_dir,
             )
-            logger.info("Wandb initialized: project=%s run=%s", args.wandb_project, wandb_name)
+            if args.wandb_run_id:
+                wandb_kwargs["id"] = args.wandb_run_id
+                wandb_kwargs["resume"] = "allow"
+            wandb.init(**wandb_kwargs)
+            logger.info("Wandb initialized: project=%s run=%s id=%s",
+                        args.wandb_project, wandb_name,
+                        args.wandb_run_id or wandb.run.id)
         logger.info(
             "FastMem CPT | model=%s | dolmino=%s | curriculum=%s | "
             "fast_mem_heads=%d d_state=%d chunk=%d fusion_init=%.1f lr_mult=%.1f | "
@@ -830,7 +852,7 @@ def main() -> None:
         tokenizer.pad_token = tokenizer.eos_token
 
     # --- model --- #
-    model = build_model(args, device, dtype)
+    model, _resumed_training_state = build_model(args, device, dtype)
     _freeze_backbone(model)
 
     if is_main(rank):
@@ -906,7 +928,20 @@ def main() -> None:
     base_params = _mem_space_params(raw_model)
     fast_params = _fast_mem_params(raw_model)
 
-    if not base_params and not fast_params:
+    # Separate fusion_gate from other fast_mem params (needs much higher LR)
+    fusion_gate_params = []
+    fast_other_params = []
+    fusion_gate_ids = set()
+    for w in raw_model._mem_space_layers:
+        fm = getattr(w, 'fast_mem', None)
+        if fm is not None and hasattr(fm, 'fusion_gate'):
+            fusion_gate_params.append(fm.fusion_gate)
+            fusion_gate_ids.add(id(fm.fusion_gate))
+    for p in fast_params:
+        if id(p) not in fusion_gate_ids:
+            fast_other_params.append(p)
+
+    if not base_params and not fast_other_params and not fusion_gate_params:
         raise RuntimeError("No trainable params found.")
 
     param_groups = []
@@ -916,16 +951,23 @@ def main() -> None:
             "lr": args.lr,
             "name": "mem_space",
         })
-    if fast_params:
+    if fast_other_params:
         param_groups.append({
-            "params": fast_params,
+            "params": fast_other_params,
             "lr": args.lr * args.fast_mem_lr_mult,
             "name": "fast_mem",
         })
+    if fusion_gate_params:
+        # fusion_gate needs ~1000x higher LR than base to move meaningfully
+        param_groups.append({
+            "params": fusion_gate_params,
+            "lr": 0.01,  # fixed high LR for the gate scalar
+            "name": "fusion_gate",
+        })
 
     if is_main(rank):
-        logger.info("Optimizer: %d base params, %d fast_mem params (%.1fx LR)",
-                    len(base_params), len(fast_params), args.fast_mem_lr_mult)
+        logger.info("Optimizer: %d base params, %d fast_mem params (%.1fx LR), %d fusion_gate params (lr=0.01)",
+                    len(base_params), len(fast_other_params), args.fast_mem_lr_mult, len(fusion_gate_params))
 
     optimizer = torch.optim.AdamW(param_groups, weight_decay=0.0, betas=(0.9, 0.95))
 
@@ -938,6 +980,16 @@ def main() -> None:
     n_nonfinite = 0
     accum_lm_loss = 0.0
     accum_aux_loss = 0.0
+
+    # Restore counters from checkpoint if resuming
+    if _resumed_training_state:
+        n_dolmino = _resumed_training_state.get("n_dolmino", 0)
+        n_babilong = _resumed_training_state.get("n_babilong", 0)
+        n_nonfinite = _resumed_training_state.get("n_nonfinite", 0)
+        if is_main(rank):
+            logger.info("Restored counters: dolmino=%d babilong=%d nf=%d",
+                        n_dolmino, n_babilong, n_nonfinite)
+
     t0 = time.time()
     grad_accum = args.gradient_accumulation_steps
 
@@ -952,6 +1004,11 @@ def main() -> None:
         for pg in optimizer.param_groups:
             if pg.get("name") == "fast_mem":
                 pg["lr"] = lr_base * args.fast_mem_lr_mult
+            elif pg.get("name") == "fusion_gate":
+                # fusion_gate uses fixed high LR with cosine decay from 0.01
+                fg_lr = cosine_lr_schedule(global_step, args.total_steps,
+                                           args.warmup_steps, 0.01)
+                pg["lr"] = fg_lr
             else:
                 pg["lr"] = lr_base
 
@@ -1025,7 +1082,7 @@ def main() -> None:
             avg_lm = step_lm_loss / max(1, step_valid_micros)
             avg_aux = step_aux_loss / max(1, step_valid_micros)
             elapsed = time.time() - t0
-            steps_per_sec = global_step / elapsed if elapsed > 0 else 0.0
+            steps_per_sec = (global_step - args.start_step) / elapsed if elapsed > 0 else 0.0
             fusion_val = _get_fusion_gate_value(raw_model)
             logger.info(
                 "[step %d/%d] lm=%.4f aux=%.4f lr=%.2e n_ctx=%d "
@@ -1051,22 +1108,31 @@ def main() -> None:
         # Save checkpoint
         if (args.save_interval > 0
                 and global_step % args.save_interval == 0
-                and global_step < args.total_steps
-                and is_main(rank)):
-            _save_adapter(model, args, global_step)
+                and global_step < args.total_steps):
+            if is_main(rank):
+                _save_adapter(model, args, global_step, training_state={
+                    "global_step": global_step,
+                    "n_dolmino": n_dolmino,
+                    "n_babilong": n_babilong,
+                    "n_nonfinite": n_nonfinite,
+                })
+            if world_size > 1:
+                dist.barrier()  # other ranks wait for save to finish
 
-        # Quick eval
+        # Quick eval — all ranks must wait (barrier) to avoid DDP deadlock
         if (args.eval_interval > 0
-                and global_step % args.eval_interval == 0
-                and is_main(rank)):
-            acc = quick_eval_babilong(
-                model.module if isinstance(model, DDP) else model,
-                tokenizer, device, args.chunk_size,
-                n_samples=args.eval_samples,
-            )
-            logger.info("[eval step %d] BABILong qa1@1k accuracy: %.1f%%", global_step, acc)
-            if _WANDB_AVAILABLE and args.wandb_project and wandb.run:
-                wandb.log({"eval/babilong_qa1_acc": acc}, step=global_step)
+                and global_step % args.eval_interval == 0):
+            if is_main(rank):
+                acc = quick_eval_babilong(
+                    model.module if isinstance(model, DDP) else model,
+                    tokenizer, device, args.chunk_size,
+                    n_samples=args.eval_samples,
+                )
+                logger.info("[eval step %d] BABILong qa1@1k accuracy: %.1f%%", global_step, acc)
+                if _WANDB_AVAILABLE and args.wandb_project and wandb.run:
+                    wandb.log({"eval/babilong_qa1_acc": acc}, step=global_step)
+            if world_size > 1:
+                dist.barrier()
             model.train()
 
     # Final save

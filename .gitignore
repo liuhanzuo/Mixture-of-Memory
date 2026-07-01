@@ -129,3 +129,27 @@ external/landmark_ckpts/
 external/landmark-attention/
 external/landmark/hf-cache/
 external/landmark/passkey_results.csv
+
+# Large local caches & venvs (NEVER commit — 1.4T+ / 37G / 5.6G etc.)
+.venv_memoryllm/
+.venv*/
+.cache/
+.hf_cache/
+.hf_home/
+distill_cache/
+distill_cache*/
+cc_state/
+.mcp.json
+
+# Eval result dumps (regenerable; keep only scores.json where tracked)
+longbench_results/
+longeval_results/
+ruler_results/
+dialogmem_results/
+*/preds_*.jsonl
+
+# More large local artifacts (venvs, staging scratch — 10G/5.6G)
+staging/
+external/memoryllm_venv/
+external/*_venv/
+external/landmark/results_s2/

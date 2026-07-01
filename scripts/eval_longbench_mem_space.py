@@ -260,6 +260,16 @@ def load_mem_space_model(
         else:
             cleaned[k] = v
 
+    # Drop the L3 token-reconstruction head: it is a TRAIN-ONLY auxiliary (ICAE-style
+    # reconstruction of each chunk's own tokens) and is never used during generation.
+    # Its pos_queries are sized to the training chunk_size (e.g. 512), which can differ
+    # from the eval-time module default, so loading it would raise a size mismatch.
+    _recon_dropped = [k for k in cleaned if "l3_token_recon_head" in k]
+    for k in _recon_dropped:
+        cleaned.pop(k, None)
+    if _recon_dropped:
+        print(f"[LongBench] Dropped {len(_recon_dropped)} train-only L3-recon-head keys")
+
     missing, unexpected = model.load_state_dict(cleaned, strict=False)
     print(f"[LongBench] Loaded {len(cleaned)} keys | "
           f"missing={len(missing)} unexpected={len(unexpected)}")
@@ -338,6 +348,7 @@ def generate_with_mem_space(
     chunk_size: int,
     max_new_tokens: int,
     device: torch.device,
+    swa_eval_chunks: int = 0,
 ) -> str:
     """Stream context through memory, then generate answer.
 
@@ -345,6 +356,15 @@ def generate_with_mem_space(
     2. Stream all-but-last chunks through model (memory accumulates).
     3. Freeze bank, generate from last chunk autoregressively.
     4. Unfreeze bank.
+
+    eval-only cross-chunk SWA (``swa_eval_chunks`` = W, mirrors
+    run_babilong_mem_space.py): W=0 = original (generation window = last chunk
+    only, earlier chunks reach the final forward solely via the memory bank).
+    W>0 = generation window is the last (W+1) chunks concatenated, so the final
+    forward's self-attention attends DIRECTLY to the previous W chunks' raw KV
+    (sliding window) IN ADDITION to memory readback. The bank streaming loop is
+    unchanged (chunks[:-1]), so SWA is purely additive. Guard ``len(chunks) >
+    W+1`` avoids double-counting on short docs (fall back to W0).
     """
     _reset_banks(model)
     _reset_l2(model)
@@ -361,7 +381,11 @@ def generate_with_mem_space(
     # Freeze bank for generation
     _freeze_banks(model)
     try:
-        cur = chunks[-1].unsqueeze(0).to(device)
+        if swa_eval_chunks > 0 and len(chunks) > swa_eval_chunks + 1:
+            start = max(0, len(chunks) - (swa_eval_chunks + 1))
+            cur = torch.cat(list(chunks[start:]), dim=0).unsqueeze(0).to(device)
+        else:
+            cur = chunks[-1].unsqueeze(0).to(device)
         generated_ids: list[int] = []
         for step in range(max_new_tokens):
             outputs = model(input_ids=cur, use_cache=False)
@@ -656,6 +680,10 @@ def main():
                              "standard LongBench middle-truncation. R3-3 anchor.")
     parser.add_argument("--chunk_size", type=int, default=1024,
                         help="Chunk size for memory accumulation")
+    parser.add_argument("--swa_eval_chunks", type=int, default=0,
+                        help="Eval-only cross-chunk SWA window W (0=off, memory-only; "
+                             "W>0 = generation window concatenates last W+1 chunks for "
+                             "direct attention in addition to memory readback).")
     parser.add_argument("--gpu_id", type=int, default=0,
                         help="GPU index for this process (for data parallelism)")
     parser.add_argument("--num_gpus", type=int, default=1,
@@ -825,6 +853,7 @@ def main():
                         chunk_size=args.chunk_size,
                         max_new_tokens=max_gen,
                         device=device,
+                        swa_eval_chunks=args.swa_eval_chunks,
                     )
 
             # Record result

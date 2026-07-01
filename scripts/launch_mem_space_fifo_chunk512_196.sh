@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # 方案B: FIFO hidden-state memory (MemoryLLM-style) — chunk512 ablation arm
-# Runs on H20 .196 (28.59.80.196, 8× H20, 盘A 共享 FS, conda torch-base)
+# Runs on H20 .196 (28.59.80.196, 8× H20, 盘A 共享 FS, .venv)
 # Derived from launch_mem_space_fifo_b200.sh: chunk_size 1024->512, rest aligned to base.
-# 2026-06-24
+# 2026-06-24; OOM fix v2: bptt_window 2->1 (H20 95GB OOM@step15 with bptt=2)
+# 2026-06-24; OOM fix v3: unfreeze_layers_from 16->24 (optimizer.step() OOM@step30, Adam states ~7GB saved)
 set -euo pipefail
 PROJECT_ROOT="${PROJECT_ROOT:-/apdcephfs_zwfy6/share_303098609/pighzliu_code/Mixture-of-Memory}"
 cd "$PROJECT_ROOT"
@@ -17,7 +18,7 @@ export HF_DATASETS_CACHE="$PROJECT_ROOT/.hf_cache/datasets"
 export PYTHONPATH="$PROJECT_ROOT/third_party/babilong-pkg:$PROJECT_ROOT:${PYTHONPATH:-}"
 export PYTHONUNBUFFERED=1
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
-PYBIN="${PYTHON_BIN:-/opt/conda/envs/torch-base/bin/python}"
+PYBIN="${PYTHON_BIN:-.venv/bin/python}"
 RUN="mem_space_fifo_b50_chunk512"
 mkdir -p logs
 setsid bash -c "CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 $PYBIN -m torch.distributed.run --nproc_per_node=8 --master_port=29796 \
@@ -28,10 +29,10 @@ setsid bash -c "CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 $PYBIN -m torch.distributed
   --chunk_size 512 --batch_size 1 --num_slots 128 --top_k 16 --selector_dim 128 \
   --selector_temperature 40 --load_balance_weight 0.0 --entropy_aux_weight 0.0 \
   --use_fifo_memory --fifo_buffer_chunks 50 --fifo_detach \
-  --unfreeze_backbone --unfreeze_layers_from 16 \
+  --unfreeze_backbone --unfreeze_layers_from 24 \
   --slot_init strided_token --slot_init_noise 0.0 --writeback_gate_max 1.0 \
   --gradient_checkpointing --gradient_accumulation_steps 4 \
-  --curriculum 0:3 --bptt_window 2 \
+  --curriculum 0:3 --bptt_window 1 \
   --inject_gate_bias_init -2.0 \
   --save_interval 500 --eval_interval 0 --eval_samples 30 --log_interval 5 \
   --grad_clip 1.0 --proj_grad_clip 0.1 --wandb_project mixture-of-memory \

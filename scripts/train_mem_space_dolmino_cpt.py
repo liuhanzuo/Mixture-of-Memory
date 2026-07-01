@@ -15,8 +15,9 @@ Training step (Dolmino):
     5. loss = (out.loss + aux_loss) / grad_accum_steps
     6. loss.backward()
 
-Mixed with BABILong SFT (--babilong_mix_fraction, default 15%) to maintain
-task-specific retrieval ability.
+BABILong-in-training is PERMANENTLY DISABLED (2026-07-01): --babilong_mix_fraction
+defaults to 0 and any >0 aborts the run. BABILong is the eval set; training on it
+is leakage. Task-specific ability comes from SYNTHETIC data (T2 give-event, mix=0).
 
 Curriculum schedule (default):
     Step 0:      n_ctx=1   (2K effective context)
@@ -145,6 +146,45 @@ class CurriculumScheduler:
         return f"CurriculumScheduler({self.schedule})"
 
 
+class DifficultyCurriculum:
+    """Signal-difficulty stairs for T2 distractor STYLE (2026-06-29, user idea).
+
+    Format: 'step:LEVEL=w[|LEVEL=w...],step:...'
+      e.g. '0:2=1.0,400:2=0.5|3=0.5,800:3=1.0'
+    At step S the active mix is the last entry whose step<=S. get_mix(S) returns
+    a {level:weight} dict to hand to NIAHChunkedDataset.set_difficulty_mix, so the
+    selector starts on an easy signal and harder ones are blended in over training
+    (instead of a single fixed difficulty)."""
+
+    def __init__(self, spec: str) -> None:
+        self.schedule = []  # list[(step, {level:weight})]
+        for entry in spec.split(","):
+            entry = entry.strip()
+            if not entry:
+                continue
+            step_s, mix_s = entry.split(":")
+            mix = {}
+            for kv in mix_s.split("|"):
+                lvl, w = kv.split("=")
+                mix[int(lvl)] = float(w)
+            self.schedule.append((int(step_s), mix))
+        self.schedule.sort(key=lambda x: x[0])
+        if not self.schedule:
+            self.schedule = [(0, {})]
+
+    def get_mix(self, step: int) -> dict:
+        mix = self.schedule[0][1]
+        for s, m in self.schedule:
+            if step >= s:
+                mix = m
+            else:
+                break
+        return mix
+
+    def __repr__(self) -> str:
+        return f"DifficultyCurriculum({self.schedule})"
+
+
 # --------------------------------------------------------------------------- #
 # Cosine LR Schedule with Warmup
 # --------------------------------------------------------------------------- #
@@ -253,8 +293,19 @@ def _wrap_model_fsdp(
         reduce_dtype=torch.float32,
         buffer_dtype=torch.float32,
     )
+    # SHARD_GRAD_OP (ZeRO-2) opt-in for the t2_select path (2026-07-01, unfreeze
+    # sweep): under FULL_SHARD, params are resharded to 0-size AFTER the forward,
+    # which crashes ``_fifo_reader_attn_salience`` (it reads q_proj/k_proj/
+    # input_layernorm DIRECTLY, outside the FSDP-managed forward). SHARD_GRAD_OP
+    # keeps params unsharded between fwd/bwd (reshard_after_forward=False) so the
+    # manual param access works, while still sharding grads + optimizer state
+    # across ranks (the OOM lever for full/16-layer unfreeze on 96 GB). Gated by
+    # env var so the default (FULL_SHARD) path is byte-identical.
+    _shard_strat = ShardingStrategy.FULL_SHARD
+    if os.environ.get("MOM_FSDP_SHARD_GRAD_OP", "") == "1":
+        _shard_strat = ShardingStrategy.SHARD_GRAD_OP
     common_fsdp_kwargs = dict(
-        sharding_strategy=ShardingStrategy.FULL_SHARD,
+        sharding_strategy=_shard_strat,
         mixed_precision=mp_policy,
         backward_prefetch=BackwardPrefetch.BACKWARD_PRE,
         device_id=local_rank,
@@ -517,6 +568,23 @@ def _mem_space_params(model: torch.nn.Module) -> List[torch.nn.Parameter]:
     gist_readout = getattr(root, "_gist_readout", None)
     if gist_readout is not None:
         for p in gist_readout.parameters():
+            if id(p) not in seen:
+                params.append(p); seen.add(id(p))
+    # HNST v2 tree-summary pool (2026-06-25). Shared singleton on the root (peer to
+    # l3_pool); collect its leaf/node attention-pool params so _freeze_backbone
+    # re-enables their grad and they enter the optimizer (else the tree navigation
+    # never learns and the parent summaries stay at random init).
+    tree_pool = getattr(root, "_tree_pool", None)
+    if tree_pool is not None:
+        for p in tree_pool.parameters():
+            if id(p) not in seen:
+                params.append(p); seen.add(id(p))
+    # Beacon pyramid (idea #3, 2026-07-01). Shared singleton on the root (peer to
+    # tree_pool); collect its chunk/group attention-pool params so the reader-
+    # consumed beacon compression is trained jointly with the unfrozen reader.
+    beacon_pyramid = getattr(root, "_beacon_pyramid", None)
+    if beacon_pyramid is not None:
+        for p in beacon_pyramid.parameters():
             if id(p) not in seen:
                 params.append(p); seen.add(id(p))
     return params
@@ -1053,6 +1121,15 @@ def parse_args() -> argparse.Namespace:
                         "dolmino stays at a small fixed n_ctx (dolmino per-doc data "
                         "is capped at 4096 tokens, so (n_ctx+1)*chunk_size>4096 "
                         "starves the dolmino loader and hangs DDP).")
+    p.add_argument("--t2_difficulty_curriculum", type=str, default="",
+                   help="Signal-difficulty stairs for T2 distractor STYLE: "
+                        "'step:L1=w1|L2=w2,...' (levels 1-5, easy->hard; see "
+                        "NIAHChunkedDataset). At step S the active mix is the last "
+                        "entry whose step<=S, passed to set_difficulty_mix so a "
+                        "sample's distractor style is drawn by weight. Empty = use "
+                        "static --t2_hard_distractors flags. Example: "
+                        "'0:2=1.0,400:2=0.5|3=0.5,800:3=1.0' starts pure L2, "
+                        "blends in L3, then pure L3.")
 
     # Self-study distillation (v21, 2026-06-15). All default OFF/empty → when no
     # --distill_* flag is given the dolmino step is BYTE-IDENTICAL to before.
@@ -1106,9 +1183,14 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--distill_conf_max", type=float, default=2.0,
                    help="Maximum token distillation weight before mean normalization.")
 
-    # BABILong mix
-    p.add_argument("--babilong_mix_fraction", type=float, default=0.15,
-                   help="Probability of sampling a BABILong step vs Dolmino.")
+    # BABILong mix — DISABLED (2026-07-01, red-line hard-block).
+    # BABILong is the EVAL set; training on it = leakage (this is exactly how the
+    # b50/b100/c1024 leaked ckpts got their inflated scores). Default is now 0.0,
+    # and ANY value > 0 is hard-rejected at startup (see the guard below). To use
+    # BABILong for training again you must consciously remove that guard.
+    p.add_argument("--babilong_mix_fraction", type=float, default=0.0,
+                   help="[DISABLED — hard-blocked to 0] BABILong is the eval set; "
+                        "training on it leaks. Any >0 aborts.")
     p.add_argument("--babilong_dataset", type=str, default="RMT-team/babilong")
     p.add_argument("--babilong_tasks", type=str, default="qa1,qa2,qa5",
                    help="Comma-separated BABILong tasks for the mix.")
@@ -1196,10 +1278,33 @@ def parse_args() -> argparse.Namespace:
                    help="Number of (name->code) mappings written into the T2 "
                         "context. 1 = single needle; >1 adds distractor keys "
                         "(T2b multi-key ablation).")
+    p.add_argument("--t2_hard_distractors", type=int, default=0,
+                   help="Number of NON-needle chunks that also MENTION the "
+                        "queried name (no code) to remove the unique-name "
+                        "exact-match shortcut and force semantic salience. "
+                        "0 = off (legacy byte-identical). Recommended 2-4 to "
+                        "give the supervised-selection loss real gradient.")
+    p.add_argument("--t2_hard_distractor_mode", type=str, default="mention",
+                   choices=["mention", "format"],
+                   help="mention=plain code-free sentence mentioning the name "
+                        "(weak, selector keys on MEMORIZE presence). format="
+                        "MEMORIZE-aligned hard negative (strong, selector must "
+                        "read the code region). Use 'format' if 'mention' leaves "
+                        "select_ce mostly 0.")
     p.add_argument("--t2_gap_tokens", type=int, default=3584,
                    help="T2 needle->query token distance, held CONSTANT across "
                         "chunk_sizes for fair comparison. n_ctx is derived as "
                         "round(t2_gap_tokens / chunk_size) (default 3584 = 7*512).")
+    p.add_argument("--t2_gap_mix", type=str, default="",
+                   help="ProLong mixed-length recipe (2026-07-01): comma-separated "
+                        "ALTERNATIVE needle->query gap_tokens, e.g. "
+                        "'1536,3584,7680,15872'. When set, EACH T2 sample draws one "
+                        "gap uniformly and derives its own n_ctx=round(gap/chunk), "
+                        "so one run trains a MIXTURE of length档 (fixes the "
+                        "single-gap 'capability translation' root cause, "
+                        "DIRECTION_C_RESULT §1). Empty = single fixed --t2_gap_tokens "
+                        "(byte-identical). REQUIRES --batch_size 1. Overrides "
+                        "--t2_curriculum's set_n_ctx (mutually exclusive in intent).")
     p.add_argument("--t2_background_data", type=str,
                    default="data/pg19_chunks_llama3.npy",
                    help="Pre-tokenised [N, L] natural-text npy used to fill T2 "
@@ -1232,6 +1337,48 @@ def parse_args() -> argparse.Namespace:
                         "the token-reforward LM window for T2 select steps. MUST "
                         "match the eval --swa_readerattn_topk (default 4) for "
                         "train/eval consistency.")
+
+    # HNST v2 (2026-06-25): trainable tree-summary navigation. When
+    # --use_tree_summary is set AND --t2_select_loss_weight>0, T2 select steps run
+    # t2_tree_train_step (hierarchical per-level navigation CE over a trainable
+    # B-ary tree) instead of the flat t2_select_train_step. The tree pool params
+    # are trained jointly with the unfrozen reader. Default off = byte-identical.
+    p.add_argument("--use_tree_summary", action="store_true", default=False,
+                   help="Enable the trainable HNST v2 tree-summary pool (leaf+node "
+                        "attention poolers). Creates model._tree_pool; when paired "
+                        "with --t2_select_loss_weight>0 routes T2 through the "
+                        "hierarchical tree navigation step. Also wired to the "
+                        "eval keep_set_mode='tree' path (learned aggregation).")
+    p.add_argument("--tree_summary_heads", type=int, default=8,
+                   help="Attention heads in each HNST v2 tree pool block.")
+    p.add_argument("--tree_summary_layers", type=int, default=1,
+                   help="Cross-attn blocks per HNST v2 tree pooler (leaf & node).")
+    p.add_argument("--tree_summary_ffn_mult", type=int, default=2,
+                   help="FFN hidden-dim multiplier inside each tree pool block.")
+    p.add_argument("--t2_tree_branch", type=int, default=8,
+                   help="B-ary branching factor of the HNST v2 navigation tree "
+                        "(train + should match eval --fifo_tree_branch).")
+    p.add_argument("--t2_tree_beam", type=int, default=2,
+                   help="Beam width kept at each internal tree level during the LM "
+                        "window descent (train). Match eval --fifo_tree_beam.")
+
+    # Beacon pyramid (idea #3, 2026-07-01): multi-scale COMPRESSED FIFO prefix
+    # the reader consumes directly (Activation-Beacon-style joint training).
+    p.add_argument("--use_beacon_pyramid", action="store_true", default=False,
+                   help="Enable the hierarchical beacon pyramid: the FIFO prefix "
+                        "becomes near-fine/far-coarse compressed beacons consumed "
+                        "by the (unfrozen) reader + jointly-trained beacon pool.")
+    p.add_argument("--beacon_k", type=int, default=8,
+                   help="Beacons produced per pooled group (per chunk / far-group).")
+    p.add_argument("--beacon_fine_chunks", type=int, default=2,
+                   help="# most-recent chunks kept RAW (near-fine band).")
+    p.add_argument("--beacon_mid_chunks", type=int, default=6,
+                   help="# chunks pooled per-chunk to beacon_k beacons (mid band).")
+    p.add_argument("--beacon_branch", type=int, default=4,
+                   help="Far-band grouping factor (chunks per parent group).")
+    p.add_argument("--beacon_heads", type=int, default=8)
+    p.add_argument("--beacon_layers", type=int, default=1)
+    p.add_argument("--beacon_ffn_mult", type=int, default=2)
 
     # Logging / saving / eval
     p.add_argument("--log_interval", type=int, default=10)
@@ -1808,6 +1955,14 @@ def parse_args() -> argparse.Namespace:
         }
     else:
         args.unfreeze_layers_set = None
+    # Parse comma-separated --t2_gap_mix "1536,3584,7680,15872" → list[int] of
+    # alternative needle->query gaps (ProLong mixed-length recipe). Empty → [].
+    if isinstance(args.t2_gap_mix, str) and args.t2_gap_mix.strip():
+        args.t2_gap_mix = [
+            int(x) for x in args.t2_gap_mix.split(",") if x.strip() != ""
+        ]
+    else:
+        args.t2_gap_mix = []
     # FIFO hidden-state memory (方案B) reads the buffered past-chunk hiddens
     # through the WRAPPED decoder layer's own attention — the slot path is fully
     # bypassed, so the only mem_space param on the graph is the tiny inject_gate,
@@ -1903,6 +2058,10 @@ def merge_adapter_config_into_args(args: argparse.Namespace) -> argparse.Namespa
         "slot_kv_cache_layer": "slot_kv_cache_layer",
         "slot_kv_select_mode": "slot_kv_select_mode",
         "use_shared_addressing": "use_shared_addressing",
+        "use_tree_summary": "use_tree_summary",
+        "tree_summary_heads": "tree_summary_heads",
+        "tree_summary_layers": "tree_summary_layers",
+        "tree_summary_ffn_mult": "tree_summary_ffn_mult",
     }
     inherited = []
     for k_json, attr in cfg_to_attr.items():
@@ -2047,6 +2206,24 @@ def build_model(args, device, dtype) -> torch.nn.Module:
     ms_cfg.use_slot_kv_cache = bool(args.use_slot_kv_cache)
     ms_cfg.slot_kv_cache_layer = int(args.slot_kv_cache_layer)
     ms_cfg.slot_kv_select_mode = args.slot_kv_select_mode
+
+    # HNST v2 trainable tree-summary pool (2026-06-25). Dynamic config attrs
+    # (like the slot_kv_cache block above) so we do not touch the shared dataclass.
+    ms_cfg.use_tree_summary = bool(getattr(args, "use_tree_summary", False))
+    ms_cfg.tree_summary_heads = int(getattr(args, "tree_summary_heads", 8))
+    ms_cfg.tree_summary_layers = int(getattr(args, "tree_summary_layers", 1))
+    ms_cfg.tree_summary_ffn_mult = int(getattr(args, "tree_summary_ffn_mult", 2))
+
+    # Beacon pyramid (idea #3, 2026-07-01). Dataclass fields; set explicitly so
+    # the value reaches ms_cfg regardless of the constructor kwarg list above.
+    ms_cfg.use_beacon_pyramid = bool(getattr(args, "use_beacon_pyramid", False))
+    ms_cfg.beacon_k = int(getattr(args, "beacon_k", 8))
+    ms_cfg.beacon_fine_chunks = int(getattr(args, "beacon_fine_chunks", 2))
+    ms_cfg.beacon_mid_chunks = int(getattr(args, "beacon_mid_chunks", 6))
+    ms_cfg.beacon_branch = int(getattr(args, "beacon_branch", 4))
+    ms_cfg.beacon_heads = int(getattr(args, "beacon_heads", 8))
+    ms_cfg.beacon_layers = int(getattr(args, "beacon_layers", 1))
+    ms_cfg.beacon_ffn_mult = int(getattr(args, "beacon_ffn_mult", 2))
 
     # H7 rotary fp32 fix — snapshot before bf16 cast
     _rope_snapshot = {}
@@ -2907,6 +3084,173 @@ def t2_select_train_step(
             needle_rank, did_select)
 
 
+def t2_tree_train_step(
+    model: torch.nn.Module,
+    context_chunks: List[torch.Tensor],
+    target_ids: torch.Tensor,
+    answer_mask: torch.Tensor,
+    needle_chunk_index: int,
+    device: torch.device,
+    grad_accum: int = 1,
+    select_layer: int = 16,
+    select_topk: int = 4,
+    select_loss_weight: float = 1.0,
+    tree_branch: int = 8,
+    tree_beam: int = 2,
+) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, int, int]:
+    """HNST v2 trainable-tree SELECTION + token-reforward step (2026-06-25).
+
+    Same pipeline as ``t2_select_train_step`` but the selection loss is a
+    HIERARCHICAL per-level navigation CE over a trainable B-ary tree instead of a
+    single flat over-all-chunks CE:
+
+      1. Stream context chunks (no grad) → FIFO buffers of layer-``select_layer``.
+      2. Query hidden = question end of an extra target forward (snapshot+restore
+         buffers), same as the flat step.
+      3. Build the tree from the buffered chunk hiddens with the TRAINABLE tree
+         pool (``model._tree_pool``): leaves = pool_leaf(chunk), internal nodes =
+         pool_node(children). For each tree LEVEL ℓ (leaf → root) compute the
+         reader's grad-bearing q.k salience over that level's nodes and a CE whose
+         target is the ancestor node of the needle at level ℓ (= needle_local //
+         branch**ℓ). Summed over levels = ``L_select``. Gradient flows into BOTH
+         the reader (q_proj/k_proj) AND the tree pool (so parents learn to keep
+         the needle subtree's routing signal). ``needle_rank`` reported at LEAF
+         level (comparable to the flat step's rank).
+      4. LM window: descend the tree (beam) with the DETACHED leaf salience to
+         pick top-k leaves; token-reforward those chunks + target; answer CE.
+      5. total = lm_loss + aux_loss + select_loss_weight * L_select ; backward.
+
+    Returns ``(lm_loss_det, aux_loss_det, select_ce_det, needle_rank, did_select)``
+    with the same semantics as ``t2_select_train_step`` (select_ce = summed
+    per-level CE; needle_rank at leaf level; -1 / 0 when skipped).
+    """
+    import torch.nn.functional as _F
+    _reset_banks(model)
+    scale = float(grad_accum)
+    _zero = torch.zeros((), device=device)
+    B_ = max(2, int(tree_branch))
+
+    target_input = _ensure_batched(target_ids, device)
+    target_len = target_input.shape[1]
+    mask = _ensure_batched(answer_mask, device).to(torch.bool)
+    target_labels = torch.where(
+        mask, target_input, torch.full_like(target_input, -100)
+    )
+    B = target_input.shape[0]
+
+    # ---- 1. Stream context chunks (no grad) → FIFO buffers ---- #
+    with torch.no_grad():
+        for ctx in context_chunks:
+            model(input_ids=_ensure_batched(ctx, device), use_cache=False)
+    _detach_banks(model)
+
+    root = getattr(model, "module", model)
+    mem_layers = getattr(root, "_mem_space_layers", None) or []
+    tree_pool = getattr(root, "_tree_pool", None)
+    L = int(select_layer)
+
+    select_ce = _zero
+    needle_rank = -1
+    did_select = 0
+    leaf_sal_detached = None
+    n_ingested = len(context_chunks)
+    buf_len = 0
+    if (tree_pool is not None and 0 <= L < len(mem_layers)
+            and B == 1 and n_ingested >= 1):
+        sel_w = mem_layers[L]
+        buf = [h for h in (getattr(sel_w, "_fifo_buf", None) or []) if h.shape[0] == B]
+        buf_len = len(buf)
+        if buf_len >= 2:
+            _buf_snap = [list(getattr(w, "_fifo_buf", []) or []) for w in mem_layers]
+            try:
+                with torch.no_grad():
+                    _out = model(input_ids=target_input, use_cache=False,
+                                 output_hidden_states=True)
+                hs = getattr(_out, "hidden_states", None)
+                q_hidden = hs[L] if (hs is not None and L < len(hs)) else None
+            finally:
+                for w, snap in zip(mem_layers, _buf_snap):
+                    w._fifo_buf = snap
+            if q_hidden is not None:
+                _nz = mask[0].nonzero()
+                q_len = int(_nz[0].item()) if _nz.numel() > 0 else target_len
+                q_len = max(1, min(q_len, q_hidden.shape[1]))
+                q_hidden = q_hidden[:, :q_len, :]
+                rot = getattr(getattr(root, "model", None), "rotary_emb", None)
+                if rot is None:
+                    rot = sel_w._fifo_resolve_rotary_emb()
+                offset = n_ingested - buf_len
+                local = int(needle_chunk_index) - offset
+                if rot is not None and 0 <= local < buf_len:
+                    pos_ids = torch.arange(q_len, device=q_hidden.device).unsqueeze(0)
+                    cos, sin = rot(q_hidden, pos_ids)
+                    qv = sel_w._fifo_query_probe(q_hidden, (cos, sin))  # [B,nh,hd]
+                    # Build the trainable tree from the buffered chunk hiddens.
+                    _dev = q_hidden.device
+                    _dt = q_hidden.dtype
+                    leaves = torch.stack(
+                        [tree_pool.pool_leaf(h.to(_dev, dtype=_dt)) for h in buf],
+                        dim=0,
+                    )                                                # [C,B,d]
+                    levels = tree_pool.build_levels(leaves, B_)      # list [n_ℓ,B,d]
+                    # Per-level navigation CE. Target ancestor of needle at level ℓ
+                    # is local // branch**ℓ (contiguous grouping in build_levels).
+                    _ce_terms = []
+                    leaf_sal = None
+                    for lvl, nodes in enumerate(levels):
+                        n_nodes = nodes.shape[0]
+                        if n_nodes < 2:
+                            continue
+                        sal = sel_w._fifo_score_node_summaries(qv, nodes)  # [n_nodes]
+                        if sal is None or sal.numel() != n_nodes:
+                            continue
+                        tgt_idx = local // (B_ ** lvl)
+                        tgt_idx = min(max(0, tgt_idx), n_nodes - 1)
+                        tgt = torch.tensor([tgt_idx], device=sal.device)
+                        _ce_terms.append(_F.cross_entropy(sal.view(1, n_nodes), tgt))
+                        if lvl == 0:
+                            leaf_sal = sal
+                    if _ce_terms:
+                        select_ce = torch.stack(_ce_terms).sum()
+                        did_select = 1
+                    if leaf_sal is not None:
+                        needle_rank = int((leaf_sal > leaf_sal[local]).sum().item())
+                        leaf_sal_detached = leaf_sal.detach()
+
+    # ---- 4. Token-reforward LM window from the SELECTED (detached) leaves ---- #
+    if leaf_sal_detached is not None:
+        offset = n_ingested - buf_len
+        k = max(1, min(int(select_topk), buf_len))
+        top_local = torch.topk(leaf_sal_detached, k=k, dim=0).indices.tolist()
+        sel_abs = sorted({offset + int(i) for i in top_local})
+    else:
+        k = max(1, min(int(select_topk), n_ingested))
+        sel_abs = list(range(n_ingested - k, n_ingested))
+
+    pieces = [_ensure_batched(context_chunks[c], device)
+              for c in sel_abs if 0 <= c < n_ingested]
+    pieces.append(target_input)
+    window = torch.cat(pieces, dim=1)
+
+    _set_banks_frozen(model, True)
+    try:
+        out = model(input_ids=window, use_cache=False,
+                    logits_to_keep=target_len)
+    finally:
+        _set_banks_frozen(model, False)
+    _logits = out.logits
+    _shift_logits = _logits[:, :-1, :].reshape(-1, _logits.shape[-1]).float()
+    _shift_labels = target_labels[:, 1:].reshape(-1)
+    lm_loss_raw = _F.cross_entropy(_shift_logits, _shift_labels, ignore_index=-100)
+    lm_loss = lm_loss_raw / scale
+    aux_loss = _collect_aux_loss(model, device) / scale
+
+    select_term = (float(select_loss_weight) * select_ce) / scale
+    (lm_loss + aux_loss + select_term).backward()
+    return (lm_loss.detach(), aux_loss.detach(), select_ce.detach(),
+            needle_rank, did_select)
+
+
 def dolmino_train_step_tbptt(
     model: torch.nn.Module,
     context_chunks: List[torch.Tensor],
@@ -3304,7 +3648,7 @@ def _save_adapter(model, args, step: int, final: bool = False) -> None:
         "lr_V_new", "lr_V_mem", "lr_U", "lr_gate_bias",
         "diag_a_in", "diag_c_in", "diag_a_f", "diag_c_f", "diag_b_in", "diag_b_f",
         "l3_pool", "l2_compressor", "memory_xattn",
-        "l3_token_recon_head",
+        "l3_token_recon_head", "tree_pool",
     )
 
     is_fsdp = _FSDP_AVAILABLE and FSDP is not None and (
@@ -3481,6 +3825,21 @@ def _save_adapter(model, args, step: int, final: bool = False) -> None:
             "use_fifo_memory": args.use_fifo_memory,
             "fifo_buffer_chunks": args.fifo_buffer_chunks,
             "fifo_detach": args.fifo_detach,
+            # HNST v2 trainable tree-summary pool (2026-06-25).
+            "use_tree_summary": bool(getattr(args, "use_tree_summary", False)),
+            "tree_summary_heads": int(getattr(args, "tree_summary_heads", 8)),
+            "tree_summary_layers": int(getattr(args, "tree_summary_layers", 1)),
+            "tree_summary_ffn_mult": int(getattr(args, "tree_summary_ffn_mult", 2)),
+            # Beacon pyramid (idea #3, 2026-07-01) — round-trip so eval rebuilds
+            # the same shared BeaconPyramid + band sizes.
+            "use_beacon_pyramid": bool(getattr(args, "use_beacon_pyramid", False)),
+            "beacon_k": int(getattr(args, "beacon_k", 8)),
+            "beacon_fine_chunks": int(getattr(args, "beacon_fine_chunks", 2)),
+            "beacon_mid_chunks": int(getattr(args, "beacon_mid_chunks", 6)),
+            "beacon_branch": int(getattr(args, "beacon_branch", 4)),
+            "beacon_heads": int(getattr(args, "beacon_heads", 8)),
+            "beacon_layers": int(getattr(args, "beacon_layers", 1)),
+            "beacon_ffn_mult": int(getattr(args, "beacon_ffn_mult", 2)),
             # Partial-unfreeze metadata (v2): records which layers were trainable.
             "unfreeze_backbone": args.unfreeze_backbone,
             "unfreeze_layers_from": args.unfreeze_layers_from,
@@ -3524,6 +3883,10 @@ def main() -> None:
     # schedule so the 4096-token-capped per-doc loader never starves.
     t2_curriculum = (
         CurriculumScheduler(args.t2_curriculum) if args.t2_curriculum else None
+    )
+    t2_difficulty = (
+        DifficultyCurriculum(args.t2_difficulty_curriculum)
+        if args.t2_difficulty_curriculum else None
     )
 
     # batch_size > 1 guards (2026-06-07). The memory bank holds per-sample slot
@@ -3722,8 +4085,18 @@ def main() -> None:
     dolmino_iter = iter(dolmino_loader)
 
     # --- BABILong dataset (for mix) --- #
+    # RED-LINE HARD BLOCK (2026-07-01): BABILong is the eval set. Training on it
+    # is data leakage (the b50/b100/c1024 leaked ckpts came from exactly this).
+    # The mix entry is permanently disabled: any --babilong_mix_fraction > 0
+    # aborts the run instead of silently loading eval data into training.
     babilong_iter = None
     if args.babilong_mix_fraction > 0.0:
+        raise SystemExit(
+            f"[RED-LINE] --babilong_mix_fraction={args.babilong_mix_fraction} > 0 is "
+            "PERMANENTLY DISABLED: BABILong is the eval set, training on it leaks "
+            "(this is how b50/b100/c1024 got inflated scores). Set it to 0. If you "
+            "REALLY need BABILong-in-training, remove this guard consciously.")
+    if False:  # dead code kept for reference; never executes (guard above aborts)
         babilong_tasks = [t.strip() for t in args.babilong_tasks.split(",") if t.strip()]
         babilong_lengths = [l.strip() for l in args.babilong_lengths.split(",") if l.strip()]
 
@@ -3786,17 +4159,25 @@ def main() -> None:
             seed=args.seed + rank,
             background_skip=args.t2_background_skip,
             random_needle_chunk=_t2_random_needle,
+            hard_distractors=args.t2_hard_distractors,
+            hard_distractor_mode=args.t2_hard_distractor_mode,
+            gap_mix=args.t2_gap_mix,
         )
+        if args.t2_gap_mix and args.batch_size > 1:
+            raise ValueError(
+                "--t2_gap_mix requires --batch_size 1 (each sample draws its own "
+                "n_ctx; the batched collate rejects mixed-n_ctx batches)."
+            )
         if is_main(rank):
             logger.info(
                 "T2 recall mix: frac=%.2f num_keys=%d gap_tokens=%d "
                 "chunk_size=%d -> n_ctx=%d bg=%s random_needle_chunk=%s "
-                "select_loss_weight=%.3f select_layer=%d select_topk=%d",
+                "select_loss_weight=%.3f select_layer=%d select_topk=%d gap_mix=%s",
                 args.t2_recall_mix_fraction, args.t2_num_keys,
                 args.t2_gap_tokens, args.chunk_size, t2_ds.n_ctx,
                 args.t2_background_data, _t2_random_needle,
                 args.t2_select_loss_weight, args.t2_select_layer,
-                args.t2_select_topk,
+                args.t2_select_topk, (args.t2_gap_mix or "off"),
             )
         t2_loader = DataLoader(
             t2_ds,
@@ -3806,7 +4187,18 @@ def main() -> None:
         )
         t2_iter = iter(t2_loader)
 
-    mix_rng = random.Random(args.seed + rank)
+    # Per-rank mix RNG (seed+rank) gives each rank an independent data stream
+    # (correct for DDP where every rank runs the SAME step-type). Under FSDP,
+    # however, use_babilong/use_t2 pick DIFFERENT sub-modules (babilong vs
+    # t2_select vs dolmino) whose forward triggers DIFFERENT FSDP all-gather
+    # collectives; if ranks disagree on the step-type the collectives desync and
+    # the run hangs/crashes. When MOM_FSDP_SYNC_MIX=1, seed the mix RNG
+    # IDENTICALLY on all ranks so every rank takes the same step-type each step
+    # (the per-rank data DIVERSITY still comes from the DistributedSampler /
+    # per-rank dataset shard, not from this control-flow RNG). Gated by env so
+    # the default DDP path is byte-identical.
+    _mix_seed = args.seed if os.environ.get("MOM_FSDP_SYNC_MIX", "") == "1" else args.seed + rank
+    mix_rng = random.Random(_mix_seed)
 
     # --- optimizer + LR scheduler --- #
     if args.use_fsdp:
@@ -3881,6 +4273,34 @@ def main() -> None:
         optimizer = torch.optim.AdamW(trainable, lr=args.lr,
                                       weight_decay=args.weight_decay,
                                       betas=(0.9, 0.95))
+
+    # ZeRO-1 optimizer-state sharding (2026-07-01, unfreeze sweep OOM lever):
+    # under DDP the full AdamW fp32 state (2 moments x 4B x N_trainable) is
+    # REPLICATED on every rank — 60 GB for a 7.5B full-unfreeze, which OOMs a
+    # 96 GB card once model+grads+activations are added. FSDP would shard it but
+    # is incompatible with the t2_select salience helper (it reads layer params
+    # directly outside the managed forward → 0-size shards). ZeRO-1 shards ONLY
+    # the optimizer state across DDP ranks while leaving params/grads REPLICATED
+    # (so the salience helper's direct param access still works), then all-ranks
+    # the updated params after step(). Gated by env (MOM_ZERO1=1) so the default
+    # path is byte-identical. Only meaningful under DDP (world_size>1, no FSDP).
+    if (os.environ.get("MOM_ZERO1", "") == "1" and world_size > 1
+            and not args.use_fsdp):
+        from torch.distributed.optim import ZeroRedundancyOptimizer
+        _defaults = dict(lr=args.lr, weight_decay=args.weight_decay,
+                         betas=(0.9, 0.95))
+        if gist_mult != 1.0 and getattr(args, "use_rawkv_readout", False):
+            # Preserve the per-group lr by handing ZeRO the flat param list; the
+            # gist group is tiny, so a single lr is an acceptable simplification
+            # only when the mult is active — refuse instead to avoid silent lr
+            # change.
+            raise RuntimeError("MOM_ZERO1=1 is incompatible with rawkv_gist_lr_mult "
+                               "(per-group lr). Disable one.")
+        optimizer = ZeroRedundancyOptimizer(
+            trainable, optimizer_class=torch.optim.AdamW, **_defaults)
+        if is_main(rank):
+            logger.info("ZeRO-1: sharding AdamW state across %d DDP ranks "
+                        "(%d trainable params replicated).", world_size, len(trainable))
 
     # --- training loop --- #
     model.train()
@@ -3999,6 +4419,11 @@ def main() -> None:
         # Requires num_workers<=1 (default 0) so the update reaches the iterator.
         if t2_iter is not None and t2_curriculum is not None:
             t2_ds.set_n_ctx(t2_curriculum.get_n_ctx(global_step))
+        # Signal-difficulty stairs (independent of n_ctx): adjust the per-sample
+        # distractor-style mixture so easy signals are mastered before harder ones
+        # blend in. Empty spec leaves the static hard_distractors flags in effect.
+        if t2_iter is not None and t2_difficulty is not None:
+            t2_ds.set_difficulty_mix(t2_difficulty.get_mix(global_step))
 
         # Update learning rate (cosine with warmup). Respect any per-group
         # lr_mult (gist scorer may run at a boosted lr to rule out undertraining).
@@ -4092,15 +4517,29 @@ def main() -> None:
                             _nci = int(_nci.view(-1)[0].item())
                         else:
                             _nci = int(_nci)
-                        (lm_loss, aux_loss, _sel_ce, _needle_rank,
-                         _did_select) = t2_select_train_step(
-                            model, context_chunks, target_ids, answer_mask,
-                            needle_chunk_index=_nci, device=device,
-                            grad_accum=grad_accum,
-                            select_layer=args.t2_select_layer,
-                            select_topk=args.t2_select_topk,
-                            select_loss_weight=args.t2_select_loss_weight,
-                        )
+                        if getattr(args, "use_tree_summary", False):
+                            # HNST v2: hierarchical trainable-tree navigation step.
+                            (lm_loss, aux_loss, _sel_ce, _needle_rank,
+                             _did_select) = t2_tree_train_step(
+                                model, context_chunks, target_ids, answer_mask,
+                                needle_chunk_index=_nci, device=device,
+                                grad_accum=grad_accum,
+                                select_layer=args.t2_select_layer,
+                                select_topk=args.t2_select_topk,
+                                select_loss_weight=args.t2_select_loss_weight,
+                                tree_branch=args.t2_tree_branch,
+                                tree_beam=args.t2_tree_beam,
+                            )
+                        else:
+                            (lm_loss, aux_loss, _sel_ce, _needle_rank,
+                             _did_select) = t2_select_train_step(
+                                model, context_chunks, target_ids, answer_mask,
+                                needle_chunk_index=_nci, device=device,
+                                grad_accum=grad_accum,
+                                select_layer=args.t2_select_layer,
+                                select_topk=args.t2_select_topk,
+                                select_loss_weight=args.t2_select_loss_weight,
+                            )
                         route_aux = torch.zeros((), device=device)
                         l3recon = torch.zeros((), device=device)
                         step_t2_select_ce += float(_sel_ce.item())

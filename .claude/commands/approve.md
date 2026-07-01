@@ -1,9 +1,5 @@
 ---
-model: glm-5.1
----
-
----
-model: glm-5.1
+model: claude-opus-4-7
 ---
 
 # /approve — 批准或拒绝 trainer 请求

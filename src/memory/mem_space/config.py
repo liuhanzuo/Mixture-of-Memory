@@ -879,6 +879,39 @@ class MemorySpaceConfig:
     fifo_buffer_chunks: int = 50
     fifo_detach: bool = True
 
+    # HNST v2 (2026-06-25): trainable tree-summary pool for the FIFO navigation
+    # tree. When True, patch.py creates a shared TreeSummaryPool (leaf + node
+    # attention pools) registered on the model root. The tree keep-set path
+    # (_fifo_select_keep_set_tree, keep_set_mode='tree') uses the learned pools
+    # instead of max-pool aggregation, and the training step adds a per-level
+    # navigation CE. Default False = byte-identical (v1 max-pool tree / no tree).
+    use_tree_summary: bool = False
+    tree_summary_heads: int = 8
+    tree_summary_layers: int = 1
+    tree_summary_ffn_mult: int = 2
+
+    # Hierarchical Beacon Pyramid (idea #3, Activation-Beacon-style, 2026-07-01).
+    # A multi-scale COMPRESSED FIFO prefix that the reader CONSUMES directly
+    # (unlike HNST v2, whose summaries only ROUTE to raw chunks). When True,
+    # patch.py builds one shared BeaconPyramid; the FIFO forward replaces the raw
+    # kept-chunk prefix with a distance-stratified beacon prefix:
+    #   * near-query chunks (last ``beacon_fine_chunks``): RAW hiddens (finest);
+    #   * mid chunks (next ``beacon_mid_chunks``): each -> ``beacon_k`` beacons;
+    #   * far chunks: groups of ``beacon_branch`` chunks -> ``beacon_k`` beacons.
+    # The reader (unfrozen layers) + beacon pool train JOINTLY on the LM loss so
+    # the reader learns to consume beacons (sidesteps the frozen-injection wall).
+    # Default False -> _forward_fifo path byte-identical (no beacon prefix built).
+    #   ablations: fine>=buffer -> pure raw FIFO; fine=0, mid>=buffer -> single-
+    #   scale beacon (every chunk -> K, no grouping); pyramid = fine+mid small.
+    use_beacon_pyramid: bool = False
+    beacon_k: int = 8               # beacons per pooled group (chunk / far-group)
+    beacon_fine_chunks: int = 2     # most-recent chunks kept RAW (near-fine band)
+    beacon_mid_chunks: int = 6      # chunks pooled per-chunk to K beacons (mid)
+    beacon_branch: int = 4          # far-band grouping factor (chunks per parent)
+    beacon_heads: int = 8
+    beacon_layers: int = 1
+    beacon_ffn_mult: int = 2
+
     def __post_init__(self) -> None:
         if self.num_slots <= 0:
             raise ValueError(f"num_slots must be > 0, got {self.num_slots}")

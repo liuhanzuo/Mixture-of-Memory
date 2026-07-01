@@ -1,6 +1,6 @@
 #!/bin/bash
 # Launch FastMem v1 training on remote H20 — 8 GPU DDP
-# Uses bond1 interface (same as local H20)
+# Uses sequential fallback (FLA Triton kernel triggers NVLink errors on this node)
 cd /apdcephfs_zwfy6/share_303098609/pighzliu_code/Mixture-of-Memory
 export PYTHONUNBUFFERED=1
 export http_proxy="http://hy-proxy.woa.com:3128"
@@ -10,10 +10,18 @@ export WANDB_API_KEY="wandb_v1_IZSf1lYaUnE7TPqDfpM07vao5wL_7gSePkLhmfArqGzwZT05W
 export PYTHONPATH="/apdcephfs_zwfy6/share_303098609/pighzliu_code/Mixture-of-Memory:/apdcephfs_zwfy6/share_303098609/pighzliu_code/Mixture-of-Memory/third_party/babilong-pkg"
 export TOKENIZERS_PARALLELISM=false
 
-# NCCL settings — same as local H20 (intra-node, bond1 for socket)
+# Disable FLA Triton kernel — it triggers NVLink hardware errors on this node.
+# Dolmino CPT (no FLA) ran 2h42m+ without issues; FastMem with FLA crashes at ~2h.
+export DISABLE_FLA=1
+
+# NCCL settings — standard config (NVLink is fine for normal PyTorch ops)
 export NCCL_SOCKET_IFNAME=bond1
 export NCCL_DEBUG=INFO
 export NCCL_TIMEOUT=1800000
+export TORCH_NCCL_HEARTBEAT_TIMEOUT_SEC=1800
+
+# Use all 8 GPUs
+export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
 
 mkdir -p outputs/fast_mem_v1 logs
 
@@ -55,13 +63,13 @@ mkdir -p outputs/fast_mem_v1 logs
     --fast_mem_heads 4 \
     --fast_mem_d_state 128 \
     --fast_mem_chunk_size 16 \
-    --fast_mem_fusion_init -2.0 \
+    --fast_mem_fusion_init 0.0 \
     --gradient_checkpointing \
     --babilong_mix_fraction 0.15 \
     --babilong_tasks qa1,qa2,qa5 \
     --babilong_lengths 0k,1k,2k,4k \
     --log_interval 10 \
-    --save_interval 5000 \
+    --save_interval 2000 \
     --eval_interval 2000 \
     --eval_samples 50 \
     --wandb_project mixture-of-memory \

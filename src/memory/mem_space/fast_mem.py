@@ -37,6 +37,7 @@ Integration:
 """
 from __future__ import annotations
 
+import os
 from typing import Optional, Tuple
 
 import torch
@@ -47,11 +48,18 @@ import torch.nn.functional as F
 # --------------------------------------------------------------------------- #
 # Try importing flash-linear-attention (Triton kernels for Gated Delta Rule)
 # --------------------------------------------------------------------------- #
+_FLA_FORCE_DISABLE = os.environ.get("DISABLE_FLA", "0") == "1"
+
 try:
     from fla.ops.gated_delta_rule import (
         chunk_gated_delta_rule as _fla_chunk_gated_delta_rule,
     )
-    _FLA_AVAILABLE = True
+    _FLA_AVAILABLE = not _FLA_FORCE_DISABLE
+    if _FLA_FORCE_DISABLE:
+        import logging as _logging
+        _logging.getLogger(__name__).warning(
+            "FLA available but DISABLED via DISABLE_FLA=1 env var. Using sequential fallback."
+        )
 except ImportError:
     _FLA_AVAILABLE = False
 
@@ -170,25 +178,29 @@ class FastMemModule(nn.Module):
         # Output projection: all heads concat → d_model
         self.W_o = nn.Linear(total_kv_dim, d_model, bias=False)
 
-        # Per-feature fusion gate: controls fast-mem contribution to output
-        # Init to fusion_init so sigmoid(fusion_init)≈0.12 at start
+        # Per-feature fusion gate: controls fast-mem contribution to output.
+        # Init to fusion_init. sigmoid(0)=0.5 is a neutral starting point that
+        # gives maximum gradient (sigmoid'(0)=0.25) for fastest learning.
+        # The W_o small init ensures actual output magnitude is still small at start.
         self.fusion_gate = nn.Parameter(
             torch.full((d_model,), fusion_init, dtype=torch.float32)
         )
 
         # --- Initialization for safe continued pretraining ---
-        # Small std so outputs are near-zero at init (combined with fusion_gate)
         nn.init.normal_(self.W_k.weight, std=0.02)
         nn.init.normal_(self.W_v.weight, std=0.02)
         nn.init.normal_(self.W_q.weight, std=0.02)
-        nn.init.normal_(self.W_gate.weight, std=0.02)
-        # W_gate bias: init slightly positive → sigmoid(0.5)≈0.62 retention
-        # (moderate forgetting, lets the model learn the right decay rate)
-        nn.init.constant_(self.W_gate.bias, 0.5)
-        # W_o initialized very small → even with non-trivial S·q, output ≈ 0
-        nn.init.normal_(self.W_o.weight, std=0.01)
-        # Beta bias: init near 0 → sigmoid(0)=0.5 initial beta (moderate update rate)
+        # W_gate: larger std (0.1) to avoid logsigmoid saturation at init.
+        # If weight is too small, gate_logit ≈ bias → constant gate → gradient ≈ 0.
+        nn.init.normal_(self.W_gate.weight, std=0.1)
+        # W_gate bias: init at 0 → logsigmoid(0) = -ln(2) ≈ -0.693 (50% retention)
+        nn.init.zeros_(self.W_gate.bias)
+        # W_o initialized very small → safety net: even with fusion_gate=0.5,
+        # actual output is still tiny at step 0 (std=0.001 → ||output|| ≈ 0)
+        nn.init.normal_(self.W_o.weight, std=0.001)
+        # Beta: init bias at 0 → sigmoid(0)=0.5 initial learning rate
         nn.init.zeros_(self.W_beta.bias)
+        nn.init.normal_(self.W_beta.weight, std=0.1)
 
     @property
     def use_fla(self) -> bool:

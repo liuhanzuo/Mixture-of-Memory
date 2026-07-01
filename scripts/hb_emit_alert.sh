@@ -96,8 +96,13 @@ rec = {
     "detail": os.environ.get("DETAIL", "") or "",
     "ack": False,
 }
+# FIX (2026-06-10): use compact separators so the key/value is written as
+# "ack":false (no space). The default json.dumps emits "ack": false (WITH a
+# space), which silently broke the probe's `grep '"ack":false'` — alerts went
+# unnoticed for ~hours. Compact form matches BOTH the naive grep and the
+# space-tolerant `grep -E '"ack":[[:space:]]*false'`.
 with open(alerts_file, "a", encoding="utf-8") as f:
-    f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+    f.write(json.dumps(rec, ensure_ascii=False, separators=(",", ":")) + "\n")
 print("[hb_emit_alert] appended alert id=%s class=%s sev=%s" %
       (rec["id"], rec["event_class"], rec["severity"]))
 PY

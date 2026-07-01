@@ -1,9 +1,5 @@
 ---
-model: claude-haiku-4-5-20251001
----
-
----
-model: claude-haiku-4-5-20251001
+model: claude-opus-4-7
 ---
 
 # /status — 项目状态快速总览

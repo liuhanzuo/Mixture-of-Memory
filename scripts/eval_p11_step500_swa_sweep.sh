@@ -39,13 +39,18 @@ if [[ ! -f "$CKPT" ]]; then
   exit 1
 fi
 
-# 8 GPUs: assign (W,length) pairs round-robin. 3 W x 7 len = 21 jobs over 8 GPUs.
+# GPU_LIST: comma-separated GPU ids to borrow (default 0-7). To avoid saturating a
+# node that is running training, set e.g. GPU_LIST="5,6,7" to use only free/spare cards.
+# 3 W x 7 len = 21 jobs distributed round-robin over the listed GPUs.
+IFS=',' read -r -a GPUS <<< "${GPU_LIST:-0,1,2,3,4,5,6,7}"
+NG=${#GPUS[@]}
+echo "[$(date)] using ${NG} GPU(s): ${GPUS[*]}"
 JOBS=()
 for W in 0 1 2; do for L in "${LENGTHS[@]}"; do JOBS+=("$W:$L"); done; done
 gi=0
 for J in "${JOBS[@]}"; do
   W="${J%%:*}"; L="${J##*:}"
-  G=$((gi % 8)); gi=$((gi+1))
+  G=${GPUS[$((gi % NG))]}; gi=$((gi+1))
   RES=babilong_results/p11_chunk512_step500_swaW${W}
   LOGD=logs/eval_p11_step500_swaW${W}; mkdir -p "$RES" "$LOGD"
   CUDA_VISIBLE_DEVICES=$G $PYBIN scripts/run_babilong_mem_space.py \
@@ -54,7 +59,7 @@ for J in "${JOBS[@]}"; do
     --tasks $TASKS --lengths $L --limit 100 --chunk_size 512 \
     --dtype bfloat16 --attn_impl sdpa --swa_eval_chunks $W \
     </dev/null >"$LOGD/${L}.log" 2>&1 &
-  if (( gi % 8 == 0 )); then wait; fi
+  if (( gi % NG == 0 )); then wait; fi
 done
 wait
 echo "[$(date)] ALL_P11_STEP500_SWA_DONE"

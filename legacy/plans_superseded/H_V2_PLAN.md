@@ -4,6 +4,57 @@
 **目标**: 在 BABILong 上获得非零分数，验证 cross-attention memory 架构  
 **维护方式**: 该文件现视为常态化 / 持续维护的 plan 文件；heartbeat/main 在处理完状态变化后可以直接更新
 
+## 2026-05-17 当前执行面（heartbeat refresh）
+
+- 当前主执行面已切到 **Phase-1B / BABILong SFT**，不再是早期 H-v2 多节点推进阶段。
+- **Local H20** 上的 `P11 8B FSDP` 已在本轮 heartbeat 确认完成：`logs/p11_fsdp_full_20260516_181417.log` 已到 `step 5000/5000`，`outputs/babilong_sft_phase11_fsdp_full/mem_space_adapter.pt` 与 `adapter_config.json` 均已存在，本地 8×H20 现已回到 `0 MiB / 0% util` 空闲状态。
+- `P11` 训练阶段的核心未解现象没有消失：末段 QUERY_DIAG 仍显示 `top1_sim_mean≈0.00203–0.00217`，而这次 **P11 8B final eval 已经给出了明确判定**——这种 flat-routing 不是 benign 指标噪声，而是和真实任务退化强相关。
+- **Remote 28.59.80.196** 上的 `P11` 7-length final eval 已在本轮 heartbeat 完整收齐：`qa1/qa2/qa5 × {0k,1k,2k,4k,8k,16k,32k}` 全部达到 `100 parsed rows`，结果目录仍是 `outputs/eval_phase1b_p11_final/`，canonical logs 仍是 `logs/eval_p11_final_{qa1,qa2,qa5}_{short,long}_20260517_015625.log`。此前误拉起的重复 worker（`276532`–`276537`，日志时间戳 `015651`）保持已清理状态；canonical workers `274873, 274938, 275004, 275070, 275136, 275202` 现都已退出，远程 8×H20 重新回到 `0 MiB / 0% util`。
+- `P11` 的最终 21-cell mean 只有 **26.33**。逐任务为：`qa1 = 64/51/39/28/10/1/1 → 27.71`，`qa2 = 24/21/16/14/4/0/0 → 11.29`，`qa5 = 69/73/64/59/13/0/2 → 40.00`。聚合后 short average (`0k/1k/2k/4k`) 仍有 **43.50**，但 long average (`8k/16k/32k`) 只剩 **3.44**。
+- 这个结果直接否定了“`top1_sim≈1/512` 虽 flat，但 8B 也许仍能在任务上 work”的乐观解释。`P11` 不仅远低于 `8B P8 = 59.14`（**-32.81pp**），也低于 BABILong paper 的 `Meta-Llama-3-8B-Instruct` vanilla mean `42.6`（**-16.27pp**，见 `docs/PAPER_BASELINES_20260516.md` 的表格摘录）。因此 **当前这支 8B recipe 不只是没把 memory 学好，而是已经把 vanilla 长上下文能力也拖下去了**。
+- 现在最合理的机制解释是：router 在训练和 eval 中都长期停留在接近均匀的 flat regime，memory slots 没学出 usable specialization。于是短长度下模型还能部分依赖 base LM / 近程上下文 / L3 summary 维持一些分数，但一旦到了真正需要跨长上下文检索的 `8k/16k/32k`，读取到的就是近似随机或均值化的 memory，long-context 能力就几乎完全塌掉。
+- **Remote 28.59.80.196** 上的 `1B v3 shortfix final eval` 已在上一轮 heartbeat 完整收齐并打分：`qa1/qa2/qa5 × {0k,1k,2k,4k,8k,16k,32k}` 全部达到 `100 parsed rows`，`v3_shortfix_final` mean = **37.48**。它与 `v2_final=37.43` 基本持平（**+0.05pp**），同时远好于 `v4_final=15.14`（**+22.33pp**）；这再次说明“memory 方向整体无效”不是结论，真正的问题是 **当前 P11 / flat-routing recipe 本身**。
+- 与此同时，`v4` 的负面对照仍成立：`1B v4 L1+L2+L3 FSDP` 的 7-length BABILong final eval 最终只有 **15.14**，相对 `v2` 整体 **-22.29pp**；尤其长长度退化严重（`8k/16k/32k` 平均 delta `-52.3/-37.0/-28.7pp`），说明当前这版 **L2-enabled recipe 明显差于 v2 (L1+L3 only)**。
+- 这轮 heartbeat 再次确认：**raw line count 不能再作为 eval 完成度信号**。部分 CSV 含嵌入换行，导致物理行数大于真实样本数；后续必须用 `csv.DictReader` 的 parsed row count 判断是否完成。
+- 用空闲远程 H20 跑完的 **`selector_temperature=20.0`、500-step、复用 v4 路径** 的短诊断消融，已在约 `23:33 CST` 干净完成。最关键的新信号是：`top1_sim_mean` 曾达到 **`0.034180`**（step 443），尾段也保留在 **`0.007629 / 0.006226`**，显著高于旧的 `~1/512≈0.002` floor。这使“selector softmax 太平”从怀疑变成了更像**真实可控的机制杠杆**。
+- 当前关于 `top1_sim_mean≈1/512≈0.002` 的证据链已扩展为：**窄范围 researcher 诊断 + 窄范围 coder audit + L1-only 窄范围分析 + temp20 机制试验 + 这次 P11 8B final eval negative comparison point**。综合解读现在更明确：
+  1. 旧配方里的 router 很可能确实长期处于 flat regime；
+  2. 这不等于“memory 方向整体无效”，因为 P8、v2、以及 v3 shortfix 都已经提供了正收益 comparison point；
+  3. temp20 说明 selector sharpness 至少能显著抬升 top1 分布；
+  4. v4 的额外崩塌很可能还叠加了 **L2 实现/训练问题**，而不只是 selector 太平。
+- 关于 **L2 回退**，researcher 的高置信结论仍成立：最可疑的两处是 `src/memory/mem_space/patch.py:256` 的 `torch.no_grad()` L2 hook，以及 `scripts/train_mem_space_babilong.py` 训练 sample reset 未清理 L2 状态。最便宜的后续验证仍是：**eval-only 禁用 L2 跑 v4 final ckpt**，看分数是否回升接近 v2。
+- `P11` 的 cheapest follow-up `step4500` checkpoint-level eval 已在本轮 heartbeat 完整收齐：`qa1/qa2/qa5 × {0k,1k,2k,4k,8k,16k,32k}` 全部达到 `100 parsed rows`，结果目录为 `outputs/eval_phase1b_p11_step4500_20260517_040951/`，日志为 `logs/eval_p11_step4500_{qa1,qa2,qa5}_{short,long}_20260517_040951.log`。远程 tmux 会话仍在，但 `step004500` worker 已全部退出，远程 8×H20 重新回到 `0 MiB / 0% util`。
+- `step4500` 的最终分数为 **27.43**，其中 `qa1 = 63/59/39/29/6/1/0 → 28.14`，`qa2 = 20/24/25/15/4/0/0 → 12.57`，`qa5 = 73/77/63/64/13/0/1 → 41.57`；聚合后 short average (`0k/1k/2k/4k`) = **45.92**，long average (`8k/16k/32k`) = **2.78**。
+- 这与 `P11 final=26.33` 的差距只有 **+1.10pp**，而且 long average 反而更差（`2.78 < 3.44`）；同时 `step4500` eval 全程 `QUERY_DIAG top1_sim_mean≈0.00204–0.00213`，与 final 训练末段的 `0.00203–0.00217` 同属一个 flat-routing regime。因此“只是 late-training collapse”的解释已明显变弱，更像 **当前 8B recipe 到 `step4500` 时就已经整体失效**。
+- researcher `general-purpose-2` 的 postmortem 已返回，结论是 **whole-recipe failure，不是 late collapse**，且置信度为 **very high (95%+)**。最高信息增益 / 最低成本的下一步是：**8B `selector_temperature=20`、500-step 短消融**。
+- 这一步的 detached tmux 版 `temp20` 短消融已干净完成：`logs/p11_temp20_500_20260517_063303.log:282-284` 明确给出 `step 500/500`、final `mem_space_adapter.pt` 与 `Training complete: steps=500 babilong=411 pg19=89 non-finite=0`。
+- 更关键的是，temp20 的后半程 QUERY_DIAG 没有塌回 flat floor：`top1_sim_mean` 在 `step 413/443/464/484` 分别为 **`0.008911 / 0.013489 / 0.006653 / 0.012512`**，说明被拉高的 routing sharpness 一直保持到训练结束。
+- `temp20 final BABILong eval` 现已全部收齐并打分。`outputs/eval_p11_temp20_final_20260517_073341/` 下 21 个 cell 全部达到 `100 parsed rows`；最终 `qa1=36.86`、`qa2=12.86`、`qa5=56.00`，overall **35.24**，short avg **45.42**，long avg **21.67**。
+- 这个结果证明 `selector_temperature=20` 确实是**真实有效的 8B 机制杠杆**：相对 old flat-routing 对照，temp20 final 比 `step500=33.81` 高 **+1.43pp**，比 `step4500=27.43` 高 **+7.81pp**，比 `P11 final=26.33` 高 **+8.91pp**。但它仍明显低于 `P8=59.14`，所以还不能把“只调 temp20”视为终局解。
+- 与此同时，`28.59.80.196` 上的 `step000500` checkpoint eval 也已全部完成并打分：overall **33.81**，short avg **45.92**，long avg **17.67**；远程当前无 eval worker，仅剩 stale tmux `p11_step4500_eval_20260517_040951`。
+- 这轮 `p11_fsdp_500step_validate` 已在本地 `8×H20` 上干净完成：`logs/p11_fsdp_500step_validate_20260517_0851.log:280-282` 给出 `step 500/500`、final `mem_space_adapter.pt` 与 `Training complete: steps=500 babilong=411 pg19=89 non-finite=0`。
+- validate 输出目录 `outputs/babilong_sft_phase11_fsdp_500step_validate/` 现已具备 `adapter_config.json`、`mem_space_adapter_step000250.pt`、`mem_space_adapter.pt`，说明“优化器参数修复 + checkpoint 保存路径”这个验证目标已经通过。
+- 但 validate training 末段 QUERY_DIAG 仍基本贴着旧的 flat floor：`step464 top1_sim_mean=0.002106`、`step484=0.002151`；因此这轮 validate 目前更像“训练/保存稳定性通过”，而不是“routing 已重新学起来”。
+- 在 final ckpt 落盘后，`outputs/eval_p11_500step_validate/` 的 21-cell BABILong eval 已继续推进到 **`21/21` 个 result CSV 全部 materialize**；其中已有 `20/21` 达到 `100 parsed rows`，当前只剩 `qa1 32k=90/100` 这一条最终长尾还在跑。
+- 当前本地只剩 1 个 validate worker 存活；GPU `3` 约 `55.0 GiB`、`99% util`，而 GPU `0/1/2/4/5/6/7` 已空闲。`outputs/eval_p11_500step_validate/p11_500step_validate_score.csv` 也已出现部分产物，但在最后这 10 个样本补齐前仍不能视为 canonical final score。
+- 剩余 validate 尾巴的最新 eval-side QUERY_DIAG 仍为 `qa1 32k top1_sim_mean=0.002091`；这继续支持“优化器 bug 修好了，但 router 仍处在 flat-routing regime”这一解释，而不是已经发生 routing recovery。
+- 与此同时，远程 `28.59.80.196` 已不再 idle：用户要求的 clean `P8 + selector_temperature=20` 500-step 对照短跑已在 tmux `p8_temp20_500_20260517_105421` 中健康运行到 `BABI step 40/500`，8 卡显存约 `90-95 GiB`、util `94-100%`，首个 QUERY_DIAG `top1_sim_mean=0.020874`，明显高于旧的 `~0.002` floor。
+- 本轮 `git status --short` 仍显示 working tree 非干净，且不只状态文件：`.claude/commands/heartbeat.md`、`.gitignore`、`docs/`、`scripts/...`、`locomo` 等改动仍在；heartbeat 需要继续把 clean-tree / push 视为独立 WARNING，而不是默认仓库已干净。
+- 当前自动闭环优先级：
+  1. 盯 `outputs/eval_p11_500step_validate/` 从当前 `21/21 materialized, 20/21 complete` 继续推进到 `21/21 × 100 parsed rows`
+  2. 一旦 validate eval 收齐，立刻产出评分表，并与 `temp20 final=35.24` / `step500=33.81` / `step4500=27.43` / `P11 final=26.33` / `P8=59.14` 对比
+  3. 并行盯住 clean `P8 + selector_temperature=20` 短跑到 `step 500/500`，一旦 final `mem_space_adapter.pt` 落盘，就立刻接上同口径 21-cell BABILong eval
+  4. 若 validate 最终分数仍明显弱于 `temp20 final`，则更应把 `selector_temperature=20` 继续视为当前 8B 主线里的默认 cheap lever，并按 researcher 排序转去 `memory gate = 0` eval-only 与 `num_slots=64 + temp20`
+  5. 1B 线上继续优先做 **L2 eval-only disable** 或 **L2 reset fix 的短跑**
+- 当前工作负载状态：本机 H20 正在收尾 validate final eval 的最后一条 `qa1 32k` 长尾（仅 GPU `3` 忙）；远程 `28.59.80.196` 则已被 clean `P8 + temp20` 500-step 短跑占满，形成用户要求的并行双前线。 
+- 之后这条 clean `P8 + temp20` 500-step 远程短跑已在 `2026-05-17 11:20 CST` 干净完成：`logs/p8_temp20_500_20260517_105421.log` 给出 final `mem_space_adapter.pt` 与 `Training complete: steps=500 babilong=411 pg19=89 non-finite=0`。由于远程节点随即空闲，heartbeat 已在 `2026-05-17 23:42 CST` 自动拉起 canonical 21-cell final eval：tmux=`p8_temp20_final_eval_20260517_2342`，结果目录 `outputs/eval_p8_temp20_final_20260517_2342/`。
+- 对这条 `p8_temp20_final_eval_20260517_2342` 的纠偏复查（`2026-05-18 00:43 CST`）表明：旧 heartbeat 之所以看到“顶层目录 `0 CSV`”，只是因为结果实际写在 `p8_temp20_final_{qa1,qa2,qa5}_{short,long}/` 子目录里；此时 tmux / eval worker 已全部退出，远程 8×H20 也已回到 `0 MiB / 0% util`，6 路日志均以 `Evaluation complete!` 收尾。
+- 按 `babilong.metrics.compare_answers` 的 canonical 口径重算后，clean `P8 + selector_temperature=20` final 结果为：`qa1=65.00`、`qa2=31.57`、`qa5=67.29`，overall **54.62**，short avg **62.08**，long avg **44.67**；这比 `P11 temp20 final=35.24` 高 **+19.38pp**，比 `P11 final=26.33` 高 **+28.29pp**，但仍比旧 `P8=59.14` 低 **-4.52pp**。
+- original B200 / cluster-1 路线也已纠偏：`.144` 并不是“没有可用环境”，而是**不能用 `torch-base`，必须改用 project `.venv`**。`/apdcephfs_wzc1/share_303098609/pighzliu_code/Mixture-of-Memory/.venv/bin/python` 现已确认 `torch 2.10.0+cu128`、arch list 包含 `sm_100`，`torch.zeros(..., device="cuda")` 成功。
+- heartbeat 已据此在 `.144` 上启动 `phase1b_v5_coldstart_alpha_origb200_20260518_004122`：tmux=`v5_coldstart_alpha_20260518_004122`，到 `2026-05-18 00:43 CST` 已推进到 `BABI step 250/5000`，8 卡显存约 `27.7–30.8 GiB`、util 非零，说明这条 original-B200 run 已真实进入训练循环。
+- 但 v5 的早期机制信号还不乐观：`QUERY_DIAG top1_sim_mean` 在 `step 25/49/73/99/124/149/175/196/219/241` 仍落在 `0.002106–0.002228`，因此下一个真正的决策点是它能否在 `step 500` 前后摆脱旧的 flat-routing floor。
+- 本地 `exp_b_train` 这一支则被确认只是 stale tmux wrapper：它的真实命令仍然指向缺失的 `scripts/exp_b_train.sh` 并只剩 `sleep 99999`；本轮 heartbeat 已将其 kill，当前本地 8×H20 已重新回到干净空闲态。
+
 ---
 
 ## 背景
@@ -169,7 +220,7 @@
 - [x] MemoryLLM eval 完成 → b200-3 释放 → H-v2 D Phase 1 启动
 - [x] H-v2 D Phase 1 完成 → Phase 2 启动（2026-05-12 13:31 已在 b200-3 启动 `v2_phase2_D_b2003`）
 - [x] H-v2 C Phase 1 已在 b200-5 启动（2026-05-12 17:12，tmux `v2_phase1_C_b2005`）；b200-2 上 HMT 继续独立跑完
-- [x] ARMT full PG19 在 b200-5/6/7/8 完成（train_loss≈2.70, eval_loss≈2.78）
+- [x] ARMT full PG19 在 b200-5/6/7/8 完成（train_loss≈2.699-2.710, eval_loss≈2.778-2.785）
 - [x] RMT 重启已在 b200-6 拉起（2026-05-12 17:12，tmux `rmt_v10_l0l1_b2006`）
 
 ### Phase 2 里程碑
@@ -179,130 +230,3 @@
 - [ ] H-v2 C Phase 2 启动 + 完成
 - [ ] H-v2 D Phase 2 启动 + 完成（已于 2026-05-12 13:31 启动，待完成）
 - [ ] 4 变体 BABILong eval → 对比表
-
----
-
-## Heartbeat 自主执行规则
-
-### Heartbeat 每次检查必须做的事
-
-1. **读取本文件 + CODEBUDDY.md + HEARTBEAT.md**
-2. **检查所有运行中 tmux session**:
-   - b200-1: `tmux ls` (本地) 找 `h_v2_A`
-   - b200-2: SSH 到 28.89.17.144，检查 `hmt_full` 和 `h_v2_C` (如已启动)
-   - b200-3: SSH 到 28.89.17.85，检查 MemoryLLM eval 进程 和 `h_v2_D` (如已启动)
-   - b200-4: SSH 到 28.89.19.134，检查 `h_v2_B`
-   - b200-5/6/7/8 (28.89.18.252, 28.89.20.82, 28.89.20.27, 28.89.18.19): 检查 replacement B200 节点可用性 / 空闲状态
-3. **对每个 RUNNING 任务**: 读 log 末尾，记录 step/loss，判断健康性:
-   - loss > 100 或 NaN → kill (符合 CODEBUDDY.md 规则)
-   - log > 30 min 无更新 → stalled，kill
-   - 正常 → 继续
-4. **对每个已 COMPLETED 任务**: 按计划书推进下一步
-   - A Phase 1 完成 → 立即启动 A Phase 2 (不需要审批，同 pipeline)
-   - MemoryLLM eval 完成 → 立即启动 **D Phase 1** 在 b200-3
-   - HMT 完成 → 立即启动 **C Phase 1** 在 b200-2 (smoke 脚本已有，Phase 1 需要加 `--sample_size 1024`)
-   - RMT 需要重启 → 等 A 在 b200-1 完成后，或找其他空闲节点
-
-### 触发新任务的条件
-
-**自动启动 (auto_launch=true，无需审批)**:
-- 任何 Phase 1 完成 → 立即启动对应 Phase 2 (同 pipeline 延伸)
-- 任何 eval 完成 → 立即释放节点并启动下一个 pending 任务
-- 节点空闲 且有 pending 任务 → 启动
-
-**需要用户审批**:
-- 新的实验方向 (非 ablation)
-- 修改训练超参 (LR/memory size 等) (但 researcher 确认的除外)
-- 发现架构重大问题需要重构
-
-### 文件路径速查
-
-**Phase 1 launch scripts**: `scripts/v2_phase1/train_v2_{A,B,C,D}_*.sh`  
-**训练主脚本**: `scripts/train_h_v2.py` (A/B/D), `third_party/associative-recurrent-memory-transformer/run_finetuning_lm_rmt_hf.py` (C)  
-**tokenized 数据**: `data/armt_pg19_real_tokenized_full/`  
-**模型**: `/apdcephfs_wzc1/share_303098609/pighzliu_code/models/Llama-3.2-1B`  
-**Log 目录**: `logs/h_v2_phase1_{A,B,C,D}_b200{1,2,3,4}.log`  
-**Output 目录**: `outputs/h_v2_phase1_{A,B,C,D}_b200{1,2,3,4}/`  
-
-### Remote 节点信息
-
-| 节点 | IP | 密码文件 |
-|---|---|---|
-| b200-1 | (本地) | - |
-| b200-2 | 28.89.17.144 | `configs/password.txt` |
-| b200-3 | 28.89.17.85 | `configs/password.txt` |
-| b200-4 | 28.89.19.134 | `configs/password.txt` |
-| b200-5 | 28.89.18.252 | `configs/password_b200_ephemeral.txt` |
-| b200-6 | 28.89.20.82 | `configs/password_b200_ephemeral.txt` |
-| b200-7 | 28.89.20.27 | `configs/password_b200_ephemeral.txt` |
-| b200-8 | 28.89.18.19 | `configs/password_b200_ephemeral.txt` |
-
-### SIGHUP 规避规则
-
-**所有长任务必须用 tmux** (一小时+的任务)：
-```bash
-# 本地
-tmux new-session -d -s <name> "<full command> 2>&1 | tee <log>"
-
-# 远程 (通过 SSH)
-sshpass ... ssh root@<ip> '
-tmux new-session -d -s <name> "
-<full command with exported env vars>
-2>&1 | tee <log>
-"
-'
-```
-不使用 `nohup` + background，这在 CodeBuddy Bash tool 下会被 SIGHUP 杀死。
-
----
-
-## 现有运行任务详情（heartbeat 重点监控）
-
-### b200-1: H-v2 A
-- Phase 1 log: `logs/h_v2_phase1_A_b2001.log`
-- Phase 1 final ckpt: `outputs/h_v2_phase1_A_b2001/checkpoint_final.pt`
-- Phase 2 tmux: `v2_phase2_A_b2001_bs`
-- Phase 2 log: `logs/h_v2_phase2_A_b2001_bs.log`
-- 最新状态: **Phase 2 持续健康推进**；当前已进入 curriculum `segments=8`，本轮 heartbeat 本地日志尾部更新到 `step=580`、recent loss≈`0.3486`（`2026-05-13 16:28 CST`），8×GPU 持续占用
-
-### b200-4: H-v2 B
-- Phase 1 log: `logs/h_v2_phase1_B_b2004.log`
-- Phase 1 final ckpt: `outputs/h_v2_phase1_B_b2004/checkpoint_final.pt`
-- Phase 2 tmux: `v2_phase2_B_b2004_bs`
-- Phase 2 log: `logs/h_v2_phase2_B_b2004_bs.log`
-- 最新状态: **Phase 2 持续健康推进**；当前已进入 curriculum `segments=8`，本轮 heartbeat 远程日志尾部更新到 `step=560`、recent loss≈`0.0007`（`2026-05-13 16:17 CST`），8×GPU 持续占用
-
-### b200-5/6/7/8: replacement B200 pool
-- 当前映射（以较新的 heartbeat / PENDING_TASKS 为准）: `b200-5=28.89.18.252`, `b200-6=28.89.20.82`, `b200-7=28.89.20.27`, `b200-8=28.89.18.19`
-- 当前状态: **本轮 heartbeat 不再视为可用训练池**。实测 `b200-5/6` 使用现有 `configs/password_b200_ephemeral.txt` 返回 `Permission denied`，`b200-7/8` 为 `Connection refused`；因此继续按“replacement B200 unavailable / not ready”处理
-- GPU / 路径: 历史上为 8× `NVIDIA L20A 183359 MiB`，且问题根路径曾指向 `share_304376610`；但在认证与连通性重新稳定前，不应作为 auto-launch 目标
-- 备注: 旧的 replacement IP 记录与路径描述在历史段落中存在不一致，本节以后续 heartbeat 的实际探测结果为准；旧 ARMT full PG19 完成记录仅保留为历史结果（train_loss≈2.699-2.710, eval_loss≈2.778-2.785）
-
-### b200-2: HMT → H-v2 C 切换位
-- HMT 历史: 原始 run 先在 ~11000 step 因 validation `StopIteration` 崩溃；之后的 `resume10000` run 已完成到 35000+ checkpoint，但在训练结束后的 final eval 再次因 `valid_gen` 耗尽触发 `StopIteration`
-- HMT 修复结果: heartbeat 已修复 `third_party/HMT-pytorch/tools/training/train_redpajama.py` 中 final eval / test 的 dataloader 迭代逻辑（`StopIteration` 时重建 iterator），并从 `outputs/hmt_pg19_full_b2002_resume10000/model_weights_35000.pth` 续跑完成；最终 test tail 给出 `PPL on 100 test samples: 11.405261888504029`
-- H-v2 C 启动经过:
-  - `2026-05-13 13:11 CST` heartbeat 在 b200-2 启动 **H-v2 C Phase 1**，tmux=`v2_phase1_C_b2002`，log=`logs/h_v2_phase1_C_b2002.log`，port=`29613`
-  - 首次启动立刻因项目 `.venv` 缺少 `fla` 而失败（`ModuleNotFoundError: No module named 'fla'`）
-  - heartbeat 随后现场验证 `/opt/conda/envs/torch-base/bin/python` 可导入 `torch/transformers/accelerate/fla` 与 `modeling_amt.online_armt`，并于 `2026-05-13 13:31 CST` 用 `PYTHON_BIN=/opt/conda/envs/torch-base/bin/python` 重新拉起同一脚本
-- 最新异常结论:
-  - relaunch 后训练确实推进到 `step≈310`，train loss 仍有限（约 `2.784`）
-  - 但 eval path 从极早期开始持续输出 `eval_loss=nan`，并一直重复到最近观测窗口（约 `epoch 0.02818`），不属于“一次性抖动”
-  - 因此 heartbeat 已在本轮 **kill `v2_phase1_C_b2002` 并释放 b200-2**，避免继续浪费稳定 B200 资源
-- 当前状态: **b200-2 现已空闲**。下一步不是直接重启 C，而是先检查 `third_party/associative-recurrent-memory-transformer/run_finetuning_lm_rmt_hf.py` 的 eval path / labels / metric 逻辑，再决定是否重启或迁移
-
-### b200-3: H-v2 D
-- Phase 1 log: `logs/h_v2_phase1_D_b2003.log`
-- Phase 1 final ckpt: `outputs/h_v2_phase1_D_b2003/checkpoint_final.pt`
-- Phase 2 tmux: `v2_phase2_D_b2003`
-- Phase 2 log: `logs/h_v2_phase2_D_b2003.log`
-- 状态: **Phase 2 已启动**；当前处于 curriculum `segments=2` 启动阶段，8×GPU 已重新占用
-
----
-
-## Researcher 报告
-
-完整背景报告在：`ops/research_notes/2026-05-11_*`
-- `memory_papers_reproducibility_survey.md`
-- BABILong 0% 根因分析 (inline in conversation log)
-- H-v2 训练配方 (本文件)
