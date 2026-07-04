@@ -53,17 +53,18 @@ NG=${#GPUS[@]}
 echo "[$(date)] sample-sharded eval: ckpt=$CKPT NG=$NG shards/cell=$NG limit=$LIMIT"
 echo "[$(date)] cells run SEQUENTIALLY; each fanned across $NG GPUs (samples [g::$NG])"
 
-# Per-length batch size: long contexts (16k/32k) have huge per-sample activation
-# (62 chunks @ 32k) — bs=4 OOMs at 32k on 183GB (measured: 178GB used, KV-cache
-# fragmentation). Short contexts have tons of headroom. Pick bs by length so we
-# fill memory without OOM. Override any cell via BATCH_SIZE (fixed) if set != auto.
+# Per-length batch size (auto). KEY FINDING 2026-07-04: bs=4 @ 32k OOM'd ONLY
+# because expandable_segments was off (178GB, 90GB was fragmentation). WITH
+# PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True (exported above), bs=4 @ 32k
+# uses just 57GB/183 — so long contexts have plenty of headroom too. These bs are
+# tuned to fill ~half the 183GB with margin. Override any cell via BATCH_SIZE=int.
 bs_for_len() {
   if [ "${BATCH_SIZE}" != "auto" ]; then echo "$BATCH_SIZE"; return; fi
   case "$1" in
-    0k|1k|2k)   echo 8 ;;
-    4k)         echo 6 ;;
-    8k)         echo 4 ;;
-    16k)        echo 2 ;;
+    0k|1k|2k)   echo 16 ;;
+    4k)         echo 12 ;;
+    8k)         echo 8 ;;
+    16k)        echo 6 ;;
     32k)        echo 1 ;;
     *)          echo 2 ;;
   esac
