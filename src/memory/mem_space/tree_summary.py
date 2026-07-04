@@ -29,6 +29,8 @@ the flat reader-attn selector.
 """
 from __future__ import annotations
 
+from typing import List, Tuple
+
 import torch
 import torch.nn as nn
 
@@ -101,3 +103,66 @@ class TreeSummaryPool(nn.Module):
             cur = torch.stack(parts, dim=0)                 # [groups, B, d]
             levels.append(cur)
         return levels
+
+    def build_readout_prefix(
+        self,
+        buffer_chunks: List[torch.Tensor],
+        branch: int,
+        fine_chunks: int = 0,
+    ) -> Tuple[torch.Tensor, int]:
+        """Aggregate a FIFO buffer into a multi-scale tree READOUT prefix (exp 2).
+
+        This is the readout-side twin of ``build_levels`` (which is used for the
+        eval keep-set *navigation*). Instead of choosing WHICH raw chunks to
+        keep, we COMPRESS the whole buffer into one condensed prefix the reader
+        consumes directly: every chunk collapses to a single learned leaf summary
+        (``T`` tokens -> 1), and the internal tree nodes add progressively coarser
+        aggregates. Compared with the pure-FIFO ``torch.cat(kept_chunks)`` prefix
+        (``C * T`` tokens), this is a ``~C``-token multi-scale prefix (leaves +
+        internal nodes) — the "tree aggregation vs naive FIFO concat" comparison.
+
+        Ordering: OLDEST -> NEWEST so the causal prefix stays in document order.
+        We emit each level bottom-up but keep each level in oldest->newest chunk
+        order, and place COARSER (higher) levels BEFORE finer ones so the finest
+        (leaf, most recent) tokens sit closest to the current chunk (near-fine /
+        far-coarse, same locality intuition as BeaconPyramid).
+
+        Args:
+            buffer_chunks: list of [B, T_c, d] chunk hiddens, OLDEST -> NEWEST.
+            branch: B-ary branching factor for the internal-node pooling.
+            fine_chunks: # most-recent chunks kept RAW (no leaf pooling) so the
+                near-query context keeps full token fidelity. 0 (default) => the
+                whole buffer is tree-compressed.
+
+        Returns:
+            (prefix, P) where prefix is [B, P, d] ordered OLDEST -> NEWEST.
+        """
+        C = len(buffer_chunks)
+        if C == 0:
+            raise ValueError("build_readout_prefix called with empty buffer")
+        g = max(2, int(branch))
+        f = max(0, min(int(fine_chunks), C))
+        B = buffer_chunks[0].shape[0]
+        d = self.d_model
+
+        # Split: [0, tree_hi) are tree-compressed; [tree_hi, C) kept RAW (near).
+        tree_hi = C - f
+
+        pieces: List[torch.Tensor] = []
+        if tree_hi > 0:
+            # Leaf summaries for the compressed span (one [B, d] per chunk).
+            leaves = torch.stack(
+                [self.pool_leaf(buffer_chunks[i]) for i in range(tree_hi)],
+                dim=0,
+            )                                                  # [tree_hi, B, d]
+            levels = self.build_levels(leaves, g)              # list of [n_ℓ, B, d]
+            # Emit COARSEST -> FINEST (far-coarse first), each level oldest->newest.
+            for lvl in reversed(levels):
+                # lvl: [n_ℓ, B, d] -> [B, n_ℓ, d]
+                pieces.append(lvl.transpose(0, 1))
+        # NEAR band (newest): raw chunk hiddens, no pooling.
+        for i in range(tree_hi, C):
+            pieces.append(buffer_chunks[i])                    # [B, T_c, d]
+
+        prefix = torch.cat(pieces, dim=1)                      # [B, P, d]
+        return prefix, prefix.shape[1]

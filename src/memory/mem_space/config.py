@@ -890,6 +890,26 @@ class MemorySpaceConfig:
     tree_summary_layers: int = 1
     tree_summary_ffn_mult: int = 2
 
+    # Tree AGGREGATED READOUT (exp 2, 2026-06-25). Readout-SIDE use of the
+    # trainable TreeSummaryPool: when True (requires use_tree_summary), the FIFO
+    # forward replaces the raw ``torch.cat(kept_chunks)`` prefix with a multi-
+    # scale TREE-COMPRESSED prefix (each chunk -> 1 learned leaf summary, plus
+    # coarser internal-node aggregates) that the (unfrozen) reader consumes
+    # directly. This is exp 2 in the "tree aggregation vs naive FIFO buffer
+    # concat" study — a readout mechanism, NOT the eval keep-set selection
+    # (keep_set_mode='tree') and NOT token reforward. The tree pool is trained
+    # jointly with the reader on the plain LM loss (last_chunk_loss_only path):
+    # the pool is applied to the DETACHED FIFO buffer inside the current chunk's
+    # forward, so .backward() reaches the pool weights (same clean-gradient trick
+    # as BeaconPyramid / L3SummaryPool). Default False => _forward_fifo path
+    # byte-identical (raw kept-chunk concat). Mutually exclusive with the beacon
+    # pyramid (both rewrite the FIFO prefix); enforced in __post_init__.
+    #   fifo_tree_readout_branch: B-ary node-pooling factor for the readout tree.
+    #   fifo_tree_readout_fine_chunks: # most-recent chunks kept RAW (near-fine).
+    fifo_tree_readout: bool = False
+    fifo_tree_readout_branch: int = 8
+    fifo_tree_readout_fine_chunks: int = 0
+
     # Hierarchical Beacon Pyramid (idea #3, Activation-Beacon-style, 2026-07-01).
     # A multi-scale COMPRESSED FIFO prefix that the reader CONSUMES directly
     # (unlike HNST v2, whose summaries only ROUTE to raw chunks). When True,
@@ -911,6 +931,14 @@ class MemorySpaceConfig:
     beacon_heads: int = 8
     beacon_layers: int = 1
     beacon_ffn_mult: int = 2
+    # QCP (query-conditional beacon pool, 2026-06-25). When True, the beacon pool
+    # (chunk_pool/group_pool) receives the current question's hidden as its cross-
+    # attn QUERY (prev_summary) so it extracts per-chunk content RELEVANT TO THE
+    # QUESTION, instead of the query-blind write-time snapshot (the confirmed
+    # readout-wall root: buffered hidden never attended the question). Default
+    # False => pool uses its learnable query bank => byte-identical to the pre-QCP
+    # beacon. Round-trips via __dataclass_fields__ so eval rebuilds the same pool.
+    beacon_query_conditional: bool = False
 
     def __post_init__(self) -> None:
         if self.num_slots <= 0:
@@ -1064,3 +1092,16 @@ class MemorySpaceConfig:
             raise ValueError(
                 f"inattn_kv_layer must be >= 0, got {self.inattn_kv_layer}"
             )
+        # Tree aggregated readout (exp 2) requires the tree pool and is mutually
+        # exclusive with the beacon pyramid (both rewrite the FIFO prefix).
+        if getattr(self, "fifo_tree_readout", False):
+            if not getattr(self, "use_tree_summary", False):
+                raise ValueError(
+                    "fifo_tree_readout=True requires use_tree_summary=True "
+                    "(the readout tree reuses the TreeSummaryPool)."
+                )
+            if getattr(self, "use_beacon_pyramid", False):
+                raise ValueError(
+                    "fifo_tree_readout and use_beacon_pyramid are mutually "
+                    "exclusive (both replace the FIFO readout prefix)."
+                )

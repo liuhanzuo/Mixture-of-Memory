@@ -78,10 +78,20 @@ class BeaconPyramid(nn.Module):
         num_heads: int = 8,
         ffn_mult: int = 2,
         n_layers: int = 1,
+        query_conditional: bool = False,
     ) -> None:
         super().__init__()
         self.d_model = d_model
         self.beacon_k = int(beacon_k)
+        # QCP (query-conditional beacon pool, 2026-06-25). When True, build_prefix
+        # accepts a per-forward q_ctx ([B, 1, d] question-hidden) and feeds it as
+        # prev_summary (the cross-attn QUERY) to chunk_pool/group_pool, so the pool
+        # extracts "what in each chunk is relevant to THIS question" instead of the
+        # query-blind "what was salient at write time". Default False => q_ctx is
+        # ignored and the pool uses its learnable orthogonal query bank => byte-
+        # identical to the pre-QCP beacon. See status/unfreeze-sweep + task notes:
+        # the query-blind FIFO snapshot is the confirmed root of the readout wall.
+        self.query_conditional = bool(query_conditional)
         # Leaf pool: chunk tokens -> K beacons. Node pool: children beacons -> K.
         self.chunk_pool = L3SummaryPool(
             d_model=d_model, num_summary=beacon_k, num_heads=num_heads,
@@ -92,13 +102,36 @@ class BeaconPyramid(nn.Module):
             ffn_mult=ffn_mult, n_layers=n_layers, dropout=0.0,
         )
 
-    def pool_chunk(self, chunk_hidden: torch.Tensor) -> torch.Tensor:
-        """[B, T, d] -> [B, K, d] beacons for one chunk (leaf level)."""
-        return self.chunk_pool(chunk_hidden)
+    def _q_prev(self, q_ctx: torch.Tensor | None, B: int) -> torch.Tensor | None:
+        """Turn a [B, 1, d] question-context vector into the [B, K, d] prev_summary
+        the pool consumes as its cross-attn QUERY (broadcast across the K slots).
 
-    def pool_group(self, children: torch.Tensor) -> torch.Tensor:
+        Returns None when QCP is off or no q_ctx was supplied => the pool falls
+        back to its learnable orthogonal query bank => byte-identical to pre-QCP.
+        The q_ctx tensor is NOT detached anywhere on this path: the query-side
+        gradient must reach the pool (the whole point of QCP)."""
+        if not self.query_conditional or q_ctx is None:
+            return None
+        # q_ctx: [B, 1, d] -> [B, K, d]. expand() keeps the grad path (no copy).
+        return q_ctx.expand(B, self.beacon_k, self.d_model)
+
+    def pool_chunk(
+        self, chunk_hidden: torch.Tensor, q_ctx: torch.Tensor | None = None
+    ) -> torch.Tensor:
+        """[B, T, d] -> [B, K, d] beacons for one chunk (leaf level).
+
+        When QCP is on and q_ctx is given, the question-hidden is the cross-attn
+        query (prev_summary) so the K beacons summarise chunk content RELEVANT TO
+        THE QUESTION; otherwise the learnable query bank is used (byte-identical)."""
+        prev = self._q_prev(q_ctx, chunk_hidden.shape[0])
+        return self.chunk_pool(chunk_hidden, prev_summary=prev)
+
+    def pool_group(
+        self, children: torch.Tensor, q_ctx: torch.Tensor | None = None
+    ) -> torch.Tensor:
         """[B, K*g, d] children beacons -> [B, K, d] parent beacons (coarser)."""
-        return self.group_pool(children)
+        prev = self._q_prev(q_ctx, children.shape[0])
+        return self.group_pool(children, prev_summary=prev)
 
     def build_prefix(
         self,
@@ -106,6 +139,7 @@ class BeaconPyramid(nn.Module):
         fine_chunks: int,
         mid_chunks: int,
         branch: int,
+        q_ctx: torch.Tensor | None = None,
     ) -> Tuple[torch.Tensor, int]:
         """Build the multi-scale beacon prefix from the FIFO buffer.
 
@@ -115,6 +149,10 @@ class BeaconPyramid(nn.Module):
             mid_chunks:   # chunks (just before the fine band) pooled per-chunk
                           to K beacons each (mid band).
             branch:       far-band grouping factor (chunks per parent group).
+            q_ctx:        [B, 1, d] question-hidden used as the pool's cross-attn
+                          query (QCP). None (or QCP off) => learnable query bank
+                          => byte-identical to the pre-QCP prefix. Passed straight
+                          into every pool_chunk / pool_group call (NOT detached).
 
         Returns:
             (prefix, P) where prefix is [B, P, d] ordered OLDEST -> NEWEST so it
@@ -145,12 +183,12 @@ class BeaconPyramid(nn.Module):
             while i < far_hi:
                 grp = buffer_chunks[i:min(far_hi, i + g)]
                 cat = torch.cat(grp, dim=1)                 # [B, <=g*T, d]
-                pieces.append(self.pool_group(cat))         # [B, K, d]
+                pieces.append(self.pool_group(cat, q_ctx))  # [B, K, d]
                 i += g
 
         # MID band: each chunk -> K beacons.
         for i in range(mid_lo, near_lo):
-            pieces.append(self.pool_chunk(buffer_chunks[i]))  # [B, K, d]
+            pieces.append(self.pool_chunk(buffer_chunks[i], q_ctx))  # [B, K, d]
 
         # NEAR band (newest): raw hiddens, no pooling.
         for i in range(near_lo, C):

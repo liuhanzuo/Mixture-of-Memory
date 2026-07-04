@@ -208,6 +208,9 @@ def build_mem_space_config(adapter_cfg: dict) -> MemorySpaceConfig:
         ("tree_summary_heads", 8),
         ("tree_summary_layers", 1),
         ("tree_summary_ffn_mult", 2),
+        ("fifo_tree_readout", False),
+        ("fifo_tree_readout_branch", 8),
+        ("fifo_tree_readout_fine_chunks", 0),
     ):
         if _dyn in adapter_cfg:
             setattr(cfg, _dyn, adapter_cfg[_dyn])
@@ -970,15 +973,15 @@ def generate_with_mem_space(
 
     _reset_banks(model)
     _reset_l2(model)
-    # READER-ATTN-TOKEN / BM25-TOKEN probe: the buffer->document chunk-index
-    # mapping (ingested - len(buf) + i, see _select_chunks_reader_attn /
-    # _select_chunks_bm25_token) is only valid if _fifo_buf holds EXACTLY this
-    # document's chunks. The default FIFO eval path does NOT reset _fifo_buf
-    # between samples (only the oracle keep-set path does, via
-    # _set_fifo_oracle_needle), so we clear it per-sample HERE, gated on the
-    # flags -> the default (both flags off) path is byte-identical (no reset).
-    if readerattn_token or bm25_token or tree_token:
-        _reset_fifo_memory(model)
+    # H-2 FIX (2026-07-02 code-health audit): ALWAYS clear the FIFO hidden buffer
+    # at the per-sample (document) boundary. Previously this only fired for the
+    # reader-attn/bm25/tree token probes, so the DEFAULT FIFO eval path carried a
+    # previous unrelated document's chunk hidden into the next sample's readout
+    # prefix — silently polluting SHORT lengths (doc chunk-count < fifo_buffer_chunks,
+    # i.e. 0k-4k never self-clear via eviction) in a LENGTH-CORRELATED way. Different
+    # documents must NEVER share the buffer. _reset_fifo_memory is a no-op on
+    # non-FIFO ckpts, so this is safe/byte-identical there.
+    _reset_fifo_memory(model)
 
     tokens = input_ids[0]  # [total_len]
     chunks = list(tokens.split(chunk_size))
@@ -1246,6 +1249,7 @@ def generate_batch_with_mem_space(
 
     _reset_banks(model)
     _reset_l2(model)
+    _reset_fifo_memory(model)  # H-2 FIX (2026-07-02): batch path also must clear FIFO buffer per-sample (no-op on non-FIFO)
 
     # Split each sample into chunks; verify the shared-chunk-count contract.
     per_sample_chunks = [list(t.split(chunk_size)) for t in token_list]
@@ -1511,6 +1515,26 @@ def main():
                              "query before BM25 so high-IDF entity words drive chunk "
                              "selection. Validated: recall@4 0.52->0.67-0.72 (qa5 16k). "
                              "Zero-train improvement over plain --swa_bm25_token.")
+    # ----- Token-reforward MASTER SWITCH (2026-06-25 REFORWARD-GUARD) ----- #
+    # The --swa_*_token probes (oracle / readerattn / tree / bm25) all drive the
+    # SAME token-reforward readout window (generate_with_mem_space:1078, re-feeding
+    # SELECTED chunks' RAW TOKENS through the whole model, ≈RAG). That is a
+    # THEORETICAL UPPER BOUND / oracle ceiling (qa5 reforward 8k=52 vs hidden
+    # ceiling 8k=28), NOT a deployable readout. It is HARD-DISABLED unless this flag
+    # is passed; when passed, results dir gets a _UPPERBOUND suffix + cfg json is
+    # tagged theoretical_upper_bound=true. Mirrors the train red-line block.
+    # status/REFORWARD_AUDIT.md.  NOTE: --fifo_keep_set_mode (incl. oracle) and
+    # --swa_eval_chunks are HIDDEN / contiguous-window paths, NOT reforward, and are
+    # intentionally NOT guarded here.
+    parser.add_argument("--allow_token_reforward", action="store_true", default=False,
+                        help="Explicitly permit the token-reforward probes "
+                             "(--swa_oracle_token / --swa_readerattn_token / "
+                             "--swa_tree_token / --swa_bm25_token). OFF by default: "
+                             "any of those aborts with a [REFORWARD-GUARD] "
+                             "SystemExit. Reforward is a THEORETICAL UPPER BOUND "
+                             "(≈RAG oracle), not deployable; when enabled the "
+                             "results dir is suffixed _UPPERBOUND and tagged "
+                             "theoretical_upper_bound=true.")
     parser.add_argument("--batch_size", type=int, default=1,
                         help="Cell-internal sample batch size. 1 (default) = the "
                              "original byte-for-byte per-sample path. >1 batches "
@@ -1660,6 +1684,43 @@ def main():
                              "the scorer bucket accuracy by needle position "
                              "(early/mid/late). Default off -> byte-identical CSV.")
     args = parser.parse_args()
+
+    # ----- REFORWARD-GUARD hard block (2026-06-25) ----- #
+    # Any --swa_*_token probe drives the token-reforward readout window (raw tokens
+    # of SELECTED chunks re-fed through the whole model, ≈RAG). That is a THEORETICAL
+    # UPPER BOUND, not a deployable readout, so it is DISABLED unless explicitly
+    # opted-in via --allow_token_reforward. Mirrors the train --babilong_mix_fraction
+    # red-line block. status/REFORWARD_AUDIT.md.
+    _reforward_flags = [
+        f for f, on in (
+            ("--swa_oracle_token", args.swa_oracle_token),
+            ("--swa_readerattn_token", args.swa_readerattn_token),
+            ("--swa_tree_token", args.swa_tree_token),
+            ("--swa_bm25_token", args.swa_bm25_token),
+        ) if on
+    ]
+    if _reforward_flags and not getattr(args, "allow_token_reforward", False):
+        raise SystemExit(
+            "[REFORWARD-GUARD] token reforward is a THEORETICAL UPPER BOUND, not a "
+            "deployable method. It is DISABLED by default. The flag(s) "
+            f"{' '.join(_reforward_flags)} drive a token-reforward readout window "
+            "(re-feeding selected chunks' RAW tokens through the whole model, ≈RAG "
+            "oracle). If you intend to measure the oracle upper bound, pass "
+            "--allow_token_reforward explicitly (results will be tagged "
+            "THEORETICAL_UPPER_BOUND)."
+        )
+    _reforward_upperbound = bool(_reforward_flags)
+    if _reforward_upperbound:
+        print(
+            "[REFORWARD-GUARD] token-reforward probe ENABLED via "
+            "--allow_token_reforward: "
+            f"{' '.join(_reforward_flags)}. Results are a THEORETICAL_UPPER_BOUND "
+            "(≈RAG oracle), NOT a deployable capability; output dir suffixed "
+            "_UPPERBOUND and cfg tagged theoretical_upper_bound=true.",
+            file=sys.stderr,
+        )
+        if not args.output_name.endswith("_UPPERBOUND"):
+            args.output_name = f"{args.output_name}_UPPERBOUND"
 
     if args.swa_eval_chunks < 0:
         parser.error("--swa_eval_chunks must be >= 0")
@@ -1936,6 +1997,11 @@ def main():
                         "do_sample": False,
                         "num_beams": 1,
                     },
+                    # REFORWARD-GUARD tag (2026-06-25): true when this cell used a
+                    # token-reforward probe (--swa_*_token). Those numbers are a
+                    # THEORETICAL UPPER BOUND (≈RAG oracle), not a deployable
+                    # capability. status/REFORWARD_AUDIT.md.
+                    "theoretical_upper_bound": bool(_reforward_upperbound),
                     "model": {
                         "model_path":      args.model_path,
                         "checkpoint":      args.checkpoint,

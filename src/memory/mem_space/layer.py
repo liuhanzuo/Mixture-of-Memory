@@ -647,6 +647,21 @@ class MemorySpaceLayer(nn.Module):
         self._beacon_mid_chunks = int(getattr(config, "beacon_mid_chunks", 6))
         self._beacon_branch = int(getattr(config, "beacon_branch", 4))
 
+        # Tree aggregated readout (exp 2, 2026-06-25). list-wrapped shared
+        # TreeSummaryPool ref set by patch.py when fifo_tree_readout=True; None
+        # -> raw FIFO (byte-identical). The FIFO forward compresses the buffer
+        # into a multi-scale tree prefix (each chunk -> 1 learned leaf summary +
+        # coarser internal-node aggregates) the reader consumes directly, in
+        # place of the raw kept-chunk concat. Readout-side aggregation, NOT the
+        # eval keep-set selection. Config-shared band sizes read here.
+        self._fifo_tree_readout_ref = None
+        self._fifo_tree_readout_branch = int(
+            getattr(config, "fifo_tree_readout_branch", 8)
+        )
+        self._fifo_tree_readout_fine_chunks = int(
+            getattr(config, "fifo_tree_readout_fine_chunks", 0)
+        )
+
         # Learnable slot↔hidden projections. We do NOT take the slot_dim==d_model
         # shortcut (Identity) because that path has zero trainable capacity and was
         # empirically responsible for the residual-gap pathology after fix1+fix2
@@ -1328,6 +1343,22 @@ class MemorySpaceLayer(nn.Module):
                 position_embeddings=position_embeddings,
                 **kwargs,
             )
+        # Tree aggregated readout (exp 2): when a shared TreeSummaryPool is
+        # attached, the prefix is a MULTI-SCALE TREE-COMPRESSED readout the
+        # reader consumes directly (each buffered chunk -> 1 learned leaf summary
+        # + coarser node aggregates), in place of the raw kept-chunk concat.
+        # Self-contained variant so the raw-FIFO path below stays byte-identical
+        # for every other config.
+        if getattr(self, "_fifo_tree_readout_ref", None) is not None:
+            return self._forward_fifo_tree_readout(
+                hidden_states,
+                attention_mask=attention_mask,
+                position_ids=position_ids,
+                past_key_values=past_key_values,
+                use_cache=use_cache,
+                position_embeddings=position_embeddings,
+                **kwargs,
+            )
         B, T, d = hidden_states.shape
 
         # ---- Step 1: Read — build prefix from FIFO buffer ----
@@ -1650,6 +1681,19 @@ class MemorySpaceLayer(nn.Module):
         B, T, d = hidden_states.shape
         pyramid = self._fifo_beacon_pyramid_ref[0]
 
+        # ---- QCP (query-conditional beacon pool, 2026-06-25) ----
+        # When the shared pyramid is query_conditional, derive a [B,1,d] question
+        # context vector from THIS forward's hidden_states and pass it to
+        # build_prefix; the pool then extracts, per buffered chunk, "what is
+        # relevant to the current question" (cross-attn query = q_ctx) instead of
+        # the query-blind write-time snapshot that is the confirmed readout wall.
+        # q_ctx is NOT detached (query-side gradient must reach the pool). When
+        # QCP is off, q_ctx stays None => pool uses its learnable query bank =>
+        # byte-identical to the pre-QCP beacon.
+        q_ctx = None
+        if getattr(pyramid, "query_conditional", False):
+            q_ctx = self._beacon_compute_q_ctx(hidden_states)
+
         # ---- Read: build the multi-scale beacon prefix from the buffer ----
         valid = [h for h in self._fifo_buf if h.shape[0] == B]
         if valid:
@@ -1658,6 +1702,7 @@ class MemorySpaceLayer(nn.Module):
                 fine_chunks=self._beacon_fine_chunks,
                 mid_chunks=self._beacon_mid_chunks,
                 branch=self._beacon_branch,
+                q_ctx=q_ctx,
             )
             extended_hidden = torch.cat([prefix, hidden_states], dim=1)  # [B,P+T,d]
         else:
@@ -1754,6 +1799,179 @@ class MemorySpaceLayer(nn.Module):
         if extra:
             return (next_hidden, *extra)
         return next_hidden
+
+    # --------------------------------------------------------------------- #
+    # Tree aggregated readout FIFO forward (exp 2, 2026-06-25).
+    # --------------------------------------------------------------------- #
+    def _forward_fifo_tree_readout(
+        self,
+        hidden_states: torch.Tensor,
+        attention_mask=None,
+        position_ids=None,
+        past_key_values=None,
+        use_cache=False,
+        position_embeddings=None,
+        **kwargs,
+    ) -> torch.Tensor:
+        """Tree AGGREGATED readout FIFO forward (exp 2, "tree vs naive FIFO").
+
+        Same read/inject-gate/write skeleton as ``_forward_fifo`` but the prefix
+        is a MULTI-SCALE TREE-COMPRESSED readout produced by the shared
+        ``TreeSummaryPool`` (``build_readout_prefix``): every buffered chunk
+        collapses to ONE learned leaf summary (``T`` tokens -> 1) and the
+        internal B-ary tree nodes add coarser aggregates, so ``C`` raw chunks
+        (``C*T`` tokens) become a ~``C``-token multi-scale prefix the reader
+        consumes DIRECTLY. This is the readout-side aggregation being compared
+        against exp 1's raw ``torch.cat(kept_chunks)`` prefix.
+
+        The pool is applied to the DETACHED FIFO buffer inside THIS chunk's
+        forward, so ``.backward()`` from the LM loss reaches the pool weights
+        (same clean-gradient trick as ``BeaconPyramid`` / ``L3SummaryPool``).
+        Positions: the whole tree prefix + current chunk is packed 0..(P+T-1) so
+        every position is in-distribution (the tree keeps P small).
+        """
+        B, T, d = hidden_states.shape
+        tree_pool = self._fifo_tree_readout_ref[0]
+
+        # ---- Read: build the multi-scale tree prefix from the buffer ----
+        valid = [h for h in self._fifo_buf if h.shape[0] == B]
+        if valid:
+            prefix, P = tree_pool.build_readout_prefix(
+                buffer_chunks=valid,
+                branch=self._fifo_tree_readout_branch,
+                fine_chunks=self._fifo_tree_readout_fine_chunks,
+            )
+            extended_hidden = torch.cat([prefix, hidden_states], dim=1)  # [B,P+T,d]
+        else:
+            P = 0
+            extended_hidden = hidden_states
+
+        # ---- Positions: pack the [prefix | current] sequence at 0..P+T-1 ----
+        if P > 0 and position_embeddings is not None:
+            cos, sin = position_embeddings                    # each [*, T, hd]
+            _rot = self._fifo_resolve_rotary_emb()
+            if _rot is not None:
+                pos_ids = torch.arange(P + T, device=hidden_states.device).unsqueeze(0)
+                _c, _s = _rot(extended_hidden, pos_ids)       # [1, P+T, hd]
+                if cos.dim() == 3 and cos.shape[0] != _c.shape[0]:
+                    _c = _c.expand(cos.shape[0], -1, -1)
+                    _s = _s.expand(sin.shape[0], -1, -1)
+                ext_pos_emb = (_c.to(cos.dtype), _s.to(sin.dtype))
+            else:
+                # Fallback: pos-0 prefix (legacy safety).
+                if cos.dim() == 3:
+                    p0c = cos[:, :1, :].expand(cos.shape[0], P, -1)
+                    p0s = sin[:, :1, :].expand(sin.shape[0], P, -1)
+                else:
+                    p0c = cos[:1, :].expand(P, -1).unsqueeze(0).expand(B, -1, -1)
+                    p0s = sin[:1, :].expand(P, -1).unsqueeze(0).expand(B, -1, -1)
+                ext_pos_emb = (torch.cat([p0c, cos], dim=1),
+                               torch.cat([p0s, sin], dim=1))
+        else:
+            ext_pos_emb = position_embeddings
+
+        # ---- Causal mask over [prefix P | current T] ----
+        S = P + T
+        if P > 0:
+            dev = hidden_states.device
+            dtype = hidden_states.dtype
+            mask_2d = torch.triu(
+                torch.full((S, S), float("-inf"), device=dev, dtype=dtype),
+                diagonal=1,
+            )
+            ext_attn_mask = mask_2d.unsqueeze(0).unsqueeze(0)
+        else:
+            ext_attn_mask = attention_mask
+
+        # ---- Bypass (current H only) for the inject gate ----
+        bypass_out = self._maybe_ckpt_wrapped_layer(
+            hidden_states, attention_mask=None, position_ids=None,
+            past_key_values=None, use_cache=False,
+            position_embeddings=position_embeddings, **kwargs,
+        )
+        bypass_h = bypass_out[0] if isinstance(bypass_out, tuple) else bypass_out
+
+        if P == 0:
+            h_stored = hidden_states.detach() if self._fifo_detach else hidden_states
+            self._fifo_write_to_buffer(h_stored)
+            return bypass_h
+
+        # ---- Extended attention (tree prefix + current H) ----
+        ext_out = self._maybe_ckpt_wrapped_layer(
+            extended_hidden, attention_mask=ext_attn_mask, position_ids=None,
+            past_key_values=None, use_cache=False,
+            position_embeddings=ext_pos_emb, **kwargs,
+        )
+        if isinstance(ext_out, tuple):
+            ext_h = ext_out[0]
+            extra = ext_out[1:]
+        else:
+            ext_h = ext_out
+            extra = ()
+        h_out = ext_h[:, P:, :]                                # [B, T, d]
+
+        # ---- slot_delta + inject gate (identical to _forward_fifo) ----
+        slot_delta = h_out - bypass_h
+        cfg = self.config
+        if not cfg.no_slot_delta_clip:
+            _bn = bypass_h.norm(dim=-1, keepdim=True).clamp(min=1e-6)
+            _sn = slot_delta.norm(dim=-1, keepdim=True).clamp(min=1e-6)
+            slot_delta = slot_delta * (_bn / _sn).clamp(max=1.0)
+        _hs_f32 = hidden_states.float()
+        _gate_logit = torch.nn.functional.linear(
+            _hs_f32, self.inject_gate.weight.float(), self.inject_gate.bias.float(),
+        )
+        g = torch.sigmoid(_gate_logit).to(hidden_states.dtype)  # [B, T, 1]
+        next_hidden = bypass_h + g * slot_delta
+
+        # ---- Write current hidden_states to FIFO buffer ----
+        h_stored = hidden_states.detach() if self._fifo_detach else hidden_states
+        self._fifo_write_to_buffer(h_stored)
+
+        self.last_aux_losses = {}
+        self.last_idx = None
+        self.last_scores = None
+        if extra:
+            return (next_hidden, *extra)
+        return next_hidden
+
+    def _beacon_compute_q_ctx(self, hidden_states: torch.Tensor) -> torch.Tensor:
+        """QCP: derive the [B, 1, d] question-context query from the CURRENT
+        chunk's hidden states (this layer's input space, same space the pool's
+        cross-attn scores). NOT detached — the query-side gradient must reach the
+        pool (blocking#2). Region selection (blocking#1):
+
+          1. If a per-forward question mask was stashed on the bank as
+             ``_beacon_q_mask`` ([B, T] bool, True on question tokens only —
+             stashed by the T2/dolmino target forward, EXCLUDES the answer + pad),
+             mean-pool hidden_states over exactly those positions. This is the
+             correct path for t2_recall training: the target chunk is
+             [question | answer | pad] with the question at the START, so pooling
+             the whole 512-token chunk would (a) dilute the query with background
+             and (b) LEAK the answer into the query.
+          2. Else (no mask — e.g. BABILong generate, where the question sits at
+             the TAIL of the current chunk) mean-pool the last min(T, 32) tokens.
+        """
+        B, T, d = hidden_states.shape
+        q_mask = getattr(self.memory_bank, "_beacon_q_mask", None)
+        if q_mask is not None and (
+            q_mask.dim() != 2 or q_mask.shape[0] != B or q_mask.shape[1] != T
+        ):
+            q_mask = None  # stale / wrong shape → fall back to tail pooling
+        if q_mask is not None:
+            m = q_mask.to(hidden_states.dtype).unsqueeze(-1)          # [B, T, 1]
+            denom = m.sum(dim=1, keepdim=True).clamp(min=1.0)         # [B, 1, 1]
+            # Guard against an all-False row (no question tokens): fall back to
+            # tail pooling for those rows so q_ctx is never a zero vector.
+            q = (hidden_states * m).sum(dim=1, keepdim=True) / denom  # [B, 1, d]
+            empty = (m.sum(dim=1, keepdim=True) < 0.5)                # [B, 1, 1]
+            if bool(empty.any()):
+                w = min(int(T), 32)
+                tail = hidden_states[:, T - w:, :].mean(dim=1, keepdim=True)
+                q = torch.where(empty, tail, q)
+            return q
+        w = min(int(T), 32)
+        return hidden_states[:, T - w:, :].mean(dim=1, keepdim=True)  # [B, 1, d]
 
     # --------------------------------------------------------------------- #
     # FIFO eval-time probes (2026-06-25): position-fix + keep-set helpers.

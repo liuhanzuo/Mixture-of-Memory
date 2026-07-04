@@ -164,6 +164,7 @@ def apply_mem_space_to_model(
             num_heads=config.beacon_heads,
             ffn_mult=config.beacon_ffn_mult,
             n_layers=config.beacon_layers,
+            query_conditional=getattr(config, "beacon_query_conditional", False),
         )
 
     # MemoryReconDecoder (P1 / v12, 2026-06-01): if l_recon_weight > 0, create a
@@ -278,6 +279,15 @@ def apply_mem_space_to_model(
         root.add_module("tree_pool", tree_pool)
         for _w in mem_layers:
             _w._fifo_tree_pool_ref = [tree_pool]
+        # Tree aggregated READOUT (exp 2, 2026-06-25). When fifo_tree_readout is
+        # on, ALSO stash the ref used by _forward_fifo_tree_readout so the FIFO
+        # prefix becomes the multi-scale tree-compressed readout (peer to the
+        # beacon-pyramid ref). Gated separately from the keep-set ref above so
+        # the selection-side tree (keep_set_mode='tree') is unaffected. list-wrap
+        # avoids nn.Module auto-registration (no model<->layer cycle).
+        if getattr(config, "fifo_tree_readout", False):
+            for _w in mem_layers:
+                _w._fifo_tree_readout_ref = [tree_pool]
     # Beacon pyramid (idea #3): register on root + stash list-wrapped ref on
     # every layer so _forward_fifo can build the multi-scale beacon prefix from
     # that layer's own FIFO buffer. list-wrap avoids nn.Module auto-registration

@@ -830,6 +830,25 @@ def _set_banks_frozen(model: torch.nn.Module, frozen: bool) -> None:
             b.frozen = frozen
 
 
+def _set_beacon_q_mask(model: torch.nn.Module, mask) -> None:
+    """Stash the current target chunk's QUESTION mask ([B, T] bool, True on
+    question tokens ONLY — excludes the answer + padding) on the memory bank(s)
+    so MemorySpaceLayer._beacon_compute_q_ctx (QCP) can mean-pool the question
+    region rather than the whole [question|answer|pad] chunk. ``mask=None``
+    clears it (every context pass, and any non-QCP run). Mirrors the
+    _active_token_mask stash pattern. No-op semantically when QCP is off (the
+    layer only reads this attr when pyramid.query_conditional is True)."""
+    root = getattr(model, "module", model)
+    shared_bank = getattr(root, "_mem_space_shared_bank", None)
+    if shared_bank is not None:
+        shared_bank._beacon_q_mask = mask
+        return
+    for w in getattr(root, "_mem_space_layers", []) or []:
+        b = getattr(w, "memory_bank", None)
+        if b is not None:
+            b._beacon_q_mask = mask
+
+
 def _collect_top1_sim(model: torch.nn.Module) -> float:
     root = getattr(model, "module", model)
     mem_layers = getattr(root, "_mem_space_layers", None)
@@ -1338,6 +1357,23 @@ def parse_args() -> argparse.Namespace:
                         "match the eval --swa_readerattn_topk (default 4) for "
                         "train/eval consistency.")
 
+    # ----- Token-reforward MASTER SWITCH (2026-06-25 REFORWARD-GUARD) ----- #
+    # Token reforward (re-feeding SELECTED chunks' RAW TOKENS through the whole
+    # model, ≈RAG) is a THEORETICAL UPPER BOUND / oracle ceiling, NOT a deployable
+    # method (user-ruled-out; qa5 hidden ceiling 8k=28/16k=21 vs reforward 8k=52).
+    # It is scattered across the code and can be silently switched on, so any
+    # reforward path (here: --t2_select_loss_weight>0) is HARD-DISABLED unless this
+    # flag is passed explicitly. When passed, ckpts are tagged theoretical_upper_
+    # bound=true so nobody mistakes the oracle ceiling for a real result.
+    # See status/REFORWARD_AUDIT.md.
+    p.add_argument("--allow_token_reforward", action="store_true", default=False,
+                   help="Explicitly permit token-reforward training paths "
+                        "(--t2_select_loss_weight>0). OFF by default: any reforward "
+                        "path aborts with a [REFORWARD-GUARD] SystemExit. Reforward "
+                        "is a THEORETICAL UPPER BOUND (≈RAG oracle), not deployable; "
+                        "when enabled the ckpt adapter_config is tagged "
+                        "theoretical_upper_bound=true.")
+
     # HNST v2 (2026-06-25): trainable tree-summary navigation. When
     # --use_tree_summary is set AND --t2_select_loss_weight>0, T2 select steps run
     # t2_tree_train_step (hierarchical per-level navigation CE over a trainable
@@ -1362,6 +1398,31 @@ def parse_args() -> argparse.Namespace:
                    help="Beam width kept at each internal tree level during the LM "
                         "window descent (train). Match eval --fifo_tree_beam.")
 
+    # Tree AGGREGATED READOUT (exp 2, 2026-06-25): readout-SIDE use of the
+    # TreeSummaryPool. When --fifo_tree_readout is set (requires --use_tree_summary),
+    # the FIFO forward replaces the raw torch.cat(kept_chunks) prefix with a multi-
+    # scale TREE-COMPRESSED prefix (each chunk -> 1 learned leaf summary + coarser
+    # internal-node aggregates) the (unfrozen) reader consumes directly. The tree
+    # pool trains jointly on the plain LM loss (last_chunk_loss_only path); the
+    # pool is applied to the DETACHED FIFO buffer inside the current chunk's
+    # forward so gradient reaches it (same clean-grad trick as the beacon pyramid).
+    # This is exp 2 in the "tree aggregation vs naive FIFO buffer concat" study --
+    # a READOUT mechanism, NOT the eval keep-set selection (keep_set_mode='tree')
+    # and NOT token reforward. Default off => _forward_fifo byte-identical.
+    # Mutually exclusive with --use_beacon_pyramid (both rewrite the FIFO prefix).
+    p.add_argument("--fifo_tree_readout", action="store_true", default=False,
+                   help="Enable the tree AGGREGATED READOUT (exp 2): the FIFO "
+                        "prefix becomes a multi-scale tree-compressed readout "
+                        "(leaf-per-chunk + coarser node summaries) consumed "
+                        "directly by the reader + jointly-trained TreeSummaryPool. "
+                        "Requires --use_tree_summary; conflicts with "
+                        "--use_beacon_pyramid.")
+    p.add_argument("--fifo_tree_readout_branch", type=int, default=8,
+                   help="B-ary node-pooling factor for the readout tree (exp 2).")
+    p.add_argument("--fifo_tree_readout_fine_chunks", type=int, default=0,
+                   help="# most-recent chunks kept RAW (near-fine band) in the "
+                        "tree readout prefix; 0 = whole buffer tree-compressed.")
+
     # Beacon pyramid (idea #3, 2026-07-01): multi-scale COMPRESSED FIFO prefix
     # the reader consumes directly (Activation-Beacon-style joint training).
     p.add_argument("--use_beacon_pyramid", action="store_true", default=False,
@@ -1379,6 +1440,13 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--beacon_heads", type=int, default=8)
     p.add_argument("--beacon_layers", type=int, default=1)
     p.add_argument("--beacon_ffn_mult", type=int, default=2)
+    p.add_argument("--beacon_query_conditional", action="store_true", default=False,
+                   help="QCP (query-conditional beacon pool): feed the current "
+                        "question's hidden as the beacon pool's cross-attn query so "
+                        "it extracts per-chunk content RELEVANT TO THE QUESTION "
+                        "(attacks the readout wall) instead of the query-blind "
+                        "write-time snapshot. Off => byte-identical to the beacon "
+                        "baseline. The query-side gradient reaches the pool.")
 
     # Logging / saving / eval
     p.add_argument("--log_interval", type=int, default=10)
@@ -1565,6 +1633,19 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--no_detach_slots_in_selector", action="store_true", default=False)
     p.add_argument("--no_slot_delta_clip", action="store_true", default=False)
     p.add_argument("--inject_gate_bias_init", type=float, default=-0.1523)
+    # multilayer-inject arm (2026-07-01): the warm-start ckpt (A-model step2000)
+    # has inject_gate.bias == -2.0 on ALL 32 layers (g≈0.12), and load_state_dict
+    # overwrites the freshly-built bias, so --inject_gate_bias_init alone is a
+    # NO-OP after warm start. This flag re-sets inject_gate.bias to
+    # --inject_gate_bias_init on every mem_space layer AFTER the ckpt load, so
+    # the memory-prefix contribution starts at a higher gate (e.g. -0.1523 →
+    # g≈0.46) and the read path gets a real gradient from step 0. weight is left
+    # as-loaded (per-token variation preserved). No-op unless set.
+    p.add_argument("--fifo_reinit_inject_gate_after_load", action="store_true",
+                   default=False,
+                   help="After warm-start load, reset every mem_space layer's "
+                        "inject_gate.bias to --inject_gate_bias_init (undo the "
+                        "ckpt's frozen g≈0.12). multilayer-inject arm only.")
     p.add_argument("--routing_pool_mode", type=str, default="max_pool",
                    choices=["max_pool", "chunk_query", "multi_query", "slot_query"])
     p.add_argument("--multi_query_tau", type=float, default=1.0,
@@ -1987,6 +2068,22 @@ def parse_args() -> argparse.Namespace:
     # (the default NOLEAK launch unfreezes from 24, well above 16) the CE has ZERO
     # gradient and the whole experiment silently does nothing. Fail loudly.
     if args.t2_select_loss_weight > 0.0:
+        # ----- REFORWARD-GUARD hard block (2026-06-25) ----- #
+        # --t2_select_loss_weight>0 routes T2 through the token-reforward path
+        # (t2_select_train_step / t2_tree_train_step re-feed SELECTED chunks' RAW
+        # TOKENS through the whole model). That is a THEORETICAL UPPER BOUND, not a
+        # deployable method, so it is DISABLED unless explicitly opted-in. Mirrors
+        # the --babilong_mix_fraction red-line block. status/REFORWARD_AUDIT.md.
+        if not getattr(args, "allow_token_reforward", False):
+            raise SystemExit(
+                "[REFORWARD-GUARD] token reforward is a THEORETICAL UPPER BOUND, "
+                "not a deployable method. It is DISABLED by default. "
+                f"--t2_select_loss_weight={args.t2_select_loss_weight} > 0 routes "
+                "T2 through a token-reforward step (re-feeding selected chunks' RAW "
+                "tokens through the whole model, ≈RAG oracle). If you intend to "
+                "measure the oracle upper bound, pass --allow_token_reforward "
+                "explicitly (results will be tagged THEORETICAL_UPPER_BOUND)."
+            )
         if args.t2_recall_mix_fraction <= 0.0:
             raise ValueError(
                 "--t2_select_loss_weight > 0 requires --t2_recall_mix_fraction > 0 "
@@ -2062,6 +2159,9 @@ def merge_adapter_config_into_args(args: argparse.Namespace) -> argparse.Namespa
         "tree_summary_heads": "tree_summary_heads",
         "tree_summary_layers": "tree_summary_layers",
         "tree_summary_ffn_mult": "tree_summary_ffn_mult",
+        "fifo_tree_readout": "fifo_tree_readout",
+        "fifo_tree_readout_branch": "fifo_tree_readout_branch",
+        "fifo_tree_readout_fine_chunks": "fifo_tree_readout_fine_chunks",
     }
     inherited = []
     for k_json, attr in cfg_to_attr.items():
@@ -2214,6 +2314,25 @@ def build_model(args, device, dtype) -> torch.nn.Module:
     ms_cfg.tree_summary_layers = int(getattr(args, "tree_summary_layers", 1))
     ms_cfg.tree_summary_ffn_mult = int(getattr(args, "tree_summary_ffn_mult", 2))
 
+    # Tree aggregated readout (exp 2, 2026-06-25). Dataclass fields; set here so
+    # the value reaches ms_cfg regardless of the constructor kwarg list above.
+    ms_cfg.fifo_tree_readout = bool(getattr(args, "fifo_tree_readout", False))
+    ms_cfg.fifo_tree_readout_branch = int(
+        getattr(args, "fifo_tree_readout_branch", 8)
+    )
+    ms_cfg.fifo_tree_readout_fine_chunks = int(
+        getattr(args, "fifo_tree_readout_fine_chunks", 0)
+    )
+    if ms_cfg.fifo_tree_readout and not ms_cfg.use_tree_summary:
+        raise ValueError(
+            "--fifo_tree_readout requires --use_tree_summary (the readout tree "
+            "reuses the TreeSummaryPool)."
+        )
+    if ms_cfg.fifo_tree_readout and bool(getattr(args, "use_beacon_pyramid", False)):
+        raise ValueError(
+            "--fifo_tree_readout and --use_beacon_pyramid are mutually exclusive "
+            "(both replace the FIFO readout prefix)."
+        )
     # Beacon pyramid (idea #3, 2026-07-01). Dataclass fields; set explicitly so
     # the value reaches ms_cfg regardless of the constructor kwarg list above.
     ms_cfg.use_beacon_pyramid = bool(getattr(args, "use_beacon_pyramid", False))
@@ -2224,6 +2343,9 @@ def build_model(args, device, dtype) -> torch.nn.Module:
     ms_cfg.beacon_heads = int(getattr(args, "beacon_heads", 8))
     ms_cfg.beacon_layers = int(getattr(args, "beacon_layers", 1))
     ms_cfg.beacon_ffn_mult = int(getattr(args, "beacon_ffn_mult", 2))
+    ms_cfg.beacon_query_conditional = bool(
+        getattr(args, "beacon_query_conditional", False)
+    )
 
     # H7 rotary fp32 fix — snapshot before bf16 cast
     _rope_snapshot = {}
@@ -2275,6 +2397,29 @@ def build_model(args, device, dtype) -> torch.nn.Module:
                     len(cleaned), len(missing), len(unexpected))
     elif args.init_checkpoint:
         logger.warning("init_checkpoint=%s not found — random init", args.init_checkpoint)
+
+    # multilayer-inject arm (2026-07-01): re-open the inject gate AFTER warm-start
+    # load. The A-model ckpt froze inject_gate.bias at -2.0 (g≈0.12) on all 32
+    # layers; load_state_dict just clobbered whatever config.inject_gate_bias_init
+    # built. Reset bias to args.inject_gate_bias_init so the memory prefix enters
+    # at a higher, trainable gate. weight kept as-loaded (per-token variation).
+    if getattr(args, "fifo_reinit_inject_gate_after_load", False):
+        _root = getattr(model, "module", model)
+        _mem_layers = getattr(_root, "_mem_space_layers", None) or []
+        _n_reset = 0
+        for _w in _mem_layers:
+            _inj = getattr(_w, "inject_gate", None)
+            if _inj is not None and getattr(_inj, "bias", None) is not None:
+                with torch.no_grad():
+                    _inj.bias.fill_(float(args.inject_gate_bias_init))
+                _n_reset += 1
+        logger.info(
+            "multilayer-inject: reset inject_gate.bias=%.4f (g≈%.3f) on %d "
+            "mem_space layers AFTER warm-start load",
+            float(args.inject_gate_bias_init),
+            1.0 / (1.0 + math.exp(-float(args.inject_gate_bias_init))),
+            _n_reset,
+        )
 
     return model
 
@@ -2707,6 +2852,10 @@ def dolmino_train_step(
     _reset_banks(model)
     scale = float(grad_accum)
 
+    # QCP: clear any stale beacon question-mask so the context passes (which
+    # write the FIFO buffer) NEVER see a mask. Only the target forward gets one.
+    _set_beacon_q_mask(model, None)
+
     # Stream context chunks through memory (no gradient)
     with torch.no_grad():
         for ctx in context_chunks:
@@ -2755,6 +2904,30 @@ def dolmino_train_step(
     online_teacher_w = int(distill_cfg.get("distill_swa_teacher", 0)) if distill_cfg else 0
     distill_on = distill_cfg is not None and (teacher_cache is not None or online_teacher_w > 0)
     _zero = torch.zeros((), device=device)
+
+    # QCP: build + stash the QUESTION mask for the target forward. The target
+    # chunk is [question | answer | pad] with the question at the START (T2
+    # niah_chunked layout), so the question region is exactly the positions
+    # BEFORE the first answer token. answer_mask marks answer-content tokens; the
+    # first True is the answer start. Masking [0, first_answer) therefore keeps
+    # ONLY the question (excludes both the answer — no leakage — and the trailing
+    # padding). Rows with no answer token fall back to tail pooling in the layer.
+    # Stashed only when answer_mask is present (T2); pure-dolmino steps leave the
+    # mask None => byte-identical. The layer only READS this when the pyramid is
+    # query_conditional, so the fixed-query arm is unaffected either way.
+    if answer_mask is not None:
+        _am = _ensure_batched(answer_mask, device).to(torch.bool)  # [B, target_len]
+        _Bm, _Tm = _am.shape
+        _first_ans = torch.argmax(_am.int(), dim=1)                # [B]; 0 if none
+        _ar = torch.arange(_Tm, device=device).unsqueeze(0)        # [1, target_len]
+        _q_target = _ar < _first_ans.unsqueeze(1)                  # [B, target_len]
+        if student_prefix_len > 0:
+            _pad = torch.zeros((_Bm, student_prefix_len), dtype=torch.bool,
+                               device=device)
+            _q_mask = torch.cat([_pad, _q_target], dim=1)          # [B, S]
+        else:
+            _q_mask = _q_target
+        _set_beacon_q_mask(model, _q_mask)
 
     if distill_on and teacher_cache is None:
         # Online Arm-A teacher: same bank state as student, but teacher gets a
@@ -3830,6 +4003,15 @@ def _save_adapter(model, args, step: int, final: bool = False) -> None:
             "tree_summary_heads": int(getattr(args, "tree_summary_heads", 8)),
             "tree_summary_layers": int(getattr(args, "tree_summary_layers", 1)),
             "tree_summary_ffn_mult": int(getattr(args, "tree_summary_ffn_mult", 2)),
+            # Tree aggregated readout (exp 2, 2026-06-25) — round-trip so eval
+            # rebuilds the same tree-readout FIFO prefix path.
+            "fifo_tree_readout": bool(getattr(args, "fifo_tree_readout", False)),
+            "fifo_tree_readout_branch": int(
+                getattr(args, "fifo_tree_readout_branch", 8)
+            ),
+            "fifo_tree_readout_fine_chunks": int(
+                getattr(args, "fifo_tree_readout_fine_chunks", 0)
+            ),
             # Beacon pyramid (idea #3, 2026-07-01) — round-trip so eval rebuilds
             # the same shared BeaconPyramid + band sizes.
             "use_beacon_pyramid": bool(getattr(args, "use_beacon_pyramid", False)),
@@ -3840,6 +4022,9 @@ def _save_adapter(model, args, step: int, final: bool = False) -> None:
             "beacon_heads": int(getattr(args, "beacon_heads", 8)),
             "beacon_layers": int(getattr(args, "beacon_layers", 1)),
             "beacon_ffn_mult": int(getattr(args, "beacon_ffn_mult", 2)),
+            "beacon_query_conditional": bool(
+                getattr(args, "beacon_query_conditional", False)
+            ),
             # Partial-unfreeze metadata (v2): records which layers were trainable.
             "unfreeze_backbone": args.unfreeze_backbone,
             "unfreeze_layers_from": args.unfreeze_layers_from,
@@ -3852,6 +4037,13 @@ def _save_adapter(model, args, step: int, final: bool = False) -> None:
             "lr": args.lr,
             "total_steps": args.total_steps,
             "babilong_mix_fraction": args.babilong_mix_fraction,
+            # REFORWARD-GUARD tag (2026-06-25): when this run used the token-
+            # reforward training path (--t2_select_loss_weight>0, only reachable
+            # with --allow_token_reforward), the resulting adapter reflects a
+            # THEORETICAL UPPER BOUND, not a deployable capability. Tag it so nobody
+            # mistakes the oracle ceiling for a real result. status/REFORWARD_AUDIT.md
+            "allow_token_reforward": bool(getattr(args, "allow_token_reforward", False)),
+            "theoretical_upper_bound": bool(args.t2_select_loss_weight > 0.0),
             "babilong_tasks": args.babilong_tasks,
             "babilong_lengths": args.babilong_lengths,
             "dolmino_path": args.dolmino_path,
