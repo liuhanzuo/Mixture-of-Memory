@@ -36,7 +36,8 @@ OUTPREFIX="${OUTPREFIX:?set OUTPREFIX}"
 TASKS="${TASKS:-qa1 qa2 qa5}"
 CHUNK_SIZE="${CHUNK_SIZE:-512}"
 LIMIT="${LIMIT:-100}"
-BATCH_SIZE="${BATCH_SIZE:-1}"
+BATCH_SIZE="${BATCH_SIZE:-4}"   # L20A 183GB: bs=1 used only ~22GB/183. bs=4 safe
+                                # for W0 (no swa/oracle) at all lengths incl 32k.
 DTYPE="${DTYPE:-bfloat16}"
 ATTN_IMPL="${ATTN_IMPL:-sdpa}"
 MAX_NEW_TOKENS="${MAX_NEW_TOKENS:-20}"
@@ -52,9 +53,21 @@ echo "[$(date)] cells run SEQUENTIALLY; each fanned across $NG GPUs (samples [g:
 
 for task in $TASKS; do
   for L in "${LENGTHS[@]}"; do
-    # Skip a cell already fully scored (all shard CSVs present). Cheap resume:
-    # if a merged/complete marker exists we still re-run shards that are missing.
-    echo "[$(date)] === CELL $task $L : launching $NG shards (one per GPU) ==="
+    # Resume support: skip a cell whose expected shard CSVs are ALL present with
+    # the right row counts. A shard i is "done" if its CSV has >=1 data row AND
+    # the shard's expected sample count (ceil((limit-i)/NG)) matches. Cheap check:
+    # if NG shard CSVs exist for this cell and total rows >= LIMIT, skip. Lets a
+    # killed/restarted run avoid re-doing finished cells (SKIP_DONE=0 to force).
+    if [ "${SKIP_DONE:-1}" = "1" ]; then
+      celldir="$RESULTS/${OUTPREFIX}_${task}_${L}"
+      ncsv=$(find "$celldir" -name "${task}_${L}_*.csv" 2>/dev/null | wc -l)
+      rows=$(find "$celldir" -name "${task}_${L}_*.csv" 2>/dev/null -exec cat {} \; 2>/dev/null | grep -c '.' 2>/dev/null || echo 0)
+      if [ "$ncsv" -ge "$NG" ] && [ "$rows" -ge "$LIMIT" ]; then
+        echo "[$(date)] === CELL $task $L SKIP (already done: $ncsv shards, ~$rows rows) ==="
+        continue
+      fi
+    fi
+    echo "[$(date)] === CELL $task $L : launching $NG shards (one per GPU), bs=$BATCH_SIZE ==="
     pids=()
     for ((g=0; g<NG; g++)); do
       GPU="${GPUS[$g]}"
