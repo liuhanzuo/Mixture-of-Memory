@@ -26,6 +26,7 @@ export PYTHONPATH="$PROJECT_ROOT:$PROJECT_ROOT/third_party/babilong-pkg:${PYTHON
 export HF_HOME="${HF_HOME:-$PROJECT_ROOT/.hf_cache}"
 export HF_DATASETS_CACHE="${HF_DATASETS_CACHE:-$PROJECT_ROOT/.hf_cache/datasets}"
 export HF_DATASETS_OFFLINE="${HF_DATASETS_OFFLINE:-1}" HF_HUB_OFFLINE="${HF_HUB_OFFLINE:-1}"
+export PYTORCH_CUDA_ALLOC_CONF="${PYTORCH_CUDA_ALLOC_CONF:-expandable_segments:True}"  # reduce KV-cache fragmentation OOM
 
 PYBIN="${PYTHON_BIN:-$PROJECT_ROOT/.venv/bin/python}"
 MODEL="${MODEL:-models/Meta-Llama-3-8B}"
@@ -36,8 +37,9 @@ OUTPREFIX="${OUTPREFIX:?set OUTPREFIX}"
 TASKS="${TASKS:-qa1 qa2 qa5}"
 CHUNK_SIZE="${CHUNK_SIZE:-512}"
 LIMIT="${LIMIT:-100}"
-BATCH_SIZE="${BATCH_SIZE:-4}"   # L20A 183GB: bs=1 used only ~22GB/183. bs=4 safe
-                                # for W0 (no swa/oracle) at all lengths incl 32k.
+BATCH_SIZE="${BATCH_SIZE:-auto}"   # "auto" = per-length bs (bs_for_len); or a fixed int.
+                                   # L20A 183GB: short lengths bs8, 16k bs2, 32k bs1
+                                   # (bs4@32k OOMs — 62 chunks/sample + KV fragmentation).
 DTYPE="${DTYPE:-bfloat16}"
 ATTN_IMPL="${ATTN_IMPL:-sdpa}"
 MAX_NEW_TOKENS="${MAX_NEW_TOKENS:-20}"
@@ -51,8 +53,25 @@ NG=${#GPUS[@]}
 echo "[$(date)] sample-sharded eval: ckpt=$CKPT NG=$NG shards/cell=$NG limit=$LIMIT"
 echo "[$(date)] cells run SEQUENTIALLY; each fanned across $NG GPUs (samples [g::$NG])"
 
+# Per-length batch size: long contexts (16k/32k) have huge per-sample activation
+# (62 chunks @ 32k) — bs=4 OOMs at 32k on 183GB (measured: 178GB used, KV-cache
+# fragmentation). Short contexts have tons of headroom. Pick bs by length so we
+# fill memory without OOM. Override any cell via BATCH_SIZE (fixed) if set != auto.
+bs_for_len() {
+  if [ "${BATCH_SIZE}" != "auto" ]; then echo "$BATCH_SIZE"; return; fi
+  case "$1" in
+    0k|1k|2k)   echo 8 ;;
+    4k)         echo 6 ;;
+    8k)         echo 4 ;;
+    16k)        echo 2 ;;
+    32k)        echo 1 ;;
+    *)          echo 2 ;;
+  esac
+}
+
 for task in $TASKS; do
   for L in "${LENGTHS[@]}"; do
+    CELL_BS="$(bs_for_len "$L")"
     # Resume support: skip a cell whose expected shard CSVs are ALL present with
     # the right row counts. A shard i is "done" if its CSV has >=1 data row AND
     # the shard's expected sample count (ceil((limit-i)/NG)) matches. Cheap check:
@@ -67,7 +86,7 @@ for task in $TASKS; do
         continue
       fi
     fi
-    echo "[$(date)] === CELL $task $L : launching $NG shards (one per GPU), bs=$BATCH_SIZE ==="
+    echo "[$(date)] === CELL $task $L : launching $NG shards (one per GPU), bs=$CELL_BS ==="
     pids=()
     for ((g=0; g<NG; g++)); do
       GPU="${GPUS[$g]}"
@@ -75,7 +94,7 @@ for task in $TASKS; do
         --model_path "$MODEL" --checkpoint "$CKPT" --adapter_config "$ADAPTER_CONFIG" \
         --results_folder "$RESULTS" --output_name "${OUTPREFIX}_${task}_${L}" \
         --tasks "$task" --lengths "$L" --limit "$LIMIT" --chunk_size "$CHUNK_SIZE" \
-        --batch_size "$BATCH_SIZE" --max_new_tokens "$MAX_NEW_TOKENS" \
+        --batch_size "$CELL_BS" --max_new_tokens "$MAX_NEW_TOKENS" \
         --dtype "$DTYPE" --attn_impl "$ATTN_IMPL" \
         --num_shards "$NG" --shard_index "$g" $EXTRA_ARGS \
         </dev/null >"$LOGDIR/${task}_${L}_shard${g}.log" 2>&1 &
