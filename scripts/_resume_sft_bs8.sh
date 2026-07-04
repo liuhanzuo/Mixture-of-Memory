@@ -27,7 +27,7 @@ BS="${BS:-8}"
 ACCUM="${ACCUM:-1}"
 mkdir -p logs outputs/$RUN
 if [ ! -f "$RESUME_CKPT" ]; then echo "ABORT: ckpt not found: $RESUME_CKPT"; exit 4; fi
-if pgrep -f "wandb_run_name $RUN" >/dev/null 2>&1; then echo "REFUSE: $RUN running"; exit 3; fi
+if pgrep -f "wandb_run_name $RUN" 2>/dev/null | while read _p; do grep -q "torch.distributed.run\|train_mem_space" "/proc/$_p/cmdline" 2>/dev/null && echo hit; done | grep -q hit; then echo "REFUSE: $RUN running"; exit 3; fi
 
 echo "[resume] $RUN bs=$BS accum=$ACCUM eff_batch=$((BS*ACCUM*8)) from $RESUME_CKPT @step$START_STEP"
 setsid bash -c "CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 $PYBIN -m torch.distributed.run \
