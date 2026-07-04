@@ -65,7 +65,7 @@ bs_for_len() {
     4k)         echo 12 ;;
     8k)         echo 8 ;;
     16k)        echo 6 ;;
-    32k)        echo 1 ;;
+    32k)        echo 4 ;;
     *)          echo 2 ;;
   esac
 }
