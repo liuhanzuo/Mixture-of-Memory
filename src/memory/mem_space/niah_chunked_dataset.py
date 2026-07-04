@@ -344,6 +344,7 @@ class NIAHChunkedDataset(torch.utils.data.IterableDataset):
         hard_distractors: int = 0,
         hard_distractor_mode: str = "mention",
         gap_mix: "list | None" = None,
+        gap_batch_size: int = 1,
     ) -> None:
         """random_needle_chunk (2026-06-27, learn-to-select):
             False (default) -> the queried needle is ALWAYS at context chunk 0
@@ -408,6 +409,19 @@ class NIAHChunkedDataset(torch.utils.data.IterableDataset):
         # batch_size==1 (the collate rejects mixed-n_ctx batches); at batch_size 1
         # each micro-step is a fresh gap so grad-accum averages over the mixture.
         self.gap_mix: List[int] = [int(g) for g in (gap_mix or []) if int(g) >= 1]
+
+        # gap_batch_size (2026-07-04, per-batch-gap for bs>1 with gap_mix): the
+        # per-SAMPLE gap draw above forces batch_size==1, because two samples that
+        # drew different gaps have different n_ctx and cannot be stacked. To use
+        # the 183GB L20A headroom we instead draw a gap ONCE per group of
+        # ``gap_batch_size`` consecutive samples: all samples in the group share
+        # the gap (== same n_ctx) so a batch of that size stacks cleanly, while the
+        # gap still VARIES across groups → mixed-length curriculum is preserved
+        # (now per-batch instead of per-sample). Set == training --batch_size.
+        # <=1 (default) → byte-identical to the per-sample draw (bs=1 behaviour).
+        self.gap_batch_size: int = max(1, int(gap_batch_size))
+        self._grp_gap: "int | None" = None   # current group's gap (runtime state)
+        self._grp_left: int = 0              # samples remaining in current group
 
         # Signal-difficulty curriculum (2026-06-29, user idea): per-sample the
         # distractor STYLE is drawn from a difficulty mix, so we can start on an
@@ -541,7 +555,18 @@ class NIAHChunkedDataset(torch.utils.data.IterableDataset):
         # capability, mixing spreads the fix). Overrides self.n_ctx for THIS sample
         # only; set_n_ctx()/t2_curriculum still work when gap_mix is empty.
         if self.gap_mix:
-            _g = rng.choice(self.gap_mix)
+            if self.gap_batch_size > 1:
+                # Per-batch gap: draw once per group of gap_batch_size samples so
+                # a whole batch shares n_ctx (stackable) while gap still varies
+                # ACROSS batches (mixed-length preserved). Group state persists on
+                # self across _make_sample calls within one worker's __iter__.
+                if self._grp_left <= 0 or self._grp_gap is None:
+                    self._grp_gap = rng.choice(self.gap_mix)
+                    self._grp_left = self.gap_batch_size
+                _g = self._grp_gap
+                self._grp_left -= 1
+            else:
+                _g = rng.choice(self.gap_mix)
             n_ctx = max(1, int(round(_g / cs)))
 
         # Draw this sample's difficulty level ONCE (0 = use static flags). Levels

@@ -20,6 +20,12 @@
 #     - warm-start from the b64 PG19 pretrain step2000 ckpt
 #     - --babilong_mix_fraction 0 (RED LINE: never train on babilong test)
 #
+# THROUGHPUT (2026-07-04): batch_size 4 (was 1). L20A 183GB was ~12% used at bs=1.
+# gap_mix + bs>1 is enabled by the per-batch-gap mechanism (gap_batch_size=bs in
+# niah_chunked_dataset): each batch's 4 samples share one gap == same n_ctx
+# (stackable), gap still varies across batches (mixed-length preserved). Effective
+# batch = bs4 * grad_accum4 = 16 (standard SFT scale, was 4).
+#
 # JUDGING: after step500/1000, eval on REAL babilong qa5 全档 n100 (official
 # compare_answers). Success = 8k/16k >= the level8-0.6 recipe (8k28/16k16) WITHOUT
 # the short-档 regression (2k/4k should recover toward pretrain 67/53 since dense
@@ -55,7 +61,7 @@ setsid bash -c "CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 $PYBIN -m torch.distributed
   --per_doc_data --dolmino_path MemLong/data/processed/dolmino_per_doc/train \
   --output_dir outputs/$RUN --init_checkpoint $INIT --init_adapter_config $IACFG \
   --total_steps 1500 --lr 3e-5 --warmup_steps 50 \
-  --chunk_size 512 --batch_size 1 --num_slots 128 --top_k 16 --selector_dim 128 \
+  --chunk_size 512 --batch_size 4 --num_slots 128 --top_k 16 --selector_dim 128 \
   --selector_temperature 40 --load_balance_weight 0.0 --entropy_aux_weight 0.0 \
   --use_fifo_memory --fifo_buffer_chunks 64 --fifo_detach --last_chunk_loss_only \
   --unfreeze_backbone --unfreeze_layers_from 16 \

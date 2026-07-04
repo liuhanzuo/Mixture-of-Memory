@@ -4354,12 +4354,17 @@ def main() -> None:
             hard_distractors=args.t2_hard_distractors,
             hard_distractor_mode=args.t2_hard_distractor_mode,
             gap_mix=args.t2_gap_mix,
+            # Per-batch gap (2026-07-04): when batch_size>1 the dataset draws ONE
+            # gap per group of batch_size consecutive samples so a batch shares
+            # n_ctx (stackable) while gap still varies across batches → mixed-
+            # length preserved WITH bs>1 (uses the L20A 183GB headroom). bs==1 →
+            # gap_batch_size 1 → byte-identical per-sample draw.
+            gap_batch_size=args.batch_size,
         )
-        if args.t2_gap_mix and args.batch_size > 1:
-            raise ValueError(
-                "--t2_gap_mix requires --batch_size 1 (each sample draws its own "
-                "n_ctx; the batched collate rejects mixed-n_ctx batches)."
-            )
+        # gap_mix + batch_size>1 is now SUPPORTED via per-batch gap (gap_batch_size
+        # above): every batch's batch_size samples share the group gap == same
+        # n_ctx, so niah_chunked_collate_fn stacks them cleanly. (Previously this
+        # raised — the per-sample gap draw made n_ctx differ within a batch.)
         if is_main(rank):
             logger.info(
                 "T2 recall mix: frac=%.2f num_keys=%d gap_tokens=%d "
