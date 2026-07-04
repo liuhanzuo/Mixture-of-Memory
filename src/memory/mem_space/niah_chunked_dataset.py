@@ -138,6 +138,168 @@ def _qa5b_gen_events(rng: "random.Random", target_events: int):
     return G, OBJ, question, answer, placed
 
 
+# --------------------------------------------------------------------------- #
+# Level 8 (2026-06-25): MULTI-TEMPLATE BABILong-qa5. L6/L7 emit exactly ONE
+# question template ("Who did {G} give the {OBJ} to?", answer ALWAYS a
+# receiver/agent name). Real babilong qa5 mixes several question forms that query
+# DIFFERENT slots of the give-event:
+#   T1 "Who did {G} give the {OBJ} to?"  -> receiver  (agent name)
+#   T2 "What did {G} give to {R}?"        -> object    (object word)
+#   T3 "Who gave the {OBJ} to {R}?"       -> giver     (agent name)
+#   T4 "Who received the {OBJ}?"          -> receiver  (agent name)
+#   T5 "Who gave the {OBJ}?"              -> giver     (agent name)
+# Each sample draws ONE template; the answer TYPE (agent name OR object word) and
+# the queried slot vary accordingly. The single-template L6/L7 taught the model
+# only "read the receiver name", which we diagnose as the root of the short-档
+# trade-off + ceiling. L8 forces reading different memory slots.
+#
+# The NOISE STRUCTURE is IDENTICAL to L7 (continuous PG19 background, recency-
+# competing gives on the QUERIED key, entity recurrence, end-biased needle) — only
+# question/answer generation differs. All (agent, object, receiver, verb) combos
+# are freshly RNG-generated from the PUBLIC bAbI grammar/word-list; NEVER reads or
+# copies any babilong-test sentence/组合 (same red-line as L6/L7).
+#
+# _QA5B_TEMPLATE_WEIGHTS: (template_id, draw_weight). Weighted so BOTH agent- and
+# object-answers appear and all 5 forms are represented.
+_QA5B_TEMPLATE_WEIGHTS = [(1, 0.24), (2, 0.24), (3, 0.18), (4, 0.17), (5, 0.17)]
+
+
+def _qa5b_gen_events_multi(rng: "random.Random", target_events: int):
+    """Multi-template BABILong-qa5-shaped instance (difficulty level 8).
+
+    Returns ``(question, answer, answer_type, placed)``:
+      * ``question``    : the drawn template, filled with fresh entities.
+      * ``answer``      : single-word answer (agent name or object word).
+      * ``answer_type`` : "agent" or "object" (for diagnostics only).
+      * ``placed``      : list of ``(pos, sentence, is_needle)`` — same format as
+        ``_qa5b_gen_events`` (sort by pos for temporal == reading order).
+
+    A random question TEMPLATE is chosen; the answer is the value of that
+    template's queried slot at the temporally-LAST give-event matching the
+    template's KNOWN slots (recency, as in real babilong qa5 — answer == last
+    matching give 100% of the time). Earlier COMPETING gives share the known slots
+    but differ in the queried slot, creating the recency-reasoning pressure. All
+    FILLER gives are guaranteed NOT to match the key (``matches`` predicate), so
+    they never form an alternative answer — the answer stays unique regardless of
+    where fillers land.
+    """
+    G = rng.choice(_QA5B_AGENTS)
+    OBJ = rng.choice(_QA5B_OBJS)
+    others = [a for a in _QA5B_AGENTS if a != G]
+
+    ttype = rng.choices([t for t, _ in _QA5B_TEMPLATE_WEIGHTS],
+                        [w for _, w in _QA5B_TEMPLATE_WEIGHTS])[0]
+
+    # number of recency competitors matching the key (same tail as L7: mostly 1).
+    n_comp = max(1, min(rng.choices([1, 2, 3], [0.94, 0.05, 0.01])[0], 3))
+
+    # Build the KEY-matching give-events (evs[-1] is the needle). Each is a
+    # (giver, object, receiver) triple; the QUERIED slot varies across them so the
+    # answer is uniquely the needle's queried slot (by recency). ``matches`` marks
+    # a give as key-matching so fillers can be kept OFF the key.
+    evs: list = []  # list of (giver, obj, receiver)
+    if ttype == 1:
+        # key=(giver G, object OBJ); vary receiver; answer = last receiver.
+        nc = min(n_comp, len(others))
+        recvs = rng.sample(others, nc)
+        evs = [(G, OBJ, rc) for rc in recvs]
+        answer, answer_type = recvs[-1], "agent"
+        question = f"Who did {G} give the {OBJ} to?"
+        matches = lambda gv, ob, rc: gv == G and ob == OBJ
+    elif ttype == 2:
+        # key=(giver G, receiver R); vary object; answer = last object.
+        R = rng.choice(others)
+        nc = min(n_comp, len(_QA5B_OBJS))
+        objs = rng.sample(_QA5B_OBJS, nc)
+        evs = [(G, ob, R) for ob in objs]
+        answer, answer_type = objs[-1], "object"
+        question = f"What did {G} give to {R}?"
+        matches = lambda gv, ob, rc: gv == G and rc == R
+    elif ttype == 3:
+        # key=(object OBJ, receiver R); vary giver; answer = last giver.
+        R = rng.choice(others)
+        cand = [a for a in _QA5B_AGENTS if a != R]
+        nc = min(n_comp, len(cand))
+        givers = rng.sample(cand, nc)
+        evs = [(gv, OBJ, R) for gv in givers]
+        answer, answer_type = givers[-1], "agent"
+        question = f"Who gave the {OBJ} to {R}?"
+        matches = lambda gv, ob, rc: ob == OBJ and rc == R
+    elif ttype == 4:
+        # key=(object OBJ); vary (giver,receiver); answer = last receiver.
+        nc = min(n_comp, len(_QA5B_AGENTS) - 1)
+        recvs = rng.sample(_QA5B_AGENTS, nc)
+        for rc in recvs:
+            gv = rng.choice([a for a in _QA5B_AGENTS if a != rc])
+            evs.append((gv, OBJ, rc))
+        answer, answer_type = recvs[-1], "agent"
+        question = f"Who received the {OBJ}?"
+        matches = lambda gv, ob, rc: ob == OBJ
+    else:  # ttype == 5
+        # key=(object OBJ); vary giver; answer = last giver.
+        nc = min(n_comp, len(_QA5B_AGENTS))
+        givers = rng.sample(_QA5B_AGENTS, nc)
+        for gv in givers:
+            rc = rng.choice([a for a in _QA5B_AGENTS if a != gv])
+            evs.append((gv, OBJ, rc))
+        answer, answer_type = givers[-1], "agent"
+        question = f"Who gave the {OBJ}?"
+        matches = lambda gv, ob, rc: ob == OBJ
+
+    # Global positions: needle (last matching give) biased to the END (babilong
+    # median frac 0.83); competitors sprinkled before it (recency pressure).
+    answer_pos = rng.uniform(0.62, 0.96)
+    comp_positions = sorted(
+        rng.uniform(0.05, max(0.06, answer_pos - 0.03)) for _ in range(len(evs) - 1)
+    ) + [answer_pos]
+
+    placed: list = []
+    for i, ((gv, ob, rc), p) in enumerate(zip(evs, comp_positions)):
+        s = f"{gv} {rng.choice(_QA5B_GIVE)} the {ob} to {rc}."
+        placed.append((p, s, i == len(evs) - 1))
+
+    # Entity recurrence: the needle's giver + receiver (which cover every agent
+    # NAMED in the question and the agent ANSWER) recur across move/pickup fillers
+    # so exact-name string-match cannot locate the needle.
+    recur = list({evs[-1][0], evs[-1][2]})
+
+    n_filler = max(0, target_events - len(evs))
+    for _ in range(n_filler):
+        roll = rng.random()
+        if roll < 0.15:
+            # hard-negative give guaranteed NOT to match the key (retry a few
+            # draws; fall back to a movement if none is found — keeps the answer
+            # unique without ever needing an on-key filler).
+            made = False
+            for _try in range(8):
+                gv = rng.choice(_QA5B_AGENTS)
+                rc = rng.choice([a for a in _QA5B_AGENTS if a != gv])
+                ob = rng.choice(_QA5B_OBJS)
+                if not matches(gv, ob, rc):
+                    placed.append((rng.random(),
+                                   f"{gv} {rng.choice(_QA5B_GIVE)} the {ob} to {rc}.",
+                                   False))
+                    made = True
+                    break
+            if made:
+                continue
+            roll = 0.5  # fall through to a movement filler
+        if roll < 0.70:
+            subj = rng.choice(recur) if rng.random() < 0.5 else rng.choice(_QA5B_AGENTS)
+            s = f"{subj} {rng.choice(_QA5B_MOVE)} {rng.choice(_QA5B_ROOMS)}."
+        else:
+            subj = rng.choice(recur) if rng.random() < 0.45 else rng.choice(_QA5B_AGENTS)
+            o = rng.choice(_QA5B_OBJS)
+            if rng.random() < 0.6:
+                s = f"{subj} {rng.choice(_QA5B_GET)} the {o} there."
+            else:
+                s = f"{subj} {rng.choice(_QA5B_DROP)} the {o}."
+        placed.append((rng.random(), s, False))
+
+    placed.sort(key=lambda t: t[0])
+    return question, answer, answer_type, placed
+
+
 class NIAHChunkedDataset(torch.utils.data.IterableDataset):
     """Infinite chunked associative-recall dataset (T2).
 
@@ -412,6 +574,16 @@ class NIAHChunkedDataset(torch.utils.data.IterableDataset):
         # builder so L1-L6 stay byte-identical.
         if _level == 7:
             return self._make_qa5_babilong_sample(rng, worker_indices, pos, n_ctx, cs)
+
+        # Level 8 (2026-06-25, THIS agent): MULTI-TEMPLATE babilong-qa5. Same
+        # early-return dispatch as L7 so L1-L7 stay byte-identical (no extra RNG
+        # consumed on the L1-L7 paths). Reuses L7's noise structure but the
+        # question TEMPLATE (and hence the answer slot/type: agent OR object) is
+        # drawn per-sample from the 5 real qa5 question forms. Handled by a
+        # dedicated builder that mirrors _make_qa5_babilong_sample exactly except
+        # for question/answer generation (via _qa5b_gen_events_multi).
+        if _level == 8:
+            return self._make_qa5_babilong_multi_sample(rng, worker_indices, pos, n_ctx, cs)
 
         # qa5 give-event vocab (bAbI public grammar; synthetic combos only, never
         # reads babilong test instances). Used when _level==6.
@@ -788,6 +960,114 @@ class NIAHChunkedDataset(torch.utils.data.IterableDataset):
             "answer_mask": torch.tensor(answer_mask, dtype=torch.bool),
             "is_t2": True,
             "code": answer,
+            "needle_chunk_index": int(needle_chunk_index),
+        }
+        return sample, pos
+
+    # --------------------------------------------------------------------- #
+    # MULTI-TEMPLATE BABILong-qa5-SHAPED builder (difficulty level 8).
+    # --------------------------------------------------------------------- #
+    def _make_qa5_babilong_multi_sample(
+        self,
+        rng: random.Random,
+        worker_indices: List[int],
+        pos: int,
+        n_ctx: int,
+        cs: int,
+    ) -> tuple[Dict[str, Any], int]:
+        """Build a MULTI-TEMPLATE BABILong-qa5-shaped sample (difficulty level 8).
+
+        Identical NOISE STRUCTURE to ``_make_qa5_babilong_sample`` (level 7):
+        continuous PG19 background, ~15 bAbI sentences scattered at random offsets
+        mid-prose, recency-competing gives on the queried key, entity recurrence,
+        end-biased needle. The ONLY difference is the question/answer: drawn from
+        the 5 real qa5 question templates via ``_qa5b_gen_events_multi``, so the
+        answer is sometimes a RECEIVER, sometimes a GIVER (agent names), and
+        sometimes the OBJECT word — forcing the model to read whichever memory slot
+        the template queries, not just "the receiver". All combos are freshly
+        RNG-generated from the public bAbI grammar; never copies a babilong-test
+        sentence.
+        """
+        target_events = max(4, rng.randint(12, 18) if n_ctx >= 4 else n_ctx)
+        question_str, answer, answer_type, placed = _qa5b_gen_events_multi(
+            rng, target_events
+        )
+
+        # 1. Background context chunks (continuous prose).
+        context_chunks: list[list[int]] = []
+        for _ in range(n_ctx):
+            bg, pos = self._get_bg_chunk(worker_indices, pos)
+            context_chunks.append(bg)
+
+        # 2. Map each placed sentence (global reading fraction) -> chunk index, in
+        #    temporal order; group per chunk; splice into ordered non-overlapping
+        #    slots mid-prose (byte-for-byte the same placement logic as L7).
+        per_chunk: Dict[int, list] = {}
+        needle_chunk_index = 0
+        for gpos, sent, is_needle in placed:
+            ci = min(n_ctx - 1, max(0, int(gpos * n_ctx)))
+            per_chunk.setdefault(ci, []).append((sent, is_needle))
+            if is_needle:
+                needle_chunk_index = ci
+
+        for ci, sents in per_chunk.items():
+            k = len(sents)
+            tok_sents = [
+                self.tokenizer.encode(" " + s, add_special_tokens=False)[:cs]
+                for s, _ in sents
+            ]
+            slot = max(1, cs // k)
+            items: list[tuple[int, list[int]]] = []
+            for j, ids in enumerate(tok_sents):
+                lo = j * slot
+                hi = min((j + 1) * slot, cs) - len(ids)
+                hi = max(lo, hi)
+                off = rng.randint(lo, hi) if hi > lo else lo
+                off = min(off, max(0, cs - len(ids)))
+                items.append((off, ids))
+            items.sort(key=lambda t: t[0])
+            cleaned: list[tuple[int, list[int]]] = []
+            cursor = 0
+            for off, ids in items:
+                off = max(off, cursor)
+                if off + len(ids) > cs:
+                    off = max(0, cs - len(ids))
+                cleaned.append((off, ids))
+                cursor = off + len(ids)
+            context_chunks[ci] = self._embed_many(context_chunks[ci], cleaned)
+
+        # 3. Target chunk: babilong-style question + single-word answer (agent name
+        #    OR object word depending on the drawn template).
+        question_ids = self.tokenizer.encode(
+            f" {question_str}\nAnswer:", add_special_tokens=False
+        )
+        answer_ids = self.tokenizer.encode(" " + answer, add_special_tokens=False)
+        target_raw = question_ids + answer_ids
+        if len(target_raw) < cs:
+            target_tokens = target_raw + [self._pad_id] * (cs - len(target_raw))
+        else:
+            target_tokens = target_raw[:cs]
+
+        # 4. answer_mask: True on the answer's content tokens (agent name or object
+        #    word); spaces stay unmasked (same rule as L6/L7).
+        answer_mask = [False] * cs
+        ans_start = len(question_ids)
+        for j, tid in enumerate(answer_ids):
+            p = ans_start + j
+            if p >= cs:
+                break
+            if self.tokenizer.decode([tid]).strip():
+                answer_mask[p] = True
+
+        sample = {
+            "context_chunks": [
+                torch.tensor(c, dtype=torch.long) for c in context_chunks
+            ],
+            "target_ids": torch.tensor(target_tokens, dtype=torch.long),
+            "answer_mask": torch.tensor(answer_mask, dtype=torch.bool),
+            "is_t2": True,
+            "code": answer,
+            "answer_type": answer_type,
             "needle_chunk_index": int(needle_chunk_index),
         }
         return sample, pos
