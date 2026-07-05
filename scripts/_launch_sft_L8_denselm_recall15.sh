@@ -42,7 +42,8 @@ export PYTHONUNBUFFERED=1 PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 
 PYBIN="$PROJECT_ROOT/.venv/bin/python"
 PORT="${PORT:-29931}"
-RUN="mem_space_sft_L8_denselm_recall15"
+RECALL="${RECALL:-0.15}"   # recall mix fraction (recall sweep: 0.6→16k10, 0.15→16k32; test 0.05)
+RUN="${RUN:-mem_space_sft_L8_denselm_recall15}"
 # Warm-start = b64 PG19 pretrain step2000 (same as the validated main-server SFT).
 # ckpt lives on the copied mirror (same physical wzc1 disk, no re-copy).
 INIT="${INIT:-/apdcephfs_wzc1/share_304376610/pighzliu_code/MoM_mainserver_20260704/outputs/mem_space_pg19base_fifo_b64/full_model_step002000.pt}"
@@ -69,7 +70,7 @@ setsid bash -c "CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 $PYBIN -m torch.distributed
   --gradient_checkpointing --gradient_accumulation_steps 4 --curriculum 0:3 \
   --bptt_window 1 --inject_gate_bias_init -2.0 \
   --babilong_mix_fraction 0 \
-  --t2_recall_mix_fraction 0.15 \
+  --t2_recall_mix_fraction $RECALL \
   --t2_background_data data/pg19_chunks_llama3_noeos.npy \
   --t2_num_keys 1 --t2_gap_tokens 4096 --t2_gap_mix 2048,4096,8192 \
   --t2_difficulty_curriculum 0:8=1.0 \
