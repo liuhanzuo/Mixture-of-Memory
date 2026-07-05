@@ -1095,6 +1095,14 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--dolmino_path", type=str,
                    default="MemLong/data/processed/dolmino_0.5B_1024/train",
                    help="Path to pre-tokenised Dolmino Arrow dataset.")
+    p.add_argument("--slimpajama_data", type=str, default=None,
+                   help="Path to a pre-tokenised SlimPajama npy [N,row_len] "
+                        "(e.g. data/slimpajama_chunks_4096.npy). When set, REPLACES "
+                        "the dolmino Arrow source with generic long-document dense-LM "
+                        "prediction self-supervision (no synthetic recall). Same "
+                        "yielded schema + curriculum hook, so the training loop is "
+                        "unchanged. Use with --last_chunk_loss_only + "
+                        "--t2_recall_mix_fraction 0 for the pure-prediction recipe.")
     p.add_argument("--chunk_size", type=int, default=1024,
                    help="Token count per chunk (must match Dolmino preprocessing).")
     p.add_argument("--contiguous_chunks", action="store_true", default=False,
@@ -4257,17 +4265,38 @@ def main() -> None:
                         find_unused_parameters=True)
 
     # --- Dolmino dataset --- #
-    dolmino_ds = DolminoCurriculumDataset(
-        data_path=args.dolmino_path,
-        chunk_size=args.chunk_size,
-        n_context=curriculum.get_n_ctx(0),
-        rank=rank,
-        world_size=world_size,
-        seed=args.seed,
-        contiguous=args.contiguous_chunks,
-        doc_reset=args.doc_reset,
-        per_doc=args.per_doc_data,
-    )
+    # SlimPajama prediction self-supervision (2026-07-05): when --slimpajama_data
+    # is set, swap the dolmino Arrow source for a generic long-document npy
+    # (SlimPajama-6B, [N,4096]). Same yielded schema + set_n_context hook, so the
+    # rest of the loop (loader/collate/dolmino_train_step/curriculum) is unchanged.
+    # This is the "generic dense-LM, no synthetic recall" path the literature uses
+    # to learn real memory readout (vs babilong-qa5 SFT which overfits token shortcuts).
+    if getattr(args, "slimpajama_data", None):
+        from src.memory.mem_space.slimpajama_dataset import SlimPajamaPredictionDataset
+        dolmino_ds = SlimPajamaPredictionDataset(
+            data_path=args.slimpajama_data,
+            chunk_size=args.chunk_size,
+            n_context=curriculum.get_n_ctx(0),
+            rank=rank,
+            world_size=world_size,
+            seed=args.seed,
+        )
+        if is_main(rank):
+            logger.info("SlimPajama prediction self-supervision: data=%s rows=%d row_len=%d "
+                        "(generic long-doc dense-LM, no synthetic recall)",
+                        args.slimpajama_data, dolmino_ds._num_rows, dolmino_ds._row_len)
+    else:
+        dolmino_ds = DolminoCurriculumDataset(
+            data_path=args.dolmino_path,
+            chunk_size=args.chunk_size,
+            n_context=curriculum.get_n_ctx(0),
+            rank=rank,
+            world_size=world_size,
+            seed=args.seed,
+            contiguous=args.contiguous_chunks,
+            doc_reset=args.doc_reset,
+            per_doc=args.per_doc_data,
+        )
     dolmino_loader = DataLoader(
         dolmino_ds,
         batch_size=(args.batch_size if args.batch_size > 1 else None),
