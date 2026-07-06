@@ -266,6 +266,13 @@ def main():
                         help="Path to plain Llama-3-8B weights.")
     parser.add_argument("--resume_j", type=int, default=6,
                         help="Layer split index j (0=RAG upper bound, L=closed-book).")
+    parser.add_argument("--top_prepay_b", type=int, default=0,
+                        help="Direction-B top-prepay: run the top b layers "
+                             "query-local at read (0=exact connective resume).")
+    parser.add_argument("--lora_adapter", type=str, default="",
+                        help="Optional path to a trained QCMem-distill LoRA "
+                             "adapter dir (Direction A). Loaded onto the frozen "
+                             "backbone before building the QCMem orchestrator.")
     parser.add_argument("--selector", type=str, default="bm25",
                         choices=["bm25", "recency", "oracle"],
                         help="Free chunk selector for the read pack.")
@@ -331,12 +338,25 @@ def main():
     L = int(model.config.num_hidden_layers)
     if not (0 <= args.resume_j <= L):
         parser.error(f"--resume_j must be in [0, {L}] for this model; got {args.resume_j}")
+    if not (0 <= args.top_prepay_b <= L - args.resume_j):
+        parser.error(f"--top_prepay_b must be in [0, {L - args.resume_j}]; got {args.top_prepay_b}")
+
+    # Direction A: load a trained QCMem-distill LoRA adapter onto the backbone.
+    # QCMemModel reads .model.layers / .lm_head etc. off whatever object we hand
+    # it; PeftModel.base_model.model is the underlying CausalLM exposing that
+    # structure, and the LoRA-wrapped Linear submodules apply their delta when
+    # called directly by _run_layers (verified 2026-07-05).
+    if args.lora_adapter:
+        from peft import PeftModel
+        print(f"[QCMem-BABILong] loading LoRA adapter: {args.lora_adapter}")
+        peft_model = PeftModel.from_pretrained(model, args.lora_adapter).eval()
+        model = peft_model.base_model.model
 
     if args.self_test:
         ok = run_self_test(model, tokenizer, device, args.chunk_size)
         sys.exit(0 if ok else 1)
 
-    qc = QCMemModel(model, resume_j=args.resume_j)
+    qc = QCMemModel(model, resume_j=args.resume_j, top_prepay_b=args.top_prepay_b)
 
     for task in tqdm(args.tasks, desc="tasks"):
         if task not in DEFAULT_PROMPTS:
@@ -384,10 +404,12 @@ def main():
                     "theoretical_upper_bound": bool(args.selector == "oracle"),
                     "qcmem": {
                         "resume_j": args.resume_j,
+                        "top_prepay_b": args.top_prepay_b,
                         "selector": args.selector,
                         "topk": args.topk,
                         "sink_tokens": args.sink_tokens,
                         "num_layers": L,
+                        "lora_adapter": args.lora_adapter or None,
                     },
                     "model": {
                         "model_path": args.model_path,
