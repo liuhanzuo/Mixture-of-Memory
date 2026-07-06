@@ -324,7 +324,11 @@ def main():
           f"topk={args.topk} sink={args.sink_tokens} chunk_size={args.chunk_size} "
           f"dtype={dtype} attn_impl={args.attn_impl}")
 
-    tokenizer = AutoTokenizer.from_pretrained(args.model_path, trust_remote_code=True)
+    # local_files_only=True: when the node is offline (e.g. .52 H20), transformers
+    # otherwise falls back to treating a local dir path as an HF repo_id and errors
+    # with "Repo id must be in the form ...". Force pure local resolution.
+    tokenizer = AutoTokenizer.from_pretrained(
+        args.model_path, trust_remote_code=True, local_files_only=True)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 
@@ -333,6 +337,7 @@ def main():
         torch_dtype=dtype,
         attn_implementation=args.attn_impl,
         trust_remote_code=True,
+        local_files_only=True,
     ).to(device).eval()
 
     L = int(model.config.num_hidden_layers)
