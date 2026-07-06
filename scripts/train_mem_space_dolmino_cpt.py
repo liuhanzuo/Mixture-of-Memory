@@ -80,7 +80,7 @@ _BABILONG_PKG = os.path.join(PROJECT_ROOT, "third_party", "babilong-pkg")
 if os.path.isdir(_BABILONG_PKG) and _BABILONG_PKG not in sys.path:
     sys.path.insert(0, _BABILONG_PKG)
 
-from transformers import AutoTokenizer, LlamaConfig, LlamaForCausalLM  # noqa: E402
+from transformers import AutoModelForCausalLM, AutoTokenizer, LlamaConfig, LlamaForCausalLM  # noqa: E402
 
 from src.memory.mem_space import (  # noqa: E402
     MemorySpaceConfig,
@@ -2190,8 +2190,15 @@ def merge_adapter_config_into_args(args: argparse.Namespace) -> argparse.Namespa
 
 
 def build_model(args, device, dtype) -> torch.nn.Module:
-    """Load Llama + patch with mem_space + optionally warm-start adapter."""
-    model = LlamaForCausalLM.from_pretrained(
+    """Load base LM + patch with mem_space + optionally warm-start adapter.
+
+    Backbone-agnostic (2026-07-05): AutoModelForCausalLM selects the right class
+    from config.model_type — LlamaForCausalLM for Llama-3-8B, Qwen3ForCausalLM
+    for Qwen3-8B, etc. The mem_space FIFO flat readout wraps whole DecoderLayers
+    and is backbone-independent (Qwen3's per-head QK-norm stays intact because we
+    call the wrapped layer's forward unchanged).
+    """
+    model = AutoModelForCausalLM.from_pretrained(
         args.model_path,
         torch_dtype=dtype,
         attn_implementation=args.attn_impl,

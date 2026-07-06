@@ -52,6 +52,36 @@ from .fast_mem import FastMemModule
 from .memory_bank import MemoryBank
 from .selector import TopKSelector
 
+
+# Backbone-aware RoPE application (2026-07-05). mem_space historically hard-coded
+# `from transformers.models.llama.modeling_llama import apply_rotary_pos_emb` in
+# the keep-set / tree / rawkv helper paths. Those functions are byte-identical
+# across Llama and Qwen3 (verified: same rotate_half + same apply_rotary_pos_emb),
+# but to keep the code honest when the backbone is NOT Llama we resolve the
+# function from the wrapped layer's own module. The FIFO *flat* readout path
+# (pos_mode=None, keep_set=None — the current SOTA) never calls this at all; it
+# only threads the outer model's `position_embeddings` through the wrapped layer.
+def _resolve_apply_rotary_pos_emb(wrapped_layer=None):
+    """Return the correct apply_rotary_pos_emb for the wrapped backbone.
+
+    Preference order:
+      1. The module that defines the wrapped decoder layer's class (so Qwen3
+         layers use qwen3.apply_rotary_pos_emb, Llama uses llama's, etc.).
+      2. Llama's, as a universal fallback (all HF decoder families share the
+         identical NeoX-style implementation).
+    """
+    if wrapped_layer is not None:
+        try:
+            import importlib
+            _mod = importlib.import_module(type(wrapped_layer).__module__)
+            _fn = getattr(_mod, "apply_rotary_pos_emb", None)
+            if _fn is not None:
+                return _fn
+        except Exception:
+            pass
+    from transformers.models.llama.modeling_llama import apply_rotary_pos_emb
+    return apply_rotary_pos_emb
+
 # Reader-attn salience query-pooling mode (2026-06-29). The salience probe was
 # historically the query's LAST token hidden (qv=q_r[:,:,-1,:]). For BABILong qa5
 # the query ends in a function word ("is"/"?"), so q_last carries near-zero
@@ -2041,7 +2071,7 @@ class MemorySpaceLayer(nn.Module):
         """
         try:
             import torch as _t
-            from transformers.models.llama.modeling_llama import apply_rotary_pos_emb
+            apply_rotary_pos_emb = _resolve_apply_rotary_pos_emb(self.wrapped_layer)
             C = len(valid_chunks)
             if C == 0:
                 return None
@@ -2140,7 +2170,7 @@ class MemorySpaceLayer(nn.Module):
         """
         try:
             import torch as _t
-            from transformers.models.llama.modeling_llama import apply_rotary_pos_emb
+            apply_rotary_pos_emb = _resolve_apply_rotary_pos_emb(self.wrapped_layer)
             C = len(valid_chunks)
             if C == 0:
                 return None
@@ -2276,7 +2306,7 @@ class MemorySpaceLayer(nn.Module):
         grad and the selection loss is a silent no-op (the #1 death trap flagged
         in status/LEARN_TO_SELECT_DESIGN §4-D).
         """
-        from transformers.models.llama.modeling_llama import apply_rotary_pos_emb
+        apply_rotary_pos_emb = _resolve_apply_rotary_pos_emb(self.wrapped_layer)
         C = len(chunk_hiddens)
         if C == 0:
             return None
@@ -2320,7 +2350,7 @@ class MemorySpaceLayer(nn.Module):
         construction inside ``_fifo_reader_attn_salience`` / the v1 tree scorer.
         Returns ``None`` on structural failure.
         """
-        from transformers.models.llama.modeling_llama import apply_rotary_pos_emb
+        apply_rotary_pos_emb = _resolve_apply_rotary_pos_emb(self.wrapped_layer)
         _attn = getattr(self.wrapped_layer, "self_attn", None)
         if _attn is None:
             return None
@@ -2437,7 +2467,7 @@ class MemorySpaceLayer(nn.Module):
         """
         try:
             import torch as _t
-            from transformers.models.llama.modeling_llama import apply_rotary_pos_emb
+            apply_rotary_pos_emb = _resolve_apply_rotary_pos_emb(self.wrapped_layer)
             with _t.no_grad():
                 B, M, d = store.token_hidden.shape
                 C = store.gist_src.shape[1]

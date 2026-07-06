@@ -29,7 +29,7 @@ if os.path.isdir(_BABILONG_PKG) and _BABILONG_PKG not in sys.path:
     sys.path.insert(0, _BABILONG_PKG)
 
 import datasets  # noqa: E402
-from transformers import AutoTokenizer, LlamaForCausalLM  # noqa: E402
+from transformers import AutoModelForCausalLM, AutoTokenizer, LlamaForCausalLM  # noqa: E402
 
 from babilong.prompts import DEFAULT_PROMPTS, DEFAULT_TEMPLATE, get_formatted_input  # noqa: E402
 
@@ -234,7 +234,13 @@ def load_mem_space_model(
 ):
     """Build base Llama + mem_space patch + load adapter ckpt."""
     print(f"[mem_space-BABILong] Loading base model from: {model_path}")
-    model = LlamaForCausalLM.from_pretrained(
+    # Backbone-agnostic load (2026-07-05): AutoModelForCausalLM picks the right
+    # class from the checkpoint's config.model_type (LlamaForCausalLM for
+    # model_type=='llama', Qwen3ForCausalLM for 'qwen3', etc.). The mem_space
+    # FIFO flat readout path wraps whole DecoderLayers and is backbone-agnostic,
+    # so the same patch works on any Llama-style decoder stack (Qwen3 keeps its
+    # QK-norm because we call the wrapped layer's forward unchanged).
+    model = AutoModelForCausalLM.from_pretrained(
         model_path,
         torch_dtype=dtype,
         attn_implementation=attn_impl,
@@ -273,47 +279,59 @@ def load_mem_space_model(
         print("[mem_space-BABILong] WARNING: rotary_emb not accessible — skipping H7 fix")
 
     # Load checkpoint
-    print(f"[mem_space-BABILong] Loading checkpoint from: {checkpoint_path}")
-    ckpt = torch.load(checkpoint_path, map_location=device, weights_only=False)
+    # Zero-training sentinel (2026-07-05): "none"/"base"/"" → skip adapter load,
+    # keep base backbone + freshly-initialised adapter params (inject_gate etc.).
+    # Used to probe whether the FIFO hidden readout works WITHOUT any mem_space
+    # training on a given backbone (e.g. Qwen3-8B vs Llama-3-8B).
+    _zero_train = (checkpoint_path is None) or (
+        str(checkpoint_path).strip().lower() in ("", "none", "base", "zero")
+    )
+    if _zero_train:
+        print("[mem_space-BABILong] ZERO-TRAINING mode: skipping adapter "
+              "checkpoint load (base backbone + fresh adapter init).")
+    else:
+        print(f"[mem_space-BABILong] Loading checkpoint from: {checkpoint_path}")
+        ckpt = torch.load(checkpoint_path, map_location=device, weights_only=False)
 
     # Common state-dict layouts: raw OrderedDict / {model_state_dict: ...} / {state_dict: ...}.
-    if isinstance(ckpt, dict):
-        if "model_state_dict" in ckpt:
-            state_dict = ckpt["model_state_dict"]
-        elif "state_dict" in ckpt:
-            state_dict = ckpt["state_dict"]
+    if not _zero_train:
+        if isinstance(ckpt, dict):
+            if "model_state_dict" in ckpt:
+                state_dict = ckpt["model_state_dict"]
+            elif "state_dict" in ckpt:
+                state_dict = ckpt["state_dict"]
+            else:
+                # Assume the dict itself is the state_dict (this is what
+                # eval_niah_mem_space.py:552 expects for the champion ckpt).
+                state_dict = ckpt
         else:
-            # Assume the dict itself is the state_dict (this is what
-            # eval_niah_mem_space.py:552 expects for the champion ckpt).
             state_dict = ckpt
-    else:
-        state_dict = ckpt
 
-    # Strip DDP "module." prefix if present.
-    cleaned: dict = {}
-    for k, v in state_dict.items():
-        if k.startswith("module."):
-            cleaned[k[7:]] = v
-        else:
-            cleaned[k] = v
+        # Strip DDP "module." prefix if present.
+        cleaned: dict = {}
+        for k, v in state_dict.items():
+            if k.startswith("module."):
+                cleaned[k[7:]] = v
+            else:
+                cleaned[k] = v
 
-    missing, unexpected = model.load_state_dict(cleaned, strict=False)
-    print(f"[mem_space-BABILong] Loaded {len(cleaned)} keys | "
-          f"missing={len(missing)} unexpected={len(unexpected)}")
-    if unexpected:
-        print(f"[mem_space-BABILong] WARNING: first 5 unexpected keys: {list(unexpected)[:5]}")
-    # Adapter-specific missing keys are real failures; base-model missing keys
-    # are expected with strict=False (the base weights came from from_pretrained).
-    adapter_missing = [
-        k for k in missing
-        if any(s in k for s in (
-            "slot_output_gate", "gate_param", "Q_sel", "K_sel",
-            "slot_to_hidden", "hidden_to_slot",
-        ))
-    ]
-    if adapter_missing:
-        print(f"[mem_space-BABILong] WARNING: {len(adapter_missing)} adapter keys NOT "
-              f"loaded — first 5: {adapter_missing[:5]}")
+        missing, unexpected = model.load_state_dict(cleaned, strict=False)
+        print(f"[mem_space-BABILong] Loaded {len(cleaned)} keys | "
+              f"missing={len(missing)} unexpected={len(unexpected)}")
+        if unexpected:
+            print(f"[mem_space-BABILong] WARNING: first 5 unexpected keys: {list(unexpected)[:5]}")
+        # Adapter-specific missing keys are real failures; base-model missing keys
+        # are expected with strict=False (the base weights came from from_pretrained).
+        adapter_missing = [
+            k for k in missing
+            if any(s in k for s in (
+                "slot_output_gate", "gate_param", "Q_sel", "K_sel",
+                "slot_to_hidden", "hidden_to_slot",
+            ))
+        ]
+        if adapter_missing:
+            print(f"[mem_space-BABILong] WARNING: {len(adapter_missing)} adapter keys NOT "
+                  f"loaded — first 5: {adapter_missing[:5]}")
 
     # Fix J: force step_counter = warmup_steps so β/warmup_frac is fully ramped.
     from src.memory.mem_space.layer import MemorySpaceLayer as _MSL  # local import to avoid cycles
@@ -1396,7 +1414,10 @@ def main():
     parser.add_argument("--model_path", type=str, required=True,
                         help="Path to base Llama-3-8B model directory")
     parser.add_argument("--checkpoint", type=str, required=True,
-                        help="Path to mem_space adapter .pt checkpoint")
+                        help="Path to mem_space adapter .pt checkpoint. Pass "
+                             "'none' / 'base' / '' to SKIP adapter loading and "
+                             "run ZERO-TRAINING (base backbone + freshly-init "
+                             "adapter params, e.g. inject_gate).")
     parser.add_argument("--adapter_config", type=str, required=True,
                         help="Path to adapter_config.json describing the MemorySpaceConfig")
     parser.add_argument("--results_folder", type=str, default="./babilong_results",
