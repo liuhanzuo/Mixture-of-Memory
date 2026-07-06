@@ -85,7 +85,8 @@ run_task_on_group() {
   local gid="$1"; shift
   local gpus=("$@")
   local j="$T_J" task="$T_TASK" L="$T_LEN"
-  local run="qcmem_j${j}"
+  local _sfx=""; [ "$SELECTOR" != "bm25" ] && _sfx="_${SELECTOR}"
+  local run="qcmem_j${j}${_sfx}"
   local results="babilong_results/$run"
   local out_name="${run}_${L}"
   local pids=()
@@ -139,7 +140,8 @@ fi
 
 echo "[$(date)] ALL_EVAL_DONE — scoring j-sweep:"
 for j in "${J_ARR[@]}"; do
-  run="qcmem_j${j}"
+  _sfx=""; [ "$SELECTOR" != "bm25" ] && _sfx="_${SELECTOR}"
+  run="qcmem_j${j}${_sfx}"
   echo "=== $run ==="
   $PYBIN scripts/score_nested_babilong.py "babilong_results/$run" --expect -1 2>&1 | tail -6
 done
