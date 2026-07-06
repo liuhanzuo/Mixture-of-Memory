@@ -68,23 +68,65 @@ from src.memory.qcmem import QCMemModel  # noqa: E402
 
 
 # --------------------------------------------------------------------------- #
-# chunk selection (free selectors: no model forward)
+# chunk selection
+#   recency / bm25 / oracle : lexical / positional, no model forward.
+#   reader_attn             : semantic, scores the ALREADY-computed depth-j
+#                             ``write_chunk`` hiddens (bottom-j only, NOT a full
+#                             model re-forward — so QCMem's compute saving holds).
 # --------------------------------------------------------------------------- #
+def _reader_attn_scores(context_hj, query_hj):
+    """Salience of each context chunk to the query, from cached depth-``j`` hidden
+    states (``h_j`` == the ``write_chunk`` output; NO extra model forward).
+
+    Score = cosine similarity between the mean-pooled (over the token axis) query
+    ``h_j`` vector and each context chunk's mean-pooled ``h_j`` vector. Mean-pool
+    collapses ``[1, T, d] -> [d]`` so variable chunk lengths compare cleanly, and
+    cosine normalises away per-chunk hidden-norm scale differences.
+
+    Returns ``list[float]`` aligned with ``context_hj`` (higher == more salient).
+    """
+    # query vector: mean over tokens, then L2-normalise (fp32 for a stable dot).
+    q_vec = query_hj.float().mean(dim=1).squeeze(0)          # [d]
+    q_vec = q_vec / (q_vec.norm() + 1e-8)
+    scores = []
+    for h in context_hj:
+        if h is None or h.shape[1] == 0:
+            scores.append(float("-inf"))
+            continue
+        c_vec = h.float().mean(dim=1).squeeze(0)             # [d]
+        c_vec = c_vec / (c_vec.norm() + 1e-8)
+        scores.append(float(torch.dot(q_vec, c_vec).item()))  # cosine similarity
+    return scores
+
+
 def _select_context_chunk_indices(
     selector: str,
     context_chunks,        # list[LongTensor] == chunks[:-1] (doc order)
     query_ids,             # list[int] bare-question token ids
     topk: int,
     needle_chunk_set,      # set[int] doc-absolute chunk indices (oracle) or None
+    context_hj=None,       # list[Tensor [1,T,d]] cached h_j  (reader_attn only)
+    query_hj=None,         # Tensor [1,T,d] query chunk h_j   (reader_attn only)
 ):
     """Return a sorted list of context-chunk indices (into ``context_chunks``)
-    to pack into the read, chosen by the requested free selector.
+    to pack into the read, chosen by the requested selector.
 
-    * ``recency`` — the last ``topk`` context chunks.
-    * ``bm25``    — the ``topk`` context chunks with the highest lexical BM25
-                    overlap with the bare question (pure CPU, no forward).
-    * ``oracle``  — the context chunks that CONTAIN the gold answer (upper bound).
-                    Falls back to ``recency`` if the needle cannot be located.
+    * ``recency``     — the last ``topk`` context chunks.
+    * ``bm25``        — the ``topk`` context chunks with the highest lexical BM25
+                        overlap with the bare question (pure CPU, no forward).
+    * ``oracle``      — the context chunks that CONTAIN the gold answer (upper
+                        bound). Falls back to ``recency`` if the needle can't be
+                        located.
+    * ``reader_attn`` — the ``topk`` context chunks whose cached depth-``j`` hidden
+                        ``h_j`` is most salient to the query ``h_j`` (mean-pool
+                        cosine; see :func:`_reader_attn_scores`). Consumes the
+                        ALREADY-computed ``write_chunk`` outputs, so it adds NO
+                        model forward beyond the bottom-j writes QCMem already
+                        does. Falls back to ``recency`` if the caller did not
+                        supply ``context_hj`` / ``query_hj``.
+
+    ``context_hj`` / ``query_hj`` are used only by ``reader_attn``; the other
+    selectors ignore them (kwargs default to ``None`` for backward compatibility).
     """
     n_ctx = len(context_chunks)
     if n_ctx == 0:
@@ -115,6 +157,17 @@ def _select_context_chunk_indices(
         scores = harness._bm25_scores(docs, list(query_ids))
         if not scores:
             return list(range(max(0, n_ctx - k), n_ctx))
+        order = sorted(range(n_ctx), key=lambda i: scores[i], reverse=True)
+        return sorted(order[:k])
+
+    if selector == "reader_attn":
+        if k <= 0:
+            return []
+        # Needs the cached h_j of every context chunk + the query chunk. If the
+        # caller didn't supply them, degrade gracefully to recency.
+        if not context_hj or query_hj is None or len(context_hj) != n_ctx:
+            return list(range(max(0, n_ctx - k), n_ctx))
+        scores = _reader_attn_scores(context_hj, query_hj)
         order = sorted(range(n_ctx), key=lambda i: scores[i], reverse=True)
         return sorted(order[:k])
 
@@ -154,12 +207,27 @@ def qcmem_generate(
         sink_hj = qc.write_chunk([bos_id])
 
     # ---- select which context chunks to pack ----
+    # reader_attn scores each chunk by its cached depth-j hidden (query h_j vs
+    # each context chunk h_j). Those hiddens are the bottom-j ``write_chunk``
+    # outputs QCMem needs anyway, so we compute them up front and REUSE the
+    # selected ones below — nothing is written (or full-forwarded) twice.
+    context_hj = None
+    query_hj_for_sel = None
+    if selector == "reader_attn":
+        context_hj = [qc.write_chunk(c) for c in context_chunks]
+        query_hj_for_sel = qc.write_chunk(query_chunk)
+
     sel_idx = _select_context_chunk_indices(
-        selector, context_chunks, bare_question_ids or [], topk, needle_chunk_set
+        selector, context_chunks, bare_question_ids or [], topk, needle_chunk_set,
+        context_hj=context_hj, query_hj=query_hj_for_sel,
     )
 
     # ---- write (encode to depth j) the selected context chunks ONCE ----
-    selected_hj = [qc.write_chunk(context_chunks[i]) for i in sel_idx]
+    if context_hj is not None:
+        # reader_attn already wrote every context chunk: reuse, do not re-write.
+        selected_hj = [context_hj[i] for i in sel_idx]
+    else:
+        selected_hj = [qc.write_chunk(context_chunks[i]) for i in sel_idx]
 
     # ---- greedy decode: only the growing query chunk is re-encoded per step ----
     query_ids = query_chunk.tolist()
@@ -274,8 +342,10 @@ def main():
                              "adapter dir (Direction A). Loaded onto the frozen "
                              "backbone before building the QCMem orchestrator.")
     parser.add_argument("--selector", type=str, default="bm25",
-                        choices=["bm25", "recency", "oracle"],
-                        help="Free chunk selector for the read pack.")
+                        choices=["bm25", "recency", "oracle", "reader_attn"],
+                        help="Chunk selector for the read pack. reader_attn scores "
+                             "chunks by query-h_j vs chunk-h_j cosine (reuses the "
+                             "cached write_chunk hiddens, no extra forward).")
     parser.add_argument("--topk", type=int, default=4,
                         help="Number of context chunks to pack into the read.")
     parser.add_argument("--sink_tokens", type=str, default="bos",
