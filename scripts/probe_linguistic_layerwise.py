@@ -3,8 +3,23 @@
 """
 Layer-wise linguistic probing of Qwen3-8B (Tenney edge-probing style).
 
-Question: Where does Qwen3-8B concentrate semantic processing? Is the claim
-"the first ~12 layers focus on semantics" supported by data?
+Real question (2026-07-07 user clarification): NOT "the first j layers saturate
+semantics" (our own monotone j-sweep already falsified that). The hypothesis to
+test is a DIVISION OF LABOUR:
+
+    early/mid layers "mostly" do semantic understanding;
+    the top few layers "mostly" do the AR generation strategy
+    (turning the already-understood meaning into a next-token distribution).
+
+Implications tested here:
+  (e) Semantic ability should be near the top-layer level already in early/mid
+      layers -> report j* = earliest layer reaching 95%/99% of the TOP-layer
+      accuracy, and the top-layer increment over j* (small => top does no semantics).
+  (f) Add a "generation/output" probe: standard logit-lens next-token top-1
+      accuracy per layer (each layer's hidden -> model.norm -> lm_head). Overlay
+      it against the semantic-understanding curves. If semantics saturate early
+      while next-token only forms near the top, the two curves separate and that
+      directly supports "mid = understand, top = generate".
 
 Method
 ------
@@ -13,8 +28,10 @@ Method
 2. On each layer, train a lightweight linear probe (sklearn LogisticRegression
    on standardized features). Token-level tasks use per-word representations
    (mean of subword pieces), sentence tasks use mean-pooled representations.
-3. Record dev accuracy per layer, per task; report peak layer and the earliest
-   "saturation" layer that reaches 95% of the peak accuracy.
+3. Record dev accuracy per layer, per task; report peak layer, saturation layer,
+   and (e) top-relative saturation j*.
+4. (f) Compute the logit-lens next-token top-1 accuracy curve on natural text and
+   compare semantic vs generation saturation depth.
 
 Tasks span a lexical -> syntactic -> semantic gradient:
   POS      (batterydata/pos_tagging)            lexical    token-level
@@ -24,9 +41,11 @@ Tasks span a lexical -> syntactic -> semantic gradient:
   SST2     (glue/sst2, sentiment)               semantic   sentence-level
   RTE      (glue/rte, NLI entailment)           semantic   sentence-pair
 
-Honesty (project red-line #2): report peak layers as measured. Do NOT massage
-data toward the desired "first 12 layers = semantic" conclusion. If semantics
-peak/saturate deeper or shallower, say so.
+Honesty (project red-line #2): report layers as measured. Do NOT massage data
+toward the division-of-labour conclusion. If the semantic probe ALSO only
+saturates at the top, or the two curves do NOT separate (next-token saturates
+early too / semantics saturate late), say explicitly that the data does not
+support the division-of-labour hypothesis.
 """
 import argparse
 import json
@@ -103,7 +122,7 @@ def extract_token_level(model, tok, sents_words, sents_labels, device, max_len,
 
     sents_words:  list[list[str]]   words per sentence
     sents_labels: list[list[str]]   label per word (aligned)
-    Returns feats {layer: np.float16 [N, H]}, y (list[str]).
+    Returns feats {layer: np.float32 [N, H]}, y (list[str]).
     """
     feats = {l: [] for l in range(n_layers)}
     ys = []
@@ -127,11 +146,11 @@ def extract_token_level(model, tok, sents_words, sents_labels, device, max_len,
                     continue  # word truncated away
                 for l in range(n_layers):
                     v = hs[l][bi, tok_idx, :].mean(dim=0)
-                    feats[l].append(v.half().numpy())
+                    feats[l].append(v.numpy())
                 ys.append(lab)
         if max_tokens and len(ys) >= max_tokens:
             break
-    feats = {l: np.stack(v).astype(np.float16) for l, v in feats.items()}
+    feats = {l: np.stack(v).astype(np.float32) for l, v in feats.items()}
     return feats, ys
 
 
@@ -146,8 +165,8 @@ def extract_sentence_pooled(model, tok, sentences, device, max_len, batch_size, 
         for l in range(n_layers):
             pooled = (hs[l] * mask).sum(dim=1) / denom  # (B,H)
             for bi in range(pooled.shape[0]):
-                feats[l].append(pooled[bi].half().numpy())
-    feats = {l: np.stack(v).astype(np.float16) for l, v in feats.items()}
+                feats[l].append(pooled[bi].numpy())
+    feats = {l: np.stack(v).astype(np.float32) for l, v in feats.items()}
     return feats
 
 
@@ -165,8 +184,8 @@ def extract_target_word(model, tok, sentences, spans, device, max_len, batch_siz
                 tok_idx = [int(nz[-1])] if len(nz) else [0]
             for l in range(n_layers):
                 v = hs[l][bi, tok_idx, :].mean(dim=0)
-                feats[l].append(v.half().numpy())
-    feats = {l: np.stack(v).astype(np.float16) for l, v in feats.items()}
+                feats[l].append(v.numpy())
+    feats = {l: np.stack(v).astype(np.float32) for l, v in feats.items()}
     return feats
 
 
@@ -176,8 +195,92 @@ def combine_pair(fa, fb, n_layers):
     for l in range(n_layers):
         a = fa[l].astype(np.float32)
         b = fb[l].astype(np.float32)
-        out[l] = np.concatenate([a, b, np.abs(a - b), a * b], axis=1).astype(np.float16)
+        out[l] = np.concatenate([a, b, np.abs(a - b), a * b], axis=1).astype(np.float32)
     return out
+
+
+# ----------------------------------------------------------------------------
+# (f) Logit-lens next-token accuracy curve (the "generation/output" side)
+# ----------------------------------------------------------------------------
+@torch.no_grad()
+def logit_lens_nexttoken_acc(model, tok, sentences, device, max_len, batch_size, n_layers):
+    """Standard logit-lens: for each layer's hidden state, apply the model's
+    final RMSNorm (model.norm) then the lm_head, and measure top-1 next-token
+    prediction accuracy against the actual next token.
+
+    Rationale (division-of-labour test): the "understanding" side (semantic
+    probes) is expected to saturate in early/mid layers, while the
+    "generation/output" side (this curve) is expected to only take shape near
+    the top. If the two curves separate, that supports "mid = understand,
+    top = generate".
+
+    Applying model.norm before lm_head is essential: without it, early-layer
+    hidden states have a different norm scale than lm_head expects, which
+    artificially depresses early-layer accuracy (a known logit-lens pitfall).
+
+    Returns list[float] of per-layer top-1 next-token accuracy (length n_layers).
+    """
+    # Locate the final norm and the output projection robustly across HF layouts.
+    base = getattr(model, "model", model)  # Qwen3ForCausalLM.model
+    final_norm = getattr(base, "norm", None)
+    lm_head = model.get_output_embeddings()
+    if final_norm is None or lm_head is None:
+        raise RuntimeError("could not locate model.norm / lm_head for logit-lens")
+
+    # correct count / total count per layer (predict token t+1 from hidden at t)
+    correct = np.zeros(n_layers, dtype=np.int64)
+    total = 0
+    for b0 in range(0, len(sentences), batch_size):
+        bs = sentences[b0:b0 + batch_size]
+        enc = tok(bs, return_tensors="pt", padding=True, truncation=True,
+                  max_length=max_len, add_special_tokens=False)
+        enc = {k: v.to(device) for k, v in enc.items()}
+        out = model(**enc)
+        input_ids = enc["input_ids"]           # (B,T)
+        attn = enc["attention_mask"]           # (B,T)
+        B, T = input_ids.shape
+        # valid prediction positions: t in [0, T-2], and both t and t+1 are non-pad
+        pred_mask = (attn[:, :-1] > 0) & (attn[:, 1:] > 0)   # (B,T-1)
+        targets = input_ids[:, 1:]                            # (B,T-1)
+        n_valid = int(pred_mask.sum().item())
+        if n_valid == 0:
+            continue
+        total += n_valid
+        for l in range(n_layers):
+            h = out.hidden_states[l][:, :-1, :]               # (B,T-1,H)
+            # cast to the norm's dtype for the projection
+            h = h.to(final_norm.weight.dtype)
+            logits = lm_head(final_norm(h))                    # (B,T-1,V)
+            pred = logits.argmax(dim=-1)                       # (B,T-1)
+            hit = (pred == targets) & pred_mask
+            correct[l] += int(hit.sum().item())
+    if total == 0:
+        return [0.0] * n_layers
+    return [float(correct[l] / total) for l in range(n_layers)]
+
+
+def load_natural_text(tok, n_sent, max_len):
+    """A batch of natural-language sentences for the logit-lens curve.
+    Reuse WikiText-103 if available; otherwise fall back to GLUE/SST2 sentences,
+    which are plain English text and adequate for next-token top-1 measurement."""
+    sents = []
+    try:
+        ds = load_hf("wikitext", "wikitext-103-raw-v1", split="train")
+        for r in ds:
+            t = r["text"].strip()
+            if len(t.split()) >= 12:  # skip headers / blank lines
+                sents.append(t)
+            if len(sents) >= n_sent:
+                break
+        if sents:
+            print(f"    logit-lens corpus: wikitext-103 ({len(sents)} lines)", flush=True)
+            return sents
+    except Exception as e:
+        print(f"    wikitext unavailable ({repr(e)[:120]}); falling back to SST2", flush=True)
+    ds = load_hf("glue", "sst2", split="train").select(range(min(n_sent, 5000)))
+    sents = [r["sentence"] for r in ds][:n_sent]
+    print(f"    logit-lens corpus: glue/sst2 fallback ({len(sents)} sentences)", flush=True)
+    return sents
 
 
 # ----------------------------------------------------------------------------
@@ -191,8 +294,8 @@ def train_probes(feats_tr, y_tr, feats_dv, y_dv, n_layers, C=1.0, max_iter=2000)
     y_dv = np.asarray(y_dv)
     accs = []
     for l in range(n_layers):
-        Xtr = feats_tr[l].astype(np.float32)
-        Xdv = feats_dv[l].astype(np.float32)
+        Xtr = np.nan_to_num(feats_tr[l].astype(np.float32), posinf=0.0, neginf=0.0)
+        Xdv = np.nan_to_num(feats_dv[l].astype(np.float32), posinf=0.0, neginf=0.0)
         scaler = StandardScaler().fit(Xtr)
         clf = LogisticRegression(C=C, max_iter=max_iter, n_jobs=-1)
         clf.fit(scaler.transform(Xtr), y_tr)
@@ -202,16 +305,44 @@ def train_probes(feats_tr, y_tr, feats_dv, y_dv, n_layers, C=1.0, max_iter=2000)
     return accs
 
 
+def _earliest_layer_reaching(accs, target):
+    """Earliest layer index whose acc >= target; None if never."""
+    for l, a in enumerate(accs):
+        if a >= target:
+            return int(l)
+    return None
+
+
 def summarize(accs, sat_frac=0.95):
     peak_layer = int(np.argmax(accs))
     peak_acc = float(accs[peak_layer])
     thresh = sat_frac * peak_acc
     sat_layer = next((l for l, a in enumerate(accs) if a >= thresh), peak_layer)
+
+    # --- (e) top-layer-relative saturation (division-of-labour test) ---------
+    # j* = earliest layer reaching 95% / 99% of the *final (top) layer* accuracy.
+    # If j* << top layer AND top-layer increment over j* is tiny, semantics are
+    # essentially resolved in early/mid layers -> supports "top does not do semantics".
+    top_layer = len(accs) - 1
+    top_acc = float(accs[top_layer])
+    j95 = _earliest_layer_reaching(accs, 0.95 * top_acc)
+    j99 = _earliest_layer_reaching(accs, 0.99 * top_acc)
+    if j95 is None:
+        j95 = top_layer
+    if j99 is None:
+        j99 = top_layer
     return {
         "peak_layer": peak_layer,
         "peak_acc": peak_acc,
         "saturation_layer": int(sat_layer),
         "saturation_thresh": float(thresh),
+        # top-relative (analysis e)
+        "top_layer": int(top_layer),
+        "top_acc": round(top_acc, 4),
+        "sat95_top_layer": int(j95),          # j* @ 95% of top-layer acc
+        "sat99_top_layer": int(j99),          # j* @ 99% of top-layer acc
+        "top_increment_over_j95": round(top_acc - float(accs[j95]), 4),
+        "top_increment_over_j99": round(top_acc - float(accs[j99]), 4),
         "per_layer_acc": [round(a, 4) for a in accs],
     }
 
@@ -334,6 +465,10 @@ def main():
     ap.add_argument("--n_dev_sent", type=int, default=1000)
     ap.add_argument("--C", type=float, default=1.0)
     ap.add_argument("--tasks", default="POS,DEPREL,CoLA,WiC,SST2,RTE")
+    ap.add_argument("--n_logitlens_sent", type=int, default=500,
+                    help="natural-text sentences for the logit-lens next-token curve (f)")
+    ap.add_argument("--skip_logitlens", action="store_true",
+                    help="skip the logit-lens next-token comparison curve")
     args = ap.parse_args()
 
     t0 = time.time()
@@ -381,19 +516,98 @@ def main():
         with open(args.out, "w") as f:
             json.dump(results, f, indent=2)
 
+    # ------------------------------------------------------------------
+    # (f) Logit-lens next-token top-1 accuracy curve + division-of-labour test
+    # ------------------------------------------------------------------
+    if not args.skip_logitlens:
+        print(f"\n[{time.strftime('%H:%M:%S')}] === LOGIT-LENS next-token curve ===", flush=True)
+        try:
+            tll = time.time()
+            sents = load_natural_text(tok, args.n_logitlens_sent, args.max_len)
+            ll_acc = logit_lens_nexttoken_acc(model, tok, sents, args.device,
+                                              args.max_len, args.batch_size, n_layers)
+            for l, a in enumerate(ll_acc):
+                print(f"    layer {l:2d}  nexttok_top1={a:.4f}", flush=True)
+            top = len(ll_acc) - 1
+            ll_summary = {
+                "per_layer_nexttoken_top1": [round(a, 4) for a in ll_acc],
+                "top_layer": int(top),
+                "top_acc": round(float(ll_acc[top]), 4),
+                "sat95_top_layer": _earliest_layer_reaching(ll_acc, 0.95 * ll_acc[top]),
+                "sat99_top_layer": _earliest_layer_reaching(ll_acc, 0.99 * ll_acc[top]),
+                "n_sentences": len(sents),
+                "extract_sec": round(time.time() - tll, 1),
+            }
+            results["logit_lens_nexttoken"] = ll_summary
+            print(f"  -> next-token top1: top(L{top})={ll_acc[top]:.4f}, "
+                  f"95%@L{ll_summary['sat95_top_layer']}, "
+                  f"99%@L{ll_summary['sat99_top_layer']}", flush=True)
+
+            # --- division-of-labour comparison: semantic understanding vs generation ---
+            sem_tasks = [n for n, s in results["tasks"].items()
+                         if isinstance(s, dict) and s.get("category") == "semantic"
+                         and "sat95_top_layer" in s]
+            if sem_tasks:
+                sem_j95 = [results["tasks"][n]["sat95_top_layer"] for n in sem_tasks]
+                sem_mean_j95 = float(np.mean(sem_j95))
+                ll_j95 = ll_summary["sat95_top_layer"]
+                # curves "separate" if semantics saturate meaningfully earlier
+                # (in fractional depth) than the next-token/generation curve
+                frac_sem = sem_mean_j95 / (n_layers - 1)
+                frac_ll = (ll_j95 if ll_j95 is not None else (n_layers - 1)) / (n_layers - 1)
+                separated = (frac_ll - frac_sem) >= 0.15  # >=15% of depth later
+                verdict = ("SUPPORTS division-of-labour (semantics saturate early/mid, "
+                           "next-token forms near the top)" if separated else
+                           "DOES NOT clearly support division-of-labour "
+                           "(curves do not separate by >=15% of depth)")
+                results["division_of_labour"] = {
+                    "semantic_tasks": sem_tasks,
+                    "semantic_mean_sat95_top_layer": round(sem_mean_j95, 2),
+                    "semantic_sat95_frac_depth": round(frac_sem, 3),
+                    "nexttoken_sat95_top_layer": ll_j95,
+                    "nexttoken_sat95_frac_depth": round(frac_ll, 3),
+                    "gap_frac_depth": round(frac_ll - frac_sem, 3),
+                    "curves_separate": bool(separated),
+                    "verdict": verdict,
+                    "honesty_note": "threshold-based heuristic; inspect per-layer curves "
+                                    "in both fields before drawing conclusions.",
+                }
+                print(f"  -> DIVISION-OF-LABOUR: sem 95%@~L{sem_mean_j95:.1f} "
+                      f"(depth {frac_sem:.2f}) vs nexttok 95%@L{ll_j95} "
+                      f"(depth {frac_ll:.2f}) -> {verdict}", flush=True)
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            results["logit_lens_nexttoken"] = {"error": repr(e)[:300]}
+        with open(args.out, "w") as f:
+            json.dump(results, f, indent=2)
+
     results["elapsed_sec"] = round(time.time() - t0, 1)
     with open(args.out, "w") as f:
         json.dump(results, f, indent=2)
 
     print(f"\n[{time.strftime('%H:%M:%S')}] DONE in {results['elapsed_sec']}s -> {args.out}")
-    print("\n=== SUMMARY (peak / saturation layer per task) ===")
-    print(f"{'task':8s} {'cat':10s} {'peak':>5s} {'peakacc':>8s} {'sat':>4s} {'maj':>6s}")
+    print("\n=== SUMMARY (peak / sat / top-relative saturation per task) ===")
+    print(f"{'task':8s} {'cat':10s} {'peak':>5s} {'peakacc':>8s} {'top':>4s} "
+          f"{'j95*':>5s} {'j99*':>5s} {'dTop95':>7s} {'maj':>6s}")
     for name, s in results["tasks"].items():
         if "error" in s:
             print(f"{name:8s} ERROR {s['error']}")
             continue
         print(f"{name:8s} {s['category']:10s} {s['peak_layer']:5d} "
-              f"{s['peak_acc']:8.4f} {s['saturation_layer']:4d} {s['majority_baseline']:6.3f}")
+              f"{s['peak_acc']:8.4f} {s['top_layer']:4d} "
+              f"{s['sat95_top_layer']:5d} {s['sat99_top_layer']:5d} "
+              f"{s['top_increment_over_j95']:7.4f} {s['majority_baseline']:6.3f}")
+
+    if "division_of_labour" in results:
+        d = results["division_of_labour"]
+        print("\n=== (f) DIVISION-OF-LABOUR (semantic understanding vs next-token generation) ===")
+        print(f"  semantic tasks: {d['semantic_tasks']}")
+        print(f"  semantic 95%-of-top saturates @ ~L{d['semantic_mean_sat95_top_layer']} "
+              f"(depth {d['semantic_sat95_frac_depth']:.2f})")
+        print(f"  next-token 95%-of-top saturates @ L{d['nexttoken_sat95_top_layer']} "
+              f"(depth {d['nexttoken_sat95_frac_depth']:.2f})")
+        print(f"  gap (depth): {d['gap_frac_depth']:+.2f}  ->  {d['verdict']}")
 
 
 if __name__ == "__main__":
