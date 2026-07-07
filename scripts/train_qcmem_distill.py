@@ -264,13 +264,14 @@ def main():
               f"chunk={args.chunk_size} n_ctx={args.n_ctx} dtype={dtype} "
               f"world_size={world_size}", flush=True)
 
-    tokenizer = AutoTokenizer.from_pretrained(args.model_path, trust_remote_code=True)
+    tokenizer = AutoTokenizer.from_pretrained(
+        args.model_path, trust_remote_code=True, local_files_only=True)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 
     base = AutoModelForCausalLM.from_pretrained(
         args.model_path, dtype=dtype, attn_implementation=args.attn_impl,
-        trust_remote_code=True,
+        trust_remote_code=True, local_files_only=True,
     ).to(device)
     base.config.use_cache = False
     L = int(base.config.num_hidden_layers)
