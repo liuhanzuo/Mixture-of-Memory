@@ -42,7 +42,7 @@ mkdir -p logs "$OUT"
 
 echo "[launch] ARM=$ARM GPUS=$GPUS ngpu=$NGPU bd=$BD layer=$BOTTLENECK_LAYER out=$OUT port=$PORT"
 
-CUDA_VISIBLE_DEVICES="$GPUS" torchrun \
+CUDA_VISIBLE_DEVICES="$GPUS" "$PYTHON_BIN" -m torch.distributed.run \
   --nproc_per_node="$NGPU" --nnodes=1 \
   --rdzv_backend=c10d --rdzv_endpoint="127.0.0.1:$PORT" \
   scripts/train_semantic_bottleneck_1b.py \
