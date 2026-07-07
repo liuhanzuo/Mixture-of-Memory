@@ -1,0 +1,782 @@
+{
+  "config": {
+    "n_examples": 96,
+    "seq_len": 512,
+    "ranks": [
+      512,
+      256,
+      128,
+      64
+    ],
+    "val_path": "data/slimpajama_val_4096_llama3.npy",
+    "js_probed": [
+      4,
+      6,
+      8
+    ]
+  },
+  "arms": {
+    "j4d512": {
+      "j": 4,
+      "dim": 512,
+      "division_of_labour": {
+        "bottleneck_layer": 4,
+        "bottleneck_dim": 512,
+        "gen_acc_curve": [
+          0.0002,
+          0.0003,
+          0.0001,
+          0.0001,
+          0.0001,
+          0.0001,
+          0.0566,
+          0.0847,
+          0.1176,
+          0.1778,
+          0.2066,
+          0.2333,
+          0.2527,
+          0.2703,
+          0.2884,
+          0.3084,
+          0.3178
+        ],
+        "nll_curve": [
+          43.0132,
+          11.6023,
+          11.7087,
+          11.7863,
+          11.8668,
+          11.94,
+          9.0649,
+          8.4075,
+          7.7962,
+          6.7892,
+          6.282,
+          5.7732,
+          5.3644,
+          4.9404,
+          4.6037,
+          4.298,
+          4.166
+        ],
+        "pre_j_gen_acc": [
+          0.0003,
+          0.0001,
+          0.0001,
+          0.0001
+        ],
+        "pre_j_gen_acc_max": 0.0003,
+        "jstar95": 15,
+        "jstar99": 16,
+        "top_acc": 0.3178,
+        "post_bottleneck_jump": 0.0565
+      },
+      "qcmem": {
+        "bottleneck_layer": 4,
+        "bottleneck_dim": 512,
+        "full_forward": {
+          "acc": 0.3178,
+          "nll": 4.166
+        },
+        "compressibility": {
+          "n_vectors": 49152,
+          "d": 2048,
+          "dim_90": 197,
+          "dim_95": 282,
+          "dim_99": 426,
+          "effective_rank_spectral_entropy": 147.67,
+          "participation_ratio": 61.88,
+          "top1_var_frac": 0.0761,
+          "int4_recon_relerr": 0.2323
+        },
+        "readout": {
+          "none": {
+            "acc": 0.3178,
+            "nll": 4.166,
+            "acc_drop": 0.0
+          },
+          "pca_rank512": {
+            "acc": 0.3177,
+            "nll": 4.1659,
+            "acc_drop": 0.0002
+          },
+          "pca_rank256": {
+            "acc": 0.315,
+            "nll": 4.1863,
+            "acc_drop": 0.0028
+          },
+          "pca_rank128": {
+            "acc": 0.3072,
+            "nll": 4.2626,
+            "acc_drop": 0.0106
+          },
+          "pca_rank64": {
+            "acc": 0.2808,
+            "nll": 4.4948,
+            "acc_drop": 0.037
+          },
+          "int4": {
+            "acc": 0.3146,
+            "nll": 4.189,
+            "acc_drop": 0.0032
+          }
+        }
+      }
+    },
+    "j6d256": {
+      "j": 6,
+      "dim": 256,
+      "division_of_labour": {
+        "bottleneck_layer": 6,
+        "bottleneck_dim": 256,
+        "gen_acc_curve": [
+          0.0002,
+          0.0001,
+          0.0,
+          0.0001,
+          0.0001,
+          0.0001,
+          0.0001,
+          0.0001,
+          0.05,
+          0.0776,
+          0.156,
+          0.1967,
+          0.2318,
+          0.2575,
+          0.279,
+          0.3001,
+          0.3141
+        ],
+        "nll_curve": [
+          43.0126,
+          12.0045,
+          11.9623,
+          11.9982,
+          11.9656,
+          11.9506,
+          11.9695,
+          11.9928,
+          9.1797,
+          8.623,
+          7.1882,
+          6.3803,
+          5.7061,
+          5.2276,
+          4.7559,
+          4.3831,
+          4.2021
+        ],
+        "pre_j_gen_acc": [
+          0.0001,
+          0.0,
+          0.0001,
+          0.0001,
+          0.0001,
+          0.0001
+        ],
+        "pre_j_gen_acc_max": 0.0001,
+        "jstar95": 15,
+        "jstar99": 16,
+        "top_acc": 0.3141,
+        "post_bottleneck_jump": 0.0499
+      },
+      "qcmem": {
+        "bottleneck_layer": 6,
+        "bottleneck_dim": 256,
+        "full_forward": {
+          "acc": 0.3141,
+          "nll": 4.2021
+        },
+        "compressibility": {
+          "n_vectors": 49152,
+          "d": 2048,
+          "dim_90": 121,
+          "dim_95": 163,
+          "dim_99": 224,
+          "effective_rank_spectral_entropy": 101.33,
+          "participation_ratio": 48.15,
+          "top1_var_frac": 0.0907,
+          "int4_recon_relerr": 0.2576
+        },
+        "readout": {
+          "none": {
+            "acc": 0.3141,
+            "nll": 4.2021,
+            "acc_drop": 0.0
+          },
+          "pca_rank512": {
+            "acc": 0.3138,
+            "nll": 4.2022,
+            "acc_drop": 0.0002
+          },
+          "pca_rank256": {
+            "acc": 0.3141,
+            "nll": 4.2022,
+            "acc_drop": 0.0
+          },
+          "pca_rank128": {
+            "acc": 0.311,
+            "nll": 4.2435,
+            "acc_drop": 0.0031
+          },
+          "pca_rank64": {
+            "acc": 0.2889,
+            "nll": 4.4263,
+            "acc_drop": 0.0251
+          },
+          "int4": {
+            "acc": 0.3095,
+            "nll": 4.2341,
+            "acc_drop": 0.0045
+          }
+        }
+      }
+    },
+    "j6d512": {
+      "j": 6,
+      "dim": 512,
+      "division_of_labour": {
+        "bottleneck_layer": 6,
+        "bottleneck_dim": 512,
+        "gen_acc_curve": [
+          0.0002,
+          0.0,
+          0.0001,
+          0.0,
+          0.0001,
+          0.0,
+          0.0001,
+          0.0001,
+          0.0797,
+          0.103,
+          0.1664,
+          0.2079,
+          0.2377,
+          0.2589,
+          0.2815,
+          0.305,
+          0.3154
+        ],
+        "nll_curve": [
+          43.0006,
+          11.9235,
+          12.0439,
+          12.0902,
+          12.1435,
+          12.134,
+          12.127,
+          12.1111,
+          8.4127,
+          7.9746,
+          6.889,
+          6.1919,
+          5.6134,
+          5.1605,
+          4.7332,
+          4.3468,
+          4.1809
+        ],
+        "pre_j_gen_acc": [
+          0.0,
+          0.0001,
+          0.0,
+          0.0001,
+          0.0,
+          0.0001
+        ],
+        "pre_j_gen_acc_max": 0.0001,
+        "jstar95": 15,
+        "jstar99": 16,
+        "top_acc": 0.3154,
+        "post_bottleneck_jump": 0.0796
+      },
+      "qcmem": {
+        "bottleneck_layer": 6,
+        "bottleneck_dim": 512,
+        "full_forward": {
+          "acc": 0.3154,
+          "nll": 4.1809
+        },
+        "compressibility": {
+          "n_vectors": 49152,
+          "d": 2048,
+          "dim_90": 202,
+          "dim_95": 287,
+          "dim_99": 427,
+          "effective_rank_spectral_entropy": 149.23,
+          "participation_ratio": 59.76,
+          "top1_var_frac": 0.0767,
+          "int4_recon_relerr": 0.2576
+        },
+        "readout": {
+          "none": {
+            "acc": 0.3154,
+            "nll": 4.1809,
+            "acc_drop": 0.0
+          },
+          "pca_rank512": {
+            "acc": 0.3158,
+            "nll": 4.181,
+            "acc_drop": -0.0004
+          },
+          "pca_rank256": {
+            "acc": 0.3143,
+            "nll": 4.2018,
+            "acc_drop": 0.0011
+          },
+          "pca_rank128": {
+            "acc": 0.3046,
+            "nll": 4.2813,
+            "acc_drop": 0.0108
+          },
+          "pca_rank64": {
+            "acc": 0.2799,
+            "nll": 4.5047,
+            "acc_drop": 0.0355
+          },
+          "int4": {
+            "acc": 0.3114,
+            "nll": 4.2102,
+            "acc_drop": 0.004
+          }
+        }
+      }
+    },
+    "j6d1024": {
+      "j": 6,
+      "dim": 1024,
+      "division_of_labour": {
+        "bottleneck_layer": 6,
+        "bottleneck_dim": 1024,
+        "gen_acc_curve": [
+          0.0002,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0872,
+          0.1147,
+          0.1672,
+          0.1988,
+          0.2399,
+          0.2615,
+          0.2855,
+          0.3052,
+          0.316
+        ],
+        "nll_curve": [
+          43.0006,
+          12.1724,
+          12.2218,
+          12.2698,
+          12.2789,
+          12.2692,
+          12.2764,
+          12.2655,
+          8.1495,
+          7.7217,
+          6.8715,
+          6.2657,
+          5.5982,
+          5.1224,
+          4.6778,
+          4.3311,
+          4.1627
+        ],
+        "pre_j_gen_acc": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "pre_j_gen_acc_max": 0.0,
+        "jstar95": 15,
+        "jstar99": 16,
+        "top_acc": 0.316,
+        "post_bottleneck_jump": 0.0872
+      },
+      "qcmem": {
+        "bottleneck_layer": 6,
+        "bottleneck_dim": 1024,
+        "full_forward": {
+          "acc": 0.316,
+          "nll": 4.1627
+        },
+        "compressibility": {
+          "n_vectors": 49152,
+          "d": 2048,
+          "dim_90": 327,
+          "dim_95": 483,
+          "dim_99": 774,
+          "effective_rank_spectral_entropy": 218.2,
+          "participation_ratio": 76.47,
+          "top1_var_frac": 0.0592,
+          "int4_recon_relerr": 0.278
+        },
+        "readout": {
+          "none": {
+            "acc": 0.316,
+            "nll": 4.1627,
+            "acc_drop": 0.0
+          },
+          "pca_rank512": {
+            "acc": 0.3158,
+            "nll": 4.1742,
+            "acc_drop": 0.0002
+          },
+          "pca_rank256": {
+            "acc": 0.3129,
+            "nll": 4.214,
+            "acc_drop": 0.0031
+          },
+          "pca_rank128": {
+            "acc": 0.3008,
+            "nll": 4.3213,
+            "acc_drop": 0.0153
+          },
+          "pca_rank64": {
+            "acc": 0.2699,
+            "nll": 4.5885,
+            "acc_drop": 0.0462
+          },
+          "int4": {
+            "acc": 0.3115,
+            "nll": 4.1974,
+            "acc_drop": 0.0045
+          }
+        }
+      }
+    },
+    "j8d512": {
+      "j": 8,
+      "dim": 512,
+      "division_of_labour": {
+        "bottleneck_layer": 8,
+        "bottleneck_dim": 512,
+        "gen_acc_curve": [
+          0.0002,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.094,
+          0.1216,
+          0.182,
+          0.2397,
+          0.2701,
+          0.2979,
+          0.315
+        ],
+        "nll_curve": [
+          43.025,
+          12.1912,
+          12.2503,
+          12.3195,
+          12.3499,
+          12.3425,
+          12.3513,
+          12.3423,
+          12.3595,
+          12.3869,
+          8.0585,
+          7.5152,
+          6.4108,
+          5.5926,
+          4.9387,
+          4.4373,
+          4.1991
+        ],
+        "pre_j_gen_acc": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "pre_j_gen_acc_max": 0.0,
+        "jstar95": 16,
+        "jstar99": 16,
+        "top_acc": 0.315,
+        "post_bottleneck_jump": 0.094
+      },
+      "qcmem": {
+        "bottleneck_layer": 8,
+        "bottleneck_dim": 512,
+        "full_forward": {
+          "acc": 0.315,
+          "nll": 4.1991
+        },
+        "compressibility": {
+          "n_vectors": 49152,
+          "d": 2048,
+          "dim_90": 214,
+          "dim_95": 299,
+          "dim_99": 435,
+          "effective_rank_spectral_entropy": 159.04,
+          "participation_ratio": 63.15,
+          "top1_var_frac": 0.0714,
+          "int4_recon_relerr": 0.2776
+        },
+        "readout": {
+          "none": {
+            "acc": 0.315,
+            "nll": 4.1991,
+            "acc_drop": 0.0
+          },
+          "pca_rank512": {
+            "acc": 0.3152,
+            "nll": 4.1992,
+            "acc_drop": -0.0001
+          },
+          "pca_rank256": {
+            "acc": 0.3115,
+            "nll": 4.2223,
+            "acc_drop": 0.0035
+          },
+          "pca_rank128": {
+            "acc": 0.3019,
+            "nll": 4.3093,
+            "acc_drop": 0.0131
+          },
+          "pca_rank64": {
+            "acc": 0.2754,
+            "nll": 4.5605,
+            "acc_drop": 0.0396
+          },
+          "int4": {
+            "acc": 0.3085,
+            "nll": 4.2373,
+            "acc_drop": 0.0065
+          }
+        }
+      }
+    }
+  },
+  "baseline": {
+    "division_of_labour": {
+      "bottleneck_layer": 6,
+      "bottleneck_dim": 0,
+      "gen_acc_curve": [
+        0.0002,
+        0.0712,
+        0.0747,
+        0.0815,
+        0.0941,
+        0.1122,
+        0.1256,
+        0.1557,
+        0.183,
+        0.2136,
+        0.2382,
+        0.2531,
+        0.2684,
+        0.2824,
+        0.2949,
+        0.3124,
+        0.3192
+      ],
+      "nll_curve": [
+        43.0268,
+        9.1513,
+        8.9257,
+        8.6205,
+        7.9819,
+        7.4957,
+        7.3478,
+        6.9219,
+        6.4587,
+        6.0937,
+        5.671,
+        5.3923,
+        5.0417,
+        4.7708,
+        4.5044,
+        4.2414,
+        4.1283
+      ],
+      "pre_j_gen_acc": [
+        0.0712,
+        0.0747,
+        0.0815,
+        0.0941,
+        0.1122,
+        0.1256
+      ],
+      "pre_j_gen_acc_max": 0.1256,
+      "jstar95": 15,
+      "jstar99": 16,
+      "top_acc": 0.3192,
+      "post_bottleneck_jump": 0.0273
+    },
+    "qcmem_by_j": {
+      "4": {
+        "bottleneck_layer": 6,
+        "bottleneck_dim": 0,
+        "full_forward": {
+          "acc": 0.3192,
+          "nll": 4.1283
+        },
+        "compressibility": {
+          "n_vectors": 49152,
+          "d": 2048,
+          "dim_90": 948,
+          "dim_95": 1349,
+          "dim_99": 1858,
+          "effective_rank_spectral_entropy": 525.33,
+          "participation_ratio": 123.46,
+          "top1_var_frac": 0.0674,
+          "int4_recon_relerr": 0.2957
+        },
+        "readout": {
+          "none": {
+            "acc": 0.3192,
+            "nll": 4.1283,
+            "acc_drop": 0.0
+          },
+          "pca_rank512": {
+            "acc": 0.3108,
+            "nll": 4.2144,
+            "acc_drop": 0.0084
+          },
+          "pca_rank256": {
+            "acc": 0.2978,
+            "nll": 4.3378,
+            "acc_drop": 0.0215
+          },
+          "pca_rank128": {
+            "acc": 0.2719,
+            "nll": 4.5705,
+            "acc_drop": 0.0473
+          },
+          "pca_rank64": {
+            "acc": 0.227,
+            "nll": 5.0163,
+            "acc_drop": 0.0922
+          },
+          "int4": {
+            "acc": 0.3152,
+            "nll": 4.1568,
+            "acc_drop": 0.0041
+          }
+        }
+      },
+      "6": {
+        "bottleneck_layer": 6,
+        "bottleneck_dim": 0,
+        "full_forward": {
+          "acc": 0.3192,
+          "nll": 4.1283
+        },
+        "compressibility": {
+          "n_vectors": 49152,
+          "d": 2048,
+          "dim_90": 925,
+          "dim_95": 1340,
+          "dim_99": 1859,
+          "effective_rank_spectral_entropy": 406.55,
+          "participation_ratio": 48.49,
+          "top1_var_frac": 0.1332,
+          "int4_recon_relerr": 0.337
+        },
+        "readout": {
+          "none": {
+            "acc": 0.3192,
+            "nll": 4.1283,
+            "acc_drop": 0.0
+          },
+          "pca_rank512": {
+            "acc": 0.3099,
+            "nll": 4.2189,
+            "acc_drop": 0.0093
+          },
+          "pca_rank256": {
+            "acc": 0.2911,
+            "nll": 4.3601,
+            "acc_drop": 0.0281
+          },
+          "pca_rank128": {
+            "acc": 0.2593,
+            "nll": 4.6682,
+            "acc_drop": 0.06
+          },
+          "pca_rank64": {
+            "acc": 0.1867,
+            "nll": 5.4136,
+            "acc_drop": 0.1325
+          },
+          "int4": {
+            "acc": 0.3146,
+            "nll": 4.1711,
+            "acc_drop": 0.0046
+          }
+        }
+      },
+      "8": {
+        "bottleneck_layer": 6,
+        "bottleneck_dim": 0,
+        "full_forward": {
+          "acc": 0.3192,
+          "nll": 4.1283
+        },
+        "compressibility": {
+          "n_vectors": 49152,
+          "d": 2048,
+          "dim_90": 1032,
+          "dim_95": 1423,
+          "dim_99": 1887,
+          "effective_rank_spectral_entropy": 600.87,
+          "participation_ratio": 116.48,
+          "top1_var_frac": 0.0775,
+          "int4_recon_relerr": 0.2838
+        },
+        "readout": {
+          "none": {
+            "acc": 0.3192,
+            "nll": 4.1283,
+            "acc_drop": 0.0
+          },
+          "pca_rank512": {
+            "acc": 0.3054,
+            "nll": 4.218,
+            "acc_drop": 0.0138
+          },
+          "pca_rank256": {
+            "acc": 0.2848,
+            "nll": 4.3656,
+            "acc_drop": 0.0344
+          },
+          "pca_rank128": {
+            "acc": 0.2453,
+            "nll": 4.6859,
+            "acc_drop": 0.074
+          },
+          "pca_rank64": {
+            "acc": 0.1761,
+            "nll": 5.2523,
+            "acc_drop": 0.1431
+          },
+          "int4": {
+            "acc": 0.317,
+            "nll": 4.1524,
+            "acc_drop": 0.0023
+          }
+        }
+      }
+    }
+  }
+}
