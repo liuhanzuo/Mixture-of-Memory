@@ -169,7 +169,32 @@ def _cov_eigvals(Xc, eig_device):
     return torch.flip(evals, dims=[0]).clamp_min(0).cpu()    # descending λ_i
 
 
-def compressibility_metrics(X: torch.Tensor, var_targets, recon_ranks, eig_device="cpu"):
+def _quant_recon_err(X: torch.Tensor, bits):
+    """Relative Frobenius error of per-tensor symmetric uniform int-b quantization
+    of the raw hiddens (the actual bytes a low-bit cache would store).
+
+    For each b in ``bits``: scale = max|X| / (2^{b-1}-1); Xq = round(X/scale)*scale
+    clamped to the int range; err = ‖X − Xq‖_F / ‖X‖_F. This is the honest
+    read-out-relevant compressibility axis for QCMem's cache: outlier norms (which
+    shallow layers lack, deep layers have) directly blow up per-tensor quant error.
+    Computed on a random subsample for speed (quant error is a pointwise stat)."""
+    fro = float(X.norm().item())
+    out = {}
+    if fro <= 0:
+        return {str(b): float("nan") for b in bits}
+    for b in bits:
+        qmax = (2 ** (b - 1)) - 1
+        scale = float(X.abs().max().item()) / max(qmax, 1)
+        if scale <= 0:
+            out[str(b)] = 0.0
+            continue
+        Xq = torch.clamp(torch.round(X / scale), -qmax - 1, qmax) * scale
+        out[str(b)] = float((X - Xq).norm().item() / fro)
+    return out
+
+
+def compressibility_metrics(X: torch.Tensor, var_targets, recon_ranks, eig_device="cpu",
+                            quant_bits=(8, 4, 3)):
     """X: [N, d] fp32 (per-token depth-j hidden vectors). Returns a metrics dict
     with TWO spectral views + norm-outlier diagnostics.
 
@@ -218,6 +243,7 @@ def compressibility_metrics(X: torch.Tensor, var_targets, recon_ranks, eig_devic
         "degenerate": False, "N": N, "d": d,
         "raw": raw,
         "unit": unit,
+        "quant_rel_frob_err": _quant_recon_err(X, quant_bits),
         "mean_norm": float(mean.norm().item()),
         "median_token_norm": med,
         "max_token_norm": mx,
@@ -243,6 +269,8 @@ def main():
     ap.add_argument("--chunk_size", type=int, default=512)
     ap.add_argument("--var_targets", type=float, nargs="+", default=[0.90, 0.95, 0.99])
     ap.add_argument("--recon_ranks", type=int, nargs="+", default=[16, 32, 64, 128, 256])
+    ap.add_argument("--quant_bits", type=int, nargs="+", default=[8, 4, 3],
+                    help="Bit-widths for per-tensor uniform int quant recon-error.")
     ap.add_argument("--max_docs", type=int, default=40,
                     help="Max samples to walk when harvesting chunks.")
     ap.add_argument("--chunk_size_source", type=str, default="context",
@@ -330,7 +358,8 @@ def main():
     for j in depths:
         X = torch.cat(pools[j], dim=0)          # [N, d]
         m = compressibility_metrics(X, args.var_targets, args.recon_ranks,
-                                    eig_device=eig_device)
+                                    eig_device=eig_device,
+                                    quant_bits=tuple(args.quant_bits))
         results[j] = m
         del X
 
@@ -394,6 +423,24 @@ def _print_table(depths, var_targets, recon_ranks, results, L):
         print(f" {j:>2}  |  {m['median_token_norm']:7.2f} {m['max_token_norm']:9.1f}  "
               f"{ratio:8.1f}  {m['frac_norm_gt_3x_median']:8.4f}  {m['frac_norm_gt_10x_median']:8.4f}")
     print("  " + "-" * 60)
+
+    # per-tensor uniform int-b quantization reconstruction error (read-out axis)
+    qb = None
+    for j in depths:
+        if not results[j].get("degenerate"):
+            qb = list(results[j]["quant_rel_frob_err"].keys())
+            break
+    if qb:
+        print("  per-tensor uniform int-b quant -> relative Frobenius reconstruction error")
+        print("  j  |" + "".join(f"  int{b:<2} " for b in qb))
+        print("  " + "-" * 60)
+        for j in depths:
+            m = results[j]
+            if m.get("degenerate"):
+                continue
+            cells = "".join(f"  {m['quant_rel_frob_err'][b]:.4f}" for b in qb)
+            print(f" {j:>2}  |{cells}")
+        print("  " + "-" * 60)
 
     _print_view(depths, var_targets, recon_ranks, results, "raw",
                 "raw mean-centered hiddens (what a naive linear store sees; INCLUDES norm-outliers)")
