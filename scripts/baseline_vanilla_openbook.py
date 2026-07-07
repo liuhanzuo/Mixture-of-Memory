@@ -29,7 +29,7 @@ if _REPO not in sys.path:
 
 from babilong.prompts import DEFAULT_PROMPTS, DEFAULT_TEMPLATE, get_formatted_input  # noqa: E402
 from babilong.metrics import compare_answers, TASK_LABELS  # noqa: E402
-from transformers import AutoTokenizer, LlamaForCausalLM  # noqa: E402
+from transformers import AutoTokenizer, AutoModelForCausalLM  # noqa: E402
 import datasets  # noqa: E402
 
 
@@ -50,8 +50,9 @@ def main():
         tok.pad_token = tok.eos_token
 
     print(f"[baseline] loading vanilla {cli.model_path} (NO patch)")
-    model = LlamaForCausalLM.from_pretrained(
+    model = AutoModelForCausalLM.from_pretrained(
         cli.model_path, torch_dtype=torch.bfloat16, attn_implementation="sdpa",
+        local_files_only=True,
     ).to(device).eval()
 
     for task in cli.tasks:
