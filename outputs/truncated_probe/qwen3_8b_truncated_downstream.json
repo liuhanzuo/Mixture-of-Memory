@@ -1,0 +1,237 @@
+{
+  "model": "/apdcephfs_wzc1/share_304376610/pighzliu_code/models/Qwen--Qwen3-8b",
+  "n_hidden_states": 37,
+  "n_transformer_layers": 36,
+  "depths": [
+    4,
+    8,
+    12,
+    16,
+    20,
+    24,
+    28,
+    32,
+    36
+  ],
+  "design_note": "Part A (truncated probe on hidden[j]) is mathematically identical to layer-j linear probing. Faithful truncate-and-recompute (option ii) reproduces the full model top exactly (verified in part_B_recompute_identity), so it is j-invariant and equals probe@36; the measured 'increment from the upper layers' is probe@36 - probe@j. Part C (native verbalizer) is the genuinely new generation-side reference.",
+  "tasks": {
+    "SST2": {
+      "depths": [
+        4,
+        8,
+        12,
+        16,
+        20,
+        24,
+        28,
+        32,
+        36
+      ],
+      "acc_by_j": {
+        "4": 0.7557,
+        "8": 0.8498,
+        "12": 0.8819,
+        "16": 0.9014,
+        "20": 0.9106,
+        "24": 0.8991,
+        "28": 0.8853,
+        "32": 0.8796,
+        "36": 0.8624
+      },
+      "acc_ratio_to_full": {
+        "4": 0.8763,
+        "8": 0.9854,
+        "12": 1.0226,
+        "16": 1.0452,
+        "20": 1.0559,
+        "24": 1.0426,
+        "28": 1.0266,
+        "32": 1.0199,
+        "36": 1.0
+      },
+      "full_model_layer": 36,
+      "full_model_acc": 0.8624,
+      "j_star_95pct_of_full": 8,
+      "j_star_99pct_of_full": 12,
+      "best_mid_layer": 20,
+      "best_mid_acc": 0.9106,
+      "mid_exceeds_full_model": true,
+      "full_minus_best_mid": -0.0482,
+      "majority_baseline": 0.5092,
+      "n_train": 2000,
+      "n_dev": 872,
+      "equivalent_to_layerwise_probing": true,
+      "native_generative_readout": {
+        "native_acc": 0.9461,
+        "n": 872,
+        "majority_baseline": 0.5092,
+        "verbalizer": {
+          "0": " negative",
+          "1": " positive"
+        },
+        "verbalizer_token_ids": {
+          "0": 8225,
+          "1": 6785
+        },
+        "verbalizer_collision": false
+      },
+      "native_vs_probe": {
+        "native_acc": 0.9461,
+        "probe_full_layer_acc": 0.8624,
+        "probe_best_mid_acc": 0.9106,
+        "native_minus_probefull": 0.0837
+      }
+    },
+    "WiC": {
+      "depths": [
+        4,
+        8,
+        12,
+        16,
+        20,
+        24,
+        28,
+        32,
+        36
+      ],
+      "acc_by_j": {
+        "4": 0.558,
+        "8": 0.6097,
+        "12": 0.6207,
+        "16": 0.616,
+        "20": 0.6285,
+        "24": 0.6348,
+        "28": 0.6113,
+        "32": 0.5815,
+        "36": 0.6223
+      },
+      "acc_ratio_to_full": {
+        "4": 0.8967,
+        "8": 0.9798,
+        "12": 0.9975,
+        "16": 0.9899,
+        "20": 1.0101,
+        "24": 1.0202,
+        "28": 0.9824,
+        "32": 0.9345,
+        "36": 1.0
+      },
+      "full_model_layer": 36,
+      "full_model_acc": 0.6223,
+      "j_star_95pct_of_full": 8,
+      "j_star_99pct_of_full": 12,
+      "best_mid_layer": 24,
+      "best_mid_acc": 0.6348,
+      "mid_exceeds_full_model": true,
+      "full_minus_best_mid": -0.0125,
+      "majority_baseline": 0.5,
+      "n_train": 2000,
+      "n_dev": 638,
+      "equivalent_to_layerwise_probing": true,
+      "native_generative_readout": {
+        "native_acc": 0.4984,
+        "n": 638,
+        "majority_baseline": 0.5,
+        "verbalizer": {
+          "1": " yes",
+          "0": " no"
+        },
+        "verbalizer_token_ids": {
+          "1": 9834,
+          "0": 902
+        },
+        "verbalizer_collision": false
+      },
+      "native_vs_probe": {
+        "native_acc": 0.4984,
+        "probe_full_layer_acc": 0.6223,
+        "probe_best_mid_acc": 0.6348,
+        "native_minus_probefull": -0.1239
+      }
+    },
+    "RTE": {
+      "depths": [
+        4,
+        8,
+        12,
+        16,
+        20,
+        24,
+        28,
+        32,
+        36
+      ],
+      "acc_by_j": {
+        "4": 0.5668,
+        "8": 0.5271,
+        "12": 0.5884,
+        "16": 0.6209,
+        "20": 0.6065,
+        "24": 0.5884,
+        "28": 0.574,
+        "32": 0.5523,
+        "36": 0.5235
+      },
+      "acc_ratio_to_full": {
+        "4": 1.0828,
+        "8": 1.0069,
+        "12": 1.1241,
+        "16": 1.1862,
+        "20": 1.1586,
+        "24": 1.1241,
+        "28": 1.0966,
+        "32": 1.0552,
+        "36": 1.0
+      },
+      "full_model_layer": 36,
+      "full_model_acc": 0.5235,
+      "j_star_95pct_of_full": 4,
+      "j_star_99pct_of_full": 4,
+      "best_mid_layer": 16,
+      "best_mid_acc": 0.6209,
+      "mid_exceeds_full_model": true,
+      "full_minus_best_mid": -0.0975,
+      "majority_baseline": 0.5271,
+      "n_train": 2000,
+      "n_dev": 277,
+      "equivalent_to_layerwise_probing": true,
+      "native_generative_readout": {
+        "native_acc": 0.787,
+        "n": 277,
+        "majority_baseline": 0.5271,
+        "verbalizer": {
+          "0": " yes",
+          "1": " no"
+        },
+        "verbalizer_token_ids": {
+          "0": 9834,
+          "1": 902
+        },
+        "verbalizer_collision": false
+      },
+      "native_vs_probe": {
+        "native_acc": 0.787,
+        "probe_full_layer_acc": 0.5235,
+        "probe_best_mid_acc": 0.6209,
+        "native_minus_probefull": 0.2635
+      }
+    }
+  },
+  "part_B_recompute_identity": {
+    "max_abs_diff_by_j": {
+      "4": 0.0,
+      "8": 0.0,
+      "12": 0.0,
+      "16": 0.0,
+      "20": 0.0,
+      "24": 0.0,
+      "28": 0.0,
+      "32": 0.0,
+      "36": 0.0
+    },
+    "max_abs_diff_over_all_j": 0.0,
+    "is_identity": true,
+    "note": "norm(layers[j:36](hidden[j])) vs hidden[36], measured at NON-PAD positions (right-pad positions are attention-masked out of the causal computation and diverge harmlessly). ~0 => faithful recompute of upper layers == full model top for every j, so option-(ii) downstream acc is j-invariant and == probe@36. The only non-trivial 'recompute' would MODIFY hidden[j] (compression / QCMem), which requires training and is out of scope."
+  },
+  "elapsed_sec": 253.3
+}
