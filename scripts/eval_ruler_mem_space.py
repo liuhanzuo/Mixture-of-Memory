@@ -73,7 +73,7 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-from transformers import AutoTokenizer, LlamaForCausalLM  # noqa: E402
+from transformers import AutoTokenizer, AutoModelForCausalLM, LlamaForCausalLM  # noqa: E402
 
 # Reuse the EXACT mem_space W0 model-loading + streaming-generation path.
 from scripts.run_babilong_mem_space import (  # noqa: E402
@@ -313,6 +313,7 @@ NOISE_HAYSTACK = (
 _LENGTH_TOKENS = {
     "1k": 1024, "2k": 2048, "4k": 4096,
     "8k": 8192, "16k": 16384, "32k": 32768,
+    "64k": 65536, "128k": 131072,
 }
 
 DEPTHS = [int(round(x)) for x in __import__("numpy").linspace(0, 100, num=40)]
@@ -677,7 +678,8 @@ def main():
         print(f"[ruler] ORACLE evidence ON: inject gold-span hidden states at "
               f"layers {oracle_layers} (plus_slot={args.oracle_plus_slot})")
 
-    tokenizer = AutoTokenizer.from_pretrained(args.model_path, trust_remote_code=True)
+    tokenizer = AutoTokenizer.from_pretrained(
+        args.model_path, trust_remote_code=True, local_files_only=True)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 
@@ -735,9 +737,10 @@ def main():
             print("[ruler] IN-ATTN ORACLE-ONLY: scorer retrieval skipped on "
                   "in-attn layer; only oracle needle injected.")
     else:
-        print(f"[ruler] loading base Llama-3 (full attention, window={args.base_max_window})")
-        model = LlamaForCausalLM.from_pretrained(
+        print(f"[ruler] loading base model (full attention, window={args.base_max_window})")
+        model = AutoModelForCausalLM.from_pretrained(
             args.model_path, torch_dtype=dtype, attn_implementation=args.attn_impl,
+            local_files_only=True,
         ).to(device)
         model.eval()
 
