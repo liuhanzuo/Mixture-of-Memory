@@ -53,6 +53,11 @@ os.environ.setdefault("HF_HOME", os.path.join(PROJECT_ROOT, ".hf_cache"))
 os.environ.setdefault("HF_DATASETS_CACHE", os.path.join(PROJECT_ROOT, ".hf_cache", "datasets"))
 os.environ.setdefault("HF_HUB_OFFLINE", "1")
 os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
+# Cap BLAS threads: several probes may run in parallel (one per GPU), and an
+# uncapped LAPACK/MKL grabs every core -> catastrophic oversubscription on the
+# CPU eig/matmul path. 8 threads is plenty for a single 4096×4096 eigh.
+for _v in ("OMP_NUM_THREADS", "MKL_NUM_THREADS", "OPENBLAS_NUM_THREADS", "NUMEXPR_NUM_THREADS"):
+    os.environ.setdefault(_v, "8")
 
 for _p in (PROJECT_ROOT,
            os.path.join(PROJECT_ROOT, "scripts"),
@@ -111,61 +116,114 @@ def encode_chunk_pertoken_multidepth(qc: QCMemModel, token_ids, depths):
 # --------------------------------------------------------------------------- #
 # compressibility metrics on a [N, d] fp32 matrix
 # --------------------------------------------------------------------------- #
-def compressibility_metrics(X: torch.Tensor, var_targets, recon_ranks):
-    """X: [N, d] fp32 (per-token hidden vectors). Returns a metrics dict.
+def _spectrum_metrics(eig, var_targets, recon_ranks):
+    """Given descending non-negative eigenvalues ``eig`` (Tensor[k]) of a
+    covariance/Gram matrix, compute the intrinsic-dimensionality read-outs.
 
-    All spectral quantities are on the CENTERED data (mean removed) so a large
-    constant offset / mean vector doesn't masquerade as one dominant component.
-    We SVD the centered X (economy) — singular values σ_i relate to covariance
-    eigenvalues by λ_i = σ_i² / (N−1)."""
-    N, d = X.shape
-    mean = X.mean(dim=0, keepdim=True)
-    Xc = X - mean
-    # economy SVD on centered data (float64 on CPU for a stable spectrum).
-    # torch.linalg.svd is fine here; d=4096, N~10k -> a few seconds on CPU.
-    S = torch.linalg.svdvals(Xc.double())          # [min(N,d)] singular values, desc
-    sig = S                                          # σ_i
-    eig = (sig ** 2)                                 # ∝ covariance eigenvalues λ_i
+    All quantities are scale-invariant ratios of the spectrum, so whether ``eig``
+    holds covariance eigenvalues or Gram eigenvalues (differ by the 1/(N-1)
+    factor) is irrelevant."""
     total_var = float(eig.sum().item())
     if total_var <= 0:
-        return {"degenerate": True, "N": N, "d": d}
-
+        return {"degenerate": True}
+    sig = eig.sqrt()
     cum = torch.cumsum(eig, dim=0) / eig.sum()
     dims_for = {}
     for t in var_targets:
-        # smallest #components whose cumulative variance >= t
         idx = int(torch.searchsorted(cum, torch.tensor(float(t), dtype=cum.dtype)).item()) + 1
         dims_for[str(t)] = min(idx, len(eig))
-
-    # stable rank (nuclear/spectral): (Σσ)/σ_max on centered singulars
-    stable_rank = float((sig.sum() / (sig.max() + 1e-12)).item())
-    # spectral-entropy effective rank: exp(H) with p_i = λ_i / Σλ (Roy&Vetterli)
+    stable_rank = float((sig.sum() / (sig.max() + 1e-12)).item())      # (Σσ)/σ_max
     p = eig / eig.sum()
     ent = float(-(p * (p + 1e-300).log()).sum().item())
-    entropy_eff_rank = float(torch.exp(torch.tensor(ent)).item())
-    # participation ratio: (Σλ)² / Σλ²  (a.k.a. squared stable rank on eigenvalues)
-    part_ratio = float(((eig.sum() ** 2) / (eig ** 2).sum()).item())
-
+    entropy_eff_rank = float(torch.exp(torch.tensor(ent)).item())      # exp(H(λ))
+    part_ratio = float(((eig.sum() ** 2) / (eig ** 2).sum()).item())   # (Σλ)²/Σλ²
+    top1_share = float((eig[0] / eig.sum()).item())                    # λ_max / Σλ
     recon = {}
     for r in recon_ranks:
         r = int(min(r, len(eig)))
         if r <= 0:
             continue
-        # relative Frobenius error of rank-r PCA truncation:
-        # ‖Xc − Xc_r‖_F² = Σ_{i>r} σ_i²  ;  ‖Xc‖_F² = Σ σ_i²
         tail = float(eig[r:].sum().item())
-        rel = (tail / total_var) ** 0.5
-        recon[str(r)] = rel
-
+        recon[str(r)] = (tail / total_var) ** 0.5   # rel Frobenius err of rank-r trunc
     return {
-        "degenerate": False, "N": N, "d": d,
+        "degenerate": False,
         "dims_for_var": dims_for,
         "stable_rank": stable_rank,
         "entropy_eff_rank": entropy_eff_rank,
         "participation_ratio": part_ratio,
+        "top1_eig_share": top1_share,
         "recon_rel_frob_err": recon,
+    }
+
+
+def _cov_eigvals(Xc, eig_device):
+    """Descending non-negative eigenvalues of the d×d Gram matrix ``Xcᵀ Xc``.
+
+    For N ≫ d this d×d eigendecomposition is far cheaper than a full N×d SVD and
+    numerically equivalent for the spectrum (PCA variance / effective rank /
+    truncation error all depend only on the eigenvalues). float64 for stability."""
+    dev = torch.device(eig_device)
+    Xcd = Xc.to(dev).double()
+    C = Xcd.t() @ Xcd                                        # [d, d]
+    evals = torch.linalg.eigvalsh(C)                          # ascending
+    return torch.flip(evals, dims=[0]).clamp_min(0).cpu()    # descending λ_i
+
+
+def compressibility_metrics(X: torch.Tensor, var_targets, recon_ranks, eig_device="cpu"):
+    """X: [N, d] fp32 (per-token depth-j hidden vectors). Returns a metrics dict
+    with TWO spectral views + norm-outlier diagnostics.
+
+    Why two views. Deep-layer transformer hidden states are dominated by a few
+    "massive-activation" / attention-sink tokens whose norm is orders of
+    magnitude larger than the rest (Sun et al. 2024). Those few outlier rows
+    inflate the *raw* covariance so its top eigenvalue swallows ~all variance,
+    making raw-PCA "#components for 95% var" collapse to ~1 at deep layers — an
+    artefact of norm scale, NOT of genuine low-dimensional geometry. To probe the
+    actual directional intrinsic dimensionality of the cache we therefore also
+    report the spectrum of the L2-NORMALISED (unit-norm) tokens, which removes
+    the per-token magnitude and asks "how many directions do the hiddens span?".
+
+      * ``raw``        — spectrum of the mean-centered raw hiddens. This is what a
+                         naive linear (PCA) store of the cache would see, INCLUDING
+                         the outlier-norm effect. Reported for honesty.
+      * ``unit``       — spectrum of the mean-centered, per-token L2-normalised
+                         hiddens (directional intrinsic dimension; outlier-norm
+                         removed).
+
+    Plus outlier diagnostics: distribution of per-token L2 norms (a heavy tail ==
+    massive activations present)."""
+    N, d = X.shape
+    # --- norm-outlier diagnostics -------------------------------------------
+    norms = X.norm(dim=1)                                    # [N]
+    med = float(norms.median().item())
+    mx = float(norms.max().item())
+    frac_gt_3x = float((norms > 3 * med).float().mean().item()) if med > 0 else 0.0
+    frac_gt_10x = float((norms > 10 * med).float().mean().item()) if med > 0 else 0.0
+
+    # --- raw-centered spectrum ----------------------------------------------
+    mean = X.mean(dim=0, keepdim=True)
+    Xc = X - mean
+    eig_raw = _cov_eigvals(Xc, eig_device)
+    if float(eig_raw.sum().item()) <= 0:
+        return {"degenerate": True, "N": N, "d": d}
+    raw = _spectrum_metrics(eig_raw, var_targets, recon_ranks)
+
+    # --- unit-norm (directional) spectrum -----------------------------------
+    Xn = X / (norms.unsqueeze(1) + 1e-8)
+    Xn = Xn - Xn.mean(dim=0, keepdim=True)
+    eig_unit = _cov_eigvals(Xn, eig_device)
+    unit = _spectrum_metrics(eig_unit, var_targets, recon_ranks)
+
+    return {
+        "degenerate": False, "N": N, "d": d,
+        "raw": raw,
+        "unit": unit,
         "mean_norm": float(mean.norm().item()),
-        "rms_token_norm": float(X.norm(dim=1).mean().item()),
+        "median_token_norm": med,
+        "max_token_norm": mx,
+        "rms_token_norm": float(norms.mean().item()),
+        "frac_norm_gt_3x_median": frac_gt_3x,
+        "frac_norm_gt_10x_median": frac_gt_10x,
     }
 
 
@@ -191,6 +249,9 @@ def main():
                     choices=["context", "any"],
                     help="'context' skips each doc's last (query) chunk; 'any' keeps all.")
     ap.add_argument("--device", type=str, default="cuda:0")
+    ap.add_argument("--eig_device", type=str, default="",
+                    help="Device for the d×d covariance eigendecomposition "
+                         "(default: same as --device; use 'cpu' to force CPU).")
     ap.add_argument("--dtype", type=str, default="bfloat16",
                     choices=["bfloat16", "float16", "float32"])
     ap.add_argument("--attn_impl", type=str, default="sdpa")
@@ -265,9 +326,11 @@ def main():
           f"({sum(t.shape[0] for t in pools[depths[0]])} tokens) per depth")
 
     results = {}
+    eig_device = args.eig_device or args.device
     for j in depths:
         X = torch.cat(pools[j], dim=0)          # [N, d]
-        m = compressibility_metrics(X, args.var_targets, args.recon_ranks)
+        m = compressibility_metrics(X, args.var_targets, args.recon_ranks,
+                                    eig_device=eig_device)
         results[j] = m
         del X
 
@@ -281,37 +344,61 @@ def main():
         print(f"[probe2] wrote {args.out_json}")
 
 
+def _print_view(depths, var_targets, recon_ranks, results, view, title):
+    print(f"\n  [{view.upper()} spectrum] {title}")
+    var_cols = "".join(f"  #PC@{int(t*100)}% " for t in var_targets)
+    print(f"  j  |{var_cols}| stable_rk  entropy_rk  part_ratio  top1_share")
+    print("  " + "-" * 86)
+    for j in depths:
+        m = results[j]
+        if m.get("degenerate") or m.get(view, {}).get("degenerate"):
+            print(f" {j:>2}  | (degenerate)")
+            continue
+        v = m[view]
+        cells = "".join(f"   {v['dims_for_var'][str(t)]:>5} " for t in var_targets)
+        print(f" {j:>2}  |{cells}|  {v['stable_rank']:8.2f}  {v['entropy_eff_rank']:9.2f}  "
+              f"{v['participation_ratio']:9.2f}  {v['top1_eig_share']:9.3f}")
+    print("  " + "-" * 86)
+    print(f"  [{view.upper()}] rank-r truncation -> relative Frobenius reconstruction error")
+    rcols = "".join(f"  r={r:<4}" for r in recon_ranks)
+    print(f"  j  |{rcols}")
+    print("  " + "-" * 86)
+    for j in depths:
+        m = results[j]
+        if m.get("degenerate") or m.get(view, {}).get("degenerate"):
+            continue
+        v = m[view]
+        cells = "".join(
+            f"  {v['recon_rel_frob_err'].get(str(int(min(r, m['d']))), float('nan')):.4f}"
+            for r in recon_ranks)
+        print(f" {j:>2}  |{cells}")
+    print("  " + "-" * 86)
+
+
 def _print_table(depths, var_targets, recon_ranks, results, L):
     d = results[depths[0]].get("d", "?")
     N = results[depths[0]].get("N", "?")
     print("\n" + "=" * 90)
     print(f"[probe2] intrinsic dimensionality of depth-j hidden  (d={d}, N={N} tokens/depth, L={L})")
     print("=" * 90)
-    var_cols = "".join(f"  #PC@{int(t*100)}% " for t in var_targets)
-    print(f"  j  |{var_cols}| stable_rk  entropy_rk  part_ratio")
-    print("-" * 90)
-    for j in depths:
-        m = results[j]
-        if m.get("degenerate"):
-            print(f" {j:>2}  | (degenerate)")
-            continue
-        cells = "".join(f"   {m['dims_for_var'][str(t)]:>5} " for t in var_targets)
-        print(f" {j:>2}  |{cells}|  {m['stable_rank']:8.2f}  {m['entropy_eff_rank']:9.2f}  "
-              f"{m['participation_ratio']:9.2f}")
-    print("-" * 90)
-    # reconstruction error table
-    print("  rank-r PCA truncation  ->  relative Frobenius reconstruction error")
-    rcols = "".join(f"  r={r:<4}" for r in recon_ranks)
-    print(f"  j  |{rcols}")
-    print("-" * 90)
+
+    # per-token norm-outlier diagnostics (massive-activation / sink detector)
+    print("  norm-outlier diagnostics (per-token L2 norm distribution):")
+    print("  j  |  median   max      max/med   frac>3x   frac>10x")
+    print("  " + "-" * 60)
     for j in depths:
         m = results[j]
         if m.get("degenerate"):
             continue
-        cells = "".join(f"  {m['recon_rel_frob_err'].get(str(int(min(r, m['d']))), float('nan')):.4f}"
-                        for r in recon_ranks)
-        print(f" {j:>2}  |{cells}")
-    print("-" * 90)
+        ratio = (m["max_token_norm"] / m["median_token_norm"]) if m["median_token_norm"] > 0 else float("nan")
+        print(f" {j:>2}  |  {m['median_token_norm']:7.2f} {m['max_token_norm']:9.1f}  "
+              f"{ratio:8.1f}  {m['frac_norm_gt_3x_median']:8.4f}  {m['frac_norm_gt_10x_median']:8.4f}")
+    print("  " + "-" * 60)
+
+    _print_view(depths, var_targets, recon_ranks, results, "raw",
+                "raw mean-centered hiddens (what a naive linear store sees; INCLUDES norm-outliers)")
+    _print_view(depths, var_targets, recon_ranks, results, "unit",
+                "L2-normalised (directional) hiddens (norm-outlier effect removed)")
 
 
 if __name__ == "__main__":
