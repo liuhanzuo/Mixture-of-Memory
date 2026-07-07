@@ -1,0 +1,391 @@
+#!/usr/bin/env python
+"""QCMem mid-depth resume — RULER long-context eval driver.
+
+Validates the QCMem write/read resume primitive
+(``src/memory/qcmem/qcmem_model.py``) on the *real long-document* RULER tasks
+(NIAH needle-in-a-haystack + variable_tracking), the generalisation companion to
+``scripts/eval_qcmem_babilong.py`` (which runs the same primitive on BABILong).
+
+Design: this is a thin composition of two existing, unmodified drivers —
+
+  RULER task framework  (imported from ``scripts/eval_ruler_mem_space.py``):
+    * ``_build_sample``          — RULER-faithful (context, answers, gold_needle)
+                                   generation, sized to ~target tokens (NIAH
+                                   single/multikey on noise|PG19-prose haystack,
+                                   variable_tracking on noise haystack).
+    * ``_make_vt_icl``           — the fixed VT in-context worked example.
+    * ``_string_match_all_one``  — RULER ``string_match_all`` recall scoring
+                                   (fraction of reference strings that appear as
+                                   a case-insensitive substring of the output).
+    * ``_LENGTH_TOKENS``         — length-bucket -> target token budget.
+
+  QCMem forward path (imported from ``scripts/eval_qcmem_babilong.py``):
+    * ``qcmem_generate``         — chunk the prompt -> write_chunk each chunk to
+                                   depth j -> selector picks topk context chunks
+                                   -> read (pack [sink; selected h_j; query h_j],
+                                   resume layers[j:]) -> greedy decode.
+    * ``run_self_test``          — j=0 correctness gate (QCMem read == full
+                                   forward, fp32 max|logit diff| < 1e-4).
+    * ``QCMemModel``             — the write/read orchestrator (read-only import).
+    * ``harness``                — ``_locate_needle_chunks`` (oracle) +
+                                   ``_write_results_csv`` (QUOTE_ALL CSV writer).
+
+The RULER sample RNG + shard filter are replicated bit-for-bit from
+``eval_ruler_mem_space.main`` (build sample ``i`` with a deterministic
+per-``(task,length,i)`` seed, then keep only ``i % num_shards == shard_index``),
+so shards share one sample set and the needle format / scoring口径 are identical
+to the mem_space RULER numbers — only the model forward differs (QCMem instead of
+mem_space streaming / base full-attention).
+
+Selectors: bm25 / recency / reader_attn behave exactly as in the BABILong driver.
+``oracle`` is supported for the NIAH tasks (the queried needle sentence is known
+at generation time, so we locate its document-absolute chunk index with
+``harness._locate_needle_chunks``); it is NOT supported for variable_tracking
+(no single gold-needle span — the answer is a set of variable names scattered
+across the chain), where it transparently degrades to recency.
+
+Usage (Direction-A QCMem-distill LoRA on Qwen3-8B):
+    python scripts/eval_ruler_qcmem.py \
+        --model_path /apdcephfs_wzc1/share_304376610/pighzliu_code/models/Qwen--Qwen3-8b \
+        --resume_j 12 --lora_adapter outputs/qcmem_distill_qwen_j12_r32_4k/final \
+        --selector bm25 --topk 12 --sink_tokens bos \
+        --ruler_tasks niah_single niah_multi vt --lengths 4k 8k 16k 32k \
+        --limit 50 --output_name ruler_qcmem_j12 --results_folder ruler_results/qcmem_j12
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import random
+import sys
+from pathlib import Path
+
+import pandas as pd
+import torch
+from tqdm.auto import tqdm
+
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+for _p in (PROJECT_ROOT,
+           os.path.join(PROJECT_ROOT, "scripts"),
+           os.path.join(PROJECT_ROOT, "third_party", "babilong-pkg")):
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
+
+from transformers import AutoModelForCausalLM, AutoTokenizer  # noqa: E402
+
+# RULER task framework (generation + scoring) — reused verbatim, unmodified.
+import scripts.eval_ruler_mem_space as ruler  # noqa: E402
+
+# QCMem forward path — reused verbatim, unmodified. Importing this module runs
+# its explicit-file-path load of the babilong harness ("_qcmem_harness"); we
+# reach that harness (needle locator + CSV writer) through ``qcb.harness``.
+import scripts.eval_qcmem_babilong as qcb  # noqa: E402
+
+QCMemModel = qcb.QCMemModel
+qcmem_generate = qcb.qcmem_generate
+run_self_test = qcb.run_self_test
+
+
+# --------------------------------------------------------------------------- #
+# RULER task-name aliases -> canonical eval_ruler_mem_space task ids.
+# --------------------------------------------------------------------------- #
+# The canonical RULER task ids are the long form (niah_single_1 = noise haystack,
+# niah_single_2 = PG19-prose haystack, niah_multikey_1 = prose + 4 distractor
+# keys, variable_tracking = 4-hop chain). We accept both the long form AND short
+# friendly aliases so "niah_single / niah_multi / vt" work on the CLI.
+_TASK_ALIAS = {
+    "niah_single": "niah_single_2",        # default to the realistic prose haystack
+    "niah_single_noise": "niah_single_1",
+    "niah_single_essay": "niah_single_2",
+    "niah_multi": "niah_multikey_1",
+    "niah_multikey": "niah_multikey_1",
+    "vt": "variable_tracking",
+}
+_CANONICAL_TASKS = {
+    "niah_single_1", "niah_single_2", "niah_multikey_1", "variable_tracking",
+}
+
+
+def _resolve_task(name: str) -> str:
+    if name in _CANONICAL_TASKS:
+        return name
+    if name in _TASK_ALIAS:
+        return _TASK_ALIAS[name]
+    raise ValueError(
+        f"unknown ruler task {name!r}; expected one of "
+        f"{sorted(_CANONICAL_TASKS)} or aliases {sorted(_TASK_ALIAS)}"
+    )
+
+
+def _bare_question(prompt: str) -> str:
+    """Extract the trailing question line (used as the bm25 lexical query).
+
+    RULER's NIAH / VT templates always place a ``\\n`` immediately before the
+    question ("...\\n{context}\\nWhat is the special magic number for {key}...?"
+    / "...\\n{context}\\nQuestion: Find all variables assigned the value
+    {value}..."). Because the question follows the whole context, the LAST
+    newline in the rendered prompt is exactly that boundary, so everything after
+    it is the question + answer-prefix — which contains the queried key (NIAH) /
+    value (VT), the terms bm25 should retrieve on. Robust to the noise haystack's
+    own many internal newlines (they all precede the question)."""
+    return prompt[prompt.rfind("\n") + 1:].strip()
+
+
+def _oracle_needle_chunks(input_ids, gold_needle, answers, tokenizer, chunk_size):
+    """Document-absolute chunk index set containing the queried needle, for the
+    NIAH oracle selector. Try the full gold-needle sentence first (most
+    distinctive), then fall back to each answer value. Returns None if nothing
+    can be located (caller's selector then degrades to recency)."""
+    for probe in ([gold_needle] if gold_needle else []) + list(answers or []):
+        if not probe:
+            continue
+        chunks = qcb.harness._locate_needle_chunks(
+            input_ids, probe, tokenizer, chunk_size)
+        if chunks:
+            return chunks
+    return None
+
+
+# --------------------------------------------------------------------------- #
+# main
+# --------------------------------------------------------------------------- #
+def main():
+    parser = argparse.ArgumentParser(
+        description="QCMem mid-depth resume — RULER (NIAH/VT) eval driver"
+    )
+    # --- CLI aligned with scripts/eval_qcmem_babilong.py ---
+    parser.add_argument("--model_path", type=str, required=True,
+                        help="Path to plain backbone weights (Qwen3-8B / Llama-3-8B).")
+    parser.add_argument("--resume_j", type=int, default=12,
+                        help="Layer split index j (0=RAG upper bound, L=closed-book).")
+    parser.add_argument("--top_prepay_b", type=int, default=0,
+                        help="Direction-B top-prepay: run the top b layers "
+                             "query-local at read (0=exact connective resume).")
+    parser.add_argument("--lora_adapter", type=str, default="",
+                        help="Optional path to a trained QCMem-distill LoRA "
+                             "adapter dir (Direction A).")
+    parser.add_argument("--selector", type=str, default="bm25",
+                        choices=["bm25", "recency", "oracle", "reader_attn"],
+                        help="Chunk selector for the read pack. oracle is NIAH-only "
+                             "(degrades to recency on variable_tracking).")
+    parser.add_argument("--topk", type=int, default=12,
+                        help="Number of context chunks to pack into the read.")
+    parser.add_argument("--sink_tokens", type=str, default="bos",
+                        choices=["bos", "none"],
+                        help="Attention-sink anchor at packed position 0.")
+    parser.add_argument("--results_folder", type=str, default="./ruler_results")
+    parser.add_argument("--output_name", type=str, required=True)
+    parser.add_argument("--chunk_size", type=int, default=512,
+                        help="QCMem chunk size (matches eval_qcmem_babilong; the "
+                             "prompt is split into chunk_size-token segments).")
+    parser.add_argument("--max_new_tokens", type=int, default=48,
+                        help="Greedy decode budget (RULER uses 48; VT is bumped "
+                             "to >=60 to fit the variable list, as in "
+                             "eval_ruler_mem_space).")
+    parser.add_argument("--limit", type=int, default=50,
+                        help="Samples per (task,length) cell (RULER's num_samples).")
+    parser.add_argument("--num_shards", type=int, default=1)
+    parser.add_argument("--shard_index", type=int, default=0)
+    parser.add_argument("--device", type=str, default="cuda:0")
+    parser.add_argument("--dtype", type=str, default="bfloat16",
+                        choices=["bfloat16", "float16", "float32"])
+    parser.add_argument("--attn_impl", type=str, default="sdpa")
+    parser.add_argument("--seed", type=int, default=42,
+                        help="Base RNG seed (matches eval_ruler_mem_space so the "
+                             "sample set is comparable to the mem_space run).")
+    # --- RULER-specific ---
+    parser.add_argument("--ruler_tasks", type=str, nargs="+",
+                        default=["niah_single", "niah_multi", "vt"],
+                        help="RULER tasks / aliases: niah_single(_1/_2), "
+                             "niah_multi(key_1), vt(variable_tracking).")
+    parser.add_argument("--lengths", type=str, nargs="+",
+                        default=["4k", "8k", "16k", "32k"])
+    parser.add_argument("--self_test", action="store_true", default=False,
+                        help="Run the shared QCMem j=0 correctness gate (read == "
+                             "full forward, fp32 < 1e-4) and exit.")
+    args = parser.parse_args()
+
+    if args.num_shards < 1:
+        parser.error("--num_shards must be >= 1")
+    if not (0 <= args.shard_index < args.num_shards):
+        parser.error(f"--shard_index must be in [0, {args.num_shards})")
+
+    tasks = [_resolve_task(t) for t in args.ruler_tasks]
+
+    device = torch.device(args.device)
+    dtype = {"bfloat16": torch.bfloat16,
+             "float16": torch.float16,
+             "float32": torch.float32}[args.dtype]
+    if args.self_test:
+        dtype = torch.float32  # tight <1e-4 gate needs fp32 (bf16 ~1e-2 roundoff)
+
+    print(f"[QCMem-RULER] model_path={args.model_path}")
+    print(f"[QCMem-RULER] resume_j={args.resume_j} top_prepay_b={args.top_prepay_b} "
+          f"selector={args.selector} topk={args.topk} sink={args.sink_tokens} "
+          f"chunk_size={args.chunk_size} dtype={dtype} attn_impl={args.attn_impl}")
+    print(f"[QCMem-RULER] tasks={tasks} lengths={args.lengths} limit={args.limit}")
+
+    # local_files_only=True: offline nodes otherwise treat a local dir path as an
+    # HF repo_id and error ("Repo id must be in the form ...").
+    tokenizer = AutoTokenizer.from_pretrained(
+        args.model_path, trust_remote_code=True, local_files_only=True)
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
+
+    model = AutoModelForCausalLM.from_pretrained(
+        args.model_path,
+        torch_dtype=dtype,
+        attn_implementation=args.attn_impl,
+        trust_remote_code=True,
+        local_files_only=True,
+    ).to(device).eval()
+
+    L = int(model.config.num_hidden_layers)
+    if not (0 <= args.resume_j <= L):
+        parser.error(f"--resume_j must be in [0, {L}] for this model; got {args.resume_j}")
+    if not (0 <= args.top_prepay_b <= L - args.resume_j):
+        parser.error(f"--top_prepay_b must be in [0, {L - args.resume_j}]; got {args.top_prepay_b}")
+
+    # Direction A: load a trained QCMem-distill LoRA adapter onto the backbone.
+    # PeftModel.base_model.model is the underlying CausalLM QCMemModel reads off.
+    if args.lora_adapter:
+        from peft import PeftModel
+        print(f"[QCMem-RULER] loading LoRA adapter: {args.lora_adapter}")
+        peft_model = PeftModel.from_pretrained(model, args.lora_adapter).eval()
+        model = peft_model.base_model.model
+
+    if args.self_test:
+        ok = run_self_test(model, tokenizer, device, args.chunk_size)
+        sys.exit(0 if ok else 1)
+
+    qc = QCMemModel(model, resume_j=args.resume_j, top_prepay_b=args.top_prepay_b)
+
+    outdir = Path(args.results_folder) / args.output_name
+    outdir.mkdir(parents=True, exist_ok=True)
+    sharded = args.num_shards > 1
+    shard_tag = f"_shard{args.shard_index}of{args.num_shards}" if sharded else ""
+
+    summary: dict = {}
+    for task in tqdm(tasks, desc="tasks"):
+        summary[task] = {}
+        for length in tqdm(args.lengths, desc="lengths", leave=False):
+            if length not in ruler._LENGTH_TOKENS:
+                print(f"[WARN] unknown length {length}, skipping")
+                continue
+            target_tokens = ruler._LENGTH_TOKENS[length]
+            # Deterministic per-(task,length) RNG so shards share the sample set
+            # (identical construction to eval_ruler_mem_space.main).
+            base_seed = args.seed + (hash((task, length)) % 100000)
+
+            # Fixed in-context example for VT (shared across all samples).
+            vt_icl = None
+            if task == "variable_tracking":
+                vt_icl = ruler._make_vt_icl(random.Random(base_seed + 777), 4)
+
+            sample_indices = set(
+                list(range(args.limit))[args.shard_index::args.num_shards]
+            )
+            if sharded:
+                print(f"[QCMem-RULER] {task}/{length} shard "
+                      f"{args.shard_index}/{args.num_shards}: "
+                      f"{len(sample_indices)} of {args.limit} samples")
+
+            df = pd.DataFrame({"target": [], "output": [], "question": [],
+                               "recall": []})
+            recall_sum = 0.0
+            total = 0
+            n_tok_seen = 0
+            mnt = args.max_new_tokens if task != "variable_tracking" \
+                else max(args.max_new_tokens, 60)
+
+            for i in tqdm(range(args.limit), desc=f"{task}/{length}", leave=False):
+                # Build EVERY sample (fixed per-i seed) so shard sample sets align,
+                # then process only this shard's indices.
+                rng = random.Random(base_seed * 1000 + i)
+                prompt, answers, gold_needle = ruler._build_sample(
+                    task, target_tokens, tokenizer, rng, vt_icl)
+                if i not in sample_indices:
+                    continue
+
+                ids = tokenizer.encode(prompt, add_special_tokens=True,
+                                       return_tensors="pt")
+                if isinstance(ids, list):
+                    ids = torch.tensor([ids], dtype=torch.long)
+                input_ids = ids.to(device)
+                n_tok_seen = int(input_ids.shape[1])
+
+                bare_q = _bare_question(prompt)
+                bare_q_ids = tokenizer.encode(bare_q, add_special_tokens=False)
+
+                # oracle needle chunks (NIAH only; VT has no single gold span).
+                needle_set = None
+                if args.selector == "oracle":
+                    needle_set = _oracle_needle_chunks(
+                        input_ids, gold_needle, answers,
+                        tokenizer, args.chunk_size)
+
+                try:
+                    output = qcmem_generate(
+                        qc=qc, tokenizer=tokenizer, input_ids=input_ids,
+                        chunk_size=args.chunk_size, max_new_tokens=mnt,
+                        selector=args.selector, topk=args.topk,
+                        sink_tokens=args.sink_tokens,
+                        needle_chunk_set=needle_set, bare_question_ids=bare_q_ids,
+                    )
+                except RuntimeError as e:
+                    if "out of memory" not in str(e).lower():
+                        raise
+                    output = "[OOM]"
+                    print(f"[OOM] i={i} task={task} length={length}: {e}",
+                          flush=True)
+                    if torch.cuda.is_available():
+                        torch.cuda.empty_cache()
+
+                rec = ruler._string_match_all_one(output, answers)
+                recall_sum += rec
+                total += 1
+                df.loc[len(df)] = [" | ".join(answers), output, bare_q, rec]
+                if len(df) % 10 == 0:
+                    qcb.harness._write_results_csv(
+                        df, outdir / f"{task}_{length}{shard_tag}.csv")
+
+            score = (recall_sum / total * 100.0) if total else 0.0
+            summary[task][length] = {
+                "score": round(score, 2), "n": total,
+                "approx_tokens": n_tok_seen,
+            }
+            outfile = outdir / f"{task}_{length}{shard_tag}.csv"
+            qcb.harness._write_results_csv(df, outfile)
+            cfg_file = outdir / f"{task}_{length}{shard_tag}.json"
+            json.dump(
+                {
+                    "task": task, "length": length,
+                    "summary": summary[task][length],
+                    "qcmem": {
+                        "resume_j": args.resume_j,
+                        "top_prepay_b": args.top_prepay_b,
+                        "selector": args.selector, "topk": args.topk,
+                        "sink_tokens": args.sink_tokens, "num_layers": L,
+                        "lora_adapter": args.lora_adapter or None,
+                        "chunk_size": args.chunk_size,
+                    },
+                    "model": {"model_path": args.model_path},
+                },
+                open(cfg_file, "w"), indent=2,
+            )
+            print(f"[QCMem-RULER] {task}/{length}: recall={score:.2f} "
+                  f"({total} samples, ~{n_tok_seen} tok) -> {outfile}")
+
+    print("\n[QCMem-RULER] SUMMARY")
+    for task in summary:
+        row = "  ".join(
+            f"{ln}={summary[task][ln]['score']:.1f}" for ln in summary[task])
+        print(f"  {task:>18}: {row}")
+    with open(outdir / f"_summary{shard_tag}.json", "w") as f:
+        json.dump(summary, f, indent=2)
+    print("\n[QCMem-RULER] Evaluation complete!")
+
+
+if __name__ == "__main__":
+    main()
