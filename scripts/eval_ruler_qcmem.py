@@ -162,6 +162,14 @@ def main():
     parser.add_argument("--top_prepay_b", type=int, default=0,
                         help="Direction-B top-prepay: run the top b layers "
                              "query-local at read (0=exact connective resume).")
+    parser.add_argument("--reuse_kv_blockdiag", action="store_true", default=False,
+                        help="Ablation arm (ii): resume layers[j:] over the SAME "
+                             "pack/positions/depth but with a BLOCK-DIAGONAL "
+                             "attention mask (sink global; each context chunk "
+                             "within-block only, query-blind; query reads sink+all "
+                             "chunks+itself). Isolates the value of cross-chunk + "
+                             "query attention vs. per-chunk query-blind KV reuse. "
+                             "Only valid with --top_prepay_b 0.")
     parser.add_argument("--lora_adapter", type=str, default="",
                         help="Optional path to a trained QCMem-distill LoRA "
                              "adapter dir (Direction A).")
@@ -222,6 +230,7 @@ def main():
 
     print(f"[QCMem-RULER] model_path={args.model_path}")
     print(f"[QCMem-RULER] resume_j={args.resume_j} top_prepay_b={args.top_prepay_b} "
+          f"reuse_kv_blockdiag={args.reuse_kv_blockdiag} "
           f"selector={args.selector} topk={args.topk} sink={args.sink_tokens} "
           f"chunk_size={args.chunk_size} dtype={dtype} attn_impl={args.attn_impl}")
     print(f"[QCMem-RULER] tasks={tasks} lengths={args.lengths} limit={args.limit}")
@@ -246,6 +255,8 @@ def main():
         parser.error(f"--resume_j must be in [0, {L}] for this model; got {args.resume_j}")
     if not (0 <= args.top_prepay_b <= L - args.resume_j):
         parser.error(f"--top_prepay_b must be in [0, {L - args.resume_j}]; got {args.top_prepay_b}")
+    if args.reuse_kv_blockdiag and args.top_prepay_b != 0:
+        parser.error("--reuse_kv_blockdiag requires --top_prepay_b 0")
 
     # Direction A: load a trained QCMem-distill LoRA adapter onto the backbone.
     # PeftModel.base_model.model is the underlying CausalLM QCMemModel reads off.
@@ -259,7 +270,8 @@ def main():
         ok = run_self_test(model, tokenizer, device, args.chunk_size)
         sys.exit(0 if ok else 1)
 
-    qc = QCMemModel(model, resume_j=args.resume_j, top_prepay_b=args.top_prepay_b)
+    qc = QCMemModel(model, resume_j=args.resume_j, top_prepay_b=args.top_prepay_b,
+                    block_diagonal=args.reuse_kv_blockdiag)
 
     outdir = Path(args.results_folder) / args.output_name
     outdir.mkdir(parents=True, exist_ok=True)
@@ -365,6 +377,7 @@ def main():
                     "qcmem": {
                         "resume_j": args.resume_j,
                         "top_prepay_b": args.top_prepay_b,
+                        "reuse_kv_blockdiag": bool(args.reuse_kv_blockdiag),
                         "selector": args.selector, "topk": args.topk,
                         "sink_tokens": args.sink_tokens, "num_layers": L,
                         "lora_adapter": args.lora_adapter or None,

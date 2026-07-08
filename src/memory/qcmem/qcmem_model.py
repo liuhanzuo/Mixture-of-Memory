@@ -80,7 +80,13 @@ class QCMemModel:
           the layer-slicing plumbing.
     """
 
-    def __init__(self, model: nn.Module, resume_j: int, top_prepay_b: int = 0):
+    def __init__(
+        self,
+        model: nn.Module,
+        resume_j: int,
+        top_prepay_b: int = 0,
+        block_diagonal: bool = False,
+    ):
         self.model = model
         inner = getattr(model, "model", model)
         self.inner = inner
@@ -106,6 +112,23 @@ class QCMemModel:
         self.top_prepay_b = int(top_prepay_b)
         # Boundary between the recomputed middle band and the query-local top band.
         self.mid_end = self.num_layers - self.top_prepay_b  # == L-b
+
+        # --- ablation flag: block-diagonal read attention (2026-07-07) ---------
+        # When True, ``read_core`` (with the default ``top_prepay_b == 0``) resumes
+        # ``layers[a:L]`` over the SAME packed sequence but with a custom 4D
+        # block-diagonal attention mask instead of the standard causal one:
+        #   * the sink is globally visible (every position may attend to it);
+        #   * each selected context chunk attends ONLY within its own block
+        #     (no cross-chunk attention, and it does NOT attend to the query) —
+        #     i.e. each chunk is contextualised as if prefilled in isolation and
+        #     its KV reused (query-blind, chunk-isolated);
+        #   * the query segment attends to the sink + ALL context chunks + itself
+        #     (causal within the query), i.e. it reads over the reused KV.
+        # The ONLY variable vs. the standard read is attention connectivity: RoPE
+        # positions, sink, retrieved chunks and the split depth ``j`` are identical,
+        # so ``(i) standard`` vs ``(ii) block_diagonal`` isolates the value of
+        # cross-chunk + query attention (vs. per-chunk query-blind KV reuse).
+        self.block_diagonal = bool(block_diagonal)
 
         # Optional gradient checkpointing on the (grad-bearing) read layer loop.
         # Only consulted by ``read_core`` when grad is enabled; write/eval paths
@@ -149,6 +172,103 @@ class QCMemModel:
         )
         position_embeddings = self.rotary_emb(hidden_like, position_ids=positions)
         return causal_mask, position_embeddings
+
+    def _make_block_diagonal_mask_and_rope(
+        self,
+        hidden_like: torch.Tensor,
+        positions: torch.Tensor,
+        seg_lens: Sequence[tuple],
+    ):
+        """Build a ``[1, 1, H, H]`` BLOCK-DIAGONAL attention mask + RoPE.
+
+        ``seg_lens`` is the packed layout as an ordered list of ``(kind, length)``
+        tuples with ``kind`` in ``{"sink", "chunk", "query"}`` (exactly one
+        ``"query"``, last; at most one ``"sink"``, first if present; the rest
+        ``"chunk"`` in doc order). The connectivity (row ``i`` attends to col
+        ``k`` iff ``mask[i, k]``) is::
+
+            allow = is_sink_col
+                    OR same_block(i, k)
+                    OR (is_query_row(i) AND is_context_chunk_col(k))
+            keep  = allow AND (k <= i)          # still causal (block-diag ⊆ causal)
+
+        i.e. the sink is globally visible; each context chunk attends only to the
+        sink + causally within its own block (NO cross-chunk, NO query — a
+        query-blind, chunk-isolated KV prefill that is then reused); the query
+        attends to the sink + every context chunk + causally within itself.
+
+        Because the packed RoPE positions are the SAME contiguous ``0:H`` as the
+        standard read, within-chunk relative positions equal an isolated prefill,
+        and the ONLY difference vs. the exact causal read is attention
+        connectivity — which is exactly the ablation variable. With a SINGLE
+        context chunk the mask is identical to the standard causal mask (there is
+        no other chunk to hide and the query already sees the one chunk), so the
+        block-diagonal read degenerates to the standard read (self-test gate).
+
+        The returned mask matches the dtype/format the backbone's attention impl
+        expects, inferred from a reference ``create_causal_mask`` output.
+        """
+        H = int(positions.shape[1])
+        device = hidden_like.device
+
+        # Per-position block id: sink -> -1, context chunk c -> c (0-indexed),
+        # query -> num_chunks. (No sink => no position carries -1.)
+        block = torch.empty(H, dtype=torch.long, device=device)
+        num_chunks = sum(1 for kind, _ in seg_lens if kind == "chunk")
+        pos = 0
+        chunk_c = 0
+        for kind, length in seg_lens:
+            length = int(length)
+            if length <= 0:
+                continue
+            if kind == "sink":
+                block[pos:pos + length] = -1
+            elif kind == "chunk":
+                block[pos:pos + length] = chunk_c
+                chunk_c += 1
+            elif kind == "query":
+                block[pos:pos + length] = num_chunks
+            else:  # pragma: no cover - guarded by callers
+                raise ValueError(f"unknown segment kind {kind!r}")
+            pos += length
+        if pos != H:  # pragma: no cover - guarded by callers
+            raise ValueError(f"seg_lens sum {pos} != packed length {H}")
+
+        row_block = block.view(H, 1)          # [H, 1]
+        col_block = block.view(1, H)          # [1, H]
+        is_sink_col = (col_block == -1)                                  # [1, H]
+        is_ctx_chunk_col = (col_block >= 0) & (col_block < num_chunks)   # [1, H]
+        is_query_row = (row_block == num_chunks)                         # [H, 1]
+        same_block = (row_block == col_block)                            # [H, H]
+
+        allow = is_sink_col | same_block | (is_query_row & is_ctx_chunk_col)
+        row_idx = torch.arange(H, device=device).view(H, 1)
+        col_idx = torch.arange(H, device=device).view(1, H)
+        causal = col_idx <= row_idx
+        keep = allow & causal                                           # [H, H] bool
+        keep = keep.view(1, 1, H, H)
+
+        # Match the format the attention impl expects. For SDPA the causal mask is
+        # a bool "keep" tensor (True == attend), so pass our bool mask straight
+        # through. For an additive float mask (eager) convert keep -> {0, min}.
+        ref = create_causal_mask(
+            config=self.config,
+            inputs_embeds=hidden_like,
+            attention_mask=None,
+            past_key_values=None,
+            position_ids=positions,
+        )
+        if isinstance(ref, torch.Tensor) and ref.dtype != torch.bool:
+            min_val = torch.finfo(ref.dtype).min
+            mask = torch.zeros(1, 1, H, H, dtype=ref.dtype, device=device)
+            mask = mask.masked_fill(~keep, min_val)
+        else:
+            # bool "keep" mask (SDPA), or ref is None (pure-causal skip) — either
+            # way an explicit bool mask is the correct, always-valid form here.
+            mask = keep
+
+        position_embeddings = self.rotary_emb(hidden_like, position_ids=positions)
+        return mask, position_embeddings
 
     def _run_layers(
         self,
@@ -237,6 +357,13 @@ class QCMemModel:
           RoPE positions and a causal mask over ``|H|``, run ``layers[a:L]``,
           norm + lm_head. Returns logits for EVERY packed position ``[1, |H|, V]``.
 
+          If ``self.block_diagonal`` is set, the SAME pack / positions / depth are
+          used but the causal mask is replaced by a block-diagonal one (sink
+          global; each context chunk within-block only; query sees sink + all
+          chunks + itself). This is the "reuse per-chunk query-blind KV" ablation
+          arm; see :meth:`_make_block_diagonal_mask_and_rope`. Only valid for
+          ``b == 0``.
+
         * ``b > 0`` — APPROXIMATE top-prepay (front + back caching). Run the
           middle band ``layers[a : L-b]`` over the full packed sequence
           (query-aware), then slice off the QUERY tail (last ``T_q`` positions,
@@ -255,17 +382,31 @@ class QCMemModel:
         numerically identical to slicing the full output.
         """
         pieces: List[torch.Tensor] = []
+        seg_lens: List[tuple] = []
         if sink_hj is not None:
             pieces.append(sink_hj)
+            seg_lens.append(("sink", int(sink_hj.shape[1])))
         for h in selected_hj_list:
             if h is not None and h.shape[1] > 0:
                 pieces.append(h)
+                seg_lens.append(("chunk", int(h.shape[1])))
         pieces.append(query_hj)
+        seg_lens.append(("query", int(query_hj.shape[1])))
 
         packed = torch.cat(pieces, dim=1)  # [1, |H|, d]
         H = packed.shape[1]
         positions = torch.arange(H, device=self.device).unsqueeze(0)
-        causal_mask, position_embeddings = self._make_mask_and_rope(packed, positions)
+        if self.block_diagonal:
+            if self.top_prepay_b != 0:
+                raise ValueError(
+                    "block_diagonal read is only defined for top_prepay_b == 0 "
+                    f"(the exact-depth resume path); got b={self.top_prepay_b}"
+                )
+            causal_mask, position_embeddings = self._make_block_diagonal_mask_and_rope(
+                packed, positions, seg_lens
+            )
+        else:
+            causal_mask, position_embeddings = self._make_mask_and_rope(packed, positions)
 
         if self.top_prepay_b == 0:
             # Exact resume over the whole packed sequence.
