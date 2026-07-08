@@ -82,8 +82,9 @@ def load_ckpt(path, device):
     bl = int(ck.get("bottleneck_layer", 6))
     bd = int(ck.get("bottleneck_dim", 0))
     seq_len = int(ck.get("seq_len", 2048))
+    size = str(ck.get("model_size", "1b"))
     model = build_bottleneck_model(bottleneck_layer=bl, bottleneck_dim=bd,
-                                   seq_len=seq_len, dtype=torch.bfloat16)
+                                   seq_len=seq_len, dtype=torch.bfloat16, size=size)
     missing, unexpected = model.load_state_dict(ck["model_state"], strict=False)
     if missing or unexpected:
         print(f"  [load] missing={len(missing)} unexpected={len(unexpected)} (bd={bd})")
