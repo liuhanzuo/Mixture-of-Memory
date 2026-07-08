@@ -102,6 +102,7 @@ slimpajama 外, wikitext 上复现 baseline+bottleneck(j6d512): **bottleneck 前
 ## 5. 诚实的 limitations
 - ≤64k(backbone 外推内) full-context ≥ QCMem(压缩宿命, 不宣称精度 SOTA)。
 - 分水岭随 backbone 外推能力此消彼长(未来原生长上下文模型推后不可替代区间; 效率优势始终在)。
+  - **实证(niah_single full-ctx vs QCMem)**: Llama-3(原生8k) full-ctx 8k=100→**16k=0崩**(QCMem 100); Qwen(原生40k) full-ctx 撑到64k=100→128k=0. **分水岭≈原生CL的~2×, backbone外推越弱QCMem不可替代区间来得越早、价值越大** → QCMem 在弱外推backbone/场景价值更突出。
 - var-track(多跳)弱(64k=21); qa1 32k 需自适应 topk。
 - "浅层可压缩"naive 版被证伪(浅层反最不可压, 深层低秩是 attention-sink 假象)→ 存储优势来自"只存一层"(layer-axis)非"该层可压"(feature-axis)。**但 §3.3 已证: semantic-bottleneck pretrain 能显式制造缓存点可压性(bottleneck dim99 427 vs vanilla 1859)** → 这条从软肋转为 pretrain 设计产物。
 
