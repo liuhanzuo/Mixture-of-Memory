@@ -351,6 +351,10 @@ def main():
     parser.add_argument("--sink_tokens", type=str, default="bos",
                         choices=["bos", "none"],
                         help="Attention-sink anchor at packed position 0.")
+    parser.add_argument("--reuse_kv_blockdiag", action="store_true", default=False,
+                        help="(ii) block-diagonal read: reuse per-chunk query-blind KV "
+                             "(no cross-chunk / query-aware attention) vs standard full "
+                             "attention. Isolates the value of upper-layer recompute.")
     parser.add_argument("--results_folder", type=str, default="./babilong_results")
     parser.add_argument("--output_name", type=str, required=True)
     parser.add_argument("--dataset_name", type=str, default="RMT-team/babilong")
@@ -431,7 +435,8 @@ def main():
         ok = run_self_test(model, tokenizer, device, args.chunk_size)
         sys.exit(0 if ok else 1)
 
-    qc = QCMemModel(model, resume_j=args.resume_j, top_prepay_b=args.top_prepay_b)
+    qc = QCMemModel(model, resume_j=args.resume_j, top_prepay_b=args.top_prepay_b,
+                    block_diagonal=args.reuse_kv_blockdiag)
 
     for task in tqdm(args.tasks, desc="tasks"):
         if task not in DEFAULT_PROMPTS:
