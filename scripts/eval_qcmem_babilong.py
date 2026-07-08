@@ -189,7 +189,26 @@ def qcmem_generate(
     sink_tokens: str,             # "bos" | "none"
     needle_chunk_set=None,        # set[int] for oracle; else None
     bare_question_ids=None,       # list[int] for bm25 query
+    no_retrieval: bool = False,   # baseline arm: pack EVERY context chunk (no topk)
+    stats=None,                   # optional out-dict: read_len / chunk counts
 ) -> str:
+    """Chunk the prompt, write each chunk to depth ``j``, select context chunks,
+    then greedily decode from the packed read.
+
+    ``no_retrieval`` (mechanism-level HCache / KV-Direct baselines): skip the
+    ``selector`` + ``topk`` filtering entirely and pack ALL context chunks in
+    document order. This makes the read length (and its memory / compute) grow
+    O(context) — the exact primitive difference from QCMem's retrieval, which
+    packs a FIXED ``topk`` chunks so the read stays constant regardless of context
+    length. ``resume_j`` is orthogonal and is set by the caller (0 => KV-Direct
+    full-depth recompute; j>0 => HCache-style mid-layer recompute).
+
+    ``stats`` (optional dict): if given, populated with ``read_len`` (packed read
+    length in tokens at the first decode step = sink + all selected chunk hiddens
+    + query chunk), ``n_selected_chunks`` and ``n_context_chunks`` — the numbers
+    the head-to-head efficiency table reports (QCMem constant read vs baselines'
+    O(context) read).
+    """
     device = qc.device
     tokens = input_ids[0]
     chunks = list(tokens.split(chunk_size))
@@ -213,14 +232,20 @@ def qcmem_generate(
     # selected ones below — nothing is written (or full-forwarded) twice.
     context_hj = None
     query_hj_for_sel = None
-    if selector == "reader_attn":
+    if not no_retrieval and selector == "reader_attn":
         context_hj = [qc.write_chunk(c) for c in context_chunks]
         query_hj_for_sel = qc.write_chunk(query_chunk)
 
-    sel_idx = _select_context_chunk_indices(
-        selector, context_chunks, bare_question_ids or [], topk, needle_chunk_set,
-        context_hj=context_hj, query_hj=query_hj_for_sel,
-    )
+    if no_retrieval:
+        # HCache / KV-Direct baseline: NO retrieval — pack every context chunk in
+        # document order. Read length grows O(context) (the primitive difference
+        # from QCMem's fixed-topk retrieval).
+        sel_idx = list(range(len(context_chunks)))
+    else:
+        sel_idx = _select_context_chunk_indices(
+            selector, context_chunks, bare_question_ids or [], topk, needle_chunk_set,
+            context_hj=context_hj, query_hj=query_hj_for_sel,
+        )
 
     # ---- write (encode to depth j) the selected context chunks ONCE ----
     if context_hj is not None:
@@ -233,6 +258,18 @@ def qcmem_generate(
     query_ids = query_chunk.tolist()
     eos_id = tokenizer.eos_token_id
     generated = []
+
+    if stats is not None:
+        # read_len at the FIRST decode step = sink + all selected chunk hiddens +
+        # the (initial) query chunk. This is the packed sequence length the read
+        # actually resumes layers[j:] over — the efficiency-table quantity that is
+        # CONSTANT for QCMem (fixed topk) but grows O(context) for the baselines.
+        sink_len = int(sink_hj.shape[1]) if sink_hj is not None else 0
+        sel_len = int(sum(h.shape[1] for h in selected_hj))
+        stats["read_len"] = sink_len + sel_len + len(query_ids)
+        stats["n_selected_chunks"] = len(selected_hj)
+        stats["n_context_chunks"] = len(context_chunks)
+
     for step in range(max_new_tokens):
         q_hj = qc.write_chunk(query_ids)
         logits = qc.read(sink_hj, selected_hj, q_hj)   # [1, |H|, V]
