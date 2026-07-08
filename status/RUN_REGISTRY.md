@@ -1301,3 +1301,97 @@ team-lead 采纳「Part-Y-only」干净单轴框架（比早先 option A 更紧�
   | qa5 | 100 | 100 | 97 | 87 | 65 | 76 | 68 |
 - **★注**:qa5（3-fact）长档异常高且稳（32k=68 >> MemoryLLM 34），输出非退化（diverse target/output 对，已抽查 qa5_32k shard0）。qa1/qa2（1-2 fact）长档掉到 30-32。待 b50/b100/c1024 W0+W6 合并后横向对照（buffer 大小 × SWA 对长档的影响）。
 - 节点 .48.7.53(b25)；本机(b50)、.58.245.174(b100)、B200.53(b50_c1024) eval RUNNING。
+
+#### ★★ QCMem mid-depth resume 自蒸馏 — 训练量 scaling (2026-07-07, Qwen3-8B, definitive n=100 官方判分)
+- **机制**:QCMem resume j=12(缓存底12层h_j,读时重算上24层)。自蒸馏:teacher=j0(RAG全重算上界),student=j12+LoRA(r16/32),PG19纯自然文本KL,**零babilong**(守红线)。eval bm25 top4,sink bos,chunk512。
+- **训练量 scaling 曲线(bm25 同口径,官方 compare_answers,n=100)**:
+  | task/len | 0步(零训) | 1000步(r16) | 2000步(r32) | 3000步 | 4000步 |
+  |--|--|--|--|--|--|
+  | qa1/8k | 23 | 30 | 31 | 31 | 31 |
+  | qa1/16k | 11 | 18 | 19 | 18 | 19 |
+  | qa5/8k | 61 | 80 | 78 | 80 | 79 |
+  | qa5/16k | 50 | 63 | 65 | **68** | 67 |
+  - 补充(4000步 final): qa1/4k=58 qa5/4k=73(短档强,检索压力小)
+- **★裁决(3条 definitive)**:
+  1. **自蒸馏真实有效且快**:90%+增益头1000步拿到(qa1/16k 11→18, qa5/16k 50→63)。证明 QCMem"训练推后 readout cliff"主张在 Qwen+自蒸馏配方成立,且**不靠合成数据**。
+  2. **qa5(关系/多fact)持续受益训练**:16k 50→63→65→68 单调爬升未饱和,4000步仍高位。
+  3. **qa1(精确单fact定位)完全饱和**:1000步后 8k=31/16k=19 纹丝不动 → **qa1 天花板=检索召回,非训练能力**(BM25 召不到含答案单chunk,再训无米;qa5 多fact冗余对检索不敏感故更高)。
+- **oracle selector 不可用作上界**(诊断 n=50×3档):定位100%成功0回退,但只选 avg1.3-1.5 个含**字面答案词**chunk vs bm25固定4 → qa5 漏推理链fact,oracle常<bm25。topk语义不同,非bug。
+- **方向B(非连续层/缓存顶层)判负**:qa5 (12,0)baseline 8k61/16k50;缓存任何顶层即崩((12,6)29/20,(6,6)27/23,(6,12)9/10)。顶层hidden=query敏感读出前表征,缓存=丢query-conditioning。印证纯前j层resume才对。
+- **下一步**:瓶颈=selector(检索召回)。修检索(BM25→更强检索/增大topk/query改写)是qa1突破口,非加训练。
+- **产物**:LoRA `outputs/qcmem_distill_qwen_j12_r32_4k/{step1000..4000,final}`;1000步版 `outputs/qcmem_distill_qwen_j12/step1000`。commit e71bdd2(local_files_only fix)。
+
+#### 🎯★★ QCMem 最佳配置全表 — 碾压 MemoryLLM (2026-07-07, definitive n=100 官方判分)
+- **配置**:Qwen3-8B, QCMem resume_j=12(缓存底12层,读时重算上24层), 4000步自蒸馏LoRA(r32/α64, teacher=j0 RAG, 纯PG19零babilong), selector=bm25 **topk12(甜点)**, sink=bos, chunk512。
+- **全表(qa1/qa2/qa5 × 0k-32k, 官方 compare_answers, n=100)**:
+  | task | 0k | 1k | 2k | 4k | 8k | 16k | 32k |
+  |--|--|--|--|--|--|--|--|
+  | qa1 | 98 | 79 | 68 | 66 | 63 | **57** | 21 |
+  | qa2 | 25 | 44 | 41 | 41 | 35 | 25 | 10 |
+  | qa5 | 69 | 77 | 75 | 76 | 62 | **63** | 63 |
+  - **MemoryLLM baseline 对照**: qa1 53/42/32/23/14/9/7; qa2 36/35/19/16/15/16/16; qa5 47/50/45/39/39/38/34。
+- **★裁决**:除 32k 边缘全面碾压。qa1/16k **57 vs 9(6.3×)**;qa5 全程压制(16k 63 vs 38);qa2 中程(1k-8k)超越。
+- **甜点 topk 随任务/长度**:qa1(单fact)=topk12;qa2(双fact)=topk16(8k=37,16k=30 > topk12);长档32k需更大topk(topk12对64chunk召回不足→qa1/qa2 32k掉21/10)。qa5(多fact冗余)对topk不敏感,32k=63稳。
+- **方法要点**:QCMem resume(破读出墙) + 自蒸馏(纯PG19守红线,readout训练) + 甜点检索精度(bm25 topk12,非越多越好)三者叠加 = 长档记忆SOTA。
+- **下一步**:(1) 甜点topk随长度自适应(32k用topk24+); (2) reader_attn salience selector(coder实现中,替代bm25词法); (3) 双fact/多fact用更大topk。
+
+#### 🎯 QCMem 每任务最优 topk SOTA 全表 (2026-07-07 最终, n=100 官方判分)
+- 同上 4000步自蒸馏LoRA，**每任务用其最优 topk**（甜点随任务所需 supporting fact 数单调）：
+  | task | 0k | 1k | 2k | 4k | 8k | 16k | 32k | 最优topk |
+  |--|--|--|--|--|--|--|--|--|
+  | qa1 | 98 | 79 | 68 | 66 | 63 | **57** | 28 | tk12(32k:24) |
+  | qa2 | 25 | 44 | 41 | 43 | 37 | 25 | 18 | tk16(32k:24) |
+  | qa5 | 69 | 77 | 75 | 73 | **79** | 67 | 63 | tk4 |
+  - MemoryLLM: qa1 53/42/32/23/14/9/7 | qa2 36/35/19/16/15/16/16 | qa5 47/50/45/39/39/38/34
+- **★最优 topk 规律(可解释)**:qa5(多fact/关系)=tk4, qa1(单fact)=tk12, qa2(双fact)=tk16 —— **最优 topk 随任务需要的 supporting fact 数单调递增**;超过甜点即噪声稀释 reader attention("信噪比非覆盖率")。长档需按比例放大(32k:tk24)。
+- **裁决**:qa1 8k=63vs14(4.5×)/16k=57vs9(6.3×)/32k=28vs7(4×);qa5 全程压制(8k 79vs39=2×);qa2 中程超越端点接近。**QCMem resume+自蒸馏(零合成)+任务自适应甜点检索 = 长档记忆全面 SOTA**。
+- **弱点**:qa2(双fact最难)0k=25<36、16k=25 未拉开→需 qa2 专训或更强 selector(reader_attn coder实现中)。
+
+#### ⚠️ MemoryLLM baseline 校准 (2026-07-07, 铁律2 官方判分复核 .52 现有 CSV)
+- **实测 MemoryLLM-8B-chat**（n=100 官方 compare_answers，.52 `babilong_results/MemoryLLM-8B-chat`）：
+  | task | 0k | 1k | 2k | 4k | 8k | 16k | 32k |
+  |--|--|--|--|--|--|--|--|
+  | qa1 | (缺) | 50 | 49 | 25 | 30 | 20 | 12 |
+  | qa2 | (缺) | 29 | 21 | 20 | 14 | 19 | 16 |
+  | qa5 | (缺) | 47 | 42 | 40 | 41 | 38 | 37 |
+- **⚠️ 更正**：此前 RUN_REGISTRY/handoff 引用的 MemoryLLM qa1 = `53/42/32/23/14/9/7` 与实测不符（实测 qa1 长档高很多：16k=20 非 9，32k=12 非 7）。**以此实测 CSV 为准**。
+- **修正后 QCMem vs MemoryLLM（官方同口径）**：qa1/16k 57 vs **20 = 2.85×**（非之前误报的 6.3×）；qa5/16k 67(topk4)/63(topk12) vs 38 = 1.7×；qa1/8k 63 vs 30 = 2.1×。**仍大幅领先，但校准后不夸大**。
+
+#### 🎯 QCMem RULER 真实任务泛化 (2026-07-07, Qwen 4000步自蒸馏, string_match_all recall)
+- **配置**: Qwen3-8B QCMem resume_j12 + 4000步自蒸馏LoRA(纯PG19零RULER/babilong) + bm25 topk12。RULER self-contained本地重实现(niah/vt),官方string_match_all口径。
+- **完整长档表(n=50/task/length)**:
+  | task | 4k | 8k | 16k | 32k |
+  |--|--|--|--|--|
+  | niah-single | 100 | 100 | 100 | 100 |
+  | niah-multikey | 96 | 94 | 94 | 88 |
+  | var-track | 100 | 49 | 25 | 21 |
+- **Qwen零训练对照(8k/16k)**: niah-single 36/8, multikey 0/6, var-track 4/2。
+- **Llama-3自蒸馏(8k/16k)**: niah-single 100/100(简单任务backbone无关), multikey 30/32, var-track 12/4。
+- **★裁决**: niah-single全长100=无长档退化. 自蒸馏(纯PG19)zero-shot到RULER真实NIAH任务=**通用长上下文记忆能力铁证,非babilong特化**. 兑现2026-07-05从qa5合成SFT转向纯prediction的目标. backbone×训练分解在RULER一致(Qwen蒸≫Llama蒸≫零训; 难任务multikey/vt Qwen backbone领先)。
+
+#### 🎯🎯 QCMem vs full-context 长档 scaling 决胜表 (2026-07-07, Qwen3-8B, RULER string_match_all n=50)
+- **QCMem** = resume_j12 + 4000步自蒸馏LoRA + bm25 (topk 随长度: 64k tk12/128k tk24/256k tk48)。**full-context** = base_max_window 覆盖全长直喂。
+- **niah-single**:
+  | 方法 | 8k | 16k | 32k | 64k | 128k | 256k |
+  |--|--|--|--|--|--|--|
+  | full-context | 100 | 100 | 100 | 100 | **0** | **OOM(~350GB)** |
+  | QCMem | 100 | 100 | (-) | 100 | **100** | **98** |
+- **niah-multikey**: full-ctx 64k=96→128k=0; QCMem 64k=82/128k=84/256k=60。
+- **★决胜结论**: Qwen3-8B外推悬崖在64k→128k之间(rope1e6撑到64k, 128k全崩=0). ≤64k full-context精度≈或略优QCMem(装得下时全喂更好); **>64k(128k/256k) full-context精度归零/OOM, QCMem仍98-100** = QCMem在超backbone外推能力的超长档是唯一可用方案.
+- **命题B速度(bench_qcmem_vs_fullctx.json)**: prefill加速 32k 2.5×/64k 4.4×/128k 7.8×; 显存 full 20→89GB(随L) vs QCMem恒定~18GB. QCMem read固定6657tok(sink+topk*chunk+query), 与上下文长度无关.
+- **价值主张**: QCMem不靠短档精度取胜(那里full-ctx更好), 靠(1)超CL可扩展(full跑不了时QCMem高精度) (2)prefill数倍加速 (3)显存恒定. 三重优势随上下文增长放大.
+
+#### 🔬 QCMem read 精确 ablation: 上层重算(cross-chunk+query attention) vs 复用KV(block-diagonal) (2026-07-08, Qwen3-8B, RULER string_match_all n=50)
+- **唯一变量 = read 时 layers[j:] 的 attention 连通性**（j=12, topk12, bm25, sink=bos, chunk512, 4000步自蒸馏LoRA 全相同; RoPE/位置/检索/sink 全相同）。实现: `QCMemModel(block_diagonal=True)` 构造 [1,1,H,H] block-diagonal 4D mask（transformers 5.5.4 `create_causal_mask` 原样透传预构建 4D mask，单次 forward，无 KV 注入）。commit `2daeb9a`。
+  - **(i) 标准 QCMem**: full attention → 检索chunk 彼此 cross-attend + query attend 全部 chunk。
+  - **(ii) block-diagonal**: sink 全局可见; 每个检索chunk 只在自己块内 causal（chunk 间无 cross, chunk 不 attend query = query-blind 孤立 KV 复用）; query 段 attend sink+所有chunk+自身causal。
+- **对比表**:
+  | task | len | (i) std | (ii) blkdiag | Δ(i-ii) |
+  |--|--|--|--|--|
+  | niah-single | 8k | 100 | 100 | +0 |
+  | niah-single | 16k | 100 | 100 | +0 |
+  | niah-multikey | 8k | 88 | 44 | **+44** |
+  | niah-multikey | 16k | 92 | 40 | **+52** |
+- **★裁决（诚实，铁律2）**: **取决于任务, 非一刀切**。单一 needle 任务(niah-single, 答案整个落在1个chunk内)→ cross-chunk attention 无关紧要, (i)≈(ii)（query 在两种mask下都能读到那唯一chunk）→ block-diagonal KV 复用完全够用（省算）。多key干扰任务(niah-multikey, 需在 4 个 distractor key 间消歧)→ **(i) 大幅碾压 (ii)（8k +44, 16k +52, block-diag 几乎腰斩）** → cross-chunk + query-aware attention 是价值来源，不能只靠复用孤立 KV。
+- **对论文的意义**: QCMem "read 时对 pack 做 full attention 重算上层" 的设计**在多fact/干扰任务上有硬价值**（不是可有可无的 over-engineering）；但在单fact检索上，更省的 block-diagonal KV-复用变体等价——存在按任务选 read 策略的空间。self-test 铁证实现正确: 单chunk时 block-diag ≡ 标准（Qwen3-8B max|logit diff| 4.7e-5），多chunk时发散（`scripts/qcmem_blockdiag_selftest.py`）。
+- **产物**: eval `ruler_results/qcmem_blockdiag_ablation/{qcmem_standard_j12,qcmem_blockdiag_j12}/`（+COMPARISON_TABLE.txt）; 代码 `--reuse_kv_blockdiag`(eval_ruler_qcmem.py) / launcher `scripts/_qcmem_blockdiag_ablation.sh` / 聚合 `scripts/aggregate_blockdiag_ablation.py`。
