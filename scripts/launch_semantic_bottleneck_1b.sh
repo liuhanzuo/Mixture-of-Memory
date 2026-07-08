@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
-# Launch one arm of the 1B semantic-bottleneck feasibility experiment on 4 GPUs.
+# Launch one arm of the semantic-bottleneck feasibility experiment on 4 GPUs.
+# Supports the 1b/3b/7b scale-up ladder via MODEL_SIZE.
 #
 # Usage:
 #   ARM=baseline    GPUS=0,1,2,3 PORT=29610 bash scripts/launch_semantic_bottleneck_1b.sh
 #   ARM=bottleneck  GPUS=4,5,6,7 PORT=29611 bash scripts/launch_semantic_bottleneck_1b.sh
+#   MODEL_SIZE=3b ARM=baseline GPUS=0,1,2,3,4,5,6,7 PORT=29612 BATCH_SIZE=8 bash scripts/launch_semantic_bottleneck_1b.sh
 set -euo pipefail
 
 export PATH=/opt/conda/bin:$PATH
@@ -20,6 +22,7 @@ export NCCL_IB_DISABLE=1
 export NCCL_P2P_DISABLE=0
 
 ARM="${ARM:-baseline}"
+MODEL_SIZE="${MODEL_SIZE:-1b}"
 GPUS="${GPUS:-0,1,2,3}"
 PORT="${PORT:-29610}"
 DATA_PATH="${DATA_PATH:-data/slimpajama_chunks_4096_llama3.npy}"
@@ -37,10 +40,10 @@ else
 fi
 
 NGPU=$(echo "$GPUS" | tr ',' '\n' | grep -c .)
-OUT="outputs/sembott_1b_${ARM}"
+OUT="${OUT:-outputs/sembott_${MODEL_SIZE}_${ARM}}"
 mkdir -p logs "$OUT"
 
-echo "[launch] ARM=$ARM GPUS=$GPUS ngpu=$NGPU bd=$BD layer=$BOTTLENECK_LAYER out=$OUT port=$PORT"
+echo "[launch] MODEL_SIZE=$MODEL_SIZE ARM=$ARM GPUS=$GPUS ngpu=$NGPU bd=$BD layer=$BOTTLENECK_LAYER out=$OUT port=$PORT"
 
 CUDA_VISIBLE_DEVICES="$GPUS" "$PYTHON_BIN" -m torch.distributed.run \
   --nproc_per_node="$NGPU" --nnodes=1 \
@@ -48,6 +51,7 @@ CUDA_VISIBLE_DEVICES="$GPUS" "$PYTHON_BIN" -m torch.distributed.run \
   scripts/train_semantic_bottleneck_1b.py \
   --data_path "$DATA_PATH" \
   --output_dir "$OUT" \
+  --model_size "$MODEL_SIZE" \
   --bottleneck_layer "$BOTTLENECK_LAYER" \
   --bottleneck_dim "$BD" \
   --max_steps "$MAX_STEPS" \

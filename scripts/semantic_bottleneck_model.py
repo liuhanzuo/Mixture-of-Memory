@@ -26,24 +26,77 @@ import torch.nn as nn
 from transformers import LlamaConfig, LlamaForCausalLM
 
 
-def make_1b_config(vocab_size: int = 128256, seq_len: int = 4096) -> LlamaConfig:
-    """Llama-3.2-1B-shaped config (random init, trained from scratch)."""
-    return LlamaConfig(
-        vocab_size=vocab_size,
+# Per-size architecture shapes. Keys are the only fields that differ across the
+# 1b/3b/7b scale-up ladder; everything else (rope, norm eps, no bias/dropout) is
+# shared and set in make_config below.
+#   1b: Llama-3.2-1B         (hidden 2048 / 16L / 32h / 8kv / hd 64  / ffn 8192)
+#   3b: Llama-3.2-3B         (hidden 3072 / 28L / 24h / 8kv / hd 128 / ffn 8192)
+#   7b: Llama-2-7B-ish       (hidden 4096 / 32L / 32h /32kv / hd 128 / ffn 11008)
+_SIZE_SHAPES = {
+    "1b": dict(
         hidden_size=2048,
         intermediate_size=8192,
         num_hidden_layers=16,
         num_attention_heads=32,
         num_key_value_heads=8,
         head_dim=64,
+        tie_word_embeddings=True,
+    ),
+    "3b": dict(
+        hidden_size=3072,
+        intermediate_size=8192,
+        num_hidden_layers=28,
+        num_attention_heads=24,
+        num_key_value_heads=8,
+        head_dim=128,
+        tie_word_embeddings=True,
+    ),
+    "7b": dict(
+        hidden_size=4096,
+        intermediate_size=11008,
+        num_hidden_layers=32,
+        num_attention_heads=32,
+        num_key_value_heads=32,
+        head_dim=128,
+        tie_word_embeddings=False,
+    ),
+}
+
+
+def make_config(size: str = "1b", vocab_size: int = 128256, seq_len: int = 4096) -> LlamaConfig:
+    """Llama-shaped config (random init, trained from scratch) for a given size.
+
+    size in {"1b", "3b", "7b"}. Shared fields (rope_theta=500000, silu,
+    rms_norm_eps=1e-5, no attention bias/dropout) match the original 1B recipe.
+    """
+    size = size.lower()
+    if size not in _SIZE_SHAPES:
+        raise ValueError(f"unknown size {size!r}; expected one of {sorted(_SIZE_SHAPES)}")
+    shape = _SIZE_SHAPES[size]
+    return LlamaConfig(
+        vocab_size=vocab_size,
+        hidden_size=shape["hidden_size"],
+        intermediate_size=shape["intermediate_size"],
+        num_hidden_layers=shape["num_hidden_layers"],
+        num_attention_heads=shape["num_attention_heads"],
+        num_key_value_heads=shape["num_key_value_heads"],
+        head_dim=shape["head_dim"],
         hidden_act="silu",
         max_position_embeddings=max(seq_len, 4096),
         rope_theta=500000.0,
         rms_norm_eps=1e-5,
-        tie_word_embeddings=True,
+        tie_word_embeddings=shape["tie_word_embeddings"],
         attention_bias=False,
         attention_dropout=0.0,
     )
+
+
+def make_1b_config(vocab_size: int = 128256, seq_len: int = 4096) -> LlamaConfig:
+    """Backward-compatible alias for make_config("1b", ...).
+
+    Kept so the currently-running 1B training keeps its exact old behaviour.
+    """
+    return make_config("1b", vocab_size=vocab_size, seq_len=seq_len)
 
 
 class BottleneckLayer(nn.Module):
@@ -81,12 +134,15 @@ def build_bottleneck_model(
     vocab_size: int = 128256,
     seq_len: int = 4096,
     dtype: torch.dtype = torch.bfloat16,
+    size: str = "1b",
 ) -> LlamaForCausalLM:
-    """Fresh (random-init) 1B Llama, optionally with a bottleneck after layer j.
+    """Fresh (random-init) Llama of the given size, optionally with a bottleneck
+    after layer j.
 
+    size in {"1b", "3b", "7b"}; default "1b" preserves the original behaviour.
     bottleneck_dim <= 0  ->  no bottleneck (baseline arm).
     """
-    cfg = make_1b_config(vocab_size=vocab_size, seq_len=seq_len)
+    cfg = make_config(size, vocab_size=vocab_size, seq_len=seq_len)
     model = LlamaForCausalLM(cfg)
     model = model.to(dtype)
     if bottleneck_dim and bottleneck_dim > 0:
@@ -98,8 +154,10 @@ def build_bottleneck_model(
 
 
 if __name__ == "__main__":
-    for bd in (0, 512):
-        m = build_bottleneck_model(bottleneck_layer=6, bottleneck_dim=bd)
-        n = sum(p.numel() for p in m.parameters())
-        n_tr = sum(p.numel() for p in m.parameters() if p.requires_grad)
-        print(f"bottleneck_dim={bd}: total={n/1e9:.4f}B trainable={n_tr/1e9:.4f}B")
+    for size in ("1b", "3b", "7b"):
+        for bd in (0, 512):
+            m = build_bottleneck_model(bottleneck_layer=6, bottleneck_dim=bd, size=size)
+            n = sum(p.numel() for p in m.parameters())
+            n_tr = sum(p.numel() for p in m.parameters() if p.requires_grad)
+            print(f"size={size} bottleneck_dim={bd}: total={n/1e9:.4f}B trainable={n_tr/1e9:.4f}B")
+            del m

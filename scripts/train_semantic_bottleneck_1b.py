@@ -32,7 +32,7 @@ for _p in (PROJECT_ROOT, os.path.join(PROJECT_ROOT, "scripts")):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
-from semantic_bottleneck_model import build_bottleneck_model, make_1b_config  # noqa: E402
+from semantic_bottleneck_model import build_bottleneck_model, make_config  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -75,6 +75,8 @@ def main():
     p.add_argument("--data_path", type=str, required=True)
     p.add_argument("--output_dir", type=str, required=True)
     p.add_argument("--tokenizer_path", type=str, default="models/Meta-Llama-3-8B")
+    p.add_argument("--model_size", type=str, default="1b", choices=["1b", "3b", "7b"],
+                   help="Llama shape to build from scratch")
     p.add_argument("--bottleneck_layer", type=int, default=6)
     p.add_argument("--bottleneck_dim", type=int, default=0, help="0 = baseline no bottleneck")
     p.add_argument("--max_steps", type=int, default=2000)
@@ -107,17 +109,18 @@ def main():
     if is_main:
         os.makedirs(args.output_dir, exist_ok=True)
         eff_bs = args.batch_size * args.grad_accumulation_steps * world_size
-        logger.info(f"=== 1B semantic-bottleneck pretrain [{arm}] ===")
+        logger.info(f"=== {args.model_size} semantic-bottleneck pretrain [{arm}] ===")
         logger.info(f"world_size={world_size} bs={args.batch_size} gaccum={args.grad_accumulation_steps} "
                     f"eff_bs={eff_bs} seq_len={args.seq_len} lr={args.lr} max_steps={args.max_steps}")
 
-    cfg = make_1b_config(seq_len=args.seq_len)
+    cfg = make_config(args.model_size, seq_len=args.seq_len)
     model = build_bottleneck_model(
         bottleneck_layer=args.bottleneck_layer,
         bottleneck_dim=args.bottleneck_dim,
         vocab_size=cfg.vocab_size,
         seq_len=args.seq_len,
         dtype=torch.bfloat16,
+        size=args.model_size,
     ).to(device)
     model.gradient_checkpointing_enable()
     model.config.use_cache = False
@@ -127,6 +130,7 @@ def main():
         logger.info(f"model params = {n/1e9:.4f}B")
         with open(os.path.join(args.output_dir, "arch_meta.json"), "w") as f:
             json.dump({
+                "model_size": args.model_size,
                 "bottleneck_layer": args.bottleneck_layer,
                 "bottleneck_dim": args.bottleneck_dim,
                 "seq_len": args.seq_len,
@@ -243,6 +247,7 @@ def _save(model, args, step, final=False):
     path = os.path.join(args.output_dir, f"{name}.pt")
     torch.save({"model_state": root.state_dict(),
                 "step": step,
+                "model_size": args.model_size,
                 "bottleneck_layer": args.bottleneck_layer,
                 "bottleneck_dim": args.bottleneck_dim,
                 "seq_len": args.seq_len}, path)
