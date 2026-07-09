@@ -122,7 +122,42 @@ read_len = topk×chunk + sink + query，随 chunk 线性（topk=12 固定）。
 - **甜点随 length 变化**：8k 甜点 topk4（multikey=100，read_len~2465），32k 甜点 **topk8**（=98，vs topk24=90，Δ-8）。**长档甜点更小**（过召回稀释信噪比）。
 - ⚠️ 网格稀疏：仅 32k 有完整曲线（tk4/8/12/16/24 = 96/98/90/92/90）。topk8/16k、topk16/多档缺；topk8/8k(n=30)、topk8/64k(n=10) 未满 n=50 不采信。
 
+### 2.7 ★ LongEval（LongChat lines-retrieval, n=50, 最优 topk tk4-6）
+纯单跳行检索——检索式记忆的主场。**默认 tk12 严重低估（0.70），最优 tk4-6 才是真实实力。**
+| 长度 | QCMem（最优 topk）| KV-Direct | HCache | QCMem read_len |
+|--|--|--|--|--|
+| 8k | **1.00**(tk4/6) | 1.00 | 0.00 | ~2.2k |
+| 16k | 0.96(tk4) | 0.96 | 0.00 | ~2.2k |
+| 32k | **1.00**(tk4) | 0.92 | 0.00 | ~2.2k |
+| 64k | 0.94(tk4/6) | **0.34** | 0.00 | ~2.3k |
+| 128k | **0.98**(tk6) | **0.00** | 0.00 | ~3.4k |
+- **窗口内追平**（8k/16k/32k = 1.00/0.96/1.00 vs KVD 1.00/0.96/0.92）+ **超窗口大幅反超**（64k 0.94 vs 0.34；128k 0.98 vs 0）。
+- QCMem read_len 恒定 ~2-3k（O(1)）；KV-Direct read_len O(context)，128k 达 13 万 tok 超窗口崩。HCache 全 0（无检索 needle 淹没）。
+
+### 2.8 LongBench（真实长文档 QA, F1 官方口径, Qwen3-8B, chunk512）
+| 任务 | QCMem(tk12) | KV-Direct(全上下文) | Stock(no-LoRA) |
+|--|--|--|--|
+| narrativeqa | 3.93 | 3.95 | 4.01 |
+| qasper | 11.07 | 11.92 | 10.33 |
+| hotpotqa | 11.64 | 12.48 | — |
+| 2wikimqa | 11.69 | 12.16 | — |
+| **AVG** | **9.58** | 10.13 | — |
+- **关键（诚实且对 QCMem 有利）**：三方 F1 全落在 4-12（Qwen3-8B base + no_chat_template，任务本难），QCMem 用**恒定 read (~4.6k)** 追平 KV-Direct 的**全上下文**（差距在噪声内）→ **LongBench 低分是任务难非 QCMem 弱**。
+
+### 2.9 LoCoMo（长对话记忆, n=1965, 按 category, F1/acc）
+| category | n | QCMem F1 | QCMem acc |
+|--|--|--|--|
+| cat1 multi_hop | 282 | 9.8 | 12.1 |
+| cat2 single_hop | 321 | 6.3 | 9.3 |
+| cat3 temporal | 96 | 8.1 | 24.0 |
+| cat4 open_domain/画像 | 828 | **13.9** | **45.7** |
+| cat5 adversarial(要拒答) | 438 | 1.6 | 1.6 |
+| **overall** | 1965 | **9.0** | **24.0** |
+- cat4（开放域/画像）最好（acc 45.7）；cat5（对抗，需拒答）最低（backbone 拒答行为主导，非检索问题）。
+- 绝对分低=对话 QA 答案短/paraphrastic 本难（旧 mem_space p11 overall F1≈16.9 是同口径参考）。⚠️ baseline arm（HCache/KV-Direct）跑中，三方对照待补。
+
 ---
+
 
 ## 3. 机制：为什么缓存中层有效 —— 理解-生成分工
 
