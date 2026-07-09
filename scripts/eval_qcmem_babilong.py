@@ -378,6 +378,21 @@ def main():
                         help="Optional path to a trained QCMem-distill LoRA "
                              "adapter dir (Direction A). Loaded onto the frozen "
                              "backbone before building the QCMem orchestrator.")
+    parser.add_argument("--baseline", type=str, default="none",
+                        choices=["none", "kvdirect", "hcache"],
+                        help="Mechanism-level head-to-head baseline (2026-07-09; "
+                             "mirrors scripts/eval_ruler_qcmem.py). "
+                             "'none' = normal QCMem (retrieval topk + resume_j + "
+                             "optional LoRA). 'kvdirect' (2603.19664 'The Residual "
+                             "Stream Is All You Need') = FULL-DEPTH recompute "
+                             "(forces resume_j=0) + NO retrieval (packs every "
+                             "context chunk) + no LoRA (training-free) — read grows "
+                             "O(context). 'hcache' (2410.05004) = mid-layer "
+                             "recompute (keeps --resume_j) + NO retrieval (packs "
+                             "every context chunk) + no LoRA (post-hoc, no "
+                             "training) — read grows O(context). Both isolate "
+                             "QCMem's two primitives: retrieval (fixed read) and "
+                             "layer-partial recompute.")
     parser.add_argument("--selector", type=str, default="bm25",
                         choices=["bm25", "recency", "oracle", "reader_attn"],
                         help="Chunk selector for the read pack. reader_attn scores "
@@ -422,6 +437,37 @@ def main():
     if not (0 <= args.shard_index < args.num_shards):
         parser.error(f"--shard_index must be in [0, {args.num_shards})")
 
+    # --- head-to-head baseline resolution (mechanism-level, 2026-07-09) --------
+    # A baseline is expressed as a re-parameterisation of the QCMem primitives, so
+    # the ONLY thing that differs vs. QCMem is the specific primitive under test
+    # (same backbone / same BABILong sample set / same scoring口径). Mirrors the
+    # already-shipped scripts/eval_ruler_qcmem.py resolution exactly.
+    #   kvdirect (2603.19664) : full-depth recompute -> force resume_j=0;
+    #                           no retrieval (pack all chunks); training-free (drop
+    #                           any --lora_adapter).
+    #   hcache   (2410.05004) : mid-layer recompute -> keep --resume_j as given;
+    #                           no retrieval (pack all chunks); post-hoc (drop LoRA).
+    # QCMem ('none') keeps retrieval (selector+topk), the given resume_j, and LoRA.
+    no_retrieval = (args.baseline != "none")
+    if args.baseline == "kvdirect":
+        if args.resume_j != 0:
+            print(f"[QCMem-BABILong] baseline=kvdirect -> forcing resume_j "
+                  f"{args.resume_j} -> 0 (full-depth K/V recompute).")
+        args.resume_j = 0
+        if args.lora_adapter:
+            print("[QCMem-BABILong] baseline=kvdirect is training-free -> ignoring "
+                  f"--lora_adapter {args.lora_adapter!r}.")
+            args.lora_adapter = ""
+    elif args.baseline == "hcache":
+        if args.lora_adapter:
+            print("[QCMem-BABILong] baseline=hcache is post-hoc (no training) -> "
+                  f"ignoring --lora_adapter {args.lora_adapter!r}.")
+            args.lora_adapter = ""
+    if no_retrieval and args.reuse_kv_blockdiag:
+        parser.error("--reuse_kv_blockdiag is a QCMem ablation and is incompatible "
+                     "with --baseline (kvdirect/hcache pack all chunks with the "
+                     "standard causal read).")
+
     device = torch.device(args.device)
     dtype = {"bfloat16": torch.bfloat16,
              "float16": torch.float16,
@@ -431,7 +477,9 @@ def main():
         dtype = torch.float32
 
     print(f"[QCMem-BABILong] model_path={args.model_path}")
-    print(f"[QCMem-BABILong] resume_j={args.resume_j} selector={args.selector} "
+    print(f"[QCMem-BABILong] baseline={args.baseline} "
+          f"(no_retrieval={no_retrieval}) resume_j={args.resume_j} "
+          f"selector={args.selector} "
           f"topk={args.topk} sink={args.sink_tokens} chunk_size={args.chunk_size} "
           f"dtype={dtype} attn_impl={args.attn_impl}")
 
@@ -519,11 +567,13 @@ def main():
                     # chunks -> a THEORETICAL/oracle-ish upper bound (esp. selector
                     # =oracle). Kept for parity with the reforward-guard tag.
                     "theoretical_upper_bound": bool(args.selector == "oracle"),
+                    "baseline": args.baseline,
+                    "no_retrieval": bool(no_retrieval),
                     "qcmem": {
                         "resume_j": args.resume_j,
                         "top_prepay_b": args.top_prepay_b,
-                        "selector": args.selector,
-                        "topk": args.topk,
+                        "selector": (None if no_retrieval else args.selector),
+                        "topk": (None if no_retrieval else args.topk),
                         "sink_tokens": args.sink_tokens,
                         "num_layers": L,
                         "lora_adapter": args.lora_adapter or None,
@@ -582,6 +632,7 @@ def main():
                         selector=args.selector, topk=args.topk,
                         sink_tokens=args.sink_tokens,
                         needle_chunk_set=needle_set, bare_question_ids=bare_q_ids,
+                        no_retrieval=no_retrieval,
                     )
                 except RuntimeError as e:
                     if "out of memory" not in str(e).lower():
