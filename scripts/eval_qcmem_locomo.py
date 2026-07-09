@@ -362,7 +362,7 @@ def run_scoring(output_dir: str, use_bertscore: bool = False):
     """Merge every ``preds_*.jsonl`` shard in ``output_dir`` (dedup by id) and
     recompute overall + per-category F1 / EM / acc. Writes ``scores.json``."""
     output_path = Path(output_dir)
-    shard_files = sorted(output_path.glob("preds_*.jsonl"))
+    shard_files = sorted(output_path.glob("preds*.jsonl"))
     if not shard_files:
         print(f"[QCMem-LoCoMo] no prediction files in {output_dir}")
         return None
