@@ -121,7 +121,11 @@ run_self_test = qcb.run_self_test
 
 build_lines_prompt = le.build_lines_prompt
 extract_prediction = le.extract_prediction
-_LENGTH_TOKENS = le._LENGTH_TOKENS
+# Extend super-long buckets (base map from eval_longeval_mem_space only goes to 32k);
+# QCMem's fixed read means these are exactly where it should beat full-context/KV-Direct.
+_LENGTH_TOKENS = dict(le._LENGTH_TOKENS)
+_LENGTH_TOKENS.setdefault("64k", 64 * 1024)
+_LENGTH_TOKENS.setdefault("128k", 128 * 1024)
 
 
 # --------------------------------------------------------------------------- #
