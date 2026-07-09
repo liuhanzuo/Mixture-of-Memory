@@ -26,6 +26,8 @@
 ## 2.0 ★★ 五大 benchmark 总览（2026-07-09 全部跑完，per-task 最优 topk，官方判分）
 
 > **重要方法学**：每个 benchmark/任务的最优 topk 不同（LongEval/RULER-multikey=tk4-8，babilong qa1=tk12/qa5=tk4）。统一用默认 tk12 会**系统性低估 QCMem**——本表已用各任务最优 topk。三方对照口径完全一致（同 backbone Qwen3-8B、同 chunk512、唯一变量=被测 primitive）。
+>
+> **★ baseline 说明**：(1) **KV-Direct 列 = full-context 精度**——KV-Direct 强制 resume_j=0（全深度重算）+ 无检索 + pack 全部 chunk，数学上精确等于把全文直接喂 Qwen（self_test j=0 read vs full forward max diff <1e-4），只是缓存 residual 省内存。所以 KV-Direct 崩=full-context 崩（超窗口 128k 都=0）。**每 benchmark 都有 full-context 精度对照 = KV-Direct 列**。(2) **HCache** 隔离检索的价值。(3) **MemoryLLM**（专用长上下文 memory 模型，同类对照）目前仅 babilong 有（qa1/16k=20 vs QCMem 55），扩到 RULER/LongEval 待补（见 §6）。
 
 | Benchmark | 任务类型 | QCMem（最优 topk） | KV-Direct（全上下文重算） | HCache（无检索） | 一句话 |
 |--|--|--|--|--|--|
