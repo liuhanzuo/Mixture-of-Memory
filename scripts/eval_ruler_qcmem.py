@@ -51,6 +51,14 @@ Usage (Direction-A QCMem-distill LoRA on Qwen3-8B):
         --selector bm25 --topk 12 --sink_tokens bos \
         --ruler_tasks niah_single niah_multi vt --lengths 4k 8k 16k 32k \
         --limit 50 --output_name ruler_qcmem_j12 --results_folder ruler_results/qcmem_j12
+
+Usage (funnel-Qwen continued-pretrain arm — pretrain-vs-vanilla head-to-head):
+    python scripts/eval_ruler_qcmem.py \
+        --model_path /apdcephfs_wzc1/share_304376610/pighzliu_code/models/Qwen--Qwen3-8b \
+        --bottleneck_ckpt outputs/qwenbott_funnel_L12_d512/final.pt --resume_j 13 \
+        --selector bm25 --topk 12 --sink_tokens bos \
+        --ruler_tasks niah_single niah_multi --lengths 8k 16k 32k \
+        --limit 50 --output_name ruler_qcmem_funnelL12 --results_folder ruler_results/qcmem_funnelL12
 """
 from __future__ import annotations
 
@@ -173,6 +181,22 @@ def main():
     parser.add_argument("--lora_adapter", type=str, default="",
                         help="Optional path to a trained QCMem-distill LoRA "
                              "adapter dir (Direction A).")
+    parser.add_argument("--bottleneck_ckpt", type=str, default="",
+                        help="Optional path to a continued-pretrain funnel-Qwen "
+                             "checkpoint (a *.pt with a full 'model_state' + an "
+                             "arch_meta.json next to it, produced by "
+                             "scripts/train_qwen_bottleneck_continued.py). When "
+                             "set, the backbone is rebuilt as 'stock Qwen3-8B "
+                             "(--model_path) + a BottleneckLayer funnel injected "
+                             "on the OUTPUT of decoder layer bottleneck_layer', "
+                             "then load_state_dict(model_state) — this is the "
+                             "'funnel-Qwen + QCMem' arm of the pretrain-vs-vanilla "
+                             "head-to-head. RECOMMENDED --resume_j == "
+                             "bottleneck_layer+1 (=13 for the default L12 ckpt) so "
+                             "QCMem caches the COMPRESSED funnel output h_j' "
+                             "(write runs layers[0:resume_j], which then includes "
+                             "the funnel layer). Mutually exclusive with "
+                             "--lora_adapter (that is the stock-Qwen LoRA arm).")
     parser.add_argument("--baseline", type=str, default="none",
                         choices=["none", "kvdirect", "hcache"],
                         help="Mechanism-level head-to-head baseline (2026-07-08). "
@@ -243,6 +267,9 @@ def main():
     #                           no retrieval (pack all chunks); post-hoc (drop LoRA).
     # QCMem ('none') keeps retrieval (selector+topk), the given resume_j, and LoRA.
     no_retrieval = (args.baseline != "none")
+    if args.bottleneck_ckpt and args.lora_adapter:
+        parser.error("--bottleneck_ckpt (funnel-Qwen arm) and --lora_adapter "
+                     "(stock-Qwen LoRA arm) are mutually exclusive; pick one.")
     if args.baseline == "kvdirect":
         if args.resume_j != 0:
             print(f"[QCMem-RULER] baseline=kvdirect -> forcing resume_j "
@@ -310,6 +337,56 @@ def main():
         print(f"[QCMem-RULER] loading LoRA adapter: {args.lora_adapter}")
         peft_model = PeftModel.from_pretrained(model, args.lora_adapter).eval()
         model = peft_model.base_model.model
+
+    # Funnel-Qwen arm: rebuild "stock Qwen + mid-layer BottleneckLayer funnel"
+    # exactly as continued-pretrain saved it, then load the full state_dict. We
+    # REUSE ``inject_bottleneck`` from the train script so the wrapper structure
+    # (layers[j] -> BottleneckLayer(.inner/.down/.up)) is guaranteed identical to
+    # the one that produced ``model_state`` (which keys off .inner/.down/.up).
+    if args.bottleneck_ckpt:
+        from scripts.train_qwen_bottleneck_continued import inject_bottleneck
+        meta_path = os.path.join(
+            os.path.dirname(os.path.abspath(args.bottleneck_ckpt)), "arch_meta.json")
+        if not os.path.exists(meta_path):
+            parser.error(f"--bottleneck_ckpt given but arch_meta.json not found "
+                         f"next to it at {meta_path}")
+        with open(meta_path) as f:
+            meta = json.load(f)
+        b_layer = int(meta["bottleneck_layer"])
+        b_dim = int(meta["bottleneck_dim"])
+        print(f"[QCMem-RULER] funnel-Qwen: arch_meta {meta_path} -> "
+              f"bottleneck_layer={b_layer} bottleneck_dim={b_dim} "
+              f"num_hidden_layers={meta.get('num_hidden_layers')}")
+        if meta.get("model_path") and os.path.abspath(meta["model_path"]) != \
+                os.path.abspath(args.model_path):
+            print(f"[QCMem-RULER][WARN] --model_path {args.model_path!r} != "
+                  f"arch_meta model_path {meta['model_path']!r}; injecting funnel "
+                  f"onto the --model_path backbone regardless.")
+        # Inject the funnel onto the OUTPUT of decoder layer b_layer, in-place.
+        inject_bottleneck(model, b_layer, b_dim, dtype)
+        # Load the continued-pretrain weights (funnel + co-adapted upper stack).
+        ck = torch.load(args.bottleneck_ckpt, map_location="cpu")
+        state = ck.get("model_state", ck)
+        missing, unexpected = model.load_state_dict(state, strict=False)
+        # Every param we saved should map back; only buffers (rotary inv_freq etc.)
+        # may legitimately differ. Fail loudly on any missing/unexpected WEIGHT.
+        bad_missing = [k for k in missing if "inv_freq" not in k]
+        if bad_missing or unexpected:
+            print(f"[QCMem-RULER][WARN] load_state_dict missing={bad_missing[:8]}"
+                  f"{'...' if len(bad_missing) > 8 else ''} "
+                  f"unexpected={unexpected[:8]}"
+                  f"{'...' if len(unexpected) > 8 else ''}")
+        model = model.to(device).eval()
+        step = ck.get("step")
+        print(f"[QCMem-RULER] funnel-Qwen loaded from {args.bottleneck_ckpt} "
+              f"(step={step}). RECOMMENDED --resume_j == bottleneck_layer+1 "
+              f"(={b_layer + 1}); you passed --resume_j {args.resume_j}.")
+        if args.resume_j != b_layer + 1:
+            print(f"[QCMem-RULER][NOTE] --resume_j {args.resume_j} != "
+                  f"bottleneck_layer+1 ({b_layer + 1}): QCMem will cache h_j at a "
+                  f"depth that does NOT coincide with the funnel output — usually "
+                  f"you want resume_j={b_layer + 1} so the cached h_j' is the "
+                  f"compressed representation.")
 
     if args.self_test:
         ok = run_self_test(model, tokenizer, device, args.chunk_size)
@@ -444,7 +521,8 @@ def main():
                         "lora_adapter": args.lora_adapter or None,
                         "chunk_size": args.chunk_size,
                     },
-                    "model": {"model_path": args.model_path},
+                    "model": {"model_path": args.model_path,
+                              "bottleneck_ckpt": args.bottleneck_ckpt or None},
                 },
                 open(cfg_file, "w"), indent=2,
             )
