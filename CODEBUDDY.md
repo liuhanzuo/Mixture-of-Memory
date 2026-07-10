@@ -277,6 +277,7 @@ git commit 只包含实际修改内容的描述，不附加任何 AI 署名行�
 
 ### 状态文件（机器可读）
 ```
+status/GPU_STATUS.md           — ★两节点 GPU 实时台账（2026-07-10 用户指令）
 status/gpu_runs.jsonl          — 训练运行历史（append-only）
 status/RUNNING_EXPERIMENTS.json — 运行中实验索引（Read→modify→Write，非 append-only）
 status/TRAINER_ACTIVE.md       — 当前活跃训练（write 覆盖，禁止 edit）
@@ -286,6 +287,13 @@ status/RESEARCHER_REPORTS.jsonl — researcher 的研究结论
 status/ISSUES.jsonl            — 问题追踪
 status/PENDING_TASKS.md        — 待完成任务看板（heartbeat 必检）
 ```
+
+### ★ GPU_STATUS.md 维护规则（2026-07-10 用户指令）
+**每次启动或 kill GPU 任务时，必须同步更新 `status/GPU_STATUS.md`**（哪节点哪张卡跑什么、起始时间、预计时长）。
+- heartbeat 每轮：先读 GPU_STATUS.md → 对照 `nvidia-smi` 实测 → 若"台账说在跑但实际空闲"=任务已完成/崩溃 → 立即补卡（铁律1）+ 更新台账。
+- 目的：避免反复"查 GPU→发现空转→补卡"的低效；台账=两节点单一事实来源。
+- ⚠️ 教训：babilong 低档(0k-8k)/RULER 短档极快(几分钟)跑完即空转——别用短任务填卡，优先耐跑任务(LoCoMo/长档/训练)，短任务成批投。
+
 
 ### 日志文件（人类可读）
 ```
