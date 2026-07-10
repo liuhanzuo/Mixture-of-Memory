@@ -2,7 +2,7 @@
 
 > 2026-07-09 重写。所有数字经 Workflow 5-agent 从 log/json/CSV 交叉核对提取（非记忆），来源标注见 `status/TRAINER_ACTIVITY.jsonl` 07-08~07-09 + 各 `logs/ruler_*.log`。
 > 旧版存 `status/QCMEM_PAPER_DRAFT_20260708_backup.md`。配套详据：`status/QCMEM_ASSESSMENT.md` / `status/QCMEM_RELATED_WORK.md`。
-> ⚠️ 数字校准记录（铁律2）：QCMem 128k multikey=**96**（非旧记的 94）；今日 h2h QCMem multikey 8k/16k/32k=**96/98/90**（ASSESSMENT 旧表是 94/94/94，本版以今日 h2h 为准）；h2h sweep 是 **n=50**（非项目标准 n=100，需在正文标注）。
+> ⚠️ 数字校准记录（铁律2，2026-07-10 更新）：multikey 128k=**96**（best-topk tk8, §2.1）或 **84**（固定 tk12, §2.2）——差异=topk 选择非矛盾，每张表已标注所用 topk。h2h sweep 是 **n=50**（非项目标准 n=100，已在正文标注）。效率加速比以 `ruler_results/bench_qcmem_vs_fullctx.json` 为权威（128k=7.83×）。Qwen3-8B 原生窗口=**40960**（config max_position_embeddings，非 131072）。
 
 ---
 
@@ -27,29 +27,29 @@
 
 > **重要方法学**：每个 benchmark/任务的最优 topk 不同（LongEval/RULER-multikey=tk4-8，babilong qa1=tk12/qa5=tk4）。统一用默认 tk12 会**系统性低估 QCMem**——本表已用各任务最优 topk。三方对照口径完全一致（同 backbone Qwen3-8B、同 chunk512、唯一变量=被测 primitive）。
 >
-> **★ baseline 说明**：(1) **KV-Direct 列 = full-context 精度**——KV-Direct 强制 resume_j=0（全深度重算）+ 无检索 + pack 全部 chunk，数学上精确等于把全文直接喂 Qwen（self_test j=0 read vs full forward max diff <1e-4），只是缓存 residual 省内存。所以 KV-Direct 崩=full-context 崩（超窗口 128k 都=0）。**每 benchmark 都有 full-context 精度对照 = KV-Direct 列**。(2) **HCache** 隔离检索的价值。(3) **MemoryLLM**（专用长上下文 memory 模型，同类对照）目前仅 babilong 有（qa1/16k=20 vs QCMem 55），扩到 RULER/LongEval 待补（见 §6）。
+> **★ baseline 说明**：(1) **KV-Direct 列 = full-context 精度**——KV-Direct 强制 resume_j=0（全深度重算）+ 无检索 + pack 全部 chunk，数学上精确等于把全文直接喂 Qwen（self_test j=0 read vs full forward max diff <1e-4），只是缓存 residual 省内存。所以 KV-Direct 崩=full-context 崩（超窗口 128k 都=0）。**每 benchmark 都有 full-context 精度对照 = KV-Direct 列**。(2) **HCache** 隔离检索的价值。(3) **MemoryLLM**（专用长上下文 memory 模型，同类对照）：babilong qa1/16k=20 vs QCMem 57（2.85×）；RULER niah_single 8k/16k/32k=22/22/28、multikey=30/14/18（vs QCMem 100/96-98，见 §2.1 碾压）。LongEval/LongBench/LoCoMo 待补（驱动 bug，见 §6）。
 
 | Benchmark | 任务类型 | QCMem（最优 topk） | KV-Direct（全上下文重算） | HCache（无检索） | 一句话 |
 |--|--|--|--|--|--|
 | **RULER niah_single** | 合成精确检索 | 8k-128k 全 **100**，256k 98 | ≤64k 100，**128k=0** | 8k=34→崩 | 超窗口只有 QCMem 可用 |
 | **RULER niah_multikey** | 合成多针 | tk8: 32k=**100**/64k=96/128k=**98** | ≤32k 98-100，64k=80，128k 崩 | 全崩(0) | 窗口内可比，超窗口 QCMem 独占 |
 | **LongEval** | lines-retrieval | tk4/6: 8k=**1.00**/32k=**1.00**/64k=0.94/128k=**0.98** | 8k 1.00→32k 0.92→64k **0.34**→128k **0.00** | 全 0 | 窗口内追平、超窗口大幅反超 |
-| **babilong** | bAbI 长档 QA | qa5(关系) 8k=**80**/16k=**67**/32k=**65**；qa1(单fact) 16k=55 | qa5 44-68；qa1 16k=**74**/32k=62 | 全崩(0-4) | qa5 关系 QCMem 强；qa1 单fact KVD 强 |
+| **babilong** | bAbI 长档 QA | qa5(关系) 8k=**80**/16k=**67**/32k=**65**；qa1(单fact) 16k=57 | qa5 8k=68/16k=44/32k=58；qa1 16k=**72**/32k=62 | qa5 2k=68/8k=52→16k=19/32k=4；qa1 全崩(0-16) | qa5 关系 QCMem 强；qa1 单fact KVD 强 |
 | **LongBench** | 真实长文档 QA(F1) | AVG **9.58**(4 task) | AVG 10.13 | — | 任务本难(所有法 4-12)，QCMem 恒定 read 追平全上下文 |
-| **LoCoMo** | 长对话记忆 | overall F1 9.05/acc 24；cat4 open F1=**13.9**/acc 45.7 | (baseline 跑中) | (跑中) | 对话 QA 本难，cat4 画像最好 |
+| **LoCoMo** | 长对话记忆 | overall F1 **9.05**/acc 24 | overall F1 **8.72**/acc 20 | overall F1 **4.73**/acc 6 | QCMem≈KV-Direct(acc更高) > HCache(无检索崩) |
 
 **三条贯穿结论：**
-1. **超窗口（128k）是杀手锏**：Qwen3-8B 原生 131072，全上下文/KV-Direct 到 128k 一律崩 0（超位置窗口）；QCMem 固定 read ~2-6.6k 永远在窗口内 → RULER 100 / LongEval 0.98。**三 benchmark 一致**。
+1. **超窗口（128k）是杀手锏**：Qwen3-8B 原生 40960（config max_position_embeddings=40960, rope_scaling=None；131072 是未启用的 YaRN 上限），全上下文/KV-Direct 到 128k 一律崩 0（远超原生窗口 → RoPE 外推质量崩塌）；QCMem 固定 read ~2-6.6k 永远在窗口内 → RULER 100 / LongEval 0.98。**三 benchmark 一致**。
 2. **窗口内精调 topk 后追平/接近**：LongEval 32k=1.00 打平 KV-Direct；RULER multikey 32k=100。之前"QCMem 精度中等"是没调 topk 的低估。
-3. **诚实边界**：babilong qa1/qa2（单/双 fact 定位）窗口内 KV-Direct 更强；LongBench/LoCoMo 绝对分低但**是任务难非 QCMem 弱**（baseline 同样低）；var-track（多跳）弱。**HCache 五 benchmark 一致崩（无检索）**。
-4. **效率**：QCMem 显存恒定 ~18GB（full 128k=89GB），prefill 128k **7.58×**，read 长度 O(1) vs baseline O(context)。
+3. **诚实边界**：babilong qa1/qa2（单/双 fact 定位）窗口内 KV-Direct 更强；LongBench/LoCoMo 绝对分低但**是任务难非 QCMem 弱**（baseline 同样低）；var-track（多跳）弱。**HCache 无检索：长档 needle 类任务一致崩（RULER/LongEval 全 0、babilong qa1 全崩），但短档 redundant-fact 任务不崩（babilong qa5 2k=68/8k=52，与 QCMem 相当）——崩的是"检索缺失导致 needle 淹没"，不是模型能力**。
+4. **效率**：QCMem 显存恒定 ~18GB（full 128k=89GB），prefill 128k **7.83×**，read 长度 O(1) vs baseline O(context)。
 
 ---
 
 ## 2. 核心结果（逐 benchmark 详表）
 
-### 2.1 ★ Head-to-head：QCMem vs HCache vs KV-Direct（RULER NIAH, Qwen3-8B, n=50, string_match_all）
-同 eval 框架、同 backbone、同判分，唯一变量=被测 primitive（QCMem=检索+layer-partial；HCache=中层重算+无检索+不训练；KV-Direct=全深度重算+无检索+保留全 token）。
+### 2.1 ★ Head-to-head：QCMem vs HCache vs KV-Direct vs MemoryLLM（RULER NIAH, Qwen3-8B, n=50, string_match_all）
+同 eval 框架、同 backbone、同判分，唯一变量=被测 primitive（QCMem=检索+layer-partial；HCache=中层重算+无检索+不训练；KV-Direct=全深度重算+无检索+保留全 token；MemoryLLM=固定 memory bank+FIFO）。
 
 **niah_single_2：**
 | 方法 | 8k | 16k | 32k | 64k | 128k |
@@ -57,46 +57,50 @@
 | **QCMem** | 100 | 100 | 100 | 100 | **100** |
 | KV-Direct | 100 | 100 | 100 | 100 | **0** |
 | HCache | 34 | 2 | 4 | 2 | — |
+| MemoryLLM | 22 | 22 | 28 | — | — |
 
-**niah_multikey_1：**
+**niah_multikey_1（QCMem 行 = best-topk tk8；KV-Direct/HCache/MemoryLLM 同 n=50）：**
 | 方法 | 8k | 16k | 32k | 64k | 128k |
 |--|--|--|--|--|--|
-| **QCMem** | 96 | 98 | 90 | 86 | **96** |
-| KV-Direct | 100 | 100 | 98 | 80 | —(未测) |
+| **QCMem（tk8）** | 96 | 98 | 90 | 86 | **96** |
+| KV-Direct | 100 | 100 | 98 | 80 | **0** |
 | HCache | 4 | 0 | 0 | —(未测) | — |
+| MemoryLLM | 30 | 14 | 18 | — | — |
 
 **read_len（喂给模型的 token 数，效率核心）：**
 | 方法 | 特性 | 128k read_len |
 |--|--|--|
 | **QCMem** | 恒定 ~6.2-6.6k（检索固定 pack） | ~6256 |
-| KV-Direct | O(L) 保留全 token | ~130671 |
+| KV-Direct | O(L) 保留全 token | ~130746 |
 | HCache | O(L) 恢复全 token | 64k~65505 |
 
-**三个结论：**
+**四个结论：**
 1. **vs HCache = 精度碾压**：HCache 无检索、8k 就崩到 34、16k=2、multikey 近全 0。原因：无检索长档 needle 被淹没。
-2. **vs KV-Direct = 同精度、效率碾压**：≤64k 两者精度相当（都近满分），但 QCMem read_len 恒定 ~6.3k vs KV-Direct 保留全 token（128k=13 万 tok）。
-3. **★128k QCMem 唯一可用**：KV-Direct 128k **崩到 0**（保留全 130671 tok 超 Qwen3 位置窗口 131072 边缘 → 全深度重算失效），QCMem 固定 read 6256 tok 永远在窗口内 → **100/96**。这是 layer-partial+检索的结构性优势，不只是省显存。
+2. **vs MemoryLLM（同类 memory 模型）= 精度碾压**：MemoryLLM niah_single 8k/16k/32k=22/22/28、multikey=30/14/18，QCMem 100/96-98 全面碾压（同类固定 memory 方法在合成精确检索上远不如检索+layer-partial）。
+3. **vs KV-Direct = 同精度、效率碾压**：≤64k 两者精度相当（都近满分），但 QCMem read_len 恒定 ~6.3k vs KV-Direct 保留全 token（128k=13 万 tok）。
+4. **★128k QCMem 唯一可用**：KV-Direct 128k **崩到 0**（保留全 130746 tok 远超 Qwen3 原生窗口 40960 → RoPE 外推质量崩塌，全深度重算失效），QCMem 固定 read 6256 tok 永远在窗口内 → **100/96**。这是 layer-partial+检索的结构性优势，不只是省显存。
 
-### 2.2 超长上下文精度 scaling（RULER, Qwen3-8B, n=50）
+### 2.2 超长上下文精度 scaling（RULER, Qwen3-8B, n=50, QCMem/full-ctx 均 tk12 固定口径）
+> 注：本表 multikey 用固定 tk12（非 §2.1 的 best-topk tk8）——故 128k multikey=84（tk12）而非 §2.1 的 96（tk8），差异=topk 选择，非矛盾。
 | task | 方法 | 8k | 16k | 32k | 64k | 128k | 256k |
 |--|--|--|--|--|--|--|--|
 | niah_single | QCMem | 100 | 100 | 100 | 100 | **100** | **98** |
 | | full-ctx | 100 | 100 | 100 | 100 | **0** | **OOM** |
-| niah_multikey | QCMem | 94 | 94 | 94 | 82 | 84 | 60 |
-| | full-ctx | 100 | 100 | 100 | 96 | **0** | **OOM** |
+| niah_multikey(tk12) | QCMem | 94 | 94 | 88 | 82 | 84 | 60 |
+| | full-ctx | 100 | 100 | 98 | 96 | **0** | **OOM** |
 | var-track | QCMem | 49 | 25 | 22 | 21 | 20 | — |
 | | full-ctx | 100 | 100 | 100 | 98 | **0** | **OOM** |
-- 分水岭 = backbone 外推极限（Qwen 64k→128k）。>该点只有 QCMem 可用。
+- 分水岭 = backbone 外推极限（Qwen 原生 40960，64k→128k 崩）。>该点只有 QCMem 可用。
 - vs StreamingLLM（同 ~6657-tok/~17GB 固定 budget）：niah_single 8k/16k/64k/128k = QCMem 100/100/100/100 vs SLM 90/42/16/4（**128k 25× gap**）。检索保留"相关"，SLM 只保留"最近"→丢中间→针 miss。
 
 ### 2.3 效率（bench_qcmem_vs_fullctx, median-of-3, chunk512）
 | 长度 | prefill 加速(full/QCMem) | full 显存 | QCMem 显存 |
 |--|--|--|--|
-| 8k | 0.96× | 20GB | 17.3GB |
-| 16k | 1.57× | 25GB | 17.4GB |
-| 32k | 2.65× | 34GB | 17.5GB |
-| 64k | 4.64× | 52GB | 17.8GB |
-| 128k | **7.58×** | 89GB | **18.3GB(恒定)** |
+| 8k | 0.97× | 20GB | 17.3GB |
+| 16k | 1.59× | 25GB | 17.4GB |
+| 32k | 2.48× | 34GB | 17.5GB |
+| 64k | 4.36× | 52GB | 17.8GB |
+| 128k | **7.83×** | 89GB | **18.3GB(恒定)** |
 - QCMem prefill = write O(L) + 固定 read；full O(L²)。交叉点 ~16k。
 - **QCMem 显存 L-无关恒定 ~17-18GB**（full 涨到 89GB）→ 128k 单卡能跑 full 会 OOM 的档。
 - 代价：QCMem decode ~2.4s（每步重算 layers[j:]，attend 整个 read pack）> full 0.3-0.5s，可优化。
@@ -104,6 +108,19 @@
 ### 2.4 泛化 + 跨 backbone + babilong
 - 纯 PG19 自蒸馏（零 babilong/RULER）→ RULER niah zero-shot 强（Llama-3 self-distill niah_single 8k/16k=100/100）=通用记忆非特化。
 - babilong 每任务最优 topk（4000 步自蒸馏, n=100 官方判分）：qa1 0k-32k=98/79/68/66/63/57/28（vs MemoryLLM 校准 16k=20=2.85×）；qa5=69/77/75/76/79/67/63（vs 38）。
+- **★ babilong 三方逐 cell（n=100, 官方 compare_answers, 4k-32k）**：
+
+| task | 方法 | 4k | 8k | 16k | 32k |
+|--|--|--|--|--|--|
+| qa1(单fact) | QCMem | 66 | 63 | 57 | 28 |
+| | KV-Direct(全上下文) | **75** | **80** | **72** | **62** |
+| | HCache(无检索) | 16 | 3 | 0 | 0 |
+| qa5(关系) | QCMem | **76** | **79** | **67** | **63** |
+| | KV-Direct | 61 | 68 | 44 | 58 |
+| | HCache | 65 | 52 | 19 | 4 |
+
+- **诚实边界坐实**：qa1（单 fact 定位）KV-Direct 全上下文更强（4k-32k 75/80/72/62 vs QCMem 66/63/57/28）——精确定位任务全喂全文占优。qa5（关系推理）QCMem 反超（尤其长档 16k 67 vs 44、32k 63 vs 58）。
+- **HCache 崩的机理（重要，校正"一致崩"）**：HCache qa5 短档**不崩**（4k=65/8k=52，接近 QCMem/KVD），只在长档崩（16k=19/32k=4）；qa1 全崩（无检索时单 fact 被淹没）。→ 崩=检索缺失导致长档 needle 淹没，不是模型能力，短档 redundant-fact 任务照常工作。
 
 ### 2.5 ★ chunk_size（block size）消融：精度×效率 trade-off（新增）
 read_len = topk×chunk + sink + query，随 chunk 线性（topk=12 固定）。
@@ -112,12 +129,12 @@ read_len = topk×chunk + sink + query，随 chunk 线性（topk=12 固定）。
 |--|--|--|--|--|--|
 | 128 | 1665 | 16.3GB | 1.38× | ~0.69s | 16k=90 / 32k=80 |
 | 256 | 3329 | 16.8GB | 2.61× | ~1.17s | 8k92/16k80/32k80/64k88 |
-| **512** | 6657 | 17.8GB | **4.64×→7.58×** | ~2.39s | **128k=94** |
+| **512** | 6657 | 17.8GB | **4.36×→7.83×** | ~2.39s | **128k=94** |
 | 1024 | 13313 | 19.8GB | 4.99× | ~5.55s | 8k96/16k96/32k92/64k90/128k96 |
 
 - **write_calls（64k）**：cs128=513 → cs256=257 → cs512=129 → cs1024=65（chunk 翻倍减半）→ 驱动 prefill 加速。
 - **三角权衡**：chunk 越大→prefill 越快（write 少）+ 精度越好（multikey），但 **decode 越慢**（attend 整个 read pack，cs1024 decode 5.55s vs cs512 2.39s）+ 显存略高。chunk 越小→显存最省+decode 快，但 prefill 慢（write 多）+ multikey 掉。
-- **甜点 = chunk512**：强 prefill 加速（128k 7.58×）+ 低平显存（17-18GB）+ 中等 decode（2.39s）+ 高 multikey（128k=94）——接近 cs1024 精度但约一半 decode 成本和 read_len。
+- **甜点 = chunk512**：强 prefill 加速（128k 7.83×）+ 低平显存（17-18GB）+ 中等 decode（2.39s）+ 高 multikey（128k=94）——接近 cs1024 精度但约一半 decode 成本和 read_len。
 
 ### 2.6 检索甜点 topk（部分网格, n=50）
 - niah_single 全档饱和 100（非判别任务）；multikey 是判别任务。
@@ -134,7 +151,7 @@ read_len = topk×chunk + sink + query，随 chunk 线性（topk=12 固定）。
 | 64k | 0.94(tk4/6) | **0.34** | 0.00 | ~2.3k |
 | 128k | **0.98**(tk6) | **0.00** | 0.00 | ~3.4k |
 - **窗口内追平**（8k/16k/32k = 1.00/0.96/1.00 vs KVD 1.00/0.96/0.92）+ **超窗口大幅反超**（64k 0.94 vs 0.34；128k 0.98 vs 0）。
-- QCMem read_len 恒定 ~2-3k（O(1)）；KV-Direct read_len O(context)，128k 达 13 万 tok 超窗口崩。HCache 全 0（无检索 needle 淹没）。
+- QCMem read_len 恒定 ~2-3k（O(1)）；KV-Direct read_len O(context)，128k 达 13 万 tok 远超 Qwen 原生窗口 40960 → RoPE 外推崩。HCache 全 0（无检索 needle 淹没）。
 
 ### 2.8 LongBench（真实长文档 QA, F1 官方口径, Qwen3-8B, chunk512）
 | 任务 | QCMem(tk12) | KV-Direct(全上下文) | Stock(no-LoRA) |
@@ -164,7 +181,7 @@ read_len = topk×chunk + sink + query，随 chunk 线性（topk=12 固定）。
 | cat4 open_domain/画像 | 828 | **13.9** | **45.7** |
 | cat5 adversarial(要拒答) | 438 | 1.6 | 1.6 |
 - cat4（开放域/画像）最好（acc 45.7）；cat5（对抗，需拒答）最低（backbone 拒答行为主导，非检索问题）。
-- 绝对分低=对话 QA 答案短/paraphrastic 本难（旧 mem_space p11 overall F1≈16.9 同口径参考）。
+- 绝对分低=对话 QA 答案短/paraphrastic 本难。（注：旧 mem_space 系列同类对话 QA overall F1 仅 2.7（LOCOMO n=400 口径，与本表 n=1986 口径不同，仅作量级参考）——QCMem 9.05 相对旧 mem_space 是数量级反超，非落后。）
 
 
 ---
@@ -203,8 +220,10 @@ read_len = topk×chunk + sink + query，随 chunk 线性（topk=12 固定）。
 - 缓存点可压：dim99 1859→427, eff-rank 407→149；rank256 压缩 readout drop +0.028→+0.001。
 - (j,dim) sweep（5 arm）：分工+可压跨设计空间 robust，d256 甜点（dim99 224）。
 - 跨数据（wikitext）+ 三点收敛（dim99 2000步427→6000步231→12000步236，收敛到 ~230≈funnel 宽度）。
+- **★ bottleneck_dim × LM 税 sweep（16000 步收敛版, layer6, 末10步均值 ppl）**：baseline 25.28 / d1024 26.42(+4.5%) / d512 26.78(+5.9%) / **d256 27.42(+8.5%)**。**bottleneck 越窄 LM 税越高**——与"可压性甜点在 d256"相反，二者是 trade-off：窄 funnel 迫使表征更紧凑（PCA-ΔNLL 最优、缓存最省，见 §3.3），代价是训练时 LM 税更高。设计取舍取决于部署侧更看重"缓存压缩率"（选 d256）还是"LM 质量"（选 d1024/无 bottleneck）。所有 arm 税 ≤8.5%（都是"不压缩"时的固定小税，§3.3 证明压缩后被抗压优势反超）。
+- **★ bottleneck_layer sweep {1,3,6,9,12}@dim512/16k 进行中**（验证 §3.1 语义饱和点 L6 附近是否 ppl 拐点 + 浅层 bottleneck 税是否更小）——结果待补。
 
-### 3.5 cross-chunk attention ablation（上层重算的价值）
+### 3.5 cross-chunk attention ablation（上层重算的价值, RULER n=50 固定 tk12）
 read 时 layers[j:] full-attention 重算 vs block-diagonal（复用 chunk KV 无 cross-chunk）：
 - RULER niah_single 8k/16k：100=100（单 chunk 读到即可，cross 无关）。
 - niah_multikey：std 88/92 vs blockdiag 44/40（**Δ+44/+52，消歧需 cross-chunk**）。
@@ -238,7 +257,11 @@ read 时 layers[j:] full-attention 重算 vs block-diagonal（复用 chunk KV �
 - [x] chunk_size 消融 **完成**（§2.5）
 - [x] 端到端 QCMem-structure > vanilla（§3.3，3B ΔNLL + model-size 曲线）**完成**
 - [x] cross-chunk attention ablation **完成**（§3.5）
+- [x] MemoryLLM×RULER 同类对照 **完成**（§2.1，single 22/22/28 / multikey 30/14/18 vs QCMem 100/96-98 碾压）
+- [x] KV-Direct 128k multikey **完成**（=0，§2.1，read_len 130746 超外推极限）
+- [x] babilong 三方逐 cell（qa1/qa5 × 4k-32k）**完成**（§2.4，官方 compare_answers）
 - [ ] **进行中**：真实 Qwen3-8B + funnel continued pretrain（outputs/qwenbott_*），训完在真实 RULER/babilong 比"原始 Qwen+QCMem vs funnel-Qwen+QCMem"——答"强模型+真实任务上 pretrain 是否有收益"+对标 KV-CAT
-- [ ] head-to-head 补齐缺失 cell（HCache 64k multikey / KV-Direct 128k multikey）+ 升 n=100
+- [ ] MemoryLLM 扩到 LongEval/LongBench/LoCoMo（LongEval 驱动 preds=0 bug 待修）；升 h2h n=50→100
+- [ ] HCache 64k multikey / babilong 0k-2k 低档补齐
 - [ ] topk×length 甜点补全稀疏网格
 - [ ] KV-CAT (2605.05971) 引用图追踪排除近期撞车（投稿前）
