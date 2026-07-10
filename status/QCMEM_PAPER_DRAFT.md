@@ -146,17 +146,26 @@ read_len = topk×chunk + sink + query，随 chunk 线性（topk=12 固定）。
 | **AVG** | **9.58** | 10.13 | — |
 - **关键（诚实且对 QCMem 有利）**：三方 F1 全落在 4-12（Qwen3-8B base + no_chat_template，任务本难），QCMem 用**恒定 read (~4.6k)** 追平 KV-Direct 的**全上下文**（差距在噪声内）→ **LongBench 低分是任务难非 QCMem 弱**。
 
-### 2.9 LoCoMo（长对话记忆, n=1965, 按 category, F1/acc）
-| category | n | QCMem F1 | QCMem acc |
+### 2.9 LoCoMo（长对话记忆, F1/acc, overall + 按 category）
+**★ 三方对照（overall, QCMem/HCache 全量 n=1986, KV-Direct n=760 已收敛）：**
+| 方法 | overall F1 | overall acc |
+|--|--|--|
+| **QCMem** | **9.05** | **24.1** |
+| KV-Direct(=全上下文) | 8.72 | 20.3 |
+| HCache(无检索) | 4.73 | 6.4 |
+- 图景与其它 benchmark 一致：**QCMem ≈ KV-Direct 且 acc 更高（24 vs 20）**（对话窗口内，检索追平/略超全上下文）；**HCache 明显低**（无检索长对话记忆差）。KV-Direct 分数 300→760 样本稳定（8.86→8.72），已收敛。
+
+**QCMem 按 category（n=1986）：**
+| category | n | F1 | acc |
 |--|--|--|--|
 | cat1 multi_hop | 282 | 9.8 | 12.1 |
 | cat2 single_hop | 321 | 6.3 | 9.3 |
 | cat3 temporal | 96 | 8.1 | 24.0 |
 | cat4 open_domain/画像 | 828 | **13.9** | **45.7** |
 | cat5 adversarial(要拒答) | 438 | 1.6 | 1.6 |
-| **overall** | 1965 | **9.0** | **24.0** |
 - cat4（开放域/画像）最好（acc 45.7）；cat5（对抗，需拒答）最低（backbone 拒答行为主导，非检索问题）。
-- 绝对分低=对话 QA 答案短/paraphrastic 本难（旧 mem_space p11 overall F1≈16.9 是同口径参考）。⚠️ baseline arm（HCache/KV-Direct）跑中，三方对照待补。
+- 绝对分低=对话 QA 答案短/paraphrastic 本难（旧 mem_space p11 overall F1≈16.9 同口径参考）。
+
 
 ---
 
