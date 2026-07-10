@@ -221,7 +221,7 @@ read_len = topk×chunk + sink + query，随 chunk 线性（topk=12 固定）。
 - (j,dim) sweep（5 arm）：分工+可压跨设计空间 robust，d256 甜点（dim99 224）。
 - 跨数据（wikitext）+ 三点收敛（dim99 2000步427→6000步231→12000步236，收敛到 ~230≈funnel 宽度）。
 - **★ bottleneck_dim × LM 税 sweep（16000 步收敛版, layer6, 末10步均值 ppl）**：baseline 25.28 / d1024 26.42(+4.5%) / d512 26.78(+5.9%) / **d256 27.42(+8.5%)**。**bottleneck 越窄 LM 税越高**——与"可压性甜点在 d256"相反，二者是 trade-off：窄 funnel 迫使表征更紧凑（PCA-ΔNLL 最优、缓存最省，见 §3.3），代价是训练时 LM 税更高。设计取舍取决于部署侧更看重"缓存压缩率"（选 d256）还是"LM 质量"（选 d1024/无 bottleneck）。所有 arm 税 ≤8.5%（都是"不压缩"时的固定小税，§3.3 证明压缩后被抗压优势反超）。
-- **★ bottleneck_layer sweep {1,3,6,9,12}@dim512/16k 进行中**（验证 §3.1 语义饱和点 L6 附近是否 ppl 拐点 + 浅层 bottleneck 税是否更小）——结果待补。
+- **★ bottleneck_layer sweep {1,3,6,9,12}@dim512/16k（16000 步收敛, 末20步均值 ppl）**：baseline 25.34 / **layer1 26.40(+4.2%)** / layer3 26.82(+5.8%) / layer6 26.85(+6.0%) / layer9 27.74(+9.5%) / layer12 27.77(+9.6%)。**LM 税随 bottleneck 深度单调递增**：越浅（越靠近输入）放 funnel，训练代价越小。这与 §3.1 分工命题一致——浅层承载的是低阶/局部信息，压缩它损失小；越深越接近"生成前的精炼表征"，压缩越伤。**设计取舍**：QCMem 缓存点若追求"LM 税最小"应放浅层（L1-3），但缓存点太浅则可缓存的语义不足（§3.2 j-sweep：j≤9 检索精度饱和、j12 崖跌）→ 二者共同框定 QCMem 的 j=12 是"可缓存语义上限"与"LM 税"的折中，而非税最小点。
 
 ### 3.5 cross-chunk attention ablation（上层重算的价值, RULER n=50 固定 tk12）
 read 时 layers[j:] full-attention 重算 vs block-diagonal（复用 chunk KV 无 cross-chunk）：
