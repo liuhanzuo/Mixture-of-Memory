@@ -1395,3 +1395,33 @@ team-lead 采纳「Part-Y-only」干净单轴框架（比早先 option A 更紧�
 - **★裁决（诚实，铁律2）**: **取决于任务, 非一刀切**。单一 needle 任务(niah-single, 答案整个落在1个chunk内)→ cross-chunk attention 无关紧要, (i)≈(ii)（query 在两种mask下都能读到那唯一chunk）→ block-diagonal KV 复用完全够用（省算）。多key干扰任务(niah-multikey, 需在 4 个 distractor key 间消歧)→ **(i) 大幅碾压 (ii)（8k +44, 16k +52, block-diag 几乎腰斩）** → cross-chunk + query-aware attention 是价值来源，不能只靠复用孤立 KV。
 - **对论文的意义**: QCMem "read 时对 pack 做 full attention 重算上层" 的设计**在多fact/干扰任务上有硬价值**（不是可有可无的 over-engineering）；但在单fact检索上，更省的 block-diagonal KV-复用变体等价——存在按任务选 read 策略的空间。self-test 铁证实现正确: 单chunk时 block-diag ≡ 标准（Qwen3-8B max|logit diff| 4.7e-5），多chunk时发散（`scripts/qcmem_blockdiag_selftest.py`）。
 - **产物**: eval `ruler_results/qcmem_blockdiag_ablation/{qcmem_standard_j12,qcmem_blockdiag_j12}/`（+COMPARISON_TABLE.txt）; 代码 `--reuse_kv_blockdiag`(eval_ruler_qcmem.py) / launcher `scripts/_qcmem_blockdiag_ablation.sh` / 聚合 `scripts/aggregate_blockdiag_ablation.py`。
+
+---
+
+## 方向2 semantic-bottleneck pretrain — bottleneck 位置 × 宽度 sweep（1B from-scratch, 16000 步收敛, 2026-07-10）
+
+**配置**：1B Llama from-scratch（hidden2048/16L/32h/8kv/ffn8192），slimpajama seq2048，eff_bs≈48，lr3e-4 cosine，bf16，DDP。funnel = 第 j 层输出过 `down(2048→d_bottle)→GELU→up(d_bottle→2048)`，**无残差**（信息必须挤过瓶颈）。ppl = 末 10-20 步均值（全部训到 16000 步收敛）。脚本 `scripts/train_semantic_bottleneck_1b.py` + `launch_semantic_bottleneck_1b.sh`。
+
+### (A) bottleneck_dim sweep（固定 layer6，扫宽度）
+| arm | ppl | LM 税 vs baseline |
+|--|--|--|
+| baseline（无 funnel） | 25.28 | — |
+| d1024 | 26.42 | +4.5% |
+| d512 | 26.78 | +5.9% |
+| d256 | 27.42 | +8.5% |
+- **趋势：bottleneck 越窄 → LM 税越高**（d256 最贵）。但 §3.3 证明越窄越可压（PCA-ΔNLL 最小、缓存最省）→ **LM 税 vs 可压性是 trade-off**：窄 funnel 迫使表征紧凑（利于 QCMem 缓存）但训练代价高。
+
+### (B) bottleneck_layer sweep（固定 dim512，扫位置）★本次
+| bottleneck 层 | ppl | LM 税 vs baseline |
+|--|--|--|
+| baseline | 25.34 | — |
+| **layer1** | 26.40 | **+4.2%（最省）** |
+| layer3 | 26.82 | +5.8% |
+| layer6 | 26.85 | +6.0% |
+| layer9 | 27.74 | +9.5% |
+| layer12 | 27.77 | +9.6% |
+
+- **★核心结论：LM 税随 bottleneck 深度单调递增——越往后放 funnel，信息密度损伤越大。** 收敛后单调（92% 进度时 L6 略低是噪声，16000 步收敛后 L1<L3<L6<L9<L12 干净单调）。
+- **机理（符合 §3.1 分工命题）**：浅层承载低阶/局部信息，压缩损失小；越深越接近"生成前的精炼表征"，那里的信息密度高、每一维都 load-bearing，强行挤过瓶颈损伤大。
+- **★为什么 QCMem 仍选 j=12（关键 framing）**：单看 LM 税，缓存点应放浅层（L1 最省）。但缓存点太浅 → 可缓存的语义不足（§3.2 j-sweep：j≤9 检索精度饱和、j12 崖跌到 14=可缓存语义上限）。→ **QCMem 的 j=12 是"可缓存语义上限"与"LM 税"之间的折中，不是税最小点**。layer sweep 正面量化了这个折中的另一端（税随深度的代价曲线），坐实 j=12 的选择是权衡而非任意。
+- **产物**：ckpt `outputs/sembott_1b_{base,d256,d512,d1024,layer1,layer3,layer9,layer12}_16k/final.pt`（layer6=d512 复用）；日志 `logs/sembott_1b_*_16k.log`；写入 draft §3.4（commit 0bf7182）。
