@@ -2,7 +2,7 @@
 
 > 2026-07-09 重写。所有数字经 Workflow 5-agent 从 log/json/CSV 交叉核对提取（非记忆），来源标注见 `status/TRAINER_ACTIVITY.jsonl` 07-08~07-09 + 各 `logs/ruler_*.log`。
 > 旧版存 `status/QCMEM_PAPER_DRAFT_20260708_backup.md`。配套详据：`status/QCMEM_ASSESSMENT.md` / `status/QCMEM_RELATED_WORK.md`。
-> ⚠️ 数字校准记录（铁律2，2026-07-10 更新）：multikey 128k=**96**（best-topk tk8, §2.1）或 **84**（固定 tk12, §2.2）——差异=topk 选择非矛盾，每张表已标注所用 topk。h2h sweep 是 **n=50**（非项目标准 n=100，已在正文标注）。效率加速比以 `ruler_results/bench_qcmem_vs_fullctx.json` 为权威（128k=7.83×）。Qwen3-8B 原生窗口=**40960**（config max_position_embeddings，非 131072）。
+> ⚠️ 数字校准记录（铁律2，2026-07-10 更新）：128k niah_multikey 有三个权威值，差异=topk 口径非矛盾，每张表标注所用 topk：**98**（best-topk tk8，§2.0 headline，`ruler_results/ruler_tk8_128k`）、**96**（固定 tk12 head-to-head，§2.1，`ruler_results/qcmem_128k`）、**84**（长度自适应 tk24 scaling，§2.2，`ruler_results/qcmem_qwen_128k_tk24`，对齐 `QCMEM_ASSESSMENT.md §1`）。h2h sweep 是 **n=50**（非项目标准 n=100，已在正文标注）。效率加速比以 `ruler_results/bench_qcmem_vs_fullctx.json` 为权威（128k=7.83×）。Qwen3-8B 原生窗口=**40960**（config max_position_embeddings，非 131072）。
 
 ---
 
@@ -34,7 +34,7 @@
 | **RULER niah_single** | 合成精确检索 | 8k-128k 全 **100**，256k 98 | ≤64k 100，**128k=0** | 8k=34→崩 | 超窗口只有 QCMem 可用 |
 | **RULER niah_multikey** | 合成多针 | tk8: 32k=**100**/64k=96/128k=**98** | ≤32k 98-100，64k=80，128k 崩 | 全崩(0) | 窗口内可比，超窗口 QCMem 独占 |
 | **LongEval** | lines-retrieval | tk4/6: 8k=**1.00**/32k=**1.00**/64k=0.94/128k=**0.98** | 8k 1.00→32k 0.92→64k **0.34**→128k **0.00** | 全 0 | 窗口内追平、超窗口大幅反超 |
-| **babilong** | bAbI 长档 QA | qa5(关系) 8k=**80**/16k=**67**/32k=**65**；qa1(单fact) 16k=57 | qa5 8k=68/16k=44/32k=58；qa1 16k=**72**/32k=62 | qa5 2k=68/8k=52→16k=19/32k=4；qa1 全崩(0-16) | qa5 关系 QCMem 强；qa1 单fact KVD 强 |
+| **babilong** | bAbI 长档 QA | qa5(关系) 8k=**79**/16k=**67**/32k=**63**；qa1(单fact) 16k=57 | qa5 8k=68/16k=44/32k=58；qa1 16k=**72**/32k=62 | qa5 2k=68/8k=52→16k=19/32k=4；qa1 全崩(0-16) | qa5 关系 QCMem 强；qa1 单fact KVD 强 |
 | **LongBench** | 真实长文档 QA(F1) | AVG **9.58**(4 task) | AVG 10.13 | — | 任务本难(所有法 4-12)，QCMem 恒定 read 追平全上下文 |
 | **LoCoMo** | 长对话记忆 | overall F1 **9.05**/acc 24 | overall F1 **8.72**/acc 20 | overall F1 **4.73**/acc 6 | QCMem≈KV-Direct(acc更高) > HCache(无检索崩) |
 
@@ -59,10 +59,10 @@
 | HCache | 34 | 2 | 4 | 2 | — |
 | MemoryLLM | 22 | 22 | 28 | — | — |
 
-**niah_multikey_1（QCMem 行 = best-topk tk8；KV-Direct/HCache/MemoryLLM 同 n=50）：**
+**niah_multikey_1（QCMem 行 = 固定 tk12 head-to-head 口径；KV-Direct/HCache/MemoryLLM 同 n=50）：**
 | 方法 | 8k | 16k | 32k | 64k | 128k |
 |--|--|--|--|--|--|
-| **QCMem（tk8）** | 96 | 98 | 90 | 86 | **96** |
+| **QCMem（tk12）** | 96 | 98 | 90 | 86 | **96** |
 | KV-Direct | 100 | 100 | 98 | 80 | **0** |
 | HCache | 4 | 0 | 0 | —(未测) | — |
 | MemoryLLM | 30 | 14 | 18 | — | — |
@@ -80,14 +80,14 @@
 3. **vs KV-Direct = 同精度、效率碾压**：≤64k 两者精度相当（都近满分），但 QCMem read_len 恒定 ~6.3k vs KV-Direct 保留全 token（128k=13 万 tok）。
 4. **★128k QCMem 唯一可用**：KV-Direct 128k **崩到 0**（保留全 130746 tok 远超 Qwen3 原生窗口 40960 → RoPE 外推质量崩塌，全深度重算失效），QCMem 固定 read 6256 tok 永远在窗口内 → **100/96**。这是 layer-partial+检索的结构性优势，不只是省显存。
 
-### 2.2 超长上下文精度 scaling（RULER, Qwen3-8B, n=50, QCMem/full-ctx 均 tk12 固定口径）
-> 注：本表 multikey 用固定 tk12（非 §2.1 的 best-topk tk8）——故 128k multikey=84（tk12）而非 §2.1 的 96（tk8），差异=topk 选择，非矛盾。
+### 2.2 超长上下文精度 scaling（RULER, Qwen3-8B, n=50, QCMem 长度自适应 topk / full-ctx 全长直喂）
+> 注：本表 QCMem multikey 行取自 `QCMEM_ASSESSMENT.md §1` 的 scaling 决胜表（长度自适应 topk：中长档 tk12、128k=tk24、256k=tk48）。故 128k multikey=**84**（tk24）——与 §2.0 headline 的 98（best-topk tk8）、§2.1 head-to-head 的 96（固定 tk12、`ruler_results/qcmem_128k`）是同一 cell 的不同 topk 口径，非矛盾。（§2.1 的 64k=86 是 tk12 h2h run，本表 64k=82 是 scaling 系列，属不同 eval 批次的小幅波动。）
 | task | 方法 | 8k | 16k | 32k | 64k | 128k | 256k |
 |--|--|--|--|--|--|--|--|
 | niah_single | QCMem | 100 | 100 | 100 | 100 | **100** | **98** |
 | | full-ctx | 100 | 100 | 100 | 100 | **0** | **OOM** |
-| niah_multikey(tk12) | QCMem | 94 | 94 | 88 | 82 | 84 | 60 |
-| | full-ctx | 100 | 100 | 98 | 96 | **0** | **OOM** |
+| niah_multikey | QCMem | 94 | 94 | 94 | 82 | 84 | 60 |
+| | full-ctx | 100 | 100 | 100 | 96 | **0** | **OOM** |
 | var-track | QCMem | 49 | 25 | 22 | 21 | 20 | — |
 | | full-ctx | 100 | 100 | 100 | 98 | **0** | **OOM** |
 - 分水岭 = backbone 外推极限（Qwen 原生 40960，64k→128k 崩）。>该点只有 QCMem 可用。
@@ -178,8 +178,8 @@ read_len = topk×chunk + sink + query，随 chunk 线性（topk=12 固定）。
 | cat1 multi_hop | 282 | 9.8 | 12.1 |
 | cat2 single_hop | 321 | 6.3 | 9.3 |
 | cat3 temporal | 96 | 8.1 | 24.0 |
-| cat4 open_domain/画像 | 828 | **13.9** | **45.7** |
-| cat5 adversarial(要拒答) | 438 | 1.6 | 1.6 |
+| cat4 open_domain/画像 | 841 | **13.9** | **45.7** |
+| cat5 adversarial(要拒答) | 446 | 1.6 | 1.6 |
 - cat4（开放域/画像）最好（acc 45.7）；cat5（对抗，需拒答）最低（backbone 拒答行为主导，非检索问题）。
 - 绝对分低=对话 QA 答案短/paraphrastic 本难。（注：旧 mem_space 系列同类对话 QA overall F1 仅 2.7（LOCOMO n=400 口径，与本表 n=1986 口径不同，仅作量级参考）——QCMem 9.05 相对旧 mem_space 是数量级反超，非落后。）
 
