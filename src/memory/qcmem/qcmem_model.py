@@ -270,6 +270,38 @@ class QCMemModel:
         position_embeddings = self.rotary_emb(hidden_like, position_ids=positions)
         return mask, position_embeddings
 
+    @staticmethod
+    def _layer_out_hidden(out):
+        """Coerce a decoder layer's return to the residual-stream hidden tensor.
+
+        In-tree transformers >=5.x decoder layers (dense AND MoE — Llama, Qwen3,
+        Qwen3-MoE, Qwen2-MoE, Mixtral, DeepSeek-V2/V3, OLMoE, Phi-MoE, DBRX,
+        GLM4-MoE, Hunyuan-V1-MoE, …) all return a BARE ``hidden_states`` tensor;
+        the MoE router logits are no longer part of the layer return, so the
+        residual stream QCMem caches (``h_j``) is identical in shape/semantics to
+        the dense case (expert-aggregated output == the layer's hidden output).
+
+        Older / custom ``trust_remote_code`` modeling (e.g. the Hunyuan Hy3
+        ``hy_v3`` custom decoder, or legacy Mixtral-style layers) may instead
+        return a ``tuple`` whose FIRST element is the hidden state (optionally
+        followed by attn weights / router logits / present-KV). We defensively
+        unwrap that first element so QCMem works on both conventions without
+        touching the dense fast-path (a bare tensor passes straight through).
+        """
+        if torch.is_tensor(out):
+            return out
+        if isinstance(out, (tuple, list)):
+            return out[0]
+        # BaseModelOutput-like object exposing .last_hidden_state / .hidden_states
+        for attr in ("last_hidden_state", "hidden_states"):
+            val = getattr(out, attr, None)
+            if torch.is_tensor(val):
+                return val
+        raise TypeError(
+            f"decoder layer returned unsupported type {type(out)!r}; expected a "
+            "tensor or a tuple whose first element is the hidden state"
+        )
+
     def _run_layers(
         self,
         hidden: torch.Tensor,
@@ -278,7 +310,18 @@ class QCMemModel:
         positions: torch.Tensor,
         position_embeddings,
     ) -> torch.Tensor:
-        """Run ``self.layers[layer_slice]`` on ``hidden`` with the given mask/RoPE."""
+        """Run ``self.layers[layer_slice]`` on ``hidden`` with the given mask/RoPE.
+
+        Works uniformly for dense and MoE backbones: the per-layer call is the
+        standard ``layer(hidden, attention_mask=, position_ids=,
+        position_embeddings=, use_cache=False)`` interface, and MoE routing lives
+        entirely inside ``layer.mlp`` (the sparse block), which is position-blind
+        (it routes each token by its own hidden vector, independent of sequence
+        position or which other tokens are packed alongside it). So a chunk-local
+        WRITE routes each token exactly as the full-context forward would, and the
+        cached depth-``j`` hidden reproduces bit-for-bit — no MoE-specific plumbing
+        is needed here beyond tolerating a tuple layer-return (see
+        :meth:`_layer_out_hidden`)."""
         use_ckpt = (
             self.grad_checkpoint
             and torch.is_grad_enabled()
@@ -286,7 +329,7 @@ class QCMemModel:
         )
         for layer in self.layers[layer_slice]:
             if use_ckpt:
-                hidden = torch.utils.checkpoint.checkpoint(
+                out = torch.utils.checkpoint.checkpoint(
                     lambda h, _l=layer: _l(
                         h,
                         attention_mask=causal_mask,
@@ -298,13 +341,14 @@ class QCMemModel:
                     use_reentrant=False,
                 )
             else:
-                hidden = layer(
+                out = layer(
                     hidden,
                     attention_mask=causal_mask,
                     position_ids=positions,
                     position_embeddings=position_embeddings,
                     use_cache=False,
                 )
+            hidden = self._layer_out_hidden(out)
         return hidden
 
     # ------------------------------------------------------------------ #
