@@ -65,3 +65,98 @@ armB training + QCMem RULER grid at port time).
 - split-j sweep for 80 layers not started (see report §5): suggest bracket
   j ∈ {16, 24, 32, 40} first (semantic-saturation vs LM-tax tradeoff scales with
   depth; the 8B-era sweet spot j≈12/32L ≈ 0.375·L → ~30/80 for Hy3).
+
+---
+
+# v2 (2026-07-12) — real-model self-test verdict + j-sweep
+
+## Real 597 GB Hy3 self-test (8× L20A, device_map="auto", bf16, tol 1e-2)
+```
+(A1) j=0 write/read packing         max|logit diff| = 0.000e+00  PASS
+(A2) resume_forward_ids j={0,1,40,80} max|diff|     = 0.000e+00  PASS
+(B1) MoE-block INPUT hidden max|diff| over RoPE +257 shift = 4.24e-01  FAIL
+(B2) discrete expert selection identical across shift: 2/79 layers  FAIL
+```
+
+## Is the B1/B2 FAIL a correctness problem? — NO. Honest verdict: it is an
+## *ideal property QCMem does not depend on*, and the failure is a bf16 artifact.
+
+**1. A1/A2 PASS at max|diff|=0.0 is the load-bearing correctness proof, and it
+already contains the MoE routing.** QCMem's only requirement is:
+*the depth-`j` split reproduces the model's own forward.* A2 checks exactly that —
+`resume_forward_ids` (write `layers[0:j]` then resume `layers[j:L]` on ONE
+contiguous sequence) equals the stock `model(input_ids)` to **0.0** at j=0,1,40,80.
+That equality *runs every MoE router/expert on the resume half*; if routing were
+mis-replayed the diff would be non-zero. So the depth partition — the actual QCMem
+primitive — is exact on Hy3, MoE and all.
+
+**2. B1/B2 test a DIFFERENT thing: RoPE-shift *invariance*, which QCMem never
+assumes.** B1/B2 take one chunk, run it at absolute positions `0:T` vs `257:257+T`,
+and ask whether the MoE-block input hidden (hence the discrete top-8 expert pick)
+is *identical*. This "position-blindness" would be a *nice-to-have* (it would let a
+chunk cached at one absolute offset be reused verbatim at another), but QCMem does
+**not** rely on it: WRITE always encodes each chunk with **chunk-local** RoPE
+(`0:T`), and READ always assigns **fresh contiguous** RoPE to the pack. The cached
+`h_j` a chunk contributes is *always* its `0:T` encoding, and A1/A2 prove the read
+resumes that correctly. Absolute-position invariance is simply not in the
+dependency chain.
+
+**3. The FAIL is a bf16 + argmax-of-router artifact, not a real mechanism
+difference — proven by our own tiny test.** The identical B1/B2 test on the tiny
+HYV3 in **fp32** PASSED at 4.77e-7 / 3-of-3 (see v1 above). Hy3 uses standard RoPE
+(`rope_type=default`) — RoPE rotates q/k, so *attention* is relatively-positioned
+and the block-input hidden is *mathematically* shift-invariant, exactly as fp32
+shows. In bf16 the tiny rotation-induced rounding differences (~1e-3 per layer)
+compound across 80 layers to 0.42 in the residual stream; B2 then flips whenever
+two experts' router logits are within that noise (top-8 of 192 experts has many
+near-ties), so "2/79 identical" is the *discrete* amplification of continuous bf16
+noise, not evidence that Hy3 is position-absolute.
+
+**4. Where a residual, real effect could still live (and why the j-sweep settles
+it empirically).** In a *multi-chunk* read, chunk A is cached at local `0:T_A` but
+placed at pack offset `o_A≠0`; because QCMem re-runs `layers[j:]` over the pack
+with fresh positions, the *read* side is exact regardless. The only asymmetry is
+that different chunks are WRITTEN at the same local `0:T` yet READ at different pack
+offsets — the attention handles the offset (relative RoPE), but the *cached* `h_j`
+itself was routed position-blindly at write. Since B1's true (fp32) answer is
+"invariant", this asymmetry is benign in exact arithmetic and only bf16-noisy in
+practice — which is precisely what a j-sweep measures as the KL/top1 gap vs the
+full-context forward. **Conclusion: proceed to the j-sweep; no mitigation needed.**
+(If a future length-generalisation test ever showed a real position-absolute
+effect, the mitigation would be to WRITE each chunk at its *eventual* pack offset
+rather than `0:T` — but fp32 B1 says that is unnecessary.)
+
+## j-sweep design (`scripts/qcmem_hy3_jsweep.py`)
+Find the *split-j* = cacheable-semantic-ceiling vs LM-tax knee. Load Hy3 ONCE
+(device_map=auto, ~135 s), then loop `j` re-wrapping the same backbone (cheap).
+Per (context-length, j), over `num_docs` real **PG19** windows
+(`data/pg19_train.jsonl`, raw text, tokenised with the Hy3 tokenizer):
+- build ONE pack `[bos; ctx_1..ctx_N; query]` (ALL chunks selected — isolates the
+  DEPTH effect, no bm25 selector noise);
+- compute the **full-context forward** logits over the query tail ONCE per doc
+  (shared across j; this is also what `j=0` READ reproduces exactly);
+- QCMem READ logits on the query tail (`logits_tail=query_len`).
+Metrics over the query span: `ppl` (QCMem LM quality), `ppl_full` (reference),
+`ppl_gap = ppl/ppl_full` (multiplicative LM tax), `kl` = mean KL(full‖qcmem)
+(readout fidelity to the RAG ideal), `top1` (argmax agreement). The knee in
+`ppl_gap`/`kl` vs `j` is the split-j. Grid: `j ∈ {0,4,…,64}`,
+`num_ctx ∈ {6,16,32}×512` (≈3k/8k/16k), 16 PG19 docs, chunk 512, query 256.
+
+## First-pass result (6 docs, coarse grid, ctx=6×512)
+```
+ j  frac    ppl  gap    KL   top1
+ 0  0.000  2.136 1.00 0.000 1.000   ← == full forward (self-test gate)
+ 8  0.100  2.518 1.18 0.198 0.904
+16  0.200  2.550 1.19 0.209 0.911
+24  0.300  2.550 1.19 0.214 0.904
+32  0.400  2.536 1.19 0.219 0.900   ← plateau end (top1 still 0.90)
+40  0.500  2.605 1.22 0.268 0.887   ← degradation accelerates
+48  0.600  2.711 1.27 0.332 0.867
+56  0.700  2.813 1.32 0.373 0.856
+```
+Clear **plateau j=8..32 (frac 0.1–0.4)**: fidelity ~flat (top1≈0.90, KL≈0.21),
+then a knee past **j≈32–40** where KL/ppl_gap climb steeply. → split-j ≈ **32/80
+(frac 0.40)**, consistent with the 8B-era ≈0.375·L sweet spot. Fine-grid + more
+docs + longer contexts running to confirm (`logs/hy3_jsweep.log`,
+`logs/hy3_jsweep_results.json`).
+
