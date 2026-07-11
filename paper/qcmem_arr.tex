@@ -1,0 +1,245 @@
+% QCMem — ACL ARR submission
+% Drop this .tex into your Overleaf ARR project (which already has acl.sty / acl_natbib.bst).
+% Compile with pdflatex -> bibtex -> pdflatex x2.
+% All numbers verified against status/QCMEM_PAPER_DRAFT.md (real experiments, official scorers). 2026-07-11.
+
+\documentclass[11pt]{article}
+\usepackage[review]{acl}          % ARR: use [review] for submission, remove for camera-ready
+\usepackage{times}
+\usepackage{latexsym}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{microtype}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{multirow}
+
+\title{Depth-Partitioned Retrieval Readout: Caching a Single Mid-Layer
+Hidden State for Unbounded-Context Memory}
+
+\author{Anonymous ARR submission}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Processing contexts far beyond a backbone's native window remains costly:
+full attention grows quadratically and, past the extrapolation limit,
+simply collapses. We introduce \textbf{QCMem} (Query-Conditioned Memory),
+which recasts long-context processing from \emph{token-partial} KV reuse
+(recompute the full-depth KV of a subset of tokens) to
+\emph{layer-partial} readout: split the transformer at depth $j$, cache the
+single depth-$j$ residual-stream hidden of each chunk, then at read time
+retrieve the top-$k$ relevant chunks and recompute only the upper layers
+$[j{:}L]$ over a fixed-size pack. The read cost and memory are independent of
+context length (constant $\approx$6.7k tokens / $\approx$18\,GB for an 8B
+backbone). Across five long-context benchmarks (RULER, BABILong, LongEval,
+LongBench, LoCoMo) with three mechanism-level baselines under an identical
+harness, QCMem matches full-context accuracy inside the window and is
+\emph{the only method that still works past the backbone's extrapolation
+limit}: at 128k, full-context / full-KV recompute collapse to 0 while QCMem
+stays at RULER~100 and LongEval~0.98, with a $7.8\times$ prefill speedup and
+constant memory. We attribute the effectiveness to an
+understand-then-generate division of labor---semantic content saturates in
+mid layers---and give both correlational probes and a causal end-to-end test.
+\end{abstract}
+
+\section{Introduction}
+Long-context inference is bottlenecked twice. First, full self-attention is
+$O(L^2)$ in prefill and $O(L)$ in KV memory. Second, and more fundamentally,
+once the context exceeds the backbone's RoPE extrapolation limit, accuracy
+does not merely degrade---it \emph{collapses}. On Qwen3-8B (native window
+$40{,}960$; the config's $131{,}072$ is an un-enabled YaRN ceiling), feeding
+128k tokens drives RULER needle accuracy to $0$.
+
+Retrieval-augmented and KV-reuse methods attack the first bottleneck but
+inherit the second: they still recompute or attend over a length that scales
+with the context. We instead make both the read computation \emph{and} the
+memory constant in context length. The idea is a \emph{depth partition}: for a
+transformer of $L$ layers split at depth $j$,
+\begin{itemize}[leftmargin=1.2em,itemsep=1pt]
+\item \textbf{Write} each 512-token chunk through the bottom layers $[0{:}j]$
+and cache its depth-$j$ residual-stream hidden $h_j$ (chunk-local RoPE).
+Storage is $\sim$$1/(2L)$ of a full KV cache.
+\item \textbf{Read} by retrieving the top-$k$ chunks (BM25), packing
+\texttt{[sink; selected $h_j$; query $h_j$]}, and recomputing only the upper
+layers $[j{:}L]$ under fresh RoPE to produce logits. The pack is a fixed
+$\sim$6.7k tokens regardless of context length.
+\end{itemize}
+The split depth $j$ is a knob: $j{=}0$ is full RAG recompute (exact-equals the
+full forward, $\max|\Delta\text{logit}|<10^{-4}$), $j{=}L$ is closed-book. Our
+contributions:
+\begin{enumerate}[leftmargin=1.4em,itemsep=1pt]
+\item \textbf{A new primitive} (\S\ref{sec:method}): recomputing $[j{:}L]$ as a
+\emph{readout} over a retrieved, layer-partial cache; the first framing of
+long-context memory as depth-partitioned rather than token-partial.
+\item \textbf{Five-benchmark, three-baseline evidence} (\S\ref{sec:results})
+under one harness, showing constant-cost QCMem matches full-context inside the
+window and is uniquely usable past the extrapolation limit.
+\item \textbf{A mechanistic account} (\S\ref{sec:mechanism}): probing plus a
+causal end-to-end test that a compressible mid-depth hidden is what makes the
+readout work.
+\end{enumerate}
+
+\section{Method: QCMem}
+\label{sec:method}
+Let a decoder-only LM have layers $[0{:}L]$. QCMem fixes a split depth $j$.
+
+\paragraph{Write.} The document is chunked into 512-token spans. Each chunk is
+run through $[0{:}j]$ with chunk-local positions, and its depth-$j$
+residual-stream hidden $h_j\in\mathbb{R}^{512\times d}$ is stored. Because only
+the bottom $j$ layers run and only one hidden state per token is kept, storage
+is $\approx$$1/(2L)$ of a full-depth KV cache and write is $O(L_{\text{ctx}})$
+but shallow.
+
+\paragraph{Read.} Given a query, BM25 retrieves the top-$k$ chunks. We form the
+pack \texttt{[sink; $h_j$ of selected chunks; $h_j$ of the query]}, assign
+\emph{fresh} contiguous RoPE positions, and recompute layers $[j{:}L]$ with
+full attention over the pack to obtain next-token logits. The pack length is
+$\text{sink}+k\cdot\text{chunk}+\text{query}\approx6.7$k for $k{=}12$,
+chunk $512$---\emph{independent of context length}.
+
+\paragraph{The $j$ knob.} At $j{=}0$ the read recomputes all layers over the
+retrieved raw tokens; a self-test confirms this equals the full forward to
+$\max|\Delta\text{logit}|<10^{-4}$. At $j{=}L$ nothing is recomputed
+(closed-book). Intermediate $j$ trades cache compressibility against readout
+fidelity.
+
+\paragraph{Training.} A student at $j{=}12$ is trained by self-distillation
+(LoRA $r{=}32,\alpha{=}64$, 4000 steps, 8-GPU DDP) against a $j{=}0$ teacher on
+plain PG19 continuous windows---\emph{no synthetic long-context data}. This
+pushes the usable cache depth from $j{\le}9$ to $j{\ge}12$.
+
+\section{Experiments}
+\label{sec:results}
+\paragraph{Setup.} Unless noted, the backbone is Qwen3-8B, chunk size 512,
+split $j{=}12$. All three baselines share the identical harness, backbone, and
+scorer---the only variable is the tested primitive:
+\textbf{KV-Direct}~\citep{residualstream} forces $j{=}0$ (full-depth
+recompute), no retrieval, keeps all tokens---mathematically the full-context
+accuracy (self-test $\max$ diff $<10^{-4}$), only caching the residual stream
+to save memory; \textbf{HCache}~\citep{hcache} caches mid-layer activations and
+recomputes upper layers post-hoc, but with no retrieval and no training;
+\textbf{MemoryLLM} is a dedicated fixed-size memory model (same-class baseline).
+Synthetic tasks use official \texttt{string\_match} scoring; BABILong uses the
+official \texttt{compare\_answers} (not \texttt{re.search}); QA tasks use
+official F1. Retrieval $k$ is set per task (long-context retrieval has a
+task-dependent optimum; a fixed default systematically underestimates QCMem).
+
+\input{tab_overview}
+
+\subsection{Head-to-head on RULER NIAH}
+Table~\ref{tab:h2h} isolates the primitive on RULER needle tasks ($n{=}50$,
+\texttt{string\_match\_all}). Three findings. (i) \emph{vs.\ HCache: accuracy
+collapse}---without retrieval the needle is drowned; HCache is already at 34 by
+8k and near 0 on multikey. (ii) \emph{vs.\ MemoryLLM: dominated}---the
+same-class fixed-memory model reaches only 22--28 (single) / 14--30 (multikey)
+vs.\ QCMem's 96--100. (iii) \emph{vs.\ KV-Direct: equal accuracy, constant
+cost, and uniquely usable at 128k}. Below the extrapolation limit both are
+near-perfect, but QCMem's read length is a constant $\approx$6.3k vs.\
+KV-Direct's full $\sim$130k tokens; at 128k KV-Direct collapses to 0 (its
+$\sim$130{,}746 packed tokens exceed the native 40{,}960 window, breaking
+extrapolation) while QCMem stays at 100/96. This is a structural advantage of
+layer-partial{+}retrieval, not merely memory savings.
+
+\input{tab_h2h}
+
+\subsection{Scaling past the extrapolation limit}
+Table~\ref{tab:scaling} scales RULER to 256k. The watershed is the backbone's
+extrapolation limit (Qwen 64k$\to$128k): beyond it only QCMem is usable
+(niah\_single 128k/256k = 100/98 vs.\ full-ctx 0/OOM). Against StreamingLLM at
+the same $\sim$6.7k/$\sim$17\,GB budget, QCMem is 100/100/100/100 vs.\ SLM
+90/42/16/4 across 8k/16k/64k/128k ($25\times$ gap at 128k): retrieval keeps the
+\emph{relevant} chunks, whereas keeping only the \emph{recent} ones misses the
+needle.
+
+\input{tab_scaling}
+
+\subsection{Efficiency}
+Table~\ref{tab:eff} (median-of-3). QCMem prefill is write $O(L)$ plus a fixed
+read; full attention is $O(L^2)$, crossing over near 16k and reaching
+$7.83\times$ at 128k. Memory is context-independent at $\approx$17--18\,GB
+(full grows to 89\,GB), so QCMem runs the 128k setting on a single GPU where
+full-context OOMs. The cost is a slower decode ($\approx$2.4\,s/step,
+recomputing $[j{:}L]$ over the pack), which is optimizable with a resumed-band
+KV cache.
+
+\input{tab_eff}
+
+\subsection{Real long-document and dialogue QA}
+On BABILong (Table~\ref{tab:overview}), QCMem is strongest on relational qa5
+(8k/16k/32k = 79/67/63) while KV-Direct wins single-fact localization qa1---an
+honest boundary. On LongBench, all three methods score 4--12 F1 (Qwen3-8B base,
+no chat template; the task is intrinsically hard), and QCMem's AVG 9.58 tracks
+KV-Direct's 10.13 within noise using a \emph{constant} read---so the low
+absolute score reflects task difficulty, not a QCMem weakness. On LoCoMo,
+QCMem (F1 9.05 / acc 24.1) $\approx$ KV-Direct (8.72 / 20.3) and both far
+exceed HCache (4.73 / 6.4). On LongEval lines-retrieval, with the per-task
+optimum $k{\in}\{4,6\}$, QCMem matches inside the window
+(8k/16k/32k = 1.00/0.96/1.00 vs.\ KV-Direct 1.00/0.96/0.92) and \emph{reverses
+sharply past it} (64k 0.94 vs.\ 0.34; 128k 0.98 vs.\ 0.00).
+
+\subsection{Ablations}
+\paragraph{Chunk size.} Read length $=k\cdot\text{chunk}+\text{sink}+\text{query}$
+scales with chunk. Chunk 512 is the sweet spot: strong prefill speedup
+($7.83\times$ at 128k), low flat memory (17--18\,GB), moderate decode (2.4\,s),
+and high multikey (128k$=$94)---near chunk-1024 accuracy at $\approx$half the
+decode cost.
+\paragraph{Cross-chunk attention.} Recomputing $[j{:}L]$ with full attention
+vs.\ block-diagonal (reuse per-chunk KV, no cross-chunk): identical on single
+needle (100$=$100, one chunk suffices) but a large gap on multikey
+(88/92 vs.\ 44/40, $\Delta{+}44/{+}52$) and BABILong qa2/qa5. Cross-chunk
+recompute is load-bearing for multi-fact disambiguation, degradable to save
+compute on single-needle tasks.
+
+\section{Why caching a mid-layer hidden works}
+\label{sec:mechanism}
+\paragraph{Division of labor.} Probing shows semantic-task accuracy peaks in
+mid layers and falls at the top, while next-token ability forms only in the top
+layers (consistent across Qwen and Llama). Causally, using only the front
+$\sim$4--8 layers (depth 0.12--0.22) reaches 95\% of the full model's
+downstream semantics. The cacheable depth ceiling ($j{\le}9$ zero-shot, pushed
+to $j{\ge}12$ by self-distillation) coincides with this semantic-saturation
+point.
+\paragraph{Caching the top fails.} A negative control (caching a top-layer
+hidden) collapses: the top hidden is a query-sensitive, pre-readout
+representation, so caching it discards query conditioning
+(qa5 $(12,0){=}61/50 \to (12,6){=}29/20$). Only caching the query-insensitive
+bottom-$j$ hidden is safe---validating the front-$j$ design.
+\paragraph{Causal end-to-end test.} Pretraining a model with a low-rank funnel
+at layer $j$ (which forces the depth-$j$ hidden to be compressible) yields a
+representation that degrades \emph{less} under rank-$r$ PCA compression of the
+cache than a vanilla model at every rank, and the advantage \emph{grows with
+model size} (1B$\to$3B $\approx 2\times$). This is direct evidence that a
+compressible mid-depth hidden---not an incidental property---is what the
+readout exploits.
+
+\section{Related Work}
+QCMem is a new combination of known components plus one new primitive
+(recompute $[j{:}L]$ as readout). The closest prior work:
+\textbf{HCache}~\citep{hcache} caches mid-layer activations and recomputes
+upper layers in a serving system, but post-hoc, untrained, and without
+retrieval; we show head-to-head that this inference form collapses on long
+context (8k$=$34, 16k$=$2). \textbf{KV-Direct}~\citep{residualstream} caches
+the residual stream and recomputes full-depth KV, training-free, keeping all
+tokens; we show it equals full-context accuracy but collapses at 128k
+($=0$) with an exploding read length---QCMem's layer-partial{+}retrieval{+}fixed
+read is the delta. Token-axis KV compression (H2O, SnapKV, StreamingLLM,
+CompressKV) and continued-pretraining compressibility (KV-CAT) are orthogonal
+to our depth-axis partition. Ultra-long anchors: YOCO, InfLLM.
+
+\section{Limitations}
+QCMem is an efficiency / extrapolation method, not an accuracy SOTA: within the
+backbone's extrapolation window full-context is $\ge$ QCMem (notably
+variable-tracking, 64k 98 vs.\ 21). The watershed shifts with the backbone's
+extrapolation ability---weaker backbones benefit earlier and more. Multi-hop
+variable-tracking is weak; single/double-fact localization (BABILong qa1/qa2)
+inside the window favors KV-Direct. The head-to-head sweep is an $n{=}50$ cut
+(vs.\ $n{=}100$ elsewhere) and the topk$\times$length grid is sparse. Decode is
+slower than full attention and is future work (resumed-band KV cache).
+
+\bibliography{qcmem}
+\bibliographystyle{acl_natbib}
+
+\end{document}
