@@ -231,6 +231,11 @@ def main():
         results = []
         for j in j_list:
             qc = qc_by_j[j]
+            # release cached activations from the previous j so the long-context
+            # (8k/16k) reads don't accumulate fragmentation across the sweep — a
+            # sharded 597 GB model has little headroom per shard.
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
             tot_nll = tot_ntok = 0.0
             tot_nll_full = 0.0
             kl_sum = top1_sum = 0.0
