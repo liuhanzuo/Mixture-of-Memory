@@ -317,13 +317,30 @@ def build_param_groups(model, args, is_main):
 # ---------------------------------------------------------------------------
 # save
 # ---------------------------------------------------------------------------
-def _save(model, args, step, cfg, final=False):
+def _save(model, optimizer, args, step, epoch, cfg, final=False):
+    """Checkpoint = model weights + arch meta + (NEW, for clean resume) optimizer
+    state / step / epoch / max_steps / training args / RNG state.
+
+    Backward compat: old checkpoints (model-only) still load fine -- the new keys
+    are additive and resume degrades gracefully to a warm-restart when
+    `optimizer_state` is absent (see the resume block in main())."""
     root = model.module if hasattr(model, "module") else model
     name = "final" if final else f"step{step}"
     path = os.path.join(args.output_dir, f"{name}.pt")
+    # RNG snapshot (torch + cuda) so dropout / any stochastic op resumes identically.
+    rng = {"torch": torch.get_rng_state()}
+    if torch.cuda.is_available():
+        rng["cuda"] = torch.cuda.get_rng_state_all()
     torch.save({
         "model_state": root.state_dict(),
         "step": step,
+        # --- NEW resume-enabling fields (additive; old evals ignore them) ---
+        "optimizer_state": optimizer.state_dict(),
+        "epoch": epoch,
+        "max_steps": args.max_steps,           # horizon this ckpt was trained under
+        "warmup_steps": args.warmup_steps,
+        "train_args": vars(args),              # full arg snapshot for provenance
+        "rng_state": rng,
         # arch descriptors so downstream eval can rebuild an identical model.
         "model_family": "qwen3",
         "base_model_path": args.model_path,
@@ -368,6 +385,13 @@ def main():
     p.add_argument("--grad_clip", type=float, default=1.0)
     p.add_argument("--save_every", type=int, default=500)
     p.add_argument("--log_every", type=int, default=20)
+    p.add_argument("--resume_from", type=str, default="",
+                   help="path to a step{N}.pt / final.pt to resume from. Restores model "
+                        "weights + (if present) optimizer state + global_step + epoch + RNG. "
+                        "Old model-only ckpts degrade gracefully to a warm-restart (Adam "
+                        "momentum re-inits, but LR resumes on the cosine curve at the ckpt "
+                        "step -- NOT from warmup). Extending --max_steps re-scales the cosine "
+                        "horizon so LR does not collapse to min_lr immediately.")
     p.add_argument("--max_rows", type=int, default=0, help=">0 to subset dataset (smoke)")
     p.add_argument("--gradient_checkpointing", type=int, default=1)
     p.add_argument("--device", type=str, default="auto",
@@ -439,14 +463,41 @@ def main():
                     f"max_steps={args.max_steps}")
 
     # ---- build model ----
-    do_transplant = not args.from_scratch
+    # When resuming we skip the base-8B front-layer transplant entirely: the
+    # resume ckpt already holds ALL trained weights (front + fresh + transplanted
+    # lm_head), so we build the shell without touching the 16GB base model, then
+    # overwrite with the ckpt weights below. (from_scratch never transplants.)
+    resume_ckpt = None
+    if args.resume_from:
+        map_loc = "cpu"
+        # weights_only=False: ckpt carries python meta (train_args dict etc.).
+        resume_ckpt = torch.load(args.resume_from, map_location=map_loc,
+                                 weights_only=False)
+        if is_main:
+            logger.info(f"[resume] loading ckpt {args.resume_from} "
+                        f"(saved at step {resume_ckpt.get('step')}, "
+                        f"has_optimizer={'optimizer_state' in resume_ckpt})")
+
+    do_transplant = (not args.from_scratch) and (resume_ckpt is None)
     model, cfg, sanity = build_qwen3_minimal(
         args.model_path, args.keep_front_layers, args.n_fresh_layers,
         model_dtype, transplant=do_transplant, is_main=is_main,
     )
-    if args.from_scratch and is_main:
+    if args.from_scratch and is_main and resume_ckpt is None:
         logger.info(f"[from_scratch] random-init {cfg.num_hidden_layers}-layer model "
                     f"(base weights IGNORED); training all layers")
+
+    if resume_ckpt is not None:
+        # Restore the full trained state_dict (fp32 master weights, incl. fresh
+        # tail + transplanted lm_head). strict=True: the shell must match exactly.
+        missing, unexpected = model.load_state_dict(
+            resume_ckpt["model_state"], strict=True)
+        assert not missing and not unexpected, (
+            f"[resume] model_state mismatch missing={missing[:4]} "
+            f"unexpected={unexpected[:4]}")
+        if is_main:
+            logger.info(f"[resume] restored {len(resume_ckpt['model_state'])} "
+                        f"model tensors (strict, fp32 master weights)")
 
     if args.freeze_front and not args.from_scratch:
         apply_freeze_front(model, args.keep_front_layers, is_main)
@@ -517,9 +568,77 @@ def main():
     accum_loss = 0.0
     accum_cnt = 0
     optimizer.zero_grad(set_to_none=True)
+    epoch = 0
+
+    # ---- resume: optimizer state + global_step + epoch + RNG ----
+    if resume_ckpt is not None:
+        step = int(resume_ckpt.get("step", 0))
+        epoch = int(resume_ckpt.get("epoch", 0))
+        if "optimizer_state" in resume_ckpt:
+            # clean resume: Adam moments + step counters restored. The param-group
+            # order is deterministic (build_param_groups) so state_dict maps 1:1.
+            try:
+                optimizer.load_state_dict(resume_ckpt["optimizer_state"])
+                if is_main:
+                    logger.info(f"[resume] optimizer state restored "
+                                f"({len(optimizer.state)} param states) -> "
+                                f"Adam momentum preserved")
+            except (ValueError, KeyError) as e:
+                if is_main:
+                    logger.warning(f"[resume] optimizer.load_state_dict failed "
+                                   f"({e}); WARM-RESTART (Adam moments re-init)")
+        else:
+            if is_main:
+                logger.warning("[resume] ckpt has NO optimizer_state (old "
+                               "model-only format) -> WARM-RESTART: Adam moments "
+                               "re-init, LR resumes on cosine curve at ckpt step")
+        # RNG (best-effort; shape may differ across #GPUs so guard cuda restore).
+        rng = resume_ckpt.get("rng_state")
+        if rng is not None:
+            try:
+                torch.set_rng_state(rng["torch"])
+                if use_cuda and "cuda" in rng and \
+                        len(rng["cuda"]) == torch.cuda.device_count():
+                    torch.cuda.set_rng_state_all(rng["cuda"])
+            except Exception as e:  # noqa: BLE001 - RNG restore is non-critical
+                if is_main:
+                    logger.warning(f"[resume] RNG restore skipped ({e})")
+        # cosine-horizon sanity: if the new run extends max_steps, the schedule is
+        # recomputed against the NEW args.max_steps below (get_lr uses args.max_steps
+        # directly), so LR smoothly continues the cosine to the new horizon instead
+        # of collapsing to min_lr. Log the before/after so it is auditable.
+        if is_main:
+            old_ms = resume_ckpt.get("max_steps", "?")
+            lr_now = get_lr(step, args.warmup_steps, args.max_steps,
+                            args.lr, args.min_lr)
+            lr_inh_now = get_lr(step, args.warmup_steps, args.max_steps,
+                                args.lr_inherited, args.min_lr_inherited)
+            if isinstance(old_ms, int) and args.max_steps != old_ms:
+                logger.info(f"[resume] EXTEND max_steps {old_ms} -> {args.max_steps}; "
+                            f"cosine re-scaled to new horizon")
+            logger.info(f"[resume] continue @ step={step} epoch={epoch} "
+                        f"warmup={args.warmup_steps} max_steps={args.max_steps} "
+                        f"lr_fresh(now)={lr_now:.3e} lr_inh(now)={lr_inh_now:.3e}")
+            if step >= args.max_steps:
+                logger.warning(f"[resume] step {step} >= max_steps "
+                               f"{args.max_steps}: nothing to train. Did you "
+                               f"forget to raise --max_steps?")
+        del resume_ckpt  # free the CPU copy of weights/optimizer before training
+        gc.collect()
+
+    # ---- data loader position ----
+    # Reshuffle deterministically per epoch (DistributedSampler.set_epoch) so the
+    # resumed run does not re-see the exact same batch order. We fast-forward the
+    # sampler to the resume epoch; within-epoch batch offset is NOT re-derived
+    # (the mmap dataset has 1.1M rows and 200k steps spans many epochs, so a
+    # partial-epoch skip is negligible and not worth a fragile custom sampler).
+    if sampler is not None and epoch > 0:
+        sampler.set_epoch(epoch)
+        if is_main:
+            logger.info(f"[resume] sampler.set_epoch({epoch}) "
+                        f"(deterministic reshuffle for this epoch)")
     data_iter = iter(loader)
     t0 = time.time()
-    epoch = 0
 
     while step < args.max_steps:
         try:
@@ -574,10 +693,10 @@ def main():
                 t0 = time.time()
 
             if is_main and step % args.save_every == 0 and step > 0:
-                _save(model, args, step, cfg)
+                _save(model, optimizer, args, step, epoch, cfg)
 
     if is_main:
-        _save(model, args, step, cfg, final=True)
+        _save(model, optimizer, args, step, epoch, cfg, final=True)
         logger.info(f"DONE [{arm}] at step {step}")
     if ddp:
         dist.destroy_process_group()
