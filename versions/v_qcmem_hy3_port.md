@@ -160,3 +160,53 @@ then a knee past **j≈32–40** where KL/ppl_gap climb steeply. → split-j ≈
 docs + longer contexts running to confirm (`logs/hy3_jsweep.log`,
 `logs/hy3_jsweep_results.json`).
 
+## Converged split-j (3 runs: full-grid 16 docs + knee-zoom 24–32 docs)
+Runs: `logs/hy3_jsweep_results_run1.json` (j∈{0..64}×ctx{3k,8k,16k}×16 docs),
+`_run2.json` (3k knee-zoom, 32 docs), `_run2b.json` (8k/16k knee-zoom, 24 docs).
+
+**ppl_gap = QCMem-readout ppl / full-context ppl (multiplicative LM tax), by (ctx, j).**
+```
+ j  frac | ctx=3k gap top1 | ctx=8k gap top1 | ctx=16k gap top1
+ 0  0.00 |  1.000  1.000   |  1.000  1.000   |  1.000  1.000     (== full forward, exact)
+ 4  0.05 |  1.130  0.872   |  1.190  0.847   |  1.245  0.802
+ 8  0.10 |  1.212  0.832   |  1.375  0.778   |  1.485  0.731     ← shallow: worst fidelity
+16  0.20 |  1.227  0.822   |  1.383  0.779   |  1.490  0.723     ← peak tax (long ctx)
+24  0.30 |  1.225  0.822   |  1.389  0.783   |  1.456  0.734
+28  0.35 |  1.224  0.820   |  1.355  0.788   |  1.395  0.754
+32  0.40 |  1.234  0.811   |  1.356  0.788   |  1.386  0.751     ← MID-DEPTH MINIMUM
+36  0.45 |  1.246  0.803   |  (—)            |  1.382  0.752
+40  0.50 |  1.288  0.791   |  (—)            |  1.403  0.746
+44  0.55 |  1.334  0.772   |  1.469  0.791   |  1.443  0.731
+48  0.60 |  1.387  0.759   |  1.543  0.772   |  1.487  0.718     ← deep: rising again
+```
+
+### Verdict: **split-j ≈ 32/80 (frac 0.40)**, and it *strengthens* with context length.
+1. **Short ctx (3k):** broad flat plateau j=8..34 (gap 1.21–1.25), gentle knee at
+   j≈38–40. Cheapest faithful point is the *top* of the plateau, **j≈32–34**
+   (max compute saving ∝ (L−j)/L ≈ 0.58 at ~no extra tax vs j=8).
+2. **Long ctx (8k, 16k): a "fidelity smile."** ppl_gap is NON-monotonic — it is
+   *worst* at shallow j (8–16) and best at **mid-depth j≈32–36**, then rises again
+   toward deep j. At 16k, gap falls 1.490 (j16) → **1.382 (j36)** and top1 rises
+   0.723 → 0.752. I.e. for long contexts, resuming from the MIDDLE of the stack is
+   strictly *more faithful to the full-context forward* than resuming shallow.
+   Interpretation: the mid-depth hidden (~0.4·L) is the most **re-composable** cache
+   point — deep enough that per-chunk semantics are formed (so the top layers can
+   re-integrate them across chunks), but not so deep that chunk-local encoding has
+   already "committed" to a query-blind continuation. This is exactly the
+   "cacheable-semantic ceiling" QCMem predicts, and it lands at ~0.4·L on Hy3 —
+   in line with the 8B-era j≈12/32 ≈ 0.375·L sweet spot.
+3. **Absolute LM tax is higher on Hy3 (1.25–1.5×) than on the 8B backbones**
+   because this is ZERO-shot (no self-distillation yet) AND all-chunks-selected
+   (no bm25 topk to shrink the pack). The j=0 self-test still matches full forward
+   at 0.0, so the tax is purely the depth-partition readout gap, which
+   self-distillation at the split-j is expected to close (the 8B story: 1000-step
+   PG19 self-distill lifted every qa cell).
+
+### Recommendation for the next step
+Run QCMem self-distillation on Hy3 at **j=32** (teacher = j=0 RAG full recompute,
+student = j=32 + LoRA on `layers[32:]`, PG19 KL), then re-measure this sweep — the
+mid-depth minimum at j≈32 should deepen and the 1.25–1.5× tax should shrink toward
+1.0, mirroring the 8B result. `read_core` is already grad-bearing + supports
+`logits_tail` for exactly this trainer.
+
+
