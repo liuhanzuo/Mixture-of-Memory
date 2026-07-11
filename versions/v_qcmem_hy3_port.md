@@ -209,4 +209,14 @@ mid-depth minimum at j≈32 should deepen and the 1.25–1.5× tax should shrink
 1.0, mirroring the 8B result. `read_core` is already grad-bearing + supports
 `logits_tail` for exactly this trainer.
 
+### Chunk-granularity robustness (`logs/hy3_jsweep_chunk256.json`, chunk=256, 20 docs)
+Repeating the sweep at chunk=256 (finer chunks → 12 chunks @3k, 32 @8k) reproduces
+the shape: the fidelity smile / mid-depth minimum persists (8k: gap peaks j≈16 at
+1.913, dips toward j≈40 at 1.80), and split-j stays ~0.35–0.5·L. The *absolute*
+tax is higher with smaller chunks (more chunks ⇒ more cross-chunk integration is
+sacrificed to caching), so a moderate-to-large chunk (512) is the better operating
+point. **Net: split-j ≈ 0.4·L (j=32) is robust to chunk size; larger chunks lower
+the LM tax.**
+
+
 
