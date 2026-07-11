@@ -162,6 +162,9 @@ def main():
                     choices=["bfloat16", "float16", "float32"])
     ap.add_argument("--attn_impl", type=str, default="sdpa")
     ap.add_argument("--out", type=str, default="logs/hy3_jsweep_results.json")
+    ap.add_argument("--lora_adapter", type=str, default="",
+                    help="optional PEFT LoRA adapter dir to load onto Hy3 "
+                         "(e.g. distilled j32 adapter) before the sweep")
     args = ap.parse_args()
 
     dtype = {"bfloat16": torch.bfloat16, "float16": torch.float16,
@@ -180,6 +183,85 @@ def main():
         attn_implementation=args.attn_impl, low_cpu_mem_usage=True,
         local_files_only=True,
     ).eval()
+    if args.lora_adapter:
+        # NOTE: PeftModel.from_pretrained(model, adapter) crashes on a
+        # device_map="auto"-sharded Hy3 in this stack (peft 0.19.0 + tf 5.13.1):
+        #   TypeError: WeightConverter.__init__() got an unexpected keyword
+        #              argument 'distributed_operation'
+        # (from_pretrained -> load_adapter routes through HF's sharded
+        # WeightConverter). set_peft_model_state_dict is ALSO risky here: for
+        # hy_v3 it runs peft's tf-v5 weight-conversion (get_model_conversion_mapping
+        # returns WeightConverter objects), the same fragile path. So we (1) REBUILD
+        # the identical empty LoRA structure with get_peft_model (exactly what the
+        # distill trainer used to CREATE these weights -> proven to work under
+        # device_map), then (2) blit the trained tensors in with a MANUAL key remap
+        # + plain nn.Module.load_state_dict(strict=False) -- pure torch, no peft/HF
+        # conversion machinery, no WeightConverter, so the bug cannot fire. The
+        # on-disk keys ('...q_proj.lora_A.weight') differ from the live param names
+        # ('...q_proj.lora_A.default.weight') only by the missing adapter-name
+        # segment, which we insert before the trailing '.weight'.
+        import json as _json
+        from peft import LoraConfig, get_peft_model, TaskType
+        from safetensors.torch import load_file
+
+        cfg_path = os.path.join(args.lora_adapter, "adapter_config.json")
+        wt_path = os.path.join(args.lora_adapter, "adapter_model.safetensors")
+        acfg = _json.load(open(cfg_path))
+        print(f"[jsweep] rebuilding LoRA from {cfg_path} "
+              f"(r={acfg['r']} a={acfg['lora_alpha']} "
+              f"layers[{acfg['layers_to_transform'][0]}:"
+              f"{acfg['layers_to_transform'][-1]}] "
+              f"targets={acfg['target_modules']})", flush=True)
+        for prm in model.parameters():
+            prm.requires_grad = False
+        lora_cfg = LoraConfig(
+            task_type=TaskType.CAUSAL_LM,
+            r=int(acfg["r"]), lora_alpha=int(acfg["lora_alpha"]),
+            lora_dropout=float(acfg.get("lora_dropout", 0.0)),
+            target_modules=list(acfg["target_modules"]),
+            layers_to_transform=list(acfg["layers_to_transform"]),
+            layers_pattern=acfg.get("layers_pattern", "layers"),
+            bias=acfg.get("bias", "none"),
+            use_rslora=bool(acfg.get("use_rslora", False)),
+        )
+        peft_model = get_peft_model(model, lora_cfg)
+
+        sd = load_file(wt_path)  # CPU bf16 tensors, keys = '...lora_{A,B}.weight'
+        model_keys = set(peft_model.state_dict().keys())
+        remapped = {}
+        no_home = []  # on-disk lora key with no matching live param -> hard error
+        for k, v in sd.items():
+            if not k.endswith(".weight"):
+                no_home.append(k)
+                continue
+            tgt = k[: -len(".weight")] + ".default.weight"  # insert adapter name
+            if tgt in model_keys:
+                remapped[tgt] = v
+            else:
+                no_home.append(k)
+        load_res = peft_model.load_state_dict(remapped, strict=False)
+        unexpected = list(getattr(load_res, "unexpected_keys", []))
+        # sanity: LoRA is a no-op if B==0 (its init). Sum |lora_B| over what we
+        # loaded; must be >> 0 or the adapter is silently doing nothing.
+        b_abs = sum(float(v.abs().sum()) for k, v in sd.items() if "lora_B" in k)
+        print(f"[jsweep] adapter loaded: {len(sd)} on-disk tensors -> "
+              f"{len(remapped)} mapped | no_home={len(no_home)} "
+              f"unexpected={len(unexpected)} | sum|lora_B|={b_abs:.3e} (>>0 req)",
+              flush=True)
+        if b_abs == 0.0 or no_home or unexpected or len(remapped) != len(sd):
+            raise SystemExit(
+                f"[jsweep] ADAPTER LOAD FAILED (silent no-op risk): "
+                f"no_home={no_home[:4]} unexpected={unexpected[:4]} "
+                f"mapped={len(remapped)}/{len(sd)} sum|B|={b_abs}. "
+                f"Aborting rather than reporting a fake result.")
+        peft_model.eval()
+        # Hand the sweep the UNDERLYING HYV3ForCausalLM (LoRA modules are swapped
+        # in-place inside its tree, adapters enabled by default, so calling it
+        # directly runs base + scale*B@A). Keeps every downstream access
+        # (model.config, model.model.embed_tokens, QCMemHy3Model(model, ...))
+        # identical to the no-adapter path.
+        model = peft_model.base_model.model
+        print("[jsweep] distilled LoRA active on underlying HYV3ForCausalLM", flush=True)
     dm = getattr(model, "hf_device_map", None)
     if dm is not None:
         devs = sorted({str(v) for v in dm.values()})
