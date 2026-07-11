@@ -1,0 +1,15 @@
+\section{Related Work}
+QCMem is a new combination of known components plus one new primitive
+(recompute $[j{:}L]$ as readout). The closest prior work:
+\textbf{HCache}~\citep{hcache} caches mid-layer activations and recomputes
+upper layers in a serving system, but post-hoc, untrained, and without
+retrieval; we show head-to-head that this inference form collapses on long
+context (8k$=$34, 16k$=$2). \textbf{KV-Direct}~\citep{residualstream} caches
+the residual stream and recomputes full-depth KV, training-free, keeping all
+tokens; we show it equals full-context accuracy but collapses at 128k
+($=0$) with an exploding read length---QCMem's layer-partial{+}retrieval{+}fixed
+read is the delta. Token-axis KV compression (H2O~\citep{h2o},
+SnapKV~\citep{snapkv}, StreamingLLM~\citep{streamingllm},
+CompressKV~\citep{compresskv}) and continued-pretraining compressibility
+(KV-CAT~\citep{kvcat}) are orthogonal to our depth-axis partition. Ultra-long
+anchors: YOCO~\citep{yoco}, InfLLM~\citep{infllm}.

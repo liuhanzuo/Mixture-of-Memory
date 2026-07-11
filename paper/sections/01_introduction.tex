@@ -1,0 +1,36 @@
+\section{Introduction}
+Long-context inference is bottlenecked twice. First, full self-attention is
+$O(L^2)$ in prefill and $O(L)$ in KV memory. Second, and more fundamentally,
+once the context exceeds the backbone's RoPE extrapolation limit, accuracy
+does not merely degrade---it \emph{collapses}. On Qwen3-8B (native window
+$40{,}960$; the config's $131{,}072$ is an un-enabled YaRN ceiling), feeding
+128k tokens drives RULER needle accuracy to $0$.
+
+Retrieval-augmented and KV-reuse methods attack the first bottleneck but
+inherit the second: they still recompute or attend over a length that scales
+with the context. We instead make both the read computation \emph{and} the
+memory constant in context length. The idea is a \emph{depth partition}: for a
+transformer of $L$ layers split at depth $j$,
+\begin{itemize}[leftmargin=1.2em,itemsep=1pt]
+\item \textbf{Write} each 512-token chunk through the bottom layers $[0{:}j]$
+and cache its depth-$j$ residual-stream hidden $h_j$ (chunk-local RoPE).
+Storage is $\sim$$1/(2L)$ of a full KV cache.
+\item \textbf{Read} by retrieving the top-$k$ chunks (BM25), packing
+\texttt{[sink; selected $h_j$; query $h_j$]}, and recomputing only the upper
+layers $[j{:}L]$ under fresh RoPE to produce logits. The pack is a fixed
+$\sim$6.7k tokens regardless of context length.
+\end{itemize}
+The split depth $j$ is a knob: $j{=}0$ is full RAG recompute (exact-equals the
+full forward, $\max|\Delta\text{logit}|<10^{-4}$), $j{=}L$ is closed-book. Our
+contributions:
+\begin{enumerate}[leftmargin=1.4em,itemsep=1pt]
+\item \textbf{A new primitive} (\S\ref{sec:method}): recomputing $[j{:}L]$ as a
+\emph{readout} over a retrieved, layer-partial cache; the first framing of
+long-context memory as depth-partitioned rather than token-partial.
+\item \textbf{Five-benchmark, three-baseline evidence} (\S\ref{sec:results})
+under one harness, showing constant-cost QCMem matches full-context inside the
+window and is uniquely usable past the extrapolation limit.
+\item \textbf{A mechanistic account} (\S\ref{sec:mechanism}): probing plus a
+causal end-to-end test that a compressible mid-depth hidden is what makes the
+readout work.
+\end{enumerate}

@@ -1,0 +1,21 @@
+\section{Why caching a mid-layer hidden works}
+\label{sec:mechanism}
+\paragraph{Division of labor.} Probing shows semantic-task accuracy peaks in
+mid layers and falls at the top, while next-token ability forms only in the top
+layers (consistent across Qwen and Llama). Causally, using only the front
+$\sim$4--8 layers (depth 0.12--0.22) reaches 95\% of the full model's
+downstream semantics. The cacheable depth ceiling ($j{\le}9$ zero-shot, pushed
+to $j{\ge}12$ by self-distillation) coincides with this semantic-saturation
+point.
+\paragraph{Caching the top fails.} A negative control (caching a top-layer
+hidden) collapses: the top hidden is a query-sensitive, pre-readout
+representation, so caching it discards query conditioning
+(qa5 $(12,0){=}61/50 \to (12,6){=}29/20$). Only caching the query-insensitive
+bottom-$j$ hidden is safe---validating the front-$j$ design.
+\paragraph{Causal end-to-end test.} Pretraining a model with a low-rank funnel
+at layer $j$ (which forces the depth-$j$ hidden to be compressible) yields a
+representation that degrades \emph{less} under rank-$r$ PCA compression of the
+cache than a vanilla model at every rank, and the advantage \emph{grows with
+model size} (1B$\to$3B $\approx 2\times$). This is direct evidence that a
+compressible mid-depth hidden---not an incidental property---is what the
+readout exploits.

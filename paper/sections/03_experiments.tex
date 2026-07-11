@@ -1,0 +1,81 @@
+\section{Experiments}
+\label{sec:results}
+\paragraph{Setup.} Unless noted, the backbone is Qwen3-8B, chunk size 512,
+split $j{=}12$. All three baselines share the identical harness, backbone, and
+scorer---the only variable is the tested primitive:
+\textbf{KV-Direct}~\citep{residualstream} forces $j{=}0$ (full-depth
+recompute), no retrieval, keeps all tokens---mathematically the full-context
+accuracy (self-test $\max$ diff $<10^{-4}$), only caching the residual stream
+to save memory; \textbf{HCache}~\citep{hcache} caches mid-layer activations and
+recomputes upper layers post-hoc, but with no retrieval and no training;
+\textbf{MemoryLLM} is a dedicated fixed-size memory model (same-class baseline).
+Synthetic tasks use official \texttt{string\_match} scoring; BABILong uses the
+official \texttt{compare\_answers} (not \texttt{re.search}); QA tasks use
+official F1. Retrieval $k$ is set per task (long-context retrieval has a
+task-dependent optimum; a fixed default systematically underestimates QCMem).
+
+\input{sections/tab_overview}
+
+\subsection{Head-to-head on RULER NIAH}
+Table~\ref{tab:h2h} isolates the primitive on RULER needle tasks ($n{=}50$,
+\texttt{string\_match\_all}). Three findings. (i) \emph{vs.\ HCache: accuracy
+collapse}---without retrieval the needle is drowned; HCache is already at 34 by
+8k and near 0 on multikey. (ii) \emph{vs.\ MemoryLLM: dominated}---the
+same-class fixed-memory model reaches only 22--28 (single) / 14--30 (multikey)
+vs.\ QCMem's 96--100. (iii) \emph{vs.\ KV-Direct: equal accuracy, constant
+cost, and uniquely usable at 128k}. Below the extrapolation limit both are
+near-perfect, but QCMem's read length is a constant $\approx$6.3k vs.\
+KV-Direct's full $\sim$130k tokens; at 128k KV-Direct collapses to 0 (its
+$\sim$130{,}746 packed tokens exceed the native 40{,}960 window, breaking
+extrapolation) while QCMem stays at 100/96. This is a structural advantage of
+layer-partial{+}retrieval, not merely memory savings.
+
+\input{sections/tab_h2h}
+
+\subsection{Scaling past the extrapolation limit}
+Table~\ref{tab:scaling} scales RULER to 256k. The watershed is the backbone's
+extrapolation limit (Qwen 64k$\to$128k): beyond it only QCMem is usable
+(niah\_single 128k/256k = 100/98 vs.\ full-ctx 0/OOM). Against StreamingLLM at
+the same $\sim$6.7k/$\sim$17\,GB budget, QCMem is 100/100/100/100 vs.\ SLM
+90/42/16/4 across 8k/16k/64k/128k ($25\times$ gap at 128k): retrieval keeps the
+\emph{relevant} chunks, whereas keeping only the \emph{recent} ones misses the
+needle.
+
+\input{sections/tab_scaling}
+
+\subsection{Efficiency}
+Table~\ref{tab:eff} (median-of-3). QCMem prefill is write $O(L)$ plus a fixed
+read; full attention is $O(L^2)$, crossing over near 16k and reaching
+$7.83\times$ at 128k. Memory is context-independent at $\approx$17--18\,GB
+(full grows to 89\,GB), so QCMem runs the 128k setting on a single GPU where
+full-context OOMs. The cost is a slower decode ($\approx$2.4\,s/step,
+recomputing $[j{:}L]$ over the pack), which is optimizable with a resumed-band
+KV cache.
+
+\input{sections/tab_eff}
+
+\subsection{Real long-document and dialogue QA}
+On BABILong (Table~\ref{tab:overview}), QCMem is strongest on relational qa5
+(8k/16k/32k = 79/67/63) while KV-Direct wins single-fact localization qa1---an
+honest boundary. On LongBench, all three methods score 4--12 F1 (Qwen3-8B base,
+no chat template; the task is intrinsically hard), and QCMem's AVG 9.58 tracks
+KV-Direct's 10.13 within noise using a \emph{constant} read---so the low
+absolute score reflects task difficulty, not a QCMem weakness. On LoCoMo,
+QCMem (F1 9.05 / acc 24.1) $\approx$ KV-Direct (8.72 / 20.3) and both far
+exceed HCache (4.73 / 6.4). On LongEval lines-retrieval, with the per-task
+optimum $k{\in}\{4,6\}$, QCMem matches inside the window
+(8k/16k/32k = 1.00/0.96/1.00 vs.\ KV-Direct 1.00/0.96/0.92) and \emph{reverses
+sharply past it} (64k 0.94 vs.\ 0.34; 128k 0.98 vs.\ 0.00).
+
+\subsection{Ablations}
+\paragraph{Chunk size.} Read length $=k\cdot\text{chunk}+\text{sink}+\text{query}$
+scales with chunk. Chunk 512 is the sweet spot: strong prefill speedup
+($7.83\times$ at 128k), low flat memory (17--18\,GB), moderate decode (2.4\,s),
+and high multikey (128k$=$94)---near chunk-1024 accuracy at $\approx$half the
+decode cost.
+\paragraph{Cross-chunk attention.} Recomputing $[j{:}L]$ with full attention
+vs.\ block-diagonal (reuse per-chunk KV, no cross-chunk): identical on single
+needle (100$=$100, one chunk suffices) but a large gap on multikey
+(88/92 vs.\ 44/40, $\Delta{+}44/{+}52$) and BABILong qa2/qa5. Cross-chunk
+recompute is load-bearing for multi-fact disambiguation, degradable to save
+compute on single-needle tasks.

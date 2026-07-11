@@ -1,0 +1,28 @@
+\section{Method: QCMem}
+\label{sec:method}
+Let a decoder-only LM have layers $[0{:}L]$. QCMem fixes a split depth $j$.
+
+\paragraph{Write.} The document is chunked into 512-token spans. Each chunk is
+run through $[0{:}j]$ with chunk-local positions, and its depth-$j$
+residual-stream hidden $h_j\in\mathbb{R}^{512\times d}$ is stored. Because only
+the bottom $j$ layers run and only one hidden state per token is kept, storage
+is $\approx$$1/(2L)$ of a full-depth KV cache and write is $O(L_{\text{ctx}})$
+but shallow.
+
+\paragraph{Read.} Given a query, BM25 retrieves the top-$k$ chunks. We form the
+pack \texttt{[sink; $h_j$ of selected chunks; $h_j$ of the query]}, assign
+\emph{fresh} contiguous RoPE positions, and recompute layers $[j{:}L]$ with
+full attention over the pack to obtain next-token logits. The pack length is
+$\text{sink}+k\cdot\text{chunk}+\text{query}\approx6.7$k for $k{=}12$,
+chunk $512$---\emph{independent of context length}.
+
+\paragraph{The $j$ knob.} At $j{=}0$ the read recomputes all layers over the
+retrieved raw tokens; a self-test confirms this equals the full forward to
+$\max|\Delta\text{logit}|<10^{-4}$. At $j{=}L$ nothing is recomputed
+(closed-book). Intermediate $j$ trades cache compressibility against readout
+fidelity.
+
+\paragraph{Training.} A student at $j{=}12$ is trained by self-distillation
+(LoRA $r{=}32,\alpha{=}64$, 4000 steps, 8-GPU DDP) against a $j{=}0$ teacher on
+plain PG19 continuous windows---\emph{no synthetic long-context data}. This
+pushes the usable cache depth from $j{\le}9$ to $j{\ge}12$.

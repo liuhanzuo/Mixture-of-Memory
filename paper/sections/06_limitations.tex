@@ -1,0 +1,9 @@
+\section{Limitations}
+QCMem is an efficiency / extrapolation method, not an accuracy SOTA: within the
+backbone's extrapolation window full-context is $\ge$ QCMem (notably
+variable-tracking, 64k 98 vs.\ 21). The watershed shifts with the backbone's
+extrapolation ability---weaker backbones benefit earlier and more. Multi-hop
+variable-tracking is weak; single/double-fact localization (BABILong qa1/qa2)
+inside the window favors KV-Direct. The head-to-head sweep is an $n{=}50$ cut
+(vs.\ $n{=}100$ elsewhere) and the topk$\times$length grid is sparse. Decode is
+slower than full attention and is future work (resumed-band KV cache).
