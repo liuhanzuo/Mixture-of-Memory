@@ -22,6 +22,16 @@ Usage:
         --tokenizer models/Meta-Llama-3-8B \
         --chunk_size 4096 \
         --num_train_shards 12
+
+Hunyuan (HYTokenizer, vocab 128167, eos_token_id=None) example -- pass
+``--trust_remote_code`` (custom tokenizer class) and an explicit ``--eos_token_id``
+(the tokenizer reports None, so it must be given; Hunyuan pretrain uses 127960):
+    python scripts/preprocess_slimpajama.py \
+        --input_dir data/slimpajama-6b/data \
+        --output data/slimpajama_chunks_2048_hunyuan.npy \
+        --val_output data/slimpajama_val_2048_hunyuan.npy \
+        --tokenizer ../models/Hunyuan-A13B-Pretrain \
+        --chunk_size 2048 --trust_remote_code --eos_token_id 127960
 """
 
 import argparse
@@ -47,15 +57,20 @@ _TOK = None
 _EOS = None
 
 
-def _init_worker(tokenizer_path):
+def _init_worker(tokenizer_path, trust_remote_code, eos_id):
     global _TOK, _EOS
     # Silence the per-process transformers chatter.
     os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
     from transformers import AutoTokenizer
     _TOK = AutoTokenizer.from_pretrained(
-        tokenizer_path, local_files_only=True, use_fast=True
+        tokenizer_path, local_files_only=True, use_fast=True,
+        trust_remote_code=trust_remote_code,
     )
-    _EOS = _TOK.eos_token_id
+    # `eos_id` is already resolved in main() (tokenizer eos, or the
+    # --eos_token_id override for tokenizers whose eos_token_id is None, e.g.
+    # Hunyuan HYTokenizer). Use it directly so the inter-doc separator and the
+    # final padding token (chosen in tokenize_to_npy) stay consistent.
+    _EOS = eos_id
 
 
 def _encode_batch(texts):
@@ -116,7 +131,7 @@ def _iter_doc_batches(files, batch_size):
 
 
 def tokenize_to_npy(files, output, tokenizer_path, chunk_size, eos_id,
-                    num_proc, batch_size, tag):
+                    num_proc, batch_size, tag, trust_remote_code=False):
     """Stream-tokenize `files` into `output` (N, chunk_size) uint32 npy."""
     import multiprocessing as mp
 
@@ -132,7 +147,7 @@ def tokenize_to_npy(files, output, tokenizer_path, chunk_size, eos_id,
     with open(tmp_bin, "wb") as fout:
         ctx = mp.get_context("fork")
         with ctx.Pool(processes=num_proc, initializer=_init_worker,
-                      initargs=(tokenizer_path,)) as pool:
+                      initargs=(tokenizer_path, trust_remote_code, eos_id)) as pool:
             batches = _iter_doc_batches(files, batch_size)
             # imap keeps memory bounded; chunksize=1 since each item is already a batch.
             for arr, n_docs, n_tok in pool.imap(_encode_batch, batches, chunksize=1):
@@ -193,19 +208,36 @@ def main():
     parser.add_argument("--num_proc", type=int, default=max(1, os.cpu_count() // 2))
     parser.add_argument("--batch_size", type=int, default=1000,
                         help="Docs per tokenization task.")
+    parser.add_argument("--trust_remote_code", action="store_true",
+                        help="Pass trust_remote_code=True to AutoTokenizer "
+                             "(required for custom tokenizers e.g. Hunyuan HYTokenizer).")
+    parser.add_argument("--eos_token_id", type=int, default=None,
+                        help="Explicit EOS/EOD id used as inter-doc separator and "
+                             "final padding. Overrides tokenizer.eos_token_id; REQUIRED "
+                             "when the tokenizer has eos_token_id=None (Hunyuan: 127960).")
     parser.add_argument("--skip_train", action="store_true")
     parser.add_argument("--skip_val", action="store_true")
     args = parser.parse_args()
 
-    # eos id from the (Llama-3) tokenizer, loaded locally.
+    # eos id from the tokenizer, loaded locally. Some tokenizers (e.g. the Hunyuan
+    # HYTokenizer) expose eos_token_id=None -> require --eos_token_id override.
     from transformers import AutoTokenizer
-    print(f"Loading tokenizer: {args.tokenizer}")
+    print(f"Loading tokenizer: {args.tokenizer} (trust_remote_code={args.trust_remote_code})")
     tok = AutoTokenizer.from_pretrained(
-        args.tokenizer, local_files_only=True, use_fast=True
+        args.tokenizer, local_files_only=True, use_fast=True,
+        trust_remote_code=args.trust_remote_code,
     )
     eos_id = tok.eos_token_id
+    if args.eos_token_id is not None:
+        print(f"  overriding eos_id: tokenizer={eos_id} -> --eos_token_id={args.eos_token_id}")
+        eos_id = args.eos_token_id
     print(f"  vocab_size={tok.vocab_size} len(tok)={len(tok)} eos_id={eos_id}")
-    assert eos_id is not None and eos_id < 2**32
+    if eos_id is None:
+        raise SystemExit(
+            "tokenizer.eos_token_id is None (e.g. Hunyuan HYTokenizer); "
+            "pass --eos_token_id explicitly (Hunyuan pretrain uses 127960)."
+        )
+    assert eos_id < 2**32
     del tok  # workers load their own copies
 
     all_parquet = sorted(glob.glob(os.path.join(args.input_dir, "**", "*.parquet"),
@@ -234,7 +266,7 @@ def main():
             print(f"  {os.path.basename(f)}")
         tokenize_to_npy(train_files, args.output, args.tokenizer,
                         args.chunk_size, eos_id, args.num_proc, args.batch_size,
-                        tag="train")
+                        tag="train", trust_remote_code=args.trust_remote_code)
 
     if not args.skip_val:
         if not val_files:
@@ -243,7 +275,7 @@ def main():
             print(f"\n=== VAL: {len(val_files)} file(s) ===")
             tokenize_to_npy(val_files, args.val_output, args.tokenizer,
                             args.chunk_size, eos_id, args.num_proc, args.batch_size,
-                            tag="val")
+                            tag="val", trust_remote_code=args.trust_remote_code)
 
     print("\nAll done!")
 
