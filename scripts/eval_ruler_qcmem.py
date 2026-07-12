@@ -211,9 +211,23 @@ def main():
                              "isolate QCMem's two primitives: retrieval (fixed read) "
                              "and layer-partial recompute.")
     parser.add_argument("--selector", type=str, default="bm25",
-                        choices=["bm25", "recency", "oracle", "reader_attn"],
+                        choices=["bm25", "recency", "oracle", "reader_attn",
+                                 "iter_reader_attn"],
                         help="Chunk selector for the read pack. oracle is NIAH-only "
-                             "(degrades to recency on variable_tracking).")
+                             "(degrades to recency on variable_tracking). "
+                             "iter_reader_attn iterates reader_attn as a multi-hop "
+                             "BFS over the cached h_j (query -> found-chunk -> ...) "
+                             "to follow the vt reference chain; forward-free.")
+    parser.add_argument("--iter_rounds", type=int, default=0,
+                        help="iter_reader_attn: #BFS hop rounds (<=0 -> "
+                             "ceil(topk/iter_hop_topk)).")
+    parser.add_argument("--iter_hop_topk", type=int, default=2,
+                        help="iter_reader_attn: chunks added per BFS round.")
+    parser.add_argument("--iter_score", type=str, default="meanpool",
+                        choices=["meanpool", "maxsim"],
+                        help="iter_reader_attn scoring: meanpool (mean-pool cosine, "
+                             "== reader_attn) or maxsim (token-level late "
+                             "interaction, dilution-free). Both forward-free.")
     parser.add_argument("--topk", type=int, default=12,
                         help="Number of context chunks to pack into the read.")
     parser.add_argument("--sink_tokens", type=str, default="bos",
@@ -470,6 +484,9 @@ def main():
                         sink_tokens=args.sink_tokens,
                         needle_chunk_set=needle_set, bare_question_ids=bare_q_ids,
                         no_retrieval=no_retrieval, stats=gen_stats,
+                        iter_rounds=args.iter_rounds,
+                        iter_hop_topk=args.iter_hop_topk,
+                        iter_score=args.iter_score,
                     )
                     if "read_len" in gen_stats:
                         read_len_last = int(gen_stats["read_len"])
@@ -517,6 +534,12 @@ def main():
                         "reuse_kv_blockdiag": bool(args.reuse_kv_blockdiag),
                         "selector": (None if no_retrieval else args.selector),
                         "topk": (None if no_retrieval else args.topk),
+                        "iter": (
+                            None if (no_retrieval or args.selector != "iter_reader_attn")
+                            else {"rounds": args.iter_rounds,
+                                  "hop_topk": args.iter_hop_topk,
+                                  "score": args.iter_score}
+                        ),
                         "sink_tokens": args.sink_tokens, "num_layers": L,
                         "lora_adapter": args.lora_adapter or None,
                         "chunk_size": args.chunk_size,

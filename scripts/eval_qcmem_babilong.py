@@ -99,14 +99,162 @@ def _reader_attn_scores(context_hj, query_hj):
     return scores
 
 
+# --------------------------------------------------------------------------- #
+# iterative multi-hop selector (iter_reader_attn)
+#
+#   Motivation (RULER variable_tracking, measured 2026-07-11): the chain is
+#   ``chain[0]="VAR V0 = <value>"`` (shares the queried VALUE with the question
+#   AND the variable V0 with chain[1]), then ``chain[c]="VAR Vc = VAR V(c-1)"``
+#   for c>=1 (shares V(c-1) BACKWARD with chain[c-1] and Vc FORWARD with
+#   chain[c+1]; ZERO lexical/semantic overlap with the query VALUE). A single-shot
+#   selector (bm25 or query-vs-chunk cosine) can only surface chain[0]; it cannot
+#   follow the chain because chain[1..k] are query-orthogonal.
+#
+#   Idea (user 2026-07-11): "retrieve every related chunk; use the chunks already
+#   retrieved to find new ones." == iterative BFS over the cached h_j graph. We
+#   propagate a FRONTIER of just-found chunks: round 1 scores every context chunk
+#   against the query h_j (== reader_attn), then each later round scores the
+#   still-unselected chunks against the JUST-ADDED chunks' h_j (max over the
+#   frontier), so the signal walks one hop along the chain per round
+#   (chunk[0] -> chunk[1] -> chunk[2] ...). Frontier = last round's picks (NOT all
+#   selected) because chain[c] links to chain[c-1], so the freshest chunk is the
+#   best query for the next hop; aggregating all selected would dilute back toward
+#   the query/early hops.
+#
+#   FREE: consumes ONLY the already-cached ``write_chunk`` h_j (the bottom-j
+#   hiddens QCMem computes anyway) — no extra model forward, so QCMem's compute
+#   saving is preserved. Two scoring modes:
+#     * meanpool (default) — mean-pool each chunk's h_j to [d], L2-normalise,
+#       cosine. Identical primitive to reader_attn, so round 1 == reader_attn
+#       top-``hop`` and the ONLY new variable vs reader_attn is the iteration
+#       (clean A/B). Cheap.
+#     * maxsim — token-level late-interaction: score = best single token-pair
+#       cosine between a chunk's token h_j and any frontier chunk's token h_j.
+#       Dilution-free (a 5-token shared VAR span is not washed out by the 512-token
+#       chunk mean), at the cost of an O(T^2 d) matmul per (candidate, frontier)
+#       pair. Still forward-free.
+# --------------------------------------------------------------------------- #
+def _meanpool_reps(context_hj):
+    """L2-normalised mean-pooled ``[d]`` vector per context chunk (None-safe)."""
+    reps = []
+    for h in context_hj:
+        if h is None or h.shape[1] == 0:
+            reps.append(None)
+            continue
+        v = h.float().mean(dim=1).squeeze(0)
+        reps.append(v / (v.norm() + 1e-8))
+    return reps
+
+
+def _query_meanpool_rep(query_hj):
+    v = query_hj.float().mean(dim=1).squeeze(0)
+    return v / (v.norm() + 1e-8)
+
+
+def _token_reps(context_hj):
+    """Row-L2-normalised token matrix ``[T, d]`` per context chunk (None-safe)."""
+    reps = []
+    for h in context_hj:
+        if h is None or h.shape[1] == 0:
+            reps.append(None)
+            continue
+        m = h.float().squeeze(0)                              # [T, d]
+        reps.append(m / (m.norm(dim=-1, keepdim=True) + 1e-8))
+    return reps
+
+
+def _iter_reader_attn_indices(
+    context_hj,
+    query_hj,
+    topk: int,
+    iter_rounds: int = 0,
+    iter_hop_topk: int = 2,
+    iter_score: str = "meanpool",
+):
+    """Iterative multi-hop chunk selection over cached h_j (see block comment).
+
+    Returns a sorted list of context-chunk indices (into ``context_hj``), up to
+    ``topk`` chunks accumulated over the BFS rounds. ``iter_hop_topk`` chunks are
+    added per round (round 1 seeded from the query, later rounds from the frontier
+    = the previous round's picks). ``iter_rounds<=0`` -> auto ceil(topk/hop).
+    """
+    n = len(context_hj)
+    k = max(0, int(topk))
+    if n == 0 or k == 0:
+        return []
+    hop = max(1, int(iter_hop_topk))
+    rounds = int(iter_rounds) if iter_rounds and iter_rounds > 0 else -(-k // hop)
+    rounds = max(1, rounds)
+
+    if iter_score == "maxsim":
+        chunk_reps = _token_reps(context_hj)                  # list[[T,d]|None]
+        qm = query_hj.float().squeeze(0)
+        q_rep = qm / (qm.norm(dim=-1, keepdim=True) + 1e-8)   # [Tq, d]
+
+        def score(frontier_reps, i):
+            ci = chunk_reps[i]
+            if ci is None:
+                return float("-inf")
+            best = float("-inf")
+            for fr in frontier_reps:
+                if fr is None:
+                    continue
+                s = float((ci @ fr.T).max().item())           # best token pair
+                if s > best:
+                    best = s
+            return best
+    else:  # meanpool (default)
+        chunk_reps = _meanpool_reps(context_hj)               # list[[d]|None]
+        q_rep = _query_meanpool_rep(query_hj)                 # [d]
+
+        def score(frontier_reps, i):
+            ci = chunk_reps[i]
+            if ci is None:
+                return float("-inf")
+            best = float("-inf")
+            for fr in frontier_reps:
+                if fr is None:
+                    continue
+                s = float(torch.dot(ci, fr).item())
+                if s > best:
+                    best = s
+            return best
+
+    selected: list = []
+    selected_set: set = set()
+    frontier = [q_rep]                                        # round 1 == reader_attn
+    for _ in range(rounds):
+        remaining = k - len(selected)
+        if remaining <= 0:
+            break
+        cand = [i for i in range(n) if i not in selected_set]
+        if not cand:
+            break
+        scored = [(i, score(frontier, i)) for i in cand]
+        scored = [(i, s) for (i, s) in scored if s != float("-inf")]
+        if not scored:
+            break
+        scored.sort(key=lambda t: t[1], reverse=True)
+        take = min(hop, remaining, len(scored))
+        new_sel = [i for (i, _s) in scored[:take]]
+        selected.extend(new_sel)
+        selected_set.update(new_sel)
+        # frontier <- reps of the JUST-ADDED chunks (walk the chain one hop).
+        frontier = [chunk_reps[i] for i in new_sel]
+    return sorted(selected)
+
+
 def _select_context_chunk_indices(
     selector: str,
     context_chunks,        # list[LongTensor] == chunks[:-1] (doc order)
     query_ids,             # list[int] bare-question token ids
     topk: int,
     needle_chunk_set,      # set[int] doc-absolute chunk indices (oracle) or None
-    context_hj=None,       # list[Tensor [1,T,d]] cached h_j  (reader_attn only)
-    query_hj=None,         # Tensor [1,T,d] query chunk h_j   (reader_attn only)
+    context_hj=None,       # list[Tensor [1,T,d]] cached h_j  (reader_attn* only)
+    query_hj=None,         # Tensor [1,T,d] query chunk h_j   (reader_attn* only)
+    iter_rounds=0,         # iter_reader_attn: #BFS rounds (<=0 -> ceil(topk/hop))
+    iter_hop_topk=2,       # iter_reader_attn: chunks added per round
+    iter_score="meanpool", # iter_reader_attn: "meanpool" | "maxsim"
 ):
     """Return a sorted list of context-chunk indices (into ``context_chunks``)
     to pack into the read, chosen by the requested selector.
@@ -171,6 +319,19 @@ def _select_context_chunk_indices(
         order = sorted(range(n_ctx), key=lambda i: scores[i], reverse=True)
         return sorted(order[:k])
 
+    if selector == "iter_reader_attn":
+        if k <= 0:
+            return []
+        # Iterative multi-hop over the SAME cached h_j (no extra forward). Degrade
+        # to recency if the caller didn't supply the hiddens.
+        if not context_hj or query_hj is None or len(context_hj) != n_ctx:
+            return list(range(max(0, n_ctx - k), n_ctx))
+        return _iter_reader_attn_indices(
+            context_hj, query_hj, topk=k,
+            iter_rounds=iter_rounds, iter_hop_topk=iter_hop_topk,
+            iter_score=iter_score,
+        )
+
     raise ValueError(f"unknown selector {selector!r}")
 
 
@@ -191,6 +352,9 @@ def qcmem_generate(
     bare_question_ids=None,       # list[int] for bm25 query
     no_retrieval: bool = False,   # baseline arm: pack EVERY context chunk (no topk)
     stats=None,                   # optional out-dict: read_len / chunk counts
+    iter_rounds: int = 0,         # iter_reader_attn: #BFS rounds (<=0 -> auto)
+    iter_hop_topk: int = 2,       # iter_reader_attn: chunks added per round
+    iter_score: str = "meanpool", # iter_reader_attn: "meanpool" | "maxsim"
 ) -> str:
     """Chunk the prompt, write each chunk to depth ``j``, select context chunks,
     then greedily decode from the packed read.
@@ -232,7 +396,7 @@ def qcmem_generate(
     # selected ones below — nothing is written (or full-forwarded) twice.
     context_hj = None
     query_hj_for_sel = None
-    if not no_retrieval and selector == "reader_attn":
+    if not no_retrieval and selector in ("reader_attn", "iter_reader_attn"):
         context_hj = [qc.write_chunk(c) for c in context_chunks]
         query_hj_for_sel = qc.write_chunk(query_chunk)
 
@@ -245,6 +409,8 @@ def qcmem_generate(
         sel_idx = _select_context_chunk_indices(
             selector, context_chunks, bare_question_ids or [], topk, needle_chunk_set,
             context_hj=context_hj, query_hj=query_hj_for_sel,
+            iter_rounds=iter_rounds, iter_hop_topk=iter_hop_topk,
+            iter_score=iter_score,
         )
 
     # ---- write (encode to depth j) the selected context chunks ONCE ----
@@ -394,10 +560,25 @@ def main():
                              "QCMem's two primitives: retrieval (fixed read) and "
                              "layer-partial recompute.")
     parser.add_argument("--selector", type=str, default="bm25",
-                        choices=["bm25", "recency", "oracle", "reader_attn"],
+                        choices=["bm25", "recency", "oracle", "reader_attn",
+                                 "iter_reader_attn"],
                         help="Chunk selector for the read pack. reader_attn scores "
                              "chunks by query-h_j vs chunk-h_j cosine (reuses the "
-                             "cached write_chunk hiddens, no extra forward).")
+                             "cached write_chunk hiddens, no extra forward). "
+                             "iter_reader_attn iterates that scoring as a multi-hop "
+                             "BFS over the cached h_j (round 1 from the query, later "
+                             "rounds from the just-found chunks) to follow reference "
+                             "chains (RULER vt); still forward-free.")
+    parser.add_argument("--iter_rounds", type=int, default=0,
+                        help="iter_reader_attn: number of BFS hop rounds "
+                             "(<=0 -> ceil(topk/iter_hop_topk)).")
+    parser.add_argument("--iter_hop_topk", type=int, default=2,
+                        help="iter_reader_attn: chunks added per BFS round.")
+    parser.add_argument("--iter_score", type=str, default="meanpool",
+                        choices=["meanpool", "maxsim"],
+                        help="iter_reader_attn scoring: meanpool (mean-pool cosine, "
+                             "== reader_attn primitive) or maxsim (token-level "
+                             "late-interaction, dilution-free). Both forward-free.")
     parser.add_argument("--topk", type=int, default=4,
                         help="Number of context chunks to pack into the read.")
     parser.add_argument("--sink_tokens", type=str, default="bos",
@@ -633,6 +814,9 @@ def main():
                         sink_tokens=args.sink_tokens,
                         needle_chunk_set=needle_set, bare_question_ids=bare_q_ids,
                         no_retrieval=no_retrieval,
+                        iter_rounds=args.iter_rounds,
+                        iter_hop_topk=args.iter_hop_topk,
+                        iter_score=args.iter_score,
                     )
                 except RuntimeError as e:
                     if "out of memory" not in str(e).lower():
