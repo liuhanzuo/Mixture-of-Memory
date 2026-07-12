@@ -1,0 +1,65 @@
+\section{Scaling QCMem to a 80-layer sparse MoE (Hunyuan Hy3)}
+\label{sec:hy3}
+Everything above uses dense $\le$8B backbones. To test whether the depth
+partition is an artifact of small dense models, we port QCMem to the Tencent
+Hunyuan \textbf{Hy3} (\texttt{hy\_v3}): an 80-layer sparse
+Mixture-of-Experts model (192 experts, top-8 routing plus one shared expert;
+$\approx$597\,GB in bf16) with a 262{,}144-token native window. The backbone is
+sharded across 8 GPUs with \texttt{device\_map="auto"}; QCMem's write/read
+semantics are unchanged, with only per-layer device hops added
+(\S\ref{sec:method}). Three questions: is the depth partition still
+\emph{exact} through an MoE stack; where is the split $j$; and does the constant
+read survive to a quarter-million tokens.
+
+\paragraph{The depth partition is exact through MoE routing.} A real-model
+self-test on the 597\,GB checkpoint confirms the partition reproduces the
+model's own forward to machine zero. Reconstructing the full forward by writing
+\texttt{layers[0:$j$]} and resuming \texttt{layers[$j$:80]} on one contiguous
+sequence gives $\max|\Delta\text{logit}|{=}0.0$ at $j\in\{0,1,40,80\}$
+(including the dense$\to$MoE layer-0 boundary); the $j{=}0$ read/write packing
+likewise matches at $0.0$. Because the resumed half re-executes every router and
+expert, this equality proves the MoE routing is replayed exactly. A separate
+probe of absolute-position \emph{invariance} of the routed hidden fails in bf16
+(the discrete top-8-of-192 pick flips under router-logit ties amplified across
+80 layers), but the same probe passes in fp32; QCMem never assumes
+position-invariance (it writes with chunk-local RoPE and reads with fresh
+contiguous RoPE), so this is a bf16 artifact orthogonal to correctness, not a
+mechanism gap.
+
+\paragraph{Split $j$: a fidelity smile at mid-depth.} Sweeping $j$ over PG19
+windows (all chunks selected, isolating the depth effect from retrieval noise),
+the readout LM tax is \emph{non-monotonic} in $j$: worst at shallow $j$, best at
+mid-depth, then rising again toward deep $j$. At 16k the perplexity gap falls
+from $1.49$ ($j{=}16$) to a minimum near $j{\approx}32$--$36$ ($1.38$) before
+climbing. The knee lands at $j{\approx}32/80$ ($0.40L$), matching the dense-8B
+sweet spot ($j{\approx}12/32\approx0.375L$): the mid-depth hidden is the most
+re-composable cache point---deep enough that per-chunk semantics are formed, not
+so deep that chunk-local encoding has committed to a query-blind continuation.
+The shape is robust to chunk size (a chunk-256 sweep reproduces it), with larger
+chunks giving a lower absolute tax; we operate at chunk 512, $j{=}32$.
+
+\paragraph{Self-distillation drives the tax toward 1.0.} Zero-shot, the
+depth-partition tax is higher on Hy3 (1.4--1.5$\times$ at 16k) than on the 8B
+backbones, because this is zero-shot and all-chunks-selected. Distilling a
+$j{=}32$ student (LoRA $r{=}32,\alpha{=}64$ on \texttt{layers[32:]}) against the
+$j{=}0$ teacher on 4000 steps of plain PG19 KL---no synthetic long-context
+data---closes most of the gap (Table~\ref{tab:hy3distill}): the 16k LM tax drops
+from $+49.6\%$ to $+7.8\%$ and top1 agreement rises $0.773\to0.871$. This
+reproduces the 8B self-distillation story on an $80$-layer MoE.
+
+\input{sections/tab_hy3_distill}
+
+\paragraph{Constant read to 256k, no OOM.} With the distilled adapter and BM25
+top-8, QCMem's read length holds at $\approx$4.3--4.6k tokens while the RULER
+context grows from 16k to 256k---a $16\times$ increase in context at
+$\approx$flat read (Table~\ref{tab:hy3ruler}). Recall stays high across the
+board (niah\_single $98/92/100/98/100$; niah\_multikey $100/94/100/100/98$ over
+16k/32k/64k/128k/256k), \emph{peaking at 256k}, the backbone's native ceiling,
+with zero out-of-memory failures. Because Hy3's native window is 262k (unlike
+the 8B backbones, whose extrapolation limit we cross at 128k, cf.\
+\S\ref{sec:results}), this run isolates the \emph{efficiency} claim rather than
+the extrapolation one: the depth partition, retrieval, and context-independent
+read together let a 597\,GB MoE ingest a quarter-million tokens through a fixed
+$\approx$4.5k-token pack. The three mechanisms hold at MoE scale.
+
+\input{sections/tab_hy3_ruler}
