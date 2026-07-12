@@ -49,3 +49,16 @@
 
 n=100 网格目标：niah_single/niah_multikey/vt × {8k,16k,32k,64k,128k} × topk{2,4,6,8,12,16,24}。
 已完成见 B 表；启动新 cell 前对照 B 表 + logs/qcw_qcmem_n100_*.log 去重。
+## Hy3 QCMem 长档 RULER eval (2026-07-12, 本机 8× L20A, 收官验证)
+scripts/eval_ruler_qcmem_hy3.py (commit 52e5bbf) | Hy3 hy_v3 80L MoE device_map=auto 8卡分片 + 蒸馏adapter(qcmem_distill_hy3_j32_r32/final, j32 LoRA r32/α64 layers[32:79]) | bm25 topk=8 恒定read + resume_j=32 + 官方 string_match_all | limit=50 | log logs/hy3_ruler_longctx.log out ruler_results/hy3_qcmem_j32_longctx/
+- niah_single_2 16k: recall=98.0 (read_len~4312, 1173s)
+- niah_single_2 32k: recall=92.0 (read_len~4581, 1384s)
+- niah_single_2 64k: recall=100.0 (intermediate 10/50, read_len~4.6k)  [跑中→128k + niah_multikey_1]
+- ★关键: read_len 4.3k→4.6k 基本恒定(context翻倍不涨), per-sample ~27s 恒定, 0 OOM through 64k. 超窗口可用 + read恒定坐实.
+- niah_single_2 128k: recall=98.0 (read_len~4548, 1664s); niah_multikey_1 128k: recall=100.0 (read_len~4275, 1595s). 16k-128k 全档 DONE.
+
+### Hy3 QCMem 256k (2026-07-12, 本机 8× L20A, 长档最后一档) — RUNNING
+- out ruler_results/hy3_qcmem_j32_256k/, log logs/hy3_ruler_256k.log, output_name hy3_qcmem_j32_256k
+- niah_single_2/niah_multikey_1 × 256k, limit=50, bm25 topk=8, resume_j=32, 蒸馏adapter j32
+- 起因: 之前"起不来"根因=`import scripts.eval_ruler_mem_space` 需 ~22s(fla triton+tf+sklearn) > 15s timeout, 脚本本身无bug. 256k 在 _LENGTH_TOKENS 中已支持(262144), topk=8 恒定read → 与128k同量级(~4.3k), 可跑不OOM.
+- ✅ 已确认启动: Hy3 107s加载分片8卡, LoRA真加载(672 tensors sum|lora_B|=7.24e4>>0), first sample ~52s → 预计 ~90-100min 出完整 256k.
