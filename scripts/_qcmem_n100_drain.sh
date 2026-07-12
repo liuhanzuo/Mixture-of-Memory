@@ -14,18 +14,19 @@ PFX="${NAME_PREFIX:-qcmem_n100}"        # 输出名前缀(不同selector用不�
 export HF_HOME="$PWD/.hf_cache" HF_DATASETS_CACHE="$PWD/.hf_cache/datasets" HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 WANDB_MODE=offline PYTHONPATH="$PWD" PATH=/opt/conda/bin:$PATH
 TASKS="niah_single niah_multikey vt"; LENS="1k 2k 4k 8k 16k 32k"; TOPKS="4 8 12 16 24"
 mkdir -p "$OUT/.locks" 2>/dev/null
-i=0
-for task in $TASKS; do for len in $LENS; do for tk in $TOPKS; do
+# 外层循环: 一个 worker 反复扫全网格抢未测 cell, 直到某趟一个都没抢到(全网格已测/在跑) 才退出.
+# 这样 worker 不会单趟做完自己那份就退出留卡空转; 队列模式下多 worker 协同排空到 90/90 无需补卡.
+while true; do
+ claimed_this_pass=0
+ i=0
+ for task in $TASKS; do for len in $LENS; do for tk in $TOPKS; do
   run=0
-  if [ "$MODE" = "q" ]; then
-    run=1                                        # 队列模式: 所有 cell 都尝试(靠锁抢)
-  elif [ $((i % STRIDE)) -eq "$MODE" ]; then
-    run=1                                        # 分区模式: 只本分区
-  fi
+  if [ "$MODE" = "q" ]; then run=1
+  elif [ $((i % STRIDE)) -eq "$MODE" ]; then run=1; fi
   if [ "$run" -eq 1 ]; then
     o="${PFX}_${task}_tk${tk}_${len}"
     if [ ! -d "$OUT/$o" ] && mkdir "$OUT/.locks/$o" 2>/dev/null; then
-      # 原子抢到 (mkdir 成功=本 worker 独占) 且未测 → 跑
+      claimed_this_pass=$((claimed_this_pass+1))
       echo "[drain m$MODE dev$CUDA_DEV sel=$SEL] $o $(date +%H:%M:%S)"
       CUDA_VISIBLE_DEVICES="$CUDA_DEV" "$PY" scripts/eval_ruler_qcmem.py --model_path "$M" --lora_adapter "$CK" \
         --resume_j 12 --selector "$SEL" --topk "$tk" --ruler_tasks "$task" --lengths "$len" --limit 100 \
@@ -33,5 +34,9 @@ for task in $TASKS; do for len in $LENS; do for tk in $TOPKS; do
     fi
   fi
   i=$((i+1))
-done; done; done
+ done; done; done
+ # 分区模式单趟即可(自己那份跑完); 队列模式若本趟没抢到新 cell 说明全网格已被瓜分完 → 退出
+ [ "$MODE" != "q" ] && break
+ [ "$claimed_this_pass" -eq 0 ] && break
+done
 echo "DRAIN_${MODE}_dev${CUDA_DEV}_DONE $(date +%H:%M:%S)"
