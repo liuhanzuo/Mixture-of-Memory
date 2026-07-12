@@ -70,6 +70,7 @@ import os
 import re
 import sys
 import time
+from datetime import timedelta
 
 import numpy as np
 import torch
@@ -602,15 +603,38 @@ def main():
 
     ddp = "RANK" in os.environ
     if ddp:
-        dist.init_process_group("nccl")
+        # NCCL init-timeout fix (bug: rank1-7 crash "wait timeout after 600000ms").
+        #   rank0 materialises the ~65B transplant on CPU (>10min: 160GB base disk
+        #   load + fresh-model init) BEFORE it reaches the first collective (the
+        #   FSDP sync_module_states broadcast). With the default 600s PG timeout,
+        #   the NCCL communicator is created lazily on that first collective, so
+        #   rank1-7 (which finish their fast meta build in seconds) block in the
+        #   comm bootstrap waiting for rank0 -> abort after 10min -> whole job dies.
+        #   Two-part fix:
+        #     (a) timeout=timedelta(hours=2): the PG (and every collective on it,
+        #         incl. the FSDP broadcast) now tolerates rank0's slow assembly.
+        #     (b) device_id=...: forces EAGER communicator formation inside
+        #         init_process_group itself, while all ranks are still aligned here
+        #         (before the transplant) -> the comm bootstrap happens fast and the
+        #         later broadcast just reuses it, so we never hit the lazy-init race.
+        local_rank = int(os.environ.get("LOCAL_RANK", os.environ.get("RANK", 0)))
+        assert torch.cuda.is_available(), "training requires CUDA (FSDP)"
+        torch.cuda.set_device(local_rank)
+        dist.init_process_group(
+            "nccl",
+            timeout=timedelta(hours=2),
+            device_id=torch.device("cuda", local_rank),
+        )
         rank = dist.get_rank()
         world_size = dist.get_world_size()
-        local_rank = int(os.environ.get("LOCAL_RANK", rank))
+        # Sanity collective while all ranks are aligned (confirms comm is up before
+        # rank0 disappears into the multi-minute transplant).
+        dist.barrier()
     else:
         rank, world_size, local_rank = 0, 1, 0
+        assert torch.cuda.is_available(), "training requires CUDA (FSDP)"
+        torch.cuda.set_device(local_rank)
     is_main = rank == 0
-    assert torch.cuda.is_available(), "training requires CUDA (FSDP)"
-    torch.cuda.set_device(local_rank)
     device = torch.device("cuda", local_rank)
     model_dtype = torch.float32  # fp32 master weights
 
