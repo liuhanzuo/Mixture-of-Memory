@@ -373,6 +373,66 @@ def build_param_groups(model, args, is_main):
 
 
 # ---------------------------------------------------------------------------
+# FSDP tied-weight deadlock fix: untie embed / lm_head before wrapping
+# ---------------------------------------------------------------------------
+def untie_output_embeddings(model, is_main):
+    """Make `lm_head.weight` an INDEPENDENT parameter (a copy of the input
+    embedding) on every rank, and flip cfg.tie_word_embeddings=False.
+
+    WHY (first-forward FSDP deadlock, diagnosed 2026-07-12 py-spy):
+      With tie_word_embeddings=True, `lm_head.weight IS model.embed_tokens.weight`
+      (single shared tensor, see _tied_weights_keys). Under FSDP FULL_SHARD:
+        * rank0 materialises the transplant on CPU with the tie intact, so FSDP
+          de-duplicates the shared tensor into ONE root flat-param -> root layout
+          = [embed_tokens.weight, norm.weight].
+        * the meta (non-rank0) ranks go through `param_init_fn` -> `to_empty(
+          recurse=False)`, which allocates FRESH per-module storage and silently
+          BREAKS the tie; those ranks then register `lm_head.weight` as a SEPARATE
+          flat-param -> root layout = [embed_tokens.weight, norm.weight,
+          lm_head.weight].
+      The root all-gather therefore has a different numel across ranks. rank0
+      finishes its (smaller) unshard and races ahead into the embed forward while
+      the other ranks are still casting a larger flat-param in pre-unshard -> the
+      collective never matches -> NCCL busy-wait hang on the very first forward
+      (exactly the observed rank0@post-unshard / rank1,4@pre-unshard divergence).
+
+    Explicit untie removes the asymmetry: embed & lm_head are two independent
+    params on ALL ranks, so the root flat-param layout is identical everywhere and
+    the all-gather sizes match. lm_head is then a normal param -- on rank0 it holds
+    a copy of the (transplanted) embedding, on meta ranks it is materialised empty
+    and filled by sync_module_states' broadcast from rank0.
+
+    MUST run BEFORE wrap_fsdp, and AFTER transplant / resume / freeze so lm_head
+    inherits the correct weights and requires_grad state."""
+    cfg = model.config
+    if not bool(getattr(cfg, "tie_word_embeddings", False)):
+        return False
+    embed = model.get_input_embeddings()
+    lm_head = model.get_output_embeddings()
+    assert embed is not None and lm_head is not None, (
+        "[untie] could not locate input/output embeddings to untie")
+    w = embed.weight
+    if lm_head.weight is w:
+        if w.is_meta:
+            new_w = torch.nn.Parameter(torch.empty_like(w), requires_grad=w.requires_grad)
+        else:
+            new_w = torch.nn.Parameter(w.detach().clone(), requires_grad=w.requires_grad)
+        lm_head.weight = new_w
+    cfg.tie_word_embeddings = False
+    # Belt-and-suspenders: neutralise any later post_init()/tie_weights() that
+    # would re-share the tensors and re-introduce the flat-param asymmetry.
+    model.tie_weights = (lambda *a, **k: None)  # type: ignore[assignment]
+    if is_main:
+        loc = "meta" if w.is_meta else "materialised"
+        logger.info(
+            f"[untie] embed/lm_head UNTIED before FSDP ({loc} rank0 build); "
+            f"lm_head.weight now independent shape={tuple(lm_head.weight.shape)} "
+            f"requires_grad={lm_head.weight.requires_grad}; cfg.tie_word_embeddings=False "
+            f"-> identical root flat-param layout on all ranks")
+    return True
+
+
+# ---------------------------------------------------------------------------
 # FSDP wrapping
 # ---------------------------------------------------------------------------
 def wrap_fsdp(model, args, local_rank, is_main):
@@ -705,6 +765,11 @@ def main():
 
     # ---- FSDP wrap ----
     if ddp:
+        # CRITICAL (see untie_output_embeddings docstring): with tied embed/lm_head,
+        # FSDP's meta-rank param_init_fn (to_empty) breaks the tie -> root flat-param
+        # composition diverges across ranks -> first-forward all-gather size mismatch
+        # -> NCCL deadlock. Untie on ALL ranks BEFORE wrapping so the layout matches.
+        untie_output_embeddings(model, is_main)
         model = wrap_fsdp(model, args, local_rank, is_main)
     else:
         model = model.to(device)
