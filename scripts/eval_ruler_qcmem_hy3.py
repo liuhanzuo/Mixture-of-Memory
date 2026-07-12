@@ -251,6 +251,25 @@ def main():
             args.lora_adapter = ""
 
     tasks = [_resolve_task(t) for t in args.ruler_tasks]
+
+    # --- lengths parsing (robust to BOTH space- and comma-separated forms) ---
+    # ``nargs="+"`` turns "--lengths 16k 32k" into ["16k","32k"] but leaves the
+    # comma form "--lengths 16k,32k" as a SINGLE token ["16k,32k"]. Flatten every
+    # token on commas so both invocations behave identically, then HARD-abort on
+    # any unknown key — a silent skip here previously ran 0 cells and reported a
+    # fake "Evaluation complete" in <1s (wasting the GPUs).
+    lengths = []
+    for tok in args.lengths:
+        lengths.extend(p.strip() for p in str(tok).split(",") if p.strip())
+    unknown = [ln for ln in lengths if ln not in ruler._LENGTH_TOKENS]
+    if unknown or not lengths:
+        parser.error(
+            f"--lengths parsed to {lengths} (from raw {args.lengths}); "
+            f"unknown/empty keys {unknown or lengths}. "
+            f"Valid keys: {sorted(ruler._LENGTH_TOKENS)}. "
+            f"Pass either '--lengths 16k 32k' or '--lengths 16k,32k'.")
+    args.lengths = lengths
+
     dtype = {"bfloat16": torch.bfloat16, "float16": torch.float16,
              "float32": torch.float32}[args.dtype]
 
