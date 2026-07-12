@@ -647,9 +647,22 @@ def main():
     p.add_argument("--resume_from", type=str, default="")
     p.add_argument("--max_rows", type=int, default=0, help=">0 to subset dataset (smoke)")
     p.add_argument("--gradient_checkpointing", type=int, default=1)
-    p.add_argument("--fsdp_cpu_offload", action="store_true",
-                   help="offload FSDP params+optim to CPU (needed on 95GB H20; slower). "
-                        "Not needed on 183GB L20A.")
+    p.add_argument("--fsdp_cpu_offload", type=int, default=1,
+                   help="1 (DEFAULT) = offload FSDP params+grads+optim (fp32 master + AdamW "
+                        "states) to CPU RAM. REQUIRED for the 65B keep24+fresh2 config: without "
+                        "it the per-shard PERSISTENT fp32 master(~32GB)+AdamW 2xfp32(~65GB)+"
+                        "fp32 grad(~32GB) plus the bf16 MoE per-layer unshard buffers exceed the "
+                        "178GB B200 -> verified first-step OOM on all 8 ranks 2026-07-12 "
+                        "(each rank ~176/178GB, only 347MiB free). With offload the GPU holds "
+                        "ONLY the bf16 unshard of the active decoder layer + its activations "
+                        "(gradient_checkpointing on), so it fits with wide headroom on 8 cards "
+                        "AND on the conservative 2-card test (2-card shard is 4x bigger yet the "
+                        "GPU-resident unshard is shard-count-independent). fp32 master logic is "
+                        "UNCHANGED and offload-compatible: the fp32 flat param simply lives on "
+                        "CPU pinned RAM, MixedPrecision casts a bf16 copy to GPU for compute, and "
+                        "torch.optim.AdamW (non-fused, built AFTER the FSDP wrap so its states "
+                        "land on CPU) applies the fp32 update on CPU. Pass 0 ONLY for small "
+                        "pruned configs whose params+optim fit on-GPU.")
     p.add_argument("--dry_run_build", action="store_true",
                    help="meta + shrunk-CPU structural/transplant-logic validation, then exit. "
                         "No GPUs, no 160GB base load.")
