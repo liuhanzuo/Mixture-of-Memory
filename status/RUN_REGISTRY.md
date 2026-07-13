@@ -1425,3 +1425,30 @@ team-lead 采纳「Part-Y-only」干净单轴框架（比早先 option A 更紧�
 - **机理（符合 §3.1 分工命题）**：浅层承载低阶/局部信息，压缩损失小；越深越接近"生成前的精炼表征"，那里的信息密度高、每一维都 load-bearing，强行挤过瓶颈损伤大。
 - **★为什么 QCMem 仍选 j=12（关键 framing）**：单看 LM 税，缓存点应放浅层（L1 最省）。但缓存点太浅 → 可缓存的语义不足（§3.2 j-sweep：j≤9 检索精度饱和、j12 崖跌到 14=可缓存语义上限）。→ **QCMem 的 j=12 是"可缓存语义上限"与"LM 税"之间的折中，不是税最小点**。layer sweep 正面量化了这个折中的另一端（税随深度的代价曲线），坐实 j=12 的选择是权衡而非任意。
 - **产物**：ckpt `outputs/sembott_1b_{base,d256,d512,d1024,layer1,layer3,layer9,layer12}_16k/final.pt`（layer6=d512 复用）；日志 `logs/sembott_1b_*_16k.log`；写入 draft §3.4（commit 0bf7182）。
+
+---
+
+## QCMem Selector 对照（RULER n=100，官方 `_string_match_all_one` 判分，2026-07-13）
+
+**详细数据与结论见 `status/QCMEM_SELECTOR_COMPARISON.md`（由 `scripts/aggregate_selector_comparison.py` 聚合）。**
+
+- **配置**：QCMem (j=12, chunk_size=1024, 32 slots, bm25 selector as default), Qwen3-8B, RULER 3-task × 6-length × 5-topk = 90 cells × 4 selectors = 360 cells total。
+- **4 selectors**：bm25（词法）/ recency（位置/末尾）/ reader_attn（语义 h_j cosine）/ oracle（含答案的 gold chunk = 检索天花板）。
+- **全量完成**：每 selector 90/90 cells，零缺失。
+
+### 核心结果（峰值 topk recall %，16k & 32k）
+
+| Task | Length | BM25 | Recency | ReaderAttn | Oracle |
+|---|---|---|---|---|---|
+| NIAH-Single   | 16k | **100.0** | 72.0  | 83.0  | **100.0** |
+| NIAH-Single   | 32k | **100.0** | 42.0  | 38.0  | **100.0** |
+| NIAH-MultiKey | 16k | **97.0**  | 61.0  | 69.0  | **100.0** |
+| NIAH-MultiKey | 32k | **99.0**  | 44.0  | 41.0  | **100.0** |
+| VT            | 16k | 27.6  | 53.2  | **60.2** | 9.2   |
+| VT            | 32k | **23.0** | 16.8  | 22.0  | 5.8   |
+
+### 关键结论
+1. **Oracle = 100% on NIAH**：给定正确 chunk，QCMem 读出无损。长档瓶颈 = 检索质量，非压缩质量。
+2. **BM25 ≈ Oracle on NIAH**（gap ≤5 pp at all lengths）：词法检索对实体 needle 近最优；BM25 是 NIAH 类任务的默认最优 selector。
+3. **ReaderAttn & Recency ≪ BM25 on NIAH**：注意力语义相似度和位置近端性在 16k/32k 上大幅落后（差距 17–62 pp）。
+4. **VT oracle 失效**（oracle 9.2 < BM25 27.6 at 16k）：oracle 选含答案字符串的 chunk，但变量追踪需全链多 chunk；单 gold chunk oracle 不适用多跳任务。reader_attn@tk24=60.2 在 VT@16k 最优（大 topk 意外覆盖链上各赋值 chunk）。32k VT 全面崩溃，topk≤24 单程 selector 不足覆盖完整链。
