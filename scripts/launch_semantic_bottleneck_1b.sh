@@ -59,4 +59,5 @@ CUDA_VISIBLE_DEVICES="$GPUS" "$PYTHON_BIN" -m torch.distributed.run \
   --batch_size "$BATCH_SIZE" \
   --grad_accumulation_steps "$GRAD_ACCUM" \
   --lr "$LR" --min_lr 3e-5 --warmup_steps 100 \
-  --save_every 500 --log_every 20
+  --save_every 500 --log_every 20 \
+  ${RESUME_FROM:+--resume_from "$RESUME_FROM"}
