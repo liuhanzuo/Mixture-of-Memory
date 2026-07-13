@@ -153,3 +153,7 @@ staging/
 external/memoryllm_venv/
 external/*_venv/
 external/landmark/results_s2/
+
+# SSH deploy key (github push) — NEVER commit private key
+configs/github_deploy_key
+configs/github_deploy_key.pub
