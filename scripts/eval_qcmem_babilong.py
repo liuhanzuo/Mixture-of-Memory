@@ -244,6 +244,89 @@ def _iter_reader_attn_indices(
     return sorted(selected)
 
 
+# --------------------------------------------------------------------------- #
+# iterative multi-hop LEXICAL selector (iter_bm25)
+#
+#   Same BFS-over-the-reference-chain idea as iter_reader_attn, but the hop signal
+#   is pure lexical BM25 instead of cached-h_j cosine — motivated by RULER
+#   variable_tracking (measured 2026-07-11): every VT chunk is
+#   ``VAR Vc = VAR V(c-1)`` (or the seed ``VAR V0 = <value>``), so the variable
+#   NAMES that link consecutive chunks are LITERAL, high-IDF tokens. A single-shot
+#   BM25 can only surface the seed chunk (it alone shares the queried VALUE); the
+#   later chain links are query-orthogonal but lexically linked to their neighbour
+#   via the shared VAR name, so a lexical hop walks the chain exactly.
+#
+#     round 1  : score every context chunk by BM25 vs the bare question, keep the
+#                top ``iter_hop_topk`` (== single-shot bm25 for that budget).
+#     round r>1: use the concatenated TOKEN TEXT of the previous round's just-added
+#                chunks as the new BM25 query, score the still-UNSELECTED chunks,
+#                keep the top ``iter_hop_topk`` — the freshest chunk's high-IDF VAR
+#                name pulls in the chunk that DEFINES that VAR (one hop backward).
+#
+#   IDF is computed over the FULL context-chunk pool every round (identical corpus
+#   / tokenisation to the single-shot ``bm25`` selector), so round 1 is bit-for-bit
+#   the same ranking as ``bm25`` — the only new variable is the iteration (clean
+#   A/B). Frontier = last round's picks (NOT all selected), matching iter_reader_attn:
+#   chain[c] links to chain[c-1], so the freshest chunk is the best next-hop query.
+#   Chunks with zero lexical overlap are never added (a 0 score == no shared token
+#   == the chain ended), so a short chain yields <topk chunks rather than padding
+#   the read with noise. Pure CPU; no model forward (QCMem's compute saving holds).
+# --------------------------------------------------------------------------- #
+def _iter_bm25_indices(
+    context_chunks,        # list[LongTensor] == chunks[:-1] (doc order)
+    query_ids,             # list[int] bare-question token ids (round-1 query)
+    topk: int,
+    iter_rounds: int = 0,
+    iter_hop_topk: int = 2,
+):
+    """Iterative multi-hop lexical (BM25) chunk selection (see block comment).
+
+    Returns a sorted list of context-chunk indices, up to ``topk`` chunks
+    accumulated over the BFS rounds (``iter_hop_topk`` added per round; round 1
+    seeded from ``query_ids``, later rounds from the previous round's picks'
+    token text). ``iter_rounds<=0`` -> auto ceil(topk/hop). Chunks with zero BM25
+    overlap are skipped (chain-end guard)."""
+    n = len(context_chunks)
+    k = max(0, int(topk))
+    if n == 0 or k == 0:
+        return []
+    hop = max(1, int(iter_hop_topk))
+    rounds = int(iter_rounds) if iter_rounds and iter_rounds > 0 else -(-k // hop)
+    rounds = max(1, rounds)
+
+    docs = [c.tolist() for c in context_chunks]     # BM25 corpus (fixed IDF pool)
+
+    selected: list = []
+    selected_set: set = set()
+    frontier_query = list(query_ids)                # round 1 == single-shot bm25
+    for _ in range(rounds):
+        remaining = k - len(selected)
+        if remaining <= 0:
+            break
+        if not frontier_query:
+            break
+        scores = harness._bm25_scores(docs, frontier_query)
+        if not scores:
+            break
+        cand = [i for i in range(n) if i not in selected_set]
+        # rank unselected candidates by this round's query; keep only positive
+        # lexical overlap (score>0 == a shared token exists == still on the chain).
+        cand = [i for i in cand if scores[i] > 0.0]
+        if not cand:
+            break
+        cand.sort(key=lambda i: scores[i], reverse=True)
+        take = min(hop, remaining, len(cand))
+        new_sel = cand[:take]
+        selected.extend(new_sel)
+        selected_set.update(new_sel)
+        # frontier <- concatenated token text of the JUST-ADDED chunks: their
+        # referenced VAR names become the next round's BM25 query (walk one hop).
+        frontier_query = []
+        for i in new_sel:
+            frontier_query.extend(docs[i])
+    return sorted(selected)
+
+
 def _select_context_chunk_indices(
     selector: str,
     context_chunks,        # list[LongTensor] == chunks[:-1] (doc order)
@@ -307,6 +390,17 @@ def _select_context_chunk_indices(
             return list(range(max(0, n_ctx - k), n_ctx))
         order = sorted(range(n_ctx), key=lambda i: scores[i], reverse=True)
         return sorted(order[:k])
+
+    if selector == "iter_bm25":
+        if k <= 0:
+            return []
+        # Iterative multi-hop LEXICAL selection: round 1 == single-shot bm25, later
+        # rounds re-query BM25 with the previous picks' token text to walk a lexical
+        # reference chain (RULER vt). Pure CPU, no forward — ignores context_hj.
+        return _iter_bm25_indices(
+            context_chunks, list(query_ids), topk=k,
+            iter_rounds=iter_rounds, iter_hop_topk=iter_hop_topk,
+        )
 
     if selector == "reader_attn":
         if k <= 0:
@@ -561,19 +655,23 @@ def main():
                              "layer-partial recompute.")
     parser.add_argument("--selector", type=str, default="bm25",
                         choices=["bm25", "recency", "oracle", "reader_attn",
-                                 "iter_reader_attn"],
+                                 "iter_reader_attn", "iter_bm25"],
                         help="Chunk selector for the read pack. reader_attn scores "
                              "chunks by query-h_j vs chunk-h_j cosine (reuses the "
                              "cached write_chunk hiddens, no extra forward). "
                              "iter_reader_attn iterates that scoring as a multi-hop "
                              "BFS over the cached h_j (round 1 from the query, later "
                              "rounds from the just-found chunks) to follow reference "
-                             "chains (RULER vt); still forward-free.")
+                             "chains (RULER vt); still forward-free. iter_bm25 is the "
+                             "same multi-hop BFS but with pure lexical BM25 as the hop "
+                             "signal (round 1 == single-shot bm25, later rounds "
+                             "re-query with the previous picks' token text) — best for "
+                             "RULER vt where the chain links are LITERAL VAR names.")
     parser.add_argument("--iter_rounds", type=int, default=0,
-                        help="iter_reader_attn: number of BFS hop rounds "
+                        help="iter_reader_attn / iter_bm25: number of BFS hop rounds "
                              "(<=0 -> ceil(topk/iter_hop_topk)).")
     parser.add_argument("--iter_hop_topk", type=int, default=2,
-                        help="iter_reader_attn: chunks added per BFS round.")
+                        help="iter_reader_attn / iter_bm25: chunks added per BFS round.")
     parser.add_argument("--iter_score", type=str, default="meanpool",
                         choices=["meanpool", "maxsim"],
                         help="iter_reader_attn scoring: meanpool (mean-pool cosine, "

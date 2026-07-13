@@ -212,17 +212,22 @@ def main():
                              "and layer-partial recompute.")
     parser.add_argument("--selector", type=str, default="bm25",
                         choices=["bm25", "recency", "oracle", "reader_attn",
-                                 "iter_reader_attn"],
+                                 "iter_reader_attn", "iter_bm25"],
                         help="Chunk selector for the read pack. oracle is NIAH-only "
                              "(degrades to recency on variable_tracking). "
                              "iter_reader_attn iterates reader_attn as a multi-hop "
                              "BFS over the cached h_j (query -> found-chunk -> ...) "
-                             "to follow the vt reference chain; forward-free.")
+                             "to follow the vt reference chain; forward-free. "
+                             "iter_bm25 is the same multi-hop BFS but with pure "
+                             "lexical BM25 as the hop signal (round 1 == single-shot "
+                             "bm25, later rounds re-query with the previous picks' "
+                             "token text) — best for vt where the chain links are "
+                             "LITERAL VAR names; pure CPU, forward-free.")
     parser.add_argument("--iter_rounds", type=int, default=0,
-                        help="iter_reader_attn: #BFS hop rounds (<=0 -> "
+                        help="iter_reader_attn / iter_bm25: #BFS hop rounds (<=0 -> "
                              "ceil(topk/iter_hop_topk)).")
     parser.add_argument("--iter_hop_topk", type=int, default=2,
-                        help="iter_reader_attn: chunks added per BFS round.")
+                        help="iter_reader_attn / iter_bm25: chunks added per BFS round.")
     parser.add_argument("--iter_score", type=str, default="meanpool",
                         choices=["meanpool", "maxsim"],
                         help="iter_reader_attn scoring: meanpool (mean-pool cosine, "
@@ -535,10 +540,14 @@ def main():
                         "selector": (None if no_retrieval else args.selector),
                         "topk": (None if no_retrieval else args.topk),
                         "iter": (
-                            None if (no_retrieval or args.selector != "iter_reader_attn")
+                            {"rounds": args.iter_rounds,
+                             "hop_topk": args.iter_hop_topk,
+                             "score": args.iter_score}
+                            if (not no_retrieval and args.selector == "iter_reader_attn")
                             else {"rounds": args.iter_rounds,
-                                  "hop_topk": args.iter_hop_topk,
-                                  "score": args.iter_score}
+                                  "hop_topk": args.iter_hop_topk}
+                            if (not no_retrieval and args.selector == "iter_bm25")
+                            else None
                         ),
                         "sink_tokens": args.sink_tokens, "num_layers": L,
                         "lora_adapter": args.lora_adapter or None,
