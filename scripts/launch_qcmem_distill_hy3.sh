@@ -21,7 +21,7 @@
 set -euo pipefail
 PROJECT_ROOT="${PROJECT_ROOT:-/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory}"
 cd "$PROJECT_ROOT"
-export WANDB_API_KEY="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"
+export WANDB_API_KEY="${WANDB_API_KEY:-}"   # set in your shell env (see CLAUDE.md); NOT hardcoded
 export WANDB_MODE="${WANDB_MODE:-offline}"
 export HF_HUB_OFFLINE=1
 export HF_DATASETS_OFFLINE=1
