@@ -15,7 +15,10 @@ while b"\r\n\r\n" not in buf:
     buf += ch
 if b" 200 " not in buf.split(b"\r\n", 1)[0]:
     sys.stderr.write("proxy CONNECT failed: " + buf.split(b"\r\n")[0].decode("latin1") + "\n"); sys.exit(1)
-s.setblocking(False)
+# keep the socket BLOCKING: select tells us a fd is readable; recv/read won't block,
+# and the blocking sendall/os.write to the peer drains fine (ssh + github both read).
+# (A non-blocking socket makes sendall raise BlockingIOError once the send buffer fills
+#  during a large push -> broken pipe. Blocking + select is the correct relay pattern.)
 fin, fout = sys.stdin.fileno(), sys.stdout.fileno()
 while True:
     r, _, _ = select.select([fin, s], [], [])
@@ -24,9 +27,6 @@ while True:
         if not d: break
         s.sendall(d)
     if s in r:
-        try:
-            d = s.recv(65536)
-        except (BlockingIOError, InterruptedError):
-            continue
+        d = s.recv(65536)
         if not d: break
         os.write(fout, d)
