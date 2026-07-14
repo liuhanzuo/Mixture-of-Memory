@@ -236,3 +236,74 @@ def load_hy3_qcmem(
         top_prepay_b=top_prepay_b,
         block_diagonal=block_diagonal,
     )
+
+
+def load_a13b_qcmem(
+    model_path: str,
+    resume_j: int,
+    top_prepay_b: int = 0,
+    block_diagonal: bool = False,
+    dtype: torch.dtype = torch.bfloat16,
+    device_map: str = "auto",
+    attn_implementation: str = "sdpa",
+    max_memory: Optional[dict] = None,
+) -> QCMemHy3Model:
+    """Load the PUBLIC 32-layer **Hunyuan-A13B** (``HunYuanMoEV1ForCausalLM``) and
+    wrap it in the SAME device-aware :class:`QCMemHy3Model`.
+
+    Why this is a separate loader (and why the class is shared)
+    ----------------------------------------------------------
+    :class:`QCMemHy3Model` is architecture-agnostic: it only reads
+    ``model.model.{embed_tokens, layers, norm, rotary_emb}`` + ``model.lm_head``
+    + ``model.config`` and hops tensors across the shard boundary. Verified (tf
+    5.13.1) that ``HunYuanMoEV1DecoderLayer.forward`` takes the exact kwargs
+    ``QCMemModel._run_layers`` passes and returns a BARE hidden tensor, the module
+    tree matches, ``HunYuanMoEV1RotaryEmbedding.forward(x, position_ids)`` matches
+    Llama's, and ``create_causal_mask`` has the same signature the parent calls —
+    so the class is reused unchanged. Only the *loading* differs from Hy3:
+
+      (a) ``HunYuanMoEV1Config.from_pretrained`` leaves ``head_dim=None`` (the
+          checkpoint only carries ``attention_head_dim=128``); the native attention
+          does ``head_dim ** -0.5`` and crashes → we set ``cfg.head_dim`` explicitly.
+      (b) the on-disk ``model_type`` is ``"hunyuan"``; we force
+          ``cfg.model_type="hunyuan_v1_moe"`` so the NATIVE class is instantiated
+          (no ``trust_remote_code``).
+      (c) ★ ``experts_implementation="eager"``: the default fused
+          ``grouped_mm_experts_forward`` (torch 2.8-nv) trips
+          ``GroupMMCommon.cuh:51 delta%16==0`` and crashes; the eager per-expert
+          ``index_add_`` loop is numerically equivalent and has no alignment
+          constraint. This is the only verified-stable path.
+
+    ``load_hy3_qcmem`` (the 80-layer internal Hy3 / ``HYV3`` loader) is left
+    entirely untouched.
+    """
+    from transformers.models.hunyuan_v1_moe.modeling_hunyuan_v1_moe import (
+        HunYuanMoEV1Config,
+        HunYuanMoEV1ForCausalLM,
+    )
+
+    cfg = HunYuanMoEV1Config.from_pretrained(model_path, local_files_only=True)
+    cfg.model_type = "hunyuan_v1_moe"  # (b) select the native class
+    if getattr(cfg, "head_dim", None) is None:  # (a) native attn needs head_dim
+        cfg.head_dim = getattr(cfg, "attention_head_dim", None) or (
+            cfg.hidden_size // cfg.num_attention_heads
+        )
+    cfg.use_cache = False
+
+    model = HunYuanMoEV1ForCausalLM.from_pretrained(
+        model_path,
+        config=cfg,
+        torch_dtype=dtype,
+        device_map=device_map,
+        attn_implementation=attn_implementation,
+        low_cpu_mem_usage=True,
+        local_files_only=True,
+        max_memory=max_memory,
+        experts_implementation="eager",  # (c) avoid grouped_mm alignment crash
+    ).eval()
+    return QCMemHy3Model(
+        model,
+        resume_j=resume_j,
+        top_prepay_b=top_prepay_b,
+        block_diagonal=block_diagonal,
+    )
