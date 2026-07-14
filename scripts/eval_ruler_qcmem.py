@@ -128,16 +128,6 @@ def _resolve_task(name: str) -> str:
     )
 
 
-def _resolve_selector(cli_selector: str, task: str) -> str:
-    """Per-task selector routing. When the user leaves ``--selector auto`` (the
-    default), variable_tracking (a multi-hop VAR chain) uses
-    ``iter_bm25_adaptive`` and every niah_* task uses ``bm25``. Any explicit
-    ``--selector X`` overrides auto and is applied to every task."""
-    if cli_selector != "auto":
-        return cli_selector
-    return "iter_bm25_adaptive" if task == "variable_tracking" else "bm25"
-
-
 def _bare_question(prompt: str) -> str:
     """Extract the trailing question line (used as the bm25 lexical query).
 
@@ -222,16 +212,19 @@ def main():
                              "(post-hoc, no training) — read grows O(context). Both "
                              "isolate QCMem's two primitives: retrieval (fixed read) "
                              "and layer-partial recompute.")
-    parser.add_argument("--selector", type=str, default="auto",
-                        choices=["auto", "bm25", "recency", "oracle", "reader_attn",
+    parser.add_argument("--selector", type=str, default="iter_bm25_adaptive",
+                        choices=["bm25", "recency", "oracle", "reader_attn",
                                  "iter_reader_attn", "iter_bm25",
                                  "iter_bm25_adaptive"],
-                        help="Chunk selector for the read pack. Default 'auto' "
-                             "routes per-task so one command scores every task "
-                             "correctly: variable_tracking (multi-hop VAR chain) "
-                             "-> iter_bm25_adaptive, every niah_* -> bm25. Passing "
-                             "any explicit selector OVERRIDES auto and applies it "
-                             "to ALL tasks. "
+                        help="Chunk selector for the read pack. Default "
+                             "'iter_bm25_adaptive' is the single universal "
+                             "selector for ALL tasks: it self-degrades via a "
+                             "confidence stop (--iter_conf_ratio), so chain-free "
+                             "tasks (niah_*) stop after round 1 (== single-shot "
+                             "bm25) while chain tasks (variable_tracking) keep "
+                             "following the VAR reference chain. Pass an explicit "
+                             "--selector (bm25 / iter_bm25 / reader_attn / oracle "
+                             "/ ...) to override it on ALL tasks for controls. "
                              "oracle is NIAH-only "
                              "(degrades to recency on variable_tracking). "
                              "iter_reader_attn iterates reader_attn as a multi-hop "
@@ -250,7 +243,7 @@ def main():
     parser.add_argument("--iter_rounds", type=int, default=0,
                         help="iter_reader_attn / iter_bm25: #BFS hop rounds (<=0 -> "
                              "ceil(topk/iter_hop_topk)).")
-    parser.add_argument("--iter_hop_topk", type=int, default=2,
+    parser.add_argument("--iter_hop_topk", type=int, default=4,
                         help="iter_reader_attn / iter_bm25 / iter_bm25_adaptive: "
                              "chunks added per BFS round.")
     parser.add_argument("--iter_score", type=str, default="meanpool",
@@ -452,15 +445,14 @@ def main():
     summary: dict = {}
     for task in tqdm(tasks, desc="tasks"):
         summary[task] = {}
-        sel = _resolve_selector(args.selector, task)
+        sel = args.selector
         for length in tqdm(args.lengths, desc="lengths", leave=False):
             cell_started = time.time()
             if length not in ruler._LENGTH_TOKENS:
                 print(f"[WARN] unknown length {length}, skipping")
                 continue
             target_tokens = ruler._LENGTH_TOKENS[length]
-            print(f"[QCMem-RULER] {task}/{length}: selector={sel}"
-                  f"{' (auto)' if args.selector == 'auto' else ''}")
+            print(f"[QCMem-RULER] {task}/{length}: selector={sel}")
             # Deterministic per-(task,length) RNG so shards share the sample set
             # (identical construction to eval_ruler_mem_space.main).
             base_seed = args.seed + (hash((task, length)) % 100000)
