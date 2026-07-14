@@ -467,6 +467,7 @@ def wrap_fsdp(model, args, local_rank, is_main):
         MixedPrecision,
         ShardingStrategy,
         CPUOffload,
+        BackwardPrefetch,
     )
     from torch.distributed.fsdp.wrap import transformer_auto_wrap_policy
 
@@ -485,11 +486,22 @@ def wrap_fsdp(model, args, local_rank, is_main):
     def _param_init_fn(module):
         module.to_empty(device=torch.device("cuda", local_rank), recurse=False)
 
+    # backward_prefetch: BACKWARD_POST (vs the FSDP default BACKWARD_PRE) all-gathers
+    # the next decoder layer's params AFTER the current layer's backward frees its own,
+    # instead of before -> at most ONE (not two) MoE-layer bf16 unshard (~4.65GB each)
+    # resident at a time. On-GPU (offload=0) the 37.9B keep13+fresh2 peaked at 134.4/139.8
+    # GB/rank and OOM'd needing exactly one more layer unshard (4.65GB); BACKWARD_POST
+    # removes precisely that concurrent unshard, staying on-GPU at seq_len=2048 with no
+    # change to model / optimizer / hyperparameters. Small throughput cost (less
+    # compute/all-gather overlap) but keeps full-speed on-GPU AdamW (vs CPU-offload's
+    # SIGSEGV on 38B params). limit_all_gathers already caps in-flight all-gathers.
     model = FSDP(
         model,
         auto_wrap_policy=auto_wrap,
         sharding_strategy=ShardingStrategy.FULL_SHARD,
         mixed_precision=mp,
+        backward_prefetch=BackwardPrefetch.BACKWARD_POST,
+        forward_prefetch=False,
         device_id=torch.device("cuda", local_rank),
         sync_module_states=True,          # broadcast rank0 weights to meta ranks
         param_init_fn=_param_init_fn,
@@ -500,6 +512,7 @@ def wrap_fsdp(model, args, local_rank, is_main):
     if is_main:
         logger.info(f"[fsdp] FULL_SHARD wrapped on HunYuanMoEV1DecoderLayer; "
                     f"mp(param=bf16, reduce=fp32) use_orig_params=True "
+                    f"backward_prefetch=BACKWARD_POST forward_prefetch=False "
                     f"cpu_offload={bool(args.fsdp_cpu_offload)}")
     return model
 

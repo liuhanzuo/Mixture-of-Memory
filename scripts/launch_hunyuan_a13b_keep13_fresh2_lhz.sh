@@ -36,5 +36,6 @@ mkdir -p logs outputs/hunyuan_a13b_keep13_fresh2
   --batch_size 1 --grad_accumulation_steps 8 \
   --lr 1e-4 --lr_inherited 2e-5 --warmup_steps 100 \
   --save_every 1000 --log_every 10 --gradient_checkpointing 1 \
+  --fsdp_cpu_offload 0 \
   > logs/hunyuan_a13b_keep13_fresh2.log 2>&1
 echo "A13B_KEEP13F2_EXIT_$?" >> logs/hunyuan_a13b_keep13_fresh2.log

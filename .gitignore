@@ -160,3 +160,7 @@ configs/github_deploy_key.pub
 
 # offline pip wheelhouse for lhz .venv_hy3 (3GB, do not commit)
 wheelhouse_hy3/
+
+# portable tmux binary + shared libs fetched for lhz (no system tmux)
+.tools/
+.tmux_env/
