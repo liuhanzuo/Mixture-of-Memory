@@ -31,6 +31,7 @@ import torch
 import torch.nn as nn
 
 from transformers.masking_utils import create_causal_mask
+from transformers.cache_utils import DynamicCache
 
 
 class QCMemModel:
@@ -309,8 +310,21 @@ class QCMemModel:
         causal_mask,
         positions: torch.Tensor,
         position_embeddings,
+        past_key_values=None,
+        use_cache: bool = False,
     ) -> torch.Tensor:
         """Run ``self.layers[layer_slice]`` on ``hidden`` with the given mask/RoPE.
+
+        ``past_key_values`` / ``use_cache`` (default ``None`` / ``False``) drive an
+        optional standard transformers KV cache — used ONLY by the resumed-band
+        decode fast path (:meth:`read_prefill` + :meth:`decode_step`). When left at
+        the defaults every layer runs with ``use_cache=False`` and no cache, so the
+        exact write/read/resume paths and the distillation trainer are byte-for-byte
+        unchanged. The per-layer ``past_key_values.update(k, v, layer_idx)`` keys off
+        each decoder layer's real ``self_attn.layer_idx``, so a cache passed to
+        ``layers[a:L]`` populates cache indices ``a..L-1`` (and one passed to
+        ``layers[0:a]`` populates ``0..a-1``) — the two bands use SEPARATE caches so
+        their indices never collide.
 
         Works uniformly for dense and MoE backbones: the per-layer call is the
         standard ``layer(hidden, attention_mask=, position_ids=,
@@ -346,7 +360,8 @@ class QCMemModel:
                     attention_mask=causal_mask,
                     position_ids=positions,
                     position_embeddings=position_embeddings,
-                    use_cache=False,
+                    past_key_values=past_key_values,
+                    use_cache=use_cache,
                 )
             hidden = self._layer_out_hidden(out)
         return hidden
@@ -513,6 +528,147 @@ class QCMemModel:
         logits: ``[1, |H|, V]`` when ``top_prepay_b == 0`` else ``[1, T_q, V]``.
         """
         return self.read_core(sink_hj, selected_hj_list, query_hj)
+
+    # ------------------------------------------------------------------ #
+    # resumed-band KV cache decode (2026-07-14) — O(1)/step generation
+    # ------------------------------------------------------------------ #
+    # Baseline QCMem decode re-runs, at EVERY step, both bands over their full
+    # sequences: layers[0:a] over the whole growing query (write_chunk) AND
+    # layers[a:L] over the whole ~6.7k-token read pack (read). That is O(pack)
+    # per step (~2.4 s/step on Qwen3-8B, honestly flagged in the paper §2.3).
+    #
+    # The pack is [sink ; selected h_j ; query h_j] with FRESH CONTIGUOUS RoPE
+    # positions 0:H. The sink + selected chunks are fixed; only the query grows
+    # (one generated token per step, appended at the contiguous tail). Because the
+    # read is causal, the K/V of the sink + selected + query-prefix positions in
+    # layers[a:L] are IDENTICAL across steps — so we cache them once (read_prefill)
+    # and each subsequent step only pushes the ONE new token through layers[a:L]
+    # (decode_step), attending to the cached band. Symmetrically the query's
+    # bottom-band layers[0:a] K/V are cached so the new token's depth-``a`` hidden
+    # h_j is produced from a single-token forward instead of re-encoding the whole
+    # query. Net: decode drops from O(pack) to O(1) per step, with logits identical
+    # to the recompute path to fp tolerance (correctness gate in
+    # scripts/bench_qcmem_decode.py). Only valid for the EXACT resume
+    # (top_prepay_b == 0, block_diagonal == False); the ablation read variants keep
+    # the recompute path.
+
+    def _decode_attn_mask(self, kv_len: int):
+        """Attention mask for a SINGLE-query decode step attending to all
+        ``kv_len`` cached keys (the new token is causal-last, so every key is
+        visible). For SDPA / FlashAttention a ``None`` mask + ``q_len == 1`` makes
+        the kernel attend to all keys (see ``sdpa_attention_forward``:
+        ``is_causal = q_len > 1 and mask is None``), which is exactly right and the
+        cheapest. For eager (additive-float) attention we return an all-zero
+        (=attend-everything) float mask ``[1, 1, 1, kv_len]``."""
+        attn_impl = getattr(self.config, "_attn_implementation", "sdpa")
+        if attn_impl in ("sdpa", "flash_attention_2", "flash_attention_3"):
+            return None
+        return torch.zeros(1, 1, 1, kv_len, dtype=self.dtype, device=self.device)
+
+    @torch.no_grad()
+    def write_prefill(self, token_ids):
+        """Bottom-band prefill WITH a KV cache (query-only helper for decode).
+
+        Runs ``embed_tokens`` + ``layers[0:a]`` over ``token_ids`` chunk-local
+        (causal mask, RoPE 0:T) exactly like :meth:`write_chunk`, but keeps the
+        bottom-band K/V in a fresh ``DynamicCache`` so :meth:`decode_step` can
+        extend it one token at a time. Returns ``(h_j [1, T, d], bottom_cache,
+        T)`` where ``T`` is the next chunk-local RoPE position for the first
+        generated token."""
+        ids = self._as_ids(token_ids)
+        T = ids.shape[1]
+        inputs_embeds = self.embed_tokens(ids)
+        positions = torch.arange(T, device=self.device).unsqueeze(0)
+        causal_mask, position_embeddings = self._make_mask_and_rope(
+            inputs_embeds, positions
+        )
+        cache = DynamicCache(config=self.config)
+        h_j = self._run_layers(
+            inputs_embeds, slice(0, self.resume_j),
+            causal_mask, positions, position_embeddings,
+            past_key_values=cache, use_cache=True,
+        )
+        return h_j, cache, T
+
+    @torch.no_grad()
+    def read_prefill(self, sink_hj, selected_hj_list, query_hj):
+        """Top-band prefill WITH a KV cache; returns first-step logits + cache.
+
+        Packs ``[sink ; ctx... ; query]`` with fresh contiguous RoPE positions
+        (identical to :meth:`read` at ``top_prepay_b == 0``), resumes
+        ``layers[a:L]`` over the whole pack once with ``use_cache=True``, caches the
+        band K/V, and applies ``norm + lm_head`` to ONLY the last packed position.
+
+        Returns ``(logits_last [1, 1, V], top_cache, H)`` where ``H`` is the packed
+        length = the next RoPE position for the first generated token's h_j. Only
+        supported for the exact resume (raises otherwise)."""
+        if self.top_prepay_b != 0 or self.block_diagonal:
+            raise NotImplementedError(
+                "resumed-band KV cache decode is only defined for the exact resume "
+                f"(top_prepay_b == 0, block_diagonal == False); got "
+                f"top_prepay_b={self.top_prepay_b}, block_diagonal={self.block_diagonal}"
+            )
+        pieces: List[torch.Tensor] = []
+        if sink_hj is not None:
+            pieces.append(sink_hj)
+        for h in selected_hj_list:
+            if h is not None and h.shape[1] > 0:
+                pieces.append(h)
+        pieces.append(query_hj)
+        packed = torch.cat(pieces, dim=1)  # [1, H, d]
+        H = packed.shape[1]
+        positions = torch.arange(H, device=self.device).unsqueeze(0)
+        causal_mask, position_embeddings = self._make_mask_and_rope(packed, positions)
+        cache = DynamicCache(config=self.config)
+        hidden = self._run_layers(
+            packed, slice(self.resume_j, self.num_layers),
+            causal_mask, positions, position_embeddings,
+            past_key_values=cache, use_cache=True,
+        )
+        last = self.norm(hidden[:, -1:, :])
+        logits_last = self.lm_head(last)  # [1, 1, V]
+        return logits_last, cache, H
+
+    @torch.no_grad()
+    def decode_step(self, token_id, bottom_cache, top_cache, q_local_pos, pack_pos):
+        """One O(1) decode step: push a single new token through both bands.
+
+        The freshly-generated ``token_id`` is (a) embedded and run through
+        ``layers[0:a]`` at chunk-local RoPE position ``q_local_pos`` attending to
+        the cached query band (``bottom_cache``) to produce its depth-``a`` hidden
+        ``h_j`` — identical to ``write_chunk(query + [token_id])[:, -1]`` by
+        causality; then (b) that ``h_j`` is run through ``layers[a:L]`` at pack RoPE
+        position ``pack_pos`` attending to the cached read band (``top_cache``),
+        norm + lm_head → next-token logits.
+
+        Returns ``logits_last [1, 1, V]``. Both caches are extended in place by one
+        position, so the caller advances ``q_local_pos`` and ``pack_pos`` by 1."""
+        ids = torch.tensor([[int(token_id)]], device=self.device, dtype=torch.long)
+        emb = self.embed_tokens(ids)  # [1, 1, d]
+        # --- bottom band: layers[0:a] on the single new token (query-local RoPE) ---
+        if self.resume_j > 0:
+            b_pos = torch.tensor([[int(q_local_pos)]], device=self.device)
+            b_pe = self.rotary_emb(emb, position_ids=b_pos)
+            b_mask = self._decode_attn_mask(int(q_local_pos) + 1)
+            new_hj = self._run_layers(
+                emb, slice(0, self.resume_j),
+                b_mask, b_pos, b_pe,
+                past_key_values=bottom_cache, use_cache=True,
+            )
+        else:
+            # j == 0: h_j IS the embedding (RAG upper bound); bottom band is empty.
+            new_hj = emb
+        # --- top band: layers[a:L] on the single new h_j (pack RoPE position) ---
+        t_pos = torch.tensor([[int(pack_pos)]], device=self.device)
+        t_pe = self.rotary_emb(new_hj, position_ids=t_pos)
+        t_mask = self._decode_attn_mask(int(pack_pos) + 1)
+        hidden = self._run_layers(
+            new_hj, slice(self.resume_j, self.num_layers),
+            t_mask, t_pos, t_pe,
+            past_key_values=top_cache, use_cache=True,
+        )
+        hidden = self.norm(hidden)
+        return self.lm_head(hidden)  # [1, 1, V]
 
     # ------------------------------------------------------------------ #
     # convenience: full split forward on a single packed token sequence

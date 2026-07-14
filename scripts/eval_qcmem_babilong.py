@@ -476,6 +476,7 @@ def qcmem_generate(
     iter_rounds: int = 0,         # iter_reader_attn: #BFS rounds (<=0 -> auto)
     iter_hop_topk: int = 2,       # iter_reader_attn: chunks added per round
     iter_score: str = "meanpool", # iter_reader_attn: "meanpool" | "maxsim"
+    use_kv_cache: bool = True,    # resumed-band KV cache decode (O(1)/step)
 ) -> str:
     """Chunk the prompt, write each chunk to depth ``j``, select context chunks,
     then greedily decode from the packed read.
@@ -574,17 +575,59 @@ def qcmem_generate(
         stats["n_selected_chunks"] = len(selected_hj)
         stats["n_context_chunks"] = len(context_chunks)
 
-    for step in range(max_new_tokens):
-        q_hj = qc.write_chunk(query_ids)
-        logits = qc.read(sink_hj, selected_hj, q_hj)   # [1, |H|, V]
-        next_logits = logits[0, -1].float()
-        if step == 0 and eos_ids:
-            next_logits[eos_ids] = float("-inf")
+    # Optional per-step next-token logits capture (correctness A/B harness).
+    capture = stats is not None and stats.get("capture_step_logits")
+    step_logits = [] if capture else None
+
+    # ---- resumed-band KV cache decode (O(1)/step) -------------------------- #
+    # Only the exact resume (top_prepay_b == 0, block_diagonal == False) supports
+    # the KV cache; the ablation read variants fall back to the recompute path.
+    # EOS detection honours the model's full int/list stop-token contract
+    # (``eos_ids``, e.g. Qwen EOS + end-of-turn), not just a single token.
+    can_kv = (use_kv_cache and getattr(qc, "top_prepay_b", 0) == 0
+              and not getattr(qc, "block_diagonal", False))
+    if can_kv:
+        # Prefill both bands once; each step then pushes ONE token through
+        # layers[0:j] (bottom cache) + layers[j:] (top cache).
+        q_hj, bottom_cache, q_local_pos = qc.write_prefill(query_ids)
+        logits1, top_cache, pack_pos = qc.read_prefill(sink_hj, selected_hj, q_hj)
+        next_logits = logits1[0, -1].float()
+        if eos_ids:
+            next_logits[eos_ids] = float("-inf")  # step 0 never emits EOS
+        if capture:
+            step_logits.append(next_logits.detach().clone())
         next_tok = int(next_logits.argmax().item())
-        if next_tok in eos_ids and step > 0:
-            break
         generated.append(next_tok)
-        query_ids = query_ids + [next_tok]
+        for step in range(1, max_new_tokens):
+            logits = qc.decode_step(
+                next_tok, bottom_cache, top_cache, q_local_pos, pack_pos)
+            q_local_pos += 1
+            pack_pos += 1
+            next_logits = logits[0, -1].float()
+            if capture:
+                step_logits.append(next_logits.detach().clone())
+            next_tok = int(next_logits.argmax().item())
+            if next_tok in eos_ids:
+                break
+            generated.append(next_tok)
+    else:
+        for step in range(max_new_tokens):
+            q_hj = qc.write_chunk(query_ids)
+            logits = qc.read(sink_hj, selected_hj, q_hj)   # [1, |H|, V]
+            next_logits = logits[0, -1].float()
+            if step == 0 and eos_ids:
+                next_logits[eos_ids] = float("-inf")
+            if capture:
+                step_logits.append(next_logits.detach().clone())
+            next_tok = int(next_logits.argmax().item())
+            if next_tok in eos_ids and step > 0:
+                break
+            generated.append(next_tok)
+            query_ids = query_ids + [next_tok]
+
+    if capture:
+        stats["step_logits"] = step_logits
+        stats["generated_ids"] = list(generated)
 
     return tokenizer.decode(generated, skip_special_tokens=True).strip()
 
