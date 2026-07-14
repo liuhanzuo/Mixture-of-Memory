@@ -157,3 +157,6 @@ external/landmark/results_s2/
 # SSH deploy key (github push) — NEVER commit private key
 configs/github_deploy_key
 configs/github_deploy_key.pub
+
+# offline pip wheelhouse for lhz .venv_hy3 (3GB, do not commit)
+wheelhouse_hy3/

@@ -138,7 +138,20 @@ def load_hunyuan(model_path, device, dtype, device_map=""):
               local_files_only=True)
     if device_map:
         kw["device_map"] = device_map
-    model = HunYuanMoEV1ForCausalLM.from_pretrained(model_path, **kw)
+    # transformers 5.13.x dispatches MoE experts through the `@use_experts_implementation`
+    # interface; the default (`grouped_mm`) calls torch 2.8-nv's grouped-GEMM CUDA kernel,
+    # which asserts `delta % 16 == 0` on the dynamic per-expert token dim and hard-crashes
+    # (GroupMMCommon.cuh:51) on our unpadded token counts. Force the officially-supported
+    # `eager` path (the native per-expert index_add_ loop, HunYuanMoEV1Experts.forward) —
+    # no kernel alignment constraint, numerically equivalent. Passing `experts_implementation`
+    # to from_pretrained sets config._experts_implementation before the layers are built.
+    # Guarded getattr keeps the tiny-random CPU smoke (older API / direct construction) working.
+    try:
+        model = HunYuanMoEV1ForCausalLM.from_pretrained(
+            model_path, experts_implementation="eager", **kw)
+    except TypeError:
+        # transformers without the experts_implementation kwarg (e.g. dev-box 4.57): default path.
+        model = HunYuanMoEV1ForCausalLM.from_pretrained(model_path, **kw)
     if not device_map:
         model.to(device)
     model.eval()
@@ -200,10 +213,18 @@ def _prep(model, ids):
     cache_position = torch.arange(T, device=embeds.device)
     pos = cache_position.unsqueeze(0)
     pe = base.rotary_emb(embeds, pos)
-    cm = create_causal_mask(
-        config=model.config, input_embeds=embeds, attention_mask=None,
-        cache_position=cache_position, past_key_values=None, position_ids=pos,
-    )
+    # transformers 5.13.x: kwarg is `inputs_embeds` and there is no `cache_position`
+    # param (4.57.x used `input_embeds` + `cache_position`). Try new sig, fall back.
+    try:
+        cm = create_causal_mask(
+            config=model.config, inputs_embeds=embeds, attention_mask=None,
+            past_key_values=None, position_ids=pos,
+        )
+    except TypeError:
+        cm = create_causal_mask(
+            config=model.config, input_embeds=embeds, attention_mask=None,
+            cache_position=cache_position, past_key_values=None, position_ids=pos,
+        )
     return embeds, pe, cm, pos, cache_position
 
 
@@ -236,7 +257,12 @@ def _readout_metrics(model, h, ids):
     norm = model.model.norm
     lm_head = model.lm_head
     h = h.to(_module_device(norm))
-    logits = lm_head(norm(h).to(_module_device(lm_head))).float()
+    # fp32 readout: mid-layer hidden can carry massive activations; a bf16 lm_head
+    # matmul (4096->128167 tied embedding) overflows to inf on those -> exploding
+    # nll (84/235). Compute norm+projection in fp32 so the logit-lens is numerically
+    # honest. (FULL arm is unaffected: hidden[L] is in-distribution for final norm.)
+    hn = norm(h).to(_module_device(lm_head)).float()
+    logits = torch.nn.functional.linear(hn, lm_head.weight.float())
     tgt = ids[:, 1:].to(logits.device)
     logits = logits[:, :-1]
     nll = torch.nn.functional.cross_entropy(

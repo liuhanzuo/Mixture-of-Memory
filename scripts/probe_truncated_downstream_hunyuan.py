@@ -107,7 +107,16 @@ def load_model_hunyuan(model_path, device, dtype, device_map="", trust_remote_co
               local_files_only=True, attn_implementation="eager")
     if device_map:
         kw["device_map"] = device_map
-    model = HunYuanMoEV1ForCausalLM.from_pretrained(model_path, **kw)
+    # transformers 5.13.x MoE experts dispatch: the default `grouped_mm` experts impl calls
+    # torch 2.8-nv's grouped-GEMM CUDA kernel, which asserts `delta % 16 == 0` on the dynamic
+    # per-expert token dim and hard-crashes (GroupMMCommon.cuh:51). Force the officially-supported
+    # `eager` path (native per-expert index_add_ loop, HunYuanMoEV1Experts.forward) — no kernel
+    # alignment constraint, numerically equivalent. Guard for older transformers w/o the kwarg.
+    try:
+        model = HunYuanMoEV1ForCausalLM.from_pretrained(
+            model_path, experts_implementation="eager", **kw)
+    except TypeError:
+        model = HunYuanMoEV1ForCausalLM.from_pretrained(model_path, **kw)
     if not device_map:
         model.to(device)
     model.eval()
@@ -145,10 +154,18 @@ def verify_recompute_identity_hunyuan(model, tok, sentences, device, max_len, de
     cache_position = torch.arange(T, device=dev0)
     pos = cache_position.unsqueeze(0)
     pe = base.rotary_emb(hs[0], pos)
-    cm = create_causal_mask(
-        config=model.config, input_embeds=hs[0], attention_mask=attn,
-        cache_position=cache_position, past_key_values=None, position_ids=pos,
-    )
+    # transformers 5.13.x: kwarg is `inputs_embeds` and there is no `cache_position` param
+    # (4.57.x used `input_embeds` + `cache_position`). Try new sig, fall back to old.
+    try:
+        cm = create_causal_mask(
+            config=model.config, inputs_embeds=hs[0], attention_mask=attn,
+            past_key_values=None, position_ids=pos,
+        )
+    except TypeError:
+        cm = create_causal_mask(
+            config=model.config, input_embeds=hs[0], attention_mask=attn,
+            cache_position=cache_position, past_key_values=None, position_ids=pos,
+        )
     diffs = {}
     for j in depths:
         if j >= n_layers:                           # j == top: nothing to recompute
