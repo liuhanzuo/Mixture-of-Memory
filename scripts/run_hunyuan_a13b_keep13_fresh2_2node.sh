@@ -35,7 +35,7 @@ export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
 # network IBext_v10 ... via NET/IBext_v10/GDRDMA"). Forcing eth0 (NCCL_IB_DISABLE=1,
 # only 10Gb/s) made the 16-card FSDP crawl at ~60-90s/step AND became unstable; IB is
 # ~40x the bandwidth. eth0 is kept only as the OOB bootstrap iface (NCCL_SOCKET_IFNAME).
-export NCCL_DEBUG=WARN NCCL_SOCKET_IFNAME=eth0 NCCL_IB_DISABLE=0
+export NCCL_DEBUG=INFO NCCL_SOCKET_IFNAME=eth0 NCCL_IB_DISABLE=0
 
 LOG="$PROJECT_ROOT/logs/hunyuan_a13b_keep13_fresh2_16card_node${NODE_RANK}.log"
 mkdir -p "$PROJECT_ROOT/logs" "$PROJECT_ROOT/outputs/hunyuan_a13b_keep13_fresh2_16card"
