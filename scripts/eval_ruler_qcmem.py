@@ -128,6 +128,16 @@ def _resolve_task(name: str) -> str:
     )
 
 
+def _resolve_selector(cli_selector: str, task: str) -> str:
+    """Per-task selector routing. When the user leaves ``--selector auto`` (the
+    default), variable_tracking (a multi-hop VAR chain) uses
+    ``iter_bm25_adaptive`` and every niah_* task uses ``bm25``. Any explicit
+    ``--selector X`` overrides auto and is applied to every task."""
+    if cli_selector != "auto":
+        return cli_selector
+    return "iter_bm25_adaptive" if task == "variable_tracking" else "bm25"
+
+
 def _bare_question(prompt: str) -> str:
     """Extract the trailing question line (used as the bm25 lexical query).
 
@@ -212,11 +222,17 @@ def main():
                              "(post-hoc, no training) — read grows O(context). Both "
                              "isolate QCMem's two primitives: retrieval (fixed read) "
                              "and layer-partial recompute.")
-    parser.add_argument("--selector", type=str, default="bm25",
-                        choices=["bm25", "recency", "oracle", "reader_attn",
+    parser.add_argument("--selector", type=str, default="auto",
+                        choices=["auto", "bm25", "recency", "oracle", "reader_attn",
                                  "iter_reader_attn", "iter_bm25",
                                  "iter_bm25_adaptive"],
-                        help="Chunk selector for the read pack. oracle is NIAH-only "
+                        help="Chunk selector for the read pack. Default 'auto' "
+                             "routes per-task so one command scores every task "
+                             "correctly: variable_tracking (multi-hop VAR chain) "
+                             "-> iter_bm25_adaptive, every niah_* -> bm25. Passing "
+                             "any explicit selector OVERRIDES auto and applies it "
+                             "to ALL tasks. "
+                             "oracle is NIAH-only "
                              "(degrades to recency on variable_tracking). "
                              "iter_reader_attn iterates reader_attn as a multi-hop "
                              "BFS over the cached h_j (query -> found-chunk -> ...) "
@@ -436,12 +452,15 @@ def main():
     summary: dict = {}
     for task in tqdm(tasks, desc="tasks"):
         summary[task] = {}
+        sel = _resolve_selector(args.selector, task)
         for length in tqdm(args.lengths, desc="lengths", leave=False):
             cell_started = time.time()
             if length not in ruler._LENGTH_TOKENS:
                 print(f"[WARN] unknown length {length}, skipping")
                 continue
             target_tokens = ruler._LENGTH_TOKENS[length]
+            print(f"[QCMem-RULER] {task}/{length}: selector={sel}"
+                  f"{' (auto)' if args.selector == 'auto' else ''}")
             # Deterministic per-(task,length) RNG so shards share the sample set
             # (identical construction to eval_ruler_mem_space.main).
             base_seed = args.seed + (hash((task, length)) % 100000)
@@ -491,7 +510,7 @@ def main():
 
                 # oracle needle chunks (NIAH only; VT has no single gold span).
                 needle_set = None
-                if args.selector == "oracle":
+                if sel == "oracle":
                     needle_set = _oracle_needle_chunks(
                         input_ids, gold_needle, answers,
                         tokenizer, args.chunk_size)
@@ -501,7 +520,7 @@ def main():
                     output = qcmem_generate(
                         qc=qc, tokenizer=tokenizer, input_ids=input_ids,
                         chunk_size=args.chunk_size, max_new_tokens=mnt,
-                        selector=args.selector, topk=args.topk,
+                        selector=sel, topk=args.topk,
                         sink_tokens=args.sink_tokens,
                         needle_chunk_set=needle_set, bare_question_ids=bare_q_ids,
                         no_retrieval=no_retrieval, stats=gen_stats,
@@ -574,20 +593,20 @@ def main():
                         "resume_j": args.resume_j,
                         "top_prepay_b": args.top_prepay_b,
                         "reuse_kv_blockdiag": bool(args.reuse_kv_blockdiag),
-                        "selector": (None if no_retrieval else args.selector),
+                        "selector": (None if no_retrieval else sel),
                         "topk": (None if no_retrieval else args.topk),
                         "iter": (
                             {"rounds": args.iter_rounds,
                              "hop_topk": args.iter_hop_topk,
                              "score": args.iter_score}
-                            if (not no_retrieval and args.selector == "iter_reader_attn")
+                            if (not no_retrieval and sel == "iter_reader_attn")
                             else {"rounds": args.iter_rounds,
                                   "hop_topk": args.iter_hop_topk}
-                            if (not no_retrieval and args.selector == "iter_bm25")
+                            if (not no_retrieval and sel == "iter_bm25")
                             else {"hop_topk": args.iter_hop_topk,
                                   "conf_ratio": args.iter_conf_ratio,
                                   "max_chunks": args.iter_max_chunks}
-                            if (not no_retrieval and args.selector == "iter_bm25_adaptive")
+                            if (not no_retrieval and sel == "iter_bm25_adaptive")
                             else None
                         ),
                         "sink_tokens": args.sink_tokens, "num_layers": L,
