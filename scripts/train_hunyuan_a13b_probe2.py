@@ -705,6 +705,11 @@ def main():
     p.add_argument("--dry_run_build", action="store_true",
                    help="meta + shrunk-CPU structural/transplant-logic validation, then exit. "
                         "No GPUs, no 160GB base load.")
+    p.add_argument("--wandb", type=int, default=1,
+                   help="1=log to wandb (offline by default, sync later); 0=off.")
+    p.add_argument("--wandb_project", type=str, default="hunyuan-a13b-minimal-arch")
+    p.add_argument("--wandb_run_name", type=str, default="",
+                   help="empty -> auto from arm/keep/fresh.")
     args = p.parse_args()
 
     if args.dry_run_build:
@@ -872,6 +877,23 @@ def main():
         del resume_ckpt
         gc.collect()
 
+    # ---- wandb (offline by default; `wandb sync <dir>` later to upload) ----
+    wandb_run = None
+    if is_main and args.wandb:
+        try:
+            import wandb
+            os.environ.setdefault("WANDB_MODE", "offline")
+            run_name = args.wandb_run_name or f"{arm}_keep{args.keep_front_layers}_fresh{args.n_fresh_layers}"
+            wandb_run = wandb.init(
+                project=args.wandb_project, name=run_name, dir=args.output_dir,
+                config={k: v for k, v in vars(args).items()},
+            )
+            logger.info(f"[wandb] offline logging -> {args.output_dir}/wandb "
+                        f"(sync later: wandb sync <run_dir>)")
+        except Exception as e:  # never let logging kill training
+            logger.warning(f"[wandb] init failed ({e}); continuing without wandb")
+            wandb_run = None
+
     model.train()
     optimizer.zero_grad(set_to_none=True)
     micro, accum_loss, accum_cnt = 0, 0.0, 0
@@ -926,6 +948,14 @@ def main():
                             f"lr={optimizer.param_groups[0]['lr']:.2e} "
                             f"gnorm={float(gnorm):.2f} {dt/args.log_every:.2f}s/step "
                             f"maxmem={mem:.1f}GB")
+                if wandb_run is not None:
+                    wandb_run.log({
+                        "train/loss": avg, "train/ppl": math.exp(min(avg, 20)),
+                        "train/lr": optimizer.param_groups[0]["lr"],
+                        "train/grad_norm": float(gnorm),
+                        "perf/s_per_step": dt / args.log_every,
+                        "perf/max_mem_gb": mem, "epoch": epoch,
+                    }, step=step)
                 accum_loss, accum_cnt = 0.0, 0
                 t0 = time.time()
 
@@ -933,6 +963,8 @@ def main():
                 _save(model, optimizer, args, step, epoch, cfg, ddp, is_main)
 
     _save(model, optimizer, args, step, epoch, cfg, ddp, is_main, final=True)
+    if wandb_run is not None:
+        wandb_run.finish()
     if is_main:
         logger.info(f"DONE [{arm}] at step {step}")
     if ddp:
