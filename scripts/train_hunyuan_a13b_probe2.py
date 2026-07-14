@@ -114,6 +114,20 @@ def build_pruned_config(model_path, keep_front_layers, n_fresh_layers):
     cfg = HunYuanMoEV1Config.from_pretrained(model_path, local_files_only=True)
     # (i) select the native class (not the trust_remote_code auto_map path).
     cfg.model_type = "hunyuan_v1_moe"
+    # (i-b) MoE experts implementation: force "eager" (per-expert index_add_ loop).
+    #   transformers 5.13.x defaults an unset `_experts_implementation` to
+    #   "grouped_mm" at post_init (get_correct_experts_implementation(None) on CUDA),
+    #   which dispatches torch 2.8-nv's grouped-GEMM CUDA kernel; that kernel asserts
+    #   `delta % 16 == 0` on the dynamic per-expert token dim and hard-crashes
+    #   (GroupMMCommon.cuh:51) on our unpadded token counts. Setting it on the config
+    #   propagates to BOTH the directly-constructed pruned model (post_init reads it)
+    #   AND the base checkpoint load below (which reuses build_pruned_config for its
+    #   full 32-layer config). "eager" is numerically equivalent with no alignment
+    #   constraint. Guarded so older transformers (no such attr) still construct.
+    try:
+        cfg._experts_implementation = "eager"
+    except (AttributeError, ValueError):
+        pass
     # (ii) native attention/rotary read config.head_dim (None here); the checkpoint
     #      only carries attention_head_dim. Set it or attn crashes on head_dim**-0.5.
     if getattr(cfg, "head_dim", None) is None:
@@ -198,10 +212,22 @@ def transplant_front(model, model_path, keep_front_layers, n_fresh_layers,
     full_cfg, _ = build_pruned_config(model_path, 32, 0)  # full 32-layer native cfg
     if is_main:
         logger.info(f"[transplant] loading full base ({base_load_dtype}) from {model_path} ...")
-    base = HunYuanMoEV1ForCausalLM.from_pretrained(
-        model_path, config=full_cfg, torch_dtype=base_load_dtype,
-        low_cpu_mem_usage=True, local_files_only=True,
-    )
+    # experts_implementation="eager" avoids the torch2.8-nv grouped_mm kernel crash
+    # (GroupMMCommon.cuh:51 delta%16==0). full_cfg already carries
+    # _experts_implementation="eager" (build_pruned_config), but we also pass the
+    # kwarg explicitly to match the proven probe load path; try/except keeps older
+    # transformers (no kwarg) working.
+    try:
+        base = HunYuanMoEV1ForCausalLM.from_pretrained(
+            model_path, config=full_cfg, torch_dtype=base_load_dtype,
+            low_cpu_mem_usage=True, local_files_only=True,
+            experts_implementation="eager",
+        )
+    except TypeError:
+        base = HunYuanMoEV1ForCausalLM.from_pretrained(
+            model_path, config=full_cfg, torch_dtype=base_load_dtype,
+            low_cpu_mem_usage=True, local_files_only=True,
+        )
     base_sd = base.state_dict()
 
     keep_keys = _copied_keys(base_sd, keep_front_layers)
