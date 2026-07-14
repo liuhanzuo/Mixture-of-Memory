@@ -39,6 +39,7 @@ Examples
 from __future__ import annotations
 
 import argparse
+import contextlib
 import gc
 import os
 import random
@@ -88,6 +89,18 @@ def _cleanup(device):
         torch.cuda.empty_cache()
 
 
+def _dense_ctx(peft_model):
+    """Context that makes the Dense path run on the STOCK backbone.
+
+    When a LoRA adapter is loaded (``peft_model is not None``) QCMem generates
+    with the adapter active; the Dense arm must ignore it, so we run Dense inside
+    ``peft_model.disable_adapter()`` (LoRA delta zeroed). With no adapter this is
+    a no-op ``nullcontext`` and Dense == QCMem backbone."""
+    if peft_model is not None:
+        return peft_model.disable_adapter()
+    return contextlib.nullcontext()
+
+
 def _bare_question(prompt: str) -> str:
     """Trailing question line = the bm25 lexical query (RULER template boundary)."""
     return prompt[prompt.rfind("\n") + 1:].strip()
@@ -118,12 +131,16 @@ def _resolve_task(name: str) -> str:
 # --------------------------------------------------------------------------- #
 # Dense: stock model.generate over the full context (standard KV cache decode)
 # --------------------------------------------------------------------------- #
-def _dense_time(model, tokenizer, input_ids, *, max_new_tokens, device):
+def _dense_time(model, tokenizer, input_ids, *, max_new_tokens, device,
+                peft_model=None):
     """Prefill time, decode s/step + tok/s, peak mem via the (N vs 1)-step delta.
 
     ``t_1`` = generate(max_new_tokens=1) = prefill + 1 decode step; ``t_N`` =
     generate(max_new_tokens=N). decode/step = (t_N - t_1)/(N-1); prefill ~= t_1
-    minus one decode step. Returns a dict, or ``{"oom": True}`` on CUDA OOM."""
+    minus one decode step. Returns a dict, or ``{"oom": True}`` on CUDA OOM.
+
+    Runs inside ``_dense_ctx`` so a loaded LoRA adapter is disabled (stock
+    backbone) for a fair Dense-vs-QCMem+LoRA comparison."""
     gen_kwargs = dict(do_sample=False, num_beams=1,
                       pad_token_id=(tokenizer.pad_token_id
                                     if tokenizer.pad_token_id is not None else 0))
@@ -131,8 +148,9 @@ def _dense_time(model, tokenizer, input_ids, *, max_new_tokens, device):
     def once(mnt):
         _sync(device)
         t0 = time.perf_counter()
-        model.generate(input_ids, max_new_tokens=mnt, min_new_tokens=mnt,
-                        **gen_kwargs)
+        with _dense_ctx(peft_model):
+            model.generate(input_ids, max_new_tokens=mnt, min_new_tokens=mnt,
+                           **gen_kwargs)
         _sync(device)
         return time.perf_counter() - t0
 
@@ -155,14 +173,19 @@ def _dense_time(model, tokenizer, input_ids, *, max_new_tokens, device):
 
 
 @torch.no_grad()
-def _dense_answer(model, tokenizer, input_ids, *, max_new_tokens, device):
-    """Greedy dense generation -> decoded string (or None on OOM)."""
+def _dense_answer(model, tokenizer, input_ids, *, max_new_tokens, device,
+                  peft_model=None):
+    """Greedy dense generation -> decoded string (or None on OOM).
+
+    Runs inside ``_dense_ctx`` so a loaded LoRA adapter is disabled (stock
+    backbone) — the Dense arm is always the unmodified model."""
     try:
-        out = model.generate(
-            input_ids, max_new_tokens=max_new_tokens, do_sample=False,
-            num_beams=1,
-            pad_token_id=(tokenizer.pad_token_id
-                          if tokenizer.pad_token_id is not None else 0))
+        with _dense_ctx(peft_model):
+            out = model.generate(
+                input_ids, max_new_tokens=max_new_tokens, do_sample=False,
+                num_beams=1,
+                pad_token_id=(tokenizer.pad_token_id
+                              if tokenizer.pad_token_id is not None else 0))
     except Exception as e:  # noqa: BLE001
         if _is_oom(e):
             _cleanup(device)
@@ -291,7 +314,7 @@ def run_profile(qc, tokenizer, *, lengths, chunk_size, topk, device, vocab,
 # 2) speed: Dense vs QCMem prefill / decode-tok-s / peak-mem per length
 # --------------------------------------------------------------------------- #
 def run_speed(model, qc, tokenizer, *, lengths, chunk_size, topk, selector,
-              sink_tokens, max_new_tokens, device, vocab):
+              sink_tokens, max_new_tokens, device, vocab, peft_model=None):
     print("=" * 78)
     print(f"Dense vs QCMem SPEED  (resume_j={qc.resume_j}, topk={topk}, "
           f"chunk_size={chunk_size}, max_new_tokens={max_new_tokens})")
@@ -309,7 +332,7 @@ def run_speed(model, qc, tokenizer, *, lengths, chunk_size, topk, selector,
         bare_q = ids[0].tolist()[-8:]
 
         d = _dense_time(model, tokenizer, ids, max_new_tokens=max_new_tokens,
-                        device=device)
+                        device=device, peft_model=peft_model)
         _cleanup(device)
         q = _qcmem_time(qc, tokenizer, ids, chunk_size=chunk_size, topk=topk,
                         selector=selector, sink_tokens=sink_tokens,
@@ -344,7 +367,8 @@ def run_speed(model, qc, tokenizer, *, lengths, chunk_size, topk, selector,
 # 3) accuracy: RULER niah_single string_match_all, Dense vs QCMem
 # --------------------------------------------------------------------------- #
 def run_accuracy(model, qc, tokenizer, *, lengths, chunk_size, topk, selector,
-                 sink_tokens, n_acc, max_new_tokens, device, base_seed, task):
+                 sink_tokens, n_acc, max_new_tokens, device, base_seed, task,
+                 peft_model=None):
     import scripts.eval_ruler_mem_space as ruler  # local import (needs real tok)
     print("=" * 78)
     print(f"Dense vs QCMem ACCURACY  RULER {task}  string_match_all  "
@@ -371,7 +395,8 @@ def run_accuracy(model, qc, tokenizer, *, lengths, chunk_size, topk, selector,
             # Dense
             if not d_oom:
                 d_out = _dense_answer(model, tokenizer, input_ids,
-                                      max_new_tokens=max_new_tokens, device=device)
+                                      max_new_tokens=max_new_tokens, device=device,
+                                      peft_model=peft_model)
                 if d_out is None:
                     d_oom = True
                 else:
@@ -397,6 +422,13 @@ def main():
     ap.add_argument("--mode", choices=["profile", "speed", "accuracy", "both",
                                        "all"], default="all")
     ap.add_argument("--model_path", type=str, default="")
+    ap.add_argument("--lora_adapter", type=str, default="",
+                    help="Path to a trained QCMem-distill LoRA adapter dir "
+                         "(peft). Loaded onto the backbone that the QCMem path "
+                         "reads off, so QCMem generates WITH the adapter. The "
+                         "Dense path runs with the adapter DISABLED (stock "
+                         "backbone) so the comparison is QCMem+LoRA vs stock "
+                         "Dense — a single resident model, no extra VRAM.")
     ap.add_argument("--tiny", action="store_true",
                     help="Tiny random Qwen3 (no weights) for CPU plumbing smoke.")
     ap.add_argument("--tiny_layers", type=int, default=6)
@@ -411,7 +443,7 @@ def main():
     ap.add_argument("--context_lengths", type=str, nargs="+",
                     default=["8k", "16k", "32k", "64k", "128k"])
     ap.add_argument("--acc_lengths", type=str, nargs="+",
-                    default=["8k", "16k", "32k"])
+                    default=["8k", "16k", "32k", "64k", "128k"])
     ap.add_argument("--acc_task", type=str, default="niah_single")
     ap.add_argument("--n_acc", type=int, default=30)
     ap.add_argument("--acc_seed", type=int, default=42)
@@ -456,6 +488,22 @@ def main():
         chunk_size = args.chunk_size
         is_tiny = False
 
+    # Direction A: load a trained QCMem-distill LoRA adapter onto the backbone.
+    # PeftModel injects the LoRA modules IN-PLACE, so ``peft_model.base_model.model``
+    # (the underlying CausalLM QCMemModel reads off) generates WITH the adapter.
+    # We keep the ``peft_model`` handle so the Dense path can be run inside
+    # ``peft_model.disable_adapter()`` (adapter delta zeroed -> stock backbone).
+    # This gives a fair "QCMem+LoRA vs stock Dense" head-to-head with a SINGLE
+    # resident 8B model (no VRAM cost of a second copy — important at 128k).
+    peft_model = None
+    if args.lora_adapter and not is_tiny:
+        from peft import PeftModel
+        print(f"[bench] loading LoRA adapter (QCMem path only): {args.lora_adapter}")
+        peft_model = PeftModel.from_pretrained(model, args.lora_adapter).eval()
+        model = peft_model.base_model.model
+    elif args.lora_adapter and is_tiny:
+        print("[bench] --lora_adapter ignored for tiny/no-weights smoke model")
+
     qc = QCMemModel(model, resume_j=resume_j)
     print(f"[bench] backbone L={L} resume_j={resume_j} chunk_size={chunk_size} "
           f"topk={args.topk} device={device}")
@@ -476,7 +524,7 @@ def main():
         run_speed(model, qc, tokenizer, lengths=speed_lengths,
                   chunk_size=chunk_size, topk=args.topk, selector=args.selector,
                   sink_tokens=args.sink_tokens, max_new_tokens=args.max_new_tokens,
-                  device=device, vocab=vocab)
+                  device=device, vocab=vocab, peft_model=peft_model)
 
     if do_acc:
         if is_tiny:
@@ -487,7 +535,8 @@ def main():
                          chunk_size=chunk_size, topk=args.topk,
                          selector=args.selector, sink_tokens=args.sink_tokens,
                          n_acc=args.n_acc, max_new_tokens=args.max_new_tokens,
-                         device=device, base_seed=args.acc_seed, task=args.acc_task)
+                         device=device, base_seed=args.acc_seed, task=args.acc_task,
+                         peft_model=peft_model)
 
 
 if __name__ == "__main__":
