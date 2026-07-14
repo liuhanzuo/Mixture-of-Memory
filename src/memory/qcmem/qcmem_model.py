@@ -391,6 +391,78 @@ class QCMemModel:
         )
         return h_j  # [1, T, d]
 
+    @torch.no_grad()
+    def write_chunks(
+        self,
+        chunk_list: Sequence,
+        max_batch_tokens: int = 8192,
+        max_batch: Optional[int] = None,
+    ) -> List[torch.Tensor]:
+        """Batched WRITE: encode many chunks to depth ``j`` in grouped forwards.
+
+        Semantically IDENTICAL to ``[self.write_chunk(c) for c in chunk_list]``
+        (each chunk stays chunk-local: RoPE positions ``0:T`` + a per-chunk causal
+        mask, no cross-chunk attention), but chunks of the same length are stacked
+        along the BATCH axis and run through ``layers[0:j]`` in a single forward.
+        This collapses ``len(chunk_list)`` sequential bottom-band forwards into a
+        handful of batched ones (order-of-magnitude fewer kernel launches / higher
+        GPU utilisation), which is the WRITE-phase bottleneck for long contexts.
+
+        Correctness note: because WRITE uses a pure per-chunk causal mask (no
+        padding, no cross-sample attention) and RoPE positions ``0:T`` shared by
+        every chunk of length ``T``, stacking equal-length chunks into ``[B,T,d]``
+        and running the bottom band once is bit-identical to running each ``[1,T,d]``
+        chunk on its own — attention never mixes batch entries and the MoE/MLP is
+        token-local. Chunks of DIFFERENT lengths are grouped separately (each group
+        is uniform-length, so no padding is ever introduced).
+
+        Parameters
+        ----------
+        chunk_list:
+            Ordered list of chunks (each a ``[T]``/``[1,T]`` tensor or id list).
+        max_batch_tokens:
+            Soft cap on ``B * T`` per batched forward (bounds activation memory for
+            long contexts / many chunks). Default 8192 (= 16 chunks of 512).
+        max_batch:
+            Optional hard cap on ``B`` per forward (applied on top of the token cap).
+
+        Returns
+        -------
+        List of ``[1, T_c, d]`` depth-``j`` hiddens aligned with ``chunk_list``.
+        """
+        n = len(chunk_list)
+        if n == 0:
+            return []
+        ids_list = [self._as_ids(c) for c in chunk_list]  # each [1, T]
+        results: List[Optional[torch.Tensor]] = [None] * n
+
+        # Group chunk indices by (uniform) length so each batch needs no padding.
+        by_len: dict = {}
+        for i, ids in enumerate(ids_list):
+            by_len.setdefault(int(ids.shape[1]), []).append(i)
+
+        for T, idxs in by_len.items():
+            # per-forward batch cap: token budget, then optional hard B cap.
+            bs = max(1, max_batch_tokens // max(1, T))
+            if max_batch is not None:
+                bs = min(bs, int(max_batch))
+            bs = max(1, bs)
+            positions = torch.arange(T, device=self.device).unsqueeze(0)  # [1,T]
+            for s in range(0, len(idxs), bs):
+                batch_idx = idxs[s:s + bs]
+                ids = torch.cat([ids_list[i] for i in batch_idx], dim=0)  # [B,T]
+                inputs_embeds = self.embed_tokens(ids)                    # [B,T,d]
+                causal_mask, position_embeddings = self._make_mask_and_rope(
+                    inputs_embeds, positions
+                )
+                h = self._run_layers(
+                    inputs_embeds, slice(0, self.resume_j),
+                    causal_mask, positions, position_embeddings,
+                )  # [B,T,d]
+                for b, i in enumerate(batch_idx):
+                    results[i] = h[b:b + 1]  # [1,T,d]
+        return results  # type: ignore[return-value]
+
     # ------------------------------------------------------------------ #
     # READ side: pack cached h_j pieces + resume layers[j:] -> logits
     # ------------------------------------------------------------------ #

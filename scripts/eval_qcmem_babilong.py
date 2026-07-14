@@ -519,7 +519,9 @@ def qcmem_generate(
     context_hj = None
     query_hj_for_sel = None
     if not no_retrieval and selector in ("reader_attn", "iter_reader_attn"):
-        context_hj = [qc.write_chunk(c) for c in context_chunks]
+        # Batched WRITE: stack equal-length context chunks into one bottom-band
+        # forward (chunk-local, bit-identical to per-chunk write_chunk).
+        context_hj = qc.write_chunks(context_chunks)
         query_hj_for_sel = qc.write_chunk(query_chunk)
 
     if no_retrieval:
@@ -540,7 +542,9 @@ def qcmem_generate(
         # reader_attn already wrote every context chunk: reuse, do not re-write.
         selected_hj = [context_hj[i] for i in sel_idx]
     else:
-        selected_hj = [qc.write_chunk(context_chunks[i]) for i in sel_idx]
+        # Batched WRITE of the selected context chunks (chunk-local, bit-identical
+        # to per-chunk write_chunk; one grouped forward instead of len(sel_idx)).
+        selected_hj = qc.write_chunks([context_chunks[i] for i in sel_idx])
 
     # ---- greedy decode: only the growing query chunk is re-encoded per step ----
     query_ids = query_chunk.tolist()
