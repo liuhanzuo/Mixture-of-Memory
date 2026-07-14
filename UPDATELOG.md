@@ -5762,3 +5762,4 @@ Sanity 已四重验证(adapter_config 配置正确、cmdline 无 SWA、CSV 完�
 - status/PENDING_TASKS.md 加 b25 中间 ckpt 早评 + LongBench 迁移验证 + b50/b100 对照 三项 auto_launch=true
 
 **Plan C 设计 workflow (5 角度) 副产品归档**：5 个 angle 报告已收集(logit-KL / position-fix / dilution-isolation / memory-state-证伪 / hybrid-staged)，已被 b25 破墙结果整体作废，但**核心诊断"dilution 才是 FIFO 真墙、b25=隐式 isolation"在事后回看是正确预言**——这从机制上解释了 b25 为何 work(小 buffer = 更少 distractor 列 = 更少 dilution)。
+{"ts":"2026-07-14T20:15:23+0800","event":"A13B FSDP bug fix and checkpoint smoke fix","summary":"Removed FULL_SHARD no_sync gradient accumulation (full gradients caused post-microbatch stalls); added --skip_final_save for diagnostic runs; lhz2 8-GPU gaccum=2 regression completed two steps without collective hang or Xid, but loss remained contamination-level (85.92 -> 90.20), so production 20k is gated pending quality root-cause investigation."}

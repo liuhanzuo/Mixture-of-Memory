@@ -705,6 +705,8 @@ def main():
     p.add_argument("--dry_run_build", action="store_true",
                    help="meta + shrunk-CPU structural/transplant-logic validation, then exit. "
                         "No GPUs, no 160GB base load.")
+    p.add_argument("--skip_final_save", action="store_true",
+                   help="Skip the expensive final FULL_STATE_DICT checkpoint (diagnostic smoke only).")
     p.add_argument("--wandb", type=int, default=1,
                    help="1=log to wandb (offline by default, sync later); 0=off.")
     p.add_argument("--wandb_project", type=str, default="hunyuan-a13b-minimal-arch")
@@ -916,13 +918,17 @@ def main():
         labels = batch["labels"].to(device, non_blocking=True)
 
         is_boundary = (micro + 1) % args.grad_accumulation_steps == 0
-        sync_ctx = model.no_sync() if (ddp and not is_boundary) else _nullctx()
-        with sync_ctx:
+        # FULL_SHARD no_sync() retains full, unsharded gradients on every rank.
+        # At 37.96B parameters that exhausts H200 memory after microbatch 1 and
+        # leaves later ranks stalled in CUDA/NCCL. Synchronize each backward so
+        # FSDP reduce-scatters gradient shards; autograd still accumulates those
+        # local shards until the optimizer boundary.
+        with _nullctx():
             # FSDP MixedPrecision handles bf16 compute; no explicit autocast needed.
             out = model(input_ids=input_ids, labels=labels)
             loss = out.loss / args.grad_accumulation_steps
             loss.backward()
-        accum_loss += loss.item() * args.grad_accumulation_steps
+        accum_loss += loss.detach().item() * args.grad_accumulation_steps
         accum_cnt += 1
         micro += 1
 
@@ -962,7 +968,11 @@ def main():
             if step % args.save_every == 0 and step > 0:
                 _save(model, optimizer, args, step, epoch, cfg, ddp, is_main)
 
-    _save(model, optimizer, args, step, epoch, cfg, ddp, is_main, final=True)
+    if args.skip_final_save:
+        if is_main:
+            logger.info("[save] skipped final checkpoint (--skip_final_save)")
+    else:
+        _save(model, optimizer, args, step, epoch, cfg, ddp, is_main, final=True)
     if wandb_run is not None:
         wandb_run.finish()
     if is_main:

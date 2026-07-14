@@ -24,6 +24,6 @@ mkdir -p logs outputs/hunyuan_a13b_keep13_fresh2_smoke
   --batch_size 1 --grad_accumulation_steps 8 \
   --lr 1e-4 --lr_inherited 2e-5 --warmup_steps 10 \
   --save_every 100 --log_every 1 --gradient_checkpointing 1 \
-  --fsdp_cpu_offload 0 --wandb 0 \
+  --fsdp_cpu_offload 0 --skip_final_save --wandb 0 \
   > "$LOG" 2>&1
 echo "A13B_SMOKE_EXIT_$?" >> "$LOG"
