@@ -214,7 +214,8 @@ def main():
                              "and layer-partial recompute.")
     parser.add_argument("--selector", type=str, default="bm25",
                         choices=["bm25", "recency", "oracle", "reader_attn",
-                                 "iter_reader_attn", "iter_bm25"],
+                                 "iter_reader_attn", "iter_bm25",
+                                 "iter_bm25_adaptive"],
                         help="Chunk selector for the read pack. oracle is NIAH-only "
                              "(degrades to recency on variable_tracking). "
                              "iter_reader_attn iterates reader_attn as a multi-hop "
@@ -224,17 +225,28 @@ def main():
                              "lexical BM25 as the hop signal (round 1 == single-shot "
                              "bm25, later rounds re-query with the previous picks' "
                              "token text) — best for vt where the chain links are "
-                             "LITERAL VAR names; pure CPU, forward-free.")
+                             "LITERAL VAR names; pure CPU, forward-free. "
+                             "iter_bm25_adaptive is iter_bm25 with a confidence-based "
+                             "adaptive stop (no fixed topk budget): stop when a hop's "
+                             "best score drops below --iter_conf_ratio x the round-1 "
+                             "best or --iter_max_chunks is hit, so short chains don't "
+                             "hard-fill low-score noise chunks into the read.")
     parser.add_argument("--iter_rounds", type=int, default=0,
                         help="iter_reader_attn / iter_bm25: #BFS hop rounds (<=0 -> "
                              "ceil(topk/iter_hop_topk)).")
     parser.add_argument("--iter_hop_topk", type=int, default=2,
-                        help="iter_reader_attn / iter_bm25: chunks added per BFS round.")
+                        help="iter_reader_attn / iter_bm25 / iter_bm25_adaptive: "
+                             "chunks added per BFS round.")
     parser.add_argument("--iter_score", type=str, default="meanpool",
                         choices=["meanpool", "maxsim"],
                         help="iter_reader_attn scoring: meanpool (mean-pool cosine, "
                              "== reader_attn) or maxsim (token-level late "
                              "interaction, dilution-free). Both forward-free.")
+    parser.add_argument("--iter_conf_ratio", type=float, default=0.3,
+                        help="iter_bm25_adaptive: stop a hop when its best BM25 score "
+                             "falls below this ratio x the round-1 best score.")
+    parser.add_argument("--iter_max_chunks", type=int, default=64,
+                        help="iter_bm25_adaptive: hard cap on accumulated chunks.")
     parser.add_argument("--topk", type=int, default=12,
                         help="Number of context chunks to pack into the read.")
     parser.add_argument("--sink_tokens", type=str, default="bos",
@@ -496,6 +508,8 @@ def main():
                         iter_rounds=args.iter_rounds,
                         iter_hop_topk=args.iter_hop_topk,
                         iter_score=args.iter_score,
+                        iter_conf_ratio=args.iter_conf_ratio,
+                        iter_max_chunks=args.iter_max_chunks,
                     )
                     if "read_len" in gen_stats:
                         read_len_last = int(gen_stats["read_len"])
@@ -570,6 +584,10 @@ def main():
                             else {"rounds": args.iter_rounds,
                                   "hop_topk": args.iter_hop_topk}
                             if (not no_retrieval and args.selector == "iter_bm25")
+                            else {"hop_topk": args.iter_hop_topk,
+                                  "conf_ratio": args.iter_conf_ratio,
+                                  "max_chunks": args.iter_max_chunks}
+                            if (not no_retrieval and args.selector == "iter_bm25_adaptive")
                             else None
                         ),
                         "sink_tokens": args.sink_tokens, "num_layers": L,

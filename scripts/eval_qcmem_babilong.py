@@ -354,6 +354,73 @@ def _iter_bm25_indices(
     return sorted(selected)
 
 
+def _iter_bm25_adaptive_indices(
+    context_chunks,        # list[LongTensor] == chunks[:-1] (doc order)
+    query_ids,             # list[int] bare-question token ids (round-1 query)
+    iter_hop_topk: int = 4,
+    conf_ratio: float = 0.3,
+    max_chunks: int = 64,
+):
+    """Confidence-adaptive variant of :func:`_iter_bm25_indices`.
+
+    Same multi-hop BFS BM25 walk (round 1 == single-shot ``bm25``; later rounds
+    re-query with the previous picks' concatenated token text; IDF is the full
+    context pool every round), but drops the fixed ``topk`` budget in favour of an
+    adaptive stop:
+
+    * record ``s1`` = round 1's best BM25 score (the confidence reference);
+    * each LATER round, if that round's best candidate score ``< conf_ratio * s1``
+      the chain has ended / the next hop is a spurious lexical link -> **break**
+      (do NOT pull the low-score chunk in, unlike the fixed-budget ``iter_bm25``
+      which hard-fills to ``topk`` and drags noise into the read);
+    * ``max_chunks`` caps the accumulated chunk count.
+
+    Every round still takes the top ``iter_hop_topk`` new chunks with ``score>0``.
+    The loop stops on the FIRST of: (1) confidence below ``conf_ratio * s1``,
+    (2) ``max_chunks`` reached, (3) no ``score>0`` candidate. Returns a sorted list
+    of context-chunk indices."""
+    n = len(context_chunks)
+    if n == 0:
+        return []
+    hop = max(1, int(iter_hop_topk))
+    cap = max(1, int(max_chunks))
+    ratio = float(conf_ratio)
+
+    docs = [c.tolist() for c in context_chunks]     # BM25 corpus (fixed IDF pool)
+
+    selected: list = []
+    selected_set: set = set()
+    frontier_query = list(query_ids)                # round 1 == single-shot bm25
+    s1 = None                                       # round-1 best score (confidence ref)
+    while True:
+        if len(selected) >= cap:
+            break
+        if not frontier_query:
+            break
+        scores = harness._bm25_scores(docs, frontier_query)
+        if not scores:
+            break
+        cand = [i for i in range(n) if i not in selected_set]
+        cand = [i for i in cand if scores[i] > 0.0]
+        if not cand:
+            break
+        cand.sort(key=lambda i: scores[i], reverse=True)
+        best = scores[cand[0]]
+        if s1 is None:
+            s1 = best                               # round 1 sets the reference
+        elif best < ratio * s1:
+            break                                   # relative-confidence early stop
+        remaining = cap - len(selected)
+        take = min(hop, remaining, len(cand))
+        new_sel = cand[:take]
+        selected.extend(new_sel)
+        selected_set.update(new_sel)
+        frontier_query = []
+        for i in new_sel:
+            frontier_query.extend(docs[i])
+    return sorted(selected)
+
+
 def _select_context_chunk_indices(
     selector: str,
     context_chunks,        # list[LongTensor] == chunks[:-1] (doc order)
@@ -365,6 +432,8 @@ def _select_context_chunk_indices(
     iter_rounds=0,         # iter_reader_attn: #BFS rounds (<=0 -> ceil(topk/hop))
     iter_hop_topk=2,       # iter_reader_attn: chunks added per round
     iter_score="meanpool", # iter_reader_attn: "meanpool" | "maxsim"
+    iter_conf_ratio=0.3,   # iter_bm25_adaptive: relative-confidence stop ratio
+    iter_max_chunks=64,    # iter_bm25_adaptive: hard cap on accumulated chunks
 ):
     """Return a sorted list of context-chunk indices (into ``context_chunks``)
     to pack into the read, chosen by the requested selector.
@@ -429,6 +498,17 @@ def _select_context_chunk_indices(
             iter_rounds=iter_rounds, iter_hop_topk=iter_hop_topk,
         )
 
+    if selector == "iter_bm25_adaptive":
+        # Adaptive-stop variant of iter_bm25: no fixed topk budget — walk the
+        # lexical chain until confidence drops below iter_conf_ratio * (round-1
+        # best score), iter_max_chunks is hit, or no positive-overlap candidate
+        # remains. Pure CPU, no forward — ignores context_hj.
+        return _iter_bm25_adaptive_indices(
+            context_chunks, list(query_ids),
+            iter_hop_topk=iter_hop_topk,
+            conf_ratio=iter_conf_ratio, max_chunks=iter_max_chunks,
+        )
+
     if selector == "reader_attn":
         if k <= 0:
             return []
@@ -476,6 +556,8 @@ def qcmem_generate(
     iter_rounds: int = 0,         # iter_reader_attn: #BFS rounds (<=0 -> auto)
     iter_hop_topk: int = 2,       # iter_reader_attn: chunks added per round
     iter_score: str = "meanpool", # iter_reader_attn: "meanpool" | "maxsim"
+    iter_conf_ratio: float = 0.3, # iter_bm25_adaptive: relative-confidence stop ratio
+    iter_max_chunks: int = 64,    # iter_bm25_adaptive: hard cap on accumulated chunks
     use_kv_cache: bool = True,    # resumed-band KV cache decode (O(1)/step)
 ) -> str:
     """Chunk the prompt, write each chunk to depth ``j``, select context chunks,
@@ -535,6 +617,7 @@ def qcmem_generate(
             context_hj=context_hj, query_hj=query_hj_for_sel,
             iter_rounds=iter_rounds, iter_hop_topk=iter_hop_topk,
             iter_score=iter_score,
+            iter_conf_ratio=iter_conf_ratio, iter_max_chunks=iter_max_chunks,
         )
 
     # ---- write (encode to depth j) the selected context chunks ONCE ----
@@ -746,7 +829,8 @@ def main():
                              "layer-partial recompute.")
     parser.add_argument("--selector", type=str, default="bm25",
                         choices=["bm25", "recency", "oracle", "reader_attn",
-                                 "iter_reader_attn", "iter_bm25"],
+                                 "iter_reader_attn", "iter_bm25",
+                                 "iter_bm25_adaptive"],
                         help="Chunk selector for the read pack. reader_attn scores "
                              "chunks by query-h_j vs chunk-h_j cosine (reuses the "
                              "cached write_chunk hiddens, no extra forward). "
@@ -757,17 +841,28 @@ def main():
                              "same multi-hop BFS but with pure lexical BM25 as the hop "
                              "signal (round 1 == single-shot bm25, later rounds "
                              "re-query with the previous picks' token text) — best for "
-                             "RULER vt where the chain links are LITERAL VAR names.")
+                             "RULER vt where the chain links are LITERAL VAR names. "
+                             "iter_bm25_adaptive is iter_bm25 with a confidence-based "
+                             "adaptive stop (no fixed topk budget): stop when a hop's "
+                             "best score drops below --iter_conf_ratio x the round-1 "
+                             "best or --iter_max_chunks is hit, so short chains don't "
+                             "hard-fill low-score noise chunks into the read.")
     parser.add_argument("--iter_rounds", type=int, default=0,
                         help="iter_reader_attn / iter_bm25: number of BFS hop rounds "
                              "(<=0 -> ceil(topk/iter_hop_topk)).")
     parser.add_argument("--iter_hop_topk", type=int, default=2,
-                        help="iter_reader_attn / iter_bm25: chunks added per BFS round.")
+                        help="iter_reader_attn / iter_bm25 / iter_bm25_adaptive: "
+                             "chunks added per BFS round.")
     parser.add_argument("--iter_score", type=str, default="meanpool",
                         choices=["meanpool", "maxsim"],
                         help="iter_reader_attn scoring: meanpool (mean-pool cosine, "
                              "== reader_attn primitive) or maxsim (token-level "
                              "late-interaction, dilution-free). Both forward-free.")
+    parser.add_argument("--iter_conf_ratio", type=float, default=0.3,
+                        help="iter_bm25_adaptive: stop a hop when its best BM25 score "
+                             "falls below this ratio x the round-1 best score.")
+    parser.add_argument("--iter_max_chunks", type=int, default=64,
+                        help="iter_bm25_adaptive: hard cap on accumulated chunks.")
     parser.add_argument("--topk", type=int, default=4,
                         help="Number of context chunks to pack into the read.")
     parser.add_argument("--sink_tokens", type=str, default="bos",
@@ -1048,6 +1143,8 @@ def main():
                         iter_rounds=args.iter_rounds,
                         iter_hop_topk=args.iter_hop_topk,
                         iter_score=args.iter_score,
+                        iter_conf_ratio=args.iter_conf_ratio,
+                        iter_max_chunks=args.iter_max_chunks,
                     )
                 except RuntimeError as e:
                     if "out of memory" not in str(e).lower():
