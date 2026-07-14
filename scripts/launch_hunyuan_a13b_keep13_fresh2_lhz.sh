@@ -3,7 +3,14 @@
 #   keep_front_layers=13 (split-j = 13/32 ~= 0.4L, QCMem j-sweep; see HARU.md core result)
 #   n_fresh_layers=2  (drop layers[13:], append 2 FRESH NTP decoder layers, continue-train)
 #   backbone NOT frozen: front-13 inherited layers at low LR (2e-5), fresh tail at high LR (1e-4).
-# max_steps=20000, seq_len=2048.
+# max_steps=20000, seq_len=1024.
+#   NOTE (2026-07-14): seq_len reduced 2048 -> 1024 to fit on 8x H200 (143GB). The
+#   37.9B keep13+fresh2 with FULL_SHARD (no CPU offload) has ~76GB/rank persistent
+#   (fp32 master 19 + fp32 grad 19 + AdamW m/v 38) + bf16 layer unshards + activations.
+#   At seq_len=2048 it OOM'd mid-training even with BACKWARD_POST (peak ~136/140GB).
+#   Halving seq_len ~halves the activation transient -> fits. This DEVIATES from the
+#   Qwen/Hy3 seq_len=2048 alignment; re-raise to 2048 if we free memory later
+#   (e.g. optimizer-only offload, or 16-card multi-node to shrink the per-rank shard).
 #
 # Fix history (2026-07-12, carried over from the old-cluster keep24 launcher):
 #   (1) NCCL init race (rank0's ~10min transplant vs 600s PG timeout) -> the train
@@ -32,7 +39,7 @@ mkdir -p logs outputs/hunyuan_a13b_keep13_fresh2
   --data_path data/slimpajama_chunks_2048_hunyuan.npy \
   --output_dir outputs/hunyuan_a13b_keep13_fresh2 \
   --keep_front_layers 13 --n_fresh_layers 2 \
-  --max_steps 20000 --seq_len 2048 \
+  --max_steps 20000 --seq_len 1024 \
   --batch_size 1 --grad_accumulation_steps 8 \
   --lr 1e-4 --lr_inherited 2e-5 --warmup_steps 100 \
   --save_every 1000 --log_every 10 --gradient_checkpointing 1 \
