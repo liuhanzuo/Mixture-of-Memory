@@ -29,7 +29,13 @@ export WANDB_MODE=offline OMP_NUM_THREADS=16 TOKENIZERS_PARALLELISM=false PYTHON
 export HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 export TORCH_NCCL_ENABLE_MONITORING=0 TORCH_NCCL_HEARTBEAT_TIMEOUT_SEC=7200 NCCL_TIMEOUT=7200
 export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
-export NCCL_DEBUG=WARN NCCL_SOCKET_IFNAME=eth0 NCCL_IB_DISABLE=1
+# InfiniBand: both nodes have 9x Mellanox HCAs (mlx5_0..8, 400Gb/s NDR ACTIVE) on a
+# shared IB fabric. Enable IB (NCCL_IB_DISABLE=0) -> NCCL uses NET/IB + GDRDMA (GPU
+# Direct RDMA), verified 2026-07-14 by a 2-node all_reduce smoke (world16 PASS, "Using
+# network IBext_v10 ... via NET/IBext_v10/GDRDMA"). Forcing eth0 (NCCL_IB_DISABLE=1,
+# only 10Gb/s) made the 16-card FSDP crawl at ~60-90s/step AND became unstable; IB is
+# ~40x the bandwidth. eth0 is kept only as the OOB bootstrap iface (NCCL_SOCKET_IFNAME).
+export NCCL_DEBUG=WARN NCCL_SOCKET_IFNAME=eth0 NCCL_IB_DISABLE=0
 
 LOG="$PROJECT_ROOT/logs/hunyuan_a13b_keep13_fresh2_16card_node${NODE_RANK}.log"
 mkdir -p "$PROJECT_ROOT/logs" "$PROJECT_ROOT/outputs/hunyuan_a13b_keep13_fresh2_16card"
