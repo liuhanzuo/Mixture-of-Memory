@@ -1452,3 +1452,9 @@ team-lead 采纳「Part-Y-only」干净单轴框架（比早先 option A 更紧�
 2. **BM25 ≈ Oracle on NIAH**（gap ≤5 pp at all lengths）：词法检索对实体 needle 近最优；BM25 是 NIAH 类任务的默认最优 selector。
 3. **ReaderAttn & Recency ≪ BM25 on NIAH**：注意力语义相似度和位置近端性在 16k/32k 上大幅落后（差距 17–62 pp）。
 4. **VT oracle 失效**（oracle 9.2 < BM25 27.6 at 16k）：oracle 选含答案字符串的 chunk，但变量追踪需全链多 chunk；单 gold chunk oracle 不适用多跳任务。reader_attn@tk24=60.2 在 VT@16k 最优（大 topk 意外覆盖链上各赋值 chunk）。32k VT 全面崩溃，topk≤24 单程 selector 不足覆盖完整链。
+
+#### Qwen3-32B chunk512 downstream split-j sanity (2026-07-15, n=30)
+- Environment restored from official booydar/babilong commit 7a6efee and RMT-team/babilong data commit ee0d588; RULER uses a clearly marked 64MiB eval-only subset of official emozilla/pg19 train prose.
+- Protocol: stock Qwen3-32B, no adapter, chunk512, bm25 topk12, j={12,16,18,20}; RULER niah single/multikey 16k plus BABILong qa1/qa5 8k.
+- Results (single/multi/qa1/qa5; macro): j12=100/100/80/33.3 (78.33); j16=100/90/86.7/33.3 (77.50); j18=100/73.3/83.3/20 (69.16); j20=100/96.7/76.7/6.7 (70.00).
+- Verdict: j12 and j16 are tied within n30 noise; use j16 by default because it is 5-9% faster, wins qa1, ties qa5/single, and has stronger five-seed intrinsic stability. j18/j20 show hard-task cliffs and are rejected.

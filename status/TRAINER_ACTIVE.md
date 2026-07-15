@@ -1,7 +1,14 @@
-# TRAINER ACTIVE — 2026-07-14 20:50 +08:00
+# TRAINER ACTIVE — 2026-07-15 05:21 UTC
 
-No active A13B training runs.
+## lhz — IDLE
 
-- lhz2: fresh4 diagnostic paused at step 6 by user request; all 8 H200s idle (1 MiB, 0%); no new Xid.
-- lhz: idle; physical GPU0 retains two historical Xid43 entries.
-- Production 20k remains gated on MoE performance implementation and model-quality validation.
+- Qwen3-32B chunk512 downstream j sanity completed; all GPUs released.
+
+## lhz2 — IDLE
+
+- BABILong environment restored and sanity completed; all GPUs released.
+
+## Decision
+
+- Default Qwen3-32B QCMem resume_j=16.
+- j=12 is an accuracy-first alternative; j=18 and j=20 rejected.

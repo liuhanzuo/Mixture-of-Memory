@@ -5763,3 +5763,25 @@ Sanity 已四重验证(adapter_config 配置正确、cmdline 无 SWA、CSV 完�
 
 **Plan C 设计 workflow (5 角度) 副产品归档**：5 个 angle 报告已收集(logit-KL / position-fix / dilution-isolation / memory-state-证伪 / hybrid-staged)，已被 b25 破墙结果整体作废，但**核心诊断"dilution 才是 FIFO 真墙、b25=隐式 isolation"在事后回看是正确预言**——这从机制上解释了 b25 为何 work(小 buffer = 更少 distractor 列 = 更少 dilution)。
 {"ts":"2026-07-14T20:15:23+0800","event":"A13B FSDP bug fix and checkpoint smoke fix","summary":"Removed FULL_SHARD no_sync gradient accumulation (full gradients caused post-microbatch stalls); added --skip_final_save for diagnostic runs; lhz2 8-GPU gaccum=2 regression completed two steps without collective hang or Xid, but loss remained contamination-level (85.92 -> 90.20), so production 20k is gated pending quality root-cause investigation."}
+
+## 2026-07-15 — Qwen3-32B QCMem split-j search launched
+
+- Confirmed complete local Qwen3-32B checkpoint: dense 64-layer model, bf16 single-H200 peak 61.15 GiB.
+- Added scripts/qcmem_qwen_jsweep.py, an intrinsic natural-text sweep independent of BABILong; it compares depth-j QCMem against full-context PPL, KL, and top-1 agreement.
+- Correctness gate passed on the real 32B model: split-forward at j=0/1/32/64 exactly matched stock forward.
+- Launched coarse j={0,8,16,20,24,28,32,40} sweep on lhz 8xH200; lhz2 is reserved for fine sweep.
+
+## 2026-07-15 — Qwen3-32B QCMem split-j finalized
+
+- Real-model split correctness passed exactly at j=0/1/32/64.
+- Coarse/fine plus five-seed natural-text readout tests finalized default resume_j=16.
+- Five-seed ctx3840: j16 top1 mean 0.81742, minimum 0.80534, PPL-gap mean 1.0770; j18 minimum top1 0.80046; j20 minimum 0.79736.
+- Added scripts/qcmem_qwen_ruler_jprobe.py. Four natural-prose RULER-style retrieval cells showed no retrieval improvement from j16 to j18/j20; shallow j4 was already strongest.
+- Decision: use j=16 by default. Keep j=18 only as an explicitly aggressive read-compute ablation; do not use j=20.
+
+## 2026-07-15 — BABILong restored + Qwen3-32B chunk512 j sanity completed
+
+- Restored official third_party/babilong-pkg at commit 7a6efee and local RMT-team/babilong dataset metadata/data at ee0d588.
+- Restored RULER prose input from official emozilla/pg19; data/pg19_train.jsonl is an explicitly documented symlink to a 64MiB eval-only subset, not the full training corpus.
+- Ran 16 paired n=30 Qwen3-32B cells on 16 H200 GPUs: j12/16/18/20 × RULER single/multikey16k + BABILong qa1/qa5 8k, chunk512/bm25/topk12.
+- Macro: j12 78.33, j16 77.50, j18 69.16, j20 70.00. Final default remains j16; j12 accuracy-first alternative; j18/j20 rejected.
