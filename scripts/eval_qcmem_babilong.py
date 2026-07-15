@@ -543,7 +543,24 @@ def qcmem_generate(
 
     # ---- greedy decode: only the growing query chunk is re-encoded per step ----
     query_ids = query_chunk.tolist()
-    eos_id = tokenizer.eos_token_id
+    # Qwen generation configs may declare more than one official stop token
+    # (e.g. EOS + end-of-turn).  Decoding only against tokenizer.eos_token_id
+    # silently skips the end-of-turn token under skip_special_tokens=True and
+    # then continues into a fabricated next role.  Preserve the model's full
+    # int/list EOS contract and merge the tokenizer EOS as a compatibility
+    # fallback for backbones whose generation config omits it.
+    generation_config = getattr(qc.model, "generation_config", None)
+    configured_eos = getattr(generation_config, "eos_token_id", None)
+    if configured_eos is None:
+        configured_eos = []
+    elif isinstance(configured_eos, int):
+        configured_eos = [configured_eos]
+    else:
+        configured_eos = list(configured_eos)
+    eos_ids = {int(eos) for eos in configured_eos if eos is not None}
+    if tokenizer.eos_token_id is not None:
+        eos_ids.add(int(tokenizer.eos_token_id))
+    eos_ids = sorted(eos_ids)
     generated = []
 
     if stats is not None:
@@ -561,10 +578,10 @@ def qcmem_generate(
         q_hj = qc.write_chunk(query_ids)
         logits = qc.read(sink_hj, selected_hj, q_hj)   # [1, |H|, V]
         next_logits = logits[0, -1].float()
-        if step == 0 and eos_id is not None:
-            next_logits[eos_id] = float("-inf")
+        if step == 0 and eos_ids:
+            next_logits[eos_ids] = float("-inf")
         next_tok = int(next_logits.argmax().item())
-        if eos_id is not None and next_tok == eos_id and step > 0:
+        if next_tok in eos_ids and step > 0:
             break
         generated.append(next_tok)
         query_ids = query_ids + [next_tok]
