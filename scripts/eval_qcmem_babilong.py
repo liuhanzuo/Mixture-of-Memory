@@ -34,7 +34,9 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import socket
 import sys
+import time
 from pathlib import Path
 
 import pandas as pd
@@ -49,6 +51,7 @@ for p in (PROJECT_ROOT,
         sys.path.insert(0, p)
 
 from transformers import AutoModelForCausalLM, AutoTokenizer  # noqa: E402
+from babilong.metrics import TASK_LABELS, compare_answers  # noqa: E402
 
 from babilong.prompts import DEFAULT_PROMPTS, DEFAULT_TEMPLATE, get_formatted_input  # noqa: E402
 
@@ -702,6 +705,8 @@ def main():
     parser.add_argument("--dtype", type=str, default="bfloat16",
                         choices=["bfloat16", "float16", "float32"])
     parser.add_argument("--attn_impl", type=str, default="sdpa")
+    parser.add_argument("--seed", type=int, default=42,
+                        help="Deterministic generation seed (greedy decode is seed-invariant).")
     parser.add_argument("--use_instruction", action="store_true", default=True)
     parser.add_argument("--use_examples", action="store_true", default=True)
     parser.add_argument("--use_post_prompt", action="store_true", default=True)
@@ -754,6 +759,7 @@ def main():
     # self_test needs fp32 to hit the <1e-4 gate (bf16 has ~1e-2 roundoff).
     if args.self_test:
         dtype = torch.float32
+    torch.manual_seed(args.seed)
 
     print(f"[QCMem-BABILong] model_path={args.model_path}")
     print(f"[QCMem-BABILong] baseline={args.baseline} "
@@ -820,6 +826,7 @@ def main():
         )
 
         for split_name in tqdm(args.lengths, desc="lengths", leave=False):
+            cell_started = time.time()
             print(f"\n[QCMem-BABILong] task={task}, length={split_name}")
             try:
                 data = harness.load_babilong_dataset(args.dataset_name, split_name)
@@ -835,8 +842,13 @@ def main():
             outfile = outdir / f"{task}_{split_name}_{prompt_name}{shard_tag}.csv"
             cfg_file = outdir / f"{task}_{split_name}_{prompt_name}{shard_tag}.json"
 
-            json.dump(
-                {
+            cell_config = {
+                    "status": "running",
+                    "task": task,
+                    "length": split_name,
+                    "n_requested": args.limit,
+                    "sharding": {"num_shards": args.num_shards,
+                                 "shard_index": args.shard_index},
                     "prompt": prompt_cfg,
                     "generate_kwargs": {
                         "max_new_tokens": args.max_new_tokens,
@@ -856,16 +868,33 @@ def main():
                         "sink_tokens": args.sink_tokens,
                         "num_layers": L,
                         "lora_adapter": args.lora_adapter or None,
+                        "chunk_size": args.chunk_size,
                     },
                     "model": {
                         "model_path": args.model_path,
-                        "chunk_size": args.chunk_size,
+                        "num_hidden_layers": L,
+                        "bottleneck_ckpt": None,
                     },
-                },
-                open(cfg_file, "w"), indent=4,
-            )
+                    "dataset_name": args.dataset_name,
+                    "runtime": {
+                        "node": socket.gethostname(),
+                        "cuda_visible_devices": os.environ.get("CUDA_VISIBLE_DEVICES"),
+                        "device": args.device,
+                        "pythonhashseed": os.environ.get("PYTHONHASHSEED"),
+                        "seed": args.seed,
+                        "dtype": args.dtype,
+                        "attn_implementation": args.attn_impl,
+                    },
+                    "chat_template": bool(args.use_chat_template),
+                    "scoring": "babilong.metrics.TASK_LABELS+compare_answers",
+                    "zero_training_no_adapter": bool(
+                        args.baseline == "none" and not args.lora_adapter
+                    ),
+                }
+            json.dump(cell_config, open(cfg_file, "w"), indent=4)
 
             df = pd.DataFrame({"target": [], "output": [], "question": []})
+            oom_count = 0
 
             num_samples = len(task_data)
             if args.limit > 0:
@@ -920,6 +949,7 @@ def main():
                     if "out of memory" not in str(e).lower():
                         raise
                     output = "[OOM]"
+                    oom_count += 1
                     print(f"[OOM] idx={idx} task={task} length={split_name}: {e}", flush=True)
                     if torch.cuda.is_available():
                         torch.cuda.empty_cache()
@@ -929,6 +959,20 @@ def main():
                     harness._write_results_csv(df, outfile)
 
             harness._write_results_csv(df, outfile)
+            correct = sum(
+                bool(compare_answers(row.target, row.output, row.question,
+                                     TASK_LABELS[task]))
+                for row in df.itertuples(index=False)
+            )
+            cell_config.update({
+                "status": "completed" if oom_count == 0 else "failed",
+                "n": len(df),
+                "oom_count": oom_count,
+                "correct": correct,
+                "score": round(100.0 * correct / len(df), 2) if len(df) else 0.0,
+                "elapsed_seconds": round(time.time() - cell_started, 3),
+            })
+            json.dump(cell_config, open(cfg_file, "w"), indent=4)
             print(f"[QCMem-BABILong] Saved {len(df)} results to {outfile}")
 
     print("\n[QCMem-BABILong] Evaluation complete!")

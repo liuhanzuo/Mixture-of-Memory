@@ -66,7 +66,9 @@ import argparse
 import json
 import os
 import random
+import socket
 import sys
+import time
 from pathlib import Path
 
 import pandas as pd
@@ -423,6 +425,7 @@ def main():
     for task in tqdm(tasks, desc="tasks"):
         summary[task] = {}
         for length in tqdm(args.lengths, desc="lengths", leave=False):
+            cell_started = time.time()
             if length not in ruler._LENGTH_TOKENS:
                 print(f"[WARN] unknown length {length}, skipping")
                 continue
@@ -451,6 +454,7 @@ def main():
             n_tok_seen = 0
             read_len_sum = 0
             read_len_last = 0
+            oom_count = 0
             mnt = args.max_new_tokens if task != "variable_tracking" \
                 else max(args.max_new_tokens, 60)
 
@@ -500,6 +504,7 @@ def main():
                     if "out of memory" not in str(e).lower():
                         raise
                     output = "[OOM]"
+                    oom_count += 1
                     print(f"[OOM] i={i} task={task} length={length}: {e}",
                           flush=True)
                     if torch.cuda.is_available():
@@ -529,8 +534,26 @@ def main():
             cfg_file = outdir / f"{task}_{length}{shard_tag}.json"
             json.dump(
                 {
+                    "status": "completed" if oom_count == 0 else "failed",
                     "task": task, "length": length,
+                    "n_requested": args.limit,
+                    "sharding": {"num_shards": args.num_shards,
+                                 "shard_index": args.shard_index},
                     "summary": summary[task][length],
+                    "score": summary[task][length]["score"],
+                    "oom_count": oom_count,
+                    "elapsed_seconds": round(time.time() - cell_started, 3),
+                    "runtime": {
+                        "node": socket.gethostname(),
+                        "cuda_visible_devices": os.environ.get("CUDA_VISIBLE_DEVICES"),
+                        "device": args.device,
+                        "pythonhashseed": os.environ.get("PYTHONHASHSEED"),
+                        "seed": args.seed,
+                        "dtype": args.dtype,
+                        "attn_implementation": args.attn_impl,
+                    },
+                    "chat_template": False,
+                    "scoring": "scripts.eval_ruler_mem_space._string_match_all_one",
                     "baseline": args.baseline,
                     "no_retrieval": bool(no_retrieval),
                     "qcmem": {
@@ -554,7 +577,12 @@ def main():
                         "chunk_size": args.chunk_size,
                     },
                     "model": {"model_path": args.model_path,
+                              "num_hidden_layers": L,
                               "bottleneck_ckpt": args.bottleneck_ckpt or None},
+                    "zero_training_no_adapter": bool(
+                        args.baseline == "none" and not args.lora_adapter
+                        and not args.bottleneck_ckpt
+                    ),
                 },
                 open(cfg_file, "w"), indent=2,
             )
