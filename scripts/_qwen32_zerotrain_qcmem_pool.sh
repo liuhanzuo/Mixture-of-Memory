@@ -6,7 +6,7 @@ ROOT="${PROJECT_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"; cd "$ROOT"
 BENCHMARK="${BENCHMARK:?ruler|babilong}"
 MODEL_PATH="${MODEL_PATH:?stock Qwen3-32B path required}"
 PY="${PYTHON_BIN:-$ROOT/.venv/bin/python}"
-BABILONG_DATASET_NAME="${BABILONG_DATASET_NAME:-$ROOT/data/babilong-hf}"
+BABILONG_DATASET_NAME="${BABILONG_DATASET_NAME:-$ROOT/data/babilong-1k-samples}"
 LIMIT=500; RESUME_J=16; CHUNK_SIZE=512; DTYPE=bfloat16; ATTN_IMPL=sdpa
 if [ "$BENCHMARK" = ruler ]; then
   OUT_ROOT="${OUT_ROOT:-ruler_results/qwen32_zerotrain_n500_j16_chunk512}"

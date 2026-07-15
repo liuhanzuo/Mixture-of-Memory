@@ -70,6 +70,30 @@ _spec.loader.exec_module(harness)
 from src.memory.qcmem import QCMemModel  # noqa: E402
 
 
+def _load_babilong_task(dataset_name: str, split_name: str, task: str):
+    """Load only one task from a partial local BABILong mirror when possible.
+
+    ``datasets.load_dataset(local_dir, split_name)`` asks the packaged BABILong
+    builder to resolve every qa1..qa20 file.  Formal mirrors may intentionally
+    contain only qa1/qa2/qa5, so load the requested parquet/JSON files directly.
+    Non-directory dataset identifiers keep the established harness path.
+    """
+    root = Path(dataset_name)
+    if root.is_dir():
+        split_dir = root / split_name
+        for extension, builder in (("parquet", "parquet"),
+                                   ("json", "json"), ("jsonl", "json")):
+            files = sorted(split_dir.glob(f"{task}-*.{extension}"))
+            files += sorted(split_dir.glob(f"{task}.{extension}"))
+            if files:
+                print(f"[QCMem-BABILong] Direct local {builder} load: "
+                      f"{len(files)} file(s) for {task}/{split_name}")
+                return harness.datasets.load_dataset(
+                    builder, data_files=[str(p) for p in files], split="train")
+    data = harness.load_babilong_dataset(dataset_name, split_name)
+    return data[task]
+
+
 # --------------------------------------------------------------------------- #
 # chunk selection
 #   recency / bm25 / oracle : lexical / positional, no model forward.
@@ -721,6 +745,25 @@ def main():
     if not (0 <= args.shard_index < args.num_shards):
         parser.error(f"--shard_index must be in [0, {args.num_shards})")
 
+    # Data gate before the 32B model is loaded.  In particular, never turn an
+    # n=500 request into a silent n=100 run because a local mirror is partial.
+    preloaded_task_data = {}
+    for task in args.tasks:
+        for split_name in args.lengths:
+            try:
+                task_data = _load_babilong_task(args.dataset_name, split_name, task)
+            except Exception as e:
+                parser.error(f"failed data preflight for {task}/{split_name} "
+                             f"from {args.dataset_name}: {e}")
+            available = len(task_data)
+            required = args.limit if args.limit > 0 else available
+            if available < required:
+                parser.error(f"data preflight failed for {task}/{split_name}: "
+                             f"available={available} < requested={required}")
+            preloaded_task_data[(task, split_name)] = task_data
+            print(f"[QCMem-BABILong] data preflight PASS {task}/{split_name}: "
+                  f"available={available}, requested={required}")
+
     # --- head-to-head baseline resolution (mechanism-level, 2026-07-09) --------
     # A baseline is expressed as a re-parameterisation of the QCMem primitives, so
     # the ONLY thing that differs vs. QCMem is the specific primitive under test
@@ -828,12 +871,8 @@ def main():
         for split_name in tqdm(args.lengths, desc="lengths", leave=False):
             cell_started = time.time()
             print(f"\n[QCMem-BABILong] task={task}, length={split_name}")
-            try:
-                data = harness.load_babilong_dataset(args.dataset_name, split_name)
-                task_data = data[task]
-            except Exception as e:
-                print(f"[ERROR] Failed to load {args.dataset_name}/{split_name}/{task}: {e}")
-                continue
+            task_data = preloaded_task_data[(task, split_name)]
+            available_count = len(task_data)
 
             outdir = Path(args.results_folder) / args.output_name
             outdir.mkdir(parents=True, exist_ok=True)
@@ -876,6 +915,7 @@ def main():
                         "bottleneck_ckpt": None,
                     },
                     "dataset_name": args.dataset_name,
+                    "available_count": available_count,
                     "runtime": {
                         "node": socket.gethostname(),
                         "cuda_visible_devices": os.environ.get("CUDA_VISIBLE_DEVICES"),

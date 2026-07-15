@@ -92,6 +92,7 @@ def validate(root: Path, bench: str, task: str, length: str, shard_index=None):
       if bench == "babilong":
         checks["official_scoring"] = (
             cfg.get("scoring") == "babilong.metrics.TASK_LABELS+compare_answers")
+        checks["available_count"] = cfg.get("available_count", 0) >= 500
       else:
         checks["official_scoring"] = (
             cfg.get("scoring") ==
