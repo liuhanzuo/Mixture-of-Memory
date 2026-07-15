@@ -326,8 +326,12 @@ def main():
     qc = QCMemModel(model, resume_j=args.resume_j, top_prepay_b=args.top_prepay_b,
                     block_diagonal=args.reuse_kv_blockdiag)
 
-    # Load LongBench data (offline JSONL) via the shared loader.
-    all_data = lb.load_longbench_dataset(args.hf_dataset, datasets_list)
+    # Load LongBench data (offline JSONL) via the shared loader.  When
+    # --hf_dataset names a local directory, use it as data_dir explicitly;
+    # otherwise retain the historical HF dataset-id fallback.
+    local_data_dir = args.hf_dataset if os.path.isdir(args.hf_dataset) else None
+    all_data = lb.load_longbench_dataset(
+        args.hf_dataset, datasets_list, data_dir=local_data_dir)
 
     output_path = Path(args.output_dir)
     output_path.mkdir(parents=True, exist_ok=True)
@@ -335,11 +339,29 @@ def main():
     # Per-shard file: run_scoring globs "{ds}_*.jsonl" and dedups by "index".
     shard_tag = f"shard{args.shard_index}of{args.num_shards}" if sharded else "0"
 
-    # Record the eval config next to the predictions.
-    with open(output_path / f"eval_config_{shard_tag}.json", "w") as f:
-        cfg = dict(vars(args))
+    # Record the eval config next to the predictions.  Keep the literal CLI
+    # values for provenance, while also exposing normalized protocol fields
+    # that downstream validators can check without interpreting empty strings.
+    task_tag = datasets_list[0] if len(datasets_list) == 1 else "multi"
+    with open(output_path / f"eval_config_{task_tag}_{shard_tag}.json", "w") as f:
+        raw_args = dict(vars(args))
+        zero_training_no_adapter = (
+            args.baseline == "none"
+            and not args.lora_adapter
+            and not args.bottleneck_ckpt
+        )
+        cfg = dict(raw_args)
         cfg.update({"no_retrieval": bool(no_retrieval), "num_layers": L,
-                    "resolved_model_path": model_path})
+                    "resolved_model_path": model_path,
+                    "raw_args": raw_args,
+                    "lora_adapter": args.lora_adapter or None,
+                    "bottleneck_ckpt": args.bottleneck_ckpt or None,
+                    "resume_j": int(args.resume_j),
+                    "chunk_size": int(args.chunk_size),
+                    "selector": args.selector,
+                    "topk": int(args.topk),
+                    "chat_template": bool(args.use_chat_template),
+                    "zero_training_no_adapter": zero_training_no_adapter})
         json.dump(cfg, f, indent=2)
 
     for ds_name in datasets_list:
@@ -427,8 +449,32 @@ def main():
                 f.write(json.dumps(r, ensure_ascii=False) + "\n")
         f1s = [lb.compute_f1_multi(r["pred"], r["answers"]) for r in results_buffer]
         avg_f1 = (sum(f1s) / len(f1s) * 100) if f1s else 0.0
+        elapsed_seconds = time.time() - t0
+        task_metrics = {
+            "dataset": ds_name,
+            "shard_index": int(args.shard_index),
+            "num_shards": int(args.num_shards),
+            "num_samples": len(results_buffer),
+            "f1": avg_f1,
+            "elapsed_seconds": elapsed_seconds,
+            "output_file": str(outfile),
+            "oom_count": sum(r["pred"] == "[OOM]" for r in results_buffer),
+            "empty_prediction_count": sum(not r["pred"].strip()
+                                          for r in results_buffer),
+            "resume_j": int(args.resume_j),
+            "chunk_size": int(args.chunk_size),
+            "selector": args.selector,
+            "topk": int(args.topk),
+            "chat_template": bool(args.use_chat_template),
+            "lora_adapter": args.lora_adapter or None,
+            "bottleneck_ckpt": args.bottleneck_ckpt or None,
+            "zero_training_no_adapter": zero_training_no_adapter,
+        }
+        metrics_file = output_path / f"{ds_name}_{shard_tag}_metrics.json"
+        with open(metrics_file, "w") as f:
+            json.dump(task_metrics, f, indent=2)
         print(f"[QCMem-LongBench] {ds_name}: F1={avg_f1:.2f}% "
-              f"({len(results_buffer)} samples, {time.time()-t0:.1f}s) -> {outfile}")
+              f"({len(results_buffer)} samples, {elapsed_seconds:.1f}s) -> {outfile}")
 
     print(f"\n[QCMem-LongBench] Shard {args.shard_index}/{args.num_shards} complete!")
     # Single-shard: auto-score (multi-shard: run --score_only after all finish).

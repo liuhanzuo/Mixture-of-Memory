@@ -14,6 +14,14 @@ RULER = {
 }
 BABI = {task: ["0k", "1k", "2k", "4k", "8k", "16k", "32k"]
         for task in ("qa1", "qa2", "qa5")}
+LONGBENCH_COUNTS = {
+    "narrativeqa": 200,
+    "qasper": 200,
+    "multifieldqa_en": 150,
+    "hotpotqa": 200,
+    "2wikimqa": 200,
+    "musique": 200,
+}
 
 
 def expected(bench):
@@ -132,13 +140,99 @@ def validate(root: Path, bench: str, task: str, length: str, shard_index=None):
     return merged, errors
 
 
+def validate_longbench_shard(root: Path, task: str, shard_index: int):
+    """Strict completion gate for one LongBench task/shard.
+
+    Kept separate from the 34-cell RULER/BABILong aggregator so LongBench can
+    never be mixed into that table.
+    """
+    errors = []
+    if task not in LONGBENCH_COUNTS:
+        return [f"unknown LongBench task {task}"]
+    tag = f"shard{shard_index}of4"
+    pred_path = root / f"{task}_{tag}.jsonl"
+    cfg_path = root / f"eval_config_{task}_{tag}.json"
+    metrics_path = root / f"{task}_{tag}_metrics.json"
+    expected_rows = len(range(shard_index, LONGBENCH_COUNTS[task], 4))
+
+    try:
+        cfg = json.loads(cfg_path.read_text())
+    except (OSError, json.JSONDecodeError) as exc:
+        cfg = {}
+        errors.append(f"invalid config: {exc}")
+    checks = {
+        "lora_adapter": cfg.get("lora_adapter") is None,
+        "bottleneck_ckpt": cfg.get("bottleneck_ckpt") is None,
+        "resume_j": cfg.get("resume_j") == 16,
+        "chunk_size": cfg.get("chunk_size") == 512,
+        "selector": cfg.get("selector") == "bm25",
+        "topk": cfg.get("topk") == 12,
+        "sink": cfg.get("sink_tokens") == "bos",
+        "chat_template": cfg.get("chat_template") is False,
+        "zero_training_no_adapter": cfg.get("zero_training_no_adapter") is True,
+        "layers": cfg.get("num_layers") == 64,
+        "dtype": cfg.get("dtype") == "bfloat16",
+        "attn_impl": cfg.get("attn_impl") == "sdpa",
+        "task": cfg.get("tasks") == [task],
+        "num_shards": cfg.get("num_shards") == 4,
+        "shard_index": cfg.get("shard_index") == shard_index,
+        "local_dataset": Path(str(cfg.get("hf_dataset", ""))).is_dir(),
+    }
+    errors.extend(k for k, ok in checks.items() if not ok)
+
+    rows = []
+    try:
+        with pred_path.open() as f:
+            for line_no, line in enumerate(f, 1):
+                item = json.loads(line)
+                pred = item.get("pred")
+                if not isinstance(pred, str) or not pred.strip() or pred == "[OOM]":
+                    errors.append(f"row{line_no}:invalid pred")
+                rows.append(item)
+    except (OSError, json.JSONDecodeError) as exc:
+        errors.append(f"invalid predictions: {exc}")
+    if len(rows) != expected_rows:
+        errors.append(f"rows={len(rows)} expected={expected_rows}")
+    indices = [r.get("index") for r in rows]
+    expected_indices = list(range(shard_index, LONGBENCH_COUNTS[task], 4))
+    if indices != expected_indices:
+        errors.append("indices do not match strided shard")
+
+    try:
+        metrics = json.loads(metrics_path.read_text())
+    except (OSError, json.JSONDecodeError) as exc:
+        metrics = {}
+        errors.append(f"invalid metrics: {exc}")
+    metric_checks = {
+        "metrics_dataset": metrics.get("dataset") == task,
+        "metrics_samples": metrics.get("num_samples") == expected_rows,
+        "metrics_elapsed": isinstance(metrics.get("elapsed_seconds"), (int, float)),
+        "metrics_f1": isinstance(metrics.get("f1"), (int, float)),
+        "metrics_oom": metrics.get("oom_count") == 0,
+        "metrics_empty": metrics.get("empty_prediction_count") == 0,
+        "metrics_protocol": metrics.get("zero_training_no_adapter") is True,
+    }
+    errors.extend(k for k, ok in metric_checks.items() if not ok)
+    return errors
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--ruler-root", type=Path)
     ap.add_argument("--babilong-root", type=Path)
     ap.add_argument("--is-complete", nargs="+")
+    ap.add_argument("--is-longbench-complete", nargs=3,
+                    metavar=("ROOT", "TASK", "SHARD_INDEX"))
     ap.add_argument("--output", type=Path)
     args = ap.parse_args()
+    if args.is_longbench_complete:
+        root, task, shard_text = args.is_longbench_complete
+        errors = validate_longbench_shard(Path(root), task, int(shard_text))
+        if errors:
+            print("; ".join(errors))
+            raise SystemExit(1)
+        print("complete")
+        return
     if args.is_complete:
         if len(args.is_complete) not in (4, 5):
             ap.error("--is-complete BENCH ROOT TASK LENGTH [SHARD_INDEX]")
