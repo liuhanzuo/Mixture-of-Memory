@@ -29,7 +29,10 @@ that self-distillation on our Qwen3-8B backbone:
 
 The teacher and student share ONE model instance (adapters on/off), so there is
 no second copy in memory. Only the ~29M LoRA params (+ the AdamW state) are
-trainable; the 8B backbone is frozen. Single- or multi-GPU DDP.
+trainable; the 8B backbone is frozen. Single- or multi-GPU DDP. For 30B/32B
+backbones that OOM under DDP (one full replica per GPU), pass ``--use_fsdp`` to
+FULL_SHARD the frozen backbone across ranks while keeping the (small) LoRA a
+full replica (grads synced by the same manual all-reduce as the DDP path).
 
 Correctness: at ``--resume_j 0`` teacher==student by construction (both are the
 full forward, adapters are zero-init so make no difference at step 0), and the
@@ -88,6 +91,117 @@ def _dist_setup():
 
 def _is_main(rank):
     return rank == 0
+
+
+# --------------------------------------------------------------------------- #
+# FSDP: shard the FROZEN backbone, keep LoRA replicated (30B/32B distill)
+# --------------------------------------------------------------------------- #
+# QCMem drives the forward by calling ``causal_lm.model.layers[i](...)`` DIRECTLY
+# (never ``causal_lm.forward``), and also calls ``embed_tokens / norm / lm_head``
+# directly. A ROOT FSDP wrap would leave those residual modules SHARDED when
+# called outside ``root.forward`` (garbage output), so instead we wrap EACH
+# decoder layer as its own FSDP unit (FULL_SHARD): calling ``layer(...)`` then
+# transparently all-gathers that layer's shard, runs, and reshards. embed/norm/
+# lm_head are frozen and left as full replicas (a few GB — acceptable; the 30B
+# bulk lives in the decoder layers, which ARE sharded).
+#
+# The backbone is FROZEN (no grads); only LoRA trains. We keep LoRA OUT of the
+# FSDP flat params via ``ignored_modules`` so LoRA stays a FULL replica on every
+# rank — its grads are then synced by the SAME manual all-reduce the DDP path
+# already uses, its init by the SAME rank-0 broadcast, and it saves with clean
+# names (only the FSDP module-wrapper prefix needs stripping). ``use_orig_params
+# =True`` lets a single FSDP unit hold mixed frozen(sharded)+ignored(LoRA) params.
+def _fsdp_wrap_backbone(causal_lm, dtype, local_rank, rank):
+    from torch.distributed.fsdp import (  # noqa: E402
+        FullyShardedDataParallel as FSDP,
+        ShardingStrategy,
+        MixedPrecision,
+        BackwardPrefetch,
+    )
+
+    if not dist.is_initialized():
+        raise SystemExit(
+            "--use_fsdp requires a distributed process group; launch with torchrun "
+            "(e.g. torchrun --nproc_per_node 8 scripts/train_qcmem_distill.py ...)."
+        )
+
+    inner = getattr(causal_lm, "model", causal_lm)
+    layers = inner.layers
+
+    mp = None
+    if dtype in (torch.bfloat16, torch.float16):
+        # params/compute in low precision; reduce grads in fp32 for stability.
+        mp = MixedPrecision(param_dtype=dtype, reduce_dtype=torch.float32,
+                            buffer_dtype=dtype)
+
+    _LORA_LEAVES = ("lora_A", "lora_B", "lora_embedding_A", "lora_embedding_B",
+                    "lora_magnitude_vector")
+
+    def _lora_ignored(module):
+        ig = []
+        for name, sub in module.named_modules():
+            if name.split(".")[-1] in _LORA_LEAVES:
+                ig.append(sub)
+        return ig
+
+    n = 0
+    for i in range(len(layers)):
+        ignored = _lora_ignored(layers[i])  # empty for layers < resume_j
+        layers[i] = FSDP(
+            layers[i],
+            sharding_strategy=ShardingStrategy.FULL_SHARD,
+            mixed_precision=mp,
+            use_orig_params=True,
+            device_id=torch.device(f"cuda:{local_rank}"),
+            sync_module_states=False,  # backbone loaded identically from disk
+            backward_prefetch=BackwardPrefetch.BACKWARD_PRE,
+            limit_all_gathers=True,
+            ignored_modules=(ignored if ignored else None),
+        )
+        n += 1
+    if _is_main(rank):
+        print(f"[qcmem-distill] FSDP FULL_SHARD wrapped {n} decoder layers "
+              f"(frozen backbone sharded; LoRA ignored -> full replica, grads via "
+              f"manual all-reduce)", flush=True)
+
+
+def _save_adapter(peft_model, save_dir, use_fsdp, rank):
+    """Save the LoRA adapter (rank-0 only).
+
+    DDP path: plain ``peft_model.save_pretrained`` (names already clean).
+
+    FSDP path: the LoRA params are FSDP-IGNORED full replicas, so we can read
+    them straight off ``named_parameters`` WITHOUT any collective, strip the
+    ``_fsdp_wrapped_module.`` module-wrapper prefix the per-layer FSDP inserts,
+    then round-trip through ``get_peft_model_state_dict(state_dict=...)`` to get
+    the exact peft save-format keys, and write ``adapter_config.json`` +
+    ``adapter_model.safetensors`` — byte-compatible with a normal peft adapter.
+    """
+    if not _is_main(rank):
+        return
+    os.makedirs(save_dir, exist_ok=True)
+    if not use_fsdp:
+        peft_model.save_pretrained(save_dir)
+        return
+
+    from peft import get_peft_model_state_dict  # noqa: E402
+    lora_raw = {
+        name.replace("_fsdp_wrapped_module.", ""): prm.detach()
+        for name, prm in peft_model.named_parameters()
+        if "lora_" in name
+    }
+    peft_sd = get_peft_model_state_dict(peft_model, state_dict=lora_raw)
+    peft_sd = {k: v.detach().cpu().contiguous() for k, v in peft_sd.items()}
+    active = peft_model.active_adapter
+    if not isinstance(active, str):
+        active = "default"
+    peft_model.peft_config[active].save_pretrained(save_dir)
+    try:
+        from safetensors.torch import save_file  # noqa: E402
+        save_file(peft_sd, os.path.join(save_dir, "adapter_model.safetensors"),
+                  metadata={"format": "pt"})
+    except Exception:  # pragma: no cover - safetensors always present here
+        torch.save(peft_sd, os.path.join(save_dir, "adapter_model.bin"))
 
 
 # --------------------------------------------------------------------------- #
@@ -235,6 +349,13 @@ def main():
     p.add_argument("--grad_accum", type=int, default=1)
     p.add_argument("--grad_clip", type=float, default=1.0)
     p.add_argument("--gradient_checkpointing", action="store_true", default=False)
+    p.add_argument("--use_fsdp", action="store_true", default=False,
+                   help="Shard the FROZEN backbone decoder layers with FSDP "
+                        "(FULL_SHARD) so 30B/32B models fit (each rank holds 1/N "
+                        "of the backbone). LoRA params are FSDP-IGNORED (kept as "
+                        "full replicas, grads synced by the same manual all-reduce "
+                        "as the DDP path). Default False -> unchanged DDP path for "
+                        "small models. Requires launching under torchrun.")
     # io
     p.add_argument("--output_dir", type=str, required=True)
     p.add_argument("--save_interval", type=int, default=250)
@@ -314,6 +435,12 @@ def main():
     if args.gradient_checkpointing:
         base.gradient_checkpointing_enable()
 
+    # Shard the frozen backbone across ranks (30B/32B). Must happen BEFORE the
+    # QCMemModel orchestrator captures ``inner.layers`` (it mutates the ModuleList
+    # entries in place to FSDP units) and BEFORE collecting the trainable params.
+    if args.use_fsdp:
+        _fsdp_wrap_backbone(causal_lm, dtype, local_rank, rank)
+
     # QCMem orchestrator (thin, no params) reading layers off the peft-wrapped LM.
     qc = QCMemModel(causal_lm, resume_j=args.resume_j, top_prepay_b=args.top_prepay_b)
     qc.grad_checkpoint = bool(args.gradient_checkpointing)
@@ -326,6 +453,12 @@ def main():
     # adapter). Instead we do EXPLICIT gradient all-reduce (mean over ranks)
     # after ``backward`` — the correct pattern for a custom non-``forward`` graph.
     # Each rank streams a disjoint PG19 shard ([rank::world_size]).
+    #
+    # Under ``--use_fsdp`` the FROZEN backbone is FULL_SHARD-ed per decoder layer
+    # (memory), but LoRA is FSDP-ignored (a full replica on every rank), so the
+    # trainable-param handling below — rank-0 broadcast at init + manual grad
+    # all-reduce + standard clip — is IDENTICAL for both paths (FSDP touches only
+    # the frozen params, which carry no grad).
     train_params = [prm for prm in peft_model.parameters() if prm.requires_grad]
 
     def _allreduce_grads_mean():
@@ -465,14 +598,12 @@ def main():
 
             if _is_main(rank) and (step % args.save_interval == 0 or step == args.total_steps):
                 save_dir = os.path.join(args.output_dir, f"step{step}")
-                os.makedirs(save_dir, exist_ok=True)
-                peft_model.save_pretrained(save_dir)
+                _save_adapter(peft_model, save_dir, args.use_fsdp, rank)
                 print(f"[qcmem-distill] saved LoRA adapter -> {save_dir}", flush=True)
 
     if _is_main(rank):
         final_dir = os.path.join(args.output_dir, "final")
-        os.makedirs(final_dir, exist_ok=True)
-        peft_model.save_pretrained(final_dir)
+        _save_adapter(peft_model, final_dir, args.use_fsdp, rank)
         print(f"[qcmem-distill] DONE. final adapter -> {final_dir}", flush=True)
         if wb is not None:
             wb.finish()
