@@ -1,6 +1,16 @@
 # GPU_STATUS.md — 三节点 GPU 实时台账
 > 每次启动/kill GPU任务更新. heartbeat先读→对照nvidia-smi→台账说跑但空=补卡. ★29.162.226.120已归还(2026-07-11用户拿回给QCMem用=28.83.24.104). 最后更新：2026-07-12 (本机启动 Hy3 256k)
 
+## 当前 Qwen3-32B 正式评测快照（2026-07-16 13:37 +08:00）
+
+- **lhz / 183.242.150.6:32668（8×H200）**：Qwen3-32B RULER **variable_tracking disable-thinking probe n=100** RUNNING；8 张卡动态 task pool，driver PID `231488`；输出 `ruler_results/qwen32_vt_disablethinking_n100_j16_chunk512`，日志 `logs/qwen32_vt_disablethinking_n100/`。
+  - 协议：stock Qwen3-32B，zero-training，j16，chunk512，`iter_bm25(topk=16, rounds=4, hop_topk=4)`，bf16/SDPA，chat template + `enable_thinking=False`（临时 patched evaluator），VT × 8k/16k/32k × 4 shards，每 cell n=100。
+  - 刚完成：BABILong **qa5 disable-thinking n=500**，结果在 `babilong_results/qwen32_qa5_disablethinking_n500_j16_chunk512/_summary.json`：0k/1k/2k/4k/8k/16k/32k = 89.2/87.6/85.2/84.0/79.2/79.2/81.4。
+  - 说明：`tmux` 在 lhz 上不存在，后台任务用 `setsid` 守护方式挂起（SSH/Claude 退出不影响）。
+- **dev4 / 183.242.150.6:32679（4×H200，新机器）**：Qwen3-32B BABILong **qa1/qa2 disable-thinking n=500** RUNNING；4 张卡动态 task pool，driver PID `262`；输出 `babilong_results/qwen32_qa12_disablethinking_n500_j16_chunk512`，日志 `logs/qwen32_qa12_disablethinking_n500/`。
+  - 协议：stock Qwen3-32B，zero-training，j16，chunk512，bm25 topk12，bf16/SDPA，chat template + `enable_thinking=False`，`max_new_tokens=20`，qa1/qa2 × 0k/1k/2k/4k/8k/16k/32k × 4 shards，每 cell n=500。
+- **lhz2 / 183.242.150.6:32669（8×H200）**：当前未由本任务占用；上一轮 Qwen3-32B LongBench strict gate 未完成，结果保留在 `longbench_results/qwen32_zerotrain_j16_chunk512`。
+
 ## 节点清单(3节点=24卡)
 - **本机 wzc1 B200/L20A(8卡)**: .venv torch2.10 sm_100
 - **H20 .53.31 (28.83.53.31:36000, diskB)**: .venv→torch-base torch2.10+tf5.5.4, 密码 configs/password_h20_3153.txt

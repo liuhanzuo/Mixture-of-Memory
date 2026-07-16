@@ -5785,3 +5785,30 @@ Sanity 已四重验证(adapter_config 配置正确、cmdline 无 SWA、CSV 完�
 - Restored RULER prose input from official emozilla/pg19; data/pg19_train.jsonl is an explicitly documented symlink to a 64MiB eval-only subset, not the full training corpus.
 - Ran 16 paired n=30 Qwen3-32B cells on 16 H200 GPUs: j12/16/18/20 × RULER single/multikey16k + BABILong qa1/qa5 8k, chunk512/bm25/topk12.
 - Macro: j12 78.33, j16 77.50, j18 69.16, j20 70.00. Final default remains j16; j12 accuracy-first alternative; j18/j20 rejected.
+
+## 2026-07-15 — Qwen3-32B LongBench smoke data-loading failure
+
+- The first `narrativeqa` n=1 smoke used the default `THUDM/LongBench` loader and stalled after the 32B model loaded: GPU utilization stayed at 0%, the process waited on a proxy connection, and no result file was created.
+- Recorded this attempt as `failed_data_loading`, terminated PID 138793, and verified all eight lhz2 GPUs returned to 1 MiB. It is not counted as a completed shard.
+- The smoke gate remains closed until the official LongBench data is available locally and passed explicitly through `--hf_dataset`.
+
+- Retried the gate on lhz2 GPU0 as PID 139669 after all eight GPUs passed the clean preflight. The retry explicitly uses the verified official local six-task JSONL directory and writes a dedicated smoke log/output directory; full dispatch remains gated on its quality and metadata checks.
+- The local-data smoke completed in 89.744 seconds with F1 4.4944. Prediction, config, metrics, and score files all parse; the prediction is nonempty and coherent with no OOM or repeated garbage, and all eight required protocol metadata fields match. The raw no-chat answer is verbose and is retained unchanged.
+
+## 2026-07-15 — Qwen3-32B zero-training QCMem LongBench full dispatch
+
+- After the smoke gate passed, lhz2 was rechecked clean (8/8 GPUs at 1 MiB, no compute processes) while the separate lhz RULER pool remained healthy and untouched.
+- Started scheduler PID 140486 for the six official default LongBench QA tasks, four shards each (24 jobs), using one stock Qwen3-32B process per GPU with strict shard validation, bounded retry, drain, and final score-only aggregation.
+- Formal output is isolated at `longbench_results/qwen32_zerotrain_j16_chunk512/`; it is not part of the RULER/BABILong 34-cell table.
+- The first full attempt was stopped before any shard completed after 40 checkpoint rows exposed role/answer continuation pollution. Root cause: Qwen's generation config has EOS IDs `[151645, 151643]`, while the generator honored only tokenizer EOS `151645`; the second EOS was skipped in decoding but did not terminate generation.
+- Terminated scheduler process group 140486 and all eight workers, verified all lhz2 GPUs returned to 1 MiB, and quarantined the complete partial evidence without deletion at `longbench_results/qwen32_zerotrain_j16_chunk512_failed_eos_attempt_20260715_191901/` and the matching `longbench_failed_eos_attempt_20260715_191901/` log directory. No shard from this attempt counts as complete.
+- A targeted post-fix 2wikimqa sample-0 smoke still reproduced literal `Answer` / `Assistant` / `Human` continuation even though both official generation-config EOS IDs are now honored. The EOS fix is correct but not sufficient for this sample; the full pool remains stopped pending token-level diagnosis. No cleaning, chat template, max-generation, prompt, or scoring change was made.
+- Token-level diagnosis is definitive: the failed prediction re-encodes to 33 ordinary tokens and contains neither official EOS ID (`151645`, `151643`), including when decoded without special-token skipping. Under the mandated raw/no-chat protocol, stock Qwen directly emits role/Answer text inside the 32-token budget. LongBench is marked `blocked_nochat_format`; no full restart is authorized.
+- Correction: the `blocked_nochat_format` decision was over-conservative. The authoritative Qwen3-8B QCMem LongBench run uses the same raw/no-chat greedy protocol, retains continuation text without cleaning or added stops, and computes official F1 directly. The continuation is protocol-native model behavior, not pipeline corruption.
+- After a clean 8-GPU lhz2 preflight, restarted the isolated 24-shard Qwen3-32B full pool as scheduler PID 145782 under commit 85faeac. Quarantined failed-attempt evidence remains untouched; formal output/log paths were fresh.
+- Qwen3-32B zero-training/no-adapter LongBench pool PID 145782 exited after 4h06m49s. Strict validation accepted 20/24 shards (950/1150 samples) and all shards for qasper, multifieldqa_en, and 2wikimqa. narrativeqa shards 0/3, hotpotqa shard3, and musique shard3 each retained one deterministic decoded-empty prediction across three attempts and exhausted rc=3; they are explicitly failed, not complete. No OOM or traceback occurred, and lhz2 drained cleanly to 1 MiB / 0% on all GPUs. Exact generated token IDs were not persisted; because step-0 configured EOS logits are masked, the evidence is decoded-empty only, not first-token EOS. No six-task macro was reported and nothing was added to the RULER/BABILong 34-cell table.
+
+## 2026-07-16 — Qwen3-32B LongBench rescored with Qwen3-8B-compatible keep-empty policy
+
+- Recomputed `longbench_results/qwen32_zerotrain_j16_chunk512/scores.json` using the existing 24 shard JSONL files and the same LongBench F1 path used for Qwen3-8B: raw/no-chat predictions retained, empty strings kept as valid predictions with F1=0, no shard invalidation for empty predictions.
+- Scores: narrativeqa 6.24, qasper 14.24, hotpotqa 12.25, 2wikimqa 14.27, musique 7.71, multifieldqa_en 28.54, macro average 13.87. This supersedes the prior `failed_strict_gate` presentation for reporting; strict-gate diagnostics remain useful only for detecting empty-output rows.
