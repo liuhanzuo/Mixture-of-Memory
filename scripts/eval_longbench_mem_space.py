@@ -551,19 +551,31 @@ def load_longbench_dataset(dataset_name: str, datasets_list: list[str], data_dir
     return all_data
 
 
-def format_prompt(sample: dict, dataset_name: str, tokenizer, use_chat_template: bool = True) -> str:
+def format_prompt(sample: dict, dataset_name: str, tokenizer, use_chat_template: bool = True,
+                  enable_thinking: bool = False) -> str:
     """Format a LongBench sample into the prompt string.
 
     Uses the MemoryLLM-style prompt templates.
+
+    ``enable_thinking`` is forwarded to ``apply_chat_template`` when the tokenizer
+    supports it (Qwen3). Default False keeps thinking OFF so the model does not emit
+    ``<think>...</think>`` that pollutes scoring / wastes the generation budget.
     """
     template = DATASET2PROMPT.get(dataset_name, DATASET2PROMPT["hotpotqa"])
     prompt = template.format(context=sample["context"], input=sample["input"])
 
     if use_chat_template:
         messages = [{"role": "user", "content": prompt}]
-        prompt = tokenizer.apply_chat_template(
-            messages, tokenize=False, add_generation_prompt=True
-        )
+        try:
+            prompt = tokenizer.apply_chat_template(
+                messages, tokenize=False, add_generation_prompt=True,
+                enable_thinking=enable_thinking,
+            )
+        except TypeError:
+            # Tokenizer doesn't accept enable_thinking (non-Qwen3) -> fall back.
+            prompt = tokenizer.apply_chat_template(
+                messages, tokenize=False, add_generation_prompt=True
+            )
 
     return prompt
 

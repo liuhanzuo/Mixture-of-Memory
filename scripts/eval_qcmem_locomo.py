@@ -553,6 +553,13 @@ def main():
                         help="Wrap each prompt in the tokenizer chat template. "
                              "Default OFF (raw-completion prompts, matching the "
                              "other QCMem drivers). Turn ON for instruct backbones.")
+    parser.add_argument("--enable_thinking", action="store_true", default=False,
+                        help="When --use_chat_template is set, keep the backbone's "
+                             "thinking/reasoning mode ON (Qwen3 enable_thinking=True). "
+                             "Default OFF: pass enable_thinking=False to apply_chat_template "
+                             "so Qwen3 does not emit <think>...</think> that pollutes "
+                             "string_match scoring and wastes the generation budget. "
+                             "Silently ignored for tokenizers that do not support the kwarg.")
     parser.add_argument("--device", type=str, default="cuda:0")
     parser.add_argument("--dtype", type=str, default="bfloat16",
                         choices=["bfloat16", "float16", "float32"])
@@ -736,9 +743,16 @@ def main():
     for pos, sample in enumerate(tqdm(shard, desc="locomo", leave=True)):
         prompt = sample["prompt"]
         if args.use_chat_template:
-            prompt = tokenizer.apply_chat_template(
-                [{"role": "user", "content": prompt}],
-                tokenize=False, add_generation_prompt=True)
+            try:
+                prompt = tokenizer.apply_chat_template(
+                    [{"role": "user", "content": prompt}],
+                    tokenize=False, add_generation_prompt=True,
+                    enable_thinking=args.enable_thinking)
+            except TypeError:
+                # Tokenizer doesn't accept enable_thinking (non-Qwen3) -> fall back.
+                prompt = tokenizer.apply_chat_template(
+                    [{"role": "user", "content": prompt}],
+                    tokenize=False, add_generation_prompt=True)
         ids = tokenizer.encode(prompt, add_special_tokens=True, return_tensors="pt")
         if isinstance(ids, list):
             ids = torch.tensor([ids], dtype=torch.long)

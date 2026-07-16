@@ -894,6 +894,13 @@ def main():
     parser.add_argument("--use_examples", action="store_true", default=True)
     parser.add_argument("--use_post_prompt", action="store_true", default=True)
     parser.add_argument("--use_chat_template", action="store_true", default=False)
+    parser.add_argument("--enable_thinking", action="store_true", default=False,
+                        help="When --use_chat_template is set, keep the backbone's "
+                             "thinking/reasoning mode ON (Qwen3 enable_thinking=True). "
+                             "Default OFF: pass enable_thinking=False to apply_chat_template "
+                             "so Qwen3 does not emit <think>...</think> that pollutes "
+                             "string_match scoring and wastes the generation budget. "
+                             "Silently ignored for tokenizers that do not support the kwarg.")
     parser.add_argument("--self_test", action="store_true", default=False,
                         help="Run the j=0 correctness gate on the real backbone "
                              "and exit. Forces fp32 for a tight tolerance.")
@@ -1114,9 +1121,16 @@ def main():
                 )
                 if args.use_chat_template:
                     messages = [{"role": "user", "content": input_text}]
-                    input_text = tokenizer.apply_chat_template(
-                        messages, tokenize=False, add_generation_prompt=True
-                    )
+                    try:
+                        input_text = tokenizer.apply_chat_template(
+                            messages, tokenize=False, add_generation_prompt=True,
+                            enable_thinking=args.enable_thinking,
+                        )
+                    except TypeError:
+                        # Tokenizer doesn't accept enable_thinking (non-Qwen3) -> fall back.
+                        input_text = tokenizer.apply_chat_template(
+                            messages, tokenize=False, add_generation_prompt=True
+                        )
                 ids = tokenizer.encode(input_text, add_special_tokens=True, return_tensors="pt")
                 if isinstance(ids, list):
                     ids = torch.tensor([ids], dtype=torch.long)

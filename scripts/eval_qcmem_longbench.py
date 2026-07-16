@@ -186,6 +186,13 @@ def main():
                              "Default OFF, matching QCMem's BABILong/RULER drivers "
                              "(raw-completion prompts). Turn ON when evaluating an "
                              "instruct backbone that expects the chat wrapper.")
+    parser.add_argument("--enable_thinking", action="store_true", default=False,
+                        help="When --use_chat_template is set, keep the backbone's "
+                             "thinking/reasoning mode ON (Qwen3 enable_thinking=True). "
+                             "Default OFF: pass enable_thinking=False to apply_chat_template "
+                             "so Qwen3 does not emit <think>...</think> that pollutes "
+                             "scoring and wastes the generation budget. "
+                             "Silently ignored for tokenizers that do not support the kwarg.")
     parser.add_argument("--device", type=str, default="cuda:0")
     parser.add_argument("--dtype", type=str, default="bfloat16",
                         choices=["bfloat16", "float16", "float32"])
@@ -387,7 +394,8 @@ def main():
         for pos, idx in enumerate(tqdm(sample_indices, desc=f"{ds_name}", leave=True)):
             sample = samples[idx]
             prompt = lb.format_prompt(sample, ds_name, tokenizer,
-                                      use_chat_template=args.use_chat_template)
+                                      use_chat_template=args.use_chat_template,
+                                      enable_thinking=args.enable_thinking)
             ids = tokenizer.encode(prompt, add_special_tokens=True,
                                    return_tensors="pt")
             if isinstance(ids, list):
