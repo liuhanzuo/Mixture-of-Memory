@@ -1,4 +1,64 @@
 # PENDING_TASKS.md — Task Board
+## Updated 2026-07-15 21:35 CST
+
+---
+
+## 📋 [PLAN 2026-07-15] QCMem 收尾（当前最高优先，覆盖下方旧计划）
+
+### T21 [PENDING, auto_launch, P0] 32B vt recall-vs-speed frontier（用户 idea：深 j 掉 recall 但 read 变快）
+- **动机**：32B vt recall 随 j 变深而降（j3≈24 > j6≈15 ≈ j9≈16，j13/16/20 探针跑中）。但 QCMem read 成本 ∝ (L-j)/L 层 → 深 j = read/decode 更快。所以 vt j-sweep 不是"确认下降"，而是 **recall vs read 算力的 Pareto frontier**（论文素材：j = 精度↔算力旋钮）。
+- **理论预览（32B L=64, decode∝(L-j)）**：j3=95.3%层/1.00× · j6=90.6%/1.05× · j9=85.9%/1.11× · j13=79.7%/1.20× · j16=75%/1.27× · j20=68.8%/**1.39×**。
+- **动作**：等 .24 上 vt 探针跑完腾卡（或 .82.250 3b ~23:05 跑完），用**1 张卡**跑实测 latency sweep：
+  ```bash
+  cd /apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory
+  M=models/Qwen3-32B
+  for j in 3 6 9 13 16 20; do
+    CUDA_VISIBLE_DEVICES=<free> /opt/conda/envs/torch-base/bin/python scripts/bench_qcmem_vs_dense.py \
+      --mode profile --model_path $M --resume_j $j --topk 12 --chunk_size 512 \
+      --selector iter_bm25 --context_lengths 32k --device cuda:0 \
+      >> logs/32b_vt_speed_frontier.log 2>&1
+  done
+  ```
+  profile 模式输出每 j 的 read_prefill_s + decode/step（跑 16 decode step，很快）。
+- **交付**：把 recall（`ruler_results/qcmem_32b_n100/32b_j{3,6,9,13,16,20}_vt`）× speed（read_prefill + decode/step）配成双轴 frontier 表 → 写 `bench_qcmem_vs_dense_result.txt` + `status/RUN_REGISTRY.md`。
+- **口径**：zero-shot 无 adapter，topk12/chunk512/selector iter_bm25，与现有 32B cell 一致。
+
+### T22 [PENDING] eval 结果回填
+- .85/.24 上跑的 32B/14B LongBench/LoCoMo/vs-Dense 跑完后 → 聚合官方判分 → 回填 `status/QCMEM_BENCHMARK_PLAN.md` 主表 + `RUN_REGISTRY.md`（32B/14B 行）。
+- ⚠️ balance-j 修正未回填计划表 §1b（zero-shot 最优 j 浅=j3，非固定 0.25L）——待用户确认后一并更新。
+
+### T23 [PENDING, auto_launch, P0-数据质量] BABILong 重跑（thinking 污染）
+- **发现（2026-07-17）**：Qwen3-scale BABILong 结果（`babilong_results/qcmem_8b_{adapter_mid,zeroshot}_babilong` 等，文件 2026-07-14）在 thinking-fix `30bb2ab`（2026-07-16）之前生成 → 原始输出 ~90% 带 thinking/MC 标记，长档答案被挤出首句（8B-adapter qa1 首句命中 8k/16k/32k=65/56/**23**，但答案出现在输出任意处=66/68/**57**）→ **32k=21 被污染压低，非干净长程效应**。
+- **动作**：一有空卡即用 `scripts/eval_qcmem_babilong.py --enable_thinking False` 重跑 8B（adapter+zs）qa1/qa2/qa5 × 0k-32k；**先验证 `chat_template_no` 配置下 thinking 是否真被抑制**（fix 在 apply_chat_template 路径；这批是 chat_template_no → 可能要改走 chat_template=True + enable_thinking=False，或在 raw-prompt 生成里加 thinking 抑制/清洗）。重判后回填主表 §1a + RUN_REGISTRY，撤掉 caveat。
+- **连带**：核 4B/1.7B/0.6B/14B/32B BABILong 是否同批（2026-07-14 前）污染，一并重跑。
+- **阻塞**：当前 32/32 卡在跑 OLMo，无空卡；待任一 run 出 plateau/结束后执行。
+
+---
+
+## 📋 [PLAN 2026-07-13] 当前待办（用户回归后确认，覆盖旧计划）
+
+### ✅ 已完成（本轮自主运行沉淀）
+- 方向4 混元剪层：A13B(65B) 四连坑修复 + healing 验证(loss102→35) + **Hy-MT2-30B prune-heal frontier 4 点单调**(keep12→ppl63.5 / 24→42 / 30→27 / 36→12) [TaskList #16]
+- **QCMem 4-selector RULER n=100 对照聚合**(bm25/recency/reader_attn/oracle 各 90/90, commit a2fa0d9, `status/QCMEM_SELECTOR_COMPARISON.md`)：NIAH oracle=100 读出无损 bm25≈oracle；VT oracle 最差(9.2)需 multi-hop [TaskList #11]
+
+### 🔧 待办（harness TaskList #17-#20）
+- **T17 [RUNNING, auto_launch] armB 200k 迁本机 L20A（~5×加速）**：传 step36000.pt(47GB) diskB→wzc1【进行中】→ kill 本机 chunk1024 消融 + kill .24.104 armB → 本机 `train_qwen3_arch_probe2.py --resume_from step36000.pt` resume 到 200000。脚本/data(slimpajama_chunks_2048_qwen3.npy)/model 本机已就位。
+- **T18 [PENDING, auto_launch] VT 迭代 bm25 selector（便宜先试，用户 idea）**：follow 变量链——query 变量名 bm25→找 chunk→读下一个变量名→再 bm25→累积 topk。eval_ruler_qcmem 加 `--selector iter_bm25`。判据：VT recall vs 单次 bm25(28)/reader_attn(60)。
+- **T19 [PENDING] VT learned scoring head（保变量身份）**：训小 head，contrastive on gold chain，迭代多跳（之前 mean-pool 抹身份失败）。若 T18 够好可降级。
+- **T20 [PENDING, 可选] Hy-MT2-30B split-j sweep**：补它的 QCMem 缓存切点(48层,预期~j19 需实测)。低优先级。
+- **T-chunk [PAUSED] chunk1024 vs 512 消融**：本机让位给 armB 迁移(已跑~51/90)，后续在 .24.104 补完 + aggregate。
+- **T-paper [PENDING] 写作**：方向4 frontier + 4-selector 对照 → probe#2 / §2.5 / §2.6 章节。
+
+### 资源规划（迁移后）
+- **本机 wzc1(L20A)**：armB 200k（快 ~5×）
+- **.24.104（armB 迁走后空）**：VT 迭代 bm25 + learned head 实验
+- **.85.73**：selector 数据 / VT eval
+- **.53.31**：offline，不管（用户 2026-07-13 指令）
+
+---
+
+<details><summary>旧计划（2026-06-25 FIFO eval，已过期存档）</summary>
+
 ## Updated 2026-06-25 00:15 CST
 
 ---
