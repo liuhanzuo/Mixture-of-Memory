@@ -298,6 +298,18 @@ def main():
     parser.add_argument("--dtype", type=str, default="bfloat16",
                         choices=["bfloat16", "float16", "float32"])
     parser.add_argument("--attn_impl", type=str, default="sdpa")
+    parser.add_argument("--use_chat_template", action="store_true", default=False,
+                        help="Render the model INPUT through the tokenizer chat "
+                             "template (messages=[{user: prompt}]). The bm25/oracle "
+                             "retrieval query is derived from the RAW target label "
+                             "(not the templated prompt), so chat-templating never "
+                             "corrupts selector-query extraction. Default OFF -> "
+                             "byte-identical to the legacy path.")
+    parser.add_argument("--enable_thinking", action="store_true", default=False,
+                        help="When --use_chat_template is set, keep the backbone's "
+                             "thinking/reasoning mode ON (Qwen3 enable_thinking=True). "
+                             "Default OFF: pass enable_thinking=False to "
+                             "apply_chat_template so no <think>...</think> is emitted.")
     parser.add_argument("--score_only", action="store_true",
                         help="Only merge existing per-shard JSON + recompute acc.")
     parser.add_argument("--self_test", action="store_true", default=False,
@@ -432,6 +444,18 @@ def main():
     qc = QCMemModel(model, resume_j=args.resume_j, top_prepay_b=args.top_prepay_b,
                     block_diagonal=args.reuse_kv_blockdiag)
 
+    # Chat assistant generation prefix (no-think when enable_thinking is False),
+    # appended at the QCMem query boundary so decoding starts after the closed
+    # <think></think> block. Computed once (content-independent). None when
+    # --use_chat_template is off -> default path stays byte-identical.
+    gen_boundary_ids = None
+    if args.use_chat_template:
+        gen_boundary_ids = qcb._chat_generation_boundary_ids(
+            tokenizer, args.enable_thinking)
+        print(f"[QCMem-LongEval] chat generation boundary ids "
+              f"({len(gen_boundary_ids or [])} tok): "
+              f"{tokenizer.decode(gen_boundary_ids) if gen_boundary_ids else None!r}")
+
     outdir.mkdir(parents=True, exist_ok=True)
     sharded = args.num_shards > 1
     shard_tag = f"_shard{args.shard_index}of{args.num_shards}" if sharded else ""
@@ -472,6 +496,37 @@ def main():
             prompt, expected, target_label, n_lines = build_lines_prompt(
                 target_tokens, tokenizer, rng)
 
+            # Chat-template ONLY the model input. The bm25/oracle retrieval query
+            # is derived from target_label (the RAW gold line label) below, NOT
+            # from `prompt`, so chat-templating never corrupts selector-query
+            # extraction (same principle as the RULER fix, commit 082aaa6).
+            if args.use_chat_template:
+                messages = [{"role": "user", "content": prompt}]
+                # add_generation_prompt=False: the assistant generation prefix
+                # (no-think block) is appended at the QCMem query boundary via
+                # gen_boundary_ids, not baked into the chunked input.
+                try:
+                    prompt = tokenizer.apply_chat_template(
+                        messages, tokenize=False, add_generation_prompt=False,
+                        enable_thinking=args.enable_thinking,
+                    )
+                except TypeError:
+                    # Tokenizer doesn't accept enable_thinking (non-Qwen3) -> fall back.
+                    prompt = tokenizer.apply_chat_template(
+                        messages, tokenize=False, add_generation_prompt=False,
+                    )
+                if gen_boundary_ids is None:
+                    # Delta extraction failed -> bake the generation prompt in.
+                    try:
+                        prompt = tokenizer.apply_chat_template(
+                            messages, tokenize=False, add_generation_prompt=True,
+                            enable_thinking=args.enable_thinking,
+                        )
+                    except TypeError:
+                        prompt = tokenizer.apply_chat_template(
+                            messages, tokenize=False, add_generation_prompt=True,
+                        )
+
             ids = tokenizer.encode(prompt, add_special_tokens=True,
                                    return_tensors="pt")
             if isinstance(ids, list):
@@ -497,6 +552,7 @@ def main():
                     sink_tokens=args.sink_tokens,
                     needle_chunk_set=needle_set, bare_question_ids=bare_q_ids,
                     no_retrieval=no_retrieval, stats=gen_stats,
+                    gen_boundary_ids=gen_boundary_ids,
                 )
                 if "read_len" in gen_stats:
                     read_len_last = int(gen_stats["read_len"])
