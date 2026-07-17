@@ -156,12 +156,34 @@ def main():
                              "every chunk) + no LoRA (post-hoc) — read grows "
                              "O(context).")
     parser.add_argument("--selector", type=str, default="bm25",
-                        choices=["bm25", "recency", "reader_attn"],
+                        choices=["bm25", "recency", "reader_attn", "iter_bm25"],
                         help="Chunk selector for the read pack (oracle is NOT "
                              "supported on LongBench — no single gold-answer span "
-                             "to locate). bm25 is the deployable default.")
+                             "to locate). bm25 is the deployable default. iter_bm25 "
+                             "is the unified multi-hop iterative lexical selector "
+                             "(round 1 == single-shot bm25; later rounds re-query "
+                             "BM25 with the previous picks' token text to walk a "
+                             "lexical reference chain — identical routine to "
+                             "eval_ruler_qcmem.py / eval_qcmem_babilong.py).")
     parser.add_argument("--topk", type=int, default=12,
                         help="Number of context chunks to pack into the read.")
+    # --- iterative multi-hop selectors (iter_bm25); defaults mirror
+    #     eval_ruler_qcmem.py so numbers are directly comparable across drivers. ---
+    parser.add_argument("--iter_rounds", type=int, default=0,
+                        help="iter_bm25: #BFS hop rounds (<=0 -> "
+                             "ceil(topk/iter_hop_topk)).")
+    parser.add_argument("--iter_hop_topk", type=int, default=4,
+                        help="iter_bm25: chunks added per BFS round.")
+    parser.add_argument("--iter_score", type=str, default="meanpool",
+                        choices=["meanpool", "maxsim"],
+                        help="Iterative reader-attn scoring (unused by iter_bm25; "
+                             "kept for signature parity with the RULER/babilong "
+                             "drivers).")
+    parser.add_argument("--iter_conf_ratio", type=float, default=0.3,
+                        help="iter_bm25_adaptive relative-confidence stop ratio "
+                             "(parity kwarg; iter_bm25 uses a fixed topk budget).")
+    parser.add_argument("--iter_max_chunks", type=int, default=64,
+                        help="iter_bm25_adaptive hard chunk cap (parity kwarg).")
     parser.add_argument("--sink_tokens", type=str, default="bos",
                         choices=["bos", "none"],
                         help="Attention-sink anchor at packed position 0.")
@@ -416,6 +438,11 @@ def main():
                     sink_tokens=args.sink_tokens,
                     needle_chunk_set=None, bare_question_ids=bare_q_ids,
                     no_retrieval=no_retrieval, stats=gen_stats,
+                    iter_rounds=args.iter_rounds,
+                    iter_hop_topk=args.iter_hop_topk,
+                    iter_score=args.iter_score,
+                    iter_conf_ratio=args.iter_conf_ratio,
+                    iter_max_chunks=args.iter_max_chunks,
                 )
             except RuntimeError as e:
                 if "out of memory" not in str(e).lower():
