@@ -33,6 +33,12 @@
 - **连带**：核 4B/1.7B/0.6B/14B/32B BABILong 是否同批（2026-07-14 前）污染，一并重跑。
 - **阻塞**：当前 32/32 卡在跑 OLMo，无空卡；待任一 run 出 plateau/结束后执行。
 
+### T24 [PENDING, auto_launch] 方向4「极简架构」缺的控制臂 + healed eval（= 用户"论文实验缺的部分"）
+- **方向4**（QCMEM_AUTONOMOUS_AGENDA §1）：「前 j 层已承载语义 → 前 j 层 + k fresh NTP 层构成更小 transformer，去中间冗余层」。剪层-heal(keep14/12/10) = 正臂。
+- **缺的关键控制臂**：`--from_scratch`（同 j+k 架构、不 transplant 前层、从头训）→ 证「前层语义 warm-start ≫ 同小架构从头练」；可选 `--freeze_front`（冻结前层只训 fresh，测前层是否需微调）。三臂 + C0(7.55) 才能下方向4 结论。
+- **healed-ckpt eval**：keep14 ppl 已出(12.55 heal 曲线)；补 keep12/keep10 收敛后的 ppl + 下游（同 held-out dolmino / eval_olmo2_ppl.py）。keep10 最新完整 ckpt step8000 尚欠 heal(ppl17.8)，待收敛。
+- **状态（2026-07-17）**：local 节点现被 keep14-resume 占；from_scratch 控制臂需整节点 DDP → 待 keep10/keep12/1B 任一出 plateau 或结束腾节点后 auto-launch（`KEEP=14 FROM_SCRATCH=1` 需给 run_olmo2_7B_keepN.sh 加 --from_scratch 透传）。keep12 亦待 resume。
+
 ---
 
 ## 📋 [PLAN 2026-07-13] 当前待办（用户回归后确认，覆盖旧计划）
