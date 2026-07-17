@@ -87,11 +87,11 @@
 > - **`j (used, zero-shot)` 行（2026-07-16 加）**：标明本 §1a 各非-RULER benchmark（BABILong/LongBench/LongEval/LoCoMo/vs-Dense）实际用的 split-depth j，逐列从结果目录名 + `eval_config.json` 的 `resume_j` 核实：0.6B=**j3** / 1.7B=**j4** / 4B=**j9** / 8B=**j9(zs)·j12(+adapter，`qcmem_distill_qwen_j12_r32_4k`)** / 14B=**j3(zs)·j13(+adapter，`qcmem_distill_14b_j13_r32`)** / 32B=**j3** / 30B-A3B=**j12**。均为各 scale 的 recall-optimal 浅 j（非 §1 双 j 主表的 readout-safe / content-j）；同一模型 5 个 benchmark 的 j 一致。⚠️ RUN_REGISTRY 旧注误把 30B-A3B 归为 zs j3，实测全 benchmark 均 **j12**（已在 RUN_REGISTRY 更正）。
 > - **LoCoMo 用 F1**（token-level SQuAD-F1，与 LoCoMo 原论文口径可比）；`eval_qcmem_locomo.py` 的 substring "acc" 仅内部代理（脚本注释亦自承是 judge 的 proxy），**非 LLM-judge** → **报告以 F1 为准**（30B-A3B F1=5.0 / 32B F1=4.1 / 14B F1=2.2）。
 > - **⏸ 暂不评（需 API / GPT-4o judge，暂缓）**：**LongMemEval**（官方 = GPT-4o auto-judge）、**∞Bench / HELMET** 的 judge 型子任务。现成 harness = 仓库里 `longmemeval/` 包（Track B RAG baseline，含 loader `load_longmemeval` + 官方提交 JSONL 格式 + `MoMSlotReranker` 接入 stub），**待有 API judge 时接，不用从头建**；若之后要 QCMem-native 口径，只复用它的 loader+scoring。
-> - **速度已回填全 scale（2026-07-16，`bench_qcmem_speed_result.txt`）**：prefill 加速随 ctx 长度增长（8k ~1–1.6× → 32k ~7–18× → 128k **50–103×**，Dense 能装下的档）；decode 8k 略慢(0.6–0.7×)、32k/128k 快(**1.6–2.6×**)；**QCMem 峰值显存跨 8k/32k/128k 恒定**（读 pack 固定 6657 tok：0.6B 2.1G / 1.7B 4.5G / 4B 9.5G / 14B 31.4G / 30B-A3B 63G / 32B 68G），Dense 显存随长度线性增 → **32B/30B-A3B @128k Dense OOM，QCMem 恒定跑通**（headline 超 scale 卖点）。
+> - **速度已回填全 scale（2026-07-16，`bench_qcmem_vs_dense_result.txt`（原 8B 于 resume_j=12 单测，其余 scale 2026-07-16 sweep；速度对 j 不敏感，QCMem read pack 恒 6657 tok））**：prefill 加速随 ctx 长度增长（8k ~1–1.6× → 32k ~7–18× → 128k **50–103×**，Dense 能装下的档）；decode 8k 略慢(0.6–0.7×)、32k/128k 快(**1.6–2.6×**)；**QCMem 峰值显存跨 8k/32k/128k 恒定**（读 pack 固定 6657 tok：0.6B 2.1G / 1.7B 4.5G / 4B 9.5G / 14B 31.4G / 30B-A3B 63G / 32B 68G），Dense 显存随长度线性增 → **32B/30B-A3B @128k Dense OOM，QCMem 恒定跑通**（headline 超 scale 卖点）。
 
 **★ agent 侧(8B→0.6B) 全 scale benchmark 基本完成**（详数见 RUN_REGISTRY「★ QCMem 全 scale benchmark」+ bench_qcmem_vs_dense_result.txt）。核心结论：①128k Dense=0 全 scale 崩、QCMem 存活（普适卖点）②adapter 是硬任务/长档杠杆（8B multikey 42→91, vt 46→97）③**zero-shot readout 崩点随模型变小而变浅**（0.6B ~0.09L → 32B >0.42L），gap=adapter 缺口随 scale 缩小到 32B~0 ④multikey topk 甜点=4。**14B/32B(collaborator, zero-shot j3) 全 benchmark 聚合完成**（2026-07-16）：RULER single/multikey 满分级、vs-Dense 128k Dense崩(11/OOM)→QCMem 存活(98-100)、LongEval~99、LongBench qa_f1 32B=12.4/14B=9.6、LoCoMo 32B acc6.6/14B acc1.4。**32B VT 异常弱(iter_bm25 j3峰值~24，深 j 不升→selector/模型瓶颈)，14B VT 却强(89-96)。30B-A3B（j12）BABILong=32.3 / LoCoMo acc7.4·F5.0 / vs-Dense 128k single Dense OOM→QCMem 100 已聚合，multikey 补跑中**；LongMemEval/∞Bench/HELMET 待接 harness。
 
-### 1c. vs-Dense 速度对比全表（2026-07-16，`bench_qcmem_speed_result.txt`）
+### 1c. vs-Dense 速度对比全表（2026-07-16，`bench_qcmem_vs_dense_result.txt`（原 8B 于 resume_j=12 单测，其余 scale 2026-07-16 sweep；速度对 j 不敏感，QCMem read pack 恒 6657 tok））
 
 > zero-shot（无 adapter），`bench_qcmem_vs_dense.py --mode speed`，topk12 chunk512 bf16，1×H20/卡，per-model readout-safe j，QCMem 读 pack 固定 6657 tok。prefill×=Dense/QCMem prefill 时间比；decode×=QCMem tok/s ÷ Dense tok/s。列格式 8k/32k/128k。
 
@@ -100,7 +100,7 @@
 | 0.6B | 2 | 0.12/1.23/15.41s | 0.12/0.07/0.15s | 1.0/17.6/**102.7×** | 2.4/5.9/19.8G | **2.1G(恒定)** | 6.6/0.7/2.6× |
 | 1.7B | 3 | 0.25/1.74/17.29s | 0.16/0.22/0.25s | 1.6/7.9/**69.2×** | 4.9/9.0/25.6G | **4.5G(恒定)** | 0.6/2.6/2.4× |
 | 4B | 9 | 0.65/4.34/43.83s | 0.45/0.52/0.55s | 1.4/8.3/**79.7×** | 10.0/15.6/37.9G | **9.5G(恒定)** | 0.7/2.2/2.2× |
-| 8B | 9 | （旧测 @128k）| — | **57×** | — | ~18G | 32–68× |
+| 8B | 9 | 2.37/13.04/110.36s | 1.82/1.90/1.92s | 1.3/6.9/**57.5×** | 18.5/24.8/49.8G | **17.9G(恒定)** | 0.9/32.4/68.7× |
 | 14B | 13 | 1.88/9.98/76.26s | 1.44/1.50/1.53s | 1.3/6.7/**49.8×** | 32.1/39.7/70.2G | **31.4G(恒定)** | 0.7/2.0/1.6× |
 | 30B-A3B | 16 | 0.75/5.19/**OOM** | 0.55/0.62/0.65s | 1.4/8.4/**Dense OOM** | 63.7/71.3/**OOM** | **63.0G(恒定)** | 0.7/1.6/— |
 | 32B | 27 | 4.47/23.91/**OOM** | 3.41/3.46/3.49s | 1.3/6.9/**Dense OOM** | 69.3/80.5/**OOM** | **68.0G(恒定)** | 0.7/1.6/— |
