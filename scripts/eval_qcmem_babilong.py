@@ -101,6 +101,46 @@ def _load_babilong_task(dataset_name: str, split_name: str, task: str):
 #                             ``write_chunk`` hiddens (bottom-j only, NOT a full
 #                             model re-forward — so QCMem's compute saving holds).
 # --------------------------------------------------------------------------- #
+def _chat_generation_boundary_ids(tokenizer, enable_thinking: bool):
+    """Token ids of the chat *assistant generation prefix* (content-independent).
+
+    Returns the exact tokens ``apply_chat_template(..., add_generation_prompt=True)``
+    appends AFTER the user turn — e.g. for Qwen3 with ``enable_thinking=False`` this
+    is ``<|im_start|>assistant\\n<think>\\n\\n</think>\\n\\n`` (a CLOSED, empty think
+    block: the standard Qwen3 no-think signal), and with ``enable_thinking=True`` it
+    is just ``<|im_start|>assistant\\n``. Computed as the delta between the
+    ``add_generation_prompt=True`` and ``=False`` renders of a dummy (empty-content)
+    message; the generation prompt is content-independent (it is appended after the
+    last message), and the base/full split falls on the ``<|im_end|>`` / ``<|im_start|>``
+    special-token boundary, so the delta tokens are exactly the generation prefix.
+
+    Returns ``None`` if the delta cannot be cleanly extracted (unexpected template),
+    in which case the caller keeps the legacy behaviour.
+    """
+    msgs = [{"role": "user", "content": ""}]
+    try:
+        base_s = tokenizer.apply_chat_template(
+            msgs, tokenize=False, add_generation_prompt=False,
+            enable_thinking=enable_thinking)
+        full_s = tokenizer.apply_chat_template(
+            msgs, tokenize=False, add_generation_prompt=True,
+            enable_thinking=enable_thinking)
+    except TypeError:
+        # Tokenizer doesn't accept enable_thinking (non-Qwen3) -> plain render.
+        base_s = tokenizer.apply_chat_template(
+            msgs, tokenize=False, add_generation_prompt=False)
+        full_s = tokenizer.apply_chat_template(
+            msgs, tokenize=False, add_generation_prompt=True)
+    # tokenize the string renders (special tokens like <|im_start|> map to their
+    # ids); add_special_tokens=False so no phantom BOS is introduced.
+    base = tokenizer.encode(base_s, add_special_tokens=False)
+    full = tokenizer.encode(full_s, add_special_tokens=False)
+    n = len(base)
+    if len(full) <= n or list(full[:n]) != list(base):
+        return None
+    return list(full[n:])
+
+
 def _reader_attn_scores(context_hj, query_hj):
     """Salience of each context chunk to the query, from cached depth-``j`` hidden
     states (``h_j`` == the ``write_chunk`` output; NO extra model forward).
@@ -559,6 +599,7 @@ def qcmem_generate(
     iter_conf_ratio: float = 0.3, # iter_bm25_adaptive: relative-confidence stop ratio
     iter_max_chunks: int = 64,    # iter_bm25_adaptive: hard cap on accumulated chunks
     use_kv_cache: bool = True,    # resumed-band KV cache decode (O(1)/step)
+    gen_boundary_ids=None,        # chat assistant no-think prefill (appended to query)
 ) -> str:
     """Chunk the prompt, write each chunk to depth ``j``, select context chunks,
     then greedily decode from the packed read.
@@ -631,6 +672,17 @@ def qcmem_generate(
 
     # ---- greedy decode: only the growing query chunk is re-encoded per step ----
     query_ids = query_chunk.tolist()
+    # Chat generation boundary (2026-07-17): when the eval runs with
+    # --use_chat_template, the model INPUT is rendered WITHOUT the assistant
+    # generation prompt (add_generation_prompt=False) and the prompt's assistant
+    # prefill is appended HERE, at the query tail, as ``gen_boundary_ids`` — e.g.
+    # Qwen3 no-think ``<|im_start|>assistant\n<think>\n\n</think>\n\n``. This makes
+    # generation resume AFTER the closed think block regardless of how chunk_size
+    # splits the prompt (the legacy path relied on chunks[-1] happening to carry
+    # the tail, which a boundary-straddling split could break). No-op / None in the
+    # default no-chat-template path, so that behaviour is byte-identical.
+    if gen_boundary_ids:
+        query_ids = query_ids + list(gen_boundary_ids)
     # Qwen generation configs may declare more than one official stop token
     # (e.g. EOS + end-of-turn).  Decoding only against tokenizer.eos_token_id
     # silently skips the end-of-turn token under skip_special_tokens=True and
@@ -1017,6 +1069,17 @@ def main():
     qc = QCMemModel(model, resume_j=args.resume_j, top_prepay_b=args.top_prepay_b,
                     block_diagonal=args.reuse_kv_blockdiag)
 
+    # Chat assistant generation prefix (no-think when enable_thinking is False),
+    # appended at the QCMem query boundary so decoding starts after the closed
+    # <think></think> block. Computed once (content-independent). None when
+    # --use_chat_template is off -> default path stays byte-identical.
+    gen_boundary_ids = None
+    if args.use_chat_template:
+        gen_boundary_ids = _chat_generation_boundary_ids(
+            tokenizer, args.enable_thinking)
+        print(f"[QCMem-BABILong] chat generation boundary ids ({len(gen_boundary_ids or [])} tok): "
+              f"{tokenizer.decode(gen_boundary_ids) if gen_boundary_ids else None!r}")
+
     for task in tqdm(args.tasks, desc="tasks"):
         if task not in DEFAULT_PROMPTS:
             print(f"[WARNING] Task {task} not in DEFAULT_PROMPTS, skipping.")
@@ -1121,16 +1184,33 @@ def main():
                 )
                 if args.use_chat_template:
                     messages = [{"role": "user", "content": input_text}]
+                    # add_generation_prompt=False: the assistant generation prefix
+                    # (no-think block) is NOT baked into the chunked input; it is
+                    # appended at the QCMem query boundary via gen_boundary_ids so
+                    # the closed <think></think> always lands at the generation tail
+                    # regardless of chunk_size (see qcmem_generate).
                     try:
                         input_text = tokenizer.apply_chat_template(
-                            messages, tokenize=False, add_generation_prompt=True,
+                            messages, tokenize=False, add_generation_prompt=False,
                             enable_thinking=args.enable_thinking,
                         )
                     except TypeError:
                         # Tokenizer doesn't accept enable_thinking (non-Qwen3) -> fall back.
                         input_text = tokenizer.apply_chat_template(
-                            messages, tokenize=False, add_generation_prompt=True
+                            messages, tokenize=False, add_generation_prompt=False
                         )
+                    if gen_boundary_ids is None:
+                        # Delta extraction failed -> keep legacy behaviour (bake the
+                        # generation prompt into the input as before).
+                        try:
+                            input_text = tokenizer.apply_chat_template(
+                                messages, tokenize=False, add_generation_prompt=True,
+                                enable_thinking=args.enable_thinking,
+                            )
+                        except TypeError:
+                            input_text = tokenizer.apply_chat_template(
+                                messages, tokenize=False, add_generation_prompt=True
+                            )
                 ids = tokenizer.encode(input_text, add_special_tokens=True, return_tensors="pt")
                 if isinstance(ids, list):
                     ids = torch.tensor([ids], dtype=torch.long)
@@ -1159,6 +1239,7 @@ def main():
                         iter_score=args.iter_score,
                         iter_conf_ratio=args.iter_conf_ratio,
                         iter_max_chunks=args.iter_max_chunks,
+                        gen_boundary_ids=gen_boundary_ids,
                     )
                 except RuntimeError as e:
                     if "out of memory" not in str(e).lower():

@@ -464,6 +464,17 @@ def main():
     qc = QCMemModel(model, resume_j=args.resume_j, top_prepay_b=args.top_prepay_b,
                     block_diagonal=args.reuse_kv_blockdiag)
 
+    # Chat assistant generation prefix (no-think when enable_thinking is False),
+    # appended at the QCMem query boundary so decoding resumes after the closed
+    # <think></think> block regardless of chunk_size. Computed once
+    # (content-independent). None when --use_chat_template is off -> byte-identical.
+    gen_boundary_ids = None
+    if args.use_chat_template:
+        gen_boundary_ids = qcb._chat_generation_boundary_ids(
+            tokenizer, args.enable_thinking)
+        print(f"[QCMem-RULER] chat generation boundary ids ({len(gen_boundary_ids or [])} tok): "
+              f"{tokenizer.decode(gen_boundary_ids) if gen_boundary_ids else None!r}")
+
     outdir = Path(args.results_folder) / args.output_name
     outdir.mkdir(parents=True, exist_ok=True)
     sharded = args.num_shards > 1
@@ -522,17 +533,24 @@ def main():
                 bare_q = _bare_question(prompt)
                 bare_q_ids = tokenizer.encode(bare_q, add_special_tokens=False)
 
-                # Only the model INPUT is (optionally) chat-templated.
+                # Only the model INPUT is (optionally) chat-templated. The
+                # assistant generation prefix (no-think block) is NOT baked into
+                # the chunked input (add_generation_prompt=False); it is appended
+                # at the QCMem query boundary via gen_boundary_ids so the closed
+                # <think></think> always lands at the generation tail regardless
+                # of chunk_size (see qcmem_generate). If the boundary delta could
+                # not be extracted, fall back to baking it into the input.
                 model_prompt = prompt
                 if args.use_chat_template:
                     messages = [{"role": "user", "content": prompt}]
+                    add_gen = gen_boundary_ids is None
                     try:
                         model_prompt = tokenizer.apply_chat_template(
-                            messages, tokenize=False, add_generation_prompt=True,
+                            messages, tokenize=False, add_generation_prompt=add_gen,
                             enable_thinking=args.enable_thinking)
                     except TypeError:  # non-Qwen3 tokenizer
                         model_prompt = tokenizer.apply_chat_template(
-                            messages, tokenize=False, add_generation_prompt=True)
+                            messages, tokenize=False, add_generation_prompt=add_gen)
 
                 ids = tokenizer.encode(model_prompt, add_special_tokens=True,
                                        return_tensors="pt")
@@ -562,6 +580,7 @@ def main():
                         iter_score=args.iter_score,
                         iter_conf_ratio=args.iter_conf_ratio,
                         iter_max_chunks=args.iter_max_chunks,
+                        gen_boundary_ids=gen_boundary_ids,
                     )
                     if "read_len" in gen_stats:
                         read_len_last = int(gen_stats["read_len"])
