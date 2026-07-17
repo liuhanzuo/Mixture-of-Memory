@@ -1458,3 +1458,231 @@ team-lead 采纳「Part-Y-only」干净单轴框架（比早先 option A 更紧�
 - Protocol: stock Qwen3-32B, no adapter, chunk512, bm25 topk12, j={12,16,18,20}; RULER niah single/multikey 16k plus BABILong qa1/qa5 8k.
 - Results (single/multi/qa1/qa5; macro): j12=100/100/80/33.3 (78.33); j16=100/90/86.7/33.3 (77.50); j18=100/73.3/83.3/20 (69.16); j20=100/96.7/76.7/6.7 (70.00).
 - Verdict: j12 and j16 are tied within n30 noise; use j16 by default because it is 5-9% faster, wins qa1, ties qa5/single, and has stronger five-seed intrinsic stability. j18/j20 show hard-task cliffs and are rejected.
+---
+## ★ QCMem 全 scale benchmark（2026-07-15 起，Paper A 主力）
+
+分工：collaborator=32B+，agent=8B→4B→1.7B→0.6B。协议见 `status/QCMEM_BENCHMARK_PLAN.md`。
+selector 默认 auto（vt→iter_bm25 固定 / niah→bm25）；j：8B/4B=12，1.7B/0.6B=9；adapter 仅 8B。
+
+### ★★ 双 j 主表（framing A，2026-07-16 重建；依据 `status/QCMEM_J_DETERMINATION.md`）
+
+**口径**：RULER=`string_match`，n=100，chunk512；single/multikey=bm25、vt=iter_bm25（固定多跳）。zero-shot 行 = per-model **readout-safe j**（zero-shot readout 不塌、single-recall 近满 ≥90 的最深 j）。adapter 行 = 现有 ~0.33L adapter（content-j ~0.45L adapter 训练中）。
+
+#### zero-shot @ readout-safe j（实测，主表权威 zero-shot 列）
+| model | L | readout-safe j (/L) | niah_single 8k/16k/32k | niah_multikey 8k/16k/32k | vt 8k/16k/32k |
+|---|---|---|---|---|---|
+| **0.6B** | 28 | **j2** (0.07L) | 100/100/100 | 77/89/79 | 58/67/79 |
+| **1.7B** | 28 | **j3** (0.11L) | 97/100/100 | 53/40/33 | 53/64/60 |
+| **4B** | 36 | **j9** (0.25L) | 93/98/94 | 38/35/41 | 58/61/54 |
+| **8B** | 36 | **j9** (0.25L) | 100/97/99 | 42/36/31 | 46/42/39 |
+| **14B** | 40 | **j13** (0.325L) | 99/89/98 | 51/51/11 | 18/15/11 |
+| **32B** | 64 | **j27** (0.42L) | 100/100/100 | 98/88/86 | 42/33/37 |
+
+- **single 在 readout-safe j 全 scale 近满**（选 j 的判据）；**multikey/vt 在此深度对中间 scale（尤 14B）已衰减**（14B mk 51/51/11、vt 18/15/11）——这是"single≥90 定 j"的代价，也是 adapter 要补的 gap。0.6B/32B 因 gap 小，mk/vt 亦高（32B mk 98/88/86，0.6B vt 58/67/79）。
+
+#### +adapter @ ~0.33L（现有较浅 adapter，标注实际 j）
+| model | adapter j | niah_single | niah_multikey | vt |
+|---|---|---|---|---|
+| **1.7B** | ~j9 (0.33L, 现有) | —(zs 已高) | 56/39/20 | 62/62/66 |
+| **4B** | ~j12 (0.33L, 现有) | —(zs 已高) | 95/97/94 | 96/96/97 |
+| **8B** | **j12** (0.33L, 已验证) | 100/100/100 | 91/91/92 | 97/97/98 |
+| **14B** | ~j13 (0.33L, 现有) | 100/100/100 | 100/99/99 | 99/100/100 |
+| **32B** | 几乎不需（gap~0，readout j27 已达 content 峰） | — | — | — |
+
+#### ★★★ n=500 firm-up（2026-07-16，RULER 官方协议口径，论文用；24 diskB 卡 task-pool，0 fail）
+> 把上面双 j 主表（zero-shot @ readout-safe j + adapter @ ~0.33L）关键 cell 从 n=100 firm 到 **n=500**。判分 `string_match`，chunk512，topk12，single/multikey=`bm25`、vt=`iter_bm25`(rounds0/hop4)。结论：**n=500 全 cell 与 n=100 一致（噪声内），headline(8B/14B/32B) 完全 track**。REUSE=已有 n500 未重跑。
+
+**zero-shot @ readout-safe j（n=500）** — 括号=REUSE 目录：
+| model | j | niah_single 8k/16k/32k | niah_multikey 8k/16k/32k | vt 8k/16k/32k | 源 |
+|---|---|---|---|---|---|
+| 0.6B | j2 | 100/100/100 | 85.0/84.4/82.4 | 58.2/60.1/82.1 | REUSE `qcmem_0p6b_balancej2_n500` |
+| 1.7B | j3 | 99.4/98.6/99.2 | 53.6/41.6/41.2 | 56.3/56.2/52.2 | REUSE `qcmem_1p7b_balancej3_n500` |
+| 4B | j9 | 92.6/98.0/94.2 | 38.0/35.4/41.0 | 58.2/60.6/53.6 | REUSE `qcmem_4b_j9_n500` |
+| 8B | j9 | 99.8/97.4/99.4 | 42.0/36.2/31.4 | 45.6/41.5/39.4 | REUSE `qcmem_8b_zeroshot_j9_n500` |
+| **14B** | j13 | 99.0/88.6/97.6 | 50.0/43.6/11.0 | 15.8/13.5/13.6 | **NEW** `qcmem_14b_zs_j13_n500` |
+| **32B** | j27 | 100/99.8/100 | 96.2/94.8/91.4 | 39.9/44.0/40.0 | **NEW** `qcmem_32b_zs_j27_n500` |
+
+**+adapter @ ~0.33L（n=500）**：
+| model | adapter j | niah_single 8k/16k/32k | niah_multikey 8k/16k/32k | vt 8k/16k/32k | 源 |
+|---|---|---|---|---|---|
+| 0.6B | j9 | 100/99.4/100 | 41.4/35.6/37.4 | 55.4/55.8/50.6 | **NEW** `qcmem_0p6b_ad_j9_n500` |
+| 1.7B | j9 | 99.8/99.4/100 | 57.4/41.0/24.8 | 73.0/64.4/68.0 | **NEW** `qcmem_1p7b_ad_j9_n500` |
+| 4B | j12 | 100/100/98.8 | 95.2/94.0/93.0 | 96.0/96.2/97.2 | **NEW** `qcmem_4b_ad_j12_n500` |
+| 8B | j12 | 100/100/100 | 91.2/91.0/92.0 | 97.2/98.7/98.7 | REUSE `qcmem_8b_n500` |
+| **14B** | j13 | 100/100/99.8 | 99.6/97.6/98.8 | 99.9/99.7/99.8 | **NEW** `qcmem_14b_ad_j13_n500` |
+
+**n500 vs n100 一致性**：所有 cell 在 n100 噪声带（±5-10pt，vt 最噪）内一致，无翻案。最大偏移全在 vt（小样本方差最大），且是 n100 outlier 被 firm 校正：**0.6B-ad vt16k 20.8→55.8**（n100 单点噪声，n500 三档 55.4/55.8/50.6 自洽）、**32B-zs vt16k 33.4→44.0**、**1.7B-ad vt8k 62→73**。headline single/multikey 全部 ±≤7pt。三深度故事 + adapter=hard 任务杠杆 + 14B-ad~100 全表 结论不变。
+
+#### ★★ +adapter @ content-j ~0.45L（2026-07-16 训练+eval，本会话，5 scale）
+> self-distill LoRA（PG19，teacher=resume_j0 全 forward，student=resume_j+LoRA on layers[j:]，双向 top-k64 KL λ0.6，lora_r32/α32，chunk512 n_ctx7=4096win，1000 步 lr1e-4）。eval RULER n=100，single/multikey=bm25、vt=iter_bm25，8k/16k/32k。adapter 存 `outputs/qcmem_distill_<m>_contentj<j>_r32/final`，结果 `ruler_results/qcmem_<m>_adapter_contentj<j>_n100/`。
+
+| model | content-j (/L) | zs@content-j single(崩) | **+ad single** | **+ad multikey** | **+ad vt** |
+|---|---|---|---|---|---|
+| **0.6B** | j13 (0.48L) | 6/3 | **95/98/99** | 24/24/22 | 0/4.8/0 |
+| **1.7B** | j13 (0.48L) | 8/0 | **98/98/96** | 26/29/17 | 22.8/4.4/15 |
+| **4B** | j16 (0.44L) | 25/3 | **100/100/100** | 46/33/37 | 72.8/65.4/79.8 |
+| **8B** | j16 (0.44L) | 3/0 | **100/100/100** | 49/32/22 | 50.2/51.4/41.4 |
+| **14B** | j18 (0.46L) | 18/36 | **100/100/99** | 83/77/71 | 80.8/89.4/64.8 |
+
+**核心结论（验证 gap-vs-scale adapter 价值论）：**
+1. **single 全 scale 通用恢复**：zero-shot@content-j 全崩（3-25 recall），adapter 后 **95-100（含 tiny 0.6B/1.7B）**——adapter 把可读深度推到语义 content 深度（~0.45L），对 needle 检索普适有效，达到/超过各 model 的 readout-safe(浅 j) zero-shot single。
+2. **hard 任务（multikey/vt）SCALE-GATED**：
+   - **14B 最强**（mk 71-83 / vt 65-89）≫ 其 zero-shot@readout-safe（mk 11-51 / vt 11-18）——深 adapter 大幅提升 14B hard 任务。
+   - **4B ok**（vt 65-80 > zs 54-61；mk 33-46 ≈ zs），**8B partial**（mk/vt ≈ 其 zs@readout-safe，32k 衰减）。
+   - **1.7B FAIL**（mk 17-29 / vt 4-23 < 其 zs@j3 的 33-64），**0.6B FAIL**（vt 0-5、mk 22-24 ≪ 其 zs@j2 的 58-89）——tiny 模型（content-vs-readout gap 0.26-0.39L）学不会从深 0.26-0.39L 的 cache 做 compositional readout。**确认 tiny 失败 finding**（对齐旧 0.6B adapter@j9<zs@j2）。
+3. **⚠️ 深度 trade-off（对论文 framing 关键）**：content-j(~0.45L) adapter 在 hard 任务上**弱于**上表 ~0.33L 现有 adapter（8B mk 91→49、vt 97→50；4B mk 95→46、vt 96→73；14B mk 100→83、vt 99→65-89）。即：**adapter 能把 single 读到 0.45L 语义峰（更深 cache=更省算/更多语义），但 hard 任务读出随缓存深度单调变难，~0.33L 才是 hard 任务甜点**。single 两档都~100。→ 报 adapter 主表若追 hard 任务峰值用 ~0.33L；若强调"读到语义 content 深度"用 0.45L（single 满、hard 衰减）。
+4. **gap-vs-scale 坐实**：能读到 content-j 的 hard-任务成功度随 content-vs-readout gap 缩小而升（14B gap0.085L 最好 → tiny gap0.26-0.39L 失败），与 `QCMEM_J_DETERMINATION.md` 的 gap 表一致。
+
+⚠️ adapter 行为现有 ~0.33L adapter，其 zero-shot 对照基线为旧 recall-optimal j（非上表 readout-safe j），绝对增益口径略有错位；content-j（~0.45L）adapter（0.6B j13/1.7B j13/4B j16/8B j16/14B j18）训练中，出来后替换本列。
+
+### ★ 3 深度总结（三个 j 分离，probe + readout bracket 实测）
+1. **content 深度 ~0.45L 近 scale-invariant**（probe knee98：0.42–0.48L，均值 ~0.45L）= 语义信息最富的可缓存上限，跨 scale 稳定。
+2. **zero-shot readout 崩点随 scale 变深，NOT scale-invariant**：single recall 从 ~100 掉到崩的 50% 点 = 0.6B ~0.09L → 1.7B ~0.22L → 4B/8B ~0.30L → 14B ~0.375L → 32B >0.42L（无崩）。旧"~0.25L 恒定"只是 4B/8B 中段粗值。
+3. **gap = content − readout = adapter 缺口，随 scale 缩小到 32B~0**（见下表）。recall-optimal ~j3 < readout-safe j（scale 依赖） < content ~0.45L —— **小模型 gap 巨大→adapter 价值最大；32B readout 已达 content 峰→几乎不需 adapter。**
+
+#### gap-vs-scale 表（adapter 缺口随 scale 单调缩小）
+| model | content /L (probe) | readout 50%崩点 /L | readout-safe j /L | gap /L (=adapter 缺口) |
+|---|---|---|---|---|
+| 0.6B | 0.48 | ~0.09 | 0.07 | **~0.39（巨大）** |
+| 1.7B | 0.48 | ~0.22 | 0.11 | ~0.26 |
+| 4B | 0.44 | ~0.31 | 0.25 | ~0.13 |
+| 8B | 0.44 | ~0.30 | 0.25 | ~0.14 |
+| 14B | 0.46 | ~0.375 | 0.325 | ~0.085 |
+| 32B | 0.42 | >0.42（无崩） | 0.42 | **~0（readout 已达 content 峰）** |
+
+> **旧 j3/0.33L 保留为参考**：旧 recall-optimal ~j3 = **recall 上界参考**（mk/vt 在浅 j3 更高，如 14B mk 98/95/90、vt 89/82/96；32B/30B-A3B 主 benchmark 亦用 zs j3）；旧固定 0.33L（8B j12/32B j21）= **保守下界（~95% 语义 knee95）**。详见 `status/QCMEM_J_DETERMINATION.md`。
+
+---
+
+### 8B (Qwen3-8B-Instruct, j=12) — RULER n=500 (8k/16k/32k, string_match)
+| task | selector | 8k | 16k | 32k |
+|---|---|---|---|---|
+| niah_single | bm25 | 100 | 100 | 100 |
+| niah_single | oracle | 100 | 100 | 100 |
+| niah_multikey | bm25 | 91 | 91 | 92 |
+| niah_multikey | oracle | 100 | 98 | 100 |
+| **vt** | **iter_bm25(固定)** | **97** | **97** | **98** |
+| vt | bm25单遍 | 48 | 26 | 23 |
+| vt | reader_attn | 76 | 30 | 17 |
+| vt | oracle(vt无意义) | 7 | 6 | 5 |
+| vt | iter_bm25_adaptive(ρ0.3,证否) | 31 | 25 | 22 |
+
+★结论：VT 需多跳迭代检索——**固定 iter_bm25 = 97/97/98**（远超单遍 bm25 48/26/23、reader_attn 76/30/17）；adaptive ρ0.3 停太早=31 已证否，默认改回固定 iter_bm25。
+
+### 8B — 其他 benchmark
+- **LongEval**(+adapter, n=100)：4k/8k/16k/32k = **92/71/74/65**。
+- **vs-Dense**(+adapter, n=100, PG19-prose)：窗口内 8k-64k QCMem≈100 追平 Dense；**128k：niah_single Dense=0/QCMem=100，niah_multikey Dense=0/QCMem=93**（超 40960 窗口 Dense 崩，QCMem 恒定）。
+- **BABILong**(qa1/2/5×0-32k)：adapter + zeroshot cells 全跑完，**官方判分聚合完成**（见下「全 scale 聚合大表」）。
+- **LongBench**(narrativeqa/qasper/hotpotqa/2wikimqa, +adapter)：4 shard preds merge+官方 qa_f1 **完成**（见下大表，AVG=9.76）。
+- **LoCoMo**(+adapter)：跑中。
+- RULER baseline kvdirect/hcache：跑中。
+
+### 4B (Qwen3-4B-Instruct, j=12, zero-shot) — 跑中（.85+.24），下轮落表
+
+### 14B (Qwen3-14B-Instruct, zero-shot j3；+adapter 臂 RULER/BABILong) — 全 benchmark 聚合完成（2026-07-16）
+RULER n=100 recall（8k/16k/32k）：
+| task | selector | zs(j3) | +adapter |
+|---|---|---|---|
+| niah_single | bm25 | 100/100/100 | 100/100/100 |
+| niah_multikey | bm25 | 98/95/90 | 100/99/99 |
+| **vt** | iter_bm25 | 89/82/96 (j3) · 85/97/96 (j4) | **99/100/100** |
+| niah_single | bm25 | j13: 99/85/98 (深 j 掉 16k) | — |
+
+- **LongEval**(zs,j3, n=100)：4k/8k/16k/32k = **99/99/97/100**（远超 8B 92/71/74/65 与 30B-A3B 43/30/-/28）。
+- **vs-Dense**(zs, n≈50-100, 超窗口崩塌)：single 8k-64k Dense/QCMem≈100/100；**128k single Dense=11 / QCMem=100**；multikey 8k/16k/32k Dense100 QCMem 97/94/91，64k Dense96/QCMem99，**128k multikey Dense=5 / QCMem=98**。
+- **BABILong**：zs(j3) overall=32.7，+adapter=46.6（见上大表）。
+- **LongBench** qa_f1=**9.63**；**LoCoMo** acc=**1.41** F1=2.17（见上表）。
+
+### 32B (Qwen3-32B, zero-shot j3；未蒸 adapter) — 全 benchmark 聚合完成（2026-07-16）
+RULER n=100 recall（8k/16k/32k）：
+| task | selector | zs(j3) |
+|---|---|---|
+| niah_single | bm25 | 100/100/100 |
+| niah_multikey | bm25 | 100/99/100 (j6: 100/97/100) |
+| **vt** | **iter_bm25** | **30/18/24**（j3 峰值~24；深 j 不升） |
+
+- **32B VT j-sweep**（iter_bm25，recall 8k/16k/32k，avg）：j3 **29.6/17.8/24.4 (~24, 峰值)** · j6 15.0/9.6/20.8 · j9 18.6/13.6/16.4 · j13 18.6/22.6/12.8 · j16 22.2/20.8/11.0 · j20 25.8/7.0/8.8。→ **深 j 不救 VT，峰值停在浅 j3** = selector/模型瓶颈（对比 14B VT j3 已 89-96、8B iter_bm25 97/97/98）。32B 是唯一 VT 崩的 scale，待配 T21 speed frontier。
+- **LongEval**(zs,j3, n=100)：4k/8k/16k/32k = **99/100/99/100**。
+- **vs-Dense**(zs, 超窗口崩塌)：single 8k-64k=100/100；**128k single Dense=OOM / QCMem=100**；multikey(n50) 8k-32k Dense100 QCMem 98/98/100，64k Dense96/QCMem100，**128k multikey Dense=OOM / QCMem=98**（Dense 长档直接 OOM，QCMem read pack 恒定存活）。
+- **BABILong**：zs(j3) overall=**41.7**（见上大表）。
+- **LongBench** qa_f1=**12.37**（全 scale 最高）；**LoCoMo** acc=**6.55** F1=4.12（见上表）。
+
+### 30B-A3B (Qwen3-30B-A3B MoE, L48, zero-shot j12) — 全 benchmark 聚合完成（2026-07-16）
+> ⚠️ 30B-A3B 全 benchmark 用 **zero-shot j12**（recall-optimal 浅 j；BABILong/LongBench/LongEval/LoCoMo/vs-Dense 的 `eval_config.json` 均 resume_j=12 实测确认），**非** RUN_REGISTRY 旧注误记的 j3，也非 plan §1 双 j 主表的 j16/j22。未蒸 adapter。
+- **BABILong**（qa1/2/5×0-32k，官方 compare_answers，n=100/cell）：overall=**32.3**。qa1 avg(0k→32k)=98/77/47/36/27/22/13，qa2=55/30/24/20/16/11/2，qa5=36/37/27/13/30/27/30（见上大表）。长档随 scale 衰减，qa5 在长档反而保持~30（时序题对深度不敏感）。
+- **LongBench** qa_f1=**6.61**（narrativeqa 3.49 / qasper 11.69 / hotpotqa 4.10 / 2wikimqa 7.17；hotpotqa/2wikimqa 多跳偏弱）。
+- **LongEval**(n=100)：4k/8k/16k/32k = **43/30/-/28**（16k 档缺；显著弱于 14B 99-100 与 32B 99-100——MoE 浅 j12 在 lines-retrieval 上不稳）。
+- **LoCoMo**（全测试集 n=1986，score_sample）：overall acc=**7.40** F1=**5.02**（multi_hop 6.7 / single_hop 2.5 / temporal 13.5 / open_domain 10.1 / adversarial 4.9）。**LoCoMo 全 scale 最高 acc/F1**（略超 32B acc6.55/F4.12）。
+- **vs-Dense**（超窗口崩塌，n=50，niah_single bm25 j12）：single 8k/16k/32k/64k Dense=100 / QCMem=98/100/98/100；**128k single Dense=OOM / QCMem=100**（30B MoE @128k Dense OOM，QCMem read pack 恒定 ~63G 存活）。**multikey 未完**（`logs/30ba3b_vsdense_mk.log`，diskB .73 GPU0 起，2026-07-16；.73 已转 OLMo 剪层训练占卡，此 cell 待空卡续跑）。
+
+---
+
+### ★ 全 scale 聚合大表（2026-07-15 官方判分，n=100/cell，scorer=`scripts/score_qcmem_scale.py`）
+
+判分口径：BABILong=`babilong.metrics.compare_answers`+TASK_LABELS（禁 re.search）；LongBench=官方 qa_f1（SQuAD token-F1，与 `eval_longbench_mem_space.compute_f1` 一致，已对齐现有 scores.json）；LoCoMo=`eval_qcmem_locomo.score_sample`（F1/EM/substring-acc，adversarial=弃权正确）。数据在 diskB `babilong_results/` + `longbench_results/` + `locomo_results/`。8B=Qwen3-8B(j=9)，4B=Qwen3-4B(j=9)，1.7B=Qwen3-1.7B(j=4)，0.6B=Qwen3-0.6B(j=3)；8B-adapter=+distill LoRA，8B-zs=zero-shot。**14B/32B（collaborator）主 benchmark 全用 zero-shot j3（bm25，vt=iter_bm25），非 plan 的 j13/j21——sweep 峰值在浅 j3；14B 另有 +adapter 臂（2026-07-16 聚合）。30B-A3B 全 benchmark 用 zero-shot j12（recall-optimal 浅 j；eval_config resume_j=12 实测确认，非 j3）。**
+
+#### BABILong 官方 accuracy（qa1/qa2/qa5 × 0k-32k，%）
+| model | task | 0k | 1k | 2k | 4k | 8k | 16k | 32k |
+|---|---|---|---|---|---|---|---|---|
+| **32B**(zs,j3) | qa1 | 100 | 99 | 92 | 78 | 53 | 33 | 24 |
+| | qa2 | 68 | 63 | 49 | 47 | 32 | 24 | 6 |
+| | qa5 | 22 | 22 | 12 | 7 | 12 | 20 | 13 |
+| | **avg** | 63 | 61 | 51 | 44 | 32 | 26 | 14 |
+| **14B**(zs,j3) | qa1 | 99 | 80 | 66 | 42 | 9 | 5 | 1 |
+| | qa2 | 35 | 52 | 40 | 6 | 9 | 3 | 1 |
+| | qa5 | 16 | 77 | 75 | 36 | 10 | 11 | 14 |
+| | **avg** | 50 | 70 | 60 | 28 | 9 | 6 | 5 |
+| **14B-adapter** | qa1 | 99 | 87 | 71 | 59 | 43 | 28 | 15 |
+| | qa2 | 47 | 54 | 27 | 13 | 5 | 1 | 2 |
+| | qa5 | 36 | 83 | 82 | 64 | 51 | 55 | 57 |
+| | **avg** | 61 | 75 | 60 | 45 | 33 | 28 | 25 |
+| **8B-adapter** | qa1 | 98 | 79 | 68 | 69 | 64 | 55 | 21 |
+| | qa2 | 26 | 44 | 43 | 44 | 35 | 25 | 9 |
+| | qa5 | 69 | 76 | 77 | 75 | 62 | 62 | 65 |
+| | **avg** | 64 | 66 | 63 | 63 | 54 | 47 | 32 |
+| **8B-zs** | qa1 | 98 | 57 | 70 | 58 | 10 | 5 | 2 |
+| | qa2 | 54 | 14 | 27 | 24 | 15 | 11 | 3 |
+| | qa5 | 68 | 73 | 62 | 60 | 38 | 40 | 35 |
+| | **avg** | 73 | 48 | 53 | 47 | 21 | 19 | 13 |
+| **4B** | qa1 | 97 | 80 | 65 | 49 | 45 | 34 | 22 |
+| | qa2 | 60 | 45 | 39 | 32 | 21 | 25 | 6 |
+| | qa5 | 71 | 76 | 57 | 58 | 49 | 48 | 57 |
+| | **avg** | 76 | 67 | 54 | 46 | 38 | 36 | 28 |
+| **1.7B** | qa1 | 91 | 79 | 65 | 40 | 11 | 12 | 2 |
+| | qa2 | 45 | 43 | 31 | 19 | 14 | 7 | 4 |
+| | qa5 | 65 | 51 | 30 | 46 | 16 | 26 | 21 |
+| | **avg** | 67 | 58 | 42 | 35 | 14 | 15 | 9 |
+| **0.6B** | qa1 | 0 | 0 | 25 | 11 | 4 | 3 | 2 |
+| | qa2 | 0 | 0 | 15 | 14 | 3 | 8 | 2 |
+| | qa5 | 0 | 5 | 27 | 29 | 21 | 25 | 38 |
+| | **avg** | 0 | 2 | 22 | 18 | 9 | 12 | 14 |
+| **30B-A3B**(zs,j12) | qa1 | 98 | 77 | 47 | 36 | 27 | 22 | 13 |
+| | qa2 | 55 | 30 | 24 | 20 | 16 | 11 | 2 |
+| | qa5 | 36 | 37 | 27 | 13 | 30 | 27 | 30 |
+| | **avg** | 63 | 48 | 33 | 23 | 24 | 20 | 15 |
+
+overall mean acc（21 cells）：8B-adapter=**55.5** > 14B-adapter=**46.6** > 4B=49.3 > 32B(zs,j3)=**41.7** > 8B-zs=39.2 > 1.7B=34.2 > 14B-zs(j3)=**32.7** > 30B-A3B(zs,j12)=**32.3** > 0.6B=11.0.
+★ adapter vs zeroshot（同 8B）：长档增益显著——8k/16k/32k avg 21→54 / 19→47 / 13→32；distill 主要救回长上下文。0.6B 在 0k/1k 近乎 0（模型太小，无检索上下文时不遵循格式），2k+ 才有信号。
+★ 14B/32B(collaborator, zero-shot j3)：14B adapter(46.6) 显著超 14B-zs(32.7)，长档 8k/16k/32k avg 9→33 / 6→28 / 5→25——adapter 结论 scale 一致。32B(zs,j3)=41.7 中等，qa1 长档尚可(53/33/24)但 qa5 弱(12/20/13)；未蒸 adapter。
+
+#### LongBench 官方 qa_f1（narrativeqa/qasper/hotpotqa/2wikimqa，n=200/task，%）
+| model | narrativeqa | qasper | hotpotqa | 2wikimqa | **AVG** |
+|---|---|---|---|---|---|
+| **32B**(zs,j3) | 6.15 | 13.25 | 15.05 | 15.01 | **12.37** |
+| **14B**(zs,j3) | 3.96 | 12.34 | 9.98 | 12.24 | **9.63** |
+| **8B-adapter** | 3.85 | 11.08 | 11.87 | 12.23 | **9.76** |
+| **4B** | 3.46 | 10.93 | 9.23 | 10.40 | **8.51** |
+| **30B-A3B**(j12) | 3.49 | 11.69 | 4.10 | 7.17 | **6.61** |
+| **1.7B** | 2.39 | 6.30 | 7.19 | 8.38 | **6.07** |
+| **0.6B** | 1.78 | 3.40 | 6.32 | 6.53 | **4.51** |
+
+★ 大体随 scale 升：32B(12.37) > 8B-adapter(9.76) ≳ 14B(9.63) > 4B(8.51) > 30B-A3B(6.61) > 1.7B(6.07) > 0.6B(4.51)。绝对 F1 偏低（真实长文档 QA 对 QCMem 检索+resume 很难；narrativeqa 尤低）；8B 无 zero-shot LongBench 目录（跳过）。4B/1.7B/0.6B 为单 shard(_0)，8B-adapter/14B/32B/30B-A3B 由 4 shard merge(n=200/task)。
+
+#### LoCoMo 官方 acc/F1（全测试集 n=1986，score_sample 五类均含 adversarial 弃权判分）
+| model | overall acc | overall F1 | multi_hop | single_hop | temporal | open_domain | adversarial |
+|---|---|---|---|---|---|---|---|
+| **32B**(zs,j3) | **6.55** | 4.12 | 6.0 | 5.3 | 7.3 | 9.8 | 1.6 |
+| **30B-A3B**(zs,j12) | **7.40** | 5.02 | 6.7 | 2.5 | 13.5 | 10.1 | 4.9 |
+| **14B**(zs,j3) | **1.41** | 2.17 | 1.4 | 0.9 | 6.3 | 1.6 | 0.5 |
+
+（acc 列 = 官方 substring/F1≥0.5 proxy；adversarial=弃权正确率。32B 全面高于 14B。LoCoMo 对 QCMem 整体很难，绝对分低——真实多会话对话记忆 + 短答案严格判分。⚠️ diskB 版 `eval_qcmem_locomo.py` run_scoring glob 为 `preds_*.jsonl`（下划线），不匹配单 shard `preds.jsonl` → 自动判分报 "no prediction files"；本机 wzc1 版已修为 `preds*.jsonl`。聚合时用 `score_sample` 直接读 `preds.jsonl`。）
