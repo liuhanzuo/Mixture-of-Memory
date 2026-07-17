@@ -1,0 +1,29 @@
+claim_id,source_doc,model,adapter,benchmark,task,length,j_stated,n_stated,metric,value,provenance_level,machine_crosscheck,notes
+MC001,RUN_REGISTRY.md/QCMEM_BENCHMARK_PLAN.md,Qwen3-8B,adapter,BABILong,overall_mean,mixed,12,100,string_match,55.5,C,not_verifiable_no_score_on_disk,"headline 'highest all-scale'; predictions exist (babilong_results/best_topk12_full etc) but NO score persisted -> needs rescore. Also thinking-contaminated (pre 30bb2ab 2026-07-16)."
+MC002,RUN_REGISTRY.md,Qwen3-4B,zero-shot,BABILong,overall_mean,mixed,9,100,string_match,49.3,C,not_verifiable_no_score_on_disk,thinking-contaminated + no score on disk
+MC003,RUN_REGISTRY.md,Qwen3-14B,adapter,BABILong,overall_mean,mixed,13,100,string_match,46.6,C,not_verifiable_no_score_on_disk,adapter qcmem_distill_14b_j13_r32 NOT on local wzc1; babilong no score on disk
+MC004,RUN_REGISTRY.md,Qwen3-32B,zero-shot,BABILong,overall_mean,mixed,3,100,string_match,41.7,C,not_verifiable_no_score_on_disk,"collaborator run, j3 (recall-optimal), thinking status unknown"
+MC005,RUN_REGISTRY.md,Qwen3-8B,zero-shot,BABILong,overall_mean,mixed,9,100,string_match,39.2,C,not_verifiable_no_score_on_disk,thinking-contaminated + no score
+MC006,RUN_REGISTRY.md,Qwen3-1.7B,zero-shot,BABILong,overall_mean,mixed,4,100,string_match,34.2,C,not_verifiable_no_score_on_disk,thinking-contaminated + no score
+MC007,RUN_REGISTRY.md,Qwen3-14B,zero-shot,BABILong,overall_mean,mixed,3,100,string_match,32.7,C,not_verifiable_no_score_on_disk,thinking-contaminated + no score
+MC008,RUN_REGISTRY.md,Qwen3-30B-A3B,zero-shot,BABILong,overall_mean,mixed,12,100,string_match,32.3,C,not_verifiable_no_score_on_disk,thinking status unknown; no score
+MC009,RUN_REGISTRY.md,Qwen3-0.6B,zero-shot,BABILong,overall_mean,mixed,3,100,string_match,11.0,C,not_verifiable_no_score_on_disk,model too small to follow format at 0k/1k; no score
+MC010,QCMEM_BENCHMARK_PLAN.md,Qwen3-8B,adapter,BABILong,qa1,32k,12,100,string_match,21,C,CONTAMINATED,"32k=21 flagged by project as thinking-contaminated deflation (answer migrates out of first sentence); true value est 35-50 per own note; needs enable_thinking=False rerun"
+MC020,RUN_REGISTRY.md,Qwen3-32B,zero-shot,LongBench,AVERAGE,full,3,200/ds,qa_f1,12.37,A,MATCHES_MACHINE,machine qcmem_32b scores.json AVERAGE f1=12.368
+MC021,RUN_REGISTRY.md,Qwen3-8B,adapter,LongBench,AVERAGE,full,12,200/ds,qa_f1,9.76,A,MINOR_DIFF,"machine qcmem_j12 scores.json f1=9.581 (manual 9.76 differs ~0.18; likely shard-merge). Use 9.58."
+MC022,RUN_REGISTRY.md,Qwen3-14B,zero-shot,LongBench,AVERAGE,full,3,200/ds,qa_f1,9.63,A,MATCHES_MACHINE,machine qcmem_14b f1=9.629
+MC023,RUN_REGISTRY.md,Qwen3-4B,zero-shot,LongBench,AVERAGE,full,9,200/ds,qa_f1,8.51,A,MATCHES_MACHINE,machine qcmem_4b_j9 f1=8.505 (single shard _0 per registry note)
+MC024,RUN_REGISTRY.md,Qwen3-30B-A3B,zero-shot,LongBench,AVERAGE,full,12,200/ds,qa_f1,6.61,A,MATCHES_MACHINE,machine qcmem_30ba3b f1=6.614
+MC025,RUN_REGISTRY.md,Qwen3-1.7B,zero-shot,LongBench,AVERAGE,full,4,200/ds,qa_f1,6.07,A,MATCHES_MACHINE,machine qcmem_1p7b_j4 f1=6.067 (single shard)
+MC026,RUN_REGISTRY.md,Qwen3-0.6B,zero-shot,LongBench,AVERAGE,full,3,200/ds,qa_f1,4.51,A,MATCHES_MACHINE,machine qcmem_0p6b_j3 f1=4.507 (single shard)
+MC030,RUN_REGISTRY.md,Qwen3-8B,adapter,LoCoMo,overall,full,12,1986,token_f1,9.05,A,MATCHES_MACHINE,machine locomo_results/qcmem_j12 scores.json overall_f1=9.05 (topk8); substring_acc=24.07 is INTERNAL proxy NOT official judge
+MC031,RUN_REGISTRY.md,Qwen3-32B,zero-shot,LoCoMo,overall,full,3,1986,token_f1,4.12,C,not_verifiable_no_score_on_disk,diskB locomo dirs have 0 scores.json; preds only -> needs rescore. acc 6.55 = substring proxy
+MC032,RUN_REGISTRY.md,Qwen3-14B,zero-shot,LoCoMo,overall,full,3,1986,token_f1,2.17,C,not_verifiable_no_score_on_disk,diskB locomo no scores.json; acc 1.41 = substring proxy
+MC033,RUN_REGISTRY.md,Qwen3-30B-A3B,zero-shot,LoCoMo,overall,full,12,1986,token_f1,5.02,C,not_verifiable_no_score_on_disk,diskB locomo no scores.json; acc 7.40 = substring proxy (highest)
+MC040,QCMEM_BENCHMARK_PLAN.md,Qwen3-8B,adapter,speed,prefill_x,128k,12,NA,speedup,57.5,B,READ_ONLY_PARTIAL,"prefill speedup Dense/QCMem = 110.36s/1.92s; read-prefill phase ONLY (excludes write 586ms + index + retrieval). Recompute OK from bench_qcmem_vs_dense_result.txt."
+MC041,QCMEM_BENCHMARK_PLAN.md,Qwen3-8B,adapter,speed,decode_x,32k,12,NA,speedup,32.4,B,SUSPECT_NOISY,"decode_x from Q_tok/s=486.1 vs D=15.0. Q_tok/s wildly varies 15.4/891.7/486.1/750.2/721.3 across lengths (physically implausible for constant 6657-tok pack) -> measurement noise; do NOT report as end-to-end."
+MC042,QCMEM_BENCHMARK_PLAN.md,Qwen3-8B,adapter,speed,decode_x,128k,12,NA,speedup,68.7,B,SUSPECT_NOISY,same noisy decode series; 16k=55.8x and 64k=57.2x were dropped from published 3-point row
+MC050,QCMEM_BENCHMARK_PLAN.md,Qwen3-8B,adapter,vs-Dense,niah_single,128k,12,100,string_match_all,Dense0->QCMem100,B,CONTEXT_OVERFLOW,"'Dense=0' at 128k is CONTEXT OVERFLOW (model max window 40960 << 128k), not answer-wrong. n=100 PG19-prose. Legit selling point but must be labeled context_overflow."
+MC051,QCMEM_BENCHMARK_PLAN.md,Qwen3-30B-A3B,zero-shot,vs-Dense,niah_multikey,128k,12,50,string_match_all,INCOMPLETE,C,INCOMPLETE,multikey run unfinished (node repurposed by OLMo) per logs/30ba3b_vsdense_mk.log
+MC060,QCMEM_J_DETERMINATION.md,Qwen3-32B,report,RULER,split_depth_j,NA,27,NA,j_choice,27,C,MULTI_J_CONFLICT,"32B appears with j3(benchmarks)/j16(collaborator+sanity verdict)/j21(0.33L ref)/j24(bracket)/j27(semantic report). Five values. Team must pick paper j."
+MC061,QCMEM_J_DETERMINATION.md,Qwen3-14B,readout-safe,RULER,niah_single,16k,13,100,string_match,89,A,VIOLATES_OWN_RULE,"readout-safe rule = single>=90 deepest j; but 14B j13 single 16k=89 (<90). machine qcmem_14b_zs_j13_n500 confirms 88.6. Minor; report as 'j13, single 16k=89'."

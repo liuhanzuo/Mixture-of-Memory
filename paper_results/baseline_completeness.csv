@@ -1,0 +1,21 @@
+benchmark,baseline_method,model,status,machine_cells,source_dirs,notes
+RULER,Dense/full-ctx,Qwen3-8B,partial,present,"ruler_results/qwen_fullctx_base, qwen_fullctx_128k",fullctx dirs parsed as method=unknown (per-cell json lacks qcmem/baseline block); 128k=context_overflow. Needs re-label not rerun.
+RULER,Dense/full-ctx,Llama-3-8B,partial,present,ruler_results/llama_fullctx_base,legacy Llama; not primary model
+RULER,KV-Direct(resume_j=0),Qwen3-8B,complete,19,"ruler_results/h2h_kvdirect_{8k,16k,32k}, kvdirect_64k, kvdirect_128k, ruler_kvd_mk_128k",machine scores present; same-model same-length as QCMem 8B -> usable H2H
+RULER,KV-Direct,Qwen3-4B,partial,6,ruler_results(diskB) kvdirect,only some lengths
+RULER,KV-Direct,Qwen3-1.7B,partial,9,ruler_results(diskB) kvdirect,partial
+RULER,HCache(mid-layer no-retrieval),Qwen3-8B,complete,23,"ruler_results/h2h_hcache_{8k,16k,32k}, hcache_64k",machine scores present; usable H2H vs QCMem 8B
+RULER,HCache,Qwen3-1.7B,partial,6,ruler_results(diskB),partial
+RULER,StreamingLLM(recency),Qwen3-8B,partial,present,"ruler_results/ruler_recency_s250, qcmem_n100_rec_local(selector=recency)",recency selector runs exist but as QCMem-selector variant not a clean StreamingLLM baseline; treat as selector-ablation
+RULER,MemoryLLM,Qwen3-8B,planned_only,none,none,no machine RULER cells found; MemoryLLM only has BABILong CSV (babilong_results/MemoryLLM-8B-chat on diskB .52 per registry)
+RULER,Oracle(upper-bound-selector),Qwen3-8B,complete,present,"ruler_results/qcmem_n100_oracle_local, *_j*_n100 oracle rows",oracle selector; NOT a fair baseline (picks literal-answer chunks); registry flags oracle<bm25 on qa5/vt
+BABILong,Dense/full-ctx,Qwen3-8B,unknown,no_score,various,babilong has NO persisted score for any method incl baselines -> needs rescore
+BABILong,KV-Direct,Qwen3-8B,partial,no_score,"babilong_results/blh2h_kvdirect_*",13 config cells present, no score -> rescore
+BABILong,HCache,Qwen3-8B,partial,no_score,babilong_results/blh2h_hcache_*,config cells present, no score -> rescore
+BABILong,MemoryLLM,Qwen3-8B,partial,no_score,babilong_results/MemoryLLM-8B-chat(diskB),registry flags OLD widely-cited qa1 numbers as WRONG; re-measured CSV exists -> rescore for authoritative
+LongBench,Dense/stock(no-LoRA),Qwen3-8B,complete,present,longbench_results/stock_noLoRA,machine scores.json f1=7.17 (j12 no adapter); fair vs qcmem_j12 adapter=9.58
+LongBench,KV-Direct,Qwen3-8B,partial,present,longbench_results/kvdirect,machine scores.json present
+LoCoMo,KV-Direct,Qwen3-8B,complete,7,"locomo_results/kvdirect, kvdirect_full, kvdirect_v2",machine scores.json present; fair vs qcmem 8B
+LoCoMo,HCache,Qwen3-8B,complete,4,"locomo_results/hcache, hcache_v2",machine scores.json present
+LoCoMo,Dense/full-ctx,Qwen3-8B,missing,none,none,no dense LoCoMo dir found
+vs-Dense,Dense(full-context),Qwen3-8B..32B,complete,manual,status/bench_qcmem_vs_dense_result.txt,"n=30/50/100; 128k Dense=context_overflow(window 40960). NOT in result dirs -> provenance C (log-only). Do not treat as end-to-end speed."
