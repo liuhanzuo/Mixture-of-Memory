@@ -17,6 +17,7 @@ cd "$PROJECT_ROOT"
 
 KEEP="${KEEP:-12}"
 N_FRESH="${N_FRESH:-2}"
+RESUME_FROM="${RESUME_FROM:-}"
 PYTHON_BIN="${PYTHON_BIN:-$PROJECT_ROOT/.venv/bin/python}"
 
 DATA_PATH="/dev/shm/dolmino_now15b.npy"
@@ -28,7 +29,10 @@ mkdir -p "$OUT_DIR" logs
 
 # fp32 master weights is the script DEFAULT (model_dtype hardcoded torch.float32,
 # no flag). Hyperparams below are all keep14-identical; only keep_front differs.
-echo "[run_olmo2_7B_keepN] KEEP=$KEEP N_FRESH=$N_FRESH -> $OUT_DIR (log $LOG_FILE)"
+echo "[run_olmo2_7B_keepN] KEEP=$KEEP N_FRESH=$N_FRESH RESUME_FROM=${RESUME_FROM:-<none>} -> $OUT_DIR (log $LOG_FILE)"
+
+# fresh run starts a clean log; resume APPENDS to preserve pre-resume history.
+[ -z "$RESUME_FROM" ] && : > "$LOG_FILE"
 
 nohup "$PYTHON_BIN" -m torch.distributed.run --standalone --nproc_per_node 8 \
   scripts/train_olmo2_arch_probe2.py \
@@ -44,6 +48,7 @@ nohup "$PYTHON_BIN" -m torch.distributed.run --standalone --nproc_per_node 8 \
     --lr_inherited 2e-5 \
     --max_steps 200000 \
     --gradient_checkpointing 1 \
-  >"$LOG_FILE" 2>&1 &
+    ${RESUME_FROM:+--resume_from "$RESUME_FROM"} \
+  >>"$LOG_FILE" 2>&1 &
 
 echo "[run_olmo2_7B_keepN] launched pid=$! ; tail -f $LOG_FILE"
