@@ -370,22 +370,31 @@ def _save(model, optimizer, args, step, epoch, cfg, final=False):
     }, path)
     logger.info(f"saved {path}")
 
-    # --- rolling retention: keep ONLY the most recent step ckpt -------------
-    # After writing the new step*.pt, delete every OTHER step*.pt in the dir, so
-    # the folder holds at most the latest step ckpt (+ final.pt when final) = <=2
-    # files. Prevents ckpt accumulation from filling the volume (the keep14 run
-    # was killed mid-save). final.pt is never rotated. Runs only where _save runs
+    # --- rolling retention: keep latest-2 + every-5000-step milestones -------
+    # After writing the new step*.pt, keep (a) the 2 most-recent step ckpts and
+    # (b) every 5000-step milestone (step5000/10000/...); delete the rest. This
+    # bounds volume usage (the keep14 run was once killed mid-save on a full disk)
+    # while preserving milestones for heal-curve analysis / resume, matching the
+    # ckpt-rotation policy. final.pt is never rotated. Runs only where _save runs
     # (rank 0), and never removes the just-written ``path``.
     if not final:
         import glob as _glob
+        import re as _re
         keep_abs = os.path.abspath(path)
+        cks = []  # (step, abspath)
         for old in _glob.glob(os.path.join(args.output_dir, "step*.pt")):
-            if os.path.abspath(old) != keep_abs:
+            m = _re.search(r"step(\d+)\.pt$", os.path.basename(old))
+            if m:
+                cks.append((int(m.group(1)), os.path.abspath(old)))
+        latest2 = {ap for _s, ap in sorted(cks, reverse=True)[:2]}
+        for s, ap in cks:
+            keep = (ap == keep_abs) or (ap in latest2) or (s % 5000 == 0)
+            if not keep:
                 try:
-                    os.remove(old)
-                    logger.info(f"rotated old ckpt {old}")
+                    os.remove(ap)
+                    logger.info(f"rotated old ckpt {ap}")
                 except OSError as e:
-                    logger.warning(f"could not remove old ckpt {old}: {e}")
+                    logger.warning(f"could not remove old ckpt {ap}: {e}")
 
 
 def main():
