@@ -48,6 +48,14 @@ DTYPE="${DTYPE:-bfloat16}"
 ATTN_IMPL="${ATTN_IMPL:-sdpa}"
 SUFFIX_BASE="_instruction_yes_examples_yes_post_prompt_yes_chat_template_no_system_prompt_no"
 
+# --- chat+no-think + adapter passthrough (env-gated, default OFF = old behavior) ---
+CHAT_FLAGS=""
+[ "${USE_CHAT:-0}" = "1" ] && CHAT_FLAGS="--use_chat_template"
+[ "${ENABLE_THINKING:-0}" = "1" ] && CHAT_FLAGS="$CHAT_FLAGS --enable_thinking"
+LORA_FLAG=""
+if [ -n "${LORA_CK:-}" ] && [ "${LORA_CK}" != "none" ]; then LORA_FLAG="--lora_adapter ${LORA_CK}"; fi
+RUN_TAG="${RUN_TAG:-}"   # appended to run-dir name to isolate this rerun's outputs
+
 read -r -a J_ARR    <<< "$J_VALUES"
 read -r -a TASK_ARR <<< "$TASKS"
 read -r -a LEN_ARR  <<< "$LENGTHS"
@@ -86,7 +94,7 @@ run_task_on_group() {
   local gpus=("$@")
   local j="$T_J" task="$T_TASK" L="$T_LEN"
   local _sfx=""; [ "$SELECTOR" != "bm25" ] && _sfx="_${SELECTOR}"
-  local run="qcmem_j${j}${_sfx}"
+  local run="qcmem_j${j}${_sfx}${RUN_TAG}"
   local results="babilong_results/$run"
   local out_name="${run}_${L}"
   local pids=()
@@ -106,6 +114,7 @@ run_task_on_group() {
       --tasks "$task" --lengths "$L" --limit "$LIMIT" --chunk_size "$CHUNK_SIZE" \
       --max_new_tokens "$MAX_NEW_TOKENS" --dtype "$DTYPE" --attn_impl "$ATTN_IMPL" \
       --device cuda:0 --use_instruction --use_examples --use_post_prompt \
+      $CHAT_FLAGS $LORA_FLAG \
       --num_shards "$NSHARD" --shard_index "$si" \
       </dev/null >"$LOGDIR/${run}_${task}_${L}${shard_tag}.log" 2>&1 &
     pids+=($!)
