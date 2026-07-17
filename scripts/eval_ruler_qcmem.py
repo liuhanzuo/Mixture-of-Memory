@@ -311,6 +311,13 @@ def main():
     parser.add_argument("--self_test", action="store_true", default=False,
                         help="Run the shared QCMem j=0 correctness gate (read == "
                              "full forward, fp32 < 1e-4) and exit.")
+    parser.add_argument("--use_chat_template", action="store_true", default=False,
+                        help="Wrap the model INPUT in the tokenizer chat template "
+                             "(mirrors eval_qcmem_babilong). bare_q / bare_q_ids "
+                             "stay derived from the raw prompt.")
+    parser.add_argument("--enable_thinking", action="store_true", default=False,
+                        help="When --use_chat_template is set, keep Qwen3 thinking "
+                             "ON. Default OFF -> enable_thinking=False.")
     args = parser.parse_args()
 
     if args.num_shards < 1:
@@ -510,15 +517,29 @@ def main():
                 if i not in sample_indices:
                     continue
 
-                ids = tokenizer.encode(prompt, add_special_tokens=True,
+                # bare_q / bare_q_ids MUST come from the ORIGINAL raw prompt — the
+                # chat template would corrupt the _bare_question last-line extraction.
+                bare_q = _bare_question(prompt)
+                bare_q_ids = tokenizer.encode(bare_q, add_special_tokens=False)
+
+                # Only the model INPUT is (optionally) chat-templated.
+                model_prompt = prompt
+                if args.use_chat_template:
+                    messages = [{"role": "user", "content": prompt}]
+                    try:
+                        model_prompt = tokenizer.apply_chat_template(
+                            messages, tokenize=False, add_generation_prompt=True,
+                            enable_thinking=args.enable_thinking)
+                    except TypeError:  # non-Qwen3 tokenizer
+                        model_prompt = tokenizer.apply_chat_template(
+                            messages, tokenize=False, add_generation_prompt=True)
+
+                ids = tokenizer.encode(model_prompt, add_special_tokens=True,
                                        return_tensors="pt")
                 if isinstance(ids, list):
                     ids = torch.tensor([ids], dtype=torch.long)
                 input_ids = ids.to(device)
                 n_tok_seen = int(input_ids.shape[1])
-
-                bare_q = _bare_question(prompt)
-                bare_q_ids = tokenizer.encode(bare_q, add_special_tokens=False)
 
                 # oracle needle chunks (NIAH only; VT has no single gold span).
                 needle_set = None
@@ -597,7 +618,8 @@ def main():
                         "dtype": args.dtype,
                         "attn_implementation": args.attn_impl,
                     },
-                    "chat_template": False,
+                    "chat_template": bool(args.use_chat_template),
+                    "enable_thinking": bool(args.enable_thinking),
                     "scoring": "scripts.eval_ruler_mem_space._string_match_all_one",
                     "baseline": args.baseline,
                     "no_retrieval": bool(no_retrieval),
