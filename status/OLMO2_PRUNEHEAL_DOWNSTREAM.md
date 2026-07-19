@@ -54,6 +54,7 @@ multiple-choice (NO generation; argmax over teacher-forced continuation log-prob
 |-------|-------:|-----:|----|-------|-------|------|-------|------|
 | **7B base full** | 32 | — | .604 / **.805** | .539 / **.571** | .823 / **.829** | .809 / **.811** | **.744** | .372 / **.462** |
 | **7B keep10** (early) | 12 | **10000** | .357 / **.443** | .279 / **.303** | .614 / **.585** | .677 / **.673** | **.524** | .216 / **.326** |
+| **7B keep14** (apex, converged) | 16 | **128000** | .480 / **.631** | .402 / **.426** | .729 / **.702** | .747 / **.747** | **.630** | .322 / **.402** |
 
 ## Story — DOWNSTREAM DOES **NOT** RECOVER IN LOCKSTEP WITH PPL
 
@@ -142,6 +143,7 @@ Latest available 1B keep7 ckpt at launch = **step150000** (trainer had advanced 
 |-------|-----:|-----:|--------:|------:|----------------:|----------------:|
 | **7B base full** | — | **.6053** | **.7316** | **.8147** | .665 / **.652** | .502 / **.547** |
 | **7B keep10** (early) | **10000** | **.2539** | **.4036** | **.598** | .421 / .406 | .378 / .431 |
+| **7B keep14** (apex, converged) | **128000** | **.3012** | **.5750** | **.6385** | .505 / .476 | .423 / .471 |
 
 ## Story — KNOWLEDGE **DOES NOT RECOVER AT ALL**; comprehension recovers like the surface band
 
@@ -196,3 +198,74 @@ local next-token prediction — is completely blind to its loss.
   `shard{0..7}of8.json` carries per-task n / n_correct_acc / n_correct_accnorm / n_nan / mode /
   sample log-prob vectors).
 - Scheduler log: `logs/olmo2_downstream_know_sched.out`; DONE marker: `logs/olmo2_downstream_know_DONE`.
+
+---
+
+# § APEX POINT — 7B keep14+fresh2 (16L/32 = 50%), step128000 (fully-converged heal)
+
+**Why this point (2026-07-19):** the earlier "MMLU pinned at random / knowledge irrecoverable"
+verdict rested on two *under-healed / over-pruned* 7B/1B points — 7B keep10 (12L/37.5%) at
+**step10000** (essentially no heal) and 1B keep7 (9L/56%). The obvious rebuttal was **"you didn't
+keep enough layers, and you didn't heal long enough."** This is the apex data point that closes
+that gap on the strong side: **more layers (16L/50%) AND fully-converged heal (step128000, trainer
+long past this step, held-out PPL plateaued).** Same harness / same node .73 / same 8-shard `[g::8]`
+/ same fp32-weights bf16-autocast forward. Driver auto-inferred `keep_front=14 n_fresh=2
+num_hidden_layers=16 (179 tensors, strict)` from the ckpt state-dict — zero arch drift (driver md5
+identical to wzc1). Ran 2026-07-19 ~15:32-15:42 CST (core ~5 min, knowledge ~4 min, 8×H20).
+
+## 铁律2 self-audit (independent recompute from the 8 shard JSONs)
+- **Core 6-task:** all 6 cells `Σn_correct/Σn` reproduce the merge summary **to 1e-9**; every task
+  n_nan=0, n_trunc=0, full n (HS 10042 / ARC-C 1172 / ARC-E 2376 / PIQA 1838 / WinoG 1267 / OBQA 500).
+- **Knowledge 5-task:** all 5 cells reproduce the merge summary **to 1e-9**; every task n_nan=0 and
+  **full n** (mmlu 14042 / lambada 5153 / boolq 3270 / csqa 1221 / siqa 1954). boolq n_trunc=2 (the
+  same 2 super-long passages truncated in every config — accepted, not a bug). No shard crashed
+  despite non-fatal CUDACachingAllocator OOM *warnings* (allocator retried; all 8 shards wrote).
+- ⇒ **Every cell verified; results trustworthy.**
+
+## Result — knowledge **PARTIALLY recovers** at the apex; it does NOT stay pinned at floor
+Above-chance recovery vs 7B base full (chance: HS/ARC/OBQA/MMLU .25, PIQA/WinoG/boolq .50,
+lambada ≈0, csqa .20, siqa .333; recovered = (keep14−rand)/(base−rand); accn where reported):
+
+| axis | task | 7B base | keep14 | recovered above-chance |
+|------|------|--------:|-------:|-----------------------:|
+| surface/reason | PIQA | .811 | .747 | **79%** |
+| surface/reason | ARC-Easy | .829 | .702 | **78%** |
+| surface/reason | OpenBookQA | .462 | .402 | **72%** |
+| surface/reason | HellaSwag | .805 | .631 | **69%** |
+| surface/reason | ARC-Challenge | .571 | .426 | **55%** |
+| surface/reason | WinoGrande | .744 | .630 | **53%** |
+| comprehension | lambada (last-word) | .732 | .575 | **79%** |
+| comprehension | commonsense_qa (acc) | .665 | .505 | **65%** |
+| comprehension | boolq (acc, passage in-ctx) | .815 | .639 | **44%** |
+| comprehension | social_iqa (acc) | .502 | .423 | **53%** |
+| **knowledge** | **MMLU** | **.605** | **.301** | **14%** |
+
+- **The apex point does NOT reproduce the "0% / pinned-at-.25-floor" MMLU result.** MMLU = **.3012**
+  on n=14042 is **~13 standard errors above the .25 chance floor** (SE≈.0039) — a *robust, real*
+  above-chance signal. Per-subject confirms it is genuine differential recovery, not an averaging
+  wash: knowledge-heavy subjects that sat at chance for keep10 (all ~.25-.27) **lift clearly off the
+  floor** — world_religions **.27→.427**, us_foreign_policy → **.46**, virology **.404**, marketing
+  **.25→.385**, high_school_us_history **.26→.309**, miscellaneous **.26→.364**. Only STEM/quantitative
+  subjects stay at/below chance (professional_medicine .195, econometrics .219, college_chemistry .22).
+- **HONEST verdict — the "heal-wasn't-enough" rebuttal is NOT fully closed; it is partly *vindicated*.**
+  Keeping 16L (50%) instead of 12L, and healing to convergence instead of step10000, **does recover
+  some factual knowledge** (MMLU .254→.301; and *all* core/comprehension tasks jump too: HS accn
+  .443→.631, ARC-E .585→.702, PIQA .673→.747). So knowledge is **not strictly irrecoverable** — more
+  depth + more heal buys real recovery.
+- **But the core direction-#4 signal holds in its *ordering / magnitude* form.** Even at the apex
+  (50% depth, fully converged), **knowledge is by far the weakest-recovering axis: MMLU recovers only
+  14% of the base's above-chance signal, vs 53-79% for every reasoning/surface task and 44-79% for
+  comprehension.** MMLU stays at .30 — less than half of the base's .605. The strict claim ("PPL
+  recovers, MMLU stuck at random / 0%") was an artifact of under-healed/over-pruned points and must be
+  softened; the robust claim survives: **the pruned middle layers carried stored world knowledge that
+  heal recovers only a small fraction of, far less than it recovers reasoning/surface ability — PPL
+  (recovered to ~1.5-2.3×) remains largely blind to this residual knowledge gap.**
+
+## Raw JSON — apex point (diskB `.../Mixture-of-Memory/`)
+- `olmo2_downstream_results/7B_keep14_step128000/summary.json` (core 6-task) and
+  `olmo2_downstream_results/7B_keep14_step128000_know/summary.json` (knowledge; mmlu carries the
+  57-subject `subjects` map) + per-shard `shard{0..7}of8.json`.
+- Launchers: `scripts/_run_olmo2_probe2_downstream_keep14_8gpu.sh` (core) /
+  `scripts/_run_olmo2_probe2_downstream_keep14_know_8gpu.sh` (knowledge).
+- Scheduler logs: `logs/olmo2_downstream_keep14_sched.out` / `logs/olmo2_downstream_keep14_know_sched.out`;
+  DONE markers: `logs/olmo2_downstream_keep14_DONE` / `logs/olmo2_downstream_keep14_know_DONE`.
