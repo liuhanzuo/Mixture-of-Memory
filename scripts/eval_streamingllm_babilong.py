@@ -89,6 +89,7 @@ def _score_only(args, prompt_name):
     (no dedup needed). Writes ``scores.json`` and prints the qa x length grid.
     """
     outdir = Path(args.results_folder) / args.output_name
+    outdir.mkdir(parents=True, exist_ok=True)
     results = {}
     print(f"[SLM-BABILong][score] dir={outdir}")
     for task in args.tasks:
