@@ -92,7 +92,9 @@ _TASK_ALIAS = {
     "vt": "variable_tracking",
 }
 _CANONICAL_TASKS = {
-    "niah_single_1", "niah_single_2", "niah_multikey_1", "variable_tracking",
+    "niah_single_1", "niah_single_2", "niah_single_3",
+    "niah_multikey_1", "niah_multivalue", "niah_multiquery",
+    "variable_tracking",
 }
 
 
@@ -193,6 +195,17 @@ def main():
                              "niah_multi(key_1), vt(variable_tracking).")
     parser.add_argument("--lengths", type=str, nargs="+",
                         default=["8k", "16k", "64k", "128k"])
+    parser.add_argument("--use_chat_template", action="store_true", default=False,
+                        help="Wrap the model INPUT in the tokenizer chat template "
+                             "(mirrors eval_infllm_ruler / eval_ruler_qcmem so the "
+                             "StreamingLLM baseline is apples-to-apples with the "
+                             "CoMem/InfLLM task-breadth run). The sink+recent-window "
+                             "truncation then keeps the chat header tokens as the "
+                             "sink and the trailing question + assistant prefix in "
+                             "the recent window.")
+    parser.add_argument("--enable_thinking", action="store_true", default=False,
+                        help="When --use_chat_template is set, keep Qwen3 thinking "
+                             "ON. Default OFF -> enable_thinking=False (no-think).")
     args = parser.parse_args()
 
     if args.num_shards < 1:
@@ -280,7 +293,23 @@ def main():
                 if i not in sample_indices:
                     continue
 
-                ids = tokenizer.encode(prompt, add_special_tokens=True,
+                # Only the model INPUT is (optionally) chat-templated; bare_q
+                # stays derived from the RAW prompt (chat wrapping would corrupt
+                # the last-line question extraction). Mirrors the InfLLM / QCMem
+                # RULER drivers so the sink+window truncation approximation runs
+                # on the same chat-templated input as the CoMem/InfLLM baselines.
+                model_prompt = prompt
+                if args.use_chat_template:
+                    messages = [{"role": "user", "content": prompt}]
+                    try:
+                        model_prompt = tokenizer.apply_chat_template(
+                            messages, tokenize=False, add_generation_prompt=True,
+                            enable_thinking=args.enable_thinking)
+                    except TypeError:  # non-Qwen3 tokenizer
+                        model_prompt = tokenizer.apply_chat_template(
+                            messages, tokenize=False, add_generation_prompt=True)
+
+                ids = tokenizer.encode(model_prompt, add_special_tokens=True,
                                        return_tensors="pt")
                 if isinstance(ids, list):
                     ids = torch.tensor([ids], dtype=torch.long)
@@ -328,6 +357,8 @@ def main():
                 {
                     "task": task, "length": length,
                     "summary": summary[task][length],
+                    "chat_template": bool(args.use_chat_template),
+                    "enable_thinking": bool(args.enable_thinking),
                     "streamingllm": {
                         "method": "truncation_approx",
                         "sink_size": args.sink_size,
