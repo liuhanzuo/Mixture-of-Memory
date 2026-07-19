@@ -12,6 +12,8 @@
   year={2026}
 }
 
+% TODO(camera-ready): confirm attribution — arXiv id 2605.05971 is a
+% forward-dated (2026) preprint (KV-CAT); verify authors/venue before final.
 @article{kvcat,
   title={{KV-CAT}: Training-Time Guidance for Compressible Key-Value Caches},
   author={Anonymous},
@@ -19,6 +21,8 @@
   year={2026}
 }
 
+% TODO(camera-ready): confirm attribution — arXiv id 2606.24467 is a
+% forward-dated (2026) preprint (CompressKV); verify authors/venue before final.
 @article{compresskv,
   title={{CompressKV}: Semantic Retrieval-Head Guided {KV} Eviction},
   author={Anonymous},
@@ -87,4 +91,200 @@
   author={Bai, Yushi and others},
   journal={arXiv preprint arXiv:2308.14508},
   year={2023}
+}
+
+@article{pyramidkv,
+  title={{PyramidKV}: Dynamic {KV} Cache Compression based on Pyramidal Information Funneling},
+  author={Cai, Zefan and others},
+  journal={arXiv preprint arXiv:2406.02069},
+  year={2024}
+}
+
+@article{lckv,
+  title={Layer-Condensed {KV} Cache for Efficient Inference of Large Language Models},
+  author={Wu, Haoyi and Tu, Kewei},
+  journal={arXiv preprint arXiv:2405.10637},
+  year={2024}
+}
+
+@article{actbeacon,
+  title={Long Context Compression with Activation Beacon},
+  author={Zhang, Peitian and others},
+  journal={arXiv preprint arXiv:2401.03462},
+  year={2024}
+}
+
+@article{landmark,
+  title={Landmark Attention: Random-Access Infinite Context Length for Transformers},
+  author={Mohtashami, Amirkeivan and Jaggi, Martin},
+  journal={arXiv preprint arXiv:2305.16300},
+  year={2023}
+}
+
+@article{longllama,
+  title={Focused Transformer: Contrastive Training for Context Scaling},
+  author={Tworkowski, Szymon and others},
+  journal={arXiv preprint arXiv:2307.03170},
+  year={2023}
+}
+
+@article{cacheblend,
+  title={{CacheBlend}: Fast Large Language Model Serving for {RAG} with Cached Knowledge Fusion},
+  author={Yao, Jiayi and others},
+  journal={arXiv preprint arXiv:2405.16444},
+  year={2024}
+}
+
+@article{ragcache,
+  title={{RAGCache}: Efficient Knowledge Caching for Retrieval-Augmented Generation},
+  author={Jin, Chao and others},
+  journal={arXiv preprint arXiv:2404.12457},
+  year={2024}
+}
+
+@article{memoryllm,
+  title={{MemoryLLM}: Towards Self-Updatable Large Language Models},
+  author={Wang, Yu and others},
+  journal={arXiv preprint arXiv:2402.04624},
+  year={2024}
+}
+
+@article{recsum,
+  title={Recursively Summarizing Enables Long-Term Dialogue Memory in Large Language Models},
+  author={Wang, Qingyue and others},
+  journal={arXiv preprint arXiv:2308.15022},
+  year={2023}
+}
+
+% TODO(camera-ready): confirm attribution — arXiv id 2603.19664 is a
+% forward-dated (2026) preprint (KV-Direct / "The Residual Stream Is All You
+% Need"); verify authors/venue before final. Note: the `residualstream` key
+% above is an alias for this same paper, kept so already-drafted section .tex
+% (\citep{residualstream}) still resolves.
+@article{kvdirect,
+  title={The Residual Stream Is All You Need: On the Redundancy of the {KV} Cache in Transformer Inference (KV-Direct)},
+  author={Anonymous},
+  journal={arXiv preprint arXiv:2603.19664},
+  year={2026}
+}
+
+@article{stagesofinference,
+  title={The Remarkable Robustness of {LLMs}: Stages of Inference?},
+  author={Lad, Vedang and Gurnee, Wes and Tegmark, Max},
+  journal={arXiv preprint arXiv:2406.19384},
+  year={2024}
+}
+
+% ---------- Backbones ----------
+
+@article{qwen3,
+  title={{Qwen3} Technical Report},
+  author={Yang, An and others (Qwen Team)},
+  journal={arXiv preprint arXiv:2505.09388},
+  year={2025},
+  eprint={2505.09388},
+  archivePrefix={arXiv}
+}
+
+@article{llama3,
+  title={The {Llama 3} Herd of Models},
+  author={Grattafiori, Aaron and others (Llama Team, Meta AI)},
+  journal={arXiv preprint arXiv:2407.21783},
+  year={2024},
+  eprint={2407.21783},
+  archivePrefix={arXiv}
+}
+
+% TODO(camera-ready): confirm this matches the "Hunyuan Hy3" 80-layer MoE
+% (~597 GB, native 262k) backbone actually used; 2411.02265 is the public
+% Hunyuan-Large MoE report by Tencent used here as the closest citation.
+@article{hunyuan,
+  title={{Hunyuan-Large}: An Open-Source {MoE} Model with 52 Billion Activated Parameters by Tencent},
+  author={{Tencent Hunyuan Team}},
+  journal={arXiv preprint arXiv:2411.02265},
+  year={2024},
+  eprint={2411.02265},
+  archivePrefix={arXiv}
+}
+
+% --- Related-work additions (proximity sweep 2026-07-19); ids curl-verified ---
+
+@article{lloco,
+  title={{LLoCO}: Learning Long Contexts Offline},
+  author={Tan and Li and Patil and Wu and Zhang and Keutzer},
+  journal={arXiv preprint arXiv:2404.07979},
+  year={2024}
+}
+
+% NOTE: Block-Attention author list not fully verified; arXiv meta returned
+% "Ma, Dongyang; Wang, Yan; ..." with possibly additional authors. Cite as
+% "Ma et al., 2024" until the full list is confirmed.
+@article{blockattn,
+  title={Block-Attention for Efficient Prefilling},
+  author={Ma, Dongyang and others},
+  journal={arXiv preprint arXiv:2409.15355},
+  year={2024}
+}
+
+@article{cepe,
+  title={Long-Context Language Modeling with Parallel Context Encoding},
+  author={Yen and Gao and Chen},
+  journal={arXiv preprint arXiv:2402.16617},
+  year={2024}
+}
+
+@article{unlimiformer,
+  title={{Unlimiformer}: Long-Range Transformers with Unlimited Length Input},
+  author={Bertsch and Alon and Neubig and Gormley},
+  journal={arXiv preprint arXiv:2305.01625},
+  year={2023}
+}
+
+@article{memtransformers,
+  title={Memorizing Transformers},
+  author={Wu and Rabe and Hutchins and Szegedy},
+  journal={arXiv preprint arXiv:2203.08913},
+  year={2022}
+}
+
+@article{gist,
+  title={Learning to Compress Prompts with Gist Tokens},
+  author={Mu and Li and Goodman},
+  journal={arXiv preprint arXiv:2304.08467},
+  year={2023}
+}
+
+@article{autocompressor,
+  title={Adapting Language Models to Compress Contexts},
+  author={Chevalier and Wettig and Ajith and Chen},
+  journal={arXiv preprint arXiv:2305.14788},
+  year={2023}
+}
+
+@article{icae,
+  title={In-context Autoencoder for Context Compression in a Large Language Model},
+  author={Ge and others},
+  journal={arXiv preprint arXiv:2307.06945},
+  year={2023}
+}
+
+@article{xrag,
+  title={{xRAG}: Extreme Context Compression for Retrieval-augmented Generation with One Token},
+  author={Cheng and Wang and Zhang},
+  journal={arXiv preprint arXiv:2405.13792},
+  year={2024}
+}
+
+@article{layerskip,
+  title={{LayerSkip}: Enabling Early Exit Inference and Self-Speculative Decoding},
+  author={Elhoushi and others},
+  journal={arXiv preprint arXiv:2404.16710},
+  year={2024}
+}
+
+@article{calm,
+  title={Confident Adaptive Language Modeling},
+  author={Schuster and Fisch and Gupta and others},
+  journal={arXiv preprint arXiv:2207.07061},
+  year={2022}
 }
