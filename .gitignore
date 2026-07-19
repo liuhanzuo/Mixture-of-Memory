@@ -126,6 +126,11 @@ password_h800.txt
 # InfLLM baseline (thunlp/InfLLM clone) — cloned locally, not committed
 external/InfLLM/
 
+# LLoCO baseline (jeffreysijuntan/lloco clone + released weights) — not committed
+external/lloco/
+external/lloco_weights/
+lloco_results/
+
 # Landmark reproduction (Phase 1): large weights, venv, cloned repo, eval cache
 external/landmark_venv/
 external/landmark_ckpts/
@@ -167,3 +172,6 @@ wheelhouse_hy3/
 # portable tmux binary + shared libs fetched for lhz (no system tmux)
 .tools/
 .tmux_env/
+
+# API keys (maas-openapi)
+.env
