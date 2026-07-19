@@ -64,6 +64,7 @@ import random
 import re
 import string
 import sys
+import uuid
 from pathlib import Path
 
 import torch
@@ -294,6 +295,24 @@ NIAH_ANSWER_PREFIX = (
 )
 NIAH_NEEDLE = "One of the special magic {type_needle_v} for {key} is: {value}."
 
+# RULER NIAH task grid (name -> haystack type + needle counts + value type).
+# single_1/2 + multikey_1 reproduce the original three configs bit-for-bit; the
+# task-breadth additions (2026-07-19) are:
+#   * niah_single_3  : essay haystack, single key, 36-char UUID value (harder
+#                      value type than the 7-digit number of single_2).
+#   * niah_multivalue: essay haystack, 1 key with 4 numeric values -> retrieve
+#                      ALL 4 (multi-value recall).
+#   * niah_multiquery: essay haystack, 4 keys ALL queried -> retrieve all 4
+#                      values (multi-query recall over scattered needles).
+_NIAH_TASK_CFG = {
+    "niah_single_1":   {"type_haystack": "noise", "num_k": 1, "num_v": 1, "num_q": 1, "value_type": "numbers"},
+    "niah_single_2":   {"type_haystack": "essay", "num_k": 1, "num_v": 1, "num_q": 1, "value_type": "numbers"},
+    "niah_single_3":   {"type_haystack": "essay", "num_k": 1, "num_v": 1, "num_q": 1, "value_type": "uuids"},
+    "niah_multikey_1": {"type_haystack": "essay", "num_k": 4, "num_v": 1, "num_q": 1, "value_type": "numbers"},
+    "niah_multivalue": {"type_haystack": "essay", "num_k": 1, "num_v": 4, "num_q": 1, "value_type": "numbers"},
+    "niah_multiquery": {"type_haystack": "essay", "num_k": 4, "num_v": 1, "num_q": 4, "value_type": "numbers"},
+}
+
 VT_TEMPLATE = (
     "Memorize and track the chain(s) of variable assignment hidden in the "
     "following text.\n\n{context}\nQuestion: Find all variables that are "
@@ -313,7 +332,7 @@ NOISE_HAYSTACK = (
 _LENGTH_TOKENS = {
     "1k": 1024, "2k": 2048, "4k": 4096,
     "8k": 8192, "16k": 16384, "32k": 32768,
-    "64k": 65536, "128k": 131072,
+    "64k": 65536, "128k": 131072, "256k": 262144,
 }
 
 DEPTHS = [int(round(x)) for x in __import__("numpy").linspace(0, 100, num=40)]
@@ -365,26 +384,47 @@ def _rand_number(rng: random.Random, num_digits: int = 7) -> str:
     return str(rng.randint(10 ** (num_digits - 1), 10 ** num_digits - 1))
 
 
+def _rand_uuid(rng: random.Random) -> str:
+    """RULER-faithful 36-char UUID value (harder to copy than a 7-digit number).
+    Deterministic given ``rng`` (uses rng.getrandbits, not the global uuid4)."""
+    return str(uuid.UUID(int=rng.getrandbits(128), version=4))
+
+
 # --------------------------------------------------------------------------- #
 # NIAH sample generation
 # --------------------------------------------------------------------------- #
 
 
 def _make_niah(num_haystack: int, type_haystack: str, num_needle_k: int,
-               rng: random.Random):
-    """Build one NIAH (context, query, answers) with ``num_needle_k`` keys
-    (1 queried, rest distractors); single value per key, numeric.
+               rng: random.Random, num_needle_v: int = 1,
+               num_needle_q: int = 1, value_type: str = "numbers"):
+    """Build one NIAH (context, query, answers, gold_needle).
 
-    Faithful to RULER niah.generate_input_output for
-    num_needle_v=num_needle_q=1.
+    Generalises RULER niah.generate_input_output to the full needle grid:
+      * ``num_needle_k`` distinct word keys (the first ``num_needle_q`` are
+        queried; any remaining keys are distractors);
+      * ``num_needle_v`` values per key (7-digit numbers, or 36-char UUIDs when
+        ``value_type == 'uuids'``);
+      * total needles inserted into the haystack = num_needle_k * num_needle_v.
+    ``answers`` = every value of every queried key (RULER string_match_all scores
+    recall over all of them). The defaults (num_needle_v=1, num_needle_q=1,
+    value_type='numbers') reproduce the original single-needle behaviour with a
+    BIT-IDENTICAL RNG call sequence, so niah_single_1/2 + niah_multikey_1 sample
+    sets are unchanged.
     """
+    type_word = "uuids" if value_type == "uuids" else "numbers"
+
+    def _mk_value():
+        return _rand_uuid(rng) if value_type == "uuids" else _rand_number(rng)
+
     keys, values, needles = [], [], []
     for _ in range(num_needle_k):
         k = _rand_word(rng)
-        v = _rand_number(rng)
+        vs = [_mk_value() for _ in range(num_needle_v)]
         keys.append(k)
-        values.append([v])
-        needles.append(NIAH_NEEDLE.format(type_needle_v="numbers", key=k, value=v))
+        values.append(vs)
+        for v in vs:
+            needles.append(NIAH_NEEDLE.format(type_needle_v=type_word, key=k, value=v))
     random.Random(rng.randint(0, 10 ** 9)).shuffle(needles)
 
     if type_haystack == "noise":
@@ -412,24 +452,34 @@ def _make_niah(num_haystack: int, type_haystack: str, num_needle_k: int,
                 parts.append(needles[i - 1])
         context = " ".join(parts)
 
-    # Query the first key; answer = its value list.
-    query = keys[0]
-    answers = values[0]
-    # Gold needle for the QUERIED key (oracle-evidence span). Built the same way
-    # the needle was inserted into the haystack above (verbatim).
+    # Query the first num_needle_q keys; answer = ALL their values (flat list).
+    n_q = min(num_needle_q, num_needle_k)
+    queried = keys[:n_q]
+    answers = [v for i in range(n_q) for v in values[i]]
+    query = ", ".join(queried) if n_q > 1 else queried[0]
+    # Gold needle for the FIRST queried (key, value) — oracle-evidence span.
     gold_needle = NIAH_NEEDLE.format(
-        type_needle_v="numbers", key=keys[0], value=values[0][0]
+        type_needle_v=type_word, key=keys[0], value=values[0][0]
     )
     return context, query, answers, gold_needle
 
 
-def _render_niah(context: str, query: str) -> str:
-    """template + answer_prefix with the single-needle text fixups RULER does."""
+def _render_niah(context: str, query: str, num_needle_q: int = 1,
+                 num_needle_v: int = 1, value_type: str = "numbers") -> str:
+    """template + answer_prefix. RULER singularises the wording ONLY when a
+    single value is requested (num_needle_q*num_needle_v == 1); multi-value /
+    multi-query keep the plural form. ``value_type`` selects number vs uuid."""
     full = NIAH_TEMPLATE + NIAH_ANSWER_PREFIX
-    # Single-needle replacements (num_needle_q*num_needle_v == 1):
-    full = full.replace("Some", "A").replace("are all", "is").replace("are", "is")
-    full = full.replace("answers", "answer")
-    full = full.format(type_needle_v="number", context=context, query=query)
+    plural = "uuids" if value_type == "uuids" else "numbers"
+    singular = "uuid" if value_type == "uuids" else "number"
+    if num_needle_q * num_needle_v == 1:
+        # Single-needle replacements (RULER-faithful).
+        full = full.replace("Some", "A").replace("are all", "is").replace("are", "is")
+        full = full.replace("answers", "answer")
+        type_word = singular
+    else:
+        type_word = plural
+    full = full.format(type_needle_v=type_word, context=context, query=query)
     return full
 
 
@@ -502,18 +552,21 @@ def _build_sample(task: str, target_tokens: int, tokenizer, rng: random.Random,
             ctx, val, vars_all, num_v = _make_vt(n, num_hops, rng)
             return _render_vt(ctx, val, num_v, vt_icl or ""), vars_all, None
     else:
-        if task == "niah_single_1":
-            type_haystack, num_k = "noise", 1
-        elif task == "niah_single_2":
-            type_haystack, num_k = "essay", 1
-        elif task == "niah_multikey_1":
-            type_haystack, num_k = "essay", 4
-        else:
+        cfg = _NIAH_TASK_CFG.get(task)
+        if cfg is None:
             raise ValueError(f"unknown task {task}")
+        type_haystack = cfg["type_haystack"]
+        num_k, num_v, num_q = cfg["num_k"], cfg["num_v"], cfg["num_q"]
+        value_type = cfg["value_type"]
         incremental = 25 if type_haystack == "noise" else 500
+
         def render(n):
-            ctx, query, answers, gold = _make_niah(n, type_haystack, num_k, rng)
-            return _render_niah(ctx, query), answers, gold
+            ctx, query, answers, gold = _make_niah(
+                n, type_haystack, num_k, rng, num_needle_v=num_v,
+                num_needle_q=num_q, value_type=value_type)
+            return (_render_niah(ctx, query, num_needle_q=num_q,
+                                 num_needle_v=num_v, value_type=value_type),
+                    answers, gold)
 
     # Grow geometrically until we exceed the target, then back off.
     n = incremental

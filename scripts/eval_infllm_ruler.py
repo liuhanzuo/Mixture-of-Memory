@@ -55,7 +55,9 @@ _TASK_ALIAS = {
     "vt": "variable_tracking",
 }
 _CANONICAL_TASKS = {
-    "niah_single_1", "niah_single_2", "niah_multikey_1", "variable_tracking",
+    "niah_single_1", "niah_single_2", "niah_single_3",
+    "niah_multikey_1", "niah_multivalue", "niah_multiquery",
+    "variable_tracking",
 }
 
 
