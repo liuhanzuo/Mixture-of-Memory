@@ -20,16 +20,26 @@ N_FRESH="${N_FRESH:-2}"
 RESUME_FROM="${RESUME_FROM:-}"
 PYTHON_BIN="${PYTHON_BIN:-$PROJECT_ROOT/.venv/bin/python}"
 
+# --- Paper B control arms (optional, opt-in via env; default = plain depth ladder) ---
+# FREEZE_FRONT=1 -> Arm A     : freeze inherited front layers, train fresh+norm+lm_head
+# FROM_SCRATCH=1 -> Control 2 : ignore base weights, random-init ALL layers
+# Control arms get an ARM-suffixed OUT_DIR/LOG so they never clobber keep14/12/8.
+FREEZE_FRONT="${FREEZE_FRONT:-}"
+FROM_SCRATCH="${FROM_SCRATCH:-}"
+ARM=""
+[ -n "$FROM_SCRATCH" ] && ARM="${ARM}_fromscratch"
+[ -n "$FREEZE_FRONT" ] && ARM="${ARM}_freezefront"
+
 DATA_PATH="/dev/shm/dolmino_now15b.npy"
 MODEL_PATH="/apdcephfs_wzc1/share_304376610/pighzliu_code/models/OLMo-2-1124-7B"
-OUT_DIR="outputs/olmo2_probe2_7B_keep${KEEP}fresh${N_FRESH}"
-LOG_FILE="logs/olmo2_7B_keep${KEEP}fresh${N_FRESH}.log"
+OUT_DIR="outputs/olmo2_probe2_7B_keep${KEEP}fresh${N_FRESH}${ARM}"
+LOG_FILE="logs/olmo2_7B_keep${KEEP}fresh${N_FRESH}${ARM}.log"
 
 mkdir -p "$OUT_DIR" logs
 
 # fp32 master weights is the script DEFAULT (model_dtype hardcoded torch.float32,
 # no flag). Hyperparams below are all keep14-identical; only keep_front differs.
-echo "[run_olmo2_7B_keepN] KEEP=$KEEP N_FRESH=$N_FRESH RESUME_FROM=${RESUME_FROM:-<none>} -> $OUT_DIR (log $LOG_FILE)"
+echo "[run_olmo2_7B_keepN] KEEP=$KEEP N_FRESH=$N_FRESH ARM=${ARM:-<none>} RESUME_FROM=${RESUME_FROM:-<none>} -> $OUT_DIR (log $LOG_FILE)"
 
 # fresh run starts a clean log; resume APPENDS to preserve pre-resume history.
 [ -z "$RESUME_FROM" ] && : > "$LOG_FILE"
@@ -48,6 +58,8 @@ nohup "$PYTHON_BIN" -m torch.distributed.run --standalone --nproc_per_node 8 \
     --lr_inherited 2e-5 \
     --max_steps 200000 \
     --gradient_checkpointing 1 \
+    ${FREEZE_FRONT:+--freeze_front} \
+    ${FROM_SCRATCH:+--from_scratch} \
     ${RESUME_FROM:+--resume_from "$RESUME_FROM"} \
   >>"$LOG_FILE" 2>&1 &
 
