@@ -673,12 +673,14 @@ class LlamaSdpaAttention(LlamaAttention):
         is_causal = True if (causal_mask is None and q_len > 1 and prefix_token_length == 0) else False
 
         if prefix_token_length > 0:
+            # PERF: build the mask directly on-device (was CPU-built then .to(device) every
+            # layer/step — dominated wall time on long prefixes, GPU-idle). Bit-identical mask.
             causal_mask = torch.cat(
                 [
-                    torch.ones(q_len - prefix_token_length, prefix_token_length, dtype=torch.bool),
-                    torch.ones(q_len - prefix_token_length, q_len - prefix_token_length, dtype=torch.bool).tril(diagonal=0),
+                    torch.ones(q_len - prefix_token_length, prefix_token_length, dtype=torch.bool, device=query_states.device),
+                    torch.ones(q_len - prefix_token_length, q_len - prefix_token_length, dtype=torch.bool, device=query_states.device).tril(diagonal=0),
                 ], dim=1
-            ).to(query_states.device)
+            )
 
         # import ipdb; ipdb.set_trace()
 

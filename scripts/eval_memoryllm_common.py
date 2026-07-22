@@ -48,6 +48,12 @@ import sys
 
 import torch
 
+# PERF: MemoryLLM eval hot path is small sequential CPU ops (bool-mask build, tokenization).
+# On many-core boxes torch fans each op across dozens of OpenMP threads = pure overhead while
+# the GPU starves. Cap intra-op threads to 1. Score-neutral (no CPU float reduction order matters).
+# Scoped to MemoryLLM eval entries only (this common module is imported by nothing else).
+torch.set_num_threads(1)
+
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 for _p in (PROJECT_ROOT,
            os.path.join(PROJECT_ROOT, "third_party", "babilong-pkg")):
