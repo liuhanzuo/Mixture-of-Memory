@@ -344,7 +344,7 @@ def _iter_bm25_indices(
     query_ids,             # list[int] bare-question token ids (round-1 query)
     topk: int,
     iter_rounds: int = 0,
-    iter_hop_topk: int = 2,
+    iter_hop_topk: int = 4,
 ):
     """Iterative multi-hop lexical (BM25) chunk selection (see block comment).
 
@@ -902,9 +902,11 @@ def main():
     parser.add_argument("--iter_rounds", type=int, default=0,
                         help="iter_reader_attn / iter_bm25: number of BFS hop rounds "
                              "(<=0 -> ceil(topk/iter_hop_topk)).")
-    parser.add_argument("--iter_hop_topk", type=int, default=2,
+    parser.add_argument("--iter_hop_topk", type=int, default=4,
                         help="iter_reader_attn / iter_bm25 / iter_bm25_adaptive: "
-                             "chunks added per BFS round.")
+                             "chunks added per BFS round. Default 4 = canonical "
+                             "across all QCMem benchmarks (2026-07-24); with topk=12 "
+                             "-> ceil(12/4)=3 BFS rounds.")
     parser.add_argument("--iter_score", type=str, default="meanpool",
                         choices=["meanpool", "maxsim"],
                         help="iter_reader_attn scoring: meanpool (mean-pool cosine, "
