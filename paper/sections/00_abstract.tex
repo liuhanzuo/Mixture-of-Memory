@@ -1,21 +1,21 @@
 \begin{abstract}
-Processing contexts far beyond a backbone's native window remains costly:
-full attention grows quadratically and, past the extrapolation limit,
-simply collapses. We introduce \textbf{QCMem} (Query-Conditioned Memory),
-which recasts long-context processing from \emph{token-partial} KV reuse
-(recompute the full-depth KV of a subset of tokens) to
-\emph{layer-partial} readout: split the transformer at depth $j$, cache the
-single depth-$j$ residual-stream hidden of each chunk, then at read time
-retrieve the top-$k$ relevant chunks and recompute only the upper layers
-$[j{:}L]$ over a fixed-size pack. The read cost and memory are independent of
-context length (constant $\approx$6.7k tokens / $\approx$18\,GB for an 8B
-backbone). Across five long-context benchmarks (RULER, BABILong, LongEval,
-LongBench, LoCoMo) with three mechanism-level baselines under an identical
-harness, QCMem matches full-context accuracy inside the window and is
-\emph{the only method that still works past the backbone's extrapolation
-limit}: at 128k, full-context / full-KV recompute collapse to 0 while QCMem
-stays at RULER~100 and LongEval~0.98, with a $7.8\times$ prefill speedup and
-constant memory. We attribute the effectiveness to an
-understand-then-generate division of labor---semantic content saturates in
-mid layers---and give both correlational probes and a causal end-to-end test.
+A transformer processes its input in two phases along \emph{depth}: the lower
+layers build a semantic representation of the text, and the upper layers turn it
+into a next-token prediction. Building on this, we propose \textbf{CoMem}
+(Comprehension Memory): split the network at a middle layer $j$, run each context
+chunk only through the lower layers $[0{:}j]$, and cache the single depth-$j$
+hidden that summarizes it; at read time, retrieve the top-$k$ relevant chunk
+hiddens and recompute only the upper layers $[j{:}L]$. The split $j$ is fixed
+empirically by probing and split-depth sweeps ($\approx$$0.33$--$0.40$ of the
+stack, e.g.\ layer $12/36$ on Qwen3-8B) and holds across model families,
+including an 80-layer Mixture-of-Experts. The cached memory is only
+$\approx$$1/72$ of a full KV cache, and read compute and memory are
+\emph{constant} in context length ($\approx$18\,GB, vs.\ a full model's
+$\approx$89\,GB at 128k), giving up to $7.83\times$ faster prefill at 128k.
+Because the read pack stays inside the native
+window, CoMem is the only method usable past the extrapolation limit---at 128k,
+full-context inference collapses to 0 on RULER while CoMem holds 100---and, with
+a light self-distilled adapter, matches dense inference inside the window while
+far exceeding prior fixed-memory methods. Long-context memory is a
+layer-partition problem, not a token-budget problem.
 \end{abstract}

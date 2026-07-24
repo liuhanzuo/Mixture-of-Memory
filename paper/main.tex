@@ -4,7 +4,8 @@
 % Compile: pdflatex -> bibtex -> pdflatex x2. Numbers verified vs status/QCMEM_PAPER_DRAFT.md.
 
 \documentclass[11pt]{article}
-\usepackage[review]{acl}          % ARR: [review] for submission; remove for camera-ready
+\usepackage[review]{acl}          % ARR review mode: anonymous + line numbers. CAMERA-READY: switch to [preprint] (or remove).
+% \usepackage[preprint]{acl}
 \usepackage{times}
 \usepackage{latexsym}
 \usepackage[T1]{fontenc}
@@ -13,27 +14,38 @@
 \usepackage{booktabs}
 \usepackage{graphicx}
 \usepackage{amsmath}
+\usepackage{amssymb}
 \usepackage{multirow}
 \usepackage{enumitem}
 
-\title{Depth-Partitioned Retrieval Readout: Caching a Single Mid-Layer
-Hidden State for Unbounded-Context Memory}
+\title{Understanding Is Done Early: A Depth Division of Labor in Large
+Language Models and Its Use for Unbounded-Context Memory}
 
-\author{Anonymous ARR submission}
+% ---------------------------------------------------------------------------
+% ARR REVIEW: author block anonymized for double-blind review.
+% CAMERA-READY — restore the de-anonymized block below:
+%   \textbf{Hanzuo Liu}$^{\dag\ddag}$ \quad\\
+%   $^{\dag}$\text{Tsinghua University} \quad $^{\ddag}$\text{Tencent} \\
+%   \texttt{\{lhz24@mails., lcf24@mails., gaomy@\}tsinghua.edu.cn} \\
+%   \url{https://github.com/tsinghua-ideal/SparseForge}
+% ---------------------------------------------------------------------------
+\author{
+  Anonymous ACL submission
+}
 
 \begin{document}
 \maketitle
 
 \input{sections/00_abstract}
 \input{sections/01_introduction}
-\input{sections/02_method}
-\input{sections/03_experiments}
-\input{sections/04_mechanism}
-\input{sections/07_hunyuan_moe}
-\input{sections/05_related}
-\input{sections/06_limitations}
+\input{sections/02_related}
+\input{sections/03_motivation}
+\input{sections/04_methodology}
+\input{sections/05_experiments}
+\input{sections/06_conclusion}
+\input{sections/07_limitations}
 
 \bibliography{qcmem}
-\bibliographystyle{acl_natbib}
+% \bibliographystyle{acl_natbib}   % redundant: acl.sty already sets acl_natbib (was causing a duplicate \bibstyle bibtex error)
 
 \end{document}

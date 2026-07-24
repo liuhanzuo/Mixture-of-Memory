@@ -7,7 +7,7 @@ window is \textbf{40{,}960} tokens (\texttt{max\_position\_embeddings}); the
 often-quoted 131{,}072 is an \emph{un-activated} YaRN extrapolation limit, so
 $>$41k inputs already fall outside the trained regime. We use
 \textbf{Llama-3}~\citep{llama3} for cross-family probing, and port CoMem to the
-Tencent \textbf{Hunyuan Hy3}~\citep{hunyuan} 80-layer sparse
+\textbf{Hunyuan Hy3}~\citep{hunyuan} 80-layer sparse
 Mixture-of-Experts model ($\approx$597\,GB bf16, native 262{,}144 window,
 $j{\approx}32$) to test the depth partition at MoE scale
 (\S\ref{sec:hy3-general}).
@@ -155,7 +155,7 @@ roughly half the read length and decode cost.
 
 \subsection{Real long-document and dialogue QA}
 The synthetic results above isolate mechanisms; we now turn to four real-QA
-benchmarks. \textbf{LongEval} (Table~\ref{tab:longeval}), pure single-hop
+benchmarks. \textbf{LongEval}~\citep{longeval} (Table~\ref{tab:longeval}), pure single-hop
 lines-retrieval, is the home turf of retrieval-based memory: with the per-task
 optimum $k{\in}\{4,6\}$, CoMem matches KV-Direct inside the window
 (8k/16k/32k $=$ 1.00/0.96/1.00) and \emph{reverses sharply} past it (64k 0.94
@@ -185,7 +185,7 @@ category peaks on open-domain items (cat4 judge 71.8).
 \subsection{Generality: Hunyuan Hy3, an 80-layer sparse MoE}
 \label{sec:hy3-general}
 Everything above uses dense $\le$8B backbones. To test whether the depth
-partition is an artifact of small dense models, we port CoMem to the Tencent
+partition is an artifact of small dense models, we port CoMem to the
 Hunyuan \textbf{Hy3} (\texttt{hy\_v3}): an 80-layer sparse Mixture-of-Experts
 model (192 experts, top-8 routing plus one shared expert; $\approx$597\,GB in
 bf16) with a 262{,}144-token native window. The backbone is sharded across 8

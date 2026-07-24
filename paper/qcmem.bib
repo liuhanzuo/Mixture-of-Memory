@@ -1,3 +1,7 @@
+% FIXME(review): author={Anonymous} is a placeholder — 2410.05004 is a real
+% external preprint (HCache). Fill the verified author list / venue before
+% camera-ready; do NOT ship with author={Anonymous}. (Could not auto-verify:
+% no network access at edit time.)
 @article{hcache,
   title={{HCache}: Efficient {LLM} Serving via Hidden-State Caching and Upper-Layer Recompute},
   author={Anonymous},
@@ -5,15 +9,16 @@
   year={2024}
 }
 
-@article{residualstream,
-  title={The Residual Stream Is All You Need: Training-Free Long Context via Residual Caching (KV-Direct)},
-  author={Anonymous},
-  journal={arXiv preprint arXiv:2603.19664},
-  year={2026}
-}
+% NOTE(review): the `residualstream` entry (an alias of `kvdirect`, same paper
+% arXiv:2603.19664) was REMOVED as a duplicate. The compiled paper cites
+% \citep{kvdirect}; only the non-compiled sections/_deprecated/05_related.tex
+% used \citep{residualstream}. Use `kvdirect` (below) for this reference.
 
 % TODO(camera-ready): confirm attribution — arXiv id 2605.05971 is a
 % forward-dated (2026) preprint (KV-CAT); verify authors/venue before final.
+% FIXME(review): author={Anonymous} is a placeholder — do NOT ship as-is;
+% fill the verified author list for camera-ready (unverifiable at edit time,
+% no network access).
 @article{kvcat,
   title={{KV-CAT}: Training-Time Guidance for Compressible Key-Value Caches},
   author={Anonymous},
@@ -23,6 +28,9 @@
 
 % TODO(camera-ready): confirm attribution — arXiv id 2606.24467 is a
 % forward-dated (2026) preprint (CompressKV); verify authors/venue before final.
+% FIXME(review): author={Anonymous} is a placeholder — do NOT ship as-is;
+% fill the verified author list for camera-ready (unverifiable at edit time,
+% no network access).
 @article{compresskv,
   title={{CompressKV}: Semantic Retrieval-Head Guided {KV} Eviction},
   author={Anonymous},
@@ -158,9 +166,11 @@
 
 % TODO(camera-ready): confirm attribution — arXiv id 2603.19664 is a
 % forward-dated (2026) preprint (KV-Direct / "The Residual Stream Is All You
-% Need"); verify authors/venue before final. Note: the `residualstream` key
-% above is an alias for this same paper, kept so already-drafted section .tex
-% (\citep{residualstream}) still resolves.
+% Need"); verify authors/venue before final. (The duplicate `residualstream`
+% alias entry has been removed; this is the single canonical entry.)
+% FIXME(review): author={Anonymous} is a placeholder — do NOT ship as-is;
+% fill the verified author list for camera-ready (unverifiable at edit time,
+% no network access).
 @article{kvdirect,
   title={The Residual Stream Is All You Need: On the Redundancy of the {KV} Cache in Transformer Inference (KV-Direct)},
   author={Anonymous},
@@ -195,9 +205,12 @@
   archivePrefix={arXiv}
 }
 
-% TODO(camera-ready): confirm this matches the "Hunyuan Hy3" 80-layer MoE
-% (~597 GB, native 262k) backbone actually used; 2411.02265 is the public
-% Hunyuan-Large MoE report by Tencent used here as the closest citation.
+% FIXME: verify Hy3 citation — 2411.02265 is Hunyuan-Large, NOT the Hy3
+% (hy_v3, 80-layer / 192-expert / ~597 GB / native 262k) backbone actually
+% used. Could not confidently locate the correct Hy3 arXiv id (no network at
+% edit time); this Hunyuan-Large entry is kept only as the closest available
+% Tencent-Hunyuan citation so \citep{hunyuan} resolves. Replace with the real
+% Hy3 reference before camera-ready; do NOT silently keep this one.
 @article{hunyuan,
   title={{Hunyuan-Large}: An Open-Source {MoE} Model with 52 Billion Activated Parameters by Tencent},
   author={{Tencent Hunyuan Team}},
@@ -287,4 +300,23 @@
   author={Schuster and Fisch and Gupta and others},
   journal={arXiv preprint arXiv:2207.07061},
   year={2022}
+}
+
+% ---------- Benchmarks / datasets previously cited-by-name but missing ----------
+
+% LongEval = the LongChat line-retrieval long-context benchmark (LMSYS, 2023).
+@misc{longeval,
+  title={How Long Can Open-Source {LLMs} Truly Promise on Context Length?},
+  author={Li, Dacheng and Shao, Rulin and Xie, Anze and Sheng, Ying and Zheng, Lianmin and Gonzalez, Joseph E. and Stoica, Ion and Ma, Xuezhe and Zhang, Hao},
+  year={2023},
+  howpublished={\url{https://lmsys.org/blog/2023-06-29-longchat/}},
+  note={LMSYS blog; introduces the LongEval line-retrieval benchmark}
+}
+
+% PG-19 dataset, introduced by the Compressive Transformer paper (Rae et al., 2019).
+@article{pg19,
+  title={Compressive Transformers for Long-Range Sequence Modelling},
+  author={Rae, Jack W. and Potapenko, Anna and Jayakumar, Siddhant M. and Hillier, Chloe and Lillicrap, Timothy P.},
+  journal={arXiv preprint arXiv:1911.05507},
+  year={2019}
 }
