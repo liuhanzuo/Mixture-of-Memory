@@ -50,6 +50,7 @@ support the division-of-labour hypothesis.
 import argparse
 import json
 import os
+import re
 import sys
 import time
 from collections import Counter
@@ -284,6 +285,183 @@ def load_natural_text(tok, n_sent, max_len):
 
 
 # ----------------------------------------------------------------------------
+# (P2) Knowledge-decodability logit-lens on MMLU (the "knowledge-readout" depth)
+# ----------------------------------------------------------------------------
+def load_mmlu_examples(n_mmlu):
+    """Flan-style MMLU (cais/mmlu 'all' test split), mirroring
+    load_task_examples('mmlu') in scripts/eval_olmo2_probe2_downstream.py so the
+    knowledge口径 matches the Paper-B downstream MC eval: per-subject description +
+    question + 'A./B./C./D.' lettered choices + 'Answer:'; gold = int answer index.
+
+    Returns list[{"prompt": str, "gold": int, "n_choices": int}]. A fixed-seed
+    (seed=0) shuffle is taken before selecting n_mmlu so the subset spans subjects
+    rather than the alphabetically-first ones."""
+    ds = load_hf("cais/mmlu", "all", split="test")
+    if n_mmlu and n_mmlu < len(ds):
+        ds = ds.shuffle(seed=0).select(range(n_mmlu))
+    letters = ["A", "B", "C", "D"]
+    out = []
+    for ex in ds:
+        subject_h = ex["subject"].replace("_", " ")
+        desc = ("The following are multiple choice questions (with answers) "
+                f"about {subject_h}.\n\n")
+        ch = ex["choices"]
+        body = "\n".join(f"{letters[i]}. {ch[i]}" for i in range(len(ch)))
+        q = desc + ex["question"].strip() + "\n" + body + "\nAnswer:"
+        out.append({"prompt": q, "gold": int(ex["answer"]), "n_choices": len(ch)})
+    print(f"    MMLU logit-lens corpus: cais/mmlu all/test ({len(out)} questions)",
+          flush=True)
+    return out
+
+
+@torch.no_grad()
+def knowledge_logit_lens_mmlu(model, tok, examples, device, max_len, batch_size,
+                              n_layers):
+    """Per-layer logit-lens knowledge decodability on MMLU (4-choice answer-letter).
+
+    For each layer L, take the hidden state at the LAST prompt position (right
+    after 'Answer:'), apply the model's final norm then lm_head (logit lens;
+    ``model.get_output_embeddings()`` handles tied AND untied heads identically),
+    and score:
+      * mmlu_acc         = argmax over the {A,B,C,D} letter-token logits hits gold,
+      * mmlu_correct_ll  = mean full-vocab log-softmax log-prob of the gold letter.
+
+    Applying the final norm before lm_head is essential (same known logit-lens
+    pitfall handled by logit_lens_nexttoken_acc). Forward-only, no grad,
+    bf16-autocast on CUDA. Returns (accs[n_layers], lls[n_layers], n_scored)."""
+    base = getattr(model, "model", model)             # *ForCausalLM.model
+    final_norm = getattr(base, "norm", None)
+    if final_norm is None:  # some layouts name it differently
+        final_norm = (getattr(base, "final_layernorm", None)
+                      or getattr(base, "final_layer_norm", None))
+    lm_head = model.get_output_embeddings()
+    if final_norm is None or lm_head is None:
+        raise RuntimeError("could not locate model.norm / lm_head for logit-lens")
+
+    letters = ["A", "B", "C", "D"]
+    # first continuation token of ' A'/' B'/... — 'Answer:' has no trailing space,
+    # so the leading-space letter tokenises context-independently for BPE vocabs.
+    letter_ids = [tok.encode(" " + L, add_special_tokens=False)[0] for L in letters]
+
+    use_cuda = "cuda" in str(device)
+    correct = np.zeros(n_layers, dtype=np.int64)
+    ll_sum = np.zeros(n_layers, dtype=np.float64)
+    total = 0
+    prev_side = tok.padding_side
+    tok.padding_side = "right"                          # so last-real-token = len-1
+    try:
+        lid = torch.tensor(letter_ids, device=device)   # (4,)
+        for b0 in range(0, len(examples), batch_size):
+            batch = examples[b0:b0 + batch_size]
+            prompts = [e["prompt"] for e in batch]
+            golds = torch.tensor([e["gold"] for e in batch], device=device)
+            enc = tok(prompts, return_tensors="pt", padding=True, truncation=True,
+                      max_length=max_len, add_special_tokens=False)
+            enc = {k: v.to(device) for k, v in enc.items()}
+            attn = enc["attention_mask"]
+            B = attn.shape[0]
+            last_idx = attn.sum(dim=1) - 1               # (B,) right-padded
+            rows = torch.arange(B, device=device)
+            with torch.autocast(device_type=("cuda" if use_cuda else "cpu"),
+                                dtype=torch.bfloat16, enabled=use_cuda):
+                out = model(**enc)
+            for l in range(n_layers):
+                h_last = out.hidden_states[l][rows, last_idx, :]   # (B,H)
+                h_last = h_last.to(final_norm.weight.dtype)
+                logits = lm_head(final_norm(h_last)).float()       # (B,V)
+                letter_logits = logits[:, lid]                     # (B,4)
+                pred = letter_logits.argmax(dim=-1)                # (B,)
+                correct[l] += int((pred == golds).sum().item())
+                logp = torch.log_softmax(logits, dim=-1)           # (B,V)
+                gold_tok = lid[golds]                              # (B,)
+                ll = logp[rows, gold_tok]                          # (B,)
+                ll_sum[l] += float(ll.sum().item())
+            total += B
+    finally:
+        tok.padding_side = prev_side
+    if total == 0:
+        return [0.0] * n_layers, [0.0] * n_layers, 0
+    accs = [float(correct[l] / total) for l in range(n_layers)]
+    lls = [float(ll_sum[l] / total) for l in range(n_layers)]
+    return accs, lls, total
+
+
+def run_knowledge_logit_lens(model, tok, args, n_layers):
+    """--task knowledge_logit_lens driver (P2 two-depths): per-layer MMLU
+    knowledge-decodability curve -> results/knowledge_logit_lens_<tag>.json."""
+    proot = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    tag = os.path.basename(os.path.normpath(args.model_path))
+    tag = re.sub(r"[^A-Za-z0-9._-]", "_", tag)
+    out = args.out or os.path.join(proot, "results",
+                                   f"knowledge_logit_lens_{tag}.json")
+    os.makedirs(os.path.dirname(os.path.abspath(out)), exist_ok=True)
+
+    print(f"\n[{time.strftime('%H:%M:%S')}] === KNOWLEDGE LOGIT-LENS (MMLU) ===",
+          flush=True)
+    tk = time.time()
+    examples = load_mmlu_examples(args.n_mmlu)
+    accs, lls, n = knowledge_logit_lens_mmlu(
+        model, tok, examples, args.device, args.max_len, args.batch_size, n_layers)
+    for l, (a, ll) in enumerate(zip(accs, lls)):
+        print(f"    layer {l:2d}  mmlu_acc={a:.4f}  correct_ll={ll:.4f}", flush=True)
+
+    chance = 0.25
+    denom = max(n_layers - 1, 1)
+    per_layer = [{
+        "layer_idx": l,
+        "frac_depth": round(l / denom, 4),
+        "mmlu_acc": round(accs[l], 4),
+        "mmlu_correct_ll": round(lls[l], 4),
+    } for l in range(n_layers)]
+
+    peak_layer = int(np.argmax(accs))
+    top_layer = n_layers - 1
+    top_acc = float(accs[top_layer])
+    j95 = _earliest_layer_reaching(accs, 0.95 * top_acc)
+    j99 = _earliest_layer_reaching(accs, 0.99 * top_acc)
+    # signal onset: earliest layer that beats chance by a clear margin (>=5 pts)
+    onset = _earliest_layer_reaching(accs, chance + 0.05)
+    summary = {
+        "peak_layer": peak_layer,
+        "peak_acc": round(float(accs[peak_layer]), 4),
+        "top_layer": int(top_layer),
+        "top_acc": round(top_acc, 4),
+        "chance": chance,
+        "sat95_top_layer": j95,
+        "sat95_frac_depth": round((j95 if j95 is not None else top_layer) / denom, 3),
+        "sat99_top_layer": j99,
+        "sat99_frac_depth": round((j99 if j99 is not None else top_layer) / denom, 3),
+        "onset_layer": onset,
+        "onset_frac_depth": (round(onset / denom, 3) if onset is not None else None),
+    }
+    results = {
+        "meta": {
+            "task": "knowledge_logit_lens",
+            "model": args.model_path,
+            "model_tag": tag,
+            "dtype": args.dtype,
+            "n_mmlu": n,
+            "n_layers": n_layers,
+            "chance": chance,
+            "note": "logit-lens per-layer MMLU (flan-style, cais/mmlu all/test); "
+                    "hidden@last-prompt-pos -> final_norm -> lm_head; argmax over "
+                    "{A,B,C,D} letter tokens = mmlu_acc; gold-letter full-vocab "
+                    "log-softmax = mmlu_correct_ll. Forward-only, no grad.",
+        },
+        "summary": summary,
+        "per_layer": per_layer,
+        "extract_sec": round(time.time() - tk, 1),
+    }
+    with open(out, "w") as f:
+        json.dump(results, f, indent=2)
+    print(f"  -> knowledge decodability: peak L{peak_layer} "
+          f"(acc {accs[peak_layer]:.4f}), top(L{top_layer})={top_acc:.4f}, "
+          f"onset@L{onset}, 95%@L{j95} -> {out}", flush=True)
+    return out
+
+
+
+# ----------------------------------------------------------------------------
 # Probe training
 # ----------------------------------------------------------------------------
 def train_probes(feats_tr, y_tr, feats_dv, y_dv, n_layers, C=1.0, max_iter=2000):
@@ -454,7 +632,18 @@ def run_task(name, model, tok, dev, args, n_layers):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--model_path", required=True)
-    ap.add_argument("--out", required=True)
+    ap.add_argument("--out", default=None,
+                    help="output JSON. Required for the linguistic probe suite; "
+                         "for --task knowledge_logit_lens it defaults to "
+                         "results/knowledge_logit_lens_<model_tag>.json.")
+    ap.add_argument("--task", default=None, choices=["knowledge_logit_lens"],
+                    help="optional SINGLE mode. 'knowledge_logit_lens' runs ONLY "
+                         "the per-layer MMLU logit-lens knowledge-decodability "
+                         "probe (P2 two-depths thesis) and exits. Omit for the "
+                         "default linguistic + next-token probe suite.")
+    ap.add_argument("--n_mmlu", type=int, default=1000,
+                    help="MMLU test questions (seed=0 shuffled subset of cais/mmlu "
+                         "'all') for --task knowledge_logit_lens (default 1000).")
     ap.add_argument("--device", default="cuda:0")
     ap.add_argument("--dtype", default="bf16", choices=["bf16", "fp16", "fp32"])
     ap.add_argument("--max_len", type=int, default=128)
@@ -470,12 +659,22 @@ def main():
     ap.add_argument("--skip_logitlens", action="store_true",
                     help="skip the logit-lens next-token comparison curve")
     args = ap.parse_args()
+    if args.task is None and not args.out:
+        ap.error("--out is required for the linguistic probe suite "
+                 "(only --task knowledge_logit_lens auto-defaults the path).")
 
     t0 = time.time()
     print(f"[{time.strftime('%H:%M:%S')}] loading model {args.model_path}", flush=True)
     model, tok, n_layers = load_model(args.model_path, args.device, args.dtype)
     print(f"model loaded: {n_layers} hidden states (embed + {n_layers-1} layers), "
           f"hidden={model.config.hidden_size}", flush=True)
+
+    # --- P2 single-mode: per-layer MMLU knowledge-decodability logit-lens ---
+    if args.task == "knowledge_logit_lens":
+        run_knowledge_logit_lens(model, tok, args, n_layers)
+        print(f"\n[{time.strftime('%H:%M:%S')}] DONE (knowledge_logit_lens) in "
+              f"{time.time()-t0:.1f}s", flush=True)
+        return
 
     results = {"model": args.model_path, "n_layers": n_layers, "tasks": {}}
     os.makedirs(os.path.dirname(os.path.abspath(args.out)), exist_ok=True)
