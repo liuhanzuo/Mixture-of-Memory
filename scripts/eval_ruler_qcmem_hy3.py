@@ -200,6 +200,15 @@ def main():
                              "(pack every context chunk -> read grows O(context), "
                              "OOMs at long lengths — the comparison that shows why "
                              "constant-read retrieval is required past the window).")
+    parser.add_argument("--force_lora_with_baseline", action="store_true",
+                        default=False,
+                        help="Allow combining --lora_adapter with baseline=hcache: "
+                             "the HCache reader keeps --resume_j, so a LoRA "
+                             "distilled at the same split depth aligns on layers "
+                             "j..L-1 (used for the P1 portable-decompression-adapter "
+                             "probe). No effect on baseline=kvdirect (it forces "
+                             "resume_j=0 so the LoRA layers do not align and the "
+                             "adapter is still cleared).")
     parser.add_argument("--selector", type=str, default="bm25",
                         choices=["bm25", "recency", "oracle", "reader_attn"],
                         help="Chunk selector. oracle is NIAH-only (degrades to "
@@ -241,14 +250,24 @@ def main():
                   f"{args.resume_j} -> 0 (full-depth recompute).")
         args.resume_j = 0
         if args.lora_adapter:
-            print("[hy3-ruler] baseline=kvdirect is training-free -> ignoring "
-                  f"--lora_adapter {args.lora_adapter!r}.")
+            if args.force_lora_with_baseline:
+                print("[hy3-ruler] baseline=kvdirect forces resume_j=0 -> the "
+                      "LoRA layers do NOT align; --force_lora_with_baseline is "
+                      f"ignored, still dropping --lora_adapter {args.lora_adapter!r}.")
+            else:
+                print("[hy3-ruler] baseline=kvdirect is training-free -> ignoring "
+                      f"--lora_adapter {args.lora_adapter!r}.")
             args.lora_adapter = ""
     elif args.baseline == "hcache":
         if args.lora_adapter:
-            print("[hy3-ruler] baseline=hcache is post-hoc -> ignoring "
-                  f"--lora_adapter {args.lora_adapter!r}.")
-            args.lora_adapter = ""
+            if args.force_lora_with_baseline:
+                print("[hy3-ruler] baseline=hcache + --force_lora_with_baseline "
+                      f"-> KEEPING --lora_adapter {args.lora_adapter!r} "
+                      "(P1 portable-adapter probe).")
+            else:
+                print("[hy3-ruler] baseline=hcache is post-hoc -> ignoring "
+                      f"--lora_adapter {args.lora_adapter!r}.")
+                args.lora_adapter = ""
 
     tasks = [_resolve_task(t) for t in args.ruler_tasks]
 

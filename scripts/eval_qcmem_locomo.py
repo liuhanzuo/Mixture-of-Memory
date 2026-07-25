@@ -511,6 +511,15 @@ def main():
                              "recompute (keeps --resume_j) + NO retrieval (packs "
                              "every chunk) + no LoRA (post-hoc) — read grows "
                              "O(context).")
+    parser.add_argument("--force_lora_with_baseline", action="store_true",
+                        default=False,
+                        help="Allow combining --lora_adapter with baseline=hcache: "
+                             "the HCache reader keeps --resume_j, so a LoRA "
+                             "distilled at the same split depth aligns on layers "
+                             "j..L-1 (used for the P1 portable-decompression-adapter "
+                             "probe). No effect on baseline=kvdirect (it forces "
+                             "resume_j=0 so the LoRA layers do not align and the "
+                             "adapter is still cleared).")
     parser.add_argument("--selector", type=str, default="bm25",
                         choices=["bm25", "recency", "oracle", "reader_attn",
                                  "iter_bm25"],
@@ -617,14 +626,24 @@ def main():
                   f"{args.resume_j} -> 0 (full-depth K/V recompute).")
         args.resume_j = 0
         if args.lora_adapter:
-            print("[QCMem-LoCoMo] baseline=kvdirect is training-free -> "
-                  f"ignoring --lora_adapter {args.lora_adapter!r}.")
+            if args.force_lora_with_baseline:
+                print("[QCMem-LoCoMo] baseline=kvdirect forces resume_j=0 -> the "
+                      "LoRA layers do NOT align; --force_lora_with_baseline is "
+                      f"ignored, still dropping --lora_adapter {args.lora_adapter!r}.")
+            else:
+                print("[QCMem-LoCoMo] baseline=kvdirect is training-free -> "
+                      f"ignoring --lora_adapter {args.lora_adapter!r}.")
             args.lora_adapter = ""
     elif args.baseline == "hcache":
         if args.lora_adapter:
-            print("[QCMem-LoCoMo] baseline=hcache is post-hoc (no training) -> "
-                  f"ignoring --lora_adapter {args.lora_adapter!r}.")
-            args.lora_adapter = ""
+            if args.force_lora_with_baseline:
+                print("[QCMem-LoCoMo] baseline=hcache + --force_lora_with_baseline "
+                      f"-> KEEPING --lora_adapter {args.lora_adapter!r} "
+                      "(P1 portable-adapter probe).")
+            else:
+                print("[QCMem-LoCoMo] baseline=hcache is post-hoc (no training) -> "
+                      f"ignoring --lora_adapter {args.lora_adapter!r}.")
+                args.lora_adapter = ""
     if no_retrieval and args.reuse_kv_blockdiag:
         parser.error("--reuse_kv_blockdiag is a QCMem ablation and is incompatible "
                      "with --baseline (kvdirect/hcache pack all chunks with the "
