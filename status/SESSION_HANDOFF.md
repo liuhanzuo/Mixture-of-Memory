@@ -2,7 +2,7 @@
 
 > **本文件是 compact 后或新会话启动时的第一手交接。** 读完这份 + `status/RUN_REGISTRY.md` §3/§4 + `status/TRAINER_ACTIVITY.jsonl` 尾部，就能接上当前研究状态。
 > 维护规则：main agent 每当方向/结论/在跑实验有重大变化时，**覆盖更新本文件的「当前快照」区**（保持精简，旧结论沉淀到 RUN_REGISTRY）。
-> 最后更新：2026-07-10 00:05 GMT+8（★5 benchmark 三方对照收尾 + 用户给自主议程）
+> 最后更新：2026-07-26 GMT+8（★ARR reviewer P3 补实验三项**全闭合**：P3.1 同机 j=0/6/9/12 深度 Pareto（read/decode 随 j 单调降、write O(L)×j、peak 恒定；j=0 RAG vs j=12 CoMem 同 pack read−29%/decode−28%）+ 顺带把全论文 decode 数字刷成 fresh sdpa harness 口径（tab_chunk 0.19/0.37/0.72/1.60；旧 draft 2.4/5.5 尺度作废，与 tab_pareto 0.72 统一）；P3.3 LoCoMo cluster bootstrap + deepseek-v3 独立 judge（κ=0.63，+7.0>+4.0 复现）已回填 appendix+paper；P3.2 超窗口控制用 reviewer 认可的 option-c「unextended reference」措辞闭合，empirical YaRN-KVD 128k 因无干净 80GB 卡 defer（recipe 在 `status/P3_2_YARN_CONTROL.md`）。commit ac31cd4 + 0cbc6ba。下方 2026-07-23 快照其余仍有效。）
 
 ---
 
@@ -17,12 +17,94 @@
 
 ---
 
-## 0. 一句话现状（2026-07-10）
+## 0. 一句话现状（2026-07-23）
 
-**QCMem 5 大 benchmark（RULER/babilong/LongBench/LongEval/LoCoMo）三方对照（QCMem/KV-Direct/HCache）+ MemoryLLM 同类对照基本跑完，per-task 最优 topk。核心卖点坐实：超窗口(128k)唯一可用(KV-Direct 崩 0)、窗口内精调 topk 追平、read 恒定。draft §2.0-2.9 + collaborator 方法说明(QCMEM_METHOD_FOR_COLLABORATORS.md)齐。进入自主议程阶段(见上, 4 方向)。本地领先 origin 60+ commit(暂不push)。**
+**Paper A（QCMem/CoMem）进入投稿前"补缺闭合"阶段（全 chat=False 口径）；Paper B（OLMo-2 剪层-heal）4 臂训练继续，其中 .73 freeze_front 已 checkpoint-pause 让 8×H20 给 Paper A GPU eval。**
 
-### 收尾中 column（TaskList #1-#4）
-- #1 LoCoMo baseline(HCache/KV-Direct 本机跑中) / #2 MemoryLLM RULER(H20 4 shard done, 待聚合) / #3 MemoryLLM 其它 benchmark / #4 babilong 低档 baseline。清完进自主议程。
+### ★ Paper A 投稿前补缺（协议双支柱：selector=iter_bm25 + chat_template=False）
+权威汇编：`status/QCMEM_STATS_APPENDIX_chatFALSE.md`（diskB，274 行）+ `status/BENCHMARK_RESULTS.md` 顶部 chat=False 段。
+- **用户 top-3 闭合项**：
+  1. **LoCoMo GPT-4o judge headline = 38.27**（n=1986；cat5 adversarial n=446 不送 judge，本地 abstention folded；judged-only cat1–4 n=1540=48.64）。baseline KV-Direct(full-ctx 上界) judge=34.59。**paired bootstrap（judged n=1540）：CoMem−KVD diff=+4.81，95%CI[2.34,7.27]，p<0.0001 → 显著优于 full-ctx KV oracle**（unpaired CI 重叠是配对设计 power artifact，已用正确配对检验推翻）。judge prompt/endpoint verbatim 在 appendix §1d，配对显著性在 §1e。✅ **SETTLE**。
+  2. **等预算长档 VT 精确值**：flagship config(`qcmem_8b_iter_chatFALSE_ad`，iter_bm25 top12/hop4 → **rounds:0=auto=3跳迭代**，read≈6.6k)=96.6/97.6/98.8/**99.0/95.8**（8k→128k）。取代旧 `~95/~95` 占位。✅ **SETTLE**（#61 已裁决，见下）。
+  3. **baseline selector 对齐**（P0#2，#55）✅ **DONE**（agent a8ef76da，2×2 selector-fairness）：固定 selector 下 KVD≈CoMem 各档（one-shot 48/26→CoMem 48/25 崩；iter KVD=100 vs CoMem 96.6–99.0）→ **VT 精度=迭代 selector 非架构；架构价值=效率**。论文口径=「CoMem 以极低显存/算力 match KVD 精度」非「VT 超 KVD」。
+- **P1 GPU（#56/#58）✅ DONE**（agent a8ef76da）：chunk1024 效率 8k-64k 1.21-4.40×，**128k full-ctx H20 OOM vs CoMem 20.3GB**；迭代开销=one-shot 4.2-4.9×、占端到端~0.1%=免费。详报 diskB `status/QCMEM_GPU_EVAL_PRESUB_20260723.md`。
+- **#61 VT provenance ✅ RESOLVED（code-backed, high conf）**：`rounds:0`=auto=ceil(topk/hop)=**多跳非单遍**（曾误标致"叙事反转"，纠正）。`_ad`=3跳→96-99；`ablation10`=4跳→89.8/87.4；真单遍=明码bm25=48/25/23崩。**迭代确实救 VT，叙事未反转**。tab_itervt 用「单遍bm25 20-48→iter 96-99」。详见 BENCHMARK_RESULTS.md §task#61。
+- **⚠️ 论文集成 #10**：tab_overview/tab_locomo 指向 chat=False dir；LoCoMo headline 改 GPT-4o judge；baseline selector 统一后 tab_selector/itervt/chunk/crosschunk/slm/overview/h2h/scaling 整套换 chat=False 数字。
+
+### ★ Paper B（OLMo-2 base 剪层-heal，4 臂，BASE LM 口径，vs vanilla OLMo-2 ppl=7.40）
+实时每卡状态见 `status/GPU_STATUS.md`（权威台账）。当前 4 臂：① from_scratch @ LOCAL 8×L20A；② keep12 @ .252 8×B200；③ **freeze_front @ .73 已 PAUSED@step23500**（用户 14:05 授权 checkpoint-pause，8×H20 让给 Paper A GPU eval；**#59=main-owned resume bookend，待 GPU eval 跑完 + 卡空后我负责重启**，resume cmd 见 task#59）；④ keep8 @ .104 8×H20。训练脚本自轮转 ckpt（latest-2 + every-5000 里程碑，绝不删 final）。
+
+### ★ 节点 roster（QCMem，2026-07-23）
+LOCAL 8×L20A（wzc1，`.venv`）；.73=28.85.35.73（H20 diskB torch-base，现跑 Paper A GPU eval）；**.82=28.82.250.82 = 用户占用给 dllm，绝不碰**；.104=28.83.24.104（H20 diskB）；.252=28.89.19.252（B200，wzc1 与 LOCAL 共享 CEPH）。H20 共享 diskB `/apdcephfs_zwfy6/share_304376610/...`；LOCAL+.252 共享 wzc1。**dllm 节点 29.162.226.120 绝不碰。ckpt 轮转 cron 4ec42903 勿删。**
+
+## 0-旧. 一句话现状（2026-07-16 晚，已被上方 2026-07-23 快照覆盖，存档）
+
+**两条线：Paper A(QCMem/CoMem)=定稿并双 push；Paper B(剪层-heal)=从 instruct 转 OLMo-2 base 重做，3 条训练全跑起来，32/32 卡满。**
+
+### ★ Paper A（QCMem）已收尾 + 双 push（本会话）
+- **j 定案（本会话核心，`status/QCMEM_J_DETERMINATION.md`）= 三深度分离**：①语义 content 深度 ~0.45L（truncation+probe 实测，scale-invariant）；②zero-shot readout 崩点随 scale 变深（0.6B 0.09L→32B >0.42L）；③gap=content−readout=adapter 缺口，随 scale 缩小到 32B~0（小模型最需 adapter，32B 几乎不需）。旧"固定 0.33L/j3"作废。
+- **主表=双 j**（`QCMEM_BENCHMARK_PLAN.md` §1）：zero-shot 报 per-model readout-safe j（0.6B j2/1.7B j3/4B j9/8B j9/14B j13/32B j27）、+adapter 报 content-j(~0.45L)。n=500 firm。vs-Dense 128k 超窗口列(Dense 崩0/OOM→QCMem 56-100 全 scale)、§1a 补充表(BABILong/LongBench/LongEval/LoCoMo-F1/j-used 行)、§1c 速度全表(prefill 50-103×,显存恒定)全在。
+- **判分口径**：RULER=string_match/BABILong=compare_answers/**LoCoMo=F1**(非 LLM-judge)/**LongMemEval+∞Bench+HELMET=⏸暂不评(需 GPT-4o judge API)**。thinking：eval 全程关(RULER raw prompt),`30bb2ab` 加了 `--enable_thinking` 默认 False 防坑。模型=**原版 hybrid Qwen3**(非2507),跑非-thinking。
+- **push**：MoM 主仓 `8176949`(与 collaborator 21 commit 合并,1 冲突 eos_ids 已解) + **COMem 论文 `196d4de`**(tab_scale 全 scale dual-j + tab_depth 3-深度追加进 05_experiments,只增)。⚠️ **COMem push 要用 MoM 的 `core.sshCommand`**(deploy key `configs/github_deploy_key` + ProxyCommand `gh_proxy_connect.py` -p443;直连/scp/proxy-tunnel 都不行)——已给 COMem 配好。
+
+### ★★ Paper B（剪层-heal）大转向 → OLMo-2 base（本会话，用户方法学修正）
+- **为什么转**：旧 armB=Qwen3-8B-**instruct** keep12+fresh2 continue-train，方法学不干净(instruct 上 continue-train 混目标)。armB 已训完 200k：**held-out ppl 23.56 vs 全 Qwen3-8B 11.43 = 2×,且 22 epoch 过拟合(训练 ppl 6.01 是记忆)**——坐实要换 base。
+- **改用 OLMo-2 base**(纯预训练 + Dolmino 公开数据,消 instruct/distribution 污染)。arch-port `scripts/train_olmo2_arch_probe2.py`(smoke 验证过;Olmo2 post-norm 无 input_layernorm)。keep 从**语义深度 0.44L 起**做 ablation frontier。
+- **数据**：dolmino-mix-1124 **DCLM 子集**用 OLMo-2 tokenizer 重 tokenize → `data/dolmino_now15b.npy`(wzc1 15.5B / diskB 31.7B,uint32[N,2048]),仍在冲 30B(auto-combine 到 `dolmino_chunks_2048_olmo2.npy`)。
+- **★3 条训练在跑(32/32 卡)**：① **7B keep14+fresh2 @ 8×L20A 本机**(ppl 19.95)；② **1B keep7+fresh2 @ 16×H20 .82+.104**(TCP over bond1,IB 栈 `ibv_reg_mr` 坏)；③ **7B keep10+fresh2 @ 8×H20 .73**(ablation,ppl 降中)。model 跑 **fp32 master**(7B 在 H20 bs4/ga4 上限、L20A bs16)。
+- **关键运维坑(必照抄)**：①py3.14 DataLoader 加 `multiprocessing_context="fork"`(否则 pickle 61G memmap 卡死)；②数据 stage 到 `/dev/shm`(ceph memmap 随机读 D 态 wedge)；③**wzc1 7B ckpt ~48.7G/500步 会写满盘 → cron `4ec42903` 每小时 :47 轮转**(留里程碑+最新2);④多机换新 rdzv 端口防僵尸占用。
+
+### ★ 待办 / 下一步
+1. **OLMo 训练监控 + 早停**：离线测 held-out ppl(dolmino_now_val) plateau 就停；出全模型 OLMo-2 baseline ppl 做剪层对照(类比 armB vs Qwen3-8B)。
+2. **ablation frontier 补齐**：keep14/10 已跑,补 keep12/8 + `--freeze_front`/`--from_scratch` 臂(脚本已支持)。.73 空出后接。
+3. **QCMem 剩项(可选)**：LongMemEval 等待 API judge;32B/14B 若要 balance-j 之外的口径统一可补。keep 具体值/是否加 13B OLMo 用户后续定。
+4. **cluster**：本机 8×L20A(wzc1 独立盘) + 3 H20 节点(.85/.82.250/.24,共 24,diskB 共享)= 32 卡。IB 栈坏用 TCP;.73 IB launcher 支持 NNODES 可扩 3-node。
+
+---
+
+## 0-旧. 一句话现状（2026-07-15 09:18，已被上方覆盖，存档）
+
+**★主线=QCMem(=CoMem) 论文全 scale benchmark，已基本完成 + 官方判分聚合。** 分工：collaborator 跑 32B+，agent 跑 8B→4B→1.7B→0.6B（全做完）。32 卡满载：本机 armB 训练(step~127k/200k ppl~7.8，Paper B keep12)、.82.250 3b 训练、.85+.24 跑 QCMem eval 收尾(vs-Dense n100 robustness)。
+
+### ★★ 全 scale 结果（已入 RUN_REGISTRY「★ QCMem 全 scale benchmark」+ bench_qcmem_vs_dense_result.txt）
+- **RULER n=500**：8B+adapter(j12) single100/multikey91/**vt97**；zero-shot 各 scale single 强(8B100/4B93/1.7B91/0.6B68)、**硬任务(multikey/vt)普遍弱**(8B-zs 42/46)。
+- **BABILong 官方**：8B-adapter 55.5 > 4B 49.3 > 8B-zs 39.2 > 1.7B 34.2 > 0.6B 11.0；**adapter 增益主要在长档**(8k+ 21→54)。
+- **LongBench 官方 qa_f1**：8B-adapter 9.76 单调随 scale 降。
+- **vs-Dense 超窗口崩塌**：128k Dense=0 全 scale / QCMem single 存活(8B~100/4B100/1.7B88/0.6B54)——核心卖点全模型族通用。
+- selector 定案：vt→**iter_bm25 固定**(97 vs adaptive 31，adaptive 已证否弃默认)；niah→bm25。
+- **j 规律**：zero-shot 可用 split 随模型变小而变浅(8B/4B=j9=0.25L, 1.7B=j5, 0.6B=j3)；adapter 推到 j12(0.33L)。
+
+### ★ 关键 insight（论文核心）
+**硬任务弱不是"小模型"是"zero-shot"问题**：8B-zs multikey42/vt46≈4B-zs，而 8B+adapter=91/97 → **adapter 是硬任务/长档的关键杠杆**。
+
+### ★ 待用户决策 + 待办
+1. **★等用户 A/B**：(A) 只 8B adapter(现数据够写诚实 scale 表) vs (B) 给 4B/1.7B 也蒸 adapter(数据强烈支持,adapter长档增益巨大)。已问≥2 次未答；**未擅自违背"只 8B"启动 distill**。
+2. **COMem 仓库**(git@github.com:liuhanzuo/COMem.git) 已 push 完整：eval harness(run_cell.sh 一行跑)+ 蒸馏 train/distill.py + 默认 selector auto(vt→iter_bm25/niah→bm25, fd73c7d)。collaborator 可直接用跑 32B。
+3. 论文 `paper/`(=CoMem，abstract 已改 insight-first 209词)；下一步用上面结果写实验节。
+4. Paper B(剪层-heal frontier keep6/8/12) 训练还在本机/曾在 diskB(已 kill 腾卡给 QCMem eval，ckpt 可 resume)。
+
+### 历史主线(已沉淀,存档)：方向4 混元剪层 prune-heal frontier(Hy-MT2 keep36→ppl12)、方向2 3b bottleneck、A13B 四连坑——详见下方 + RUN_REGISTRY。当前非主线。
+
+### ★ 当前活跃线 + 待办
+1. **★方向4 主线：混元 MoE 剪层+补层 continue-train（已验证 + prune-heal frontier）**（用户核心指令："像 Qwen3-8b 一样截断后面几层再填上两层然后 continue training"）。
+   - **A13B（Hunyuan-A13B-Pretrain, hunyuan_v1_moe, 65B, tie_emb=True）**：`scripts/train_hunyuan_a13b_probe2.py`（keep24+fresh2）。四连坑全修（见 [[a13b-known-pitfalls]] / 下方史）后**验证成功：loss 102→35（13步）**。但 65B 必须 cpu_offload → 113s/step 慢。
+   - **★Hy-MT2-30B-A3B（hy_v3, 30B, tie_emb=False）**：用户嫌 A13B 慢 → 换更小的（sanity 测过能正常答通用问题非只翻译）。`scripts/train_hyv3_probe2.py`（coder dcb2691，不碰 A13B 路径）。**30B on-GPU 免 cpu_offload → 3.7s/step 快~125×**。数据 `data/slimpajama_chunks_2048_hymt2.npy`（Hy-MT2 tokenizer，vocab120832，避 A13B tokenizer 越界）。启动 `scripts/launch_hyv3_probe2_keep36_fresh2.sh`（bdfefcb，含 MONITORING=0）。
+   - **★prune-heal frontier（Hy-MT2, 200步/config）**：keep36(75%层)→ppl12(loss6.83→2.5)；keep24(50%)→ppl42(loss12.1→3.73)；keep30 跑中。**单调：保留越多 heal 越好**。loss 曲线在各 config 的 log；ckpt 285GB(含fp32 optim)已 rm 省磁盘（**⚠️CEPH 92%**），仅留 keep36/step200.pt。
+   - env `.venv_hy3`(tf5.13.1)。**运维坑**：cpu_offload 进程 kill -9 后 D 状态卡~60s；kill 后须轮询等 nvidia-smi memory=0 再重启（否则撞泄漏显存 EXIT_1）；杀进程绝不用 pkill -f（自杀 shell）。
+2. **方向2 3b scale**：.53.31 跑 3b_d512@L6（bottleneck_dim512@layer6）到 16000 步，验证 semantic-bottleneck 在 3b 规模。用 torch-base（.venv 在 H20 sm_90 会 cudaErrorAssert），数据 slimpajama_chunks_4096_llama3.npy seq4096。
+3. **方向4 probe#2 armB (Qwen3-8B keep12+fresh2)**：.24.104 从 20k warm-restart 续训到 200000（用户："若未收敛续训到 200k"），step~26440 ppl13.7 缓降。step20000.pt 是旧格式无 optimizer_state→warm-restart(Adam re-init, LR 按 cosine step20000 续)。
+4. **QCMem n=100 网格**（补论文§2.5/§2.6）：.85.73(diskB) + 本机 L20A(临时) 跑 topk×length×task。**★台账 `status/RULER_RESULT_LEDGER.md` + `scripts/ruler_ledger_check.sh has/done` 去重**（启动 cell 前先查）。**⚠️ 本机 wzc1 与 diskB 不共享盘，两处 ledger 独立→选 cell 时错开避重跑**。合法 RULER 任务仅 niah_single/niah_multikey/vt。
+5. **Hy3 QCMem 已完成**（沉淀到 RUN_REGISTRY）：self-test PASS、j-sweep split-j≈32/80、自蒸馏 tax1.386→1.078、长档 niah 92-100 read 恒定。论文 §07（efficiency/constant-read，非 super-window）。
+6. **iter_reader_attn selector 诚实证否**（沉淀）：CPU 合成 recall1.0 但真实 vt 无提升（mean-pool 抹变量身份）→ 真解=learned selector head（1.7B 基座已备，backlog）。1.7B QCMem 蒸馏已完成。
+
+### 关键运维（2026-07-11）
+- **判空卡用 compute-apps count**（`nvidia-smi -i $k --query-compute-apps=pid`），非显存——MoE inject/model-load 期 GPU 0GB 但进程活，避误判补卡堆叠。
+- **grid 完成关键字是 `recall=XX (N samples`**，非 `RESULT`（曾 grep 错词漏报）。cell 均值读 log RESULT 行，非 CSV per-sample recall 列。
+- **跨节点同名 cell 碰撞**：3 台 H20 共享 diskB，各自从 pool 头分配会撞名 → 补卡脚本要 pgrep+目录+recall 三重去重，每卡分配不同 cell。
+- **eval 合法 RULER 任务只有** niah_single / niah_multikey / vt（`niah_multivalue`/`multiquery`/`qa_*` 会崩）。
+- 第三台 H20 = 28.85.35.73（22端口，密码 configs/password_h20_853573.txt，torch-base 补了 tf5.5.4/peft/rank_bm25/pandas/datasets）。.24.104 密码=configs/password_h20_24104.txt（.venv symlink 坏，用 /opt/conda/envs/torch-base/bin/python）。
+
+### 旧收尾 column（TaskList #1-#4，已清/弃）
 
 ---
 
