@@ -55,6 +55,7 @@ multiple-choice (NO generation; argmax over teacher-forced continuation log-prob
 | **7B base full** | 32 | — | .604 / **.805** | .539 / **.571** | .823 / **.829** | .809 / **.811** | **.744** | .372 / **.462** |
 | **7B keep10** (early) | 12 | **10000** | .357 / **.443** | .279 / **.303** | .614 / **.585** | .677 / **.673** | **.524** | .216 / **.326** |
 | **7B keep14** (apex, converged) | 16 | **128000** | .480 / **.631** | .402 / **.426** | .729 / **.702** | .747 / **.747** | **.630** | .322 / **.402** |
+| **7B keep14** (post-apex, +25.5k) | 16 | **153500** | .485 / **.643** | .412 / **.442** | .732 / **.705** | .746 / **.745** | **.633** | .328 / **.406** |
 
 ## Story — DOWNSTREAM DOES **NOT** RECOVER IN LOCKSTEP WITH PPL
 
@@ -144,6 +145,7 @@ Latest available 1B keep7 ckpt at launch = **step150000** (trainer had advanced 
 | **7B base full** | — | **.6053** | **.7316** | **.8147** | .665 / **.652** | .502 / **.547** |
 | **7B keep10** (early) | **10000** | **.2539** | **.4036** | **.598** | .421 / .406 | .378 / .431 |
 | **7B keep14** (apex, converged) | **128000** | **.3012** | **.5750** | **.6385** | .505 / .476 | .423 / .471 |
+| **7B keep14** (post-apex, +25.5k) | **153500** | **.3124** | **.5698** | .6058 / .682 | .506 / .479 | .441 / .474 |
 
 ## Story — KNOWLEDGE **DOES NOT RECOVER AT ALL**; comprehension recovers like the surface band
 
@@ -269,3 +271,148 @@ lambada ≈0, csqa .20, siqa .333; recovered = (keep14−rand)/(base−rand); ac
   `scripts/_run_olmo2_probe2_downstream_keep14_know_8gpu.sh` (knowledge).
 - Scheduler logs: `logs/olmo2_downstream_keep14_sched.out` / `logs/olmo2_downstream_keep14_know_sched.out`;
   DONE markers: `logs/olmo2_downstream_keep14_DONE` / `logs/olmo2_downstream_keep14_know_DONE`.
+
+---
+
+# § POST-APEX TRAJECTORY — 7B keep14+fresh2 (16L/32), step153500 (+25.5k past apex step128000)
+
+**Why (2026-07-20):** the trainer kept healing ~25.5k steps past the step128000 point where the
+apex MC/knowledge was measured. **Core question:** after more heal, does capability *keep
+recovering, hold flat, or roll back*? This de-risks the eventual step200000 eval and directly tests
+the Paper-B claim "PPL plateaus early but knowledge keeps recovering (or stalls)." Same node .73 /
+same 8-shard `[g::8]` / same fp32-weights bf16-autocast forward / base 口径 (add_bos False, no
+chat_template, no generation). Ckpt cp-snapshotted off the wzc1 train dir (rotation-safe) → scp to
+.73; driver loaded it `keep_front=14 n_fresh=2 num_hidden_layers=16 (179 tensors, strict)` — identical
+arch signature to the apex ckpt. Ran 2026-07-20 04:06-04:12 CST (ppl ~5min, core ~3min, know ~4min).
+
+## 铁律2 self-audit (independent recompute from the 8 shard JSONs)
+- **PPL:** 8/8 shards, each n_tokens=1,048,064, none empty; recompute exp(Σnll/Σtok)=**10.693429** == summary to 1e-9.
+- **Core 6-task:** 8/8 shards, empty_shards=0; every cell Σn_correct/Σn reproduces the merge to 1e-9; every task n_nan=0 n_trunc=0, full n (HS 10042 / ARC-C 1172 / ARC-E 2376 / PIQA 1838 / WinoG 1267 / OBQA 500).
+- **Knowledge 5-task:** 8/8 shards, empty_shards=0; every cell reproduces the merge to 1e-9; every task n_nan=0, full n (mmlu 14042 / lambada 5153 / boolq 3270 / csqa 1221 / siqa 1954); boolq n_trunc=2 (same 2 super-long passages as apex, accepted).
+- ⇒ **Every cell verified; results trustworthy.**
+
+## Result — capability keeps creeping up, does NOT roll back; still knowledge-limited
+Paired with `OLMO2_PRUNEHEAL_PPL.md` (same ckpt step153500): held-out PPL **10.827→10.693**
+(1.463×→1.446×, slight further recovery). Downstream deltas apex(128000)→post-apex(153500):
+
+| axis | task | apex 128000 | 153500 | Δ | dir |
+|------|------|------------:|-------:|--:|:---:|
+| knowledge | **MMLU** | .3012 | **.3124** | +.011 | up |
+| surface/reason | HellaSwag accn | .631 | .643 | +.012 | up |
+| surface/reason | ARC-Challenge accn | .426 | .442 | +.016 | up |
+| surface/reason | ARC-Easy accn | .702 | .705 | +.003 | flat/up |
+| surface/reason | PIQA accn | .747 | .745 | −.002 | flat |
+| surface/reason | WinoGrande | .630 | .633 | +.003 | flat/up |
+| surface/reason | OpenBookQA accn | .402 | .406 | +.004 | flat/up |
+| comprehension | lambada (last-word) | .575 | .570 | −.005 | flat |
+| comprehension | boolq (acc) | .639 | .606 | −.033 | down* |
+| comprehension | commonsense_qa (acc) | .505 | .506 | +.001 | flat |
+| comprehension | social_iqa (acc) | .423 | .441 | +.018 | up |
+
+\*boolq: acc drifts down but acc_norm=.682 (yes/no length-normalization wash; the yes/no
+answer-length imbalance makes raw acc noisy — comprehension itself ≈flat, cf. the same acc-vs-accn
+split noted for 1B in the knowledge section).
+
+- **MMLU above-chance recovery** rises **14.4%→17.6%** ((.3124−.25)/(.605−.25)) — a small but real
+  further knowledge recovery, still by far the weakest axis (base .605, keep14 .312 = ~half).
+- **Verdict:** +25.5k heal steps → **no regression / no overfitting collapse**; PPL and every
+  reasoning/knowledge axis is **flat-to-slightly-up** (biggest gainers HS/ARC-C accn +.012/.016,
+  MMLU +.011, siqa +.018). But the per-step yield is **tiny** vs the earlier 12L→16L / 10k→128k
+  jump. ⇒ **supports "PPL plateaued early; knowledge keeps recovering but only marginally per extra
+  step" — extending heal past the apex helps a little and does not hurt.** de-risks the step200000
+  final eval (expect the same slow-creep, no rollback).
+
+## Raw JSON — post-apex (diskB `.../Mixture-of-Memory/`)
+- `olmo2_downstream_results/7B_keep14_step153500/summary.json` (core 6-task) and
+  `olmo2_downstream_results/7B_keep14_step153500_know/summary.json` (knowledge; mmlu carries the
+  57-subject `subjects` map) + per-shard `shard{0..7}of8.json`.
+- Launchers: `scripts/_run_olmo2_probe2_downstream_keep14_s153500_8gpu.sh` /
+  `scripts/_run_olmo2_probe2_downstream_keep14_s153500_know_8gpu.sh` (+ ppl
+  `scripts/_run_olmo2_probe2_ppl_keep14_s153500.sh`, master `scripts/_run_olmo2_keep14_s153500_master.sh`).
+- DONE markers: `logs/olmo2_downstream_keep14_s153500_DONE` / `logs/olmo2_downstream_keep14_s153500_know_DONE`;
+  master `logs/keep14_s153500_ALL_DONE`.
+
+---
+
+# § CONTROL 2 — from-scratch 16L (random-init keep14/fresh2 shell, step200000)
+
+**Why (2026-07-25):** the paired Paper-B control for "does *inheriting the pretrained front layers*
+matter, or would training the same small 16L architecture *from scratch* on the same Dolmino data
+reach the same place?" Same 16-layer arch as the healed keep14 (keep_front=14/n_fresh=2), **all weights
+random-init**, trained to **step200000 — MORE steps than the healed keep14 (128k apex / 153.5k
+post-apex)**. Paired with the held-out PPL row (`OLMO2_PRUNEHEAL_PPL.md`, from-scratch=11.498/1.554×,
+worse than healed 10.693/1.446×). Ran on **LOCAL** (8×B200, wzc1, .venv); ckpt
+`outputs/olmo2_probe2_7B_keep14fresh2_fromscratch/final.pt` loaded strict (keep_front=14 n_fresh=2
+num_hidden_layers=16). Core 6-task **2026-07-25 10:25, all nan=0/trunc=0, full n**; knowledge 5-task
+(mmlu/lambada/boolq/csqa/siqa) **DONE 2026-07-25 10:32, all nan=0, full n** (driver `_run_olmo2_downstream_scratch_know_wzc1.sh`).
+
+## Core 6-task (acc / acc_norm; winogrande acc only)
+| model | layers | step | HS | ARC-C | ARC-E | PIQA | WinoG | OBQA |
+|-------|-------:|-----:|----|-------|-------|------|-------|------|
+| **7B base full** | 32 | — | .604 / **.805** | .539 / **.571** | .823 / **.829** | .809 / **.811** | **.744** | .372 / **.462** |
+| **7B keep14 healed** (post-apex) | 16 | 153500 | .485 / **.643** | .412 / **.442** | .732 / **.705** | .746 / **.745** | **.633** | .328 / **.406** |
+| **7B from-scratch** (control 2) | 16 | **200000** | .447 / **.578** | .382 / **.414** | .732 / **.697** | .724 / **.733** | **.545** | .278 / **.384** |
+
+## Story — CORE: from-scratch ≈ ties healed on SURFACE, lags on REASONING/coherence
+Above-chance recovery (accn; chance HS/ARC/OBQA .25, PIQA/WinoG .50):
+
+| task | base | healed 153.5k | from-scratch 200k | healed vs scratch |
+|------|-----:|--------------:|------------------:|:-----------------:|
+| ARC-Easy | .829 | 79% | **77%** | ≈tie |
+| PIQA | .811 | 79% | **75%** | ≈tie |
+| OpenBookQA | .462 | 74% | **63%** | healed +11pt |
+| HellaSwag | .805 | 71% | **59%** | healed +12pt |
+| ARC-Challenge | .571 | 60% | **51%** | healed +9pt |
+| WinoGrande | .744 | 55% | **18%** | **healed +37pt** |
+
+- **Honest core read:** on *surface / lexical* tasks (ARC-Easy, PIQA) that are **learnable from Dolmino
+  from scratch**, from-scratch (200k steps) essentially **ties** the healed model — inheritance buys
+  little there. The gap opens on tasks needing more than local co-occurrence: HellaSwag (+12pt),
+  ARC-Challenge (+9pt), and especially **WinoGrande (+37pt)** — coreference/commonsense reasoning is
+  where the inherited pretrained front layers help most. **This alone is a modest control** (surface
+  ties, reasoning lags), consistent with the modest PPL gap (1.554× vs 1.446×).
+## Knowledge 5-task — ★ THE DECISIVE CONTROL (confirmed 2026-07-25 10:32)
+| model | step | MMLU | lambada | boolq (acc) | CSQA (acc) | SIQA (acc) |
+|-------|-----:|-----:|--------:|------------:|-----------:|-----------:|
+| **7B base full** | — | **.605** | .732 | .815 | .665 | .502 |
+| **7B keep14 healed** (post-apex) | 153500 | **.312** | .570 | .606 | .506 | .441 |
+| **7B from-scratch** (control 2) | **200000** | **.246** | .484 | .614 | .451 | .416 |
+
+Above-chance recovery (chance MMLU .25, lambada ≈0, boolq .50, CSQA .20, SIQA .333; recovered=(x−rand)/(base−rand)):
+
+| task | base | healed 153.5k | from-scratch 200k | verdict |
+|------|-----:|--------------:|------------------:|:--------|
+| **MMLU (stored world knowledge)** | .605 | **17.6%** | **≈0% (.246 = chance floor)** | **★ DECISIVE: only healed recovers** |
+| lambada (long-range coherence) | .732 | 78% | 66% | healed +12pt |
+| social_iqa | .502 | 64% | 49% | healed +15pt |
+| commonsense_qa | .665 | 66% | 54% | healed +12pt |
+| boolq (in-ctx reading comp) | .815 | 34% | **36%** | ≈tie (learnable from scratch) |
+
+- **★ MMLU is the decisive control read, exactly as predicted.** from-scratch MMLU = **.2461** on
+  n=14042 — statistically **at the .25 chance floor** (SE≈.0037; .2461 is ~1 SE *below* chance, i.e.
+  indistinguishable from random). It recovers **0% of the base's above-chance signal** despite training
+  **200k Dolmino steps — MORE than the healed keep14's 153.5k**. The healed keep14 (same 16L arch, same
+  Dolmino data, FEWER steps) recovered MMLU to **.312 (17.6% above chance)** — **solely because it
+  inherited the pretrained front 14 layers that store world knowledge.** from-scratch shows none of the
+  healed model's per-subject lift (world_religions/us_foreign_policy/marketing/history all stay at chance).
+- **The boolq tie is the perfect complement:** in-context reading comprehension (answer is *in the
+  passage*) is **learnable from scratch** — from-scratch .614 ≈ healed .606 (both ~35% above chance;
+  from-scratch even nominally higher). So the from-scratch model is **NOT globally broken** — it just
+  **cannot acquire the stored world knowledge that lives in the inherited layers.** The deficit is
+  knowledge-specific, not a general capacity failure.
+- **★ Paper-B control 2 CLOSED — clean, sharp message:** *the healed model's recovered factual
+  knowledge came from the inherited pretrained front layers, not from heal-training.* A from-scratch
+  model of identical architecture, trained on the same data for MORE steps, stays pinned at the MMLU
+  chance floor. Inheritance is **not merely a sample-efficiency shortcut** (the PPL gap is modest,
+  1.554× vs 1.446×) — for stored world knowledge it is the **only** route (MMLU 0% vs 17.6% recovery).
+  Reasoning/coherence (HS/ARC/WinoG/lambada/csqa/siqa) partly transfers from scratch but consistently
+  lags healed (+9 to +37pt); only in-context comprehension (boolq) fully ties. **This is the strongest
+  single piece of evidence that prune-then-heal ≫ train-small-from-scratch for the knowledge axis.**
+
+## Raw JSON — control 2 (wzc1, LOCAL, shared FS)
+- `olmo2_downstream_results/7B_scratch16L_step200000/summary.json` (core 6-task; done 10:25) +
+  `olmo2_downstream_results/7B_scratch16L_step200000_know/summary.json` (knowledge; done 10:32 — MMLU .2461/lambada .4838/boolq .6138/csqa .4505/siqa .4156, all n_nan=0 full n).
+- Launchers: `scripts/_run_olmo2_downstream_scratch_wzc1.sh` (core) /
+  `scripts/_run_olmo2_downstream_scratch_know_wzc1.sh` (knowledge).
+- DONE markers: `logs/olmo2_downstream_scratch_DONE` (core, landed 10:25) /
+  `logs/olmo2_downstream_scratch_know_DONE` (knowledge, landed 10:32).

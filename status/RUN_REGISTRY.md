@@ -1602,6 +1602,18 @@ RULER n=100 recall（8k/16k/32k）：
 | **vt** | **iter_bm25** | **30/18/24**（j3 峰值~24；深 j 不升） |
 
 - **32B VT j-sweep**（iter_bm25，recall 8k/16k/32k，avg）：j3 **29.6/17.8/24.4 (~24, 峰值)** · j6 15.0/9.6/20.8 · j9 18.6/13.6/16.4 · j13 18.6/22.6/12.8 · j16 22.2/20.8/11.0 · j20 25.8/7.0/8.8。→ **深 j 不救 VT，峰值停在浅 j3** = selector/模型瓶颈（对比 14B VT j3 已 89-96、8B iter_bm25 97/97/98）。32B 是唯一 VT 崩的 scale，待配 T21 speed frontier。
+  - ⚠️ 上行是 **2026-07-17 chat+no-think 标准之前**的旧口径；**干净口径 vt 见 `status/QCMEM_RECALL_SPEED_FRONTIER.md` 表1**（T21，j3 16k=93.6/32k=52.0 峰值，深 j 崩），旧"峰值~24"作废。
+- **★ 32B per-task recall-vs-j frontier（T21b，2026-07-20，.73；zero-shot，iter_bm25，chat+no-think，n=50，string_match_all，全 48 cell empty=0）**——把 T21 vt frontier 推广到 niah 检索类，验证 resume_j 速度↔精度旋钮的任务依赖性。recall(j) 16k/32k：
+
+  | j (j/L) | single_2 | multikey_1 | multivalue | multiquery |
+  |---|---|---|---|---|
+  | 6 (.09) | 100/100 | 98/96 | 48.5/50 | 25/25.5 |
+  | 20 (.31) | 100/98 | 96/90 | 49.5/50 | 25/32.5 |
+  | 27 (.42) | 100/98 | 96/86 | 49.5/49 | 26.5/32 |
+  | 34 (.53) | 100/100 | 66/62 | 49.5/48.5 | 23/24 |
+  | 41 (.64) | 10/34 | 8/4 | 1.5/1.5 | 2/0 |
+
+  结论：**统一 readout 硬崖 j41（0.64L）**（所有 niah 一致坠落）；崖下 **niah_single 深-j 最宽容**（recall 平在 100 到 j34/0.53L = read 1.93× 提速零损失，纯免费提速）、**multivalue/multiquery 亦深-j 宽容**（recall 平在各自任务天花板 ~50/~28 到 j34）、**multikey 居中**（免费到 j27，j34 温和衰减 66/62）、**vt 反向偏好浅 j**（见 frontier 表1）。read latency 任务无关（avg_read_len=6182 恒定，引 T21 线性轴）。详见 `status/QCMEM_RECALL_SPEED_FRONTIER.md` §per-task 泛化。原始：`.73:ruler_results/qcmem_32b_t21b/`。
 - **LongEval**(zs,j3, n=100)：4k/8k/16k/32k = **99/100/99/100**。
 - **vs-Dense**(zs, 超窗口崩塌)：single 8k-64k=100/100；**128k single Dense=OOM / QCMem=100**；multikey(n50) 8k-32k Dense100 QCMem 98/98/100，64k Dense96/QCMem100，**128k multikey Dense=OOM / QCMem=98**（Dense 长档直接 OOM，QCMem read pack 恒定存活）。
 - **BABILong**：zs(j3) overall=**41.7**（见上大表）。
@@ -1665,7 +1677,191 @@ overall mean acc（21 cells）：8B-adapter=**55.5** > 14B-adapter=**46.6** > 4B
 ★ adapter vs zeroshot（同 8B）：长档增益显著——8k/16k/32k avg 21→54 / 19→47 / 13→32；distill 主要救回长上下文。0.6B 在 0k/1k 近乎 0（模型太小，无检索上下文时不遵循格式），2k+ 才有信号。
 ★ 14B/32B(collaborator, zero-shot j3)：14B adapter(46.6) 显著超 14B-zs(32.7)，长档 8k/16k/32k avg 9→33 / 6→28 / 5→25——adapter 结论 scale 一致。32B(zs,j3)=41.7 中等，qa1 长档尚可(53/33/24)但 qa5 弱(12/20/13)；未蒸 adapter。
 
-#### LongBench 官方 qa_f1（narrativeqa/qasper/hotpotqa/2wikimqa，n=200/task，%）
+#### ★ 8B BABILong CLEAN 重跑（T23，2026-07-20，节点 .73；chat+no-think + iter_bm25 统一口径）
+> 干净口径 = `--use_chat_template` + `enable_thinking=False`(no-think) + `selector=iter_bm25`（2026-07-17 标配）。官方 `compare_answers`+TASK_LABELS（首句+恰好一 label），4-shard 求和合并（`score_nested_babilong.py`），n=100/cell。**全 21 cell empty_output=0，输出 well-formed**（抽查 adapter qa1 16k 为干净单答=真检索命中/失误，非 thinking ramble）。数据：`.73:babilong_results/qcmem_j9_iter_bm25_chatnothink_zs`（zs）+ `qcmem_j12_iter_bm25_chatnothink_ad`（adapter）。
+
+| model | task | 0k | 1k | 2k | 4k | 8k | 16k | 32k |
+|---|---|---|---|---|---|---|---|---|
+| **8B-adapter(j12) clean** | qa1 | 100 | 82 | 68 | 63 | 50 | 23 | 27 |
+| | qa2 | 57 | 58 | 53 | 51 | 31 | 20 | 6 |
+| | qa5 | 83 | 83 | 78 | 76 | 70 | 59 | 61 |
+| **8B-zs(j9) clean** | qa1 | 100 | 83 | 74 | 61 | 16 | 3 | 1 |
+| | qa2 | 60 | 53 | 59 | 38 | 22 | 11 | 1 |
+| | qa5 | 81 | 82 | 67 | 62 | 57 | 45 | 41 |
+
+overall mean acc（21 cell）：**adapter(j12)=57.10（1199/2100）> zeroshot(j9)=48.43（1017/2100）**。
+- **vs 旧 2026-07-14 污染版**（bm25 + chat_template_no + thinking-era；zs `qcmem_8b_zeroshot_babilong`(j12)=39.2 实测 37.9 / adapter `qcmem_8b_adapter_babilong_mid`(j12)=55.5）：**zs 39.2→48.4（+9.2）**、**adapter 55.5→57.1（+1.6 持平）**。增益集中 0k–8k（chat+no-think 净化指令跟随：zs qa2 1k 14→53、qa5 8k 38→57）。
+- **⚠️ 修正旧 caveat**："32k 真值 35–50" 不成立——干净口径 32k qa1/qa2 仍低（adapter 27/6、zs 1/1），仅 qa5 32k ~41–61。thinking 污染对 32k 压低幅度被**高估**；32k qa1/qa2 是**真长程检索失败**非判分 artifact。
+- **⚠️ selector caveat**：统一 iter_bm25 对 **qa1 单事实中档反掉分**（adapter qa1 16k 旧 bm25=55→干净 iter_bm25=23；输出 well-formed 单答=真失误）。iter_bm25 多跳 BFS 对 single-fact QA 过度扩召摊薄 topk。bm25 对 qa1 更优，但 iter_bm25 是统一口径标配。
+
+#### ★★ zero-shot BABILong CLEAN 全 scale 曲线（T24，2026-07-20，节点 .73；chat+no-think + iter_bm25 统一口径）
+> **8B clean 的直接延伸——补齐 0.6B/1.7B/4B/14B/32B 到与 8B(48.43) 完全一致口径。** 干净口径 = `--use_chat_template` + `enable_thinking=False`(no-think) + `selector=iter_bm25`（topk12/chunk512/sink=bos/bf16）。zero-shot（无 adapter/lora），每 scale 用 §1 主表 **readout-safe j**（single≥90 最深）：0.6B **j2** / 1.7B **j3** / 4B **j9** / 8B **j9** / 14B **j13** / 32B **j27**。官方 `babilong.metrics.compare_answers`+TASK_LABELS，n=100/cell，8-shard 求和合并（`score_nested_babilong.py`，与 4-shard 等价）。**全 21 cell/scale empty_output=0（各 2100 records），输出 well-formed**（抽查 qa1 16k 为干净单答 "Sandra is in the bedroom." 类=真检索命中/失误，非 thinking ramble；tiny 模型偶带 `</think>` 前缀 = 与 8B 参考同口径行为）。
+> **来源**：0.6B/4B = agent a9eeeb2a 已跑 clean dir **仅打分**（`babilong_results/qcmem_0p6b_zs_iter_chatnothink`(j2) / `qcmem_4b_zs_iter_chatnothink`(j9)）；1.7B/14B/32B = **本次新 GPU 重跑**（`babilong_results/qcmem_{1p7b,14b,32b}_zs_iter_chatnothink`）；8B = T23 参考（`qcmem_j9_iter_bm25_chatnothink_zs`）。30B-A3B 未纳入本曲线。
+
+| model | j (/L) | qa1 0k/8k/16k/32k | qa2 0k/8k/16k/32k | qa5 0k/8k/16k/32k | **overall(21 cell)** |
+|---|---|---|---|---|---|
+| **0.6B** | j2 (0.07L) | 77/44/35/37 | 45/18/12/5 | 21/16/18/19 | **33.05** |
+| **1.7B** | j3 (0.11L) | 92/14/9/2 | 52/13/6/1 | 67/41/36/32 | **41.19** |
+| **4B** | j9 (0.25L) | 98/19/7/4 | 60/17/3/0 | 80/56/46/51 | **46.71** |
+| **8B** | j9 (0.25L) | 100/16/3/1 | 60/22/11/1 | 81/57/45/41 | **48.43** |
+| **14B** | j13 (0.325L) | 100/31/9/5 | 66/18/10/5 | 83/73/62/58 | **54.29** |
+| **32B** | j27 (0.42L) | 100/64/43/43 | 70/39/20/9 | 91/67/54/62 | **64.10** |
+
+**★ zero-shot BABILong overall 单调随 scale 上升**：0.6B 33.05 → 1.7B 41.19 → 4B 46.71 → 8B 48.43 → 14B 54.29 → 32B **64.10**（+31pt over 0.6B，完全单调）。长档增益最明显在大模型（qa1 16k：0.6B 35→32B 43；qa5 32k：0.6B 19→32B 62）。
+- **撤销 legacy caveat**：0.6B/1.7B/4B/14B/32B 的旧污染版 BABILong（recall-optimal 浅 j3/j4/j3 + chat_template_no + thinking-era，§1a 行 11.0/34.2/49.3/32.7/41.7）**作废用于口径一致对照**——本 clean 曲线是全 scale 唯一同口径可比结果。（注：clean 用 readout-safe j 而非旧 recall-optimal j，故与旧 §1a 逐 cell 不直接可比；clean 曲线内部逐 cell 严格同口径。）
+
+#### ★★ zero-shot LongBench + LoCoMo CLEAN 全 scale 曲线（T22，2026-07-20，节点 .73；chat+no-think + iter_bm25 统一口径）
+> **T24 BABILong clean 曲线的 real-QA 延伸——把 zero-shot clean 口径从合成 BABILong 扩到 LongBench(6-ds real-doc QA) + LoCoMo(多会话记忆, n=1986)，与 BABILong scale 曲线(0.6B 33.05→…→32B 64.10)同口径可比。** 完全同 recipe：`--use_chat_template` + `enable_thinking=False`(no-think) + `--selector iter_bm25`（topk12/chunk512/sink=bos/bf16，zero-shot 无 adapter/lora），每 scale 用 §1 主表 **readout-safe j**（0.6B j2 / 1.7B j3 / 4B j9 / 8B j9 / 14B j13 / 32B j27）。每 scale 8-GPU：4-shard LongBench(GPU0-3) + 4-shard LoCoMo(GPU4-7) 并行。
+> **判分**：LongBench = 官方 `eval_longbench_mem_space.run_scoring`（`compute_f1_multi`/`compute_em_multi`，SQuAD token-F1/EM，**禁 re.search**），6-ds cohort = hotpotqa/narrativeqa/qasper/multifieldqa_en/2wikimqa/musique（与现有 baseline cohort 一致，合计 n=1150/scale）；LoCoMo = 项目 `eval_qcmem_locomo.run_scoring` F1/EM/acc（**无 GPT-4o judge**，acc=substring/F1≥0.5 proxy），n=1986，5-cat 分解。**每 scale：LongBench 1150 records + LoCoMo 1986 records，全部 empty_output=0，输出 well-formed**（抽查 32B hotpotqa "Gyulafehérvár, Transylvania"/"1532"、0.6B LoCoMo "1:56 pm on 8 May, 2023"=真检索命中/失误，非 thinking ramble）。
+> **来源**：8B = 已有 clean dir（`{longbench,locomo}_results/qcmem_8b_zs_iter_chatnothink`，j9）**仅打分**（零 GPU）；**0.6B/1.7B/4B/14B/32B = 本次全部新 GPU 重跑**（`qcmem_{0p6b,1p7b,4b,14b,32b}_zs_iter_chatnothink`）。旧 LongBench/LoCoMo `qcmem_{14b,32b,1p7b_j*,0p6b_j*,4b*}` dir 经 `eval_config.json` 核实为 **legacy 污染**（selector=bm25 非 iter_bm25 / chat_template=false / recall-optimal 浅 j 非 readout-safe j）→ 三轴皆不符，均需 clean 重跑，不用于本曲线。30B-A3B 未纳入。
+
+**LongBench 官方 F1（zero-shot readout-safe j，chat+no-think+iter_bm25，n/task=150-200，AVG=6-ds 均值）**
+| model | j | hotpotqa | narrativeqa | qasper | multifieldqa_en | 2wikimqa | musique | **AVG F1** | AVG EM | 新跑/仅打分 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| **0.6B** | j2 | 21.42 | 13.78 | 11.83 | 40.19 | 25.69 | 9.09 | **20.33** | 7.61 | 新 GPU |
+| **1.7B** | j3 | 20.77 | 12.30 | 29.10 | 38.16 | 18.49 | 8.84 | **21.28** | 5.00 | 新 GPU |
+| **4B** | j9 | 37.55 | 17.04 | 32.62 | 41.81 | 29.88 | 13.86 | **28.79** | 11.78 | 新 GPU |
+| **8B** | j9 | 27.81 | 17.93 | 33.66 | 41.98 | 25.37 | 10.88 | **26.27** | 9.17 | 仅打分(已有 clean) |
+| **14B** | j13 | 37.80 | 21.47 | 36.77 | 42.67 | 28.74 | 20.16 | **31.27** | 12.72 | 新 GPU |
+| **32B** | j27 | 43.75 | 23.30 | 43.16 | 46.04 | 38.31 | 23.18 | **36.29** | 17.39 | 新 GPU |
+
+**LoCoMo 官方 F1/EM/acc（n=1986，5-cat 按官方 category number；cat5=adversarial 弃权判分，F1==EM==acc）**
+| model | j | overall F1 | overall EM | overall acc | F1 c1/c2/c3/c4/c5 | acc c1/c2/c3/c4/c5 |
+|---|---|---|---|---|---|---|
+| **0.6B** | j2 | **12.19** | 0.65 | **14.75** | 10.96/18.63/9.64/16.79/0.22 | 9.93/13.71/10.42/24.97/0.22 |
+| **1.7B** | j3 | **9.75** | 0.30 | **16.41** | 9.86/9.11/6.83/14.74/1.35 | 7.80/7.79/11.46/31.15/1.35 |
+| **4B** | j9 | **12.56** | 0.91 | **20.85** | 13.45/10.25/8.28/19.46/1.57 | 17.02/8.41/14.58/37.81/1.57 |
+| **8B** | j9 | **14.26** | 3.37 | **22.41** | 15.11/16.84/7.94/21.28/0.00 | 15.96/18.69/13.54/38.88/0.00 |
+| **14B** | j13 | **13.85** | 1.86 | **22.26** | 13.45/11.59/9.13/20.82/3.59 | 14.18/9.35/23.96/39.60/3.59 |
+| **32B** | j27 | **17.31** | 3.37 | **27.64** | 15.14/12.61/9.15/26.01/7.40 | 16.31/9.35/19.79/50.06/7.40 |
+（cat n：c1=282 c2=321 c3=96 c4=841 c5=446。c4（最大类）acc 是总 acc 主要驱动，随 scale 单调升 0.6B 24.97→32B 50.06。）
+
+**★ scale 曲线小结（对比 BABILong clean 单调 0.6B 33.05→32B 64.10）**：
+- **LongBench AVG F1 整体随 scale 上升，32B 最优**：0.6B 20.33 → 1.7B 21.28 → 4B 28.79 → 8B 26.27 → 14B 31.27 → 32B **36.29**（+15.96pt over 0.6B）。**单一非单调点=8B(26.27) < 4B(28.79)**（8B zero-shot 在 hotpotqa/2wikimqa 偏弱；4B 反常强）；其余相邻 scale 皆升。
+- **LoCoMo acc 近单调随 scale 上升**：0.6B 14.75 → 1.7B 16.41 → 4B 20.85 → 8B 22.41 → 14B 22.26(≈8B plateau) → 32B **27.64**。**LoCoMo F1 更 noisy 但 32B 最优**：12.19→9.75(1.7B 谷)→12.56→14.26→13.85(14B 微降)→**17.31**。
+- **结论**：两个 real-QA 基准都印证「scale up 有帮助、32B 全面最优」的核心故事，趋势与 BABILong 一致；但 real-doc QA 的 token-F1 比合成 BABILong exact-match **更 noisy**（LongBench 8B<4B、LoCoMo 1.7B/14B 小回落），单调性弱于 BABILong。绝对分偏低（真实长文档/多会话记忆对 zero-shot QCMem 检索+resume 本就难，adapter 是长档/硬任务杠杆——本曲线为 zero-shot 无 adapter）。
+- **撤 legacy caveat**：§1a 旧 LongBench/LoCoMo 行（recall-optimal 浅 j + chat_template_no + bm25-single）作废用于口径一致对照；本 clean 曲线是全 scale 唯一同口径可比结果（内部逐 cell 严格同口径；因用 readout-safe j 而非旧 recall-optimal j，与旧行不直接可比）。
+
+#### ★★ zero-shot RULER CLEAN 全 scale scale-consistency 曲线（T25，2026-07-20，节点 .73；chat+no-think + iter_bm25 统一口径）
+> **补齐 4-benchmark cross-scale 故事的第 4 条曲线（BABILong T24 / LongBench+LoCoMo T22 已完成）——把 zero-shot clean 口径扩到 RULER 合成检索。** 完全同 recipe：`--use_chat_template` + `enable_thinking=False`(no-think) + `--selector iter_bm25`（topk12/chunk512/sink=bos/bf16，zero-shot 无 adapter/lora），每 scale 用 §1 主表 **readout-safe j**（0.6B **j2** / 1.7B **j3** / 4B **j9** / 8B **j9** / 14B **j13** / 32B **j27**）。原始 hybrid Qwen3（非 2507）。RULER 判分 = 官方 `scripts.eval_ruler_mem_space._string_match_all_one`（`string_match`，**禁 re.search 自造判分**）。任务 = RULER 标准子集 niah_single_2 / niah_multikey_1 / variable_tracking。
+> **CORE 8k/16k/32k = n=100/cell，8-shard 跨 8-GPU 求和合并**（`total_score=Σ score_i·n_i / Σ n_i`）。**超窗 64k/128k = n=50/cell**（128k haystack CPU 构造 ~25s/sample，为可跑性降 n；1-cell-per-GPU + 重档 128k(multikey/vt) 各 2-shard 用满 8 卡）。**全 cell empty_output=0，输出 well-formed**（抽查 8B VT="which variables are assigned value X…"=真任务理解但多跳链未从压缩读出重建=真失误；14B niah_single 命中时 "The special magic number… is 1801110" rec=1.0、失误时改述 PG19/Genesis 干草堆=真 readout drift，均非空/非 thinking ramble）。
+> **来源/去重裁决**：0.6B/1.7B/4B/8B 的 niah_single_2 + niah_multikey_1 @8k/16k/32k = **旧 clean dir 复用仅打分（0 GPU）**（0.6B←`qcmem_0p6b_zs_iter_chatnothink`(j2) / 1.7B←`qcmem_1p7b_zs_iter_chatnothink`(j3) / 4B←`qcmem_4b_zs_iter_chatnothink`(j9) / 8B←`qcmem_8b_zs_iter_bm25_chatnothink`(j9)，三轴 selector=iter_bm25 / chat=true / resume_j=readout-safe 皆核实干净）。**variable_tracking @全长 = 全 scale 新 GPU 重跑**（旧 dir VT 轴被 chat=false 污染）。14B/32B @8k/16k/32k 全 3 task = 全新 GPU 重跑（无干净旧数据）。**64k/128k 全 scale 全 task = 全新 GPU 跑**（各处均无干净超窗数据）。新目录统一 `ruler_results/qcmem_{scale}_zs_ruler_iter_chatnothink/`。
+
+**RULER 官方 string_match（zero-shot readout-safe j，chat+no-think+iter_bm25；8k/16k/32k n=100，64k/128k n=50）**
+| model | j (/L) | task | 8k | 16k | 32k | 64k | 128k |
+|---|---|---|---|---|---|---|---|
+| **0.6B** | j2 (0.07L) | niah_single_2 | 100.0 | 100.0 | 100.0 | 100.0 | 100.0 |
+| | | niah_multikey_1 | 86.0 | 83.0 | 87.0 | 76.0 | 86.0 |
+| | | variable_tracking | 83.2 | 89.2 | 70.6 | 91.6 | 88.0 |
+| **1.7B** | j3 (0.11L) | niah_single_2 | 56.0 | 5.0 | 59.0 | 56.0 | 28.0 |
+| | | niah_multikey_1 | 39.0 | 20.0 | 13.0 | 0.0 | 38.0 |
+| | | variable_tracking | 40.8 | 42.6 | 59.0 | 63.6 | 68.8 |
+| **4B** | j9 (0.25L) | niah_single_2 | 70.0 | 53.0 | 38.0 | 28.0 | 18.0 |
+| | | niah_multikey_1 | 46.0 | 24.0 | 38.0 | 16.0 | 20.0 |
+| | | variable_tracking | 24.4 | 19.8 | 16.0 | 18.0 | 18.4 |
+| **8B** | j9 (0.25L) | niah_single_2 | 95.0 | 98.0 | 97.0 | 88.0 | 94.0 |
+| | | niah_multikey_1 | 32.0 | 42.0 | 49.0 | 34.0 | 38.0 |
+| | | variable_tracking | 1.2 | 4.4 | 0.2 | 0.0 | 1.6 |
+| **14B** | j13 (0.325L) | niah_single_2 | 15.0 | 13.0 | 16.0 | 28.0 | 0.0 |
+| | | niah_multikey_1 | 46.0 | 28.0 | 43.0 | 32.0 | 24.0 |
+| | | variable_tracking | 2.0 | 0.4 | 0.8 | 0.4 | 0.8 |
+| **32B** | j27 (0.42L) | niah_single_2 | 100.0 | 100.0 | 98.0 | 100.0 | 100.0 |
+| | | niah_multikey_1 | 96.0 | 97.0 | 89.0 | 94.0 | 96.0 |
+| | | variable_tracking | 43.0 | 42.2 | 26.8 | 28.4 | 26.8 |
+
+**★ RULER scale-consistency 小结（全 5 长档完成；对比 3 姊妹曲线）**：与 BABILong（完全单调 33.05→64.10）/ LongBench（8B<4B 唯一非单调）/ LoCoMo（近单调）**明显不同，RULER zero-shot@readout-safe-j 强非单调**：
+- **scale 轴（非单调）**：**niah_single_2** — 0.6B **100**/8B 95-98/32B **98-100** 三点近满，但 **1.7B(5-59)、4B(18-70)、14B(0-28) 大幅塌陷**。**14B@j13 全长塌到 0-28（128k=0）** = readout drift（命中时答对 rec=1.0，多数改述 PG19/Genesis 干草堆而非答 needle），证明 readout-safe j 标定（按 single≥90 取最深）在 14B 这点并不稳、且随长度恶化。**niah_multikey_1** — 32B(89-97) 最强、0.6B(76-87) 反超中段，1.7B/4B/8B/14B(0-49) 弱且非单调。**variable_tracking** — **tiny 0.6B 最强(70-92)**（浅 j2 保留原始 VAR token 链），随 j 加深塌陷：8B/14B(≈0-4) 几乎全崩，32B(27-43) 部分恢复。VT 崩点与 **j 深度（非 scale）**强相关。
+- **length 轴（超窗健壮性 = QCMem 固定读卖点）**：readout 表现好的 (scale,task) 点**跨长度几乎不衰减**——QCMem 固定读 ~6.6k tok（与上下文长度无关），故 **32B niah_single 64k/128k 仍 100/100、niah_multikey 94/96；0.6B niah_single 全长 100、VT 64k/128k 91.6/88.0；8B niah_single 88/94**——在 **dense 128k 必 OOM** 的长度上稳定跑通且高分（RULER 侧印证 vs-Dense 卖点）。readout 已崩的点（8B/14B VT、14B single）在长档仍崩（1.7B/4B single 随长度缓降），非长度问题而是 j-标定问题。
+- **唯一稳健信号 = 32B 全 task 最强 + 全长档最稳**（与 3 姊妹曲线「32B 全面最优」一致）+ **0.6B 因浅 j 在字面 needle/链任务反常强**。机制 = RULER exact-match 字面 needle/链对「readout-safe j 是否保留原始 token」极敏感；该 j 按 single-recall 标定，**不迁移到 multikey/VT 且中段 scale drift** → 曲线非单调。verbose chat 前言在固定 VT token 预算下亦部分压低大模型 VT（协议内 caveat，非 bug）。
+- **运维记录**：CORE 8k/16k/32k(n=100) 由本 agent phase1 8-shard 跑完验证；64k/128k(n=50) 0.6B/1.7B/4B 由 phase2 sequential ext 跑完，8B/14B/32B 由 recovery task-pool（`t25_pool.sh`，8-worker 抢占式；phase2 driver 在 4B 后意外退出后同口径同目录接管）跑完。**全 6 scale × 3 task × 5 长 = 90 cell，empty_output=0（抽查 32B/8B/14B 128k 共 300 records 全非空、well-formed），oom=0，total_n=1200/scale**。
+
+#### ★★ zero-shot LongEval CLEAN 全 scale scale-consistency 曲线（T26，2026-07-20，节点 .73；chat+no-think + iter_bm25 统一口径）
+> **补齐 5-benchmark cross-scale 故事的第 5 条（最后一条）曲线（BABILong T24 / LongBench+LoCoMo T22 / RULER T25 已完成）——把 zero-shot clean 口径扩到 LongEval line-retrieval。** 完全同 recipe：`--use_chat_template` + `enable_thinking=False`(no-think) + `--selector iter_bm25`（topk12/chunk512/sink=bos/bf16，zero-shot 无 adapter/lora），每 scale 用 §1 主表 **readout-safe j**（0.6B **j2** / 1.7B **j3** / 4B **j9** / 8B **j9** / 14B **j13** / 32B **j27**）。driver `scripts/eval_qcmem_longeval.py` 官方 LongEval accuracy（line-key→register-content 精确抽取匹配，**禁 re.search 自造判分**）。6 长档 = 4k/8k/16k/32k/64k/128k，**n=100/cell，8-shard 求和合并**。
+> **来源/去重裁决**：8B 4k/8k/16k/32k = 旧 clean of4 run 复用仅打分（config 核实 selector=iter_bm25 / chat=true / resume_j=9 干净），8B 64k/128k = of8 新跑；其余 5 scale(0.6B/1.7B/4B/14B/32B) 全 6 长档全 clean 新 GPU 跑。新目录统一 `longeval_results/qcmem_{scale}_zs_iter_chatnothink/`。**全 36 cell empty=0 oom=0，well-formed**（抽查 32B 16k：expected 153333 → output "…is <153333>" → pred=153333 correct=True=真检索命中；read_len≈6315 恒定=固定读、n_selected_chunks=12=topk12）。
+
+**LongEval 官方 accuracy（zero-shot readout-safe j，chat+no-think+iter_bm25；n=100/cell，%）**
+| model | j (/L) | 4k | 8k | 16k | 32k | 64k | 128k | AVG |
+|---|---|---|---|---|---|---|---|---|
+| **0.6B** | j2 | 58 | 28 | 41 | 25 | 35 | 37 | **37.3** |
+| **1.7B** | j3 | 33 | 11 | 4 | 12 | 20 | 15 | **15.8** |
+| **4B** | j9 | 30 | 11 | 16 | 15 | 8 | 11 | **15.2** |
+| **8B** | j9 | 14 | 6 | 5 | 7 | 6 | 7 | **7.5** |
+| **14B** | j13 | 36 | 13 | 16 | 14 | 18 | 25 | **20.3** |
+| **32B** | j27 | 99 | 97 | 97 | 98 | 97 | 97 | **97.5** |
+
+**★ LongEval scale-consistency 小结（对比 4 姊妹曲线）**：**与 RULER 同型（强非单调），非 BABILong/LongBench/LoCoMo 的单调随 scale 升**——LongEval = 按 line-key 检索精确 register 值 = exact-match 字面任务：
+- **scale 轴（强非单调）**：**32B(97.5) 碾压**，其余全在 7.5-37.3 且 **0.6B(37.3) > 14B(20.3) > 1.7B(15.8) ≈ 4B(15.2) > 8B(7.5)**——中段全面塌陷、8B 最弱。与 RULER niah/VT 同一 pattern（0.6B 浅 j 反常强、32B 独强、中段 drift）。
+- **0.6B 反常强机制**：浅 j2 几乎不压缩、保留原始字面 REGISTER token → exact-match 直接命中；随 j 加深（8B j9 最深塌陷区）原始 token 被语义 readout 覆盖 → 字面值丢失（readout drift，同 RULER 14B/8B niah/VT）。
+- **length 轴（32B 超窗健壮）**：**32B 跨全长 97-99 几乎无衰减（128k=97≈4k=99，dense 128k 必 OOM）** = QCMem 固定读 ~6.3k tok 与上下文长度无关的直接体现（LongEval 侧印证 vs-Dense 固定读卖点）；其余 scale 各长档均低、无稳定长度趋势。
+- **唯一稳健信号 = 32B 全长档最强最稳 + 0.6B 因浅 j 在字面任务反常强**（与 RULER 完全一致）→ **5-benchmark cross-scale 故事收官：语义 QA 三基准（BABILong/LongBench/LoCoMo）单调随 scale 升，字面 exact-match 两基准（RULER/LongEval）强非单调但 32B 始终全面最优**。
+- **运维记录**：T26 agent a1f86c58 完成 GPU eval（36 cell，n=100/empty=0/oom=0）后在 well-formed 抽查阶段意外终止（39 tool-uses，未落账）；本 heartbeat 独立复算全 grid（of8 逐-length 求和 + 8B of4 短档修正核实无 double-count，铁律2 核实非空 well-formed）并回填。数据：`.73:longeval_results/qcmem_{0p6b,1p7b,4b,8b,14b,32b}_zs_iter_chatnothink`。
+
+#### ★★ +adapter content-j 曲线（T27，2026-07-20，节点 .73；RULER + LongEval 两 exact-match 基准；chat+no-think + iter_bm25 统一口径）
+> **T25(RULER)/T26(LongEval) zero-shot readout-safe-j 曲线的 content-j 配对臂。核心论文问题：蒸馏 content-j LoRA adapter 能否修复 zero-shot readout-safe-j 在字面 exact-match 上的塌陷？** 同 clean recipe（`--use_chat_template` + no-think + `--selector iter_bm25`，topk12/chunk512/sink=bos/bf16），加载各 scale content-j LoRA adapter（`outputs/qcmem_distill_{0p6b_contentj13,1p7b_contentj13,4b_contentj16,8b_contentj16,14b_contentj18}_r32/final`）。**32B/30B-A3B 无 content-j adapter，跳过。** RULER driver `eval_ruler_qcmem.py`（官方 `_string_match_all_one`，禁 re.search，max_new_tokens=48），niah_single_2/niah_multikey_1/variable_tracking @8k/16k/32k n=100（8-shard）。LongEval driver `eval_qcmem_longeval.py`（官方 line-key→register 精确抽取，禁 re.search），4k-128k n=100（8-shard）。**⚠️ LongEval 显式 `--max_new_tokens 48`**（driver 默认 16 截断 adapter 冗长输出 → 全 0 假象；48=统一协议值，与 T26 zs 同样冗长完整、口径一致；RULER 默认已 48）。**全 RULER 15 cell + LongEval 30 cell empty=0 / n=100，铁律2 OK。**
+
+**RULER 官方 string_match（+adapter content-j，chat+no-think+iter_bm25，8k/16k/32k/64k/128k n=100）— 括号内为 zero-shot readout-safe j（T25）对照。★ 64k/128k = T27-ext GPU 早已跑完但从未聚合，本轮（T27b, 2026-07-20）用官方 `_string_match_all_one` 逐 cell 8-shard 加权合并（Σ score_i·n_i/Σn_i）回填；全 cell n=100 empty=0 oom=0 well-formed（抽查 14B niah_single 128k 命中真值 magic number、8B vt 128k 冗长推理未在 48tok 内列出变量=真失误、0.6B vt 全 0=真失误，均非空）**
+| model | content-j | niah_single 8/16/32/64/128k | (zs single) | niah_multikey 8/16/32/64/128k | (zs mk) | vt 8/16/32/64/128k | (zs vt) |
+|---|---|---|---|---|---|---|---|
+| **0.6B** | j13 | 97/99/97/97/93 | (100/100/100/100/100) | 22/32/37/34/32 | (86/83/87/76/86) | 1.4/0.2/0.0/0.0/0.0 | (83/89/71/92/88) |
+| **1.7B** | j13 | 81/95/85/78/78 | (56/5/59/56/28) | 20/32/35/34/33 | (39/20/13/0/38) | 23.8/20.8/17.2/11.4/17.0 | (41/43/59/64/69) |
+| **4B** | j16 | 61/100/67/75/41 | (70/53/38/28/18) | 45/32/54/37/42 | (46/24/38/16/20) | 48.4/41.2/57.0/43.8/52.2 | (24/20/16/18/18) |
+| **8B** | j16 | 99/100/98/98/100 | (95/98/97/88/94) | 51/36/40/39/50 | (32/42/49/34/38) | 8.6/25.0/2.6/3.8/1.2 | (1.2/4.4/0.2/0.0/1.6) |
+| **14B** | j18 | 100/99/94/98/100 | (15/13/16/28/0) | 71/74/74/59/72 | (46/28/43/32/24) | 19.2/18.8/19.4/19.4/19.2 | (2.0/0.4/0.8/0.4/0.8) |
+
+> **★ RULER 64k/128k 超窗口小结（content-j，T27b 回填）**：adapter 修复能力在超窗档保持与 CORE(8-32k) 一致的 scale 依赖形态，且 QCMem 固定读（~6.6k tok）使长度几乎不衰减——**大模型 niah_single 超窗健壮**（8B 98/100、14B 98/100 @64k/128k，dense 128k 必 OOM 处稳定跑通），**14B niah_multikey 超窗仍被 adapter 大幅救回**（zs 32/24 → cj 59/72 @64k/128k）；**vt 依旧仅 4B 可用**（cj 43.8/52.2 @64k/128k，其余 scale≈0-19，深 content-j 丢字面链，与 CORE 同型）。niah_single 中段（1.7B/4B）超窗随长度缓降（4B 75→41 @64k→128k）。整体印证：content-j adapter 对超窗字面 exact-match 的价值同样「大模型 YES、小模型 NO」，且固定读让高分点跨 64k/128k 不塌。
+
+**LongEval 官方 accuracy（+adapter content-j，chat+no-think+iter_bm25+max_new48，n=100/cell，%）— AVG 旁括号为 zero-shot readout-safe j（T26）AVG**
+| model | content-j | 4k | 8k | 16k | 32k | 64k | 128k | AVG | (zs AVG) |
+|---|---|---|---|---|---|---|---|---|---|
+| **0.6B** | j13 | 6 | 0 | 0 | 1 | 0 | 0 | **1.2** | (37.3) |
+| **1.7B** | j13 | 4 | 0 | 0 | 1 | 0 | 0 | **0.8** | (15.8) |
+| **4B** | j16 | 33 | 10 | 17 | 12 | 11 | 10 | **15.5** | (15.2) |
+| **8B** | j16 | 22 | 9 | 14 | 15 | 9 | 9 | **13.0** | (7.5) |
+| **14B** | j18 | 60 | 31 | 38 | 37 | 38 | 37 | **40.2** | (20.3) |
+
+**★ content-vs-readout 小结（adapter 修复能力随 scale 涌现，monotone scale-dependent）**：
+- **小模型（0.6B/1.7B）：adapter 伤字面 exact-match**。LongEval 0.6B 37.3→1.2(↓36)、1.7B 15.8→0.8(↓15)；RULER 0.6B mk 85→30 / vt 81→1、1.7B vt 48→21。深 content-j(~0.45L) 丢字面 token，浅 readout-safe zs 远好；蒸馏 adapter **无法修复反倒破坏**（唯 1.7B RULER niah 40→87 例外升）。
+- **中段（4B）：break-even→helpful**。LongEval 15.2→15.5(≈)；RULER 全 task↑（niah 54→76、mk 36→44、vt 20→49）。
+- **大模型（8B/14B）：adapter 明显修复 zs 塌陷**。LongEval 8B 7.5→13.0(↑5.5)、14B **20.3→40.2(↑20，翻倍)**；RULER **14B 最戏剧（niah 15→98、mk 39→73、vt 1→19，把 j13 塌陷完全救回）**，8B vt 部分修复（2→12，16k 4.4→25）。
+- **结论**：content-j adapter 对字面 exact-match 的修复价值 **随 scale 单调涌现**——**大模型（8B/14B）YES**（尤 14B 完全修复 readout-safe-j 塌陷），**小模型（0.6B/1.7B）NO**（深 j 破坏字面检索、蒸馏训不回来）。与语义/real-QA（BABILong/LongBench/LoCoMo）上 adapter 普遍有益的图景**不同**——字面 exact-match 更依赖浅层原始 token，深 content-j 是双刃剑，仅大模型有足够容量在深层重建字面读出。运维：80-job(40 RULER + 40 LongEval，8-shard×5 scale) 8-worker flock task-pool，全 rc=0；LongEval 首轮误用 driver 默认 max16 全塌，诊断为冗长输出截断 artifact（非真塌），改 max_new48 重跑修复。数据：`.73:{ruler_results,longeval_results}/qcmem_{0p6b,1p7b,4b,8b,14b}_adapter_contentj{13,13,16,16,18}_iter_chatnothink`。
+
+#### ★★ +adapter content-j 曲线（T27b，2026-07-21，节点 .73；BABILong + LongBench + LoCoMo 三个语义/real-QA 基准；chat+no-think + iter_bm25 统一口径）
+> **T24(BABILong)/T22(LongBench+LoCoMo) zero-shot readout-safe-j clean 曲线的 content-j 配对臂 = 补齐 5-benchmark × content-j 全网格的最后 3 条（语义侧）。核心问题：content-j adapter 在语义/real-QA（非字面 exact-match）上的 scale 依赖是否与 T27 的 RULER/LongEval 一致？** 同 clean recipe（`--use_chat_template` + no-think + `--selector iter_bm25`，topk12/chunk512/sink=bos/bf16），各 scale content-j LoRA adapter（`outputs/qcmem_distill_{0p6b_contentj13,1p7b_contentj13,4b_contentj16,8b_contentj16,14b_contentj18}_r32/final`）。**32B/30B-A3B 无 content-j adapter，跳过。** 判分：BABILong=官方 `babilong.metrics.compare_answers`+TASK_LABELS（禁 re.search，flat 8-shard 求和合并），qa1/qa2/qa5 × 0k-32k **n=100/cell 全 21 cell 无缺**；LongBench=per-shard `f1`（`eval_qcmem_longbench` 官方 qa_f1）按 num_samples 加权合并，6-ds n=200/ds；LoCoMo=官方 `eval_qcmem_locomo.run_scoring`（token-level SQuAD-F1 + substring-acc + EM，dedup by id）n=1986。**⚠️ 14B BABILong 首轮 pool 进程缺 HF_*_OFFLINE env → dataset-config HEAD 联网重试卡死零推理，独立 standalone 重跑（HF_HUB_OFFLINE=1 + 3s stagger）修复，336 文件齐、抽查 qa1/2k 62% 真检索。**
+
+**BABILong 官方 compare_answers（+adapter content-j，chat+no-think+iter_bm25，n=100/cell）— per-task 为 7 长档(0k-32k)均值，overall=21-cell 均值。括号内为 zero-shot readout-safe j（T24 clean）overall 对照**
+| model | content-j | qa1 avg | qa2 avg | qa5 avg | **overall** | (zs overall T24) | Δ |
+|---|---|---|---|---|---|---|---|
+| **0.6B** | j13 | 31.9 | 19.3 | 33.4 | **28.2** | (33.1, j2) | −4.9 |
+| **1.7B** | j13 | 32.3 | 25.3 | 58.1 | **38.6** | (41.2, j3) | −2.6 |
+| **4B** | j16 | 46.0 | 30.6 | 70.7 | **49.1** | (46.7, j9) | +2.4 |
+| **8B** | j16 | 49.9 | 33.3 | 64.4 | **49.2** | (48.4, j9) | +0.8 |
+| **14B** | j18 | 50.9 | 33.4 | 74.0 | **52.8** | (54.3, j13) | −1.5 |
+
+**LongBench 官方 qa_f1（+adapter content-j，chat+no-think+iter_bm25，n=200/ds，%）— MACRO=6-ds 均值。括号内为 zero-shot readout-safe j（T22 clean）MACRO 对照**
+| model | content-j | narrqa | qasper | mfqa_en | hotpotqa | 2wiki | musique | **MACRO** | (zs MACRO T22) | Δ |
+|---|---|---|---|---|---|---|---|---|---|---|
+| **0.6B** | j13 | 10.17 | 12.64 | 32.26 | 18.85 | 16.87 | 5.08 | **15.98** | (20.3, j2) | −4.3 |
+| **1.7B** | j13 | 14.42 | 25.97 | 33.21 | 28.63 | 25.83 | 9.71 | **22.96** | (21.3, j3) | +1.7 |
+| **4B** | j16 | 21.15 | 33.15 | 41.55 | 41.28 | 29.44 | 15.52 | **30.35** | (28.8, j9) | +1.6 |
+| **8B** | j16 | 20.86 | 37.16 | 42.54 | 47.62 | 34.22 | 21.91 | **34.05** | (26.3, j9) | **+7.8** |
+| **14B** | j18 | 23.72 | 37.68 | 47.18 | 50.36 | 39.83 | 24.13 | **37.15** | (31.3, j13) | **+5.9** |
+
+**LoCoMo 官方 run_scoring（+adapter content-j，chat+no-think+iter_bm25，n=1986）— 报以 F1 为准（token-SQuAD-F1）。括号内为 zero-shot readout-safe j（T22 clean）F1/acc 对照**
+| model | content-j | **F1** | acc | EM | (zs F1/acc T22) | ΔF1 / Δacc |
+|---|---|---|---|---|---|---|
+| **0.6B** | j13 | **9.97** | 9.26 | 0.35 | (12.2 / 14.8, j2) | −2.2 / −5.5 |
+| **1.7B** | j13 | **8.33** | 11.18 | 0.86 | (9.8 / 16.4, j3) | −1.5 / −5.2 |
+| **4B** | j16 | **14.20** | 19.34 | 3.63 | (12.6 / 20.9, j9) | +1.6 / −1.6 |
+| **8B** | j16 | **16.66** | 22.05 | 4.03 | (14.3 / 22.4, j9) | **+2.4** / −0.4 |
+| **14B** | j18 | **18.85** | 26.13 | 5.64 | (13.9 / 22.3, j13) | **+5.0** / **+3.8** |
+
+**★ content-vs-readout 语义侧小结（T27b）——与 T27 字面 exact-match 同型（scale-emergent）但更温和**：
+- **同型确认**：三条语义曲线上 content-j adapter 的 scale 依赖与 T27（RULER/LongEval）一致——**小模型（0.6B）全线被伤**（BABILong −4.9、LongBench −4.3、LoCoMo F −2.2/acc −5.5：深 content-j(~0.45L) 丢字面 token，蒸馏训不回浅层原始读出），**大模型（8B/14B）净增益**（LongBench 8B **+7.8**/14B **+5.9**、LoCoMo 14B F **+5.0**/acc **+3.8**）。
+- **与字面 exact-match 的关键差异 = 幅度更温和、BABILong 近中性**：LongEval 14B 曾 **20.3→40.2（翻倍）**、RULER 14B niah **15→98（完全救回）**；语义侧最大增益仅 LongBench 8B +7.8。**BABILong 几乎全 scale 近中性**（Δ ∈ [−4.9,+2.4]，4B/8B 微升、14B/0.6B 微降）——因 BABILong 语义 QA 在 ~0.45L content 深度本就基本保真，zero-shot readout-safe-j 已能做，adapter 既救不多也伤不多。
+- **机制统一图景（跨 5 benchmark 收敛）**：content-j adapter 价值 = f(任务字面依赖度 × 模型容量)。①**字面依赖越强，adapter 的双刃剑效应越剧**（RULER/LongEval：大模型戏剧修复、小模型戏剧破坏）；②**语义依赖越强，效应越温和**（BABILong 近中性、LongBench/LoCoMo 中等正）；③但**「大模型 YES、小模型 NO」的 scale-emergent 符号在全 5 benchmark 一致**——0.6B 处处被伤、14B 处处（除 BABILong 微降）获益。→ 论文 framing：**content-j adapter 是「读到语义 content 深度（更省算/更多语义压缩）」的杠杆，但需足够模型容量在深层重建读出；小模型宜用浅 readout-safe j，大模型可用深 content-j + adapter**。
+- 运维：CPU 打分（flat 8-shard BABILong 自写 `score_flat_babilong.py` glob `{task}_{L}_*shard*of8.csv` 求和 compare_answers；LongBench 加权合并 metrics.json；LoCoMo run_scoring dedup by id）全 5 scale 无缺 cell。数据：`.73:{babilong_results,longbench_results,locomo_results}/qcmem_{0p6b,1p7b,4b,8b,14b}_adapter_contentj{13,13,16,16,18}_iter_chatnothink`。
+
+#### LongBench 官方 qa_f1（narrativeqa/qasper/hotpotqa/2wikimqa，n=200/task，%）〔legacy：recall-optimal 浅 j + chat_template_no + bm25-single，见上方 T22 clean 曲线〕
 | model | narrativeqa | qasper | hotpotqa | 2wikimqa | **AVG** |
 |---|---|---|---|---|---|
 | **32B**(zs,j3) | 6.15 | 13.25 | 15.05 | 15.01 | **12.37** |
@@ -1686,3 +1882,62 @@ overall mean acc（21 cells）：8B-adapter=**55.5** > 14B-adapter=**46.6** > 4B
 | **14B**(zs,j3) | **1.41** | 2.17 | 1.4 | 0.9 | 6.3 | 1.6 | 0.5 |
 
 （acc 列 = 官方 substring/F1≥0.5 proxy；adversarial=弃权正确率。32B 全面高于 14B。LoCoMo 对 QCMem 整体很难，绝对分低——真实多会话对话记忆 + 短答案严格判分。⚠️ diskB 版 `eval_qcmem_locomo.py` run_scoring glob 为 `preds_*.jsonl`（下划线），不匹配单 shard `preds.jsonl` → 自动判分报 "no prediction files"；本机 wzc1 版已修为 `preds*.jsonl`。聚合时用 `score_sample` 直接读 `preds.jsonl`。）
+
+---
+
+### ★ Phase-2 chat=False 消融判分（2026-07-23，官方 scorer，Iron-Law-2 全过，CoMem 8B j=12 chunk1024 adapter=qcmem_distill_qwen_j12_r32_4k，sink=bos，chat_template=False）
+
+数据在 diskB（.73/.82/.104 共享 FS）。RULER=`scripts/score_ruler_taskbreadth.py` 官方 `_string_match_all_one`；BABILong=`scripts/score_flat_babilong.py`（新增，官方 `compare_answers`+`TASK_LABELS`，禁 re.search）。全部 8/8 shard、empty=0、recall-mismatch=0。
+
+**#9 tab_selector — 单遍 selector 消融（RULER n=100，峰值 top-k over {4,8,12,16,24}，chat=False）**
+| Task | Len | BM25 | Recency | ReaderAttn | Oracle |
+|---|---|---|---|---|---|
+| niah_single   | 8k  | 100 | 100 | 100 | 100 |
+| niah_single   | 16k | 100 | 100 | 100 | 100 |
+| niah_single   | 32k | 100 | 82  | 73  | 100 |
+| niah_multikey | 8k  | 99  | 98  | 97  | 100 |
+| niah_multikey | 16k | 99  | 88  | 90  | 100 |
+| niah_multikey | 32k | 99  | 54  | 60  | 100 |
+| var-track     | 8k  | 99.4 | 99.2 | 99.8 | N/A(VT skip) |
+| var-track     | 16k | 92.6 | 92.4 | 92.4 | N/A(VT skip) |
+| var-track     | 32k | 32.0 | 41.2 | 27.8 | N/A(VT skip) |
+
+- 对齐 paper tab_selector.tex 结论：Oracle 在两 needle 任务 100/100/100（读出无损，长程差距=检索问题；BM25 单遍在 niah_single 0pp gap、niah_multikey ≤1pp gap 追平 Oracle）。VT 单遍 selector 全部 32k 崩塌（BM25 32.0 / Recency 41.2 / ReaderAttn 27.8）→ 需 iter_bm25（tab_itervt 的 iter 列由 .82 补）。Oracle-VT 本轮 skip（无数据；paper 现有 Oracle-VT 10.4/9.2/5.8 为旧 chat=True 数据，若要 chat=False 需补跑）。
+- ⚠️ 新 chat=False 峰值 vs 现 paper tab_selector（旧 chat=True）在 16k/32k 显著更高（如 Recency niah_single 16k 72→100；BM25 VT 16k 27.6→92.6）——与 chat=False 大幅利好 exact-match/completion 任务一致（见 PAPER_LOCOMO_ERRATA §11a）。若切 chat=False 协议，整张 tab_selector 需换这套数字。
+
+**#12 tab_crosschunk — cross-chunk attention 消融（full vs block-diag KV reuse，chat=False，selector=iter_bm25，top-k12）**
+| Task | Full | Block-diag | Δ(full−bd) |
+|---|---|---|---|
+| RULER niah_single (8k/16k, n=50) | 100 / 100 | 100 / 96 | 0 / +4 |
+| RULER niah_multikey (8k/16k, n=50) | 96 / 94 | 60 / 32 | +36 / +62 |
+| BABILong qa2 (8k/16k, n=100) | 36 / 20 | 17 / 13 | +19 / +7 |
+| BABILong qa5 (8k/16k, n=100) | 78 / 69 | 78 / 55 | 0 / +14 |
+
+- 结论同 paper：cross-chunk recompute 对多事实消歧 load-bearing（multikey Δ+36/+62、qa2/qa5 有 gap），对单 needle 无关（niah_single 近似持平）。数值与现 paper tab_crosschunk（旧 chat 口径 multikey 88/92 vs 44/40）不同，但趋势一致；chat=False 应替换。
+
+**#8 tab_slm — StreamingLLM 等预算（RULER niah_single，string_match，chat=False）→ 可提取，无需重跑**
+| Method | 8k | 16k | 32k | 64k | 128k | budget |
+|---|---|---|---|---|---|---|
+| CoMem (retrieved h_j) | 100 | 100 | 99 | 99 | 100 | top-k12×chunk512 = 6144 tok |
+| StreamingLLM (sink4+win6653) | 85 | 36 | 20 | 10 | 2 | 6657 tok |
+
+- StreamingLLM 已跑档 sink4+win6653（budget 6657≈6.7k）== paper 声称的「≈6.7k-token 等预算」；CoMem 侧 chat=False niah_single 在 top-k12×chunk512=6144 tok（`ruler_results/qcmem_8b_iter_chatFALSE_ad`）存在 → **tab_slm 可从现有 chat=False 数据直接提取，无需 GPU 重跑**。注意：(a) 已跑 n=100（paper 写 n=50，n=100 更稳，应更新脚注）；(b) chat=False 数字（SLM 85/36/10/2）替换现 paper 旧 chat=True 90/42/16/4；(c) 两侧预算 6144 vs 6657 差 ~8%，均记 ≈6.7k（paper caption 已如此写），若要严格同预算可 CoMem top-k13×512=6656 或 SLM window=6140，非必需。
+
+dirs（diskB）：`ruler_results/ablation9_selector_chatFALSE/sel{sel}_tk{tk}/`；`ruler_results/ablation12_crosschunk_chatFALSE/{full,blockdiag}/`；`babilong_results/ablation12_crosschunk_chatFALSE/{full,blockdiag}/`；`ruler_results/streamingllm_8b_ruler_chatFALSE/`；`ruler_results/qcmem_8b_iter_chatFALSE_ad/`。
+
+---
+
+## ★★ Paper B — OLMo-2 base 剪层-heal 深度扫（depth-sweep，prune-heal frontier）
+
+**方法**：OLMo-2-1124 base（纯预训练，消 instruct 污染）truncate 到前 `keep` 层 + `n_fresh=2` 层新 tail，再在 Dolmino（DCLM 子集，OLMo-2 tokenizer 重 tokenize）continue-train(heal)。脚本 `scripts/train_olmo2_arch_probe2.py`（`--keep_front_layers/--n_fresh_layers/--resume_from`）。红线 `--babilong_mix_fraction 0`。7B 全模型 32 层。所有臂同超参（seq_len 2048 / lr_fresh 1e-4 / lr_inherited 2e-5 / max_steps 200000 / grad_checkpointing / fp32 master / n_fresh 2），仅 keep 变化 = 纯深度阶梯。**H20 配方 bs4/ga4 eff_bs128；L20A 配方 bs16/ga1**（皆 eff_bs=128 可比）。launcher：wzc1/L20A `scripts/run_olmo2_7B_keepN.sh`；diskB/H20 `scripts/run_olmo2_7B_keepN_diskB.sh`（env-overridable diskB 路径 + bs/ga）。
+
+| keep (/32) | n_fresh | params | 节点 | 卡/配方 | 起点 | 状态 | held-out ppl / 备注 |
+|---|---|---|---|---|---|---|---|
+| **keep14** (0.44L) | 2 | ~3.9B(16L) | 本机 wzc1 8×L20A | bs16 ga1 eff128 | fresh | ✅ running step~170.5k/200k | train-ppl~10.15；apex step128000 held-out 10.83/1.46× |
+| **keep12** (0.375L) | 2 | 3.6556B(14L) | .82 8×H20 | bs4 ga4 eff128 | **fresh**（无旧 ckpt 可 resume，旧 07-17 崩掉 ckpt 不完整已弃） | 🔄 running（2026-07-20 11:23 起） | step40 loss8.47 ppl4785 gnorm5.27 maxmem91.9GB 0NaN |
+| **keep10** (0.3125L) | 2 | ~3.3B(12L) | 曾 .73 8×H20 | bs4 ga4 eff128 | fresh | ⏸ 曾跑（step10000 早期欠 heal，非收敛点） | — |
+| **keep8** (0.25L) | 2 | 2.8460B(10L) | .104 8×H20 | bs4 ga4 eff128 | **fresh** | 🔄 running（2026-07-20 11:23 起） | step40 loss8.53 ppl5068 gnorm4.67 maxmem73.5GB 0NaN |
+
+- **transplant sanity（两新臂启动即验）**：keep12 = copied 135 tensors（前12层 + embed/norm/lm_head from 32L base）+ fresh tail[12,13]；keep8 = copied 91 tensors（前8层）+ fresh tail[8,9]；均 unexpected=0 / max|model−base|=0（exact）/ fresh post_attn_ln & q_norm all-ones / fresh_q_std=0.02 → **ALL 6 CHECKS PASS**。
+- **待铺（ablation frontier 控制臂）**：`--freeze_front`（冻结前 keep 层只训 fresh tail）/ `--from_scratch`（前 keep 层随机初始化对照）——脚本已支持，待空节点。
+- **数据/运维**：`/dev/shm/dolmino_now15b.npy`（126.9GB，diskB 两台已 stage）；DataLoader `multiprocessing_context="fork"`（防 pickle 61G memmap 卡死）；WANDB offline；单节点 `torch.distributed.run --standalone --nproc 8`。
