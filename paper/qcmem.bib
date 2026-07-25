@@ -1,10 +1,8 @@
-% FIXME(review): author={Anonymous} is a placeholder — 2410.05004 is a real
-% external preprint (HCache). Fill the verified author list / venue before
-% camera-ready; do NOT ship with author={Anonymous}. (Could not auto-verify:
-% no network access at edit time.)
+% Verified 2026-07-25: arXiv:2410.05004 (also EuroSys 2025).
+% Source: https://arxiv.org/abs/2410.05004
 @article{hcache,
-  title={{HCache}: Efficient {LLM} Serving via Hidden-State Caching and Upper-Layer Recompute},
-  author={Anonymous},
+  title={Fast State Restoration in {LLM} Serving with {HCache}},
+  author={Gao, Shiwei and Chen, Youmin and Shu, Jiwu},
   journal={arXiv preprint arXiv:2410.05004},
   year={2024}
 }
@@ -14,26 +12,21 @@
 % \citep{kvdirect}; only the non-compiled sections/_deprecated/05_related.tex
 % used \citep{residualstream}. Use `kvdirect` (below) for this reference.
 
-% TODO(camera-ready): confirm attribution — arXiv id 2605.05971 is a
-% forward-dated (2026) preprint (KV-CAT); verify authors/venue before final.
-% FIXME(review): author={Anonymous} is a placeholder — do NOT ship as-is;
-% fill the verified author list for camera-ready (unverifiable at edit time,
-% no network access).
+% Verified 2026-07-25: arXiv:2605.05971. The paper's own title is below; our
+% in-text "KV-CAT" is a shorthand not used by the authors.
+% Source: https://arxiv.org/abs/2605.05971
 @article{kvcat,
-  title={{KV-CAT}: Training-Time Guidance for Compressible Key-Value Caches},
-  author={Anonymous},
+  title={Training Transformers for {KV} Cache Compressibility},
+  author={Gelberg, Yoav and Eitan, Yam and Bronstein, Michael and Gal, Yarin and Maron, Haggai},
   journal={arXiv preprint arXiv:2605.05971},
   year={2026}
 }
 
-% TODO(camera-ready): confirm attribution — arXiv id 2606.24467 is a
-% forward-dated (2026) preprint (CompressKV); verify authors/venue before final.
-% FIXME(review): author={Anonymous} is a placeholder — do NOT ship as-is;
-% fill the verified author list for camera-ready (unverifiable at edit time,
-% no network access).
+% Verified 2026-07-25: arXiv:2606.24467.
+% Source: https://arxiv.org/abs/2606.24467
 @article{compresskv,
-  title={{CompressKV}: Semantic Retrieval-Head Guided {KV} Eviction},
-  author={Anonymous},
+  title={{CompressKV}: Semantic-Retrieval-Guided {KV}-Cache Compression for Resource-Efficient Long-Context {LLM} Inference},
+  author={Lin, Xiaolin and Wang, Jingcun and Kondrateva, Olga and Shi, Yiyu and Li, Bing and Zhang, Grace Li},
   journal={arXiv preprint arXiv:2606.24467},
   year={2026}
 }
@@ -164,16 +157,12 @@
   year={2023}
 }
 
-% TODO(camera-ready): confirm attribution — arXiv id 2603.19664 is a
-% forward-dated (2026) preprint (KV-Direct / "The Residual Stream Is All You
-% Need"); verify authors/venue before final. (The duplicate `residualstream`
-% alias entry has been removed; this is the single canonical entry.)
-% FIXME(review): author={Anonymous} is a placeholder — do NOT ship as-is;
-% fill the verified author list for camera-ready (unverifiable at edit time,
-% no network access).
+% Verified 2026-07-25: arXiv:2603.19664. Our in-text "KV-Direct" is a shorthand;
+% the paper's own title is below. Source: https://arxiv.org/abs/2603.19664
+% (The duplicate `residualstream` alias entry was removed; this is canonical.)
 @article{kvdirect,
-  title={The Residual Stream Is All You Need: On the Redundancy of the {KV} Cache in Transformer Inference (KV-Direct)},
-  author={Anonymous},
+  title={The Residual Stream Is All You Need: On the Redundancy of the {KV} Cache in Transformer Inference},
+  author={Qasim, Kaleem Ullah and Zhang, Jiashu and Shaheen, Muhammad Kafeel and Alharith, Razan and Zhang, Heying},
   journal={arXiv preprint arXiv:2603.19664},
   year={2026}
 }
@@ -205,19 +194,19 @@
   archivePrefix={arXiv}
 }
 
-% FIXME: verify Hy3 citation — 2411.02265 is Hunyuan-Large, NOT the Hy3
-% (hy_v3, 80-layer / 192-expert / ~597 GB / native 262k) backbone actually
-% used. Could not confidently locate the correct Hy3 arXiv id (no network at
-% edit time); this Hunyuan-Large entry is kept only as the closest available
-% Tencent-Hunyuan citation so \citep{hunyuan} resolves. Replace with the real
-% Hy3 reference before camera-ready; do NOT silently keep this one.
-@article{hunyuan,
-  title={{Hunyuan-Large}: An Open-Source {MoE} Model with 52 Billion Activated Parameters by Tencent},
+% Verified 2026-07-25: the paper's Hy3 (hy_v3) backbone is Tencent's open-weights
+% "Hy3" (a.k.a. Hunyuan 3.0) — a 295B-total / 21B-active, 80-layer, 192-expert
+% MoE with 256K context (matches models/Hy3/config.json: model_type=hy_v3,
+% HYV3ForCausalLM, num_experts=192, num_hidden_layers=80, 262144 ctx). This is
+% NOT Hunyuan-Large (arXiv:2411.02265, 389B/52B, 16 experts). No arXiv tech
+% report exists for Hy3; cite the official open-weights release. Sources:
+% https://huggingface.co/tencent/Hy3 , https://github.com/Tencent-Hunyuan/Hy3
+@misc{hunyuan,
+  title={{Hy3}: An Open 295B Mixture-of-Experts Model with 21B Activated Parameters},
   author={{Tencent Hunyuan Team}},
-  journal={arXiv preprint arXiv:2411.02265},
-  year={2024},
-  eprint={2411.02265},
-  archivePrefix={arXiv}
+  year={2026},
+  howpublished={\url{https://huggingface.co/tencent/Hy3}},
+  note={Tencent Hunyuan (Hunyuan~3.0) open-weights release; 80-layer, 192-expert MoE, 256K context}
 }
 
 % --- Related-work additions (proximity sweep 2026-07-19); ids curl-verified ---
