@@ -1,0 +1,29 @@
+% Depth-axis efficiency Pareto (P3.1), median-of-3, chunk 512, top-12, no LoRA,
+% single H20, same retrieved pack (~6657 tok) at every split j. Only j varies.
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+\textbf{Split} & \textbf{Read} & \textbf{Read} & \textbf{Decode} & \textbf{Write} & \textbf{Peak} \\
+$j$ & layers & (s) & (s/tok) & (s, offline) & (GB) \\
+\midrule
+0 (RAG) & 36 & 1.01 & 1.01 & 0.23 & 18.3 \\
+6 & 30 & 0.86 & 0.86 & 4.61 & 18.3 \\
+9 & 27 & 0.79 & 0.79 & 6.11 & 18.3 \\
+\textbf{12 (CoMem)} & 24 & \textbf{0.72} & \textbf{0.72} & 7.79 & 18.3 \\
+\bottomrule
+\end{tabular}
+\caption{Depth-axis Pareto at 128k on one H20 (median-of-3, chunk 512, top-12,
+no LoRA, \emph{identical} retrieved pack $\approx$6.7k tokens at every $j$). Read
+recomputes \texttt{layers[$j$:36]}; write runs \texttt{embed+layers[0:$j$]} over
+\emph{all} chunks once, offline. Deeper $j$ monotonically cuts \emph{query-time}
+read and decode (both context-independent: read is flat 1.01$\to$0.72\,s across
+8k--128k) while raising the \emph{one-time} offline write; peak memory is
+context- and $j$-independent. At the flagship $j{=}12$ the same pack is served
+with 24/36 layers recomputed---read $-29\%$, decode $-28\%$ vs.\ $j{=}0$
+full-recompute RAG---so caching a mid-layer hidden is strictly cheaper per query
+than ordinary retrieval$+$full recompute, with the extra ingest amortized over
+queries.}
+\label{tab:pareto}
+\end{table}

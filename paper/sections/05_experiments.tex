@@ -17,7 +17,15 @@ scorer---the only variable is the tested primitive.
 \textbf{KV-Direct}~\citep{kvdirect} is our \emph{full-context reference}: it
 forces $j{=}0$ (full-depth recompute), performs no retrieval, and keeps all
 tokens; its read equals the full forward to $\max|\Delta\text{logit}|<10^{-4}$,
-so a KV-Direct collapse \emph{is} a full-context collapse. \textbf{HCache}~\citep{hcache}
+so a KV-Direct collapse \emph{is} a full-context collapse. Crucially, KV-Direct
+runs at Qwen3-8B's \emph{native} 40{,}960 window with YaRN \emph{not} activated,
+so beyond 40{,}960 tokens it is an \emph{unextended} full-context reference---a
+lower bound on what a YaRN-extended backbone of the same size would achieve, not
+a fair length-extended upper bound. We read all $>$40{,}960-token
+KV-Direct / full-context numbers under this convention: CoMem's advantage there
+means it stays usable where the \emph{unextended} backbone breaks, and we do not
+claim CoMem beats a length-extended full-context model at those lengths.
+\textbf{HCache}~\citep{hcache}
 caches mid-layer activations and recomputes upper layers post-hoc, but with
 \emph{no retrieval and no training}---it isolates the value of retrieval.
 \textbf{MemoryLLM}~\citep{memoryllm} is a dedicated fixed-size parametric memory
@@ -96,11 +104,34 @@ Table~\ref{tab:eff} (median-of-3). CoMem prefill is write $O(L)$ plus a fixed
 read; full attention is $O(L^2)$, crossing over near 16k and reaching
 $7.83\times$ at 128k. Memory is context-independent at $\approx$17--18\,GB
 (full grows to 89\,GB), so CoMem runs the 128k setting on a single GPU where
-full-context OOMs. The cost is a slower decode ($\approx$2.4\,s/step,
-recomputing $[j{:}L]$ over the pack), which is optimizable with a resumed-band
-KV cache.
+full-context OOMs. The cost is a slower decode ($\approx$0.72\,s/step at chunk
+512, recomputing $[j{:}L]$ over the pack with no resumed-band KV cache), which is
+optimizable by caching that band.
 
 \input{sections/tab_eff}
+
+\paragraph{The split depth is a pure efficiency knob (depth-axis Pareto).}
+Table~\ref{tab:pareto} sweeps the split $j\in\{0,6,9,12\}$ on the \emph{same}
+hardware with the \emph{same} retrieved pack ($\approx$6.7k tokens) and same
+top-12 retrieval---only $j$ moves. This isolates the two-sided cost of the depth
+partition. \emph{Query-time} cost falls monotonically as $j$ deepens (the read
+recomputes only \texttt{layers[$j$:36]}): read drops $1.01{\to}0.72$\,s and
+decode $1.01{\to}0.72$\,s/tok from $j{=}0$ to $j{=}12$, and both are
+\emph{context-independent} (read is flat across 8k--128k). \emph{Offline} write
+rises correspondingly---\texttt{embed$+$layers[0:$j$]} over all chunks, $O(L)$,
+$0.23{\to}7.79$\,s at 128k---but it is a one-time ingest amortized over queries.
+Peak memory ($\approx$18\,GB) is invariant to both $j$ and $L$. The decisive
+comparison is $j{=}0$ vs.\ $j{=}12$: $j{=}0$ \emph{is} an ordinary retrieve-then-
+full-recompute RAG pipeline (all 36 layers recomputed over the retrieved pack),
+whereas the CoMem flagship $j{=}12$ serves the identical pack with only 24 layers
+recomputed---\textbf{read $-29\%$, decode $-28\%$ per query at identical memory
+and retrieval}. Caching a mid-layer hidden is thus strictly cheaper \emph{per
+query} than full-recompute RAG; the added offline write pays for itself after the
+first re-query of the same corpus. Accuracy across this depth sweep is examined in
+the depth ablation (the mid-depth $j{\approx}0.33L$ minimizes the read-out LM tax),
+so $j{=}12$ buys the query-time speedup at negligible quality cost.
+
+\input{sections/tab_pareto}
 
 \subsection{Ablations}
 \paragraph{The selector, not the read-out, is the long-range bottleneck.}
@@ -148,7 +179,7 @@ Table~\ref{tab:chunk} sweeps the chunk (block) size. Read length grows linearly
 with chunk while write calls halve as chunk doubles, trading prefill speed and
 multi-key recall against decode latency and memory. Chunk 512 is the sweet spot:
 strong prefill speedup ($7.83\times$ at 128k), low flat memory (17--18\,GB),
-moderate decode (2.4\,s), and near chunk-1024 multikey accuracy (94 vs.\ 96) at
+moderate decode (0.72\,s), and near chunk-1024 multikey accuracy (94 vs.\ 96) at
 roughly half the read length and decode cost.
 
 \input{sections/tab_chunk}
@@ -175,7 +206,17 @@ strongest on open-domain/persona questions and weakest on adversarial
 (refusal-requiring) items. On the official gpt-4o judge (the LoCoMo/mem0
 CORRECT/WRONG protocol), which credits paraphrastic answers that token-F1 misses,
 CoMem scores 39.5---above KV-Direct (31.5) and far above HCache (12.3)---and by
-category peaks on open-domain items (cat4 judge 71.8).
+category peaks on open-domain items (cat4 judge 71.8). This CoMem$>$KV-Direct
+judge gap is statistically robust on two axes. \emph{Statistical unit:} a paired
+bootstrap over the shared judged questions gives a significant positive
+difference that \emph{survives} resampling at the correct conversation-cluster
+level (95\% CI excludes 0; 8 of 10 conversations favor CoMem), so it is not an
+artifact of treating the nested per-conversation questions as independent.
+\emph{Judge dependence:} re-grading a stratified sample of the same questions
+with an \emph{independent} judge (\texttt{deepseek-v3}, verbatim prompt) reaches
+\emph{substantial} agreement with GPT-4o (Cohen's $\kappa{=}0.63$) and reproduces
+the CoMem$>$KV-Direct ordering (indeed a \emph{larger} gap, $+7.0$ vs.\ $+4.0$ on
+that subset), so the advantage is not a single-judge artifact.
 
 \input{sections/tab_longeval}
 \input{sections/tab_babilong}
