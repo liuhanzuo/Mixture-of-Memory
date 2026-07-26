@@ -19,9 +19,12 @@ tracking roughly twice the native positional window. On Llama-3
 \citep{llama3} (native 8k) full-context already collapses at 16k
 ($=$0) while CoMem holds; on Qwen3-8B \citep{qwen3} (native 40{,}960)
 full-context survives to 64k and only collapses at 128k. A backbone with
-strong length extrapolation therefore pushes the crossover out and narrows
-the regime in which CoMem is the only viable choice; weaker-extrapolating
-backbones benefit earlier and more.
+strong length extrapolation therefore pushes the crossover out; even against
+a YaRN-extended same-size backbone, CoMem outperforms by $+40.6$\,pp on
+multi-hop variable-tracking at 128k (Table~\ref{tab:scaling}) with
+${\approx}5\times$ lower memory---so the CoMem advantage past the window
+is not merely an artefact of an unextended reference.
+Weaker-extrapolating backbones benefit earlier and more.
 
 Multi-hop reasoning over reference chains was a genuine weakness of
 single-pass retrieval: on RULER variable-tracking a one-shot BM25 selector

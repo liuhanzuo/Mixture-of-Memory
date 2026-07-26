@@ -1,19 +1,37 @@
-% RULER scaling to 256k, n=50. From draft §2.2 (verified; QCMem multikey = length-adaptive topk).
-\begin{table}[t]
+% RULER scaling to 256k, n=50/100. KVD rows n=100; CoMem/CoMem+LoRA rows n=50.
+% YaRN rows (dagger): KVD+YaRN n=100 from p32_from_82; CoMem+LoRA+YaRN n=50.
+% CoMem+LoRA uses iter_bm25 selector (hop=4, topk=12, chunk=512, sink=bos).
+\begin{table*}[t]
 \centering
 \small
 \begin{tabular}{@{}llcccccc@{}}
 \toprule
 \textbf{Task} & & 8k & 16k & 32k & 64k & 128k & 256k \\
 \midrule
-\multirow{2}{*}{niah\_single} & QCMem & 100 & 100 & 100 & 100 & \textbf{100} & \textbf{98} \\
- & full-ctx & 100 & 100 & 100 & 100 & \textbf{0} & OOM \\
-\multirow{2}{*}{niah\_multikey} & QCMem & 94 & 94 & 94 & 82 & 84 & 60 \\
- & full-ctx & 100 & 100 & 100 & 96 & \textbf{0} & OOM \\
-\multirow{2}{*}{var-track} & QCMem & 49 & 25 & 22 & 21 & 20 & --- \\
- & full-ctx & 100 & 100 & 100 & 98 & \textbf{0} & OOM \\
+\multirow{5}{*}{niah\_single} & CoMem & 100 & 100 & 100 & 100 & \textbf{100} & \textbf{98} \\
+ & full-ctx & 100 & 100 & 100 & 100 & 0 & OOM \\
+ & KVD+YaRN$^\dagger$ & 100 & 100 & 100 & 100 & 100 & --- \\
+ & CoMem+LoRA & 100 & 86 & 100 & 100 & 98 & --- \\
+ & CoMem+LoRA+YaRN$^\dagger$ & 100 & 86 & 92 & 90 & 96 & --- \\
+\midrule
+\multirow{5}{*}{niah\_multikey} & CoMem & 94 & 94 & 94 & 82 & 84 & 60 \\
+ & full-ctx & 100 & 100 & 100 & 96 & 0 & OOM \\
+ & KVD+YaRN$^\dagger$ & 98 & 94 & 96 & 91 & 89 & --- \\
+ & CoMem+LoRA & 94 & 96 & 100 & 98 & 96 & --- \\
+ & CoMem+LoRA+YaRN$^\dagger$ & 88 & 90 & 96 & 82 & 90 & --- \\
+\midrule
+\multirow{5}{*}{var-track} & CoMem & 49 & 25 & 22 & 21 & 20 & --- \\
+ & full-ctx & 100 & 100 & 100 & 98 & 0 & OOM \\
+ & KVD+YaRN$^\dagger$ & 99.2 & 99.4 & 26.6 & 67.2 & 57.8 & --- \\
+ & CoMem+LoRA & 98.0 & 98.4 & 98.8 & 97.6 & \textbf{98.4} & --- \\
+ & CoMem+LoRA+YaRN$^\dagger$ & 81.2 & 86.0 & 90.4 & 96.8 & 87.6 & --- \\
 \bottomrule
 \end{tabular}
-\caption{RULER scaling, Qwen3-8B, $n{=}50$. The watershed is the backbone's extrapolation limit; beyond it (128k, 256k) only QCMem is usable. Multi-hop var-track is a QCMem weakness (Limitations).}
+\caption{RULER scaling, Qwen3-8B. CoMem and CoMem+LoRA: $n{=}50$; KVD rows: $n{=}100$.
+CoMem+LoRA uses the \texttt{iter\_bm25} selector (hop$=4$, top-12, chunk 512).
+$^\dagger$~YaRN activated on backbone, factor$=4$ (effective window 163{,}840~tokens).
+At 128k, var-track ranking:
+CoMem+LoRA $98.4 >$ CoMem+LoRA+YaRN $87.6 >$ KVD+YaRN $57.8 >$ unextended full-ctx $0$~($+40.6$\,pp CoMem advantage over length-extended reference).
+Multi-hop var-track is a weakness of single-pass CoMem (row~1); the CoMem+LoRA rows use iterative retrieval (Table~\ref{tab:itervt}).}
 \label{tab:scaling}
-\end{table}
+\end{table*}

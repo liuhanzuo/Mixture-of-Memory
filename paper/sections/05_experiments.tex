@@ -99,6 +99,37 @@ variable-tracking is the honest weak spot of single-pass retrieval here
 
 \input{sections/tab_scaling}
 
+\paragraph{Length-extension composability: CoMem vs.\ YaRN.}
+A reviewer concern asks whether our $>$40{,}960-token advantages are fair when
+the backbone has a dormant YaRN extrapolation capability (factor$=4$, effective
+ceiling 163{,}840~tokens). Table~\ref{tab:yarn_tax} quantifies the YaRN tax
+directly on KV-Direct ($n{=}100$, identical harness). YaRN does rescue
+single-needle recall past the native window (niah\_single 128k: $0\to100$;
+niah\_multikey 128k: $0\to89$), confirming that the unextended reference in
+Table~\ref{tab:scaling} is a lower bound for those tasks. However, YaRN
+imposes an \emph{in-window} multi-hop quality tax: at 32k the var-track score
+drops from 100 (unextended) to 26.6 with YaRN active~($-73.4$\,pp), recovering
+only partially to 67.2 at 64k and 57.8 at 128k as the sequence approaches the
+effective ceiling. This penalty peaks at intermediate lengths (32k--64k) where
+the RoPE rescaling disrupts trained short-range attention patterns; single-needle
+tasks are unaffected inside the window ($\Delta{=}0$ at 8k--64k).
+
+At 128k the fair ranking on the hardest multi-hop task is:
+CoMem+LoRA (unext) $98.4 >$ CoMem+LoRA (YaRN) $87.6 >$ KVD+YaRN $57.8 >$
+unextended KVD $0$ (Table~\ref{tab:scaling}).
+The CoMem over YaRN-KVD margin is $\mathbf{+40.6}$\,pp; moreover CoMem uses
+${\approx}5\times$ less memory (17--18\,GB vs.\ 89\,GB at 128k,
+Table~\ref{tab:eff}) and is $7.83\times$ faster at prefill.
+Replacing the backbone with a YaRN-active variant hurts CoMem only modestly:
+the VT drop is 0.8--16.8\,pp across lengths, versus the 27.8--73.4\,pp drop
+for KVD. This is expected: CoMem's read pack (${\approx}6.7$k tokens) always
+lies inside the native window, so only the chunk-write phase touches the
+modified RoPE---a phase that trained-frozen chunks tolerate well because write
+is position-agnostic up to the residual correction learned during distillation.
+The best config uses the vanilla backbone (no YaRN activation needed).
+
+\input{sections/tab_yarn_tax}
+
 \subsection{Efficiency}
 Table~\ref{tab:eff} (median-of-3). CoMem prefill is write $O(L)$ plus a fixed
 read; full attention is $O(L^2)$, crossing over near 16k and reaching

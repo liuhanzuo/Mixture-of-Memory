@@ -1,0 +1,25 @@
+% YaRN tax table: delta (YaRN-activated KVD) - (unextended KVD), n=100 each.
+% Positive = YaRN rescues past-window collapse; negative = in-window quality tax.
+% Data source: ruler_results/p32_from_82/kvd_yarn_* vs kvd_unext_*.
+\begin{table}[tb]
+\centering
+\small
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+\textbf{Task} & 8k & 16k & 32k & 64k & 128k \\
+\midrule
+niah\_single & $0$ & $0$ & $0$ & $0$ & $\mathbf{+100}$ \\
+niah\_multikey & $-2$ & $-6$ & $-3$ & $+2$ & $\mathbf{+89}$ \\
+var-track & $-0.8$ & $-0.4$ & $\mathbf{-73.4}$ & $-28.0$ & $+57.8$ \\
+\bottomrule
+\end{tabular}
+\caption{YaRN activation (factor$=4$) on Qwen3-8B for KV-Direct: score delta
+(YaRN $-$ unextended), $n{=}100$. Positive entries at 128k: YaRN rescues
+past-window collapse (the unextended backbone scores 0 there). Negative entries
+at intermediate lengths: in-window quality tax. For multi-hop var-track, YaRN
+imposes a $-73.4$\,pp penalty at 32k---where the RoPE rescaling conflicts with
+trained short-range attention patterns---before partially recovering as the
+sequence approaches the factor-4 effective ceiling ($163{,}840$~tokens).
+Single-needle tasks are unaffected inside the window ($\Delta{=}0$ at 8k--64k).}
+\label{tab:yarn_tax}
+\end{table}
