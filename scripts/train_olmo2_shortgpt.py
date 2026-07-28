@@ -507,7 +507,7 @@ def main():
                             args.lr_inherited, args.min_lr_inherited)
             logger.info(f"[resume] continue @ step={step} epoch={epoch} "
                         f"max_steps={args.max_steps} lr(now)={lr_now:.3e}")
-        del resume_ckpt
+        resume_ckpt = None
         gc.collect()
 
     # ---- step0 checkpoint: pruned-but-not-healed (fresh run only) ----
