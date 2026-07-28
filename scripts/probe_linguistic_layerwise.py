@@ -266,7 +266,7 @@ def load_natural_text(tok, n_sent, max_len):
     which are plain English text and adequate for next-token top-1 measurement."""
     sents = []
     try:
-        ds = load_hf("wikitext", "wikitext-103-raw-v1", split="train")
+        ds = load_hf("Salesforce/wikitext", "wikitext-103-raw-v1", split="train")
         for r in ds:
             t = r["text"].strip()
             if len(t.split()) >= 12:  # skip headers / blank lines
@@ -278,7 +278,7 @@ def load_natural_text(tok, n_sent, max_len):
             return sents
     except Exception as e:
         print(f"    wikitext unavailable ({repr(e)[:120]}); falling back to SST2", flush=True)
-    ds = load_hf("glue", "sst2", split="train").select(range(min(n_sent, 5000)))
+    ds = load_hf("nyu-mll/glue", "sst2", split="train").select(range(min(n_sent, 5000)))
     sents = [r["sentence"] for r in ds][:n_sent]
     print(f"    logit-lens corpus: glue/sst2 fallback ({len(sents)} sentences)", flush=True)
     return sents
@@ -582,8 +582,8 @@ def build_pair_sentence(hf_args, k1, k2, model, tok, dev, max_len, bs, n_layers,
 
 
 def build_wic(model, tok, dev, max_len, bs, n_layers, n_train, n_dev):
-    tr = load_hf("super_glue", "wic", split="train")
-    dv = load_hf("super_glue", "wic", split="validation")
+    tr = load_hf("aps/super_glue", "wic", split="train")
+    dv = load_hf("aps/super_glue", "wic", split="validation")
     tr = tr.select(range(min(n_train, len(tr))))
     dv = dv.select(range(min(n_dev, len(dv))))
     def feats(ds):
@@ -616,15 +616,15 @@ def run_task(name, model, tok, dev, args, n_layers):
     if b == "deprel":
         return build_deprel(model, tok, dev, args.max_len, args.batch_size, n_layers, ntr_tok, ndv_tok)
     if b == "cola":
-        return build_single_sentence(("glue", "cola"), "sentence", model, tok, dev,
+        return build_single_sentence(("nyu-mll/glue", "cola"), "sentence", model, tok, dev,
                                      args.max_len, args.batch_size, n_layers, ntr_sent, ndv_sent)
     if b == "sst2":
-        return build_single_sentence(("glue", "sst2"), "sentence", model, tok, dev,
+        return build_single_sentence(("nyu-mll/glue", "sst2"), "sentence", model, tok, dev,
                                      args.max_len, args.batch_size, n_layers, ntr_sent, ndv_sent)
     if b == "wic":
         return build_wic(model, tok, dev, args.max_len, args.batch_size, n_layers, ntr_sent, ndv_sent)
     if b == "rte":
-        return build_pair_sentence(("glue", "rte"), "sentence1", "sentence2", model, tok, dev,
+        return build_pair_sentence(("nyu-mll/glue", "rte"), "sentence1", "sentence2", model, tok, dev,
                                    args.max_len, args.batch_size, n_layers, ntr_sent, ndv_sent)
     raise ValueError(name)
 
