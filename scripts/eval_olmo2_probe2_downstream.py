@@ -67,6 +67,15 @@ from eval_olmo2_probe2_ppl import (  # noqa: E402
     load_pruned_model,
 )
 
+# option-index -> letter for per-example dumps (paired bootstrap / McNemar).
+_LETTERS = "ABCDEFGHIJKLMNOP"
+
+
+def _safe_lp(x):
+    """Round a log-prob for JSON; map non-finite (NaN/inf) to None."""
+    return round(float(x), 6) if math.isfinite(x) else None
+
+
 ALL_TASKS = ["hellaswag", "arc_challenge", "arc_easy", "piqa", "winogrande", "openbookqa"]
 # knowledge / comprehension extension (Paper B direction #4, 2026-07-19):
 #   mmlu           57-subject 4-choice knowledge (letter continuations; acc==acc_norm),
@@ -288,9 +297,10 @@ def encode_pair(tok, context, continuation, add_bos, bos_id):
 
 @torch.no_grad()
 def score_task(model, tok, examples, device, batch_size, add_bos, bos_id,
-               pad_id, max_len, mode="mc"):
+               pad_id, max_len, mode="mc", save_per_example=False,
+               shard_index=0, num_shards=1):
     """Return (n, n_correct_acc, n_correct_accnorm, n_nan, sample_lls, n_trunc,
-    subjects).
+    subjects, per_example).
     mode="mc": argmax over candidate sum-logprob (acc) / length-normed (acc_norm).
     mode="greedy": single candidate scored by is_greedy (every continuation token
       is the argmax of the model's next-token distribution) -> acc==acc_norm; used
@@ -298,7 +308,13 @@ def score_task(model, tok, examples, device, batch_size, add_bos, bos_id,
     subjects: {subject -> {n, n_correct_acc}} accumulated when examples carry a
       "subject" key (mmlu per-subject breakdown); empty dict otherwise.
     sample_lls = list of {gold, lls, norm_lls, pred_acc, pred_accnorm} for the
-    first few examples (degenerate/NaN inspection)."""
+    first few examples (degenerate/NaN inspection).
+    per_example: [] unless save_per_example. When on, one dict per example:
+      {item_id, gold_letter, pred_letter, correct(bool), option_scores(letter->
+       raw sum-logprob), acc_norm_score(1.0/0.0 = this item's acc_norm hit), nan}.
+      item_id = shard_index + local_idx*num_shards (the global strided index, so
+      shard files carry disjoint stable ids). This does NOT change any aggregate
+      count; it is a pure side-record to unlock paired bootstrap / McNemar."""
     # flatten candidates into items, remember (ex_idx, cand_idx)
     items = []  # (ex_idx, cand_idx, ids, cont_start, cont_len)
     n_trunc = 0
@@ -354,12 +370,26 @@ def score_task(model, tok, examples, device, batch_size, add_bos, bos_id,
     n_correct_norm = 0
     n_nan = 0
     samples = []
+    per_example = []
     subjects = {}  # subject -> {n, n_correct_acc}
     for ei, ex in enumerate(examples):
         cand_lls = lls[ei]
         norm_lens = [c[2] for c in ex["cands"]]
+        item_id = shard_index + ei * num_shards
+        gold = ex["gold"]
         if any(nan[ei]):
             n_nan += 1
+            if save_per_example:
+                per_example.append({
+                    "item_id": item_id,
+                    "gold_letter": _LETTERS[gold] if 0 <= gold < len(_LETTERS) else str(gold),
+                    "pred_letter": None,
+                    "correct": False,
+                    "option_scores": {_LETTERS[k]: _safe_lp(cand_lls[k])
+                                      for k in range(len(cand_lls))},
+                    "acc_norm_score": 0.0,
+                    "nan": True,
+                })
             continue
         if mode == "greedy":
             correct = greedy_ok[ei][0]
@@ -373,10 +403,10 @@ def score_task(model, tok, examples, device, batch_size, add_bos, bos_id,
             pred_acc = max(range(len(cand_lls)), key=lambda k: cand_lls[k])
             norm_lls = [cand_lls[k] / max(norm_lens[k], 1) for k in range(len(cand_lls))]
             pred_norm = max(range(len(norm_lls)), key=lambda k: norm_lls[k])
-            correct = (pred_acc == ex["gold"])
+            correct = (pred_acc == gold)
             if correct:
                 n_correct_acc += 1
-            if pred_norm == ex["gold"]:
+            if pred_norm == gold:
                 n_correct_norm += 1
         subj = ex.get("subject")
         if subj is not None:
@@ -384,15 +414,28 @@ def score_task(model, tok, examples, device, batch_size, add_bos, bos_id,
             sb["n"] += 1
             if correct:
                 sb["n_correct_acc"] += 1
+        if save_per_example:
+            per_example.append({
+                "item_id": item_id,
+                "gold_letter": _LETTERS[gold] if 0 <= gold < len(_LETTERS) else str(gold),
+                "pred_letter": (_LETTERS[pred_acc] if 0 <= pred_acc < len(_LETTERS)
+                                else None),
+                "correct": bool(correct),
+                "option_scores": {_LETTERS[k]: _safe_lp(cand_lls[k])
+                                  for k in range(len(cand_lls))},
+                "acc_norm_score": 1.0 if pred_norm == gold else 0.0,
+                "nan": False,
+            })
         if len(samples) < 6:
             samples.append({
-                "gold": ex["gold"],
+                "gold": gold,
                 "lls": [round(x, 4) for x in cand_lls],
                 "norm_lls": [round(x, 5) for x in norm_lls],
                 "pred_acc": pred_acc,
                 "pred_accnorm": pred_norm,
             })
-    return n, n_correct_acc, n_correct_norm, n_nan, samples, n_trunc, subjects
+    return (n, n_correct_acc, n_correct_norm, n_nan, samples, n_trunc, subjects,
+            per_example)
 
 
 # ---------------------------------------------------------------------------
@@ -476,7 +519,38 @@ def merge(results_dir):
               else f"{t}: acc={v['acc']:.4f} accn={v['acc_norm']:.4f} "
                    f"(n={v['n']},nan={v['n_nan']})")
              for t, v in tasks.items()))
+    _merge_per_example(results_dir)
     return summary
+
+
+def _merge_per_example(results_dir):
+    """Concatenate per_example_{task}_shard*of*.jsonl -> per_example_{task}.jsonl
+    (sorted by item_id). No-op when --save_per_example was not used."""
+    pe_files = sorted(glob.glob(
+        os.path.join(results_dir, "per_example_*_shard*of*.jsonl")))
+    if not pe_files:
+        return
+    by_task = {}  # task -> list of records
+    pat = re.compile(r"per_example_(.+)_shard\d+of\d+\.jsonl$")
+    for pf in pe_files:
+        m = pat.search(os.path.basename(pf))
+        if not m:
+            continue
+        task = m.group(1)
+        recs = by_task.setdefault(task, [])
+        with open(pf) as f:
+            for line in f:
+                line = line.strip()
+                if line:
+                    recs.append(json.loads(line))
+    for task, recs in by_task.items():
+        recs.sort(key=lambda r: r.get("item_id", 0))
+        outp = os.path.join(results_dir, f"per_example_{task}.jsonl")
+        with open(outp, "w") as f:
+            for r in recs:
+                f.write(json.dumps(r) + "\n")
+        _log(f"[merge] per-example {task}: {len(recs)} rows -> "
+             f"{os.path.basename(outp)}")
 
 
 def main():
@@ -497,6 +571,11 @@ def main():
     p.add_argument("--output_name", type=str, required=False)
     p.add_argument("--results_root", type=str, default="olmo2_downstream_results")
     p.add_argument("--merge", action="store_true")
+    p.add_argument("--save_per_example", action="store_true",
+                   help="also dump per-example predictions to "
+                        "per_example_{task}_shard{i}of{n}.jsonl (merged into "
+                        "per_example_{task}.jsonl by --merge). Unlocks paired "
+                        "bootstrap / McNemar; does NOT change aggregate behaviour.")
     p.add_argument("--prepare_data", action="store_true",
                    help="load all --tasks datasets (populate cache) then exit; "
                         "run ONCE before fanning out 8 shards to avoid a download race")
@@ -543,6 +622,9 @@ def main():
     meta["base_model"] = args.base_model
     meta["add_bos"] = bool(args.add_bos)
 
+    results_dir = os.path.join(args.results_root, args.output_name)
+    os.makedirs(results_dir, exist_ok=True)
+
     task_results = {}
     for task in tasks:
         try:
@@ -561,9 +643,11 @@ def main():
             shard = shard[: args.limit]
         mode = "greedy" if task in GREEDY_TASKS else "mc"
         t0 = time.time()
-        n, nca, ncn, nnan, samples, ntr, subjects = score_task(
+        n, nca, ncn, nnan, samples, ntr, subjects, per_example = score_task(
             model, tok, shard, device, args.batch_size, bool(args.add_bos),
-            bos_id, pad_id, args.max_len, mode)
+            bos_id, pad_id, args.max_len, mode,
+            save_per_example=bool(args.save_per_example),
+            shard_index=args.shard_index, num_shards=args.num_shards)
         dt = time.time() - t0
         acc = nca / max(n - nnan, 1)
         accn = ncn / max(n - nnan, 1)
@@ -573,12 +657,19 @@ def main():
             "acc_norm_shard": accn, "mode": mode, "seconds": round(dt, 1),
             "subjects": subjects, "samples": samples,
         }
+        if args.save_per_example:
+            pe_out = os.path.join(
+                results_dir,
+                f"per_example_{task}_shard{args.shard_index}of{args.num_shards}.jsonl")
+            with open(pe_out, "w") as f:
+                for rec in per_example:
+                    f.write(json.dumps(rec) + "\n")
+            _log(f"[shard {args.shard_index}/{args.num_shards}] {task}: "
+                 f"wrote {len(per_example)} per-example rows -> {pe_out}")
         _log(f"[shard {args.shard_index}/{args.num_shards}] {task}: n={n} "
              f"acc={acc:.4f} acc_norm={accn:.4f} nan={nnan} trunc={ntr} "
              f"mode={mode} ({dt:.1f}s)")
 
-    results_dir = os.path.join(args.results_root, args.output_name)
-    os.makedirs(results_dir, exist_ok=True)
     out = os.path.join(results_dir, f"shard{args.shard_index}of{args.num_shards}.json")
     with open(out, "w") as f:
         json.dump({
