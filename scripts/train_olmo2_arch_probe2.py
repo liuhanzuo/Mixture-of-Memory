@@ -194,7 +194,13 @@ def transplant_front(model, base_path, keep_front_layers, n_fresh_layers, dtype,
     )
 
     # --- fresh-init assert (tail layers untouched, correct Olmo2 init) ---
-    ln_all_ones, qnorm_all_ones, q_std = _assert_fresh_init(model, keep_front_layers)
+    # n_fresh_layers==0 (e.g. full-32L continued-pretraining control): every
+    # layer is transplanted, there is no fresh tail, and layer index
+    # `keep_front_layers` does not exist -> skip the fresh-init check.
+    if n_fresh_layers > 0:
+        ln_all_ones, qnorm_all_ones, q_std = _assert_fresh_init(model, keep_front_layers)
+    else:
+        ln_all_ones, qnorm_all_ones, q_std = None, None, None
 
     del base, base_sd, filtered
     gc.collect()
@@ -221,7 +227,7 @@ def transplant_front(model, base_path, keep_front_layers, n_fresh_layers, dtype,
             f"[sanity] unexpected=0 | copied={len(keep_keys)}=={expected_copied} | "
             f"max|model-base|={max_diff:.3e} (exact) | "
             f"fresh_post_attn_ln_all_ones={ln_all_ones} "
-            f"fresh_q_norm_all_ones={qnorm_all_ones} fresh_q_std={q_std:.4f} "
+            f"fresh_q_norm_all_ones={qnorm_all_ones} fresh_q_std={q_std} "
             f"-> ALL 6 CHECKS PASS"
         )
     return sanity
@@ -480,11 +486,14 @@ def main():
                               if k.startswith("model.layers.")})
         assert n_layers_in_sd == total_layers, f"{n_layers_in_sd} != {total_layers}"
         expected_copied = N_NONLAYER_KEYS + N_TENSORS_PER_LAYER * args.keep_front_layers
-        ln_all_ones, qnorm_all_ones, q_std = _assert_fresh_init(model, args.keep_front_layers)
+        if args.n_fresh_layers > 0:
+            ln_all_ones, qnorm_all_ones, q_std = _assert_fresh_init(model, args.keep_front_layers)
+        else:
+            ln_all_ones, qnorm_all_ones, q_std = None, None, None
         logger.info(f"[dry_run_build] cfg.num_hidden_layers={cfg.num_hidden_layers} "
                     f"layers_in_sd={n_layers_in_sd} expected_copied_keys={expected_copied} "
                     f"fresh_post_attn_ln_all_ones={ln_all_ones} "
-                    f"fresh_q_norm_all_ones={qnorm_all_ones} fresh_q_std={q_std:.4f} -> OK")
+                    f"fresh_q_norm_all_ones={qnorm_all_ones} fresh_q_std={q_std} -> OK")
         logger.info("[dry_run_build] arch/init logic validated; exiting (no training).")
         return
 
