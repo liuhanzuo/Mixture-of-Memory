@@ -101,6 +101,7 @@ import scripts.eval_qcmem_babilong as qcb  # noqa: E402
 QCMemModel = qcb.QCMemModel
 qcmem_generate = qcb.qcmem_generate
 run_self_test = qcb.run_self_test
+_select_context_chunk_indices = qcb._select_context_chunk_indices
 
 
 # --------------------------------------------------------------------------- #
@@ -280,6 +281,125 @@ def format_prompt(inst: dict, task: str, tokenizer,
     boundary = full[len(body):] if full.startswith(body) else full
     boundary_ids = tokenizer.encode(boundary, add_special_tokens=False)
     return body, boundary_ids
+
+
+# --------------------------------------------------------------------------- #
+# LL-based multiple-choice scoring (base-LM MC protocol, chat_template=False safe)
+# For MC tasks we teacher-force each answer OPTION's tokens as a continuation of
+# the (packed) context+question and pick the option with the highest summed
+# log-prob (also report the length-normalized acc_norm). This is the standard
+# base-LM cloze/continuation MC protocol (the same one the OLMo-2 base eval uses)
+# and does NOT depend on the model emitting a clean single letter, so it is the
+# correct scorer under chat_template=False (the generate-based letter EM above is
+# a formatting-sensitive variant, not the headline number).
+# --------------------------------------------------------------------------- #
+MC_LL_LEADIN = {
+    "longbook_choice_eng": (
+        "Read the book below and answer the question.\n\n{context}\n\n"
+        "Question: {question}\n\nAnswer:"
+    ),
+    "code_debug": (
+        "There is exactly one function in the project below that is deliberately "
+        "made to include an obvious error.\n\n{context}\n\n"
+        "The function that contains the deliberate error is:"
+    ),
+}
+MC_LL_TASKS = set(MC_LL_LEADIN.keys())
+
+
+def build_mc_ll(inst: dict, task: str):
+    """Return (leadin_text, option_texts[list[str]], gold_idx[int]) for an MC task."""
+    leadin = MC_LL_LEADIN[task].format(**inst)
+    option_texts = [inst[f"OPTION_{c}"] for c in "ABCD"]
+    gold_letter = next((a for a in inst["answers"]
+                        if isinstance(a, str) and a in "ABCD"), None)
+    if gold_letter is not None:
+        gold_idx = "ABCD".index(gold_letter)
+    else:
+        gold_idx = 0
+        for i, opt in enumerate(option_texts):
+            if any(str(a).strip() == str(opt).strip() for a in inst["answers"]):
+                gold_idx = i
+                break
+    return leadin, option_texts, gold_idx
+
+
+@torch.no_grad()
+def qcmem_ll_score_options(qc, tokenizer, leadin_ids, option_id_lists, *,
+                           chunk_size, selector, topk, sink_tokens,
+                           bare_question_ids, no_retrieval,
+                           iter_rounds, iter_hop_topk, iter_score,
+                           iter_conf_ratio, iter_max_chunks, stats=None):
+    """Teacher-force each option's tokens under the packed QCMem read; return a
+    list of (sum_logprob, mean_logprob) per option.
+
+    Reuses the EXACT QCMem write/select/read path from ``qcmem_generate`` (chunk
+    -> write depth-j -> selector picks topk -> pack [sink; selected h_j; leadin
+    query h_j] -> resume layers[j:]). The base prefill is done ONCE per sample;
+    the bottom/top KV caches are cropped back to the base state between options,
+    so the cost is ~1 prefill/sample (not 4x) and memory stays O(1). Works
+    identically for QCMem (resume_j>0, retrieval) and native-window Dense
+    (baseline=kvdirect: resume_j=0, no_retrieval packs every chunk)."""
+    import torch.nn.functional as F
+    tokens = leadin_ids[0]
+    chunks = list(tokens.split(chunk_size))
+    context_chunks = chunks[:-1]
+    query_chunk = chunks[-1]
+
+    sink_hj = None
+    if sink_tokens == "bos":
+        bos_id = tokenizer.bos_token_id
+        if bos_id is None:
+            bos_id = int(tokens[0].item())
+        sink_hj = qc.write_chunk([bos_id])
+
+    if no_retrieval:
+        sel_idx = list(range(len(context_chunks)))
+    else:
+        sel_idx = _select_context_chunk_indices(
+            selector, context_chunks, bare_question_ids or [], topk, None,
+            context_hj=None, query_hj=None,
+            iter_rounds=iter_rounds, iter_hop_topk=iter_hop_topk,
+            iter_score=iter_score, iter_conf_ratio=iter_conf_ratio,
+            iter_max_chunks=iter_max_chunks)
+    selected_hj = (qc.write_chunks([context_chunks[i] for i in sel_idx])
+                   if sel_idx else [])
+
+    q_hj, bottom_cache, q_local0 = qc.write_prefill(query_chunk.tolist())
+    logits0, top_cache, pack0 = qc.read_prefill(sink_hj, selected_hj, q_hj)
+    base_logits = logits0[0, -1].float()
+
+    if stats is not None:
+        sink_len = int(sink_hj.shape[1]) if sink_hj is not None else 0
+        sel_len = int(sum(h.shape[1] for h in selected_hj))
+        stats["read_len"] = sink_len + sel_len + int(query_chunk.shape[0])
+        stats["n_selected_chunks"] = len(selected_hj)
+        stats["n_context_chunks"] = len(context_chunks)
+
+    can_crop = hasattr(bottom_cache, "crop") and hasattr(top_cache, "crop")
+    results = []
+    for opt_ids in option_id_lists:
+        if not opt_ids:
+            results.append((float("-inf"), float("-inf")))
+            continue
+        if can_crop:
+            bottom_cache.crop(q_local0)
+            top_cache.crop(pack0)
+        else:  # fallback: rebuild the base prefill (correct, just 4x read cost)
+            q_hj, bottom_cache, q_local0 = qc.write_prefill(query_chunk.tolist())
+            logits0, top_cache, pack0 = qc.read_prefill(sink_hj, selected_hj, q_hj)
+        cur = base_logits
+        ql, pp = q_local0, pack0
+        total = 0.0
+        for t, tok in enumerate(opt_ids):
+            total += float(F.log_softmax(cur, dim=-1)[int(tok)])
+            if t < len(opt_ids) - 1:
+                nxt = qc.decode_step(int(tok), bottom_cache, top_cache, ql, pp)
+                ql += 1
+                pp += 1
+                cur = nxt[0, -1].float()
+        results.append((total, total / len(opt_ids)))
+    return results
 
 
 # --------------------------------------------------------------------------- #
@@ -488,6 +608,16 @@ def run_scoring(output_dir: str, tasks: list) -> dict:
                         preds.append(item)
         if not preds:
             continue
+        ll_records = [p for p in preds if p.get("mode") == "ll"]
+        if ll_records:
+            acc = 100.0 * sum(int(p.get("correct", 0)) for p in ll_records) / len(ll_records)
+            acc_norm = 100.0 * sum(int(p.get("correct_norm", p.get("correct", 0)))
+                                   for p in ll_records) / len(ll_records)
+            summary[task] = {"metric": "acc_ll", "score": acc,
+                             "acc_norm": acc_norm, "n": len(ll_records)}
+            print(f"[QCMem-InfBench] {task}: acc_ll={acc:.2f} "
+                  f"acc_ll_norm={acc_norm:.2f} (n={len(ll_records)}, LL-based MC)")
+            continue
         scores = [score_one(task, p.get("pred", ""), p.get("answers", [])) for p in preds]
         mean = 100.0 * sum(scores) / len(scores)
         summary[task] = {"metric": _METRIC_NAME[task], "score": mean, "n": len(scores)}
@@ -555,6 +685,12 @@ def main():
     parser.add_argument("--shard_index", type=int, default=0)
     parser.add_argument("--use_chat_template", action="store_true", default=False,
                         help="Default OFF (paper mandate: chat_template=False).")
+    parser.add_argument("--mc_ll", action="store_true", default=False,
+                        help="For MC tasks (longbook_choice_eng / code_debug) score "
+                             "by LL: teacher-force each option's tokens under the "
+                             "packed read, argmax summed log-prob. Base-LM MC "
+                             "protocol; chat_template=False safe (headline choice "
+                             "number). Non-MC tasks still use generate.")
     parser.add_argument("--enable_thinking", action="store_true", default=False)
     parser.add_argument("--device", type=str, default="cuda:0")
     parser.add_argument("--dtype", type=str, default="bfloat16",
@@ -699,92 +835,159 @@ def main():
                   f"{len(sample_indices)} of {len(samples)} samples")
 
         max_gen = INFBENCH_MAXGEN.get(task, 40)
+        use_ll = args.mc_ll and task in MC_LL_TASKS
+        metric_name = "acc_ll" if use_ll else _METRIC_NAME[task]
         outfile = output_path / f"{task}_{shard_tag}.jsonl"
         buf = []
         t0 = time.time()
 
+        def _rec_score(r):
+            return int(r.get("correct", 0)) if r.get("mode") == "ll" \
+                else score_one(task, r["pred"], r["answers"])
+
         for pos, idx in enumerate(tqdm(sample_indices, desc=task, leave=True)):
             inst = samples[idx]
-            prompt, gen_boundary_ids = format_prompt(
-                inst, task, tokenizer, use_chat_template=args.use_chat_template,
-                enable_thinking=args.enable_thinking)
-            ids = tokenizer.encode(prompt, add_special_tokens=True,
-                                   return_tensors="pt")
-            if isinstance(ids, list):
-                ids = torch.tensor([ids], dtype=torch.long)
-            input_ids = ids.to(device)
-            n_tokens = int(input_ids.shape[1])
-            n_chunks = (n_tokens + args.chunk_size - 1) // args.chunk_size
-            bare_q_ids = tokenizer.encode(bare_query(inst, task),
-                                          add_special_tokens=False)
-
             gen_stats: dict = {}
-            try:
-                pred = qcmem_generate(
-                    qc=qc, tokenizer=tokenizer, input_ids=input_ids,
-                    chunk_size=args.chunk_size, max_new_tokens=max_gen,
-                    selector=args.selector, topk=args.topk,
-                    sink_tokens=args.sink_tokens, needle_chunk_set=None,
-                    bare_question_ids=bare_q_ids, no_retrieval=no_retrieval,
-                    stats=gen_stats, iter_rounds=args.iter_rounds,
-                    iter_hop_topk=args.iter_hop_topk, iter_score=args.iter_score,
-                    iter_conf_ratio=args.iter_conf_ratio,
-                    iter_max_chunks=args.iter_max_chunks,
-                    gen_boundary_ids=gen_boundary_ids,
-                )
-            except RuntimeError as e:
-                if "out of memory" not in str(e).lower():
-                    raise
-                pred = "[OOM]"
-                print(f"[OOM] idx={idx} task={task} n_tok={n_tokens}: {e}", flush=True)
-                if torch.cuda.is_available():
-                    torch.cuda.empty_cache()
 
-            buf.append({
-                "index": idx, "pred": pred, "answers": inst["answers"],
-                "task": task, "n_tokens": n_tokens, "n_chunks": n_chunks,
-                "read_len": gen_stats.get("read_len"),
-                "n_selected_chunks": gen_stats.get("n_selected_chunks"),
-                "n_context_chunks": gen_stats.get("n_context_chunks"),
-            })
+            if use_ll:
+                # ---- LL-based MC: teacher-force each option's tokens -------- #
+                leadin, option_texts, gold_idx = build_mc_ll(inst, task)
+                ids = tokenizer.encode(leadin, add_special_tokens=True,
+                                       return_tensors="pt")
+                if isinstance(ids, list):
+                    ids = torch.tensor([ids], dtype=torch.long)
+                input_ids = ids.to(device)
+                n_tokens = int(input_ids.shape[1])
+                n_chunks = (n_tokens + args.chunk_size - 1) // args.chunk_size
+                bare_q_ids = tokenizer.encode(bare_query(inst, task),
+                                              add_special_tokens=False)
+                option_id_lists = [
+                    tokenizer.encode(" " + str(t), add_special_tokens=False)
+                    for t in option_texts]
+                try:
+                    res = qcmem_ll_score_options(
+                        qc, tokenizer, input_ids, option_id_lists,
+                        chunk_size=args.chunk_size, selector=args.selector,
+                        topk=args.topk, sink_tokens=args.sink_tokens,
+                        bare_question_ids=bare_q_ids, no_retrieval=no_retrieval,
+                        iter_rounds=args.iter_rounds, iter_hop_topk=args.iter_hop_topk,
+                        iter_score=args.iter_score, iter_conf_ratio=args.iter_conf_ratio,
+                        iter_max_chunks=args.iter_max_chunks, stats=gen_stats)
+                    sums = [r[0] for r in res]
+                    norms = [r[1] for r in res]
+                    pred_idx = int(max(range(len(sums)), key=lambda i: sums[i]))
+                    pred_norm_idx = int(max(range(len(norms)), key=lambda i: norms[i]))
+                    oom = False
+                except RuntimeError as e:
+                    if "out of memory" not in str(e).lower():
+                        raise
+                    sums, norms = [], []
+                    pred_idx, pred_norm_idx, oom = -1, -1, True
+                    print(f"[OOM] idx={idx} task={task}(LL): {e}", flush=True)
+                    if torch.cuda.is_available():
+                        torch.cuda.empty_cache()
+                rec = {
+                    "index": idx, "task": task, "mode": "ll",
+                    "gold_idx": gold_idx, "pred_idx": pred_idx,
+                    "pred_norm_idx": pred_norm_idx,
+                    "correct": int(pred_idx == gold_idx),
+                    "correct_norm": int(pred_norm_idx == gold_idx),
+                    "option_ll": sums, "option_ll_norm": norms,
+                    "oom": bool(oom), "answers": inst["answers"],
+                    "n_tokens": n_tokens, "n_chunks": n_chunks,
+                    "read_len": gen_stats.get("read_len"),
+                    "n_selected_chunks": gen_stats.get("n_selected_chunks"),
+                    "n_context_chunks": gen_stats.get("n_context_chunks"),
+                }
+                last_disp = f"pred={pred_idx} gold={gold_idx}"
+            else:
+                prompt, gen_boundary_ids = format_prompt(
+                    inst, task, tokenizer, use_chat_template=args.use_chat_template,
+                    enable_thinking=args.enable_thinking)
+                ids = tokenizer.encode(prompt, add_special_tokens=True,
+                                       return_tensors="pt")
+                if isinstance(ids, list):
+                    ids = torch.tensor([ids], dtype=torch.long)
+                input_ids = ids.to(device)
+                n_tokens = int(input_ids.shape[1])
+                n_chunks = (n_tokens + args.chunk_size - 1) // args.chunk_size
+                bare_q_ids = tokenizer.encode(bare_query(inst, task),
+                                              add_special_tokens=False)
+                try:
+                    pred = qcmem_generate(
+                        qc=qc, tokenizer=tokenizer, input_ids=input_ids,
+                        chunk_size=args.chunk_size, max_new_tokens=max_gen,
+                        selector=args.selector, topk=args.topk,
+                        sink_tokens=args.sink_tokens, needle_chunk_set=None,
+                        bare_question_ids=bare_q_ids, no_retrieval=no_retrieval,
+                        stats=gen_stats, iter_rounds=args.iter_rounds,
+                        iter_hop_topk=args.iter_hop_topk, iter_score=args.iter_score,
+                        iter_conf_ratio=args.iter_conf_ratio,
+                        iter_max_chunks=args.iter_max_chunks,
+                        gen_boundary_ids=gen_boundary_ids,
+                    )
+                except RuntimeError as e:
+                    if "out of memory" not in str(e).lower():
+                        raise
+                    pred = "[OOM]"
+                    print(f"[OOM] idx={idx} task={task} n_tok={n_tokens}: {e}", flush=True)
+                    if torch.cuda.is_available():
+                        torch.cuda.empty_cache()
+                rec = {
+                    "index": idx, "pred": pred, "answers": inst["answers"],
+                    "task": task, "n_tokens": n_tokens, "n_chunks": n_chunks,
+                    "read_len": gen_stats.get("read_len"),
+                    "n_selected_chunks": gen_stats.get("n_selected_chunks"),
+                    "n_context_chunks": gen_stats.get("n_context_chunks"),
+                }
+                last_disp = f"'{pred[:50]}'"
+
+            buf.append(rec)
 
             if (pos + 1) % 5 == 0 or pos == len(sample_indices) - 1:
                 with open(outfile, "w") as f:
                     for r in buf:
                         f.write(json.dumps(r, ensure_ascii=False) + "\n")
             if (pos + 1) % 5 == 0:
-                cur = [score_one(task, r["pred"], r["answers"]) for r in buf]
+                cur = [_rec_score(r) for r in buf]
                 running = 100.0 * sum(cur) / len(cur)
                 speed = (pos + 1) / (time.time() - t0)
-                print(f"  [{task}] {pos+1}/{len(sample_indices)} | {speed:.3f} s/it⁻¹ | "
-                      f"running {_METRIC_NAME[task]}={running:.1f} | "
+                print(f"  [{task}] {pos+1}/{len(sample_indices)} | {speed:.3f} it/s | "
+                      f"running {metric_name}={running:.1f} | "
                       f"read_len~{gen_stats.get('read_len')} | "
                       f"n_ctx_chunks={gen_stats.get('n_context_chunks')} | "
-                      f"last='{pred[:50]}'", flush=True)
+                      f"last={last_disp}", flush=True)
 
         with open(outfile, "w") as f:
             for r in buf:
                 f.write(json.dumps(r, ensure_ascii=False) + "\n")
-        sc = [score_one(task, r["pred"], r["answers"]) for r in buf]
+        sc = [_rec_score(r) for r in buf]
         mean = (100.0 * sum(sc) / len(sc)) if sc else 0.0
         elapsed = time.time() - t0
         metrics = {
-            "task": task, "metric": _METRIC_NAME[task], "score": mean,
+            "task": task, "metric": metric_name, "score": mean,
             "shard_index": int(args.shard_index), "num_shards": int(args.num_shards),
             "num_samples": len(buf), "elapsed_seconds": elapsed,
             "output_file": str(outfile),
-            "oom_count": sum(r["pred"] == "[OOM]" for r in buf),
-            "empty_prediction_count": sum(not r["pred"].strip() for r in buf),
             "resume_j": int(args.resume_j), "chunk_size": int(args.chunk_size),
             "selector": args.selector, "topk": int(args.topk),
             "chat_template": bool(args.use_chat_template),
+            "mc_ll": bool(use_ll),
             "lora_adapter": args.lora_adapter or None,
             "baseline": args.baseline,
             "zero_training_no_adapter": zero_training_no_adapter,
         }
+        if use_ll:
+            metrics["acc_norm"] = (100.0 * sum(int(r.get("correct_norm", 0))
+                                   for r in buf) / len(buf)) if buf else 0.0
+            metrics["oom_count"] = sum(int(r.get("oom", False)) for r in buf)
+        else:
+            metrics["oom_count"] = sum(r.get("pred") == "[OOM]" for r in buf)
+            metrics["empty_prediction_count"] = sum(
+                not r.get("pred", "").strip() for r in buf)
         with open(output_path / f"{task}_{shard_tag}_metrics.json", "w") as f:
             json.dump(metrics, f, indent=2)
-        print(f"[QCMem-InfBench] {task}: {_METRIC_NAME[task]}={mean:.2f} "
+        print(f"[QCMem-InfBench] {task}: {metric_name}={mean:.2f} "
               f"({len(buf)} samples, {elapsed:.1f}s) -> {outfile}")
 
     print(f"\n[QCMem-InfBench] Shard {args.shard_index}/{args.num_shards} complete!")
