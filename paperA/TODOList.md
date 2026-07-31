@@ -271,7 +271,7 @@
 
 ## P0.11 补齐 frozen CoMem `j=12` 主表同深度对照
 
-- **状态**：`[RUNNING]`（2026-07-31 审计：已有 2/5 指标；缺的 RULER/LongEval/LongBench frozen-j12 **确认不在盘上**——本地 wzc1 只有 frozen-j12 的 BABILong/LoCoMo（task #73），唯一的 `longbench_results/qcmem_j12` 是**错配置**（`lora_adapter=qcmem_distill_qwen_j12_r32_4k/final` + `selector=bm25` + 仅 4 ds，是 +LoRA 旗舰非 frozen 对照）；diskB 因 .73/.104 满载 SSH 超时未能核实副本。→ 三指标需专门 GPU 离线跑，已登记 **task #104（auto_launch=true，.73/.104 gap-fill subagent 完成腾卡即起）**。）
+- **状态**：`[DONE]`（2026-07-31 **交付**，.73 8×H20 subagent a62bdb0，80 jobs 全过 0 failure，SCHED_DONE，全 15 RULER cell 过 Iron-Law-2：n=100/8 shard/empty=0/recompute-mismatch=0）。三缺指标已补齐并填入下表；记录 `status/P0_11_FROZEN_J12.md`（commit `aa0ce88`，LiuHanzuo，未 push）。原缺失原因（本地只有 BABILong/LoCoMo；`longbench_results/qcmem_j12` 是 +LoRA 错配置）已由本轮专门 GPU 离线跑覆盖。
 - **类型**：额外评测 + 主表更新。
 - **目的**：主表当前比较 distilled `j=12` 与 frozen `j=9`，容易混淆 split-depth 与 LoRA adaptation。加入 frozen `j=12` 后可在完全相同深度直接比较 distillation 增益。
 - **固定配置**：Qwen3-8B、`resume_j=12`、无 LoRA、`iter_bm25`、top-12、hop-4、`rounds=0`（自动三轮）、chunk-512、BOS sink、`chat_template=False`，评测协议与主表一致。
@@ -284,11 +284,17 @@
   3. LongBench 6-QA macro F1。
 - **完成后修改**：在 `paperA/sections/tab_overview.tex` 增加完整的 `CoMem frozen ($j=12$)` 行，并在正文明确：`j=12` frozen→LoRA 是 adaptation effect；`j=9` frozen 仅保留为较浅 split 的跨 benchmark operating point。
 
-**结果填写**
+**结果填写**（2026-07-31 交付，n=100/cell，chat=False，iter_bm25/top-12/hop-4/rounds=0/chunk-512/BOS sink/seed=42，Qwen3-8B resume_j=12 frozen）
 
 | Method | RULER | LongEval | LongBench | BABILong | LoCoMo | Raw path |
 |---|---:|---:|---:|---:|---:|---|
-| frozen `j=12` | TBD | TBD | TBD | **24.52** | **24.52** | 见上；其余 TBD |
+| frozen `j=12` | **8.01** | **0.2** | **9.96** | **24.52** | **24.52** | `{ruler,longeval,longbench,babilong,locomo}_results/qcmem_8b_zeroshot_j12_frozen_iterbm25_chatFALSE/`（diskB .73） |
+
+- **RULER 15-cell macro = 8.01**（120.2/15，string_match）：niah_single_2 36/7/22/18/9、niah_multikey_1 8/3/1/6/4、variable_tracking 2.4/1.2/2.0/0.2/0.4（8k/16k/32k/64k/128k）。
+- **LongEval mean(8k–128k) = 0.2%**：per-length 0.0/0.0/1.0/0.0/0.0。
+- **LongBench 6-QA macro F1 = 9.96**：narrativeqa 3.85 / qasper 10.67 / hotpotqa 8.85 / 2wikimqa 9.55 / multifieldqa_en 20.76 / musique 6.06。
+- **核心结论（adaptation gain 隔离）**：frozen j=12 相对 flagship CoMem+LoRA(j=12) RULER **97.05** 崩塌到 8.01，甚至低于 CoMem frozen(j=9) RULER **59.41**——**在更深 j=12 split，frozen backbone 无 distillation/LoRA 无法读 memory buffer**。这在完全相同深度隔离出 LoRA adaptation 增益（j=12 frozen→LoRA 是 adaptation effect；j=9 frozen 仅作较浅 split 的跨 benchmark operating point）。
+- **tex 待办（main 后续，非本轮）**：在 `paperA/sections/tab_overview.tex` 增 `CoMem frozen ($j=12$)` 行（上述 5 数），正文点明 same-depth adaptation 对照。详见 `status/P0_11_FROZEN_J12.md`。
 
 ---
 
