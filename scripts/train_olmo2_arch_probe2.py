@@ -341,10 +341,14 @@ def build_param_groups(model, args, is_main):
 # ---------------------------------------------------------------------------
 # save
 # ---------------------------------------------------------------------------
-def _save(model, optimizer, args, step, epoch, cfg, final=False):
+def _save(model, optimizer, args, step, epoch, cfg, final=False, rotate=True):
     """Checkpoint = model weights + arch meta + optimizer state / step / epoch /
     max_steps / training args / RNG state (for clean resume). New keys are
-    additive; old model-only evals ignore them, resume degrades to warm-restart."""
+    additive; old model-only evals ignore them, resume degrades to warm-restart.
+
+    rotate=False disables the rolling-retention pruning below; used by the
+    --save_step0_and_exit path so writing step0.pt can NEVER delete an existing
+    training checkpoint in the same output_dir."""
     root = model.module if hasattr(model, "module") else model
     name = "final" if final else f"step{step}"
     path = os.path.join(args.output_dir, f"{name}.pt")
@@ -383,7 +387,7 @@ def _save(model, optimizer, args, step, epoch, cfg, final=False):
     # while preserving milestones for heal-curve analysis / resume, matching the
     # ckpt-rotation policy. final.pt is never rotated. Runs only where _save runs
     # (rank 0), and never removes the just-written ``path``.
-    if not final:
+    if not final and rotate:
         import glob as _glob
         import re as _re
         keep_abs = os.path.abspath(path)
@@ -442,6 +446,15 @@ def main():
     p.add_argument("--dry_run_build", action="store_true",
                    help="build the model shell (no base transplant) + validate arch/init "
                         "logic, then exit. For CPU smoke without loading the base weights.")
+    p.add_argument("--save_step0_and_exit", action="store_true",
+                   help="construct the keep_front+n_fresh student EXACTLY as training does "
+                        "(same transplant + same fresh-block init), save it to "
+                        "output_dir/step0.pt in the identical checkpoint format the trainer "
+                        "uses (strict-loadable by the eval harness, same keys as any step{N}.pt), "
+                        "then exit BEFORE loading data / building the training loop. The "
+                        "initial (step-0) reference point for the heal curve. Single-process "
+                        "(CUDA_VISIBLE_DEVICES=0) is enough; rotation is disabled so an existing "
+                        "step{N}.pt in output_dir is never deleted.")
     args = p.parse_args()
 
     ddp = "RANK" in os.environ
@@ -541,6 +554,37 @@ def main():
 
     if args.freeze_front and not args.from_scratch:
         apply_freeze_front(model, args.keep_front_layers, is_main)
+
+    # ---- step-0 checkpoint (initial training state) + exit -------------------
+    # P0.2 reference point: the student EXACTLY as training constructs it above
+    # (same do_transplant path -> same front-layer transplant + same fresh-block
+    # Olmo2 post_init random init + fp32 master weights), saved in the IDENTICAL
+    # checkpoint format the trainer's _save writes, so step0.pt strict-loads into
+    # the eval harness like any step{N}.pt (same keys / shapes / tensor count).
+    # We build a real AdamW over the same differential-LR param groups so
+    # optimizer_state matches a mid-training ckpt's structure (fresh Adam moments
+    # = the genuine step-0 state). rotate=False so writing step0.pt can NEVER
+    # delete an existing trained step{N}.pt in output_dir. Runs BEFORE data / DDP
+    # / the training loop. Single-process (CUDA_VISIBLE_DEVICES=0) is enough; the
+    # model stays on CPU here (no .to(device)), which is fine for saving weights.
+    if args.save_step0_and_exit:
+        os.makedirs(args.output_dir, exist_ok=True)
+        param_groups = build_param_groups(model, args, is_main)
+        optimizer = torch.optim.AdamW(
+            param_groups, lr=args.lr, betas=(0.9, 0.95), eps=1e-8,
+        )
+        _save(model, optimizer, args, 0, 0, cfg, final=False, rotate=False)
+        n_tensors = len(model.state_dict())
+        n = sum(pp.numel() for pp in model.parameters())
+        logger.info(
+            f"[save_step0] wrote {args.output_dir}/step0.pt arm={arm} "
+            f"do_transplant={do_transplant} n_tensors={n_tensors} "
+            f"num_hidden_layers={cfg.num_hidden_layers} params={n/1e9:.4f}B; "
+            f"exiting before training (no data / DDP / loop)."
+        )
+        if ddp:
+            dist.destroy_process_group()
+        return
 
     model = model.to(device)
     if args.gradient_checkpointing:

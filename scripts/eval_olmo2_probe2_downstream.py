@@ -80,11 +80,15 @@ ALL_TASKS = ["hellaswag", "arc_challenge", "arc_easy", "piqa", "winogrande", "op
 # knowledge / comprehension extension (Paper B direction #4, 2026-07-19):
 #   mmlu           57-subject 4-choice knowledge (letter continuations; acc==acc_norm),
 #                  aggregate acc + per-subject breakdown.
+#   mmlu_pro       TIGER-Lab/MMLU-Pro, up-to-10-choice reasoning-heavy knowledge
+#                  (letter continuations A..J; acc==acc_norm), aggregate acc +
+#                  per-category breakdown. Same flan-style zero-shot code path as
+#                  mmlu, extended from 4 to <=10 options.
 #   lambada_openai last-word prediction; metric = is_greedy (exact match of the whole
 #                  last-word continuation under greedy argmax), NOT MC argmax -> acc only.
 #   boolq          yes/no reading comprehension (2-choice likelihood) -> acc only.
 #   commonsense_qa 5-choice; social_iqa 3-choice (choice-text continuations).
-KNOWLEDGE_TASKS = ["mmlu", "lambada_openai", "boolq", "commonsense_qa", "social_iqa"]
+KNOWLEDGE_TASKS = ["mmlu", "mmlu_pro", "lambada_openai", "boolq", "commonsense_qa", "social_iqa"]
 # tasks scored by greedy last-word match instead of MC argmax over candidates.
 GREEDY_TASKS = {"lambada_openai"}
 
@@ -202,6 +206,34 @@ def load_task_examples(task: str):
             out.append({
                 "gold": int(ex["answer"]),
                 "subject": ex["subject"],
+                "cands": [(q, " " + letters[i], len(letters[i]))
+                          for i in range(len(ch))],
+            })
+        return out
+
+    if task == "mmlu_pro":
+        # TIGER-Lab/MMLU-Pro test split: reasoning-heavy knowledge with up to 10
+        # options per question. SAME flan-style zero-shot code path as `mmlu`
+        # above, only extended from 4 to <=10 lettered choices (A..J): per-category
+        # description + question + "A." .. lettered choices + "Answer:", candidates
+        # are the single letters -> acc == acc_norm. Fields: question (str),
+        # options (list[str], <=10), answer (letter str), answer_index (int, 0-based),
+        # category (str). Gold = answer_index (0-based, aligned with options order).
+        # The MC scorer sizes everything by len(ex["cands"]) and _LETTERS has 16
+        # slots, so >4 options need no scorer change.
+        d = load_dataset("TIGER-Lab/MMLU-Pro", split="test")
+        letters = list("ABCDEFGHIJ")  # MMLU-Pro caps at 10 options
+        out = []
+        for ex in d:
+            category_h = str(ex["category"]).replace("_", " ")
+            desc = ("The following are multiple choice questions (with answers) "
+                    f"about {category_h}.\n\n")
+            ch = ex["options"]
+            body = "\n".join(f"{letters[i]}. {ch[i]}" for i in range(len(ch)))
+            q = desc + ex["question"].strip() + "\n" + body + "\nAnswer:"
+            out.append({
+                "gold": int(ex["answer_index"]),
+                "subject": ex["category"],  # per-category breakdown (reuses subject path)
                 "cands": [(q, " " + letters[i], len(letters[i]))
                           for i in range(len(ch))],
             })
