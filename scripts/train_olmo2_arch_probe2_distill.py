@@ -60,6 +60,7 @@ import time
 
 import torch
 import torch.distributed as dist
+import bitsandbytes as bnb  # 8-bit AdamW to fit keep14 train-all + teacher in H20 95GB
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data import DataLoader
 from torch.utils.data.distributed import DistributedSampler
@@ -617,7 +618,7 @@ def main():
 
     # ---- optimizer (differential-LR param groups; only params requiring grad) ----
     param_groups = build_param_groups(model, args, is_main)
-    optimizer = torch.optim.AdamW(
+    optimizer = bnb.optim.AdamW8bit(
         param_groups, lr=args.lr, betas=(0.9, 0.95), eps=1e-8,
     )
 
@@ -625,6 +626,8 @@ def main():
     step = 0
     micro = 0
     accum_loss = 0.0
+    accum_ntp = 0.0
+    accum_kl = 0.0
     accum_cnt = 0
     optimizer.zero_grad(set_to_none=True)
     epoch = 0
@@ -728,14 +731,19 @@ def main():
                         t_p = t_logp.exp()
                         kl_loss = (t_p * (t_logp - s_logp)).sum(dim=-1).mean()
                         loss = (ntp_loss + args.distill_lambda * kl_loss) / args.grad_accumulation_steps
+                        ntp_item = ntp_loss.item(); kl_item = kl_loss.item()
                     else:
                         out = model(input_ids=input_ids, labels=labels)
                         loss = out.loss / args.grad_accumulation_steps
+                        ntp_item = out.loss.item(); kl_item = 0.0
             else:
                 out = model(input_ids=input_ids, labels=labels)
                 loss = out.loss / args.grad_accumulation_steps
+                ntp_item = out.loss.item(); kl_item = 0.0
             loss.backward()
         accum_loss += loss.item() * args.grad_accumulation_steps
+        accum_ntp += ntp_item
+        accum_kl += kl_item
         accum_cnt += 1
         micro += 1
 
@@ -751,14 +759,20 @@ def main():
 
             if is_main and step % args.log_every == 0:
                 avg = accum_loss / max(accum_cnt, 1)
+                avg_ntp = accum_ntp / max(accum_cnt, 1)
+                avg_kl = accum_kl / max(accum_cnt, 1)
                 dt = time.time() - t0
                 mem = torch.cuda.max_memory_allocated() / 1e9 if use_cuda else 0.0
                 lr_fresh = optimizer.param_groups[0]["lr"]
                 logger.info(f"[step {step:5d}/{args.max_steps}] loss={avg:.4f} "
-                            f"ppl={math.exp(min(avg,20)):.2f} lr={lr_fresh:.2e} "
+                            f"ppl={math.exp(min(avg,20)):.2f} "
+                            f"ntp={avg_ntp:.4f} ntp_ppl={math.exp(min(avg_ntp,20)):.2f} "
+                            f"kl={avg_kl:.4f} lr={lr_fresh:.2e} "
                             f"gnorm={float(gnorm):.2f} {dt/args.log_every:.2f}s/step "
                             f"maxmem={mem:.1f}GB")
                 accum_loss = 0.0
+                accum_ntp = 0.0
+                accum_kl = 0.0
                 accum_cnt = 0
                 t0 = time.time()
 

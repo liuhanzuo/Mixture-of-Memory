@@ -16,6 +16,7 @@ LOG_FILE="${LOG_FILE:-logs/olmo2_7B_keep14_distill.log}"
 NPROC="${NPROC:-8}"
 BS="${BS:-16}"
 GA="${GA:-1}"
+RESUME_FROM="${RESUME_FROM:-}"
 
 mkdir -p "$OUT_DIR" logs
 
@@ -46,9 +47,9 @@ CMD=(
     --weight_decay 0.1
     --grad_clip 1.0
     --save_every 5000
-    --extra_save_steps 128000,153500
     --gradient_checkpointing 1
 )
+[ -n "$RESUME_FROM" ] && CMD+=(--resume_from "$RESUME_FROM")
 
 echo "[_run_olmo2_keep14_distill_heal] teacher=$TEACHER_PATH lambda=0.6 topk=64 eff_bs=$((BS*GA*NPROC))"
 echo "----- launch command -----"
@@ -60,7 +61,7 @@ if [ "${RUN:-0}" != "1" ]; then
   exit 0
 fi
 
-: > "$LOG_FILE"
+[ -z "$RESUME_FROM" ] && : > "$LOG_FILE"
 echo "[_run_olmo2_keep14_distill_heal] LAUNCHING 8-GPU distill heal ..."
 nohup "${CMD[@]}" >>"$LOG_FILE" 2>&1 &
 echo "[_run_olmo2_keep14_distill_heal] launched pid=$! ; tail -f $LOG_FILE"
