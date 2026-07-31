@@ -1,0 +1,145 @@
+\section{Experiments}
+\label{sec:experiments}
+
+\paragraph{Models and unified protocol.} Unless noted, the backbone is the
+\textbf{Qwen3-8B base LM}~\citep{qwen3} (36 layers), continued-trained without
+SFT or RL. All methods are evaluated under a unified plain-text prompting
+protocol, with chat templating disabled (\texttt{chat\_template=False}). The
+backbone remains frozen; the flagship trains only our self-distilled rank-32
+LoRA at split $j{=}12$ and uses chunk size 512, a BOS sink, and
+\texttt{iter\_bm25}. All five benchmark supports fix top-$12$, hop width four,
+and \texttt{rounds=0}, which automatically executes three retrieval rounds; the
+observed read is approximately 6.5k tokens. The native window is 40,960 tokens;
+reaching the configured 131,072-token limit requires YaRN~\citep{yarn}.
+
+\paragraph{Baselines and position range.} KV-Direct~\citep{kvdirect}, the
+HCache-style reproduction~\citep{hcache}, StreamingLLM~\citep{streamingllm}, and
+InfLLM~\citep{infllm} use Qwen3-8B. We report KV-Direct with native RoPE and with
+YaRN factor 4. Native-RoPE cells above 40,960 tokens are unextended stress
+references; the YaRN arm is the same-backbone length-extension comparison. For
+MemoryLLM~\citep{memoryllm}, we use its released Llama-3-8B-chat
+backbone~\citep{llama3} as an out-of-backbone diagnostic. Its official chat
+template does not improve the evaluated supports
+(Appendix~\ref{app:reproducibility}).
+
+\paragraph{Evaluation \& metrics.} We evaluate three RULER
+families~\citep{ruler}, BABILong qa1/qa2/qa5~\citep{babilong}, and six LongBench
+QA datasets~\citep{longbench}, naming these subsets explicitly. RULER and
+BABILong tables contain 100 examples per task--length cell except the separate
+CoMem+YaRN row, which uses 50. RULER uses official
+\texttt{string\_match\_all}; BABILong uses \texttt{compare\_answers} with
+\texttt{TASK\_LABELS} and never \texttt{re.search}. LongBench and
+LoCoMo~\citep{locomo} use \texttt{run\_scoring}. LongEval follows the LongChat
+lines-retrieval protocol~\citep{longchat}. LoCoMo reports deterministic token F1
+and substring accuracy as lexical diagnostics, with semantic Judge as the
+primary metric: GPT-4o scores categories 1--4, while category 5 uses the official
+local abstention rule. Complete RULER grids passed the eight-shard completeness
+check, contained no empty predictions, and matched scores recomputed from disk.
+Appendix~\ref{app:statistics} gives aggregation and uncertainty details.
+
+\paragraph{Hardware.} Headline Qwen3-8B timing uses one NVIDIA L20A with the
+flagship LoRA enabled (median of three runs, chunk size 512). At 128k,
+full-context prefill peaks at 89.39\,GB and CoMem at 18.54\,GB. A separate
+same-H20 split-depth sweep holds the retrieved pack fixed and is compared only
+within that cohort. Large-MoE details are in Appendix~\ref{app:generality}.
+
+\input{sections/tab_overview}
+\input{sections/tab_scaling}
+\subsection{Core benchmark overview}
+Table~\ref{tab:overview} compares five audited benchmark supports under the
+unified protocol. CoMem scores 97.05 on the 15-cell RULER subset and 69.0 on
+LongEval versus 78.80/65.2 for unextended KV-Direct, while matching its
+six-dataset LongBench QA macro F1 (12.15 vs.\ 12.17). These aggregate differences
+partly reflect cells beyond the native window. The same-backbone length-extension comparison in Table~\ref{tab:scaling} shows
+the sharper trade-off: at 128k, CoMem+LoRA without YaRN ($n{=}50$) versus
+KV-Direct+YaRN ($n{=}100$) scores 98/96/98.4 versus 100/89/57.8 on single
+needle, multikey, and variable tracking. Enabling YaRN on CoMem gives
+96/90/87.6, so position scaling is not uniformly helpful. The mixed-$n$
+comparison is descriptive rather than paired. Within-window BABILong still
+exposes a qa1/qa2 compression tax, whereas CoMem leads qa5. The contribution is
+a bounded-read trade-off, not uniform accuracy dominance.
+
+\subsection{Equal-budget comparison}
+At the same $\sim$6.5k-token budget, CoMem stays near 100 on single needles and
+above 95 on variable tracking through 128k, while StreamingLLM falls
+85$\to$2 and 41.8$\to$0.8 (Appendix Table~\ref{tab:slm}). With read length
+approximately fixed, the gap shows that relevant rather than merely recent
+chunks are essential.
+
+\subsection{Long-dialogue memory}
+\input{sections/tab_locomo}
+CoMem scores 38.27 versus 34.59 for KV-Direct on all 1,986 LoCoMo questions.
+The advantage is not an artifact of one scorer or treating correlated questions
+as independent: on 1,540 paired answerable items, the $+4.81$ gap has
+item-bootstrap 95\% CI $[2.34,7.27]$; a 10-conversation cluster bootstrap gives
+$[1.27,8.32]$ ($p{\approx}0.004$; 8/10 conversations favor CoMem); and a
+stratified 200-item DeepSeek-V3 audit preserves the ordering
+($\kappa=0.626$ with GPT-4o). Retrieved $j=0$
+reaches 41.59, showing that retrieval contributes independently of depth reuse,
+while the same-$j$ adapter control below measures how much fidelity is recovered.
+Appendix~\ref{app:statistics} details both uncertainty analyses and judge prompts.
+
+\subsection{End-to-end efficiency}
+\input{sections/tab_eff}
+Table~\ref{tab:eff} uses one platform and the actual distilled flagship. Prefill
+crosses parity between 16k and 32k and reaches $2.74\times$ at 128k, where peak
+memory is 18.54\,GB versus 89.39\,GB. LoRA-on cached decode costs about
+31--32\,ms/token versus 22\,ms/token for Dense but is independent of stored
+context for a fixed pack. We do not mix an older $7.83\times$ online-query
+cohort, which used a persistent-index timing convention, with the full-ingest
+component measurements.
+
+The separate fixed-pack sweep (Table~\ref{tab:pareto}) makes the text-retrieval
+baseline explicit. Moving from retrieved full recomputation ($j{=}0$) to
+$j{=}12$ lowers online Read from 1.01 to 0.72\,s but increases measured offline
+Write from 0.23 to 7.79\,s, implying a component-wise break-even near 26 repeated
+queries. CoMem stores 8\,KB/token (about 1\,GiB at 128k), far more than text or
+token IDs. Depth caching is therefore a high-query-reuse operating point, not a
+free replacement for text retrieval. Appendix~\ref{app:efficiency} gives the
+measurement protocol and remaining systems limitations.
+
+\subsection{What drives the result?}
+\paragraph{Retrieval versus depth reuse.}
+The controlled depth sweep (Appendix Table~\ref{tab:depth-tradeoff}) holds the
+retrieved pack fixed. The $j=0$ row performs full-depth recomputation on it and
+therefore isolates selection from depth reuse. It reaches 41.59 on LoCoMo,
+compared with 34.59 for full-context KV-Direct, showing that bounded selection
+can improve natural dialogue memory even before layer reuse. Deeper frozen
+splits reduce quality (32.78/29.15/24.52 at $j=6/9/12$) as query-blind states
+become harder to read, but a same-pack 128k sweep reduces Read from 1.01 to
+0.72\,s. Depth is therefore a quality--query-cost knob rather than a free
+accuracy gain.
+
+\paragraph{Self-distillation repairs readout fidelity.}
+At the same $j=12$, the PG19-only LoRA restores 13.75 LoCoMo points and
+22.2/9.0/8.4 BABILong qa1/qa2/qa5 points. The controlled RULER cohort similarly
+moves single-needle recall from 35/5/17 to 100/100/100 and multikey recall from
+4/2/1 to 91/95/92 over 8k/16k/32k (Appendix Table~\ref{tab:adapter}). This
+supports adaptation of the split interface rather than benchmark-specific
+training: PG19 contains no retrieval or task supervision.
+
+\paragraph{Selection breadth and chunk interaction.}
+\input{sections/tab_itervt}
+\input{sections/tab_crosschunk}
+Oracle retrieval keeps the reported needle cells at 100, whereas recency and
+reader-attention selectors degrade with length (Appendix
+Table~\ref{tab:selector}). More retrieval is not automatically better: the
+$\sim$17k four-hop variant is worse than the focused $\sim$6.5k flagship from
+16k onward on variable tracking (Table~\ref{tab:itervt}), consistent with
+additional distractor chains. Once selected, chunks must interact: replacing
+full cross-chunk attention by block-diagonal reuse costs 36/62 points on
+8k/16k multikey retrieval and 19/7 points on BABILong qa2
+(Table~\ref{tab:crosschunk}). Together these controls justify bounded relevance
+selection, a tunable split, full cross-chunk recomputation, and lightweight
+interface adaptation as distinct parts of CoMem.
+
+\subsection{Additional tasks and generality}
+Appendix~\ref{app:tasks} gives the remaining task details. Across Qwen3
+0.6B--32B, the specified linear probe places content depth near $0.45L$ while
+the zero-shot readable boundary moves deeper with scale; this is a
+probe-dependent trend, not a causal localization or a claim of complete task
+transfer at every size. Three LoRA seeds evaluated on identical cells and sample counts yield a
+median cell-wise standard deviation of 1.34 points and a maximum of 4.36 over 18
+reported RULER/BABILong cells (Appendix~\ref{app:reproducibility}). CoMem is also viable on two sparse MoE
+backbones. On Hy3, it keeps a $\approx$4.3--4.6k-token read through 256k and
+reaches 100/98 single/multikey recall (Appendix~\ref{app:generality}).

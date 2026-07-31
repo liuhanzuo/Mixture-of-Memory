@@ -1,0 +1,23 @@
+\begin{abstract}
+Layer-wise probes suggest that task-relevant semantic information becomes
+accessible before the top of a transformer, while upper layers increasingly
+specialize representations for prediction. We turn this depth structure into
+\textbf{CoMem} (Comprehension Memory): each context chunk is written to an
+intermediate residual state, a fixed number of states is retrieved, and
+query-conditioned upper layers are recomputed over the bounded pack. On a
+continued-trained Qwen3-8B base LM, CoMem reaches 97.05 on a 15-cell,
+three-family RULER subset and 38.27 on LoCoMo under a unified no-chat protocol.
+The LoCoMo advantage over full-context KV-Direct remains positive under a
+10-conversation cluster bootstrap (95\% CI $[1.27,8.32]$), although retrieved
+full recomputation at $j{=}0$ scores still higher (41.59), exposing the distinct
+roles of selection and depth reuse. A same-backbone length-extension comparison further shows task-dependent
+trade-offs at 128k: CoMem+LoRA without YaRN ($n{=}50$) versus KV-Direct+YaRN
+($n{=}100$) scores 98/96/98.4 versus 100/89/57.8 on single-needle, multikey,
+and variable-tracking recall. The flagship trains only a rank-32 self-distillation LoRA on plain PG-19;
+across three training seeds evaluated on identical cells, the median cell-wise
+standard deviation is 1.34 points over the evaluated RULER and BABILong cells. In a same-platform
+LoRA-on efficiency control at 128k, CoMem uses 18.54\,GB rather than 89.39\,GB
+and achieves $2.74\times$ faster prefill. CoMem therefore provides a tunable
+quality--storage--query-cost trade-off by organizing memory along both token and
+layer axes.
+\end{abstract}

@@ -1,0 +1,35 @@
+\section{Limitations}
+\label{sec:limitations}
+CoMem is a bounded-read efficiency method, not an accuracy state of the art for
+every in-window task. BABILong qa2 remains weak (27.0), and full context is a
+strong reference whenever it fits. Qwen3-8B is not position-extended in our
+experiments: results above its native 40,960-token window are unextended stress
+references and do not establish superiority over a YaRN-enabled full-context
+model. Retrieval breadth is task-dependent; retrieval latency on natural
+multi-hop workloads remains unmeasured. Full cross-chunk attention improves
+multi-fact accuracy but increases read compute.
+
+Our evaluation is English-only and emphasizes retrieval-style QA rather than
+long-form generation, code, multilingual, or multimodal memory. We use greedy
+decoding, a 512-token flagship chunk size, and fixed top-12 BM25 retrieval;
+learned/dense retrievers, dynamic index updates, deletions, and continually
+changing memory streams are outside the present scope. Lexical retrieval may be
+less suitable when relevant passages share little surface form with the query.
+
+Efficiency measurements use bf16/SDPA on H20-class hardware and a single-query
+harness. Kernel choice, batching, concurrent serving, storage I/O, and a
+networked external store can change absolute latency. Write is reusable and is
+most attractive when a context serves multiple queries; for one short query,
+preprocessing may not amortize. We do not measure index-build energy or total
+persistent-store capacity.
+
+LoCoMo contains only 10 conversation clusters. We therefore supplement the
+item-level interval with conversation-cluster bootstrap and a stratified
+DeepSeek-V3 audit, but neither replaces evaluation on more conversations.
+The GPT-4o endpoint also lacks a dated snapshot. Across three LoRA seeds
+evaluated on identical cells and sample counts we observe small variation on the
+RULER/BABILong cells, but the two added seeds use effective batch 3 versus 8 for
+the flagship despite matched data budget; the optimization noise is therefore
+not fully controlled. Other synthetic cells use 100 examples, and not
+every ablation has multiple seeds or a paired test; chunk and attention
+differences are consequently reported as point estimates.
