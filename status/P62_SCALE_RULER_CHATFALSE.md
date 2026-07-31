@@ -64,7 +64,38 @@ would redo finished work. `_run_scale_ruler_remaining_p62.sh` instead uses a **r
 - `ruler_results/qcmem_scale_1p7b_chatFALSE_ruler/qcmem_scale_1p7b_<cell>/`
 - `ruler_results/qcmem_scale_30ba3b_chatFALSE_ruler/qcmem_scale_30ba3b_<cell>/`
 
-## RESULTS (filled after pools finish)
-- 0.6B  (j=2):  RULER mean = _pending_
-- 1.7B  (j=3):  RULER mean = _pending_
-- 30B-A3B (j=12): RULER mean = _pending_
+## RESULTS — DONE 2026-08-01 (chat_template=False, n=500, all 52 shards×125 rows, 0 failures)
+
+Scorer: `scripts/_score_chatFALSE.py --ruler <dir>` (official `_string_match_all_one`, weighted-mean recall).
+
+### Per-size RULER recall (%)
+| size | j | niah_single 8k/16k/32k/64k/128k | niah_multikey 8k/16k/32k/64k/128k | vt 8k/16k/32k | **RULER mean (13 cells)** | n |
+|------|---|----------------------------------|-----------------------------------|----------------|--------------------------|---|
+| 0.6B     | 2  | 100.0 / 99.8 / 100.0 / 99.6 / 99.6 | 87.6 / 80.8 / 83.6 / 84.4 / 91.0 | 60.8 / 65.0 / 61.6 | **85.68** | 500 |
+| 1.7B     | 3  | 99.8 / 98.2 / 99.4 / 99.4 / 98.6   | 62.4 / 43.4 / 41.8 / 26.4 / 66.4 | 42.9 / 42.0 / 47.7 | **66.81** | 500 |
+| 4B       | (locked) | 92.2 / 97.4 / 95.4 / 98.0 / 98.8 | 34.0 / 35.8 / 40.8 / 32.0 / 34.8 | 56.4 / 36.5 / 34.6 | **60.52** | 500 |
+| 14B      | 13 | 99.8 / 82.8 / 97.6 / 98.4 / 97.8   | 49.2 / 42.6 / 9.8 / 34.2 / 36.4 | 14.2 / 11.6 / 13.5 | **52.91** | 500 |
+| 30B-A3B  | 12 | 99.4 / 99.6 / 99.0 / 99.4 / 99.8   | 67.8 / 51.6 / 53.2 / 52.4 / 62.8 | 89.2 / 88.0 / 84.0 | **80.48** | 500 |
+| 32B      | 27 | 100/100/100/100/100                | 96.0 / 100.0 / 84.0 / 88.0 / 100.0 | 46.4 / 64.8 / 67.2 | **88.18** | 25 (footnote) |
+
+Bold sizes 0.6B / 1.7B / 30B-A3B are this task's new results; 4B / 14B / 32B are the
+pre-existing locked reference rows (not rerun; 32B stays at n=25 footnote special case).
+
+### Notes / observations
+- 30B-A3B (MoE) mean 80.48 vs 32B 88.18. Its niah_single is saturated (~99-100) like the big
+  dense models, and its **vt is by far the strongest of the whole family (84-89 vs 11-67
+  elsewhere)** — but niah_multikey (51-68) drags the mean. 32B's mean uses only n=25 so the two
+  are not perfectly comparable.
+- 0.6B (85.68) unexpectedly HIGH — beats 1.7B/4B/14B. Driven by near-perfect niah_single
+  (~100) + strong multikey (80-91) + best-in-small-models vt (60-65). Non-monotone scale curve
+  is a genuine result (verified n=500, 125 rows/shard), not an artifact of missing data.
+
+### Reproduce
+```
+# .73 (small sizes)  |  .104 (30B-A3B alone)
+POOL_ROOT=ruler_results/_p62_scale_pool_73  SIZE_LABELS="0p6b 1p7b" \
+POOL_ROOT=ruler_results/_p62_scale_pool_104 SIZE_LABELS="30ba3b" \
+  PROJECT_ROOT=/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory \
+  PYTHON_BIN=/opt/conda/envs/torch-base/bin/python GPUS="0 1 2 3 4 5 6 7" \
+  bash scripts/_run_scale_ruler_remaining_p62.sh
+```
