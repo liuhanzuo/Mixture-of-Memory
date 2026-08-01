@@ -1,0 +1,22 @@
+{
+  "method_a_title_author_pgid": "NOT COMPUTABLE \u2014 neither InfiniteBench records nor pg19_train.jsonl carry title/author/PG-ID metadata.",
+  "method_b_exact_hash": {
+    "eval_book_norm_sha_count": 86,
+    "eval_book_raw_sha_count": 86,
+    "note": "eval contexts are anonymized whole books; the training corpus is concatenated lines with no document boundary, so a book-level exact-hash match is structurally impossible and is reported as 0 by construction. Content overlap is measured by method (c).",
+    "exact_book_matches": 0
+  },
+  "method_c_ngram_containment": {
+    "n": 13,
+    "tokenization": "lowercase; [^0-9a-z]+ -> space; whitespace split",
+    "hash": "xxhash.xxh64(seed=0) intdigest, 64-bit",
+    "downsample": 32,
+    "downsample_rule": "keep hash h iff (h %% downsample) == 0 (bottom-hash / MinHash sketch)",
+    "ngram_dedup": "unique n-gram hashes per document",
+    "containment_definition": "|unique eval n-gram sketch hashes present in train sketch| / |unique eval n-gram sketch hashes|",
+    "contam_high_threshold": 0.8,
+    "contam_low_threshold": 0.1,
+    "verdict_rule": ">= contam_high => CONTAMINATED; < contam_low => CLEAN; else PARTIAL"
+  },
+  "train_sketch_unique_hashes": 59071187
+}

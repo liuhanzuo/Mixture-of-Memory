@@ -1,0 +1,55 @@
+{
+  "date": "2026-08-02",
+  "node": "wzc1 local (28.89.x, diskB share_304376610), CPU-only, NO GPU",
+  "purpose": "P0.14 InfiniteBench/PG-19 train-eval contamination audit data manifest",
+  "training_corpus": {
+    "path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/data/pg19_train.jsonl",
+    "size_bytes": 11450766349,
+    "size_gb": 11.45,
+    "format": "raw PG-19 wrapped English text (.jsonl extension is a MISNOMER; NOT json \u2014 one hard-wrapped ~13-word line per row)",
+    "role": "SOLE distillation corpus of the flagship LoRA (verified via outputs/qcmem_distill_qwen_j12_r32_4k/distill_args.json -> pg19_path)",
+    "metadata_available": "NONE \u2014 loader scripts/train_qcmem_distill.py::PG19Packer concatenates every non-empty line with no document boundary and no title/author/PG-ID",
+    "sha256_full": "not computed (11.4GB; sketch fingerprint used instead)"
+  },
+  "eval_data": {
+    "longbook_qa_eng.jsonl": {
+      "downloaded_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/.t27_tmp/infb_eval/longbook_qa_eng.jsonl",
+      "source": "HuggingFace dataset xinrongzhang2022/InfiniteBench (public; CPU download via hy-proxy, NO GPU node touched)",
+      "size_bytes": 298297185,
+      "sha256": "7f53a3aabd5445fa29f168914f13569c348406cfc88a3e495f3f2c13a0966ca4",
+      "schema": "{id:int, context:str(full anonymized book), input:str(question), answer:list, options:list}",
+      "metadata_available": "NO title/author/PG-ID; character names ANONYMIZED (e.g. qa#0 = Woolf 'To the Lighthouse' with Mrs Ramsay->Mrs Bronwyn)",
+      "n_records": 351
+    },
+    "longbook_choice_eng.jsonl": {
+      "downloaded_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/.t27_tmp/infb_eval/longbook_choice_eng.jsonl",
+      "source": "HuggingFace dataset xinrongzhang2022/InfiniteBench (public; CPU download via hy-proxy, NO GPU node touched)",
+      "size_bytes": 185904631,
+      "sha256": "d2e646822a3d40dc329e57894d81cf9c527503e963ba06567c3eaaccf78f87fe",
+      "schema": "{id:int, context:str(full anonymized book), input:str(question), answer:list, options:list}",
+      "metadata_available": "NO title/author/PG-ID; character names ANONYMIZED (e.g. qa#0 = Woolf 'To the Lighthouse' with Mrs Ramsay->Mrs Bronwyn)",
+      "n_records": 229
+    },
+    "_unique_books_across_both": 86,
+    "_books_in_both_tasks": 41
+  },
+  "flagship_adapter": {
+    "path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/outputs/qcmem_distill_qwen_j12_r32_4k/final",
+    "distill_args": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/outputs/qcmem_distill_qwen_j12_r32_4k/distill_args.json",
+    "base_model": "Qwen3-8B",
+    "pg19_path_in_args": "data/pg19_train.jsonl",
+    "role": "the adapter whose InfiniteBench Table tab:infbench numbers (Book-QA F1 6.06, Book-choice acc 17.47) are under audit"
+  },
+  "notes": [
+    "Method (a) title/author/PG-ID intersection: NOT COMPUTABLE (no metadata either side).",
+    "Method (b) exact document hash: structurally 0 (eval books anonymized; training corpus has no doc boundary).",
+    "Method (c) 13-gram containment (bottom-hash/MinHash sketch, downsample 1/32, xxh64): the decisive method.",
+    "Train side reflowed to a CONTINUOUS token stream to match eval whitespace-collapse \u2014 otherwise PG-19's ~13-word hard wrap would yield near-zero containment even for identical books (a false-CLEAN bug that was caught and fixed)."
+  ],
+  "predictions": {
+    "local_status": "ABSENT on this wzc1 node",
+    "actual_location": "remote GPU node .73 (diskB zwfy6/share_304376610), per status/P2_1_NATURAL_LONGCTX.md \u2014 infbench_results/{qcmem_8b_j12_lora,kvdirect_8b,...}",
+    "recoverable_here": false,
+    "consequence": "clean-subset F1/acc CANNOT be recomputed on this node without touching the off-limits GPU node; scripts/recompute_p0_14_clean_subset.py is ready to run IF predictions are copied over."
+  }
+}

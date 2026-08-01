@@ -1,0 +1,117 @@
+{
+  "note": "Contamination is robust to threshold choice: containment is sharply bimodal (see match_list \u2014 31 books <0.10, gap 0.18-0.60 empty, 54 books >=0.60). Any cut in [0.20,0.60] gives ~55 contaminated books / ~64% of records. The headline >=0.80 cut is CONSERVATIVE (undercounts, because InfiniteBench anonymizes character names which breaks a fraction of 13-grams in genuinely-in-training books).",
+  "total_unique_books": 86,
+  "total_records": 580,
+  "sensitivity": [
+    {
+      "cut": 0.05,
+      "books_contaminated": 56,
+      "book_ratio": 0.6512,
+      "records_contaminated": 395,
+      "record_ratio": 0.681,
+      "qa_contaminated": 238,
+      "choice_contaminated": 157,
+      "qa_clean": 113,
+      "choice_clean": 72
+    },
+    {
+      "cut": 0.1,
+      "books_contaminated": 55,
+      "book_ratio": 0.6395,
+      "records_contaminated": 391,
+      "record_ratio": 0.6741,
+      "qa_contaminated": 238,
+      "choice_contaminated": 153,
+      "qa_clean": 113,
+      "choice_clean": 76
+    },
+    {
+      "cut": 0.2,
+      "books_contaminated": 54,
+      "book_ratio": 0.6279,
+      "records_contaminated": 387,
+      "record_ratio": 0.6672,
+      "qa_contaminated": 238,
+      "choice_contaminated": 149,
+      "qa_clean": 113,
+      "choice_clean": 80
+    },
+    {
+      "cut": 0.3,
+      "books_contaminated": 54,
+      "book_ratio": 0.6279,
+      "records_contaminated": 387,
+      "record_ratio": 0.6672,
+      "qa_contaminated": 238,
+      "choice_contaminated": 149,
+      "qa_clean": 113,
+      "choice_clean": 80
+    },
+    {
+      "cut": 0.4,
+      "books_contaminated": 54,
+      "book_ratio": 0.6279,
+      "records_contaminated": 387,
+      "record_ratio": 0.6672,
+      "qa_contaminated": 238,
+      "choice_contaminated": 149,
+      "qa_clean": 113,
+      "choice_clean": 80
+    },
+    {
+      "cut": 0.5,
+      "books_contaminated": 54,
+      "book_ratio": 0.6279,
+      "records_contaminated": 387,
+      "record_ratio": 0.6672,
+      "qa_contaminated": 238,
+      "choice_contaminated": 149,
+      "qa_clean": 113,
+      "choice_clean": 80
+    },
+    {
+      "cut": 0.6,
+      "books_contaminated": 54,
+      "book_ratio": 0.6279,
+      "records_contaminated": 387,
+      "record_ratio": 0.6672,
+      "qa_contaminated": 238,
+      "choice_contaminated": 149,
+      "qa_clean": 113,
+      "choice_clean": 80
+    },
+    {
+      "cut": 0.7,
+      "books_contaminated": 46,
+      "book_ratio": 0.5349,
+      "records_contaminated": 323,
+      "record_ratio": 0.5569,
+      "qa_contaminated": 198,
+      "choice_contaminated": 125,
+      "qa_clean": 153,
+      "choice_clean": 104
+    },
+    {
+      "cut": 0.8,
+      "books_contaminated": 24,
+      "book_ratio": 0.2791,
+      "records_contaminated": 163,
+      "record_ratio": 0.281,
+      "qa_contaminated": 102,
+      "choice_contaminated": 61,
+      "qa_clean": 249,
+      "choice_clean": 168
+    },
+    {
+      "cut": 0.9,
+      "books_contaminated": 9,
+      "book_ratio": 0.1047,
+      "records_contaminated": 60,
+      "record_ratio": 0.1034,
+      "qa_contaminated": 32,
+      "choice_contaminated": 28,
+      "qa_clean": 319,
+      "choice_clean": 201
+    }
+  ]
+}

@@ -1,0 +1,58 @@
+{
+  "date": "2026-08-01 23:55:16",
+  "train_corpus": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/data/pg19_train.jsonl",
+  "eval_dir": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/.t27_tmp/infb_eval",
+  "eval_files": [
+    "longbook_qa_eng.jsonl",
+    "longbook_choice_eng.jsonl"
+  ],
+  "n_eval_records": 580,
+  "n_unique_eval_books": 86,
+  "books": {
+    "CONTAMINATED": 24,
+    "PARTIAL": 31,
+    "CLEAN": 31
+  },
+  "book_contamination_ratio": 0.2791,
+  "records_by_task": {
+    "longbook_qa_eng": {
+      "total": 351,
+      "CONTAMINATED": 102,
+      "PARTIAL": 136,
+      "CLEAN": 113
+    },
+    "longbook_choice_eng": {
+      "total": 229,
+      "CONTAMINATED": 61,
+      "PARTIAL": 92,
+      "CLEAN": 76
+    }
+  },
+  "overall_record_contamination_ratio": 0.281,
+  "clean_subset_size": {
+    "longbook_qa_eng": 113,
+    "longbook_choice_eng": 76
+  },
+  "thresholds": {
+    "method_a_title_author_pgid": "NOT COMPUTABLE \u2014 neither InfiniteBench records nor pg19_train.jsonl carry title/author/PG-ID metadata.",
+    "method_b_exact_hash": {
+      "eval_book_norm_sha_count": 86,
+      "eval_book_raw_sha_count": 86,
+      "note": "eval contexts are anonymized whole books; the training corpus is concatenated lines with no document boundary, so a book-level exact-hash match is structurally impossible and is reported as 0 by construction. Content overlap is measured by method (c).",
+      "exact_book_matches": 0
+    },
+    "method_c_ngram_containment": {
+      "n": 13,
+      "tokenization": "lowercase; [^0-9a-z]+ -> space; whitespace split",
+      "hash": "xxhash.xxh64(seed=0) intdigest, 64-bit",
+      "downsample": 32,
+      "downsample_rule": "keep hash h iff (h %% downsample) == 0 (bottom-hash / MinHash sketch)",
+      "ngram_dedup": "unique n-gram hashes per document",
+      "containment_definition": "|unique eval n-gram sketch hashes present in train sketch| / |unique eval n-gram sketch hashes|",
+      "contam_high_threshold": 0.8,
+      "contam_low_threshold": 0.1,
+      "verdict_rule": ">= contam_high => CONTAMINATED; < contam_low => CLEAN; else PARTIAL"
+    },
+    "train_sketch_unique_hashes": 59071187
+  }
+}

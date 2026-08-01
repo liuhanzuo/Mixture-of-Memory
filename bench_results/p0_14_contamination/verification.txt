@@ -1,0 +1,26 @@
+{
+  "purpose": "Manual verbatim spot-check that the 13-gram containment audit is correct in BOTH directions.",
+  "method": "For the highest- and lowest-containment eval books, extract a mid-document 14-word run of (name-free) narration, normalize (lowercase, non-alnum->space), and search for it verbatim as a substring of the whitespace-reflowed pg19_train.jsonl (64MB block scan with 500-char carry).",
+  "high_containment_book": {
+    "containment": 0.9989,
+    "example_record": {
+      "task": "longbook_qa_eng",
+      "id": 271
+    },
+    "phrase": "Such as are the Histories of Metals Plants Animals Regions and the like The",
+    "found_verbatim_in_pg19_train": true,
+    "expected": true
+  },
+  "low_containment_book": {
+    "containment": 0.0,
+    "example_record": {
+      "task": "longbook_qa_eng",
+      "id": 386
+    },
+    "phrase": "puzzled him She questioned him immensely about England about the British constitution the English",
+    "found_verbatim_in_pg19_train": false,
+    "expected": false
+  },
+  "conclusion": "Audit verified: a 0.999-containment book's narration appears verbatim in PG-19 train (true positive); a 0.000-containment book's narration does not (true negative). The containment metric correctly separates in-training from out-of-training eval books.",
+  "additional_sanity": "InfiniteBench QA #0 = Virginia Woolf 'To the Lighthouse' (1927), which is POST-1919 and therefore correctly NOT in the pre-1919 PG-19 set \u2014 it scored CLEAN(0.000), an independent sanity check."
+}

@@ -1,0 +1,34 @@
+{
+  "clean_ids_source": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/bench_results/p0_14_contamination/clean_subset_ids.json",
+  "clean_subset_size": {
+    "longbook_qa_eng": 113,
+    "longbook_choice_eng": 76
+  },
+  "results": [
+    {
+      "arm": "CoMem+LoRA",
+      "task": "longbook_qa_eng",
+      "pred_dir": "infbench_results/qcmem_8b_j12_lora",
+      "status": "NO_PREDICTIONS_ON_THIS_NODE"
+    },
+    {
+      "arm": "CoMem+LoRA",
+      "task": "longbook_choice_eng",
+      "pred_dir": "infbench_results/qcmem_8b_j12_lora_llmc",
+      "status": "NO_PREDICTIONS_ON_THIS_NODE"
+    },
+    {
+      "arm": "Dense(KV-Direct)",
+      "task": "longbook_qa_eng",
+      "pred_dir": "infbench_results/kvdirect_8b",
+      "status": "NO_PREDICTIONS_ON_THIS_NODE"
+    },
+    {
+      "arm": "Dense(KV-Direct)",
+      "task": "longbook_choice_eng",
+      "pred_dir": "infbench_results/kvdirect_8b_llmc",
+      "status": "NO_PREDICTIONS_ON_THIS_NODE"
+    }
+  ],
+  "found_any_predictions": false
+}

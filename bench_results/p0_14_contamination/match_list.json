@@ -1,0 +1,3500 @@
+{
+  "summary": {
+    "date": "2026-08-01 23:55:16",
+    "train_corpus": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/data/pg19_train.jsonl",
+    "eval_dir": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/.t27_tmp/infb_eval",
+    "eval_files": [
+      "longbook_qa_eng.jsonl",
+      "longbook_choice_eng.jsonl"
+    ],
+    "n_eval_records": 580,
+    "n_unique_eval_books": 86,
+    "books": {
+      "CONTAMINATED": 24,
+      "PARTIAL": 31,
+      "CLEAN": 31
+    },
+    "book_contamination_ratio": 0.2791,
+    "records_by_task": {
+      "longbook_qa_eng": {
+        "total": 351,
+        "CONTAMINATED": 102,
+        "PARTIAL": 136,
+        "CLEAN": 113
+      },
+      "longbook_choice_eng": {
+        "total": 229,
+        "CONTAMINATED": 61,
+        "PARTIAL": 92,
+        "CLEAN": 76
+      }
+    },
+    "overall_record_contamination_ratio": 0.281,
+    "clean_subset_size": {
+      "longbook_qa_eng": 113,
+      "longbook_choice_eng": 76
+    },
+    "thresholds": {
+      "method_a_title_author_pgid": "NOT COMPUTABLE \u2014 neither InfiniteBench records nor pg19_train.jsonl carry title/author/PG-ID metadata.",
+      "method_b_exact_hash": {
+        "eval_book_norm_sha_count": 86,
+        "eval_book_raw_sha_count": 86,
+        "note": "eval contexts are anonymized whole books; the training corpus is concatenated lines with no document boundary, so a book-level exact-hash match is structurally impossible and is reported as 0 by construction. Content overlap is measured by method (c).",
+        "exact_book_matches": 0
+      },
+      "method_c_ngram_containment": {
+        "n": 13,
+        "tokenization": "lowercase; [^0-9a-z]+ -> space; whitespace split",
+        "hash": "xxhash.xxh64(seed=0) intdigest, 64-bit",
+        "downsample": 32,
+        "downsample_rule": "keep hash h iff (h %% downsample) == 0 (bottom-hash / MinHash sketch)",
+        "ngram_dedup": "unique n-gram hashes per document",
+        "containment_definition": "|unique eval n-gram sketch hashes present in train sketch| / |unique eval n-gram sketch hashes|",
+        "contam_high_threshold": 0.8,
+        "contam_low_threshold": 0.1,
+        "verdict_rule": ">= contam_high => CONTAMINATED; < contam_low => CLEAN; else PARTIAL"
+      },
+      "train_sketch_unique_hashes": 59071187
+    }
+  },
+  "books": [
+    {
+      "norm_sha256": "37b563dd29b1540fc0de4e6e8fef9d78981c9f0217df1825fe7b1f7c64d51bd6",
+      "raw_sha256": "b783c42e93add9bc38ddd7a617dc7cb4e7cd1c35bf87cd603ac83a23ca83f325",
+      "char_len": 3171853,
+      "n_words": 570665,
+      "n_eval_ngrams_sampled": 17657,
+      "n_ngrams_in_train": 15374,
+      "containment": 0.8707,
+      "verdict": "CONTAMINATED",
+      "n_records": 9,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 111
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 112
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 113
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 114
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 115
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 106
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 107
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 108
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 109
+        }
+      ]
+    },
+    {
+      "norm_sha256": "640d83c7cdbf5aa54e617952aef8c7dd9bbbc2c7241c268304685c8e6079a3fd",
+      "raw_sha256": "4a190b7aec81123da0609d66517e84be7ceeee4b4c1a59d134fd18d18fd847ea",
+      "char_len": 2591136,
+      "n_words": 466221,
+      "n_eval_ngrams_sampled": 14625,
+      "n_ngrams_in_train": 9760,
+      "containment": 0.6674,
+      "verdict": "PARTIAL",
+      "n_records": 5,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 121
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 122
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 123
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 124
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 125
+        }
+      ]
+    },
+    {
+      "norm_sha256": "a383eaf16ddc91b4731996e3529c9d896f72bf89908034ed84058ee6f7a05f0b",
+      "raw_sha256": "dd607ab7b24b686d6252505a7261f693b0255ad7e62cc4bd716083c0cba6290f",
+      "char_len": 2306899,
+      "n_words": 433285,
+      "n_eval_ngrams_sampled": 13459,
+      "n_ngrams_in_train": 1,
+      "containment": 0.0001,
+      "verdict": "CLEAN",
+      "n_records": 5,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 66
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 67
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 68
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 69
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 70
+        }
+      ]
+    },
+    {
+      "norm_sha256": "a0ca401b9f3af70b370ac938742fb456b0db39c02b9e21cb32d97c4188c11bd7",
+      "raw_sha256": "6d16dca33a0ca72f8b89e451cbff1dc645da83d365190da55a7d3fa50b758212",
+      "char_len": 1957500,
+      "n_words": 358554,
+      "n_eval_ngrams_sampled": 11092,
+      "n_ngrams_in_train": 8724,
+      "containment": 0.7865,
+      "verdict": "PARTIAL",
+      "n_records": 9,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 181
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 182
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 183
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 184
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 185
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 12
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 13
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 14
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 15
+        }
+      ]
+    },
+    {
+      "norm_sha256": "2e2a69e670281a3279c08bbe80a958449bde7fbebaf8d90308b5c6a06b168778",
+      "raw_sha256": "8f43e01c7ec8633e929957bb534f679cc355effe1440f342be968198fd6d9562",
+      "char_len": 1926398,
+      "n_words": 361216,
+      "n_eval_ngrams_sampled": 11311,
+      "n_ngrams_in_train": 8977,
+      "containment": 0.7937,
+      "verdict": "PARTIAL",
+      "n_records": 4,
+      "records": [
+        {
+          "task": "longbook_choice_eng",
+          "id": 246
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 247
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 248
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 249
+        }
+      ]
+    },
+    {
+      "norm_sha256": "7f0c7c8d52160a48e7168ce06313b72b858363cf36e342269e9d20aaa3af5bde",
+      "raw_sha256": "e7a33ddaf53de51da1505a1409888be77ff013a1b047e73f509e35fa5328759d",
+      "char_len": 1745498,
+      "n_words": 316048,
+      "n_eval_ngrams_sampled": 9786,
+      "n_ngrams_in_train": 6899,
+      "containment": 0.705,
+      "verdict": "PARTIAL",
+      "n_records": 5,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 51
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 52
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 53
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 54
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 55
+        }
+      ]
+    },
+    {
+      "norm_sha256": "b364dc90866942e9719535091825aa8c1c82f3afec3a4298d7a297def714e60e",
+      "raw_sha256": "74109788618f5270d7b83af2f0dd0cf8b4a151ed15d39f5e5bb827e2e58f4966",
+      "char_len": 1694961,
+      "n_words": 319466,
+      "n_eval_ngrams_sampled": 9892,
+      "n_ngrams_in_train": 7954,
+      "containment": 0.8041,
+      "verdict": "CONTAMINATED",
+      "n_records": 5,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 136
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 137
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 138
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 139
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 140
+        }
+      ]
+    },
+    {
+      "norm_sha256": "deccc91d0fe117b8e2db1a8420520c5b08f162e091cf75b47b80b8724fe3dd4b",
+      "raw_sha256": "5f579da48d431ff2695e3ee5a218d4bc4a2042094d22adcf8fec573769f7b987",
+      "char_len": 1505609,
+      "n_words": 268936,
+      "n_eval_ngrams_sampled": 8438,
+      "n_ngrams_in_train": 1,
+      "containment": 0.0001,
+      "verdict": "CLEAN",
+      "n_records": 9,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 76
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 77
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 78
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 79
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 80
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 230
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 231
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 232
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 233
+        }
+      ]
+    },
+    {
+      "norm_sha256": "ad197411a1b43f8776d8d7272175a17f3b0d9777a8bbf656e10f14a7384da025",
+      "raw_sha256": "43445bfdba1f031291bd69ca8ab5fe96a7d9c48c8af35ab00c7220e7301c0e4c",
+      "char_len": 1360179,
+      "n_words": 238804,
+      "n_eval_ngrams_sampled": 7406,
+      "n_ngrams_in_train": 5295,
+      "containment": 0.715,
+      "verdict": "PARTIAL",
+      "n_records": 4,
+      "records": [
+        {
+          "task": "longbook_choice_eng",
+          "id": 242
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 243
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 244
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 245
+        }
+      ]
+    },
+    {
+      "norm_sha256": "bcd45fcc522c97cfa90aefb7b39612db7a392fa69fa3b47a07dcdb50ad48f582",
+      "raw_sha256": "23893104f6876608df1e323fe482274a73181b24344107b64a27e13a9186f8a4",
+      "char_len": 1344317,
+      "n_words": 247885,
+      "n_eval_ngrams_sampled": 7900,
+      "n_ngrams_in_train": 7237,
+      "containment": 0.9161,
+      "verdict": "CONTAMINATED",
+      "n_records": 4,
+      "records": [
+        {
+          "task": "longbook_choice_eng",
+          "id": 290
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 291
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 292
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 293
+        }
+      ]
+    },
+    {
+      "norm_sha256": "2ac32828d960e27b8153fae30df4539935564664188825f96080e755fe0cc9c4",
+      "raw_sha256": "43fded2cd5587b9356cfe80b44e04073d2f1bbcb68ec35787f5ad85772d3d916",
+      "char_len": 1273198,
+      "n_words": 229183,
+      "n_eval_ngrams_sampled": 7122,
+      "n_ngrams_in_train": 5001,
+      "containment": 0.7022,
+      "verdict": "PARTIAL",
+      "n_records": 5,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 456
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 457
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 458
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 459
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 460
+        }
+      ]
+    },
+    {
+      "norm_sha256": "f6e4b71c1a1da6c1683f62f610419eb77edf803e1bf32b2aaf75782ad2129ec5",
+      "raw_sha256": "e9669039f2684bf4c5434036079db7aa96c5190e55931251cea6fbefdf41d6e0",
+      "char_len": 1229657,
+      "n_words": 229959,
+      "n_eval_ngrams_sampled": 7291,
+      "n_ngrams_in_train": 0,
+      "containment": 0.0,
+      "verdict": "CLEAN",
+      "n_records": 9,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 386
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 387
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 388
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 389
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 390
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 162
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 163
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 164
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 165
+        }
+      ]
+    },
+    {
+      "norm_sha256": "49e82e9d451c523ff0a82746e10c25285d41b25ddbf1dfddb93970a7ff414af3",
+      "raw_sha256": "1b3af58ae677a48bb444e21bd8aa5b7a2cd322788a5132909e2bc7bd57a2cce0",
+      "char_len": 1193777,
+      "n_words": 214919,
+      "n_eval_ngrams_sampled": 6677,
+      "n_ngrams_in_train": 6024,
+      "containment": 0.9022,
+      "verdict": "CONTAMINATED",
+      "n_records": 4,
+      "records": [
+        {
+          "task": "longbook_choice_eng",
+          "id": 298
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 299
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 300
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 301
+        }
+      ]
+    },
+    {
+      "norm_sha256": "006880d0ae7f9318d7d35e8b002ecb3d9c6e6d79a52b3ff73bc4654f3117b6d1",
+      "raw_sha256": "f20f9ca8b224c8ac94d09993d0a0d678a32cca5c6369b3eea101ae9dc1dd6c5e",
+      "char_len": 1186368,
+      "n_words": 214641,
+      "n_eval_ngrams_sampled": 6645,
+      "n_ngrams_in_train": 5944,
+      "containment": 0.8945,
+      "verdict": "CONTAMINATED",
+      "n_records": 5,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 371
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 372
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 373
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 374
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 375
+        }
+      ]
+    },
+    {
+      "norm_sha256": "5abf5b166e48f7e3172ef10f810e0d230b6488aca05170113f5685dcdefa52dc",
+      "raw_sha256": "1f0d367470ebb847b375069b31c2cd655bab35e94e7d36c8100189c0e2429337",
+      "char_len": 1116721,
+      "n_words": 214630,
+      "n_eval_ngrams_sampled": 6736,
+      "n_ngrams_in_train": 5135,
+      "containment": 0.7623,
+      "verdict": "PARTIAL",
+      "n_records": 9,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 171
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 172
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 173
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 174
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 175
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 0
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 1
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 2
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 3
+        }
+      ]
+    },
+    {
+      "norm_sha256": "752e86e807f638fbe8e8382c0598a24dccfc4f4212d53a70b69b09574b4b017c",
+      "raw_sha256": "76b38920faf9cc22d1688c810f33a4a35ebe1610878f0f0055707f6c62dbc208",
+      "char_len": 1115791,
+      "n_words": 208219,
+      "n_eval_ngrams_sampled": 6533,
+      "n_ngrams_in_train": 5466,
+      "containment": 0.8367,
+      "verdict": "CONTAMINATED",
+      "n_records": 9,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 131
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 132
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 133
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 134
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 135
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 40
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 41
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 42
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 43
+        }
+      ]
+    },
+    {
+      "norm_sha256": "dd8d765a1bdbc148e2da50b7fa9a0910d2c33951568c5357ef9936925db88a91",
+      "raw_sha256": "658faead8d2055aae654044ae25a4c889eedaaa622072de0883e40556f832cb8",
+      "char_len": 1114815,
+      "n_words": 203424,
+      "n_eval_ngrams_sampled": 6470,
+      "n_ngrams_in_train": 0,
+      "containment": 0.0,
+      "verdict": "CLEAN",
+      "n_records": 9,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 91
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 92
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 93
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 94
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 95
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 134
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 135
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 136
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 137
+        }
+      ]
+    },
+    {
+      "norm_sha256": "133206cb6bc7a549da98ec32fea6eddfe09db2f38c0a4e940efc3cc68571e8fb",
+      "raw_sha256": "ef8ee769eeaaf621170a5615e7f200deb5fc9b576f6745e831881297b356c15f",
+      "char_len": 1109076,
+      "n_words": 206521,
+      "n_eval_ngrams_sampled": 6480,
+      "n_ngrams_in_train": 4414,
+      "containment": 0.6812,
+      "verdict": "PARTIAL",
+      "n_records": 9,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 211
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 212
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 213
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 214
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 215
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 138
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 139
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 140
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 141
+        }
+      ]
+    },
+    {
+      "norm_sha256": "c0e3f8e7d719300c1494ac8654978305d879ba774973c0b279281e5c75ed5244",
+      "raw_sha256": "8cff781c382e2079dab08180c344a1af55e63a33a6d412290e1684b0351f692e",
+      "char_len": 1037970,
+      "n_words": 185497,
+      "n_eval_ngrams_sampled": 5652,
+      "n_ngrams_in_train": 4828,
+      "containment": 0.8542,
+      "verdict": "CONTAMINATED",
+      "n_records": 5,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 116
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 117
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 118
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 119
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 120
+        }
+      ]
+    },
+    {
+      "norm_sha256": "ac7c577090b9af64899e69805c3de75a56f4d9aaa36d0836f82efeefd0583c3d",
+      "raw_sha256": "6694052dc8f4d70986538f277d2ea0b31fbc568910ae1e92539ea20807008dd1",
+      "char_len": 1023032,
+      "n_words": 191335,
+      "n_eval_ngrams_sampled": 5960,
+      "n_ngrams_in_train": 4204,
+      "containment": 0.7054,
+      "verdict": "PARTIAL",
+      "n_records": 9,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 35
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 36
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 37
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 38
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 39
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 110
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 111
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 112
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 113
+        }
+      ]
+    },
+    {
+      "norm_sha256": "ab49a99267574b5c991154a13c3e48483550ad1c4859ce26a112a26b1232ff14",
+      "raw_sha256": "8b4e980619ddd48a89e0306a0c8b10cc1b61545d5b96268013992738fe1f2cdb",
+      "char_len": 1002430,
+      "n_words": 177682,
+      "n_eval_ngrams_sampled": 5593,
+      "n_ngrams_in_train": 4263,
+      "containment": 0.7622,
+      "verdict": "PARTIAL",
+      "n_records": 9,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 256
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 257
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 258
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 259
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 260
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 86
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 87
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 88
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 89
+        }
+      ]
+    },
+    {
+      "norm_sha256": "9f81432912631c6868924a03b08bfa1b6fa4c706ed224c0e84440aca44c61041",
+      "raw_sha256": "4fb345e28ef3ce1ad2c45d9defbe93651ab89fc912c0603f13af22e47ab47563",
+      "char_len": 989489,
+      "n_words": 188998,
+      "n_eval_ngrams_sampled": 5949,
+      "n_ngrams_in_train": 4464,
+      "containment": 0.7504,
+      "verdict": "PARTIAL",
+      "n_records": 6,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 5
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 6
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 7
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 8
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 9
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 10
+        }
+      ]
+    },
+    {
+      "norm_sha256": "a1594a0a65247900dbace299c6f1304b61217efd45c96fbca17743bf7332b756",
+      "raw_sha256": "1ebe843e50d22cae91ad231260a29347e0712c330a205ecc503919ec4d2a4ac0",
+      "char_len": 968742,
+      "n_words": 172636,
+      "n_eval_ngrams_sampled": 5354,
+      "n_ngrams_in_train": 0,
+      "containment": 0.0,
+      "verdict": "CLEAN",
+      "n_records": 5,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 71
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 72
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 73
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 74
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 75
+        }
+      ]
+    },
+    {
+      "norm_sha256": "dca4a2e9302442e259a0f56c102716ae6b9be788d448301abf5ffec647006a27",
+      "raw_sha256": "fe7d09b9fd9f2c33899a674f4d9268dc378c8b395efaada0f666b03d484b788f",
+      "char_len": 962255,
+      "n_words": 183421,
+      "n_eval_ngrams_sampled": 5755,
+      "n_ngrams_in_train": 0,
+      "containment": 0.0,
+      "verdict": "CLEAN",
+      "n_records": 5,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 56
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 57
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 58
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 59
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 60
+        }
+      ]
+    },
+    {
+      "norm_sha256": "f9be404601254e0277f2222715d681ef9410b517a654021f3be3d0660783124c",
+      "raw_sha256": "3822340431a4a41988444d4f6eace19c5b99fe5bd541c88895f83629e2bee2eb",
+      "char_len": 958222,
+      "n_words": 187924,
+      "n_eval_ngrams_sampled": 5975,
+      "n_ngrams_in_train": 1,
+      "containment": 0.0002,
+      "verdict": "CLEAN",
+      "n_records": 10,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 45
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 46
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 47
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 48
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 49
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 50
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 58
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 59
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 60
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 61
+        }
+      ]
+    },
+    {
+      "norm_sha256": "432daa43d3d2eac2835439ee0be26d200c318aa5211042314b6833e50949486c",
+      "raw_sha256": "ce3d9327d00df863c97a00ffd0cb8ad6b2380084e316be0a8e97e9fdd8fb2054",
+      "char_len": 940303,
+      "n_words": 173213,
+      "n_eval_ngrams_sampled": 5553,
+      "n_ngrams_in_train": 1,
+      "containment": 0.0002,
+      "verdict": "CLEAN",
+      "n_records": 4,
+      "records": [
+        {
+          "task": "longbook_choice_eng",
+          "id": 278
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 279
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 280
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 281
+        }
+      ]
+    },
+    {
+      "norm_sha256": "1eb0133805cc6a7d549b45b136f09d386887a14a5fd29486b58e5e53c0a63ec2",
+      "raw_sha256": "5e7d5ec274620da5941eead528443c13387396d05af34343bb01fe8a6bfe8f4c",
+      "char_len": 931239,
+      "n_words": 170561,
+      "n_eval_ngrams_sampled": 5287,
+      "n_ngrams_in_train": 4469,
+      "containment": 0.8453,
+      "verdict": "CONTAMINATED",
+      "n_records": 9,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 431
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 432
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 433
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 434
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 435
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 90
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 91
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 92
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 93
+        }
+      ]
+    },
+    {
+      "norm_sha256": "9009900dc77db1be2ec4ba30f405a00a846f925e442ab5e9d000f86c9c141152",
+      "raw_sha256": "800b1b866c6772bc35ddb02519d63def69d4e408a87a527e6748817d5a3b3260",
+      "char_len": 906064,
+      "n_words": 165968,
+      "n_eval_ngrams_sampled": 5108,
+      "n_ngrams_in_train": 1,
+      "containment": 0.0002,
+      "verdict": "CLEAN",
+      "n_records": 9,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 266
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 267
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 268
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 269
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 270
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 126
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 127
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 128
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 129
+        }
+      ]
+    },
+    {
+      "norm_sha256": "16caccf088f17a4758daca4e8a1d672eeac4ee66affca579470bb6df05017c13",
+      "raw_sha256": "79c4d4bb0c5667b7de8f3396dab9c05a72339cdf8a4917ea3176c285ce3e94e2",
+      "char_len": 891974,
+      "n_words": 160656,
+      "n_eval_ngrams_sampled": 5071,
+      "n_ngrams_in_train": 3691,
+      "containment": 0.7279,
+      "verdict": "PARTIAL",
+      "n_records": 9,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 156
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 157
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 158
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 159
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 160
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 154
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 155
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 156
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 157
+        }
+      ]
+    },
+    {
+      "norm_sha256": "a62666774fbbf5e38559018a908ad2365438e764b364c8e67cefa1e784630e61",
+      "raw_sha256": "24036473611dfb3b15ba7d2a081adaa077958815b5713d38808e4b91fd286958",
+      "char_len": 884417,
+      "n_words": 161363,
+      "n_eval_ngrams_sampled": 5101,
+      "n_ngrams_in_train": 3661,
+      "containment": 0.7177,
+      "verdict": "PARTIAL",
+      "n_records": 9,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 306
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 307
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 308
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 309
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 310
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 130
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 131
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 132
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 133
+        }
+      ]
+    },
+    {
+      "norm_sha256": "48b760139352d46df1d0d1bd4e0511e2b7a0442ed6180f809a17f8760a3075e6",
+      "raw_sha256": "0015d8eabb811f45516517d5f0fa63eefdccdf0635e53fb1a95c9355e51cc451",
+      "char_len": 879954,
+      "n_words": 161347,
+      "n_eval_ngrams_sampled": 5015,
+      "n_ngrams_in_train": 3399,
+      "containment": 0.6778,
+      "verdict": "PARTIAL",
+      "n_records": 9,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 421
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 422
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 423
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 424
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 425
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 48
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 49
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 50
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 51
+        }
+      ]
+    },
+    {
+      "norm_sha256": "f476fc83ffd50385bce07d5db7cc951e37064ae4146352f2d169ce3db09785eb",
+      "raw_sha256": "9bcb4a030c28a1d44c274b84614653465b8361b66d7e4747743a9e50427faacd",
+      "char_len": 850669,
+      "n_words": 154430,
+      "n_eval_ngrams_sampled": 4833,
+      "n_ngrams_in_train": 0,
+      "containment": 0.0,
+      "verdict": "CLEAN",
+      "n_records": 5,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 96
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 97
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 98
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 99
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 100
+        }
+      ]
+    },
+    {
+      "norm_sha256": "51810791a4f28f59026c9852944ed98f07adddcb48a1586eb5a2a7e23cd2d01b",
+      "raw_sha256": "73963b83e6c743c128d5f63d5441b5493bf37fd4bfdbc48521bc0d5f1d899a2e",
+      "char_len": 833688,
+      "n_words": 146878,
+      "n_eval_ngrams_sampled": 4473,
+      "n_ngrams_in_train": 3307,
+      "containment": 0.7393,
+      "verdict": "PARTIAL",
+      "n_records": 9,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 326
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 327
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 328
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 329
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 330
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 102
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 103
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 104
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 105
+        }
+      ]
+    },
+    {
+      "norm_sha256": "e31ebcc837ec8b18f33497c5597fb6b0510161e59095700288a303b0d7bf0733",
+      "raw_sha256": "25db4d9581c8c74ab5a780262c3ca188a8e4b584cfd7c0e56f9ec185d4827a51",
+      "char_len": 816652,
+      "n_words": 158346,
+      "n_eval_ngrams_sampled": 4937,
+      "n_ngrams_in_train": 4251,
+      "containment": 0.861,
+      "verdict": "CONTAMINATED",
+      "n_records": 5,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 206
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 207
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 208
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 209
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 210
+        }
+      ]
+    },
+    {
+      "norm_sha256": "6fc4dc54bf402af169f366d1e61e9c4011d225833b0d175cc1e78a8f38337644",
+      "raw_sha256": "4045c499610c30d225c7e055cab3d9aedef86c0bb81050a954e6689779e46ccf",
+      "char_len": 798938,
+      "n_words": 147509,
+      "n_eval_ngrams_sampled": 4519,
+      "n_ngrams_in_train": 3940,
+      "containment": 0.8719,
+      "verdict": "CONTAMINATED",
+      "n_records": 5,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 226
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 227
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 228
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 229
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 230
+        }
+      ]
+    },
+    {
+      "norm_sha256": "795438b6c8984cb900e42f869af0e2f88bc22ef449c66474d2999705ab9c4630",
+      "raw_sha256": "0d8b7b57a7b330214d192a013d7c059d935561e91169f4b17f0d6778de0a1226",
+      "char_len": 791924,
+      "n_words": 139680,
+      "n_eval_ngrams_sampled": 4420,
+      "n_ngrams_in_train": 4415,
+      "containment": 0.9989,
+      "verdict": "CONTAMINATED",
+      "n_records": 5,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 271
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 272
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 273
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 274
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 275
+        }
+      ]
+    },
+    {
+      "norm_sha256": "ad28c4944237e0b40d3bb79ab511a9b3d9f54232b01ab0c9104914310d23949a",
+      "raw_sha256": "83793c9b8130b26c9c42b12cafd9eb5dbd890df63bbb6bfa18ebd9f7f287c5bd",
+      "char_len": 775562,
+      "n_words": 143343,
+      "n_eval_ngrams_sampled": 4378,
+      "n_ngrams_in_train": 3447,
+      "containment": 0.7873,
+      "verdict": "PARTIAL",
+      "n_records": 9,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 391
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 392
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 393
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 394
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 395
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 177
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 178
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 179
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 180
+        }
+      ]
+    },
+    {
+      "norm_sha256": "8ef0348e71a3fc2c9565a8f0189623d980c7732bae9cf1e91fa322a6c885d0b1",
+      "raw_sha256": "253c04b4afcfe58e8e52c76cc0de812bbd48a6dffa7fb813d19174c00fc378aa",
+      "char_len": 759348,
+      "n_words": 138141,
+      "n_eval_ngrams_sampled": 4299,
+      "n_ngrams_in_train": 3494,
+      "containment": 0.8127,
+      "verdict": "CONTAMINATED",
+      "n_records": 7,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 246
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 247
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 248
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 249
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 250
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 200
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 201
+        }
+      ]
+    },
+    {
+      "norm_sha256": "b6cfdda6134abdd3fb2d7f6b2c1a6100bd9bd05d264446971ae668770cea9008",
+      "raw_sha256": "63ffcaa5886716c25a216d89cbcf9e59c76c0b829375d967db947a649e9d646d",
+      "char_len": 747078,
+      "n_words": 132614,
+      "n_eval_ngrams_sampled": 4008,
+      "n_ngrams_in_train": 0,
+      "containment": 0.0,
+      "verdict": "CLEAN",
+      "n_records": 9,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 166
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 167
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 168
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 169
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 170
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 94
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 95
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 96
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 97
+        }
+      ]
+    },
+    {
+      "norm_sha256": "29c0319c1116e77c6f6f7a9c814a03c55cd8ee4b51afb28fa08f5210e0b83f7f",
+      "raw_sha256": "c4153578ec0728b4b03ec5a0440da082c66de239812910af7aebc5a3d0637a98",
+      "char_len": 690387,
+      "n_words": 126443,
+      "n_eval_ngrams_sampled": 3832,
+      "n_ngrams_in_train": 0,
+      "containment": 0.0,
+      "verdict": "CLEAN",
+      "n_records": 9,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 191
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 192
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 193
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 194
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 195
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 24
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 25
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 26
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 27
+        }
+      ]
+    },
+    {
+      "norm_sha256": "f4e591efcc0fa6e5e38a553af65196ca61c0b5c8cede075edf25638dda97a70e",
+      "raw_sha256": "9b3d2c1a81d97d1b6927a1cc6bcac97414b4e8c04aef81eb3468ddefe8b2f800",
+      "char_len": 661882,
+      "n_words": 122252,
+      "n_eval_ngrams_sampled": 3800,
+      "n_ngrams_in_train": 0,
+      "containment": 0.0,
+      "verdict": "CLEAN",
+      "n_records": 4,
+      "records": [
+        {
+          "task": "longbook_choice_eng",
+          "id": 28
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 29
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 30
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 31
+        }
+      ]
+    },
+    {
+      "norm_sha256": "7276cdad4fe40503c54698772a848f57fddac25c0f00f29ba99ea7d3e366fea1",
+      "raw_sha256": "e6c587b3d8b4b0f831f67b4742c901fa0840c9c0a469e971b5a494560a9c1d07",
+      "char_len": 661111,
+      "n_words": 120759,
+      "n_eval_ngrams_sampled": 3744,
+      "n_ngrams_in_train": 2524,
+      "containment": 0.6741,
+      "verdict": "PARTIAL",
+      "n_records": 9,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 376
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 377
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 378
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 379
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 380
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 188
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 189
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 190
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 191
+        }
+      ]
+    },
+    {
+      "norm_sha256": "eba5536aef83f76ffa551a6494c046351f5891037b08e808e2f0c77bdd49bd8d",
+      "raw_sha256": "660892d133a7669198428ad0c92d6ce8404312af742b728391a1cdf9524fab93",
+      "char_len": 660582,
+      "n_words": 122025,
+      "n_eval_ngrams_sampled": 3797,
+      "n_ngrams_in_train": 0,
+      "containment": 0.0,
+      "verdict": "CLEAN",
+      "n_records": 5,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 30
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 31
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 32
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 33
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 34
+        }
+      ]
+    },
+    {
+      "norm_sha256": "25b3f8c93f57a7d2f978cb22ae50009ee116e77314dd5d7c264f3f06cd8bd64c",
+      "raw_sha256": "c8455ff0352205436fe885d698815f0348969eaa8c2076f9dc105859db7fe7bb",
+      "char_len": 649681,
+      "n_words": 119478,
+      "n_eval_ngrams_sampled": 3692,
+      "n_ngrams_in_train": 2909,
+      "containment": 0.7879,
+      "verdict": "PARTIAL",
+      "n_records": 4,
+      "records": [
+        {
+          "task": "longbook_choice_eng",
+          "id": 294
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 295
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 296
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 297
+        }
+      ]
+    },
+    {
+      "norm_sha256": "756bff9b9d3c14b625597ac09a39a4572d537cfce369586c95cd98d48ff0e3b0",
+      "raw_sha256": "a27672d659d4031b80e72dd7c5f6ddbaa7185b3451e1c6e4363987923652043c",
+      "char_len": 642385,
+      "n_words": 115474,
+      "n_eval_ngrams_sampled": 3549,
+      "n_ngrams_in_train": 2930,
+      "containment": 0.8256,
+      "verdict": "CONTAMINATED",
+      "n_records": 9,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 231
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 232
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 233
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 234
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 235
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 118
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 119
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 120
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 121
+        }
+      ]
+    },
+    {
+      "norm_sha256": "a0b3493fe7a81d45d5cc21052eab8e6a54782c3c323d37ddd8fdcfb7a4248572",
+      "raw_sha256": "6324b9af7c38d28a85c9bf75fa4d3b2aa968881fdd8a3ea2094f7d6f1c2cc7f2",
+      "char_len": 641691,
+      "n_words": 120754,
+      "n_eval_ngrams_sampled": 3823,
+      "n_ngrams_in_train": 4,
+      "containment": 0.001,
+      "verdict": "CLEAN",
+      "n_records": 5,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 101
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 102
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 103
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 104
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 105
+        }
+      ]
+    },
+    {
+      "norm_sha256": "2a0d568a0cbfa1699889102a39321df70f7f7f727470791651a9a9f6ed5af53e",
+      "raw_sha256": "5328f8445751cdbe6ee6ef3b2ca8ebf7495a5ecd8339b0c8bff315b9c5f5a031",
+      "char_len": 637766,
+      "n_words": 117118,
+      "n_eval_ngrams_sampled": 3683,
+      "n_ngrams_in_train": 2882,
+      "containment": 0.7825,
+      "verdict": "PARTIAL",
+      "n_records": 5,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 381
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 382
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 383
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 384
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 385
+        }
+      ]
+    },
+    {
+      "norm_sha256": "979e1396ce9d56b971c0003b30d466cb25fc5f5e8cd5e2bc10e6ce229388d000",
+      "raw_sha256": "679d38eda253f61e7514fe8a0501cfd2227187710ee603a19eb11f789c54c5d9",
+      "char_len": 632560,
+      "n_words": 117337,
+      "n_eval_ngrams_sampled": 3780,
+      "n_ngrams_in_train": 681,
+      "containment": 0.1802,
+      "verdict": "PARTIAL",
+      "n_records": 4,
+      "records": [
+        {
+          "task": "longbook_choice_eng",
+          "id": 318
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 319
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 320
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 321
+        }
+      ]
+    },
+    {
+      "norm_sha256": "c1492732d07e0382db5c8e270992ba25cb29c7f14548723cf9ed50c8dce4d34c",
+      "raw_sha256": "5fc70bfc05d63845e5f43a1b4eaaad415a1f6f851956684a1ca2ee42ebfc0620",
+      "char_len": 632149,
+      "n_words": 113594,
+      "n_eval_ngrams_sampled": 3518,
+      "n_ngrams_in_train": 2502,
+      "containment": 0.7112,
+      "verdict": "PARTIAL",
+      "n_records": 9,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 61
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 62
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 63
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 64
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 65
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 166
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 167
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 168
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 169
+        }
+      ]
+    },
+    {
+      "norm_sha256": "de000b78c8ec01bcaa5a3752afe75af8ce7a8c8768f128e93fa83e367c92882f",
+      "raw_sha256": "24d1bd748741e96943a569a31fd38f499b25f07392cbdf5cca8229509a49ee13",
+      "char_len": 620388,
+      "n_words": 121708,
+      "n_eval_ngrams_sampled": 3887,
+      "n_ngrams_in_train": 3033,
+      "containment": 0.7803,
+      "verdict": "PARTIAL",
+      "n_records": 9,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 146
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 147
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 148
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 149
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 150
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 181
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 182
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 183
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 184
+        }
+      ]
+    },
+    {
+      "norm_sha256": "964f7b76b71ca1eda979c74b35a5f03ba7b963531f7d258223c0f657dfdd65e5",
+      "raw_sha256": "42f3ce9a0ed7ca60004d2f7c806db14f5d42e97b3afa7db1061fa0915f2f5510",
+      "char_len": 613577,
+      "n_words": 112288,
+      "n_eval_ngrams_sampled": 3499,
+      "n_ngrams_in_train": 2534,
+      "containment": 0.7242,
+      "verdict": "PARTIAL",
+      "n_records": 5,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 281
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 282
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 283
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 284
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 285
+        }
+      ]
+    },
+    {
+      "norm_sha256": "595da60a434c2ee4358b86d8153a0dd0924a12a6f5f3399dce69db74193ec985",
+      "raw_sha256": "e2eaf1730107dd91bcd955adff4f3479439efc4c21e50abc571abec1048b9b71",
+      "char_len": 595684,
+      "n_words": 104216,
+      "n_eval_ngrams_sampled": 3258,
+      "n_ngrams_in_train": 3001,
+      "containment": 0.9211,
+      "verdict": "CONTAMINATED",
+      "n_records": 9,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 441
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 442
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 443
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 444
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 445
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 226
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 227
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 228
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 229
+        }
+      ]
+    },
+    {
+      "norm_sha256": "3f17c8ffc2b3154483634d2dfd847ea2d63fc7221ddfedebf680db89f788547f",
+      "raw_sha256": "196f32318a35ece1dff097907670a7da1afa4208222b9a3065487ce29cf38ba2",
+      "char_len": 578969,
+      "n_words": 104875,
+      "n_eval_ngrams_sampled": 3318,
+      "n_ngrams_in_train": 0,
+      "containment": 0.0,
+      "verdict": "CLEAN",
+      "n_records": 4,
+      "records": [
+        {
+          "task": "longbook_choice_eng",
+          "id": 238
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 239
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 240
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 241
+        }
+      ]
+    },
+    {
+      "norm_sha256": "3cd38daea7bebdc39cc058f7da837ae4cedbeebdd907d9c3c9a882f10cccd217",
+      "raw_sha256": "397bac05476362f402a432d0af2821ee648b65243966ae93b3e3b2d63374d9e6",
+      "char_len": 572855,
+      "n_words": 103879,
+      "n_eval_ngrams_sampled": 3188,
+      "n_ngrams_in_train": 4,
+      "containment": 0.0013,
+      "verdict": "CLEAN",
+      "n_records": 4,
+      "records": [
+        {
+          "task": "longbook_choice_eng",
+          "id": 302
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 303
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 304
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 305
+        }
+      ]
+    },
+    {
+      "norm_sha256": "935e16cf609e00eed280f7f005d58f9ceed9f7b015dbd204eee30e1ed8c32e33",
+      "raw_sha256": "6e6dd5f69de390c7b069a0b10c895475e345a072d5dd698f9beef0d8a7f828de",
+      "char_len": 571553,
+      "n_words": 105637,
+      "n_eval_ngrams_sampled": 3316,
+      "n_ngrams_in_train": 218,
+      "containment": 0.0657,
+      "verdict": "CLEAN",
+      "n_records": 4,
+      "records": [
+        {
+          "task": "longbook_choice_eng",
+          "id": 286
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 287
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 288
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 289
+        }
+      ]
+    },
+    {
+      "norm_sha256": "3a946e643ea66342fb55187434aab1c6578298135c5d8d4f5080fd5803f0c8d6",
+      "raw_sha256": "893a573e50a0f0ec75ec2305b04f8ca5ae63013f0f0210e02539779b4b01e7b4",
+      "char_len": 564719,
+      "n_words": 106604,
+      "n_eval_ngrams_sampled": 3366,
+      "n_ngrams_in_train": 2034,
+      "containment": 0.6043,
+      "verdict": "PARTIAL",
+      "n_records": 9,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 186
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 187
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 188
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 189
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 190
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 16
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 17
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 18
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 19
+        }
+      ]
+    },
+    {
+      "norm_sha256": "13a0d715bdd6b7be009e273fe63da376a6ba94dc4d148990bf138610960b217e",
+      "raw_sha256": "e0c3f4d1eab833c96d7cf9250a60eb77468aff15ad12c15905fa29f2a79a9a28",
+      "char_len": 559632,
+      "n_words": 104958,
+      "n_eval_ngrams_sampled": 3259,
+      "n_ngrams_in_train": 2427,
+      "containment": 0.7447,
+      "verdict": "PARTIAL",
+      "n_records": 5,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 126
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 127
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 128
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 129
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 130
+        }
+      ]
+    },
+    {
+      "norm_sha256": "aa31b8fe32c88c3083400dde5db0d5739e7d4c3cce337a43a196f25f0d1104cf",
+      "raw_sha256": "3e3a1a2dbd3bc870158bb70f87d8556ea31b3a6c40fdf5fba2c5cef0ab0be905",
+      "char_len": 550189,
+      "n_words": 97047,
+      "n_eval_ngrams_sampled": 3047,
+      "n_ngrams_in_train": 2374,
+      "containment": 0.7791,
+      "verdict": "PARTIAL",
+      "n_records": 9,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 276
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 277
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 278
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 279
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 280
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 82
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 83
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 84
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 85
+        }
+      ]
+    },
+    {
+      "norm_sha256": "fec2c62b85b1d6013ef7dc7207995b41393eeafaa0d5332800cfcac0aaef8709",
+      "raw_sha256": "299081322f32b0af82be17374f1643d5b24f17e9cb06d3676870a86c3a7ba426",
+      "char_len": 546787,
+      "n_words": 104876,
+      "n_eval_ngrams_sampled": 3222,
+      "n_ngrams_in_train": 0,
+      "containment": 0.0,
+      "verdict": "CLEAN",
+      "n_records": 6,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 24
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 25
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 26
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 27
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 28
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 29
+        }
+      ]
+    },
+    {
+      "norm_sha256": "80ab5143aa6a68f0bd4f7a3c8634f8466cbbd207820ac8538f7e59af1507b16c",
+      "raw_sha256": "1ee8ca99599aefe2fc60be657d8e0aa9e03d67f93a941079a23e8c1cf6bbb226",
+      "char_len": 539564,
+      "n_words": 98648,
+      "n_eval_ngrams_sampled": 3104,
+      "n_ngrams_in_train": 0,
+      "containment": 0.0,
+      "verdict": "CLEAN",
+      "n_records": 6,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 18
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 19
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 20
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 21
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 22
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 23
+        }
+      ]
+    },
+    {
+      "norm_sha256": "409d3c57c3b4059e64bc086c52ee1972eacb02fb0bebe931dd23072351555882",
+      "raw_sha256": "effac601d0406239b9c8a78e676a6b5b3f801836a9be752d4364c9326fe71d25",
+      "char_len": 538051,
+      "n_words": 98561,
+      "n_eval_ngrams_sampled": 3092,
+      "n_ngrams_in_train": 0,
+      "containment": 0.0,
+      "verdict": "CLEAN",
+      "n_records": 4,
+      "records": [
+        {
+          "task": "longbook_choice_eng",
+          "id": 210
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 211
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 212
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 213
+        }
+      ]
+    },
+    {
+      "norm_sha256": "1eb95ad86fc16714e8f45e541d0688cc71fc736c264339c9adb7da5f8f9fa09f",
+      "raw_sha256": "7bea24d048e657d8bd6a553f8de6f10aec1994e8365dc516a5094e2a4095e047",
+      "char_len": 529900,
+      "n_words": 95517,
+      "n_eval_ngrams_sampled": 2981,
+      "n_ngrams_in_train": 2531,
+      "containment": 0.849,
+      "verdict": "CONTAMINATED",
+      "n_records": 5,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 161
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 162
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 163
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 164
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 165
+        }
+      ]
+    },
+    {
+      "norm_sha256": "7feba158cab8d8bf1f18b9f2a38f11e3ed4e2fc9fcf800eed24375891d532360",
+      "raw_sha256": "c4a391b61aa6fa9150a5efbc913e64ca8b03020bd132f71866d61605ddc4222a",
+      "char_len": 507228,
+      "n_words": 96698,
+      "n_eval_ngrams_sampled": 3008,
+      "n_ngrams_in_train": 0,
+      "containment": 0.0,
+      "verdict": "CLEAN",
+      "n_records": 9,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 406
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 407
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 408
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 409
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 410
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 74
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 75
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 76
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 77
+        }
+      ]
+    },
+    {
+      "norm_sha256": "73d949394a22c7bf267df9f1956ebe1caf8a61b6b9212ae13d6342772d7c93af",
+      "raw_sha256": "88c539d2d19bbe53c4c4a7dd1de97a6296f5079847451f648e0d863f66846ae7",
+      "char_len": 456621,
+      "n_words": 82388,
+      "n_eval_ngrams_sampled": 2619,
+      "n_ngrams_in_train": 1756,
+      "containment": 0.6705,
+      "verdict": "PARTIAL",
+      "n_records": 9,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 341
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 342
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 343
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 344
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 345
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 158
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 159
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 160
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 161
+        }
+      ]
+    },
+    {
+      "norm_sha256": "99718f9745d85ae801a848302e76a92dad52bc4fc46bbc53785e569f6e39bcda",
+      "raw_sha256": "c458f9733f2653cf94fd10d772ede7abb239c5235d05dc2b0f3ba7d7a4afb95a",
+      "char_len": 453541,
+      "n_words": 84434,
+      "n_eval_ngrams_sampled": 2676,
+      "n_ngrams_in_train": 2,
+      "containment": 0.0007,
+      "verdict": "CLEAN",
+      "n_records": 4,
+      "records": [
+        {
+          "task": "longbook_choice_eng",
+          "id": 282
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 283
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 284
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 285
+        }
+      ]
+    },
+    {
+      "norm_sha256": "0310f3c056873fdfc4fdf1619f7c5c8b31f2ffdffbda4deecab0b8b36d8d232c",
+      "raw_sha256": "6c1806b15e26aba7b8864c5207d2f206587e2360e36bf6c42af103dd21a11f29",
+      "char_len": 449693,
+      "n_words": 86395,
+      "n_eval_ngrams_sampled": 2731,
+      "n_ngrams_in_train": 0,
+      "containment": 0.0,
+      "verdict": "CLEAN",
+      "n_records": 4,
+      "records": [
+        {
+          "task": "longbook_choice_eng",
+          "id": 310
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 311
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 312
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 313
+        }
+      ]
+    },
+    {
+      "norm_sha256": "0248224bc03b26aa42a6f52aaa511efe3d472e551cf04a1d675965b74d5c9274",
+      "raw_sha256": "3928828a83a42d47d1e4f93bc28d8bdea7cd8282814505fa0dd6dfda72d4802a",
+      "char_len": 445452,
+      "n_words": 79897,
+      "n_eval_ngrams_sampled": 2409,
+      "n_ngrams_in_train": 2063,
+      "containment": 0.8564,
+      "verdict": "CONTAMINATED",
+      "n_records": 4,
+      "records": [
+        {
+          "task": "longbook_choice_eng",
+          "id": 274
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 275
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 276
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 277
+        }
+      ]
+    },
+    {
+      "norm_sha256": "f8b306fe1ef8d0430e27ad5f8a775ebe4d13f3389133e880061e8264d37aed19",
+      "raw_sha256": "961cc874530c4d0ce4201e37be2c144f1cff569011ea3f0044f708dc35afda3a",
+      "char_len": 434156,
+      "n_words": 77301,
+      "n_eval_ngrams_sampled": 2365,
+      "n_ngrams_in_train": 2210,
+      "containment": 0.9345,
+      "verdict": "CONTAMINATED",
+      "n_records": 9,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 251
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 252
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 253
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 254
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 255
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 114
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 115
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 116
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 117
+        }
+      ]
+    },
+    {
+      "norm_sha256": "3b1c7481d09f447bbcf665d3955584e669925ef328ce51970827959a29545110",
+      "raw_sha256": "2f2d0e3b9a78ee8c38923b888674a1dc28649ee97e564c82ce8f5391c64c5ed9",
+      "char_len": 433794,
+      "n_words": 82307,
+      "n_eval_ngrams_sampled": 2540,
+      "n_ngrams_in_train": 1755,
+      "containment": 0.6909,
+      "verdict": "PARTIAL",
+      "n_records": 5,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 221
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 222
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 223
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 224
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 225
+        }
+      ]
+    },
+    {
+      "norm_sha256": "c2a1bd8717bbce6e934ccacd8a78e65177dacdd307d65de07fd2940a9a38c353",
+      "raw_sha256": "004eae0d03f806e8cef9b02808d8ac512ecc6c47979518d901503679ded4998f",
+      "char_len": 430884,
+      "n_words": 77979,
+      "n_eval_ngrams_sampled": 2439,
+      "n_ngrams_in_train": 1844,
+      "containment": 0.756,
+      "verdict": "PARTIAL",
+      "n_records": 9,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 416
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 417
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 418
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 419
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 420
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 146
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 147
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 148
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 149
+        }
+      ]
+    },
+    {
+      "norm_sha256": "25cb583eb6c22661fc55e1c13ca6acc9ba525efe6ce55f361df692853c2d2d45",
+      "raw_sha256": "0bec916936a55899247f38553b6a462f8e4df52c8ebdc305849abf5a1124aeaf",
+      "char_len": 411609,
+      "n_words": 81214,
+      "n_eval_ngrams_sampled": 2596,
+      "n_ngrams_in_train": 2189,
+      "containment": 0.8432,
+      "verdict": "CONTAMINATED",
+      "n_records": 9,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 286
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 287
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 288
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 289
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 290
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 98
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 99
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 100
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 101
+        }
+      ]
+    },
+    {
+      "norm_sha256": "1207f23486121d1fda4e8114568eebe97a48436b7c1866b5097a38c2ee88e9d1",
+      "raw_sha256": "c13d4b94bc727d142a319060179115918ed534beb20782db3106bd584b8eeb17",
+      "char_len": 400562,
+      "n_words": 76381,
+      "n_eval_ngrams_sampled": 2356,
+      "n_ngrams_in_train": 0,
+      "containment": 0.0,
+      "verdict": "CLEAN",
+      "n_records": 5,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 141
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 142
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 143
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 144
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 145
+        }
+      ]
+    },
+    {
+      "norm_sha256": "3a46a89cf13968f57a5c97f9146b0812114130bf9c704b341c701824919237d7",
+      "raw_sha256": "7f6ed2b0e06b26a092e92276fd4b354fee57e2edeca1588cb020cf0f17a79fb3",
+      "char_len": 397153,
+      "n_words": 69915,
+      "n_eval_ngrams_sampled": 2153,
+      "n_ngrams_in_train": 1753,
+      "containment": 0.8142,
+      "verdict": "CONTAMINATED",
+      "n_records": 8,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 361
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 362
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 363
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 364
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 365
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 185
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 186
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 187
+        }
+      ]
+    },
+    {
+      "norm_sha256": "7efd7811deae663d3a70100b825c82c317dbe0b6e2158b15249bb9046ed1aacb",
+      "raw_sha256": "f186cd415885b43befa96d5f56ae1c0a0bb4c85842539ca57b00f70e4e71d7ed",
+      "char_len": 383366,
+      "n_words": 68743,
+      "n_eval_ngrams_sampled": 2148,
+      "n_ngrams_in_train": 2003,
+      "containment": 0.9325,
+      "verdict": "CONTAMINATED",
+      "n_records": 11,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 11
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 12
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 13
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 14
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 15
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 16
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 17
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 52
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 53
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 54
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 55
+        }
+      ]
+    },
+    {
+      "norm_sha256": "9571ab10da29ebe0fe8eef0e619b86a6529898cecfd01575532c1534b2b2c187",
+      "raw_sha256": "1856d77efc6efe181cc3f78ae164c11183b832255b6586db5ff9e01086bf6c72",
+      "char_len": 381748,
+      "n_words": 70472,
+      "n_eval_ngrams_sampled": 2227,
+      "n_ngrams_in_train": 0,
+      "containment": 0.0,
+      "verdict": "CLEAN",
+      "n_records": 9,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 0
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 1
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 2
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 3
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 4
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 214
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 215
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 216
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 217
+        }
+      ]
+    },
+    {
+      "norm_sha256": "44353d3efba81318877bb0037a1d176955fc9ed68a45987bac27872dd33b3f61",
+      "raw_sha256": "1f45fd1554c622941dca99579fba2a11b1f069828fc88cca896d5308390bf66d",
+      "char_len": 380419,
+      "n_words": 77541,
+      "n_eval_ngrams_sampled": 2402,
+      "n_ngrams_in_train": 0,
+      "containment": 0.0,
+      "verdict": "CLEAN",
+      "n_records": 5,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 40
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 41
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 42
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 43
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 44
+        }
+      ]
+    },
+    {
+      "norm_sha256": "cc99d21ec9256d68ad961192838a7ab5f163496cc04cc2064680a921bb8cb0ac",
+      "raw_sha256": "fb9543f25676a34dd29da7a1ccb82fec4d87d03e8ff5361219b2a54262fcb4fc",
+      "char_len": 377030,
+      "n_words": 66268,
+      "n_eval_ngrams_sampled": 2058,
+      "n_ngrams_in_train": 5,
+      "containment": 0.0024,
+      "verdict": "CLEAN",
+      "n_records": 4,
+      "records": [
+        {
+          "task": "longbook_choice_eng",
+          "id": 250
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 251
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 252
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 253
+        }
+      ]
+    },
+    {
+      "norm_sha256": "ebb07918360fdeb59639731439e53eb7e89540db244bc137532a048a38d2a249",
+      "raw_sha256": "a5b600aa7bd8bc1fc5b36854b5c91653fa94686a794cebb1747aa729cba2ae83",
+      "char_len": 376298,
+      "n_words": 69780,
+      "n_eval_ngrams_sampled": 2137,
+      "n_ngrams_in_train": 1961,
+      "containment": 0.9176,
+      "verdict": "CONTAMINATED",
+      "n_records": 9,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 176
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 177
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 178
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 179
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 180
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 4
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 5
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 6
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 7
+        }
+      ]
+    },
+    {
+      "norm_sha256": "bed4f57b940f929520381b8760588aaac1d7f4b8dc9c770d63da766d854313fa",
+      "raw_sha256": "4e0fdbb531eaca8453c6ef58cb1cf267a6ecbb81f490e20e1617a3be415b5f48",
+      "char_len": 369324,
+      "n_words": 69207,
+      "n_eval_ngrams_sampled": 2134,
+      "n_ngrams_in_train": 2059,
+      "containment": 0.9649,
+      "verdict": "CONTAMINATED",
+      "n_records": 4,
+      "records": [
+        {
+          "task": "longbook_choice_eng",
+          "id": 262
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 263
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 264
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 265
+        }
+      ]
+    },
+    {
+      "norm_sha256": "4bb8bfa44c673f2cddeeb4e1effd9767e787e00b9dd2a9ccb91bd46dea18bf27",
+      "raw_sha256": "5828b6339183116bf118d7f66d843968dcbddcabb69c5828fb85b45126926e97",
+      "char_len": 362678,
+      "n_words": 70176,
+      "n_eval_ngrams_sampled": 2181,
+      "n_ngrams_in_train": 1658,
+      "containment": 0.7602,
+      "verdict": "PARTIAL",
+      "n_records": 9,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 426
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 427
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 428
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 429
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 430
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 218
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 219
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 220
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 221
+        }
+      ]
+    },
+    {
+      "norm_sha256": "6cc1130b755e9c2029cb19729ce3b374efc430509a777ed1d38762a140ba3f7b",
+      "raw_sha256": "b721d0a06ba3ad3931feeae383cf593d4170513e5b9dcaee75f5a787143bb6fb",
+      "char_len": 360035,
+      "n_words": 70437,
+      "n_eval_ngrams_sampled": 2219,
+      "n_ngrams_in_train": 0,
+      "containment": 0.0,
+      "verdict": "CLEAN",
+      "n_records": 9,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 86
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 87
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 88
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 89
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 90
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 196
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 197
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 198
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 199
+        }
+      ]
+    },
+    {
+      "norm_sha256": "bf131b7a6a93c5f762d764272c7d45ef5383f033f5fd488c5fc15fe5eda7c011",
+      "raw_sha256": "a6e45acb324d67901b8af1733fda1f58d4b20e203a4246ccfce9a7c56ca2a9b0",
+      "char_len": 343437,
+      "n_words": 67144,
+      "n_eval_ngrams_sampled": 2110,
+      "n_ngrams_in_train": 0,
+      "containment": 0.0,
+      "verdict": "CLEAN",
+      "n_records": 5,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 446
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 447
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 448
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 449
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 450
+        }
+      ]
+    },
+    {
+      "norm_sha256": "aaf797967da0b91590d6a039d4e6c5876a40df1aed5dbb646ce2204ebe3ff6cc",
+      "raw_sha256": "6b6eba697060380e48b11043bd2b69b6408c2f2beb408eea2981c9c73590128a",
+      "char_len": 338720,
+      "n_words": 64708,
+      "n_eval_ngrams_sampled": 2027,
+      "n_ngrams_in_train": 0,
+      "containment": 0.0,
+      "verdict": "CLEAN",
+      "n_records": 5,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 396
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 397
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 398
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 399
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 400
+        }
+      ]
+    },
+    {
+      "norm_sha256": "c56ee74d8f80370a190e695ad71e552a3a9f84dfab3ccda844d7952187b2a7ac",
+      "raw_sha256": "1ae329374a16eea23a72cacf14d7a18f6434652a3c9211808d0cd635e7a97f81",
+      "char_len": 315800,
+      "n_words": 59476,
+      "n_eval_ngrams_sampled": 1927,
+      "n_ngrams_in_train": 1552,
+      "containment": 0.8054,
+      "verdict": "CONTAMINATED",
+      "n_records": 9,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 411
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 412
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 413
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 414
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 415
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 78
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 79
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 80
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 81
+        }
+      ]
+    },
+    {
+      "norm_sha256": "518cdd282852848e25922704bd6f1351d31948fc35b77dc58299fe4d7424754c",
+      "raw_sha256": "cb1104516284ee52e6c76e435af3a22c995f8671fb4a2989eff62402364003e6",
+      "char_len": 312528,
+      "n_words": 56818,
+      "n_eval_ngrams_sampled": 1791,
+      "n_ngrams_in_train": 1684,
+      "containment": 0.9403,
+      "verdict": "CONTAMINATED",
+      "n_records": 5,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 321
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 322
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 323
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 324
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 325
+        }
+      ]
+    },
+    {
+      "norm_sha256": "e7a4275cde7498500852417c02da1bca844320ae415b9cb7a039a2a0a0e5a46b",
+      "raw_sha256": "d3fa1ef5e2ffc10becdfc8114abdecef784a6f354ea62d987b39065d7bb36b50",
+      "char_len": 298903,
+      "n_words": 56933,
+      "n_eval_ngrams_sampled": 1792,
+      "n_ngrams_in_train": 1218,
+      "containment": 0.6797,
+      "verdict": "PARTIAL",
+      "n_records": 9,
+      "records": [
+        {
+          "task": "longbook_qa_eng",
+          "id": 261
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 262
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 263
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 264
+        },
+        {
+          "task": "longbook_qa_eng",
+          "id": 265
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 150
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 151
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 152
+        },
+        {
+          "task": "longbook_choice_eng",
+          "id": 153
+        }
+      ]
+    }
+  ]
+}
