@@ -1,7 +1,448 @@
 # GPU_STATUS.md — 4 节点 GPU 实时台账（QCMem = 32 卡）
 > 每次启动/kill GPU 任务更新。heartbeat 先读→对照 nvidia-smi→台账说跑但空=补卡。★29.162.226.120=dllm 绝不碰。
 
-## 当前快照（2026-07-25 10:40 +08:00，★节点重新分配生效 + Paper B control-2 CLOSED + .82 起 #68 + FIXME/push 并行）
+## 当前快照（2026-08-02 14:52 +08:00，✅ .82 P1.7 两 cohort 全完→补 Paper A P2.4 深度曲线训练；5 节点仍全占）
+> - **✅ .82 refill（铁律1 + H20 PaperA>PaperB 优先级）**：P1.7 h12-oracle **cohort-a + cohort-b 双双 COMPLETE**（.82 8 卡空出）。cohort-b macro n_paired=1500：A(j=0)=99.19 / C(oracle)=99.19（bit-identical，p=1）/ B(chunk-local)=96.07，A−B=C−B=+3.12pp（CI[2.36,3.93] p=8.79e-24）== P0.13 deployable gap → **#121 结项**。→ 立即在 .82 补下一个 PaperA 待跑项 **P2.4 蒸馏多深度 quality-latency 曲线**（j∈{6,9,18} rank-32 LoRA 训练，匹配 flagship j=12 配方）：coder ae216e60 后台派发中，读 `_launch_contentj_distill.sh` 提配置→串行 8-GPU DDP 训 3 深度，log `.82:logs/p2_4_distill_j{6,9,18}.log`。启动确认后回填本台账 PID。
+> - **✅ 5 节点全占 healthy**：**LOCAL**（8×L20A）full32 #100 continued-pretrain step~24.9k/200k healthy；**.252**（8×L20A）P1.6 SnapKV equal-budget（VT@64k ~75%，收尾后自动跑 PyramidKV 56 job，task #120）；**.104**（8×H20）Paper B P0.5 Arm A（contiguous16/no-fresh，pid 4105448，task #118）；**.73**（8×H20）Paper B P0.5 Arm B（retained-final14+fresh2 差分 LR，pid 4077879，task #118）；**.82**（8×H20）→ P2.4 深度曲线训练启动中。
+> - **✅ paperB P0.1/P0.2 回填完（MAIN，无模型运行）**：P0.1 [DONE] step-0 anchor（keep14 step0 PPL 167,371/MMLU .254 chance，R_MMLU 13.4/16.6/18.5%，R_LM 96.2/96.3/96.5% saturated 不作 headline，确认 recovery 分母=vanilla−chance）；P0.2 [PARTIAL] 端点 anchors 填完（keep14@200k 10.561/.3191 vs random 11.498/.2461 vs frozen 12.797/.2628），严格 ≤0.10 matched-PPL 交叉点缺 on-disk ckpt → 待 #103 dense-save re-heal。commit 8433453。
+> - **📌 待办**：P2.4 训练完 → eval（RULER Cohort-B 15 cells + LoCoMo + timing）；.252 SnapKV 完自动 PyramidKV；P0.6 content-MMLU sweep auto_launch 排队等下一空节点（PaperA 待跑排空后）；#103 matched-PPL dense-save re-heal。
+> - Monitor 8088 http200 OK。本轮：0 kill；1 launch（P2.4 .82，coder ae216e60）；paperA P1.7 回填结项 #121 + paperB P0.1/P0.2 回填。
+
+## 当前快照（2026-08-02 14:12 +08:00，✅ 5 节点全占 healthy；.252 keep8 eval 已完→跑 P1.6 SnapKV；P0.7 审计回填完）
+> - **✅ 5 节点全占，0 无计划空转（铁律1 满足）**：
+>   - **LOCAL**（8× L20A）：full32 #100 continued-pretrain，**step 24620/200k**，loss 2.1233 ppl 8.36，3.16s/step，8/8 GPU @100%，healthy（task #100）。
+>   - **.252**（8× L20A）：**Paper A P1.6 SnapKV equal-budget campaign**（keep8 eval 已「ALL DONE」→ 已切 P1.6）。当前跑 `ruler_snapkv_niah_single_2` native 8-shard，128k 长度 52%（~6.5s/it），gate PASSED，全 log 0 error。task_queue 48 job（56 减去已完成的短档），9 proc 活（8 worker + sched）。log `logs/p16_kvcompress/sched_snapkv.out`（task #120）。
+>   - **.104**（8× H20）：Paper B **P0.5 Arm A**「contiguous16/no-fresh」keep[0..15] n_fresh=0 单 LR2e-5，训练中 8/8 @100%，pid 4105448（task #118）。
+>   - **.73**（8× H20）：Paper B **P0.5 Arm B**「retained-final14[0-12,31]+fresh2」差分 LR（inherited2e-5/fresh1e-4），训练中 8/8 @100%，pid 4077879（task #118）。
+>   - **.82**（8× H20）：Paper A **P1.7 h12-oracle cohort-b** VT@128k quality 4-shard（pid 2386791 等），GPU3/6 active、余卡 model-resident 等待长档，healthy（task #121）。
+> - **✅ P0.7 aggregate 审计回填完（MAIN，无模型运行）**：paperB/TODOList.md 深度阶梯表 `AUDIT`→审计值（base aux5_raw .6637 / keep8 .4289 / keep10 .4491 / keep12 .4608 / keep14 **.4935**）+ 列名 aux5 aggregate→aux5_raw；keep14 recovery 19.4→19.5%；line-40 note + ShortGPT §（.5596 确认正确）+ P0.7 §[DONE]（含结果表 + deliverable 路径）。status/RUN_REGISTRY.md + PAPERB_THREE_ARM_200K.md 加 know5=aux5_raw 命名对齐 note（值经 JSON 核对正确，唯一数值修正 keep14 .5071→.4935 不在这两表）。
+> - **📌 待办**：SnapKV campaign 完 → 在 .252 起 `DRY=0 METHODS=pyramidkv`（gate 已由 bf9bc41 修复，56 job）；P0.6 content-MMLU harness（agent ac954257135164176 running）交付后起全 sweep。
+> - Monitor 8088 http200 OK。本轮：0 kill；0 新 launch（P1.6 SnapKV 上轮已起，本轮确认健康推进）；P0.7 回填 3 文件。
+
+## 当前快照（2026-08-02 13:25 +08:00，✅ P1.7 harness 交付→立即上 .82 跑起来；h12 oracle 精确 PASS；keep8 端点回填=200k；P2.3 回填完）
+> - **✅ Paper A P1.7 launch on .82**（8 卡全占，pid 2371359）：harness agent a0a846b4 交付 `scripts/bench_p1_7_h12_oracle.py`+`_run_p17_oracle.sh`（commit **3327b34**，未 push）。rsync 本机缺→用 cat-over-ssh 同步 2 脚本到 .82:diskB（torch-base tf5.5.4/torch2.13，compile OK）。**RUN=1 COHORT=min** = niah_multikey_1×{8k,16k}×4shard=8 job。**h12_sanity 精确 PASS：continuous-oracle-h12 vs stock lower-12 forward max_abs=0.000e+00**（bit-identical，ref_abs_max=8576，tol5e-2）→ oracle 有效性硬确认。manifest gate 过 + 8 GPU workers 全跑（100%/40% util，~18.5GB/卡）。log `.82:logs/p1_7_oracle.out`，OUTDIR `bench_results/p1_7_h12_oracle`。
+> - **✅ keep8 端点回填（按用户指令=200k，不写 121k）**：用户 mid-turn「不要写 121k，直接写这是 200k 的结果，我自己会加正确描述」→ paperB §深度阶梯 keep8 行改为 `[DONE]` 200k endpoint（10L shell），移除 121k/plateau 措辞；step-note 同步移除 keep8=121k。数字 **PPL 13.3332 / tax 1.802× / core6 0.5238 / MMLU .2535 / recovery 1.0%**（aux5=`AUDIT`，随全表 P0.7 待审）。ladder 单调（越深越好）：tax 1.802→1.732→1.547→1.428，core6 0.5238→…→0.5938，MMLU recovery 1.0→6.1→7.1→19.4%。
+> - **✅ Paper B P2.3 Qwen 跨家族回填完**：paperB §P2.3 由 linter 收敛到保守口径（know5→`AUDIT`、letter-protocol MMLU 未恢复、不与 OLMo 三点拼纯 depth law）；核心 finding「healed Qwen PPL tax 2.06× 但 MMLU .2495≈chance」保留（跨家族 dissociation 稳健）。
+> - **📌 .82 现跑 P1.7（非再留 P1.6）**：P1.7 harness ready-now 且复用 .82 上的 P0.13 manifest → 上 P1.7 最省事（铁律1：不留 .82 空等未 commit 的 P1.6）。**P1.6 harness（a1efd83a）仍在写**，commit 后上下一个释放节点（.252 keep8 eval ~30min 或 .82 P1.7 ~30-60min 完）。
+> - **✅ 5 节点全占**：LOCAL full32 #100（~22.9k/200k healthy）+ .252 keep8 eval（step121000 端点已出+回填，110k/100k 收尾）+ .104 P0.5 ArmA + .73 P0.5 ArmB + .82 P1.7 oracle。Monitor 8088 http200 OK。**铁律1 满足，0 无计划空转**。
+> - 本轮：0 kill；1 launch（P1.7 .82）；paperB 回填 keep8+P2.3。
+
+## 当前快照（2026-08-02 13:12 +08:00，✅ 24 卡空出→铁律1 补卡：Paper B P0.5 双臂上 .104+.73；Qwen #117 完成；.82 留给 imminent Paper A P1.6）
+> - **🟢 铁律1 补卡（24 卡空）**：Qwen #117 eval 完 + .82 ShortGPT eval「ALL DONE」→ .82/.104/.73 三节点 24×H20 全空。Paper A GPU 项（P1.6/P1.7）仍 code-prep 中（无 GPU-ready job），故上**已授权+code-ready 的 Paper B P0.5 结构隔离双臂**（commit 759f4af，DRY→RUN=1）：
+>   - **.104 = Arm A「contiguous16」**：keep [0..15] 连续 16 层、**n_fresh=0**（纯 ShortGPT 移植，无新生尾层），单 LR 2e-5 heal。pid 4103679，`outputs/olmo2_p05_armA_contig16`，log `logs/olmo2_p05_armA_contig16.log`。
+>   - **.73 = Arm B「retained-final14+fresh2」**：keep [0..12,31]（14 非连续含末层）+ 2 新生尾层，差分 LR（inherited 2e-5 / fresh 1e-4）。pid 4076314，`outputs/olmo2_p05_armB_final14_fresh2`。
+>   - 两臂 fp32-master、eff_bs128（BS4×GA4×8）、seq2048、200k、save_every5000+extra{50k,100k,150k}、olmo2_venv、diskB /dev/shm dolmino。**matched-step 对照在存点里程碑（50k/100k/150k/200k）比，非 wall-clock，单节点各 8 卡即可**。13:09 init 健康（各 9 proc）。
+> - **📌 .82 保留给 imminent Paper A P1.6**（用户「PaperA 优先级最高」）：P1.6 harness（SnapKV+PyramidKV，agent a1efd83a）13:04 刚 vendored 完 GQA-aware clusters，正写 Qwen3 tf-5.14 monkeypatch харness，~15-20min 出。**这是「已明确即将点亮」的计划性桥接（比照 scp-wait 先例），非无计划空转**；harness commit 即在 .82 起 P1.6。
+> - **✅ Paper B P2.3 Qwen 跨家族 #117 完成**（agent a79b7fac）：Qwen f12k2 healed（14/36=39% 深）**PPL 23.49（=2.06× base 11.42）但 MMLU 0.2495≈chance（recovery ≈0%）**，core6 .4624 know5 .3689；base full-36 PPL11.42/MMLU.7297/core6.6648/know5.6850。**「PPL 恢复 MMLU 滞后」dissociation 跨家族稳健、且更浅→知识恢复更差单调趋势与 OLMo 一致**（Qwen 39% recovery0% < OLMo keep12 44% 7.1% < keep14 50% 19.4%）。脚本 commit f83a696（eval_qwen3_probe2_{ppl,downstream}.py + _run_qwen3_probe2_eval.sh）。**MAIN 回填 RUN_REGISTRY + paperB/TODOList（下方进行中）**。
+> - **✅ 其余 2 训练/eval 臂**：LOCAL #100 full-32L（step~22.9k/200k healthy）+ .252 keep8 平台期 eval（step121000 PPL=13.333 已出，core downstream phase；跑完回填 paperB §深度阶梯 keep8 行 + task #96）。Monitor 8088 待 curl。
+> - 本轮：0 kill；2 launch（P0.5 Arm A .104 / Arm B .73）；#117→completed，#118→in_progress。**铁律1 满足**（.104/.73 上 P0.5 训练，.82 明确即将点亮 P1.6，.252 跑 keep8 eval，LOCAL 跑 full32；无无计划空转）。
+
+## 当前快照（2026-08-02 12:56 +08:00，★ 用户「.252 饱和了就 kill 了 eval 写进文件」→ keep8 平台期 kill+eval；P0.15 交付、P1.7 需 resume）
+> - **★ 用户指令执行：.252 keep8 平台期 kill + eval**：keep8+fresh2（10L，最浅臂）训练到 step121000/200k，**训练 PPL 已 post-100k 平台**（15.37@50k→14.37@80k→~13.5@120k，单步 13.00@115k/13.69@120k=batch 噪声），且 keep8 比 keep10（83.5k 知识轴平台）更浅→更早饱和。按用户「饱和就 kill+eval+写文件」：**KILL keep8 训练**（.252 parent 974856 + 8 rank 974929-936，0 残留 + 0 compute-apps，8 卡释放）→ 立即在释放的 .252 起 **base-protocol eval 3 点阶梯 STEPS=121000/110000/100000**（PPL+core6+know5，keep_front=8 n_fresh=2，8-GPU sharded），既定 keep8 端点数字又文档化知识轴平台（~21k step 内是否 noise-flat）。log `logs/eval_keep8_FINAL.log`，脚本 `scripts/_run_olmo2_eval_keep8.sh`（commit a01de0a）。**跑完 MAIN 回填 paperB §深度阶梯 keep8 行 + RUN_REGISTRY + task #96**（keep8 是 #96 最后一格，keep10 已冻结）。
+> - **✅ Paper A P0.15 交付**（subagent aab0e8c5 DONE）：`status/P0_15_AUDIT.md`（commit 6bfcc55，无 GPU，CPU-only 打分核实）。结论：A) j=0 cell 分解全 5 benchmark 无 [BLOCKED-DATA]，RULER Cohort-B niah_single_3 macro 99.20 单列；B) 读长口径无硬矛盾，2 处 loose-wording 可选微调；C) 匿名扫描**唯一硬命中** `08_statistics_appendix.tex:79-81` 真实 judge 域名需泛化，余 clean。**MAIN 待办（等用户签字后在 .tex 执行）：1 必改 + 4 可选**。
+> - **⚠️ Paper A P1.7 需 resume**（a0a846b4 finished 但**未交付 harness**）：git log 无其 commit，盘上无 bench_p1_7_h12_oracle.py——它去跑 GPU sanity 卡住提前停。已 SendMessage 修正：纯 code-prep 禁跑 GPU，只写 harness+DRY launch script+commit。
+> - **✅ Paper A P1.6 仍在跑**（a1efd83a，SnapKV+PyramidKV harness code-prep，未完成通知）。
+> - **✅ 其余 3 臂继续**：LOCAL #100 full-32L（step22900/200k ppl8.37 8×100% healthy）+ .82 ShortGPT step153500 eval（PPL+core6 done，know5 phase near done）+ .104/.73 Qwen f12k2 eval（scp ~98% 完即启动，coder a79b7fac）。Monitor 8088 http200 OK。
+> - 1 kill（keep8 .252 平台期）+ 1 launch（keep8 eval .252）+ 1 subagent resume（P1.7）。铁律1 满足（.252 kill 后立即起 eval 不空转；余卡全 training-healthy 或 near-done eval）。
+
+## 当前快照（2026-08-02 12:40 +08:00，★★ 用户「paperA todolist 更新了记得跑=优先级最高」+「H20 应该空出来好几台」→ Paper A 顶到 PaperB P0.5 之上）
+> - **★★ 用户指令（最新，覆盖 12:11）**：Paper A（`paperA/TODOList.md`）为**最高优先级**；H20 应有数台空闲。按 TODOList §建议顺序 P0.15→P1.6→P1.7→P2.4 推进。**P0.5 launch 排到 Paper A 之后**（h20-paperA-over-paperB-priority memory）。
+> - **✅ 已派 3 条 Paper A 流（全 background）**：
+>   - **P0.15**（REQUIRED, NO GPU，subagent aab0e8c5）：j=0 cell 分解（从现有 raw preds，RULER paired j=0=Cohort-B niah_single_3 单列勿混 Cohort-A）+ 读长术语扫描（nominal 6,657 vs actual 6.2–6.5k）+ 匿名/可复现扫描；只产出 `status/P0_15_AUDIT.md`，不碰 .tex。
+>   - **P1.6**（HIGH-VALUE, inference-only，coder a1efd83a，code-prep）：官方 SnapKV+PyramidKV（禁自研 PyramidMemory/SnapKV-on-chunks）retained budget=6,657，RULER Cohort-A 15 cell + LoCoMo，报 full-prefill lat/peak-mem/decode。写 `scripts/eval_p16_kvcompress.py`+`_run_p16_baselines.sh`+`src/baselines/{snapkv,pyramidkv}/`。**完整 eval 等 MAIN 在 diskB 空节点启动**。
+>   - **P1.7**（HIGH-VALUE, inference-only，coder a0a846b4，code-prep）：continuous-prefix h12 归因 oracle（第 3 臂：连续位置/全 causal 跑 layers 0-11 截 pack-level h12 → 同 LoRA 跑 12-35），min niah_multikey_1 8k/16k n=100。写 `scripts/bench_p1_7_h12_oracle.py`+`_run_p17_oracle.sh`。**完整 eval 等 MAIN 启动**。
+> - **📋 排程**：Paper A GPU 项（P1.6/P1.7）gating=代码准备（~30-60min），非缺节点 → 让 diskB 三节点先跑完 near-done 的 PaperB eval（.82 salvaged ShortGPT step153500 ~40min；.104/.73 Qwen eval scp ~3min out 后启动），随节点释放 MAIN 即上 Paper A GPU eval。**抢占 near-done eval 只会空转（Paper A 无 GPU-ready job）→ 不抢占**。
+> - **✅ .82 ShortGPT step153500 eval 修复重启**：原 driver 用坏的 `.venv/bin/python`（diskB 上 numpy/torch 缺）→ 5 秒崩。已 kill 坏 driver+scp，用 `olmo2_venv/bin/python` 直接在 .82 重启（ckpt 48.7GB 已在盘，救回 sunk scp），当前 PPL phase 健康。
+> - **✅ 其余训练臂继续**：LOCAL #100 full-32L（step~22600/200k ppl~8.55）+ .252 keep8（wzc1，~1 天到 200k）。Monitor 8088 http200 OK。
+> - 0 kill（本轮，坏 driver 上轮已清）；1 launch（.82 salvaged eval）+ 3 subagent dispatch（P0.15/P1.6/P1.7）。铁律1 满足（24 卡：.82 跑 eval，.104/.73 scp 等待即将点亮，Paper A code-prep 并行推进）。
+
+## 当前快照（2026-08-02 12:11 +08:00，✅ 用户「paperB todolist 更新了你可以开始跑」→ 备 P0.5 结构隔离双臂 + Qwen eval scp in flight）
+> - **★ 用户指令（最新）**：paperB TODOList 更新完毕，可开始跑；平台期确认后即可 kill（效率）。新增最高优先级项 = **P0.5 ShortGPT 结构隔离控制**（task #118）：Arm A contiguous16/no-fresh（继承 layers 0-15，0 fresh）+ Arm B retained-final14+fresh2（继承 [0-12,31]=14层 + 2 fresh）。拆分 ShortGPT-16 vs keep14 的「继承层数」与「选层/final-layer retention」混淆。
+> - **✅ 机制已核实 + 派 prep coder（a0ef019c，无 GPU）**：Arm A 复用现成 `train_olmo2_shortgpt.py`（任意 keep_layer_indices，n_fresh=0）零改代码；Arm B 需新 `train_olmo2_shortgpt_fresh.py`（shortgpt 任意索引 + arch_probe2 的 fresh-init + 双桶 LR）。coder 写两个 DRY-by-default launch 脚本 + dry-run 验证 + 同步 diskB + git commit，**不启动 GPU**（两节点正忙）。
+> - **✅ diskB 训练资产齐全**（.104/.73 共享）：OLMo-2-7B base（`../models/OLMo-2-1124-7B`）、`dolmino_now15b.npy`（repo+/dev/shm）、val、olmo2_venv/.venv 均在。
+> - **⏳ Qwen eval（#117，P2.3）scp in flight**：coder a79b7f 存活，ported eval 脚本已写好（diskB+LOCAL），`outputs/qwen3_minarch_armB_f12k2_200k/final.pt` 正 scp→diskB（12:11 时 23.5/47GB，~14MB/s，~再 28min）；scp 完点亮 .104(f12k2)+.73(base-ref)。**16×H20 此刻空 = scp 传输必要等待（非无计划空转），已有明确即将点亮计划**。
+> - **📋 排程决策**：Qwen eval（P2.3 可选、短~2h、已 90% 备好、答用户「训完也评测」）先用 .104/.73；P0.5（最高优先级、需 Arm B 代码~30-60min）并行备好，Qwen eval ~14:40 释放两节点即启动 **Arm A on .104 + Arm B on .73 并行**（2 独立臂各占 1 节点，同步跑到 200k 便于 matched-step 对照）。抢占 Qwen eval 不划算（省 P0.5 ~1.6h 却要重跑 scp+eval ~2.6h）。
+> - **✅ 其余训练臂继续**：LOCAL #100 full-32L + .252 keep8（wzc1）+ .82 ShortGPT 中点 eval。
+> - 0 kill；0 新 GPU launch（Qwen eval 已在途、P0.5 待节点释放）。铁律1 满足（16 卡 scp 等待 + 最高优先级 P0.5 prep 推进中）。
+
+## 当前快照（2026-08-02 11:34 +08:00，✅ heartbeat：16×H20 补卡起 Qwen 剪层-heal 跨家族对照 eval）
+> - **🎯 发现 disk 上已有未评测的 Qwen 剪层-heal ckpt** = 用户 OLMo-vs-Qwen 问题的经验答案：`outputs/qwen3_minarch_armB_f12k2_200k/final.pt`（47GB，Qwen3-8B keep_front12+fresh2=14L，healing arm，训练到 200k on SlimPajama-Qwen-tok，**从未 eval**）= Paper B **P2.3 跨家族对照**。全项目无任何 qwen minarch 的 ppl/downstream/mmlu 结果。
+> - **✅ 铁律1 补卡**：16×H20（.104+.73，diskB）→ 派 coder a79b7f 把 OLMo probe2 eval（`eval_olmo2_probe2_{ppl,downstream}.py`）移植到 Qwen3（复用 `train_qwen3_arch_probe2.py` 的 pruned-shell 构建），base-protocol（chat=False/no-BOS/LL-MC）跑 PPL(slimpajama_val_2048_qwen3)+core6+know5(MMLU)：**.104 = Qwen full-36 base 参照（Control 0），.73 = f12k2 healed 200k**，并行。算 MMLU above-chance recovery 与 OLMo keep12(.2752/7.1%)/keep14(.3191/19.4%) 对比。coder scp 47GB final.pt→diskB(.73)，跑完 rm。
+> - ⚠️ 口径：Qwen 训练语料 SlimPajama≠OLMo Dolmino → PPL 不可跨家族直接比；但 MMLU recovery 语料无关、可比。f12k2 深度 14/36=39%（比 OLMo keep12 的 44% 略深）。
+> - **✅ 其余 2 训练臂继续**：LOCAL #100 full-32L（step21560/200k ppl8.11 8×100%）+ .252 keep8（8×100%，wzc1）。.82 跑 ShortGPT 中点 eval（153500/128000）。Monitor 8088 http200。
+> - 0 kill；1 launch（Qwen probe2 eval on 16×H20）。铁律1 满足。
+
+## 当前快照（2026-08-02 11:15 +08:00，★用户决定：keep10/keep12 平台期冻结=200k 并 kill；16×H20 释放）
+> - **★ 用户指令执行完毕**：keep10(12L) / keep12(14L) 知识轴（core6/know5/MMLU）近 ~13k step 已在噪声内平台（MMLU 钉 chance .27），按用户「已到平台期直接用当前数据=200k、然后 kill」：
+>   - **keep10·83500 冻结=≈200k**（PPL 12.8160 core6 .5303 know5 .4491 mmlu .2718，batch82k MAIN 从 JSON 核对）→ **.104 训练 kill**（parent PID 3995588 + pkill `keep10[f]resh2`，0 残留进程 + 0 GPU compute-apps）。
+>   - **keep12·124000 冻结=≈200k**（PPL 11.4426 core6 .5669 know5 .4608 mmlu .2752）→ **.73 训练 kill**（parent PID 3983054，0 残留 + 0 compute-apps）。
+>   - 已写入 `paperB/TODOList.md` §深度阶梯 200k 端点 + RUN_REGISTRY frontier 表加 ⇒≈200k 标注 + 冻结说明；task #95 完成、#96 keep10 冻结（keep8 仍跑）。
+> - **⚠️ pkill self-match 坑修复**：`pkill -f 'train_olmo2_arch_probe2.*keep10fresh2'` 会匹配到运行 pkill 自身的 shell（cmdline 含该 pattern 字面）→ 杀掉 SSH 会话报 exit 255。改用 `[f]` 括号技巧 `keep10[f]resh2`（正则匹配训练进程但不匹配含字面 `[f]` 的自身 cmdline）+ 显式 parent PID kill -9，一次干净落地。
+> - **✅ 剩 2 训练臂继续跑满 200k**：LOCAL #100 full-32L（step~21000/200k，~6.5 天）+ .252 keep8（step~116000/200k，wzc1 FS，~1 天，无 frontier 轨迹可冻结故跑满）。
+> - **🟢 .104 + .73 = 16×H20 释放**（diskB FS）→ 铁律1：下轮 heartbeat 可补 Paper C P-C1（task #92，auto-launch on free .104/.73）或其它 pending。Monitor 8088 待下轮 curl 确认。
+> - 2 kill（keep10 .104 / keep12 .73）；无 launch。ShortGPT 中点 128000/153500 仍 deferred。
+
+## 当前快照（2026-08-02 10:53 +08:00，✅ heartbeat：batch82j 出 keep12·124000（keep10·83500 又被 SKIP）→回填1点+起单点 batch82k 补 keep10·83500；4 arm 全健康）
+> - **✅ batch82j ALL DONE 10:38:11**：keep12·124000 出（PPL 11.4426 core6 .5669 know5 .4608 mmlu .2752，MAIN 从 JSON 核对回填 RUN_REGISTRY）。**但 keep10·83500 在 loop 到它时尚未落盘 → 又 SKIP**（连续第二轮 spec2-skip，guard 正确未假-DONE）。
+> - **✅ 采用新规则打破 spec2-skip**：keep10·83500 现已落盘（.104 已 step83600）= 未 eval 里程碑 = 铁律1 缺口 → 起**单点 batch82k**（.82 setsid nohup </dev/null，log `logs/frontier_batch_82k_20260802.log`，脚本 `scripts/_frontier_batch_82k.sh`，PY=olmo2_venv）：**只含盘上已有的 keep10·83500 一个点**，故意不赌即将落盘的 keep12·124500——从此 batch 只含「当前已落盘、未 eval」的点，单点也起。已确认 8 shard 起（START 10:55:19）。跑完 MAIN 回填。
+> - **✅ 4 arm 全健康+推进**：LOCAL #100 full-32L（step20940/200k ppl8.11 3.16s/step）+ .252 keep8（step115600/200k ppl13.26 1.02s/step，**wzc1 FS**）+ .104 keep10（step83600/200k ppl13.17 6.83s/step 最长杆）+ .73 keep12（step124380/200k ppl11.42 7.81s/step）。Monitor 8088 http200。
+> - 无 kill；1 launch（单点 batch82k）。铁律1 满足。ShortGPT 中点 128000/153500 仍 deferred。
+> - ⚠️ **教训固化**：500 步间隔下「已落盘先、即将落盘后」的两点 batch 会稳定 SKIP 第二点（~13min eval 早于第二点 ~20min 落盘）。**新规则：batch 只含当前已落盘未 eval 的点，只有一个就跑单点 batch**，不再赌第二点。
+
+## 当前快照（2026-08-02 10:23 +08:00，✅ heartbeat：batch82i 出 keep10·83000（keep12·124000 被 SKIP）→回填1点+起 batch82j 补 keep12·124000；4 arm 全健康）
+> - **✅ batch82i ALL DONE 10:05:52**：keep10·83000 出（PPL 12.8241 core6 .5314 know5 .4418 mmlu .2585，MAIN 从 JSON 核对回填 RUN_REGISTRY）。**但 keep12·124000 在 10:05 loop 到它时尚未落盘 → SKIP**（脚本 ckpt-exist guard 正确未假-DONE）。
+> - **✅ keep12·124000 现已落盘**（.73 已 step124100）= 未 eval 里程碑 = 铁律1 缺口 → 起 **batch82j**（.82 setsid nohup，log `logs/frontier_batch_82j_20260802.log`）：specs **keep12·124000（先，补 skip 的点）→ keep10·83500（后，机会捕获，~23min 内落盘）**。已确认 keep12·124000 8 shard 起（START 10:24:47）。跑完 MAIN 回填。
+> - **✅ 4 arm 全健康+推进**：LOCAL #100 full-32L（step20260/200k ppl8.46 3.16s/step）+ .252 keep8（step113880/200k ppl13.66 1.02s/step，**wzc1 FS**）+ .104 keep10（step83300/200k ppl13.22 6.84s/step 最长杆）+ .73 keep12（step124100/200k ppl11.23 7.81s/step）。Monitor 8088 http200。
+> - 无 kill；1 launch（batch82j）。铁律1 满足。ShortGPT 中点 128000/153500 仍 deferred。
+> - ⚠️ **教训**：batch 内 spec2 若尚未落盘会被 SKIP（非 bug，guard 生效），下轮补起即可；ordering「已在盘的放前、即将落盘的放后」仍是最优，但即将落盘的点 eval 时长 <12min 时可能来不及。
+
+## 当前快照（2026-08-02 09:53 +08:00，✅ heartbeat：新里程碑 keep10·83000 落盘→补卡起 batch82i；4 arm 全健康）
+> - **✅ 新 frontier 里程碑落盘**：keep10·83000 已存盘（未 eval），keep12·124000 也已在盘（当前 step123880）。**.82 全 8 卡 idle（0% 0MiB）** → 补卡（铁律1）起 **batch82i**（.82 setsid nohup <　/dev/null，log `logs/frontier_batch_82i_20260802.log`，脚本 `scripts/_frontier_batch_82i.sh`，PY=olmo2_venv）：specs **keep10·83000（先，盘上已有）→ keep12·124000（后，也已在盘）**，各 PPL+core6+know5 8 卡 sharded，免 scp。已确认 8 python shard 进程起（keep10·83000 PPL phase，START 09:53:47）。跑完 MAIN 回填 2 点。
+> - **✅ 4 arm 全健康+推进**：LOCAL #100 full-32L（step19760/200k ppl8.37 3.16s/step）+ .252 keep8（step112380/200k ppl13.34 1.02s/step，**wzc1 FS**）+ .104 keep10（step83020/200k ppl13.26 9.64s/step 最长杆）+ .73 keep12（step123880/200k ppl11.65 7.81s/step）。Monitor 8088 http200。
+> - 无 kill；1 launch（batch82i，补 .82 idle）。铁律1 满足。ShortGPT 中点 128000/153500 仍 deferred。
+
+## 当前快照（2026-08-02 09:23 +08:00，✅ heartbeat：batch82h 全完+回填2点；frontier 表再度追平，.82 合理空闲）
+> - **✅ batch82h ALL DONE 09:20:01**（2 点全出，无 silent-skip）。MAIN 从 JSON 核对回填 RUN_REGISTRY frontier 表：**keep10·82500 PPL 12.8360 core6 .5318 know5 .4344 mmlu .2563**、**keep12·123500 PPL 11.4475 core6 .5736 know5 .4736 mmlu .2749**。
+> - **frontier 表再度 100% 追平所有盘上 keep10/keep12 存点**（keep10 至 82500、keep12 至 123500）——无未 eval 存点。下一存点 keep10·83000（当前 step82780，~220步/~25min）、keep12·124000（当前 step123640，~360步/~47min）出来后下轮捕获。.82 全 8 卡 idle（0%）= "无未 eval 存点"的合理空闲，非 铁律1 缺口，**本轮不起新 batch**。
+> - **✅ 4 arm 全健康+推进**：LOCAL #100 full-32L（step19180/200k ppl8.05 3.16s/step）+ .252 keep8（step110880/200k ppl13.52 1.02s/step，**wzc1 FS**）+ .104 keep10（step82780/200k ppl13.12 6.80s/step 最长杆）+ .73 keep12（step123640/200k ppl11.57 7.81s/step）。Monitor 8088 http200。
+> - 无 kill；无 launch（.82 合理空闲）。铁律1 满足。ShortGPT 中点 128000/153500 仍 deferred。
+
+## 当前快照（2026-08-02 08:53 +08:00，✅ heartbeat：新里程碑 keep10·82500 落盘→补卡起 batch82h；4 arm 全健康）
+> - **✅ 新 frontier 里程碑落盘**：keep10·82500 已存盘（未 eval），keep12·123500 距落盘 ~10min（当前 step123420）。**.82 全 8 卡 idle（0% 0MiB）** → 补卡（铁律1）起 **batch82h**（.82 setsid，log `logs/frontier_batch_82h_20260802.log`，脚本 `scripts/_frontier_batch_82h.sh`，PY=olmo2_venv）：specs **keep10·82500（先，盘上已有）→ keep12·123500（后，keep10 eval ~12min 内它必落盘）**，各 PPL+core6+know5 8 卡 sharded，免 scp。已确认 keep10·82500 8 shard PPL 进程起（ckpt-load）。跑完 MAIN 回填 2 点。
+> - **✅ 4 arm 全健康+推进**：LOCAL #100 full-32L（step18620/200k ppl8.34 3.16s/step）+ .252 keep8（step109380/200k ppl13.57 1.02s/step，**wzc1 FS**）+ .104 keep10（step82500/200k ppl13.31 6.84s/step 最长杆）+ .73 keep12（step123420/200k ppl11.56 7.81s/step）。Monitor 8088 http200。
+> - 无 kill；1 launch（batch82h，补 .82 idle）。铁律1 满足。ShortGPT 中点 128000/153500 仍 deferred。
+
+## 当前快照（2026-08-02 08:23 +08:00，✅ heartbeat：batch82g 全完+回填2点；frontier 表再度追平，.82 合理空闲）
+> - **✅ batch82g ALL DONE 08:20:08**（2 点全出）。MAIN 从 JSON 核对回填 RUN_REGISTRY frontier 表：**keep10·82000 PPL 12.8462 core6 .5263 know5 .4348 mmlu .2609**、**keep12·123000 PPL 11.4513 core6 .5683 know5 .4630 mmlu .2572**。
+> - **frontier 表再度 100% 追平所有盘上 keep10/keep12 存点**（keep10 至 82000、keep12 至 123000）——无未 eval 存点，故本轮**不起新 batch**。下一存点 keep10·82500（~240步/~27min）、keep12·123500（~300步/~39min）出来后下轮捕获。.82 空闲 = "无未 eval 存点"的合理空闲，非 铁律1 缺口。
+> - **✅ 4 arm 全健康+推进**：LOCAL #100 full-32L（step18040/200k ppl8.17 3.17s/step）+ .252 keep8（step107880/200k ppl13.20 1.02s/step，**wzc1 FS**）+ .104 keep10（step82260/200k ppl13.17 6.84s/step 最长杆）+ .73 keep12（step123200/200k ppl11.71 7.81s/step）。Monitor 8088 http200。
+> - 无 kill；无 launch（frontier 已追平）。ShortGPT 中点 128000/153500 仍 deferred（各需 46GB scp + paper 决策）。
+
+## 当前快照（2026-08-02 07:54 +08:00，✅ heartbeat：新里程碑 keep10·82000 落盘→补卡起 batch82g；4 arm 全健康）
+> - **✅ 新 frontier 里程碑落盘**：keep10·82000 已存盘（未 eval），keep12·123000 距落盘 ~2.6min（当前 step122980）。**.82 全 8 卡 idle（0% 0MiB）** → 补卡（铁律1）起 **batch82g**（.82 setsid，log `logs/frontier_batch_82g_20260802.log`，脚本 `scripts/_frontier_batch_82g.sh`，PY=olmo2_venv）：specs 顺序 **keep10·82000（先，盘上已有）→ keep12·123000（后，keep10 eval ~12min 内它必落盘）**，各 PPL+core6+know5 8 卡 sharded，免 scp 同盘直读。已确认 keep10·82000 8 shard PPL 进程起（ckpt-load 阶段 GPU 0% 正常，与前几批一致）。跑完 MAIN 回填 2 点。
+> - **✅ 4 arm 全健康+推进**：LOCAL #100 full-32L（step17480/200k ppl8.14 3.16s/step）+ .252 keep8（step106380/200k ppl13.41 1.02s/step，**wzc1 FS**）+ .104 keep10（step82000/200k ppl13.07 6.84s/step 最长杆）+ .73 keep12（step122980/200k ppl11.78 7.81s/step）。Monitor 8088 http200。
+> - 无 kill；1 launch（batch82g，补 .82 idle）。铁律1 满足（无空转卡）。ShortGPT 中点 128000/153500 仍 deferred（各需 46GB scp + paper 决策）。
+
+## 当前快照（2026-08-02 07:26 +08:00，✅ heartbeat：batch82f 全完+回填2点；frontier 表已追平所有盘上存点，无空转任务）
+> - **✅ batch82f ALL DONE 07:21:01**（2 点全出）。MAIN 直接在 .82 从 JSON 核对并回填 RUN_REGISTRY frontier 表：**keep12·122500 PPL 11.4573 core6 .5670 know5 .4593 mmlu .2634**、**keep10·81500 PPL 12.8493 core6 .5308 know5 .4458 mmlu .2655**。
+> - **frontier 表已 100% 追平盘上所有 keep10/keep12 存点**（keep10 至 81500、keep12 至 122500 全回填）——当前**无任何未 eval 的存点**，故本轮**不起新 batch**（re-eval 已完成点 = 零价值）。下一里程碑 keep10·82000（~260 步/~30min）、keep12·123000（~240 步/~31min）出来后下轮再捕获。
+> - **✅ 4 arm 全健康+推进**：LOCAL #100 full-32L（step16920/200k ppl7.85 3.16s/step）+ .252 keep8（step104980/200k ppl14.15 1.02s/step，**wzc1 FS**）+ .104 keep10（step81740/200k ppl12.74 6.84s/step 最长杆）+ .73 keep12（step122760/200k ppl11.67 7.81s/step）。Monitor 8088 http200。
+> - 无 kill；无 launch（frontier 已追平，无空转卡可补——.82 空闲是"无未 eval 存点"的合理空闲，非任务缺口）。ShortGPT 中点 128000/153500 仍 deferred（各需 46GB scp + paper 决策）。
+
+## 当前快照（2026-08-02 06:55 +08:00，✅ heartbeat：batch82e 全完+回填2点；.82 idle→起 batch82f；4 arm 全健康）
+> - **✅ batch82e ALL DONE 06:53:14**（2 点全出）。MAIN 直接在 .82 用 olmo2_venv 从 JSON 算并回填 RUN_REGISTRY frontier 表：**keep12·122000 PPL 11.4605 core6 .5696 know5 .4634 mmlu .2665**、**keep10·81000 PPL 12.8563 core6 .5315 know5 .4419 mmlu .2633**。
+> - **✅ .82 idle→补卡（铁律1）起 batch82f**（.82 setsid，log `logs/frontier_batch_82f_20260802.log`，脚本 `scripts/_frontier_batch_82f.sh`，PY=olmo2_venv）：盘上 2 个新存点 **keep12·122500 + keep10·81500**（免 scp）。已确认 8 shard PPL 进程起。跑完 MAIN 回填 2 点。
+> - **I/O contention 核查**：batch82e 期间 .73 keep12 仅 step122520 一步慢到 10.81s/step（ckpt-load 瞬时），前后 122480/122500 均正常 7.81s；.104 keep10 全程 6.84s 无抖动 → eval 读盘对 diskB 训练**无持续拖累**，继续在删前捕获轨迹点 = net-valuable。
+> - **✅ 4 arm 全健康+推进**：LOCAL #100 full-32L（step16340/200k ppl8.37 3.16s/step）+ .252 keep8（step103440/200k ppl14.05 1.02s/step，**wzc1 FS**）+ .104 keep10（step81500/200k ppl13.39 6.84s/step 最长杆）+ .73 keep12（step122520/200k ppl11.59 7.81s/step）。Monitor 8088 http200。
+> - 无 kill；1 launch（batch82f）。铁律1 满足（无空转卡）。
+
+## 当前快照（2026-08-02 06:28 +08:00，✅ heartbeat：batch82d 全完+回填2点；.82 idle→起 batch82e；4 arm 全健康）
+> - **✅ batch82d ALL DONE 06:12:33**（名义 4 点实产 3 点）。MAIN 从 JSON 核对回填 RUN_REGISTRY frontier 表：**keep10·80000 PPL 12.8725 core6 .5308 know5 .4387 mmlu .2611**、**keep10·80500 PPL 12.8698 core6 .5350 know5 .4397 mmlu .2587**（keep12·121500 上轮已回填）。**keep12·121000 被 silent-skip 正确跳过**（ckpt 不在盘、无 summary.json→未 touch DONE marker，符合预期）。
+> - **✅ .82 idle→补卡（铁律1）起 batch82e**（.82 setsid，log `logs/frontier_batch_82e_20260802.log`，脚本 `scripts/_frontier_batch_82e.sh`，PY=olmo2_venv）：盘上 2 个新存未 eval 的最高步点 **keep12·122000 + keep10·81000**（免 scp 同盘直读，最接近训练前沿）。已确认 keep12·122000 8 shard PPL 进程起（ckpt load 中）。跑完 MAIN 回填 frontier 表 2 点。
+> - **✅ 4 arm 全健康+推进**：LOCAL #100 full-32L（step15760/200k ppl8.04 3.16s/step）+ .252 keep8（step101980/200k ppl13.86 1.02s/step，**wzc1 FS**）+ .104 keep10（step81220/200k ppl13.25 6.84s/step 最长杆）+ .73 keep12（step122280/200k ppl12.03 7.81s/step）。Monitor 8088 http200。
+> - 无 kill；1 launch（batch82e，补 .82 idle）。铁律1 满足（无空转卡）。ShortGPT 轨迹中点 128000/153500 仍 deferred（各需 46GB scp LOCAL→.82）。
+
+## 当前快照（2026-08-02 05:29 +08:00，✅ heartbeat：ShortGPT #98 step200000 eval 全完+回填；4 arm 全健康，无空闲卡）
+> - **✅ ShortGPT #98 step200000 downstream eval DONE**（05:06:55 完成，datasets 5.0.0 生效，11 task 全出）。MAIN 从 JSON 核对完整结果：**PPL 9.7803 / core6 .6215 / know5 .5596 / mmlu .4739**（per-task：HS .6851·arc_c .4761·arc_e .7462·piqa .7584·obqa .408 acc_norm·WG .6551 acc；mmlu .4739·lambada .6194·boolq .7287·csqa .5340·siqa .4422 acc）。
+> - **★ 关键发现**：ShortGPT-policy（非连续保留 16 层 [0-12,16,17,31] 含 readout 层 31，0 fresh，200k heal）在 **PPL(1.322× tax) 与 MMLU(63.0% above-chance recovery) 两轴同时优于全部三个 16L 连续截断臂**（keep14 train-all 19.4% / freeze-front 3.6% / random-front ~0%）。混淆项：继承 16 vs 14 层 + 保留原生 readout vs 换 2 fresh 层，两效应未拆分（需 keep16-inherited/0-fresh 连续控制隔离 policy）。
+> - **回填**：`status/PAPERB_THREE_ARM_200K.md`（headline 表 + §ShortGPT breakdown + "★dominates" finding）、`status/RUN_REGISTRY.md`（Paper B 新增 ShortGPT endpoint block）、task#98 desc 更新。原始 JSON 在 `.82:olmo2_ppl_results/7B_shortgpt16_step200000/` + `.82:olmo2_downstream_results/7B_shortgpt16_step200000{,_know}/`。
+> - **✅ 4 arm 全健康+推进**：LOCAL #100 full-32L（step14800/200k ppl8.34 3.16s/step）+ .252 keep8（step99280/200k ppl14.20 1.02s/step，**wzc1 FS**，~1.1d 剩）+ .104 keep10（step80760/200k ppl13.47 6.84s/step 最长杆）+ .73 keep12（step121880/200k ppl11.83 7.81s/step）。Monitor 8088 http200。
+> - **⚠️→✅ .82 补卡（铁律1）**：ShortGPT eval 05:06:55 收尾后 .82 全 8 卡 idle（0 MiB）。发现 diskB 上有 4 个新存未 eval 的 frontier 点（**免 scp**，同盘直读）→ 05:35 起 **batch82d**（.82 setsid pid2124096，log `logs/frontier_batch_82d_20260802.log`，脚本 `scripts/_frontier_batch_82d.sh`，PY=olmo2_venv 修 torch-base 崩坏）：keep12 {121500,121000} + keep10 {80500,80000}，各 PPL+core6+know5 8 卡 sharded。已确认 8 shard PPL 进程起（keep12·121500 首点 ckpt load 中）。`_eval_frontier_pt.sh` 已参数化 PY=${PY:-...} 以兼容 olmo2_venv。跑完 MAIN 回填 RUN_REGISTRY frontier 表 4 点。
+> - 无 kill；1 launch（batch82d，补 .82 idle）。铁律1 满足（无空转卡）。ShortGPT 轨迹中点 128000/153500 deferred（各需 46GB scp LOCAL→.82；待定 paper 是否需 healing 轨迹 vs 仅 headline 端点）。
+
+## 当前快照（2026-08-02 05:00 +08:00，🔧 heartbeat：修复 datasets 版本 + 重跑 ShortGPT #98 downstream；4 arm 全健康）
+> - **✅ ShortGPT step200000 PPL 已出且有效 = 9.7803**（avg_nll 2.2803，8 shard 合并；`olmo2_ppl_results/7B_shortgpt16_step200000/summary.json`）。但 **downstream 6 task 被 SKIP**（`Feature type 'List' not found`）——04:37 建的 olmo2_venv 继承 elsa 的 **datasets 3.6.0**，而 diskB 数据 cache 是新版 datasets（≥4.0 引入 `List` feature）建的→旧版读不了 mmlu/hellaswag/arc*/openbookqa/commonsense_qa。仅 List-free 的 piqa/winogrande/lambada/boolq/social_iqa 成功。
+> - **修复**：查得 .252（跑 keep14 baseline #93 的节点）用 **datasets 5.0.0 + pyarrow 25.0.0**，venv 已有 pyarrow 25→`pip install datasets==5.0.0`（精确匹配 baseline 版本；版本只影响 load 不影响 scoring→数字与 keep14 口径一致）。.73 `.venv` 无 datasets（跑 QCMem/Paper-A 非 OLMo-2 downstream）。
+> - **重跑 downstream-only**（.82 setsid pid2109690，PY=olmo2_venv，脚本 `scripts/_run_shortgpt_downstream_only.sh`，log `logs/eval_shortgpt16_step200000_downstream.log`）：跳过已有效的 PPL，只跑 core6+know5；datasets=5.0.0 已确认，8 shard core6 全活。~30-60min 出 summary→MAIN 回填 RUN_REGISTRY ShortGPT step200000 完整行（ppl9.78+core6+know5+mmlu）。ckpt step200000.pt（48.7GB）仍在 .82 diskB=免重传。
+> - **✅ 4 arm 全健康+推进**：LOCAL #100 full-32L（step14260/200k loss2.13 ppl8.43 3.16s/step 8×100%）+ .252 keep8（step97900/200k ppl14.46 1.02s/step，**wzc1 FS**）+ .104 keep10（step80500/200k ppl13.40 6.84s/step 最长杆）+ .73 keep12（step121660/200k ppl11.59 7.81s/step）。Monitor 8088 http200。
+> - 无 kill；1 launch（downstream-only eval）。铁律1 满足（修复 datasets 阻塞 + .82 持续跑真 eval，无空转）。后续 153500/128000 轨迹点需重新 scp（46GB each）+ eval，下轮视 step200000 完整结果决定是否续跑。
+
+## 当前快照（2026-08-02 04:37 +08:00，🔧 heartbeat：修复 .82 崩环境 + 重启 ShortGPT #98 eval；4 arm 全健康）
+> - **🔧 发现并修复 .82 环境崩坏（silent eval fail）**：03:37 起的 ShortGPT eval driver 把 step200000.pt（46GB）scp 到 .82 成功，但 eval 04:20 秒崩 `ModuleNotFoundError: numpy/torch`——**`/opt/conda/envs/torch-base/bin/python` 被 reset 成 python3.14 且 site-packages 全空**（py3.11 包目录被抹，比常规 reset 更严重；02:55 batch82c 时还是 py3.11+torch 能跑）。`elsa` env 有 torch2.7+numpy 但 transformers 4.45<4.47 无 Olmo2 类。
+> - **修复（非侵入）**：`elsa/bin/python -m venv --system-site-packages olmo2_venv`（继承 elsa torch2.7+numpy，装在 **diskB 共享盘**→跨 .82 reset 持久，不改 elsa），`pip install transformers==5.5.4`（匹配 save-time 版本）+ tokenizers0.22.2。验证 torch2.7+cu126/cuda(8dev)/numpy2.2.6/Olmo2 import 全 OK。
+> - **kill 低效 driver**（pid3728497+scp，本会 3× 传 46GB 后同样 fail-eval=纯浪费带宽/盘）；rm 半截 step153500.pt；**KEEP 已传好的 step200000.pt**（免重传）。
+> - **重启 step200000 eval**（.82 pid2092237，PY=olmo2_venv，log `logs/eval_shortgpt16_step200000.log`）：8 shard 进程全活、各 ~47GB RSS=ckpt 已载入 CPU、PPL 相、无 import error=真进展。~5min PPL + core6 + know5，~20-25min 出 summary.json→MAIN 回填 RUN_REGISTRY ShortGPT 行。后续 153500/128000 需重新 scp（本轮未重启 driver，避免 GPU 冲突；下轮视 step200000 结果决定是否续跑轨迹点）。
+> - **✅ 4 arm 全健康**：LOCAL #100 full-32L（step13540/200k ppl8.21 3.17s/step）+ .252 keep8（step96660/200k ppl13.89 1.02s/step，**wzc1 FS**）+ .104 keep10（step80300/200k ppl13.03 6.84s/step 最长杆）+ .73 keep12（step121480/200k ppl12.14 7.81s/step）。Monitor 8088 http200。
+> - 1 kill（ShortGPT driver+scp）；1 launch（step200000 eval，olmo2_venv PY）。铁律1 满足（修复阻塞 + .82 重投入真 eval）。
+
+## 当前快照（2026-08-02 03:37 +08:00，✅ heartbeat：batch82c 全完+回填2点；.82 idle→起 ShortGPT #98 eval 补卡；4 arm 全健康）
+> - **✅ batch82c ALL DONE 03:17:03**（keep12·120500 + keep10·79000，PPL summary.json 校验通过=silent-skip 修复生效）。MAIN 已核对 JSON 回填 RUN_REGISTRY frontier 表 2 行：**keep12·120500 PPL 11.4740 core6 .5686 know5 .4554 mmlu .2707**、**keep10·79000 PPL 12.9010 core6 .5333 know5 .4417 mmlu .2641**。
+> - **✅ 大发现：ShortGPT #98 heal 已 200k 全完**（`logs/olmo2_7B_shortgpt16.log` 末行 `[step 200000/200000] loss=2.1785 ppl=8.83`，08-01 16:09；ckpt step0→200000 全在盘；chain PID 657760 已死=正常完成非崩）。**#98 剩余=4 点 eval battery（step0/128k/153.5k/200k），此前仅 step0 已 eval（`7B_shortgpt_step0` ppl~401）。**
+> - **✅ .82 idle→补卡（铁律1）起 ShortGPT eval driver**（LOCAL setsid pid3728495，log `logs/drive_shortgpt_eval_82_20260802.log`，脚本 `scripts/_drive_shortgpt_eval_on_82.sh`）：ShortGPT ckpt 在 **wzc1**、.82 是 **diskB**、无空闲 wzc1 节点→逐点 **scp -O**（本节点无 rsync；scp 默认 SFTP 被 .82 sshd 拒→用 `-O` legacy 协议修复）把 46GB ckpt LOCAL→.82，用**canonical `_run_olmo2_eval_shortgpt.sh`**（16 层 shell strict-load，选层已在训练时 compact 进 0-15，故 keep_front=16/fresh=0 正确）跑 PPL+core6+know5 8 卡 sharded，验 JSON 后 rm 远端 ckpt 释盘。步序 200000→153500→128000（headline 优先）。⚠️ 跨盘 scp ~14MB/s→单 ckpt ~30-55min 传输（传输期 .82 GPU 空转=FS split 不可避免的开销，非疏忽；无其他能填这段的 .82 耐跑活）+ ~24min eval。跑完 MAIN 回填 RUN_REGISTRY ShortGPT 行。
+> - **✅ 4 arm 全健康**：LOCAL #100 full-32L（step12540/200k ppl8.24 3.16s/step）+ .252 keep8（step93440/200k ppl13.68 1.02s/step，**wzc1 FS**）+ .104 keep10（step79740/200k ppl12.99 6.84s/step 最长杆）+ .73 keep12（step121000/200k ppl11.83 7.81s/step）。Monitor 8088 http200。
+> - 无 kill；1 launch（ShortGPT eval driver）。铁律1 满足。
+
+## 当前快照（2026-08-02 02:55 +08:00，✅ heartbeat：batch82b 全完；.82 idle→起 batch82c；4 arm 全健康）
+> - **✅ batch82b ALL DONE 02:37:22**（keep12 {120000,115000}+keep10 {70000,75000} 全 eval，末点 keep10·70000 完），shell 已退，.82 8 卡 0MiB 真空闲。
+> - **✅ .82 idle→补卡（铁律1）起 batch82c**（pid2057462，log `logs/frontier_batch_82c_20260802.log`，脚本 `scripts/_frontier_batch_82c.sh`）：仅 **2 个盘上新存未 eval 的点**——keep12·**120500** + keep10·**79000**（训练滚动删旧 ckpt，故盘上只剩最新 3-4 个，其余已 eval+删）。02:55 keep12·120500 PPL 相已起（ceph-load 中）。**脚本加了「PPL summary.json 存在才 touch DONE」的校验**，避免 batch1 的静默-SKIP/假 DONE-marker bug 复现。跑完 MAIN 续填 RUN_REGISTRY frontier 表 2 行。
+> - **✅ 4 arm 全健康**：LOCAL #100 full-32L（step11840/200k ppl8.34 3.15s/step 8/8 98-100%）+ .252 keep8（step91560/200k ppl13.58 1.02s/step，**wzc1 FS**）+ .104 keep10（step79400/200k ppl13.00 6.84s/step 最长杆）+ .73 keep12（step120700/200k ppl11.63 7.81s/step）。Monitor 8088 http200。
+> - 无 kill；1 launch（batch82c）。铁律1 满足。备注：keep8/full32 无 frontier 轨迹点（ckpt 在 wzc1，.82 diskB 读不到，需跨盘 rsync；keep8 仍训练中→端点未就绪，暂不值当跨盘）。
+
+## 当前快照（2026-08-02 02:27 +08:00，✅ heartbeat：batch82b 收尾+全轨迹22点回填；4 arm 全健康）
+> - **✅ batch82b（pid1995941）已跑完 keep12 {120000,115000} + keep10 {70000,75000}**，末点 keep10·75000 downstream 收尾中（.82 8 卡 ceph-load 0MiB=载模型非空转，batch shell pid1995941 + child pid2026458 alive）。**MAIN 一次性把全部完成点核对 JSON 回填 RUN_REGISTRY frontier trajectory 表 = 22 点**（keep10 step10k/70k/73.5k/74k/74.5k/75k/75.5k/76k/76.5k/77k/78k/78.5k；keep12 step115k–120k 全段）。趋势：keep12(14L) PPL~11.5 core6~.567 know5~.464 > keep10(12L) PPL~12.9 core6~.531 know5~.440；mmlu 全轨迹 ~chance（.25-.27）→ 「PPL 早收敛 knowledge 滞后」（轨迹中点非 200k 终点）。step0（degenerate）+ step77500（缺 know5）未入表。
+> - **✅ 4 arm 全健康**：LOCAL #100 full-32L（step11300/200k ppl8.31 3.16s/step 8/8 98-100%）+ .252 keep8（step90200/200k ppl14.49 1.02s/step，**wzc1 FS**）+ .104 keep10（step79160/200k ppl12.71 6.84s/step 最长杆）+ .73 keep12（step120500/200k ppl11.76 7.81s/step）。Monitor 8088 http200。
+> - 无 kill/launch（.82 仍忙于 batch82b 末点，铁律1 满足）；batch82b 完全收尾后下轮 heartbeat 视新存 ckpt 决定是否再补 batch82c。
+
+## 当前快照（2026-08-02 02:02 +08:00，✅ heartbeat：batch1 完成+回填3点；.82 idle→补 batch82b；4 arm 全健康）
+> - **✅ .82 frontier batch1（pid1950104）01:44:58 ALL DONE**——但名义 4 点**实产 3 点**：keep12 **step119000 被静默 SKIP**（ckpt 不在盘，harness 仍 touch DONE marker=已知 bug）。3 个有效点 MAIN 已核对 JSON 回填 RUN_REGISTRY frontier trajectory 表：**keep10·78000 PPL12.9207 core6 .5301 know5 .4425**、**keep10·78500 PPL12.9113 core6 .5324 know5 .4392**、**keep12·119500 PPL11.4826 core6 .5684 know5 .4624**（core6=hellaswag/arc_c/arc_e/piqa/obqa acc_norm+winogrande acc；know5=mmlu/lambada/boolq/csqa/siqa acc）。趋势 keep12>keep10 符深度阶梯；mmlu 仍 ~chance（.26-.27，轨迹中点非 200k 终点）。
+> - **✅ .82 idle→补卡（铁律1）**：起 **batch82b**（pid1995909，log `logs/frontier_batch_82b_20260802.log`，脚本 `scripts/_frontier_batch_82b.sh`）补 4 个盘上已存未 eval 的点：keep12 {**120000**（补 batch1 漏的高端）,115000} + keep10 {75000,70000}（4 ckpt 均已确认在盘 ~40GB）。02:01 keep12·120000 PPL 已完成→正跑 downstream core6，9 procs，进度快（~5min/PPL）。跑完 MAIN 续填 RUN_REGISTRY。
+> - **✅ 4 arm 全健康**：LOCAL #100 full-32L（step10700/200k ppl8.48 3.16s/step）+ .252 keep8（step88600/200k ppl14.64 1.02s/step，**wzc1 FS**）+ .104 keep10（step78880/200k ppl12.70 6.84s/step 最长杆）+ .73 keep12（step120240/200k ppl11.53 7.81→10.82s/step）。Monitor 8088 http200。
+> - 无 kill；1 launch（batch82b eval）。铁律1 满足。
+
+## 当前快照（2026-08-02 01:26 +08:00，✅ heartbeat：5 节点全忙无空闲卡；.252 FS 纠错）
+> - **✅ 4 训练 arm 全健康**：LOCAL #100 full-32L（step10140/200k ppl8.28 3.16s/step 8/8 99-100%）+ .252 keep8（step**87300**/200k ppl13.97 1.02s/step 8/8 100%，newest ckpt step87000，~112.7k step≈1.3d 剩）+ .104 keep10（step78620/200k ppl12.63 6.84s/step 8/8 100%，最长杆）+ .73 keep12（step120020/200k ppl12.16 10.82s/step 8/8 99-100%）。Monitor 8088 http200。
+> - **⏳ .82 Paper B frontier batch（pid1950104）进行中**：keep10 **step78000 ✅DONE**（结果在 batch log，待批次收尾统一 backfill）→ keep10 step78500 **正在跑**（01:22:46 起 PPL 相，ceph-load 8卡 0%/3MiB=正常载模型非 stall，9 procs alive）→ 队列剩 keep12 {119000,119500}。
+> - **⚠️ 纠错：.252 keep8 实际跑在 wzc1 FS**（进程 cmdline=`/apdcephfs_wzc1/share_304376610/.../.venv/bin/python ... --resume_from outputs/olmo2_probe2_7B_keep8fresh2/step47000.pt`，log/ckpt 在 wzc1 根**不是** diskB `/apdcephfs_zwfy6/`）→ .252 与 LOCAL #100 共享 wzc1 盘。**影响：keep8 完成后迁 keep10→.252 需先 rsync keep10 ckpt（diskB .104 保存）→ wzc1**，非零成本，迁移前须计入。查 .252 keep8 step 用 `cd /apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory && grep '\[step' logs/olmo2_7B_keep8fresh2.log`。
+> - 无 launch/kill（批次早已在跑，训练全健康）；铁律1 满足（5 节点全忙）。
+
+## 当前快照（2026-08-02 01:13 +08:00，✅ P0.13 完成+回填；.82 空闲→按铁律1 起 Paper B frontier batch；4 训练 arm 全健康）
+> - **✅ P0.13 DONE + MAIN 已核对 JSON 回填**（TODOList P0.13 RESULTS 块 + 新建 `status/P0_13_QUALITY_LATENCY.md`）：Arm A(j=0) macro **99.19** vs Arm B(j=12) macro **96.07**，diff **+3.12pp** CI[2.36,3.93]（10k bootstrap），McNemar b83/c1/both1404/neither12 **p=8.79e-24**；read latency A 931.9ms / B 664.4ms = **1.4027×**（三进程一致，与 P0.12 1.373× 吻合），total-decode 两臂 ~相等（read-phase 效应非端到端）。质量差集中 niah_multikey_1（distractor 消歧）。**决策=QUALITY-LATENCY TRADEOFF（B 非非劣，显著更弱）**，论文不得写 quality-preserving/pure-depth/端到端加速。coder local commit `29243d9` 未 push。task #115 completed。⚠️ `.tex` 集成待用户拍板（MAIN 不改 .tex）。**P0.13 是投稿前最后一个必要模型 run → Paper A required-model-run 队列已排空。**
+> - **✅ .82 idle→补卡（铁律1 + h20-paperA-over-paperB-priority：Paper A 排空→Paper B）**：P0.13 完成后 .82 8 卡 free。起 **Paper B depth-ladder frontier eval batch**（pid1950104，log `logs/frontier_batch_82_20260802.log`）——4 个盘上已存但未 eval 的 frontier 点：**keep10 {78000,78500}**（keep10 轨迹稀疏，仅 step77500 已 eval，densify 优先）+ **keep12 {119000,119500}**。每点 = PPL+core6+know5 8-shard 全占 8 卡，串行（keep10 先）。base protocol chat=False/no-BOS/LL-based MC。.73/.82/.104 共享 diskB FS 故 .82 直接读 keep10(.104)/keep12(.73) ckpt 无需 rsync。9 procs alive PPL 相（ceph-load 28GB/卡 ~1-2min 后填卡）。
+> - **✅ 4 arm 全健康（≈00:55 读数）**：LOCAL #100 full-32L（step9660/200k ppl8.35 3.17s/step 8/8 99-100%）+ .252 keep8（step85780/200k ppl14.55 1.02s/step 8/8 100%，~1.3d 剩→完成后迁 keep10→.252 B200）+ .104 keep10（step78400/200k ppl12.40 6.84s/step 8/8 100%，最长杆）+ .73 keep12（step119820/200k ppl11.35 7.81s/step 8/8 100%）。Monitor 8088 http200 OK。
+> - **纠错备忘（不变）**：节点密码 `.104=configs/password_h20_24104.txt`、`.73=configs/password_h20_853573.txt`、`.82=configs/password_h20_82250.txt`、`.252(B200,28.89.19.252)=configs/password_b200_19252.txt`，全部端口 36000。#100 log=`logs/olmo2_7B_full32_dolmino.log`；keep{8,10,12} log=`logs/olmo2_7B_keep{N}fresh2.log`；keep{N} ckpt=`outputs/olmo2_probe2_7B_keep{N}fresh2/step*.pt`。frontier 一次一点=`bash scripts/_eval_frontier_pt.sh TAG DIR STEP KEEP FRESH`。dllm 29.162.226.120 绝不碰、cron 4ec42903 不删。
+
+## 当前快照（2026-08-02 00:56 +08:00，✅ heartbeat：4 训练 arm 全健康；P0.13 quality 仍在跑（task-pool churning）；无空闲卡）
+> - **✅ 4 arm 全健康**：LOCAL #100 full-32L（step9660/200k ppl8.35 3.17s/step 8/8 99-100% maxmem176.9GB）+ .252 keep8（step85780/200k ppl14.55 1.02s/step 8/8 100%）+ .104 keep10（step78400/200k ppl12.40 6.84s/step 8/8 100%，最长杆）+ .73 keep12（step119820/200k ppl11.35 7.81s/step 8/8 100%）。Monitor 8088 http200 OK。
+> - **⏳ P0.13 running on .82**（coder a0853dad）：quality dir 已 90 files（00:28 时 43）、rc=0 全通过、task-pool 动态跑 15 cells×4 shard（本轮 launcher 见 niah_single_3/multikey_1/VT 各长档交错，无 error 无 stall），GPU 8 卡 model 全载 mixed-util（16-19GB/卡）。latency micro-bench + paired bootstrap/McNemar 尚未开始（quality 未收尾）。跑完 MAIN backfill TODOList/status（不碰 .tex）。**.82 committed to P0.13，无空闲卡=不违反铁律1。**
+> - **✅ P0.14 DONE + 已回填 TODOList**（详见下方 00:28 快照）；task #116 completed。⚠️ `tab:infbench` withdraw/relabel 待用户拍板（MAIN 不改 .tex）。
+> - **纠错备忘（不变）**：节点密码 `.104=configs/password_h20_24104.txt`、`.73=configs/password_h20_853573.txt`、`.82=configs/password_h20_82250.txt`、`.252(B200,28.89.19.252)=configs/password_b200_19252.txt`，全部端口 36000。#100 log=`logs/olmo2_7B_full32_dolmino.log`；keep{8,10,12} log=`logs/olmo2_7B_keep{N}fresh2.log`。dllm 29.162.226.120 绝不碰、cron 4ec42903 不删。
+
+## 当前快照（2026-08-02 00:28 +08:00，✅ heartbeat：4 训练 arm 全健康；P0.14 完成+回填；P0.13 ~80% quality 已跑完）
+> - **✅ 4 arm 全健康**：LOCAL #100 full-32L（step9100/200k ppl8.33 3.17s/step 8/8 100% maxmem176.9GB）+ .252 keep8（step84360/200k ppl13.97 1.02s/step 8/8 100%）+ .104 keep10（step78140/200k ppl12.87 6.84s/step 8/8 100%，最长杆）+ .73 keep12（step119600/200k ppl11.57 7.81s/step 8/8 100%）。Monitor 8088 http200 OK。
+> - **✅ P0.14 DONE + 已回填 TODOList**（coder a2585140 commit `362a22f` 未 push）：PG-19/InfiniteBench 13-gram MinHash 审计 → 强双峰，~63% 书 / ~67% eval records（诚实口径，≥0.80 保守口径仅 28.1% 因人名匿名化低估）命中 PG-19 训练集。建议 **withdraw/relabel `tab:infbench`**（Book-QA F1 6.06/choice 17.47）。clean-subset 重算需 predictions（在禁访 .73），脚本 `recompute_p0_14_clean_subset.py` 已就绪。⚠️ `.tex` 待用户拍板集成（MAIN 不改 .tex）。task #116 completed。
+> - **⏳ P0.13 running on .82**（coder a0853dad，00:00 launch）：8×H20，~80% quality mode 已完成（niah_single_3 + niah_multikey_1 全 5 长档 cell 齐；现跑最后 VT 64k/128k，iter_bm25 CPU-bound 阶段），43 out files。剩 VT + latency micro-bench（3-proc）+ paired bootstrap/McNemar 统计。ETA 全套 ~01:00–01:30。跑完 MAIN backfill TODOList/status（不碰 .tex）。
+> - **纠错备忘（不变）**：节点密码 `.104=configs/password_h20_24104.txt`、`.73=configs/password_h20_853573.txt`、`.82=configs/password_h20_82250.txt`、`.252(B200,28.89.19.252)=configs/password_b200_19252.txt`，全部端口 36000。#100 log=`logs/olmo2_7B_full32_dolmino.log`；keep{8,10,12} log=`logs/olmo2_7B_keep{N}fresh2.log`。dllm 29.162.226.120 绝不碰、cron 4ec42903 不删。
+
+## 当前快照（2026-08-01 23:30 +08:00，✅ heartbeat：4 训练 arm 全健康；用户加 P0.13/P0.14→.82 转投 Paper A P0.13（final required run），暂停 frontier watch-loop）
+> - **✅ 4 arm 全健康**：LOCAL #100 full-32L（step7960/200k ppl8.37 3.16s/step 8/8 100% maxmem176.9GB）+ .252 keep8（step81280/200k ppl14.11 1.02s/step 8/8 100%）+ .104 keep10（step77600/200k ppl12.89 6.84s/step 8/8 99%）+ .73 keep12（step119120/200k ppl11.63 7.81s/step 8/8 98-100%）。Monitor 8088 http200 OK。
+> - **★ .82 转投 Paper A P0.13（用户 23:26 指令：TODO 新增 P0.13/P0.14，跑完把结果放表里）**：P0.13 = **投稿前最后一个必要模型 run**（同 pack/同 LoRA/同 examples，RULER Cohort B 15 cells j=0 vs j=12 quality↔latency 闭环 + paired bootstrap/McNemar + 3-proc latency）。按 h20-paperA-over-paperB-priority，.82（QCMem H20，Paper-A-first）优先给 P0.13 → **kill frontier watch-loop pid1655855**（Paper B eval densification 让位 Paper A；训练 arm 全不动）。kill 时发现 watch 刚起 keep10:77500 know5 eval（8 shard，20GB/卡）→**留其跑完**（保住该 frontier 点），P0.13 coder poll GPU 空闲后再上 8 卡。
+> - **派 2 coder（opus，后台）**：P0.13 harness+run on .82（agent a0853dad，建 `scripts/bench_p0_13_quality_latency.py`，写 `bench_results/p0_13_quality_latency/`）；P0.14 InfiniteBench/PG-19 污染审计 CPU-only（agent a2585140，写 `bench_results/p0_14_contamination/`）。两者**禁碰 .tex/TODOList/status**，结果由 main backfill 进 TODOList/status 表。
+> - **代价备忘**：P0.13 期间（多小时）.82 不再自动抓 keep10/keep12 frontier 中间点（rotation 每 ~1h 滚 3-4 ckpt）→ 会丢若干中间轨迹点；apex@200000 不丢（训练继续）。轨迹已密（keep10 有 74000-77500 共 8 点），可接受。P0.13 完成后可 resume watch-loop。dllm 29.162.226.120 绝不碰、cron 4ec42903 不删。
+> - **纠错备忘（不变）**：节点密码 `.104=configs/password_h20_24104.txt`、`.73=configs/password_h20_853573.txt`、`.82=configs/password_h20_82250.txt`、`.252(B200)=configs/password_b200_19252.txt`，全部端口 36000。#100 log=`logs/olmo2_7B_full32_dolmino.log`；keep{8,10,12} log=`logs/olmo2_7B_keep{N}fresh2.log`。
+
+## 当前快照（2026-08-01 22:02 +08:00，✅ heartbeat：4 训练 arm 全健康；.82 idle→无未抓点→派 coder 补 P0.12 acceptance bench；P0.12 文档按用户订正）
+> - **✅ 4 arm 全健康**：LOCAL #100 full-32L（step6200/200k ppl8.32 3.16s/step 8/8 100%）+ .252 keep8（step76780/200k ppl14.02 1.02s/step 8/8 100%，~1.5d 剩）+ .104 keep10（step76820/200k ppl12.97 6.84s/step 8/8 100%，最长杆）+ .73 keep12（step118440/200k ppl11.78 7.81s/step 8/8 100%）。Monitor 8088 http200 OK。
+> - **✅ .82 idle-card（本轮不同）**：8×0%，但**无未抓 frontier 点**（watch-state keep12:118000 / keep10:76500 均已抓；下一点 keep12 s118500 约 ~8min 后落盘，watch-loop pid1655855 alive etime4h26m 会自动抓）。故不做无意义 micro-eval → 派 coder(opus) 用 .82 空闲 8 卡跑 **P0.12 acceptance-closure bench**（output-consistency j0 vs j12 + upper-layer/LM-head 分计时 + provenance：git/版本/权重hash/LoRA-module枚举/NaN检查），写 `bench_results/p0_12_acceptance/`。coder 禁碰 .tex/TODOList/status，结果由 main backfill。⚠️ 该 bench 短（~几min/wave），期间若 keep12 s118500 落盘会被 watch-loop 延后抓（ckpt 持久不丢）。
+> - **✅ P0.12 文档订正（用户两轮 audit）**：`paperA/TODOList.md` + `status/P0_12_DEPTH_REPLAY_LATENCY.md` 均改：① 权威集切 16k `bench_results/p0_12_depth_replay/`（read_s 1.0767→0.7837=1.374×，qtotal 1.329×，peak~17.66GB，pack/LoRA sha 两臂一致），旧 32k `p012/` 降级；② 标题 "纯 depth-replay 延迟隔离"→"**replay 起始层延迟对照**"（非隔离）；③ "replay-kernel speedup"→"**model-side read-path speedup**"（read 未拆 upper-layer vs LM-head，不得称 kernel）；④ 修 4 处表述错（跳/预计算 **lower 12 层**、存 **residual h₁₂**、两臂 layer12 hidden 不同=非语义等价、只对照不证明输出/质量等价/端到端）；⑤ 状态 [DONE]→**[DONE-CORE/VERIFY]**，列 10 项验收。**论文只能写 model-side read-path 对照，不得写同质量 pure-depth 或端到端加速。**
+> - **纠错备忘（关键，供后续 heartbeat）**：节点密码文件 `.104=configs/password_h20_24104.txt`、`.73=configs/password_h20_853573.txt`、`.82=configs/password_h20_82250.txt`、`.252(B200)=configs/password_b200_19252.txt`（**不是** password_h20_returned.txt，那是 .53/.174）。全部端口 36000。#100 训练 log=`logs/olmo2_7B_full32_dolmino.log`；keep{8,10,12} log=`logs/olmo2_7B_keep{N}fresh2.log`（无 probe2）。
+> - **维持原方案（不 merge）**：keep8 完成后迁 keep10→.252 B200（~6.7×，总 ~2.9d 优于 16 卡 merge ~4.9d）。不动健康 arm。dllm 29.162.226.120 绝不碰、cron 4ec42903 不删。
+
+## 当前快照（2026-08-01 21:28 +08:00，✅ heartbeat：4 训练 arm 全健康；.82 idle→补 keep10 s76500 frontier eval）
+> **本轮实测**：
+> - **✅ 4 arm 全健康**：LOCAL #100 full-32L（step5660/200k ppl8.37 3.16s/step 8/8 100%）+ .252 keep8（step75340/200k ppl14.50 1.02s/step，~1.5d 剩）+ .104 keep10（step76560/200k ppl12.83 6.84s/step 8/8 100%，最长杆）+ .73 keep12（step118220/200k ppl11.92 7.81s/step 8/8 100%）。Monitor 8088 http200 OK。
+> - **✅ .82 idle-card 修复（连续第 8 轮）**：heartbeat 时 8/8 0%（watch caught keep10:76000/keep12:118000），keep10 已推进到 step76560→存在**未抓点 keep10 s76500**。先置 watch-state keep10:76500（防 double-eval race）→ 启 `eval_frontier_pt keep10 76500 10 2`（9 procs，已进 downstream CORE）。
+> - **纠错备忘（关键，供后续 heartbeat）**：节点密码文件 `.104=configs/password_h20_24104.txt`、`.73=configs/password_h20_853573.txt`、`.82=configs/password_h20_82250.txt`（IP 28.82.250.82）——**不是** `password_h20_returned.txt`（那是 .53/.174 用）。LOCAL #100 训练 log = `logs/olmo2_7B_full32_dolmino.log`。keep10/keep12 训练 log = `logs/olmo2_7B_keep{N}fresh2.log`（无 probe2）。
+> - **维持原方案（不 merge）**：keep8 完成后迁 keep10→.252 B200（~6.7×，总 ~2.9d 优于 16 卡 merge ~4.9d）。不动健康 arm。dllm 29.162.226.120 绝不碰、cron 4ec42903 不删。
+> ↓ 下方 20:56 / 20:24 / 19:55 / 19:26 及更早快照沉淀。
+
+## 当前快照（2026-08-01 20:56 +08:00，✅ heartbeat：4 训练 arm 全健康；.82 无未抓点→等 keep12 s118000 落盘补 frontier eval）
+> **本轮实测**：
+> - **✅ 4 arm 全健康**：LOCAL #100 full-32L（step5060/200k ppl8.03 3.16s/step 8/8 98-100%）+ .252 keep8（step73780/200k ppl14.36 1.02s/step 8/8 100%，~1.5d 剩）+ .104 keep10（step76300/200k ppl12.93 6.84s/step 8/8 100%，最长杆）+ .73 keep12（step117980/200k ppl11.86 7.81s/step 8/8 100%）。Monitor 8088 http200 OK。
+> - **✅ .82 idle-card 修复（连续第 7 轮，本轮特殊）**：heartbeat 时**无未抓点**（keep12 117500/keep10 76000 均已抓），但 keep12 s118000 临近（~20 步）。等 150s 待其落盘→启 `eval_one 7B_keep12_step118000`（先置 watch state keep12:118000，9 procs）。比让 .82 空等 watch-loop 更紧。
+> - **决策复核（拒绝 16 卡 merge）**：考虑过把 .104+.82 合 16 卡跑 keep10（同 diskB，不需 kill 健康 arm 因 .82 无训练）——但 ~2×（~4.9d）**慢于** B200 迁移总时（~2.9d，含等 keep8 ~1.5d），且牺牲 frontier-catch。**维持原方案 = keep8 完成后迁 keep10→.252 B200**，不 merge、不动健康 arm。
+> - dllm 29.162.226.120 绝不碰、cron 4ec42903 不删。训练 log 路径 `logs/olmo2_7B_keep{N}fresh2.log`（无 probe2）。
+> ↓ 下方 20:24 / 19:55 / 19:26 及更早快照沉淀。
+
+## 当前快照（2026-08-01 20:24 +08:00，✅ heartbeat：4 训练 arm 全健康；.82 keep12 s117500 eval 完成→又 idle→补 keep10 s76000 frontier eval）
+> **本轮实测**：
+> - **✅ 4 arm 全健康**：LOCAL #100 full-32L（step4560/200k ppl8.35 3.16s/step 8/8 99-100%）+ .252 keep8（step72300/200k ppl14.74 1.02s/step 8/8 100%，~1.4d 剩）+ .104 keep10（step76040/200k ppl13.32 6.84s/step 8/8 100%，最长杆）+ .73 keep12（step117760/200k ppl11.86 7.81s/step 8/8 100%）。Monitor 8088 http200 OK。
+> - **✅ .82 idle-card 修复（连续第 6 轮）**：上轮 keep12 s117500 eval **20:06 DONE**。本轮 .82 又 idle + 新未抓点 **keep10 step76000**（watch state=75500）。复用 `scripts/_eval_frontier_pt.sh` + 先置 watch state `keep10:76000` + 启 `eval_one 7B_keep10_step76000`（log 20:23:47 PPL phase，9 procs）。keep12 无新点（117500 已抓）。
+> - **⚠️ .82 已连续 6 heartbeat 手动 catch**：bursty ~85% idle 是结构性。**fix 不变 = keep8（~1.4d 剩）完成后迁 keep10→.252 B200（6.7×）**。不 merge、不动健康 arm。训练 log 正确路径 `logs/olmo2_7B_keep{N}fresh2.log`（无 probe2）。
+> - dllm 29.162.226.120 绝不碰、cron 4ec42903 不删。
+> ↓ 下方 19:55 / 19:26 / 18:55 及更早快照沉淀。
+
+## 当前快照（2026-08-01 19:55 +08:00，✅ heartbeat：4 训练 arm 全健康；.82 keep10 s75500 eval 完成→又 idle→补 keep12 s117500 frontier eval；修正训练 log 路径）
+> **本轮实测（nvidia-smi + log 逐节点核对）**：
+> - **✅ 4 arm 全健康**：LOCAL #100 full-32L（step3980/200k ppl8.35 3.16s/step 8/8 98-100%）+ .252 keep8（step70820/200k ppl14.39 1.02s/step 8/8 99-100%，~1.5d 剩）+ .104 keep10（step75800/200k ppl13.08 6.84s/step 8/8 100%，最长杆）+ .73 keep12（step117540/200k ppl12.09 7.81s/step 8/8 100%）。Monitor 8088 http200 OK。
+> - **⚠️ LOG 路径修正（重要，未来 heartbeat 照此）**：keep10/keep12 训练 log 是 `logs/olmo2_7B_keep{N}fresh2.log`（**无 probe2**；`olmo2_probe2_7B_keep{N}fresh2` 是 OUTPUT-DIR 名，不是 log 名）。本轮误用 probe2 路径 grep→空→ls 确认 no such file→但 GPU 8/8 100% + ckpt 在推进（keep12 step117500.pt mtime 19:49）证明健康→改用正确路径拿到 step。
+> - **✅ .82 idle-card 修复（连续第 5 轮）**：上轮 keep10 s75500 frontier eval **19:37 DONE**（成功补卡）。本轮 .82 又 idle（8×0 MiB）+ 盘上新未抓点 **keep12 step117500**（watch state=117000）。按铁律1 复用 `scripts/_eval_frontier_pt.sh` + 先置 watch state `keep12:117500`（防 double-eval）+ 启 `eval_one 7B_keep12_step117500`（log 19:54:37 PPL phase，9 procs）。keep10 无新点（75500 已抓，next save 76000）。
+> - **⚠️ .82 结构性 note（不变）**：frontier-catch 本质 bursty→~85% idle。**结构性 fix = keep8（~1.5d）完成后迁 keep10→.252 B200（6.7×，不 merge、不动健康 arm）**。keep8 完成前每 heartbeat 手动 catch + watch-loop（pid1655855）兜底。
+> - dllm 29.162.226.120 绝不碰、cron 4ec42903 不删。
+> ↓ 下方 19:26 / 18:55 / 18:32 / 18:00 及更早快照沉淀。
+
+## 当前快照（2026-08-01 19:26 +08:00，✅ heartbeat：4 训练 arm 全健康；.82 keep12 s117000 eval 完成→又 idle→补 keep10 s75500 frontier eval）
+> **本轮实测（nvidia-smi + log 逐节点核对）**：
+> - **✅ 4 arm 全健康**：LOCAL #100 full-32L（step3420/200k ppl8.35 3.15s/step 8/8 98-100%）+ .252 keep8（step69340/200k ppl14.78 1.02s/step 8/8 100%，~1.5d 剩）+ .104 keep10（step75520/200k ppl13.55 9.78s/step 8/8 100%，最长杆）+ .73 keep12（step117300/200k ppl11.96 7.81s/step 8/8 99%）。Monitor 8088 http200 OK。
+> - **✅ .82 idle-card 修复（连续第 4 轮）**：上轮 keep12 s117000 frontier eval **19:03 DONE**（成功补卡）。本轮 .82 又 idle（8×0 MiB）+ 盘上新未抓点 **keep10 step75500**（watch state=75000）。按铁律1 即刻补：复用 `scripts/_eval_frontier_pt.sh`（本轮不再新增脚本）+ 先置 watch state `keep10:75500`（watch 跳过防 double-eval）+ 启 `eval_one 7B_keep10_step75500`（log 19:26:49 PPL phase，9 procs：8 shard+driver）。keep12 无新点（117000 已抓）。
+> - **⚠️ .82 结构性 note（不变）**：frontier-catching 本质 bursty（每 ~65-80min 一新 ckpt，eval~5min）→ ~85% idle。**结构性 fix = keep8（~1.5d）完成后迁 keep10→.252 B200（6.7×，优于 16 卡 merge 且无 NCCL 风险/不 kill 健康 arm）**。keep8 完成前不 merge、不动任何健康 arm；每 heartbeat 手动 catch 未抓点 + watch-loop（pid1655855）兜底。
+> - dllm 29.162.226.120 绝不碰、cron 4ec42903 不删。#97（1B keep7 apex）已 completed。
+> ↓ 下方 18:55 / 18:32 / 18:00 及更早快照沉淀。
+
+## 当前快照（2026-08-01 18:55 +08:00，✅ heartbeat：4 训练 arm 全健康；.82 上轮 keep10 s75000 eval 完成→又 idle→补 keep12 s117000 frontier eval）
+> **本轮实测（nvidia-smi + log 逐节点核对）**：
+> - **✅ 4 arm 全健康**：LOCAL #100 full-32L（step2840/200k ppl8.12 3.15s/step 8/8 100%）+ .252 keep8（step67840/200k ppl14.71 1.02s/step 8/8 100%，~1.5d 剩）+ .104 keep10（step75260/200k ppl13.12 6.84s/step 8/8 100%，最长杆）+ .73 keep12（step117060/200k ppl11.45 7.81s/step 8/8 99%）。Monitor 8088 http200 OK。
+> - **✅ .82 idle-card 修复（连续第 3 轮）**：上轮 keep10 s75000 frontier eval **18:39 DONE**（成功补卡）。本轮 .82 又 idle + 盘上新未抓点 **keep12 step117000**（watch state=116500）。按铁律1 即刻补：建**通用参数化 one-shot** `scripts/_eval_frontier_pt.sh`（复用 watch-loop env+helpers，参数 TAG DIR STEP KEEP FRESH，减少脚本增殖）+ 先置 watch state `keep12:117000`（watch 跳过防 double-eval）+ 启 `eval_one 7B_keep12_step117000`（pid1721292，PPL+core6+know5），8 shard ceph-load 相。
+> - **⚠️ .82 结构性 note**：frontier-catching 本质 bursty（每 ~65-80min 一个新 ckpt，eval~5min）→ ~85% idle。**结构性 fix = keep8（~1.5d）完成后迁 keep10→.252 B200（6.7×，优于 16 卡 merge 2× 且无 NCCL 风险/不 kill 健康 arm）**。该期间每 heartbeat 手动 catch 未抓点 + watch-loop（pid1655855）兜底。keep8 完成前不 merge、不动任何健康 arm。
+> - dllm 29.162.226.120 绝不碰、cron 4ec42903 不删。#97（1B keep7 apex）已 completed（上轮）。
+> ↓ 下方 18:32 / 18:00 及更早快照沉淀。
+
+## 当前快照（2026-08-01 18:32 +08:00，✅ heartbeat：4 训练 arm 全健康；#97 1B keep7 apex eval 全部完成→关闭；.82 idle→按铁律1 填 keep10 s75000 frontier eval）
+> **本轮实测（nvidia-smi + log 逐节点核对）**：
+> - **✅ 4 arm 全健康**：LOCAL #100 full-32L（step2280/200k ppl8.04 3.15s/step 8/8 100%）+ .252 keep8（step66440/200k ppl14.99 1.02s/step 8/8 100%，~1.5d 剩）+ .104 keep10（step75020/200k ppl12.70 8/8 100%，最长杆）+ .73 keep12（step116860/200k ppl11.67 7.81s/step 8/8 100%）。Monitor 8088 http200 OK。
+> - **✅ #97（1B keep7 replication）关闭**：apex step200000 eval **18:04 全部完成**——PPL=15.41（9L keep7/fresh2 val=dolmino_now_val.npy）+ core6 + know5（mmlu 0.2524 / lambada 0.3976 / boolq 0.6254accn / csqa 0.3898 / siqa 0.4299accn）。结果落 olmo2_ppl_results/1B_keep7_step200000 + olmo2_downstream_results/1B_keep7_step200000{,_know}。任务 #97 标 completed（数字 backfill RUN_REGISTRY/TODOList 为 main-only，NOT .tex）。
+> - **✅ .82 idle-card 修复（铁律1）**：1B apex 18:04 完成→8 卡 0 MiB。watch-loop（pid1655855）alive 但 mid-sleep（state keep10:74500/keep12:116500）。盘上有**未抓 frontier 点 keep10 step75000**（rotation 保留 75000/74500/70000）。立即填：先置 watch state `keep10:75000`（watch 跳过→无 double-eval/碰撞）+ 建 `scripts/_eval_keep10_s75000.sh`（复用 watch-loop env+helpers）+ 启 `eval_one 7B_keep10_step75000`（pid1702893，PPL+core6+know5）。9 shard 进程 7×Dl（ceph 加载 28GB）+1×Rl，~1-2min 落卡。keep12 无新点（116500 已抓）。
+> - **长杆方案不变**：keep8 完成后（~1.5d）迁最差长杆 keep10→.252 B200（~6.7×，不 merge、不动健康 arm）。dllm 29.162.226.120 绝不碰、cron 4ec42903 不删。
+> ↓ 下方 18:00 / 17:28 及更早快照沉淀。
+
+## 当前快照（2026-08-01 18:00 +08:00，✅ heartbeat：4 训练 arm 全健康；.82 watch-loop 已抓 2 新点后进 sleep→IDLE→填 1B keep7 apex eval 补卡）
+> **本轮实测（nvidia-smi + log 逐节点核对）**：
+> - **✅ 4 arm 全健康**：LOCAL #100 full-32L（step1700/200k ppl8.29 3.15s/step 8/8 100%）+ .252 keep8（step64880/200k ppl14.61 1.02s/step 8/8 100%，~1.6d）+ .104 keep10（step74740/200k ppl13.08 6.84s/step 8/8 100%，最长杆~9.9d）+ .73 keep12（step116620/200k ppl11.57 7.81s/step 8/8 100%）。Monitor 8088 http200 OK。
+> - **✅ .82 idle 窗口再填**：watch-loop（pid1655855）已抓 keep10 s74500 + keep12 s116500 两新点→state 记 keep10:74500/keep12:116500→进 900s sleep（8 卡 0 MiB）。查 #97 **1B keep7 replication**：16-card 训练 **已 DONE**（step200000 @2026-07-20，evals 有 50k/100k/147k/148.5k/150k）**但 apex step200000 eval 缺失**。建 `scripts/_eval_1B_keep7_apex.sh`（pid1686690，BASE 覆盖为 OLMo-2-0425-1B，keep7/fresh2 protocol 与既有 1B eval 完全对齐：val=dolmino_now_val.npy n_win4096）→ eval_one 8 卡 shard PPL+core6+know5，实测 8/8 GPU 57-99% ~18GB/卡 active。**零竞争**：watch-loop ~18:04 醒来时下一 7B ckpt 未到（keep10~18:23/keep12~18:42）→resleep，1B eval(~10min)安全跑完。补 #97 apex 缺口。
+> - **长杆方案不变**：keep8 完成后（~1.6d）迁最差长杆 keep10→.252 B200（~6.7×，> 16 卡 merge ~2× 且需 kill 健康训练/NCCL 风险），本轮不 merge、不动任何训练 arm。dllm 29.162.226.120 绝不碰、cron 4ec42903 不删。
+> ↓ 下方 17:28 / 16:38 及更早快照沉淀。
+
+## 当前快照（2026-08-01 17:28 +08:00，✅ heartbeat：4 训练 arm 全健康在 200k 轨道；.82 continuation 电池排空→IDLE→按铁律1 建 bounded trajectory WATCH-LOOP 补卡）
+> **本轮实测（nvidia-smi + log 逐节点核对，真实时钟~17:23）**：
+> - **✅ 4 arm 全健康**：LOCAL #100 full-32L（step1140/200k ppl8.10 3.15s/step 8/8 100%）+ .252 keep8（step63420/200k ppl14.30 1.02s/step 8/8 100%，~1.6d ETA）+ .104 keep10（step74500/200k ppl12.85 6.84s/step 8/8 100%）+ .73 keep12（step116400/200k ppl11.72 7.81s/step 8/8 100%）。Monitor 8088 http200 OK。
+> - **⚠️→✅ .82 IDLE-CARD 修复**：上轮 continuation 电池（pid1624185）**16:58 DONE**（keep12 s116000 ppl11.52+core6+know5 + keep10 s74000 落盘）→ 8 卡 0 MiB。按铁律1 建 **bounded trajectory watch-loop** `scripts/_run_olmo2_frontier_82_watch.sh`（pid1655855）：轮询 keep10/keep12 最新 ckpt，每出一个新 frontier 点就 eval（PPL+core6+know5, base protocol）——因盘上仅滚动保留 3 个 ckpt（rotation），不及时抓会被删。预置 keep12:116000 跳过已做；现在 eval **keep10 step74500**（新点），8 PPL shard 处 ceph 加载相（Dl）。zero-risk forward-only。
+> - **长杆再评估**：keep10 现为最长杆（~9.9d）> keep12（~7.6d）> #100（~7.25d）>> keep8（~1.6d）。**加速方案不变**：keep8 完成后（~1.6d）迁最差长杆→.252 B200（~7.7× > 16 卡 merge ~2× 且需 kill 健康训练/NCCL 风险），本轮不做 merge、不动任何训练 arm。dllm 29.162.226.120 绝不碰、cron 4ec42903 不删。
+> ↓ 下方 16:38 / 16:27 及更早快照沉淀。
+
+## 当前快照（2026-08-01 16:38 +08:00，✅ heartbeat：4/5 arm 全健康；.82 eval-battery 队列排空→IDLE→按铁律1 立即补挂 continuation frontier 电池）
+> **本轮 heartbeat 实测（nvidia-smi + log 逐节点核对）**：
+> - **✅ 4/5 arm 全健康在 200k 轨道**：LOCAL #100 full-32L（step160 ppl8.18 3.15s/step 8/8 100%）+ .252 keep8（step60840 ppl15.09 1.02s/step 8/8 100%）+ .104 keep10（proc alive 9:48h 8/8 99-100%/90GB，log block-buffered=正常）+ .73 keep12（step116000 ppl11.68 7.81s/step 8/8 100%，长杆 ETA~7.5d）。Monitor 8088 http200 OK。
+> - **⚠️→✅ .82 IDLE-CARD 修复**：.82 之前的 frontier eval 电池（`_run_olmo2_mmlu_recovery_frontier_82.sh`）固定 4-cell 队列（keep10 s73500 / keep12 s115500 / keep8 s48000 / keep10 s70000）**全跑完**（最后 keep10 s70000 know 16:15:37 落盘，其间一次瞬时 OOM warning 但已恢复 mmlu n=1755 完成）→ 8 卡全 0 MiB 空转。按铁律1 立即补挂 **continuation 电池** `_run_olmo2_frontier_82_cont.sh`（pid1624185，复用同 `eval_one` helper=PPL+core6+know5）：**keep12 step116000 + keep10 step74000**（各 KEEP/FRESH 正确，forward-only，喂 Paper B 深度阶梯 healing-trajectory）。8 个 PPL shard proc 已起，处 ceph 模型加载相（34GB fp32×8 并发争 I/O，GPU compute 稍后起），下轮 HB 核 compute+结果。产出 `olmo2_ppl_results/7B_keep{12_step116000,10_step74000}` + `olmo2_downstream_results/…{,_know}` + `/tmp/frontier_82_cont_DONE`。
+> - **keep12 长杆加速路径不变**：keep8 完成后（~1.7d）迁 keep12→.252 B200（7.7× > 16 卡 H20 2×）；现不动 .73 keep12 训练。dllm 29.162.226.120 绝不碰、cron 4ec42903 不删。
+> ↓ 下方 16:27（#100 launch）及更早快照沉淀。
+
+## 当前快照（2026-08-01 16:27 +08:00，✅ ShortGPT16 #98 DONE @200k（final.pt 16:13:09）→ LOCAL B200 空出 → 启动 #100 full-32L continued-pretraining control（Paper B 头号因果对照）；5-arm ladder 全健康）
+> **本轮 launch-check（one-shot，非完整 heartbeat）**：
+> - **✅ #98 ShortGPT-16 heal DONE**：`logs/olmo2_7B_shortgpt16.log` 末行 `[step 200000/200000] loss=2.1785 ppl=8.83`，`final.pt` 已存（16:13:09），proc 已退 → LOCAL B200 8 卡空出。4-point eval 待跑（pending）。
+> - **✅ #100 full-32L continued-pretraining control 已启动（LOCAL B200 wzc1）**：`scripts/_run_olmo2_full32_dolmino_heal.sh`，`keep_front=32/n_fresh=0`（**不剪层**，移植全 32 层+embed/norm/lm_head，uniform LR 2e-5）→ 回答头号 reviewer 因果问：MMLU 崩塌来自**剪层**还是 **Dolmino 续训语料遗忘**。config: BS4 GA4 eff_bs128 seq2048 max200k warmup150 save5000 gradckpt fp32-AdamW。commit `4f7051a`。实测 `[step 60/200000] loss=2.13 ppl=8.43 gnorm=0.34 3.15s/step maxmem=176.9GB`，8/8 GPU 100%/~174GB，无 OOM/Traceback，`[optim] group inh_decay 7298.1M base_lr=2.00e-05` → eff_bs/LR 均正确。ETA~7.3d。LOG=`logs/olmo2_7B_full32_dolmino.log`。
+>   - **⚠️ 两次 pre-launch OOM 误射（均在跑 step 前 kill，无落 step）**：(1) BS16 GA1 在 B200 178GiB OOM——full-32L fp32-AdamW ~112GiB 固定优化器态（W28+G28+m28+v28）+ BS16 activation 超顶；(2) 我 BS4 GA8 修法误得 eff_bs256（算错）→ kill 重启 BS4 GA4=eff_bs128。**教训：full-32L fp32-master 峰值内存随 micro-batch(BS) 而非 GA；eff_bs=BS×GA×NPROC。**
+> - **✅ 5-arm compute-matched depth ladder 全健康在 200k 轨道**：LOCAL **#100 full-32L**（step60 3.15s/step ETA~7.3d，NEW）+ .252 keep8（#96 B200 1.02s/step ETA~1.7d）+ .104 keep10（#96 6.84s/step）+ .73 keep12（#95 step~115720 7.81s/step 长杆 ETA~7.6d）+ .82 forward-only base-protocol eval battery（frontier PPL+MMLU/core6/know5 for keep10/12/8）。
+> - **keep12 长杆加速路径不变**：keep8 完成后（~1.7d）迁 keep12→.252 B200（7.7×）。dllm 29.162.226.120 绝不碰、cron 4ec42903 不删。
+> ↓ 下方 13:02 及更早快照沉淀（其 P0.12 已 DONE，见 `status/P0_12_DEPTH_REPLAY_LATENCY.md`）。
+
+## 当前快照（2026-08-01 13:02 +08:00，⚠️ P0.12 subagent a2e1bc4c 死亡（~12:27，API-400 pattern，0 GPU work）→ TaskStop + INLINE 重启在 .82；4-arm ladder 全健康）
+> **本轮 heartbeat 实测（nvidia-smi + log 逐节点核对）**：
+> - **⚠️→✅ P0.12 idle-card 修复**：12:22 派的 P0.12 subagent `a2e1bc4c` 到 12:53 仍 .82 8 卡全 0 MiB/无 bench 进程、transcript mtime 冻结在 12:27（~27min stale，与此前 #112 两次 API-400 死亡同 pattern）→ 判定已死。**TaskStop 之 + 改 INLINE 跑**（不再派 subagent，规避 API-400）：.82 bg `scripts/_p012_latency.sh`（j=0 与 j=12 **同挂 flagship LoRA** `outputs/qcmem_distill_qwen_j12_r32_4k/final`，32k，n_repeat=20 warmup=2 n_decode=32，各 3 process reps，串行 cuda:0 求净延迟）。已核 j=0+LoRA smoke 通（read_len=6657=同 pack），当前 j0_rep1 GPU0 100%/30GB 在跑。产出 `bench_results/p012/p012_j{0,12}_rep{1,2,3}.json`（.82 diskB）+ touch `/tmp/p012_DONE`，跑完 scp 回 + 写 `status/P0_12_DEPTH_REPLAY_LATENCY.md` + 回填 TODOList P0.12（main-only，NO .tex）。
+> - **✅ 4-arm compute-matched depth ladder 全健康在 200k 轨道**：LOCAL ShortGPT16（#98，step192840 ppl8.89 1.56s/step 8/8 100% ETA~3.1h=最先完成）+ .252 keep8（#96 B200，step50240 1.02s/step 8/8 100% ETA~1.77d）+ .104 keep10（#96，8/8 100%/90GB 42procs，log block-buffered=正常）+ .73 keep12（#95，step114420 7.81s/step 8/8 100% 长杆）。Monitor 8088 http200 OK。
+> - **keep12 长杆加速最优路径不变**：keep8 完成后（~1.77d）迁 keep12→.252 B200（7.7×）优于 16 卡 H20 合并（~2×）；.82 现先跑 Paper-A P0.12，.252 空出后再评估 keep12 迁移。
+> - dllm 29.162.226.120 绝不碰、cron 4ec42903 不删。
+> ↓ 下方 12:22 快照沉淀（其 .82=subagent a2e1bc4c 已作废，见上）。
+
+## 当前快照（2026-08-01 12:22 +08:00，✅ #112 mc_ll rescore DONE（数据本已在 .82 磁盘，只回填 TODOList 无需重跑）→ .82 空出→ Paper A GPU 队列仅剩 P0.12（可选延迟隔离）→ 按 Paper-A-first 派 subagent 在 .82 跑 P0.12；4-arm ladder 全健康）
+> **本轮 heartbeat 实测（nvidia-smi + log 逐节点核对）**：
+> - **✅ #112 CLOSED（P2.1 QCMem InfiniteBench longbook_choice_eng LL-MC rescore）**：`--mc_ll` acc_ll=**48.03**（n=229，0 OOM）vs clean-letter 17.47（**+30.56pp**，证实 chat=False clean-letter 低估 choice）；matched-n=229 同 scorer native-window Dense LL-MC=32.31（QCMem +15.72pp）。**数据早在 .82 磁盘**（P2.1 worker 8-01 02:52–03:43 经 `_infb_orchestrate_p21.sh` S3/S4 跑完）→ 无需重跑，只读+回填 `paperA/TODOList.md` P2.1（main-only，NO .tex）。raw `infbench_results/{qcmem_8b_j12_lora_llmc,kvdirect_8b_llmc}/scores.json`（.82 diskB）。task#112 completed。
+> - **✅ 4-arm compute-matched depth ladder 全健康在 200k 轨道**：.252 keep8（#96 B200，step48240，1.02s/step，8/8 100%/115GB，ETA~1.8d）+ .104 keep10（#96，8/8 100%/90GB，log block-buffered=正常，GPU 忙=健康）+ .73 keep12（#95，step114100，7.81s/step，8/8 100%/96GB，ETA~7.8d=长杆）+ LOCAL ShortGPT16（#98，step191320 ppl9.13，1.56s/step，ETA~3.8h）。Monitor 8088 http200 OK。
+> - **.82（28.82.250.82 H20 diskB）= Paper A P0.12 depth-replay 延迟隔离（subagent a2e1bc4c，12:22 起）**：#112 已闭合 → .82 空出 → Paper A GPU 队列仅剩 P0.12（最后一个 Paper-A GPU 项，可选/非阻塞）→ 按 memory `h20-paperA-over-paperB-priority` 严格 Paper-A-first 先跑它。`bench_qcmem_vs_fullctx.py` j0+flagshipLoRA vs j12+同LoRA，同 pack，≥20 reps×3 process，非训练~1h。产出 raw JSON（.82）+ `status/P0_12_DEPTH_REPLAY_LATENCY.md`。
+> - **keep12 长杆加速最优路径**：keep8 完成后（~1.8d）迁 keep12→.252 B200（1.02s/step=**7.7×** vs .73 7.81s/step）优于 .82+.73 16 卡 H20 合并（仅~2×）→ 现不动 keep12，.82 先跑 Paper-A P0.12；.252 空出后再评估 keep12 迁移。
+> - dllm 29.162.226.120 绝不碰、cron 4ec42903 不删。
+> ↓ 下方 12:05 快照沉淀。
+
+## 当前快照（2026-08-01 12:05 +08:00，✅ keep8→.252 B200 迁移**成功**（11:34「中止」快照系 PORT 错误，非密码轮换——已更正）→ keep8 现跑在 .252 B200 @1.02s/step≈5.7× vs H20；.82 空出→接 Paper A #112 mc_ll rescore）
+> **★ 更正 11:34「迁移中止」结论（用户质疑「你用错密码了吧」→ 属实是端口错，用户判断正确）**：.252（28.89.19.252）**并非密码轮换失效**，而是我此前用了**端口 22**（Permission denied）；实际 `password_b200_19252.txt` 在**端口 36000** = ✅ AUTH_OK。∴ 迁移**未中止、已完成**：keep8 `step47000.pt`（34152195199 B，diskB→wzc1 字节校验一致）现在 **.252 B200 从 step47000 续跑**，实测 `[step 47060/200000] 1.02s/step`、8/8 GPU 100%/115GB → ETA→200k ≈1.8d（vs H20 5.78s/step≈10.2d，~5.7× 加速）。**.82 keep8 已 kill（pkill -9，12:00 实测 8 卡全 0-3 MiB 空闲）**→ 按 Paper-A-first 补 **#112**（QCMem InfiniteBench longbook_choice_eng LL-MC rescore，`--mc_ll`，QCMem-only，chat=False，subagent a1796dc1 在跑）。
+> - **✅ 4-arm compute-matched depth ladder 全部在 200k 轨道（实测 12:05）**：.252 keep8（#96，B200，1.02s/step，8/8 100%）+ .104 keep10（#96，8/8 100%）+ .73 keep12（#95，step113980，7.81s/step，8/8 100%）+ LOCAL ShortGPT16（#98，step190660，1.56s/step，8/8 99-100%，~4h left）。Monitor 8088 http200 OK。
+> - **.82（28.82.250.82 H20 diskB）= Paper A #112 mc_ll rescore（QCMem-only，subagent a1796dc1）**：keep8 迁走后空出，按 memory `h20-paperA-over-paperB-priority` 补 Paper A GPU 待跑项（Paper A GPU 队列除 #112 外已排空）。
+> - **wzc1 B200 现状**：.252 ✅ 可达（**端口 36000**）在跑 keep8；.53/.188/.18 仍 Permission denied（真密码轮换）。**教训：连 wzc1 B200 先试端口 36000 再判死，别默认 22。**
+> - dllm 29.162.226.120 绝不碰、cron 4ec42903 不删。
+> ↓ 下方 11:34（结论已更正为误报「中止」）及更早快照沉淀。
+
+## 当前快照（2026-08-01 11:34 +08:00，⚠️【已更正：本快照结论错误】keep8→.252 迁移被误判「中止」——实为我用错端口 22，.252 在端口 36000 实际可达、迁移已成功，详见上方 12:05 快照）
+> **本轮事件（keep8 B200 迁移尝试 + 中止）**：用户此前授权「拿回 .252 跑」。earlier this session .252（28.89.19.252，`password_b200_19252.txt`，port 22）曾一度可达（8× L20A idle，torch2.13）→ 已把 .82 keep8 `step47000.pt`（34152195199 B）scp diskB→wzc1（校验字节精确一致，`outputs/olmo2_probe2_7B_keep8fresh2/step47000.pt`，作 backup 留存）。**但本轮再连 .252 = `Permission denied`（密码已被集群再次轮换，与 .53/.188/.18 同命运）→ 无 B200 可落 → 迁移中止**。keep8 **不 kill**，继续在 .82（step47800 5.78s/step 健康）跑 →200k。#112（mc_ll rescore）因无卡空出仍 pending。
+> - **✅ 4-arm compute-matched depth ladder 全部在 200k 轨道，全忙无空转**：LOCAL ShortGPT16（#98，step189100 1.56s/step，~4.5h left）+ .82 keep8（#96，step47800 5.78s/step）+ .104 keep10（#96，step71380 6.84s/step）+ .73 keep12（#95，step113660 7.81s/step）。Monitor 8088 http200 OK。
+> - **.252（28.89.19.252 B200 wzc1）= 不可达（密码 2026-08-01 再轮换）**；全 4 台 wzc1 B200（.252/.53/.188/.18）现均不可达。若 .252 日后回归，wzc1 已有 keep8 step47000 ckpt→可即时 relaunch（届时宜取 .82 更新 ckpt）。
+> - **长期优先级不变（memory `h20-paperA-over-paperB-priority`）**：H20 空出先补 Paper A 待跑（#112 mc_ll rescore 为下一个 Paper A GPU 项），排空后才 resume Paper B。当前无 H20 空出。dllm 29.162.226.120 绝不碰、cron 4ec42903 不删。
+> ↓ 下方 07:02 及更早快照沉淀。
+
+## 当前快照（2026-08-01 07:02 +08:00，✅ Paper A GPU 队列全排空（#62 tab_scale DONE+folded）→ Paper-A-first 满足→ Paper B 4-arm compute-matched depth ladder 全部在 200k 轨道：.73 keep12 + .104 keep10 + .82 keep8（07:02 起，.82 dllm co-tenant 已撤）+ LOCAL ShortGPT16）
+> **★ 长期优先级（memory `h20-paperA-over-paperB-priority`）：三 QCMem H20（.73/.82/.104）先跑 Paper A 再 Paper B；任何节点空出先补 Paper A 待跑项，Paper A 全排空后才 resume 暂停的 Paper B。** SSH：QCMem H20 三节点用**端口 36000** + 各自密码文件（.73=`password_h20_853573.txt` / .104=`password_h20_24104.txt` / .82=`password_h20_82250.txt`）。dllm 29.162.226.120 绝不碰、cron 4ec42903 不删。
+> - **✅→DONE Paper A #62（Qwen3 scale RULER chat=False，Appendix tab_scale）COMPLETE 2026-08-01 06:50**（worker ac2d74ac 收工）：**全 6 档跑完**——0.6B(j2)=85.68 / 1.7B(j3)=66.81 / 30B-A3B(j12)=80.48（本任务新档，n=500）+ 参考 4B=60.52 / 14B=52.91 / 32B=88.18(n25)。per-task selector（niah→bm25 topk12 r0；vt→iter_bm25 topk16 r4 hop4）与 locked 4B/14B/32B run 逐行一致→跨档可比已核。scale 非单调（0.6B 最高、14B 最弱其 vt 塌）。**已 fold 进 `paperA/TODOList.md` P2.3**（main-only，NO .tex），task#62 completed。产出 `status/P62_SCALE_RULER_CHATFALSE.md`，commit `3ca261d`+`4f7051a`（未 push）。raw `ruler_results/qcmem_scale_{0p6b,1p7b,30ba3b}_chatFALSE_ruler/`。
+> - **★ Paper A GPU 队列现全排空**：#62 是最后一个 Paper A GPU 待跑项；剩余 Paper A 全为 main-only .tex（P0.8 provenance 措辞、#10 InfLLM 行入 .tex + LoCoMo errata + P1.2 软化）——无 GPU 工作 → 按 memory `h20-paperA-over-paperB-priority`「Paper A 排空后才 resume Paper B」条件**满足** → 三 QCMem H20 现全接 Paper B 深度阶梯 resume。
+> - **✅ .73（06:40 起）= Paper B keep12 resume（#95）**：`KEEP=12 N_FRESH=2 RESUME_FROM=outputs/olmo2_probe2_7B_keep12fresh2_wzc1/step111500.pt BS4/GA4`，pid3983054，LOG=`logs/olmo2_7B_keep12fresh2.log`。resume 已核 continue @ step=111500（optimizer 157 params），8/8 GPU 100%/96GB 健康，→200k。
+> - **✅ .104（06:43 起）= Paper B keep10 resume（#96，#62 排空后接力）**：30B-A3B long-pole shard 跑完 .104 全空 → 接 compute-matched ladder 缺口 keep10。`KEEP=10 N_FRESH=2 RESUME_FROM=outputs/olmo2_probe2_7B_keep10fresh2/step69000.pt BS4/GA4`，pid3995588，LOG=`logs/olmo2_probe2_7B_keep10fresh2.log`。**实测 pid alive etime4:56，8/8 GPU 100%/90.5GB**（log block-buffered 空属正常，wrapper 用 python 非 -u），→200k。
+> - **✅→DONE .104 P2.2 持久化存储 I/O（#110）+ P0.2 step-0 recovery（#102）**：均 COMPLETE 已回填（详见下方作废快照）；.104 于 06:43 转 keep10。
+> - **.82（28.82.250.82 H20 diskB）= Paper B keep8 resume（#96，07:02 起，dllm co-tenant 已撤，铁律1 补齐 ladder 最后缺口）**：Paper A P1.1/P1.5（#107）此前已在此跑完（`status/P1_1_P1_5_SCALING_RESULTS.md`）。本轮 heartbeat 实测 .82 8 卡全 0 MiB/0%（dllm SFT 走了）→ 立即补挂起的 keep8。`KEEP=8 N_FRESH=2 RESUME_FROM=outputs/olmo2_probe2_7B_keep8fresh2/step45000.pt BS4/GA4`，pid1531968，LOG=`logs/olmo2_7B_keep8fresh2.log`（save5000，原 500 会爆盘已改）。resume 已核：restored 113 model tensors(strict fp32-master) + optimizer 113 param states(Adam momentum 保留) + **continue @ step=45000** lr_fresh=8.927e-05 lr_inh=1.785e-05。8/8 GPU ~99%/78.4GB 健康，→200k。
+> - **✅ LOCAL（B200/L20A wzc1）= Paper B ShortGPT-16 heal（#98）**：`outputs/olmo2_probe2_7B_shortgpt16`，跑到 200k（用户豁免 Paper-A-first 规则）。step~178880 ppl9.97，绝不重启。
+> - **✅ Paper B 4-arm compute-matched depth ladder 现全部在 200k 轨道**：keep8（.82 pid1531968 @45000→200k）+ keep10（.104 pid3995588 @69000→200k）+ keep12（.73 pid3983054 @111500→200k）+ ShortGPT16（LOCAL @178880→200k）。铁律1 满足——四张节点每张都填到最高价值的 stalled 训练，无空转。
+> - **Paper A 剩余（全 main-only .tex，无 GPU）**：P0.8 provenance 措辞（含修「continued-trained Qwen3-8B base LM」不实措辞）；#10（InfLLM 行入 .tex + CoMem LoCoMo errata + P1.2 措辞软化）。
+> - **✅ 已闭合本轮**：P0.2 config#2 j=0 text-RAG 5-benchmark gap-fill（task #108，`status/P0_2_CONFIG2_JRAG_RESULTS.md`）→ RULER macro 99.20 / LongBench 12.31 / LongEval 97.2% / LoCoMo judge 41.59%（= 蒸馏 teacher/上界），已回填 TODOList P0.2 + `status/P0_2_PARETO_RESULTS.md`（§4a/4b/4c/5/7 NOT-FOUND 全闭）。
+> ↓ 下方 2026-07-31 19:27 及更早快照作废存档。
+
+## 当前快照（2026-07-31 19:27 +08:00，✅ Paper A P0.11 frozen-j12 DONE（.73 subagent a62bdb0 收工→回填 TODOList）+ P0.3 matched-n=100 DONE（已回填）→ .73 空闲检出→立即补 Paper B keep8 resume（铁律1，补齐 compute-matched ladder 最后缺口）→ 4 训练全忙：LOCAL ShortGPT16 + .82 keep10 + .104 keep12 + .73 keep8）〔已作废存档〕
+> **实测台账（本轮 nvidia-smi + ps 逐节点核对）**。SSH：QCMem H20 三节点用**端口 36000** + 各自密码文件（.73=`password_h20_853573.txt` / .104=`password_h20_24104.txt` / .82=`password_h20_82250.txt`）——**不是 `password_h20_returned.txt`、不是端口 22**。dllm 29.162.226.120 绝不碰、cron 4ec42903 不删。
+> **★ Paper B 4-arm compute-matched depth ladder 现全部在 200k 轨道上跑**（keep8/keep10/keep12/ShortGPT16）——铁律1 把每张空卡都填到最高价值的 stalled 训练。
+> - **✅ LOCAL（B200/L20A wzc1）= Paper B ShortGPT-16 heal（#98）**：`train_olmo2_shortgpt.py --output_dir outputs/olmo2_probe2_7B_shortgpt16`，**step 150000/200000，8/8 GPU 100% / 132GB**，健康。绝不重启。
+> - **✅ .82（28.82.250.82 H20 diskB）= Paper B keep10 heal（#88）**：`--output_dir outputs/olmo2_probe2_7B_keep10fresh2`，**step 67060/200000 ppl13.35，99% / 90.5GB**，健康。绝不重启。
+> - **✅ .104（28.83.24.104 H20 diskB）= Paper B keep12 resume（#95）**：`--output_dir outputs/olmo2_probe2_7B_keep12fresh2_wzc1 --resume_from step111500.pt`，**step 111540/200000 ppl11.82，100% / 96.4GB**，resume 已核（optimizer_state 157 params, Adam momentum preserved）。健康。LOG=`logs/olmo2_7B_keep12_resume_104.log`。
+> - **✅ .73（28.85.35.73 H20 diskB）= Paper B keep8 resume（#96，19:27 起，铁律1 补卡）**：P0.11 frozen-j12 subagent a62bdb0 **收工**（80 jobs 0 fail，.73 8 卡全释放 0procs）→ main 立即补 compute-matched ladder 最后缺口 keep8（原停在 step44000）。`--output_dir outputs/olmo2_probe2_7B_keep8fresh2 --keep_front_layers 8 --n_fresh_layers 2 --resume_from step44000.pt`，BS4/GA4 lr1e-4/inh2e-5 max200k **save5000（原 500 会爆盘，已改）**。resume 已核：optimizer_state 113 params restored / continue @ step=44000 / lr_fresh=8.973e-05。**8/8 GPU 100% / 78.4GB，step44020 loss2.70 ppl14.82**，健康。LOG=`logs/olmo2_7B_keep8_resume_73.log`。ETA 156k step ~10.5h（5.84s/step）。
+> - **✅ Paper A P0.11 frozen-j12（.73 subagent a62bdb0）DONE**：Qwen3-8B resume_j=12 **NO LoRA**（frozen backbone），iter_bm25/top-12/hop-4/rounds=0/chunk-512/BOS sink/chat=False/seed=42/n=100。**RULER 15-cell macro=8.01 / LongEval mean=0.2% / LongBench 6-QA F1=9.96**（+已有 BABILong 24.52 / LoCoMo 24.52）。**崩塌 vs flagship CoMem+LoRA(j=12) RULER 97.05、亦 < frozen(j=9) 59.41 → 隔离出 fixed-depth 的 LoRA adaptation 增益**。已回填 `paperA/TODOList.md` P0.11 表（commit a5d1208 未 push）+ 记录 `status/P0_11_FROZEN_J12.md`（commit aa0ce88 未 push）。tex 待办（tab_overview 增 frozen j=12 行）留 main 后续，非本轮（用户指令：只填 TODOList 不填 .tex）。
+> - **✅ Paper A P0.3 matched-n=100 YaRN（.104 subagent ab0993f）DONE**：native macro 96.07 / +YaRN 92.04；**headline vt@128k=99.0 > +YaRN 93.6 > KVD-YaRN 57.8 > full-ctx 0，+41.2pp HOLDS**。已回填 TODOList（commit 6cc94a6 未 push）+ `status/P0_3_MATCHED_N100.md`（2bd16ff）。
+> - **.252（28.89.19.252 B200 wzc1）= 不可达**。task#99 keep14-distill 已 park。
+> - **⚠️ 台账更正**：task#102（P0.2 step-0 eval battery）曾被标 in_progress-on-.73 但 .73 实际 0 procs 空转（orchestrator 已死）→ 本轮 reset 回 pending，.73 改跑更高价值的 keep8。
+> ↓ 下方 2026-07-31 19:13 及更早快照作废存档。
+
+## 当前快照（2026-07-27 01:35 +08:00，✅ .104 = Paper B keep12 heal 已起跑（step25500 resume）+ LOCAL freeze_front #59 续跑）〔已作废存档〕
+> **节点分配**：.82 = 用户 seed-variance 训练（ETA ~03:40）；.104 = Paper B keep12 heal（trainer subagent 启）；LOCAL = freeze_front #59；.73/.252 未触碰。dllm 29.162.226.120 绝不碰、cron 4ec42903 不删。
+> - **✅ .104（28.83.24.104, H20 diskB, p36000）= Paper B keep12 heal 已健康运行**：`KEEP=12 N_FRESH=2 BS=4 GA=4 eff_bs=128` 从 step25500 resume（diskB 最新 ckpt）。PID 3302609（torchrun coordinator），8 rank worker。step25520 loss=2.6524 ppl=14.19 → step25540 loss=2.6638 ppl=14.35 lr=1.93e-05 gnorm=0.54 7.86s/step maxmem=91.9GB。**8 GPU 100%/96.4GB 全健康**。OUT=`outputs/olmo2_probe2_7B_keep12fresh2`（diskB路径），LOG=`logs/olmo2_7B_keep12fresh2.log`。ETA step200000 ~14h（~2026-07-27 16:00），ckpt 每 5000 步轮转。⚠️ 前置坑：ALPS SparseForge-Resubmission 进程（28h stuck，0 output）消耗 6-10GB/GPU 导致两次 OOM；trainer subagent kill -9 后重跑成功。⚠️ 文件系统注意：.104 `/apdcephfs_wzc1/share_304376610/` 实为 diskB（zwfy6）alias，与本机 wzc1 不同；本机 keep12 step111500 对 .104 不可见。
+> - **✅ LOCAL（B200 wzc1）= freeze_front #59 续跑**：上次已知 step54280/200000 (27.1%)，1.32s/step。绝不重启。
+> - **.82（28.82.250.82, H20 diskB）= 用户 seed-variance 训练**：ETA ~03:40。seed 完成后可接 keep10 heal（见 keep10 准备命令）。
+> ↓ 下方 2026-07-26 10:55 快照作废存档。
+
+## 当前快照（2026-07-26 10:55 +08:00，✅ .82 空出 → P3.2 YaRN-KVD@128k 实测起跑 + freeze_front（#59）健康推进；heartbeat cron 已恢复）〔已作废存档〕
+> **节点分配**：用户用 .73/.104/.252；我用 = LOCAL(B200 wzc1) + .82(28.82.250.82, H20 diskB)。dllm 29.162.226.120 绝不碰、cron 4ec42903 不删。**heartbeat cron 本轮恢复**：durable `bf3d24e0`（13,43 * * * *，30min 一次，7 天后 2026-08-02 过期需重加）。
+> - **✅ freeze_front（#59）LOCAL 8 卡健康**：step **54280/200000 (27.1%)**，loss2.71/ppl15.03，8 卡 87.8GB/健康，1.32s/step。decisive matched eval @ step128000/153500/200000。绝不重启。task#59 in_progress。
+> - **✅ .82（H20 diskB）= P3.2 YaRN-KVD@128k 实测（3 卡并行，10:55 起，ETA~13:15）**：外部 co-tenant 走了，8 卡全空 → 跑 ARR reviewer P3.2 最后挂起的实测点。bg subagent a0d8c72aa4731a53d：私有 model 副本 `Qwen--Qwen3-8b-yarn`（config.json 注入 `rope_scaling yarn factor4`，权重全 symlink，max_pos 保持 40960）+ n=100 KVD chat=False。GPU0 niah_single_3(pid1093933)、GPU1 niah_multikey(pid1094515)、GPU2 vt(pid1095410)，各 54.3GB/97.9GB，~81s/it。**★ 冒烟 n=2 已出关键信号：niah_single_3/128k recall=100.0**（未扩展 KVD 此处崩到 0）→ YaRN 版能救回，**可能需把「128k 只有 CoMem 可用」的措辞改为「CoMem≈YaRN-KVD 精度但 O(L)-write+固定 read vs O(L²)+89GB」的效率优先叙事**——待 n=100 三任务定论。结果落 .82 `ruler_results/kvd_yarn_128k/*.csv`，跑完 scp 回本地。⚠️ .82 `.venv/bin/python` 是 py3.14-broken，用 `/usr/bin/python3.11 + PYTHONPATH=.venv/lib/python3.11/site-packages`（同 MemoryLLM 修法）。
+> - **.104/.73/.252（用户的）**：.104 GPU 0% util（残留缓存 3-11GB），未干预；.73/.252 未触碰。
+> - **Monitor 8088**：本轮 down(http 000)→清残留+重启→http 200 OK。
+
+## 当前快照（2026-07-25 22:35 +08:00，✅ #68 CLOSED——MemoryLLM LongEval chat=False=13.6 在 .104 跑完并回填两文档 + freeze_front（#59）健康推进）〔已作废存档〕
+> **节点分配**：用户用 .73/.104/.252；我用 = LOCAL(B200 wzc1) + .82(H20 diskB)。**★ 本轮用户 steer「不是有三个 H20 节点么 应该空了一个啊」→ 实测 .104 已空(8 卡 util 0%)、.73 满载(100%)、.82 仍被外部 co-tenant 占**。.104=QCMem H20 挂 **wzc1 共享盘**(结果本地直接可见,无需回传)+ MemoryLLM 权重 `../baselines/memoryllm-8b-chat-hf` + py3.11 env 全齐 → #68 从「等 .82」改为直接在 .104 跑完。dllm 29.162.226.120 绝不碰、cron 4ec42903 不删。
+> - **✅ #68 MemoryLLM LongEval chat=False CLOSED（.104，8-GPU 分片）**：bg subagent a2029253 跑完，**mean(8k–128k)=13.6**（8k22/16k22/32k16/64k6/128k2，n=50/档，全 shard `use_chat_template:false`，无 OOM，`--score_only` 合并 `longeval_results/memoryllm_8b_chatFALSE/_summary_merged.json`）。**MemoryLLM 现全 5 benchmark 都有真 chat=False，主矩阵无 chat=True 占位。** 已回填 BENCHMARK_CHATFALSE_MASTER §B/headline/脚注3-4/§G + PAPERA_RESULTS_CONSOLIDATED headline/§B/§7/provenance（14.0ᵀ→13.6）。**已删 .82-poll cron 75473588。** 我的 8 shard 进程已干净退出，.104 恢复启动前状态无残留。task#68 completed。
+> - **✅ freeze_front（#59）LOCAL 8 卡健康**：step 25260/200000，loss2.86/ppl17.50，8 卡 102GB/100%，1.32s/step。decisive matched eval @ step128000/153500/200000。绝不重启（会在同 8 卡重复=灾难）。task#59 in_progress。
+> ↓ 下方 22:22 及更早快照作废存档。
+
+## 当前快照（2026-07-25 22:22 +08:00，✅ .104 空出 → #68 MemoryLLM LongEval chat=False 改在 .104 跑 + freeze_front（#59）健康推进）〔已作废存档〕
+> **节点分配**：用户用 .73/.104/.252；我用 = LOCAL(B200 wzc1) + .82(H20 diskB)。**★ 本轮用户 steer「不是有三个 H20 节点么 应该空了一个啊」→ 实测 .104 已空(8 卡 util 0%)、.73 满载(100%)、.82 仍被外部 co-tenant 占**。.104=QCMem H20 挂 **wzc1 共享盘**(结果本地直接可见,无需回传)+ MemoryLLM 权重 `../baselines/memoryllm-8b-chat-hf` + py3.11 env 全齐 → #68 从「等 .82」改为直接在 .104 跑。dllm 29.162.226.120 绝不碰、cron 4ec42903 不删。
+> - **✅ #68 MemoryLLM LongEval chat=False 起跑（.104，8-GPU 分片）**：bg subagent a2029253，`eval_memoryllm_longeval.py --no_chat_template --num_shards 8 --lengths 8k 16k 32k 64k 128k --num_samples 50 --max_new_tokens 48`，PYBIN=`PYTHONPATH=.venv/lib/python3.11/site-packages /usr/bin/python3.11`（diskB py3.14 workaround，我已实测 torch2.10/tf5.5.4/cuda OK），OUT=`longeval_results/memoryllm_8b_chatFALSE`。冒烟→全量→score_only 合并→报每档 acc。完成后我回填 BENCHMARK_CHATFALSE_MASTER §B + PAPERA_RESULTS_CONSOLIDATED 的 14.0ᵀ 占位格→真 chat=False，#68 completed。**已删 .82-poll cron 75473588**（改用 .104，不再轮询 .82）。
+> - **✅ freeze_front（#59）LOCAL 8 卡健康**：step 22740/200000，loss2.84/ppl17.15，8 卡 102GB/100%，1.32s/step。decisive matched eval @ step128000/153500/200000。绝不重启（会在同 8 卡重复=灾难）。task#59 in_progress。
+> ↓ 下方 21:42 及更早快照作废存档。
+
+## 当前快照（2026-07-25 21:42 +08:00，✅ P1（#75）完成=CONFIRMED + freeze_front（#59）已在 LOCAL 8 卡恢复）〔已作废存档〕
+> **节点分配不变**：用户用 .73/.104/.252；我用 = LOCAL(B200 wzc1) + .82(28.82.250.82, H20 diskB)。dllm 29.162.226.120 绝不碰、cron 4ec42903 不删。
+> - **✅ P1（#75）portable-adapter CLOSED = CONFIRMED**（LOCAL 卡 2-7，~42min，LoCoMo n=1986 GPT-4o judge，卡已释放）：HCache±distilled-LoRA 单变量 toggle（`no_retrieval=True`，selector 无关）→ judge **13.29(no-LoRA) → 31.17(+LoRA) = +17.88**（2.3×，identical node/commit）。cat4 open_domain +32.46 主驱动。**HCache+LoRA 31.17 > CoMem adapter-free 29.15（带检索），零检索即清过 adapter-free 门槛、逼近 flagship 38.27** → distilled LoRA = 可移植的 compression-agnostic KV-decompression/readout adapter（修的是 j=12 深度切分的 readout 分布 shift，非检索）。**caveat**：Arm A=13.29≠canonical 8.11（8.11 在 diskB `hcache_8b_chatFALSE`，本 wzc1 盘无；本地复现 deprecated dir 12.29）；delta 干净因同 node/commit；若锚 8.11 则 +23。产出 `locomo_results/hcache_j12_{noLoRA,LoRA}_chatFALSE/scores.json`，回填 `new_propositions_20260725.md §6`。task#75 completed。
+> - **✅ freeze_front（#59）已在 LOCAL 8 卡恢复**（21:37 起，从 `step21000.pt`）：`FREEZE_FRONT=1 KEEP=14 N_FRESH=2 RESUME_FROM=...step21000.pt bash scripts/run_olmo2_7B_keepN.sh`，pid=2755952。**resume 干净**：restored 179 tensors(strict fp32-master) + optimizer 25 param states(Adam momentum 保留) + continue @ step21000。现 step21060@21:41 loss2.87/ppl17.7/gnorm0.60（与 pause 前 step21360 无缝）。**8 卡全 102GB/100% util 健康**。OUT=`outputs/olmo2_probe2_7B_keep14fresh2_freezefront`，LOG=`logs/olmo2_7B_keep14fresh2_freezefront.log`（resume append）。ETA→step200000 ~2.7 天（1.32s/step×179k）；decisive matched eval 在 step128000(~39h)/153500/200000 对照 healed keep14 apex + from_scratch。task#59 in_progress。
+> - **.82（diskB，EVAL-ONLY）= #68 MemoryLLM LongEval chat=False 剩项**：21:00 poll 仍全 8 卡被外部 co-tenant（PID 517303-517310，容器隔离不可杀，~28GB/90-100%）独占，抢不到。cron 49047f5e（每半点 13,43）继续轮询空即 8-GPU 分片补跑。LongBench 9.01 / BABILong 30.4·21.4·38.1 已补齐；仅 LongEval 一格待跑（异基座次要参考行，不影响核心结论）。task#68 in_progress。
+> - **★ P2+P1 双命题小结**（供论文机制章）：**P2 SUPPORTS**（两深度分离：semantic 0.13L ≪ knowledge 0.59-0.69L < next-token 0.94L，两模型一致；单深度证伪情形排除）；**P1 CONFIRMED**（distilled LoRA 可移植到零检索 HCache，+17.88 judge，修 readout 分布 shift）。两者共同强化「深度轴」机制主线：浅语义深度=CoMem 近无损切分处；深知识深度=prune-heal keep-N cliff 处；distilled LoRA=修深度切分 readout 的可复用 primitive。
+> ↓ 下方 21:10 及更早快照作废存档。
+
+## 当前快照（2026-07-25 21:10 +08:00，✅ P2（#74）完成=SUPPORTS + P1（#75）仍在跑 → freeze_front 待 P1 释放后 8 卡恢复）〔已作废存档〕
+> **节点分配不变**：用户用 .73/.104/.252；我用 = LOCAL(B200 wzc1) + .82(28.82.250.82, H20 diskB)。dllm 29.162.226.120 绝不碰、cron 4ec42903 不删。
+> - **✅ P2（#74）two-depths CLOSED = SUPPORTS**（LOCAL 卡 0-1，forward-only ~30s/model 跑完，卡已释放）：MMLU knowledge logit-lens → **knowledge sat95 OLMo 0.594L / Qwen3 0.694L**（both ≥0.55L 且 ≥2× semantic sat 0.13L=4.6×/5.3×），干净的三曲线 depth 分离 semantic 0.13L ≪ knowledge 0.59-0.69L < next-token 0.94L，**两模型都成立**。knowledge-onset(OLMo 0.562L) vs Paper B keep-N cliff（keep14=0.44L/keep10=0.31L）方向对但 +0.12L 偏深（decodability lag installation，非紧贴）。产出 `results/knowledge_logit_lens_{OLMo-2-1124-7B,Qwen3-8b-local}.json`，结论回填 `ops/research_notes/new_propositions_20260725.md §5`。task#74 completed。**可选 follow-up**：healed-16L ckpt 的同 probe（需 wire 自定义 16L arch，仅确认性非决定，暂缓）。
+> - **⏳ P1（#75）portable-adapter 仍在跑**（LOCAL 卡 2-7，bg subagent a3f4bd1061f9a2dc6）：HCache±distilled-LoRA LoCoMo n=1986 GPT-4o judge 单变量 toggle，API-bound ~几小时。对照 HCache headline judge=8.11 预测抬到 ~20-30。完成后落账 + 收 verdict。task#75 in_progress。
+> - **LOCAL 卡 0-1 短暂空闲**：P2 forward-only 秒级跑完释放；freeze_front（#59）需 8-GPU（torchrun nproc=8），P1 占卡 2-7 → **freeze_front 待 P1 完成释放 2-7 后 8 卡恢复**（step21000.pt，恢复丢 <500 步）。2 卡短闲不可塞 8-GPU 训练，且无 wzc1 可跑的 2-卡耐跑待办（#68 diskB-only）→ 合理等待，非铁律1 违规。
+> - **.82（diskB，EVAL-ONLY）= #68 MemoryLLM LongEval chat=False 剩项**：仍被外部 co-tenant（PID 517303-517310，容器隔离不可杀）独占，抢不到。cron 49047f5e（每半点 13,43）轮询空即 8-GPU 分片补跑；并检查 LOCAL P1 完成→恢复 freeze_front。LongBench 9.01 / BABILong 30.4·21.4·38.1 已补齐。task#68 in_progress。
+> ↓ 下方 20:45 及更早快照作废存档。
+
+## 当前快照（2026-07-25 20:45 +08:00，★用户 steer「不是给了你一个 B200 一个 H20 么」→ 暂停 freeze_front，LOCAL B200 转跑被堵的 P2+P1）〔已作废存档〕
+> **节点分配不变**：用户用 .73/.104/.252；我用 = LOCAL(B200 wzc1) + .82(28.82.250.82, H20 diskB)。dllm 29.162.226.120 绝不碰、cron 4ec42903 不删。
+> - **关键澄清**：三个被堵实验里只有 **MemoryLLM LongEval 非 .82 不可**（MemoryLLM 权重+env 只在 diskB）；**P2/P1 模型都在 wzc1 盘，本来就能在 LOCAL B200 跑**——之前全排队等 .82 是错的。用户 approve「暂停 freeze_front 先跑 P2+P1」。
+> - **✅ freeze_front（#59）PAUSED**：kill 于 step21000（20:39 存档 `outputs/olmo2_probe2_7B_keep14fresh2_freezefront/step21000.pt`，恢复只丢 <500 步）。8 卡全释放（实测 0MiB）。**P2+P1 完成后在 LOCAL 恢复**（decisive eval 仍在 128k/153.5k/200k 步，~2.7 天）。
+> - **⚠️ LOCAL venv 提醒**：`.venv/bin/python` 现是 py3.14.6 但**健康**（torch 2.13.0 / tf 5.14.1 / peft 0.19.1 / 8 GPU 全 import OK）——与 diskB 的 py3.14-broken 不同，LOCAL 直接用 `.venv/bin/python`，**不用** py3.11 workaround。
+> - **✅ LOCAL 卡 0-1 = P2（#74）two-depths knowledge logit-lens**：bg subagent，`scripts/probe_linguistic_layerwise.py --task knowledge_logit_lens`（commit 3ab7dd9）跑 OLMo-2-1124-7B(cuda:0) + Qwen3-8b-local(cuda:1)，forward-only ~4-6 GPU-hr。产出 `results/knowledge_logit_lens_*.json` + cross-map 到 Paper B keep-N cliff / CoMem split-j。task#74 in_progress。
+> - **✅ LOCAL 卡 2-7 = P1（#75）portable-adapter HCache±distilled-LoRA**：bg subagent，`eval_qcmem_locomo.py --baseline hcache --resume_j 12 ±--force_lora_with_baseline`（commit 0b55791），LoCoMo n=1986 GPT-4o judge 单变量 toggle。对照现有 HCache headline judge=8.11，预测 LoRA 抬升到 ~20-30。~4-8 GPU-hr。task#75 in_progress。
+> - **.82（diskB，EVAL-ONLY）= #68 MemoryLLM LongEval chat=False 剩项**：仍被外部 co-tenant（PID 517303-517310，容器隔离不可杀）独占全 8 卡 ~8h，抢不到。cron 7a7955d8 每 30min 轮询，空即 8-GPU 分片补跑。LongBench 9.01 / BABILong 30.4·21.4·38.1 已补齐。task#68 in_progress。
+> ↓ 下方 12:15 及更早快照作废存档。
+
+## 当前快照（2026-07-25 12:15 +08:00，★用户授权用 LOCAL+H20 接着跑 → LOCAL 起 Paper B #59 freeze_front + Paper A 结果整合成单文档 + 派 researcher 推演新命题）〔已作废存档〕
+> **节点分配不变**：用户用 .73/.104/.252；我用 = LOCAL(B200 wzc1) + .82(28.82.250.82, H20 diskB)。dllm 29.162.226.120 绝不碰、cron 4ec42903 不删。
+> - **★ 用户 2 条新指令**：(1)「本地的 B200 和剩下的那个 H20 你可以拿来接着跑实验」→ LOCAL + .82 授权接活；(2)「看看我们这个想法能不能催生出新的命题来」→ 研究性 ideation。
+> - **✅ LOCAL（wzc1，8×B200/L20A）= Paper B #59 freeze_front（Arm A，12:15 起）**：`FREEZE_FRONT=1 KEEP=14 N_FRESH=2 bash scripts/run_olmo2_7B_keepN.sh`。transplant 前 14 层+embed/norm/head（157 tensors）自 OLMo-2-1124-7B base → **冻结前 14 层（frozen 2833.5M / trainable 仅 1226.9M）**，heal on `/dev/shm/dolmino_now15b.npy`。eff_bs128 seq2048 max_steps200000 fp32-master grad-ckpt。**实测 8/8 GPU 100%/106GB 健康**。OUT=`outputs/olmo2_probe2_7B_keep14fresh2_freezefront`，LOG=`logs/olmo2_7B_keep14fresh2_freezefront.log`。**这是 Paper B 最后一个待铺控制臂（RUN_REGISTRY line1942「脚本已支持,待空节点」）**——#59 之前标 blocked-on-diskB，被本次 LOCAL 授权解除（OLMo-2 资产全在 wzc1）。核心假设:继承的前层在 heal 时是否**需要 adapt** vs 可**冻结**（知识静态假设）；在匹配步（10k/128k/153.5k/200k）对照 healed keep14 apex + from_scratch。task#59 in_progress。
+> - **✅ Paper A 结果整合成单文档（用户令「更新在一个文档里」）**：新建 `status/PAPERA_RESULTS_CONSOLIDATED.md`——一处读全 headline 6×5 主矩阵 + 逐 benchmark 明细(RULER/LongEval/LongBench/BABILong/LoCoMo) + 决定性实验 §F/§H/§I + #67 效率(report H20) + LoCoMo GPT-4o judge + bootstrap 显著性 + 可复现配置 + provenance + 唯一剩项 #68。等论文正文重构定稿后以此为准整合(#10)。
+> - **.82（28.82.250.82，diskB，EVAL-ONLY）= #68 MemoryLLM chat=False overlay（未变）**：bg agent `a3f1093c` 满负荷跑中。完成后回填 master matrix ᵀ 占位格。task#68 in_progress。**.82 空出后**：铺一个「新命题」验证 eval（见下方 researcher 推演结论）。
+> - **新命题 ideation（用户令）**：派 researcher（bg）从 CoMem depth-split + Paper B prune-heal 两个核心 idea 推演可测新命题（重点:统一的「semantic bottleneck depth」命题——split-j 与 keep-N 由同一 model-intrinsic 深度预测；及 compression-agnostic distilled LoRA、query-adaptive depth）→ 产出 top-1/2 的可跑实验计划，供 .82 空出/LOCAL 后续承接。
+> ↓ 下方 11:10 及更早快照作废存档。
+
+## 当前快照（2026-07-25 11:10 +08:00，#72 bib push 落地 + #67 效率控制 CLOSED〔发现 7.83× 为 H20-specific〕+ LOCAL 合法空闲 + .82 仍 #68）〔已作废存档〕
+> **节点分配不变**：用户用 .73/.104/.252；我用 = LOCAL(B200 wzc1) + .82(28.82.250.82, H20 diskB)。dllm 29.162.226.120 绝不碰、cron 4ec42903 不删。
+> - **✅ #72 论文 bib FIXME 完成 + push**：5 处全查实修复（hcache/kvcat/compresskv/kvdirect 的 Anonymous→真作者；`hunyuan` 从误引 Hunyuan-Large 2411.02265 → 正确 **Hy3 @misc** HF `tencent/Hy3`，依据本地 config.json model_type=hy_v3）。只改 `paper/qcmem.bib`（30/41 行），commit `bc67b56`，subagent review APPROVED，star-proxy push `4a0ac37..bc67b56`，**现 0 ahead**。论文重编译 16 页零 undefined。task#72 completed。
+> - **✅ #67 效率 LoRA-on 控制 CLOSED（LOCAL 8×L20A，bg agent ab250045，11:06 完，全 8 卡释放）**：用旗舰同款 `bench_qcmem_vs_fullctx.py`（full-write-inclusive）跑 LoRA-off（复现论文）+ LoRA-on × 8k–128k。**① 显存声明精确复现且 LoRA-on 成立**：LoRA-off@128k CoMem **18.29GB**/Dense **89.39GB**（论文 18.26/89.36，2 位小数吻合）；LoRA-on +0.25GB（adapter 参数）→ 18.54GB。**~5× 显存优势是硬件无关的基本卖点，安全**。**② ⚠️ 7.83× prefill 加速是 H20-specific，非 LoRA artifact**：本 L20A 上 LoRA-off=**3.23×** / LoRA-on=**2.74×**@128k（非 7.83×）。根因干净——CoMem prefill+peak-mem 与论文精确吻合，**只有 dense prefill 不同**（L20A 6.04s vs 论文 json 15.01s），因 H20 bf16 compute 被 throttle ~2.5× 抬高 O(L²) dense baseline。论文 json config 本身标 "H20/L20A"，15s dense 证实是 H20。**③ decode**：LoRA +~33% ms/tok（23.8→31.7@128k），context-independent，仍 O(1)/step。结果 JSON：`ruler_results/bench_{fullwrite_,}lora{OFF,ON}_L20A.json` + `bench_lora_sanity_32k.json`。**★ 待用户决策**：7.83× 出现在 abstract+intro+concl+limitations+tab_eff+tab_chunk 共 7 处，是 headline claim；如何标注硬件（保留+标 H20 / 重测 / 改以显存为主 headline）= 用户的论文口径决定，见回复 AskUserQuestion。task#67 数据完成，paper-wording 部分待用户定 + 待改版落定。
+> - **LOCAL（wzc1，8×B200/L20A）= 合法空闲（非铁律1 违规）**：#67 11:06 跑完释放。**当前无「我拥有的 + 论文相关 + wzc1 可跑」的 GPU 待办**——#59 freeze_front 真阻塞（launcher/ckpt 只在 diskB=用户的 .73/.104，wzc1 无）；#62 family-scale RULER **不在论文**（in-paper `tab_scaling`=Qwen3-8B 长度-scaling 已完；family-scale 仅在未 \input 的 scratch `tab_scale.tex`，且 dense 家族 0.6-8B+collaborator 32B，30B-A3B 是 MoE 类别不匹配）；#68 在 .82。故 LOCAL 空闲是「待跑项皆阻塞于用户节点/或投机不入论文」的合理结果，已 surface 给用户（是否让我跑 30B 填 LOCAL 或留空=用户定）。
+> - **.82（28.82.250.82，diskB，EVAL-ONLY）= #68 MemoryLLM chat=False overlay**：bg agent `a3f1093c`，**实测 8/8 GPU 100%/55GB 满负荷健康**。完成后回填 master matrix ᵀ(chat=True)占位格（LongEval/LongBench 6ds/BABILong）。task#68 in_progress。
+> ↓ 下方 10:40 及更早快照作废存档。
+
+## 当前快照（2026-07-25 10:40 +08:00，★节点重新分配生效 + Paper B control-2 CLOSED + .82 起 #68 + FIXME/push 并行）〔已作废存档〕
 > **★ 用户新分配（2026-07-25 生效，覆盖旧「H20 全归用户」）**：用户答「这两个节点加上 2，你可以用一个 B200 一个 H20」→ **用户用 .73(28.85.35.73)+.104(28.83.24.104)+.252(28.89.19.252, B200 "节点2")；我用 = LOCAL(B200 wzc1) + .82(28.82.250.82, H20 diskB)**。dllm 29.162.226.120 绝不碰、cron 4ec42903 不删。
 > - **✅ Paper B control-2（from_scratch）完全闭合**：knowledge downstream MC 10:32 完成（LOCAL 8×B200）。**★ MMLU=.2461（= .25 chance floor，−1 SE，与随机不可区分）vs healed keep14 .312（17.6% above chance）→ from_scratch 训 200k 步（比 healed 153.5k 更多）仍 0% 恢复世界知识**。boolq 打平（.614 vs .606，in-context 阅读理解可从头学）= 完美互补 → **干净证明 healed 恢复的知识来自继承的预训练前层、非 heal 训练**。已回填 `OLMO2_PRUNEHEAL_DOWNSTREAM.md §CONTROL2`（PPL 1.554× + core surface-tie/reasoning-lag + knowledge MMLU 决定性表全齐）。**Paper B 三控制（healed apex/post-apex、freeze_front、from_scratch）+ PPL + core + knowledge 全闭合**。
 > - **LOCAL（wzc1，8×B200/L20A）= 空闲**（from_scratch knowledge MC 10:32 跑完释放；此前 from_scratch 训练亦已闭合）。可承接 wzc1-scoped 待跑项。
@@ -371,3 +812,4 @@
 - **本机 wzc1 8×L20A**：`.venv/bin/python`（py3.14 torch2.13）。
 - **28.85.35.73 / 28.82.250.82 / 28.83.24.104**：均 36000 端口，diskB 共享 FS（免同步），`/opt/conda/envs/torch-base/bin/python`。★**.73 = EVAL-ONLY（不塞训练）**。
 - SSH：`unset LD_LIBRARY_PATH; /opt/conda/bin/sshpass -f configs/password_h20_xxx.txt /usr/bin/ssh -o StrictHostKeyChecking=no -o PreferredAuthentications=password root@IP`。
+- **.73 (28.85.35.73 diskB H20)**: keep14-distill heal (8bit adam, teacher OLMo-2-7B 32L → student keep14+2fresh), bs=4 gaccum=4, started 2026-07-30 14:20, ~13.87s/step → 200k ETA ~32d (observe loss), maxmem 94.6GB
