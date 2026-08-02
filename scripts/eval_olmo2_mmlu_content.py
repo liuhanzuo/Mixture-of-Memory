@@ -267,12 +267,26 @@ def score_examples(model, tok, examples, device, batch_size, add_bos, bos_id,
 def mcnemar_exact_p(b: int, c: int) -> float:
     """Exact two-sided McNemar p-value. b = #(A correct, B wrong),
     c = #(A wrong, B correct). Under H0 each discordant pair is 50/50, so the
-    smaller count ~ Binomial(n=b+c, 0.5). p = min(1, 2 * P[X <= min(b,c)])."""
+    smaller count ~ Binomial(n=b+c, 0.5). p = min(1, 2 * P[X <= min(b,c)]).
+
+    Computed in log-space (lgamma) with a log-sum-exp accumulation so that large
+    n (thousands of discordant pairs over the full 14,042-item MMLU set) does not
+    overflow: math.comb(n, i) alone is astronomically large and multiplying it by
+    the underflowed float 0.5**n raises OverflowError."""
     n = b + c
     if n == 0:
         return 1.0
     k = min(b, c)
-    tail = sum(math.comb(n, i) for i in range(0, k + 1)) * (0.5 ** n)
+    log_half_n = n * math.log(0.5)
+    # log P[X = i] = log C(n, i) + n*log(0.5), i = 0..k
+    log_terms = [
+        (math.lgamma(n + 1) - math.lgamma(i + 1) - math.lgamma(n - i + 1)
+         + log_half_n)
+        for i in range(0, k + 1)
+    ]
+    m = max(log_terms)
+    log_tail = m + math.log(sum(math.exp(t - m) for t in log_terms))
+    tail = math.exp(log_tail)
     return min(1.0, 2.0 * tail)
 
 
