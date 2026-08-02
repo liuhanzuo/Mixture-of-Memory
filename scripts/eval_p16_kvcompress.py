@@ -468,16 +468,20 @@ def run_selftest(args, tokenizer, model, device):
         ok_budget = all(pl == budget for pl in per_layer)
         detail = f"all==budget({budget})? {ok_budget}; observed set={sorted(set(per_layer))}"
     else:
-        # pyramidkv: per-layer varies (pyramidal), decreasing with layer index,
-        # each bounded in [budget-window, long_len] and averaging ~ budget.
+        # pyramidkv: per-layer varies pyramidally — LOWER layers retain MORE than
+        # the uniform budget, HIGHER layers retain LESS (down to ~window_size), and
+        # the per-layer mean tracks the budget. This is the method's defining
+        # behaviour, so the floor is the recent window (not budget-window), and we
+        # additionally assert the pyramid is non-increasing with layer index.
         lo, hi = min(per_layer), max(per_layer)
         mean = sum(per_layer) / len(per_layer)
-        bounded = all((budget - args.window_size) <= pl <= long_len for pl in per_layer)
+        bounded = all(args.window_size <= pl <= long_len for pl in per_layer)
         varied = (lo != hi)
         mean_ok = abs(mean - budget) <= max(2, 0.05 * budget)
-        ok_budget = bounded and varied and mean_ok
+        monotonic = all(per_layer[i] >= per_layer[i + 1] for i in range(len(per_layer) - 1))
+        ok_budget = bounded and varied and mean_ok and monotonic
         detail = (f"pyramidal min={lo} max={hi} mean={mean:.1f} budget={budget} "
-                  f"bounded={bounded} varied={varied} mean_ok={mean_ok}")
+                  f"bounded={bounded} varied={varied} mean_ok={mean_ok} monotonic={monotonic}")
     print(f"[P16-selftest] (2) long>budget retained: {detail} "
           f"-> {'PASS' if ok_budget else 'FAIL'}")
 
