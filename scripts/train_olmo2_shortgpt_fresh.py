@@ -1,37 +1,43 @@
 #!/usr/bin/env python3
-"""ShortGPT prune-then-heal training for Paper B (external layer-selection baseline).
+"""ShortGPT-style arbitrary-index transplant + FRESH tail heal (Paper B P0.5).
 
-Companion to scripts/train_olmo2_arch_probe2.py (the "Ours" keep-front + fresh
-arm). This script keeps an ARBITRARY set of `keep_layer_indices` OLMo-2 decoder
-layers (chosen by scripts/shortgpt_select_layers.py via Block Influence), stacks
-them in ascending original order into a new model, and HEALS with continued
-pretraining -- with NO freshly initialised tail layer (n_fresh = 0, the essence
-of ShortGPT). Every other knob (Dolmino data, seq_len 2048, effective batch 128,
-gradient checkpointing, fp32 master weights, max_steps 200000, cosine schedule,
-resume logic, checkpoint format) is identical to the keep14 healed arm, so the
-comparison isolates the layer-SELECTION policy.
+Structural-isolation control for the minimal-architecture thesis. Combines the
+two existing OLMo-2 trainers:
 
-Differences from the keep-front arm (train_olmo2_arch_probe2.py)
-----------------------------------------------------------------
-  * layers kept are `keep_layer_indices` (sorted ascending), not the front `keep`.
-  * n_fresh = 0: no fresh tail -> there is NO high-LR "fresh" bucket. ALL trainable
-    params (transplanted layers + embed + final norm + lm_head) use the SINGLE
-    inherited learning rate (2e-5), the same LR the keep-front arm applies to its
-    inherited modules.
-  * embed / final-norm / lm_head are copied from the base model (same as keep14).
-  * transplant verification: new layer j must equal base layer keep_layer_indices[j]
-    exactly (max|theta_new - theta_base| == 0), plus embed/norm/lm_head exact.
-  * a step0.pt (pruned-but-not-healed model) is saved immediately after transplant,
-    before any optimizer step, for the "heal-free" eval point.
+  * scripts/train_olmo2_shortgpt.py -- keep an ARBITRARY set of base decoder
+    layers (`keep_layer_indices`, sorted ascending, compacted to 0..K_keep-1).
+  * scripts/train_olmo2_arch_probe2.py -- append `n_fresh_layers` FRESH
+    Olmo2-init decoder layers as a re-grown NTP tail, and heal with a two-bucket
+    DIFFERENTIAL LR (inherited layers + embed + norm + lm_head at the low
+    inherited LR; the fresh tail at the high fresh LR).
 
-fp32 MASTER WEIGHTS: params stay fp32 (do NOT model.to(bf16)); forward runs under
-bf16 autocast, AdamW states fp32. Same anti-catastrophic-forgetting knob as the
-keep-front arm.
+Construction (P0.5 Arm B: keep [0..12, 31] = 14 layers + 2 fresh = 16 total):
+  (a) cfg = Olmo2Config.from_pretrained(base); cfg.num_hidden_layers = K_keep +
+      n_fresh. model = Olmo2ForCausalLM(cfg) -> post_init gives EVERY layer,
+      including the fresh tail, the correct Olmo2 init (never hand-build a
+      DecoderLayer).
+  (b) transplant the `keep_layer_indices` base layers (ascending) into
+      model.layers[0..K_keep-1] + embed_tokens + model.norm + lm_head from the
+      base; model.layers[K_keep..K-1] stay at their fresh Olmo2 random init.
+  (c) heal on Dolmino with the EXACT keep14 recipe (seq_len 2048, effective batch
+      128, gradient checkpointing, fp32 master weights, cosine, warmup 150),
+      differential LR: inherited 2e-5, fresh 1e-4.
 
-Checkpoints are raw state_dict (+ arch meta: keep_front_layers = len(indices),
-n_fresh_layers = 0, keep_layer_indices) so scripts/eval_olmo2_probe2_ppl.py can
-rebuild an identical 16-layer shell (its build_pruned_shell only needs the total
-layer count = keep + fresh = 16) and strict-load.
+Why the two-bucket LR here maps lm_head to INHERITED (not fresh, unlike the
+keep-front arm): lm_head IS transplanted from the base (untied embeddings), so it
+is inherited weight and heals at the low inherited LR; only the freshly-init tail
+layers get the high fresh LR. (P0.5 spec, 2026-08-02.)
+
+fp32 MASTER WEIGHTS: params stay fp32 (do NOT model.to(bf16)); forward under bf16
+autocast, AdamW states fp32. Same anti-catastrophic-forgetting knob as both
+sibling arms.
+
+Checkpoints are raw state_dict (+ arch meta). The eval harness
+(scripts/eval_olmo2_probe2_ppl.py::build_pruned_shell) rebuilds a shell of size
+keep_front_layers + n_fresh_layers, so the ckpt records keep_front_layers =
+len(keep_layer_indices) (the count of inherited layers = eval shell inherited
+size) and n_fresh_layers, giving keep_front + fresh = num_hidden_layers = 16.
+keep_layer_indices records the TRUE inherited identity ([0..12, 31]).
 """
 from __future__ import annotations
 
@@ -79,10 +85,8 @@ N_NONLAYER_KEYS = 3
 
 
 def set_seed(seed: int):
-    """Seed python/numpy/torch (CPU + all CUDA devices) for reproducible init.
-    Called on every rank BEFORE model construction so the fresh-layer init (none
-    here for ShortGPT, but kept for parity with the fresh-tail arm) and any RNG
-    use is deterministic and DDP-consistent."""
+    """Seed python/numpy/torch (CPU + all CUDA devices) for reproducible +
+    DDP-consistent fresh-layer init. Called on every rank BEFORE model build."""
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
@@ -91,7 +95,8 @@ def set_seed(seed: int):
 
 
 # ---------------------------------------------------------------------------
-# model construction (arbitrary kept indices -> compacted 0..K-1 layers)
+# model construction (arbitrary kept indices -> compacted 0..K_keep-1, then a
+# fresh Olmo2-init tail of n_fresh layers at K_keep..K-1)
 # ---------------------------------------------------------------------------
 def parse_indices(spec: str):
     """'0,2,5,...' -> sorted unique list of ints."""
@@ -102,9 +107,10 @@ def parse_indices(spec: str):
 
 
 def _remap_state_dict(base_sd, keep_indices):
-    """Build a state_dict for the K-layer shell: new layer position j inherits
-    base layer keep_indices[j]. Non-layer keys (embed/norm/lm_head) verbatim.
-    Dropped layers omitted."""
+    """Build the transplant state_dict for the inherited layers: base layer
+    keep_indices[j] -> new layer position j (j in 0..K_keep-1). Non-layer keys
+    (embed/norm/lm_head) verbatim. Fresh tail layers (>= K_keep) are NOT included
+    -> they remain at their Olmo2 random init (strict=False load below)."""
     pos_of = {src: j for j, src in enumerate(keep_indices)}
     new_sd = {}
     for k, v in base_sd.items():
@@ -120,10 +126,41 @@ def _remap_state_dict(base_sd, keep_indices):
     return new_sd
 
 
-def transplant_indices(model, base_path, keep_indices, dtype, is_main):
-    """Load the pretrained base OLMo-2 and transplant the `keep_indices` decoder
-    layers (compacted to 0..K-1) + embed + norm + lm_head into `model`. Runs the
-    sanity asserts. Raises on any failure (must crash the run). Returns sanity."""
+def _assert_fresh_init(model, fresh_layer_ids):
+    """Fresh tail layers must retain proper Olmo2 init after transplant. OLMo-2
+    is POST-norm (no input_layernorm); the first RMSNorm in a layer is
+    post_attention_layernorm. For EVERY fresh layer id, checks:
+    post_attention_layernorm.weight all-ones, q_norm.weight all-ones (QK-norm),
+    q_proj.weight std ~= 0.02 (initializer_range). Returns
+    (ln_all_ones, qnorm_all_ones, q_std) for the FIRST fresh layer (summary)."""
+    sd = model.state_dict()
+    first_ln = first_qnorm = first_qstd = None
+    for lid in fresh_layer_ids:
+        fresh_ln = sd[f"model.layers.{lid}.post_attention_layernorm.weight"]
+        ln_all_ones = bool(torch.all(fresh_ln == 1.0).item())
+        fresh_qnorm = sd[f"model.layers.{lid}.self_attn.q_norm.weight"]
+        qnorm_all_ones = bool(torch.all(fresh_qnorm == 1.0).item())
+        fresh_q = sd[f"model.layers.{lid}.self_attn.q_proj.weight"]
+        q_std = fresh_q.float().std().item()
+        assert ln_all_ones, (
+            f"fresh layer {lid} post_attention_layernorm not all-ones "
+            f"(min={fresh_ln.min().item()}, max={fresh_ln.max().item()})")
+        assert qnorm_all_ones, (
+            f"fresh layer {lid} q_norm not all-ones "
+            f"(min={fresh_qnorm.min().item()}, max={fresh_qnorm.max().item()})")
+        assert 0.01 < q_std < 0.04, (
+            f"fresh layer {lid} q_proj.weight std={q_std:.4f} not ~0.02 -> wrong init")
+        if first_ln is None:
+            first_ln, first_qnorm, first_qstd = ln_all_ones, qnorm_all_ones, q_std
+    return first_ln, first_qnorm, first_qstd
+
+
+def transplant_indices_fresh(model, base_path, keep_indices, n_fresh, dtype, is_main):
+    """Load the pretrained base OLMo-2, transplant the `keep_indices` decoder
+    layers (compacted to 0..K_keep-1) + embed + norm + lm_head into `model`, and
+    leave the n_fresh tail layers (K_keep..K-1) at their fresh Olmo2 init. Runs
+    all sanity asserts + the fresh-init assert. Raises on any failure. Returns
+    a sanity dict."""
     base = Olmo2ForCausalLM.from_pretrained(
         base_path, torch_dtype=dtype, local_files_only=True)
     base_num_layers = base.config.num_hidden_layers
@@ -133,21 +170,35 @@ def transplant_indices(model, base_path, keep_indices, dtype, is_main):
     base_sd = base.state_dict()
     new_sd = _remap_state_dict(base_sd, keep_indices)
 
-    missing, unexpected = model.load_state_dict(new_sd, strict=True)
+    missing, unexpected = model.load_state_dict(new_sd, strict=False)
 
-    # --- assert 1: strict load is exact (no missing/unexpected) ---
-    assert not missing and not unexpected, (
-        f"[sanity1] strict load mismatch: missing={missing[:6]} "
-        f"unexpected={unexpected[:6]}")
+    K_keep = len(keep_indices)
+    fresh_layer_ids = list(range(K_keep, K_keep + n_fresh))
 
-    # --- assert 2: number of transplanted keys == 3 + 11*K ---
-    K = len(keep_indices)
-    expected = N_NONLAYER_KEYS + N_TENSORS_PER_LAYER * K
+    # --- assert 1: no unexpected keys (everything transplanted exists in model) ---
+    assert unexpected == [], (
+        f"[sanity1] unexpected keys when transplanting: {unexpected[:8]}")
+
+    # --- assert 2: the ONLY missing keys are the fresh tail layers ---
+    missing_layer_ids = set()
+    bad_missing = []
+    for mk in missing:
+        if mk.startswith("model.layers."):
+            missing_layer_ids.add(int(mk.split(".")[2]))
+        else:
+            bad_missing.append(mk)
+    assert not bad_missing, f"[sanity2] non-layer keys unexpectedly missing: {bad_missing}"
+    assert missing_layer_ids == set(fresh_layer_ids), (
+        f"[sanity2] missing layer-ids {sorted(missing_layer_ids)} != "
+        f"fresh set {fresh_layer_ids}")
+
+    # --- assert 3: number of transplanted keys == 3 + 11*K_keep ---
+    expected = N_NONLAYER_KEYS + N_TENSORS_PER_LAYER * K_keep
     assert len(new_sd) == expected, (
-        f"[sanity2] transplanted {len(new_sd)} keys != expected {expected} "
-        f"(={N_NONLAYER_KEYS}+{N_TENSORS_PER_LAYER}*{K})")
+        f"[sanity3] transplanted {len(new_sd)} keys != expected {expected} "
+        f"(={N_NONLAYER_KEYS}+{N_TENSORS_PER_LAYER}*{K_keep})")
 
-    # --- assert 3: EVERY new layer j matches base layer keep_indices[j] exactly,
+    # --- assert 4: EVERY inherited layer j matches base layer keep_indices[j],
     #     and embed/norm/lm_head match exactly -> max|model - base| == 0 ---
     model_sd = model.state_dict()
     max_diff = 0.0
@@ -170,7 +221,10 @@ def transplant_indices(model, base_path, keep_indices, dtype, is_main):
         d = (model_sd[nlk].float() - base_sd[nlk].float()).abs().max().item()
         max_diff = max(max_diff, d)
     assert max_diff == 0.0, (
-        f"[sanity3] transplant max|model_param - base| = {max_diff:.3e} != 0.0")
+        f"[sanity4] transplant max|model_param - base| = {max_diff:.3e} != 0.0")
+
+    # --- fresh-init assert (tail layers untouched, correct Olmo2 init) ---
+    ln_all_ones, qnorm_all_ones, q_std = _assert_fresh_init(model, fresh_layer_ids)
 
     del base, base_sd, new_sd
     gc.collect()
@@ -179,69 +233,102 @@ def transplant_indices(model, base_path, keep_indices, dtype, is_main):
         "transplanted": True,
         "base_num_layers": base_num_layers,
         "keep_layer_indices": keep_indices,
-        "n_kept": K,
+        "n_kept": K_keep,
+        "n_fresh_layers": n_fresh,
+        "fresh_layer_ids": fresh_layer_ids,
         "n_transplanted_keys": expected,
         "transplant_max_abs_diff": max_diff,
         "per_new_layer_max_abs_diff": per_layer_max,
+        "fresh_post_attention_layernorm_all_ones": ln_all_ones,
+        "fresh_q_norm_all_ones": qnorm_all_ones,
+        "fresh_q_proj_std": q_std,
     }
     if is_main:
         logger.info(
-            f"[transplant] kept {K} layers {keep_indices} (compacted 0..{K - 1}) "
-            f"+ embed/norm/lm_head from a {base_num_layers}-layer base")
+            f"[transplant] kept {K_keep} layers {keep_indices} (compacted "
+            f"0..{K_keep - 1}) + embed/norm/lm_head from a {base_num_layers}-layer "
+            f"base; fresh tail layer-ids {fresh_layer_ids} left at Olmo2 init")
         logger.info(
-            f"[sanity] strict load OK | transplanted_keys={expected} | "
-            f"max|model-base|={max_diff:.3e} (exact, all {K} kept layers "
-            f"+ embed/norm/head) -> ALL 3 CHECKS PASS")
+            f"[sanity] unexpected=0 | missing=fresh {fresh_layer_ids} | "
+            f"transplanted_keys={expected} | max|model-base|={max_diff:.3e} (exact) "
+            f"| fresh_post_attn_ln_all_ones={ln_all_ones} "
+            f"fresh_q_norm_all_ones={qnorm_all_ones} fresh_q_std={q_std} "
+            f"-> ALL CHECKS PASS")
     return sanity
 
 
-def build_shortgpt_model(base_path, keep_indices, dtype, transplant=True,
-                         is_main=True):
-    """Build a len(keep_indices)-layer OLMo-2 (no fresh tail) and (optionally)
-    transplant the selected base layers. Returns (model, cfg, sanity)."""
+def build_shortgpt_fresh_model(base_path, keep_indices, n_fresh, dtype,
+                               transplant=True, is_main=True):
+    """Build a (len(keep_indices) + n_fresh)-layer OLMo-2 and (optionally)
+    transplant the selected base layers into the front, leaving the fresh tail
+    at its Olmo2 init. Returns (model, cfg, sanity)."""
     cfg = Olmo2Config.from_pretrained(base_path, local_files_only=True)
-    K = len(keep_indices)
+    K_keep = len(keep_indices)
+    K = K_keep + n_fresh
     cfg.num_hidden_layers = K
     if getattr(cfg, "layer_types", None) is not None:
         cfg.layer_types = ["full_attention"] * K
         assert len(cfg.layer_types) == K
     model = Olmo2ForCausalLM(cfg).to(dtype)
     if transplant:
-        sanity = transplant_indices(model, base_path, keep_indices, dtype, is_main)
+        sanity = transplant_indices_fresh(model, base_path, keep_indices, n_fresh,
+                                          dtype, is_main)
     else:
-        sanity = {"transplanted": False, "keep_layer_indices": keep_indices}
+        sanity = {"transplanted": False, "keep_layer_indices": keep_indices,
+                  "n_fresh_layers": n_fresh}
     return model, cfg, sanity
 
 
-def build_param_groups(model, args, is_main):
-    """Single inherited-LR optimizer groups (ShortGPT has no fresh tail). Splits
-    weight-decay by ndim only; every trainable param uses lr_inherited."""
+def _classify_param(name, n_kept):
+    """Two buckets. 'fresh' = fresh tail layers (index >= n_kept) -> high LR.
+    'inherited' = transplanted layers (index < n_kept) + embed + norm + lm_head
+    -> low inherited LR. lm_head is INHERITED here (it is transplanted from the
+    base, untied embeddings), unlike the keep-front arm."""
+    if name.startswith("model.layers."):
+        lid = int(name.split(".")[2])
+        return "fresh" if lid >= n_kept else "inherited"
+    # lm_head.weight, model.embed_tokens.weight, model.norm.weight -> inherited
+    return "inherited"
+
+
+def build_param_groups(model, args, n_kept, is_main):
+    """Differential-LR param groups (also splitting weight-decay by ndim).
+
+    fresh (tail layers): base_lr=args.lr_fresh, min_lr=args.min_lr_fresh.
+    inherited (transplanted layers + embed + norm + lm_head): base_lr=
+        args.lr_inherited, min_lr=args.min_lr_inherited."""
     specs = {
-        "decay":   {"params": [], "weight_decay": args.weight_decay,
-                    "base_lr": args.lr_inherited, "min_lr": args.min_lr_inherited},
-        "nodecay": {"params": [], "weight_decay": 0.0,
-                    "base_lr": args.lr_inherited, "min_lr": args.min_lr_inherited},
+        "fresh_decay":   {"params": [], "weight_decay": args.weight_decay,
+                          "base_lr": args.lr_fresh, "min_lr": args.min_lr_fresh},
+        "fresh_nodecay": {"params": [], "weight_decay": 0.0,
+                          "base_lr": args.lr_fresh, "min_lr": args.min_lr_fresh},
+        "inh_decay":     {"params": [], "weight_decay": args.weight_decay,
+                          "base_lr": args.lr_inherited, "min_lr": args.min_lr_inherited},
+        "inh_nodecay":   {"params": [], "weight_decay": 0.0,
+                          "base_lr": args.lr_inherited, "min_lr": args.min_lr_inherited},
     }
-    for _name, pp in model.named_parameters():
+    for name, pp in model.named_parameters():
         if not pp.requires_grad:
             continue
-        key = "decay" if pp.ndim >= 2 else "nodecay"
+        cls = _classify_param(name, n_kept)
+        prefix = "fresh" if cls == "fresh" else "inh"
+        key = f"{prefix}_decay" if pp.ndim >= 2 else f"{prefix}_nodecay"
         specs[key]["params"].append(pp)
-    groups = [g for g in specs.values() if g["params"]]
+    param_groups = [g for g in specs.values() if g["params"]]
     if is_main:
         for gname, g in specs.items():
             n = sum(p.numel() for p in g["params"])
             if n > 0:
                 logger.info(f"[optim] group {gname}: {n / 1e6:.1f}M params "
                             f"base_lr={g['base_lr']:.2e} min_lr={g['min_lr']:.2e}")
-    return groups
+    return param_groups
 
 
 # ---------------------------------------------------------------------------
-# save (matches train_olmo2_arch_probe2._save contract; adds keep_layer_indices,
-# protects extra_save_steps from rotation)
+# save (records keep_front_layers = len(keep_indices) so the eval harness rebuilds
+# a keep_front + n_fresh = 16-layer shell; keep_layer_indices = true identity)
 # ---------------------------------------------------------------------------
-def _save(model, optimizer, args, step, epoch, cfg, keep_indices,
+def _save(model, optimizer, args, step, epoch, cfg, keep_indices, n_fresh,
           protect_steps, final=False):
     root = model.module if hasattr(model, "module") else model
     name = "final" if final else f"step{step}"
@@ -249,6 +336,7 @@ def _save(model, optimizer, args, step, epoch, cfg, keep_indices,
     rng = {"torch": torch.get_rng_state()}
     if torch.cuda.is_available():
         rng["cuda"] = torch.cuda.get_rng_state_all()
+    K_keep = len(keep_indices)
     torch.save({
         "model_state": root.state_dict(),
         "step": step,
@@ -259,13 +347,13 @@ def _save(model, optimizer, args, step, epoch, cfg, keep_indices,
         "train_args": vars(args),
         "rng_state": rng,
         # arch descriptors: eval rebuilds a (keep_front_layers + n_fresh_layers)-
-        # layer shell = 16 + 0 = 16, then strict-loads this state_dict.
+        # layer shell = 14 + 2 = 16, then strict-loads this state_dict.
         "model_family": "olmo2",
         "base_model_path": args.model_path,
-        "keep_front_layers": len(keep_indices),   # total layers (eval shell size)
-        "n_fresh_layers": 0,
-        "keep_layer_indices": keep_indices,        # ShortGPT-selected original ids
-        "arm": "shortgpt",
+        "keep_front_layers": K_keep,          # inherited layer count = eval shell inh size
+        "n_fresh_layers": n_fresh,
+        "keep_layer_indices": keep_indices,   # TRUE inherited identity ([0..12,31])
+        "arm": "shortgpt_fresh",
         "num_hidden_layers": cfg.num_hidden_layers,
         "hidden_size": cfg.hidden_size,
         "vocab_size": cfg.vocab_size,
@@ -303,16 +391,20 @@ def main():
     p.add_argument("--output_dir", type=str, required=True)
     p.add_argument("--model_path", type=str,
                    default="/apdcephfs_wzc1/share_304376610/pighzliu_code/models/OLMo-2-1124-7B")
-    # layer selection: pass the comma list directly OR a selection JSON.
     p.add_argument("--keep_layer_indices", type=str, default="",
-                   help="comma-separated original layer ids to KEEP, e.g. '0,2,5,...'")
+                   help="comma-separated original layer ids to KEEP, e.g. '0,...,12,31'")
     p.add_argument("--selection_json", type=str, default="",
-                   help="ShortGPT selection JSON (reads kept_layer_indices); "
+                   help="selection JSON (reads kept_layer_indices); "
                         "--keep_layer_indices overrides it if both given")
-    # single inherited LR (no fresh tail). Defaults match the keep14 inherited LR.
+    p.add_argument("--n_fresh_layers", type=int, default=0,
+                   help="number of FRESH Olmo2-init tail layers to re-grow (P0.5 Arm B=2)")
+    # differential LR: inherited (transplant + embed + norm + lm_head) low; fresh tail high.
     p.add_argument("--lr_inherited", type=float, default=2e-5,
-                   help="single LR for ALL trainable params (ShortGPT has no fresh tail)")
+                   help="LR for inherited layers + embed + norm + lm_head")
     p.add_argument("--min_lr_inherited", type=float, default=2e-6)
+    p.add_argument("--lr_fresh", type=float, default=1e-4,
+                   help="LR for the fresh tail layers")
+    p.add_argument("--min_lr_fresh", type=float, default=1e-5)
     p.add_argument("--max_steps", type=int, default=200000)
     p.add_argument("--seq_len", type=int, default=2048)
     p.add_argument("--batch_size", type=int, default=16)
@@ -321,9 +413,8 @@ def main():
     p.add_argument("--weight_decay", type=float, default=0.1)
     p.add_argument("--grad_clip", type=float, default=1.0)
     p.add_argument("--save_every", type=int, default=5000)
-    p.add_argument("--extra_save_steps", type=str, default="128000,153500",
-                   help="comma steps to force-save (protected from rotation) so the "
-                        "keep14-matched eval points exist even with save_every=5000")
+    p.add_argument("--extra_save_steps", type=str, default="50000,100000,150000",
+                   help="comma steps to force-save (protected from rotation)")
     p.add_argument("--log_every", type=int, default=20)
     p.add_argument("--resume_from", type=str, default="")
     p.add_argument("--max_rows", type=int, default=0)
@@ -333,8 +424,9 @@ def main():
                    help="RNG seed (python/numpy/torch/CUDA), set on every rank "
                         "before model build for reproducible + DDP-consistent init")
     p.add_argument("--dry_run_build", action="store_true",
-                   help="build the K-layer model shell (no base transplant), validate "
-                        "arch, then exit (CPU smoke without loading base weights)")
+                   help="build the (K_keep+n_fresh)-layer model shell WITH the base "
+                        "transplant, validate arch + transplant + fresh-init asserts, "
+                        "then exit (no data / no training / no big ckpt saved)")
     args = p.parse_args()
 
     # ---- resolve keep_layer_indices ----
@@ -346,7 +438,9 @@ def main():
         keep_indices = sorted(int(i) for i in sel["kept_layer_indices"])
     else:
         raise ValueError("provide --keep_layer_indices or --selection_json")
-    K = len(keep_indices)
+    K_keep = len(keep_indices)
+    n_fresh = args.n_fresh_layers
+    K = K_keep + n_fresh
 
     extra_steps = {int(x) for x in args.extra_save_steps.split(",") if x.strip()}
     protect_steps = {0} | extra_steps
@@ -361,7 +455,7 @@ def main():
         rank, world_size, local_rank = 0, 1, 0
     is_main = rank == 0
 
-    set_seed(args.seed)  # reproducible + DDP-consistent init on every rank
+    set_seed(args.seed)  # reproducible + DDP-consistent fresh-tail init on every rank
 
     if args.device == "cpu" or (args.device == "auto" and not torch.cuda.is_available()):
         device = torch.device("cpu")
@@ -372,32 +466,39 @@ def main():
         use_cuda = True
     model_dtype = torch.float32  # fp32 master weights
 
-    arm = f"shortgpt_keep{K}"
+    arm = f"shortgpt_keep{K_keep}+fresh{n_fresh}"
 
-    # ---- dry-run build (no transplant) ----
+    # ---- dry-run build (WITH transplant + fresh-init asserts) ----
     if args.dry_run_build:
-        logger.info(f"[dry_run_build] {arm} keep_indices={keep_indices} K={K}")
-        model, cfg, _ = build_shortgpt_model(
-            args.model_path, keep_indices, model_dtype, transplant=False,
-            is_main=True)
+        logger.info(f"[dry_run_build] {arm} keep_indices={keep_indices} "
+                    f"K_keep={K_keep} n_fresh={n_fresh} total={K}")
+        model, cfg, sanity = build_shortgpt_fresh_model(
+            args.model_path, keep_indices, n_fresh, model_dtype,
+            transplant=True, is_main=True)
         assert cfg.num_hidden_layers == K
         n_layers_in_sd = len({k.split(".")[2] for k in model.state_dict()
                               if k.startswith("model.layers.")})
         assert n_layers_in_sd == K, f"{n_layers_in_sd} != {K}"
         logger.info(f"[dry_run_build] cfg.num_hidden_layers={cfg.num_hidden_layers} "
-                    f"layers_in_sd={n_layers_in_sd} -> OK (no training)")
+                    f"layers_in_sd={n_layers_in_sd} transplant_max_abs_diff="
+                    f"{sanity.get('transplant_max_abs_diff')} "
+                    f"fresh_ids={sanity.get('fresh_layer_ids')} "
+                    f"fresh_post_attn_ln_all_ones="
+                    f"{sanity.get('fresh_post_attention_layernorm_all_ones')} "
+                    f"fresh_q_norm_all_ones={sanity.get('fresh_q_norm_all_ones')} "
+                    f"fresh_q_std={sanity.get('fresh_q_proj_std')} -> OK (no training)")
         return
 
     if is_main:
         os.makedirs(args.output_dir, exist_ok=True)
         eff_bs = args.batch_size * args.grad_accumulation_steps * world_size
-        logger.info(f"=== OLMo-2 ShortGPT prune-heal [{arm}] ===")
-        logger.info(f"keep_layer_indices={keep_indices}")
+        logger.info(f"=== OLMo-2 ShortGPT+fresh prune-heal [{arm}] ===")
+        logger.info(f"keep_layer_indices={keep_indices} n_fresh={n_fresh}")
         logger.info(f"device={device} dtype={model_dtype} (fp32 master weights) "
                     f"world_size={world_size} bs={args.batch_size} "
                     f"gaccum={args.grad_accumulation_steps} eff_bs={eff_bs} "
-                    f"seq_len={args.seq_len} lr={args.lr_inherited} "
-                    f"max_steps={args.max_steps}")
+                    f"seq_len={args.seq_len} lr_inh={args.lr_inherited} "
+                    f"lr_fresh={args.lr_fresh} max_steps={args.max_steps}")
 
     resume_ckpt = None
     if args.resume_from:
@@ -409,9 +510,9 @@ def main():
                         f"has_optimizer={'optimizer_state' in resume_ckpt})")
 
     do_transplant = resume_ckpt is None
-    model, cfg, sanity = build_shortgpt_model(
-        args.model_path, keep_indices, model_dtype, transplant=do_transplant,
-        is_main=is_main)
+    model, cfg, sanity = build_shortgpt_fresh_model(
+        args.model_path, keep_indices, n_fresh, model_dtype,
+        transplant=do_transplant, is_main=is_main)
 
     if resume_ckpt is not None:
         missing, unexpected = model.load_state_dict(
@@ -440,8 +541,8 @@ def main():
                 "model_family": "olmo2",
                 "base_model_path": args.model_path,
                 "keep_layer_indices": keep_indices,
-                "keep_front_layers": K,     # eval shell size (= total layers)
-                "n_fresh_layers": 0,
+                "keep_front_layers": K_keep,   # inherited count = eval shell inh size
+                "n_fresh_layers": n_fresh,
                 "num_hidden_layers": cfg.num_hidden_layers,
                 "hidden_size": cfg.hidden_size,
                 "vocab_size": cfg.vocab_size,
@@ -450,6 +551,7 @@ def main():
                 "from_scratch": False,
                 "seq_len": args.seq_len,
                 "lr_inherited": args.lr_inherited,
+                "lr_fresh": args.lr_fresh,
                 "selection_json": args.selection_json,
                 "seed": args.seed,
                 "n_params": n,
@@ -483,9 +585,9 @@ def main():
                             multiprocessing_context="fork" if use_cuda else None)
 
     # ---- optimizer ----
-    param_groups = build_param_groups(model, args, is_main)
+    param_groups = build_param_groups(model, args, K_keep, is_main)
     optimizer = torch.optim.AdamW(
-        param_groups, lr=args.lr_inherited, betas=(0.9, 0.95), eps=1e-8)
+        param_groups, lr=args.lr_fresh, betas=(0.9, 0.95), eps=1e-8)
 
     model.train()
     step = 0
@@ -523,17 +625,22 @@ def main():
                 if is_main:
                     logger.warning(f"[resume] RNG restore skipped ({e})")
         if is_main:
-            lr_now = get_lr(step, args.warmup_steps, args.max_steps,
-                            args.lr_inherited, args.min_lr_inherited)
+            lr_inh_now = get_lr(step, args.warmup_steps, args.max_steps,
+                                args.lr_inherited, args.min_lr_inherited)
+            lr_fresh_now = get_lr(step, args.warmup_steps, args.max_steps,
+                                  args.lr_fresh, args.min_lr_fresh)
             logger.info(f"[resume] continue @ step={step} epoch={epoch} "
-                        f"max_steps={args.max_steps} lr(now)={lr_now:.3e}")
+                        f"max_steps={args.max_steps} lr_inh(now)={lr_inh_now:.3e} "
+                        f"lr_fresh(now)={lr_fresh_now:.3e}")
         resume_ckpt = None
         gc.collect()
 
     # ---- step0 checkpoint: pruned-but-not-healed (fresh run only) ----
-    if is_main and resume_ckpt is None and step == 0:
-        _save(model, optimizer, args, 0, epoch, cfg, keep_indices, protect_steps)
-        logger.info("[step0] saved pruned-but-not-healed ckpt (heal-free eval point)")
+    if is_main and step == 0:
+        _save(model, optimizer, args, 0, epoch, cfg, keep_indices, n_fresh,
+              protect_steps)
+        logger.info("[step0] saved pruned+fresh-tail-but-not-healed ckpt "
+                    "(heal-free eval point)")
 
     if sampler is not None and epoch > 0:
         sampler.set_epoch(epoch)
@@ -594,10 +701,10 @@ def main():
             save_now = (step % args.save_every == 0) or (step in extra_steps)
             if is_main and save_now and step > 0:
                 _save(model, optimizer, args, step, epoch, cfg, keep_indices,
-                      protect_steps)
+                      n_fresh, protect_steps)
 
     if is_main:
-        _save(model, optimizer, args, step, epoch, cfg, keep_indices,
+        _save(model, optimizer, args, step, epoch, cfg, keep_indices, n_fresh,
               protect_steps, final=True)
         logger.info(f"DONE [{arm}] at step {step}")
     if ddp:
