@@ -73,6 +73,21 @@ export CUDA_VISIBLE_DEVICES="$GPUS"
 export WANDB_MODE=offline
 export TOKENIZERS_PARALLELISM=false
 
+if [ "${FOREGROUND:-0}" = "1" ]; then
+  "$PYTHON_BIN" -m torch.distributed.run \
+    --nnodes 1 --nproc_per_node "$nGPU" --rdzv_backend c10d --rdzv_endpoint "localhost:$PORT" \
+    scripts/train_olmo2_arch_probe2.py \
+      --data_path "$DATA_PATH" --output_dir "$OUT_DIR" --model_path "$MODEL_PATH" \
+      --keep_front_layers "$KEEP" --n_fresh_layers "$FRESH" \
+      --batch_size "$BS" --grad_accumulation_steps "$GA" --seq_len "$SEQ_LEN" \
+      --lr "$LR" --lr_inherited "$LR_INH" --max_steps "$MAX_STEPS" \
+      --warmup_steps 150 --save_every 500 --log_every 10 --seed "$SEED" \
+      --gradient_checkpointing 1 $EXTRA $OPT_FLAG \
+    >>"$LOG_FILE" 2>&1
+  echo "[paperC_pc1] FOREGROUND done ARM=$ARM (exit $?)"
+  exit 0
+fi
+
 setsid nohup "$PYTHON_BIN" -m torch.distributed.run \
   --nnodes 1 --nproc_per_node "$nGPU" --rdzv_backend c10d --rdzv_endpoint "localhost:$PORT" \
   scripts/train_olmo2_arch_probe2.py \
