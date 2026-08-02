@@ -55,9 +55,11 @@ import json
 import logging
 import math
 import os
+import random
 import sys
 import time
 
+import numpy as np
 import torch
 import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
@@ -89,6 +91,17 @@ logger = logging.getLogger(__name__)
 #   * tie_word_embeddings=False -> lm_head.weight is a real, separate tensor.
 N_TENSORS_PER_LAYER = 11
 N_NONLAYER_KEYS = 3  # model.embed_tokens.weight, model.norm.weight, lm_head.weight
+
+
+def set_seed(seed: int):
+    """Seed python/numpy/torch (CPU + all CUDA devices) for reproducible +
+    DDP-consistent fresh-tail init. Called on every rank BEFORE model build.
+    Mirrors scripts/train_olmo2_shortgpt_fresh.py::set_seed."""
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
 
 
 # ---------------------------------------------------------------------------
@@ -377,6 +390,7 @@ def _save(model, optimizer, args, step, epoch, cfg, final=False, rotate=True):
         "freeze_front": bool(args.freeze_front),
         "from_scratch": bool(args.from_scratch),
         "seq_len": args.seq_len,
+        "seed": args.seed,
     }, path)
     logger.info(f"saved {path}")
 
@@ -441,6 +455,10 @@ def main():
                         "Old model-only ckpts degrade gracefully to a warm-restart.")
     p.add_argument("--max_rows", type=int, default=0, help=">0 to subset dataset (smoke)")
     p.add_argument("--gradient_checkpointing", type=int, default=1)
+    p.add_argument("--seed", type=int, default=42,
+                   help="RNG seed (python/numpy/torch/CUDA), set on every rank "
+                        "BEFORE model build for reproducible + DDP-consistent "
+                        "fresh-tail random init.")
     p.add_argument("--device", type=str, default="auto",
                    help="'auto' (cuda if available else cpu), 'cpu', or 'cuda'")
     p.add_argument("--dry_run_build", action="store_true",
@@ -466,6 +484,12 @@ def main():
     else:
         rank, world_size, local_rank = 0, 1, 0
     is_main = rank == 0
+
+    # Seed on EVERY rank before any model construction so the fresh-tail random
+    # init is reproducible and identical across DDP ranks.
+    set_seed(args.seed)
+    if is_main:
+        logger.info(f"[seed] set_seed({args.seed}) on all ranks")
 
     # device selection. NOTE: params are fp32 (master weights) on BOTH cpu and
     # cuda; only the forward pass uses bf16 autocast (cuda only).
@@ -614,6 +638,7 @@ def main():
                 "seq_len": args.seq_len,
                 "lr_fresh": args.lr,
                 "lr_inherited": args.lr_inherited,
+                "seed": args.seed,
                 "n_params": n,
                 "n_trainable": n_tr,
                 "sanity": sanity,
