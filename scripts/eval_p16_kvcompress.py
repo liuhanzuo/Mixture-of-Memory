@@ -90,7 +90,7 @@ _QWEN3_NATIVE_WINDOW = 40960
 # local_files_only, bf16, SDPA). No LoRA (these are training-free baselines).
 # --------------------------------------------------------------------------- #
 def _load_model(model_path, dtype, attn_impl, device, yarn_factor=None):
-    from transformers import AutoModelForCausalLM, AutoTokenizer
+    from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
     tokenizer = AutoTokenizer.from_pretrained(
         model_path, trust_remote_code=True, local_files_only=True)
     if tokenizer.pad_token is None:
@@ -99,10 +99,27 @@ def _load_model(model_path, dtype, attn_impl, device, yarn_factor=None):
                   trust_remote_code=True, local_files_only=True)
     if yarn_factor is not None:
         # YaRN long-context: bound to the "-yarn" method label in outputs.
-        kwargs["rope_scaling"] = {
+        # IMPORTANT (transformers >=5.x): passing `rope_scaling` as a kwarg REPLACES
+        # config.rope_parameters wholesale, so the model's native `rope_theta` (which
+        # in newer transformers lives INSIDE config.rope_parameters, not as a top-level
+        # attr) is dropped and back-fills to None. The YaRN init then evaluates
+        # `base ** (...)` with base=rope_theta=None -> the observed crash:
+        #   "unsupported operand type(s) for ** or pow(): 'NoneType' and 'Tensor'".
+        # Fix: read the native rope_theta + max_position_embeddings from the model's own
+        # config and carry them into the rope_scaling dict (no hardcoding).
+        base_cfg = AutoConfig.from_pretrained(
+            model_path, trust_remote_code=True, local_files_only=True)
+        _rp = getattr(base_cfg, "rope_parameters", None) or {}
+        native_theta = _rp.get("rope_theta", getattr(base_cfg, "rope_theta", None))
+        orig_max_pos = int(getattr(base_cfg, "max_position_embeddings",
+                                   _QWEN3_NATIVE_WINDOW) or _QWEN3_NATIVE_WINDOW)
+        rope_scaling = {
             "rope_type": "yarn", "factor": float(yarn_factor),
-            "original_max_position_embeddings": _QWEN3_NATIVE_WINDOW,
+            "original_max_position_embeddings": orig_max_pos,
         }
+        if native_theta is not None:
+            rope_scaling["rope_theta"] = native_theta
+        kwargs["rope_scaling"] = rope_scaling
     model = AutoModelForCausalLM.from_pretrained(model_path, **kwargs).to(device).eval()
     return tokenizer, model
 
