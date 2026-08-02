@@ -710,7 +710,8 @@
 
 ## P2.4 蒸馏后的多深度 quality--latency 曲线
 
-- **状态**：`[TODO — OPTIONAL, TRAINING REQUIRED]`
+- **状态**：`[RUNNING — 训练已启动 2026-08-02，.82 diskB]`（task #122；launcher commit `ebfe475`）。j=6 已在 step~130/4000 健康训练（loss 0.26→0.07，镜像 flagship 0.29→0.05），串行 j=6→9→18，8-GPU DDP ETA≈3h；eval 待训练完再跑。
+  - **provenance 更正**：任务原指 `scripts/_launch_contentj_distill.sh` **仓库不存在**；coder 改用 flagship 权威记录 `outputs/qcmem_distill_qwen_j12_r32_4k/distill_args.json`（对照 log 交叉核实）逐项匹配：backbone `Qwen--Qwen3-8b` · r32/α64/dropout0 · 7-proj targets · PG-19 chunk512/n_ctx3(2048窗) · 双向 top-64 KL/λ0.6/ce0 · total4000/lr8e-5/warmup100/wd0/GA1/clip1.0 · **GC=off** · bf16/sdpa/**seed42**/8-GPU。PG-19 jsonl 在 wzc1 与 diskB byte-identical（11450766349 B）→ seed42+ws8+n_ctx3 数据顺序与 flagship 相同。（⚠️ diskB 上 `_seed1/_seed2` 副本是不同配方 n_ctx7/α32/10667步/GC-on，未采用。）
 - **定位**：把“深度是可调 reuse 轴”从 `j=0/12` 两点扩展为曲线；不阻断当前投稿，优先级低于 P1.6/P1.7。
 - **深度**：在旗舰 `j=12` 外新增 `j∈{6,9,18}`；每个深度单独训练与其 split 匹配的 rank-32 LoRA，不能复用 j=12 adapter 伪装成 distilled sweep。
 - **严格匹配**：同 backbone revision、PG-19 数据顺序/总 tokens、4000 steps、effective batch、optimizer/LR schedule、seed、LoRA rank/alpha/target-module规则；若 target layer 数不同导致 trainable params 不同，必须报告并避免称 compute matched。
@@ -718,14 +719,16 @@
 - **报告**：`(persistent bytes/token, Write cost, Read ms, RULER macro, LoCoMo)` Pareto；paired CI/McNemar；不得只选最优深度或删除负面点。
 - **验收**：三个新 adapter provenance 完整；评测无 cohort 混用；质量和 latency 来自同一 config manifest；与 j=12 共同绘制完整曲线。
 
-**结果填写**
+**结果填写**（LoRA modules/params 列 = 启动时已知，已回填；j=6 从 live log 确认，j=9/j=18 为算术预测待各自 log 确认；eval 列训练完回填）
+
+⚠️ **非严格 compute-matched**：三深度 LoRA span 随 split 变化（layers[j:36]）→ trainable params 不同，**论文须报告逐深度参数量且不得称 compute-matched**。除参数量外（数据顺序/seed/eff-batch/steps/LR schedule/KL loss）与 flagship 完全一致。逐层 r32 LoRA(7 proj) = 2.4247M/层。
 
 | j | LoRA modules/params | RULER B | LoCoMo | Read ms | Write ms | Raw/checkpoint |
 |---:|---|---:|---:|---:|---:|---|
-| 6 | TBD | TBD | TBD | TBD | TBD | TBD |
-| 9 | TBD | TBD | TBD | TBD | TBD | TBD |
+| 6 | 210 / 72.74M（confirmed，30 层[6:36]）| TBD | TBD | TBD | TBD | `.82:outputs/qcmem_distill_qwen_j6_r32_4k/final`（训练中）|
+| 9 | 189 / 65.47M（predicted，27 层[9:36]）| TBD | TBD | TBD | TBD | `.82:outputs/qcmem_distill_qwen_j9_r32_4k/final`（排队）|
 | 12 | 168 / 58.20M | 96.07 | 38.27 | 664.4 | existing | P0.13 / flagship |
-| 18 | TBD | TBD | TBD | TBD | TBD | TBD |
+| 18 | 126 / 43.64M（predicted，18 层[18:36]）| TBD | TBD | TBD | TBD | `.82:outputs/qcmem_distill_qwen_j18_r32_4k/final`（排队）|
 
 ---
 
