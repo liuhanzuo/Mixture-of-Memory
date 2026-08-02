@@ -7,10 +7,12 @@ default), SAME 8-GPU shard+merge + per-example dump conventions.
 
 What this measures
 ------------------
-Strict zero-shot, NO retrieval, free-form greedy generation on two closed-book
+Strict zero-shot, NO retrieval, free-form greedy generation on three closed-book
 factual-QA benchmarks:
   * PopQA         (akariasai/PopQA, test, 14267 q)  -- long-tail entity facts.
   * TriviaQA      (mandarjoshi/trivia_qa, rc.nocontext, validation, 17944 q).
+  * NQ-open       (google-research-datasets/nq_open, validation, 3610 q)
+                  -- Natural Questions open, short free-form answers (alias list).
 The model must answer from parametric memory alone (no passages/context). This
 is the "independent knowledge task" the P2.4 diagnostic uses alongside MMLU:
 if MMLU rises after SFT but PopQA/TriviaQA do not, the gain is interface/format
@@ -167,6 +169,41 @@ def load_task_examples(task: str):
             if not uniq:
                 continue
             out.append({"question": ex["question"].strip(), "answers": uniq})
+        return out
+
+    if task == "nq_open":
+        # Natural Questions open (closed-book). Short free-form answers; `answer`
+        # is an alias list (multiple gold), scored max-over-aliases like TriviaQA.
+        # Try the canonical name first, then known aliases; pick whichever loads
+        # a validation split carrying question + answer(list).
+        from datasets import load_dataset
+
+        last_err = None
+        d = None
+        for name in ("google-research-datasets/nq_open", "nq_open",
+                     "natural_questions_open"):
+            try:
+                d = load_dataset(name, split="validation")
+                break
+            except Exception as e:  # noqa: BLE001
+                last_err = e
+                d = None
+        if d is None:
+            raise RuntimeError(f"could not load nq_open (tried gr-datasets/nq_open,"
+                               f" nq_open, natural_questions_open): {last_err}")
+        out = []
+        for ex in d:
+            raw = ex.get("answer")
+            if isinstance(raw, str):
+                answers = [raw]
+            elif raw is None:
+                answers = []
+            else:
+                answers = list(raw)
+            answers = [a for a in answers if isinstance(a, str) and a.strip()]
+            if not answers:
+                continue
+            out.append({"question": ex["question"].strip(), "answers": answers})
         return out
 
     raise ValueError(f"unknown closed-book task {task}")
