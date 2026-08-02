@@ -304,9 +304,17 @@ def apply_freeze_front(model, keep_front_layers, is_main):
 
 def _classify_param(name, keep_front_layers, from_scratch):
     """'fresh' (fresh tail layers + lm_head -> high LR) vs 'inherited' (front
-    layers + embed + norm -> low LR). from_scratch -> everything 'fresh'."""
+    layers + embed + norm -> low LR). from_scratch -> everything 'fresh'.
+
+    Strips a leading 'module.' so classification is correct whether called on a
+    bare model or a DDP-wrapped one (build_param_groups runs AFTER DDP wrap, whose
+    named_parameters() prefix all names with 'module.'; without this strip every
+    trainable param mis-fell-through to 'inherited' and the fresh cap trained at
+    lr_inherited instead of lr). from_scratch is unaffected (returns 'fresh' first)."""
     if from_scratch:
         return "fresh"
+    if name.startswith("module."):
+        name = name[len("module."):]
     if name.startswith("model.layers."):
         lid = int(name.split(".")[2])
         return "inherited" if lid < keep_front_layers else "fresh"
@@ -349,6 +357,26 @@ def build_param_groups(model, args, is_main):
                 logger.info(f"[optim] group {gname}: {n/1e6:.1f}M params "
                             f"base_lr={g['base_lr']:.2e} min_lr={g['min_lr']:.2e}")
     return param_groups
+
+
+def build_optimizer(param_groups, args, is_main):
+    """AdamW over the differential-LR param groups. Default = fp32 torch AdamW
+    (unchanged). --optimizer bnb_adamw8bit uses bitsandbytes 8-bit AdamW to halve
+    optimizer-state memory so full-param 7B/4B arms fit a single H20 (Paper C
+    A1/A3 fallback). betas/eps match the torch path."""
+    if args.optimizer == "bnb_adamw8bit":
+        import bitsandbytes as bnb  # noqa: F401  (import errors early if missing)
+        opt = bnb.optim.AdamW8bit(
+            param_groups, lr=args.lr, betas=(0.9, 0.95), eps=1e-8,
+        )
+        if is_main:
+            logger.info("[optim] using bitsandbytes AdamW8bit (8-bit optimizer "
+                        "state) -- optimizer differs from the fp32-AdamW default")
+        return opt
+    opt = torch.optim.AdamW(param_groups, lr=args.lr, betas=(0.9, 0.95), eps=1e-8)
+    if is_main:
+        logger.info("[optim] using torch AdamW (fp32 optimizer state, default)")
+    return opt
 
 
 # ---------------------------------------------------------------------------
@@ -445,6 +473,13 @@ def main():
                    help="LR for inherited front layers + embed + norm")
     p.add_argument("--min_lr_inherited", type=float, default=2e-6)
     p.add_argument("--warmup_steps", type=int, default=150)
+    p.add_argument("--optimizer", type=str, default="adamw",
+                   choices=["adamw", "bnb_adamw8bit"],
+                   help="'adamw' (default, unchanged fp32 torch AdamW) or "
+                        "'bnb_adamw8bit' (bitsandbytes 8-bit AdamW; halves optimizer "
+                        "state memory so full-param 7B/4B arms fit a single H20). "
+                        "Paper C A1/A3 fallback; A4/LoRA stay on adamw. Any arm using "
+                        "bnb8bit must note the optimizer difference in its report.")
     p.add_argument("--weight_decay", type=float, default=0.1)
     p.add_argument("--grad_clip", type=float, default=1.0)
     p.add_argument("--save_every", type=int, default=500)
@@ -594,9 +629,7 @@ def main():
     if args.save_step0_and_exit:
         os.makedirs(args.output_dir, exist_ok=True)
         param_groups = build_param_groups(model, args, is_main)
-        optimizer = torch.optim.AdamW(
-            param_groups, lr=args.lr, betas=(0.9, 0.95), eps=1e-8,
-        )
+        optimizer = build_optimizer(param_groups, args, is_main)
         _save(model, optimizer, args, 0, 0, cfg, final=False, rotate=False)
         n_tensors = len(model.state_dict())
         n = sum(pp.numel() for pp in model.parameters())
@@ -669,9 +702,7 @@ def main():
 
     # ---- optimizer (differential-LR param groups; only params requiring grad) ----
     param_groups = build_param_groups(model, args, is_main)
-    optimizer = torch.optim.AdamW(
-        param_groups, lr=args.lr, betas=(0.9, 0.95), eps=1e-8,
-    )
+    optimizer = build_optimizer(param_groups, args, is_main)
 
     model.train()
     step = 0
