@@ -70,8 +70,11 @@ Write teacher. Only the Write LoRA is trained; the trained Read is frozen.
 `chunk_size=512`, `n_ctx=3` (2048-tok window); `teacher_topk=64`, `λ=0.6`, `ce=0`;
 `total_steps=4000`, `lr=8e-5`, `warmup=100`, `grad_accum=1`, `save_interval=500`;
 bf16, sdpa, seed 42; **`gradient_checkpointing` ON** (grad now spans all 36 layers).
-- **`batch_size`** (NEW, windows/step): `<FILL_AFTER_SANITY>` — chosen to fill the
-  97.8 GB H20 to ~80%; measured peak `<FILL>` GB/card.
+- **`batch_size = 24`** (NEW, windows/step) — chosen to fill the 97.8 GB H20 near ~80%;
+  measured peak **~75 GB/card (~77%)** at 100% GPU util, no OOM. Probed batch=8 → ~40 GB
+  (~41%, under-utilised) and batch=24 → ~75 GB; both give the same **6.7 win/s** throughput
+  (larger batch is free util), so 24 was kept for the full run (safe headroom vs peaks on a
+  ~4 h run; batch=28/32 risked OOM spikes for marginal gain).
 
 ## Run
 - Node: `.104` (28.83.24.104), diskB, `PYTHON_BIN=/opt/conda/envs/torch-base/bin/python`
@@ -80,6 +83,12 @@ bf16, sdpa, seed 42; **`gradient_checkpointing` ON** (grad now spans all 36 laye
 - Launch: `PROJECT_ROOT=/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory
   PYTHON_BIN=/opt/conda/envs/torch-base/bin/python setsid nohup bash
   scripts/launch_qcmem_writepath_distill_diskB.sh >logs/qcmem_writepath_distill.out 2>&1 &`
-- output_dir `outputs/qcmem_writepath_distill_qwen_j12_r32/`, log `logs/qcmem_writepath_distill.log`.
-- Sanity: `MAX_STEPS_SMOKE=30` (finite decreasing loss, no OOM/NaN) before the full 4000-step run.
-- pid / commit / step-0 numbers: `<FILL_AFTER_LAUNCH>`.
+- output_dir `outputs/qcmem_writepath_distill_qwen_j12_r32/`, log
+  `logs/qcmem_writepath_distill_qwen_j12_r32.log` (launcher writes `logs/$RUN.log`;
+  outer wrapper stdout at `logs/qcmem_writepath_distill.out`).
+- Sanity: `MAX_STEPS_SMOKE=30` (batch 8) + `MAX_STEPS_SMOKE=12` (batch 24) — both showed
+  finite decreasing loss, no OOM/NaN, and `--self_test` max|diff|=0.000e+00.
+- **Full run launched 2026-08-03 on `.104`, pid `1113844`, commit `8cf49ea`.**
+  Step-10: `loss 0.1429  lr 8.80e-06  6.7 win/s` (batch=8 smoke step10 0.1945→step20 0.1437;
+  batch=24 probe step10 0.1431 — consistent). ETA ≈ **4.0 h** for 4000 steps
+  (4000 × 24 / 6.7 ≈ 1.43e4 s); saves every 500 steps to the output_dir.
