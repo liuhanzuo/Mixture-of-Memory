@@ -465,9 +465,27 @@ def run_serve(args, device, dtype):
     j0_store_bytes = n_store * args.chunk_size * 4  # int32 token IDs (~4 B/tok)
 
     # ---- GATE 2: store-fetched selected h12 == fresh recompute (bit-identical) ----
+    # The persistent store rows are produced by ``_build_store`` via the per-chunk
+    # ``write_chunk`` primitive (B=1, chunk-local). The fresh-recompute REFERENCE
+    # therefore recomputes each selected chunk with that SAME ``write_chunk``
+    # primitive — NOT the batched ``write_chunks``. This is the correct invariant:
+    # it asserts that reusing the persistent store yields the *identical* h12 tensor
+    # a from-scratch per-chunk compute would, i.e. cache/store reuse changes nothing
+    # on the Read inputs (max_abs == 0.0 exactly; the store rows equal ``write_chunk``
+    # bit-for-bit — verified 2026-08-03).
+    #
+    # WHY NOT ``write_chunks`` here: the batched write groups equal-length chunks
+    # along the batch axis and runs ONE forward, so its matmul/SDPA reduction order
+    # differs from the B=1 ``write_chunk`` that fills the store. On Qwen3-8B the h12
+    # residual carries "massive activations" (|h12| up to ~1.3e4); the bf16 ULP at
+    # that magnitude is 64-128, so a batched reference trips the exact ``!= 0.0``
+    # gate with a spurious max_abs of 64/128 that reflects batched-vs-single fp
+    # noise, NOT any store-integrity problem. Matching the reference primitive to the
+    # store's build primitive is what makes the invariant hold at bit-identity while
+    # keeping the gate strict (no tolerance added).
     if args.verify:
         with torch.no_grad():
-            fresh = qc12.write_chunks([all_ctx_chunks[k] for k in sel_idx])
+            fresh = [qc12.write_chunk(all_ctx_chunks[k]) for k in sel_idx]
             fresh_cat = torch.cat([h[0] for h in fresh], dim=0).float()  # [sum T, d]
             idx = torch.as_tensor(sel_idx, dtype=torch.long)
             got = store.index_select(0, idx.to(store.device)).to(device)
