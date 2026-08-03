@@ -120,8 +120,25 @@ w helps marginally (w128 best, closes the 8k cell to a perfect 100).
 
 ⇒ **+6.0pp deployable accuracy for a one-time +5.7% lower-12 Write compute (w32)**;
 persistent bytes/token, Read pack, Read compute and decode are unchanged from w0.
-(Latency `--mode latency` not run in the min cohort — same convention as P0.16; the
-token/FLOPs accounting above quantifies the Write-cost delta the spec required.)
+
+### Measured latency (`--mode latency`, .104 GPU0, single-proc, niah_multikey_1/16k, warmup 3 × n_repeat 20)
+| arm | Read (ms) | Write (ms) | Write Δ vs w0 |
+|-----|-----------|------------|---------------|
+| A (full replay, j0) | 957.7 | — | — |
+| B (w0 deployable, j12) | 681.9 | 262.1 | — |
+| E2_w32 | 679.4 | 311.7 | +18.9% |
+| E2_w64 | 677.4 | 324.9 | +24.0% |
+| E2_w128 | 677.6 | 346.8 | +32.3% |
+
+**Confirms the design end-to-end at the wall-clock level:** E2 Read is cost-identical to B
+(679–682ms vs 681.9ms, within run-to-run noise) — E2 changes ONLY the one-time Write. The
+deployable j12 Read (~680ms) is **~29% faster** than full-replay A's Read (957.7ms). The
+measured Write overhead (w32 +18.9% … w128 +32.3%) exceeds the marginal-FLOPs ratio
+(1.057×…1.229×) because wall-clock includes fixed per-chunk Write overhead beyond the extra
+prefix tokens; either way it is a one-time cost that never touches persistent store, Read
+pack, Read compute or decode. Per-proc raw:
+`bench_results/p0_17_e2_overlap/latency/latency_proc0.json` (the top-level `latency.json`
+n_procs=0 is a stale 14:01 pre-run artifact, superseded by this per-proc file).
 
 ### Integrity guards (all PASS)
 - `packs_paired_1to1 = True` (every arm's read_len == pack_read_len, all 200).
