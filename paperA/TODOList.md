@@ -486,7 +486,7 @@
 
 ## P0.18 E4：Write 上下文与位置重映射二因素拆解（零训练）
 
-- **状态**：`[TODO — 等 P0.16]`
+- **状态**：`[HARNESS READY，GPU 排队 — 2026-08-03，5-臂 2×2 拆解 harness（scripts/eval_p018_e4_2x2_writecontrol.py + scripts/_run_p018_e4_8gpu.sh），workflow wg28ofr1v 构建，commit c32a2c9（author LiuHanzuo，未 push）。CPU 全通过（py_compile + import + aggregate path，transformers 5.14.1）。臂：A=j0 / BB=Arm B（chunk-local,local-pos）/ E0=P0.16 E0（doc-ctx,local-pos）/ X=(chunk-local,doc-origin-pos 新)/ Y=(doc-ctx,doc-origin-pos 新)；单因素 control BB→E0（factor1 上下文）、BB→X（factor2 位置）、E0→Y、X→Y、joint BB→Y + 交互残差；A/BB/E0 verbatim 走 p016/p017 → 与 headline 行 bit-identical。fail-closed 门：manifest(exit3, LoRA sha dd09cd17/168 mod/layers[12..35]) + pos_sanity(exit4, doc-origin read==read_prefill tol5e-2) + quality --verify（doc-ctx-h12==stock-lower12 + pos-plumbing assert）。GPU run 排队 .104（P0.20 之后；当前无空闲节点，.55 UNAVAILABLE）。P1.10 解锁依赖本实验裁决。]`
 - **目的**：拆开当前 Limitations 中混在一起的两个因素：lower layers 是否看见跨 chunk 文档上下文，以及 cached states 从文档坐标移到 selected-pack 坐标的 RoPE 不一致。
 - **设计**：构造可验证的 `2×2` diagnostic：`chunk-local vs document-contextual lower-layer attention` × `local/reset vs document-origin position IDs`。若某臂因 Qwen RoPE/cache API 无法严格实现，必须记录数学定义、失败原因，并至少完成能单独改变一个因素的两条 control。
 - **协议**：先用 P0.16 的 paired 200 examples；保存 layer-12 state cosine/L2、最终 logits KL/top-1 agreement和任务 accuracy，不只报最终分数。
@@ -723,7 +723,7 @@ PyramidKV native 15-cell（n=100，IRON-LAW-2 全 OK，raw `ruler_results/p16_py
 
 ## P1.8 真实 repeated-query serving 曲线：CoMem vs `j=0`
 
-- **状态**：`[TODO — 复用 P0.2/P2.2 资产，补统一 harness]`
+- **状态**：`[HARNESS READY，GPU 排队 — 2026-08-03，serving-curve harness（scripts/bench_p1_8_serving_curve.py + scripts/_run_p1_8_serving.sh），workflow wg28ofr1v，commit c32a2c9（author LiuHanzuo，未 push）。CPU 通过（py_compile + import + crossover 合成 fixture：Q* 随 G 下降、winner grid 翻转、P0.2 解析交叉核对）。fail-closed 5 门（LoRA sha / store-fetch 选中 h12==fresh recompute max_abs 0 / 单 pack / persistent_bytes 精确 / finite logits）。L=1M store cell ~16GB（H20 97.8G 可跑；逼近 OOM 用 --tier cpu pinned host store，launcher 已单独 fan）。默认矩阵 L∈{32k,128k,1M}×tier{gpu,cpu}×3 proc。GPU run 排队 .104（P0.20 之后）。]`
 - **目的**：正面回答 CoMem 在何种 workload 下相对 matched raw-text replay 严格占优，而不是只给解析式 break-even。
 - **对照**：`j=0` BM25 raw-text replay、CoMem `j=12+LoRA`；可附 full context 作为参考，但主判断必须是 CoMem vs `j=0`。
 - **矩阵**：context/store `L∈{32k,128k,1M}`；同文档查询数 `Q∈{1,4,16,32,64}`；generation length `G∈{1,32,128,512}`；至少测试 GPU-resident 与 CPU-pinned 两个 store tier，CEPH/NVMe 可用 P2.2 实测组件或补统一运行。
@@ -733,7 +733,7 @@ PyramidKV native 15-cell（n=100，IRON-LAW-2 全 OK，raw `ruler_results/p16_py
 
 ## P1.9 Dense retriever + native prompting 的标准 RAG reference
 
-- **状态**：`[TODO — 同时作为 P0.20 阶段 B 的前置资产]`
+- **状态**：`[HARNESS READY，GPU 排队 — 2026-08-03，dense-RAG reference harness（scripts/eval_p1_9_dense_rag.py + scripts/_run_p1_9_dense_rag_8gpu.sh + paperA/P1_9_DENSE_RAG_NOTES.md），workflow wg28ofr1v，commit c32a2c9（author LiuHanzuo，未 push）。retriever=models/bge-large-en-v1.5（frozen，weight sha 45e19549…== 硬编码门，--mode provenance exit0）；chunk=512、Qwen3-8B reader no-LoRA j=0；raw-text RAG 与 CoMem 共用同 examples + 同排序列表 top-k 前缀。默认 cohort 44 jobs（babilong qa1/qa2×{4k,8k,16k}+longeval{8k,16k}+locomo+ruler niah_multikey_1×{8k,16k}，n=100，4 shards）；分解报 recall@k / hit-conditional reader acc / e2e quality / query-enc+ANN latency / index size；READER_PROMPTS="plain native" 做 template-sensitivity。GPU run 排队 .104（P0.20 之后；本实验亦为 P0.20 阶段B dense equal-latency 前置）。]`
 - **目的**：补齐 BM25 `j=0` 之外更接近真实部署的 RAG reference，避免系统结论仅依赖 lexical selector；该实验不替代 matched BM25 路径，也不与 MemoryLLM 混为同类。固定 dense retriever 后，必须同时服务 raw-text RAG 与 CoMem，形成 P0.20 的 dense equal-latency 主比较。
 - **建议配置**：固定一个公开 dense retriever（优先 BGE 或 E5，冻结版本/hash），同 chunk=512、Qwen3-8B reader；先完成 top-12 sanity，再按 P0.20 扫描 `k∈{2,4,6,8,10,12,14,16,20,24}`。同时给统一 no-chat 主协议和 reader 原生 prompt/template sensitivity。若 retriever 需要 query instruction，必须按官方说明固定。
 - **任务**：优先 BABILong qa1/qa2、LongEval、LoCoMo；附 RULER multikey但不以 lexical needle 为唯一结论。
