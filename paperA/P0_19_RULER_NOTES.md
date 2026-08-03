@@ -106,6 +106,35 @@ RUN=1 setsid nohup bash scripts/_run_p0_19_ruler_paired.sh \
 ```
 Output decomposition JSON: `paperA/p0_19_ruler_decomp.json`.
 
-## 6. RESULTS
+## 6. RESULTS (GPU run on .104, 2026-08-03; n=100/cell, paired)
 
-(filled after the .104 run — see final report / paperA/p0_19_ruler_decomp.json)
+Run COMPLETE. All 48 shards rc=0; STEP0 self-test PASS (j=0 read == full forward,
+fp32 max|diff| = 0.000e+00); STEP3 analyzer **emitted numbers → the fail-closed
+per-example input_ids_sha256 seed-pairing gate PASSED** (it raises RuntimeError /
+exit 1 otherwise, no numbers). Output: `paperA/p0_19_ruler_decomp.json` (.104 diskB).
+
+selector = iter_bm25(flagship), topk=12, chunk_size=512, seed=42, chat_template=False.
+
+| cell | n | recall@12 (CI) | HIT n | j0\|HIT | j12-frozen\|HIT | j12+LoRA\|HIT | end-to-end j0 / j12-frozen / j12+LoRA |
+|---|---|---|---|---|---|---|---|
+| niah_multikey_1 @16k | 100 | 97.0 [91.6, 99.0] | 97 | 100.0 | 0.0 | **89.7** | 100.0 / 3.0 / **90.0** |
+| niah_multikey_1 @8k  | 100 | 98.0 [93.0, 99.5] | 98 | 100.0 | 1.0 | **81.6** | 100.0 / 3.0 / **82.0** |
+
+MISS subset (gold chunk not in top-12): n=3 (16k) / n=2 (8k); all three arms 100%
+there — those are closed-book-answerable items, so a selector miss costs nothing.
+
+### Reading (mirrors the LongEval/babilong P0.19 story)
+* **Retrieval leg is NOT the bottleneck**: iter_bm25 recall@12 = 97–98% on
+  single-support niah_multikey_1 — the gold support chunk almost always lands in
+  the pack. The RAG upper bound j0|HIT = 100% confirms that once the chunk is in
+  the pack at full depth it is always read out.
+* **The gap is the READING leg, and it is where LoRA earns its keep**: the
+  mid-depth resume with the adapter FROZEN cannot read the cached chunk at all
+  (j12-frozen|HIT = 0–1%, end-to-end ≈3%) — a cached-state readout collapse. The
+  flagship LoRA recovers almost all of it: j12+LoRA|HIT = 89.7% (16k) / 81.6% (8k),
+  end-to-end 90 / 82. So on RULER the CoMem accuracy is bounded above by retrieval
+  (≈97–98% recall) and the learned adapter closes ≈90% / ≈82% of the readout gap
+  that the frozen resume leaves open.
+* Consistent with the other P0.19 families: retrieval recall is high and near-
+  saturated; the CoMem–vs–RAG gap is dominated by in-pack readout, which the
+  distilled LoRA (not the frozen cache) supplies.
