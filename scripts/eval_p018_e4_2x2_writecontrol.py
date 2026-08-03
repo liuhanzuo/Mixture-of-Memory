@@ -93,6 +93,7 @@ ONLY the document-origin-position read/decode for the two new arms X / Y.
 from __future__ import annotations
 
 import argparse
+import contextlib
 import glob
 import hashlib
 import json
@@ -150,6 +151,131 @@ _versions = p016._versions
 EXPECTED_LORA_SHA = p016.EXPECTED_LORA_SHA
 EXPECTED_BACKBONE_KEY_SHA = p016.EXPECTED_BACKBONE_KEY_SHA
 EXPECTED_LORA_MODULE_COUNT = p016.EXPECTED_LORA_MODULE_COUNT
+
+
+# --------------------------------------------------------------------------- #
+# BBWL arm (2026-08-04): the deployable chunk-local Write path (== Arm BB) but with
+# the P1.10-trained WRITE LoRA loaded on layers [0..resume_j-1] and ENABLED only
+# during the write phase. It quantifies how much of the Arm B (chunk-local, 92.5)
+# -> E0 (document-contextual, 100) gap the trained Write recovers WITHOUT giving the
+# lower band the whole document.
+#
+# Two-adapter design (why A/BB/E0/X/Y stay bit-identical):
+#   * the flagship READ LoRA lives on layers 12..35 and is loaded as the LIVE peft
+#     adapter "default" by ``_load`` (never merged);
+#   * the trained WRITE LoRA lives on layers 0..11 (DISJOINT from READ) and is loaded
+#     as a SECOND adapter "write". Because the two adapters target disjoint layers,
+#     every layer holds exactly ONE of them in its lora ModuleDict:
+#       - layers 12..35 -> only "default";  - layers 0..11 -> only "write".
+#     With the active adapter set to "default" (the post-load default state), each
+#     layer-0..11 ``lora.Linear`` falls through to ``base_layer(x)`` (no "default"
+#     key in its ModuleDict) == the ORIGINAL ``nn.Linear`` -> BIT-IDENTICAL to a load
+#     that never saw the write adapter. So A/BB/E0/X/Y (run with active=="default")
+#     are numerically unchanged. The WRITE LoRA fires ONLY inside
+#     ``_write_lora_enabled`` (active==["default","write"]), which wraps the BBWL arm:
+#     then layers 0..11 apply ONLY "write" and layers 12..35 apply ONLY "default" —
+#     i.e. Arm BB's exact write/read/decode pipeline plus the trained write on the
+#     lower band. This reproduces the P1.10 trainer's student forward, where the READ
+#     LoRA was merged into the base and the WRITE LoRA sat on layers 0..11 (layers
+#     0..11 never carried READ either way, so the lower-band write is identical here).
+# --------------------------------------------------------------------------- #
+def _sha256_file(path):
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def _load_with_write_lora(model_path, dtype, attn_impl, device, lora_adapter,
+                          write_lora_ckpt, resume_j):
+    """Reproduce p013 ``_load`` EXACTLY (base + flagship READ LoRA as the live
+    "default" adapter on layers 12..35) but KEEP the ``PeftModel`` handle so the
+    trained WRITE LoRA (layers 0..resume_j-1) can be added as a SECOND, disjoint
+    adapter named "write". Returns ``(tokenizer, model, lora_sha256, lora_layers,
+    peft_model, write_sha, write_layers)`` — the first four fields are IDENTICAL to
+    ``_load``'s return so the caller path for A/BB/E0/X/Y is unchanged.
+
+    The base + READ load mirrors ``bench_p0_13_quality_latency._load`` line for line
+    (same ``AutoModelForCausalLM.from_pretrained`` args, same ``PeftModel.from_pretrained``
+    ordering), so the resulting base+READ weights are bit-identical to the default
+    harness. Loading the disjoint WRITE adapter and restoring ``set_adapter("default")``
+    leaves every A/BB/E0/X/Y forward untouched (inactive lora.Linear == base passthrough).
+    """
+    from transformers import AutoModelForCausalLM, AutoTokenizer
+    from peft import PeftModel
+    if not lora_adapter:
+        raise SystemExit("[p0.18][BBWL][ABORT] --lora_adapter (flagship READ) is "
+                         "required to build the BBWL arm")
+    tokenizer = AutoTokenizer.from_pretrained(
+        model_path, trust_remote_code=True, local_files_only=True)
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
+    model = AutoModelForCausalLM.from_pretrained(
+        model_path, torch_dtype=dtype, attn_implementation=attn_impl,
+        trust_remote_code=True, local_files_only=True,
+    ).to(device).eval()
+
+    print(f"[p0.18] loading flagship READ LoRA (adapter='default'): {lora_adapter}",
+          flush=True)
+    peft_model = PeftModel.from_pretrained(model, lora_adapter).eval()
+    read_file = os.path.join(lora_adapter, "adapter_model.safetensors")
+    lora_sha256 = _sha256_file(read_file) if os.path.exists(read_file) else None
+    lora_layers = None
+    read_cfg = os.path.join(lora_adapter, "adapter_config.json")
+    if os.path.exists(read_cfg):
+        with open(read_cfg) as f:
+            lora_layers = json.load(f).get("layers_to_transform")
+
+    print(f"[p0.18] loading trained WRITE LoRA (adapter='write'): {write_lora_ckpt}",
+          flush=True)
+    peft_model.load_adapter(write_lora_ckpt, adapter_name="write")
+    # Restore the READ-only default state; the write adapter stays DORMANT until a
+    # ``_write_lora_enabled`` block activates it. This is what guarantees A/BB/E0/X/Y
+    # are numerically identical to a load without the write adapter.
+    peft_model.base_model.set_adapter("default")
+    model = peft_model.base_model.model
+
+    write_file = os.path.join(write_lora_ckpt, "adapter_model.safetensors")
+    write_sha = _sha256_file(write_file) if os.path.exists(write_file) else None
+    write_layers = None
+    write_cfg = os.path.join(write_lora_ckpt, "adapter_config.json")
+    if os.path.exists(write_cfg):
+        with open(write_cfg) as f:
+            write_layers = json.load(f).get("layers_to_transform")
+
+    # fail-closed: the trained WRITE LoRA MUST live on layers [0..resume_j-1] and be
+    # DISJOINT from the READ LoRA (12..35), else the two-adapter bit-identity argument
+    # (each layer holds exactly one adapter) breaks.
+    exp_write_layers = list(range(0, int(resume_j)))
+    if sorted(write_layers or []) != exp_write_layers:
+        raise SystemExit(
+            f"[p0.18][BBWL][ABORT] WRITE LoRA layers_to_transform {write_layers} != "
+            f"expected {exp_write_layers} (must be the lower band 0..{resume_j - 1}, "
+            f"disjoint from READ 12..35)")
+    if set(lora_layers or []) & set(write_layers or []):
+        raise SystemExit(
+            f"[p0.18][BBWL][ABORT] READ {sorted(lora_layers or [])} and WRITE "
+            f"{sorted(write_layers or [])} LoRA share layers — not disjoint")
+    return (tokenizer, model, lora_sha256, lora_layers,
+            peft_model, write_sha, write_layers)
+
+
+@contextlib.contextmanager
+def _write_lora_enabled(peft_model):
+    """Activate BOTH the READ ("default", layers 12..35) and the trained WRITE
+    ("write", layers 0..11) adapters for the duration of the block, then restore the
+    READ-only "default" state. Because the two adapters live on DISJOINT layer sets,
+    activating both makes layers 0..11 apply ONLY "write" and layers 12..35 apply ONLY
+    "default" — i.e. Arm BB's exact pipeline plus the trained write on the lower band.
+    Everything outside this block runs with active=="default" (READ only), so the
+    other arms are unaffected."""
+    tuner = peft_model.base_model            # LoraModel (BaseTuner.set_adapter)
+    tuner.set_adapter(["default", "write"])
+    try:
+        yield
+    finally:
+        tuner.set_adapter("default")
 
 
 # --------------------------------------------------------------------------- #
@@ -427,8 +553,18 @@ def _logit_kl_top1(ref_logits, arm_logits):
 # --------------------------------------------------------------------------- #
 def run_quality(args, device, dtype):
     torch.manual_seed(args.seed)
-    tokenizer, model, lora_sha256, lora_layers = _load(
-        args.model_path, dtype, args.attn_impl, device, args.lora_adapter)
+    include_bbwl = bool(args.write_lora_ckpt)
+    peft_model = None
+    write_lora_sha256 = None
+    write_lora_layers = None
+    if include_bbwl:
+        (tokenizer, model, lora_sha256, lora_layers,
+         peft_model, write_lora_sha256, write_lora_layers) = _load_with_write_lora(
+            args.model_path, dtype, args.attn_impl, device, args.lora_adapter,
+            args.write_lora_ckpt, args.resume_j)
+    else:
+        tokenizer, model, lora_sha256, lora_layers = _load(
+            args.model_path, dtype, args.attn_impl, device, args.lora_adapter)
     L = int(model.config.num_hidden_layers)
     if lora_sha256 != EXPECTED_LORA_SHA:
         raise SystemExit(
@@ -438,11 +574,14 @@ def run_quality(args, device, dtype):
     qcE0 = QCMemModel(model, resume_j=args.resume_j)      # 12 doc-ctx      local-pos
     qcX = QCMemModel(model, resume_j=args.resume_j)       # 12 chunk-local  doc-origin
     qcY = QCMemModel(model, resume_j=args.resume_j)       # 12 doc-ctx      doc-origin
+    # BBWL: chunk-local (== BB) but with the trained WRITE LoRA enabled during write.
+    qcBBWL = QCMemModel(model, resume_j=args.resume_j) if include_bbwl else None
     eosA = _eos_ids(qcA, tokenizer)
     eosBB = _eos_ids(qcBB, tokenizer)
     eosE0 = _eos_ids(qcE0, tokenizer)
     eosX = _eos_ids(qcX, tokenizer)
     eosY = _eos_ids(qcY, tokenizer)
+    eosBBWL = _eos_ids(qcBBWL, tokenizer) if include_bbwl else None
     include_e0 = not args.no_e0
 
     task = _resolve_task(args.task)
@@ -485,8 +624,13 @@ def run_quality(args, device, dtype):
     print(f"[p0.18][quality] {task}/{length}{shard_tag}: selector={sel_name} "
           f"topk={args.topk} hop={args.iter_hop_topk} n={len(sample_indices)}/"
           f"{args.limit} A=j{args.resume_j_a} BB/E0/X/Y=j{args.resume_j} "
-          f"e0={'on' if include_e0 else 'off'} mnt={mnt} verify={args.verify}",
+          f"e0={'on' if include_e0 else 'off'} "
+          f"bbwl={'on' if include_bbwl else 'off'} mnt={mnt} verify={args.verify}",
           flush=True)
+    if include_bbwl:
+        print(f"[p0.18][quality] BBWL WRITE LoRA: {args.write_lora_ckpt} "
+              f"sha={str(write_lora_sha256)[:12]}… layers={write_lora_layers}",
+              flush=True)
 
     records = []
     n_done = 0
@@ -580,6 +724,19 @@ def run_quality(args, device, dtype):
             genY, tY, rlY, pkY, finY, lY, statesY = _run_docpos_arm(
                 qcY, tokenizer, pack, doc_ids, sink_span, chunk_spans, query_span,
                 "doc_ctx", mnt, eosY, capture_first=True)
+            if include_bbwl:
+                # BBWL == Arm BB (chunk-local, local-pos) run VERBATIM through the same
+                # p017._run_arm machinery, but with the trained WRITE LoRA ENABLED on
+                # layers 0..11 for the whole write/read/decode (the write phase +
+                # decode bottom band go through the trained lower band; the read stays
+                # the flagship READ LoRA, bit-identical to BB's read). Wrapping the
+                # entire call activates ["default","write"]; outside it every other arm
+                # runs with active=="default" (bit-identical to the E0 harness).
+                with _write_lora_enabled(peft_model):
+                    genBW, tBW, rlBW, pkBW, finBW, lBW = _run_arm(
+                        qcBBWL, tokenizer, pack["bos_id"],
+                        pack["selected_chunk_tensors"], pack["query_ids"],
+                        mnt, eosBBWL, capture_first=True)
         except RuntimeError as e:
             if "out of memory" not in str(e).lower():
                 raise
@@ -608,6 +765,19 @@ def run_quality(args, device, dtype):
             f"[p0.18][ABORT] Y h12 not == doc-ctx reference "
             f"(cos={m_docctx['h12_cosine_vs_docctx_mean']}) — factor-1 mislabelled")
 
+        # BBWL trained-write packed h12 (WRITE LoRA on layers 0..11): quantifies how
+        # far the trained chunk-local write moves h12 TOWARD the document-contextual
+        # reference (cos->1 / rel_l2->0 == it recovered document context).
+        m_bbwl = None
+        if include_bbwl:
+            with _write_lora_enabled(peft_model):
+                bw_sink = qcBBWL.write_chunk([pack["bos_id"]])
+                bw_sel = qcBBWL.write_chunks(list(pack["selected_chunk_tensors"])) \
+                    if pack["selected_chunk_tensors"] else []
+                bw_query = qcBBWL.write_chunk(pack["query_ids"])
+            bw_states = torch.cat([bw_sink] + list(bw_sel) + [bw_query], dim=1)
+            m_bbwl = _h12_state_metrics(bw_states, ref_states)
+
         predA = tokenizer.decode(genA, skip_special_tokens=True).strip()
         predBB = tokenizer.decode(genBB, skip_special_tokens=True).strip()
         predX = tokenizer.decode(genX, skip_special_tokens=True).strip()
@@ -619,6 +789,9 @@ def run_quality(args, device, dtype):
         if include_e0:
             predE = tokenizer.decode(genE, skip_special_tokens=True).strip()
             recE = ruler._string_match_all_one(predE, answers)
+        if include_bbwl:
+            predBW = tokenizer.decode(genBW, skip_special_tokens=True).strip()
+            recBW = ruler._string_match_all_one(predBW, answers)
 
         # 1:1 pairing guard: ALL arms MUST consume the identical pack length.
         pack_rl = pack["pack_read_len"]
@@ -627,6 +800,9 @@ def run_quality(args, device, dtype):
             f"pack={pack_rl}")
         if include_e0:
             assert rlE == pack_rl, f"read_len mismatch i={i}: E0={rlE} pack={pack_rl}"
+        if include_bbwl:
+            assert rlBW == pack_rl, \
+                f"read_len mismatch i={i}: BBWL={rlBW} pack={pack_rl}"
 
         def _arm_rec(resume_j, f1, f2, pred, rec_score, gen, rl, tt, pk, fin, first):
             d = {"resume_j": resume_j, "factor1": f1, "factor2": f2,
@@ -690,6 +866,21 @@ def run_quality(args, device, dtype):
             agree["A_vs_E0"] = _pair_agree(genA, lA, genE, lE)
             agree["BB_vs_E0"] = _pair_agree(genBB, lBB, genE, lE)
             agree["E0_vs_Y"] = _pair_agree(genE, lE, genY, lY)
+        if include_bbwl:
+            # BBWL = chunk-local Write with the trained WRITE LoRA (== BB + trained
+            # lower band). factor2 is still local_pos (BB's deployable Read interface).
+            rec["armBBWL"] = _arm_rec(
+                args.resume_j, "chunk_local_trained_write", "local_pos",
+                predBW, recBW, genBW, rlBW, tBW, pkBW, finBW, lBW)
+            rec["h12_state_bbwl_vs_docctx"] = m_bbwl
+            # accuracy of the trained Write path: how much of BB->E0 it recovers.
+            rec["diff_BBWL_minus_BB"] = recBW - recBB          # trained-write gain
+            rec["diff_A_minus_BBWL"] = recA - recBW            # residual to full replay
+            rec["diff_E0_minus_BBWL"] = (recE - recBW) if include_e0 else None
+            agree["A_vs_BBWL"] = _pair_agree(genA, lA, genBW, lBW)
+            agree["BB_vs_BBWL"] = _pair_agree(genBB, lBB, genBW, lBW)
+            if include_e0:
+                agree["E0_vs_BBWL"] = _pair_agree(genE, lE, genBW, lBW)
         rec["agreement"] = agree
 
         fout.write(json.dumps(rec) + "\n"); fout.flush()
@@ -697,9 +888,10 @@ def run_quality(args, device, dtype):
         torch.cuda.empty_cache()
         if n_done % 5 == 0:
             estr = f" E0={recE:.2f}" if include_e0 else ""
+            bwstr = f" BBWL={recBW:.2f}" if include_bbwl else ""
             print(f"[p0.18][quality] {task}/{length}{shard_tag} {n_done} done "
-                  f"(A={recA:.2f} BB={recBB:.2f}{estr} X={recX:.2f} Y={recY:.2f} "
-                  f"rl={rlA})", flush=True)
+                  f"(A={recA:.2f} BB={recBB:.2f}{estr}{bwstr} X={recX:.2f} "
+                  f"Y={recY:.2f} rl={rlA})", flush=True)
     fout.close()
 
     valid = [r for r in records if not r.get("oom")]
@@ -728,11 +920,20 @@ def run_quality(args, device, dtype):
     }
     if include_e0:
         cell["armE0_score"] = _mean("armE0")
+    if include_bbwl:
+        cell["armBBWL_score"] = _mean("armBBWL")
+        cell["diff_BBWL_minus_BB"] = round(_mean("armBBWL") - _mean("armBB"), 3)
+        cell["write_lora_ckpt"] = args.write_lora_ckpt
+        cell["write_lora_sha256"] = write_lora_sha256
+        cell["write_lora_layers"] = write_lora_layers
+        if include_e0:
+            cell["diff_E0_minus_BBWL"] = round(_mean("armE0") - _mean("armBBWL"), 3)
     with open(outdir / f"{task}_{length}{shard_tag}_cell.json", "w") as f:
         json.dump(cell, f, indent=2)
     estr = f" E0={cell.get('armE0_score')}" if include_e0 else ""
+    bwstr = f" BBWL={cell.get('armBBWL_score')}" if include_bbwl else ""
     print(f"[p0.18][quality] DONE {task}/{length}{shard_tag}: "
-          f"A={cell['armA_score']} BB={cell['armBB_score']}{estr} "
+          f"A={cell['armA_score']} BB={cell['armBB_score']}{estr}{bwstr} "
           f"X={cell['armX_score']} Y={cell['armY_score']} n_valid={len(valid)}",
           flush=True)
 
@@ -815,8 +1016,17 @@ def run_pos_sanity(args, device, dtype):
 # --------------------------------------------------------------------------- #
 def run_manifest(args, device, dtype):
     torch.manual_seed(args.seed)
-    tokenizer, model, lora_sha256, lora_layers = _load(
-        args.model_path, dtype, args.attn_impl, device, args.lora_adapter)
+    include_bbwl = bool(args.write_lora_ckpt)
+    write_lora_sha256 = None
+    write_lora_layers = None
+    if include_bbwl:
+        (tokenizer, model, lora_sha256, lora_layers, _peft,
+         write_lora_sha256, write_lora_layers) = _load_with_write_lora(
+            args.model_path, dtype, args.attn_impl, device, args.lora_adapter,
+            args.write_lora_ckpt, args.resume_j)
+    else:
+        tokenizer, model, lora_sha256, lora_layers = _load(
+            args.model_path, dtype, args.attn_impl, device, args.lora_adapter)
     qcA = QCMemModel(model, resume_j=args.resume_j_a)
     _ = QCMemModel(model, resume_j=args.resume_j)
     prov_backbone = _backbone_provenance(qcA, args.model_path)
@@ -830,11 +1040,21 @@ def run_manifest(args, device, dtype):
         got = prov_backbone["key_tensor_sha256"].get(k)
         if got != v:
             abort.append(f"backbone {k} sha {got} != expected {v}")
-    if prov_lora["count"] != EXPECTED_LORA_MODULE_COUNT:
-        abort.append(f"LoRA module count {prov_lora['count']} != "
-                     f"{EXPECTED_LORA_MODULE_COUNT}")
+    # The WRITE adapter adds resume_j x 7 LoRA modules on the DISJOINT lower band
+    # (layers 0..resume_j-1), so the expected count grows by exactly that when BBWL is
+    # loaded; the READ (12..35) count is unchanged.
+    exp_lora_modules = EXPECTED_LORA_MODULE_COUNT + (int(args.resume_j) * 7
+                                                     if include_bbwl else 0)
+    if prov_lora["count"] != exp_lora_modules:
+        abort.append(f"LoRA module count {prov_lora['count']} != {exp_lora_modules}")
     if sorted(lora_layers or []) != list(range(12, 36)):
-        abort.append(f"LoRA layers_to_transform {lora_layers} != [12..35]")
+        abort.append(f"READ LoRA layers_to_transform {lora_layers} != [12..35]")
+    if include_bbwl:
+        if sorted(write_lora_layers or []) != list(range(0, int(args.resume_j))):
+            abort.append(f"WRITE LoRA layers_to_transform {write_lora_layers} != "
+                         f"[0..{int(args.resume_j) - 1}]")
+        if set(lora_layers or []) & set(write_lora_layers or []):
+            abort.append("READ and WRITE LoRA layers overlap (must be disjoint)")
 
     manifest = {
         "run": "P0.18_E4_two_factor_2x2_write_control",
@@ -896,6 +1116,25 @@ def run_manifest(args, device, dtype):
                        "versions": prov_versions},
         "command": " ".join(sys.argv), "abort_reasons": abort,
     }
+    if include_bbwl:
+        # Pure increment: BBWL == BB but with the P1.10-trained WRITE LoRA enabled
+        # (peft adapter "write", layers 0..resume_j-1) ONLY during the write phase.
+        # The five existing arms (A/BB/E0/X/Y) keep the WRITE adapter DISABLED
+        # (active set = ["default"]), so their forward is bit-identical to a load
+        # without the write ckpt.
+        manifest["arms"]["BBWL"] = {
+            "resume_j": args.resume_j, "factor1": "chunk_local_trained_write",
+            "factor2": "local_pos", "included": True,
+            "note": "NEW (P1.10). == BB (chunk-local, local-pos) but the trained "
+                    "WRITE LoRA (layers 0..%d) is enabled during the write phase via "
+                    "peft set_adapter([\"default\",\"write\"]); disabled elsewhere. "
+                    "Quantifies how much a trained deployable Write recovers of the "
+                    "BB(92.5)->E0(100) document-context gap." % (int(args.resume_j) - 1),
+        }
+        manifest["strict_fixes"]["write_lora_ckpt"] = args.write_lora_ckpt
+        manifest["strict_fixes"]["write_lora_sha256"] = write_lora_sha256
+        manifest["strict_fixes"]["write_lora_layers"] = write_lora_layers
+        manifest["strict_fixes"]["lora_adapter_names"] = prov_lora.get("adapter_names")
     Path(args.output_dir).mkdir(parents=True, exist_ok=True)
     with open(Path(args.output_dir) / "manifest.json", "w") as f:
         json.dump(manifest, f, indent=2)
@@ -938,8 +1177,11 @@ def run_aggregate(args):
                       f, indent=2)
         return
     have_e0 = bool(valid) and all("armE0" in r for r in valid)
+    have_bbwl = bool(valid) and all("armBBWL" in r for r in valid)
 
-    arms = ["armA", "armBB", "armX", "armY"] + (["armE0"] if have_e0 else [])
+    arms = (["armA", "armBB", "armX", "armY"]
+            + (["armE0"] if have_e0 else [])
+            + (["armBBWL"] if have_bbwl else []))
     macros = {}
     cell_maps = {}
     cells = None
@@ -958,12 +1200,20 @@ def run_aggregate(args):
     if have_e0:
         pairs += [("f1_BB_to_E0_localpos", "armE0", "armBB"),
                   ("f2_E0_to_Y_docctx", "armY", "armE0")]
+    if have_bbwl:
+        # BBWL vs BB isolates the trained-Write accuracy gain; E0 vs BBWL is the
+        # residual gap to the (non-deployable) document-contextual Write.
+        pairs += [("BBWL_vs_BB", "armBBWL", "armBB")]
+        if have_e0:
+            pairs += [("E0_vs_BBWL", "armE0", "armBBWL")]
     pairwise = {name: _pairwise(valid, cells_keys, cells, ax, ay, args.n_boot)
                 for (name, ax, ay) in pairs}
 
     agree_pairs = ["A_vs_BB", "A_vs_X", "A_vs_Y", "BB_vs_X", "X_vs_Y"]
     if have_e0:
         agree_pairs += ["A_vs_E0", "BB_vs_E0", "E0_vs_Y"]
+    if have_bbwl:
+        agree_pairs += ["A_vs_BBWL", "BB_vs_BBWL"] + (["E0_vs_BBWL"] if have_e0 else [])
     agreement = {p: _agree_means(valid, p) for p in agree_pairs
                  if valid and p in valid[0].get("agreement", {})}
 
@@ -989,6 +1239,9 @@ def run_aggregate(args):
         "chunk_local_vs_docctx": _state_means("h12_state_chunklocal_vs_docctx"),
         "docctx_vs_docctx": _state_means("h12_state_docctx_vs_docctx"),
     }
+    if have_bbwl:
+        h12_states["bbwl_trained_vs_docctx"] = _state_means(
+            "h12_state_bbwl_vs_docctx")
 
     per_cell = {}
     for key in cells_keys:
@@ -1007,6 +1260,12 @@ def run_aggregate(args):
                                               - cell_maps["armBB"][tag], 2)
             entry["diff_f2_E0_to_Y"] = round(cell_maps["armY"][tag]
                                              - cell_maps["armE0"][tag], 2)
+        if have_bbwl:
+            entry["diff_BBWL_minus_BB"] = round(cell_maps["armBBWL"][tag]
+                                                - cell_maps["armBB"][tag], 2)
+            if have_e0:
+                entry["diff_E0_minus_BBWL"] = round(cell_maps["armE0"][tag]
+                                                    - cell_maps["armBBWL"][tag], 2)
         per_cell[tag] = entry
 
     macro = {a: round(macros[a], 3) for a in arms}
@@ -1043,6 +1302,7 @@ def run_aggregate(args):
 
     summary = {
         "n_examples_paired": n, "n_cells": len(cells_keys), "e0_included": have_e0,
+        "bbwl_included": have_bbwl,
         "per_cell": per_cell, "macro": macro, "interaction_2x2": interaction,
         "logit_vs_A": logit_vs_A, "h12_state_metrics": h12_states,
         "oom_examples": any_oom, "nonfinite_examples": any_nonfinite,
@@ -1068,9 +1328,10 @@ def run_aggregate(args):
 
     print("=" * 78)
     print(f"[p0.18][aggregate] n_paired={n} n_cells={len(cells_keys)} "
-          f"e0={'on' if have_e0 else 'off'}")
+          f"e0={'on' if have_e0 else 'off'} bbwl={'on' if have_bbwl else 'off'}")
     estr = f"  E0={macros['armE0']:.2f}" if have_e0 else ""
-    print(f"  macro  A={macros['armA']:.2f}  BB={macros['armBB']:.2f}{estr}  "
+    bwstr = f"  BBWL={macros['armBBWL']:.2f}" if have_bbwl else ""
+    print(f"  macro  A={macros['armA']:.2f}  BB={macros['armBB']:.2f}{estr}{bwstr}  "
           f"X={macros['armX']:.2f}  Y={macros['armY']:.2f}")
     for name in [p[0] for p in pairs]:
         pw = pairwise[name]
@@ -1100,6 +1361,13 @@ def main():
     ap.add_argument("--model_path", type=str, default="models/Qwen3-8b-local")
     ap.add_argument("--lora_adapter", type=str,
                     default="outputs/qcmem_distill_qwen_j12_r32_4k/final")
+    ap.add_argument("--write_lora_ckpt", type=str, default="",
+                    help="path to a P1.10-trained WRITE LoRA step dir (adapter_config"
+                         ".json + adapter_model.safetensors; layers 0..resume_j-1, "
+                         "r32/α64). When set, adds the BBWL arm = Arm BB (chunk-local, "
+                         "local-pos) with the trained WRITE LoRA ENABLED during the "
+                         "write phase. Empty (default) => A/BB/E0/X/Y only, "
+                         "bit-identical to the existing P0.18 harness.")
     ap.add_argument("--resume_j_a", type=int, default=0)   # full replay (anchor A)
     ap.add_argument("--resume_j", type=int, default=12)    # BB/E0/X/Y split depth
     ap.add_argument("--no_e0", action="store_true",
