@@ -63,6 +63,7 @@ Usage (funnel-Qwen continued-pretrain arm — pretrain-vs-vanilla head-to-head):
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import random
@@ -146,6 +147,21 @@ def _resolve_selector(selector: str, task: str) -> str:
     if task == "variable_tracking":
         return "iter_bm25"
     return "bm25"
+
+
+def _sha256_ids(input_ids) -> str:
+    """sha256 of the FULL prompt token ids (byte-identity fingerprint for the
+    P0.19 paired seed-pairing gate).
+
+    Convention MUST match the recall-side analyzer + P0.20 Phase B / P1.9
+    (``_sha256_str(",".join(map(str, tokens.tolist())))``): the exact same string
+    of comma-joined token ids over the WHOLE prompt (BOS-prefixed, chunking-blind).
+    Two arms (j0 / j12-frozen / j12+LoRA) that regenerate the SAME RULER sample
+    with the SAME crc32 seed + pinned PYTHONHASHSEED therefore produce an identical
+    digest; a mismatch means the arms are NOT paired and the decomposition MUST
+    abort rather than emit un-paired numbers."""
+    ids = input_ids[0].tolist() if hasattr(input_ids, "tolist") else list(input_ids)
+    return hashlib.sha256(",".join(map(str, ids)).encode()).hexdigest()
 
 
 def _bare_question(prompt: str) -> str:
@@ -537,6 +553,7 @@ def main():
 
             df = pd.DataFrame({"target": [], "output": [], "question": [],
                                "recall": []})
+            records: list[dict] = []  # per-sample provenance (P0.19 pairing gate)
             recall_sum = 0.0
             total = 0
             n_tok_seen = 0
@@ -626,6 +643,20 @@ def main():
                 recall_sum += rec
                 total += 1
                 df.loc[len(df)] = [" | ".join(answers), output, bare_q, rec]
+                # Per-sample provenance for the P0.19 paired decomposition: the
+                # full-prompt input_ids_sha256 is the byte-identity fingerprint the
+                # cross-arm seed-pairing gate asserts on; ``correct`` = RULER
+                # string_match_all recall == 1.0 (all reference strings matched),
+                # the binary correctness the decomposition joins per HIT/MISS subset.
+                records.append({
+                    "sample_index": i,
+                    "input_ids_sha256": _sha256_ids(input_ids),
+                    "target": " | ".join(answers),
+                    "output": output,
+                    "recall": rec,
+                    "correct": int(rec >= 1.0),
+                    "n_tok": int(input_ids.shape[1]),
+                })
                 if len(df) % 10 == 0:
                     qcb.harness._write_results_csv(
                         df, outdir / f"{task}_{length}{shard_tag}.csv")
@@ -643,6 +674,27 @@ def main():
             }
             outfile = outdir / f"{task}_{length}{shard_tag}.csv"
             qcb.harness._write_results_csv(df, outfile)
+            # Per-sample provenance records (P0.19 pairing): sample_index +
+            # input_ids_sha256 + binary correctness. The analyzer joins arms by
+            # sample_index and asserts input_ids_sha256 equality (fail-closed).
+            recfile = outdir / f"{task}_{length}{shard_tag}.records.json"
+            with open(recfile, "w") as rf:
+                json.dump({
+                    "task": task, "length": length,
+                    "sharding": {"num_shards": args.num_shards,
+                                 "shard_index": args.shard_index},
+                    "resume_j": args.resume_j,
+                    "selector": (None if no_retrieval else sel),
+                    "topk": (None if no_retrieval else args.topk),
+                    "iter_hop_topk": args.iter_hop_topk,
+                    "iter_rounds": args.iter_rounds,
+                    "chunk_size": args.chunk_size,
+                    "lora_adapter": args.lora_adapter or None,
+                    "baseline": args.baseline,
+                    "seed": args.seed,
+                    "pythonhashseed": os.environ.get("PYTHONHASHSEED"),
+                    "records": records,
+                }, rf, indent=2)
             cfg_file = outdir / f"{task}_{length}{shard_tag}.json"
             json.dump(
                 {

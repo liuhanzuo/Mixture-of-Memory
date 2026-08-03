@@ -76,6 +76,7 @@ from __future__ import annotations
 import argparse
 import csv
 import glob
+import hashlib
 import json
 import math
 import os
@@ -159,6 +160,14 @@ def recall_frac(gold_chunks, sel_set) -> float:
     if not gold_chunks:
         return 0.0
     return len([g for g in gold_chunks if g in sel_set]) / len(gold_chunks)
+
+
+def _sha256_ids(tokens) -> str:
+    """sha256 of the full-prompt token ids — MUST match eval_ruler_qcmem._sha256_ids
+    and P0.20 Phase B / P1.9 (_sha256_str over comma-joined ids). This is the
+    byte-identity key the cross-arm seed-pairing gate asserts on."""
+    ids = tokens.tolist() if hasattr(tokens, "tolist") else list(tokens)
+    return hashlib.sha256(",".join(map(str, ids)).encode()).hexdigest()
 
 
 # --------------------------------------------------------------------------- #
@@ -368,45 +377,124 @@ def _find_cell_dir(root, task, length):
 
 
 # --------------------------------------------------------------------------- #
-# RULER (recall side only; needs paired PYTHONHASHSEED-pinned re-run to join)
+# RULER (paired j0 / j12-frozen / j12+LoRA-flagship, seed-paired via crc32)
 # --------------------------------------------------------------------------- #
+def _load_ruler_records(base_dir, task, length):
+    """Merge per-shard records.json for one (task,length) cell.
+
+    Returns ({sample_index: {"correct","recall","sha"}}, selector_str|None).
+    The eval (``scripts/eval_ruler_qcmem.py``) writes one
+    ``<task>_<length>_shard{S}of{N}.records.json`` per shard, each holding a
+    ``records`` list of ``{sample_index, input_ids_sha256, correct, recall}`` plus
+    the cell config (``selector``/``resume_j``/...)."""
+    if not base_dir:
+        return {}, None
+    files = (glob.glob(os.path.join(base_dir, f"{task}_{length}_shard*of*.records.json"))
+             or glob.glob(os.path.join(base_dir, f"{task}_{length}.records.json")))
+    out, selector = {}, None
+    for fp in sorted(files):
+        d = json.load(open(fp))
+        selector = d.get("selector", selector)
+        for r in d.get("records", []):
+            out[int(r["sample_index"])] = {
+                "correct": int(r["correct"]),
+                "recall": float(r.get("recall", r["correct"])),
+                "sha": r.get("input_ids_sha256"),
+            }
+    return out, selector
+
+
 def analyze_ruler(args, tokenizer):
     import scripts.eval_ruler_mem_space as ruler
     results = {}
+    gate_failures = []  # (cell, i, {arm: sha}) — ANY entry => fail-closed abort
     for task in args.ruler_tasks:
         for length in args.lengths:
             if length not in ruler._LENGTH_TOKENS:
                 results[f"{task}|{length}"] = {"error": "unknown_length"}
                 continue
             target_tokens = ruler._LENGTH_TOKENS[length]
-            # MUST mirror eval_ruler_qcmem/eval_ruler_mem_space exactly so this
-            # regenerates the SAME samples the eval scored. Both now use
-            # zlib.crc32 (PYTHONHASHSEED-independent) instead of built-in hash();
-            # keep this identical or the recall join would use different needles.
+
+            # Load the paired per-sample records (correct + input_ids_sha256).
+            j0_rec, j0_sel = _load_ruler_records(args.j0_dir, task, length)
+            j12_rec, j12_sel = _load_ruler_records(args.j12_dir, task, length)
+            flag_rec, flag_sel = _load_ruler_records(args.flagship_dir, task, length)
+            arms = {"j0": j0_rec, "j12": j12_rec, "flag": flag_rec}
+            present = {a: r for a, r in arms.items() if r}
+            if not present:
+                results[f"{task}|{length}"] = {
+                    "error": "no_records — RULER accuracy join needs a paired "
+                             "run (scripts/eval_ruler_qcmem.py emits "
+                             "<task>_<length>_shard*of*.records.json). Point "
+                             "--j0_dir/--j12_dir/--flagship_dir at the run dirs."}
+                continue
+
+            # Selector: explicit --ruler_selector overrides; 'auto' reproduces the
+            # eval's per-task routing (VT->iter_bm25, niah->bm25). VERIFY it agrees
+            # with what each arm actually recorded (fail-closed on disagreement).
+            if args.ruler_selector != "auto":
+                sel_name = args.ruler_selector
+            elif task == "variable_tracking":
+                sel_name = "iter_bm25"
+            else:
+                sel_name = "bm25"
+            for a, s in ((a, s) for a, s in
+                         (("j0", j0_sel), ("j12", j12_sel), ("flag", flag_sel))
+                         if arms[a]):
+                if s is not None and s != sel_name:
+                    gate_failures.append(
+                        (f"{task}|{length}", -1,
+                         {"reason": f"recorded selector {a}={s!r} != analyzer "
+                                    f"selector {sel_name!r}"}))
+
+            # Deterministic per-(task,length) seed — IDENTICAL to the eval
+            # (eval_ruler_qcmem / eval_ruler_mem_space): crc32 (PYTHONHASHSEED-
+            # independent). Regenerating the sample here therefore reproduces the
+            # EXACT prompt the arms scored; the sha gate below proves it.
             base_seed = args.seed + (zlib.crc32(f"{task}\x00{length}".encode()) % 100000)
             vt_icl = None
             if task == "variable_tracking":
                 vt_icl = ruler._make_vt_icl(random.Random(base_seed + 777), 4)
-            sel_task = "iter_bm25" if task == "variable_tracking" else "bm25"
+
+            # Pair on the intersection of sample indices the arms actually ran.
+            idx_sets = [set(r.keys()) for r in present.values()]
+            sample_ids = sorted(set.intersection(*idx_sets)) if len(idx_sets) > 1 \
+                else sorted(idx_sets[0])
+
             per_sample = []
-            for i in range(args.limit):
+            for i in sample_ids:
                 rng = random.Random(base_seed * 1000 + i)
                 prompt, answers, gold_needle = ruler._build_sample(
                     task, target_tokens, tokenizer, rng, vt_icl)
                 ids = tokenizer.encode(prompt, add_special_tokens=True)
                 tokens = torch.tensor(ids, dtype=torch.long)
+                regen_sha = _sha256_ids(tokens)
+
+                # ---- FAIL-CLOSED seed-pairing gate ----
+                # every present arm's recorded input_ids_sha256 MUST equal each
+                # other AND the regenerated prompt's sha. A mismatch means the arms
+                # (or the regeneration) saw a different sample -> the decomposition
+                # would be UNPAIRED -> abort rather than emit misleading numbers.
+                shas = {"regen": regen_sha}
+                for a, r in present.items():
+                    shas[a] = r[i].get("sha")
+                distinct = set(v for v in shas.values() if v is not None)
+                if len(distinct) > 1 or any(v is None for v in
+                                            (present[a][i].get("sha") for a in present)):
+                    gate_failures.append((f"{task}|{length}", i, shas))
+
                 chunks = list(tokens.split(args.chunk_size))
                 context_chunks = chunks[:-1]
                 bare_q = prompt[prompt.rfind("\n") + 1:].strip()
                 bare_q_ids = tokenizer.encode(bare_q, add_special_tokens=False)
-                if sel_task == "iter_bm25":
+                if sel_name.startswith("iter_bm25"):
                     sel = _iter_bm25_indices(context_chunks, list(bare_q_ids),
                                              topk=args.topk,
                                              iter_rounds=args.iter_rounds,
                                              iter_hop_topk=args.iter_hop_topk)
                 else:
                     sel = _select_context_chunk_indices(
-                        "bm25", context_chunks, bare_q_ids, args.topk, None)
+                        sel_name, context_chunks, bare_q_ids, args.topk, None)
                 sel_set = set(sel)
                 # gold-support span: for NIAH the queried needle sentence; for VT
                 # the chain sentences (answers are the variable names).
@@ -419,13 +507,23 @@ def analyze_ruler(args, tokenizer):
                     "sample_index": i, "gold_chunks": gold,
                     "recall_hit": recall_hit(gold, sel_set),
                     "recall_frac": round(recall_frac(gold, sel_set), 3),
-                    "j0": None, "j12": None, "flag": None,
+                    "j0": j0_rec.get(i, {}).get("correct") if j0_rec else None,
+                    "j12": j12_rec.get(i, {}).get("correct") if j12_rec else None,
+                    "flag": flag_rec.get(i, {}).get("correct") if flag_rec else None,
                 })
             results[f"{task}|{length}"] = summarize(
                 per_sample, task, length,
-                note="RULER predictions NOT paired (pythonhashseed unset) — "
-                     "recall side only; join needs a PYTHONHASHSEED-pinned "
-                     "paired re-run.")
+                note=f"paired via crc32 seed + fail-closed input_ids_sha256 gate; "
+                     f"selector={sel_name}, arms={sorted(present)}")
+
+    if gate_failures:
+        # DO NOT emit numbers — the arms are not byte-identically paired.
+        msg = ["[P0.19-RULER][ABORT] seed-pairing gate FAILED "
+               f"({len(gate_failures)} mismatch(es)) — arms are NOT paired; "
+               "refusing to emit an unpaired decomposition."]
+        for cell, i, shas in gate_failures[:12]:
+            msg.append(f"  {cell} i={i}: {shas}")
+        raise RuntimeError("\n".join(msg))
     return results
 
 
@@ -491,6 +589,14 @@ def main():
     ap.add_argument("--babilong_tasks", nargs="+", default=["qa1"])
     ap.add_argument("--ruler_tasks", nargs="+",
                     default=["niah_multikey_1", "variable_tracking"])
+    ap.add_argument("--ruler_selector", default="auto",
+                    help="RULER pack selector used to recompute recall. 'auto' "
+                         "(default) reproduces the eval's per-task routing "
+                         "(variable_tracking->iter_bm25, niah_*->bm25). Pass the "
+                         "explicit selector the paired run used (e.g. iter_bm25) "
+                         "so the recall side matches the actual packed chunks; the "
+                         "analyzer fail-closes if it disagrees with the selector "
+                         "recorded in the arms' records.json.")
     ap.add_argument("--topk", type=int, default=12)
     ap.add_argument("--chunk_size", type=int, default=512)
     ap.add_argument("--iter_rounds", type=int, default=0)
