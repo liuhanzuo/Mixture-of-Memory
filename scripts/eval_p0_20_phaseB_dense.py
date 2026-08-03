@@ -251,12 +251,20 @@ def run_quality(args, device, dtype):
         scR = score(predR, sample)
         scC = score(predC, sample)
 
-        # read-len invariant: both arms pack exactly min(k, n_ctx) full 512-tok
-        # chunks + same query chunk => equal token count even though the chosen
-        # chunk INDICES differ (full-deployment vs full-deployment).
-        assert rlR == rlC == comem_pack["pack_read_len"] == dense_pack["pack_read_len"], \
-            (f"read_len mismatch i={i}: R={rlR} C={rlC} "
-             f"comem={comem_pack['pack_read_len']} dense={dense_pack['pack_read_len']}")
+        # per-arm self-consistency ONLY (always true): each arm's realized read_len
+        # equals the read_len of the pack it was handed. We do NOT assert cross-arm
+        # equality: the CoMem arm's iter_bm25 (iterative, hop-expanded) can DEDUP to
+        # FEWER than k unique chunks when the lexical chain exhausts, whereas dense
+        # BGE always returns a flat top-min(k,n_ctx). So the two arms legitimately
+        # read DIFFERENT token counts (rlC <= rlR); they are compared at matched
+        # *latency* (STEP-2 calib TTFT anchor), not at equal read_len. We RECORD both
+        # arms' read lengths (below) so downstream has the truth.
+        assert rlR == dense_pack["pack_read_len"], \
+            (f"dense-arm read_len self-mismatch i={i}: rlR={rlR} "
+             f"dense_pack={dense_pack['pack_read_len']}")
+        assert rlC == comem_pack["pack_read_len"], \
+            (f"comem-arm read_len self-mismatch i={i}: rlC={rlC} "
+             f"comem_pack={comem_pack['pack_read_len']}")
 
         rec = {
             "example_id": i, "cell": cell, "benchmark": args.benchmark,
@@ -269,6 +277,11 @@ def run_quality(args, device, dtype):
             "n_selected_comem": len(comem_pack["sel_idx"]),
             "n_selected_dense": len(dense_pack["sel_idx"]),
             "pack_read_len": comem_pack["pack_read_len"],
+            # NEW (2026-08-03): explicit per-arm read lengths. iter_bm25 can under-fill
+            # (< k chunks) so comem_read_len <= dense_read_len; recorded so the
+            # aggregate/latency solver has the truth instead of assuming arm-equality.
+            "comem_read_len": comem_pack["pack_read_len"],
+            "dense_read_len": dense_pack["pack_read_len"],
             "comem_packed_ids_sha256": comem_pack["packed_ids_sha256"],
             "dense_packed_ids_sha256": dense_pack["packed_ids_sha256"],
             "input_ids_sha256": dense_pack["input_ids_sha256"],
@@ -660,9 +673,15 @@ def run_sanity(args, device, dtype):
         qc12, tokenizer, comem_pack["bos_id"],
         comem_pack["selected_chunk_tensors"], comem_pack["query_ids"], 4,
         _eos_ids(qc12, tokenizer))
-    if not (rlR == rlC == comem_pack["pack_read_len"] == dense_pack["pack_read_len"]):
-        fails.append(f"read_len mismatch R={rlR} C={rlC} "
-                     f"comem={comem_pack['pack_read_len']} dense={dense_pack['pack_read_len']}")
+    # per-arm self-consistency ONLY (see run_quality): cross-arm read_len equality
+    # is NOT required — iter_bm25 can under-fill (< k chunks) vs dense's flat top-k,
+    # so rlC <= rlR is legitimate. Arms are matched at latency, not read_len.
+    if not (rlR == dense_pack["pack_read_len"]):
+        fails.append(f"dense-arm read_len self-mismatch rlR={rlR} "
+                     f"dense_pack={dense_pack['pack_read_len']}")
+    if not (rlC == comem_pack["pack_read_len"]):
+        fails.append(f"comem-arm read_len self-mismatch rlC={rlC} "
+                     f"comem_pack={comem_pack['pack_read_len']}")
     if not (finR and finC):
         fails.append(f"non-finite logits R={finR} C={finC}")
 
