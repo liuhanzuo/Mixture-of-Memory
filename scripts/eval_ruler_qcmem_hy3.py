@@ -71,6 +71,7 @@ import os
 import random
 import sys
 import time
+import zlib
 from pathlib import Path
 
 import pandas as pd
@@ -343,7 +344,11 @@ def main():
                 print(f"[WARN] unknown length {length}, skipping")
                 continue
             target_tokens = ruler._LENGTH_TOKENS[length]
-            base_seed = args.seed + (hash((task, length)) % 100000)
+            # zlib.crc32 (PYTHONHASHSEED-independent) instead of built-in hash():
+            # hash() is per-process salted unless PYTHONHASHSEED is pinned, so
+            # separate shard/arm processes would draw different base_seeds and see
+            # misaligned/unpaired samples. crc32 is stable -> shards/arms paired.
+            base_seed = args.seed + (zlib.crc32(f"{task}\x00{length}".encode()) % 100000)
 
             vt_icl = None
             if task == "variable_tracking":

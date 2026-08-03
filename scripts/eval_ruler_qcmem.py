@@ -69,6 +69,7 @@ import random
 import socket
 import sys
 import time
+import zlib
 from pathlib import Path
 
 import pandas as pd
@@ -514,7 +515,12 @@ def main():
             print(f"[QCMem-RULER] {task}/{length}: selector={sel}")
             # Deterministic per-(task,length) RNG so shards share the sample set
             # (identical construction to eval_ruler_mem_space.main).
-            base_seed = args.seed + (hash((task, length)) % 100000)
+            # Use zlib.crc32 (PYTHONHASHSEED-independent) rather than Python's
+            # built-in hash(), which is per-process salted unless PYTHONHASHSEED
+            # is pinned: with salted hash() every shard/arm process would draw a
+            # different base_seed -> misaligned samples across shards & unpaired
+            # arms. crc32 is stable across processes so shards/arms are paired.
+            base_seed = args.seed + (zlib.crc32(f"{task}\x00{length}".encode()) % 100000)
 
             # Fixed in-context example for VT (shared across all samples).
             vt_icl = None

@@ -65,6 +65,7 @@ import re
 import string
 import sys
 import uuid
+import zlib
 from pathlib import Path
 
 import torch
@@ -812,7 +813,11 @@ def main():
                 continue
             target_tokens = _LENGTH_TOKENS[length]
             # Deterministic per-(task,length) RNG so shards share the sample set.
-            base_seed = args.seed + (hash((task, length)) % 100000)
+            # Use zlib.crc32 (PYTHONHASHSEED-independent) rather than Python's
+            # built-in hash(), which is per-process salted unless PYTHONHASHSEED
+            # is pinned -> shards/arms would otherwise draw different base_seeds
+            # and see misaligned/unpaired samples. crc32 is stable across procs.
+            base_seed = args.seed + (zlib.crc32(f"{task}\x00{length}".encode()) % 100000)
 
             # Pre-build a fixed in-context example for VT (shared across samples).
             vt_icl = None

@@ -41,6 +41,7 @@ import random
 import re
 import string
 import sys
+import zlib
 from pathlib import Path
 
 import torch
@@ -212,7 +213,11 @@ def main():
         target_tokens = _LENGTH_TOKENS[length]
         # Deterministic per-(length) RNG so shards generate the SAME sample set
         # and each shard evaluates a stride slice [shard::num_shards].
-        rng = random.Random(args.seed + hash(length) % 100000)
+        # Use zlib.crc32 (PYTHONHASHSEED-independent) not built-in hash():
+        # hash(str) is per-process salted unless PYTHONHASHSEED is pinned, so
+        # separate shard processes would draw different seeds and generate
+        # misaligned sample sets. crc32 is stable across processes.
+        rng = random.Random(args.seed + zlib.crc32(length.encode()) % 100000)
 
         sample_indices = list(range(args.num_samples))[args.shard_index::args.num_shards]
         sharded = args.num_shards > 1

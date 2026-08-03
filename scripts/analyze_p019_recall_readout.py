@@ -43,14 +43,17 @@ Reproducibility notes (see paperA/P0_19_decomp_NOTES.md for the full audit):
     answer location token appears in exactly the supporting fact chunk(s)); qa2
     (two-fact) / qa5 (three-arg) need a support-fact locator, flagged below.
     -> qa1 CPU-decomposable (answer-string == support span). ``--task babilong``.
-  * RULER     : ``eval_ruler_qcmem`` seeds ``base_seed = args.seed + hash((task,
-    length)) % 100000`` with Python's ``hash()``. The existing runs recorded
+  * RULER     : ``eval_ruler_qcmem`` originally seeded ``base_seed = args.seed +
+    hash((task, length)) % 100000`` with Python's ``hash()``. That is per-process
+    salted unless ``PYTHONHASHSEED`` is pinned; the EXISTING on-disk runs recorded
     ``pythonhashseed: null`` (NOT pinned) so ``base_seed`` — hence the whole
-    sample set — differs run-to-run: the existing j=0 and j=12 RULER dirs are
-    NOT paired (verified: same-slot needles differ). RULER therefore needs a
-    fresh PAIRED re-run with ``PYTHONHASHSEED`` pinned before CPU decomposition;
-    this script emits the recall side for a *single* run's samples (``--task
-    ruler``) so once a paired re-run exists it is a pure-CPU join.
+    sample set — differs run-to-run: those existing j=0 and j=12 RULER dirs are
+    NOT paired (verified: same-slot needles differ) and cannot be joined. The
+    seed is now ``args.seed + zlib.crc32(f"{task}\x00{length}") % 100000``
+    (PYTHONHASHSEED-independent), so a FRESH paired re-run with the fixed code is
+    automatically paired across shards/arms without needing PYTHONHASHSEED. This
+    script emits the recall side for a *single* run's samples (``--task ruler``);
+    once a fresh paired re-run exists it is a pure-CPU join.
 
 Usage (LongEval, all paired arms already on disk):
     python scripts/analyze_p019_recall_readout.py --task longeval \
@@ -376,7 +379,11 @@ def analyze_ruler(args, tokenizer):
                 results[f"{task}|{length}"] = {"error": "unknown_length"}
                 continue
             target_tokens = ruler._LENGTH_TOKENS[length]
-            base_seed = args.seed + (hash((task, length)) % 100000)
+            # MUST mirror eval_ruler_qcmem/eval_ruler_mem_space exactly so this
+            # regenerates the SAME samples the eval scored. Both now use
+            # zlib.crc32 (PYTHONHASHSEED-independent) instead of built-in hash();
+            # keep this identical or the recall join would use different needles.
+            base_seed = args.seed + (zlib.crc32(f"{task}\x00{length}".encode()) % 100000)
             vt_icl = None
             if task == "variable_tracking":
                 vt_icl = ruler._make_vt_icl(random.Random(base_seed + 777), 4)
