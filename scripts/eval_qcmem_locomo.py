@@ -570,10 +570,25 @@ def _judge_one(question: str, golds: list, pred: str, model: str,
     url = base_url.rstrip("/") + "/chat/completions"
     headers = {"Authorization": f"Bearer {api_key}",
                "Content-Type": "application/json"}
-    # keep the body minimal + deterministic: seed only (per endpoint's GPT note,
-    # temperature/top_p are best left unset for GPT-series models).
-    body = {"model": model, "stream": False, "seed": 1,
-            "messages": [{"role": "user", "content": prompt}]}
+    # An open-weight judge (Qwen3-8B served via vLLM's OpenAI-compatible endpoint,
+    # ARR-audit reproducible substitute for gpt-4o) MUST run in NON-thinking mode:
+    # Qwen3 otherwise emits a <think>...</think> chain that (a) wastes the token
+    # budget before the CORRECT/WRONG word and (b) makes the verdict non-deterministic.
+    # We turn thinking off two redundant ways (chat_template_kwargs.enable_thinking
+    # =false is the canonical vLLM switch; the "/no_think" soft-switch is the belt-and-
+    # -suspenders fallback for template variants) and force greedy determinism
+    # (temperature 0 / top_p 1). GPT-series judges keep the original minimal body
+    # (seed only; per the maas endpoint note temperature/top_p are best left unset).
+    is_gpt = str(model).lower().startswith("gpt")
+    if is_gpt:
+        body = {"model": model, "stream": False, "seed": 1,
+                "messages": [{"role": "user", "content": prompt}]}
+    else:
+        body = {"model": model, "stream": False, "seed": 1,
+                "temperature": 0.0, "top_p": 1.0, "max_tokens": 8,
+                "chat_template_kwargs": {"enable_thinking": False},
+                "messages": [{"role": "user",
+                              "content": prompt + "\n/no_think"}]}
     backoff = 2.0
     for attempt in range(retries):
         try:
@@ -619,6 +634,29 @@ def llm_judge_preds(preds: list, output_dir: str, model: str = "gpt-4o",
               "OPENAI_BASE_URL / OPENAI_API_KEY missing (set them in .env); "
               "skipping judge (F1/EM still reported).")
         return False
+
+    # Reproducibility artifact: record exactly how this judge was invoked (the
+    # verbatim prompt template, model id, endpoint, sampling knobs). ARR audit
+    # requires a date-fixed, publicly reproducible open-weight judge, so we dump
+    # the prompt + model identity next to the parsed decisions (judge_cache.jsonl).
+    try:
+        meta = {
+            "judge_model": model,
+            "judge_base_url": base_url,
+            "non_thinking": not str(model).lower().startswith("gpt"),
+            "prompt_template": _JUDGE_TEMPLATE,
+            "sampling": ({"seed": 1} if str(model).lower().startswith("gpt") else
+                         {"seed": 1, "temperature": 0.0, "top_p": 1.0,
+                          "max_tokens": 8,
+                          "chat_template_kwargs": {"enable_thinking": False},
+                          "prompt_suffix": "/no_think"}),
+            "refusal_regex": _REFUSAL_RE.pattern,
+            "written_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
+        }
+        with open(Path(output_dir) / "judge_meta.json", "w") as _mf:
+            json.dump(meta, _mf, indent=2, ensure_ascii=False)
+    except Exception as _e:  # pragma: no cover - never block scoring on meta dump
+        print(f"[QCMem-LoCoMo][WARN] could not write judge_meta.json ({_e}).")
 
     cache_path = Path(output_dir) / "judge_cache.jsonl"
     cache = {}
@@ -667,8 +705,12 @@ def llm_judge_preds(preds: list, output_dir: str, model: str = "gpt-4o",
                     item["judge"] = 0.0  # count API failures as WRONG (rare)
                 else:
                     item["judge"] = v
-                    rec = {"id": item["id"], "judge": v, "raw": raw[:80],
-                           "model": model}
+                    rec = {"id": item["id"], "judge": v,
+                           "category": item.get("category"),
+                           "question": item.get("question", ""),
+                           "gold": item.get("answers", []),
+                           "pred": (item.get("pred", "") or "")[:200],
+                           "raw": raw[:80], "model": model}
                     cache_fh.write(json.dumps(rec, ensure_ascii=False) + "\n")
                     cache_fh.flush()
         cache_fh.close()
