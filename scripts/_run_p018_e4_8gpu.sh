@@ -84,6 +84,7 @@ H12_TOL="${H12_TOL:-5e-2}"           # bf16 max-abs tolerance for the doc-ctx h1
 H12_CHECK_PREFIX="${H12_CHECK_PREFIX:-1024}"  # doc-prefix len for the doc-ctx gate
 POS_TOL="${POS_TOL:-5e-2}"           # bf16 max-abs tolerance for the pos-plumbing assert
 NO_E0="${NO_E0:-0}"                  # 1 => drop the E0 (dc,local) arm; keep A/BB/X/Y
+WRITE_LORA="${WRITE_LORA:-}"         # BBWL arm: trained WRITE LoRA adapter dir (empty => BBWL off)
 
 MODEL="${MODEL:-models/Qwen3-8b-local}"
 LORA="${LORA:-outputs/qcmem_distill_qwen_j12_r32_4k/final}"
@@ -93,8 +94,11 @@ P013_MANIFEST_DIR="${P013_MANIFEST_DIR:-bench_results/p1_7_h12_oracle}"
 DRIVER="scripts/eval_p018_e4_2x2_writecontrol.py"
 
 E0_FLAG=""; [ "$NO_E0" = "1" ] && E0_FLAG="--no_e0"
+# BBWL arm (2026-08-04): passing --write_lora_ckpt enables the trained deployable Write
+# LoRA (== Arm BB + trained WRITE LoRA). Empty WRITE_LORA => BBWL arm not built.
+WRITE_FLAG=""; [ -n "$WRITE_LORA" ] && WRITE_FLAG="--write_lora_ckpt $WRITE_LORA"
 COMMON="--model_path $MODEL --lora_adapter $LORA \
---resume_j_a 0 --resume_j 12 $E0_FLAG \
+--resume_j_a 0 --resume_j 12 $E0_FLAG $WRITE_FLAG \
 --topk 12 --iter_hop_topk 4 --chunk_size 512 --dtype bfloat16 --attn_impl sdpa \
 --seed 42 --output_dir $OUTDIR"
 
@@ -109,6 +113,7 @@ echo "[p0.18] PROJECT_ROOT=$PROJECT_ROOT"
 echo "[p0.18] PYBIN=$PYBIN  RUN=$RUN  COHORT=$COHORT  e0=$([ "$NO_E0" = 1 ] && echo off || echo on)"
 echo "[p0.18] TASKS=[$TASKS]  LENGTHS=[$LENGTHS]  limit=$LIMIT shards=$NUM_SHARDS"
 echo "[p0.18] MODEL=$MODEL  LORA=$LORA  OUTDIR=$OUTDIR"
+echo "[p0.18] WRITE_LORA=${WRITE_LORA:-<none>}  BBWL=$([ -n "$WRITE_LORA" ] && echo on || echo off)"
 echo "[p0.18] P013_MANIFEST_DIR=$P013_MANIFEST_DIR  h12_tol=$H12_TOL pos_tol=$POS_TOL prefix=$H12_CHECK_PREFIX"
 [ "$RUN" != "1" ] && echo "[p0.18] *** DRY-RUN (RUN!=1): printing commands only, no forward ***"
 echo "============================================================"
