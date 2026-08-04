@@ -91,6 +91,8 @@ _lora_modules = p020._lora_modules
 _versions = p020._versions
 _paired_bootstrap_ci = p020._paired_bootstrap_ci
 _mcnemar_exact = p020._mcnemar_exact
+_agg_schemes = p020._agg_schemes
+FROZEN_TASK_WEIGHTS = p020.FROZEN_TASK_WEIGHTS
 EXPECTED_LORA_SHA = p020.EXPECTED_LORA_SHA
 EXPECTED_LORA_MODULE_COUNT = p020.EXPECTED_LORA_MODULE_COUNT
 EXPECTED_BACKBONE_KEY_SHA = p020.EXPECTED_BACKBONE_KEY_SHA
@@ -199,7 +201,8 @@ def run_quality(args, device, dtype):
     jsonl_path = outdir / f"{cell}{shard_tag}.jsonl"
     fout = open(jsonl_path, "w")
     print(f"[p0.20B][quality] {cell}{shard_tag}: k={k} n={len(sample_indices)}/"
-          f"{n_eval} mnt={mnt} denseRAG=j0-noLoRA CoMem=j12-LoRA(bm25)", flush=True)
+          f"{n_eval} mnt={mnt} denseRAG=j0-noLoRA "
+          f"CoMem=j12-LoRA({args.comem_selector})", flush=True)
 
     records = []
     n_done = 0
@@ -213,9 +216,18 @@ def run_quality(args, device, dtype):
         input_ids = ids.to(device)
         approx_tokens = int(input_ids.shape[1])
 
-        # CoMem pack — UNCHANGED flagship iter_bm25 (resume_j-independent).
-        comem_pack = _build_pack(input_ids, args.chunk_size, "iter_bm25", k,
-                                 args.iter_hop_topk, bare_q_ids, tokenizer)
+        # CoMem pack — selector governed by --comem_selector (A-P1.1). DEFAULT
+        # iter_bm25 == the flagship Phase B behaviour (BGE-RAG vs bm25-CoMem). With
+        # --comem_selector dense_bge the CoMem arm reads the SAME frozen-BGE pack
+        # as the dense-RAG arm (the A-P1.1 same-selector BGE/BGE control), so the
+        # ONLY variable between arms is the reader (full-recompute j0 vs cached-h12
+        # resume j12), not the retriever.
+        if args.comem_selector == "dense_bge":
+            comem_pack = _build_dense_pack(input_ids, args.chunk_size, k, retriever,
+                                           sample["bare_q"], tokenizer)
+        else:
+            comem_pack = _build_pack(input_ids, args.chunk_size, "iter_bm25", k,
+                                     args.iter_hop_topk, bare_q_ids, tokenizer)
         # dense-RAG pack — frozen BGE selection over the same document/query.
         dense_pack = _build_dense_pack(input_ids, args.chunk_size, k, retriever,
                                        sample["bare_q"], tokenizer)
@@ -293,7 +305,7 @@ def run_quality(args, device, dtype):
                           "correct": scR["correct"], "f1": scR.get("f1"),
                           "gen_len": len(genR), "read_len": rlR,
                           "peak_gb": pkR, "finite": finR},
-            "comem": {"resume_j": 12, "lora": True, "selector": "iter_bm25",
+            "comem": {"resume_j": 12, "lora": True, "selector": args.comem_selector,
                       "prediction": predC, "score": scC["score"],
                       "correct": scC["correct"], "f1": scC.get("f1"),
                       "gen_len": len(genC), "read_len": rlC,
@@ -329,7 +341,7 @@ def run_quality(args, device, dtype):
             sum(r["n_selected_dense"] for r in valid) / len(valid), 2) if valid else 0,
         "mean_read_len": round(
             sum(r["pack_read_len"] for r in valid) / len(valid), 1) if valid else 0,
-        "comem_selector": "iter_bm25", "dense_selector": "dense_bge",
+        "comem_selector": args.comem_selector, "dense_selector": "dense_bge",
         "iter_hop_topk": args.iter_hop_topk,
         "chunk_size": args.chunk_size, "max_new_tokens": mnt,
         "lora_sha256": lora_sha256, "bge_sha256": retriever.weight_sha256,
@@ -473,10 +485,20 @@ def run_calib_latency(args, device, dtype):
     cpu_h2d_t = _timeit(cpu_h2d, W, N, gpu_sync=True)
 
     # ---- assemble TTFT (to first logits; decode EXCLUDED) ---------------------
-    # CoMem TTFT — IDENTICAL construction to Phase A (iter_bm25 sel + fetch + write + read).
-    comem_ttft_gpu = (_med(comem_sel_t) + _med(gpu_fetch_t)
+    # CoMem selection cost is charged under the SAME model as its context-store:
+    #   comem_selector=iter_bm25 (flagship) -> forward-free lexical iter_bm25 cost.
+    #   comem_selector=dense_bge (A-P1.1 BGE/BGE control) -> the DEPLOYMENT dense
+    #     cost (offline-indexed: query-encode + flat cosine search), IDENTICAL to
+    #     the dense-RAG arm's deploy selection. Charging the same term to both arms
+    #     makes the BGE/BGE TTFT DELTA cancel the (shared) selection cost and reduce
+    #     cleanly to full-recompute (RAG j0 write+read) vs cached-h12 read (CoMem
+    #     fetch + bottom-12 write + layers[12:36] resume) — the only real variable.
+    comem_sel_med = (_med(dense_deploy_t) if args.comem_selector == "dense_bge"
+                     else _med(comem_sel_t))
+    # CoMem TTFT — Phase A construction with the selector-appropriate selection cost.
+    comem_ttft_gpu = (comem_sel_med + _med(gpu_fetch_t)
                       + _med(comem_write_t) + _med(comem_read_t))
-    comem_ttft_cpu = (_med(comem_sel_t) + _med(cpu_gather_t) + _med(cpu_h2d_t)
+    comem_ttft_cpu = (comem_sel_med + _med(cpu_gather_t) + _med(cpu_h2d_t)
                       + _med(comem_write_t) + _med(comem_read_t))
     # dense-RAG TTFT — two selection cost models; write/read identical to Phase A's j0-RAG.
     densrag_ttft_deploy = _med(dense_deploy_t) + _med(rag_write_t) + _med(rag_read_t)
@@ -495,6 +517,8 @@ def run_calib_latency(args, device, dtype):
         "dense_index_bytes": n_dense * retriever.hidden * retriever.dtype_bytes,
         "components_ms": {
             "comem_selection_bm25": {"median": _med(comem_sel_t) * 1e3, "p95": comem_sel_t["p95"] * 1e3},
+            "comem_selection_charged": {"median": comem_sel_med * 1e3,
+                                        "selector": args.comem_selector},
             "dense_selection_deploy": {"median": _med(dense_deploy_t) * 1e3, "p95": dense_deploy_t["p95"] * 1e3},
             "dense_selection_coldindex": {"median": _med(dense_cold_t) * 1e3, "p95": dense_cold_t["p95"] * 1e3},
             "dense_rag_write_j0": {"median": _med(rag_write_t) * 1e3, "p95": rag_write_t["p95"] * 1e3},
@@ -519,6 +543,7 @@ def run_calib_latency(args, device, dtype):
                    "warmup": W, "n_repeat": N, "dtype": args.dtype,
                    "attn_impl": args.attn_impl, "lora_sha256": lora_sha256,
                    "bge_sha256": retriever.weight_sha256,
+                   "comem_selector": args.comem_selector,
                    "dense_search": "flat brute-force cosine (CPU, == P1.9)"},
         "env": {"torch": torch.__version__, "cuda": torch.version.cuda,
                 "gpu": torch.cuda.get_device_name(device) if device.type == "cuda" else None,
@@ -567,8 +592,10 @@ def run_manifest(args, device, dtype):
         "run": "P0.20_equal_latency_phaseB_dense",
         "arms": {"dense_rag": {"resume_j": 0, "lora": False, "selector": "dense_bge",
                                "note": "vanilla Qwen3-8B full 36-layer recompute over BGE-selected pack"},
-                 "comem": {"resume_j": 12, "lora": True, "selector": "iter_bm25",
-                           "note": "flagship UNCHANGED: fetch pre-stored h12, resume layers[12:36]"}},
+                 "comem": {"resume_j": 12, "lora": True, "selector": args.comem_selector,
+                           "note": ("flagship (comem_selector=iter_bm25): fetch pre-stored "
+                                    "h12, resume layers[12:36]. dense_bge => A-P1.1 BGE/BGE "
+                                    "same-selector control (CoMem reads the frozen-BGE pack).")}},
         "strict_fixes": {
             "model_path": args.model_path, "lora_adapter": args.lora_adapter,
             "lora_sha256": lora_sha256, "expected_lora_sha256": EXPECTED_LORA_SHA,
@@ -581,7 +608,7 @@ def run_manifest(args, device, dtype):
             "bge_sha_match": retriever.weight_sha256 == EXPECTED_BGE_SHA256,
             "bge_revision": EXPECTED_BGE_REVISION,
             "bge_pooling": retriever.pooling, "bge_hidden": retriever.hidden,
-            "comem_selector": "iter_bm25", "dense_selector": "dense_bge",
+            "comem_selector": args.comem_selector, "dense_selector": "dense_bge",
             "iter_hop_topk": args.iter_hop_topk,
             "sink_tokens": "bos", "chunk_size": args.chunk_size,
             "chat_template": False, "enable_thinking": False, "add_special_tokens": True,
@@ -651,8 +678,11 @@ def run_sanity(args, device, dtype):
     if isinstance(ids, list):
         ids = torch.tensor([ids], dtype=torch.long)
     input_ids = ids.to(device)
-    comem_pack = _build_pack(input_ids, args.chunk_size, "iter_bm25", args.k,
-                             args.iter_hop_topk, bare_q_ids, tokenizer)
+    comem_pack = (_build_dense_pack(input_ids, args.chunk_size, args.k, retriever,
+                                    sample["bare_q"], tokenizer)
+                  if args.comem_selector == "dense_bge"
+                  else _build_pack(input_ids, args.chunk_size, "iter_bm25", args.k,
+                                   args.iter_hop_topk, bare_q_ids, tokenizer))
     dense_pack = _build_dense_pack(input_ids, args.chunk_size, args.k, retriever,
                                    sample["bare_q"], tokenizer)
     # (3) dense determinism: recompute selection -> identical top-k.
@@ -876,6 +906,7 @@ def run_aggregate(args):
         """Paired: CoMem@comem_k vs dense-RAG@dense_k, per example (same ids)."""
         out = {"comem_k": comem_k, "dense_k": dense_k, "per_cell": {}}
         macro_c, macro_r, all_diffs = [], [], []
+        cell_stats = []  # per-cell {gname, family, n, diff} for the 3 agg schemes.
         b = c = both = neither = 0
         for grp, byk in sorted(fkey.items()):
             gname = f"{grp[0]}/{grp[1]}/{grp[2]}"
@@ -906,6 +937,8 @@ def run_aggregate(args):
             out["per_cell"][gname] = {"n": len(ids), "comem": round(cm, 2),
                                       "dense_rag": round(rm, 2),
                                       "diff": round(cm - rm, 2)}
+            cell_stats.append({"gname": gname, "family": grp[0], "n": len(ids),
+                               "diff": cm - rm})
             macro_c.append(cm); macro_r.append(rm)
             all_diffs.extend(cell_diffs)
         if macro_c:
@@ -921,6 +954,7 @@ def run_aggregate(args):
                             "both": both, "neither": neither,
                             "exact_two_sided_p": _mcnemar_exact(b, c)},
                 "n_examples": len(all_diffs),
+                "aggregation_schemes": _agg_schemes(cell_stats),
             })
         return out
 
@@ -968,6 +1002,8 @@ def run_aggregate(args):
 
     summary = {
         "run": "P0.20_phaseB_dense_equal_latency", "tol": args.tol,
+        "comem_selector": args.comem_selector,
+        "same_selector_control": (args.comem_selector == "dense_bge"),
         "n_examples_paired": len(valid),
         "latency_by_k": {str(k): lat_by_k[k] for k in ks_sorted},
         "frozen_k_star": frozen,
@@ -1016,6 +1052,13 @@ def main():
     ap.add_argument("--lora_adapter", type=str,
                     default="outputs/qcmem_distill_qwen_j12_r32_4k/final")
     ap.add_argument("--retriever_path", type=str, default="models/bge-large-en-v1.5")
+    ap.add_argument("--comem_selector", type=str, default="iter_bm25",
+                    choices=["iter_bm25", "dense_bge"],
+                    help="CoMem-arm retrieval selector. DEFAULT iter_bm25 == the "
+                         "flagship Phase B (BGE-RAG vs bm25-CoMem). Set to dense_bge "
+                         "for the A-P1.1 same-selector BGE/BGE control (both arms "
+                         "read the identical frozen-BGE pack; only the reader "
+                         "differs: full-recompute j0 vs cached-h12 resume j12).")
     ap.add_argument("--benchmark", type=str, default="ruler",
                     choices=["ruler", "babilong", "longeval", "locomo"])
     ap.add_argument("--task", type=str, default="niah_multikey_1")

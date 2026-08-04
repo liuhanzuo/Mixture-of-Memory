@@ -193,7 +193,7 @@ def _resolve_evidence_texts(evidence, dia_map: dict) -> list:
     return texts
 
 
-def build_locomo_samples(data_path: str) -> list:
+def build_locomo_samples(data_path: str, stratify: bool = True) -> list:
     """Parse locomo10.json and flatten to one sample per QA.
 
     Each sample dict carries everything the driver needs downstream:
@@ -204,13 +204,21 @@ def build_locomo_samples(data_path: str) -> list:
       category      — int 1..5 (question type)
       is_abstention — True for category 5 (model should refuse)
       evidence_texts— resolved supporting turn texts (oracle needle candidates)
-    """
+
+    ``stratify`` (default True): interleave QAs ROUND-ROBIN across the 10
+    conversations so any prefix (e.g. a ``--limit 100`` / ``--max_samples`` cut, or
+    the p0.20 quality cell's first-N slice) is BALANCED across conversations
+    instead of ~100% conversation 0 (conv0 alone holds ~199 QAs, so the old
+    conv-then-QA order made ``--limit 100`` a single-conversation sample). The
+    sample ``id`` is unchanged, so --score_only dedup + shard merges are unaffected;
+    only the enumeration ORDER changes. Pass ``stratify=False`` for the legacy
+    conv-major order."""
     with open(data_path, "r", encoding="utf-8") as f:
         data = json.load(f)
     if isinstance(data, dict):
         data = list(data.values())
 
-    samples = []
+    per_conv = []  # one QA-sample list per conversation (stable conversation order)
     for conv_idx, d in enumerate(data):
         conv = d.get("conversation", {})
         if not isinstance(conv, dict):
@@ -220,6 +228,7 @@ def build_locomo_samples(data_path: str) -> list:
         instr = _LOCOMO_INSTRUCTION.format(spa=spa, spb=spb)
         history = render_locomo_history(conv)
         dia_map = _build_dia_id_map(conv)
+        conv_samples = []
         for qi, qa in enumerate(d.get("qa", [])):
             question = (qa.get("question", "") or "").strip()
             if not question:
@@ -236,7 +245,7 @@ def build_locomo_samples(data_path: str) -> list:
                 f"{instr}\n\n# Conversation history\n{history}\n\n"
                 f"# Question\n{question}\n\n# Answer\n"
             )
-            samples.append({
+            conv_samples.append({
                 "id": f"conv{conv_idx}_qa{qi}",
                 "prompt": prompt,
                 "question": question,
@@ -246,6 +255,19 @@ def build_locomo_samples(data_path: str) -> list:
                 "evidence_texts": _resolve_evidence_texts(
                     qa.get("evidence", []), dia_map),
             })
+        per_conv.append(conv_samples)
+
+    if not stratify:
+        # legacy conv-major order: all of conv0's QAs, then conv1's, ...
+        return [s for cs in per_conv for s in cs]
+    # stratified round-robin: take the r-th QA of every conversation before moving
+    # to r+1, so any prefix is balanced across all conversations.
+    samples = []
+    max_len = max((len(cs) for cs in per_conv), default=0)
+    for r in range(max_len):
+        for cs in per_conv:
+            if r < len(cs):
+                samples.append(cs[r])
     return samples
 
 

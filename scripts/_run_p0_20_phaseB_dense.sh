@@ -71,6 +71,11 @@ RETRIEVER="${RETRIEVER:-models/bge-large-en-v1.5}"
 OUTDIR="${OUTDIR:-bench_results/p0_20_phaseB_dense}"
 P19_OUTDIR="${P19_OUTDIR:-bench_results/p1_9_dense_rag}"
 DRIVER="scripts/eval_p0_20_phaseB_dense.py"
+# CoMem-arm selector. Default iter_bm25 == flagship Phase B (cross-selector control:
+# dense-RAG vs bm25-CoMem). Set COMEM_SELECTOR=dense_bge for the A-P1.1 SAME-selector
+# control: BOTH arms use the frozen BGE retriever, isolating the reader variable
+# (full-recompute RAG j0 vs cached-h12 CoMem j12) at matched selection cost.
+COMEM_SELECTOR="${COMEM_SELECTOR:-iter_bm25}"
 
 # ---- k sweep (BOTH arms) + calibration latency reps -------------------------
 KS_STR="${KS:-2 4 6 8 10 12 14 16 20 24}"
@@ -89,6 +94,7 @@ QKS_STR="${QKS:-$KS_STR}"
 
 COMMON="--model_path $MODEL --lora_adapter $LORA --retriever_path $RETRIEVER \
 --iter_hop_topk 4 --chunk_size 512 --dtype bfloat16 --attn_impl sdpa \
+--comem_selector $COMEM_SELECTOR \
 --seed 42 --output_dir $OUTDIR --p19_output_dir $P19_OUTDIR --limit $LIMIT \
 --calib_offset $CALIB_OFFSET"
 
@@ -99,6 +105,7 @@ echo "[p0.20B] KS=[$KS_STR]  QKS=[$QKS_STR]  n_procs=$N_PROCS warmup=$WARMUP n_r
 echo "[p0.20B] QCELLS=[$QCELLS]"
 echo "[p0.20B] LIMIT=$LIMIT shards=$NUM_SHARDS calib_offset=$CALIB_OFFSET calib_length=$CALIB_LENGTH"
 echo "[p0.20B] MODEL=$MODEL  LORA=$LORA  RETRIEVER=$RETRIEVER  OUTDIR=$OUTDIR"
+echo "[p0.20B] COMEM_SELECTOR=$COMEM_SELECTOR (iter_bm25=cross-selector flagship; dense_bge=A-P1.1 same-selector control)"
 [ "$RUN" != "1" ] && echo "[p0.20B] *** DRY-RUN (RUN!=1): printing commands only, no forward ***"
 if [ "$CALIB_OFFSET" -lt "$LIMIT" ]; then
     echo "[p0.20B][FATAL] CALIB_OFFSET($CALIB_OFFSET) < LIMIT($LIMIT) => calib/quality split overlap."; exit 2
