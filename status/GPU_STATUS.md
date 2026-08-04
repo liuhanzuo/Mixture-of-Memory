@@ -1,6 +1,19 @@
 # GPU_STATUS.md — 5 节点 GPU 实时台账（QCMem = 40 卡）
 > 每次启动/kill GPU 任务更新。heartbeat 先读→对照 nvidia-smi→台账说跑但空=补卡。★29.162.226.120=dllm 绝不碰。
 
+## 当前快照（2026-08-04 23:3x +08:00，**monitor 节点表修复→5 节点全可见；.104 BGE 臂已停待收；.82 改派 PaperC #133；.252 认证其实正常（前次误判）**）
+> **★ 三条修正/发现（比上一快照重要）**：
+> 1. **monitor/gpu_monitor_server.py 的 NODES 表是过期集群**（`.196` / `b200-18` / `b200-53` 三台已下线节点）→ 4 节点里 3 个常报 `ok=False`，等于**监控前端一直没在看当前 5 节点**。已改成 LOCAL/.252/.73/.82/.104 并放宽 PS/METRIC 匹配（旧的只 match `scripts/train_mem_space`，当前 olmo2/qcmem/paperC/eval/patch 全不算 task→忙节点被显示成 idle）。重启后 `/api/data` 实测 **5 节点全 ok=True**。
+> 2. **.252 SSH 其实正常**（上一快照记的 Permission denied 是**瞬时失败/误判**，已纠正）：monitor 实测 `252 ok=True 8 gpus 0.0GB 0%`。→ **.252 当前 0 MiB 空闲**，可用。
+> 3. **.104 的 A-P1.1 BGE/BGE 臂已停**（8 卡全 0 MiB）——完成还是崩未知，已派 agent a37938eb 去判定+收数（★重点查 `n_examples_paired` 与 frontier 是否为空：该实验有过 stale-done-marker → 全 SKIP → 看着像 done 实则 `VERDICT:INCOMPLETE`/`n_paired=0` 的前科）。
+> **节点占用（monitor 实测 23:3x）**：
+> - **LOCAL 8×B200**：▶️ **#103 keep14 dense-save re-heal RUNNING**（monitor task 确认 pid 2371815，elapsed **10h09m**，1074.8GB/8卡=100% util，healthy）。等 frozen-match PPL≈12.797 / random-match≈11.498 双侧 crossing → matched-PPL MMLU+McNemar 后**立即停，不跑到 200k**。wzc1 盘。
+> - **.252 8×B200**：🟢 **FREE（0 MiB，认证正常）**。候选：#134 PaperC A1 full-FT-32L ceiling（明确 defer 到 B200，fp32-AdamW 需 183GB）、或 #128 若确认是 wzc1-only。⚠️ 但它同时是 #103 crossing-monitor 宿主 → 起 8 卡任务前须确认不撞 monitor 爆发。wzc1 盘。
+> - **.73 8×H20**：▶️ **Paper C #132 second-task capability eval**（agent a2ab12c6，eval-only，MMLU-MC + closed-book QA × 4 臂）。zwfy6 盘。
+> - **.82 8×H20**：▶️ **Paper C #133 depth-sweep 启动中**（agent ab90739b；freeze-graft vs from-scratch @ keep{20,24,28}+fresh2 = 6 run + SQuAD eval，eff_bs 恒 128 保可比）。**原派的 #128 patching 已撤下**（两次被中断且疑 wzc1-only ckpt，见 task #128 备注）。zwfy6 盘。
+> - **.104 8×H20**：⏸️ **空闲待收（A-P1.1 BGE 臂已停）**，agent a37938eb 判定中；收完再补卡。zwfy6 盘。
+> - **⚠️ .venv/bin/python 在 H20 三台已坏** → 一律 `/opt/conda/envs/torch-base/bin/python`。**两处物理盘**：wzc1（LOCAL+.252）/ zwfy6（.73+.82+.104）。
+
 ## 当前快照（2026-08-04 22:5x +08:00，**用户新指令：paperB rebuttal todo + paperC 开始推进 → A/B/C 均衡铺开；.73/.82 两空节点填 C/B**）
 > **关键事件**：(1) **用户指令**「另外 paperB 也有一些 todo，然后 paperC 可以开始推进了，paperB 是为了 rebuttal 做准备，所以你可以均衡推进」→ **解除 Paper C 的 H20-PaperA-first 等待**，三线并行。(2) **.73+.82 实测全空（0 MiB ×16 卡，无 python 进程）** → 立即填：**.73 = Paper C #132**（P-C1 second-task capability eval：MMLU-MC + closed-book QA on A4_hero/A3_fromscratch/A2_lora_r160/BASE_ref 四臂，eval-only，agent a2ab12c6）；**.82 = Paper B #128**（P2.2 activation patching 因果层恢复 harness，forward-only，新脚本 patch_olmo2_layers.py，agent ae4e2ee4）。两者均 base 协议 chat=False/no-BOS。#128 设**硬门禁：identity-patch 必须复现 unpatched 分数**，否则曲线作废。(3) **release 仓整理**：Paper B → `perplexity-heals-knowledge-lags` **DONE commit 9f71cfa（未 push）**，22 文件 SHA256 全对齐 anonymous_artifact 清单、sanitization 干净（130k JSONL 记录无 >40 字符串=无题面文本）；Paper A → COMem 代码+索引 agent 在跑。(4) **monitor 8088 曾 http=000 → 已重启，现 http=200**。
 > **节点占用（实测 nvidia-smi 22:4x）**：

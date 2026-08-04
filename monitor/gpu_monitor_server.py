@@ -27,19 +27,27 @@ QUERY = "index,name,memory.used,memory.total,utilization.gpu,power.draw,power.li
 SMI = (
     "nvidia-smi --query-gpu=" + QUERY + " --format=csv,noheader,nounits"
 )
-# Running training tasks: grab train processes and their --output_dir / etime.
+# Running tasks: training AND offline eval/bench drivers. The roster of active
+# scripts changed after the mem_space era (OLMo-2 prune-heal, QCMem distill,
+# paperC graft-FT, patching/eval harnesses), so match the current families too
+# or the frontend's task panel silently reports "idle" on a busy node.
+TRAIN_PAT = (
+    'scripts/train_mem_space|scripts/train_olmo2|scripts/train_qcmem'
+    '|scripts/train_shortgpt|scripts/eval_|scripts/bench_|scripts/patch_olmo2'
+    '|scripts/probe_linguistic|_run_p0_20|_run_paperB|_run_paperC|paperC_pc1'
+)
 PS_CMD = (
-    "ps -eo pid,etimes,cmd | grep -E 'scripts/train_mem_space' "
+    "ps -eo pid,etimes,cmd | grep -E '" + TRAIN_PAT + "' "
     "| grep -v grep || true"
 )
 # Latest training metrics: for each train proc, follow its stdout (fd/1) to the
 # log file and grab the last `INFO - [step ...]` line. Dedup by log path so each
 # distinct run reports once. Output lines: "<logpath>@@<metric line>".
 METRIC_CMD = (
-    "for pid in $(pgrep -f 'scripts/train_mem_space' 2>/dev/null); do "
+    "for pid in $(pgrep -f 'scripts/train_mem_space|scripts/train_olmo2|scripts/train_qcmem' 2>/dev/null); do "
     "log=$(readlink /proc/$pid/fd/1 2>/dev/null); "
     "[ -f \"$log\" ] || continue; "
-    "line=$(grep -a 'INFO - \\[step' \"$log\" 2>/dev/null | tail -1); "
+    "line=$(grep -aE 'INFO - \\[step|^\\[step' \"$log\" 2>/dev/null | tail -1); "
     "[ -n \"$line\" ] && echo \"${log}@@${line}\"; "
     "done 2>/dev/null | sort -u || true"
 )
@@ -48,38 +56,46 @@ METRIC_CMD = (
 # in-memory polling cadence. Output format is "<logpath>@@<metric line>" for
 # up to the last METRIC_HISTORY_LEN training steps per active run.
 CURVE_CMD = (
-    "for pid in $(pgrep -f 'scripts/train_mem_space' 2>/dev/null); do "
+    "for pid in $(pgrep -f 'scripts/train_mem_space|scripts/train_olmo2|scripts/train_qcmem' 2>/dev/null); do "
     "log=$(readlink /proc/$pid/fd/1 2>/dev/null); "
     "[ -f \"$log\" ] || continue; "
-    "grep -a 'INFO - \\[step' \"$log\" 2>/dev/null | tail -1000 | sed \"s#^#${log}@@#\"; "
+    "grep -aE 'INFO - \\[step|^\\[step' \"$log\" 2>/dev/null | tail -1000 | sed \"s#^#${log}@@#\"; "
     "done 2>/dev/null || true"
 )
 
 NODES = [
-    {"id": "local", "label": "本机 (Group-A master, H20)", "mode": "local"},
+    {"id": "local", "label": "本机 LOCAL (wzc1, 8xL20A/B200级 183GB)", "mode": "local"},
     {
-        "id": "196",
-        "label": ".196 (Group-A worker, H20)",
+        "id": "252",
+        "label": ".252 (28.89.19.252, wzc1, 8xB200)",
         "mode": "ssh",
-        "host": "28.59.80.196",
+        "host": "28.89.19.252",
         "port": "22",
-        "pwfile": os.path.join(PROJECT, "configs/password_diskA.txt"),
+        "pwfile": os.path.join(PROJECT, "configs/password_b200_19252.txt"),
     },
     {
-        "id": "b200-18",
-        "label": "B200 .18 (28.89.16.18:36000, L20A)",
+        "id": "73",
+        "label": ".73 (28.85.35.73:36000, zwfy6, 8xH20)",
         "mode": "ssh",
-        "host": "28.89.16.18",
+        "host": "28.85.35.73",
         "port": "36000",
-        "pwfile": os.path.join(PROJECT, "configs/password_b200_new.txt"),
+        "pwfile": os.path.join(PROJECT, "configs/password_h20_853573.txt"),
     },
     {
-        "id": "b200-53",
-        "label": "B200 .53 (28.88.184.53, L20A)",
+        "id": "82",
+        "label": ".82 (28.82.250.82:36000, zwfy6, 8xH20)",
         "mode": "ssh",
-        "host": "28.88.184.53",
-        "port": "22",
-        "pwfile": os.path.join(PROJECT, "configs/password_b200_53.txt"),
+        "host": "28.82.250.82",
+        "port": "36000",
+        "pwfile": os.path.join(PROJECT, "configs/password_h20_82250.txt"),
+    },
+    {
+        "id": "104",
+        "label": ".104 (28.83.24.104:36000, zwfy6, 8xH20)",
+        "mode": "ssh",
+        "host": "28.83.24.104",
+        "port": "36000",
+        "pwfile": os.path.join(PROJECT, "configs/password_h20_24104.txt"),
     },
 ]
 
