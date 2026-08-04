@@ -10,73 +10,23 @@
 
 **只使用中文和英文交流，禁止使用韩语或其他语言。**
 
-## 🖥️ 当前 GPU 集群（2026-06-06 更新，权威，覆盖旧记录）
+## 🖥️ 当前 GPU 集群（2026-08-04 更新，权威，覆盖旧记录）
 
-**6 个 H20 节点 = 48 卡（两个 ceph 盘 A/B）＋ 1 个 B200 节点（28.89.18.188，8× L20A，ceph wzc1 独立盘）。H800 已下线。**
+**当前只有 5 个节点 = 40 卡，全部共享同一 wzc1 项目盘 `/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/`**（本机与 .252 是 B200，真共享该盘、互相无需 rsync；.73/.82/.104 是 H20，也在该路径下跑训练/eval）。
 
-分多个 CEPH 盘，盘内共享 FS，**盘间需要 rsync 同步代码 + 数据**：
+| # | 节点 | IP:端口 | 硬件 | 密码文件 | Python |
+|---|------|---------|------|---------|--------|
+| 1 | 本机 (local, wzc1) | 本地直连 | 8×L20A（B200 级，183GB/卡） | — | `.venv/bin/python`（torch2.10+cu128，支持 L20A sm_100） |
+| 2 | .252 | `28.89.19.252` :22 | 8×B200 | `configs/password_b200_19252.txt` | `.venv/bin/python` |
+| 3 | .73 | `28.85.35.73` :36000 | 8×H20（97.8GB） | `configs/password_h20_853573.txt` | `/opt/conda/envs/torch-base/bin/python` |
+| 4 | .82 | `28.82.250.82` :36000 | 8×H20 | `configs/password_h20_82250.txt` | `/opt/conda/envs/torch-base/bin/python` |
+| 5 | .104 | `28.83.24.104` :36000 | 8×H20 | `configs/password_h20_24104.txt` | `/opt/conda/envs/torch-base/bin/python` |
 
-| 盘 | 节点 IP | 角色 | share 路径 | 密码文件 |
-|----|---------|------|-----------|---------|
-| **盘 A** | `29.162.227.178` | **本机** | `/apdcephfs_zwfy6/share_303098609/` | — |
-| **盘 A** | `28.59.80.196` | 远程（与本机共享 FS，代码改动直接可见） | `/apdcephfs_zwfy6/share_303098609/` | `configs/password_diskA.txt` |
-| **盘 B** | `28.49.196.161` | 远程（旧，env 缺 transformers，见下） | `/apdcephfs_zwfy6/share_304376610/` | `configs/password_diskB.txt` |
-| **盘 B** | `29.162.241.149` | 远程（与 .161 共享 FS，env 缺 transformers） | `/apdcephfs_zwfy6/share_304376610/` | `configs/password_diskB.txt` |
-| **盘 B** | `28.49.57.76` | 远程（2026-06-05 新增，✅ 可训练） | `/apdcephfs_zwfy6/share_304376610/` | `configs/password_h20_new2.txt` |
-| **盘 B** | `28.59.33.249` | 远程（2026-06-05 新增，与 .76 共享 FS，✅ 可训练） | `/apdcephfs_zwfy6/share_304376610/` | `configs/password_h20_new2.txt` |
-| **盘 B** | `28.48.7.53` | 远程 H20（2026-06-22 回归，✅ 可训练） | `/apdcephfs_zwfy6/share_304376610/` | `configs/password_h20_returned.txt` |
-| **盘 B** | `28.58.245.174` | 远程 H20（2026-06-22 回归，✅ 可训练） | `/apdcephfs_zwfy6/share_304376610/` | `configs/password_h20_returned.txt` |
-| **盘 wzc1** | `28.89.18.188` | B200/L20A 远程（✅ 2026-06-08 新增，8× L20A 183GB，全空可训/eval） | `/apdcephfs_wzc1/share_304376610/` | `configs/password_b200_188.txt` |
-| **盘 wzc1** | `28.89.16.18:36000` | B200/L20A 远程（✅ 可用，8× L20A 183GB，端口 36000） | `/apdcephfs_wzc1/share_304376610/` | `configs/password_b200_new.txt` |
-| **盘 wzc1** | `28.88.184.53` | B200/L20A 远程（✅ 2026-06-21 新增，8× L20A 183GB，22 端口直连，与 .18/.188 共享 wzc1 盘→资产无需 rsync） | `/apdcephfs_wzc1/share_304376610/` | `configs/password_b200_53.txt` |
-
-- **新 B200 节点 .53（✅ 2026-06-21 新增）**：`28.88.184.53`，8× NVIDIA L20A（183GB/卡），密码 `BSH18oZsBWdTVsW,`（含末尾逗号，存 `configs/password_b200_53.txt`）。**22 端口直连**（非 36000）。
-  - 工作目录 `/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/`，**与 B200 .18:36000 / .188 共享同一 wzc1 盘**——代码/ckpt/数据共享，无需 rsync（一台传好另一台直接可见）。
-  - env：`.venv/bin/python`（torch 2.10.0+cu128，支持 L20A sm_100）；`external/landmark_venv` 也在（faithful landmark 用，但 L20A 跑不了 torch2.1，仅 H20 可用）。
-  - SSH：`sshpass -f configs/password_b200_53.txt ssh -o StrictHostKeyChecking=no -o ConnectTimeout=15 -o PreferredAuthentications=password root@28.88.184.53`
-  - ⚠️ L20A 不能跑 faithful Landmark（torch2.1 不支持 sm_100）；能跑本项目 mem_space 训练/eval（用 .venv torch2.10）。
-
-- **新 B200 节点（✅ 2026-06-08 新增）**：`28.89.18.188`，8× NVIDIA L20A（183GB/卡），密码 `acdhW564HMrnWAv,`（含末尾逗号，存 `configs/password_b200_188.txt`）。
-  - 工作目录 `/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/`（**CEPH=wzc1，与盘A/盘B/jn2 都不共享**，代码/ckpt/数据需 rsync 过去）。
-  - env 就绪：`.venv/bin/python`（torch 2.10.0+cu128 + transformers 5.5.4，L20A sm_100 兼容，CUDA OK）；model `models/Meta-Llama-3-8B`、`third_party/babilong-pkg` 都在。git head 落后（85366ea），代码用前先 rsync。
-  - SSH：`sshpass -f configs/password_b200_188.txt ssh -o StrictHostKeyChecking=no -o ConnectTimeout=15 -o PreferredAuthentications=password root@28.89.18.188`
-
-- **H800 已下线（2026-06-08）**：H800 节点已被回收，不再可用，已从集群移除。历史死 IP（别再试）：`30.203.138.247/.130.90`、`30.203.138.213/.131.102`、`30.203.132.121/.138.209`。
-- **2026-06-22 回归 2 个 H20 节点（28.48.7.53 / 28.58.245.174）**：8× H20 each，挂载**盘 B**（share_304376610）。SSH 已验证；项目 `.venv/bin/python` 可用（torch 2.10.0+cu128 + transformers 5.5.4）。密码存 `configs/password_h20_returned.txt`（不要在日志/回复中展开）。
-- **2026-06-05 新增 2 节点（.76 / .249）**：8× H20 each，挂载**盘 B**（share_304376610，与 .161/.149 同一 ceph）。
-  - ✅ **与旧盘B节点不同：这俩节点用项目 `.venv/bin/python`（torch 2.10.0+cu128 + transformers 5.5.4，CUDA OK on H20）→ 可直接跑本项目训练，无需 pip install。** 启动脚本带 `PYTHON_BIN` 默认即 `.venv/bin/python`，不要用 torch-base。
-  - 模型已就位：`/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/models/Meta-Llama-3-8B`。
-  - 代码/数据用前需从盘A rsync（盘B 落后；dolmino 训练数据 `MemLong/data/processed/dolmino_per_doc` 需同步过去）。
-- **密码含末尾逗号**：盘A/盘B/H20/B200 的密码均已存入对应 `configs/password*.txt` 文件；用 `sshpass -f`，不要 `tr -d` 或手写展开，逗号可能是密码的一部分。
-- SSH：`sshpass -f configs/password_diskA.txt ssh -o StrictHostKeyChecking=no -o ConnectTimeout=15 -o PreferredAuthentications=password root@<IP>`
-- **盘 A 项目根**：`/apdcephfs_zwfy6/share_303098609/pighzliu_code/Mixture-of-Memory/`（本机 + .196 共享，代码无需同步）
-- **盘 B 项目根**：`/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/`（⚠️ 注意是 **304376610** 不是 303098609；代码落后，用前必须先 rsync 同步当前代码）
-- Python：盘A本机 `.venv/bin/python`；盘A 远程 .196 `/opt/conda/envs/torch-base/bin/python`；**盘B 新节点（.76/.249）用项目 `.venv/bin/python`**（torch 2.10+cu128，有 transformers）；盘B 旧节点（.161/.149）torch-base 缺 transformers，不能直接训。
-- **盘 A → 盘 B rsync**（跨盘同步代码，盘间不共享）：
-  ```bash
-  rsync -az --exclude '.git' --exclude '*.pt' --exclude '.venv' --exclude 'outputs' --exclude 'logs' \
-    -e "sshpass -f configs/password_diskB.txt ssh -o StrictHostKeyChecking=no -o PreferredAuthentications=password" \
-    /apdcephfs_zwfy6/share_303098609/pighzliu_code/Mixture-of-Memory/{src,scripts,configs} \
-    root@28.49.196.161:/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/
-  ```
-- 远程训练注意：远程连不上 wandb.ai → 必须 `export WANDB_MODE=offline`；用 launch 脚本（脚本内 cd 到 PROJECT_ROOT），盘B 旧节点要带 `PROJECT_ROOT=/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory PYTHON_BIN=/opt/conda/envs/torch-base/bin/python`。**盘B 新节点（.76/.249）的 chunk512/chunk1024 launch 脚本已把 PROJECT_ROOT/PYTHON_BIN 默认指向盘B + .venv**，直接 `bash scripts/launch_mem_space_p8_nullsink_chunk{512,1024}_diskB.sh` 即可。
-- **盘 A → 盘 B 新节点（.76/.249）rsync**（代码 + 数据，2026-06-05）：
-  ```bash
-  # 代码
-  rsync -az --exclude '.git' --exclude '*.pt' --exclude '.venv' --exclude 'outputs' --exclude 'logs' \
-    --exclude 'babilong_results' --exclude 'data' --exclude 'MemLong/data' --exclude 'models' \
-    -e "sshpass -f configs/password_h20_new2.txt ssh -o StrictHostKeyChecking=no -o PreferredAuthentications=password" \
-    src scripts configs third_party \
-    root@28.49.57.76:/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/
-  # dolmino 训练数据（1.6G，盘B 缺）
-  rsync -az -e "sshpass -f configs/password_h20_new2.txt ssh -o StrictHostKeyChecking=no -o PreferredAuthentications=password" \
-    MemLong/data/processed/dolmino_per_doc \
-    root@28.49.57.76:/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/MemLong/data/processed/
-  ```
-- ⚠️ **盘B 旧节点（28.49.196.161 / .241.149）的 `torch-base` env 没有 `transformers`**（2026-06-02 实测）→ 不能直接训。**盘B 新节点（.76/.249）有 `.venv`，可训。**
-- ⚠️ **盘B 节点（28.49.196.161 / .241.149）的 `torch-base` env 没有 `transformers` 模块**（2026-06-02 实测 ModuleNotFoundError）→ **目前无法在盘B 跑本项目训练**，除非先 pip install transformers 等依赖。盘A 节点 env 正常。
+- **SSH 通式**：`sshpass -f <密码文件> ssh -o StrictHostKeyChecking=no -o ConnectTimeout=12 -o PreferredAuthentications=password [-p 36000] root@<IP>`（H20 三台 .73/.82/.104 加 `-p 36000`；.252 走默认 22 端口）。
+- **全部共享 wzc1 项目盘**：5 台代码/ckpt/数据都在 `/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/`，互相无需 rsync。
+- **密码只见对应 `configs/password*.txt` 文件**（含末尾逗号是密码的一部分，用 `sshpass -f`，不要 `tr -d` 或手写展开）。
+- ⚠️ **dllm 节点 `29.162.226.120` 已归还，绝不连。**
 - ⚠️ **内联 BABILong eval 会导致 NCCL 崩溃**（2026-06-02 实测）：`quick_eval_babilong` 在 DDP 循环里做变长 greedy generation 会让各 rank desync → ALLREDUCE 等满 30min watchdog timeout → 整个 job SIGABRT。**训练时务必 `--eval_interval 0`**（launch 脚本已默认 `EVAL_INTERVAL=0`），eval 改为离线单独跑 checkpoint。
-- ⚠️ 远程节点（尤其盘A 28.59.80.196）偶发**独立的 NCCL/CEPH hang**（非 eval、非边界），约 30min watchdog 后崩。本机节点更稳。重要 run 优先放本机。
 
 ## Wandb 配置（2026-05-25）
 
@@ -217,7 +167,7 @@ git commit 只包含实际修改内容的描述，不附加任何 AI 署名行�
 
 **当只有一个训练任务时，必须尽量使用多个节点来最大化效率。**
 
-- 有 4 个 B200 节点（b200-1/2/3/4）+ 本地 8×H20，闲置节点是浪费
+- 当前有 5 个节点 = 40 卡（本机 + .252 两台 B200 级 + .73/.82/.104 三台 H20），闲置节点是浪费
 - 单任务训练时，优先考虑 **多机多卡 DDP**（torchrun `--nnodes N --rdzv_backend c10d --rdzv_endpoint <master_ip>:29500`）
 - 若多机配置复杂（数据 sharding / 脚本不支持），退而求其次使用 **gradient accumulation** 提升单节点有效 batch size，目标 GPU mem bandwidth ≥ 70%
 - **GPU mem bandwidth < 50% 视为欠载**，必须在 heartbeat 报告中标注 WARNING 并提出扩展方案
@@ -227,10 +177,7 @@ git commit 只包含实际修改内容的描述，不附加任何 AI 署名行�
 
 **当【待跑训练 ≤ 3 个】时，不要一实验一节点各自慢跑，而是把【同盘的两个节点合成一个 16 卡节点】做多机 DDP 加速单个关键实验。**
 
-- **同盘分组（合并前提=共享 FS，跨盘 ckpt/数据不可达）**：
-  - diskA (`share_303098609`) = {本机 local, `.196`=`28.59.80.196`}
-  - diskB (`share_304376610`) = {`.7.53`=`28.48.7.53`, `.245`=`28.58.245.174`}
-  - B200.55 wzc1（`28.89.16.55`，`configs/password_b200_55.txt`，实为真 B200，显示名 L20A）独立盘，不与上面合并
+- **同 wzc1 盘可合成 16 卡（合并前提=共享 FS）**：当前 5 节点全部共享 wzc1 盘 → 任两台都可合成 16 卡多机 DDP。常用组合：H20 三台（.73/.82/.104）任取两台，或本机 + .252 两台 B200 级。
 - **配方**：现成 2-node 脚本 `scripts/launch_landmark_S2_dolmino_2node.sh` + `scripts/run_landmark_S2_node.sh`；两节点各跑一次 `torchrun --nnodes 2 --node_rank {0/1} --nproc_per_node 8 --rdzv_backend c10d --rdzv_endpoint <MASTER内网IP>:<PORT>`。NCCL 注意 bond1 + IB disabled（见 run_landmark_S2_node.sh verified recipe）。
 - **决策准则**：≤3 训练 + 有同盘空节点 → 合成 16 卡跑最关键那个（训练提速近 2×；慢的 16k eval 也可分片到 16 卡）。>3 独立实验 → 一实验一节点铺开。每轮判断"16 卡合起来加速一个 vs 分开跑多个"哪个总产出高。
 
@@ -323,49 +270,27 @@ configs/
 
 ## 计算资源
 
-**现有集群（2026-05-20 更新）：本机 H20 + 远程 H20 + 新 B200 节点。**
+**当前集群（2026-08-04 更新）：5 个节点 = 40 卡，全部共享 wzc1 项目盘 `/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/`，互相无需 rsync。详见顶部「🖥️ 当前 GPU 集群」表。**
 
-### 1. 本机 H20（主力训练）
-- 8× H20 (97.8 GiB)，直接本地访问
-- 工作目录: `/apdcephfs_zwfy6/share_303098609/pighzliu_code/Mixture-of-Memory/`
-- 模型: `/apdcephfs_zwfy6/share_303098609/pighzliu_code/models/`
-- Python: 项目 `.venv/bin/python`（torch 兼容 H20）
-- ⚠️ **VRAM 97.8 GiB**，1B 模型训练完全没问题，8B+memory 需要 gradient_checkpointing
+| # | 节点 | 硬件 | Python |
+|---|------|------|--------|
+| 1 | 本机 (local, wzc1) | 8×L20A（B200 级，183GB/卡） | `.venv/bin/python` |
+| 2 | .252 (`28.89.19.252` :22) | 8×B200 | `.venv/bin/python` |
+| 3 | .73 (`28.85.35.73` :36000) | 8×H20（97.8GB） | `/opt/conda/envs/torch-base/bin/python` |
+| 4 | .82 (`28.82.250.82` :36000) | 8×H20 | `/opt/conda/envs/torch-base/bin/python` |
+| 5 | .104 (`28.83.24.104` :36000) | 8×H20 | `/opt/conda/envs/torch-base/bin/python` |
 
-### 2. 远程 H20 节点（28.59.80.196）（2026-05-20 更新）
-- 1 节点，8× H20 (97.8 GiB)
-- SSH: `sshpass -f configs/password_h20_new.txt ssh -o StrictHostKeyChecking=no -o PreferredAuthentications=password root@28.59.80.196`
-- 工作目录: `/apdcephfs_zwfy6/share_303098609/pighzliu_code/Mixture-of-Memory/`（**与本机共享 zwfy6/share_303098609**）
-- 模型: 使用共享路径 `models/Meta-Llama-3-8B-Instruct`（相对于 PROJECT_ROOT）
-- Python: `/opt/conda/envs/torch-base/bin/python`（torch OK，H20 兼容）
-- ✅ **与本机共享 CEPH FS**（zwfy6/share_303098609），代码/模型/数据无需同步
-- ⚠️ 启动脚本时需设置 `PROJECT_ROOT=/apdcephfs_zwfy6/share_303098609/pighzliu_code/Mixture-of-Memory PYTHON_BIN=/opt/conda/envs/torch-base/bin/python`
-
-### 3. 新 B200 节点（28.89.16.108）（2026-05-20 新增）
-- 1 节点，8× NVIDIA L20A (183 GiB/卡)，**全部空闲**
-- SSH: `sshpass -f configs/password_b200_new.txt ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 -o PreferredAuthentications=password root@28.89.16.108`
-- 密码保存在 `configs/password_b200_new.txt`（密码末尾有逗号 `,`，是密码的一部分）
-- 工作目录: `/apdcephfs_wzc1/share_303098609/pighzliu_code/Mixture-of-Memory/`（wzc1 共享 FS）
-- 模型: 同上 wzc1 路径下 `models/`
-- Python: **必须用 `.venv/bin/python`**（torch 2.10.0+cu128，支持 sm_100）
-  - ❌ `/opt/conda/envs/torch-base/bin/python` 不兼容 L20A (sm_100)
-- ⚠️ **不同 CEPH 集群**（wzc1 vs 本机 zwfy6）：代码改动需要 git push+pull 或 scp 同步
-- ⚠️ 当前 wzc1 代码版本落后本机（最新 commit: `ec09cef`），需要同步新脚本
-
-### ❌ 已确认不可用
-- 原始 B200 集群（28.89.17.143/144/85/134）：Connection refused
-- 旧 H800 节点（29.185.88.158/89.190 及 30.203.132.121/.138.209）：Connection refused（⚠️ 注意：当前活跃 H800 是 `30.203.138.213/.131.102`，见顶部集群表，别混淆）
-- h20-1/2/3/4（28.58.244.13 / 28.85.54.125 / 28.59.5.176 / 28.83.52.26）：密码被拒
-- ephemeral B200（b200-5..8）：密码被拒
+- 本机 + .252 是 B200 级（183GB/卡），显存大，适合重型 8B+memory 训练；.73/.82/.104 是 H20（97.8GB），1B 训练无压力，8B+memory 需 gradient_checkpointing。
+- SSH / 密码文件见顶部「🖥️ 当前 GPU 集群」表与 SSH 通式（H20 三台加 `-p 36000`；.252 走默认 22 端口）。
+- ⚠️ **dllm 节点 `29.162.226.120` 已归还，绝不连。**
 
 ### 集群间分配指南
 
 | 任务类型 | 推荐节点 |
 |---------|----------|
-| 主训练（1B memory 实验） | **本机 H20**（8 卡） |
-| 并行第二个训练 | **远程 H20 28.59.80.196**（需先 rsync 脚本） |
-| baseline / eval / inference | 本机 H20 或远程 H20 |
-| 重型 8B+memory 训练 | **原始 B200 28.89.17.144**（L20A 183 GiB 空间更大）|
+| 主训练 / baseline / eval / inference | 任一节点（5 台共享 wzc1 盘） |
+| 重型 8B+memory 训练 | **本机 或 .252**（B200 级 183 GiB 空间更大） |
+| 多机 16 卡加速单个关键实验 | H20 三台（.73/.82/.104）任取两台，或本机 + .252 |
 
 ---
 
@@ -389,10 +314,10 @@ configs/
 
 用户明确要求:**"我们的卡很多, 我希望你可以以最大的效率利用他们"**。
 
-- 有 4 个 B200 节点 + 1 个本地 8× H20 节点
+- 当前有 5 个节点 = 40 卡（本机 + .252 两台 B200 级 + .73/.82/.104 三台 H20）
 - **不同节点可以并行跑不同实验**(red line #5 说的是同一节点不能双开)
 - 当一类工作(例如 memory 架构实现)在推进时,**旧线索(WikiText rank sweep 等)不能停**
-- 如果架构训练需要 1 个 8-GPU 节点,就让剩下 3 个节点继续跑 baseline / eval / sweep
+- 如果架构训练需要 1 个 8-GPU 节点,就让其余节点继续跑 baseline / eval / sweep
 - ~~Q-Filters checklist~~ 已废弃 (2026-05-10 用户授权), `src/memory/qfilters/` 移入 `legacy/`
 - **每个训练开一个后台 subagent 跑,不要阻塞 main**,main 继续调度其他工作
 - subagent 返回的信息 main 必须处理(检查结果、决定下一步、落账)
@@ -546,7 +471,7 @@ Agent(
 
 append-only 文件写错了**不要 edit**,追加一条 correction 行:
 ```json
-{"ts":"...","sweep":"...","correction":"prior entry at 14:08 had wrong node b200-3; actual b200-1","...":...}
+{"ts":"...","sweep":"...","correction":"prior entry at 14:08 had wrong node .104; actual local","...":...}
 ```
 
 ---
@@ -567,9 +492,9 @@ append-only 文件写错了**不要 edit**,追加一条 correction 行:
 ## 关键路径速查
 
 - 本地代码根:`/apdcephfs_wzc1/share_303098609/pighzliu_code/Mixture-of-Memory/`
-- **远程 canonical workdir**:`/apdcephfs_wzc1/share_303098609/pighzliu_code/Mixture-of-Memory/`(wzc1 跨节点共享,训练脚本都 cd 到这里)
-- SSH:`sshpass -f configs/password.txt ssh -o StrictHostKeyChecking=no root@<IP>`
-- IPs:b200-1 .143, b200-2 .144, b200-3 .85, b200-4 .134
+- **远程 canonical workdir**:`/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/`(wzc1 跨节点共享,5 节点都 cd 到这里,训练/eval/ckpt/数据免同步)
+- SSH 通式见顶部「🖥️ 当前 GPU 集群」表:`sshpass -f <configs/password*.txt> ssh -o StrictHostKeyChecking=no -o PreferredAuthentications=password [-p 36000] root@<IP>`
+- 当前 5 节点:本机(local) + .252(`28.89.19.252`) 两台 B200 级 + .73(`28.85.35.73`)/.82(`28.82.250.82`)/.104(`28.83.24.104`) 三台 H20(端口 36000)
 
 ---
 
@@ -628,7 +553,7 @@ git rev-parse --short HEAD  # 获取 7 位 hash
 
 示例 gpu_runs.jsonl 条目：
 ```json
-{"ts": "2026-05-05T12:00:00", "node": "b200-1", "exp": "chunk_isolation_arm1", "commit_hash": "a1b2c3d", "seq_len": 256, "status": "running"}
+{"ts": "2026-05-05T12:00:00", "node": "local", "exp": "chunk_isolation_arm1", "commit_hash": "a1b2c3d", "seq_len": 256, "status": "running"}
 ```
 
 ### Heartbeat 对 git 的职责

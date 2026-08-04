@@ -4,16 +4,52 @@
 
 ---
 
-## ⚡⚡ 当前阶段（2026-06-28 起，最高优先，覆盖下方旧计划）
+## ⚡⚡ 当前阶段 + 节点 roster（2026-07-13 更新，最高优先；★改这里不用重启 cron★）
 
-**主线：supervised-selection 训练（run=mem_space_fifo_b25_c512_supervised_select on .7.53）。** 训练让可部署选择器学会选 needle chunk，配 token-reforward 读出。已验证有效且持续涨（干净 K2 部署，qa5 8k：C-probe 28→step500 39→step1000 46，朝 oracle 66 走；W0 raw hidden 也被训练改善 12→28）。
+> **用户 2026-07-13 指令**：heartbeat cron 只指向本文件；易变的节点清单/待办写在这里，改动无需重启 cron 任务。**每轮 heartbeat 第一件事读本块 + `status/SESSION_HANDOFF.md` + `status/QCMEM_AUTONOMOUS_AGENDA.md`。**
 
-**每轮必做的判据推进：**
-- A 训练 step 进度（目标 3000，健康 = babi=0）。新 ckpt 落盘（每 500 步）→ 立即 eval：token-reforward（`--swa_readerattn_token --swa_readerattn_topk 2 --swa_readerattn_select_layer 16`）+ W0（`--swa_eval_chunks 0`）两模式，qa1/qa5 × 8k/16k。
-- 锚点对照：C-probe（训练前零训练选择）、oracle-token（完美选中上界 66）。
-- ckpt 在 diskB，跨盘 eval 需先传 ckpt（adapter_config 单独验证传到，曾漏传）；远程 eval 用单命令自带 `HF_HOME=$R/.hf_cache` 绕过 taskpool 的 PROJECT_ROOT 覆盖坑。
+### ★ 当前节点 roster（权威，QCMem = 5 节点 40 卡；2026-08-04 更新）
+sshpass 前先 `export PATH=/opt/conda/bin:$PATH`。**全部共享同一 wzc1 项目盘 `/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/`**（本机与 .252 是 B200，真共享该盘、互相无需 rsync；.73/.82/.104 是 H20，也在该路径下跑训练/eval）。
 
-**红线（最高）：所有训练 `--babilong_mix_fraction 0`；泄漏 ckpt（b50/b100/P2/c1024/旧b25）完全不碰，不引用其分数。**
+| # | 节点 | IP:端口 | 硬件 | 密码文件 | Python |
+|---|------|---------|------|---------|--------|
+| 1 | 本机 (local, wzc1) | 本地直连 | 8×L20A（B200 级，183GB/卡） | — | `.venv/bin/python`（torch2.10+cu128，支持 L20A sm_100） |
+| 2 | .252 | `28.89.19.252` :22 | 8×B200 | configs/password_b200_19252.txt | `.venv/bin/python` |
+| 3 | .73 | `28.85.35.73` :36000 | 8×H20（97.8GB） | configs/password_h20_853573.txt | `/opt/conda/envs/torch-base/bin/python` |
+| 4 | .82 | `28.82.250.82` :36000 | 8×H20 | configs/password_h20_82250.txt | `/opt/conda/envs/torch-base/bin/python` |
+| 5 | .104 | `28.83.24.104` :36000 | 8×H20 | configs/password_h20_24104.txt | `/opt/conda/envs/torch-base/bin/python` |
+
+- **SSH 通式**：`sshpass -f <密码文件> ssh -o StrictHostKeyChecking=no -o ConnectTimeout=12 -o PreferredAuthentications=password [-p 36000] root@<IP>`（H20 三台 .73/.82/.104 加 `-p 36000`；.252 走默认 22 端口）。密码只见对应 `configs/password*.txt`（含末尾逗号是密码的一部分，用 `sshpass -f`，不要手写展开）。
+- ⚠️ **SSH recipe（2026-07-13 修，重要）**：本会话 conda 装过 texlive → shell snapshot 带进了 `LD_LIBRARY_PATH=/opt/conda/lib`，会让系统 `ssh` 加载 conda libcrypto 与 `/usr/lib64/libk5crypto.so.3` 冲突（`undefined symbol EVP_KDF_ctrl`）。**正确连法：`unset LD_LIBRARY_PATH` + 全路径 `/usr/bin/ssh` + sshpass 用 `/opt/conda/bin/sshpass`，且不要 `export PATH=/opt/conda/bin`。** 例：`unset LD_LIBRARY_PATH; /opt/conda/bin/sshpass -f configs/password_h20_853573.txt /usr/bin/ssh -o StrictHostKeyChecking=no -o PreferredAuthentications=password root@28.85.35.73 '<cmd>'`
+- ⚠️ **★29.162.226.120 dllm 已归还，绝不连。** 环境 reset 后 `/etc/ssh/ssh_config` 全局 `Port 36000`：连 36000 端口节点直接连（不加 -p）；连 22 端口节点才要 `-F /dev/null`。
+
+### ★ 两条铁律（最高优先）
+1. **GPU 绝不空转**：判空卡用 `nvidia-smi -i K --query-compute-apps=pid | wc -l`（数进程，**非显存**——MoE load / model inject 期 GPU 0GB 但进程活，避误判堆叠）。发现空卡**立即填**（推进 TaskList column 或 `status/QCMEM_AUTONOMOUS_AGENDA.md` §1 四方向）。
+2. **每结论查全证据 + 官方判分**（babilong=`TASK_LABELS`+`compare_answers` **禁 re.search**；RULER=`string_match`）+ 真实 `date` + util 低先查功耗/log 增长再判卡死。
+
+### ★★★ EVAL 统一协议（2026-07-17 用户指令，最高优先，覆盖旧的 per-task selector）
+- **所有 QCMem eval（RULER / BABILong / LongBench / LoCoMo / vs-Dense，所有 scale、所有 j、所有 task）统一用 `selector=iter_bm25`。** 不再用 bm25 单遍或 per-task 混选。启动脚本传 `SELECTOR=iter_bm25`（taskpool）或 `--selector iter_bm25`（单 cell）。
+- **所有 benchmark + 所有 baseline（含 MemoryLLM / HCache / KV-Direct / Dense）都用同一配置测（2026-07-17 用户加强），保证可比：**
+  - **chat template + no-think**：`--use_chat_template`，enable_thinking 默认 False。QCMem 生成边界 no-think 前缀已由 `c056a6d` 修好。
+  - **QCMem selector = iter_bm25**（见上）。
+  - **HCache / KV-Direct / Dense** 走 `eval_ruler_qcmem.py --baseline ...` / `eval_qcmem_babilong.py`（已有 chat 旗标）→ 直接传 `--use_chat_template` 重跑。
+  - **⚠️ MemoryLLM = `YuWangX/memoryllm-8b-chat` = Llama-based**：无 thinking 模式（enable_thinking 仅 Qwen3）→ no-think 天然满足；无 bm25 selector（内部 stateful memory）→ iter_bm25 不适用。「同配置」对它 = 用 chat template（它本就是 -chat 模型）。且需专用 env（`../MemoryLLM-source` + `external/memoryllm_venv`/ported transformers），只在特定节点能跑 → 单独 track。
+- 之前用 bm25 或非-chat 跑的结果**作废，需重跑**（含 8B-adapter BABILong bm25=62.2 / iter_bm25=57.1）。
+
+### 当前在跑（每轮核对实测，随状态改这里）（2026-08-04 更新）
+
+**★★ 当前主线（2026-07-16 用户定）：Paper A(QCMem) 全 scale benchmark 已基本完成并 push（MoM `8176949` + COMem 论文 `196d4de`）；主力转 Paper B = OLMo-2 base 剪层-heal（纠正原 instruct-continue-train 错误）。★live 状态以 `status/SESSION_HANDOFF.md` 顶部快照为准，本块只给方向骨架。**
+
+- **当前节点分配（示例，实测为准；live 详情见 `status/SESSION_HANDOFF.md`）**：
+  - 本机 (8×L20A)：armA。
+  - .252 (8×B200)：armB。
+  - .73 + .82（16×H20 多机 DDP，TCP over bond1，IB 挂时 `NCCL_IB_DISABLE=1`）：P1.3。
+  - .104 (8×H20)：P1.10。
+- **ckpt 轮转**：cron `4ec42903`（:47）清 wzc1 旧 OLMo ckpt 防盘满（≠heartbeat，勿删）。
+- **★论文方向**：单一 insight「前几层已压缩语义」→ Paper A=QCMem(已 benchmark+push)、Paper B=OLMo-2 剪层-heal(在跑)、Paper C=蒸馏。
+- **QCMem 收尾**：LongMemEval/∞Bench/HELMET 待接 API-judge harness（用户 2026-07-16 定暂不评）；LoCoMo 报 F1。
+
+### 红线：所有训练 `--babilong_mix_fraction 0`；泄漏 ckpt（b50/b100/P2/c1024/旧 b25）完全不碰、不引用其分数。
 
 ### 🚀 效率三条铁律（2026-06-28 用户指令）
 
@@ -32,7 +68,7 @@
 3. **关键实验 / 实验不多时 → 多节点并行加速（如 2 IP 16 卡）。** 当某个实验是关键判据、或当前待跑实验很少（多数节点空）时，不要让单个实验只占一台机慢慢跑——把它拆到多个节点并行（eval 按 shard 分到 2+ 节点；训练用多机 DDP，CODEBUDDY.md:221 的 `torchrun --nnodes N --rdzv_backend c10d` 配方，2 节点 16 卡可将训练提速近 2×）。判断点：实验关键且慢 + 有空闲节点 = 并行。注意跨盘 ckpt/数据可达性（同盘节点优先并行，跨盘需先同步）。
 
    **★★ 少实验就合成多节点（2026-07-01 用户指令，强化上条）：当【待跑训练 ≤ 3 个】时，不要一实验一节点各自慢跑，而是把【同盘的两个节点合成一个 16 卡节点】做多机 DDP 加速单个实验。**
-   - **同盘分组（合并前提=共享盘）**：diskA = {本机 local, .196=28.59.80.196}；diskB = {.7.53=28.48.7.53, .245=28.58.245.174}。B200.55=wzc1 独立盘不与上面合并。**只有同盘的两节点能合成 16 卡**（跨盘 ckpt/数据不可达）。
+   - **同 wzc1 盘可合成 16 卡（合并前提=共享盘）**：当前 5 节点全部共享 wzc1 盘 → 任两台都能合成 16 卡多机 DDP（代码/ckpt/数据免同步）。常用组合：H20 三台（.73/.82/.104）任取两台，或本机 + .252 两台 B200 级。
    - **配方**（现成 2node 脚本参考 `scripts/launch_landmark_S2_dolmino_2node.sh` + `run_landmark_S2_node.sh`）：两节点各跑一次 `torchrun --nnodes 2 --node_rank {0/1} --nproc_per_node 8 --rdzv_backend c10d --rdzv_endpoint <MASTER内网IP>:<PORT>`，master 用内网 IP，NCCL 注意 bond1 + IB disabled（见 run_landmark_S2_node.sh）。
    - **决策**：≤3 训练 + 有同盘空节点 → 合成 16 卡跑最关键那个（训练提速近 2×，或让慢的 16k eval 分片到 16 卡）。>3 实验或都是独立小实验 → 一实验一节点铺开。判断"这一轮 16 卡合起来加速一个，还是分开跑多个"哪个总产出高。
 
@@ -184,48 +220,29 @@ nvidia-smi --query-compute-apps=pid,gpu_index,used_memory,process_name \
 
 ### Step 2: 远程集群检查
 
-> ⚠️ **当前权威集群拓扑见 CODEBUDDY.md 顶部「当前 GPU 集群」表（2026-06-08 更新）**。下方旧表多为已回收 IP，仅作历史参考。
+> **当前权威集群 = 顶部「★ 当前节点 roster」的 5 节点 40 卡**（本机 + .252 两台 B200 级 + .73/.82/.104 三台 H20），全部共享 wzc1 项目盘 `/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/`，代码/ckpt/数据免同步。
 >
-> **2026-06-08 活跃节点**：
-> - 盘A 本机 `29.162.227.178` + 远程 `28.59.80.196`（共享 FS，无需 rsync），`/apdcephfs_zwfy6/share_303098609/`
-> - 盘B `28.49.57.76` / `28.59.33.249`（共享 FS，可训），`configs/password_h20_new2.txt`，`/apdcephfs_zwfy6/share_304376610/`
-> - 盘B 回归 H20 `28.48.7.53` / `28.58.245.174`（共享 FS，可训），`configs/password_h20_returned.txt`，`/apdcephfs_zwfy6/share_304376610/`
-> - **B200 `28.89.18.188`**（8× L20A 183GB，✅ 2026-06-08 新增），`configs/password_b200_188.txt`，CEPH=`wzc1/share_304376610`（**独立盘，代码/ckpt 需 rsync**），用 `.venv/bin/python`
-> - **H800 已下线**（2026-06-08 回收）：不要再 ssh 探测 `30.203.138.247/.130.90`、`30.203.138.213/.131.102` 等任何 H800 IP。
+> 旧的「盘A/盘B 双 ceph」「b200-1..4 / b200-5..8 / h20-1..4 / 回归 H20」拓扑已全部回收，**不要再 ssh 探测任何不在 roster 里的 IP**（含所有 `30.203.*` H800、`28.59.80.196`、`28.49.*`、`28.48.7.53`、`28.58.245.174`、`28.89.16/17/18.*`、`28.89.19.134`、`28.89.20.*` 等）。**★29.162.226.120 dllm 已归还，绝不连。**
 
-遍历 `configs/remote_experiments.json` 中 status=running 的节点。**集群分为三类，密码文件不同**：
-
-| 集群 | IP 列表 | 密码文件 | CEPH 共享 | 备注 |
-|------|---------|----------|-----------|------|
-| **b200-1..4 (原始)** | 28.89.17.143, .144, 28.89.17.85, 28.89.19.134 | `configs/password.txt` | `share_303098609` (项目主目录) | 稳定，主训练资源 |
-| **b200-5..8 (replacement B200)** | 28.89.18.252, 28.89.20.82, 28.89.20.27, 28.89.18.19 | `configs/password_b200_ephemeral.txt` | `share_303098609` (与主项目同一 share) | 当前 replacement B200 节点；密码文件已更新，可直接用于 heartbeat SSH |
-| **h20-1..4 (H20)** | 28.58.244.13, 28.85.54.125, 28.59.5.176, 28.83.52.26 | `configs/password_h20.txt` | `zwfy6/share_304376610` | 8x H20 (97.8 GB)，VRAM 是 B200 一半 |
-| **returned H20 (2026-06-22)** | 28.48.7.53, 28.58.245.174 | `configs/password_h20_returned.txt` | `zwfy6/share_304376610` | 8x H20 each，SSH/env 已验证，项目 `.venv/bin/python` 可用 |
-
-每类节点的 SSH 命令模板：
+远程 4 台节点 SSH 检查模板（密码文件见 roster；H20 三台 .73/.82/.104 加 `-p 36000`，.252 走默认 22 端口）：
 
 ```bash
-# 原始 B200
-sshpass -f configs/password.txt ssh -o StrictHostKeyChecking=no \
-  -o ConnectTimeout=10 root@<IP> \
+# H20（.73 / .82 / .104，端口 36000）
+sshpass -f configs/password_h20_853573.txt ssh -o StrictHostKeyChecking=no \
+  -o ConnectTimeout=12 -o PreferredAuthentications=password -p 36000 root@28.85.35.73 \
   "nvidia-smi --query-compute-apps=pid,used_memory,process_name --format=csv,noheader; \
    tail -5 <log_path> 2>/dev/null"
 
-# ephemeral B200（注意 -o PreferredAuthentications=password 避免 pubkey 卡死）
-sshpass -f configs/password_b200_ephemeral.txt ssh -o StrictHostKeyChecking=no \
-  -o ConnectTimeout=10 -o PreferredAuthentications=password root@<IP> "<cmd>"
-
-# 检查 ephemeral 节点是否仍存活（先 ping 再 ssh）
-sshpass -f configs/password_b200_ephemeral.txt ssh -o StrictHostKeyChecking=no \
-  -o ConnectTimeout=10 -o PreferredAuthentications=password root@<IP> "echo alive" 2>&1 \
-  | grep -q alive && echo OK || echo DEAD
+# .252（B200，默认 22 端口）
+sshpass -f configs/password_b200_19252.txt ssh -o StrictHostKeyChecking=no \
+  -o ConnectTimeout=12 -o PreferredAuthentications=password root@28.89.19.252 "<cmd>"
 ```
 
-**replacement B200 / H20 节点 SSH 失败时**：不要立即升级。在 `status/TRAINER_ACTIVITY.jsonl` 标记 `ssh_timeout`，连续 3 次（约 60 分钟）失败才视为节点不可用，再更新状态。
+（SSH recipe 坑：conda texlive 污染 `LD_LIBRARY_PATH` 导致 ssh libcrypto 冲突时，见 roster 里的 `unset LD_LIBRARY_PATH` + `/usr/bin/ssh` + `/opt/conda/bin/sshpass` 修法。）
 
-**replacement B200 节点路径**：项目根 = `/apdcephfs_wzc1/share_303098609/pighzliu_code/Mixture-of-Memory/`，与主项目完全共享，不需要 rsync。
+**节点 SSH 失败时**：不要立即升级。在 `status/TRAINER_ACTIVITY.jsonl` 标记 `ssh_timeout`，连续 3 次（约 60 分钟）失败才视为节点不可用，再更新状态。
 
-**H20 节点路径**：项目根 = `/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/`，仍与主项目不同步；把任务派到 H20 时必须确认脚本/数据路径兼容。
+**所有节点共享 wzc1 项目盘**：项目根 = `/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/`，代码/模型/数据免同步。
 
 检查是否还在运行，loss 是否正常。
 
@@ -554,14 +571,14 @@ scripts/hb_emit_alert.sh \
 
 ### 多实验并行调度规则（确保不浪费 GPU）
 
-**核心原则：4 个 B200 节点 + 1 个本地 8×H20 = 5 组 GPU。任何时刻空闲节点 ≥ 1 且有可做的事 = 浪费。**
+**核心原则：当前 5 节点 40 卡（本机 + .252 + .73/.82/.104）。任何时刻空闲节点 ≥ 1 且有可做的事 = 浪费。**
 
 Heartbeat 必须维护一个 **"节点占用表"**，每次检查时：
 
 | 节点 | 当前实验 | 预计完成时间 |
 |------|----------|------------|
-| b200-1 | ... | ... |
-| ... | ... | ... |
+| 本机 | ... | ... |
+| .252 | ... | ... |
 
 #### 调度算法（每次 heartbeat 执行）
 
@@ -644,8 +661,8 @@ Heartbeat 必须维护一个 **"节点占用表"**，每次检查时：
 - 活跃进程: [PID 列表或 none]
 
 ### 远程集群
-- node0 (28.89.17.143): [状态]
-- node1-3: [状态]
+- .252 (28.89.19.252): [状态]
+- .73/.82/.104 (H20): [状态]
 
 ### 活跃训练
 - [实验名称]: step X/Y, loss Z, 健康/异常
