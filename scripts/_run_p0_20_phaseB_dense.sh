@@ -112,7 +112,10 @@ if [ "$CALIB_OFFSET" -lt "$LIMIT" ]; then
 fi
 echo "============================================================"
 
-LOGDIR="logs/p0_20_phaseB"
+# LOGDIR follows OUTDIR (overridable) so per-OUTDIR runs get their OWN done/ markers.
+# Default OUTDIR=bench_results/p0_20_phaseB_dense => logs/p0_20_phaseB_dense (original
+# run already complete; its stale done/ is never re-read so the differing basename is harmless).
+LOGDIR="${LOGDIR:-logs/$(basename "$OUTDIR")}"
 DONEDIR="$LOGDIR/done"
 QUEUE="$LOGDIR/task_queue.txt"
 LOCK="$LOGDIR/queue.lock"
