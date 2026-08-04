@@ -1,0 +1,833 @@
+{
+  "date": "2026-08-04 18:10:11",
+  "task": "A-P1.2(a) cross-benchmark contamination audit vs PG-19 training corpus",
+  "benchmarks": {
+    "longbench": {
+      "n_eval_records": 8418,
+      "n_unique_docs": 7429,
+      "docs": {
+        "CONTAMINATED": 11,
+        "PARTIAL": 16,
+        "CLEAN": 7402
+      },
+      "doc_contamination_ratio": 0.0015,
+      "records_by_task": {
+        "2wikimqa": {
+          "total": 200,
+          "CONTAMINATED": 0,
+          "PARTIAL": 1,
+          "CLEAN": 199
+        },
+        "2wikimqa_e": {
+          "total": 300,
+          "CONTAMINATED": 0,
+          "PARTIAL": 0,
+          "CLEAN": 300
+        },
+        "dureader": {
+          "total": 200,
+          "CONTAMINATED": 0,
+          "PARTIAL": 1,
+          "CLEAN": 199
+        },
+        "gov_report": {
+          "total": 200,
+          "CONTAMINATED": 0,
+          "PARTIAL": 0,
+          "CLEAN": 200
+        },
+        "gov_report_e": {
+          "total": 300,
+          "CONTAMINATED": 0,
+          "PARTIAL": 0,
+          "CLEAN": 300
+        },
+        "hotpotqa": {
+          "total": 200,
+          "CONTAMINATED": 0,
+          "PARTIAL": 0,
+          "CLEAN": 200
+        },
+        "hotpotqa_e": {
+          "total": 300,
+          "CONTAMINATED": 0,
+          "PARTIAL": 0,
+          "CLEAN": 300
+        },
+        "lcc": {
+          "total": 500,
+          "CONTAMINATED": 0,
+          "PARTIAL": 0,
+          "CLEAN": 500
+        },
+        "lcc_e": {
+          "total": 300,
+          "CONTAMINATED": 0,
+          "PARTIAL": 0,
+          "CLEAN": 300
+        },
+        "lsht": {
+          "total": 200,
+          "CONTAMINATED": 0,
+          "PARTIAL": 0,
+          "CLEAN": 200
+        },
+        "multi_news": {
+          "total": 200,
+          "CONTAMINATED": 0,
+          "PARTIAL": 0,
+          "CLEAN": 200
+        },
+        "multi_news_e": {
+          "total": 294,
+          "CONTAMINATED": 0,
+          "PARTIAL": 0,
+          "CLEAN": 294
+        },
+        "multifieldqa_en": {
+          "total": 150,
+          "CONTAMINATED": 0,
+          "PARTIAL": 0,
+          "CLEAN": 150
+        },
+        "multifieldqa_en_e": {
+          "total": 150,
+          "CONTAMINATED": 0,
+          "PARTIAL": 0,
+          "CLEAN": 150
+        },
+        "multifieldqa_zh": {
+          "total": 200,
+          "CONTAMINATED": 1,
+          "PARTIAL": 0,
+          "CLEAN": 199
+        },
+        "musique": {
+          "total": 200,
+          "CONTAMINATED": 0,
+          "PARTIAL": 0,
+          "CLEAN": 200
+        },
+        "narrativeqa": {
+          "total": 200,
+          "CONTAMINATED": 96,
+          "PARTIAL": 0,
+          "CLEAN": 104
+        },
+        "passage_count": {
+          "total": 200,
+          "CONTAMINATED": 0,
+          "PARTIAL": 0,
+          "CLEAN": 200
+        },
+        "passage_count_e": {
+          "total": 300,
+          "CONTAMINATED": 0,
+          "PARTIAL": 1,
+          "CLEAN": 299
+        },
+        "passage_retrieval_en": {
+          "total": 200,
+          "CONTAMINATED": 0,
+          "PARTIAL": 0,
+          "CLEAN": 200
+        },
+        "passage_retrieval_en_e": {
+          "total": 300,
+          "CONTAMINATED": 0,
+          "PARTIAL": 0,
+          "CLEAN": 300
+        },
+        "passage_retrieval_zh": {
+          "total": 200,
+          "CONTAMINATED": 0,
+          "PARTIAL": 8,
+          "CLEAN": 192
+        },
+        "qasper": {
+          "total": 200,
+          "CONTAMINATED": 0,
+          "PARTIAL": 0,
+          "CLEAN": 200
+        },
+        "qasper_e": {
+          "total": 224,
+          "CONTAMINATED": 0,
+          "PARTIAL": 0,
+          "CLEAN": 224
+        },
+        "qmsum": {
+          "total": 200,
+          "CONTAMINATED": 0,
+          "PARTIAL": 0,
+          "CLEAN": 200
+        },
+        "repobench-p": {
+          "total": 500,
+          "CONTAMINATED": 0,
+          "PARTIAL": 0,
+          "CLEAN": 500
+        },
+        "repobench-p_e": {
+          "total": 300,
+          "CONTAMINATED": 0,
+          "PARTIAL": 0,
+          "CLEAN": 300
+        },
+        "samsum": {
+          "total": 200,
+          "CONTAMINATED": 0,
+          "PARTIAL": 0,
+          "CLEAN": 200
+        },
+        "samsum_e": {
+          "total": 300,
+          "CONTAMINATED": 0,
+          "PARTIAL": 0,
+          "CLEAN": 300
+        },
+        "trec": {
+          "total": 200,
+          "CONTAMINATED": 0,
+          "PARTIAL": 0,
+          "CLEAN": 200
+        },
+        "trec_e": {
+          "total": 300,
+          "CONTAMINATED": 0,
+          "PARTIAL": 0,
+          "CLEAN": 300
+        },
+        "triviaqa": {
+          "total": 200,
+          "CONTAMINATED": 0,
+          "PARTIAL": 2,
+          "CLEAN": 198
+        },
+        "triviaqa_e": {
+          "total": 300,
+          "CONTAMINATED": 0,
+          "PARTIAL": 3,
+          "CLEAN": 297
+        },
+        "vcsum": {
+          "total": 200,
+          "CONTAMINATED": 0,
+          "PARTIAL": 0,
+          "CLEAN": 200
+        }
+      },
+      "record_contamination_ratio": 0.0115,
+      "n_clean_records": 8305
+    },
+    "locomo": {
+      "n_eval_records": 1986,
+      "n_unique_docs": 10,
+      "docs": {
+        "CONTAMINATED": 0,
+        "PARTIAL": 0,
+        "CLEAN": 10
+      },
+      "doc_contamination_ratio": 0.0,
+      "records_by_task": {
+        "locomo": {
+          "total": 1986,
+          "CONTAMINATED": 0,
+          "PARTIAL": 0,
+          "CLEAN": 1986
+        }
+      },
+      "record_contamination_ratio": 0.0,
+      "n_clean_records": 1986
+    },
+    "infinitebench": {
+      "n_eval_records": 580,
+      "n_unique_docs": 86,
+      "docs": {
+        "CONTAMINATED": 24,
+        "PARTIAL": 31,
+        "CLEAN": 31
+      },
+      "doc_contamination_ratio": 0.2791,
+      "records_by_task": {
+        "longbook_qa_eng": {
+          "total": 351,
+          "CONTAMINATED": 102,
+          "PARTIAL": 136,
+          "CLEAN": 113
+        },
+        "longbook_choice_eng": {
+          "total": 229,
+          "CONTAMINATED": 61,
+          "PARTIAL": 92,
+          "CLEAN": 76
+        }
+      },
+      "record_contamination_ratio": 0.281,
+      "n_clean_records": 189
+    },
+    "longeval": {
+      "verdict": "CLEAN_BY_CONSTRUCTION",
+      "reason": "LongEval is a synthetic lines-retrieval task: every context is a machine-generated list of `line <random-label>: REGISTER_CONTENT is <6-digit number>` entries with no natural-language source, so verbatim overlap with the PG-19 book corpus is impossible. The stored longeval_*.json hold only predictions (label/expected/output/pred), never the synthesized context, so containment is not computed.",
+      "n_prediction_files": 135,
+      "n_prediction_records_total": 4450,
+      "prediction_files": [
+        {
+          "file": "longeval_results/infllm_8b_chatFALSE/longeval_128k_shard0of8.json",
+          "records": 7
+        },
+        {
+          "file": "longeval_results/infllm_8b_chatFALSE/longeval_128k_shard1of8.json",
+          "records": 7
+        },
+        {
+          "file": "longeval_results/infllm_8b_chatFALSE/longeval_128k_shard2of8.json",
+          "records": 6
+        },
+        {
+          "file": "longeval_results/infllm_8b_chatFALSE/longeval_128k_shard3of8.json",
+          "records": 6
+        },
+        {
+          "file": "longeval_results/infllm_8b_chatFALSE/longeval_128k_shard4of8.json",
+          "records": 6
+        },
+        {
+          "file": "longeval_results/infllm_8b_chatFALSE/longeval_128k_shard5of8.json",
+          "records": 6
+        },
+        {
+          "file": "longeval_results/infllm_8b_chatFALSE/longeval_128k_shard6of8.json",
+          "records": 6
+        },
+        {
+          "file": "longeval_results/infllm_8b_chatFALSE/longeval_128k_shard7of8.json",
+          "records": 6
+        },
+        {
+          "file": "longeval_results/infllm_8b_chatFALSE/longeval_16k_shard0of8.json",
+          "records": 7
+        },
+        {
+          "file": "longeval_results/infllm_8b_chatFALSE/longeval_16k_shard1of8.json",
+          "records": 7
+        },
+        {
+          "file": "longeval_results/infllm_8b_chatFALSE/longeval_16k_shard2of8.json",
+          "records": 6
+        },
+        {
+          "file": "longeval_results/infllm_8b_chatFALSE/longeval_16k_shard3of8.json",
+          "records": 6
+        },
+        {
+          "file": "longeval_results/infllm_8b_chatFALSE/longeval_16k_shard4of8.json",
+          "records": 6
+        },
+        {
+          "file": "longeval_results/infllm_8b_chatFALSE/longeval_16k_shard5of8.json",
+          "records": 6
+        },
+        {
+          "file": "longeval_results/infllm_8b_chatFALSE/longeval_16k_shard6of8.json",
+          "records": 6
+        },
+        {
+          "file": "longeval_results/infllm_8b_chatFALSE/longeval_16k_shard7of8.json",
+          "records": 6
+        },
+        {
+          "file": "longeval_results/infllm_8b_chatFALSE/longeval_32k_shard0of8.json",
+          "records": 7
+        },
+        {
+          "file": "longeval_results/infllm_8b_chatFALSE/longeval_32k_shard1of8.json",
+          "records": 7
+        },
+        {
+          "file": "longeval_results/infllm_8b_chatFALSE/longeval_32k_shard2of8.json",
+          "records": 6
+        },
+        {
+          "file": "longeval_results/infllm_8b_chatFALSE/longeval_32k_shard3of8.json",
+          "records": 6
+        },
+        {
+          "file": "longeval_results/infllm_8b_chatFALSE/longeval_32k_shard4of8.json",
+          "records": 6
+        },
+        {
+          "file": "longeval_results/infllm_8b_chatFALSE/longeval_32k_shard5of8.json",
+          "records": 6
+        },
+        {
+          "file": "longeval_results/infllm_8b_chatFALSE/longeval_32k_shard6of8.json",
+          "records": 6
+        },
+        {
+          "file": "longeval_results/infllm_8b_chatFALSE/longeval_32k_shard7of8.json",
+          "records": 6
+        },
+        {
+          "file": "longeval_results/infllm_8b_chatFALSE/longeval_64k_shard0of8.json",
+          "records": 7
+        },
+        {
+          "file": "longeval_results/infllm_8b_chatFALSE/longeval_64k_shard1of8.json",
+          "records": 7
+        },
+        {
+          "file": "longeval_results/infllm_8b_chatFALSE/longeval_64k_shard2of8.json",
+          "records": 6
+        },
+        {
+          "file": "longeval_results/infllm_8b_chatFALSE/longeval_64k_shard3of8.json",
+          "records": 6
+        },
+        {
+          "file": "longeval_results/infllm_8b_chatFALSE/longeval_64k_shard4of8.json",
+          "records": 6
+        },
+        {
+          "file": "longeval_results/infllm_8b_chatFALSE/longeval_64k_shard5of8.json",
+          "records": 6
+        },
+        {
+          "file": "longeval_results/infllm_8b_chatFALSE/longeval_64k_shard6of8.json",
+          "records": 6
+        },
+        {
+          "file": "longeval_results/infllm_8b_chatFALSE/longeval_64k_shard7of8.json",
+          "records": 6
+        },
+        {
+          "file": "longeval_results/infllm_8b_chatFALSE/longeval_8k_shard0of8.json",
+          "records": 7
+        },
+        {
+          "file": "longeval_results/infllm_8b_chatFALSE/longeval_8k_shard1of8.json",
+          "records": 7
+        },
+        {
+          "file": "longeval_results/infllm_8b_chatFALSE/longeval_8k_shard2of8.json",
+          "records": 6
+        },
+        {
+          "file": "longeval_results/infllm_8b_chatFALSE/longeval_8k_shard3of8.json",
+          "records": 6
+        },
+        {
+          "file": "longeval_results/infllm_8b_chatFALSE/longeval_8k_shard4of8.json",
+          "records": 6
+        },
+        {
+          "file": "longeval_results/infllm_8b_chatFALSE/longeval_8k_shard5of8.json",
+          "records": 6
+        },
+        {
+          "file": "longeval_results/infllm_8b_chatFALSE/longeval_8k_shard6of8.json",
+          "records": 6
+        },
+        {
+          "file": "longeval_results/infllm_8b_chatFALSE/longeval_8k_shard7of8.json",
+          "records": 6
+        },
+        {
+          "file": "longeval_results/longeval_combined_s250_swa6/longeval_16k.json",
+          "records": 100
+        },
+        {
+          "file": "longeval_results/longeval_combined_s250_swa6/longeval_32k.json",
+          "records": 100
+        },
+        {
+          "file": "longeval_results/longeval_combined_s250_swa6/longeval_4k.json",
+          "records": 100
+        },
+        {
+          "file": "longeval_results/longeval_combined_s250_swa6/longeval_8k.json",
+          "records": 100
+        },
+        {
+          "file": "longeval_results/longeval_combined_s250_swa8/longeval_16k.json",
+          "records": 100
+        },
+        {
+          "file": "longeval_results/longeval_combined_s250_swa8/longeval_32k.json",
+          "records": 100
+        },
+        {
+          "file": "longeval_results/longeval_combined_s250_swa8/longeval_4k.json",
+          "records": 100
+        },
+        {
+          "file": "longeval_results/longeval_combined_s250_swa8/longeval_8k.json",
+          "records": 100
+        },
+        {
+          "file": "longeval_results/longeval_hcache_128k_v2/longeval_128k.json",
+          "records": 50
+        },
+        {
+          "file": "longeval_results/longeval_hcache_16k/longeval_16k.json",
+          "records": 50
+        },
+        {
+          "file": "longeval_results/longeval_hcache_32k/longeval_32k.json",
+          "records": 50
+        },
+        {
+          "file": "longeval_results/longeval_hcache_64k_v2/longeval_64k.json",
+          "records": 50
+        },
+        {
+          "file": "longeval_results/longeval_hcache_8k/longeval_8k.json",
+          "records": 50
+        },
+        {
+          "file": "longeval_results/longeval_kvdirect_128k_v2/longeval_128k.json",
+          "records": 50
+        },
+        {
+          "file": "longeval_results/longeval_kvdirect_16k/longeval_16k.json",
+          "records": 50
+        },
+        {
+          "file": "longeval_results/longeval_kvdirect_32k/longeval_32k.json",
+          "records": 50
+        },
+        {
+          "file": "longeval_results/longeval_kvdirect_64k_v2/longeval_64k.json",
+          "records": 50
+        },
+        {
+          "file": "longeval_results/longeval_kvdirect_8k/longeval_8k.json",
+          "records": 50
+        },
+        {
+          "file": "longeval_results/longeval_learnmassFINAL_swa0/longeval_16k.json",
+          "records": 100
+        },
+        {
+          "file": "longeval_results/longeval_learnmassFINAL_swa0/longeval_32k.json",
+          "records": 100
+        },
+        {
+          "file": "longeval_results/longeval_learnmassFINAL_swa0/longeval_4k.json",
+          "records": 100
+        },
+        {
+          "file": "longeval_results/longeval_learnmassFINAL_swa0/longeval_8k.json",
+          "records": 100
+        },
+        {
+          "file": "longeval_results/longeval_learnmassFINAL_swa8/longeval_16k.json",
+          "records": 100
+        },
+        {
+          "file": "longeval_results/longeval_learnmassFINAL_swa8/longeval_32k.json",
+          "records": 100
+        },
+        {
+          "file": "longeval_results/longeval_learnmassFINAL_swa8/longeval_4k.json",
+          "records": 100
+        },
+        {
+          "file": "longeval_results/longeval_learnmassFINAL_swa8/longeval_8k.json",
+          "records": 100
+        },
+        {
+          "file": "longeval_results/longeval_nctx63_s250_swa63/longeval_16k.json",
+          "records": 100
+        },
+        {
+          "file": "longeval_results/longeval_nctx63_s250_swa63/longeval_32k.json",
+          "records": 100
+        },
+        {
+          "file": "longeval_results/longeval_nctx63_s250_swa63/longeval_4k.json",
+          "records": 100
+        },
+        {
+          "file": "longeval_results/longeval_nctx63_s250_swa63/longeval_8k.json",
+          "records": 100
+        },
+        {
+          "file": "longeval_results/longeval_qcmem_128k_v2/longeval_128k.json",
+          "records": 50
+        },
+        {
+          "file": "longeval_results/longeval_qcmem_16k/longeval_16k.json",
+          "records": 50
+        },
+        {
+          "file": "longeval_results/longeval_qcmem_32k/longeval_32k.json",
+          "records": 50
+        },
+        {
+          "file": "longeval_results/longeval_qcmem_64k_v2/longeval_64k.json",
+          "records": 50
+        },
+        {
+          "file": "longeval_results/longeval_qcmem_8k/longeval_8k.json",
+          "records": 50
+        },
+        {
+          "file": "longeval_results/longeval_qcmem_tk24_16k/longeval_16k.json",
+          "records": 50
+        },
+        {
+          "file": "longeval_results/longeval_qcmem_tk4_16k/longeval_16k.json",
+          "records": 50
+        },
+        {
+          "file": "longeval_results/longeval_qcmem_tk4_32k_final/longeval_32k.json",
+          "records": 50
+        },
+        {
+          "file": "longeval_results/longeval_qcmem_tk4_64k_final/longeval_64k.json",
+          "records": 50
+        },
+        {
+          "file": "longeval_results/longeval_qcmem_tk4_8k/longeval_8k.json",
+          "records": 50
+        },
+        {
+          "file": "longeval_results/longeval_qcmem_tk6_128k/longeval_128k.json",
+          "records": 50
+        },
+        {
+          "file": "longeval_results/longeval_qcmem_tk6_16k_final/longeval_16k.json",
+          "records": 50
+        },
+        {
+          "file": "longeval_results/longeval_qcmem_tk6_32k/longeval_32k.json",
+          "records": 50
+        },
+        {
+          "file": "longeval_results/longeval_qcmem_tk6_64k/longeval_64k.json",
+          "records": 50
+        },
+        {
+          "file": "longeval_results/longeval_qcmem_tk6_8k/longeval_8k.json",
+          "records": 50
+        },
+        {
+          "file": "longeval_results/longeval_qcmem_tk8_128k/longeval_128k.json",
+          "records": 50
+        },
+        {
+          "file": "longeval_results/longeval_qcmem_tk8_128k_final/longeval_128k.json",
+          "records": 50
+        },
+        {
+          "file": "longeval_results/longeval_qcmem_tk8_16k/longeval_16k.json",
+          "records": 50
+        },
+        {
+          "file": "longeval_results/longeval_qcmem_tk8_32k/longeval_32k.json",
+          "records": 50
+        },
+        {
+          "file": "longeval_results/longeval_qcmem_tk8_64k/longeval_64k.json",
+          "records": 50
+        },
+        {
+          "file": "longeval_results/longeval_qcmem_tk8_8k/longeval_8k.json",
+          "records": 50
+        },
+        {
+          "file": "longeval_results/longeval_recency_s250/longeval_16k.json",
+          "records": 100
+        },
+        {
+          "file": "longeval_results/longeval_recency_s250/longeval_32k.json",
+          "records": 100
+        },
+        {
+          "file": "longeval_results/longeval_recency_s250/longeval_4k.json",
+          "records": 100
+        },
+        {
+          "file": "longeval_results/longeval_recency_s250/longeval_8k.json",
+          "records": 100
+        },
+        {
+          "file": "longeval_results/qcmem_8b_zeroshot_j9_chatFALSE/longeval_128k_shard0of8.json",
+          "records": 7
+        },
+        {
+          "file": "longeval_results/qcmem_8b_zeroshot_j9_chatFALSE/longeval_128k_shard1of8.json",
+          "records": 7
+        },
+        {
+          "file": "longeval_results/qcmem_8b_zeroshot_j9_chatFALSE/longeval_128k_shard2of8.json",
+          "records": 6
+        },
+        {
+          "file": "longeval_results/qcmem_8b_zeroshot_j9_chatFALSE/longeval_128k_shard3of8.json",
+          "records": 6
+        },
+        {
+          "file": "longeval_results/qcmem_8b_zeroshot_j9_chatFALSE/longeval_128k_shard4of8.json",
+          "records": 6
+        },
+        {
+          "file": "longeval_results/qcmem_8b_zeroshot_j9_chatFALSE/longeval_128k_shard5of8.json",
+          "records": 6
+        },
+        {
+          "file": "longeval_results/qcmem_8b_zeroshot_j9_chatFALSE/longeval_128k_shard6of8.json",
+          "records": 6
+        },
+        {
+          "file": "longeval_results/qcmem_8b_zeroshot_j9_chatFALSE/longeval_128k_shard7of8.json",
+          "records": 6
+        },
+        {
+          "file": "longeval_results/qcmem_8b_zeroshot_j9_chatFALSE/longeval_16k_shard0of8.json",
+          "records": 7
+        },
+        {
+          "file": "longeval_results/qcmem_8b_zeroshot_j9_chatFALSE/longeval_16k_shard1of8.json",
+          "records": 7
+        },
+        {
+          "file": "longeval_results/qcmem_8b_zeroshot_j9_chatFALSE/longeval_16k_shard2of8.json",
+          "records": 6
+        },
+        {
+          "file": "longeval_results/qcmem_8b_zeroshot_j9_chatFALSE/longeval_16k_shard3of8.json",
+          "records": 6
+        },
+        {
+          "file": "longeval_results/qcmem_8b_zeroshot_j9_chatFALSE/longeval_16k_shard4of8.json",
+          "records": 6
+        },
+        {
+          "file": "longeval_results/qcmem_8b_zeroshot_j9_chatFALSE/longeval_16k_shard5of8.json",
+          "records": 6
+        },
+        {
+          "file": "longeval_results/qcmem_8b_zeroshot_j9_chatFALSE/longeval_16k_shard6of8.json",
+          "records": 6
+        },
+        {
+          "file": "longeval_results/qcmem_8b_zeroshot_j9_chatFALSE/longeval_16k_shard7of8.json",
+          "records": 6
+        },
+        {
+          "file": "longeval_results/qcmem_8b_zeroshot_j9_chatFALSE/longeval_32k_shard0of8.json",
+          "records": 7
+        },
+        {
+          "file": "longeval_results/qcmem_8b_zeroshot_j9_chatFALSE/longeval_32k_shard1of8.json",
+          "records": 7
+        },
+        {
+          "file": "longeval_results/qcmem_8b_zeroshot_j9_chatFALSE/longeval_32k_shard2of8.json",
+          "records": 6
+        },
+        {
+          "file": "longeval_results/qcmem_8b_zeroshot_j9_chatFALSE/longeval_32k_shard3of8.json",
+          "records": 6
+        },
+        {
+          "file": "longeval_results/qcmem_8b_zeroshot_j9_chatFALSE/longeval_32k_shard4of8.json",
+          "records": 6
+        },
+        {
+          "file": "longeval_results/qcmem_8b_zeroshot_j9_chatFALSE/longeval_32k_shard5of8.json",
+          "records": 6
+        },
+        {
+          "file": "longeval_results/qcmem_8b_zeroshot_j9_chatFALSE/longeval_32k_shard6of8.json",
+          "records": 6
+        },
+        {
+          "file": "longeval_results/qcmem_8b_zeroshot_j9_chatFALSE/longeval_32k_shard7of8.json",
+          "records": 6
+        },
+        {
+          "file": "longeval_results/qcmem_8b_zeroshot_j9_chatFALSE/longeval_64k_shard0of8.json",
+          "records": 7
+        },
+        {
+          "file": "longeval_results/qcmem_8b_zeroshot_j9_chatFALSE/longeval_64k_shard1of8.json",
+          "records": 7
+        },
+        {
+          "file": "longeval_results/qcmem_8b_zeroshot_j9_chatFALSE/longeval_64k_shard2of8.json",
+          "records": 6
+        },
+        {
+          "file": "longeval_results/qcmem_8b_zeroshot_j9_chatFALSE/longeval_64k_shard3of8.json",
+          "records": 6
+        },
+        {
+          "file": "longeval_results/qcmem_8b_zeroshot_j9_chatFALSE/longeval_64k_shard4of8.json",
+          "records": 6
+        },
+        {
+          "file": "longeval_results/qcmem_8b_zeroshot_j9_chatFALSE/longeval_64k_shard5of8.json",
+          "records": 6
+        },
+        {
+          "file": "longeval_results/qcmem_8b_zeroshot_j9_chatFALSE/longeval_64k_shard6of8.json",
+          "records": 6
+        },
+        {
+          "file": "longeval_results/qcmem_8b_zeroshot_j9_chatFALSE/longeval_64k_shard7of8.json",
+          "records": 6
+        },
+        {
+          "file": "longeval_results/qcmem_8b_zeroshot_j9_chatFALSE/longeval_8k_shard0of8.json",
+          "records": 7
+        },
+        {
+          "file": "longeval_results/qcmem_8b_zeroshot_j9_chatFALSE/longeval_8k_shard1of8.json",
+          "records": 7
+        },
+        {
+          "file": "longeval_results/qcmem_8b_zeroshot_j9_chatFALSE/longeval_8k_shard2of8.json",
+          "records": 6
+        },
+        {
+          "file": "longeval_results/qcmem_8b_zeroshot_j9_chatFALSE/longeval_8k_shard3of8.json",
+          "records": 6
+        },
+        {
+          "file": "longeval_results/qcmem_8b_zeroshot_j9_chatFALSE/longeval_8k_shard4of8.json",
+          "records": 6
+        },
+        {
+          "file": "longeval_results/qcmem_8b_zeroshot_j9_chatFALSE/longeval_8k_shard5of8.json",
+          "records": 6
+        },
+        {
+          "file": "longeval_results/qcmem_8b_zeroshot_j9_chatFALSE/longeval_8k_shard6of8.json",
+          "records": 6
+        },
+        {
+          "file": "longeval_results/qcmem_8b_zeroshot_j9_chatFALSE/longeval_8k_shard7of8.json",
+          "records": 6
+        }
+      ]
+    }
+  },
+  "thresholds": {
+    "n": 13,
+    "tokenization": "lowercase; [^0-9a-z]+ -> space; whitespace split",
+    "hash": "xxhash.xxh64(seed=0) intdigest, 64-bit",
+    "downsample": 32,
+    "downsample_rule": "keep hash h iff (h %% downsample) == 0 (bottom-hash sketch)",
+    "membership": "np.searchsorted vs sorted-unique train sketch (== isin membership)",
+    "containment_definition": "|unique eval n-gram sketch hashes present in train sketch| / |unique eval n-gram sketch hashes|",
+    "contam_high_threshold": 0.8,
+    "contam_low_threshold": 0.1,
+    "verdict_rule": ">= contam_high => CONTAMINATED; < contam_low => CLEAN; else PARTIAL",
+    "train_corpus": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/data/pg19_train.jsonl",
+    "train_sketch_npy": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/.t27_tmp/pg19_train_sketch_n13_d32.npy",
+    "train_sketch_unique_hashes": 59071187
+  }
+}

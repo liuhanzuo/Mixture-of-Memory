@@ -1,0 +1,15 @@
+{
+  "n": 13,
+  "tokenization": "lowercase; [^0-9a-z]+ -> space; whitespace split",
+  "hash": "xxhash.xxh64(seed=0) intdigest, 64-bit",
+  "downsample": 32,
+  "downsample_rule": "keep hash h iff (h %% downsample) == 0 (bottom-hash sketch)",
+  "membership": "np.searchsorted vs sorted-unique train sketch (== isin membership)",
+  "containment_definition": "|unique eval n-gram sketch hashes present in train sketch| / |unique eval n-gram sketch hashes|",
+  "contam_high_threshold": 0.8,
+  "contam_low_threshold": 0.1,
+  "verdict_rule": ">= contam_high => CONTAMINATED; < contam_low => CLEAN; else PARTIAL",
+  "train_corpus": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/data/pg19_train.jsonl",
+  "train_sketch_npy": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/.t27_tmp/pg19_train_sketch_n13_d32.npy",
+  "train_sketch_unique_hashes": 59071187
+}

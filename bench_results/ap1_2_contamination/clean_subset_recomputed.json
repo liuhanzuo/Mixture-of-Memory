@@ -1,0 +1,750 @@
+{
+  "clean_ids_source": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/bench_results/ap1_2_contamination/clean_subset_ids.json",
+  "note": "Only LongBench narrativeqa is materially contaminated vs PG-19; LoCoMo/LongEval are clean (clean==full identity check); InfiniteBench predictions are off-node (see p0_14_contamination).",
+  "longbench": [
+    {
+      "arm": "L2ON_W0",
+      "pred_dir": "longbench_results/L2ON_W0",
+      "status": "OK",
+      "macro_f1_full": 6.53,
+      "macro_f1_clean": 6.49,
+      "n_tasks": 6,
+      "per_task": {
+        "2wikimqa": {
+          "full_f1": 9.61,
+          "full_em": 0.0,
+          "full_n": 200,
+          "clean_f1": 9.56,
+          "clean_em": 0.0,
+          "clean_n": 199,
+          "n_dropped": 1
+        },
+        "hotpotqa": {
+          "full_f1": 5.95,
+          "full_em": 0.0,
+          "full_n": 200,
+          "clean_f1": 5.95,
+          "clean_em": 0.0,
+          "clean_n": 200,
+          "n_dropped": 0
+        },
+        "multifieldqa_en": {
+          "full_f1": 11.83,
+          "full_em": 0.0,
+          "full_n": 150,
+          "clean_f1": 11.83,
+          "clean_em": 0.0,
+          "clean_n": 150,
+          "n_dropped": 0
+        },
+        "musique": {
+          "full_f1": 3.42,
+          "full_em": 0.0,
+          "full_n": 200,
+          "clean_f1": 3.42,
+          "clean_em": 0.0,
+          "clean_n": 200,
+          "n_dropped": 0
+        },
+        "narrativeqa": {
+          "full_f1": 3.71,
+          "full_em": 0.0,
+          "full_n": 200,
+          "clean_f1": 3.54,
+          "clean_em": 0.0,
+          "clean_n": 104,
+          "n_dropped": 96
+        },
+        "qasper": {
+          "full_f1": 4.64,
+          "full_em": 0.0,
+          "full_n": 200,
+          "clean_f1": 4.64,
+          "clean_em": 0.0,
+          "clean_n": 200,
+          "n_dropped": 0
+        }
+      }
+    },
+    {
+      "arm": "infllm_8b_chatFALSE",
+      "pred_dir": "longbench_results/infllm_8b_chatFALSE",
+      "status": "OK",
+      "macro_f1_full": 11.86,
+      "macro_f1_clean": 11.82,
+      "n_tasks": 6,
+      "per_task": {
+        "2wikimqa": {
+          "full_f1": 12.5,
+          "full_em": 0.0,
+          "full_n": 200,
+          "clean_f1": 12.45,
+          "clean_em": 0.0,
+          "clean_n": 199,
+          "n_dropped": 1
+        },
+        "hotpotqa": {
+          "full_f1": 12.08,
+          "full_em": 0.0,
+          "full_n": 200,
+          "clean_f1": 12.08,
+          "clean_em": 0.0,
+          "clean_n": 200,
+          "n_dropped": 0
+        },
+        "multifieldqa_en": {
+          "full_f1": 25.33,
+          "full_em": 0.0,
+          "full_n": 150,
+          "clean_f1": 25.33,
+          "clean_em": 0.0,
+          "clean_n": 150,
+          "n_dropped": 0
+        },
+        "musique": {
+          "full_f1": 6.94,
+          "full_em": 0.0,
+          "full_n": 200,
+          "clean_f1": 6.94,
+          "clean_em": 0.0,
+          "clean_n": 200,
+          "n_dropped": 0
+        },
+        "narrativeqa": {
+          "full_f1": 2.99,
+          "full_em": 0.0,
+          "full_n": 200,
+          "clean_f1": 2.74,
+          "clean_em": 0.0,
+          "clean_n": 104,
+          "n_dropped": 96
+        },
+        "qasper": {
+          "full_f1": 11.35,
+          "full_em": 0.0,
+          "full_n": 200,
+          "clean_f1": 11.35,
+          "clean_em": 0.0,
+          "clean_n": 200,
+          "n_dropped": 0
+        }
+      }
+    },
+    {
+      "arm": "kvdirect",
+      "pred_dir": "longbench_results/kvdirect",
+      "status": "OK",
+      "macro_f1_full": 10.07,
+      "macro_f1_clean": 9.94,
+      "n_tasks": 4,
+      "per_task": {
+        "2wikimqa": {
+          "full_f1": 12.16,
+          "full_em": 0.0,
+          "full_n": 200,
+          "clean_f1": 12.11,
+          "clean_em": 0.0,
+          "clean_n": 199,
+          "n_dropped": 1
+        },
+        "hotpotqa": {
+          "full_f1": 12.48,
+          "full_em": 0.0,
+          "full_n": 200,
+          "clean_f1": 12.48,
+          "clean_em": 0.0,
+          "clean_n": 200,
+          "n_dropped": 0
+        },
+        "narrativeqa": {
+          "full_f1": 3.73,
+          "full_em": 0.0,
+          "full_n": 200,
+          "clean_f1": 3.26,
+          "clean_em": 0.0,
+          "clean_n": 104,
+          "n_dropped": 96
+        },
+        "qasper": {
+          "full_f1": 11.92,
+          "full_em": 0.0,
+          "full_n": 200,
+          "clean_f1": 11.92,
+          "clean_em": 0.0,
+          "clean_n": 200,
+          "n_dropped": 0
+        }
+      }
+    },
+    {
+      "arm": "l3recontoken_w0.3_final",
+      "pred_dir": "longbench_results/l3recontoken_w0.3_final",
+      "status": "OK",
+      "macro_f1_full": 4.87,
+      "macro_f1_clean": 4.89,
+      "n_tasks": 9,
+      "per_task": {
+        "2wikimqa": {
+          "full_f1": 8.99,
+          "full_em": 3.0,
+          "full_n": 200,
+          "clean_f1": 8.93,
+          "clean_em": 3.02,
+          "clean_n": 199,
+          "n_dropped": 1
+        },
+        "gov_report": {
+          "full_f1": 1.41,
+          "full_em": 0.0,
+          "full_n": 200,
+          "clean_f1": 1.41,
+          "clean_em": 0.0,
+          "clean_n": 200,
+          "n_dropped": 0
+        },
+        "hotpotqa": {
+          "full_f1": 4.83,
+          "full_em": 1.0,
+          "full_n": 200,
+          "clean_f1": 4.83,
+          "clean_em": 1.0,
+          "clean_n": 200,
+          "n_dropped": 0
+        },
+        "multi_news": {
+          "full_f1": 1.5,
+          "full_em": 0.0,
+          "full_n": 200,
+          "clean_f1": 1.5,
+          "clean_em": 0.0,
+          "clean_n": 200,
+          "n_dropped": 0
+        },
+        "multifieldqa_en": {
+          "full_f1": 10.79,
+          "full_em": 0.67,
+          "full_n": 150,
+          "clean_f1": 10.79,
+          "clean_em": 0.67,
+          "clean_n": 150,
+          "n_dropped": 0
+        },
+        "musique": {
+          "full_f1": 2.79,
+          "full_em": 0.0,
+          "full_n": 200,
+          "clean_f1": 2.79,
+          "clean_em": 0.0,
+          "clean_n": 200,
+          "n_dropped": 0
+        },
+        "narrativeqa": {
+          "full_f1": 0.67,
+          "full_em": 0.0,
+          "full_n": 200,
+          "clean_f1": 0.93,
+          "clean_em": 0.0,
+          "clean_n": 104,
+          "n_dropped": 96
+        },
+        "qasper": {
+          "full_f1": 3.36,
+          "full_em": 0.5,
+          "full_n": 200,
+          "clean_f1": 3.36,
+          "clean_em": 0.5,
+          "clean_n": 200,
+          "n_dropped": 0
+        },
+        "qmsum": {
+          "full_f1": 9.48,
+          "full_em": 0.0,
+          "full_n": 200,
+          "clean_f1": 9.48,
+          "clean_em": 0.0,
+          "clean_n": 200,
+          "n_dropped": 0
+        }
+      }
+    },
+    {
+      "arm": "l3recontoken_w1.0_final",
+      "pred_dir": "longbench_results/l3recontoken_w1.0_final",
+      "status": "OK",
+      "macro_f1_full": 3.96,
+      "macro_f1_clean": 3.99,
+      "n_tasks": 9,
+      "per_task": {
+        "2wikimqa": {
+          "full_f1": 6.29,
+          "full_em": 0.5,
+          "full_n": 200,
+          "clean_f1": 6.22,
+          "clean_em": 0.5,
+          "clean_n": 199,
+          "n_dropped": 1
+        },
+        "gov_report": {
+          "full_f1": 0.1,
+          "full_em": 0.0,
+          "full_n": 200,
+          "clean_f1": 0.1,
+          "clean_em": 0.0,
+          "clean_n": 200,
+          "n_dropped": 0
+        },
+        "hotpotqa": {
+          "full_f1": 4.87,
+          "full_em": 0.0,
+          "full_n": 200,
+          "clean_f1": 4.87,
+          "clean_em": 0.0,
+          "clean_n": 200,
+          "n_dropped": 0
+        },
+        "multi_news": {
+          "full_f1": 0.43,
+          "full_em": 0.0,
+          "full_n": 200,
+          "clean_f1": 0.43,
+          "clean_em": 0.0,
+          "clean_n": 200,
+          "n_dropped": 0
+        },
+        "multifieldqa_en": {
+          "full_f1": 8.41,
+          "full_em": 0.0,
+          "full_n": 150,
+          "clean_f1": 8.41,
+          "clean_em": 0.0,
+          "clean_n": 150,
+          "n_dropped": 0
+        },
+        "musique": {
+          "full_f1": 3.33,
+          "full_em": 0.0,
+          "full_n": 200,
+          "clean_f1": 3.33,
+          "clean_em": 0.0,
+          "clean_n": 200,
+          "n_dropped": 0
+        },
+        "narrativeqa": {
+          "full_f1": 0.71,
+          "full_em": 0.0,
+          "full_n": 200,
+          "clean_f1": 1.05,
+          "clean_em": 0.0,
+          "clean_n": 104,
+          "n_dropped": 96
+        },
+        "qasper": {
+          "full_f1": 3.52,
+          "full_em": 0.0,
+          "full_n": 200,
+          "clean_f1": 3.52,
+          "clean_em": 0.0,
+          "clean_n": 200,
+          "n_dropped": 0
+        },
+        "qmsum": {
+          "full_f1": 8.01,
+          "full_em": 0.0,
+          "full_n": 200,
+          "clean_f1": 8.01,
+          "clean_em": 0.0,
+          "clean_n": 200,
+          "n_dropped": 0
+        }
+      }
+    },
+    {
+      "arm": "p11_step500",
+      "pred_dir": "longbench_results/p11_step500",
+      "status": "OK",
+      "macro_f1_full": 8.87,
+      "macro_f1_clean": 9.06,
+      "n_tasks": 6,
+      "per_task": {
+        "2wikimqa": {
+          "full_f1": 13.65,
+          "full_em": 6.0,
+          "full_n": 100,
+          "clean_f1": 13.55,
+          "clean_em": 6.06,
+          "clean_n": 99,
+          "n_dropped": 1
+        },
+        "hotpotqa": {
+          "full_f1": 7.76,
+          "full_em": 2.0,
+          "full_n": 200,
+          "clean_f1": 7.76,
+          "clean_em": 2.0,
+          "clean_n": 200,
+          "n_dropped": 0
+        },
+        "multifieldqa_en": {
+          "full_f1": 16.53,
+          "full_em": 1.0,
+          "full_n": 100,
+          "clean_f1": 16.53,
+          "clean_em": 1.0,
+          "clean_n": 100,
+          "n_dropped": 0
+        },
+        "musique": {
+          "full_f1": 4.7,
+          "full_em": 1.0,
+          "full_n": 100,
+          "clean_f1": 4.7,
+          "clean_em": 1.0,
+          "clean_n": 100,
+          "n_dropped": 0
+        },
+        "narrativeqa": {
+          "full_f1": 5.72,
+          "full_em": 1.0,
+          "full_n": 100,
+          "clean_f1": 6.95,
+          "clean_em": 1.89,
+          "clean_n": 53,
+          "n_dropped": 47
+        },
+        "qasper": {
+          "full_f1": 4.85,
+          "full_em": 0.0,
+          "full_n": 100,
+          "clean_f1": 4.85,
+          "clean_em": 0.0,
+          "clean_n": 100,
+          "n_dropped": 0
+        }
+      }
+    },
+    {
+      "arm": "p11_step5000",
+      "pred_dir": "longbench_results/p11_step5000",
+      "status": "OK",
+      "macro_f1_full": 6.06,
+      "macro_f1_clean": 5.99,
+      "n_tasks": 6,
+      "per_task": {
+        "2wikimqa": {
+          "full_f1": 9.36,
+          "full_em": 0.0,
+          "full_n": 100,
+          "clean_f1": 9.26,
+          "clean_em": 0.0,
+          "clean_n": 99,
+          "n_dropped": 1
+        },
+        "hotpotqa": {
+          "full_f1": 6.72,
+          "full_em": 0.5,
+          "full_n": 200,
+          "clean_f1": 6.72,
+          "clean_em": 0.5,
+          "clean_n": 200,
+          "n_dropped": 0
+        },
+        "multifieldqa_en": {
+          "full_f1": 11.25,
+          "full_em": 0.0,
+          "full_n": 100,
+          "clean_f1": 11.25,
+          "clean_em": 0.0,
+          "clean_n": 100,
+          "n_dropped": 0
+        },
+        "musique": {
+          "full_f1": 3.05,
+          "full_em": 0.0,
+          "full_n": 100,
+          "clean_f1": 3.05,
+          "clean_em": 0.0,
+          "clean_n": 100,
+          "n_dropped": 0
+        },
+        "narrativeqa": {
+          "full_f1": 2.07,
+          "full_em": 0.0,
+          "full_n": 100,
+          "clean_f1": 1.75,
+          "clean_em": 0.0,
+          "clean_n": 53,
+          "n_dropped": 47
+        },
+        "qasper": {
+          "full_f1": 3.89,
+          "full_em": 0.0,
+          "full_n": 100,
+          "clean_f1": 3.89,
+          "clean_em": 0.0,
+          "clean_n": 100,
+          "n_dropped": 0
+        }
+      }
+    },
+    {
+      "arm": "pg19_nctx7_final_W0",
+      "pred_dir": "longbench_results/pg19_nctx7_final_W0",
+      "status": "OK",
+      "macro_f1_full": 6.49,
+      "macro_f1_clean": 6.52,
+      "n_tasks": 6,
+      "per_task": {
+        "2wikimqa": {
+          "full_f1": 8.52,
+          "full_em": 0.0,
+          "full_n": 200,
+          "clean_f1": 8.46,
+          "clean_em": 0.0,
+          "clean_n": 199,
+          "n_dropped": 1
+        },
+        "hotpotqa": {
+          "full_f1": 6.44,
+          "full_em": 0.0,
+          "full_n": 200,
+          "clean_f1": 6.44,
+          "clean_em": 0.0,
+          "clean_n": 200,
+          "n_dropped": 0
+        },
+        "multifieldqa_en": {
+          "full_f1": 12.72,
+          "full_em": 1.33,
+          "full_n": 150,
+          "clean_f1": 12.72,
+          "clean_em": 1.33,
+          "clean_n": 150,
+          "n_dropped": 0
+        },
+        "musique": {
+          "full_f1": 3.93,
+          "full_em": 0.0,
+          "full_n": 200,
+          "clean_f1": 3.93,
+          "clean_em": 0.0,
+          "clean_n": 200,
+          "n_dropped": 0
+        },
+        "narrativeqa": {
+          "full_f1": 2.45,
+          "full_em": 0.0,
+          "full_n": 200,
+          "clean_f1": 2.7,
+          "clean_em": 0.0,
+          "clean_n": 104,
+          "n_dropped": 96
+        },
+        "qasper": {
+          "full_f1": 4.86,
+          "full_em": 0.0,
+          "full_n": 200,
+          "clean_f1": 4.86,
+          "clean_em": 0.0,
+          "clean_n": 200,
+          "n_dropped": 0
+        }
+      }
+    },
+    {
+      "arm": "qcmem_8b_zeroshot_j9_chatFALSE",
+      "pred_dir": "longbench_results/qcmem_8b_zeroshot_j9_chatFALSE",
+      "status": "OK",
+      "macro_f1_full": 10.63,
+      "macro_f1_clean": 10.6,
+      "n_tasks": 6,
+      "per_task": {
+        "2wikimqa": {
+          "full_f1": 10.71,
+          "full_em": 0.0,
+          "full_n": 200,
+          "clean_f1": 10.67,
+          "clean_em": 0.0,
+          "clean_n": 199,
+          "n_dropped": 1
+        },
+        "hotpotqa": {
+          "full_f1": 9.41,
+          "full_em": 0.0,
+          "full_n": 200,
+          "clean_f1": 9.41,
+          "clean_em": 0.0,
+          "clean_n": 200,
+          "n_dropped": 0
+        },
+        "multifieldqa_en": {
+          "full_f1": 22.05,
+          "full_em": 0.0,
+          "full_n": 150,
+          "clean_f1": 22.05,
+          "clean_em": 0.0,
+          "clean_n": 150,
+          "n_dropped": 0
+        },
+        "musique": {
+          "full_f1": 5.72,
+          "full_em": 0.0,
+          "full_n": 200,
+          "clean_f1": 5.72,
+          "clean_em": 0.0,
+          "clean_n": 200,
+          "n_dropped": 0
+        },
+        "narrativeqa": {
+          "full_f1": 4.63,
+          "full_em": 0.0,
+          "full_n": 200,
+          "clean_f1": 4.51,
+          "clean_em": 0.0,
+          "clean_n": 104,
+          "n_dropped": 96
+        },
+        "qasper": {
+          "full_f1": 11.23,
+          "full_em": 0.0,
+          "full_n": 200,
+          "clean_f1": 11.23,
+          "clean_em": 0.0,
+          "clean_n": 200,
+          "n_dropped": 0
+        }
+      }
+    },
+    {
+      "arm": "qcmem_j12",
+      "pred_dir": "longbench_results/qcmem_j12",
+      "status": "OK",
+      "macro_f1_full": 9.58,
+      "macro_f1_clean": 9.57,
+      "n_tasks": 4,
+      "per_task": {
+        "2wikimqa": {
+          "full_f1": 11.69,
+          "full_em": 0.0,
+          "full_n": 200,
+          "clean_f1": 11.64,
+          "clean_em": 0.0,
+          "clean_n": 199,
+          "n_dropped": 1
+        },
+        "hotpotqa": {
+          "full_f1": 11.64,
+          "full_em": 0.0,
+          "full_n": 200,
+          "clean_f1": 11.64,
+          "clean_em": 0.0,
+          "clean_n": 200,
+          "n_dropped": 0
+        },
+        "narrativeqa": {
+          "full_f1": 3.93,
+          "full_em": 0.0,
+          "full_n": 200,
+          "clean_f1": 3.92,
+          "clean_em": 0.0,
+          "clean_n": 104,
+          "n_dropped": 96
+        },
+        "qasper": {
+          "full_f1": 11.07,
+          "full_em": 0.0,
+          "full_n": 200,
+          "clean_f1": 11.07,
+          "clean_em": 0.0,
+          "clean_n": 200,
+          "n_dropped": 0
+        }
+      }
+    },
+    {
+      "arm": "stock_noLoRA",
+      "pred_dir": "longbench_results/stock_noLoRA",
+      "status": "OK",
+      "macro_f1_full": 7.17,
+      "macro_f1_clean": 7.35,
+      "n_tasks": 2,
+      "per_task": {
+        "narrativeqa": {
+          "full_f1": 4.01,
+          "full_em": 0.0,
+          "full_n": 200,
+          "clean_f1": 4.36,
+          "clean_em": 0.0,
+          "clean_n": 104,
+          "n_dropped": 96
+        },
+        "qasper": {
+          "full_f1": 10.33,
+          "full_em": 0.0,
+          "full_n": 200,
+          "clean_f1": 10.33,
+          "clean_em": 0.0,
+          "clean_n": 200,
+          "n_dropped": 0
+        }
+      }
+    }
+  ],
+  "locomo": [
+    {
+      "arm": "qcmem_8b_zs_j9_iter_chatFALSE",
+      "pred_dir": "locomo_results/qcmem_8b_zs_j9_iter_chatFALSE",
+      "status": "OK",
+      "full": {
+        "f1": 7.13,
+        "em": 0.2,
+        "acc": 16.06,
+        "n": 1986,
+        "judge": 37.47,
+        "judge_n": 1540
+      },
+      "clean": {
+        "f1": 7.13,
+        "em": 0.2,
+        "acc": 16.06,
+        "n": 1986,
+        "judge": 37.47,
+        "judge_n": 1540
+      },
+      "n_dropped": 0
+    },
+    {
+      "arm": "kvdirect",
+      "pred_dir": "locomo_results/kvdirect",
+      "status": "OK",
+      "full": {
+        "f1": 8.8,
+        "em": 0.38,
+        "acc": 20.0,
+        "n": 780,
+        "judge": 40.03,
+        "judge_n": 607
+      },
+      "clean": {
+        "f1": 8.8,
+        "em": 0.38,
+        "acc": 20.0,
+        "n": 780,
+        "judge": 40.03,
+        "judge_n": 607
+      },
+      "n_dropped": 0
+    }
+  ],
+  "infinitebench": {
+    "status": "NO_PREDICTIONS_ON_THIS_NODE",
+    "clean_subset_size": {
+      "longbook_qa_eng": 113,
+      "longbook_choice_eng": 76
+    },
+    "note": "raw predictions live on an off-limits GPU node; the clean-subset recompute is in bench_results/p0_14_contamination/clean_subset_recomputed.json"
+  },
+  "longeval": {
+    "status": "CLEAN_BY_CONSTRUCTION",
+    "note": "synthetic lines-retrieval; no contamination possible; clean subset == full set."
+  }
+}
