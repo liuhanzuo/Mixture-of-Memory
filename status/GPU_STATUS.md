@@ -1,5 +1,400 @@
-# GPU_STATUS.md — 4 节点 GPU 实时台账（QCMem = 32 卡）
+# GPU_STATUS.md — 5 节点 GPU 实时台账（QCMem = 40 卡）
 > 每次启动/kill GPU 任务更新。heartbeat 先读→对照 nvidia-smi→台账说跑但空=补卡。★29.162.226.120=dllm 绝不碰。
+
+## 当前快照（2026-08-04 22:5x +08:00，**用户新指令：paperB rebuttal todo + paperC 开始推进 → A/B/C 均衡铺开；.73/.82 两空节点填 C/B**）
+> **关键事件**：(1) **用户指令**「另外 paperB 也有一些 todo，然后 paperC 可以开始推进了，paperB 是为了 rebuttal 做准备，所以你可以均衡推进」→ **解除 Paper C 的 H20-PaperA-first 等待**，三线并行。(2) **.73+.82 实测全空（0 MiB ×16 卡，无 python 进程）** → 立即填：**.73 = Paper C #132**（P-C1 second-task capability eval：MMLU-MC + closed-book QA on A4_hero/A3_fromscratch/A2_lora_r160/BASE_ref 四臂，eval-only，agent a2ab12c6）；**.82 = Paper B #128**（P2.2 activation patching 因果层恢复 harness，forward-only，新脚本 patch_olmo2_layers.py，agent ae4e2ee4）。两者均 base 协议 chat=False/no-BOS。#128 设**硬门禁：identity-patch 必须复现 unpatched 分数**，否则曲线作废。(3) **release 仓整理**：Paper B → `perplexity-heals-knowledge-lags` **DONE commit 9f71cfa（未 push）**，22 文件 SHA256 全对齐 anonymous_artifact 清单、sanitization 干净（130k JSONL 记录无 >40 字符串=无题面文本）；Paper A → COMem 代码+索引 agent 在跑。(4) **monitor 8088 曾 http=000 → 已重启，现 http=200**。
+> **节点占用（实测 nvidia-smi 22:4x）**：
+> - **LOCAL 8×B200**：▶️ **#103 keep14 dense-save re-heal RUNNING**（step **21700**/200000，137.6GB/卡 100%，healthy）。等 frozen-match PPL≈12.797 / random-match≈11.498 双侧 crossing → matched-PPL MMLU+McNemar 后**立即停，不跑到 200k**（paperB Phase R 决策）。wzc1 盘。
+> - **.252 8×B200**：⏸️ **RESERVED-for-#103-monitor**；⚠️ **本轮 SSH 密码认证失败（Permission denied）**——待排查（密码文件可能已轮换），暂不计入可用节点。wzc1 盘。
+> - **.73 8×H20**：▶️ **Paper C #132 second-task eval 启动中**（agent a2ab12c6；#92 四臂 ckpt 在 **zwfy6**，agent 需先定位 PROJECT_ROOT）。zwfy6 盘。
+> - **.82 8×H20**：▶️ **Paper B #128 P2.2 activation patching 启动中**（agent ae4e2ee4）。zwfy6 盘。
+> - **.104 8×H20**：▶️ **A-P1.1 BGE/BGE RUNNING**（8 卡 18-20GB/卡、22-100% util，`_run_p0_20_phaseB_dense.sh` 已跑 ~1.9h，healthy）。zwfy6 盘。
+> - **⚠️ .venv/bin/python 在 H20 三台已坏** → 一律 `/opt/conda/envs/torch-base/bin/python`。**⚠️ 两处物理盘**：wzc1（LOCAL+.252）/ zwfy6（.73+.82+.104）。
+
+## 当前快照（2026-08-04 21:16 +08:00，**A-P1.1 LOGDIR bug 修复→BM25/BM25 臂 DONE(NEGATIVE)；BGE/BGE 臂 RUNNING @.104**）
+> **关键事件**：coder a1e87376 修好 LOGDIR bug（`LOGDIR="${LOGDIR:-logs/$(basename "$OUTDIR")}"`，commit **9aee7e6** LiuHanzuo 未 push，scp 同步 zwfy6 md5 一致）→ 原拓扑并行重跑 STEP 3b `SKIP=0`（bug 消）。**BM25/BM25 臂 DONE**（n=100 分层 LoCoMo×10k=1000 paired，已 scp 回 wzc1 `bench_results/p1_1_bm25_locomo/`）：primary anchor CoMem@k12(acc 8.0) vs latency-matched text-RAG@k10(acc 11.0) → **diff −3.0pp 95%CI[−7,0] McNemar p=0.25（方向性差、n.s.）**；逐 k text-RAG ≥ CoMem 全程。**decision.json 裁决 NEGATIVE**（cached-state readout 瓶颈；redirect P0.17/P0.18/P1.10，不得包装成 positive Pareto）。**★诚实修正**：#137 里 LoCoMo +1「tie」是 first-100=100%conv0 采样假象，分层 10-conv 后翻转成 CoMem-worse。已回填 paperA/TODOList A-P1.1。**BGE/BGE 臂 RUNNING @.104**（default 9-cell，dense_bge 两臂对称）：60/360 quality done SKIP=0，8 卡在跑，STEP4 auto-agg，ETA ~1-2h → 待回填后关 #151。**无 heartbeat cron → 已 CronCreate 一次性 ~22:47 check-back。**
+> **节点占用（21:16）**：
+> - **LOCAL 8×B200**：▶️ **#103 keep14 dense-save re-heal RUNNING**（step ~16840+/200000，train ppl 14.50，healthy）。等 crossing#2（held-out Dolmino PPL <11.4983）后跑 matched-PPL MMLU+McNemar。wzc1 盘。
+> - **.252 8×B200**：⏸️ **RESERVED-for-#103-monitor**（crossing-monitor PID 1238902 alive；PPL step10000=14.67 单调↓，目标 <11.4983 停）→ 不 co-schedule。wzc1 盘。
+> - **.73 8×H20**：🟢 **FREE（idle 有据）**：PaperA GPU 待跑排空；#128/#129=wzc1-only 不能跑 zwfy6 H20；PaperB 训练 #84/#99/#123 用户 defer → 宁 idle 不擅起 defer 训练。zwfy6 盘。
+> - **.82 8×H20**：🟢 **FREE（BM25/BM25 臂 DONE 释放）**。zwfy6 盘。
+> - **.104 8×H20**：▶️ **A-P1.1 BGE/BGE re-run RUNNING**（dense_bge，60/360，SKIP=0，healthy；OUTDIR p1_1_bge_bge）。zwfy6 盘。
+> - **⚠️ .venv/bin/python 已坏** → 一律 `/opt/conda/envs/torch-base/bin/python`。**⚠️ 三处物理盘**：wzc1（LOCAL+.252）/ zwfy6（.73+.82+.104）；BGE 结果在 zwfy6 → 完后 scp -O 回 wzc1。
+
+## 历史快照（2026-08-04 20:20 +08:00，**A-P1.2(b) DONE→A-P1.2 两半闭合(contamination+judge 双稳健)**；**A-P1.1 首跑跑完但交付空(INCOMPLETE/n_paired=0)→定位 LOGDIR bug→派 coder 修+重跑 .82+.104**）
+> **关键事件**：(1) **A-P1.2(b) open-weight Qwen3-8B judge LoCoMo 复评 DONE**（coder a52329d3 @.73，commits 7aa4e14+15f7325 未 push）：CoMem flagship 双 judge 均 #1（open 52.06 vs GPT-4o 38.27），top-4 序保持；诚实 caveat：CoMem-vs-kvdirect 从 +3.68pp(GPT-4o) 收窄到 +1.76pp(open judge)、conv-cluster CI 略重叠（cluster-bootstrap 噪声内）。→ **A-P1.2 两半全闭合：(a) contamination-robust + (b) judge-robust**。产物 locomo_results_openjudge_qwen3_MIRROR/（wzc1）。#152 completed。.73 释放。(2) **A-P1.1（#151）首跑跑完但交付物为空**：bench_results/p1_1_bm25_locomo + p1_1_bge_bge 两 OUTDIR 均 `VERDICT:INCOMPLETE`、`n_examples_paired=0`、frontier={}。**根因（main 定位）**：`_run_p0_20_8gpu.sh` L102 / `_run_p0_20_phaseB_dense.sh` L115 **硬编码 LOGDIR 未跟随 OUTDIR**，`DONEDIR=$LOGDIR/done` 继承原始 P0.20 #137 run 的 360 个同名 `quality_*.done` marker → STEP 3b 全部 40 quality job SKIP（calib-latency 正常）。→ 派 **opus coder a1e87376** 修（LOGDIR 跟随 OUTDIR，向后兼容）+ 镜像 zwfy6 + 按原拓扑重跑 **.82(BM25/BM25)+.104(BGE/BGE)**。#151 保持 in_progress。
+> **节点占用（实测 nvidia-smi 20:16）**：
+> - **LOCAL 8×B200**：▶️ **#103 keep14 dense-save re-heal RUNNING**（step 16840/200000，train ppl 14.50，1.56s/step，137.6GB/卡 100%，healthy）。等 bracket crossing#2（held-out Dolmino PPL <11.4983）后跑 matched-PPL MMLU+McNemar。wzc1 盘。
+> - **.252 8×B200**：⏸️ **RESERVED-for-#103-monitor**：crossing-monitor alive（PID 1238902 since 14:12，卡间隙 0-4 MiB），每新 ckpt 跑 8-GPU held-out PPL；PPL step10000=14.67（单调↓，目标 <11.4983 停）→ 不 co-schedule（#129/P2.2 HELD）。wzc1 盘。
+> - **.73 8×H20**：🟢 **FREE（0 MiB，A-P1.2(b) DONE 释放）**。zwfy6 盘。PaperA GPU 待跑已排空（A-P1.1 在修+重跑于 .82/.104）；#128/#129=wzc1-only 不能跑 zwfy6 H20；PaperB 训练 #84/#99/#123 用户 defer → 暂 idle 有据。
+> - **.82 8×H20**：▶️ **A-P1.1 BM25/BM25 re-run 启动中**（coder a1e87376，LOGDIR-fix 后，OUTDIR=p1_1_bm25_locomo）。zwfy6 盘。
+> - **.104 8×H20**：▶️ **A-P1.1 BGE/BGE re-run 启动中**（coder a1e87376，dense_bge 对称，OUTDIR=p1_1_bge_bge）。zwfy6 盘。
+> - **⚠️ .venv/bin/python 已坏** → 一律 `/opt/conda/envs/torch-base/bin/python`。**⚠️ 三处物理盘**：wzc1（LOCAL+.252）/ zwfy6（.73+.82+.104）；A-P1.1 结果在 zwfy6 → 完后 scp -O 回 wzc1 聚合/落账。
+
+## 历史快照（2026-08-04 18:05 +08:00，**A-P1.1 LAUNCHED（.104 BGE/BGE + .82 BM25/BM25）+ A-P1.2(a) DONE + A-P1.2(b) LAUNCHED @.73** → 5 节点全部产出，无空转）
+> **关键事件**：(1) **A-P1.1 coder a5504d6 DONE-launch**（commit 1c0d66b 未 push，改 eval_p0_20_phaseB_dense.py 加 `--comem_selector dense_bge` + eval_qcmem_locomo.py LoCoMo stratify(legacy first-100=100% conv0→10/conv×10) + eval_p0_20_equal_latency.py 4 聚合方案 frozen weights）：**.104 BGE/BGE**（COMEM_SELECTOR=dense_bge，PID 1166059）+ **.82 BM25/BM25 LoCoMo-fixed**（PID 2926566）两 GPU run 过 manifest+sha+sanity gate、STEP 2 calib sweep healthy。结果落 zwfy6 → 待完成 scp 回 wzc1 聚合。(2) **A-P1.2(a) contamination overlap audit DONE**（coder afc3ace7 @LOCAL CPU，commit 746974c）：LongBench=CONTAMINATED(局限 narrativeqa，clean 8305/8418)/LoCoMo=CLEAN/InfiniteBench=CONTAMINATED(复现 P0.14)/LongEval=CLEAN-BY-CONSTRUCTION；clean-subset 重评分 clean ≤ full 全 arm（连 PG-19 蒸馏模型都不获益）→ **contamination-robust**。(3) **A-P1.2(b) open-weight judge LoCoMo 重判 LAUNCHED @.73**（coder a52329d3；A-P1.1 提交 eval_qcmem_locomo.py 后同文件冲突解除→串行放行）。
+> **节点占用（全 5 节点产出）**：
+> - **LOCAL 8×B200**：▶️ **#103 keep14 dense-save re-heal RUNNING**（step ~10000/200000，1.56s/step，healthy）。A-P1.2(a) CPU 已完。等 bracket crossing#2（PPL≈11.498）后跑 matched-PPL MMLU+McNemar。wzc1 盘。
+> - **.252 8×B200**：⏸️ **RESERVED-for-#103-monitor**：crossing-monitor alive，PPL step10000=14.67（单调↓；目标 <11.4983 停），每新 ckpt 跑 8-GPU eval → 不 co-schedule（#129/P2.2 HELD）。wzc1 盘。
+> - **.73 8×H20**：▶️ **A-P1.2(b) open-weight judge LoCoMo 重判 启动中**（coder a52329d3：装 vllm+serve Qwen3-8B、`--score_only` 重判 6 pred dir、fresh output_dir、enable_thinking=false；~30min flagship/~1-2h 全 6）。zwfy6 盘。
+> - **.82 8×H20**：▶️ **A-P1.1 BM25/BM25 LoCoMo-fixed re-cell RUNNING**（coder a5504d6，PID 2926566，STEP 2 calib，healthy；OUTDIR bench_results/p1_1_bm25_locomo）。zwfy6 盘。
+> - **.104 8×H20**：▶️ **A-P1.1 BGE/BGE Phase B RUNNING**（coder a5504d6，COMEM_SELECTOR=dense_bge，PID 1166059，STEP 2 calib，healthy；OUTDIR bench_results/p1_1_bge_bge）。zwfy6 盘。
+> - **⚠️ .venv/bin/python 已坏** → 一律 `/opt/conda/envs/torch-base/bin/python`。**⚠️ 三处物理盘**：wzc1（LOCAL+.252）/ zwfy6（.73+.82+.104）。A-P1.1 结果在 zwfy6 → scp -O 回 wzc1 聚合/落账。
+
+## 当前快照（2026-08-04 17:45 +08:00，**B-P1.2-sub closed-book clean-subset DONE→回填 paperB**；**A-P1.2 就绪度回来=非多天→(a) 派 coder @LOCAL CPU、(b) HELD 待 A-P1.1 让出 eval_qcmem_locomo.py**）
+> **关键事件**：(1) **B-P1.2-sub（task #153，agent a0f9c7b6，纯 CPU）DONE**：OLMo-2 closed-book（TriviaQA/PopQA/NQ）clean-subset 重算——去污染最大变动 ≤0.15pp、7 臂排序完全保持 → **closed-book 知识表对 Dolmino 污染稳健**（与 MMLU clean-subset 结论一致）。脚本 `recompute_closedbook_clean_subset.py` commit 1624d55（未 push），产物 `bench_results/olmo2_dolmino_contamination/closedbook_clean_subset_recomputed.json`（wzc1）。已回填 paperB/TODOList §B-P1.2（原 "未做 deferred" 行）。(2) **A-P1.2 就绪度评估回来 = 两半 same-day 小 compute、非多天 → 不 DEFER**。**(a) contamination overlap audit** 派 opus coder **afc3ace7 @LOCAL CPU 已启**（新文件 `scripts/audit_ap1_2_contamination.py`，复用 P0.14 引擎+预建 sketch `.t27_tmp/pg19_train_sketch_n13_d32.npy`，`CUDA_VISIBLE_DEVICES=-1`，与 #103 的 8-GPU 训练**无争用**，CPU ~15-30min）。**(b) open-weight judge LoCoMo 复评 HELD**：需改 `eval_qcmem_locomo.py` 的 enable_thinking，**与在跑的 A-P1.1 coder a5504d6 同文件冲突** → 串行，待 A-P1.1 提交后派 (b) coder **@.73**（iter_bm25/chatFALSE flagship preds `qcmem_8b_iter_chatFALSE` + 5 竞品已在 .73 zwfy6，就地跑免 scp）。
+> **节点占用（实测 nvidia-smi 17:20，无新 GPU 变化）**：
+> - **LOCAL 8×B200**：▶️ **#103 keep14 dense-save re-heal RUNNING**（step ~10000/200000，1.56s/step，healthy）；🖥️ **A-P1.2(a) contamination audit DONE（coder afc3ace7，CPU-only，commit 746974c，contamination-robust：clean ≤ full 全 arm）**。dense-save 每 2500 步。等 bracket crossing#2（random-match PPL≈11.498）后跑 matched-PPL MMLU+McNemar。
+> - **.252 8×B200**：⏸️ **RESERVED-for-#103-monitor**：crossing-monitor alive，PPL step10000=14.67（单调↓、减速；目标 <11.4983 停），每新 ckpt 跑 8-GPU eval → 不 co-schedule（#129/P2.2 HELD）。wzc1 盘。
+> - **.73 8×H20**：🟡 **HELD-for-A-P1.2(b)**（open-weight judge，待 A-P1.1 让出 eval_qcmem_locomo.py 后就地启；flagship+竞品 preds 已在此）。zwfy6 盘。
+> - **.82 8×H20**：🟡 **A-P1.1 BM25/BM25 LoCoMo-fixed re-cell 待启**（coder a5504d6 building→dry-gate→scp -O→launch）。zwfy6 盘。
+> - **.104 8×H20**：🟡 **A-P1.1 BGE/BGE Phase B 待启**（coder a5504d6，同上）。zwfy6 盘。
+> - **⚠️ .venv/bin/python 已坏** → 一律 `/opt/conda/envs/torch-base/bin/python`。**⚠️ 三处物理盘**：wzc1（LOCAL+.252）/ zwfy6（.73+.82+.104）。zwfy6-only preds 就地跑或 scp -O。
+
+## 当前快照（2026-08-04 17:25 +08:00，**P0.14 clean-subset 重算 DONE→回填 TODOList**；**#129/P2.2 HELD 保护 #103 交叉序列**；派 3 只只读 agent 评 A-P1.1/1.2/1.3 就绪度）
+> **关键事件**：(1) **P0.14 InfiniteBench clean-subset 重算完成**（`.82` zwfy6 CPU pid2924913）→ clean subset 上 CoMem 优势不降反升（choice **54.55 vs Dense 25.00** clean；QA 6.54 vs 2.14）→ **contamination-robustness 成立，撤回原 WITHDRAW `tab:infbench` 建议**，结果已回填 paperA/TODOList P0.14。⚠️ 遗留口径冲突：本 recompute CoMem choice full=48.03 vs tex 现载 17.47（#112 mc_ll 口径）→ MAIN 集成前须统一。(2) **确认 .252 crossing-monitor = 8-GPU 满卡爆发**（`eval_ppl_252.sh` 每存 ckpt 跑一遍 8-GPU held-out Dolmino PPL）→ 8-GPU #129/P2.2 会撞 monitor、危及 #103 **blocking** 交叉序列 → **#129(Qwen 跨家族)/P2.2(activation-patch) HELD**，.252 保留给 #103 monitor（当前非可用节点）。(3) **派 3 只 opus 只读 agent** 评 A-P1.1(equal-latency same-selector)/A-P1.2(contamination+open-weight judge)/A-P1.3(serving grid) 就绪度+ETA（纯文本无 schema，避开上轮 StructuredOutput retry-cap 失败）→ 回来据 ETA 决定是否铺到 .73/.82/.104；**多天大实验先别跑（用户指令），ETA 未确认前不启**。
+> **节点占用（实测 nvidia-smi 17:20）**：
+> - **LOCAL 8×B200**：▶️ **#103 keep14 dense-save re-heal RUNNING**（step ~10000/200000，1.56s/step，healthy）。dense-save 每 2500 步（~67min）。等 bracket crossing#2（random-match PPL≈11.498）后跑 matched-PPL MMLU+McNemar。
+> - **.252 8×B200**：⏸️ **RESERVED-for-#103-monitor（0 MiB 间隙，crossing-monitor alive）**：PPL step5000=16.47→7500=15.33→**10000=14.67**（单调↓、减速；目标 <11.4983 停）。monitor 每新 ckpt 跑 **8-GPU** eval → **不 co-schedule 任何任务**（#129/P2.2 HELD）。crossing#2 估还需数小时 bracket → monitor 自动停后 .252 才真正空出。wzc1 盘。
+> - **.73 8×H20**：🟢 **FREE（0 MiB）**：**留给 A-P1.2**（contamination+open-weight judge，就绪度评估在途）。zwfy6 盘。
+> - **.82 8×H20**：🟡 **A-P1.1 BM25/BM25 LoCoMo-fixed re-cell 待启**（coder a5504d6 building→dry-gate→scp -O→launch）。zwfy6 盘。
+> - **.104 8×H20**：🟡 **A-P1.1 BGE/BGE Phase B 待启**（coder a5504d6，同上）。zwfy6 盘。
+> - **⚠️ .venv/bin/python 已坏** → 一律 `/opt/conda/envs/torch-base/bin/python`。**⚠️ 三处物理盘**：wzc1（LOCAL+.252）/ zwfy6（.73+.82+.104）。zwfy6 git=2d98c5a 旧+dirty，wzc1-only 新脚本走 `scp -O` 搬。
+
+## 历史快照（2026-08-04 16:55 +08:00，**#142 write-path DONE-收敛 → kill .104**；**4 节点空出**（.252/.73/.82/.104=32 卡），待小-ETA workflow 出 plan 铺开；多天大实验依用户指令不启）
+> **关键事件**：**#142 P1.10 write-path 蒸馏双重收敛确认 → 停训**。BBWL 收敛 eval（coder task #150，跑在 .73+.82）：step1000/1500/2000 macro = **98.0/99.0/98.5**（n=200 噪声内完全持平，8k 全 100 饱和，movement 全在 16k 噪声），对照 BB=92.5 / E0=100 —— 闭合 ~6pp（80%）可部署 Write gap，到 E0 上界残差 p≥0.125 **不显著**。training loss 也早收敛（平台 since ~step500）。∴ step4000 无意义 → **kill .104 #142 训练**（跑到 step2500，省 ~11h + 腾节点）。**交付 ckpt = step2000 adapter，BBWL=98.5**。基线精确复现（A=100/BB=92.5/E0=100，pack 1:1 sha-match，oom=0）。coder 两处 launcher 改动 commit 在 wzc1 本地（64db47c WRITE_LORA env / e8f9925 LOGDIR 可覆盖，LiuHanzuo，**未 push**）；因 zwfy6 1081 dirty 文件 git pull 不安全，BBWL 驱动走 **scp** 搬过去（md5 一致，留 .bak）。**小-ETA launch workflow（wq9hv411w）仍在评就绪度**，回来后把 ready 项（A-P1.1/1.2/1.3 + #128/#129 + no-GPU recompute）铺到这 4 个空节点。**A-P0.1/P0.2/P0.3 多天大实验依用户指令不启。**
+> **节点占用（实测 nvidia-smi 16:55）**：
+> - **LOCAL 8×B200**：▶️ **#103 keep14 dense-save re-heal RUNNING**（step ~7500/200000，1.56s/step，137.6GB/卡 100%，healthy）。等 bracket crossing#2（random-match PPL≈11.498）后跑 matched-PPL MMLU+McNemar。
+> - **.252 8×B200**：⏸️ **GATED-IDLE（0 MiB，crossing-monitor alive）**：#103 crossing-eval step2500=19.11→5000=16.47→7500=15.33。**待小-ETA PaperA eval 进驻**（monitor 只在 #103 存 ckpt 时短爆发，需错峰）。wzc1 盘。
+> - **.73 8×H20**：🟢 **FREE（0 MiB）**：#142 BBWL 收敛 eval **DONE**（step2000+step1000 在此，step1500 并行在 .82）。zwfy6 盘。待小-ETA 项进驻。
+> - **.82 8×H20**：🟢 **FREE（0 MiB）**：BBWL step1500 eval DONE。zwfy6 盘。待小-ETA PaperB harness（#128/#129）进驻。
+> - **.104 8×H20**：🟢 **FREE（0 MiB，刚 kill #142）**：写路径蒸馏 DONE-收敛，8 卡全 0 MiB 0 残留进程；adapter step500/1000/1500/2000/2500 全落盘 zwfy6。待小-ETA 项进驻。
+> - **⚠️ .venv/bin/python 已坏** → 一律 `/opt/conda/envs/torch-base/bin/python`（.252 待现场验证）。**⚠️ 三处物理盘**：wzc1（LOCAL+.252）/ zwfy6（.73+.82+.104）。paused-heal ckpt 均在 wzc1（LOCAL）。
+
+## 历史快照（2026-08-04 16:40 +08:00，用户指令：**多天大实验(A-P0.1/P0.2/P0.3)先别跑，ETA 小的先跑**；#142 训练近收敛→派 eval 证下游平台再 kill；小-ETA 项并行铺开）
+> **关键事件**：用户拍板 —— Paper A 三个 ACL main-gate 多天大实验（A-P0.1 matched frontier / A-P0.2 多 seed headline / A-P0.3 overlap-write frontier）**暂不启动**，先把 ETA 小的项铺开。已动作：(1) **#142 write-path 蒸馏 training loss 已收敛**（0.038-0.041 平台 since ~step500，step1000-1300 均值 0.04136 vs 末 300 步 0.03934，~5% 改善），派 **opus coder（task #150）在 .73 跑 BBWL 收敛 eval**（step1000/1500/2000 逐 ckpt vs ArmB 92.5 / E0 100，niah_multikey_1×{8k,16k} n=100 iter_bm25 chat=False）证【下游指标】平台——证平即 kill .104 省 ~11h。(2) 派 **workflow wq9hv411w（7 路并行）**查小-ETA 候选（A-P1.1 equal-latency / A-P1.2 contamination+judge / A-P1.3 serving grid / #128 activation-patch / #129 Qwen 跨家族 / P0.14 clean-subset / B-P1.2-sub）就绪度 → 出 ranked launch plan 分配 .252(B200,wzc1,PaperA 优先) + .82(H20,zwfy6,PaperB harness)。gap-audit workflow(wc3fqbdr6) 已闭合：Paper A 剩 3 main-gate（defer）+ 在跑收尾；Paper B 主体闭合，剩 #103 收尾 + #128/#129。
+> **节点占用（实测 nvidia-smi 16:35）**：
+> - **LOCAL 8×B200**：▶️ **#103 keep14 dense-save re-heal RUNNING**（step ~7200/200000，1.56s/step，137.6GB/卡 100%，healthy）。step2500/5000/7500.pt 落盘。等 bracket crossing#2 (random-match PPL≈11.498) 后跑 matched-PPL MMLU+McNemar。
+> - **.252 8×B200**：⏸️ **GATED-IDLE（0 MiB，crossing-monitor alive）**：#103 crossing-eval step2500=19.11→5000=16.47→7500=15.33（单调↓）。**待 workflow 规划的小-ETA PaperA eval 进驻**（monitor 只在 #103 存 ckpt 时短爆发，可与 eval-scale 任务错峰共存；启动前 coder 需确认不撞 monitor 评估窗口）。wzc1 盘。
+> - **.73 8×H20**：▶️ **#142 write-path BBWL 收敛 eval RUNNING**（coder task #150；~20GB/卡 37-100% util，8-GPU flock 调度 step1000/1500/2000）。zwfy6 盘。几小时完→释放为第 3 空节点。
+> - **.82 8×H20**：🟢 **FREE（0 MiB）**：待 workflow 规划的小-ETA PaperB harness（#128/#129）或 PaperA 项进驻。zwfy6 盘。
+> - **.104 8×H20**：▶️ **#142 P1.10 write-path 蒸馏 training RUNNING**（step ~2410/4000，loss ~0.039 **已收敛**，~26 s/step data-stall 主导；GPU 100%）。**不迁移**；等 BBWL eval 证下游平台后 kill（省 ~11h + 腾节点）。
+> - **⚠️ .venv/bin/python 已坏** → 一律 `/opt/conda/envs/torch-base/bin/python`（.252 待现场验证）。**⚠️ 三处物理盘**：wzc1（LOCAL+.252）/ zwfy6（.73+.82+.104）。paused-heal ckpt 均在 wzc1（LOCAL）。
+
+## 历史快照（2026-08-04 16:04 +08:00，heartbeat：**核实“暂停 heal”=stale，实为已 DONE**；两活训练 healthy；16 H20 无 in-scope 可自动启训 → 依用户 defer 指令保持 idle）
+> **关键事件**：上一轮 flag 的"该 resume 哪个 Paper B heal（keep8@45000/keep10@69000/keep12@111500）"经核实为 **stale memory**——paperB/TODOList 行 248-250 显示 keep8(10L)/keep10(12L)/keep12(14L) 均 **`[DONE]` 200k**（task #95/#96/#114 completed），**无 heal 可 resume**。已更正 memory `h20-paperA-over-paperB-priority`。剩余 Paper B 训练（#84 contamination-deferred / #99 keep14-distill-PARKED-per-user / #123 general-SFT-用户判太贵）**均被用户明确 defer**，heartbeat 不可自主 auto-launch（会违背用户 defer 指令）→ 16 H20 本轮保持 idle 有据，非"HEARTBEAT_OK 不作为"。#142 完/#103 触交叉后其 eval 收尾会用到这些卡。
+> **节点占用（实测 nvidia-smi + log）**：
+> - **LOCAL 8×B200**：▶️ **#103 keep14 dense-save re-heal RUNNING**（step ~7200/200000，loss 2.78 / train ppl 16.17，1.56s/step，healthy）。step2500.pt + step5000.pt 已落盘，step7500.pt 约 8min 后落。GPU0-7 100%。
+> - **.252 8×B200**：⏸️ **GATED-IDLE（0 MiB，crossing monitor alive）**：#103 crossing-eval 已评 step2500 PPL=19.11 → step5000 PPL=16.47（单调降），等 LOCAL step7500.pt 再评。blocking 目标 = bracket crossing#2 random-match PPL≈11.498（frozen-match≈12.797，endpoint≈10.561）；粗估 re-heal ~step11-17k（~3-5h）触及，随后两 bracketing ckpt 跑 matched-PPL MMLU + McNemar（~30-60min）。⚠️ **不 co-schedule 长训练**（monitor 随时可能触发 8-GPU 评估）。
+> - **.73 8×H20**：🟢 **FREE（0 MiB）**：#149 Finding-3 LR 对照 **STOPPED @step25260/200000**（用户 cost-benefit 判定 B-P1.1 类不值 ~200 GPU·h → Finding-3 保留 hedged wording；ckpt 保留可日后 resume）。zwfy6 盘。**无 in-scope 可自动启训 → idle。**
+> - **.82 8×H20**：🟢 **FREE（0 MiB）**：#143 CacheBlend **DONE**（结果入 paperA/TODOList A-AUDIT-1）。zwfy6 盘。**无 in-scope 可自动启训 → idle。**
+> - **.104 8×H20**：▶️ **#142 P1.10 write-path 蒸馏 RUNNING**（step ~2300/4000，loss ~0.039 近收敛，effective ~26 s/step 受 data-stall 主导，剩 ~10h；GPU 100%）。**留在 .104，不迁移，不动。**
+> - **⚠️ .venv/bin/python 已坏** → 一律 `/opt/conda/envs/torch-base/bin/python`。**⚠️ 三处物理盘**：wzc1（LOCAL+.252）/ zwfy6（.73+.82+.104 同 zwfy6 盘）。paused-heal ckpt 均在 wzc1（LOCAL）非 zwfy6。
+
+## 历史快照（2026-08-04 14:00 +08:00，heartbeat：**LOCAL re-heal 首 ckpt step2500.pt 落盘 + 用户 ARR 审计分诊**。发现 .252/.73 共 16 卡空转 → 立即补卡。派 3 agent：**abdf565@.252 消费 step2500 起 #103 crossing-eval**（此前 a88cddeb 已完成 sanity）；**a81a6b6@.73 CPU 聚合 #143 CacheBlend**（generation 已完，缺 aggregate.json）；**ad838cf4@.73 8×H20 跑 PaperB Finding-3 matched-LR 对照**（ARR 审计唯一需跑项，task #149）。ARR 审计其余 8 条为「有结果→改写」（tab:downstream Table?? 已内联修）。）
+> **节点占用（实测 nvidia-smi + log）**：
+> - **LOCAL 8×B200**：▶️ **#103 keep14 dense-save re-heal RUNNING**（step2500/200000，train ppl 19.69，1.56s/step，healthy；**step2500.pt 已落盘=首个交叉候选**）。GPU1-7 100%，GPU0 步间 1%。每 ckpt 48.7GB，定位交叉步后 prune。
+> - **.252 8×B200**：⏸️ **GATED-IDLE（0 MiB，crossing monitor PID1238902 alive）**：#103 crossing-eval 已评 step2500（PPL 19.1117），**等 LOCAL 下一 ckpt step5000（~14:59 落盘）**才再评——8 卡在评估间隙空转 ~55min/65min 周期。⚠️ **不 co-schedule 长训练**（monitor 任一分钟可能触发 8-GPU 评估，会撞显存 + 危及已承诺的 #103 结果）；crossings（12.797/11.498）预计 step~5k-30k=6-13h 内 bracket，之后 MMLU+McNemar（短）→ **.252 全空后立即接 pending Paper-B/C 训练（#88 keep10 / #132-134 Paper C）**。
+> - **.73 8×H20**：▶️ **PaperB Finding-3 matched-LR 对照（agent ad838cf4，task #149）RUNNING**：RESUME #127 from step25000.pt（random-init@uniform-2e-5，单变量 vs keep14），96.4GB/98.5%mem/100%util，~9.2s/step。**⚠️ 全 200k ETA ~18.6 天**；采纳 agent 建议 **step50k(~2.7d) 早读拍板续/降级**。#143 aggregate 已 DONE。zwfy6 盘。
+> - **.82 8×H20**：▶️ **#143 CacheBlend LoCoMo r=0.15 cell 仍在生成**（n=960/1986，`incomplete_cells` 已标；完成后重跑 `scripts/aggregate_cacheblend_143.py` 合入 + GPT-4o judge deferred 待跑）。~20GB/卡，healthy。zwfy6 盘。
+> - **.104 8×H20**：▶️ **#142 P1.10 write-path 蒸馏 RUNNING**（step 2020/4000，healthy，GPU 100%）。**不动**。
+> - **⚠️ .venv/bin/python 已坏** → 一律 `/opt/conda/envs/torch-base/bin/python`。**⚠️ 三处物理盘**：wzc1（LOCAL+.252）/ zwfy6（.73+.82）/ .104-TBD；跨盘代码需 cat-over-ssh 同步。
+
+## 历史快照（2026-08-04 12:57 +08:00，subagent_done×2：**B-P1.2 完成 + #103 re-heal 启动**。B-P0.0/B-P1.2 两个 quick-win 全部 DONE。**LOCAL 派 coder aa5d1482 启动 #103 keep14 dense-save re-heal**；**.252 派 coder a88cddeb 消费 re-heal ckpt 定位 PPL 交叉点**。Paper A（.73/.82）+ P1.10（.104）不动。）
+
+## 历史快照（2026-08-04 12:27 +08:00，用户指令：**两台跑 LR 的（P1.3）与 B200 原实验同样处理——记录当前曲线后早停，腾 .73+.82 跑 Paper A**；并「先跑 paperA + paperB 里性价比最高的两个实验 P-0.0, P1.2」。B-P0.0 已完成（见下），B-P1.2 仍在 .252 跑。**P1.3 已 kill**（.73+.82 各 8 卡实测 0 procs/0 MiB），曲线回填 paperB/TODOList §P1.3。**派 opus coder a377ed8a 在 .73+.82 跑 Paper A**（#143 CacheBlend + #144 dense-selector），含 H20 FS 代码同步（H20 三台与 B200 是独立盘，.73 git=2d98c5a 缺 CacheBlend 代码，coder 负责 rsync 同步+self-test gate 再启动）。.104 P1.10 不动继续跑。）
+> **节点占用（实测 nvidia-smi + log）**：
+> - **LOCAL 8×B200**：✅ **B-P0.0 ShortGPT-16 closed-book QA COMPLETE**（agent aadf4c60；sanity PPL=9.7800 复现 9.7803；PopQA .1585/TriviaQA .3301/NQ .0668，均略高于 keep14@200k 远低于 base_full → 支撑 knowledge-lags；artifact `perplexity-heals-knowledge-lags/data/closedbook/shortgpt16_step200k{,_nqopen}/`，未 push）。8 卡已释放，空闲待补。
+> - **.252 8×B200**：▶️ **B-P1.2 OOD PPL + contamination RUNNING**（opus coder abaeab6f；OOD PPL WikiText-103/C4+PG19 × 各模型 + Dolmino n-gram overlap → clean-subset gap）。
+> - **.73 + .82 16×H20**：⏹️ **P1.3 STOPPED EARLY @~26.9k/200k**（train-loss ppl~25.4；用户决策同 armA/armB 处理，非崩溃 kill；ckpt step0/5000/.../25000.pt 在 .73 H20 FS）→ ▶️ **Paper A 启动中**（opus coder a377ed8a：#143 CacheBlend@.73 + #144 dense-selector@.82，先同步 H20 FS 代码+self-test）。
+> - **.104 8×H20**：✅ P1.10 write-path 蒸馏 RUNNING（Paper A，~2h left，save@每500步；BBWL eval arm 就绪 commit 4340feb，待 .104 空即逐 ckpt 跑）。**不动**。
+> - **⚠️ .venv/bin/python 已坏**（Aug3 19:45 reset 成裸 py3.11 无 torch）→ eval 一律用 `/opt/conda/envs/torch-base/bin/python`。**⚠️ H20 三台（.73/.82/.104）与 B200 是独立盘**（路径串同、物理盘不同；B200 上 commit 未 push 则 H20 看不到，需 rsync/push+pull 同步）。
+
+## 历史快照（2026-08-04 11:40 +08:00，用户决策：**P0.5 armA/armB 早停释放 B200，改跑两个 Paper B quick-win eval**（B-P0.4 4-arm factorial ~270 GPU·h 不值得跑）。两 arm 曲线/数据已回填 paperB/TODOList.md + RUN_REGISTRY。**LOCAL 派 opus coder aadf4c60 跑 B-P0.0**（ShortGPT-16@200k closed-book PopQA/TriviaQA/NQ-open → Table 3 closed-book 列，4/6 reviewer 要求）；**.252 派 opus coder abaeab6f 跑 B-P1.2**（OOD PPL C4/WikiText-103+PG19 + n-gram contamination → 附录）。两 H20 长训练 P1.3/P1.10 不动继续跑。monitor http200）
+> **节点占用（实测 nvidia-smi + log）**：
+> - **LOCAL 8×B200**：⏹️ P0.5 armA **STOPPED @~80.68k/200k ppl10.64**（非崩溃早停，ckpt 保存 step{0..80000}.pt）→ ▶️ **B-P0.0 ShortGPT-16 closed-book QA RUNNING**（opus coder aadf4c60；`/opt/conda/envs/torch-base/bin/python`；先 proxy 预热 HF cache 再 8-shard offline；ckpt `outputs/olmo2_probe2_7B_shortgpt16/step200000.pt`；sanity gate PPL≈9.78）。
+> - **.252 8×B200**：⏹️ P0.5 armB **STOPPED @~81k/200k ppl11.42**（非崩溃早停，saved step80000.pt）→ ▶️ **B-P1.2 OOD PPL + contamination RUNNING**（opus coder abaeab6f；先 `pip install datasets` via hy-proxy；OOD PPL WikiText-103/C4+PG19 × {base/full32/keep14/ShortGPT/random/frozen}；Dolmino-vs-benchmark n-gram overlap → clean-subset 重算 gap）。
+> - **.73 + .82 16×H20**：P1.3 16-card DDP step26200/200k ppl25.21（4.68s/step，healthy，长训练，无 plateau，不打断）。
+> - **.104 8×H20**：✅ P1.10 write-path 蒸馏 RUNNING（step1680/4000 loss0.040，~2h left，save@每500步 已存 step500/1000/1500 ckpt）。BBWL eval arm 就绪（coder 4340feb），待 .104 空即逐 ckpt 跑。
+> - **⚠️ .venv/bin/python 已坏**（Aug3 19:45 reset 成裸 py3.11 无 torch）→ B200 eval 一律用 `/opt/conda/envs/torch-base/bin/python`（LOCAL 全栈；.252 缺 datasets 需先装）。
+
+## 历史快照（2026-08-04 02:58 +08:00，heartbeat：P1.10 step520/4000 loss0.0445 近收敛，step500 ckpt CONFIRMED present。**step500 早读 eval GPU-blocked**：无空闲卡（5 个可达节点全在跑健康训练），returned-H20 .245/.7.53 + B200 .53/.18/.188 全 reject 凭据 → 派 opus coder ac32812513 预制 WRITE-LoRA arm 进 eval_p018_e4_2x2_writecontrol.py（GPU-free 编码+dry-check，不占卡），待 .104 空（~P1.10 done）或有节点即逐 ckpt 跑 vs ArmB 92.5 / E0 100。三长训练全健康无 plateau，monitor http200）
+> **节点占用（实测 nvidia-smi + log，22:55）**：
+> - **LOCAL 8×B200**：P0.5 armA step62940 ppl10.75（1.79s/step，healthy，不打断，无 plateau）。
+> - **.252 8×B200**：P0.5 armB step63100 ppl11.40（1.76s/step，healthy，不打断，无 plateau）。
+> - **.73 + .82 16×H20**：P1.3 16-card DDP step19740 ppl28.83（4.68s/step，healthy，长训练，loss 仍降无 plateau）。
+> - **.104 8×H20**：✅ P1.10 write-path 蒸馏 RUNNING（pid 1113844，8卡 100% util ~73-75GB ~77%VRAM，batch=24；step520/4000 loss0.0445 近收敛平台（0.0447@500→0.0445@520）；**实测 ~24s/step** → ETA ~27h（save@每500步）；step500 ckpt CONFIRMED present（adapter_config 1189B + safetensors ~116MB）。**eval GPU-blocked**：无空闲卡，WRITE-LoRA eval arm 已就绪（coder ac32812513，commit 4340feb，新 arm BBWL=BB+训练 WRITE LoRA(0..11)，`--write_lora_ckpt` 缺省时逐位不变、dry-check pass 未跑 GPU），待 .104 空（~P1.10 done）或有节点即三段式（manifest→quality→aggregate）对 step500…step4000 逐 ckpt 跑 vs ArmB 92.5 / E0 100 看 gap-closure → outputs/qcmem_writepath_distill_qwen_j12_r32/{step*, final}；训练 commit 8cf49ea+cc020d6）。
+
+## 历史快照（2026-08-03 22:26 +08:00，heartbeat：✅ #135 P0.19 RULER paired leg COMPLETE（recall 97-98% 非瓶颈；j12-frozen|HIT 0-1% 崩、LoRA 恢复 90/82 → gap 在 readout leg，全家族闭合）→ P0.19 全腿 DONE。**用户批准启动 P1.10 write-path 蒸馏训练**（"可以 那就跑"，task #142）→ .104 承接：opus coder ad69ed87 编码 write-path 蒸馏（下 12 层 Write LoRA，teacher=document-contextual Write，吃 P0.17 残留 10-15% gap，upper-bound 点，~20min@8卡）。三长训练全健康）
+> **节点占用（实测 nvidia-smi + log，22:24）**：
+> - **LOCAL 8×B200**：P0.5 armA step53860 ppl11.45（1.81s/step，healthy，不打断，无 plateau）。
+> - **.252 8×B200**：P0.5 armB step53900 ppl12.05（1.77s/step，healthy，不打断，无 plateau）。
+> - **.73 + .82 16×H20**：P1.3 16-card DDP step16220 ppl29.33（4.69s/step，healthy，长训练，无 plateau）。
+> - **.104 8×H20**：#135 P0.19 RULER 已跑完释放 → coder ad69ed87 正编码/启动 P1.10 write-path 蒸馏（diskB，torch-base，Qwen3-8b-local+PG19，output outputs/qcmem_writepath_distill_qwen_j12_r32/）。coder setup 阶段卡可能暂空=非空转。
+> - **Monitor**：http200 OK。.55 UNAVAILABLE。
+
+## 历史快照（2026-08-03 21:29 +08:00，heartbeat：✅ P0.20 阶段B（dense，#1 正文主结果候选，#141）COMPLETE → 裁决=MIXED/TIE（k_dense*=10，CoMem 53.22 vs dense 54.22，−1.0pp CI[−4.667,2.667] p=0.637）→ .104 释放 → 立即派 opus coder 承接 #135 P0.19 RULER paired leg（fix eval_ruler_qcmem seed-pairing）；三长训练全健康）
+> **节点占用（实测 nvidia-smi + log）**：
+> - **LOCAL 8×B200**：P0.5 armA step52040 ppl11.81（1.78s/step，healthy，不打断，无 plateau）。
+> - **.252 8×B200**：P0.5 armB step52080 ppl12.53（1.77s/step，healthy，不打断，无 plateau）。
+> - **.73 + .82 16×H20**：P1.3 16-card DDP step15540 ppl31.00（4.68s/step，16 卡，healthy，长训练，无 plateau）。
+> - **.104 8×H20（diskB）**：P0.20 阶段B（dense）**COMPLETE**（pid499855 done，8/8 GPU 0%/0MiB 空闲，decision.json@21:07）→ **派 opus coder 承接 #135 P0.19 RULER paired leg**（fix eval_ruler_qcmem RULER 样本 seeding 与 paired 口径不一致的 bug，使两臂见同一 RULER 样本；跑 recall@k×hit-conditional readout decomposition，补齐 P0.19 RULER 腿，解释 P0.20 RULER cell CoMem 低 k 碾压来源）。
+> - **B200 .55**：❌ UNAVAILABLE。Monitor http200。
+>
+> **P0.20 阶段B 裁决（#141 DONE）**：deployment PRIMARY k_dense*=10 → CoMem(k12)=53.22 vs dense-RAG=54.22，diff−1.0pp，CI[−4.667,2.667]，McNemar p=0.637 → 统计打平；cold-index k_dense*=None（encode-all 超带）；参考非等延迟两臂 k12 CoMem 53.22 vs dense 58.56（−5.33，p=0.00387）。VERDICT=MIXED。阶段A BM25 是 −11.56pp → 等延迟裁决 selector-dependent，CoMem 对可部署 text-RAG 最好=打平（dense）从不赢。逐 cell CoMem 随 k 非单调（低 k 峰、高 k 退化）vs dense 单调↑，crossover≈k12-14。全文 paperA/P0_20_PHASEB_NOTES.md §5 + bench_results/p0_20_phaseB_dense/{decision,summary}.json。
+
+## 当前快照（2026-08-03 19:05 +08:00，subagent_done：✅ P0.20 阶段B（dense，#1 正文主结果候选，task #141）已编码+CPU 验证+启动于 .104（pid499855），全 fail-closed 门 PASS（P1.9 repro=True），STEP2 calib 运行中；三长训练全健康）
+> **节点占用（实测 nvidia-smi + log）**：
+> - **LOCAL 8×B200**：P0.5 armA step46840 ppl11.80（1.79s/step，healthy，不打断，无 plateau）。
+> - **.252 8×B200**：P0.5 armB step46820 ppl11.79（1.76s/step，healthy，不打断，无 plateau）。
+> - **.73 + .82 16×H20**：P1.3 16-card DDP step13540 ppl31.86（4.68s/step，16 卡，healthy，长训练，无 plateau）。
+> - **.104 8×H20（diskB）**：**P0.20 阶段B（dense）RUNNING**——opus agent（abde161e）编码 scripts/eval_p0_20_phaseB_dense.py + _run_p0_20_phaseB_dense.sh + paperA/P0_20_PHASEB_NOTES.md（commit `749b0a0`，author LiuHanzuo，+1385 行，未 push），CPU 验证全过，启动 pid499855（torch-base）。**现 STEP2 calib_latency 单卡扫（GPU0 100%/18.5GB，k=4/6…；calib 串行于 GPU0 属正常）**→ STEP3 8-GPU quality（360 jobs=9 cells×10 k×4 shards）→ STEP4 aggregate。fail-closed 门全 PASS（manifest LoRA+BGE sha；sanity P1.9 repro=True、read_len paired=6257、LoRA toggle 168→0、calib/quality disjoint）。log logs/p0_20_phaseB.out。**verdict/k_dense*/dense-vs-CoMem CI+McNemar 于 aggregate 出（数小时）**。task #141 in_progress。
+> - **B200 .55**：❌ UNAVAILABLE。Monitor http200。
+>
+> **P0.20 阶段B 设计要点（未 loosen 门）**：(1) import P1.9 冻结 DenseRetriever verbatim（同 sha/CLS+L2+cosine），select_topk 全 score dict 恢复任意 k；fail-closed 复现核对 top-12==P1.9 stored dense_sel_idx（按 input_ids_sha256），.104 实测 repro=True。(2) dense 延迟两口径：**Deployment（PRIMARY 定 k_dense*）**=离线预索引→在线 query-encode+flat cosine（CoMem 预存 h12 的对偶）；**Cold-index（SENSITIVITY）**=encode-all（==P1.9 retrieval_latency_ms）。实测 k=2 deploy=7.9ms vs cold=216ms。CoMem 臂 byte-identical 于阶段A（TTFT anchor 同），reader 同 config#2。阶段A（BM25，#137）=NEGATIVE 留作 selector ablation（不删）。
+
+## 当前快照（2026-08-03 18:28 +08:00，heartbeat：✅ P1.8（#139）COMPLETE=VALID（18/18 done，0 abort，crossover json 已出）→ .104 释放 → 立即派 opus agent（abde161e）编码+启动 #1 优先级 P0.20 阶段B（dense，正文主结果候选）于 .104；三长训练全健康）
+> **节点占用（实测 nvidia-smi + log）**：
+> - **LOCAL 8×B200**：P0.5 armA step46020 ppl11.53（1.80s/step，maxmem98.3GB，healthy，不打断，无 plateau）。
+> - **.252 8×B200**：P0.5 armB step45980 ppl12.17（1.77s/step，healthy，不打断，无 plateau）。
+> - **.73 + .82 16×H20**：P1.3 16-card DDP step13220 ppl34.92（4.68s/step，16 卡 100%/98GB，healthy，长训练，无 plateau）。
+> - **.104 8×H20（diskB）**：**P1.8 serving-curve COMPLETE & VALID**（`[p1.8] COMPLETE`，18/18 done markers，store!=recompute=0，crossover json `bench_results/p1_8_serving/p1_8_serving_aggregate.json` 58722B）→ GPU 全 0% 释放 → **派 opus agent（abde161e）承接 P0.20 阶段B（dense）**：扩 P0.20 阶段A harness 消费 P1.9 `retrieval_results/p1_9_dense` BGE 排序、按 dense 检索 cost 重算 equal-latency k*、复跑同 cohort quality+McNemar+bootstrap+decision.json。agent CPU 验证后 RUN=1 于 .104（torch-base，PROJECT_ROOT .104 diskB）。task #137 阶段B in_progress，#139 DONE。
+> - **B200 .55**：❌ UNAVAILABLE。Monitor http200。
+>
+> **P1.8 crossover 结论（#139 DONE）**：CoMem 每 query 分摊后更快——L=32k tier=cpu comemW=2.253s，G1:Q*≈8.9 / G32:9.2 / G128:10.9 / G512:94；tier=gpu G1:Q*≈8.4；@128k G=1 break-even Q*≈26-28（与 P0.2 解析 ≈17-20 一致，larger G 更早）。⚠️ 定位：P1.8=延迟分摊故事（重复 query 同 doc 后 CoMem 更省），P0.20=等延迟质量故事（NEGATIVE）；互补，不得混为「CoMem 赢」。
+
+## 当前快照（2026-08-03 18:00 +08:00，heartbeat：✅ P1.8（#139）store!=recompute bug 已被 opus coder agent 修复+relaunch，selfcheck GATE2 max_abs=0.0 PASS，8 卡 serve pool 运行中（4 runtime job 已 GATE2 PASS）；三长训练全健康）
+> **节点占用（实测 nvidia-smi）**：
+> - **LOCAL 8×B200**：P0.5 armA step44900 ppl12.09（1.78s/step，GPU99-100%，healthy，不打断，无 plateau）。
+> - **.252 8×B200**：P0.5 armB step44840 ppl12.00（1.76s/step，healthy，不打断，无 plateau）。
+> - **.73 + .82 16×H20**：P1.3 16-card DDP step12780 ppl31.16（4.68s/step，16 卡 100%/96GB，healthy，长训练，无 plateau）。
+> - **.104 8×H20（diskB）**：**P1.8 serving-curve RUNNING & VALID**——opus coder agent（a46b637b）已修复 write-once/fetch 对齐 bug 并 relaunch（17:52 起，log logs/p1_8_serving.out）；**manifest 门 PASS + selfcheck GATE2 `store==recompute max_abs=0.0 PASS`**（前一版每 job max_abs=128 abort 的问题已解）；8 GPU flock serve pool 运行（32k/128k × gpu/cpu tier），4 个 runtime serve job 已 GATE2 PASS，store!=recompute 计数=0（17:39 killed-run 陈旧 per-job log 已清理）。task #139 in_progress。
+> - **B200 .55**：❌ UNAVAILABLE。Monitor http200。
+>
+> **P1.8 修复确认**：GATE（store-fetch 选中 h12 == fresh recompute，max_abs≈0）保持严格未 loosen；coder agent 仅改 bench_p1_8_serving_curve.py 复用路径，未动共享模块。ETA serve pool 完成后出 serving curve（TTFT/decode vs store_length×query_count×gen_length×tier）。
+> **P0.20（#1）阶段B（dense，正文主结果候选）仍待编码**：需扩 harness 消费 P1.9 `retrieval_results/p1_9_dense` BGE 排序、按 dense 检索 cost 重算 equal-latency k*。可在下一个空节点派 P0.20 agent（ac5056a0）承接。
+
+## 当前快照（2026-08-03 17:35 +08:00，heartbeat：✅ P0.20（#1）阶段A COMPLETE=NEGATIVE 裁决（.104 释放）→ 立即接 P1.8 serving-curve；但 P1.8 触发 store!=recompute 门（max_abs=128）每 job abort→已 kill→派 opus coder 诊断修复+relaunch（.104 归 agent）；三长训练全健康）
+> **节点占用（实测 nvidia-smi）**：
+> - **LOCAL 8×B200**：P0.5 armA step44300 ppl12.19（1.77s/step，GPU99-100%，healthy，不打断）。
+> - **.252 8×B200**：P0.5 armB step44240 ppl12.03（fresh，healthy，不打断）。
+> - **.73 + .82 16×H20**：P1.3 16-card DDP step12540 ppl32.87（4.69s/step，16 卡 100%，fresh 17:34，healthy，长训练）。
+> - **.104 8×H20（diskB）**：**P0.20 阶段A 已 COMPLETE**（360/360，run-clean，NEGATIVE 裁决）→ 接 P1.8 但 **store!=recompute 门 fail-closed**（每 serve job max_abs=128 abort，无有效数据）→ **已 kill（GPU 全 0%）** → **opus coder agent（诊断+修 bench_p1_8_serving_curve.py 的 write-once/fetch 对齐 bug + relaunch），.104 归该 agent**。不空转。
+> - **B200 .55**：❌ UNAVAILABLE。Monitor http200。
+>
+> **P0.20（#1）阶段A 裁决=NEGATIVE**：等 GPU-resident TTFT（±5%）下 BM25 text-RAG k_RAG*=10 匹配 CoMem(j12,k12)，text-RAG 宏观 64.78 vs CoMem 53.22，**diff=-11.56pp CI[-14.44,-8.67]**（McNemar comem_only_b=41）。逐 cell 几乎全输（longeval 16k -28、qa1 16k -17…），仅 locomo +1 打平。⇒ 瓶颈=cached-state readout，非 retrieval budget；不得包装成 positive Pareto。BM25 结果留作 selector ablation。**阶段B（dense，正文主结果候选）尚未编码**（launcher 无 dense 支持，需扩 harness 消费 P1.9 BGE 排序按 dense cost 重算 k*）。
+> **P1.8 fail-closed 细节**：manifest 门 PASS（LoRA sha dd09cd17… match）；serve/selfcheck 门 abort `store!=recompute max_abs=128.0（cache reuse changed the Read inputs）`——P1.8 独有的 write-once-then-fetch 复用路径 bug（P0.13/P0.16/P0.17 write+read per-example 无此路径故均过）。opus agent 修复中，禁止 loosen 门 tolerance。
+
+## 当前快照（2026-08-03 15:56 +08:00，heartbeat：✅ P1.9 dense-RAG 完成（44/44 cells，guard PASS，dense recall@12 长档崩=Paper A 参照点）→ .104 释放 → 立即启动 #1 优先级 P0.20 阶段A RUN=1（pid208646，manifest+sanity 门 PASS，现 calib 单卡阶段））
+> **节点占用（实测 nvidia-smi）**：
+> - **LOCAL 8×B200**：P0.5 armA（healthy，不打断）。
+> - **.252 8×B200**：P0.5 armB（healthy，不打断）。
+> - **.73 + .82 16×H20**：P1.3 16-card DDP（healthy，长训练）。
+> - **.104 8×H20（diskB）：P0.20 阶段A RUNNING**（pid 208646，torch-base；STEP2 calib-latency 单卡 GPU0 活跃~10.8GB，GPU1-7 设计性短暂空~15-25min（干净单卡计时，故意不补短任务），STEP3 后占满 8 卡~2.5-4h）。P1.9 本轮已完成。
+> - **B200 .55**：❌ UNAVAILABLE。Monitor http200。
+>
+> **P1.9 DONE**：dense-RAG(BGE topk12 no-LoRA) recall@12 随长度衰减（16k babilong qa1=0.52/qa2=0.45，8k~0.90），reader hit-conditional acc 仍高 → 瓶颈在检索非阅读。为 P0.20 阶段B 前置（复用 retrieval_results/p1_9_dense）。
+> **P0.20（#1）RUNNING**：equal-latency frontier，固定 CoMem(j12,k12) 找 k_RAG*（±5% 延迟带）。ETA STEP4 ~3-4.5h。当前无其它空节点（.55 UNAVAILABLE），P1.8 仍排队。
+
+## 当前快照（2026-08-03 15:00 +08:00，heartbeat：✅ P0.18 E4 完成收口（2×2 裁决=Write-side gap，doc-ctx write 闭合，read 位置不是杠杆）；.104 P0.18 跑完→立即接 P1.9 dense-RAG（BGE 已 rsync，provenance PASS，填空窗+P0.20 阶段B 前置））
+> **节点占用（实测 nvidia-smi）**：
+> - **LOCAL 8×B200**：P0.5 armA step38960 ppl12.06（healthy，不打断）。
+> - **.252 8×B200**：P0.5 armB step38840 ppl12.06（healthy，不打断）。
+> - **.73 + .82 16×H20**：P1.3 16-card DDP，GPU100%/96GB（healthy，长训练）。
+> - **.104 8×H20（diskB）**：**P1.9 dense-RAG RUNNING**（pid 153121，8 workers，GPU 19-100%/~19GB，COHORT=min 44 jobs，provenance sha_ok=true，torch-base，log logs/p1_9_dense_rag.out）。**P0.18 已于本轮完成**（全 fail-closed 门 PASS）。
+> - **B200 .55**：❌ UNAVAILABLE。Monitor http200。
+>
+> **P0.18 裁决**：macro A=100/BB(chunk-local,local-pos)=92.5/X(chunk-local,doc-origin-pos)=88/E0(doc-ctx,local-pos)=100/Y(doc-ctx,doc-origin-pos)=100；deployable gap 纯 Write-side（下12层 attn scope），doc-ctx write→100，read RoPE 位置非杠杆（chunk-local 下 doc-origin −4.5pp），两因素 interact（residual+4.5）。⇒ P1.10 若训练针对 Write repr；且 P0.17 E2 已零训练恢复 80-87%，训练很可能不必要（交用户）。
+> **P0.20（#1）**：阶段A harness agent ac5056a0 在 LOCAL 建 ETA~20-25min（不自启动，交 main 命令）；.104 P1.9 跑完接 P0.20 阶段A。P1.9=阶段B dense 前置。
+
+## 当前快照（2026-08-03 14:41 +08:00，heartbeat 续：.104 曾空闲→已用 P0.18 E4 填上（用户问"H20 是否全占用"后立即补卡）；P0.20 agent 改为 build-only 并将交出启动命令，避免与 P0.18 抢 8 卡）
+> **节点占用（实测 nvidia-smi）**：
+> - **LOCAL 8×B200**：P0.5 **armA** step37900+ ppl~11.9（healthy，不打断）。
+> - **.252 8×B200**：P0.5 **armB** step37780+ ppl~12.6（healthy，不打断）。
+> - **.73 + .82 16×H20**：**P1.3** random-init LR2e-5（16-card DDP）step10120 ppl37.75（GPU99%，healthy，不打断；长训练不会很快空出）。
+> - **.104 8×H20（diskB）**：**P0.18 E4 2×2 write-control RUNNING**（pid 145899，8×GPU 全载 ~19-20GB，manifest+pos_sanity 门通过，8 quality shards niah_multikey_1×{8k,16k} 入池；task #138，PYBIN torch-base，日志 /apdcephfs_zwfy6/.../logs/p0_18_e4.out）。**填补了此前 idle 窗口**——scripts 已 rsync wzc1→.104。
+> - **B200 .55（wzc1 独立盘）**：❌ UNAVAILABLE。Monitor http200。
+>
+> **P0.20（#137，用户 #1 优先）调度**：agent ac5056a0 已确认改为 **build-only**（不自启动 GPU），在 LOCAL 建 harness→rsync .104→**把 8-GPU 启动命令交给 main**。main 将在 **P0.18 释放 .104 后（~30-40min）** 或更早有节点空出时启动 P0.20。此举避免两个 8-GPU DDP 撞同 8 卡。
+> **P1.8/P1.9 harness**（commit c32a2c9）排队 #139/#140，.104 空出后按 P0.20→P1.9→P0.18已跑→P1.8 序（P1.9 亦为 P0.20 阶段B 前置）。
+
+## 当前快照（2026-08-03 14:23 +08:00，heartbeat：✅ P0.17 **完全收口**（含 measured latency，已入 notes）；.104 空闲但**为 #1 优先 P0.20 保留**（agent ac5056a0 在 LOCAL 建 harness→自行 rsync+在 .104 起 8-GPU，禁止另起任务抢卡）；三长训练全健康）
+> **节点占用（实测 nvidia-smi）**：
+> - **LOCAL 8×B200**：P0.5 **armA** step37900 ppl11.92（1.76s/step，8×GPU 98-100%，healthy，不打断）。
+> - **.252 8×B200**：P0.5 **armB** step37780 ppl12.61（1.77s/step，healthy，不打断）。
+> - **.73 + .82 16×H20**：**P1.3** random-init LR2e-5 control（16-card DDP），step10120 ppl37.75（4.69s/step，GPU 99%，healthy，不打断）。
+> - **.104 8×H20（diskB）**：**空闲，为 P0.20 保留**。P0.17 latency 微bench 已完成（GPU0，per-arm ms 见 P0_17_E2_NOTES §4：A.read957.7 / B.read681.9=E2.read≈680；B.write262.1→w128 346.8）。P0.20 phaseA harness 由 agent ac5056a0 在 LOCAL 构建中→将自行 rsync 到 .104 并启动 → **main 不在 .104 另起任务**（否则与 agent 的启动撞车）。
+> - **B200 .55（wzc1 独立盘）**：❌ UNAVAILABLE（2× ssh timeout）——不计入可用池。
+> - Monitor http200 OK。
+>
+> **✅ P0.17 latency 收口（14:22，.104 GPU0，single-proc，niah_multikey_1/16k，warmup3×n_repeat20）**：Read 跨 B/E2 一致（~680ms，证明 E2 只改 Write）；deployable j12 Read 比 full-replay A（957.7ms）快 ~29%；Write w0=262.1→w32 311.7(+18.9%)→w64 324.9(+24.0%)→w128 346.8(+32.3%)（wall-clock 含固定 per-chunk 开销，>marginal-FLOPs 1.057×–1.229×）。原始 `bench_results/p0_17_e2_overlap/latency/latency_proc0.json`（顶层 latency.json n_procs=0 为 14:01 陈旧产物）。
+
+## 当前快照（2026-08-03 14:12 +08:00，✅ P0.17 E2 overlap-Write COMPLETE（deployable 修复达标）→ P0.20 equal-latency frontier 成为用户指定 #1 优先并已启动；三长训练全健康）
+> **节点占用（实测 nvidia-smi 对照）**：
+> - **LOCAL 8×B200**：P0.5 **armA** step37400 ppl11.87（1.80s/step，healthy，不打断）。
+> - **.252 8×B200**：P0.5 **armB** step37280 ppl12.08（1.77s/step，healthy，不打断）。
+> - **.73 + .82 16×H20**：**P1.3** random-init LR2e-5 control（16-card IB DDP），.73 GPUs 99-100%/96GB，healthy，不打断。
+> - **.104 8×H20（diskB）**：P0.17 **latency 微bench** 运行中（GPU0 pid143737，~10min，收尾 P0.17 measured per-arm ms）→ 完成后接 **P0.20 phaseA** 8-GPU 质量 sweep（agent ac5056a0 正在 LOCAL 建 harness→rsync 过来）。
+> - **B200 .55（wzc1 独立盘）**：❌ UNAVAILABLE（2× ssh timeout，rc=143）——不计入可用池。
+>
+> **✅ P0.17 E2 overlapping-chunk Write COMPLETE（task #136，.104 8×H20，n=200 paired，真 Qwen3-8B+旗舰 LoRA）**：
+>   - deployable multikey pooled **92.5（w0=Arm B）→ 99.0（best w=128）**，**清过预注册目标 ≥97.0**。E2_w32=98.5（+6.0 [3.0,9.5] p=4.9e-4 b12c0）、w64=98.5（+6.0）、w128=99.0（+6.5 [3.5,10.0] p=2.4e-4 b13c0）；E0 天花板=100.0。
+>   - 回收 **80–87%** 的 E0−B document-context gap，**store bytes/token + Read + decode 与 w0 完全不变**（仅一次性 lower-12 Write FLOPs +5.7%~+22.9%）。gates 全 PASS（LoRA sha dd09cd17…；e2_sanity 两项 max_abs=0；packs_paired_1to1；pack sha 200/200==P1.7；oom=0 nonfinite=0）。
+>   - **裁决**：确认 P0.16 归因（gap=chunk-local Write 缺文档上下文，非 Read 重定位）；E2 是可部署修复（w=32 已近最优最省）→ 候选并入 Cohort-B。commits 873deb2+be2ae80（LOCAL canonical，author LiuHanzuo，未 push）。
+>
+> **🔴 P0.20 equal-latency retrieval-budget frontier（用户 2026-08-03 新增，指定最高优先级；task #137，agent ac5056a0）**：phaseA=BM25 k-sweep k∈{2..24}，text-RAG(j0) vs CoMem(j12) 在匹配 TTFT 下比质量，calib split 冻结 k_RAG*/k_CoMem*（±5%）；复用 config#2/P0.13/P1.7/P0.2 资产；base 协议 chat=False add_bos=0 iter_bm25 seed=42。phaseB（dense retriever）绑定 P1.9。
+>
+> **零训练 harness 并行 build（workflow wg28ofr1v，3 agents，不提交 git，MAIN 集中提交）**：P0.18 E4 2×2 write-control / P1.8 repeated-query serving curve / P1.9 dense-retriever RAG（P1.9 亦为 P0.20 phaseB 前置）。就绪后按节点空闲排队上 .104。
+>
+> **P0.19 已收口**：#131 DONE via CPU recompute（`paperA/P0_19_decomp_NOTES.md` commit b9dc847）；TODOList TODO→DONE。#135 RULER paired GPU leg = 低优先/可选（seed bug 已修 d1e1389，无 paper table 依赖）。
+> **Monitor**：http200 OK。
+
+## 当前快照（2026-08-03 13:43 +08:00，✅ Paper A P0.16 E0 write-control COMPLETE→write-path gate 决定性通过→P0.17 E2 GO 已启动@.104；三长训练全健康）
+> - **✅ P0.16 E0 document-contextual Write control COMPLETE（task #130 done）**：`bench_results/p0_16_e0_write_control/`（.104 diskB），n_paired=200 n_cells=2。
+>   - **macro：A(full replay)=100.0 / C(continuous-pack oracle)=100.0 / E0(doc-ctx Write)=100.0 / B(chunk-local deployable)=92.5**。
+>   - **A−E0=+0.0 CI[0,0] McNemar p=1；C−E0=+0.0 CI[0,0] p=1（E0 与 A/C 逐位一致，both=200）**；**E0−B=A−B=C−B=+7.5pp CI[4.0,11.5] McNemar b=15/c=0 p=6.1e-5**。per-cell：8k B=94.0(E0−B=+6.0)、16k B=91.0(E0−B=+9.0)。
+>   - fail-closed 全过：`packs_paired_1to1=True p013_sha_match=True oom=0 nonfinite=0`；e0_h12_sanity `max_abs=0.000e+00`（前 gate）。agreement A_vs_E0 first_token=0.855 cos=0.9963、B_vs_E0 first_token=0.91。
+>   - **决策（pre-registered rule 命中）：E0 ≈ A/C 且 ≫ B → deployable A-B gap 全部来自 chunk-local Write 缺文档上下文；Read 接口/repositioning 近乎无损 → P0.17（E2 overlap Write）trigger 满足 → GO。**
+> - **✅ P0.17 E2 overlapping-chunk Write control 已启动@.104 8卡（task #136，coder aa927039 opus 在跑：建 `scripts/eval_p017_e2_overlap_write.py`（import P0.16 machinery 保 A/B/C/E0 逐位不变）+ `scripts/_run_p017_e2_8gpu.sh`→commit（author LiuHanzuo 无署名 未 push 仅指定文件）→rsync wzc1→.104→8卡 launch→验 gate→报 per-w）**：
+>   - E2=每 512-tok chunk 带左 prefix w∈{32,64,128} 跑下-12、弃 prefix 态、只存原 512 chunk h12（persistent bytes/token、Read pack、Read compute 与 Arm B 不变，仅 Write compute↑）。arms A/B(=w0)/E2_w32/E2_w64/E2_w128/E0，cohort=niah_multikey_1 {8k,16k} n=100（同 200 paired）。pre-reg 目标 multikey pooled 92.5→≥97.0。
+> - **✅ 三长训练全健康（绝不打断）**：P0.5 armA(LOCAL B200 contig16) ~step35k ppl~12.3 1.80s/step；armB(.252 final14+2fresh) ~step35k ppl~12.3 1.77s/step（未近 1-2% 平台）；P1.3(.73+.82 16卡 IB DDP from-scratch16L uniform lr2e5) ~step9k ppl~40.7 4.69s/step（冷启正常降）。ETA P0.5 ~3天到 200k；P1.3 待 B200 空迁移。到平台记 200k endpoint。
+> - Monitor 8088 http200 OK。本轮：0 kill；**1 GPU launch（P0.17 E2@.104 8卡，task #136；.104 held-for-PaperA 兑现 P0.16→P0.17 接力）**；2 后台 coder 在跑（aa927039 P0.17 build+launch、aeec7b55 RULER seed-pairing fix #135）。**MAIN 待办**：aa927039 完→复核 commit 干净+gate 过+per-w 数字→回填 paperA/TODOList P0.17 + mechanism table；aeec7b55 完→确认 `PAIRED_RULER_CLAIM_FOUND` 口径→#135 GPU leg 排队待 H20 空；#132 排 diskB H20（Paper A 优先后）；#133/#134/#103 待 B200 空。
+> - 旧快照（2026-08-03 13:05）保留于下方 →
+
+## 当前快照（2026-08-03 13:05 +08:00，✅ Paper A P0.16 E0 write-control LAUNCHED@.104（held-for-PaperA 落点兑现）；三长训练全健康）
+> - **✅ P0.16 E0 document-contextual Write control 已启动@.104 8卡（task #130，coder ab9637a done→commit 2ae5917，author=LiuHanzuo 无 AI 署名 未 push，仅 3 文件含新 paperA/P0_16_E0_NOTES.md 无 TODOList/.tex/status）**：
+>   - **两道 gate 在真 Qwen3-8B 全过（E0 有效性确证）**：manifest `OK — LoRA sha dd09cd17… 168 modules layers[12..35]`；**e0_h12_sanity `max_abs=0.000e+00`（ref_abs_max=8576，tol=5e-2）PASS** → E0 的 document-contextual 下-12 前向与 stock 下-12 逐位一致（LoRA 在 12..35，hidden[12] adapter-independent）。
+>   - cohort=min：`niah_multikey_1 × {8k,16k}`，n=100/cell，4 臂（A=j0 full replay / B=j12 chunk-local deployable / C=j12 continuous-pack oracle / E0=j12 doc-ctx），4 shards/cell 跨 8 卡；8 worker 全起 ~18.8GB/卡 37-100%util（H20 97.8GB 余量足）。`--verify --p013_manifest_dir bench_results/p1_7_h12_oracle`（pack-sha 交叉校验 active）。log `logs/p0_16_e0.out` + `logs/p0_16_e0/`；输出 `bench_results/p0_16_e0_write_control/`（.104 diskB）。
+>   - **同步 wzc1→.104**：2 新脚本 committed 于 wzc1，.104 是独立 diskB 卷→已 rsync（exit0）+ .104 bash -n/py_compile(torch-base) 双过。E0-vs-B 隔离 document-context 价值、E0-vs-C 隔离 repositioning 代价（framed 为 cross-query-reusable doc-ctx control，非严格上界）。
+> - **✅ Paper C P-C1 follow-up harness coder（a7ed839）done→commit cd0f527（仅 2 脚本 +446 行，author=LiuHanzuo 无署名 未 push，bash -n 双过，无 protected files）**：#132 second-task eval（`scripts/_run_paperC_secondtask_8gpu.sh`，须跑在有 P-C1 ckpt+squad npy 的 diskB H20，排 P0.16 之后）；#133 depth-sweep keep{20,24,28}（`scripts/run_paperC_depthsweep.sh`，header DO-NOT-AUTORUN，待 B200 空 P0.5~3天）。
+> - **P0.19（#131）coder abedcb7 仍在跑**：`scripts/analyze_p019_recall_readout.py` 已落盘（12:54）但未发完成通知→等其 completion+verification 再起（CPU-only，不占卡，可与 P0.16 并行）。
+> - **✅ 三长训练全健康（绝不打断）**：P0.5 armA(LOCAL B200 contig16) step34940 ppl12.29 1.80s/step；armB(.252 final14+2fresh) step34780 ppl12.29 1.77s/step（~7% over 17k steps 未近 1-2% 平台）；P1.3(.73+.82 16卡 IB DDP from-scratch16L uniform lr2e5) step8940 ppl40.70 4.69s/step 96GB（冷启正常降）。ETA P0.5 ~3天到 200k；P1.3 待 B200 空迁移。到平台记 200k endpoint。
+> - Monitor 8088 http200 OK。本轮：0 kill；**1 GPU launch（P0.16 E0@.104 8卡，task #130 in_progress）**。**MAIN 待办**：P0.16 完→aggregate→mechanism-table rows + P0.17/P0.18 attribution 决策；P0.19 coder 完→立即起（CPU）；#132 排 P0.16 后（diskB H20）；#133/A1 待 B200 空。
+> - 旧快照（2026-08-03 12:33）保留于下方 →
+
+## 当前快照（2026-08-03 12:33 +08:00，✅ P-C1 orchestrator DONE→全 4 臂 SQuAD EM/F1 落地→.104 8卡空出(用户预留给 Paper A)；三长训练全健康）
+> - **✅ P-C1 orchestrator DONE @12:31:36（task #92，SQuAD dev n=2000，同 base 口径）**：
+>   | arm | EM | F1 |
+>   |-----|-----|-----|
+>   | A2_lora_r160（全32L LoRA r160，param-matched） | **0.6590** | **0.7139** |
+>   | BASE_ref（基座参考） | 0.3385 | 0.3999 |
+>   | A4_hero（freeze-graft keep14+2fresh） | 0.2930 | 0.2970 |
+>   | A3_fromscratch（16L from-scratch bnb8bit） | 0.2605 | 0.2612 |
+>   - **freeze-graft(A4) > from-scratch(A3) +3.2pp EM / +3.6pp F1**（Paper C 核心对照方向成立）；但两个剪枝-16L 变体均 < 全模型 LoRA(A2) 且 < BASE_ref → 需 Paper C 正面框定（剪枝容量损失 vs 1000-step/1.58M-token SFT 恢复量级）。**已派 researcher（a64858a）分析 EM/F1 口径核实 + framing + 是否补 A1 天花板；不改 .tex/TODOList，回填由 MAIN。**
+>   - **A1 full-FT-32L 仍 NEEDS B200**（H20 OOM，7B fp32-AdamW）→待 B200 P0.5 空出后补跑作天花板参照（researcher 将给建议）。
+>   - raw：`paperC_squad_results/{A2_lora_r160,A3_fromscratch,A4_hero,BASE_ref}/shard0of1.json`；orch log `logs/paperC_pc1_orch.log`。
+> - **✅ .104 8×H20 全空出（用户 2026-08-03 指令"空一台 H20 给 Paper A"的落点）**：2 个 Paper A harness coder 在建（P0.16 E0 write-control #130 = ab9637a、P0.19 recall×readout 分解 #131 = abedcb7），**harness ready 即启动**：P0.19（CPU-only 分析）立即起、P0.16（zero-training GPU eval，是 write-path 训练的 gate）8卡起，**排在 Paper B P2.2/P2.5(#128/#129) 之前**（H20=PaperA-first）。**本轮 .104 held for Paper A（用户明确预留 + harness 临近，属正当 hold 非空转）**。
+> - **✅ 三长训练全健康（绝不打断）**：P0.5 armA(LOCAL B200 contig16) step34220 ppl12.09 1.80s/step；armB(.252 final14+2fresh) step34060 ppl12.41 1.77s/step（armA 自 17.6k 的 ppl13.22 降至 34.2k 的 ~12.1，>15k 步内 ~9% 未近 1-2% 平台→继续）；P1.3(.73+.82 16卡 IB DDP from-scratch16L uniform lr2e5) step8680 ppl40.82 4.69s/step 98.3GB（冷启正常降 211→41）。ETA P0.5 ~3天到 200k；P1.3 待 B200 空迁移(--resume_from)。到平台记 200k endpoint。
+> - Monitor 8088 http200 OK。本轮：0 kill；0 GPU launch（.104 held for Paper A，harness 未 ready）；1 researcher 派发（P-C1 EM/F1 分析）；task #92 4/5 臂 EM/F1 全落地（A1 待 B200）。**MAIN 待办**：researcher 回来后回填 paperC 文档（EM/F1 表 + framing）；harness ready 后 launch P0.16/P0.19@.104；A1 待 B200 空补跑。
+> - 旧快照（2026-08-03 08:23）保留于下方 →
+
+## 当前快照（2026-08-03 08:23 +08:00，✅ P-C1 A4+A3 完成→A1 full-32L OOM 标 NEEDS B200→orchestrator 自动进 A2 LoRA 跑起；三长训练全健康）
+> - **✅ P-C1 A3 from-scratch 16L 完成**（bnb8bit，`outputs/paperC_pc1_squad_A3/final.pt` 24.5GB @08:04，train ppl→1.00 属预期记忆；held-out SQuAD dev EM/F1 才是 headline）。A4(hero)+A3 两臂 final.pt 均在盘。
+> - **⚠️→✅ A1 full-FT 32L 标 NEEDS B200（orchestrator 自动处理，非 bug）**：08:09 A1(keep32/fresh0，7B 全参 bnb8bit AdamW，BS2/GA8)起→无 final 崩(H20 OOM：7B fp32 params+grads+8bit optim m/v ~70GB+activation>95GB)→08:09 自动降 BS1/GA16 重试→08:12 仍崩→标 "A1 STILL no final -> NEEDS B200" 并 **fault-tolerant 跳过**，08:12:35 自动进 A2。**A1 延迟到 B200 空**（P0.5 两臂 ~3.5天到 200k 后；B200 183GB 可 fp32-AdamW 跑满 7B，1000 步 ~15min）。
+> - **✅ A2 param-matched LoRA r=160 正在跑@.104**：step40/1000 loss0.41 ppl1.51（step10 0.73→稳定下降）15.09s/step **maxmem36.5GB OOM=0** 8卡100%util。ETA ~4.2h→~12:30 final。这是 .104 上 P-C1 最后一个训练臂，完后 orchestrator 跑逐臂 SQuAD dev EM/F1(A4_hero/A3_fromscratch/A2_lora_r160 + BASE_ref；A1 缺待 B200)。
+> - **✅ 三长训练全健康（绝不打断）**：P0.5 armA(LOCAL B200 contig16) step25900 ppl12.51 1.79s/step；armB(.252 final14+2fresh) step25660 ppl13.11 1.77s/step；P1.3(.73+.82 16卡 IB DDP from-scratch16L uniform lr2e5) step5480 ppl50.96(冷启正常降 211→51)4.69s/step 98.3GB。ETA P0.5~3天到 200k；P1.3 待 B200 空迁移。到平台记 200k endpoint。
+> - Monitor 8088 http200 OK。本轮：0 kill；0 launch（orchestrator 自主 A3→A1(崩)→A2 链，无 idle 卡）。**MAIN 待办**：A2 完+逐臂 EM/F1 落地后回填 paperC 文档（subagent 不碰 .tex/TODOList）；A1 待 B200 空补跑。
+> - 旧快照（2026-08-03 05:32）保留于下方 →
+
+## 当前快照（2026-08-03 05:32 +08:00，✅ P-C1 A4(hero) 完成 final.pt→orchestrator 进 A3；A3 fp32-AdamW OOM→已诊断+改 bnb8bit 重启跑起；三长训练全健康）
+> - **✅ P-C1 A4 freeze-graft HERO 完成**（`outputs/paperC_pc1_squad_A4/final.pt`+step500.pt 在盘，train ppl→1.00，held-out SQuAD dev EM/F1 才是 headline，训练 loss 记忆到 1.0 属预期无害）。
+> - **⚠️→✅ A3 from-scratch 崩溃已修（本轮 Step-2 处理）**：05:10 orchestrator 起 A3(from-scratch 16L 4.06B **全参 fp32 AdamW**)→05:12 **8 卡全 CUDA OOM**（每卡试 alloc 3.06GB，仅剩 508MiB）——正是"4B 全参 fp32-AdamW 单 H20 装不下"（A4 能装因 freeze-graft 只 1.23B 可训）。**根因非 bug 是显存**。另发现 orchestrator 一个 latent bug：其 `pgrep -f 'train_olmo2_(...)'` 崩溃检测被残留启动 shell(pid25135，cmdline 含 "train_olmo2_lora_sft.py")误匹配→本会空转到 3600s timeout(~06:12)才 advance。**修复**：kill 25138(orchestrator)+25135(poison parent)→sed A3 launch 行加 `OPT=bnb8bit`(A1 早已 bnb8bit)→无 py_compile 包装干净重启(pid53773，不留 poison shell)。A3-bnb8bit 已跑起：`using bitsandbytes AdamW8bit`、**OOM=0**、8 卡 100%util **83.7GB**(8-bit optimizer 省 ~11GB 装下 4.06B)。orchestrator 将链 A3→A1(bnb8bit)→A2(LoRA)→逐臂 SQuAD dev EM/F1 + base ref。
+> - **✅ 三长训练全健康（绝不打断）**：P0.5 armA(LOCAL B200 contig16) step20120 ppl12.68 1.76s/step；armB(.252 final14+2fresh) step19900 ppl13.03 1.76s/step；P1.3(.73+.82 16卡 IB DDP, from-scratch16L uniform lr2e5) step3300 ppl67.75(冷启正常下降 211→67)4.70s/step 98.3GB。ETA P0.5~3.5天到 200k；P1.3 待 B200 空迁移(--resume_from)。到平台记 200k endpoint。
+> - Monitor 8088 http200 OK。本轮：2 kill（.104 stuck orchestrator+poison parent，无结果浪费）；1 relaunch（P-C1 orchestrator A3-bnb8bit@.104，task #92）。**bnb8bit 偏离记录**：A3 从 fp32-AdamW 改 8-bit（与 A1 一致，B200 忙~3.5天不可用+no-idle 铁律；8-bit Adam 逼近 fp32，EM/F1 定性结论稳健）。
+> - 旧快照（2026-08-03 03:20）保留于下方 →
+
+## 当前快照（2026-08-03 03:20 +08:00，✅ Paper C P-C1 coder 完成+已核实(.104 8卡~99%util、A4 step110 ppl15.9 健康下降、orchestrator pid25138 活)；三训练全健康；重要 DDP module.前缀 bug 已修保 hero 臂有效性）
+> - **✅ Paper C P-C1 coder（a67afcb2）完成 + MAIN 已核实（task #92 仍 in_progress，训练 overnight 跑）**：
+>   - **A4 freeze-graft HERO 真跑起**（.104 8×H20 ~99% util 56GB/卡）：keep14+fresh2 冻前14、`frozen=2833.5M trainable=1226.9M`（匹配 scoping），移植 6 sanity check 全过（copied=157==157、max|Δ|=0.0、fresh q_std=0.02）。log `logs/paperC_pc1_squad_A4.log` step110/1000 loss2.77 ppl15.9（from step10 ppl>1e4 快速健康下降）、7.34s/step、ETA~1h50m。fp32 AdamW，lr_fresh=1e-4/lr_inh=2e-5，eff_bs128。
+>   - **⚠️ coder 发现并修复关键 validity bug**：首次 A4 optimizer 只建一个组（全部 param 落到 inherited@2e-5，fresh cap 随机初始化被以 15× 过低 LR 训）——根因 `build_param_groups` 在 DDP wrap 之后跑，`named_parameters()` 带 `module.` 前缀使 `_classify_param` 的 startswith 全 miss。已修（strip `module.`），kill 重启，现正确 `fresh_decay 815.8M@1e-4 + inh_decay 411.0M@2e-5`。**P1.3 不受影响**（已在跑的进程不受磁盘 edit 影响；且 from_scratch 短路到 fresh；且 P1.3 uniform LR 分组无关）。
+>   - **overnight orchestrator**（`scripts/paperC_pc1_orchestrate.sh` setsid pid25138 活）：等 A4 final.pt→顺序链 A3(from-scratch16L,fp32 AdamW single-LR 3e-4)→A1(full-FT 32L,**bnb 8-bit AdamW** BS2/GA8,7B 全参 fp32 单卡 OOM 故偏离,失败自动降 BS1/GA16 再标 NEEDS B200)→A2(param-matched LoRA r=160→399.8M≈A4 fresh405M,bf16 冻 base+fp32 LoRA)→逐臂 SQuAD dev EM/F1 headline eval + base 参考。orch log `logs/paperC_pc1_orch.log`，fault-tolerant（失败臂记录并继续）。
+>   - **数据**：`tokenize_squad_olmo2_sft.py` 把 `data/squad_train.jsonl`（零下载风险）packed [N,2048]→770 chunks/1.58M tokens；因数据小 max_steps 2000→**1000**（~166 epoch，2000=332 epoch 纯记忆），eff_bs 保 128 跨臂可比。4 臂同 shard 同 loss（full-LM over packed，answer-only mask 延后）。
+>   - **代码 commit `7a330ce`+`9b44e9f`（MAIN 已核实：author=LiuHanzuo，纯 scripts，无 *.pt/*.bin/password）**，rsync .104。新增 tokenize/train_lora/eval_emf1/3 launchers；additive `--optimizer {adamw,bnb_adamw8bit}` + `_classify_param` strip module. 修复。未 push（heartbeat 不 push）。
+>   - **MAIN 待办**：orchestrator overnight 出 A4/A3/A1/A2 × {EM,F1} + downstream MC 后，MAIN 回填 paperC 文档（subagent 不碰 .tex/TODOList）；A1 若标 NEEDS B200 则待 B200 空。
+> - 旧快照（2026-08-03 02:20）保留于下方 →
+
+## 当前快照（2026-08-03 02:20 +08:00，✅ P0.8 eval 完+回填结项(full32≈base 闭合 P1.1)→.104 空出→按用户预批准起 Paper C P-C1 freeze-graft@.104；三训练(2×B200 P0.5 + .73/.82 P1.3)全健康）
+> - **✅ P0.8 结项 + 回填完（task #126 completed）**：full32@25k closed-book QA 全出（PopQA em .1842/contains .2280/f1 .2348；TriviaQA em .5715/contains .6838/f1 .6389；NQ-open em .1582/contains .2443/f1 .2369），**full32 ≈ base ≫ keep14@200k**→坐实"知识损失来自 pruning/policy 而非续训 corpus shift"。MAIN 已回填 paperB/TODOList P0.8 §（DONE + 3臂对照表 + 结论 + raw path）+ tonight-queue item2 标 DONE + P1.1 §"剩余缺口"改为闭合。.104 8卡随之空出。
+> - **✅ Paper C P-C1 freeze-graft 已启动@.104 8×H20（task #92，用户 2026-07-27 option1 预批准"LoCoMo 空出 .104/.73 时自动起"，LoCoMo 早已完成→节点真空出→触发；coder agent 后台）**：minimal-viable slice = 4 臂（A4 freeze-graft HERO=keep14+fresh2 冻前14只训 fresh2+norm+lm_head / A3 from-scratch 16L 深度匹配 / A1 full-FT 32L 基线 / A2 param-matched LoRA），finetune task=**SQuAD**（`data/squad_{train,val}.jsonl` 已在盘，零 proxy 下载风险），seq2048 eff_bs128 ~2000 steps，headline=SQuAD dev EM/F1 + downstream MC。**⚠️ 显存注意**：A1 full-FT 7B / A3 16L 4B 全参 fp32-AdamW 单卡 H20 恐 OOM（keep16 实测 4B fp32-AdamW 单 H20 装不下）→ agent 授权用 8-bit bnb Adam 或减 batch+加 ga 保 eff_bs128 并注明 optimizer 偏离；跑不动的臂标注需 B200，先保 A4/A3/A2。**freeze-graft 是本次核心臂**。~154 GPU-h ≈ 单 8×H20 ~2.2 天（远早于 B200 迁移窗）。代码 fork（SQuAD tokenizer + full_ft/LoRA path + eval）在 LOCAL commit 后 rsync .104。
+> - **✅ P1.3 LR-matched init 训练健康（task #127，绝不打断）**：.73+.82 16卡 IB DDP，step 840 loss 5.35 ppl 211（from-scratch cold-start 正常，PPL>100 规则不适用冷启）、4.71s/step、16卡100%util 98.3GB。output `outputs/olmo2_p13_scratch16_lr2e5_uniform`，commit c57c4cb。ETA H20≈10.8天→待 B200 P0.5 空出(~3.7天)MAIN 迁 B200(--resume_from)。到平台记 200k endpoint。⚠️ 正确 log 名 `logs/olmo2_p13_scratch16_lr2e5_rank{0,1}.log`（非 _node0）。
+> - **✅ 两 B200 P0.5 训练健康（#118，绝不打断）**：LOCAL Arm A(contig16) step 13720/200k ppl~13.6 1.79s/step；.252 Arm B(final14+2fresh) step 13420/200k ppl~13.9 1.77s/step；98.3GB、8卡~99%。ETA ~3.7 天到 200k，未近平台。到平台记 200k endpoint（#103 matched-PPL dense-save re-heal + P1.2 keep14 multi-seed + P0.2 均等 B200 空——4B 全参 fp32-AdamW H20 装不下且 DDP 复制非分片 optimizer，2节点 H20 也不解）。
+> - **节点分工遵从（用户 2026-08-02 指令）**：H20 优先 eval→eval 队列排空(PaperA 全 DONE + PaperB depth-ladder/ShortGPT endpoint 全 DONE)→.104 接 P-C1（Paper C 训练，属"节点空出优先补待跑"，且 P-C1 是唯一能在单 H20 跑的 freeze-graft 小可训参训练；重训练 P1.2/P0.2 保留给 B200）；B200 优先长训练(P0.5 满载)。
+> - Monitor 8088 http200 OK。本轮：0 kill；1 launch（P-C1 freeze-graft@.104，task #92）；task #126 completed。
+> - 旧快照（2026-08-03 00:45）保留于下方 →
+
+## 当前快照（2026-08-03 00:45 +08:00，✅ 依用户新指令 kill 两 P0.4 延伸 agent→按今晚队列起 P0.8 eval@.104 + P1.3 训练@.73+.82 16卡DDP；两 B200 P0.5 训练健康）
+> - **⚠️ 纠正 00:31 快照**：用户 00:32 更新 paperB/TODOList 明列「2026-08-03 运行任务审计与今晚队列」——**不要重复运行 P0.4（已有结果，下一步是回填）**。故本轮 kill 掉两个 P0.4 延伸 agent（控制臂 traj ad0ce28a、keep12 dense traj ada06870），二者均**未产出结果**（keep12 仍在传 ckpt、控制臂仍在 stage rsync），无浪费；删 task #125。改按今晚队列起下面两项。
+> - **✅ P0.8 full32@25k closed-book QA eval（纯评测，队列第 1 优先，task #126，agent a06d44436931e2db3）@.104 8卡**：闭合 P1.1 原验收的 knowledge-task 腿（full32 无需重训）。rsync `outputs/olmo2_probe2_7B_full32_dolmino/step25000.pt`（87.6GB，LOCAL→.104 共享 diskB 卷，一次）→ `_run_closedbook_8shard.sh` 跑 PopQA(n=14267)/TriviaQA(rc.nocontext val n=17944)/NQ-open(val n=3610)，keep_front=32/n_fresh=0，base 协议(chat=False/add_bos=0/zero-shot/no-retrieval/greedy)。判 full32 是否≈base（若≈base→加强"知识损失来自 pruning/policy 而非续训 corpus shift"）。MAIN 待回填 paperB/TODOList P0.8。
+> - **✅ P1.3 LR-matched init 控制训练 已启动+健康（队列第 4 项，task #127，agent a4acb6669f89a4f8f）@.73+.82 16卡 DDP over IB(RoCE v2 200Gbps)**：`train_olmo2_arch_probe2.py --from_scratch --keep_front_layers 14 --n_fresh_layers 2 --lr 2e-5 --lr_inherited 2e-5`（uniform 2e-5，与 keep14 严格同 LR，去除现有 fromscratch 臂 lr_fresh=1e-4 的 init×LR 混杂；arch_meta 确认 scratch16L/from_scratch:true/16L 4.06B/seed42）。eff_bs 128（world16×bs2×ga4，log 确认）、seq2048、200k、save_every5000（rolling-retention 永久保留每 5k 里程碑→50k/100k/150k 自动留）、新唯一 output_dir `outputs/olmo2_p13_scratch16_lr2e5_uniform`。**step80 loss 8.17 健康、4.68s/step、16卡~100%util 96GB、无 NaN/NCCL timeout**。.73=rank0 master(29517)、.82=rank1。**⚠️ 纠正前置条件**：base trainer 原本**无** `--seed` flag（只在 sibling P0.5 trainer 有）→ agent 加了 additive `--seed`（commit **c57c4cb**，未 push，unset 时无行为变化）+ mirror set_seed。**IB 坑修复**：首launch 8-rank/node GDR MR 注册崩(`ibv_reg_mr_iova2 failed`，1-rank smoke 未暴露)→ `NCCL_NET_GDR_LEVEL=0 NCCL_IB_PCI_RELAXED_ORDERING=1` 关 GDR 保留 IB/RoCE 传输，16-rank smoke PASS。runner `scripts/run_olmo2_p13_node.sh` + smoke `scripts/_nccl_smoke_2node.py` 新增。**ETA on H20 ≈10.8天（4.68s/step×200k）→ 待 B200 P0.5 空出(~3.8天)由 MAIN 迁 P1.3 到 B200(1.77s/step)加速（--resume_from 支持 model+opt+RNG 干净续）**。到平台记 200k endpoint。
+> - **✅ 两 B200 P0.5 训练健康（#118，绝不打断）**：LOCAL Arm A(contig16) step 10120/200k ppl13.36 1.79s/step；.252 Arm B(final14+2fresh) step 9840/200k ppl14.36 1.76s/step；98.3GB、8卡满。ETA ~3.9 天到 200k，未近平台。到平台记 200k endpoint（#103 matched-PPL dense-save re-heal 亦需等 B200 空）。
+> - Monitor 8088 http200 OK。本轮：2 kill（P0.4 延伸 agent，无浪费）；2 launch（P0.8 eval@.104、P1.3 训练@.73+.82）；删 #125，建 #126/#127。
+> - 旧快照（2026-08-03 00:31，已被本快照纠正/取代）保留于下方 →
+
+## 当前快照（2026-08-02 23:56 +08:00，✅ P0.3 NQ-open 全完+回填（3 free-form 知识 benchmark）→接 keep12 dense-trajectory paired MMLU（P0.4 加固）；两 B200 训练健康）
+> - **✅ P0.3 第 3 个 closed-book benchmark（Natural Questions open）全完 + 回填**（agent a56c04b3）：NQ validation n=3610，harness 加 `nq_open` branch commit **9fabb88**（向后兼容不改 PopQA/TriviaQA）。**主分离在 3 任务一致大幅**：base_full em 0.2050 ≫ 全部剪层-heal 变体 ≤0.063（PopQA/TriviaQA 同）→ 续训不恢复参数化知识，泛化到 3 个 free-form 知识 benchmark。细序：keep14>frozen>random 在 PopQA/TriviaQA 干净成立，**NQ em headline 上 random(.0632)≳keep14(.0598)>frozen(.0496)**（random 以 ~0.33pp 噪声级微超 keep14），但 NQ contains/f1 上 keep14 重回榜首、frozen 三任务稳定最低。净判：分离方向泛化，keep14>random 细序在 NQ em 为噪声级、措辞需弱化。回填 paperB/TODOList P0.3（表+3-benchmark 结论+raw 路径+infra 记录）。
+> - **✅ 24 H20 空出→接 keep12 dense-trajectory paired MMLU（P0.4 加固，agent ada06870）**：keep12（14L shell，keep_front12+fresh2）是**唯一有 dense on-disk 轨迹的 heal 臂**——LOCAL wzc1 有 5k..111.5k 每 5k 一点（24 点），.73/.82 有 115k/120k/123.5k/124k(endpoint)。P0.4 主体只有 keep14/keep8 各 2 点稀疏配对，keep12 dense 轨迹直接补 P0.4 文档写明的 limitation。目标 8 点（5k/40k/75k/111.5k 从 LOCAL rsync 到 .73 + 晚段 4 点已在盘），复用 `_run_olmo2_mmlu_peritem_kf_8gpu.sh`(KF=12) + `analyze_traj_paired_mmlu.py`，相邻步+每点 vs endpoint McNemar exact+bootstrap CI。在 .73 单节点 8 卡。带宽慢则降级 2 点。
+> - **✅ 两 B200 P0.5 训练健康（#118）**：LOCAL Arm A(contig16) step 8920/200k ppl13.92；.252 Arm B(final14+2fresh) step 8600/200k ppl14.35；~1.76s/step、98.3GB、8卡满。ETA ~4 天，到平台记 200k endpoint。绝不打断（#103 matched-PPL dense-save re-heal 亦需等 B200 空）。
+> - Monitor 8088 http200 OK。本轮：0 kill；1 launch（keep12 traj paired MMLU @.73，agent ada06870）；P0.3 NQ-open 回填结项。
+> - 旧快照（23:39）保留于下方 →
+
+## 当前快照（2026-08-02 23:39 +08:00，✅ P0.4 trajectory 配对完+回填→24 H20 空出→接 P0.3 可选第3 benchmark NQ-open 加固；两 B200 训练健康）
+> - **✅ Paper B P0.4 trajectory 配对 MMLU 全完 + 回填**（task #124 completed，agent a685a4bb）：checkpoint-to-checkpoint 同题 flip 分析，只跑盘上可行对。**keep14 128k→200k**：n=14042，wrong→right=1038 / right→wrong=802，**Δ+1.681pp，McNemar exact p=4.12e-08（显著）**，bootstrap CI[+1.075,+2.286]pp，gold-NLL Δ−0.0210 → 深臂 apex→endpoint 有显著 knowledge gain。**keep8 45k→121k**：n=14042，Δ+0.235pp，**p=0.553（n.s.）**，CI[−0.513,+0.983]，gold-NLL Δ−0.0388 → 浅臂（≈chance .25）MMLU 无显著变化但 calibration 仍改善。回填 paperB/TODOList P0.4 表+notes。计划里 keep14 153.5k / keep8 10k/25k/44k 因盘无 ckpt 标注不可做。
+> - **✅ 24 H20 再空出→接 P0.3 可选第 3 个 closed-book knowledge benchmark（Natural Questions open）**：P0.3 plan 明列的可选加固项，把 free-form 知识 benchmark 从 2→3（PopQA+TriviaQA+NQ），复用 harness `eval_olmo2_closedbook_qa.py`（加 `nq_open` task 分支），5 模型 × NQ-open em/contains/f1，base 协议(chat=False/add_bos=0/zero-shot/no-retrieval)，检验 matched keep14-triad 是否与 MMLU/PopQA/TriviaQA 同序同向。agent a56c04b3 后台跑，分 .73/.104/.82 三节点加速。**判定=可选加固，非必需**。
+> - **✅ 两 B200 P0.5 训练健康（#118）**：LOCAL Arm A(contig16) step 8460/200k ppl14.03；.252 Arm B(final14+fresh2) step 8120/200k ppl14.18；~1.78s/step、98.3GB、8卡满。ETA ~4 天，到平台记 200k endpoint。绝不打断（#103 matched-PPL dense-save re-heal 也需等 B200 空出）。
+> - Monitor 8088 http200 OK。本轮：0 kill；1 launch（P0.3 NQ-open @.73/.104/.82，agent a56c04b3）；P0.4 回填结项 #124。
+> - 旧快照（23:05）保留于下方 →
+
+## 当前快照（2026-08-02 23:05 +08:00，✅ #103 P2.8 McNemar 全完+回填→24 H20 空出→接 P0.4 trajectory 配对；两 B200 训练健康）
+> - **✅ #103 P2.8 per-item McNemar 全完 + 回填**（agent a70d2dbc）：三 matched 臂 @200k per-item MMLU（n=14042，复现 ledger keep14 .318/frozen .263 ±0.005）。**headline gap keep14 vs frozen Δ+5.50pp，McNemar exact p=6.99e-27，bootstrap 95% CI [+4.51,+6.49]pp**；keep14 vs scratch Δ+7.11pp p=1.64e-46 CI[+6.14,+8.09]；frozen vs scratch Δ+1.61pp p=2.59e-03 CI[+0.58,+2.64]——三臂 knowledge 排序每对均显著。回填 paperB/TODOList line98/101/103/104。#103 仅剩 strict matched-PPL 腿 BLOCKED（需 dense-save re-heal，属 B200 训练，两 B200 忙 P0.5 不打断）。
+> - **✅ 24 H20 再空出→接 P0.4 trajectory 配对 MMLU（task #124，coder a685a4bb）**：checkpoint-to-checkpoint 同题 flip 分析。**盘上现实**：keep14 只有 128k/200k（153.5k 已清）、keep8 只有 45k/47.5k/48k/121k（无 10k/25k/44k）→ 只跑可行对 **keep14 128k→200k**（200k jsonl 复用 P2.8）+ **keep8 45k→121k**；计划里 153.5k/keep8 早期点因盘无 ckpt 标注不可做。keep14@128k dump→.73，keep8→.104。复用 harness `_run_olmo2_mmlu_peritem_8gpu.sh`（8dd4694）。
+> - **✅ 两 B200 P0.5 训练健康（#118）**：LOCAL Arm A step 7080/200k ppl14.14；.252 Arm B step 6740/200k ppl14.72；~1.77s/step、98.3GB、8卡满。ETA ~4 天，到平台记 200k endpoint。
+> - Monitor 8088 http200 OK。本轮：0 kill；1 launch（P0.4 trajectory @.73/.104，coder a685a4bb）；#103 P2.8 回填结项。
+> - 旧快照（22:55）保留于下方 →
+
+## 当前快照（2026-08-02 22:55 +08:00，✅ P0.3 closed-book QA 全完+回填→24 H20 空出→接 #103 P2.8 per-item McNemar；两 B200 训练健康）
+> - **✅ Paper B P0.3 closed-book QA 全完 + 回填**（PopQA n=14267 / TriviaQA rc.nocontext val n=17944，5 模型，base 协议 chat=False/add_bos=0/zero-shot/no-retrieval）。matched keep14-triad **两任务同序且与 MMLU dissociation 同向**：PopQA contains keep14 0.1415>frozen 0.1283>scratch 0.1112；TriviaQA em keep14 0.2940>frozen 0.2477>scratch 0.2086；base_full 两任务大幅最高。→ **"MMLU dissociation" 可扩为 "knowledge-sensitive benchmarks (MMLU, PopQA, TriviaQA)"**，措辞落 .tex 由 MAIN 后续。回填 paperB/TODOList P0.3 表。（agent af1e5f79 完成）
+> - **✅ 24 H20 空出→接 #103 P2.8 per-item McNemar（H20 优先 eval + PaperB 待跑）**：keep14@200k vs frozen@200k vs scratch@200k 三 matched 臂（均 keep_front14+fresh2=16 层）per-item MMLU → 补 gap+5.6pp 的配对 McNemar exact p + bootstrap 95% CI（TODOList line101 "gap/CI/p：待 #103" 的可行腿）。keep14→.73 / frozen→.104 / scratch→.82，各 8-shard，协议同 `_know`（核验复现 keep14≈.3191/frozen≈.2628）。coder a70d2dbc 后台跑。#103 的 strict matched-PPL 腿仍 BLOCKED（盘无 dense-save 交叉 ckpt），本轮不做。
+> - **✅ 两 B200 P0.5 训练健康（task #118）**：LOCAL Arm A(contig16) + .252 Arm B(final14+fresh2)，~1.76s/step，ETA ~4 天，到平台记 200k endpoint。
+> - Monitor 8088 http200 OK。本轮：0 kill；1 launch（#103 per-item McNemar @.73/.104/.82，coder a70d2dbc）；P0.3 回填结项。
+> - 旧快照（22:35）保留于下方 →
+
+## 当前快照（2026-08-02 22:35 +08:00，✅ P2.4 全 3 深度 eval 完+回填→Paper A 实验层面全清；.73 补 Paper B P0.3 closed-book QA；两 B200 训练健康）
+> - **✅ Paper A P2.4 全部验收 + 回填（task #122 completed）**：j=6/9/18 三深度 RULER Cohort-B(15cell) + LoCoMo(n=1986 GPT-4o judge) + 16k same-pack Read/Write timing 全完（j6/j9 on .82，j18 on .73）。headline=部署 Arm B(resume_j=j)：RULER 98.29/97.55/(旗舰12=96.07)/55.41；LoCoMo judge 40.38/39.02/(38.27)/28.65；Read ms 830/748/(664)/500，read_speedup A/B 1.17/1.27/(1.40)/1.81×。**j 是单调 quality↔latency 旋钮**，浅 j 质量略超旗舰、深 j18 坍塌。回填 paperA/TODOList 表+顶部状态。**Paper A 实验层面全部完成，.tex P2.4 集成也 DONE（linter 确认 line 9）→ 无剩余模型 run**。
+> - **✅ .73 空出→补 Paper B P0.3 closed-book QA（H20 优先 eval + PaperA 排空后接 PaperB，见 memory h20-paperA-over-paperB + h20-eval-b200-train）**：PopQA+TriviaQA closed-book，5 模型（base/keep14@200k/random-front@200k/frozen-front@200k/keep8@121k），base 协议(chat=False/add_bos=0/zero-shot/no-retrieval)，检验 perplexity–knowledge dissociation 是否泛化出 MMLU。harness `eval_olmo2_closedbook_qa.py`（commit d05ef59，此前从未跑过，两 result dir 空）。coder af1e5f79 后台跑（可分 .73/.104/.82 三节点加速）。
+> - **✅ 两 B200 P0.5 训练健康推进（task #118）**：LOCAL Arm A(contig16) step 6060/200k loss 2.642 ppl 14.04；.252 Arm B(final14+fresh2) step 5720/200k loss 2.692 ppl 14.76；均 1.76s/step、98.3GB、8卡满载，ETA ~4 天，到平台记 200k endpoint。
+> - **⚠️ 关键纠正（避免误操作）**：stale memory 曾说「resume 暂停的 keep8/10/12 heal」——但按用户 2026-08-02 决定，keep8@121k/keep10@83.5k/keep12@124k 已在 paperB TODOList 记为 **[DONE] 200k endpoint**，**不得 resume**。真正剩余 PaperB GPU 待跑=P0.3(本轮起)、#103 dense-save re-heal（缺严格 matched-PPL 交叉 ckpt）。
+> - Monitor 8088 http200 OK。本轮：0 kill；1 launch（P0.3 closed-book QA @.73，coder af1e5f79）；paperA P2.4 回填结项 #122。
+> - 旧快照（19:29）保留于下方 →
+
+## 当前快照（2026-08-02 19:29 +08:00，✅ P1.6 SnapKV yarn 全完+回填→LOCAL B200 迁入 P0.5 Arm A 加速 5.4×；Arm B 待 .252 空出再迁）
+> - **✅ P1.6 SnapKV yarn 全完（18:55）+ score + 回填 paperA TODOList**：ns2 64k/128k=100/100、mk1=94/91、vt=80/84.8（IRON-LAW-2 全 OK），raw `ruler_results/p16_snapkv_yarn/`。PyramidKV yarn 在 .252 收尾（~8 job VT yarn）。
+> - **✅ 用户策略（2026-08-02，见 memory `b200-prefer-paperB-when-free`）：B200 当前任务跑完→优先 Paper B 长程训练上 B200 加速**。LOCAL B200 SnapKV yarn 完→空出→**迁入 P0.5 Arm A**（contig16 keep0-15，`_run_p05_armA_b200.sh`，`.venv` torch2.13，从 base 剪层从头起）。⚠️ **配方统一**：两 arm 都将用 `.venv`（torch2.13）→ .104 Arm A(olmo2_venv torch2.7 step2060) 已 kill 作废，.73 Arm B 待迁后同样重起。**实测 1.75s/step（vs H20 9.5s=5.4× 加速），200k ETA≈4 天（vs 22 天）**，8 卡 97GB/100%，loss 8.4→6.2 冷启下降健康，pid 217510。
+> - **⏳ Arm B（.73 H20 step~2060 olmo2_venv）暂不动**：等 .252 PyramidKV yarn 完→kill .73 Arm B→在 .252 B200 用 `.venv` 从头起（两 arm 各占一台 B200 并行，配方一致）。
+> - **✅ .82 P2.4 eval**（coder a40444866）：三深度训练完→跑 RULER Cohort-B 15cell + LoCoMo + 16k timing，进行中。
+> - **✅ .104 空闲**（Arm A 已 kill）：按 h20-paperA-over-paperB 待补 PaperA 项或 resume 暂停的 PaperB heal（下轮 heartbeat 处理）。
+> - 旧快照（17:28）保留于下方 →
+
+## 当前快照（2026-08-02 17:28 +08:00，✅ #100 平台 eval 全完+回填→LOCAL B200 补 SnapKV YaRN 重跑；P2.4 j=18 收尾；PyramidKV VT 长档中）
+> - **✅ #100 full32 平台 eval 全完（17:24）**：PPL **7.6699** / core6 **.6968** / aux5 **.6536** / MMLU **.5867**（94.8% above-chance recovery vs base .6053）→ 回填 `PAPERB_THREE_ARM_200K.md`，**task #100 completed**。结论：intact-32L 续训近乎无损，是深度阶梯/ShortGPT 对照的干净上锚。
+> - **✅ LOCAL 8×B200 空出→立即补 SnapKV YaRN 64k/128k 重跑（铁律1，PaperA P1.6 待跑项）**：`scripts/_rerun_snapkv_yarn.sh`（修好的 harness，rope_theta fix `14bd576`），pid 136363，8 shard×3task×{64k,128k}。**已验证修复生效**（niah_single_2/64k 跑到 19/100，无 NoneType/pow 崩），log `logs/p16_snapkv_yarn_rerun/`，ETA ~35min。PyramidKV yarn 由 .252 scheduler 用同 fix 自动带到。
+> - **✅ .252 P1.6 PyramidKV**：native 3 task 全 8 shard 在跑 variable_tracking 长档 generation（16 done + VT in-flight），未卡死，healthy。
+> - **✅ .82 P2.4**：j=6/j=9 DONE，**j=18 step 330/4000**（loss 0.14），8 卡 healthy。训完即 3 深度 eval。
+> - **✅ .104 P0.5 ArmA step1440 ppl17.43 / .73 P0.5 ArmB step1440 ppl18.34**：快降中未平台，保留。
+> - 旧快照（17:04）保留于下方 →
+
+## 当前快照（2026-08-02 17:04 +08:00，✅ #100 full32 到平台→停+记 200k endpoint→LOCAL B200 补平台 eval；PyramidKV/P2.4 推进中）
+> - **✅ #100 full-32L 控制到平台→停（用户「到平台期就可以了」授权）**：ppl 从 step10k 起锁 8.1–8.4 共 17k+ 步无下降趋势（10k=8.19/20k=8.11/27.7k=8.41）→ **step27740 SIGTERM 停 torchrun coord 3296519（8 rank 干净退出）**，固化 `outputs/olmo2_probe2_7B_full32_dolmino/step25000.pt`（87.6GB）为 **200k-equivalent plateau endpoint**。
+> - **✅ LOCAL 8×B200 空出→立即补 #100 平台 endpoint eval**（PaperB P1.1 闭合）：`scripts/_run_olmo2_eval_full32_plateau.sh`（keep32/n_fresh0，base 协议 PPL+core6+know5，8-GPU sharded，与 keep14/ShortGPT 同 harness），pid 112491，log `logs/full32_plateau_eval.out`。8 PPL shard running（load 87GB ckpt 中）。⚠️ P0.5 现太早（step~1280 ppl~19 快降中，无 ckpt）不迁移，等它自然到平台再停。
+> - **✅ .252 P1.6 PyramidKV**：16 job DONE（niah_single_2 全 8 shard + multikey 部分），56-job pool 推进中，healthy。YaRN fix 已 commit `14bd576`，待 PyramidKV 腾卡后重跑两 method yarn 64k/128k。
+> - **✅ .82 P2.4**：j=6 DONE、**j=9 step 2920/4000**（loss 0.043）、j=18 待续，8 卡 100%/35GB healthy。
+> - **✅ .104 P0.5 Arm A / .73 P0.5 Arm B**：step ~1280/200000（ppl ~18–19 快降中，9.5s/step，98GB），早期健康，绝不停（未到平台）。
+> - 旧快照（16:08）保留于下方 →
+
+## 当前快照（2026-08-02 16:08 +08:00，✅ .252 SnapKV 完→补 PyramidKV；YaRN bug 派 coder 修；5 节点全占）
+> - **✅ .252 refill（铁律1）**：P1.6 **SnapKV pool DONE**（SCHED_DONE @15:42）——native RULER(15 cell)+LoCoMo 数字 good（VT 8k=100→128k=4.4；LoCoMo F1 9.21/acc 22.05）；**但 (a) PyramidKV 从未跑**（本轮 scheduler 是 SnapKV-only，SUMMARY 无 pyramid 段）+**(b) SnapKV YaRN 64k/128k 全 shard 崩**（`yarn_factor=None` pow 崩）。→ .252 空出立即起 **PyramidKV**（`DRY=0 METHODS=pyramidkv`，56-job pool，gate PASS，8 卡 25-30GB loading，pid 1094886，log `.252:logs/p16_kvcompress/sched_pyramidkv.out`）。YaRN bug 派 coder a542419157（worktree）修 `eval_p16_kvcompress.py` → 修好后 .252 空出重跑两 method 的 yarn cells。
+> - **⚠️ 启动坑记录**：远程 setsid launch 的 `>logs/...` 重定向在 SSH `$HOME` 解析，需 `cd $P && DRY=0 ... bash ...` 把 cd 放整条命令最前（放 launch 后无效）。
+> - **✅ .82 P2.4 深度曲线**：j=6 **step 3010/4000** loss 0.027，8 卡 97-100% util 37GB healthy（pid 2422703/parent 2422697，task #122）。串行 j6→9→18，j=6 ~2min 内完切 j=9。
+> - **旧快照（14:52，.82 P1.7 两 cohort 全完→补 P2.4）保留于下方 →**
 
 ## 当前快照（2026-08-02 14:52 +08:00，✅ .82 P1.7 两 cohort 全完→补 Paper A P2.4 深度曲线训练；5 节点仍全占）
 > - **✅ .82 refill（铁律1 + H20 PaperA>PaperB 优先级）**：P1.7 h12-oracle **cohort-a + cohort-b 双双 COMPLETE**（.82 8 卡空出）。cohort-b macro n_paired=1500：A(j=0)=99.19 / C(oracle)=99.19（bit-identical，p=1）/ B(chunk-local)=96.07，A−B=C−B=+3.12pp（CI[2.36,3.93] p=8.79e-24）== P0.13 deployable gap → **#121 结项**。→ 立即在 .82 补下一个 PaperA 待跑项 **P2.4 蒸馏多深度 quality-latency 曲线**（j∈{6,9,18} rank-32 LoRA 训练，匹配 flagship j=12 配方）：coder ae216e60 已提交 launcher `ebfe475`（串行 8-GPU DDP 训 3 深度）。**✅ 15:02 确认 j=6 在跑：step 90/4000 loss~0.11，8 卡 100% util 37GB/卡，torchrun pid 2422703**，resume_j=6/rank32/α64/total4000/lr8e-5/seed42，log `.82:logs/p2_4_distill_j{6,9,18}.log`。ETA ~1-1.7h/arm × 3 serial ≈ 3-5h。
