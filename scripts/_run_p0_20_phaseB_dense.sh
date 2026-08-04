@@ -221,14 +221,19 @@ if [ "$RUN" = "1" ]; then
     echo "[p0.20B] all workers done."
 
     # ---- STEP 4: aggregate ----
+    # --comem_selector MUST be passed here too: the driver derives summary.json's
+    # `comem_selector` / `same_selector_control` from this arg, so omitting it
+    # falls back to the iter_bm25 default and mislabels a BGE/BGE same-selector
+    # arm as the cross-selector flagship (per-cell data stays correct).
     echo "[p0.20B] STEP 4: aggregate"
     $PYBIN $DRIVER --mode aggregate --output_dir "$OUTDIR" --tol "$TOL" --n_boot "$N_BOOT" \
+        --comem_selector "$COMEM_SELECTOR" \
         >"$LOGDIR/aggregate.out" 2>&1
     cat "$LOGDIR/aggregate.out"
     echo "[p0.20B] COMPLETE."
 else
     echo "[p0.20B] STEP 3b/4 (workers + aggregate) — DRY: not launched."
     echo "[p0.20B] aggregate (CPU) command MAIN runs after all shards finish:"
-    echo "    $PYBIN $DRIVER --mode aggregate --output_dir $OUTDIR --tol $TOL --n_boot $N_BOOT"
+    echo "    $PYBIN $DRIVER --mode aggregate --output_dir $OUTDIR --tol $TOL --n_boot $N_BOOT --comem_selector $COMEM_SELECTOR"
     echo "[p0.20B] to execute for real on a FREE diskB node: re-run with RUN=1."
 fi

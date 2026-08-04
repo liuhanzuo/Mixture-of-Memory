@@ -1,5 +1,249 @@
 # Paper A：ARR 修改与补充实验清单
 
+## 2026-08-04 v6 六评后剩余实验（当前权威优先级）
+
+> **六评结论**：v6 Overall=`3.08`，strict 三评均为 `3.0`。写作、统计口径和
+> 内部 `j=0→12` 对照已基本收敛。若目标是稳定 ACL 主会，下面的实验优先级覆盖
+> 后文较早版本的“当前优先级”说明；旧条目继续保留作实验历史与 provenance。
+>
+> **不得用低优先级的跨模型或新 benchmark 扩展替代 A-P0 主实验。**
+> Paper A 与 Paper B 始终独立，不要求互引或共享实验。
+
+### A-AUDIT ARR 审计指控分诊（2026-08-04，用户指令「有结果么，没有的话加 todolist 然后跑」）
+
+> 分诊：PaperA 共 5 条，**全部为「有结果 → 改写/解释」**，无需新训练。唯一有
+> 经验支撑缺口的 Block-Attention/TurboRAG 对位由 **#143 CacheBlend**（正在 .73 scoring）落地。task #148。
+
+- **A-AUDIT-1（★有结果+经验对位已落地，P1）漏引 Block-Attention/TurboRAG 族** — `[#143 全 cell + aggregate DONE 2026-08-04（all_tasks_reported=True，missing=0）；数据完全就绪，仅剩写对位段（写作 deferred 到 #148，用户暂缓写作）]`
+  该族缓存 full-depth per-chunk KV，而 CoMem 是 tunable-j 的中间残差——真正区分点。**#143 CacheBlend = 这族的 minimal-faithful 经验 baseline**（144 KiB/tok vs CoMem depth-12 residual 8 KiB/tok = **18× KV**），recompute ratio r∈{0.00,0.10,0.15,0.18} 扫描。
+  **`bench_results/cacheblend/aggregate.json`（zwfy6，.73/.82 可见）已写，`all_tasks_reported=True`。头对头（同 selector=iter_bm25/chunk=512/topk=12/chat=False/Qwen3-8B）：**
+  - RULER macro（12 cell，string_match_all recall %）：CacheBlend r=0.00→67.80，r=0.18→74.70（随 recompute 单调升）；**vs flagship CoMem：single-needle 相当（niah_single_2 ~100），但 multikey/variable_tracking 远弱**（CoMem variable_tracking 96.6/97.6/98.8 vs CacheBlend 53–67）。
+  - BABILong qa5（6 len mean %）：CacheBlend 各 r 约 **49**（48.5–49.8）vs flagship **68.7** — 明显低。
+  - LoCoMo substr acc %：CacheBlend r=0.00 **17.07** / r=0.10 16.77 / r=0.15 **17.07** / r=0.18 17.37（全 n=1986，随 recompute 基本持平）vs flagship **23.36**；GPT-4o judge 待 MAIN 跑（deferred）。**#143 全 cell + aggregate DONE 2026-08-04**（`bench_results/cacheblend/aggregate.json`，`all_tasks_reported=True`，missing=0；48 RULER + 24 BABILong + 4 LoCoMo-r cell 全齐）。merger `scripts/aggregate_cacheblend_143.py` 已收口。
+  **结论：Block-Attention 族即便 CacheBlend 强变体 + 部分 recompute，仍用 18× KV 换来全面低于 CoMem 的 QA/RULER/LoCoMo——正面对位而非仅引用，claim 不退。** ⚠️ provenance 记录：RULER/LoCoMo 用 resume_j=12，BABILong 用 resume_j=6（写作时点明或补跑 j=12 BABILong 以统一，但不改定性结论）。merger：`scripts/aggregate_cacheblend_143.py`。
+- **A-AUDIT-2（有结果，P0）三个不同 128k prefill 时间** — `[改写解释，用户判定「需要解释而非修数字」]`
+  71.37s（dense prefill）/ 6.035s（full pipeline, adapter on）/ 50.59s（pareto dense with adapter）——不同测量协议。正文点名每个数字的协议边界即可，不重跑。
+- **A-AUDIT-3（有结果，P1）equal-latency 与 64.9× 叙事矛盾** — `[改写统一 abstract framing]`
+- **A-AUDIT-4（有结果，P1）64.9× → 1.07× 端到端** — `[改写解释，有数据]` decode 吃掉 read 节约；正文拆解 read-only vs end-to-end 两个口径。
+- **A-AUDIT-5（✅ DONE 2026-08-04，P0）硬件 “one NVIDIA L20A” 但 89.39GB peak** — `[已改写]`
+  根因=公开 NVIDIA L20 是 48GB Ada 卡，reviewer 据此认为 89.39GB peak 不可能；但本项目 L20A 是 B200 级 **183GB HBM**。**修复=在硬件描述处标注实际单卡容量**（`08_appendix.tex:289` + `tab_eff.tex:18` 均加 “183\,GB HBM”），使 89.39GB peak 自洽（~49% 容量），**测量数字一个未改**。tab_pareto.tex:34-35 已额外说明该 harness 在 H20 上 OOM、L20A cohort 非矛盾硬件。
+
+### A-P0.1 最近邻 reusable-context 系统的完全 matched 对照
+
+- **状态**：`[TODO — ACL MAIN GATE；6/6 reviewer 共识]`
+- **目的**：回答当前稿尚未回答的外部问题：在相同 backbone、证据包、硬件、
+  存储层级和 timing boundary 下，单 residual/token 的 CoMem 是否是有竞争力的
+  reusable-context object。
+- **最低方法集合**：
+  1. CoMem `j=12`；
+  2. matched raw replay `j=0`；
+  3. 至少一个最近的公开 reusable-KV/PIC/chunk-cache 方法。优先官方
+     CacheBlend/EPIC 类实现；若无法接入 Qwen3，可实现论文定义的 minimal faithful
+     baseline，但必须列出与原方法的全部偏差，不能直接冒用方法名；
+  4. 可附加 independently encoded full per-layer KV without repair，作为 lower-bound
+     control，但不能替代第 3 项。
+- **严格公平协议**：
+  - Qwen3-8B 同 revision/tokenizer，bf16/SDPA，同一台 H20；
+  - chunk=`512`，相同 query、example IDs、retrieved chunk IDs/order、sink、
+    generation 和 scorer；
+  - 主结果固定同一 top-12 evidence pack；
+  - baseline 原生 selector 只能单列为 native-selector operating point；
+  - storage 至少报告 GPU-resident 与 CPU-pinned。
+- **最低评测**：RULER-B 15 cells、BABILong/LongEval 主 cells、LoCoMo full set，
+  以及论文最终保留的至少一个自然 QA aggregate。
+- **系统指标**：persistent bytes/token、总 store、one-time Write/build、retrieval、
+  fetch/H2D、TTFT/Read p50/p95、decode、peak HBM/host memory、throughput、
+  repeated-query break-even `Q*`。
+- **验收条件**：
+  - baseline short-input fidelity sanity 通过；
+  - raw predictions、component timings、config、commit/hash 齐全；
+  - 负面结果完整保留；
+  - 论文只在 matched boundary 内谈 competitive utility。
+
+**结果填写**
+
+| Method | Quality suite | Store/token | Write | TTFT p50/p95 | Decode | `Q*` | Raw |
+|---|---:|---:|---:|---:|---:|---:|---|
+| raw replay `j=0` | TBD | 4--8 B | per query | TBD | TBD | 0 | TBD |
+| CoMem `j=12` | TBD | 8192 B | once | TBD | TBD | TBD | TBD |
+| nearest reusable-cache | TBD | TBD | TBD | TBD | TBD | TBD | TBD |
+
+### A-P0.2 exact headline adapter 的 clean same-configuration 多 seed
+
+- **状态**：`[TODO — ACL MAIN GATE；现有 P1.4 仅是 seed+effective-batch robustness]`
+- **目的**：得到真正的 training-run uncertainty。
+- **最低设计**：
+  - 使用 flagship seed 42 的完全相同训练配置；
+  - 新增至少两个独立 seed，均为 effective batch=`8`、4000 steps、相同总 token
+    budget、optimizer、warmup、LoRA target modules、top-64 KL objective；
+  - seed 同时控制 LoRA 初始化、数据顺序和所有随机源；
+  - 保存 RNG states、data order 与 resume state。
+- **必须评测 exact headline cohorts**：
+  - RULER-B 15 cells，不能用缩小 9-cell/n=50 代理；
+  - LongEval 主 cells；
+  - LoCoMo full set；
+  - 推荐补 BABILong 主 cells。
+- **统计**：每 run 单独给 aggregate/cell；报告 run-level mean/SD/range；item 与
+  run uncertainty 分开；总体 CI 以 seed 为最高层级。
+- **验收**：三个 run 除 seed 外逐字段一致，checkpoint、data-order manifest、
+  raw predictions 和 hash 齐全。
+
+**结果填写**
+
+| Seed | Eff. batch | RULER-B | LongEval | LoCoMo | Checkpoint/raw |
+|---:|---:|---:|---:|---:|---|
+| 42 | 8 | 96.07 | TBD | 38.27 | existing |
+| TBD | 8 | TBD | TBD | TBD | TBD |
+| TBD | 8 | TBD | TBD | TBD | TBD |
+
+### A-P0.3 Overlap/Contextual-Write 的自然任务与端到端 frontier
+
+- **状态**：`[TODO — ACL MAIN GATE；5/6 reviewer 共识]`
+- **目的**：确认 `w=32` 的 synthetic multikey 修复是否改善重要自然任务，并把
+  额外 Write 成本纳入 repeated-query 决策。
+- **arms**：`w∈{0,32,128}`，固定 adapter、selector、pack、Read 和 generation；
+  `w=0` 为现有 CoMem。
+- **最低评测**：exact RULER-B、BABILong、LongEval、LoCoMo full set，以及
+  LongBench QA aggregate 或最终保留的一个自然 QA suite。
+- **必须报告**：
+  - paired quality difference 与 CI；
+  - 实测 Write wall time，而非仅理论 FLOP；
+  - persistent bytes、per-query Read/TTFT、decode；
+  - edit invalidation：修改 chunk `i` 时需重写多少后继对象；
+  - 加入额外 Write 后的 repaired `Q*` 和 end-to-end frontier。
+- **判定**：
+  - 自然任务和 frontier 均改善，才可升级为方法组件；
+  - 只改善 multikey 时继续称 diagnosis；
+  - Write 成本导致 `Q*` 恶化时完整报告负面边界。
+
+### A-P1.1 same-selector、代表性 workload 的 equal-latency 复核
+
+- **状态**：`[✅ 两臂全 DONE — 均 NEGATIVE。BM25/BM25 臂 n.s.（−3.0pp, p=0.25）；BGE/BGE 臂 **统计显著**（−6.22pp, CI[−9.11,−3.33], p=3.26e-05）。commits 1c0d66b(实现)+9aee7e6(LOGDIR fix)+本轮 selector-label fix，均未 push]`
+  - **★★ A-P1.1 最终裁决（比 BM25 臂更强、更不容回避）**：**equal-latency「CoMem 赢」在本 cohort 上不成立；论文不得断言 latency-matched CoMem win。** BGE/BGE 同选择器控制把检索质量**完全按住**后 CoMem 仍显著落后 → 差距**不是 retriever-recall artifact，而是 CoMem 机制本身**（cached-h12 fetch + bottom-12 write + layers[12:36] resume）相对 same-text full-recompute 的代价。
+    - ⚠️ **`decision.json` 自带解释文案在本臂是错的**（"the dense retriever's recall lets it read fewer-but-better chunks"）——BGE/BGE 臂里 recall 按构造逐字节相同，该解释不适用；真实读法是**压缩/resume 机制在赔分**。**引用 decision.json 文案前必须改写**，否则把机制性亏损误说成检索差异。
+  - **BGE/BGE 臂结果（DONE @.104，n_examples_paired=9000，9 cell × 10 k）**：
+    - **primary latency-matched anchor**（CoMem k12 @ TTFT 689.8ms，±5% band → dense k\*=**10**；GPU-resident 与 CPU-pinned 两 deploy 同结论）：**CoMem 48.11 vs dense-BGE 54.33 = −6.22pp**，95% paired bootstrap **CI[−9.111, −3.333]（不含 0）**，McNemar 精确双侧 **p=3.26e-05**（b=61 CoMem-only / c=117 dense-only）→ **显著**（BM25 臂 p=0.25 仅方向性）。
+    - **equal-k 参照**（k12 vs k12）：48.11 vs 58.00 = **−9.89pp**，CI[−12.556, −7.222]，p=1.03e-12。
+    - **三聚合方案（看结果前冻结）全为负**：sample-weighted −6.22 / frozen task-weights −4.75 / leave-one-task-out 区间 [−7.57, −3.71] → 结论不依赖聚合口径。
+    - **全 k frontier：dense-BGE 在每个 k 都占优**（CoMem / dense / diff）：k2 23.33/28.11/−4.78 · k4 36.00/39.78/−3.78 · k6 41.11/45.22/−4.11 · k8 46.11/49.67/−3.56 · k10 49.00/54.33/−5.33 · k12 48.11/58.00/−9.89 · k16 49.67/65.11/−15.44 · k24 48.89/70.44/−21.56。**k≥6 起 CoMem 一个 cell 都不赢，且 gap 随 k 单调扩大**（CoMem ~50 饱和，dense 爬到 70）→ CoMem 吃不下更大 budget。
+    - anchor 处逐 cell：CoMem **输 8/9**（最差 longeval/16k −19、longeval/8k −11、babilong qa2/16k −11；仅 ruler/niah 16k +1）。
+    - **★ 同选择器控制确实成立（决定性证据）**：`comem_packed_ids_sha256 == dense_packed_ids_sha256` 在 **9000/9000 例（100%，零例外）** → 两臂读**逐字节相同**的 context；charged selection cost 亦相同（dense 7.81ms 记到 CoMem 头上，替代 bm25 的 16.97ms）→ 在 TTFT delta 中对消。
+    - **唯一 CoMem 领先处（须降级、不得升为 headline）**：**cold-index sensitivity** 档（dense 每 query 重编码全部 passage）——无 dense k 落入 ±5% band（`k_star=null`），插值 k\*≈6.73 → CoMem 48.11 vs dense ≈46.84 = **+1.27pp**（对保守 dense k=6 为 +2.89pp）。**属 secondary/sensitivity 档、非预注册 primary、无 CI/McNemar**，且只在「dense index 无法离线预建」这一**很弱的部署假设**下成立。
+    - **可辩护的窄口径**：CoMem 在 matched k 上 TTFT 确实更低（k12：689.8 vs 840.1 ms），但**这份速度在把 k 拉到等延迟后不转化为精度持平**。
+  - **有效性验证（本结果未被 stale-marker bug 污染）**：.104 上其实跑了**两次** —— **attempt 1**（`logs/p1_1_bge_bge_sched.out`，18:40）正中已知失效模式：全部 quality job `SKIP`、`paired examples=0`、`VERDICT INCOMPLETE`，而日志末尾照样打印 `[p0.20B] COMPLETE.`（"看着完成实则空交付"的陷阱）；**attempt 2**（`logs/p1_1_bge_bge_rerun.out`，21:02–22:32）才真跑，全 shard `rc=0`，无 traceback/OOM/NCCL。留存产物全来自 rerun 且过全部检查：n_paired=9000 · frontier 9 cell×10 k 非空 · 360/360 quality cell、n_valid=9000/9000、**oom_count=0** · 单一 LoRA sha `dd09cd17` + BGE sha `45e19549` · 360 quality 文件 mtime 全在 21:02–22:31、aggregate 22:32（**无 attempt-1 残留**）· `sanity.json`：lora_active_outside=168 / inside_disable=0、dense_deterministic=true、P1.9 复现 matched=true。MAIN 已从 wzc1 副本**独立重算** headline = −6.22 / −9.89，与 summary.json 一致。
+  - **🐛 summary.json 标签 bug（已修，纯标签零数字变动）**：原 `summary.json` 记 `comem_selector:"iter_bm25"` / `same_selector_control:false` —— **标错**；只读 summary 的人会把这个 BGE/BGE 同选择器控制误认成 cross-selector flagship。根因：`scripts/_run_p0_20_phaseB_dense.sh` STEP 4 aggregate 调用**漏传 `--comem_selector`** → 落回 driver 默认 `iter_bm25`（`eval_p0_20_phaseB_dense.py:1005-1006` 由该 arg 派生两字段）；底层数据本就是 BGE/BGE（全 360 quality + 30 calib 均记 `dense_bge`）。**修复**：launcher STEP 4 与 DRY 提示补 `--comem_selector "$COMEM_SELECTOR"` + 注释警告；并以 `--comem_selector dense_bge` **纯 CPU 重跑 aggregate**（⚠️ 用 conda python：**LOCAL `.venv` 现也已无 torch**，不只 H20 坏）。核验：三标签字段 `iter_bm25→dense_bge`、`False→True` 修正，**其余键值结构完全相等（strip 3 标签后 dict 相等=True）**，n_paired 仍 9000、headline 仍 −6.22 / CI[−9.111,−3.333] / p=3.26e-05。
+  - **数据位置（双盘）**：zwfy6（.104 origin）`bench_results/p1_1_bge_bge/` + `logs/p1_1_bge_bge{,_sched.out,_rerun.out}`；wzc1（论文盘，`scp -O` 回传 14M：720 quality + 30 calib + anchors/frontier/summary/decision/sanity/manifest）`bench_results/p1_1_bge_bge/` + `logs/p1_1_bge_bge/`（360 done marker）。完整性经独立重算验证。
+  - **⚠️ 首跑空交付 bug + 修复（2026-08-04，coder a1e87376）**：A-P1.1 首跑两臂都出 `VERDICT INCOMPLETE / n_examples_paired=0 / frontier={}`。根因：`_run_p0_20_8gpu.sh`L102 / `_run_p0_20_phaseB_dense.sh`L115 **硬编码 `LOGDIR`（未随 `OUTDIR`）** → `DONEDIR=$LOGDIR/done` 继承了原 P0.20 #137 run 遗留的 **360 个同名 stale `quality_*.done` marker** → STEP 3b `[ -f $DONEDIR/$tag.done ] && SKIP` 命中全部 40 quality job（只有 calib-latency 腿真跑）。修复=两脚本加 `LOGDIR="${LOGDIR:-logs/$(basename "$OUTDIR")}"`（向后兼容：默认 OUTDIR basename 映射回原 `logs/p0_20_eqlat`，不扰 #137）；commit `9aee7e6`（LiuHanzuo，仅 2 脚本 git add，未 push）；scp -O 同步 zwfy6（5 文件 md5 一致）。**原拓扑并行重跑**：BM25/BM25 @.82、BGE/BGE @.104，两臂 STEP 3b `SKIP=0`（bug 已消），.73 idle、LOCAL/.252 未碰。
+  - **BM25/BM25 臂结果（DONE，n=100 stratified LoCoMo × 10 k = 1000 paired；bench_results/p1_1_bm25_locomo/ 已 scp 回 wzc1）**：primary anchor=CoMem@k12(TTFT 698ms, acc **8.0**) vs latency-matched text-RAG@k10(703ms, acc **11.0**) → **diff −3.0pp，95%CI[−7.0,0.0]，McNemar p=0.25（方向性差、不显著）**。逐 k（comem_acc / text_rag_acc，n=100）：k2=10/13·k4=11/11·k6=10/13·k8=**10/15**·k10=9/11·k12=8/10·k14=10/10·k16=9/11·k20=8/10·k24=9/10 —— **每个 k 上 text-RAG ≥ CoMem，CoMem 从不领先**。frozen k*：CoMem@12 anchor 匹配 text-RAG k*=10（in-band）。**decision.json 裁决：NEGATIVE — CoMem 读更多 chunk 却在等延迟下更差 → 瓶颈=cached-state readout；redirect P0.17/P0.18/P1.10，不得包装成 positive Pareto。** **★重要诚实修正**：原 #137 Phase-A 里 LoCoMo 是 CoMem 唯一「不输」cell（17/16 +1），但那用 first-100=**100% conv0**（非分层采样 artifact）；A-P1.1 用**分层 10-conv 平衡采样**后该亮点**翻转为 CoMem 更差（−3.0pp, n.s.）** → 早前 LoCoMo「打平/微胜」是 conv0 采样假象，分层后消失。BM25 臂结果保留为 selector ablation（不删负面结果）。
+  - **BGE/BGE 臂 → 见上方结果块（已 DONE，NEGATIVE 显著）**。原 IN-PROGRESS 记录：default 9-cell QCELLS，dense_bge 两臂对称，8 卡在跑，STEP 4 aggregate 自动跑。
+  - **旧 IN-PROGRESS 记录（保留）**：LAUNCHED 2026-08-04（coder a5504d6，commit 1c0d66b 未 push）：BGE/BGE @.104 + BM25/BM25 LoCoMo-fixed @.82 两 GPU run 过 manifest+sha+sanity、STEP 2 calib sweep healthy；结果落 zwfy6 → scp 回 wzc1 聚合。
+  - **实现（commit 1c0d66b）**：`eval_p0_20_phaseB_dense.py` 加 `--comem_selector {iter_bm25,dense_bge}`（default iter_bm25；`dense_bge` 让 CoMem 臂也走 frozen BGE pack，BGE/BGE TTFT delta 归约为 full-recompute RAG(j0) vs cached-h12 CoMem(j12)）；`eval_qcmem_locomo.py` 加 `build_locomo_samples(stratify=True)` 跨 10 conv round-robin（实测 legacy first-100=**100% conv0** → stratified=**10/conv × 10 conv**，id 集不变 dedup/shard 安全）；`eval_p0_20_equal_latency.py`（untracked，scp only）加 `FROZEN_TASK_WEIGHTS`(locomo.35/babilong.35/longeval.15/ruler.15，**看结果前冻结**)+`_agg_schemes()`（macro-equal-cell / sample-weighted / leave-one-task-out+range / frozen-weighted 四方案）。3 tracked 文件已 commit（仅 3 个 tracked git add），2 untracked（eval_p0_20_equal_latency.py / _run_p0_20_8gpu.sh）scp only 未 commit（by design）。CPU dry-gate 全绿；5 文件 scp -O 到 .82/.104 md5 一致。BGE/BGE 臂对称放宽 iter_bm25（两臂 dense_bge）= A-P1.1 要求的 reader-isolation 控制，非 flagship 违规。
+  - **结构结论**：三臂里两臂已覆盖 —— **BM25/BM25 已 same-selector**（Phase A `scripts/eval_p0_20_equal_latency.py` 已用 iter_bm25 构一次 pack 喂两臂，zwfy6 已有全网格）；**cross-selector sensitivity 已完成**（Phase B `eval_p0_20_phaseB_dense.py`=BGE-RAG vs iter_bm25-CoMem，zwfy6 已有结果）。**真正 gap = BGE/BGE**（Phase B CoMem 臂硬编码 iter_bm25 → 需加 `--comem_selector dense_bge` 让 CoMem 臂也走 dense pack；schema 已一致零下游改动）+ 三方案聚合（equal-cell 已有，**新增 sample-weighted、leave-one-task-out、frozen task-weights**）+ **LoCoMo 分层**（`build_locomo_samples` 现 first-100=100% conv0 → 跨 10 conv round-robin/full）。
+  - **eta**：build 2-3h + 8×H20 run（Phase B BGE/BGE 全网格 3-5h + Phase A LoCoMo re-cell 0.5-1h，三空节点并行）→ wall ~3-5h，**<1 天，NOT 多天**。
+  - **BGE/BGE 臂的 selector 说明**：对称放宽 iter_bm25 铁律（两臂都 dense_bge）——这正是 A-P1.1 要求的控制，非 flagship 违规；写作须显式声明，勿与 flagship（CoMem=iter_bm25）混淆。
+  - **交付**：每臂对 summary/anchors/decision.json（绝对 TTFT、quality、hierarchical paired-bootstrap CI、task-level dispersion、p95、k 由独立 latency calibration 冻结）+ 三聚合报告（frozen weight 向量）+ LoCoMo 取自全 10 conv。**成功判据**：两臂共享 ranking/pack-prefix 后重测 equal-latency CoMem 结论，三聚合诚实呈现，确认/限定 Phase-A/B 结论而非依赖 cross-selector artifact。
+- **设计**：
+  1. BM25/BM25；
+  2. BGE/BGE，两个 arms 使用同一 ranking 和 pack prefix；
+  3. 交叉 selector 仅作 sensitivity；
+  4. LoCoMo 从所有 conversations 分层抽样或使用 full set；
+  5. 看结果前冻结 task weights，并同时报告 equal-cell、sample-weighted、
+     leave-one-task-out。
+- **指标**：绝对 TTFT、quality、hierarchical CI、task-level dispersion、p95；
+  `k` 由独立 latency calibration 冻结。
+
+### A-P1.2 natural-task contamination 与固定 judge 闭环
+
+- **状态**：`[DONE 2026-08-04 — (a) overlap audit DONE（coder afc3ace7 @LOCAL CPU，commit 746974c，contamination-robust）；(b) open-weight judge LoCoMo 复评 DONE（coder a52329d3 @.73，commits 7aa4e14+15f7325，CoMem 双 judge 均 #1、top-4 序保持）。两半均闭合，contamination + judge 双稳健。]`
+  - **(a) overlap audit DONE**（脚本 `scripts/audit_ap1_2_contamination.py` + `scripts/recompute_ap1_2_clean_subset.py`，commit **746974c** 未 push；verbatim 复用 P0.14 引擎（import `audit_p0_14_contamination`）+ 预建 sketch `.t27_tmp/pg19_train_sketch_n13_d32.npy`（59.07M 13-gram hashes），纯 CPU、**只读未编辑 eval_qcmem_locomo.py**）。**分类**：LongBench=**CONTAMINATED（局限 narrativeqa）**——11 本 Gutenberg 书 containment≈1.0，narrativeqa 96/200 CONTAMINATED + 104 CLEAN，其余 33 task（qasper/hotpotqa/2wikimqa/musique/gov_report/代码/中文…）全 CLEAN → clean subset **8305/8418**（1 个 multifieldqa_zh 退化误报已保守剔除）；LoCoMo=**CLEAN**（合成对话，0 污染，full=1986）；InfiniteBench=**CONTAMINATED**（24/31/31，clean=189=113qa+76choice，**精确复现 P0.14** = 引擎交叉校验）；LongEval=**CLEAN-BY-CONSTRUCTION**（合成 lines-retrieval，无自然语料，不可能与 PG-19 重叠）。**clean-subset 重评分（full→clean，官方 scorer）**：narrativeqa 上 CoMem flagship `qcmem_8b_zeroshot_j9` F1 4.63→4.51（n200→104）/ macro-F1 10.63→10.60；`qcmem_j12`（PG-19 蒸馏 LoRA）narrativeqa 3.93→3.92 / macro 9.58→9.57；`kvdirect` narrativeqa 3.73→3.26 / macro 10.07→9.94；`infllm` macro 11.86→11.82（共 11 arm）；LoCoMo 全 clean=identity（flagship judge 37.47、kvdirect 40.03）。**结论：clean ≤ 或 ≈ full 于所有 arm（narrativeqa Δ≤0.5pp、macro ≤0.13pp），连 PG-19 蒸馏模型都未从记忆书获益 → CoMem/QCMem 数字非 train-on-test artifact，自然任务 contamination-robust**。产物 `bench_results/ap1_2_contamination/`（audit_summary.json / match_list.json / per_record_verdict.jsonl(10984 行) / clean_subset_ids.json（含 narrativeqa 104 clean index）/ thresholds.json / clean_subset_recomputed.json）；受影响 113 records 从 per_record_verdict.jsonl（verdict≠CLEAN）可枚举。
+  - **(b) open-weight judge 复评 DONE**（coder a52329d3 @.73 zwfy6，commits **7aa4e14**（`enable_thinking=false` + `/no_think` fallback + 确定性 temp=0/top_p=1/max_tokens=8 + dump judge_meta.json/judge_cache.jsonl）+ **15f7325**（`requests.Session(trust_env=False)` 绕过 `.env` 的 hy-proxy 对 localhost judge URL 的劫持——**首跑 1540 judge call 全失败根因即此**）未 push）。**judge=`models/Qwen--Qwen3-8b`**（36-layer Qwen3-8B，.73 zwfy6 就地，vLLM 0.26.0 @ `/root/vllm_judge_venv`（`/usr/bin/python3.11` 新建，torch-base py3.14 无 vllm wheel），endpoint 127.0.0.1:8412/v1，GPU0，eval 后已 kill 归 0 MiB）。**全 6 法 LoCoMo 全集复判 n=1986 miss=0**（非 200-item audit）。结果：
+
+    | method | open-judge | 95% CI (conv-cluster bootstrap) | GPT-4o | lexical F1 | EM |
+    |---|---|---|---|---|---|
+    | **qcmem_8b_iter (CoMem flagship)** | **52.06** | [50.76, 53.46] | **38.27** | 9.15 | 0.55 |
+    | kvdirect | 50.30 | [47.58, 52.73] | 34.59 | 9.02 | 0.60 |
+    | streamingllm | 41.14 | [39.08, 43.98] | 25.63 | 7.67 | 1.56 |
+    | infllm | 36.15 | [34.29, 38.51] | 22.21 | 7.39 | 1.71 |
+    | hcache | 26.99 | [23.84, 30.69] | 8.11 | 4.67 | 0.25 |
+    | memoryllm | 25.38 | [23.42, 27.88] | 16.11 | 5.91 | 0.10 |
+
+    **稳健性结论**：open judge 一致比 GPT-4o 宽松（各法系统性抬升），但 **CoMem 在两个 judge 下均排 #1，top-4 序（CoMem>kvdirect>streamingllm>infllm）完全保持**。**诚实 caveat（写进论文）**：CoMem 对 kvdirect 的领先从 +3.68pp（GPT-4o）收窄到 **+1.76pp**（open judge），且 conv-cluster CI 略有重叠（[50.76,53.46] vs [47.58,52.73]）→「CoMem #1」在两 judge 下均以 point-estimate 成立，但 open judge 下 CoMem-vs-kvdirect margin 落在 cluster-bootstrap 噪声内。底部两法（hcache/memoryllm）互换但 CI 重叠=噪声。adversarial cat-5 ~2.5% 各法一致。**产物**：`locomo_results_openjudge_qwen3/<method>/{scores.json,judge_meta.json,judge_cache.jsonl}`（.73 zwfy6）+ `cluster_bootstrap_summary.json`；**已镜像回 LOCAL wzc1** `locomo_results_openjudge_qwen3_MIRROR/<method>/{scores.json,judge_meta.json}` + `cluster_bootstrap_summary.json`（MAIN 可直读，LOCAL 与 .73 盘不 coherent）。
+- **overlap audit**：
+  - 对 PG-19 distillation windows 与 LongBench、NarrativeQA、LongEval、LoCoMo、
+    InfiniteBench/long-book 做统一 document/n-gram overlap；
+  - 报告阈值、匹配数、受影响 sample IDs；
+  - 对可能污染的 benchmark 给 strict-clean subset 重评分。
+- **judge 稳健性**：
+  - 用日期固定、可公开复现的 open-weight judge 重评 LoCoMo 全集或全部
+    answerable items，不只做 200-item audit；
+  - 保存 judge prompt、snapshot/hash、parsed decisions；
+  - 报告 conversation-cluster CI 与 deterministic lexical metrics。
+- **验收 DONE**：自然任务 clean / unresolved / judge-sensitive 三类均已闭合 —— (a) contamination-robust（clean ≤ full 全 arm，连 PG-19 蒸馏模型未从记忆书获益）；(b) judge-robust（open-weight Qwen3-8B judge 全集复判，CoMem 双 judge #1 + top-4 序保持，仅 CoMem-vs-kvdirect margin 在 open judge 下收窄至 cluster-bootstrap 噪声内——已作为诚实 caveat 记录）。
+
+### A-P1.3 production serving：并发、tail latency 与真实存储层级
+
+- **状态**：`[TODO — DEFER (多天大实验，用户指令不启) — 就绪度评估 2026-08-04]`
+  - **readiness**：needs-wiring —— 真并发 serving harness 是**新代码**（这是 A-P1.3 的核心 gap）。可复用 `scripts/bench_p1_8_serving_curve.py`（`_build_store`/`_serve_comem`/`_serve_j0`/LoRA sha 门/pack-read-decode primitives，但只有 **single-query** 分解、无并发/无 p95p99/无 queue/无 throughput-under-load/无 OOM-rate）+ `scripts/bench_persistent_store_io.py`（thread-pool QPS + nvme/network O_DIRECT，但只测 storage 层不含 model forward）。QCMem primitives 是 B=1 单查询（`src/memory/qcmem/qcmem_model.py` 无 batched path）→ 并发建模为「排队 + 单 GPU 时间片服务」而非 GPU 并行 batching。model+LoRA 已在 wzc1（`models/Qwen3-8b-local` / `outputs/qcmem_distill_qwen_j12_r32_4k/final`）；P1.8 从未跑过（`bench_results/p1_8_serving/` 空）。
+  - **eta**：build ~1.5-2 天 opus-coder（并发调度+tail+OOM-under-load+3 arm，GIL/CUDA/queue 会计 finicky）；full-grid = 2 source × 3 G × 3 concurrency × 2-3 tier × 3 arm = 108-162 cells，每 cell ≥150-300 req → 8×H20 ~0.5-1 天 wall。**合计多天 → DEFER**（三项 P1 中最大）。
+  - **最小可交付子集**（仍满足验收：必须真并发）：仅 CoMem+j0 两 arm、gpu tier、source{32k,128k}、G=128、concurrency{1,8,32}=**12 cells**；build ~1 天（scheduler 缩小）+ run 2-4h（1-2 H20）。交付 TTFT p50/p95/p99 + throughput + queue + OOM-rate @ concurrency 1/8/32 × 32k/128k（CoMem vs raw-replay）。
+  - **launch（若日后启最小子集）**：先派 coder 写 `scripts/bench_p1_3_serving_concurrency.py`（import P1.8 primitives + 加请求队列调度器 + 逐 req queue_time/TTFT/decode/e2e + p50p95p99/qps/OOM/Q\*；selector=iter_bm25 chat=False bf16/sdpa seed42；CPU `--mode selfcheck` gate，不启 GPU）→ `scp -O` 新脚本+P1.8 系列+`src/memory/qcmem/qcmem_model.py` 到 zwfy6 H20（先确认 zwfy6 有 model/LoRA）→ `PROJECT_ROOT=/apdcephfs_zwfy6/... PYTHON_BIN=/opt/conda/envs/torch-base/bin/python STORE_LENGTHS="32k 128k" CONCURRENCY="1 8 32" GEN_LENGTHS="128" TIERS="gpu" ARMS="comem j0" RUN=1 setsid nohup bash scripts/_run_p1_3_serving_concurrency.sh`。
+  - **验收**：per-cell JSON + `p1_3_serving_aggregate.json`（TTFT p50/p95/p99、throughput qps、queue、decode、peak HBM/host、fetch BW、failure/OOM、Q\*）；tail 来自**并发** per-req 分布（非顺序 repeat）；fail-closed 门（LoRA sha==flagship、store-fetch h12 bit-identical、finite logits、pack 配对）。
+
+### A-P2.1 次要诊断：完整 depth/Write 与蒸馏 support
+
+- **状态**：`[TODO — OPTIONAL；不得挤占 P0]`
+- **内容**：
+  1. 同一 harness 重测 `j∈{0,6,9,12,18}` 的 Write/Read/peak memory，补回
+     matched `j=12` Write；
+  2. separately trained adapters 不称单一 causal frontier；
+  3. 记录 teacher top-64 retained probability mass 的 mean/quantiles；
+  4. held-out 小样本比较 top-32/64/128 或 full-logit objective。
+- **验收**：只用于解释 objective/depth curve，不替代最近邻 baseline 或 clean seeds。
+
+### A-P1.3 用户指定补充基线：CacheBlend-style chunk-KV + CoMem dense-selector（2026-08-04，GPU-queued，auto_launch=true）
+
+- **状态**：`[★2 #144 DONE + ★1 #143 DONE — 2026-08-04（#143 r-sweep r00/r010/r015/r018 全 cell + aggregate 完成 all_tasks_reported=True，结果落 A-AUDIT-1；#144 dense-selector 见下 ★2 节）；两个用户指定补充基线均闭合，仅剩写作（deferred #148，用户暂缓）]`
+- **动机（用户原话）**：把 ARR Overall 从 `3.0` 推到 `3.5`（Borderline Conference）最有效的是"完整系统对照，而非内部测量"。补两个可部署竞品基线；先做 ★1（~1–2 天评测），再做 ★2（~几小时）。用户明确**不要** EPIC-style PIC / full-context+YaRN / 更多 KV 压缩 / LongMem / ACRE。
+- **设计细节与 GQA 存储核算**：见 `paperA/CACHEBLEND_BASELINE_DESIGN.md`（scoping workflow `wf_8b10be57-fc9` 交付中；落地后回填 verified file-level plan 与逐项存储/延迟核算）。
+- **共同约束**：committer=LiuHanzuo（无 AI trailer，`git add <具体文件>`）；harness 复用现有 eval 资产 verbatim（不动共享模块）；结果落 `bench_results/`；**不改 .tex**（MAIN-only 后续集成）；实现均**非 GPU-blocked**（先派 opus coder 写 harness + CPU dry-check 使其 launch-ready），launch 排在 `.104` BBWL eval（#142）之后的首个空闲 H20。
+
+#### ★1 CacheBlend-style chunk-KV precompute + selective reuse（task #143；**同时闭合 A-P0.1 item #3**）
+
+- **目的**：CoMem 最近的竞品——缓存**全深度 KV（36 层）** vs CoMem 单个 `h12` residual，直接回答 "residual-vs-full-KV" 权衡。**零训练、纯 eval。**
+- **方法**（faithful CacheBlend, Yao et al. ACL 2024）：离线对每个 512-tok chunk 预算并持久化全深度 KV → 检索（**同 top-12 iter_bm25、同 chunk=512、同排序/顺序**）→ 按 pack 顺序 concat KV → **选择性边界重算**（~10–18% 最高 attention-deviation token；旋钮 = recompute-ratio `r`）。若官方实现无法接入 Qwen3，按论文定义实现 minimal faithful baseline，并**列出与原方法的全部偏差**（A-P0.1 协议要求，不冒用方法名）。
+- **单变量对照**：与 CoMem 仅差 **cache-object（full KV vs 单 residual）**；backbone/selector/pack/read/decode/scorer 全一致。
+- **存储核算（GQA 已校正，权威）**：Qwen3-8B 全深度 KV = 36 层 × 8 KV-head × 128 head-dim × 2(K,V) × 2 B(bf16) = **144 KiB/tok**；CoMem 单 `h12` = 4096 × 2 B = **8 KiB/tok** → CacheBlend 每 token 存储 **18× 于 CoMem**（`r` 的重算 FLOPs/latency 单列）。
+- **eval**：RULER Cohort-A/B 主 cells + LoCoMo full set + BABILong qa5（`chat_template=False`、`iter_bm25`、`seed=42`、bf16/sdpa）。必须报告 quality + persistent bytes/tok + full/selective-recompute prefill latency + peak mem + repeated-query break-even `Q*`。
+- **auto_launch=true**；GPU-queued（BBWL eval 之后）。
+
+#### ★2 CoMem dense-selector swap（task #144；提供 A-P1.1 的 BGE/BGE CoMem 臂操作点）— ✅ DONE 2026-08-04
+
+- **状态**：`[DONE — 2026-08-04 13:20，.82 H20（zwfy6），task #144；aggregate `bench_results/dense_selector/aggregate.json`（all_tasks_reported=true，missing_required_cells=[]，n=100/cell）；MAIN 已复核 JSON]`
+- **目的**：隔离 "**检索质量 vs 深度复用**"——把 **CoMem 自己的 chunk selector** 从 `iter_bm25` 换成冻结 dense **BGE-large**，其余 byte-identical。
+- **⚠️ 与已完成工作的区分（关键，避免重复）**：P0.20 Phase B（#141）/ P1.9（#140）换的是 **text-RAG 臂**的 selector（BM25→BGE），CoMem 臂始终 `iter_bm25`。★2 换的是 **CoMem 自己**的 selector → **是新的**。复用 P1.9 冻结 `DenseRetriever`（BGE-large-en-v1.5，sha 门 `45e19549…`，CLS+L2+cosine，deterministic）。
+- **单变量对照**：CoMem 仅换 selector（`iter_bm25`→dense）；`resume_j=12` + 旗舰 LoRA + read + decode 全一致。⚠️ **混淆变量须点明**：dense_bge=向量 top-12 **单发**，iter_bm25=稀疏 **4-hop 迭代**（`iter_rounds=3`）→ Δ 同时含 (稀疏↔dense) 与 (单发↔迭代) 两因素，非纯 selector-type 隔离。
+
+- **实测结果**（n=100/cell，chat=False，dense_bge=BGE-large/top-12/单发 vs flagship iter_bm25/top-12/hop-4/chunk-512/BOS-sink/seed=42，Qwen3-8B resume_j=12 distilled LoRA；flagship 对照数取自 `status/PAPERA_RESULTS_CONSOLIDATED.md`）：
+
+  **RULER Cohort A（e2e acc %；仅 8k/16k/32k 有 flagship 对照——dense 有 4k 但 flagship RULER 协议从 8k 起，故 4k 不计 Δ）**
+  | Task | 8k (d/bm25) | 16k (d/bm25) | 32k (d/bm25) |
+  |---|---:|---:|---:|
+  | niah_single_2 | 93 / 100 | 84 / 100 | 63 / 99 |
+  | variable_tracking | 91 / 96.6 | 86 / 97.6 | 87 / 98.8 |
+  | niah_multikey_1 | 89 / 95 | 77 / 94 | 62 / 97 |
+  | **Macro(9 cells)** | **dense 81.3 / bm25 97.6 → Δ −16.2pp** |||
+
+  **BABILong qa5（e2e acc %；dense aggregate 无 32k → 仅比 matched 0k–16k）**
+  | | 0k | 1k | 2k | 4k | 8k | 16k | Mean(0k–16k) |
+  |---|--:|--:|--:|--:|--:|--:|--:|
+  | dense | 68 | 75 | 76 | 73 | 61 | 64 | **69.5** |
+  | bm25 | 68 | 76 | 76 | 75 | 68 | 60 | **70.5** |
+
+  **LoCoMo**（⚠️ 口径不同：dense aggregate **无 GPT-4o judge 分**，仅同指标可比且 n=100 vs flagship n=1986 不配对 → 仅指示性）：substr dense 12.0 vs bm25 23.36；F1 dense 9.69 vs bm25 9.15；dense retrieval recall@k=0.699。
+
+- **结论**：dense_bge selector **明确退化** CoMem 质量——RULER Cohort A macro **−16.2pp**（长档尤甚：32k 上 niah_single_2/niah_multikey_1 跌 35–36pp），BABILong matched-range −1.0pp（8k −7、16k 反超 +4），LoCoMo substr −11.4pp / F1 +0.5pp。**dense 无任何增益、长档 RULER 大幅拉低**，证实预注册预期（needle-heavy cohort dense recall < BM25 → CoMem+dense ≤ CoMem+bm25）。**负面结果保留，不 cherry-pick、不删。**
+- **⚠️ 落 .tex 前的核对（workflow wq0ehnxh6 §4，MAIN 勿硬凑）**：① LoCoMo **绝不可**拿 dense substr 12.0 对 flagship judge 38.27（不同指标）——如正文要 dense LoCoMo judge 需补跑 judge；② RULER 用 **Cohort A**（^A），勿混 Cohort B（needle=niah_single_3）；③ BABILong 用 **matched-range mean**（dense 无 32k，勿拿 6 档均值对 flagship 7 档 68.7）；④ 引用须标「dense 单发」而非纯 selector-type 隔离。
+
 > 截至 2026-08-02，Pareto、probe、store/I/O scaling、same-depth controls、P0.12/P0.13 paired quality--latency、P0.15 audit、P1.6 SnapKV/PyramidKV、P1.7 continuous-prefix oracle 和 **P2.4 多深度 quality--latency 曲线（j=6/9/18 训练+eval 全部验收，2026-08-02）** 均已完成并集成。
 >
 > **2026-08-03 独立 ARR 重审后新增实验缺口：P0.16--P0.20 为决定投稿强度的优先诊断；P1.8--P1.10 为系统/基线补强；P2.5 为可选泛化验证。P0.16 已完成并证明 document context 可全额回收 multikey gap；P0.17 overlap Write 正在运行。用户指定 P0.20 equal-latency retrieval-budget comparison 为当前最高优先级的新实验；write-path 训练仍需等待 P0.18 的机制判定。**
@@ -404,7 +648,7 @@
 
 ## P0.14 InfiniteBench / PG-19 污染审计（不需模型重跑）
 
-- **状态**：`[DONE-NEGATIVE — NO MODEL RUN]`（2026-08-02，CPU-only，未用 GPU；coder commit `362a22f`，未 push）。审计产物位于 `bench_results/p0_14_contamination/`（`README.md` / `audit_summary.json` / `match_list.json` / `per_record_verdict.jsonl`(580 行) / `threshold_sensitivity.json` / `clean_subset_ids.json` / `data_manifest.json` / `verification.txt`）。
+- **状态**：`[DONE — CLEAN-SUBSET RECOMPUTED 2026-08-04]`（2026-08-02 审计 CPU-only + 2026-08-04 clean-subset 重算 CPU-only @`.82` zwfy6 pid 2924913，均未用 GPU；coder commit `362a22f`，未 push）。审计产物位于 `bench_results/p0_14_contamination/`（`README.md` / `audit_summary.json` / `match_list.json` / `per_record_verdict.jsonl`(580 行) / `threshold_sensitivity.json` / `clean_subset_ids.json` / `data_manifest.json` / `verification.txt`）。
 - **方法（三种）**：(a) title/author/PG-ID 交集 = **不可计算**（InfiniteBench 记录与 `data/pg19_train.jsonl` 均无 title/author/PG-ID 元数据）；(b) book-level 精确哈希 = **0**（eval 为匿名化整书，train 为无边界拼接行，结构上不可能整书匹配）；(c) **13-gram containment MinHash sketch**（lowercase+去标点、xxh64 seed0、1/32 bottom-hash 下采样、train sketch 59.1M unique hashes）= **决定性**。⚠️ 修正：首轮按 PG-19 原始行分词，但 PG-19 硬换行 ~13 词/行 → 行内 13-gram 几乎捕获不到 → 假 ~0；已 reflow 成连续 token 流匹配 eval 侧，双向逐字复核（0.999 书的叙述能在 PG-19 找到、0.000 书找不到；QA#0 = Woolf《To the Lighthouse》1927，晚于 PG-19 1919 截止 → 正确判 CLEAN 0.000）。
 - **结果**：86 本 unique 书（580 records = QA 351 + choice 229）。containment 分布**强双峰**：31 本 <0.10（30 本 ≈0.000），0.18–0.60 空档，54 本 ≥0.60。故污染率对阈值稳健：
 
@@ -415,7 +659,16 @@
 | ≥0.90 | 9 | 10.5% | 60 | 10.3% | 319 | 201 |
 
   ≥0.80 低估是因为 InfiniteBench **匿名化人名**（"Mrs Ramsay"→"Mrs Bronwyn"）打断了部分 13-gram，把本在训练集中的书从 1.0 拉到 0.60–0.92。**诚实结论：~63% 的书 / ~67% 的 eval records 命中 PG-19 训练集（flagship LoRA `outputs/qcmem_distill_qwen_j12_r32_4k` 仅在 `data/pg19_train.jsonl` 上蒸馏，已由 `distill_args.json` 核实）。**
-- **处理**：clean-subset 重算（CLEAN<0.10 → QA 113 / choice 76）**本节点不可行**——四臂 per-example predictions 在禁访 GPU 节点 `.73`（zwfy6），wzc1 无副本。`scripts/recompute_p0_14_clean_subset.py` 已就绪（复用 `eval_qcmem_infbench.py` 打分器，无需模型 run），predictions 一旦转来即可跑。**结论/建议：鉴于 ~63–67% 污染且本节点 predictions 不可恢复 → WITHDRAW/RELABEL `tab:infbench`（Book-QA F1 6.06 / Book-choice acc 17.47），仅保留其作为 bounded-read coverage / memory-stress 的定位，删除 QA-F1 / choice-acc 质量结论（或在 predictions 转来后于 GPU 节点用 clean subset 重算再决定）。** ⚠️ `.tex` 集成非本任务范围（MAIN 不改 `.tex`）；该负面结果不触发模型重跑。
+- **处理（clean-subset 重算 DONE 2026-08-04）**：predictions 已 `scp -O` 转至 `.82`（zwfy6），`scripts/recompute_p0_14_clean_subset.py` CPU-only 重算完成（产物 `bench_results/p0_14_contamination/clean_subset_recomputed.json`）。clean_ids（CLEAN<0.10）QA=113 / choice=76；四臂交集（clean ∩ 有预测）实际 **QA n=93 / choice n=44**。结果（`eval_qcmem_infbench.py` 打分器，full n=QA351/choice229 → clean）：
+
+| arm | task | full | clean | Δ |
+|---|---|---:|---:|---:|
+| CoMem+LoRA | longbook_qa_eng (F1) | 6.06 | **6.54** | +0.48 |
+| CoMem+LoRA | longbook_choice_eng (acc) | 48.03 | **54.55** | +6.52 |
+| Dense(KV-Direct) | longbook_qa_eng (F1) | 2.16 | 2.14 | −0.02 |
+| Dense(KV-Direct) | longbook_choice_eng (acc) | 32.31 | **25.00** | −7.31 |
+
+  **关键结论（正向）：clean subset 上 CoMem 相对 Dense 的优势不降反升（choice CoMem 54.55 vs Dense 25.00，Δ 反而更大；QA CoMem 6.54 vs Dense 2.14）→ CoMem 优势非污染驱动，contamination-robustness 成立。** ⚠️ 需 MAIN 复核的口径冲突：本重算打分器给出 CoMem choice full=48.03，与 tex `tab:infbench` 现载 Book-choice acc 17.47（#112 mc_ll rescore 口径）不一致 → 两者打分口径不同，集成前须统一（沿用 mc_ll 口径重跑 clean-subset，或在 tex 注明用 `eval_qcmem_infbench.py` 打分器）。**基于此正向结果，撤回原 WITHDRAW `tab:infbench` 建议**；改为保留该表 + 加 clean-subset robustness 脚注。⚠️ `.tex` 集成非本任务范围（MAIN 不改 `.tex`）；不触发模型重跑。
 
 ## P0.15 提交前可审计性、读长口径与匿名化收口
 
@@ -486,7 +739,7 @@
 
 ## P0.18 E4：Write 上下文与位置重映射二因素拆解（零训练）
 
-- **状态**：`[HARNESS READY，GPU 排队 — 2026-08-03，5-臂 2×2 拆解 harness（scripts/eval_p018_e4_2x2_writecontrol.py + scripts/_run_p018_e4_8gpu.sh），workflow wg28ofr1v 构建，commit c32a2c9（author LiuHanzuo，未 push）。CPU 全通过（py_compile + import + aggregate path，transformers 5.14.1）。臂：A=j0 / BB=Arm B（chunk-local,local-pos）/ E0=P0.16 E0（doc-ctx,local-pos）/ X=(chunk-local,doc-origin-pos 新)/ Y=(doc-ctx,doc-origin-pos 新)；单因素 control BB→E0（factor1 上下文）、BB→X（factor2 位置）、E0→Y、X→Y、joint BB→Y + 交互残差；A/BB/E0 verbatim 走 p016/p017 → 与 headline 行 bit-identical。fail-closed 门：manifest(exit3, LoRA sha dd09cd17/168 mod/layers[12..35]) + pos_sanity(exit4, doc-origin read==read_prefill tol5e-2) + quality --verify（doc-ctx-h12==stock-lower12 + pos-plumbing assert）。GPU run 排队 .104（P0.20 之后；当前无空闲节点，.55 UNAVAILABLE）。P1.10 解锁依赖本实验裁决。]`
+- **状态**：`[DONE — 2026-08-03，task #138，5-臂 2×2 拆解 GPU run 完成于 .104（pid145899）。harness（scripts/eval_p018_e4_2x2_writecontrol.py + scripts/_run_p018_e4_8gpu.sh），workflow wg28ofr1v 构建，commit c32a2c9（author LiuHanzuo，未 push）。CPU 全通过（py_compile + import + aggregate path，transformers 5.14.1）。臂：A=j0 / BB=Arm B（chunk-local,local-pos）/ E0=P0.16 E0（doc-ctx,local-pos）/ X=(chunk-local,doc-origin-pos 新)/ Y=(doc-ctx,doc-origin-pos 新)；单因素 control BB→E0（factor1 上下文）、BB→X（factor2 位置）、E0→Y、X→Y、joint BB→Y + 交互残差；A/BB/E0 verbatim 走 p016/p017 → 与 headline 行 bit-identical。fail-closed 门：manifest(exit3, LoRA sha dd09cd17/168 mod/layers[12..35]) + pos_sanity(exit4, doc-origin read==read_prefill tol5e-2) + quality --verify（doc-ctx-h12==stock-lower12 + pos-plumbing assert）。**结果（n=200 paired，niah_multikey_1×{8k,16k}，全 fail-closed 门 PASS：manifest+pos_sanity+packs_paired_1to1=True+p013_sha_match=True+oom=0+nonfinite=0）**：macro A=100 / BB(chunk-local,local-pos)=92.5 / X(chunk-local,doc-origin-pos)=88.0 / E0(doc-ctx,local-pos)=100 / Y(doc-ctx,doc-origin-pos)=100。factor1（write 上下文 chunk-local→doc-ctx）=+7.5pp@local-pos、+12.0pp@doc-origin；factor2（read 位置 local→doc-origin）=−4.5pp@chunk-local、+0.0pp@doc-ctx；joint BB→Y=+7.5，sum-of-singles=+3.0，**interaction_residual=+4.5（两因素非可加、须联合修）**。h12 chunk-local vs doc-ctx cos=0.967 rel_l2=0.527；logit KL-vs-A：BB=0.133 X=0.139 Y=0.040（doc-ctx write 使 logits 最接近 full-replay A）。**裁决：deployable gap 是 Write-side（lower-layer attention scope）现象——把下 12 层 Write 改为 document-contextual 即完全闭合（→100），与 read RoPE 位置无关；单独 read 重定位在 chunk-local write 下反而 −4.5pp（位置/内容错配），两因素 interact。⇒ P1.10 若训练应针对 Write representation，而非独立位置接口；但 P0.17 E2 已零训练 deployable 恢复 80-87% 该 gap，训练很可能不必要。** 结果 bench_results/p0_18_e4_2x2/{summary,stats}.json。]`
 - **目的**：拆开当前 Limitations 中混在一起的两个因素：lower layers 是否看见跨 chunk 文档上下文，以及 cached states 从文档坐标移到 selected-pack 坐标的 RoPE 不一致。
 - **设计**：构造可验证的 `2×2` diagnostic：`chunk-local vs document-contextual lower-layer attention` × `local/reset vs document-origin position IDs`。若某臂因 Qwen RoPE/cache API 无法严格实现，必须记录数学定义、失败原因，并至少完成能单独改变一个因素的两条 control。
 - **协议**：先用 P0.16 的 paired 200 examples；保存 layer-12 state cosine/L2、最终 logits KL/top-1 agreement和任务 accuracy，不只报最终分数。
@@ -495,7 +748,7 @@
 
 ## P0.19 Retrieval recall 与 in-pack readout 分解（零训练/现有数据优先）
 
-- **状态**：`[DONE（CPU 重算）— 2026-08-03，task #131，from existing predictions/manifests；记录 paperA/P0_19_decomp_NOTES.md，commit b9dc847（author LiuHanzuo，未 push）。RULER paired GPU leg 见 #135 = 低优先/可选（seed-pairing bug 已修 d1e1389；无 paper table 依赖那批 cross-run 配对），仅当该 decomposition 进正文才需重跑 paired j0/j12 RULER。]`
+- **状态**：`[DONE（全 leg 完成）— CPU 重算 leg 2026-08-03 task #131（babilong/longeval，from existing predictions/manifests；记录 paperA/P0_19_decomp_NOTES.md，commit b9dc847）；**RULER paired GPU leg DONE 2026-08-03 task #135**（.104 8×H20，torch-base，commit d15252b 代码 + 7bf82f5 结果，author LiuHanzuo，未 push；seed-pairing 根因 hash()→zlib.crc32 已在祖先 commit d1e1389 修，#135 补 per-example input_ids_sha256 fail-closed 配对门+analyzer join accuracy，48 shards rc=0，STEP0 self-test PASS fp32 max|diff|=0，seed-pairing sha 门 PASS）。**RULER 结果（niah_multikey_1，selector=iter_bm25 topk=12 chat=False seed=42，n=100/cell，paperA/p0_19_ruler_decomp.json on .104 diskB + paperA/P0_19_RULER_NOTES.md §6）：@16k recall@12=97.0% [91.6,99.0]，j0|HIT=100.0 / j12-frozen|HIT=0.0 / j12+LoRA|HIT=89.7，end-to-end 100/3/90；@8k recall@12=98.0% [93.0,99.5]，j0|HIT=100.0 / j12-frozen|HIT=1.0 / j12+LoRA|HIT=81.6，e2e 100/3/82。裁读：retrieval leg 非瓶颈（recall 97-98%，j0|HIT=100%），gap 在 READING leg——frozen 中深 resume 完全崩（j12-frozen|HIT 0-1%），distilled LoRA 恢复 ≈90%/≈82% 的 readout（与 babilong/longeval P0.19 故事一致：CoMem–vs–RAG gap 由 in-pack readout 主导，由蒸馏 LoRA 而非冻结 cache 供给）。⇒ P0.19 decomposition 全家族闭合，直接解释 P0.20 RULER cell 低 k 优势来源。]`
 - **目的**：回答为何 CoMem 相对 `j=0` 在 RULER 仅小幅下降，却在 LongEval/BABILong 某些任务下降更大；区分 selector miss 与 cached-state readout failure。
 - **任务**：至少覆盖 RULER multikey、BABILong qa1/qa2 和 LongEval；对每个样本标注 gold support 是否进入 top-12 pack，并分别报告：
   1. retrieval recall@12；
@@ -507,7 +760,7 @@
 
 ## P0.20 Equal-latency retrieval-budget frontier：text RAG vs CoMem（先测）
 
-- **状态**：`[RUNNING 阶段A — 2026-08-03 起，task #137，agent ac5056a0 在 LOCAL 建 harness（复用 config#2 j0-RAG/P0.13/P1.7/P0.2 资产）→ rsync .104 → 8×H20 跑 BM25 equal-latency k-sweep；用户指定最高优先级。阶段B（dense）绑定 P1.9。]`
+- **状态**：`[阶段A DONE（NEGATIVE 裁决）— 2026-08-03，task #137，.104 8×H20 跑完 360/360 quality jobs（run-clean：oom=0 nonfinite=0 gate-fail=0，logs/p0_20_eqlat.out 结尾 [p0.20] COMPLETE.；6 个结果 JSON 齐 bench_results/p0_20_eqlat/{decision,anchors,frontier,manifest,sanity,summary}.json）。harness=agent ac5056a0（scripts/eval_p0_20_equal_latency.py + scripts/_run_p0_20_8gpu.sh，复用 config#2 j0-RAG/P0.13/P1.7/P0.2 资产 verbatim）。**结论：等在线延迟（GPU-resident TTFT ±5%）下，可部署 BM25 text-RAG 的 k_RAG*=10 匹配 CoMem(j=12,k=12) 的 TTFT；此时 text-RAG 宏观质量 64.78 vs CoMem 53.22，diff=-11.56pp，paired-bootstrap 95%CI[-14.444,-8.667]（n_boot=10000），McNemar comem_only_b=41。** 逐 cell（comem/text_rag/diff）：babilong qa1 16k=17/34/-17·4k=68/74/-6；qa2 16k=8/18/-10·4k=44/47/-3；longeval 16k=70/98/-28·8k=70/96/-26；ruler nmk1 16k=91/100/-9·8k=94/100/-6；locomo=17/16/+1（唯一不输 cell，仅打平）。**裁决（decision.json 原文）：NEGATIVE — CoMem 读了更多 chunk 但在等延迟下更差 → 瓶颈是 cached-state readout（不是 retrieval budget）；redirect P0.17/P0.18/P1.10；不得包装成 positive Pareto 结果。** 阶段A BM25 结果保留为 selector ablation（不删负面结果）。**阶段B（dense，正文主结果候选）DONE（task #141，2026-08-03 21:07）**：2026-08-03 18:5x opus agent（abde161e）编码+CPU 验证+启动于 .104（pid499855，torch-base）。新文件 scripts/eval_p0_20_phaseB_dense.py + scripts/_run_p0_20_phaseB_dense.sh + paperA/P0_20_PHASEB_NOTES.md（commit `749b0a0`，author LiuHanzuo，+1385 行，未 push；仅换 text-RAG selector BM25→frozen BGE，CoMem 臂 byte-identical 于阶段A 故 TTFT anchor 相同，reader 同 config#2）。**设计（未 loosen 任何门）**：(1) import P1.9 冻结 DenseRetriever verbatim（同 sha 门/CLS+L2+cosine），其 select_topk 返回全 index score dict → 可恢复任意 k 排序；加 fail-closed 复现交叉核对证明重算 top-12==P1.9 stored dense_sel_idx（按 input_ids_sha256 配对），**.104 实测 P1.9 repro=True**。(2) dense 延迟两种诚实口径均报：**Deployment（PRIMARY，定 k_dense*）**=passages 离线预索引（CoMem 预存 h12 的对偶）→ 在线=query-encode+flat cosine search；**Cold-index（SENSITIVITY）**=encode-all（==P1.9 retrieval_latency_ms）。实测 k=2 deploy=7.9ms vs cold=216ms。fail-closed 门全 PASS（manifest：LoRA sha dd09cd17…+layers[12..35]+168 模块+BGE sha 45e19549…+pooling=cls；sanity：fails=[]、LoRA toggle 168→0、dense 确定性、P1.9 repro=True、read_len paired=6257 两臂各 12 chunk、calib/quality 样本 disjoint）。CPU 验证：py_compile/bash -n OK；DRY 打印 360 quality jobs（9 cells×10 k×4 shards）+30 calib configs；equal-latency solver fixture PASSED（deploy 有 k_dense*、cold-index k* 正确 =None 因 encode-all 超带）。log logs/p0_20_phaseB.out（+logs/p0_20_phaseB/），输出 bench_results/p0_20_phaseB_dense/{summary,frontier,anchors,decision}.json。STEP2 calib→STEP3 8-GPU quality(360 jobs)→STEP4 aggregate 全跑完（.104 pid499855 done，all done markers，run-clean）。**裁决（decision.json，deployment PRIMARY 口径）：k_dense\*=10（gpu-resident 与 cpu-pinned 同）——CoMem(k=12)=53.22 vs dense-RAG@k\*=10=54.22，diff(CoMem−dense)=−1.0pp，paired-bootstrap 95%CI[−4.667,2.667]（n_boot=10000），McNemar p=0.637 → 统计打平（TIE）。Cold-index(SENSITIVITY) k_dense\*=None（encode-all 超 ±5% 带，dense 任何 k 都匹配不上 CoMem TTFT）。参考（非等延迟，两臂 k=12）：CoMem 53.22 vs dense 58.56，diff−5.33，CI[−8.889,−1.778]，p=0.00387（dense 仅在忽略延迟时赢）。VERDICT=MIXED：dense-RAG 点估计领先但 CI 含 0。** **阶段A→B selector 依赖故事**：CoMem 臂两阶段 byte-identical（均 53.22），仅换 text-RAG selector——阶段A lexical iter_bm25 text-RAG@k\*=10=64.78（CoMem −11.56pp 显著输），阶段B dense BGE dense-RAG@k\*=10=54.22（CoMem −1.0pp 打平）；通用 dense 检索在此 needle-heavy cohort 上反而比 lexical BM25 差 10.6pp，把阶段A 的 text-RAG 优势收缩成打平 → **等延迟裁决 selector-dependent；CoMem 对可部署 text-RAG 的最好情形是打平（dense），从不是赢**。禁与 P1.8 延迟分摊混为「CoMem 全面赢」。逐 cell：CoMem 质量随 k 非单调（低 k 峰值、高 k 退化，如 LongEval-16k k=2..24=96/95/97/93/85/70/58/47/43/34），dense 单调↑（15/28/34/44/54/57/62/66/79/90）；紧预算（低 k=低延迟）CoMem 碾压（LongEval-16k k=2 +81pp、RULER-16k k=2 +66pp），dense 仅高 k 反超；crossover≈k12-14 → flagship CoMem@12 anchor 恰落 crossover 附近 → 宏观打平（k=12 是保守 operating point，不 post-hoc 重选 k）。fail-closed 门全 PASS；harness bug（read_len 四臂 assert 在 babilong-qa1 因 iter_bm25 under-fill 崩）已修（commit 306ccbe，per-arm 自洽 assert + additive read_len 字段，8 崩 shard 重跑 rc=0，aggregate 干净）。design notes 全文 `paperA/P0_20_PHASEB_NOTES.md` §5。结果 JSON `bench_results/p0_20_phaseB_dense/{decision,summary}.json`（.104 diskB）。]`
 - **核心问题**：固定在线延迟预算时，CoMem 能否利用省下的 lower-layer 计算读取更多 evidence，并在质量上达到或超过 raw-text RAG；这比固定 `topk=12` 只报告约 `1.4×` Read 加速更直接地检验 CoMem 的实际价值。
 - **符号与主锚点**：`j` 仅表示深度，旗舰固定 `j=12`；`k` 表示 retrieved chunks。主比较固定 `CoMem(j=12,k=12)`，寻找最大的整数 `k_RAG*` 使 text RAG 的部署配置在线延迟与其匹配（预注册容差 `±5%`），再比较两者质量。
 - **两条路径**：
@@ -598,7 +851,11 @@
 
 ## P1.4 LoRA 训练 seed 与 judge 稳健性
 
-- **状态**：`[DONE]`（2026-07-31：两个追加 adapter seed、DeepSeek-V3 audit 和 conversation-cluster CI 均已完成并写入论文。**n-matched backfill 亦已完成**：flagship 在 seed1/2 完全相同的 cell 上重跑 n=50（新目录 `ruler_results/ruler_qcmem_seed42_n50` / `babilong_results/babilong_qcmem_seed42`，n=500 旗舰目录未动），得**真 3-seed matched-n**：RULER max **2.31pp**/median 0.40pp、BABILong max **4.36pp**/median 1.73pp、18-cell median **1.34pp**（旧 seed1-vs-seed2-only 为 median 0.71 / max 3.54）。flagship-n=500-vs-seeds-n=50 caveat 已真正清除；论文 abstract/§05/§07/§08 已更新为 "1.34 … max 4.36"。仅剩 effective-batch-3-vs-8 二阶 caveat 保留（data-seen 已 matched）。commit `28b22a8`（未 push）。）
+- **状态**：`[PARTIAL]`（2026-07-31 已完成两个追加 adapter run、
+  DeepSeek-V3 audit、conversation-cluster CI 与 matched-n backfill；但 seed1/2
+  effective batch=3、flagship=8，且未覆盖 exact 15-cell RULER-B、LongEval、
+  LoCoMo headline，因此按 2026-08-04 六评不能算 clean seed variance。剩余工作
+  由本文件顶部 A-P0.2 接管。）
 - **类型**：训练 + 评测。
 - **设计**：主 `j=12` self-distillation LoRA 至少 3 seeds；报告 benchmark mean±std。扩大可复现 judge audit，或使用可固定版本的开放 judge；报告 conversation-level 数值 CI。
 
@@ -723,7 +980,16 @@ PyramidKV native 15-cell（n=100，IRON-LAW-2 全 OK，raw `ruler_results/p16_py
 
 ## P1.8 真实 repeated-query serving 曲线：CoMem vs `j=0`
 
-- **状态**：`[HARNESS READY，GPU 排队 — 2026-08-03，serving-curve harness（scripts/bench_p1_8_serving_curve.py + scripts/_run_p1_8_serving.sh），workflow wg28ofr1v，commit c32a2c9（author LiuHanzuo，未 push）。CPU 通过（py_compile + import + crossover 合成 fixture：Q* 随 G 下降、winner grid 翻转、P0.2 解析交叉核对）。fail-closed 5 门（LoRA sha / store-fetch 选中 h12==fresh recompute max_abs 0 / 单 pack / persistent_bytes 精确 / finite logits）。L=1M store cell ~16GB（H20 97.8G 可跑；逼近 OOM 用 --tier cpu pinned host store，launcher 已单独 fan）。默认矩阵 L∈{32k,128k,1M}×tier{gpu,cpu}×3 proc。GPU run 排队 .104（P0.20 之后）。]`
+- **2026-08-04 纠错**：早先论文 Table 3 只展示 32k 全 grid、128k 的
+  `G=1` 两格，并误写“128k longer-generation values were not retained”；
+  这不是原始实验事实。`.104` 的权威
+  `bench_results/p1_8_serving/p1_8_serving_aggregate.json` 实际包含完整
+  `32k/128k/1M × {gpu,cpu} × G={1,32,128,512}` 共 24 个 crossover cells。
+  原始 aggregate（SHA-256
+  `9648f4e6d29d29d97b548b889da861de60dc164d38c4790fe15a302fe0758411`）
+  和 18 个 per-process JSON 已回拷到
+  `paperA/artifacts/p1_8_serving/`；Table 3 已恢复完整 grid。
+- **状态**：`[DONE — 2026-08-03 18:28，task #139，.104 8×H20（torch-base）。COMPLETE & VALID：`[p1.8] COMPLETE`，18/18 done markers，store!=recompute abort=0，crossover json `bench_results/p1_8_serving/p1_8_serving_aggregate.json`（58722B）。GPU 全 0% 释放→接 P0.20 阶段B。**crossover 结论**：CoMem 每 query 分摊后更快——L=32k tier=cpu comemW=2.253s j0idx=2.16ms，G1:Q*≈8.9 / G32:9.2 / G128:10.9 / G512:94；tier=gpu G1:Q*≈8.4 / G32:7.7 / G128:5.5 / G512:inf；@128k G=1 break-even tier=cpu Q*≈27.6 / gpu Q*≈25.8（与 P0.2 解析 ≈17-20 一致，larger G 更早交叉）。⚠️ **定位**：P1.8=延迟分摊故事（重复 query 同 doc ≥Q* 次后 CoMem 每 query 更省）；P0.20=等延迟质量故事（NEGATIVE）；二者互补，禁止混为「CoMem 全面赢」。**bug→fix 历程**（已闭合）：17:35 首 launch 每 serve job 首 query fail-closed abort `store!=recompute max_abs=128.0`——GATE2 用 per-chunk `write_chunk`(B=1) 建 store 却用 batched `write_chunks`(B=12) 算 fresh recompute 参照，语义同但非 bit-identical（Qwen3-8B 第12层 |h12|~1.3e4，一个 bf16 ULP 恰=128 触发 exact 门）；store 本身始终正确（|store−write_chunk|=0）。opus coder agent（a46b637b）修复=参照改用同一 per-chunk `write_chunk` 原语（line 488），门未 loosen、未动共享模块。**修复 commit `9856029`**（`fix: P1.8 serving store-fetch h12==recompute integrity gate`，author LiuHanzuo，单文件 scripts/bench_p1_8_serving_curve.py +19/−1，未 push）。fail-closed 5 门全 PASS。]`
 - **目的**：正面回答 CoMem 在何种 workload 下相对 matched raw-text replay 严格占优，而不是只给解析式 break-even。
 - **对照**：`j=0` BM25 raw-text replay、CoMem `j=12+LoRA`；可附 full context 作为参考，但主判断必须是 CoMem vs `j=0`。
 - **矩阵**：context/store `L∈{32k,128k,1M}`；同文档查询数 `Q∈{1,4,16,32,64}`；generation length `G∈{1,32,128,512}`；至少测试 GPU-resident 与 CPU-pinned 两个 store tier，CEPH/NVMe 可用 P2.2 实测组件或补统一运行。
@@ -733,7 +999,7 @@ PyramidKV native 15-cell（n=100，IRON-LAW-2 全 OK，raw `ruler_results/p16_py
 
 ## P1.9 Dense retriever + native prompting 的标准 RAG reference
 
-- **状态**：`[HARNESS READY，GPU 排队 — 2026-08-03，dense-RAG reference harness（scripts/eval_p1_9_dense_rag.py + scripts/_run_p1_9_dense_rag_8gpu.sh + paperA/P1_9_DENSE_RAG_NOTES.md），workflow wg28ofr1v，commit c32a2c9（author LiuHanzuo，未 push）。retriever=models/bge-large-en-v1.5（frozen，weight sha 45e19549…== 硬编码门，--mode provenance exit0）；chunk=512、Qwen3-8B reader no-LoRA j=0；raw-text RAG 与 CoMem 共用同 examples + 同排序列表 top-k 前缀。默认 cohort 44 jobs（babilong qa1/qa2×{4k,8k,16k}+longeval{8k,16k}+locomo+ruler niah_multikey_1×{8k,16k}，n=100，4 shards）；分解报 recall@k / hit-conditional reader acc / e2e quality / query-enc+ANN latency / index size；READER_PROMPTS="plain native" 做 template-sensitivity。GPU run 排队 .104（P0.20 之后；本实验亦为 P0.20 阶段B dense equal-latency 前置）。]`
+- **状态**：`[DONE — 2026-08-03，task #140，.104 8×H20 跑完（44 cells=11 tasks×4shards，all_tasks_reported=True，missing=[]，aggregate guard PASS）。dense-RAG reference harness（scripts/eval_p1_9_dense_rag.py + scripts/_run_p1_9_dense_rag_8gpu.sh + paperA/P1_9_DENSE_RAG_NOTES.md），workflow wg28ofr1v，commit c32a2c9（author LiuHanzuo，未 push）。retriever=models/bge-large-en-v1.5（frozen，weight sha 45e19549…== 硬编码门，--mode provenance exit0）；chunk=512、Qwen3-8B reader no-LoRA j=0；raw-text RAG 与 CoMem 共用同 examples + 同排序列表 top-k 前缀。默认 cohort 44 jobs（babilong qa1/qa2×{4k,8k,16k}+longeval{8k,16k}+locomo+ruler niah_multikey_1×{8k,16k}，n=100，4 shards）；分解报 recall@k / hit-conditional reader acc / e2e quality / query-enc+ANN latency / index size；READER_PROMPTS="plain native" 做 template-sensitivity。GPU run **DONE** 于 .104（pid153121，torch-base，BGE frozen provenance sha_ok=true；COHORT=min，n=100，plain-prompt）。**dense-RAG(BGE CLS+L2+cosine, topk12, no-LoRA Qwen3-8B reader) headline recall@k / e2e**：babilong qa1 4k=1.00/0.74·8k=0.90/0.77·16k=**0.52/0.45**；qa2 4k=1.00/0.45·8k=0.91/0.45·16k=**0.45/0.31**；longeval 8k=0.84/0.82·16k=0.58/0.57；ruler nmk1 8k=0.99/0.98·16k=0.81/0.82；locomo 0.70/0.18。**要点：dense 检索 recall@12 随长度显著衰减（16k babilong ~0.45-0.52），是 Paper A "RAG 长档 recall 崩" 干净参照；hit-conditional reader acc 仍高 → 瓶颈在检索非阅读。** 结果 bench_results/p1_9_dense_rag/aggregate.json。作 P0.20 阶段B dense equal-latency 前置：阶段B 直接复用 retrieval_results/p1_9_dense 的 BGE 排序，不重编。]`
 - **目的**：补齐 BM25 `j=0` 之外更接近真实部署的 RAG reference，避免系统结论仅依赖 lexical selector；该实验不替代 matched BM25 路径，也不与 MemoryLLM 混为同类。固定 dense retriever 后，必须同时服务 raw-text RAG 与 CoMem，形成 P0.20 的 dense equal-latency 主比较。
 - **建议配置**：固定一个公开 dense retriever（优先 BGE 或 E5，冻结版本/hash），同 chunk=512、Qwen3-8B reader；先完成 top-12 sanity，再按 P0.20 扫描 `k∈{2,4,6,8,10,12,14,16,20,24}`。同时给统一 no-chat 主协议和 reader 原生 prompt/template sensitivity。若 retriever 需要 query instruction，必须按官方说明固定。
 - **任务**：优先 BABILong qa1/qa2、LongEval、LoCoMo；附 RULER multikey但不以 lexical needle 为唯一结论。
@@ -742,7 +1008,8 @@ PyramidKV native 15-cell（n=100，IRON-LAW-2 全 OK，raw `ruler_results/p16_py
 
 ## P1.10 E1：Write-path representation/interface distillation（仅条件启动）
 
-- **状态**：`[BLOCKED — 等 P0.16/P0.18 决策；不得提前训练]`
+- **状态**：`[✅ DONE-CONVERGED @.104 8×H20（2026-08-04）— **#142 双重收敛确认 → 提前停训（step2500/4000，省 ~11h）**。**BBWL 收敛 eval（task #150，coder aed17fd6，跑在 .73+.82，niah_multikey_1×{8k,16k}，n=200 paired，全 fail-closed 门 PASS：packs_paired_1to1=True + p013_sha_match=True + oom=0 + nonfinite=0，基线 A=100/BB=92.5/E0=100 bit-identical 复现）**：macro BBWL(chunk-local Write + 下12层蒸馏 WRITE LoRA) step1000/1500/2000 = **98.0 / 99.0 / 98.5**（8k 全 100 饱和，movement 全在 16k n=200 噪声内 → 平台自 step1000）。**BBWL−BB（部署 Write gap 闭合）McNemar p=0.0034/0.0002/0.0005（显著）；E0−BBWL（到 doc-ctx=100 上界残差）p=0.125/0.5/0.25（三点均 n.s.）** → 训练版下 12 层 Write→document-contextual 蒸馏**闭合 ~6pp（80%）可部署 Write gap（BB 92.5 → BBWL 98.5），到 E0=100 上界残差在 n=200 下不显著**（与 P0.17 E2 零训练 80-87% 恢复量级一致——训练把残留基本吃掉但未统计性超越零训练方案）。training loss 亦早平台（~0.038-0.041 since step500）。**交付 ckpt = step2000 adapter（BBWL=98.5），作为论文 upper-bound 点。** 蒸馏 WRITE adapter（layers 0..11）与旗舰 READ LoRA（layers 12..35, sha dd09cd17）disjoint，A/BB/E0 保持 bit-identical。coder 两处 launcher 改动 commit 在 wzc1 本地（64db47c WRITE_LORA env / e8f9925 LOGDIR 可覆盖，LiuHanzuo，未 push）；因 zwfy6 1081 dirty 文件 git pull 不安全，BBWL 驱动 scp 搬 zwfy6（md5 一致，留 .bak）。结果 JSON bench_results/p0_18_e4_bbwl_step{1000,1500,2000}/。 (以下为训练期历史)] `[RUNNING @.104 8×H20（2026-08-04 复检：step ~2280/4000，loss ~0.038 已近收敛，~26 s/step effective——受 PG19 data-pipeline I/O stall 主导（GPU 在 burst 内 7.3 win/s，但 step 间长 stall），剩 ~12.7h；⚠️ **B200(.252) 迁移评估=不划算，已放弃**：trainer 无 training-state resume（`--resume_j` 是层索引非 ckpt-resume）→ 迁移=从 step0 重启；L20A grad-ckpt-OFF@bs24=172GB>178GB OOM，grad-ckpt-ON 仅边际提速 → 重启净更晚完成；且瓶颈是 data I/O 非 compute，换节点治不了 stall；.252 唯一空闲 B200 又已托管 #103 crossing-PPL eval（不可占）→ 结论 #142 留 .104 跑完）。用户批准 2026-08-03（"可以 那就跑"），task #142，opus coder ad69ed87 编码+启动于 .104（8×H20，diskB，torch-base）。目标=P0.18 裁决的训练版：给下 12 层 Write 路径（layer 0..11）加 LoRA，蒸馏使 chunk-local Write 逼近 document-contextual Write（teacher 采 P0.18 harness 闭合到 100 的 Write 构造），吃掉 P0.17 E2 零训练残留的 10-15% gap（92.5→98.5-99.0 → 目标~100），作为论文 upper-bound 点。新脚本 scripts/train_qcmem_writepath_distill.py + launch_qcmem_writepath_distill_diskB.sh；output outputs/qcmem_writepath_distill_qwen_j12_r32/；镜像旗舰超参（4000 steps, lr8e-5, r32/α64, chunk512, n_ctx3, top64 KD λ0.6, ce0, bf16, sdpa, seed42, ~20min@8卡）。committer=LiuHanzuo 未 push；coder 不碰 .tex/TODOList/status（MAIN 独占），设计记入 NEW paperA/P1_10_WRITEPATH_NOTES.md。**✅ 已启动并 MAIN 独立核验 healthy（2026-08-03 22:55）**：commit 8cf49ea（scripts+notes）+ cc020d6（notes placeholder 填充：batch/pid/step-0），仅 3 新文件 clean（无 .pt/.tex/TODOList/status/password）。.104 pid 1113844，8卡 100% util ~73-75GB（~77% VRAM，batch=24 tuned）；--self_test max|diff|=0.000e+00 PASS（batched Write(0:12)+Read(12:36)==merged full forward，SDPA implicit-causal 验证）；log 确认 flagship READ LoRA merge 入冻结 base + WRITE LoRA on layers[0:12] 29.10M trainable + step10/4000 loss0.1429 @6.7win/s。**设计（faithful，见 notes）**：student=chunk-local Write+下12层 WRITE LoRA（旗舰 READ trainer 的 inverse，grad-bearing+grad-ckpt 贯穿36层）；teacher=P0.18 E0 那个「闭合到100」的 document-contextual 连续 Write（WRITE LoRA disabled=stock 下12层），PG19 全 chunk 顺序用→doc位置==pack位置→复位 gap 为零，student 唯一差异=chunk-local isolation；共享冻结 Read=旗舰 READ LoRA merge_and_unload 入 base（两臂 Read 一致）；obj=top-64 logit-KL λ0.6 ce0。**ETA 修正为 ~4h**（非早前 ~20min：write-path 变体因 grad-bearing Write + grad-ckpt + teacher double-forward 每步更重，4000步×24win/6.7win·s⁻¹≈4.0h）。**剩余交付（MAIN，~4h 后 heartbeat 复检 outputs/qcmem_writepath_distill_qwen_j12_r32/final）**：eval 训练后 chunk-local Write vs Arm B（92.5，chunk-local）vs E0（100，doc-ctx），量化训练吃掉多少 92.5→100 gap（复用 scripts/eval_p018_e4_2x2_writecontrol.py，新增 WRITE-LoRA 臂）。
+  历史裁决（保留）：P0.18（task #138）deployable gap = Write-side（lower-layer attention scope）；下 12 层 Write 改 document-contextual 即全闭合（92.5→100），与 read RoPE 无关；单独 read 重定位（doc-origin）在 chunk-local write 下 −4.5pp（位置/内容错配），两因素 interact（residual +4.5，须联合修）。P0.17 E2 零训练 overlap-write 已恢复 80-87%（92.5→98.5-99.0），故 P1.10 主要作为「训练能否吃掉残留」的 upper-bound 验证。]`
 - **触发条件**：P0.16/P0.18 证明主要误差可由 query-independent Write representation 或可学习位置接口修复；若主要问题是不可消除的 pack-coordinate mismatch，则取消本任务。
 - **实现要求**：
   1. 新建独立训练脚本/config，不污染旗舰 adapter；
