@@ -118,7 +118,7 @@ echo "[p0.18] P013_MANIFEST_DIR=$P013_MANIFEST_DIR  h12_tol=$H12_TOL pos_tol=$PO
 [ "$RUN" != "1" ] && echo "[p0.18] *** DRY-RUN (RUN!=1): printing commands only, no forward ***"
 echo "============================================================"
 
-LOGDIR="logs/p0_18_e4"
+LOGDIR="${LOGDIR:-logs/p0_18_e4}"    # per-run override so concurrent adapters don't share queue/done markers
 DONEDIR="$LOGDIR/done"
 QUEUE="$LOGDIR/task_queue.txt"
 LOCK="$LOGDIR/queue.lock"
