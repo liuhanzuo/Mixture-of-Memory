@@ -116,6 +116,8 @@ import scripts.eval_qcmem_babilong as qcb  # noqa: E402
 QCMemModel = qcb.QCMemModel
 qcmem_generate = qcb.qcmem_generate
 run_self_test = qcb.run_self_test
+cacheblend_generate = qcb.cacheblend_generate
+run_cacheblend_self_test = qcb.run_cacheblend_self_test
 
 
 # --------------------------------------------------------------------------- #
@@ -358,7 +360,10 @@ def score_sample(item: dict) -> dict:
     return out
 
 
-def run_scoring(output_dir: str, use_bertscore: bool = False):
+def run_scoring(output_dir: str, use_bertscore: bool = False,
+                use_llm_judge: bool = False, judge_model: str = "gpt-4o",
+                judge_base_url: str = None, judge_api_key: str = None,
+                judge_workers: int = 8):
     """Merge every ``preds_*.jsonl`` shard in ``output_dir`` (dedup by id) and
     recompute overall + per-category F1 / EM / acc. Writes ``scores.json``."""
     output_path = Path(output_dir)
@@ -386,6 +391,13 @@ def run_scoring(output_dir: str, use_bertscore: bool = False):
     if use_bertscore:
         _attach_bertscore(preds)
 
+    # optional LLM judge (attaches per-item ``judge`` 1.0/0.0).
+    judged = False
+    if use_llm_judge:
+        judged = llm_judge_preds(preds, output_dir, model=judge_model,
+                                 base_url=judge_base_url, api_key=judge_api_key,
+                                 workers=judge_workers)
+
     overall = collections.defaultdict(list)
     by_cat = collections.defaultdict(lambda: collections.defaultdict(list))
     for item in preds:
@@ -397,6 +409,9 @@ def run_scoring(output_dir: str, use_bertscore: bool = False):
         if "bert" in sc:
             overall["bert"].append(sc["bert"])
             by_cat[cat]["bert"].append(sc["bert"])
+        if judged and "judge" in item:
+            overall["judge"].append(float(item["judge"]))
+            by_cat[cat]["judge"].append(float(item["judge"]))
 
     n = len(preds)
 
@@ -413,12 +428,17 @@ def run_scoring(output_dir: str, use_bertscore: bool = False):
     }
     if overall["bert"]:
         results["overall_bert"] = _avg(overall["bert"])
+    if overall["judge"]:
+        results["overall_judge"] = _avg(overall["judge"])
+        results["judge_model"] = judge_model
 
     print(f"\n[QCMem-LoCoMo] locomo  n={n}")
     print(f"  OVERALL   F1={results['overall_f1']:6.2f}  "
           f"EM={results['overall_em']:6.2f}  acc={results['overall_acc']:6.2f}"
           + (f"  BERT={results['overall_bert']:6.2f}"
-             if "overall_bert" in results else ""))
+             if "overall_bert" in results else "")
+          + (f"  JUDGE={results['overall_judge']:6.2f}"
+             if "overall_judge" in results else ""))
     for cat in sorted(by_cat, key=lambda c: (c == "?", c)):
         v = by_cat[cat]
         m = len(v["f1"])
@@ -427,9 +447,13 @@ def run_scoring(output_dir: str, use_bertscore: bool = False):
                  "acc": _avg(v["acc"])}
         if v["bert"]:
             entry["bert"] = _avg(v["bert"])
+        if v["judge"]:
+            entry["judge"] = _avg(v["judge"])
         results["by_category"][cat] = entry
         print(f"  cat{cat:>2} {name:12s} F1={entry['f1']:6.2f}  "
-              f"EM={entry['em']:6.2f}  acc={entry['acc']:6.2f}  (n={m})")
+              f"EM={entry['em']:6.2f}  acc={entry['acc']:6.2f}"
+              + (f"  JUDGE={entry['judge']:6.2f}" if "judge" in entry else "")
+              + f"  (n={m})")
 
     with open(output_path / "scores.json", "w") as fh:
         json.dump(results, fh, indent=2)
@@ -471,6 +495,170 @@ def _attach_bertscore(preds: list):
 
 
 # --------------------------------------------------------------------------- #
+# LLM judge  (LoCoMo/mem0-style CORRECT/WRONG grading via an OpenAI-compatible
+# chat-completions endpoint, e.g. gpt-4o on maas-openapi.wanjiedata.com).
+# --------------------------------------------------------------------------- #
+def _load_dotenv(path: str = None):
+    """Minimal .env loader (no python-dotenv dependency). Populates os.environ
+    for keys that are not already set. Looks at PROJECT_ROOT/.env by default."""
+    path = path or os.path.join(PROJECT_ROOT, ".env")
+    if not os.path.isfile(path):
+        return
+    with open(path) as fh:
+        for line in fh:
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            k, v = line.split("=", 1)
+            k, v = k.strip(), v.strip().strip('"').strip("'")
+            if k and k not in os.environ:
+                os.environ[k] = v
+    # mirror upper/lower-case proxy vars so requests picks them up either way
+    for up, lo in (("HTTP_PROXY", "http_proxy"), ("HTTPS_PROXY", "https_proxy")):
+        if os.environ.get(up) and not os.environ.get(lo):
+            os.environ[lo] = os.environ[up]
+        if os.environ.get(lo) and not os.environ.get(up):
+            os.environ[up] = os.environ[lo]
+
+
+_JUDGE_TEMPLATE = (
+    "You are grading a model's answer against the gold answer for a question "
+    "about a long, multi-session dialogue (the LoCoMo benchmark).\n\n"
+    "Question: {question}\n"
+    "Gold answer: {gold}\n"
+    "Model answer: {pred}\n\n"
+    "Grade whether the model answer is CORRECT. It is CORRECT if it conveys the "
+    "same key information as the gold answer (a semantic match), even if phrased "
+    "differently, more verbosely, or with extra correct context. It is WRONG if "
+    "it contradicts the gold answer, omits the key information, or is empty / "
+    "refuses when an answer exists. For date/time answers, accept any unambiguous "
+    "equivalent phrasing.\n\n"
+    "Respond with ONLY one word: CORRECT or WRONG."
+)
+
+
+def _judge_one(question: str, golds: list, pred: str, model: str,
+               base_url: str, api_key: str, timeout: float = 60.0,
+               retries: int = 4):
+    """Call the judge model once; return (verdict_float, raw_reply). verdict is
+    1.0 for CORRECT, 0.0 for WRONG, None on unrecoverable API failure."""
+    import requests  # local import: only needed in --use_llm_judge scoring
+    gold = " OR ".join(str(g) for g in golds if str(g).strip()) or "(none)"
+    prompt = _JUDGE_TEMPLATE.format(question=question, gold=gold, pred=pred or "")
+    url = base_url.rstrip("/") + "/chat/completions"
+    headers = {"Authorization": f"Bearer {api_key}",
+               "Content-Type": "application/json"}
+    # keep the body minimal + deterministic: seed only (per endpoint's GPT note,
+    # temperature/top_p are best left unset for GPT-series models).
+    body = {"model": model, "stream": False, "seed": 1,
+            "messages": [{"role": "user", "content": prompt}]}
+    backoff = 2.0
+    for attempt in range(retries):
+        try:
+            r = requests.post(url, headers=headers, json=body, timeout=timeout)
+            if r.status_code == 200:
+                txt = r.json()["choices"][0]["message"]["content"].strip()
+                up = txt.upper()
+                if up.startswith("CORRECT"):
+                    return 1.0, txt
+                if up.startswith("WRONG"):
+                    return 0.0, txt
+                # fall back to substring vote
+                if "CORRECT" in up and "WRONG" not in up:
+                    return 1.0, txt
+                if "WRONG" in up and "CORRECT" not in up:
+                    return 0.0, txt
+                return 0.0, txt  # unparseable -> conservative WRONG
+            # 5xx / 429 -> retry; other 4xx -> give up (won't recover)
+            if r.status_code not in (429, 500, 502, 503, 504):
+                return None, f"HTTP {r.status_code}: {r.text[:120]}"
+        except Exception as e:  # network / proxy hiccup
+            if attempt == retries - 1:
+                return None, f"EXC {e}"
+        time.sleep(backoff)
+        backoff *= 2
+    return None, "retries exhausted"
+
+
+def llm_judge_preds(preds: list, output_dir: str, model: str = "gpt-4o",
+                    base_url: str = None, api_key: str = None,
+                    workers: int = 8):
+    """Attach a per-prediction ``judge`` (1.0/0.0) using an LLM judge. Adversarial
+    (is_abstention) items are graded locally (correct iff the model refused) — no
+    API call. Verdicts are cached in ``judge_cache.jsonl`` so re-scoring is cheap
+    and resumable. Missing key/endpoint -> warn and skip (F1/EM still reported)."""
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+
+    _load_dotenv()
+    base_url = base_url or os.environ.get("OPENAI_BASE_URL", "")
+    api_key = api_key or os.environ.get("OPENAI_API_KEY", "")
+    if not base_url or not api_key:
+        print("[QCMem-LoCoMo][WARN] --use_llm_judge requested but "
+              "OPENAI_BASE_URL / OPENAI_API_KEY missing (set them in .env); "
+              "skipping judge (F1/EM still reported).")
+        return False
+
+    cache_path = Path(output_dir) / "judge_cache.jsonl"
+    cache = {}
+    if cache_path.exists():
+        with open(cache_path) as fh:
+            for line in fh:
+                line = line.strip()
+                if line:
+                    try:
+                        rec = json.loads(line)
+                        cache[rec["id"]] = rec
+                    except Exception:
+                        pass
+
+    # 1) abstention items graded locally; 2) cached items reused; 3) rest via API
+    todo = []
+    for item in preds:
+        _id = item["id"]
+        if item.get("is_abstention", False):
+            refused = bool(_REFUSAL_RE.search(item.get("pred", ""))) \
+                or item.get("pred", "").strip() == ""
+            item["judge"] = 1.0 if refused else 0.0
+        elif _id in cache and cache[_id].get("judge") is not None:
+            item["judge"] = float(cache[_id]["judge"])
+        else:
+            todo.append(item)
+
+    if todo:
+        print(f"[QCMem-LoCoMo] LLM judge: {len(todo)} to grade with {model} "
+              f"({len(preds) - len(todo)} cached/abstention), workers={workers}")
+        cache_fh = open(cache_path, "a")
+        n_fail = 0
+
+        def _grade(item):
+            v, raw = _judge_one(item.get("question", ""), item.get("answers", []),
+                                item.get("pred", ""), model, base_url, api_key)
+            return item, v, raw
+
+        with ThreadPoolExecutor(max_workers=workers) as ex:
+            futs = {ex.submit(_grade, it): it for it in todo}
+            for fut in tqdm(as_completed(futs), total=len(futs),
+                            desc="[QCMem-LoCoMo] judging"):
+                item, v, raw = fut.result()
+                if v is None:
+                    n_fail += 1
+                    item["judge"] = 0.0  # count API failures as WRONG (rare)
+                else:
+                    item["judge"] = v
+                    rec = {"id": item["id"], "judge": v, "raw": raw[:80],
+                           "model": model}
+                    cache_fh.write(json.dumps(rec, ensure_ascii=False) + "\n")
+                    cache_fh.flush()
+        cache_fh.close()
+        if n_fail:
+            print(f"[QCMem-LoCoMo][WARN] {n_fail}/{len(todo)} judge calls failed "
+                  f"(counted as WRONG; not cached — re-run to retry them).")
+    else:
+        print("[QCMem-LoCoMo] LLM judge: all items cached/abstention, no API calls.")
+    return True
+
+
+# --------------------------------------------------------------------------- #
 # main
 # --------------------------------------------------------------------------- #
 def main():
@@ -500,7 +688,7 @@ def main():
                              "bottleneck_layer+1. Mutually exclusive with "
                              "--lora_adapter.")
     parser.add_argument("--baseline", type=str, default="none",
-                        choices=["none", "kvdirect", "hcache"],
+                        choices=["none", "kvdirect", "hcache", "cacheblend"],
                         help="Mechanism-level head-to-head baseline (mirrors the "
                              "other QCMem drivers). 'none' = normal QCMem "
                              "(retrieval topk + resume_j + optional LoRA). "
@@ -510,7 +698,12 @@ def main():
                              "O(context). 'hcache' (2410.05004) = mid-layer "
                              "recompute (keeps --resume_j) + NO retrieval (packs "
                              "every chunk) + no LoRA (post-hoc) — read grows "
-                             "O(context).")
+                             "O(context). 'cacheblend' (2405.16444, EuroSys'25) = "
+                             "FULL 36-layer per-chunk KV (144 KiB/tok) reused via "
+                             "global-RoPE reindex + selective boundary recompute "
+                             "(knob --recompute_ratio); KEEPS retrieval (same "
+                             "selector/topk as CoMem) + no LoRA — single variable "
+                             "vs CoMem is the cache object (full KV vs h_j).")
     parser.add_argument("--force_lora_with_baseline", action="store_true",
                         default=False,
                         help="Allow combining --lora_adapter with baseline=hcache: "
@@ -555,6 +748,13 @@ def main():
     parser.add_argument("--sink_tokens", type=str, default="bos",
                         choices=["bos", "none"],
                         help="Attention-sink anchor at packed position 0.")
+    parser.add_argument("--recompute_ratio", type=float, default=0.15,
+                        help="CacheBlend (--baseline cacheblend) ONLY: fraction of "
+                             "context tokens whose full-depth K/V is recomputed "
+                             "(highest layer-0 deviation). r=0.0 = pure reuse "
+                             "(naive-concat floor); r=1.0 = full-context prefill "
+                             "(upper bound / self-test gate). Sweep {0.0,0.10,0.15,"
+                             "0.18}. Ignored by other baselines.")
     parser.add_argument("--chunk_size", type=int, default=512,
                         help="QCMem chunk size (prompt split into chunk_size "
                              "segments; matches the other QCMem drivers).")
@@ -599,13 +799,33 @@ def main():
     parser.add_argument("--score_only", action="store_true",
                         help="Only merge existing per-shard JSONL + recompute "
                              "metrics.")
+    parser.add_argument("--use_llm_judge", action="store_true", default=False,
+                        help="Grade non-abstention preds CORRECT/WRONG with an "
+                             "LLM judge (LoCoMo/mem0 protocol) via an "
+                             "OpenAI-compatible endpoint; adds overall_judge + "
+                             "per-category judge to scores.json. Reads "
+                             "OPENAI_BASE_URL / OPENAI_API_KEY from .env.")
+    parser.add_argument("--judge_model", type=str, default="gpt-4o",
+                        help="Judge model id (default gpt-4o; the only model "
+                             "authorized on the maas-openapi key).")
+    parser.add_argument("--judge_base_url", type=str, default=None,
+                        help="Override judge base URL (else OPENAI_BASE_URL/.env).")
+    parser.add_argument("--judge_api_key", type=str, default=None,
+                        help="Override judge API key (else OPENAI_API_KEY/.env).")
+    parser.add_argument("--judge_workers", type=int, default=8,
+                        help="Concurrent judge API requests (default 8).")
     parser.add_argument("--self_test", action="store_true", default=False,
                         help="Run the shared QCMem j=0 correctness gate and exit.")
     args = parser.parse_args()
 
     # --- score-only: merge shards + recompute metrics, then exit ---
     if args.score_only:
-        run_scoring(args.output_dir, use_bertscore=args.use_bertscore)
+        run_scoring(args.output_dir, use_bertscore=args.use_bertscore,
+                    use_llm_judge=args.use_llm_judge,
+                    judge_model=args.judge_model,
+                    judge_base_url=args.judge_base_url,
+                    judge_api_key=args.judge_api_key,
+                    judge_workers=args.judge_workers)
         return
 
     if args.num_shards < 1:
@@ -616,7 +836,9 @@ def main():
         parser.error("--model_path is required unless --score_only")
 
     # --- head-to-head baseline resolution (identical to the other QCMem drivers) --
-    no_retrieval = (args.baseline != "none")
+    # cacheblend KEEPS retrieval (same selector/topk as CoMem), so it is NOT a
+    # "no_retrieval pack all" baseline — only kvdirect/hcache pack every chunk.
+    no_retrieval = (args.baseline in ("kvdirect", "hcache"))
     if args.bottleneck_ckpt and args.lora_adapter:
         parser.error("--bottleneck_ckpt (funnel-Qwen arm) and --lora_adapter "
                      "(stock-Qwen LoRA arm) are mutually exclusive; pick one.")
@@ -644,6 +866,17 @@ def main():
                 print("[QCMem-LoCoMo] baseline=hcache is post-hoc (no training) -> "
                       f"ignoring --lora_adapter {args.lora_adapter!r}.")
                 args.lora_adapter = ""
+    elif args.baseline == "cacheblend":
+        # CacheBlend is training-free (no LoRA) and full-depth (resume_j irrelevant),
+        # but KEEPS retrieval (same selector/topk as CoMem). Drop any LoRA so the
+        # single variable vs CoMem is purely the cache object (full KV vs h_j).
+        if args.lora_adapter:
+            print("[QCMem-LoCoMo] baseline=cacheblend is training-free (full-depth "
+                  f"KV) -> ignoring --lora_adapter {args.lora_adapter!r}.")
+            args.lora_adapter = ""
+        if not (0.0 <= args.recompute_ratio <= 1.0):
+            parser.error("--recompute_ratio must be in [0.0, 1.0]; "
+                         f"got {args.recompute_ratio}")
     if no_retrieval and args.reuse_kv_blockdiag:
         parser.error("--reuse_kv_blockdiag is a QCMem ablation and is incompatible "
                      "with --baseline (kvdirect/hcache pack all chunks with the "
@@ -745,7 +978,10 @@ def main():
               f"(={b_layer + 1}); you passed --resume_j {args.resume_j}.")
 
     if args.self_test:
-        ok = run_self_test(model, tokenizer, device, args.chunk_size)
+        if args.baseline == "cacheblend":
+            ok = run_cacheblend_self_test(model, tokenizer, device)
+        else:
+            ok = run_self_test(model, tokenizer, device, args.chunk_size)
         sys.exit(0 if ok else 1)
 
     qc = QCMemModel(model, resume_j=args.resume_j, top_prepay_b=args.top_prepay_b,
@@ -782,6 +1018,12 @@ def main():
     results_buffer = []
     t0 = time.time()
 
+    # CacheBlend efficiency accumulators (baseline=cacheblend only; else stay None).
+    cb_kv_bytes = None
+    cb_prefill_ms_sum = 0.0
+    cb_peak_mem = 0
+    cb_n = 0
+
     for pos, sample in enumerate(tqdm(shard, desc="locomo", leave=True)):
         prompt = sample["prompt"]
         if args.use_chat_template:
@@ -812,19 +1054,40 @@ def main():
 
         gen_stats: dict = {}
         try:
-            pred = qcmem_generate(
-                qc=qc, tokenizer=tokenizer, input_ids=input_ids,
-                chunk_size=args.chunk_size, max_new_tokens=args.max_new_tokens,
-                selector=args.selector, topk=args.topk,
-                sink_tokens=args.sink_tokens,
-                needle_chunk_set=needle_set, bare_question_ids=bare_q_ids,
-                no_retrieval=no_retrieval, stats=gen_stats,
-                iter_rounds=args.iter_rounds,
-                iter_hop_topk=args.iter_hop_topk,
-                iter_score=args.iter_score,
-                iter_conf_ratio=args.iter_conf_ratio,
-                iter_max_chunks=args.iter_max_chunks,
-            )
+            if args.baseline == "cacheblend":
+                pred = cacheblend_generate(
+                    qc=qc, tokenizer=tokenizer, input_ids=input_ids,
+                    chunk_size=args.chunk_size, max_new_tokens=args.max_new_tokens,
+                    selector=args.selector, topk=args.topk,
+                    sink_tokens=args.sink_tokens,
+                    recompute_ratio=args.recompute_ratio,
+                    needle_chunk_set=needle_set, bare_question_ids=bare_q_ids,
+                    stats=gen_stats,
+                    iter_rounds=args.iter_rounds,
+                    iter_hop_topk=args.iter_hop_topk,
+                )
+            else:
+                pred = qcmem_generate(
+                    qc=qc, tokenizer=tokenizer, input_ids=input_ids,
+                    chunk_size=args.chunk_size, max_new_tokens=args.max_new_tokens,
+                    selector=args.selector, topk=args.topk,
+                    sink_tokens=args.sink_tokens,
+                    needle_chunk_set=needle_set, bare_question_ids=bare_q_ids,
+                    no_retrieval=no_retrieval, stats=gen_stats,
+                    iter_rounds=args.iter_rounds,
+                    iter_hop_topk=args.iter_hop_topk,
+                    iter_score=args.iter_score,
+                    iter_conf_ratio=args.iter_conf_ratio,
+                    iter_max_chunks=args.iter_max_chunks,
+                )
+            # CacheBlend efficiency columns (additive; empty for other arms).
+            if args.baseline == "cacheblend":
+                cb_kv_bytes = gen_stats.get("cacheblend_kv_bytes_per_tok")
+                if "prefill_latency_ms" in gen_stats:
+                    cb_prefill_ms_sum += float(gen_stats["prefill_latency_ms"])
+                    cb_n += 1
+                if "peak_mem" in gen_stats:
+                    cb_peak_mem = max(cb_peak_mem, int(gen_stats["peak_mem"]))
         except RuntimeError as e:
             if "out of memory" not in str(e).lower():
                 raise
@@ -845,6 +1108,11 @@ def main():
             "read_len": gen_stats.get("read_len"),
             "n_selected_chunks": gen_stats.get("n_selected_chunks"),
             "n_context_chunks": gen_stats.get("n_context_chunks"),
+            # CacheBlend efficiency (additive; None for other baselines).
+            "cacheblend_kv_bytes_per_tok": gen_stats.get(
+                "cacheblend_kv_bytes_per_tok"),
+            "prefill_latency_ms": gen_stats.get("prefill_latency_ms"),
+            "peak_mem": gen_stats.get("peak_mem"),
         })
 
         if (pos + 1) % 10 == 0 or pos == len(shard) - 1:
@@ -867,10 +1135,33 @@ def main():
     print(f"[QCMem-LoCoMo] shard {args.shard_index}/{args.num_shards} done: "
           f"{len(results_buffer)} samples ({time.time()-t0:.1f}s) -> {outfile}")
 
+    # CacheBlend efficiency summary (additive; only written for baseline=cacheblend).
+    if args.baseline == "cacheblend":
+        cb_summary = {
+            "baseline": "cacheblend",
+            "recompute_ratio": args.recompute_ratio,
+            "cacheblend_kv_bytes_per_tok": cb_kv_bytes,
+            "avg_prefill_latency_ms": (round(cb_prefill_ms_sum / cb_n, 2)
+                                       if cb_n else None),
+            "peak_mem": (cb_peak_mem if cb_peak_mem else None),
+            "n_samples": len(results_buffer),
+        }
+        with open(outdir / f"cacheblend_efficiency{shard_tag}.json", "w") as f:
+            json.dump(cb_summary, f, indent=2)
+        print(f"[QCMem-LoCoMo] cacheblend efficiency (r={args.recompute_ratio}): "
+              f"kv_bytes/tok={cb_kv_bytes} "
+              f"avg_prefill_ms={cb_summary['avg_prefill_latency_ms']} "
+              f"peak_mem={cb_summary['peak_mem']}")
+
     # Single-shard: auto-score (multi-shard: run --score_only after all finish).
     if args.num_shards == 1:
         print("\n[QCMem-LoCoMo] Running scoring (single-shard mode)...")
-        run_scoring(args.output_dir, use_bertscore=args.use_bertscore)
+        run_scoring(args.output_dir, use_bertscore=args.use_bertscore,
+                    use_llm_judge=args.use_llm_judge,
+                    judge_model=args.judge_model,
+                    judge_base_url=args.judge_base_url,
+                    judge_api_key=args.judge_api_key,
+                    judge_workers=args.judge_workers)
 
     print("\n[QCMem-LoCoMo] Evaluation complete!")
 
