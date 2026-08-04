@@ -25,7 +25,8 @@ Design notes
 """
 from __future__ import annotations
 
-from typing import List, Optional, Sequence
+import math
+from typing import List, Optional, Sequence, Tuple
 
 import torch
 import torch.nn as nn
@@ -777,3 +778,319 @@ class QCMemModel:
         """Stock ``model(input_ids)`` logits — the self-test reference."""
         ids = self._as_ids(token_ids)
         return self.model(input_ids=ids, use_cache=False).logits
+
+    # ================================================================== #
+    # CacheBlend-style full-depth chunk-KV baseline (Paper A ★1, #143)
+    # ------------------------------------------------------------------ #
+    # NOTE: these methods are ADDITIVE and never touch the QCMem write/read
+    # (h_j) path above. They implement the *cache-object* variant of the
+    # single-variable Paper A control: instead of caching one depth-``j``
+    # residual per chunk (8 KiB/tok), cache the FULL 36-layer per-chunk K/V
+    # (144 KiB/tok) then reuse it with a global-position RoPE repair +
+    # selective boundary-token recompute (CacheBlend / EuroSys'25,
+    # arXiv:2405.16444). ``resume_j`` / ``top_prepay_b`` are IRRELEVANT here
+    # (this is a full-depth path); the caller may build the model at any j.
+    # ================================================================== #
+    @staticmethod
+    def _rotate_half(x: torch.Tensor) -> torch.Tensor:
+        """RoPE ``rotate_half`` (matches transformers ``apply_rotary_pos_emb``)."""
+        d = x.shape[-1] // 2
+        x1 = x[..., :d]
+        x2 = x[..., d:]
+        return torch.cat((-x2, x1), dim=-1)
+
+    def _rope_delta_cos_sin(self, offset: int, like: torch.Tensor):
+        """UN-scaled RoPE (cos, sin) for a single absolute position ``offset``.
+
+        The rotary module returns cos/sin ALREADY multiplied by
+        ``attention_scaling`` (= 1.0 for Qwen3 default rope, but != 1 for e.g.
+        YaRN). RoPE reindex is a pure rotation composition R(a)·R(b)=R(a+b), so
+        the extra ``attention_scaling`` factor must be divided out; otherwise a
+        non-default rope would scale the reindexed keys by ``s`` and silently
+        corrupt them. Returns cos/sin broadcastable to ``[1, kvh, T, head_dim]``.
+        """
+        pos = torch.tensor([[int(offset)]], device=like.device)
+        cos, sin = self.rotary_emb(like, position_ids=pos)  # [1, 1, head_dim]
+        s = float(getattr(self.rotary_emb, "attention_scaling", 1.0) or 1.0)
+        if s != 1.0:
+            cos = cos / s
+            sin = sin / s
+        # [1, 1, hd] -> [1, 1, 1, hd] so it broadcasts over (kv_heads, seq).
+        return cos.unsqueeze(1).to(like.dtype), sin.unsqueeze(1).to(like.dtype)
+
+    def _rotate_k_by_offset(self, k: torch.Tensor, offset: int) -> torch.Tensor:
+        """Reindex cached (post-RoPE) keys from chunk-local ``0:T`` to global
+        ``offset:offset+T`` by applying one extra uniform rotation ``R(offset)``.
+
+        ``k`` is ``[1, kv_heads, T, head_dim]``; every token in the chunk gets the
+        SAME delta rotation because token ``i`` was rotated at local pos ``i`` and
+        we want it at global pos ``offset+i`` (a uniform +offset shift). Values are
+        NOT rotated by RoPE, so ``V`` is returned unchanged by the caller. Offset 0
+        is the identity (sink at pack pos 0)."""
+        if int(offset) == 0:
+            return k
+        cos, sin = self._rope_delta_cos_sin(int(offset), k)
+        return (k * cos) + (self._rotate_half(k) * sin)
+
+    def cacheblend_kv_bytes_per_tok(self, dtype_bytes: int = 2) -> int:
+        """Full-depth per-token KV store size in bytes (GQA-correct).
+
+        ``2 (K+V) * num_layers * num_key_value_heads * head_dim * dtype_bytes``.
+        Qwen3-8B bf16: ``2*36*8*128*2 = 147456`` B = 144 KiB/tok."""
+        n_kv = int(getattr(self.config, "num_key_value_heads",
+                           self.config.num_attention_heads))
+        head_dim = int(getattr(self.config, "head_dim",
+                       self.config.hidden_size // self.config.num_attention_heads))
+        return 2 * self.num_layers * n_kv * head_dim * int(dtype_bytes)
+
+    @torch.no_grad()
+    def prefill_chunk_full(self, token_ids, rope_start: int = 0):
+        """Full-depth chunk prefill — the CacheBlend precompute primitive.
+
+        Mirrors :meth:`write_prefill` but generalises the layer band from
+        ``slice(0, resume_j)`` to ``slice(0, L)`` and keeps every layer's K/V.
+        Each chunk is contextualised in ISOLATION: a chunk-local causal mask over
+        ``T`` tokens and RoPE positions ``rope_start:rope_start+T`` (``rope_start=0``
+        for the normal precompute; the self-test uses ``rope_start=G`` to build a
+        "prefill directly at global pos" reference for the reindex check). The
+        causal mask is always chunk-local (lower-triangular over ``T``), decoupled
+        from the RoPE offset, so shifting positions never changes intra-chunk
+        connectivity (RoPE is relative, so intra-chunk attention is offset-invariant).
+
+        Returns ``(kv_layers, T)`` where ``kv_layers`` is a length-``L`` list of
+        ``(K, V)`` tensors each ``[1, kv_heads, T, head_dim]`` (post q/k-norm,
+        post-RoPE — the exact space the backbone attention caches)."""
+        ids = self._as_ids(token_ids)
+        T = ids.shape[1]
+        inputs_embeds = self.embed_tokens(ids)
+        mask_positions = torch.arange(T, device=self.device).unsqueeze(0)
+        rope_positions = mask_positions + int(rope_start)
+        causal_mask = create_causal_mask(
+            config=self.config,
+            inputs_embeds=inputs_embeds,
+            attention_mask=None,
+            past_key_values=None,
+            position_ids=mask_positions,
+        )
+        position_embeddings = self.rotary_emb(inputs_embeds, position_ids=rope_positions)
+        cache = DynamicCache(config=self.config)
+        _ = self._run_layers(
+            inputs_embeds, slice(0, self.num_layers),
+            causal_mask, rope_positions, position_embeddings,
+            past_key_values=cache, use_cache=True,
+        )
+        kv_layers = [
+            (cache.layers[l].keys, cache.layers[l].values)
+            for l in range(self.num_layers)
+        ]
+        return kv_layers, T
+
+    @torch.no_grad()
+    def concat_kv_reindex(
+        self,
+        chunk_kv_list: Sequence,
+        chunk_offsets: Sequence[int],
+    ):
+        """Concatenate per-chunk full-depth K/V in pack order + RoPE-reindex keys.
+
+        ``chunk_kv_list``: ordered list (pack order ``[sink ; ctx... ; query]``) of
+        the ``kv_layers`` returned by :meth:`prefill_chunk_full` (each a length-``L``
+        list of ``(K, V)``). ``chunk_offsets[c]`` is chunk ``c``'s GLOBAL start
+        position in the pack (running sum of chunk lengths). For each layer, every
+        chunk's cached keys (rotated at chunk-local ``0:T_c``) are re-rotated by the
+        chunk offset (``K_global = R(offset)·K_local``) and concatenated on the seq
+        axis; values are concatenated as-is (RoPE never touches V). Returns a
+        length-``L`` list of ``(K_full, V_full)`` each ``[1, kv_heads, H, head_dim]``
+        with ``H = sum(T_c)`` — a full-depth KV cache for the whole pack, positioned
+        exactly as a single contiguous full-context prefill (verified to fp tol by
+        the reindex self-test)."""
+        L = self.num_layers
+        merged: List[Tuple[torch.Tensor, torch.Tensor]] = []
+        for l in range(L):
+            k_parts = []
+            v_parts = []
+            for c, kv_layers in enumerate(chunk_kv_list):
+                K, V = kv_layers[l]
+                k_parts.append(self._rotate_k_by_offset(K, int(chunk_offsets[c])))
+                v_parts.append(V)
+            merged.append((torch.cat(k_parts, dim=-2), torch.cat(v_parts, dim=-2)))
+        return merged
+
+    def _cacheblend_attn_mask(self, keep_bool: torch.Tensor):
+        """Coerce a ``[Sq, Skv]`` bool keep-mask to the attention impl's format.
+
+        SDPA / FlashAttention take a bool mask (True = attend) directly; eager
+        wants an additive float mask (0 / -inf). Shape ``[1, 1, Sq, Skv]``."""
+        keep = keep_bool.view(1, 1, *keep_bool.shape)
+        attn_impl = getattr(self.config, "_attn_implementation", "sdpa")
+        if attn_impl in ("sdpa", "flash_attention_2", "flash_attention_3"):
+            return keep
+        min_val = torch.finfo(self.dtype).min
+        mask = torch.zeros(keep.shape, dtype=self.dtype, device=keep.device)
+        return mask.masked_fill(~keep, min_val)
+
+    @torch.no_grad()
+    def cacheblend_read(
+        self,
+        pack_ids,
+        merged_kv: Sequence,
+        sink_len: int,
+        query_len: int,
+        recompute_ratio: float,
+        stats=None,
+    ):
+        """CacheBlend forward: reuse blended full-depth KV + selective recompute.
+
+        ``pack_ids`` is the ``[1, H]`` packed token sequence ``[sink ; ctx ; query]``
+        (same tokens whose per-chunk KV produced ``merged_kv`` via
+        :meth:`concat_kv_reindex`). ``sink_len`` / ``query_len`` mark the sink prefix
+        and query tail; the middle ``[sink_len : H-query_len]`` is context.
+
+        Pipeline (faithful CacheBlend HKVD):
+          1. **Bootstrap layer 0 full** over all ``H`` tokens (global RoPE ``0:H``,
+             standard causal) → ``h1`` for every token + fresh layer-0 K.
+          2. **Deviation** per context token = ``||K0_fresh - K0_reused||_2`` (over
+             kv-heads × head_dim). ``R`` = sink ∪ query ∪ top-``ceil(r*n_ctx)``
+             highest-deviation context tokens (``r`` = the only knob).
+          3. **Selective layers 1..L-1**: forward ONLY the ``|R|`` tokens; each
+             layer overwrites the reused cache at the ``R`` positions with freshly
+             computed K/V and reuses cached K/V elsewhere; ``R`` queries attend to
+             the full ``H`` cache, causal by GLOBAL position.
+          4. norm + lm_head over ``R`` → logits at ``R`` positions.
+
+        At ``r=1.0`` ``R`` = all tokens ⇒ this reduces to a standard full-context
+        prefill (the exact self-test gate). At ``r=0.0`` only sink+query are
+        recomputed beyond the bootstrap layer (pure-reuse lower bound).
+
+        Returns ``(logits_R [1, |R|, V], R_idx [|R|], mixed)`` where ``mixed`` is the
+        final length-``L`` list of ``(K, V)`` full-``H`` caches (for decode)."""
+        ids = self._as_ids(pack_ids)
+        H = ids.shape[1]
+        L = self.num_layers
+        embeds = self.embed_tokens(ids)
+        positions = torch.arange(H, device=self.device).unsqueeze(0)  # global 0:H
+        full_mask, full_pe = self._make_mask_and_rope(embeds, positions)
+
+        # (1) bootstrap: full layer 0 over all H tokens (fresh KV for all).
+        boot_cache = DynamicCache(config=self.config)
+        h1 = self._run_layers(
+            embeds, slice(0, 1), full_mask, positions, full_pe,
+            past_key_values=boot_cache, use_cache=True,
+        )
+        freshK0 = boot_cache.layers[0].keys      # [1, kvh, H, hd]
+        freshV0 = boot_cache.layers[0].values
+
+        # (2) per-context-token deviation vs the reused (reindexed) layer-0 keys.
+        ctx_start = int(sink_len)
+        ctx_end = H - int(query_len)
+        n_ctx = max(0, ctx_end - ctx_start)
+        reusedK0 = merged_kv[0][0].to(freshK0.dtype)         # [1, kvh, H, hd]
+        dev = (freshK0 - reusedK0).float().pow(2).sum(dim=(1, 3)).sqrt().squeeze(0)  # [H]
+
+        r = float(recompute_ratio)
+        n_recompute = int(math.ceil(r * n_ctx)) if n_ctx > 0 else 0
+        n_recompute = max(0, min(n_recompute, n_ctx))
+        R = torch.zeros(H, dtype=torch.bool, device=self.device)
+        if ctx_start > 0:
+            R[:ctx_start] = True         # sink forced (identity reuse anyway)
+        R[ctx_end:] = True               # query forced (always recomputed)
+        if n_recompute > 0:
+            ctx_dev = dev[ctx_start:ctx_end]
+            top = torch.topk(ctx_dev, n_recompute).indices + ctx_start
+            R[top] = True
+        R_idx = torch.nonzero(R, as_tuple=False).squeeze(1)  # sorted global positions
+
+        # (3) selective recompute over layers 1..L-1.
+        # Layer 0 is fully fresh; layers 1..L-1 start from the reused (reindexed)
+        # cache and get the R positions overwritten in-place by the custom cache.
+        mixed: List[Tuple[torch.Tensor, torch.Tensor]] = [(freshK0, freshV0)]
+        for l in range(1, L):
+            mixed.append((merged_kv[l][0].clone(), merged_kv[l][1].clone()))
+
+        hidden_R = h1[:, R_idx, :]                      # [1, |R|, d]
+        rope_R = positions[:, R_idx]                    # [1, |R|] global positions
+        pe_R = self.rotary_emb(hidden_R, position_ids=rope_R)
+        # R query at global pos p attends to cache key at global pos k iff k <= p.
+        col = torch.arange(H, device=self.device).view(1, H)
+        keep = col <= R_idx.view(-1, 1)                 # [|R|, H] bool
+        attn_mask = self._cacheblend_attn_mask(keep)
+
+        for l in range(1, L):
+            cache_l = _CacheBlendSparseCache(mixed[l][0], mixed[l][1], R_idx)
+            out = self.layers[l](
+                hidden_R,
+                attention_mask=attn_mask,
+                position_ids=rope_R,
+                position_embeddings=pe_R,
+                past_key_values=cache_l,
+                use_cache=True,
+            )
+            hidden_R = self._layer_out_hidden(out)
+            mixed[l] = (cache_l.keys, cache_l.values)
+
+        # (4) norm + lm_head over the recomputed positions.
+        logits_R = self.lm_head(self.norm(hidden_R))    # [1, |R|, V]
+
+        if stats is not None:
+            stats["cacheblend_kv_bytes_per_tok"] = self.cacheblend_kv_bytes_per_tok(
+                dtype_bytes=(2 if self.dtype in (torch.bfloat16, torch.float16) else 4)
+            )
+            stats["recompute_ratio"] = r
+            stats["n_recompute_ctx"] = int(n_recompute)
+            stats["n_context_tokens"] = int(n_ctx)
+            stats["pack_len"] = int(H)
+        return logits_R, R_idx, mixed
+
+    @torch.no_grad()
+    def cacheblend_decode_cache(self, mixed: Sequence) -> DynamicCache:
+        """Seed a standard ``DynamicCache`` from a blended full-``H`` KV cache so a
+        plain single-token decode can extend it (the blended cache IS a valid past
+        for every layer). Returns a ``DynamicCache`` with ``H`` cached positions."""
+        cache = DynamicCache(config=self.config)
+        for l in range(self.num_layers):
+            cache.update(mixed[l][0], mixed[l][1], l)
+        return cache
+
+    @torch.no_grad()
+    def cacheblend_decode_step(self, token_id, decode_cache: DynamicCache, pack_pos: int):
+        """One O(1) decode step over the blended full-depth cache (all L layers).
+
+        Embeds ``token_id``, runs it through ``layers[0:L]`` at global RoPE position
+        ``pack_pos`` attending to the full cache (single query ⇒ SDPA ``None`` mask
+        attends to all), norm + lm_head → next-token logits ``[1, 1, V]``. The cache
+        is extended by one position at every layer."""
+        ids = torch.tensor([[int(token_id)]], device=self.device, dtype=torch.long)
+        emb = self.embed_tokens(ids)
+        t_pos = torch.tensor([[int(pack_pos)]], device=self.device)
+        t_pe = self.rotary_emb(emb, position_ids=t_pos)
+        t_mask = self._decode_attn_mask(int(pack_pos) + 1)
+        hidden = self._run_layers(
+            emb, slice(0, self.num_layers),
+            t_mask, t_pos, t_pe,
+            past_key_values=decode_cache, use_cache=True,
+        )
+        return self.lm_head(self.norm(hidden))
+
+
+class _CacheBlendSparseCache:
+    """Minimal duck-typed per-layer cache for CacheBlend selective recompute.
+
+    Pre-loaded with the reused (RoPE-reindexed) K/V for ALL ``H`` packed positions.
+    The backbone attention calls ``past_key_values.update(k_fresh, v_fresh, layer_idx)``
+    with the freshly computed K/V for the ``|R|`` recompute tokens only; we overwrite
+    the reused cache at the ``R`` positions and return the FULL ``[1, kvh, H, hd]``
+    K/V (fresh at ``R``, reused elsewhere) so the ``|R|`` queries attend to the whole
+    blended context. Qwen3's attention only ever calls ``.update(...)`` on the cache
+    (verified against modeling_qwen3.py), so no other Cache API is needed."""
+
+    def __init__(self, keys: torch.Tensor, values: torch.Tensor, recompute_pos: torch.Tensor):
+        self.keys = keys
+        self.values = values
+        self._pos = recompute_pos
+
+    def update(self, key_states, value_states, *args, **kwargs):
+        self.keys = self.keys.clone()
+        self.values = self.values.clone()
+        self.keys[:, :, self._pos, :] = key_states.to(self.keys.dtype)
+        self.values[:, :, self._pos, :] = value_states.to(self.values.dtype)
+        return self.keys, self.values

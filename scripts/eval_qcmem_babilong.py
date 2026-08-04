@@ -847,6 +847,223 @@ def run_self_test(model, tokenizer, device, chunk_size: int) -> bool:
 
 
 # --------------------------------------------------------------------------- #
+# CacheBlend-style full-depth chunk-KV baseline (Paper A ★1, #143)
+# --------------------------------------------------------------------------- #
+@torch.no_grad()
+def cacheblend_generate(
+    qc: QCMemModel,
+    tokenizer,
+    input_ids: torch.Tensor,      # [1, L] full formatted sample (BOS-prefixed)
+    chunk_size: int,
+    max_new_tokens: int,
+    selector: str,
+    topk: int,
+    sink_tokens: str,             # "bos" | "none"
+    recompute_ratio: float,       # the ONLY CacheBlend knob (r); 1.0 == full prefill
+    needle_chunk_set=None,        # set[int] for oracle; else None
+    bare_question_ids=None,       # list[int] for bm25/iter_bm25 query
+    stats=None,                   # optional out-dict: read_len / latency / peak_mem
+    iter_rounds: int = 0,         # iter_bm25: #BFS rounds (<=0 -> auto)
+    iter_hop_topk: int = 4,       # iter_bm25: chunks added per round (CoMem canonical)
+    gen_boundary_ids=None,        # chat assistant no-think prefill (appended to query)
+) -> str:
+    """CacheBlend baseline generate — SAME retrieval/pack/selector as CoMem, but the
+    cache object is the FULL 36-layer per-chunk K/V (144 KiB/tok) instead of one
+    depth-``j`` residual (8 KiB/tok). Single-variable control vs flagship CoMem.
+
+    Pipeline: chunk → select context chunks with the SAME selector as CoMem
+    (iter_bm25, iter_hop_topk=4) → per-chunk full-depth prefill (chunk-local RoPE)
+    → concat + global-position RoPE reindex → selective boundary-token recompute
+    (knob ``r``) → greedy decode over the blended full-depth cache. ``r=0.0`` = pure
+    reuse (naive-concat lower bound), ``r=1.0`` = full-context prefill (upper bound).
+    """
+    device = qc.device
+    tokens = input_ids[0]
+    chunks = list(tokens.split(chunk_size))
+    context_chunks = chunks[:-1]
+    query_chunk = chunks[-1]
+
+    # ---- sink token ids (BOS attention-sink anchor at pack pos 0) ----
+    sink_ids = None
+    if sink_tokens == "bos":
+        bos_id = tokenizer.bos_token_id
+        if bos_id is None:
+            bos_id = int(tokens[0].item())
+        sink_ids = [int(bos_id)]
+
+    # ---- select context chunks with the SAME selector as CoMem ----
+    # (iter_bm25 is pure lexical / CPU, no h_j needed — the cache-object variable is
+    #  the ONLY thing that differs from CoMem.)
+    sel_idx = _select_context_chunk_indices(
+        selector, context_chunks, bare_question_ids or [], topk, needle_chunk_set,
+        iter_rounds=iter_rounds, iter_hop_topk=iter_hop_topk,
+    )
+
+    # ---- query ids (+ chat generation boundary, matched to qcmem_generate) ----
+    query_ids = query_chunk.tolist()
+    if gen_boundary_ids:
+        query_ids = query_ids + list(gen_boundary_ids)
+
+    # ---- full-depth per-chunk prefill in pack order [sink ; ctx ; query] ----
+    measure = torch.cuda.is_available() and str(device).startswith("cuda")
+    if measure:
+        torch.cuda.synchronize(device)
+        torch.cuda.reset_peak_memory_stats(device)
+    t0 = time.perf_counter()
+
+    chunk_kv_list = []
+    chunk_offsets = []
+    seg_ids = []
+    offset = 0
+    sink_len = 0
+    if sink_ids is not None:
+        kv, T = qc.prefill_chunk_full(sink_ids)
+        chunk_kv_list.append(kv); chunk_offsets.append(offset); offset += T
+        seg_ids.append(torch.tensor(sink_ids, device=device, dtype=torch.long))
+        sink_len = T
+    for i in sel_idx:
+        c = context_chunks[i]
+        kv, T = qc.prefill_chunk_full(c)
+        chunk_kv_list.append(kv); chunk_offsets.append(offset); offset += T
+        seg_ids.append(c.to(device).long().view(-1))
+    q_ids_t = torch.tensor(query_ids, device=device, dtype=torch.long)
+    kv, T = qc.prefill_chunk_full(q_ids_t)
+    chunk_kv_list.append(kv); chunk_offsets.append(offset); offset += T
+    seg_ids.append(q_ids_t)
+    query_len = T
+    H = offset
+    pack_ids = torch.cat(seg_ids).view(1, -1)  # [1, H]
+
+    merged = qc.concat_kv_reindex(chunk_kv_list, chunk_offsets)
+    logits_R, R_idx, mixed = qc.cacheblend_read(
+        pack_ids, merged, sink_len, query_len, recompute_ratio, stats=stats,
+    )
+    if measure:
+        torch.cuda.synchronize(device)
+    prefill_ms = (time.perf_counter() - t0) * 1000.0
+
+    if stats is not None:
+        stats["read_len"] = int(H)
+        stats["n_selected_chunks"] = len(sel_idx)
+        stats["n_context_chunks"] = len(context_chunks)
+        stats["prefill_latency_ms"] = float(prefill_ms)
+        if measure:
+            stats["peak_mem"] = int(torch.cuda.max_memory_allocated(device))
+
+    # ---- EOS contract (identical to qcmem_generate) ----
+    generation_config = getattr(qc.model, "generation_config", None)
+    configured_eos = getattr(generation_config, "eos_token_id", None)
+    if configured_eos is None:
+        configured_eos = []
+    elif isinstance(configured_eos, int):
+        configured_eos = [configured_eos]
+    else:
+        configured_eos = list(configured_eos)
+    eos_ids = {int(e) for e in configured_eos if e is not None}
+    if tokenizer.eos_token_id is not None:
+        eos_ids.add(int(tokenizer.eos_token_id))
+    eos_ids = sorted(eos_ids)
+
+    # ---- greedy decode over the blended full-depth cache ----
+    generated = []
+    next_logits = logits_R[0, -1].float()   # last query position → first new token
+    if eos_ids:
+        next_logits[eos_ids] = float("-inf")  # step 0 never emits EOS
+    next_tok = int(next_logits.argmax().item())
+    generated.append(next_tok)
+
+    decode_cache = qc.cacheblend_decode_cache(mixed)
+    pack_pos = H
+    for step in range(1, max_new_tokens):
+        logits = qc.cacheblend_decode_step(next_tok, decode_cache, pack_pos)
+        pack_pos += 1
+        next_logits = logits[0, -1].float()
+        next_tok = int(next_logits.argmax().item())
+        if next_tok in eos_ids:
+            break
+        generated.append(next_tok)
+
+    return tokenizer.decode(generated, skip_special_tokens=True).strip()
+
+
+@torch.no_grad()
+def run_cacheblend_self_test(model, tokenizer, device) -> bool:
+    """CacheBlend correctness gate: (A) RoPE reindex exactness, (B) r=1.0 ==
+    vanilla full prefill, (C) r=0.0 finite / no-NaN.
+
+    Run with ``--dtype float32`` for a strict 1e-3 hard gate; in bf16 (the eval
+    dtype) the gate additionally requires 100% top-1 token agreement at r=1.0
+    (the dtype-robust exactness check) and reports the raw max|diff|."""
+    print("=" * 72)
+    print("CacheBlend self-test (reindex exactness + r=1.0 == full prefill)")
+    print("=" * 72)
+    qc = QCMemModel(model, resume_j=0)  # resume_j irrelevant for the full-depth path
+    dtype = next(model.parameters()).dtype
+    strict = (dtype == torch.float32)
+    tol = 1e-3 if strict else 5e-2
+
+    V = int(model.config.vocab_size)
+    bos_id = tokenizer.bos_token_id if tokenizer.bos_token_id is not None else 1
+
+    def rand_ids(n):
+        return torch.randint(0, V, (1, n), device=device)
+
+    torch.manual_seed(0)
+    sink_ids = [bos_id]
+    c1, c2, c3 = rand_ids(37), rand_ids(29), rand_ids(41)
+    q = rand_ids(23)
+
+    # (A) reindex: prefill c2 chunk-local (0:T) then rotate by its global offset must
+    #     equal prefilling c2 DIRECTLY at global positions offset:offset+T.
+    offset = len(sink_ids) + c1.shape[1]                 # c2's pack start position
+    kv_local, _ = qc.prefill_chunk_full(c2, rope_start=0)
+    kv_ref, _ = qc.prefill_chunk_full(c2, rope_start=offset)
+    reidx = qc.concat_kv_reindex([kv_local], [offset])   # single-chunk reindex
+    maxK = max((reidx[l][0].float() - kv_ref[l][0].float()).abs().max().item()
+               for l in range(qc.num_layers))
+    maxV = max((reidx[l][1].float() - kv_ref[l][1].float()).abs().max().item()
+               for l in range(qc.num_layers))
+
+    # Build the full pack for the end-to-end checks.
+    pack_ids = torch.cat([torch.tensor([sink_ids], device=device), c1, c2, c3, q], dim=1)
+    offs, kvs, o = [], [], 0
+    for seg in (torch.tensor([sink_ids], device=device), c1, c2, c3, q):
+        kv, T = qc.prefill_chunk_full(seg)
+        kvs.append(kv); offs.append(o); o += T
+    merged = qc.concat_kv_reindex(kvs, offs)
+    q_len = q.shape[1]
+
+    ref = qc.full_forward_logits(pack_ids).float()       # [1, H, V]
+
+    # (B) r=1.0 (all recompute) must reproduce the vanilla full prefill.
+    logits1, R1, _ = qc.cacheblend_read(pack_ids, merged, len(sink_ids), q_len, 1.0)
+    diff_full = (logits1.float() - ref).abs().max().item()
+    top1 = (logits1.argmax(-1) == ref.argmax(-1)).float().mean().item()
+    r1_all = (int(R1.numel()) == int(pack_ids.shape[1]))  # R must be every token
+
+    # (C) r=0.0 (pure reuse) must be finite / no NaN.
+    logits0, _, _ = qc.cacheblend_read(pack_ids, merged, len(sink_ids), q_len, 0.0)
+    finite0 = bool(torch.isfinite(logits0).all().item())
+
+    print(f"  model dtype={dtype}, L={qc.num_layers}, "
+          f"kv_bytes/tok={qc.cacheblend_kv_bytes_per_tok()}, strict={strict}")
+    print(f"  (A) reindex  max|dK|={maxK:.3e}  max|dV|={maxV:.3e}  "
+          f"{'PASS' if (maxK < tol and maxV < tol) else 'FAIL'}")
+    print(f"  (B) r=1.0 vs full prefill  max|logit diff|={diff_full:.3e}  "
+          f"top1_agree={top1*100:.2f}%  R=all:{r1_all}  "
+          f"{'PASS' if ((diff_full < tol or top1 >= 0.999) and r1_all) else 'FAIL'}")
+    print(f"  (C) r=0.0 finite (no NaN): {finite0}  {'PASS' if finite0 else 'FAIL'}")
+
+    okA = (maxK < tol and maxV < tol)
+    okB = ((diff_full < tol or top1 >= 0.999) and r1_all)
+    ok = okA and okB and finite0
+    print("-" * 72)
+    print(f"CACHEBLEND SELF-TEST: {'ALL PASS' if ok else 'FAILURE — DO NOT EVAL'}")
+    print("=" * 72)
+    return ok
+
+
+# --------------------------------------------------------------------------- #
 # main
 # --------------------------------------------------------------------------- #
 def main():
@@ -865,7 +1082,7 @@ def main():
                              "adapter dir (Direction A). Loaded onto the frozen "
                              "backbone before building the QCMem orchestrator.")
     parser.add_argument("--baseline", type=str, default="none",
-                        choices=["none", "kvdirect", "hcache"],
+                        choices=["none", "kvdirect", "hcache", "cacheblend"],
                         help="Mechanism-level head-to-head baseline (2026-07-09; "
                              "mirrors scripts/eval_ruler_qcmem.py). "
                              "'none' = normal QCMem (retrieval topk + resume_j + "
@@ -878,7 +1095,13 @@ def main():
                              "every context chunk) + no LoRA (post-hoc, no "
                              "training) — read grows O(context). Both isolate "
                              "QCMem's two primitives: retrieval (fixed read) and "
-                             "layer-partial recompute.")
+                             "layer-partial recompute. 'cacheblend' (2405.16444, "
+                             "EuroSys'25) = full-depth per-chunk KV reuse + global "
+                             "RoPE reindex + selective boundary recompute (knob "
+                             "--recompute_ratio); KEEPS retrieval (same selector/"
+                             "topk as CoMem) — single-variable control vs CoMem "
+                             "differing ONLY in the cache object (144 KiB/tok "
+                             "full KV vs 8 KiB/tok depth-j residual).")
     parser.add_argument("--force_lora_with_baseline", action="store_true",
                         default=False,
                         help="Allow combining --lora_adapter with baseline=hcache: "
@@ -967,6 +1190,13 @@ def main():
     parser.add_argument("--self_test", action="store_true", default=False,
                         help="Run the j=0 correctness gate on the real backbone "
                              "and exit. Forces fp32 for a tight tolerance.")
+    parser.add_argument("--recompute_ratio", type=float, default=0.15,
+                        help="CacheBlend (--baseline cacheblend) ONLY: fraction of "
+                             "context tokens whose KV is recomputed at the boundary "
+                             "(HKVD). r=0.0 = pure reuse (naive-concat lower bound); "
+                             "r=1.0 = full-context prefill (upper bound / self_test "
+                             "gate). Sweep {0.0, 0.10, 0.15, 0.18}. Ignored by other "
+                             "baselines.")
     args = parser.parse_args()
 
     if args.num_shards < 1:
@@ -1003,8 +1233,11 @@ def main():
     #                           any --lora_adapter).
     #   hcache   (2410.05004) : mid-layer recompute -> keep --resume_j as given;
     #                           no retrieval (pack all chunks); post-hoc (drop LoRA).
+    #   cacheblend (2405.16444): full-depth per-chunk KV reuse + selective recompute;
+    #                           KEEPS retrieval (same selector/topk as CoMem);
+    #                           training-free (drop LoRA). NOT a no_retrieval arm.
     # QCMem ('none') keeps retrieval (selector+topk), the given resume_j, and LoRA.
-    no_retrieval = (args.baseline != "none")
+    no_retrieval = (args.baseline in ("kvdirect", "hcache"))
     if args.baseline == "kvdirect":
         if args.resume_j != 0:
             print(f"[QCMem-BABILong] baseline=kvdirect -> forcing resume_j "
@@ -1029,6 +1262,16 @@ def main():
                 print("[QCMem-BABILong] baseline=hcache is post-hoc (no training) -> "
                       f"ignoring --lora_adapter {args.lora_adapter!r}.")
                 args.lora_adapter = ""
+    elif args.baseline == "cacheblend":
+        # CacheBlend keeps CoMem's retrieval (selector/topk) — only the cache object
+        # differs (full-depth KV vs depth-j residual). Training-free: drop any LoRA.
+        if args.lora_adapter:
+            print("[QCMem-BABILong] baseline=cacheblend is training-free (full-depth "
+                  f"KV reuse) -> ignoring --lora_adapter {args.lora_adapter!r}.")
+            args.lora_adapter = ""
+        if not (0.0 <= args.recompute_ratio <= 1.0):
+            parser.error("--recompute_ratio must be in [0.0, 1.0]; "
+                         f"got {args.recompute_ratio}")
     if no_retrieval and args.reuse_kv_blockdiag:
         parser.error("--reuse_kv_blockdiag is a QCMem ablation and is incompatible "
                      "with --baseline (kvdirect/hcache pack all chunks with the "
@@ -1084,7 +1327,10 @@ def main():
         model = peft_model.base_model.model
 
     if args.self_test:
-        ok = run_self_test(model, tokenizer, device, args.chunk_size)
+        if args.baseline == "cacheblend":
+            ok = run_cacheblend_self_test(model, tokenizer, device)
+        else:
+            ok = run_self_test(model, tokenizer, device, args.chunk_size)
         sys.exit(0 if ok else 1)
 
     qc = QCMemModel(model, resume_j=args.resume_j, top_prepay_b=args.top_prepay_b,
@@ -1185,6 +1431,11 @@ def main():
 
             df = pd.DataFrame({"target": [], "output": [], "question": []})
             oom_count = 0
+            # CacheBlend efficiency accumulators (baseline=cacheblend only).
+            cb_kv_bytes = None
+            cb_prefill_ms_sum = 0.0
+            cb_peak_mem = 0
+            cb_n = 0
 
             num_samples = len(task_data)
             if args.limit > 0:
@@ -1248,20 +1499,44 @@ def main():
                 )
 
                 try:
-                    output = qcmem_generate(
-                        qc=qc, tokenizer=tokenizer, input_ids=input_ids,
-                        chunk_size=args.chunk_size, max_new_tokens=args.max_new_tokens,
-                        selector=args.selector, topk=args.topk,
-                        sink_tokens=args.sink_tokens,
-                        needle_chunk_set=needle_set, bare_question_ids=bare_q_ids,
-                        no_retrieval=no_retrieval,
-                        iter_rounds=args.iter_rounds,
-                        iter_hop_topk=args.iter_hop_topk,
-                        iter_score=args.iter_score,
-                        iter_conf_ratio=args.iter_conf_ratio,
-                        iter_max_chunks=args.iter_max_chunks,
-                        gen_boundary_ids=gen_boundary_ids,
-                    )
+                    gen_stats: dict = {}
+                    if args.baseline == "cacheblend":
+                        output = cacheblend_generate(
+                            qc=qc, tokenizer=tokenizer, input_ids=input_ids,
+                            chunk_size=args.chunk_size,
+                            max_new_tokens=args.max_new_tokens,
+                            selector=args.selector, topk=args.topk,
+                            sink_tokens=args.sink_tokens,
+                            recompute_ratio=args.recompute_ratio,
+                            needle_chunk_set=needle_set,
+                            bare_question_ids=bare_q_ids,
+                            stats=gen_stats,
+                            iter_rounds=args.iter_rounds,
+                            iter_hop_topk=args.iter_hop_topk,
+                            gen_boundary_ids=gen_boundary_ids,
+                        )
+                        cb_kv_bytes = gen_stats.get("cacheblend_kv_bytes_per_tok")
+                        if "prefill_latency_ms" in gen_stats:
+                            cb_prefill_ms_sum += float(gen_stats["prefill_latency_ms"])
+                            cb_n += 1
+                        if "peak_mem" in gen_stats:
+                            cb_peak_mem = max(cb_peak_mem,
+                                              int(gen_stats["peak_mem"]))
+                    else:
+                        output = qcmem_generate(
+                            qc=qc, tokenizer=tokenizer, input_ids=input_ids,
+                            chunk_size=args.chunk_size, max_new_tokens=args.max_new_tokens,
+                            selector=args.selector, topk=args.topk,
+                            sink_tokens=args.sink_tokens,
+                            needle_chunk_set=needle_set, bare_question_ids=bare_q_ids,
+                            no_retrieval=no_retrieval,
+                            iter_rounds=args.iter_rounds,
+                            iter_hop_topk=args.iter_hop_topk,
+                            iter_score=args.iter_score,
+                            iter_conf_ratio=args.iter_conf_ratio,
+                            iter_max_chunks=args.iter_max_chunks,
+                            gen_boundary_ids=gen_boundary_ids,
+                        )
                 except RuntimeError as e:
                     if "out of memory" not in str(e).lower():
                         raise
@@ -1289,6 +1564,15 @@ def main():
                 "score": round(100.0 * correct / len(df), 2) if len(df) else 0.0,
                 "elapsed_seconds": round(time.time() - cell_started, 3),
             })
+            # CacheBlend efficiency columns (additive; None for other baselines).
+            if args.baseline == "cacheblend":
+                cell_config["cacheblend"] = {
+                    "recompute_ratio": args.recompute_ratio,
+                    "kv_bytes_per_tok": cb_kv_bytes,
+                    "avg_prefill_latency_ms": (round(cb_prefill_ms_sum / cb_n, 2)
+                                               if cb_n else None),
+                    "peak_mem": (cb_peak_mem if cb_peak_mem else None),
+                }
             json.dump(cell_config, open(cfg_file, "w"), indent=4)
             print(f"[QCMem-BABILong] Saved {len(df)} results to {outfile}")
 

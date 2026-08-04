@@ -97,6 +97,8 @@ import scripts.eval_qcmem_babilong as qcb  # noqa: E402
 QCMemModel = qcb.QCMemModel
 qcmem_generate = qcb.qcmem_generate
 run_self_test = qcb.run_self_test
+cacheblend_generate = qcb.cacheblend_generate
+run_cacheblend_self_test = qcb.run_cacheblend_self_test
 
 
 # --------------------------------------------------------------------------- #
@@ -236,7 +238,7 @@ def main():
                              "the funnel layer). Mutually exclusive with "
                              "--lora_adapter (that is the stock-Qwen LoRA arm).")
     parser.add_argument("--baseline", type=str, default="none",
-                        choices=["none", "kvdirect", "hcache"],
+                        choices=["none", "kvdirect", "hcache", "cacheblend"],
                         help="Mechanism-level head-to-head baseline (2026-07-08). "
                              "'none' = normal QCMem (retrieval topk + resume_j). "
                              "'kvdirect' (2603.19664 'The Residual Stream Is All "
@@ -247,7 +249,12 @@ def main():
                              "+ NO retrieval (packs every context chunk) + no LoRA "
                              "(post-hoc, no training) — read grows O(context). Both "
                              "isolate QCMem's two primitives: retrieval (fixed read) "
-                             "and layer-partial recompute.")
+                             "and layer-partial recompute. 'cacheblend' (2405.16444, "
+                             "EuroSys'25) = FULL 36-layer per-chunk KV (144 KiB/tok) "
+                             "reused via global-RoPE reindex + selective boundary "
+                             "recompute (knob --recompute_ratio); KEEPS retrieval "
+                             "(same selector/topk as CoMem) + no LoRA — the single "
+                             "variable vs CoMem is the cache object (full KV vs h_j).")
     parser.add_argument("--force_lora_with_baseline", action="store_true",
                         default=False,
                         help="Allow combining --lora_adapter with baseline=hcache: "
@@ -309,6 +316,13 @@ def main():
     parser.add_argument("--sink_tokens", type=str, default="bos",
                         choices=["bos", "none"],
                         help="Attention-sink anchor at packed position 0.")
+    parser.add_argument("--recompute_ratio", type=float, default=0.15,
+                        help="CacheBlend (--baseline cacheblend) ONLY: fraction of "
+                             "context tokens whose full-depth K/V is recomputed "
+                             "(highest layer-0 deviation). r=0.0 = pure reuse "
+                             "(naive-concat floor); r=1.0 = full-context prefill "
+                             "(upper bound / self-test gate). Sweep {0.0,0.10,0.15,"
+                             "0.18}. Ignored by other baselines.")
     parser.add_argument("--results_folder", type=str, default="./ruler_results")
     parser.add_argument("--output_name", type=str, required=True)
     parser.add_argument("--chunk_size", type=int, default=512,
@@ -362,8 +376,14 @@ def main():
     #                           any --lora_adapter).
     #   hcache   (2410.05004) : mid-layer recompute -> keep --resume_j as given;
     #                           no retrieval (pack all chunks); post-hoc (drop LoRA).
+    #   cacheblend (2405.16444): full-depth per-chunk KV reuse + selective recompute;
+    #                           KEEPS retrieval (same selector/topk as CoMem); no
+    #                           LoRA (training-free); resume_j irrelevant (full depth).
     # QCMem ('none') keeps retrieval (selector+topk), the given resume_j, and LoRA.
-    no_retrieval = (args.baseline != "none")
+    #
+    # NOTE: cacheblend retrieves like CoMem, so it is NOT a "no_retrieval pack all"
+    # baseline — only kvdirect/hcache pack every chunk.
+    no_retrieval = (args.baseline in ("kvdirect", "hcache"))
     if args.bottleneck_ckpt and args.lora_adapter:
         parser.error("--bottleneck_ckpt (funnel-Qwen arm) and --lora_adapter "
                      "(stock-Qwen LoRA arm) are mutually exclusive; pick one.")
@@ -391,6 +411,17 @@ def main():
                 print("[QCMem-RULER] baseline=hcache is post-hoc (no training) -> "
                       f"ignoring --lora_adapter {args.lora_adapter!r}.")
                 args.lora_adapter = ""
+    elif args.baseline == "cacheblend":
+        # CacheBlend is training-free (no LoRA) and full-depth (resume_j irrelevant),
+        # but KEEPS retrieval (same selector/topk as CoMem). Drop any LoRA so the
+        # single variable vs CoMem is purely the cache object (full KV vs h_j).
+        if args.lora_adapter:
+            print("[QCMem-RULER] baseline=cacheblend is training-free (full-depth "
+                  f"KV) -> ignoring --lora_adapter {args.lora_adapter!r}.")
+            args.lora_adapter = ""
+        if not (0.0 <= args.recompute_ratio <= 1.0):
+            parser.error("--recompute_ratio must be in [0.0, 1.0]; "
+                         f"got {args.recompute_ratio}")
     if no_retrieval and args.reuse_kv_blockdiag:
         parser.error("--reuse_kv_blockdiag is a QCMem ablation and is incompatible "
                      "with --baseline (kvdirect/hcache pack all chunks with the "
@@ -496,7 +527,10 @@ def main():
                   f"compressed representation.")
 
     if args.self_test:
-        ok = run_self_test(model, tokenizer, device, args.chunk_size)
+        if args.baseline == "cacheblend":
+            ok = run_cacheblend_self_test(model, tokenizer, device)
+        else:
+            ok = run_self_test(model, tokenizer, device, args.chunk_size)
         sys.exit(0 if ok else 1)
 
     qc = QCMemModel(model, resume_j=args.resume_j, top_prepay_b=args.top_prepay_b,
@@ -560,6 +594,11 @@ def main():
             read_len_sum = 0
             read_len_last = 0
             oom_count = 0
+            # CacheBlend efficiency accumulators (baseline=cacheblend only).
+            cb_kv_bytes = None
+            cb_prefill_ms_sum = 0.0
+            cb_peak_mem = 0
+            cb_n = 0
             mnt = args.max_new_tokens if task != "variable_tracking" \
                 else max(args.max_new_tokens, 60)
 
@@ -612,23 +651,47 @@ def main():
 
                 try:
                     gen_stats: dict = {}
-                    output = qcmem_generate(
-                        qc=qc, tokenizer=tokenizer, input_ids=input_ids,
-                        chunk_size=args.chunk_size, max_new_tokens=mnt,
-                        selector=sel, topk=args.topk,
-                        sink_tokens=args.sink_tokens,
-                        needle_chunk_set=needle_set, bare_question_ids=bare_q_ids,
-                        no_retrieval=no_retrieval, stats=gen_stats,
-                        iter_rounds=args.iter_rounds,
-                        iter_hop_topk=args.iter_hop_topk,
-                        iter_score=args.iter_score,
-                        iter_conf_ratio=args.iter_conf_ratio,
-                        iter_max_chunks=args.iter_max_chunks,
-                        gen_boundary_ids=gen_boundary_ids,
-                    )
+                    if args.baseline == "cacheblend":
+                        output = cacheblend_generate(
+                            qc=qc, tokenizer=tokenizer, input_ids=input_ids,
+                            chunk_size=args.chunk_size, max_new_tokens=mnt,
+                            selector=sel, topk=args.topk,
+                            sink_tokens=args.sink_tokens,
+                            recompute_ratio=args.recompute_ratio,
+                            needle_chunk_set=needle_set,
+                            bare_question_ids=bare_q_ids,
+                            stats=gen_stats,
+                            iter_rounds=args.iter_rounds,
+                            iter_hop_topk=args.iter_hop_topk,
+                            gen_boundary_ids=gen_boundary_ids,
+                        )
+                    else:
+                        output = qcmem_generate(
+                            qc=qc, tokenizer=tokenizer, input_ids=input_ids,
+                            chunk_size=args.chunk_size, max_new_tokens=mnt,
+                            selector=sel, topk=args.topk,
+                            sink_tokens=args.sink_tokens,
+                            needle_chunk_set=needle_set, bare_question_ids=bare_q_ids,
+                            no_retrieval=no_retrieval, stats=gen_stats,
+                            iter_rounds=args.iter_rounds,
+                            iter_hop_topk=args.iter_hop_topk,
+                            iter_score=args.iter_score,
+                            iter_conf_ratio=args.iter_conf_ratio,
+                            iter_max_chunks=args.iter_max_chunks,
+                            gen_boundary_ids=gen_boundary_ids,
+                        )
                     if "read_len" in gen_stats:
                         read_len_last = int(gen_stats["read_len"])
                         read_len_sum += read_len_last
+                    # CacheBlend efficiency columns (additive; empty for other arms).
+                    if args.baseline == "cacheblend":
+                        cb_kv_bytes = gen_stats.get("cacheblend_kv_bytes_per_tok")
+                        if "prefill_latency_ms" in gen_stats:
+                            cb_prefill_ms_sum += float(gen_stats["prefill_latency_ms"])
+                            cb_n += 1
+                        if "peak_mem" in gen_stats:
+                            cb_peak_mem = max(cb_peak_mem,
+                                              int(gen_stats["peak_mem"]))
                 except RuntimeError as e:
                     if "out of memory" not in str(e).lower():
                         raise
@@ -672,6 +735,17 @@ def main():
                 "avg_read_len": avg_read_len,
                 "last_read_len": read_len_last,
             }
+            if args.baseline == "cacheblend":
+                # CacheBlend storage/latency columns (144 KiB/tok, prefill TTFT,
+                # peak mem) + the recompute knob. Full-depth KV does NOT compress
+                # storage — report it next to any prefill win.
+                summary[task][length].update({
+                    "cacheblend_kv_bytes_per_tok": cb_kv_bytes,
+                    "recompute_ratio": args.recompute_ratio,
+                    "avg_prefill_latency_ms": (round(cb_prefill_ms_sum / cb_n, 2)
+                                               if cb_n else None),
+                    "peak_mem": (cb_peak_mem if cb_peak_mem else None),
+                })
             outfile = outdir / f"{task}_{length}{shard_tag}.csv"
             qcb.harness._write_results_csv(df, outfile)
             # Per-sample provenance records (P0.19 pairing): sample_index +
@@ -721,6 +795,14 @@ def main():
                     "scoring": "scripts.eval_ruler_mem_space._string_match_all_one",
                     "baseline": args.baseline,
                     "no_retrieval": bool(no_retrieval),
+                    "cacheblend": (
+                        {"recompute_ratio": args.recompute_ratio,
+                         "kv_bytes_per_tok": cb_kv_bytes,
+                         "avg_prefill_latency_ms": (round(cb_prefill_ms_sum / cb_n, 2)
+                                                    if cb_n else None),
+                         "peak_mem": (cb_peak_mem if cb_peak_mem else None)}
+                        if args.baseline == "cacheblend" else None
+                    ),
                     "qcmem": {
                         "resume_j": args.resume_j,
                         "top_prepay_b": args.top_prepay_b,
