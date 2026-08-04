@@ -589,10 +589,19 @@ def _judge_one(question: str, golds: list, pred: str, model: str,
                 "chat_template_kwargs": {"enable_thinking": False},
                 "messages": [{"role": "user",
                               "content": prompt + "\n/no_think"}]}
+    # A localhost open-weight judge (vLLM on 127.0.0.1) must NOT be routed through
+    # the cluster's outbound HTTP(S)_PROXY (hy-proxy) that .env sets for the remote
+    # gpt-4o endpoint — the proxy cannot reach the node's own loopback, so every
+    # request would fail. Use a proxy-agnostic Session (trust_env=False) for local
+    # URLs; remote (gpt-4o) judges keep the env proxy.
+    _is_local = ("127.0.0.1" in url) or ("localhost" in url) or ("://0.0.0.0" in url)
+    sess = requests.Session()
+    if _is_local:
+        sess.trust_env = False  # ignore HTTP(S)_PROXY / .env proxy for loopback
     backoff = 2.0
     for attempt in range(retries):
         try:
-            r = requests.post(url, headers=headers, json=body, timeout=timeout)
+            r = sess.post(url, headers=headers, json=body, timeout=timeout)
             if r.status_code == 200:
                 txt = r.json()["choices"][0]["message"]["content"].strip()
                 up = txt.upper()
