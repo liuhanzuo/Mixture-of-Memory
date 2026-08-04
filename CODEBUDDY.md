@@ -12,7 +12,16 @@
 
 ## 🖥️ 当前 GPU 集群（2026-08-04 更新，权威，覆盖旧记录）
 
-**当前只有 5 个节点 = 40 卡，全部共享同一 wzc1 项目盘 `/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/`**（本机与 .252 是 B200，真共享该盘、互相无需 rsync；.73/.82/.104 是 H20，也在该路径下跑训练/eval）。
+**当前只有 5 个节点 = 40 卡，但 ⚠️ 分属【两个物理盘】，不是"全部共享 wzc1"。**
+
+> **★★ 2026-08-04 实测纠正（旧文档「5 台全部共享 wzc1、互相无需 rsync」是错的，已让多个 agent 白跑，务必按本条执行）：**
+> - **wzc1 盘 = 本机 LOCAL + .252**（两台 B200 级，真共享 `/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/`，互相无需 rsync）。
+> - **zwfy6 盘 = .73 / .82 / .104**（三台 H20，真实 root = `/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/`）。它是**另一份独立 checkout、commit 常落后**（实测 `2d98c5a`，且非 local HEAD 的祖先）。
+> - **陷阱 1（.73）**：`/apdcephfs_wzc1` 在 .73 上是**指向 zwfy6 的 symlink** —— wzc1 路径字符串"看着能用"，但物理盘不同于 LOCAL/.252，**写进去 LOCAL 看不到**。.73 的 PROJECT_ROOT 应写 zwfy6 路径。
+> - **陷阱 2（.82）**：`/apdcephfs_wzc1` 在 .82 上**根本不存在**。
+> - **跨盘搬运一律 `scp -O`**（.82 的 sftp subsystem 已坏，普通 `scp` 报 `subsystem request failed`），搬完核 md5/sha256。
+> - **推论**：wzc1-only 的新脚本/新 ckpt 必须显式 `scp -O` 到 zwfy6 才能在三台 H20 上跑；「同盘合 16 卡多机 DDP」只在**同盘内**成立（LOCAL+.252，或 .73/.82/.104 任两台），**不可跨盘合并**。
+> - **软件差异**：三台 H20 的 `.venv/bin/python` 已坏 → 用 `/opt/conda/envs/torch-base/bin/python`；**LOCAL 的 `.venv` 现也已无 torch**（2026-08-04 实测），同样改用 conda。**.82 未装 `bitsandbytes`** → `OPT=bnb8bit` 在 .82 不可用。
 
 | # | 节点 | IP:端口 | 硬件 | 密码文件 | Python |
 |---|------|---------|------|---------|--------|
@@ -23,7 +32,7 @@
 | 5 | .104 | `28.83.24.104` :36000 | 8×H20 | `configs/password_h20_24104.txt` | `/opt/conda/envs/torch-base/bin/python` |
 
 - **SSH 通式**：`sshpass -f <密码文件> ssh -o StrictHostKeyChecking=no -o ConnectTimeout=12 -o PreferredAuthentications=password [-p 36000] root@<IP>`（H20 三台 .73/.82/.104 加 `-p 36000`；.252 走默认 22 端口）。
-- **全部共享 wzc1 项目盘**：5 台代码/ckpt/数据都在 `/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/`，互相无需 rsync。
+- **⚠️ 两个物理盘，非全共享**：**wzc1** = LOCAL + .252（`/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/`）；**zwfy6** = .73/.82/.104（`/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/`，独立 checkout、commit 常落后）。**.73 上 `/apdcephfs_wzc1` 是指向 zwfy6 的 symlink；.82 上该路径不存在。** 跨盘一律 `scp -O` + 核 md5。详见顶部纠正条。
 - **密码只见对应 `configs/password*.txt` 文件**（含末尾逗号是密码的一部分，用 `sshpass -f`，不要 `tr -d` 或手写展开）。
 - ⚠️ **dllm 节点 `29.162.226.120` 已归还，绝不连。**
 - ⚠️ **内联 BABILong eval 会导致 NCCL 崩溃**（2026-06-02 实测）：`quick_eval_babilong` 在 DDP 循环里做变长 greedy generation 会让各 rank desync → ALLREDUCE 等满 30min watchdog timeout → 整个 job SIGABRT。**训练时务必 `--eval_interval 0`**（launch 脚本已默认 `EVAL_INTERVAL=0`），eval 改为离线单独跑 checkpoint。
@@ -177,7 +186,7 @@ git commit 只包含实际修改内容的描述，不附加任何 AI 署名行�
 
 **当【待跑训练 ≤ 3 个】时，不要一实验一节点各自慢跑，而是把【同盘的两个节点合成一个 16 卡节点】做多机 DDP 加速单个关键实验。**
 
-- **同 wzc1 盘可合成 16 卡（合并前提=共享 FS）**：当前 5 节点全部共享 wzc1 盘 → 任两台都可合成 16 卡多机 DDP。常用组合：H20 三台（.73/.82/.104）任取两台，或本机 + .252 两台 B200 级。
+- **合成 16 卡只能【同盘内】（合并前提=共享 FS）**：⚠️ 5 节点**分属两盘**，**不可跨盘合并**。合法组合：**LOCAL + .252**（wzc1），或 **.73/.82/.104 任取两台**（zwfy6）。
 - **配方**：现成 2-node 脚本 `scripts/launch_landmark_S2_dolmino_2node.sh` + `scripts/run_landmark_S2_node.sh`；两节点各跑一次 `torchrun --nnodes 2 --node_rank {0/1} --nproc_per_node 8 --rdzv_backend c10d --rdzv_endpoint <MASTER内网IP>:<PORT>`。NCCL 注意 bond1 + IB disabled（见 run_landmark_S2_node.sh verified recipe）。
 - **决策准则**：≤3 训练 + 有同盘空节点 → 合成 16 卡跑最关键那个（训练提速近 2×；慢的 16k eval 也可分片到 16 卡）。>3 独立实验 → 一实验一节点铺开。每轮判断"16 卡合起来加速一个 vs 分开跑多个"哪个总产出高。
 
@@ -270,7 +279,7 @@ configs/
 
 ## 计算资源
 
-**当前集群（2026-08-04 更新）：5 个节点 = 40 卡，全部共享 wzc1 项目盘 `/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/`，互相无需 rsync。详见顶部「🖥️ 当前 GPU 集群」表。**
+**当前集群（2026-08-04 更新）：5 个节点 = 40 卡，⚠️ 分属【两个物理盘】——wzc1（LOCAL + .252）与 zwfy6（.73/.82/.104），跨盘需 `scp -O`，不可跨盘合成多机 DDP。详见顶部「🖥️ 当前 GPU 集群」表与其纠正条。**
 
 | # | 节点 | 硬件 | Python |
 |---|------|------|--------|
