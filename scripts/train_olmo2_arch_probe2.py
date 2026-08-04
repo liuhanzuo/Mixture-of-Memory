@@ -440,7 +440,8 @@ def _save(model, optimizer, args, step, epoch, cfg, final=False, rotate=True):
                 cks.append((int(m.group(1)), os.path.abspath(old)))
         latest2 = {ap for _s, ap in sorted(cks, reverse=True)[:2]}
         for s, ap in cks:
-            keep = (ap == keep_abs) or (ap in latest2) or (s % 5000 == 0)
+            milestone_every = getattr(args, "milestone_every", 5000) or 5000
+            keep = (ap == keep_abs) or (ap in latest2) or (s % milestone_every == 0)
             if not keep:
                 try:
                     os.remove(ap)
@@ -483,6 +484,12 @@ def main():
     p.add_argument("--weight_decay", type=float, default=0.1)
     p.add_argument("--grad_clip", type=float, default=1.0)
     p.add_argument("--save_every", type=int, default=500)
+    p.add_argument("--milestone_every", type=int, default=5000,
+                   help="rolling-retention milestone modulus: step*.pt whose step "
+                        "is a multiple of this are kept permanently (plus latest-2). "
+                        "Default 5000 preserves the keep14/12/10 ladder behavior; "
+                        "set smaller (e.g. 2500) to durably retain a denser early "
+                        "heal curve for matched-PPL crossing-point analysis.")
     p.add_argument("--log_every", type=int, default=20)
     p.add_argument("--resume_from", type=str, default="",
                    help="path to a step{N}.pt / final.pt to resume from. Restores model "
