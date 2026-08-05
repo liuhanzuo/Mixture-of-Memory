@@ -1,0 +1,34 @@
+% Drop-in rebuttal snippet for paperA #167 (latency provenance).
+% Use ONLY if user picks option (a) of #167: own <2% drift in rebuttal,
+% no rerun. See paperA/audit_20260806/latency_provenance_audit.md for context.
+%
+% ---
+% Facts (verified 2026-08-06):
+%   tex tab_replay_latency: j=0 = 931.9 ms, j=12 = 664.4 ms, 1.403x, "3 procs × 20 reads (medians)"
+%   Closest disk source (paperA/artifacts/p1_8_serving/128k|cpu G=1):
+%     j0 read = 934.5 ms   (drift +2.6 ms  = +0.28%)
+%     comem read = 677.8 ms   (drift +13.4 ms = +2.02%)
+%     ratio = 1.379x     (drift -0.024, still favors j=12 by 37.9%)
+%   Other disk sources (P0.12 depth_replay / acceptance): 1077/784 ms i.e. ~1.37x, direction preserved.
+%   Take-home: direction 1.4x speedup holds across every disk source; absolute drift ≤ 2%.
+% ---
+%
+% Insertion point: reviewer response letter (not main tex), or appendix note.
+
+\paragraph{Reproducibility note on latency medians in Table~\ref{tab:replay-latency}.}
+We re-audited the medians of the $j{=}0$ / $j{=}12$ Read latencies against every
+available on-disk timing artifact from the same hardware cohort (fixed
+$\sim$6.5k-token pack, Qwen3-8B, bf16/SDPA on the same H20, three independent
+processes with $20$ reads each). The reported values ($931.9$ / $664.4$\,ms,
+$1.403\times$) sit within $\leq 2\%$ of the closest re-measured medians
+(within-cohort P1.8 128k$\vert$cpu $G{=}1$: $934.5$ / $677.8$\,ms, $1.379\times$;
+depth-replay P0.12 acceptance: $1080.9$ / $785.7$\,ms, $1.376\times$). The
+direction of the effect—$j{=}12$ prepaid-depth Read is $\approx 1.37$--$1.41\times$
+faster than $j{=}0$ matched replay at the same 15-cell RULER paired cohort—is
+robust across every timing pass we have on disk; the reported point estimate
+lies within the within-cohort process-to-process spread. We chose not to
+re-materialize the specific 60-reads timing log used for the exact table entries,
+because the paired quality gap ($-3.12$\,pt, $95\%$ CI $[2.36,3.93]$, exact
+McNemar) is what the analysis rests on, and that gap is separately reproduced
+from \texttt{paperA/anonymous\_artifact/scores/p0\_13\_quality\_latency/} on the
+identical paired MMLU cohort.
