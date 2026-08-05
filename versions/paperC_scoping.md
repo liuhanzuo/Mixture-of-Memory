@@ -432,3 +432,128 @@ alone and pre-warms datasets on CPU.
   + `shard{0..7}of8.json` + `per_example_*.jsonl` (~200 MB, **zwfy6**, gitignored);
   logs `logs/paperC_132_{secondtask,secondtask_summary,paired_stats,interpret}.log`.
 
+
+---
+
+## 2026-08-05 — 三名独立外部 reviewer 审查（tcodex / gpt-5.6-sol / effort=max / web_search=on）+ MAIN 独立核实
+
+三份完整报告：`paperC_research/reviewers_20260805/{R1_novelty_priorart,R2_power_stats,R3_repositioning}.md`
+（可用的 tcodex 调用配方：同目录 `tcodex_working_recipe.sh`；**关键坑：`tcodex exec` 传任何 `-c` 都会
+清掉注入的 `model_providers.tencent` → 静默 fallback 到 provider=openai → 连 wss://api.openai.com
+无限超时。`--search` 这个 flag 不存在，真正的开关是配置里的 `tools.web_search = true`。**）
+
+三名 reviewer 互相独立，却**收敛到同一结论：P-C1 按现有框定不可发表**。
+
+### ★ 结论 1：构造已被 scoop（MAIN 已独立核实为真，非编造）
+
+**Yao Lu et al., "Reassessing Layer Pruning in LLMs: New Insights and Methods," arXiv:2411.15558.**
+MAIN 经代理直取 arXiv abs 页核实：标题、作者（Lu Yao; Cheng Hao; Fang Yujie; ...）全部对应，且摘要原文即：
+
+> "pruning the final 25% of layers followed by fine-tuning the `lm_head` and the remaining last three layer"
+
+在 Vicuna-7B / Qwen1.5-7B / Llama-3.1-8B-It 上。**这一篇同时占掉了我们 brief 里自称的全部三条区分点**：
+(a) 真变浅（丢顶部 25%）、(b) trunk 真冻结（只训末几层 + lm_head）、(c) decoder-only LLM @7-8B。
+所以「Unlike prior work, we genuinely shorten a 7B decoder LLM and keep the trunk frozen」
+**作为 novelty 主张是错的，不能写**。
+
+残余的唯一架构差异 = 他们训**继承的**末层，我们插**随机初始化的完整新块**。而这一侧也很拥挤
+（MAIN 逐个核实标题真实、主张一致）：
+- **arXiv:2403.19135** "Streamlining Redundant Layers to Compress Large Language Models"（ICLR'25，
+  = LLM-Streamline）：删连续层段 → 插一个更小的替换网络 → **冻结原模型、只训替换件**，并明确试了
+  随机初始化的 Transformer 替换件。
+- **arXiv:2407.16286** "A deeper look at depth pruning of LLMs"：用轻量 additive bias / low-rank
+  linear adapter 顶替被删块并 SFT 恢复。
+- **arXiv:2410.02330** "Llama SLayer 8B"：删末层 + 加/重初始化块 + 冻结继承块 + 只训新块。
+- **arXiv:2401.02415** "LLaMA Pro"：冻结 7B backbone，只训新插入的完整 Transformer 块。
+
+### ★ 结论 2：P-C2 的核心 hook 也已被 scoop（MAIN 已独立核实）
+
+我们自认 P-C2 最新的是「用 base 模型 **forward-only、免训练**的 probe **先验**预测切点 j」，
+并以「Surgical FT 用 post-hoc gradient/Fisher，需要 FT 信号」作为区分。但：
+
+**Xie, Qiu, Pasad, Du et al., "Hidden State Variability of Pretrained Language Models Can Guide
+Computation Reduction for Transfer Learning," arXiv:2210.10041**（EMNLP'22 Findings）摘要原文：
+选层依据是 hidden-state variability，"**cheap to compute and doesn't need any training or
+hyperparameter tuning**"，做的正是 "**make a task-specific selection on which subset of the layers
+to adapt and where to place the classifier**"，明确对照 "conventionally attach their task-specific
+classifiers to the top layer and adapt all the pretrained layers"（= 决定 classifier 放哪层 = 丢弃上层）。
+
+⇒ **这是 P-C2 必须打败的 baseline，而我们的 brief 完全没提它。** 任何 P-C2 稿件若不与它做直接
+对照实验，会被直接 desk-reject 级别地质疑。
+
+### ★★ 结论 3：evaluation validity gate 直接失败（MAIN 独立复算确认）
+
+`data/squad_val.jsonl` 的 `target_text` 有 **997/2000 = 49.85%** 是同一句中文拒答
+`根据提供的信息无法回答这个问题`（train 侧只有 **1756/10000 = 17.56%**，train/val 在主导标签上
+**差 32.29pp**）。MAIN 用 `target_text` 字段独立复算，数字完全一致。
+
+**后果（比 reviewer 说得更硬）**：一个**完全不看输入的常量函数** EM = **49.85%**，而我们四个臂里
+A4_hero=29.30、A3_fromscratch=26.05、BASE_ref=33.85 **全部低于它**（只有 A2_lora=65.90 高于它）。
+所以两个 16L 臂不是"接近随机"，而是**跑不过一个常量**。⇒ **A4>A3 的 +3.25pp EM 差不能支撑
+任何关于 init 优劣或恢复能力的结论**，#133 的 keep20/24/28 单调上升曲线（0.3440/0.3560/0.4190）
+也全部落在这条常量线以下，同样不能作为 capability 证据。
+
+**这也意味着杀掉 #134 (A1 ceiling) 零代价** —— 在这个 eval set 上它的 ceiling 数字本就无意义。
+
+### ★ 结论 4：「唯一差异」这句话在我们自己的脚本里就是事实错误（MAIN 直接查证）
+
+`scripts/run_paperC_pc1.sh:61-66` 三臂 lr **各不相同**：
+
+| arm | keep/fresh | 额外 flag | LR (fresh) | LR (inherited) |
+|---|---|---|---|---|
+| A4_hero | 14/2 | `--freeze_front` | **1e-4** | **2e-5** |
+| A3_fromscratch | 14/2 | `--from_scratch` | **3e-4** | 3e-4 |
+| A1_full32ft | 32/0 | — | 1e-5 | 1e-5 |
+
+⇒ brief 里「唯一差异 = 前段继承+冻结 vs 随机初始化」**是错的**：A3 的 lr 比 A4 的 fresh lr 高 3×、
+比 inherited lr 高 15×。R2 因此指出「learning-rate mismatch 单因素即可解释全部 3.25pp」，成立。
+R2 另列的 5 个混淆（freezing 当正则、optimizer 不一致、过训后取 final ckpt、单 seed、拒答标签
+校准）也都无法排除。**每臂只有 1 个 seed**，所以现有 McNemar/bootstrap 只描述"这两个固定 ckpt
+在这个固定 eval set 上不同"，不描述方法级可复现性。
+
+另外 A4 的可训练参数里，**只有约 33%（404.8M）是 fresh 层，67%（822.1M）是继承的
+embedding+lm_head+norm**，且 embedding 可训 → 名义冻结的前段输出其实也会被间接改动。
+⇒ 按 R3 的建议，行文必须叫「**a frozen decoder prefix with trainable inherited lexical/readout
+modules and a fresh cap**」，不能叫 "wholly frozen trunk"。
+
+**一条 MAIN 自查的澄清（避免论文写错）**：`_classify_param` 的 `module.` 前缀剥离是与 #92 的
+runner **同一个 commit 7a330ce（08-03）引入**的，所以 **#92 A4 的差分 LR 确实生效**（fresh 1e-4 /
+inherited 2e-5）。我此前在 #99 语境下说过"差分 LR 是 no-op"，那只适用于该修复**之前**的 run，
+不适用于 #92。
+
+### ★ 结论 5：三人一致认为唯一值得写的是重新框定
+
+R3 提的方向（三人中最具体）：
+
+> **"Preserve Here, Adapt There: Causal Depth Profiles for Knowledge-Preserving LLM Adaptation"**
+> —— 需要被保留以维持事实知识的预训练计算，与最有利于下游 adaptation 的层，**不必是同一批**；
+> base 模型的 depth 诊断可以**先验地**把一个紧凑模型有限的深度预算，在"保留"与"适应"之间分配。
+
+这个框定把我们那些**崩坏的模型从"失败的压缩模型"变成"受控 lesion"**，是现有资产的最佳用法。
+若要做成独立的 P-C2 论文，必须是**预注册的定量深度律**（K* ≈ ⌈[d_t − j + δ]₊ / γ⌉ 形式，
+带 held-out + regret 评估），而不是 post-hoc 相关性。
+
+R3 的三条强制纠正（MAIN 认为全部与我们自己的数据一致）：
+1. 那个 probe 量应叫 **task linearization depth**（readout 兼容性），**不是** "adaptation onset" /
+   "storage depth"。理由：knowledge logit-lens 在 OLMo L18→L19 有 .326→.544 的陡跳，Qwen3-8B 在
+   L24→L25 有 .236→.621 的陡跳，但**我们本地的 full-FT CKA 曲线在 OLMo L18 并没有膝点**（平滑下降，
+   只在最末几层加速）⇒ knowledge-readout onset / SFT 下的表征漂移 / 因果必要性 / 最优 adaptation
+   位置，在证明之前是**四个不同的量**。
+2. 「format SFT 成功但 knowledge 消失」这个故事**现有证据不支持**；特别是 **F1−EM≈0 不是
+   format-compliance 指标**。
+3. 拒答先验混淆（见结论 3）：那 52% 的 closed-book 同句中文拒答，更可能是**学到的 response prior
+   与 decoder 损伤交互**，而不是"成功学到通用作答格式"的证据。
+
+### MAIN 的决定（据 CODEBUDDY.md「researcher confidence high 可自主执行方向切换」）
+
+- **#134 (A1 full-FT-32L ceiling) 取消**，不再排队。理由：eval set validity gate 已失败（结论 3），
+  该数字在此 eval 上无意义；且它当时正挤占 .252 导致 Paper B #103 crossing 曲线掉 shard。
+- **#133 的 A4/A3 深度扫结果不得作为 capability 证据写入论文**，只能作为"常量线以下的受控 lesion"。
+- **P-C1 不再作为主线命题**。任何后续 Paper C 工作在跑 GPU 之前，必须先解决两件事：
+  (a) **重建 eval set**：去掉/受控 skew 的拒答先验，并把「常量-拒答基线」作为**强制报告项**写进
+      每张表（任何低于它的数字都不得称为 capability）；
+  (b) **补 lr/optimizer/seed 对齐的控制臂**，否则 A4-vs-A3 的因果解释不成立。
+- **必须补进 `.bib` 且必须在 related work 正面处理**（全部已由 MAIN 核实存在）：
+  arXiv:2411.15558、2403.19135、2407.16286、2410.02330、2401.02415、**2210.10041**（P-C2 的必胜 baseline）。
+- 其余 venue 归属（LLM-Streamline=ICLR'25、Xie et al.=EMNLP'22 Findings 之外的）**在进 `.bib` 前
+  仍须逐条用 DBLP/ACL Anthology/OpenReview 核实**，不得直接采信报告里的 venue 标注。
