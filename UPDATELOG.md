@@ -5812,3 +5812,109 @@ Sanity 已四重验证(adapter_config 配置正确、cmdline 无 SWA、CSV 完�
 
 - Recomputed `longbench_results/qwen32_zerotrain_j16_chunk512/scores.json` using the existing 24 shard JSONL files and the same LongBench F1 path used for Qwen3-8B: raw/no-chat predictions retained, empty strings kept as valid predictions with F1=0, no shard invalidation for empty predictions.
 - Scores: narrativeqa 6.24, qasper 14.24, hotpotqa 12.25, 2wikimqa 14.27, musique 7.71, multifieldqa_en 28.54, macro average 13.87. This supersedes the prior `failed_strict_gate` presentation for reporting; strict-gate diagnostics remain useful only for detecting empty-output rows.
+
+## 2026-07-22 23:04 +0800 — ckpt 轮转 cron (4ec42903)
+- **wzc1**: df=24T avail/15% used(健康,非 cron 假设的~3T)。3 个 OLMo-2 7B dir (keep12/keep14/keep14_fromscratch) dry-run 删除集全空——已只剩里程碑(÷5000)+最新2+final,training 自轮转。**no-op**。
+- **diskB (与 cron "放宽"前提相反,实测 71%/3.5T free)**: 轮转 3 个未清理 dir,删 145 中间 ckpt,du 释放 ~4.8T: keep8fresh2 2.3T→287G(删63) · keep12fresh2(diskB stale副本,活跃在wzc1) 2.1T→246G(删45) · keep14fresh2_freezefront 1.1T→146G(删37)。规则=保留 milestones+最新2+final+**resume ckpt**。
+- **安全验证**: 两暂停臂 resume ckpt 确认保留 (keep8=step36000.pt, freezefront=step21500.pt),PAUSE_RESUME_20260722 resume 命令不受影响。无 active writer(训练暂停,diskB节点跑eval)。df 因 CephFS 异步回收暂未更新,du 已确认释放。
+
+## 2026-07-23 00:0x ckpt 轮转 cron(4ec42903) — NO-OP
+- df /apdcephfs_wzc1: 4.2T used / 24T avail / 15% used（远比 cron 假设 ~3T free 充裕）。
+- 3 个 olmo2 训练输出目录逐一套保留策略(final + 最新2 + 每5000里程碑)：
+  - keep12fresh2(.252活跃): 5000-25000里程碑 + 29000/29500最新2 → 无可删
+  - keep14fresh2(apex完): final.pt + step200000(里程碑) → 无可删
+  - keep14fresh2_fromscratch(LOCAL活跃): 5000-90000每5000全里程碑 + 92500/93000最新2 → 无可删
+  - keep10fresh2: 不存在
+- 结论: 每个现存 ckpt 均被里程碑/最新2/final 覆盖 → 完全 NO-OP，未删任何文件，df 不变。from_scratch 现每5000步存(非每500)，累积远慢，24T free 无写满风险。
+- 安全铁律遵守: 未碰 final/里程碑/其他目录。dllm 未碰。
+
+## 2026-07-24T20:33:12 — Paper A 收尾推进（#63 完工 / #64 judge 补跑 / #65 adapter-free 启动）
+- **新 API key**：用户提供有余额的 JWT key，已换入 wzc1 + diskB 的 .env（.env 已 gitignore，不入库）。curl 测 gpt-4o HTTP200 正常，无 432 余额错误。
+- **#63 InfLLM chat=False 完工**：.252（28.89.19.252）17:09 SCHED_DONE，IRON-LAW-2 ALL OK。RULER + LongBench(avgF1 11.86) + LongEval(8k .60→128k .02) + BABILong(qa1/2/5×0k-32k) 全落地。task#63 标 completed。
+- **#64 LoCoMo judge 补跑**：.73 起 detached judge（InfLLM/StreamingLLM/MemoryLLM chat=False，纯 CPU+API），pid 3197649，log logs/locomo_judge_backfill_20260724.log；一次性回收 cron a99c8caa@20:53。
+- **#65 CoMem adapter-free chat=False 全 5-benchmark**：.252 空闲 3h 后，派后台 coder ad4accf5 建 driver + 启动（Qwen3-8B 冻结/无 LoRA/resume_j=9/chunk512/top12/sink=bos/iter_bm25，输出 qcmem_8b_zeroshot_j9_chatFALSE）。
+- LOCAL from_scratch（Paper B）step180700/200000（90.4%）健康续训，ETA~8.4h。
+
+## 2026-07-26 20:05 GMT+8 — P3.2 empirical pushed + suppl experiments launched
+- Pushed P3 series to origin/main (bc67b56..ac01684, 6 commits, subagent-reviewed APPROVED). P3.2 empirical YaRN control now on main: CoMem beats YaRN-KVD +40.6pp @128k VT; tab_yarn_tax + Length-extension composability section added.
+- Launched on .82 (8 idle H20): EXP-A flagship LoRA 3-seed variance (2 new seed trainings + eval), EXP-B MemoryLLM native-chat appendix. Coder a0eb3343.
+- Deferred (need design): training-data contamination ablation, one more ultra-long natural-doc benchmark.
+
+## 2026-07-26 22:40 GMT+8 — COMem public release code-reproducibility alignment
+- Pushed github.com/liuhanzuo/COMem 196d4de..e272745: corrected eval default --n (ruler 500->50, babilong 500->100) so a 3rd-party clone reproduces our Paper A numbers out of the box.
+- Audit (status/COMEM_RELEASE_AUDIT.md): comem/model.py byte-faithful to src/memory/qcmem (clean-room reimpl, no deep sync needed); secret-scan CLEAN; chat_template correctly never applied (chat=False pillar upheld).
+- Deferred (user-scoped out): merging P3.1/P3.2 paper tables (tab_yarn_tax/tab_pareto) into COMem canonical paper.
+
+## 2026-07-31 15:44 GMT+8 — 会话 resume 后状态核对（Paper A gap-fill）
+
+主 agent 跨 ~3 天 gap 恢复。nvidia-smi + ps 逐节点实测核对（覆盖 07-27 旧台账）：
+- **LOCAL (wzc1)** = Paper B ShortGPT-16 heal (#98)，8/8 100%/132GB 健康。
+- **.82** = Paper B keep10 heal (#88)，8/8 100%，已跑 4d10h 健康。
+- **.73** = Paper A gap-fill P1.4+P0.1（subagent adba6abc）QCMem Qwen3-8B j12 RULER+BABILong flagship matched-n rerun，GPU0-3 各~18GB，GPU4-7 空闲。
+- **.104** = 全 8 卡空闲；P0.3 matched-n=100 YaRN subagent (ab0993f) 标 running 但无任何进程、无 6h 内新结果 → 已 SendMessage 查询真实状态，确认 free 后认领。
+- **.252** = 本轮未核对（task#99 keep14-distill 标 →B200 迁移，可能在此）。
+
+**Paper A gap-fill 进度**：
+- **P0.9 ✅ DONE**：LoCoMo conversation-cluster bootstrap 数值 95% CI = **[+1.27, +8.32]**（point +4.81，bootstrap p≈0.004，8/10 会话 favor CoMem）。subagent 已回填 `sections/08_statistics_appendix.tex`（commit 787427b，本地未 push），本轮我把该闭合折进 `paperA/TODOList.md`（P0.9 → DONE）。
+- **P1.4+P0.1 🟡** 在 .73 跑（flagship n=50 + P0.1 统一 timing）。
+- **P0.3 🟡** matched-n=100 YaRN sweep 待查（.104 无活进程）。
+
+**运维纠坑**：QCMem H20 三节点 SSH = **端口 36000** + 各自密码文件（.73=password_h20_853573 / .104=password_h20_24104 / .82=password_h20_82250），**不是 password_h20_returned、不是端口 22**（本轮 permission-denied 根因，已纠正并记入 GPU_STATUS 台账）。
+
+## 2026-08-04 03:25 GMT+8 — P1.10 eval arm (BBWL) ready (coder ac32812513, commit 4340feb)
+- opus coder 完成：在 `scripts/eval_p018_e4_2x2_writecontrol.py` 新增 **BBWL** arm = Arm BB（chunk-local Write，deployable 92.5 config）+ P1.10 训练好的 WRITE LoRA（layers 0..11 r32/α64）在 write 阶段启用，量化「训练后 chunk-local Write」对 BB(92.5)→E0(100) document-context gap 的回收。
+- 纯增量：`--write_lora_ckpt` 缺省时 harness 逐位不变；READ(12..35, default) 与 WRITE(0..11, "write") 两 adapter 层集不相交，A/BB/E0/X/Y 全程 active="default" → 与改前数值一致（coder 已论证 + ast.parse/py_compile 通过；无 GPU 端到端，ckpt 不在 wzc1 盘）。
+- commit `4340feb`（author LiuHanzuo，无 AI 署名，**未 push**，branch ahead 78）；新增笔记 `paperA/P1_10_EVAL_ARM_NOTES.md`。per-ckpt 运行三段式（manifest→quality→aggregate）已备，待 diskB 节点空闲即对 step500…step4000 逐 ckpt 跑。
+- **eval 仍 GPU-blocked**：5 个可达节点全在跑健康训练（armA/armB/P1.3/P1.10），returned-H20 .245/.7.53 + B200 .53/.18/.188 全 reject 凭据（QCMem 现 3 节点 .73/.82/.104，端口 36000）。待 .104 空（~P1.10 done ~26h）或有节点即跑；P1.10 loss 自 step500 起平台（0.0447→0.0452），下一 heartbeat 向用户提「早停 P1.10 换 eval 提前」的取舍选项（不擅自 kill）。
+
+## 2026-08-04 11:40 GMT+8 — 用户决策：P0.5 armA/armB 早停，两台 B200 改跑 Paper B quick-win eval
+- **背景**：子 agent 评分 + TODOList 审阅后，用户裁决「大部分重训实验不值得做」——B-P0.4 ShortGPT 4-arm factorial（~270 GPU·h，armA/armB 正是其中 2 臂）、B-P0.1 keep14×3seed、B-P0.2 full32@200k、B-P1.1 LR-matched controls 全部 ❌ SKIP；只保留两个「性价比极高」的 quick-win（无训练）：✅ **B-P0.0** closed-book QA + ✅ **B-P1.2** OOD PPL + contamination。
+- **armA/armB 曲线已回填**（非崩溃早停 @~40% 预算，ckpt 保存到 step80000.pt）：
+  - Arm A（contiguous16/no-fresh）：20k 12.49 → 40k 11.89 → 60k 11.21 → 80k 10.40，停点 **ppl10.64 @80.68k**。
+  - Arm B（retained[0–12,31]+fresh2）：20k 12.75 → 40k 12.13 → 60k 11.48 → 80k 10.65，停点 **ppl11.42 @81k**。
+  - ⚠️ 该 PPL 列为**训练 loss 派生**（非 held-out eval）；早停无 held-out/core6/MMLU/McNemar 配对分析。已在 paperB/TODOList.md P0.5 表 + status line 标注。
+- **Paper B 重定位**：从 "pruning recovery study" → **"A Measurement Protocol for Post-Intervention Recovery Assessment"**（.tex 待 main 改）。B-P0.4 降级、structural confound 移入 caveat/limitation。
+- **两台 B200 释放并派 opus coder**（both background，`/opt/conda/envs/torch-base/bin/python`，⚠️ `.venv` 已坏无 torch）：
+  - **LOCAL 8×B200 → B-P0.0（#145，coder aadf4c60）**：ShortGPT-16@200k（`outputs/olmo2_probe2_7B_shortgpt16/step200000.pt`）closed-book PopQA(14267)/TriviaQA(17944)/NQ-open(3610)，chat=False/no-BOS/greedy/max_new_tokens=32，proxy 预热 HF cache 后 8-shard offline，sanity gate 复现 PPL≈9.78；产出匹配 `perplexity-heals-knowledge-lags/data/closedbook/` 格式 → 回填 Table 3 closed-book 列（4/6 reviewer 要求）。
+  - **.252 8×B200 → B-P1.2（#146，coder abaeab6f）**：先 `pip install datasets` via hy-proxy；OOD token-weighted PPL（WikiText-103/C4 一般 + PG19 叙事）× {base/full32/keep14/ShortGPT/random/frozen}；Dolmino-vs-{MMLU/PopQA/TriviaQA/NQ-open} n-gram overlap → clean-subset 重算主 gap → 附录。
+- **两个 H20 长训练不动继续跑**：P1.3（#127，.73+.82 16-card DDP，random-init LR=2e-5 control）step26200/200k ppl25.21 healthy；P1.10（#142，.104，Qwen3-8B 下12层 write-path 蒸馏）step1680/4000 loss0.040 ~2h left。
+- **节点清理**：opus coder（commit 8344c6b，+102/−160，未 push）从 CODEBUDDY.md/HEARTBEAT.md 删除全部死节点、剥离内联明文密码，落定 5 存活节点。
+
+## 2026-08-04 12:27 +08:00 — P1.3 LR-control 早停 + Paper A 上 freed H20；B-P0.0 完成
+
+**用户指令**："那两台跑 LR 的和 B200 上原本的实验一样处理，把现在的结果记录下来，然后先跑 paperA 和 paperB 里面我刚才跟你说的性价比最高的两个实验 P-0.0, P1.2"。
+
+- **P1.3（#127，random-init LR=2e-5 control，.73+.82 16 卡 IB DDP）早停**：与 P0.5 armA/armB 同样处理（B-P1.1 LR-matched controls 类 ~200 GPU·h 不值得跑完）。记录当前 train-loss 曲线后主动 kill（非崩溃）：step20 loss11.5742/ppl106323 → step12000 loss3.57/ppl35.54 → step24080 loss3.26/ppl26.00 → step26860(last) loss3.24/ppl~25.4（≈13.4% budget，4.68s/step，maxmem 98.3GB）。ckpt step0/5000/.../25000.pt 存于 .73 H20 FS `outputs/olmo2_p13_scratch16_lr2e5_uniform/`，若 reviewer 强烈要求可 resume。kill 后 .73+.82 各 8 卡实测 0 procs/0 MiB。曲线回填 paperB/TODOList.md §P1.3。
+- **Paper A 上 freed H20（.73+.82，16 卡）**：派 opus coder a377ed8a 跑 #143 CacheBlend（.73）+ #144 dense-selector（.82）。⚠️ **关键运维发现：H20 三台（.73/.82/.104）与 B200（本机+.252）是两个独立物理盘，路径串同名但不共享**——.73 git HEAD=2d98c5a，缺 CacheBlend 代码（commit 81949b0 只在 B200 且未 push）。coder 负责先 rsync 同步 5 个 CacheBlend 文件到 H20 FS + 跑 self-test gate（RoPE reindex/r=1.0 vs vanilla）再启动。协议 chat=False/enable_thinking=False/iter_bm25(CacheBlend)/dense_bge(#144)/chunk512/topk12/sink=bos。.104 P1.10 write-path 蒸馏训练不动继续跑。
+- **B-P0.0（#145）完成**（agent aadf4c60，LOCAL B200）：sanity gate PASS（held-out PPL=9.7800 复现已知 9.7803，strict-load 16 层正确）。ShortGPT-16@200k closed-book：PopQA contains .1585 / TriviaQA em .3301 / NQ-open em .0668——三项均略高于 keep14@200k（16 层剪枝臂最强），远低于 base_full(.2571/.6355/.2050) 与 full32@25k(.2280/.5715/.1582)。尽管 PPL/MMLU 在剪枝臂里最优，closed-book 参数化事实召回仍严重退化 → 支撑 "PPL/MMLU 恢复 ≠ closed-book 知识恢复" 论点。匿名 artifact commit 627efe2（嵌套匿名仓，匿名身份 pighzliu，未 push 保匿名性）。LOCAL 8 卡释放。回填 paperB/TODOList.md §B-P0.0。
+- **B-P1.2（#146）仍在 .252 跑**（OOD PPL + n-gram contamination）。
+
+## 2026-08-04（续）— FS 精确核实修正 + #103 keep14 dense-save re-heal 上 LOCAL B200
+
+- **FS 修正（coder a377ed8a 实测，覆盖本轮前述"H20 各自独立盘"的粗略表述）**：`.73` 与 `.82` **共享同一物理盘 zwfy6**（`.73` 的 wzc1 路径是指向 zwfy6 的符号链接；`.82` 无 wzc1 alias），规范路径统一为 `/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/`。证据：marker 写读 + 核心文件 md5 逐一相同 + git HEAD 均 2d98c5a。`.104` 盘归属未实测（疑独立 diskB），P1.10 在跑不碰。B200（本机+.252）仍共享 wzc1。→ 结论：三处物理盘（wzc1 / zwfy6 / .104-TBD），代码同步一次到 zwfy6 即 .73+.82 都可见。已同步修正 memory `dllm-h20-node.md`。
+- **Paper A 覆盖 gate 已放行**：coder 用 md5 逐字节 + 函数级 diff 证明 zwfy6 上待覆盖的 3 文件（qcmem_model.py / eval_ruler_qcmem.py / eval_qcmem_babilong.py）= pre-cacheblend 父提交 8344c6b 的无损超集（B200 仅多 cacheblend_generate/self_test 两函数 + 22 行 cacheblend dispatch，无 H20 独有逻辑丢失）。MAIN APPROVED，护栏：self-test gate 先过（RoPE reindex max|dK|~1e-6、r=1.0 vs vanilla top1=100%）；不在 zwfy6 stale-HEAD 树上 commit/push；不碰 .104。#144 dense-selector 零覆盖纯新文件已放行。
+- **#103 matched-PPL leg re-heal 上 LOCAL 8×B200**（agent aa5d1482）：现有 keep14 ckpt（10.56~10.83）全低于两个 matched 目标 PPL（11.498 / 12.797），派 coder 复原原始 keep14 heal recipe（inherited init、keep front14+fresh2、eff_bs128、seq2048），改 dense early saves（0-80k 每 2500 step）抓 PPL 交叉点，output_dir 新目录不覆盖原 ckpt，完全可中断。填满 B-P0.0 释放的 LOCAL B200，遵 "B200 空出优先 Paper B" 指令。
+
+## 2026-08-04 13:50 GMT+8 — Paper A TODOList 回填 #144 dense-selector 结果（用户指令 "跑完的结果全部在 todolist 更新"）
+- **#144 CoMem dense-selector swap** → paperA/TODOList.md ★2 节标 DONE + 回填 dense_bge vs flagship iter_bm25 对照表（workflow wq0ehnxh6 汇编 + 交叉核对，flagship 锚点 status/PAPERA_RESULTS_CONSOLIDATED.md 已验证）。结论：dense **明确退化** CoMem——RULER Cohort A macro 81.3 vs 97.6（Δ −16.2pp，32k niah/multikey −35/−36pp），BABILong qa5 matched 0k-16k 69.5 vs 70.5（−1.0pp），LoCoMo substr 12.0 vs 23.36（仅指示性，dense 无 judge）。证实预注册预期 dense≤bm25，负面结果保留。落 .tex 前须注意 LoCoMo judge/substr 口径不可混、RULER 用 Cohort A、BABILong 用 matched-range、混淆变量(dense 单发 vs bm25 4-hop)。
+- **Paper B (#145 B-P0.0 / #146 B-P1.2 / #127 P1.3)**：审计确认结果已完整回填（上会话完成），无需补。
+- **未落（非"跑完的结果"）**：#143 CacheBlend 仍 RUNNING（.73 ruler/babilong r-sweep + .82 新起 LoCoMo cell，无 aggregate）；#142 write-path distill step2010/4000 healthy 未出 final；paperB P2.3 Qwen aux aggregate 2 格 = AUDIT 占位（需按 P0.7 口径重算，Qwen 缺部分任务 deferred to P2.5，非现成结果）。
+
+## 2026-08-06 夜（03:00-05:30 GMT+8）— rebuttal-prep sprint（audit + tex 数字漂修 + release artifact 补齐）
+
+用户 pending 4 项决策未拍板期间（Paper C A4×random_trunk / Paper D 深度对齐 mini / GitHub push / paperA #167 latency），32 卡持续空闲；不投未定方向，全程 CPU-only 系统性 audit paperA/paperB 数字-tex-provenance 三层，共 10 commit：
+
+- **paperB Finding 2 chance 校正**（`51c7349`）：用 Random-16L 作 uninformative-model 代理测得 content_norm empirical chance = 35.98%（letter chance 25%，差 +10.98pp 是 scoring metric base-rate）。10-arm 中 8 个 chance-adj (C−L) 为负 → 原 raw「崩坏 arm C>L」是 metric artifact 非能力差异。落 `paperB/audit_20260805/finding2_chance_correction.md`。
+- **paperB letter above-chance headroom（Wilson CI + one-sided binomial）**（`6a3b6bb`）：PPL 匹配 pair (Random-16L 11.50 / keep14@67500 11.53) letter headroom -0.30pp (p=0.80) / -0.08pp (p=0.59) **都在 chance 内**；keep8@121k +0.50pp (p=0.085) 也 NS。Rebuttal 可用单变量口径「letter above-chance headroom collapses monotone with PPL」（base +35.5 → keep14 +6.8 → keep8 +0.5），干净不需要 rewrite Finding 1。
+- **paperB tex-wording audit**（`dfdbf2d`）：逐节审查发现 Paper B tex 从未做「PPL heals / knowledge lags」硬断言——abstract 主命题是「multi-interface recovery audit」methodology；Finding 1 是 **within-path** 残差观察（keep14 200k MMLU 距 base 差 28.74pp）无 cross-arm 断言；Finding 2 已明确 own content .360 random floor；`02_related.tex:28` 明确 disavow "nor loss--task dissociation originate here"。我之前口头说的「三重证伪 Paper B 主命题」打的是我口头概括，不是 tex 正式文本 → **不需要 rewrite Finding 1**。
+- **paperB tex 数字 vs 磁盘全面 audit**（`638fb04`）：4 MMLU + 12 closed-book QA 断言全部与 `paperB/anonymous_artifact/scores/` 一致，max diff 0.001（16/16 ✓）。落 `paperB/audit_20260805/tex_numbers_vs_disk.md`。
+- **paperA tab_replay_latency provenance audit**（`550a81a`）：tex 931.9/664.4 ms 精确 provenance 追不到；P0.12 depth_replay=1077/784 ms，P0.12 acceptance=1081/786 ms，P1.8 serving 128k|cpu G=1=934.5/677.8 ms（最近，差 3-13 ms 稳定漂）。方向 1.4× speedup 全 candidates 成立。落 `paperA/audit_20260806/latency_provenance_audit.md`，创建任务 #167 三选一：(a) own <2% 漂 / (b) 找 archived log / (c) 60-reads rerun。
+- **paperA 数字 self-consistency**（`8c30fc7`）：`2.74× = 6.035/2.202` ✓，`3.12 = 99.19-96.07` ✓，`1.403× = 931.9/664.4` ✓，`6.0pp = 98.5-92.5` ✓。代数关系全部闭合。
+- **paperA 3/3 primitive 数字精确 + tab_pareto fix**（`9883ef9`）：派 Explore subagent a22e71b57a12c0e5e 定位剩 3 组 primitive；subagent 只搜 wzc1 误报 2/3 "文件不在磁盘"；MAIN 独立核实纠正——**P0.13/P0.17 跑在 .82 (zwfy6 盘)**，是 CLAUDE.md 顶部「两个物理盘」坑的第 N 次复现。核实 disk 真值：RULER `macro/armA=99.187, armB=96.067, diff=3.12`，`stats/paired_bootstrap_95ci=[2.36, 3.9333]` + `mcnemar` + `all_packs_paired_1to1=True` ✓；overlap `armB_w0=92.5, armE2_w32=98.5, armE2_w128=99.0` + pre-reg target ✓；BM25 `primary_anchor_diff=-11.56, ci=[-14.444, -8.667]` ✓。**顺带发现 tab_pareto.tex:12 `99.20` 与 tab_replay_latency.tex `99.19` 不一致**（磁盘真值 99.187 → 正确四舍五入 99.19）→ 已修。落 `paperA/audit_20260806/primitive_numbers_disk_provenance.md`。
+- **P0.13/P0.17 artifact 镜像**（`f9fb8c6`）：从 .82 zwfy6 `scp -O` 拷 9 文件（summary/stats/manifest/latency+e2_sanity 共 61 KB）到 `paperA/anonymous_artifact/scores/p0_13_quality_latency/` 与 `.../p0_17_e2_overlap/`。release 现自包含，跨盘复现风险清零。
+- **SESSION_HANDOFF.md 覆盖更新**（`a82f7b7`）：把 2026-08-04 三线均衡快照替换为 2026-08-06 05:00 rebuttal-prep 结束快照——含一句话现状、Paper 主命题 rebuttal 备料状态、Paper C/D 判决、集群状态、4 项 pending 决策、10 commit 索引、跨盘运维教训。下次 compact 后能无缝接上。
+
+**paperA 数字总账**：5 组 primitive 中 **4 组精确匹配磁盘**（RULER 99.187/96.067 + CI [2.36, 3.9333]; overlap 92.5/98.5/99.0; BM25 -11.56），**1 组 latency 931.9/664.4 ms 有 <2% 漂**（#167 待用户决策三选一）。
+**paperB 数字总账**：**16/16 全部精确**，Finding 2 已有 rebuttal-ready 单变量表，Finding 1 措辞不需要动。
+**tex 内部一致性**：paperA 修一处（99.20→99.19）后完全一致；paperB 扫 43 tex 无真不一致。
+**教训**：subagent 派 provenance audit 必须在 prompt 里显式写「跨 wzc1 + zwfy6 两盘搜索」，否则会漏（本轮已复现）。
