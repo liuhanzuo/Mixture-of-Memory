@@ -2,31 +2,50 @@
 
 > **本文件是 compact 后或新会话启动时的第一手交接。** 读完这份 + `status/RUN_REGISTRY.md` §3/§4 + `status/TRAINER_ACTIVITY.jsonl` 尾部，就能接上当前研究状态。
 > 维护规则：main agent 每当方向/结论/在跑实验有重大变化时，**覆盖更新本文件的「当前快照」区**（保持精简，旧结论沉淀到 RUN_REGISTRY）。
-> 最后更新：2026-08-03 12:00 GMT+8（Paper A 已按 ARR 反馈重构为“首个持久化中间残差 bounded-read memory + 128k 大幅加速”主叙事：64.9× select-first online prefill、2.74× Write-inclusive same-adapter pipeline、4.82× lower peak GPU memory；新增主文在线效率表并保留 1.403× depth-only control；baseline 叙事已统一：MemoryLLM 为主要外部 persistent-memory reference，HCache 仅作 intermediate-state precedent/interface diagnostic，j=0/KV-Direct 继续承担 matched comparison；**2026-08-03 最新实验优先级**：P0.16 E0 已完成并显示 document-contextual Write 全额回收 multikey gap，P0.17 overlap Write 在跑；用户指定新增 P0.20 equal-latency retrieval-budget frontier 为下一项最高优先级（固定 CoMem j12/k12，寻找 latency-matched text-RAG k，并比较质量；先 BM25、再 BGE/E5 dense 复现）；Paper B 论文/数据一致性审计完成；★★ARR reviewer P3 补实验三项**全闭合，含 P3.2 empirical**：P3.1 同机 j=0/6/9/12 深度 Pareto（read/decode 随 j 单调降、write O(L)×j、peak 恒定；j=0 RAG vs j=12 CoMem 同 pack read−29%/decode−28%）+ 顺带把全论文 decode 数字刷成 fresh sdpa harness 口径（tab_chunk 0.19/0.37/0.72/1.60；旧 draft 2.4/5.5 尺度作废，与 tab_pareto 0.72 统一）；P3.3 LoCoMo cluster bootstrap + deepseek-v3 独立 judge（κ=0.63，+7.0>+4.0 复现）已回填 appendix+paper；**P3.2 empirical 已完成（.82 8×H20 6h）**：完整 KVD × YaRN 6×5 矩阵（n=100 chat=False）+ CoMem+LoRA × YaRN 3×5 矩阵（n=50 iter_bm25 j12）。**核心发现**：(1) YaRN 对 KVD 有 task-dependent tax，VT@32k unext→YaRN 100→26.6（-73pp），窗口内多跳灾难；(2) **CoMem 近似 rope-invariant**，YaRN backbone 只让 CoMem VT 掉 0.8-16.8pp（vs KVD 27.8-73.4pp）；(3) **128k VT 排名**：CoMem+LoRA+unext=98.4 > CoMem+YaRN=87.6 > **KVD+YaRN=57.8**（公平 length-extended 参照） > unext-KVD=0。CoMem 领先 YaRN-KVD **+40.6pp @128k VT**，同时 5× 更省内存 + 7.83× 更快 prefill。**CoMem 是一阶 length-extension 机制，不依赖 YaRN**。**Paper drafts 已就绪未 commit**：`tab_scaling.tex` 加 3 rows + `tab_yarn_tax.tex` NEW + `05_experiments.tex` NEW `\paragraph{Length-extension composability...}` L102-129 + `07_limitations.tex` 软化措辞 + `status/P3_2_YARN_CONTROL.md` → RESOLVED-empirical + `status/P3_SUPPLEMENT_SUMMARY.md` P3.2 段扩展。等用户审阅→commit→star-proxy push。相关 commits：ac31cd4 (P3.1) · 0cbc6ba (P3.2 wording) · 3261369 (docs)。下方 2026-07-23 快照其余仍有效。）
+> 最后更新：2026-08-06 05:00 GMT+8（rebuttal-prep sprint 结束：paperA 数字全 audit + tab_pareto 修 99.20→99.19；paperB tex 16/16 数字精确；Paper C P-C1 scooped + eval 无效已判决；Paper D 层拼接判决 dead。下方 2026-08-04 及更早快照请视为历史沉淀，以本快照为准。）
 
 ---
 
-## ⚡ 当前快照（2026-08-04 23:00 GMT+8）—— 三线均衡 + release 仓整理
+## ⚡ 当前快照（2026-08-06 05:00 GMT+8）—— rebuttal-prep 收尾 + 4 项决策待用户
 
-**一句话现状**：稿子已交（Paper A ARR 在投）→ 用户令 (1) 把做过的实验整理进两个 release 仓，(2) **paperB 为 rebuttal 备料 + paperC 开始推进，A/B/C 均衡铺开**。Paper A 的 GPU 队列已排空（只剩被明令不启的多天大实验），所以算力自然让给 B/C。
+**一句话现状**：ARR 已交（Paper A 已投、Paper B 已投），主战场转 rebuttal 备料。夜间 sprint 完成 paperA/B 数字-tex-provenance 三层 audit + 关键 tex 数字漂修（`tab_pareto.tex` 99.20→99.19），rebuttal 弹药充足；#99 与 #103 已按用户令 kill（释放 6037 GPU-h）；32 卡持续空闲，方向未拍板不动。
 
-**用户本轮三条指令（权威）**：
-1. 「稿子交完了，把我们做的实验都整理到对应的仓库里面」→ Paper A→`../COMem/`（code-only）、Paper B→`perplexity-heals-knowledge-lags/`（含 sanitized data）。**Paper C 不整理**。
-2. 「另外 paperB 也有一些 todo，然后 paperC 可以开始推进了，paperB 是为了 rebuttal 做准备，所以你可以均衡推进」→ **解除 H20「PaperA-first」等待**；A/B/C 三线并行。
-3. release push 走 **commit + review-subagent(APPROVED/REJECTED) → star-proxy** 流程；**现在整理已定稿的，in-flight 出了再补**；Paper A 深度 = **「代码 + 索引」**（加 clean-room baseline/selector + EXPERIMENTS.md，**不同步 paper .tex**，因「你不用写作」）。
+**用户 2026-08-05/06 关键指令**：
+- 「rebuttle 和重写的角度分别出发走」→ Paper B 双轨（rebuttal 素材 + 若被拒的重写方向）
+- **.104 已交还用户** → **4 节点 32 卡**（LOCAL/.252/.73/.82）
+- **kill #99 keep14-distill**、**kill #103 matched-PPL crossing 监控**（crossing 已达成目的）
+- Paper C 令：**P0-4 重建 eval set**（CPU）+ **P0-5 加 `--random_trunk` flag**（15 行）——均已完成
+- Paper D 令：调研 model editing 层拼接可行性——已判决 dead
 
-**release 仓进度**：
-- **Paper B → `perplexity-heals-knowledge-lags`：DONE，本地 commit `9f71cfa`（未 push）**。22 文件从 `paperB/anonymous_artifact/` port 进 `data/`：contamination/ ood_ppl/ paired/ closedbook_per_item/ configs/ manifests/ + 6 臂 per_example_mmlu.jsonl。**全 22 个 SHA256 与 artifact 自带清单逐一对齐**；sanitization 扫描干净（130k JSONL 记录 schema walk，无 >40 字符的串 → 无题面/答案文本；只有 json/jsonl，无权重）。keep8/10/12 无 per-item → 保持 summary-only，未编造。
-  - 待决小项：`paired/keep14_vs_random.json` 与顶层 `paired_analysis.json` 字节相同；`configs/` 里 cross_family_endpoint.json + shortgpt_layer_selection.json 也与顶层重复 → 已在 README 注明是 mirror，是否删重复待定。
-- **Paper A → COMem：agent 在跑**（dense_bge selector + snapkv/pyramidkv/cacheblend baseline + EXPERIMENTS.md 索引，须过 `comem.selftest` + `bench/vs_dense.py` 门禁）。⚠️ 已核实 COMem/paper 严重落后提交稿（17 表 vs ~40 表，tab_eff 还是旧 7.83×）——**本轮不同步**，按用户选的「代码+索引」深度。
-- 两仓 commit 齐了再走 review-subagent → push（COMem 用自己的 deploy key `configs/comem_deploy_key`，**不走 star-proxy**）。
+**Paper 主命题 rebuttal 备料状态**：
+- **Paper B tex 数字**：4 MMLU + 12 closed-book QA 全部与磁盘一致（max diff 0.001）; Finding 1 tex 是「likelihood recovery overstates target recovery」的**单轨迹内**残差观察（keep14 200k MMLU 距 base 差 28.74pp），**无 cross-arm dissociation 断言**; related work 明确 disavow "loss--task dissociation originate here"; **不需要 rewrite Finding 1**
+- **Paper B Finding 2 rebuttal 就位**：用 Random-16L 校准发现 content_norm empirical chance = 35.98%（letter chance 25%，差 +10.98pp 是 scoring metric base-rate）；letter-only 单轴 Wilson CI + 单侧 binomial 表：PPL 匹配 pair (Random-16L 11.50 / keep14@67500 11.53) letter headroom 分别 -0.30pp (p=0.80) / -0.08pp (p=0.59) **都在 chance 内**，keep8@121k +0.50pp (p=0.085) **NS**，rebuttal 弱化不推翻
+- **Paper B 主命题「三重证伪」的真相**：打的是我口头概括的靶子，不是 tex 正式文本。三重 audit（Spearman +0.94 lockstep / matched-PPL MMLU +0.32pp / ShortGPT beats keep14）作 supporting appendix 即可
+- **Paper A 数字**：5 组 primitive 中 **4 组精确**（RULER 99.187/96.067 + CI [2.36, 3.9333] 全在 .82 `p0_13_quality_latency/{summary,stats}.json`; overlap 92.5/98.5/99.0 全在 .82 `p0_17_e2_overlap/`; BM25 -11.56 CI[-14.444,-8.667] 在 wzc1 `equal_latency/source/bm25/decision.json`）; **1 组 latency 931.9/664.4 ms 有 <2% 漂**（最近 P1.8 128k|cpu G=1 = 934.5/677.8, 差 3-13 ms）→ #167 rebuttal 前三选一
+- **Paper A tex 漂修**：`tab_pareto.tex:12` `99.20` → `99.19`（磁盘真值 99.187，与 `tab_replay_latency.tex` 一致）
+- **Paper A anonymous_artifact 补齐**：P0.13/P0.17 的 summary/stats/manifest/latency.json 已从 .82 `scp -O` 到 `paperA/anonymous_artifact/scores/p0_13_quality_latency/` 与 `.../p0_17_e2_overlap/`——release 可复现，不需要跨盘 scp
 
-**在跑的实验（4 节点产出）**：
-- **LOCAL 8×B200**：#103 keep14 dense-save re-heal，step **21700**/200000，healthy。等 frozen-match PPL≈12.797 / random-match≈11.498 双侧 crossing → matched-PPL MMLU+McNemar 后**立即停，不跑到 200k**（Phase R 决策）。
-- **.104 8×H20**：A-P1.1 (#151) BGE/BGE 臂，8 卡 healthy ~1.9h。⚠️ **BM25/BM25 臂已裁决 NEGATIVE**（latency-matched text-RAG ≥ CoMem，−3.0pp n.s.；#137 的 LoCoMo「tie」是 first-100=100%conv0 采样假象，分层后翻转）——**不得包装成 positive Pareto**。
-- **.73 8×H20**：**Paper C #132** P-C1 second-task capability eval（MMLU-MC + closed-book QA on A4_hero/A3_fromscratch/A2_lora_r160/BASE_ref，eval-only）。要回答的是：SQuAD 上 A4>A3(+3.25pp EM, p=7.3e-4) 在知识/推理任务上还成立吗，还是只是 format 效应。
-- **.82 8×H20**：**Paper B #128** P2.2 activation patching 因果层恢复 harness（forward-only）。**硬门禁：identity-patch 必须复现 unpatched 分数**，否则曲线作废。
-- **.252**：⚠️ **SSH 密码认证失败**（`configs/password_b200_19252.txt` 是历史上正确的文件，本轮 Permission denied）→ 疑密码轮换，**未反复重试以免锁账号**，暂不计入可用节点。需用户确认。
+**Paper C 状态**（**三 reviewer 联合判决 2026-08-05**）：P-C1 构造被 arXiv:2411.15558 全占、P-C2 hook 被 2210.10041 占、原 SQuAD eval set 常量拒答 49.85% 基线**高于所有臂**且 relevant_indices z=+0.72 分布过均匀 → **P-C1 降级不作主线**。已完成 (1) 重建干净 eval set（P0-4，SQuAD v1.1/v2.0 CPU forensic），(2) 加 `--random_trunk` flag（P0-5，`train_olmo2_arch_probe2.py` +166/-7，8/8 self-test pass）分离 A4 vs A3 的 readout-interface confound。**下一步 A4×random_trunk keep{14,20,24,28} 训练待用户拍板**（#165）
+
+**Paper D 层拼接判决**：3 路调研（R1 lit 34 refs + R2 tcodex gpt-5.6-sol + R3 CPU feasibility oracle affine ppl 596 vs 19）联合结论——**方向被 BTS (EMNLP'25 2025.emnlp-main.347) / LEGO-LLM (2026.acl-long.2081) / StitchLLM (2025.acl-long.1305) / CALM (arXiv:2401.02412 ICLR'24) 全占，且跨家族技术不通**。**不建议做**；仅剩「相对深度主导层对齐」cheap mini finding 可补（forward-only 几小时，#166 待用户拍板）
+
+**在跑的实验**：无。#99 与 #103 已 kill。32 卡持续空闲，无未定方向擅自投入（3 heartbeat 一致）
+
+**集群状态**：
+- **LOCAL / .73 / .82**：直连各 0 GB，**24 卡确认闲**
+- **.252**：**SSH 4h+ 持续 Permission denied**（连续 10+ 次拒），密码文件 16 字节含末尾逗号，ed25519 握手 OK 但 auth 拒——疑 sshd 端问题或密码轮换，**不 hammer 等自愈或用户确认**；上一次 heartbeat 前它是可连的（0021）
+- Monitor 8088 前端 http=200 但 `metric_history` chronic 全空（26h+），已 kill+restart 一次首轮 55s 后仍 0 samples，采集线程疑卡在 poll .252 SSH——不深挖（http 200 满足 skill 要求）
+
+**待用户 4 项决策**：
+1. **Paper C**：A4×random_trunk keep{14,20,24,28} 在新 eval set 上训练是否启动（P-C1 干净重跑，#165）
+2. **Paper D**：「相对深度主导层对齐」mini finding 是否做（纯 forward-only 几小时，#166）
+3. **paperA #167 latency**：931.9/664.4 ms 三选一——(a) rebuttal 主动 own <2% 漂；(b) 找回原始 log；(c) GPU 60-reads 重跑
+4. **17 个 unpushed commit 是否 push GitHub**（走 `/gitpush` review-subagent → star-proxy 流程）
+
+**本轮 sprint 关键 commits（10 个 audit/fix）**：
+`6a3b6bb` letter headroom + Wilson CI · `dfdbf2d` paperB tex-wording audit · `638fb04` paperB 16/16 数字 audit · `51c7349` Finding 2 chance 校正 · `550a81a` paperA latency provenance · `8c30fc7` self-consistency check · `9883ef9` paperA 3/3 primitive 精确 + tab_pareto fix · `f9fb8c6` P0.13/P0.17 artifact 拷到 wzc1
+
+**运维复现坑**：subagent 派 provenance audit 时一定要在 prompt 里写明**跨 2 盘搜索**（wzc1 + zwfy6），否则会误报"文件不在磁盘"。这是 CLAUDE.md 顶部「两个物理盘」坑的第 N 次复现。
 
 **Paper C 状态**（`versions/paperC_scoping.md` 是唯一 scoping 文档，**无 paperC/TODOList.md**）：定位 = 冻结前 j 层 + 丢弃顶部 + 移植 K 层新块、**只 finetune 那 K 层**（区别于 Paper B 的 continue-pretrain 全参 heal）。推荐命题 = **P-C1 构造 + P-C2「用 base 模型的廉价 probe 预测该切多深/长多少层」为差异化 hook（P-C1 单独有 novelty 风险：Zhang'21 re-init / Surgical FT）**；P-C3 建议降为附录。已有 #92 SQuAD 4 臂结果（A2_lora 0.659 > BASE_ref 0.339 > A4_hero 0.293 > A3_fromscratch 0.261，A1 因 H20 OOM 未跑）；**诚实框定**：BASE_ref 差两个轴（32L-vs-16L AND no-SFT-vs-SFT）→ 只作 intact-model 上限参照，A4-vs-A3 才是干净对照。剩余 #133 depth-sweep / #134 A1 ceiling 待 B200。
 
