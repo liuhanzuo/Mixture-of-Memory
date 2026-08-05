@@ -1,0 +1,104 @@
+{
+  "n_examples_paired": 1500,
+  "n_cells": 15,
+  "per_cell": {
+    "niah_multikey_1/128k": {
+      "n": 100,
+      "armA": 100.0,
+      "armB": 93.0,
+      "diff_A_minus_B": 7.0
+    },
+    "niah_multikey_1/16k": {
+      "n": 100,
+      "armA": 100.0,
+      "armB": 91.0,
+      "diff_A_minus_B": 9.0
+    },
+    "niah_multikey_1/32k": {
+      "n": 100,
+      "armA": 100.0,
+      "armB": 99.0,
+      "diff_A_minus_B": 1.0
+    },
+    "niah_multikey_1/64k": {
+      "n": 100,
+      "armA": 97.0,
+      "armB": 90.0,
+      "diff_A_minus_B": 7.0
+    },
+    "niah_multikey_1/8k": {
+      "n": 100,
+      "armA": 100.0,
+      "armB": 94.0,
+      "diff_A_minus_B": 6.0
+    },
+    "niah_single_3/128k": {
+      "n": 100,
+      "armA": 98.0,
+      "armB": 98.0,
+      "diff_A_minus_B": 0.0
+    },
+    "niah_single_3/16k": {
+      "n": 100,
+      "armA": 97.0,
+      "armB": 91.0,
+      "diff_A_minus_B": 6.0
+    },
+    "niah_single_3/32k": {
+      "n": 100,
+      "armA": 97.0,
+      "armB": 97.0,
+      "diff_A_minus_B": 0.0
+    },
+    "niah_single_3/64k": {
+      "n": 100,
+      "armA": 99.0,
+      "armB": 98.0,
+      "diff_A_minus_B": 1.0
+    },
+    "niah_single_3/8k": {
+      "n": 100,
+      "armA": 100.0,
+      "armB": 100.0,
+      "diff_A_minus_B": 0.0
+    },
+    "variable_tracking/128k": {
+      "n": 100,
+      "armA": 100.0,
+      "armB": 99.0,
+      "diff_A_minus_B": 1.0
+    },
+    "variable_tracking/16k": {
+      "n": 100,
+      "armA": 100.0,
+      "armB": 98.0,
+      "diff_A_minus_B": 2.0
+    },
+    "variable_tracking/32k": {
+      "n": 100,
+      "armA": 100.0,
+      "armB": 98.2,
+      "diff_A_minus_B": 1.8
+    },
+    "variable_tracking/64k": {
+      "n": 100,
+      "armA": 100.0,
+      "armB": 98.6,
+      "diff_A_minus_B": 1.4
+    },
+    "variable_tracking/8k": {
+      "n": 100,
+      "armA": 99.8,
+      "armB": 96.2,
+      "diff_A_minus_B": 3.6
+    }
+  },
+  "macro": {
+    "armA": 99.187,
+    "armB": 96.067,
+    "diff_A_minus_B": 3.12
+  },
+  "oom_examples": 0,
+  "nonfinite_examples": 0,
+  "all_packs_paired_1to1": true
+}

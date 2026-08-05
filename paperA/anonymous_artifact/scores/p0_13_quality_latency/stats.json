@@ -1,0 +1,27 @@
+{
+  "macro_diff_A_minus_B": 3.12,
+  "paired_bootstrap_95ci": [
+    2.36,
+    3.9333
+  ],
+  "bootstrap_n": 10000,
+  "mcnemar": {
+    "A_only_correct_b": 83,
+    "B_only_correct_c": 1,
+    "both_correct": 1404,
+    "neither_correct": 12,
+    "exact_two_sided_p": 8.788794008375919e-24
+  },
+  "agreement": {
+    "prediction_exact_rate": 0.028,
+    "first_token_match_rate": 0.908,
+    "decode_top1_rate_mean": 0.4208,
+    "first_token_cosine_mean": 0.9772
+  },
+  "failure_breakdown": {
+    "both_correct": 1404,
+    "both_wrong": 12,
+    "A_only_correct": 83,
+    "B_only_correct": 1
+  }
+}

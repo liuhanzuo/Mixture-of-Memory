@@ -1,0 +1,22 @@
+{
+  "task": "niah_multikey_1",
+  "length": "8k",
+  "example_index": 0,
+  "resume_j_b": 12,
+  "resume_j_e0": 12,
+  "dtype": "bfloat16",
+  "e0_h12_residual": {
+    "max_abs": 0.0,
+    "mean_abs": 0.0,
+    "ref_abs_max": 8576.0,
+    "H": 1024
+  },
+  "e2_w0_residual": {
+    "max_abs": 0.0,
+    "mean_abs": 0.0,
+    "T": 512
+  },
+  "h12_tol": 0.05,
+  "e2_w0_tol": 0.001,
+  "passed": true
+}

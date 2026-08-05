@@ -1,0 +1,97 @@
+{
+  "n_examples_paired": 200,
+  "n_cells": 2,
+  "widths": [
+    32,
+    64,
+    128
+  ],
+  "per_cell": {
+    "niah_multikey_1/16k": {
+      "n": 100,
+      "armA": 100.0,
+      "armB": 91.0,
+      "armE2_w32": 98.0,
+      "armE2_w64": 98.0,
+      "armE2_w128": 98.0,
+      "armE0": 100.0,
+      "diff_A_minus_B": 9.0,
+      "diff_E0_minus_B": 9.0,
+      "diff_E2_w32_minus_B": 7.0,
+      "diff_E0_minus_E2_w32": 2.0,
+      "diff_E2_w64_minus_B": 7.0,
+      "diff_E0_minus_E2_w64": 2.0,
+      "diff_E2_w128_minus_B": 7.0,
+      "diff_E0_minus_E2_w128": 2.0
+    },
+    "niah_multikey_1/8k": {
+      "n": 100,
+      "armA": 100.0,
+      "armB": 94.0,
+      "armE2_w32": 99.0,
+      "armE2_w64": 99.0,
+      "armE2_w128": 100.0,
+      "armE0": 100.0,
+      "diff_A_minus_B": 6.0,
+      "diff_E0_minus_B": 6.0,
+      "diff_E2_w32_minus_B": 5.0,
+      "diff_E0_minus_E2_w32": 1.0,
+      "diff_E2_w64_minus_B": 5.0,
+      "diff_E0_minus_E2_w64": 1.0,
+      "diff_E2_w128_minus_B": 6.0,
+      "diff_E0_minus_E2_w128": 0.0
+    }
+  },
+  "macro": {
+    "armA_full_replay": 100.0,
+    "armB_chunk_local_w0_deployable": 92.5,
+    "armE0_document_contextual_control": 100.0,
+    "diff_A_minus_B": 7.5,
+    "diff_E0_minus_B": 7.5,
+    "armE2_w32_overlap_write": 98.5,
+    "diff_E2_w32_minus_B": 6.0,
+    "diff_E0_minus_E2_w32": 1.5,
+    "armE2_w64_overlap_write": 98.5,
+    "diff_E2_w64_minus_B": 6.0,
+    "diff_E0_minus_E2_w64": 1.5,
+    "armE2_w128_overlap_write": 99.0,
+    "diff_E2_w128_minus_B": 6.5,
+    "diff_E0_minus_E2_w128": 1.0
+  },
+  "write_cost": {
+    "w0_mean_ctx_write_tokens": 6144.0,
+    "w32": {
+      "mean_extra_prefix_tokens": 352.0,
+      "mean_total_ctx_write_tokens": 6496.0,
+      "extra_write_flops_ratio_vs_w0": 1.0573,
+      "note": "extra lower-12 Write cost only; store/Read/decode identical to w0"
+    },
+    "w64": {
+      "mean_extra_prefix_tokens": 704.0,
+      "mean_total_ctx_write_tokens": 6848.0,
+      "extra_write_flops_ratio_vs_w0": 1.1146,
+      "note": "extra lower-12 Write cost only; store/Read/decode identical to w0"
+    },
+    "w128": {
+      "mean_extra_prefix_tokens": 1408.0,
+      "mean_total_ctx_write_tokens": 7552.0,
+      "extra_write_flops_ratio_vs_w0": 1.2292,
+      "note": "extra lower-12 Write cost only; store/Read/decode identical to w0"
+    }
+  },
+  "prereg_target": {
+    "target_metric": "multikey pooled (macro over cells) armE2_w accuracy",
+    "baseline_w0_pooled": 92.5,
+    "target_threshold": 97.0,
+    "best_width": 128,
+    "best_width_pooled": 99.0,
+    "target_met": true,
+    "note": "ALL widths reported below regardless; reporting only the best w is forbidden. store/Read cost is identical across all widths (== w0)."
+  },
+  "oom_examples": 0,
+  "nonfinite_examples": 0,
+  "all_packs_paired_1to1": true,
+  "p013_pack_sha_checked": 200,
+  "p013_pack_sha_all_match": true,
+  "attribution_hint": "E2_w recovers the E0-vs-B document-context gap in proportion to the left-context width w, at unchanged store/Read cost. If the best w reaches the pre-registered >=97.0 pooled target it becomes a new deployable Write variant (extend Cohort-B); if only a small/negative effect, report as a boundary/negative result and pivot to P0.18. E0 is the O(L) document-contextual control (not deployable), the recovery ceiling."
+}
