@@ -30,10 +30,10 @@ PYTHON_BIN="${PYTHON_BIN:-/opt/conda/envs/torch-base/bin/python}"
 
 BASE_PATH="${BASE_PATH:-/apdcephfs_zwfy6/share_304376610/pighzliu_code/models/OLMo-2-1124-7B}"
 DATA_PATH="${DATA_PATH:-$PROJECT_ROOT/data/squad_val.jsonl}"
-N_WIN="${N_WIN:-512}"
+N_WIN="${N_WIN:-128}"           # squad_val has only ~130 windows worth of unique passages at seq_len=2048 -> use 128 for headroom
 SEQ_LEN="${SEQ_LEN:-2048}"
 SEED="${SEED:-42}"
-PBS="${PBS:-16}"                 # per-batch positions kept (fp64 pool)
+PBS="${PBS:-32}"                 # per-batch positions kept (fp64 pool) -- with 128 windows -> 128*32 = 4096 vectors/layer, ample for CKA
 BATCH_SIZE="${BATCH_SIZE:-1}"
 GPUS="${GPUS:-0,1,2,3,4,5,6,7}"
 NPROC=$(awk -F, '{print NF}' <<< "$GPUS")
