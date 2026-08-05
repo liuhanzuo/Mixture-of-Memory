@@ -557,3 +557,36 @@ R3 的三条强制纠正（MAIN 认为全部与我们自己的数据一致）：
   arXiv:2411.15558、2403.19135、2407.16286、2410.02330、2401.02415、**2210.10041**（P-C2 的必胜 baseline）。
 - 其余 venue 归属（LLM-Streamline=ICLR'25、Xie et al.=EMNLP'22 Findings 之外的）**在进 `.bib` 前
   仍须逐条用 DBLP/ACL Anthology/OpenReview 核实**，不得直接采信报告里的 venue 标注。
+
+### 2026-08-05 补：6 篇关键引用的 venue 独立核实（MAIN 亲自查，可直接进 .bib）
+
+核实源与方法（**不采信 reviewer 报告里的 venue 标注**，逐条查权威库）：
+Semantic Scholar Graph API 按 `arXiv:<id>` 查（带 `publicationVenue` / `externalIds.DBLP`）+
+OpenReview API2 (`api2.openreview.net/notes/search`) 验 ICLR + arXiv abs 页验标题作者。
+⚠️ **DBLP 的 search API 经 hy-proxy 全部返回 error 500**（长短 query 都试过），S2 频繁 **429 限流**
+——429 是限流不是"无 venue"，必须重试到 200 才能下结论。**先前一个 subagent 正是把 429/空
+当成了 "preprint only"，还把 reviewer 报告的行号当作核实证据（循环论证），其结论已废弃不用。**
+
+| arXiv | 标题 | **核实后的 venue** | 首 3 作者 | 证据 |
+|---|---|---|---|---|
+| 2411.15558 | Reassessing Layer Pruning in LLMs | **arXiv preprint（无 published venue）** 2024 | Yao Lu, Hao Cheng, Yujie Fang | S2 `venue="arXiv.org"`, `journal={ArXiv, abs/2411.15558}` |
+| 2403.19135 | Streamlining Redundant Layers (LLM-Streamline) | **ICLR 2025 Spotlight** ✅ | Xiaodong Chen et al. | OpenReview `venue="ICLR 2025 Spotlight"`, `venueid=ICLR.cc/2025/Conference` |
+| 2407.16286 | A deeper look at depth pruning of LLMs | **arXiv preprint（无 published venue）** 2024 | Shoaib Ahmed Siddiqui, Xin Dong, Greg Heinrich | S2 `venue="arXiv.org"` |
+| 2410.02330 | Llama SLayer 8B | **EMNLP 2024**（pages 5991–6002） ✅ | Tianxiang Chen, Zhentao Tan, Tao Gong | S2 `publicationVenue.type="conference"` |
+| 2401.02415 | LLaMA Pro: Progressive LLaMA with Block Expansion | **★ACL 2024**（pages 6518–6537，DBLP `conf/acl/WuGGLWFSL24`） ✅ | Chengyue Wu, Yukang Gan, Yixiao Ge | S2 + DBLP key |
+| 2210.10041 | Hidden State Variability … Computation Reduction | **EMNLP 2022** ✅ | Shuo Xie, Jiahao Qiu, Ankita Pasad | S2 `publicationVenue` |
+
+**两处必须纠正的错误标注**：
+1. **LLaMA Pro 不是 preprint，是 ACL 2024 主会**（DBLP `conf/acl/WuGGLWFSL24`）。它冻结 7B backbone
+   只训新插入的完整 Transformer 块 —— 一篇 ACL 主会论文与我们构造高度相邻，**必须在 related work
+   正面处理，不能当作可轻描淡写的 preprint**。
+2. 2410.02330 / 2210.10041 的 S2 `venue` 字段返回的是会议全名
+   （"Conference on Empirical Methods in Natural Language Processing"），**未区分 main 还是 Findings**。
+   reviewer 说这两篇都是 Findings；S2 的 pages（5991-6002 / 无）不足以判定。
+   ⇒ **进 .bib 时 Findings-vs-main 仍须用 ACL Anthology 的 anthology ID 最终确认**（本轮 anthology
+   直查未命中，我不猜）。其余 4 篇的 venue 已可直接使用。
+
+⇒ 结论：**6 篇里 4 篇是 peer-reviewed（ICLR'25 Spotlight / ACL'24 / EMNLP'24 / EMNLP'22），
+只有 2411.15558 与 2407.16286 是 preprint**。而"构造被 scoop"的主力 2411.15558 虽是 preprint，
+但其摘要主张明确、可引用；真正棘手的是 **ICLR'25 Spotlight 的 LLM-Streamline + ACL'24 的 LLaMA Pro
+这两篇 peer-reviewed 工作已覆盖"冻结主干 + 只训替换/新增块"**。
