@@ -38,6 +38,16 @@ then read out. Scan L over {13,14,...,31}.
 Positions/RoPE align exactly: both models tokenise identically and OLMo-2 computes
 position_embeddings once from position_ids (theta 5e5), independent of layer count.
 
+Controls for intervention 1 (all forward-only, same protocol):
+  * IDENTITY PATCH   --graft_donor keep14 --graft_layer <keep_front-1>: the donor
+    is a second copy of the recipient, so the captured activation IS the tensor it
+    replaces -> must be a BIT-EXACT no-op. This is the HARNESS VALIDITY GATE; run
+    it with --gate_check (real 7B weights, real val tokens, logits level).
+  * PATCH-NOTHING    --graft_layer -1: hooks disabled -> plain keep14 numbers.
+  * RANDOM PATCH     --graft_random {shuffle_positions,gauss_matched}: the donated
+    activation is replaced by a statistics-matched, information-free surrogate ->
+    the metric floor for "the patched pathway is being used at all".
+
 Intervention 2 — progressive upper-layer restoration  (--mode restore)
 ---------------------------------------------------------------------
 Assemble a hybrid Olmo2ForCausalLM by COPYING weights (no training):
@@ -231,22 +241,41 @@ def build_restore_model(base_path, base_sd, base_nl, keep_sd, keep_front,
 # Intervention 1 — boundary hidden-state grafting (base -> keep14 tail)
 # ===========================================================================
 class GraftedModel(torch.nn.Module):
-    """Wrap (base 32L, keep14 16L). forward(input_ids, attention_mask): run base
-    to capture the residual AT THE OUTPUT of base layer `graft_layer`, then run
-    keep14 with that hidden INJECTED as the input of keep14 layer `inject_at`
-    (default = keep_front = fresh-tail input). Returns keep14's CausalLMOutput
-    (has .logits), so the reused score_windows / score_examples work unchanged.
+    """Wrap (donor, recipient=keep14 16L). forward(input_ids, attention_mask):
+    run the DONOR to capture the residual AT THE OUTPUT of donor layer
+    `graft_layer`, then run the recipient with that hidden INJECTED as the input
+    of recipient layer `inject_at` (default = keep_front = fresh-tail input).
+    Returns the recipient's CausalLMOutput (has .logits), so the reused
+    score_windows / score_examples work unchanged.
 
-    graft_layer < 0 disables the graft (pure keep14 through the wrapper -> must
-    reproduce the plain keep14 numbers; used as an in-harness control)."""
+    Controls
+    --------
+    * graft_layer < 0            -> graft disabled ("patch-nothing" baseline: pure
+                                    keep14 through the wrapper; must reproduce the
+                                    plain keep14 numbers).
+    * donor is a SECOND COPY of the recipient (`--graft_donor keep14`) with
+      graft_layer == inject_at-1  -> mathematically an IDENTITY PATCH: the
+      captured tensor IS byte-for-byte the tensor it replaces, so logits must be
+      bit-identical to plain keep14. This is the harness VALIDITY GATE.
+    * random_mode != "none"      -> the captured hidden is replaced by an
+      information-free surrogate with matched activation statistics
+      (`shuffle_positions`: exact same activation multiset, permuted along the
+      sequence axis; `gauss_matched`: Gaussian with the captured tensor's
+      per-(batch,position) mean/std). This is the random-activation FLOOR."""
 
-    def __init__(self, base, keep, graft_layer, inject_at):
+    def __init__(self, base, keep, graft_layer, inject_at,
+                 random_mode="none", random_seed=0):
         super().__init__()
         self.base = base
         self.keep = keep
         self.graft_layer = int(graft_layer)
         self.inject_at = int(inject_at)
+        self.random_mode = str(random_mode)
+        self.random_seed = int(random_seed)
+        if self.random_mode not in ("none", "shuffle_positions", "gauss_matched"):
+            raise ValueError(f"unknown random_mode {self.random_mode}")
         self._captured = None
+        self._call_idx = 0            # makes the random surrogate reproducible
 
         n_keep = keep.config.num_hidden_layers
         n_base = base.config.num_hidden_layers
@@ -255,26 +284,50 @@ class GraftedModel(torch.nn.Module):
                 raise ValueError(f"graft_layer {self.graft_layer} outside [0,{n_base})")
             if not (0 <= self.inject_at < n_keep):
                 raise ValueError(f"inject_at {self.inject_at} outside [0,{n_keep})")
+            if base is keep:
+                raise ValueError(
+                    "donor and recipient must be DISTINCT module instances "
+                    "(the recipient carries an inject pre-hook, so calling it as "
+                    "the donor would fire 'inject before capture')")
             base.model.layers[self.graft_layer].register_forward_hook(self._capture)
             keep.model.layers[self.inject_at].register_forward_pre_hook(
                 self._inject, with_kwargs=True)
 
-    # forward hook on base layer L: store its output residual (plain tensor).
+    # forward hook on donor layer L: store its output residual (plain tensor).
     def _capture(self, module, inp, output):
         h = output[0] if isinstance(output, tuple) else output
         self._captured = h.detach()
         return None
 
-    # forward PRE-hook on keep layer J: replace hidden_states (positional arg 0).
+    def _randomise(self, cap):
+        """Information-free surrogate with matched activation statistics."""
+        g = torch.Generator(device="cpu")
+        g.manual_seed(self.random_seed * 1000003 + self._call_idx)
+        if self.random_mode == "shuffle_positions":
+            # exact same activation values, permuted along the sequence axis
+            # (destroys token<->position content alignment, preserves the
+            #  per-batch activation multiset and hence all moments/norms).
+            T = cap.shape[1]
+            perm = torch.randperm(T, generator=g).to(cap.device)
+            return cap.index_select(1, perm)
+        # gauss_matched: N(mu, sigma) matched per (batch, position) over hidden dim
+        mu = cap.mean(dim=-1, keepdim=True)
+        sd = cap.std(dim=-1, keepdim=True)
+        noise = torch.randn(cap.shape, generator=g, dtype=torch.float32).to(cap.device)
+        return (noise.to(cap.dtype) * sd + mu)
+
+    # forward PRE-hook on recipient layer J: replace hidden_states (pos. arg 0).
     def _inject(self, module, args, kwargs):
         if self._captured is None:
-            raise RuntimeError("inject before capture (base forward did not run)")
+            raise RuntimeError("inject before capture (donor forward did not run)")
         cur = args[0]
         cap = self._captured
         assert cap.shape == cur.shape, (
             f"graft shape {tuple(cap.shape)} != keep-layer{self.inject_at} input "
             f"{tuple(cur.shape)}")
         cap = cap.to(dtype=cur.dtype, device=cur.device)
+        if self.random_mode != "none":
+            cap = self._randomise(cap)
         return (cap,) + tuple(args[1:]), kwargs
 
     def forward(self, input_ids=None, attention_mask=None, labels=None, **kw):
@@ -285,33 +338,180 @@ class GraftedModel(torch.nn.Module):
             assert self._captured is not None, "capture hook did not fire"
         out = self.keep(input_ids=input_ids, attention_mask=attention_mask,
                         labels=labels)
+        self._call_idx += 1
         return out
 
 
+def _load_donor(donor, base_path, ckpt_path, cli_keep_front, cli_n_fresh, device):
+    """donor='base' -> pretrained 32L OLMo-2; donor='keep14' -> a SECOND,
+    independent instance of the healed keep14 ckpt (identity-patch control)."""
+    if donor == "base":
+        return load_base_model(base_path, device)
+    if donor == "keep14":
+        m, meta = load_pruned_model(
+            ckpt_path, base_path, cli_keep_front, cli_n_fresh, device)
+        meta = dict(meta)
+        meta["mode"] = "donor_keep14"
+        return m, meta
+    raise ValueError(f"unknown graft_donor {donor}")
+
+
 def build_graft_model(base_path, ckpt_path, cli_keep_front, cli_n_fresh,
-                      graft_layer, inject_at, device):
-    base, _bmeta = load_base_model(base_path, device)
+                      graft_layer, inject_at, device, donor="base",
+                      random_mode="none", random_seed=0):
+    donor_model, _bmeta = _load_donor(
+        donor, base_path, ckpt_path, cli_keep_front, cli_n_fresh, device)
     keep, _kmeta = load_pruned_model(
         ckpt_path, base_path, cli_keep_front, cli_n_fresh, device)
     kf = _kmeta["keep_front_layers"]
     nf = _kmeta["n_fresh_layers"]
     if inject_at is None:
         inject_at = kf  # fresh-tail input
-    gm = GraftedModel(base, keep, graft_layer, inject_at)
+    gm = GraftedModel(donor_model, keep, graft_layer, inject_at,
+                      random_mode=random_mode, random_seed=random_seed)
     gm.eval()
+    is_identity = (donor == "keep14" and graft_layer == inject_at - 1
+                   and random_mode == "none")
     meta = {
         "mode": "graft",
+        "graft_donor": donor,
         "graft_layer": graft_layer,
         "inject_at_layer": inject_at,
+        "graft_random": random_mode,
+        "graft_random_seed": random_seed,
+        "is_identity_patch": bool(is_identity),
         "keep_front_layers": kf,
         "n_fresh_layers": nf,
-        "base_num_layers": base.config.num_hidden_layers,
+        "donor_num_layers": donor_model.config.num_hidden_layers,
         "keep_num_layers": keep.config.num_hidden_layers,
         "ckpt_step": _kmeta.get("ckpt_step"),
     }
-    _log(f"[graft] base_L{graft_layer}_out -> keep_layer{inject_at}_in "
+    _log(f"[graft] donor={donor} L{graft_layer}_out -> keep_layer{inject_at}_in "
+         f"random={random_mode} identity={is_identity} "
          f"(keep_front={kf} n_fresh={nf}); both models on {device}")
     return gm, meta
+
+
+# ===========================================================================
+# HARNESS VALIDITY GATE (real 7B weights, real val tokens, logits level)
+# ===========================================================================
+def run_gate_check(args, device):
+    """Bit-level validity gate for the graft hooks, on the REAL keep14 weights.
+
+    Builds (a) a hook-free plain keep14 and (b) an IDENTITY-PATCH GraftedModel
+    whose donor is a second copy of keep14, capturing layer (keep_front-1)'s
+    output and injecting it at layer keep_front. That substitution is a
+    mathematical no-op, so the two must produce BIT-IDENTICAL logits. Also
+    reports the same-batch NLL for both, and (as a wiring positive control) the
+    max|delta| for a base-donor graft and for a random-activation patch, which
+    MUST be non-zero.
+
+    Exit status is non-zero if the gate fails, so drivers can hard-stop."""
+    kf_cli, nf_cli = args.keep_front_layers, args.n_fresh_layers
+    plain, pmeta = load_pruned_model(
+        args.keep14_ckpt, args.base_model, kf_cli, nf_cli, device)
+    kf = pmeta["keep_front_layers"]
+    inject_at = args.inject_at_layer if args.inject_at_layer is not None else kf
+
+    arr = np.load(args.val_path, mmap_mode="r")
+    n_win = max(1, int(args.gate_windows))
+    windows = np.array(arr[:n_win]).astype(np.int64)
+    input_ids = torch.from_numpy(windows).to(device)
+    _log(f"[gate] batch = first {n_win} val window(s) of {args.val_path} "
+         f"shape={tuple(input_ids.shape)}")
+
+    with torch.no_grad(), torch.amp.autocast("cuda", dtype=torch.bfloat16):
+        ref = plain(input_ids=input_ids).logits.float()
+    ref_nll = _nll_of(ref, input_ids)
+    del plain
+    gc.collect()
+    torch.cuda.empty_cache()
+
+    report = {"gate": "identity_patch", "val_path": args.val_path,
+              "n_windows": n_win, "seq_len": int(input_ids.shape[1]),
+              "keep_front_layers": kf, "inject_at_layer": inject_at,
+              "ckpt": args.keep14_ckpt, "plain_keep14_nll": ref_nll}
+
+    # ---- (1) THE GATE: donor == recipient, capture L=kf-1, inject at kf ----
+    gm, gmeta = build_graft_model(
+        args.base_model, args.keep14_ckpt, kf_cli, nf_cli,
+        kf - 1, inject_at, device, donor="keep14", random_mode="none")
+    assert gmeta["is_identity_patch"], gmeta
+    with torch.no_grad(), torch.amp.autocast("cuda", dtype=torch.bfloat16):
+        idt = gm(input_ids=input_ids).logits.float()
+    d = (idt - ref).abs().max().item()
+    idt_nll = _nll_of(idt, input_ids)
+    report["identity_max_abs_logit_delta"] = d
+    report["identity_patch_nll"] = idt_nll
+    report["identity_nll_delta"] = idt_nll - ref_nll
+    report["identity_exact_bitwise"] = bool(torch.equal(idt, ref))
+    _log(f"[gate] IDENTITY PATCH (donor=keep14 L{kf-1}->inject{inject_at}): "
+         f"max|dlogit|={d:.3e} bitwise_equal={report['identity_exact_bitwise']} "
+         f"nll {ref_nll:.6f} -> {idt_nll:.6f} (d={idt_nll-ref_nll:+.3e})")
+    del gm
+    gc.collect()
+    torch.cuda.empty_cache()
+
+    # ---- (2) positive control: random-activation patch MUST change logits ----
+    gr, _ = build_graft_model(
+        args.base_model, args.keep14_ckpt, kf_cli, nf_cli,
+        kf - 1, inject_at, device, donor="keep14",
+        random_mode="shuffle_positions", random_seed=args.graft_random_seed)
+    with torch.no_grad(), torch.amp.autocast("cuda", dtype=torch.bfloat16):
+        rnd = gr(input_ids=input_ids).logits.float()
+    report["random_patch_max_abs_logit_delta"] = (rnd - ref).abs().max().item()
+    report["random_patch_nll"] = _nll_of(rnd, input_ids)
+    _log(f"[gate] random(shuffle_positions) patch: "
+         f"max|dlogit|={report['random_patch_max_abs_logit_delta']:.4f} "
+         f"nll={report['random_patch_nll']:.4f} (plain {ref_nll:.4f})")
+    del gr
+    gc.collect()
+    torch.cuda.empty_cache()
+
+    # ---- (3) positive control: base-donor graft MUST change logits ----
+    gb, _ = build_graft_model(
+        args.base_model, args.keep14_ckpt, kf_cli, nf_cli,
+        kf - 1, inject_at, device, donor="base", random_mode="none")
+    with torch.no_grad(), torch.amp.autocast("cuda", dtype=torch.bfloat16):
+        bse = gb(input_ids=input_ids).logits.float()
+    report["base_donor_L%d_max_abs_logit_delta" % (kf - 1)] = \
+        (bse - ref).abs().max().item()
+    report["base_donor_L%d_nll" % (kf - 1)] = _nll_of(bse, input_ids)
+    _log(f"[gate] base-donor L{kf-1} graft: "
+         f"max|dlogit|={report['base_donor_L%d_max_abs_logit_delta' % (kf-1)]:.4f} "
+         f"nll={report['base_donor_L%d_nll' % (kf-1)]:.4f}")
+    del gb
+    gc.collect()
+    torch.cuda.empty_cache()
+
+    ok_identity = report["identity_exact_bitwise"] or d <= 1e-6
+    ok_random = report["random_patch_max_abs_logit_delta"] > 1e-3
+    ok_base = report["base_donor_L%d_max_abs_logit_delta" % (kf - 1)] > 1e-3
+    report["PASS_identity_is_noop"] = bool(ok_identity)
+    report["PASS_random_patch_changes_logits"] = bool(ok_random)
+    report["PASS_base_donor_changes_logits"] = bool(ok_base)
+    report["GATE_PASS"] = bool(ok_identity and ok_random and ok_base)
+
+    os.makedirs(args.results_root, exist_ok=True)
+    out = os.path.join(args.results_root,
+                       (args.output_name or "gate_check") + ".json")
+    with open(out, "w") as f:
+        json.dump(report, f, indent=2)
+    _log(f"[gate] {'PASS' if report['GATE_PASS'] else 'FAIL'} -> {out}")
+    if not report["GATE_PASS"]:
+        _log("[gate] FAIL detail: " + json.dumps(
+            {k: v for k, v in report.items() if k.startswith("PASS_")}))
+        sys.exit(3)
+
+
+def _nll_of(logits, input_ids):
+    """Mean teacher-forced NTP NLL of `logits` against `input_ids` (same口径 as
+    score_windows, just averaged instead of summed)."""
+    import torch.nn.functional as F
+    lg = logits[:, :-1, :]
+    tg = input_ids[:, 1:].contiguous()
+    return float(F.cross_entropy(lg.reshape(-1, lg.shape[-1]), tg.reshape(-1),
+                                 reduction="mean").item())
 
 
 # ===========================================================================
@@ -405,7 +605,9 @@ def build_model_for_mode(args, device):
             raise ValueError("graft needs --base_model and --keep14_ckpt")
         return build_graft_model(
             args.base_model, args.keep14_ckpt, args.keep_front_layers,
-            args.n_fresh_layers, args.graft_layer, args.inject_at_layer, device)
+            args.n_fresh_layers, args.graft_layer, args.inject_at_layer, device,
+            donor=args.graft_donor, random_mode=args.graft_random,
+            random_seed=args.graft_random_seed)
     if args.mode == "restore":
         if not (args.base_model and args.keep14_ckpt):
             raise ValueError("restore needs --base_model and --keep14_ckpt")
@@ -547,7 +749,64 @@ def _selftest():
         _ = mh(input_ids=input_ids).logits
     _log("[selftest] OK restore: base_head k=n_deleted -> base readout, forward OK")
 
-    _log("[selftest] ALL CHECKS PASSED (graft hooks + restore composition validated)")
+    # ---------- (C) controls: identity patch / random patch / patch-nothing ----
+    # (C1) IDENTITY PATCH: donor IS a second copy of the recipient, capture layer
+    #      (KF-1)'s output, inject at layer KF. The captured tensor is exactly the
+    #      tensor it replaces -> must be BIT-identical to plain keep.
+    gm_id = GraftedModel(_fresh(KF + NF, keep_sd), _fresh(KF + NF, keep_sd),
+                         graft_layer=KF - 1, inject_at=KF)
+    with torch.no_grad():
+        idt = gm_id(input_ids=input_ids).logits
+    assert torch.equal(idt, plain_ref), (
+        "IDENTITY PATCH is not bit-exact: max|d|="
+        f"{(idt-plain_ref).abs().max().item():.3e}")
+    _log("[selftest] OK control: identity patch (donor==recipient, L=KF-1) is "
+         "BIT-EXACT vs plain keep")
+
+    # (C2) PATCH-NOTHING: graft_layer<0 disables both hooks -> also identical.
+    gm_off = GraftedModel(_fresh(BASE_NL, base_sd), _fresh(KF + NF, keep_sd),
+                          graft_layer=-1, inject_at=KF)
+    with torch.no_grad():
+        off = gm_off(input_ids=input_ids).logits
+    assert torch.equal(off, plain_ref), "patch-nothing (graft_layer<0) changed logits"
+    _log("[selftest] OK control: patch-nothing (graft_layer=-1) == plain keep")
+
+    # (C3) RANDOM-ACTIVATION PATCH: same donor+layer as the identity patch, but
+    #      the activation is replaced by a statistics-matched surrogate -> MUST
+    #      change the logits (and shuffle_positions must preserve the multiset).
+    for rm in ("shuffle_positions", "gauss_matched"):
+        gm_r = GraftedModel(_fresh(KF + NF, keep_sd), _fresh(KF + NF, keep_sd),
+                            graft_layer=KF - 1, inject_at=KF,
+                            random_mode=rm, random_seed=7)
+        with torch.no_grad():
+            rnd = gm_r(input_ids=input_ids).logits
+        assert not torch.allclose(rnd, plain_ref, atol=1e-4), \
+            f"random patch ({rm}) did not change logits"
+        _log(f"[selftest] OK control: random patch ({rm}) changes logits "
+             f"(max|d|={(rnd-plain_ref).abs().max().item():.3e})")
+    # shuffle_positions preserves the exact activation multiset
+    gm_s = GraftedModel(_fresh(KF + NF, keep_sd), _fresh(KF + NF, keep_sd),
+                        graft_layer=KF - 1, inject_at=KF,
+                        random_mode="shuffle_positions", random_seed=7)
+    with torch.no_grad():
+        _ = gm_s(input_ids=input_ids)
+    cap = gm_s._captured
+    sh = gm_s._randomise(cap)
+    assert torch.equal(cap.flatten().sort().values, sh.flatten().sort().values), \
+        "shuffle_positions changed the activation multiset"
+    _log("[selftest] OK control: shuffle_positions preserves the activation multiset")
+
+    # (C4) donor must be a distinct instance (a shared instance would deadlock on
+    #      'inject before capture').
+    shared = _fresh(KF + NF, keep_sd)
+    try:
+        GraftedModel(shared, shared, graft_layer=KF - 1, inject_at=KF)
+        raise AssertionError("shared donor/recipient was not rejected")
+    except ValueError:
+        _log("[selftest] OK control: shared donor/recipient instance rejected")
+
+    _log("[selftest] ALL CHECKS PASSED (graft hooks + restore composition + "
+         "identity/random/patch-nothing controls validated)")
 
 
 # ===========================================================================
@@ -570,6 +829,18 @@ def main():
     p.add_argument("--inject_at_layer", type=int, default=None,
                    help="graft mode: keep14 layer index to inject before "
                         "(default keep_front_layers = fresh-tail input)")
+    p.add_argument("--graft_donor", choices=["base", "keep14"], default="base",
+                   help="graft mode: which model donates the activation. 'base' "
+                        "(default) = pretrained 32L OLMo-2; 'keep14' = a second "
+                        "copy of the recipient itself -> with "
+                        "--graft_layer=keep_front-1 this is the IDENTITY PATCH "
+                        "control (must be a bit-exact no-op)")
+    p.add_argument("--graft_random", choices=["none", "shuffle_positions",
+                                             "gauss_matched"], default="none",
+                   help="graft mode: replace the donated activation with a "
+                        "statistics-matched but information-free surrogate "
+                        "(random-activation patch floor)")
+    p.add_argument("--graft_random_seed", type=int, default=0)
     # restore
     p.add_argument("--restore_k", type=int, default=0,
                    help="restore mode: #base upper layers restored before the tail")
@@ -602,6 +873,13 @@ def main():
                    help="mmlu: load cais/mmlu (populate cache) then exit")
     p.add_argument("--selftest", action="store_true",
                    help="tiny CPU end-to-end validation (no GPU / no 7B weights)")
+    p.add_argument("--gate_check", action="store_true",
+                   help="HARNESS VALIDITY GATE on the real 7B weights: identity "
+                        "patch (donor=keep14, L=keep_front-1) must be a bit-exact "
+                        "no-op vs plain keep14; random + base-donor patches must "
+                        "change the logits. Exits 3 on failure.")
+    p.add_argument("--gate_windows", type=int, default=2,
+                   help="#val windows used by --gate_check")
     p.add_argument("--device", type=str, default="auto")
     args = p.parse_args()
 
@@ -624,12 +902,19 @@ def main():
             mmlu_merge(results_dir, n_boot=args.n_boot, seed=args.boot_seed)
         return
 
+    if args.gate_check:
+        if not (args.base_model and args.keep14_ckpt):
+            raise ValueError("--gate_check needs --base_model and --keep14_ckpt")
+        if not torch.cuda.is_available():
+            raise RuntimeError("--gate_check needs CUDA (real 7B weights)")
+        run_gate_check(args, torch.device("cuda"))
+        return
+
     if not (args.mode and args.task and args.output_name):
         raise ValueError("need --mode, --task, --output_name (or --merge/--selftest)")
     if args.device == "cpu" or (args.device == "auto" and not torch.cuda.is_available()):
         raise RuntimeError("CUDA required for a real run (use --selftest for CPU dry-run)")
     device = torch.device("cuda")
-
     model, meta = build_model_for_mode(args, device)
 
     if args.task == "ppl":
