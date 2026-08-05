@@ -1,0 +1,134 @@
+{
+  "model_a": "olmo2_1b",
+  "model_b": "llama32_1b",
+  "k": 4,
+  "n_fit_texts": 120,
+  "n_ce_texts": 50,
+  "arms": {
+    "none": {
+      "stitch": "none",
+      "oracle_unstitch_fit": {
+        "test_r2": 0.39674592759837946,
+        "test_rel_err": 0.7766943236573927,
+        "alpha": 100.0,
+        "n_train": 5609,
+        "n_test": 1203,
+        "per_dim_r2_median": 0.40628020312324675,
+        "per_dim_r2_p10": 0.3647500471679302,
+        "target_var_share_top1": 0.0782100772467244,
+        "target_var_share_top8": 0.22672380928435532
+      },
+      "n_fit_tokens": 8013,
+      "ce_with_oracle_affine_unstitch": 9.176309662296244,
+      "ppl": 9665.418219917363,
+      "delta_ce_vs_A_full": 6.242832395707818,
+      "eval_tokens": 3673
+    },
+    "scale": {
+      "stitch": "scale",
+      "oracle_unstitch_fit": {
+        "test_r2": 0.4662493965513217,
+        "test_rel_err": 0.7305823728017765,
+        "alpha": 10000.0,
+        "n_train": 5609,
+        "n_test": 1203,
+        "per_dim_r2_median": 0.4280882000096695,
+        "per_dim_r2_p10": 0.388280591064925,
+        "target_var_share_top1": 0.0782100772467244,
+        "target_var_share_top8": 0.22672380928435532
+      },
+      "n_fit_tokens": 8013,
+      "ce_with_oracle_affine_unstitch": 7.9553839772850425,
+      "ppl": 2850.882793158927,
+      "delta_ce_vs_A_full": 5.021906710696616,
+      "eval_tokens": 3673
+    },
+    "ridge": {
+      "stitch": "ridge",
+      "oracle_unstitch_fit": {
+        "test_r2": 0.5089157239767419,
+        "test_rel_err": 0.7007740549016243,
+        "alpha": 100.0,
+        "n_train": 5609,
+        "n_test": 1203,
+        "per_dim_r2_median": 0.48101486830035955,
+        "per_dim_r2_p10": 0.43796110410759914,
+        "target_var_share_top1": 0.0782100772467244,
+        "target_var_share_top8": 0.22672380928435532
+      },
+      "n_fit_tokens": 8013,
+      "ce_with_oracle_affine_unstitch": 8.324484273519499,
+      "ppl": 4123.610005091556,
+      "delta_ce_vs_A_full": 5.391007006931072,
+      "eval_tokens": 3673
+    },
+    "xfmr_untrained": {
+      "stitch": "xfmr_untrained",
+      "oracle_unstitch_fit": {
+        "test_r2": 0.441927158114371,
+        "test_rel_err": 0.7470427309636505,
+        "alpha": 100.0,
+        "n_train": 5609,
+        "n_test": 1203,
+        "per_dim_r2_median": 0.43208165514304675,
+        "per_dim_r2_p10": 0.39010781704315894,
+        "target_var_share_top1": 0.0782100772467244,
+        "target_var_share_top8": 0.22672380928435532
+      },
+      "n_fit_tokens": 8013,
+      "ce_with_oracle_affine_unstitch": 8.54771268383995,
+      "ppl": 5154.949931732877,
+      "delta_ce_vs_A_full": 5.614235417251524,
+      "eval_tokens": 3673
+    },
+    "REF_random_A_tail": {
+      "stitch": "none",
+      "oracle_unstitch_fit": {
+        "test_r2": 0.28061051803787473,
+        "test_rel_err": 0.8481683099256423,
+        "alpha": 10000.0,
+        "n_train": 5609,
+        "n_test": 1203,
+        "per_dim_r2_median": 0.370168308207777,
+        "per_dim_r2_p10": 0.32879797540773187,
+        "target_var_share_top1": 0.0782100772467244,
+        "target_var_share_top8": 0.22672380928435532
+      },
+      "ce_with_oracle_affine_unstitch": 10.06908541273558,
+      "ppl": 23601.96883475699,
+      "delta_ce_vs_A_full": 7.135608146147153,
+      "note": "A[0:k] + FRESH RANDOM A-family tail + oracle affine readout. 'tail carries zero useful computation' floor: any cross-family stitch must BEAT this to have transferred anything."
+    },
+    "REF_selfsplice_A_tail": {
+      "stitch": "none",
+      "oracle_unstitch_fit": {
+        "test_r2": 0.9594129491601465,
+        "test_rel_err": 0.20146228143216674,
+        "alpha": 10.0,
+        "n_train": 5609,
+        "n_test": 1203,
+        "per_dim_r2_median": 0.974618091055126,
+        "per_dim_r2_p10": 0.9714490404766511,
+        "target_var_share_top1": 0.0782100772467244,
+        "target_var_share_top8": 0.22672380928435532
+      },
+      "ce_with_oracle_affine_unstitch": 3.5696831479112814,
+      "ppl": 35.50534142756448,
+      "delta_ce_vs_A_full": 0.6362058813228546,
+      "note": "A[0:k] + A's OWN tail[k:] (i.e. the unmodified model) + oracle affine readout. Ceiling: shows the oracle-readout harness itself is not what limits CE."
+    }
+  },
+  "ce_a_full": 2.933477266588427,
+  "scale_match_factor": 10.200009398917118,
+  "stitch_ridge_fit": {
+    "test_r2": 0.9861121244872224,
+    "test_rel_err": 0.11784683072860844,
+    "alpha": 100.0,
+    "n_train": 2800,
+    "n_test": 600,
+    "per_dim_r2_median": 0.7317360898599001,
+    "per_dim_r2_p10": 0.52128913928355,
+    "target_var_share_top1": 0.2656526887686853,
+    "target_var_share_top8": 0.9882166832930508
+  }
+}

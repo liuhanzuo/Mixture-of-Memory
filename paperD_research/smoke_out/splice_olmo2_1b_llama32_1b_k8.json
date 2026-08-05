@@ -1,0 +1,225 @@
+{
+  "model_a": "olmo2_1b",
+  "model_b": "llama32_1b",
+  "k": 8,
+  "device": "cuda:0",
+  "n_texts": 50,
+  "variants": {
+    "A_full": {
+      "ce": 2.933477266588427,
+      "ppl": 18.79286481330314,
+      "tokens": 3673
+    },
+    "A_earlyexit_k8": {
+      "ce": 14.039691957244749,
+      "ppl": 1251297.983396037,
+      "tokens": 3673,
+      "note": "A's own front-k + A's own norm/lm_head: logit-lens floor, isolates 'A's readout cannot read layer-k' from stitch quality"
+    },
+    "SELF_SPLICE_A+A_stitch=none": {
+      "ce": 2.933477266588427,
+      "ppl": 18.79286481330314,
+      "tokens": 3673,
+      "delta_vs_A_full": 0.0,
+      "plumbing_ok": true
+    },
+    "B_full": {
+      "ce": 2.9968850999159584,
+      "ppl": 20.023069822434085,
+      "note": "B's OWN tokenizer -> not directly comparable to A-tokenised CE"
+    },
+    "stitch=none": {
+      "forward_ok": true,
+      "logits_shape": [
+        1,
+        71,
+        100352
+      ],
+      "shape_as_expected": true,
+      "logits_all_finite": true,
+      "logits_std": 3.3612194061279297,
+      "n_params_total_M": 1434.55232,
+      "n_params_stitch_M": 0.0,
+      "ce": 16.214087953886867,
+      "tokens": 3673,
+      "ppl": 11007505.914054185,
+      "delta_ce_vs_A_full": 13.280610687298442
+    },
+    "stitch=scale": {
+      "forward_ok": true,
+      "logits_shape": [
+        1,
+        71,
+        100352
+      ],
+      "shape_as_expected": true,
+      "logits_all_finite": true,
+      "logits_std": 3.8083693981170654,
+      "n_params_total_M": 1434.55232,
+      "n_params_stitch_M": 0.0,
+      "ce": 13.84257161997009,
+      "tokens": 3673,
+      "ppl": 1027430.5378175823,
+      "delta_ce_vs_A_full": 10.909094353381665
+    },
+    "stitch=linear_rand": {
+      "forward_ok": true,
+      "logits_shape": [
+        1,
+        71,
+        100352
+      ],
+      "shape_as_expected": true,
+      "logits_all_finite": true,
+      "logits_std": 3.4725546836853027,
+      "n_params_total_M": 1438.746624,
+      "n_params_stitch_M": 4.194304,
+      "ce": 14.711341490513163,
+      "tokens": 3673,
+      "ppl": 2449370.2055420512,
+      "delta_ce_vs_A_full": 11.777864223924738
+    },
+    "stitch=xfmr": {
+      "forward_ok": true,
+      "logits_shape": [
+        1,
+        71,
+        100352
+      ],
+      "shape_as_expected": true,
+      "logits_all_finite": true,
+      "logits_std": 3.184816837310791,
+      "n_params_total_M": 1495.373824,
+      "n_params_stitch_M": 60.821504,
+      "ce": 16.329534743548155,
+      "tokens": 3673,
+      "ppl": 12354547.149899969,
+      "delta_ce_vs_A_full": 13.39605747695973
+    },
+    "stitch=xfmr+unstitch=xfmr": {
+      "forward_ok": true,
+      "logits_shape": [
+        1,
+        71,
+        100352
+      ],
+      "shape_as_expected": true,
+      "logits_all_finite": true,
+      "logits_std": 3.0771853923797607,
+      "n_params_total_M": 1562.49088,
+      "n_params_stitch_M": 127.93856,
+      "ce": 18.79132116895718,
+      "tokens": 3673,
+      "ppl": 144866207.70642456,
+      "delta_ce_vs_A_full": 15.857843902368753
+    },
+    "stitch=ridge": {
+      "forward_ok": true,
+      "logits_shape": [
+        1,
+        71,
+        100352
+      ],
+      "shape_as_expected": true,
+      "logits_all_finite": true,
+      "logits_std": 3.644566535949707,
+      "n_params_total_M": 1434.55232,
+      "n_params_stitch_M": 0.0,
+      "ce": 18.992361386011186,
+      "tokens": 3673,
+      "ppl": 177124137.4097389,
+      "delta_ce_vs_A_full": 16.05888411942276
+    },
+    "stitch=ridge+unstitch=ridge": {
+      "forward_ok": true,
+      "logits_shape": [
+        1,
+        71,
+        100352
+      ],
+      "shape_as_expected": true,
+      "logits_all_finite": true,
+      "logits_std": 9.12692642211914,
+      "n_params_total_M": 1434.55232,
+      "n_params_stitch_M": 0.0,
+      "ce": 14.406188866698121,
+      "tokens": 3673,
+      "ppl": 1805212.4915996366,
+      "delta_ce_vs_A_full": 11.472711600109694
+    },
+    "stitch=none+unstitch=ridge": {
+      "forward_ok": true,
+      "logits_shape": [
+        1,
+        71,
+        100352
+      ],
+      "shape_as_expected": true,
+      "logits_all_finite": true,
+      "logits_std": 6.528116226196289,
+      "n_params_total_M": 1434.55232,
+      "n_params_stitch_M": 0.0,
+      "ce": 17.532169473421142,
+      "tokens": 3673,
+      "ppl": 41126756.337024145,
+      "delta_ce_vs_A_full": 14.598692206832716
+    }
+  },
+  "residual_rms_per_layer": {
+    "A": [
+      0.15179061889648438,
+      0.16386233270168304,
+      0.1787460744380951,
+      0.18936821818351746,
+      0.2019815593957901,
+      0.2166707068681717,
+      0.2286406308412552,
+      0.23690089583396912,
+      0.2520122528076172,
+      0.2674560546875,
+      0.2838869094848633,
+      0.30929845571517944,
+      0.3715630769729614,
+      0.457520991563797,
+      0.5885612964630127,
+      0.7578701376914978,
+      2.3661134243011475
+    ],
+    "B": [
+      0.021072380244731903,
+      0.13800795376300812,
+      2.0568490028381348,
+      2.0585055351257324,
+      2.060213804244995,
+      2.0625457763671875,
+      2.064995288848877,
+      2.0676157474517822,
+      2.070570707321167,
+      2.072967290878296,
+      2.0770578384399414,
+      2.079554557800293,
+      2.0838797092437744,
+      2.0898585319519043,
+      2.095954418182373,
+      2.0944859981536865,
+      2.301804542541504
+    ]
+  },
+  "scale_match_factor": 8.216150938112573,
+  "ridge_maps": {
+    "stitch_A8->B8": {
+      "test_r2": 0.9786812756850065,
+      "test_rel_err": 0.1460093295477844,
+      "alpha": 100.0,
+      "n_train": 2800,
+      "n_test": 600
+    },
+    "unstitch_B16->A16": {
+      "test_r2": 0.6555430240595559,
+      "test_rel_err": 0.5869045714087133,
+      "alpha": 1000.0,
+      "n_train": 2800,
+      "n_test": 600
+    }
+  }
+}
