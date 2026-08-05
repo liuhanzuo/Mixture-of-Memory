@@ -37,6 +37,7 @@ import glob
 import json
 import math
 import os
+import re
 import time
 
 import numpy as np
@@ -168,12 +169,45 @@ def score_windows(model, windows, device, batch_size):
     return sum_nll, n_tokens, n_windows
 
 
-def merge_shards(results_dir):
+def merge_shards(results_dir, allow_partial=False):
     """Token-weighted merge of shard{i}of{N}.json -> summary.json. ppl is
-    exp(sum_nll / sum_tokens), NOT a mean of per-shard ppl."""
+    exp(sum_nll / sum_tokens), NOT a mean of per-shard ppl.
+
+    Refuses to merge an incomplete shard set unless allow_partial=True. A
+    partial merge silently changes the measurement basis: on 2026-08-05 shards
+    0/1/7 of reheal_step{55000,57500} died with CUBLAS_STATUS_ALLOC_FAILED
+    (co-resident job ate the memory) and the 5/8 merge produced a
+    plausible-looking PPL over 2560 windows instead of 4096, which is NOT
+    comparable to the 8-shard points it was meant to be plotted against.
+    """
     shard_files = sorted(glob.glob(os.path.join(results_dir, "shard*of*.json")))
     if not shard_files:
         raise FileNotFoundError(f"no shard*of*.json in {results_dir}")
+    # every shard file encodes the total count as shard{i}of{N}.json
+    expected = set()
+    found = set()
+    for sf in shard_files:
+        m = re.match(r"shard(\d+)of(\d+)\.json$", os.path.basename(sf))
+        if not m:
+            raise ValueError(f"unparseable shard filename: {sf}")
+        found.add(int(m.group(1)))
+        expected.add(int(m.group(2)))
+    if len(expected) != 1:
+        raise ValueError(
+            f"inconsistent shard totals {sorted(expected)} in {results_dir} — "
+            "results from different --num_shards settings must not be merged")
+    n_exp = expected.pop()
+    missing = sorted(set(range(n_exp)) - found)
+    if missing:
+        msg = (f"incomplete shard set in {results_dir}: have {len(found)}/{n_exp}, "
+               f"missing shard_index {missing}. Merging would change the "
+               f"measurement basis (fewer windows) and produce a number that is "
+               f"NOT comparable to full {n_exp}-shard results. Re-run the missing "
+               f"shards, or pass --allow_partial_merge if a partial number is "
+               f"genuinely wanted.")
+        if not allow_partial:
+            raise ValueError(msg)
+        _log(f"[merge][WARN] PARTIAL MERGE — {msg}")
     tot_nll = 0.0
     tot_tok = 0
     tot_win = 0
@@ -229,12 +263,17 @@ def main():
     p.add_argument("--results_root", type=str, default="olmo2_ppl_results")
     p.add_argument("--merge", action="store_true",
                    help="merge shard jsons in olmo2_ppl_results/<output_name>/ and exit")
+    p.add_argument("--allow_partial_merge", action="store_true",
+                   help="permit --merge over an incomplete shard set. Off by "
+                        "default: a partial merge yields fewer windows and is "
+                        "NOT comparable to full-shard results.")
     args = p.parse_args()
 
     if args.merge:
         if not args.output_name:
             raise ValueError("--merge requires --output_name")
-        merge_shards(os.path.join(args.results_root, args.output_name))
+        merge_shards(os.path.join(args.results_root, args.output_name),
+                     allow_partial=args.allow_partial_merge)
         return
 
     if not args.output_name:
