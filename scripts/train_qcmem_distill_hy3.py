@@ -63,6 +63,14 @@ for _p in (PROJECT_ROOT, os.path.join(PROJECT_ROOT, "scripts")):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
+from ckpt_rotation import (  # noqa: E402
+    STEP_DIR_PATTERN,
+    add_rotation_args,
+    rotate_checkpoints,
+    rotation_kwargs_from_args,
+)
+
+
 from transformers import AutoModelForCausalLM, AutoTokenizer  # noqa: E402
 from peft import LoraConfig, get_peft_model, TaskType  # noqa: E402
 
@@ -114,6 +122,9 @@ def main():
     # io
     p.add_argument("--output_dir", type=str, required=True)
     p.add_argument("--save_interval", type=int, default=500)
+    # adapter-dir rotation; --keep_last_n 0 restores keep-everything.
+    add_rotation_args(p, default_keep_last_n=3, default_milestone_every=0,
+                      default_keep_milestones=0)
     p.add_argument("--log_interval", type=int, default=10)
     p.add_argument("--dtype", type=str, default="bfloat16",
                    choices=["bfloat16", "float16", "float32"])
@@ -304,6 +315,19 @@ def main():
                 os.makedirs(save_dir, exist_ok=True)
                 peft_model.save_pretrained(save_dir)
                 print(f"[hy3-distill] saved LoRA adapter -> {save_dir}", flush=True)
+                # rotation (shared policy, scripts/ckpt_rotation.py). Adapters are
+                # DIRECTORIES (step{N}/) -> rmtree. final/ is never touched; the
+                # just-written dir is never removed; an empty save rotates nothing;
+                # --keep_last_n 0 disables rotation. This trainer is single-process
+                # (world_size=1), so there is no DDP race.
+                rotate_checkpoints(
+                    args.output_dir,
+                    just_written=save_dir,
+                    pattern=STEP_DIR_PATTERN,
+                    is_dir=True,
+                    log=lambda m: print(f"[hy3-distill] {m}", flush=True),
+                    **rotation_kwargs_from_args(args),
+                )
 
     final_dir = os.path.join(args.output_dir, "final")
     os.makedirs(final_dir, exist_ok=True)

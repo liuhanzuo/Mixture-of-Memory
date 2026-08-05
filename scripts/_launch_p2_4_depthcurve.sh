@@ -125,6 +125,7 @@ for J in $DEPTHS; do
     --weight_decay "$WEIGHT_DECAY" --grad_accum "$GRAD_ACCUM" --grad_clip "$GRAD_CLIP" \
     $GC_FLAG \
     --output_dir "$OUTPUT_DIR" --save_interval "$SAVE_INTERVAL" --log_interval "$LOG_INTERVAL" \
+    --keep_last_n "${KEEP_LAST_N:-3}" ${KEEP_STEPS:+--keep_steps "$KEEP_STEPS"} \
     --dtype "$DTYPE" --attn_impl "$ATTN_IMPL" --seed "$SEED" \
     --wandb_project mixture-of-memory --wandb_run_name "" \
     >"$LOG" 2>&1

@@ -23,6 +23,17 @@ BS="${BS:-4}"
 GA="${GA:-4}"
 PYTHON_BIN="${PYTHON_BIN:-/opt/conda/envs/torch-base/bin/python}"
 
+# --- checkpoint volume control (added 2026-08-05; mirrors run_olmo2_7B_keepN.sh) -
+# Previously neither --save_every nor --milestone_every was passed, so every arm
+# ran at trainer defaults 500/5000 with max_steps=200000 -> 40 permanently
+# retained milestones ~= 1.8 TB. KEEP_MILESTONES now caps that. KEEP_STEPS
+# protects load-bearing steps; KEEP_LAST_N=0 disables rotation entirely.
+SAVE_EVERY="${SAVE_EVERY:-500}"
+MILESTONE_EVERY="${MILESTONE_EVERY:-5000}"
+KEEP_LAST_N="${KEEP_LAST_N:-3}"
+KEEP_MILESTONES="${KEEP_MILESTONES:-8}"
+KEEP_STEPS="${KEEP_STEPS:-}"
+
 DATA_PATH="${DATA_PATH:-/dev/shm/dolmino_now15b.npy}"
 MODEL_PATH="${MODEL_PATH:-/apdcephfs_zwfy6/share_304376610/pighzliu_code/models/OLMo-2-1124-7B}"
 OUT_DIR="outputs/olmo2_probe2_7B_keep${KEEP}fresh${N_FRESH}"
@@ -54,6 +65,11 @@ nohup "$PYTHON_BIN" -m torch.distributed.run --standalone --nproc_per_node 8 \
     --lr_inherited 2e-5 \
     --max_steps 200000 \
     --gradient_checkpointing 1 \
+    --save_every "$SAVE_EVERY" \
+    --milestone_every "$MILESTONE_EVERY" \
+    --keep_last_n "$KEEP_LAST_N" \
+    --keep_milestones "$KEEP_MILESTONES" \
+    ${KEEP_STEPS:+--keep_steps "$KEEP_STEPS"} \
     ${RESUME_FROM:+--resume_from "$RESUME_FROM"} \
   >>"$LOG_FILE" 2>&1 &
 

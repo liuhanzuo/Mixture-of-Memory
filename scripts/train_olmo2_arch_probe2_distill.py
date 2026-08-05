@@ -71,6 +71,13 @@ for _p in (PROJECT_ROOT, os.path.join(PROJECT_ROOT, "scripts")):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
+from ckpt_rotation import (  # noqa: E402
+    add_rotation_args,
+    rotate_checkpoints,
+    rotation_kwargs_from_args,
+)
+
+
 # Reuse (do NOT modify) the sibling Llama training script.
 from train_semantic_bottleneck_1b import (  # noqa: E402
     NpyChunkDataset,
@@ -336,7 +343,7 @@ def build_param_groups(model, args, is_main):
 # ---------------------------------------------------------------------------
 # save
 # ---------------------------------------------------------------------------
-def _save(model, optimizer, args, step, epoch, cfg, final=False):
+def _save(model, optimizer, args, step, epoch, cfg, final=False, rotate=True):
     """Checkpoint = model weights + arch meta + optimizer state / step / epoch /
     max_steps / training args / RNG state (for clean resume). New keys are
     additive; old model-only evals ignore them, resume degrades to warm-restart."""
@@ -371,31 +378,20 @@ def _save(model, optimizer, args, step, epoch, cfg, final=False):
     }, path)
     logger.info(f"saved {path}")
 
-    # --- rolling retention: keep latest-2 + every-5000-step milestones -------
-    # After writing the new step*.pt, keep (a) the 2 most-recent step ckpts and
-    # (b) every 5000-step milestone (step5000/10000/...); delete the rest. This
-    # bounds volume usage (the keep14 run was once killed mid-save on a full disk)
-    # while preserving milestones for heal-curve analysis / resume, matching the
-    # ckpt-rotation policy. final.pt is never rotated. Runs only where _save runs
-    # (rank 0), and never removes the just-written ``path``.
-    if not final:
-        import glob as _glob
-        import re as _re
-        keep_abs = os.path.abspath(path)
-        cks = []  # (step, abspath)
-        for old in _glob.glob(os.path.join(args.output_dir, "step*.pt")):
-            m = _re.search(r"step(\d+)\.pt$", os.path.basename(old))
-            if m:
-                cks.append((int(m.group(1)), os.path.abspath(old)))
-        latest2 = {ap for _s, ap in sorted(cks, reverse=True)[:2]}
-        for s, ap in cks:
-            keep = (ap == keep_abs) or (ap in latest2) or (s % 5000 == 0)
-            if not keep:
-                try:
-                    os.remove(ap)
-                    logger.info(f"rotated old ckpt {ap}")
-                except OSError as e:
-                    logger.warning(f"could not remove old ckpt {ap}: {e}")
+    # --- rolling retention (shared policy, see scripts/ckpt_rotation.py) -----
+    # Keep the --keep_last_n newest step ckpts + step0 + every --keep_steps entry
+    # + the newest --keep_milestones multiples of --milestone_every; delete the
+    # rest. final.pt is never rotated; the just-written path is never removed; a
+    # failed save rotates nothing; --keep_last_n 0 disables rotation entirely
+    # (dense-save opt-out). rotate=False also bypasses it. Rank 0 only (this is
+    # where _save runs).
+    if not final and rotate:
+        rotate_checkpoints(
+            args.output_dir,
+            just_written=path,
+            log=logger.info,
+            **rotation_kwargs_from_args(args, default_milestone_every=5000),
+        )
 
 
 def main():
@@ -425,6 +421,11 @@ def main():
     p.add_argument("--weight_decay", type=float, default=0.1)
     p.add_argument("--grad_clip", type=float, default=1.0)
     p.add_argument("--save_every", type=int, default=500)
+    # rotation knobs. This fork previously hardcoded latest-2 + every-5000
+    # milestones; the defaults below reproduce that (keep_last_n 3 keeps one MORE
+    # than before, milestone_every 5000, unlimited milestones).
+    add_rotation_args(p, default_keep_last_n=3, default_milestone_every=5000,
+                      default_keep_milestones=0)
     p.add_argument("--log_every", type=int, default=20)
     p.add_argument("--resume_from", type=str, default="",
                    help="path to a step{N}.pt / final.pt to resume from. Restores model "

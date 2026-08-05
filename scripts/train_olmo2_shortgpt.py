@@ -60,6 +60,14 @@ for _p in (PROJECT_ROOT, os.path.join(PROJECT_ROOT, "scripts")):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
+from ckpt_rotation import (  # noqa: E402
+    add_rotation_args,
+    parse_keep_steps,
+    rotate_checkpoints,
+    rotation_kwargs_from_args,
+)
+
+
 # Reuse (do NOT modify) the shared data loading / cosine schedule / null-context.
 from train_semantic_bottleneck_1b import (  # noqa: E402
     NpyChunkDataset,
@@ -276,25 +284,18 @@ def _save(model, optimizer, args, step, epoch, cfg, keep_indices,
     }, path)
     logger.info(f"saved {path}")
 
-    # rolling retention: keep latest-2 + every-5000 milestones + protected steps
-    # (step0 + extra_save_steps). final.pt is never rotated; never remove `path`.
+    # rolling retention (shared policy, see scripts/ckpt_rotation.py): keep the
+    # --keep_last_n newest + the newest --keep_milestones multiples of
+    # --milestone_every + protected steps (step0 + --extra_save_steps +
+    # --keep_steps). final.pt is never rotated; the just-written `path` is never
+    # removed; a failed save rotates nothing; --keep_last_n 0 disables rotation
+    # entirely (dense-save opt-out).
     if not final:
-        keep_abs = os.path.abspath(path)
-        cks = []
-        for old in glob.glob(os.path.join(args.output_dir, "step*.pt")):
-            m = re.search(r"step(\d+)\.pt$", os.path.basename(old))
-            if m:
-                cks.append((int(m.group(1)), os.path.abspath(old)))
-        latest2 = {ap for _s, ap in sorted(cks, reverse=True)[:2]}
-        for s, ap in cks:
-            keep = (ap == keep_abs) or (ap in latest2) or (s % 5000 == 0) \
-                or (s in protect_steps)
-            if not keep:
-                try:
-                    os.remove(ap)
-                    logger.info(f"rotated old ckpt {ap}")
-                except OSError as e:
-                    logger.warning(f"could not remove old ckpt {ap}: {e}")
+        _rot = rotation_kwargs_from_args(args, default_milestone_every=5000)
+        _rot["keep_steps"] = set(protect_steps) | parse_keep_steps(
+            _rot.get("keep_steps", ""))
+        rotate_checkpoints(args.output_dir, just_written=path,
+                           log=logger.info, **_rot)
 
 
 def main():
@@ -324,6 +325,12 @@ def main():
     p.add_argument("--extra_save_steps", type=str, default="128000,153500",
                    help="comma steps to force-save (protected from rotation) so the "
                         "keep14-matched eval points exist even with save_every=5000")
+    # --keep_last_n / --keep_steps / --milestone_every / --keep_milestones.
+    # Defaults preserve the previous hardcoded behaviour (latest-2 -> now
+    # latest-3, milestone modulus 5000, unlimited milestones), so a resumed run
+    # never prunes anything it would not have pruned before.
+    add_rotation_args(p, default_keep_last_n=3, default_milestone_every=5000,
+                      default_keep_milestones=0)
     p.add_argument("--log_every", type=int, default=20)
     p.add_argument("--resume_from", type=str, default="")
     p.add_argument("--max_rows", type=int, default=0)

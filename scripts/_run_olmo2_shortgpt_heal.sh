@@ -47,32 +47,40 @@ export NCCL_IB_DISABLE="${NCCL_IB_DISABLE:-1}"
 export WANDB_MODE="${WANDB_MODE:-offline}"
 export PYTORCH_CUDA_ALLOC_CONF="${PYTORCH_CUDA_ALLOC_CONF:-expandable_segments:True}"
 
-read -r -d '' CMD <<EOF || true
-$PYTHON_BIN -m torch.distributed.run --standalone --nproc_per_node $NPROC \\
-  scripts/train_olmo2_shortgpt.py \\
-    --data_path $DATA_PATH \\
-    --output_dir $OUT_DIR \\
-    --model_path $MODEL_PATH \\
-    --selection_json $SELECTION_JSON \\
-    --lr_inherited 2e-5 \\
-    --min_lr_inherited 2e-6 \\
-    --batch_size $BS \\
-    --grad_accumulation_steps $GA \\
-    --seq_len 2048 \\
-    --max_steps 200000 \\
-    --warmup_steps 150 \\
-    --weight_decay 0.1 \\
-    --grad_clip 1.0 \\
-    --save_every 5000 \\
-    --extra_save_steps 128000,153500 \\
-    --gradient_checkpointing 1 \\
-    ${RESUME_FROM:+--resume_from $RESUME_FROM}
-EOF
+# Build the launch command as a bash array to avoid any quoting/line-continuation
+# pitfalls (an earlier heredoc+`bash -c "$CMD"` form fed literal backslashes to
+# argparse as spurious arguments).
+CMD=(
+  "$PYTHON_BIN" -m torch.distributed.run --standalone --nproc_per_node "$NPROC"
+  scripts/train_olmo2_shortgpt.py
+    --data_path "$DATA_PATH"
+    --output_dir "$OUT_DIR"
+    --model_path "$MODEL_PATH"
+    --selection_json "$SELECTION_JSON"
+    --lr_inherited 2e-5
+    --min_lr_inherited 2e-6
+    --batch_size "$BS"
+    --grad_accumulation_steps "$GA"
+    --seq_len 2048
+    --max_steps 200000
+    --warmup_steps 150
+    --weight_decay 0.1
+    --grad_clip 1.0
+    --save_every 5000
+    --extra_save_steps 128000,153500
+    # ckpt rotation: bound this 200k-step run's volume. Previously the 40
+    # every-5000 milestones were retained forever (~1.8 TB). extra_save_steps
+    # + step0 stay protected regardless. keep_last_n 0 would disable rotation.
+    --keep_last_n ${KEEP_LAST_N:-3}
+    --keep_milestones ${KEEP_MILESTONES:-8}
+    --gradient_checkpointing 1
+)
+[ -n "$RESUME_FROM" ] && CMD+=(--resume_from "$RESUME_FROM")
 
 echo "[_run_olmo2_shortgpt_heal] selection=$SELECTION_JSON keep=$(${PYTHON_BIN} -c "import json;print(json.load(open('$SELECTION_JSON'))['kept_layer_indices'])" 2>/dev/null)"
 echo "[_run_olmo2_shortgpt_heal] eff_bs=$((BS*GA*NPROC)) -> $OUT_DIR (log $LOG_FILE)"
 echo "----- launch command -----"
-echo "$CMD"
+printf '  %q' "${CMD[@]}"; echo
 echo "--------------------------"
 
 if [ "${RUN:-0}" != "1" ]; then
@@ -83,5 +91,5 @@ fi
 # fresh run starts a clean log; resume appends.
 [ -z "$RESUME_FROM" ] && : > "$LOG_FILE"
 echo "[_run_olmo2_shortgpt_heal] LAUNCHING 8-GPU heal ..."
-nohup bash -c "$CMD" >>"$LOG_FILE" 2>&1 &
+nohup "${CMD[@]}" >>"$LOG_FILE" 2>&1 &
 echo "[_run_olmo2_shortgpt_heal] launched pid=$! ; tail -f $LOG_FILE"

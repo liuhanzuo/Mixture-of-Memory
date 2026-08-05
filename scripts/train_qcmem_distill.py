@@ -58,6 +58,14 @@ for _p in (PROJECT_ROOT, os.path.join(PROJECT_ROOT, "scripts")):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
+from ckpt_rotation import (  # noqa: E402
+    STEP_DIR_PATTERN,
+    add_rotation_args,
+    rotate_checkpoints,
+    rotation_kwargs_from_args,
+)
+
+
 from transformers import AutoModelForCausalLM, AutoTokenizer  # noqa: E402
 from peft import LoraConfig, get_peft_model, TaskType  # noqa: E402
 
@@ -359,6 +367,10 @@ def main():
     # io
     p.add_argument("--output_dir", type=str, required=True)
     p.add_argument("--save_interval", type=int, default=250)
+    # adapter-dir rotation. Adapters are tiny (~120 MB) so the default keeps 3;
+    # --keep_last_n 0 restores the old keep-every-step behaviour.
+    add_rotation_args(p, default_keep_last_n=3, default_milestone_every=0,
+                      default_keep_milestones=0)
     p.add_argument("--log_interval", type=int, default=10)
     p.add_argument("--dtype", type=str, default="bfloat16",
                    choices=["bfloat16", "float16", "float32"])
@@ -600,6 +612,19 @@ def main():
                 save_dir = os.path.join(args.output_dir, f"step{step}")
                 _save_adapter(peft_model, save_dir, args.use_fsdp, rank)
                 print(f"[qcmem-distill] saved LoRA adapter -> {save_dir}", flush=True)
+                # rotation (shared policy, scripts/ckpt_rotation.py). Adapters are
+                # DIRECTORIES (step{N}/), so this rmtree's whole dirs. final/ is
+                # never touched; the just-written dir is never removed; an empty
+                # save rotates nothing; --keep_last_n 0 disables rotation.
+                # rank-0 only (we are inside the _is_main guard).
+                rotate_checkpoints(
+                    args.output_dir,
+                    just_written=save_dir,
+                    pattern=STEP_DIR_PATTERN,
+                    is_dir=True,
+                    log=lambda m: print(f"[qcmem-distill] {m}", flush=True),
+                    **rotation_kwargs_from_args(args),
+                )
 
     if _is_main(rank):
         final_dir = os.path.join(args.output_dir, "final")

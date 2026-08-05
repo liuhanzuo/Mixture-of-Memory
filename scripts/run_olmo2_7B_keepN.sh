@@ -20,6 +20,31 @@ N_FRESH="${N_FRESH:-2}"
 RESUME_FROM="${RESUME_FROM:-}"
 PYTHON_BIN="${PYTHON_BIN:-$PROJECT_ROOT/.venv/bin/python}"
 
+# --- checkpoint volume control (added 2026-08-05) -----------------------------
+# These arms previously ran at the trainer defaults save_every=500 /
+# milestone_every=5000 with max_steps=200000: 400 saves of which the 40
+# every-5000 milestones were retained FOREVER -> ~1.8 TB per arm (measured:
+# outputs/olmo2_probe2_7B_shortgpt16 = 2.0 TB / 44 ckpts at 46 GB each). The
+# unbounded milestone clause -- NOT the latest-N clause -- was the volume driver.
+#
+# KEEP_MILESTONES caps how many milestones are retained (newest first), so an arm
+# is now bounded at roughly KEEP_MILESTONES * 46 GB instead of growing without
+# limit. SAVE_EVERY / MILESTONE_EVERY keep their historical values so the retained
+# step GRID is unchanged; only the NUMBER of retained milestones is now bounded.
+#
+# KEEP_STEPS is the escape hatch for load-bearing checkpoints (paired-trajectory
+# points, PPL-bracketing points, paper-table rows): they are retained no matter
+# what. e.g. KEEP_STEPS=45000,121000 for the keep8 paired-MMLU trajectory.
+# step0 is protected automatically.
+#
+# Set KEEP_LAST_N=0 to DISABLE rotation entirely and keep EVERY save -- required
+# for dense-save runs (see scripts/run_olmo2_keep14_densesave_reheal.sh).
+SAVE_EVERY="${SAVE_EVERY:-500}"
+MILESTONE_EVERY="${MILESTONE_EVERY:-5000}"
+KEEP_LAST_N="${KEEP_LAST_N:-3}"
+KEEP_MILESTONES="${KEEP_MILESTONES:-8}"
+KEEP_STEPS="${KEEP_STEPS:-}"
+
 # --- Paper B control arms (optional, opt-in via env; default = plain depth ladder) ---
 # FREEZE_FRONT=1 -> Arm A     : freeze inherited front layers, train fresh+norm+lm_head
 # FROM_SCRATCH=1 -> Control 2 : ignore base weights, random-init ALL layers
@@ -40,6 +65,8 @@ mkdir -p "$OUT_DIR" logs
 # fp32 master weights is the script DEFAULT (model_dtype hardcoded torch.float32,
 # no flag). Hyperparams below are all keep14-identical; only keep_front differs.
 echo "[run_olmo2_7B_keepN] KEEP=$KEEP N_FRESH=$N_FRESH ARM=${ARM:-<none>} RESUME_FROM=${RESUME_FROM:-<none>} -> $OUT_DIR (log $LOG_FILE)"
+echo "[run_olmo2_7B_keepN] ckpt retention: save_every=$SAVE_EVERY milestone_every=$MILESTONE_EVERY keep_last_n=$KEEP_LAST_N keep_milestones=$KEEP_MILESTONES keep_steps=${KEEP_STEPS:-<none>}"
+[ "$KEEP_LAST_N" = "0" ] && echo "[run_olmo2_7B_keepN] NOTE keep_last_n=0 -> ROTATION DISABLED, every save retained"
 
 # fresh run starts a clean log; resume APPENDS to preserve pre-resume history.
 [ -z "$RESUME_FROM" ] && : > "$LOG_FILE"
@@ -58,6 +85,11 @@ nohup "$PYTHON_BIN" -m torch.distributed.run --standalone --nproc_per_node 8 \
     --lr_inherited 2e-5 \
     --max_steps 200000 \
     --gradient_checkpointing 1 \
+    --save_every "$SAVE_EVERY" \
+    --milestone_every "$MILESTONE_EVERY" \
+    --keep_last_n "$KEEP_LAST_N" \
+    --keep_milestones "$KEEP_MILESTONES" \
+    ${KEEP_STEPS:+--keep_steps "$KEEP_STEPS"} \
     ${FREEZE_FRONT:+--freeze_front} \
     ${FROM_SCRATCH:+--from_scratch} \
     ${RESUME_FROM:+--resume_from "$RESUME_FROM"} \

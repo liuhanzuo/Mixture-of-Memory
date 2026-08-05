@@ -65,6 +65,10 @@ CMD=(
     --grad_clip 1.0
     --save_every 5000
     --extra_save_steps 50000,100000,150000
+    # ckpt rotation (bound the 200k-step volume; extra_save_steps + step0
+    # remain protected). KEEP_LAST_N=0 disables rotation entirely.
+    --keep_last_n ${KEEP_LAST_N:-3}
+    --keep_milestones ${KEEP_MILESTONES:-8}
     --gradient_checkpointing 1
     --seed "$SEED"
 )

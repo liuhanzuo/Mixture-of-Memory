@@ -68,6 +68,7 @@ setsid bash -c "CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-0,1,2,3,4,5,6,7} \
   --total_steps $TOTAL_STEPS --lr $LR --warmup_steps $WARMUP --grad_accum $GRAD_ACCUM \
   --gradient_checkpointing --max_steps_smoke $MAX_STEPS_SMOKE \
   --output_dir $OUTPUT_DIR --save_interval 500 --log_interval 10 \
+  --keep_last_n ${KEEP_LAST_N:-3} --keep_steps "${KEEP_STEPS:-1000,1500,2000}" \
   --dtype bfloat16 --attn_impl sdpa --seed 42 \
   --wandb_project mixture-of-memory --wandb_run_name $RUN" \
   </dev/null >logs/$RUN.log 2>&1 &

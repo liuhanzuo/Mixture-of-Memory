@@ -42,7 +42,19 @@
 #   save_every       500  -> 2500   (dense early saves)
 #   milestone_every  5000 -> 2500   (durably retain the every-2500 ckpts; without this
 #                                     the rolling-retention prunes non-5000 multiples)
+#   keep_last_n      3    -> 0      (*** ROTATION DISABLED ***, see below)
 #   output_dir       -> outputs/olmo2_keep14_densesave_reheal  (new; never clobbers keep14)
+#
+# *** WHY --keep_last_n 0 IS LOAD-BEARING HERE (added 2026-08-05) ***
+# The trainers now rotate checkpoints (keep the newest N + a capped number of
+# milestones); that is what stops a 200k-step 7B run from writing ~1.8 TB. THIS
+# RUN MUST OPT OUT: its entire purpose is retaining EVERY dense save so the
+# matched-PPL crossing points can be bracketed (step27500 is the only STRICT
+# frozen-front match at dPPL 0.0386; step25000/30000 are its two-sided bracket;
+# the random-front match at PPL 11.498 is expected near step63000 and has not been
+# reached yet). --keep_last_n 0 disables rotation entirely, so no _save call can
+# delete step2500..step27500 and destroy the bracket. Do NOT pass
+# --keep_milestones here, and do NOT drop --keep_last_n 0 when resuming.
 #
 # NOTE: no wandb -- train_olmo2_arch_probe2.py has no wandb integration and the
 # original keep14 run did not use it; progress is in the log (step/loss/ppl lines).
@@ -58,7 +70,7 @@ OUT_DIR="outputs/olmo2_keep14_densesave_reheal"
 
 mkdir -p "$OUT_DIR" logs
 
-echo "[keep14-densesave-reheal] PYTHON=$PYTHON_BIN OUT=$OUT_DIR save_every=2500 milestone_every=2500 eff_bs=128 (bs16 ga1 x8)"
+echo "[keep14-densesave-reheal] PYTHON=$PYTHON_BIN OUT=$OUT_DIR save_every=2500 milestone_every=2500 keep_last_n=0 (ROTATION DISABLED - every save retained for PPL-crossing bracketing) eff_bs=128 (bs16 ga1 x8)"
 
 exec "$PYTHON_BIN" -m torch.distributed.run --standalone --nproc_per_node 8 \
   scripts/train_olmo2_arch_probe2.py \
@@ -82,4 +94,5 @@ exec "$PYTHON_BIN" -m torch.distributed.run --standalone --nproc_per_node 8 \
     --max_steps 200000 \
     --gradient_checkpointing 1 \
     --save_every 2500 \
-    --milestone_every 2500
+    --milestone_every 2500 \
+    --keep_last_n 0

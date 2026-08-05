@@ -39,6 +39,15 @@ SEED="${SEED:-42}"
 OPT="${OPT:-adamw}"          # adamw | bnb8bit  (bnb8bit -> --optimizer bnb_adamw8bit)
 EFF_BS="${EFF_BS:-128}"
 SAVE_EVERY="${SAVE_EVERY:-500}"   # 500 = #92 default; raise to cut ckpt volume
+# Rotation knobs (added 2026-08-05). MAX_STEPS defaults to 2000 here, so the
+# binding constraint is KEEP_LAST_N, not the milestone clause; MILESTONE_EVERY=0
+# disables milestones entirely for this launcher (nothing worth retaining at 2000
+# steps). KEEP_STEPS protects load-bearing steps; KEEP_LAST_N=0 disables rotation
+# entirely and keeps every save.
+MILESTONE_EVERY="${MILESTONE_EVERY:-0}"
+KEEP_LAST_N="${KEEP_LAST_N:-3}"
+KEEP_MILESTONES="${KEEP_MILESTONES:-0}"
+KEEP_STEPS="${KEEP_STEPS:-}"
 
 nGPU=$(awk -F, '{print NF}' <<< "$GPUS")
 
@@ -89,6 +98,7 @@ OPT_FLAG=""
 [ "$OPT" = "bnb8bit" ] && OPT_FLAG="--optimizer bnb_adamw8bit"
 
 echo "[paperC_pc1] ARM=$ARM tag=$RUN_TAG KEEP=$KEEP FRESH=$FRESH (total_layers=$((KEEP+FRESH))) GPUS=$GPUS nGPU=$nGPU BS=$BS GA=$GA eff_bs=$REAL_EFF (target $EFF_BS) OPT=$OPT -> $OUT_DIR"
+echo "[paperC_pc1] ckpt retention: save_every=$SAVE_EVERY milestone_every=$MILESTONE_EVERY keep_last_n=$KEEP_LAST_N keep_milestones=$KEEP_MILESTONES keep_steps=${KEEP_STEPS:-<none>}"
 if [ "$REAL_EFF" -ne "$EFF_BS" ]; then
   echo "[paperC_pc1] WARNING eff_bs=$REAL_EFF != target $EFF_BS (adjust BS/GA)"
 fi
@@ -107,6 +117,8 @@ if [ "${FOREGROUND:-0}" = "1" ]; then
       --batch_size "$BS" --grad_accumulation_steps "$GA" --seq_len "$SEQ_LEN" \
       --lr "$LR" --lr_inherited "$LR_INH" --max_steps "$MAX_STEPS" \
       --warmup_steps 150 --save_every "$SAVE_EVERY" --log_every 10 --seed "$SEED" \
+      --milestone_every "$MILESTONE_EVERY" --keep_last_n "$KEEP_LAST_N" \
+      --keep_milestones "$KEEP_MILESTONES" ${KEEP_STEPS:+--keep_steps "$KEEP_STEPS"} \
       --gradient_checkpointing 1 $EXTRA $OPT_FLAG \
     >>"$LOG_FILE" 2>&1
   echo "[paperC_pc1] FOREGROUND done ARM=$ARM (exit $?)"
@@ -129,6 +141,10 @@ setsid nohup "$PYTHON_BIN" -m torch.distributed.run \
     --max_steps "$MAX_STEPS" \
     --warmup_steps 150 \
     --save_every "$SAVE_EVERY" \
+    --milestone_every "$MILESTONE_EVERY" \
+    --keep_last_n "$KEEP_LAST_N" \
+    --keep_milestones "$KEEP_MILESTONES" \
+    ${KEEP_STEPS:+--keep_steps "$KEEP_STEPS"} \
     --log_every 10 \
     --seed "$SEED" \
     --gradient_checkpointing 1 \

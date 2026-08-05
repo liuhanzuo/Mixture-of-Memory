@@ -70,6 +70,13 @@ for _p in (PROJECT_ROOT, os.path.join(PROJECT_ROOT, "scripts")):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
+from ckpt_rotation import (  # noqa: E402
+    add_rotation_args,
+    rotate_checkpoints,
+    rotation_kwargs_from_args,
+)
+
+
 # Reuse (do NOT modify) the sibling Llama training script.
 from train_semantic_bottleneck_1b import (  # noqa: E402
     NpyChunkDataset,
@@ -356,6 +363,21 @@ def _save(model, optimizer, args, step, epoch, cfg, final=False):
     }, path)
     logger.info(f"saved {path}")
 
+    # --- rolling retention (shared policy, see scripts/ckpt_rotation.py) -----
+    # Keep the --keep_last_n newest step*.pt + step0 + every --keep_steps entry
+    # + the newest --keep_milestones multiples of --milestone_every; delete the
+    # rest, so a long run cannot fill the disk. final.pt is NEVER rotated; the
+    # just-written path is never removed; a failed/empty save rotates nothing;
+    # --keep_last_n 0 disables rotation entirely (dense-save opt-out). Reached
+    # only on the saving rank.
+    if not final:
+        rotate_checkpoints(
+            args.output_dir,
+            just_written=path,
+            log=logger.info,
+            **rotation_kwargs_from_args(args),
+        )
+
 
 def main():
     p = argparse.ArgumentParser()
@@ -384,6 +406,12 @@ def main():
     p.add_argument("--weight_decay", type=float, default=0.1)
     p.add_argument("--grad_clip", type=float, default=1.0)
     p.add_argument("--save_every", type=int, default=500)
+    # checkpoint rotation. Defaults: keep the 3 newest step*.pt, no milestone
+    # retention (milestone_every=0), --keep_steps empty. Previously this trainer
+    # had NO rotation at all, so these defaults are the first bound on its ckpt
+    # volume; pass --keep_last_n 0 to restore the old keep-everything behaviour.
+    add_rotation_args(p, default_keep_last_n=3, default_milestone_every=0,
+                      default_keep_milestones=0)
     p.add_argument("--log_every", type=int, default=20)
     p.add_argument("--resume_from", type=str, default="",
                    help="path to a step{N}.pt / final.pt to resume from. Restores model "

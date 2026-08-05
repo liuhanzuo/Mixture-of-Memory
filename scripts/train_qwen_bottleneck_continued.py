@@ -77,6 +77,13 @@ for _p in (PROJECT_ROOT, os.path.join(PROJECT_ROOT, "scripts")):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
+from ckpt_rotation import (  # noqa: E402
+    add_rotation_args,
+    rotate_checkpoints,
+    rotation_kwargs_from_args,
+)
+
+
 from transformers import AutoModelForCausalLM, AutoTokenizer  # noqa: E402
 
 from semantic_bottleneck_model import BottleneckLayer  # noqa: E402
@@ -239,6 +246,20 @@ def _save(model, args, step, final=False):
         },
         path,
     )
+
+    # --- rolling retention (shared policy, see scripts/ckpt_rotation.py) -----
+    # Keep the --keep_last_n newest step*.pt + step0 + every --keep_steps entry;
+    # delete the rest so a long run cannot fill the disk. final.pt is NEVER
+    # rotated; the just-written path is never removed; a failed/empty save
+    # rotates nothing; --keep_last_n 0 disables rotation entirely. Both call
+    # sites are behind `is_main`, so this is rank-0 only.
+    if not final:
+        rotate_checkpoints(
+            args.output_dir,
+            just_written=path,
+            log=lambda m: print(f"[qwen-bottleneck] {m}", flush=True),
+            **rotation_kwargs_from_args(args),
+        )
     return path
 
 
@@ -276,6 +297,10 @@ def main():
     # io
     p.add_argument("--output_dir", type=str, required=True)
     p.add_argument("--save_every", type=int, default=500)
+    # checkpoint rotation (previously this trainer had none). Defaults keep the
+    # 3 newest step*.pt; --keep_last_n 0 restores keep-everything.
+    add_rotation_args(p, default_keep_last_n=3, default_milestone_every=0,
+                      default_keep_milestones=0)
     p.add_argument("--log_every", type=int, default=20)
     p.add_argument("--dtype", type=str, default="bfloat16",
                    choices=["bfloat16", "float16", "float32"])

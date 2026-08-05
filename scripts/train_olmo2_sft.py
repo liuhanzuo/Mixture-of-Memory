@@ -57,6 +57,13 @@ for _p in (PROJECT_ROOT, _HERE):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
+from ckpt_rotation import (  # noqa: E402
+    add_rotation_args,
+    rotate_checkpoints,
+    rotation_kwargs_from_args,
+)
+
+
 # NO arch drift: same loaders every Paper B eval uses.
 from eval_olmo2_probe2_ppl import (  # noqa: E402
     build_pruned_shell,
@@ -172,6 +179,25 @@ def _save(model, optimizer, args, step, keep, fresh, n_layers, final=False):
     }, tmp)
     os.replace(tmp, path)
     logger.info(f"[save] {path} (step={step} keep={keep} fresh={fresh})")
+
+    # --- rolling retention (shared policy, see scripts/ckpt_rotation.py) -----
+    # Keep the --keep_last_n newest step*.pt + step0 + every --keep_steps entry
+    # + the newest --keep_milestones multiples of --milestone_every; delete the
+    # rest, so a long run cannot fill the disk. final.pt is NEVER rotated; the
+    # just-written path is never removed; a failed/empty save rotates nothing;
+    # --keep_last_n 0 disables rotation entirely (dense-save opt-out). Reached
+    # only on the saving rank (both call sites are behind `is_main`).
+    # This is the ONLY trainer using atomic writes (tmp -> os.replace), so
+    # rotation runs strictly AFTER os.replace and also sweeps stale *.pt.tmp
+    # left behind by an interrupted save.
+    if not final:
+        rotate_checkpoints(
+            args.output_dir,
+            just_written=path,
+            log=logger.info,
+            sweep_tmp=True,
+            **rotation_kwargs_from_args(args),
+        )
     return path
 
 
@@ -208,6 +234,12 @@ def main():
     p.add_argument("--gradient_checkpointing", type=int, default=1)
     p.add_argument("--seed", type=int, default=42)
     p.add_argument("--save_every", type=int, default=500)
+    # checkpoint rotation. Defaults: keep the 3 newest step*.pt, no milestone
+    # retention (milestone_every=0), --keep_steps empty. Previously this trainer
+    # had NO rotation at all, so these defaults are the first bound on its ckpt
+    # volume; pass --keep_last_n 0 to restore the old keep-everything behaviour.
+    add_rotation_args(p, default_keep_last_n=3, default_milestone_every=0,
+                      default_keep_milestones=0)
     p.add_argument("--log_every", type=int, default=20)
     p.add_argument("--max_rows", type=int, default=0)
     p.add_argument("--dry_run_build", action="store_true",

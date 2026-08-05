@@ -72,6 +72,12 @@ for _p in (PROJECT_ROOT, os.path.join(PROJECT_ROOT, "scripts")):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
+from ckpt_rotation import (  # noqa: E402
+    add_rotation_args,
+    rotate_checkpoints,
+    rotation_kwargs_from_args,
+)
+
 # Reuse (do NOT modify) the sibling Llama training script.
 from train_semantic_bottleneck_1b import (  # noqa: E402
     NpyChunkDataset,
@@ -422,32 +428,23 @@ def _save(model, optimizer, args, step, epoch, cfg, final=False, rotate=True):
     }, path)
     logger.info(f"saved {path}")
 
-    # --- rolling retention: keep latest-2 + every-5000-step milestones -------
-    # After writing the new step*.pt, keep (a) the 2 most-recent step ckpts and
-    # (b) every 5000-step milestone (step5000/10000/...); delete the rest. This
-    # bounds volume usage (the keep14 run was once killed mid-save on a full disk)
-    # while preserving milestones for heal-curve analysis / resume, matching the
-    # ckpt-rotation policy. final.pt is never rotated. Runs only where _save runs
-    # (rank 0), and never removes the just-written ``path``.
+    # --- rolling retention (shared policy, see scripts/ckpt_rotation.py) -----
+    # After the new step*.pt is fully written, keep (a) the --keep_last_n newest
+    # step ckpts, (b) step0, (c) every --keep_steps entry, (d) the newest
+    # --keep_milestones multiples of --milestone_every; delete the rest. This
+    # bounds volume (the keep14 run was once killed mid-save on a full disk)
+    # while preserving milestones for heal-curve analysis / resume.
+    # final.pt is never rotated; the just-written path is never removed; a failed
+    # save rotates nothing; --keep_last_n 0 disables rotation entirely (which is
+    # what dense-save runs such as #103's matched-PPL crossing-point capture MUST
+    # pass). Runs only where _save runs (rank 0).
     if not final and rotate:
-        import glob as _glob
-        import re as _re
-        keep_abs = os.path.abspath(path)
-        cks = []  # (step, abspath)
-        for old in _glob.glob(os.path.join(args.output_dir, "step*.pt")):
-            m = _re.search(r"step(\d+)\.pt$", os.path.basename(old))
-            if m:
-                cks.append((int(m.group(1)), os.path.abspath(old)))
-        latest2 = {ap for _s, ap in sorted(cks, reverse=True)[:2]}
-        for s, ap in cks:
-            milestone_every = getattr(args, "milestone_every", 5000) or 5000
-            keep = (ap == keep_abs) or (ap in latest2) or (s % milestone_every == 0)
-            if not keep:
-                try:
-                    os.remove(ap)
-                    logger.info(f"rotated old ckpt {ap}")
-                except OSError as e:
-                    logger.warning(f"could not remove old ckpt {ap}: {e}")
+        rotate_checkpoints(
+            args.output_dir,
+            just_written=path,
+            log=logger.info,
+            **rotation_kwargs_from_args(args, default_milestone_every=5000),
+        )
 
 
 def main():
@@ -490,6 +487,14 @@ def main():
                         "Default 5000 preserves the keep14/12/10 ladder behavior; "
                         "set smaller (e.g. 2500) to durably retain a denser early "
                         "heal curve for matched-PPL crossing-point analysis.")
+    # --keep_last_n / --keep_steps / --keep_milestones. milestone_every is
+    # declared above, so pass None to avoid an argparse conflict.
+    # Defaults are behaviour-preserving for every previously-run config:
+    # keep_last_n=3 (was a hardcoded 2 -> now keeps one MORE, strictly safer) and
+    # keep_milestones=0 (unlimited = exactly the old milestone semantics), so a
+    # resumed run prunes nothing it would not have pruned before.
+    add_rotation_args(p, default_keep_last_n=3, default_milestone_every=None,
+                      default_keep_milestones=0)
     p.add_argument("--log_every", type=int, default=20)
     p.add_argument("--resume_from", type=str, default="",
                    help="path to a step{N}.pt / final.pt to resume from. Restores model "

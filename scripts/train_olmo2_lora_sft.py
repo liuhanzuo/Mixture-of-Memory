@@ -56,6 +56,14 @@ for _p in (PROJECT_ROOT, os.path.join(PROJECT_ROOT, "scripts")):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
+from ckpt_rotation import (  # noqa: E402
+    ADAPTER_STEP_DIR_PATTERN,
+    add_rotation_args,
+    rotate_checkpoints,
+    rotation_kwargs_from_args,
+)
+
+
 from train_semantic_bottleneck_1b import (  # noqa: E402
     NpyChunkDataset,
     collate_fn,
@@ -104,6 +112,9 @@ def main():
     p.add_argument("--weight_decay", type=float, default=0.0)
     p.add_argument("--grad_clip", type=float, default=1.0)
     p.add_argument("--save_every", type=int, default=500)
+    # adapter-dir rotation (previously none). --keep_last_n 0 keeps everything.
+    add_rotation_args(p, default_keep_last_n=3, default_milestone_every=0,
+                      default_keep_milestones=0)
     p.add_argument("--log_every", type=int, default=10)
     p.add_argument("--gradient_checkpointing", type=int, default=1)
     p.add_argument("--seed", type=int, default=42)
@@ -252,6 +263,19 @@ def main():
                 adir = os.path.join(args.output_dir, f"adapter_step{step}")
                 (model.module if hasattr(model, "module") else model).save_pretrained(adir)
                 logger.info(f"saved adapter {adir}")
+                # rotation (shared policy, scripts/ckpt_rotation.py). Adapters are
+                # DIRECTORIES (adapter_step{N}/) -> rmtree, and the pattern only
+                # matches that name, so `adapter_final/` and the merged full-7B
+                # `merged/` dir written below are structurally unreachable (they are
+                # also in ckpt_rotation.NEVER_DELETE). rank-0 only via is_main.
+                rotate_checkpoints(
+                    args.output_dir,
+                    just_written=adir,
+                    pattern=ADAPTER_STEP_DIR_PATTERN,
+                    is_dir=True,
+                    log=logger.info,
+                    **rotation_kwargs_from_args(args),
+                )
 
     # ---- final: save adapter + merged full model for the eval harness ----
     if is_main:

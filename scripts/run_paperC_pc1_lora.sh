@@ -46,7 +46,8 @@ if [ "${FOREGROUND:-0}" = "1" ]; then
       --data_path "$DATA_PATH" --output_dir "$OUT_DIR" --model_path "$MODEL_PATH" \
       --lora_rank "$R" --batch_size "$BS" --grad_accumulation_steps "$GA" \
       --seq_len "$SEQ_LEN" --max_steps "$MAX_STEPS" --warmup_steps 150 \
-      --save_every 500 --log_every 10 --seed "$SEED" --gradient_checkpointing 1 \
+      --save_every "${SAVE_EVERY:-500}" --log_every 10 --seed "$SEED" --gradient_checkpointing 1 \
+      --keep_last_n "${KEEP_LAST_N:-3}" ${KEEP_STEPS:+--keep_steps "$KEEP_STEPS"} \
     >>"$LOG_FILE" 2>&1
   echo "[paperC_pc1_lora] FOREGROUND done R=$R (exit $?)"
   exit 0
@@ -64,7 +65,9 @@ setsid nohup "$PYTHON_BIN" -m torch.distributed.run \
     --seq_len "$SEQ_LEN" \
     --max_steps "$MAX_STEPS" \
     --warmup_steps 150 \
-    --save_every 500 \
+    --save_every "${SAVE_EVERY:-500}" \
+    --keep_last_n "${KEEP_LAST_N:-3}" \
+    ${KEEP_STEPS:+--keep_steps "$KEEP_STEPS"} \
     --log_every 10 \
     --seed "$SEED" \
     --gradient_checkpointing 1 \

@@ -90,6 +90,14 @@ for _p in (PROJECT_ROOT, os.path.join(PROJECT_ROOT, "scripts")):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
+from ckpt_rotation import (  # noqa: E402
+    STEP_DIR_PATTERN,
+    add_rotation_args,
+    rotate_checkpoints,
+    rotation_kwargs_from_args,
+)
+
+
 from transformers import AutoModelForCausalLM, AutoTokenizer  # noqa: E402
 from peft import LoraConfig, PeftModel, get_peft_model, TaskType  # noqa: E402
 
@@ -294,6 +302,9 @@ def main():
     # io
     p.add_argument("--output_dir", type=str, required=True)
     p.add_argument("--save_interval", type=int, default=500)
+    # adapter-dir rotation; --keep_last_n 0 restores keep-everything.
+    add_rotation_args(p, default_keep_last_n=3, default_milestone_every=0,
+                      default_keep_milestones=0)
     p.add_argument("--log_interval", type=int, default=10)
     p.add_argument("--dtype", type=str, default="bfloat16",
                    choices=["bfloat16", "float16", "float32"])
@@ -514,6 +525,20 @@ def main():
                 save_dir = os.path.join(args.output_dir, f"step{step}")
                 _save_adapter(peft_model, save_dir, rank)
                 print(f"[wp-distill] saved WRITE LoRA adapter -> {save_dir}", flush=True)
+                # rotation (shared policy, scripts/ckpt_rotation.py). Adapters are
+                # DIRECTORIES (step{N}/) -> rmtree. final/ never touched; the
+                # just-written dir never removed; --keep_last_n 0 disables it.
+                # NOTE #142's paper provenance spans step1000/1500/2000, so that
+                # run must be launched with --keep_steps 1000,1500,2000 (the
+                # launcher does this) or --keep_last_n 0.
+                rotate_checkpoints(
+                    args.output_dir,
+                    just_written=save_dir,
+                    pattern=STEP_DIR_PATTERN,
+                    is_dir=True,
+                    log=lambda m: print(f"[wp-distill] {m}", flush=True),
+                    **rotation_kwargs_from_args(args),
+                )
 
             if args.max_steps_smoke > 0 and step >= args.max_steps_smoke:
                 if _is_main(rank):
