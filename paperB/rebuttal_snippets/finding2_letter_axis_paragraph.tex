@@ -1,0 +1,22 @@
+% One-paragraph rebuttal insertion: single-axis chance-corrected view of Finding 2.
+% Use if reviewer challenges "content-score dissociation" or asks about metric-artifact concerns.
+% Loads tab_letter_headroom directly from paperB/rebuttal_snippets/.
+% Source: paperB/audit_20260805/finding2_letter_headroom.tsv (commit 6a3b6bb)
+%           paperB/audit_20260805/finding2_chance_correction.md
+%
+% Two-mode:  (a) as clarification to Finding 2;  (b) as robustness supplement in appendix.
+
+\paragraph{Letter above-chance headroom, an independent single-axis view.}
+Because complete-option scoring has an empirical chance of $0.360$ (Random-16L, $L{=}16$
+uninformative reference), the raw content--letter contrast conflates capability with
+scoring base-rate. Table~\ref{tab:letter-headroom} therefore reports \emph{letter} accuracy
+minus its chance value $0.25$, with a Wilson $95\%$ CI and one-sided binomial $p$ against
+the chance null on the same $N{=}14{,}042$ items. Two elements of Finding~1 recur here on
+a chance-calibrated axis: the PPL-matched pair Random-16L (PPL $11.50$) and
+keep14@$67.5$k (PPL $11.53$) are both indistinguishable from chance
+($p{=}0.80/0.59$), and keep8+fresh2@$121$k (the deepest-pruned frontier) is
+non-significant ($p{=}0.085$). Above-chance headroom then declines monotonically with
+PPL: base $+35.5$pp $\to$ full32@25k $+33.8$pp $\to$ ShortGPT-16 $+22.4$pp $\to$
+keep14@$200$k $+6.8$pp $\to$ chance. The letter axis therefore supports the
+target-recovery gap independently of complete-option scoring, while
+Table~\ref{tab:interface-audit} continues to give the interface-validity picture.

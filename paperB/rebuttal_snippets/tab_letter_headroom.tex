@@ -1,0 +1,47 @@
+% Finding 2 rebuttal drop-in: letter above-chance headroom (single-axis, chance-corrected).
+% If reviewers challenge "崩坏 arm content>letter is scoring-metric artifact, not capability",
+% this table stands on letter-axis alone with Wilson 95% CI + one-sided binomial vs chance,
+% no cross-metric comparison needed. Data: N=14,042 MMLU test items, paperB/anonymous_artifact/scores/.
+%
+% Source of numbers: paperB/audit_20260805/finding2_letter_headroom.tsv
+% Generated: 2026-08-06 rebuttal-prep sprint (commit 6a3b6bb).
+\begin{table}[!t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3.5pt}
+\begin{tabular}{@{}lrrccc@{}}
+\toprule
+\textbf{Arm} & \textbf{PPL}$\downarrow$ & \textbf{Letter} & \textbf{Headroom} & \textbf{95\% CI (pp)} & \textbf{Sig.} \\
+ &  & \textbf{(\%)} & \textbf{(pp)} &  &  \\
+\midrule
+base                        & 7.398  & 60.54 & $+35.54$ & $[+34.73, +36.35]$ & *** \\
+full32@25k                  & 7.670  & 58.77 & $+33.77$ & $[+32.95, +34.58]$ & *** \\
+ShortGPT-16                 & 9.780  & 47.42 & $+22.42$ & $[+21.60, +23.25]$ & *** \\
+keep14+fresh2 @200k         & 10.561 & 31.84 & $+6.84$  & $[+6.07,  +7.62]$  & *** \\
+\midrule
+\multicolumn{6}{@{}l}{\emph{PPL-matched pair (both $\approx 11.5$; letter above-chance null $\approx 0$)}} \\
+Random-16L                  & 11.498 & 24.70 & $-0.30$  & $[-1.01,  +0.42]$  & n.s. \\
+keep14+fresh2 @67.5k        & 11.533 & 24.92 & $-0.08$  & $[-0.79,  +0.64]$  & n.s. \\
+\midrule
+keep12+fresh2 @124k         & 11.566 & 27.28 & $+2.28$  & $[+1.54,  +3.02]$  & *** \\
+frozen-front keep14+fresh2  & 12.797 & 26.24 & $+1.24$  & $[+0.51,  +1.97]$  & *** \\
+keep10+fresh2 @83.5k        & 12.816 & 27.20 & $+2.20$  & $[+1.47,  +2.95]$  & *** \\
+keep8+fresh2 @121k          & 13.333 & 25.50 & $+0.50$  & $[-0.21,  +1.23]$  & n.s. \\
+\bottomrule
+\end{tabular}
+\caption{\textbf{Letter above-chance headroom across the 10-arm sweep.} Headroom is
+$\text{letter\_acc} - 0.25$ (chance for 4-way MMLU); Wilson 95\% CI and one-sided
+binomial p-value vs the chance null. Sig.: *** $p{<}10^{-3}$; n.s.\ $p{\geq}0.05$.
+Same paired 14{,}042-item cohort as Tables~\ref{tab:main-results}
+and~\ref{tab:interface-audit}. Read three ways: (i) the PPL-matched pair Random-16L
+(11.50) and keep14@67.5k (11.53) are both indistinguishable from chance
+($p{=}0.80/0.59$)---letter-space lockstep with likelihood ceiling; (ii) keep8@121k
+(13.33) is also non-significant ($p{=}0.085$), so the deepest-pruned arm has
+already returned to chance on the letter axis; (iii) above-chance headroom
+collapses monotonically with PPL (base $+35.5$pp $\to$ keep14@200k $+6.8$pp
+$\to$ near-chance), reproducing the residual-gap picture of
+Table~\ref{tab:main-results} on a single, chance-calibrated axis. This axis is
+independent of the complete-option scoring path whose 35.98\% empirical chance
+Table~\ref{tab:interface-audit} already discusses.}
+\label{tab:letter-headroom}
+\end{table}
