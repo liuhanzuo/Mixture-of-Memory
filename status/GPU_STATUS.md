@@ -8,15 +8,19 @@
 > 可调度节点 = **4 台 / 32 卡**：**LOCAL + .252（wzc1 盘）/ .73 + .82（zwfy6 盘）**。
 > ⚠️ 连带影响：**zwfy6 侧的 16 卡多机 DDP 只剩 .73+.82 这唯一组合**（原先 .73/.82/.104 任取两台）。
 
-## 当前在跑（2026-08-05 15:4x +08:00）
-> - **LOCAL 8×L20A**：▶️ #103 `olmo2_keep14_densesave_reheal` 训练中（step 60000+/200000，1.56 s/step，122.3GB/卡）。
->   这是 Paper B 的 blocking deliverable（matched-PPL crossing），**优先级高于 Paper C**。
-> - **.252 8×B200**：▶️ #103 的 crossing-PPL monitor（`ppl_monitor_252.sh`，每个新 ckpt 起 8-shard burst，
->   约 100 s/点）。**必须保持 8 卡可用**：co-resident 任务会让 shard 报
->   `CUBLAS_STATUS_ALLOC_FAILED` 而死 → 曾静默产出 5/8 口径的 PPL（已修，见 commit d380bbc）。
->   ⛔ **这台在 crossing bracket 完成前不要放别的训练**。
-> - **PaperC #134（A1 full-FT-32L ceiling）已取消**（不是暂停）：eval set validity gate 失败
->   （squad_val 49.85% 恒定拒答基线高于所有臂），且它曾挤占 .252 害 crossing 掉 shard。
+## 当前在跑（2026-08-06 08:35 +08:00）— **32 卡全空闲**，rebuttal-prep sprint 已收工
+
+> **实测（本轮 heartbeat 直连每台 nvidia-smi）**：
+> - **LOCAL 8×L20A (wzc1)**：0 MiB × 8 = 空闲
+> - **.252 8×B200 (wzc1)**：SSH 7h+ 持续 Permission denied（sshpass 密码文件未变、其他 3 节点密码同格式都成功、ed25519 握手 OK 但 auth 拒）→ 疑 sshd 端问题或密码轮换，**不 hammer** 等自愈或用户确认。上一次通=2026-08-06 00:21 heartbeat。
+> - **.73 8×H20 (zwfy6)**：0 MiB × 8 = 空闲
+> - **.82 8×H20 (zwfy6)**：0 MiB × 8 = 空闲
+>
+> **kill 事件（2026-08-05, 用户令）**：#99 keep14-distill @ .73（释放 5601 GPU-h）+ #103 keep14 dense-save re-heal @ LOCAL + `ppl_monitor_252.sh` @ .252（crossing 已达成目的，共释放 436 GPU-h）。#134 PaperC A1 ceiling 已取消（squad_val 49.85% 恒定拒答基线高于所有臂）。
+>
+> **32 卡空闲的原因不是运维错误，是 4 项 pending 用户决策未拍板**：(1) Paper C A4×random_trunk (#165); (2) Paper D 深度对齐 mini (#166); (3) push 22 unpushed commits; (4) paperA #167 latency 三选一。sprint 期间不投未定方向。
+>
+> **rebuttal-prep sprint 产出（2026-08-06 夜 03:00-07:52）**：13 audit/rebuttal commit（详见 UPDATELOG.md 2026-08-06 段 + `paperB/audit_20260805/REBUTTAL_INDEX.md`），paperA 4/5 primitive 精确 + paperB 16/16 精确 + tex 内部一致（tab_pareto 99.20→99.19 修）+ Finding 2 rebuttal 弹药 drop-in tex ready + P0.13/P0.17 artifact 已 mirror 到 wzc1 anonymous_artifact/scores/。
 
 ## 当前快照（2026-08-04 23:3x +08:00，**monitor 节点表修复→5 节点全可见；.104 BGE 臂已停待收；.82 改派 PaperC #133；.252 认证其实正常（前次误判）**）
 > **★ 三条修正/发现（比上一快照重要）**：
