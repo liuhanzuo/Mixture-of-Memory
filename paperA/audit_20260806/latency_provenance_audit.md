@@ -40,3 +40,19 @@
 
 paperB tex 数字与 disk 完美一致 (max diff 0.001, 16/16 通过). paperA tex 数字漂 3-13 ms.
 paperA 严谨性弱于 paperB, 需 rebuttal 前修正或 own.
+
+## Follow-up: paperA 数字 self-consistency (2026-08-06 03:39)
+
+除已 audit 的 primitives, paperA abstract/experiments 里许多数字是**代数衍生**:
+- 2.74x = 6.035/2.202  (128k L20A pipeline; 内部一致 ✓)
+- 3.12  = 99.19 - 96.07 (RULER macro diff; 内部一致 ✓)
+- 1.403x = 931.9/664.4 (tab_replay_latency; 内部一致 ✓, primitive 数字见 P1.8 128k|cpu G=1)
+- 6.0 pp = 98.5 - 92.5 (context overlap gain; 内部一致 ✓)
+
+Rebuttal 意义: 代数关系全部闭合. 剩余的 4 组 primitive 数字需要磁盘 verify:
+- 931.9/664.4 ms latency  → 有 <2% 漂, 见前节 (needs own or rerun)
+- 99.19/96.07 RULER macros  → 需 P0.13 quality-latency artifact locate
+- 92.5/98.5 context-position  → 需 P0.17 E2 overlapping-chunk artifact locate  
+- 11.56 BM25 delta       → 需 P0.20 equal-latency frontier artifact locate
+
+这些需要一次性 subagent audit (~15 分钟), 但 rebuttal 前必做.
