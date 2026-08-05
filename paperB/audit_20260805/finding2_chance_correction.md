@@ -72,3 +72,63 @@
 ★ 与 content_norm 无关, 直接从 letter_acc 得, rebuttal 站得住.
 
 TSV 数据: paperB/audit_20260805/finding2_letter_headroom.tsv
+
+## Paper B tex 现有措辞审计 (2026-08-06 01:59, rebuttal prep 关键修正)
+
+上一轮说的"三重证伪 Paper B 主命题"打的是**口头概括的靶子**, 不是 tex 里的正式文本.
+逐节 review 现有 paperB/sections/*.tex 措辞:
+
+### 00_abstract.tex
+- 主命题: "**multi-interface recovery audit**" 作为 methodology contribution
+- "Perplexity and downstream performance **can diverge** after compression"
+  ---把 dissociation 当**已知前提**引用 costcompression/jaiswal2024truth/beyondperplexity,
+  不是**主张** dissociation
+- 主结论是 "six-axis reporting checklist" ---audit protocol 而非因果理论
+
+### 01_introduction.tex
+- "The open measurement problem is therefore not whether the metrics can disagree,
+   but how to audit a recovery claim"
+- Contributions 都是 measurement / diagnostic / actionable finding + audit protocol
+- 没有 "perplexity heals while knowledge lags" 类硬断言
+
+### 04_experiments.tex
+- **Finding 1**: "likelihood recovery overstates target recovery"
+  - 具体证据: keep14 200k PPL 10.561 但 MMLU 仍距 base 差 28.74pp
+  - 这是**单轨迹内**绝对差距观察, 不涉及跨 arm lockstep
+  - 我上轮三重证伪 (Spearman +0.94 lockstep, matched-PPL +0.32pp, ShortGPT beats keep14)
+    针对的是 **跨 arm dissociation**, **与 Finding 1 tex 措辞正交**
+- **Finding 2**: 已明确 own content 有 high random floor (.360) + null needed
+  - 与我 letter-only 校正表 (Random-16L content_norm=.3598) 完全一致
+  - tex 已经含 "This reversal changes the interpretation of the interface gain"
+- **Finding 3**: 用 letter-only 差 (15.6pt vs 1.8pt) 讨论 ShortGPT vs keep14, 干净
+
+### 02_related.tex line 28
+- **"nor loss--task dissociation originate here"** ---Paper B 主动 disavow "自己是提出者"
+- Reviewer 若挑 dissociation, tex 已经 defensively 回答了
+
+## Rebuttal 实操 impact
+
+不需要软化 Finding 1 tex 措辞. 我上一轮 audit 出的所有 evidence 可作 supporting
+appendix material, 但**主 rebuttal 论证不需要重写 Finding 1**.
+
+若 reviewer 挑:
+- "你们说 perplexity heals but knowledge lags 是不是被证伪?"
+  → tex 从没这样说. Finding 1 说的是 "likelihood recovery **overstates** target
+    recovery", 不是 dissociation. 200k keep14 仍距 base MMLU 28.74pp 是硬事实
+    (paired 14042 items, boostrap CI [1.08, 2.29] 只 close 1.68pp), 这个观察站得住.
+- "Random-16L 和 keep14@matched-PPL 是不是 letter chance-level? 那你们的差距会不会
+   只是 chance 噪声?"
+  → 见 finding2_letter_headroom.tsv. 是的, PPL 匹配 pair 都在 chance 内 (p=0.80/0.59),
+    这正是 Paper B Finding 2 想说的 "null needed" 现象, 支持 tex 现有论证.
+- "Cross-arm PPL vs MMLU 是不是 lockstep? 那 Finding 1 的 headline claim 是不是
+   scale artifact?"
+  → tex Finding 1 从没做 cross-arm claim. 只做 within-path 观察.
+
+## 结论
+Paper B tex 已经足够 defensive. 我上轮的三重证伪 audit 主要用于:
+1. Preventing overclaim (自身写 rebuttal 时不要 overclaim)
+2. Supporting appendix (若 reviewer 挑, 我们有更强证据)
+3. Paper D/C 论证时不要基于错误 Paper B 结论推导
+
+Task #164 "Paper B 主命题证伪三连" 描述改为 "Paper B 主命题保护:
+tex 措辞已 defensive, 三重 audit 只是 supporting evidence, 不需要 rewrite".
