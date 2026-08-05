@@ -1,5 +1,22 @@
-# GPU_STATUS.md — 5 节点 GPU 实时台账（QCMem = 40 卡）
+# GPU_STATUS.md — 4 节点可调度 GPU 台账（32 卡；.104 已交还用户）
 > 每次启动/kill GPU 任务更新。heartbeat 先读→对照 nvidia-smi→台账说跑但空=补卡。★29.162.226.120=dllm 绝不碰。
+
+## 🚫 .104 已交还用户（2026-08-05 15:4x，用户指令：「.104你不要管了 我在用」）
+> **`.104`（28.83.24.104）从此不在可调度范围。** 不派任务、不 kill 其上进程、**不因「看到空闲」去补卡**、
+> heartbeat 不把它算进 idle 统计、不因它空转报 WARNING。下方 .104 的历史行仅作归档，不再更新。
+>
+> 可调度节点 = **4 台 / 32 卡**：**LOCAL + .252（wzc1 盘）/ .73 + .82（zwfy6 盘）**。
+> ⚠️ 连带影响：**zwfy6 侧的 16 卡多机 DDP 只剩 .73+.82 这唯一组合**（原先 .73/.82/.104 任取两台）。
+
+## 当前在跑（2026-08-05 15:4x +08:00）
+> - **LOCAL 8×L20A**：▶️ #103 `olmo2_keep14_densesave_reheal` 训练中（step 60000+/200000，1.56 s/step，122.3GB/卡）。
+>   这是 Paper B 的 blocking deliverable（matched-PPL crossing），**优先级高于 Paper C**。
+> - **.252 8×B200**：▶️ #103 的 crossing-PPL monitor（`ppl_monitor_252.sh`，每个新 ckpt 起 8-shard burst，
+>   约 100 s/点）。**必须保持 8 卡可用**：co-resident 任务会让 shard 报
+>   `CUBLAS_STATUS_ALLOC_FAILED` 而死 → 曾静默产出 5/8 口径的 PPL（已修，见 commit d380bbc）。
+>   ⛔ **这台在 crossing bracket 完成前不要放别的训练**。
+> - **PaperC #134（A1 full-FT-32L ceiling）已取消**（不是暂停）：eval set validity gate 失败
+>   （squad_val 49.85% 恒定拒答基线高于所有臂），且它曾挤占 .252 害 crossing 掉 shard。
 
 ## 当前快照（2026-08-04 23:3x +08:00，**monitor 节点表修复→5 节点全可见；.104 BGE 臂已停待收；.82 改派 PaperC #133；.252 认证其实正常（前次误判）**）
 > **★ 三条修正/发现（比上一快照重要）**：
