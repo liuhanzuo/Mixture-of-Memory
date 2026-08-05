@@ -27,7 +27,13 @@ Arms (via flags):
   * Arm B (default)      : train ALL layers ("healing"). Differential LR:
     fresh+lm_head high, front layers + embed + norm low.
   * Control 2 --from_scratch : ignore base weights, random-init all layers, train
-    everything at a single LR.
+    everything at a single LR (embed / final norm / lm_head are random too).
+  * Control 3 --random_trunk : SAME depth/shape as the keep+fresh arm, trunk
+    (model.layers.*) fully random-init, but embed_tokens / model.norm / lm_head
+    TRANSPLANTED from the pretrained base. Isolates "does inheriting trunk
+    weights help?" from the confound that --from_scratch also throws away the
+    pretrained vocab embedding + readout head (which a ~1.6M-token SFT can never
+    relearn for a 100352-vocab model). Mutually exclusive with --from_scratch.
 
 OLMo-2 layer layout (verified 2026-07-16 against the local checkpoints):
   Each Olmo2DecoderLayer has 11 tensors and NO input_layernorm (OLMo-2 is
@@ -252,8 +258,106 @@ def transplant_front(model, base_path, keep_front_layers, n_fresh_layers, dtype,
     return sanity
 
 
+def transplant_readout_only(model, base_path, total_layers, dtype, is_main):
+    """Control 3 (--random_trunk): transplant ONLY the 3 non-layer tensors
+    (model.embed_tokens.weight, model.norm.weight, lm_head.weight) from the
+    pretrained base; leave EVERY decoder layer at its Olmo2 post_init random init.
+
+    Rationale: --from_scratch randomises the trunk AND the vocab embedding AND
+    the readout head, so "A4 (inherit front-j) beats A3 (from_scratch)" is
+    confounded -- a ~1.6M-token SFT cannot learn a 100352-vocab embedding + output
+    map from scratch. This arm shares A4's tokeniser interface exactly (embed /
+    final norm / lm_head bit-identical to base) and differs from A4 ONLY in where
+    the trunk weights come from.
+
+    The trunk uses the SAME random init as the fresh tail blocks of A4: both come
+    from Olmo2ForCausalLM(cfg) post_init in build_olmo2_minimal step (b) -- we
+    never re-initialise anything here, we only decline to overwrite the layers.
+
+    Returns a sanity dict (same shape/keys as transplant_front's where meaningful).
+    Raises on any assert failure (must crash the run)."""
+    base = Olmo2ForCausalLM.from_pretrained(
+        base_path, torch_dtype=dtype, local_files_only=True
+    )
+    base_num_layers = base.config.num_hidden_layers
+    base_sd = base.state_dict()
+    # keep_front_layers=0 -> _copied_keys returns exactly the 3 non-layer keys.
+    keep_keys = _copied_keys(base_sd, 0)
+    filtered = {k: base_sd[k] for k in keep_keys}
+
+    missing, unexpected = model.load_state_dict(filtered, strict=False)
+
+    # --- assert 1: no unexpected keys ---
+    assert unexpected == [], (
+        f"[rt-sanity1] unexpected keys when transplanting readout: {unexpected[:8]}"
+    )
+
+    # --- assert 2: the ONLY missing keys are decoder layers (all of them) ---
+    missing_layer_ids = set()
+    bad_missing = []
+    for mk in missing:
+        if mk.startswith("model.layers."):
+            missing_layer_ids.add(int(mk.split(".")[2]))
+        else:
+            bad_missing.append(mk)
+    assert not bad_missing, f"[rt-sanity2] non-layer keys unexpectedly missing: {bad_missing}"
+    assert missing_layer_ids == set(range(total_layers)), (
+        f"[rt-sanity2] missing layer-ids {sorted(missing_layer_ids)} != "
+        f"all layers {list(range(total_layers))}"
+    )
+
+    # --- assert 3: exactly the 3 non-layer tensors were copied ---
+    assert len(keep_keys) == N_NONLAYER_KEYS, (
+        f"[rt-sanity3] copied {len(keep_keys)} keys != expected {N_NONLAYER_KEYS} "
+        f"(embed_tokens / model.norm / lm_head)"
+    )
+
+    # --- assert 4: copied tensors match base elementwise (max diff == 0) ---
+    model_sd = model.state_dict()
+    max_diff = 0.0
+    for k in keep_keys:
+        d = (model_sd[k].float() - base_sd[k].float()).abs().max().item()
+        max_diff = max(max_diff, d)
+    assert max_diff == 0.0, (
+        f"[rt-sanity4] readout transplant max|model_param - base| = {max_diff:.3e} != 0.0"
+    )
+
+    # --- fresh-init assert on layer 0 (the whole trunk is fresh here) ---
+    ln_all_ones, qnorm_all_ones, q_std = _assert_fresh_init(model, 0)
+
+    del base, base_sd, filtered
+    gc.collect()
+
+    sanity = {
+        "transplanted": True,
+        "random_trunk": True,
+        "base_num_layers": base_num_layers,
+        "n_copied": len(keep_keys),
+        "expected_copied": N_NONLAYER_KEYS,
+        "missing_fresh_layer_ids": sorted(missing_layer_ids),
+        "transplant_max_abs_diff": max_diff,
+        "fresh_post_attention_layernorm_all_ones": ln_all_ones,
+        "fresh_q_norm_all_ones": qnorm_all_ones,
+        "fresh_q_proj_std": q_std,
+    }
+    if is_main:
+        logger.info(
+            f"[random_trunk] copied ONLY {len(keep_keys)} non-layer tensors "
+            f"(embed_tokens / model.norm / lm_head) from a {base_num_layers}-layer "
+            f"base; ALL {total_layers} decoder layers left at Olmo2 random init"
+        )
+        logger.info(
+            f"[rt-sanity] unexpected=0 | copied={len(keep_keys)}=={N_NONLAYER_KEYS} | "
+            f"max|model-base|={max_diff:.3e} (exact) | random layer-ids "
+            f"{sorted(missing_layer_ids)} | trunk_post_attn_ln_all_ones={ln_all_ones} "
+            f"trunk_q_norm_all_ones={qnorm_all_ones} trunk_q_std={q_std} "
+            f"-> ALL CHECKS PASS"
+        )
+    return sanity
+
+
 def build_olmo2_minimal(base_path, keep_front_layers, n_fresh_layers, dtype,
-                        transplant=True, is_main=True):
+                        transplant=True, is_main=True, random_trunk=False):
     """Build a (keep_front + n_fresh)-layer OLMo-2 model.
 
     (a) shrink the pretrained Olmo2 config to `keep_front + n_fresh` layers.
@@ -262,6 +366,9 @@ def build_olmo2_minimal(base_path, keep_front_layers, n_fresh_layers, dtype,
         including the fresh tail, the correct Olmo2 init.
     (c) if transplant: overwrite front keep_front layers + embed + norm + lm_head
         with the pretrained base weights and run the sanity asserts.
+        if transplant and random_trunk (Control 3): overwrite ONLY embed + norm +
+        lm_head; every decoder layer stays at its Olmo2 random init. Depth/shape
+        are identical to the (b) shell either way, so the arms stay comparable.
 
     Returns (model, cfg, sanity_dict). `dtype` should be torch.float32 for
     continue-training (fp32 master weights)."""
@@ -276,7 +383,9 @@ def build_olmo2_minimal(base_path, keep_front_layers, n_fresh_layers, dtype,
 
     model = Olmo2ForCausalLM(cfg).to(dtype)
 
-    if transplant:
+    if transplant and random_trunk:
+        sanity = transplant_readout_only(model, base_path, total_layers, dtype, is_main)
+    elif transplant:
         sanity = transplant_front(
             model, base_path, keep_front_layers, n_fresh_layers, dtype, is_main
         )
@@ -308,7 +417,7 @@ def apply_freeze_front(model, keep_front_layers, is_main):
     return n_frozen, n_train
 
 
-def _classify_param(name, keep_front_layers, from_scratch):
+def _classify_param(name, keep_front_layers, from_scratch, random_trunk=False):
     """'fresh' (fresh tail layers + lm_head -> high LR) vs 'inherited' (front
     layers + embed + norm -> low LR). from_scratch -> everything 'fresh'.
 
@@ -316,11 +425,22 @@ def _classify_param(name, keep_front_layers, from_scratch):
     bare model or a DDP-wrapped one (build_param_groups runs AFTER DDP wrap, whose
     named_parameters() prefix all names with 'module.'; without this strip every
     trainable param mis-fell-through to 'inherited' and the fresh cap trained at
-    lr_inherited instead of lr). from_scratch is unaffected (returns 'fresh' first)."""
+    lr_inherited instead of lr). from_scratch is unaffected (returns 'fresh' first).
+
+    random_trunk (Control 3, default False -> every pre-existing call site keeps
+    its exact behaviour): the whole trunk is random -> every 'model.layers.*'
+    param is 'fresh', while embed_tokens / model.norm / lm_head are transplanted
+    from the base -> 'inherited'. Note lm_head flips to 'inherited' here (it IS
+    inherited in this arm), so a launch that wants a specific LR for it should set
+    --lr / --lr_inherited deliberately."""
     if from_scratch:
         return "fresh"
     if name.startswith("module."):
         name = name[len("module."):]
+    if random_trunk:
+        # trunk fully random -> fresh; embed_tokens / model.norm / lm_head copied
+        # from the base -> inherited.
+        return "fresh" if name.startswith("model.layers.") else "inherited"
     if name.startswith("model.layers."):
         lid = int(name.split(".")[2])
         return "inherited" if lid < keep_front_layers else "fresh"
@@ -336,7 +456,8 @@ def build_param_groups(model, args, is_main):
     fresh (tail layers + lm_head): base_lr=args.lr, min_lr=args.min_lr.
     inherited (front layers + embed + norm): base_lr=args.lr_inherited,
         min_lr=args.min_lr_inherited.
-    from_scratch: single 'fresh' bucket at args.lr."""
+    from_scratch: single 'fresh' bucket at args.lr.
+    random_trunk: 'fresh' = the whole trunk, 'inherited' = embed/norm/lm_head."""
     specs = {
         "fresh_decay":  {"params": [], "weight_decay": args.weight_decay,
                          "base_lr": args.lr, "min_lr": args.min_lr},
@@ -350,7 +471,8 @@ def build_param_groups(model, args, is_main):
     for name, pp in model.named_parameters():
         if not pp.requires_grad:
             continue
-        cls = _classify_param(name, args.keep_front_layers, args.from_scratch)
+        cls = _classify_param(name, args.keep_front_layers, args.from_scratch,
+                              random_trunk=getattr(args, "random_trunk", False))
         prefix = "fresh" if cls == "fresh" else "inh"
         key = f"{prefix}_decay" if pp.ndim >= 2 else f"{prefix}_nodecay"
         specs[key]["params"].append(pp)
@@ -423,6 +545,7 @@ def _save(model, optimizer, args, step, epoch, cfg, final=False, rotate=True):
         "tie_word_embeddings": False,
         "freeze_front": bool(args.freeze_front),
         "from_scratch": bool(args.from_scratch),
+        "random_trunk": bool(getattr(args, "random_trunk", False)),
         "seq_len": args.seq_len,
         "seed": args.seed,
     }, path)
@@ -460,6 +583,15 @@ def main():
                    help="Arm A: freeze inherited front layers, train fresh+norm+head only")
     p.add_argument("--from_scratch", action="store_true",
                    help="Control 2: ignore base weights, random-init all layers, train all")
+    p.add_argument("--random_trunk", action="store_true",
+                   help="Control 3: random-init the trunk (model.layers.*) but "
+                        "TRANSPLANT embed_tokens / model.norm / lm_head from the base. "
+                        "Same depth/shape as the matching --keep_front_layers j "
+                        "--n_fresh_layers K arm, so the ONLY variable vs that arm is "
+                        "where the trunk weights come from -- unlike --from_scratch, "
+                        "which additionally randomises the 100352-vocab embedding and "
+                        "the readout head (an unlearnable confound at SFT token budgets). "
+                        "Mutually exclusive with --from_scratch.")
     p.add_argument("--max_steps", type=int, default=2000)
     p.add_argument("--seq_len", type=int, default=2048)
     p.add_argument("--batch_size", type=int, default=8)
@@ -522,6 +654,25 @@ def main():
                         "step{N}.pt in output_dir is never deleted.")
     args = p.parse_args()
 
+    # --random_trunk and --from_scratch are different controls and cannot be combined.
+    if args.random_trunk and args.from_scratch:
+        p.error(
+            "--random_trunk and --from_scratch are mutually exclusive.\n"
+            "  --from_scratch : NOTHING is inherited -- trunk AND embed_tokens AND "
+            "model.norm AND lm_head are all random-init (Control 2).\n"
+            "  --random_trunk : ONLY the trunk (model.layers.*) is random-init; "
+            "embed_tokens / model.norm / lm_head are transplanted from the pretrained "
+            "base so the arm shares the keep-front arm's vocab+readout interface "
+            "(Control 3).\n"
+            "Pick exactly one."
+        )
+    if args.random_trunk and args.freeze_front:
+        p.error(
+            "--random_trunk with --freeze_front would freeze RANDOM front layers "
+            "(nothing is inherited in the trunk), which trains nothing meaningful. "
+            "Use --random_trunk alone (train all layers, the A4-matched control)."
+        )
+
     ddp = "RANK" in os.environ
     if ddp:
         dist.init_process_group("nccl")
@@ -552,6 +703,8 @@ def main():
     total_layers = args.keep_front_layers + args.n_fresh_layers
     if args.from_scratch:
         arm = f"scratch{total_layers}L"
+    elif args.random_trunk:
+        arm = f"randtrunk{total_layers}L_front{args.keep_front_layers}+fresh{args.n_fresh_layers}"
     elif args.freeze_front:
         arm = f"frozen_front{args.keep_front_layers}+fresh{args.n_fresh_layers}"
     else:
@@ -608,10 +761,15 @@ def main():
     model, cfg, sanity = build_olmo2_minimal(
         args.model_path, args.keep_front_layers, args.n_fresh_layers,
         model_dtype, transplant=do_transplant, is_main=is_main,
+        random_trunk=args.random_trunk,
     )
     if args.from_scratch and is_main and resume_ckpt is None:
         logger.info(f"[from_scratch] random-init {cfg.num_hidden_layers}-layer model "
                     f"(base weights IGNORED); training all layers")
+    if args.random_trunk and is_main and resume_ckpt is None:
+        logger.info(f"[random_trunk] random-init trunk of the {cfg.num_hidden_layers}-layer "
+                    f"model (all model.layers.*), embed_tokens/model.norm/lm_head "
+                    f"INHERITED from base; training all layers")
 
     if resume_ckpt is not None:
         missing, unexpected = model.load_state_dict(
@@ -680,6 +838,7 @@ def main():
                 "tie_word_embeddings": False,
                 "freeze_front": bool(args.freeze_front),
                 "from_scratch": bool(args.from_scratch),
+                "random_trunk": bool(args.random_trunk),
                 "seq_len": args.seq_len,
                 "lr_fresh": args.lr,
                 "lr_inherited": args.lr_inherited,
