@@ -1,3 +1,14 @@
 {
-  "tasks": []
+  "tasks": [
+    {
+      "id": "8ad8ba6c",
+      "cron": "13,43 * * * *",
+      "prompt": "/heartbeat",
+      "createdAt": 1785898583885,
+      "recurring": true,
+      "createdBySessionId": "b405362c-2a9f-405a-978e-56afc9e4b104",
+      "createdByPid": 3121375,
+      "createdByProcStart": "356727371"
+    }
+  ]
 }
