@@ -1,0 +1,19 @@
+{
+  "output_name": "A4_keep28fresh2",
+  "n_shards": 1,
+  "n": 2000,
+  "em": 0.419,
+  "f1": 0.47953538519238564,
+  "em_hits": 838,
+  "f1_sum": 959.0707703847713,
+  "meta": {
+    "mode": "pruned",
+    "keep_front_layers": 28,
+    "n_fresh_layers": 2,
+    "num_hidden_layers": 30,
+    "ckpt_step": 1000,
+    "ckpt": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/outputs/paperC_pc1_squad_A4_keep28fresh2/final.pt",
+    "val_path": "data/squad_val.jsonl",
+    "add_bos": false
+  }
+}

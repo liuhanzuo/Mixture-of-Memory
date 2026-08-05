@@ -1,0 +1,16 @@
+{
+  "output_name": "A2_lora_r160",
+  "n_shards": 1,
+  "n": 2000,
+  "em": 0.659,
+  "f1": 0.7138938795964731,
+  "em_hits": 1318,
+  "f1_sum": 1427.7877591929462,
+  "meta": {
+    "mode": "base",
+    "num_hidden_layers": 32,
+    "base_model": "outputs/paperC_pc1_squad_A2_lora_r160/merged",
+    "val_path": "data/squad_val.jsonl",
+    "add_bos": false
+  }
+}

@@ -22,6 +22,7 @@
 > - **跨盘搬运一律 `scp -O`**（.82 的 sftp subsystem 已坏，普通 `scp` 报 `subsystem request failed`），搬完核 md5/sha256。
 > - **推论**：wzc1-only 的新脚本/新 ckpt 必须显式 `scp -O` 到 zwfy6 才能在三台 H20 上跑；「同盘合 16 卡多机 DDP」只在**同盘内**成立（LOCAL+.252，或 .73/.82/.104 任两台），**不可跨盘合并**。
 > - **软件差异**：三台 H20 的 `.venv/bin/python` 已坏 → 用 `/opt/conda/envs/torch-base/bin/python`；**LOCAL 的 `.venv` 现也已无 torch**（2026-08-04 实测），同样改用 conda。**.82 未装 `bitsandbytes`** → `OPT=bnb8bit` 在 .82 不可用。
+> - ⚠️ **"某任务 ckpt 是 wzc1-only" 这类记载必须实测再信**：2026-08-05 实测发现 `outputs/olmo2_probe2_7B_keep14fresh2/step200000.pt`(16G)、`..._freezefront/step200000.pt`、`..._fromscratch/step200000.pt`、`keep8/keep10/keep12/shortgpt16/full32` 的 ckpt、以及 `olmo2_probe2_7B_keep14fresh2_distill/step5000.pt`(24.5G) **在 zwfy6 上都有**——此前把 #128/#129 记成 "wzc1-only 不能在 H20 跑" 是**错的**，白卡了三次 agent。**派 GPU agent 前让它自己 ls 确认，不要照抄台账。** 反过来也成立：`olmo2_p05_arm{A_contig16,B_final14_fresh2}` 的 17 个 ckpt（到 step80000）**只在 wzc1**，zwfy6 上只有空壳 `step0.pt`。
 
 | # | 节点 | IP:端口 | 硬件 | 密码文件 | Python |
 |---|------|---------|------|---------|--------|

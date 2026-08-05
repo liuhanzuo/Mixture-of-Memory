@@ -1,0 +1,16 @@
+{
+  "output_name": "BASE_ref",
+  "n_shards": 1,
+  "n": 2000,
+  "em": 0.3385,
+  "f1": 0.39990975922924465,
+  "em_hits": 677,
+  "f1_sum": 799.8195184584893,
+  "meta": {
+    "mode": "base",
+    "num_hidden_layers": 32,
+    "base_model": "/apdcephfs_wzc1/share_304376610/pighzliu_code/models/OLMo-2-1124-7B",
+    "val_path": "data/squad_val.jsonl",
+    "add_bos": false
+  }
+}
