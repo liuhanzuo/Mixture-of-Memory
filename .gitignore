@@ -175,3 +175,10 @@ wheelhouse_hy3/
 
 # API keys (maas-openapi)
 .env
+
+# ★ 2026-08-06: 收紧为通配 —— configs/comem_deploy_key 是私钥但此前未被覆盖(只 ignore 了 github_deploy_key)
+configs/*deploy_key
+configs/*deploy_key.pub
+# ★ 2026-08-06: 含 verbatim MMLU question 原文(其余 8 个 sibling 是 hash-only 安全) —— 绝不可进公开仓
+bench_results/olmo2_dolmino_contamination/examples.json
+bench_results/**/examples.json

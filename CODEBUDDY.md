@@ -30,12 +30,16 @@
 | # | 节点 | IP:端口 | 硬件 | 密码文件 | Python |
 |---|------|---------|------|---------|--------|
 | 1 | 本机 (local, wzc1) | 本地直连 | 8×L20A（B200 级，183GB/卡） | — | `.venv/bin/python`（torch2.10+cu128，支持 L20A sm_100） |
-| 2 | .252 | `28.89.19.252` :22 | 8×B200 | `configs/password_b200_19252.txt` | `.venv/bin/python` |
+| 2 | .252 | `28.89.19.252` **:36000** | 8×B200 | `configs/password_b200_19252.txt` | `.venv/bin/python` |
 | 3 | .73 | `28.85.35.73` :36000 | 8×H20（97.8GB） | `configs/password_h20_853573.txt` | `/opt/conda/envs/torch-base/bin/python` |
 | 4 | .82 | `28.82.250.82` :36000 | 8×H20 | `configs/password_h20_82250.txt` | `/opt/conda/envs/torch-base/bin/python` |
 | 5 | .104 | `28.83.24.104` :36000 | 8×H20 | `configs/password_h20_24104.txt` | `/opt/conda/envs/torch-base/bin/python` |
 
-- **SSH 通式**：`sshpass -f <密码文件> ssh -o StrictHostKeyChecking=no -o ConnectTimeout=12 -o PreferredAuthentications=password [-p 36000] root@<IP>`（H20 三台 .73/.82/.104 加 `-p 36000`；.252 走默认 22 端口）。
+- **SSH 通式**：`sshpass -f <密码文件> ssh -o StrictHostKeyChecking=no -o ConnectTimeout=12 -o PreferredAuthentications=password root@<IP>`（**不要显式写 `-p`**）。
+  > ⚠️⚠️ **2026-08-06 实测纠正（旧文档写「.252 走默认 22 端口」是错的，害我误判 13 小时）**：本机 `/etc/ssh/ssh_config` 有全局 `Host * / Port 36000`，所以**省略 `-p` 时 ssh 已经走 36000**。
+  > **`.252` 必须走 36000**：`-p 22` → `Permission denied`（22 上另有一个 sshd，host key 相同但账户不同，所以看着像密码过期）；不加 `-p` 或 `-p 36000` → 正常登入（hostname `TENCENT64.site`）。
+  > **四节点统一：省略 `-p` 即可**（.73/.82/.104 的 36000 也由全局配置覆盖）。若脚本里出现 `-p 22`，一律视为 bug。
+  > 判定口径：`ssh -G <host> | grep '^port'` 看真实生效端口；`monitor/gpu_monitor_server.py:run_cmd` 就是因为「port==22 时不加 `-p`」而一直连得上。
 - **⚠️ 两个物理盘，非全共享**：**wzc1** = LOCAL + .252（`/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/`）；**zwfy6** = .73/.82/.104（`/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/`，独立 checkout、commit 常落后）。**.73 上 `/apdcephfs_wzc1` 是指向 zwfy6 的 symlink；.82 上该路径不存在。** 跨盘一律 `scp -O` + 核 md5。详见顶部纠正条。
 - **密码只见对应 `configs/password*.txt` 文件**（含末尾逗号是密码的一部分，用 `sshpass -f`，不要 `tr -d` 或手写展开）。
 - ⚠️ **dllm 节点 `29.162.226.120` 已归还，绝不连。**
@@ -288,13 +292,13 @@ configs/
 | # | 节点 | 硬件 | Python |
 |---|------|------|--------|
 | 1 | 本机 (local, wzc1) | 8×L20A（B200 级，183GB/卡） | `.venv/bin/python` |
-| 2 | .252 (`28.89.19.252` :22) | 8×B200 | `.venv/bin/python` |
+| 2 | .252 (`28.89.19.252` **:36000**) | 8×B200 | `.venv/bin/python` |
 | 3 | .73 (`28.85.35.73` :36000) | 8×H20（97.8GB） | `/opt/conda/envs/torch-base/bin/python` |
 | 4 | .82 (`28.82.250.82` :36000) | 8×H20 | `/opt/conda/envs/torch-base/bin/python` |
 | 5 | .104 (`28.83.24.104` :36000) | 8×H20 | `/opt/conda/envs/torch-base/bin/python` |
 
 - 本机 + .252 是 B200 级（183GB/卡），显存大，适合重型 8B+memory 训练；.73/.82/.104 是 H20（97.8GB），1B 训练无压力，8B+memory 需 gradient_checkpointing。
-- SSH / 密码文件见顶部「🖥️ 当前 GPU 集群」表与 SSH 通式（H20 三台加 `-p 36000`；.252 走默认 22 端口）。
+- SSH / 密码文件见顶部「🖥️ 当前 GPU 集群」表与 SSH 通式（**四节点一律省略 `-p`**，全局 ssh_config 已设 `Port 36000`；**.252 写 `-p 22` 会被拒**，见顶部纠正条）。
 - ⚠️ **dllm 节点 `29.162.226.120` 已归还，绝不连。**
 
 ### 集群间分配指南
