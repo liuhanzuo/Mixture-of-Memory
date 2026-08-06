@@ -1,0 +1,32 @@
+% Drop-in rebuttal answer for latency reproducibility (paperA #167, RESOLVED 2026-08-06).
+%
+% ⚠️ SUPERSEDES latency_provenance_own_drift.tex — that snippet assumed a <2% drift
+% that turned out NOT to exist. Do not use the own-drift wording; use this instead.
+%
+% Verified facts (MAIN independently re-pooled the raw reads, did not trust the agent):
+%   provenance = bench_results/p0_13_quality_latency/latency/latency_proc{0,1,2}.json
+%     pooled 3x20 raw reads, median  -> j=0  931.9195 ms   (tex 931.9)
+%                                    -> j=12 664.3577 ms   (tex 664.4)
+%                                    -> ratio 1.40274      (tex 1.403)
+%     pooled p10/p90                 -> 931.5080 / 941.9407 (tex 931.6 / 942.0)
+%                                    -> 663.7139 / 667.0992 (tex 663.8 / 667.1)
+%     => all six numbers match to rounding; ZERO drift.
+%   independent rerun, .82, 8 idle H20 exclusive, same env (torch 2.13.0 / cu13.2 /
+%   NVIDIA H20 / py 3.14.6) and the SAME pack sha256 cae91f9a503fd2cd3b010053:
+%     j=0 936.9745, j=12 667.5251 (+0.54% / +0.48%), ratio 1.40365 vs 1.40274.
+
+\paragraph{Reproducibility of the Read-latency measurement.}
+The medians in Table~\ref{tab:replay-latency} come from three independent processes
+of $20$ timed reads each over one fixed $\sim$6.5k-token pack (identical
+\texttt{sha256}), pooled and reduced by the median: $931.92$\,ms at $j{=}0$ and
+$664.36$\,ms at $j{=}12$, with pooled $p10/p90$ of $931.51/941.94$ and
+$663.71/667.10$\,ms. To check stability we repeated the measurement on an
+otherwise-idle node of the same type (H20, identical torch/CUDA build) using the
+same pack, and obtained $936.97$ / $667.53$\,ms: both arms shift by $\approx{+}0.5\%$
+together, so the reported ratio reproduces to four significant figures
+($1.40365$ versus $1.40274$). The quality side of the same paired cohort is
+released as
+\texttt{anonymous\_artifact/scores/p0\_13\_quality\_latency/\{summary,stats\}.json},
+which also carries the $-3.12$-point RULER gap, its paired-bootstrap
+$95\%$ CI $[2.36,3.93]$, the exact McNemar counts, and an
+\texttt{all\_packs\_paired\_1to1} assertion.

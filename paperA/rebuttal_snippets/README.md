@@ -2,6 +2,16 @@
 
 Drop-in LaTeX / plaintext 片段用于 rebuttal 答复 letter，若 Paper A rebuttal 用到今晚 audit 的结论。
 
+## ⚠️ 2026-08-06 15:20 更新：#167 已解决，无漂移
+
+provenance 找到了（`bench_results/p0_13_quality_latency/latency/latency_proc{0,1,2}.json`），
+池化 3×20 raw reads 得 931.9195/664.3577 ms、ratio 1.40274、p10/p90 931.51/941.94 与 663.71/667.10，
+**六个数字逐项对上 tex**。.82 独占重跑（同 env 同 pack sha）936.97/667.53，ratio 1.40365 —— speedup
+复现到 4 位有效数字。**tex 不改。**
+
+→ **用 `latency_reproducibility.tex`**（正确的强答复）。
+→ `latency_provenance_own_drift.tex` 已作废（它 own 一个不存在的漂移），仅留作被撤回推理的记录。
+
 ## 内容
 
 - **`latency_provenance_own_drift.tex`** — 若 #167 三选一中选 **(a) own <2% 漂**：
