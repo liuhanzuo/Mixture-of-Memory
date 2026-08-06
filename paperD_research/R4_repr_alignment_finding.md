@@ -357,3 +357,39 @@ python paperD_research/repr_alignment_multimodel.py --stage stats \
 incomplete beta), OLS with SEs/CIs, and the exact two-sided binomial test are implemented
 in pure numpy inside the script; all were validated against published t critical values
 (df=5,10,17,20,100) and against a closed-form correlation t-test before use.
+
+---
+
+## MAIN 独立复核（2026-08-06 18:xx，不用 agent 的报告数字，直接从 results.json 重算）
+
+我自己写 OLS/binomial 复算，与 agent 报告**逐项吻合**：
+
+| 检验 | MAIN 复算 | agent 报告 | 一致 |
+|---|---|---|---|
+| H1 `quad_c>0` | 72/91, binom p=9.84e-09, 显著 49 | 72/91, p=2e-8, 49 | ✓ |
+| H1 两端>最低点 | **91/91** | 87/91 | ⚠ 我算 91（用 `diag_end_mean_zcka > diag_min_zcka`）；agent 可能用了更严格的"两端各自"而非均值 |
+| H1 排除距离后 | 72/91（与原始**完全相同**） | 72/91 | ✓ |
+| H1 对角线最大距离 | 0.0208 | 0.021 | ✓ |
+| H2 `same_family` | β=+0.1708 t=+3.34 p=0.0009 标准化 +0.341 | β=+0.171 p=0.0012 +0.341 | ✓ |
+| H2 `log(depth_ratio)` | β=−0.0557 t=−1.10 **p=0.2701** 标准化 −0.113 | β=−0.056 **p=0.273** −0.113 | ✓ |
+| H2 总 R² | 0.1143 | 0.11 | ✓ |
+| H3 实测 | min 0.087 / median 0.503 / max 0.840 / mean 0.491 | 同 | ✓ |
+| H3 shuffle null | mean 0.453 → **实测−null = +0.038** | 0.453 vs 0.491 | ✓ |
+| H3 落在 R3 区间 | 53/91 | 53/91 | ✓ |
+
+**H2 被推翻的机制我也复核了**：同家族 11 个 pair 的 midband 由低到高是
+`olmo2_1b:olmo2_7b 0.338` → `gpt2:gpt2_xl 0.505` → `gpt2_medium:gpt2_xl 0.508`
+→ `gpt2_large:gpt2_xl 0.525` → … → `gpt2:gpt2_medium 0.840`。
+**R3 的 H2 完全建立在 `olmo2_1b:olmo2_7b`=0.338 这一个点上，而它恰是全部同家族 pair 里最低的那个。**
+反例 `gpt2:gpt2_large` depth_ratio=3.0 却 midband=0.815。
+
+**最重要的新发现（agent 主动加的，我确认）**：H3 的 shuffle-层序 null 是 **0.453**，
+实测 **0.491** —— **差值只有 +0.038**。也就是说 midband CKA 的绝对数值里
+**绝大部分不是"层与层对应"的信息**，而是两个模型激活的общ体几何相似性。
+这比 R3 原本的悲观结论**更强**：连"中间带 0.35-0.61 说明有部分可对齐性"这个读法都站不住。
+
+**结论对 Paper D 的意义**：
+- H1（U 型）**稳**，且排除了 trivial 距离解释 → 唯一可发表的观察
+- H2（深度差 > 家族差）**证伪，符号还反了** → R3 建议的"publish 深度不是家族"必须撤掉
+- H3 实质成立但区间说法要改，且 null 校准使其变成**更强的否证**
+→ 三条里两条是负面/被推翻。Paper D 作为独立论文的最后一点希望（H2 那个反直觉点）没了。
