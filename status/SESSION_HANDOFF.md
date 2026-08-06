@@ -33,8 +33,8 @@
 
 **集群状态**：
 - **LOCAL / .73 / .82**：直连各 0 GB，**24 卡确认闲**
-- **.252**：**SSH 4h+ 持续 Permission denied**（连续 10+ 次拒），密码文件 16 字节含末尾逗号，ed25519 握手 OK 但 auth 拒——疑 sshd 端问题或密码轮换，**不 hammer 等自愈或用户确认**；上一次 heartbeat 前它是可连的（0021）
-- Monitor 8088 前端 http=200 但 `metric_history` chronic 全空（26h+），已 kill+restart 一次首轮 55s 后仍 0 samples，采集线程疑卡在 poll .252 SSH——不深挖（http 200 满足 skill 要求）
+- **.252**：✅ **正常可用，8 卡 0 MiB 空闲**。⚠️ 2026-08-06 全天 heartbeat 报的「SSH 拒登陆 / 密码轮换」**全部作废**——根因是我的命令带了 `-p 22`，而全局 `/etc/ssh/ssh_config` 设了 `Port 36000`；22 端口上另有 sshd 且 host key 相同，导致误判像凭据失效。**省略 `-p` 即通**。CLAUDE.md 已修，见 memory `ssh-252-port-36000-not-22`
+- Monitor 8088 ✅ **一直完全正常**（history 每 node 720 samples、latest 5 node 全 `ok=True` 含 8 卡明细）。⚠️ 早前说「metric_history 全空 / 采集线程卡死」是**我查错了字段**：`metric_history` 是按 **run 名**索引的训练曲线（不含 node key），node 数据在 `history`/`latest`。**那次 kill+restart 是不必要的**
 
 **待用户 4 项决策**：
 1. **Paper C**：A4×random_trunk keep{14,20,24,28} 在新 eval set 上训练是否启动（P-C1 干净重跑，#165）

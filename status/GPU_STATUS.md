@@ -12,7 +12,7 @@
 
 > **实测（本轮 heartbeat 直连每台 nvidia-smi）**：
 > - **LOCAL 8×L20A (wzc1)**：0 MiB × 8 = 空闲
-> - **.252 8×B200 (wzc1)**：SSH 7h+ 持续 Permission denied（sshpass 密码文件未变、其他 3 节点密码同格式都成功、ed25519 握手 OK 但 auth 拒）→ 疑 sshd 端问题或密码轮换，**不 hammer** 等自愈或用户确认。上一次通=2026-08-06 00:21 heartbeat。
+> - **.252 8×B200 (wzc1)**：**0 MiB × 8 = 空闲，节点完全正常。** ⚠️ 本文件早前版本（及 2026-08-06 全天 heartbeat）说它「SSH 拒登陆 / 密码轮换嫌疑」——**全部作废，那是我的命令 bug**：我一直按旧 CLAUDE.md 写 `-p 22`，而本机 `/etc/ssh/ssh_config` 有全局 `Port 36000`。`.252` 的 22 端口上另有一个 sshd（host key 与 36000 相同 → 握手/banner 全正常，只有 password 被拒，故极像凭据失效）。**省略 `-p` 即通**（`hostname`=`TENCENT64.site`）。CLAUDE.md 已修 4 处，memory 已记 `ssh-252-port-36000-not-22`。**32 卡全部可调度。**
 > - **.73 8×H20 (zwfy6)**：0 MiB × 8 = 空闲
 > - **.82 8×H20 (zwfy6)**：0 MiB × 8 = 空闲
 >
