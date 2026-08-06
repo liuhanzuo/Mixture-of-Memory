@@ -112,3 +112,67 @@ MAIN 独立复算（不用 agent 的聚合脚本，自己 pool 3×20 raw read �
 
 新增脚本：`scripts/launch_p167_latency_rerun_82.sh`（含全卡 idle 独占 gate）、
 `scripts/aggregate_p167_latency.py`（双聚合规则 + env/config 逐字段断言 + FAIL-on-mismatch）。
+
+---
+
+## ★ 归因再修正（2026-08-06 16:05）：不是"漏搜子目录"，是"只搜了一个盘"
+
+上一节我写「我漏搜了 `bench_results/p0_13_quality_latency/latency/`」——**这个归因也是错的**。
+实测：
+
+```
+$ ls bench_results/p0_13_quality_latency/          # wzc1
+ls: cannot access ...: No such file or directory
+$ find bench_results -name 'latency_proc*.json' | grep -v p0_167     # wzc1
+(零个)
+$ ssh .82 ls .../bench_results/p0_13_quality_latency/latency/        # zwfy6
+latency_proc0.json  latency_proc1.json  latency_proc2.json   (Aug 2 01:02)
+```
+
+**那个目录在 wzc1 上从来不存在，只在 zwfy6（.82）。** 我的 grep 没有漏，
+它在 wzc1 上**不可能命中** —— 真正的错误是我**只在 wzc1 搜就宣布"追不到"**。
+
+这与同一天早些时候 subagent 误报「P0.13/P0.17 数字不在磁盘」是**同一个根因的第二次发作**，
+而且是我在为那次教训写下 memory `subagent-audit-must-specify-cross-disk` 之后自己又犯的：
+> 「派 subagent 搜文件时要声明两盘」——但我没把这条**应用到自己身上**。
+
+**正确的通用规则（已写入 memory）**：任何"文件/数字不存在 / 追不到"的结论，
+在 wzc1 与 zwfy6 两盘都搜过之前**不成立**，不论搜的人是 subagent 还是 MAIN。
+
+现在 `_orig_p0_13/` 下有 md5 相同的 wzc1 副本（skeptic 独立核对：
+`5ed54ac8… / b93037ec… / 4e45a400…` 两盘一致），所以证据链在 wzc1 上可审计了。
+
+## 独立 skeptic 的额外核实（2 个 skeptic，0/2 refuted）
+
+skeptic 用**自己写的**池化代码（不用 agent 的聚合脚本）复现 931.9195/664.3577/1.40274 与
+p10/p90 931.5572/941.9580、663.7733/667.1029，并额外验了三件我没验的：
+
+1. **重跑是真新数据不是拷贝**：6 个 (proc × arm) 组合里，orig 与 rerun 的 20 个 raw float
+   **交集 0/20**（如 proc0 armA orig[0]=0.935234 vs new[0]=0.936908）。若是伪造/复制会有重叠。
+2. **聚合脚本没做假**：从 disk glob 载入（非硬编码），`n_procs != expected` 会 append FAIL，
+   per-proc reads != n_repeat 会 FAIL。skeptic 自己重跑聚合得到的 json 与提交版**字节相同**
+   （md5 6d594b8f…）→ 项目经典的「5/8 shard 静默当 8/8」失败模式在此被结构性阻断。
+3. **"不同 protocol"论断成立**：p0_12_acceptance 的 pack sha 是 `f7fc7617…`，
+   P0.13 是 `cae91f9a…` → 确实是不同 pack/实验，本来就不能背书这张表。
+
+## agent 主动违背 brief 的地方（诚实性加分，我确认它做对了）
+
+我在 brief 里要求「逐字段照抄 p0_12_acceptance 的 config（seed=0, n_decode=6）」。
+agent **拒绝执行**，理由：那是另一个实验的 config，照抄会产出 ~1081/787 ms，
+**看起来像 150 ms 的性能回退**，是假警报。它改用 P0.13 latency-leg 的真实 config
+（seed=42, max_new_tokens=48, example_index=0, PYTHONHASHSEED=0, iter_hop_topk=4），
+并用 bit-exact 复现证明那才是这张表的权威 config。**这个判断是对的，我的 brief 是错的。**
+
+另两条诚实备注（照实记录）：
+- P0.13 manifest 记的 git commit `21c124e` 在本仓历史中**不存在**（`git rev-parse` 失败），
+  所以 driver 身份是靠 md5（`09f7a5de…` 两盘一致且 git 中干净）而非 git ancestry 验证的。
+- 重跑绝对值比 tex 高约 0.5%，是同一 pack 上的常规 GPU 时钟/热漂移；ratio 匹配到小数点后 4 位。
+
+## 表格处置（最终）
+**不改数字。** 换掉数字反而会把一个「有 committed raw log 精确背书」的值，
+替换成一个差 <0.6% 的新值，并与 `paperA/anonymous_artifact/scores/p0_13_quality_latency/latency.json`
+（已存 `read_speedup_A_over_B=1.4027`、`armA_read_ms=[935.46, 931.677, 931.9]`）**失同步**。
+
+可选的 caption 加固（尚未改 tex，等定稿时再定）：
+> "...medians across three independent processes (20 reads each) on a single H20; an independent
+> re-measurement on the same node and the same retrieved pack reproduces the ratio to 1.404×."
