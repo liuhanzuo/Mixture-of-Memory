@@ -59,11 +59,18 @@ DATA_PATH="${DATA_PATH:-$PROJECT_ROOT/data/paperC_squad_v2/train_refusal25_olmo2
 VAL_PATH="${VAL_PATH:-$PROJECT_ROOT/data/paperC_squad_v2/val_refusal25.jsonl}"
 
 # ---- NCCL: verified 2-node smoke recipe on zwfy6 .82+.73 (2026-08-06) ------
+# IMPORTANT: NCCL_IB_DISABLE is FORCED to 1 (do not honour caller override).
+# The zwfy6 nodes have IB HCAs listed as "Up" (mlx5_0..17) but ibv_reg_mr_iova2
+# fails with EINVAL when NCCL tries to register buffers -- this crashes training
+# ~90s in with the misleading "NCCL error, unhandled system error" message. The
+# 2026-08-06 smoke passed BECAUSE it explicitly set IB_DISABLE=1. Some login env
+# on these nodes exports NCCL_IB_DISABLE=0 by default, and `${VAR:-1}` would
+# silently honour it -> keep this HARD-CODED 1 until IB is separately verified.
 MASTER_ADDR="${MASTER_ADDR:-28.82.250.82}"   # .82 bond1
 MASTER_PORT="${MASTER_PORT:-29501}"
 export NCCL_DEBUG="${NCCL_DEBUG:-WARN}"
-export NCCL_SOCKET_IFNAME="${NCCL_SOCKET_IFNAME:-bond1}"
-export NCCL_IB_DISABLE="${NCCL_IB_DISABLE:-1}"
+export NCCL_SOCKET_IFNAME=bond1              # single routable inter-node iface
+export NCCL_IB_DISABLE=1                     # HARD-CODED: see comment above
 
 # ---- eff_bs 128 = BS * GA * (2 nodes * 8 GPU) = 4 * 2 * 16 ------------------
 BS="${BS:-4}"
