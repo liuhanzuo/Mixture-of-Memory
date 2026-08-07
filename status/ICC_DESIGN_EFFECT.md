@@ -76,12 +76,14 @@ full 100K pool, |target|=1000):
 | 4B | 0.652 ± 0.005 | 0.845 ± 0.004 | −0.193 |
 | 8B | **0.518 ± 0.010** | **0.808 ± 0.003** | **−0.290** |
 
-Read the columns, not the diagonal. **Within Instruct, ICC is essentially flat and mildly
-DECREASING in scale (.880 → .862 → .845 → .808).** Within Base it is non-monotone and noisy
-(.877 → .501 → .652 → .518). The pin's ladder mixed one Base checkpoint (8B) into three Instruct
-ones, so the "drop at 8B" is the Base column being read as the continuation of the Instruct column.
-At **fixed 8B scale**, swapping Base→Instruct moves ICC by **+0.290**, which is ~29x the seed sd —
-far larger than anything scale does. **There is no scale effect to explain.**
+Read the columns, not the diagonal. **Within Instruct, ICC is STRICTLY monotone decreasing in scale
+(.880 → .862 → .845 → .808)** — verified strictly decreasing at every step. Within Base it is
+non-monotone and noisy (.877 → .501 → .652 → .518). The pin's ladder mixed one Base checkpoint (8B)
+into three Instruct ones, so the "drop at 8B" is the Base column being read as the continuation of
+the Instruct column. At **fixed 8B scale**, swapping Base→Instruct moves ICC by **+0.290 = 46x the
+pooled seed sd (0.0064)** — far larger than anything scale does, and in the *opposite* direction to
+the pin's interpretation (bigger model → *lower* ICC within a tuning family).
+**There is no scale effect to explain.**
 
 Sanity check that this is not an artifact of my protocol: the embedding ICC (the quantity the pin
 actually reported) is nearly flat across the whole grid, 0.772–0.846, i.e. **it cannot produce the
