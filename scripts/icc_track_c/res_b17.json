@@ -1,0 +1,76 @@
+{
+ "tag": "b17",
+ "model": "/apdcephfs_wzc1/share_304376610/pighzliu_code/models/Qwen3-1.7B-Base",
+ "N": 100002,
+ "dim": 2048,
+ "K": 5000,
+ "n_target": 1000,
+ "icc_score_oneway": {
+  "icc": 0.5096712687727403,
+  "k": 16351,
+  "N": 93671,
+  "MSB": 0.0002269488908460041,
+  "MSW": 3.2636304876422296e-05,
+  "m0": 5.727922584925958,
+  "mean_m": 5.7287627668032535
+ },
+ "icc_score_nested": {
+  "icc_env": 0.48732705488062195,
+  "icc_traj_within": 0.05012822187340945,
+  "icc_traj_oneway_like": 0.5374552767540314,
+  "s2_env": 3.4384900612422185e-05,
+  "s2_traj": 3.536955130506486e-06,
+  "s2_resid": 3.2636304876422296e-05
+ },
+ "icc_embed_multivar": 0.781431364076302,
+ "arms": [
+  {
+   "name": "RDS+ global top-k",
+   "K": 5000,
+   "distinct": 906,
+   "distinct_pct": 18.12,
+   "max_from_one": 73,
+   "envs": 16,
+   "top3": 86.42,
+   "deff": 4.003498067730854,
+   "neff": 1248.9078089736543,
+   "m_kish": 14.7656
+  },
+  {
+   "name": "RDS+ round-robin",
+   "K": 5000,
+   "distinct": 2764,
+   "distinct_pct": 55.279999999999994,
+   "max_from_one": 15,
+   "envs": 19,
+   "top3": 45.26,
+   "deff": 1.5771324060086391,
+   "neff": 3170.310863533554,
+   "m_kish": 3.4868
+  },
+  {
+   "name": "random",
+   "K": 5000,
+   "distinct": 3766,
+   "distinct_pct": 75.32,
+   "max_from_one": 13,
+   "envs": 19,
+   "top3": 45.56,
+   "deff": 1.2299830309288442,
+   "neff": 4065.0967324517956,
+   "m_kish": 1.8784
+  },
+  {
+   "name": "stratified-random",
+   "K": 5000,
+   "distinct": 4026,
+   "distinct_pct": 80.52,
+   "max_from_one": 10,
+   "envs": 19,
+   "top3": 16.919999999999998,
+   "deff": 1.1710188840197313,
+   "neff": 4269.785968640068,
+   "m_kish": 1.678
+  }
+ ]
+}
