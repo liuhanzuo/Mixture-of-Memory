@@ -8,24 +8,28 @@
 > 可调度节点 = **4 台 / 32 卡**：**LOCAL + .252（wzc1 盘）/ .73 + .82（zwfy6 盘）**。
 > ⚠️ 连带影响：**zwfy6 侧的 16 卡多机 DDP 只剩 .73+.82 这唯一组合**（原先 .73/.82/.104 任取两台）。
 
-## 当前在跑（2026-08-07 23:37 +08:00 更新）— **LOCAL** P1.2 seed2（~87h）+ **.252** P2.4 full-32L SFT（~1h）+ **.73** P2.4 keep14fresh2 SFT（~2.2h）
+## 当前在跑（2026-08-08 01:02 +08:00 更新）— **LOCAL** P1.2 seed2（~87h）+ **.252** P2.4 ShortGPT-16 SFT（~30 min）+ **.73** P2.4 keep14fresh2 SFT（收尾）；**.252** full-32L 已 DONE 00:38
 
-> ### ▶️ .252 8×L20A (wzc1) — `olmo2_p24_sft_full32`（PaperB P2.4 full-32L base SFT，8/8 卡 @100%）
+> ### ▶️ .252 8×L20A (wzc1) — `olmo2_p24_sft_shortgpt16`（PaperB P2.4 ShortGPT-16 SFT 第三臂，8/8 卡 @96-100%）
 > | 项 | 值 |
 > |---|---|
-> | 任务 | **PaperB P2.4 三臂之 full-32L base SFT**（sibling agent 说 H20 装不下的 B200-required 臂之一） |
-> | 节点/卡 | **.252 8×L20A（wzc1 盘）GPU 0-7 全占**，maxmem **182 GiB/183 GiB/卡 = 99.3%**（fp32-AdamW 静态 108.8 GB + bf16 forward + gc；H20 97.8GB 装不下 = 派 .252 的原因） |
-> | 起始 | 2026-08-07 **23:32** +08:00 |
-> | ETA | **~59 min → 约 2026-08-08 00:3x**（4.18 s/step × 842 step；L20A ≈ 2.3× H20 速度） |
-> | seed / arm | seed=42 / arm=full32；`--base_model` 走 `load_base_model`（无 `--ckpt`，跳过剪层臂需要的 `final.pt` workaround） |
-> | PID / log | root torchrun `2936878` / `logs/p24_sft_full32.log` |
-> | 输出 | `outputs/olmo2_p24_sft_full32/final.pt`（trainer 保存 arch descriptors `keep=32 fresh=0 layers=32`，Paper B eval harness 可 verbatim 加载） |
-> | 数据 | `data/olmo2_sft/tulu3_general_clean_{input_ids,labels}.npy` (wzc1 副本，md5 与 zwfy6 源逐字节一致，见 `status/PAPERB_P24_FULL32_ARM.md` §3) |
-> | 与 .73 keep14 arm diff | **仅 3 处**：`--arm_name`、无 `--ckpt`（走 full-base 路径）、`--output_dir`；其余 byte-identical（token budget 220,725,248；eff_batch 128；lr 1e-5；seed 42；grad_ckpt 1） |
-> | python | `/opt/conda/envs/torch-base/bin/python3.11` torch 2.13.0 transformers 4.57.6 |
-> | 健康 | step 20 loss=**1.1101**（finite，非 NaN）/ 4.18s/step / maxmem 182 GiB / 8/8 GPU 100% util |
+> | 任务 | **PaperB P2.4 三臂之 ShortGPT-16@200k SFT**（16L 剪层臂，与 .73 keep14fresh2 同架构，single-variable 只差起始 ckpt） |
+> | 节点/卡 | **.252 8×L20A（wzc1 盘）GPU 0-7 全占**，maxmem **~101 GiB/183 GiB/卡 = 55%**（16L 半深度，fp32-AdamW 静态 60.5 GB） |
+> | 起始 | 2026-08-08 **00:58** +08:00 |
+> | ETA | **~29 min → 约 2026-08-08 01:30**（2.18-2.23 s/step × 842 step；比 full-32L 快 ~2× 因 16L） |
+> | seed / arm | seed=42 / arm=shortgpt16 |
+> | PID / log | torchrun `2995894` / `logs/p24_sft_shortgpt16.log` |
+> | 输出 | `outputs/olmo2_p24_sft_shortgpt16/final.pt`（trainer 保存 arch descriptors `keep=16 fresh=0 layers=16`） |
+> | 数据 | `data/olmo2_sft/tulu3_general_clean_{input_ids,labels}.npy` (wzc1 副本 md5 `b1e6fe4e...` / `bf7c5774...`，与 .73 keep14 逐字节一致) |
+> | 与 .73 keep14 arm diff | **仅 3 处（+base_model 路径差，同 HF 内容）**：`--arm_name shortgpt16`、`--ckpt outputs/olmo2_probe2_7B_shortgpt16/step200000.pt`、`--output_dir outputs/olmo2_p24_sft_shortgpt16`；`--base_model` wzc1 vs zwfy6 路径（内容 byte-identical）；其余全 byte-identical（token budget 220,725,248；eff_batch 128；lr 1e-5；warmup 100；seed 42；grad_ckpt 1；BS=1 GA=16；max_steps 842） |
+> | 与 .252 full32 arm diff | **仅 3 处**：`--arm_name`（shortgpt16 vs full32）、`--ckpt`（本臂有，full32 无走 full_base 路径）、`--output_dir` |
+> | python | `/opt/conda/envs/torch-base/bin/python3.14` torch 2.13.0 transformers 4.57.6 |
+> | 健康 | step 20 loss=**1.6719**（finite，非 NaN） / step 40 loss=1.4377 / 2.18s/step / maxmem 101 GiB / 8/8 GPU 96-100% util |
 >
-> ⚠️ 唯一变量 = 起始 checkpoint（full-32L base vs keep14fresh2 healed ckpt）；三臂裁决须等 ShortGPT-16 臂启动 + 三臂 post-SFT eval 完成。
+> ⚠️ 唯一变量 = 起始 checkpoint（shortgpt16@200k vs keep14fresh2@200k healed ckpts）；三臂裁决须等 post-SFT eval battery 跑完。
+
+> ### ✅ .252 8×L20A (wzc1) — `olmo2_p24_sft_full32` **DONE 2026-08-08 00:38 +08:00**
+> - PID 2936878 (退出) / log `logs/p24_sft_full32.log` / final `outputs/olmo2_p24_sft_full32/final.pt`（87.6 GB）/ 842 steps / 63.2 min / step 20 loss=1.1101 finite / seed=42 / arm=full32 / no `--ckpt`（full_base 路径）/ ETA vs 实际吻合。三臂之一已完成，等三臂全部完成后启动 post-SFT eval battery。详见 `status/PAPERB_P24_FULL32_ARM.md`。
 
 > ### ▶️ LOCAL 8×L20A (wzc1) — `olmo2_probe2_7B_keep14fresh2_seed1234`（占满 8/8 卡，**勿补卡、勿 kill**）
 > | 项 | 值 |
