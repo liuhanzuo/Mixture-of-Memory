@@ -8,17 +8,35 @@
 > 可调度节点 = **4 台 / 32 卡**：**LOCAL + .252（wzc1 盘）/ .73 + .82（zwfy6 盘）**。
 > ⚠️ 连带影响：**zwfy6 侧的 16 卡多机 DDP 只剩 .73+.82 这唯一组合**（原先 .73/.82/.104 任取两台）。
 
-## 当前在跑（2026-08-08 04:35 +08:00 更新）— **LOCAL** P1.2 seed2（~87h）+ **.252** P2.4 ladder wzc1 pre-SFT eval battery（started 03:58, ETA ~2h）+ **.73** P2.4 **keep8 SFT**（zwfy6，n=6 damage-sensitivity ladder；started 04:27, ETA ~35min）+ **.82** P2.4 **keep10 SFT**（zwfy6，n=6 ladder；started 04:31, ETA ~55min）+ **.104** P2.4 **keep12 SFT**（zwfy6，n=6 ladder；started 04:31, ETA ~65min）；ladder pre-SFT _v2 eval on .73 ✅ ~04:xx; full-32L/shortgpt16 SFT + keep14 SFT+eval ✅ 前批
+## 当前在跑（2026-08-08 06:25 +08:00 更新）— **LOCAL** P1.2 seed2（~87h）+ **.104** P2.4 keep12 SFT（zwfy6，step 780/842，8/8 @ 100%）；**.73 空闲 0/8**（keep8 SFT ✅ 05:56 + post-SFT eval battery ✅ 06:21）；**.82 空闲 0/8**（keep10 SFT ✅ **06:16:12** final.pt step=842 → **post-SFT eval 待跑**）；**.252** ladder wzc1 pre-SFT eval ✅ 05:51
+> ⚠️ **补卡线索（2026-08-08 06:25）**：`.82` 的 keep10 SFT 已于 06:16:12 完成且节点空转 → 可立即照 `scripts/_run_olmo2_p24_eval_sft_keep8_73.sh` 的模式派 keep10 post-SFT eval battery（换 arm/ckpt/output_name + pre anchor 用 keep10 同盘 _v2）。keep8 实测 battery 仅 16 min。
+> ★ **keep8 预测检验结论（2026-08-08）**：damage-sensitivity **次线性/饱和**——n=3 线性拟合预测 +14.0%，实测 **+10.15%**（CI [+10.05,+10.23] 排除预测值）；详见 `status/PAPERB_P24_SFT_KEEP8_EVAL.md`。后续 keep10/keep12 落点是对「饱和」的进一步检验。
 
-> ### ▶️ .73 8×H20 (zwfy6) — `p24_sft_keep8_zwfy6`（PaperB P2.4 n=6 damage-sensitivity ladder — SFT lowest rung）
+> ### ✅ (完成 06:21:37) .73 8×H20 (zwfy6) — `p24_sft_keep8_eval_73`（PaperB P2.4 keep8 **POST-SFT eval battery**）
 > | 项 | 值 |
 > |---|---|
-> | 任务 | keep8+fresh2 (10L) SFT from `step121000.pt` — byte-identical recipe to completed keep14/shortgpt16 arms; predicts Δ PPL ≈ +14.0% based on n=3 fit (pre-SFT PPL 13.333) |
+> | 任务 | keep8 post-SFT 5-harness battery（PPL + core6 + know5 + MMLU-dual + closedbook），与**同节点同架构** pre-SFT anchor `7B_keep8_step121000_v2` 做 item 级 pairing |
+> | 节点/卡 | **.73 8×H20（zwfy6 盘）GPU 0-7 全占**，29.5 GiB/卡 @ 99-100%（PPL 段） |
+> | 起始 / 结束 | 2026-08-08 **06:05:22** → **06:21:37** +08:00（**16 min**，远快于 ~90min 估计） |
+> | ★ 核心结果 | pre-PPL **13.3329** → post-PPL **14.6857**，**ΔPPL% = +10.15%**；shard-level bootstrap CI **[+10.05, +10.23]** |
+> | ★ 预测检验 | n=3 拟合预测 **+14.0%**（post 15.20）→ **残差 −3.86 pp，预测落在 CI 之外 = 被排除**。但预registered「materially lower」门槛（post<14.5 / Δ<9%）**也未达到** → 落在两个预设结论**之间**：关系**次线性/饱和**，非线性外推失效（n=4 refit 斜率 1.6015→0.9417，r 0.998→0.907；二次项 −0.215 = 凹） |
+> | 下游 | core6 macro 0.52328→0.51428（−0.90pp，CI 排除 0；**arc_easy 独占 −0.43pp，p=3.6e−12**，其余 5 项不显著）；MMLU letter 0.2543→0.2483（p=0.162，仍贴 chance）/ content_norm 0.3427→0.3365（p=0.0052）；**TriviaQA EM −4.30pp（p≈6.8e−106）= 最大伤亡**；PopQA EM −0.88pp 但 contains/f1 持平 → **格式/verbosity 漂移而非纯知识丢失** |
+> | 完整性 | `assert_8shards` **5/5 段全过 8/8**；per-item preds 双侧齐全（core6/MMLU 14042/popqa 14267/triviaqa 17944）；paired 值与 harness `summary.json` **全部 <1e−9 吻合**（item 对齐无误join）；pre 侧复现 MAIN-verified anchor PPL 13.3329 ✓ core6 0.52328 ✓ |
+> | ⚠️ Caveat | keep8 anchor 是 **step121000 非 200k**（keep8 从未到 200k，`PAPERB_TABLE4_BUDGET_DEFECT.md`）→ 本实验「固定自身 pre-SFT ckpt 测 SFT delta」有效，但**不可用于对 keep14(200k) 的 compute-matched 深度比较** |
+> | PID / log | `3071994`（wrapper 3071993）/ `logs/p24_eval_sft_keep8_73.log` |
+> | Driver / 分析 | `scripts/_run_olmo2_p24_eval_sft_keep8_73.sh` + `scripts/paired_analysis_p24_sft_keep8.py` → `results/paperb_p24_sft_keep8_paired.json` |
+> | Report | `status/PAPERB_P24_SFT_KEEP8_EVAL.md`（commit `fd1633c`） |
+> | 现状 | **.73 现 0/8 空闲**，可补卡 |
+
+> ### ✅ (完成 05:56:44) .73 8×H20 (zwfy6) — `p24_sft_keep8_zwfy6`（PaperB P2.4 n=6 damage-sensitivity ladder — SFT lowest rung）
+> | 项 | 值 |
+> |---|---|
+> | 任务 | keep8+fresh2 (10L) SFT from `step121000.pt` — byte-identical recipe to completed keep14/shortgpt16 arms; predicts Δ PPL ≈ +14.0% based on n=3 fit (pre-SFT PPL 13.333) → **实测 +10.15%，见上方 eval 行** |
 > | 节点/卡 | **.73 8×H20（zwfy6 盘）GPU 0-7 全占**, 68.3 GiB/卡 @ 99-100% |
 > | 起始 | 2026-08-08 **04:27:01** +08:00 |
-> | ETA | **~04:59-05:05** (~2.16s/step × 842 = ~30 min after init) |
+> | 完成 | 2026-08-08 **05:56:44**（89.7 min，step=842，**0 NaN**，step 840 loss=1.3947） |
 > | pre-SFT ckpt | `outputs/olmo2_probe2_7B_keep8fresh2/step121000.pt` (11.4 GB) — Table 4 headline (not step200000 which never existed) |
-> | 输出 | `outputs/olmo2_p24_sft_keep8fresh2/{step500,final}.pt` (paired eval to follow) |
+> | 输出 | `outputs/olmo2_p24_sft_keep8fresh2/final.pt`（34.15 GB）+ `step500.pt` — **eval ✅ 已完成** |
 > | Recipe | BS=1 GA=16 eff_batch=128 seq_len=2048 max_steps=842 lr=1e-5 min_lr=1e-6 warmup=100 wd=0.1 seed=42, fp32 master AdamW + bf16, gradient_checkpointing=1 |
 > | step-1 loss | step 20 = **2.0422** (finite; NaN-fix commit `0fd051a` in play) |
 > | Data md5 | `b1e6fe4e...` (input_ids) / `bf7c5774...` (labels) — matches spec |
