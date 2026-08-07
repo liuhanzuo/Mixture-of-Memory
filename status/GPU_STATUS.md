@@ -8,9 +8,27 @@
 > 可调度节点 = **4 台 / 32 卡**：**LOCAL + .252（wzc1 盘）/ .73 + .82（zwfy6 盘）**。
 > ⚠️ 连带影响：**zwfy6 侧的 16 卡多机 DDP 只剩 .73+.82 这唯一组合**（原先 .73/.82/.104 任取两台）。
 
-## 当前在跑（2026-08-08 02:05 +08:00 更新）— **LOCAL** P1.2 seed2（~87h）+ **.252** P2.4 full32+shortgpt16 pre/post-SFT **eval battery**（started 02:02, ETA ~4-6h）+ **.73** P2.4 keep14fresh2 **post-SFT eval battery**（started 01:26, ETA ~1.5-2h）；**.252** full-32L SFT ✅ 00:38, shortgpt16 SFT ✅ 01:33; **.73** keep14fresh2 SFT ✅ 01:07
+## 当前在跑（2026-08-08 02:32 +08:00 更新）— **LOCAL** P1.2 seed2（~87h）+ **.252** P2.4 full32+shortgpt16 pre/post-SFT **eval battery**（started 02:02, ETA ~4-6h）+ **.73** P2.4 **ladder pre-SFT _v2 eval battery**（keep8/10/12/shortgpt16 for task #189 flip-count n=5 audit，started 02:28, ETA ~4-6h）；**.252** full-32L SFT ✅ 00:38, shortgpt16 SFT ✅ 01:33; **.73** keep14fresh2 SFT ✅ 01:07, keep14fresh2 pre/post eval ✅ 02:02
 
-> ### ▶️ .73 8×H20 (zwfy6) — `p24_eval_keep14_73`（PaperB P2.4 keep14fresh2 post-SFT eval + pre-SFT gap-fill，8/8 卡 24-25 GiB @ 60-80%）
+> ### ▶️ .73 8×H20 (zwfy6) — `p24_eval_ladder_prev2_73`（PaperB P2.4 / task #189 — Table 4 ladder 4-rung pre-SFT _v2 eval，8/8 卡 17.6-18.5 GiB @ 66-98%）
+> | 项 | 值 |
+> |---|---|
+> | 任务 | **task #189 cross-arch flip-count audit（n=5 extension）**：keep8/keep10/keep12/shortgpt16 四个 Table 4 ladder rung pre-SFT 全 battery（PPL + core6 + know5 + MMLU dual + closedbook），每 harness `--save_per_example` 保留 per-item preds；用 H20 数字与 wzc1 Table 4 source 对拍以判断每 rung 的 Table 4 是 L20A 还是 H20（详见 `status/PAPERB_CORE6_CROSSARCH_FLOOR.md` §flip-count scaling） |
+> | 节点/卡 | **.73 8×H20（zwfy6 盘）GPU 0-7 全占**，实测 17.6-18.5 GiB / 66-98% util |
+> | 起始 | 2026-08-08 **02:28:05** +08:00 |
+> | ETA | **~4-6 h → 约 2026-08-08 06:30-08:30**（4 rungs × 5 harness = 20 harness runs on H20，每 harness ~15-20 min） |
+> | 输入 4 ckpts | keep8: `outputs/olmo2_probe2_7B_keep8fresh2/step121000.pt` (11.4 GB) / keep10: `.../keep10fresh2/step83500.pt` (39.0 GB) / keep12: `.../keep12fresh2/step124000.pt` (43.9 GB) / shortgpt16: `.../shortgpt16/step200000.pt` (48.7 GB)。**任务 text 写 step200000 但 keep8/10/12 从未训到 step200000**（详见 `PAPERB_P24_LADDER_PREV2_EVAL.md` §path correction）；使用 P0.7 audit headline steps |
+> | 输出 output_name | `7B_keep8_step121000_v2` / `7B_keep10_step83500_v2` / `7B_keep12_step124000_v2` / `7B_shortgpt16_step200000_v2`（`_v2` 后缀确保不覆盖 Table 4 引用的既存 summary.json） |
+> | 早期锚点 | keep8 PPL 重跑 = **13.3329**，对 P0.7 audit 表 **13.333** 至 1e-4 精度一致 → harness path 零漂移（PPL 本就 arch-invariant，见 flip-count floor 报告） |
+> | 硬门禁 | `assert_8shards` 在每次 merge 前强制核对 8/8 shard 存在，缺任一即 abort 不 merge（防 5/8 partial-merge silent contamination） |
+> | 每-item 保留 | downstream `--save_per_example` → `per_example_<task>{,_shard{0..7}of8}.jsonl`；mmlu_content/closedbook 默认写；pre/post + cross-arch McNemar / paired bootstrap 具备条件 |
+> | Chat template | `chat_template=False`，`--add_bos 0` 全程 |
+> | Python | `/opt/conda/envs/torch-base/bin/python` torch 2.13.0 |
+> | Driver | `scripts/_run_olmo2_p24_eval_ladder_prev2_73.sh` md5=`7e56545268874b180ef682e7e473734a`（wzc1 + zwfy6 一致） |
+> | PID / log | driver bash `2871872` / `logs/p24_eval_ladder_prev2_73.log` |
+> | 报告 | `status/PAPERB_P24_LADDER_PREV2_EVAL.md` |
+
+> ### (完成 02:02) .73 8×H20 (zwfy6) — `p24_eval_keep14_73`（PaperB P2.4 keep14fresh2 post-SFT eval + pre-SFT gap-fill，8/8 卡 24-25 GiB @ 60-80%）
 > | 项 | 值 |
 > |---|---|
 > | 任务 | **P2.4 keep14fresh2 arm 的 pre/post SFT eval battery**：held-out Dolmino PPL + core6（HellaSwag/ARC-C/ARC-E/PIQA/OBQA/WinoGrande）+ know5（MMLU/Lambada/BoolQ/CSQA/SIQA）+ MMLU dual-protocol（letter+content）+ PopQA/TriviaQA closed-book |
