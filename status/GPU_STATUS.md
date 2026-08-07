@@ -8,7 +8,54 @@
 > 可调度节点 = **4 台 / 32 卡**：**LOCAL + .252（wzc1 盘）/ .73 + .82（zwfy6 盘）**。
 > ⚠️ 连带影响：**zwfy6 侧的 16 卡多机 DDP 只剩 .73+.82 这唯一组合**（原先 .73/.82/.104 任取两台）。
 
-## 当前在跑（2026-08-08 03:58 +08:00 更新）— **LOCAL** P1.2 seed2（~87h）+ **.252** P2.4 **ladder wzc1 keep8+keep12 pre-SFT eval battery**（task #189 5-rung cross-arch audit n=3/n=4；started 03:58, ETA ~2h）+ **.73** P2.4 **ladder pre-SFT _v2 eval battery**（keep8/10/12/shortgpt16 for task #189 flip-count n=5 audit，started 02:28, ETA ~4-6h）；**.252** full-32L SFT ✅ 00:38, shortgpt16 SFT ✅ 01:33, full32+shortgpt16 pre/post-SFT eval ✅ ~03:5x（自动 skip 检测触发退出）; **.73** keep14fresh2 SFT ✅ 01:07, keep14fresh2 pre/post eval ✅ 02:02
+## 当前在跑（2026-08-08 04:35 +08:00 更新）— **LOCAL** P1.2 seed2（~87h）+ **.252** P2.4 ladder wzc1 pre-SFT eval battery（started 03:58, ETA ~2h）+ **.73** P2.4 **keep8 SFT**（zwfy6，n=6 damage-sensitivity ladder；started 04:27, ETA ~35min）+ **.82** P2.4 **keep10 SFT**（zwfy6，n=6 ladder；started 04:31, ETA ~55min）+ **.104** P2.4 **keep12 SFT**（zwfy6，n=6 ladder；started 04:31, ETA ~65min）；ladder pre-SFT _v2 eval on .73 ✅ ~04:xx; full-32L/shortgpt16 SFT + keep14 SFT+eval ✅ 前批
+
+> ### ▶️ .73 8×H20 (zwfy6) — `p24_sft_keep8_zwfy6`（PaperB P2.4 n=6 damage-sensitivity ladder — SFT lowest rung）
+> | 项 | 值 |
+> |---|---|
+> | 任务 | keep8+fresh2 (10L) SFT from `step121000.pt` — byte-identical recipe to completed keep14/shortgpt16 arms; predicts Δ PPL ≈ +14.0% based on n=3 fit (pre-SFT PPL 13.333) |
+> | 节点/卡 | **.73 8×H20（zwfy6 盘）GPU 0-7 全占**, 68.3 GiB/卡 @ 99-100% |
+> | 起始 | 2026-08-08 **04:27:01** +08:00 |
+> | ETA | **~04:59-05:05** (~2.16s/step × 842 = ~30 min after init) |
+> | pre-SFT ckpt | `outputs/olmo2_probe2_7B_keep8fresh2/step121000.pt` (11.4 GB) — Table 4 headline (not step200000 which never existed) |
+> | 输出 | `outputs/olmo2_p24_sft_keep8fresh2/{step500,final}.pt` (paired eval to follow) |
+> | Recipe | BS=1 GA=16 eff_batch=128 seq_len=2048 max_steps=842 lr=1e-5 min_lr=1e-6 warmup=100 wd=0.1 seed=42, fp32 master AdamW + bf16, gradient_checkpointing=1 |
+> | step-1 loss | step 20 = **2.0422** (finite; NaN-fix commit `0fd051a` in play) |
+> | Data md5 | `b1e6fe4e...` (input_ids) / `bf7c5774...` (labels) — matches spec |
+> | Trainer md5 | `02d8b9ead6cafdf5893d6e59df6ad196` — no bnb imports (`grep -c bitsandbytes = 0`) |
+> | PID / log | `2997933` / `logs/p24_sft_keep8.log` |
+> | Driver | `scripts/_run_olmo2_p24_sft_ladder_zwfy6.sh keep8` md5=`62a640b1b3f344226e33d1b98b720e0b` (wzc1 = 3 nodes) |
+> | Report | `status/PAPERB_P24_LADDER_SFT.md` |
+
+> ### ▶️ .82 8×H20 (zwfy6) — `p24_sft_keep10_zwfy6`（PaperB P2.4 n=6 damage-sensitivity ladder — middle rung）
+> | 项 | 值 |
+> |---|---|
+> | 任务 | keep10+fresh2 (12L) SFT from `step83500.pt`; predicts Δ PPL ≈ +13.2% (pre-SFT PPL 12.816) |
+> | 节点/卡 | **.82 8×H20（zwfy6 盘）GPU 0-7 全占**, 77.5 GiB/卡 @ 98-100% |
+> | 起始 | 2026-08-08 **04:30:59** +08:00 |
+> | ETA | **~05:15-05:25** (~7.51s/step × 842 = ~106 min, or ~2.5s/step steady = ~35 min; log will reveal) |
+> | pre-SFT ckpt | `outputs/olmo2_probe2_7B_keep10fresh2/step83500.pt` (39.0 GB) — Table 4 headline |
+> | 输出 | `outputs/olmo2_p24_sft_keep10fresh2/{step500,final}.pt` |
+> | step-1 loss | step 20 = **1.9671** (finite) |
+> | ⚠️ .82 无 bnb | trainer no bnb imports confirmed (`grep -c=0`) so this arm is safe on .82 |
+> | PID / log | `1129375` / `logs/p24_sft_keep10.log` |
+> | Driver | `scripts/_run_olmo2_p24_sft_ladder_zwfy6.sh keep10` |
+
+> ### ▶️ .104 8×H20 (zwfy6) — `p24_sft_keep12_zwfy6`（PaperB P2.4 n=6 damage-sensitivity ladder — top rung of the three）
+> | 项 | 值 |
+> |---|---|
+> | 任务 | keep12+fresh2 (14L) SFT from `step124000.pt`; predicts Δ PPL ≈ +11.0% (pre-SFT PPL 11.443) |
+> | 节点/卡 | **.104 8×H20（zwfy6 盘）GPU 0-7 全占**, 86.9 GiB/卡 @ 100% (highest of the three; still <90 GiB threshold) |
+> | 起始 | 2026-08-08 **04:31:29** +08:00 |
+> | ETA | **~05:30-05:45** (~8.66s/step × 842 = ~121 min at init; will reduce once steady) |
+> | pre-SFT ckpt | `outputs/olmo2_probe2_7B_keep12fresh2/step124000.pt` (43.9 GB) — Table 4 headline (NOT `step111500` which is the wzc1-only cross-arch pair anchor) |
+> | 输出 | `outputs/olmo2_p24_sft_keep12fresh2/{step500,final}.pt` |
+> | step-1 loss | step 20 = **1.8399** (finite) |
+> | ⚠️ .104 之前用户交还 | 但 .104 现在 nvidia-smi 显示 8/8 全空，且本次 SFT 用户明确派单指定；不新增 heartbeat 补卡语义，仅本次任务在此节点跑 |
+> | PID / log | `3187927` / `logs/p24_sft_keep12.log` |
+> | Driver | `scripts/_run_olmo2_p24_sft_ladder_zwfy6.sh keep12` |
+
+
 
 > ### ▶️ .252 8×L20A (wzc1) — `paperB_p24_ladder_wzc1_252`（PaperB P2.4 / task #189 — Table 4 ladder wzc1-side keep8+keep12 pre-SFT eval battery）
 > | 项 | 值 |
