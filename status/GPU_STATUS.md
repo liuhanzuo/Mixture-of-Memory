@@ -8,7 +8,24 @@
 > 可调度节点 = **4 台 / 32 卡**：**LOCAL + .252（wzc1 盘）/ .73 + .82（zwfy6 盘）**。
 > ⚠️ 连带影响：**zwfy6 侧的 16 卡多机 DDP 只剩 .73+.82 这唯一组合**（原先 .73/.82/.104 任取两台）。
 
-## 当前在跑（2026-08-07 21:40 +08:00）— **LOCAL 8 卡 = PaperB P1.2 keep14 SEED 2（~87h 长跑）**；PaperB P2.4（#123）只跑 CPU 段于 .73；.252 + zwfy6 三台仍被他人 dllm EvalPlus 占用
+## 当前在跑（2026-08-07 23:37 +08:00 更新）— **LOCAL** P1.2 seed2（~87h）+ **.252** P2.4 full-32L SFT（~1h）+ **.73** P2.4 keep14fresh2 SFT（~2.2h）
+
+> ### ▶️ .252 8×L20A (wzc1) — `olmo2_p24_sft_full32`（PaperB P2.4 full-32L base SFT，8/8 卡 @100%）
+> | 项 | 值 |
+> |---|---|
+> | 任务 | **PaperB P2.4 三臂之 full-32L base SFT**（sibling agent 说 H20 装不下的 B200-required 臂之一） |
+> | 节点/卡 | **.252 8×L20A（wzc1 盘）GPU 0-7 全占**，maxmem **182 GiB/183 GiB/卡 = 99.3%**（fp32-AdamW 静态 108.8 GB + bf16 forward + gc；H20 97.8GB 装不下 = 派 .252 的原因） |
+> | 起始 | 2026-08-07 **23:32** +08:00 |
+> | ETA | **~59 min → 约 2026-08-08 00:3x**（4.18 s/step × 842 step；L20A ≈ 2.3× H20 速度） |
+> | seed / arm | seed=42 / arm=full32；`--base_model` 走 `load_base_model`（无 `--ckpt`，跳过剪层臂需要的 `final.pt` workaround） |
+> | PID / log | root torchrun `2936878` / `logs/p24_sft_full32.log` |
+> | 输出 | `outputs/olmo2_p24_sft_full32/final.pt`（trainer 保存 arch descriptors `keep=32 fresh=0 layers=32`，Paper B eval harness 可 verbatim 加载） |
+> | 数据 | `data/olmo2_sft/tulu3_general_clean_{input_ids,labels}.npy` (wzc1 副本，md5 与 zwfy6 源逐字节一致，见 `status/PAPERB_P24_FULL32_ARM.md` §3) |
+> | 与 .73 keep14 arm diff | **仅 3 处**：`--arm_name`、无 `--ckpt`（走 full-base 路径）、`--output_dir`；其余 byte-identical（token budget 220,725,248；eff_batch 128；lr 1e-5；seed 42；grad_ckpt 1） |
+> | python | `/opt/conda/envs/torch-base/bin/python3.11` torch 2.13.0 transformers 4.57.6 |
+> | 健康 | step 20 loss=**1.1101**（finite，非 NaN）/ 4.18s/step / maxmem 182 GiB / 8/8 GPU 100% util |
+>
+> ⚠️ 唯一变量 = 起始 checkpoint（full-32L base vs keep14fresh2 healed ckpt）；三臂裁决须等 ShortGPT-16 臂启动 + 三臂 post-SFT eval 完成。
 
 > ### ▶️ LOCAL 8×L20A (wzc1) — `olmo2_probe2_7B_keep14fresh2_seed1234`（占满 8/8 卡，**勿补卡、勿 kill**）
 > | 项 | 值 |
@@ -45,6 +62,7 @@
 > - ⚠️ **P2.4 full-32L 臂在 H20 不可行（硬约束，非调度问题）**：`train_olmo2_sft.py` = **plain DDP + fp32 master + fp32 AdamW**（无 bnb 8bit 路径，`grep -c bitsandbytes`=0），
 >   per-card 静态 = 16 B/param × 7.298B = **108.8 GiB > H20 97.8 GiB**，且 plain DDP 不 shard param/grad/optim → **加卡不降每卡内存**。两个 16L 剪层臂 = 60.5 GiB，可过 H20。
 >   → **full-32L 臂须去 B200（183 GiB）**，或先给 trainer 加 8bit/FSDP。详见 `status/PAPERB_P24_SFT_REPAIRABILITY.md`。
+> - ✅ **2026-08-07 23:32 full-32L 臂已启动于 .252（L20A 183 GiB）**：byte-identical config（唯一 diff = 起始 ckpt = full-base，无 `--ckpt`）；实测 maxmem **182 GiB/卡 = 99.3%**（H20 装不下已交叉验证）；step20 loss 1.1101 finite；ETA ~59 min。详见 `status/PAPERB_P24_FULL32_ARM.md`。
 
 ## 历史快照（2026-08-06 08:35 +08:00）— **32 卡全空闲**，rebuttal-prep sprint 已收工
 
