@@ -1,0 +1,41 @@
+\begin{table}[t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3.2pt}
+\begin{tabular}{@{}lrrrrl@{}}
+\toprule
+\textbf{Operating point} & \textbf{Letter} & \textbf{Content} &
+$\boldsymbol{\Delta}$ \textbf{(pp)} & \textbf{tie} & \textbf{letter vs.} \\
+& & & & \textbf{rate} & \textbf{constant} \\
+\midrule
+Intact base & .6054 & .4706 & $-13.48$ & 0.1\% & $+33.7^{\ast}$ \\
+full32, 25k & .5877 & .4662 & $-12.15$ & 6.4\% & $+31.9^{\ast}$ \\
+keep14, 200k & .3184 & .3832 & $+6.48$ & 24.4\% & $+4.9^{\ast}$ \\
+Frozen, 200k & .2624 & .3604 & $+9.80$ & 19.4\% & $-0.7$ \\
+Random, 200k & .2470 & .3598 & $+11.28$ & 5.8\% & $-2.2^{\dagger}$ \\
+ShortGPT, 200k & .4742 & .4012 & $-7.31$ & 10.4\% & $+20.5^{\ast}$ \\
+\bottomrule
+\end{tabular}
+\caption{\textbf{Interface audit on the same 14,042 MMLU items.}
+All endpoint MMLU values in the paper use this dual-interface snapshot. Content uses
+mean log-likelihood per complete-option token. It raises keep14 by 6.48 points
+(95\% CI $[5.43,7.56]$), but raises Random by 11.28 points
+($[10.24,12.31]$) to essentially the same content score as Frozen. The random
+floor shows that an interface gain cannot by itself certify inherited target
+recovery.
+\emph{Tie rate} is the fraction of items on which the four answer-letter logits
+are indistinguishable in \texttt{bfloat16}, so \texttt{argmax} resolves the item
+by index rather than by preference; logit spread collapses on the damaged arms
+and this reaches 24.4\% for keep14. The last column is letter accuracy minus the
+best constant predictor on this item set (always answer~D, $.2689$), with paired
+McNemar significance at $p<0.05$: $^{\ast}$~above constant,
+$^{\dagger}$~\emph{below} constant. Frozen is statistically indistinguishable
+from the constant predictor, and Random is significantly \emph{worse} than it
+($z=3.84$, $p=1.2\times10^{-4}$; it answers~``A'' on 74.2\% of items). The
+letter interface has therefore stopped measuring knowledge on those two arms, so
+their letter deficits---and hence the $+9.80$ and $+11.28$ content gains
+measured against them---are lower bounds rather than calibrated quantities. The
+content interface stays above its own length-preference control on all six arms
+(always pick the longest option: $.2845$; lowest arm $.3598$).}
+\label{tab:interface-audit}
+\end{table}

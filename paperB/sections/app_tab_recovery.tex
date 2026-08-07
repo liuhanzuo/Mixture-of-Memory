@@ -1,0 +1,51 @@
+\begin{table*}[t]
+\centering
+\small
+\setlength{\tabcolsep}{4.5pt}
+\begin{tabular}{@{}llrrrrr@{}}
+\toprule
+\textbf{Family} & \textbf{Task} & \textbf{chance} & \textbf{base} &
+\textbf{inherited} & \textbf{random init} & \textbf{recovery (\%)} \\
+& & & & \multicolumn{2}{c}{\textit{reported score}} &
+\textit{inherited / random} \\
+\midrule
+surface & ARC-Easy & .25 & .829 & .705 & .697 & $78.6 / 77.2$ \\
+surface & PIQA & .50 & .811 & .745 & .733 & $78.9 / 74.9$ \\
+\midrule
+reasoning & HellaSwag & .25 & .805 & .645 & .578 & $71.1 / 59.1$ \\
+reasoning & ARC-Challenge & .25 & .571 & .438 & .414 & $58.5 / 51.1$ \\
+reasoning & WinoGrande & .50 & .744 & .626 & .545 & $51.6 / 18.4$ \\
+reasoning & OpenBookQA & .25 & .462 & .404 & .384 & $72.6 / 63.2$ \\
+reasoning & LAMBADA & .00 & .732 & .577 & .484 & $78.9 / 66.1$ \\
+reasoning & SocialIQA & .333 & .502 & .434 & .416 & $59.8 / 49.1$ \\
+reasoning & CommonsenseQA & .20 & .665 & .499 & .450 & $64.3 / 53.9$ \\
+\midrule
+in-context & BoolQ & .50 & .815 & .638 & .614 & $43.9 / 36.2$ \\
+\textbf{answer-letter} & \textbf{MMLU} & .25 & .6054 & .3184 & .2470 &
+$\mathbf{19.4 / -1.1}$ \\
+\bottomrule
+\end{tabular}
+\caption{\textbf{Exact above-chance recovery for inherited keep14 and the
+fully random-init control at the matched step $200$k.}
+Recovery is $100(x-c)/(b-c)$ for score $x$, chance $c$, and full-base score
+$b$. Family labels are descriptive: ``surface'' contains ARC-Easy and PIQA;
+``in-context'' denotes passage-grounded BoolQ; ``answer-letter'' denotes the
+MMLU protocol; the remaining tasks are grouped descriptively as ``reasoning.'' Reported scores use character-normalized candidate likelihood for
+HellaSwag, ARC, PIQA, and OpenBookQA and raw accuracy otherwise. The negative
+random-init MMLU value means statistically chance-level performance. The random-init arm also randomizes lexical modules and uses a different learning
+rate, so the table is an operating-point comparison rather than an
+initialization-only or decoder-block-only ablation. Negative recovery denotes a
+score below the chance-adjusted reference.
+The MMLU row carries a caveat the others do not. At this operating point 24.4\%
+of keep14's items have answer-letter logits that are indistinguishable in
+\texttt{bfloat16} (Table~\ref{tab:interface-audit}), so \texttt{argmax} resolves
+them by index. The reported $19.4$ uses that \texttt{argmax} convention;
+recomputing base and keep14 together under three alternatives gives $26.6$
+(exclude tied items), $21.1$ (award $1/k$ on a $k$-way tie), and $3.0$ (count
+ties as incorrect), a $[3.0, 26.6]$ span around the $19.4$ headline. We keep
+\texttt{argmax} for consistency with the rest of the paper and report the span
+rather than choosing the most favorable convention. The remaining rows score
+full candidate continuations rather than single answer letters, so they do not
+concentrate their decision on four nearly-identical logits in the same way.}
+\label{tab:app-recovery}
+\end{table*}
