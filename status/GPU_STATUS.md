@@ -45,19 +45,28 @@
 > | Driver | `scripts/_run_olmo2_p24_sft_ladder_zwfy6.sh keep8` md5=`62a640b1b3f344226e33d1b98b720e0b` (wzc1 = 3 nodes) |
 > | Report | `status/PAPERB_P24_LADDER_SFT.md` |
 
-> ### ▶️ .82 8×H20 (zwfy6) — `p24_sft_keep10_zwfy6`（PaperB P2.4 n=6 damage-sensitivity ladder — middle rung）
+> ### ✅ .82 8×H20 (zwfy6) — `p24_sft_keep10_zwfy6` **DONE 2026-08-08 06:16:12 +08:00**（PaperB P2.4 keep10 SFT — middle rung）
+> keep10+fresh2 SFT finished (step 842, final.pt = 39.0 GiB, no NaN). Post-SFT eval battery launched immediately on same node — see next entry.
+
+> ### ✅ .82 8×H20 (zwfy6) — `p24_eval_sft_keep10_82` **DONE 2026-08-08 06:43:15 +08:00**（PaperB P2.4 keep10 POST-SFT eval battery — n=3 fit FALSIFIED）
 > | 项 | 值 |
 > |---|---|
-> | 任务 | keep10+fresh2 (12L) SFT from `step83500.pt`; predicts Δ PPL ≈ +13.2% (pre-SFT PPL 12.816) |
-> | 节点/卡 | **.82 8×H20（zwfy6 盘）GPU 0-7 全占**, 77.5 GiB/卡 @ 98-100% |
-> | 起始 | 2026-08-08 **04:30:59** +08:00 |
-> | ETA | **~05:15-05:25** (~7.51s/step × 842 = ~106 min, or ~2.5s/step steady = ~35 min; log will reveal) |
-> | pre-SFT ckpt | `outputs/olmo2_probe2_7B_keep10fresh2/step83500.pt` (39.0 GB) — Table 4 headline |
-> | 输出 | `outputs/olmo2_p24_sft_keep10fresh2/{step500,final}.pt` |
-> | step-1 loss | step 20 = **1.9671** (finite) |
-> | ⚠️ .82 无 bnb | trainer no bnb imports confirmed (`grep -c=0`) so this arm is safe on .82 |
-> | PID / log | `1129375` / `logs/p24_sft_keep10.log` |
-> | Driver | `scripts/_run_olmo2_p24_sft_ladder_zwfy6.sh keep10` |
+> | 结果头条 | **pre-PPL 12.8159 → post-PPL 13.9221 ⇒ ΔPPL% = +8.63%**. Predicted +13.18%. **Miss = −4.55 pp** (n=3 fit systematically over-predicts). keep8 also missed by −3.86 pp same direction ⇒ **n=3 linear fit is DEAD**; sub-linear/saturating relationship. |
+> | 节点/卡 | ✅ 已 idle |
+> | 起始 → 结束 | 2026-08-08 **06:24:36 → 06:43:15** +08:00, wall-clock **19 min** (spec ETA 25min, on target) |
+> | pre anchor | `7B_keep10_step83500_v2` on zwfy6 (PPL=12.815923, ANCHOR_OK gate passed pre-launch) |
+> | post ckpt | `outputs/olmo2_p24_sft_keep10fresh2/final.pt` (39.01 GB, step=842 keep=10 fresh=2; 135 tensors loaded `strict=True`) |
+> | 输出 output_name | `7B_p24_sft_keep10fresh2_final` (+`_know`) across 5 result roots (all `summary.json` present) |
+> | Hard gate | `assert_8shards` **5/5 harnesses ✅** (PPL / core6 / know5 / MMLU-dual / closedbook) |
+> | Per-item preds | ✅ all retained; McNemar + 10k paired bootstrap computed on-node |
+> | Downstream deltas (highlights) | core6 avg Δ=+0.03pp (wash) · arc_easy Δ=−3.45pp (p=2.9e−9) · MMLU-letter Δ=−1.82pp (p=5.6e−4) · MMLU-content_norm Δ=−0.43pp (p=0.053, marginal) · **PopQA EM Δ=−1.53pp (p=1.4e−41; b/c=36/254)** · **TriviaQA EM Δ=−5.19pp (p=1.1e−146; b/c=242/1173)** · TriviaQA-contains Δ=−2.95pp (p=4.2e−36) |
+> | SFT-hurts-facts story | ✅ replicated (keep10 is 2nd Table 4 arm confirming SFT tanks closed-book memorised facts while leaving core6 flat and MMLU-content near-null) |
+> | Chat template | `chat_template=False`, `--add_bos 0`, `LOCAL_RANK=0 RANK=$g` per shard ✅ |
+> | Caveat | keep10 pre-anchor `step83500` = 42% of claimed 200k budget (`status/PAPERB_TABLE4_BUDGET_DEFECT.md`). Valid for SFT-delta-on-own-ckpt; NOT comparable to hypothetical keep10@200k SFT delta. |
+> | Python | `/opt/conda/envs/torch-base/bin/python` (3.14.6 + torch 2.13.0) |
+> | Driver | `scripts/_run_olmo2_p24_eval_sft_keep10_82.sh` (mirrors keep8 driver byte-identical except arm/ckpt/output_name) |
+> | Parent bash PID / log | `1215445` (dead) / `logs/p24_eval_sft_keep10_82.log` |
+> | 报告 | `status/PAPERB_P24_SFT_KEEP10_EVAL.md` |
 
 > ### ▶️ .104 8×H20 (zwfy6) — `p24_sft_keep12_zwfy6`（PaperB P2.4 n=6 damage-sensitivity ladder — top rung of the three）
 > | 项 | 值 |
