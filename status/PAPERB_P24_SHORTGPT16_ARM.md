@@ -165,3 +165,35 @@ Step 20 loss = **1.6719 finite** → 通过。
 见 `status/gpu_runs.jsonl`（本 arm 已 append，2026-08-08T00:58:00+0800）与 `status/GPU_STATUS.md`（.252 块已换为 shortgpt16）。
 
 `.73` keep14fresh2 应在 ~01:00 CST 完成（step 740/842 at 00:49 → ETA ~11 min at 9.6 s/step）；本 arm 大约同期完成。**三臂全部完成后即可启动 post-SFT eval battery**。
+
+## Addendum (MAIN, verified 2026-08-08 01:0x CST) — the `final.pt` premise was MAIN's error
+
+MAIN's dispatch brief asserted that ShortGPT-16 "WILL hit" a `final.pt` hardcode and instructed a
+symlink workaround. **That was wrong, and the agent was right to refuse it.** Verified independently:
+
+- `scripts/train_olmo2_sft.py:130` uses `args.ckpt` **directly**. There is no `final.pt` hardcode in
+  the trainer. The hardcode lives only in `_run_olmo2_p24_sft_pipeline.sh`, which none of the three
+  arms invoke.
+- **Origin of MAIN's error**: the trainer's own module docstring (lines 7-8) documents the arms as
+  `--ckpt .../keep14fresh2/final.pt` and `--ckpt .../shortgpt16/final.pt`. MAIN read the docstring as
+  a hard requirement. It is only a usage example, and it is inconsistent with what all three arms
+  actually run.
+- **A real `final.pt` does exist** in `outputs/olmo2_probe2_7B_shortgpt16/` (48,724,467,955 B,
+  Aug 1 16:13) — the healing run's own final save, *not* an agent-created symlink.
+  `readlink -f` returns the file itself. So a blind `ln -s` would have **failed or clobbered a
+  48.7 GB checkpoint.** Refusing the instruction protected an artifact.
+- It is **6,023 bytes smaller** than `step200000.pt` (48,724,473,978 B), which MAIN checked in case
+  the two were different training points. They are not: both load `step=200000`, `epoch=3`,
+  `keep_front_layers=16`, `n_fresh_layers=0`, `arm=shortgpt`,
+  `keep_layer_indices=[0,1,2,3,4,5,6,7,8,9,10,11,12,16,17,31]` — byte-identical metadata. The delta
+  is optimizer/serialization overhead, not weights.
+
+**Both pruned arms load symmetrically**, confirmed from each run's own log line:
+- `.73` keep14fresh2: `[pruned] loaded ckpt step=200000 keep_front=14 n_fresh=2 num_hidden_layers=16 (179 tensors, strict)` from `keep14fresh2/step200000.pt`
+- `.252` shortgpt16: `[pruned] loaded ckpt step=200000 keep_front=16 n_fresh=0 num_hidden_layers=16 (179 tensors, strict)` from `shortgpt16/step200000.pt`
+
+Same `179 tensors, strict`, same step, same shell depth (16L). Single-variable discipline intact.
+
+**Action for whoever writes P2.4 up**: the trainer docstring lines 7-8 should be corrected to say
+`step200000.pt`, since `final.pt`-as-requirement is what produced this false premise. MAIN did not
+edit it here because the `.73` arm is mid-training against the current file.
