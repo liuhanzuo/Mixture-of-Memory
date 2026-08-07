@@ -15,7 +15,7 @@
 **当前只有 5 个节点 = 40 卡，但 ⚠️ 分属【两个物理盘】，不是"全部共享 wzc1"。**
 
 > **★★ 2026-08-04 实测纠正（旧文档「5 台全部共享 wzc1、互相无需 rsync」是错的，已让多个 agent 白跑，务必按本条执行）：**
-> - **wzc1 盘 = 本机 LOCAL + .252**（两台 B200 级，真共享 `/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/`，互相无需 rsync）。
+> - **wzc1 盘 = 本机 LOCAL + .252**（两台 **L20A cc10.0 同型**，真共享 `/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/`，互相无需 rsync）。
 > - **zwfy6 盘 = .73 / .82 / .104**（三台 H20，真实 root = `/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/`）。它是**另一份独立 checkout、commit 常落后**（实测 `2d98c5a`，且非 local HEAD 的祖先）。
 > - **陷阱 1（.73）**：`/apdcephfs_wzc1` 在 .73 上是**指向 zwfy6 的 symlink** —— wzc1 路径字符串"看着能用"，但物理盘不同于 LOCAL/.252，**写进去 LOCAL 看不到**。.73 的 PROJECT_ROOT 应写 zwfy6 路径。
 > - **陷阱 2（.82）**：`/apdcephfs_wzc1` 在 .82 上**根本不存在**。
@@ -29,11 +29,18 @@
 
 | # | 节点 | IP:端口 | 硬件 | 密码文件 | Python |
 |---|------|---------|------|---------|--------|
-| 1 | 本机 (local, wzc1) | 本地直连 | 8×L20A（B200 级，183GB/卡） | — | `.venv/bin/python`（torch2.10+cu128，支持 L20A sm_100） |
-| 2 | .252 | `28.89.19.252` **:36000** | 8×B200 | `configs/password_b200_19252.txt` | `.venv/bin/python` |
+| 1 | 本机 (local, wzc1) | 本地直连 | 8×L20A（cc 10.0，183GB/卡） | — | `.venv/bin/python`（torch2.10+cu128，支持 L20A sm_100） |
+| 2 | .252 | `28.89.19.252` **:36000** | 8×**L20A**（cc 10.0，183GB/卡）—— 与 LOCAL **同型**，不是 B200 | `configs/password_b200_19252.txt` | `.venv/bin/python` |
 | 3 | .73 | `28.85.35.73` :36000 | 8×H20（97.8GB） | `configs/password_h20_853573.txt` | `/opt/conda/envs/torch-base/bin/python` |
 | 4 | .82 | `28.82.250.82` :36000 | 8×H20 | `configs/password_h20_82250.txt` | `/opt/conda/envs/torch-base/bin/python` |
 | 5 | .104 | `28.83.24.104` :36000 | 8×H20 | `configs/password_h20_24104.txt` | `/opt/conda/envs/torch-base/bin/python` |
+
+> **⚠️⚠️ 2026-08-07 实测纠正（旧文档多处写「.252 = 8×B200」「本机+.252 两台 B200 级」是错的）**：
+> `nvidia-smi` 实测 **LOCAL 与 .252 都是 `NVIDIA L20A`、compute_cap `10.0`、183359 MiB —— 完全同型**。
+> `.252` 上 torch 2.13.0。**没有任何一台是 B200。** 三台 H20 是 `NVIDIA H20` cc `9.0`。
+> **后果**：LOCAL 与 .252 之间的「跨节点」对比**只能测盘/checkout，测不到硬件架构差异**（同 arch）。
+> 真正的跨架构对比是 **L20A(cc10.0) vs H20(cc9.0)**，即 {LOCAL,.252} vs {.73,.82,.104}。
+> 此前把 .252 当作「另一种架构」的推理全部无效。
 
 - **SSH 通式**：`sshpass -f <密码文件> ssh -o StrictHostKeyChecking=no -o ConnectTimeout=12 -o PreferredAuthentications=password root@<IP>`（**不要显式写 `-p`**）。
   > ⚠️⚠️ **2026-08-06 实测纠正（旧文档写「.252 走默认 22 端口」是错的，害我误判 13 小时）**：本机 `/etc/ssh/ssh_config` 有全局 `Host * / Port 36000`，所以**省略 `-p` 时 ssh 已经走 36000**。
@@ -184,7 +191,7 @@ git commit 只包含实际修改内容的描述，不附加任何 AI 署名行�
 
 **当只有一个训练任务时，必须尽量使用多个节点来最大化效率。**
 
-- 当前有 5 个节点 = 40 卡（本机 + .252 两台 B200 级 + .73/.82/.104 三台 H20），闲置节点是浪费
+- 当前有 5 个节点 = 40 卡（本机 + .252 两台 L20A + .73/.82/.104 三台 H20），闲置节点是浪费
 - 单任务训练时，优先考虑 **多机多卡 DDP**（torchrun `--nnodes N --rdzv_backend c10d --rdzv_endpoint <master_ip>:29500`）
 - 若多机配置复杂（数据 sharding / 脚本不支持），退而求其次使用 **gradient accumulation** 提升单节点有效 batch size，目标 GPU mem bandwidth ≥ 70%
 - **GPU mem bandwidth < 50% 视为欠载**，必须在 heartbeat 报告中标注 WARNING 并提出扩展方案
@@ -291,13 +298,13 @@ configs/
 
 | # | 节点 | 硬件 | Python |
 |---|------|------|--------|
-| 1 | 本机 (local, wzc1) | 8×L20A（B200 级，183GB/卡） | `.venv/bin/python` |
-| 2 | .252 (`28.89.19.252` **:36000**) | 8×B200 | `.venv/bin/python` |
+| 1 | 本机 (local, wzc1) | 8×L20A（cc 10.0，183GB/卡） | `.venv/bin/python` |
+| 2 | .252 (`28.89.19.252` **:36000**) | 8×**L20A**（cc 10.0，183GB/卡，与 LOCAL 同型） | `.venv/bin/python` |
 | 3 | .73 (`28.85.35.73` :36000) | 8×H20（97.8GB） | `/opt/conda/envs/torch-base/bin/python` |
 | 4 | .82 (`28.82.250.82` :36000) | 8×H20 | `/opt/conda/envs/torch-base/bin/python` |
 | 5 | .104 (`28.83.24.104` :36000) | 8×H20 | `/opt/conda/envs/torch-base/bin/python` |
 
-- 本机 + .252 是 B200 级（183GB/卡），显存大，适合重型 8B+memory 训练；.73/.82/.104 是 H20（97.8GB），1B 训练无压力，8B+memory 需 gradient_checkpointing。
+- 本机 + .252 是 L20A cc10.0（183GB/卡，同型），显存大，适合重型 8B+memory 训练；.73/.82/.104 是 H20（97.8GB），1B 训练无压力，8B+memory 需 gradient_checkpointing。
 - SSH / 密码文件见顶部「🖥️ 当前 GPU 集群」表与 SSH 通式（**四节点一律省略 `-p`**，全局 ssh_config 已设 `Port 36000`；**.252 写 `-p 22` 会被拒**，见顶部纠正条）。
 - ⚠️ **dllm 节点 `29.162.226.120` 已归还，绝不连。**
 
@@ -306,7 +313,7 @@ configs/
 | 任务类型 | 推荐节点 |
 |---------|----------|
 | 主训练 / baseline / eval / inference | 任一节点（5 台共享 wzc1 盘） |
-| 重型 8B+memory 训练 | **本机 或 .252**（B200 级 183 GiB 空间更大） |
+| 重型 8B+memory 训练 | **本机 或 .252**（L20A 183 GiB 空间更大） |
 | 多机 16 卡加速单个关键实验 | H20 三台（.73/.82/.104）任取两台，或本机 + .252 |
 
 ---
@@ -331,7 +338,7 @@ configs/
 
 用户明确要求:**"我们的卡很多, 我希望你可以以最大的效率利用他们"**。
 
-- 当前有 5 个节点 = 40 卡（本机 + .252 两台 B200 级 + .73/.82/.104 三台 H20）
+- 当前有 5 个节点 = 40 卡（本机 + .252 两台 L20A + .73/.82/.104 三台 H20）
 - **不同节点可以并行跑不同实验**(red line #5 说的是同一节点不能双开)
 - 当一类工作(例如 memory 架构实现)在推进时,**旧线索(WikiText rank sweep 等)不能停**
 - 如果架构训练需要 1 个 8-GPU 节点,就让其余节点继续跑 baseline / eval / sweep
