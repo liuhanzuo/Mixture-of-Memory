@@ -103,11 +103,18 @@ Did not touch: `.tex`, `versions/*.md`, `paperB/TODOList.md`, `status/PAPERB_P24
 
 Filled as batteries land. Empty placeholders now; the driver's shard invariant ensures the numbers are only visible after 8/8 shards merge.
 
-### Leg 1 — full32 pre-SFT (`7B_full32_base_wzc1`)
+### Leg 1 — full32 pre-SFT (`7B_full32_base_wzc1`) — PPL + core6 DONE @ 02:04
 
-- [ ] PPL:           `olmo2_ppl_results/7B_full32_base_wzc1/summary.json`  (expect ≈ 7.398)
-- [ ] core6:         `olmo2_downstream_results/7B_full32_base_wzc1/summary.json`
-- [ ] know5:         `olmo2_downstream_results/7B_full32_base_wzc1_know/summary.json`  (MMLU expect ≈ 0.6053)
+- [x] **PPL = 7.398071** (paper Table 4: 7.398 ✓ **exact match, 6-decimal**) — cross-disk harness is stable; `n_windows=4096 n_tokens=8384512`.
+- [x] **core6** (`acc_norm` for hs/arcc/arce/piqa/obqa, `acc` for wg):
+  - hellaswag: acc_norm=**0.8048** (acc=0.6035, n=10042)
+  - arc_challenge: acc_norm=**0.5725** (acc=0.5410, n=1172)
+  - arc_easy: acc_norm=**0.8283** (acc=0.8237, n=2376)
+  - piqa: acc_norm=**0.8107** (acc=0.8090, n=1838)
+  - winogrande: acc=**0.7459** (n=1267)
+  - openbookqa: acc_norm=**0.4620** (acc=0.3700, n=500)
+  - **core6 avg ≈ 0.7040**
+- [ ] know5:         `olmo2_downstream_results/7B_full32_base_wzc1_know/summary.json`  (MMLU expect ≈ 0.6053) — running now
 - [ ] MMLU dual:     `olmo2_mmlu_content_results/7B_full32_base_wzc1/summary.json`
 - [ ] closedbook:    `olmo2_closedbook_results/7B_full32_base_wzc1/summary.json`
 
