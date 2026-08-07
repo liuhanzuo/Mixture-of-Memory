@@ -148,12 +148,26 @@ def main():
     buf_ids: list[int] = []
     buf_lab: list[int] = []             # token id where supervised else -100
 
+    n_rows_dropped_zero_sup = 0
+
     def _flush_full():
+        # ★ A packed row MUST contain >=1 supervised token. We pack by
+        # CONCATENATION across conversation boundaries, and the any(mask) check
+        # upstream is PER CONVERSATION -- so an [L]-token row can still land
+        # entirely inside an unsupervised span (e.g. a long user turn), yielding
+        # an all -100 label row. F.cross_entropy(..., ignore_index=-100) on an
+        # all-ignored target returns NaN, and under DDP that NaN all-reduces into
+        # every rank's gradients and poisons ALL weights (observed 2026-08-07:
+        # 14330/122070 = 11.74% such rows -> loss=nan from step 1).
+        nonlocal n_rows_dropped_zero_sup
         while len(buf_ids) >= L:
             chunk_ids = np.asarray(buf_ids[:L], dtype=np.uint32)
             chunk_lab = np.asarray(buf_lab[:L], dtype=np.int32)
-            packed_ids.append(chunk_ids)
-            packed_lab.append(chunk_lab)
+            if bool((chunk_lab != -100).any()):
+                packed_ids.append(chunk_ids)
+                packed_lab.append(chunk_lab)
+            else:
+                n_rows_dropped_zero_sup += 1
             del buf_ids[:L]
             del buf_lab[:L]
 
@@ -236,6 +250,7 @@ def main():
         "tokenizer_path": args.tokenizer_path,
         "eos_id": eos_id,
         "n_sequences": int(ids_arr.shape[0]),
+        "n_rows_dropped_zero_supervised": n_rows_dropped_zero_sup,
         "n_conversations_used": n_used,
         "n_conversations_seen": n_seen,
         "n_conversations_denied": n_denied,
