@@ -60,3 +60,17 @@ HE+/MBPP+ 2.82× discrepancy is a measured, unexplained benchmark asymmetry. It 
 - HE+ cells: `wzc1:dllm_draft/runs/sampler_audit_mirror/summary.json`
 - Driver + full planned cell list: `.82:.../dllm_draft_104/scripts/_run_sampler_audit_mbpp_82.sh` (lines 92–128)
 - Related corrections found in the same pass: see `DLLM_RESULTS_20260807.md` retractions 8 and 9.
+
+## Addendum — G2 (rank transfer) and the p-value convention
+
+G2 required Spearman ρ ≥ 0.70 **and** p < 0.05 between HE+ and MBPP+ over distinct plausible cells.
+Measured over the 5 distinct plausible points (`entropy`/`maskgit_plus`/`topk_margin` at the
+reference cell are byte-identical, so they are one point, not three):
+
+- ρ = **0.6000**
+- exact permutation p, **one-sided = 0.1750**; **two-sided = 0.3500** (120 permutations, n=5)
+
+**G2 is NOT met on either convention.** State the sidedness whenever this is quoted — an unlabelled
+`0.1750` reads as two-sided to a reviewer, and the two-sided figure is twice that. The same
+labelling discipline applies to the McNemar values elsewhere in this direction (those are
+two-sided exact binomial: dLLM p=0.3877, AR p=0.3438).

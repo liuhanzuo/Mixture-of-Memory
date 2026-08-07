@@ -38,16 +38,19 @@ The three nearest measured quantities are three *different* measures at three
 |---|---|---|---|
 | 0.802 | `i40 icc_embed` (4B-**Instruct**) | 0.8012 | 0.0008 |
 | 0.848 | `b06 icc_embed` (0.6B-**Base**) | 0.8463 | 0.0017 |
-| 0.487 | `b17 icc_env` (1.7B-**Base**) | 0.4827 | 0.0043 |
+| 0.487 | `b17 icc_score_nested.icc_env` (1.7B-**Base**) | 0.4873 | 0.0003 |
 
-Three different estimators (`icc_embed`, `icc_embed`, `icc_env`) at three
+Three different estimators (`icc_embed`, `icc_embed`, `icc_score_nested.icc_env`) at three
 different model cells (4B-Instruct, 0.6B-Base, 1.7B-Base) — and the pin presented
 them as one ladder over scale at fixed tuning family. **There is no single
 estimator, and no single model family, under which these three numbers are a
 ladder.** So the triplet cannot be relabeled into correctness; it has to be
 retired outright. (Re-derived from
-`dllm_draft/runs/icc_track_c/seeds_*.json`, 5-seed means, exhaustive nearest-match
-scan over all 550 icc-valued scalars in the track's artifacts.)
+`dllm_draft/runs/icc_track_c/seeds_*.json` and `res_*.json`, 5-seed means, exhaustive
+nearest-match scan over all icc-valued scalars in the track's artifacts. The 0.487 row
+was itself corrected once: the nearest quantity is `res_b17.json icc_score_nested.icc_env`
+= 0.487327, diff 3e-4, closer than the 5-seed `icc_env` mean 0.4827 recorded earlier.
+Same model and measure family, so the conclusion is unchanged.)
 
 ---
 
@@ -95,16 +98,28 @@ Read the columns, not the diagonal. **Within Instruct, ICC is STRICTLY monotone 
 (.880 → .862 → .845 → .808)** — verified strictly decreasing at every step. Within Base it is
 non-monotone and noisy (.877 → .501 → .652 → .518). The pin's ladder mixed one Base checkpoint (8B)
 into three Instruct ones, so the "drop at 8B" is the Base column being read as the continuation of
-the Instruct column. At **fixed 8B scale**, swapping Base→Instruct moves ICC by **+0.2899 = 37x the
-pooled seed sd (0.0079)** — far larger than anything scale does, and in the *opposite* direction to
+the Instruct column. At **fixed 8B scale**, swapping Base→Instruct moves ICC by **+0.2899 = 36.5x the
+pooled per-cell seed sd (0.007935)** — far larger than anything scale does, and in the *opposite* direction to
 the pin's interpretation (bigger model → *lower* ICC within a tuning family).
 **There is no scale effect to explain.**
 
-> Multiplier correction: this was previously written as **46x**. The 0.2899 gap is right; the
-> multiplier was not. 46x came from dividing by the mean of the two *population* sds (0.0064).
-> The pooled (ddof=1) seed sd is **0.0079** (`icc_score`: Base sd 0.0107, Instruct sd 0.0035,
-> n=5 each), giving **0.2899 / 0.0079 = 37x**. Use **37x**. The qualitative point is unchanged
-> and does not depend on the convention.
+> Multiplier correction, and the convention must be stated because this number has now been
+> written four different ways. The **gap 0.289914 is stable** (8B Inst 0.807778 − 8B Base 0.517864,
+> `seeds_i80.json` / `seeds_b80.json`, n=5 each); only the denominator moved:
+>
+> | denominator | value | multiplier | where it came from |
+> |---|---:|---:|---|
+> | mean of two *population* sds | 0.0064 | 46x | the original, **wrong** (ddof=0) |
+> | Base-only rounded sd | 0.010 | 29x | §6's stray third figure, **wrong** (one cell) |
+> | pooled sd of the two 8B cells | 0.007935 | **36.5x** | defensible: matches the compared cells |
+> | pooled sd of all 8 crossed cells | 0.007935 | **36.5x** | defensible: the grid-wide floor |
+>
+> Both defensible conventions give **36.5x** — they coincide to 4 decimals here. Earlier text said
+> 37x, which is 0.2899/0.0079 using the sd *pre-rounded to 2 significant figures*; that rounding
+> inflates it by 0.2. **Report 36.5x** (or "~36x"), and state that it is the gap over the pooled
+> per-cell seed sd. Do not quote a bare multiplier without the denominator — that ambiguity is
+> exactly what produced 46x, 29x, and 37x for one unchanged gap.
+> The qualitative point is unaffected: the Base→Instruct swap at fixed scale dwarfs seed noise.
 
 Sanity check that this is not an artifact of my protocol: the embedding ICC is nearly flat across
 the whole grid, 0.772–0.846, i.e. **it cannot produce the pin's .802/.848/.487 spread either** —
@@ -214,8 +229,8 @@ Two mandatory caveats, or this number will not survive review:
 
 - **The claim "ICC ≈ 0.8 measures trajectory structure" is already dead** (§3, §4). Any reviewer
   who fits a nested model or ablates the shared prefix gets 0.04–0.15, not 0.8.
-- **The scale story is dead** (§2). Base-vs-instruct at fixed 8B is **37x the pooled seed sd**
-  (0.2899 / 0.0079); scale within Instruct is flat-to-decreasing.
+- **The scale story is dead** (§2). Base-vs-instruct at fixed 8B is **36.5x the pooled per-cell seed sd**
+  (0.289914 / 0.007935); scale within Instruct is flat-to-decreasing.
 - The surviving, defensible claim is the **concentration pathology + the ~3x information loss of
   RDS+ vs random at equal budget**. To kill *that*, one would need to show it does not survive a
   cap-1 constraint (it does not — that is the known one-line fix, deliberately not pursued here),
