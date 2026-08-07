@@ -107,10 +107,29 @@ Sources: `wzc1:olmo2_downstream_results/7B_full32_base_wzc1/`, `zwfy6:olmo2_down
 
 ## Paper provenance, now pinned
 
-**Table 4's base row `0.7037` is the H20 number** (`zwfy6:7B_base_full` = `.70368`). The wzc1/L20A
-measurement of the same checkpoint is `.70402`. So the base row and the keep14 row (`.5938`, also
-H20 — `zwfy6` anchor) are at least *consistent with each other* in architecture. That is the good case,
-and it is what the Table 4 audit (task #189) must confirm for **every** rung, not just these two.
+> ### ⛔ CORRECTION (MAIN, ~04:3x CST) — the paragraph below originally said the wrong thing
+>
+> The text as first written claimed the keep14 row was "**also H20 — `zwfy6` anchor**" and that base
+> and keep14 were therefore "*consistent with each other* in architecture… the good case."
+> **That was false, and it contradicted this document's own earlier section.** Caught by the synthesis
+> agent (`a0dca402`) and re-verified by MAIN:
+>
+> | Table 4 row | paper value | matching source | arch |
+> |---|---|---|---|
+> | base full-32L | `.7037` | `zwfy6:7B_base_full` = `.70368` | **H20 cc9.0** |
+> | keep14 | `.5938` | `wzc1:7B_keep14_step200000` = `.59376` | **L20A cc10.0** |
+>
+> The zwfy6 keep14 measurement is `.59532`, which rounds to `.5953` — **not** the paper's `.5938`.
+> So the two rows come from **different architectures**, which is the *bad* case, not the good one.
+> This is the same conclusion MAIN reached at ~01:2x CST; the 02:1x addendum then restated it
+> backwards. The earlier finding stands; this paragraph was the error.
+
+**Table 4's base row `0.7037` is the H20 number** (`zwfy6:7B_base_full` = `.70368`); the wzc1/L20A
+measurement of the same checkpoint is `.70402`. **Table 4's keep14 row `0.5938` is the L20A number**
+(`wzc1` = `.59376`); the H20 measurement of the same weights is `.59532`. The two rows are therefore
+**measured on different GPU architectures**, and the full per-rung attribution is in
+`status/PAPERB_TABLE4_ARCH_AUDIT.md` (task #189): base/keep10/keep12/ShortGPT-16 = H20,
+keep8/keep14 = L20A. Six rows, two architectures, mixed.
 
 PPL is unaffected: full32 pre-SFT PPL reproduced as **7.398071** against the paper's **7.398** — exact.
 Consistent with the mechanism: summed-NLL averages the bf16 jitter, whereas core6 thresholds it

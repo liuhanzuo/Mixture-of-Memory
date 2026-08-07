@@ -126,3 +126,34 @@ still says "compute-matched" or "same budget", plus the `paperB/TODOList.md:267`
 - PPL: `olmo2_ppl_results/*/summary.json` on both disks.
 - MMLU per-example shard mtimes: `stat -c '%y'` on both disks; md5 confirms the merged summaries are copies.
 - Contamination-audit provenance for the P0.7 CSV: `paperB/P0_7_aggregate_audit.csv:1-11`.
+
+---
+
+## MAIN verification pass (~04:4x CST)
+
+**CONFIRMED by independent recomputation** — the cross-rung disk mixing. I re-derived core6 myself
+(`acc_norm` ×5 + WinoGrande `acc`) and matched to Table 4's precision:
+
+| rung | Table 4 | matching source | disk/arch |
+|---|---|---|---|
+| base full-32L | `.7037` | `zwfy6:7B_base_full` = `.70368` | H20 |
+| keep8 | `.5238` | `wzc1:7B_keep8_step121000` = `.52377` | **L20A** |
+| keep14 | `.5938` | `wzc1:7B_keep14_step200000` = `.59376` | **L20A** |
+
+The rival measurements round differently and so are excluded: `wzc1` base = `.70402` → `.7040`;
+`zwfy6` keep8 v2 = `.52328` → `.5233`; `zwfy6` keep14 = `.59532` → `.5953`. **Table 4 mixes
+architectures across rungs — verified, not inferred.**
+
+**NOT CONFIRMED — one sub-claim needs re-checking before it is used.** The report states MMLU
+per-example shards "exist only on zwfy6 (wzc1 summaries are byte-identical copies with mtime 11 min
+later)", concluding keep8's row pairs L20A core6 against H20 MMLU. My spot-check does not reproduce
+the stated evidence: `wzc1:olmo2_downstream_results/7B_keep8_step121000_know/` contains its own
+`shard0of8.json` … `shard7of8.json` (mtime Aug 2 13:05, same as its `summary.json`), and **neither**
+disk has any `per_example_*.jsonl` in that directory (0 files on both). So the "copied summary with no
+local shards" signature isn't what I observe there.
+
+The *within-row* mixing claim may still be right — it would need per-rung shard-provenance evidence
+(compare shard file mtimes/hashes across disks per rung, not just the summary) — but as written the
+supporting evidence does not hold up on the rung I checked. **Do not put within-row mixing in the paper
+until that is re-derived.** The cross-rung mixing above is solid and is sufficient on its own to
+require the fix.
