@@ -23,16 +23,31 @@ the task called "the finding" is an artifact of two conflated things.**
 | RDS+ max from ONE traj = 71 | **74.8 ± 14.7 (i17)** — range **48–89** over 5 seeds | **PASS in mean, but "71" is not a stable statistic** |
 | RDS+ benchmarks hit = 14 | **16.4 ± 0.5 (i17)** | marginal |
 | RDS+ top-3 share 78.0% | **79.4 ± 1.7** | **PASS** |
-| **ICC = 0.802 (1.7B) / 0.848 (4B) / 0.487 (8B-Base)** | **see §2 — mislabeled quantity** | **FAIL** |
-| **"ICC on the selection score"** | the three pin values are **embedding ICCs**, not score ICCs | **FAIL** |
+| **ICC = 0.802 (1.7B) / 0.848 (4B) / 0.487 (8B-Base)** | **see §2 — not any single coherent measure** | **FAIL** |
+| **"ICC on the selection score"** | wrong label, but the replacement label "embedding ICCs" is **also wrong** — see §2 | **FAIL** |
 
-The pin's ICC triplet is closest to the **multivariate embedding** ICC, not the selection-score
-ICC. Direct evidence: the surviving prior artifact `/tmp/icc/E17.npy` (12,000 x 2048) rerun through
-the prior `measure.py` gives **0.7722**, and my independently re-embedded Qwen3-1.7B-**Instruct**
-restricted to the same 12K prefix gives **ICC_embed = 0.7724** (full pool 0.7738) — reproducing the
-prior pipeline to 2e-4. The pin reported "0.802" for that cell. Meanwhile the *selection-score* ICC
-for the same model/protocol is **0.873**. So "0.802" matches neither cleanly; it is in the
-embedding-ICC family and the label "ICC on the selection score" is wrong.
+**The pin's ICC triplet is retired, and the reason is neither of the two reasons
+previously recorded.** It is not "these are embedding ICCs, mislabeled" (this
+document's earlier claim), and it is not "these ARE selection-score ICCs matching
+to 2e-4" (a skeptic's counter-claim). **Neither holds.** The actual reason is
+worse for the pin than either: **the triplet is not any single coherent measure.**
+The three nearest measured quantities are three *different* measures at three
+*different* cells:
+
+| pin value | nearest measured quantity | value | abs diff |
+|---|---|---|---|
+| 0.802 | `i40 icc_embed` (4B-**Instruct**) | 0.8012 | 0.0008 |
+| 0.848 | `b06 icc_embed` (0.6B-**Base**) | 0.8463 | 0.0017 |
+| 0.487 | `b17 icc_env` (1.7B-**Base**) | 0.4827 | 0.0043 |
+
+Three different estimators (`icc_embed`, `icc_embed`, `icc_env`) at three
+different model cells (4B-Instruct, 0.6B-Base, 1.7B-Base) — and the pin presented
+them as one ladder over scale at fixed tuning family. **There is no single
+estimator, and no single model family, under which these three numbers are a
+ladder.** So the triplet cannot be relabeled into correctness; it has to be
+retired outright. (Re-derived from
+`dllm_draft/runs/icc_track_c/seeds_*.json`, 5-seed means, exhaustive nearest-match
+scan over all 550 icc-valued scalars in the track's artifacts.)
 
 ---
 
@@ -80,15 +95,21 @@ Read the columns, not the diagonal. **Within Instruct, ICC is STRICTLY monotone 
 (.880 → .862 → .845 → .808)** — verified strictly decreasing at every step. Within Base it is
 non-monotone and noisy (.877 → .501 → .652 → .518). The pin's ladder mixed one Base checkpoint (8B)
 into three Instruct ones, so the "drop at 8B" is the Base column being read as the continuation of
-the Instruct column. At **fixed 8B scale**, swapping Base→Instruct moves ICC by **+0.290 = 46x the
-pooled seed sd (0.0064)** — far larger than anything scale does, and in the *opposite* direction to
+the Instruct column. At **fixed 8B scale**, swapping Base→Instruct moves ICC by **+0.2899 = 37x the
+pooled seed sd (0.0079)** — far larger than anything scale does, and in the *opposite* direction to
 the pin's interpretation (bigger model → *lower* ICC within a tuning family).
 **There is no scale effect to explain.**
 
-Sanity check that this is not an artifact of my protocol: the embedding ICC (the quantity the pin
-actually reported) is nearly flat across the whole grid, 0.772–0.846, i.e. **it cannot produce the
-pin's .802/.848/.487 spread either**. The pin's spread is not a stable property of any single
-estimator in this design.
+> Multiplier correction: this was previously written as **46x**. The 0.2899 gap is right; the
+> multiplier was not. 46x came from dividing by the mean of the two *population* sds (0.0064).
+> The pooled (ddof=1) seed sd is **0.0079** (`icc_score`: Base sd 0.0107, Instruct sd 0.0035,
+> n=5 each), giving **0.2899 / 0.0079 = 37x**. Use **37x**. The qualitative point is unchanged
+> and does not depend on the convention.
+
+Sanity check that this is not an artifact of my protocol: the embedding ICC is nearly flat across
+the whole grid, 0.772–0.846, i.e. **it cannot produce the pin's .802/.848/.487 spread either** —
+which is part of why the triplet is retired as "not any single coherent measure" (§0) rather than
+merely relabeled. The pin's spread is not a stable property of any single estimator in this design.
 
 ---
 
@@ -193,8 +214,8 @@ Two mandatory caveats, or this number will not survive review:
 
 - **The claim "ICC ≈ 0.8 measures trajectory structure" is already dead** (§3, §4). Any reviewer
   who fits a nested model or ablates the shared prefix gets 0.04–0.15, not 0.8.
-- **The scale story is dead** (§2). Base-vs-instruct at fixed 8B is 29 seed-sd; scale within
-  Instruct is flat-to-decreasing.
+- **The scale story is dead** (§2). Base-vs-instruct at fixed 8B is **37x the pooled seed sd**
+  (0.2899 / 0.0079); scale within Instruct is flat-to-decreasing.
 - The surviving, defensible claim is the **concentration pathology + the ~3x information loss of
   RDS+ vs random at equal budget**. To kill *that*, one would need to show it does not survive a
   cap-1 constraint (it does not — that is the known one-line fix, deliberately not pursued here),
