@@ -8,7 +8,45 @@
 > 可调度节点 = **4 台 / 32 卡**：**LOCAL + .252（wzc1 盘）/ .73 + .82（zwfy6 盘）**。
 > ⚠️ 连带影响：**zwfy6 侧的 16 卡多机 DDP 只剩 .73+.82 这唯一组合**（原先 .73/.82/.104 任取两台）。
 
-## 当前在跑（2026-08-06 08:35 +08:00）— **32 卡全空闲**，rebuttal-prep sprint 已收工
+## 当前在跑（2026-08-07 21:40 +08:00）— **LOCAL 8 卡 = PaperB P1.2 keep14 SEED 2（~87h 长跑）**；PaperB P2.4（#123）只跑 CPU 段于 .73；.252 + zwfy6 三台仍被他人 dllm EvalPlus 占用
+
+> ### ▶️ LOCAL 8×L20A (wzc1) — `olmo2_probe2_7B_keep14fresh2_seed1234`（占满 8/8 卡，**勿补卡、勿 kill**）
+> | 项 | 值 |
+> |---|---|
+> | 任务 | **Paper B P1.2「训练 seed 方差」第 2 个 seed**（keep14+fresh2 7B healing 复制臂） |
+> | 节点/卡 | **LOCAL 8×L20A（wzc1 盘）GPU 0-7 全占**，maxmem **122.3GB/卡**（= 原 run 实测值，L20A 183GB 够；**H20 97.8GB 放不下 → .73/.82 永远不要试**） |
+> | 起始 | 2026-08-07 **21:39** +08:00 |
+> | ETA | **~87h → 约 2026-08-11 12:4x**（1.56s/step × 200k step，与原 run 同速） |
+> | seed | **1234**（原 run = **无 seed/未记录**：当时 trainer afdfa66 根本没 set_seed，`--seed` 是 2026-08-03 c57c4cb 才加的） |
+> | PID / log | `4155272` / `logs/olmo2_7B_keep14fresh2_seed1234.log` |
+> | 输出 | `outputs/olmo2_probe2_7B_keep14fresh2_seed1234`（**不是** 原 run 的 `..._keep14fresh2`，未覆盖论文 ckpt） |
+> | launcher | `scripts/run_olmo2_7B_keep14_seed2.sh`（commit `5db5d30`） |
+> | python | `/opt/conda/envs/torch-base/bin/python` torch 2.13.0 — ⚠️ **LOCAL `.venv` 已无 torch（2026-08-07 实测）** |
+> | 健康 | step80 loss=6.6148 / 1.56s/step / maxmem=122.3GB / sanity ALL 6 CHECKS PASS |
+>
+> **⚠️ 唯一变量 = fresh-block init，且 LR 写法必须是 `--lr 2e-5` 不是原 run 字面的 `--lr 1e-4`**：原 run 的差分 LR 是
+> **no-op**（`build_param_groups` 在 DDP wrap 之后跑，而当时 `_classify_param` 没剥 `module.` 前缀 → 4060.1M 参数
+> 全落进 `inh_*` @2e-5，原 log 只有 `inh_decay`+`inh_nodecay` 两组）。今天 trainer 已修，字面重放 `--lr 1e-4` 会
+> **真的**造出 1e-4 的 fresh 组 = 第二个变量，seed 方差数字就废了。故本 run 传 `--lr 2e-5 --min_lr 2e-6`，
+> log 里出现 **4 组但 base_lr 全是 2.00e-05** = 等价性达成的正确签名。**论文不得为此臂声称 differential LR。**
+> **`--seed` 只控 fresh 2 层 init，不控数据顺序**（`DistributedSampler(shuffle=True)` 无 `seed=` → 私有 generator 固定在 0+epoch，两 run 数据序完全相同）；dropout=0。→ P1.2 只能称 **init 方差**。详见 `status/PAPERB_P12_SEED2.md`。
+
+> **其余节点（21:40 实测）**：`.252` 8 卡被他人 `dllm_draft/.venv_b200 generate_evalplus_dream` 占（~63GB 合计，未 kill）；
+> `.73`/`.82` GPU 仍被他人 EvalPlus 占，`.73` 只有我们的纯 CPU P2.4 段。
+
+### PaperB P2.4（#123）CPU 段 @ .73（未占卡）
+
+> **P2.4 派单前提「`.73` 空闲」实测不成立**：21:10 直连 `.73` 见 **8/8 GPU @ 99%（19.3GB→35GB/卡）**，进程 =
+> `dllm_draft_104/scripts/generate_evalplus_dream.py --dataset humaneval`（PID 2628561-68，**21:08:10 启动**，即派单前约 2.5 分钟被别的 agent 占走）。
+> `.82`（20:45 起）/`.104`（20:47 起）在跑同一 EvalPlus 审计 → **zwfy6 三台 0 空闲**。未 kill 任何他人任务。
+> **P2.4 的 GPU 段（pre-eval / SFT / post-eval）因此未启动**；本轮只在 `.73` 跑**纯 CPU**（384 核）数据构建 + 污染审计，不碰 GPU。
+>
+> - **.73 CPU**：`prepare_olmo2_sft_data.py`（DONE 21:33，249,999,360 tok）+ `audit_olmo2_sft_overlap.py`（PID 2648315，running）。log = `logs/p24_sft_dataprep.log` / `logs/p24_overlap_audit.log`。
+> - ⚠️ **P2.4 full-32L 臂在 H20 不可行（硬约束，非调度问题）**：`train_olmo2_sft.py` = **plain DDP + fp32 master + fp32 AdamW**（无 bnb 8bit 路径，`grep -c bitsandbytes`=0），
+>   per-card 静态 = 16 B/param × 7.298B = **108.8 GiB > H20 97.8 GiB**，且 plain DDP 不 shard param/grad/optim → **加卡不降每卡内存**。两个 16L 剪层臂 = 60.5 GiB，可过 H20。
+>   → **full-32L 臂须去 B200（183 GiB）**，或先给 trainer 加 8bit/FSDP。详见 `status/PAPERB_P24_SFT_REPAIRABILITY.md`。
+
+## 历史快照（2026-08-06 08:35 +08:00）— **32 卡全空闲**，rebuttal-prep sprint 已收工
 
 > **实测（本轮 heartbeat 直连每台 nvidia-smi）**：
 > - **LOCAL 8×L20A (wzc1)**：0 MiB × 8 = 空闲
