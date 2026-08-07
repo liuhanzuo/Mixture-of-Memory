@@ -172,3 +172,65 @@ within the pruned group, no slope, no r², no saturation curve.** Lead the P2.4 
 factual-recall degradation, which replicates cleanly on two arms and does not depend on the confounded
 axis. keep12 is still pending and will not change any of this — it is one more point on an axis that
 cannot support a fit.
+
+---
+
+# FINAL (MAIN, ~07:1x CST): complete n=6 ladder — the two-group result is the whole result
+
+keep12 landed at **ΔPPL% = +9.07%** (pre 11.4425 → post 12.4801; predicted +10.98%, miss −1.91 pp,
+same direction as keep8's −3.86 and keep10's −4.55). **All three pre-registered predictions missed
+low.** The sweep is complete.
+
+## The full table
+
+| arm | layers kept | pre-SFT PPL | ΔPPL% |
+|---|---:|---:|---:|
+| full32 (intact) | 32 | 7.398 | **+4.46** |
+| ShortGPT-16 | 16 | 9.780 | +8.51 |
+| keep14 | 16 | 10.561 | +9.43 |
+| keep12 | 14 | 11.443 | +9.07 |
+| keep10 | 12 | 12.816 | +8.63 |
+| keep8 | 10 | 13.333 | +10.15 |
+
+**Sorted by pre-SFT PPL there are 2 monotonicity violations out of 5 transitions** (keep12 below
+keep14, keep10 below keep12). **Sorted by structural depth it is no better** — 16L gives +8.51 and
++9.43 for two different pruning policies, 14L gives +9.07, 12L gives +8.63, 10L gives +10.15. Neither
+axis orders the response.
+
+## The one statement the data supports
+
+```
+intact  (n=1):  +4.46%
+pruned  (n=5):  mean +9.16%,  sd 0.66,  range [+8.51, +10.15]
+gap:            +4.70 pp
+```
+
+The five pruned arms are **statistically indistinguishable from each other** (sd 0.66 pp on a 1.6 pp
+range) and **all ~2× the intact base**. That is a clean two-group contrast — one number for intact,
+one number ± sd for pruned — and it needs no fit, no ordering, no confounded axis.
+
+**Write it as**: *"General instruction SFT costs held-out PPL. The intact 32-layer base pays +4.5%;
+all five pruned-and-healed variants pay +9.2 ± 0.7%, roughly double, with no resolvable ordering
+among them by depth or by pre-SFT perplexity."*
+
+**Do not write**: a slope, an r², "scales with damage", "saturating", or any within-pruned ranking.
+Three successive framings died tonight (linear fit → monotone-saturating → any ordering at all), each
+killed by the next data point. The two-group contrast is what survived all of them.
+
+## Why the fit looked so good at n=3
+
+The three original arms happened to be the three with the *lowest* pre-PPL (7.40, 9.78, 10.56) — i.e.
+the intact base plus the two best-healed pruned arms. Within that range the intact-vs-pruned step
+(+4.46 → +8.51) masquerades as a slope. Adding any arm from the +11 to +13 pre-PPL range flattens it,
+because the pruned group is flat and the apparent "slope" was really one step between two groups.
+**A 3-point fit spanning a group boundary will always look linear.** Worth remembering as a
+methodological note, not just an outcome here.
+
+## Status of the P2.4 deliverable
+
+Data collection is **complete**: 6 arms × (pre, post) × {PPL, core6, MMLU letter, MMLU content,
+PopQA, TriviaQA}, all with per-item predictions, all `assert_8shards`-verified, `chat_template=False`
+throughout. The headline for the writeup is not this PPL table — it is the **replicated factual-recall
+degradation** (TriviaQA EM −4.30 pp on keep8 / −5.19 pp on keep10, p<1e−100 both, two-sided) which
+answers P2.4's actual question: **general SFT does not repair pruning damage, and it makes closed-book
+factual recall worse.** See the UPDATE section above for that table.
