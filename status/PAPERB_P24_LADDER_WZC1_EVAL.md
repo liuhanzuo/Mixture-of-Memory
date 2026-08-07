@@ -151,3 +151,47 @@ other disk.
 ```json
 {"ts":"2026-08-07T20:01:04Z","node":".252","exp":"paperB_p24_ladder_wzc1_252","commit_hash":"73d2e5c","legs":["7B_keep8_step121000_wzc1","7B_keep12_step111500_wzc1"],"parent_pid":3115943,"log":"logs/p24_eval_ladder_wzc1_252.log","status":"running","note":"keep12 wzc1 uses step111500 (Table 4 headline is step124000 - only on zwfy6); keep8 uses step121000 (matches Table 4 headline). 2 rungs x 5 harnesses = 10 evals, ~2h ETA."}
 ```
+
+---
+
+## MAIN correction (2026-08-08 ~04:2x CST): the keep12 confound DISSOLVES — no scp needed
+
+The agent correctly flagged that wzc1 holds only `keep12 step111500` while Table 4's keep12 row came
+from `step124000` (zwfy6-only), and concluded the wzc1↔zwfy6 delta for keep12 would be confounded by
+Δstep=12,500. **That reasoning was right, but the premise is now obsolete: a matching-step pair
+already exists.**
+
+MAIN found that zwfy6 already carries an eval directory `7B_keep12_step111500`, and its own metadata
+records the ckpt it read as `outputs/olmo2_probe2_7B_keep12fresh2_wzc1/step111500.pt` — i.e. **a copy
+of the wzc1 checkpoint was transferred to zwfy6 previously and evaluated there.** So the same
+checkpoint has already been scored on H20, and the running `.252` job is scoring it on L20A.
+
+Verified identical, not assumed:
+
+| | size (bytes) | `model_state` SHA-256 | n_tensors |
+|---|---:|---|---:|
+| wzc1 `olmo2_probe2_7B_keep12fresh2/step111500.pt` | 43,867,047,682 | `c90f812ab97e3435c0d31b9c1374fb5ef107cfca7241d016525435e532fe9411` | 157 |
+| zwfy6 `olmo2_probe2_7B_keep12fresh2_wzc1/step111500.pt` | 43,867,047,682 | `c90f812ab97e3435c0d31b9c1374fb5ef107cfca7241d016525435e532fe9411` | 157 |
+
+**Bit-identical.** (Note the *original* zwfy6 `keep12fresh2/step111500.pt` has been rotated away —
+only `step123500` and `step124000` survive in that directory. The surviving matching-step copy is the
+`_wzc1`-suffixed one.)
+
+### Consequence — use this pair, not the step-mismatched one
+
+- **H20 (zwfy6) keep12 @ step111500, core6 = `0.56959`** — from `zwfy6:olmo2_downstream_results/7B_keep12_step111500/summary.json`
+  (hellaswag `.59600`, arc_c `.40700`, arc_e `.68813`, piqa `.73558`, obqa `.37600`, wino `.61484`).
+- **L20A (wzc1) keep12 @ step111500** — being produced by the running `.252` battery as
+  `7B_keep12_step111500_wzc1`. No wzc1-side eval of this step existed before, so nothing is clobbered.
+
+When it lands, `core6_wzc1 − 0.56959` is a **clean architecture-only delta** at Δstep=0. The keep12
+row of the damage-scaling table is therefore fully usable — the 70-minute 48.7 GB `scp -O` the agent
+(correctly) declined is not needed at all.
+
+### Note for the damage-scaling table
+
+keep12 @ step111500 is **not** Table 4's headline keep12 point (`step124000`). That is fine for the
+*cross-architecture* question, which only needs the same ckpt on both machines. It is **not**
+interchangeable with Table 4's keep12 row for any depth-ladder claim — keep those two uses separate.
+Cross-reference `PAPERB_TABLE4_BUDGET_DEFECT.md`: keep12's real ceiling is 124,000 steps, not the
+200k the paper claims.
