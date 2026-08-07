@@ -83,3 +83,52 @@ cross-architecture floor.** Consequences:
 - zwfy6: same relative paths under `/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/`
 - ckpt both disks: `outputs/olmo2_probe2_7B_keep14fresh2/step200000.pt`
 - Related: `status/DLLM_G1_GATE_RESULT.md`, `dllm_draft/SAMPLER_VARIANCE_DECOMPOSITION.md` §3
+
+---
+
+# REPLICATION on a second checkpoint (MAIN, 2026-08-08 ~02:1x CST)
+
+The `.252` eval agent's leg-1 result gives an **independent second instance**, on the *vanilla base*
+model rather than a healed pruned one. Same HF checkpoint
+(`models/OLMo-2-1124-7B`), same harness, `chat=False`, `add_bos=False`, `mode=base`,
+`num_hidden_layers=32`.
+
+| task | L20A cc10.0 (wzc1) | H20 cc9.0 (zwfy6) | net flip | n |
+|---|---:|---:|---:|---:|
+| hellaswag | .80482 (8082) | .80522 (8086) | −4 | 10042 |
+| arc_challenge | .57253 (671) | .57082 (669) | +2 | 1172 |
+| arc_easy | .82828 (1968) | .82912 (1970) | −2 | 2376 |
+| piqa | .81066 (1490) | .81066 (1490) | 0 | 1838 |
+| openbookqa | .46200 (231) | .46200 (231) | 0 | 500 |
+| winogrande | .74586 (945) | .74428 (943) | +2 | 1267 |
+| **core6 avg** | **.70402** | **.70368** | **+0.034 pp** | |
+
+Sources: `wzc1:olmo2_downstream_results/7B_full32_base_wzc1/`, `zwfy6:olmo2_downstream_results/7B_base_full/`.
+
+## Paper provenance, now pinned
+
+**Table 4's base row `0.7037` is the H20 number** (`zwfy6:7B_base_full` = `.70368`). The wzc1/L20A
+measurement of the same checkpoint is `.70402`. So the base row and the keep14 row (`.5938`, also
+H20 — `zwfy6` anchor) are at least *consistent with each other* in architecture. That is the good case,
+and it is what the Table 4 audit (task #189) must confirm for **every** rung, not just these two.
+
+PPL is unaffected: full32 pre-SFT PPL reproduced as **7.398071** against the paper's **7.398** — exact.
+Consistent with the mechanism: summed-NLL averages the bf16 jitter, whereas core6 thresholds it
+through an argmax over options, so only core6 flips.
+
+## A new observation: flip count scales with how damaged the model is
+
+| checkpoint | net flips | core6 delta |
+|---|---:|---:|
+| full-32L vanilla base (undamaged) | **10** | +0.034 pp |
+| keep14+fresh2 @200k (pruned, healed) | **28** | +0.156 pp |
+
+The healed pruned model is **~3x more numerically fragile** than the intact base under the same
+hardware swap. This is mechanistically plausible — a 16L shell healed to a 1.43x PPL tax sits closer
+to its decision boundaries, so more items are within bf16 reordering distance of flipping — but with
+n=2 checkpoints it is an **observation, not a result**. Do not put it in the paper as a claim.
+
+If it holds across the ladder it is worth a sentence, because it means **the cross-architecture floor is
+not a constant** and the more-pruned rungs carry the larger instrument noise — precisely the rungs the
+paper's headline depends on. The Table 4 audit (#189) can test this for free: it is already reading
+every rung's per-task counts, and the keep8/keep10/keep12 rungs would extend this table to n=5.
