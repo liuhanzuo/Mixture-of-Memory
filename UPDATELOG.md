@@ -5918,3 +5918,45 @@ Sanity 已四重验证(adapter_config 配置正确、cmdline 无 SWA、CSV 完�
 **paperB 数字总账**：**16/16 全部精确**，Finding 2 已有 rebuttal-ready 单变量表，Finding 1 措辞不需要动。
 **tex 内部一致性**：paperA 修一处（99.20→99.19）后完全一致；paperB 扫 43 tex 无真不一致。
 **教训**：subagent 派 provenance audit 必须在 prompt 里显式写「跨 wzc1 + zwfy6 两盘搜索」，否则会漏（本轮已复现）。
+
+## 2026-08-06 23:15 GMT+8 — Paper E (eval-interface construct validity) 判 NO-GO；转 Paper B P0-fix
+
+**Workflow wrolfidns 20/20 agent 完成**（7 novelty × 7 adversarial-verify × 5 hostile-recompute）：
+- Obs1 (letter/content crossover) 被 OLMES arXiv:2406.08446 (Findings NAACL 2025) 直接占——同一 OLMo 家族 MMLU CF/MCF 训练过程 crossover
+- Obs3 (等长子集反转) 被 arXiv:2607.12767 (ICML 2026 CR-verified) 占——明确 name equal-option-length 为 length-bias-free regime
+- Obs4 (ranking flip) 被 Alzahrani arXiv:2402.01781 (ACL 2024) 占；且 workflow attack-4 (FATAL) 独立发现原 flip pair 都在 **best-constant-predictor 地板 (.2689)** 上或之下——自己也把它推翻了。⚠️ 2026-08-07 更正：**不是 .2500 generic chance line**。MAIN 实测 keep10 对 .2500 是 +2.20pp p=1.6e-09（显著在上方），对 always-D .2689 才是 +0.31pp p=0.41（贴地板）。用 chance line 重推此撤回会得出「无故撤回」的错误结论
+- Obs2 (subject-rho vs binomial null) 唯一活着，但需换 split-half reliability 分母 + MMLU-Redux 干净子集，力度不够独立成文
+
+**MAIN 独立 refetch 核实**（arxiv.org abs 页 citation_title）：三篇 killer 标题全部真实。OLMES venueid 未在 OpenReview 命中（DBLP CoRR 2024 而非 conference）——subagent 报 "Findings NAACL 2025" 需在写论文前再走一次 anthology 核实（教训 [[venue-verify-must-use-openreview-2026]] 反向亦然：不能因 OpenReview 未命中就否定 anthology 记录）
+
+**决定**：Paper E 不做独立方向。task #171 close (NO-GO)；task #172 open (Paper B P0-fix，论文在审)。
+
+**转化为 Paper B P0-fix (task #172)**：
+- `tab_interface_audit.tex` 加 tie-rate 列 + letter-vs-常量地板显著性列（Random letter=.2470 显著差于 "always D"=.2689，配对 −2.19pp 显著）
+- `app_tab_recovery.tex` keep14 MMLU recovery 从 headline "19.4" 改为区间 [19.4, 26.6]（并列按弃权=26.57），caption 说明 tie-rate 敏感性
+- 加 limitation 句：letter interface degrades to a constant predictor on damaged arms via bf16 tie-break (24.4% for keep14, 30.6% for keep8)
+- must-cite: OLMES / Alzahrani / MMLU-Redux（限于 related-work 和 limitations 段）
+
+**MAIN empirical assets 保留在 paperE_research/**（供 Paper B 引用）：
+- Qwen3 cross-family MMLU dual-interface 4 arm × n=14042（新跑，8 卡 45 分钟）
+- letter/content 与常量地板的配对显著性（4000 bootstrap）
+- bf16 精确并列的代码级证据（eval_olmo2_mmlu_content.py:200-204）
+
+## 2026-08-07 — Paper B #172: 声明 letter 口径的 tie 依赖（在审论文自曝）
+
+`paperB/sections/tab_interface_audit.tex` + `app_tab_recovery.tex`，commit `41bc558`。
+所有数字由新增 `scripts/verify_interface_audit.py` 从 per-item 记录独立复算（未沿用旧笔记）。
+
+- **tab_interface_audit 加 2 列**：tie rate（0.1/6.4/24.4/19.4/5.8/10.4%）+ letter-vs-最佳常量预测器
+  （恒答 D = .2689，paired McNemar）：keep14 +4.95pp 显著优于常量；**Frozen −0.66pp 与常量不可区分
+  （p=0.23）；Random −2.19pp 显著差于常量（z=3.84, p=1.2e-4），且 74.2% 的题都答 "A"**。
+  → caption 明确写出 +9.80 / +11.28 的 content 增益是**下界**而非校准量。
+  另加 content 侧 length-preference 对照 = .2845，六臂全部高于它（最低 .3598）。
+- **app_tab_recovery**：MMLU recovery 19.4 的 tie-convention 区间 **[3.0, 26.6]**
+  （argmax 19.25 / 排除并列 26.57 / 1-k 分摊 21.10 / 并列判错 3.00），保留 argmax 口径并报区间。
+- **两次自我纠错**：(1) 我先把已发表的 ShortGPT −7.31 改成 −7.30，复核后发现 −7.31 来自**未舍入**
+  差值（−7.3067），原数字正确 → 已还原；(2) 我写的「其余各行 tie rate < 0.2%」无 per-item 文件可
+  验证 → 改为机制陈述。
+- **旧笔记的 [19.4, 26.6] 区间不完整**（只算了排除并列一种），并列判错口径给出 3.0，真实区间更宽。
+- **未做（需用户定）**：OLMES / Alzahrani 两条 related-work 引用（MMLU-Redux 已在 bib 中）——
+  在审论文加引用会改变 positioning。
