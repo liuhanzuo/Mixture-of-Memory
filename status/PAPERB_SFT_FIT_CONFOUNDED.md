@@ -21,7 +21,9 @@ outside it, so this is not noise. Refit statistics, which I reproduced exactly:
 | n=4 | 0.9424 | −1.5385 | 0.9070 | 0.8226 |
 
 Adding one point cut the slope by **41%** and r² from .996 to .823. **Three points were collinear by
-chance.** Monotonicity in pre-PPL survives; linearity does not.
+chance.** Linearity does not survive. (This section originally added "monotonicity in pre-PPL
+survives" — **that was superseded ~20 minutes later when keep10 landed and broke monotonicity too.**
+See the UPDATE section at the end of this file. Left visible rather than silently edited.)
 
 ## But the deeper problem makes even the saturating version uninterpretable
 
@@ -54,8 +56,9 @@ than n=4 with a confounded x-axis.
 ## What is actually supportable
 
 1. **SFT costs held-out PPL on every arm measured** — +4.46% (full32), +8.51% (ShortGPT-16),
-   +9.43% (keep14), +10.15% (keep8). Monotone in pre-PPL, and each individual number is solid
-   (tight bootstrap CIs, single node, no NaN, byte-identical recipe).
+   +9.43% (keep14), +10.15% (keep8). Each individual number is solid (tight bootstrap CIs, single
+   node, no NaN, byte-identical recipe). *(Originally read "Monotone in pre-PPL" — struck; keep10's
+   +8.63% at pre-PPL 12.816 breaks it. See UPDATE.)*
 2. **The intact base is the smallest mover (+4.46%) and all four pruned arms move roughly 2×.** That
    contrast is between-groups (intact vs pruned), does not require the confounded within-pruned
    ordering, and is the honest headline.
