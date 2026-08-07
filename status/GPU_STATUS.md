@@ -8,28 +8,54 @@
 > 可调度节点 = **4 台 / 32 卡**：**LOCAL + .252（wzc1 盘）/ .73 + .82（zwfy6 盘）**。
 > ⚠️ 连带影响：**zwfy6 侧的 16 卡多机 DDP 只剩 .73+.82 这唯一组合**（原先 .73/.82/.104 任取两台）。
 
-## 当前在跑（2026-08-08 01:02 +08:00 更新）— **LOCAL** P1.2 seed2（~87h）+ **.252** P2.4 ShortGPT-16 SFT（~30 min）+ **.73** P2.4 keep14fresh2 SFT（收尾）；**.252** full-32L 已 DONE 00:38
+## 当前在跑（2026-08-08 02:05 +08:00 更新）— **LOCAL** P1.2 seed2（~87h）+ **.252** P2.4 full32+shortgpt16 pre/post-SFT **eval battery**（started 02:02, ETA ~4-6h）+ **.73** P2.4 keep14fresh2 **post-SFT eval battery**（started 01:26, ETA ~1.5-2h）；**.252** full-32L SFT ✅ 00:38, shortgpt16 SFT ✅ 01:33; **.73** keep14fresh2 SFT ✅ 01:07
 
-> ### ▶️ .252 8×L20A (wzc1) — `olmo2_p24_sft_shortgpt16`（PaperB P2.4 ShortGPT-16 SFT 第三臂，8/8 卡 @96-100%）
+> ### ▶️ .73 8×H20 (zwfy6) — `p24_eval_keep14_73`（PaperB P2.4 keep14fresh2 post-SFT eval + pre-SFT gap-fill，8/8 卡 24-25 GiB @ 60-80%）
 > | 项 | 值 |
 > |---|---|
-> | 任务 | **PaperB P2.4 三臂之 ShortGPT-16@200k SFT**（16L 剪层臂，与 .73 keep14fresh2 同架构，single-variable 只差起始 ckpt） |
-> | 节点/卡 | **.252 8×L20A（wzc1 盘）GPU 0-7 全占**，maxmem **~101 GiB/183 GiB/卡 = 55%**（16L 半深度，fp32-AdamW 静态 60.5 GB） |
-> | 起始 | 2026-08-08 **00:58** +08:00 |
-> | ETA | **~29 min → 约 2026-08-08 01:30**（2.18-2.23 s/step × 842 step；比 full-32L 快 ~2× 因 16L） |
-> | seed / arm | seed=42 / arm=shortgpt16 |
-> | PID / log | torchrun `2995894` / `logs/p24_sft_shortgpt16.log` |
-> | 输出 | `outputs/olmo2_p24_sft_shortgpt16/final.pt`（trainer 保存 arch descriptors `keep=16 fresh=0 layers=16`） |
-> | 数据 | `data/olmo2_sft/tulu3_general_clean_{input_ids,labels}.npy` (wzc1 副本 md5 `b1e6fe4e...` / `bf7c5774...`，与 .73 keep14 逐字节一致) |
-> | 与 .73 keep14 arm diff | **仅 3 处（+base_model 路径差，同 HF 内容）**：`--arm_name shortgpt16`、`--ckpt outputs/olmo2_probe2_7B_shortgpt16/step200000.pt`、`--output_dir outputs/olmo2_p24_sft_shortgpt16`；`--base_model` wzc1 vs zwfy6 路径（内容 byte-identical）；其余全 byte-identical（token budget 220,725,248；eff_batch 128；lr 1e-5；warmup 100；seed 42；grad_ckpt 1；BS=1 GA=16；max_steps 842） |
-> | 与 .252 full32 arm diff | **仅 3 处**：`--arm_name`（shortgpt16 vs full32）、`--ckpt`（本臂有，full32 无走 full_base 路径）、`--output_dir` |
-> | python | `/opt/conda/envs/torch-base/bin/python3.14` torch 2.13.0 transformers 4.57.6 |
-> | 健康 | step 20 loss=**1.6719**（finite，非 NaN） / step 40 loss=1.4377 / 2.18s/step / maxmem 101 GiB / 8/8 GPU 96-100% util |
+> | 任务 | **P2.4 keep14fresh2 arm 的 pre/post SFT eval battery**：held-out Dolmino PPL + core6（HellaSwag/ARC-C/ARC-E/PIQA/OBQA/WinoGrande）+ know5（MMLU/Lambada/BoolQ/CSQA/SIQA）+ MMLU dual-protocol（letter+content）+ PopQA/TriviaQA closed-book |
+> | 节点/卡 | **.73 8×H20（zwfy6 盘）GPU 0-7 全占** |
+> | 起始 | 2026-08-08 **01:26** +08:00 |
+> | ETA | **~1.5-2 h → 约 2026-08-08 03:00-03:30**（8-shard 并行；每 harness ~15-25 min） |
+> | 输入 ckpt | **pre**: `outputs/olmo2_probe2_7B_keep14fresh2/step200000.pt`（16.2 GB）／**post**: `outputs/olmo2_p24_sft_keep14fresh2/final.pt`（48.7 GB, step=842） |
+> | 输出 | pre → `olmo2_ppl_results/7B_keep14_step200000/`（gap-fill）+ `olmo2_downstream_results/7B_keep14_step200000{,_know}/`（gap-fill）；mmlu-content + closedbook pre 已在 zwfy6，自动 skip。post → `7B_p24_sft_keep14fresh2_final{,_know}/summary.json`（4 个 harness） |
+> | 关键实测 | pre-SFT PPL 重跑 = **10.5612**，与 wzc1 anchor 10.5613（paper Table 4）字节级一致 → harness path 未漂移 |
+> | 硬门禁 | `assert_8shards` 在每次 merge 前强制核对 8/8 shard 存在，缺任一即 abort 不 merge（防止 5/8 partial merge silent contamination） |
+> | 每-item 保留 | 所有 4 类 harness 均保留 `per_example_*.jsonl` — downstream 用 `--save_per_example`，mmlu_content/closedbook 默认写；pre/post McNemar + paired bootstrap 可行 |
+> | Chat template | `chat_template=False` 全程（OLMo-2 base 无 SFT/RL；paper hard rule） |
+> | Python | `/opt/conda/envs/torch-base/bin/python` torch 2.13.0 |
+> | Launcher | `scripts/_run_olmo2_p24_eval_keep14_73.sh`（wzc1 + zwfy6 md5 一致 = `7bc763ef38d591bbca289ff49564bc2a`） |
+> | 报告 | `status/PAPERB_P24_KEEP14_EVAL.md` |
 >
-> ⚠️ 唯一变量 = 起始 checkpoint（shortgpt16@200k vs keep14fresh2@200k healed ckpts）；三臂裁决须等 post-SFT eval battery 跑完。
+> ⚠️ **发现**：pre-SFT anchor `7B_keep14_step200000{,_know}/summary.json` 只在 wzc1，zwfy6 没有 → 为 pre/post 同盘 pairing 已在本脚本 PART A 重跑 PPL+downstream；PPL 已达成，MMLU-content + closedbook 的 pre 结果已在 zwfy6 自动 skip。post-SFT 全新。
+> ⚠️ **SFT 数据污染注记**（不影响本次 eval，只影响后续报数）：sibling agent 审计发现 Tulu-3 general-clean 与 MMLU test 有 45 items 交集（PopQA/TriviaQA/NQ-open = 0）。post-SFT MMLU 报数前须做 clean-subset 剔除（CPU 后处理，per_example 已保留即可复算）。
+
+> ### ▶️ .252 8×L20A (wzc1) — `p24_eval_full32_shortgpt_252`（PaperB P2.4 full32+shortgpt16 pre/post-SFT eval battery，8/8 卡 @100%）
+> | 项 | 值 |
+> |---|---|
+> | 任务 | **P2.4 wzc1 两臂 pre/post-SFT eval battery**（.73 keep14fresh2 eval 的姊妹；same-arch pairing 硬要求，见 `status/PAPERB_CORE6_CROSSARCH_FLOOR.md` — L20A cc10.0 vs H20 cc9.0 对 bit-identical ckpt 会有 28 items 翻转 / +0.156 pp 差异，故 pre/post 必须同架构） |
+> | 节点/卡 | **.252 8×L20A（wzc1 盘）GPU 0-7 全占**，实测 maxmem **64.6 GiB/卡 @ 100% util**（8 shard 并行） |
+> | 起始 | 2026-08-08 **02:02:07** +08:00 |
+> | ETA | **~4-6 h → 约 2026-08-08 06:00-08:00**（4 legs × 5 harnesses；每 leg ~60-90 min on L20A ≈ 2× H20） |
+> | 4 legs | (1) full32 pre-SFT: vanilla base `../models/OLMo-2-1124-7B` (no --ckpt) → `7B_full32_base_wzc1{,_know}`  (2) full32 post-SFT: `outputs/olmo2_p24_sft_full32/final.pt` (87.6 GB, step=842) → `7B_p24_sft_full32_final{,_know}`  (3) shortgpt16 pre-SFT: `outputs/olmo2_probe2_7B_shortgpt16/step200000.pt` (48.7 GB, keep_front=16 n_fresh=0 read from ckpt meta) → `7B_shortgpt16_step200000_wzc1{,_know}` (`_wzc1` 后缀避免与已存在 `7B_shortgpt_step200000` 的老 no-per-example run 混淆)  (4) shortgpt16 post-SFT: `outputs/olmo2_p24_sft_shortgpt16/final.pt` → `7B_p24_sft_shortgpt16_final{,_know}` |
+> | 5 harness/leg | held-out Dolmino PPL + core6 downstream (hs/arcc/arce/piqa/wg/obqa) + know5 downstream (mmlu/lambada/boolq/csqa/siqa) + MMLU dual-protocol (letter+content) + closedbook (PopQA/TriviaQA) |
+> | PID / log | `3032751` (setsid nohup) / `logs/p24_eval_full32_shortgpt_252.log` |
+> | Launcher | `scripts/_run_olmo2_p24_eval_full32_shortgpt_252.sh` commit `0b2f707` |
+> | 硬门禁 | `assert_8shards <root> <name> shard{i}of8.json` 在每次 merge 前强制核对 8/8 存在，缺任一即 abort 不 merge（防止 5/8 partial merge silent contamination；memory `kill-remote-gpu-job-by-pid-not-pkill`） |
+> | 每-item 保留 | downstream `--save_per_example` → `per_example_<task>.jsonl`；mmlu-content/closedbook 默认写 `per_example_*.jsonl`；pre/post McNemar + paired bootstrap 已具备 |
+> | Chat template | `chat_template=False`，`--add_bos 0` 全程（memory `paper-eval-chat-false-mandatory`；OLMo-2 base 无 SFT/RL） |
+> | Python | `/opt/conda/envs/torch-base/bin/python` torch 2.13.0 |
+> | Loud 预期锚点 | full32 pre-SFT PPL ≈ **7.398**（paper Table 4）/ MMLU ≈ **0.6053**；shortgpt16 pre-SFT PPL ≈ **9.7803** / MMLU ≈ **0.4739**（若偏差 > 0.2 PPL 或 > 0.5 pp MMLU，立即 loud report — 可能是另一层跨盘/harness drift） |
+> | 报告 | `status/PAPERB_P24_WZC1_EVAL.md` |
+>
+> ⚠️ **sibling agent**：`.73` 上的 agent aefe8b20 正在跑 keep14fresh2 pre/post-SFT eval battery（`scripts/_run_olmo2_p24_eval_keep14_73.sh` / log `logs/p24_eval_keep14_73.log` / 报告 `status/PAPERB_P24_KEEP14_EVAL.md`）。本 dispatch 与之互不重叠：不同节点、不同架构、不同 output_name。
+> ⚠️ **SFT 数据污染注记**：Tulu-3 general-clean 与 MMLU test 有 45 items 交集（PopQA/TriviaQA/NQ-open = 0）。post-SFT MMLU 报数前须做 clean-subset 剔除（CPU 后处理，per_example 已保留即可复算）。
 
 > ### ✅ .252 8×L20A (wzc1) — `olmo2_p24_sft_full32` **DONE 2026-08-08 00:38 +08:00**
-> - PID 2936878 (退出) / log `logs/p24_sft_full32.log` / final `outputs/olmo2_p24_sft_full32/final.pt`（87.6 GB）/ 842 steps / 63.2 min / step 20 loss=1.1101 finite / seed=42 / arm=full32 / no `--ckpt`（full_base 路径）/ ETA vs 实际吻合。三臂之一已完成，等三臂全部完成后启动 post-SFT eval battery。详见 `status/PAPERB_P24_FULL32_ARM.md`。
+> - PID 2936878 (退出) / log `logs/p24_sft_full32.log` / final `outputs/olmo2_p24_sft_full32/final.pt`（87.6 GB）/ 842 steps / 63.2 min / step 20 loss=1.1101 finite / seed=42 / arm=full32 / no `--ckpt`（full_base 路径） / 详见 `status/PAPERB_P24_FULL32_ARM.md`。post-SFT eval battery 已在 02:02 起动。
+
+> ### ✅ .252 8×L20A (wzc1) — `olmo2_p24_sft_shortgpt16` **DONE 2026-08-08 01:33 +08:00**
+> - torchrun PID 2995894 (退出) / log `logs/p24_sft_shortgpt16.log` / final `outputs/olmo2_p24_sft_shortgpt16/final.pt`（48.7 GB）/ 842 steps / 35 min / seed=42 / arm=shortgpt16 / `--ckpt outputs/olmo2_probe2_7B_shortgpt16/step200000.pt`（keep_front=16 n_fresh=0 从 ckpt meta 读） / loss finite 全程。post-SFT eval battery 已在 02:02 起动。
 
 > ### ▶️ LOCAL 8×L20A (wzc1) — `olmo2_probe2_7B_keep14fresh2_seed1234`（占满 8/8 卡，**勿补卡、勿 kill**）
 > | 项 | 值 |
