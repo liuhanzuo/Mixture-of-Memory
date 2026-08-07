@@ -57,24 +57,26 @@
 
 
 
-> ### ▶️ .252 8×L20A (wzc1) — `paperB_p24_ladder_wzc1_252`（PaperB P2.4 / task #189 — Table 4 ladder wzc1-side keep8+keep12 pre-SFT eval battery）
+> ### ✅ .252 8×L20A (wzc1) — `paperB_p24_ladder_wzc1_252` **DONE 2026-08-08 04:31:19 +08:00**
+> keep8 + keep12 pre-SFT wzc1 eval battery finished; all 10 harnesses landed. See `status/PAPERB_P24_LADDER_WZC1_EVAL.md`.
+
+> ### ✅ .252 8×L20A (wzc1) — `paperB_p24_keep10_wzc1_252` **DONE 2026-08-08 05:51 +08:00**（PaperB P2.4 / task #189 extension — **keep10** pre-SFT wzc1 eval，last missing wzc1-side ladder rung）
 > | 项 | 值 |
 > |---|---|
-> | 任务 | **task #189 cross-arch audit wzc1 side（n=3/n=4 补齐）**：keep8 + keep12 两个 Table 4 ladder rung pre-SFT 全 battery（PPL + core6 + know5 + MMLU dual + closedbook），每 harness `--save_per_example`；配 `.73` 早 5.5h 起动的 `_v2` H20 sibling 做 same-ckpt cross-arch delta。**扩展 "flip 数随 pruning damage 增加" 假说（n=2: full base 10 flips / keep14 28 flips → n=3/n=4: keep8/keep12）** |
-> | 节点/卡 | **.252 8×L20A（wzc1 盘）GPU 0-7 全占**，PPL 阶段每 shard ~4 MiB 加载中 |
-> | 起始 | 2026-08-08 **03:58:36** +08:00 |
-> | ETA | **~2 h → 约 2026-08-08 06:00**（2 rungs × 5 harnesses = 10 harness runs on L20A，8-shard 并行；每 harness ~10-15 min） |
-> | 输入 2 ckpts | keep8: `outputs/olmo2_probe2_7B_keep8fresh2/step121000.pt` (32 GB weights-only, ✅ **匹配 Table 4 headline**) / keep12: `outputs/olmo2_probe2_7B_keep12fresh2/step111500.pt` (41 GB w+optim, ⚠️ **NOT** Table 4 headline `step124000`——wzc1 上唯一存在的 step*.pt) |
-> | ⚠️ keep12 step 错配 | Table 4 keep12 行是从 `step124000.pt` 出的（P0.7 audit + zwfy6 `_v2` sibling），wzc1 上根本没有该 step；48.7GB scp-O @ ~12MB/s ≈ 70min 不值当阻塞。**wzc1 侧只能用 step111500**，delta 会同时含 arch + Δstep=12500 skill drift，无法解耦——loud 报出 |
-> | 输出 output_name | `7B_keep8_step121000_wzc1` / `7B_keep12_step111500_wzc1`（`_wzc1` 后缀避免与 zwfy6 `_v2` 或 Table 4 anchor summary 冲突；已 pre-launch grep 验证无 collision） |
-> | 硬门禁 | `assert_8shards` 在每次 merge 前强制核对 8/8 shard 存在，缺任一即 abort 不 merge（memory `kill-remote-gpu-job-by-pid-not-pkill`） |
-> | 每-item 保留 | downstream `--save_per_example` → `per_example_<task>.jsonl`；mmlu_content/closedbook 默认写；per-rung wzc1↔zwfy6_v2 McNemar + paired bootstrap 具备 |
+> | 任务 | **task #189 5×2 grid completion**：keep10 是唯一无 wzc1 pre-SFT eval 的 Table 4 ladder rung。**Phase A ✅**：`scp -O` from `.73`→wzc1，36.3 GiB @ 18.4 MB/s，34 min，md5 8bf07fa0d08ddfdf66bd80fbc6721b33 **两侧一致**。**Phase B ✅**：全 5 harness 13min 内跑完（PPL 12.8158 / core6 accn 0.5322 / know5 mmlu 0.2713 / MMLU-dual content_norm 0.3452 / closedbook TriviaQA em 18.15）。`assert_8shards` 全过，per-item preds 全保留。**arch-only delta**（无 keep12 那种 Δstep 混淆） |
+> | 节点/卡 | ✅ 已 idle |
+> | 起始 / 结束 | 2026-08-08 **05:38:02 → 05:51:XX** +08:00（wall-clock ~13 min，比 60min ETA 快得多；scp 4:57–5:31, eval 5:38–5:51） |
+> | 输入 ckpt | `outputs/olmo2_probe2_7B_keep10fresh2/step83500.pt` (36.3 GiB, cross-disk transferred, **matches Table 4 headline step exactly**) |
+> | 输出 output_name | `7B_keep10_step83500_wzc1` |
+> | ★ 早期锚点 | PPL 12.8158 vs zwfy6 headline 12.816 → **arch-invariant to 4 sig figs**（ckpt integrity confirmed cross-disk） |
+> | ★ core6 cross-arch delta | L20A 0.5322 accn vs H20 0.5300 = **+0.218 pp**（accn），核心 flip 数 Σ\|Δc(acc)\| = **31**——fits n=4 monotone pattern (weakly)，**不破坏故事** |
+> | 硬门禁 | `assert_8shards` 在每次 merge 前强制核对 8/8 shard 存在（全 5 harness 均 ✅ 通过） |
+> | 每-item 保留 | ✅ downstream core6+know5 各产 `per_example_<task>.jsonl` + 8 shard-level 副本；mmlu_content/closedbook 默认写 |
 > | Chat template | `chat_template=False`，`--add_bos 0` 全程 |
-> | Python | `/opt/conda/envs/torch-base/bin/python` torch 2.13.0 py3.14 |
-> | Driver | `scripts/_run_olmo2_p24_eval_ladder_wzc1_252.sh` commit `73d2e5c`（byte-identical mirror of `_run_olmo2_p24_eval_ladder_prev2_73.sh` 除 2-rung / ROOT=wzc1 / suffix=`_wzc1`） |
-> | Parent bash PID / log | `3115943` / `logs/p24_eval_ladder_wzc1_252.log` |
-> | keep10 未跑 | keep10 wzc1 max step 是 zwfy6-only 的 step83500（wzc1 无 keep10 ckpt）；跨盘 scp 48.7GB 阻塞 70min 不划算，MAIN 单独决定是否 scp-and-rerun |
-> | 报告 | `status/PAPERB_P24_LADDER_WZC1_EVAL.md` |
+> | Python | `/opt/conda/envs/torch-base/bin/python` |
+> | Driver | `scripts/_run_olmo2_p24_eval_keep10_wzc1_252.sh` commit `b7d2d39` |
+> | Parent bash PID / log | `3170804` (dead) / `logs/p24_eval_keep10_wzc1_252.log` |
+> | 报告 | `status/PAPERB_P24_KEEP10_WZC1_EVAL.md` |
 
 > ### ▶️ .73 8×H20 (zwfy6) — `p24_eval_ladder_prev2_73`（PaperB P2.4 / task #189 — Table 4 ladder 4-rung pre-SFT _v2 eval，8/8 卡 17.6-18.5 GiB @ 66-98%）
 > | 项 | 值 |
