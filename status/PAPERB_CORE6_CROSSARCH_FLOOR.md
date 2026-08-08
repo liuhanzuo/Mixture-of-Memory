@@ -1,5 +1,13 @@
 # core6 is not hardware-portable: 28 items flip between L20A and H20 on bit-identical weights
 
+> **⚠️ PARTIAL REVISION (2026-08-08 ~08:2x CST): the "28 flips = cross-arch" number here was
+> against a v1 (old-harness) H20 measurement. With MATCHED new-harness on both sides, the
+> corresponding rung has been re-measured; refer to `status/PAPERB_HARNESS_DRIFT_REVISION.md`
+> for the honest cross-arch flip counts (ShortGPT-16: 7, keep10: 23, keep8: 29, with
+> winogrande dominating). The cross-arch signal is real but modest and does NOT scale
+> monotonically with damage. Left visible rather than silently edited.**
+
+
 **Date**: 2026-08-08 CST. **Verified by**: MAIN, by re-deriving both sides and hashing the weights.
 **GPU cost**: 0 (both eval batteries already existed / were produced by the P2.4 eval agent).
 

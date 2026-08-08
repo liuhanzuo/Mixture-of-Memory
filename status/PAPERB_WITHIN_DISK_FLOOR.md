@@ -1,5 +1,13 @@
 # ⚠️ The cross-architecture "effect" is mostly harness nondeterminism — within-disk floor ≈ cross-arch effect
 
+> **⛔ SUPERSEDED (2026-08-08 ~08:2x CST): the 18-flip "within-disk floor" claimed here was
+> actually harness-version drift, not runtime jitter. Same-harness same-arch re-runs are
+> BYTE-IDENTICAL (0 flips) — verified on keep14 v1-vs-v2, keep8 v2-vs-v3, shortgpt16 v2-vs-v3.
+> The 18 flips in keep10 v1-vs-v2 were between an old and a new harness version. See
+> `status/PAPERB_HARNESS_DRIFT_REVISION.md` for the corrected reading. Left visible rather
+> than silently edited.**
+
+
 **Date**: 2026-08-08 ~06:0x CST. **Found by**: MAIN, computing the within-disk control that had been
 sitting on disk unused. **GPU cost**: 0.
 
