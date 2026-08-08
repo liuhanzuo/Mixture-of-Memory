@@ -412,6 +412,7 @@ def score_task(model, tok, examples, device, batch_size, add_bos, bos_id,
         if any(nan[ei]):
             n_nan += 1
             if save_per_example:
+                _nl = [c[2] for c in ex["cands"]]
                 per_example.append({
                     "item_id": item_id,
                     "gold_letter": _LETTERS[gold] if 0 <= gold < len(_LETTERS) else str(gold),
@@ -421,6 +422,12 @@ def score_task(model, tok, examples, device, batch_size, add_bos, bos_id,
                                       for k in range(len(cand_lls))},
                     "acc_norm_score": 0.0,
                     "nan": True,
+                    # NEW (2026-08-08): norm_lens/norm_scores populated even for nan rows
+                    # so consumers don't need to special-case missing keys.
+                    "norm_lens": {_LETTERS[k]: _nl[k]
+                                  for k in range(len(_nl))},
+                    "norm_scores": {_LETTERS[k]: None
+                                    for k in range(len(_nl))},
                 })
             continue
         if mode == "greedy":
@@ -457,6 +464,14 @@ def score_task(model, tok, examples, device, batch_size, add_bos, bos_id,
                                   for k in range(len(cand_lls))},
                 "acc_norm_score": 1.0 if pred_norm == gold else 0.0,
                 "nan": False,
+                # NEW (2026-08-08): length-norm fields needed for acc_norm margin analysis.
+                # norm_lens[k] = raw candidate character count (same as c[2] in load_task_examples).
+                # norm_scores[k] = option_scores[k] / max(norm_lens[k], 1).
+                # These fields do NOT affect any existing scoring logic.
+                "norm_lens": {_LETTERS[k]: norm_lens[k]
+                              for k in range(len(norm_lens))},
+                "norm_scores": {_LETTERS[k]: _safe_lp(norm_lls[k])
+                                for k in range(len(norm_lls))},
             })
         if len(samples) < 6:
             samples.append({
