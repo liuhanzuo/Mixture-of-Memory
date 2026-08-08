@@ -99,7 +99,7 @@ Fine-grained flip rate by margin bucket (pooled over core6 tasks):
 
 **Mechanism note**: The higher P(flip|margin<0.001) for ShortGPT-16 could come from (a) larger batch-size-induced score perturbations on the damaged model's representations, or (b) the same perturbations acting on scores that are arithmetically closer. Both are consistent with "damage amplifies implementation sensitivity", but they are different causal paths. Distinguishing them requires the full 6-rung ladder (to separate whether the *bucket sizes* or the *bucket rates* drive inter-rung variation).
 
-
+## Cross-check against MAIN's reported numbers
 
 MAIN reported "correct flag flips = 107, pred_letter flips = 122" for ShortGPT-16 bs8 vs bs16.
 
@@ -110,11 +110,13 @@ Direct recount (Python, per_example_*.jsonl paired by item_id):
 | `pred_letter` field (raw acc pred letter) | **122** ✓ matches MAIN |
 | `acc_norm_score` field (harness stored acc_norm correctness) | **110** |
 | `norm_scores argmax == gold` (this analysis) | **110** |
-| `norm_scores argmax letter` (prediction letter) | 134 (not correctness flips) |
+| `norm_scores argmax letter` (prediction letter change, not correctness) | 134 |
 
 The 110 figure (acc_norm correctness flips) is the correct number for the acc_norm criterion.
 MAIN's "107" is for the raw acc criterion (not length-normalized).
 Discrepancy 107 vs 110: 3 items where raw acc decision is unchanged but length-normalized decision flips.
+
+## What was NOT done
 
 - Zero-effect sanity: no bs8-vs-bs8 re-run data. Per memory `same-harness-runs-bit-identical`:
   same code + same data + same harness = byte-identical results = 0 flips expected.
@@ -122,6 +124,8 @@ Discrepancy 107 vs 110: 3 items where raw acc decision is unchanged but length-n
 - bs16-vs-bs16 re-run for internal consistency check (not done).
 - Logistic regression fit (replaced by empirical bucket-rate LOO).
 - Bootstrap CI on flip rates per rung (n=1 per cell, CI not meaningful).
+- Full 6-rung Spearman + LOO mediation: **BLOCKED** by Paper B training on .73 (3291639 series).
+  Watchdog `_run_paperF_bs16_deferred_73.sh` PID 3321551 will auto-launch eval when training ends.
 
 ## Relationship to the existing near-tie density finding
 
