@@ -19,17 +19,50 @@ Reference points (from earlier gates, same protocol):
 * Truncated k=14, no heal: letter 0.2432 (-2.6pp vs floor 0.2689), content_norm 0.2720 (-1.3pp vs 0.2845)
 * Intact base OLMo-2-7B-1124: letter 0.6054 (Paper B ref)
 
-| arm | letter | content_norm | CI95(cn−l) | McNemar p | Δ vs truncated k14 (letter) |
-|---|---:|---:|---|---:|---:|
-| **keep14fresh2** (main) | **0.3185** | **0.3841** | [0.0550, 0.0763] | 1.20e−33 | **+7.5pp** |
-| keep14fresh2 content_desc=none | 0.3182 | 0.3767 | [0.0479, 0.0694] | 5.70e−27 | +7.5pp |
-| keep14fresh2 freeze_front | 0.2629 | 0.3600 | [0.0865, 0.1080] | 1.32e−68 | +2.0pp |
-| keep14fresh2 from_scratch | 0.2458 | 0.3598 | [0.1036, 0.1243] | 8.97e−102 | +0.3pp |
-| **shortgpt16** | **0.4734** | **0.4014** | **[−0.0822, −0.0617]** | 2.71e−42 | **+23.0pp, SIGN FLIPPED** |
+### Keep-front-N healed depth curve (all fresh2 + heal, various step counts)
 
-CI95 is on `(content_norm − letter)` in pp. All CIs exclude 0; every arm is a
-statistically decisive interface-gap datapoint. The one where the CI is on the
-NEGATIVE side is shortgpt16, and that is the finding.
+| arm | step | letter | content_norm | CI95(cn−l) | McNemar p | Δ letter vs floor |
+|---|---:|---:|---:|---|---:|---:|
+| keep8fresh2 | 124500 | 0.2468 | 0.3424 | [0.0850, 0.1065] | 5.41e−69 | −2.2pp (at floor) |
+| keep10fresh2 | 86500 | 0.2677 | 0.3478 | [0.0694, 0.0909] | 4.99e−47 | −0.1pp (at floor) |
+| keep12fresh2 | 130000 | 0.2609 | 0.3670 | [0.0954, 0.1172] | 8.06e−81 | −0.8pp (at floor) |
+| **keep14fresh2** | **200000** | **0.3185** | **0.3841** | [0.0550, 0.0763] | 1.20e−33 | **+5.0pp** |
+
+**Caveat: step counts differ.** keep14 is the only 200k arm; keep8/10/12 stopped at
+86–130k. If those arms were extended to 200k, letter might rise further, and the
+apparent "step" between keep12→keep14 could be a training-budget artifact rather
+than a depth-transition artifact. See §5. That said, content_norm is monotone in
+depth even at unequal step counts (0.34 → 0.35 → 0.37 → 0.38), so the smooth-side
+of the interface remains smooth here.
+
+### keep14fresh2 recipe variants (all 200k)
+
+| arm | letter | content_norm | CI95(cn−l) | McNemar p | Δ letter vs main |
+|---|---:|---:|---|---:|---:|
+| **keep14fresh2 main** | **0.3185** | **0.3841** | [0.0550, 0.0763] | 1.20e−33 | 0.0 (ref) |
+| keep14fresh2 freeze_front | 0.2629 | 0.3600 | [0.0865, 0.1080] | 1.32e−68 | −5.6pp |
+| keep14fresh2 from_scratch | 0.2458 | 0.3598 | [0.1036, 0.1243] | 8.97e−102 | −7.3pp |
+
+### Prompt-richness robustness (content_desc=none control)
+
+| arm | letter | content_norm | CI95(cn−l) | McNemar p |
+|---|---:|---:|---|---:|
+| keep14fresh2 main + cdnone | 0.3182 | 0.3767 | [0.0479, 0.0694] | 5.70e−27 |
+| **shortgpt16 + cdnone** | **0.4738** | **0.3940** | **[−0.0902, −0.0694]** | **7.11e−51** |
+
+**The shortgpt16 inversion persists under content_desc=none.** Both letter and
+content move less than 0.7pp between the two content protocols, and the CI on
+(cn−l) is still decisively negative. The finding is a property of the model, not
+of the content prompt.
+
+### ShortGPT-16 (topology-preserving heal, 200k)
+
+| arm | letter | content_norm | CI95(cn−l) | McNemar p |
+|---|---:|---:|---|---:|
+| **shortgpt16** | **0.4734** | **0.4014** | **[−0.0822, −0.0617]** | **2.71e−42** |
+
+CI95 is on `(content_norm − letter)` in pp. All CIs exclude 0. **Only shortgpt16
+puts the CI on the NEGATIVE side.**
 
 ## 2. Three separate results
 
@@ -141,6 +174,45 @@ comparison of capability — it is a comparison of circuit preservation.
 * A ShortGPT-at-different-keep-N sweep would isolate topology from depth. Not
   in scope for A01, but if the shortgpt16 inversion holds up on a second
   ShortGPT arm, it is worth a dedicated writeup.
+
+## 5b. What the healed-depth curve added (2026-08-09 03:53 → 04:10)
+
+`keep8 (0.2468) → keep10 (0.2677) → keep12 (0.2609) → keep14 (0.3185)` on letter,
+with all sub-14 arms sitting at or below the 0.2689 floor. **Naïvely** this looks
+like the same step function the truncation curve had, just softened by heal —
+"heal at k≤12 doesn't lift letter off the floor".
+
+But the step counts are NOT matched: keep8 stopped at 124.5k, keep10 at 86.5k,
+keep12 at 130k, keep14 at 200k. So the comparison confounds depth with training
+budget. Two clean readings both consistent with the data:
+
+* **(A) Depth still gates the letter readout even after heal:** if we ran keep8
+  at 200k, letter would still sit sub-floor because there are simply not enough
+  layers to instantiate the readout circuit. Heal moves each arm off the floor
+  by some depth-monotonic amount; keep14's 200k step count *plus* its
+  keep-14-front topology together lift it over the floor; the earlier arms
+  never get there regardless of training budget.
+* **(B) The gap is a training-budget artifact:** if we ran keep8/10/12 to 200k,
+  their letter accuracy would rise to something like keep14's 0.32. Under this
+  reading the "step at k=14" seen in this partial curve would flatten and heal
+  would look monotone in depth.
+
+The data on hand cannot separate these; running keep8/10/12 out to 200k on a
+zwfy6 node would settle it. **Meanwhile the ShortGPT-16 result — measured at
+200k with the interface INVERTED — is unaffected by this ambiguity**, because
+it is a topology-vs-recipe finding, not a depth finding.
+
+Content_norm's monotone rise (0.34 → 0.35 → 0.37 → 0.38 across k=8..14) is
+consistent with either reading — the graded side stays graded.
+
+## 5c. What could still kill either reading
+
+* If Paper B has trajectory data for keep8/10/12 (letter/content at earlier
+  step counts), it would tell us whether letter is *still rising* at the
+  stopping points. If it's flat, that supports (A); if still climbing, (B).
+* An intermediate-depth ShortGPT (say ShortGPT-14 or ShortGPT-12) at 200k
+  would isolate topology from depth.
+* Both are for later, not blocking this verdict.
 
 ## 6. Provenance
 
