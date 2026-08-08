@@ -1,0 +1,1137 @@
+{
+ "n_boot": 10000,
+ "seed": 0,
+ "bh_q": 0.05,
+ "bh_k": 32,
+ "n_cells": 33,
+ "arms": {
+  "intact": "A03_1B_base",
+  "pruned_healed": "A03_1B_keep7_step200k",
+  "barely_healed": "A03_1B_keep7_step500"
+ },
+ "nulls": {
+  "mmlu": {
+   "n": 14042,
+   "gold_letter_distribution": {
+    "A": 3222,
+    "B": 3462,
+    "C": 3582,
+    "D": 3776
+   },
+   "best_constant_letter": "D",
+   "best_constant_acc": 0.2689075630252101,
+   "chance_line_for_reference_only": 0.25,
+   "longest_option_by_tie_convention": {
+    "split": 0.28445022076627263,
+    "first": 0.28108531548212506,
+    "last": 0.28215353938185445,
+    "credit": 0.4537102976783934,
+    "wrong": 0.19612590799031476
+   },
+   "preregistered_tie_convention": "split",
+   "tied_longest_rate": 0.34218772254664576
+  },
+  "letter_degeneration": {
+   "intact": {
+    "letter_pred_distribution": {
+     "A": 1930,
+     "B": 2418,
+     "C": 8091,
+     "D": 1603
+    },
+    "modal_pred_letter": "C",
+    "modal_pred_share": 0.5761999715140294,
+    "vs_own_modal_null_pp": 12.562313060817548,
+    "vs_own_modal_null_p": 0.0001,
+    "bf16_exact_top2_tie_rate": 0.06979062811565304
+   },
+   "pruned_healed": {
+    "letter_pred_distribution": {
+     "A": 102,
+     "B": 4838,
+     "C": 9043,
+     "D": 59
+    },
+    "modal_pred_letter": "C",
+    "modal_pred_share": 0.6439965816835209,
+    "vs_own_modal_null_pp": -0.3916820965674406,
+    "vs_own_modal_null_p": 0.2816,
+    "bf16_exact_top2_tie_rate": 0.10945734225893747
+   },
+   "barely_healed": {
+    "letter_pred_distribution": {
+     "A": 14042
+    },
+    "modal_pred_letter": "A",
+    "modal_pred_share": 1.0,
+    "vs_own_modal_null_pp": 0.0,
+    "vs_own_modal_null_p": 1.0,
+    "bf16_exact_top2_tie_rate": 0.0
+   }
+  },
+  "popqa": {
+   "n": 14267,
+   "em": {
+    "best_constant": "association football",
+    "acc": 0.0229200252330553,
+    "n_candidates": 303,
+    "top5": [
+     {
+      "constant": "association football",
+      "em": 0.02292
+     },
+     {
+      "constant": "united states of america",
+      "em": 0.020046
+     },
+     {
+      "constant": "politician",
+      "em": 0.010654
+     },
+     {
+      "constant": "catholic church",
+      "em": 0.009603
+     },
+     {
+      "constant": "actor",
+      "em": 0.008131
+     }
+    ],
+    "majority_gold_string": "association football"
+   },
+   "contains": {
+    "best_constant": "american football",
+    "acc": 0.04878390691806266,
+    "n_candidates": 303,
+    "top5": [
+     {
+      "constant": "american football",
+      "contains": 0.048784
+     },
+     {
+      "constant": "western classical music",
+      "contains": 0.027756
+     },
+     {
+      "constant": "united states of america",
+      "contains": 0.027336
+     },
+     {
+      "constant": "rock music",
+      "contains": 0.027126
+     },
+     {
+      "constant": "musical film",
+      "contains": 0.026074
+     }
+    ],
+    "majority_gold_string": "association football"
+   },
+   "headline_metric": "contains",
+   "arm_prediction_shape": {
+    "intact": {
+     "n_distinct_normalised_preds": 4006,
+     "modal_pred": "rock",
+     "modal_pred_share": 0.036237471087124135,
+     "empty_pred_rate": 0.00014018364056914557,
+     "mean_pred_chars": 13.411158617789305
+    },
+    "pruned_healed": {
+     "n_distinct_normalised_preds": 9230,
+     "modal_pred": "johann sebastian bach",
+     "modal_pred_share": 0.026004065325576507,
+     "empty_pred_rate": 0.0,
+     "mean_pred_chars": 80.75797294455737
+    },
+    "barely_healed": {
+     "n_distinct_normalised_preds": 4395,
+     "modal_pred": "first movie was first movie in world to be published in 1970s",
+     "modal_pred_share": 0.03455526740029439,
+     "empty_pred_rate": 0.00028036728113829115,
+     "mean_pred_chars": 109.62711151608607
+    }
+   },
+   "lengthmatched_contains_null": {
+    "intact": {
+     "target_chars": 13.411158617789305,
+     "null_string_chars": 20,
+     "acc": 0.025863881685007358,
+     "null_string_head": "association football"
+    },
+    "pruned_healed": {
+     "target_chars": 80.75797294455737,
+     "null_string_chars": 90,
+     "acc": 0.09280157005677438,
+     "null_string_head": "association football united states of america catholic church politician actor horror film"
+    },
+    "barely_healed": {
+     "target_chars": 109.62711151608607,
+     "null_string_chars": 118,
+     "acc": 0.10303497581832201,
+     "null_string_head": "association football united states of america catholic church politician actor horror film rock music documentary film"
+    }
+   }
+  },
+  "triviaqa": {
+   "n": 17944,
+   "em": {
+    "best_constant": "australia commonwealth realm",
+    "acc": 0.0025635309852875612,
+    "n_candidates": 303,
+    "top5": [
+     {
+      "constant": "australia commonwealth realm",
+      "em": 0.002564
+     },
+     {
+      "constant": "la republique francaise",
+      "em": 0.002229
+     },
+     {
+      "constant": "3",
+      "em": 0.002118
+     },
+     {
+      "constant": "south africa",
+      "em": 0.001951
+     },
+     {
+      "constant": "islands of spain",
+      "em": 0.001895
+     }
+    ],
+    "majority_gold_string": "australia commonwealth realm"
+   },
+   "contains": {
+    "best_constant": "one thousand nine hundred and eightytwo",
+    "acc": 0.008637984841729826,
+    "n_candidates": 303,
+    "top5": [
+     {
+      "constant": "one thousand nine hundred and eightytwo",
+      "contains": 0.008638
+     },
+     {
+      "constant": "one thousand nine hundred and seventynine",
+      "contains": 0.008415
+     },
+     {
+      "constant": "one thousand nine hundred and ninetyseven",
+      "contains": 0.008359
+     },
+     {
+      "constant": "one thousand nine hundred and seventy",
+      "contains": 0.008081
+     },
+     {
+      "constant": "james callaghan 19122005",
+      "contains": 0.007914
+     }
+    ],
+    "majority_gold_string": "australia commonwealth realm"
+   },
+   "headline_metric": "em",
+   "arm_prediction_shape": {
+    "intact": {
+     "n_distinct_normalised_preds": 7129,
+     "modal_pred": "yes",
+     "modal_pred_share": 0.006854658938921088,
+     "empty_pred_rate": 0.002229157378510923,
+     "mean_pred_chars": 15.032657155595185
+    },
+    "pruned_healed": {
+     "n_distinct_normalised_preds": 9655,
+     "modal_pred": "beatles",
+     "modal_pred_share": 0.007913508693713777,
+     "empty_pred_rate": 0.00044583147570218456,
+     "mean_pred_chars": 72.38374944271065
+    },
+    "barely_healed": {
+     "n_distinct_normalised_preds": 9252,
+     "modal_pred": "",
+     "modal_pred_share": 0.019282211324119482,
+     "empty_pred_rate": 0.019282211324119482,
+     "mean_pred_chars": 116.39077128845297
+    }
+   },
+   "lengthmatched_contains_null": {
+    "intact": {
+     "target_chars": 15.032657155595185,
+     "null_string_chars": 28,
+     "acc": 0.006241640659830584,
+     "null_string_head": "australia commonwealth realm"
+    },
+    "pruned_healed": {
+     "target_chars": 72.38374944271065,
+     "null_string_chars": 84,
+     "acc": 0.016384306732055282,
+     "null_string_head": "australia commonwealth realm la republique francaise 3 south africa islands of spain"
+    },
+    "barely_healed": {
+     "target_chars": 116.39077128845297,
+     "null_string_chars": 121,
+     "acc": 0.026972804279982165,
+     "null_string_head": "australia commonwealth realm la republique francaise 3 south africa islands of spain six n z arxintina canada iso 31661c"
+    }
+   }
+  },
+  "nq_open": {
+   "n": 3610,
+   "em": {
+    "best_constant": "2017",
+    "acc": 0.00554016620498615,
+    "n_candidates": 303,
+    "top5": [
+     {
+      "constant": "2017",
+      "em": 0.00554
+     },
+     {
+      "constant": "2018",
+      "em": 0.005263
+     },
+     {
+      "constant": "1998",
+      "em": 0.003047
+     },
+     {
+      "constant": "france",
+      "em": 0.00277
+     },
+     {
+      "constant": "united states",
+      "em": 0.002493
+     }
+    ],
+    "majority_gold_string": "2018"
+   },
+   "contains": {
+    "best_constant": "april 10 2018",
+    "acc": 0.014404432132963989,
+    "n_candidates": 303,
+    "top5": [
+     {
+      "constant": "april 10 2018",
+      "contains": 0.014404
+     },
+     {
+      "constant": "march 16 2018",
+      "contains": 0.014127
+     },
+     {
+      "constant": "february 7 2018",
+      "contains": 0.013573
+     },
+     {
+      "constant": "march 27 2018",
+      "contains": 0.013573
+     },
+     {
+      "constant": "30 march 2018",
+      "contains": 0.013296
+     }
+    ],
+    "majority_gold_string": "2018"
+   },
+   "headline_metric": "em",
+   "arm_prediction_shape": {
+    "intact": {
+     "n_distinct_normalised_preds": 2607,
+     "modal_pred": "beatles",
+     "modal_pred_share": 0.019113573407202215,
+     "empty_pred_rate": 0.0033240997229916896,
+     "mean_pred_chars": 27.786426592797785
+    },
+    "pruned_healed": {
+     "n_distinct_normalised_preds": 2885,
+     "modal_pred": "1992",
+     "modal_pred_share": 0.009695290858725761,
+     "empty_pred_rate": 0.00110803324099723,
+     "mean_pred_chars": 61.549307479224375
+    },
+    "barely_healed": {
+     "n_distinct_normalised_preds": 2352,
+     "modal_pred": "1945",
+     "modal_pred_share": 0.00775623268698061,
+     "empty_pred_rate": 0.0002770083102493075,
+     "mean_pred_chars": 54.164542936288086
+    }
+   },
+   "lengthmatched_contains_null": {
+    "intact": {
+     "target_chars": 27.786426592797785,
+     "null_string_chars": 28,
+     "acc": 0.03102493074792244,
+     "null_string_head": "2018 2017 10 china 1960 1998"
+    },
+    "pruned_healed": {
+     "target_chars": 61.549307479224375,
+     "null_string_chars": 64,
+     "acc": 0.044598337950138504,
+     "null_string_head": "2018 2017 10 china 1960 1998 2003 5 four 2010 1989 united states"
+    },
+    "barely_healed": {
+     "target_chars": 54.164542936288086,
+     "null_string_chars": 64,
+     "acc": 0.044598337950138504,
+     "null_string_head": "2018 2017 10 china 1960 1998 2003 5 four 2010 1989 united states"
+    }
+   }
+  }
+ },
+ "cells": [
+  {
+   "arm": "intact",
+   "task": "mmlu",
+   "interface": "letter",
+   "n": 14042,
+   "reported": 0.3807149978635522,
+   "null_name": "best-constant always-D",
+   "null": 0.2689075630252101,
+   "residual": 0.1118074348383421,
+   "residual_fraction": 0.2936775158997381,
+   "boot_mean_pp": 11.180743483834211,
+   "boot_ci95_pp": [
+    9.998575701467027,
+    12.391575274177464
+   ],
+   "boot_p": 0.0001,
+   "mcnemar_arm_only": 4531,
+   "mcnemar_null_only": 2961,
+   "mcnemar_p": 5.754426825930498e-74,
+   "bh_reject_q05": true,
+   "bh_adj_p": 0.00011379310344827586,
+   "verdict": "ABOVE floor"
+  },
+  {
+   "arm": "intact",
+   "task": "mmlu_content",
+   "interface": "content_norm",
+   "n": 14042,
+   "reported": 0.386839481555334,
+   "null_name": "longest-option (split-tie)",
+   "null": 0.28445022076627263,
+   "residual": 0.10238926078906135,
+   "residual_fraction": 0.2646815169366715,
+   "boot_mean_pp": 10.238926078906138,
+   "boot_ci95_pp": [
+    9.314838223424962,
+    11.183146987608602
+   ],
+   "boot_p": 0.0001,
+   "mcnemar_p": null,
+   "bh_reject_q05": true,
+   "bh_adj_p": 0.00011379310344827586,
+   "verdict": "ABOVE floor"
+  },
+  {
+   "arm": "pruned_healed",
+   "task": "mmlu",
+   "interface": "letter",
+   "n": 14042,
+   "reported": 0.25117504628970233,
+   "null_name": "best-constant always-D",
+   "null": 0.2689075630252101,
+   "residual": -0.017732516735507742,
+   "residual_fraction": -0.07059824213212354,
+   "boot_mean_pp": -1.7732516735507762,
+   "boot_ci95_pp": [
+    -2.9767839339125484,
+    -0.5839623985187294
+   ],
+   "boot_p": 0.0034,
+   "mcnemar_arm_only": 3514,
+   "mcnemar_null_only": 3763,
+   "mcnemar_p": 0.0036438615131326683,
+   "bh_reject_q05": true,
+   "bh_adj_p": 0.00374,
+   "verdict": "BELOW floor"
+  },
+  {
+   "arm": "pruned_healed",
+   "task": "mmlu_content",
+   "interface": "content_norm",
+   "n": 14042,
+   "reported": 0.3243839908844894,
+   "null_name": "longest-option (split-tie)",
+   "null": 0.28445022076627263,
+   "residual": 0.03993377011821675,
+   "residual_fraction": 0.12310647639956084,
+   "boot_mean_pp": 3.9933770118216776,
+   "boot_ci95_pp": [
+    3.1043625077149506,
+    4.874127617148554
+   ],
+   "boot_p": 0.0001,
+   "mcnemar_p": null,
+   "bh_reject_q05": true,
+   "bh_adj_p": 0.00011379310344827586,
+   "verdict": "ABOVE floor"
+  },
+  {
+   "arm": "barely_healed",
+   "task": "mmlu",
+   "interface": "letter",
+   "n": 14042,
+   "reported": 0.22945449366187154,
+   "null_name": "best-constant always-D",
+   "null": 0.2689075630252101,
+   "residual": -0.03945306936333853,
+   "residual_fraction": -0.17194289261328358,
+   "boot_mean_pp": -3.9453069363338553,
+   "boot_ci95_pp": [
+    -5.120353226036177,
+    -2.798746617290984
+   ],
+   "boot_p": 0.0001,
+   "mcnemar_arm_only": 3222,
+   "mcnemar_null_only": 3776,
+   "mcnemar_p": 3.742550339532043e-11,
+   "bh_reject_q05": true,
+   "bh_adj_p": 0.00011379310344827586,
+   "verdict": "BELOW floor"
+  },
+  {
+   "arm": "barely_healed",
+   "task": "mmlu_content",
+   "interface": "content_norm",
+   "n": 14042,
+   "reported": 0.26321036889332006,
+   "null_name": "longest-option (split-tie)",
+   "null": 0.28445022076627263,
+   "residual": -0.021239851872952575,
+   "residual_fraction": -0.08069534632034633,
+   "boot_mean_pp": -2.123985187295257,
+   "boot_ci95_pp": [
+    -2.9999436215164033,
+    -1.2616317713526104
+   ],
+   "boot_p": 0.0001,
+   "mcnemar_p": null,
+   "bh_reject_q05": true,
+   "bh_adj_p": 0.00011379310344827586,
+   "verdict": "BELOW floor"
+  },
+  {
+   "arm": "intact",
+   "task": "popqa",
+   "interface": "em",
+   "n": 14267,
+   "reported": 0.15497301464919044,
+   "null_name": "best-constant answer 'association football'",
+   "null": 0.0229200252330553,
+   "residual": 0.13205298941613514,
+   "residual_fraction": 0.8521031207598372,
+   "boot_mean_pp": 13.205298941613513,
+   "boot_ci95_pp": [
+    12.616527651223103,
+    13.787061049975469
+   ],
+   "boot_p": 0.0001,
+   "mcnemar_arm_only": 1960,
+   "mcnemar_null_only": 76,
+   "mcnemar_p": 0.0,
+   "bh_reject_q05": true,
+   "bh_adj_p": 0.00011379310344827586,
+   "verdict": "ABOVE floor"
+  },
+  {
+   "arm": "pruned_healed",
+   "task": "popqa",
+   "interface": "em",
+   "n": 14267,
+   "reported": 0.03939160299992991,
+   "null_name": "best-constant answer 'association football'",
+   "null": 0.0229200252330553,
+   "residual": 0.016471577766874607,
+   "residual_fraction": 0.41814946619217086,
+   "boot_mean_pp": 1.6471577766874606,
+   "boot_ci95_pp": [
+    1.2476344010653957,
+    2.06069951636644
+   ],
+   "boot_p": 0.0001,
+   "mcnemar_arm_only": 545,
+   "mcnemar_null_only": 310,
+   "mcnemar_p": 8.066861143339899e-16,
+   "bh_reject_q05": true,
+   "bh_adj_p": 0.00011379310344827586,
+   "verdict": "ABOVE floor"
+  },
+  {
+   "arm": "barely_healed",
+   "task": "popqa",
+   "interface": "em",
+   "n": 14267,
+   "reported": 0.0,
+   "null_name": "best-constant answer 'association football'",
+   "null": 0.0229200252330553,
+   "residual": -0.0229200252330553,
+   "residual_fraction": null,
+   "boot_mean_pp": -2.29200252330553,
+   "boot_ci95_pp": [
+    -2.5443330763299925,
+    -2.053515104787274
+   ],
+   "boot_p": 0.0001,
+   "mcnemar_arm_only": 0,
+   "mcnemar_null_only": 327,
+   "mcnemar_p": 7.31511930420656e-99,
+   "bh_reject_q05": true,
+   "bh_adj_p": 0.00011379310344827586,
+   "verdict": "BELOW floor"
+  },
+  {
+   "arm": "intact",
+   "task": "popqa",
+   "interface": "contains",
+   "n": 14267,
+   "reported": 0.16779981776126726,
+   "null_name": "best-constant answer 'american football'",
+   "null": 0.04878390691806266,
+   "residual": 0.11901591084320459,
+   "residual_fraction": 0.7092731829573934,
+   "boot_mean_pp": 11.90159108432046,
+   "boot_ci95_pp": [
+    11.312819793930048,
+    12.490362374710871
+   ],
+   "boot_p": 0.0001,
+   "mcnemar_arm_only": 1913,
+   "mcnemar_null_only": 215,
+   "mcnemar_p": 0.0,
+   "bh_reject_q05": true,
+   "bh_adj_p": 0.00011379310344827586,
+   "verdict": "ABOVE floor"
+  },
+  {
+   "arm": "pruned_healed",
+   "task": "popqa",
+   "interface": "contains",
+   "n": 14267,
+   "reported": 0.11186654517417817,
+   "null_name": "best-constant answer 'american football'",
+   "null": 0.04878390691806266,
+   "residual": 0.06308263825611551,
+   "residual_fraction": 0.5639097744360902,
+   "boot_mean_pp": 6.308263825611552,
+   "boot_ci95_pp": [
+    5.810611901591084,
+    6.813100161211184
+   ],
+   "boot_p": 0.0001,
+   "mcnemar_arm_only": 1150,
+   "mcnemar_null_only": 250,
+   "mcnemar_p": 5.0287582771852444e-138,
+   "bh_reject_q05": true,
+   "bh_adj_p": 0.00011379310344827586,
+   "verdict": "ABOVE floor"
+  },
+  {
+   "arm": "barely_healed",
+   "task": "popqa",
+   "interface": "contains",
+   "n": 14267,
+   "reported": 0.0270554426298451,
+   "null_name": "best-constant answer 'american football'",
+   "null": 0.04878390691806266,
+   "residual": -0.021728464288217564,
+   "residual_fraction": -0.8031088082901553,
+   "boot_mean_pp": -2.1728464288217566,
+   "boot_ci95_pp": [
+    -2.4742412560454197,
+    -1.8714516015980935
+   ],
+   "boot_p": 0.0001,
+   "mcnemar_arm_only": 94,
+   "mcnemar_null_only": 404,
+   "mcnemar_p": 8.50678514174299e-47,
+   "bh_reject_q05": true,
+   "bh_adj_p": 0.00011379310344827586,
+   "verdict": "BELOW floor"
+  },
+  {
+   "arm": "intact",
+   "task": "popqa",
+   "interface": "contains_lenmatched",
+   "n": 14267,
+   "reported": 0.16779981776126726,
+   "null_name": "length-matched verbose constant (20 chars)",
+   "null": 0.025863881685007358,
+   "residual": 0.1419359360762599,
+   "residual_fraction": 0.8458646616541353,
+   "boot_mean_pp": 14.19359360762599,
+   "boot_ci95_pp": [
+    13.611831499264035,
+    14.7823648980164
+   ],
+   "boot_p": 0.0001,
+   "mcnemar_arm_only": 2078,
+   "mcnemar_null_only": 53,
+   "mcnemar_p": 0.0,
+   "bh_reject_q05": true,
+   "bh_adj_p": 0.00011379310344827586,
+   "verdict": "ABOVE floor"
+  },
+  {
+   "arm": "pruned_healed",
+   "task": "popqa",
+   "interface": "contains_lenmatched",
+   "n": 14267,
+   "reported": 0.11186654517417817,
+   "null_name": "length-matched verbose constant (90 chars)",
+   "null": 0.09280157005677438,
+   "residual": 0.019064975117403793,
+   "residual_fraction": 0.17042606516290723,
+   "boot_mean_pp": 1.90649751174038,
+   "boot_ci95_pp": [
+    1.331744585406883,
+    2.467232074016962
+   ],
+   "boot_p": 0.0001,
+   "mcnemar_arm_only": 1007,
+   "mcnemar_null_only": 735,
+   "mcnemar_p": 7.723237808918734e-11,
+   "bh_reject_q05": true,
+   "bh_adj_p": 0.00011379310344827586,
+   "verdict": "ABOVE floor"
+  },
+  {
+   "arm": "barely_healed",
+   "task": "popqa",
+   "interface": "contains_lenmatched",
+   "n": 14267,
+   "reported": 0.0270554426298451,
+   "null_name": "length-matched verbose constant (118 chars)",
+   "null": 0.10303497581832201,
+   "residual": -0.07597953318847692,
+   "residual_fraction": -2.8082901554404147,
+   "boot_mean_pp": -7.59795331884769,
+   "boot_ci95_pp": [
+    -8.053550150697413,
+    -7.149365669026425
+   ],
+   "boot_p": 0.0001,
+   "mcnemar_arm_only": 40,
+   "mcnemar_null_only": 1124,
+   "mcnemar_p": 2.2383383410351675e-276,
+   "bh_reject_q05": true,
+   "bh_adj_p": 0.00011379310344827586,
+   "verdict": "BELOW floor"
+  },
+  {
+   "arm": "intact",
+   "task": "triviaqa",
+   "interface": "em",
+   "n": 17944,
+   "reported": 0.40687695051270617,
+   "null_name": "best-constant answer 'australia commonwealth realm'",
+   "null": 0.0025635309852875612,
+   "residual": 0.4043134195274186,
+   "residual_fraction": 0.9936994932201069,
+   "boot_mean_pp": 40.43134195274186,
+   "boot_ci95_pp": [
+    39.706865804725815,
+    41.139099420419086
+   ],
+   "boot_p": 0.0001,
+   "mcnemar_arm_only": 7265,
+   "mcnemar_null_only": 10,
+   "mcnemar_p": 0.0,
+   "bh_reject_q05": true,
+   "bh_adj_p": 0.00011379310344827586,
+   "verdict": "ABOVE floor"
+  },
+  {
+   "arm": "pruned_healed",
+   "task": "triviaqa",
+   "interface": "em",
+   "n": 17944,
+   "reported": 0.09585376727596968,
+   "null_name": "best-constant answer 'australia commonwealth realm'",
+   "null": 0.0025635309852875612,
+   "residual": 0.09329023629068212,
+   "residual_fraction": 0.9732558139534883,
+   "boot_mean_pp": 9.329023629068212,
+   "boot_ci95_pp": [
+    8.905483727151136,
+    9.76928221132412
+   ],
+   "boot_p": 0.0001,
+   "mcnemar_arm_only": 1704,
+   "mcnemar_null_only": 30,
+   "mcnemar_p": 0.0,
+   "bh_reject_q05": true,
+   "bh_adj_p": 0.00011379310344827586,
+   "verdict": "ABOVE floor"
+  },
+  {
+   "arm": "barely_healed",
+   "task": "triviaqa",
+   "interface": "em",
+   "n": 17944,
+   "reported": 0.00022291573785109228,
+   "null_name": "best-constant answer 'australia commonwealth realm'",
+   "null": 0.0025635309852875612,
+   "residual": -0.0023406152474364688,
+   "residual_fraction": -10.5,
+   "boot_mean_pp": -0.23406152474364691,
+   "boot_ci95_pp": [
+    -0.3120820329915292,
+    -0.16161390994204192
+   ],
+   "boot_p": 0.0001,
+   "mcnemar_arm_only": 4,
+   "mcnemar_null_only": 46,
+   "mcnemar_p": 4.461782054931973e-10,
+   "bh_reject_q05": true,
+   "bh_adj_p": 0.00011379310344827586,
+   "verdict": "BELOW floor"
+  },
+  {
+   "arm": "intact",
+   "task": "triviaqa",
+   "interface": "contains",
+   "n": 17944,
+   "reported": 0.4518502006241641,
+   "null_name": "best-constant answer 'one thousand nine hundred and eightytwo'",
+   "null": 0.008637984841729826,
+   "residual": 0.44321221578243425,
+   "residual_fraction": 0.9808830784410458,
+   "boot_mean_pp": 44.321221578243424,
+   "boot_ci95_pp": [
+    43.591172536781094,
+    45.05684351315203
+   ],
+   "boot_p": 0.0001,
+   "mcnemar_arm_only": 8037,
+   "mcnemar_null_only": 84,
+   "mcnemar_p": 0.0,
+   "bh_reject_q05": true,
+   "bh_adj_p": 0.00011379310344827586,
+   "verdict": "ABOVE floor"
+  },
+  {
+   "arm": "pruned_healed",
+   "task": "triviaqa",
+   "interface": "contains",
+   "n": 17944,
+   "reported": 0.22854436023183236,
+   "null_name": "best-constant answer 'one thousand nine hundred and eightytwo'",
+   "null": 0.008637984841729826,
+   "residual": 0.21990637539010255,
+   "residual_fraction": 0.9622043404047794,
+   "boot_mean_pp": 21.990637539010255,
+   "boot_ci95_pp": [
+    21.37761925991975,
+    22.609228711547036
+   ],
+   "boot_p": 0.0001,
+   "mcnemar_arm_only": 4033,
+   "mcnemar_null_only": 87,
+   "mcnemar_p": 0.0,
+   "bh_reject_q05": true,
+   "bh_adj_p": 0.00011379310344827586,
+   "verdict": "ABOVE floor"
+  },
+  {
+   "arm": "barely_healed",
+   "task": "triviaqa",
+   "interface": "contains",
+   "n": 17944,
+   "reported": 0.007913508693713777,
+   "null_name": "best-constant answer 'one thousand nine hundred and eightytwo'",
+   "null": 0.008637984841729826,
+   "residual": -0.000724476148016049,
+   "residual_fraction": -0.09154929577464777,
+   "boot_mean_pp": -0.072447614801605,
+   "boot_ci95_pp": [
+    -0.23406152474364691,
+    0.08916629514043692
+   ],
+   "boot_p": 0.399,
+   "mcnemar_arm_only": 106,
+   "mcnemar_null_only": 119,
+   "mcnemar_p": 0.4237736910837464,
+   "bh_reject_q05": false,
+   "bh_adj_p": 0.399,
+   "verdict": "AT floor (not distinguishable)"
+  },
+  {
+   "arm": "intact",
+   "task": "triviaqa",
+   "interface": "contains_lenmatched",
+   "n": 17944,
+   "reported": 0.4518502006241641,
+   "null_name": "length-matched verbose constant (28 chars)",
+   "null": 0.006241640659830584,
+   "residual": 0.4456085599643335,
+   "residual_fraction": 0.9861864824864331,
+   "boot_mean_pp": 44.56085599643335,
+   "boot_ci95_pp": [
+    43.81966116807847,
+    45.27975925100312
+   ],
+   "boot_p": 0.0001,
+   "mcnemar_arm_only": 8038,
+   "mcnemar_null_only": 42,
+   "mcnemar_p": 0.0,
+   "bh_reject_q05": true,
+   "bh_adj_p": 0.00011379310344827586,
+   "verdict": "ABOVE floor"
+  },
+  {
+   "arm": "pruned_healed",
+   "task": "triviaqa",
+   "interface": "contains_lenmatched",
+   "n": 17944,
+   "reported": 0.22854436023183236,
+   "null_name": "length-matched verbose constant (84 chars)",
+   "null": 0.016384306732055282,
+   "residual": 0.21216005349977707,
+   "residual_fraction": 0.9283101682516459,
+   "boot_mean_pp": 21.21600534997771,
+   "boot_ci95_pp": [
+    20.59741417744093,
+    21.8568880962996
+   ],
+   "boot_p": 0.0001,
+   "mcnemar_arm_only": 3972,
+   "mcnemar_null_only": 165,
+   "mcnemar_p": 0.0,
+   "bh_reject_q05": true,
+   "bh_adj_p": 0.00011379310344827586,
+   "verdict": "ABOVE floor"
+  },
+  {
+   "arm": "barely_healed",
+   "task": "triviaqa",
+   "interface": "contains_lenmatched",
+   "n": 17944,
+   "reported": 0.007913508693713777,
+   "null_name": "length-matched verbose constant (121 chars)",
+   "null": 0.026972804279982165,
+   "residual": -0.01905929558626839,
+   "residual_fraction": -2.4084507042253516,
+   "boot_mean_pp": -1.9059295586268392,
+   "boot_ci95_pp": [
+    -2.1567097637093178,
+    -1.6551493535443602
+   ],
+   "boot_p": 0.0001,
+   "mcnemar_arm_only": 97,
+   "mcnemar_null_only": 439,
+   "mcnemar_p": 6.035461559519634e-53,
+   "bh_reject_q05": true,
+   "bh_adj_p": 0.00011379310344827586,
+   "verdict": "BELOW floor"
+  },
+  {
+   "arm": "intact",
+   "task": "nq_open",
+   "interface": "em",
+   "n": 3610,
+   "reported": 0.10249307479224377,
+   "null_name": "best-constant answer '2017'",
+   "null": 0.00554016620498615,
+   "residual": 0.09695290858725762,
+   "residual_fraction": 0.9459459459459459,
+   "boot_mean_pp": 9.695290858725762,
+   "boot_ci95_pp": [
+    8.698060941828254,
+    10.720221606648199
+   ],
+   "boot_p": 0.0001,
+   "mcnemar_arm_only": 370,
+   "mcnemar_null_only": 20,
+   "mcnemar_p": 1.390899896453219e-84,
+   "bh_reject_q05": true,
+   "bh_adj_p": 0.00011379310344827586,
+   "verdict": "ABOVE floor"
+  },
+  {
+   "arm": "pruned_healed",
+   "task": "nq_open",
+   "interface": "em",
+   "n": 3610,
+   "reported": 0.02853185595567867,
+   "null_name": "best-constant answer '2017'",
+   "null": 0.00554016620498615,
+   "residual": 0.02299168975069252,
+   "residual_fraction": 0.8058252427184466,
+   "boot_mean_pp": 2.2991689750692523,
+   "boot_ci95_pp": [
+    1.7174515235457064,
+    2.9085872576177287
+   ],
+   "boot_p": 0.0001,
+   "mcnemar_arm_only": 103,
+   "mcnemar_null_only": 20,
+   "mcnemar_p": 1.1701818604131554e-14,
+   "bh_reject_q05": true,
+   "bh_adj_p": 0.00011379310344827586,
+   "verdict": "ABOVE floor"
+  },
+  {
+   "arm": "barely_healed",
+   "task": "nq_open",
+   "interface": "em",
+   "n": 3610,
+   "reported": 0.0016620498614958448,
+   "null_name": "best-constant answer '2017'",
+   "null": 0.00554016620498615,
+   "residual": -0.003878116343490305,
+   "residual_fraction": -2.3333333333333335,
+   "boot_mean_pp": -0.3878116343490305,
+   "boot_ci95_pp": [
+    -0.6648199445983379,
+    -0.110803324099723
+   ],
+   "boot_p": 0.006,
+   "mcnemar_arm_only": 6,
+   "mcnemar_null_only": 20,
+   "mcnemar_p": 0.009355306625366211,
+   "bh_reject_q05": true,
+   "bh_adj_p": 0.006387096774193549,
+   "verdict": "BELOW floor"
+  },
+  {
+   "arm": "intact",
+   "task": "nq_open",
+   "interface": "contains",
+   "n": 3610,
+   "reported": 0.14293628808864267,
+   "null_name": "best-constant answer 'april 10 2018'",
+   "null": 0.014404432132963989,
+   "residual": 0.12853185595567868,
+   "residual_fraction": 0.8992248062015503,
+   "boot_mean_pp": 12.853185595567867,
+   "boot_ci95_pp": [
+    11.662049861495845,
+    14.044321329639889
+   ],
+   "boot_p": 0.0001,
+   "mcnemar_arm_only": 505,
+   "mcnemar_null_only": 41,
+   "mcnemar_p": 1.015643044154761e-102,
+   "bh_reject_q05": true,
+   "bh_adj_p": 0.00011379310344827586,
+   "verdict": "ABOVE floor"
+  },
+  {
+   "arm": "pruned_healed",
+   "task": "nq_open",
+   "interface": "contains",
+   "n": 3610,
+   "reported": 0.07867036011080332,
+   "null_name": "best-constant answer 'april 10 2018'",
+   "null": 0.014404432132963989,
+   "residual": 0.06426592797783934,
+   "residual_fraction": 0.8169014084507044,
+   "boot_mean_pp": 6.426592797783933,
+   "boot_ci95_pp": [
+    5.484764542936288,
+    7.368421052631578
+   ],
+   "boot_p": 0.0001,
+   "mcnemar_arm_only": 277,
+   "mcnemar_null_only": 45,
+   "mcnemar_p": 6.606173607350715e-42,
+   "bh_reject_q05": true,
+   "bh_adj_p": 0.00011379310344827586,
+   "verdict": "ABOVE floor"
+  },
+  {
+   "arm": "barely_healed",
+   "task": "nq_open",
+   "interface": "contains",
+   "n": 3610,
+   "reported": 0.009695290858725761,
+   "null_name": "best-constant answer 'april 10 2018'",
+   "null": 0.014404432132963989,
+   "residual": -0.004709141274238228,
+   "residual_fraction": -0.4857142857142858,
+   "boot_mean_pp": -0.47091412742382266,
+   "boot_ci95_pp": [
+    -0.886426592797784,
+    -0.0554016620498615
+   ],
+   "boot_p": 0.0336,
+   "mcnemar_arm_only": 21,
+   "mcnemar_null_only": 38,
+   "mcnemar_p": 0.036343179957053884,
+   "bh_reject_q05": true,
+   "bh_adj_p": 0.03465,
+   "verdict": "BELOW floor"
+  },
+  {
+   "arm": "intact",
+   "task": "nq_open",
+   "interface": "contains_lenmatched",
+   "n": 3610,
+   "reported": 0.14293628808864267,
+   "null_name": "length-matched verbose constant (28 chars)",
+   "null": 0.03102493074792244,
+   "residual": 0.11191135734072023,
+   "residual_fraction": 0.7829457364341086,
+   "boot_mean_pp": 11.191135734072022,
+   "boot_ci95_pp": [
+    9.916897506925208,
+    12.437673130193906
+   ],
+   "boot_p": 0.0001,
+   "mcnemar_arm_only": 487,
+   "mcnemar_null_only": 83,
+   "mcnemar_p": 1.615555039772333e-70,
+   "bh_reject_q05": true,
+   "bh_adj_p": 0.00011379310344827586,
+   "verdict": "ABOVE floor"
+  },
+  {
+   "arm": "pruned_healed",
+   "task": "nq_open",
+   "interface": "contains_lenmatched",
+   "n": 3610,
+   "reported": 0.07867036011080332,
+   "null_name": "length-matched verbose constant (64 chars)",
+   "null": 0.044598337950138504,
+   "residual": 0.034072022160664815,
+   "residual_fraction": 0.43309859154929575,
+   "boot_mean_pp": 3.4072022160664823,
+   "boot_ci95_pp": [
+    2.326869806094183,
+    4.487534626038781
+   ],
+   "boot_p": 0.0001,
+   "mcnemar_arm_only": 262,
+   "mcnemar_null_only": 139,
+   "mcnemar_p": 8.266683130045114e-10,
+   "bh_reject_q05": true,
+   "bh_adj_p": 0.00011379310344827586,
+   "verdict": "ABOVE floor"
+  },
+  {
+   "arm": "barely_healed",
+   "task": "nq_open",
+   "interface": "contains_lenmatched",
+   "n": 3610,
+   "reported": 0.009695290858725761,
+   "null_name": "length-matched verbose constant (64 chars)",
+   "null": 0.044598337950138504,
+   "residual": -0.034903047091412745,
+   "residual_fraction": -3.6000000000000005,
+   "boot_mean_pp": -3.4903047091412747,
+   "boot_ci95_pp": [
+    -4.1551246537396125,
+    -2.8254847645429364
+   ],
+   "boot_p": 0.0001,
+   "mcnemar_arm_only": 15,
+   "mcnemar_null_only": 141,
+   "mcnemar_p": 7.361303006079904e-27,
+   "bh_reject_q05": true,
+   "bh_adj_p": 0.00011379310344827586,
+   "verdict": "BELOW floor"
+  }
+ ]
+}

@@ -1,14 +1,29 @@
 ---
-gate: A01 gate-1 (third model family MC interface)
+gate: A01 gate-1 (third model family MC interface) -- INTACT-ONLY LEG
 date: 2026-08-09
 node: .21 (8x L20A 183GB, wzc1)
-verdict: KILL_CONDITION_CLAUSE_2_TRIGGERED
-status: A01 generality claim must be NARROWED; protocol contribution survives
+verdict: SUPERSEDED -- this file measured INTACT bases, which cannot test A01's kill clause
+superseded_by: GATE1_DAMAGED_VERDICT.md (6/6 damaged non-OLMo arms below floor -> A01_GENERAL_CLAIM_CONFIRMED)
+status: the NUMBERS below are valid and still cited; the VERDICT section (§1) is RETRACTED
 ---
+
+> **★ RETRACTION NOTICE (2026-08-09, same day).** §1 of this file concluded
+> `KILL_CONDITION_CLAUSE_2_TRIGGERED` and "narrow A01 to OLMo-only". **That conclusion is
+> withdrawn.** A01's kill clause is about **structurally damaged** models; this run measured
+> **intact** bases, which were never expected to show the pathology and therefore cannot
+> trigger or clear the clause. The damaged-arm run (`GATE1_DAMAGED_VERDICT.md`) found
+> **6/6 non-OLMo damaged arms at/below their own best-constant floor**, i.e. the general
+> claim is **CONFIRMED**, not narrowed.
+>
+> **What survives from this file:** the intact-base measurements themselves (§2 onward),
+> which are the source of a *different*, second-order finding — on three of four **healthy**
+> strong models the letter interface is **+13 to +23pp better** than the label-free content
+> interface. So "content is the fair interface" is a statement about damaged models, not a
+> general property of MC interfaces.
 
 # A01 gate-1 — third-model-family verdict
 
-## 1. Verdict in one line
+## 1. Verdict in one line ⚠️ RETRACTED — see notice above
 
 **0 of 3 non-OLMo families replicate the MMLU letter-interface failure.** A01's
 Kill condition clause 2 ("第三家族和第二 benchmark 均不复现 interface failure") is
@@ -17,6 +32,9 @@ MC interface is an unreliable instrument"* to *"the letter interface degenerates
 in structurally damaged OLMo-2 arms."* The **protocol** contribution
 (construct-appropriate nulls before any cross-arm comparison) is untouched and
 in fact is what made this narrowing detectable.
+
+*(Paragraph above retained verbatim as the record of what was claimed and withdrawn.
+Do not cite it. The reason it was wrong: it tested intact, not damaged, models.)*
 
 ## 2. The measurement
 

@@ -17,11 +17,14 @@
       "transfer_note": "556 MB cross-disk is ~15-45 min at measured 12-37 MB/s -- tolerable. But irrelevant if the run happens on a zwfy6 node, which is the better choice."
     },
     "read_lora": {
-      "status": "NOT IDENTIFIED -- this is the blocker",
-      "suspect_path": "outputs/lora_best_ref/",
-      "suspect_size": "512 bytes -- NOT adapter weights (a real r=32 LoRA on Qwen3-8B is tens-to-hundreds of MB with adapter_config.json + adapter_model.safetensors or a .pt)",
-      "candidate_found_by_scout": "a ~222 MB adapter with adapter_config.json (1341 B) + README.md (5288 B) exists, but whether it is the paper's flagship Read-LoRA or a different distill run is UNRESOLVED",
-      "action_required": "provenance grep (CPU, no GPU): find which adapter path the Paper A flagship table rows were actually produced with. Until pinned, the 5-config comparison is not interpretable."
+      "status": "RESOLVED 2026-08-09 -- canonical Read-LoRA pinned via provenance grep",
+      "canonical_path": "outputs/qcmem_distill_qwen_j12_r32_4k/final/",
+      "size": "223 MB",
+      "config": "r=32, alpha=64, layers 12..35 (upper band), sha dd09cd17",
+      "disk": "BOTH wzc1 and zwfy6 -- no transfer needed on either side",
+      "provenance": ">10 citation points incl paperA/P0_16_E0_NOTES.md; and the Write-LoRA's own distill_args.json records this path as its read_lora_path, which independently confirms it is the flagship Read adapter the Write path was distilled against",
+      "retracted_suspect_path": "outputs/lora_best_ref/ -- an EMPTY DIRECTORY, not a 512-byte file. The earlier '512 bytes' claim in this file was wrong (512 B is a directory inode size, not file content). It is not a stale/broken adapter, it is simply empty; not evidence of anything.",
+      "unblocks": "the 5-config x 5-benchmark stage-1 sweep is now interpretable"
     },
     "base_model": {
       "note": "the path recorded in some docs (models/Qwen3-8b-local) is a 512-byte SYMLINK, not the weights",

@@ -425,7 +425,8 @@ def main():
 
     # ---------------- closed-book QA ----------------
     for task, expected_n, headline in (("popqa", 14267, "contains"),
-                                       ("triviaqa", 17944, "em")):
+                                       ("triviaqa", 17944, "em"),
+                                       ("nq_open", 3610, "em")):
         rows_by_arm = {}
         ok = True
         for lab, d in arms:
