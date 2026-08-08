@@ -90,6 +90,7 @@ from eval_olmo2_probe2_ppl import (  # noqa: E402
     load_base_model,
     load_base_model_any_family,
     load_pruned_model,
+    load_truncated_any_family,
 )
 from eval_olmo2_probe2_downstream import (  # noqa: E402
     _safe_lp,
@@ -710,8 +711,9 @@ def main():
         raise ValueError("--output_name required")
     if args.any_family and args.ckpt:
         raise ValueError(
-            "--any_family is base-mode only; --ckpt implies OLMo-specific layer "
-            "surgery (keep_front/n_fresh) which does not transfer across families"
+            "--any_family with --ckpt is not supported; use --any_family with "
+            "--keep_front_layers (base mode, truncation, no heal) or without "
+            "--keep_front_layers (untouched base)"
         )
     if not torch.cuda.is_available():
         raise RuntimeError("CUDA required (use --selftest for a CPU dry run)")
@@ -735,7 +737,14 @@ def main():
             # A01 gate-1: the same letter-vs-content MC interface on a NON-OLMo
             # family. Only the model class changes; scoring/tokenising/nulls are
             # the identical code path, which is what makes the comparison valid.
-            model, meta = load_base_model_any_family(args.base_model, device)
+            if args.keep_front_layers:
+                # Damaged variant: truncate the base to its first keep_front layers,
+                # no fresh block, no heal. Answers whether letter-interface failure
+                # transfers to *damaged* non-OLMo transformers.
+                model, meta = load_truncated_any_family(
+                    args.base_model, args.keep_front_layers, device)
+            else:
+                model, meta = load_base_model_any_family(args.base_model, device)
         else:
             model, meta = load_base_model(args.base_model, device)
     meta["base_model"] = args.base_model

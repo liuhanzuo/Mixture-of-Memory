@@ -172,6 +172,72 @@ def load_base_model_any_family(base_path, device):
     }
 
 
+def load_truncated_any_family(base_path, keep_front_layers, device):
+    """A01 gate-1, damaged-arm variant: load a non-OLMo base and *truncate* it to
+    its first `keep_front_layers` transformer blocks, without any heal training.
+
+    This is deliberately harsher than the OLMo pruned+healed arms A01 already
+    has: no fresh block is inserted, no heal steps are taken. It answers a very
+    specific question the healthy-base gate-1 could not: is the letter-interface
+    degeneration (letter acc at or below the best-constant floor, high tie rate)
+    a property of *damaged* transformer LMs in general, or does it only appear
+    on OLMo-2? If a truncated Llama-2 / Llama-3 / Qwen3-Base ends up healthy on
+    letter, then even *damage* does not reproduce the OLMo pathology across
+    families -- a much stronger scoping statement than the healthy-base result.
+
+    Implementation: HF's AutoModelForCausalLM.from_pretrained fully loads the
+    base, then we replace `model.model.layers` with a slice of the first N and
+    update num_hidden_layers on the config. This works for the LLaMA and Qwen
+    families (they all store transformer blocks under `.model.layers`). We
+    intentionally do NOT touch the norm / lm_head. The forward path uses the
+    remaining layers and the untouched final norm + head, exactly what a
+    training run's step-0 forward would look like.
+    """
+    from transformers import AutoModelForCausalLM
+
+    model = AutoModelForCausalLM.from_pretrained(
+        base_path, torch_dtype=torch.float32, local_files_only=True
+    )
+    arch = type(model).__name__
+    orig_n = getattr(model.config, "num_hidden_layers", None)
+    # Locate the transformer-block list; LLaMA/Qwen store it at model.model.layers.
+    if not (hasattr(model, "model") and hasattr(model.model, "layers")):
+        raise RuntimeError(
+            f"truncated_any_family: {arch} does not expose model.model.layers; "
+            f"add family-specific handling before using this loader"
+        )
+    if keep_front_layers is None or keep_front_layers <= 0:
+        raise ValueError("--keep_front_layers must be a positive int for any_family truncation")
+    if keep_front_layers >= orig_n:
+        raise ValueError(
+            f"keep_front_layers={keep_front_layers} does not truncate {arch} "
+            f"(has {orig_n} layers); use --any_family without truncation instead"
+        )
+    # torch.nn.ModuleList slice preserves the correct module registration.
+    kept = model.model.layers[:keep_front_layers]
+    model.model.layers = torch.nn.ModuleList(kept)
+    model.config.num_hidden_layers = keep_front_layers
+    if getattr(model.config, "layer_types", None) is not None:
+        # Some configs record a per-layer type list; keep it in sync.
+        model.config.layer_types = list(model.config.layer_types[:keep_front_layers])
+        assert len(model.config.layer_types) == keep_front_layers
+
+    _log(f"[truncated:any_family] {arch} truncated {orig_n} -> {keep_front_layers} layers "
+         f"(no heal) from {base_path} vocab={model.config.vocab_size}")
+    model = model.to(device)
+    model.eval()
+    return model, {
+        "mode": "truncated_any_family",
+        "architecture": arch,
+        "keep_front_layers": keep_front_layers,
+        "original_num_hidden_layers": orig_n,
+        "num_hidden_layers": keep_front_layers,
+        "n_fresh_layers": 0,
+        "heal_steps": 0,
+        "base_model": base_path,
+    }
+
+
 # ---------------------------------------------------------------------------
 # scoring
 # ---------------------------------------------------------------------------
