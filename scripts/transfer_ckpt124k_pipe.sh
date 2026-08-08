@@ -1,4 +1,6 @@
 #!/bin/bash
+echo "[DISABLED 2026-08-08] .21 已改分配给 SparseForge (用户改优先级 STAND DOWN); Paper B keep10 在 .82 正常跑, keep12 在 .104 正常跑, 无需迁移. 如需恢复请人工删除此 guard." >&2
+exit 1
 # Self-restarting wrapper for step124000.pt transfer
 # Retries until MD5_OK is confirmed on .21
 

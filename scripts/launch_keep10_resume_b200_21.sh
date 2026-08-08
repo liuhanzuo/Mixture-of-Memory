@@ -1,4 +1,6 @@
 #!/bin/bash
+echo "[DISABLED 2026-08-08] .21 已改分配给 SparseForge (用户改优先级 STAND DOWN); Paper B keep10 在 .82 正常跑, keep12 在 .104 正常跑, 无需迁移. 如需恢复请人工删除此 guard." >&2
+exit 1
 # Launch keep10+fresh2 resume on .21 (8xL20A, wzc1 disk)
 # This script waits for dolmino transfer to complete, then starts training
 # eff_batch = batch_size(8) * grad_accum(2) * world_size(8) = 128
