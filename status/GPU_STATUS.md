@@ -9,6 +9,22 @@
 > ⚠️ 连带影响：**zwfy6 侧的 16 卡多机 DDP 只剩 .73+.82 这唯一组合**（原先 .73/.82/.104 任取两台）。
 
 ## 当前在跑（2026-08-08 06:25 +08:00 更新）— **LOCAL** P1.2 seed2（~87h）+ **.104** P2.4 keep12 SFT（zwfy6，step 780/842，8/8 @ 100%）；**.73 空闲 0/8**（keep8 SFT ✅ 05:56 + post-SFT eval battery ✅ 06:21）；**.82 空闲 0/8**（keep10 SFT ✅ **06:16:12** final.pt step=842 → **post-SFT eval 待跑**）；**.252** ladder wzc1 pre-SFT eval ✅ 05:51
+
+## ▶️ 2026-08-08 08:00-08:15 — Within-disk floor v3 batch（4 batteries in parallel, feeds `PAPERB_WITHIN_DISK_FLOOR.md`）
+> ✅ **ALL 4 DONE by 2026-08-08 08:28:02 +08:00.** Verdict: **0 flips / Δcore6=+0.0000 pp across all 4 rungs** under the current driver. The previously-reported "18-flip within-disk floor" on keep10 was a **mixed-driver artefact** (old driver → v1 dirs without per-example preds vs new driver → v2 with per-example preds). Under a single driver revision the eval is bit-deterministic. Report: `status/PAPERB_WITHIN_DISK_FLOOR_V3.md`.
+> Purpose: extend n=2 within-disk-within-arch controls (keep10 v1-v2, keep12 v1-v2, sg16 v1-v2) to n=3 per rung, and cover keep14 + full32-base (previously n=1). New `_v3` (or `_v2` for keep14/full32_base) output names — no pre-existing summaries touched. Driver: `scripts/_run_olmo2_within_disk_floor_v3.sh <ARM>`.
+
+| node | disk/arch | ARM (ckpt) | output_name | script PID | log | started | done | wall | flips | Δcore6 |
+|---|---|---|---|---:|---|---|---|---:|---:|---:|
+| .73 | zwfy6/H20-cc9.0 | keep14 (`outputs/olmo2_probe2_7B_keep14fresh2/step200000.pt`) | `7B_keep14_step200000_v2` | 3125387 | `logs/within_disk_floor_v3_keep14.log` | 07:58:05 | **08:14:59** | 17m | **0** | **+0.0000 pp** |
+| .82 | zwfy6/H20-cc9.0 | keep8 (`.../keep8fresh2/step121000.pt`) | `7B_keep8_step121000_v3` | 1267272 | `logs/within_disk_floor_v3_keep8.log` | 08:00:06 | **08:13:54** | 14m | **0** | **+0.0000 pp** |
+| .104 | zwfy6/H20-cc9.0 | shortgpt16 (`.../shortgpt16/step200000.pt`) | `7B_shortgpt16_step200000_v3` | 3332220 | `logs/within_disk_floor_v3_shortgpt16.log` | 08:02:06 | **08:23:24** | 21m | **0** | **+0.0000 pp** |
+| .252 | wzc1/L20A-cc10.0 | full32_base (HF `models/OLMo-2-1124-7B`, no ckpt) | `7B_full32_base_wzc1_v2` | 3226907 | `logs/within_disk_floor_v3_full32_base.log` | 08:13:28 | **08:28:02** | 15m | **0** | **+0.0000 pp** |
+
+- Each battery = PPL + core6 + know5 + MMLU letter+content + closedbook (popqa+triviaqa); `chat_template=False`; `--add_bos 0`; `--save_per_example` retained on downstream+MMLU+closedbook; `assert_8shards` on every merge → **5/5 harnesses × 4 arms all 8/8 shards, 0 SHARD MISSING / ABORT**.
+- Nodes idle at 0/8 GPU util as of 08:28 across all four (verified `nvidia-smi` post-completion).
+
+## 当前在跑（2026-08-08 06:25 +08:00 更新 — 旧行, 不再准确）— **LOCAL** P1.2 seed2（~87h）+ **.104** P2.4 keep12 SFT（zwfy6，step 780/842，8/8 @ 100%）；**.73 空闲 0/8**（keep8 SFT ✅ 05:56 + post-SFT eval battery ✅ 06:21）；**.82 空闲 0/8**（keep10 SFT ✅ **06:16:12** final.pt step=842 → **post-SFT eval 待跑**）；**.252** ladder wzc1 pre-SFT eval ✅ 05:51
 > ⚠️ **补卡线索（2026-08-08 06:25）**：`.82` 的 keep10 SFT 已于 06:16:12 完成且节点空转 → 可立即照 `scripts/_run_olmo2_p24_eval_sft_keep8_73.sh` 的模式派 keep10 post-SFT eval battery（换 arm/ckpt/output_name + pre anchor 用 keep10 同盘 _v2）。keep8 实测 battery 仅 16 min。
 > ★ **keep8 预测检验结论（2026-08-08）**：damage-sensitivity **次线性/饱和**——n=3 线性拟合预测 +14.0%，实测 **+10.15%**（CI [+10.05,+10.23] 排除预测值）；详见 `status/PAPERB_P24_SFT_KEEP8_EVAL.md`。后续 keep10/keep12 落点是对「饱和」的进一步检验。
 
@@ -68,19 +84,26 @@
 > | Parent bash PID / log | `1215445` (dead) / `logs/p24_eval_sft_keep10_82.log` |
 > | 报告 | `status/PAPERB_P24_SFT_KEEP10_EVAL.md` |
 
-> ### ▶️ .104 8×H20 (zwfy6) — `p24_sft_keep12_zwfy6`（PaperB P2.4 n=6 damage-sensitivity ladder — top rung of the three）
+> ### ✅ .104 8×H20 (zwfy6) — `p24_sft_keep12_zwfy6` **DONE 2026-08-08 06:32:28 +08:00**
+> keep12+fresh2 SFT finished (step 842, final.pt = 43.87 GiB, no NaN, final step loss=1.2483). Post-SFT eval battery launched immediately on same node — see next entry.
+
+> ### ▶️ .104 8×H20 (zwfy6) — `p24_eval_sft_keep12_104`（PaperB P2.4 keep12 POST-SFT eval battery — last of n=5 SFT sweep）
 > | 项 | 值 |
 > |---|---|
-> | 任务 | keep12+fresh2 (14L) SFT from `step124000.pt`; predicts Δ PPL ≈ +11.0% (pre-SFT PPL 11.443) |
-> | 节点/卡 | **.104 8×H20（zwfy6 盘）GPU 0-7 全占**, 86.9 GiB/卡 @ 100% (highest of the three; still <90 GiB threshold) |
-> | 起始 | 2026-08-08 **04:31:29** +08:00 |
-> | ETA | **~05:30-05:45** (~8.66s/step × 842 = ~121 min at init; will reduce once steady) |
-> | pre-SFT ckpt | `outputs/olmo2_probe2_7B_keep12fresh2/step124000.pt` (43.9 GB) — Table 4 headline (NOT `step111500` which is the wzc1-only cross-arch pair anchor) |
-> | 输出 | `outputs/olmo2_p24_sft_keep12fresh2/{step500,final}.pt` |
-> | step-1 loss | step 20 = **1.8399** (finite) |
-> | ⚠️ .104 之前用户交还 | 但 .104 现在 nvidia-smi 显示 8/8 全空，且本次 SFT 用户明确派单指定；不新增 heartbeat 补卡语义，仅本次任务在此节点跑 |
-> | PID / log | `3187927` / `logs/p24_sft_keep12.log` |
-> | Driver | `scripts/_run_olmo2_p24_sft_ladder_zwfy6.sh keep12` |
+> | 任务 | keep12 post-SFT 5-harness battery（PPL + core6 + know5 + MMLU-dual + closedbook），与**同节点同架构** pre-SFT anchor `7B_keep12_step124000_v2` 做 item 级 pairing。⚠️ **anchor 用 _v2**（非 v2 版有 arc_easy 6/8 shard partial-merge bug）|
+> | 节点/卡 | **.104 8×H20（zwfy6 盘）GPU 0-7 全占** — 8 shard workers 已启动 model loading |
+> | 起始 | 2026-08-08 **06:58:17** +08:00 |
+> | ETA | ~20 min（keep8 battery 16 min / keep10 battery 19 min） |
+> | pre anchor | `7B_keep12_step124000_v2` (PPL=11.4425, core6=0.56888, per-item preds retained, `ANCHOR_OK` gate passed pre-launch) |
+> | post ckpt | `outputs/olmo2_p24_sft_keep12fresh2/final.pt` (43.87 GB, step=842 keep=12 fresh=2) |
+> | 输出 output_name | `7B_p24_sft_keep12fresh2_final` (+`_know`) across 5 result roots |
+> | PREDICTION | n=3 linear fit: ΔPPL% ≈ **+10.98%** ⇒ post-PPL ~12.70. **已 broken twice**（keep8 predicted +14.0 obs +10.15; keep10 predicted +13.2 obs +8.63）→ 本次目的是完成 n=5 sweep，不是复活 linear-fit 主张 |
+> | Chat template | `chat_template=False`, `--add_bos 0`, `LOCAL_RANK=0 RANK=$g` per shard ✅ |
+> | Hard gate | `assert_8shards` 在每次 merge 前强制 8/8 检查（keep12_v1 non-v2 的 arc_easy 6/8 就是这么捕到的） |
+> | Wrapper PID / shard PIDs | `3291603` / PPL shards `3291613-3291620` |
+> | Log | `logs/p24_eval_sft_keep12_104.log` |
+> | Driver | `scripts/_run_olmo2_p24_eval_sft_keep12_104.sh`（md5=`2c0646e2df2b54502f529b21a8b54e3f`，两盘一致；镜像 keep10 driver 除 arm/ckpt/output_name/prediction 外 byte-identical） |
+> | Report | `status/PAPERB_P24_SFT_KEEP12_EVAL.md`（写作中） |
 
 
 
