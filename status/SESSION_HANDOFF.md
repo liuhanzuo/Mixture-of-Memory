@@ -58,7 +58,7 @@
 
 **在跑 / 空闲**：
 - **LOCAL 8×L20A**：`keep14fresh2_seed1234`(#181) 训练 seed-variance 第二子，@ **step 25.8k/200k**，loss 2.59 ppl 13.33，1.56 s/step，ETA ~76h。健康。
-- **.252 / .73 / .82 / .104 = 32 卡空闲**。今夜完成的 batteries：`keep14_wzc1_v2`（.252）、`base_full_bs8`（.73）、bs4/8/16/32 sweep（.82+.104）、within-disk floor v3（4 节点）、bisect（.82/.104）。全部落盘。
+- **.21 / .73 / .82 / .104 = 32 卡空闲**。今夜完成的 batteries：`keep14_wzc1_v2`（.21）、`base_full_bs8`（.73）、bs4/8/16/32 sweep（.82+.104）、within-disk floor v3（4 节点）、bisect（.82/.104）。全部落盘。
 - **不再擅自 dispatch**：eval-methodology cleanup 已收尾；剩下的是 TeX 改写 + 用户 5 项决策。
 
 **待用户决策（保留自 2026-08-06 + 本轮新增）**：
@@ -72,7 +72,7 @@
 `af6d869` within-disk floor v1 claim（后 v3 反转） · `c6bdc05` driver-drift 框架 · `cb26f17` driver-drift 撤回（driver 是 untracked，非 causal） · `29b18ca` bisect PART 1（消灭 candidate A / dataset drift） · `1657627` v3 batteries 0 flip · `66535d4` batch-size sweep 数据 · `2364e39` **flip-boundary RESOLVED = torch version**（<--最终定论） · `c89c214` keep14 wzc1 v2 · `e575f14` keep12 partial-merge 发现
 
 **运维备忘（本轮踩过的坑）**：
-- `.venv` 在 LOCAL / .252 上都缺 torch → 一律 conda `/opt/conda/envs/torch-base/bin/python`
+- `.venv` 在 LOCAL / .21 上都缺 torch → 一律 conda `/opt/conda/envs/torch-base/bin/python`
 - ssh 到远端后默认 CWD=`/root/`，命令里必须自己 `cd` 到 PROJECT_ROOT（用 heredoc 最稳）
 - pgrep 时脚本 shard 后台进程，pkill 会把自己 kill 掉（kill -9 PID 只）
 - 「Aug 4 HF cache lock」是死路——两代 launcher 都 `HF_DATASETS_CACHE=project_dir`，`~/.cache` 从不 read
@@ -89,7 +89,7 @@
 
 **用户 2026-08-05/06 关键指令**：
 - 「rebuttle 和重写的角度分别出发走」→ Paper B 双轨（rebuttal 素材 + 若被拒的重写方向）
-- **.104 已交还用户** → **4 节点 32 卡**（LOCAL/.252/.73/.82）
+- **.104 已交还用户** → **4 节点 32 卡**（LOCAL/.21/.73/.82）
 - **kill #99 keep14-distill**、**kill #103 matched-PPL crossing 监控**（crossing 已达成目的）
 - Paper C 令：**P0-4 重建 eval set**（CPU）+ **P0-5 加 `--random_trunk` flag**（15 行）——均已完成
 - Paper D 令：调研 model editing 层拼接可行性——已判决 dead
@@ -110,7 +110,7 @@
 
 **集群状态**：
 - **LOCAL / .73 / .82**：直连各 0 GB，**24 卡确认闲**
-- **.252**：✅ **正常可用，8 卡 0 MiB 空闲**。⚠️ 2026-08-06 全天 heartbeat 报的「SSH 拒登陆 / 密码轮换」**全部作废**——根因是我的命令带了 `-p 22`，而全局 `/etc/ssh/ssh_config` 设了 `Port 36000`；22 端口上另有 sshd 且 host key 相同，导致误判像凭据失效。**省略 `-p` 即通**。CLAUDE.md 已修，见 memory `ssh-252-port-36000-not-22`
+- **.252（已退役，2026-08-08 被 .21=28.89.19.21 替代）**：当时状态 ✅ 正常可用。⚠️ 2026-08-06 全天 heartbeat 报的「SSH 拒登陆 / 密码轮换」**全部作废**——根因是我的命令带了 `-p 22`，而全局 `/etc/ssh/ssh_config` 设了 `Port 36000`；22 端口上另有 sshd 且 host key 相同，导致误判像凭据失效。**省略 `-p` 即通**。CLAUDE.md 已修，见 memory `ssh-omit-p-flag-port-36000`
 - Monitor 8088 ✅ **一直完全正常**（history 每 node 720 samples、latest 5 node 全 `ok=True` 含 8 卡明细）。⚠️ 早前说「metric_history 全空 / 采集线程卡死」是**我查错了字段**：`metric_history` 是按 **run 名**索引的训练曲线（不含 node key），node 数据在 `history`/`latest`。**那次 kill+restart 是不必要的**
 
 **待用户 4 项决策**：
@@ -126,7 +126,7 @@
 
 **Paper C 状态**（`versions/paperC_scoping.md` 是唯一 scoping 文档，**无 paperC/TODOList.md**）：定位 = 冻结前 j 层 + 丢弃顶部 + 移植 K 层新块、**只 finetune 那 K 层**（区别于 Paper B 的 continue-pretrain 全参 heal）。推荐命题 = **P-C1 构造 + P-C2「用 base 模型的廉价 probe 预测该切多深/长多少层」为差异化 hook（P-C1 单独有 novelty 风险：Zhang'21 re-init / Surgical FT）**；P-C3 建议降为附录。已有 #92 SQuAD 4 臂结果（A2_lora 0.659 > BASE_ref 0.339 > A4_hero 0.293 > A3_fromscratch 0.261，A1 因 H20 OOM 未跑）；**诚实框定**：BASE_ref 差两个轴（32L-vs-16L AND no-SFT-vs-SFT）→ 只作 intact-model 上限参照，A4-vs-A3 才是干净对照。剩余 #133 depth-sweep / #134 A1 ceiling 待 B200。
 
-**运维要点**：monitor 8088 曾 http=000 → 已重启，现 **http=200**。H20 三台 `.venv/bin/python` **已坏** → 一律 `/opt/conda/envs/torch-base/bin/python`。两处物理盘：**wzc1**（LOCAL+.252）/ **zwfy6**（.73+.82+.104），#92 的 Paper C ckpt 在 zwfy6。
+**运维要点**：monitor 8088 曾 http=000 → 已重启，现 **http=200**。H20 三台 `.venv/bin/python` **已坏** → 一律 `/opt/conda/envs/torch-base/bin/python`。两处物理盘：**wzc1**（LOCAL+.21）/ **zwfy6**（.73+.82+.104），#92 的 Paper C ckpt 在 zwfy6。
 
 ---
 
@@ -156,11 +156,11 @@
 - **⚠️ 论文集成 #10**：tab_overview/tab_locomo 指向 chat=False dir；LoCoMo headline 改 GPT-4o judge；baseline selector 统一后 tab_selector/itervt/chunk/crosschunk/slm/overview/h2h/scaling 整套换 chat=False 数字。
 
 ### ★ Paper B（OLMo-2 base 剪层-heal，4 臂，BASE LM 口径，vs vanilla OLMo-2 ppl=7.40）
-实时每卡状态见 `status/GPU_STATUS.md`（权威台账）。当前 4 臂：① from_scratch @ LOCAL 8×L20A；② keep12 @ .252 8×B200；③ **freeze_front @ .73 已 PAUSED@step23500**（用户 14:05 授权 checkpoint-pause，8×H20 让给 Paper A GPU eval；**#59=main-owned resume bookend，待 GPU eval 跑完 + 卡空后我负责重启**，resume cmd 见 task#59）；④ keep8 @ .104 8×H20。训练脚本自轮转 ckpt（latest-2 + every-5000 里程碑，绝不删 final）。
+实时每卡状态见 `status/GPU_STATUS.md`（权威台账）。当前 4 臂：① from_scratch @ LOCAL 8×L20A；② keep12 @ .21 8×B200；③ **freeze_front @ .73 已 PAUSED@step23500**（用户 14:05 授权 checkpoint-pause，8×H20 让给 Paper A GPU eval；**#59=main-owned resume bookend，待 GPU eval 跑完 + 卡空后我负责重启**，resume cmd 见 task#59）；④ keep8 @ .104 8×H20。训练脚本自轮转 ckpt（latest-2 + every-5000 里程碑，绝不删 final）。
 - **★ 2026-07-28 论文审计纠正（load-bearing）**：`--from_scratch` 实际是**完整 16L 模型全随机初始化**（decoder + embedding + norm + lm_head 全不 transplant），且所有参数进 fresh LR=1e-4；不是旧稿所称“只随机 front blocks、复制 lexical modules、optimizer fixed”。因此该臂只能支持“同架构/语料/200k budget 从随机初始化未恢复 MMLU”，**不能隔离 decoder-block inheritance**。`paperB/PAPER_B_DATA.md`、正文、表格、限制与图已统一纠正；同时修复 BoolQ raw/acc_norm 混用（keep8=.588、keep12=.610）及 PPL 舍入（10.826→10.693，tax 1.445×，Δ−0.133）。**Appendix 已扩充**：完整 keep8 11-task 轨迹、keep14 late-healing 图、raw/norm 敏感性、MMLU 四组+57-subject 全表、逐臂 integrity manifest、OLMo/Qwen 全 33/37-depth logit-lens；由 `paperB/scripts/generate_appendix_tables.py` 从 raw JSON 自动生成。另修正 SIQA 主表口径（keep8 raw=.400、keep12 raw=.415）。**实验缺口审计**：keep14 train-all 已完训200k且 ckpt 存在，但完整 eval 仅到153.5k（P0：补200k PPL+core+knowledge）；freeze_front 13:05 已到179720/200k健康运行（约剩7.5h，完训后同样全评）；keep8/10/12 仍是不等预算 44k/10k/111.5k，不能宣称收敛 architectural threshold。详见 `PENDING_TASKS.md` T24。**Appendix 排版已按 Paper A 重构**：默认双栏，窄表/轨迹图进单栏，宽协议/恢复率/MMLU 图跨双栏；OLMo/Qwen 全层表与 57-subject MMLU 均改成左右双面板。最终 `paperB/main.pdf` 17页（Appendix p11–17），0 undefined/0 overfull。**匿名发布仓库已整理**：`perplexity-heals-knowledge-lags/`（建议仓库名同名），含自包含 train/eval/data prep/logit-lens、脱敏37份 summary+2份 probe JSON、匿名论文源/PDF和复现脚本；安全扫描0身份/0集群路径，2.2MB。待用户创建匿名远程仓库并提供 URL 后，加入论文正文。
 
 ### ★ 节点 roster（QCMem，2026-07-23）
-LOCAL 8×L20A（wzc1，`.venv`）；.73=28.85.35.73（H20 diskB torch-base，现跑 Paper A GPU eval）；**.82=28.82.250.82 = 用户占用给 dllm，绝不碰**；.104=28.83.24.104（H20 diskB）；.252=28.89.19.252（B200，wzc1 与 LOCAL 共享 CEPH）。H20 共享 diskB `/apdcephfs_zwfy6/share_304376610/...`；LOCAL+.252 共享 wzc1。**dllm 节点 29.162.226.120 绝不碰。ckpt 轮转 cron 4ec42903 勿删。**
+LOCAL 8×L20A（wzc1，`.venv`）；.73=28.85.35.73（H20 diskB torch-base，现跑 Paper A GPU eval）；**.82=28.82.250.82 = 用户占用给 dllm，绝不碰**；.104=28.83.24.104（H20 diskB）；.21=28.89.19.21（B200，wzc1 与 LOCAL 共享 CEPH）。H20 共享 diskB `/apdcephfs_zwfy6/share_304376610/...`；LOCAL+.21 共享 wzc1。**dllm 节点 29.162.226.120 绝不碰。ckpt 轮转 cron 4ec42903 勿删。**
 
 ## 0-旧. 一句话现状（2026-07-16 晚，已被上方 2026-07-23 快照覆盖，存档）
 

@@ -1,0 +1,28 @@
+# Memory Index
+
+- [Project State 2026-07-04 Handoff](project-state-20260704-handoff.md) — 主力机 offline 后接力状态:PG19+SFT 两阶段突破(16k 追平 SOTA)、待跑清单(数据配方修复/蒸馏 hidden tree/多源 SFT)、本机 B200 决策、红线
+- [dllm H20 Node](dllm-h20-node.md) — ★QCMem集群=5节点40卡(本机+.21两台B200 wzc1 + .73/.82/.104三台H20:36000端口);⚠️分两盘见[[cluster-two-disks-not-shared]];原dllm节点29.162.226.120绝不碰(2026-08-04更新)
+- [Cluster = TWO disks, not shared](cluster-two-disks-not-shared.md) — ★★2026-08-04实测:wzc1=LOCAL+.21 / zwfy6=.73+.82+.104(独立checkout);.73的/apdcephfs_wzc1是指向zwfy6的symlink,.82上不存在;跨盘必scp -O;16卡DDP只能同盘内
+- [GitHub push recipe (2 release repos)](github-push-recipe-two-release-repos.md) — ★推GitHub唯一可行:每仓core.sshCommand已配好(configs/github_deploy_key + configs/gh_proxy_connect.py + -F /dev/null -p 443),直接git push别覆盖GIT_SSH_COMMAND;全局ssh默认port36000会打死github
+- [dllm Autonomous Phase Transition](dllm-autonomous-phase-transition.md) — 用户授权:阶段性结果出来+有清晰延伸方向时,可自主决定下一步直接启动,不等用户拍板
+- [Bottleneck Layer Sweep Monotone](bottleneck-layer-sweep-monotone.md) — 方向2 layer sweep:bottleneck越深LM税越大(单调),QCMem j=12是"可缓存语义上限vs LM税"的折中非税最小点
+- [Heartbeat Pre-auth kill/rm](heartbeat-preauth-kill-rm.md) — ★用户预授权:heartbeat可自主kill -9/rm腾卡不等审批(2026-07-12卡审批阻塞会话5.5h教训),限GPU运维不含push
+- [A13B Known Pitfalls](a13b-known-pitfalls.md) — 混元A13B剪层continue-train四连坑+修复:NCCL init竞争/心跳监控480s误杀/tied-embedding FSDP死锁/fp32master OOM;pkill自杀shell坑
+- [QCMem Eval Selector = iter_bm25](qcmem-eval-selector-iterbm25.md) — ★用户指令2026-07-17:所有QCMem eval(全benchmark/scale/j/task)统一用selector=iter_bm25,旧bm25结果作废需重跑;chat+no-think标配
+- [MemoryLLM venv python broken](memoryllm-venv-python-broken.md) — MemoryLLM在diskB:venv bin/python被reset换成py3.14(包在py3.11)→秒崩pandas;用/usr/bin/python3.11+PYTHONPATH=venv-site-packages
+- [Paper B OLMo-2 is BASE not chat](paperb-olmo2-base-not-chat.md) — ★用户2026-07-19:剪层-heal OLMo-2是BASE LM(Dolmino续训无SFT),只能base口径eval(ppl+LL-based MC,无chat_template/无BOS)对照OLMo-2 vanilla BASE,绝不chat-style
+- [Paper eval chat_template=False mandatory](paper-eval-chat-false-mandatory.md) — ★用户2026-07-22:全论文所有结果统一chat=False,明确写明模型无SFT/RL故chat template不公平;旧chat=True数字作废需重跑;与iter_bm25并列为QCMem eval两支柱
+- [H20 PaperA over PaperB priority](h20-paperA-over-paperB-priority.md) — ★用户2026-08-01:三个QCMem H20(.73/.82/.104)长期先跑PaperA再PaperB,节点空出优先补PaperA待跑项,排空才resume暂停的PaperB剪层-heal(keep8@45000/keep10@69000/keep12@111500)
+- [B200 prefer PaperB when free](b200-prefer-paperB-when-free.md) — ★用户2026-08-02:B200(wzc1,~5-9x H20)收尾任务跑完空出后优先把TODOList待跑任务尤其Paper B训练放B200加速;不打断/不浪费当前在跑的(H20正常跑不算浪费)
+- [Kill remote GPU job by PID, not pkill](kill-remote-gpu-job-by-pid-not-pkill.md) — ★pkill -f打不中(run名只在--output_dir里)且自杀ssh进程组吞输出;正解setsid+kill -9 PID+另开连接验;附sharded eval必须断言shard完整(静默5/8 merge毁口径)
+- [tcodex exec: never pass -c](tcodex-exec-no-dash-c-flag.md) — ★-c会清掉注入的model_providers.tencent→静默fallback openai→无限超时;--search不存在(用tools.web_search);effort=max单次50-80min;报告引用必须自己核实
+- [Paper C P-C1 scooped + eval invalid](paperc-pc1-scooped-eval-invalid.md) — ★2026-08-05三reviewer收敛:构造被arXiv:2411.15558全占、P-C2 hook被2210.10041占、squad_val 49.85%恒定拒答基线高于所有臂→P-C1降级不作主线
+- [Subagent audit must specify cross-disk](subagent-audit-must-specify-cross-disk.md) — ★派 provenance/搜索类 subagent 时 prompt 必须显式列 wzc1+zwfy6 两盘搜索路径, 否则 subagent 默认只搜工作目录盘会误报"文件不在磁盘" (2026-08-06 中招);见 [[cluster-two-disks-not-shared]]
+- [SSH: 一律省略 -p (全局 Port 36000)](ssh-omit-p-flag-port-36000.md) — ★★全局 ssh_config Port 36000 → 所有节点省略 -p; 写 -p 22 会 Permission denied 且 host key 相同故极像密码过期; 2026-08-06 在【已退役的 .252】上误判 13 小时; "auth 被拒" ≠ "凭据失效", 先查 ssh -G 端口; 当前 B200 = .21 (28.89.19.21)
+- [Two-disk rule applies to MAIN too](two-disk-rule-applies-to-main-too.md) — ★★"文件/数字不存在"在 wzc1+zwfy6 都搜过前不成立, MAIN 自己同样适用 (2026-08-06 同日犯两次: 纠正 subagent 后几小时自己又误报 latency provenance 追不到); 且要按"同表其他数字在哪个目录"找而非全盘 grep 数值近似 (会引到不同 protocol)
+- [DDP not FSDP, per-card mem invariant](ddp-not-fsdp-per-card-mem.md) — ★plain DDP 只 all-reduce grads, 不 shard params/grads/optim → 加卡不减每卡内存; 项目 train_olmo2_arch_probe2.py 是 plain DDP; OOM 时先算 per-rank 静态 (~4×params_GB for fp32-AdamW), 换更大卡或 bnb8bit 而非加节点
+- [Kill hung train must exclude eval procs](kill-hung-train-must-exclude-eval.md) — ★2026-08-06 教训: pgrep 'keep28_scratch_refusal25|torch.distributed.run' 会同时匹配 eval merge 的 --output_name, 一把梭 kill 会误杀 EVAL 收尾丢数字; kill 前 grep -v eval_.*\.py, hung 判据是命令名不是 GPU util
+- [Venue verify: OpenReview mandatory for 2026 confs](venue-verify-must-use-openreview-2026.md) — ★2026-08-06 AUDIT0: 2611.15558/2605.02105/2602.11137/2602.14486/2506.11389/2510.10071/2601.20009 七篇 2026 会议论文 S2/DBLP 全滞后返 arXiv.org, 只有 OpenReview `venueid + Camera_Ready_Revision` 才是权威; 单走 S2 会全部误判 preprint (MAIN 08-05 踩过)
+- [Prior work: differentiate, don't abandon](prior-work-differentiate-dont-abandon.md) — ★★用户2026-08-07: 别因1-2篇类似工作就放弃方向, 判据是"完全相同/抄袭"而非"有重叠"; 2-3月内算concurrent不构成preemption; 主动找已有工作缺陷做follow-up修正; 我把"默认它已被做过, 努力找到杀死它的论文"+`fully-preempted→drop`写进了workflow, 是过度保守机制化
+- [Venue verify: ACL family needs Anthology, not OpenReview](venue-verify-acl-family-needs-anthology.md) — ★★venue 核实分两套家族: OpenReview 系(ICLR/NeurIPS/ICML)用 venueid; ACL 系(含 Findings)必须 aclanthology+DBLP; 2026-08-07 我把 OpenReview 规则过度泛化写进 workflow, 害 sweep 把 Findings-NAACL-2025 论文误报 preprint; 另: ACL 论文 PDF 正文标题可能≠Anthology metadata, 且必须 diff arXiv vs camera-ready
+- [Same-harness runs are bit-identical](same-harness-runs-bit-identical.md) — ★2026-08-08 OLMo-2 downstream: 同arch同盘同harness版本 re-run 是 BYTE-IDENTICAL (0 flips); 我之前写的 "15-20 flip within-disk floor" 是 v1(旧harness)-vs-v2(新harness) 的代码版本 drift 不是 runtime jitter; 治标: 声称 "noise floor" 前先跑 same-code 对照; 治本: aggregator 必须 assert n_scored==expected 每 task 不只查 n_nan
