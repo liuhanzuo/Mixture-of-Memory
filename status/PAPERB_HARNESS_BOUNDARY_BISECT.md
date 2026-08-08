@@ -1,5 +1,12 @@
 # PaperB Harness Boundary Bisect Report
 
+> **⛔ SUPERSEDED (2026-08-08 ~09:3x CST): the "cause cannot be identified" verdict below is
+> resolved. The boundary variable is the **torch version** — the v1 launcher
+> `_run_shortgpt_downstream_only.sh` used `olmo2_venv/bin/python` (torch 2.7.0) while v2/v3 use
+> conda torch 2.13.0. See `status/PAPERB_FLIP_BOUNDARY_RESOLVED.md`. Candidate A's elimination
+> (Arrow MD5s identical) and the per-task flip distribution in this file remain correct and were
+> load-bearing for reaching the answer.**
+
 **Date**: 2026-08-08  
 **Agent**: a8604004 (subagent dispatch from MAIN's `PAPERB_HARNESS_DRIFT_REVISION.md`)  
 **Task**: Determine whether the v1→v2 15-20 flip boundary is caused by (A) dataset version drift, (B) old driver code change, or (C) model/tokenizer file drift.
