@@ -6,6 +6,15 @@ verdict: HEAL SOFTENS THE LETTER STEP BUT DOES NOT CLOSE THE INTERFACE ASYMMETRY
 n: 14042 per arm, 0 nan, 8/8-shard + exact-n asserted before every merge
 ---
 
+> **★ 2026-08-09 05:56 CORRECTION — see §7.** The "shortgpt16 INVERTS the sign vs
+> every other arm we have measured, including intact base" framing below is WRONG.
+> Intact base OLMo-2-7B under this exact protocol gives **letter 0.6060, cn 0.4702,
+> cn−l = −13.6pp** (FULL content) and **letter 0.6060, cn 0.4563, cn−l = −15pp**
+> (cdnone). Both signs are NEGATIVE, i.e. intact base ALREADY has letter > content.
+> That is the OPPOSITE of what I stated in §2c, and I made that statement without
+> ever measuring intact base's content_norm under this protocol — I assumed it. §7
+> reframes the finding around what the data actually says.
+
 # A01 gate-1 — healed-arm interface measurements
 
 Same MMLU protocol as the truncation depth-curve (`chat_template=False`, no
@@ -227,3 +236,94 @@ consistent with either reading — the graded side stays graded.
 * Logs: `logs/a01_healed_arms_progress.log`, `logs/a01_keep14fresh2_7B_healed*` + `logs/a01_7B_*_healed_shard*.log`
 * Wall time: ~5.5 min per arm on 8× L20A after ckpt-load phase; ckpt-load was
   the bottleneck (30 GB × 8 parallel readers = ~2 min FS thrash)
+
+---
+
+# §7. Correction and reframe (2026-08-09 05:56)
+
+## 7.1 What I got wrong
+
+In §2c I wrote that shortgpt16's letter > content was "opposite direction of all
+other arms" and cited "intact base, truncation-only across four families, healed
+keep14fresh2 in three variants, healed 1B keep7" as the reference set where cn > l.
+I had NOT measured intact base's content_norm under the gate-1 protocol. I inferred
+it from the healed-arm pattern.
+
+That inference was wrong. Actual intact-base numbers under this exact protocol:
+
+| arm | letter | content_norm | cn−l | CI95(cn−l) | McNemar p |
+|---|---:|---:|---:|---|---:|
+| **OLMo-2-7B intact + FULL** | **0.6060** | **0.4702** | **−13.6pp** | [−0.146, −0.126] | 3.0e−145 |
+| OLMo-2-7B intact + cdnone | 0.6060 | 0.4563 | −15.0pp | [−0.160, −0.140] | 5.7e−175 |
+
+Cross-family intact bases (from `GATE1_VERDICT.md`, retracted verdict but the
+numbers themselves stood): Llama-3-8B and Qwen3-8B intact both have letter 16–23pp
+above content. Only Llama-2-7B (a weak model) has letter ≈ content near floor.
+
+So the honest pattern is:
+
+| regime | letter vs content |
+|---|---|
+| **strong intact bases** (OLMo-2, Llama-3, Qwen3) | **letter > content, by 13–23pp** |
+| damaged / truncated arms (all families) | ≈ tied near floor |
+| healed keep14 (main, freezefront, fromscratch) | **content > letter, by 6–12pp** |
+| healed shortgpt16 | letter > content, by 7pp (matches intact regime) |
+
+## 7.2 What the corrected pattern says
+
+The shortgpt16 result is not "the only arm that inverts". It is **the only healed
+arm that preserves the intact base's letter > content ordering**. The keep14
+variants (which reinit two fresh layers and heal for 200k) FLIP the ordering
+relative to their own intact parent. That is still an unusual and specific fact
+about keep14 heal — but it is not that shortgpt16 broke the rule; it is that
+keep14 broke it, and shortgpt16 didn't.
+
+Two readings compatible with all the data:
+
+* **(A) The letter readout is a specific circuit in the intact model.** ShortGPT-16
+  selects 16 layers by hidden-state-delta cosine similarity, in a way that tends to
+  keep the readout-adjacent layers. keep-front-14 removes the top 18 layers and
+  drops in two fresh untrained layers where the readout circuit used to live. Heal
+  can partially rebuild the readout via content-style signals (hence content > letter
+  after heal on keep14), but cannot fully rebuild the letter-emitting circuit in
+  200k steps. ShortGPT-16 preserves the original circuit, so heal only fine-tunes.
+* **(B) Content_norm is measuring something different.** On intact strong models,
+  letter is a competent classifier; content_norm reads the option likelihoods
+  differently and its calibration lands lower. On healed keep14, the letter circuit
+  is degraded but the option-likelihood signal has been trained back to a
+  respectable level — so content > letter. Under this reading it is the CONTENT
+  interface that heal is preferentially rebuilding, not the letter one.
+
+Both readings imply the *same* practical claim: **the letter and content interfaces
+measure different circuits, and which one dominates depends on what the training
+touched.** That is A01's core protocol claim, unchanged.
+
+## 7.3 What is no longer supported
+
+* "content_norm is the graded / fair side and letter is the fragile side of the
+  same measurement." Only true for damaged and healed keep14 arms. On intact
+  strong models the letter interface is BOTH more accurate AND appears equally
+  smooth (though we did not run a within-intact depth curve to prove smoothness).
+  So "always report content_norm" is too strong a recommendation.
+* The framing that shortgpt16 is *anomalous*. It is not — it is the arm that
+  matches intact behaviour. The anomalous arms are keep14 main / freezefront /
+  fromscratch, which invert the ordering their intact parent had.
+
+## 7.4 What still stands
+
+* The truncation depth curve (letter as step function, content as smooth) is
+  unchanged — that finding was on damaged arms, not on intact bases.
+* Under damage the letter interface degenerates to at/below the floor across
+  four families. Still true.
+* Reporting every construct against a construct-appropriate null. Still the
+  correct recommendation — best-constant / longest-option split-tie / etc.
+  should always be computed before any letter vs content headline. This
+  correction is itself an instance of exactly that discipline: I skipped
+  measuring intact base's content_norm and wrote a claim about it; the
+  measurement now contradicts the claim.
+
+## 7.5 Provenance
+
+* `olmo2_mmlu_content_results/a01_7B_intact_base_full/summary.json`  (this session's new run, 8-shard eval on .21)
+* `olmo2_mmlu_content_results/a01_7B_intact_base_cdnone/summary.json`  (this session's new run)
+* Prior intact non-OLMo numbers (Llama-2/Llama-3/Qwen3): `GATE1_VERDICT.md` §2 (numbers valid, its VERDICT retracted)
