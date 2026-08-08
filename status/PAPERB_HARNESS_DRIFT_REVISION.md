@@ -56,6 +56,10 @@ So the honest cross-architecture picture at matched harness is:
 
 ## What actually happened between v1 and v2+
 
+**⚠️ MAIN correction (~08:4x CST): the "driver drift" mechanism named below and in the agent's
+`PAPERB_WITHIN_DISK_FLOOR_V3.md` is NOT supported. The measurement (0 flips same-harness) is solid;
+the cause is misattributed. See the CAUSE INVESTIGATION section at the end of this file.**
+
 I don't yet know which specific harness change introduced the boundary. Candidates: the
 `assert_8shards` guard (v1 predates it; if a v1 silently kept a stale shard from a previous run
 mixed with fresh ones, that alone would produce ~20-item drift); a change in how per-item
@@ -103,3 +107,87 @@ Five framings now retracted or revised:
 Now plus this partial revision: **the intra-disk floor was itself an artifact of harness drift,
 not a physical noise floor.** The cross-arch numbers with matched harness are still small and don't
 reinstate any earlier claim; they just need to be re-cited carefully.
+
+---
+
+# CAUSE INVESTIGATION (MAIN, ~08:4x CST): "driver drift" is ruled out — and the real problem is worse
+
+The variance-controls agent (`afe2a215`) closed the table at **4/4 rungs, 0 flips** — adding
+`full32_base` on wzc1/L20A to the three zwfy6 rungs above. Its measurement is solid and its
+mtime boundary is a perfect predictor:
+
+| eval | mtime | side of Aug 2 20:12 | flips vs re-run |
+|---|---|---|---:|
+| shortgpt16 v1 | Aug 2 05:02 | before | 20 |
+| keep12 v1 | Aug 2 10:34 | before | 437 (+ the 6/8 partial merge) |
+| keep10 v1 | Aug 2 11:04 | before | 18 |
+| keep14 v1 | Aug 8 01:31 | **after** | **0** |
+| keep8 v2, sg16 v2, full32 v1 | Aug 8 02–08 | **after** | **0** |
+
+**But the mechanism the agent named — "the old driver predates `--save_per_example`" — cannot
+produce a flip, and I verified this five ways:**
+
+1. **The driver diff is purely additive.** `8947078 → a4da5e8` on
+   `scripts/eval_olmo2_probe2_downstream.py` is 135 insertions / 12 deletions, and every line is
+   either the new `mmlu_pro` task, the `--save_per_example` side-record, or an
+   `ex["gold"]`→local-`gold` refactor. **No change to the scoring, batching, or sharding math.**
+2. `--batch_size 8 --num_shards 8` in both the v1-era launcher (`_run_olmo2_eval_shortgpt.sh:80`)
+   and the v3 launcher (`_run_olmo2_within_disk_floor_v3.sh:136`).
+3. `--max_len` defaults to 1024 (`:598`) and **neither** generation's launcher overrides it.
+4. The driver never reads `LOCAL_RANK`/`RANK` — the v3 launcher sets them, the v1 launcher doesn't,
+   and it makes no difference. `device = torch.device("cuda")` unconditionally (`:638`).
+5. **No stale-shard mixing**: all 8 `shardNof8.json` mtimes inside each v1 dir cluster within ~3 s.
+
+## The thing I found instead, which is the real finding
+
+```
+zwfy6:  git status --short scripts/eval_olmo2_probe2_downstream.py
+        ?? scripts/eval_olmo2_probe2_downstream.py        <-- UNTRACKED
+        git cat-file -p 2d98c5a:scripts/eval_olmo2_probe2_downstream.py
+        fatal: path ... exists on disk, but not in '2d98c5a'
+```
+
+**The downstream eval driver is untracked in zwfy6's git checkout.** It was `scp`'d in at
+**Aug 2 20:12** with no commit (alongside `_run_olmo2_mmlu_content.sh` at 20:12 and
+`eval_olmo2_mmlu_content.py` at 20:22). The file is now byte-identical to wzc1's
+(`md5 2bf40c0d379d37a51e412347cb012cd0`) and wzc1's copy **is** tracked and clean.
+
+So: **the exact code that produced every v1 number — including four of Table 4's six rungs — was
+never version-controlled and is now unrecoverable.** That is a provenance failure independent of
+whether the numbers are right. It is also why the boundary lines up with an mtime instead of a
+commit, and why I can't diff my way to the cause.
+
+## Live candidates, none yet confirmed
+
+- **(A) Dataset version drift.** The driver calls `load_dataset` **without pinning a revision** for
+  hellaswag / ai2_arc / winogrande / openbookqa (only piqa pins
+  `revision="refs/convert/parquet"`, `:161`). If the HF cache was rebuilt between Aug 2 and Aug 4,
+  item content or order could change. Suggestive: zwfy6's `~/.cache/huggingface/datasets/`
+  has `.lock` files dated **Aug 4 23:26** for winogrande and ai2_arc — the two tasks that dominate
+  the cross-arch flip counts. **This would be the serious outcome**: it would mean core6 numbers
+  are not comparable across time at all, not merely across harness versions.
+- **(B) The pre-scp driver genuinely differed** in some scoring-relevant way. Unfalsifiable from
+  git; only reachable by behavioral reconstruction.
+- **(C) Base-model/tokenizer file drift** under `models/OLMo-2-1124-7B`.
+
+Dispatched agent `a8604004` to bisect these (CPU per-task flip localization + two-disk dataset
+fingerprint comparison first; a `force_redownload` differential run on .82/.104 only if that
+doesn't settle it). The discriminator: if flips concentrate in winogrande/arc_easy → (A);
+if spread evenly across all six tasks → (B).
+
+## What this changes about the writeup
+
+- **The 0-flip determinism result stands.** Same code + same data + same arch ⇒ bit-identical. That
+  is worth stating as a protocol fact.
+- **"Harness/driver drift" must NOT be asserted as the cause** until `a8604004` reports. Both this
+  file's earlier sections and the agent's `PAPERB_WITHIN_DISK_FLOOR_V3.md` overreach on that point;
+  the honest statement today is "a boundary at Aug 2 20:12 whose cause is not yet identified."
+- **Paper B needs a provenance fix regardless of the outcome**: pin dataset revisions in the driver,
+  and never run a paper number from an untracked script. The untracked-driver fact alone justifies
+  re-sourcing Table 4 to post-boundary measurements.
+- **Convenient**: wzc1 already has a **complete post-boundary ladder**, all six tasks at full
+  `n_scored`, measured Aug 8 with the tracked driver — `full32_base .70402`, `shortgpt16 .62194`,
+  `keep8@121000 .52377`, `keep10@83500 .53217`, `keep12@111500 .56941`. So a clean single-arch,
+  single-driver, full-shard Table 4 is already largely on disk (keep14 is the gap: wzc1's copy is
+  from Jul 28, pre-boundary).
+
