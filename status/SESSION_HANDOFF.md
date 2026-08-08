@@ -2,11 +2,32 @@
 
 > **本文件是 compact 后或新会话启动时的第一手交接。** 读完这份 + `status/RUN_REGISTRY.md` §3/§4 + `status/TRAINER_ACTIVITY.jsonl` 尾部，就能接上当前研究状态。
 > 维护规则：main agent 每当方向/结论/在跑实验有重大变化时，**覆盖更新本文件的「当前快照」区**（保持精简，旧结论沉淀到 RUN_REGISTRY）。
-> 最后更新：2026-08-08 10:00 GMT+8（P2.4 6-arm ladder 数据完备 + 三重 Table 4 defect 已定位并修复 + flip-boundary 根因确认为 torch 2.7→2.13 + 五级框架撤回记录清算完。下方 2026-08-06 快照请视为历史沉淀，以本快照为准。）
+> 最后更新：2026-08-08 15:15 GMT+8（Paper B resume 迁移至 .21(L20A)+.73(H20) 启动中；keep8 on .73 已 REMAPPED 运行；keep10 on .21 等待 118GB dolmino 传输（ETA ~17:00）；step124000.pt 传输进行中（ETA ~15:42）。下方 10:00 快照为当前研究状态，resume 迁移为新增 GPU 状态变更。）
 
 ---
 
-## ⚡ 当前快照（2026-08-08 10:00 GMT+8）—— P2.4 收尾 + Paper B eval 协议 audit 完结
+## ⚡ 当前快照（2026-08-08 15:15 GMT+8）—— Paper B resume 迁移进行中
+
+**一句话现状（GPU 迁移）**：用户指令「B200跑resume，H20跑新方向」→
+- **.73 H20**：keep8 resume **已 REMAPPED 运行** @ step121300+，5.79s/step ✓
+- **.21 L20A**：keep10 resume **等待 dolmino 传输完成**（118GB 进行中，ETA ~17:00 CST；launch script 实时轮询）
+- **step124000.pt 传输**：5.5GB/41GB，ETA ~15:42 CST，完成后 md5 自动校验
+- **.82 H20**：keep10 running @ step84000+，将在 .21 确认运行后被 kill
+- **.104 H20**（用户管理）：keep12 running @ step124220+，用户可随时 kill
+- **LOCAL L20A**：keep14 seed1234 @ step25.8k/200k
+
+**⚡ heartbeat 下一步动作**：
+1. 检查 `logs/transfer_dolmino_to_21.log` 是否写入 `SIZE_OK` 
+2. 检查 `logs/olmo2_7B_keep10fresh2_resume200k_21.log` 是否出现 `[step xxx/200000]`
+3. 确认 REMAPPED / base_lr=2.00e-05 / rows=15491607 三行 → 然后 `kill -9 1418803` on .82
+
+**⚠️ 运维注意**：.21 上存在历史遗留「blocker」文件/目录（来自 SparseForge 优先级保护，由之前 agent 创建）。每次传输前需要 `rm -rf /dev/shm/dolmino_now15b_zwfy6.npy` 确保路径是文件而非目录。当前已处理干净，传输正在进行。
+
+**详细状态**：`status/PAPERB_RESUME_ON_B200_21.md`
+
+---
+
+## ⚡ 当前快照（2026-08-08 10:00 GMT+8）—— P2.4 收尾 + Paper B eval 协议 audit 完结（以下内容保留为历史快照）
 
 **一句话现状**：过去一夜完成 P2.4 general-SFT repairability 六臂全数据 + 修完 Table 4 三重 defect（架构混跑 / budget 不齐 / 6/8 静默 merge / batch-size 不一致）+ 定位 flip boundary 根因（torch 2.7.0 vs 2.13.0）；**Paper B Table 4 的干净版本现在完整在盘上**，可直接改写。四项 2026-08-06 用户决策仍未拍板（原样保留）。LOCAL 在跑 keep14 seed=1234 seed-variance 第二子的训练（step 25.8k/200k），32 remote 卡当前空闲。
 

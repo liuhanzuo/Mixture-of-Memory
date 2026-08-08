@@ -2,6 +2,7 @@
 # Launch keep10+fresh2 resume on .21 (8xL20A, wzc1 disk)
 # This script waits for dolmino transfer to complete, then starts training
 # eff_batch = batch_size(8) * grad_accum(2) * world_size(8) = 128
+# USER INSTRUCTION 2026-08-08: B200用于resume, .21 = keep10 resume (not SparseForge)
 
 PROJECT_ROOT=/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory
 PYTHON=/opt/conda/envs/torch-base/bin/python
