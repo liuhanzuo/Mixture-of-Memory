@@ -94,8 +94,10 @@ run_babilong() {
       > "logs/a02_babilong_${NAME}_shard${g}.log" 2>&1 &
   done
   wait
-  # Assert 8/8 shards per (task, length) -- sample check on qa1@4k
-  local ns; ns=$(ls "$RD"/qa1_4k_shard*of${NGPU}.json 2>/dev/null | wc -l)
+  # Assert 8/8 shards per (task, length) -- BABILong writes long filenames like
+  #   qa1_16k_instruction_yes_examples_yes_post_prompt_yes_chat_template_no_system_prompt_no_shard0of8.csv
+  # so we glob for `qa1_4k*shard*of${NGPU}.csv` (any middle text), not qa1_4k_shard*.json.
+  local ns; ns=$(ls "$RD"/qa1_4k*shard*of${NGPU}.csv 2>/dev/null | wc -l)
   if [ "$ns" -ne "$NGPU" ]; then
     note "ABORT babilong $NAME: qa1_4k got $ns/$NGPU shards" >&2; return 9
   fi
