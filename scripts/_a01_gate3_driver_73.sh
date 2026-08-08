@@ -98,4 +98,24 @@ run_arm "7B_base_dtype" ""
 run_arm "7B_keep8_step121000_dtype" \
     "--ckpt outputs/olmo2_probe2_7B_keep8fresh2/step121000.pt --keep_front_layers 8 --n_fresh_layers 2"
 
+# ---------------------------------------------------------------------------
+# ARMS 3-4 (added 2026-08-09): the two intermediate rungs.
+#
+# Arms 1-2 established that the tie rate is a bf16 readout of logit compression
+# (gap median 1.1185 on base vs 0.2500 on keep8) and that removing the ties
+# changes nothing (McNemar p=1.000 and p=0.570). What that pair CANNOT show is
+# whether the compression is monotone in damage or just an endpoint contrast.
+# Adding keep14 and keep12 gives a 4-point ladder in (tie_rate, gap_median),
+# which is the quantity that connects this gate to B04's per-item margin result
+# (Spearman(core6, frac<0.005) = -1.00 at p=0.0028 over six rungs). If gap
+# median falls monotonically base -> keep14 -> keep12 -> keep8, then gate-3 and
+# B04 are measuring the same underlying compression through two different
+# instruments, which is a much stronger statement than either alone.
+# ---------------------------------------------------------------------------
+run_arm "7B_keep14_step200000_dtype" \
+    "--ckpt outputs/olmo2_probe2_7B_keep14fresh2/step200000.pt --keep_front_layers 14 --n_fresh_layers 2"
+
+run_arm "7B_keep12_step124000_dtype" \
+    "--ckpt outputs/olmo2_probe2_7B_keep12fresh2/step124000.pt --keep_front_layers 12 --n_fresh_layers 2"
+
 log_progress "ALL DONE"
