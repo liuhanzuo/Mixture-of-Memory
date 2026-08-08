@@ -140,7 +140,7 @@ def load_task_examples(task: str):
 # item_id = shard_index + ei * num_shards  (harness convention, num_shards=8)
 # For a merged (non-sharded) file the item_ids run 0..N-1.
 # ---------------------------------------------------------------------------
-def build_norm_lens_lookup(task: str, num_examples: int, num_shards: int = 8):
+def build_norm_lens_lookup(task: str, num_shards: int = 8):
     """Returns dict: item_id -> list[int]  (one int per candidate option)."""
     examples = load_task_examples(task)
     lookup = {}
