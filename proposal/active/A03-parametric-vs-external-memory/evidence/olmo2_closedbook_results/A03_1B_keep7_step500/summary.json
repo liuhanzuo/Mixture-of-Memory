@@ -1,0 +1,40 @@
+{
+  "output_name": "A03_1B_keep7_step500",
+  "n_shards": 8,
+  "add_bos": false,
+  "meta": {
+    "mode": "pruned",
+    "keep_front_layers": 7,
+    "n_fresh_layers": 2,
+    "num_hidden_layers": 9,
+    "ckpt_step": 500,
+    "ckpt": "outputs/olmo2_probe2_1B_keep7fresh2/step500.pt",
+    "base_model": "../models/OLMo-2-0425-1B",
+    "add_bos": false,
+    "max_new_tokens": 32
+  },
+  "tasks": {
+    "popqa": {
+      "n": 14267,
+      "em": 0.0,
+      "contains": 0.0270554426298451,
+      "f1": 0.017595854747129196,
+      "em_hits": 0,
+      "contains_hits": 386,
+      "f1_sum": 251.04005967729222,
+      "majority_em": 0.0229200252330553,
+      "empty_em": 0.0
+    },
+    "triviaqa": {
+      "n": 17944,
+      "em": 0.00022291573785109228,
+      "contains": 0.007913508693713777,
+      "f1": 0.04397763860822462,
+      "em_hits": 4,
+      "contains_hits": 142,
+      "f1_sum": 789.1347471859826,
+      "majority_em": 0.0025635309852875612,
+      "empty_em": 0.0
+    }
+  }
+}

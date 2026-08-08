@@ -1,0 +1,36 @@
+{
+  "output_name": "A03_1B_base",
+  "n_shards": 8,
+  "add_bos": false,
+  "meta": {
+    "mode": "base",
+    "num_hidden_layers": 16,
+    "base_model": "../models/OLMo-2-0425-1B",
+    "add_bos": false,
+    "max_new_tokens": 32
+  },
+  "tasks": {
+    "popqa": {
+      "n": 14267,
+      "em": 0.15497301464919044,
+      "contains": 0.16779981776126726,
+      "f1": 0.2016122059388388,
+      "em_hits": 2211,
+      "contains_hits": 2394,
+      "f1_sum": 2876.401342129413,
+      "majority_em": 0.0229200252330553,
+      "empty_em": 0.0
+    },
+    "triviaqa": {
+      "n": 17944,
+      "em": 0.40687695051270617,
+      "contains": 0.4518502006241641,
+      "f1": 0.4639840759636478,
+      "em_hits": 7301,
+      "contains_hits": 8108,
+      "f1_sum": 8325.730259091697,
+      "majority_em": 0.0025635309852875612,
+      "empty_em": 0.0
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "id": "A03",
+  "status": "active_design",
+  "priority": 3,
+  "updated": "2026-08-08",
+  "kill_condition_1b_pilot_at_floor": {
+    "tested": "2026-08-08",
+    "verdict": "1B_PILOT_VIABLE",
+    "evidence": "status/A03_1B_FLOOR_VERDICT.md, proposal/active/A03-parametric-vs-external-memory/evidence/a03_1b_floor_nulls.json",
+    "summary": "pruned+healed OLMo-2 1B (keep7+fresh2 @200k) is BH-significantly ABOVE its own construct-appropriate null on 4/5 usable knowledge interfaces (MMLU-content +3.99pp/12.3%, PopQA EM +1.65pp/41.8%, PopQA contains length-matched +1.91pp/17.0%, TriviaQA EM +9.33pp/97.3%); barely-healed step500 control is at/below floor on all 6, so 'at floor' is detectable. Kill condition NOT met.",
+    "interfaces_retired": "MMLU-letter at 1B: pruned arm 0.2512 vs best-constant always-D 0.2689 = significantly BELOW floor (p=3.4e-3) and indistinguishable from its own modal-C constant (p=0.28); step500 arm emits always-A on 14042/14042 items"
+  },
+  "next_gate": [
+    "1B pilot floor gate PASSED (2026-08-08): use MMLU-content + PopQA + TriviaQA; primary axis = TriviaQA EM (pruned-arm residual fraction 97.3%, largest floor-free dynamic range); MMLU-letter is BANNED at 1B (degenerate constant predictor below its own best-constant floor)",
+    "report `contains` on generative QA ONLY against a length-matched input-blind null: healing inflates prediction length ~6x (13.4 -> 80.8 chars) and naive `contains` residual fraction drops 56.4% -> 17.0% under that control; prefer EM as headline",
+    "run the same floor gate on A03's three remaining knowledge axes (new injected facts, updated/conflicting knowledge, multi-evidence) before building the 6 arms -- only the old-parametric-knowledge axis has been floor-certified",
+    "then build the 6 arms (intact / pruned / +CPT / +raw-text RAG / +residual memory / +CPT+memory) on the certified axes, each arm re-checked against its own null"
+  ]
+}
