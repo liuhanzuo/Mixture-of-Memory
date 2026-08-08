@@ -1,18 +1,36 @@
 {
   "id": "B04",
-  "status": "SURVIVING",
-  "promotion_pending": "novelty_check_only",
-  "updated": "2026-08-08T24:00+0800",
-  "complete_rungs": 6,
-  "target_rungs": 6,
-  "kill_verdict": "NOT_KILLED",
-  "primary_metric": "Spearman(core6, frac<0.005) = -1.0000, exact p = 0.0028 at n=6",
-  "secondary_metric": "Spearman(core6, median_margin) = +1.0000, exact p = 0.0028 at n=6",
-  "next_gates": [
-    "novelty check (CPU, MAIN)",
-    "Qwen cross-family replication (GPU)",
-    "LOO mediation check (CPU)"
+  "status": "NARROWED_TO_OLMO_2_ONLY",
+  "updated": "2026-08-08T22:26+0800",
+  "kill_history": [
+    {
+      "gate": "n=6 within-OLMo bs16 ladder",
+      "date": "2026-08-08",
+      "verdict": "NOT_KILLED",
+      "detail": "Spearman(core6, median_margin) = +1.00, exact p = 0.0028; Spearman(core6, frac<0.005) = -1.00, exact p = 0.0028 -- both at n=6 exact-permutation lower bound"
+    },
+    {
+      "gate": "Qwen cross-family replication n=6",
+      "date": "2026-08-08",
+      "verdict": "GENERAL_CLAIM_KILLED",
+      "detail": "Same metrics on Qwen3-8B six-rung ladder: rho = +0.43 (p=0.42) and -0.49 (p=0.36). Signs correct but effect strength collapses to non-significant. Per-rung margin distributions non-monotone in damage (step20000 has smaller median than step2000; scratch14L has larger median than any f12k2 rung). Rungs still core6-ordered, so aggregate degradation replicates; per-item margin compression does not."
+    }
   ],
-  "evidence_file": "DIRECTION_A_VERDICT.md",
-  "analysis_json": "evidence/B04_6rung_bs16_analysis.json"
+  "olmo_only_finding": {
+    "claim": "On the OLMo-2-7B keepN + shortgpt16 ladder, aggregate core6 degradation is accompanied by per-item acc_norm margin compression. Both Spearman metrics hit the n=6 exact-permutation lower bound.",
+    "scope": "OLMo-2-7B specifically; does not extend to Qwen3-8B",
+    "recommended_home": "fold into Paper B methods appendix or the A01 null-cal spin-out; not stand-alone-paper material"
+  },
+  "resurrection_conditions": [
+    "a second confirming family (NOT Qwen; that has already failed)",
+    "a mechanism-level hypothesis for why the compression is family-general, tested a priori"
+  ],
+  "evidence_files": {
+    "olmo_verdict": "DIRECTION_A_VERDICT.md",
+    "olmo_analysis": "evidence/B04_6rung_bs16_analysis.json",
+    "qwen_verdict": "DIRECTION_A_QWEN_VERDICT.md",
+    "qwen_analysis": "evidence/B04_Qwen_6rung_bs16_analysis.json"
+  },
+  "complete_rungs_olmo": 6,
+  "complete_rungs_qwen": 6
 }
