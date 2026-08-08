@@ -1,8 +1,8 @@
 {
   "id": "A03",
-  "status": "active_design",
+  "status": "active_measurable",
   "priority": 3,
-  "updated": "2026-08-08",
+  "updated": "2026-08-09T00:12+0800",
   "kill_condition_1b_pilot_at_floor": {
     "tested": "2026-08-08",
     "verdict": "1B_PILOT_VIABLE",
@@ -10,10 +10,42 @@
     "summary": "pruned+healed OLMo-2 1B (keep7+fresh2 @200k) is BH-significantly ABOVE its own construct-appropriate null on 4/5 usable knowledge interfaces (MMLU-content +3.99pp/12.3%, PopQA EM +1.65pp/41.8%, PopQA contains length-matched +1.91pp/17.0%, TriviaQA EM +9.33pp/97.3%); barely-healed step500 control is at/below floor on all 6, so 'at floor' is detectable. Kill condition NOT met.",
     "interfaces_retired": "MMLU-letter at 1B: pruned arm 0.2512 vs best-constant always-D 0.2689 = significantly BELOW floor (p=3.4e-3) and indistinguishable from its own modal-C constant (p=0.28); step500 arm emits always-A on 14042/14042 items"
   },
+  "second_axis_nq_open_gate": {
+    "tested": "2026-08-09",
+    "verdict": "AXIS_MEASURABLE",
+    "node": ".82 (8x H20, zwfy6)",
+    "wall": "5 min for 3 arms via scripts/_run_a03_axes_floor_82.sh",
+    "results_em_vs_maj_em": {
+      "A03_1B_base_36L_intact": {"em": 0.1025, "contains": 0.1429, "n": 3610},
+      "A03_1B_keep7_step200k_9L_healed": {"em": 0.0285, "contains": 0.0787, "n": 3610},
+      "A03_1B_keep7_step500_9L_barely_healed": {"em": 0.0017, "contains": 0.0097, "n": 3610},
+      "best_constant_null_maj_em": 0.0053
+    },
+    "reading": "intact 0.1025 and pruned+healed 0.0285 are both above the majority-answer floor 0.0053 (residual fractions ~0.948 and ~0.814); barely-healed step500 is BELOW floor (0.0017 < 0.0053), confirming 'at floor' is detectable on this axis too. Same 'floor certifies detectability' pattern as PopQA/TriviaQA.",
+    "harness": "scripts/eval_olmo2_closedbook_qa.py --tasks nq_open (native support, 3610 items, google-research-datasets/nq_open cache on zwfy6)",
+    "analyzer_TODO": "analyze_1b_knowledge_floor.py hardcodes popqa+triviaqa at lines 427-428; adding a (nq_open, 3610, em) tuple to that loop gives full floor-calibrated residuals (bootstrap CI, McNemar, BH). Not blocking.",
+    "next_gate_for_this_axis": "same-item paired McNemar (intact vs pruned) on nq_open; length-matched null for contains"
+  },
+  "remaining_axes_status": {
+    "conflicting_knowledge": {
+      "status": "BLOCKED_NO_DATA",
+      "reason": "CounterFact, MQuAKE, zsRE, KnowEdit -- NONE on either disk; all require context injection (edit-then-query), not native to closed-book harness. Adding them is a research-code project, not a gate.",
+      "reframe": "the closed-book protocol already covers 'stable parametric knowledge' (PopQA/TriviaQA/NQ-open, 3 axes). Conflicting-knowledge belongs to a separate paper about knowledge editing; A03 should not carry it."
+    },
+    "multi_evidence": {
+      "status": "BLOCKED_WRONG_FORMAT",
+      "reason": "HotpotQA/2Wiki/MuSiQue live in LongBench form (open-book, with context); the closed-book form would require a paired-context stripped variant we do not have. Same reframing: A03 covers closed-book only.",
+      "reframe": "if this axis is essential, do it as a separate paper on retrieval-vs-parametric under multi-hop; not A03's job."
+    },
+    "new_injected_facts": {
+      "status": "BLOCKED_BY_DEFINITION",
+      "reason": "requires a CPT phase that injects new facts, then measures recall against a held-out probe set. A03 has no such CPT arm on 1B yet and cannot answer the floor question until the injection design is fixed."
+    }
+  },
   "next_gate": [
-    "1B pilot floor gate PASSED (2026-08-08): use MMLU-content + PopQA + TriviaQA; primary axis = TriviaQA EM (pruned-arm residual fraction 97.3%, largest floor-free dynamic range); MMLU-letter is BANNED at 1B (degenerate constant predictor below its own best-constant floor)",
-    "report `contains` on generative QA ONLY against a length-matched input-blind null: healing inflates prediction length ~6x (13.4 -> 80.8 chars) and naive `contains` residual fraction drops 56.4% -> 17.0% under that control; prefer EM as headline",
-    "run the same floor gate on A03's three remaining knowledge axes (new injected facts, updated/conflicting knowledge, multi-evidence) before building the 6 arms -- only the old-parametric-knowledge axis has been floor-certified",
-    "then build the 6 arms (intact / pruned / +CPT / +raw-text RAG / +residual memory / +CPT+memory) on the certified axes, each arm re-checked against its own null"
+    "extend analyze_1b_knowledge_floor.py to include nq_open (small CPU task, ~15 min)",
+    "then A03's certified axes are: MMLU-content, PopQA EM (+ length-matched contains), TriviaQA EM (primary), NQ-open EM (new). Four closed-book parametric-knowledge axes measurable at 1B",
+    "narrow A03's scope explicitly to closed-book parametric knowledge (drop the three blocked axes, or move them to a follow-up paper)",
+    "then build the 6 arms (intact / pruned / +CPT / +raw-text RAG / +residual memory / +CPT+memory) on the four certified axes, each arm re-checked against its own null"
   ]
 }
