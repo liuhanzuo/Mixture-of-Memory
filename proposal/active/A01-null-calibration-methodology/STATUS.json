@@ -22,13 +22,21 @@
       "code": "scripts/eval_olmo2_probe2_ppl.py::load_truncated_any_family, scripts/_a01_gate1_damaged_driver_21.sh"
     },
     "gate1_depth_curve": {
-      "verdict": "COLLAPSE IS A SHARP PHASE TRANSITION, not a gradual decay",
-      "ran": "2026-08-08, three families in parallel on .21/.73/.82",
-      "qwen3_8b_36L": "keep 4,6,8,12,18,24 ALL pinned at letter 0.2295-0.2301 (modal 92-100%, ties ~0); keep30 jumps to 0.7263 (+45.74pp). Transition in (24,30].",
-      "llama3_8b_32L": "keep 4..16 all sub-floor (0.2319-0.2698); keep20 -> 0.5758 (+30.69pp), keep24 -> 0.5734. Transition in (16,20].",
-      "llama2_7b_32L": "NON-MONOTONE: k4 -3.84, k6 -1.55, k16 +6.00, k20 +3.65, k24 +0.33 -- partially recovers then DEGRADES back toward the floor as depth increases. Anomalous; gap-fill running.",
-      "status": "gap-fill in flight to pin each threshold to a single layer (.21 Llama-2 k=10,14,28,30,31; .73 Llama-3 k=17,18,19,28,30; .82 Qwen3 k=25,26,27,28,29,32,34)",
-      "code": "scripts/_a01_gate1_depth_curve.sh, code/summarise_gate1_depth.py"
+      "verdict": "THE TWO INTERFACES HAVE DIFFERENT FUNCTIONAL FORMS -- letter is a STEP function of depth, content_norm is SMOOTH and MONOTONE",
+      "ran": "2026-08-08/09, four families across .21/.73/.82; 58 arms x 14042 items, thresholds pinned to a single layer",
+      "headline": "Letter accuracy sits pinned at its 0.2689 floor over a wide depth range, then jumps 27-48pp at ONE layer, then plateaus. Content_norm over the SAME forward passes rises smoothly and monotonically with no jump anywhere. At the layer where Qwen3 letter moves +48.0pp (k24 0.2297 -> k25 0.7099), Qwen3 content moves +1.4pp (0.3045 -> 0.3180).",
+      "thresholds_pinned": {
+        "qwen3_8b_36L": "k24->k25, +48.0pp. Pinned at 0.2295-0.2301 for k=4..24 -- twenty depths agreeing within 0.06pp",
+        "llama3_8b_32L": "k17->k18, +30.3pp (0.3016 -> 0.6050)",
+        "olmo2_7b_32L": "k18->k19, +26.7pp (0.3218 -> 0.5886)",
+        "relative_depth": "thresholds at k/L = 0.69 / 0.56 / 0.59 -- past the midpoint in all three, but n=3, NOT a law"
+      },
+      "llama2_anomaly": "letter NON-MONOTONE (k16 0.3289 +6.0pp -> k20 0.3054 -> k24 0.2723 +0.3pp back at floor -> k28 0.4315) while content over the same range is STRICTLY monotone (0.2650->0.2877->0.3139->0.3548). The non-monotonicity is in the readout, not the model. Gap-fill k=8,12,18,22,26 in flight on .21. Also: Llama-2's k28 letter 0.4315 already exceeds its INTACT 0.4100, so its plateau is at intact level -- it is a weak-model case, not a damage case.",
+      "why_it_matters": "Supplies a mechanism-free version of A01's protocol argument. Below threshold the letter interface IS a constant predictor; above it, a competent one. Averaging arms that straddle the threshold mixes two regimes. Any damage-scaling regression on letter accuracy that includes sub-threshold rungs is fitting a step, and its slope is an artifact of how many rungs land on each side. This also EXPLAINS the 6/6 damaged result: those arms were keep8/keep12, deep inside every family's sub-threshold range.",
+      "does_not_show": "no mechanism (tie explanation stays triple-falsified, this does not resurrect it); nothing about HEALED arms (all arms here are truncation-only); no per-subject breakdown",
+      "evidence": "GATE1_DEPTHCURVE_VERDICT.md",
+      "code": "scripts/_a01_gate1_depth_curve.sh, scripts/eval_olmo2_probe2_ppl.py::load_truncated_any_family",
+      "ops_note": ".21's .venv/bin/python is a broken symlink to a torch-less py3.11; use /opt/conda/envs/torch-base/bin/python on .21 too"
     },
     "gate2_second_mc_benchmark": {
       "verdict": "REPLICATES_FAILURE (so the AND-gate cannot fire)",
