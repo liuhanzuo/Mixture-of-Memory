@@ -1,0 +1,19 @@
+{
+  "id": "B02",
+  "status": "backlog_blocked_needs_new_gpu_run",
+  "updated": "2026-08-08T23:20+0800",
+  "next_gate": "RE-RUN the j-sweep on a FIXED sample set, then measure per-example oracle headroom",
+  "premise_falsified": {
+    "date": "2026-08-08",
+    "old_next_gate": "measure per-example oracle headroom from existing sweeps",
+    "why_wrong": "The T21 sweep (Qwen3-32B x variable_tracking x resume_j in {3,6,13,20,27,34,41,48} x {16k,32k}, n=50/cell) does NOT use the same 50 samples across configs. Measured on zwfy6 by md5-ing the full question text and the target column: j3 INTERSECT j6 = 0/50, j3 INTERSECT j13 = 0/50, ... j3 INTERSECT j48 = 0/50. Target column intersections are also 0/50. RULER variable_tracking is synthesised at eval time and the sample identity was never fixed or seeded per config.",
+    "consequence": "per-example oracle requires the SAME example measured under different configs, to compute oracle = max_config(quality) and regret = oracle - best_fixed_config. With disjoint sample sets neither quantity is computable. Only cell-level 'best fixed config' can be computed -- which is precisely the baseline the oracle is supposed to beat, not the oracle.",
+    "compute_class_correction": "recompute_existing_data -> needs_new_gpu_run",
+    "evidence": "proposal/MINIMAL_VALIDATION_PLAN.md section 3 (MAIN-verified, commands recorded there)"
+  },
+  "required_before_stage0": [
+    "fix n (sample count) and a per-config RNG seed protocol so the same items are scored under every resume_j",
+    "re-run the j-sweep with that fixed set (1 GPU x 8 configs x n items)",
+    "only then compute per-example oracle and regret"
+  ]
+}

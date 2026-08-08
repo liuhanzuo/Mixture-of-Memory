@@ -15,39 +15,39 @@
 **当前只有 5 个节点 = 40 卡，但 ⚠️ 分属【两个物理盘】，不是"全部共享 wzc1"。**
 
 > **★★ 2026-08-04 实测纠正（旧文档「5 台全部共享 wzc1、互相无需 rsync」是错的，已让多个 agent 白跑，务必按本条执行）：**
-> - **wzc1 盘 = 本机 LOCAL + .252**（两台 **L20A cc10.0 同型**，真共享 `/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/`，互相无需 rsync）。
+> - **wzc1 盘 = 本机 LOCAL + .21**（两台 **L20A cc10.0 同型**，真共享 `/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/`，互相无需 rsync）。
 > - **zwfy6 盘 = .73 / .82 / .104**（三台 H20，真实 root = `/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/`）。它是**另一份独立 checkout、commit 常落后**（实测 `2d98c5a`，且非 local HEAD 的祖先）。
-> - **陷阱 1（.73）**：`/apdcephfs_wzc1` 在 .73 上是**指向 zwfy6 的 symlink** —— wzc1 路径字符串"看着能用"，但物理盘不同于 LOCAL/.252，**写进去 LOCAL 看不到**。.73 的 PROJECT_ROOT 应写 zwfy6 路径。
+> - **陷阱 1（.73）**：`/apdcephfs_wzc1` 在 .73 上是**指向 zwfy6 的 symlink** —— wzc1 路径字符串"看着能用"，但物理盘不同于 LOCAL/.21，**写进去 LOCAL 看不到**。.73 的 PROJECT_ROOT 应写 zwfy6 路径。
 > - **陷阱 2（.82）**：`/apdcephfs_wzc1` 在 .82 上**根本不存在**。
 > - **跨盘搬运一律 `scp -O`**（.82 的 sftp subsystem 已坏，普通 `scp` 报 `subsystem request failed`），搬完核 md5/sha256。
-> - **推论**：wzc1-only 的新脚本/新 ckpt 必须显式 `scp -O` 到 zwfy6 才能在三台 H20 上跑；「同盘合 16 卡多机 DDP」只在**同盘内**成立（LOCAL+.252，或 .73/.82/.104 任两台），**不可跨盘合并**。
+> - **推论**：wzc1-only 的新脚本/新 ckpt 必须显式 `scp -O` 到 zwfy6 才能在三台 H20 上跑；「同盘合 16 卡多机 DDP」只在**同盘内**成立（LOCAL+.21，或 .73/.82/.104 任两台），**不可跨盘合并**。
 > - **软件差异**：三台 H20 的 `.venv/bin/python` 已坏 → 用 `/opt/conda/envs/torch-base/bin/python`；**LOCAL 的 `.venv` 现也已无 torch**（2026-08-04 实测），同样改用 conda。**.82 未装 `bitsandbytes`** → `OPT=bnb8bit` 在 .82 不可用。
-> - ⚠️ **"某任务 ckpt 是 wzc1-only" 这类记载必须实测再信**：2026-08-05 实测发现 `outputs/olmo2_probe2_7B_keep14fresh2/step200000.pt`(16G)、`..._freezefront/step200000.pt`、`..._fromscratch/step200000.pt`、`keep8/keep10/keep12/shortgpt16/full32` 的 ckpt、以及 `olmo2_probe2_7B_keep14fresh2_distill/step5000.pt`(24.5G) **在 zwfy6 上都有**——此前把 #128/#129 记成 "wzc1-only 不能在 H20 跑" 是**错的**，白卡了三次 agent。**派 GPU agent 前让它自己 ls 确认，不要照抄台账。** 反过来也成立：`olmo2_p05_arm{A_contig16,B_final14_fresh2}` 的 17-18 个 ckpt（step0 + step5000..**step80000**，各 742GB，最新 45.4GiB）**只在 wzc1**，zwfy6 上只有 `arch_meta.json` + 空壳 `step0.pt` → **B-P0.4 的 gate eval 只能在 LOCAL/.252 跑**（实测跨盘传输仅 12MB/s 单流 / 37MB/s 四流，搬两个 45.4GiB 端点 ckpt 约需 42 小时，不划算）。
-> - ⚠️ **`train_olmo2_arch_probe2_distill.py` 把节点锁死在 .73/.104**：它在 **module 级 `import bitsandbytes`** 并硬编码 `bnb.optim.AdamW8bit`。实测 **bnb 缺失于 LOCAL `.venv`、LOCAL conda、.252 conda、.82**，仅 .73/.104 有（0.50.0）。且它存的 optimizer state 是 bnb 格式 → 换 fp32 AdamW 也破坏忠实 resume。**所以 #99 distill 不能迁到 B200**（除非先在目标机装 bnb）。
+> - ⚠️ **"某任务 ckpt 是 wzc1-only" 这类记载必须实测再信**：2026-08-05 实测发现 `outputs/olmo2_probe2_7B_keep14fresh2/step200000.pt`(16G)、`..._freezefront/step200000.pt`、`..._fromscratch/step200000.pt`、`keep8/keep10/keep12/shortgpt16/full32` 的 ckpt、以及 `olmo2_probe2_7B_keep14fresh2_distill/step5000.pt`(24.5G) **在 zwfy6 上都有**——此前把 #128/#129 记成 "wzc1-only 不能在 H20 跑" 是**错的**，白卡了三次 agent。**派 GPU agent 前让它自己 ls 确认，不要照抄台账。** 反过来也成立：`olmo2_p05_arm{A_contig16,B_final14_fresh2}` 的 17-18 个 ckpt（step0 + step5000..**step80000**，各 742GB，最新 45.4GiB）**只在 wzc1**，zwfy6 上只有 `arch_meta.json` + 空壳 `step0.pt` → **B-P0.4 的 gate eval 只能在 LOCAL/.21 跑**（实测跨盘传输仅 12MB/s 单流 / 37MB/s 四流，搬两个 45.4GiB 端点 ckpt 约需 42 小时，不划算）。
+> - ⚠️ **`train_olmo2_arch_probe2_distill.py` 把节点锁死在 .73/.104**：它在 **module 级 `import bitsandbytes`** 并硬编码 `bnb.optim.AdamW8bit`。实测 **bnb 缺失于 LOCAL `.venv`、LOCAL conda、.21 conda、.82**，仅 .73/.104 有（0.50.0）。且它存的 optimizer state 是 bnb 格式 → 换 fp32 AdamW 也破坏忠实 resume。**所以 #99 distill 不能迁到 B200**（除非先在目标机装 bnb）。
 > - ⚠️ **distill trainer 的 `--lr` fresh 组是 no-op（写作时不要声称差分 LR）**：`_classify_param`（distill 版 line 287）**缺 `module.` 前缀剥离**（该修复只落在 `train_olmo2_arch_probe2.py:316`），实测 log 只有 `inh_decay 4060.1M @2e-5` + `inh_nodecay 0.3M @2e-5`、**没有 fresh 组** → #99 实际是**均匀 2e-5**。与 keepN ladder 同 bug 同行为（因此可比），但**不得声称差分 LR**。
 > - ⚠️ **Qwen base 路径名错**：paperB/TODOList 写的 `models/Qwen3-8b-local` **在 zwfy6 不存在**，真实目录是 `/apdcephfs_zwfy6/share_304376610/pighzliu_code/models/Qwen--Qwen3-8b`。
 
 | # | 节点 | IP:端口 | 硬件 | 密码文件 | Python |
 |---|------|---------|------|---------|--------|
 | 1 | 本机 (local, wzc1) | 本地直连 | 8×L20A（cc 10.0，183GB/卡） | — | `.venv/bin/python`（torch2.10+cu128，支持 L20A sm_100） |
-| 2 | .252 | `28.89.19.252` **:36000** | 8×**L20A**（cc 10.0，183GB/卡）—— 与 LOCAL **同型**，不是 B200 | `configs/password_b200_19252.txt` | `.venv/bin/python` |
+| 2 | .21 | `28.89.19.21` **:36000** | 8×**L20A**（cc 10.0，183GB/卡）—— 与 LOCAL **同型**，不是 B200 | `configs/password_b200_19021.txt` | `.venv/bin/python` |
 | 3 | .73 | `28.85.35.73` :36000 | 8×H20（97.8GB） | `configs/password_h20_853573.txt` | `/opt/conda/envs/torch-base/bin/python` |
 | 4 | .82 | `28.82.250.82` :36000 | 8×H20 | `configs/password_h20_82250.txt` | `/opt/conda/envs/torch-base/bin/python` |
 | 5 | .104 | `28.83.24.104` :36000 | 8×H20 | `configs/password_h20_24104.txt` | `/opt/conda/envs/torch-base/bin/python` |
 
-> **⚠️⚠️ 2026-08-07 实测纠正（旧文档多处写「.252 = 8×B200」「本机+.252 两台 B200 级」是错的）**：
-> `nvidia-smi` 实测 **LOCAL 与 .252 都是 `NVIDIA L20A`、compute_cap `10.0`、183359 MiB —— 完全同型**。
-> `.252` 上 torch 2.13.0。**没有任何一台是 B200。** 三台 H20 是 `NVIDIA H20` cc `9.0`。
-> **后果**：LOCAL 与 .252 之间的「跨节点」对比**只能测盘/checkout，测不到硬件架构差异**（同 arch）。
-> 真正的跨架构对比是 **L20A(cc10.0) vs H20(cc9.0)**，即 {LOCAL,.252} vs {.73,.82,.104}。
-> 此前把 .252 当作「另一种架构」的推理全部无效。
+> **⚠️⚠️ 2026-08-07 实测纠正（旧文档多处写「.21 = 8×B200」「本机+.21 两台 B200 级」是错的）**：
+> `nvidia-smi` 实测 **LOCAL 与 .21 都是 `NVIDIA L20A`、compute_cap `10.0`、183359 MiB —— 完全同型**。
+> `.21` 上 torch 2.13.0。**没有任何一台是 B200。** 三台 H20 是 `NVIDIA H20` cc `9.0`。
+> **后果**：LOCAL 与 .21 之间的「跨节点」对比**只能测盘/checkout，测不到硬件架构差异**（同 arch）。
+> 真正的跨架构对比是 **L20A(cc10.0) vs H20(cc9.0)**，即 {LOCAL,.21} vs {.73,.82,.104}。
+> 此前把 .21 当作「另一种架构」的推理全部无效。
 
 - **SSH 通式**：`sshpass -f <密码文件> ssh -o StrictHostKeyChecking=no -o ConnectTimeout=12 -o PreferredAuthentications=password root@<IP>`（**不要显式写 `-p`**）。
-  > ⚠️⚠️ **2026-08-06 实测纠正（旧文档写「.252 走默认 22 端口」是错的，害我误判 13 小时）**：本机 `/etc/ssh/ssh_config` 有全局 `Host * / Port 36000`，所以**省略 `-p` 时 ssh 已经走 36000**。
-  > **`.252` 必须走 36000**：`-p 22` → `Permission denied`（22 上另有一个 sshd，host key 相同但账户不同，所以看着像密码过期）；不加 `-p` 或 `-p 36000` → 正常登入（hostname `TENCENT64.site`）。
+  > ⚠️⚠️ **2026-08-06 实测纠正（旧文档写「.21 走默认 22 端口」是错的，害我误判 13 小时）**：本机 `/etc/ssh/ssh_config` 有全局 `Host * / Port 36000`，所以**省略 `-p` 时 ssh 已经走 36000**。
+  > **`.21` 必须走 36000**：`-p 22` → `Permission denied`（22 上另有一个 sshd，host key 相同但账户不同，所以看着像密码过期）；不加 `-p` 或 `-p 36000` → 正常登入（hostname `TENCENT64.site`）。
   > **四节点统一：省略 `-p` 即可**（.73/.82/.104 的 36000 也由全局配置覆盖）。若脚本里出现 `-p 22`，一律视为 bug。
   > 判定口径：`ssh -G <host> | grep '^port'` 看真实生效端口；`monitor/gpu_monitor_server.py:run_cmd` 就是因为「port==22 时不加 `-p`」而一直连得上。
-- **⚠️ 两个物理盘，非全共享**：**wzc1** = LOCAL + .252（`/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/`）；**zwfy6** = .73/.82/.104（`/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/`，独立 checkout、commit 常落后）。**.73 上 `/apdcephfs_wzc1` 是指向 zwfy6 的 symlink；.82 上该路径不存在。** 跨盘一律 `scp -O` + 核 md5。详见顶部纠正条。
+- **⚠️ 两个物理盘，非全共享**：**wzc1** = LOCAL + .21（`/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/`）；**zwfy6** = .73/.82/.104（`/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/`，独立 checkout、commit 常落后）。**.73 上 `/apdcephfs_wzc1` 是指向 zwfy6 的 symlink；.82 上该路径不存在。** 跨盘一律 `scp -O` + 核 md5。详见顶部纠正条。
 - **密码只见对应 `configs/password*.txt` 文件**（含末尾逗号是密码的一部分，用 `sshpass -f`，不要 `tr -d` 或手写展开）。
 - ⚠️ **dllm 节点 `29.162.226.120` 已归还，绝不连。**
 - ⚠️ **内联 BABILong eval 会导致 NCCL 崩溃**（2026-06-02 实测）：`quick_eval_babilong` 在 DDP 循环里做变长 greedy generation 会让各 rank desync → ALLREDUCE 等满 30min watchdog timeout → 整个 job SIGABRT。**训练时务必 `--eval_interval 0`**（launch 脚本已默认 `EVAL_INTERVAL=0`），eval 改为离线单独跑 checkpoint。
@@ -191,7 +191,7 @@ git commit 只包含实际修改内容的描述，不附加任何 AI 署名行�
 
 **当只有一个训练任务时，必须尽量使用多个节点来最大化效率。**
 
-- 当前有 5 个节点 = 40 卡（本机 + .252 两台 L20A + .73/.82/.104 三台 H20），闲置节点是浪费
+- 当前有 5 个节点 = 40 卡（本机 + .21 两台 L20A + .73/.82/.104 三台 H20），闲置节点是浪费
 - 单任务训练时，优先考虑 **多机多卡 DDP**（torchrun `--nnodes N --rdzv_backend c10d --rdzv_endpoint <master_ip>:29500`）
 - 若多机配置复杂（数据 sharding / 脚本不支持），退而求其次使用 **gradient accumulation** 提升单节点有效 batch size，目标 GPU mem bandwidth ≥ 70%
 - **GPU mem bandwidth < 50% 视为欠载**，必须在 heartbeat 报告中标注 WARNING 并提出扩展方案
@@ -201,7 +201,7 @@ git commit 只包含实际修改内容的描述，不附加任何 AI 署名行�
 
 **当【待跑训练 ≤ 3 个】时，不要一实验一节点各自慢跑，而是把【同盘的两个节点合成一个 16 卡节点】做多机 DDP 加速单个关键实验。**
 
-- **合成 16 卡只能【同盘内】（合并前提=共享 FS）**：⚠️ 5 节点**分属两盘**，**不可跨盘合并**。合法组合：**LOCAL + .252**（wzc1），或 **.73/.82/.104 任取两台**（zwfy6）。
+- **合成 16 卡只能【同盘内】（合并前提=共享 FS）**：⚠️ 5 节点**分属两盘**，**不可跨盘合并**。合法组合：**LOCAL + .21**（wzc1），或 **.73/.82/.104 任取两台**（zwfy6）。
 - **配方**：现成 2-node 脚本 `scripts/launch_landmark_S2_dolmino_2node.sh` + `scripts/run_landmark_S2_node.sh`；两节点各跑一次 `torchrun --nnodes 2 --node_rank {0/1} --nproc_per_node 8 --rdzv_backend c10d --rdzv_endpoint <MASTER内网IP>:<PORT>`。NCCL 注意 bond1 + IB disabled（见 run_landmark_S2_node.sh verified recipe）。
 - **决策准则**：≤3 训练 + 有同盘空节点 → 合成 16 卡跑最关键那个（训练提速近 2×；慢的 16k eval 也可分片到 16 卡）。>3 独立实验 → 一实验一节点铺开。每轮判断"16 卡合起来加速一个 vs 分开跑多个"哪个总产出高。
 
@@ -294,18 +294,18 @@ configs/
 
 ## 计算资源
 
-**当前集群（2026-08-04 更新）：5 个节点 = 40 卡，⚠️ 分属【两个物理盘】——wzc1（LOCAL + .252）与 zwfy6（.73/.82/.104），跨盘需 `scp -O`，不可跨盘合成多机 DDP。详见顶部「🖥️ 当前 GPU 集群」表与其纠正条。**
+**当前集群（2026-08-04 更新）：5 个节点 = 40 卡，⚠️ 分属【两个物理盘】——wzc1（LOCAL + .21）与 zwfy6（.73/.82/.104），跨盘需 `scp -O`，不可跨盘合成多机 DDP。详见顶部「🖥️ 当前 GPU 集群」表与其纠正条。**
 
 | # | 节点 | 硬件 | Python |
 |---|------|------|--------|
 | 1 | 本机 (local, wzc1) | 8×L20A（cc 10.0，183GB/卡） | `.venv/bin/python` |
-| 2 | .252 (`28.89.19.252` **:36000**) | 8×**L20A**（cc 10.0，183GB/卡，与 LOCAL 同型） | `.venv/bin/python` |
+| 2 | .21 (`28.89.19.21` **:36000**) | 8×**L20A**（cc 10.0，183GB/卡，与 LOCAL 同型） | `.venv/bin/python` |
 | 3 | .73 (`28.85.35.73` :36000) | 8×H20（97.8GB） | `/opt/conda/envs/torch-base/bin/python` |
 | 4 | .82 (`28.82.250.82` :36000) | 8×H20 | `/opt/conda/envs/torch-base/bin/python` |
 | 5 | .104 (`28.83.24.104` :36000) | 8×H20 | `/opt/conda/envs/torch-base/bin/python` |
 
-- 本机 + .252 是 L20A cc10.0（183GB/卡，同型），显存大，适合重型 8B+memory 训练；.73/.82/.104 是 H20（97.8GB），1B 训练无压力，8B+memory 需 gradient_checkpointing。
-- SSH / 密码文件见顶部「🖥️ 当前 GPU 集群」表与 SSH 通式（**四节点一律省略 `-p`**，全局 ssh_config 已设 `Port 36000`；**.252 写 `-p 22` 会被拒**，见顶部纠正条）。
+- 本机 + .21 是 L20A cc10.0（183GB/卡，同型），显存大，适合重型 8B+memory 训练；.73/.82/.104 是 H20（97.8GB），1B 训练无压力，8B+memory 需 gradient_checkpointing。
+- SSH / 密码文件见顶部「🖥️ 当前 GPU 集群」表与 SSH 通式（**四节点一律省略 `-p`**，全局 ssh_config 已设 `Port 36000`；**.21 写 `-p 22` 会被拒**，见顶部纠正条）。
 - ⚠️ **dllm 节点 `29.162.226.120` 已归还，绝不连。**
 
 ### 集群间分配指南
@@ -313,8 +313,8 @@ configs/
 | 任务类型 | 推荐节点 |
 |---------|----------|
 | 主训练 / baseline / eval / inference | 任一节点（5 台共享 wzc1 盘） |
-| 重型 8B+memory 训练 | **本机 或 .252**（L20A 183 GiB 空间更大） |
-| 多机 16 卡加速单个关键实验 | H20 三台（.73/.82/.104）任取两台，或本机 + .252 |
+| 重型 8B+memory 训练 | **本机 或 .21**（L20A 183 GiB 空间更大） |
+| 多机 16 卡加速单个关键实验 | H20 三台（.73/.82/.104）任取两台，或本机 + .21 |
 
 ---
 
@@ -338,7 +338,7 @@ configs/
 
 用户明确要求:**"我们的卡很多, 我希望你可以以最大的效率利用他们"**。
 
-- 当前有 5 个节点 = 40 卡（本机 + .252 两台 L20A + .73/.82/.104 三台 H20）
+- 当前有 5 个节点 = 40 卡（本机 + .21 两台 L20A + .73/.82/.104 三台 H20）
 - **不同节点可以并行跑不同实验**(red line #5 说的是同一节点不能双开)
 - 当一类工作(例如 memory 架构实现)在推进时,**旧线索(WikiText rank sweep 等)不能停**
 - 如果架构训练需要 1 个 8-GPU 节点,就让其余节点继续跑 baseline / eval / sweep
@@ -500,6 +500,73 @@ append-only 文件写错了**不要 edit**,追加一条 correction 行:
 
 ---
 
+## ★★ 算力优先级：proposal > Paper B 补跑 / 3-seed（2026-08-08 用户指令）
+
+**`proposal/` 的 gate 实验优先级高于 Paper B 的补跑和 3-seed variance。只要 proposal 有东西要跑，就可以打断 Paper B 的 run 去跑它。**
+
+### 节点分工（2026-08-08 用户指令，权威）
+
+| 节点 | 盘 | 归属 |
+|---|---|---|
+| **`.21`**（8×L20A 183GB） | wzc1 | **SparseForge / CAST**（下载 + tokenize + 训练） |
+| **`.73` / `.82` / `.104`**（各 8×H20） | zwfy6 | **全部给 proposal** |
+| **LOCAL**（8×L20A） | wzc1 | Paper B 训练（当前 keep14 seed1234），proposal 需要时可让位 |
+
+### 铁律
+
+1. **每次有新结果就立刻写回对应 proposal 目录**（`proposal/{active,backlog}/<ID>/STATUS.json` + 一份 `*_VERDICT.md`），不要攒在 `status/` 或对话里。判定必须落到 proposal 自己的目录，否则下个 agent 接不上。
+2. **开一个任务时就同时派 subagent 准备下一个任务**（写 driver / 核实资产 / 定协议），让当前任务跑完立刻有下一个可投，不让卡空着。
+3. **`proposal` 的实验做完就补下一个**，不要等 heartbeat 周期。GPU 空 + proposal 有 gate → 立刻投。
+
+### 反例（已发生过，不要重犯）
+
+- 上一轮 A01 gate-1 只测了 **intact base** 就写「kill clause 触发、方向要收窄」，而 A01 的 kill 条件说的是 **damaged 模型**。补了 damaged 6-arm 后结论完全反转。**判定前先确认自己测的是不是 kill 条件说的那个条件。**
+- 三节点同时跑完 → 空转 40 分钟才被下一个 heartbeat 发现。应当在投任务的同时就备好下一批。
+
+---
+
+## ★ 研究方向命名与晋升规则（2026-08-08 用户指令）
+
+**没有显著发现之前，一律叫 `proposal_xxx`；确认可行、有显著发现之后，才晋升为 `paper_xxx`。**
+
+### 目录约定
+
+| 阶段 | 位置 | 命名 |
+|---|---|---|
+| **提案期**（默认） | `proposal/active/` 或 `proposal/backlog/` | `A0N-<slug>` / `B0N-<slug>`，如 `A01-null-calibration-methodology` |
+| **晋升后** | 仓库根目录 | `paper<X>/`，如 `paperA/`、`paperB/` |
+| **死亡后** | `proposal/archive/` | 保留 provenance，防止旧 claim 被误复活 |
+
+### 晋升条件（全部满足才能建 `paper<X>/`）
+
+1. 该 proposal 的 `PROPOSAL.md` 里的 **kill gate 已跑过且没被杀掉**；
+2. 至少有**一条经独立复核的显著发现**（不是"算出了一个数字"，而是能改变科学结论）；
+3. 该发现的 provenance 完整（原始 json/csv 在盘上，数字可重算）；
+4. 已做过 novelty 核查，确认不是已有工作的重复。
+
+晋升时必须：
+- 在对应 proposal 的 `STATUS.json` 加 `"promoted_to": "paper<X>"`；
+- 在 `proposal/README.md` 的排序表里标注已晋升；
+- **proposal 目录不删**，它是该方向的证据与决策历史入口。
+
+### 反向（降级/死亡）
+
+- 方向被证伪 → 把 provenance 收进 `proposal/archive/<name>/`，写 `POSTMORTEM.md`；
+- 根目录的 `paper<X>/` 残留按白名单清理，**但清理前必须做引用检查**：
+  ```bash
+  grep -rl "<dirname>" --include='*.py' --include='*.sh' --include='*.md' --include='*.tex' . | grep -v "^./<dirname>"
+  ```
+  若被 `proposal/active/*/SOURCES.md` 或 `code/` 引用 → **禁删**（那是活提案的证据源）。
+  ⚠️ 2026-08-08 实测反例：`paperC_squad_results` 被 A01 的 `SOURCES.md` + `build_null_calibration_table.py` 引用；`paperF_evalfragility` 被 B04 引用 —— 两者**看似死方向残留，实为活提案证据源，禁删**。
+
+### 铁律
+
+- **不得跳过 proposal 阶段直接建 `paper<X>/`。** 新方向先写 `PROPOSAL.md` + kill gate，再启动 GPU。
+- 不得用旧 `status/*.md` 或 `versions/*.md` 里的历史 proposal 作为当前决策入口 —— `proposal/` 是唯一索引。
+- dead proposal 的**证据可以复用**，但其**旧 claim 不自动复活**。
+
+---
+
 ## 版本管理规则（2026-04-30 用户指令）
 
 **每次架构修改都要在 `versions/` 文件夹里创建一个版本描述文件。**
@@ -518,7 +585,7 @@ append-only 文件写错了**不要 edit**,追加一条 correction 行:
 - 本地代码根:`/apdcephfs_wzc1/share_303098609/pighzliu_code/Mixture-of-Memory/`
 - **远程 canonical workdir**:`/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/`(wzc1 跨节点共享,5 节点都 cd 到这里,训练/eval/ckpt/数据免同步)
 - SSH 通式见顶部「🖥️ 当前 GPU 集群」表:`sshpass -f <configs/password*.txt> ssh -o StrictHostKeyChecking=no -o PreferredAuthentications=password [-p 36000] root@<IP>`
-- 当前 5 节点:本机(local) + .252(`28.89.19.252`) 两台 B200 级 + .73(`28.85.35.73`)/.82(`28.82.250.82`)/.104(`28.83.24.104`) 三台 H20(端口 36000)
+- 当前 5 节点:本机(local) + .21(`28.89.19.21`) 两台 B200 级 + .73(`28.85.35.73`)/.82(`28.82.250.82`)/.104(`28.83.24.104`) 三台 H20(端口 36000)
 
 ---
 

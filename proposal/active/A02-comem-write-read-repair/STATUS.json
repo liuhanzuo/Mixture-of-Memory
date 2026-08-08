@@ -1,0 +1,39 @@
+{
+  "id": "A02",
+  "status": "active_blocked_on_asset_identification",
+  "priority": 2,
+  "updated": "2026-08-08T23:20+0800",
+  "phase": "zero-training natural-task transfer gate",
+  "premise_check_2026_08_08": {
+    "claim_under_test": "A02 stage-1 needs NO new training -- only eval of ~5 configs x 5 benchmarks",
+    "verdict": "PARTIALLY TRUE; blocked on identifying the canonical Read-LoRA",
+    "write_lora": {
+      "status": "ON DISK",
+      "path": "outputs/qcmem_writepath_distill_qwen_j12_r32/",
+      "size": "556 MB",
+      "disk": "zwfy6 only",
+      "contents": "distill_args.json + step{500,1000,1500,2000,2500}",
+      "provenance": "task #142 (P1.10 write-path distillation, Qwen3-8B, lower-12 Write LoRA)",
+      "transfer_note": "556 MB cross-disk is ~15-45 min at measured 12-37 MB/s -- tolerable. But irrelevant if the run happens on a zwfy6 node, which is the better choice."
+    },
+    "read_lora": {
+      "status": "NOT IDENTIFIED -- this is the blocker",
+      "suspect_path": "outputs/lora_best_ref/",
+      "suspect_size": "512 bytes -- NOT adapter weights (a real r=32 LoRA on Qwen3-8B is tens-to-hundreds of MB with adapter_config.json + adapter_model.safetensors or a .pt)",
+      "candidate_found_by_scout": "a ~222 MB adapter with adapter_config.json (1341 B) + README.md (5288 B) exists, but whether it is the paper's flagship Read-LoRA or a different distill run is UNRESOLVED",
+      "action_required": "provenance grep (CPU, no GPU): find which adapter path the Paper A flagship table rows were actually produced with. Until pinned, the 5-config comparison is not interpretable."
+    },
+    "base_model": {
+      "note": "the path recorded in some docs (models/Qwen3-8b-local) is a 512-byte SYMLINK, not the weights",
+      "real_path_zwfy6": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/models/Qwen--Qwen3-8b",
+      "real_path_wzc1": "/apdcephfs_wzc1/share_304376610/pighzliu_code/models/Qwen--Qwen3-8b (5 safetensors shards)",
+      "verdict": "present on BOTH disks -- not a blocker on either"
+    },
+    "recommended_node": "a zwfy6 node (.73/.82/.104) so the Write-LoRA needs no transfer at all"
+  },
+  "next_gate": [
+    "CPU: pin the canonical Read-LoRA identity via provenance grep of the Paper A flagship table config",
+    "then GPU: the 5-config x 5-benchmark stage-1 sweep (zero new training) on a zwfy6 node"
+  ],
+  "kill_gate_verbatim": "若 paired quality CI 仍显著低于 0，则停止 CoMem 优于 RAG 的叙事，定位为高复用 workload 的 storage/read-compute 方案"
+}

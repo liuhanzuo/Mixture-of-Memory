@@ -1,20 +1,38 @@
 {
   "id": "A01",
-  "status": "active_narrowed",
+  "status": "active_general_claim_confirmed",
   "priority": 1,
-  "updated": "2026-08-09",
+  "updated": "2026-08-08T23:25+0800",
   "gate_results": {
-    "gate1_third_model_family": {
-      "verdict": "KILL_CLAUSE_2_TRIGGERED_ON_THIS_HALF",
-      "ran": "2026-08-09 on .21 (8x L20A), 5 min wall",
-      "summary": "0/3 non-OLMo families replicate the MMLU letter-interface failure. Llama-2-7B letter 0.4100 (+14.11pp vs always-D 0.2689), Llama-3-8B 0.6220 (+35.31pp), Qwen3-8B-Base 0.7464 (+47.75pp). All n=14042, 0 nan. On Llama-3 and Qwen3 the letter interface is 16-23pp BETTER than content, inverting the 'content is the valid interface' narrative.",
-      "evidence": "proposal/active/A01-null-calibration-methodology/GATE1_VERDICT.md, evidence/a01_gate1_third_family.json",
-      "code": "code/a01_gate1_verdict.py, scripts/_a01_gate1_driver_21.sh, scripts/eval_olmo2_mmlu_content.py --any_family",
-      "side_finding": "Llama-2-7B has a 15.79% exact-tie rate and is nonetheless HEALTHY (+14.11pp, letter indistinguishable from content p=0.51), while OLMo-2 base has 0.13% ties and is also healthy. Tie rate does NOT order the pathology across families -> 'exact ties cause interface failure' is FALSIFIED as a family-general mechanism. Within OLMo-2 the tie rate still tracks damage (0.13 -> 24.36 -> 30.64%)."
+    "gate1_third_model_family_INTACT": {
+      "verdict": "SUPERSEDED -- tested the wrong condition",
+      "ran": "2026-08-08 on .21 (8x L20A), 5 min wall",
+      "summary": "0/3 INTACT non-OLMo families show letter-interface failure. Llama-2-7B letter 0.4100 (+14.11pp vs always-D 0.2689), Llama-3-8B 0.6220 (+35.31pp), Qwen3-8B-Base 0.7464 (+47.75pp). All n=14042, 0 nan. On Llama-3 and Qwen3 letter is 16-23pp BETTER than content.",
+      "why_superseded": "A01's kill claim is about DAMAGED models. Intact bases were never expected to show the pathology; measuring them cannot trigger or clear the kill clause. GATE1_VERDICT.md's 'kill clause 2 triggered / narrow to OLMo-only' conclusion was WRONG and is retracted -- see gate1_third_model_family_DAMAGED.",
+      "still_useful_for": "the second-order observation that on three of four HEALTHY strong models the letter interface is substantially BETTER than the label-free content interface (+13 to +23pp), so 'content is the fair interface' is not a general statement about MC interfaces",
+      "evidence": "GATE1_VERDICT.md (keep for the intact numbers; its verdict section is retracted), evidence/a01_gate1_third_family.json"
+    },
+    "gate1_third_model_family_DAMAGED": {
+      "verdict": "A01_GENERAL_CLAIM_CONFIRMED",
+      "ran": "2026-08-08 on .21, 6.5 min wall for 6 arms",
+      "summary": "6/6 DAMAGED non-OLMo arms land at/below their own best-constant floor 0.2689. Llama-2 k8 0.2415 (-2.74pp), Llama-3 k8 0.2329 (-3.60), Qwen3 k8 0.2286 (-4.03), Llama-2 k12 0.2295 (-3.94), Llama-3 k12 0.2527 (-1.62), Qwen3 k12 0.2300 (-3.89). Damage = front-N truncation, NO fresh block, NO heal (deliberately worst-case).",
+      "mechanism_finding": "The collapse ROUTE differs by family but the OUTCOME does not. Non-OLMo damaged arms become constant-letter emitters with NEAR-ZERO exact ties (Llama-2 k12 is 100.0% modal with 0.00% ties; Qwen3 k12 is 99.1% modal with 0.03% ties). OLMo damaged arms reach the same place via 30.64% exact ties + argmax index tie-breaking. So ties are ONE road, not THE mechanism -- this over-determines the gate-3 refutation.",
+      "content_also_fails": "every damaged arm has content_norm within +/-3pp of its letter accuracy and both hover at their floors -- switching interface does NOT rescue a damaged arm",
+      "evidence": "GATE1_DAMAGED_VERDICT.md",
+      "code": "scripts/eval_olmo2_probe2_ppl.py::load_truncated_any_family, scripts/_a01_gate1_damaged_driver_21.sh"
+    },
+    "gate1_depth_curve": {
+      "verdict": "COLLAPSE IS A SHARP PHASE TRANSITION, not a gradual decay",
+      "ran": "2026-08-08, three families in parallel on .21/.73/.82",
+      "qwen3_8b_36L": "keep 4,6,8,12,18,24 ALL pinned at letter 0.2295-0.2301 (modal 92-100%, ties ~0); keep30 jumps to 0.7263 (+45.74pp). Transition in (24,30].",
+      "llama3_8b_32L": "keep 4..16 all sub-floor (0.2319-0.2698); keep20 -> 0.5758 (+30.69pp), keep24 -> 0.5734. Transition in (16,20].",
+      "llama2_7b_32L": "NON-MONOTONE: k4 -3.84, k6 -1.55, k16 +6.00, k20 +3.65, k24 +0.33 -- partially recovers then DEGRADES back toward the floor as depth increases. Anomalous; gap-fill running.",
+      "status": "gap-fill in flight to pin each threshold to a single layer (.21 Llama-2 k=10,14,28,30,31; .73 Llama-3 k=17,18,19,28,30; .82 Qwen3 k=25,26,27,28,29,32,34)",
+      "code": "scripts/_a01_gate1_depth_curve.sh, code/summarise_gate1_depth.py"
     },
     "gate2_second_mc_benchmark": {
       "verdict": "REPLICATES_FAILURE (so the AND-gate cannot fire)",
-      "ran": "2026-08-08/09, CPU only, no GPU needed",
+      "ran": "2026-08-08, CPU only, no GPU needed",
       "summary": "On non-MMLU MC the interface/floor failure DOES reproduce. BoolQ's construct-appropriate null is 0.6217 (always-B), not 0.5: keep12/keep10/keep8 all sit BELOW it on the raw-LL interface and keep14 is n.s. (p=0.20) -> 4/6 arms indistinguishable from a constant predictor while their nominal 0.59-0.64 look 'passing' against a 0.50 chance line. OpenBookQA: longest-option null 0.3635 vs chance 0.2500; keep10 acc_norm 0.3560 is below that floor, and 3/15 arm-pair sign flips between acc and acc_norm. Residual fraction for base OBQA drops 45.9% -> 21.3% under the correct null (2.15x inflation from using chance).",
       "caveat": "The two interfaces used here are raw sum-LL vs length-normalised acc_norm, NOT MMLU's letter-vs-content. Report that difference explicitly; it is an analogous but not identical interface contrast.",
       "negative_control": "winogrande is structurally degenerate (both options share the continuation -> identical norm_lens, acc == acc_norm exactly, 100% tie rate). Cannot serve as an interface case; report as a control, not evidence.",
@@ -33,20 +51,26 @@
     }
   },
   "claim_scope_after_gates": {
-    "must_narrow": "Drop any claim that the letter MC interface is GENERALLY an unreliable instrument. Three families spanning three tokenizers show it healthy and mostly better than content.",
-    "must_drop": "'Exact ties are the mechanism of interface failure' as a family-general causal claim (gate-1 side finding).",
-    "survives": [
-      "Report every construct against a construct-appropriate null (best-constant, not chance) before comparing arms -- gate-1 and gate-2 are both demonstrations (keep8 0.2550 reads 'above chance' at .25 but is BELOW the 0.2689 floor; BoolQ 0.59-0.64 reads 'passing' at .50 but is below the 0.6217 floor).",
-      "The self-falsification narrative (using the protocol to retract one's own headline).",
-      "The letter-interface degeneration result SCOPED to structurally damaged OLMo-2, now with a cross-family contrast making the scoping evidence-based.",
-      "gate-2's non-MMLU replication: the wrong-null problem is not an MMLU artifact."
+    "RETRACTED_must_narrow": "An earlier version of this file said 'drop any claim that the letter MC interface is GENERALLY an unreliable instrument'. RETRACTED: that was based on INTACT bases only. The damaged-arm gate (6/6 non-OLMo below floor) confirms the general claim.",
+    "must_drop": "'Exact ties are the mechanism of interface failure' as a family-general CAUSAL claim. Triple-falsified: (a) gate-3 base, ties 18->0 in fp32, acc unchanged p=1.000; (b) gate-3 keep8, ties 4303->0, 18% argmax flips, acc unchanged p=0.570, still below floor; (c) damaged non-OLMo collapse to the same place with 0.00-1.35% ties.",
+    "confirmed_general": [
+      "Under structural damage the letter MC interface degenerates to at/below its own best-constant floor. Demonstrated on FOUR families: OLMo-2-7B (healed keep8, 0.2550), Llama-2-7B (trunc, 0.2295-0.2415), Llama-3-8B (trunc, 0.2329-0.2527), Qwen3-8B-Base (trunc, 0.2286-0.2301).",
+      "The collapse is a SHARP phase transition in depth, not a gradual decay -- Qwen3 is pinned at 0.2297 for keep 4..24 then jumps +45.74pp at keep30.",
+      "Interface swap does NOT rescue a damaged arm: content_norm sits within +/-3pp of letter on every damaged arm.",
+      "Report every construct against a construct-appropriate null (best-constant, not chance) before comparing arms. Demonstrations: keep8 0.2550 reads 'above chance' at .25 but is BELOW the 0.2689 floor; BoolQ 0.59-0.64 reads 'passing' at .50 but is below the 0.6217 always-B floor; OBQA residual fraction inflates 2.15x under the chance line.",
+      "gate-2's non-MMLU replication: the wrong-null problem is not an MMLU artifact.",
+      "The self-falsification narrative (using the protocol to retract one's own headline) -- now including this file's own retraction of the intact-only verdict."
+    ],
+    "family_specific_not_general": [
+      "The collapse MECHANISM. OLMo-2 gets there via exact bf16 ties (30.64% on keep8) resolved by argmax index bias; Llama/Qwen get there via direct modal collapse with near-zero ties. Same destination, different road.",
+      "On HEALTHY strong models the letter interface is substantially BETTER than the label-free content interface (+13 to +23pp on OLMo-2 base, Llama-3, Qwen3). So 'content is the fair interface' is not a general statement about MC interfaces -- it is a statement about damaged models."
     ]
   },
   "next_gate": [
-    "gate-3 keep8 arm finish + read against Llama-2 as the ties-without-failure control",
+    "gate-1 depth-curve gap-fill: pin each family's collapse threshold to a single layer (in flight)",
     "gate-4 C4 aggregation pre-registration (CPU)",
-    "rewrite PROPOSAL.md claims section to the narrowed scope above",
-    "novelty check vs existing similarity-null / construct-validity prior art (the third Kill clause: 'only degenerates into a case collection of existing similarity-null methods')"
+    "rewrite PROPOSAL.md claims section to the CONFIRMED-general scope above (not the retracted narrowed scope)",
+    "novelty check vs existing similarity-null / construct-validity prior art (the third Kill clause)"
   ],
   "must_not_resurrect": {
     "4.8x": "should be 4.69x relative to .25, or 3.22x relative to content's own floor",
