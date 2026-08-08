@@ -2,11 +2,88 @@
 
 > **本文件是 compact 后或新会话启动时的第一手交接。** 读完这份 + `status/RUN_REGISTRY.md` §3/§4 + `status/TRAINER_ACTIVITY.jsonl` 尾部，就能接上当前研究状态。
 > 维护规则：main agent 每当方向/结论/在跑实验有重大变化时，**覆盖更新本文件的「当前快照」区**（保持精简，旧结论沉淀到 RUN_REGISTRY）。
-> 最后更新：2026-08-06 05:00 GMT+8（rebuttal-prep sprint 结束：paperA 数字全 audit + tab_pareto 修 99.20→99.19；paperB tex 16/16 数字精确；Paper C P-C1 scooped + eval 无效已判决；Paper D 层拼接判决 dead。下方 2026-08-04 及更早快照请视为历史沉淀，以本快照为准。）
+> 最后更新：2026-08-08 10:00 GMT+8（P2.4 6-arm ladder 数据完备 + 三重 Table 4 defect 已定位并修复 + flip-boundary 根因确认为 torch 2.7→2.13 + 五级框架撤回记录清算完。下方 2026-08-06 快照请视为历史沉淀，以本快照为准。）
 
 ---
 
-## ⚡ 当前快照（2026-08-06 05:00 GMT+8）—— rebuttal-prep 收尾 + 4 项决策待用户
+## ⚡ 当前快照（2026-08-08 10:00 GMT+8）—— P2.4 收尾 + Paper B eval 协议 audit 完结
+
+**一句话现状**：过去一夜完成 P2.4 general-SFT repairability 六臂全数据 + 修完 Table 4 三重 defect（架构混跑 / budget 不齐 / 6/8 静默 merge / batch-size 不一致）+ 定位 flip boundary 根因（torch 2.7.0 vs 2.13.0）；**Paper B Table 4 的干净版本现在完整在盘上**，可直接改写。四项 2026-08-06 用户决策仍未拍板（原样保留）。LOCAL 在跑 keep14 seed=1234 seed-variance 第二子的训练（step 25.8k/200k），32 remote 卡当前空闲。
+
+**★ 本轮头等重要新事实（写进 Paper B 前必读）**：
+
+1. **P2.4 六臂 SFT 效应表已定，only-supportable statement 是 two-group contrast**（`status/PAPERB_SFT_FIT_CONFOUNDED.md` §FINAL）：
+
+   | arm | 层数 | pre-PPL | ΔPPL% |
+   |---|---:|---:|---:|
+   | full32 (intact) | 32 | 7.398 | **+4.46** |
+   | ShortGPT-16 | 16 | 9.780 | +8.51 |
+   | keep14 | 16 | 10.561 | +9.43 |
+   | keep12 | 14 | 11.443 | +9.07 |
+   | keep10 | 12 | 12.816 | +8.63 |
+   | keep8 | 10 | 13.333 | +10.15 |
+
+   干净声明：**intact 付 +4.46%；五个 pruned 付 +9.16 ± 0.66%（≈2×）；组内无法排序**（既不 monotone in depth 也不 in pre-PPL，两次违反）。**不要写 slope / r² / "scales with damage" / "saturating"**——三个连续框架今晚被后来的数据一枪打死（linear fit → monotone-saturating → within-pruned ordering）。
+
+2. **真正的 P2.4 headline 是 factual recall 崩塌，n=2 独立复现**：
+   - TriviaQA EM：keep8 **−4.30 pp** (p=6.8e−106) / keep10 **−5.19 pp** (p=1.1e−146)
+   - PopQA EM：keep8 −0.88 pp / keep10 −1.53 pp
+   - MMLU letter：keep10 −1.82 pp (p=5.6e−4)
+   - **General instruction SFT 修不了 pruning damage，反而进一步伤 closed-book factual recall。**
+   - core6 aggregate 上 keep8 −0.90 pp / keep10 wash（arc_easy 主导，别抱 core6 aggregate）。
+
+3. **Paper B eval 协议今晚发现的四种「不同框架给不同数字」现象**（都已定位，都要写进 appendix protocol note）：
+
+   | 变量 | 影响幅度 | 状态 |
+   |---|---|---|
+   | **torch 版本**（2.7.0 vs 2.13.0） | 15-20 net flips | ★ **flip-boundary 根因，agent `a71d3994` 定位，MAIN 独立验证**（`status/PAPERB_FLIP_BOUNDARY_RESOLVED.md` 提交 `2364e39`）。v1 launcher 用 `olmo2_venv/bin/python` (torch 2.7)，v2/v3 用 conda (torch 2.13)。zwfy6 driver git-untracked 是 coincident 不是 causal。 |
+   | **eval batch_size** | 90-123 exact / 16 net flips (bs8 vs bs16) | Table 4 base 行是 BS=16 跑的，pruned 全 BS=8——**已用 BS=8 补跑 base**，delta 只 −0.004 pp（strong intact 没什么 near-tie）。不影响主表数字。 |
+   | **partial shard merge** | keep12 arc_easy 6/8 shard 静默 merge：+0.194 pp | 已发现（`PAPERB_TABLE4_KEEP12_PARTIAL_MERGE.md` 提交 `e575f14`）。keep12 core6 应从 `.5669` 改为 `.5689`。 |
+   | **GPU 架构**（L20A cc10.0 vs H20 cc9.0） | 7-29 flips 单方向按 damage 排 | 真实但小；winogrande 主导。Table 4 混了架构（base=H20，keep14/keep8=L20A，其他 H20），要么同 arch 重取要么在 caption 里说清。 |
+
+   **damage 越大 → near-tie 密度越大 → 数字越易被 bf16 数值差挤翻。** 这是四种现象的共同 mechanism，值得写一句进 §Protocol。
+
+4. **Clean single-protocol Table 4 已在盘上**（zwfy6 `_v2` 批次 + base_bs8）：单盘 H20 / 单 torch 2.13 / 单 BS=8 / 全 `n_scored` / 论文自己给定的 steps。数字：
+
+   | rung | dir | core6 |
+   |---|---|---:|
+   | base full32 | `7B_base_full_bs8` | .70365 |
+   | ShortGPT-16 | `7B_shortgpt16_step200000_v2` | .62247 |
+   | keep14@200000 | `7B_keep14_step200000_v2` | .59532 |
+   | keep12@124000 | `7B_keep12_step124000_v2` | .56888 |
+   | keep10@83500 | `7B_keep10_step83500_v2` | .52999 |
+   | keep8@121000 | `7B_keep8_step121000_v2` | .52328 |
+
+   **这套数字可以直接改写 paperB 里的 Table 4，不需要再跑 GPU。** 但仍需用户拍板 #192 「Table 4 budget defect」（keep8/10/12 未训到 200k 的 disclosure 策略）。
+
+**在跑 / 空闲**：
+- **LOCAL 8×L20A**：`keep14fresh2_seed1234`(#181) 训练 seed-variance 第二子，@ **step 25.8k/200k**，loss 2.59 ppl 13.33，1.56 s/step，ETA ~76h。健康。
+- **.252 / .73 / .82 / .104 = 32 卡空闲**。今夜完成的 batteries：`keep14_wzc1_v2`（.252）、`base_full_bs8`（.73）、bs4/8/16/32 sweep（.82+.104）、within-disk floor v3（4 节点）、bisect（.82/.104）。全部落盘。
+- **不再擅自 dispatch**：eval-methodology cleanup 已收尾；剩下的是 TeX 改写 + 用户 5 项决策。
+
+**待用户决策（保留自 2026-08-06 + 本轮新增）**：
+1. **Paper C**：A4×random_trunk keep{14,20,24,28} 训练是否启动（#165）
+2. **Paper D**：「相对深度主导层对齐」mini finding 是否做（#166）
+3. **Paper A #167 latency**：931.9/664.4 ms 三选一
+4. **17+个 unpushed commit 是否 push GitHub**
+5. **★ 新增 #192**：Table 4 是 disclose 真实 steps（keep10=83.5k / keep12=124k / keep8=121k 而非 200k）还是把三个 pruned rung resume 到 200k 再重 eval
+
+**本轮 sprint 关键 commits**（今夜 + 从 08-06 起）：
+`af6d869` within-disk floor v1 claim（后 v3 反转） · `c6bdc05` driver-drift 框架 · `cb26f17` driver-drift 撤回（driver 是 untracked，非 causal） · `29b18ca` bisect PART 1（消灭 candidate A / dataset drift） · `1657627` v3 batteries 0 flip · `66535d4` batch-size sweep 数据 · `2364e39` **flip-boundary RESOLVED = torch version**（<--最终定论） · `c89c214` keep14 wzc1 v2 · `e575f14` keep12 partial-merge 发现
+
+**运维备忘（本轮踩过的坑）**：
+- `.venv` 在 LOCAL / .252 上都缺 torch → 一律 conda `/opt/conda/envs/torch-base/bin/python`
+- ssh 到远端后默认 CWD=`/root/`，命令里必须自己 `cd` 到 PROJECT_ROOT（用 heredoc 最稳）
+- pgrep 时脚本 shard 后台进程，pkill 会把自己 kill 掉（kill -9 PID 只）
+- 「Aug 4 HF cache lock」是死路——两代 launcher 都 `HF_DATASETS_CACHE=project_dir`，`~/.cache` 从不 read
+- Subagent 的 provenance / 搜索类任务，prompt 里必须显式列 wzc1+zwfy6 两盘（memory `subagent-audit-must-specify-cross-disk`）
+
+**运维错误账（Main 自己今夜的三连错归因）**：
+- flip boundary 依次被我误归因为 (a) runtime jitter → (b) driver drift → (c) batch size；只有 (c) 是真的、但只解释 Table 4 base 行的 cross-protocol，v1-vs-v2 的正解是 torch 版本（agent `a71d3994` 找到），我从 launcher 的 `PY=` 行读过两次都没抓到。已写进 memory `same-harness-runs-bit-identical` 里作为教训。
+
+---
+
+## ⚡ 上一份快照（2026-08-06 05:00 GMT+8）—— rebuttal-prep 收尾 + 4 项决策待用户（HISTORICAL，以上方 08-08 快照为准）
 
 **一句话现状**：ARR 已交（Paper A 已投、Paper B 已投），主战场转 rebuttal 备料。夜间 sprint 完成 paperA/B 数字-tex-provenance 三层 audit + 关键 tex 数字漂修（`tab_pareto.tex` 99.20→99.19），rebuttal 弹药充足；#99 与 #103 已按用户令 kill（释放 6037 GPU-h）；32 卡持续空闲，方向未拍板不动。
 
