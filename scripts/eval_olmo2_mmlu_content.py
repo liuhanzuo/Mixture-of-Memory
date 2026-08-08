@@ -88,6 +88,7 @@ if _HERE not in sys.path:
 from eval_olmo2_probe2_ppl import (  # noqa: E402
     _log,
     load_base_model,
+    load_base_model_any_family,
     load_pruned_model,
 )
 from eval_olmo2_probe2_downstream import (  # noqa: E402
@@ -626,6 +627,12 @@ def main():
     p.add_argument("--ckpt", type=str, default="",
                    help="prune-then-heal .pt (omit -> full-base mode). ShortGPT is "
                         "loaded with --keep_front_layers 16 --n_fresh_layers 0.")
+    p.add_argument("--any_family", action="store_true",
+                   help="base mode only: load --base_model with AutoModelForCausalLM "
+                        "instead of Olmo2ForCausalLM, so a non-OLMo family (Llama, "
+                        "Qwen, ...) can be scored through the identical MC interface. "
+                        "A01 gate-1. Incompatible with --ckpt (layer surgery is "
+                        "OLMo-specific).")
     p.add_argument("--keep_front_layers", type=int, default=None,
                    help="pruned mode; default read from ckpt meta")
     p.add_argument("--n_fresh_layers", type=int, default=None,
@@ -701,6 +708,11 @@ def main():
 
     if not args.output_name:
         raise ValueError("--output_name required")
+    if args.any_family and args.ckpt:
+        raise ValueError(
+            "--any_family is base-mode only; --ckpt implies OLMo-specific layer "
+            "surgery (keep_front/n_fresh) which does not transfer across families"
+        )
     if not torch.cuda.is_available():
         raise RuntimeError("CUDA required (use --selftest for a CPU dry run)")
     device = torch.device("cuda")
@@ -719,7 +731,13 @@ def main():
     else:
         if not args.base_model:
             raise ValueError("base mode requires --base_model")
-        model, meta = load_base_model(args.base_model, device)
+        if args.any_family:
+            # A01 gate-1: the same letter-vs-content MC interface on a NON-OLMo
+            # family. Only the model class changes; scoring/tokenising/nulls are
+            # the identical code path, which is what makes the comparison valid.
+            model, meta = load_base_model_any_family(args.base_model, device)
+        else:
+            model, meta = load_base_model(args.base_model, device)
     meta["base_model"] = args.base_model
     meta["add_bos"] = bool(args.add_bos)
     meta["content_desc"] = args.content_desc

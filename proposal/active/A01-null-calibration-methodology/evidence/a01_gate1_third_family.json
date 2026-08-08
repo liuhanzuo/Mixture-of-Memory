@@ -1,0 +1,334 @@
+{
+  "arms": [
+    {
+      "label": "Llama-2-7B",
+      "arm_dir": "gate1_llama2_7b",
+      "family": "non-OLMo",
+      "n": 14042,
+      "best_constant_rule": "always-D",
+      "best_constant_null": 0.2689075630252101,
+      "gold_letter_counts": {
+        "B": 3462,
+        "C": 3582,
+        "D": 3776,
+        "A": 3222
+      },
+      "longest_option_split_tie_null": 0.27566111190238957,
+      "interfaces": {
+        "letter": {
+          "acc": 0.4099843327161373,
+          "residual_pp_vs_best_constant": 14.107676969092726,
+          "exact_binom_p_vs_best_constant": 1.775150552402245e-285,
+          "boot95_residual_pp": [
+            12.9896026207093,
+            15.282723258795045
+          ],
+          "modal_pred": "A",
+          "modal_share": 0.4144708730950007,
+          "own_modal_constant_acc": 0.22945449366187154,
+          "exact_tie_rate": 0.15788349238000285,
+          "mcnemar_vs_own_modal_constant_p": 3.1250895263018387e-290
+        },
+        "content_norm": {
+          "acc": 0.41347386412191994,
+          "residual_pp_vs_best_constant": 14.456630109670987,
+          "exact_binom_p_vs_best_constant": 3.565540814579838e-299,
+          "boot95_residual_pp": [
+            13.345677253952429,
+            15.596246973365616
+          ],
+          "modal_pred": "A",
+          "modal_share": 0.3155533399800598,
+          "own_modal_constant_acc": 0.22945449366187154,
+          "exact_tie_rate": 0.0027773821392963966,
+          "mcnemar_vs_own_modal_constant_p": 2.0925665309677102e-254
+        }
+      },
+      "letter_vs_content": {
+        "delta_pp_letter_minus_content": -0.348953140578262,
+        "boot95_pp": [
+          -1.3673265916536106,
+          0.6694203104970802
+        ],
+        "b_letter_right_content_wrong": 2611,
+        "c_letter_wrong_content_right": 2660,
+        "exact_mcnemar_p": 0.5085250449103744
+      }
+    },
+    {
+      "label": "Llama-3-8B",
+      "arm_dir": "gate1_llama3_8b",
+      "family": "non-OLMo",
+      "n": 14042,
+      "best_constant_rule": "always-D",
+      "best_constant_null": 0.2689075630252101,
+      "gold_letter_counts": {
+        "B": 3462,
+        "C": 3582,
+        "D": 3776,
+        "A": 3222
+      },
+      "longest_option_split_tie_null": 0.2846638655462203,
+      "interfaces": {
+        "letter": {
+          "acc": 0.6219911693490956,
+          "residual_pp_vs_best_constant": 35.30836063238855,
+          "exact_binom_p_vs_best_constant": 0.0,
+          "boot95_residual_pp": [
+            34.190286284005126,
+            36.43355647343684
+          ],
+          "modal_pred": "A",
+          "modal_share": 0.2920524141860134,
+          "own_modal_constant_acc": 0.22945449366187154,
+          "exact_tie_rate": 0.044295684375445094,
+          "mcnemar_vs_own_modal_constant_p": 0.0
+        },
+        "content_norm": {
+          "acc": 0.4623985187295257,
+          "residual_pp_vs_best_constant": 19.34909557043156,
+          "exact_binom_p_vs_best_constant": 0.0,
+          "boot95_residual_pp": [
+            18.28799316336704,
+            20.438683948155536
+          ],
+          "modal_pred": "D",
+          "modal_share": 0.2975359635379576,
+          "own_modal_constant_acc": 0.2689075630252101,
+          "exact_tie_rate": 0.0038456060390257797,
+          "mcnemar_vs_own_modal_constant_p": 6.54049584263723e-259
+        }
+      },
+      "letter_vs_content": {
+        "delta_pp_letter_minus_content": 15.95926506195699,
+        "boot95_pp": [
+          14.905106110240704,
+          16.956274035037744
+        ],
+        "b_letter_right_content_wrong": 3999,
+        "c_letter_wrong_content_right": 1758,
+        "exact_mcnemar_p": 1.210331024925421e-196
+      }
+    },
+    {
+      "label": "Qwen3-8B-Base",
+      "arm_dir": "gate1_qwen3_8b_base",
+      "family": "non-OLMo",
+      "n": 14042,
+      "best_constant_rule": "always-D",
+      "best_constant_null": 0.2689075630252101,
+      "gold_letter_counts": {
+        "B": 3462,
+        "C": 3582,
+        "D": 3776,
+        "A": 3222
+      },
+      "longest_option_split_tie_null": 0.28334638940322066,
+      "interfaces": {
+        "letter": {
+          "acc": 0.7464036462042444,
+          "residual_pp_vs_best_constant": 47.74960831790343,
+          "exact_binom_p_vs_best_constant": 0.0,
+          "boot95_residual_pp": [
+            46.702748896168636,
+            48.810710724967954
+          ],
+          "modal_pred": "B",
+          "modal_share": 0.3056544651759009,
+          "own_modal_constant_acc": 0.24654607605754167,
+          "exact_tie_rate": 0.04899586953425438,
+          "mcnemar_vs_own_modal_constant_p": 0.0
+        },
+        "content_norm": {
+          "acc": 0.517305227175616,
+          "residual_pp_vs_best_constant": 24.839766415040593,
+          "exact_binom_p_vs_best_constant": 0.0,
+          "boot95_residual_pp": [
+            23.750178037316623,
+            25.922233300099702
+          ],
+          "modal_pred": "D",
+          "modal_share": 0.28493092152115085,
+          "own_modal_constant_acc": 0.2689075630252101,
+          "exact_tie_rate": 0.00256373735935052,
+          "mcnemar_vs_own_modal_constant_p": 0.0
+        }
+      },
+      "letter_vs_content": {
+        "delta_pp_letter_minus_content": 22.909841902862837,
+        "boot95_pp": [
+          21.912832929782084,
+          23.864121919954425
+        ],
+        "b_letter_right_content_wrong": 4398,
+        "c_letter_wrong_content_right": 1181,
+        "exact_mcnemar_p": 0.0
+      }
+    },
+    {
+      "label": "OLMo-2-7B base",
+      "arm_dir": "7B_base",
+      "family": "OLMo-2",
+      "n": 14042,
+      "best_constant_rule": "always-D",
+      "best_constant_null": 0.2689075630252101,
+      "gold_letter_counts": {
+        "B": 3462,
+        "C": 3582,
+        "D": 3776,
+        "A": 3222
+      },
+      "longest_option_split_tie_null": 0.28445022076627446,
+      "interfaces": {
+        "letter": {
+          "acc": 0.6053980914399658,
+          "residual_pp_vs_best_constant": 33.64905284147557,
+          "exact_binom_p_vs_best_constant": 0.0,
+          "boot95_residual_pp": [
+            32.57352941176471,
+            34.73864121919954
+          ],
+          "modal_pred": "C",
+          "modal_share": 0.28664007976071787,
+          "own_modal_constant_acc": 0.25509186725537675,
+          "exact_tie_rate": 0.00128186867967526,
+          "mcnemar_vs_own_modal_constant_p": 0.0
+        },
+        "content_norm": {
+          "acc": 0.47058823529411764,
+          "residual_pp_vs_best_constant": 20.168067226890756,
+          "exact_binom_p_vs_best_constant": 0.0,
+          "boot95_residual_pp": [
+            19.09272183449651,
+            21.279020082609314
+          ],
+          "modal_pred": "D",
+          "modal_share": 0.2906993305796895,
+          "own_modal_constant_acc": 0.2689075630252101,
+          "exact_tie_rate": 0.0004985044865403788,
+          "mcnemar_vs_own_modal_constant_p": 4.55858818420197e-275
+        }
+      },
+      "letter_vs_content": {
+        "delta_pp_letter_minus_content": 13.480985614584817,
+        "boot95_pp": [
+          12.45549067084461,
+          14.456630109670987
+        ],
+        "b_letter_right_content_wrong": 3759,
+        "c_letter_wrong_content_right": 1866,
+        "exact_mcnemar_p": 3.7927489410382826e-143
+      }
+    },
+    {
+      "label": "OLMo-2-7B keep14@200k",
+      "arm_dir": "7B_keep14_step200000",
+      "family": "OLMo-2",
+      "n": 14042,
+      "best_constant_rule": "always-D",
+      "best_constant_null": 0.2689075630252101,
+      "gold_letter_counts": {
+        "B": 3462,
+        "C": 3582,
+        "D": 3776,
+        "A": 3222
+      },
+      "longest_option_split_tie_null": 0.28445022076627446,
+      "interfaces": {
+        "letter": {
+          "acc": 0.31840193704600483,
+          "residual_pp_vs_best_constant": 4.949437402079476,
+          "exact_binom_p_vs_best_constant": 1.2985392465110254e-38,
+          "boot95_residual_pp": [
+            3.788634097706879,
+            6.088876228457485
+          ],
+          "modal_pred": "A",
+          "modal_share": 0.3946731234866828,
+          "own_modal_constant_acc": 0.22945449366187154,
+          "exact_tie_rate": 0.2435550491382994,
+          "mcnemar_vs_own_modal_constant_p": 5.495196670365901e-78
+        },
+        "content_norm": {
+          "acc": 0.3832075202962541,
+          "residual_pp_vs_best_constant": 11.429995727104403,
+          "exact_binom_p_vs_best_constant": 1.5153433664974595e-190,
+          "boot95_residual_pp": [
+            10.39737929069933,
+            12.491098134168922
+          ],
+          "modal_pred": "D",
+          "modal_share": 0.2960404500783364,
+          "own_modal_constant_acc": 0.2689075630252101,
+          "exact_tie_rate": 0.004415325452214784,
+          "mcnemar_vs_own_modal_constant_p": 6.213653848131247e-99
+        }
+      },
+      "letter_vs_content": {
+        "delta_pp_letter_minus_content": -6.480558325024926,
+        "boot95_pp": [
+          -7.556081754735793,
+          -5.4336989032901295
+        ],
+        "b_letter_right_content_wrong": 2448,
+        "c_letter_wrong_content_right": 3358,
+        "exact_mcnemar_p": 6.187518104902632e-33
+      }
+    },
+    {
+      "label": "OLMo-2-7B keep8@121k",
+      "arm_dir": "7B_keep8_step121000",
+      "family": "OLMo-2",
+      "n": 14042,
+      "best_constant_rule": "always-D",
+      "best_constant_null": 0.2689075630252101,
+      "gold_letter_counts": {
+        "B": 3462,
+        "C": 3582,
+        "D": 3776,
+        "A": 3222
+      },
+      "longest_option_split_tie_null": 0.28445022076627446,
+      "interfaces": {
+        "letter": {
+          "acc": 0.2550206523287281,
+          "residual_pp_vs_best_constant": -1.3886910696481958,
+          "exact_binom_p_vs_best_constant": 0.0001982657069334709,
+          "boot95_residual_pp": [
+            -2.513886910696482,
+            -0.23500925794046434
+          ],
+          "modal_pred": "C",
+          "modal_share": 0.4879646773963823,
+          "own_modal_constant_acc": 0.25509186725537675,
+          "exact_tie_rate": 0.30643782936903574,
+          "mcnemar_vs_own_modal_constant_p": 1.0
+        },
+        "content_norm": {
+          "acc": 0.3422589374732944,
+          "residual_pp_vs_best_constant": 7.335137444808431,
+          "exact_binom_p_vs_best_constant": 2.0720609901778234e-81,
+          "boot95_residual_pp": [
+            6.302521008403361,
+            8.367753881213503
+          ],
+          "modal_pred": "D",
+          "modal_share": 0.30131035465033473,
+          "own_modal_constant_acc": 0.2689075630252101,
+          "exact_tie_rate": 0.004700185158809287,
+          "mcnemar_vs_own_modal_constant_p": 2.3120378598016584e-43
+        }
+      },
+      "letter_vs_content": {
+        "delta_pp_letter_minus_content": -8.723828514456628,
+        "boot95_pp": [
+          -9.827659877510326,
+          -7.66272610739211
+        ],
+        "b_letter_right_content_wrong": 2397,
+        "c_letter_wrong_content_right": 3622,
+        "exact_mcnemar_p": 1.8782080906407396e-56
+      }
+    }
+  ]
+}

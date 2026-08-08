@@ -2,7 +2,61 @@
 
 > **本文件是 compact 后或新会话启动时的第一手交接。** 读完这份 + `status/RUN_REGISTRY.md` §3/§4 + `status/TRAINER_ACTIVITY.jsonl` 尾部，就能接上当前研究状态。
 > 维护规则：main agent 每当方向/结论/在跑实验有重大变化时，**覆盖更新本文件的「当前快照」区**（保持精简，旧结论沉淀到 RUN_REGISTRY）。
-> 最后更新：2026-08-08 15:15 GMT+8（Paper B resume 迁移至 .21(L20A)+.73(H20) 启动中；keep8 on .73 已 REMAPPED 运行；keep10 on .21 等待 118GB dolmino 传输（ETA ~17:00）；step124000.pt 传输进行中（ETA ~15:42）。下方 10:00 快照为当前研究状态，resume 迁移为新增 GPU 状态变更。）
+> 最后更新：2026-08-09 00:07 GMT+8（Direction A **ESTABLISHED** 于 B04 eval-fragility n=6 max-significance；.73 A01 gate-3 fp32-vs-bf16 已启动；`.21` A01 agent stall 已 kill；5 节点全部有活）。
+
+---
+
+## ⚡ 当前快照（2026-08-09 00:07 GMT+8）—— Direction A ESTABLISHED + A01 gate-3 on .73
+
+**一句话现状**：B04 eval-fragility 已判死点通过——OLMo-2-7B keepN+shortgpt16 六 rung bs16 acc_norm 口径上，Spearman(core6, median_margin)=**+1.00** & Spearman(core6, frac<0.005)=**−1.00** 都达到 n=6 exact-permutation 下限 **p=0.0028**。B04 从 backlog `incubator` 升为 `SURVIVING`，仅欠 novelty check 即可晋升 paper<X>。同时 `.21` A01 gate-3 agent（`af78e84c4dc4d16b4`）确认 silent stall（progress log 从未创建 90+ min），已 kill；改由 MAIN 亲自把 gate-3 launch 到 `.73`。
+
+**★ 头等新事实（写进 direction A 前必读）**：
+
+1. **B04 n=6 verdict**（`proposal/backlog/B04-eval-fragility-incubator/DIRECTION_A_VERDICT.md`）：
+   | Rung (OLMo-2-7B) | core6 | median_margin | frac<.005 |
+   |---|---:|---:|---:|
+   | base_full (32L) | 0.7037 | 0.1318 | 1.76% |
+   | shortgpt16@200k | 0.6233 | 0.1165 | 2.67% |
+   | keep14@200k | 0.5949 | 0.1079 | 2.68% |
+   | keep12@124k | 0.5681 | 0.1005 | 3.23% |
+   | keep10@83.5k | 0.5308 | 0.0956 | 3.33% |
+   | keep8@121k | 0.5226 | 0.0949 | 3.55% |
+   - Spearman(core6, median_margin) = **+1.0000**, exact p = **0.0028** ★ n=6 exact下限
+   - Spearman(core6, frac<0.005) [PRIMARY] = **−1.0000**, exact p = **0.0028** ★ n=6 exact下限
+   - 复算了 archived `PAPERF_ACCNORM_REDO` 的 n=6 结果，用新的 8-shard 完整合并 + acc_norm 口径 → **独立验证 + 数据完整性 audit 均通过**
+   - Provenance：`proposal/backlog/B04-eval-fragility/analyze_b04_5rung.py` + `.73:/apdcephfs_zwfy6/.../olmo2_downstream_results/7B_*_bs16/per_example_*.jsonl`（每 rung n_scored=17195 assert 通过）
+
+2. **B04 是什么/不是什么**：
+   - **是**：per-item acc_norm margin 分布单调随 damage 收缩（damaged model 做对答案时置信度更低，同时 near-tie 更多）。
+   - **不是**：跨 batch size 的 flip rate 命题（那需要 bs4/bs8 rungs，keepN 只有 bs16）；不是跨 model family 的通用命题（仅 OLMo-2-7B 单模型）；不是 mediation 命题。
+   - 促晋升需 ✓ kill gate ✓ 独立复现 ✓ provenance ✗ **novelty check** → 停留在 `proposal/backlog/B04-eval-fragility-incubator/` 不升 paper<X>。
+
+3. **A01 gate-3 已启动 on .73**（fp32-vs-bf16 exact-tie causal check on OLMo-2 MMLU 14042 items）：
+   - Driver：`scripts/_a01_gate3_driver_73.sh` PID 3478401，8 shard/GPU 并行，`7B_base_dtype` + `7B_keep8_step121000_dtype` 双 arm 串行
+   - 21:04:16 shard0 已加载 base fp32 模型（`num_hidden_layers=32 vocab=100352`），8 卡 14GB 占用
+   - progress log：`logs/a01_gate3_progress.log`；shard log：`logs/a01_gate3_*_shard*.log`
+   - **⚠️ 两盘规则中招 → 已修**：`proposal/active/A01-null-calibration-methodology/code/` 只在 wzc1，zwfy6 侧原空；先 mkdir 再 scp 3 个 py 文件后才能跑。今后任何 `.73/.82/.104` 上跑 proposal/active 代码前先 `ls` 确认存在（[[cluster-two-disks-not-shared]] + [[subagent-audit-must-specify-cross-disk]]）。
+
+4. **`.21` A01 agent silent stall（今日第 5 次）**：`af78e84c4dc4d16b4` 90+ min GPU 0%、progress log 从未创建、仅嘴上说"Independently reproduced .2689/.2845"实际什么都没写。已 kill。这与 `[[long-running-subagents-stall-silently.md]]` 一致，opus 长时 agent > 60 min 有相当概率静默 stuck。**从今起 A01/A03 类严 gate 任务全部 MAIN 亲自 launch driver 脚本，不再派 subagent。**
+
+**⚡ heartbeat 下一步动作**：
+1. .73 gate-3 base arm 完成后（~30-60 min）自动 merge，再跑 keep8 arm。全程 progress log 若 20 min 无更新 → 视为死。
+2. `.21` CAST download PID 25999（HF snapshot dolmino-mix-1124，7352 files，已完成 ~7%，ETA ~3h40m）继续跑；download 完后 tokenize 阶段可再评估。
+3. 每次 heartbeat 记得核实 A03 progress log（.82）、gate-3 progress log（.73）、CAST download log（.21）三处的 mtime；> 20 min 无更新 → 该杀就杀。
+4. B04 直接晋升 paper<X> 只差 novelty check（CPU）—— 主题："damage × MC margin × per-item near-tie" 是否已有 pre-existing work，可用 Anthology + OpenReview + arXiv 搜。见 [[venue-verify-acl-family-needs-anthology]]。
+
+**5 节点当前分工**：
+- **LOCAL (L20A wzc1)**：keep14 seed1234 训练 @46900/200k（1.56 s/step，健康）
+- **.21 (L20A wzc1)**：CAST Dolmino download PID 25999（CPU only，GPU 全空）
+- **.73 (H20 zwfy6)**：**A01 gate-3 fp32-vs-bf16 causal test** PID 3478401 ★
+- **.82 (H20 zwfy6)**：A03 1B floor kill-experiment（agent a6669e895da8cc295，arm 3/N running），最新进展 21:52 前完成 base + keep7@200k，正跑 keep7@step500；GPU 75% 146GB
+- **.104 (H20 zwfy6)**：keep12 训练 @127100/200k（7.87 s/step，健康）
+
+**⚠️ 运维注意**：
+- **两盘规则**：`.73/.82/.104` 是 zwfy6，wzc1 上新写的 code / 新 checkout / 新 evidence 都必须 `scp -O` 才可用。今夜已中招 1 次（gate-3 code 未同步），下次 heartbeat 前请自查。
+- **长 opus agent 铁律**：> 45 min transcript 无更新 → 90% 死。今日已 kill 5 个 stall agent，累计浪费 8h+。方针 = MAIN 亲跑严 gate 任务。
+
+**详细状态**：`proposal/backlog/B04-eval-fragility-incubator/DIRECTION_A_VERDICT.md`（B04 判决）；`logs/a01_gate3_progress.log`（.73 gate-3）；`logs/a03_1b_floor_progress.log`（.82 A03）。
 
 ---
 
@@ -123,9 +177,15 @@
 - **Paper A tex 漂修**：`tab_pareto.tex:12` `99.20` → `99.19`（磁盘真值 99.187，与 `tab_replay_latency.tex` 一致）
 - **Paper A anonymous_artifact 补齐**：P0.13/P0.17 的 summary/stats/manifest/latency.json 已从 .82 `scp -O` 到 `paperA/anonymous_artifact/scores/p0_13_quality_latency/` 与 `.../p0_17_e2_overlap/`——release 可复现，不需要跨盘 scp
 
-**Paper C 状态**（**三 reviewer 联合判决 2026-08-05**）：P-C1 构造被 arXiv:2411.15558 全占、P-C2 hook 被 2210.10041 占、原 SQuAD eval set 常量拒答 49.85% 基线**高于所有臂**且 relevant_indices z=+0.72 分布过均匀 → **P-C1 降级不作主线**。已完成 (1) 重建干净 eval set（P0-4，SQuAD v1.1/v2.0 CPU forensic），(2) 加 `--random_trunk` flag（P0-5，`train_olmo2_arch_probe2.py` +166/-7，8/8 self-test pass）分离 A4 vs A3 的 readout-interface confound。**下一步 A4×random_trunk keep{14,20,24,28} 训练待用户拍板**（#165）
+**Paper C v1 状态**：已归档为 **DEAD**。原始 SQuAD 常量拒答 floor
+高于剪枝臂；修复为 25% controlled floor 后，8 个 depth/random-trunk arm
+仍全部不超过 floor。P-C2 forward-probe predictor 也被自身数据和先例否证。
+权威入口：`proposal/archive/paperC-v1-frozen-cap/README.md`。
 
-**Paper D 层拼接判决**：3 路调研（R1 lit 34 refs + R2 tcodex gpt-5.6-sol + R3 CPU feasibility oracle affine ppl 596 vs 19）联合结论——**方向被 BTS (EMNLP'25 2025.emnlp-main.347) / LEGO-LLM (2026.acl-long.2081) / StitchLLM (2025.acl-long.1305) / CALM (arXiv:2401.02412 ICLR'24) 全占，且跨家族技术不通**。**不建议做**；仅剩「相对深度主导层对齐」cheap mini finding 可补（forward-only 几小时，#166 待用户拍板）
+**Paper D 状态**：跨家族 layer stitching 方法已归档为 **DEAD**。存活的
+91-pair representation/null evidence 与 affine readout pilot 已迁入
+`proposal/shared/representation/`，服务 A01 null-calibration，而不是继续作为
+stitching 方法提案。
 
 **在跑的实验**：无。#99 与 #103 已 kill。32 卡持续空闲，无未定方向擅自投入（3 heartbeat 一致）
 
@@ -135,17 +195,21 @@
 - Monitor 8088 ✅ **一直完全正常**（history 每 node 720 samples、latest 5 node 全 `ok=True` 含 8 卡明细）。⚠️ 早前说「metric_history 全空 / 采集线程卡死」是**我查错了字段**：`metric_history` 是按 **run 名**索引的训练曲线（不含 node key），node 数据在 `history`/`latest`。**那次 kill+restart 是不必要的**
 
 **待用户 4 项决策**：
-1. **Paper C**：A4×random_trunk keep{14,20,24,28} 在新 eval set 上训练是否启动（P-C1 干净重跑，#165）
-2. **Paper D**：「相对深度主导层对齐」mini finding 是否做（纯 forward-only 几小时，#166）
-3. **paperA #167 latency**：931.9/664.4 ms 三选一——(a) rebuttal 主动 own <2% 漂；(b) 找回原始 log；(c) GPU 60-reads 重跑
-4. **17 个 unpushed commit 是否 push GitHub**（走 `/gitpush` review-subagent → star-proxy 流程）
+1. 当前新方向统一从 `proposal/README.md` 选择，不再启动已死亡的 Paper C/D
+   历史任务。
+2. **paperA #167 latency**：931.9/664.4 ms 的 provenance/rerun 已有专题结果，
+   后续只需统一写作口径。
+3. **unpushed commits 是否 push GitHub**（走 `/gitpush` review-subagent →
+   star-proxy 流程）。
 
 **本轮 sprint 关键 commits（10 个 audit/fix）**：
 `6a3b6bb` letter headroom + Wilson CI · `dfdbf2d` paperB tex-wording audit · `638fb04` paperB 16/16 数字 audit · `51c7349` Finding 2 chance 校正 · `550a81a` paperA latency provenance · `8c30fc7` self-consistency check · `9883ef9` paperA 3/3 primitive 精确 + tab_pareto fix · `f9fb8c6` P0.13/P0.17 artifact 拷到 wzc1
 
 **运维复现坑**：subagent 派 provenance audit 时一定要在 prompt 里写明**跨 2 盘搜索**（wzc1 + zwfy6），否则会误报"文件不在磁盘"。这是 CLAUDE.md 顶部「两个物理盘」坑的第 N 次复现。
 
-**Paper C 状态**（`versions/paperC_scoping.md` 是唯一 scoping 文档，**无 paperC/TODOList.md**）：定位 = 冻结前 j 层 + 丢弃顶部 + 移植 K 层新块、**只 finetune 那 K 层**（区别于 Paper B 的 continue-pretrain 全参 heal）。推荐命题 = **P-C1 构造 + P-C2「用 base 模型的廉价 probe 预测该切多深/长多少层」为差异化 hook（P-C1 单独有 novelty 风险：Zhang'21 re-init / Surgical FT）**；P-C3 建议降为附录。已有 #92 SQuAD 4 臂结果（A2_lora 0.659 > BASE_ref 0.339 > A4_hero 0.293 > A3_fromscratch 0.261，A1 因 H20 OOM 未跑）；**诚实框定**：BASE_ref 差两个轴（32L-vs-16L AND no-SFT-vs-SFT）→ 只作 intact-model 上限参照，A4-vs-A3 才是干净对照。剩余 #133 depth-sweep / #134 A1 ceiling 待 B200。
+**Proposal 总索引**：`proposal/README.md`。cyclic block-reset 仅保留为
+低优先级 gate-only boundary study：
+`proposal/backlog/B03-cyclic-layer-reset-boundary/`。
 
 **运维要点**：monitor 8088 曾 http=000 → 已重启，现 **http=200**。H20 三台 `.venv/bin/python` **已坏** → 一律 `/opt/conda/envs/torch-base/bin/python`。两处物理盘：**wzc1**（LOCAL+.21）/ **zwfy6**（.73+.82+.104），#92 的 Paper C ckpt 在 zwfy6。
 

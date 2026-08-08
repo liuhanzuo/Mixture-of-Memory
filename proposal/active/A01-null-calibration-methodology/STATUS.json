@@ -1,0 +1,58 @@
+{
+  "id": "A01",
+  "status": "active_narrowed",
+  "priority": 1,
+  "updated": "2026-08-09",
+  "gate_results": {
+    "gate1_third_model_family": {
+      "verdict": "KILL_CLAUSE_2_TRIGGERED_ON_THIS_HALF",
+      "ran": "2026-08-09 on .21 (8x L20A), 5 min wall",
+      "summary": "0/3 non-OLMo families replicate the MMLU letter-interface failure. Llama-2-7B letter 0.4100 (+14.11pp vs always-D 0.2689), Llama-3-8B 0.6220 (+35.31pp), Qwen3-8B-Base 0.7464 (+47.75pp). All n=14042, 0 nan. On Llama-3 and Qwen3 the letter interface is 16-23pp BETTER than content, inverting the 'content is the valid interface' narrative.",
+      "evidence": "proposal/active/A01-null-calibration-methodology/GATE1_VERDICT.md, evidence/a01_gate1_third_family.json",
+      "code": "code/a01_gate1_verdict.py, scripts/_a01_gate1_driver_21.sh, scripts/eval_olmo2_mmlu_content.py --any_family",
+      "side_finding": "Llama-2-7B has a 15.79% exact-tie rate and is nonetheless HEALTHY (+14.11pp, letter indistinguishable from content p=0.51), while OLMo-2 base has 0.13% ties and is also healthy. Tie rate does NOT order the pathology across families -> 'exact ties cause interface failure' is FALSIFIED as a family-general mechanism. Within OLMo-2 the tie rate still tracks damage (0.13 -> 24.36 -> 30.64%)."
+    },
+    "gate2_second_mc_benchmark": {
+      "verdict": "REPLICATES_FAILURE (so the AND-gate cannot fire)",
+      "ran": "2026-08-08/09, CPU only, no GPU needed",
+      "summary": "On non-MMLU MC the interface/floor failure DOES reproduce. BoolQ's construct-appropriate null is 0.6217 (always-B), not 0.5: keep12/keep10/keep8 all sit BELOW it on the raw-LL interface and keep14 is n.s. (p=0.20) -> 4/6 arms indistinguishable from a constant predictor while their nominal 0.59-0.64 look 'passing' against a 0.50 chance line. OpenBookQA: longest-option null 0.3635 vs chance 0.2500; keep10 acc_norm 0.3560 is below that floor, and 3/15 arm-pair sign flips between acc and acc_norm. Residual fraction for base OBQA drops 45.9% -> 21.3% under the correct null (2.15x inflation from using chance).",
+      "caveat": "The two interfaces used here are raw sum-LL vs length-normalised acc_norm, NOT MMLU's letter-vs-content. Report that difference explicitly; it is an analogous but not identical interface contrast.",
+      "negative_control": "winogrande is structurally degenerate (both options share the continuation -> identical norm_lens, acc == acc_norm exactly, 100% tie rate). Cannot serve as an interface case; report as a control, not evidence.",
+      "clean_cases": "CommonsenseQA (5-way) and SocialIQA (3-way): all 6 arms significantly ABOVE their constant-letter nulls on both interfaces -- the 'not everything collapses' side of the protocol.",
+      "evidence": "status/scout_21/lane2_a01_gate2.md"
+    },
+    "gate3_fp32_causal_tie_test": {
+      "verdict": "base arm DONE; keep8 arm running on .73",
+      "base_arm_result": "fp32 removes ALL exact ties (18 -> 0) but letter acc is UNCHANGED: 0.6054 both dtypes, delta +0.0000 CI95 [-0.0011,+0.0011], McNemar p=1.000. 96 letter argmax flips (0.68%), of which only 12 were the bf16-tied items. So on the intact model, ties are a bf16 artifact AND removing them changes nothing measurable.",
+      "note": "gate-1's Llama-2 result (15.79% ties, fully healthy) now serves as an external positive control for 'ties without failure', which reframes what the keep8 arm can show.",
+      "evidence": "results/a01_gate3/dtype_runs/7B_base_dtype/dtype_summary.json (on zwfy6/.73)"
+    },
+    "gate4_c4_aggregation_prereg": {
+      "verdict": "NOT STARTED",
+      "note": "CPU only, data on disk (evidence/null_calibration_{p1,obs4}_nperm2000.json + code/build_null_calibration_table.py). Cannot kill anything; removes a selective-reporting attack on the 10x figure."
+    }
+  },
+  "claim_scope_after_gates": {
+    "must_narrow": "Drop any claim that the letter MC interface is GENERALLY an unreliable instrument. Three families spanning three tokenizers show it healthy and mostly better than content.",
+    "must_drop": "'Exact ties are the mechanism of interface failure' as a family-general causal claim (gate-1 side finding).",
+    "survives": [
+      "Report every construct against a construct-appropriate null (best-constant, not chance) before comparing arms -- gate-1 and gate-2 are both demonstrations (keep8 0.2550 reads 'above chance' at .25 but is BELOW the 0.2689 floor; BoolQ 0.59-0.64 reads 'passing' at .50 but is below the 0.6217 floor).",
+      "The self-falsification narrative (using the protocol to retract one's own headline).",
+      "The letter-interface degeneration result SCOPED to structurally damaged OLMo-2, now with a cross-family contrast making the scoping evidence-based.",
+      "gate-2's non-MMLU replication: the wrong-null problem is not an MMLU artifact."
+    ]
+  },
+  "next_gate": [
+    "gate-3 keep8 arm finish + read against Llama-2 as the ties-without-failure control",
+    "gate-4 C4 aggregation pre-registration (CPU)",
+    "rewrite PROPOSAL.md claims section to the narrowed scope above",
+    "novelty check vs existing similarity-null / construct-validity prior art (the third Kill clause: 'only degenerates into a case collection of existing similarity-null methods')"
+  ],
+  "must_not_resurrect": {
+    "4.8x": "should be 4.69x relative to .25, or 3.22x relative to content's own floor",
+    "0.2822": "canonical longest-option null is split-tie 0.2845",
+    "58/91": "un-BH-corrected; canonical is ~50-52/91",
+    "0.25_as_mmlu_null": "the MMLU letter null is always-D = 0.2689; the content null is 0.2845",
+    "0.50_as_boolq_null": "BoolQ's null is always-B = 0.6217 (gold 2033 B / 1237 A)"
+  }
+}

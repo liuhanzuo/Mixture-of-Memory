@@ -1,0 +1,18 @@
+{
+  "id": "B04",
+  "status": "SURVIVING",
+  "promotion_pending": "novelty_check_only",
+  "updated": "2026-08-08T24:00+0800",
+  "complete_rungs": 6,
+  "target_rungs": 6,
+  "kill_verdict": "NOT_KILLED",
+  "primary_metric": "Spearman(core6, frac<0.005) = -1.0000, exact p = 0.0028 at n=6",
+  "secondary_metric": "Spearman(core6, median_margin) = +1.0000, exact p = 0.0028 at n=6",
+  "next_gates": [
+    "novelty check (CPU, MAIN)",
+    "Qwen cross-family replication (GPU)",
+    "LOO mediation check (CPU)"
+  ],
+  "evidence_file": "DIRECTION_A_VERDICT.md",
+  "analysis_json": "evidence/B04_6rung_bs16_analysis.json"
+}

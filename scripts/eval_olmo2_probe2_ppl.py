@@ -140,6 +140,38 @@ def load_base_model(base_path, device):
     }
 
 
+def load_base_model_any_family(base_path, device):
+    """Same contract as load_base_model but for a NON-OLMo checkpoint.
+
+    A01 gate-1 needs the letter-vs-content MC interface measured on a third
+    model family. The scoring code downstream is already architecture-agnostic
+    (it only calls the model and reads logits), and the tokenizer path already
+    uses AutoTokenizer -- the ONLY OLMo-specific line was the hardcoded
+    Olmo2ForCausalLM above. This variant swaps it for AutoModelForCausalLM and
+    changes nothing else: same fp32 master weights, same local_files_only, same
+    .eval(), same returned meta shape. Keeping it as a separate function (rather
+    than editing load_base_model in place) means the OLMo path stays bit-for-bit
+    what produced every archived number.
+    """
+    from transformers import AutoModelForCausalLM
+
+    model = AutoModelForCausalLM.from_pretrained(
+        base_path, torch_dtype=torch.float32, local_files_only=True
+    )
+    n_layers = getattr(model.config, "num_hidden_layers", None)
+    arch = type(model).__name__
+    _log(f"[base:any_family] loaded {arch} from {base_path} "
+         f"num_hidden_layers={n_layers} vocab={model.config.vocab_size}")
+    model = model.to(device)
+    model.eval()
+    return model, {
+        "mode": "base_any_family",
+        "architecture": arch,
+        "num_hidden_layers": n_layers,
+        "base_model": base_path,
+    }
+
+
 # ---------------------------------------------------------------------------
 # scoring
 # ---------------------------------------------------------------------------
