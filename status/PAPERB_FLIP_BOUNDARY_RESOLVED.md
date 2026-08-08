@@ -70,7 +70,7 @@ own steps** — verified by MAIN:
 | keep12@124000 | `7B_keep12_step124000_v2` | .56888 |
 | keep10@83500 | `7B_keep10_step83500_v2` | .52999 |
 | keep8@121000 | `7B_keep8_step121000_v2` | .52328 |
-| base full32 | *pending* `7B_base_full_bs8` | (BS=16 value was .70368) |
+| base full32 | `7B_base_full_bs8` (this run, 09:35) | **.70365** (BS=16 published: .70368; Δ = −0.004 pp) |
 
 Five of six rungs need no new compute. One 6-minute job closes the sixth. **This is the version of
 Table 4 to publish**: single disk, single architecture (H20 cc9.0), single torch, single batch size,
