@@ -1,0 +1,101 @@
+{
+  "gate": "A01 gate-4",
+  "purpose": "C4 aggregation pre-registration -- prevent selective reporting of 10x",
+  "primary_variant": "V1_QwOl_3task_pooled__PRIMARY",
+  "primary_rationale": "Qwen+OLMo only (Llama excluded because its WiC+RTE native knees are at chance=1.0, making its 3-task native aggregate unreliable as a null); pooled because two-model pooling and per-model-then-avg are symmetric here; 3-task mean because it matches the pre-existing linear-knee aggregation; this is the variant already used in build_null_calibration_table.py.",
+  "per_model_data": {
+    "Qwen--Qwen3-8b": {
+      "L": 36,
+      "linear_knee_frac_3task_mean": 0.3926,
+      "native_knee_per_task": {
+        "RTE": 0.9444,
+        "SST2": 0.6389,
+        "WiC": 0.8889
+      }
+    },
+    "OLMo-2-1124-7B": {
+      "L": 32,
+      "linear_knee_frac_3task_mean": 0.2854,
+      "native_knee_per_task": {
+        "RTE": 1.0,
+        "SST2": 0.75,
+        "WiC": 0.875
+      }
+    },
+    "Meta-Llama-3-8B": {
+      "L": 32,
+      "linear_knee_frac_3task_mean": 0.2688,
+      "native_knee_per_task": {
+        "RTE": 0.9688,
+        "SST2": 1.0,
+        "WiC": 0.125
+      }
+    }
+  },
+  "variants": {
+    "V1_QwOl_3task_pooled__PRIMARY": {
+      "description": "Qwen+OLMo, native 3-task mean, pooled (primary, pre-registered)",
+      "primary": true,
+      "linear_knee_mean": 0.33899999999999997,
+      "native_knee_mean": 0.8495333333333334,
+      "c4_fraction": 0.7723651033787192
+    },
+    "V2_QwOl_3task_permodel_avg": {
+      "description": "Qwen+OLMo, native 3-task mean, per-model then avg",
+      "primary": false,
+      "c4_fraction": 0.767713546177976
+    },
+    "V3_All3_3task_permodel_avg": {
+      "description": "All 3 models, native 3-task mean, per-model then avg (includes Llama whose RTE+WiC native knees are at chance=1.0)",
+      "primary": false,
+      "c4_fraction": 0.7074387414587916,
+      "warning": "Llama RTE+WiC native_knee_frac=1.0 (chance), making Llama's 3-task native aggregate = 0.968 which is unrealistically high -- its 3-task C4 fraction will look very low and will pull V3 down"
+    },
+    "V4_All3_SST2only_permodel_avg": {
+      "description": "All 3 models, native = SST2 only (matched support -- SST2 native reliable for all three)",
+      "primary": false,
+      "c4_fraction": 0.6852175932722409
+    },
+    "V5_QwOl_SST2only_permodel_avg": {
+      "description": "Qwen+OLMo, native = SST2 only",
+      "primary": false,
+      "c4_fraction": 0.5278263899083613
+    }
+  },
+  "c4_fraction_range": [
+    0.5278263899083613,
+    0.7723651033787192
+  ],
+  "c4_fraction_spread_x": 1.463293837037617,
+  "gate_results_with_c1c3": {
+    "V1_QwOl_3task_pooled__PRIMARY": {
+      "c4_fraction": 0.7723651033787192,
+      "span": 10.04268121894133,
+      "pass": true
+    },
+    "V2_QwOl_3task_permodel_avg": {
+      "c4_fraction": 0.767713546177976,
+      "span": 9.98219932257602,
+      "pass": false
+    },
+    "V3_All3_3task_permodel_avg": {
+      "c4_fraction": 0.7074387414587916,
+      "span": 9.198475865003005,
+      "pass": false
+    },
+    "V4_All3_SST2only_permodel_avg": {
+      "c4_fraction": 0.6852175932722409,
+      "span": 8.909545271712124,
+      "pass": false
+    },
+    "V5_QwOl_SST2only_permodel_avg": {
+      "c4_fraction": 0.5278263899083613,
+      "span": 6.863065342550995,
+      "pass": false
+    }
+  },
+  "gate_passes_any_variant": true,
+  "c1_residual_frac": 0.20937252573237805,
+  "c2_residual_frac": 0.2435508345978756,
+  "c3_residual_frac": 0.07690825652436069
+}
