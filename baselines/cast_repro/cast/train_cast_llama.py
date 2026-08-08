@@ -84,7 +84,8 @@ def parse_args():
     p.add_argument("--model", default="models/Llama--Llama2-7b")
     p.add_argument("--data", default="data/c4_llama",
                    help="dir with train.bin/val.bin; see README for PRIMARY vs FALLBACK")
-    p.add_argument("--data-dtype", default="uint16", choices=["uint16", "uint32"])
+    p.add_argument("--data-dtype", default="auto", choices=["auto", "uint16", "uint32"],
+                   help="auto = read from <data>/metadata.json if present, else fall back to uint16")
     p.add_argument("--out", default="outputs/cast_repro_ddp")
     p.add_argument("--project-root", default="/apdcephfs_wzc1/share_304376610/pighzliu_code")
     p.add_argument("--log-every", type=int, default=10)
@@ -269,7 +270,16 @@ def main():  # noqa: C901
 
     # ---- data ----
     data_dir = root / args.data
-    train = BinDataset(data_dir / "train.bin", args.seq_len, args.data_dtype, args.seed, rank, world)
+    dtype = args.data_dtype
+    if dtype == "auto":
+        meta_path = data_dir / "metadata.json"
+        if meta_path.exists():
+            import json as _json
+            dtype = _json.loads(meta_path.read_text()).get("dtype", "uint16")
+        else:
+            dtype = "uint16"
+        log(f"data-dtype auto-resolved to {dtype} (from {'metadata.json' if meta_path.exists() else 'fallback default'})")
+    train = BinDataset(data_dir / "train.bin", args.seq_len, dtype, args.seed, rank, world)
     log(f"train tokens: {train.n:,} from {data_dir}")
 
     manifest = {

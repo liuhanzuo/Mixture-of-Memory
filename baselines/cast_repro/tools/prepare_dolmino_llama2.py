@@ -22,7 +22,11 @@ exist), so this script has to download first.
     # step 1: download the raw subsets (needs the HTTP proxy, see below)
     python prepare_dolmino_llama2.py --stage download --raw-dir data/dolmino-mix-1124-raw
 
-    # step 2: tokenize to a flat uint16 .bin (LLaMA-2 vocab fits in uint16)
+    # step 2: tokenize to a flat uint32 .bin (LLaMA-2 vocab 32000 fits in uint16
+    # but the shared scripts/download_and_tokenize_dolmino.py hardcodes uint32;
+    # train_cast_llama.py --data-dtype=auto reads dtype from metadata.json, so
+    # either dtype is fine at load time. uint32 doubles disk but keeps the
+    # already-validated tokenize pipeline unchanged.)
     python prepare_dolmino_llama2.py --stage tokenize \
         --raw-dir data/dolmino-mix-1124-raw \
         --out-dir data/dolmino-mix-1124-llama2 \
@@ -92,7 +96,11 @@ def stage_download(args) -> int:
 
 
 def stage_tokenize(args) -> int:
-    """Tokenize raw jsonl/jsonl.gz into one flat uint16 .bin + a metadata sidecar.
+    """Tokenize raw jsonl/jsonl.gz into one flat uint32 .bin + a metadata sidecar.
+
+    NB: the underlying scripts/download_and_tokenize_dolmino.py hardcodes uint32.
+    train_cast_llama.py --data-dtype=auto reads dtype from metadata.json, so the
+    downstream loader adapts automatically. Do not claim uint16 in wrapper output.
 
     Reuses the repo's existing, already-validated pipeline rather than a new
     implementation: scripts/download_and_tokenize_dolmino.py supports
@@ -122,7 +130,7 @@ def stage_tokenize(args) -> int:
     print("RUN:", " ".join(cmd))
     if args.dry_run:
         print("\n--dry-run: not executing.")
-        print(f"Expected output: {args.out_dir}/train.bin  (~{args.target_tokens*2/2**30:.0f} GiB, uint16)")
+        print(f"Expected output: {args.out_dir}/train.bin  (~{args.target_tokens*4/2**30:.0f} GiB, uint32)")
         return 0
     import subprocess
 
@@ -148,7 +156,7 @@ def main() -> int:
             "tokens_needed_7500_steps": need,
             "target_tokens": args.target_tokens,
             "slack": args.target_tokens - need,
-            "output_bytes_uint16": args.target_tokens * 2,
+            "output_bytes_uint32": args.target_tokens * 4,
             "on_disk_alternatives": {
                 "data/dolmino-mix-1124-llama3": "469B tokens but LLaMA-3 vocab 128000 -> UNUSABLE",
                 "data/dolmino-flan-heavy": "LLaMA-2 vocab but only 499.5M tokens, FLAN-heavy custom mix",
