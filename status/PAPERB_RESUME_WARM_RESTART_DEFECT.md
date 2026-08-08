@@ -1,5 +1,22 @@
 # Resume-to-200k 无法忠实续跑：param-group 不匹配让三个 arm 全部退化成 WARM-RESTART
 
+> ### ⛔ 本文件的「选项 A 更强」论证已被推翻（MAIN, 2026-08-08 ~13:4x CST）
+>
+> 下面那段论证「keep8（10 层，121k 步）预算比 keep10（12 层，83.5k 步）多 45%
+> 却仍 core6 更低 ⇒ ladder 单调性在更不利条件下成立，比等预算 ladder 更强」
+> **建立在「所有 arm 训练在同一语料」这个隐含假设上，而该假设为假。**
+>
+> 实测（训练 log 的 `dataset rows=`）：keep14/ShortGPT-16/freeze_front 训练在
+> **7,570,911** windows（wzc1），keep8/keep10/keep12 训练在 **15,491,607**
+> windows（zwfy6），比值 2.046×。同样 200k 步在两侧分别是 3.38 epoch 与 1.65 epoch。
+> 所以「多 45% 预算」这个说法本身不成立 —— token 预算 / epoch 数 / 数据多样性
+> 三者全不可比。
+>
+> 详见 `status/PAPERB_TWO_CORPORA_DEFECT.md`。这是我今晚第 5 次判断错误，
+> 原因是从未查过各 arm 的 `dataset rows=`。原文保留以显示判断过程。
+
+
+
 **日期**: 2026-08-08 ~12:00 CST。**发现者**: MAIN，实际启动 resume 时从 trainer 日志读到。
 **这条直接改变 #192（Table 4 budget defect）的答案空间。**
 
