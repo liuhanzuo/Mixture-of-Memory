@@ -888,16 +888,88 @@ def main():
         step = int(resume_ckpt.get("step", 0))
         epoch = int(resume_ckpt.get("epoch", 0))
         if "optimizer_state" in resume_ckpt:
-            try:
-                optimizer.load_state_dict(resume_ckpt["optimizer_state"])
+            ckpt_optim = resume_ckpt["optimizer_state"]
+            n_ckpt_groups = len(ckpt_optim["param_groups"])
+            n_new_groups = len(optimizer.param_groups)
+            if n_ckpt_groups == n_new_groups:
+                # Normal path: group counts match, use standard load
+                try:
+                    optimizer.load_state_dict(ckpt_optim)
+                    if is_main:
+                        logger.info(f"[resume] optimizer state restored "
+                                    f"({len(optimizer.state)} param states) -> "
+                                    f"Adam momentum preserved")
+                except (ValueError, KeyError) as e:
+                    if is_main:
+                        logger.warning(f"[resume] optimizer.load_state_dict failed "
+                                       f"({e}); WARM-RESTART (Adam moments re-init)")
+            elif n_ckpt_groups == 2 and n_new_groups == 4:
+                # ---- Compatibility shim for keep10/keep12/keep8 ckpts ----
+                # These ckpts were saved with a buggy _classify_param (no module.
+                # prefix stripping) -> all params fell into inh_* -> 2 groups in ckpt.
+                # HEAD builds 4 groups (fresh_decay/fresh_nodecay/inh_decay/inh_nodecay).
+                # We remap by param-name using old scheme: group0=ndim>=2, group1=ndim<2,
+                # both in model.named_parameters() iteration order.
                 if is_main:
-                    logger.info(f"[resume] optimizer state restored "
-                                f"({len(optimizer.state)} param states) -> "
-                                f"Adam momentum preserved")
-            except (ValueError, KeyError) as e:
+                    logger.info("[resume] ckpt has 2 groups, optimizer has 4 groups; "
+                                "applying keep10/12/8 compatibility remap...")
+                try:
+                    ms = resume_ckpt["model_state"]
+                    ms_keys = list(ms.keys())
+                    ndim2_keys = [k for k in ms_keys if ms[k].ndim >= 2]
+                    ndim1_keys = [k for k in ms_keys if ms[k].ndim < 2]
+                    n2 = len(ndim2_keys)
+                    # old scheme: group0 = ndim>=2 in ms_keys order,
+                    #             group1 = ndim<2 in ms_keys order
+                    old_name_to_idx = {k: i for i, k in enumerate(ndim2_keys)}
+                    old_name_to_idx.update({k: n2 + i for i, k in enumerate(ndim1_keys)})
+                    old_state = ckpt_optim["state"]
+
+                    # Walk HEAD optimizer's param groups and fill optimizer.state by name
+                    # model may be DDP-wrapped; strip module. to get bare names
+                    root_model = model.module if hasattr(model, "module") else model
+                    name_to_param = {n: p for n, p in root_model.named_parameters()}
+
+                    restored = 0
+                    for g in optimizer.param_groups:
+                        for p in g["params"]:
+                            # Find param name by tensor identity (data_ptr + shape)
+                            matched_name = None
+                            for n, mp in name_to_param.items():
+                                if (mp is p or
+                                        (mp.data_ptr() == p.data_ptr() and
+                                         tuple(mp.shape) == tuple(p.shape))):
+                                    matched_name = n
+                                    break
+                            if matched_name is not None and matched_name in old_name_to_idx:
+                                old_i = old_name_to_idx[matched_name]
+                                if old_i in old_state:
+                                    optimizer.state[p] = {
+                                        k: (v.to(p.device)
+                                            if isinstance(v, torch.Tensor) else v)
+                                        for k, v in old_state[old_i].items()
+                                    }
+                                    restored += 1
+
+                    if is_main:
+                        n_total = len(old_state)
+                        logger.info(
+                            f"[resume] optimizer state REMAPPED 2-group -> 4-group "
+                            f"({restored}/{n_total} param states, Adam moments preserved)")
+                        if restored < n_total * 0.9:
+                            logger.warning(
+                                f"[resume] WARNING: only {restored}/{n_total} "
+                                f"states restored; check name matching")
+                except Exception as e:  # noqa: BLE001
+                    if is_main:
+                        logger.warning(
+                            f"[resume] optimizer remap failed ({e}); "
+                            f"WARM-RESTART (Adam moments re-init)")
+            else:
                 if is_main:
-                    logger.warning(f"[resume] optimizer.load_state_dict failed "
-                                   f"({e}); WARM-RESTART (Adam moments re-init)")
+                    logger.warning(
+                        f"[resume] group count mismatch: ckpt={n_ckpt_groups} "
+                        f"optimizer={n_new_groups}; WARM-RESTART (Adam moments re-init)")
         else:
             if is_main:
                 logger.warning("[resume] ckpt has NO optimizer_state (old "
