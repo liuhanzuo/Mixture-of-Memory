@@ -239,3 +239,184 @@ specific claim than "CoMem is worse".** What the data supports:
   across 4k/8k/16k/32k for C1; `logs/a02_ruler_c2_shard0.log` shows C2 at
   92.3/76.9/84.6/100.0 and 98.5/95.4/98.5/98.5. The −5.17pp is real.
 * Judge protocol: `git log --grep=judge` → `7aa4e14`, `15f7325`
+
+---
+
+## § LoCoMo judge re-run (open-weight)
+
+**Run date**: 2026-08-09  
+**Node**: `.82` (zwfy6), GPU 0 (NVIDIA H20 97.8GB)  
+**Script**: `scripts/a02_judge_openweight.py` (transformers-based fallback)  
+**Evidence file**: `proposal/active/A02-comem-write-read-repair/evidence/locomo_judge_openweight.json`
+
+### Why a transformers fallback instead of vLLM
+
+vLLM 0.26.0 on `.82` was attempted first (task protocol). After installing `partial_json_parser`
+the `LLM` class imported successfully, but model load failed:
+
+```
+Qwen3ForCausalLM failed to be inspected. ValidationError: model architectures ['Qwen3ForCausalLM']
+```
+
+vLLM 0.26.0 predates Qwen3 (architecture released post-0.26.0). Upgrading vLLM would require
+a torch downgrade (vLLM 0.26.0 requires torch==2.11.0; env has 2.13.0) — a risky env change.
+The protocol-preserving alternative is transformers `generate()` with identical sampling flags:
+`do_sample=False`, `max_new_tokens=8`, `enable_thinking=False` (applied via chat template).
+This is the same semantic as the vLLM `temperature=0 / top_p=1 / chat_template_kwargs.enable_thinking=False`
+protocol. The judge prompt template and refusal regex are copied verbatim from
+`eval_qcmem_locomo.py::_JUDGE_TEMPLATE` / `_REFUSAL_RE`.
+
+### Results
+
+| Metric | C1 (kvdirect) | C2 (j12+ReadLoRA) | Δ (C2−C1) | 95% CI (n=2000 bootstrap) |
+|--------|:-------------:|:-----------------:|:---------:|:-------------------------:|
+| Judge acc (Qwen3-8B OW) | 50.55% | 52.32% | **+1.76pp** | [**−0.35**, **+3.78**] |
+| Token F1 (deterministic) | 10.57% | 11.25% | **+0.68pp** | [**+0.31**, **+1.02**] |
+
+Per-category judge accuracy (Qwen3-8B open-weight):
+
+| Category | C1 | C2 | Δ |
+|----------|:--:|:--:|:--:|
+| cat1 (multi_hop) | 58.16% | 57.45% | −0.71pp |
+| cat2 (single_hop) | 37.69% | 39.88% | +2.19pp |
+| cat3 (temporal) | 43.75% | 51.04% | +7.29pp |
+| cat4 (open_domain) | 79.07% | 81.81% | +2.74pp |
+| cat5 (adversarial) | 2.69% | 2.69% | 0.00pp |
+
+### Verdict
+
+The open-weight judge CI for the paired difference is **+1.76pp, 95% CI [−0.35, +3.78]**.
+The CI **crosses zero** — the difference is **not statistically significant** at α=0.05.
+
+This is consistent with LoCoMo F1 (+0.20pp, CI [−0.36, +0.75]), which was already clean.
+
+**Comparison to the quarantined GPT-4o number (+3.22pp, CI [+1.21, +5.04]):**
+The GPT-4o judge gave a significantly positive result; the open-weight Qwen3-8B judge does not.
+The likely explanation: GPT-4o applies broader semantic matching (e.g. date paraphrases, pronoun
+resolution, partial phrasing) that Qwen3-8B in strict non-thinking mode applies more conservatively.
+The absolute judge accuracy levels also differ (GPT-4o C1≈34.6%, OW C1≈50.6%), suggesting the
+two judges have different severity thresholds.
+
+**The quarantined leg should now be updated from QUARANTINED to the open-weight result.**
+
+Per the corrected verdict (Correction 1 in this document), the updated conclusion is:
+
+> **There is NO protocol-clean benchmark on which C2 is significantly better in aggregate.**
+> LoCoMo judge (open-weight, corrected): +1.76pp, CI crosses zero — NOT significant.
+> The kill condition framing ("position CoMem as storage/read-compute, not quality win") stands.
+
+---
+
+# MAIN CORRECTION 3 (2026-08-09 07:05): the open-weight judge re-run's F1 leg is a REIMPLEMENTATION ARTIFACT
+
+The open-weight judge re-run reported **LoCoMo F1 as +0.68pp, CI [+0.31, +1.02]** —
+"significantly positive" — and flagged it as "a new minor finding: C2 is detectably
+better than C1 on LoCoMo F1."
+
+**That reverses the earlier F1 result on the same data** (+0.20pp, CI [−0.36, +0.75],
+a tie). F1 is deterministic string scoring. On identical predictions with identical
+n=1986, it cannot legitimately differ. One of the two is wrong.
+
+## The bug
+
+The re-run script `scripts/a02_judge_openweight.py:423-445` **reimplemented F1**
+instead of importing the project's canonical `compute_f1` /
+`compute_f1_multi` / `normalize_answer` from `scripts/eval_qcmem_locomo.py:313-343`.
+Two differences:
+
+**(1) `normalize_answer` operation order is swapped.**
+
+| | canonical (`eval_qcmem_locomo.py:313`) | re-run (`a02_judge_openweight.py:424`) |
+|---|---|---|
+| step 1 | lower | lower |
+| step 2 | **remove_punc** | **remove_articles** |
+| step 3 | **remove_articles** | **remove_punc** |
+| step 4 | white_space_fix | white_space_fix |
+
+Because `\b(a|an|the)\b` is applied while punctuation is still present, the word
+boundaries land differently. Demonstrated:
+
+| input | canonical | re-run | same? |
+|---|---|---|---|
+| `the-house` | `thehouse` | `house` | **no** |
+| `a.k.a. Bob` | `aka bob` | `k bob` | **no** |
+| `an-apple` | `anapple` | `apple` | **no** |
+| `the,dog` | `thedog` | `dog` | **no** |
+| `A-1 steak` | `a1 steak` | `1 steak` | **no** |
+| `(the) cat` | `cat` | `cat` | yes |
+
+Any gold or prediction containing a hyphen, period-in-abbreviation, or
+comma-adjacent article tokenises differently. LoCoMo answers are conversational
+and contain plenty of these.
+
+**(2) Zero-overlap handling differs.** Canonical `compute_f1` returns `0.0` when
+`num_same == 0`. The re-run `continue`s to the next gold answer and keeps
+`best` at its running value. For the multi-answer max this happens to coincide,
+but the empty-prediction branch does not: canonical returns `0.0` when exactly
+one of pred/gold is empty; the re-run `continue`s, so an item with one empty
+gold among several can score differently.
+
+## Which number is right
+
+**The canonical one: +0.20pp, CI [−0.36, +0.75], a TIE** — because it is the F1
+definition the rest of this project's LoCoMo numbers were computed with. Using a
+different normaliser for one cell of a comparison table is exactly the kind of
+inconsistency that makes cross-row comparison meaningless, regardless of which
+normaliser is "better" in the abstract.
+
+**Status of the re-run's F1 leg: RETRACTED.** Do not cite +0.68pp. The "new minor
+finding: C2 is detectably better on LoCoMo F1" does not exist.
+
+## The judge leg itself is fine and DOES resolve the quarantine
+
+The judge accuracy leg used the correct prompt template and refusal regex (copied
+verbatim per instruction) and an open-weight Qwen3-8B with `enable_thinking=False`,
+`do_sample=False`, `max_new_tokens=8`:
+
+| | C1 | C2 | Δ | 95% CI |
+|---|---:|---:|---:|---|
+| judge acc (Qwen3-8B open-weight) | 50.55% | 52.32% | **+1.76pp** | **[−0.35, +3.78]** — crosses 0 |
+
+**This resolves Correction 1's quarantine.** The GPT-4o number (+3.22pp, CI
+[+1.21, +5.04], significant) is replaced by the protocol-correct open-weight
+number (+1.76pp, CI crosses 0, **not significant**). So the quarantined leg,
+measured correctly, is a **tie** — which is what the earlier F1 leg already said.
+
+Caveat on the judge method: vLLM 0.26.0 could not load Qwen3 (pydantic
+`ValidationError: Qwen3ForCausalLM failed to be inspected` — the version predates
+the architecture; a fix needs torch 2.11 vs the env's 2.13). The judge therefore
+ran via `transformers.generate` rather than a vLLM server. Same model, same
+sampling knobs, same prompt — so it is protocol-equivalent on the axis that
+matters (open weights, deterministic, versionable), and that substitution IS
+acceptable where swapping to GPT-4o was not. Label it as
+`transformers_generate` in any table footnote, not as the vLLM path.
+
+## Net effect on the A02 verdict: UNCHANGED
+
+Corrected, protocol-clean legs:
+
+| benchmark | Δ (C2−C1) | 95% CI | reading |
+|---|---:|---|---|
+| BABILong qa1/qa2 @16k–32k | −0.35 to −0.55 | all 4 CIs < 0 | **C1 wins decisively** |
+| BABILong qa5 @4k, @16k | +0.16, +0.14 | both CIs > 0 | C2 wins |
+| RULER | −5.17pp | [−6.77, −3.70] | **C1 wins** |
+| LongBench | −0.13pp | [−0.61, +0.32] | tie |
+| LoCoMo F1 (canonical) | +0.20pp | [−0.36, +0.75] | tie |
+| LoCoMo judge (open-weight) | +1.76pp | [−0.35, +3.78] | tie |
+| LongEval pooled | +2.00pp | [−5.33, +9.00] | tie (C2 better only at 64k/128k) |
+
+**"No protocol-clean benchmark shows C2 significantly better in aggregate" still
+holds.** The kill condition still fires. The prescribed reframe — CoMem as a
+storage / read-compute method for high-reuse workloads, not a quality win —
+is unchanged.
+
+## Meta-note for future scoring work
+
+This is the second time in one session that a subagent reimplemented a metric
+rather than importing the project's canonical one, and the reimplementation
+produced a *significant* result where the canonical one produced a tie. Both times
+the error direction favoured the more exciting conclusion. **Any scoring run must
+import the canonical scorer from the harness that produced the predictions, never
+reimplement it.** The canonical LoCoMo scorers are
+`eval_qcmem_locomo.py::{normalize_answer, compute_f1, compute_f1_multi,
+compute_em_multi, substring_acc}`.

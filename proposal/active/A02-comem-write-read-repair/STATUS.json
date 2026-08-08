@@ -2,7 +2,7 @@
   "id": "A02",
   "status": "active_kill_condition_fired_reframe_to_storage_readcompute",
   "priority": 2,
-  "updated": "2026-08-09T05:50+0800",
+  "updated": "2026-08-09T07:15+0800",
   "phase": "zero-training natural-task transfer gate",
   "premise_check_2026_08_08": {
     "claim_under_test": "A02 stage-1 needs NO new training -- only eval of ~5 configs x 5 benchmarks",
@@ -50,18 +50,28 @@
       "locomo_f1": "TIE +0.20pp CI [-0.36,+0.75] n=1986 (deterministic string scoring, no judge)",
       "longeval_pooled": "TIE +2.00pp CI [-5.33,+9.00]; but C2 far better at 64k/128k where C1 collapses"
     },
-    "quarantined_leg": {
-      "locomo_judge": "+3.22pp CI [+1.21,+5.04] -- QUARANTINED, DO NOT CITE. Produced with GPT-4o via maas-openapi, which REVERTS this project's deliberate move to an open-weight Qwen3-8B/vLLM judge (commits 7aa4e14 + 15f7325). Subagent's reason (vLLM 0.26.0 broken deps on .82) is a tooling problem, not a licence to swap the measurement instrument. Must be re-run under the open-weight judge.",
-      "note": "this cut AGAINST the convenient direction -- it was the only leg favourable to C2 on a natural benchmark"
-    },
     "aggregation_correction": "the -17.89pp pooled BABILong figure is a mean over 9 cells with OPPOSITE true signs (4 sig negative, 2 sig POSITIVE, 3 n.s.). Pooling summarises nothing. Report per-cell always. This is exactly the aggregation artifact A01's null-calibration protocol exists to catch.",
-    "no_clean_c2_advantage": "There is NO protocol-clean benchmark on which C2 is significantly better in aggregate. The only such leg was the quarantined LoCoMo judge.",
+    "no_clean_c2_advantage": "There is NO protocol-clean benchmark on which C2 is significantly better in aggregate. The quarantined GPT-4o leg has been replaced by the open-weight Qwen3-8B result (+1.76pp, CI [-0.35,+3.78], CROSSES ZERO), which is also non-significant. Confirmed 2026-08-09.",
     "prescribed_reframe": "Position CoMem as a storage / read-compute method for high-reuse workloads, NOT a quality win. This is what the kill clause literally instructs.",
     "reframe_NOT_supported": "Do NOT reframe as 'C2 worse at exact-match, better at semantic'. qa5 lives INSIDE BABILong, a synthetic exact-match benchmark, so that split does not carve the data. The honest axis is single-span retrieval (C2 loses badly at long context) vs multi-mention relation (C2 can win), and that needs more than 2 significant cells to assert.",
     "blocks": [
-      "Do NOT build Configs 3/4/5 (~400 lines per status/proposal_prep/A02_CONFIG345_WIRING.md) on the premise that C2 is the strong quality arm -- the gate says it is not. If built, it should test the storage/read-compute framing, which needs a latency/storage axis.",
-      "Re-run LoCoMo judge under the open-weight Qwen3-8B protocol before A02 claims any C2 quality advantage."
+      "Do NOT build Configs 3/4/5 (~400 lines per status/proposal_prep/A02_CONFIG345_WIRING.md) on the premise that C2 is the strong quality arm -- the gate says it is not. If built, it should test the storage/read-compute framing, which needs a latency/storage axis."
     ],
-    "evidence": "PHASE1_C1_VS_C2_VERDICT.md (incl. MAIN CORRECTIONS section), evidence/{babilong,ruler,longbench,longeval,locomo}_paired_ci.json + phase1_full_summary.json"
+    "evidence": "PHASE1_C1_VS_C2_VERDICT.md (incl. MAIN CORRECTIONS + LoCoMo judge re-run sections), evidence/{babilong,ruler,longbench,longeval,locomo}_paired_ci.json + phase1_full_summary.json + evidence/locomo_judge_openweight.json",
+    "locomo_judge_resolved": {
+      "resolved": "2026-08-09",
+      "open_weight_result": "judge acc C1=50.55% C2=52.32% diff=+1.76pp CI[-0.35,+3.78] -- CROSSES 0, NOT SIGNIFICANT",
+      "supersedes": "the GPT-4o number (+3.22pp CI[+1.21,+5.04], significant) is retracted; it used the wrong measurement instrument",
+      "judge_method": "transformers.generate with Qwen3-8B, enable_thinking=False, do_sample=False, max_new_tokens=8, canonical prompt+refusal regex. vLLM 0.26.0 could NOT load Qwen3 (pydantic ValidationError: Qwen3ForCausalLM failed to be inspected -- version predates the arch; fix needs torch 2.11 vs env 2.13). transformers substitution IS acceptable (open weights, deterministic, versionable); the GPT-4o substitution was NOT. Label tables as transformers_generate, not vLLM.",
+      "script": "scripts/a02_judge_openweight.py"
+    },
+    "f1_leg_retraction": {
+      "retracted": "the re-run's F1 leg (+0.68pp CI[+0.31,+1.02], reported as 'significantly positive / new minor finding')",
+      "reason": "scripts/a02_judge_openweight.py:423-445 REIMPLEMENTED F1 instead of importing the canonical compute_f1/normalize_answer from eval_qcmem_locomo.py:313-343. Two bugs: (1) normalize_answer operation order swapped -- canonical does remove_punc THEN remove_articles, the re-run does remove_articles THEN remove_punc, so \\b(a|an|the)\\b lands on different word boundaries while punctuation is still present ('the-house' -> canonical 'thehouse' vs re-run 'house'; 'a.k.a. Bob' -> 'aka bob' vs 'k bob'; 'an-apple' -> 'anapple' vs 'apple'). (2) zero-overlap: canonical returns 0.0, the re-run `continue`s.",
+      "canonical_value": "+0.20pp CI[-0.36,+0.75] -- a TIE. This is the value to cite, because it is the F1 definition every other LoCoMo number in this project used.",
+      "principle": "using a different normaliser for one cell of a comparison table makes cross-row comparison meaningless regardless of which normaliser is better in the abstract"
+    },
+    "verdict_after_all_corrections": "UNCHANGED. No protocol-clean benchmark shows C2 significantly better in aggregate. Kill condition still fires. Prescribed reframe (storage/read-compute, not quality win) stands. Corrected legs: BABILong qa1/qa2@16k-32k C1 wins decisively; BABILong qa5@4k,16k C2 wins; RULER C1 wins; LongBench tie; LoCoMo F1 tie; LoCoMo judge (open-weight) tie; LongEval pooled tie.",
+    "meta_note_for_future_scoring": "TWICE in one session a subagent reimplemented a metric rather than importing the canonical one, and the reimplementation produced a SIGNIFICANT result where canonical produced a tie -- both times in the more exciting direction. Any scoring run MUST import the canonical scorer from the harness that produced the predictions. Canonical LoCoMo scorers: eval_qcmem_locomo.py::{normalize_answer, compute_f1, compute_f1_multi, compute_em_multi, substring_acc}."
   }
 }
