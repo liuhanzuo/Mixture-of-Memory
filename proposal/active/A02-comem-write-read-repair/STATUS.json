@@ -1,8 +1,8 @@
 {
   "id": "A02",
-  "status": "active_blocked_on_asset_identification",
+  "status": "active_kill_condition_fired_reframe_to_storage_readcompute",
   "priority": 2,
-  "updated": "2026-08-08T23:20+0800",
+  "updated": "2026-08-09T05:50+0800",
   "phase": "zero-training natural-task transfer gate",
   "premise_check_2026_08_08": {
     "claim_under_test": "A02 stage-1 needs NO new training -- only eval of ~5 configs x 5 benchmarks",
@@ -38,5 +38,30 @@
     "CPU: pin the canonical Read-LoRA identity via provenance grep of the Paper A flagship table config",
     "then GPU: the 5-config x 5-benchmark stage-1 sweep (zero new training) on a zwfy6 node"
   ],
-  "kill_gate_verbatim": "若 paired quality CI 仍显著低于 0，则停止 CoMem 优于 RAG 的叙事，定位为高复用 workload 的 storage/read-compute 方案"
+  "kill_gate_verbatim": "若 paired quality CI 仍显著低于 0，则停止 CoMem 优于 RAG 的叙事，定位为高复用 workload 的 storage/read-compute 方案",
+  "phase1_c1_vs_c2_gate": {
+    "tested": "2026-08-09",
+    "verdict": "KILL_CONDITION_FIRES -- honour the reframe the kill clause itself prescribes",
+    "protocol_clean_legs": {
+      "babilong_qa1_qa2_at_16k_32k": "DECISIVE C1 WIN, -35pp to -55pp per cell, all four CIs entirely below 0",
+      "babilong_qa5_at_4k_16k": "C2 WINS, +0.16 / +0.14, both CIs entirely above 0 -- the pooled BABILong headline hides this sign flip",
+      "ruler": "DECISIVE C1 WIN -5.17pp CI [-6.77,-3.70]; MAIN spot-checked raw shard logs (C1 100.0 on all 8 cells; C2 niah_multikey_1 92.3/76.9/84.6/100.0)",
+      "longbench": "TIE -0.13pp CI [-0.61,+0.32] n=1150",
+      "locomo_f1": "TIE +0.20pp CI [-0.36,+0.75] n=1986 (deterministic string scoring, no judge)",
+      "longeval_pooled": "TIE +2.00pp CI [-5.33,+9.00]; but C2 far better at 64k/128k where C1 collapses"
+    },
+    "quarantined_leg": {
+      "locomo_judge": "+3.22pp CI [+1.21,+5.04] -- QUARANTINED, DO NOT CITE. Produced with GPT-4o via maas-openapi, which REVERTS this project's deliberate move to an open-weight Qwen3-8B/vLLM judge (commits 7aa4e14 + 15f7325). Subagent's reason (vLLM 0.26.0 broken deps on .82) is a tooling problem, not a licence to swap the measurement instrument. Must be re-run under the open-weight judge.",
+      "note": "this cut AGAINST the convenient direction -- it was the only leg favourable to C2 on a natural benchmark"
+    },
+    "aggregation_correction": "the -17.89pp pooled BABILong figure is a mean over 9 cells with OPPOSITE true signs (4 sig negative, 2 sig POSITIVE, 3 n.s.). Pooling summarises nothing. Report per-cell always. This is exactly the aggregation artifact A01's null-calibration protocol exists to catch.",
+    "no_clean_c2_advantage": "There is NO protocol-clean benchmark on which C2 is significantly better in aggregate. The only such leg was the quarantined LoCoMo judge.",
+    "prescribed_reframe": "Position CoMem as a storage / read-compute method for high-reuse workloads, NOT a quality win. This is what the kill clause literally instructs.",
+    "reframe_NOT_supported": "Do NOT reframe as 'C2 worse at exact-match, better at semantic'. qa5 lives INSIDE BABILong, a synthetic exact-match benchmark, so that split does not carve the data. The honest axis is single-span retrieval (C2 loses badly at long context) vs multi-mention relation (C2 can win), and that needs more than 2 significant cells to assert.",
+    "blocks": [
+      "Do NOT build Configs 3/4/5 (~400 lines per status/proposal_prep/A02_CONFIG345_WIRING.md) on the premise that C2 is the strong quality arm -- the gate says it is not. If built, it should test the storage/read-compute framing, which needs a latency/storage axis.",
+      "Re-run LoCoMo judge under the open-weight Qwen3-8B protocol before A02 claims any C2 quality advantage."
+    ],
+    "evidence": "PHASE1_C1_VS_C2_VERDICT.md (incl. MAIN CORRECTIONS section), evidence/{babilong,ruler,longbench,longeval,locomo}_paired_ci.json + phase1_full_summary.json"
+  }
 }
