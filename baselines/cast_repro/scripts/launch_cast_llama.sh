@@ -38,7 +38,11 @@ PARALLEL="${PARALLEL:-zero2}"
 # constant = paper-literal (Appendix B "consistent learning rate", Table XI 2e-5).
 LR_SCHEDULE="${LR_SCHEDULE:-constant}"
 RESUME="${RESUME:-}"
-CODE="$ROOT/baselines/cast_repro"
+# Derive the code root from this script's own location rather than assuming it
+# sits at $ROOT/baselines/cast_repro -- it does not (the checkout is under
+# $ROOT/Mixture-of-Memory/), and hardcoding it made the launcher cd into a
+# non-existent directory.
+CODE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 cd "$CODE"
 
