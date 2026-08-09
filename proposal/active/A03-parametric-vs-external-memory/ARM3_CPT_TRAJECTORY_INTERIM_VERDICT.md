@@ -29,6 +29,7 @@ Per-item paired-diff bootstrap CI95, n_boot=5000 seed=42. "SIG" = CI excludes 0.
 |---|---:|---|---:|---|---|
 | step205000 (5k CPT) | +0.02pp | [−0.48,+0.51] | −0.11pp | [−0.37,+0.15] | TIE + TIE |
 | step210000 (10k CPT) | −0.03pp | [−0.37,+0.32] | −0.23pp | [−0.50,+0.04] | TIE + TIE |
+| step215000 (15k CPT) | +0.26pp | [−0.06,+0.57] | −0.11pp | [−0.39,+0.16] | TIE + TIE |
 
 ### Closed-book QA (per-example paired)
 
@@ -40,17 +41,21 @@ Per-item paired-diff bootstrap CI95, n_boot=5000 seed=42. "SIG" = CI excludes 0.
 | step210000 | popqa | +0.16pp TIE | −0.04pp TIE | **−0.25pp SIG** | recovers on EM |
 | step210000 | triviaqa | **+0.37pp SIG** | +0.05pp TIE | +0.18pp TIE | recovers on EM |
 | step210000 | nq_open | +0.00pp TIE | **−0.47pp SIG** | −0.11pp TIE | contains only |
+| step215000 | popqa | −0.04pp TIE | **−0.35pp SIG** | **−0.25pp SIG** | contains+f1 drift |
+| step215000 | triviaqa | −0.02pp TIE | +0.27pp TIE | +0.08pp TIE | flat |
+| step215000 | nq_open | +0.28pp TIE | +0.14pp TIE | +0.24pp TIE | tiny positive drift |
 
 ## Reading
 
-**No coherent trajectory.** Cells that go SIG at step205000 reverse at
-step210000 (popqa em and triviaqa em both). Effect sizes are ≤1pp on every SIG
-cell. The "significance" here is coming from the paired-item structure (small
-consistent per-item shifts) rather than from a large mean effect — this is what
-"random fluctuation around a plateau" looks like on this data volume.
+**No coherent trajectory across 3 measured points (5k / 10k / 15k CPT).** MMLU
+letter and cn stay within ±0.5pp on every ckpt; closed-book cells wobble
+±1pp with sign reversals between steps (popqa em: −0.35 → +0.16 → −0.04; triviaqa
+em: −0.49 → +0.37 → −0.02). Only popqa `contains` and popqa `f1` are SIG
+negative at BOTH step210000 and step215000, and only by 0.25–0.35pp. The pattern
+is "flat with paired-item structure noise", not a trajectory.
 
 **MMLU shows no movement at all** — letter and content_norm both within [−0.5,
-+0.5]pp of baseline on both ckpts.
++0.5]pp of baseline on all three ckpts.
 
 ## What this DOES and does NOT say
 
