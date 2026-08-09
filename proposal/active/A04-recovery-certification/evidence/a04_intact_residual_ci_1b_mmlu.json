@@ -1,0 +1,99 @@
+{
+ "what": "intact 1B MMLU-content residual + CI under all five longest-option tie conventions; the input to A04's Delta",
+ "date": "2026-08-10",
+ "gpu_spent": 0,
+ "source_anchor": "zwfy6:/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/olmo2_mmlu_content_results/A03_1B_base/per_example_mmlu.jsonl",
+ "n": 14042,
+ "n_boot": 10000,
+ "seed_base": 0,
+ "delta_fraction_prereg": 0.1,
+ "reported_content_norm": 0.386839481555334,
+ "by_convention": {
+  "split": {
+   "null": 0.28445022076627263,
+   "residual_pp": 10.238926078906136,
+   "boot_mean_pp": 10.238926078906138,
+   "ci95_pp": [
+    9.314912405640221,
+    11.180164862555191
+   ],
+   "one_sided_lower95_pp": 9.485234771874852,
+   "boot_p": 0.0001,
+   "delta_pp_as_prereg": 1.0238926078906134,
+   "residual_le_0": false,
+   "ci_straddles_0": false
+  },
+  "first": {
+   "null": 0.28108531548212506,
+   "residual_pp": 10.575416607320893,
+   "boot_mean_pp": 10.575416607320895,
+   "ci95_pp": [
+    9.535678678250962,
+    11.586668565731378
+   ],
+   "one_sided_lower95_pp": 9.713715994872524,
+   "boot_p": 0.0001,
+   "delta_pp_as_prereg": 1.057541660732089,
+   "residual_le_0": false,
+   "ci_straddles_0": false
+  },
+  "last": {
+   "null": 0.28215353938185445,
+   "residual_pp": 10.468594217347954,
+   "boot_mean_pp": 10.468594217347956,
+   "ci95_pp": [
+    9.443099273607748,
+    11.47984617575844
+   ],
+   "one_sided_lower95_pp": 9.606893604899588,
+   "boot_p": 0.0001,
+   "delta_pp_as_prereg": 1.0468594217347955,
+   "residual_le_0": false,
+   "ci_straddles_0": false
+  },
+  "credit": {
+   "null": 0.4537102976783934,
+   "residual_pp": -6.687081612305939,
+   "boot_mean_pp": -6.687081612305939,
+   "ci95_pp": [
+    -7.719876086027631,
+    -5.640222190571144
+   ],
+   "one_sided_lower95_pp": -7.555903717419171,
+   "boot_p": 0.0001,
+   "delta_pp_as_prereg": -0.668708161230594,
+   "residual_le_0": true,
+   "ci_straddles_0": false
+  },
+  "wrong": {
+   "null": 0.19612590799031476,
+   "residual_pp": 19.071357356501924,
+   "boot_mean_pp": 19.071357356501924,
+   "ci95_pp": [
+    18.11707733941034,
+    20.018515880928643
+   ],
+   "one_sided_lower95_pp": 18.273750178037318,
+   "boot_p": 0.0001,
+   "delta_pp_as_prereg": 1.9071357356501921,
+   "residual_le_0": false,
+   "ci_straddles_0": false
+  }
+ },
+ "anchor_stability_D5": {
+  "second_measurement": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/olmo2_mmlu_content_results/a01_1B_intact_base_full/per_example_mmlu.jsonl",
+  "note": "same base model (models/OLMo-2-0425-1B, 16L, add_bos false, content_desc full), same item set, same nulls; different disk/node and a harness commit apart",
+  "item_flips": 48,
+  "acc_drift_pp": 0.014242985329726565,
+  "residual_drift_pp": 0.014242985329726565,
+  "delta_drift_pp": 0.0014242985329726565,
+  "nulls_identical": true
+ },
+ "anchor_drift_delta_pp": 0.0014242985329726565,
+ "_canonical_source_note": "paths above are the CANONICAL on-disk locations on zwfy6. This pass read them via read-only `scp -O` staging copies whose md5 matched the remote originals at both ends: {\"A03_1B_base\": \"d1a7b1cefc0031afa84e7b9334a08bc5\", \"A03_1B_keep7_step200k\": \"098e342e08e3e9407e8c56f745688cc2\", \"A03_1B_keep7_step500\": \"1b46a4b3032d66490c3bce5ef0bf6af0\"}. Re-running against the zwfy6 paths directly (e.g. from .73/.82/.104) reproduces these numbers byte-identically.",
+ "_md5_verified": {
+  "A03_1B_base": "d1a7b1cefc0031afa84e7b9334a08bc5",
+  "A03_1B_keep7_step200k": "098e342e08e3e9407e8c56f745688cc2",
+  "A03_1B_keep7_step500": "1b46a4b3032d66490c3bce5ef0bf6af0"
+ }
+}

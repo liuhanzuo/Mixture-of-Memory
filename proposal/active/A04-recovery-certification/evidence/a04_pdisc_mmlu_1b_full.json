@@ -1,0 +1,41 @@
+{
+ "what": "measured paired discordance p_disc vs the intact anchor on MMLU-content at 1B; the input to the guard's D6 condition",
+ "date": "2026-08-10",
+ "gpu_spent": 0,
+ "intact_source": "zwfy6:/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/olmo2_mmlu_content_results/A03_1B_base/per_example_mmlu.jsonl",
+ "intact_content_norm": 0.386839481555334,
+ "n": 14042,
+ "note": "p_disc = fraction of items where the arm and the intact anchor disagree. hw_95 = 1.96*sqrt(p_disc/n). A barely healed arm has HIGHER p_disc and therefore a WIDER CI, which is why the gate's early checkpoints are the worst case for D6.",
+ "arms": {
+  "keep7_step200k": {
+   "source": "zwfy6:/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/olmo2_mmlu_content_results/A03_1B_keep7_step200k/per_example_mmlu.jsonl",
+   "acc": 0.3243839908844894,
+   "p_disc": 0.16870816123059393,
+   "diff_pp": -6.245549067084461,
+   "ci95_pp": [
+    -6.922090870246405,
+    -5.583250249252243
+   ],
+   "halfwidth_pp": 0.6694203104970806,
+   "boot_p": 0.0001
+  },
+  "keep7_step500": {
+   "source": "zwfy6:/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/olmo2_mmlu_content_results/A03_1B_keep7_step500/per_example_mmlu.jsonl",
+   "acc": 0.26321036889332006,
+   "p_disc": 0.30109670987038883,
+   "diff_pp": -12.362911266201396,
+   "ci95_pp": [
+    -13.23885486397949,
+    -11.472724683093578
+   ],
+   "halfwidth_pp": 0.8830650904429569,
+   "boot_p": 0.0001
+  }
+ },
+ "_canonical_source_note": "paths above are the CANONICAL on-disk locations on zwfy6. This pass read them via read-only `scp -O` staging copies whose md5 matched the remote originals at both ends: {\"A03_1B_base\": \"d1a7b1cefc0031afa84e7b9334a08bc5\", \"A03_1B_keep7_step200k\": \"098e342e08e3e9407e8c56f745688cc2\", \"A03_1B_keep7_step500\": \"1b46a4b3032d66490c3bce5ef0bf6af0\"}. Re-running against the zwfy6 paths directly (e.g. from .73/.82/.104) reproduces these numbers byte-identically.",
+ "_md5_verified": {
+  "A03_1B_base": "d1a7b1cefc0031afa84e7b9334a08bc5",
+  "A03_1B_keep7_step200k": "098e342e08e3e9407e8c56f745688cc2",
+  "A03_1B_keep7_step500": "1b46a4b3032d66490c3bce5ef0bf6af0"
+ }
+}

@@ -1,0 +1,926 @@
+{
+ "what": "A04 margin guard: enumeration of Delta-degeneracy conditions + pre-data classification of every planned gate cell",
+ "date": "2026-08-10",
+ "gpu_spent": 0,
+ "amends": "A04_GATE_DESIGN.md \u00a72 definition of Delta_x",
+ "does_not_change": "the pre-registered Delta rule itself. The guard only declares WHICH CELLS the rule is admissible in; it never substitutes a different margin.",
+ "preregistration_verified_on_disk": {
+  "commit": "d1ba737",
+  "commit_utc": "2026-08-09 23:02:27 +0800",
+  "T_pct_per_5k": 2.0,
+  "rho": 0.85,
+  "delta_rule": "0.10 * residual(intact, x)",
+  "delta_fraction": 0.1
+ },
+ "guard_thresholds": {
+  "residual_floor_pp": 1.0,
+  "delta_over_halfwidth_min": 1.0,
+  "d6_pdisc_safety_factor": 2.0
+ },
+ "conditions": {
+  "D1_residual_negative": "residual(intact, x) < 0 -- the intact arm is BELOW its own construct-appropriate null. Delta < 0, so -Delta > 0 and NI(Delta) silently becomes a STRICT SUPERIORITY test. Worse, the comparison target is itself sub-null, so 'recovered is non-inferior to intact' has no scientific content on this axis.",
+  "D2_residual_at_zero": "0 <= residual(intact, x) <= residual_floor_pp -- Delta -> 0, so NI degenerates towards an exact-equality test whose power against any real difference is ~0. Not a wrong hypothesis, but an unachievable one; a REJECT carries no information.",
+  "D3_residual_ci_straddles_zero": "the CI on residual(intact, x) contains 0 -- the SIGN of Delta is itself a sampling outcome. The rule's semantics (non-inferiority vs superiority) would then depend on a coin flip, which no pre-registration can license.",
+  "D4_baseline_illegitimate": "residual(intact, x) is well-defined and positive, but the NULL itself is not admissible on this interface -- e.g. the arm is significantly below the best-constant floor, or the interface is degenerate (100% tie rate / constant emission). Delta is then a well-formed number computed on top of an invalid measurement.",
+  "D5_intact_anchor_unstable": "residual(intact, x) differs between two admissible measurements of the SAME intact model, so Delta is not uniquely determined by the pre-registration. Requires pinning the intact anchor artefact.",
+  "D6_delta_below_measurement_resolution": "Delta_x < delta_over_halfwidth_min x (achievable item-level 95% CI half-width for that axis at that n). The margin is finer than the instrument, so NI can essentially never accept regardless of the arm's true quality. This is the condition the design already used to demote NQ-open. Pre-registered as a critical discordance rate p_disc_crit = n*(Delta/(100*z2))^2; D6 fires iff the cell's measured p_disc exceeds it."
+ },
+ "preregistered_convention": "split",
+ "intact_residual_pp_by_convention": {
+  "split": {
+   "triviaqa": 40.43134195274186,
+   "popqa": 13.205298941613513,
+   "mmlu_content": 10.238926078906136,
+   "nq_open": 9.695290858725762
+  },
+  "first": {
+   "triviaqa": 40.43134195274186,
+   "popqa": 13.205298941613513,
+   "mmlu_content": 10.575416607320893,
+   "nq_open": 9.695290858725762
+  },
+  "last": {
+   "triviaqa": 40.43134195274186,
+   "popqa": 13.205298941613513,
+   "mmlu_content": 10.468594217347954,
+   "nq_open": 9.695290858725762
+  },
+  "credit": {
+   "triviaqa": 40.43134195274186,
+   "popqa": 13.205298941613513,
+   "mmlu_content": -6.687081612305939,
+   "nq_open": 9.695290858725762
+  },
+  "wrong": {
+   "triviaqa": 40.43134195274186,
+   "popqa": 13.205298941613513,
+   "mmlu_content": 19.071357356501924,
+   "nq_open": 9.695290858725762
+  }
+ },
+ "residual_intact_ci95_pp_by_convention": {
+  "split": {
+   "mmlu_content": [
+    9.314912405640221,
+    11.180164862555191
+   ],
+   "triviaqa": [
+    39.706865804725815,
+    41.139099420419086
+   ],
+   "popqa": [
+    12.616527651223103,
+    13.787061049975469
+   ],
+   "nq_open": [
+    8.698060941828254,
+    10.720221606648199
+   ]
+  },
+  "first": {
+   "mmlu_content": [
+    9.535678678250962,
+    11.586668565731378
+   ],
+   "triviaqa": [
+    39.706865804725815,
+    41.139099420419086
+   ],
+   "popqa": [
+    12.616527651223103,
+    13.787061049975469
+   ],
+   "nq_open": [
+    8.698060941828254,
+    10.720221606648199
+   ]
+  },
+  "last": {
+   "mmlu_content": [
+    9.443099273607748,
+    11.47984617575844
+   ],
+   "triviaqa": [
+    39.706865804725815,
+    41.139099420419086
+   ],
+   "popqa": [
+    12.616527651223103,
+    13.787061049975469
+   ],
+   "nq_open": [
+    8.698060941828254,
+    10.720221606648199
+   ]
+  },
+  "credit": {
+   "mmlu_content": [
+    -7.719876086027631,
+    -5.640222190571144
+   ],
+   "triviaqa": [
+    39.706865804725815,
+    41.139099420419086
+   ],
+   "popqa": [
+    12.616527651223103,
+    13.787061049975469
+   ],
+   "nq_open": [
+    8.698060941828254,
+    10.720221606648199
+   ]
+  },
+  "wrong": {
+   "mmlu_content": [
+    18.11707733941034,
+    20.018515880928643
+   ],
+   "triviaqa": [
+    39.706865804725815,
+    41.139099420419086
+   ],
+   "popqa": [
+    12.616527651223103,
+    13.787061049975469
+   ],
+   "nq_open": [
+    8.698060941828254,
+    10.720221606648199
+   ]
+  }
+ },
+ "observed_bootstrap_halfwidths_pp": {
+  "triviaqa": {
+   "min_pp": 0.6975857981412167,
+   "max_pp": 0.7238158210127791,
+   "n_cells": 40,
+   "worst_case_used_pp": 0.7238158210127791
+  },
+  "popqa": {
+   "min_pp": 0.5428771091023996,
+   "max_pp": 0.5929888422503108,
+   "n_cells": 40,
+   "worst_case_used_pp": 0.5929888422503108
+  },
+  "mmlu_content": {
+   "min_pp": 0.6618909883689408,
+   "max_pp": 0.6873483340754412,
+   "n_cells": 40,
+   "worst_case_used_pp": 0.6873483340754412
+  },
+  "nq_open": {
+   "min_pp": 0.9572197048853736,
+   "max_pp": 1.0232348569464365,
+   "n_cells": 40,
+   "worst_case_used_pp": 1.0232348569464365
+  }
+ },
+ "observed_discordance_rates": {
+  "triviaqa": {
+   "min": 0.22730989393474452,
+   "max": 0.2447254984391229,
+   "n_cells": 40
+  },
+  "popqa": {
+   "min": 0.10945599127378829,
+   "max": 0.13059589396713886,
+   "n_cells": 40
+  },
+  "mmlu_content": {
+   "min": 0.1601421751605534,
+   "max": 0.30109670987038883,
+   "n_cells": 42,
+   "includes_barely_healed_arm": true,
+   "barely_healed_source": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/proposal/active/A04-recovery-certification/evidence/a04_pdisc_mmlu_1b.json"
+  },
+  "nq_open": {
+   "min": 0.08610617159633002,
+   "max": 0.09839242675870818,
+   "n_cells": 40
+  }
+ },
+ "barely_healed_pdisc_folded_in": {
+  "keep7_step200k": 0.16870816123059393,
+  "keep7_step500": 0.30109670987038883
+ },
+ "n_items_per_axis": {
+  "triviaqa": 17944,
+  "popqa": 14267,
+  "mmlu_content": 14042,
+  "nq_open": 3610
+ },
+ "intact_anchor_drift_pp": 0.0014242985329726565,
+ "per_axis_convention": {
+  "split": {
+   "triviaqa": {
+    "verdict": "CERTIFIABLE",
+    "conditions_fired": [],
+    "conditions_needing_recheck": [],
+    "residual_intact_pp": 40.43134195274186,
+    "residual_intact_ci95_pp": [
+     39.706865804725815,
+     41.139099420419086
+    ],
+    "delta_pp": 4.043134195274186,
+    "n_items": 17944,
+    "worst_case_item_halfwidth_pp": 0.7238158210127791,
+    "delta_over_halfwidth": 5.585860488123821,
+    "d6_status": "clear",
+    "p_disc_crit": 7.635885208165257,
+    "p_disc_observed_range": {
+     "min": 0.22730989393474452,
+     "max": 0.2447254984391229,
+     "n_cells": 40
+    },
+    "demoted_by_design": false
+   },
+   "popqa": {
+    "verdict": "CERTIFIABLE",
+    "conditions_fired": [],
+    "conditions_needing_recheck": [],
+    "residual_intact_pp": 13.205298941613513,
+    "residual_intact_ci95_pp": [
+     12.616527651223103,
+     13.787061049975469
+    ],
+    "delta_pp": 1.3205298941613515,
+    "n_items": 14267,
+    "worst_case_item_halfwidth_pp": 0.5929888422503108,
+    "delta_over_halfwidth": 2.2269051288555834,
+    "d6_status": "clear",
+    "p_disc_crit": 0.6476389404977257,
+    "p_disc_observed_range": {
+     "min": 0.10945599127378829,
+     "max": 0.13059589396713886,
+     "n_cells": 40
+    },
+    "demoted_by_design": false
+   },
+   "mmlu_content": {
+    "verdict": "NEEDS_RECHECK_AFTER_DATA",
+    "conditions_fired": [],
+    "conditions_needing_recheck": [
+     "D6_delta_below_measurement_resolution"
+    ],
+    "residual_intact_pp": 10.238926078906136,
+    "residual_intact_ci95_pp": [
+     9.314912405640221,
+     11.180164862555191
+    ],
+    "delta_pp": 1.0238926078906136,
+    "n_items": 14042,
+    "worst_case_item_halfwidth_pp": 0.6873483340754412,
+    "delta_over_halfwidth": 1.4896269578769858,
+    "d6_status": "recheck",
+    "p_disc_crit": 0.3832142073382244,
+    "p_disc_observed_range": {
+     "min": 0.1601421751605534,
+     "max": 0.30109670987038883,
+     "n_cells": 42,
+     "includes_barely_healed_arm": true,
+     "barely_healed_source": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/proposal/active/A04-recovery-certification/evidence/a04_pdisc_mmlu_1b.json"
+    },
+    "demoted_by_design": false
+   },
+   "nq_open": {
+    "verdict": "NOT_CERTIFIABLE",
+    "conditions_fired": [
+     "D6_delta_below_measurement_resolution"
+    ],
+    "conditions_needing_recheck": [],
+    "residual_intact_pp": 9.695290858725762,
+    "residual_intact_ci95_pp": [
+     8.698060941828254,
+     10.720221606648199
+    ],
+    "delta_pp": 0.9695290858725762,
+    "n_items": 3610,
+    "worst_case_item_halfwidth_pp": 1.0232348569464365,
+    "delta_over_halfwidth": 0.9475137396764118,
+    "d6_status": "fires",
+    "p_disc_crit": 0.08833497790667091,
+    "p_disc_observed_range": {
+     "min": 0.08610617159633002,
+     "max": 0.09839242675870818,
+     "n_cells": 40
+    },
+    "demoted_by_design": true
+   }
+  },
+  "first": {
+   "triviaqa": {
+    "verdict": "CERTIFIABLE",
+    "conditions_fired": [],
+    "conditions_needing_recheck": [],
+    "residual_intact_pp": 40.43134195274186,
+    "residual_intact_ci95_pp": [
+     39.706865804725815,
+     41.139099420419086
+    ],
+    "delta_pp": 4.043134195274186,
+    "n_items": 17944,
+    "worst_case_item_halfwidth_pp": 0.7238158210127791,
+    "delta_over_halfwidth": 5.585860488123821,
+    "d6_status": "clear",
+    "p_disc_crit": 7.635885208165257,
+    "p_disc_observed_range": {
+     "min": 0.22730989393474452,
+     "max": 0.2447254984391229,
+     "n_cells": 40
+    },
+    "demoted_by_design": false
+   },
+   "popqa": {
+    "verdict": "CERTIFIABLE",
+    "conditions_fired": [],
+    "conditions_needing_recheck": [],
+    "residual_intact_pp": 13.205298941613513,
+    "residual_intact_ci95_pp": [
+     12.616527651223103,
+     13.787061049975469
+    ],
+    "delta_pp": 1.3205298941613515,
+    "n_items": 14267,
+    "worst_case_item_halfwidth_pp": 0.5929888422503108,
+    "delta_over_halfwidth": 2.2269051288555834,
+    "d6_status": "clear",
+    "p_disc_crit": 0.6476389404977257,
+    "p_disc_observed_range": {
+     "min": 0.10945599127378829,
+     "max": 0.13059589396713886,
+     "n_cells": 40
+    },
+    "demoted_by_design": false
+   },
+   "mmlu_content": {
+    "verdict": "NEEDS_RECHECK_AFTER_DATA",
+    "conditions_fired": [],
+    "conditions_needing_recheck": [
+     "D6_delta_below_measurement_resolution"
+    ],
+    "residual_intact_pp": 10.575416607320893,
+    "residual_intact_ci95_pp": [
+     9.535678678250962,
+     11.586668565731378
+    ],
+    "delta_pp": 1.0575416607320893,
+    "n_items": 14042,
+    "worst_case_item_halfwidth_pp": 0.6873483340754412,
+    "delta_over_halfwidth": 1.538581834426934,
+    "d6_status": "recheck",
+    "p_disc_crit": 0.4088158794588831,
+    "p_disc_observed_range": {
+     "min": 0.1601421751605534,
+     "max": 0.30109670987038883,
+     "n_cells": 42,
+     "includes_barely_healed_arm": true,
+     "barely_healed_source": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/proposal/active/A04-recovery-certification/evidence/a04_pdisc_mmlu_1b.json"
+    },
+    "demoted_by_design": false
+   },
+   "nq_open": {
+    "verdict": "NOT_CERTIFIABLE",
+    "conditions_fired": [
+     "D6_delta_below_measurement_resolution"
+    ],
+    "conditions_needing_recheck": [],
+    "residual_intact_pp": 9.695290858725762,
+    "residual_intact_ci95_pp": [
+     8.698060941828254,
+     10.720221606648199
+    ],
+    "delta_pp": 0.9695290858725762,
+    "n_items": 3610,
+    "worst_case_item_halfwidth_pp": 1.0232348569464365,
+    "delta_over_halfwidth": 0.9475137396764118,
+    "d6_status": "fires",
+    "p_disc_crit": 0.08833497790667091,
+    "p_disc_observed_range": {
+     "min": 0.08610617159633002,
+     "max": 0.09839242675870818,
+     "n_cells": 40
+    },
+    "demoted_by_design": true
+   }
+  },
+  "last": {
+   "triviaqa": {
+    "verdict": "CERTIFIABLE",
+    "conditions_fired": [],
+    "conditions_needing_recheck": [],
+    "residual_intact_pp": 40.43134195274186,
+    "residual_intact_ci95_pp": [
+     39.706865804725815,
+     41.139099420419086
+    ],
+    "delta_pp": 4.043134195274186,
+    "n_items": 17944,
+    "worst_case_item_halfwidth_pp": 0.7238158210127791,
+    "delta_over_halfwidth": 5.585860488123821,
+    "d6_status": "clear",
+    "p_disc_crit": 7.635885208165257,
+    "p_disc_observed_range": {
+     "min": 0.22730989393474452,
+     "max": 0.2447254984391229,
+     "n_cells": 40
+    },
+    "demoted_by_design": false
+   },
+   "popqa": {
+    "verdict": "CERTIFIABLE",
+    "conditions_fired": [],
+    "conditions_needing_recheck": [],
+    "residual_intact_pp": 13.205298941613513,
+    "residual_intact_ci95_pp": [
+     12.616527651223103,
+     13.787061049975469
+    ],
+    "delta_pp": 1.3205298941613515,
+    "n_items": 14267,
+    "worst_case_item_halfwidth_pp": 0.5929888422503108,
+    "delta_over_halfwidth": 2.2269051288555834,
+    "d6_status": "clear",
+    "p_disc_crit": 0.6476389404977257,
+    "p_disc_observed_range": {
+     "min": 0.10945599127378829,
+     "max": 0.13059589396713886,
+     "n_cells": 40
+    },
+    "demoted_by_design": false
+   },
+   "mmlu_content": {
+    "verdict": "NEEDS_RECHECK_AFTER_DATA",
+    "conditions_fired": [],
+    "conditions_needing_recheck": [
+     "D6_delta_below_measurement_resolution"
+    ],
+    "residual_intact_pp": 10.468594217347954,
+    "residual_intact_ci95_pp": [
+     9.443099273607748,
+     11.47984617575844
+    ],
+    "delta_pp": 1.0468594217347955,
+    "n_items": 14042,
+    "worst_case_item_halfwidth_pp": 0.6873483340754412,
+    "delta_over_halfwidth": 1.523040603776157,
+    "d6_status": "recheck",
+    "p_disc_crit": 0.40059868445292446,
+    "p_disc_observed_range": {
+     "min": 0.1601421751605534,
+     "max": 0.30109670987038883,
+     "n_cells": 42,
+     "includes_barely_healed_arm": true,
+     "barely_healed_source": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/proposal/active/A04-recovery-certification/evidence/a04_pdisc_mmlu_1b.json"
+    },
+    "demoted_by_design": false
+   },
+   "nq_open": {
+    "verdict": "NOT_CERTIFIABLE",
+    "conditions_fired": [
+     "D6_delta_below_measurement_resolution"
+    ],
+    "conditions_needing_recheck": [],
+    "residual_intact_pp": 9.695290858725762,
+    "residual_intact_ci95_pp": [
+     8.698060941828254,
+     10.720221606648199
+    ],
+    "delta_pp": 0.9695290858725762,
+    "n_items": 3610,
+    "worst_case_item_halfwidth_pp": 1.0232348569464365,
+    "delta_over_halfwidth": 0.9475137396764118,
+    "d6_status": "fires",
+    "p_disc_crit": 0.08833497790667091,
+    "p_disc_observed_range": {
+     "min": 0.08610617159633002,
+     "max": 0.09839242675870818,
+     "n_cells": 40
+    },
+    "demoted_by_design": true
+   }
+  },
+  "credit": {
+   "triviaqa": {
+    "verdict": "CERTIFIABLE",
+    "conditions_fired": [],
+    "conditions_needing_recheck": [],
+    "residual_intact_pp": 40.43134195274186,
+    "residual_intact_ci95_pp": [
+     39.706865804725815,
+     41.139099420419086
+    ],
+    "delta_pp": 4.043134195274186,
+    "n_items": 17944,
+    "worst_case_item_halfwidth_pp": 0.7238158210127791,
+    "delta_over_halfwidth": 5.585860488123821,
+    "d6_status": "clear",
+    "p_disc_crit": 7.635885208165257,
+    "p_disc_observed_range": {
+     "min": 0.22730989393474452,
+     "max": 0.2447254984391229,
+     "n_cells": 40
+    },
+    "demoted_by_design": false
+   },
+   "popqa": {
+    "verdict": "CERTIFIABLE",
+    "conditions_fired": [],
+    "conditions_needing_recheck": [],
+    "residual_intact_pp": 13.205298941613513,
+    "residual_intact_ci95_pp": [
+     12.616527651223103,
+     13.787061049975469
+    ],
+    "delta_pp": 1.3205298941613515,
+    "n_items": 14267,
+    "worst_case_item_halfwidth_pp": 0.5929888422503108,
+    "delta_over_halfwidth": 2.2269051288555834,
+    "d6_status": "clear",
+    "p_disc_crit": 0.6476389404977257,
+    "p_disc_observed_range": {
+     "min": 0.10945599127378829,
+     "max": 0.13059589396713886,
+     "n_cells": 40
+    },
+    "demoted_by_design": false
+   },
+   "mmlu_content": {
+    "verdict": "NOT_CERTIFIABLE",
+    "conditions_fired": [
+     "D1_residual_negative",
+     "D4_baseline_illegitimate"
+    ],
+    "conditions_needing_recheck": [],
+    "residual_intact_pp": -6.687081612305939,
+    "residual_intact_ci95_pp": [
+     -7.719876086027631,
+     -5.640222190571144
+    ],
+    "delta_pp": -0.668708161230594,
+    "n_items": 14042,
+    "worst_case_item_halfwidth_pp": 0.6873483340754412,
+    "delta_over_halfwidth": -0.9728810387386473,
+    "d6_status": "not_applicable",
+    "p_disc_crit": null,
+    "p_disc_observed_range": {
+     "min": 0.1601421751605534,
+     "max": 0.30109670987038883,
+     "n_cells": 42,
+     "includes_barely_healed_arm": true,
+     "barely_healed_source": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/proposal/active/A04-recovery-certification/evidence/a04_pdisc_mmlu_1b.json"
+    },
+    "demoted_by_design": false,
+    "d4_reason": "all 8/8 damaged cells AND the intact arm are below this null -- it is above the entire arm population, so it is not a floor (A01 gate-3 found the same at 7B: 5 of 6 arms below, only intact above by 1.69pp)"
+   },
+   "nq_open": {
+    "verdict": "NOT_CERTIFIABLE",
+    "conditions_fired": [
+     "D6_delta_below_measurement_resolution"
+    ],
+    "conditions_needing_recheck": [],
+    "residual_intact_pp": 9.695290858725762,
+    "residual_intact_ci95_pp": [
+     8.698060941828254,
+     10.720221606648199
+    ],
+    "delta_pp": 0.9695290858725762,
+    "n_items": 3610,
+    "worst_case_item_halfwidth_pp": 1.0232348569464365,
+    "delta_over_halfwidth": 0.9475137396764118,
+    "d6_status": "fires",
+    "p_disc_crit": 0.08833497790667091,
+    "p_disc_observed_range": {
+     "min": 0.08610617159633002,
+     "max": 0.09839242675870818,
+     "n_cells": 40
+    },
+    "demoted_by_design": true
+   }
+  },
+  "wrong": {
+   "triviaqa": {
+    "verdict": "CERTIFIABLE",
+    "conditions_fired": [],
+    "conditions_needing_recheck": [],
+    "residual_intact_pp": 40.43134195274186,
+    "residual_intact_ci95_pp": [
+     39.706865804725815,
+     41.139099420419086
+    ],
+    "delta_pp": 4.043134195274186,
+    "n_items": 17944,
+    "worst_case_item_halfwidth_pp": 0.7238158210127791,
+    "delta_over_halfwidth": 5.585860488123821,
+    "d6_status": "clear",
+    "p_disc_crit": 7.635885208165257,
+    "p_disc_observed_range": {
+     "min": 0.22730989393474452,
+     "max": 0.2447254984391229,
+     "n_cells": 40
+    },
+    "demoted_by_design": false
+   },
+   "popqa": {
+    "verdict": "CERTIFIABLE",
+    "conditions_fired": [],
+    "conditions_needing_recheck": [],
+    "residual_intact_pp": 13.205298941613513,
+    "residual_intact_ci95_pp": [
+     12.616527651223103,
+     13.787061049975469
+    ],
+    "delta_pp": 1.3205298941613515,
+    "n_items": 14267,
+    "worst_case_item_halfwidth_pp": 0.5929888422503108,
+    "delta_over_halfwidth": 2.2269051288555834,
+    "d6_status": "clear",
+    "p_disc_crit": 0.6476389404977257,
+    "p_disc_observed_range": {
+     "min": 0.10945599127378829,
+     "max": 0.13059589396713886,
+     "n_cells": 40
+    },
+    "demoted_by_design": false
+   },
+   "mmlu_content": {
+    "verdict": "CERTIFIABLE",
+    "conditions_fired": [],
+    "conditions_needing_recheck": [],
+    "residual_intact_pp": 19.071357356501924,
+    "residual_intact_ci95_pp": [
+     18.11707733941034,
+     20.018515880928643
+    ],
+    "delta_pp": 1.9071357356501926,
+    "n_items": 14042,
+    "worst_case_item_halfwidth_pp": 0.6873483340754412,
+    "delta_over_halfwidth": 2.7746277121854077,
+    "d6_status": "clear",
+    "p_disc_crit": 1.3295234280679757,
+    "p_disc_observed_range": {
+     "min": 0.1601421751605534,
+     "max": 0.30109670987038883,
+     "n_cells": 42,
+     "includes_barely_healed_arm": true,
+     "barely_healed_source": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/proposal/active/A04-recovery-certification/evidence/a04_pdisc_mmlu_1b.json"
+    },
+    "demoted_by_design": false
+   },
+   "nq_open": {
+    "verdict": "NOT_CERTIFIABLE",
+    "conditions_fired": [
+     "D6_delta_below_measurement_resolution"
+    ],
+    "conditions_needing_recheck": [],
+    "residual_intact_pp": 9.695290858725762,
+    "residual_intact_ci95_pp": [
+     8.698060941828254,
+     10.720221606648199
+    ],
+    "delta_pp": 0.9695290858725762,
+    "n_items": 3610,
+    "worst_case_item_halfwidth_pp": 1.0232348569464365,
+    "delta_over_halfwidth": 0.9475137396764118,
+    "d6_status": "fires",
+    "p_disc_crit": 0.08833497790667091,
+    "p_disc_observed_range": {
+     "min": 0.08610617159633002,
+     "max": 0.09839242675870818,
+     "n_cells": 40
+    },
+    "demoted_by_design": true
+   }
+  }
+ },
+ "cell_counts_by_convention": {
+  "split": {
+   "all_axes": {
+    "CERTIFIABLE": 48,
+    "NOT_CERTIFIABLE": 24,
+    "NEEDS_RECHECK_AFTER_DATA": 24
+   },
+   "decision_axes_only": {
+    "CERTIFIABLE": 48,
+    "NOT_CERTIFIABLE": 0,
+    "NEEDS_RECHECK_AFTER_DATA": 24
+   },
+   "n_cells_total": 96,
+   "n_decision_cells_total": 72
+  },
+  "first": {
+   "all_axes": {
+    "CERTIFIABLE": 48,
+    "NOT_CERTIFIABLE": 24,
+    "NEEDS_RECHECK_AFTER_DATA": 24
+   },
+   "decision_axes_only": {
+    "CERTIFIABLE": 48,
+    "NOT_CERTIFIABLE": 0,
+    "NEEDS_RECHECK_AFTER_DATA": 24
+   },
+   "n_cells_total": 96,
+   "n_decision_cells_total": 72
+  },
+  "last": {
+   "all_axes": {
+    "CERTIFIABLE": 48,
+    "NOT_CERTIFIABLE": 24,
+    "NEEDS_RECHECK_AFTER_DATA": 24
+   },
+   "decision_axes_only": {
+    "CERTIFIABLE": 48,
+    "NOT_CERTIFIABLE": 0,
+    "NEEDS_RECHECK_AFTER_DATA": 24
+   },
+   "n_cells_total": 96,
+   "n_decision_cells_total": 72
+  },
+  "credit": {
+   "all_axes": {
+    "CERTIFIABLE": 48,
+    "NOT_CERTIFIABLE": 48,
+    "NEEDS_RECHECK_AFTER_DATA": 0
+   },
+   "decision_axes_only": {
+    "CERTIFIABLE": 48,
+    "NOT_CERTIFIABLE": 24,
+    "NEEDS_RECHECK_AFTER_DATA": 0
+   },
+   "n_cells_total": 96,
+   "n_decision_cells_total": 72
+  },
+  "wrong": {
+   "all_axes": {
+    "CERTIFIABLE": 72,
+    "NOT_CERTIFIABLE": 24,
+    "NEEDS_RECHECK_AFTER_DATA": 0
+   },
+   "decision_axes_only": {
+    "CERTIFIABLE": 72,
+    "NOT_CERTIFIABLE": 0,
+    "NEEDS_RECHECK_AFTER_DATA": 0
+   },
+   "n_cells_total": 96,
+   "n_decision_cells_total": 72
+  }
+ },
+ "kill_clause_impact": {
+  "split": {
+   "decision_axes": [
+    "triviaqa",
+    "popqa",
+    "mmlu_content"
+   ],
+   "surviving_decision_axes": [
+    "triviaqa",
+    "popqa",
+    "mmlu_content"
+   ],
+   "n_surviving_decision_axes": 3,
+   "K1_clause_a_literal_3_of_4_satisfiable": true,
+   "K1_DISABLED_if_not_satisfiable": false,
+   "K1_rescaled_threshold": 3,
+   "K2_literal_2_of_4_satisfiable": true,
+   "K2_rescaled_threshold": 2,
+   "K3_n_axes_intact_residual_below_5pp": 0,
+   "K3_axes_below_5pp": [],
+   "K3_literal_fires": false,
+   "K3_coupling_warning": "",
+   "n_cells_remaining_decision": 72,
+   "K1_ge24_cell_precondition_met": true
+  },
+  "first": {
+   "decision_axes": [
+    "triviaqa",
+    "popqa",
+    "mmlu_content"
+   ],
+   "surviving_decision_axes": [
+    "triviaqa",
+    "popqa",
+    "mmlu_content"
+   ],
+   "n_surviving_decision_axes": 3,
+   "K1_clause_a_literal_3_of_4_satisfiable": true,
+   "K1_DISABLED_if_not_satisfiable": false,
+   "K1_rescaled_threshold": 3,
+   "K2_literal_2_of_4_satisfiable": true,
+   "K2_rescaled_threshold": 2,
+   "K3_n_axes_intact_residual_below_5pp": 0,
+   "K3_axes_below_5pp": [],
+   "K3_literal_fires": false,
+   "K3_coupling_warning": "",
+   "n_cells_remaining_decision": 72,
+   "K1_ge24_cell_precondition_met": true
+  },
+  "last": {
+   "decision_axes": [
+    "triviaqa",
+    "popqa",
+    "mmlu_content"
+   ],
+   "surviving_decision_axes": [
+    "triviaqa",
+    "popqa",
+    "mmlu_content"
+   ],
+   "n_surviving_decision_axes": 3,
+   "K1_clause_a_literal_3_of_4_satisfiable": true,
+   "K1_DISABLED_if_not_satisfiable": false,
+   "K1_rescaled_threshold": 3,
+   "K2_literal_2_of_4_satisfiable": true,
+   "K2_rescaled_threshold": 2,
+   "K3_n_axes_intact_residual_below_5pp": 0,
+   "K3_axes_below_5pp": [],
+   "K3_literal_fires": false,
+   "K3_coupling_warning": "",
+   "n_cells_remaining_decision": 72,
+   "K1_ge24_cell_precondition_met": true
+  },
+  "credit": {
+   "decision_axes": [
+    "triviaqa",
+    "popqa",
+    "mmlu_content"
+   ],
+   "surviving_decision_axes": [
+    "triviaqa",
+    "popqa"
+   ],
+   "n_surviving_decision_axes": 2,
+   "K1_clause_a_literal_3_of_4_satisfiable": false,
+   "K1_DISABLED_if_not_satisfiable": true,
+   "K1_rescaled_threshold": 2,
+   "K2_literal_2_of_4_satisfiable": true,
+   "K2_rescaled_threshold": 1,
+   "K3_n_axes_intact_residual_below_5pp": 1,
+   "K3_axes_below_5pp": [
+    "mmlu_content"
+   ],
+   "K3_literal_fires": false,
+   "K3_coupling_warning": "K3 counts a NEGATIVE intact residual as 'below 5pp', so a convention that pushes axes below their null pushes K3 towards firing -- but for the wrong reason (an inadmissible null, not an unmeasurable scale). Axes retired by D1/D4 must be EXCLUDED from K3's count, not counted as at-floor.",
+   "n_cells_remaining_decision": 48,
+   "K1_ge24_cell_precondition_met": true
+  },
+  "wrong": {
+   "decision_axes": [
+    "triviaqa",
+    "popqa",
+    "mmlu_content"
+   ],
+   "surviving_decision_axes": [
+    "triviaqa",
+    "popqa",
+    "mmlu_content"
+   ],
+   "n_surviving_decision_axes": 3,
+   "K1_clause_a_literal_3_of_4_satisfiable": true,
+   "K1_DISABLED_if_not_satisfiable": false,
+   "K1_rescaled_threshold": 3,
+   "K2_literal_2_of_4_satisfiable": true,
+   "K2_rescaled_threshold": 2,
+   "K3_n_axes_intact_residual_below_5pp": 0,
+   "K3_axes_below_5pp": [],
+   "K3_literal_fires": false,
+   "K3_coupling_warning": "",
+   "n_cells_remaining_decision": 72,
+   "K1_ge24_cell_precondition_met": true
+  }
+ },
+ "gate_structure_assumed": {
+  "arms": [
+   "A1_prefix_fresh_tail",
+   "A2_contiguous_keep_only",
+   "A3_random_trunk",
+   "A4_from_scratch"
+  ],
+  "checkpoint_grid": [
+   2500,
+   5000,
+   10000,
+   20000,
+   40000,
+   80000
+  ],
+  "axes": [
+   "triviaqa",
+   "popqa",
+   "mmlu_content",
+   "nq_open"
+  ],
+  "demoted_axes": [
+   "nq_open"
+  ],
+  "banned_interfaces": [
+   "mmlu_letter",
+   "raw_contains_on_generative_QA"
+  ]
+ },
+ "sources": {
+  "pilot_zero": "evidence/pilot_zero_rule_disagreement.json",
+  "a03_4axes": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/proposal/active/A03-parametric-vs-external-memory/evidence/a03_1b_floor_nulls_4axes.json",
+  "a01_conventions": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/proposal/active/A01-null-calibration-methodology/evidence/gate3_content_null_conventions.json",
+  "intact_ci_recompute": "evidence/a04_intact_residual_ci_1b_mmlu.json"
+ }
+}

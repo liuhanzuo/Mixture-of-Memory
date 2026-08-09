@@ -76,6 +76,55 @@ Fixed before any data is seen. Style matched to A02's `kill_gate_verbatim` and A
 > * Both `T` and `ρ` and `Δ` are **frozen by this document's git commit**. If any is later
 >   changed, the gate is void and must be re-run.
 
+#### 2.0.1 AMENDMENT 2026-08-10 — admissibility guard on `Δ` (`A04_MARGIN_GUARD_PREREG.md`)
+
+**The pre-registered text above is UNCHANGED. Nothing in it is edited, retuned, or replaced.**
+This is an *additive* amendment, registered **before any recovered-arm datum exists** (verified
+2026-08-10 by `ls outputs/` on **both** disks: the only 1B recovery runs anywhere are `keep7`
+variants on zwfy6; there is no `j=12` or `j=10` arm, and no 1B recovery output at all on wzc1).
+
+The `Δ_x = 0.10 · residual(intact, x)` definition above is a well-formed **non-inferiority**
+margin only while `residual(intact, x)` is comfortably positive. Pilot Zero found a real case
+where it is not: under the `credit` MMLU tie convention the **intact** 1B model scores
+`0.386839481555334` against its own null `0.4537102976783934`, so
+`residual(intact) = −6.687081612305939 pp` and `Δ` is **negative** — which makes `−Δ` positive
+and silently converts `NI(Δ)` into a **strict-superiority** test (see §4.1 of
+`PILOT_ZERO_VERDICT.md`; flagged per-cell as `delta_degenerate_negative_margin` in
+`evidence/pilot_zero_rule_disagreement.json`). This cannot create a false accept — a
+superiority test is strictly harder — but it creates a **silent false reject plus a swapped
+hypothesis**, which in a pre-registered gate is the more serious failure.
+
+**→ See `A04_MARGIN_GUARD_PREREG.md` for the binding guard.** In brief, and binding here:
+
+* Six degeneracy conditions **D1–D6** (residual negative / at-zero / CI straddling zero /
+  inadmissible null / unstable intact anchor / `Δ` below the item-level CI half-width) are
+  evaluated **before** `NI(Δ)` is computed for any cell.
+* A cell failing D1, D2, D3, D4 or D6 is **NOT_CERTIFIABLE**: `NI(Δ)` is **not run** for it, no
+  accept/reject is reported, and it is **excluded from the BH family** (declare the reduced
+  family size).
+* **`Δ` is never substituted.** `max(Δ, ε)`, `0.10·|residual|`, and any change of anchor are
+  **prohibited** for the remainder of A04 — a plausible-looking margin over a sub-null target
+  measures nothing.
+* Because `residual(intact, x)` depends on neither the arm nor the checkpoint, the guard's
+  verdict is a property of `(axis, convention)` alone and is therefore **fully fixed today**.
+  Under the pre-registered `split` convention: **0 of the 72 decision cells are retired**
+  (the 24 NOT_CERTIFIABLE cells are all NQ-open, already demoted by §5.2), and 24
+  MMLU-content cells are `NEEDS_RECHECK_AFTER_DATA` on the **fixed** arithmetic trigger
+  `p_disc > p*_crit = 0.3832`.
+* Two clarifications the guard adds to the kill clauses in this section, both fixed before
+  data: (i) if the guard retires a decision axis, K1's "≥3 of 4" and K2's "≥2 of 4" rescale to
+  `ceil(0.75·n_surviving)` and `ceil(0.50·n_surviving)` — otherwise retiring one of three axes
+  would make K1 **unsatisfiable and thus unfireable**; (ii) axes retired by D1/D4 are
+  **excluded** from K3's "residual below 5pp" count rather than counted as at-floor, since a
+  *negative* residual is trivially "below 5pp" and would make K3 fire for an inadmissible null
+  rather than for an unmeasurable scale.
+* One consequence for a claim already written down: `PILOT_ZERO_VERDICT.md` §4's
+  "survives **all five** conventions" must now read "**the verdict is unchanged under the four
+  admissible conventions; `credit` is inadmissible on MMLU-content by the margin guard**".
+  The measured *difference* is unaffected — the null cancels exactly in
+  `residual(arm) − residual(intact)` — so only the `credit` **margin** is lost.
+
+
 ### 2.1 What the gate is NOT allowed to conclude
 
 * Not "our rule is better" — it can only conclude the rules **disagree** and quantify by how much.
@@ -419,6 +468,11 @@ cost.
 ## 8. Pre-registration checklist (must all be true before any gate GPU is spent)
 
 - [ ] `T = 2.0%/5k`, `ρ = 0.85`, `Δ_x = 0.10 · residual(intact, x)` committed to git, unchanged.
+- [ ] **Margin guard applied (`A04_MARGIN_GUARD_PREREG.md`, amendment §2.0.1)**: D1–D6 evaluated
+      per cell *before* `NI(Δ)`; NOT_CERTIFIABLE cells excluded from the BH family and the
+      reduced family size declared; intact anchor pinned by path + SHA256 (rule G0); K1/K2
+      thresholds rescaled and D1/D4-retired axes excluded from K3's count if any axis is
+      retired.
 - [ ] Checkpoint grid `{2500, 5000, 10000, 20000, 40000, 80000}` committed; `--milestone_every 2500`.
 - [ ] Training array SHA256 + row count recorded; every arm's log shows the **same** `dataset rows=`.
 - [ ] All arms on **one** disk; `dolmino_now15b.npy` size recorded (wzc1 62,020,903,040 B vs zwfy6
@@ -444,3 +498,18 @@ cost.
 5. **arXiv:2408.11796 (Minitron Approach) venue** — not verified in this pass.
 6. **Pilot Zero's `T` band** `(1.388, 3.297]` is post-hoc, as stated in §6.1. Illustrative only
    until `T` is committed first.
+7. **(added 2026-08-10, see `A04_MARGIN_GUARD_PREREG.md` §8)** Whether **MMLU-content** survives
+   the guard's D6 condition at the gate's *early* checkpoints. `p*_crit = 0.3832` against a
+   barely-healed discordance of `p_disc = 0.301097` leaves only **16 % headroom on `Δ/hw`**; the
+   arm that would settle it does not exist. The early checkpoints, not the late ones, are the D6
+   risk.
+8. **(added 2026-08-10)** `p_disc` at a barely-healed checkpoint for **TriviaQA / PopQA /
+   NQ-open** — only MMLU-content has a step-500 arm scored. Since `p_disc` rises as the arm
+   degrades, those three D6 verdicts rest on an **optimistic** range. TriviaQA's ~31× headroom
+   is safe by any margin; PopQA's ~5× is very likely safe but unproven at step 2,500.
+9. **(added 2026-08-10)** An **unresolved tension between K3 and D6**: an axis can pass K3
+   (residual ≥ 5 pp ⇒ "measurable") yet fail D6 (`Δ = 0.10 × 5 pp = 0.5 pp` is below every
+   item-level half-width measured here, 0.54–1.02 pp) ⇒ "not certifiable at a 10 % margin". No
+   1B axis falls in that window (smallest surviving residual 10.2389 pp), so it does not bite
+   here — but it is **not resolved**, and it must **not** be resolved by adjusting `Δ` after
+   data.

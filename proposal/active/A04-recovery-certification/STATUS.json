@@ -2,7 +2,7 @@
  "id": "A04",
  "status": "active_design_gate_specified_awaiting_pilot_zero",
  "priority": 4,
- "updated": "2026-08-09",
+ "updated": "2026-08-10",
  "warning": "Do not use the historical depth ladder as a controlled scaling law.",
  "warning_evidence_reverified_20260809": {
   "two_corpora": "data/dolmino_now15b.npy is 62,020,903,040 B on wzc1 (= 7,570,911 rows x 2048 x int32) but 126,907,244,672 B on zwfy6 (= 15,491,607 rows). Ratio 2.0462x. SAME FILENAME, DIFFERENT FILE (wzc1 is a byte-prefix). Row counts re-derived here from ls -l on BOTH disks; they match the 'dataset rows=' lines in status/PAPERB_TWO_CORPORA_DEFECT.md.",
@@ -386,6 +386,520 @@
    "whether the disagreement replicates at 7B (out of scope, unfunded)",
    "arm4_peaklr20k intermediate capability numbers (A03 NOT_YET_JUDGED)"
   ],
-  "recommendation": "DO NOT ARCHIVE (K1 did not fire), but DO NOT authorise the full gate. (1) Narrow the claim to the PLATEAU rule only -- the ratio-rule half is falsified. (2) Pilot One is now strictly MANDATORY and more valuable than the design assumed, because K2 is the likeliest killer AND no usable sd_run exists; it must run UNDER the seed fix, at j=12, S=3 (~135 GPU-h). (3) Do not authorise the 1,077-4,309 GPU-h gate until sd_run is known. (4) Decide the Delta guard for residual(intact)<=0 explicitly before Pilot One."
+  "recommendation": "DO NOT ARCHIVE (K1 did not fire), but DO NOT authorise the full gate. (1) Narrow the claim to the PLATEAU rule only -- the ratio-rule half is falsified. (2) Pilot One is now strictly MANDATORY and more valuable than the design assumed, because K2 is the likeliest killer AND no usable sd_run exists; it must run UNDER the seed fix, at j=12, S=3 (~135 GPU-h). (3) Do not authorise the 1,077-4,309 GPU-h gate until sd_run is known. (4) Decide the Delta guard for residual(intact)<=0 explicitly before Pilot One.",
+  "delta_guard_RESOLVED": "the SS4.1 / caveats_not_dropped item 'Delta = 0.10*residual(intact,x) is ILL-DEFINED when residual(intact,x) <= 0 ... FLAGGED, NOT CHANGED' is now ADDRESSED by the pre-registered guard in A04_MARGIN_GUARD_PREREG.md (see margin_guard_prereg). Resolution = option (c) RETIRE THE CELL; Delta is never substituted. Also NARROWS this file's own SS4 claim: 'survives all five conventions' -> 'unchanged under the FOUR ADMISSIBLE conventions; credit is inadmissible on MMLU-content'."
+ },
+ "margin_guard_prereg": {
+  "status": "PRE-REGISTERED 2026-08-10, ZERO GPU (CPU re-analysis of on-disk per-example records + read-only ssh/scp -O of 3 JSONL files)",
+  "document": "A04_MARGIN_GUARD_PREREG.md",
+  "amends": "A04_GATE_DESIGN.md SS2 definition of Delta_x, via additive amendment SS2.0.1. The pre-registered text is UNCHANGED -- nothing retuned or replaced.",
+  "prereg_timing_evidence": "registered BEFORE any recovered-arm datum exists. Verified 2026-08-10 by ls outputs/ on BOTH disks: the only 1B recovery runs anywhere are zwfy6:outputs/olmo2_probe2_1B_keep7fresh2{,_16card}, ..._keep7f2_dolmino_cpt20k, ..._keep7f2_dolmino_arm4_peaklr20k -- all keep7. NO j=12 or j=10 arm on either disk, and NO 1B recovery output at all on wzc1. Delta depends ONLY on the intact anchor, so every cell's verdict is computable now and cannot be tuned later.",
+  "defect_addressed": "Delta_x = 0.10*residual(intact,x) is a well-formed NON-INFERIORITY margin only while residual(intact,x) is comfortably positive. When it is negative, Delta<0 so -Delta>0 and NI(Delta) silently becomes a STRICT SUPERIORITY test. Direction of error matters: it cannot create a false ACCEPT (superiority is strictly harder), but it creates a SILENT FALSE REJECT plus a SWAPPED HYPOTHESIS, which in a pre-registered gate is the more serious failure. Pilot Zero flagged this (PILOT_ZERO_VERDICT.md SS4.1, delta_degenerate_negative_margin per cell) and correctly did NOT change the rule.",
+  "verdict": "RECOMMENDED GUARD = option (c) RETIRE THE CELL (NOT_CERTIFIABLE). Delta is NEVER substituted.",
+  "one_line_reason": "an arm below its own input-blind floor has no measured capability on that axis, so 'recover to be no worse than it' is vacuous -- and a re-margined Delta (via max(Delta,eps) or 0.10*|residual|) would be a plausible-LOOKING number over a scientifically empty comparison, i.e. it converts a visible degeneracy into an invisible one.",
+  "rejected_alternatives": {
+   "a_absolute_floor_max_delta_eps": "REJECTED. Restores a positive margin but does nothing about WHAT is compared: under credit the target is 6.687pp BELOW its own null. Also eps=1pp is comparable to the entire legitimate Delta_MMLU=1.0239pp, so the guard would silently SET the margin on the very axis it was meant to rescue.",
+   "b_abs_residual_0.10_times_abs": "REJECTED, and it is the specific failure mode to avoid. Gives Delta=+0.6687pp -- a normal-looking number -- while all 8 damaged credit cells sit 6.2-6.6pp below a sub-null target. Also NON-MONOTONE: as the intact arm degrades past its null, |residual| grows so Delta GROWS, i.e. the test gets EASIER as the reference gets worse. A margin that loosens as the reference degrades is not a margin.",
+   "c_retire_cell": "RECOMMENDED. Honest (A01's own below-floor-carries-no-signal logic, applied to the REFERENCE arm), preserves the pre-registration (Delta's formula untouched; only cell ADMISSIBILITY changes, which is a scope statement not a threshold), and FAILS LOUD -- a retired cell is visibly absent and cannot be mistaken for a passed or failed test, whereas (a) and (b) both fail SILENTLY. Cost: removes cells; SS5 shows it does not empty A04.",
+   "d_change_anchor": "REJECTED. Damaged-arm anchor is circular (a worse arm buys itself a wider margin). Intact ABSOLUTE score re-imports the exact error A01 exists to kill: the MMLU null 0.2845 is 73.5% of the intact 0.3868, so a null-blind margin would be 3.78x the null-calibrated one -- dominated by label/length artefacts, and self-contradictory for a proposal whose claim IS null-calibrated non-inferiority."
+  },
+  "six_conditions_enumerated": {
+   "D1_residual_negative": "CONFIRMED IN DATA: credit convention x MMLU-content ONLY. intact reported 0.386839481555334 vs credit null 0.4537102976783934 -> residual = -6.687081612305939pp, CI95 [-7.7199,-5.6402], p=1e-4 (entirely below zero, not marginal). Delta = -0.6687081612305939pp. Exhaustively checked: 1 of 20 (axis x convention) combinations.",
+   "D2_residual_at_zero": "DOES NOT FIRE at 1B. Smallest positive intact residual is NQ-open 9.6953pp. Threshold pre-registered anyway at residual_floor_pp=1.0 (=> Delta=0.10pp, BELOW every item-level half-width measured in this project, min 0.5429pp PopQA). NEAR-MISS RECORDED at 7B: credit/7B_base residual +1.6878pp => Delta=0.1688pp vs CI half-width 1.0541pp, i.e. Delta 6.2x smaller than the half-width (A01 gate3_content_null_conventions.json). 7B is out of A04 scope.",
+   "D3_residual_ci_straddles_zero": "DOES NOT FIRE. Measured for MMLU-content under all 5 conventions (new) + taken from A03 intact cells for the 3 QA axes: 0 of 20 combinations straddle 0, all at p=1e-4. Enumerated because it is the condition under which the guard would be UNRESOLVABLE rather than merely restrictive.",
+   "D4_baseline_illegitimate": "CONFIRMED, and the honest reason to retire rather than re-margin: under credit at 1B, 8 of 8 damaged cells (-12.93 to -13.24pp) PLUS the intact arm (-6.69pp) are below the null. A floor above the entire arm population is not a floor. A01 found the same at 7B (credit: n_arms_above=1, n_arms_below=5).",
+   "D5_intact_anchor_unstable": "MEASURED, below the fatal threshold but procedurally load-bearing. Two independent admissible intact 1B measurements exist: zwfy6 A03_1B_base content_norm 0.3868394816 vs wzc1 a01_1B_intact_base_full 0.3869819114, identical meta, 48/14042 item flips -> residual drift +0.014243pp -> Delta drift +0.001424pp (0.14% of Delta_MMLU). The 5 nulls are BIT-IDENTICAL between dumps (<1e-12), confirming the null is a tokenizer+dataset property. Consequence: 'Delta = 0.10*residual(intact)' does not by itself NAME a number -> rule G0 pins the anchor.",
+   "D6_delta_below_measurement_resolution": "FIRES for NQ-open; BORDERLINE for MMLU-content. Generalises the design's own SS5.2 NQ-open demotion and makes it checkable BEFORE data by pre-registering a critical discordance rate p*_crit = n*(Delta/(100*1.959964))^2 instead of a half-width nobody can know yet."
+  },
+  "D5_48_flips_named_cause": "the repo rule is that same-arch/same-harness re-runs are BYTE-IDENTICAL (0 flips), so a nonzero difference needs a NAMED cause. Named cause: a HARNESS CODE CHANGE falls strictly between the two evals (A03_1B_base written 2026-08-08 20:49; a01_1B_intact_base_full 2026-08-09 08:25; scripts/eval_olmo2_mmlu_content.py modified by commit 7ac9653 at 2026-08-08 22:29:43 +0800). UNVERIFIED: causality is NOT proven -- the dumps also sit on different disks/nodes. The verified claim is only the weaker one: this is a code-VERSION difference, not a same-code runtime-jitter claim. NO noise floor is asserted.",
+  "d6_critical_values_frozen": {
+   "triviaqa": {
+    "n": 17944,
+    "delta_pp_split": 4.043134195274186,
+    "p_disc_crit": 7.635885208165257,
+    "p_disc_observed_min": 0.22730989393474452,
+    "p_disc_observed_max": 0.2447254984391229,
+    "d6_status": "clear"
+   },
+   "popqa": {
+    "n": 14267,
+    "delta_pp_split": 1.3205298941613515,
+    "p_disc_crit": 0.6476389404977257,
+    "p_disc_observed_min": 0.10945599127378829,
+    "p_disc_observed_max": 0.13059589396713886,
+    "d6_status": "clear"
+   },
+   "mmlu_content": {
+    "n": 14042,
+    "delta_pp_split": 1.0238926078906136,
+    "p_disc_crit": 0.3832142073382244,
+    "p_disc_observed_min": 0.1601421751605534,
+    "p_disc_observed_max": 0.30109670987038883,
+    "d6_status": "recheck"
+   },
+   "nq_open": {
+    "n": 3610,
+    "delta_pp_split": 0.9695290858725762,
+    "p_disc_crit": 0.08833497790667091,
+    "p_disc_observed_min": 0.08610617159633002,
+    "p_disc_observed_max": 0.09839242675870818,
+    "d6_status": "fires"
+   }
+  },
+  "d6_note_barely_healed_is_the_risk": "Pilot Zero scored only arms at >=200k steps (MMLU p_disc 0.1601-0.1727), but the gate's frozen grid STARTS at 2,500 steps. The closest on-disk analogue (A03_1B_keep7_step500, barely healed) has p_disc=0.301097 = 79% of the way to p*_crit=0.3832; its half-width 0.8831pp vs Delta 1.0239pp gives Delta/hw=1.16, only 16% headroom. Restricting to well-healed arms would have produced a FALSELY COMFORTABLE CERTIFIABLE verdict. THE EARLY CHECKPOINTS ARE THE D6 RISK, NOT THE LATE ONES. Also: NQ-open's p*_crit=0.0883 sits INSIDE its observed range 0.0861-0.0984, so its SS5.2 demotion is independently confirmed here from a different statistic.",
+  "guard_rules_verbatim_ids": {
+   "G0": "anchor pinning by path + SHA256 before any gate GPU. 2026-08-10 pinning = zwfy6:olmo2_mmlu_content_results/A03_1B_base/per_example_mmlu.jsonl (md5 d1a7b1cefc0031afa84e7b9334a08bc5) + matching A03_1B_base* closed-book dumps, i.e. A03's anchor, the one Pilot Zero used. The wzc1 a01_1B_intact_base_full dump is a D5 sensitivity check ONLY and is not used for Delta.",
+   "G1": "admissibility precedes testing: D1-D6 evaluated per cell BEFORE NI(Delta). A cell failing D1/D2/D3/D4/D6 is NOT_CERTIFIABLE -- NI is NOT RUN, no accept/reject reported, and the cell is EXCLUDED FROM THE BH FAMILY (declare the reduced family size).",
+   "G2": "NO MARGIN SUBSTITUTION EVER. max(.,eps), 0.10*|residual|, and any anchor change are PROHIBITED for the remainder of A04. Only admissible responses: retire the cell, or (with explicit re-registration) change the INTERFACE so the null becomes admissible.",
+   "G3": "frozen numeric triggers: D1 residual<0; D2 0<=residual<=1.0pp; D3 two-sided 95% paired-bootstrap CI (10,000 resamples, A03 paired_bootstrap) contains 0; D4 intact AND every damaged arm below null, OR structural degeneracy (a single constant on >99% of items, or >=99% tie rate in the null's winner set); D5 |Delta drift across admissible anchors| >= 0.10*Delta (recorded, mandates G0, not fatal); D6 measured p_disc > p*_crit.",
+   "G4": "the ONLY post-data step is arithmetic: a NEEDS_RECHECK_AFTER_DATA cell is so marked ONLY because D6's input p_disc is a property of the unseen arm. The recheck is the single comparison p_disc > p*_crit with p*_crit ALREADY FIXED. No threshold may be adjusted then.",
+   "G5": "convention is part of Delta's definition. Decision convention remains split (A01, unchanged). The other four are sensitivity only and CANNOT promote a NOT_CERTIFIABLE cell to CERTIFIABLE.",
+   "G6": "every NOT_CERTIFIABLE cell is listed in the writeup with the condition and the triggering number. Retired cells are NEVER reported as 'NI rejected'."
+  },
+  "d4_threshold_calibration_check": "the >99%-constant / >=99%-tie-rate thresholds in G3 were checked against data so they separate the real cases: barely_healed modal_pred_share=1.0 (FIRES, emits letter A on 14042/14042); pruned_healed 0.6440 and intact 0.5762 (do NOT fire); MMLU longest-option tied_longest_rate=0.3422 (does NOT fire); winogrande tie rate 1.0000 (FIRES, quoted from status/scout_21/lane2_a01_gate2.md, UNVERIFIED here).",
+  "cell_classification": {
+   "family": "4 arms (A1..A4) x 6 checkpoints {2500,5000,10000,20000,40000,80000} x 4 axes = 96 cells; 72 DECISION cells after the design's own NQ-open demotion (SS5.2)",
+   "why_fixable_pre_data": "the guard's verdict is a property of (axis, convention) ONLY, because residual(intact,x) depends on neither the arm nor the checkpoint -- the intact anchor is the same model in every cell.",
+   "by_convention": {
+    "split": {
+     "all_96_cells": {
+      "CERTIFIABLE": 48,
+      "NOT_CERTIFIABLE": 24,
+      "NEEDS_RECHECK_AFTER_DATA": 24
+     },
+     "decision_72_cells": {
+      "CERTIFIABLE": 48,
+      "NOT_CERTIFIABLE": 0,
+      "NEEDS_RECHECK_AFTER_DATA": 24
+     },
+     "per_axis": {
+      "triviaqa": {
+       "verdict": "CERTIFIABLE",
+       "residual_intact_pp": 40.43134195274186,
+       "residual_intact_ci95_pp": [
+        39.706865804725815,
+        41.139099420419086
+       ],
+       "delta_pp": 4.043134195274186,
+       "conditions_fired": [],
+       "conditions_needing_recheck": []
+      },
+      "popqa": {
+       "verdict": "CERTIFIABLE",
+       "residual_intact_pp": 13.205298941613513,
+       "residual_intact_ci95_pp": [
+        12.616527651223103,
+        13.787061049975469
+       ],
+       "delta_pp": 1.3205298941613515,
+       "conditions_fired": [],
+       "conditions_needing_recheck": []
+      },
+      "mmlu_content": {
+       "verdict": "NEEDS_RECHECK_AFTER_DATA",
+       "residual_intact_pp": 10.238926078906136,
+       "residual_intact_ci95_pp": [
+        9.314912405640221,
+        11.180164862555191
+       ],
+       "delta_pp": 1.0238926078906136,
+       "conditions_fired": [],
+       "conditions_needing_recheck": [
+        "D6_delta_below_measurement_resolution"
+       ]
+      },
+      "nq_open": {
+       "verdict": "NOT_CERTIFIABLE",
+       "residual_intact_pp": 9.695290858725762,
+       "residual_intact_ci95_pp": [
+        8.698060941828254,
+        10.720221606648199
+       ],
+       "delta_pp": 0.9695290858725762,
+       "conditions_fired": [
+        "D6_delta_below_measurement_resolution"
+       ],
+       "conditions_needing_recheck": []
+      }
+     }
+    },
+    "first": {
+     "all_96_cells": {
+      "CERTIFIABLE": 48,
+      "NOT_CERTIFIABLE": 24,
+      "NEEDS_RECHECK_AFTER_DATA": 24
+     },
+     "decision_72_cells": {
+      "CERTIFIABLE": 48,
+      "NOT_CERTIFIABLE": 0,
+      "NEEDS_RECHECK_AFTER_DATA": 24
+     },
+     "per_axis": {
+      "triviaqa": {
+       "verdict": "CERTIFIABLE",
+       "residual_intact_pp": 40.43134195274186,
+       "residual_intact_ci95_pp": [
+        39.706865804725815,
+        41.139099420419086
+       ],
+       "delta_pp": 4.043134195274186,
+       "conditions_fired": [],
+       "conditions_needing_recheck": []
+      },
+      "popqa": {
+       "verdict": "CERTIFIABLE",
+       "residual_intact_pp": 13.205298941613513,
+       "residual_intact_ci95_pp": [
+        12.616527651223103,
+        13.787061049975469
+       ],
+       "delta_pp": 1.3205298941613515,
+       "conditions_fired": [],
+       "conditions_needing_recheck": []
+      },
+      "mmlu_content": {
+       "verdict": "NEEDS_RECHECK_AFTER_DATA",
+       "residual_intact_pp": 10.575416607320893,
+       "residual_intact_ci95_pp": [
+        9.535678678250962,
+        11.586668565731378
+       ],
+       "delta_pp": 1.0575416607320893,
+       "conditions_fired": [],
+       "conditions_needing_recheck": [
+        "D6_delta_below_measurement_resolution"
+       ]
+      },
+      "nq_open": {
+       "verdict": "NOT_CERTIFIABLE",
+       "residual_intact_pp": 9.695290858725762,
+       "residual_intact_ci95_pp": [
+        8.698060941828254,
+        10.720221606648199
+       ],
+       "delta_pp": 0.9695290858725762,
+       "conditions_fired": [
+        "D6_delta_below_measurement_resolution"
+       ],
+       "conditions_needing_recheck": []
+      }
+     }
+    },
+    "last": {
+     "all_96_cells": {
+      "CERTIFIABLE": 48,
+      "NOT_CERTIFIABLE": 24,
+      "NEEDS_RECHECK_AFTER_DATA": 24
+     },
+     "decision_72_cells": {
+      "CERTIFIABLE": 48,
+      "NOT_CERTIFIABLE": 0,
+      "NEEDS_RECHECK_AFTER_DATA": 24
+     },
+     "per_axis": {
+      "triviaqa": {
+       "verdict": "CERTIFIABLE",
+       "residual_intact_pp": 40.43134195274186,
+       "residual_intact_ci95_pp": [
+        39.706865804725815,
+        41.139099420419086
+       ],
+       "delta_pp": 4.043134195274186,
+       "conditions_fired": [],
+       "conditions_needing_recheck": []
+      },
+      "popqa": {
+       "verdict": "CERTIFIABLE",
+       "residual_intact_pp": 13.205298941613513,
+       "residual_intact_ci95_pp": [
+        12.616527651223103,
+        13.787061049975469
+       ],
+       "delta_pp": 1.3205298941613515,
+       "conditions_fired": [],
+       "conditions_needing_recheck": []
+      },
+      "mmlu_content": {
+       "verdict": "NEEDS_RECHECK_AFTER_DATA",
+       "residual_intact_pp": 10.468594217347954,
+       "residual_intact_ci95_pp": [
+        9.443099273607748,
+        11.47984617575844
+       ],
+       "delta_pp": 1.0468594217347955,
+       "conditions_fired": [],
+       "conditions_needing_recheck": [
+        "D6_delta_below_measurement_resolution"
+       ]
+      },
+      "nq_open": {
+       "verdict": "NOT_CERTIFIABLE",
+       "residual_intact_pp": 9.695290858725762,
+       "residual_intact_ci95_pp": [
+        8.698060941828254,
+        10.720221606648199
+       ],
+       "delta_pp": 0.9695290858725762,
+       "conditions_fired": [
+        "D6_delta_below_measurement_resolution"
+       ],
+       "conditions_needing_recheck": []
+      }
+     }
+    },
+    "credit": {
+     "all_96_cells": {
+      "CERTIFIABLE": 48,
+      "NOT_CERTIFIABLE": 48,
+      "NEEDS_RECHECK_AFTER_DATA": 0
+     },
+     "decision_72_cells": {
+      "CERTIFIABLE": 48,
+      "NOT_CERTIFIABLE": 24,
+      "NEEDS_RECHECK_AFTER_DATA": 0
+     },
+     "per_axis": {
+      "triviaqa": {
+       "verdict": "CERTIFIABLE",
+       "residual_intact_pp": 40.43134195274186,
+       "residual_intact_ci95_pp": [
+        39.706865804725815,
+        41.139099420419086
+       ],
+       "delta_pp": 4.043134195274186,
+       "conditions_fired": [],
+       "conditions_needing_recheck": []
+      },
+      "popqa": {
+       "verdict": "CERTIFIABLE",
+       "residual_intact_pp": 13.205298941613513,
+       "residual_intact_ci95_pp": [
+        12.616527651223103,
+        13.787061049975469
+       ],
+       "delta_pp": 1.3205298941613515,
+       "conditions_fired": [],
+       "conditions_needing_recheck": []
+      },
+      "mmlu_content": {
+       "verdict": "NOT_CERTIFIABLE",
+       "residual_intact_pp": -6.687081612305939,
+       "residual_intact_ci95_pp": [
+        -7.719876086027631,
+        -5.640222190571144
+       ],
+       "delta_pp": -0.668708161230594,
+       "conditions_fired": [
+        "D1_residual_negative",
+        "D4_baseline_illegitimate"
+       ],
+       "conditions_needing_recheck": [],
+       "d4_reason": "all 8/8 damaged cells AND the intact arm are below this null -- it is above the entire arm population, so it is not a floor (A01 gate-3 found the same at 7B: 5 of 6 arms below, only intact above by 1.69pp)"
+      },
+      "nq_open": {
+       "verdict": "NOT_CERTIFIABLE",
+       "residual_intact_pp": 9.695290858725762,
+       "residual_intact_ci95_pp": [
+        8.698060941828254,
+        10.720221606648199
+       ],
+       "delta_pp": 0.9695290858725762,
+       "conditions_fired": [
+        "D6_delta_below_measurement_resolution"
+       ],
+       "conditions_needing_recheck": []
+      }
+     }
+    },
+    "wrong": {
+     "all_96_cells": {
+      "CERTIFIABLE": 72,
+      "NOT_CERTIFIABLE": 24,
+      "NEEDS_RECHECK_AFTER_DATA": 0
+     },
+     "decision_72_cells": {
+      "CERTIFIABLE": 72,
+      "NOT_CERTIFIABLE": 0,
+      "NEEDS_RECHECK_AFTER_DATA": 0
+     },
+     "per_axis": {
+      "triviaqa": {
+       "verdict": "CERTIFIABLE",
+       "residual_intact_pp": 40.43134195274186,
+       "residual_intact_ci95_pp": [
+        39.706865804725815,
+        41.139099420419086
+       ],
+       "delta_pp": 4.043134195274186,
+       "conditions_fired": [],
+       "conditions_needing_recheck": []
+      },
+      "popqa": {
+       "verdict": "CERTIFIABLE",
+       "residual_intact_pp": 13.205298941613513,
+       "residual_intact_ci95_pp": [
+        12.616527651223103,
+        13.787061049975469
+       ],
+       "delta_pp": 1.3205298941613515,
+       "conditions_fired": [],
+       "conditions_needing_recheck": []
+      },
+      "mmlu_content": {
+       "verdict": "CERTIFIABLE",
+       "residual_intact_pp": 19.071357356501924,
+       "residual_intact_ci95_pp": [
+        18.11707733941034,
+        20.018515880928643
+       ],
+       "delta_pp": 1.9071357356501926,
+       "conditions_fired": [],
+       "conditions_needing_recheck": []
+      },
+      "nq_open": {
+       "verdict": "NOT_CERTIFIABLE",
+       "residual_intact_pp": 9.695290858725762,
+       "residual_intact_ci95_pp": [
+        8.698060941828254,
+        10.720221606648199
+       ],
+       "delta_pp": 0.9695290858725762,
+       "conditions_fired": [
+        "D6_delta_below_measurement_resolution"
+       ],
+       "conditions_needing_recheck": []
+      }
+     }
+    }
+   },
+   "HEADLINE_prereg_split": "24 of 96 cells (25%) are NOT_CERTIFIABLE -- ALL 24 are NQ-open, and ALL 24 were ALREADY excluded from decisions by the design's own SS5.2 demotion. Of the 72 DECISION cells, 0 are NOT_CERTIFIABLE; 48 CERTIFIABLE + 24 (MMLU-content) NEEDS_RECHECK_AFTER_DATA on the fixed trigger p_disc>0.3832. => THE GUARD REMOVES NO DECISION CAPACITY A04 POSSESSED BEFORE IT."
+  },
+  "kill_clause_impact": {
+   "split": {
+    "surviving_decision_axes": [
+     "triviaqa",
+     "popqa",
+     "mmlu_content"
+    ],
+    "n_surviving_decision_axes": 3,
+    "K1_clause_a_literal_3_of_4_satisfiable": true,
+    "K1_DISABLED_if_not_satisfiable": false,
+    "K1_rescaled_threshold": 3,
+    "K1_ge24_cell_precondition_met": true,
+    "n_cells_remaining_decision": 72,
+    "K2_literal_2_of_4_satisfiable": true,
+    "K2_rescaled_threshold": 2,
+    "K3_n_axes_intact_residual_below_5pp": 0,
+    "K3_axes_below_5pp": [],
+    "K3_literal_fires": false
+   },
+   "first": {
+    "surviving_decision_axes": [
+     "triviaqa",
+     "popqa",
+     "mmlu_content"
+    ],
+    "n_surviving_decision_axes": 3,
+    "K1_clause_a_literal_3_of_4_satisfiable": true,
+    "K1_DISABLED_if_not_satisfiable": false,
+    "K1_rescaled_threshold": 3,
+    "K1_ge24_cell_precondition_met": true,
+    "n_cells_remaining_decision": 72,
+    "K2_literal_2_of_4_satisfiable": true,
+    "K2_rescaled_threshold": 2,
+    "K3_n_axes_intact_residual_below_5pp": 0,
+    "K3_axes_below_5pp": [],
+    "K3_literal_fires": false
+   },
+   "last": {
+    "surviving_decision_axes": [
+     "triviaqa",
+     "popqa",
+     "mmlu_content"
+    ],
+    "n_surviving_decision_axes": 3,
+    "K1_clause_a_literal_3_of_4_satisfiable": true,
+    "K1_DISABLED_if_not_satisfiable": false,
+    "K1_rescaled_threshold": 3,
+    "K1_ge24_cell_precondition_met": true,
+    "n_cells_remaining_decision": 72,
+    "K2_literal_2_of_4_satisfiable": true,
+    "K2_rescaled_threshold": 2,
+    "K3_n_axes_intact_residual_below_5pp": 0,
+    "K3_axes_below_5pp": [],
+    "K3_literal_fires": false
+   },
+   "credit": {
+    "surviving_decision_axes": [
+     "triviaqa",
+     "popqa"
+    ],
+    "n_surviving_decision_axes": 2,
+    "K1_clause_a_literal_3_of_4_satisfiable": false,
+    "K1_DISABLED_if_not_satisfiable": true,
+    "K1_rescaled_threshold": 2,
+    "K1_ge24_cell_precondition_met": true,
+    "n_cells_remaining_decision": 48,
+    "K2_literal_2_of_4_satisfiable": true,
+    "K2_rescaled_threshold": 1,
+    "K3_n_axes_intact_residual_below_5pp": 1,
+    "K3_axes_below_5pp": [
+     "mmlu_content"
+    ],
+    "K3_literal_fires": false,
+    "K3_coupling_warning": "K3 counts a NEGATIVE intact residual as 'below 5pp', so a convention that pushes axes below their null pushes K3 towards firing -- but for the wrong reason (an inadmissible null, not an unmeasurable scale). Axes retired by D1/D4 must be EXCLUDED from K3's count, not counted as at-floor."
+   },
+   "wrong": {
+    "surviving_decision_axes": [
+     "triviaqa",
+     "popqa",
+     "mmlu_content"
+    ],
+    "n_surviving_decision_axes": 3,
+    "K1_clause_a_literal_3_of_4_satisfiable": true,
+    "K1_DISABLED_if_not_satisfiable": false,
+    "K1_rescaled_threshold": 3,
+    "K1_ge24_cell_precondition_met": true,
+    "n_cells_remaining_decision": 72,
+    "K2_literal_2_of_4_satisfiable": true,
+    "K2_rescaled_threshold": 2,
+    "K3_n_axes_intact_residual_below_5pp": 0,
+    "K3_axes_below_5pp": [],
+    "K3_literal_fires": false
+   }
+  },
+  "kill_clause_new_prereg_rules": {
+   "K1_K2_rescaling": "if the guard retires a decision axis, K1's '>=3 of 4' rescales to ceil(0.75*n_surviving) and K2's '>=2 of 4' to ceil(0.50*n_surviving), preserving the original proportions. NECESSARY because retiring one of three decision axes makes K1 clause (a) PERMANENTLY FALSE -> K1 could never fire -> A04 becomes UNKILLABLE by K1, which is strictly worse than being killed. Under split this is a no-op (3 of 3 / 2 of 3); under credit it gives 2 of 2 / 1 of 2. Fixed BEFORE data so it cannot be chosen later to suit an outcome.",
+   "K3_sign_decoupling": "axes retired by D1 or D4 are EXCLUDED from K3's 'residual below 5pp' count, NOT counted as at-floor. A NEGATIVE residual is trivially below 5pp, so a convention that pushes an axis under its null would push K3 towards firing FOR THE WRONG REASON -- K3 detects an UNMEASURABLE SCALE, not an INADMISSIBLE NULL. With the exclusion, K3 does not fire under ANY convention (consistent with Pilot Zero SS2, but now for a stated reason rather than by luck)."
+  },
+  "does_this_kill_A04": "NO -- and A04's survival does NOT depend on the guard being lenient. Under the pre-registered split convention 72 of 72 decision cells remain admissible (48 CERTIFIABLE + 24 pending one arithmetic check); the PRIMARY axis TriviaQA EM is the safest cell in the family (Delta=4.0431pp, p*_crit=7.6359 vs observed p_disc<=0.2447, ~31x headroom) and cannot be retired by any of D1-D6 at 1B; and the 24 retired cells are entirely NQ-open, an axis already demoted to descriptive on independent grounds. K2 -- untestable with anything on disk (SEED_SEMANTICS_DEFECT.md) -- remains the likeliest killer, exactly as Pilot Zero concluded. The guard changes nothing about that.",
+  "what_the_guard_DOES_cost": [
+   "A04 loses the ability to report a credit-convention MMLU non-inferiority result. Because residual(arm)-residual(intact) = reported(arm)-reported(intact) (the null cancels EXACTLY; ni_rule's null_vec_* arguments are provably unused -- 0 references in the function body, verified by AST), the MEASURED DIFFERENCE is convention-invariant and A04's headline is unaffected. Only the credit MARGIN is lost. CONSEQUENCE FOR A CLAIM ALREADY WRITTEN DOWN: PILOT_ZERO_VERDICT.md SS4's 'survives ALL FIVE conventions' must now read 'the verdict is unchanged under the FOUR ADMISSIBLE conventions; credit is inadmissible on MMLU-content by the margin guard'. That is a real narrowing, and it is this amendment's doing.",
+   "MMLU-content's admissibility now depends on the unseen arm (16% headroom at the barely-healed p_disc). If early-checkpoint MMLU cells retire, the pre-registered rescaling leaves K1 at ceil(0.75*2)=2 of 2 -- still satisfiable, so still falsifiable, but on a thinner base.",
+   "UNRESOLVED TENSION between K3 and D6: an axis can PASS K3 (residual>=5pp => 'measurable') yet FAIL D6 (Delta=0.10*5pp=0.5pp is below every measured item-level half-width, 0.54-1.02pp) => 'not certifiable at a 10% margin'. No 1B axis is in that window (smallest surviving residual 10.2389pp), so it does not bite here -- but it is NOT RESOLVED and must NOT be resolved by adjusting Delta after data."
+  ],
+  "evidence_files": [
+   "evidence/a04_margin_guard_classification.json (new)",
+   "evidence/a04_intact_residual_ci_1b_mmlu.json (new)",
+   "evidence/a04_pdisc_mmlu_1b.json + _full.json (new)",
+   "evidence/pilot_zero_rule_disagreement.json (existing, re-read)"
+  ],
+  "code": [
+   "code/a04_margin_guard_classify.py (new)",
+   "code/a04_intact_residual_ci.py (new)",
+   "code/a04_measure_pdisc.py (new)"
+  ],
+  "method_compliance": "scorers/nulls (longest_option_vector, paired_bootstrap) IMPORTED from A03/code/analyze_1b_knowledge_floor.py, never reimplemented; item counts hard-asserted at 14042 with nan-row and duplicate-item_id checks; item_id and gold_letter alignment asserted across every pair of dumps; the 5 nulls asserted bit-identical between the two intact artefacts; the p_disc range recovered from bootstrap gaps asserted to CONTAIN the directly measured 0.168708; T/rho/delta_fraction asserted equal to evidence/pilot_zero_rule_disagreement.json:preregistration. GPU: ZERO (no training, no eval, no torchrun, no model load; remote access read-only ls/md5sum/scp -O of 3 JSONL files).",
+  "correction_prose_vs_json": "REPORTED DISCREPANCY, JSON WINS: A04_GATE_DESIGN.md SS4 and STATUS.json nulls_per_metric.NQ_open_EM.null both give the NQ-open null as 0.0055; the evidence JSONs give 0.00554016620498615 (a03_1b_floor_nulls_4axes.json cells[intact,nq_open,em].null and pilot_zero_rule_disagreement.json nulls.nq_open.acc). This is a DISPLAY ROUNDING, not a conflict: it moves Delta_NQ-open from 0.9695290858725762pp to 0.9699307479224377pp (+0.000402pp) and p*_crit from 0.088335 to 0.088408 -- NQ-open is retired by D6 under either value, so no verdict changes. CANONICAL VALUE = 0.00554016620498615; 0.0055 must not be used in arithmetic. No other prose/JSON inconsistency was found in the quantities this guard depends on (the 4 intact residuals, the 5 MMLU nulls, and the 8 credit cells were each re-derived and matched to <1e-6).",
+  "unverified": [
+   "whether MMLU-content survives D6 at the gate's EARLY checkpoints -- p*_crit=0.3832 vs barely-healed p_disc=0.301097 leaves 16% headroom on Delta/hw; the arm that would settle it does not exist. This IS the NEEDS_RECHECK_AFTER_DATA verdict; the trigger is fixed.",
+   "p_disc at a barely-healed checkpoint for triviaqa/popqa/nq_open -- only mmlu_content has a step-500 arm scored. Since p_disc rises as the arm degrades, those three D6 verdicts rest on an OPTIMISTIC range. TriviaQA's ~31x headroom is safe by any margin; PopQA's ~5x is very likely safe but unproven at step 2,500.",
+   "the CAUSAL attribution of the 48-item D5 drift to harness commit 7ac9653 -- verified only that the commit falls strictly between the two evals; no same-code control was run; no noise floor is claimed.",
+   "BoolQ 0.6217 always-B / OpenBookQA 0.3635 / winogrande 100% tie rate -- quoted from status/scout_21/lane2_a01_gate2.md, underlying shards NOT re-opened in this pass. They inform only the widened-axis discussion, not any A04 verdict.",
+   "whether residual(intact) stays positive at j=12 -- the intact anchor is the same model regardless of j so Delta itself is unaffected, but K3's clearance is arm-dependent and remains UNVERIFIED for j=12 (as PILOT_ZERO_VERDICT.md SS2 already states).",
+   "7B behaviour: the credit/7B_base near-D2 case (Delta=0.1688pp vs half-width 1.0541pp) is recorded from A01's JSON but 7B is out of A04 scope and unfunded.",
+   "the K3-vs-D6 tension is IDENTIFIED, NOT RESOLVED. No 1B axis falls in the window.",
+   "SHA256 for the pinned anchors: G0 asks for SHA256; this pass verified MD5 after scp -O (matched at both ends). SHA256 must be recorded at gate launch."
+  ]
  }
 }
