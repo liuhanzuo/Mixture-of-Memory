@@ -1,9 +1,9 @@
 {
   "id": "A02",
-  "status": "active_reframe_gate_run_storage_DEAD_readcompute_survives_weakly",
+  "status": "active_storage_DEAD_readcompute_weak_phase1_BABILONG_evidence_reattributed_to_retrieval",
   "priority": 2,
-  "updated": "2026-08-09T23:55+0800",
-  "phase": "storage/read-compute reframe gate MEASURED (was: unmeasured assertion)",
+  "updated": "2026-08-10T01:30+0800",
+  "phase": "depth-vs-retrieval quality gate MEASURED (the question the cost gate exposed but could not answer)",
   "premise_check_2026_08_08": {
     "claim_under_test": "A02 stage-1 needs NO new training -- only eval of ~5 configs x 5 benchmarks",
     "verdict": "PARTIALLY TRUE; blocked on identifying the canonical Read-LoRA",
@@ -35,9 +35,10 @@
     "recommended_node": "a zwfy6 node (.73/.82/.104) so the Write-LoRA needs no transfer at all"
   },
   "next_gate": [
-    "A02 is NOT cleared for promotion: the strong form of the only framing its kill clause left open (storage) is DEAD, and the weak form (read-compute) is a 1.03-1.37x per-query micro-optimisation whose 86-93% of apparent win belongs to retrieval.",
-    "If A02 continues, the highest-value question this gate EXPOSED but did not answer: selection is the dominant per-query cost at 1M (1014.8 ms vs 678 ms read) -> sublinear retrieval. NOTE this is not CoMem-specific and would benefit text-RAG equally.",
-    "Still open from phase-1 and NOT resolved here: whether C2's quality losses are mid-layer-read failures or retrieval-recall failures. Needs a j0_top12 QUALITY run (same pack, j=0, no LoRA); this gate only costed that arm."
+    "A02 is NOT cleared for promotion. Storage form DEAD (2048x raw text). Read-compute form is a 1.03-1.37x per-query micro-optimisation. AND (2026-08-10) the phase-1 BABILong quality evidence has been RE-ATTRIBUTED: 54.9-78.6% of the C1-vs-C2 change on qa1/qa2 is the RETRIEVAL axis, not mid-layer read.",
+    "RESOLVED 2026-08-10 (was the top open question): 'whether C2's quality losses are mid-layer-read failures or retrieval-recall failures'. ANSWER: benchmark-dependent. BABILong qa1/qa2 -> retrieval dominates (recall@12 only 22.9-63.2%). RULER -> retrieval is ~0 (recall 99-100%) and the whole loss is the read (deployed -3 to -12pp). See A02_DEPTH_VS_RETRIEVAL_VERDICT.md.",
+    "If A02 continues, two candidates, NEITHER CoMem-specific: (a) sublinear retrieval -- selection is the dominant per-query cost at 1M (1014.8 ms vs 678 ms read); (b) a better selector than top-12 iter_bm25 -- it misses the gold support on 37-77% of BABILong qa1/qa2 samples. Both would benefit plain text-RAG identically, so neither supports a CoMem thesis.",
+    "NOT tested anywhere yet: a matched-quality depth control (a LoRA distilled for j=0) -- without it, depth cannot be isolated from adapter quality. This is the only remaining way to make a clean depth claim, and it requires TRAINING, not eval."
   ],
   "kill_gate_verbatim": "若 paired quality CI 仍显著低于 0，则停止 CoMem 优于 RAG 的叙事，定位为高复用 workload 的 storage/read-compute 方案",
   "phase1_c1_vs_c2_gate": {
@@ -129,5 +130,68 @@
       "evidence/a02_storage_readcompute_serve/ (18 raw per-unit records)"
     ],
     "promotion_impact": "Does NOT clear A02 for promotion to paper<X>. Recommended positioning: not a storage method and not a large serving win; the defensible claim is 'given you are already doing retrieval, caching mid-depth residuals removes the bottom-12-layer prefill for 1.03-1.37x per-query, repaid after ~8-226 queries/corpus, at a 2048x storage premium over raw text and with a measurable accuracy cost on long-context single-span retrieval' = a systems micro-optimisation, not a paper thesis."
+  },
+  "depth_vs_retrieval_quality_gate": {
+    "tested": "2026-08-10",
+    "node": ".82 (8x H20, zwfy6), bounded 4-GPU pool (GPUs 0-3); A03 watcher PID 2165190 left untouched and still alive at exit; all GPUs released on completion",
+    "question": "Phase-1's C1-vs-C2 moved FOUR variables at once (verified from on-disk cell configs: C1 no_retrieval=True/selector=None/topk=None/resume_j=0/lora=None vs C2 no_retrieval=False/selector=iter_bm25/topk=12/resume_j=12/lora=flagship). Were C2's quality losses MID-LAYER-READ failures (A02's thesis) or RETRIEVAL-RECALL failures (a property of top-12 iter_bm25, unrelated to CoMem)?",
+    "verdict": "BOTH ARE REAL AND WHICH DOMINATES IS DECIDED BY THE BENCHMARK. BABILong qa1/qa2 -> RETRIEVAL dominates (54.9-78.6%). RULER -> READ dominates (retrieval ~0, recall 99-100%). BABILong qa5 -> neither step significant.",
+    "headline": "Phase-1's four 'decisive C1 wins' on BABILong qa1/qa2 (-35 to -55pp) are MOSTLY a retrieval/pack-narrowing artifact, NOT evidence about mid-layer reading. A02's read thesis was only ever properly tested by RULER, where the DEPLOYED read costs a significant but modest -3 to -12pp with retrieval held identical.",
+    "arms": {
+      "c1_pack_all": "phase-1 C1 (on disk): j=0, no LoRA, packs ALL chunks, no selector",
+      "j0_top12": "NEW: j=0, no LoRA, top-12 iter_bm25 == matched-pack text-RAG",
+      "j12_frozen": "NEW: j=12, NO LoRA, SAME top-12 pack -- this is what breaks the depth<->LoRA confound the cost gate called irreducible",
+      "c2_comem": "phase-1 C2 (on disk): j=12 + flagship Read-LoRA, same top-12 pack"
+    },
+    "steps": "retrieval=c1->j0_top12; read_depth=j0_top12->j12_frozen; read_lora=j12_frozen->c2_comem; read_deployed=j0_top12->c2_comem (the like-for-like shipped read). retrieval+read_deployed EXACTLY partitions the total c1->c2 change and read_depth+read_lora EXACTLY equals read_deployed (both asserted to 1e-6 on all 10 cells), so nothing is double-counted.",
+    "per_cell_retrieval_vs_deployed_pp": {
+      "babilong_qa1_16k": "RETR -39.0* / DEPLOY -16.0* -> retrieval 70.9%",
+      "babilong_qa1_32k": "RETR -28.0* / DEPLOY -23.0* -> retrieval 54.9% (NOT decisive, near-tie)",
+      "babilong_qa2_16k": "RETR -33.0* / DEPLOY -9.0 ns -> retrieval 78.6%",
+      "babilong_qa2_32k": "RETR -25.0* / DEPLOY -10.0* -> retrieval 71.4%",
+      "babilong_qa5_16k": "RETR +9.0 ns / DEPLOY +5.0 ns -> unattributable",
+      "babilong_qa5_32k": "RETR +2.0 ns / DEPLOY -3.0 ns -> unattributable",
+      "ruler_niah_mk1_16k": "RETR +0.0 ns / DEPLOY -10.0* [-16,-5] -> read 100%",
+      "ruler_niah_mk1_32k": "RETR +1.0 ns / DEPLOY -3.0 ns -> read 75.0%",
+      "ruler_vt_16k": "RETR +0.0 ns / DEPLOY -12.0* [-19,-6] -> read 100%",
+      "ruler_vt_32k": "RETR +1.0 ns / DEPLOY -11.0* [-18,-5] -> read 91.7%"
+    },
+    "retrieval_recall_at_12": {
+      "method": "HIT iff EVERY gold-support chunk is in the top-12 iter_bm25 pack; decided INDEPENDENTLY of answer accuracy; flagship selector + harness gold locator both imported unmodified",
+      "babilong": "qa1x16k 63.2% [53.1,72.2] | qa1x32k 57.0% [47.2,66.3] | qa2x16k 49.5% [39.6,59.4] | qa2x32k 22.9% [15.7,32.3] | qa5x16k 64.1% | qa5x32k 57.9%",
+      "ruler": "niah_mk1x16k 100.0% [96.2,100.0] | niah_mk1x32k 99.0% [94.6,99.8] | variable_tracking NOT MEASURABLE (0 gold-locatable)",
+      "interpretation": "the retrieval channel is wide open on BABILong (misses gold on 37-77% of samples, degrading with length) and closed on RULER -- exactly matching where each cause dominates"
+    },
+    "NEW_FINDING_adapter_dependence": "Mid-depth resume is almost ENTIRELY adapter-supplied: j12_frozen scores 0.0-3.0% on RULER while c2_comem scores 88-96% (read_depth -97 to -100pp, read_lora +87 to +95pp). Resuming at layer 12 on chunk-local hiddens is non-functional untrained. This is clean, previously unmeasured, and is a fact about distillation, not about memory efficiency. NOTE it is task-dependent: read_lora is n.s. on BABILong qa2 (+4.0, -1.0).",
+    "conditional_on_recall": "Confirms retrieval is causal (penalty always larger on MISS than HIT: qa1x16k -45.7 vs -36.7; qa2x16k -43.8 vs -21.3; j0_top12 collapses to 5-20% on MISS) AND qualifies it (the retrieval step stays significantly negative on the HIT subset too, so 'gold chunk in pack' is NOT sufficient -- narrowing 30-60 chunks to 12 also removes distractor/aggregation context). On RULER the retrieval step is +2.02 ns on the 99-sample HIT subset.",
+    "confound_KEPT_stated_plainly": "There is NO arm here that isolates depth with a matched-quality adapter. j12_frozen runs j=12 WITHOUT the adapter distilled for it, so it is a LOWER BOUND on depth-12 capability, not a fair depth arm; read_deployed bundles depth+adapter. Both are reported. The read_depth -97pp on RULER must NOT be read as 'depth costs 97pp' -- it means 'untrained depth-12 resume is non-functional'. The defensible depth-effect numbers are the read_deployed ones (-3 to -12pp). Removing this confound needs a j=0 control LoRA = TRAINING, out of scope for an eval gate.",
+    "unverified": [
+      "gold-support locator for qa2/qa5 matches the ANSWER string, which for multi-fact tasks marks only the answer-bearing fact, not the full support chain -> reported qa2/qa5 recall is an UPPER BOUND (making the retrieval attribution conservative, but the absolute percentages should not be quoted as exact)",
+      "variable_tracking retrieval recall NOT measured at all (0 gold-locatable); its 'retrieval ~0' rests only on the accuracy step (j0_top12 100.0 vs c1 100.0/99.0)",
+      "10 cells only, n=100/cell, ONE seed (42), Qwen3-8B only, H20/bf16/sdpa; 4k NOT re-run (phase-1 showed n.s.) so the length trend rests on 2 points per task",
+      "LongBench / LoCoMo / LongEval NOT re-run (phase-1 TIEs cannot discriminate depth from retrieval); LongEval's 8k->128k sign flip remains unexplained",
+      "whether a better selector (higher topk / oracle / semantic retriever) closes the BABILong gap is untested -- and would NOT be CoMem-specific"
+    ],
+    "integrity_gates": "ALL PASSED: G0 Read-LoRA sha==dd09cd17 fail-closed; G1 shard completeness 8/8 every cell every arm, 0 refused, NEGATIVE-TESTED (deleting one shard -> G1_SHARD_INCOMPLETE 7/8, refuses to merge); G2 BABILong (question,target) identical across arms; G2 RULER input_ids_sha256 identical across all 4 arms AND vs crc32 regeneration, 0 failures; G3 config identity 0 errors; chat_template=False asserted in every cell config; both partition identities exact to 1e-6; canonical scorers IMPORTED not reimplemented (babilong.metrics.compare_answers, RULER harness per-item correct); evidence md5-identical on wzc1 and zwfy6.",
+    "aggregation_hygiene": "No pooled BABILong or pooled LongEval figure is computed or quoted anywhere in this gate; evidence JSON contains per-cell blocks only. The banned -17.89pp / +2.00pp pooled values are absent by construction.",
+    "restates_phase1": "YES for BABILong qa1/qa2: phase-1's verdict should no longer cite those cells as evidence about mid-layer reading. NO for RULER: phase-1's reading stands there, at a corrected (smaller) magnitude. Phase-1's overall KILL conclusion is UNCHANGED -- C2 is still not significantly better anywhere protocol-clean -- but its stated CAUSE was wrong for 4 of its 5 decisive cells.",
+    "code": [
+      "proposal/active/A02-comem-write-read-repair/code/run_a02_depth_vs_retrieval.sh",
+      "proposal/active/A02-comem-write-read-repair/code/analyze_a02_depth_vs_retrieval.py",
+      "proposal/active/A02-comem-write-read-repair/code/analyze_a02_conditional_recall.py"
+    ],
+    "evidence": [
+      "A02_DEPTH_VS_RETRIEVAL_VERDICT.md",
+      "evidence/a02_depth_vs_retrieval_ci.json (every headline recomputable; audited number-by-number against the doc)",
+      "evidence/a02_depth_vs_retrieval_per_item.json (raw per-item correctness + per-sample recall, all 4 arms, 10 cells)",
+      "evidence/a02_depth_vs_retrieval_conditional.json"
+    ],
+    "raw_results_on_zwfy6": [
+      "babilong_results/a02_dvr_babilong_j0_top12/ (6 cells x 8 shards)",
+      "babilong_results/a02_dvr_babilong_j12_frozen/ (6 cells x 8 shards)",
+      "ruler_results/a02_dvr_ruler_j0_top12/ (32 records.json)",
+      "ruler_results/a02_dvr_ruler_j12_frozen/ (32 records.json)"
+    ],
+    "promotion_impact": "Does NOT clear A02. The kill clause's quality finding survives in WEAKENED, NARROWED form: CoMem's read does cost accuracy where retrieval is not the bottleneck (RULER, -3 to -12pp), but the headline magnitude was inflated 2-5x by a retrieval confound. Combined with the cost gate (storage DEAD, read-compute 1.03-1.37x), positioning is unchanged."
   }
 }
