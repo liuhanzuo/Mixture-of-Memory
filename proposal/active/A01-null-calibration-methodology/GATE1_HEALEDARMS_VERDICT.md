@@ -264,12 +264,49 @@ above content. Only Llama-2-7B (a weak model) has letter ≈ content near floor.
 
 So the honest pattern is:
 
-| regime | letter vs content |
-|---|---|
-| **strong intact bases** (OLMo-2, Llama-3, Qwen3) | **letter > content, by 13–23pp** |
-| damaged / truncated arms (all families) | ≈ tied near floor |
-| healed keep14 (main, freezefront, fromscratch) | **content > letter, by 6–12pp** |
-| healed shortgpt16 | letter > content, by 7pp (matches intact regime) |
+| regime | letter vs content | example |
+|---|---|---|
+| **competent intact bases** (letter ≥ 0.60) | **letter > content, by 13–23pp** | OLMo-2-7B, Llama-3-8B, Qwen3-8B |
+| **weaker intact bases** (letter 0.38–0.41) | **letter ≈ content (TIE)** | OLMo-2-**1B** (added 2026-08-09), Llama-2-7B |
+| damaged / truncated arms | ≈ tied near floor | trunc k=8/12 non-OLMo |
+| healed keep14 (main, freezefront, fromscratch) | **content > letter, by 6–12pp** | OLMo-2-7B keep14 variants |
+| healed shortgpt16 | letter > content, by 7pp (matches competent-intact regime) | OLMo-2-7B shortgpt16 |
+
+### 7.1.1 The OLMo-2-1B intact data point (2026-08-09)
+
+Same protocol as intact 7B (base mode, `chat_template=False`, no few-shot,
+`--add_bos 0`, `--content_desc full` and `cdnone` variants, 8-shard eval on .21).
+
+| arm | letter | content_norm | cn − l | CI95(cn−l) | McNemar p |
+|---|---:|---:|---:|---|---:|
+| OLMo-2-1B intact + FULL | 0.3816 | 0.3870 | +0.53pp | [−0.51, +1.58] | 0.33 |
+| OLMo-2-1B intact + cdnone | 0.3816 | 0.3762 | −0.54pp | [−1.58, +0.50] | 0.32 |
+
+Both CIs cross 0. This is a **TIE**, not a sign flip — the same construct on the
+same items but at a weaker letter readout gives no advantage to either interface.
+
+### 7.1.2 What this refines about §7's read
+
+§7 originally said "strong intact bases have letter > content by 13–23pp". The
+correct statement is:
+
+* **Letter > content is a property of COMPETENT letter readouts, not intact-ness.**
+  1B OLMo-2 is intact, but its letter readout at 0.38 is not competent enough to
+  beat the content readout at 0.39.
+* **The letter advantage grows with letter competence, not merely with model
+  scale.** Llama-2-7B is intact and 7B in parameters but its letter is 0.41 —
+  same regime as 1B OLMo-2, not the same regime as 7B OLMo-2. Whatever letter
+  readout is decoding, its per-token calibration matters more than the
+  parameter count.
+* **This makes the intact-vs-healed contrast tighter, not looser.** Healed
+  keep14's letter (0.32) sits BELOW the intact 1B letter (0.38) — a smaller
+  model, same architecture family, no damage, still beats healed 7B on the same
+  interface. That is genuine capability loss in the fresh-2-layers-plus-heal
+  recipe, and it is not a scale story.
+
+This does NOT change §7's other reads. The shortgpt16 sign is still striking
+(matches the competent-intact regime while its structurally-matched keep14
+siblings do not).
 
 ## 7.2 What the corrected pattern says
 
@@ -330,4 +367,6 @@ touched.** That is A01's core protocol claim, unchanged.
 * `olmo2_mmlu_content_results/a01_7B_intact_base_cdnone/summary.json`  (this session's new run)
 * `olmo2_mmlu_content_results/a01_7B_keep14fresh2_freezefront_healed_cdnone/summary.json`  (2026-08-09 fill on .21)
 * `olmo2_mmlu_content_results/a01_7B_keep14fresh2_fromscratch_healed_cdnone/summary.json`  (2026-08-09 fill on .21)
+* `olmo2_mmlu_content_results/a01_1B_intact_base_full/summary.json`  (2026-08-09 cross-scale fill on .21)
+* `olmo2_mmlu_content_results/a01_1B_intact_base_cdnone/summary.json`  (2026-08-09 cross-scale fill on .21)
 * Prior intact non-OLMo numbers (Llama-2/Llama-3/Qwen3): `GATE1_VERDICT.md` §2 (numbers valid, its VERDICT retracted)
