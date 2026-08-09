@@ -2,6 +2,18 @@
 mapping of every hyperparameter and implementation choice."""
 
 from .adams import AdamS, MaskCoverageError, build_param_groups
+from .checkpoint import (
+    CKPT_FORMAT,
+    RESUME_CRITICAL_ARGS,
+    ResumeMismatchError,
+    assert_optimizer_state_restored,
+    check_resume_args,
+    checkpoint_size_bytes,
+    find_latest_checkpoint,
+    load_training_state,
+    prune_old_checkpoints,
+    save_training_state,
+)
 from .diagnostics import exactness_report, magnitude_report
 from .distill import cast_loss, convex_to_unnormalised, kl_divergence_loss
 from .sparse_linear import (
@@ -25,6 +37,16 @@ __all__ = [
     "AdamS",
     "MaskCoverageError",
     "build_param_groups",
+    "ResumeMismatchError",
+    "RESUME_CRITICAL_ARGS",
+    "CKPT_FORMAT",
+    "check_resume_args",
+    "save_training_state",
+    "load_training_state",
+    "assert_optimizer_state_restored",
+    "checkpoint_size_bytes",
+    "find_latest_checkpoint",
+    "prune_old_checkpoints",
     "magnitude_report",
     "exactness_report",
     "cast_loss",

@@ -13,6 +13,7 @@ from __future__ import annotations
 import math
 import os
 import sys
+from pathlib import Path
 
 import torch
 import torch.nn as nn
@@ -23,13 +24,19 @@ from cast import (  # noqa: E402
     AdamS,
     CastSparseLinear,
     MaskCoverageError,
+    ResumeMismatchError,
+    assert_optimizer_state_restored,
     build_param_groups,
     cast_loss,
+    check_resume_args,
     convert_llama_to_cast,
     convex_to_unnormalised,
+    find_latest_checkpoint,
     kl_divergence_loss,
+    load_training_state,
     nm_magnitude_mask,
     refresh_all_masks,
+    save_training_state,
 )
 
 
@@ -556,6 +563,252 @@ def test_terminal_magnitude_is_set_by_final_lr():
 
 
 # ---------------------------------------------------------------------------
+# 9. Resume guards: a resume must be a continuation or a crash, never a warm restart
+# ---------------------------------------------------------------------------
+def _full_args(**over):
+    """A complete trainer arg namespace, as vars(args) would give."""
+    a = dict(
+        lr=2e-5, l1_decay=4e-7, max_steps=7500, lr_schedule="constant", min_lr=2e-6,
+        warmup=375, global_batch=256, micro_batch=1, seq_len=4096, mask_period=10,
+        scale_groups=2, eta=1.0 / 3.0, kl_temperature=1.0, betas=(0.9, 0.999),
+        eps=1e-8, grad_clip=1.0, seed=1234, no_teacher=False, data="data/dolmino",
+        data_dtype="auto", parallel="zero2",
+        # free
+        out="outputs/x", project_root="/root", model="models/m", log_every=10,
+        diag_every=250, save_every=250, keep_last=2, resume="", dist_timeout=3600,
+        stop_after=0, gradient_checkpointing=True, smoke=False,
+    )
+    a.update(over)
+    return a
+
+
+def test_resume_accepts_identical_config():
+    old, new = _full_args(), _full_args()
+    benign = check_resume_args(old, new)
+    assert benign == {}, benign
+    return "identical config resumes cleanly, no spurious diffs reported"
+
+
+def test_resume_allows_benign_differences():
+    """Where a run was interrupted, and how often it saves, are not part of the recipe."""
+    old = _full_args(save_every=250, stop_after=0, out="outputs/a")
+    new = _full_args(save_every=500, stop_after=4000, out="outputs/a", resume="auto")
+    benign = check_resume_args(old, new)
+    assert set(benign) == {"save_every", "stop_after", "resume"}, benign
+    return f"benign diffs allowed and reported: {sorted(benign)}"
+
+
+def test_resume_rejects_changed_max_steps():
+    """The trap that makes 'just stop it early' silently wrong.
+
+    max_steps is not only a stopping condition: AdamS uses alpha_t = t/max_steps as
+    the L1-decay ramp, so resuming a 7500-step run as a 4000-step run rescales the
+    whole sparsification schedule. This must be refused, and --stop-after used
+    instead.
+    """
+    try:
+        check_resume_args(_full_args(max_steps=7500), _full_args(max_steps=4000))
+    except ResumeMismatchError as e:
+        assert "max_steps" in str(e) and "7500" in str(e) and "4000" in str(e)
+        assert "--stop-after" in str(e), "the error must point at the right tool"
+        return "changed --max-steps is refused (alpha_t = t/T would be rescaled)"
+    raise AssertionError("a changed max_steps was silently accepted")
+
+
+def test_resume_rejects_changed_l1_decay_and_lr():
+    bad = 0
+    for k, v in (("l1_decay", 8e-7), ("lr", 1e-5), ("seed", 7), ("seq_len", 2048)):
+        try:
+            check_resume_args(_full_args(), _full_args(**{k: v}))
+        except ResumeMismatchError as e:
+            assert k in str(e)
+            bad += 1
+    assert bad == 4, f"only {bad}/4 trajectory-critical changes were caught"
+    return "changed l1_decay / lr / seed / seq_len all refused"
+
+
+def test_resume_reports_every_mismatch_at_once():
+    """One key per error would make fixing a launch command a guessing game."""
+    try:
+        check_resume_args(_full_args(), _full_args(lr=1e-5, l1_decay=1e-6, warmup=0))
+    except ResumeMismatchError as e:
+        msg = str(e)
+        assert all(k in msg for k in ("lr", "l1_decay", "warmup")), msg
+        return "all mismatching keys are listed in a single error"
+    raise AssertionError("no error raised")
+
+
+def test_resume_rejects_checkpoint_missing_a_key():
+    """A checkpoint that cannot vouch for a critical arg cannot be proven faithful."""
+    old = _full_args()
+    del old["l1_decay"]
+    try:
+        check_resume_args(old, _full_args())
+    except ResumeMismatchError as e:
+        assert "l1_decay" in str(e) and "cannot verify" in str(e)
+        return "missing key in checkpoint => refuse (cannot prove equality)"
+    raise AssertionError("an unverifiable checkpoint was accepted")
+
+
+def test_warm_restart_is_detected():
+    """THE regression test for the failure that cost a sibling project three arms.
+
+    Zeroed Adam moments are what torch leaves behind when it silently
+    re-initialises state. assert_optimizer_state_restored must call that out.
+    """
+    lin = _one_layer()
+    lin.refresh_mask()
+    opt = AdamS(build_param_groups(lin, lr=1e-3), lr=1e-3, total_steps=10, l1_decay=1e-3)
+    for _ in range(3):
+        lin.weight.grad = torch.randn_like(lin.weight)
+        lin.cast_scale.grad = torch.randn_like(lin.cast_scale)
+        opt.step()
+
+    # healthy state passes
+    counts = assert_optimizer_state_restored(
+        opt, expected_step=3, is_zero=False, rank=0, world=1
+    )
+    assert counts["with_state"] == counts["params"] == 2, counts
+
+    # now simulate the warm restart
+    for st in opt.state.values():
+        st["exp_avg"].zero_()
+        st["exp_avg_sq"].zero_()
+    try:
+        assert_optimizer_state_restored(opt, expected_step=3, is_zero=False, rank=0, world=1)
+    except ResumeMismatchError as e:
+        assert "identically zero" in str(e)
+        return (
+            "healthy moments pass; zeroed moments (the silent warm-restart signature) "
+            "raise ResumeMismatchError"
+        )
+    raise AssertionError("a warm restart with zeroed Adam moments was accepted")
+
+
+def test_wrong_step_counter_is_detected():
+    """state['step'] drives bias correction AND alpha_t = (step-1)/T."""
+    lin = _one_layer()
+    lin.refresh_mask()
+    opt = AdamS(build_param_groups(lin, lr=1e-3), lr=1e-3, total_steps=10, l1_decay=1e-3)
+    for _ in range(2):
+        lin.weight.grad = torch.randn_like(lin.weight)
+        lin.cast_scale.grad = torch.randn_like(lin.cast_scale)
+        opt.step()
+    try:
+        assert_optimizer_state_restored(opt, expected_step=999, is_zero=False, rank=0, world=1)
+    except ResumeMismatchError as e:
+        assert "step counters" in str(e) and "alpha_t" in str(e)
+        return "a rewound step counter raises (would silently restart the decay ramp)"
+    raise AssertionError("a wrong step counter was accepted")
+
+
+def test_checkpoint_roundtrip_single_rank():
+    """Save -> perturb -> load must restore weights, MASK, moments, step and RNG.
+
+    The perturbation is the point: without it a load that silently did nothing
+    would pass. The mask especially -- it is training state (refreshed only every
+    T1 steps), so a resume that recomputes it from the current weights is NOT
+    equivalent.
+    """
+    import tempfile
+
+    import numpy as np
+
+    torch.manual_seed(11)
+    model = nn.Sequential()
+    lin = CastSparseLinear(16, 8, bias=False, scale_groups=2)
+    model.add_module("q_proj", lin)
+    with torch.no_grad():
+        lin.weight.copy_(torch.randn_like(lin.weight))
+    refresh_all_masks(model)
+    opt = AdamS(build_param_groups(model, lr=1e-3), lr=1e-3, total_steps=50, l1_decay=1e-3)
+    for _ in range(4):
+        for p in model.parameters():
+            p.grad = torch.randn_like(p)
+        opt.step()
+    gen = np.random.default_rng(5)
+    gen.integers(0, 100, size=3)  # advance it
+
+    ref_w = lin.weight.detach().clone()
+    ref_mask = lin.mask.detach().clone()
+    ref_m = opt.state[lin.weight]["exp_avg"].clone()
+    ref_v = opt.state[lin.weight]["exp_avg_sq"].clone()
+    ref_next = np.random.default_rng()
+    ref_next.bit_generator.state = gen.bit_generator.state
+    ref_next = ref_next.integers(0, 100, size=3).tolist()
+
+    args = _full_args(parallel="ddp")
+    with tempfile.TemporaryDirectory() as td:
+        ck = Path(td) / "ckpt_step3"
+        save_training_state(ck, step=3, model=model, opt=opt, args=args,
+                            np_generator=gen, is_zero=False, rank=0, world=1)
+        assert (ck / "DONE").exists(), "DONE marker missing"
+        assert find_latest_checkpoint(Path(td)) == ck
+
+        # PERTURB: a no-op load must not be able to pass
+        with torch.no_grad():
+            lin.weight.add_(1.0)
+            lin.mask.copy_(~lin.mask)
+            opt.state[lin.weight]["exp_avg"].add_(3.0)
+            opt.state[lin.weight]["exp_avg_sq"].add_(3.0)
+        gen.bit_generator.state = np.random.default_rng(77).bit_generator.state
+
+        meta = load_training_state(ck, model=model, opt=opt, cur_args=args,
+                                  np_generator=gen, is_zero=False, rank=0, world=1,
+                                  expected_mask_buffers=1)
+        assert meta["step"] == 3, meta
+
+    now_next = np.random.default_rng()
+    now_next.bit_generator.state = gen.bit_generator.state
+    now_next = now_next.integers(0, 100, size=3).tolist()
+
+    assert torch.equal(lin.weight.detach(), ref_w), "weights not restored bit-exactly"
+    assert torch.equal(lin.mask, ref_mask), "MASK not restored (it is training state!)"
+    assert torch.equal(opt.state[lin.weight]["exp_avg"], ref_m), "exp_avg not restored"
+    assert torch.equal(opt.state[lin.weight]["exp_avg_sq"], ref_v), "exp_avg_sq not restored"
+    assert now_next == ref_next, f"data order diverged: {ref_next} vs {now_next}"
+    assert lin.weight.cast_mask is lin.mask, "cast_mask tag lost across the round trip"
+    return (
+        "save->perturb->load restores weights, mask, both moments and the numpy data "
+        f"stream bit-exactly (next indices {ref_next} reproduced)"
+    )
+
+
+def test_incomplete_checkpoint_is_not_loadable():
+    """A crash mid-save must not leave something that looks resumable."""
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as td:
+        ck = Path(td) / "ckpt_step7"
+        ck.mkdir()
+        (ck / "meta.json").write_text("{}")  # no DONE marker
+        assert find_latest_checkpoint(Path(td)) is None, "torn ckpt was offered for resume"
+        try:
+            load_training_state(ck, model=nn.Linear(2, 2), opt=None, cur_args={},
+                                np_generator=None, is_zero=False, rank=0, world=1)
+        except ResumeMismatchError as e:
+            assert "DONE" in str(e)
+            return "a checkpoint without the DONE marker is refused and never auto-selected"
+    raise AssertionError("an incomplete checkpoint was accepted")
+
+
+def test_legacy_weightsonly_checkpoint_is_refused():
+    """The old step*_prefinal.pt has no optimizer state: resuming = warm restart."""
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as td:
+        f = Path(td) / "step500_prefinal.pt"
+        torch.save({"model": {}, "step": 500}, f)
+        try:
+            load_training_state(f, model=nn.Linear(2, 2), opt=None, cur_args={},
+                                np_generator=None, is_zero=False, rank=0, world=1)
+        except ResumeMismatchError as e:
+            assert "WARM RESTART" in str(e)
+            return "a legacy weights-only .pt file is refused with an explicit reason"
+    raise AssertionError("a weights-only checkpoint was accepted as resumable")
+
+
+# ---------------------------------------------------------------------------
 def main():
     tests = [
         test_nm_mask_hand_computed,
@@ -580,6 +833,17 @@ def main():
         test_convex_unnormalised_equivalence,
         test_end_to_end_masked_weights_go_to_zero,
         test_terminal_magnitude_is_set_by_final_lr,
+        test_resume_accepts_identical_config,
+        test_resume_allows_benign_differences,
+        test_resume_rejects_changed_max_steps,
+        test_resume_rejects_changed_l1_decay_and_lr,
+        test_resume_reports_every_mismatch_at_once,
+        test_resume_rejects_checkpoint_missing_a_key,
+        test_warm_restart_is_detected,
+        test_wrong_step_counter_is_detected,
+        test_checkpoint_roundtrip_single_rank,
+        test_incomplete_checkpoint_is_not_loadable,
+        test_legacy_weightsonly_checkpoint_is_refused,
     ]
     failed = 0
     for fn in tests:

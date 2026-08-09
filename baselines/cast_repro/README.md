@@ -14,7 +14,9 @@ cast/
   distill.py         Eq.13 convex KL+CE loss, self-teacher
   diagnostics.py     audit section-5 masked/kept magnitude report
   train_cast_llama.py  DDP training loop
-tests/test_cast.py   22 unit tests (all passing, output below)
+tests/test_cast.py   33 unit tests (all passing, output below)
+  checkpoint.py      resumable save/load: per-rank shard files, arg guard, the
+                     anti-warm-restart verifier
 tools/
   smoke_alignment.py        real-scale (224-tensor) alignment proof, pure torch
   fsdp_misalignment_demo.py empirical proof of the old FSDP bug
@@ -22,7 +24,10 @@ tools/
   decay_budget.py           pre-flight feasibility check
   throughput_probe.py       measured step time / wall-clock projection
   diagnose_checkpoint.py    run the audit metric on a checkpoint
-  prepare_dolmino_llama2.py PRIMARY data path (script only, NOT executed)
+  prepare_dolmino_llama2.py PRIMARY data path (EXECUTED -- 77.7B tokens on disk)
+  verify_checkpoint_roundtrip.py  bit-exact save/load proof at 7B scale (8 GPUs)
+  resume_faithfulness.py    loss-trace resume comparison (see S6 for why it is
+                            NOT the primary evidence)
 scripts/launch_cast_llama.sh
 ```
 
@@ -35,7 +40,7 @@ Reference: `Mixture-of-Memory/SparseForge_Data/docs/CAST_REPRODUCTION_AUDIT.md`.
 | # | Audit finding | Fix here | Evidence |
 |---|---|---|---|
 | **1** | **[fatal]** FSDP sliced `weight` and `mask` at different FlatParameter offsets; old code hit unequal numel → `mask = None` → **silent vanilla Adam**, so selective L1 decay never ran. Ratio 0.294, Wiki PPL 23.4514. | **Plain DDP**, nothing sharded: `weight`/`mask` are full same-shape same-device tensors. `mask` is a **buffer**, so it is never packed into a FlatParameter. AdamS **raises `MaskCoverageError`** on any missing/misshaped mask — silent fallback is now impossible. | `tools/fsdp_misalignment_demo.py` reproduces the bug (FSDP gives `(262144,)` and even `(0,)` weight shards against a `(512,512)` mask); `smoke_alignment.py` shows 224/224 aligned under DDP. Unit tests `test_missing_mask_raises`, `test_shape_mismatch_raises`. |
-| **2** | **[fatal]** Paper uses Dolmino-Mix-1124; old run used C4. | Unresolved by code — it is a data-availability problem. See §4; the honest options are spelled out and the fallback is explicitly *not* callable a paper reproduction. | `tools/prepare_dolmino_llama2.py` (PRIMARY path, written, **not run**) |
+| **2** | **[fatal]** Paper uses Dolmino-Mix-1124; old run used C4. | **FIXED.** `tools/prepare_dolmino_llama2.py` was executed: `data/dolmino-mix-1124-llama2/` holds **77,721,665,859** LLaMA-2 tokens (vocab 32000), 9.9× the 7.86B the run needs, so it trains for <1 epoch. It is now the launcher default; C4 is opt-in only. ⚠️ the tokenizer wrote **uint32**, not uint16 — `--data-dtype auto` reads `metadata.json` and cross-checks it against the byte size, and **refuses to run** if metadata is absent (a hardcoded uint16 would reinterpret each 4-byte token as two, silently doubling the stream and injecting zeros). | `metadata.json`: `dtype=uint32`, `total_tokens=77721665859`; asserted at launch by `scripts/launch_cast_llama.sh` and again in-process |
 | **3** | KL temperature: Eq. 13 has none, old code used T=2 with ×T². | Default **T = 1.0** (paper-literal). T=2 available as a named variant via `--kl-temperature 2.0`, never silently. | `test_temperature_default_is_paper_literal` |
 | **4** | LR schedule not specified by the paper but presented as config. | cosine → `min_lr` 2e-6 + 375-step warmup, tagged **`implementation_choice`** in SPEC.md §1. Table XI's only LR claim (peak 2e-5) is used verbatim. | SPEC.md §1 |
 | **5** | Mask refreshed *after* `optimizer.step()`, so step 0 used an all-ones mask. | Refresh at the **top of step t**, before backward and before `opt.step()` (Alg. 1 L6-8; Alg. 2 L8-10 precede L13/L16). | `test_mask_refresh_before_step_and_every_T1` asserts the step-0 mask is already 2:4 |
@@ -95,9 +100,35 @@ PASS  test_end_to_end_masked_weights_go_to_zero
 PASS  test_terminal_magnitude_is_set_by_final_lr
         late per-step |dw| = 1.69 x lr (independent of lambda) -> the residual floor is O(final lr),
         so the LR schedule must decay for masked weights to vanish
+PASS  test_resume_accepts_identical_config
+        identical config resumes cleanly, no spurious diffs reported
+PASS  test_resume_allows_benign_differences
+        benign diffs allowed and reported: ['resume', 'save_every', 'stop_after']
+PASS  test_resume_rejects_changed_max_steps
+        changed --max-steps is refused (alpha_t = t/T would be rescaled)
+PASS  test_resume_rejects_changed_l1_decay_and_lr
+        changed l1_decay / lr / seed / seq_len all refused
+PASS  test_resume_reports_every_mismatch_at_once
+        all mismatching keys are listed in a single error
+PASS  test_resume_rejects_checkpoint_missing_a_key
+        missing key in checkpoint => refuse (cannot prove equality)
+PASS  test_warm_restart_is_detected
+        healthy moments pass; zeroed moments (the silent warm-restart signature) raise
+        ResumeMismatchError
+PASS  test_wrong_step_counter_is_detected
+        a rewound step counter raises (would silently restart the decay ramp)
+PASS  test_checkpoint_roundtrip_single_rank
+        save->perturb->load restores weights, mask, both moments and the numpy data stream
+        bit-exactly (next indices [80, 46, 51] reproduced)
+PASS  test_incomplete_checkpoint_is_not_loadable
+        a checkpoint without the DONE marker is refused and never auto-selected
+PASS  test_legacy_weightsonly_checkpoint_is_refused
+        a legacy weights-only .pt file is refused with an explicit reason
 
-22/22 passed
+33/33 passed
 ```
+
+The last 11 target the checkpoint/resume machinery; see S5b.
 
 ## 3. GPU smoke results (`.21`, 8×L20A cc10.0 183 GiB, verified idle first)
 
@@ -153,65 +184,72 @@ PASS integration: loop ran, 14 saved projections are exact 2:4
 
 **Not yet run:** a ≤50-step smoke of the *real* LLaMA2-7B through `train_cast_llama.py`. That is the only remaining gap and it is blocked solely on `transformers` not being installed on `.21` (§5).
 
-## 4. Data — FALLBACK for now, PRIMARY not executed
+## 4. Data — PRIMARY (Dolmino-Mix-1124) is now on disk and is the default
 
-The paper uses **Dolmino-Mix-1124** with LLaMA-2 (Sec. VI-A). What is actually on disk:
+The paper uses **Dolmino-Mix-1124** with LLaMA-2 (Sec. VI-A). `tools/prepare_dolmino_llama2.py`
+has since been **executed**, so the fallback is no longer needed:
 
-| path | tokens | tokenizer | verdict |
-|---|---|---|---|
-| `data/dolmino-mix-1124-llama3/` | 469B | **Llama3-8B, vocab 128000** | **unusable** — LLaMA-2 has vocab 32000 and the id spaces are unrelated |
-| `data/dolmino-flan-heavy/` | 499.5M | Llama2-7b, vocab 32000 | right tokenizer, right *source*, but 16× too small for 7.86B and a **FLAN-heavy custom mix** (38.9% FLAN), not the Dolmino default proportions |
-| `data/c4_llama/` | 21.7B | Llama2-7b | usable, 2.76 epochs at 7.86B — **the fallback** |
-| `data/dolmino-mix-1124-raw/` | — | — | **does not exist**; raw download required |
+| path | tokens | tokenizer | dtype | verdict |
+|---|---|---|---|---|
+| `Mixture-of-Memory/data/dolmino-mix-1124-llama2/` | **77,721,665,859** | Llama2-7b, vocab 32000 | **uint32** | **PRIMARY — the launcher default.** 9.9× the 7.86B needed ⇒ <1 epoch, no repetition |
+| `data/dolmino-mix-1124-llama3/` | 469B | Llama3-8B, vocab 128000 | uint16 | unusable — LLaMA-2 vocab is 32000, id spaces unrelated |
+| `data/dolmino-flan-heavy/` | 499.5M | Llama2-7b | uint16 | right source, 16× too small, and FLAN-heavy (38.9%), not Dolmino proportions |
+| `data/c4_llama/` | 21.7B | Llama2-7b | uint16 | opt-in fallback only; this is the corpus the **broken** run used |
 
-**Recommendation: run FALLBACK (C4) now, and label it precisely.** Reasons:
+Note the path: it is under `Mixture-of-Memory/data/`, **not** `$PROJECT_ROOT/data/` (a different,
+older data tree that does not contain dolmino). Passing the wrong one is not a silent failure —
+`BinDataset` raises on the missing `train.bin`.
 
-1. It unblocks the baseline immediately and is a *controlled* comparison: C4 is what the previous run used, so a C4 result isolates the algorithmic fix (0.294 → ~0 masked ratio) from the data change. Changing both at once would confound the one thing we most need to verify.
-2. It is defensible on its own terms — the paper itself uses C4 for OPT/GPT-2 "to remain consistent with their original pretraining data" (Sec. VI-A), and C4 is closer to LLaMA-2's actual pretraining mix than Dolmino is.
-3. Dolmino is a deliberately *stronger*, knowledge-dense annealing corpus. Table IV shows LLaMA2-7B sparse **beating** dense on MMLU (45.74 → 52.34), which the paper attributes to "a pretraining corpus more focused on knowledge-intensive tasks". A C4 run will therefore **understate** CAST on knowledge benchmarks — so as a *baseline for SparseForge* it is conservative in the safe direction (it does not flatter our own method by handicapping CAST on perplexity, which is the headline metric, but it does mean MMLU-style gains will not reproduce).
+### ⚠️ The uint32 trap
 
-**Mandatory labelling if FALLBACK is used** — this distinction matters a lot to a reviewer:
+The tokenizer wrote **uint32** even though vocab 32000 fits in uint16. Reading it as uint16
+would reinterpret every token as *two* tokens — half of them zeros — with **no error anywhere**:
+the memmap would simply be twice as long and the corpus would be garbage. Guards now in place:
 
-> CAST (our paper-based reimplementation), **controlled C4 reimplementation** — trained on C4 rather than the paper's Dolmino-Mix-1124 because a LLaMA-2-tokenized Dolmino corpus of sufficient size was unavailable. **This is not a paper-setting reproduction**, and knowledge-intensive results are expected to be lower than the paper's.
+1. `--data-dtype auto` (the default) reads `dtype` from `metadata.json`. It no longer falls back
+   to uint16 when metadata is missing — it **raises**. The old fallback fired for real during
+   development, on a mistyped `--data` path, and cheerfully logged
+   `data-dtype auto-resolved to uint16` for a directory that did not exist.
+2. It cross-checks `os.path.getsize(train.bin) // itemsize == metadata["total_tokens"]`, which
+   catches a truncated file *and* a dtype/metadata disagreement.
+3. `scripts/launch_cast_llama.sh` asserts the same before spending a single GPU-second, and
+   prints the resolved width.
 
-For the PRIMARY path, `tools/prepare_dolmino_llama2.py` is written and dry-run-checked but **deliberately not executed**:
-
+Verified at launch:
 ```
-python tools/prepare_dolmino_llama2.py --stage plan       # prints the accounting
-python tools/prepare_dolmino_llama2.py --stage download --raw-dir data/dolmino-mix-1124-raw
-python tools/prepare_dolmino_llama2.py --stage tokenize  --out-dir data/dolmino-mix-1124-llama2 \
-       --target-tokens 9000000000 --workers 64
+[cast] data-dtype resolved to uint32 (4 B/token) from metadata.json; dataset=allenai/dolmino-mix-1124
+       tokenizer=.../models/Llama--Llama2-7b total_tokens=77,721,665,859 (byte size agrees)
+[cast] train tokens: 77,721,665,859
 ```
-ETA ≈ **2–4 h wall, download-dominated** (~35–40 GB compressed; tokenization of 9B tokens is only ~20–40 min given this box did 469B tokens in 3306 s per the existing `metadata.json`). Output ≈ 18 GB uint16.
 
-## 5. What is still needed for the full 7500-step run
+Because PRIMARY is available, the "controlled C4 reimplementation" labelling caveat that used to
+live here **no longer applies**: this is a paper-setting corpus.
 
-**Blocker: `transformers` is not installed on `.21`.** Bare env has only `/opt/conda/envs/torch-base/bin/python` (py3.14, torch 2.13.0, numpy 2.5.1); `transformers`/`datasets`/`safetensors` are all `ModuleNotFoundError`. Per instructions I did **not** install anything — the real-model smoke and the full run both need approval:
+## 5. Running it
 
-```bash
-# on .21, pinned as instructed
-/opt/conda/envs/torch-base/bin/pip install 'transformers==4.57.6' 'datasets==2.21.0' safetensors
-```
-(Note: `transformers` also needs `safetensors` to read `models/Llama--Llama2-7b/*.safetensors`. The pin on `datasets==2.21.0` matters — a bare install pulls 5.0.1, whose cache layout differs from the existing 2.x cache and would trigger a full re-download.)
-
-Then, in order:
+`transformers` **is** installed on `.21` now (the earlier blocker is resolved), and the real
+LLaMA2-7B path has been exercised end to end under `--parallel zero2` — see S3 for the alignment
+numbers and S5b for the checkpoint evidence.
 
 ```bash
 # 1. pre-flight feasibility (no GPU)
 python tools/decay_budget.py --steps 7500
-#    -> HEADROOM 4.32x, residual floor 2.0e-06, VERDICT: OK
+#    constant LR -> HEADROOM 11.19x (cosine: 4.32x, residual floor 2.0e-06), VERDICT: OK
 
-# 2. real-model smoke, <=50 steps  (the remaining unproven step)
+# 2. real-model smoke, <=50 steps
 bash scripts/launch_cast_llama.sh smoke
 #    expect: "aligned=224/224 ... decayed=3,238,002,688" and finite loss
 
-# 3. full run
-DATA=data/c4_llama bash scripts/launch_cast_llama.sh full          # FALLBACK
-# or, after the PRIMARY data build:
-DATA=data/dolmino-mix-1124-llama2 DATA_DTYPE=uint16 bash scripts/launch_cast_llama.sh full
+# 3. full run (dolmino is the default; dtype auto-read from metadata.json)
+bash scripts/launch_cast_llama.sh full
+RESUME=auto bash scripts/launch_cast_llama.sh full   # continue after a crash
 
-# 4. verify the fix actually took, on the pre-finalization checkpoint
-python tools/diagnose_checkpoint.py --ckpt outputs/cast_repro_ddp/prefinal.pt
+# 4. prove the checkpoint machinery on this box before trusting a multi-day run
+torchrun --nproc_per_node 8 tools/verify_checkpoint_roundtrip.py --parallel zero2 --steps 3
+#    expect: VERDICT: PASS - state round-trips BIT-EXACTLY
+
+# 5. verify the fix actually took, on the pre-finalization checkpoint
+python tools/diagnose_checkpoint.py --ckpt outputs/cast_repro_zero2/prefinal.pt
 #    PASS if ratio_mean < 0.01 and frac_below_1e-4 > 0.95 (broken run: 0.294 / 21.5%)
 ```
 
@@ -260,6 +298,141 @@ Caveats: assumes perfect DDP scaling, omits dataloader and checkpoint I/O, and t
 > forbidden (it silently disabled CAST once already; 7.86B tokens burned, Wiki
 > PPL 23.45). `require_fp32=True` is non-negotiable: λ=4e-7 is below bf16
 > resolution.
+
+## 5b. Checkpoint / resume — what is guaranteed, and the evidence
+
+**Why this got hardened.** A sibling project in this repo resumed three 200k-step arms and all
+three *silently* became WARM RESTARTS: the optimizer param-groups did not line up, torch quietly
+re-initialised the Adam moments, and a differential-LR setting never took effect. Nothing raised.
+Weeks of compute produced arms that could not be compared to anything. A 1.5–3 day CAST run that
+cannot be resumed or verified would be worse than no run.
+
+### What a checkpoint contains
+
+`ckpt_step<N>/` is a **directory**, written every `--save-every` steps:
+
+| file | written by | contents |
+|---|---|---|
+| `meta.json` | rank 0 | step, full args, world size, parallel mode, torch version |
+| `model.pt` | rank 0 | fp32 master weights + `cast_scale` + all **224 `mask` buffers** |
+| `optim_rank<k>.pt` | rank k | that rank's Adam shard, keyed by ZeRO **global** param index |
+| `rng_rank<k>.pt` | rank k | torch CPU + torch CUDA + the **numpy Generator** driving `BinDataset` |
+| `DONE` | rank 0, last | published only after a barrier ⇒ a torn checkpoint is never loadable |
+
+Measured: **81.4 GiB** per checkpoint (14.6 GB model + 8 × ~6.5–7.5 GB optimizer shards).
+`--keep-last 2` therefore caps disk at ~163 GiB.
+
+**The mask is saved, not recomputed.** It is refreshed only every `T1=10` steps, so it is *not* a
+function of the current weights: the mask live at step 503 was computed from the weights as of
+step 500. Recomputing it at resume time flips the entries near the intra-group threshold, changing
+*which* weights get decayed. The live mask is restored verbatim.
+
+### Why NOT `ZeroRedundancyOptimizer.consolidate_state_dict`
+
+The obvious design — gather all shards to rank 0, write one file — was implemented first and
+**hangs at 7B scale**. Measured on 8×L20A: `consolidate_state_dict(to=0)` ran >10 min, all 8 ranks
+at 100% GPU util, zero bytes produced. py-spy across all ranks located it exactly — rank 3 (the
+then-sender) parked on `zero_redundancy_optimizer.py:102`:
+
+```python
+data_send_tensor = torch.ByteTensor(data).to(device)   # `data` is a ~7 GB bytearray
+```
+
+`torch.ByteTensor(bytearray)` constructs element-by-element through the Python C-API while holding
+the GIL — O(7e9) Python-level ops. It is fine for the small optimizer states the helper was written
+for and unusable here. **Do not "fix" this by waiting longer.** The shard-file design avoids
+cross-rank transfer entirely, and is strictly safer: state is already where it belongs, so it
+cannot be mis-routed.
+
+### The evidence: bit-exact round-trip at full scale
+
+`tools/verify_checkpoint_roundtrip.py` on **8×L20A, LLaMA2-7B, `--parallel zero2`**, 3 real
+training steps then save → **perturb everything in memory** → load → compare:
+
+```
+[verify] saved outputs/cast_ckpt_roundtrip/ckpt_step2
+[verify] perturbed live state (weights +1, masks inverted, moments +7, step +999, RNG reseeded)
+[verify] === CHECKPOINT ROUND-TRIP (bit-exactness of the SAVED vs RESTORED state) ===
+[verify] parallel=zero2 world=8 steps_before_save=3 ckpt=ckpt_step2
+[verify] float model tensors per rank : 515   max |delta| = 0.000e+00
+[verify] bool mask buffers per rank   : 224   mismatching elements = 0
+[verify] optimizer state tensors      : 78 params/rank, max |delta| = 0.000e+00
+[verify] per-parameter step counters   : 0 mismatches
+[verify] next-batch data indices       : IDENTICAL  (rank0 [18790478069, 24756986272,
+                                         74929841005, 20491300911] reproduced exactly)
+[verify] optimizer coverage            : 515/515 owned params carry moments
+[verify] VERDICT: PASS - state round-trips BIT-EXACTLY
+```
+
+The perturbation step is what makes this a test rather than a tautology: weights +1, **every mask
+bit inverted**, moments +7, step +999, RNG reseeded. A load that silently did nothing would fail
+every line.
+
+### Why the loss-trace comparison is NOT the primary evidence (honest negative result)
+
+The intuitive test — run N+M steps straight through vs N → save → resume → M, diff the losses —
+was run first (`tools/resume_faithfulness.py --real`) and is **inconclusive on this hardware**.
+Two arms with *identical config, identical seed, and no resume at all* already diverge:
+
+```
+step   A (control)        B (resumed at step 3)   |diff|     phase
+  0    1.107989544049     1.107989544049          0.0e+00    before ckpt  <- bit-identical
+  1    6.252430841327     6.252966612577          5.4e-04    before ckpt
+  2    3.457070469856     3.451371617615          5.7e-03    before ckpt  <- NO ckpt yet!
+  3    2.527226369828     2.530831024051          3.6e-03    first resumed step
+  4    1.775430817157     1.773593582213          1.8e-03    after resume
+```
+
+Step 0 is bit-identical (same weights, same batch), then the trajectories separate **before any
+checkpoint exists**. The cause is non-deterministic reduction order in the backward kernels
+(atomics in SDPA / gradient-checkpoint recompute), amplified by bf16 accumulation over 32
+micro-batches. So the run-to-run noise floor is **5.7e-3**, and the post-resume difference
+(3.6e-3) is *below* it — that comparison cannot distinguish a perfect resume from a subtly broken
+one, and quoting it as proof would be precisely the unfalsifiable "looks fine" claim to avoid.
+Hence the state-level round-trip above, which GPU non-determinism cannot contaminate.
+
+What *is* independently confirmed from the real 8-GPU resume: the anti-warm-restart verifier
+passing on live state, and the CAST invariant surviving the boundary:
+
+```
+[cast] resumed at step 2 (next step 3); optimizer state verified: 515/515 owned params carry
+       non-zero moments with step==3
+[cast] step 3/5 ... aligned=224/224(global) decayed=3,238,002,688 mem=145.7G
+[cast] step 4/5 ... aligned=224/224(global) decayed=3,238,002,688 mem=145.7G
+```
+
+### Fail-loud guards (all unit-tested)
+
+| guard | fires when | test |
+|---|---|---|
+| `ResumeMismatchError` on args | any of 21 trajectory-critical args differs; **all** offenders listed at once | `test_resume_rejects_changed_max_steps`, `..._l1_decay_and_lr`, `..._reports_every_mismatch_at_once` |
+| unverifiable checkpoint | ckpt has no record of a critical arg ⇒ equality cannot be proven ⇒ refuse | `test_resume_rejects_checkpoint_missing_a_key` |
+| **warm-restart detector** | any restored `exp_avg_sq` is identically zero (the signature of re-initialised state) | `test_warm_restart_is_detected` |
+| step-counter check | per-param `step` ≠ expected; AdamS derives bias correction **and** `alpha_t=(step-1)/T` from it | `test_wrong_step_counter_is_detected` |
+| partition check | the set of global param indices a rank owns ≠ the set in its shard file | (asserted in `load_training_state`) |
+| torn checkpoint | no `DONE` marker ⇒ never auto-selected, refused if named explicitly | `test_incomplete_checkpoint_is_not_loadable` |
+| legacy file | a weights-only `.pt` is refused with an explicit "WARM RESTART" reason | `test_legacy_weightsonly_checkpoint_is_refused` |
+| world-size change | data sharding is `seed+rank`, so a different world size reads a different corpus | (asserted in `load_training_state`) |
+| coverage across resume | `aligned=224/224` global check still runs every step, and a rank seeing 0 in-scope tensors now raises instead of passing vacuously | `assert_full_coverage` |
+
+### `--stop-after` vs `--max-steps` (a trap worth naming)
+
+To stop a run early **do not lower `--max-steps`**: AdamS uses `alpha_t = t/max_steps` as the decay
+ramp, so changing it rescales the entire sparsification schedule and makes the two segments
+different experiments. The resume guard refuses this — it caught exactly this mistake in the first
+draft of the faithfulness harness. Use `--stop-after N`, which stops cleanly, writes a resumable
+checkpoint, and **skips finalisation** (finalisation hard-prunes with M_T and is irreversible).
+
+### Usage
+
+```bash
+bash scripts/launch_cast_llama.sh full              # fresh run, dolmino, save every 250
+RESUME=auto bash scripts/launch_cast_llama.sh full  # continue from the newest complete ckpt
+```
+
+`--dist-timeout` defaults to 3600 s. It must exceed the checkpoint write: the FS measures
+262 MB/s, so ~81 GiB is minutes during which non-zero ranks sit in a barrier — the 10-minute NCCL
+default is too close for comfort. Do not lower it.
 
 ## 6. Reporting rules
 
