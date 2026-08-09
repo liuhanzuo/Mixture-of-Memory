@@ -2,7 +2,18 @@
   "id": "A03",
   "status": "active_measurable",
   "priority": 3,
-  "updated": "2026-08-09T13:20+0800",
+  "updated": "2026-08-09T21:05+0800",
+  "arm4_peaklr_cpt": {
+    "status": "RUNNING on .73 since ~13:24, watcher self-stops at step220000.pt",
+    "purpose": "peak-LR CPT control for Arm 3: does the +0.48pp triviaqa gain get larger/earlier at [1.0x, 0.56x] peak LR instead of Arm 3's [0.33x, 0.28x] band?",
+    "config": "ARM4_DESIGN.md Config B -- warmup_steps=200500, max_steps=240000 -> lr[200000]=1.995e-5 (~peak), lr[220000]=1.12e-5 (0.56x peak)",
+    "eval_watcher": ".82 /tmp/a03_arm4_trajectory_watcher.sh (pid 2165190), fires 4-axis eval per ckpt; already fired step205000 (16:17) and step210000 (19:08)",
+    "verdict": "NOT_YET_JUDGED -- do not cite the intermediate cells",
+    "why_not_yet": "triviaqa em swings -1.40pp @step205000 then +1.26pp @step210000, i.e. ~3x Arm 3's headline magnitude in BOTH directions. ARM4_DESIGN.md predicts exactly this for the first ~500 steps: Adam moments inherited from Arm 2 were adapted to a min_lr trajectory ending at 2e-6, so they are mismatched under restored peak LR. Judge only at step220000 vs Arm 3's matched 20k window.",
+    "naming_warning": "This Arm 4 is the peak-LR CONTROL. It is NOT the 6-arm study's Arm 4 (pruned+heal+raw-text RAG), which is still unimplemented.",
+    "manual_step_required": "the eval driver writes per-item shards but computes NO CIs (grep bootstrap|ci95|n_boot|SIG over /tmp/a03_arm4_ext_driver.sh = 0 matches). Run code/recompute_cpt_trajectory_paired.py after step220000 lands. CPU, ~1 min.",
+    "evidence_file": "evidence/arm3_arm4_cpt_trajectory_paired_full.json"
+  },
   "arm3_cpt_trajectory": {
     "tested": "2026-08-09",
     "verdict": "TRIVIAQA_COHERENT_GAIN_AT_STEP220000_ONLY_OTHER_AXES_FLAT",
@@ -12,12 +23,13 @@
     "arms_covered": ["step205000 (5k CPT)", "step210000 (10k CPT)", "step215000 (15k CPT)", "step220000 (20k CPT, final)"],
     "mmlu_across_trajectory": "letter delta in [-0.23,+0.26]pp all TIE; cn delta in [-0.24,-0.11]pp all TIE. No movement on MMLU.",
     "popqa_across_trajectory": "step205-215 mixed SIG-negative (small); step220000 all 3 metrics TIE. Cleaned up.",
-    "triviaqa_step220000_headline": "em +0.48pp SIG [+0.27,+0.69]; contains +0.47pp SIG [+0.16,+0.79]; f1 +0.47pp SIG [+0.26,+0.69]. 3 co-moving SIG cells at 20k CPT only, absent at 5/10/15k.",
+    "triviaqa_step220000_headline": "em +0.48pp SIG [+0.27,+0.69]; contains +0.47pp SIG [+0.16,+0.79]; f1 +0.47pp SIG [+0.26,+0.69]. 3 co-moving SIG cells at 20k CPT only, absent at 5/10/15k. n=17944.",
     "nq_open_across_trajectory": "flat throughout, but n=3610 limits sensitivity",
     "reading": "20k Dolmino CPT at 0.28-0.33x peak LR moves triviaqa EM by +5% relative on the last 5k steps only. MMLU, popqa, nq_open unmoved. Effect size small but 3-metric coherence rules out noise.",
-    "caveat_LR_HORIZON": "cosine tail LR only. Arm 4 (peak-LR, ARM4_DESIGN.md) tests whether the gain would be larger and/or earlier under peak LR. If Arm 4 also small: saturation claim strengthens. If Arm 4 large: our late-cosine LR was too low.",
-    "verdict_file": "ARM3_CPT_TRAJECTORY_INTERIM_VERDICT.md",
-    "evidence_file": "evidence/arm3_cpt_trajectory_step205_210_paired.json (contains step205/210k only, needs extension to include 215/220k)"
+    "caveat_LR_HORIZON": "cosine tail LR only. Arm 4 (peak-LR) tests whether the gain would be larger and/or earlier under peak LR. If Arm 4 also small: saturation claim strengthens. If Arm 4 large: our late-cosine LR was too low.",
+    "verdict_file": "ARM3_CPT_TRAJECTORY_INTERIM_VERDICT.md (filename says INTERIM for link stability; the verdict is FINAL for Arm 3 -- see its frontmatter)",
+    "evidence_file": "evidence/arm3_arm4_cpt_trajectory_paired_full.json",
+    "evidence_provenance_fix_20260809": "the headline had NO persistent evidence before this date: evidence/arm3_cpt_trajectory_step205_210_paired.json and the volatile .82:/tmp/a03_arm3_cpt_trajectory_paired.json (1016 B, md5 37149d4d59bf941c1dbc05f17260f0b2) both held MMLU for step205/210k ONLY and never contained triviaqa at all. Regenerated from the 8/8 per-item shards by code/recompute_cpt_trajectory_paired.py, which reproduced every published cell exactly and hard-fails on any incomplete shard set."
   },
   "kill_condition_1b_pilot_at_floor": {
     "tested": "2026-08-08",
@@ -35,9 +47,10 @@
       "A03_1B_base_36L_intact": {"em": 0.1025, "contains": 0.1429, "n": 3610},
       "A03_1B_keep7_step200k_9L_healed": {"em": 0.0285, "contains": 0.0787, "n": 3610},
       "A03_1B_keep7_step500_9L_barely_healed": {"em": 0.0017, "contains": 0.0097, "n": 3610},
-      "best_constant_null_maj_em": 0.0053
+      "best_constant_null_maj_em": 0.0055
     },
-    "reading": "intact 0.1025 and pruned+healed 0.0285 are both above the majority-answer floor 0.0053 (residual fractions ~0.948 and ~0.814); barely-healed step500 is BELOW floor (0.0017 < 0.0053), confirming 'at floor' is detectable on this axis too. Same 'floor certifies detectability' pattern as PopQA/TriviaQA.",
+    "null_value_correction_20260809": "this block previously carried 0.0053 for the NQ-open best-constant null in two places. The canonical value is 0.0055, per GATE_FOURAXES_VERDICT.md lines 41-43, which is the file that ran the floor-calibrated comparison. Both readings reach the same verdict (intact 0.1025 and pruned+healed 0.0285 ABOVE; barely-healed 0.0017 BELOW), so no conclusion changes -- but 0.0053 must not be quoted.",
+    "reading": "intact 0.1025 and pruned+healed 0.0285 are both above the majority-answer floor 0.0055 (residual fractions 94.6% and 80.6%, both p=1.1e-4); barely-healed step500 is BELOW floor (0.0017 < 0.0055, p=6.4e-3), confirming 'at floor' is detectable on this axis too. Same 'floor certifies detectability' pattern as PopQA/TriviaQA.",
     "harness": "scripts/eval_olmo2_closedbook_qa.py --tasks nq_open (native support, 3610 items, google-research-datasets/nq_open cache on zwfy6)",
     "analyzer_TODO": "analyze_1b_knowledge_floor.py hardcodes popqa+triviaqa at lines 427-428; adding a (nq_open, 3610, em) tuple to that loop gives full floor-calibrated residuals (bootstrap CI, McNemar, BH). Not blocking.",
     "next_gate_for_this_axis": "same-item paired McNemar (intact vs pruned) on nq_open; length-matched null for contains"

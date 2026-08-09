@@ -1,0 +1,148 @@
+{
+  "n": 14042,
+  "gold_letter_marginals": {
+    "A": 0.22945449366187154,
+    "B": 0.24654607605754167,
+    "C": 0.25509186725537675,
+    "D": 0.2689075630252101
+  },
+  "best_constant_letter": "D",
+  "best_constant_floor": 0.2689075630252101,
+  "longest_option_floor_by_conv": {
+    "split": 0.28445022076627446,
+    "first": 0.28108531548212506,
+    "last": 0.28215353938185445,
+    "credit": 0.4537102976783934,
+    "wrong": 0.19612590799031476
+  },
+  "by_dtype": {
+    "bf16": {
+      "letter_acc": 0.2550206523287281,
+      "content_raw_acc": 0.3218914684517875,
+      "content_norm_acc": 0.3422589374732944,
+      "letter_vs_const_floor_pp": -1.3886910696481958,
+      "content_norm_vs_longest_split_pp": 5.780871670701993,
+      "letter_exact_tie2_count": 4303,
+      "letter_exact_tie2_rate": 0.30643782936903574,
+      "letter_tie_multiplicity_hist": {
+        "1": 9739,
+        "2": 3243,
+        "3": 885,
+        "4": 175
+      },
+      "letter_all4_tied_count": 175,
+      "letter_strict_n": 9739,
+      "letter_strict_acc": 0.25782934592874013,
+      "letter_tied_index_luck_acc": 0.24866372298396466,
+      "letter_gap_min_positive": 8.225440979003906e-05,
+      "letter_gap_median": 0.25,
+      "letter_gap_p05": 0.0,
+      "letter_pred_dist": {
+        "A": 0.32068081469876086,
+        "B": 0.11259079903147699,
+        "C": 0.4879646773963823,
+        "D": 0.07876370887337986
+      },
+      "letter_vs_null_pp": -1.3886910696481982,
+      "letter_vs_null_ci95_pp": [
+        -2.5567939040022787,
+        -0.24907420595357047
+      ],
+      "letter_vs_null_boot_p": 0.0192,
+      "letter_verdict": "BELOW the floor (significantly)",
+      "content_norm_vs_null_pp": 5.780871670702179,
+      "content_norm_vs_null_ci95_pp": [
+        4.8645729478231985,
+        6.669277880643784
+      ],
+      "content_norm_vs_null_boot_p": 0.0001,
+      "content_norm_verdict": "above the floor",
+      "letter_residual": -0.013886910696481958,
+      "letter_residual_fraction": -0.05445406311086279,
+      "content_residual": 0.057808716707019925,
+      "content_residual_fraction": 0.1689034540158081
+    },
+    "fp32": {
+      "letter_acc": 0.253525138869107,
+      "content_raw_acc": 0.32153539381854435,
+      "content_norm_acc": 0.34268622703318613,
+      "letter_vs_const_floor_pp": -1.538242415610308,
+      "content_norm_vs_longest_split_pp": 5.823600626691166,
+      "letter_exact_tie2_count": 0,
+      "letter_exact_tie2_rate": 0.0,
+      "letter_tie_multiplicity_hist": {
+        "1": 14042
+      },
+      "letter_all4_tied_count": 0,
+      "letter_strict_n": 14042,
+      "letter_strict_acc": 0.253525138869107,
+      "letter_tied_index_luck_acc": null,
+      "letter_gap_min_positive": 3.0517578125e-05,
+      "letter_gap_median": 0.17814254760742188,
+      "letter_gap_p05": 0.016000843048095702,
+      "letter_pred_dist": {
+        "A": 0.22333000997008973,
+        "B": 0.08018800740635237,
+        "C": 0.5586810995584675,
+        "D": 0.13780088306509045
+      },
+      "letter_vs_null_pp": -1.5382424156103118,
+      "letter_vs_null_ci95_pp": [
+        -2.663438256658596,
+        -0.4272895598917533
+      ],
+      "letter_vs_null_boot_p": 0.0062,
+      "letter_verdict": "BELOW the floor (significantly)",
+      "content_norm_vs_null_pp": 5.823600626691355,
+      "content_norm_vs_null_ci95_pp": [
+        4.9161889332004005,
+        6.725671200683664
+      ],
+      "content_norm_vs_null_boot_p": 0.0001,
+      "content_norm_verdict": "above the floor",
+      "letter_residual": -0.01538242415610308,
+      "letter_residual_fraction": -0.06067415730337063,
+      "content_residual": 0.058236006266911666,
+      "content_residual_fraction": 0.169939733998332
+    }
+  },
+  "contrast": {
+    "letter_argmax_changed": 2532,
+    "letter_argmax_changed_rate": 0.18031619427431989,
+    "letter_argmax_changed_among_bf16_tied": 2466,
+    "letter_argmax_changed_among_bf16_untied": 66,
+    "n_bf16_tied": 4303,
+    "content_norm_argmax_changed": 195,
+    "content_norm_argmax_changed_rate": 0.013886910696481982,
+    "letter_acc_delta_fp32_minus_bf16": -0.0014955134596211228,
+    "content_norm_acc_delta_fp32_minus_bf16": 0.00042728955989174144,
+    "letter_b_bf16right_fp32wrong": 631,
+    "letter_c_bf16wrong_fp32right": 610,
+    "letter_mcnemar_p": 0.5702338863722238,
+    "letter_acc_diff_ci95": [
+      -0.0064093433983762995,
+      0.003347101552485401
+    ],
+    "letter_acc_diff_boot_p": 0.5598
+  },
+  "output_name": "7B_keep8_step121000_dtype",
+  "n_shards": 8,
+  "meta": {
+    "mode": "pruned",
+    "keep_front_layers": 8,
+    "n_fresh_layers": 2,
+    "num_hidden_layers": 10,
+    "ckpt_step": 121000,
+    "ckpt": "outputs/olmo2_probe2_7B_keep8fresh2/step121000.pt",
+    "base_model": "../models/OLMo-2-1124-7B",
+    "add_bos": false,
+    "content_desc": "full",
+    "weights_dtype": "float32",
+    "forward_dtypes": [
+      "bf16",
+      "fp32"
+    ],
+    "batch_size": 16,
+    "max_len": 1024
+  }
+}

@@ -1,0 +1,142 @@
+{
+  "n": 14042,
+  "gold_letter_marginals": {
+    "A": 0.22945449366187154,
+    "B": 0.24654607605754167,
+    "C": 0.25509186725537675,
+    "D": 0.2689075630252101
+  },
+  "best_constant_letter": "D",
+  "best_constant_floor": 0.2689075630252101,
+  "longest_option_floor_by_conv": {
+    "split": 0.28445022076627446,
+    "first": 0.28108531548212506,
+    "last": 0.28215353938185445,
+    "credit": 0.4537102976783934,
+    "wrong": 0.19612590799031476
+  },
+  "by_dtype": {
+    "bf16": {
+      "letter_acc": 0.6053980914399658,
+      "content_raw_acc": 0.44003703176185727,
+      "content_norm_acc": 0.47058823529411764,
+      "letter_vs_const_floor_pp": 33.64905284147557,
+      "content_norm_vs_longest_split_pp": 18.61380145278432,
+      "letter_exact_tie2_count": 18,
+      "letter_exact_tie2_rate": 0.00128186867967526,
+      "letter_tie_multiplicity_hist": {
+        "1": 14024,
+        "2": 18
+      },
+      "letter_all4_tied_count": 0,
+      "letter_strict_n": 14024,
+      "letter_strict_acc": 0.6058899030233885,
+      "letter_tied_index_luck_acc": 0.2222222222222222,
+      "letter_gap_min_positive": 0.000244140625,
+      "letter_gap_median": 1.1185302734375,
+      "letter_gap_p05": 0.0546875,
+      "letter_pred_dist": {
+        "A": 0.21592365759863266,
+        "B": 0.24205953567867824,
+        "C": 0.28664007976071787,
+        "D": 0.2553767269619712
+      },
+      "letter_vs_null_pp": 33.64905284147557,
+      "letter_vs_null_ci95_pp": [
+        32.538099985757015,
+        34.75288420452927
+      ],
+      "letter_vs_null_boot_p": 0.0001,
+      "letter_verdict": "above the floor",
+      "content_norm_vs_null_pp": 18.613801452784504,
+      "content_norm_vs_null_ci95_pp": [
+        17.663660803304374,
+        19.577576793429238
+      ],
+      "content_norm_vs_null_boot_p": 0.0001,
+      "content_norm_verdict": "above the floor",
+      "letter_residual": 0.33649052841475574,
+      "letter_residual_fraction": 0.5558169627102694,
+      "content_residual": 0.18613801452784318,
+      "content_residual_fraction": 0.39554328087166674
+    },
+    "fp32": {
+      "letter_acc": 0.6053980914399658,
+      "content_raw_acc": 0.4398233869819114,
+      "content_norm_acc": 0.4704458054408204,
+      "letter_vs_const_floor_pp": 33.64905284147557,
+      "content_norm_vs_longest_split_pp": 18.599558467454592,
+      "letter_exact_tie2_count": 0,
+      "letter_exact_tie2_rate": 0.0,
+      "letter_tie_multiplicity_hist": {
+        "1": 14042
+      },
+      "letter_all4_tied_count": 0,
+      "letter_strict_n": 14042,
+      "letter_strict_acc": 0.6053980914399658,
+      "letter_tied_index_luck_acc": null,
+      "letter_gap_min_positive": 8.225440979003906e-05,
+      "letter_gap_median": 1.1166654825210571,
+      "letter_gap_p05": 0.05399803519248962,
+      "letter_pred_dist": {
+        "A": 0.21521150833214642,
+        "B": 0.2416322461187865,
+        "C": 0.28770830366044725,
+        "D": 0.25544794188861986
+      },
+      "letter_vs_null_pp": 33.64905284147557,
+      "letter_vs_null_ci95_pp": [
+        32.53097849309215,
+        34.74576271186441
+      ],
+      "letter_vs_null_boot_p": 0.0001,
+      "letter_verdict": "above the floor",
+      "content_norm_vs_null_pp": 18.59955846745478,
+      "content_norm_vs_null_ci95_pp": [
+        17.651198191140864,
+        19.558600982765988
+      ],
+      "content_norm_vs_null_boot_p": 0.0001,
+      "content_norm_verdict": "above the floor",
+      "letter_residual": 0.33649052841475574,
+      "letter_residual_fraction": 0.5558169627102694,
+      "content_residual": 0.1859955846745459,
+      "content_residual_fraction": 0.3953602785346615
+    }
+  },
+  "contrast": {
+    "letter_argmax_changed": 96,
+    "letter_argmax_changed_rate": 0.006836632958268053,
+    "letter_argmax_changed_among_bf16_tied": 12,
+    "letter_argmax_changed_among_bf16_untied": 84,
+    "n_bf16_tied": 18,
+    "content_norm_argmax_changed": 47,
+    "content_norm_argmax_changed_rate": 0.003347101552485401,
+    "letter_acc_delta_fp32_minus_bf16": 0.0,
+    "content_norm_acc_delta_fp32_minus_bf16": -0.00014242985329726565,
+    "letter_b_bf16right_fp32wrong": 28,
+    "letter_c_bf16wrong_fp32right": 28,
+    "letter_mcnemar_p": 1.0,
+    "letter_acc_diff_ci95": [
+      -0.0010682238997293833,
+      0.0010682238997293833
+    ],
+    "letter_acc_diff_boot_p": 1.042
+  },
+  "output_name": "7B_base_dtype",
+  "n_shards": 8,
+  "meta": {
+    "mode": "base",
+    "num_hidden_layers": 32,
+    "base_model": "../models/OLMo-2-1124-7B",
+    "add_bos": false,
+    "content_desc": "full",
+    "weights_dtype": "float32",
+    "forward_dtypes": [
+      "bf16",
+      "fp32"
+    ],
+    "batch_size": 16,
+    "max_len": 1024
+  }
+}

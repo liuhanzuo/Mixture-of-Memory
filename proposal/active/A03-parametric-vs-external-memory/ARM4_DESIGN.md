@@ -1,7 +1,11 @@
 ---
 scope: A03 Arm 4 (peak-LR CPT) design; task #199 territory
 date: 2026-08-09
-status: DESIGN_ONLY, no experiment launched
+status: LAUNCHED 2026-08-09 ~13:24 GMT+8 on .73 (Config B). step205000/210000 already evaluated. Was DESIGN_ONLY before launch -- do not read that stale value.
+run: outputs/olmo2_probe2_1B_keep7f2_dolmino_arm4_peaklr20k (watcher self-stops at step220000.pt)
+driver: scripts/_run_a03_arm4_peaklr.sh
+evidence: evidence/arm3_arm4_cpt_trajectory_paired_full.json
+naming_warning: "This 'Arm 4' is the peak-LR CPT CONTROL for Arm 3. It is NOT the Arm 4 of the 6-arm study (pruned+heal+raw-text RAG), which is still unimplemented. Two different experiments share the label -- always say 'Arm 4 (peak-LR)' or 'Arm 4 (raw-text RAG)'."
 ---
 
 # A03 Arm 4 design — how to restart at peak LR after resume

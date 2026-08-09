@@ -48,10 +48,29 @@
       "evidence": "status/scout_21/lane2_a01_gate2.md"
     },
     "gate3_fp32_causal_tie_test": {
-      "verdict": "base arm DONE; keep8 arm running on .73",
+      "verdict": "ALL SIX ARMS DONE. Ties are NOT the mechanism: fp32 eliminates every exact tie and changes no arm's floor verdict except one marginal case.",
+      "stale_verdict_corrected_20260809": "this field read 'base arm DONE; keep8 arm running on .73'. Both halves were stale -- keep8 finished AND four further arms were run. All six dtype_summary.json exist under results/a01_gate3/dtype_runs/ on zwfy6, and `ps` on .73 shows no A01 process. Four arms of completed evidence were sitting unreported.",
+      "six_arm_table_n14042_floor_0.2689": {
+        "7B_base": {"bf16_letter": 0.6054, "fp32_letter": 0.6054, "delta_pp": 0.000, "bf16_tie_pct": 0.13, "fp32_tie_pct": 0.00, "bf16_verdict": "above", "fp32_verdict": "above"},
+        "7B_shortgpt16_step200000": {"bf16_letter": 0.4742, "fp32_letter": 0.4780, "delta_pp": 0.377, "bf16_tie_pct": 10.40, "fp32_tie_pct": 0.01, "bf16_verdict": "above", "fp32_verdict": "above"},
+        "7B_keep14_step200000": {"bf16_letter": 0.3184, "fp32_letter": 0.3290, "delta_pp": 1.061, "bf16_tie_pct": 24.36, "fp32_tie_pct": 0.00, "bf16_verdict": "above", "fp32_verdict": "above"},
+        "7B_keep12_step124000": {"bf16_letter": 0.2728, "fp32_letter": 0.2771, "delta_pp": 0.434, "bf16_tie_pct": 24.61, "fp32_tie_pct": 0.00, "bf16_verdict": "AT the floor", "fp32_verdict": "above the floor -- THE ONE FLIP, see below"},
+        "7B_keep10_step83500": {"bf16_letter": 0.2720, "fp32_letter": 0.2700, "delta_pp": -0.207, "bf16_tie_pct": 13.80, "fp32_tie_pct": 0.00, "bf16_verdict": "AT the floor", "fp32_verdict": "AT the floor"},
+        "7B_keep8_step121000": {"bf16_letter": 0.2550, "fp32_letter": 0.2535, "delta_pp": -0.150, "bf16_tie_pct": 30.64, "fp32_tie_pct": 0.00, "bf16_verdict": "BELOW the floor", "fp32_verdict": "BELOW the floor"}
+      },
+      "headline_1_fp32_kills_all_ties": "fp32 drives the exact-tie rate to 0.00% on five of six arms (shortgpt16 0.01%), from a bf16 rate that rises monotonically with damage to 30.64% on keep8. The ties are unambiguously a bf16 artifact.",
+      "headline_2_verdicts_do_not_move": "removing every tie leaves the floor verdict unchanged on 5/6 arms. keep8 stays BELOW and gets MORE significant (bf16 -1.389pp p=0.0192 -> fp32 -1.538pp p=0.0062). This is the triple-falsification of 'ties are the mechanism', now at n=6 arms instead of 2.",
+      "the_one_flip_keep12_MARGINAL": {
+        "bf16": "+0.385pp CI95 [-0.463,+1.239] p=0.3736 -> AT the floor",
+        "fp32": "+0.819pp CI95 [+0.078,+1.545] p=0.0272 -> above the floor",
+        "do_not_overclaim": "ONE arm of six; the fp32 CI clears zero by 0.078pp; p=0.0272 is UNCORRECTED and would not survive BH across the six arms. Report as 'one arm's verdict is dtype-fragile at the margin', NOT as 'fp32 rescues keep12'. It argues for reporting dtype alongside every verdict -- which is A01's own thesis -- not for a mechanism claim.",
+        "modal_shift_cuts_the_other_way": "keep12's modal-letter concentration RISES under fp32: D@49.3% -> D@61.3%. So fp32 nudges accuracy up while making the arm a MORE degenerate constant predictor. The two move in opposite directions."
+      },
+      "headline_3_fp32_makes_damaged_arms_more_degenerate": "modal concentration rises under fp32 on every damaged arm: keep10 D 60.1->65.1%, keep12 D 49.3->61.3%, keep8 C 48.8->55.9%. Removing index tie-breaking does not make a damaged arm less degenerate -- it makes it more visibly constant. Worth a sentence in the paper.",
       "base_arm_result": "fp32 removes ALL exact ties (18 -> 0) but letter acc is UNCHANGED: 0.6054 both dtypes, delta +0.0000 CI95 [-0.0011,+0.0011], McNemar p=1.000. 96 letter argmax flips (0.68%), of which only 12 were the bf16-tied items. So on the intact model, ties are a bf16 artifact AND removing them changes nothing measurable.",
       "note": "gate-1's Llama-2 result (15.79% ties, fully healthy) now serves as an external positive control for 'ties without failure', which reframes what the keep8 arm can show.",
-      "evidence": "results/a01_gate3/dtype_runs/7B_base_dtype/dtype_summary.json (on zwfy6/.73)"
+      "evidence": "results/a01_gate3/dtype_runs/{7B_base,7B_shortgpt16_step200000,7B_keep14_step200000,7B_keep12_step124000,7B_keep10_step83500,7B_keep8_step121000}_dtype/dtype_summary.json -- all on zwfy6 ONLY, wzc1 does not have them",
+      "remaining_analysis_TODO": "the six summaries also carry content_norm columns and four longest_option_floor_by_conv variants (split/first/last/credit/wrong) that nobody has tabulated. CPU-only, no GPU."
     },
     "gate4_c4_aggregation_prereg": {
       "verdict": "HEADLINE_IS_AGGREGATION_SENSITIVE -- must be reported as a range, not '10x'",
