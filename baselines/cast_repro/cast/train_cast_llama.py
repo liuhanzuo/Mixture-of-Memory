@@ -1,29 +1,88 @@
 #!/usr/bin/env python3
-"""CAST training for LLaMA-2-7B under plain DDP (arXiv:2509.25996v1).
+"""CAST training for LLaMA-2-7B: plain DDP or ZeRO-1 sharding (arXiv:2509.25996v1).
 
 Paper recipe for LLaMA (Table XI): lr 2e-5, lambda 4e-7, global batch 256,
 seqlen 4096, 7500 steps, mask refresh every 10 steps, n=2 scaling groups,
 eta=1/3 KL coefficient, Dolmino-Mix-1124.
 
-WHY DDP AND NOT FSDP.  The previous attempt used FSDP FULL_SHARD.  FSDP packs
+THE ACTUAL HAZARD IS PARAMETER FLATTENING, NOT SHARDING
+-------------------------------------------------------
+The previous attempt used FSDP FULL_SHARD and it failed *silently*.  FSDP packs
 `weight` and `mask` into a FlatParameter and slices them at *different* global
 offsets, so a rank's weight shard and mask shard are not element-aligned (their
 numel can even differ).  The old optimizer set `mask = None` in that case and
 silently ran vanilla Adam, so the selective L1 decay never happened on most
 tensors -- 7.86B tokens burned, Wiki PPL 23.45.  See
 Mixture-of-Memory/SparseForge_Data/docs/CAST_REPRODUCTION_AUDIT.md section 4.1.
-Under DDP nothing is sharded: `weight` and `mask` are full, same-shape,
-same-device tensors, so alignment holds by construction and AdamS asserts it on
-every step.
+**FULL_SHARD remains forbidden.**
 
-Memory (per rank, LLaMA2-7B, fp32 master + fp32 Adam state):
-    params 26.9 GB + grads 26.9 GB + exp_avg 26.9 GB + exp_avg_sq 26.9 GB
-    + bool masks 6.5 GB + frozen bf16 teacher 13.5 GB  ~= 128 GB
-which fits an L20A/B200-class 183 GB card but NOT an 80/97 GB card.  DDP does
-not shard optimizer state, so adding nodes does not reduce per-card memory.
+The refined diagnosis, established empirically by
+``tools/fsdp_misalignment_demo.py`` on 8 ranks (torch 2.13.0, L20A): what breaks
+CAST is *re-viewing / flattening the Parameter object*, not distributing work.
+AdamS needs, at ``step()`` time, the original 2-D ``nn.Parameter`` still carrying
+its original ``cast_mask``.  Measured verdicts:
+
+  DDP                                     SAFE, 32/32 aligned, 1.000x state
+  FSDP1 FULL_SHARD  use_orig_params=True  UNSAFE - param becomes (262144,) vs mask (512,512)
+  FSDP1 SHARD_GRAD_OP use_orig_params=True UNSAFE - *identical* flattening; `use_orig_params`
+                                          does NOT prevent it, and ZeRO-2-via-FSDP is
+                                          therefore not available to us
+  FSDP2 fully_shard (DTensor)             UNSAFE, AND WORSE: the `cast_in_scope` /
+                                          `cast_mask` attributes are DROPPED (0/32 tagged),
+                                          so AdamS sees no CAST params at all, reports
+                                          `aligned=0/0`, and every assertion passes
+                                          VACUOUSLY.  This is the same silent-failure
+                                          class as the original bug.
+  DDP + ZeroRedundancyOptimizer(AdamS)    SAFE, 32/32 aligned, 0.125x state at world=8
+
+`--parallel zero2` therefore uses **DDP + ZeroRedundancyOptimizer**, i.e. ZeRO-1
+(optimizer state sharded).  It is safe *by construction*, not incidentally: ZeRO
+partitions at whole-tensor granularity (`_partition_parameters` greedily assigns
+each entire Parameter to one rank), so a rank either owns a weight completely --
+full 2-D shape, original `cast_mask`, alignment exactly as under DDP -- or does
+not see it at all.  No tensor is ever split, so no offset mismatch can arise.
+Naming note: the flag is `zero2` because grads are also reduced-and-freed by DDP
+buckets; the optimizer-state sharding itself is ZeRO-1.
+
+Because each rank now covers only its shard, `AdamS.last_stats` is per-rank and
+`expected_scope_tensors`/`expected_scope_elements` (224 / 6.48e9, whole-model
+constants) cannot be asserted locally.  They are asserted **globally via
+all-reduce every step** instead -- see `assert_full_coverage()`.  Coverage is
+never assumed; it is measured on every single step.
+
+Memory per rank (LLaMA2-7B = 6.74e9 params, fp32 master + fp32 Adam state),
+MEASURED on 8x L20A (178.35 GiB/card), seq_len 4096, micro_batch 1,
+gradient checkpointing + expandable_segments, global_batch 256 (accum 32):
+
+    ddp   : OOM.  Dies on step 1 trying to allocate 172 MiB with 99.75 MiB free;
+            174.04 GiB allocated by PyTorch of a 178.35 GiB card.  Step 0
+            completes (peak 138.6 GB) and then the optimizer state materialises.
+    zero2 : COMPLETES.  Peak allocated 145.6 GB, reserved 147.9 GB, steady from
+            step 1 onward -> ~32.7 GiB headroom on the card.
+            Adam state on rank0: 7.0 GB over 29 tensors, vs 50.2 GB if
+            unsharded => the realised saving is ~43 GB.
+
+HONEST SCOPE OF THE SAVING -- the flag is called `zero2` but what is implemented
+is ZeRO-**1**: only optimizer state is sharded.  **Gradients are NOT sharded**;
+DDP keeps a full fp32 gradient buffer (~25 GB) on every rank.  Sharding grads too
+would need either FSDP (flattens params -> forbidden, see above) or
+`overlap_with_ddp=True` (requires a *functional* optimizer; AdamS is not one, and
+that path is documented as experimental).  That is why the peak is 145.6 GB rather
+than the ~103 GB a true ZeRO-2 would give.  32.7 GiB of headroom is enough for
+this recipe but is NOT generous: raising seq_len, micro_batch, or dropping
+gradient checkpointing can still OOM.  The next safe lever is CPU-offloading the
+Adam state (still whole-tensor, so still alignment-preserving) -- NOT quantising
+the master weights.
+
+fp32 IS NON-NEGOTIABLE.  lambda=4e-7 gives a per-step decay ~8e-12, far below
+bf16 resolution; bf16 master weights round the entire selective-decay signal to
+zero and silently disable CAST (tests/test_cast.py::
+test_bf16_swallows_lambda_fp32_does_not).  Never quantise the master weights to
+save memory -- shard them or offload them instead.
 
 Smoke test (no long run):
     torchrun --nproc_per_node 8 train_cast_llama.py --max-steps 4 --smoke
+    torchrun --nproc_per_node 8 train_cast_llama.py --max-steps 4 --parallel zero2
 
 Full run: see README.md.
 """
@@ -57,6 +116,7 @@ from cast import (  # noqa: E402
     refresh_all_masks,
 )
 from cast.diagnostics import magnitude_report  # noqa: E402
+from cast.adams import MaskCoverageError  # noqa: E402
 
 
 # ---------------------------------------------------------------------------
@@ -74,12 +134,26 @@ def parse_args():
     # --- implementation choices (NOT specified by the paper) ---
     p.add_argument("--kl-temperature", type=float, default=1.0,
                    help="[impl] 1.0 = paper-literal Eq.13; 2.0 = AST-code variant")
-    p.add_argument("--min-lr", type=float, default=2e-6, help="[impl] cosine floor (AST alpha_f=0.1)")
-    p.add_argument("--warmup", type=int, default=375, help="[impl] 5%% of 7500")
+    p.add_argument("--lr-schedule", default="constant", choices=["constant", "cosine"],
+                   help="[paper] constant = paper-literal: Appendix B says a 'consistent "
+                        "learning rate for each model' at peak 2e-5, i.e. no cosine and no "
+                        "warmup. 'cosine' is the documented DEVIATION (uses --min-lr/--warmup).")
+    p.add_argument("--min-lr", type=float, default=2e-6,
+                   help="[impl] cosine floor (AST alpha_f=0.1); ignored when "
+                        "--lr-schedule constant")
+    p.add_argument("--warmup", type=int, default=375,
+                   help="[impl] 5%% of 7500; ignored when --lr-schedule constant")
     p.add_argument("--betas", type=float, nargs=2, default=(0.9, 0.999), help="[impl] Adam default")
     p.add_argument("--eps", type=float, default=1e-8, help="[impl] Adam default")
     p.add_argument("--grad-clip", type=float, default=1.0, help="[impl] not in paper")
     p.add_argument("--micro-batch", type=int, default=1, help="[impl] memory-driven")
+    p.add_argument("--parallel", default="ddp", choices=["ddp", "zero2"],
+                   help="[impl] ddp = no sharding; MEASURED to OOM on 8x L20A at seq_len 4096 "
+                        "(174.04/178.35 GiB). zero2 = DDP + ZeroRedundancyOptimizer(AdamS): "
+                        "shards Adam state at WHOLE-TENSOR granularity, so weight<->mask "
+                        "alignment is preserved by construction; measured peak 145.6 GB. "
+                        "NEVER use FSDP -- it flattens the Parameter and breaks alignment; "
+                        "see the module docstring and tools/fsdp_misalignment_demo.py.")
     # --- plumbing ---
     p.add_argument("--model", default="models/Llama--Llama2-7b")
     p.add_argument("--data", default="data/c4_llama",
@@ -109,9 +183,19 @@ def log(msg: str) -> None:
 
 
 def lr_at(step: int, args) -> float:
-    """Cosine with linear warmup.  [implementation_choice] -- Table XI gives only
-    the peak LR; the schedule shape is ours (AST official uses alpha_f=0.1, hence
-    min_lr = lr/10)."""
+    """LR at ``step``.
+
+    ``constant`` (default) is PAPER-LITERAL: Appendix B specifies a "consistent
+    learning rate for each model", and Table XI gives the single value 2e-5 for
+    LLaMA -- so no warmup and no decay.  This is what a reproduction must use.
+
+    ``cosine`` is a documented DEVIATION (audit S4.4): linear warmup then cosine
+    to ``--min-lr``, mirroring AST official's ``alpha_f=0.1``.  Kept available
+    because the decay budget is larger under a constant LR (tools/decay_budget.py
+    with --min-lr == --lr), but it must be selected explicitly, never silently.
+    """
+    if args.lr_schedule == "constant":
+        return args.lr
     if step < args.warmup:
         return args.lr * (step + 1) / max(1, args.warmup)
     prog = (step - args.warmup) / max(1, args.max_steps - args.warmup)
@@ -256,17 +340,125 @@ def main():  # noqa: C901
             )
 
     # ---- optimizer ----
-    opt = AdamS(
-        build_param_groups(inner, lr=args.lr),
+    # Under zero2 each rank's AdamS only ever sees ITS SHARD of the tensors, so
+    # the whole-model constants (224 tensors / 6.48e9 elements) are not locally
+    # satisfiable -- they are asserted globally instead, every step, by
+    # assert_full_coverage() below.  Passing them to the local AdamS would make
+    # it crash on a correct run.
+    adams_kwargs = dict(
         lr=args.lr,
         betas=tuple(args.betas),
         eps=args.eps,
         total_steps=args.max_steps,
         l1_decay=args.l1_decay,
-        expected_scope_elements=expected_elements,
-        expected_scope_tensors=expected_tensors,
         require_fp32=True,
     )
+    if args.parallel == "zero2":
+        if not ddp:
+            raise ValueError("--parallel zero2 requires world_size > 1 (launch with torchrun)")
+        from torch.distributed.optim import ZeroRedundancyOptimizer
+
+        # Whole-tensor partitioning => the Parameter a rank owns is the original
+        # full 2-D nn.Parameter with its original `cast_mask`.  Verified on 8
+        # ranks by tools/fsdp_misalignment_demo.py (32/32 aligned, 0.125x state).
+        opt = ZeroRedundancyOptimizer(
+            build_param_groups(inner, lr=args.lr),
+            optimizer_class=AdamS,
+            expected_scope_elements=None,
+            expected_scope_tensors=None,
+            **adams_kwargs,
+        )
+        log("optimizer: DDP + ZeroRedundancyOptimizer(AdamS) -- Adam state sharded at "
+            "whole-tensor granularity (ZeRO-1); mask alignment preserved by construction")
+    else:
+        opt = AdamS(
+            build_param_groups(inner, lr=args.lr),
+            expected_scope_elements=expected_elements,
+            expected_scope_tensors=expected_tensors,
+            **adams_kwargs,
+        )
+        log("optimizer: plain AdamS (no sharding), ~131.8 GB/rank static")
+
+    def local_stats() -> dict:
+        """AdamS.last_stats for this rank (unwrapping ZeRO's local optimizer)."""
+        return getattr(getattr(opt, "optim", opt), "last_stats", {}) or {}
+
+    @torch.no_grad()
+    def assert_full_coverage(step: int) -> dict:
+        """EVERY step: prove 100% of the CAST scope took the AdamS decay path.
+
+        Under zero2 no single rank can see the whole scope, so the per-rank
+        assertions inside AdamS are necessary but NOT sufficient.  We combine the
+        per-rank counters and check the totals against the static whole-model
+        constants.  This is the guard the previous run lacked: it turns "the
+        optimizer thinks it is fine locally" into "the union of all ranks covered
+        exactly 224 tensors / 6.48e9 elements, half of them decayed".  A rank that
+        silently fell back to vanilla Adam, or lost its cast_mask attribute, shows
+        up as a deficit here.  Fault-injection-verified: untagging one rank's
+        shard yields "GLOBAL tensors 14 != expected 16" on all ranks.
+
+        The combining rule DIFFERS BY MODE and getting it wrong makes the check
+        meaningless:
+          zero2 -- the scope is PARTITIONED, so ranks are disjoint => SUM.
+          ddp   -- every rank redundantly owns the WHOLE scope => the totals are
+                   already per-model; summing would give 8*224=1792.  We instead
+                   assert every rank agrees (MIN == MAX == local), which also
+                   catches a single rank losing coverage.
+        """
+        s = local_stats()
+        if not s:
+            raise MaskCoverageError(
+                f"step {step}: AdamS.last_stats empty -- step() did not run the CAST path"
+            )
+        if s["cast_tensors"] != s["cast_tensors_aligned"]:
+            raise MaskCoverageError(
+                f"step {step}: rank{rank} local coverage "
+                f"{s['cast_tensors_aligned']}/{s['cast_tensors']}"
+            )
+        keys = ("cast_tensors", "cast_tensors_aligned", "cast_elements", "decayed_elements")
+        if not ddp:
+            g = {k: s[k] for k in keys}
+        elif args.parallel == "zero2":
+            # Disjoint shards -> the union is the sum.
+            t = torch.tensor([s[k] for k in keys], dtype=torch.float64, device=device)
+            dist.all_reduce(t, op=dist.ReduceOp.SUM)
+            g = dict(zip(keys, (int(v) for v in t.tolist())))
+        else:
+            # Replicated scope -> totals must be IDENTICAL on every rank.
+            mine = torch.tensor([s[k] for k in keys], dtype=torch.float64, device=device)
+            lo, hi = mine.clone(), mine.clone()
+            dist.all_reduce(lo, op=dist.ReduceOp.MIN)
+            dist.all_reduce(hi, op=dist.ReduceOp.MAX)
+            if not (torch.equal(lo, mine) and torch.equal(hi, mine)):
+                raise MaskCoverageError(
+                    f"step {step}: ranks disagree on CAST coverage under ddp: "
+                    f"rank{rank}={[int(v) for v in mine.tolist()]} "
+                    f"min={[int(v) for v in lo.tolist()]} max={[int(v) for v in hi.tolist()]}"
+                )
+            g = {k: s[k] for k in keys}
+        if g["cast_tensors"] != g["cast_tensors_aligned"]:
+            raise MaskCoverageError(
+                f"step {step}: GLOBAL coverage {g['cast_tensors_aligned']}/{g['cast_tensors']} "
+                "-- some rank ran without an aligned mask"
+            )
+        exp_t = expected_tensors
+        if exp_t is not None and g["cast_tensors"] != exp_t:
+            raise MaskCoverageError(
+                f"step {step}: GLOBAL in-scope tensors {g['cast_tensors']} != expected {exp_t}. "
+                "Under zero2 this means a rank's shard was dropped entirely."
+            )
+        if expected_elements is not None and g["cast_elements"] != expected_elements:
+            raise MaskCoverageError(
+                f"step {step}: GLOBAL in-scope elements {g['cast_elements']:,} != expected "
+                f"{expected_elements:,}"
+            )
+        # Exact 2:4 => exactly half the scope is masked, hence decayed.
+        if g["cast_elements"] and g["decayed_elements"] != g["cast_elements"] // 2:
+            raise MaskCoverageError(
+                f"step {step}: GLOBAL decayed {g['decayed_elements']:,} != half of scope "
+                f"{g['cast_elements'] // 2:,} -- mask is not a valid 2:4 pattern"
+            )
+        return g
 
     # ---- data ----
     data_dir = root / args.data
@@ -284,7 +476,19 @@ def main():  # noqa: C901
 
     manifest = {
         "paper": "arXiv:2509.25996v1",
-        "parallelism": "plain DDP (NOT FSDP -- see module docstring)",
+        "parallelism": (
+            "DDP + ZeroRedundancyOptimizer(AdamS): ZeRO-1, Adam state sharded at "
+            "whole-tensor granularity. NOT FSDP -- FSDP flattens the Parameter and "
+            "breaks weight<->mask alignment; see module docstring."
+            if args.parallel == "zero2"
+            else "plain DDP, no sharding (NOT FSDP -- see module docstring)"
+        ),
+        "lr_schedule": (
+            "constant (paper-literal: Appendix B 'consistent learning rate', Table XI 2e-5)"
+            if args.lr_schedule == "constant"
+            else f"cosine {args.lr:g}->{args.min_lr:g} warmup {args.warmup} "
+                 "(DOCUMENTED DEVIATION from Appendix B)"
+        ),
         "world_size": world,
         "hyperparameters": vars(args),
         "cast_scope": stats,
@@ -336,15 +540,36 @@ def main():  # noqa: C901
         if args.grad_clip > 0:
             torch.nn.utils.clip_grad_norm_(inner.parameters(), args.grad_clip)
         opt.step()  # raises unless 100% of in-scope weights took the AdamS path
+        # EVERY step, not just step 0: under zero2 the per-rank assertions inside
+        # AdamS cannot see the whole scope, so the global totals are the only
+        # sufficient check. Cost is one 4-element all-reduce.
+        gcov = assert_full_coverage(step)
+
+        if step == 0:
+            # Measure, don't assume, the thing this whole mechanism exists for.
+            _o = getattr(opt, "optim", opt)
+            _st = sum(
+                t.numel() * t.element_size()
+                for s_ in _o.state.values()
+                for t in (s_.get("exp_avg"), s_.get("exp_avg_sq"))
+                if torch.is_tensor(t)
+            )
+            _pn = sum(p.numel() for p in inner.parameters() if p.requires_grad)
+            log(
+                f"MEM step0 rank{rank}: adam_state={_st / 2**30:.1f}G over "
+                f"{len(_o.state)} tensors (full-model fp32 Adam state would be "
+                f"{2 * 4 * _pn / 2**30:.1f}G) peak={torch.cuda.max_memory_allocated() / 2**30:.1f}G "
+                f"reserved={torch.cuda.max_memory_reserved() / 2**30:.1f}G"
+            )
 
         if step % args.log_every == 0 or step == args.max_steps - 1:
-            s = opt.last_stats
+            s = local_stats()
             el = time.time() - t0
             log(
                 f"step {step}/{args.max_steps} loss={agg['loss']:.4f} ce={agg['ce']:.4f} "
                 f"kl={agg['kl']:.4f} lr={cur_lr:.3e} alpha={s['alpha_t']:.4f} "
-                f"aligned={s['cast_tensors_aligned']}/{s['cast_tensors']} "
-                f"decayed={s['decayed_elements']:,} flips={flips} "
+                f"aligned={gcov['cast_tensors_aligned']}/{gcov['cast_tensors']}(global) "
+                f"decayed={gcov['decayed_elements']:,} flips={flips} "
                 f"mem={torch.cuda.max_memory_allocated()/2**30:.1f}G {el:.0f}s"
             )
 
@@ -352,6 +577,10 @@ def main():  # noqa: C901
             rep = magnitude_report(inner)
             log(f"DIAG step {step}: {json.dumps(rep['summary'])}")
 
+        # Weights only -- these are model checkpoints, not resumable ones. Under
+        # zero2 the Adam state lives sharded on 8 ranks, so resuming would need
+        # opt.consolidate_state_dict(to=0) first. Weights are replicated by DDP,
+        # so rank0's copy is complete and correct either way.
         if args.save_every and step > 0 and step % args.save_every == 0 and is_master():
             torch.save(
                 {"model": inner.state_dict(), "step": step, "args": vars(args)},
