@@ -66,12 +66,17 @@ CURVE_CMD = (
 NODES = [
     {"id": "local", "label": "本机 LOCAL (wzc1, 8xL20A/B200级 183GB)", "mode": "local"},
     {
-        "id": "252",
-        "label": ".252 (28.89.19.252, wzc1, 8xB200)",
+        # 2026-08-09: .252 retired, replaced by .21. The old entry pointed at
+        # 28.89.19.252:22 with configs/password_b200_19252.txt -- that password file
+        # was deleted in 46abe8a, so this panel showed a permanently-broken node
+        # while the live .21 was invisible. Port is 36000 (global ssh_config sets it;
+        # port 22 on these hosts is a different sshd with different accounts).
+        "id": "21",
+        "label": ".21 (28.89.19.21:36000, wzc1, 8xL20A 183GB)",
         "mode": "ssh",
-        "host": "28.89.19.252",
-        "port": "22",
-        "pwfile": os.path.join(PROJECT, "configs/password_b200_19252.txt"),
+        "host": "28.89.19.21",
+        "port": "36000",
+        "pwfile": os.path.join(PROJECT, "configs/password_b200_19021.txt"),
     },
     {
         "id": "73",

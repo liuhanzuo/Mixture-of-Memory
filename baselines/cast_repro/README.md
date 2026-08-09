@@ -229,7 +229,37 @@ peak memory: 104.9 GiB
 
 Caveats: assumes perfect DDP scaling, omits dataloader and checkpoint I/O, and the ×1.55 correction (attention matmuls ×1.12, embeddings+lm_head ×1.04, bf16 teacher forward ×1.33) is an estimate. Expect **1.5–3 days** realistically. Do **not** use the paper's Appendix F figure (403 s/step for LLaMA3-8B on 32×H800) to project this — it is ~40× slower than a FLOPs estimate allows and extrapolating from it wrongly suggests a multi-month run.
 
-Memory is not the blocker (127.7 GiB of 178 GiB measured under 8-GPU DDP), but DDP does not shard optimizer state, so adding cards will not reduce per-card memory — the 183 GiB L20A/B200 class is required and an 80/97 GiB H20 cannot hold this run.
+~~Memory is not the blocker (127.7 GiB of 178 GiB measured under 8-GPU DDP)~~, but DDP does not shard optimizer state, so adding cards will not reduce per-card memory — the 183 GiB L20A/B200 class is required and an 80/97 GiB H20 cannot hold this run.
+
+> **★ 2026-08-09 CORRECTION — memory IS the blocker.** The struck-through clause
+> above (written 2026-08-08 16:11) predates the first real training attempt
+> (2026-08-09 03:17–03:29) and is FALSE. The run OOM'd on the **second
+> micro-batch of step 0**.
+>
+> * Per-rank **static** cost under plain DDP is **131.8 GB** (fp32 master 25.1 +
+>   fp32 grads 25.1 + Adam m 25.1 + Adam v 25.1 + bf16 compute 12.6 + bool masks
+>   6.3 + bf16 frozen teacher 12.6). L20A capacity 178.35 GiB → **46.6 GB** left
+>   for activations.
+> * Step 0 completed at a **measured** 138.6 G (`aligned=224/224`,
+>   3,238,002,688 weights decayed), then the next 172 MiB allocation failed with
+>   99.75 MiB free.
+> * Measured peaks: **178.33 GiB** without gradient checkpointing, **174.04 GiB**
+>   with checkpointing + `expandable_segments:True` — still OOM by ~100 MiB.
+> * **Do not conflate the two figures: 131.8 GB is the static budget; 138.6 G is a
+>   measured step-0 peak that already includes activations.** (An earlier summary
+>   mixed them and produced the self-inconsistent 178.4 − 138.6 = 46.6.)
+>
+> The paper's own reported hardware (8×H800, 94 GB/card) also cannot hold
+> 131.8 GB/rank, which implies **the paper must have used FSDP or ZeRO sharding**
+> and simply does not state its parallelism strategy. Sharding therefore fills in
+> an axis the paper left unspecified rather than deviating from it.
+>
+> Fix in progress: ZeRO-2 style sharding of optimizer state + gradients
+> (`--parallel zero2`), which MUST preserve `weight ↔ mask` element alignment —
+> see the `train_cast_llama.py` module docstring for why FSDP FULL_SHARD is
+> forbidden (it silently disabled CAST once already; 7.86B tokens burned, Wiki
+> PPL 23.45). `require_fp32=True` is non-negotiable: λ=4e-7 is below bf16
+> resolution.
 
 ## 6. Reporting rules
 
