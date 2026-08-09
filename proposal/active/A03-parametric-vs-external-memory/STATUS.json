@@ -2,7 +2,22 @@
   "id": "A03",
   "status": "active_measurable",
   "priority": 3,
-  "updated": "2026-08-09T00:12+0800",
+  "updated": "2026-08-09T07:40+0800",
+  "arm3_cpt_trajectory_interim": {
+    "tested": "2026-08-09",
+    "verdict": "NO_COHERENT_TRAJECTORY_AT_STEP205_STEP210",
+    "node": ".82 (8x H20, zwfy6), 8 min wall for 6 eval passes",
+    "arms_covered": ["step205000 (5k CPT past Arm 2)", "step210000 (10k CPT past Arm 2)"],
+    "arms_pending": ["step215000", "step220000 (final of 20k window)"],
+    "mmlu_letter_step205_delta_pp": 0.02,
+    "mmlu_letter_step210_delta_pp": -0.03,
+    "mmlu_cn_step205_delta_pp": -0.11,
+    "mmlu_cn_step210_delta_pp": -0.23,
+    "closedbook_pattern": "individual metric wobbles ≤1pp, SIG cells reverse sign step205→step210 (popqa em: -0.35pp→+0.16pp; triviaqa em: -0.49pp→+0.37pp). No coherent direction.",
+    "caveat_LR_HORIZON": "cosine at step 205-210k gives 5.6-6.5e-6 = 0.28-0.33x peak. A null here does NOT rule out gain under a fresh-CPT peak-LR arm with new warmup.",
+    "verdict_file": "ARM3_CPT_TRAJECTORY_INTERIM_VERDICT.md",
+    "evidence_file": "evidence/arm3_cpt_trajectory_step205_210_paired.json"
+  },
   "kill_condition_1b_pilot_at_floor": {
     "tested": "2026-08-08",
     "verdict": "1B_PILOT_VIABLE",

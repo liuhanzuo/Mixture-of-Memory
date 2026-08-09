@@ -54,8 +54,11 @@
       "evidence": "results/a01_gate3/dtype_runs/7B_base_dtype/dtype_summary.json (on zwfy6/.73)"
     },
     "gate4_c4_aggregation_prereg": {
-      "verdict": "NOT STARTED",
-      "note": "CPU only, data on disk (evidence/null_calibration_{p1,obs4}_nperm2000.json + code/build_null_calibration_table.py). Cannot kill anything; removes a selective-reporting attack on the 10x figure."
+      "verdict": "HEADLINE_IS_AGGREGATION_SENSITIVE -- must be reported as a range, not '10x'",
+      "ran": "2026-08-09, CPU only, seconds",
+      "summary": "V1 pre-registered primary (Qwen+OLMo, 3-task native, pooled) gives span 10.04x. Defensible alternatives V2-V5 give 6.86-9.98x, with C4 fraction 0.5278-0.7724 (1.46x spread within the construct). 'Exactly 10x' is a selected number; the correct headline is 'residual fractions span roughly 7-10x'.",
+      "note": "Not a kill gate; removes a reviewer selective-reporting attack surface by enumerating and pre-registering all defensible aggregations.",
+      "evidence": "GATE4_VERDICT.md, evidence/gate4_c4_prereg.json, code/a01_gate4_c4_prereg.py"
     }
   },
   "claim_scope_after_gates": {
@@ -75,8 +78,8 @@
     ]
   },
   "next_gate": [
-    "gate-1 depth-curve gap-fill: pin each family's collapse threshold to a single layer (in flight)",
-    "gate-4 C4 aggregation pre-registration (CPU)",
+    "gate-1 depth-curve gap-fill: COMPLETE (all four families pinned, incl Llama-2 non-monotone anomaly resolved)",
+    "gate-4 C4 aggregation pre-registration: COMPLETE (span 6.86-10.04x, headline range not '10x' point)",
     "rewrite PROPOSAL.md claims section to the CONFIRMED-general scope above (not the retracted narrowed scope)",
     "novelty check vs existing similarity-null / construct-validity prior art (the third Kill clause)"
   ],

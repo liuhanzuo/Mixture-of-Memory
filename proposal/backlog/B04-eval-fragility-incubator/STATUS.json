@@ -32,5 +32,31 @@
     "qwen_analysis": "evidence/B04_Qwen_6rung_bs16_analysis.json"
   },
   "complete_rungs_olmo": 6,
-  "complete_rungs_qwen": 6
+  "complete_rungs_qwen": 6,
+  "novelty_check_2026_08_09": {
+    "verdict": "hold_in_backlog",
+    "rationale": "OLMo-2-narrowed per-item acc_norm margin fingerprint on prune-heal ladder is not preempted by any verified peer-reviewed prior work (closest is Tropeano 2026 TMLR, which uses ECE/Brier aggregate calibration on attention-only prune without heal; measurement family is disjoint). But OLMo-2-only scope after Qwen kill is too narrow for stand-alone paper. Needs a 2nd non-Qwen family AND a mechanism-level hypothesis before promotion.",
+    "key_prior_work": [
+      "Tropeano, Maistro, Ruotsalo, Lioma. Don't Go Breaking My LLM: The Impact of Pruning Attention Layers on Explanation Faithfulness and Confidence Calibration. arXiv:2606.24970. TMLR 2026 (OpenReview venueid=TMLR, Camera_Ready_Revision).",
+      "Madaan, Yuret, Hupkes et al. Quantifying Variance in Evaluation Benchmarks. arXiv:2406.10229. NeurIPS 2024 RegML Workshop (OpenReview venueid=NeurIPS.cc/2024/Workshop/RegML).",
+      "Men, Xu, Zhang et al. ShortGPT: Layers in Large Language Models are More Redundant Than You Expect. arXiv:2403.03853. Findings of ACL 2025 (DBLP conf/acl/MenXZYWL0HC25, doi 10.18653/v1/2025.findings-acl.1035).",
+      "Kim, Kim, Kim et al. Shortened LLaMA: A Simple Depth Pruning for Large Language Models. arXiv:2402.02834. arXiv preprint, venue unverified (DBLP journals/corr/abs-2402-02834, Informal).",
+      "Hong, Bhagia, Sun et al. Fluid Language Model Benchmarking. arXiv:2509.11106. COLM 2025 (OpenReview venueid=colmweb.org/COLM/2025/Conference)."
+    ],
+    "kill_definition": "A paper is a kill iff it (1) uses depth-prune-then-heal (not just prune-only or attention-only) on >=3 rungs, (2) reports per-item acc_norm (or equivalent length-normalized) margin distribution on MC tasks, AND (3) reports either median_margin or frac(margin<threshold) co-varying with aggregate score on that ladder. None of the top-5 or also-noted set satisfies all three. Concurrent (<=3mo, arXiv only) same-lens work on a different family is NOT a kill.",
+    "resurrection_gate_still_stands": {
+      "second_confirming_family_NOT_qwen": "required; e.g. Llama-3 or Mistral prune-heal ladder",
+      "mechanism_level_hypothesis": "required a priori; candidate: fresh-layer-init variance shapes logit dispersion, which in turn shapes margin compression under damage"
+    },
+    "confidence": "medium-high",
+    "search_scope": "arXiv API + OpenReview API + DBLP + Semantic Scholar (rate-limited). Venue verification followed CLAUDE.md two-family rule (OpenReview venueid + Camera_Ready_Revision for ICLR/NeurIPS/ICML/TMLR/COLM; aclanthology + DBLP for ACL/NAACL/EMNLP family).",
+    "output_file": "NOVELTY_CHECK.md",
+    "main_independent_verification_2026_08_09": {
+      "all_5_venues_reverified_by_MAIN": "yes -- OpenReview /notes/search for TMLR + RegML + COLM; DBLP bibtex for ShortGPT; arXiv comment field for Shortened LLaMA and Fluid Bench",
+      "shortgpt_findings_vs_main": "CONFIRMED Findings (DBLP booktitle=\"Findings of the ACL, ACL 2025\", series=\"Findings of ACL\", pages 20192-20204, doi 10.18653/v1/2025.findings-acl.1035). The subagent got the Findings-vs-main distinction right -- this is the exact trap the venue-verify-acl-family-needs-anthology memory warns about.",
+      "refinement_1_shortened_llama": "venue is VERSION-DEPENDENT. arXiv-v1 was accepted at ICLR 2024 ME-FoMo WORKSHOP (openreview.net/forum?id=18VGxuOdpu). arXiv-v2 added the continued-pretraining-for-severe-pruning results, which is the part that overlaps B04 prune-then-heal. So the OVERLAPPING content is not the peer-reviewed content -- weaker preemption threat than \"arXiv preprint\" alone conveys. Cite as arXiv:2402.02834v2 with workshop-applies-to-v1-only note.",
+      "refinement_2_madaan": "OpenReview returns THREE records for this title: RegML 2024 workshop (venueid NeurIPS.cc/2024/Workshop/RegML), CoRR 2024, AND ICLR.cc/2025/Conference/Rejected_Submission. Workshop claim is correct, but the paper was REJECTED at ICLR 2025. Do not treat its negative result about IRT/item-analysis failing on MMLU as settled -- which if anything leaves more room for B04 per-item margin lens.",
+      "verdict_impact": "NONE on the HOLD verdict; both refinements make the novelty case marginally STRONGER"
+    }
+  }
 }

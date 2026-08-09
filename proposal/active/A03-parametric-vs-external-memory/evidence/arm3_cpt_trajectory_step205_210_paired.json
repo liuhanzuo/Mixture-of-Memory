@@ -1,0 +1,278 @@
+{
+  "protocol": "per-item paired diff bootstrap n_boot=5000 seed=42",
+  "baseline": "A03_1B_keep7_step200k (Arm 2)",
+  "arms_tested": [
+    "step205000 (5k CPT)",
+    "step210000 (10k CPT)"
+  ],
+  "cpt_config": "--max_steps 300000 --lr 2e-5 --min_lr 2e-6 --lr_inherited 2e-5, so late-cosine LR at step 205-210k is 5.6e-6 to 6.5e-6 (0.28-0.33x peak); full window is 20k steps stopping at step220000",
+  "mmlu": {
+    "step205000": {
+      "mmlu_letter": {
+        "n": 14042,
+        "delta_pp": 0.021364477994587665,
+        "ci95_pp": [
+          -0.4771400085457912,
+          0.5127474718701039
+        ],
+        "verdict": "TIE"
+      },
+      "mmlu_cn": {
+        "n": 14042,
+        "delta_pp": -0.11394388263780088,
+        "ci95_pp": [
+          -0.3703176185728529,
+          0.14955134596211367
+        ],
+        "verdict": "TIE"
+      }
+    },
+    "step210000": {
+      "mmlu_letter": {
+        "n": 14042,
+        "delta_pp": -0.02848597065945022,
+        "ci95_pp": [
+          -0.3703176185728529,
+          0.32046716991881496
+        ],
+        "verdict": "TIE"
+      },
+      "mmlu_cn": {
+        "n": 14042,
+        "delta_pp": -0.23500925794046434,
+        "ci95_pp": [
+          -0.4985044865403789,
+          0.04272895598917533
+        ],
+        "verdict": "TIE"
+      }
+    }
+  },
+  "closedbook": [
+    {
+      "task": "popqa",
+      "step": "205000",
+      "metric": "em",
+      "n": 14267,
+      "delta_pp": -0.35045910142286396,
+      "ci95_pp": [
+        -0.5326978341627532,
+        -0.17522955071143198
+      ],
+      "verdict": "SIG"
+    },
+    {
+      "task": "popqa",
+      "step": "205000",
+      "metric": "contains",
+      "n": 14267,
+      "delta_pp": 0.06308263825611551,
+      "ci95_pp": [
+        -0.17522955071143198,
+        0.30840400925212025
+      ],
+      "verdict": "TIE"
+    },
+    {
+      "task": "popqa",
+      "step": "205000",
+      "metric": "f1",
+      "n": 14267,
+      "delta_pp": -0.8227511039461695,
+      "ci95_pp": [
+        -0.9873008340926615,
+        -0.6575003855050116
+      ],
+      "verdict": "SIG"
+    },
+    {
+      "task": "popqa",
+      "step": "210000",
+      "metric": "em",
+      "n": 14267,
+      "delta_pp": 0.16121118665451742,
+      "ci95_pp": [
+        0.0,
+        0.32242237330903484
+      ],
+      "verdict": "TIE"
+    },
+    {
+      "task": "popqa",
+      "step": "210000",
+      "metric": "contains",
+      "n": 14267,
+      "delta_pp": -0.04205509217074367,
+      "ci95_pp": [
+        -0.2733580991098339,
+        0.1962570967968038
+      ],
+      "verdict": "TIE"
+    },
+    {
+      "task": "popqa",
+      "step": "210000",
+      "metric": "f1",
+      "n": 14267,
+      "delta_pp": -0.2505319969159599,
+      "ci95_pp": [
+        -0.39645267049835287,
+        -0.1082656304759235
+      ],
+      "verdict": "SIG"
+    },
+    {
+      "task": "triviaqa",
+      "step": "205000",
+      "metric": "em",
+      "n": 17944,
+      "delta_pp": -0.4848417298261258,
+      "ci95_pp": [
+        -0.6854658938921088,
+        -0.28979045920642
+      ],
+      "verdict": "SIG"
+    },
+    {
+      "task": "triviaqa",
+      "step": "205000",
+      "metric": "contains",
+      "n": 17944,
+      "delta_pp": 0.4123941150245208,
+      "ci95_pp": [
+        0.09473918858671422,
+        0.7300490414623272
+      ],
+      "verdict": "SIG"
+    },
+    {
+      "task": "triviaqa",
+      "step": "205000",
+      "metric": "f1",
+      "n": 17944,
+      "delta_pp": -0.630041796700847,
+      "ci95_pp": [
+        -0.8305043050601871,
+        -0.43095373105216234
+      ],
+      "verdict": "SIG"
+    },
+    {
+      "task": "triviaqa",
+      "step": "210000",
+      "metric": "em",
+      "n": 17944,
+      "delta_pp": 0.37338386090057957,
+      "ci95_pp": [
+        0.16718680338831923,
+        0.5907267053053946
+      ],
+      "verdict": "SIG"
+    },
+    {
+      "task": "triviaqa",
+      "step": "210000",
+      "metric": "contains",
+      "n": 17944,
+      "delta_pp": 0.04458314757021846,
+      "ci95_pp": [
+        -0.26192599197503347,
+        0.362238074008025
+      ],
+      "verdict": "TIE"
+    },
+    {
+      "task": "triviaqa",
+      "step": "210000",
+      "metric": "f1",
+      "n": 17944,
+      "delta_pp": 0.17993201069995549,
+      "ci95_pp": [
+        -0.028576306843513123,
+        0.39072765269728016
+      ],
+      "verdict": "TIE"
+    },
+    {
+      "task": "nq_open",
+      "step": "205000",
+      "metric": "em",
+      "n": 3610,
+      "delta_pp": 0.110803324099723,
+      "ci95_pp": [
+        -0.19459833795013826,
+        0.41620498614957446
+      ],
+      "verdict": "TIE"
+    },
+    {
+      "task": "nq_open",
+      "step": "205000",
+      "metric": "contains",
+      "n": 3610,
+      "delta_pp": 0.0,
+      "ci95_pp": [
+        -0.47091412742382266,
+        0.47091412742382266
+      ],
+      "verdict": "TIE"
+    },
+    {
+      "task": "nq_open",
+      "step": "205000",
+      "metric": "f1",
+      "n": 3610,
+      "delta_pp": -0.09444875346260381,
+      "ci95_pp": [
+        -0.4510420360110802,
+        0.25823704986149587
+      ],
+      "verdict": "TIE"
+    },
+    {
+      "task": "nq_open",
+      "step": "210000",
+      "metric": "em",
+      "n": 3610,
+      "delta_pp": 0.0,
+      "ci95_pp": [
+        -0.2770083102493075,
+        0.2770083102493075
+      ],
+      "verdict": "TIE"
+    },
+    {
+      "task": "nq_open",
+      "step": "210000",
+      "metric": "contains",
+      "n": 3610,
+      "delta_pp": -0.47091412742382266,
+      "ci95_pp": [
+        -0.9141274238227147,
+        -0.02770083102493075
+      ],
+      "verdict": "SIG"
+    },
+    {
+      "task": "nq_open",
+      "step": "210000",
+      "metric": "f1",
+      "n": 3610,
+      "delta_pp": -0.10589473684210524,
+      "ci95_pp": [
+        -0.42932887811634346,
+        0.21360131578947303
+      ],
+      "verdict": "TIE"
+    }
+  ],
+  "headline_verdict": "ALL_TIES \u2014 5k and 10k of CPT past 200k moves NO axis significantly",
+  "caveat": "Late-cosine LR is 0.28-0.33x peak; a null here does NOT rule out that fresh CPT at peak LR would show gain. Interim result only; step215000+step220000 to follow.",
+  "evidence_files": {
+    "mmlu_bootstrap": "/tmp/a03_arm3_cpt_trajectory_paired.json",
+    "per_example_dirs": [
+      "olmo2_mmlu_content_results/A03_1B_arm3_cpt_step{205000,210000}",
+      "olmo2_closedbook_results/A03_1B_arm3_cpt_step{205000,210000}{,_nq}"
+    ]
+  }
+}

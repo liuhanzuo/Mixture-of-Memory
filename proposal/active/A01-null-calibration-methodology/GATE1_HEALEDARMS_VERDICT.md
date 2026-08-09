@@ -52,17 +52,19 @@ of the interface remains smooth here.
 | keep14fresh2 freeze_front | 0.2629 | 0.3600 | [0.0865, 0.1080] | 1.32e−68 | −5.6pp |
 | keep14fresh2 from_scratch | 0.2458 | 0.3598 | [0.1036, 0.1243] | 8.97e−102 | −7.3pp |
 
-### Prompt-richness robustness (content_desc=none control)
+### Prompt-richness robustness (content_desc=none control, all 4 healed arms)
 
-| arm | letter | content_norm | CI95(cn−l) | McNemar p |
-|---|---:|---:|---|---:|
-| keep14fresh2 main + cdnone | 0.3182 | 0.3767 | [0.0479, 0.0694] | 5.70e−27 |
-| **shortgpt16 + cdnone** | **0.4738** | **0.3940** | **[−0.0902, −0.0694]** | **7.11e−51** |
+| arm | letter | content_norm | CI95(cn−l) | shift vs FULL |
+|---|---:|---:|---|---|
+| keep14fresh2 main + cdnone | 0.3182 | 0.3767 | [0.0479, 0.0694] | letter −0.0003 / cn −0.0074 |
+| keep14fresh2 freezefront + cdnone | 0.2623 | 0.3565 | [0.0833, 0.1053] | letter −0.0006 / cn −0.0035 |
+| keep14fresh2 fromscratch + cdnone | 0.2458 | 0.3608 | [0.1047, 0.1256] | letter +0.0000 / cn +0.0010 |
+| **shortgpt16 + cdnone** | **0.4738** | **0.3940** | **[−0.0902, −0.0694]** | letter +0.0004 / cn −0.0074 |
 
-**The shortgpt16 inversion persists under content_desc=none.** Both letter and
-content move less than 0.7pp between the two content protocols, and the CI on
-(cn−l) is still decisively negative. The finding is a property of the model, not
-of the content prompt.
+**The pattern is robust to content_desc.** All four healed arms move <1pp on
+either interface between FULL and cdnone content descriptions. The three keep14
+variants keep their POSITIVE (cn−l) sign; shortgpt16 keeps its NEGATIVE sign.
+The finding is a property of the model, not of the content prompt richness.
 
 ### ShortGPT-16 (topology-preserving heal, 200k)
 
@@ -326,4 +328,6 @@ touched.** That is A01's core protocol claim, unchanged.
 
 * `olmo2_mmlu_content_results/a01_7B_intact_base_full/summary.json`  (this session's new run, 8-shard eval on .21)
 * `olmo2_mmlu_content_results/a01_7B_intact_base_cdnone/summary.json`  (this session's new run)
+* `olmo2_mmlu_content_results/a01_7B_keep14fresh2_freezefront_healed_cdnone/summary.json`  (2026-08-09 fill on .21)
+* `olmo2_mmlu_content_results/a01_7B_keep14fresh2_fromscratch_healed_cdnone/summary.json`  (2026-08-09 fill on .21)
 * Prior intact non-OLMo numbers (Llama-2/Llama-3/Qwen3): `GATE1_VERDICT.md` §2 (numbers valid, its VERDICT retracted)
