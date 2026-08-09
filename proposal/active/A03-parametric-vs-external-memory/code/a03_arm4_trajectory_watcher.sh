@@ -30,13 +30,22 @@ done
 note "v2 started; REF_SIZE=${REF_SIZE:-unknown} bytes; watching $CKDIR for step205000/210000/215000/220000"
 
 fully_written() {  # 0 iff $1 is complete by (a)+(b)+(c)
-  local f="$1" s1 s2 age
+  local f="$1" s1 s2 age diff
   [ -f "$f" ] || return 1
   age=$(($(date +%s) - $(stat -c %Y "$f")))
   if [ $age -lt $STALE_S ]; then note "$(basename $f) only ${age}s old; waiting"; return 1; fi
   s1=$(stat -c %s "$f" 2>/dev/null) || return 1
-  if [ -n "$REF_SIZE" ] && [ "$s1" != "$REF_SIZE" ]; then
-    note "REFUSE $(basename $f): size $s1 != reference $REF_SIZE (truncated/corrupt)"; return 1
+  # 2026-08-10 v3: torch.save pickle bytes drift ~1 KiB between saves within a
+  # single run (rng_state, train_args), so exact-size match is too strict.
+  # step220000 arrived at 12181310562 vs sibling 12181311650 (1088-byte drift)
+  # and torch.load OK. Tolerance = 64 KiB, vs the 6.2 GB gap of the original
+  # corruption case (5,956,287,104 vs 12,181,311,650) -- still 5000x tighter.
+  if [ -n "$REF_SIZE" ]; then
+    diff=$(( s1 > REF_SIZE ? s1 - REF_SIZE : REF_SIZE - s1 ))
+    if [ "$diff" -gt 65536 ]; then
+      note "REFUSE $(basename $f): size $s1 vs reference $REF_SIZE (diff ${diff} B > 64 KiB tolerance -- likely corrupt)"
+      return 1
+    fi
   fi
   sleep 60
   s2=$(stat -c %s "$f" 2>/dev/null) || return 1

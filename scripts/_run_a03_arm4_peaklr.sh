@@ -115,15 +115,24 @@ done
 note "watcher: reference ckpt size = ${REF_SIZE:-unknown} bytes"
 
 settled_size() {  # echo size if $1 is fully written, else nothing
-  local f="$1" s1 s2
+  local f="$1" s1 s2 diff
   [ -f "$f" ] || return 1
   s1=$(stat -c %s "$f" 2>/dev/null) || return 1
   sleep 60
   s2=$(stat -c %s "$f" 2>/dev/null) || return 1
   [ "$s1" = "$s2" ] || { note "watcher: $f still growing ($s1 -> $s2); waiting"; return 1; }
-  if [ -n "$REF_SIZE" ] && [ "$s2" != "$REF_SIZE" ]; then
-    note "watcher: $f settled at $s2 but reference is $REF_SIZE -- NOT stopping"
-    return 1
+  # 2026-08-10 v3: torch.save picks up rng_state / train_args pickle bytes that
+  # drift ~1KB between saves within the same run. step220000.pt landed at
+  # 12181310562 vs sibling 12181311650 (1088-byte drift) and torch.load OK,
+  # step==220000, all keys present. Exact-size match rejected a healthy ckpt.
+  # New rule: accept within a 64 KiB tolerance -- 5000x tighter than the 6.2 GB
+  # gap of the original corruption case (5,956,287,104 vs 12,181,311,650).
+  if [ -n "$REF_SIZE" ]; then
+    diff=$(( s2 > REF_SIZE ? s2 - REF_SIZE : REF_SIZE - s2 ))
+    if [ "$diff" -gt 65536 ]; then
+      note "watcher: $f settled at $s2 but reference is $REF_SIZE (diff ${diff} B > 64 KiB tolerance) -- NOT stopping"
+      return 1
+    fi
   fi
   echo "$s2"
 }
