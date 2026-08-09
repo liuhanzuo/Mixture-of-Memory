@@ -1,10 +1,10 @@
 {
   "id": "A03",
-  "status": "active_measurable",
+  "status": "active_measurable_but_trajectory_claim_weakened_by_LR_sensitivity",
   "priority": 3,
-  "updated": "2026-08-10T01:40+0800",
+  "updated": "2026-08-10T04:10+0800",
   "arm4_peaklr_cpt": {
-    "status": "REDO RUNNING on .73 since 00:50:56 (resumed from intact step215000.pt), guarded watcher self-stops at step220000.pt; ETA ~04:15 GMT+8",
+    "status": "COMPLETED 08-10 03:58 GMT+8 (all 4 ckpts evaluated on 4 axes); training killed via SIGTERM after step220000 landed on disk (see ckpt_corruption_incident_20260810 for the size-guard drama). All 8 GPUs on both .73 and .82 released.",
     "ckpt_corruption_incident_20260810": {
       "what_happened": "the FIRST step220000.pt was truncated to 5,956,287,104 B of 12,181,311,650 B (48.9%) and torch.load fails with 'PytorchStreamReader failed finding central directory'. Quarantined on .73 as step220000.pt.CORRUPT_truncated_49pct_watcher_race -- NOT deleted, it is the evidence.",
       "root_cause": "BOTH watchers used a ready-test that a partially-written file passes. torch.save creates the file and then streams 12.18 GB into it. Trainer-side (scripts/_run_a03_arm4_peaklr.sh) used bare `[ -f ]` -> fired 8s after the step line, SIGTERM + sleep 20 + kill -9 at +28s; a 12.18 GB save cannot finish in 28 s on this FS. Eval-side (.82) used mtime age >= 120s, which cannot distinguish 'finished' from 'SIGKILLed mid-write so mtime froze'.",
@@ -15,8 +15,9 @@
     "purpose": "peak-LR CPT control for Arm 3: does the +0.48pp triviaqa gain get larger/earlier at [1.0x, 0.56x] peak LR instead of Arm 3's [0.33x, 0.28x] band?",
     "config": "ARM4_DESIGN.md Config B -- warmup_steps=200500, max_steps=240000 -> lr[200000]=1.995e-5 (~peak), lr[220000]=1.12e-5 (0.56x peak)",
     "eval_watcher": ".82 /tmp/a03_arm4_trajectory_watcher.sh (v2, pid 2417015 since 01:32:50, REF_SIZE=12181311650 loaded). Fires the 4-axis eval per ckpt. step205000 (16:17), step210000 (19:08) and step215000 (22:00) are DONE; step220000 pending the REDO. Canonical copy in code/a03_arm4_trajectory_watcher.sh -- the /tmp copy does not survive reboot.",
-    "verdict": "NOT_YET_JUDGED -- do not cite the intermediate cells",
-    "why_not_yet": "triviaqa em swings -1.40pp @step205000 then +1.26pp @step210000, i.e. ~3x Arm 3's headline magnitude in BOTH directions. ARM4_DESIGN.md predicts exactly this for the first ~500 steps: Adam moments inherited from Arm 2 were adapted to a min_lr trajectory ending at 2e-6, so they are mismatched under restored peak LR. Judge only at step220000 vs Arm 3's matched 20k window.",
+    "verdict": "COHERENT_AT_ARM3_NOT_AT_ARM4 -- Arm 3's +0.48pp SIG triviaqa em headline at step220000 does NOT reproduce under peak-LR CPT. Under peak LR (~1.0-0.56x peak across 20k), triviaqa em SIGNIFICANTLY SIGN-FLIPS to -0.93pp SIG and popqa collapses -0.97pp em SIG / -1.45pp f1 SIG. Only triviaqa contains stays positive (+0.88pp SIG). See ARM4_PEAKLR_VERDICT.md.",
+    "reading": "The trajectory-CPT-recovery claim on the primary axis is fragile: two natural LR schedules disagree in sign at the same 20k window. Arm 4 step210k does hit +1.26pp SIG on triviaqa em -- LARGER than Arm 3's headline -- but as a transient at Adam-moment stabilisation, absent by step215/220. Arm 3's +0.48pp reads as a recipe-specific fragile effect, not a general finding about parametric knowledge recovery.",
+    "prior_intermediate_reading_supersede": "The earlier 'why_not_yet' note (triviaqa swings 3x Arm 3's magnitude in both directions at step205/210, interpret as Adam-moment mismatch, judge only at step220) is now closed by the step220 data itself: peak-LR CPT ends step220 significantly WORSE than intact on the primary axis, not better and not saturating. The Adam-moment window was correctly diagnosed but the terminal cell now speaks for itself.",
     "naming_warning": "This Arm 4 is the peak-LR CONTROL. It is NOT the 6-arm study's Arm 4 (pruned+heal+raw-text RAG), which is still unimplemented.",
     "manual_step_required": "the eval driver writes per-item shards but computes NO CIs (grep bootstrap|ci95|n_boot|SIG over /tmp/a03_arm4_ext_driver.sh = 0 matches). Run code/recompute_cpt_trajectory_paired.py after step220000 lands. CPU, ~1 min.",
     "evidence_file": "evidence/arm3_arm4_cpt_trajectory_paired_full.json"

@@ -76,7 +76,9 @@ ARMS = {
                          ("step215000", "A03_1B_arm3_cpt_step215000"),
                          ("step220000", "A03_1B_arm3_cpt_step220000")],
     "arm4_peaklr":      [("step205000", "A03_1B_arm4_peaklr_step205000"),
-                         ("step210000", "A03_1B_arm4_peaklr_step210000")],
+                         ("step210000", "A03_1B_arm4_peaklr_step210000"),
+                         ("step215000", "A03_1B_arm4_peaklr_step215000"),
+                         ("step220000", "A03_1B_arm4_peaklr_step220000")],
 }
 
 out = {
