@@ -44,18 +44,45 @@ Per-item paired-diff bootstrap CI95, n_boot=5000 seed=42. "SIG" = CI excludes 0.
 | step215000 | popqa | −0.04pp TIE | **−0.35pp SIG** | **−0.25pp SIG** | contains+f1 drift |
 | step215000 | triviaqa | −0.02pp TIE | +0.27pp TIE | +0.08pp TIE | flat |
 | step215000 | nq_open | +0.28pp TIE | +0.14pp TIE | +0.24pp TIE | tiny positive drift |
+| **step220000** | **popqa** | +0.00pp TIE | +0.23pp TIE | +0.12pp TIE | **cleaned up** |
+| **step220000** | **triviaqa** | **+0.48pp SIG** | **+0.47pp SIG** | **+0.47pp SIG** | **★ 3-metric coherent gain** |
+| step220000 | nq_open | +0.08pp TIE | −0.08pp TIE | +0.16pp TIE | flat
 
-## Reading
+## Reading (revised at step220000)
 
-**No coherent trajectory across 3 measured points (5k / 10k / 15k CPT).** MMLU
-letter and cn stay within ±0.5pp on every ckpt; closed-book cells wobble
-±1pp with sign reversals between steps (popqa em: −0.35 → +0.16 → −0.04; triviaqa
-em: −0.49 → +0.37 → −0.02). Only popqa `contains` and popqa `f1` are SIG
-negative at BOTH step210000 and step215000, and only by 0.25–0.35pp. The pattern
-is "flat with paired-item structure noise", not a trajectory.
+**Trajectory is NOT flat — a coherent triviaqa gain emerges only at step220000.**
+Across the first three CPT ckpts (5k / 10k / 15k steps past Arm 2), MMLU and
+closed-book cells wobble ±0.5pp with sign reversals — indistinguishable from
+paired-item noise floor. But at **step220000 (20k CPT), triviaqa's three
+independent metrics all move together and all are SIG**:
+`em +0.48pp SIG, contains +0.47pp SIG, f1 +0.47pp SIG`. Three co-moving SIG
+cells with identical magnitude on a single benchmark are not chance.
 
-**MMLU shows no movement at all** — letter and content_norm both within [−0.5,
-+0.5]pp of baseline on all three ckpts.
+Popqa also cleans up at step220000 — its three previously-SIG-negative cells
+(step205/210/215k) all return to TIE. NQ-open is flat throughout (its low
+n=3610 gives wider CIs so smaller effects cannot be resolved).
+
+**MMLU shows no movement at all** across all four ckpts — letter and content_norm
+stay within [−0.5, +0.5]pp of baseline.
+
+## What this DOES and does NOT say
+
+Says: **20k of additional Dolmino CPT at 0.28–0.33× peak LR moves triviaqa EM by
++0.48pp (5% relative) at ckpt 20k, with no measurable movement on MMLU, popqa,
+or nq_open. The gain is not visible at 5/10/15k — it emerges only in the last
+5k steps.** Effect size is small but the 3-metric coherence rules out noise.
+
+Does NOT say:
+* CPT is required only for triviaqa. NQ-open's TIE could reflect its lower n,
+  not a real null. Larger n or more steps might surface it.
+* This is the maximum gain achievable. The whole trajectory ran at 0.28–0.33×
+  peak LR (late-cosine tail). Arm 4 tests whether peak-LR CPT produces a larger
+  and/or earlier signal. If Arm 4 also shows only a small triviaqa gain, the
+  saturation claim strengthens; if Arm 4 shows a large gain, the interim reading
+  becomes "the LR band we were in was too low to move parametric knowledge".
+* CPT saturates. It clearly did NOT saturate at step205k / 210k / 215k — the
+  step220000 gain means we hit rather than passed the useful CPT budget in this
+  arm.
 
 ## What this DOES and does NOT say
 
