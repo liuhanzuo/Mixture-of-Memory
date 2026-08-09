@@ -1,9 +1,9 @@
 {
   "id": "A02",
-  "status": "active_kill_condition_fired_reframe_to_storage_readcompute",
+  "status": "active_reframe_gate_run_storage_DEAD_readcompute_survives_weakly",
   "priority": 2,
-  "updated": "2026-08-09T07:15+0800",
-  "phase": "zero-training natural-task transfer gate",
+  "updated": "2026-08-09T23:55+0800",
+  "phase": "storage/read-compute reframe gate MEASURED (was: unmeasured assertion)",
   "premise_check_2026_08_08": {
     "claim_under_test": "A02 stage-1 needs NO new training -- only eval of ~5 configs x 5 benchmarks",
     "verdict": "PARTIALLY TRUE; blocked on identifying the canonical Read-LoRA",
@@ -35,8 +35,9 @@
     "recommended_node": "a zwfy6 node (.73/.82/.104) so the Write-LoRA needs no transfer at all"
   },
   "next_gate": [
-    "CPU: pin the canonical Read-LoRA identity via provenance grep of the Paper A flagship table config",
-    "then GPU: the 5-config x 5-benchmark stage-1 sweep (zero new training) on a zwfy6 node"
+    "A02 is NOT cleared for promotion: the strong form of the only framing its kill clause left open (storage) is DEAD, and the weak form (read-compute) is a 1.03-1.37x per-query micro-optimisation whose 86-93% of apparent win belongs to retrieval.",
+    "If A02 continues, the highest-value question this gate EXPOSED but did not answer: selection is the dominant per-query cost at 1M (1014.8 ms vs 678 ms read) -> sublinear retrieval. NOTE this is not CoMem-specific and would benefit text-RAG equally.",
+    "Still open from phase-1 and NOT resolved here: whether C2's quality losses are mid-layer-read failures or retrieval-recall failures. Needs a j0_top12 QUALITY run (same pack, j=0, no LoRA); this gate only costed that arm."
   ],
   "kill_gate_verbatim": "若 paired quality CI 仍显著低于 0，则停止 CoMem 优于 RAG 的叙事，定位为高复用 workload 的 storage/read-compute 方案",
   "phase1_c1_vs_c2_gate": {
@@ -73,5 +74,60 @@
     },
     "verdict_after_all_corrections": "UNCHANGED. No protocol-clean benchmark shows C2 significantly better in aggregate. Kill condition still fires. Prescribed reframe (storage/read-compute, not quality win) stands. Corrected legs: BABILong qa1/qa2@16k-32k C1 wins decisively; BABILong qa5@4k,16k C2 wins; RULER C1 wins; LongBench tie; LoCoMo F1 tie; LoCoMo judge (open-weight) tie; LongEval pooled tie.",
     "meta_note_for_future_scoring": "TWICE in one session a subagent reimplemented a metric rather than importing the canonical one, and the reimplementation produced a SIGNIFICANT result where canonical produced a tie -- both times in the more exciting direction. Any scoring run MUST import the canonical scorer from the harness that produced the predictions. Canonical LoCoMo scorers: eval_qcmem_locomo.py::{normalize_answer, compute_f1, compute_f1_multi, compute_em_multi, substring_acc}."
+  },
+  "storage_readcompute_reframe_gate": {
+    "tested": "2026-08-09",
+    "node": ".82 (8x H20, zwfy6), bounded 4-GPU pool; A03 watcher left untouched",
+    "verdict": "STORAGE FORM: DEAD. READ-COMPUTE FORM: SURVIVES WEAKLY.",
+    "headline": "Finite N* exists vs the phase-1 C1 arm (0.13-0.38 queries, 12/12 cells within the pre-registered 1e5 bar), BUT 86-93% of that win is RETRIEVAL, which plain text-RAG gets for free. Against a matched-pack text-RAG control, CoMem's own contribution is 1.03-1.37x per-query, needing N*=8-226 queries to repay its Write, at 2048x the bytes/token of raw text.",
+    "crossover_n_star": {
+      "vs_phase1_C1_pack_all": "32k: 0.35-0.38 | 128k: 0.13 | 1M: N/A (C1 arm OOMs, 88.3GB peak) -- recorded as ARM-ABSENT, explicitly NOT as infinite N* and NOT as a CoMem win",
+      "vs_matched_pack_text_RAG": "32k: 8.1-11.9 | 128k: 25.2-42.6 | 1M: 185.5-225.5; grows ~linearly in L because Write is O(L) while the per-query saving is constant -> break-even gets WORSE for the big corpora the method is pitched at",
+      "prereg_threshold": "N* <= 1e5 queries/corpus, fixed before the run in the driver docstring"
+    },
+    "storage_ratio": {
+      "h12_over_raw_text": "2048x LARGER (8192 vs 4 bytes/token, exact and constant across all L) -> 'storage method' framing FAILS",
+      "comem_total_over_rag_total": "632-1129x (store + BM25 index on both sides)",
+      "h12_over_fulldepth_KV": "18x SMALLER (8192 vs 147456 B/tok) -- the ONLY sense in which 'storage win' holds, and it is vs KV-caching, not vs what RAG stores",
+      "method": "real bytes: in-memory tensor bytes AND actual file size after torch.save+fsync; agree to a 1577-byte pickle header"
+    },
+    "latency_decomposition_128k_gpu_G1_ms": {
+      "comem": "select 117.7 + fetch 1.50 + read 677.9 + decode 0.0 = 797.2 (read_len 6177)",
+      "j0_top12": "select 117.7 + fetch 0.02 + read 938.4 + decode 0.0 = 1056.2 (read_len 6177, SAME pack)",
+      "c1_all": "select 0.0 + fetch 0.22 + read 53009.6 + decode 0.0 = 53009.8 (read_len 131105, O(L))",
+      "what_the_memory_removes": "the bottom-12-layer prefill: read 938.4 -> 677.9 ms = 1.38x on the read component, 1.33x on the per-query total",
+      "G_decay": "CoMem-specific per-query speedup 1.33x (G=1) -> 1.11x (G=32) -> 1.03x (G=128); decode is identical across arms so larger G dilutes the advantage to within 3%",
+      "NEW_FINDING_selection_cost": "iter_bm25 selection is O(L) on CPU per query and CoMem does NOT remove it: 17.1 ms @32k, 117.7 ms @128k, 1014.8 ms @1M = 59.9% of CoMem's entire per-query budget at 1M and LARGER than its 678 ms read. Any 'CoMem per-query cost is constant in L' claim is false once selection is counted. The published P1.8 crossover let this cancel because both its arms retrieved."
+    },
+    "quality_not_held_fixed": "'Same quality, better cost' does NOT hold, so even the weak read-compute win is not free. Per-cell: BABILong qa1x16k -55pp / qa1x32k -51pp / qa2x16k -42pp / qa2x32k -35pp (all 4 CIs <0) but qa5x4k +16pp / qa5x16k +14pp (both CIs >0); RULER -5.17pp; LongEval -30pp@8k to +68pp@128k; LongBench / LoCoMo F1 / LoCoMo judge(open-weight) all ties.",
+    "protocol_defect_status": "phase-1's FOUR-way confound {read depth}x{LoRA}x{retrieval vs pack-all}x{selector} is REDUCED, not eliminated. This gate holds selector fixed at iter_bm25 and separates depth from retrieval via a 2-hop single-variable chain (comem -> j0_top12 -> c1_all). REMAINING confound: depth and LoRA move together (irreducible -- j=12 without the Read-LoRA is not a functional arm). NOT resolved: whether phase-1's quality losses are depth failures or retrieval-recall failures.",
+    "unverified": [
+      "single example / single task (niah_multikey_1, example_index=0, read_sample_length=32k); 3 procs x 5 repeats; no cross-task variance (matches released P1.8 protocol)",
+      "store tail beyond the real 32k sample is random-token padding; BM25 select time over random tokens may not match real text -- the 1014.8 ms @1M select is the least-confident number and it is load-bearing",
+      "c1_all @1M is an OOM, not a timing: its per-query cost at 1M is unmeasured; only 'does not fit in 97.8 GB' is established",
+      "no NVMe / networked storage tier measured (only gpu-resident + cpu-pinned); scripts/bench_persistent_store_io.py exists for this and was NOT run",
+      "batch=1 single-stream, no continuous batching / paged attention; a served RAG system amortises prefill across concurrent requests, further eroding a 1.33x single-stream advantage",
+      "H20 cc9.0 / torch 2.13.0 / bf16 / sdpa only; L20A absolute latencies would differ (ratios should be more stable)"
+    ],
+    "integrity_gates": "ALL PASSED: (1) Read-LoRA sha == flagship dd09cd17 fail-closed; (2) comem/j0_top12 share ONE pack (read_len 6177 both); (3) c1_all packs exactly range(N) matching the no_retrieval branch verbatim; (4) persistent bytes == N*chunk*d*2 exactly; (5) finite logits everywhere; (6) store-fetched h12 == fresh recompute max_abs == 0.0 bit-identical; (7) 18/18 procs present, aggregator ABORTS on partial cells.",
+    "cross_check_vs_published": "j0_top12 and comem reproduce the released Paper A P1.8 artifact to 0.06% and 0.21% (128k|gpu G=1) -- the new harness measures the same thing the paper did.",
+    "bugs_found_and_fixed": [
+      "out-of-bounds index_select when store_length < read_sample_length (opaque device-side assert) -> now fail-closed GATE 0 with an actionable message",
+      "CPU/CUDA device mismatch in the on-disk size probe",
+      "REPORTING bug caught in review: aggregator printed 'N*=inf' for an arm that had OOM'd, conflating 'measured but never cheaper' with 'could not run'. Console output and verdict builder now keep the categories separate."
+    ],
+    "aggregation_hygiene": "No pooled BABILong (-17.89pp) or pooled LongEval (+2.00pp) figure is quoted anywhere in this gate. Both average over cells with opposite true signs. The verdict JSON stores them ONLY under the key 'pooled_diff_pt_DO_NOT_QUOTE' so their exclusion is auditable, and classifies every cell by CI sign instead.",
+    "code": [
+      "proposal/active/A02-comem-write-read-repair/code/bench_a02_storage_readcompute.py",
+      "proposal/active/A02-comem-write-read-repair/code/run_a02_storage_readcompute.sh",
+      "proposal/active/A02-comem-write-read-repair/code/build_a02_reframe_verdict.py"
+    ],
+    "evidence": [
+      "A02_STORAGE_READCOMPUTE_VERDICT.md",
+      "evidence/a02_storage_readcompute_verdict.json (every headline recomputable; 42-point self-check passes)",
+      "evidence/a02_storage_readcompute_aggregate.json",
+      "evidence/a02_storage_readcompute_serve/ (18 raw per-unit records)"
+    ],
+    "promotion_impact": "Does NOT clear A02 for promotion to paper<X>. Recommended positioning: not a storage method and not a large serving win; the defensible claim is 'given you are already doing retrieval, caching mid-depth residuals removes the bottom-12-layer prefill for 1.03-1.37x per-query, repaid after ~8-226 queries/corpus, at a 2048x storage premium over raw text and with a measurable accuracy cost on long-context single-span retrieval' = a systems micro-optimisation, not a paper thesis."
   }
 }
