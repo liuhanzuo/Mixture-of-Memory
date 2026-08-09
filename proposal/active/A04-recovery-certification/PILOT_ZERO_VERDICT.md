@@ -67,7 +67,18 @@ code. This makes Pilot One strictly more necessary than the design's §6.2 assum
 
 ---
 
-## 4. Convention sensitivity — the verdict survives **all five** conventions
+## 4. Convention sensitivity — the verdict survives all **four admissible** conventions
+
+> **NARROWED 2026-08-10** (was: "survives **all five** conventions"). The pre-registered
+> admissibility guard in `A04_MARGIN_GUARD_PREREG.md` rules `credit` **inadmissible for
+> MMLU-content at 1B**: it puts the intact arm *below* its own null (residual −6.687 pp), so
+> `Δ = −0.669 pp` and the NI test silently becomes a strict-superiority test. A verdict cannot
+> "survive" a test it never ran. The four admissible conventions are `split` (pre-registered),
+> `first`, `last`, `wrong`.
+>
+> **The K1 conclusion is unchanged**, and for a reason stronger than convention-robustness: the
+> null cancels exactly in the quantity NI tests (see the derivation below), so `credit`'s row is
+> non-informative about the *measured difference* either way. Dropping it costs nothing.
 
 A01 established that the longest-option content null is itself convention-dependent, with a
 **25.76 pp** spread, and that under `credit` 5 of 6 arms flip from "above null" to significantly
@@ -77,15 +88,15 @@ I recomputed all five conventions **on the 1B item set** (n = 14,042) with A01's
 `longest_option_vector`, and reproduced A01's values bit-for-bit; my measured spread is
 **25.758438968807862 pp**, matching A01's reported 25.76 pp.
 
-| convention | MMLU null | intact residual | Δ_MMLU | K1 fires? |
-|---|---:|---:|---:|:--:|
-| **split** (pre-registered) | 0.284450 | 10.239 pp | 1.024 pp | **NO** |
-| first | 0.281085 | 10.575 pp | 1.058 pp | **NO** |
-| last | 0.282154 | 10.469 pp | 1.047 pp | **NO** |
-| credit | 0.453710 | **−6.687 pp** | **−0.669 pp** | **NO** |
-| wrong | 0.196126 | 19.071 pp | 1.907 pp | **NO** |
+| convention | MMLU null | intact residual | Δ_MMLU | K1 fires? | admissible? |
+|---|---:|---:|---:|:--:|:--:|
+| **split** (pre-registered) | 0.284450 | 10.239 pp | 1.024 pp | **NO** | yes |
+| first | 0.281085 | 10.575 pp | 1.058 pp | **NO** | yes |
+| last | 0.282154 | 10.469 pp | 1.047 pp | **NO** | yes |
+| credit | 0.453710 | **−6.687 pp** | **−0.669 pp** | **NO** | **NO — D1/D4 fire** |
+| wrong | 0.196126 | 19.071 pp | 1.907 pp | **NO** | yes |
 
-**The K1 verdict does not flip under any convention**, and it also survives dropping the
+**The K1 verdict does not flip under any admissible convention**, and it also survives dropping the
 degenerate axis entirely (`K1_survives_excluding_degenerate_axes: false` under every convention,
 i.e. K1 still does not fire).
 
