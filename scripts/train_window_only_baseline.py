@@ -95,6 +95,8 @@ def main():
     parser.add_argument("--save_every", type=int, default=1000)
     parser.add_argument("--log_every", type=int, default=50)
     parser.add_argument("--sliding_window", type=int, default=256)
+    parser.add_argument("--seed", type=int, default=42,
+                   help="RNG seed. Also passed to DistributedSampler(seed=...) -- without that the sampler silently uses its own default 0 and data order is identical across seeds.")
     args = parser.parse_args()
 
     # Patch BEFORE loading model
@@ -140,7 +142,11 @@ def main():
 
     # Dataset
     dataset = PreTokenizedDataset(path=args.data_path, max_seq_len=args.seq_len)
-    sampler = DistributedSampler(dataset)
+    # seed=args.seed is LOAD-BEARING: DistributedSampler.__iter__ builds its OWN
+    # generator (g.manual_seed(self.seed + self.epoch)) and self.seed defaults to 0,
+    # so torch.manual_seed()/set_seed() CANNOT reach it. Without this argument every
+    # --seed value gives a BYTE-IDENTICAL data order. Do not delete as redundant.
+    sampler = DistributedSampler(dataset, shuffle=True, seed=args.seed)
     dataloader = DataLoader(
         dataset, batch_size=args.batch_size, sampler=sampler,
         collate_fn=collate_fn, num_workers=2, pin_memory=True, drop_last=True,

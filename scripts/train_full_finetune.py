@@ -642,6 +642,8 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--output_dir", type=str, default="outputs/full_finetune")
     p.add_argument("--resume_checkpoint", type=str, default=None)
     p.add_argument("--dtype", type=str, default="bfloat16", choices=["bfloat16", "float16", "float32"])
+    p.add_argument("--seed", type=int, default=42,
+                   help="RNG seed. Also passed to DistributedSampler(seed=...) -- without that the sampler silently uses its own default 0 and data order is identical across seeds.")
     return p.parse_args()
 
 
@@ -828,8 +830,12 @@ def main() -> None:
         chunks_per_doc=args.chunks_per_doc,
         shard_offset=args.shard_offset,
     )
+    # seed=args.seed is LOAD-BEARING: DistributedSampler.__iter__ builds its OWN
+    # generator (g.manual_seed(self.seed + self.epoch)) and self.seed defaults to 0,
+    # so torch.manual_seed()/set_seed() CANNOT reach it. Without this argument every
+    # --seed value gives a BYTE-IDENTICAL data order. Do not delete as redundant.
     train_sampler = DistributedSampler(
-        train_ds, num_replicas=world_size, rank=rank, shuffle=True,
+        train_ds, num_replicas=world_size, rank=rank, shuffle=True, seed=args.seed,
     )
     train_loader = DataLoader(
         train_ds,

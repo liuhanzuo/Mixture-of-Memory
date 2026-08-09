@@ -698,7 +698,12 @@ def main():
     )
 
     if world_size > 1:
-        train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=rank, shuffle=True)
+        # seed=args.seed is LOAD-BEARING: DistributedSampler.__iter__ builds its OWN
+        # generator (g.manual_seed(self.seed + self.epoch)) and self.seed defaults to 0,
+        # so torch.manual_seed()/set_seed() CANNOT reach it. Without this argument every
+        # --seed value gives a BYTE-IDENTICAL data order. Do not delete as redundant.
+        train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=rank, shuffle=True,
+                                           seed=args.seed)
     else:
         train_sampler = None
 

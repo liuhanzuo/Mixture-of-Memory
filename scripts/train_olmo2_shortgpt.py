@@ -476,7 +476,11 @@ def main():
         logger.info(f"dataset rows={len(ds)} seq_len={ds.seq_len} from {args.data_path}")
 
     if ddp:
-        sampler = DistributedSampler(ds, shuffle=True)
+        # seed=args.seed is LOAD-BEARING: DistributedSampler.__iter__ builds its OWN
+        # generator (g.manual_seed(self.seed + self.epoch)) and self.seed defaults to 0,
+        # so torch.manual_seed()/set_seed() CANNOT reach it. Without this argument every
+        # --seed value gives a BYTE-IDENTICAL data order. Do not delete as redundant.
+        sampler = DistributedSampler(ds, shuffle=True, seed=args.seed)
         loader = DataLoader(ds, batch_size=args.batch_size, sampler=sampler,
                             collate_fn=collate_fn, num_workers=4, pin_memory=True,
                             drop_last=True,

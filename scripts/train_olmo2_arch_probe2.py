@@ -860,7 +860,13 @@ def main():
         logger.info(f"dataset rows={len(ds)} seq_len={ds.seq_len} from {args.data_path}")
 
     if ddp:
-        sampler = DistributedSampler(ds, shuffle=True)
+        # seed=args.seed is LOAD-BEARING -- do not delete as "redundant with
+        # set_seed()/torch.manual_seed() above". DistributedSampler.__iter__ builds
+        # its OWN generator (`g = torch.Generator(); g.manual_seed(self.seed + self.epoch)`)
+        # and `self.seed` defaults to 0, so the global torch RNG cannot reach it.
+        # Without this argument every --seed value yields a BYTE-IDENTICAL data order,
+        # and "seed variance" collapses to fresh-block-init variance only.
+        sampler = DistributedSampler(ds, shuffle=True, seed=args.seed)
         loader = DataLoader(ds, batch_size=args.batch_size, sampler=sampler,
                             collate_fn=collate_fn, num_workers=4, pin_memory=True, drop_last=True,
                             multiprocessing_context="fork" if use_cuda else None)

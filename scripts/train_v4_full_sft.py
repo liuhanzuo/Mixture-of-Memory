@@ -546,6 +546,8 @@ def parse_args() -> argparse.Namespace:
                    help="Number of chunks for eval PPL computation")
     p.add_argument("--dtype", type=str, default="bfloat16",
                    choices=["bfloat16", "float16", "float32"])
+    p.add_argument("--seed", type=int, default=42,
+                   help="RNG seed. Also passed to DistributedSampler(seed=...) -- without that the sampler silently uses its own default 0 and data order is identical across seeds.")
     return p.parse_args()
 
 
@@ -632,8 +634,12 @@ def main() -> None:
         skip=args.skip_chunks,
         max_chunks=args.pretrain_max_chunks,
     )
+    # seed=args.seed is LOAD-BEARING: DistributedSampler.__iter__ builds its OWN
+    # generator (g.manual_seed(self.seed + self.epoch)) and self.seed defaults to 0,
+    # so torch.manual_seed()/set_seed() CANNOT reach it. Without this argument every
+    # --seed value gives a BYTE-IDENTICAL data order. Do not delete as redundant.
     pretrain_sampler = DistributedSampler(
-        pretrain_ds, num_replicas=world_size, rank=rank, shuffle=True,
+        pretrain_ds, num_replicas=world_size, rank=rank, shuffle=True, seed=args.seed,
     )
     pretrain_loader = DataLoader(
         pretrain_ds,
@@ -654,8 +660,12 @@ def main() -> None:
         max_chunks=args.memory_max_chunks,
         chunks_per_doc=args.chunks_per_doc,
     )
+    # seed=args.seed is LOAD-BEARING: DistributedSampler.__iter__ builds its OWN
+    # generator (g.manual_seed(self.seed + self.epoch)) and self.seed defaults to 0,
+    # so torch.manual_seed()/set_seed() CANNOT reach it. Without this argument every
+    # --seed value gives a BYTE-IDENTICAL data order. Do not delete as redundant.
     memory_sampler = DistributedSampler(
-        memory_ds, num_replicas=world_size, rank=rank, shuffle=True,
+        memory_ds, num_replicas=world_size, rank=rank, shuffle=True, seed=args.seed,
     )
     memory_loader = DataLoader(
         memory_ds,

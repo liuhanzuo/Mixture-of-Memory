@@ -116,6 +116,8 @@ def main():
                         "step -- NOT from warmup. Extending --max_steps re-scales the cosine "
                         "horizon so LR does not collapse to min_lr immediately.")
     p.add_argument("--max_rows", type=int, default=0, help=">0 to subset dataset (smoke)")
+    p.add_argument("--seed", type=int, default=42,
+                   help="RNG seed. Also passed to DistributedSampler(seed=...) -- without that the sampler silently uses its own default 0 and data order is identical across seeds.")
     args = p.parse_args()
 
     ddp = "RANK" in os.environ
@@ -198,7 +200,11 @@ def main():
         logger.info(f"dataset rows={len(ds)} seq_len={ds.seq_len} from {args.data_path}")
 
     if ddp:
-        sampler = DistributedSampler(ds, shuffle=True)
+        # seed=args.seed is LOAD-BEARING: DistributedSampler.__iter__ builds its OWN
+        # generator (g.manual_seed(self.seed + self.epoch)) and self.seed defaults to 0,
+        # so torch.manual_seed()/set_seed() CANNOT reach it. Without this argument every
+        # --seed value gives a BYTE-IDENTICAL data order. Do not delete as redundant.
+        sampler = DistributedSampler(ds, shuffle=True, seed=args.seed)
         loader = DataLoader(ds, batch_size=args.batch_size, sampler=sampler,
                             collate_fn=collate_fn, num_workers=4, pin_memory=True, drop_last=True)
     else:
