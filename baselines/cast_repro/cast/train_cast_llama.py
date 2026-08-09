@@ -192,9 +192,17 @@ def parse_args():
     p.add_argument("--kl-temperature", type=float, default=1.0,
                    help="[impl] 1.0 = paper-literal Eq.13; 2.0 = AST-code variant")
     p.add_argument("--lr-schedule", default="constant", choices=["constant", "cosine"],
-                   help="[paper] constant = paper-literal: Appendix B says a 'consistent "
-                        "learning rate for each model' at peak 2e-5, i.e. no cosine and no "
-                        "warmup. 'cosine' is the documented DEVIATION (uses --min-lr/--warmup).")
+                   help="[impl] BOTH options are implementation_choice: the paper "
+                        "specifies no within-run schedule (grep -ci cosine over the "
+                        "fulltext = 0). 'constant' holds peak 2e-5 -- a defensible "
+                        "literal reading of a silent paper, but NOT paper_explicit. "
+                        "NOTE the 'consistent learning rate' sentence sometimes cited "
+                        "for this is fulltext:1646, in Appendix D on the SCALING-LAW "
+                        "sweep (hold LR fixed across token-budget points), not the "
+                        "within-run schedule. 'cosine' is what SPEC.md S6 prescribes, "
+                        "because the residual floor is O(final lr): constant parks "
+                        "masked weights at ~2e-5 instead of ~2e-6, giving up ~10x of "
+                        "terminal-magnitude margin before the final hard prune.")
     p.add_argument("--min-lr", type=float, default=2e-6,
                    help="[impl] cosine floor (AST alpha_f=0.1); ignored when "
                         "--lr-schedule constant")
@@ -665,10 +673,23 @@ def main():  # noqa: C901
             else "plain DDP, no sharding (NOT FSDP -- see module docstring)"
         ),
         "lr_schedule": (
-            "constant (paper-literal: Appendix B 'consistent learning rate', Table XI 2e-5)"
+            # NOT paper-literal, and NOT Appendix B. The paper never specifies a
+            # within-run schedule: `grep -ci cosine` and `grep -ci 'warm.?up'`
+            # over the full text are both 0. The one "consistent learning rate"
+            # sentence is at line 1646 of the fulltext, inside Appendix D
+            # ("Details on Scaling Law Experiments"), and reads "...we maintain a
+            # consistent learning rate for each model AND ADJUST THE DECAY FACTOR
+            # BASED ON THE TRAINING TOKEN BUDGET" -- i.e. hold LR fixed ACROSS the
+            # sweep's token-budget points, not within a run. Both options here are
+            # therefore implementation_choice. See SPEC.md S6 for the cost:
+            # constant gives up ~10x of terminal-magnitude margin.
+            f"constant {args.lr:g} (implementation_choice; the paper specifies no "
+            "within-run schedule, so this is a literal-but-OUR reading, NOT "
+            "paper_explicit. min_lr/warmup are inert here.)"
             if args.lr_schedule == "constant"
             else f"cosine {args.lr:g}->{args.min_lr:g} warmup {args.warmup} "
-                 "(DOCUMENTED DEVIATION from Appendix B)"
+                 "(implementation_choice; matches SPEC.md S6, which argues the LR "
+                 "must decay so masked weights are not parked at O(lr))"
         ),
         "world_size": world,
         "hyperparameters": vars(args),
@@ -787,7 +808,11 @@ def main():  # noqa: C901
                 )
 
         if args.diag_every and step > 0 and step % args.diag_every == 0 and is_master():
-            rep = magnitude_report(inner)
+            # Pass alpha_t so the verdict is judged against the ramp position.
+            # Sec. IV-A / Appendix C targets are END-state; without alpha_t this
+            # printed "BAD: ... AdamS is probably not running" on every DIAG of a
+            # healthy run until ~step 5700 of 7500.
+            rep = magnitude_report(inner, alpha_t=local_stats().get("alpha_t"))
             log(f"DIAG step {step}: {json.dumps(rep['summary'])}")
 
         # FULLY RESUMABLE checkpoint. Collective (consolidate_state_dict +
@@ -854,7 +879,10 @@ def main():  # noqa: C901
 
     # ---- Alg. 2 lines 19-22: finalise ----
     if is_master():
-        pre = magnitude_report(inner)
+        # Ramp is consumed here (alpha_t -> 1), so this is the one place the
+        # END-state acceptance targets legitimately apply. Pass alpha_t anyway
+        # rather than relying on the None fallback, so the verdict records it.
+        pre = magnitude_report(inner, alpha_t=local_stats().get("alpha_t"))
         log(f"PRE-FINALIZE diagnostics: {json.dumps(pre['summary'])}")
         (outdir / "diag_prefinalize.json").write_text(json.dumps(pre, indent=2))
         torch.save({"model": inner.state_dict(), "step": args.max_steps}, outdir / "prefinal.pt")

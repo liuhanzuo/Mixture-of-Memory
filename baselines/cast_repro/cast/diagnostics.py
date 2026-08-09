@@ -45,13 +45,23 @@ def _proj_kind(name: str) -> str:
 
 
 @torch.no_grad()
-def magnitude_report(model, thresholds=(1e-4, 1e-3), max_modules: Optional[int] = None) -> Dict:
+def magnitude_report(
+    model,
+    thresholds=(1e-4, 1e-3),
+    max_modules: Optional[int] = None,
+    alpha_t: Optional[float] = None,
+) -> Dict:
     """Masked-vs-kept magnitude statistics, overall and per projection type.
 
     Works on a live model or one loaded from a pre-finalization checkpoint (it
     reads ``weight`` and the ``mask`` buffer, so it must be run BEFORE
     ``finalize()`` -- afterwards the masked entries are exactly zero by
     construction and the metric is vacuous).
+
+    ``alpha_t`` is the AdamS decay ramp position (Alg. 1 line 12, alpha = t/T).
+    Pass it whenever it is known -- the acceptance targets in this module's
+    docstring are *end-of-training* targets, so judging a mid-run report against
+    them mislabels a healthy run as broken.  See ``_verdict`` for what changes.
     """
     from .sparse_linear import cast_modules
 
@@ -127,19 +137,79 @@ def magnitude_report(model, thresholds=(1e-4, 1e-3), max_modules: Optional[int] 
     # explicit side-by-side with the broken run
     summary["BROKEN_RUN_ratio_mean"] = 0.294
     summary["BROKEN_RUN_frac_below_1e-4"] = 0.215
-    verdict = "UNKNOWN"
-    rm = summary["ratio_mean"]
-    fb = summary.get("frac_masked_below_0.0001")
-    if rm is not None and fb is not None:
-        if rm < 0.01 and fb > 0.95:
-            verdict = "OK: masked weights collapsed; hard prune should be ~free"
-        elif rm < 0.05:
-            verdict = "MARGINAL: decayed but a tail survives; check max_masked_magnitude"
-        else:
-            verdict = "BAD: looks like the broken run -- AdamS is probably not running"
-    summary["verdict"] = verdict
+    summary["alpha_t"] = round(alpha_t, 6) if alpha_t is not None else None
+    summary["verdict"] = _verdict(
+        summary["ratio_mean"], summary.get("frac_masked_below_0.0001"), alpha_t
+    )
 
     return {"summary": summary, "by_projection": by_projection}
+
+
+def _verdict(rm: Optional[float], fb: Optional[float], alpha_t: Optional[float]) -> str:
+    """Judge a magnitude report, gated on where the alpha ramp actually is.
+
+    The targets in this module's docstring (ratio_mean < 0.01, frac_below_1e-4
+    > 0.95) come from Sec. IV-A / Appendix C, which describe the state at the
+    *end* of training.  AdamS decays a masked weight by ~alpha_t * lambda per
+    step (Alg. 1 line 14), so at alpha_t = 0.16 barely 16% of the ramp has been
+    applied and those end-state numbers are unreachable *by construction*.
+
+    Applying them anyway is what made this function print
+    "BAD: looks like the broken run -- AdamS is probably not running" at every
+    DIAG interval of a healthy run, all the way to ~step 5700 of 7500.  That
+    string is exactly the kind of thing that gets a 26-hour run killed by an
+    operator who trusts it.
+
+    Note the broken run's 0.294 is likewise a *terminal* value, so it is not a
+    mid-run bound either: this run legitimately read ratio_mean 0.331 and 0.301
+    at alpha 0.03/0.07 -- above 0.294 -- while decaying correctly, simply
+    because the ramp had barely started.  Hence no BAD verdict at all below
+    EARLY_RAMP; between there and the end-state window, still-at-0.294 does
+    become meaningful.
+
+    Single reports carry no history, so the signal that actually separates AdamS
+    from vanilla Adam -- masked_mean falling while kept_mean holds -- cannot be
+    evaluated here.  The mid-ramp branch names it for the reader instead of
+    guessing.
+
+    ``alpha_t=None`` means the caller could not supply the ramp position (e.g.
+    diagnose_checkpoint.py on a bare checkpoint).  Then the end-state targets
+    are applied, since a checkpoint under inspection is usually final.
+    """
+    END_STATE = 0.9  # ramp essentially consumed; paper targets apply
+    EARLY_RAMP = 0.5  # below this, a terminal yardstick says nothing
+
+    if rm is None or fb is None:
+        return "UNKNOWN"
+
+    if alpha_t is None or alpha_t >= END_STATE:
+        if rm < 0.01 and fb > 0.95:
+            return "OK: masked weights collapsed; hard prune should be ~free"
+        if rm < 0.05:
+            return "MARGINAL: decayed but a tail survives; check max_masked_magnitude"
+        return "BAD: looks like the broken run -- AdamS is probably not running"
+
+    pos = f"alpha_t={alpha_t:.3f}"
+
+    if rm < 0.01 and fb > 0.95:
+        return f"OK ({pos}): already at the end-state target, ahead of schedule"
+
+    # Past halfway and still no better than the broken run's FINAL ratio: real.
+    if alpha_t >= EARLY_RAMP and rm >= 0.294:
+        return (
+            f"BAD ({pos}): ratio_mean {rm:.4f} is still at or above the broken run's "
+            "TERMINAL 0.294 despite most of the ramp being spent -- AdamS is "
+            "probably not running"
+        )
+
+    return (
+        f"IN_PROGRESS ({pos}): ratio_mean {rm:.4f}, frac<1e-4 {fb:.4f}. "
+        "End-state targets (<0.01, >0.95) and the broken run's terminal 0.294 are "
+        "BOTH inapplicable this early -- do NOT read this as pass or fail. "
+        "Confirm across consecutive DIAGs that masked_mean is falling while "
+        "kept_mean holds (only the selective L1 decay does that), and watch "
+        "max_masked_magnitude for the heavy tail."
+    )
 
 
 @torch.no_grad()

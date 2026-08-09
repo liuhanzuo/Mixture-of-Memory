@@ -1,7 +1,9 @@
 # CAST reproduction spec — source level for every decision
 
 Paper: **CAST: Continuous and Differentiable Semi-Structured Sparsity-Aware Training for Large Language Models**, arXiv:2509.25996v1.
-Full text on disk: `docs/cast_arxiv_2509.25996v1_fulltext.txt`; layout/PDF in `paper/`.
+Full text on disk: `/apdcephfs_wzc1/share_304376610/pighzliu_code/baselines/cast_repro_paper_refs/docs/cast_arxiv_2509.25996v1_fulltext.txt`; layout/PDF in the sibling `paper/`.
+
+> ⚠️ Those are **not** under `baselines/cast_repro/` — this file previously pointed at a bare `docs/` and `paper/`, which do not exist here. Anyone verifying a `paper_explicit` tag against a dead path silently verifies nothing; that is most likely how the Appendix B/D misattribution in §1's LR row survived. Always cite the full path plus a line number.
 
 Source levels:
 
@@ -30,14 +32,14 @@ Source levels:
 | Forward pass | dense throughout | `paper_explicit` | Sec. IV, Fig. 2 (right) |
 | β₁, β₂ | 0.9, 0.999 | `implementation_choice` | Alg. 1 names β₁/β₂ but never gives values; Adam defaults |
 | ε | 1e-8 | `implementation_choice` | Adam default |
-| LR schedule | cosine to min_lr 2e-6 | `implementation_choice` | **Table XI gives only the peak LR.** min_lr = lr/10 mirrors AST official `alpha_f=0.1` (`ast_code_inferred` for the 0.1 ratio) |
-| Warmup | 375 steps (5% of 7500) | `implementation_choice` | not in the paper |
+| LR schedule | **`constant` at peak 2e-5 is what the code defaults to and what the live run uses** (see the ⚠️ box in §6). `cosine` to min_lr 2e-6 is available via `--lr-schedule cosine` | `implementation_choice` | **Table XI gives only the peak LR, and the paper never specifies a within-run schedule** (`grep -ci cosine` = 0 over the full text). `constant` is therefore a defensible literal reading, but it is OUR choice, not `paper_explicit` — and the code's "Appendix B" citation for it is wrong (the phrase is in Appendix D, about the scaling-law sweep). min_lr = lr/10 mirrors AST official `alpha_f=0.1` (`ast_code_inferred` for the 0.1 ratio) |
+| Warmup | 375 steps (5% of 7500) **when `--lr-schedule cosine`; ignored under `constant`, which is the default** | `implementation_choice` | not in the paper |
 | Weight decay (L2) | 0 | `implementation_choice` | Table XI lists none; CAST's regularizer is the selective L1 |
 | Grad clip | 1.0 | `implementation_choice` | not in the paper |
 | KL temperature | **1.0** | `paper_explicit` | Eq. (13) has **no** temperature term ⇒ T=1 is the literal reading |
 | — AST-style variant | 2.0 with ×T² | `ast_code_inferred` | `ast_official_clean/sparse_modeling.py:240` hardcodes `temperature=2` and `*(temperature**2)`. Available via `--kl-temperature 2.0`; **not** the default |
 | Master weight dtype | fp32 | `implementation_choice` | forced by numerics: λ=4e-7 is below bf16 resolution — see `tests/test_cast.py::test_bf16_swallows_lambda_fp32_does_not` |
-| Parallelism | plain DDP | `implementation_choice` | the paper says nothing; DDP is required for mask↔weight alignment (§4 below) |
+| Parallelism | **DDP + `ZeroRedundancyOptimizer` (ZeRO-1) via `--parallel zero2`**; plain DDP via `--parallel ddp` no longer fits at 7B (see §5) | `implementation_choice` | the paper says nothing; what matters is that neither option shards the *parameter*, so mask↔weight alignment is preserved. **Never FSDP** — it flattens the Parameter and breaks alignment (§5) |
 | Micro-batch | 1 (+grad accum) | `implementation_choice` | memory-driven |
 
 ## 2. AdamS (Algorithm 1, Eq. 7–8)
@@ -96,7 +98,7 @@ Mask dtype is `torch.bool`: Sec. IV-A's Remark budgets the mask at "1/32" of opt
 
 **Intermediate-layer distillation is deliberately absent** — Sec. IV-C and Appendix H: hidden/attention-based losses (TinyBERT, MobileBERT, Sparse-Finetuning) are *worse* than plain KL (Table XV), so CAST uses logit KL only.
 
-## 5. Why plain DDP, not FSDP
+## 5. Why not FSDP (and why the live run is ZeRO-1, not plain DDP)
 
 The previous attempt (audit §4.1) ran FSDP FULL_SHARD. FSDP packs `weight` and `mask` into a FlatParameter and slices them at different global offsets, so a rank's weight shard and mask shard are not element-aligned. The old optimizer set `mask = None` on mismatch and **silently ran vanilla Adam** — the selective L1 decay never executed on most tensors. Result: masked/kept magnitude ratio 0.294 (should be ≈0), only 21.5% of masked weights below 1e-4, Wiki PPL 23.4514 after the final prune.
 
@@ -113,7 +115,11 @@ FSDP FULL_SHARD, use_orig_params=True:
 
 Under DDP nothing is sharded: `weight` and `mask` are full, same-shape, same-device tensors, so alignment holds structurally. AdamS additionally asserts it every step and raises `MaskCoverageError` rather than degrading.
 
-Cost: DDP does not shard optimizer state, so per-rank memory is ~128 GiB (fp32 params 26.9 + grads 26.9 + exp_avg 26.9 + exp_avg_sq 26.9 + bool masks 6.5 + bf16 teacher 13.5). Measured peak **127.7 GiB** on an L20A (183 GiB) — fits with headroom, but **not** on an 80/97 GiB card. Adding nodes does not reduce per-card memory.
+**⚠️ 2026-08-09 — the live run is ZeRO-1, not plain DDP; the memory figure below is also wrong.** Plain DDP does not fit: the per-rank static budget is **131.8 GiB** (fp32 params 26.9 + grads 26.9 + exp_avg 26.9 + exp_avg_sq 26.9 + bool masks 6.5 + bf16 teacher 13.5 + fp32 master 4.2), and measured step-0 peak was **178.33 GiB** without checkpointing / **174.04 GiB** with `expandable_segments` — OOM by ~100 MiB on a 183 GiB L20A. (The "127.7 GiB measured peak" previously stated here was from a smaller configuration and does not apply.)
+
+The run therefore uses **`--parallel zero2`**, which is **DDP + `torch.distributed.optim.ZeroRedundancyOptimizer(AdamS)` = ZeRO-1**: only the *Adam state* is sharded, and `_partition_parameters` assigns **whole Parameters** greedily and never slices them, so weight↔mask element alignment is structurally preserved exactly as under plain DDP. Measured: `adam_state = 7.0 G/rank` over 29 tensors vs 50.2 G unsharded; steady peak **145.7 GiB/rank**.
+
+**The flag name `zero2` is a misnomer** — grads are reduced-and-freed by DDP's own bucketing rather than sharded, so the mechanism is ZeRO-1. Do not write "ZeRO-2" in the paper. (Real ZeRO-2 or ZeRO-3 would need FSDP, which is forbidden above.)
 
 ## 6. A mechanism the paper does not discuss (our finding)
 
@@ -122,7 +128,28 @@ AdamS is Adam-normalized, so in the decay-dominated regime (α→1, small gradie
 Two consequences for the full run:
 
 1. **The total decay distance is bounded by `Σ_t lr_t·α_t`.** If that is smaller than typical |W|, masked weights cannot reach zero however correct the code is, and the final prune collapses the model. For the paper recipe (2e-5→2e-6 cosine, 7500 steps, |W|≈0.0067 from audit §5) the budget is 0.0289 ⇒ **4.32× headroom**. `tools/decay_budget.py` computes this; run it before any long run.
-2. **The residual floor is O(final lr)**, so the LR *must* decay. min_lr = 2e-6 gives a floor ≈4e-6, safely below the 1e-4 target. A constant LR would leave every masked weight parked at ≈lr.
+2. **The residual floor is O(final lr)**, so a *decaying* LR is what drives masked weights to zero. min_lr = 2e-6 gives a floor ≈4e-6, safely below the 1e-4 target. A constant LR leaves every masked weight parked at ≈lr.
+
+> **⚠️ 2026-08-09 — the live 7500-step run does NOT follow point 2, and this section was never updated to say so.**
+>
+> `cast/train_cast_llama.py` changed its `--lr-schedule` default to **`constant`** in commit `b4addd7`, and this file has had **zero commits since** (`git log b4addd7..HEAD -- SPEC.md` is empty). So the paragraph above is stale relative to the code, not a description of it. The run on `.21` (`outputs/cast_repro_zero2`, argv verified from `/proc/266500/cmdline`) is `--lr-schedule constant --lr 2e-5`; the `--min-lr 2e-6 --warmup 375` it also passes are **dead flags** under `constant` (`train_cast_llama.py:275-276` returns `args.lr` directly) yet still get recorded into `run_manifest.json`, which reads as though cosine were active.
+>
+> **The justification given in the code for `constant` is a misattribution.** `--lr-schedule`'s help text calls `constant` "paper-literal: Appendix B". In `docs/cast_arxiv_2509.25996v1_fulltext.txt` the phrase "consistent learning rate" occurs **once**, at line 1646, inside **Appendix D "Details on Scaling Law Experiments"** (header at line 1645) — not Appendix B (line 1335). The full sentence is: *"To ensure effective mask learning, we maintain a consistent learning rate for each model **and adjust the decay factor based on the training token budget**."* That is about holding LR fixed **across** the scaling-law's token-budget points, **not** about the within-run schedule. Separately, `grep -ci cosine` and `grep -ci 'warm.?up'` over the full text both return **0** — the paper genuinely never specifies a within-run schedule. So `constant` is a *defensible* reading of a silent paper, but it is an `implementation_choice`, **not** `paper_explicit`, and the Appendix B citation is wrong.
+>
+> Cost of the deviation, via `tools/decay_budget.py` and the 1.69×lr result above:
+>
+> | schedule | α-weighted decay distance | headroom vs \|W\|≈0.0067 | residual floor | terminal \|dw\| | margin to the 1e-4 target |
+> |---|---|---|---|---|---|
+> | `constant` (**what is running**) | 0.0750 | 11.19× | 2.0e-5 | 3.38e-5 | **2.96×** |
+> | `cosine` (what this section prescribes) | 0.0289 | 4.32× | 2.0e-6 | 3.38e-6 | 29.6× |
+>
+> `constant` buys **2.6× more total decay distance** but gives up **~10× of terminal-magnitude margin** — and terminal magnitude is precisely the axis §6 exists to reason about. It is not obviously fatal (3.38e-5 still sits under the 1e-4 target, and the implied `ratio_mean ≈ 3.38e-5/0.0224 ≈ 0.0015` clears §8's <0.01), but it is also **not** what §6 prescribes, and Appendix C's claim that masked weights converge to zero with sparse-weight-ratio → 1 is unreachable under a constant LR: it can only settle at O(lr).
+>
+> The open empirical question is the heavy tail, not the mean: `max_masked_magnitude` has risen monotonically across all five DIAG points (1.06329 → 1.06725 at step 1250). A weight at 1.067 is ~14× beyond the 0.0750 reachable decay distance, so the final Alg. 2 line-20 hard prune may not be free. **Re-check at step 4000-5000** — if `max_masked_magnitude` is still climbing then, `constant` is doing real damage and the run should be redone under `cosine`.
+>
+> ⚠️ `lr_schedule` is in `RESUME_CRITICAL_ARGS` (`checkpoint.py:151`), so this **cannot** be changed by resuming an existing checkpoint — switching to `cosine` requires a fresh run with a new `--out`.
+>
+> Whatever the outcome, any reported result must state the schedule explicitly and tag it `implementation_choice`.
 
 λ therefore controls *when* decay starts dominating the gradient, not the terminal magnitude. This is consistent with the paper's claim that λ is "robust and easy to tune" (Appendix B) and that λ should be "the same order of magnitude as the gradient g_t" (Sec. IV-A2).
 
@@ -136,6 +163,15 @@ Two consequences for the full run:
 
 Independently measured: the *same* AST official checkpoint scores AST-7 58.62→57.94 and Wiki PPL 5.69→**6.3430** (+11%) across two harnesses. So even a perfect CAST reproduction lands near ~6.2 in our harness, not 5.58. Judge instead on:
 
-1. **Algorithmic correctness** — masked weights → 0; exact 2:4; AdamS on 100% of in-scope weights (asserted every step, expected 3,238,002,688 decayed elements).
+1. **Algorithmic correctness** — masked weights → 0; exact 2:4; AdamS actually running on the in-scope weights.
+
+   ⚠️ **2026-08-09: do NOT use the per-step log counters as this evidence.** Adversarial testing on `.21` showed all three are weaker than they read:
+   * `aligned=224/224` — `adams.py:184-201` compares only `mask is not None`, shape and device, **never contents**. Attaching a *deliberately wrong* mask (49% agreement) still reported `aligned: 1/1, coverage: 1.0`. The counter is blind to the exact failure it is named after.
+   * `decayed=3,238,002,688` — **vacuous by construction**. `nm_magnitude_mask` uses `topk(2)+scatter_`, writing exactly 2 True per 4-group unconditionally; `mask.sum()` stays `numel/2` even for all-zero, all-one, 1e30, or **all-NaN** weights. The assertion cannot fail.
+   * `check_mask_sync` — **dead code**. Its cross-rank checksum is `sum(mask.sum())`, which by the above is always `numel/2`; two masks agreeing on only 50.5% of entries both checksum to the same value and pass `all_reduce(MIN)`. Ranks could decay disjoint weight sets undetected.
+
+   What *is* load-bearing: the global tensor/element counts under zero2's SUM-reduce (224 / 6,476,005,376), the `cast_scope == 0` guard, and — for alignment specifically — **recomputing the 2:4 mask from the saved weights in a checkpoint**. That probe gave 0.999745-0.999979 agreement on an 8-tensor sample of `ckpt_step1250`, against 0.559 for a deliberately mismatched control. Use that, not the log line.
+
+   The strongest *cheap* signal that AdamS is running at all is the DIAG pair: `masked_mean_magnitude` must fall while `kept_mean_magnitude` holds (observed 0.00740 → 0.00344 vs 0.02233 → 0.02243). Vanilla Adam moves both.
 2. **PPL in the same band as the AST official ckpt under our harness** (~6.2–6.5), far from 23.45.
 3. **Explainable relative ordering** vs dense / Wanda / naive-retraining under one harness.
