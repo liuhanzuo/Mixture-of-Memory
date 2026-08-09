@@ -1,0 +1,1055 @@
+[
+ {
+  "arxiv": "2004.14975",
+  "title": "Investigating Transferability in Pretrained Language Models",
+  "published": "2020-04-30",
+  "authors": "Alex Tamkin, Trisha Singh, Davide Giovanardi, Noah Goodman",
+  "journal": "COMMENT: Findings of EMNLP 2020",
+  "comment": "",
+  "summary": "How does language model pretraining help transfer learning? We consider a simple ablation technique for determining the impact of each pretrained layer on transfer task performance. This method, partial reinitialization, involves replacing different layers of a pretrained model with random weights, then finetuning the entire model on the transfer task and observing the change in performance. This technique reveals that in BERT, layers with high probing performance on downstream GLUE tasks are neither necessary nor sufficient for high accuracy on those tasks. Furthermore, the benefit of using pretrained parameters for a layer varies dramatically with finetuning dataset size: parameters that provide tremendous performance improvement when data is plentiful may provide negligible benefits in data-scarce settings. These results reveal the complexity of the transfer learning process, highlighting the limitations of methods that operate on frozen models or single data samples."
+ },
+ {
+  "arxiv": "2006.05987",
+  "title": "Revisiting Few-sample BERT Fine-tuning",
+  "published": "2020-06-10",
+  "authors": "Tianyi Zhang, Felix Wu, Arzoo Katiyar, Kilian Q. Weinberger, Yoav Artzi",
+  "journal": "COMMENT: Code available at https://github.com/asappresearch/revisit-bert-finetuning",
+  "comment": "",
+  "summary": "This paper is a study of fine-tuning of BERT contextual representations, with focus on commonly observed instabilities in few-sample scenarios. We identify several factors that cause this instability: the common use of a non-standard optimization method with biased gradient estimation; the limited applicability of significant parts of the BERT network for down-stream tasks; and the prevalent practice of using a pre-determined, and small number of training iterations. We empirically test the impact of these factors, and identify alternative practices that resolve the commonly observed instability of the process. In light of these observations, we re-visit recently proposed methods to improve few-sample fine-tuning with BERT and re-evaluate their effectiveness. Generally, we observe the impact of these methods diminishes significantly with our modified process."
+ },
+ {
+  "arxiv": "2101.11109",
+  "title": "First Align, then Predict: Understanding the Cross-Lingual Ability of Multilingual BERT",
+  "published": "2021-01-26",
+  "authors": "Benjamin Muller, Yanai Elazar, Benoît Sagot, Djamé Seddah",
+  "journal": "COMMENT: Accepted at EACL 2021",
+  "comment": "",
+  "summary": "Multilingual pretrained language models have demonstrated remarkable zero-shot cross-lingual transfer capabilities. Such transfer emerges by fine-tuning on a task of interest in one language and evaluating on a distinct language, not seen during the fine-tuning. Despite promising results, we still lack a proper understanding of the source of this transfer. Using a novel layer ablation technique and analyses of the model's internal representations, we show that multilingual BERT, a popular multilingual language model, can be viewed as the stacking of two sub-networks: a multilingual encoder followed by a task-specific language-agnostic predictor. While the encoder is crucial for cross-lingual transfer and remains mostly unchanged during fine-tuning, the task predictor has little importance on the transfer and can be reinitialized during fine-tuning. We present extensive experiments with three distinct tasks, seventeen typologically diverse languages and multiple domains to support our hypothesis."
+ },
+ {
+  "arxiv": "2109.08406",
+  "title": "Fine-Tuned Transformers Show Clusters of Similar Representations Across Layers",
+  "published": "2021-09-17",
+  "authors": "Jason Phang, Haokun Liu, Samuel R. Bowman",
+  "journal": "COMMENT: BlackboxNLP 2021",
+  "comment": "",
+  "summary": "Despite the success of fine-tuning pretrained language encoders like BERT for downstream natural language understanding (NLU) tasks, it is still poorly understood how neural networks change after fine-tuning. In this work, we use centered kernel alignment (CKA), a method for comparing learned representations, to measure the similarity of representations in task-tuned models across layers. In experiments across twelve NLU tasks, we discover a consistent block diagonal structure in the similarity of representations within fine-tuned RoBERTa and ALBERT models, with strong similarity within clusters of earlier and later layers, but not between them. The similarity of later layer representations implies that later layers only marginally contribute to task performance, and we verify in experiments that the top few layers of fine-tuned Transformers can be discarded without hurting performance, even with no further tuning."
+ },
+ {
+  "arxiv": "2210.10041",
+  "title": "Hidden State Variability of Pretrained Language Models Can Guide Computation Reduction for Transfer Learning",
+  "published": "2022-10-18",
+  "authors": "Shuo Xie, Jiahao Qiu, Ankita Pasad, Li Du, Qing Qu, Hongyuan Mei",
+  "journal": "COMMENT: EMNLP 2022 camera-ready",
+  "comment": "",
+  "summary": "While transferring a pretrained language model, common approaches conventionally attach their task-specific classifiers to the top layer and adapt all the pretrained layers. We investigate whether one could make a task-specific selection on which subset of the layers to adapt and where to place the classifier. The goal is to reduce the computation cost of transfer learning methods (e.g. fine-tuning or adapter-tuning) without sacrificing its performance. We propose to select layers based on the variability of their hidden states given a task-specific corpus. We say a layer is already \"well-specialized\" in a task if the within-class variability of its hidden states is low relative to the between-class variability. Our variability metric is cheap to compute and doesn't need any training or hyperparameter tuning. It is robust to data imbalance and data scarcity. Extensive experiments on the GLUE benchmark demonstrate that selecting layers based on our metric can yield significantly stronger performance than using the same number of top layers and often match the performance of fine-tuning or adapter-tuning the entire language model."
+ },
+ {
+  "arxiv": "2212.10503",
+  "title": "Mini-Model Adaptation: Efficiently Extending Pretrained Models to New Languages via Aligned Shallow Training",
+  "published": "2022-12-20",
+  "authors": "Kelly Marchisio, Patrick Lewis, Yihong Chen, Mikel Artetxe",
+  "journal": "COMMENT: Findings of ACL 2023 Camera Ready",
+  "comment": "",
+  "summary": "Prior work shows that it is possible to expand pretrained Masked Language Models (MLMs) to new languages by learning a new set of embeddings, while keeping the transformer body frozen. Despite learning a small subset of parameters, this approach is not compute-efficient, as training the new embeddings requires a full forward and backward pass over the entire model. We propose mini-model adaptation, a compute-efficient alternative that builds a shallow mini-model from a fraction of a large model's parameters. New language-specific embeddings can then be efficiently trained over the mini-model and plugged into the aligned large model for rapid cross-lingual transfer. We explore two approaches to learn mini-models: MiniJoint, which jointly pretrains the primary model and the mini-model using a single transformer with a secondary MLM head at a middle layer; and MiniPost, where we start from a regular pretrained model, build a mini-model by extracting and freezing a few layers, and learn a small number of parameters on top. Experiments on XNLI, MLQA and PAWS-X show that mini-model adaptation matches the performance of the standard approach using 2.3x less compute on average."
+ },
+ {
+  "arxiv": "2302.03241",
+  "title": "Continual Pre-training of Language Models",
+  "published": "2023-02-07",
+  "authors": "Zixuan Ke, Yijia Shao, Haowei Lin, Tatsuya Konishi, Gyuhak Kim, Bing Liu",
+  "journal": "ICLR 2023",
+  "comment": "https://github.com/UIC-Liu-Lab/ContinualLM",
+  "summary": "Language models (LMs) have been instrumental for the rapid advance of natural language processing. This paper studies continual pre-training of LMs, in particular, continual domain-adaptive pre-training (or continual DAP-training). Existing research has shown that further pre-training an LM using a domain corpus to adapt the LM to the domain can improve the end-task performance in the domain. This paper proposes a novel method to continually DAP-train an LM with a sequence of unlabeled domain corpora to adapt the LM to these domains to improve their end-task performances. The key novelty of our method is a soft-masking mechanism that directly controls the update to the LM. A novel proxy is also proposed to preserve the general knowledge in the original LM. Additionally, it contrasts the representations of the previously learned domain knowledge (including the general knowledge in the pre-trained LM) and the knowledge from the current full network to achieve knowledge integration. The method not only overcomes catastrophic forgetting, but also achieves knowledge transfer to improve end-task performances. Empirical evaluation demonstrates the effectiveness of the proposed method."
+ },
+ {
+  "arxiv": "2306.11644",
+  "title": "Textbooks Are All You Need",
+  "published": "2023-06-20",
+  "authors": "Suriya Gunasekar, Yi Zhang, Jyoti Aneja, Caio César Teodoro Mendes, Allie Del Giorno, Sivakanth Gopi, Mojan Javaheripi, Piero Kauffmann, Gustavo de Rosa, Olli Saarikivi, Adil Salim, Shital Shah, Harkirat Singh Behl, Xin Wang, Sébastien Bubeck, Ronen Eldan, Adam Tauman Kalai, Yin Tat Lee, Yuanzhi Li",
+  "journal": "COMMENT: 26 pages; changed color scheme of plot. fixed minor typos and added couple clarifications",
+  "comment": "",
+  "summary": "We introduce phi-1, a new large language model for code, with significantly smaller size than competing models: phi-1 is a Transformer-based model with 1.3B parameters, trained for 4 days on 8 A100s, using a selection of ``textbook quality\" data from the web (6B tokens) and synthetically generated textbooks and exercises with GPT-3.5 (1B tokens). Despite this small scale, phi-1 attains pass@1 accuracy 50.6% on HumanEval and 55.5% on MBPP. It also displays surprising emergent properties compared to phi-1-base, our model before our finetuning stage on a dataset of coding exercises, and phi-1-small, a smaller model with 350M parameters trained with the same pipeline as phi-1 that still achieves 45% on HumanEval."
+ },
+ {
+  "arxiv": "2307.01163",
+  "title": "Improving Language Plasticity via Pretraining with Active Forgetting",
+  "published": "2023-07-03",
+  "authors": "Yihong Chen, Kelly Marchisio, Roberta Raileanu, David Ifeoluwa Adelani, Pontus Stenetorp, Sebastian Riedel, Mikel Artetxe",
+  "journal": "COMMENT: NeurIPS 2023 Final Version",
+  "comment": "",
+  "summary": "Pretrained language models (PLMs) are today the primary model for natural language processing. Despite their impressive downstream performance, it can be difficult to apply PLMs to new languages, a barrier to making their capabilities universally accessible. While prior work has shown it possible to address this issue by learning a new embedding layer for the new language, doing so is both data and compute inefficient. We propose to use an active forgetting mechanism during pretraining, as a simple way of creating PLMs that can quickly adapt to new languages. Concretely, by resetting the embedding layer every K updates during pretraining, we encourage the PLM to improve its ability of learning new embeddings within a limited number of updates, similar to a meta-learning effect. Experiments with RoBERTa show that models pretrained with our forgetting mechanism not only demonstrate faster convergence during language adaptation but also outperform standard ones in a low-data regime, particularly for languages that are distant from English."
+ },
+ {
+  "arxiv": "2308.08742",
+  "title": "PMET: Precise Model Editing in a Transformer",
+  "published": "2023-08-17",
+  "authors": "Xiaopeng Li, Shasha Li, Shezheng Song, Jing Yang, Jun Ma, Jie Yu",
+  "journal": "COMMENT: AAAI24",
+  "comment": "",
+  "summary": "Model editing techniques modify a minor proportion of knowledge in Large Language Models (LLMs) at a relatively low cost, which have demonstrated notable success. Existing methods assume Transformer Layer (TL) hidden states are values of key-value memories of the Feed-Forward Network (FFN). They usually optimize the TL hidden states to memorize target knowledge and use it to update the weights of the FFN in LLMs. However, the information flow of TL hidden states comes from three parts: Multi-Head Self-Attention (MHSA), FFN, and residual connections. Existing methods neglect the fact that the TL hidden states contains information not specifically required for FFN. Consequently, the performance of model editing decreases. To achieve more precise model editing, we analyze hidden states of MHSA and FFN, finding that MHSA encodes certain general knowledge extraction patterns. This implies that MHSA weights do not require updating when new knowledge is introduced. Based on above findings, we introduce PMET, which simultaneously optimizes Transformer Component (TC, namely MHSA and FFN) hidden states, while only using the optimized TC hidden states of FFN to precisely update FFN weights. Our experiments demonstrate that PMET exhibits state-of-the-art performance on both the COUNTERFACT and zsRE datasets. Our ablation experiments substantiate the effectiveness of our enhancements, further reinforcing the finding that the MHSA encodes certain general knowledge extraction patterns and indicating its storage of a small amount of factual knowledge. Our code is available at https://github.com/xpq-tech/PMET."
+ },
+ {
+  "arxiv": "2309.06256",
+  "title": "Mitigating the Alignment Tax of RLHF",
+  "published": "2023-09-12",
+  "authors": "Yong Lin, Hangyu Lin, Wei Xiong, Shizhe Diao, Jianmeng Liu, Jipeng Zhang, Rui Pan, Haoxiang Wang, Wenbin Hu, Hanning Zhang, Hanze Dong, Renjie Pi, Han Zhao, Nan Jiang, Heng Ji, Yuan Yao, Tong Zhang",
+  "journal": "COMMENT: EMNLP 2024 Main",
+  "comment": "",
+  "summary": "LLMs acquire a wide range of abilities during pre-training, but aligning LLMs under Reinforcement Learning with Human Feedback (RLHF) can lead to forgetting pretrained abilities, which is also known as the alignment tax. To investigate alignment tax, we conducted experiments with existing RLHF algorithms using OpenLLaMA-3B, which revealed a pronounced alignment tax in NLP tasks. Whereas, despite various techniques to mitigate forgetting, they are often at odds with the RLHF performance, leading to a trade-off between alignment performance and forgetting mitigation, leading to an alignment-forgetting trade-off. In this paper we show that model averaging, which simply interpolates between pre and post RLHF model weights, surprisingly achieves the most strongest alignment-forgetting Pareto front among a wide range of competing methods. To understand its effectiveness, we offer theoretical insights into model averaging, revealing that it enhances performance Pareto front by increasing feature diversity on the layers where tasks share overlapped feature spaces. Empirical evidence corroborates our analysis by showing the benefits of averaging low-level transformer layers. Building on the analysis and the observation that averaging different layers of the transformer leads to significantly different alignment-forgetting trade-offs, we propose Heterogeneous Model Averaging (HMA) to Heterogeneously find various combination ratios of model layers. HMA seeks to maximize the alignment performance while incurring minimal alignment tax. Moreover, we validate HMA's performance across a range of RLHF algorithms over OpenLLaMA-3B and further extend our findings to Mistral-7B which is evaluated by open-sourced preference model and GPT4. Code available here: https://github.com/avalonstrel/Mitigating-the-Alignment-Tax-of-RLHF.git."
+ },
+ {
+  "arxiv": "2309.08168",
+  "title": "Draft & Verify: Lossless Large Language Model Acceleration via Self-Speculative Decoding",
+  "published": "2023-09-15",
+  "authors": "Jun Zhang, Jue Wang, Huan Li, Lidan Shou, Ke Chen, Gang Chen, Sharad Mehrotra",
+  "journal": "COMMENT: Accepted to ACL 2024",
+  "comment": "",
+  "summary": "We present a novel inference scheme, self-speculative decoding, for accelerating Large Language Models (LLMs) without the need for an auxiliary model. This approach is characterized by a two-stage process: drafting and verification. The drafting stage generates draft tokens at a slightly lower quality but more quickly, which is achieved by selectively skipping certain intermediate layers during drafting. Subsequently, the verification stage employs the original LLM to validate those draft output tokens in one forward pass. This process ensures the final output remains identical to that produced by the unaltered LLM. Moreover, the proposed method requires no additional neural network training and no extra memory footprint, making it a plug-and-play and cost-effective solution for inference acceleration. Benchmarks with LLaMA-2 and its variants demonstrated a speedup up to 1.99$\\times$."
+ },
+ {
+  "arxiv": "2309.10105",
+  "title": "Understanding Catastrophic Forgetting in Language Models via Implicit Inference",
+  "published": "2023-09-18",
+  "authors": "Suhas Kotha, Jacob Mitchell Springer, Aditi Raghunathan",
+  "journal": "COMMENT: ICLR 2024",
+  "comment": "",
+  "summary": "We lack a systematic understanding of the effects of fine-tuning (via methods such as instruction-tuning or reinforcement learning from human feedback), particularly on tasks outside the narrow fine-tuning distribution. In a simplified scenario, we demonstrate that improving performance on tasks within the fine-tuning data distribution comes at the expense of capabilities on other tasks. We hypothesize that language models implicitly infer the task of the prompt and that fine-tuning skews this inference towards tasks in the fine-tuning distribution. To test this, we propose Conjugate Prompting, which artificially makes the task look farther from the fine-tuning distribution while requiring the same capability, and we find that this recovers some of the pretraining capabilities in our synthetic setup. Since real-world fine-tuning distributions are predominantly English, we apply conjugate prompting to recover pretrained capabilities in LLMs by simply translating the prompts to different languages. This allows us to recover in-context learning abilities lost via instruction tuning, natural reasoning capability lost during code fine-tuning, and, more concerningly, harmful content generation suppressed by safety fine-tuning in chatbots like ChatGPT."
+ },
+ {
+  "arxiv": "2310.04680",
+  "title": "The Cost of Down-Scaling Language Models: Fact Recall Deteriorates before In-Context Learning",
+  "published": "2023-10-07",
+  "authors": "Tian Jin, Nolan Clement, Xin Dong, Vaishnavh Nagarajan, Michael Carbin, Jonathan Ragan-Kelley, Gintare Karolina Dziugaite",
+  "journal": "The Twelfth International Conference on Learning Representations (ICLR), 2024",
+  "comment": "SUMMARY: How does scaling the number of parameters in large language models (LLMs) affect their core capabilities? We study two natural scaling techniques -- weight pruning and simply training a smaller or larger model, which we refer to as dense scaling -- and their effects on two core capabilities of LLMs: (a) recalling facts presented during pre-training and (b) processing information presented in-context during inference. By curating a suite of tasks that help disentangle these two capabilities, we find a striking difference in how these two abilities evolve due to scaling. Reducing the model size by more than 30\\% (via either scaling approach) significantly decreases the ability to recall facts seen in pre-training. Yet, a 60--70\\% reduction largely preserves the various ways the model can process in-context information, ranging from retrieving answers from a long context to learning parameterized functions from in-context exemplars. The fact that both dense scaling and weight pruning exhibit this behavior suggests that scaling model size has an inherently disparate effect on fact recall and in-context learning.\n\n### 2312.15166\nTITLE: SOLAR 10.7B: Scaling Large Language Models with Simple yet Effective Depth Up-Scaling\nPUBLISHED: 2023-12-23T05:11:37Z\nUPDATED: 2024-04-04T01:53:38Z\nAUTHORS: Dahyun Kim, Chanjun Park, Sanghoon Kim, Wonsung Lee, Wonho Song, Yunsu Kim, Hyeonwoo Kim, Yungi Kim, Hyeonju Lee, Jihoo Kim, Changbae Ahn, Seonghoon Yang, Sukyung Lee, Hyunbyung Park, Gyoungjin Gim, Mikyoung Cha, Hwalsuk Lee, Sunghun Kim\nJOURNAL: \nCOMMENT: accepted to NAACL 2024 Industry Track",
+  "summary": "We introduce SOLAR 10.7B, a large language model (LLM) with 10.7 billion parameters, demonstrating superior performance in various natural language processing (NLP) tasks. Inspired by recent efforts to efficiently up-scale LLMs, we present a method for scaling LLMs called depth up-scaling (DUS), which encompasses depthwise scaling and continued pretraining. In contrast to other LLM up-scaling methods that use mixture-of-experts, DUS does not require complex changes to train and inference efficiently. We show experimentally that DUS is simple yet effective in scaling up high-performance LLMs from small ones. Building on the DUS model, we additionally present SOLAR 10.7B-Instruct, a variant fine-tuned for instruction-following capabilities, surpassing Mixtral-8x7B-Instruct. SOLAR 10.7B is publicly available under the Apache 2.0 license, promoting broad access and application in the LLM field."
+ },
+ {
+  "arxiv": "2310.18581",
+  "title": "Accelerating LLaMA Inference by Enabling Intermediate Layer Decoding via Instruction Tuning with LITE",
+  "published": "2023-10-28",
+  "authors": "Neeraj Varshney, Agneet Chatterjee, Mihir Parmar, Chitta Baral",
+  "journal": "COMMENT:",
+  "comment": "",
+  "summary": "Large Language Models (LLMs) have achieved remarkable performance across a wide variety of natural language tasks; however, their large size makes their inference slow and computationally expensive. Focusing on this problem, we propose to instruction tune LLMs with additional explicit losses from the intermediate layers (LITE) and show that it enables these layers to acquire 'good' generation ability without affecting the generation ability of the final layer. We perform 'dynamic confidence-based early exiting' at token level from the intermediate layers which improves the efficiency of text generation without compromising the quality of the generation. We conduct comprehensive experiments by instruction tuning LLaMA-2 models on the Alpaca dataset and holistically evaluate on four different human-instruction test sets. We show that dynamic early exiting achieves consistent and considerable inference computation cost improvements (37.86% for 7B and 46.35% for 13B model) while maintaining the generation quality of the responses. We further conduct a thorough analysis of the results over several important aspects, such as comparing the semantic similarity of the outputs and dissecting the efficiency improvements by comparing the number of tokens generated in the output. In summary, our work contributes to improving the efficiency of LLM inference while maintaining the generation quality, a crucial step en route to enabling their widespread adoption."
+ },
+ {
+  "arxiv": "2310.18547",
+  "title": "Punica: Multi-Tenant LoRA Serving",
+  "published": "2023-10-28",
+  "authors": "Lequn Chen, Zihao Ye, Yongji Wu, Danyang Zhuo, Luis Ceze, Arvind Krishnamurthy",
+  "journal": "COMMENT:",
+  "comment": "",
+  "summary": "Low-rank adaptation (LoRA) has become an important and popular method to adapt pre-trained models to specific domains. We present Punica, a system to serve multiple LoRA models in a shared GPU cluster. Punica contains a new CUDA kernel design that allows batching of GPU operations for different LoRA models. This allows a GPU to hold only a single copy of the underlying pre-trained model when serving multiple, different LoRA models, significantly enhancing GPU efficiency in terms of both memory and computation. Our scheduler consolidates multi-tenant LoRA serving workloads in a shared GPU cluster. With a fixed-sized GPU cluster, our evaluations show that Punica achieves 12x higher throughput in serving multiple LoRA models compared to state-of-the-art LLM serving systems while only adding 2ms latency per token. Punica is open source at https://github.com/punica-ai/punica ."
+ },
+ {
+  "arxiv": "2311.03285",
+  "title": "S-LoRA: Serving Thousands of Concurrent LoRA Adapters",
+  "published": "2023-11-06",
+  "authors": "Ying Sheng, Shiyi Cao, Dacheng Li, Coleman Hooper, Nicholas Lee, Shuo Yang, Christopher Chou, Banghua Zhu, Lianmin Zheng, Kurt Keutzer, Joseph E. Gonzalez, Ion Stoica",
+  "journal": "COMMENT:",
+  "comment": "",
+  "summary": "The \"pretrain-then-finetune\" paradigm is commonly adopted in the deployment of large language models. Low-Rank Adaptation (LoRA), a parameter-efficient fine-tuning method, is often employed to adapt a base model to a multitude of tasks, resulting in a substantial collection of LoRA adapters derived from one base model. We observe that this paradigm presents significant opportunities for batched inference during serving. To capitalize on these opportunities, we present S-LoRA, a system designed for the scalable serving of many LoRA adapters. S-LoRA stores all adapters in the main memory and fetches the adapters used by the currently running queries to the GPU memory. To efficiently use the GPU memory and reduce fragmentation, S-LoRA proposes Unified Paging. Unified Paging uses a unified memory pool to manage dynamic adapter weights with different ranks and KV cache tensors with varying sequence lengths. Additionally, S-LoRA employs a novel tensor parallelism strategy and highly optimized custom CUDA kernels for heterogeneous batching of LoRA computation. Collectively, these features enable S-LoRA to serve thousands of LoRA adapters on a single GPU or across multiple GPUs with a small overhead. Compared to state-of-the-art libraries such as HuggingFace PEFT and vLLM (with naive support of LoRA serving), S-LoRA can improve the throughput by up to 4 times and increase the number of served adapters by several orders of magnitude. As a result, S-LoRA enables scalable serving of many task-specific fine-tuned models and offers the potential for large-scale customized fine-tuning services. The code is available at https://github.com/S-LoRA/S-LoRA"
+ },
+ {
+  "arxiv": "2312.02730",
+  "title": "Towards Measuring Representational Similarity of Large Language Models",
+  "published": "2023-12-05",
+  "authors": "Max Klabunde, Mehdi Ben Amor, Michael Granitzer, Florian Lemmerich",
+  "journal": "COMMENT: Extended abstract in UniReps Workshop @ NeurIPS 2023",
+  "comment": "",
+  "summary": "Understanding the similarity of the numerous released large language models (LLMs) has many uses, e.g., simplifying model selection, detecting illegal model reuse, and advancing our understanding of what makes LLMs perform well. In this work, we measure the similarity of representations of a set of LLMs with 7B parameters. Our results suggest that some LLMs are substantially different from others. We identify challenges of using representational similarity measures that suggest the need of careful study of similarity scores to avoid false conclusions."
+ },
+ {
+  "arxiv": "2312.04916",
+  "title": "EE-LLM: Large-Scale Training and Inference of Early-Exit Large Language Models with 3D Parallelism",
+  "published": "2023-12-08",
+  "authors": "Yanxi Chen, Xuchen Pan, Yaliang Li, Bolin Ding, Jingren Zhou",
+  "journal": "COMMENT: ICML 2024 camera-ready version",
+  "comment": "",
+  "summary": "We present EE-LLM, a framework for large-scale training and inference of early-exit large language models (LLMs). While recent works have shown preliminary evidence for the efficacy of early exiting in accelerating LLM inference, EE-LLM makes a foundational step towards scaling up early-exit LLMs by supporting their training and inference with massive 3D parallelism. Built upon Megatron-LM, EE-LLM implements a variety of algorithmic innovations and performance optimizations tailored to early exiting, including a lightweight method that facilitates backpropagation for the early-exit training objective with pipeline parallelism, techniques of leveraging idle resources in the original pipeline schedule for computation related to early-exit layers, and two approaches of early-exit inference that are compatible with KV caching for autoregressive generation. Our analytical and empirical study shows that EE-LLM achieves great training efficiency with negligible computational overhead compared to standard LLM training, as well as outstanding inference speedup without compromising output quality. To facilitate further research and adoption, we release EE-LLM at https://github.com/pan-x-c/EE-LLM."
+ },
+ {
+  "arxiv": "2312.15166",
+  "title": "SOLAR 10.7B: Scaling Large Language Models with Simple yet Effective Depth Up-Scaling",
+  "published": "2023-12-23",
+  "authors": "Dahyun Kim, Chanjun Park, Sanghoon Kim, Wonsung Lee, Wonho Song, Yunsu Kim, Hyeonwoo Kim, Yungi Kim, Hyeonju Lee, Jihoo Kim, Changbae Ahn, Seonghoon Yang, Sukyung Lee, Hyunbyung Park, Gyoungjin Gim, Mikyoung Cha, Hwalsuk Lee, Sunghun Kim",
+  "journal": "COMMENT: accepted to NAACL 2024 Industry Track",
+  "comment": "",
+  "summary": "We introduce SOLAR 10.7B, a large language model (LLM) with 10.7 billion parameters, demonstrating superior performance in various natural language processing (NLP) tasks. Inspired by recent efforts to efficiently up-scale LLMs, we present a method for scaling LLMs called depth up-scaling (DUS), which encompasses depthwise scaling and continued pretraining. In contrast to other LLM up-scaling methods that use mixture-of-experts, DUS does not require complex changes to train and inference efficiently. We show experimentally that DUS is simple yet effective in scaling up high-performance LLMs from small ones. Building on the DUS model, we additionally present SOLAR 10.7B-Instruct, a variant fine-tuned for instruction-following capabilities, surpassing Mixtral-8x7B-Instruct. SOLAR 10.7B is publicly available under the Apache 2.0 license, promoting broad access and application in the LLM field."
+ },
+ {
+  "arxiv": "2401.02412",
+  "title": "LLM Augmented LLMs: Expanding Capabilities through Composition",
+  "published": "2024-01-04",
+  "authors": "Rachit Bansal, Bidisha Samanta, Siddharth Dalmia, Nitish Gupta, Shikhar Vashishth, Sriram Ganapathy, Abhishek Bapna, Prateek Jain, Partha Talukdar",
+  "journal": "COMMENT: 17 pages, 2 figures, 8 tables",
+  "comment": "",
+  "summary": "Foundational models with billions of parameters which have been trained on large corpora of data have demonstrated non-trivial skills in a variety of domains. However, due to their monolithic structure, it is challenging and expensive to augment them or impart new skills. On the other hand, due to their adaptation abilities, several new instances of these models are being trained towards new domains and tasks. In this work, we study the problem of efficient and practical composition of existing foundation models with more specific models to enable newer capabilities. To this end, we propose CALM -- Composition to Augment Language Models -- which introduces cross-attention between models to compose their representations and enable new capabilities. Salient features of CALM are: (i) Scales up LLMs on new tasks by 're-using' existing LLMs along with a few additional parameters and data, (ii) Existing model weights are kept intact, and hence preserves existing capabilities, and (iii) Applies to diverse domains and settings. We illustrate that augmenting PaLM2-S with a smaller model trained on low-resource languages results in an absolute improvement of up to 13\\% on tasks like translation into English and arithmetic reasoning for low-resource languages. Similarly, when PaLM2-S is augmented with a code-specific model, we see a relative improvement of 40\\% over the base model for code generation and explanation tasks -- on-par with fully fine-tuned counterparts."
+ },
+ {
+  "arxiv": "2401.02415",
+  "title": "LLaMA Pro: Progressive LLaMA with Block Expansion",
+  "published": "2024-01-04",
+  "authors": "Chengyue Wu, Yukang Gan, Yixiao Ge, Zeyu Lu, Jiahao Wang, Ye Feng, Ying Shan, Ping Luo",
+  "journal": "COMMENT: Accepted by ACL 2024, Main Conference",
+  "comment": "",
+  "summary": "Humans generally acquire new skills without compromising the old; however, the opposite holds for Large Language Models (LLMs), e.g., from LLaMA to CodeLLaMA. To this end, we propose a new post-pretraining method for LLMs with an expansion of Transformer blocks. We tune the expanded blocks using only new corpus, efficiently and effectively improving the model's knowledge without catastrophic forgetting. In this paper, we experiment on the corpus of code and math, yielding LLaMA Pro-8.3B, a versatile foundation model initialized from LLaMA2-7B, excelling in general tasks, programming, and mathematics. LLaMA Pro and its instruction-following counterpart (LLaMA Pro-Instruct) achieve advanced performance among various benchmarks, demonstrating superiority over existing open models in the LLaMA family and the immense potential of reasoning and addressing diverse tasks as an intelligent agent. Our findings provide valuable insights into integrating natural and programming languages, laying a solid foundation for developing advanced language agents that operate effectively in various environments."
+ },
+ {
+  "arxiv": "2401.03129",
+  "title": "Examining Forgetting in Continual Pre-training of Aligned Large Language Models",
+  "published": "2024-01-06",
+  "authors": "Chen-An Li, Hung-Yi Lee",
+  "journal": "COMMENT: Work in progress",
+  "comment": "",
+  "summary": "Recent advances in Large Language Models (LLMs) have exhibited remarkable proficiency across various tasks. Given the potent applications of LLMs in numerous fields, there has been a surge in LLM development. In developing LLMs, a common practice involves continual pre-training on previously fine-tuned models. However, this can lead to catastrophic forgetting. In our work, we investigate the phenomenon of forgetting that occurs during continual pre-training on an existing fine-tuned LLM. We evaluate the impact of continuous pre-training on the fine-tuned LLM across various dimensions, including output format, knowledge, and reliability. Experiment results highlight the non-trivial challenge of addressing catastrophic forgetting during continual pre-training, especially the repetition issue."
+ },
+ {
+  "arxiv": "2401.06102",
+  "title": "Patchscopes: A Unifying Framework for Inspecting Hidden Representations of Language Models",
+  "published": "2024-01-11",
+  "authors": "Asma Ghandeharioun, Avi Caciularu, Adam Pearce, Lucas Dixon, Mor Geva",
+  "journal": "COMMENT: ICML 2024 (to appear)",
+  "comment": "",
+  "summary": "Understanding the internal representations of large language models (LLMs) can help explain models' behavior and verify their alignment with human values. Given the capabilities of LLMs in generating human-understandable text, we propose leveraging the model itself to explain its internal representations in natural language. We introduce a framework called Patchscopes and show how it can be used to answer a wide range of questions about an LLM's computation. We show that many prior interpretability methods based on projecting representations into the vocabulary space and intervening on the LLM computation can be viewed as instances of this framework. Moreover, several of their shortcomings such as failure in inspecting early layers or lack of expressivity can be mitigated by Patchscopes. Beyond unifying prior inspection techniques, Patchscopes also opens up new possibilities such as using a more capable model to explain the representations of a smaller model, and multihop reasoning error correction."
+ },
+ {
+  "arxiv": "2401.05605",
+  "title": "Scaling Laws for Forgetting When Fine-Tuning Large Language Models",
+  "published": "2024-01-11",
+  "authors": "Damjan Kalajdzievski",
+  "journal": "COMMENT:",
+  "comment": "",
+  "summary": "We study and quantify the problem of forgetting when fine-tuning pre-trained large language models (LLMs) on a downstream task. We find that parameter-efficient fine-tuning (PEFT) strategies, such as Low-Rank Adapters (LoRA), still suffer from catastrophic forgetting. In particular, we identify a strong inverse linear relationship between the fine-tuning performance and the amount of forgetting when fine-tuning LLMs with LoRA. We further obtain precise scaling laws that show forgetting increases as a shifted power law in the number of parameters fine-tuned and the number of update steps. We also examine the impact of forgetting on knowledge, reasoning, and the safety guardrails trained into Llama 2 7B chat. Our study suggests that forgetting cannot be avoided through early stopping or by varying the number of parameters fine-tuned. We believe this opens up an important safety-critical direction for future research to evaluate and develop fine-tuning schemes which mitigate forgetting"
+ },
+ {
+  "arxiv": "2402.00518",
+  "title": "EE-Tuning: An Economical yet Scalable Solution for Tuning Early-Exit Large Language Models",
+  "published": "2024-02-01",
+  "authors": "Xuchen Pan, Yanxi Chen, Yaliang Li, Bolin Ding, Jingren Zhou",
+  "journal": "COMMENT:",
+  "comment": "",
+  "summary": "This work introduces EE-Tuning, a lightweight and economical solution to training/tuning early-exit large language models (LLMs). In contrast to the common approach of full-parameter pre-training, EE-Tuning augments any pre-trained (and possibly fine-tuned) standard LLM with additional early-exit layers that are tuned in a parameter-efficient manner, which requires significantly less computational resources and training data. Our implementation of EE-Tuning achieves outstanding training efficiency via extensive performance optimizations, as well as scalability due to its full compatibility with 3D parallelism. Results of systematic experiments validate the efficacy of EE-Tuning, confirming that effective early-exit LLM inference can be achieved with a limited training budget. In hope of making early-exit LLMs accessible to the community, we release the source code of our implementation of EE-Tuning at https://github.com/pan-x-c/EE-LLM."
+ },
+ {
+  "arxiv": "2402.02834",
+  "title": "Shortened LLaMA: Depth Pruning for Large Language Models with Comparison of Retraining Methods",
+  "published": "2024-02-05",
+  "authors": "Bo-Kyeong Kim, Geonmin Kim, Tae-Ho Kim, Thibault Castells, Shinkook Choi, Junho Shin, Hyoung-Kyu Song",
+  "journal": "COMMENT: Update (arXiv-v2): continued pretraining for severe pruning ratios, compatibility with quantization, and enhanced baselines. Preliminary work (arXiv-v1) accepted at ICLR 2024 Workshop on ME-FoMo: https://openreview.net/forum?id=18VGxuOdpu",
+  "comment": "",
+  "summary": "Structured pruning of modern large language models (LLMs) has emerged as a way of decreasing their high computational needs. Width pruning reduces the size of projection weight matrices (e.g., by removing attention heads) while maintaining the number of layers. Depth pruning, in contrast, removes entire layers or blocks, while keeping the size of the remaining weights unchanged. Most current research focuses on either width-only or a blend of width and depth pruning, with little comparative analysis between the two units (width vs. depth) concerning their impact on LLM inference efficiency. In this work, we show that simple depth pruning can effectively compress LLMs while achieving comparable or superior performance to recent width pruning studies. Our pruning method boosts inference speeds, especially under memory-constrained conditions that require limited batch sizes for running LLMs, where width pruning is ineffective. In retraining pruned models for quality recovery, continued pretraining on a large corpus markedly outperforms LoRA-based tuning, particularly at severe pruning ratios. We hope this work can help build compact yet capable LLMs. Code and models can be found at: https://github.com/Nota-NetsPresso/shortened-llm"
+ },
+ {
+  "arxiv": "2402.05913",
+  "title": "Efficient Stagewise Pretraining via Progressive Subnetworks",
+  "published": "2024-02-08",
+  "authors": "Abhishek Panigrahi, Nikunj Saunshi, Kaifeng Lyu, Sobhan Miryoosefi, Sashank Reddi, Satyen Kale, Sanjiv Kumar",
+  "journal": "COMMENT:",
+  "comment": "",
+  "summary": "Recent developments in large language models have sparked interest in efficient pretraining methods. Stagewise training approaches to improve efficiency, like gradual stacking and layer dropping (Reddi et al, 2023; Zhang & He, 2020), have recently garnered attention. The prevailing view suggests that stagewise dropping strategies, such as layer dropping, are ineffective, especially when compared to stacking-based approaches. This paper challenges this notion by demonstrating that, with proper design, dropping strategies can be competitive, if not better, than stacking methods. Specifically, we develop a principled stagewise training framework, progressive subnetwork training, which only trains subnetworks within the model and progressively increases the size of subnetworks during training, until it trains the full network. We propose an instantiation of this framework - Random Part Training (RAPTR) - that selects and trains only a random subnetwork (e.g. depth-wise, width-wise) of the network at each step, progressively increasing the size in stages. We show that this approach not only generalizes prior works like layer dropping but also fixes their key issues. Furthermore, we establish a theoretical basis for such approaches and provide justification for (a) increasing complexity of subnetworks in stages, conceptually diverging from prior works on layer dropping, and (b) stability in loss across stage transitions in presence of key modern architecture components like residual connections and layer norms. Through comprehensive experiments, we demonstrate that RAPTR can significantly speed up training of standard benchmarks like BERT and UL2, up to 33% compared to standard training and, surprisingly, also shows better downstream performance on UL2, improving QA tasks and SuperGLUE by 1.5%; thereby, providing evidence of better inductive bias."
+ },
+ {
+  "arxiv": "2402.10987",
+  "title": "WilKE: Wise-Layer Knowledge Editor for Lifelong Knowledge Editing",
+  "published": "2024-02-16",
+  "authors": "Chenhui Hu, Pengfei Cao, Yubo Chen, Kang Liu, Jun Zhao",
+  "journal": "COMMENT: To be published in ACL Findings 2024",
+  "comment": "",
+  "summary": "Knowledge editing aims to rectify inaccuracies in large language models (LLMs) without costly retraining for outdated or erroneous knowledge. However, current knowledge editing methods primarily focus on single editing, failing to meet the requirements for lifelong editing. This study reveals a performance degradation encountered by knowledge editing in lifelong editing, characterized by toxicity buildup and toxicity flash, with the primary cause identified as pattern unmatch. We introduce a knowledge editing approach named Wise-Layer Knowledge Editor (WilKE), which selects editing layer based on the pattern matching degree of editing knowledge across different layers in language models. Experimental results demonstrate that, in lifelong editing, WilKE exhibits an average improvement of 46.2% and 67.8% on editing GPT2-XL and GPT-J relative to state-of-the-art knowledge editing methods."
+ },
+ {
+  "arxiv": "2402.16061",
+  "title": "How Large Language Models Encode Context Knowledge? A Layer-Wise Probing Study",
+  "published": "2024-02-25",
+  "authors": "Tianjie Ju, Weiwei Sun, Wei Du, Xinwei Yuan, Zhaochun Ren, Gongshen Liu",
+  "journal": "COMMENT: Accepted at LREC-COLING 2024 (Long Paper)",
+  "comment": "",
+  "summary": "Previous work has showcased the intriguing capability of large language models (LLMs) in retrieving facts and processing context knowledge. However, only limited research exists on the layer-wise capability of LLMs to encode knowledge, which challenges our understanding of their internal mechanisms. In this paper, we devote the first attempt to investigate the layer-wise capability of LLMs through probing tasks. We leverage the powerful generative capability of ChatGPT to construct probing datasets, providing diverse and coherent evidence corresponding to various facts. We employ $\\mathcal V$-usable information as the validation metric to better reflect the capability in encoding context knowledge across different layers. Our experiments on conflicting and newly acquired knowledge show that LLMs: (1) prefer to encode more context knowledge in the upper layers; (2) primarily encode context knowledge within knowledge-related entity tokens at lower layers while progressively expanding more knowledge within other tokens at upper layers; and (3) gradually forget the earlier context knowledge retained within the intermediate layers when provided with irrelevant evidence. Code is publicly available at https://github.com/Jometeorie/probing_llama."
+ },
+ {
+  "arxiv": "2402.17400",
+  "title": "Investigating Continual Pretraining in Large Language Models: Insights and Implications",
+  "published": "2024-02-27",
+  "authors": "Çağatay Yıldız, Nishaanth Kanna Ravichandran, Nitin Sharma, Matthias Bethge, Beyza Ermis",
+  "journal": "COMMENT:",
+  "comment": "",
+  "summary": "Continual learning (CL) in large language models (LLMs) is an evolving domain that focuses on developing efficient and sustainable training strategies to adapt models to emerging knowledge and achieve robustness in dynamic environments. Our primary emphasis is on continual domain-adaptive pretraining, a process designed to equip LLMs with the ability to integrate new information from various domains while retaining previously learned knowledge. Since existing works concentrate mostly on continual fine-tuning for a limited selection of downstream tasks or training domains, we introduce a new benchmark designed to measure the adaptability of LLMs to changing pretraining data landscapes. We further examine the impact of model size on learning efficacy and forgetting, as well as how the progression and similarity of emerging domains affect the knowledge transfer within these models. Our findings uncover several key insights: (i) continual pretraining consistently improves <1.5B models studied in this work and is also superior to domain adaptation, (ii) larger models always achieve better perplexity than smaller ones when continually pretrained on the same corpus, (iii) smaller models are particularly sensitive to continual pretraining, showing the most significant rates of both learning and forgetting, (iv) continual pretraining boosts downstream task performance of GPT-2 family, (v) continual pretraining enables LLMs to specialize better when the sequence of domains shows semantic similarity while randomizing training domains leads to better transfer and final performance otherwise. We posit that our research establishes a new benchmark for CL in LLMs, providing a more realistic evaluation of knowledge retention and transfer across diverse domains."
+ },
+ {
+  "arxiv": "2403.03853",
+  "title": "ShortGPT: Layers in Large Language Models are More Redundant Than You Expect",
+  "published": "2024-03-06",
+  "authors": "Xin Men, Mingyu Xu, Qingyu Zhang, Bingning Wang, Hongyu Lin, Yaojie Lu, Xianpei Han, Weipeng Chen",
+  "journal": "COMMENT:",
+  "comment": "",
+  "summary": "As Large Language Models (LLMs) continue to advance in performance, their size has escalated significantly, with current LLMs containing billions or even trillions of parameters. However, in this study, we discovered that many layers of LLMs exhibit high similarity, and some layers play a negligible role in network functionality. Based on this observation, we define a metric called Block Influence (BI) to gauge the significance of each layer in LLMs. We then propose a straightforward pruning approach: layer removal, in which we directly delete the redundant layers in LLMs based on their BI scores. Experiments demonstrate that our method, which we call ShortGPT, significantly outperforms previous state-of-the-art (SOTA) methods in model pruning. Moreover, ShortGPT is orthogonal to quantization-like methods, enabling further reduction in parameters and computation. The ability to achieve better results through simple layer removal, as opposed to more complex pruning techniques, suggests a high degree of redundancy in the model architecture."
+ },
+ {
+  "arxiv": "2403.17919",
+  "title": "LISA: Layerwise Importance Sampling for Memory-Efficient Large Language Model Fine-Tuning",
+  "published": "2024-03-26",
+  "authors": "Rui Pan, Xiang Liu, Shizhe Diao, Renjie Pi, Jipeng Zhang, Chi Han, Tong Zhang",
+  "journal": "COMMENT: NeurIPS 2024",
+  "comment": "",
+  "summary": "The machine learning community has witnessed impressive advancements since large language models (LLMs) first appeared. Yet, their massive memory consumption has become a significant roadblock to large-scale training. For instance, a 7B model typically requires at least 60 GB of GPU memory with full parameter training, which presents challenges for researchers without access to high-resource environments. Parameter Efficient Fine-Tuning techniques such as Low-Rank Adaptation (LoRA) have been proposed to alleviate this problem. However, in most large-scale fine-tuning settings, their performance does not reach the level of full parameter training because they confine the parameter search to a low-rank subspace. Attempting to complement this deficiency, we investigate the layerwise properties of LoRA on fine-tuning tasks and observe an unexpected but consistent skewness of weight norms across different layers. Utilizing this key observation, a surprisingly simple training strategy is discovered, which outperforms both LoRA and full parameter training in a wide range of settings with memory costs as low as LoRA. We name it Layerwise Importance Sampled AdamW (LISA), a promising alternative for LoRA, which applies the idea of importance sampling to different layers in LLMs and randomly freezes most middle layers during optimization. Experimental results show that with similar or less GPU memory consumption, LISA surpasses LoRA or even full parameter tuning in downstream fine-tuning tasks, where LISA consistently outperforms LoRA by over 10%-35% in terms of MT-Bench score while achieving on-par or better performance in MMLU, AGIEval and WinoGrande. On large models, specifically LLaMA-2-70B, LISA surpasses LoRA on MT-Bench, GSM8K, and PubMedQA, demonstrating its effectiveness across different domains."
+ },
+ {
+  "arxiv": "2403.17887",
+  "title": "The Unreasonable Ineffectiveness of the Deeper Layers",
+  "published": "2024-03-26",
+  "authors": "Andrey Gromov, Kushal Tirumala, Hassan Shapourian, Paolo Glorioso, Daniel A. Roberts",
+  "journal": "COMMENT: 10 + 14 pages, 6 + 5 figures. v2: ICLR camera-ready version; additional experiments in an extended discussion",
+  "comment": "",
+  "summary": "How is knowledge stored in an LLM's weights? We study this via layer pruning: if removing a certain layer does not affect model performance in common question-answering benchmarks, then the weights in that layer are not necessary for storing the knowledge needed to answer those questions. To find these unnecessary parameters, we identify the optimal block of layers to prune by considering similarity across layers; then, to \"heal\" the damage, we perform a small amount of finetuning. Surprisingly, with this method we find minimal degradation of performance until after a large fraction (up to half) of the layers are removed for some common open-weight models. From a scientific perspective, the robustness of these LLMs to the deletion of layers implies either that current pretraining methods are not properly leveraging the parameters in the deeper layers of the network or that the shallow layers play a critical role in storing knowledge. For our study, we use parameter-efficient finetuning (PEFT) methods, specifically quantization and Low Rank Adapters (QLoRA), such that each of our experiments can be performed on a single 40GB A100 GPU."
+ },
+ {
+  "arxiv": "2403.19135",
+  "title": "Streamlining Redundant Layers to Compress Large Language Models",
+  "published": "2024-03-28",
+  "authors": "Xiaodong Chen, Yuxuan Hu, Jing Zhang, Yanling Wang, Cuiping Li, Hong Chen",
+  "journal": "COMMENT:",
+  "comment": "",
+  "summary": "This paper introduces LLM-Streamline, a pioneer work on layer pruning for large language models (LLMs). It is based on the observation that different layers have varying impacts on hidden states, enabling the identification of less important layers to be pruned.LLM-Streamline comprises two parts: layer pruning, which removes consecutive layers with the lowest importance based on target sparsity, and layer replacement, a novel module that trains a lightweight network to replace the pruned layers to mitigate performance loss. Additionally, a new metric called stability is proposed to address the limitations of the widely used accuracy metric in evaluating model compression. Experiments show that LLM-Streamline outperforms both previous and concurrent state-of-the-art pruning methods in terms of both performance and training efficiency.Our code is available at https://github.com/RUCKBReasoning/LLM-Streamline"
+ },
+ {
+  "arxiv": "2404.04900",
+  "title": "Radial Networks: Dynamic Layer Routing for High-Performance Large Language Models",
+  "published": "2024-04-07",
+  "authors": "Jordan Dotzel, Yash Akhauri, Ahmed S. AbouElhamayed, Carly Jiang, Mohamed Abdelfattah, Zhiru Zhang",
+  "journal": "COMMENT: First two authors have equal contribution",
+  "comment": "",
+  "summary": "Large language models (LLMs) often struggle with strict memory, latency, and power demands. To meet these demands, various forms of dynamic sparsity have been proposed that reduce compute on an input-by-input basis. These methods improve over static methods by exploiting the variance across individual inputs, which has steadily grown with the exponential increase in training data. Yet, the increasing depth within modern models, currently with hundreds of layers, has opened opportunities for dynamic layer sparsity, which skips the computation for entire layers. In this work, we explore the practicality of layer sparsity by profiling residual connections and establish the relationship between model depth and layer sparsity. For example, the residual blocks in the OPT-66B model have a median contribution of 5% to its output. We then take advantage of this dynamic sparsity and propose Radial Networks, which perform token-level routing between layers guided by a trained router module. These networks can be used in a post-training distillation from sequential networks or trained from scratch to co-learn the router and layer weights. They enable scaling to larger model sizes by decoupling the number of layers from the dynamic depth of the network, and their design allows for layer reuse. By varying the compute token by token, they reduce the overall resources needed for generating entire sequences. Overall, this leads to larger capacity networks with significantly lower compute and serving costs for large language models."
+ },
+ {
+  "arxiv": "2404.07066",
+  "title": "Exploring Concept Depth: How Large Language Models Acquire Knowledge and Concept at Different Layers?",
+  "published": "2024-04-10",
+  "authors": "Mingyu Jin, Qinkai Yu, Jingyuan Huang, Qingcheng Zeng, Zhenting Wang, Wenyue Hua, Haiyan Zhao, Kai Mei, Yanda Meng, Kaize Ding, Fan Yang, Mengnan Du, Yongfeng Zhang",
+  "journal": "COMMENT: COLING 2025",
+  "comment": "",
+  "summary": "Large language models (LLMs) have shown remarkable performances across a wide range of tasks. However, the mechanisms by which these models encode tasks of varying complexities remain poorly understood. In this paper, we explore the hypothesis that LLMs process concepts of varying complexities in different layers, introducing the idea of \"Concept Depth\" to suggest that more complex concepts are typically acquired in deeper layers. Specifically, we categorize concepts based on their level of abstraction, defining them in the order of increasing complexity within factual, emotional, and inferential tasks. We conduct extensive probing experiments using layer-wise representations across various LLM families (Gemma, LLaMA, Qwen) on various datasets spanning the three domains of tasks. Our findings reveal that models could efficiently conduct probing for simpler tasks in shallow layers, and more complex tasks typically necessitate deeper layers for accurate understanding. Additionally, we examine how external factors, such as adding noise to the input and quantizing the model weights, might affect layer-wise representations. Our findings suggest that these factors can impede the development of a conceptual understanding of LLMs until deeper layers are explored. We hope that our proposed concept and experimental insights will enhance the understanding of the mechanisms underlying LLMs. Our codes are available at https://github.com/Luckfort/CD."
+ },
+ {
+  "arxiv": "2404.06954",
+  "title": "Accelerating Inference in Large Language Models with a Unified Layer Skipping Strategy",
+  "published": "2024-04-10",
+  "authors": "Yijin Liu, Fandong Meng, Jie Zhou",
+  "journal": "COMMENT: 12 pages, codes at https://github.com/Adaxry/Unified_Layer_Skipping",
+  "comment": "",
+  "summary": "Recently, dynamic computation methods have shown notable acceleration for Large Language Models (LLMs) by skipping several layers of computations through elaborate heuristics or additional predictors. However, in the decoding process of existing approaches, different samples are assigned different computational budgets, which cannot guarantee a stable and precise acceleration effect. Furthermore, existing approaches generally skip multiple contiguous layers at the bottom or top of the layers, leading to a drastic change in the model's layer-wise representations, and thus a consequent performance degeneration. Therefore, we propose a Unified Layer Skipping strategy, which selects the number of layers to skip computation based solely on the target speedup ratio, and then skips the corresponding number of intermediate layer computations in a balanced manner. Since the Unified Layer Skipping strategy is independent of input samples, it naturally supports popular acceleration techniques such as batch decoding and KV caching, thus demonstrating more practicality for real-world applications. Experimental results on two common tasks, i.e., machine translation and text summarization, indicate that given a target speedup ratio, the Unified Layer Skipping strategy significantly enhances both the inference performance and the actual model throughput over existing dynamic approaches."
+ },
+ {
+  "arxiv": "2404.16710",
+  "title": "LayerSkip: Enabling Early Exit Inference and Self-Speculative Decoding",
+  "published": "2024-04-25",
+  "authors": "Mostafa Elhoushi, Akshat Shrivastava, Diana Liskovich, Basil Hosmer, Bram Wasti, Liangzhen Lai, Anas Mahmoud, Bilge Acun, Saurabh Agarwal, Ahmed Roman, Ahmed A Aly, Beidi Chen, Carole-Jean Wu",
+  "journal": "COMMENT: ACL 2024",
+  "comment": "",
+  "summary": "We present LayerSkip, an end-to-end solution to speed-up inference of large language models (LLMs). First, during training we apply layer dropout, with low dropout rates for earlier layers and higher dropout rates for later layers, and an early exit loss where all transformer layers share the same exit. Second, during inference, we show that this training recipe increases the accuracy of early exit at earlier layers, without adding any auxiliary layers or modules to the model. Third, we present a novel self-speculative decoding solution where we exit at early layers and verify and correct with remaining layers of the model. Our proposed self-speculative decoding approach has less memory footprint than other speculative decoding approaches and benefits from shared compute and activations of the draft and verification stages. We run experiments on different Llama model sizes on different types of training: pretraining from scratch, continual pretraining, finetuning on specific data domain, and finetuning on specific task. We implement our inference solution and show speedups of up to 2.16x on summarization for CNN/DM documents, 1.82x on coding, and 2.0x on TOPv2 semantic parsing task. We open source our code and checkpoints at https://github.com/facebookresearch/LayerSkip."
+ },
+ {
+  "arxiv": "2404.18322",
+  "title": "BlockLLM: Multi-tenant Finer-grained Serving for Large Language Models",
+  "published": "2024-04-28",
+  "authors": "Bodun Hu, Jiamin Li, Le Xu, Myungjin Lee, Akshay Jajoo, Geon-Woo Kim, Hong Xu, Aditya Akella",
+  "journal": "COMMENT:",
+  "comment": "",
+  "summary": "The increasing demand for Large Language Models (LLMs) across various applications has led to a significant shift in the design of deep learning serving systems. Deploying LLMs, particularly in multi-tenant environments, poses substantial challenges due to their high computational and memory demands. We introduce BlockLLM, a serving system that leverages component sharing among fine-tuned LLM models to provide an efficient and flexible solution for LLM workloads. BlockLLM partitions models into finer-grained blocks, enabling the reuse of model components and independent provisioning to improve computation efficiency. BlockLLM comprises an offline block zoo for storing blocks and an online system to serve requests through chains of blocks. It offers multi-fold flexibilities: (1) Adaptive assembly of blocks on-the-fly through equivalence evaluation among blocks in the zoo; (2) Per-block batch size configuration and best-effort KV cache coordination at the individual block level; (3) Speculative execution and locality-aware block placement to reduce communication costs from dynamic block resource allocation. Our evaluation shows that BlockLLM reduces memory and storage footprints and improves computational efficiency, outperforming existing serving approach in 95%ile latency and GPU utilization by 33.5% and 20.1%, respectively, with minimal impact on accuracy"
+ },
+ {
+  "arxiv": "2405.02421",
+  "title": "What does the Knowledge Neuron Thesis Have to do with Knowledge?",
+  "published": "2024-05-03",
+  "authors": "Jingcheng Niu, Andrew Liu, Zining Zhu, Gerald Penn",
+  "journal": "COMMENT: ICLR 2024 (Spotlight)",
+  "comment": "",
+  "summary": "We reassess the Knowledge Neuron (KN) Thesis: an interpretation of the mechanism underlying the ability of large language models to recall facts from a training corpus. This nascent thesis proposes that facts are recalled from the training corpus through the MLP weights in a manner resembling key-value memory, implying in effect that \"knowledge\" is stored in the network. Furthermore, by modifying the MLP modules, one can control the language model's generation of factual information. The plausibility of the KN thesis has been demonstrated by the success of KN-inspired model editing methods (Dai et al., 2022; Meng et al., 2022). We find that this thesis is, at best, an oversimplification. Not only have we found that we can edit the expression of certain linguistic phenomena using the same model editing methods but, through a more comprehensive evaluation, we have found that the KN thesis does not adequately explain the process of factual expression. While it is possible to argue that the MLP weights store complex patterns that are interpretable both syntactically and semantically, these patterns do not constitute \"knowledge.\" To gain a more comprehensive understanding of the knowledge representation process, we must look beyond the MLP weights and explore recent models' complex layer structures and attention mechanisms."
+ },
+ {
+  "arxiv": "2405.14117",
+  "title": "Knowledge Localization: Mission Not Accomplished? Enter Query Localization!",
+  "published": "2024-05-23",
+  "authors": "Yuheng Chen, Pengfei Cao, Yubo Chen, Kang Liu, Jun Zhao",
+  "journal": "COMMENT: ICLR 2025 Spotlight",
+  "comment": "",
+  "summary": "Large language models (LLMs) store extensive factual knowledge, but the mechanisms behind how they store and express this knowledge remain unclear. The Knowledge Neuron (KN) thesis is a prominent theory for explaining these mechanisms. This theory is based on the Knowledge Localization (KL) assumption, which suggests that a fact can be localized to a few knowledge storage units, namely knowledge neurons. However, this assumption has two limitations: first, it may be too rigid regarding knowledge storage, and second, it neglects the role of the attention module in knowledge expression. In this paper, we first re-examine the KL assumption and demonstrate that its limitations do indeed exist. To address these, we then present two new findings, each targeting one of the limitations: one focusing on knowledge storage and the other on knowledge expression. We summarize these findings as \\textbf{Query Localization} (QL) assumption and argue that the KL assumption can be viewed as a simplification of the QL assumption. Based on QL assumption, we further propose the Consistency-Aware KN modification method, which improves the performance of knowledge modification, further validating our new assumption. We conduct 39 sets of experiments, along with additional visualization experiments, to rigorously confirm our conclusions. Code is available at https://github.com/heng840/KnowledgeLocalization."
+ },
+ {
+  "arxiv": "2405.16833",
+  "title": "Safe LoRA: the Silver Lining of Reducing Safety Risks when Fine-tuning Large Language Models",
+  "published": "2024-05-27",
+  "authors": "Chia-Yi Hsu, Yu-Lin Tsai, Chih-Hsun Lin, Pin-Yu Chen, Chia-Mu Yu, Chun-Ying Huang",
+  "journal": "COMMENT: This is the camera-ready version accepted for NeurIPS 2024",
+  "comment": "",
+  "summary": "While large language models (LLMs) such as Llama-2 or GPT-4 have shown impressive zero-shot performance, fine-tuning is still necessary to enhance their performance for customized datasets, domain-specific tasks, or other private needs. However, fine-tuning all parameters of LLMs requires significant hardware resources, which can be impractical for typical users. Therefore, parameter-efficient fine-tuning such as LoRA have emerged, allowing users to fine-tune LLMs without the need for considerable computing resources, with little performance degradation compared to fine-tuning all parameters. Unfortunately, recent studies indicate that fine-tuning can increase the risk to the safety of LLMs, even when data does not contain malicious content. To address this challenge, we propose Safe LoRA, a simple one-liner patch to the original LoRA implementation by introducing the projection of LoRA weights from selected layers to the safety-aligned subspace, effectively reducing the safety risks in LLM fine-tuning while maintaining utility. It is worth noting that Safe LoRA is a training-free and data-free approach, as it only requires the knowledge of the weights from the base and aligned LLMs. Our extensive experiments demonstrate that when fine-tuning on purely malicious data, Safe LoRA retains similar safety performance as the original aligned model. Moreover, when the fine-tuning dataset contains a mixture of both benign and malicious data, Safe LoRA mitigates the negative effect made by malicious data while preserving performance on downstream tasks. Our codes are available at \\url{https://github.com/IBM/SafeLoRA}."
+ },
+ {
+  "arxiv": "2405.18653",
+  "title": "Recent Advances of Foundation Language Models-based Continual Learning: A Survey",
+  "published": "2024-05-28",
+  "authors": "Yutao Yang, Jie Zhou, Xuanwen Ding, Tianyu Huai, Shunyu Liu, Qin Chen, Yuan Xie, Liang He",
+  "journal": "COMMENT: Accepted by ACM Computing Survey",
+  "comment": "",
+  "summary": "Recently, foundation language models (LMs) have marked significant achievements in the domains of natural language processing (NLP) and computer vision (CV). Unlike traditional neural network models, foundation LMs obtain a great ability for transfer learning by acquiring rich commonsense knowledge through pre-training on extensive unsupervised datasets with a vast number of parameters. However, they still can not emulate human-like continuous learning due to catastrophic forgetting. Consequently, various continual learning (CL)-based methodologies have been developed to refine LMs, enabling them to adapt to new tasks without forgetting previous knowledge. However, a systematic taxonomy of existing approaches and a comparison of their performance are still lacking, which is the gap that our survey aims to fill. We delve into a comprehensive review, summarization, and classification of the existing literature on CL-based approaches applied to foundation language models, such as pre-trained language models (PLMs), large language models (LLMs) and vision-language models (VLMs). We divide these studies into offline CL and online CL, which consist of traditional methods, parameter-efficient-based methods, instruction tuning-based methods and continual pre-training methods. Offline CL encompasses domain-incremental learning, task-incremental learning, and class-incremental learning, while online CL is subdivided into hard task boundary and blurry task boundary settings. Additionally, we outline the typical datasets and metrics employed in CL research and provide a detailed analysis of the challenges and future work for LMs-based continual learning."
+ },
+ {
+  "arxiv": "2406.05644",
+  "title": "How Alignment and Jailbreak Work: Explain LLM Safety through Intermediate Hidden States",
+  "published": "2024-06-09",
+  "authors": "Zhenhong Zhou, Haiyang Yu, Xinghua Zhang, Rongwu Xu, Fei Huang, Yongbin Li",
+  "journal": "COMMENT: 27 pages",
+  "comment": "",
+  "summary": "Large language models (LLMs) rely on safety alignment to avoid responding to malicious user inputs. Unfortunately, jailbreak can circumvent safety guardrails, resulting in LLMs generating harmful content and raising concerns about LLM safety. Due to language models with intensive parameters often regarded as black boxes, the mechanisms of alignment and jailbreak are challenging to elucidate. In this paper, we employ weak classifiers to explain LLM safety through the intermediate hidden states. We first confirm that LLMs learn ethical concepts during pre-training rather than alignment and can identify malicious and normal inputs in the early layers. Alignment actually associates the early concepts with emotion guesses in the middle layers and then refines them to the specific reject tokens for safe generations. Jailbreak disturbs the transformation of early unethical classification into negative emotions. We conduct experiments on models from 7B to 70B across various model families to prove our conclusion. Overall, our paper indicates the intrinsical mechanism of LLM safety and how jailbreaks circumvent safety guardrails, offering a new perspective on LLM safety and reducing concerns. Our code is available at https://github.com/ydyjya/LLM-IHS-Explanation."
+ },
+ {
+  "arxiv": "2406.06391",
+  "title": "Towards Lifelong Learning of Large Language Models: A Survey",
+  "published": "2024-06-10",
+  "authors": "Junhao Zheng, Shengjie Qiu, Chengming Shi, Qianli Ma",
+  "journal": "COMMENT: 37 pages",
+  "comment": "",
+  "summary": "As the applications of large language models (LLMs) expand across diverse fields, the ability of these models to adapt to ongoing changes in data, tasks, and user preferences becomes crucial. Traditional training methods, relying on static datasets, are increasingly inadequate for coping with the dynamic nature of real-world information. Lifelong learning, also known as continual or incremental learning, addresses this challenge by enabling LLMs to learn continuously and adaptively over their operational lifetime, integrating new knowledge while retaining previously learned information and preventing catastrophic forgetting. This survey delves into the sophisticated landscape of lifelong learning, categorizing strategies into two primary groups: Internal Knowledge and External Knowledge. Internal Knowledge includes continual pretraining and continual finetuning, each enhancing the adaptability of LLMs in various scenarios. External Knowledge encompasses retrieval-based and tool-based lifelong learning, leveraging external data sources and computational tools to extend the model's capabilities without modifying core parameters. The key contributions of our survey are: (1) Introducing a novel taxonomy categorizing the extensive literature of lifelong learning into 12 scenarios; (2) Identifying common techniques across all lifelong learning scenarios and classifying existing literature into various technique groups within each scenario; (3) Highlighting emerging techniques such as model expansion and data selection, which were less explored in the pre-LLM era. Through a detailed examination of these groups and their respective categories, this survey aims to enhance the adaptability, reliability, and overall performance of LLMs in real-world applications."
+ },
+ {
+  "arxiv": "2406.11753",
+  "title": "A Semantic-Aware Layer-Freezing Approach to Computation-Efficient Fine-Tuning of Language Models",
+  "published": "2024-06-17",
+  "authors": "Jian Gu, Aldeida Aleti, Chunyang Chen, Hongyu Zhang",
+  "journal": "COMMENT: accepted by ACL 2025, the camera-ready version",
+  "comment": "",
+  "summary": "Finetuning language models (LMs) is crucial for adapting the models to downstream data and tasks. However, full finetuning is usually costly. Existing work, such as parameter-efficient finetuning (PEFT), often focuses on \\textit{how to finetune} but neglects the issue of \\textit{where to finetune}. As a pioneering work on reducing the cost of backpropagation (at the layer level) by answering where to finetune, we conduct a semantic analysis of the LM inference process. We first propose using transition traces of the latent representation to compute deviations (or loss). Then, using a derived formula of scaling law, we estimate the gain of each layer in reducing deviation (or loss). Further, we narrow down the scope for finetuning, and also, study the cost-benefit balance of LM finetuning. We perform extensive experiments across well-known LMs and datasets. The results show that our approach is effective and efficient, and outperforms the existing baselines. Our approach is orthogonal to other techniques for improving finetuning efficiency, such as PEFT methods, offering practical values on LM finetuning."
+ },
+ {
+  "arxiv": "2406.14670",
+  "title": "Exploring Design Choices for Building Language-Specific LLMs",
+  "published": "2024-06-20",
+  "authors": "Atula Tejaswi, Nilesh Gupta, Eunsol Choi",
+  "journal": "COMMENT: Accepted to EMNLP 2024 Findings",
+  "comment": "",
+  "summary": "Despite rapid progress in large language models (LLMs), their performance on a vast majority of languages remains unsatisfactory. In this paper, we study building language-specific LLMs by adapting monolingual and multilingual LLMs. We conduct systematic experiments on how design choices (base model selection, vocabulary extension, and continued pretraining) impact the adapted LLM, both in terms of efficiency (how many tokens are needed to encode the same amount of information) and end task performance. We find that (1) the initial performance of LLM does not always correlate with the final performance after the adaptation. Adapting an English-centric models can yield better results than adapting multilingual models despite their worse initial performance on low-resource languages. (2) Efficiency can easily improved with simple vocabulary extension and continued pretraining in most LLMs we study, and (3) The optimal adaptation method (choice of the base model, new vocabulary size, training data, initialization strategy) is highly language-dependent, and the simplest embedding initialization works well across various experimental settings. Together, our work lays foundations on efficiently building language-specific LLMs by adapting existing LLMs."
+ },
+ {
+  "arxiv": "2406.17245",
+  "title": "Unlocking Continual Learning Abilities in Language Models",
+  "published": "2024-06-25",
+  "authors": "Wenyu Du, Shuang Cheng, Tongxu Luo, Zihan Qiu, Zeyu Huang, Ka Chun Cheung, Reynold Cheng, Jie Fu",
+  "journal": "COMMENT: EMNLP 2024 Findings",
+  "comment": "",
+  "summary": "Language models (LMs) exhibit impressive performance and generalization capabilities. However, LMs struggle with the persistent challenge of catastrophic forgetting, which undermines their long-term sustainability in continual learning (CL). Existing approaches usually address the issue by incorporating old task data or task-wise inductive bias into LMs. However, old data and accurate task information are often unavailable or costly to collect, hindering the availability of current CL approaches for LMs. To address this limitation, we introduce $\\textbf{MIGU}$ ($\\textbf{M}$agn$\\textbf{I}$tude-based $\\textbf{G}$radient $\\textbf{U}$pdating for continual learning), a rehearsal-free and task-label-free method that only updates the model parameters with large magnitudes of output in LMs' linear layers. MIGU is based on our observation that the L1-normalized magnitude distribution of the output in LMs' linear layers is different when the LM models deal with different task data. By imposing this simple constraint on the gradient update process, we can leverage the inherent behaviors of LMs, thereby unlocking their innate CL abilities. Our experiments demonstrate that MIGU is universally applicable to all three LM architectures (T5, RoBERTa, and Llama2), delivering state-of-the-art or on-par performance across continual finetuning and continual pre-training settings on four CL benchmarks. For example, MIGU brings a 15.2% average accuracy improvement over conventional parameter-efficient finetuning baselines in a 15-task CL benchmark. MIGU can also seamlessly integrate with all three existing CL types to further enhance performance. Code is available at https://github.com/wenyudu/MIGU."
+ },
+ {
+  "arxiv": "2407.02118",
+  "title": "Breaking Language Barriers: Cross-Lingual Continual Pre-Training at Scale",
+  "published": "2024-07-02",
+  "authors": "Wenzhen Zheng, Wenbo Pan, Xu Xu, Libo Qin, Li Yue, Ming Zhou",
+  "journal": "COMMENT: 8 pages. Accepted at EMNLP 2024",
+  "comment": "",
+  "summary": "In recent years, Large Language Models (LLMs) have made significant strides towards Artificial General Intelligence. However, training these models from scratch requires substantial computational resources and vast amounts of text data. In this paper, we explore an alternative approach to constructing an LLM for a new language by continually pretraining (CPT) from existing pretrained LLMs, instead of using randomly initialized parameters. Based on parallel experiments on 40 model sizes ranging from 40M to 5B parameters, we find that 1) CPT converges faster and saves significant resources in a scalable manner; 2) CPT adheres to an extended scaling law derived from Hoffmann et al. (2022) with a joint data-parameter scaling term; 3) The compute-optimal data-parameter allocation for CPT markedly differs based on our estimated scaling factors; 4) The effectiveness of transfer at scale is influenced by training duration and linguistic properties, while robust to data replaying, a method that effectively mitigates catastrophic forgetting in CPT. We hope our findings provide deeper insights into the transferability of LLMs at scale for the research community."
+ },
+ {
+  "arxiv": "2407.08699",
+  "title": "Mitigating Catastrophic Forgetting in Language Transfer via Model Merging",
+  "published": "2024-07-11",
+  "authors": "Anton Alexandrov, Veselin Raychev, Mark Niklas Müller, Ce Zhang, Martin Vechev, Kristina Toutanova",
+  "journal": "COMMENT:",
+  "comment": "",
+  "summary": "As open-weight large language models (LLMs) achieve ever more impressive performances across a wide range of tasks in English, practitioners aim to adapt these models to different languages. However, such language adaptation is often accompanied by catastrophic forgetting of the base model's capabilities, severely limiting the usefulness of the resulting model. We address this issue by proposing Branch-and-Merge (BaM), a new adaptation method based on iteratively merging multiple models, fine-tuned on a subset of the available training data. BaM is based on the insight that this yields lower magnitude but higher quality weight changes, reducing forgetting of the source domain while maintaining learning on the target domain. We demonstrate in an extensive empirical study on Bulgarian and German that BaM can significantly reduce forgetting while matching or even improving target domain performance compared to both standard continued pretraining and instruction finetuning across different model architectures."
+ },
+ {
+  "arxiv": "2407.17467",
+  "title": "CMR Scaling Law: Predicting Critical Mixture Ratios for Continual Pre-training of Language Models",
+  "published": "2024-07-24",
+  "authors": "Jiawei Gu, Zacc Yang, Chuanghao Ding, Rui Zhao, Fei Tan",
+  "journal": "COMMENT: EMNLP 2024 main conference",
+  "comment": "",
+  "summary": "Large Language Models (LLMs) excel in diverse tasks but often underperform in specialized fields due to limited domain-specific or proprietary corpus. Continual pre-training (CPT) enhances LLM capabilities by imbuing new domain-specific or proprietary knowledge while replaying general corpus to prevent catastrophic forgetting. The data mixture ratio of general corpus and domain-specific corpus, however, has been chosen heuristically, leading to sub-optimal training efficiency in practice. In this context, we attempt to re-visit the scaling behavior of LLMs under the hood of CPT, and discover a power-law relationship between loss, mixture ratio, and training tokens scale. We formalize the trade-off between general and domain-specific capabilities, leading to a well-defined Critical Mixture Ratio (CMR) of general and domain data. By striking the balance, CMR maintains the model's general ability and achieves the desired domain transfer, ensuring the highest utilization of available resources. Considering the balance between efficiency and effectiveness, CMR can be regarded as the optimal mixture ratio. Through extensive experiments, we ascertain the predictability of CMR, propose CMR scaling law and have substantiated its generalization. These findings offer practical guidelines for optimizing LLM training in specialized domains, ensuring both general and domain-specific performance while efficiently managing training resources."
+ },
+ {
+  "arxiv": "2407.21082",
+  "title": "Accelerating Large Language Model Inference with Self-Supervised Early Exits",
+  "published": "2024-07-30",
+  "authors": "Florian Valade",
+  "journal": "COMMENT:",
+  "comment": "",
+  "summary": "This paper presents a modular approach to accelerate inference in large language models (LLMs) by adding early exit heads at intermediate transformer layers. Each head is trained in a self-supervised manner to mimic the main model's predictions, allowing computation to stop early when a calibrated confidence threshold is reached. We evaluate several confidence metrics and show that entropy provides the most reliable separation between correct and incorrect predictions. Experiments on the Pythia model suite (70M to 2.8B parameters) demonstrate that our method significantly reduces inference cost while maintaining accuracy across multiple benchmarks. We further adapt this approach to speculative decoding, introducing Dynamic Self-Speculative Decoding (DSSD), which achieves 1.66x higher token acceptance than manually-tuned LayerSkip baselines with minimal hyperparameter tuning."
+ },
+ {
+  "arxiv": "2408.03247",
+  "title": "Unveiling Factual Recall Behaviors of Large Language Models through Knowledge Neurons",
+  "published": "2024-08-06",
+  "authors": "Yifei Wang, Yuheng Chen, Wanting Wen, Yu Sheng, Linjing Li, Daniel Dajun Zeng",
+  "journal": "COMMENT:",
+  "comment": "",
+  "summary": "In this paper, we investigate whether Large Language Models (LLMs) actively recall or retrieve their internal repositories of factual knowledge when faced with reasoning tasks. Through an analysis of LLMs' internal factual recall at each reasoning step via Knowledge Neurons, we reveal that LLMs fail to harness the critical factual associations under certain circumstances. Instead, they tend to opt for alternative, shortcut-like pathways to answer reasoning questions. By manually manipulating the recall process of parametric knowledge in LLMs, we demonstrate that enhancing this recall process directly improves reasoning performance whereas suppressing it leads to notable degradation. Furthermore, we assess the effect of Chain-of-Thought (CoT) prompting, a powerful technique for addressing complex reasoning tasks. Our findings indicate that CoT can intensify the recall of factual knowledge by encouraging LLMs to engage in orderly and reliable reasoning. Furthermore, we explored how contextual conflicts affect the retrieval of facts during the reasoning process to gain a comprehensive understanding of the factual recall behaviors of LLMs. Code and data will be available soon."
+ },
+ {
+  "arxiv": "2408.17003",
+  "title": "Safety Layers in Aligned Large Language Models: The Key to LLM Security",
+  "published": "2024-08-30",
+  "authors": "Shen Li, Liuyi Yao, Lan Zhang, Yaliang Li",
+  "journal": "COMMENT: Accepted by ICLR 2025. The code is available at https://github.com/listen0425/Safety-Layers",
+  "comment": "",
+  "summary": "Aligned LLMs are secure, capable of recognizing and refusing to answer malicious questions. However, the role of internal parameters in maintaining such security is not well understood yet, further these models can be vulnerable to security degradation when subjected to fine-tuning attacks. To address these challenges, our work uncovers the mechanism behind security in aligned LLMs at the parameter level, identifying a small set of contiguous layers in the middle of the model that are crucial for distinguishing malicious queries from normal ones, referred to as ``safety layers\". We first confirm the existence of these safety layers by analyzing variations in input vectors within the model's internal layers. Additionally, we leverage the over-rejection phenomenon and parameters scaling analysis to precisely locate the safety layers. Building on these findings, we propose a novel fine-tuning approach, Safely Partial-Parameter Fine-Tuning (SPPFT), that fixes the gradient of the safety layers during fine-tuning to address the security degradation. Our experiments demonstrate that the proposed approach can significantly preserve LLM security while maintaining performance and reducing computational resources compared to full fine-tuning."
+ },
+ {
+  "arxiv": "2409.00617",
+  "title": "Does Knowledge Localization Hold True? Surprising Differences Between Entity and Relation Perspectives in Language Models",
+  "published": "2024-09-01",
+  "authors": "Yifan Wei, Xiaoyan Yu, Yixuan Weng, Huanhuan Ma, Yuanzhe Zhang, Jun Zhao, Kang Liu",
+  "journal": "COMMENT: CIKM 2024",
+  "comment": "",
+  "summary": "Large language models encapsulate knowledge and have demonstrated superior performance on various natural language processing tasks. Recent studies have localized this knowledge to specific model parameters, such as the MLP weights in intermediate layers. This study investigates the differences between entity and relational knowledge through knowledge editing. Our findings reveal that entity and relational knowledge cannot be directly transferred or mapped to each other. This result is unexpected, as logically, modifying the entity or the relation within the same knowledge triplet should yield equivalent outcomes. To further elucidate the differences between entity and relational knowledge, we employ causal analysis to investigate how relational knowledge is stored in pre-trained models. Contrary to prior research suggesting that knowledge is stored in MLP weights, our experiments demonstrate that relational knowledge is also significantly encoded in attention modules. This insight highlights the multifaceted nature of knowledge storage in language models, underscoring the complexity of manipulating specific types of knowledge within these models."
+ },
+ {
+  "arxiv": "2409.02877",
+  "title": "Configurable Foundation Models: Building LLMs from a Modular Perspective",
+  "published": "2024-09-04",
+  "authors": "Chaojun Xiao, Zhengyan Zhang, Chenyang Song, Dazhi Jiang, Feng Yao, Xu Han, Xiaozhi Wang, Shuo Wang, Yufei Huang, Guanyu Lin, Yingfa Chen, Weilin Zhao, Yuge Tu, Zexuan Zhong, Ao Zhang, Chenglei Si, Khai Hao Moo, Chenyang Zhao, Huimin Chen, Yankai Lin, Zhiyuan Liu, Jingbo Shang, Maosong Sun",
+  "journal": "COMMENT:",
+  "comment": "",
+  "summary": "Advancements in LLMs have recently unveiled challenges tied to computational efficiency and continual scalability due to their requirements of huge parameters, making the applications and evolution of these models on devices with limited computation resources and scenarios requiring various abilities increasingly cumbersome. Inspired by modularity within the human brain, there is a growing tendency to decompose LLMs into numerous functional modules, allowing for inference with part of modules and dynamic assembly of modules to tackle complex tasks, such as mixture-of-experts. To highlight the inherent efficiency and composability of the modular approach, we coin the term brick to represent each functional module, designating the modularized structure as configurable foundation models. In this paper, we offer a comprehensive overview and investigation of the construction, utilization, and limitation of configurable foundation models. We first formalize modules into emergent bricks - functional neuron partitions that emerge during the pre-training phase, and customized bricks - bricks constructed via additional post-training to improve the capabilities and knowledge of LLMs. Based on diverse functional bricks, we further present four brick-oriented operations: retrieval and routing, merging, updating, and growing. These operations allow for dynamic configuration of LLMs based on instructions to handle complex tasks. To verify our perspective, we conduct an empirical analysis on widely-used LLMs. We find that the FFN layers follow modular patterns with functional specialization of neurons and functional neuron partitions. Finally, we highlight several open issues and directions for future research. Overall, this paper aims to offer a fresh modular perspective on existing LLM research and inspire the future creation of more efficient and scalable foundational models."
+ },
+ {
+  "arxiv": "2410.10846",
+  "title": "Duo-LLM: A Framework for Studying Adaptive Computation in Large Language Models",
+  "published": "2024-10-01",
+  "authors": "Keivan Alizadeh, Iman Mirzadeh, Hooman Shahrokhi, Dmitry Belenko, Frank Sun, Minsik Cho, Mohammad Hossein Sekhavat, Moin Nabi, Mehrdad Farajtabar",
+  "journal": "COMMENT:",
+  "comment": "",
+  "summary": "Large Language Models (LLMs) typically generate outputs token by token using a fixed compute budget, leading to inefficient resource utilization. To address this shortcoming, recent advancements in mixture of expert (MoE) models, speculative decoding, and early exit strategies leverage the insight that computational demands can vary significantly based on the complexity and nature of the input. However, identifying optimal routing patterns for dynamic execution remains an open challenge, limiting the full potential of these adaptive methods. To address this need, we study adaptive computation in LLMs more systematically. We propose a novel framework that integrates smaller auxiliary modules within each Feed-Forward Network layer of the LLM. This design enables dynamic routing of tokens based on task complexity: tokens can be processed by either the small or big modules at each layer, or even bypass certain layers entirely. This allows us to introduce a novel notion of a token's difficulty, defined by its potential to benefit from additional computational resources. Importantly, by employing oracles to identify optimal patterns of adaptive computations, we gain valuable insights into the internal workings of LLMs and the routing processes in a simplified heterogeneous MoE setup. We show that trained routers operate differently from oracles and often yield suboptimal solutions. Notably, activating a large module in just one layer outperforms models that use large modules across all layers, underscoring the gap between practical implementations of routing in MoE models and theoretical optima for adaptive computation."
+ },
+ {
+  "arxiv": "2410.02330",
+  "title": "Llama SLayer 8B: Shallow Layers Hold the Key to Knowledge Injection",
+  "published": "2024-10-03",
+  "authors": "Tianxiang Chen, Zhentao Tan, Tao Gong, Yue Wu, Qi Chu, Bin Liu, Jieping Ye, Nenghai Yu",
+  "journal": "COMMENT:",
+  "comment": "",
+  "summary": "As a manner to augment pre-trained large language models (LLM), knowledge injection is critical to develop vertical domain large models and has been widely studied. Although most current approaches, including parameter-efficient fine-tuning (PEFT) and block expansion methods, uniformly apply knowledge across all LLM layers, it raises the question: are all layers equally crucial for knowledge injection? We begin by evaluating the importance of each layer in finding the optimal layer range for knowledge injection. Intuitively, the more important layers should play a more critical role in knowledge injection and deserve a denser injection. We observe performance dips in question-answering benchmarks after the removal or expansion of the shallow layers, and the degradation shrinks as the layer gets deeper, indicating that the shallow layers hold the key to knowledge injection. This insight leads us to propose the S strategy, a post-pretraining strategy of selectively enhancing shallow layers while pruning the less effective deep ones. Based on this strategy, we introduce Llama Slayer-8B and Llama Slayer-8B-Instruct. We experimented on the corpus of code $\\&$ math and demonstrated the effectiveness of our strategy. Further experiments across different LLM, Mistral-7B, and a legal corpus confirmed the general applicability of the approach, underscoring its wide-ranging efficacy. Our code is available at: \\https://github.com/txchen-USTC/Llama-Slayer"
+ },
+ {
+  "arxiv": "2410.06225",
+  "title": "A Timeline and Analysis for Representation Plasticity in Large Language Models",
+  "published": "2024-10-08",
+  "authors": "Akshat Kannan",
+  "journal": "COMMENT:",
+  "comment": "",
+  "summary": "The ability to steer AI behavior is crucial to preventing its long term dangerous and catastrophic potential. Representation Engineering (RepE) has emerged as a novel, powerful method to steer internal model behaviors, such as \"honesty\", at a top-down level. Understanding the steering of representations should thus be placed at the forefront of alignment initiatives. Unfortunately, current efforts to understand plasticity at this level are highly neglected. This paper aims to bridge the knowledge gap and understand how LLM representation stability, specifically for the concept of \"honesty\", and model plasticity evolve by applying steering vectors extracted at different fine-tuning stages, revealing differing magnitudes of shifts in model behavior. The findings are pivotal, showing that while early steering exhibits high plasticity, later stages have a surprisingly responsive critical window. This pattern is observed across different model architectures, signaling that there is a general pattern of model plasticity that can be used for effective intervention. These insights greatly contribute to the field of AI transparency, addressing a pressing lack of efficiency limiting our ability to effectively steer model behavior."
+ },
+ {
+  "arxiv": "2410.06981",
+  "title": "Quantifying Feature Space Universality Across Large Language Models via Sparse Autoencoders",
+  "published": "2024-10-09",
+  "authors": "Michael Lan, Philip Torr, Austin Meek, Ashkan Khakzar, David Krueger, Fazl Barez",
+  "journal": "COMMENT:",
+  "comment": "",
+  "summary": "The Universality Hypothesis in large language models (LLMs) claims that different models converge towards similar concept representations in their latent spaces. Providing evidence for this hypothesis would enable researchers to exploit universal properties, facilitating the generalization of mechanistic interpretability techniques across models. Previous works studied if LLMs learned the same features, which are internal representations that activate on specific concepts. Since comparing features across LLMs is challenging due to polysemanticity, in which LLM neurons often correspond to multiple unrelated features rather than to distinct concepts, sparse autoencoders (SAEs) have been employed to disentangle LLM neurons into SAE features corresponding to distinct concepts. In this paper, we introduce a new variation of the universality hypothesis called Analogous Feature Universality: we hypothesize that even if SAEs across different models learn different feature representations, the spaces spanned by SAE features are similar, such that one SAE space is similar to another SAE space under rotation-invariant transformations. Evidence for this hypothesis would imply that interpretability techniques related to latent spaces, such as steering vectors, may be transferred across models via certain transformations. To investigate this hypothesis, we first pair SAE features across different models via activation correlation, and then measure spatial relation similarities between paired features via representational similarity measures, which transform spaces into representations that reveal hidden relational similarities. Our experiments demonstrate high similarities for SAE feature spaces across various LLMs, providing evidence for feature space universality."
+ },
+ {
+  "arxiv": "2410.08255",
+  "title": "Investigating Representation Universality: Case Study on Genealogical Representations",
+  "published": "2024-10-10",
+  "authors": "David D. Baek, Yuxiao Li, Max Tegmark",
+  "journal": "NeurIPS 2025 Workshop on Responsible Foundation Models",
+  "comment": "14 pages, 7 figures",
+  "summary": "Motivated by interpretability and reliability, we investigate whether large language models (LLMs) deploy universal geometric structures to encode discrete, graph-structured knowledge. To this end, we present two complementary experimental evidence that might support universality of graph representations. First, on an in-context genealogy Q&A task, we train a cone probe to isolate a tree-like subspace in residual stream activations and use activation patching to verify its causal effect in answering related questions. We validate our findings across five different models. Second, we conduct model stitching experiments across models of diverse architectures and parameter counts (OPT, Pythia, Mistral, and LLaMA, 410 million to 8 billion parameters), quantifying representational alignment via relative degradation in the next-token prediction loss. Generally, we conclude that the lack of ground truth representations of graphs makes it challenging to study how LLMs represent them. Ultimately, improving our understanding of LLM representations could facilitate the development of more interpretable, robust, and controllable AI systems."
+ },
+ {
+  "arxiv": "2410.10181",
+  "title": "Scalable Multi-Domain Adaptation of Language Models using Modular Experts",
+  "published": "2024-10-14",
+  "authors": "Peter Schafhalter, Shun Liao, Yanqi Zhou, Chih-Kuan Yeh, Arun Kandoor, James Laudon",
+  "journal": "COMMENT: 14 pages, 5 figures, 3 tables",
+  "comment": "",
+  "summary": "Domain-specific adaptation is critical to maximizing the performance of pre-trained language models (PLMs) on one or multiple targeted tasks, especially under resource-constrained use cases, such as edge devices. However, existing methods often struggle to balance domain-specific performance, retention of general knowledge, and efficiency for training and inference. To address these challenges, we propose Modular Domain Experts (MoDE). MoDE is a mixture-of-experts architecture that augments a general PLMs with modular, domain-specialized experts. These experts are trained independently and composed together via a lightweight training process. In contrast to standard low-rank adaptation methods, each MoDE expert consists of several transformer layers which scale better with more training examples and larger parameter counts. Our evaluation demonstrates that MoDE achieves comparable target performances to full parameter fine-tuning while achieving 1.65% better retention performance. Moreover, MoDE's architecture enables flexible sharding configurations and improves training speeds by up to 38% over state-of-the-art distributed training configurations."
+ },
+ {
+  "arxiv": "2410.11654",
+  "title": "Transformer Layer Injection: A Novel Approach for Efficient Upscaling of Large Language Models",
+  "published": "2024-10-15",
+  "authors": "James Vo",
+  "journal": "COMMENT:",
+  "comment": "",
+  "summary": "In this paper, we propose Transformer Layer Injection (TLI), a novel method for efficiently upscaling large language models (LLMs) while minimizing computational costs and maintaining model performance. Model scale is a key factor in enhancing the quality of machine learning models, and TLI addresses the challenge of scaling by reducing initial loss, minimizing fine-tuning requirements, and preserving model complexity. Our approach improves upon the conventional Depth Up-Scaling (DUS) technique by injecting new layers into every set of K layers, enabling hidden representations to pass through transformer blocks with minimal disruption. We compare TLI with existing approaches, including Mixture of Experts (MoE) and DUS, and validate its efficiency through experiments on small LLMs (LLama3 1B, 3B, and 8B). Results show that TLI achieves better initialization, requires fewer training steps, and delivers superior accuracy on tasks such as KoBEST and KMCQA, with models performing effectively even without additional training. TLI is demonstrated to be both data-efficient and cost-effective, significantly outperforming existing methods. Its scalability and simplicity make it a promising solution for upscaling transformer-based models, with potential applications in scaling models from 10B to 405B parameters."
+ },
+ {
+  "arxiv": "2410.11772",
+  "title": "Layer-wise Importance Matters: Less Memory for Better Performance in Parameter-efficient Fine-tuning of Large Language Models",
+  "published": "2024-10-15",
+  "authors": "Kai Yao, Penglei Gao, Lichun Li, Yuan Zhao, Xiaofeng Wang, Wei Wang, Jianke Zhu",
+  "journal": "COMMENT: EMNLP 2024",
+  "comment": "",
+  "summary": "Parameter-Efficient Fine-Tuning (PEFT) methods have gained significant popularity for adapting pre-trained Large Language Models (LLMs) to downstream tasks, primarily due to their potential to significantly reduce memory and computational overheads. However, a common limitation in most PEFT approaches is their application of a uniform architectural design across all layers. This uniformity involves identical trainable modules and ignores the varying importance of each layer, leading to sub-optimal fine-tuning results. To overcome the above limitation and obtain better performance, we develop a novel approach, Importance-aware Sparse Tuning (IST), to fully utilize the inherent sparsity and select the most important subset of full layers with effective layer-wise importance scoring. The proposed IST is a versatile and plug-and-play technique compatible with various PEFT methods that operate on a per-layer basis. By leveraging the estimated importance scores, IST dynamically updates these selected layers in PEFT modules, leading to reduced memory demands. We further provide theoretical proof of convergence and empirical evidence of superior performance to demonstrate the advantages of IST over uniform updating strategies. Extensive experiments on a range of LLMs, PEFTs, and downstream tasks substantiate the effectiveness of our proposed method, showcasing IST's capacity to enhance existing layer-based PEFT methods. Our code is available at https://github.com/Kaiseem/IST."
+ },
+ {
+  "arxiv": "2410.14354",
+  "title": "Characterization of non-Gaussian stochastic signals with heavier-tailed likelihoods",
+  "published": "2024-10-18",
+  "authors": "Nikolaos Karnesis, Argyro Sasli, Riccardo Buscicchio, Nikolaos Stergioulas",
+  "journal": "COMMENT: 24 pages, 9 figures",
+  "comment": "",
+  "summary": "Future Gravitational Wave observatories will give us the opportunity to search for stochastic signals of astrophysical, or even cosmological origins. However, parameter estimation and search will be challenging, mostly due to the overlap of multiple signal components, as well as the potentially partially unknown properties of the instrumental noise. In this work, we propose a robust statistical framework based on heavier-tailed likelihoods for the characterization of stochastic gravitational-wave signals. In particular, we use the symmetric hyperbolic likelihood, which allows us to probe the signal spectral properties and simultaneously test for any departures from Gaussianity. We demonstrate this methodology with synthetic data from the future LISA mission, where we estimate the potential non-Gaussianities induced by the unresolved Ultra Compact Galactic Binaries."
+ },
+ {
+  "arxiv": "2410.14891",
+  "title": "LUCI in the Surface Code with Dropouts",
+  "published": "2024-10-18",
+  "authors": "Dripto M. Debroy, Matt McEwen, Craig Gidney, Noah Shutty, Adam Zalcman",
+  "journal": "Quantum 9, 1936 (2025)",
+  "comment": "SUMMARY: Recently, usage of detecting regions facilitated the discovery of new circuits for fault-tolerantly implementing the surface code. Building on these ideas, we present LUCI, a framework for constructing fault-tolerant circuits flexible enough to construct aperiodic and anisotropic circuits, making it a clear step towards quantum error correction beyond static codes. We show that LUCI can be used to adapt surface code circuits to lattices with imperfect qubit and coupler yield, a key challenge for fault-tolerant quantum computers using solid-state architectures. These circuits preserve spacelike distance for isolated broken couplers or isolated broken measure qubits in exchange for halving timelike distance, substantially reducing the penalty for dropout compared to the state of the art and creating opportunities in device architecture design. For qubit and coupler dropout rates of 1% and a patch diameter of 15, LUCI achieves an average spacelike distance of 13.1, compared to 9.1 for the best method in the literature. For a SI1000(0.001) circuit noise model, this translates to a 36x improvement in median logical error rate per round, a factor which increases with device performance. At these dropout and error rates, LUCI requires roughly 25% fewer physical qubits to reach algorithmically relevant one-in-a-trillion logical codeblock error rates.\n\n### 2411.17401\nTITLE: One Mind, Many Tongues: A Deep Dive into Language-Agnostic Knowledge Neurons in Large Language Models\nPUBLISHED: 2024-11-26T13:03:49Z\nUPDATED: 2024-11-26T13:03:49Z\nAUTHORS: Pengfei Cao, Yuheng Chen, Zhuoran Jin, Yubo Chen, Kang Liu, Jun Zhao\nJOURNAL: \nCOMMENT:",
+  "summary": "Large language models (LLMs) have learned vast amounts of factual knowledge through self-supervised pre-training on large-scale corpora. Meanwhile, LLMs have also demonstrated excellent multilingual capabilities, which can express the learned knowledge in multiple languages. However, the knowledge storage mechanism in LLMs still remains mysterious. Some researchers attempt to demystify the factual knowledge in LLMs from the perspective of knowledge neurons, and subsequently discover language-agnostic knowledge neurons that store factual knowledge in a form that transcends language barriers. However, the preliminary finding suffers from two limitations: 1) High Uncertainty in Localization Results. Existing study only uses a prompt-based probe to localize knowledge neurons for each fact, while LLMs cannot provide consistent answers for semantically equivalent queries. Thus, it leads to inaccurate localization results with high uncertainty. 2) Lack of Analysis in More Languages. The study only analyzes language-agnostic knowledge neurons on English and Chinese data, without exploring more language families and languages. Naturally, it limits the generalizability of the findings. To address aforementioned problems, we first construct a new benchmark called Rephrased Multilingual LAMA (RML-LAMA), which contains high-quality cloze-style multilingual parallel queries for each fact. Then, we propose a novel method named Multilingual Integrated Gradients with Uncertainty Estimation (MATRICE), which quantifies the uncertainty across queries and languages during knowledge localization. Extensive experiments show that our method can accurately localize language-agnostic knowledge neurons. We also further investigate the role of language-agnostic knowledge neurons in cross-lingual knowledge editing, knowledge enhancement and new knowledge injection."
+ },
+ {
+  "arxiv": "2410.17875",
+  "title": "Understanding Layer Significance in LLM Alignment",
+  "published": "2024-10-23",
+  "authors": "Guangyuan Shi, Zexin Lu, Xiaoyu Dong, Wenlong Zhang, Xuanyu Zhang, Yujie Feng, Xiao-Ming Wu",
+  "journal": "COMMENT:",
+  "comment": "",
+  "summary": "Aligning large language models (LLMs) through supervised fine-tuning is essential for tailoring them to specific applications. Recent studies suggest that alignment primarily adjusts a model's presentation style rather than its foundational knowledge, indicating that only certain components of the model are significantly impacted. To uncover how alignment affects model behavior at a granular level, we propose identifying which layers within LLMs are most critical to the alignment process. Our approach, named ILA, involves learning a binary mask for the parameter changes in each layer during alignment, as an indicator of layer significance. Experimental results reveal that, despite substantial differences in alignment datasets, the important layers of a model identified by ILA exhibit nearly 90\\% overlap, highlighting fundamental patterns in LLM alignment. The results also indicate that freezing non-essential layers improves overall model performance, while selectively tuning the most critical layers significantly enhances fine-tuning efficiency with minimal performance loss. Finally, we discuss how these findings extend from LLM alignment to reasoning."
+ },
+ {
+  "arxiv": "2410.20022",
+  "title": "Dynamic layer selection in decoder-only transformers",
+  "published": "2024-10-26",
+  "authors": "Theodore Glavas, Joud Chataoui, Florence Regol, Wassim Jabbour, Antonios Valkanas, Boris N. Oreshkin, Mark Coates",
+  "journal": "COMMENT:",
+  "comment": "",
+  "summary": "The vast size of Large Language Models (LLMs) has prompted a search to optimize inference. One effective approach is dynamic inference, which adapts the architecture to the sample-at-hand to reduce the overall computational cost. We empirically examine two common dynamic inference methods for natural language generation (NLG): layer skipping and early exiting. We find that a pre-trained decoder-only model is significantly more robust to layer removal via layer skipping, as opposed to early exit. We demonstrate the difficulty of using hidden state information to adapt computation on a per-token basis for layer skipping. Finally, we show that dynamic computation allocation on a per-sequence basis holds promise for significant efficiency gains by constructing an oracle controller. Remarkably, we find that there exists an allocation which achieves equal performance to the full model using only 23.3% of its layers on average."
+ },
+ {
+  "arxiv": "2411.04448",
+  "title": "Gradient Localization Improves Lifelong Pretraining of Language Models",
+  "published": "2024-11-07",
+  "authors": "Jared Fernandez, Yonatan Bisk, Emma Strubell",
+  "journal": "COMMENT: EMNLP Findings 2024",
+  "comment": "",
+  "summary": "Large Language Models (LLMs) trained on web-scale text corpora have been shown to capture world knowledge in their parameters. However, the mechanism by which language models store different types of knowledge is poorly understood. In this work, we examine two types of knowledge relating to temporally sensitive entities and demonstrate that each type is localized to different sets of parameters within the LLMs. We hypothesize that the lack of consideration of the locality of knowledge in existing continual learning methods contributes to both: the failed uptake of new information, and catastrophic forgetting of previously learned information. We observe that sequences containing references to updated and newly mentioned entities exhibit larger gradient norms in a subset of layers. We demonstrate that targeting parameter updates to these relevant layers can improve the performance of continually pretraining on language containing temporal drift."
+ },
+ {
+  "arxiv": "2411.14055",
+  "title": "DRPruning: Efficient Large Language Model Pruning through Distributionally Robust Optimization",
+  "published": "2024-11-21",
+  "authors": "Hexuan Deng, Wenxiang Jiao, Xuebo Liu, Jing Li, Min Zhang, Zhaopeng Tu",
+  "journal": "COMMENT: Accepted by ACL 2025 Main Conference",
+  "comment": "",
+  "summary": "Large language models (LLMs) deliver impressive results but face challenges from increasing model sizes and computational costs. Structured pruning reduces model size and speeds up inference but often causes uneven degradation across domains, leading to biased performance. To address this, we propose DRPruning, a method that dynamically adjusts the data distribution during training to restore balanced performance across heterogeneous and multi-tasking data. Experiments in monolingual and multilingual settings show that DRPruning surpasses similarly sized models in both pruning and continued pretraining over perplexity, downstream tasks, and instruction tuning. Further analysis demonstrates the robustness of DRPruning towards various domains and distribution shifts. Furthermore, DRPruning can determine optimal reference losses and data ratios automatically, suggesting potential for broader applications. Code and scripts are available at https://github.com/hexuandeng/DRPruning."
+ },
+ {
+  "arxiv": "2411.15558",
+  "title": "Reassessing Layer Pruning in LLMs: New Insights and Methods",
+  "published": "2024-11-23",
+  "authors": "Yao Lu, Hao Cheng, Yujie Fang, Zeyu Wang, Jiaheng Wei, Dongwei Xu, Qi Xuan, Xiaoniu Yang, Zhaowei Zhu",
+  "journal": "COMMENT:",
+  "comment": "",
+  "summary": "Although large language models (LLMs) have achieved remarkable success across various domains, their considerable scale necessitates substantial computational resources, posing significant challenges for deployment in resource-constrained environments. Layer pruning, as a simple yet effective compression method, removes layers of a model directly, reducing computational overhead. However, what are the best practices for layer pruning in LLMs? Are sophisticated layer selection metrics truly effective? Does the LoRA (Low-Rank Approximation) family, widely regarded as a leading method for pruned model fine-tuning, truly meet expectations when applied to post-pruning fine-tuning? To answer these questions, we dedicate thousands of GPU hours to benchmarking layer pruning in LLMs and gaining insights across multiple dimensions. Our results demonstrate that a simple approach, i.e., pruning the final 25\\% of layers followed by fine-tuning the \\texttt{lm\\_head} and the remaining last three layer, yields remarkably strong performance. Following this guide, we prune Llama-3.1-8B-It and obtain a model that outperforms many popular LLMs of similar size, such as ChatGLM2-6B, Vicuna-7B-v1.5, Qwen1.5-7B and Baichuan2-7B. We release the optimal model weights on Huggingface, and the code is available on GitHub."
+ },
+ {
+  "arxiv": "2412.01455",
+  "title": "Early Exit Is a Natural Capability in Transformer-based Models: An Empirical Study on Early Exit without Joint Optimization",
+  "published": "2024-12-02",
+  "authors": "Weiqiao Shan, Long Meng, Tong Zheng, Yingfeng Luo, Bei Li, junxin Wang, Tong Xiao, Jingbo Zhu",
+  "journal": "COMMENT:",
+  "comment": "",
+  "summary": "Large language models (LLMs) exhibit exceptional performance across various downstream tasks. However, they encounter limitations due to slow inference speeds stemming from their extensive parameters. The early exit (EE) is an approach that aims to accelerate auto-regressive decoding. EE generates outputs from intermediate layers instead of using the whole model, which offers a promising solution to this challenge. However, additional output layers and joint optimization used in conventional EE hinder the application of EE in LLMs. In this paper, we explore the possibility of LLMs EE without additional output layers and joint optimization. Our findings indicate that EE is a natural capability within transformer-based models. While joint optimization does not give model EE capability, it must be employed to address challenges by improving the accuracy of locating the optimal EE layer through gating functions. Additionally, our study reveals patterns in EE behavior from a sub-word perspective based on the LLaMA model and the potential possibility for EE based on sub-layers."
+ },
+ {
+  "arxiv": "2412.12674",
+  "title": "Train More Parameters But Mind Their Placement: Insights into Language Adaptation with PEFT",
+  "published": "2024-12-17",
+  "authors": "Jenny Kunz",
+  "journal": "COMMENT: To appear at NoDaLiDa 2025",
+  "comment": "",
+  "summary": "Smaller LLMs still face significant challenges even in medium-resourced languages, particularly when it comes to language-specific knowledge -- a problem not easily resolved with machine-translated data. In this case study on Icelandic, we aim to enhance the generation performance of an LLM by specialising it using unstructured text corpora. A key focus is on preventing interference with the models' capabilities of handling longer context during this adaptation. Through ablation studies using various parameter-efficient fine-tuning (PEFT) methods and setups, we find that increasing the number of trainable parameters leads to better and more robust language adaptation. LoRAs placed in the feed-forward layers and bottleneck adapters show promising results with sufficient parameters, while prefix tuning and (IA)3 are not suitable. Although improvements are consistent in 0-shot summarisation, some adapted models struggle with longer context lengths, an issue that can be mitigated by adapting only the final layers."
+ },
+ {
+  "arxiv": "2412.16469",
+  "title": "Chained Tuning Leads to Biased Forgetting",
+  "published": "2024-12-21",
+  "authors": "Megan Ung, Alicia Sun, Samuel J. Bell, Bhaktipriya Radharapu, Levent Sagun, Adina Williams",
+  "journal": "COMMENT:",
+  "comment": "",
+  "summary": "Large language models (LLMs) are often fine-tuned for use on downstream tasks, though this can degrade capabilities learned during previous training. This phenomenon, often referred to as catastrophic forgetting, has important potential implications for the safety of deployed models. In this work, we first show that models trained on downstream tasks forget their safety tuning to a greater extent than models trained in the opposite order. Second, we show that forgetting disproportionately impacts safety information about certain groups. To quantify this phenomenon, we define a new metric we term biased forgetting. We conduct a systematic evaluation of the effects of task ordering on forgetting and apply mitigations that can help the model recover from the forgetting observed. We hope our findings can better inform methods for chaining the finetuning of LLMs in continual learning settings to enable training of safer and less toxic models."
+ },
+ {
+  "arxiv": "2412.19512",
+  "title": "Safeguard Fine-Tuned LLMs Through Pre- and Post-Tuning Model Merging",
+  "published": "2024-12-27",
+  "authors": "Hua Farn, Hsuan Su, Shachi H Kumar, Saurav Sahay, Shang-Tse Chen, Hung-yi Lee",
+  "journal": "COMMENT: EMNLP 2025 Findings",
+  "comment": "",
+  "summary": "Fine-tuning large language models (LLMs) for downstream tasks often leads to catastrophic forgetting, notably degrading the safety of originally aligned models. While some existing methods attempt to restore safety by incorporating additional safety data, the quality of such data typically falls short of that used in the original alignment process. Moreover, these high-quality safety datasets are generally inaccessible, making it difficult to fully recover the model's original safety. We ask: How can we preserve safety while improving downstream task performance without additional safety data? We show that simply merging the weights of pre- and post-fine-tuned models effectively mitigates safety degradation while enhancing performance. Experiments across different downstream tasks and models validate the method's practicality and effectiveness."
+ },
+ {
+  "arxiv": "2501.15054",
+  "title": "Unraveling Token Prediction Refinement and Identifying Essential Layers in Language Models",
+  "published": "2025-01-25",
+  "authors": "Jaturong Kongmanee",
+  "journal": "COMMENT:",
+  "comment": "",
+  "summary": "This research aims to unravel how large language models (LLMs) iteratively refine token predictions through internal processing. We utilized a logit lens technique to analyze the model's token predictions derived from intermediate representations. Specifically, we focused on (1) how LLMs access and utilize information from input contexts, and (2) how positioning of relevant information affects the model's token prediction refinement process. On a multi-document question answering task with varying input context lengths, we found that the depth of prediction refinement (defined as the number of intermediate layers an LLM uses to transition from an initial correct token prediction to its final, stable correct output), as a function of the position of relevant information, exhibits an approximately inverted U-shaped curve. We also found that the gap between these two layers, on average, diminishes when relevant information is positioned at the beginning or end of the input context. This suggested that the model requires more refinements when processing longer contexts with relevant information situated in the middle. Furthermore, our findings indicate that not all layers are equally essential for determining final correct outputs. Our analysis provides insights into how token predictions are distributed across different conditions, and establishes important connections to existing hypotheses and previous findings in AI safety research and development. 2501.15054 774632 40494"
+ },
+ {
+  "arxiv": "2501.17905",
+  "title": "DReSS: Data-driven Regularized Structured Streamlining for Large Language Models",
+  "published": "2025-01-29",
+  "authors": "Mingkuan Feng, Jinyang Wu, Shuai Zhang, Pengpeng Shao, Ruihan Jin, Zhengqi Wen, Jianhua Tao, Feihu Che",
+  "journal": "COMMENT:",
+  "comment": "",
+  "summary": "Large language models (LLMs) have achieved significant progress across various domains, but their increasing scale results in high computational and memory costs. Recent studies have revealed that LLMs exhibit sparsity, providing the potential to reduce model size through pruning techniques. However, existing pruning methods typically follow a prune-then-finetune paradigm. Since the pruned components still contain valuable information, their direct removal often leads to irreversible performance degradation, imposing a substantial computational burden to recover performance during finetuning. In this paper, we propose a novel paradigm that first applies regularization, then prunes, and finally finetunes. Based on this paradigm, we introduce DReSS, a simple and effective Data-driven Regularized Structured Streamlining method for LLMs. By leveraging a small amount of data to regularize the components to be pruned, DReSS explicitly transfers the important information to the remaining parts of the model in advance. Compared to direct pruning, this can reduce the information loss caused by parameter removal, thereby enhancing its language modeling capabilities. Experimental results demonstrate that DReSS significantly outperforms existing pruning methods even under extreme pruning ratios, significantly reducing latency and increasing throughput."
+ },
+ {
+  "arxiv": "2502.00075",
+  "title": "BTS: Harmonizing Specialized Experts into a Generalist LLM",
+  "published": "2025-01-31",
+  "authors": "Qizhen Zhang, Prajjwal Bhargava, Chloe Bi, Chris X. Cai, Jakob Foerster, Jeremy Fu, Punit Singh Koura, Ruan Silva, Sheng Shen, Emily Dinan, Suchin Gururangan, Mike Lewis",
+  "journal": "COMMENT:",
+  "comment": "",
+  "summary": "We present Branch-Train-Stitch (BTS), an efficient and flexible training algorithm for combining independently trained large language model (LLM) experts into a single, capable generalist model. Following Li et al., we start with a single seed language model which is branched into domain-specific (e.g., coding or math) experts with continual pretraining. BTS combines experts into a generalist model using lightweight stitch layers, which are inserted between frozen experts and the seed LLM, and trained on a small datamix of the expert domains. Stitch layers enable the seed LLM to integrate representations from any number of experts during the forward pass, allowing it to generalize to new domains, despite remaining frozen. Because BTS does not alter the constituent LLMs, BTS provides a modular and flexible approach: experts can be easily removed and new experts can be added with only a small amount of training. Compared to alternative model merging approaches, BTS yields the best generalist performance on a variety of downstream tasks, retaining the specialized capabilities of each of the experts."
+ },
+ {
+  "arxiv": "2502.03748",
+  "title": "Rethinking Residual Distribution in Locate-then-Edit Model Editing",
+  "published": "2025-02-06",
+  "authors": "Xiaopeng Li, Shanwen Wang, Shasha Li, Shezheng Song, Bin Ji, Jun Ma, Jie Yu",
+  "journal": "COMMENT: NeurIPS 2025",
+  "comment": "",
+  "summary": "Model editing enables targeted updates to the knowledge of large language models (LLMs) with minimal retraining. Among existing approaches, locate-then-edit methods constitute a prominent paradigm: they first identify critical layers, then compute residuals at the final critical layer based on the target edit, and finally apply least-squares-based multi-layer updates via $\\textbf{residual distribution}$. While empirically effective, we identify a counterintuitive failure mode: residual distribution, a core mechanism in these methods, introduces weight shift errors that undermine editing precision. Through theoretical and empirical analysis, we show that such errors increase with the distribution distance, batch size, and edit sequence length, ultimately leading to inaccurate or suboptimal edits. To address this, we propose the $\\textbf{B}$oundary $\\textbf{L}$ayer $\\textbf{U}$pdat$\\textbf{E (BLUE)}$ strategy to enhance locate-then-edit methods. Sequential batch editing experiments on three LLMs and two datasets demonstrate that BLUE not only delivers an average performance improvement of 35.59\\%, significantly advancing the state of the art in model editing, but also enhances the preservation of LLMs' general capabilities. Our code is available at https://github.com/xpq-tech/BLUE."
+ },
+ {
+  "arxiv": "2502.07365",
+  "title": "LongReD: Mitigating Short-Text Degradation of Long-Context Large Language Models via Restoration Distillation",
+  "published": "2025-02-11",
+  "authors": "Zican Dong, Junyi Li, Jinhao Jiang, Mingyu Xu, Wayne Xin Zhao, Bingning Wang, Weipeng Chen",
+  "journal": "COMMENT: ACL2025 Main",
+  "comment": "",
+  "summary": "Large language models (LLMs) have gained extended context windows through scaling positional encodings and lightweight continual pre-training. However, this often leads to degraded performance on short-text tasks, while the reasons for this degradation remain insufficiently explored. In this work, we identify two primary factors contributing to this issue: distribution drift in hidden states and attention scores, and catastrophic forgetting during continual pre-training. To address these challenges, we propose Long Context Pre-training with Restoration Distillation (LongReD), a novel approach designed to mitigate short-text performance degradation through minimizing the distribution discrepancy between the extended and original models. Besides training on long texts, LongReD distills the hidden state of selected layers from the original model on short texts. Additionally, LongReD also introduces a short-to-long distillation, aligning the output distribution on short texts with that on long texts by leveraging skipped positional indices. Experiments on common text benchmarks demonstrate that LongReD effectively preserves the model's short-text performance while maintaining comparable or even better capacity to handle long texts than baselines. Our code is available at https://github.com/RUCAIBox/LongReD."
+ },
+ {
+  "arxiv": "2502.13794",
+  "title": "LESA: Learnable LLM Layer Scaling-Up",
+  "published": "2025-02-19",
+  "authors": "Yifei Yang, Zouying Cao, Xinbei Ma, Yao Yao, Libo Qin, Zhi Chen, Hai Zhao",
+  "journal": "COMMENT:",
+  "comment": "",
+  "summary": "Training Large Language Models (LLMs) from scratch requires immense computational resources, making it prohibitively expensive. Model scaling-up offers a promising solution by leveraging the parameters of smaller models to create larger ones. However, existing depth scaling-up methods rely on empirical heuristic rules for layer duplication, which result in poorer initialization and slower convergence during continual pre-training. We propose \\textbf{LESA}, a novel learnable method for depth scaling-up. By concatenating parameters from each layer and applying Singular Value Decomposition, we uncover latent patterns between layers, suggesting that inter-layer parameters can be learned. LESA uses a neural network to predict the parameters inserted between adjacent layers, enabling better initialization and faster training. Experiments show that LESA outperforms existing baselines, achieving superior performance with less than half the computational cost during continual pre-training. Extensive analyses demonstrate its effectiveness across different model sizes and tasks."
+ },
+ {
+  "arxiv": "2503.04429",
+  "title": "Activation Space Interventions Can Be Transferred Between Large Language Models",
+  "published": "2025-03-06",
+  "authors": "Narmeen Oozeer, Dhruv Nathawani, Nirmalendu Prakash, Michael Lan, Abir Harrasse, Amirali Abdullah",
+  "journal": "COMMENT: 75 pages. Accepted to ICML 2025",
+  "comment": "",
+  "summary": "The study of representation universality in AI models reveals growing convergence across domains, modalities, and architectures. However, the practical applications of representation universality remain largely unexplored. We bridge this gap by demonstrating that safety interventions can be transferred between models through learned mappings of their shared activation spaces. We demonstrate this approach on two well-established AI safety tasks: backdoor removal and refusal of harmful prompts, showing successful transfer of steering vectors that alter the models' outputs in a predictable way. Additionally, we propose a new task, \\textit{corrupted capabilities}, where models are fine-tuned to embed knowledge tied to a backdoor. This tests their ability to separate useful skills from backdoors, reflecting real-world challenges. Extensive experiments across Llama, Qwen and Gemma model families show that our method enables using smaller models to efficiently align larger ones. Furthermore, we demonstrate that autoencoder mappings between base and fine-tuned models can serve as reliable ``lightweight safety switches\", allowing dynamic toggling between model behaviors."
+ },
+ {
+  "arxiv": "2503.17239",
+  "title": "SafeMERGE: Preserving Safety Alignment in Fine-Tuned Large Language Models via Selective Layer-Wise Model Merging",
+  "published": "2025-03-21",
+  "authors": "Aladin Djuhera, Swanand Ravindra Kadhe, Farhan Ahmed, Syed Zawad, Holger Boche",
+  "journal": "Findings of the ACL 2026",
+  "comment": "SUMMARY: Fine-tuning large language models (LLMs) is a common practice to adapt generalist models to specialized domains. However, recent studies show that fine-tuning can erode safety alignment, causing LLMs to respond to harmful or unethical prompts. Many methods to realign safety have been proposed, but often introduce custom algorithms that are difficult to implement or compromise task utility. In this work, we propose SafeMERGE, a lightweight, post-fine-tuning framework that restores safety while maintaining downstream performance. SafeMERGE selectively merges fine-tuned with safety-aligned model layers only when they deviate from safe behavior, measured by a cosine similarity criterion. Across four LLMs and several tasks, SafeMERGE consistently reduces harmful outputs compared to other defenses, with negligible or even positive impact on utility. Our results demonstrate that selective, layer-wise merging offers a robust safeguard against the inadvertent loss of safety during fine-tuning, establishing SafeMERGE as a simple yet effective post-fine-tuning defense.\n\n### 2405.16833\nTITLE: Safe LoRA: the Silver Lining of Reducing Safety Risks when Fine-tuning Large Language Models\nPUBLISHED: 2024-05-27T05:04:05Z\nUPDATED: 2025-01-05T21:51:46Z\nAUTHORS: Chia-Yi Hsu, Yu-Lin Tsai, Chih-Hsun Lin, Pin-Yu Chen, Chia-Mu Yu, Chun-Ying Huang\nJOURNAL: \nCOMMENT: This is the camera-ready version accepted for NeurIPS 2024",
+  "summary": "While large language models (LLMs) such as Llama-2 or GPT-4 have shown impressive zero-shot performance, fine-tuning is still necessary to enhance their performance for customized datasets, domain-specific tasks, or other private needs. However, fine-tuning all parameters of LLMs requires significant hardware resources, which can be impractical for typical users. Therefore, parameter-efficient fine-tuning such as LoRA have emerged, allowing users to fine-tune LLMs without the need for considerable computing resources, with little performance degradation compared to fine-tuning all parameters. Unfortunately, recent studies indicate that fine-tuning can increase the risk to the safety of LLMs, even when data does not contain malicious content. To address this challenge, we propose Safe LoRA, a simple one-liner patch to the original LoRA implementation by introducing the projection of LoRA weights from selected layers to the safety-aligned subspace, effectively reducing the safety risks in LLM fine-tuning while maintaining utility. It is worth noting that Safe LoRA is a training-free and data-free approach, as it only requires the knowledge of the weights from the base and aligned LLMs. Our extensive experiments demonstrate that when fine-tuning on purely malicious data, Safe LoRA retains similar safety performance as the original aligned model. Moreover, when the fine-tuning dataset contains a mixture of both benign and malicious data, Safe LoRA mitigates the negative effect made by malicious data while preserving performance on downstream tasks. Our codes are available at \\url{https://github.com/IBM/SafeLoRA}."
+ },
+ {
+  "arxiv": "2503.23798",
+  "title": "Adaptive Layer-skipping in Pre-trained LLMs",
+  "published": "2025-03-31",
+  "authors": "Xuan Luo, Weizhi Wang, Xifeng Yan",
+  "journal": "Second Conference on Language Modeling, 2025",
+  "comment": "SUMMARY: Various layer-skipping methods have been proposed to accelerate token generation in large language models (LLMs). However, limited attention has been paid to a fundamental question: How do computational demands vary across the generation of different tokens? In this work, we introduce FlexiDepth, a method that dynamically adjusts the number of Transformer layers used in text generation. By incorporating a plug-in router and adapter, FlexiDepth enables adaptive computation in LLMs without modifying their original parameters. Applied to Llama-3-8B, it skips 8 out of 32 layers while maintaining full benchmark performance. Our experiments reveal that computational demands in LLMs significantly vary based on token type. Specifically, generating repetitive tokens or fixed phrases requires fewer layers, whereas producing tokens involving computation or high uncertainty requires more layers. Despite the computational savings, FlexiDepth does not yet achieve wall-clock speedup due to varied skipping patterns and I/O overhead. To inspire future work and advance research on practical speedup, we open-sourced FlexiDepth and a dataset documenting its layer allocation patterns.\n\n### 2502.04348\nTITLE: Prompt-based Depth Pruning of Large Language Models\nPUBLISHED: 2025-02-04T15:16:17Z\nUPDATED: 2025-06-12T01:56:10Z\nAUTHORS: Juyun Wee, Minjae Park, Jaeho Lee\nJOURNAL: \nCOMMENT: Project: https://jwee01.github.io/PuDDing/ Code: https://github.com/tada0347/PuDDing",
+  "summary": "Depth pruning aims to reduce the inference cost of a large language model without any hardware-specific complications, by simply removing several less important transformer blocks. However, our empirical findings suggest that the importance of a transformer block may be highly task-dependent -- a block that is crucial for a task can be removed without degrading the accuracy on another task. Based on this observation, we develop a dynamic depth pruning algorithm, coined PuDDing (Prompt-routed Dynamic Depth Pruning), which determines which blocks to omit from the model based on the input prompt. PuDDing operates by training a lightweight router to predict the best omission set among a set of options, where this option set has also been constructed in a data-driven manner. Empirical results on commonsense reasoning benchmarks demonstrate that PuDDing effectively accelerates the inference language models, and achieves better on-task performance than static depth pruning baselines."
+ },
+ {
+  "arxiv": "2504.02107",
+  "title": "TiC-LM: A Web-Scale Benchmark for Time-Continual LLM Pretraining",
+  "published": "2025-04-02",
+  "authors": "Jeffrey Li, Mohammadreza Armandpour, Iman Mirzadeh, Sachin Mehta, Vaishaal Shankar, Raviteja Vemulapalli, Samy Bengio, Oncel Tuzel, Mehrdad Farajtabar, Hadi Pouransari, Fartash Faghri",
+  "journal": "COMMENT: Code available at: https://github.com/apple/ml-tic-lm",
+  "comment": "",
+  "summary": "Large Language Models (LLMs) trained on historical web data inevitably become outdated. We investigate evaluation strategies and update methods for LLMs as new data becomes available. We introduce a web-scale dataset for time-continual pretraining of LLMs derived from 114 dumps of Common Crawl (CC) - orders of magnitude larger than previous continual language modeling benchmarks. We also design time-stratified evaluations across both general CC data and specific domains (Wikipedia, StackExchange, and code documentation) to assess how well various continual learning methods adapt to new data while retaining past knowledge. Our findings demonstrate that, on general CC data, autoregressive meta-schedules combined with a fixed-ratio replay of older data can achieve comparable held-out loss to re-training from scratch, while requiring significantly less computation (2.6x). However, the optimal balance between incorporating new data and replaying old data differs as replay is crucial to avoid forgetting on generic web data but less so on specific domains."
+ },
+ {
+  "arxiv": "2504.07097",
+  "title": "Sculpting Subspaces: Constrained Full Fine-Tuning in LLMs for Continual Learning",
+  "published": "2025-04-09",
+  "authors": "Nikhil Shivakumar Nayak, Krishnateja Killamsetty, Ligong Han, Abhishek Bhandwaldar, Prateek Chanda, Kai Xu, Hao Wang, Aldo Pareja, Oleg Silkin, Mustafa Eyceoz, Akash Srivastava",
+  "journal": "COMMENT: 25 pages, 13 figures, 6 tables",
+  "comment": "",
+  "summary": "Continual learning in large language models (LLMs) is prone to catastrophic forgetting, where adapting to new tasks significantly degrades performance on previously learned ones. Existing methods typically rely on low-rank, parameter-efficient updates that limit the model's expressivity and introduce additional parameters per task, leading to scalability issues. To address these limitations, we propose a novel continual full fine-tuning approach leveraging adaptive singular value decomposition (SVD). Our method dynamically identifies task-specific low-rank parameter subspaces and constrains updates to be orthogonal to critical directions associated with prior tasks, thus effectively minimizing interference without additional parameter overhead or storing previous task gradients. We evaluate our approach extensively on standard continual learning benchmarks using both encoder-decoder (T5-Large) and decoder-only (LLaMA-2 7B) models, spanning diverse tasks including classification, generation, and reasoning. Empirically, our method achieves state-of-the-art results, up to 7% higher average accuracy than recent baselines like O-LoRA, and notably maintains the model's general linguistic capabilities, instruction-following accuracy, and safety throughout the continual learning process by reducing forgetting to near-negligible levels. Our adaptive SVD framework effectively balances model plasticity and knowledge retention, providing a practical, theoretically grounded, and computationally scalable solution for continual learning scenarios in large language models."
+ },
+ {
+  "arxiv": "2505.00624",
+  "title": "FineScope : SAE-guided Data Selection Enables Domain Specific LLM Pruning and Finetuning",
+  "published": "2025-05-01",
+  "authors": "Chaitali Bhattacharyya, Hyunsei Lee, Junyoung Lee, Shinhyoung Jang, Il hong Suh, Yeseong Kim",
+  "journal": "COMMENT:",
+  "comment": "",
+  "summary": "Training large language models (LLMs) from scratch requires significant computational resources, driving interest in developing smaller, domain-specific LLMs that maintain both efficiency and strong task performance. Medium-sized models such as LLaMA, llama} have served as starting points for domain-specific adaptation, but they often suffer from accuracy degradation when tested on specialized datasets. We introduce FineScope, a framework for deriving compact, domain-optimized LLMs from larger pretrained models. FineScope leverages the Sparse Autoencoder (SAE) framework, inspired by its ability to produce interpretable feature representations, to extract domain-specific subsets from large datasets. We apply structured pruning with domain-specific constraints, ensuring that the resulting pruned models retain essential knowledge for the target domain. To further enhance performance, these pruned models undergo self-data distillation, leveraging SAE-curated datasets to restore key domain-specific information lost during pruning. Extensive experiments and ablation studies demonstrate that FineScope achieves highly competitive performance, outperforming several large-scale state-of-the-art LLMs in domain-specific tasks. Additionally, our results show that FineScope enables pruned models to regain a substantial portion of their original performance when fine-tuned with SAE-curated datasets. Furthermore, applying these datasets to fine-tune pretrained LLMs without pruning also improves their domain-specific accuracy, highlighting the robustness of our approach."
+ },
+ {
+  "arxiv": "2505.19440",
+  "title": "The Birth of Knowledge: Emergent Features across Time, Space, and Scale in Large Language Models",
+  "published": "2025-05-26",
+  "authors": "Shashata Sawmya, Micah Adler, Nir Shavit",
+  "journal": "COMMENT:",
+  "comment": "",
+  "summary": "This paper studies the emergence of interpretable categorical features within large language models (LLMs), analyzing their behavior across training checkpoints (time), transformer layers (space), and varying model sizes (scale). Using sparse autoencoders for mechanistic interpretability, we identify when and where specific semantic concepts emerge within neural activations. Results indicate clear temporal and scale-specific thresholds for feature emergence across multiple domains. Notably, spatial analysis reveals unexpected semantic reactivation, with early-layer features re-emerging at later layers, challenging standard assumptions about representational dynamics in transformer models."
+ },
+ {
+  "arxiv": "2505.20155",
+  "title": "Pangu Light: Weight Re-Initialization for Pruning and Accelerating LLMs",
+  "published": "2025-05-26",
+  "authors": "Hanting Chen, Jiarui Qin, Jialong Guo, Tao Yuan, Yichun Yin, Huiling Zhen, Yasheng Wang, Jinpeng Li, Xiaojun Meng, Meng Zhang, Rongju Ruan, Zheyuan Bai, Yehui Tang, Can Chen, Xinghao Chen, Fisher Yu, Ruiming Tang, Yunhe Wang",
+  "journal": "COMMENT:",
+  "comment": "",
+  "summary": "Large Language Models (LLMs) deliver state-of-the-art capabilities across numerous tasks, but their immense size and inference costs pose significant computational challenges for practical deployment. While structured pruning offers a promising avenue for model compression, existing methods often struggle with the detrimental effects of aggressive, simultaneous width and depth reductions, leading to substantial performance degradation. This paper argues that a critical, often overlooked, aspect in making such aggressive joint pruning viable is the strategic re-initialization and adjustment of remaining weights to improve the model post-pruning training accuracies. We introduce Pangu Light, a framework for LLM acceleration centered around structured pruning coupled with novel weight re-initialization techniques designed to address this ``missing piece''. Our framework systematically targets multiple axes, including model width, depth, attention heads, and RMSNorm, with its effectiveness rooted in novel re-initialization methods like Cross-Layer Attention Pruning (CLAP) and Stabilized LayerNorm Pruning (SLNP) that mitigate performance drops by providing the network a better training starting point. Further enhancing efficiency, Pangu Light incorporates specialized optimizations such as absorbing Post-RMSNorm computations and tailors its strategies to Ascend NPU characteristics. The Pangu Light models consistently exhibit a superior accuracy-efficiency trade-off, outperforming prominent baseline pruning methods like Nemotron and established LLMs like Qwen3 series. For instance, on Ascend NPUs, Pangu Light-32B's 81.6 average score and 2585 tokens/s throughput exceed Qwen3-32B's 80.9 average score and 2225 tokens/s."
+ },
+ {
+  "arxiv": "2505.19715",
+  "title": "Graceful Forgetting in Generative Language Models",
+  "published": "2025-05-26",
+  "authors": "Chunyang Jiang, Chi-min Chan, Yiyang Cai, Yulong Liu, Wei Xue, Yike Guo",
+  "journal": "COMMENT: 8 pages, 6 figures. EMNLP 2025",
+  "comment": "",
+  "summary": "Recently, the pretrain-finetune paradigm has become a cornerstone in various deep learning areas. While in general the pre-trained model would promote both effectiveness and efficiency of downstream tasks fine-tuning, studies have shown that not all knowledge acquired during pre-training is beneficial. Some of the knowledge may actually bring detrimental effects to the fine-tuning tasks, which is also known as negative transfer. To address this problem, graceful forgetting has emerged as a promising approach. The core principle of graceful forgetting is to enhance the learning plasticity of the target task by selectively discarding irrelevant knowledge. However, this approach remains underexplored in the context of generative language models, and it is often challenging to migrate existing forgetting algorithms to these models due to architecture incompatibility. To bridge this gap, in this paper we propose a novel framework, Learning With Forgetting (LWF), to achieve graceful forgetting in generative language models. With Fisher Information Matrix weighting the intended parameter updates, LWF computes forgetting confidence to evaluate self-generated knowledge regarding the forgetting task, and consequently, knowledge with high confidence is periodically unlearned during fine-tuning. Our experiments demonstrate that, although thoroughly uncovering the mechanisms of knowledge interaction remains challenging in pre-trained language models, applying graceful forgetting can contribute to enhanced fine-tuning performance."
+ },
+ {
+  "arxiv": "2505.23811",
+  "title": "LayerIF: Estimating Layer Quality for Large Language Models using Influence Functions",
+  "published": "2025-05-27",
+  "authors": "Hadi Askari, Shivanshu Gupta, Fei Wang, Anshuman Chhabra, Muhao Chen",
+  "journal": "COMMENT: Neurips 2025",
+  "comment": "",
+  "summary": "Pretrained Large Language Models (LLMs) achieve strong performance across a wide range of tasks, yet exhibit substantial variability in the various layers' training quality with respect to specific downstream applications, limiting their downstream performance. It is therefore critical to estimate layer-wise training quality in a manner that accounts for both model architecture and training data. However, existing approaches predominantly rely on model-centric heuristics (such as spectral statistics, outlier detection, or uniform allocation) while overlooking the influence of data. To address these limitations, we propose LayerIF, a data-driven framework that leverages Influence Functions to quantify the training quality of individual layers in a principled and task-sensitive manner. By isolating each layer's gradients and measuring the sensitivity of the validation loss to training examples by computing layer-wise influences, we derive data-driven estimates of layer importance. Notably, our method produces task-specific layer importance estimates for the same LLM, revealing how layers specialize for different test-time evaluation tasks. We demonstrate the utility of our scores by leveraging them for two downstream applications: (a) expert allocation in LoRA-MoE architectures and (b) layer-wise sparsity distribution for LLM pruning. Experiments across multiple LLM architectures demonstrate that our model-agnostic, influence-guided allocation leads to consistent gains in task performance."
+ },
+ {
+  "arxiv": "2505.22582",
+  "title": "Less, but Better: Efficient Multilingual Expansion for LLMs via Layer-wise Mixture-of-Experts",
+  "published": "2025-05-28",
+  "authors": "Xue Zhang, Yunlong Liang, Fandong Meng, Songming Zhang, Yufeng Chen, Jinan Xu, Jie Zhou",
+  "journal": "COMMENT: ACL 2025 (Main), 16 pages, 5 figures, 11 tables",
+  "comment": "",
+  "summary": "Continually expanding new languages for existing large language models (LLMs) is a promising yet challenging approach to building powerful multilingual LLMs. The biggest challenge is to make the model continuously learn new languages while preserving the proficient ability of old languages. To achieve this, recent work utilizes the Mixture-of-Experts (MoE) architecture to expand new languages by adding new experts and avoid catastrophic forgetting of old languages by routing corresponding tokens to the original model backbone (old experts). Although intuitive, this kind of method is parameter-costly when expanding new languages and still inevitably impacts the performance of old languages. To address these limitations, we analyze the language characteristics of different layers in LLMs and propose a layer-wise expert allocation algorithm (LayerMoE) to determine the appropriate number of new experts for each layer. Specifically, we find different layers in LLMs exhibit different representation similarities between languages and then utilize the similarity as the indicator to allocate experts for each layer, i.e., the higher similarity, the fewer experts. Additionally, to further mitigate the forgetting of old languages, we add a classifier in front of the router network on the layers with higher similarity to guide the routing of old language tokens. Experimental results show that our method outperforms the previous state-of-the-art baseline with 60% fewer experts in the single-expansion setting and with 33.3% fewer experts in the lifelong-expansion setting, demonstrating the effectiveness of our method."
+ },
+ {
+  "arxiv": "2506.00288",
+  "title": "Emergent Abilities of Large Language Models under Continued Pretraining for Language Adaptation",
+  "published": "2025-05-30",
+  "authors": "Ahmed Elhady, Eneko Agirre, Mikel Artetxe",
+  "journal": "COMMENT: Published as a Conference Paper at the main track of ACL 2025",
+  "comment": "",
+  "summary": "Continued pretraining (CPT) is a popular approach to adapt existing large language models (LLMs) to new languages. When doing so, it is common practice to include a portion of English data in the mixture, but its role has not been carefully studied to date. In this work, we show that including English does not impact validation perplexity, yet it is critical for the emergence of downstream capabilities in the target language. We introduce a language-agnostic benchmark for in-context learning (ICL), which reveals catastrophic forgetting early on CPT when English is not included. This in turn damages the ability of the model to generalize to downstream prompts in the target language as measured by perplexity, even if it does not manifest in terms of accuracy until later in training, and can be tied to a big shift in the model parameters. Based on these insights, we introduce curriculum learning and exponential moving average (EMA) of weights as effective alternatives to mitigate the need for English. All in all, our work sheds light into the dynamics by which emergent abilities arise when doing CPT for language adaptation, and can serve as a foundation to design more effective methods in the future."
+ },
+ {
+  "arxiv": "2506.11389",
+  "title": "Curriculum-Guided Layer Scaling for Language Model Pretraining",
+  "published": "2025-06-13",
+  "authors": "Karanpartap Singh, Neil Band, Ehsan Adeli",
+  "journal": "COMMENT: Accepted to ICML 2026. Code available at https://github.com/su-karanps/cgls",
+  "comment": "",
+  "summary": "As the cost of pretraining large language models grows, there is continued interest in strategies to improve learning efficiency during this core training stage. Motivated by cognitive development, where humans gradually build knowledge as their brains mature, we propose Curriculum-Guided Layer Scaling (CGLS), a framework for compute-efficient pretraining that synchronizes increasing data difficulty with model growth through progressive layer stacking (i.e. gradually adding layers during training). At the 100M parameter scale, using a curriculum transitioning from synthetic short stories to general web data, CGLS outperforms baseline methods on the question-answering benchmarks PIQA and ARC. Pretraining at the 1.2B scale, we stratify the DataComp-LM corpus with a DistilBERT-based classifier and progress from general text to highly technical or specialized content. Our results show that progressively increasing model depth alongside sample difficulty leads to better generalization and zero-shot performance on various downstream benchmarks. Altogether, our findings demonstrate that CGLS unlocks the potential of progressive stacking, offering a simple yet effective strategy for improving generalization on knowledge-intensive and reasoning tasks."
+ },
+ {
+  "arxiv": "2507.07996",
+  "title": "Skip a Layer or Loop it? Test-Time Depth Adaptation of Pretrained LLMs",
+  "published": "2025-07-10",
+  "authors": "Ziyue Li, Yang Li, Tianyi Zhou",
+  "journal": "COMMENT: 9 pages, 7 figures",
+  "comment": "",
+  "summary": "Can a pretrained neural network adapt its architecture to different inputs without any finetuning? Do we need all layers for simple tasks, and are they adequate for challenging tasks? We found that the layers of a pretrained large language model (LLM) can be manipulated as separate modules to build a better and even shallower model customized for each test sample. In particular, each layer from the pretrained model can be skipped/pruned or repeated multiple times as recurrent neural networks (RNN), and stacked with others in arbitrary orders, yielding a chain-of-layers (CoLa) per sample. This compositional space greatly expands the scope of existing works on looped/recurrent pretrained modules, layer pruning, or early-exit networks. We develop a Monte Carlo Tree Search (MCTS) protocol to explore and identify the optimal CoLa for each sample from math and commonsense reasoning benchmarks. Compared to a static model of a fixed depth, CoLa allows shortcut paths (fast thinking), recurrence of the same layer(s) (slow thinking), and combining both, offering more flexible, dynamic architectures for different inputs. We conduct an extensive analysis of the MCTS-optimized CoLa, which leads to two key findings: (1) For >75% of samples with correct predictions by the original LLM, we can find shorter CoLa, suggesting a large space for improving inference efficiency; (2) For >60% of samples with originally incorrect predictions, we can identify CoLa achieving correct predictions, suggesting a large space of performance enhancement. Our results highlight the shortcomings of using a fixed architecture of pre-trained LLMs for inference on different samples and pave the way to unlock the generalization power of test-time depth adaptation."
+ },
+ {
+  "arxiv": "2507.18671",
+  "title": "Innovator: Scientific Continued Pretraining with Fine-grained MoE Upcycling",
+  "published": "2025-07-24",
+  "authors": "Ning Liao, Xiaoxing Wang, Zehao Lin, Weiyang Guo, Feng Hong, Shixiang Song, Geng Yu, Zihua Zhao, Sitao Xie, Longxuan Wei, Xiangqi Jin, Xiaohan Qin, Jiale Ma, Kai Chen, Jiangchao Yao, Zhouhan Lin, Junchi Yan, Zhiyu Li, Feiyu Xiong, Yanfeng Wang, Linfeng Zhang",
+  "journal": "COMMENT: Technical Report",
+  "comment": "",
+  "summary": "A large language model (LLM) with knowledge in both scientific and general tasks is the foundation of science general intelligence. However, directly continued pretraining an LLM using science data usually leads to catastrophic forgetting, which indicates severe degradation in general ability. In this report, we present Innovator, which solves this problem by upcycling a pre-trained dense LLM into a fine-grained Mixtures-of-Experts model during continued pretraining, where different experts are expected to learn science knowledge in different disciplines, and a shared expert is utilized for general tasks. Innovator introduces a four-stage upcycle training paradigm: (1) Scientific Expert Induction on discipline-specific data, (2) Fine-grained Expert Splitting via FFN dimension decomposition, (3) Science-Aware Routing warmup, and (4) Generalist-Scientist Integration training on hybrid datasets. Such a paradigm enables knowledge in the general domain, and different scientific disciplines can be decoupled, avoiding the negative influence among knowledge in different domains. With 53.3B total parameters and 13.3B activated, Innovator extends Qwen2.5-7B using a shared general expert and 64 specialized scientific experts with 8 activated. Trained on 300B tokens with tri-level quality-controlled data, Innovator achieves 25% average improvement across 30 scientific tasks with a win rate as 70%, while retaining 99% performance in general tasks. Furthermore, Innovator-Reason, which is post-trained from Innovator for reasoning boosting, exhibits excellent reasoning performance in solving complex scientific problems with improvements over 30%."
+ },
+ {
+  "arxiv": "2508.08011",
+  "title": "Progressive Depth Up-scaling via Optimal Transport",
+  "published": "2025-08-11",
+  "authors": "Mingzi Cao, Xi Wang, Nikolaos Aletras",
+  "journal": "COMMENT:",
+  "comment": "",
+  "summary": "Scaling Large Language Models (LLMs) yields performance gains but incurs substantial training costs. Depth up-scaling offers training efficiency by adding new layers to pre-trained models. However, most existing methods copy or average weights from base layers, neglecting neuron permutation differences. This limitation can potentially cause misalignment that harms performance. Inspired by applying Optimal Transport (OT) for neuron alignment, we propose Optimal Transport Depth Up-Scaling (OpT-DeUS). OpT-DeUS aligns and fuses Transformer blocks in adjacent base layers via OT for new layer creation, to mitigate neuron permutation mismatch between layers. OpT-DeUS achieves better overall performance and offers improved training efficiency than existing methods for continual pre-training and supervised fine-tuning across different model sizes. To further evaluate the impact of interpolation positions, our extensive analysis shows that inserting new layers closer to the top results in higher training efficiency due to shorter back-propagation time while obtaining additional performance gains."
+ },
+ {
+  "arxiv": "2509.01213",
+  "title": "Mitigating Catastrophic Forgetting in Continual Learning through Model Growth",
+  "published": "2025-09-01",
+  "authors": "Ege Süalp, Mina Rezaei",
+  "journal": "COMMENT:",
+  "comment": "",
+  "summary": "Catastrophic forgetting is a significant challenge in continual learning, in which a model loses prior knowledge when it is fine-tuned on new tasks. This problem is particularly critical for large language models (LLMs) undergoing continual learning, as retaining performance across diverse domains is important for their general utility. In this paper, we explore model growth, a promising strategy that leverages smaller models to expedite and structure the training of larger ones for mitigating the catastrophic forgetting problem. Although growth-based pretraining, particularly via transformer stacking, has shown promise in accelerating convergence, its impact on forgetting remains under-explored. Therefore, we evaluate whether growth-based models can retain previously learned capabilities more effectively across a sequence of fine-tuning tasks involving domain knowledge, reasoning, reading comprehension, and bias. Our findings show that both models -- one trained with growth (Stack LLM) and one without (LLM) -- exhibit improvements in domain knowledge. However, reasoning and reading comprehension degrade over time, indicating signs of catastrophic forgetting. Stack LLM consistently shows less degradation, especially in reading comprehension, suggesting enhanced retention capabilities. Interestingly, in bias evaluation, the baseline LLM becomes progressively more neutral with continued fine-tuning, while Stack LLM maintains a steady bias ratio around 60--61\\%. These results indicate that growth-based pretraining may deliver modest improvements in resisting catastrophic forgetting, though trade-offs remain in handling social biases."
+ },
+ {
+  "arxiv": "2509.06518",
+  "title": "Crown, Frame, Reverse: Layer-Wise Scaling Variants for LLM Pre-Training",
+  "published": "2025-09-08",
+  "authors": "Andrei Baroian, Kasper Notebomer",
+  "journal": "COMMENT: The reported results are skewed due to a data type mismatch. The dataset was saved with int32, but the data loader interpreted it as uint16. As a result, each 32-bit token was incorrectly split into two 16-bit tokens. Outcome: a consistent artifact where every other token is zero",
+  "comment": "",
+  "summary": "Transformer-based language models traditionally use uniform (isotropic) layer sizes, yet they ignore the diverse functional roles that different depths can play and their computational capacity needs. Building on Layer-Wise Scaling (LWS) and pruning literature, we introduce three new LWS variants - Framed, Reverse, and Crown - that redistribute FFN widths and attention heads via two or three-point linear interpolation in the pre-training stage. We present the first systematic ablation of LWS and its variants, on a fixed budget of 180M parameters, trained on 5B tokens. All models converge to similar losses and achieve better performance compared to an equal-cost isotropic baseline, without a substantial decrease in training throughput. This work represents an initial step into the design space of layer-wise architectures for pre-training, but future work should scale experiments to orders of magnitude more tokens and parameters to fully assess their potential."
+ },
+ {
+  "arxiv": "2509.11414",
+  "title": "Continually Adding New Languages to Multilingual Language Models",
+  "published": "2025-09-14",
+  "authors": "Abraham Toluwase Owodunni, Sachin Kumar",
+  "journal": "COMMENT:",
+  "comment": "",
+  "summary": "Multilingual language models are trained on a fixed set of languages, and to support new languages, the models need to be retrained from scratch. This is an expensive endeavor and is often infeasible, as model developers tend not to release their pre-training data. Naive approaches, such as continued pretraining, suffer from catastrophic forgetting; however, mitigation strategies like experience replay cannot be applied due to the lack of original pretraining data. In this work, we investigate the problem of continually adding new languages to a multilingual model, assuming access to pretraining data in only the target languages. We explore multiple approaches to address this problem and propose Layer-Selective LoRA (LayRA), which adds Low-Rank Adapters (LoRA) to selected initial and final layers while keeping the rest of the model frozen. LayRA builds on two insights: (1) LoRA reduces forgetting, and (2) multilingual models encode inputs in the source language in the initial layers, reason in English in intermediate layers, and translate back to the source language in final layers. We experiment with adding multiple combinations of Galician, Swahili, and Urdu to pretrained language models and evaluate each method on diverse multilingual tasks. We find that LayRA provides the overall best tradeoff between preserving models' capabilities in previously supported languages, while being competitive with existing approaches such as LoRA in learning new languages. We also demonstrate that using model arithmetic, the adapted models can be equipped with strong instruction following abilities without access to any instruction tuning data in the target languages."
+ },
+ {
+  "arxiv": "2510.10071",
+  "title": "ADEPT: Continual Pretraining via Adaptive Expansion and Dynamic Decoupled Tuning",
+  "published": "2025-10-11",
+  "authors": "Jinyang Zhang, Yue Fang, Hongxin Ding, Weibin Liao, Muyang Ye, Xu Chu, Junfeng Zhao, Yasha Wang",
+  "journal": "COMMENT:",
+  "comment": "",
+  "summary": "Conventional continual pretraining (CPT) for large language model (LLM) domain adaptation often suffers from catastrophic forgetting and limited domain capacity. Existing strategies adopt layer expansion, introducing additional trainable parameters to accommodate new knowledge. However, the uniform expansion and updates still entangle general and domain learning, undermining its effectiveness. Our pilot studies reveal that LLMs exhibit functional specialization, where layers and units differentially encode general-critical capabilities, suggesting that parameter expansion and optimization should be function-aware. We then propose ADEPT, Adaptive Expansion and Dynamic Decoupled Tuning for continual pretraining, a two-stage framework for domain-adaptive CPT. ADEPT first performs General-Competence Guided Selective Layer Expansion, duplicating layers least critical for the general domain to increase representational capacity while minimizing interference with general knowledge. It then applies Adaptive Unit-Wise Decoupled Tuning, disentangling parameter units within expanded layers according to their general-domain importance and assigning asymmetric learning rates to balance knowledge injection and retention. Experiments on mathematical and medical benchmarks show that ADEPT outperforms full-parameter CPT by up to 5.76% on the general domain and 5.58% on the target domain with only 15% of parameters tuned and less than 50% training time. Ablation studies, theoretical analysis, and extended investigations further demonstrate the necessity of targeted expansion and decoupled optimization, providing new principles for efficient and robust domain-adaptive CPT. Our code is open-sourced at https://github.com/PuppyKnightUniversity/ADEPT"
+ },
+ {
+  "arxiv": "2510.18871",
+  "title": "How Do LLMs Use Their Depth?",
+  "published": "2025-10-21",
+  "authors": "Akshat Gupta, Jay Yeung, Gopala Anumanchipalli, Anna Ivanova",
+  "journal": "COMMENT:",
+  "comment": "",
+  "summary": "Growing evidence suggests that large language models do not use their depth uniformly, yet we still lack a fine-grained understanding of their layer-wise prediction dynamics. In this paper, we trace the intermediate representations of several open-weight models during inference and reveal a structured and nuanced use of depth. Specifically, we propose a \"Guess-then-Refine\" framework that explains how LLMs internally structure their computations to make predictions. We first show that the top-ranked predictions in early LLM layers are composed primarily of high-frequency tokens, which act as statistical guesses proposed by the model due to the lack of contextual information. As contextual information develops deeper into the model, these initial guesses get refined into contextually appropriate tokens. We then examine the dynamic usage of layer depth through three case studies. (i) Multiple-choice task analysis shows that the model identifies appropriate options within the first half of the model and finalizes the response in the latter half. (ii) Fact recall task analysis shows that in a multi-token answer, the first token requires more computational depth than the rest. (iii) Part-of-speech analysis shows that function words are, on average, the earliest to be predicted correctly. To validate our results, we supplement probe-based analyses with causal manipulations in the form of activation patching and early-exiting experiments. Together, our results provide a detailed view of depth usage in LLMs, shedding light on the layer-by-layer computations that underlie successful predictions and providing insights for future works to improve computational efficiency in transformer-based models."
+ },
+ {
+  "arxiv": "2511.03270",
+  "title": "SCALE: Upscaled Continual Learning of Large Language Models",
+  "published": "2025-11-05",
+  "authors": "Jin-woo Lee, Junhwa Choi, Bongkyu Hwang, Jinho Choo, Bogun Kim, JeongSeon Yi, Joonseok Lee, DongYoung Jung, Jaeseon Park, Kyoungwon Park, Suk-hoon Jung",
+  "journal": "COMMENT:",
+  "comment": "",
+  "summary": "We revisit continual pre-training for large language models and argue that progress now depends more on scaling the right structure than on scaling parameters alone. We introduce SCALE, a width upscaling architecture that inserts lightweight expansion into linear modules while freezing all pre-trained parameters. This preserves the residual and attention topologies and increases capacity without perturbing the base model's original functionality. SCALE is guided by two principles: Persistent Preservation, which maintains the base model's behavior via preservation-oriented initialization and freezing of the pre-trained weights, and Collaborative Adaptation, which selectively trains a subset of expansion components to acquire new knowledge with minimal interference. We instantiate these ideas as SCALE-Preserve (preservation-first), SCALE-Adapt (adaptation-first), and SCALE-Route, an optional routing extension that performs token-level routing between preservation and adaptation heads. On a controlled synthetic biography benchmark, SCALE mitigates the severe forgetting observed with depth expansion while still acquiring new knowledge. In continual pre-training on a Korean corpus, SCALE variants achieve less forgetting on English evaluations and competitive gains on Korean benchmarks, with these variants offering the best overall stability-plasticity trade-off. Accompanying analysis clarifies when preservation provably holds and why the interplay between preservation and adaptation stabilizes optimization compared to standard continual learning setups."
+ },
+ {
+  "arxiv": "2511.08500",
+  "title": "SPEAR-MM: Selective Parameter Evaluation and Restoration via Model Merging for Efficient Financial LLM Adaptation",
+  "published": "2025-11-11",
+  "authors": "Berkcan Kapusuzoglu, Supriyo Chakraborty, Renkun Ni, Stephen Rawls, Sambit Sahu",
+  "journal": "COMMENT:",
+  "comment": "",
+  "summary": "Large language models (LLMs) adapted to financial domains often suffer from catastrophic forgetting of general reasoning capabilities essential for customer interactions and complex financial analysis. We introduce Selective Parameter Evaluation and Restoration via Model Merging (SPEAR-MM), a practical framework that preserves critical capabilities while enabling domain adaptation. Our method approximates layer-wise impact on external benchmarks through post-hoc analysis, then selectively freezes or restores transformer layers via spherical interpolation merging. Applied to LLaMA-3.1-8B for financial tasks, SPEAR-MM achieves 91.2% retention of general capabilities versus 69.7% for standard continual pretraining, while maintaining 94% of domain adaptation gains. The approach provides interpretable trade-off control and reduces computational costs by 90% crucial for resource-constrained financial institutions."
+ },
+ {
+  "arxiv": "2601.03648",
+  "title": "ELO: Efficient Layer-Specific Optimization for Continual Pretraining of Multilingual LLMs",
+  "published": "2026-01-07",
+  "authors": "HanGyeol Yoo, ChangSu Choi, Minjun Kim, Seohyun Song, SeungWoo Song, Inho Won, Jongyoul Park, Cheoneum Park, KyungTae Lim",
+  "journal": "COMMENT: 12 pages, Accepted to EACL 2026 (Industrial Track)",
+  "comment": "",
+  "summary": "We propose an efficient layer-specific optimization (ELO) method designed to enhance continual pretraining (CP) for specific languages in multilingual large language models (MLLMs). This approach addresses the common challenges of high computational cost and degradation of source language performance associated with traditional CP. The ELO method consists of two main stages: (1) ELO Pretraining, where a small subset of specific layers, identified in our experiments as the critically important first and last layers, are detached from the original MLLM and trained with the target language. This significantly reduces not only the number of trainable parameters but also the total parameters computed during the forward pass, minimizing GPU memory consumption and accelerating the training process. (2) Layer Alignment, where the newly trained layers are reintegrated into the original model, followed by a brief full fine-tuning step on a small dataset to align the parameters. Experimental results demonstrate that the ELO method achieves a training speedup of up to 6.46 times compared to existing methods, while improving target language performance by up to 6.2\\% on qualitative benchmarks and effectively preserving source language (English) capabilities."
+ },
+ {
+  "arxiv": "2601.09398",
+  "title": "Ability Transfer and Recovery via Modularized Parameters Localization",
+  "published": "2026-01-14",
+  "authors": "Songyao Jin, Kun Zhou, Wenqi Li, Peng Wang, Biwei Huang",
+  "journal": "COMMENT:",
+  "comment": "",
+  "summary": "Large language models can be continually pre-trained or fine-tuned to improve performance in specific domains, languages, or skills, but this specialization often degrades other capabilities and may cause catastrophic forgetting. We investigate how abilities are distributed within LLM parameters by analyzing module activations under domain- and language-specific inputs for closely related models. Across layers and modules, we find that ability-related activations are highly concentrated in a small set of channels (typically <5\\%), and these channels are largely disentangled with good sufficiency and stability. Building on these observations, we propose ACT (Activation-Guided Channel-wise Ability Transfer), which localizes ability-relevant channels via activation differences and selectively transfers only the corresponding parameters, followed by lightweight fine-tuning for compatibility. Experiments on multilingual mathematical and scientific reasoning show that ACT can recover forgotten abilities while preserving retained skills. It can also merge multiple specialized models to integrate several abilities into a single model with minimal interference. Our code and data will be publicly released."
+ },
+ {
+  "arxiv": "2601.13580",
+  "title": "Neural Organ Transplantation (NOT): Checkpoint-Based Modular Adaptation for Transformer Models",
+  "published": "2026-01-20",
+  "authors": "Ahmad Al-Zuraiqi",
+  "journal": "COMMENT: 27 pages, 8 figures, 16 tables. Decoder-only transformers (124M-20B parameters). Complete experimental results and reproducibility details in appendices. Code and checkpoints: https://github.com/zuraiqi/neural-organ-transplant",
+  "comment": "",
+  "summary": "We introduce Neural Organ Transplantation (NOT), a modular adaptation framework that enables trained transformer layers to function as reusable transferable checkpoints for domain adaptation. Unlike conventional fine-tuning approaches that tightly couple trained parameters to specific model instances and training data, NOT extracts contiguous layer subsets (\"donor organs\") from pre-trained models, trains them independently on domain-specific data, and saves them as standalone checkpoint files that can be transplanted into compatible recipient models without access to the original training data. Through experiments on three decoder-only transformer architectures spanning 124M to 20B parameters (GPT-2, TinyLlama, and GPT-OSS), we demonstrate that donor transplantation substantially outperforms existing adaptation methods, achieving an order-of-magnitude improvement in perplexity over LoRA while training significantly faster. The method exhibits position dependence, with early insertion positions yielding optimal results. Cross-domain transfer at billion-parameter scale reveals unexpected regularization benefits. These findings demonstrate that transformer middle layers can support efficient modular transfer for decoder-only architectures, enabling privacy-preserving expertise sharing through checkpoint distribution. We note that this approach is currently limited to decoder-only models; preliminary experiments on encoder-based architectures show reduced effectiveness."
+ },
+ {
+  "arxiv": "2601.20009",
+  "title": "LinguaMap: Which Layers of LLMs Speak Your Language and How to Tune Them?",
+  "published": "2026-01-27",
+  "authors": "J. Ben Tamo, Daniel Carlander-Reuterfelt, Jonathan Rubin, Dezhi Hong, Mingxian Wang, Oleg Poliannikov",
+  "journal": "COMMENT:",
+  "comment": "",
+  "summary": "Despite multilingual pretraining, large language models often struggle with non-English tasks, particularly in language control, the ability to respond in the intended language. We identify and characterize two key failure modes: the multilingual transfer bottleneck (correct language, incorrect task response) and the language consistency bottleneck (correct task response, wrong language). To systematically surface these issues, we design a four-scenario evaluation protocol spanning MMLU, MGSM, and XQuAD benchmarks. To probe these issues with interpretability, we extend logit lens analysis to track language probabilities layer by layer and compute cross-lingual semantic similarity of hidden states. The results reveal a three-phase internal structure: early layers align inputs into a shared semantic space, middle layers perform task reasoning, and late layers drive language-specific generation. Guided by these insights, we introduce selective fine-tuning of only the final layers responsible for language control. On Qwen-3-32B and Bloom-7.1B, this method achieves over 98 percent language consistency across six languages while fine-tuning only 3-5 percent of parameters, without sacrificing task accuracy. Importantly, this result is nearly identical to that of full-scope fine-tuning (for example, above 98 percent language consistency for both methods across all prompt scenarios) but uses a fraction of the computational resources. To the best of our knowledge, this is the first approach to leverage layer-localization of language control for efficient multilingual adaptation."
+ },
+ {
+  "arxiv": "2602.11137",
+  "title": "Weight Decay Improves Language Model Plasticity",
+  "published": "2026-02-11",
+  "authors": "Tessa Han, Sebastian Bordt, Hanlin Zhang, Sham Kakade",
+  "journal": "COMMENT:",
+  "comment": "",
+  "summary": "Large language models are typically trained in two broad phases: pretraining to produce a base model, followed by further training to improve downstream performance. However, hyperparameter optimization and scaling laws are studied primarily from the perspective of the base model's validation loss, overlooking a crucial model property: downstream adaptability. In this work, we study pretraining from the perspective of model plasticity, that is, the ability of the base model to successfully adapt to downstream tasks upon additional training. We focus on the role of weight decay, a key regularization parameter during pretraining, and show through systematic experiments that larger weight decay increases the plasticity of the pretrained model, resulting in greater performance gains downstream after fine-tuning. This effect can lead to counterintuitive trade-offs where base models that perform worse after pretraining can perform better after further training. Further investigation of weight decay's mechanistic effects on model behavior reveals that it encourages linearly separable representations, regularizes attention matrices, and reduces overfitting on the training data. Together, these findings highlight the importance of pretrained model plasticity, the limits of using cross-entropy loss as the sole metric for hyperparameter optimization, and the multifaceted role that a single optimization hyperparameter plays in shaping model behavior."
+ },
+ {
+  "arxiv": "2603.23701",
+  "title": "The Diminishing Returns of Early-Exit Decoding in Modern LLMs",
+  "published": "2026-03-24",
+  "authors": "Rui Wei, Rui Du, Hanfei Yu, Devesh Tiwari, Jian Li, Zhaozhuo Xu, Hao Wang",
+  "journal": "COMMENT:",
+  "comment": "",
+  "summary": "In Large Language Model (LLM) inference, early-exit refers to stopping computation at an intermediate layer once the prediction is sufficiently confident, thereby reducing latency and cost. However, recent LLMs adopt improved pretraining recipes and architectures that reduce layer redundancy, potentially limiting early-exit opportunities. We re-evaluate layer-wise early-exit in modern LLMs and analyze how intermediate representations evolve during training. We introduce a metric to quantify a model's intrinsic suitability for early-exit and propose a benchmark for researchers to explore the potential early-exit benefits on different models and workloads. Our results show a diminishing trend in early-exit effectiveness across newer model generations. We further find that dense transformers generally offer greater early-exit potential than Mixture-of-Experts and State Space Models. In addition, larger models, particularly those with more than 20 billion parameters, and base pretrained models without specialized tuning tend to exhibit higher early-exit potential."
+ },
+ {
+  "arxiv": "2604.00489",
+  "title": "Adapting Text LLMs to Speech via Multimodal Depth Up-Scaling",
+  "published": "2026-04-01",
+  "authors": "Kazuki Yano, Jun Suzuki, Shinji Watanabe",
+  "journal": "COMMENT:",
+  "comment": "",
+  "summary": "Adapting pre-trained text Large Language Models (LLMs) into Speech Language Models (Speech LMs) via continual pretraining on speech data is promising, but often degrades the original text capabilities. We propose Multimodal Depth Upscaling, an extension of an emerging strategy in continual LLM pre-training, where new transformer layers are inserted into a frozen text LLM and only the added layers are trained on speech data. Experiments with SmolLM2-360M and SmolLM2-1.7B on 48k hours of English Automatic Speech Recognition (ASR) data show that depth up-scaling achieves ASR comparable to full fine-tuning while causing far less text degradation than both full fine-tuning and Low-Rank Adaptation (LoRA). We further show that incorporating E-Branchformer, an architecture designed for speech recognition, as the inserted layers achieves ASR that matches or surpasses full fine-tuning on the larger model while reducing text degradation by over 75% with 60% fewer trainable parameters."
+ },
+ {
+  "arxiv": "2605.02105",
+  "title": "Sharpness-Aware Pretraining Mitigates Catastrophic Forgetting",
+  "published": "2026-05-04",
+  "authors": "Ishaan Watts, Catherine Li, Sachin Goyal, Jacob Mitchell Springer, Aditi Raghunathan",
+  "journal": "COMMENT: 43 pages, 64 figures, 9 tables, accepted to ICML2026",
+  "comment": "",
+  "summary": "Pretraining optimizers are tuned to produce the strongest possible base model, on the assumption that a stronger starting point yields a stronger model after subsequent changes like post-training and quantization. This overlooks the geometry of the base model which controls how much of the base model's capabilities survive subsequent parameter updates. We study three pretraining optimization approaches that bias optimization toward flatter minima: Sharpness-Aware Minimization (SAM), large learning rates, and shortened learning rate annealing periods. Across model sizes ranging from 20M to 150M parameters, we find that these interventions consistently improve downstream performance after post-training on five common datasets with up to 80% less forgetting. These principles hold at scale: a short SAM mid-training phase applied to an existing OLMo-2-1B checkpoint reduces forgetting by 31% after MetaMath post-training and by 40% after 4-bit quantization."
+ },
+ {
+  "arxiv": "2605.11416",
+  "title": "Freeze Deep, Train Shallow: Interpretable Layer Allocation for Continued Pre-Training",
+  "published": "2026-05-12",
+  "authors": "Yu-Hang Wu, Qin-Yuan Liu, Qiu-Yang Zhao, Bo Jiang, Jiang-Feng Yang, Qing-Wei Cong",
+  "journal": "COMMENT:",
+  "comment": "",
+  "summary": "Selective layer-wise updates are essential for low-cost continued pre-training of Large Language Models (LLMs), yet determining which layers to freeze or train remains an empirical black-box problem due to the lack of interpretable guidance. To address this issue, we propose LayerTracer, an architecture-agnostic diagnostic framework that reveals the evolution patterns of layer-wise representations and stability by locating task execution positions and quantifying layer sensitivity. Analysis results reveal that deep layers act as critical regions for task execution and maintain high stability against disruptive updates. Guided by this finding, we conduct three controlled continued pre-training trials to compare diverse freeze-train strategies, demonstrating that training shallow layers while freezing deep layers consistently outperforms full-parameter fine-tuning and the opposite allocation on both C-Eval and CMMLU benchmarks. We further present a hybrid model case study, which validates that placing high-quality pre-trained modules in deep layers effectively preserves inherent knowledge of the model. This work delivers a low-cost and interpretable solution for resource-constrained teams, offering actionable guidance for layer-wise parameter allocation in continued pre-training and hybrid model construction."
+ },
+ {
+  "arxiv": "2606.07978",
+  "title": "MechLens: Late Crystallization of Factual Knowledge Explains Intervention Effectiveness in Language Models",
+  "published": "2026-06-06",
+  "authors": "Xueping Gao",
+  "journal": "COMMENT:",
+  "comment": "",
+  "summary": "Understanding where LLMs store factual knowledge is critical for hallucination mitigation. We systematically quantify Late Crystallization: factual knowledge does not gradually emerge across layers but \"crystallizes\" abruptly at the final layers. Across five model families (Pythia, Gemma, Qwen2.5, Llama-3.1, Mistral; 0.5--14B), 26.8%--93.4% of correct answers never enter top-10 predictions at any intermediate layer, with late emergence (>80% depth) consistent across architectures. Cross-scale (Qwen2.5-14B) and cross-benchmark (MMLU: 98.2%) results confirm generality; tuned lens rules out probe artifacts. A sentiment-classification control (0.5% for Qwen vs. 85.9% factual; 2.0% for Mistral vs. 26.8%) confirms the phenomenon is specific to factual recall. Late Crystallization yields a crystallization-guided intervention principle: CAA outperforms DoLa on moderate-crystallization models (Llama, Mistral; p<0.001), with a directionally consistent reversal on high-crystallization Qwen (+25.4% vs. +15.5% MC1, p=0.069). LayerNorm ablation shows crystallization is intrinsic to the residual stream; LN scaling (x1.2) yields +11.8% MC1 with zero inference overhead. We further reveal a Computability-Memorization Spectrum: computable knowledge crystallizes earlier (layer 22.1/28) than memorized facts (28.0/28). We release MechLens supporting five model families."
+ },
+ {
+  "arxiv": "2606.09932",
+  "title": "When RL Fails after SFT: Rejuvenating Model Plasticity for Robust SFT-to-RL Handoff",
+  "published": "2026-06-07",
+  "authors": "Runze Liu, Jiashun Liu, Xu Wan, Yuqian Fu, Ling Pan",
+  "journal": "COMMENT:",
+  "comment": "",
+  "summary": "Supervised Fine-Tuning (SFT) followed by Reinforcement Learning (RL) has become a standard pipeline for Large Language Model (LLM) post-training. SFT is expected to provide a useful behavioral prior for RL to further enhance model capabilities. However, checkpoints with excessive SFT often show limited improvement during RL. We attribute this failure to the loss of model plasticity: the reduced ability of an SFT-initialized policy to be effectively reshaped by subsequent RL. To better understand this phenomenon, we conduct detailed analysis from multiple perspectives, including parameter changes, output spaces, and RL optimization dynamics. Our results show that models from excessive SFT tend to produce over-confident token distributions and exhibit sharp parameter landscapes, which make them harder to optimize in the RL stage. To enable a more robust SFT-to-RL handoff, we propose \\texttt{Rejuvenation}, a simple yet effective method that restores plasticity while preserving useful SFT-acquired priors. Rejuvenation leverages base-anchored model fusion to reduce excessive SFT-induced drift with targeted neuron reset to mitigate model rigidity. Experimental results on both math reasoning tasks and agentic tasks demonstrate that our approach consistently improves RL performance on over-trained SFT models, while also enhancing generalization to out-of-distribution tasks."
+ },
+ {
+  "arxiv": "2607.25663",
+  "title": "Localized Adaptation Reveals Distinct Learning Signatures in Transformers",
+  "published": "2026-07-28",
+  "authors": "Rebecca Ramnauth, Brian Scassellati",
+  "journal": "COMMENT: Main text: 8 pages, 2 figures; appendix: 13 tables, 10 figures; code and data available at https://github.com/rramnauth2220/adaptation-geometries",
+  "comment": "",
+  "summary": "Transformer adaptation is typically distributed across model depth, even when the intended change is narrow. We investigate how adaptation site shapes what a model learns, how well that learning generalizes, and how selectively it is applied. We introduce a controlled benchmark spanning five objectives (lexical binding, factual association, behavioral policy learning, causal mapping, and procedural reasoning) and define each objective's \"adaptation geometry\" as its profile of acquisition, transfer, and boundedness under full-stack and early-, middle-, or late-layer LoRA. The objectives exhibit distinct geometries. Lexical binding favors early-layer adaptation for acquisition and boundedness but requires broader updates for transfer; factual association favors later layers among localized adapters; behavioral learning separates late-layer action acquisition from middle-layer policy gating; and causal and procedural transfer benefit most from middle- or full-stack adaptation. These patterns largely persist under parameter-matched controls, and most corresponding directional contrasts replicate across five model families. These findings establish adaptation site as a key design variable for controlling what models learn, generalize, and leave unchanged."
+ }
+]

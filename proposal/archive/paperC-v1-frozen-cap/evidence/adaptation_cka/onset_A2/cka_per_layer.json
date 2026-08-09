@@ -1,0 +1,390 @@
+{
+  "tag": "A2_lora_r160",
+  "ft_mode": "hf_dir",
+  "base_meta": {
+    "mode": "base",
+    "num_hidden_layers": 32,
+    "base_model": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/models/OLMo-2-1124-7B"
+  },
+  "ft_meta": {
+    "mode": "hf_dir",
+    "num_hidden_layers": 32,
+    "ckpt": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/outputs/paperC_pc1_squad_A2_lora_r160/merged"
+  },
+  "config": {
+    "n_windows": 128,
+    "seq_len": 2048,
+    "seed": 42,
+    "per_batch_subsample": 32,
+    "world_size": 8,
+    "tok_path": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/models/OLMo-2-1124-7B",
+    "data_path": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/data/squad_val.jsonl",
+    "total_vectors_per_layer": 4096
+  },
+  "per_layer": [
+    {
+      "name": "L00",
+      "ft_hidden_index": 0,
+      "base_hidden_index": 0,
+      "n_vectors": 4096,
+      "dim_ft": 4096,
+      "dim_base": 4096,
+      "linear_cka": 0.999999624342921,
+      "mean_cosine": 0.9999986554960147,
+      "mean_dnorm_ratio": 0.0016809747993739778
+    },
+    {
+      "name": "L01",
+      "ft_hidden_index": 1,
+      "base_hidden_index": 1,
+      "n_vectors": 4096,
+      "dim_ft": 4096,
+      "dim_base": 4096,
+      "linear_cka": 0.9997856067807357,
+      "mean_cosine": 0.9992473277864837,
+      "mean_dnorm_ratio": 0.03734389700358794
+    },
+    {
+      "name": "L02",
+      "ft_hidden_index": 2,
+      "base_hidden_index": 2,
+      "n_vectors": 4096,
+      "dim_ft": 4096,
+      "dim_base": 4096,
+      "linear_cka": 0.9995103875913103,
+      "mean_cosine": 0.9974692886256866,
+      "mean_dnorm_ratio": 0.06960352856747186
+    },
+    {
+      "name": "L03",
+      "ft_hidden_index": 3,
+      "base_hidden_index": 3,
+      "n_vectors": 4096,
+      "dim_ft": 4096,
+      "dim_base": 4096,
+      "linear_cka": 0.9989975646527232,
+      "mean_cosine": 0.9951920099775022,
+      "mean_dnorm_ratio": 0.09604055993970131
+    },
+    {
+      "name": "L04",
+      "ft_hidden_index": 4,
+      "base_hidden_index": 4,
+      "n_vectors": 4096,
+      "dim_ft": 4096,
+      "dim_base": 4096,
+      "linear_cka": 0.9974470723950324,
+      "mean_cosine": 0.9919954881743399,
+      "mean_dnorm_ratio": 0.12215873848244886
+    },
+    {
+      "name": "L05",
+      "ft_hidden_index": 5,
+      "base_hidden_index": 5,
+      "n_vectors": 4096,
+      "dim_ft": 4096,
+      "dim_base": 4096,
+      "linear_cka": 0.9965051396044791,
+      "mean_cosine": 0.9891842622415017,
+      "mean_dnorm_ratio": 0.1428150356341231
+    },
+    {
+      "name": "L06",
+      "ft_hidden_index": 6,
+      "base_hidden_index": 6,
+      "n_vectors": 4096,
+      "dim_ft": 4096,
+      "dim_base": 4096,
+      "linear_cka": 0.9958676749135457,
+      "mean_cosine": 0.9868914060623506,
+      "mean_dnorm_ratio": 0.15747040773751664
+    },
+    {
+      "name": "L07",
+      "ft_hidden_index": 7,
+      "base_hidden_index": 7,
+      "n_vectors": 4096,
+      "dim_ft": 4096,
+      "dim_base": 4096,
+      "linear_cka": 0.9949825115667938,
+      "mean_cosine": 0.9849837748645084,
+      "mean_dnorm_ratio": 0.16775351413467732
+    },
+    {
+      "name": "L08",
+      "ft_hidden_index": 8,
+      "base_hidden_index": 8,
+      "n_vectors": 4096,
+      "dim_ft": 4096,
+      "dim_base": 4096,
+      "linear_cka": 0.9943077769608752,
+      "mean_cosine": 0.9816099030371522,
+      "mean_dnorm_ratio": 0.18473014646222197
+    },
+    {
+      "name": "L09",
+      "ft_hidden_index": 9,
+      "base_hidden_index": 9,
+      "n_vectors": 4096,
+      "dim_ft": 4096,
+      "dim_base": 4096,
+      "linear_cka": 0.9929274356048332,
+      "mean_cosine": 0.9780234619509766,
+      "mean_dnorm_ratio": 0.20187448611568753
+    },
+    {
+      "name": "L10",
+      "ft_hidden_index": 10,
+      "base_hidden_index": 10,
+      "n_vectors": 4096,
+      "dim_ft": 4096,
+      "dim_base": 4096,
+      "linear_cka": 0.9913742102073272,
+      "mean_cosine": 0.9749057881504767,
+      "mean_dnorm_ratio": 0.2147299222945599
+    },
+    {
+      "name": "L11",
+      "ft_hidden_index": 11,
+      "base_hidden_index": 11,
+      "n_vectors": 4096,
+      "dim_ft": 4096,
+      "dim_base": 4096,
+      "linear_cka": 0.9878277807752488,
+      "mean_cosine": 0.9705036449051764,
+      "mean_dnorm_ratio": 0.23077591131574143
+    },
+    {
+      "name": "L12",
+      "ft_hidden_index": 12,
+      "base_hidden_index": 12,
+      "n_vectors": 4096,
+      "dim_ft": 4096,
+      "dim_base": 4096,
+      "linear_cka": 0.98508768077453,
+      "mean_cosine": 0.9651108475731547,
+      "mean_dnorm_ratio": 0.24984035202492216
+    },
+    {
+      "name": "L13",
+      "ft_hidden_index": 13,
+      "base_hidden_index": 13,
+      "n_vectors": 4096,
+      "dim_ft": 4096,
+      "dim_base": 4096,
+      "linear_cka": 0.9823454417110792,
+      "mean_cosine": 0.9586712110502495,
+      "mean_dnorm_ratio": 0.2703994016234834
+    },
+    {
+      "name": "L14",
+      "ft_hidden_index": 14,
+      "base_hidden_index": 14,
+      "n_vectors": 4096,
+      "dim_ft": 4096,
+      "dim_base": 4096,
+      "linear_cka": 0.9811752598504857,
+      "mean_cosine": 0.954785257312043,
+      "mean_dnorm_ratio": 0.2821627271039274
+    },
+    {
+      "name": "L15",
+      "ft_hidden_index": 15,
+      "base_hidden_index": 15,
+      "n_vectors": 4096,
+      "dim_ft": 4096,
+      "dim_base": 4096,
+      "linear_cka": 0.9807037741472785,
+      "mean_cosine": 0.951592862066013,
+      "mean_dnorm_ratio": 0.2927920011530186
+    },
+    {
+      "name": "L16",
+      "ft_hidden_index": 16,
+      "base_hidden_index": 16,
+      "n_vectors": 4096,
+      "dim_ft": 4096,
+      "dim_base": 4096,
+      "linear_cka": 0.9778693697395652,
+      "mean_cosine": 0.9471308920112096,
+      "mean_dnorm_ratio": 0.30633450480301483
+    },
+    {
+      "name": "L17",
+      "ft_hidden_index": 17,
+      "base_hidden_index": 17,
+      "n_vectors": 4096,
+      "dim_ft": 4096,
+      "dim_base": 4096,
+      "linear_cka": 0.9739692759352712,
+      "mean_cosine": 0.941204993081125,
+      "mean_dnorm_ratio": 0.32296777168866286
+    },
+    {
+      "name": "L18",
+      "ft_hidden_index": 18,
+      "base_hidden_index": 18,
+      "n_vectors": 4096,
+      "dim_ft": 4096,
+      "dim_base": 4096,
+      "linear_cka": 0.9708151363376101,
+      "mean_cosine": 0.9354952486037936,
+      "mean_dnorm_ratio": 0.33733166909713796
+    },
+    {
+      "name": "L19",
+      "ft_hidden_index": 19,
+      "base_hidden_index": 19,
+      "n_vectors": 4096,
+      "dim_ft": 4096,
+      "dim_base": 4096,
+      "linear_cka": 0.9659521726609083,
+      "mean_cosine": 0.9306244558514538,
+      "mean_dnorm_ratio": 0.349124412401155
+    },
+    {
+      "name": "L20",
+      "ft_hidden_index": 20,
+      "base_hidden_index": 20,
+      "n_vectors": 4096,
+      "dim_ft": 4096,
+      "dim_base": 4096,
+      "linear_cka": 0.9616299383331588,
+      "mean_cosine": 0.9235596778925028,
+      "mean_dnorm_ratio": 0.36581499937007594
+    },
+    {
+      "name": "L21",
+      "ft_hidden_index": 21,
+      "base_hidden_index": 21,
+      "n_vectors": 4096,
+      "dim_ft": 4096,
+      "dim_base": 4096,
+      "linear_cka": 0.9547660107096948,
+      "mean_cosine": 0.9158305772628641,
+      "mean_dnorm_ratio": 0.38267590212696445
+    },
+    {
+      "name": "L22",
+      "ft_hidden_index": 22,
+      "base_hidden_index": 22,
+      "n_vectors": 4096,
+      "dim_ft": 4096,
+      "dim_base": 4096,
+      "linear_cka": 0.9486538512532697,
+      "mean_cosine": 0.9076361076791097,
+      "mean_dnorm_ratio": 0.3989968464164852
+    },
+    {
+      "name": "L23",
+      "ft_hidden_index": 23,
+      "base_hidden_index": 23,
+      "n_vectors": 4096,
+      "dim_ft": 4096,
+      "dim_base": 4096,
+      "linear_cka": 0.9416307485509456,
+      "mean_cosine": 0.8970604744062531,
+      "mean_dnorm_ratio": 0.4196186298192772
+    },
+    {
+      "name": "L24",
+      "ft_hidden_index": 24,
+      "base_hidden_index": 24,
+      "n_vectors": 4096,
+      "dim_ft": 4096,
+      "dim_base": 4096,
+      "linear_cka": 0.9325865496003539,
+      "mean_cosine": 0.8842493020215028,
+      "mean_dnorm_ratio": 0.4429434267921561
+    },
+    {
+      "name": "L25",
+      "ft_hidden_index": 25,
+      "base_hidden_index": 25,
+      "n_vectors": 4096,
+      "dim_ft": 4096,
+      "dim_base": 4096,
+      "linear_cka": 0.9248891950847485,
+      "mean_cosine": 0.8710670607271987,
+      "mean_dnorm_ratio": 0.4665914890750013
+    },
+    {
+      "name": "L26",
+      "ft_hidden_index": 26,
+      "base_hidden_index": 26,
+      "n_vectors": 4096,
+      "dim_ft": 4096,
+      "dim_base": 4096,
+      "linear_cka": 0.9144900369803486,
+      "mean_cosine": 0.8547141493974423,
+      "mean_dnorm_ratio": 0.4945646949200951
+    },
+    {
+      "name": "L27",
+      "ft_hidden_index": 27,
+      "base_hidden_index": 27,
+      "n_vectors": 4096,
+      "dim_ft": 4096,
+      "dim_base": 4096,
+      "linear_cka": 0.9033416721828122,
+      "mean_cosine": 0.8364944246259087,
+      "mean_dnorm_ratio": 0.5252069125396504
+    },
+    {
+      "name": "L28",
+      "ft_hidden_index": 28,
+      "base_hidden_index": 28,
+      "n_vectors": 4096,
+      "dim_ft": 4096,
+      "dim_base": 4096,
+      "linear_cka": 0.8829371150689471,
+      "mean_cosine": 0.8132540965352024,
+      "mean_dnorm_ratio": 0.5643052307236727
+    },
+    {
+      "name": "L29",
+      "ft_hidden_index": 29,
+      "base_hidden_index": 29,
+      "n_vectors": 4096,
+      "dim_ft": 4096,
+      "dim_base": 4096,
+      "linear_cka": 0.8650079346327746,
+      "mean_cosine": 0.7889783208921315,
+      "mean_dnorm_ratio": 0.605349732134425
+    },
+    {
+      "name": "L30",
+      "ft_hidden_index": 30,
+      "base_hidden_index": 30,
+      "n_vectors": 4096,
+      "dim_ft": 4096,
+      "dim_base": 4096,
+      "linear_cka": 0.8087089571855522,
+      "mean_cosine": 0.7524905294829287,
+      "mean_dnorm_ratio": 0.658632374612343
+    },
+    {
+      "name": "L31",
+      "ft_hidden_index": 31,
+      "base_hidden_index": 31,
+      "n_vectors": 4096,
+      "dim_ft": 4096,
+      "dim_base": 4096,
+      "linear_cka": 0.6578945264645112,
+      "mean_cosine": 0.7016653468873608,
+      "mean_dnorm_ratio": 0.7181520150380808
+    },
+    {
+      "name": "L32",
+      "ft_hidden_index": 32,
+      "base_hidden_index": 32,
+      "n_vectors": 4096,
+      "dim_ft": 4096,
+      "dim_base": 4096,
+      "linear_cka": 0.6184875326290367,
+      "mean_cosine": 0.6203491751087523,
+      "mean_dnorm_ratio": 0.8366007632321248
+    }
+  ],
+  "sanity": {}
+}

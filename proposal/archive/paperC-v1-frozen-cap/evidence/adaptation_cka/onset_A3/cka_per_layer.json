@@ -1,0 +1,222 @@
+{
+  "tag": "A3_fromscratch",
+  "ft_mode": "pruned",
+  "base_meta": {
+    "mode": "base",
+    "num_hidden_layers": 32,
+    "base_model": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/models/OLMo-2-1124-7B"
+  },
+  "ft_meta": {
+    "mode": "pruned",
+    "keep_front_layers": 14,
+    "n_fresh_layers": 2,
+    "num_hidden_layers": 16,
+    "ckpt_step": 1000,
+    "ckpt": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/outputs/paperC_pc1_squad_A3/final.pt"
+  },
+  "config": {
+    "n_windows": 128,
+    "seq_len": 2048,
+    "seed": 42,
+    "per_batch_subsample": 32,
+    "world_size": 8,
+    "tok_path": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/models/OLMo-2-1124-7B",
+    "data_path": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/data/squad_val.jsonl",
+    "total_vectors_per_layer": 4096
+  },
+  "per_layer": [
+    {
+      "name": "L00",
+      "ft_hidden_index": 0,
+      "base_hidden_index": 0,
+      "n_vectors": 4096,
+      "dim_ft": 4096,
+      "dim_base": 4096,
+      "linear_cka": 0.2883902786890066,
+      "mean_cosine": 0.0004838563223333494,
+      "mean_dnorm_ratio": 1.1433039007792316
+    },
+    {
+      "name": "L01",
+      "ft_hidden_index": 1,
+      "base_hidden_index": 1,
+      "n_vectors": 4096,
+      "dim_ft": 4096,
+      "dim_base": 4096,
+      "linear_cka": 0.25751172455034066,
+      "mean_cosine": 0.0010951453089196885,
+      "mean_dnorm_ratio": 41.75569148394802
+    },
+    {
+      "name": "L02",
+      "ft_hidden_index": 2,
+      "base_hidden_index": 2,
+      "n_vectors": 4096,
+      "dim_ft": 4096,
+      "dim_base": 4096,
+      "linear_cka": 0.253156206542991,
+      "mean_cosine": 0.0003412412217623563,
+      "mean_dnorm_ratio": 47.05579566388209
+    },
+    {
+      "name": "L03",
+      "ft_hidden_index": 3,
+      "base_hidden_index": 3,
+      "n_vectors": 4096,
+      "dim_ft": 4096,
+      "dim_base": 4096,
+      "linear_cka": 0.2556015454647243,
+      "mean_cosine": -0.0011100465789012559,
+      "mean_dnorm_ratio": 43.115959423013095
+    },
+    {
+      "name": "L04",
+      "ft_hidden_index": 4,
+      "base_hidden_index": 4,
+      "n_vectors": 4096,
+      "dim_ft": 4096,
+      "dim_base": 4096,
+      "linear_cka": 0.2698229513855789,
+      "mean_cosine": 0.0028397459657935123,
+      "mean_dnorm_ratio": 39.52885124890723
+    },
+    {
+      "name": "L05",
+      "ft_hidden_index": 5,
+      "base_hidden_index": 5,
+      "n_vectors": 4096,
+      "dim_ft": 4096,
+      "dim_base": 4096,
+      "linear_cka": 0.29677906769750995,
+      "mean_cosine": 0.0017853549660759747,
+      "mean_dnorm_ratio": 36.564227854936924
+    },
+    {
+      "name": "L06",
+      "ft_hidden_index": 6,
+      "base_hidden_index": 6,
+      "n_vectors": 4096,
+      "dim_ft": 4096,
+      "dim_base": 4096,
+      "linear_cka": 0.3071822521089635,
+      "mean_cosine": -0.000119415490285859,
+      "mean_dnorm_ratio": 34.37751194242396
+    },
+    {
+      "name": "L07",
+      "ft_hidden_index": 7,
+      "base_hidden_index": 7,
+      "n_vectors": 4096,
+      "dim_ft": 4096,
+      "dim_base": 4096,
+      "linear_cka": 0.32941739898284633,
+      "mean_cosine": 0.0014382065361122423,
+      "mean_dnorm_ratio": 31.892659990959384
+    },
+    {
+      "name": "L08",
+      "ft_hidden_index": 8,
+      "base_hidden_index": 8,
+      "n_vectors": 4096,
+      "dim_ft": 4096,
+      "dim_base": 4096,
+      "linear_cka": 0.32421644167169,
+      "mean_cosine": 0.0015155361099188059,
+      "mean_dnorm_ratio": 30.744462527393743
+    },
+    {
+      "name": "L09",
+      "ft_hidden_index": 9,
+      "base_hidden_index": 9,
+      "n_vectors": 4096,
+      "dim_ft": 4096,
+      "dim_base": 4096,
+      "linear_cka": 0.30606904128418966,
+      "mean_cosine": 0.0014416483514646053,
+      "mean_dnorm_ratio": 30.10384808933642
+    },
+    {
+      "name": "L10",
+      "ft_hidden_index": 10,
+      "base_hidden_index": 10,
+      "n_vectors": 4096,
+      "dim_ft": 4096,
+      "dim_base": 4096,
+      "linear_cka": 0.29864556133273057,
+      "mean_cosine": 0.0014413157333230016,
+      "mean_dnorm_ratio": 29.727643499284433
+    },
+    {
+      "name": "L11",
+      "ft_hidden_index": 11,
+      "base_hidden_index": 11,
+      "n_vectors": 4096,
+      "dim_ft": 4096,
+      "dim_base": 4096,
+      "linear_cka": 0.30401116673004736,
+      "mean_cosine": 0.0003445213445550269,
+      "mean_dnorm_ratio": 29.40936729606917
+    },
+    {
+      "name": "L12",
+      "ft_hidden_index": 12,
+      "base_hidden_index": 12,
+      "n_vectors": 4096,
+      "dim_ft": 4096,
+      "dim_base": 4096,
+      "linear_cka": 0.2986351887627672,
+      "mean_cosine": 0.0018048101012188937,
+      "mean_dnorm_ratio": 29.198890609241218
+    },
+    {
+      "name": "L13",
+      "ft_hidden_index": 13,
+      "base_hidden_index": 13,
+      "n_vectors": 4096,
+      "dim_ft": 4096,
+      "dim_base": 4096,
+      "linear_cka": 0.3042748431599799,
+      "mean_cosine": 0.0002628300951651396,
+      "mean_dnorm_ratio": 29.120081970932816
+    },
+    {
+      "name": "L14",
+      "ft_hidden_index": 14,
+      "base_hidden_index": 14,
+      "n_vectors": 4096,
+      "dim_ft": 4096,
+      "dim_base": 4096,
+      "linear_cka": 0.3013028340204303,
+      "mean_cosine": -0.0007497394674382727,
+      "mean_dnorm_ratio": 28.95193286015788
+    },
+    {
+      "name": "L15_fresh",
+      "ft_hidden_index": 15,
+      "base_hidden_index": -1,
+      "n_vectors": 4096,
+      "dim_ft": 4096,
+      "dim_base": null,
+      "linear_cka": null,
+      "mean_cosine": null,
+      "mean_dnorm_ratio": null
+    },
+    {
+      "name": "L16_fresh",
+      "ft_hidden_index": 16,
+      "base_hidden_index": -1,
+      "n_vectors": 4096,
+      "dim_ft": 4096,
+      "dim_base": null,
+      "linear_cka": null,
+      "mean_cosine": null,
+      "mean_dnorm_ratio": null
+    }
+  ],
+  "sanity": {
+    "pruned_front_min_cka": 0.253156206542991,
+    "pruned_front_threshold": 0.999,
+    "pruned_front_pass_0999": false,
+    "pruned_front_pass_099": false
+  }
+}

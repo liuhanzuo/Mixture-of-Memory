@@ -1,0 +1,389 @@
+{
+ "2606.16897": {
+  "_http": 200,
+  "paperId": "144f157a2dc63fb56f2e1df209fca2d3e2c76eeb",
+  "externalIds": {
+   "ArXiv": "2606.16897",
+   "CorpusId": 289301389
+  },
+  "publicationVenue": null,
+  "title": "Contrastive-Difference CKA Reveals Concept-Specific Structural Alignment Across Language Model Architectures",
+  "venue": "",
+  "year": 2026,
+  "publicationTypes": null,
+  "matchScore": 315.4903
+ },
+ "2510.18871": {
+  "_http": 200,
+  "paperId": "9975a375aeb73e2f79df71356782cd33d77bef62",
+  "externalIds": {
+   "DBLP": "journals/corr/abs-2510-18871",
+   "ArXiv": "2510.18871",
+   "DOI": "10.48550/arXiv.2510.18871",
+   "CorpusId": 282246570
+  },
+  "publicationVenue": {
+   "id": "1901e811-ee72-4b20-8f7e-de08cd395a10",
+   "name": "arXiv.org",
+   "alternate_names": [
+    "ArXiv"
+   ],
+   "issn": "2331-8422",
+   "url": "https://arxiv.org"
+  },
+  "title": "How Do LLMs Use Their Depth?",
+  "venue": "arXiv.org",
+  "year": 2025,
+  "publicationTypes": [
+   "JournalArticle"
+  ],
+  "matchScore": 155.37009
+ },
+ "2602.11137": {
+  "_http": 200,
+  "paperId": "16f1697704b6a3dd026f37e404746d1654b0099f",
+  "externalIds": {
+   "DBLP": "journals/corr/abs-2602-11137",
+   "ArXiv": "2602.11137",
+   "DOI": "10.48550/arXiv.2602.11137",
+   "CorpusId": 285470749
+  },
+  "publicationVenue": {
+   "id": "1901e811-ee72-4b20-8f7e-de08cd395a10",
+   "name": "arXiv.org",
+   "alternate_names": [
+    "ArXiv"
+   ],
+   "issn": "2331-8422",
+   "url": "https://arxiv.org"
+  },
+  "title": "Weight Decay Improves Language Model Plasticity",
+  "venue": "arXiv.org",
+  "year": 2026,
+  "publicationTypes": [
+   "JournalArticle"
+  ],
+  "matchScore": 200.5356
+ },
+ "2503.04429": {
+  "_http": 200,
+  "paperId": "27ea167940e4c466739d728f6d5cc6624a42681b",
+  "externalIds": {
+   "DBLP": "conf/icml/OozeerNPLHA25",
+   "ArXiv": "2503.04429",
+   "DOI": "10.48550/arXiv.2503.04429",
+   "CorpusId": 276812830
+  },
+  "publicationVenue": {
+   "id": "fc0a208c-acb7-47dc-a0d4-af8190e21d29",
+   "name": "International Conference on Machine Learning",
+   "type": "conference",
+   "alternate_names": [
+    "ICML",
+    "Int Conf Mach Learn"
+   ],
+   "url": "https://icml.cc/"
+  },
+  "title": "Activation Space Interventions Can Be Transferred Between Large Language Models",
+  "venue": "International Conference on Machine Learning",
+  "year": 2025,
+  "publicationTypes": [
+   "JournalArticle",
+   "Conference"
+  ],
+  "matchScore": 241.91013
+ },
+ "2109.08406": {
+  "_http": 200,
+  "paperId": "d20bcf41b772ea31a8ddd20317ee99fe7e1f32ca",
+  "externalIds": {
+   "DBLP": "journals/corr/abs-2109-08406",
+   "ArXiv": "2109.08406",
+   "ACL": "2021.blackboxnlp-1.42",
+   "DOI": "10.18653/v1/2021.blackboxnlp-1.42",
+   "CorpusId": 237263144
+  },
+  "publicationVenue": {
+   "id": "738626d7-5b8c-497d-9fd6-64bdb6dbf440",
+   "name": "BlackboxNLP Workshop on Analyzing and Interpreting Neural Networks for NLP",
+   "type": "conference",
+   "alternate_names": [
+    "BlackboxNLP",
+    "Blackboxnlp Workshop Anal Interprèt Neural Netw NLP"
+   ],
+   "url": "https://aclanthology.org/venues/blackboxnlp/"
+  },
+  "title": "Fine-Tuned Transformers Show Clusters of Similar Representations Across Layers",
+  "venue": "BlackboxNLP Workshop on Analyzing and Interpreting Neural Networks for NLP",
+  "year": 2021,
+  "publicationTypes": [
+   "JournalArticle"
+  ],
+  "matchScore": 285.74954
+ },
+ "2403.17887": {
+  "_http": 200,
+  "paperId": "2ccbafd636184c6edd83e585359514923b6cf849",
+  "externalIds": {
+   "ArXiv": "2403.17887",
+   "DBLP": "conf/iclr/GromovTSGR25",
+   "DOI": "10.48550/arXiv.2403.17887",
+   "CorpusId": 268692211
+  },
+  "publicationVenue": {
+   "id": "939c6e1d-0d17-4d6e-8a82-66d960df0e40",
+   "name": "International Conference on Learning Representations",
+   "type": "conference",
+   "alternate_names": [
+    "Int Conf Learn Represent",
+    "ICLR"
+   ],
+   "url": "https://iclr.cc/"
+  },
+  "title": "The Unreasonable Ineffectiveness of the Deeper Layers",
+  "venue": "International Conference on Learning Representations",
+  "year": 2024,
+  "publicationTypes": [
+   "JournalArticle"
+  ],
+  "matchScore": 185.71661
+ },
+ "2402.02834": {
+  "_http": 200,
+  "_note": "matched via arXiv-v1 title 'Shortened LLaMA: A Simple Depth Pruning for Large Language Models' (v2 title returns 404 Title match not found)",
+  "paperId": "87667fd50710183951fd2206a929a25b4b970276",
+  "externalIds": {
+   "DBLP": "journals/corr/abs-2402-02834",
+   "ArXiv": "2402.02834",
+   "DOI": "10.48550/arXiv.2402.02834",
+   "CorpusId": 267413136
+  },
+  "publicationVenue": {
+   "name": "arXiv.org",
+   "issn": "2331-8422"
+  },
+  "title": "Shortened LLaMA: A Simple Depth Pruning for Large Language Models",
+  "venue": "arXiv.org",
+  "year": 2024
+ },
+ "2508.08011": {
+  "_http": 200,
+  "paperId": "3b4dd8efdc9b338a85450f9d8ec928d6e239e594",
+  "externalIds": {
+   "ArXiv": "2508.08011",
+   "DBLP": "journals/corr/abs-2508-08011",
+   "DOI": "10.48550/arXiv.2508.08011",
+   "CorpusId": 280566658
+  },
+  "publicationVenue": {
+   "id": "1901e811-ee72-4b20-8f7e-de08cd395a10",
+   "name": "arXiv.org",
+   "alternate_names": [
+    "ArXiv"
+   ],
+   "issn": "2331-8422",
+   "url": "https://arxiv.org"
+  },
+  "title": "Progressive Depth Up-scaling via Optimal Transport",
+  "venue": "arXiv.org",
+  "year": 2025,
+  "publicationTypes": [
+   "JournalArticle"
+  ],
+  "matchScore": 230.89847
+ },
+ "2402.05913": {
+  "_http": 200,
+  "paperId": "b204c257d06eb7148ef7e1fc0ca72e3e9eae2064",
+  "externalIds": {
+   "DBLP": "conf/iclr/PanigrahiSLMRKK25",
+   "ArXiv": "2402.05913",
+   "DOI": "10.48550/arXiv.2402.05913",
+   "CorpusId": 267547688
+  },
+  "publicationVenue": {
+   "id": "939c6e1d-0d17-4d6e-8a82-66d960df0e40",
+   "name": "International Conference on Learning Representations",
+   "type": "conference",
+   "alternate_names": [
+    "Int Conf Learn Represent",
+    "ICLR"
+   ],
+   "url": "https://iclr.cc/"
+  },
+  "title": "Efficient Stagewise Pretraining via Progressive Subnetworks",
+  "venue": "International Conference on Learning Representations",
+  "year": 2024,
+  "publicationTypes": [
+   "JournalArticle"
+  ],
+  "matchScore": 248.0519
+ },
+ "2511.03270": {
+  "_http": 200,
+  "paperId": "a45f34ec2fb7ddae23e569a40d538c76e07b77ae",
+  "externalIds": {
+   "DBLP": "journals/corr/abs-2511-03270",
+   "ArXiv": "2511.03270",
+   "DOI": "10.48550/arXiv.2511.03270",
+   "CorpusId": 282758279
+  },
+  "publicationVenue": {
+   "id": "1e33b3be-b2ab-46e9-96e8-d4eb4bad6e44",
+   "name": "Annual Meeting of the Association for Computational Linguistics",
+   "type": "conference",
+   "alternate_names": [
+    "Annu Meet Assoc Comput Linguistics",
+    "Meeting of the Association for Computational Linguistics",
+    "ACL",
+    "Meet Assoc Comput Linguistics"
+   ],
+   "url": "https://www.aclweb.org/anthology/venues/acl/"
+  },
+  "title": "SCALE: Upscaled Continual Learning of Large Language Models",
+  "venue": "Annual Meeting of the Association for Computational Linguistics",
+  "year": 2025,
+  "publicationTypes": [
+   "JournalArticle"
+  ],
+  "matchScore": 209.15607
+ },
+ "2505.20155": {
+  "_http": 200,
+  "paperId": "b6a5dca855a12d5058db77e17d11f3cac678581d",
+  "externalIds": {
+   "DBLP": "journals/corr/abs-2505-20155",
+   "ArXiv": "2505.20155",
+   "DOI": "10.48550/arXiv.2505.20155",
+   "CorpusId": 278911584
+  },
+  "publicationVenue": {
+   "id": "1901e811-ee72-4b20-8f7e-de08cd395a10",
+   "name": "arXiv.org",
+   "alternate_names": [
+    "ArXiv"
+   ],
+   "issn": "2331-8422",
+   "url": "https://arxiv.org"
+  },
+  "title": "Pangu Light: Weight Re-Initialization for Pruning and Accelerating LLMs",
+  "venue": "arXiv.org",
+  "year": 2025,
+  "publicationTypes": [
+   "JournalArticle"
+  ],
+  "matchScore": 285.9482
+ },
+ "2307.01163": {
+  "_http": 200,
+  "paperId": "9a2f47777b99a92effb4e998b7082e1e92ae13bc",
+  "externalIds": {
+   "DBLP": "conf/nips/ChenMRAS0A23",
+   "ArXiv": "2307.01163",
+   "DOI": "10.48550/arXiv.2307.01163",
+   "CorpusId": 259317182
+  },
+  "publicationVenue": {
+   "id": "d9720b90-d60b-48bc-9df8-87a30b9a60dd",
+   "name": "Neural Information Processing Systems",
+   "type": "conference",
+   "alternate_names": [
+    "Neural Inf Process Syst",
+    "NeurIPS",
+    "NIPS"
+   ],
+   "url": "http://neurips.cc/"
+  },
+  "title": "Improving Language Plasticity via Pretraining with Active Forgetting",
+  "venue": "Neural Information Processing Systems",
+  "year": 2023,
+  "publicationTypes": [
+   "JournalArticle"
+  ],
+  "matchScore": 262.44128
+ },
+ "2410.02330": {
+  "_http": 200,
+  "paperId": "3777748543f1ff1f3ed8b16f063435217173b865",
+  "externalIds": {
+   "DBLP": "journals/corr/abs-2410-02330",
+   "ArXiv": "2410.02330",
+   "DOI": "10.48550/arXiv.2410.02330",
+   "CorpusId": 273098762
+  },
+  "publicationVenue": {
+   "id": "41bf9ed3-85b3-4c90-b015-150e31690253",
+   "name": "Conference on Empirical Methods in Natural Language Processing",
+   "type": "conference",
+   "alternate_names": [
+    "Empir Method Nat Lang Process",
+    "Empirical Methods in Natural Language Processing",
+    "Conf Empir Method Nat Lang Process",
+    "EMNLP"
+   ],
+   "url": "https://www.aclweb.org/portal/emnlp"
+  },
+  "title": "Llama SLayer 8B: Shallow Layers Hold the Key to Knowledge Injection",
+  "venue": "Conference on Empirical Methods in Natural Language Processing",
+  "year": 2024,
+  "publicationTypes": [
+   "JournalArticle",
+   "Conference"
+  ],
+  "matchScore": 318.77576
+ },
+ "2407.16286": {
+  "_http": 200,
+  "paperId": "1e5a52ec166d9bcfc76d9e42ab8708130b0b63a4",
+  "externalIds": {
+   "ArXiv": "2407.16286",
+   "DBLP": "journals/corr/abs-2407-16286",
+   "DOI": "10.48550/arXiv.2407.16286",
+   "CorpusId": 271334159
+  },
+  "publicationVenue": {
+   "id": "1901e811-ee72-4b20-8f7e-de08cd395a10",
+   "name": "arXiv.org",
+   "alternate_names": [
+    "ArXiv"
+   ],
+   "issn": "2331-8422",
+   "url": "https://arxiv.org"
+  },
+  "title": "A deeper look at depth pruning of LLMs",
+  "venue": "arXiv.org",
+  "year": 2024,
+  "publicationTypes": [
+   "JournalArticle"
+  ],
+  "matchScore": 206.41335
+ },
+ "2505.23811": {
+  "_http": 200,
+  "paperId": "5c210f016c49e442faf45c6404ba166a2340348a",
+  "externalIds": {
+   "DBLP": "journals/corr/abs-2505-23811",
+   "ArXiv": "2505.23811",
+   "DOI": "10.48550/arXiv.2505.23811",
+   "CorpusId": 279071226
+  },
+  "publicationVenue": {
+   "id": "d9720b90-d60b-48bc-9df8-87a30b9a60dd",
+   "name": "Neural Information Processing Systems",
+   "type": "conference",
+   "alternate_names": [
+    "Neural Inf Process Syst",
+    "NeurIPS",
+    "NIPS"
+   ],
+   "url": "http://neurips.cc/"
+  },
+  "title": "LayerIF: Estimating Layer Quality for Large Language Models using Influence Functions",
+  "venue": "Neural Information Processing Systems",
+  "year": 2025,
+  "publicationTypes": [
+   "JournalArticle"
+  ],
+  "matchScore": 271.0571
+ }
+}

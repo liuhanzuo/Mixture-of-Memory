@@ -1,0 +1,772 @@
+{
+ "2411.15558": {
+  "_http": 200,
+  "hits": [
+   {
+    "title": "Reassessing Layer Pruning in LLMs: New Insights and Methods.",
+    "venue": "CoRR",
+    "year": "2024",
+    "type": "Informal and Other Publications",
+    "key": "journals/corr/abs-2411-15558",
+    "doi": "10.48550/ARXIV.2411.15558"
+   }
+  ]
+ },
+ "2606.07978": {
+  "_http": 200,
+  "hits": [
+   {
+    "title": "MechLens: Late Crystallization of Factual Knowledge Explains Intervention Effectiveness in Language Models.",
+    "venue": "CoRR",
+    "year": "2026",
+    "type": "Informal and Other Publications",
+    "key": "journals/corr/abs-2606-07978",
+    "doi": "10.48550/ARXIV.2606.07978"
+   }
+  ]
+ },
+ "2606.16897": {
+  "_http": 200,
+  "hits": [
+   {
+    "title": "Contrastive-Difference CKA Reveals Concept-Specific Structural Alignment Across Language Model Architectures.",
+    "venue": "CoRR",
+    "year": "2026",
+    "type": "Informal and Other Publications",
+    "key": "journals/corr/abs-2606-16897",
+    "doi": "10.48550/ARXIV.2606.16897"
+   }
+  ]
+ },
+ "2607.25663": {
+  "_http": 200,
+  "hits": []
+ },
+ "2510.18871": {
+  "_http": 200,
+  "hits": [
+   {
+    "title": "How Do LLMs Use Their Depth?",
+    "venue": "CoRR",
+    "year": "2025",
+    "type": "Informal and Other Publications",
+    "key": "journals/corr/abs-2510-18871",
+    "doi": "10.48550/ARXIV.2510.18871"
+   }
+  ]
+ },
+ "2605.11416": {
+  "_http": 200,
+  "hits": [
+   {
+    "title": "Freeze Deep, Train Shallow: Interpretable Layer Allocation for Continued Pre-Training.",
+    "venue": "CoRR",
+    "year": "2026",
+    "type": "Informal and Other Publications",
+    "key": "journals/corr/abs-2605-11416",
+    "doi": "10.48550/ARXIV.2605.11416"
+   }
+  ]
+ },
+ "2605.02105": {
+  "_http": 200,
+  "hits": [
+   {
+    "title": "Sharpness-Aware Pretraining Mitigates Catastrophic Forgetting.",
+    "venue": "CoRR",
+    "year": "2026",
+    "type": "Informal and Other Publications",
+    "key": "journals/corr/abs-2605-02105",
+    "doi": "10.48550/ARXIV.2605.02105"
+   }
+  ]
+ },
+ "2602.11137": {
+  "_http": 200,
+  "hits": [
+   {
+    "title": "Weight Decay Improves Language Model Plasticity.",
+    "venue": "CoRR",
+    "year": "2026",
+    "type": "Informal and Other Publications",
+    "key": "journals/corr/abs-2602-11137",
+    "doi": "10.48550/ARXIV.2602.11137"
+   }
+  ]
+ },
+ "2606.09932": {
+  "_http": 200,
+  "hits": [
+   {
+    "title": "When RL Fails after SFT: Rejuvenating Model Plasticity for Robust SFT-to-RL Handoff.",
+    "venue": "CoRR",
+    "year": "2026",
+    "type": "Informal and Other Publications",
+    "key": "journals/corr/abs-2606-09932",
+    "doi": "10.48550/ARXIV.2606.09932"
+   }
+  ]
+ },
+ "2602.14486": {
+  "_http": 200,
+  "hits": [
+   {
+    "title": "Revisiting the Platonic Representation Hypothesis: An Aristotelian View.",
+    "venue": "CoRR",
+    "year": "2026",
+    "type": "Informal and Other Publications",
+    "key": "journals/corr/abs-2602-14486",
+    "doi": "10.48550/ARXIV.2602.14486"
+   }
+  ]
+ },
+ "2410.06981": {
+  "_http": 200,
+  "hits": []
+ },
+ "2503.04429": {
+  "_http": 200,
+  "hits": [
+   {
+    "title": "Activation Space Interventions Can Be Transferred Between Large Language Models.",
+    "venue": "ICML",
+    "year": "2025",
+    "type": "Conference and Workshop Papers",
+    "key": "conf/icml/OozeerNPLHA25",
+    "doi": null
+   },
+   {
+    "title": "Activation Space Interventions Can Be Transferred Between Large Language Models.",
+    "venue": "CoRR",
+    "year": "2025",
+    "type": "Informal and Other Publications",
+    "key": "journals/corr/abs-2503-04429",
+    "doi": "10.48550/ARXIV.2503.04429"
+   }
+  ]
+ },
+ "2312.02730": {
+  "_http": 200,
+  "hits": [
+   {
+    "title": "Towards Measuring Representational Similarity of Large Language Models.",
+    "venue": "CoRR",
+    "year": "2023",
+    "type": "Informal and Other Publications",
+    "key": "journals/corr/abs-2312-02730",
+    "doi": "10.48550/ARXIV.2312.02730"
+   }
+  ]
+ },
+ "2109.08406": {
+  "_http": 200,
+  "hits": [
+   {
+    "title": "Fine-Tuned Transformers Show Clusters of Similar Representations Across Layers.",
+    "venue": "BlackboxNLP@EMNLP",
+    "year": "2021",
+    "type": "Conference and Workshop Papers",
+    "key": "conf/blackboxnlp/PhangLB21",
+    "doi": "10.18653/V1/2021.BLACKBOXNLP-1.42"
+   },
+   {
+    "title": "Fine-Tuned Transformers Show Clusters of Similar Representations Across Layers.",
+    "venue": "CoRR",
+    "year": "2021",
+    "type": "Informal and Other Publications",
+    "key": "journals/corr/abs-2109-08406",
+    "doi": null
+   }
+  ]
+ },
+ "2502.05795": {
+  "_http": 200,
+  "hits": [
+   {
+    "title": "The Curse of Depth in Large Language Models.",
+    "venue": "NeurIPS",
+    "year": "2025",
+    "type": "Conference and Workshop Papers",
+    "key": "conf/nips/SunSLYZL25",
+    "doi": null
+   },
+   {
+    "title": "The Curse of Depth in Large Language Models.",
+    "venue": "CoRR",
+    "year": "2025",
+    "type": "Informal and Other Publications",
+    "key": "journals/corr/abs-2502-05795",
+    "doi": "10.48550/ARXIV.2502.05795"
+   }
+  ]
+ },
+ "2310.04680": {
+  "_http": 200,
+  "hits": [
+   {
+    "title": "The Cost of Down-Scaling Language Models: Fact Recall Deteriorates before In-Context Learning.",
+    "venue": "CoRR",
+    "year": "2023",
+    "type": "Informal and Other Publications",
+    "key": "journals/corr/abs-2310-04680",
+    "doi": "10.48550/ARXIV.2310.04680"
+   }
+  ]
+ },
+ "2506.00288": {
+  "_http": 200,
+  "hits": [
+   {
+    "title": "Emergent Abilities of Large Language Models under Continued Pretraining for Language Adaptation.",
+    "venue": "CoRR",
+    "year": "2025",
+    "type": "Informal and Other Publications",
+    "key": "journals/corr/abs-2506-00288",
+    "doi": "10.48550/ARXIV.2506.00288"
+   }
+  ]
+ },
+ "2407.17467": {
+  "_http": 200,
+  "hits": [
+   {
+    "title": "CMR Scaling Law: Predicting Critical Mixture Ratios for Continual Pre-training of Language Models.",
+    "venue": "EMNLP",
+    "year": "2024",
+    "type": "Conference and Workshop Papers",
+    "key": "conf/emnlp/GuYDZT24",
+    "doi": "10.18653/V1/2024.EMNLP-MAIN.903"
+   },
+   {
+    "title": "CMR Scaling Law: Predicting Critical Mixture Ratios for Continual Pre-training of Language Models.",
+    "venue": "CoRR",
+    "year": "2024",
+    "type": "Informal and Other Publications",
+    "key": "journals/corr/abs-2407-17467",
+    "doi": "10.48550/ARXIV.2407.17467"
+   }
+  ]
+ },
+ "2403.17887": {
+  "_http": 200,
+  "hits": [
+   {
+    "title": "The Unreasonable Ineffectiveness of the Deeper Layers.",
+    "venue": "ICLR",
+    "year": "2025",
+    "type": "Conference and Workshop Papers",
+    "key": "conf/iclr/GromovTSGR25",
+    "doi": null
+   },
+   {
+    "title": "The Unreasonable Ineffectiveness of the Deeper Layers.",
+    "venue": "CoRR",
+    "year": "2024",
+    "type": "Informal and Other Publications",
+    "key": "journals/corr/abs-2403-17887",
+    "doi": "10.48550/ARXIV.2403.17887"
+   }
+  ]
+ },
+ "2403.03853": {
+  "_http": 200,
+  "hits": [
+   {
+    "title": "ShortGPT: Layers in Large Language Models are More Redundant Than You Expect.",
+    "venue": "ACL",
+    "year": "2025",
+    "type": "Conference and Workshop Papers",
+    "key": "conf/acl/MenXZYWL0HC25",
+    "doi": "10.18653/V1/2025.FINDINGS-ACL.1035"
+   },
+   {
+    "title": "ShortGPT: Layers in Large Language Models are More Redundant Than You Expect.",
+    "venue": "CoRR",
+    "year": "2024",
+    "type": "Informal and Other Publications",
+    "key": "journals/corr/abs-2403-03853",
+    "doi": "10.48550/ARXIV.2403.03853"
+   }
+  ]
+ },
+ "2402.02834": {
+  "_http": -1,
+  "hits": []
+ },
+ "2304.01373": {
+  "_http": 200,
+  "hits": [
+   {
+    "title": "Pythia: A Suite for Analyzing Large Language Models Across Training and Scaling.",
+    "venue": "ICML",
+    "year": "2023",
+    "type": "Conference and Workshop Papers",
+    "key": "conf/icml/BidermanSABOHKP23",
+    "doi": null
+   },
+   {
+    "title": "Pythia: A Suite for Analyzing Large Language Models Across Training and Scaling.",
+    "venue": "CoRR",
+    "year": "2023",
+    "type": "Informal and Other Publications",
+    "key": "journals/corr/abs-2304-01373",
+    "doi": "10.48550/ARXIV.2304.01373"
+   }
+  ]
+ },
+ "2312.12141": {
+  "_http": 200,
+  "hits": [
+   {
+    "title": "Neuron-Level Knowledge Attribution in Large Language Models.",
+    "venue": "EMNLP",
+    "year": "2024",
+    "type": "Conference and Workshop Papers",
+    "key": "conf/emnlp/YuA24",
+    "doi": "10.18653/V1/2024.EMNLP-MAIN.191"
+   }
+  ]
+ },
+ "2601.13580": {
+  "_http": 200,
+  "hits": [
+   {
+    "title": "Neural Organ Transplantation (NOT): Checkpoint-Based Modular Adaptation for Transformer Models.",
+    "venue": "CoRR",
+    "year": "2026",
+    "type": "Informal and Other Publications",
+    "key": "journals/corr/abs-2601-13580",
+    "doi": "10.48550/ARXIV.2601.13580"
+   }
+  ]
+ },
+ "2506.11389": {
+  "_http": 200,
+  "hits": [
+   {
+    "title": "Curriculum-Guided Layer Scaling for Language Model Pretraining.",
+    "venue": "CoRR",
+    "year": "2025",
+    "type": "Informal and Other Publications",
+    "key": "journals/corr/abs-2506-11389",
+    "doi": "10.48550/ARXIV.2506.11389"
+   }
+  ]
+ },
+ "2509.06518": {
+  "_http": 200,
+  "hits": [
+   {
+    "title": "Crown, Frame, Reverse: Layer-Wise Scaling Variants for LLM Pre-Training.",
+    "venue": "CoRR",
+    "year": "2025",
+    "type": "Informal and Other Publications",
+    "key": "journals/corr/abs-2509-06518",
+    "doi": "10.48550/ARXIV.2509.06518"
+   }
+  ]
+ },
+ "2502.13794": {
+  "_http": 200,
+  "hits": [
+   {
+    "title": "LESA: Learnable LLM Layer Scaling-Up.",
+    "venue": "ACL",
+    "year": "2025",
+    "type": "Conference and Workshop Papers",
+    "key": "conf/acl/YangCMYC0Z25",
+    "doi": "10.18653/V1/2025.ACL-LONG.1095"
+   },
+   {
+    "title": "LESA: Learnable LLM Layer Scaling-Up.",
+    "venue": "CoRR",
+    "year": "2025",
+    "type": "Informal and Other Publications",
+    "key": "journals/corr/abs-2502-13794",
+    "doi": "10.48550/ARXIV.2502.13794"
+   }
+  ]
+ },
+ "2508.08011": {
+  "_http": 200,
+  "hits": [
+   {
+    "title": "Progressive Depth Up-scaling via Optimal Transport.",
+    "venue": "CoRR",
+    "year": "2025",
+    "type": "Informal and Other Publications",
+    "key": "journals/corr/abs-2508-08011",
+    "doi": "10.48550/ARXIV.2508.08011"
+   }
+  ]
+ },
+ "2402.05913": {
+  "_http": 200,
+  "hits": [
+   {
+    "title": "Efficient stagewise pretraining via progressive subnetworks.",
+    "venue": "ICLR",
+    "year": "2025",
+    "type": "Conference and Workshop Papers",
+    "key": "conf/iclr/PanigrahiSLMRKK25",
+    "doi": null
+   },
+   {
+    "title": "Efficient Stagewise Pretraining via Progressive Subnetworks.",
+    "venue": "CoRR",
+    "year": "2024",
+    "type": "Informal and Other Publications",
+    "key": "journals/corr/abs-2402-05913",
+    "doi": "10.48550/ARXIV.2402.05913"
+   }
+  ]
+ },
+ "2511.03270": {
+  "_http": 200,
+  "hits": [
+   {
+    "title": "SCALE: Upscaled Continual Learning of Large Language Models.",
+    "venue": "ACL",
+    "year": "2026",
+    "type": "Conference and Workshop Papers",
+    "key": "conf/acl/LeeCHCKYLJPPJ26",
+    "doi": "10.18653/V1/2026.FINDINGS-ACL.2037"
+   },
+   {
+    "title": "SCALE: Upscaled Continual Learning of Large Language Models.",
+    "venue": "CoRR",
+    "year": "2025",
+    "type": "Informal and Other Publications",
+    "key": "journals/corr/abs-2511-03270",
+    "doi": "10.48550/ARXIV.2511.03270"
+   }
+  ]
+ },
+ "2509.01213": {
+  "_http": 200,
+  "hits": [
+   {
+    "title": "Mitigating Catastrophic Forgetting in Continual Learning through Model Growth.",
+    "venue": "CoRR",
+    "year": "2025",
+    "type": "Informal and Other Publications",
+    "key": "journals/corr/abs-2509-01213",
+    "doi": "10.48550/ARXIV.2509.01213"
+   }
+  ]
+ },
+ "2505.20155": {
+  "_http": 200,
+  "hits": [
+   {
+    "title": "Pangu Light: Weight Re-Initialization for Pruning and Accelerating LLMs.",
+    "venue": "CoRR",
+    "year": "2025",
+    "type": "Informal and Other Publications",
+    "key": "journals/corr/abs-2505-20155",
+    "doi": "10.48550/ARXIV.2505.20155"
+   }
+  ]
+ },
+ "2307.01163": {
+  "_http": 200,
+  "hits": [
+   {
+    "title": "Improving Language Plasticity via Pretraining with Active Forgetting.",
+    "venue": "NeurIPS",
+    "year": "2023",
+    "type": "Conference and Workshop Papers",
+    "key": "conf/nips/ChenMRAS0A23",
+    "doi": null
+   },
+   {
+    "title": "Improving Language Plasticity via Pretraining with Active Forgetting.",
+    "venue": "CoRR",
+    "year": "2023",
+    "type": "Informal and Other Publications",
+    "key": "journals/corr/abs-2307-01163",
+    "doi": "10.48550/ARXIV.2307.01163"
+   }
+  ]
+ },
+ "2006.05987": {
+  "_http": 200,
+  "hits": [
+   {
+    "title": "Revisiting Few-sample BERT Fine-tuning.",
+    "venue": "ICLR",
+    "year": "2021",
+    "type": "Conference and Workshop Papers",
+    "key": "conf/iclr/0007WKWA21",
+    "doi": null
+   },
+   {
+    "title": "Revisiting Few-sample BERT Fine-tuning.",
+    "venue": "CoRR",
+    "year": "2020",
+    "type": "Informal and Other Publications",
+    "key": "journals/corr/abs-2006-05987",
+    "doi": null
+   }
+  ]
+ },
+ "2004.14975": {
+  "_http": 200,
+  "hits": [
+   {
+    "title": "Investigating Transferability in Pretrained Language Models.",
+    "venue": "EMNLP",
+    "year": "2020",
+    "type": "Conference and Workshop Papers",
+    "key": "conf/emnlp/TamkinSGG20",
+    "doi": "10.18653/V1/2020.FINDINGS-EMNLP.125"
+   },
+   {
+    "title": "Investigating Transferability in Pretrained Language Models.",
+    "venue": "CoRR",
+    "year": "2020",
+    "type": "Informal and Other Publications",
+    "key": "journals/corr/abs-2004-14975",
+    "doi": null
+   }
+  ]
+ },
+ "2410.06225": {
+  "_http": 200,
+  "hits": [
+   {
+    "title": "A Timeline and Analysis for Representation Plasticity in Large Language Models.",
+    "venue": "CoRR",
+    "year": "2024",
+    "type": "Informal and Other Publications",
+    "key": "journals/corr/abs-2410-06225",
+    "doi": "10.48550/ARXIV.2410.06225"
+   }
+  ]
+ },
+ "2410.11654": {
+  "_http": 200,
+  "hits": [
+   {
+    "title": "Transformer Layer Injection: A Novel Approach for Efficient Upscaling of Large Language Models.",
+    "venue": "CoRR",
+    "year": "2024",
+    "type": "Informal and Other Publications",
+    "key": "journals/corr/abs-2410-11654",
+    "doi": "10.48550/ARXIV.2410.11654"
+   }
+  ]
+ },
+ "2312.15166": {
+  "_http": 200,
+  "hits": [
+   {
+    "title": "SOLAR 10.7B: Scaling Large Language Models with Simple yet Effective Depth Up-Scaling.",
+    "venue": "NAACL",
+    "year": "2024",
+    "type": "Conference and Workshop Papers",
+    "key": "conf/naacl/KimKPLSKKKLKAYLPGCLK24",
+    "doi": "10.18653/V1/2024.NAACL-INDUSTRY.3"
+   },
+   {
+    "title": "SOLAR 10.7B: Scaling Large Language Models with Simple yet Effective Depth Up-Scaling.",
+    "venue": "CoRR",
+    "year": "2023",
+    "type": "Informal and Other Publications",
+    "key": "journals/corr/abs-2312-15166",
+    "doi": "10.48550/ARXIV.2312.15166"
+   }
+  ]
+ },
+ "2401.02415": {
+  "_http": 200,
+  "hits": [
+   {
+    "title": "LLaMA Pro: Progressive LLaMA with Block Expansion.",
+    "venue": "ACL",
+    "year": "2024",
+    "type": "Conference and Workshop Papers",
+    "key": "conf/acl/WuGGLWFSL24",
+    "doi": "10.18653/V1/2024.ACL-LONG.352"
+   },
+   {
+    "title": "LLaMA Pro: Progressive LLaMA with Block Expansion.",
+    "venue": "CoRR",
+    "year": "2024",
+    "type": "Informal and Other Publications",
+    "key": "journals/corr/abs-2401-02415",
+    "doi": "10.48550/ARXIV.2401.02415"
+   }
+  ]
+ },
+ "2410.02330": {
+  "_http": 200,
+  "hits": [
+   {
+    "title": "Llama SLayer 8B: Shallow Layers Hold the Key to Knowledge Injection.",
+    "venue": "EMNLP",
+    "year": "2024",
+    "type": "Conference and Workshop Papers",
+    "key": "conf/emnlp/ChenTGW00YY24",
+    "doi": "10.18653/V1/2024.FINDINGS-EMNLP.347"
+   },
+   {
+    "title": "Llama SLayer 8B: Shallow Layers Hold the Key to Knowledge Injection.",
+    "venue": "CoRR",
+    "year": "2024",
+    "type": "Informal and Other Publications",
+    "key": "journals/corr/abs-2410-02330",
+    "doi": "10.48550/ARXIV.2410.02330"
+   }
+  ]
+ },
+ "2403.19135": {
+  "_http": 200,
+  "hits": [
+   {
+    "title": "Streamlining Redundant Layers to Compress Large Language Models.",
+    "venue": "ICLR",
+    "year": "2025",
+    "type": "Conference and Workshop Papers",
+    "key": "conf/iclr/ChenHZWL025",
+    "doi": null
+   }
+  ]
+ },
+ "2407.16286": {
+  "_http": 200,
+  "hits": [
+   {
+    "title": "A deeper look at depth pruning of LLMs.",
+    "venue": "CoRR",
+    "year": "2024",
+    "type": "Informal and Other Publications",
+    "key": "journals/corr/abs-2407-16286",
+    "doi": "10.48550/ARXIV.2407.16286"
+   }
+  ]
+ },
+ "2210.10041": {
+  "_http": 200,
+  "hits": [
+   {
+    "title": "Hidden State Variability of Pretrained Language Models Can Guide Computation Reduction for Transfer Learning.",
+    "venue": "EMNLP",
+    "year": "2022",
+    "type": "Conference and Workshop Papers",
+    "key": "conf/emnlp/XieQPDQM22",
+    "doi": "10.18653/V1/2022.FINDINGS-EMNLP.422"
+   },
+   {
+    "title": "Hidden State Variability of Pretrained Language Models Can Guide Computation Reduction for Transfer Learning.",
+    "venue": "CoRR",
+    "year": "2022",
+    "type": "Informal and Other Publications",
+    "key": "journals/corr/abs-2210-10041",
+    "doi": "10.48550/ARXIV.2210.10041"
+   }
+  ]
+ },
+ "2403.17919": {
+  "_http": 200,
+  "hits": [
+   {
+    "title": "LISA: Layerwise Importance Sampling for Memory-Efficient Large Language Model Fine-Tuning.",
+    "venue": "NeurIPS",
+    "year": "2024",
+    "type": "Conference and Workshop Papers",
+    "key": "conf/nips/PanLDPZH024",
+    "doi": null
+   },
+   {
+    "title": "LISA: Layerwise Importance Sampling for Memory-Efficient Large Language Model Fine-Tuning.",
+    "venue": "CoRR",
+    "year": "2024",
+    "type": "Informal and Other Publications",
+    "key": "journals/corr/abs-2403-17919",
+    "doi": "10.48550/ARXIV.2403.17919"
+   }
+  ]
+ },
+ "2406.11753": {
+  "_http": 200,
+  "hits": [
+   {
+    "title": "A Semantic-Aware Layer-Freezing Approach to Computation-Efficient Fine-Tuning of Language Models.",
+    "venue": "ACL",
+    "year": "2025",
+    "type": "Conference and Workshop Papers",
+    "key": "conf/acl/0001A0Z25",
+    "doi": "10.18653/V1/2025.FINDINGS-ACL.420"
+   }
+  ]
+ },
+ "2505.23811": {
+  "_http": 200,
+  "hits": [
+   {
+    "title": "LayerIF: Estimating Layer Quality for Large Language Models using Influence Functions.",
+    "venue": "NeurIPS",
+    "year": "2025",
+    "type": "Conference and Workshop Papers",
+    "key": "conf/nips/AskariGWCC25",
+    "doi": null
+   },
+   {
+    "title": "LayerIF: Estimating Layer Quality for Large Language Models using Influence Functions.",
+    "venue": "CoRR",
+    "year": "2025",
+    "type": "Informal and Other Publications",
+    "key": "journals/corr/abs-2505-23811",
+    "doi": "10.48550/ARXIV.2505.23811"
+   }
+  ]
+ },
+ "2510.10071": {
+  "_http": 200,
+  "hits": [
+   {
+    "title": "ADEPT: Continual Pretraining via Adaptive Expansion and Dynamic Decoupled Tuning.",
+    "venue": "CoRR",
+    "year": "2025",
+    "type": "Informal and Other Publications",
+    "key": "journals/corr/abs-2510-10071",
+    "doi": "10.48550/ARXIV.2510.10071"
+   }
+  ]
+ },
+ "2601.20009": {
+  "_http": 200,
+  "hits": [
+   {
+    "title": "LinguaMap: Which Layers of LLMs Speak Your Language and How to Tune Them?",
+    "venue": "CoRR",
+    "year": "2026",
+    "type": "Informal and Other Publications",
+    "key": "journals/corr/abs-2601-20009",
+    "doi": "10.48550/ARXIV.2601.20009"
+   }
+  ]
+ },
+ "2404.07066": {
+  "_http": 200,
+  "hits": [
+   {
+    "title": "Exploring Concept Depth: How Large Language Models Acquire Knowledge and Concept at Different Layers?",
+    "venue": "COLING",
+    "year": "2025",
+    "type": "Conference and Workshop Papers",
+    "key": "conf/coling/JinYHZWH0MMDYDZ25",
+    "doi": null
+   },
+   {
+    "title": "Exploring Concept Depth: How Large Language Models Acquire Knowledge at Different Layers?",
+    "venue": "CoRR",
+    "year": "2024",
+    "type": "Informal and Other Publications",
+    "key": "journals/corr/abs-2404-07066",
+    "doi": "10.48550/ARXIV.2404.07066"
+   }
+  ]
+ }
+}

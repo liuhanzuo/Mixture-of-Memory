@@ -1,0 +1,16 @@
+olmo2_7b:llama32_1b olmo2_7b:llama3_8b olmo2_7b:llama2_7b olmo2_7b:qwen3_0p6b olmo2_7b:qwen3_1p7b olmo2_7b:qwen3_4b olmo2_7b:gpt2 olmo2_7b:gpt2_medium olmo2_7b:gpt2_large olmo2_7b:gpt2_xl olmo2_7b:opt_2p7b olmo2_7b:openllama_3b
+llama3_8b:llama2_7b llama3_8b:qwen3_0p6b llama3_8b:qwen3_1p7b llama3_8b:qwen3_4b llama3_8b:gpt2 llama3_8b:gpt2_medium llama3_8b:gpt2_large llama3_8b:gpt2_xl llama3_8b:opt_2p7b llama3_8b:openllama_3b
+llama2_7b:qwen3_0p6b llama2_7b:qwen3_1p7b llama2_7b:qwen3_4b llama2_7b:gpt2 llama2_7b:gpt2_medium llama2_7b:gpt2_large llama2_7b:gpt2_xl llama2_7b:opt_2p7b llama2_7b:openllama_3b
+olmo2_1b:olmo2_7b olmo2_1b:llama32_1b olmo2_1b:llama3_8b olmo2_1b:llama2_7b olmo2_1b:qwen3_0p6b olmo2_1b:qwen3_1p7b olmo2_1b:qwen3_4b olmo2_1b:gpt2 olmo2_1b:gpt2_medium olmo2_1b:gpt2_large olmo2_1b:gpt2_xl olmo2_1b:opt_2p7b olmo2_1b:openllama_3b olmo2_1b:RANDOM_olmo2_1b olmo2_1b:RANDOM_llama32_1b
+qwen3_4b:gpt2 qwen3_4b:gpt2_medium qwen3_4b:gpt2_large qwen3_4b:gpt2_xl qwen3_4b:opt_2p7b qwen3_4b:openllama_3b
+llama32_1b:llama3_8b llama32_1b:llama2_7b llama32_1b:qwen3_0p6b llama32_1b:qwen3_1p7b llama32_1b:qwen3_4b llama32_1b:gpt2 llama32_1b:gpt2_medium llama32_1b:gpt2_large llama32_1b:gpt2_xl llama32_1b:opt_2p7b llama32_1b:openllama_3b llama32_1b:RANDOM_llama32_1b llama32_1b:RANDOM_olmo2_1b
+qwen3_1p7b:qwen3_4b qwen3_1p7b:gpt2 qwen3_1p7b:gpt2_medium qwen3_1p7b:gpt2_large qwen3_1p7b:gpt2_xl qwen3_1p7b:opt_2p7b qwen3_1p7b:openllama_3b
+qwen3_0p6b:qwen3_1p7b qwen3_0p6b:qwen3_4b qwen3_0p6b:gpt2 qwen3_0p6b:gpt2_medium qwen3_0p6b:gpt2_large qwen3_0p6b:gpt2_xl qwen3_0p6b:opt_2p7b qwen3_0p6b:openllama_3b
+gpt2_xl:opt_2p7b gpt2_xl:openllama_3b
+gpt2_large:gpt2_xl gpt2_large:opt_2p7b gpt2_large:openllama_3b
+gpt2_medium:gpt2_large gpt2_medium:gpt2_xl gpt2_medium:opt_2p7b gpt2_medium:openllama_3b
+opt_2p7b:openllama_3b
+gpt2:gpt2_medium gpt2:gpt2_large gpt2:gpt2_xl gpt2:opt_2p7b gpt2:openllama_3b
+
+
+

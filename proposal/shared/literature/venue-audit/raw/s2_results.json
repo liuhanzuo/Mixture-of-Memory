@@ -1,0 +1,1101 @@
+{
+ "2411.15558": {
+  "_http": 200,
+  "_attempts": 4,
+  "_body": "{\"message\": \"Too Many Requests. Please wait and try again or apply for a key for higher rate limits. https://www.semanticscholar.org/product/api#api-key-form\", \"code\": \"429\"}",
+  "paperId": "831cd766f8af737f3fdf6bf73562625b9be73bae",
+  "externalIds": {
+   "DBLP": "journals/corr/abs-2411-15558",
+   "ArXiv": "2411.15558",
+   "DOI": "10.48550/arXiv.2411.15558",
+   "CorpusId": 274233986
+  },
+  "publicationVenue": {
+   "id": "1901e811-ee72-4b20-8f7e-de08cd395a10",
+   "name": "arXiv.org",
+   "alternate_names": [
+    "ArXiv"
+   ],
+   "issn": "2331-8422",
+   "url": "https://arxiv.org"
+  },
+  "title": "Reassessing Layer Pruning in LLMs: New Insights and Methods",
+  "venue": "arXiv.org",
+  "year": 2024,
+  "publicationTypes": [
+   "JournalArticle"
+  ],
+  "journal": {
+   "name": "ArXiv",
+   "volume": "abs/2411.15558"
+  }
+ },
+ "2606.07978": {
+  "_http": 200,
+  "_attempts": 4,
+  "_body": "{\"message\": \"Too Many Requests. Please wait and try again or apply for a key for higher rate limits. https://www.semanticscholar.org/product/api#api-key-form\", \"code\": \"429\"}",
+  "paperId": "98dd1e2b2abb8f1dbaa5e055389f108afdcc6a83",
+  "externalIds": {
+   "ArXiv": "2606.07978",
+   "CorpusId": 289031963
+  },
+  "publicationVenue": null,
+  "title": "MechLens: Late Crystallization of Factual Knowledge Explains Intervention Effectiveness in Language Models",
+  "venue": "",
+  "year": 2026,
+  "publicationTypes": null,
+  "journal": null
+ },
+ "2606.16897": {
+  "_http": 429,
+  "_attempts": 11,
+  "_body": "{\"message\": \"Too Many Requests. Please wait and try again or apply for a key for higher rate limits. https://www.semanticscholar.org/product/api#api-key-form\", \"code\": \"429\"}"
+ },
+ "2607.25663": {
+  "_http": 200,
+  "_attempts": 9,
+  "_body": "{\"message\": \"Too Many Requests. Please wait and try again or apply for a key for higher rate limits. https://www.semanticscholar.org/product/api#api-key-form\", \"code\": \"429\"}",
+  "paperId": "32da386b925ff88e5fb70210ba74aae637655362",
+  "externalIds": {
+   "ArXiv": "2607.25663",
+   "CorpusId": 290638923
+  },
+  "publicationVenue": null,
+  "title": "Localized Adaptation Reveals Distinct Learning Signatures in Transformers",
+  "venue": "",
+  "year": 2026,
+  "publicationTypes": null,
+  "journal": null
+ },
+ "2510.18871": {
+  "_http": 429,
+  "_attempts": 11,
+  "_body": "{\"message\": \"Too Many Requests. Please wait and try again or apply for a key for higher rate limits. https://www.semanticscholar.org/product/api#api-key-form\", \"code\": \"429\"}"
+ },
+ "2605.11416": {
+  "_http": 200,
+  "_attempts": 2,
+  "_body": "{\"message\": \"Too Many Requests. Please wait and try again or apply for a key for higher rate limits. https://www.semanticscholar.org/product/api#api-key-form\", \"code\": \"429\"}",
+  "paperId": "514613cab05f0846159545b2050c86bd0292a937",
+  "externalIds": {
+   "DBLP": "journals/corr/abs-2605-11416",
+   "ArXiv": "2605.11416",
+   "DOI": "10.48550/arXiv.2605.11416",
+   "CorpusId": 288258458
+  },
+  "publicationVenue": {
+   "id": "1901e811-ee72-4b20-8f7e-de08cd395a10",
+   "name": "arXiv.org",
+   "alternate_names": [
+    "ArXiv"
+   ],
+   "issn": "2331-8422",
+   "url": "https://arxiv.org"
+  },
+  "title": "Freeze Deep, Train Shallow: Interpretable Layer Allocation for Continued Pre-Training",
+  "venue": "arXiv.org",
+  "year": 2026,
+  "publicationTypes": [
+   "JournalArticle"
+  ],
+  "journal": {
+   "name": "ArXiv",
+   "volume": "abs/2605.11416"
+  }
+ },
+ "2605.02105": {
+  "_http": 200,
+  "_attempts": 2,
+  "_body": "{\"message\": \"Too Many Requests. Please wait and try again or apply for a key for higher rate limits. https://www.semanticscholar.org/product/api#api-key-form\", \"code\": \"429\"}",
+  "paperId": "06bd069861fe1a35223b41404b82d9fd9b0f75c6",
+  "externalIds": {
+   "ArXiv": "2605.02105",
+   "DBLP": "journals/corr/abs-2605-02105",
+   "DOI": "10.48550/arXiv.2605.02105",
+   "CorpusId": 287950915
+  },
+  "publicationVenue": {
+   "id": "1901e811-ee72-4b20-8f7e-de08cd395a10",
+   "name": "arXiv.org",
+   "alternate_names": [
+    "ArXiv"
+   ],
+   "issn": "2331-8422",
+   "url": "https://arxiv.org"
+  },
+  "title": "Sharpness-Aware Pretraining Mitigates Catastrophic Forgetting",
+  "venue": "arXiv.org",
+  "year": 2026,
+  "publicationTypes": [
+   "JournalArticle"
+  ],
+  "journal": {
+   "name": "ArXiv",
+   "volume": "abs/2605.02105"
+  }
+ },
+ "2602.11137": {
+  "_http": 429,
+  "_attempts": 11,
+  "_body": "{\"message\": \"Too Many Requests. Please wait and try again or apply for a key for higher rate limits. https://www.semanticscholar.org/product/api#api-key-form\", \"code\": \"429\"}"
+ },
+ "2606.09932": {
+  "_http": 200,
+  "_attempts": 5,
+  "_body": "{\"message\": \"Too Many Requests. Please wait and try again or apply for a key for higher rate limits. https://www.semanticscholar.org/product/api#api-key-form\", \"code\": \"429\"}",
+  "paperId": "7a2ba7d29088198ab28ef4313a730dec55e12bc0",
+  "externalIds": {
+   "ArXiv": "2606.09932",
+   "CorpusId": 289131897
+  },
+  "publicationVenue": null,
+  "title": "When RL Fails after SFT: Rejuvenating Model Plasticity for Robust SFT-to-RL Handoff",
+  "venue": "",
+  "year": 2026,
+  "publicationTypes": null,
+  "journal": null
+ },
+ "2602.14486": {
+  "_http": 200,
+  "_attempts": 2,
+  "_body": "{\"message\": \"Too Many Requests. Please wait and try again or apply for a key for higher rate limits. https://www.semanticscholar.org/product/api#api-key-form\", \"code\": \"429\"}",
+  "paperId": "e8e6537d20ded29839cc2c4cfe82f3ac2512f3d5",
+  "externalIds": {
+   "DBLP": "journals/corr/abs-2602-14486",
+   "ArXiv": "2602.14486",
+   "DOI": "10.48550/arXiv.2602.14486",
+   "CorpusId": 285616118
+  },
+  "publicationVenue": {
+   "id": "1901e811-ee72-4b20-8f7e-de08cd395a10",
+   "name": "arXiv.org",
+   "alternate_names": [
+    "ArXiv"
+   ],
+   "issn": "2331-8422",
+   "url": "https://arxiv.org"
+  },
+  "title": "Revisiting the Platonic Representation Hypothesis: An Aristotelian View",
+  "venue": "arXiv.org",
+  "year": 2026,
+  "publicationTypes": [
+   "JournalArticle"
+  ],
+  "journal": {
+   "name": "ArXiv",
+   "volume": "abs/2602.14486"
+  }
+ },
+ "2410.06981": {
+  "_http": 200,
+  "_attempts": 8,
+  "_body": "{\"message\": \"Too Many Requests. Please wait and try again or apply for a key for higher rate limits. https://www.semanticscholar.org/product/api#api-key-form\", \"code\": \"429\"}",
+  "paperId": "39bbd489b43911152bdaf07f741a91bf1b15989d",
+  "externalIds": {
+   "ArXiv": "2410.06981",
+   "CorpusId": 273228435
+  },
+  "publicationVenue": null,
+  "title": "Quantifying Feature Space Universality Across Large Language Models via Sparse Autoencoders",
+  "venue": "",
+  "year": 2024,
+  "publicationTypes": null,
+  "journal": null
+ },
+ "2503.04429": {
+  "_http": 429,
+  "_attempts": 11,
+  "_body": "{\"message\": \"Too Many Requests. Please wait and try again or apply for a key for higher rate limits. https://www.semanticscholar.org/product/api#api-key-form\", \"code\": \"429\"}"
+ },
+ "2312.02730": {
+  "_http": 200,
+  "_attempts": 1,
+  "paperId": "8f3492053904484a6cc76b35e0c3fc4d441563e4",
+  "externalIds": {
+   "ArXiv": "2312.02730",
+   "DBLP": "journals/corr/abs-2312-02730",
+   "DOI": "10.48550/arXiv.2312.02730",
+   "CorpusId": 265658940
+  },
+  "publicationVenue": {
+   "id": "1901e811-ee72-4b20-8f7e-de08cd395a10",
+   "name": "arXiv.org",
+   "alternate_names": [
+    "ArXiv"
+   ],
+   "issn": "2331-8422",
+   "url": "https://arxiv.org"
+  },
+  "title": "Towards Measuring Representational Similarity of Large Language Models",
+  "venue": "arXiv.org",
+  "year": 2023,
+  "publicationTypes": [
+   "JournalArticle"
+  ],
+  "journal": {
+   "name": "ArXiv",
+   "volume": "abs/2312.02730"
+  }
+ },
+ "2109.08406": {
+  "_http": 429,
+  "_attempts": 9,
+  "_body": "{\"message\": \"Too Many Requests. Please wait and try again or apply for a key for higher rate limits. https://www.semanticscholar.org/product/api#api-key-form\", \"code\": \"429\"}"
+ },
+ "2502.05795": {
+  "_http": 200,
+  "_attempts": 3,
+  "_body": "{\"message\": \"Too Many Requests. Please wait and try again or apply for a key for higher rate limits. https://www.semanticscholar.org/product/api#api-key-form\", \"code\": \"429\"}",
+  "paperId": "3cf4e1e35bf302b84065cd2a8aa744fd275d5c22",
+  "externalIds": {
+   "DBLP": "conf/nips/SunSLYZL25",
+   "ArXiv": "2502.05795",
+   "DOI": "10.48550/arXiv.2502.05795",
+   "CorpusId": 276249718
+  },
+  "publicationVenue": {
+   "id": "d9720b90-d60b-48bc-9df8-87a30b9a60dd",
+   "name": "Neural Information Processing Systems",
+   "type": "conference",
+   "alternate_names": [
+    "Neural Inf Process Syst",
+    "NeurIPS",
+    "NIPS"
+   ],
+   "url": "http://neurips.cc/"
+  },
+  "title": "The Curse of Depth in Large Language Models",
+  "venue": "Neural Information Processing Systems",
+  "year": 2025,
+  "publicationTypes": [
+   "JournalArticle"
+  ],
+  "journal": {
+   "name": "ArXiv",
+   "volume": "abs/2502.05795"
+  }
+ },
+ "2310.04680": {
+  "_http": 200,
+  "_attempts": 2,
+  "_body": "{\"message\": \"Too Many Requests. Please wait and try again or apply for a key for higher rate limits. https://www.semanticscholar.org/product/api#api-key-form\", \"code\": \"429\"}",
+  "paperId": "fa820299a00542eedb8624756016f7b14f4a383e",
+  "externalIds": {
+   "ArXiv": "2310.04680",
+   "DBLP": "journals/corr/abs-2310-04680",
+   "DOI": "10.48550/arXiv.2310.04680",
+   "CorpusId": 263828939
+  },
+  "publicationVenue": {
+   "id": "1901e811-ee72-4b20-8f7e-de08cd395a10",
+   "name": "arXiv.org",
+   "alternate_names": [
+    "ArXiv"
+   ],
+   "issn": "2331-8422",
+   "url": "https://arxiv.org"
+  },
+  "title": "The Cost of Down-Scaling Language Models: Fact Recall Deteriorates before In-Context Learning",
+  "venue": "arXiv.org",
+  "year": 2023,
+  "publicationTypes": [
+   "JournalArticle"
+  ],
+  "journal": {
+   "name": "ArXiv",
+   "volume": "abs/2310.04680"
+  }
+ },
+ "2506.00288": {
+  "_http": 200,
+  "_attempts": 2,
+  "_body": "{\"message\": \"Too Many Requests. Please wait and try again or apply for a key for higher rate limits. https://www.semanticscholar.org/product/api#api-key-form\", \"code\": \"429\"}",
+  "paperId": "e943d1ac1e74d4290a7bf8e16d01394d964220ef",
+  "externalIds": {
+   "ArXiv": "2506.00288",
+   "DBLP": "conf/acl/ElhadyAA25",
+   "DOI": "10.48550/arXiv.2506.00288",
+   "CorpusId": 279076109
+  },
+  "publicationVenue": {
+   "id": "1e33b3be-b2ab-46e9-96e8-d4eb4bad6e44",
+   "name": "Annual Meeting of the Association for Computational Linguistics",
+   "type": "conference",
+   "alternate_names": [
+    "Annu Meet Assoc Comput Linguistics",
+    "Meeting of the Association for Computational Linguistics",
+    "ACL",
+    "Meet Assoc Comput Linguistics"
+   ],
+   "url": "https://www.aclweb.org/anthology/venues/acl/"
+  },
+  "title": "Emergent Abilities of Large Language Models under Continued Pretraining for Language Adaptation",
+  "venue": "Annual Meeting of the Association for Computational Linguistics",
+  "year": 2025,
+  "publicationTypes": [
+   "JournalArticle",
+   "Conference"
+  ],
+  "journal": {
+   "name": "ArXiv",
+   "volume": "abs/2506.00288"
+  }
+ },
+ "2407.17467": {
+  "_http": 200,
+  "_attempts": 4,
+  "_body": "{\"message\": \"Too Many Requests. Please wait and try again or apply for a key for higher rate limits. https://www.semanticscholar.org/product/api#api-key-form\", \"code\": \"429\"}",
+  "paperId": "fce434329773bdec3deb7e5985c1780492f8cd6f",
+  "externalIds": {
+   "DBLP": "conf/emnlp/GuYDZT24",
+   "ACL": "2024.emnlp-main.903",
+   "ArXiv": "2407.17467",
+   "DOI": "10.48550/arXiv.2407.17467",
+   "CorpusId": 271404362
+  },
+  "publicationVenue": {
+   "id": "41bf9ed3-85b3-4c90-b015-150e31690253",
+   "name": "Conference on Empirical Methods in Natural Language Processing",
+   "type": "conference",
+   "alternate_names": [
+    "Empir Method Nat Lang Process",
+    "Empirical Methods in Natural Language Processing",
+    "Conf Empir Method Nat Lang Process",
+    "EMNLP"
+   ],
+   "url": "https://www.aclweb.org/portal/emnlp"
+  },
+  "title": "CMR Scaling Law: Predicting Critical Mixture Ratios for Continual Pre-training of Language Models",
+  "venue": "Conference on Empirical Methods in Natural Language Processing",
+  "year": 2024,
+  "publicationTypes": [
+   "JournalArticle",
+   "Conference"
+  ],
+  "journal": {
+   "pages": "16143-16162"
+  }
+ },
+ "2403.17887": {
+  "_http": 429,
+  "_attempts": 9,
+  "_body": "{\"message\": \"Too Many Requests. Please wait and try again or apply for a key for higher rate limits. https://www.semanticscholar.org/product/api#api-key-form\", \"code\": \"429\"}"
+ },
+ "2403.03853": {
+  "_http": 200,
+  "_attempts": 7,
+  "_body": "{\"message\": \"Too Many Requests. Please wait and try again or apply for a key for higher rate limits. https://www.semanticscholar.org/product/api#api-key-form\", \"code\": \"429\"}",
+  "paperId": "3c6f2e0c5ff5dff6151c3e6489378a53318a75b4",
+  "externalIds": {
+   "DBLP": "conf/acl/MenXZYWL0HC25",
+   "ArXiv": "2403.03853",
+   "DOI": "10.48550/arXiv.2403.03853",
+   "CorpusId": 268253513
+  },
+  "publicationVenue": {
+   "id": "1e33b3be-b2ab-46e9-96e8-d4eb4bad6e44",
+   "name": "Annual Meeting of the Association for Computational Linguistics",
+   "type": "conference",
+   "alternate_names": [
+    "Annu Meet Assoc Comput Linguistics",
+    "Meeting of the Association for Computational Linguistics",
+    "ACL",
+    "Meet Assoc Comput Linguistics"
+   ],
+   "url": "https://www.aclweb.org/anthology/venues/acl/"
+  },
+  "title": "ShortGPT: Layers in Large Language Models are More Redundant Than You Expect",
+  "venue": "Annual Meeting of the Association for Computational Linguistics",
+  "year": 2024,
+  "publicationTypes": [
+   "JournalArticle",
+   "Conference"
+  ],
+  "journal": {
+   "pages": "20192-20204"
+  }
+ },
+ "2402.02834": {
+  "_http": 429,
+  "_attempts": 9,
+  "_body": "{\"message\": \"Too Many Requests. Please wait and try again or apply for a key for higher rate limits. https://www.semanticscholar.org/product/api#api-key-form\", \"code\": \"429\"}"
+ },
+ "2304.01373": {
+  "_http": 200,
+  "_attempts": 3,
+  "_body": "{\"message\": \"Too Many Requests. Please wait and try again or apply for a key for higher rate limits. https://www.semanticscholar.org/product/api#api-key-form\", \"code\": \"429\"}",
+  "paperId": "be55e8ec4213868db08f2c3168ae666001bea4b8",
+  "externalIds": {
+   "DBLP": "conf/icml/BidermanSABOHKP23",
+   "ArXiv": "2304.01373",
+   "DOI": "10.48550/arXiv.2304.01373",
+   "CorpusId": 257921893
+  },
+  "publicationVenue": {
+   "id": "fc0a208c-acb7-47dc-a0d4-af8190e21d29",
+   "name": "International Conference on Machine Learning",
+   "type": "conference",
+   "alternate_names": [
+    "ICML",
+    "Int Conf Mach Learn"
+   ],
+   "url": "https://icml.cc/"
+  },
+  "title": "Pythia: A Suite for Analyzing Large Language Models Across Training and Scaling",
+  "venue": "International Conference on Machine Learning",
+  "year": 2023,
+  "publicationTypes": [
+   "JournalArticle",
+   "Conference"
+  ],
+  "journal": {
+   "name": "ArXiv",
+   "volume": "abs/2304.01373"
+  }
+ },
+ "2312.12141": {
+  "_http": 200,
+  "_attempts": 1,
+  "paperId": "9af3c1be7a4cfd38f10b9373e4623f4b64d467cd",
+  "externalIds": {
+   "ArXiv": "2312.12141",
+   "DBLP": "conf/emnlp/YuA24",
+   "ACL": "2024.emnlp-main.191",
+   "DOI": "10.18653/v1/2024.emnlp-main.191",
+   "CorpusId": 266362692
+  },
+  "publicationVenue": {
+   "id": "41bf9ed3-85b3-4c90-b015-150e31690253",
+   "name": "Conference on Empirical Methods in Natural Language Processing",
+   "type": "conference",
+   "alternate_names": [
+    "Empir Method Nat Lang Process",
+    "Empirical Methods in Natural Language Processing",
+    "Conf Empir Method Nat Lang Process",
+    "EMNLP"
+   ],
+   "url": "https://www.aclweb.org/portal/emnlp"
+  },
+  "title": "Neuron-Level Knowledge Attribution in Large Language Models",
+  "venue": "Conference on Empirical Methods in Natural Language Processing",
+  "year": 2023,
+  "publicationTypes": [
+   "JournalArticle",
+   "Conference"
+  ],
+  "journal": {
+   "pages": "3267-3280"
+  }
+ },
+ "2601.13580": {
+  "_http": 200,
+  "_attempts": 3,
+  "_body": "{\"message\": \"Too Many Requests. Please wait and try again or apply for a key for higher rate limits. https://www.semanticscholar.org/product/api#api-key-form\", \"code\": \"429\"}",
+  "paperId": "7a77b28c2dcb619cd49aec6c8de40210895bff7f",
+  "externalIds": {
+   "DBLP": "journals/corr/abs-2601-13580",
+   "ArXiv": "2601.13580",
+   "DOI": "10.48550/arXiv.2601.13580",
+   "CorpusId": 284912109
+  },
+  "publicationVenue": {
+   "id": "1901e811-ee72-4b20-8f7e-de08cd395a10",
+   "name": "arXiv.org",
+   "alternate_names": [
+    "ArXiv"
+   ],
+   "issn": "2331-8422",
+   "url": "https://arxiv.org"
+  },
+  "title": "Neural Organ Transplantation (NOT): Checkpoint-Based Modular Adaptation for Transformer Models",
+  "venue": "arXiv.org",
+  "year": 2026,
+  "publicationTypes": [
+   "JournalArticle"
+  ],
+  "journal": {
+   "name": "ArXiv",
+   "volume": "abs/2601.13580"
+  }
+ },
+ "2506.11389": {
+  "_http": 200,
+  "_attempts": 2,
+  "_body": "{\"message\": \"Too Many Requests. Please wait and try again or apply for a key for higher rate limits. https://www.semanticscholar.org/product/api#api-key-form\", \"code\": \"429\"}",
+  "paperId": "116b35c2b00c22d6d0b1770fa50bed934e8582f6",
+  "externalIds": {
+   "DBLP": "journals/corr/abs-2506-11389",
+   "ArXiv": "2506.11389",
+   "DOI": "10.48550/arXiv.2506.11389",
+   "CorpusId": 279391223
+  },
+  "publicationVenue": {
+   "id": "1901e811-ee72-4b20-8f7e-de08cd395a10",
+   "name": "arXiv.org",
+   "alternate_names": [
+    "ArXiv"
+   ],
+   "issn": "2331-8422",
+   "url": "https://arxiv.org"
+  },
+  "title": "Curriculum-Guided Layer Scaling for Language Model Pretraining",
+  "venue": "arXiv.org",
+  "year": 2025,
+  "publicationTypes": [
+   "JournalArticle"
+  ],
+  "journal": {
+   "name": "ArXiv",
+   "volume": "abs/2506.11389"
+  }
+ },
+ "2509.06518": {
+  "_http": 200,
+  "_attempts": 1,
+  "paperId": "83d9d7881e629b951cf62344f4cf359523f5bafc",
+  "externalIds": {
+   "DBLP": "journals/corr/abs-2509-06518",
+   "ArXiv": "2509.06518",
+   "DOI": "10.48550/arXiv.2509.06518",
+   "CorpusId": 281203033
+  },
+  "publicationVenue": {
+   "id": "1901e811-ee72-4b20-8f7e-de08cd395a10",
+   "name": "arXiv.org",
+   "alternate_names": [
+    "ArXiv"
+   ],
+   "issn": "2331-8422",
+   "url": "https://arxiv.org"
+  },
+  "title": "Crown, Frame, Reverse: Layer-Wise Scaling Variants for LLM Pre-Training",
+  "venue": "arXiv.org",
+  "year": 2025,
+  "publicationTypes": [
+   "JournalArticle"
+  ],
+  "journal": {
+   "name": "ArXiv",
+   "volume": "abs/2509.06518"
+  }
+ },
+ "2502.13794": {
+  "_http": 200,
+  "_attempts": 7,
+  "_body": "{\"message\": \"Too Many Requests. Please wait and try again or apply for a key for higher rate limits. https://www.semanticscholar.org/product/api#api-key-form\", \"code\": \"429\"}",
+  "paperId": "b0e405bdcddffdf6d682a92eee0e3a32966850cf",
+  "externalIds": {
+   "DBLP": "conf/acl/YangCMYC0Z25",
+   "ArXiv": "2502.13794",
+   "DOI": "10.48550/arXiv.2502.13794",
+   "CorpusId": 276450060
+  },
+  "publicationVenue": {
+   "id": "1e33b3be-b2ab-46e9-96e8-d4eb4bad6e44",
+   "name": "Annual Meeting of the Association for Computational Linguistics",
+   "type": "conference",
+   "alternate_names": [
+    "Annu Meet Assoc Comput Linguistics",
+    "Meeting of the Association for Computational Linguistics",
+    "ACL",
+    "Meet Assoc Comput Linguistics"
+   ],
+   "url": "https://www.aclweb.org/anthology/venues/acl/"
+  },
+  "title": "LESA: Learnable LLM Layer Scaling-Up",
+  "venue": "Annual Meeting of the Association for Computational Linguistics",
+  "year": 2025,
+  "publicationTypes": [
+   "JournalArticle",
+   "Conference"
+  ],
+  "journal": {
+   "pages": "22463-22476"
+  }
+ },
+ "2508.08011": {
+  "_http": 429,
+  "_attempts": 9,
+  "_body": "{\"message\": \"Too Many Requests. Please wait and try again or apply for a key for higher rate limits. https://www.semanticscholar.org/product/api#api-key-form\", \"code\": \"429\"}"
+ },
+ "2402.05913": {
+  "_http": 429,
+  "_attempts": 9,
+  "_body": "{\"message\": \"Too Many Requests. Please wait and try again or apply for a key for higher rate limits. https://www.semanticscholar.org/product/api#api-key-form\", \"code\": \"429\"}"
+ },
+ "2511.03270": {
+  "_http": 429,
+  "_attempts": 9,
+  "_body": "{\"message\": \"Too Many Requests. Please wait and try again or apply for a key for higher rate limits. https://www.semanticscholar.org/product/api#api-key-form\", \"code\": \"429\"}"
+ },
+ "2509.01213": {
+  "_http": 200,
+  "_attempts": 6,
+  "_body": "{\"message\": \"Too Many Requests. Please wait and try again or apply for a key for higher rate limits. https://www.semanticscholar.org/product/api#api-key-form\", \"code\": \"429\"}",
+  "paperId": "bbcbb3fe793628937a695d334bb6694bce850760",
+  "externalIds": {
+   "ArXiv": "2509.01213",
+   "DBLP": "journals/corr/abs-2509-01213",
+   "DOI": "10.48550/arXiv.2509.01213",
+   "CorpusId": 281081405
+  },
+  "publicationVenue": {
+   "id": "1901e811-ee72-4b20-8f7e-de08cd395a10",
+   "name": "arXiv.org",
+   "alternate_names": [
+    "ArXiv"
+   ],
+   "issn": "2331-8422",
+   "url": "https://arxiv.org"
+  },
+  "title": "Mitigating Catastrophic Forgetting in Continual Learning through Model Growth",
+  "venue": "arXiv.org",
+  "year": 2025,
+  "publicationTypes": [
+   "JournalArticle"
+  ],
+  "journal": {
+   "name": "ArXiv",
+   "volume": "abs/2509.01213"
+  }
+ },
+ "2505.20155": {
+  "_http": 429,
+  "_attempts": 9,
+  "_body": "{\"message\": \"Too Many Requests. Please wait and try again or apply for a key for higher rate limits. https://www.semanticscholar.org/product/api#api-key-form\", \"code\": \"429\"}"
+ },
+ "2307.01163": {
+  "_http": 429,
+  "_attempts": 9,
+  "_body": "{\"message\": \"Too Many Requests. Please wait and try again or apply for a key for higher rate limits. https://www.semanticscholar.org/product/api#api-key-form\", \"code\": \"429\"}"
+ },
+ "2006.05987": {
+  "_http": 200,
+  "_attempts": 3,
+  "_body": "{\"message\": \"Too Many Requests. Please wait and try again or apply for a key for higher rate limits. https://www.semanticscholar.org/product/api#api-key-form\", \"code\": \"429\"}",
+  "paperId": "056935031bc5cf0aeeaa0946320de26e14a1817e",
+  "externalIds": {
+   "MAG": "3034709122",
+   "DBLP": "journals/corr/abs-2006-05987",
+   "ArXiv": "2006.05987",
+   "CorpusId": 219558527
+  },
+  "publicationVenue": {
+   "id": "939c6e1d-0d17-4d6e-8a82-66d960df0e40",
+   "name": "International Conference on Learning Representations",
+   "type": "conference",
+   "alternate_names": [
+    "Int Conf Learn Represent",
+    "ICLR"
+   ],
+   "url": "https://iclr.cc/"
+  },
+  "title": "Revisiting Few-sample BERT Fine-tuning",
+  "venue": "International Conference on Learning Representations",
+  "year": 2020,
+  "publicationTypes": [
+   "JournalArticle"
+  ],
+  "journal": {
+   "name": "ArXiv",
+   "volume": "abs/2006.05987"
+  }
+ },
+ "2004.14975": {
+  "_http": 200,
+  "_attempts": 3,
+  "_body": "{\"message\": \"Too Many Requests. Please wait and try again or apply for a key for higher rate limits. https://www.semanticscholar.org/product/api#api-key-form\", \"code\": \"429\"}",
+  "paperId": "0f1107494c77a6aa559c52f8b37aede31398e334",
+  "externalIds": {
+   "ArXiv": "2004.14975",
+   "DBLP": "conf/emnlp/TamkinSGG20",
+   "MAG": "3103838460",
+   "ACL": "2020.findings-emnlp.125",
+   "DOI": "10.18653/v1/2020.findings-emnlp.125",
+   "CorpusId": 216869396
+  },
+  "publicationVenue": {
+   "id": "479d5605-51be-4346-b1d6-4334084504df",
+   "name": "Findings",
+   "type": "journal",
+   "issn": "2652-8800",
+   "url": "https://findingspress.org/"
+  },
+  "title": "Investigating Transferability in Pretrained Language Models",
+  "venue": "Findings",
+  "year": 2020,
+  "publicationTypes": [
+   "JournalArticle"
+  ],
+  "journal": {
+   "name": "ArXiv",
+   "volume": "abs/2004.14975"
+  }
+ },
+ "2410.06225": {
+  "_http": 200,
+  "_attempts": 6,
+  "_body": "{\"message\": \"Too Many Requests. Please wait and try again or apply for a key for higher rate limits. https://www.semanticscholar.org/product/api#api-key-form\", \"code\": \"429\"}",
+  "paperId": "e2feeeb55da69efd30f74714317dbab53615c989",
+  "externalIds": {
+   "DBLP": "journals/corr/abs-2410-06225",
+   "ArXiv": "2410.06225",
+   "DOI": "10.48550/arXiv.2410.06225",
+   "CorpusId": 273229320
+  },
+  "publicationVenue": {
+   "id": "1901e811-ee72-4b20-8f7e-de08cd395a10",
+   "name": "arXiv.org",
+   "alternate_names": [
+    "ArXiv"
+   ],
+   "issn": "2331-8422",
+   "url": "https://arxiv.org"
+  },
+  "title": "A Timeline and Analysis for Representation Plasticity in Large Language Models",
+  "venue": "arXiv.org",
+  "year": 2024,
+  "publicationTypes": [
+   "JournalArticle"
+  ],
+  "journal": {
+   "name": "ArXiv",
+   "volume": "abs/2410.06225"
+  }
+ },
+ "2410.11654": {
+  "_http": 200,
+  "_attempts": 2,
+  "_body": "{\"message\": \"Too Many Requests. Please wait and try again or apply for a key for higher rate limits. https://www.semanticscholar.org/product/api#api-key-form\", \"code\": \"429\"}",
+  "paperId": "5a4893c9492b913bd7dcdd5e393ab7b105bafd33",
+  "externalIds": {
+   "DBLP": "journals/corr/abs-2410-11654",
+   "ArXiv": "2410.11654",
+   "DOI": "10.48550/arXiv.2410.11654",
+   "CorpusId": 273351444
+  },
+  "publicationVenue": {
+   "id": "1901e811-ee72-4b20-8f7e-de08cd395a10",
+   "name": "arXiv.org",
+   "alternate_names": [
+    "ArXiv"
+   ],
+   "issn": "2331-8422",
+   "url": "https://arxiv.org"
+  },
+  "title": "Transformer Layer Injection: A Novel Approach for Efficient Upscaling of Large Language Models",
+  "venue": "arXiv.org",
+  "year": 2024,
+  "publicationTypes": [
+   "JournalArticle"
+  ],
+  "journal": {
+   "name": "ArXiv",
+   "volume": "abs/2410.11654"
+  }
+ },
+ "2312.15166": {
+  "_http": 200,
+  "_attempts": 2,
+  "_body": "{\"message\": \"Too Many Requests. Please wait and try again or apply for a key for higher rate limits. https://www.semanticscholar.org/product/api#api-key-form\", \"code\": \"429\"}",
+  "paperId": "ab7d320cbae173aef86c31faa087780cba44551f",
+  "externalIds": {
+   "ArXiv": "2312.15166",
+   "DBLP": "conf/naacl/KimKPLSKKKLKAYLPGCLK24",
+   "DOI": "10.48550/arXiv.2312.15166",
+   "CorpusId": 266550918
+  },
+  "publicationVenue": {
+   "id": "01103732-3808-4930-b8e4-7e9e68d5c68d",
+   "name": "North American Chapter of the Association for Computational Linguistics",
+   "type": "conference",
+   "alternate_names": [
+    "North Am Chapter Assoc Comput Linguistics",
+    "NAACL"
+   ],
+   "url": "https://www.aclweb.org/portal/naacl"
+  },
+  "title": "SOLAR 10.7B: Scaling Large Language Models with Simple yet Effective Depth Up-Scaling",
+  "venue": "North American Chapter of the Association for Computational Linguistics",
+  "year": 2023,
+  "publicationTypes": [
+   "JournalArticle",
+   "Conference"
+  ],
+  "journal": {
+   "name": "ArXiv",
+   "volume": "abs/2312.15166"
+  }
+ },
+ "2401.02415": {
+  "_http": 200,
+  "_attempts": 1,
+  "paperId": "c3d1832ed0444f75d44116fabbdda891aebc4b01",
+  "externalIds": {
+   "ArXiv": "2401.02415",
+   "DBLP": "conf/acl/WuGGLWFSL24",
+   "DOI": "10.48550/arXiv.2401.02415",
+   "CorpusId": 266755997
+  },
+  "publicationVenue": {
+   "id": "1e33b3be-b2ab-46e9-96e8-d4eb4bad6e44",
+   "name": "Annual Meeting of the Association for Computational Linguistics",
+   "type": "conference",
+   "alternate_names": [
+    "Annu Meet Assoc Comput Linguistics",
+    "Meeting of the Association for Computational Linguistics",
+    "ACL",
+    "Meet Assoc Comput Linguistics"
+   ],
+   "url": "https://www.aclweb.org/anthology/venues/acl/"
+  },
+  "title": "LLaMA Pro: Progressive LLaMA with Block Expansion",
+  "venue": "Annual Meeting of the Association for Computational Linguistics",
+  "year": 2024,
+  "publicationTypes": [
+   "JournalArticle",
+   "Conference"
+  ],
+  "journal": {
+   "pages": "6518-6537"
+  }
+ },
+ "2410.02330": {
+  "_http": 200,
+  "_attempts": 9,
+  "_body": "{\"message\": \"Too Many Requests. Please wait and try again or apply for a key for higher rate limits. https://www.semanticscholar.org/product/api#api-key-form\", \"code\": \"429\"}",
+  "paperId": "3777748543f1ff1f3ed8b16f063435217173b865",
+  "externalIds": {
+   "DBLP": "journals/corr/abs-2410-02330",
+   "ArXiv": "2410.02330",
+   "DOI": "10.48550/arXiv.2410.02330",
+   "CorpusId": 273098762
+  },
+  "publicationVenue": {
+   "id": "41bf9ed3-85b3-4c90-b015-150e31690253",
+   "name": "Conference on Empirical Methods in Natural Language Processing",
+   "type": "conference",
+   "alternate_names": [
+    "Empir Method Nat Lang Process",
+    "Empirical Methods in Natural Language Processing",
+    "Conf Empir Method Nat Lang Process",
+    "EMNLP"
+   ],
+   "url": "https://www.aclweb.org/portal/emnlp"
+  },
+  "title": "Llama SLayer 8B: Shallow Layers Hold the Key to Knowledge Injection",
+  "venue": "Conference on Empirical Methods in Natural Language Processing",
+  "year": 2024,
+  "publicationTypes": [
+   "JournalArticle",
+   "Conference"
+  ],
+  "journal": {
+   "pages": "5991-6002"
+  }
+ },
+ "2403.19135": {
+  "_http": 200,
+  "_attempts": 3,
+  "_body": "{\"message\": \"Too Many Requests. Please wait and try again or apply for a key for higher rate limits. https://www.semanticscholar.org/product/api#api-key-form\", \"code\": \"429\"}",
+  "paperId": "43f457b728d9c48bfb6109f9c6a30f6440b0f342",
+  "externalIds": {
+   "ArXiv": "2403.19135",
+   "CorpusId": 268733054
+  },
+  "publicationVenue": null,
+  "title": "Streamlining Redundant Layers to Compress Large Language Models",
+  "venue": "",
+  "year": 2024,
+  "publicationTypes": null,
+  "journal": null
+ },
+ "2407.16286": {
+  "_http": 429,
+  "_attempts": 9,
+  "_body": "{\"message\": \"Too Many Requests. Please wait and try again or apply for a key for higher rate limits. https://www.semanticscholar.org/product/api#api-key-form\", \"code\": \"429\"}"
+ },
+ "2210.10041": {
+  "_http": 200,
+  "_attempts": 1,
+  "paperId": "1c7ddec500b12a39040057758e3b972bd02c4758",
+  "externalIds": {
+   "DBLP": "conf/emnlp/XieQPDQM22",
+   "ArXiv": "2210.10041",
+   "DOI": "10.48550/arXiv.2210.10041",
+   "CorpusId": 252968322
+  },
+  "publicationVenue": {
+   "id": "41bf9ed3-85b3-4c90-b015-150e31690253",
+   "name": "Conference on Empirical Methods in Natural Language Processing",
+   "type": "conference",
+   "alternate_names": [
+    "Empir Method Nat Lang Process",
+    "Empirical Methods in Natural Language Processing",
+    "Conf Empir Method Nat Lang Process",
+    "EMNLP"
+   ],
+   "url": "https://www.aclweb.org/portal/emnlp"
+  },
+  "title": "Hidden State Variability of Pretrained Language Models Can Guide Computation Reduction for Transfer Learning",
+  "venue": "Conference on Empirical Methods in Natural Language Processing",
+  "year": 2022,
+  "publicationTypes": [
+   "JournalArticle",
+   "Conference"
+  ],
+  "journal": {
+   "name": "ArXiv",
+   "volume": "abs/2210.10041"
+  }
+ },
+ "2403.17919": {
+  "_http": 200,
+  "_attempts": 2,
+  "_body": "{\"message\": \"Too Many Requests. Please wait and try again or apply for a key for higher rate limits. https://www.semanticscholar.org/product/api#api-key-form\", \"code\": \"429\"}",
+  "paperId": "c739eb7f0302e85e935d1e2fdb903fe01b812804",
+  "externalIds": {
+   "DBLP": "journals/corr/abs-2403-17919",
+   "ArXiv": "2403.17919",
+   "DOI": "10.48550/arXiv.2403.17919",
+   "CorpusId": 268691349
+  },
+  "publicationVenue": {
+   "id": "d9720b90-d60b-48bc-9df8-87a30b9a60dd",
+   "name": "Neural Information Processing Systems",
+   "type": "conference",
+   "alternate_names": [
+    "Neural Inf Process Syst",
+    "NeurIPS",
+    "NIPS"
+   ],
+   "url": "http://neurips.cc/"
+  },
+  "title": "LISA: Layerwise Importance Sampling for Memory-Efficient Large Language Model Fine-Tuning",
+  "venue": "Neural Information Processing Systems",
+  "year": 2024,
+  "publicationTypes": [
+   "JournalArticle"
+  ],
+  "journal": {
+   "name": "ArXiv",
+   "volume": "abs/2403.17919"
+  }
+ },
+ "2406.11753": {
+  "_http": 200,
+  "_attempts": 3,
+  "_body": "{\"message\": \"Too Many Requests. Please wait and try again or apply for a key for higher rate limits. https://www.semanticscholar.org/product/api#api-key-form\", \"code\": \"429\"}",
+  "paperId": "59ce35fe9db291472b750780610b3e8f6f7005a2",
+  "externalIds": {
+   "DBLP": "conf/acl/0001A0Z25",
+   "ArXiv": "2406.11753",
+   "DOI": "10.18653/v1/2025.findings-acl.420",
+   "CorpusId": 270560840
+  },
+  "publicationVenue": {
+   "id": "1e33b3be-b2ab-46e9-96e8-d4eb4bad6e44",
+   "name": "Annual Meeting of the Association for Computational Linguistics",
+   "type": "conference",
+   "alternate_names": [
+    "Annu Meet Assoc Comput Linguistics",
+    "Meeting of the Association for Computational Linguistics",
+    "ACL",
+    "Meet Assoc Comput Linguistics"
+   ],
+   "url": "https://www.aclweb.org/anthology/venues/acl/"
+  },
+  "title": "A Semantic-Aware Layer-Freezing Approach to Computation-Efficient Fine-Tuning of Language Models",
+  "venue": "Annual Meeting of the Association for Computational Linguistics",
+  "year": 2024,
+  "publicationTypes": [
+   "JournalArticle",
+   "Conference"
+  ],
+  "journal": {
+   "pages": "8019-8033"
+  }
+ },
+ "2505.23811": {
+  "_http": 429,
+  "_attempts": 9,
+  "_body": "{\"message\": \"Too Many Requests. Please wait and try again or apply for a key for higher rate limits. https://www.semanticscholar.org/product/api#api-key-form\", \"code\": \"429\"}"
+ },
+ "2510.10071": {
+  "_http": 200,
+  "_attempts": 1,
+  "paperId": "ff4585ea24f12f37e86d72c1e71fa13a84342d0a",
+  "externalIds": {
+   "ArXiv": "2510.10071",
+   "DBLP": "journals/corr/abs-2510-10071",
+   "DOI": "10.48550/arXiv.2510.10071",
+   "CorpusId": 282056837
+  },
+  "publicationVenue": {
+   "id": "1901e811-ee72-4b20-8f7e-de08cd395a10",
+   "name": "arXiv.org",
+   "alternate_names": [
+    "ArXiv"
+   ],
+   "issn": "2331-8422",
+   "url": "https://arxiv.org"
+  },
+  "title": "ADEPT: Continual Pretraining via Adaptive Expansion and Dynamic Decoupled Tuning",
+  "venue": "arXiv.org",
+  "year": 2025,
+  "publicationTypes": [
+   "JournalArticle"
+  ],
+  "journal": {
+   "name": "ArXiv",
+   "volume": "abs/2510.10071"
+  }
+ },
+ "2601.20009": {
+  "_http": 200,
+  "_attempts": 6,
+  "_body": "{\"message\": \"Too Many Requests. Please wait and try again or apply for a key for higher rate limits. https://www.semanticscholar.org/product/api#api-key-form\", \"code\": \"429\"}",
+  "paperId": "79d603525a2a3593ce27dda5648af5a88df8414d",
+  "externalIds": {
+   "ArXiv": "2601.20009",
+   "DBLP": "journals/corr/abs-2601-20009",
+   "DOI": "10.48550/arXiv.2601.20009",
+   "CorpusId": 285101686
+  },
+  "publicationVenue": {
+   "id": "1901e811-ee72-4b20-8f7e-de08cd395a10",
+   "name": "arXiv.org",
+   "alternate_names": [
+    "ArXiv"
+   ],
+   "issn": "2331-8422",
+   "url": "https://arxiv.org"
+  },
+  "title": "LinguaMap: Which Layers of LLMs Speak Your Language and How to Tune Them?",
+  "venue": "arXiv.org",
+  "year": 2026,
+  "publicationTypes": [
+   "JournalArticle"
+  ],
+  "journal": {
+   "name": "ArXiv",
+   "volume": "abs/2601.20009"
+  }
+ },
+ "2404.07066": {
+  "_http": 200,
+  "_attempts": 7,
+  "_body": "{\"message\": \"Too Many Requests. Please wait and try again or apply for a key for higher rate limits. https://www.semanticscholar.org/product/api#api-key-form\", \"code\": \"429\"}",
+  "paperId": "364ecd815bce96ed27b0ff4da474d6e22785a30f",
+  "externalIds": {
+   "ArXiv": "2404.07066",
+   "CorpusId": 276116485
+  },
+  "publicationVenue": null,
+  "title": "Exploring Concept Depth: How Large Language Models Acquire Knowledge and Concept at Different Layers?",
+  "venue": "",
+  "year": 2024,
+  "publicationTypes": null,
+  "journal": null
+ }
+}

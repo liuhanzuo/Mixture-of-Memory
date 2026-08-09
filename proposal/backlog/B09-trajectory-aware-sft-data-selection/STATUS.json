@@ -1,0 +1,41 @@
+{
+  "id": "B09",
+  "slug": "trajectory-aware-sft-data-selection",
+  "status": "backlog_ready_for_data_audit",
+  "updated": "2026-08-08",
+  "evidence_level": "literature_design_and_novelty_collision_audit",
+  "novelty_status": "combination_gap_found_but_strong_component_collisions",
+  "closest_prior_art": [
+    "TopoCurate (arXiv:2603.01714)",
+    "MDS / Data Selection for Multi-turn Dialogue Instruction Tuning (arXiv:2604.07892)",
+    "ATLAS (arXiv:2503.02197)",
+    "Verified Critical Step Optimization (arXiv:2602.03412)",
+    "RDS+ / Large-Scale Data Selection for Instruction Tuning (arXiv:2503.01807)",
+    "DELIFT (arXiv:2411.04425)",
+    "SMART (arXiv:2403.08370)",
+    "LESS (arXiv:2402.04333)"
+  ],
+  "next_gate": [
+    "audit trajectory expansion, sibling redundancy, token distribution, and benchmark imbalance",
+    "freeze task-family-level candidate/query/validation/test split",
+    "implement constraint-matched stratified random, RDS+, and TA-Coreset selectors",
+    "implement a row-multiplicity stress test",
+    "add either joint hierarchical marginal gain or branch-verified decision credit",
+    "run fixed-target-token three-seed validation pilot",
+    "add LESS only if the zero-update pilot passes"
+  ],
+  "promotion_criteria": [
+    "TA-Coreset beats trajectory-stratified constraint-matched random under fixed target-token budget",
+    "the gain survives ablations for trajectory cap and benchmark balancing",
+    "at least one held-out benchmark or task-family setting is non-inferior",
+    "TA-Coreset improves the performance-total-cost Pareto frontier over RDS+",
+    "the method contains a non-compositional core beyond combining ATLAS, RDS+, and facility location"
+  ],
+  "kill_criteria": [
+    "constraint-matched random matches TA-Coreset across sufficient paired seeds",
+    "critical-step selection does not beat random-step selection",
+    "RDS+ dominates TA-Coreset in both performance and total cost",
+    "untouched-test gains disappear after leakage controls",
+    "results are driven only by additional target tokens"
+  ]
+}

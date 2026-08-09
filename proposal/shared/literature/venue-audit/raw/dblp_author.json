@@ -1,0 +1,4111 @@
+{
+ "2411.15558": {
+  "_http": 200,
+  "query": "Yao Lu Zhu",
+  "authors": [
+   "Yao Lu",
+   "Hao Cheng",
+   "Yujie Fang",
+   "Zeyu Wang",
+   "Jiaheng Wei",
+   "Dongwei Xu",
+   "Qi Xuan",
+   "Xiaoniu Yang",
+   "Zhaowei Zhu"
+  ],
+  "nonCorr": [
+   {
+    "key": "journals/nature/GuoYZSWZXZMBZY025",
+    "venue": "Nat.",
+    "year": "2025",
+    "title": "DeepSeek-R1 incentivizes reasoning in LLMs through reinforcement learning."
+   },
+   {
+    "key": "conf/cvpr/LiYLGSYWLLYSZ0T25",
+    "venue": "CVPR Workshops",
+    "year": "2025",
+    "title": "NTIRE 2025 Challenge on Short-form UGC Video Quality Assessment and Enhancement: Methods and Results."
+   },
+   {
+    "key": "journals/jcheminf/DongYZWLCLMZC17",
+    "venue": "J. Cheminformatics",
+    "year": "2017",
+    "title": "ChemSAR: an online pipelining platform for molecular SAR modeling."
+   },
+   {
+    "key": "journals/jcamd/YaoDCZWWWLC16",
+    "venue": "J. Comput. Aided Mol. Des.",
+    "year": "2016",
+    "title": "TargetNet: a web service for predicting potential drug-target interaction profiling via multi-target SAR models."
+   },
+   {
+    "key": "journals/jcheminf/DongYWZWMLZC16",
+    "venue": "J. Cheminformatics",
+    "year": "2016",
+    "title": "BioTriangle: a web-accessible platform for generating various molecular representations for chemicals, proteins, DNAs/RNAs and their interactions."
+   },
+   {
+    "key": "journals/bspc/TengLZLSYZ26",
+    "venue": "Biomed. Signal Process. Control.",
+    "year": "2026",
+    "title": "An enhanced Mamba-based YOLOv12 model featuring dual-stage sparse attention and enhanced interlayer feature correlation for automated lung nodule detection in CT images."
+   },
+   {
+    "key": "journals/jcisd/WangDDZWYLWC16",
+    "venue": "J. Chem. Inf. Model.",
+    "year": "2016",
+    "title": "ADME Properties Evaluation in Drug Discovery: Prediction of Caco-2 Cell Permeability Using a Combination of NSGA-II and Boosting."
+   },
+   {
+    "key": "journals/cmpb/LuZZZY26",
+    "venue": "Comput. Methods Programs Biomed.",
+    "year": "2026",
+    "title": "A lightweight vision transformer with context-aware convolution and uniformity normalization for Alzheimer&apos;s Disease diagnosis."
+   },
+   {
+    "key": "journals/eaai/LuZZY25",
+    "venue": "Eng. Appl. Artif. Intell.",
+    "year": "2025",
+    "title": "Tuberculosis and pneumonia diagnosis in chest X-rays by large adaptive filter and aligning normalized network with report-guided multi-level alignment."
+   },
+   {
+    "key": "journals/tcom/ZhangZMXLZ24",
+    "venue": "IEEE Trans. Commun.",
+    "year": "2024",
+    "title": "Rate-Splitting Multiple Access in Cell-Free Massive MIMO-URLLC Systems: Achievable Rate Analysis and Optimization."
+   },
+   {
+    "key": "conf/icra/ONeillRMGPLPGMJ24",
+    "venue": "ICRA",
+    "year": "2024",
+    "title": "Open X-Embodiment: Robotic Learning Datasets and RT-X Models : Open X-Embodiment Collaboration."
+   },
+   {
+    "key": "journals/ijprai/WangYAZZGLMWSXL11",
+    "venue": "Int. J. Pattern Recognit. Artif. Intell.",
+    "year": "2011",
+    "title": "Rided-2D: a Rule-Based instantaneous Denoising and Edge Detection Method for 2D Range Scan Line."
+   },
+   {
+    "key": "journals/titb/FuDCCZLCY26",
+    "venue": "IEEE J. Biomed. Health Informatics",
+    "year": "2026",
+    "title": "DrugKANs: A Paradigm to Enhance Drug-Target Interaction Prediction With KANs."
+   },
+   {
+    "key": "journals/bmcmi/LiuHYLDLDYZF25",
+    "venue": "BMC Medical Imaging",
+    "year": "2025",
+    "title": "Improved noninvasive diagnostic evaluations in treatment-naïve adrenocorticotropic hormone (ACTH)-dependent Cushing&apos;s syndrome."
+   },
+   {
+    "key": "journals/tvt/LiuWYL24",
+    "venue": "IEEE Trans. Veh. Technol.",
+    "year": "2024",
+    "title": "A Data-Driven Maneuvering Target Tracking Method Aided With Partial Models."
+   },
+   {
+    "key": "conf/vldb/0001XL0TYZDSL0Z24",
+    "venue": "VLDB Workshops",
+    "year": "2024",
+    "title": "OneEdit: A Neural-Symbolic Collaboratively Knowledge Editing System."
+   },
+   {
+    "key": "conf/iccvw/KristanMDFCZLDZ23",
+    "venue": "ICCV",
+    "year": "2023",
+    "title": "The First Visual Object Tracking Segmentation VOTS2023 Challenge Results."
+   },
+   {
+    "key": "conf/qrs/YaoLLLZ23",
+    "venue": "QRS",
+    "year": "2023",
+    "title": "MicroKGCL: A Knowledge Graph for Root Cause Localization of Feedback Issues in Microservices."
+   },
+   {
+    "key": "journals/tsmc/NiuLLW22",
+    "venue": "IEEE Trans. Syst. Man Cybern. Syst.",
+    "year": "2022",
+    "title": "Evidential Combination of Classifiers for Imbalanced Data."
+   },
+   {
+    "key": "conf/eccv/FengLZSZJYLGZWFHHLCDZHLWJJSWLZZZGWRHFH22",
+    "venue": "ECCV Workshops",
+    "year": "2022",
+    "title": "MIPI 2022 Challenge on Under-Display Camera Image Restoration: Methods and Results."
+   },
+   {
+    "key": "conf/sigir/HongLYZZ12",
+    "venue": "SIGIR",
+    "year": "2012",
+    "title": "What reviews are satisfactory: novel features for automatic helpfulness voting."
+   },
+   {
+    "key": "conf/csse/BinJJQ08",
+    "venue": "CSSE",
+    "year": "2008",
+    "title": "Automated Essay Scoring Using the KNN Algorithm."
+   },
+   {
+    "key": "journals/ascom/HanZXZWXCCCDDDHLLLLQTWX26",
+    "venue": "Astron. Comput.",
+    "year": "2026",
+    "title": "SVOM follow-up observation coordinating service."
+   },
+   {
+    "key": "journals/quanbio/RuanLZCSGLGWWZWLFLLLWCJ26",
+    "venue": "Quant. Biol.",
+    "year": "2026",
+    "title": "Large language models for bioinformatics."
+   },
+   {
+    "key": "journals/ral/ChenMZZLZ26",
+    "venue": "IEEE Robotics Autom. Lett.",
+    "year": "2026",
+    "title": "InstGPMap: Real-Time Instance-Level Global Prior Mapping via Historical Predictions Fusion."
+   },
+   {
+    "key": "journals/mta/ChenLZZYW25",
+    "venue": "Multim. Tools Appl.",
+    "year": "2025",
+    "title": "Sample-based relationship for assisting diagnosis of pneumonia in medical care."
+   },
+   {
+    "key": "journals/npjdm/MaCYPYLLTSZWJXLGZZQJWLC25",
+    "venue": "npj Digit. Medicine",
+    "year": "2025",
+    "title": "Multimodal machine learning enables AI chatbot to diagnose ophthalmic diseases and provide high-quality medical responses."
+   },
+   {
+    "key": "journals/tnn/LiCPZLLCLWYX25",
+    "venue": "IEEE Trans. Neural Networks Learn. Syst.",
+    "year": "2025",
+    "title": "EEG-Based Emotion Monitoring and Regulation System by Learning the Discriminative Brain Network Manifold."
+   },
+   {
+    "key": "conf/cvm/XuLZZY25",
+    "venue": "CVM",
+    "year": "2025",
+    "title": "Local and Global Feature Cross-Attention Multimodal Place Recognition."
+   },
+   {
+    "key": "journals/concurrency/LiangLMCY24",
+    "venue": "Concurr. Comput. Pract. Exp.",
+    "year": "2024",
+    "title": "DML-OFA: Deep mutual learning with online feature alignment for the detection of COVID-19 from chest x-ray images."
+   },
+   {
+    "key": "journals/mta/KeLYZXY24",
+    "venue": "Multim. Tools Appl.",
+    "year": "2024",
+    "title": "A semi-supervised medical image classification method based on combined pseudo-labeling and distance metric consistency."
+   },
+   {
+    "key": "journals/mta/LiangLZYZ24",
+    "venue": "Multim. Tools Appl.",
+    "year": "2024",
+    "title": "CMFuse: Correlation-based multi-scale feature fusion network for the detection of COVID-19 from Chest X-ray images."
+   },
+   {
+    "key": "conf/cvpr/LiuMZLKS0GCZWTP22",
+    "venue": "CVPR Workshops",
+    "year": "2024",
+    "title": "NTIRE 2024 Quality Assessment of AI-Generated Content Challenge."
+   },
+   {
+    "key": "conf/eccv/KristanMTFZLTVBCFACCCCC24",
+    "venue": "ECCV Workshops",
+    "year": "2024",
+    "title": "The Second Visual Object Tracking Segmentation VOTS2024 Challenge Results."
+   },
+   {
+    "key": "journals/patterns/XueZZZXQYSLCWDYLPPXLLZZWXLLHWG23",
+    "venue": "Patterns",
+    "year": "2023",
+    "title": "DPHL v.2: An updated and comprehensive DIA pan-human assay library for quantifying more than 14,000 proteins."
+   },
+   {
+    "key": "journals/nar/XueB0ZXHZLZCSMZ21",
+    "venue": "Nucleic Acids Res.",
+    "year": "2021",
+    "title": "Database Resources of the National Genomics Data Center, China National Center for Bioinformation in 2021."
+   },
+   {
+    "key": "conf/cvpr/GuoLZYLL20",
+    "venue": "CVPR",
+    "year": "2020",
+    "title": "Normalized and Geometry-Aware Self-Attention Network for Image Captioning."
+   },
+   {
+    "key": "journals/cbm/XiangZLCWCLZYXC19",
+    "venue": "Comput. Biol. Medicine",
+    "year": "2019",
+    "title": "Network pharmacology-based identification for therapeutic mechanism of Ling-Gui-Zhu-Gan decoction in the metabolic syndrome induced by antipsychotic drugs."
+   },
+   {
+    "key": "conf/iccvw/WenZBSZJDLLZWZN19",
+    "venue": "ICCV Workshops",
+    "year": "2019",
+    "title": "VisDrone-MOT2019: The Vision Meets Drone Multiple Object Tracking Challenge Results."
+   },
+   {
+    "key": "journals/bib/ZhuDGYLQXZLYLTXWZYH26",
+    "venue": "Briefings Bioinform.",
+    "year": "2026",
+    "title": "A comprehensive survey of computer vision methods for spatial transcriptomics."
+   },
+   {
+    "key": "journals/chinaf/ShiLZZYWG26",
+    "venue": "Sci. China Inf. Sci.",
+    "year": "2026",
+    "title": "RFDR: a retransmission-free data reconstruction framework for emergency response networks."
+   },
+   {
+    "key": "journals/fcsc/WangLFWZ26",
+    "venue": "Frontiers Comput. Sci.",
+    "year": "2026",
+    "title": "Enhancing data quality with effective feature selection and privacy protection."
+   }
+  ]
+ },
+ "2606.07978": {
+  "_http": 200,
+  "query": "Xueping Gao",
+  "authors": [
+   "Xueping Gao"
+  ],
+  "nonCorr": [
+   {
+    "key": "journals/cnsns/RaoZGZ21",
+    "venue": "Commun. Nonlinear Sci. Numer. Simul.",
+    "year": "2021",
+    "title": "Self-organizations with fast-slow time scale in a memristor-based Shinriki&apos;s circuit."
+   },
+   {
+    "key": "conf/iciscae/GaoL21",
+    "venue": "ICISCAE",
+    "year": "2021",
+    "title": "The Imperative and Recommendations for the Integration of Modern Technology and Internet-Based Learning into the Teaching Methods of Economic Law in China&apos;s Universities in the Era of Big Data."
+   },
+   {
+    "key": "journals/ecoi/LiGS25",
+    "venue": "Ecol. Informatics",
+    "year": "2025",
+    "title": "Dynamic drivers and thresholds of algal blooms under different thermal structure in a deep reservoir: Biomass and vertical distribution perspectives."
+   },
+   {
+    "key": "journals/prl/WangGLYZ25",
+    "venue": "Pattern Recognit. Lett.",
+    "year": "2025",
+    "title": "StableID: Multimodal learning for stable identity in personalized Text-to-Face generation."
+   },
+   {
+    "key": "journals/vc/WangGLYZ25",
+    "venue": "Vis. Comput.",
+    "year": "2025",
+    "title": "Instance-level cross-attention learning for fine-grained customizable face generation."
+   },
+   {
+    "key": "journals/remotesensing/YuanZGZ24",
+    "venue": "Remote. Sens.",
+    "year": "2024",
+    "title": "An Evaluation of Future Climate Change Impacts on Key Elements of the Water-Carbon Cycle Using a Physics-Based Ecohydrological Model in Sanchuan River Basin, Loess Plateau."
+   },
+   {
+    "key": "journals/staeors/YangZGZGGL24",
+    "venue": "IEEE J. Sel. Top. Appl. Earth Obs. Remote. Sens.",
+    "year": "2024",
+    "title": "Analysis of the Spatiotemporal Dynamics and Drivers of Ecosystem Health in Xinjiang."
+   },
+   {
+    "key": "journals/tcbb/ShengXWHZGW24",
+    "venue": "IEEE ACM Trans. Comput. Biol. Bioinform.",
+    "year": "2024",
+    "title": "A Survey of Deep Learning for Detecting miRNA- Disease Associations: Databases, Computational Methods, Challenges, and Future Directions."
+   },
+   {
+    "key": "journals/tce/LiGYXJYZ24",
+    "venue": "IEEE Trans. Consumer Electron.",
+    "year": "2024",
+    "title": "Human Body Impact and Error Correction for Indoor UWB Ranging."
+   },
+   {
+    "key": "journals/tim/FengGDLCZZLZS24",
+    "venue": "IEEE Trans. Instrum. Meas.",
+    "year": "2024",
+    "title": "Multivariable Optimization Method for Improving the Self-Calibration and Accuracy of a Binary Polarization State Analyzer."
+   },
+   {
+    "key": "journals/bib/ShengWHGCXF23",
+    "venue": "Briefings Bioinform.",
+    "year": "2023",
+    "title": "Multi-task prediction-based graph contrastive learning for inferring the relationship among lncRNAs, miRNAs and diseases."
+   },
+   {
+    "key": "journals/cbm/ShengHLWYGXFW23",
+    "venue": "Comput. Biol. Medicine",
+    "year": "2023",
+    "title": "Data resources and computational methods for lncRNA-disease association prediction."
+   },
+   {
+    "key": "journals/tcbb/ShengHGCXW23",
+    "venue": "IEEE ACM Trans. Comput. Biol. Bioinform.",
+    "year": "2023",
+    "title": "A Survey of Computational Methods and Databases for lncRNA-MiRNA Interaction Prediction."
+   },
+   {
+    "key": "conf/bibm/ShengHWGSX23",
+    "venue": "BIBM",
+    "year": "2023",
+    "title": "Contrastive self-supervised graph convolutional network for detecting the relationship among lncRNAs, miRNAs, and diseases."
+   },
+   {
+    "key": "journals/mta/SuGRLDL22",
+    "venue": "Multim. Tools Appl.",
+    "year": "2022",
+    "title": "Face mask detection and classification via deep transfer learning."
+   },
+   {
+    "key": "journals/aslib/WangG21",
+    "venue": "Aslib J. Inf. Manag.",
+    "year": "2021",
+    "title": "Information modeling and system realization for supporting engineering education accreditation process based on polychromatic graph."
+   },
+   {
+    "key": "journals/concurrency/ZhangLWPYG21",
+    "venue": "Concurr. Comput. Pract. Exp.",
+    "year": "2021",
+    "title": "Chinese clinical named entity recognition based on stacked neural network."
+   },
+   {
+    "key": "journals/jcheminf/ShenHGZZWXKCH21",
+    "venue": "J. Cheminformatics",
+    "year": "2021",
+    "title": "The impact of cross-docked poses on performance of machine learning classifier for protein-ligand binding pose prediction."
+   },
+   {
+    "key": "journals/access/GaoF20",
+    "venue": "IEEE Access",
+    "year": "2020",
+    "title": "SOC Optimization Based Energy Management Strategy for Hybrid Energy Storage System in Vessel Integrated Power System."
+   },
+   {
+    "key": "journals/complexity/NiuGPGPLL20",
+    "venue": "Complex.",
+    "year": "2020",
+    "title": "Multichannel Deep Attention Neural Networks for the Classification of Autism Spectrum Disorder Using Neuroimaging and Personal Characteristic Data."
+   },
+   {
+    "key": "journals/isci/ZhouYCLJGW19",
+    "venue": "Inf. Sci.",
+    "year": "2019",
+    "title": "An individual dependent multi-colony artificial bee colony algorithm."
+   },
+   {
+    "key": "conf/icra/WangGXZ19",
+    "venue": "ICRA",
+    "year": "2019",
+    "title": "Modal Dynamics and Analysis of a Vertical Stretch-Retractable Continuum Manipulator with Large Deflection."
+   },
+   {
+    "key": "conf/icnsc/GaoJYW18",
+    "venue": "ICNSC",
+    "year": "2018",
+    "title": "Clustering and selection method of shaft part manufacturing services on cloud platform."
+   },
+   {
+    "key": "journals/tmc/XieN0XCXW17",
+    "venue": "IEEE Trans. Mob. Comput.",
+    "year": "2017",
+    "title": "Recover Corrupted Data in Sensor Networks: A Matrix Completion Solution."
+   },
+   {
+    "key": "journals/ijcim/GaoWLYLG16",
+    "venue": "Int. J. Comput. Integr. Manuf.",
+    "year": "2016",
+    "title": "Workflow dynamic change and instance migration approach based on polychromatic sets theory."
+   },
+   {
+    "key": "journals/eis/GaoXWLYL13",
+    "venue": "Enterp. Inf. Syst.",
+    "year": "2013",
+    "title": "Workflow process modelling and resource allocation based on polychromatic sets theory."
+   },
+   {
+    "key": "conf/icai/ZhangXYDW09",
+    "venue": "IC-AI",
+    "year": "2009",
+    "title": "Using Quantum-Behaved Particle Swarm Optimization to Solve Spatial Clustering with Obstacles Constraints."
+   },
+   {
+    "key": "conf/ijcbs/XuNUGQL09",
+    "venue": "IJCBS",
+    "year": "2009",
+    "title": "Semi-supervised Learning of Text Classification on Bacterial Protein-Protein Interaction Documents."
+   },
+   {
+    "key": "conf/fskd/ZhangZFDZ08",
+    "venue": "FSKD",
+    "year": "2008",
+    "title": "Clustering Spatial Data with Obstacles Using Improved Ant Colony Optimization and Hybrid Particle Swarm Optimization."
+   },
+   {
+    "key": "conf/iske/ZhangDWFD08",
+    "venue": "ISKE",
+    "year": "2008",
+    "title": "Spatial clustering with obstacles constraints using PSO-DV and K-Medoids."
+   },
+   {
+    "key": "conf/ifip8/WangZGL06",
+    "venue": "CONFENIS",
+    "year": "2006",
+    "title": "Development of Enterprise Information System Using Business Component-Based Approach."
+   }
+  ]
+ },
+ "2606.16897": {
+  "_http": 200,
+  "query": "Xueping Gao",
+  "authors": [
+   "Xueping Gao"
+  ],
+  "nonCorr": [
+   {
+    "key": "journals/cnsns/RaoZGZ21",
+    "venue": "Commun. Nonlinear Sci. Numer. Simul.",
+    "year": "2021",
+    "title": "Self-organizations with fast-slow time scale in a memristor-based Shinriki&apos;s circuit."
+   },
+   {
+    "key": "conf/iciscae/GaoL21",
+    "venue": "ICISCAE",
+    "year": "2021",
+    "title": "The Imperative and Recommendations for the Integration of Modern Technology and Internet-Based Learning into the Teaching Methods of Economic Law in China&apos;s Universities in the Era of Big Data."
+   },
+   {
+    "key": "journals/ecoi/LiGS25",
+    "venue": "Ecol. Informatics",
+    "year": "2025",
+    "title": "Dynamic drivers and thresholds of algal blooms under different thermal structure in a deep reservoir: Biomass and vertical distribution perspectives."
+   },
+   {
+    "key": "journals/prl/WangGLYZ25",
+    "venue": "Pattern Recognit. Lett.",
+    "year": "2025",
+    "title": "StableID: Multimodal learning for stable identity in personalized Text-to-Face generation."
+   },
+   {
+    "key": "journals/vc/WangGLYZ25",
+    "venue": "Vis. Comput.",
+    "year": "2025",
+    "title": "Instance-level cross-attention learning for fine-grained customizable face generation."
+   },
+   {
+    "key": "journals/remotesensing/YuanZGZ24",
+    "venue": "Remote. Sens.",
+    "year": "2024",
+    "title": "An Evaluation of Future Climate Change Impacts on Key Elements of the Water-Carbon Cycle Using a Physics-Based Ecohydrological Model in Sanchuan River Basin, Loess Plateau."
+   },
+   {
+    "key": "journals/staeors/YangZGZGGL24",
+    "venue": "IEEE J. Sel. Top. Appl. Earth Obs. Remote. Sens.",
+    "year": "2024",
+    "title": "Analysis of the Spatiotemporal Dynamics and Drivers of Ecosystem Health in Xinjiang."
+   },
+   {
+    "key": "journals/tcbb/ShengXWHZGW24",
+    "venue": "IEEE ACM Trans. Comput. Biol. Bioinform.",
+    "year": "2024",
+    "title": "A Survey of Deep Learning for Detecting miRNA- Disease Associations: Databases, Computational Methods, Challenges, and Future Directions."
+   },
+   {
+    "key": "journals/tce/LiGYXJYZ24",
+    "venue": "IEEE Trans. Consumer Electron.",
+    "year": "2024",
+    "title": "Human Body Impact and Error Correction for Indoor UWB Ranging."
+   },
+   {
+    "key": "journals/tim/FengGDLCZZLZS24",
+    "venue": "IEEE Trans. Instrum. Meas.",
+    "year": "2024",
+    "title": "Multivariable Optimization Method for Improving the Self-Calibration and Accuracy of a Binary Polarization State Analyzer."
+   },
+   {
+    "key": "journals/bib/ShengWHGCXF23",
+    "venue": "Briefings Bioinform.",
+    "year": "2023",
+    "title": "Multi-task prediction-based graph contrastive learning for inferring the relationship among lncRNAs, miRNAs and diseases."
+   },
+   {
+    "key": "journals/cbm/ShengHLWYGXFW23",
+    "venue": "Comput. Biol. Medicine",
+    "year": "2023",
+    "title": "Data resources and computational methods for lncRNA-disease association prediction."
+   },
+   {
+    "key": "journals/tcbb/ShengHGCXW23",
+    "venue": "IEEE ACM Trans. Comput. Biol. Bioinform.",
+    "year": "2023",
+    "title": "A Survey of Computational Methods and Databases for lncRNA-MiRNA Interaction Prediction."
+   },
+   {
+    "key": "conf/bibm/ShengHWGSX23",
+    "venue": "BIBM",
+    "year": "2023",
+    "title": "Contrastive self-supervised graph convolutional network for detecting the relationship among lncRNAs, miRNAs, and diseases."
+   },
+   {
+    "key": "journals/mta/SuGRLDL22",
+    "venue": "Multim. Tools Appl.",
+    "year": "2022",
+    "title": "Face mask detection and classification via deep transfer learning."
+   },
+   {
+    "key": "journals/aslib/WangG21",
+    "venue": "Aslib J. Inf. Manag.",
+    "year": "2021",
+    "title": "Information modeling and system realization for supporting engineering education accreditation process based on polychromatic graph."
+   },
+   {
+    "key": "journals/concurrency/ZhangLWPYG21",
+    "venue": "Concurr. Comput. Pract. Exp.",
+    "year": "2021",
+    "title": "Chinese clinical named entity recognition based on stacked neural network."
+   },
+   {
+    "key": "journals/jcheminf/ShenHGZZWXKCH21",
+    "venue": "J. Cheminformatics",
+    "year": "2021",
+    "title": "The impact of cross-docked poses on performance of machine learning classifier for protein-ligand binding pose prediction."
+   },
+   {
+    "key": "journals/access/GaoF20",
+    "venue": "IEEE Access",
+    "year": "2020",
+    "title": "SOC Optimization Based Energy Management Strategy for Hybrid Energy Storage System in Vessel Integrated Power System."
+   },
+   {
+    "key": "journals/complexity/NiuGPGPLL20",
+    "venue": "Complex.",
+    "year": "2020",
+    "title": "Multichannel Deep Attention Neural Networks for the Classification of Autism Spectrum Disorder Using Neuroimaging and Personal Characteristic Data."
+   },
+   {
+    "key": "journals/isci/ZhouYCLJGW19",
+    "venue": "Inf. Sci.",
+    "year": "2019",
+    "title": "An individual dependent multi-colony artificial bee colony algorithm."
+   },
+   {
+    "key": "conf/icra/WangGXZ19",
+    "venue": "ICRA",
+    "year": "2019",
+    "title": "Modal Dynamics and Analysis of a Vertical Stretch-Retractable Continuum Manipulator with Large Deflection."
+   },
+   {
+    "key": "conf/icnsc/GaoJYW18",
+    "venue": "ICNSC",
+    "year": "2018",
+    "title": "Clustering and selection method of shaft part manufacturing services on cloud platform."
+   },
+   {
+    "key": "journals/tmc/XieN0XCXW17",
+    "venue": "IEEE Trans. Mob. Comput.",
+    "year": "2017",
+    "title": "Recover Corrupted Data in Sensor Networks: A Matrix Completion Solution."
+   },
+   {
+    "key": "journals/ijcim/GaoWLYLG16",
+    "venue": "Int. J. Comput. Integr. Manuf.",
+    "year": "2016",
+    "title": "Workflow dynamic change and instance migration approach based on polychromatic sets theory."
+   },
+   {
+    "key": "journals/eis/GaoXWLYL13",
+    "venue": "Enterp. Inf. Syst.",
+    "year": "2013",
+    "title": "Workflow process modelling and resource allocation based on polychromatic sets theory."
+   },
+   {
+    "key": "conf/icai/ZhangXYDW09",
+    "venue": "IC-AI",
+    "year": "2009",
+    "title": "Using Quantum-Behaved Particle Swarm Optimization to Solve Spatial Clustering with Obstacles Constraints."
+   },
+   {
+    "key": "conf/ijcbs/XuNUGQL09",
+    "venue": "IJCBS",
+    "year": "2009",
+    "title": "Semi-supervised Learning of Text Classification on Bacterial Protein-Protein Interaction Documents."
+   },
+   {
+    "key": "conf/fskd/ZhangZFDZ08",
+    "venue": "FSKD",
+    "year": "2008",
+    "title": "Clustering Spatial Data with Obstacles Using Improved Ant Colony Optimization and Hybrid Particle Swarm Optimization."
+   },
+   {
+    "key": "conf/iske/ZhangDWFD08",
+    "venue": "ISKE",
+    "year": "2008",
+    "title": "Spatial clustering with obstacles constraints using PSO-DV and K-Medoids."
+   },
+   {
+    "key": "conf/ifip8/WangZGL06",
+    "venue": "CONFENIS",
+    "year": "2006",
+    "title": "Development of Enterprise Information System Using Business Component-Based Approach."
+   }
+  ]
+ },
+ "2607.25663": {
+  "_http": 200,
+  "query": "Rebecca Ramnauth Scassellati",
+  "authors": [
+   "Rebecca Ramnauth",
+   "Brian Scassellati"
+  ],
+  "nonCorr": [
+   {
+    "key": "journals/thri/RamnauthBS26",
+    "venue": "ACM Trans. Hum. Robot Interact.",
+    "year": "2026",
+    "title": "To Help or Not to Help?: An Expanded Framework for Deciding Socially Appropriate Robot Assistance."
+   },
+   {
+    "key": "conf/hri/RamnauthS26",
+    "venue": "HRI",
+    "year": "2026",
+    "title": "When Robots Should Break the Rules."
+   },
+   {
+    "key": "journals/thri/MatheusRSS25",
+    "venue": "ACM Trans. Hum. Robot Interact.",
+    "year": "2025",
+    "title": "Long-Term Interactions with Social Robots: Trends, Insights, and Recommendations."
+   },
+   {
+    "key": "conf/aaai/CandonGRCFS25",
+    "venue": "AAAI",
+    "year": "2025",
+    "title": "Artificial Intelligence for Future Presidents: Teaching AI Literacy to Everyone."
+   },
+   {
+    "key": "conf/hri/RamnauthSS25",
+    "venue": "HRI",
+    "year": "2025",
+    "title": "Gaze Behavior During a Long-Term, In-Home, Social Robot Intervention for Children with ASD."
+   },
+   {
+    "key": "conf/ro-man/RamnauthBS25",
+    "venue": "RO-MAN",
+    "year": "2025",
+    "title": "From Fidgeting to Focused: Developing Robot-Enhanced Social-Emotional Therapy (RESET) for School De-Escalation Rooms."
+   },
+   {
+    "key": "conf/ro-man/RamnauthBS24",
+    "venue": "RO-MAN",
+    "year": "2024",
+    "title": "Should I Help?: A Skill-Based Framework for Deciding Socially Appropriate Assistance in Human-Robot Interactions."
+   },
+   {
+    "key": "journals/thri/GeorgiouRALSS23",
+    "venue": "ACM Trans. Hum. Robot Interact.",
+    "year": "2023",
+    "title": "Is Someone There or Is That the TV? Detecting Social Presence Using Sound."
+   },
+   {
+    "key": "conf/hri/RamnauthAALGRS22",
+    "venue": "HRI",
+    "year": "2022",
+    "title": "A Social Robot for Improving Interruptions Tolerance and Employability in Adults with ASD."
+   },
+   {
+    "key": "conf/hri/TsoiCAHPATRVS21",
+    "venue": "HRI",
+    "year": "2021",
+    "title": "Challenges Deploying Robots During a Pandemic: An Effort to Fight Social Isolation Among Children."
+   }
+  ]
+ },
+ "2510.18871": {
+  "_http": 200,
+  "query": "Akshat Gupta Ivanova",
+  "authors": [
+   "Akshat Gupta",
+   "Jay Yeung",
+   "Gopala Anumanchipalli",
+   "Anna Ivanova"
+  ],
+  "nonCorr": []
+ },
+ "2605.11416": {
+  "_http": 200,
+  "query": "Yu-Hang Wu Cong",
+  "authors": [
+   "Yu-Hang Wu",
+   "Qin-Yuan Liu",
+   "Qiu-Yang Zhao",
+   "Bo Jiang",
+   "Jiang-Feng Yang",
+   "Qing-Wei Cong"
+  ],
+  "nonCorr": [
+   {
+    "key": "conf/cvpr/0001M0ZGZWZ0LYW25",
+    "venue": "CVPR Workshops",
+    "year": "2025",
+    "title": "NTIRE 2025 XGC Quality Assessment Challenge: Methods and Results."
+   },
+   {
+    "key": "journals/todaes/WuLYCDHYX24",
+    "venue": "ACM Trans. Design Autom. Electr. Syst.",
+    "year": "2024",
+    "title": "Survey of Machine Learning for Software-assisted Hardware Design Verification: Past, Present, and Prospect."
+   },
+   {
+    "key": "conf/cvpr/LiuMSZZTZGCKDJLZCSMAHLCFZLWWZZMSM23",
+    "venue": "CVPR Workshops",
+    "year": "2023",
+    "title": "NTIRE 2023 Quality Assessment of Video Enhancement Challenge."
+   },
+   {
+    "key": "journals/titb/ZhuWGFSYCC24",
+    "venue": "IEEE J. Biomed. Health Informatics",
+    "year": "2024",
+    "title": "Towards Real-Time Sleep Stage Prediction and Online Calibration Based on Architecturally Switchable Deep Learning Models."
+   },
+   {
+    "key": "journals/titb/ZhuZFWSSYCC23",
+    "venue": "IEEE J. Biomed. Health Informatics",
+    "year": "2023",
+    "title": "MaskSleepNet: A Cross-Modality Adaptation Neural Network for Heterogeneous Signals Processing in Sleep Staging."
+   },
+   {
+    "key": "conf/dac/WuYXLH22",
+    "venue": "DAC",
+    "year": "2022",
+    "title": "High-level synthesis performance prediction using GNNs: benchmarking, modeling, and advancing."
+   },
+   {
+    "key": "conf/cec/WuWLJ08",
+    "venue": "IEEE Congress on Evolutionary Computation",
+    "year": "2008",
+    "title": "An anytime algorithm based on modified GA for dynamic weapon-target allocation problem."
+   },
+   {
+    "key": "journals/access/SuGLLFDW25",
+    "venue": "IEEE Access",
+    "year": "2025",
+    "title": "Construction and Application of GIS-Based Public Transport Transfer Network."
+   },
+   {
+    "key": "journals/eaai/LeiWHCTGWD25",
+    "venue": "Eng. Appl. Artif. Intell.",
+    "year": "2025",
+    "title": "Nonlinear dynamic modeling of turbojet engines using combined convolutional and long short-term memory networks."
+   },
+   {
+    "key": "conf/trustcom/XuSCGH024",
+    "venue": "TrustCom",
+    "year": "2024",
+    "title": "Shield-U: Safeguarding Traffic Sign Recognition Against Perturbation Attacks."
+   },
+   {
+    "key": "conf/icassp/ChenWDWD0C0SSLY23",
+    "venue": "ICASSP",
+    "year": "2023",
+    "title": "Summary on the Multimodal Information Based Speech Processing (MISP) 2022 Challenge."
+   },
+   {
+    "key": "conf/iclr/CongZKYWZTM23",
+    "venue": "ICLR",
+    "year": "2023",
+    "title": "Do We Really Need Complicated Model Architectures For Temporal Networks?"
+   }
+  ]
+ },
+ "2606.09932": {
+  "_http": 200,
+  "query": "Runze Liu Pan",
+  "authors": [
+   "Runze Liu",
+   "Jiashun Liu",
+   "Xu Wan",
+   "Yuqian Fu",
+   "Ling Pan"
+  ],
+  "nonCorr": [
+   {
+    "key": "journals/mlst/GuanZLQGCWGGXCJLLWHHYLH25",
+    "venue": "Mach. Learn. Sci. Technol.",
+    "year": "2025",
+    "title": "Thermal damage detection of EAST internal component based on machine learning."
+   },
+   {
+    "key": "journals/dt/PanYWZZL26",
+    "venue": "IEEE Des. Test",
+    "year": "2026",
+    "title": "Evaluating 3-D Flash Memory Retention Reliability Under Temperature Elevation."
+   },
+   {
+    "key": "conf/cvpr/FuQR0TS0GZNDGZP25",
+    "venue": "CVPR Workshops",
+    "year": "2025",
+    "title": "NTIRE 2025 Challenge on Cross-Domain Few-Shot Object Detection: Methods and Results."
+   },
+   {
+    "key": "conf/iccv/HuangMMLZZGLPYZYYAWZCSW25",
+    "venue": "ICCVW",
+    "year": "2025",
+    "title": "VQualA 2025 Document Image Quality Assessment Challenge."
+   },
+   {
+    "key": "conf/miccai/ZhangPZGLHJLY25",
+    "venue": "DGM4MICCAI@MICCAI",
+    "year": "2025",
+    "title": "Unsupervised Brain Tumor Segmentation via Bi-Level Optimization Guided by Radiological Reports."
+   },
+   {
+    "key": "journals/tc/PanZYLZL23",
+    "venue": "IEEE Trans. Computers",
+    "year": "2023",
+    "title": "LightWarner: Predicting Failure of 3D NAND Flash Memory Using Reinforcement Learning."
+   },
+   {
+    "key": "conf/aaai/QinHLZLLZ23",
+    "venue": "AAAI",
+    "year": "2023",
+    "title": "Data-Efficient Image Quality Assessment with Attention-Panel Decoder."
+   },
+   {
+    "key": "journals/jcisd/ZhangCYWZWLZWPSCD25",
+    "venue": "J. Chem. Inf. Model.",
+    "year": "2025",
+    "title": "Modeling Enzyme Temperature Stability from Sequence Segment Perspective."
+   },
+   {
+    "key": "journals/finr/XuLZCZL24",
+    "venue": "Frontiers Neurorobotics",
+    "year": "2024",
+    "title": "Cascade contour-enhanced panoptic segmentation for robotic vision perception."
+   },
+   {
+    "key": "conf/aaai/PanGZZSLHLD24",
+    "venue": "AAAI",
+    "year": "2024",
+    "title": "Semi-Supervised Blind Image Quality Assessment through Knowledge Distillation and Incremental Learning."
+   },
+   {
+    "key": "conf/chi/CaiJCWZL24",
+    "venue": "CHI",
+    "year": "2024",
+    "title": "PANDALens: Towards AI-Assisted In-Context Writing on OHMD During Travels."
+   },
+   {
+    "key": "journals/tip/LiangZZWLP23",
+    "venue": "IEEE Trans. Image Process.",
+    "year": "2023",
+    "title": "Omni-Frequency Channel-Selection Representations for Unsupervised Anomaly Detection."
+   },
+   {
+    "key": "conf/cicba/XiaoZHHL23",
+    "venue": "CICAI",
+    "year": "2023",
+    "title": "Concealed Object Segmentation with Hierarchical Coherence Modeling."
+   },
+   {
+    "key": "conf/cvpr/RomeroCATDH0ZLH22",
+    "venue": "CVPR Workshops",
+    "year": "2022",
+    "title": "NTIRE 2022 Image Inpainting Challenge: Report."
+   },
+   {
+    "key": "conf/dac/Li0QDYLPYZ22",
+    "venue": "DAC",
+    "year": "2022",
+    "title": "Eventor: an efficient event-based monocular multi-view stereo accelerator on FPGA platform."
+   },
+   {
+    "key": "journals/access/WangXDLSY21",
+    "venue": "IEEE Access",
+    "year": "2021",
+    "title": "Multi-Kernel Neural Network Sliding Mode Control for Permanent Magnet Linear Synchronous Motors."
+   },
+   {
+    "key": "journals/ijon/XuYYLWDL21",
+    "venue": "Neurocomputing",
+    "year": "2021",
+    "title": "An enhanced differential evolution algorithm with a new oppositional-mutual learning strategy."
+   }
+  ]
+ },
+ "2410.06981": {
+  "_http": 200,
+  "query": "Michael Lan Barez",
+  "authors": [
+   "Michael Lan",
+   "Philip Torr",
+   "Austin Meek",
+   "Ashkan Khakzar",
+   "David Krueger",
+   "Fazl Barez"
+  ],
+  "nonCorr": [
+   {
+    "key": "conf/emnlp/Lan0B24",
+    "venue": "EMNLP",
+    "year": "2024",
+    "title": "Towards Interpretable Sequence Continuation: Analyzing Shared Circuits in Large Language Models."
+   },
+   {
+    "key": "conf/acl/LanOBQMBA26",
+    "venue": "ACL",
+    "year": "2026",
+    "title": "Make Mechanistic Interpretability Auditable: A Call to Develop Guidelines via Continuous Collaborative Reviewing."
+   }
+  ]
+ },
+ "2312.02730": {
+  "_http": 200,
+  "query": "Max Klabunde Lemmerich",
+  "authors": [
+   "Max Klabunde",
+   "Mehdi Ben Amor",
+   "Michael Granitzer",
+   "Florian Lemmerich"
+  ],
+  "nonCorr": [
+   {
+    "key": "journals/csur/KlabundeSSL25",
+    "venue": "ACM Comput. Surv.",
+    "year": "2025",
+    "title": "Similarity of Neural Network Models: A Survey of Functional and Representational Measures."
+   },
+   {
+    "key": "conf/iclr/KlabundeW0MSL25",
+    "venue": "ICLR",
+    "year": "2025",
+    "title": "ReSi: A Comprehensive Benchmark for Representational Similarity Measures."
+   },
+   {
+    "key": "conf/pkdd/KlabundeL22",
+    "venue": "ECML/PKDD",
+    "year": "2022",
+    "title": "On the Prediction Instability of Graph Neural Networks."
+   }
+  ]
+ },
+ "2310.04680": {
+  "_http": 200,
+  "query": "Tian Jin Dziugaite",
+  "authors": [
+   "Tian Jin",
+   "Nolan Clement",
+   "Xin Dong",
+   "Vaishnavh Nagarajan",
+   "Michael Carbin",
+   "Jonathan Ragan-Kelley",
+   "Gintare Karolina Dziugaite"
+  ],
+  "nonCorr": [
+   {
+    "key": "conf/iclr/JinHESYAD25",
+    "venue": "ICLR",
+    "year": "2025",
+    "title": "The Journey Matters: Average Parameter Count over Pre-training Unifies Sparse and Dense Scaling Laws."
+   },
+   {
+    "key": "conf/iclr/JinCDNCRD24",
+    "venue": "ICLR",
+    "year": "2024",
+    "title": "The Cost of Scaling Down Large Language Models: Reducing Model Size Affects Memory before In-context Learning."
+   },
+   {
+    "key": "conf/nips/JinC0FD22",
+    "venue": "NeurIPS",
+    "year": "2022",
+    "title": "Pruning&apos;s Effect on Generalization Through the Lens of Training and Regularization."
+   }
+  ]
+ },
+ "2506.00288": {
+  "_http": 200,
+  "query": "Ahmed Elhady Artetxe",
+  "authors": [
+   "Ahmed Elhady",
+   "Eneko Agirre",
+   "Mikel Artetxe"
+  ],
+  "nonCorr": [
+   {
+    "key": "conf/acl/ElhadyAA25",
+    "venue": "ACL",
+    "year": "2025",
+    "title": "Emergent Abilities of Large Language Models under Continued Pre-training for Language Adaptation."
+   },
+   {
+    "key": "conf/acl/ElhadyAA25a",
+    "venue": "ACL",
+    "year": "2025",
+    "title": "WiCkeD: A Simple Method to Make Multiple Choice Benchmarks More Challenging."
+   },
+   {
+    "key": "conf/naacl/ElhadyEAA24",
+    "venue": "NAACL",
+    "year": "2024",
+    "title": "Improving Factuality in Clinical Abstractive Multi-Document Summarization by Guided Continued Pre-training."
+   }
+  ]
+ },
+ "2403.03853": {
+  "_http": 200,
+  "query": "Xin Men Chen",
+  "authors": [
+   "Xin Men",
+   "Mingyu Xu",
+   "Qingyu Zhang",
+   "Bingning Wang",
+   "Hongyu Lin",
+   "Yaojie Lu",
+   "Xianpei Han",
+   "Weipeng Chen"
+  ],
+  "nonCorr": [
+   {
+    "key": "journals/nature/GuoYZSWZXZMBZY025",
+    "venue": "Nat.",
+    "year": "2025",
+    "title": "DeepSeek-R1 incentivizes reasoning in LLMs through reinforcement learning."
+   },
+   {
+    "key": "journals/nar/XueB0ZXHZLZCSMZ21",
+    "venue": "Nucleic Acids Res.",
+    "year": "2021",
+    "title": "Database Resources of the National Genomics Data Center, China National Center for Bioinformation in 2021."
+   },
+   {
+    "key": "conf/iccvw/KristanBZRGBDDN19",
+    "venue": "ICCV Workshops",
+    "year": "2019",
+    "title": "The Seventh Visual Object Tracking VOT2019 Challenge Results."
+   },
+   {
+    "key": "conf/eccv/KristanLMFPKCDZLDBZZYYCMFBBCCCCCCCCCCC22",
+    "venue": "ECCV Workshops",
+    "year": "2022",
+    "title": "The Tenth Visual Object Tracking VOT2022 Challenge Results."
+   },
+   {
+    "key": "conf/cvpr/LiZTGYLLJWHLJLFLWCLZFSMZWZSPDTYWPCDZKV23",
+    "venue": "CVPR Workshops",
+    "year": "2023",
+    "title": "NTIRE 2023 Challenge on Efficient Super-Resolution: Methods and Results."
+   },
+   {
+    "key": "journals/nar/ChouSYCLLHSTLCT18",
+    "venue": "Nucleic Acids Res.",
+    "year": "2018",
+    "title": "miRTarBase update 2018: a resource for experimentally validated microRNA-target interactions."
+   },
+   {
+    "key": "conf/cvpr/0082JJWLWYL0WTT25",
+    "venue": "CVPR Workshops",
+    "year": "2025",
+    "title": "NTIRE 2025 Challenge on Day and Night Raindrop Removal for Dual-Focused Images: Methods and Results."
+   },
+   {
+    "key": "conf/iccv/XuXZCZLCLGHYLHTYSFZZTZZ25",
+    "venue": "ICCVW",
+    "year": "2025",
+    "title": "MARS2 2025 Challenge on Multimodal Reasoning: Datasets, Methods, Results, Discussion, and Outlook."
+   },
+   {
+    "key": "conf/iecon/ChenZSZHC23",
+    "venue": "IECON",
+    "year": "2023",
+    "title": "Enhancing Ocean Scene Video Captioning with Multimodal Pre-Training and Video-Swin-Transformer."
+   },
+   {
+    "key": "conf/isscc/XueHLCKWLWHWCHC20",
+    "venue": "ISSCC",
+    "year": "2020",
+    "title": "15.4 A 22nm 2Mb ReRAM Compute-in-Memory Macro with 121-28TOPS/W for Multibit MAC Computing for Tiny AI Edge Devices."
+   },
+   {
+    "key": "conf/isscc/ChenLLHLYXYCCHK18",
+    "venue": "ISSCC",
+    "year": "2018",
+    "title": "A 65nm 1Mb nonvolatile computing-in-memory ReRAM macro with sub-16ns multiply-and-accumulate for binary DNN AI edge processors."
+   },
+   {
+    "key": "conf/cvpr/LiuMZLKS0GCZWTP22",
+    "venue": "CVPR Workshops",
+    "year": "2024",
+    "title": "NTIRE 2024 Quality Assessment of AI-Generated Content Challenge."
+   },
+   {
+    "key": "conf/icml/Huang0WWZLGHLZL24",
+    "venue": "ICML",
+    "year": "2024",
+    "title": "Position: TrustLLM: Trustworthiness in Large Language Models."
+   },
+   {
+    "key": "conf/icra/ONeillRMGPLPGMJ24",
+    "venue": "ICRA",
+    "year": "2024",
+    "title": "Open X-Embodiment: Robotic Learning Datasets and RT-X Models : Open X-Embodiment Collaboration."
+   },
+   {
+    "key": "conf/cchi/FuCHLCXLCJJSZGL22",
+    "venue": "CCHI",
+    "year": "2022",
+    "title": "A Multi-media Entry to Traditional Chinese Art."
+   },
+   {
+    "key": "journals/jssc/XueCCKCLKLLHTCC20",
+    "venue": "IEEE J. Solid State Circuits",
+    "year": "2020",
+    "title": "Embedded 1-Mb ReRAM-Based Computing-in- Memory Macro With Multibit Input and Weight for CNN-Based AI Edge Processors."
+   },
+   {
+    "key": "journals/nar/HuangLLHSHTCJYX20",
+    "venue": "Nucleic Acids Res.",
+    "year": "2020",
+    "title": "miRTarBase 2020: updates to the experimentally validated microRNA?target interaction database."
+   },
+   {
+    "key": "conf/isscc/XueCLLLLWWCCHKW19",
+    "venue": "ISSCC",
+    "year": "2019",
+    "title": "A 1Mb Multibit ReRAM Computing-In-Memory Macro with 14.6ns Parallel MAC Computing Time for CNN Based AI Edge Processors."
+   },
+   {
+    "key": "journals/remotesensing/WangWLZCLDXSLRLWZH24",
+    "venue": "Remote. Sens.",
+    "year": "2024",
+    "title": "The Prediction of Cross-Regional Landslide Susceptibility Based on Pixel Transfer Learning."
+   },
+   {
+    "key": "conf/dasfaa/LiLCLXW24",
+    "venue": "DASFAA",
+    "year": "2024",
+    "title": "Next POI Recommendation based on Adaptive Graph Learning and Future Preferences."
+   },
+   {
+    "key": "conf/cvpr/VasluianuSTCHTFZZWWLGZSSDZLLYOLRLJHWLY23",
+    "venue": "CVPR Workshops",
+    "year": "2023",
+    "title": "NTIRE 2023 Image Shadow Removal Challenge Report."
+   },
+   {
+    "key": "conf/cvpr/LiangTYLSWZZZHL22",
+    "venue": "CVPR Workshops",
+    "year": "2024",
+    "title": "NTIRE 2024 Restore Any Image Model (RAIM) in the Wild Challenge."
+   },
+   {
+    "key": "journals/tmlr/SrivastavaRRSAF23",
+    "venue": "Trans. Mach. Learn. Res.",
+    "year": "2023",
+    "title": "Beyond the Imitation Game: Quantifying and extrapolating the capabilities of language models."
+   },
+   {
+    "key": "conf/asicon/SiQCXSZLSLCW19",
+    "venue": "ASICON",
+    "year": "2019",
+    "title": "Circuit Design Challenges in Computing-in-Memory for AI Edge Devices."
+   },
+   {
+    "key": "journals/mlc/ChenCLKB26",
+    "venue": "Int. J. Mach. Learn. Cybern.",
+    "year": "2026",
+    "title": "A novel SRGAN framework for mural restoration: integrating multi-scale features and attention mechanisms."
+   },
+   {
+    "key": "journals/tmi/WangWLLQWGSHZTLCHWZHLSL26",
+    "venue": "IEEE Trans. Medical Imaging",
+    "year": "2026",
+    "title": "Toward Modality- and Sampling-Universal Learning Strategies for Accelerating Cardiovascular Imaging: Summary of the CMRxRecon2024 Challenge."
+   },
+   {
+    "key": "conf/icic/LiuBCKC26",
+    "venue": "ICIC",
+    "year": "2026",
+    "title": "Lightweight and Efficient Restoration of Beiting Murals: A Degression Receptive Field Network with Multi-scale Reparameterization and Wavelet-Fourier Frequency Domain Fusion."
+   },
+   {
+    "key": "conf/siggraph/LiZCHGZSH26",
+    "venue": "SIGGRAPH",
+    "year": "2026",
+    "title": "Pixal3D: Pixel-Aligned 3D Generation from Images."
+   },
+   {
+    "key": "journals/taes/LiCHCWQMWL25",
+    "venue": "IEEE Trans. Aerosp. Electron. Syst.",
+    "year": "2025",
+    "title": "AOT: Aggregation Optimal Transport for Few-Shot SAR Automatic Target Recognition."
+   },
+   {
+    "key": "conf/cvpr/0001M0ZGZWZ0LYW25",
+    "venue": "CVPR Workshops",
+    "year": "2025",
+    "title": "NTIRE 2025 XGC Quality Assessment Challenge: Methods and Results."
+   },
+   {
+    "key": "conf/cvpr/LiYLGSYWLLYSZ0T25",
+    "venue": "CVPR Workshops",
+    "year": "2025",
+    "title": "NTIRE 2025 Challenge on Short-form UGC Video Quality Assessment and Enhancement: Methods and Results."
+   }
+  ]
+ },
+ "2402.02834": {
+  "_http": 200,
+  "query": "Bo-Kyeong Kim Song",
+  "authors": [
+   "Bo-Kyeong Kim",
+   "Geonmin Kim",
+   "Tae-Ho Kim",
+   "Thibault Castells",
+   "Shinkook Choi",
+   "Junho Shin",
+   "Hyoung-Kyu Song"
+  ],
+  "nonCorr": [
+   {
+    "key": "conf/isscc/LeeJKKKKHKMLJKL19",
+    "venue": "ISSCC",
+    "year": "2019",
+    "title": "A 512GB 1.1V Managed DRAM Solution with 16GB ODP and Media Controller."
+   },
+   {
+    "key": "journals/itiis/KimLS19",
+    "venue": "KSII Trans. Internet Inf. Syst.",
+    "year": "2019",
+    "title": "A Practical Measurement Method of the Occupied Bandwidth for 8-VSB DTV Signal Using Modified ACPR."
+   },
+   {
+    "key": "journals/jssc/NamLKKLYKWSKNSIYH25",
+    "venue": "IEEE J. Solid State Circuits",
+    "year": "2025",
+    "title": "An Offset Compensated Charge Transfer Pre-Sensing Bitline Sense Amplifier."
+   },
+   {
+    "key": "conf/vlsit/NamKLKKLYKWSNSI24",
+    "venue": "VLSI Technology and Circuits",
+    "year": "2024",
+    "title": "An Offset-Compensated Charge-Transfer Pre-Sensing Bit-Line Sense-Amplifier for Low-Voltage DRAM."
+   },
+   {
+    "key": "conf/cvpr/CastellsSKC22",
+    "venue": "CVPR Workshops",
+    "year": "2024",
+    "title": "LD-Pruner: Efficient Pruning of Latent Diffusion Models using Task-Agnostic Insights."
+   },
+   {
+    "key": "conf/eccv/KimSCC24",
+    "venue": "ECCV",
+    "year": "2024",
+    "title": "BK-SDM: A Lightweight, Fast, and Cheap Version of Stable Diffusion."
+   },
+   {
+    "key": "conf/cvpr/AradTBLFGLW0LLL20",
+    "venue": "CVPR Workshops",
+    "year": "2020",
+    "title": "NTIRE 2020 Challenge on Spectral Reconstruction from an RGB Image."
+   },
+   {
+    "key": "journals/ijon/SongKLL15",
+    "venue": "Neurocomputing",
+    "year": "2015",
+    "title": "Hierarchical feature extraction by multi-layer non-negative matrix factorization network for classification task."
+   },
+   {
+    "key": "conf/esscirc/KimSBLLLHY17",
+    "venue": "ESSCIRC",
+    "year": "2017",
+    "title": "A 24 μW 38.51 mΩrms resolution bio-impedance sensor with dual path instrumentation amplifier."
+   }
+  ]
+ },
+ "2601.13580": {
+  "_http": 200,
+  "query": "Ahmad Al-Zuraiqi",
+  "authors": [
+   "Ahmad Al-Zuraiqi"
+  ],
+  "nonCorr": [
+   {
+    "key": "journals/ijsinnov/Al-BatahAMZ19",
+    "venue": "Int. J. Softw. Innov.",
+    "year": "2019",
+    "title": "Hybrid Technique for Complexity Analysis for Java Code."
+   },
+   {
+    "key": "conf/icse-encycris/ZuraiqiG25",
+    "venue": "EnCyCriS",
+    "year": "2025",
+    "title": "Static Analysis of IoT Firmware: Identifying Systemic Vulnerabilities with RMMIDL."
+   },
+   {
+    "key": "conf/promise/ZuraiqiG25",
+    "venue": "PROMISE",
+    "year": "2025",
+    "title": "Designing and Optimizing Alignment Datasets for IoT Security: A Synergistic Approach with Static Analysis Insights."
+   },
+   {
+    "key": "conf/icmla/ZuraiqiG24",
+    "venue": "ICMLA",
+    "year": "2024",
+    "title": "Evaluating Alignment Techniques for Enhancing LLM Performance in a Closed-Domain Application: A RAG Bench-Marking Study."
+   }
+  ]
+ },
+ "2506.11389": {
+  "_http": 200,
+  "query": "Karanpartap Singh Adeli",
+  "authors": [
+   "Karanpartap Singh",
+   "Neil Band",
+   "Ehsan Adeli"
+  ],
+  "nonCorr": []
+ },
+ "2509.06518": {
+  "_http": 200,
+  "query": "Andrei Baroian Notebomer",
+  "authors": [
+   "Andrei Baroian",
+   "Kasper Notebomer"
+  ],
+  "nonCorr": []
+ },
+ "2502.13794": {
+  "_http": 200,
+  "query": "Yifei Yang Zhao",
+  "authors": [
+   "Yifei Yang",
+   "Zouying Cao",
+   "Xinbei Ma",
+   "Yao Yao",
+   "Libo Qin",
+   "Zhi Chen",
+   "Hai Zhao"
+  ],
+  "nonCorr": [
+   {
+    "key": "conf/cicc/XiaMZLYYLZYSJGZGL24",
+    "venue": "CICC",
+    "year": "2024",
+    "title": "An Integrated Burst-Mode 2R Receiver Employing Fast Residual Offset Canceller for XGS-PON in 40-nm CMOS."
+   },
+   {
+    "key": "journals/npjdm/YangLDCYZZLX26",
+    "venue": "npj Digit. Medicine",
+    "year": "2026",
+    "title": "Human-AI collaboration for dysphagia rehabilitation from effectiveness to implementation complexity: a systematic review."
+   },
+   {
+    "key": "conf/cnml/ZhaoY26",
+    "venue": "CNML",
+    "year": "2026",
+    "title": "H-GINA: Accelerating Distributed Training via Hierarchical In-Network Aggregation with Multi-Objective Optimization."
+   },
+   {
+    "key": "journals/access/YangZ25",
+    "venue": "IEEE Access",
+    "year": "2025",
+    "title": "Artistic Intelligence: A Diffusion-Based Framework for High-Fidelity Landscape Painting Synthesis."
+   },
+   {
+    "key": "journals/mj/PanHZHYQWZXX24",
+    "venue": "Microelectron. J.",
+    "year": "2024",
+    "title": "GaN monolithic digital units on P-GaN platform."
+   },
+   {
+    "key": "conf/cvippr/ZhaoWLY24",
+    "venue": "CVIPPR",
+    "year": "2024",
+    "title": "EDO-SANet: Shape-Aware Network with Edge Detection Operator for Polyp Segmentation."
+   },
+   {
+    "key": "journals/symmetry/ChenCSZDXY21",
+    "venue": "Symmetry",
+    "year": "2021",
+    "title": "Spread Mechanism and Control Strategies of Rumor Propagation Model Considering Rumor Refutation and Information Feedback in Emergency Management."
+   },
+   {
+    "key": "journals/tie/TaoKZYP20",
+    "venue": "IEEE Trans. Ind. Electron.",
+    "year": "2020",
+    "title": "A Class D Power Amplifier for Multifrequency Eddy Current Testing Based on Multisimultaneous-Frequency Selective Harmonic Elimination Pulsewidth Modulation."
+   },
+   {
+    "key": "conf/icarcv/MaBZSY20",
+    "venue": "ICARCV",
+    "year": "2020",
+    "title": "Strategy Generation Based on Reinforcement Learning with Deep Deterministic Policy Gradient for UCAV."
+   },
+   {
+    "key": "conf/icarcv/MaZBYZ20",
+    "venue": "ICARCV",
+    "year": "2020",
+    "title": "Collaborative task allocation of heterogeneous multi-UAV based on improved CBGA algorithm."
+   },
+   {
+    "key": "journals/access/ChenZS19b",
+    "venue": "IEEE Access",
+    "year": "2019",
+    "title": "Research on the Classification of Slope Stability State Based on the Method of Vectorization Attribute Circle."
+   },
+   {
+    "key": "journals/titb/LiZCXQ19",
+    "venue": "IEEE J. Biomed. Health Informatics",
+    "year": "2019",
+    "title": "Detecting Alzheimer&apos;s Disease on Small Dataset: A Knowledge Transfer Perspective."
+   },
+   {
+    "key": "conf/i2mtc/TaoZZKYP16",
+    "venue": "I2MTC",
+    "year": "2016",
+    "title": "Sparse electromagnetic tomography based on matching pursuit algorithms."
+   },
+   {
+    "key": "conf/icfce/YangWZ11",
+    "venue": "ICFCE",
+    "year": "2011",
+    "title": "Confirmation of Air Traffic Scenario Characteristic Parameters Based on BP Neural Network."
+   },
+   {
+    "key": "journals/jcs/SunGHZZSL26",
+    "venue": "J. Comput. Secur.",
+    "year": "2026",
+    "title": "Fully adaptive MA-ABE supporting multi-fan-in circuits."
+   },
+   {
+    "key": "journals/tcom/FuQWCLZ25",
+    "venue": "IEEE Trans. Commun.",
+    "year": "2025",
+    "title": "Over-the-Air Edge Inference for Low-Altitude Airspace: Generative AI-Aided Multi-Task Batching and Beamforming Design."
+   },
+   {
+    "key": "conf/iccv/FengYYZYZLJG25",
+    "venue": "ICCV",
+    "year": "2025",
+    "title": "RomanTex: Decoupling 3D-Aware Rotary Positional Embedded Multi-Attention Network for Texture Synthesis."
+   },
+   {
+    "key": "conf/date/XiaoDYCWZDWTX24",
+    "venue": "DATE",
+    "year": "2024",
+    "title": "LLM-Based Processor Verification: A Case Study for Neuronnorphic Processor."
+   },
+   {
+    "key": "conf/iccd/DengCXYLZLWADW24",
+    "venue": "ICCD",
+    "year": "2024",
+    "title": "LLM - TG: Towards Automated Test Case Generation for Processors Using Large Language Models."
+   },
+   {
+    "key": "conf/miip/ZhaoLXHWWW22",
+    "venue": "Image Processing",
+    "year": "2022",
+    "title": "SCU-Net: shape constraint U-Net for prostate segmentation in MR images."
+   },
+   {
+    "key": "journals/ijprai/WangLYCWJ19",
+    "venue": "Int. J. Pattern Recognit. Artif. Intell.",
+    "year": "2019",
+    "title": "The Location of Electric Vehicle Charging Stations based on FRLM with Robust Optimization."
+   },
+   {
+    "key": "conf/smc/XuZLW19",
+    "venue": "SMC",
+    "year": "2019",
+    "title": "Integrated Electricity and Natural Gas System for Day-Ahead Scheduling."
+   },
+   {
+    "key": "conf/mmsp/ZhaoLZFLZY05",
+    "venue": "MMSP",
+    "year": "2005",
+    "title": "Gridmedia: A Practical Peer-to-Peer Based Live Video Streaming System."
+   },
+   {
+    "key": "conf/acl/ChenSWYZHDHHZDZ26",
+    "venue": "ACL",
+    "year": "2026",
+    "title": "DUET: Joint Exploration of User-Item Profiles in Recommendation System."
+   },
+   {
+    "key": "conf/acl/TangZWZTMWTZLW26",
+    "venue": "ACL",
+    "year": "2026",
+    "title": "From Charts to Code: A Hierarchical Benchmark for Multimodal Models."
+   },
+   {
+    "key": "conf/ofc/ZhangZZYXQLYLZSZL26",
+    "venue": "OFC",
+    "year": "2026",
+    "title": "Experimental demonstration of L-band discrete Raman amplifier using germanium doped photonic crystal fiber with high Raman gain coefficient and low loss."
+   },
+   {
+    "key": "journals/ijcv/GraumanWTKMAABBBBCCCCCD25",
+    "venue": "Int. J. Comput. Vis.",
+    "year": "2025",
+    "title": "Ego-Exo4D: Understanding Skilled Human Activity from First- and Third-Person Perspectives."
+   },
+   {
+    "key": "journals/pami/GraumanWBCCFGHJKLLMNRRR25",
+    "venue": "IEEE Trans. Pattern Anal. Mach. Intell.",
+    "year": "2025",
+    "title": "Ego4D: Around the World in 3,600 Hours of Egocentric Video."
+   },
+   {
+    "key": "journals/ploscb/WangYHZSZY25",
+    "venue": "PLoS Comput. Biol.",
+    "year": "2025",
+    "title": "Exploring the transmission of cognitive task information through optimal brain pathways."
+   },
+   {
+    "key": "journals/telsys/ZhangZZSL25",
+    "venue": "Telecommun. Syst.",
+    "year": "2025",
+    "title": "Semantic-based topic multicast aggregated routing algorithm for resource optimization of pub/sub systems in wireless sensor network."
+   },
+   {
+    "key": "conf/bibm/AyoubZYSYL25",
+    "venue": "BIBM",
+    "year": "2025",
+    "title": "Re-Thinking the Nature of Planning for Safe and Personalized Treatment Management Planning Using Large Language Models."
+   },
+   {
+    "key": "conf/ijcai/YangZQLF25",
+    "venue": "IJCAI",
+    "year": "2025",
+    "title": "KGCL: Knowledge-Enhanced Graph Contrastive Learning for Retrosynthesis Prediction Based on Molecular Graph Editing."
+   },
+   {
+    "key": "journals/cea/YuZLHWIMZJYZL24",
+    "venue": "Comput. Electron. Agric.",
+    "year": "2024",
+    "title": "In-field grading and sorting technology of apples: A state-of-the-art review."
+   },
+   {
+    "key": "conf/cvpr/GraumanWTKMAABB24",
+    "venue": "CVPR",
+    "year": "2024",
+    "title": "Ego-Exo4D: Understanding Skilled Human Activity from First- and Third-Person Perspectives."
+   },
+   {
+    "key": "conf/kdd/ZhaoZZGG0Z24",
+    "venue": "KDD",
+    "year": "2024",
+    "title": "DUE: Dynamic Uncertainty-Aware Explanation Supervision via 3D Imputation."
+   },
+   {
+    "key": "conf/emnlp/YangYFYWWZ23",
+    "venue": "EMNLP",
+    "year": "2023",
+    "title": "RefGPT: Dialogue Generation of GPT, by GPT, and for GPT."
+   }
+  ]
+ },
+ "2508.08011": {
+  "_http": 200,
+  "query": "Mingzi Cao Aletras",
+  "authors": [
+   "Mingzi Cao",
+   "Xi Wang",
+   "Nikolaos Aletras"
+  ],
+  "nonCorr": [
+   {
+    "key": "conf/acl/CaoTAVLWA26",
+    "venue": "ACL",
+    "year": "2026",
+    "title": "Fundamental Reasoning Paradigms Induce Out-of-Domain Generalization in Language Models."
+   }
+  ]
+ },
+ "2511.03270": {
+  "_http": 200,
+  "query": "Jin-woo Lee Jung",
+  "authors": [
+   "Jin-woo Lee",
+   "Junhwa Choi",
+   "Bongkyu Hwang",
+   "Jinho Choo",
+   "Bogun Kim",
+   "JeongSeon Yi",
+   "Joonseok Lee",
+   "DongYoung Jung",
+   "Jaeseon Park",
+   "Kyoungwon Park",
+   "Suk-hoon Jung"
+  ],
+  "nonCorr": [
+   {
+    "key": "conf/isscc/JungKKKLSKRLHPKKLLJPKJKSKLCKLLLLCNKYL24",
+    "venue": "ISSCC",
+    "year": "2024",
+    "title": "13.3 A 280-Layer 1Tb 4b/cell 3D-NAND Flash Memory with a 28.5Gb/mm2 Areal Density and a 3.2GB/s High-Speed IO Rate."
+   },
+   {
+    "key": "conf/isscc/KimKDEKAKJDLKKP18",
+    "venue": "ISSCC",
+    "year": "2018",
+    "title": "A 16Gb 18Gb/S/pin GDDR6 DRAM with per-bit trainable single-ended DFE and PLL-less clocking."
+   },
+   {
+    "key": "conf/isscc/LeeYCCLKKYKLLSKCSSMKLPKCAC09",
+    "venue": "ISSCC",
+    "year": "2009",
+    "title": "A 1.6V 3.3Gb/s GDDR3 DRAM with dual-mode phase- and delay-locked loop using power-noise management with unregulated power supply in 54nm CMOS."
+   },
+   {
+    "key": "conf/isscc/ChoiHKHWKCLLJJHYLYLOLLKKPHNCLLSLRSPLB24",
+    "venue": "ISSCC",
+    "year": "2024",
+    "title": "13.2 A 32Gb 8.0Gb/s/pin DDR5 SDRAM with a Symmetric-Mosaic Architecture in a 5th-Generation 10nm DRAM Process."
+   },
+   {
+    "key": "conf/isscc/YunLSKYLLSKCSSCMKLCPKCAY08",
+    "venue": "ISSCC",
+    "year": "2008",
+    "title": "A 0.1-to-1.5GHz 4.2mW All-Digital DLL with Dual Duty-Cycle Correction Circuit and Update Gear Circuit for DRAM in 66nm CMOS Technology."
+   },
+   {
+    "key": "conf/isscc/ParkCYBKYLCPLCM22",
+    "venue": "ISSCC",
+    "year": "2022",
+    "title": "A 192-Gb 12-High 896-GB/s HBM3 DRAM with a TSV Auto-Calibration Scheme and Machine-Learning-Based Layout Optimization."
+   },
+   {
+    "key": "conf/isscc/ChoKPNSJLLKJKKS21",
+    "venue": "ISSCC",
+    "year": "2021",
+    "title": "A 512Gb 3b/Cell 7th -Generation 3D-NAND Flash Memory with 184MB/s Write Throughput and 2.0Gb/s Interface."
+   },
+   {
+    "key": "journals/jssc/KimKDAKLKDLCPKP19",
+    "venue": "IEEE J. Solid State Circuits",
+    "year": "2019",
+    "title": "A 16-Gb, 18-Gb/s/pin GDDR6 DRAM With Per-Bit Trainable Single-Ended DFE and PLL-Less Clocking."
+   },
+   {
+    "key": "conf/vlsic/HeoKLLMKBYYKKPP19",
+    "venue": "VLSI Circuits",
+    "year": "2019",
+    "title": "A 5Gb/s/pin 16Gb LPDDR4/4X Reconfigurable SDRAM with Voltage-High Keeper and a Prediction-based Fast-tracking ZQ Calibration."
+   },
+   {
+    "key": "conf/isscc/LeeLPPYKLKLKCCY16",
+    "venue": "ISSCC",
+    "year": "2016",
+    "title": "7.5 A 128Gb 2b/cell NAND flash memory in 14nm technology with tPROG=640µs and 800MB/s I/O rate."
+   },
+   {
+    "key": "journals/jssc/ParkLCPMLKOCCCY23",
+    "venue": "IEEE J. Solid State Circuits",
+    "year": "2023",
+    "title": "A 192-Gb 12-High 896-GB/s HBM3 DRAM With a TSV Auto-Calibration Scheme and Machine-Learning-Based Layout Optimization."
+   },
+   {
+    "key": "journals/jssc/SohnNSSBKLJHJLPLLJPPCKCCJKCJKLC13",
+    "venue": "IEEE J. Solid State Circuits",
+    "year": "2013",
+    "title": "A 1.2 V 30 nm 3.2 Gb/s/pin 4 Gb DDR4 SDRAM With Dual-Error Detection and PVT-Tolerant Data-Fetch Scheme."
+   },
+   {
+    "key": "conf/isscc/LeeCKKOKKLKYKLL20",
+    "venue": "ISSCC",
+    "year": "2020",
+    "title": "22.3 A 128Gb 8-High 512GB/s HBM2E DRAM with a Pseudo Quarter Bank Structure, Power Dispersion and an Instruction-Based At-Speed PMBIST."
+   },
+   {
+    "key": "conf/isscc/PyoSLBKKSKOLLLH15",
+    "venue": "ISSCC",
+    "year": "2015",
+    "title": "23.1 20nm high-K metal-gate heterogeneous 64b quad-core CPUs and hexa-core GPU for high-performance and energy-efficient mobile application processor."
+   },
+   {
+    "key": "conf/isscc/KimSAKDCKOJPJKL22",
+    "venue": "ISSCC",
+    "year": "2022",
+    "title": "A 16Gb 9.5Gb/S/pin LPDDR5X SDRAM With Low-Power Schemes Exploiting Dynamic Voltage-Frequency Scaling and Offset-Calibrated Readout Sense Amplifiers in a Fourth Generation 10nm DRAM Process."
+   },
+   {
+    "key": "conf/isscc/OhCBKKRPKCSLSHC20",
+    "venue": "ISSCC",
+    "year": "2020",
+    "title": "22.1 A 1.1V 16GB 640GB/s HBM2E DRAM with a Data-Bus Window-Extension Technique and a Synergetic On-Die ECC Scheme."
+   },
+   {
+    "key": "conf/isscc/KwonSLSHKLJDCPD17",
+    "venue": "ISSCC",
+    "year": "2017",
+    "title": "23.4 An extremely low-standby-power 3.733Gb/s/pin 2Gb LPDDR4 SDRAM for wearable devices."
+   },
+   {
+    "key": "conf/ofc/HwangKPSYLHKKKKKKKKMPPP26",
+    "venue": "OFC",
+    "year": "2026",
+    "title": "Samsung Foundry 300-mm Silicon Photonics Platform for HPC/AI Applications."
+   },
+   {
+    "key": "conf/vlsic/LeeNKCLYSKLJCJJ20",
+    "venue": "VLSI Circuits",
+    "year": "2020",
+    "title": "A 1.8 Gb/s/pin 16Tb NAND Flash Memory Multi-Chip Package with F-Chip of Toggle 4.0 Specification for High Performance and High Capacity Storage Systems."
+   },
+   {
+    "key": "journals/jssc/LeeLKHBCMLPLCCH18",
+    "venue": "IEEE J. Solid State Circuits",
+    "year": "2018",
+    "title": "Dual-Loop Two-Step ZQ Calibration for Dynamic Voltage-Frequency Scaling in LPDDR4 SDRAM."
+   },
+   {
+    "key": "conf/socc/KonakovLLRCLCL04",
+    "venue": "SoCC",
+    "year": "2004",
+    "title": "High speed mixed analog/digital PRML architecture for optical data storage system."
+   },
+   {
+    "key": "journals/jssc/NaLLCLYSKKJJSCL21",
+    "venue": "IEEE J. Solid State Circuits",
+    "year": "2021",
+    "title": "A 1.8-Gb/s/Pin 16-Tb NAND Flash Memory Multi-Chip Package With F-Chip for High-Performance and High-Capacity Storage."
+   },
+   {
+    "key": "conf/isscc/ChunCHKKYKLKYSC18",
+    "venue": "ISSCC",
+    "year": "2018",
+    "title": "A 16Gb LPDDR4X SDRAM with an NBTI-tolerant circuit solution, an SWD PMOS GIDL reduction technique, an adaptive gear-down scheme and a metastable-free DQS aligner in a 10nm class DRAM process."
+   },
+   {
+    "key": "conf/isscc/ChoiSPCCCKOKSSRLKLKKKLWCAHLKJLLYJ12",
+    "venue": "ISSCC",
+    "year": "2012",
+    "title": "A 20nm 1.8V 8Gb PRAM with 40MB/s program bandwidth."
+   },
+   {
+    "key": "conf/isscc/ChungJMCCSKSPWLCKKKRPKSJLKLCCCSJHSLCCYJ11",
+    "venue": "ISSCC",
+    "year": "2011",
+    "title": "A 58nm 1.8V 1Gb PRAM with 6.4MB/s program BW."
+   },
+   {
+    "key": "conf/isscc/LeeCLLPOJJCLYCOMPCKYKJKLJPKKOKJKKKYYL24",
+    "venue": "ISSCC",
+    "year": "2024",
+    "title": "13.4 A 48GB 16-High 1280GB/s HBM3E DRAM with All-Around Power TSV and a 6-Phase RDQS Scheme for TSV Area Optimization."
+   },
+   {
+    "key": "conf/isscc/ParkPCLLKLKJIPK21",
+    "venue": "ISSCC",
+    "year": "2021",
+    "title": "7.9 1/2.74-inch 32Mpixel-Prototype CMOS Image Sensor with 0.64μ m Unit Pixels Separated by Full-Depth Deep-Trench Isolation."
+   },
+   {
+    "key": "journals/arobots/ParkBLKLKLSKJDSKSL07",
+    "venue": "Auton. Robots",
+    "year": "2007",
+    "title": "Robotic smart house to assist people with movement disabilities."
+   },
+   {
+    "key": "journals/jssc/AhnSKKKLGLJKCPLBMLLBO24",
+    "venue": "IEEE J. Solid State Circuits",
+    "year": "2024",
+    "title": "A 1.01-V 8.5-Gb/s/pin 16-Gb LPDDR5x SDRAM With Advanced I/O Circuitry for High-Speed and Low-Power Applications."
+   },
+   {
+    "key": "conf/asscc/AhnSKKKLGLJKCPLBMLBSYO23",
+    "venue": "A-SSCC",
+    "year": "2023",
+    "title": "A 1.01V 8.5Gb/s/pin 16Gb LPDDR5x SDRAM with Self-Pre-Emphasized Stacked-Tx, Supply Voltage Insensitive Rx, and Optimized Clock Using 4th-Generation 10nm DRAM Process for High-Speed and Low-Power Applications."
+   },
+   {
+    "key": "conf/emnlp/KimKLLKJ0KKSLJL21",
+    "venue": "EMNLP",
+    "year": "2021",
+    "title": "What Changes Can Large-scale Language Models Bring? Intensive Study on HyperCLOVA: Billions-scale Korean Generative Pretrained Transformers."
+   },
+   {
+    "key": "journals/bmcmi/ParkKHHBLCLKJAA18",
+    "venue": "BMC Medical Imaging",
+    "year": "2018",
+    "title": "Utility of routine ultrasonography follow-up after total thyroidectomy in patients with papillary thyroid carcinoma: a single-center study."
+   },
+   {
+    "key": "conf/isscc/OhCCRLLLKJHKMBP14",
+    "venue": "ISSCC",
+    "year": "2014",
+    "title": "25.1 A 3.2Gb/s/pin 8Gb 1.0V LPDDR4 SDRAM with integrated ECC engine for sub-1V DRAM core operation."
+   },
+   {
+    "key": "conf/ichit/LeeCBLCKLCKKJ12",
+    "venue": "ICHIT",
+    "year": "2012",
+    "title": "Quality Analysis of Conditional Replenishment Algorithm for Hybrid 3DTV with Mixed Resolution."
+   },
+   {
+    "key": "conf/isscc/KangCHALCAKKLJKKLKMJKCOLJYK09",
+    "venue": "ISSCC",
+    "year": "2009",
+    "title": "8Gb 3D DDR3 DRAM using through-silicon-via technology."
+   },
+   {
+    "key": "journals/jssc/ChoLKLCLKHLLCS01",
+    "venue": "IEEE J. Solid State Circuits",
+    "year": "2001",
+    "title": "A dual-mode NAND flash memory: 1-Gb multilevel and high-performance 512-Mb single-level modes."
+   },
+   {
+    "key": "conf/isscc/ParkLKLSYHKPKLS25",
+    "venue": "ISSCC",
+    "year": "2025",
+    "title": "30.1 A 28Gb/mm24XX-Layer 1Tb 3b/Cell WF-Bonding 3D-NAND Flash with 5.6Gb/s/Pin IOs."
+   },
+   {
+    "key": "conf/isscc/YuKSBKBBKCKKSHSYCLCKWYJKHJYLKKCKCOKKJ24",
+    "venue": "ISSCC",
+    "year": "2024",
+    "title": "2.4 ATOMUS: A 5nm 32TFLOPS/128TOPS ML System-on-Chip for Latency Critical Applications."
+   },
+   {
+    "key": "conf/isscc/KimKCALCPPJKCYJ21",
+    "venue": "ISSCC",
+    "year": "2021",
+    "title": "25.2 A 16Gb Sub-1V 7.14Gb/s/pin LPDDR5 SDRAM Applying a Mosaic Architecture with a Short-Feedback 1-Tap DFE, an FSS Bus with Low-Level Swing and an Adaptively Controlled Body Biasing in a 3rd-Generation 10nm DRAM."
+   },
+   {
+    "key": "conf/rita/WooKJL21",
+    "venue": "RiTA",
+    "year": "2021",
+    "title": "Study on Geometry Based Collision Avoidance for Formation Flight by Redefinition of Safety Radius."
+   },
+   {
+    "key": "conf/asscc/LeeOKLSKKKYHLPL16",
+    "venue": "A-SSCC",
+    "year": "2016",
+    "title": "Low power FSK transceiver using ADPLL with direct modulation and integrated SPDT for BLE application."
+   },
+   {
+    "key": "conf/biorob/WooHLLKHY16",
+    "venue": "BioRob",
+    "year": "2016",
+    "title": "Development of a robot-assisted orthognathic surgery system integrated with image-guided navigation."
+   },
+   {
+    "key": "conf/case/LeePPLPKHSL12",
+    "venue": "CASE",
+    "year": "2012",
+    "title": "An underwater cleaning robot for industrial reservoirs."
+   },
+   {
+    "key": "journals/ieicet/SeongJLLKWLPC09",
+    "venue": "IEICE Trans. Inf. Syst.",
+    "year": "2009",
+    "title": "Vibration Analysis of Human Middle Ear with Differential Floating Mass Transducer Using Electrical Model."
+   },
+   {
+    "key": "journals/jssc/YooKLKYLSHKHLSK96",
+    "venue": "IEEE J. Solid State Circuits",
+    "year": "1996",
+    "title": "A 32-bank 1 Gb self-strobing synchronous DRAM with 1 GByte/s bandwidth."
+   },
+   {
+    "key": "conf/isscc/LeeKYKPBCCCCHHJ25",
+    "venue": "ISSCC",
+    "year": "2025",
+    "title": "16.2 RNGD: A 5nm Tensor-Contraction Processor for Power-Efficient Inference on Large Language Models."
+   },
+   {
+    "key": "conf/asscc/LeeLKHCBMEKCSKP17",
+    "venue": "A-SSCC",
+    "year": "2017",
+    "title": "Dual-loop 2-step ZQ calibration for dedicated power supply voltage in LPDDR4 SDRAM."
+   },
+   {
+    "key": "conf/isscc/SohnYOOSPSJSRYJ16",
+    "venue": "ISSCC",
+    "year": "2016",
+    "title": "18.2 A 1.2V 20nm 307GB/s HBM DRAM with at-speed wafer-level I/O test scheme and adaptive refresh considering temperature distribution."
+   },
+   {
+    "key": "conf/isscc/ChoiKCKJCKLSJCA14",
+    "venue": "ISSCC",
+    "year": "2014",
+    "title": "19.2 A 93.4mm2 64Gb MLC NAND-flash memory with 16nm CMOS technology."
+   },
+   {
+    "key": "conf/isscc/LeeSHBLLPCCCKCK14",
+    "venue": "ISSCC",
+    "year": "2014",
+    "title": "25.3 A 1.35V 5.0Gb/s/pin GDDR5M with 5.4mW standby power and an error-adaptive duty-cycle corrector."
+   },
+   {
+    "key": "conf/isscc/LeeCYJJHPKYLMYLPKYKCKJCIKHPYLLKKSJCHKLJ12",
+    "venue": "ISSCC",
+    "year": "2012",
+    "title": "A 64Gb 533Mb/s DDR interface MLC NAND Flash in sub-20nm technology."
+   },
+   {
+    "key": "conf/siggrapha/KangJSKHJLLL10",
+    "venue": "SIGGRAPH ASIA",
+    "year": "2010",
+    "title": "Digital IDEA&apos;s VFX work."
+   },
+   {
+    "key": "journals/jms/YuHPJJKYLCLLHBKKSCAPSHS26",
+    "venue": "J. Medical Syst.",
+    "year": "2026",
+    "title": "Prognostic Modeling Based on Post-Endovascular Thrombectomy Systolic Blood Pressure Trajectories Using Explainable Artificial Intelligence: A Secondary Analysis of the OPTIMAL-BP Trial."
+   },
+   {
+    "key": "conf/ictc/LeeMJSI25",
+    "venue": "ICTC",
+    "year": "2025",
+    "title": "PQCIF: Post-Quantum Cryptography Integration Framework for Securing Blockchain-enabled Internet of Medical Things."
+   },
+   {
+    "key": "conf/acl/LeeLHKLLS23",
+    "venue": "ACL",
+    "year": "2023",
+    "title": "Query-Efficient Black-Box Red Teaming via Bayesian Optimization."
+   },
+   {
+    "key": "conf/isscc/KwonJCKKYCLRLLJKKSLLWYBOSYL23",
+    "venue": "ISSCC",
+    "year": "2023",
+    "title": "A 1.1V 6.4Gb/s/pin 24-Gb DDR5 SDRAM with a Highly-Accurate Duty Corrector and NBTI-Tolerant DLL."
+   }
+  ]
+ },
+ "2509.01213": {
+  "_http": 200,
+  "query": "Ege Süalp Rezaei",
+  "authors": [
+   "Ege Süalp",
+   "Mina Rezaei"
+  ],
+  "nonCorr": []
+ },
+ "2505.20155": {
+  "_http": 200,
+  "query": "Hanting Chen Wang",
+  "authors": [
+   "Hanting Chen",
+   "Jiarui Qin",
+   "Jialong Guo",
+   "Tao Yuan",
+   "Yichun Yin",
+   "Huiling Zhen",
+   "Yasheng Wang",
+   "Jinpeng Li",
+   "Xiaojun Meng",
+   "Meng Zhang",
+   "Rongju Ruan",
+   "Zheyuan Bai",
+   "Yehui Tang",
+   "Can Chen",
+   "Xinghao Chen",
+   "Fisher Yu",
+   "Ruiming Tang",
+   "Yunhe Wang"
+  ],
+  "nonCorr": [
+   {
+    "key": "conf/cvpr/LiZTGTDWCLWHWKWZZLBFWZSWLXZCRZWHCLJJLL23",
+    "venue": "CVPR Workshops",
+    "year": "2023",
+    "title": "NTIRE 2023 Challenge on Image Denoising: Methods and Results."
+   },
+   {
+    "key": "conf/acl/MaLWLYCHCZXYSWC26",
+    "venue": "ACL",
+    "year": "2026",
+    "title": "MATCH: Modulating Attention via In-Context Retrieval for Long-Context Transformers."
+   },
+   {
+    "key": "journals/tog/NiuDHWH26",
+    "venue": "ACM Trans. Graph.",
+    "year": "2026",
+    "title": "SharpNet: Enhancing MLPs to Represent Functions with Controlled Non-differentiability."
+   },
+   {
+    "key": "conf/eurocrypt/BernsteinCHHMWWY26",
+    "venue": "EUROCRYPT",
+    "year": "2026",
+    "title": "Accelerating and verifying constant-time modular inversion."
+   },
+   {
+    "key": "conf/cvpr/WangL0WCH0CSZ025",
+    "venue": "CVPR",
+    "year": "2025",
+    "title": "Towards Transformer-Based Aligned Generation with Self-Coherence Guidance."
+   },
+   {
+    "key": "journals/sensors/LinLTCTW24",
+    "venue": "Sensors",
+    "year": "2024",
+    "title": "Application of Multi-Channel Synchronized Dynamic Strain Gauges in Monitoring the Neutral Axis Position and Prestress Loss of Box Girder Bridges."
+   },
+   {
+    "key": "conf/icml/ChenCWT024",
+    "venue": "ICML",
+    "year": "2024",
+    "title": "DiJiang: Efficient Large Language Models through Compact Kernelization."
+   },
+   {
+    "key": "journals/tip/HeTTZCCGZHWG26",
+    "venue": "IEEE Trans. Image Process.",
+    "year": "2026",
+    "title": "One Step Diffusion-Based Super-Resolution With Time-Aware Distillation."
+   },
+   {
+    "key": "journals/chinaf/SunBCDXLCZKZ25",
+    "venue": "Sci. China Inf. Sci.",
+    "year": "2025",
+    "title": "Model quantization for computing-in-memory: a survey."
+   },
+   {
+    "key": "journals/tsc/ChenDTCLW25",
+    "venue": "IEEE Trans. Serv. Comput.",
+    "year": "2025",
+    "title": "A QoS Prediction Framework via Utility Maximization and Region-Aware Matrix Factorization."
+   },
+   {
+    "key": "conf/cvpr/TianHWL0C25",
+    "venue": "CVPR",
+    "year": "2025",
+    "title": "DiC: Rethinking Conv3x3 Designs in Diffusion Models."
+   },
+   {
+    "key": "conf/emnlp/ChenJWWZ25",
+    "venue": "EMNLP",
+    "year": "2025",
+    "title": "InteractSpeech: A Speech Dialogue Interaction Corpus for Spoken Dialogue Model."
+   },
+   {
+    "key": "journals/bmcmi/ZhengMWLLDZCGLGZYWLHS24",
+    "venue": "BMC Medical Imaging",
+    "year": "2024",
+    "title": "CT-based delta-radiomics for predicting pathological response to neoadjuvant immunochemotherapy in esophageal squamous cell carcinoma: a multicenter study."
+   },
+   {
+    "key": "conf/iclr/TianCWBZL0024",
+    "venue": "ICLR",
+    "year": "2024",
+    "title": "Multiscale Positive-Unlabeled Detection of AI-Generated Texts."
+   },
+   {
+    "key": "conf/icws/ChenDCWLMT24",
+    "venue": "ICWS",
+    "year": "2024",
+    "title": "HyLoReF: A Reputation Based QoS Prediction Framework using Hybrid Location Information."
+   },
+   {
+    "key": "journals/pami/00020C0GLTXXXYZ23",
+    "venue": "IEEE Trans. Pattern Anal. Mach. Intell.",
+    "year": "2023",
+    "title": "A Survey on Vision Transformer."
+   },
+   {
+    "key": "conf/nips/WangC0023",
+    "venue": "NeurIPS",
+    "year": "2023",
+    "title": "PUe: Biased Positive-Unlabeled Learning Enhancement by Causal Inference."
+   },
+   {
+    "key": "conf/cvpr/ZhangC0DXW21",
+    "venue": "CVPR",
+    "year": "2021",
+    "title": "Data-Free Knowledge Distillation for Image Super-Resolution."
+   },
+   {
+    "key": "conf/icml/LiCH0X021",
+    "venue": "ICML",
+    "year": "2021",
+    "title": "Winograd Algorithm for AdderNet."
+   },
+   {
+    "key": "conf/nips/ShuWCLYW21",
+    "venue": "NeurIPS",
+    "year": "2021",
+    "title": "Adder Attention for Vision Transformer."
+   },
+   {
+    "key": "journals/displays/ZhangWWY26",
+    "venue": "Displays",
+    "year": "2026",
+    "title": "Weak label selection optimization framework for weakly supervised point cloud segmentation."
+   },
+   {
+    "key": "journals/ivc/YuWZW26",
+    "venue": "Image Vis. Comput.",
+    "year": "2026",
+    "title": "DBaP-net: Deep network for image defogging based on physical properties prior."
+   },
+   {
+    "key": "conf/acl/LiuZLLHCTHXW26",
+    "venue": "ACL",
+    "year": "2026",
+    "title": "Multi-Granularity Semantic Revision for Large Language Model Distillation."
+   },
+   {
+    "key": "conf/iscas/JiangCWZZ26",
+    "venue": "ISCAS",
+    "year": "2026",
+    "title": "A 6.86Tb/s Bandwidth SOT-MRAM Sensing Scheme with Configurable Full-Column Over Frequency Technique for Near Memory Computing."
+   },
+   {
+    "key": "conf/iclr/DingLTZ00CTXY025",
+    "venue": "ICLR",
+    "year": "2025",
+    "title": "CBQ: Cross-Block Quantization for Large Language Models."
+   }
+  ]
+ },
+ "2006.05987": {
+  "_http": 200,
+  "query": "Tianyi Zhang Artzi",
+  "authors": [
+   "Tianyi Zhang",
+   "Felix Wu",
+   "Arzoo Katiyar",
+   "Kilian Q. Weinberger",
+   "Yoav Artzi"
+  ],
+  "nonCorr": [
+   {
+    "key": "conf/iclr/0007WKWA21",
+    "venue": "ICLR",
+    "year": "2021",
+    "title": "Revisiting Few-sample BERT Fine-tuning."
+   },
+   {
+    "key": "conf/iclr/ZhangKWWA20",
+    "venue": "ICLR",
+    "year": "2020",
+    "title": "BERTScore: Evaluating Text Generation with BERT."
+   }
+  ]
+ },
+ "2004.14975": {
+  "_http": 200,
+  "query": "Alex Tamkin Goodman",
+  "authors": [
+   "Alex Tamkin",
+   "Trisha Singh",
+   "Davide Giovanardi",
+   "Noah Goodman"
+  ],
+  "nonCorr": [
+   {
+    "key": "conf/iclr/LiTGA25",
+    "venue": "ICLR",
+    "year": "2025",
+    "title": "Eliciting Human Preferences with Language Models."
+   },
+   {
+    "key": "conf/icml/TamkinTG24",
+    "venue": "ICML",
+    "year": "2024",
+    "title": "Codebook Features: Sparse and Discrete Interpretability for Neural Networks."
+   },
+   {
+    "key": "conf/cvpr/BayrootiGT23",
+    "venue": "CVPR Workshops",
+    "year": "2023",
+    "title": "Multispectral Contrastive Learning with Viewmaker Networks."
+   },
+   {
+    "key": "conf/iclr/TamkinHSG23",
+    "venue": "ICLR",
+    "year": "2023",
+    "title": "Task Ambiguity in Humans and Language Models."
+   },
+   {
+    "key": "conf/nips/TamkinGHG23",
+    "venue": "NeurIPS",
+    "year": "2023",
+    "title": "Feature Dropout: Revisiting the Role of Augmentations in Contrastive Learning."
+   },
+   {
+    "key": "conf/nips/TamkinBOLRG22",
+    "venue": "NeurIPS",
+    "year": "2022",
+    "title": "DABS 2.0: Improved Datasets and Algorithms for Universal Self-Supervision."
+   },
+   {
+    "key": "conf/nips/TamkinNDMG22",
+    "venue": "NeurIPS",
+    "year": "2022",
+    "title": "Active Learning Helps Pretrained Models Learn the Intended Task."
+   },
+   {
+    "key": "conf/iclr/TamkinWG21",
+    "venue": "ICLR",
+    "year": "2021",
+    "title": "Viewmaker Networks: Learning Views for Unsupervised Representation Learning."
+   },
+   {
+    "key": "conf/nips/TamkinLLFSG21",
+    "venue": "NeurIPS Datasets and Benchmarks",
+    "year": "2021",
+    "title": "DABS: a Domain-Agnostic Benchmark for Self-Supervised Learning."
+   },
+   {
+    "key": "conf/emnlp/TamkinSGG20",
+    "venue": "EMNLP",
+    "year": "2020",
+    "title": "Investigating Transferability in Pretrained Language Models."
+   },
+   {
+    "key": "conf/nips/TamkinJG20",
+    "venue": "NeurIPS",
+    "year": "2020",
+    "title": "Language Through a Prism: A Spectral Approach for Multiscale Language Representations."
+   }
+  ]
+ },
+ "2410.06225": {
+  "_http": 200,
+  "query": "Akshat Kannan",
+  "authors": [
+   "Akshat Kannan"
+  ],
+  "nonCorr": [
+   {
+    "key": "conf/agent/AkshathalaARVMP26",
+    "venue": "AGENT@ICSE",
+    "year": "2026",
+    "title": "Beyond Task Completion: An Assessment Framework for Evaluating Agentic AI Systems."
+   },
+   {
+    "key": "conf/cais/LiuCAKNMLGMCPBR26",
+    "venue": "CAIS",
+    "year": "2026",
+    "title": "SkyDiscover: A Flexible, Adaptive Framework for AI-Driven Scientific and Algorithmic Discovery."
+   },
+   {
+    "key": "conf/cain/ParthasarathyVDKKAAKMDV25",
+    "venue": "CAIN",
+    "year": "2025",
+    "title": "Engineering LLM Powered Multi-Agent Framework for Autonomous CloudOps."
+   }
+  ]
+ },
+ "2410.11654": {
+  "_http": 200,
+  "query": "James Vo",
+  "authors": [
+   "James Vo"
+  ],
+  "nonCorr": [
+   {
+    "key": "journals/tmlr/SrivastavaRRSAF23",
+    "venue": "Trans. Mach. Learn. Res.",
+    "year": "2023",
+    "title": "Beyond the Imitation Game: Quantifying and extrapolating the capabilities of language models."
+   },
+   {
+    "key": "journals/jpdc/Aartsen15",
+    "venue": "J. Parallel Distributed Comput.",
+    "year": "2015",
+    "title": "The IceProd framework: Distributed data processing for the IceCube neutrino observatory."
+   },
+   {
+    "key": "conf/hpdc/FosterGG04",
+    "venue": "HPDC",
+    "year": "2004",
+    "title": "The Grid2003 Production Grid: Principles and Practice."
+   },
+   {
+    "key": "journals/pami/GraumanWBCCFGHJKLLMNRRR25",
+    "venue": "IEEE Trans. Pattern Anal. Mach. Intell.",
+    "year": "2025",
+    "title": "Ego4D: Around the World in 3,600 Hours of Egocentric Video."
+   },
+   {
+    "key": "conf/cvpr/GraumanWBCFGH0L22",
+    "venue": "CVPR",
+    "year": "2022",
+    "title": "Ego4D: Around the World in 3, 000 Hours of Egocentric Video."
+   },
+   {
+    "key": "journals/jib/BaigFKMVBBBBCCM21",
+    "venue": "J. Integr. Bioinform.",
+    "year": "2021",
+    "title": "Synthetic biology open language visual (SBOL Visual) version 2.3."
+   },
+   {
+    "key": "journals/jib/BaigFKMVBBBBCCM20",
+    "venue": "J. Integr. Bioinform.",
+    "year": "2020",
+    "title": "Synthetic biology open language visual (SBOL visual) version 2.2."
+   },
+   {
+    "key": "journals/jib/MadsenMPPRBBBBC19",
+    "venue": "J. Integr. Bioinform.",
+    "year": "2019",
+    "title": "Synthetic Biology Open Language Visual (SBOL Visual) Version 2.1."
+   },
+   {
+    "key": "conf/cvpr/Vo0S0L0H19",
+    "venue": "CVPR",
+    "year": "2019",
+    "title": "Composing Text and Image for Image Retrieval - an Empirical Odyssey."
+   },
+   {
+    "key": "conf/wacv/VoH19",
+    "venue": "WACV",
+    "year": "2019",
+    "title": "Generalization in Metric Learning: Should the Embedding Layer Be Embedding Layer?"
+   },
+   {
+    "key": "conf/vts/McCluskeyALTVFLM04",
+    "venue": "VTS",
+    "year": "2004",
+    "title": "ELF-Murphy Data on Defects and Test Sets."
+   },
+   {
+    "key": "conf/sac/PetkovicNFSLYHTTDGVVHHWEB96",
+    "venue": "SAC",
+    "year": "1996",
+    "title": "Recent applications of IBM&apos;s query by image content (QBIC)."
+   },
+   {
+    "key": "journals/access/TahirJVKBB25",
+    "venue": "IEEE Access",
+    "year": "2025",
+    "title": "Toward Explainable AI in Spacecraft Health Monitoring: Comparative Benchmarking of Anomaly Detection Models and Open-Source Datasets."
+   },
+   {
+    "key": "journals/tcasI/VohraSJD25",
+    "venue": "IEEE Trans. Circuits Syst. I Regul. Pap.",
+    "year": "2025",
+    "title": "SpiMAM: CMOS Implementation of Bio-Inspired Spiking Multidirectional Associative Memory Featuring In-Situ Learning."
+   },
+   {
+    "key": "conf/icaart/HashmiDCUVCD25",
+    "venue": "ICAART",
+    "year": "2025",
+    "title": "Coordinated Self-Exploration for Self-Adaptive Systems in Contested Environments."
+   },
+   {
+    "key": "conf/icaart/HashmiDCUVCD25a",
+    "venue": "ICAART",
+    "year": "2025",
+    "title": "The Role of Self-exploration in Self-adaptation for Cyber Resilience."
+   },
+   {
+    "key": "conf/prima/JabbarpourETVKBB25",
+    "venue": "PRIMA",
+    "year": "2025",
+    "title": "A Mission-Aware Coordinated Adaptation Mechanism for Enhancing Resilience of EO Satellite Constellations."
+   },
+   {
+    "key": "conf/emnlp/Hwang0WGV0T24",
+    "venue": "EMNLP",
+    "year": "2024",
+    "title": "Enhancing Incremental Summarization with Structured Representations."
+   },
+   {
+    "key": "conf/norcas/VohraJSD23",
+    "venue": "NorCAS",
+    "year": "2023",
+    "title": "Analysing Mismatch effect of CMOS Neurons in Spiking Neural Network with Winner-take-all Mechanism."
+   },
+   {
+    "key": "journals/jamia/PfaffGGKMPLABBG22",
+    "venue": "J. Am. Medical Informatics Assoc.",
+    "year": "2022",
+    "title": "Synergies between centralized and federated approaches to data quality: a report from the national COVID cohort collaborative."
+   },
+   {
+    "key": "journals/pajais/LeeJCFKNHWSVMGS22",
+    "venue": "Pac. Asia J. Assoc. Inf. Syst.",
+    "year": "2022",
+    "title": "Journey with Ting-Peng Liang in Pacific Asia Information Systems Field."
+   },
+   {
+    "key": "conf/hci/VogeNWTRHRNL21",
+    "venue": "HCI",
+    "year": "2021",
+    "title": "Applying Adaptive Intelligent Tutoring Techniques to Physical Fitness Training Programs."
+   },
+   {
+    "key": "conf/pacis/Burton-JonesJZQ21",
+    "venue": "PACIS",
+    "year": "2021",
+    "title": "PACIS Panel - Meet the Editors."
+   },
+   {
+    "key": "conf/pacis/LeeVLWH0NSWMSSJ21",
+    "venue": "PACIS",
+    "year": "2021",
+    "title": "PACIS TP Liang Tribute Session."
+   },
+   {
+    "key": "conf/cidr/ShengVWTN20",
+    "venue": "CIDR",
+    "year": "2020",
+    "title": "Migrating a Privacy-Safe Information Extraction System to a Software 2.0 Design."
+   },
+   {
+    "key": "conf/sc/KarlinPSWSBBCCC19",
+    "venue": "SC",
+    "year": "2019",
+    "title": "Preparation and optimization of a diverse workload for a large-scale heterogeneous system."
+   },
+   {
+    "key": "conf/www/KocayusufogluSV19",
+    "venue": "WWW",
+    "year": "2019",
+    "title": "RiSER: Learning Better Representations for Richly Structured Emails."
+   },
+   {
+    "key": "conf/icacci/KauanovaVJ17",
+    "venue": "ICACCI",
+    "year": "2017",
+    "title": "Automated image segmentation for detecting cell spreading for metastasizing assessments of cancer development."
+   },
+   {
+    "key": "conf/xsede/BottumMNPO13",
+    "venue": "XSEDE",
+    "year": "2013",
+    "title": "The condo of condos."
+   },
+   {
+    "key": "journals/concurrency/MoreauLA08",
+    "venue": "Concurr. Comput. Pract. Exp.",
+    "year": "2008",
+    "title": "Special Issue: The First Provenance Challenge."
+   },
+   {
+    "key": "journals/tosem/HuntVT98",
+    "venue": "ACM Trans. Softw. Eng. Methodol.",
+    "year": "1998",
+    "title": "Delta Algorithms: An Empirical Analysis."
+   },
+   {
+    "key": "conf/scm/HuntVT96",
+    "venue": "SCM",
+    "year": "1996",
+    "title": "An Empirical Study of Delta Algorithms."
+   },
+   {
+    "key": "conf/compcon/BarberFHLNPAMHJBYVHLTCHCPLSFMRPBW94",
+    "venue": "COMPCON",
+    "year": "1994",
+    "title": "Multimedia Manager: Query by Image Content and Its Applications."
+   },
+   {
+    "key": "journals/bioinformatics/VolkelHKTT25",
+    "venue": "Bioinform.",
+    "year": "2025",
+    "title": "Nanopore decoding with speed and versatility for data storage."
+   },
+   {
+    "key": "journals/cphysics/CangiFBSCKSBGRVMTR25",
+    "venue": "Comput. Phys. Commun.",
+    "year": "2025",
+    "title": "Materials Learning Algorithms (MALA): Scalable machine learning for electronic structure calculations in large-scale atomistic simulations."
+   },
+   {
+    "key": "journals/ijmms/GuoWZJGVHH25",
+    "venue": "Int. J. Hum. Comput. Stud.",
+    "year": "2025",
+    "title": "&quot;Having it physical is a different story&quot;: Physicalizing personal data publicly to motivate physical activity."
+   },
+   {
+    "key": "conf/icbet/BitangcorLOD25",
+    "venue": "ICBET",
+    "year": "2025",
+    "title": "Real-Time Dental Caries Detection using SSD Lite MobileNet V2."
+   },
+   {
+    "key": "conf/ipmi/CaiNMXMLWVWWH25",
+    "venue": "IPMI",
+    "year": "2025",
+    "title": "SafeTriage: Facial Video De-identification for Privacy-Preserving Stroke Triage."
+   },
+   {
+    "key": "conf/isbi/JosephMSPMYMCPS25",
+    "venue": "ISBI",
+    "year": "2025",
+    "title": "Few-Shot Sample-Specific Deep Learning Multiclass Segmentation and Fiber Tractography using 3D-Microscopy with Ultraviolet Surface Excitation (3D-Muse) Images of Human Vagus Nerve."
+   },
+   {
+    "key": "conf/miccai/YangCNMXWVWHW25",
+    "venue": "MICCAI",
+    "year": "2025",
+    "title": "Enhancing AI-Assisted Stroke Emergency Triage with Adaptive Uncertainty Estimation."
+   },
+   {
+    "key": "conf/pakdd/VoTZZY25",
+    "venue": "PAKDD",
+    "year": "2025",
+    "title": "Inversion Triplet - A Contrastive Backdoor Mitigation Method for Self-Supervised Vision Encoders."
+   }
+  ]
+ },
+ "2312.15166": {
+  "_http": 200,
+  "query": "Dahyun Kim Kim",
+  "authors": [
+   "Dahyun Kim",
+   "Chanjun Park",
+   "Sanghoon Kim",
+   "Wonsung Lee",
+   "Wonho Song",
+   "Yunsu Kim",
+   "Hyeonwoo Kim",
+   "Yungi Kim",
+   "Hyeonju Lee",
+   "Jihoo Kim",
+   "Changbae Ahn",
+   "Seonghoon Yang",
+   "Sukyung Lee",
+   "Hyunbyung Park",
+   "Gyoungjin Gim",
+   "Mikyoung Cha",
+   "Hwalsuk Lee",
+   "Sunghun Kim"
+  ],
+  "nonCorr": [
+   {
+    "key": "conf/isscc/KimKCALCPPJKCYJ21",
+    "venue": "ISSCC",
+    "year": "2021",
+    "title": "25.2 A 16Gb Sub-1V 7.14Gb/s/pin LPDDR5 SDRAM Applying a Mosaic Architecture with a Short-Feedback 1-Tap DFE, an FSS Bus with Low-Level Swing and an Adaptively Controlled Body Biasing in a 3rd-Generation 10nm DRAM."
+   },
+   {
+    "key": "journals/jssc/BaePISLKKPPLBMH08",
+    "venue": "IEEE J. Solid State Circuits",
+    "year": "2008",
+    "title": "An 80 nm 4 Gb/s/pin 32 bit 512 Mb GDDR4 Graphics DRAM With Low Power and Low Noise Data Bus Inversion."
+   },
+   {
+    "key": "conf/isscc/IhmBPSLKKLPBLMJHCHKLKPPYCKLKJJC07",
+    "venue": "ISSCC",
+    "year": "2007",
+    "title": "An 80nm 4Gb/s/pin 32b 512Mb GDDR4 Graphics DRAM with Low-Power and Low-Noise Data-Bus Inversion."
+   },
+   {
+    "key": "journals/jssc/OhSBPLCKKKKKKKKKLLSYCBYCMPHLPCJ11",
+    "venue": "IEEE J. Solid State Circuits",
+    "year": "2011",
+    "title": "A 7 Gb/s/pin 1 Gbit GDDR5 SDRAM With 2.5 ns Bank to Bank Active Time and No Bank Group Restriction."
+   },
+   {
+    "key": "conf/isscc/OhSBPLCKKKKKKKKKLLSYCBYCMPHLPCJ10",
+    "venue": "ISSCC",
+    "year": "2010",
+    "title": "A 7Gb/s/pin GDDR5 SDRAM with 2.5ns bank-to-bank active time and no bank-group restriction."
+   },
+   {
+    "key": "conf/isscc/BaeSPKCKKPLBLPKKKSPMYKLYJCJK08",
+    "venue": "ISSCC",
+    "year": "2008",
+    "title": "A 60nm 6Gb/s/pin GDDR5 Graphics DRAM with Multifaceted Clocking and ISI/SSN-Reduction Techniques."
+   },
+   {
+    "key": "conf/isscc/KimSAKDCKOJPJKL22",
+    "venue": "ISSCC",
+    "year": "2022",
+    "title": "A 16Gb 9.5Gb/S/pin LPDDR5X SDRAM With Low-Power Schemes Exploiting Dynamic Voltage-Frequency Scaling and Offset-Calibrated Readout Sense Amplifiers in a Fourth Generation 10nm DRAM Process."
+   },
+   {
+    "key": "conf/vlsit/JoLBLCKJPYLYSKK22",
+    "venue": "VLSI Technology and Circuits",
+    "year": "2022",
+    "title": "Lg = 130 nm GAA MBCFETs with three-level stacked In0.53Ga0.47As nanosheets."
+   },
+   {
+    "key": "journals/jssc/LeeBKKCKACLISKP23",
+    "venue": "IEEE J. Solid State Circuits",
+    "year": "2023",
+    "title": "A 16-Gb T-Coil-Based GDDR6 DRAM With Merged-MUX TX, Optimized WCK Operation, and Alternative-Data-Bus Achieving 27-Gb/s/Pin in NRZ."
+   },
+   {
+    "key": "journals/ijmi/KimSMKKJKKKKC26",
+    "venue": "Int. J. Medical Informatics",
+    "year": "2026",
+    "title": "Domain-specific functional outcome prediction in stroke rehabilitation: A multicenter artificial intelligence study."
+   },
+   {
+    "key": "conf/isscc/BaeSOKYKKSSPHKCKDKKCBPSMPKYLPCJ11",
+    "venue": "ISSCC",
+    "year": "2011",
+    "title": "A 40nm 2Gb 7Gb/s/pin GDDR5 SDRAM with a programmable DQ ordering crosstalk equalizer and adjustable clock-tracking BW."
+   },
+   {
+    "key": "conf/isscc/LeeKKBCKACLISKP22",
+    "venue": "ISSCC",
+    "year": "2022",
+    "title": "A 16Gb 27Gb/s/pin T-coil based GDDR6 DRAM with Merged-MUX TX, Optimized WCK Operation, and Alternative-Data-Bus."
+   },
+   {
+    "key": "conf/vlsit/YooJLCBLJKKLKJP23",
+    "venue": "VLSI Technology and Circuits",
+    "year": "2023",
+    "title": "Lg = 60 nm In0.53 Ga0.47 As MBCFETs: From gm_max = 13.7 mS/üm and Q = 180 to virtual-source modeling."
+   },
+   {
+    "key": "journals/jssc/LeeCHPJLJLKKKPL21",
+    "venue": "IEEE J. Solid State Circuits",
+    "year": "2021",
+    "title": "An 8.5-Gb/s/Pin 12-Gb LPDDR5 SDRAM With a Hybrid-Bank Architecture, Low Power, and Speed-Boosting Techniques."
+   },
+   {
+    "key": "conf/isscc/ChiLPHJLKPKKPCL20",
+    "venue": "ISSCC",
+    "year": "2020",
+    "title": "22.2 An 8.5Gb/s/pin 12Gb-LPDDR5 SDRAM with a Hybrid-Bank Architecture using Skew-Tolerant, Low-Power and Speed-Boosting Techniques in a 2nd generation 10nm DRAM Process."
+   },
+   {
+    "key": "journals/sensors/HongLCCKKKKK22",
+    "venue": "Sensors",
+    "year": "2022",
+    "title": "Feasibility of Overground Gait Training Using a Joint-Torque-Assisting Wearable Exoskeletal Robot in Children with Static Brain Injury."
+   },
+   {
+    "key": "conf/asru/KimJLHKLGPKJLYK19",
+    "venue": "ASRU",
+    "year": "2019",
+    "title": "Attention Based On-Device Streaming Speech Recognition with Large Speech Corpus."
+   },
+   {
+    "key": "conf/naacl/KimKPLSKKKLKAYLPGCLK24",
+    "venue": "NAACL",
+    "year": "2024",
+    "title": "SOLAR 10.7B: Scaling Large Language Models with Simple yet Effective Depth Up-Scaling."
+   },
+   {
+    "key": "journals/cea/SiddiqueBBJKKKLLK23",
+    "venue": "Comput. Electron. Agric.",
+    "year": "2023",
+    "title": "Application of auto power shift (APS) controller for minimizing fuel consumption and performance evaluation of an agricultural tractor."
+   },
+   {
+    "key": "journals/cea/KimLKKKSK21",
+    "venue": "Comput. Electron. Agric.",
+    "year": "2021",
+    "title": "One-shot classification-based tilled soil region segmentation for boundary guidance in autonomous tillage."
+   },
+   {
+    "key": "journals/ieiceta/KimKYOC03",
+    "venue": "IEICE Trans. Fundam. Electron. Commun. Comput. Sci.",
+    "year": "2003",
+    "title": "A Study on Real-Time Implementation of the View Interpolation System."
+   },
+   {
+    "key": "conf/iui/KimLLKHK24",
+    "venue": "IUI",
+    "year": "2024",
+    "title": "DataDive: Supporting Readers&apos; Contextualization of Statistical Statements with Data Exploration."
+   },
+   {
+    "key": "journals/sensors/KimLKKSK21",
+    "venue": "Sensors",
+    "year": "2021",
+    "title": "Weakly Supervised Crop Area Segmentation for an Autonomous Combine Harvester."
+   },
+   {
+    "key": "conf/dac/YangKNCSRKLLKYKLHKKPPLHPK98",
+    "venue": "DAC",
+    "year": "1998",
+    "title": "MetaCore: An Application Specific DSP Development System."
+   },
+   {
+    "key": "journals/eaai/KimKKK26",
+    "venue": "Eng. Appl. Artif. Intell.",
+    "year": "2026",
+    "title": "Real-time safety diagnostics of Type III hydrogen tanks using acoustic emission testing: Precision dataset construction with representation learning and multi-modal failure classification."
+   },
+   {
+    "key": "conf/isscc/KimSUJLSKSSLCYKLJKLKKJS26",
+    "venue": "ISSCC",
+    "year": "2026",
+    "title": "A 16Gb 12.8Gb/s LPDDR6 SDRAM with 12-DQ/Sub-Channel Wide NRZ Signaling and Enhanced Reliability by Per-Row Activation Counting and Meta-Data Scheme."
+   },
+   {
+    "key": "journals/jssc/ParkKLJBKKMY22",
+    "venue": "IEEE J. Solid State Circuits",
+    "year": "2022",
+    "title": "Single Transformer-Based Compact Doherty Power Amplifiers for 5G RF Phased-Array ICs."
+   },
+   {
+    "key": "conf/rita/KimKCP22",
+    "venue": "RiTA",
+    "year": "2022",
+    "title": "Natural Language-Guided Semantic Navigation Using Scene Graph."
+   },
+   {
+    "key": "journals/cea/KimLKKLC21",
+    "venue": "Comput. Electron. Agric.",
+    "year": "2021",
+    "title": "Stereo-vision-based crop height estimation for agricultural robots."
+   },
+   {
+    "key": "journals/sensors/KimLKKP21",
+    "venue": "Sensors",
+    "year": "2021",
+    "title": "Estimation of Axle Torque for an Agricultural Tractor Using an Artificial Neural Network."
+   },
+   {
+    "key": "journals/cea/KimLKKHL20",
+    "venue": "Comput. Electron. Agric.",
+    "year": "2020",
+    "title": "Path detection for autonomous traveling in orchards using patch-based CNN."
+   },
+   {
+    "key": "journals/cea/ChoKJKAS18",
+    "venue": "Comput. Electron. Agric.",
+    "year": "2018",
+    "title": "On-site ion monitoring system for precision hydroponic nutrient management."
+   },
+   {
+    "key": "conf/iccv/BaekKCLKK23",
+    "venue": "ICCV",
+    "year": "2023",
+    "title": "Luminance-aware Color Transform for Multiple Exposure Correction."
+   },
+   {
+    "key": "journals/jetc/LeeKKLM22",
+    "venue": "ACM J. Emerg. Technol. Comput. Syst.",
+    "year": "2022",
+    "title": "A ReRAM Memory Compiler for Monolithic 3D Integrated Circuits in a Carbon Nanotube Process."
+   },
+   {
+    "key": "journals/access/AmirKK20",
+    "venue": "IEEE Access",
+    "year": "2020",
+    "title": "Comprehensive Analysis of Quantum Mechanical Effects of Interface Trap and Border Trap Densities of High-k Al2O3/In0.53Ga0.47As on a 300-mm Si Substrate."
+   },
+   {
+    "key": "conf/iccad/KimMVLKCBCML20",
+    "venue": "ICCAD",
+    "year": "2020",
+    "title": "RTL-to-GDS Design Tools for Monolithic 3D ICs."
+   },
+   {
+    "key": "conf/eurosys/KimKCKK19",
+    "venue": "EuroSys",
+    "year": "2019",
+    "title": "μLayer: Low Latency On-Device Inference Using Cooperative Single-Layer Acceleration and Processor-Friendly Quantization."
+   },
+   {
+    "key": "conf/ascc/GohKJPK15",
+    "venue": "ASCC",
+    "year": "2015",
+    "title": "Robust observer for state-of-charge estimation of li-ion battery with uncertainties."
+   },
+   {
+    "key": "conf/hci/KimKH14",
+    "venue": "HCI",
+    "year": "2014",
+    "title": "The Effect of Presentation on Visual Working Memory."
+   },
+   {
+    "key": "journals/tie/ChoLKK13",
+    "venue": "IEEE Trans. Ind. Electron.",
+    "year": "2013",
+    "title": "Observability-Based Selection Criterion for Anchor Nodes in Multiple-Cell Localization."
+   },
+   {
+    "key": "journals/ejasp/ChoLKK12",
+    "venue": "EURASIP J. Adv. Signal Process.",
+    "year": "2012",
+    "title": "Localization based on two-stage treatment for dealing with noisy and biased distance measurements."
+   },
+   {
+    "key": "conf/icarcv/ParkLKJK10",
+    "venue": "ICARCV",
+    "year": "2010",
+    "title": "Mathematical formulation of RFID tag floor based localization and performance analysis for tag placement."
+   },
+   {
+    "key": "journals/ecoi/LeeJPKRKKJ26",
+    "venue": "Ecol. Informatics",
+    "year": "2026",
+    "title": "Explainable AI -driven deep learning model for the root image-based classification of the medicinal plants Saposhnikovia divaricata, Glehnia littoralis, and Peucedanum japonicum."
+   },
+   {
+    "key": "journals/staeors/LeeKKKLH25",
+    "venue": "IEEE J. Sel. Top. Appl. Earth Obs. Remote. Sens.",
+    "year": "2025",
+    "title": "Data Assimilation of Satellite-Derived Arctic Sea-Ice Thickness During Boreal Summer."
+   },
+   {
+    "key": "conf/coling/0001KSK0KP25",
+    "venue": "COLING",
+    "year": "2025",
+    "title": "sDPO: Don&apos;t Use Your Data All at Once."
+   },
+   {
+    "key": "journals/cea/KimLKK23",
+    "venue": "Comput. Electron. Agric.",
+    "year": "2023",
+    "title": "2D pose estimation of multiple tomato fruit-bearing systems for robotic harvesting."
+   },
+   {
+    "key": "conf/isscc/ParkKLPKLAYLLKK20",
+    "venue": "ISSCC",
+    "year": "2020",
+    "title": "4.1 A 39GHz-Band CMOS 16-Channel Phased-Array Transceiver IC with a Companion Dual-Stream IF Transceiver IC for 5G NR Base-Station Applications."
+   },
+   {
+    "key": "journals/computer/KumarCKKNDBK08",
+    "venue": "Computer",
+    "year": "2008",
+    "title": "Second Life and the New Generation of Virtual Worlds."
+   },
+   {
+    "key": "conf/acl/JeonKYSCKKY26",
+    "venue": "ACL",
+    "year": "2026",
+    "title": "Do MLLMs Capture How Interfaces Guide User Behavior? A Benchmark for Multimodal UI/UX Design Understanding."
+   },
+   {
+    "key": "journals/ijis/OhKPKKK24",
+    "venue": "Int. J. Intell. Syst.",
+    "year": "2024",
+    "title": "Hyperparameter Optimization of the Machine Learning Model for Distillation Processes."
+   },
+   {
+    "key": "conf/smc/KimBNCKK23",
+    "venue": "SMC",
+    "year": "2023",
+    "title": "SAT-Net: SincNet-Based Attentive Temporal Convolutional Network for Motor Imagery Classification."
+   },
+   {
+    "key": "conf/vlsit/YoonHKCKMKNC23",
+    "venue": "VLSI Technology and Circuits",
+    "year": "2023",
+    "title": "QLC Programmable 3D Ferroelectric NAND Flash Memory by Memory Window Expansion using Cell Stack Engineering."
+   },
+   {
+    "key": "conf/imw2/YoonHCKKJKM22",
+    "venue": "IMW",
+    "year": "2022",
+    "title": "Highly Stackable 3D Ferroelectric NAND Devices: Beyond the Charge Trap Based Memory."
+   }
+  ]
+ },
+ "2401.02415": {
+  "_http": 200,
+  "query": "Chengyue Wu Luo",
+  "authors": [
+   "Chengyue Wu",
+   "Yukang Gan",
+   "Yixiao Ge",
+   "Zeyu Lu",
+   "Jiahao Wang",
+   "Ye Feng",
+   "Ying Shan",
+   "Ping Luo"
+  ],
+  "nonCorr": [
+   {
+    "key": "conf/vlsit/YuCHSALWKSCLFLW22",
+    "venue": "VLSI Technology and Circuits",
+    "year": "2022",
+    "title": "First Demonstration of Vertical Stacked Hetero-Oriented n-Ge (111)/p-Ge (100) CFET toward Mobility Balance Engineering."
+   },
+   {
+    "key": "journals/mia/WangLWLZNLCZLHFJCHZXCYZ26",
+    "venue": "Medical Image Anal.",
+    "year": "2026",
+    "title": "MICCAI STS 2024 challenge: Semi-supervised instance-level tooth segmentation in panoramic X-ray and CBCT images."
+   },
+   {
+    "key": "journals/pr/WangZCWQYXZDZHHLZWLLMCL26",
+    "venue": "Pattern Recognit.",
+    "year": "2026",
+    "title": "MICCAI 2023 STS Challenge: A retrospective study of semi-supervised approaches for teeth segmentation."
+   },
+   {
+    "key": "journals/tmlr/XiongLHWW0YSWHT25",
+    "venue": "Trans. Mach. Learn. Res.",
+    "year": "2025",
+    "title": "Autoregressive Models in Vision: A Survey."
+   },
+   {
+    "key": "conf/bibm/LuoW13",
+    "venue": "BIBM",
+    "year": "2013",
+    "title": "Study on the extraction method of decoction for Spleen deficiency syndrome."
+   },
+   {
+    "key": "conf/cvpr/WuCWMLPLXYR025",
+    "venue": "CVPR",
+    "year": "2025",
+    "title": "Janus: Decoupling Visual Encoding for Unified Multimodal Understanding and Generation."
+   },
+   {
+    "key": "conf/iccv/WangKYCWZXLWLZZSLL25",
+    "venue": "ICCV",
+    "year": "2025",
+    "title": "LiT: Delving into a Simple Linear Diffusion Transformer for Image Generation."
+   },
+   {
+    "key": "conf/uavm/WuHH25",
+    "venue": "UAVM",
+    "year": "2025",
+    "title": "FlyGS: Online 3DGS Model Construction Using a MAVLink-Connected Drone."
+   },
+   {
+    "key": "journals/ijon/WangWLLWL22",
+    "venue": "Neurocomputing",
+    "year": "2022",
+    "title": "Adversarial attacks and defenses in deep learning for image recognition: A survey."
+   },
+   {
+    "key": "conf/naacl/WuLGGLWSL25",
+    "venue": "NAACL",
+    "year": "2025",
+    "title": "Plot2Code: A Comprehensive Benchmark for Evaluating Multi-modal Large Language Models in Code Generation from Scientific Plots."
+   },
+   {
+    "key": "conf/nips/WangLLZSKWLL25",
+    "venue": "NeurIPS",
+    "year": "2025",
+    "title": "FUDOKI: Discrete Flow-based Unified Understanding and Generation via Kinetic-Optimal Velocities."
+   },
+   {
+    "key": "conf/acl/WuGGLWFSL24",
+    "venue": "ACL",
+    "year": "2024",
+    "title": "LLaMA Pro: Progressive LLaMA with Block Expansion."
+   },
+   {
+    "key": "conf/icml/WuWGLZSL23",
+    "venue": "ICML",
+    "year": "2023",
+    "title": "π-Tuning: Transferring Multimodal Foundation Models with Optimal Multi-task Interpolation."
+   },
+   {
+    "key": "journals/jcisd/WuCZQWZWXLD22",
+    "venue": "J. Chem. Inf. Model.",
+    "year": "2022",
+    "title": "Self-Supervised Molecular Pretraining Strategy for Low-Resource Reaction Prediction Scenarios."
+   },
+   {
+    "key": "journals/neuroimage/WuSKLZJC26",
+    "venue": "NeuroImage",
+    "year": "2026",
+    "title": "Temporal dynamics of flexible cognitive control."
+   },
+   {
+    "key": "journals/npjdm/GharabaghiGCSMMKZAFSLWW26",
+    "venue": "npj Digit. Medicine",
+    "year": "2026",
+    "title": "Real-world multicenter assessment of sustained clinical outcomes after digital deep brain stimulation."
+   },
+   {
+    "key": "journals/staeors/WuTLLCLWWZDLW25",
+    "venue": "IEEE J. Sel. Top. Appl. Earth Obs. Remote. Sens.",
+    "year": "2025",
+    "title": "XingHuan Visible and Uncooled Multispectral Infrared Camera for Wildfire Detection: Algorithm Description and Initial Validation."
+   },
+   {
+    "key": "conf/icmcs/LuoMLWCW25",
+    "venue": "ICME",
+    "year": "2025",
+    "title": "AutoStyle-TTS: Retrieval-Augmented Generation based Automatic Style Matching Text-to-Speech Synthesis."
+   },
+   {
+    "key": "conf/icpads/MaZLWY25",
+    "venue": "ICPADS",
+    "year": "2025",
+    "title": "Unlocking Agentic AI Service Deployment Complexity: Simulation-Guided Strategy Orchestration and Optimization."
+   }
+  ]
+ },
+ "2410.02330": {
+  "_http": 200,
+  "query": "Tianxiang Chen Yu",
+  "authors": [
+   "Tianxiang Chen",
+   "Zhentao Tan",
+   "Tao Gong",
+   "Yue Wu",
+   "Qi Chu",
+   "Bin Liu",
+   "Jieping Ye",
+   "Nenghai Yu"
+  ],
+  "nonCorr": [
+   {
+    "key": "journals/iotj/LiCZSDCZY25",
+    "venue": "IEEE Internet Things J.",
+    "year": "2025",
+    "title": "Fed-SecTP: A Federated-Learning-Based Framework for Secure Vehicle Trajectory Prediction Using Surrounding Vehicle Data."
+   },
+   {
+    "key": "journals/access/MaWCWWTYYSMRB20",
+    "venue": "IEEE Access",
+    "year": "2020",
+    "title": "Analog Integrated Circuits Based on Wafer-Level Two-Dimensional MoS2 Materials With Physical and SPICE Model."
+   },
+   {
+    "key": "journals/lgrs/LuHYCCLX17",
+    "venue": "IEEE Geosci. Remote. Sens. Lett.",
+    "year": "2017",
+    "title": "Penalized Linear Discriminant Analysis of Hyperspectral Imagery for Noise Removal."
+   },
+   {
+    "key": "conf/mobicom/HuangHCYC17",
+    "venue": "MobiCom",
+    "year": "2017",
+    "title": "Poster: Interacting Data-Intensive Services Mining and Placement in Mobile Edge Clouds."
+   },
+   {
+    "key": "conf/iros/HuCFWWD25",
+    "venue": "IROS",
+    "year": "2025",
+    "title": "A Novel Aerial-Aquatic Locomotion Robot with Variable Stiffness Propulsion Module."
+   },
+   {
+    "key": "conf/IEEEscc/HuangHWYHC16",
+    "venue": "SCC",
+    "year": "2016",
+    "title": "An Ontology-Based Semantic Service Markup for Content-centric Networking."
+   },
+   {
+    "key": "conf/wsdm/ZhaoYWWZCLCC24",
+    "venue": "WSDM",
+    "year": "2024",
+    "title": "Interpretable Imitation Learning with Dynamic Causal Relations."
+   },
+   {
+    "key": "journals/ida/ZhengWCYL23",
+    "venue": "Intell. Data Anal.",
+    "year": "2023",
+    "title": "Feature evolvable learning with image streams."
+   },
+   {
+    "key": "conf/kdd/ZhaoYWWZCLCC23",
+    "venue": "KDD",
+    "year": "2023",
+    "title": "Skill Disentanglement for Imitation Learning from Suboptimal Demonstrations."
+   },
+   {
+    "key": "journals/jgim/DengYLDSCSZZY22",
+    "venue": "J. Glob. Inf. Manag.",
+    "year": "2022",
+    "title": "Changes in China&apos;s Food Self-Sufficiency Rate in the Context of a Changing Dietary Structure."
+   },
+   {
+    "key": "journals/tgis/YueCL10",
+    "venue": "Trans. GIS",
+    "year": "2010",
+    "title": "An Adaptive Method of High Accuracy Surface Modeling and Its Application to Simulating Elevation Surfaces."
+   },
+   {
+    "key": "conf/msv/YueCL10",
+    "venue": "MSV",
+    "year": "2010",
+    "title": "The Most Efficient Algorithm of High Accuracy and Speed Method for Surface Modelling."
+   },
+   {
+    "key": "journals/tcsv/ChenTGCWLYLY25",
+    "venue": "IEEE Trans. Circuits Syst. Video Technol.",
+    "year": "2025",
+    "title": "Bootstrapping Audio-Visual Video Segmentation by Strengthening Audio Cues."
+   },
+   {
+    "key": "journals/tmi/ChenZTWWYGCYL25",
+    "venue": "IEEE Trans. Medical Imaging",
+    "year": "2025",
+    "title": "Zig-RiR: Zigzag RWKV-in-RWKV for Efficient Medical Image Segmentation."
+   },
+   {
+    "key": "conf/cscwd/RongWSSKC025",
+    "venue": "CSCWD",
+    "year": "2025",
+    "title": "Hyperboloid-Aware Cross-Community Knowledge Graph Contrastive Learning for Paper Recommendation."
+   },
+   {
+    "key": "conf/iclr/Zeng0W0JYLSY00025",
+    "venue": "ICLR",
+    "year": "2025",
+    "title": "TimeSuite: Improving MLLMs for Long Video Understanding via Grounded Tuning."
+   },
+   {
+    "key": "journals/ijautcomp/SunZHLCLYSTZZCZZLZZLYWY24",
+    "venue": "Mach. Intell. Res.",
+    "year": "2024",
+    "title": "MOSS: An Open Conversational Large Language Model."
+   },
+   {
+    "key": "journals/ijautcomp/SunZHLCLYSTZZCZZLZZLYWY24a",
+    "venue": "Mach. Intell. Res.",
+    "year": "2024",
+    "title": "Correction to: MOSS: An Open Conversational Large Language Model."
+   },
+   {
+    "key": "journals/pami/LuoZCXHYLCZ24",
+    "venue": "IEEE Trans. Pattern Anal. Mach. Intell.",
+    "year": "2024",
+    "title": "Towards Inductive and Efficient Explanations for Graph Neural Networks."
+   },
+   {
+    "key": "journals/tgrs/ChenYTGWCLYY24",
+    "venue": "IEEE Trans. Geosci. Remote. Sens.",
+    "year": "2024",
+    "title": "MiM-ISTD: Mamba-in-Mamba for Efficient Infrared Small-Target Detection."
+   },
+   {
+    "key": "conf/aaai/ChenT0WLY24",
+    "venue": "AAAI",
+    "year": "2024",
+    "title": "TCI-Former: Thermal Conduction-Inspired Transformer for Infrared Small Target Detection."
+   },
+   {
+    "key": "conf/eccv/WangLLYHCPZWSJLXZHQWW24",
+    "venue": "ECCV",
+    "year": "2024",
+    "title": "InternVideo2: Scaling Foundation Models for Multimodal Video Understanding."
+   },
+   {
+    "key": "conf/emnlp/ChenTGW00YY24",
+    "venue": "EMNLP",
+    "year": "2024",
+    "title": "Llama SLayer 8B: Shallow Layers Hold the Key to Knowledge Injection."
+   },
+   {
+    "key": "journals/remotesensing/MaSCZSCL23",
+    "venue": "Remote. Sens.",
+    "year": "2023",
+    "title": "UCTNet with Dual-Flow Architecture: Snow Coverage Mapping with Sentinel-2 Satellite Imagery."
+   },
+   {
+    "key": "journals/tip/LiZCDZY22",
+    "venue": "IEEE Trans. Image Process.",
+    "year": "2022",
+    "title": "Attention Guided Global Enhancement and Local Refinement Network for Semantic Segmentation."
+   },
+   {
+    "key": "journals/information/DengWLYTZCMY19",
+    "venue": "Inf.",
+    "year": "2019",
+    "title": "Identification of Insider Trading Using Extreme Gradient Boosting and Multi-Objective Optimization."
+   },
+   {
+    "key": "conf/cvpr/AncutiATGZ0a19",
+    "venue": "CVPR Workshops",
+    "year": "2019",
+    "title": "NTIRE 2019 Image Dehazing Challenge Report."
+   },
+   {
+    "key": "journals/remotesensing/LuCLYYRLNX17",
+    "venue": "Remote. Sens.",
+    "year": "2017",
+    "title": "Forest Types Classification Based on Multi-Source Data Fusion."
+   },
+   {
+    "key": "journals/ecoi/ChenJMCYCX14",
+    "venue": "Ecol. Informatics",
+    "year": "2014",
+    "title": "Dynamic monitoring of wetland cover changes using time-series remote sensing imagery."
+   },
+   {
+    "key": "journals/access/YiYZC26",
+    "venue": "IEEE Access",
+    "year": "2026",
+    "title": "A Review of Classical Underwater Image Stitching Techniques and a Dynamic Matching Method for Low-Cost Underwater Robotic Platforms."
+   },
+   {
+    "key": "journals/fcsc/ZhengWLYZXCSCQ26",
+    "venue": "Frontiers Comput. Sci.",
+    "year": "2026",
+    "title": "Investigating effective LLM-based in-context tool use: what matters and how to improve."
+   },
+   {
+    "key": "journals/tip/ChenWTZWWLWY26",
+    "venue": "IEEE Trans. Image Process.",
+    "year": "2026",
+    "title": "Neural Wave Propagation for Surgical Video Action Recognition: A New Dataset and Baseline."
+   },
+   {
+    "key": "conf/aaai/ChenTBWGCY26",
+    "venue": "AAAI",
+    "year": "2026",
+    "title": "Flora: Effortless Context Construction to Arbitrary Length and Scale."
+   },
+   {
+    "key": "conf/aaai/ChengMRJYZLZZL26",
+    "venue": "AAAI",
+    "year": "2026",
+    "title": "Phased One-Step Adversarial Equilibrium for Video Diffusion Models."
+   },
+   {
+    "key": "journals/staeors/ShaoWYZH25",
+    "venue": "IEEE J. Sel. Top. Appl. Earth Obs. Remote. Sens.",
+    "year": "2025",
+    "title": "Prediction of Gross Primary Productivity Change in Central Asia Under Climate Change Using Deep Learning."
+   }
+  ]
+ },
+ "2407.16286": {
+  "_http": 200,
+  "query": "Shoaib Ahmed Siddiqui Molchanov",
+  "authors": [
+   "Shoaib Ahmed Siddiqui",
+   "Xin Dong",
+   "Greg Heinrich",
+   "Thomas Breuel",
+   "Jan Kautz",
+   "David Krueger",
+   "Pavlo Molchanov"
+  ],
+  "nonCorr": []
+ },
+ "2210.10041": {
+  "_http": 200,
+  "query": "Shuo Xie Mei",
+  "authors": [
+   "Shuo Xie",
+   "Jiahao Qiu",
+   "Ankita Pasad",
+   "Li Du",
+   "Qing Qu",
+   "Hongyuan Mei"
+  ],
+  "nonCorr": [
+   {
+    "key": "conf/intcompsymp/HuangCXYH14",
+    "venue": "ICS",
+    "year": "2014",
+    "title": "A New Human-Machine Interaction of Smart Plants."
+   },
+   {
+    "key": "journals/titb/TianQXLYDYXCL23",
+    "venue": "IEEE J. Biomed. Health Informatics",
+    "year": "2023",
+    "title": "ARR-GCN: Anatomy-Relation Reasoning Graph Convolutional Network for Automatic Fine-Grained Segmentation of Organ&apos;s Surgical Anatomy."
+   },
+   {
+    "key": "conf/emnlp/XieQPDQM22",
+    "venue": "EMNLP",
+    "year": "2022",
+    "title": "Hidden State Variability of Pretrained Language Models Can Guide Computation Reduction for Transfer Learning."
+   }
+  ]
+ },
+ "2312.12141": {
+  "_http": 200,
+  "query": "Zeping Yu Ananiadou",
+  "authors": [
+   "Zeping Yu",
+   "Sophia Ananiadou"
+  ],
+  "nonCorr": [
+   {
+    "key": "journals/csr/ZhangZWSWWYNDXYSLXSTLJX26",
+    "venue": "Comput. Sci. Rev.",
+    "year": "2026",
+    "title": "Locate, steer, and improve: A practical survey of actionable mechanistic interpretability in large language models."
+   },
+   {
+    "key": "conf/acl/ZhangZNWSWWYDXY26",
+    "venue": "ACL",
+    "year": "2026",
+    "title": "Locate, Steer, and Improve: A Practical Survey of Actionable Mechanistic Interpretability in Large Language Models."
+   },
+   {
+    "key": "conf/emnlp/YuA25",
+    "venue": "EMNLP",
+    "year": "2025",
+    "title": "Locate-then-Merge: Neuron-Level Parameter Fusion for Mitigating Catastrophic Forgetting in Multimodal LLMs."
+   },
+   {
+    "key": "conf/emnlp/YuBA25",
+    "venue": "EMNLP",
+    "year": "2025",
+    "title": "Back Attention: Understanding and Enhancing Multi-Hop Reasoning in Large Language Models."
+   },
+   {
+    "key": "journals/inffus/LiuZYTYA24",
+    "venue": "Inf. Fusion",
+    "year": "2024",
+    "title": "Emotion detection for misinformation: A review."
+   },
+   {
+    "key": "conf/emnlp/YuA24",
+    "venue": "EMNLP",
+    "year": "2024",
+    "title": "Neuron-Level Knowledge Attribution in Large Language Models."
+   },
+   {
+    "key": "conf/emnlp/YuA24a",
+    "venue": "EMNLP",
+    "year": "2024",
+    "title": "How do Large Language Models Learn In-Context? Query and Key Matrices of In-Context Heads are Two Towers for Metric Learning."
+   },
+   {
+    "key": "conf/emnlp/YuA24b",
+    "venue": "EMNLP",
+    "year": "2024",
+    "title": "Interpreting Arithmetic Mechanism in Large Language Models through Comparative Neuron Analysis."
+   }
+  ]
+ },
+ "2406.11753": {
+  "_http": 200,
+  "query": "Jian Gu Zhang",
+  "authors": [
+   "Jian Gu",
+   "Aldeida Aleti",
+   "Chunyang Chen",
+   "Hongyu Zhang"
+  ],
+  "nonCorr": [
+   {
+    "key": "journals/nar/XueB0ZXHZLZCSMZ21",
+    "venue": "Nucleic Acids Res.",
+    "year": "2021",
+    "title": "Database Resources of the National Genomics Data Center, China National Center for Bioinformation in 2021."
+   },
+   {
+    "key": "conf/iccvw/KristanBZRGBDDN19",
+    "venue": "ICCV Workshops",
+    "year": "2019",
+    "title": "The Seventh Visual Object Tracking VOT2019 Challenge Results."
+   },
+   {
+    "key": "conf/iccvw/KristanMLFPKCDZ21",
+    "venue": "ICCVW",
+    "year": "2021",
+    "title": "The Ninth Visual Object Tracking VOT2021 Challenge Results."
+   },
+   {
+    "key": "conf/cvpr/LiZTGYLLJWHLJLFLWCLZFSMZWZSPDTYWPCDZKV23",
+    "venue": "CVPR Workshops",
+    "year": "2023",
+    "title": "NTIRE 2023 Challenge on Efficient Super-Resolution: Methods and Results."
+   },
+   {
+    "key": "conf/cvpr/WangGWLGTCMMSZSDSWZLWXHQPZXJZDNZGTZZPM23",
+    "venue": "CVPR Workshops",
+    "year": "2023",
+    "title": "NTIRE 2023 Challenge on Stereo Image Super-Resolution: Methods and Results."
+   },
+   {
+    "key": "journals/nature/GuoYZSWZXZMBZY025",
+    "venue": "Nat.",
+    "year": "2025",
+    "title": "DeepSeek-R1 incentivizes reasoning in LLMs through reinforcement learning."
+   },
+   {
+    "key": "conf/eccv/KristanLMFPKCDZLDBZZYYCMFBBCCCCCCCCCCC22",
+    "venue": "ECCV Workshops",
+    "year": "2022",
+    "title": "The Tenth Visual Object Tracking VOT2022 Challenge Results."
+   },
+   {
+    "key": "conf/cvpr/LiYLGSYWLLYSZ0T25",
+    "venue": "CVPR Workshops",
+    "year": "2025",
+    "title": "NTIRE 2025 Challenge on Short-form UGC Video Quality Assessment and Enhancement: Methods and Results."
+   },
+   {
+    "key": "conf/eccv/KristanLMFPKDZL20",
+    "venue": "ECCV Workshops",
+    "year": "2020",
+    "title": "The Eighth Visual Object Tracking VOT2020 Challenge Results."
+   },
+   {
+    "key": "conf/eccv/ZhuWDBLHNCLLMWW18",
+    "venue": "ECCV Workshops",
+    "year": "2018",
+    "title": "VisDrone-DET2018: The Vision Meets Drone Object Detection in Image Challenge Results."
+   },
+   {
+    "key": "journals/npjdm/XuHWZSGZCSZZQWLLTWYDGCY26",
+    "venue": "npj Digit. Medicine",
+    "year": "2026",
+    "title": "Predicting Invasiveness of Lung Adenocarcinoma from Chest CT with Few-shot Vision-Language Ternary Classification Model."
+   },
+   {
+    "key": "conf/cvpr/CondeZTMLZPLGZCLHYZLSKBPDTABLZFSSLGLYX23",
+    "venue": "CVPR Workshops",
+    "year": "2023",
+    "title": "Efficient Deep Models for Real-Time 4K Image Super-Resolution. NTIRE 2023 Benchmark and Report."
+   },
+   {
+    "key": "conf/acl/NiuLGWOZCHWZJLZ26",
+    "venue": "ACL",
+    "year": "2026",
+    "title": "MinerU2.5: A Decoupled Vision-Language Model for Efficient High-Resolution Document Parsing."
+   },
+   {
+    "key": "conf/hpca/DongLZZFZLCSJLG25",
+    "venue": "HPCA",
+    "year": "2025",
+    "title": "Enhancing Large-Scale AI Training Efficiency: The C4 Solution for Real-Time Anomaly Detection and Communication Optimization."
+   },
+   {
+    "key": "journals/jsce/ZhengRZZG22",
+    "venue": "J. Syst. Control. Eng.",
+    "year": "2022",
+    "title": "Improved modeling and active disturbance rejection control of tank gun control system."
+   },
+   {
+    "key": "journals/access/RaoZZZZL20",
+    "venue": "IEEE Access",
+    "year": "2020",
+    "title": "Investigation on the Impact-Based Energy Conversion of a Dielectric Elastomer Membrane."
+   },
+   {
+    "key": "conf/visapp/ZhuYHZZ06",
+    "venue": "VISAPP",
+    "year": "2006",
+    "title": "Excluding the Remaining Ridges of Fingerprint Image."
+   },
+   {
+    "key": "journals/mia/GaoWLCLWLWLLCCCCCCCCCCD26",
+    "venue": "Medical Image Anal.",
+    "year": "2026",
+    "title": "Transfer learning from 2D natural images to 4D fMRI brain images via geometric mapping."
+   },
+   {
+    "key": "journals/ftsec/MaGWWWSDXCZHLWZZBLWQZHL25",
+    "venue": "Found. Trends Priv. Secur.",
+    "year": "2025",
+    "title": "Safety at Scale: A Comprehensive Survey of Large Model and Agent Safety."
+   },
+   {
+    "key": "conf/cvpr/WangLZTW00TGJWY25",
+    "venue": "CVPR Workshops",
+    "year": "2025",
+    "title": "NTIRE 2025 Challenge on Light Field Image Super-Resolution: Methods and Results."
+   },
+   {
+    "key": "journals/chinaf/QiuYZZXLLBCCCCDDDDFFGGHHHHHHHHIK24",
+    "venue": "Sci. China Inf. Sci.",
+    "year": "2024",
+    "title": "Two-dimensional materials for future information technology: status and prospects."
+   },
+   {
+    "key": "journals/comintsys/ZhangGNLWSNFZZLZ24",
+    "venue": "Complex Intell. Syst.",
+    "year": "2024",
+    "title": "Lp-slam: language-perceptive RGB-D SLAM framework exploiting large language model."
+   },
+   {
+    "key": "conf/cvpr/RenLMTYWHHWZLLH22",
+    "venue": "CVPR Workshops",
+    "year": "2024",
+    "title": "The Ninth NTIRE 2024 Efficient Super-Resolution Challenge Report."
+   },
+   {
+    "key": "conf/cvpr/LiZTGTDWCLWHWKWZZLBFWZSWLXZCRZWHCLJJLL23",
+    "venue": "CVPR Workshops",
+    "year": "2023",
+    "title": "NTIRE 2023 Challenge on Image Denoising: Methods and Results."
+   },
+   {
+    "key": "journals/bmcbi/LiZZL21",
+    "venue": "BMC Bioinform.",
+    "year": "2021",
+    "title": "ModularBoost: an efficient network inference algorithm based on module decomposition."
+   },
+   {
+    "key": "conf/iccvw/KristanLMFPZVHL17",
+    "venue": "ICCV Workshops",
+    "year": "2017",
+    "title": "The Visual Object Tracking VOT2017 Challenge Results."
+   },
+   {
+    "key": "journals/ijwmc/ZhangZZ16",
+    "venue": "Int. J. Wirel. Mob. Comput.",
+    "year": "2016",
+    "title": "Modelling and optimising of ready-mixed concrete vehicle scheduling problem with stochastic transportation time."
+   },
+   {
+    "key": "conf/icess/LvGZDYZ09",
+    "venue": "ICESS",
+    "year": "2009",
+    "title": "A Survey of WCET Analysis of Real-Time Operating Systems."
+   },
+   {
+    "key": "journals/cphysics/BatistaBBBBCCCCCCLDAEJN25",
+    "venue": "Comput. Phys. Commun.",
+    "year": "2025",
+    "title": "GRANDlib: A simulation pipeline for the Giant Radio Array for Neutrino Detection (GRAND)."
+   },
+   {
+    "key": "conf/cvpr/ManSZGW25",
+    "venue": "CVPR",
+    "year": "2025",
+    "title": "Floating No More: Object-Ground Reconstruction from a Single Image."
+   },
+   {
+    "key": "conf/iconip/GuoGZL25",
+    "venue": "ICONIP",
+    "year": "2025",
+    "title": "Learnable Bilateral Downsampling and Triple-Augmented Feature Fusion in YOLOv8 for Small Object Detection of UAV Aerial Images."
+   },
+   {
+    "key": "conf/nips/GuoLKJZGZLSZJHL25",
+    "venue": "NeurIPS",
+    "year": "2025",
+    "title": "Toward Engineering AGI: Benchmarking the Engineering Design Capabilities of LLMs."
+   },
+   {
+    "key": "conf/robio/ZhangZWKYLVLZYW25",
+    "venue": "ROBIO",
+    "year": "2025",
+    "title": "Learning Acceleration-Constrained Motion Skill and Variable Impedance for Visual Gaspability-Driven Robotic Flexible Cable Disassembly."
+   }
+  ]
+ },
+ "2510.10071": {
+  "_http": 200,
+  "query": "Jinyang Zhang Wang",
+  "authors": [
+   "Jinyang Zhang",
+   "Yue Fang",
+   "Hongxin Ding",
+   "Weibin Liao",
+   "Muyang Ye",
+   "Xu Chu",
+   "Junfeng Zhao",
+   "Yasha Wang"
+  ],
+  "nonCorr": [
+   {
+    "key": "journals/bspc/LiangYWZZ25",
+    "venue": "Biomed. Signal Process. Control.",
+    "year": "2025",
+    "title": "Development and validation of a human lumbar spine finite element model based on an automated process: Application to disc degeneration."
+   },
+   {
+    "key": "conf/ijcai/WangL0WYL0XZ24",
+    "venue": "IJCAI",
+    "year": "2024",
+    "title": "MuChin: A Chinese Colloquial Description Benchmark for Evaluating Language Models in the Field of Music."
+   },
+   {
+    "key": "journals/ijprai/0011CW0GZFP25",
+    "venue": "Int. J. Pattern Recognit. Artif. Intell.",
+    "year": "2025",
+    "title": "An Indoor WiFi Fingerprint Positioning Based on RSS and CSI."
+   },
+   {
+    "key": "conf/acl/DingJ0JGWZW000T25",
+    "venue": "ACL",
+    "year": "2025",
+    "title": "Dynamic Parallel Tree Search for Efficient LLM Reasoning."
+   },
+   {
+    "key": "conf/seke/LiuYZWZ21",
+    "venue": "SEKE",
+    "year": "2021",
+    "title": "A hierarchical RNN-based model for learning recommendation with session intent detection."
+   },
+   {
+    "key": "journals/access/WangZDZWZ20",
+    "venue": "IEEE Access",
+    "year": "2020",
+    "title": "Application of Incentive-Type Variable Weight in Decision of 500/220kV Received Electromagnetic Looped Grid Decomposing Operation."
+   },
+   {
+    "key": "journals/computers/WangZRTWZL25",
+    "venue": "Comput.",
+    "year": "2025",
+    "title": "Re_MGFE: A Multi-Scale Global Feature Embedding Spectrum Sensing Method Based on Relation Network."
+   },
+   {
+    "key": "conf/nips/LiuZGZQDBLZWWLW24",
+    "venue": "NeurIPS",
+    "year": "2024",
+    "title": "DDK: Distilling Domain Knowledge for Efficient Large Language Models."
+   },
+   {
+    "key": "journals/pvldb/DongWZXZCPL23",
+    "venue": "Proc. VLDB Endow.",
+    "year": "2023",
+    "title": "Fine-Grained Re-Execution for Efficient Batched Commit of Distributed Transactions."
+   },
+   {
+    "key": "conf/cvpr/AradTYMBCLLWZPG22",
+    "venue": "CVPR Workshops",
+    "year": "2022",
+    "title": "NTIRE 2022 Spectral Recovery Challenge and Data Set."
+   },
+   {
+    "key": "conf/acl/DingHFLJZZLMZW26",
+    "venue": "ACL",
+    "year": "2026",
+    "title": "ProMed: Shapley Information Gain Guided Reinforcement Learning for Proactive Medical LLMs."
+   },
+   {
+    "key": "conf/hpca/WangLZGHWWCHYZG26",
+    "venue": "HPCA",
+    "year": "2026",
+    "title": "AUM: Unleashing the Efficiency Potential of Shared Processors with Accelerator Units for LLM Serving."
+   },
+   {
+    "key": "conf/infocom/ZhangLSWLLMZ26",
+    "venue": "INFOCOM",
+    "year": "2026",
+    "title": "Heterogeneity-Oblivious Robust Federated Learning."
+   },
+   {
+    "key": "conf/aaai/WangZWWHGZPW25",
+    "venue": "AAAI",
+    "year": "2025",
+    "title": "Overcoming Heterogeneous Data in Federated Medical Vision-Language Pre-training: A Triple-Embedding Model Selector Approach."
+   },
+   {
+    "key": "conf/cvpr/WuZ0G0025",
+    "venue": "CVPR",
+    "year": "2025",
+    "title": "APHQ-ViT: Post-Training Quantization with Average Perturbation Hessian Based Reconstruction for Vision Transformers."
+   },
+   {
+    "key": "conf/emnlp/DingFZJZXLCZW25",
+    "venue": "EMNLP",
+    "year": "2025",
+    "title": "3DS: Medical Domain Adaptation of LLMs via Decomposed Difficulty-based Data Selection."
+   },
+   {
+    "key": "conf/emnlp/WangSLZHLSCWA25",
+    "venue": "EMNLP",
+    "year": "2025",
+    "title": "Benchmarking Contextual and Paralinguistic Reasoning in Speech-LLMs: A Case Study with In-the-Wild Data."
+   },
+   {
+    "key": "conf/osdi/LinJSZYWWSSJLWL25",
+    "venue": "OSDI",
+    "year": "2025",
+    "title": "Understanding Stragglers in Large Model Training Using What-if Analysis."
+   },
+   {
+    "key": "conf/sigir/0004Z0LSWWCKA24",
+    "venue": "SIGIR",
+    "year": "2024",
+    "title": "MetaHKG: Meta Hyperbolic Learning for Few-shot Temporal Reasoning."
+   },
+   {
+    "key": "conf/icassp/WangWCDZY23",
+    "venue": "ICASSP",
+    "year": "2023",
+    "title": "ICStega: Image Captioning-based Semantically Controllable Linguistic Steganography."
+   },
+   {
+    "key": "journals/biomedsem/HeYHLNBZPWLOWHT22",
+    "venue": "J. Biomed. Semant.",
+    "year": "2022",
+    "title": "A comprehensive update on CIDO: the community-based coronavirus infectious disease ontology."
+   },
+   {
+    "key": "conf/mm/OoiTWWCCGLTWXZZ15",
+    "venue": "ACM Multimedia",
+    "year": "2015",
+    "title": "SINGA: A Distributed Deep Learning Platform."
+   },
+   {
+    "key": "journals/dmaa/WangLWZ26",
+    "venue": "Discret. Math. Algorithms Appl.",
+    "year": "2026",
+    "title": "Notes on the total positivity of the compression of double Riordan arrays."
+   },
+   {
+    "key": "journals/eaai/WangLZZCDYWW26",
+    "venue": "Eng. Appl. Artif. Intell.",
+    "year": "2026",
+    "title": "From human and object interaction to threat detection: An interpretable threat detection method for human violence scenarios."
+   },
+   {
+    "key": "journals/kbs/AnLZWCYLW26",
+    "venue": "Knowl. Based Syst.",
+    "year": "2026",
+    "title": "Advancing multi-subject text-to-image synthesis via Attention Refinement and Inheritance."
+   },
+   {
+    "key": "journals/tdsc/ChenZWZDZY26",
+    "venue": "IEEE Trans. Dependable Secur. Comput.",
+    "year": "2026",
+    "title": "Side-Information Estimated Steganography via Dual-Path Super-Resolution Reconstruction."
+   },
+   {
+    "key": "conf/aaai/YangWLZLLWNXSHZ26",
+    "venue": "AAAI",
+    "year": "2026",
+    "title": "From Imitation to Discrimination: Toward a Generalized Curriculum Advantage Mechanism Enhancing Cross-Domain Reasoning Tasks."
+   },
+   {
+    "key": "conf/ipps/ZhangGTLWZFSSTT26",
+    "venue": "IPDPS",
+    "year": "2026",
+    "title": "Accelerating AI Compression through Lightweight Lossless Encoding and Pipelined Workflows."
+   },
+   {
+    "key": "conf/ndss/WangPCDHZY26",
+    "venue": "NDSS",
+    "year": "2026",
+    "title": "Breaking the Generative Steganography Trilemma: ANStega for Optimal Capacity, Efficiency, and Security."
+   },
+   {
+    "key": "journals/aei/ZhangJLZZW25",
+    "venue": "Adv. Eng. Informatics",
+    "year": "2025",
+    "title": "More will be better: Multi-source-free aggregation adaptation with confidence calibration for fault diagnosis."
+   },
+   {
+    "key": "journals/computers/ZhouHRWWZL25",
+    "venue": "Comput.",
+    "year": "2025",
+    "title": "A Method for Few-Shot Modulation Recognition Based on Reinforcement Metric Meta-Learning."
+   },
+   {
+    "key": "journals/csur/DiLZLUZSHHYRGWTTJJWRZSC25",
+    "venue": "ACM Comput. Surv.",
+    "year": "2025",
+    "title": "A Survey on Error-Bounded Lossy Compression for Scientific Datasets."
+   },
+   {
+    "key": "journals/iotj/GuoDFSZWLY25",
+    "venue": "IEEE Internet Things J.",
+    "year": "2025",
+    "title": "A Time-Efficient and Robust Indoor Stationary Human Localization Method Using a Through-Wall MIMO Radar."
+   }
+  ]
+ },
+ "2601.20009": {
+  "_http": 200,
+  "query": "J. Ben Tamo Poliannikov",
+  "authors": [
+   "J. Ben Tamo",
+   "Daniel Carlander-Reuterfelt",
+   "Jonathan Rubin",
+   "Dezhi Hong",
+   "Mingxian Wang",
+   "Oleg Poliannikov"
+  ],
+  "nonCorr": []
+ },
+ "2404.07066": {
+  "_http": 200,
+  "query": "Mingyu Jin Zhang",
+  "authors": [
+   "Mingyu Jin",
+   "Qinkai Yu",
+   "Jingyuan Huang",
+   "Qingcheng Zeng",
+   "Zhenting Wang",
+   "Wenyue Hua",
+   "Haiyan Zhao",
+   "Kai Mei",
+   "Yanda Meng",
+   "Kaize Ding",
+   "Fan Yang",
+   "Mengnan Du",
+   "Yongfeng Zhang"
+  ],
+  "nonCorr": [
+   {
+    "key": "conf/cvpr/LiZTGYLLJWHLJLFLWCLZFSMZWZSPDTYWPCDZKV23",
+    "venue": "CVPR Workshops",
+    "year": "2023",
+    "title": "NTIRE 2023 Challenge on Efficient Super-Resolution: Methods and Results."
+   },
+   {
+    "key": "journals/tip/YangYRLSWZZXPZQ20",
+    "venue": "IEEE Trans. Image Process.",
+    "year": "2020",
+    "title": "Advancing Image Understanding in Poor Visibility Environments: A Collective Benchmark Study."
+   },
+   {
+    "key": "journals/integration/SunLCLLLZ26",
+    "venue": "Integr.",
+    "year": "2026",
+    "title": "Transformer-based surrogate modeling for multi-circuit analog sizing via Bayesian optimization."
+   },
+   {
+    "key": "journals/mj/SunNLLLZ26",
+    "venue": "Microelectron. J.",
+    "year": "2026",
+    "title": "UniSize-Net: An extensible automated framework for multi-circuit analog circuit sizing with integrated simulation and netlist generation."
+   },
+   {
+    "key": "journals/cea/ChiJZLLZHHLTLM26",
+    "venue": "Comput. Electron. Agric.",
+    "year": "2026",
+    "title": "Fine-scale aboveground biomass estimation of restored vegetation in tailings ponds: integrating UAV multi-source data and explainable machine learning."
+   },
+   {
+    "key": "journals/tcbb/ZhuBSSLZDLL25",
+    "venue": "IEEE Trans. Comput. Biol. Bioinform.",
+    "year": "2025",
+    "title": "MPSO-CD: A Multi-Objective Particle Swarm Optimization Community Detection Method for Identifying Disease Modules."
+   },
+   {
+    "key": "conf/bibm/BiSKL0024",
+    "venue": "BIBM",
+    "year": "2024",
+    "title": "A multi-objective genetic algorithm based on neighborhood coevolution for community detection."
+   },
+   {
+    "key": "conf/icra/ONeillRMGPLPGMJ24",
+    "venue": "ICRA",
+    "year": "2024",
+    "title": "Open X-Embodiment: Robotic Learning Datasets and RT-X Models : Open X-Embodiment Collaboration."
+   },
+   {
+    "key": "conf/cvpr/VasluianuSTCHTFZZWWLGZSSDZLLYOLRLJHWLY23",
+    "venue": "CVPR Workshops",
+    "year": "2023",
+    "title": "NTIRE 2023 Image Shadow Removal Challenge Report."
+   },
+   {
+    "key": "journals/eaai/PuJZLRWQ25",
+    "venue": "Eng. Appl. Artif. Intell.",
+    "year": "2025",
+    "title": "Intelligent optimization of air-floating piston core parameters for homemade frictionless pneumatic actuators based on a new multi-objective particle swarm optimization algorithm with Gaussian mutation and fuzzy logic."
+   },
+   {
+    "key": "conf/cvpr/0016ADSWSTPGLYL25",
+    "venue": "CVPR Workshops",
+    "year": "2025",
+    "title": "NTIRE 2025 Challenge on Event-Based Image Deblurring: Methods and Results."
+   },
+   {
+    "key": "conf/miccai/LinZWHSZGDH24",
+    "venue": "MICCAI",
+    "year": "2024",
+    "title": "Class-Balancing Deep Active Learning with Auto-Feature Mixing and Minority Push-Pull Sampling."
+   },
+   {
+    "key": "journals/remotesensing/SongGZLMLWLZYL22",
+    "venue": "Remote. Sens.",
+    "year": "2022",
+    "title": "Estimation of Soil Organic Carbon Content in Coastal Wetlands with Measured VIS-NIR Spectroscopy Using Optimized Support Vector Machines and Random Forests."
+   },
+   {
+    "key": "journals/jcisd/ChenLCHLLLZMZLZ16",
+    "venue": "J. Chem. Inf. Model.",
+    "year": "2016",
+    "title": "Identification of Novel Disruptor of Telomeric Silencing 1-like (DOT1L) Inhibitors through Structure-Based Virtual Screening and Biological Assays."
+   },
+   {
+    "key": "conf/mm/BaoCZLCH10",
+    "venue": "ACM Multimedia",
+    "year": "2010",
+    "title": "Explicit and implicit concept-based video retrieval with bipartite graph propagation model."
+   },
+   {
+    "key": "journals/fgcs/BiSLXZLL26",
+    "venue": "Future Gener. Comput. Syst.",
+    "year": "2026",
+    "title": "A multi-objective multi-stage genetic algorithm for community detection in biological networks."
+   },
+   {
+    "key": "conf/semeval/BaiWZ26",
+    "venue": "SemEval@ACL",
+    "year": "2026",
+    "title": "YNU-HPCC at SemEval-2026 Task 5: Rating Plausibility of Word Senses in Ambiguous Stories through Narrative Understanding."
+   },
+   {
+    "key": "journals/bib/RenQSZLNTZKWWWLZZL24",
+    "venue": "Briefings Bioinform.",
+    "year": "2024",
+    "title": "KinomeMETA: meta-learning enhanced kinome-wide polypharmacology profiling."
+   },
+   {
+    "key": "journals/iotj/DingWWLZLHLZ24",
+    "venue": "IEEE Internet Things J.",
+    "year": "2024",
+    "title": "A Multimode Neuromorphic Vision Sensor With Improved Brightness Measurement Performance by Pulse Coding Method."
+   },
+   {
+    "key": "journals/sigkdd/TangZJYWJZD24",
+    "venue": "SIGKDD Explor.",
+    "year": "2024",
+    "title": "Time Series Forecasting with LLMs: Understanding and Enhancing Model Capabilities."
+   },
+   {
+    "key": "conf/biocas/ZhangZYHZCLZLLW23",
+    "venue": "BioCAS",
+    "year": "2023",
+    "title": "Grand Challenge on Respiratory Sound Classification for SPRSound Dataset."
+   },
+   {
+    "key": "journals/access/ZhongZLQCWNHZZ21",
+    "venue": "IEEE Access",
+    "year": "2021",
+    "title": "Fabrication and Characterization of a Quantum Voltage Noise Source Chip for a Johnson Noise Thermometer."
+   },
+   {
+    "key": "journals/jmihi/RenSZDLZ19",
+    "venue": "J. Medical Imaging Health Informatics",
+    "year": "2019",
+    "title": "An Accurate Detection Method for Biopsy Needle in Ultrasound Images Based on Fuzzy Enhancement and Hough Transform."
+   },
+   {
+    "key": "conf/ofc/HuZYL0HZJQ19",
+    "venue": "OFC",
+    "year": "2019",
+    "title": "MAP Detection of Probabilistically Shaped Constellations in Optical Fiber Transmissions."
+   },
+   {
+    "key": "journals/cn/ChenZMP09",
+    "venue": "Comput. Networks",
+    "year": "2009",
+    "title": "Delay-based TCP congestion avoidance: A network calculus interpretation and performance improvements."
+   },
+   {
+    "key": "conf/infocom/ChenZMP05",
+    "venue": "INFOCOM",
+    "year": "2005",
+    "title": "TCP congestion avoidance: a network calculus interpretation and performance improvements."
+   },
+   {
+    "key": "journals/ecoi/YanZSLWSLLZLW26",
+    "venue": "Ecol. Informatics",
+    "year": "2026",
+    "title": "A machine learning-based wildfire susceptibility mapping framework for China&apos;s three-north shelterbelt region."
+   },
+   {
+    "key": "journals/ijdsa/SunZBSQWL26",
+    "venue": "Int. J. Data Sci. Anal.",
+    "year": "2026",
+    "title": "Community detection based on community structure enhancement and multi-objective particle swarm optimization."
+   },
+   {
+    "key": "journals/tcasI/CaiKZLSDP26",
+    "venue": "IEEE Trans. Circuits Syst. I Regul. Pap.",
+    "year": "2026",
+    "title": "The Block-Oriented Digital Predistortion Based on the 2-D Complex-Valued Spline Interpolation Lookup Table Method."
+   },
+   {
+    "key": "journals/bmcmi/TongZBLZLLSWZWY25",
+    "venue": "BMC Medical Imaging",
+    "year": "2025",
+    "title": "The value of diagnosing coronary slow flow based on epicardial adipose tissue radiomics in chest computed tomography."
+   },
+   {
+    "key": "journals/eswa/XuTGZTXJ25",
+    "venue": "Expert Syst. Appl.",
+    "year": "2025",
+    "title": "Super-resolution 3D reconstruction from low-dose biomedical images based on expertized multi-layer refining."
+   },
+   {
+    "key": "journals/tcbb/DengYZLZ25",
+    "venue": "IEEE Trans. Comput. Biol. Bioinform.",
+    "year": "2025",
+    "title": "HIN-MTDTI: Heterogeneous Information Networks for Multitask Drug-Target Interaction Prediction."
+   },
+   {
+    "key": "conf/accv/ZhangJYXGJ24",
+    "venue": "ACCV",
+    "year": "2024",
+    "title": "Bridging the Projection Gap: Overcoming Projection Bias Through Parameterized Distance Learning."
+   },
+   {
+    "key": "conf/ecai/ZhangJSWLJ24",
+    "venue": "ECAI",
+    "year": "2024",
+    "title": "Target-driven Attack for Large Language Models."
+   },
+   {
+    "key": "conf/icdm/ZhangJYLXJ24",
+    "venue": "ICDM",
+    "year": "2024",
+    "title": "Goal-Guided Generative Prompt Injection Attack on Large Language Models."
+   },
+   {
+    "key": "conf/icpr/LiYLLSLZHWZWTZJXLLSLPKH24",
+    "venue": "ICPR",
+    "year": "2024",
+    "title": "ICPR 2024 Competition on Resource-Limited Infrared Small Target Detection Challenge: Methods and Results."
+   },
+   {
+    "key": "conf/miccai/ZhangZLLGZXZZFLZ24",
+    "venue": "MICCAI",
+    "year": "2024",
+    "title": "Hierarchical Multiple Instance Learning for COPD Grading with Relatively Specific Similarity."
+   },
+   {
+    "key": "journals/apin/PanZZL23",
+    "venue": "Appl. Intell.",
+    "year": "2023",
+    "title": "CSDTI: an interpretable cross-attention network with GNN-based drug molecule aggregation for drug-target interaction prediction."
+   },
+   {
+    "key": "journals/nar/SongLLLSZWZWYZZGLLLZ23",
+    "venue": "Nucleic Acids Res.",
+    "year": "2023",
+    "title": "DeepAlloDriver: a deep learning-based strategy to predict cancer driver mutations."
+   },
+   {
+    "key": "conf/icic/DengZZPL23",
+    "venue": "ICIC",
+    "year": "2023",
+    "title": "DTI-MACF: Drug-Target Interaction Prediction via Multi-component Attention Network."
+   },
+   {
+    "key": "conf/iconip/XueJZHWJ23",
+    "venue": "ICONIP",
+    "year": "2023",
+    "title": "Image Blending Algorithm with Automatic Mask Generation."
+   },
+   {
+    "key": "conf/itsc/ZhangWJSLWY23",
+    "venue": "ITSC",
+    "year": "2023",
+    "title": "Research on Battery Fault Diagnosis Method Based on Entropy."
+   }
+  ]
+ },
+ "2605.02105": {
+  "_http": 200,
+  "query": "Ishaan Watts Raghunathan",
+  "authors": [
+   "Ishaan Watts",
+   "Catherine Li",
+   "Sachin Goyal",
+   "Jacob Mitchell Springer",
+   "Aditi Raghunathan"
+  ],
+  "nonCorr": []
+ },
+ "2602.11137": {
+  "_http": 200,
+  "query": "Tessa Han Kakade",
+  "authors": [
+   "Tessa Han",
+   "Sebastian Bordt",
+   "Hanlin Zhang",
+   "Sham Kakade"
+  ],
+  "nonCorr": []
+ },
+ "2602.14486": {
+  "_http": 200,
+  "query": "Fabian Gröger Brbić",
+  "authors": [
+   "Fabian Gröger",
+   "Shuo Wen",
+   "Maria Brbić"
+  ],
+  "nonCorr": [
+   {
+    "key": "conf/nips/GrogerWLB25",
+    "venue": "NeurIPS",
+    "year": "2025",
+    "title": "With Limited Data for Multimodal Alignment, Let the STRUCTURE Guide You."
+   }
+  ]
+ }
+}

@@ -1,0 +1,492 @@
+{
+ "2411.15558": {
+  "_http": 200,
+  "citation_title": "Reassessing Layer Pruning in LLMs: New Insights and Methods",
+  "citation_journal_title": null,
+  "citation_date": "2024/11/23",
+  "citation_doi": null,
+  "comments": null,
+  "jref": null,
+  "doi": null
+ },
+ "2606.07978": {
+  "_http": 200,
+  "citation_title": "MechLens: Late Crystallization of Factual Knowledge Explains Intervention Effectiveness in Language Models",
+  "citation_journal_title": null,
+  "citation_date": "2026/06/06",
+  "citation_doi": null,
+  "comments": null,
+  "jref": null,
+  "doi": null
+ },
+ "2606.16897": {
+  "_http": 200,
+  "citation_title": "Contrastive-Difference CKA Reveals Concept-Specific Structural Alignment Across Language Model Architectures",
+  "citation_journal_title": null,
+  "citation_date": "2026/06/15",
+  "citation_doi": null,
+  "comments": null,
+  "jref": null,
+  "doi": null
+ },
+ "2607.25663": {
+  "_http": 200,
+  "citation_title": "Localized Adaptation Reveals Distinct Learning Signatures in Transformers",
+  "citation_journal_title": null,
+  "citation_date": "2026/07/28",
+  "citation_doi": null,
+  "comments": "Main text: 8 pages, 2 figures; appendix: 13 tables, 10 figures; code and data available at this https URL",
+  "jref": null,
+  "doi": null
+ },
+ "2510.18871": {
+  "_http": 200,
+  "citation_title": "How Do LLMs Use Their Depth?",
+  "citation_journal_title": null,
+  "citation_date": "2025/10/21",
+  "citation_doi": null,
+  "comments": null,
+  "jref": null,
+  "doi": null
+ },
+ "2605.11416": {
+  "_http": 200,
+  "citation_title": "Freeze Deep, Train Shallow: Interpretable Layer Allocation for Continued Pre-Training",
+  "citation_journal_title": null,
+  "citation_date": "2026/05/12",
+  "citation_doi": null,
+  "comments": null,
+  "jref": null,
+  "doi": null
+ },
+ "2605.02105": {
+  "_http": 200,
+  "citation_title": "Sharpness-Aware Pretraining Mitigates Catastrophic Forgetting",
+  "citation_journal_title": null,
+  "citation_date": "2026/05/04",
+  "citation_doi": null,
+  "comments": "43 pages, 64 figures, 9 tables, accepted to ICML2026",
+  "jref": null,
+  "doi": null
+ },
+ "2602.11137": {
+  "_http": 200,
+  "citation_title": "Weight Decay Improves Language Model Plasticity",
+  "citation_journal_title": null,
+  "citation_date": "2026/02/11",
+  "citation_doi": null,
+  "comments": null,
+  "jref": null,
+  "doi": null
+ },
+ "2606.09932": {
+  "_http": 200,
+  "citation_title": "When RL Fails after SFT: Rejuvenating Model Plasticity for Robust SFT-to-RL Handoff",
+  "citation_journal_title": null,
+  "citation_date": "2026/06/07",
+  "citation_doi": null,
+  "comments": null,
+  "jref": null,
+  "doi": null
+ },
+ "2602.14486": {
+  "_http": 200,
+  "citation_title": "Revisiting the Platonic Representation Hypothesis: An Aristotelian View",
+  "citation_journal_title": null,
+  "citation_date": "2026/02/16",
+  "citation_doi": null,
+  "comments": "ICML 2026 camera-ready",
+  "jref": null,
+  "doi": null
+ },
+ "2410.06981": {
+  "_http": 200,
+  "citation_title": "Quantifying Feature Space Universality Across Large Language Models via Sparse Autoencoders",
+  "citation_journal_title": null,
+  "citation_date": "2024/10/09",
+  "citation_doi": null,
+  "comments": null,
+  "jref": null,
+  "doi": null
+ },
+ "2503.04429": {
+  "_http": 200,
+  "citation_title": "Activation Space Interventions Can Be Transferred Between Large Language Models",
+  "citation_journal_title": null,
+  "citation_date": "2025/03/06",
+  "citation_doi": null,
+  "comments": "75 pages. Accepted to ICML 2025",
+  "jref": null,
+  "doi": null
+ },
+ "2312.02730": {
+  "_http": 200,
+  "citation_title": "Towards Measuring Representational Similarity of Large Language Models",
+  "citation_journal_title": null,
+  "citation_date": "2023/12/05",
+  "citation_doi": null,
+  "comments": "Extended abstract in UniReps Workshop @ NeurIPS 2023",
+  "jref": null,
+  "doi": null
+ },
+ "2109.08406": {
+  "_http": 200,
+  "citation_title": "Fine-Tuned Transformers Show Clusters of Similar Representations Across Layers",
+  "citation_journal_title": null,
+  "citation_date": "2021/09/17",
+  "citation_doi": null,
+  "comments": "BlackboxNLP 2021",
+  "jref": null,
+  "doi": null
+ },
+ "2502.05795": {
+  "_http": 200,
+  "citation_title": "The Curse of Depth in Large Language Models",
+  "citation_journal_title": null,
+  "citation_date": "2025/02/09",
+  "citation_doi": null,
+  "comments": "Accepted by NeurIPS 2025",
+  "jref": null,
+  "doi": null
+ },
+ "2310.04680": {
+  "_http": 200,
+  "citation_title": "The Cost of Down-Scaling Language Models: Fact Recall Deteriorates before In-Context Learning",
+  "citation_journal_title": null,
+  "citation_date": "2023/10/07",
+  "citation_doi": null,
+  "comments": null,
+  "jref": "The Twelfth International Conference on Learning Representations (ICLR), 2024",
+  "doi": null
+ },
+ "2506.00288": {
+  "_http": 200,
+  "citation_title": "Emergent Abilities of Large Language Models under Continued Pretraining for Language Adaptation",
+  "citation_journal_title": null,
+  "citation_date": "2025/05/30",
+  "citation_doi": null,
+  "comments": "Published as a Conference Paper at the main track of ACL 2025",
+  "jref": null,
+  "doi": null
+ },
+ "2407.17467": {
+  "_http": 200,
+  "citation_title": "CMR Scaling Law: Predicting Critical Mixture Ratios for Continual Pre-training of Language Models",
+  "citation_journal_title": null,
+  "citation_date": "2024/07/24",
+  "citation_doi": null,
+  "comments": "EMNLP 2024 main conference",
+  "jref": null,
+  "doi": null
+ },
+ "2403.17887": {
+  "_http": 200,
+  "citation_title": "The Unreasonable Ineffectiveness of the Deeper Layers",
+  "citation_journal_title": null,
+  "citation_date": "2024/03/26",
+  "citation_doi": null,
+  "comments": "10 + 14 pages, 6 + 5 figures. v2: ICLR camera-ready version; additional experiments in an extended discussion",
+  "jref": "MIT-CTP/5694",
+  "doi": null
+ },
+ "2403.03853": {
+  "_http": 200,
+  "citation_title": "ShortGPT: Layers in Large Language Models are More Redundant Than You Expect",
+  "citation_journal_title": null,
+  "citation_date": "2024/03/06",
+  "citation_doi": null,
+  "comments": null,
+  "jref": null,
+  "doi": null
+ },
+ "2402.02834": {
+  "_http": 200,
+  "citation_title": "Shortened LLaMA: Depth Pruning for Large Language Models with Comparison of Retraining Methods",
+  "citation_journal_title": null,
+  "citation_date": "2024/02/05",
+  "citation_doi": null,
+  "comments": "Update (arXiv-v2): continued pretraining for severe pruning ratios, compatibility with quantization, and enhanced baselines. Preliminary work (arXiv-v1) accepted at ICLR 2024 Workshop on ME-FoMo: this https URL",
+  "jref": null,
+  "doi": null
+ },
+ "2304.01373": {
+  "_http": 200,
+  "citation_title": "Pythia: A Suite for Analyzing Large Language Models Across Training and Scaling",
+  "citation_journal_title": null,
+  "citation_date": "2023/04/03",
+  "citation_doi": null,
+  "comments": "Code at this https URL",
+  "jref": null,
+  "doi": null
+ },
+ "2312.12141": {
+  "_http": 200,
+  "citation_title": "Neuron-Level Knowledge Attribution in Large Language Models",
+  "citation_journal_title": null,
+  "citation_date": "2023/12/19",
+  "citation_doi": null,
+  "comments": "Accepted by EMNLP 2024 main. This paper aims to identify the important neurons in large language models",
+  "jref": null,
+  "doi": null
+ },
+ "2601.13580": {
+  "_http": 200,
+  "citation_title": "Neural Organ Transplantation (NOT): Checkpoint-Based Modular Adaptation for Transformer Models",
+  "citation_journal_title": null,
+  "citation_date": "2026/01/20",
+  "citation_doi": null,
+  "comments": "27 pages, 8 figures, 16 tables. Decoder-only transformers (124M-20B parameters). Complete experimental results and reproducibility details in appendices. Code and checkpoints: this https URL",
+  "jref": null,
+  "doi": null
+ },
+ "2506.11389": {
+  "_http": 200,
+  "citation_title": "Curriculum-Guided Layer Scaling for Language Model Pretraining",
+  "citation_journal_title": null,
+  "citation_date": "2025/06/13",
+  "citation_doi": null,
+  "comments": "Accepted to ICML 2026. Code available at this https URL",
+  "jref": null,
+  "doi": null
+ },
+ "2509.06518": {
+  "_http": 200,
+  "citation_title": "Crown, Frame, Reverse: Layer-Wise Scaling Variants for LLM Pre-Training",
+  "citation_journal_title": null,
+  "citation_date": "2025/09/08",
+  "citation_doi": null,
+  "comments": "The reported results are skewed due to a data type mismatch. The dataset was saved with int32, but the data loader interpreted it as uint16. As a result, each 32-bit token was incorrectly split into two 16-bit tokens. Outcome: a consistent artifact where every other token is zero",
+  "jref": null,
+  "doi": null
+ },
+ "2502.13794": {
+  "_http": 200,
+  "citation_title": "LESA: Learnable LLM Layer Scaling-Up",
+  "citation_journal_title": null,
+  "citation_date": "2025/02/19",
+  "citation_doi": null,
+  "comments": null,
+  "jref": null,
+  "doi": null
+ },
+ "2508.08011": {
+  "_http": 200,
+  "citation_title": "Progressive Depth Up-scaling via Optimal Transport",
+  "citation_journal_title": null,
+  "citation_date": "2025/08/11",
+  "citation_doi": null,
+  "comments": null,
+  "jref": null,
+  "doi": null
+ },
+ "2402.05913": {
+  "_http": 200,
+  "citation_title": "Efficient Stagewise Pretraining via Progressive Subnetworks",
+  "citation_journal_title": null,
+  "citation_date": "2024/02/08",
+  "citation_doi": null,
+  "comments": null,
+  "jref": null,
+  "doi": null
+ },
+ "2511.03270": {
+  "_http": 200,
+  "citation_title": "SCALE: Upscaled Continual Learning of Large Language Models",
+  "citation_journal_title": null,
+  "citation_date": "2025/11/05",
+  "citation_doi": null,
+  "comments": null,
+  "jref": null,
+  "doi": null
+ },
+ "2509.01213": {
+  "_http": 200,
+  "citation_title": "Mitigating Catastrophic Forgetting in Continual Learning through Model Growth",
+  "citation_journal_title": null,
+  "citation_date": "2025/09/01",
+  "citation_doi": null,
+  "comments": null,
+  "jref": null,
+  "doi": null
+ },
+ "2505.20155": {
+  "_http": 200,
+  "citation_title": "Pangu Light: Weight Re-Initialization for Pruning and Accelerating LLMs",
+  "citation_journal_title": null,
+  "citation_date": "2025/05/26",
+  "citation_doi": null,
+  "comments": null,
+  "jref": null,
+  "doi": null
+ },
+ "2307.01163": {
+  "_http": 200,
+  "citation_title": "Improving Language Plasticity via Pretraining with Active Forgetting",
+  "citation_journal_title": null,
+  "citation_date": "2023/07/03",
+  "citation_doi": null,
+  "comments": "NeurIPS 2023 Final Version",
+  "jref": null,
+  "doi": null
+ },
+ "2006.05987": {
+  "_http": 200,
+  "citation_title": "Revisiting Few-sample BERT Fine-tuning",
+  "citation_journal_title": null,
+  "citation_date": "2020/06/10",
+  "citation_doi": null,
+  "comments": "Code available at this https URL",
+  "jref": null,
+  "doi": null
+ },
+ "2004.14975": {
+  "_http": 200,
+  "citation_title": "Investigating Transferability in Pretrained Language Models",
+  "citation_journal_title": null,
+  "citation_date": "2020/04/30",
+  "citation_doi": null,
+  "comments": "Findings of EMNLP 2020",
+  "jref": null,
+  "doi": null
+ },
+ "2410.06225": {
+  "_http": 200,
+  "citation_title": "A Timeline and Analysis for Representation Plasticity in Large Language Models",
+  "citation_journal_title": null,
+  "citation_date": "2024/10/08",
+  "citation_doi": null,
+  "comments": null,
+  "jref": null,
+  "doi": null
+ },
+ "2410.11654": {
+  "_http": 200,
+  "citation_title": "Transformer Layer Injection: A Novel Approach for Efficient Upscaling of Large Language Models",
+  "citation_journal_title": null,
+  "citation_date": "2024/10/15",
+  "citation_doi": null,
+  "comments": null,
+  "jref": null,
+  "doi": null
+ },
+ "2312.15166": {
+  "_http": 200,
+  "citation_title": "SOLAR 10.7B: Scaling Large Language Models with Simple yet Effective Depth Up-Scaling",
+  "citation_journal_title": null,
+  "citation_date": "2023/12/23",
+  "citation_doi": null,
+  "comments": "accepted to NAACL 2024 Industry Track",
+  "jref": null,
+  "doi": null
+ },
+ "2401.02415": {
+  "_http": 200,
+  "citation_title": "LLaMA Pro: Progressive LLaMA with Block Expansion",
+  "citation_journal_title": null,
+  "citation_date": "2024/01/04",
+  "citation_doi": null,
+  "comments": "Accepted by ACL 2024, Main Conference",
+  "jref": null,
+  "doi": null
+ },
+ "2410.02330": {
+  "_http": 200,
+  "citation_title": "Llama SLayer 8B: Shallow Layers Hold the Key to Knowledge Injection",
+  "citation_journal_title": null,
+  "citation_date": "2024/10/03",
+  "citation_doi": null,
+  "comments": null,
+  "jref": null,
+  "doi": null
+ },
+ "2403.19135": {
+  "_http": 200,
+  "citation_title": "Streamlining Redundant Layers to Compress Large Language Models",
+  "citation_journal_title": null,
+  "citation_date": "2024/03/28",
+  "citation_doi": null,
+  "comments": null,
+  "jref": null,
+  "doi": null
+ },
+ "2407.16286": {
+  "_http": 200,
+  "citation_title": "A deeper look at depth pruning of LLMs",
+  "citation_journal_title": null,
+  "citation_date": "2024/07/23",
+  "citation_doi": null,
+  "comments": null,
+  "jref": null,
+  "doi": null
+ },
+ "2210.10041": {
+  "_http": 200,
+  "citation_title": "Hidden State Variability of Pretrained Language Models Can Guide Computation Reduction for Transfer Learning",
+  "citation_journal_title": null,
+  "citation_date": "2022/10/18",
+  "citation_doi": null,
+  "comments": "EMNLP 2022 camera-ready",
+  "jref": null,
+  "doi": null
+ },
+ "2403.17919": {
+  "_http": 200,
+  "citation_title": "LISA: Layerwise Importance Sampling for Memory-Efficient Large Language Model Fine-Tuning",
+  "citation_journal_title": null,
+  "citation_date": "2024/03/26",
+  "citation_doi": null,
+  "comments": "NeurIPS 2024",
+  "jref": null,
+  "doi": null
+ },
+ "2406.11753": {
+  "_http": 200,
+  "citation_title": "A Semantic-Aware Layer-Freezing Approach to Computation-Efficient Fine-Tuning of Language Models",
+  "citation_journal_title": null,
+  "citation_date": "2024/06/17",
+  "citation_doi": null,
+  "comments": "accepted by ACL 2025, the camera-ready version",
+  "jref": null,
+  "doi": null
+ },
+ "2505.23811": {
+  "_http": 200,
+  "citation_title": "LayerIF: Estimating Layer Quality for Large Language Models using Influence Functions",
+  "citation_journal_title": null,
+  "citation_date": "2025/05/27",
+  "citation_doi": null,
+  "comments": "Neurips 2025",
+  "jref": null,
+  "doi": null
+ },
+ "2510.10071": {
+  "_http": 200,
+  "citation_title": "ADEPT: Continual Pretraining via Adaptive Expansion and Dynamic Decoupled Tuning",
+  "citation_journal_title": null,
+  "citation_date": "2025/10/11",
+  "citation_doi": null,
+  "comments": null,
+  "jref": null,
+  "doi": null
+ },
+ "2601.20009": {
+  "_http": 200,
+  "citation_title": "LinguaMap: Which Layers of LLMs Speak Your Language and How to Tune Them?",
+  "citation_journal_title": null,
+  "citation_date": "2026/01/27",
+  "citation_doi": null,
+  "comments": null,
+  "jref": null,
+  "doi": null
+ },
+ "2404.07066": {
+  "_http": 200,
+  "citation_title": "Exploring Concept Depth: How Large Language Models Acquire Knowledge and Concept at Different Layers?",
+  "citation_journal_title": null,
+  "citation_date": "2024/04/10",
+  "citation_doi": null,
+  "comments": "COLING 2025",
+  "jref": null,
+  "doi": null
+ }
+}
