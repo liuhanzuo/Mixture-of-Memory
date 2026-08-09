@@ -367,6 +367,47 @@ touched.** That is A01's core protocol claim, unchanged.
 * `olmo2_mmlu_content_results/a01_7B_intact_base_cdnone/summary.json`  (this session's new run)
 * `olmo2_mmlu_content_results/a01_7B_keep14fresh2_freezefront_healed_cdnone/summary.json`  (2026-08-09 fill on .21)
 * `olmo2_mmlu_content_results/a01_7B_keep14fresh2_fromscratch_healed_cdnone/summary.json`  (2026-08-09 fill on .21)
-* `olmo2_mmlu_content_results/a01_1B_intact_base_full/summary.json`  (2026-08-09 cross-scale fill on .21)
-* `olmo2_mmlu_content_results/a01_1B_intact_base_cdnone/summary.json`  (2026-08-09 cross-scale fill on .21)
-* Prior intact non-OLMo numbers (Llama-2/Llama-3/Qwen3): `GATE1_VERDICT.md` §2 (numbers valid, its VERDICT retracted)
+### 7.1.3 Cross-family cross-scale grid (added 2026-08-09)
+
+Same protocol; one row per available intact model. `--any_family` used for non-OLMo.
+
+| model | scale | letter | cn | cn − l | CI95(cn−l) | verdict |
+|---|---:|---:|---:|---:|---|---|
+| OLMo-2 | 1B | 0.3816 | 0.3870 | **+0.53pp** | [−0.51, +1.58] | TIE (p=0.33) |
+| **Llama-3.2** | **1B** | **0.3708** | **0.3472** | **−2.36pp** | **[−3.40, −1.34]** | **SIG letter > content (p=8.7e−6)** |
+| Llama-2 | 7B | 0.4100 | 0.4135 | +0.35pp | [−1.37, +0.67] | TIE (p=0.51) |
+| OLMo-2 | 7B | 0.6060 | 0.4702 | −13.59pp | [−14.58, −12.57] | SIG letter > content |
+| Llama-3 | 8B | 0.6220 | 0.4624 | −15.96pp | — | SIG letter > content (p=1.2e−196) |
+| Qwen3 | 8B | 0.7464 | 0.5173 | −22.91pp | — | SIG letter > content |
+
+The pattern refines further:
+
+* At **high competence** (letter ≥ 0.60), the letter-over-content gap is 13–23pp
+  and is family-general across three families.
+* At **mid competence** (letter 0.37–0.41), the pattern is **family-dependent**:
+  * Llama-3.2-1B — SIG letter > content, but only by 2.4pp
+  * Llama-2-7B — TIE
+  * OLMo-2-1B — TIE
+* At **floor** (letter ≤ 0.30), both interfaces tie at their own null.
+
+The Llama-3.2-1B case says the letter advantage does not require competent
+letter accuracy in isolation — Llama-3.2-1B's letter (0.371) is slightly
+*below* OLMo-2-1B's letter (0.382). What differs is content_norm: 0.347 for
+Llama-3.2 vs 0.387 for OLMo-2, on the same items. So Llama-3-family loses
+CONTENT faster than OLMo-2 family at 1B scale. The net effect is that Llama-3
+family produces a letter advantage even at 1B, while OLMo-2 does not.
+
+**Takeaway.** "Letter > content" is not a monotone function of scale, nor of
+letter competence alone. It is a joint function of `(letter readout quality,
+content readout quality)` on the same items, and different families weight the
+two differently at each scale. Reporting one number from one family and calling
+it "the interface asymmetry" is unsafe.
+
+### 7.1.4 Provenance for 7.1.1–7.1.3
+
+* `olmo2_mmlu_content_results/a01_1B_intact_base_full/summary.json` (2026-08-09 .21)
+* `olmo2_mmlu_content_results/a01_1B_intact_base_cdnone/summary.json` (2026-08-09 .21)
+* `olmo2_mmlu_content_results/a01_llama32_1b_intact_base_full/summary.json` (2026-08-09 .21)
+* `olmo2_mmlu_content_results/a01_llama32_1b_intact_base_cdnone/summary.json` (2026-08-09 .21)
+* `proposal/active/A01-null-calibration-methodology/evidence/a01_gate1_third_family.json` (Llama-2-7B, Llama-3-8B, Qwen3-8B numbers)
+
