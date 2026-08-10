@@ -97,19 +97,53 @@
     "next_gate_for_this_axis": "same-item paired McNemar (intact vs pruned) on nq_open; length-matched null for contains"
   },
   "remaining_axes_status": {
-    "conflicting_knowledge": {
-      "status": "BLOCKED_NO_DATA",
-      "reason": "CounterFact, MQuAKE, zsRE, KnowEdit -- NONE on either disk; all require context injection (edit-then-query), not native to closed-book harness. Adding them is a research-code project, not a gate.",
-      "reframe": "the closed-book protocol already covers 'stable parametric knowledge' (PopQA/TriviaQA/NQ-open, 3 axes). Conflicting-knowledge belongs to a separate paper about knowledge editing; A03 should not carry it."
+    "_correction_20260810": "PRIOR LABELS RETRACTED. This block previously carried BLOCKED_NO_DATA / BLOCKED_WRONG_FORMAT. User pushed back on 2026-08-10; all four candidate datasets were downloaded to data/knowledge_axes/{counterfact,mquake,hotpotqa,zsre}/ (197 MB total, sha256 in data/knowledge_axes/MANIFEST.md). The real reason 3 of 4 are unused is null-floor / construct mismatch, not resource availability. See KNOWLEDGE_AXES_FEASIBILITY.md for provenance (agent report + MAIN independent verification of the CounterFact 0.5364 / 0.5429 held-out floor).",
+    "conflicting_knowledge_counterfact": {
+      "status": "MEASURABLE_BUT_DEFERRED",
+      "data_on_disk": "data/knowledge_axes/counterfact/ (test 2191 + train 19728 = 21919 items, 15 MB, sha256 verified in MANIFEST.md)",
+      "null_floor_measured": {
+        "input_blind_2AFC_marginal_prior": 0.5454,
+        "role_frequency_prior_in_sample": 0.6426,
+        "held_out_train_to_test": 0.5429,
+        "held_out_test_to_train": 0.5364,
+        "canonical_for_A03": 0.5364,
+        "note": "MAIN reproduced 0.5364/0.5429 exactly on 2026-08-10; retracts an unreproducible 64.3% in-sample figure (measured 57.0%)."
+      },
+      "power_at_pool_size": "n=21919, MDE 0.94pp at floor 0.5396 -- pruned-vs-floor comfortably powered, but paired intact-vs-pruned McNemar is the correct test for Arm-3-style deltas (do NOT quote pool vs-floor p-value as if it settled a paired question).",
+      "deferred_reason": "harness has no 2AFC path. eval_olmo2_closedbook_qa.py is generation-only; eval_olmo2_mmlu_content.py does LL scoring but is 4-way MMLU-specific (letter-keyed score dicts, no n_opt=2 branch, no results_root for CounterFact, no new null-floor branch in analyze_1b_knowledge_floor.py). ~150-250 lines of coder work + a new null branch. Not gate-sized; queue behind Arm 6 verdict.",
+      "risk_note": "the risk is not 'at floor' but 'above floor but measuring the candidate-set prior more than parametric knowledge' -- 0.46 headroom vs TriviaQA's 0.997."
     },
-    "multi_evidence": {
-      "status": "BLOCKED_WRONG_FORMAT",
-      "reason": "HotpotQA/2Wiki/MuSiQue live in LongBench form (open-book, with context); the closed-book form would require a paired-context stripped variant we do not have. Same reframing: A03 covers closed-book only.",
-      "reframe": "if this axis is essential, do it as a separate paper on retrieval-vs-parametric under multi-hop; not A03's job."
+    "multi_evidence_mquake": {
+      "status": "RETIRED_BY_FLOOR",
+      "data_on_disk": "data/knowledge_axes/mquake/ (MQuAKE-CF-3k 3000 cases / 9000 paraphrase questions, 82 MB, sha256 in MANIFEST.md)",
+      "null_floor_measured": {
+        "best_constant_em_floor_multihop": 0.17733,
+        "best_constant_string": "washington dc",
+        "n": 9000,
+        "MDE": "1.14pp -- but ceiling reduced to 0.82 and A03's residual-fraction statistic collapses"
+      },
+      "retire_reason": "floor 0.177-0.235 is pathological (compare: TriviaQA 0.0026, PopQA 0.0229, NQ-open 0.0055) because MQuAKE composes questions whose true answers concentrate on high-frequency entities. Even if floor were fixed, the construct measures multi-hop *composition* not the stable-parametric-knowledge axis A03 is about."
+    },
+    "multi_evidence_hotpotqa": {
+      "status": "RETIRED_BY_LEAKAGE_AND_CONSTRUCT",
+      "data_on_disk": "data/knowledge_axes/hotpotqa/ (validation 7405, 27 MB, sha256 in MANIFEST.md)",
+      "leakage_channel": "10.2% items have the answer as a literal span in the question; best-constant EM 0.03147 on 'no'; after dropping yes/no and leaked (n=6208) floor drops to 0.00387 -- but this is a span-copy channel not a parametric-knowledge channel.",
+      "retire_reason": "even the cleaned n=6208 form measures reading comprehension of a distractor context, not parametric recall. The closed-book strip would require a paired-context-removed variant that (a) we do not have, and (b) would drop the effective n below the pruned-vs-floor MDE anyway. Belongs in a separate retrieval-vs-parametric paper."
+    },
+    "conflicting_knowledge_zsre": {
+      "status": "RETIRED_BY_2AFC_PRIOR",
+      "data_on_disk": "data/knowledge_axes/zsre/ (zsre_mend_eval 19086 items, 76 MB, sha256 in MANIFEST.md)",
+      "null_floor_measured": {
+        "generative_best_constant_em": 0.01865,
+        "generative_constant_string": "french",
+        "twoAFC_role_frequency_prior_in_sample": 0.8565,
+        "twoAFC_marginal_frequency_prior": 0.5902
+      },
+      "retire_reason": "the 2AFC prior 0.8565 is disqualifying: zsRE's `alt` counterfactuals are drawn from a much narrower pool than its `answers` (TRUE) field, so candidate identity leaks the answer via role-frequency. CounterFact has the same construct but the pool asymmetry is much milder (held-out 0.5364 vs zsRE 0.8565). Strictly dominated by CounterFact."
     },
     "new_injected_facts": {
-      "status": "BLOCKED_BY_DEFINITION",
-      "reason": "requires a CPT phase that injects new facts, then measures recall against a held-out probe set. A03 has no such CPT arm on 1B yet and cannot answer the floor question until the injection design is fixed."
+      "status": "BLOCKED_BY_DESIGN",
+      "reason": "requires a CPT phase that injects new facts, then measures recall against a held-out probe set. A03 has no such CPT arm on 1B yet -- this is a *design gap*, not a data or resource gap. Not addressable by download."
     }
   },
   "next_gate": [
