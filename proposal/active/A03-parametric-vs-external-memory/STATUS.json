@@ -1,5 +1,6 @@
 {
   "id": "A03",
+  "surviving_claims_doc": "claims/A03_SURVIVING_CLAIMS.md -- READ THIS FIRST. Authoritative single statement of what A03 may and may not claim (SURVIVING / RETRACTED / OPEN). It overrides any other .md headline in this directory; all its numbers were read from the evidence JSONs (trajectory md5 28584639f120aaff07bd1a52120f983e), not from prose. Also records 4 new prose-vs-JSON discrepancies (sign-contradiction denominator is 7/13 not 7/12; frac_combos_over_2x is 0.5556 not 0.52; the canonical trajectory JSON has NO mmlu axis despite three files calling it 'four-axis'; the zwfy6 copy of a03_1b_floor_nulls_4axes.json is pre-erratum).",
   "status": "active_dataorder_replication_RUNNING_seed43_82_seed44_73_prereg_locked_verdict_due_~0420",
   "priority": 3,
   "updated": "2026-08-10T19:25+0800",
