@@ -17,7 +17,31 @@ python code/pilot_zero_rule_disagreement.py \
 
 ---
 
-## 1. K1 VERDICT (lead) — **K1 DOES NOT FIRE.**
+## 1. K1 VERDICT (lead) — **RETRACTED 2026-08-10: K1 is INDETERMINATE, not "does not fire".**
+
+> **Why this section's original heading was wrong.** K1's verbatim text
+> (`A04_GATE_DESIGN.md:45-47`) requires the rule-disagreement count to be
+> **"≤ 1 out of ≥ 24 evaluated cells"**. Pilot Zero evaluated **3 axes at one
+> checkpoint = 3 cells**. A ≥24-cell clause cannot be adjudicated from 3 cells —
+> the denominator the rule itself names was never reached. "K1 does not fire" was
+> a positive result inferred from a sample smaller than its own governing
+> denominator, and any downstream "A04 is NOT killed" that rests on it is
+> withdrawn. A04 is not killed, but the reason is that **the gate has not been
+> run**, not that it passed.
+>
+> **What the pilot genuinely did establish, and it is worth keeping:** at the
+> single PLATEAU-accept checkpoint, `NI(Δ=0.10·residual(intact,x))` rejects on
+> **3/3** decision axes by 6.6–9.1× the margin, and this is invariant across all
+> five null conventions and both plateau readings — because
+> `residual(arm) − residual(intact) = reported(arm) − reported(intact)`, so the
+> null cancels exactly. That is a real, convention-robust finding about one
+> checkpoint: a disagreement **of the required shape exists**. It is not a verdict
+> on the ≥24-cell clause.
+>
+> `TCODEX_AUDIT_20260810.md` §7 reached the same conclusion independently.
+
+### Original section text (retained as the record of what was measured)
+
 
 **A disagreement of the required shape EXISTS.** At the checkpoint where `PLATEAU(T=2.0%/5k)`
 accepts (step 200,000), `NI(Δ=0.10·residual(intact,x))` **rejects on 3 of 3 decision axes**, each
