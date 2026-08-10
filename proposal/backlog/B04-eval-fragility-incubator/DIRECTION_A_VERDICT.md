@@ -1,12 +1,52 @@
 ---
 id: B04
-status: SURVIVING
-promotion_pending: novelty_check_only
+status: SUPERSEDED_SEE_BANNER
+status_stale_value_was: SURVIVING
+promotion_pending: none -- see STATUS.json
+promotion_pending_stale_value_was: novelty_check_only
 updated: 2026-08-08T24:00+0800
+banner_added: 2026-08-10
 complete_rungs: 6
 target_rungs: 6
-kill_verdict: NOT_KILLED (established at max-possible significance)
+kill_verdict: NOT_KILLED (established at max-possible significance) -- but see budget caveat in banner
 ---
+
+> ## ⚠️ 2026-08-10 — TWO CORRECTIONS TO THIS DOCUMENT
+>
+> **(a) The front matter above was stale.** It said `status: SURVIVING` and
+> `promotion_pending: novelty_check_only`. Both were already false before today:
+> `STATUS.json` has read **`NARROWED_TO_OLMO_2_ONLY`** since 2026-08-08, and the
+> novelty check completed on 2026-08-09 with verdict **`hold_in_backlog`**. The Qwen
+> verdict document's §5 instructed exactly this edit ("Remove
+> `promotion_pending: novelty_check_only`") and it was never carried out, so this
+> file has been advertising a promotable status for two days. The authoritative
+> status is **`STATUS.json`**, not this front matter.
+>
+> **(b) This ladder is not budget-matched, and that was never disclosed.** Across
+> its five damaged rungs, heal steps range over {83,500; 121,000; 124,000; 200,000}
+> and **Spearman(core6, heal_steps) = +0.8721**. So training budget is itself a
+> strong rank predictor of the outcome the ρ=+1.00 is computed against.
+>
+> The finding is still defensible, for a reason that must be stated whenever it is
+> quoted: on this ladder **damage depth spans five distinct values (8/10/12/14/16)
+> and is a *perfect* rank predictor of core6 (ρ = +1.0000)**, i.e. damage
+> out-predicts budget here. That is precisely what fails on the Qwen ladder, where
+> damage depth spans only two values (14/16) and predicts *worse* than budget
+> (−0.3536 vs +0.8944) — which is why the Qwen "kill" has been downgraded to
+> `NON_MATCHED_INCONCLUSIVE` (see
+> `DIRECTION_A_QWEN_LADDER_CONFOUND_ADDENDUM.md`).
+>
+> **Rule going forward: never quote the +1.00 without the +0.8721 beside it.** A
+> reader is entitled to know that a nuisance factor also orders these rungs.
+>
+> **(c) Consequence for item 2 of "Next actions" below.** It says a Qwen ρ≈+1.00
+> at n≥5 would make "cross-family evidence complete". The Qwen run happened, and
+> its ladder turned out not to be able to answer the question either way. Item 2 is
+> therefore **still open**, and the addendum's §6 lists the six conditions a
+> re-run would have to meet. Nothing else in this document changes; all per-rung
+> numbers were re-verified against `evidence/B04_6rung_bs16_analysis.json` on
+> 2026-08-10.
+
 # B04 eval-fragility — Direction A verdict (n=6, bs16, acc_norm)
 
 ## Result
@@ -47,6 +87,8 @@ Both PRIMARY metrics achieve **exact-permutation lower bound p = 1/360 = 0.00278
 
 - **NOT** a claim about bs sensitivity or seed sensitivity. Only bs16, single 8-shard determinist run per rung. If bs4/bs8 rungs are added later the flip-rate story can be tested separately.
 - **NOT** established beyond OLMo-2-7B. Cross-family replication (Qwen prune-heal ladder) is the next kill test.
+  - *2026-08-10 update*: that test ran and could **not** adjudicate — its ladder confounds damage with training budget. Still open. See `DIRECTION_A_QWEN_LADDER_CONFOUND_ADDENDUM.md` §6.
+- **NOT** a budget-matched design. Heal steps vary across rungs (83.5k–200k) and Spearman(core6, heal_steps) = **+0.8721**. The claim rests on damage depth being the *better* predictor (ρ = +1.0000 over five distinct depths), not on budget being controlled. Added 2026-08-10.
 - **NOT** a mediation claim ("near-ties cause the aggregate drop") — that would need LOO across items, not addressed here.
 
 ## Provenance

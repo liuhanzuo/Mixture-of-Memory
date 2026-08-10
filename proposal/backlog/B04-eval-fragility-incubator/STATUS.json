@@ -1,7 +1,7 @@
 {
   "id": "B04",
   "status": "NARROWED_TO_OLMO_2_ONLY",
-  "updated": "2026-08-08T22:26+0800",
+  "updated": "2026-08-10T19:05+0800",
   "kill_history": [
     {
       "gate": "n=6 within-OLMo bs16 ladder",
@@ -12,23 +12,46 @@
     {
       "gate": "Qwen cross-family replication n=6",
       "date": "2026-08-08",
-      "verdict": "GENERAL_CLAIM_KILLED",
-      "detail": "Same metrics on Qwen3-8B six-rung ladder: rho = +0.43 (p=0.42) and -0.49 (p=0.36). Signs correct but effect strength collapses to non-significant. Per-rung margin distributions non-monotone in damage (step20000 has smaller median than step2000; scratch14L has larger median than any f12k2 rung). Rungs still core6-ordered, so aggregate degradation replicates; per-item margin compression does not."
+      "verdict": "NON_MATCHED_INCONCLUSIVE",
+      "verdict_superseded": "GENERAL_CLAIM_KILLED (2026-08-08) -> NON_MATCHED_INCONCLUSIVE (2026-08-10)",
+      "downgraded_on": "2026-08-10",
+      "downgrade_reason": "The ladder confounds damage level with training budget, so neither a positive nor a negative correlation over it is attributable to damage. Among the 5 damaged rungs: Spearman(core6, heal_steps) = +0.8944 while Spearman(core6, layers_kept) = -0.3536 -- budget outranks damage AND has the better sign. layers_kept takes only TWO values across damaged rungs (14 at four rungs, 16 at one), so there is almost no damage-depth rank variation to correlate. Holding damage completely constant inside the f12k2/14L cell still spans core6 0.3848 -> 0.4632 (spread 0.0783) purely on 2k vs 20k vs 200k steps, which is 66.1% of the 0.1185 spread across all five damaged rungs. The step20000 non-monotonicity that the original verdict called the story-breaker sits exactly on that budget axis.",
+      "detail": "Original measurement retained and unchanged: same metrics on the Qwen3-8B six-rung ladder give rho = +0.43 (p=0.42) and -0.49 (p=0.36) vs OLMo's +-1.00 (exact p=0.0028). Rungs are still core6-ordered, so aggregate degradation replicates. What is withdrawn is the INFERENCE that the rho collapse shows damage failing to compress per-item margins.",
+      "only_damage_attributable_contrast": "the equal-budget slice at 2000 steps (f12k2/14L, f12k4/16L, scratch14L) -- n=3, exact-permutation two-sided minimum p = 2/6 = 0.3333, so it cannot reach significance at any conventional alpha regardless of the data, and it varies two architectural factors at once. Neither confirms nor kills.",
+      "consequence": "Cross-family generality is now UNTESTED, not refuted. This is NOT a promotion -- see status_note_2026_08_10.",
+      "addendum": "DIRECTION_A_QWEN_LADDER_CONFOUND_ADDENDUM.md"
     }
   ],
+  "status_note_2026_08_10": {
+    "status_unchanged": "NARROWED_TO_OLMO_2_ONLY -- removing a failed kill does not manufacture a successful replication. Before the downgrade cross-family generality was refuted; after it, untested. Both are equally far from established, and 'untested' is not a promotion argument. The hold_in_backlog novelty verdict of 2026-08-09 is unaffected.",
+    "olmo_leg_is_less_confounded_not_unconfounded": "Disclosed for symmetry: the OLMo ladder is also budget-varying -- Spearman(core6, heal_steps) = +0.8721 across its 5 damaged rungs (steps 83500/121000/124000/200000). The difference that licenses its claim is that OLMo's damage depth spans FIVE distinct values (8/10/12/14/16) and is a PERFECT rank predictor of core6 (rho = +1.0000), i.e. it has a real damage axis, whereas Qwen's damage depth spans two values and predicts worse than budget. Wherever the OLMo rho=+1.00 is quoted, the +0.8721 budget correlation should be quoted with it.",
+    "qwen_readmitted_as_candidate_family": "The prior resurrection condition said 'NOT Qwen; that has already failed'. That clause is WITHDRAWN because Qwen was never fairly tested. Qwen is re-admitted, but only via a matched ladder meeting the six conditions in the addendum's section 6.",
+    "matched_ladder_requirements": [
+      "budget held constant across damaged rungs; report Spearman(core6, heal_steps) ~ 0 alongside the headline rho",
+      ">=4 distinct damage levels so layers_kept has real rank variation (OLMo's 8/10/12/14/16 is the shape to match)",
+      "one damage axis at a time -- do not vary fresh-block width and init inside the correlation ladder",
+      "n >= 6 rungs to keep the exact-permutation two-sided floor at 2/720 = 0.0028",
+      "identical harness and identical item set across rungs (existing runs already satisfy this: n=17195 each, per-item norm_scores asserted)",
+      "reuse the already-designated PRIMARY metric frac(margin<0.005); do not pick post hoc among the four thresholds"
+    ],
+    "cost_note": "The budget-matching requirement means re-healing Qwen rungs to a common step count rather than reusing existing checkpoints. This downgrade does NOT authorise that spend; it records what the spend would buy. B04 stays in backlog, so there is no reason to run it before the mechanism-level hypothesis exists.",
+    "disclosure": "No new threshold was invented. +0.8944 and the 0.661 within-cell ratio are descriptive statistics of the existing design, not tests against a cutoff. The judgement -- that a correlation better explained by a nuisance factor than by the factor of interest cannot license a claim about the factor of interest -- was made AFTER seeing the data, on 2026-08-10, by re-reading an already-published verdict. The original gate design should have required the matching conditions up front and did not.",
+    "gpu_used": "none; recomputed from evidence/B04_Qwen_6rung_bs16_analysis.json and evidence/B04_6rung_bs16_analysis.json"
+  },
   "olmo_only_finding": {
     "claim": "On the OLMo-2-7B keepN + shortgpt16 ladder, aggregate core6 degradation is accompanied by per-item acc_norm margin compression. Both Spearman metrics hit the n=6 exact-permutation lower bound.",
-    "scope": "OLMo-2-7B specifically; does not extend to Qwen3-8B",
+    "scope": "OLMo-2-7B specifically; cross-family generality is UNTESTED as of 2026-08-10 (the Qwen leg that previously refuted it is now NON_MATCHED_INCONCLUSIVE)",
+    "budget_caveat_2026_08_10": "This ladder is not budget-matched either: Spearman(core6, heal_steps) = +0.8721 across its 5 damaged rungs. It is defensible because damage depth spans 5 values and is a PERFECT rank predictor (rho = +1.0000), unlike Qwen's. Quote the +0.8721 whenever the +1.00 is quoted.",
     "recommended_home": "fold into Paper B methods appendix or the A01 null-cal spin-out; not stand-alone-paper material"
   },
   "resurrection_conditions": [
-    "a second confirming family (NOT Qwen; that has already failed)",
+    "a second confirming family -- Qwen RE-ADMITTED as of 2026-08-10 (it was never fairly tested; the 'NOT Qwen' clause is withdrawn), but only via a budget-matched ladder per status_note_2026_08_10.matched_ladder_requirements",
     "a mechanism-level hypothesis for why the compression is family-general, tested a priori"
   ],
   "evidence_files": {
     "olmo_verdict": "DIRECTION_A_VERDICT.md",
-    "olmo_analysis": "evidence/B04_6rung_bs16_analysis.json",
-    "qwen_verdict": "DIRECTION_A_QWEN_VERDICT.md",
+    "olmo_analysis": "evidence/B04_6rung_bs16_analysis.json",    "qwen_verdict": "DIRECTION_A_QWEN_VERDICT.md (banner at head: its kill is downgraded)",
+    "qwen_confound_addendum": "DIRECTION_A_QWEN_LADDER_CONFOUND_ADDENDUM.md",
     "qwen_analysis": "evidence/B04_Qwen_6rung_bs16_analysis.json"
   },
   "complete_rungs_olmo": 6,

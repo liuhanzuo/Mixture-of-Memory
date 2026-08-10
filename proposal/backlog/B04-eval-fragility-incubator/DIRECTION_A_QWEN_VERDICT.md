@@ -2,7 +2,34 @@
 verdict: DIRECTION_A_IS_OLMO_2_FAMILY_SPECIFIC
 date: 2026-08-08
 n_rungs: 6 (Qwen3-8B), matched to the six-rung OLMo-2-7B ladder
+superseded_in_part: 2026-08-10
+superseded_by: DIRECTION_A_QWEN_LADDER_CONFOUND_ADDENDUM.md
 ---
+
+> ## ⚠️ 2026-08-10 — THE "KILL" IN THIS DOCUMENT IS DOWNGRADED TO INCONCLUSIVE
+>
+> The verdict below reads the Qwen rho collapse (+0.43 / -0.49, n.s.) as a **kill**
+> of the general claim. It is not one. This ladder **confounds damage level with
+> training budget**: among its 5 damaged rungs Spearman(core6, heal_steps) =
+> **+0.8944** while Spearman(core6, layers_kept) = **-0.3536**, and **66.1%** of the
+> damaged-rung core6 spread is reproducible with damage held *completely constant*
+> (the f12k2/14L cell spans core6 0.3848 -> 0.4632 on budget alone, 2k vs 200k steps).
+> `layers_kept` takes only TWO values across the damaged rungs (14 at four of them,
+> 16 at one). A correlation over that design cannot be attributed to damage, so its
+> collapse cannot be attributed to damage either.
+>
+> **`GENERAL_CLAIM_KILLED` -> `NON_MATCHED_INCONCLUSIVE`.** Cross-family generality
+> is now **untested**, not refuted. That is NOT a promotion: B04 stays
+> `NARROWED_TO_OLMO_2_ONLY`. §5 of the addendum sets out why removing a failed kill
+> does not create a replication, and §6 states what a matched ladder would require.
+>
+> One consequence for this document specifically: §5's claim that "a Qwen family
+> attempt has *already failed*, so any resurrection needs a fresh model choice" is
+> **withdrawn** — Qwen is re-admitted as a candidate family, via a matched ladder only.
+>
+> Everything else below (the per-rung numbers, the OLMo leg, the n=6 exact-p floor
+> arithmetic) is unchanged and was re-verified against the evidence JSONs on
+> 2026-08-10. Read `DIRECTION_A_QWEN_LADDER_CONFOUND_ADDENDUM.md` first.
 
 # B04 cross-family (Qwen3-8B) verdict
 
