@@ -2,7 +2,35 @@
 
 ## 状态
 
-**BACKLOG / READY FOR DATA AUDIT。**
+> ## ⚠️ 2026-08-10 — BLOCKED：本提案的候选池在盘上不存在
+>
+> **`BACKLOG / READY FOR DATA AUDIT` → `BACKLOG / BLOCKED — DATA DOES NOT EXIST`。**
+>
+> 下面 §1（第 47-58 行）把 `|G| ≈ 10000` 条 agent trajectories 与
+> `|U| ≈ 100000` 条派生 SFT rows 当作**已有资产**（第 168 行明确写
+> `Candidate U | 100K 候选池 | 可见`）。**两个物理盘都搜过，这个池子不存在。**
+> 因此 `next_gate[0]`（Phase 0 数据审计）**无法执行**——没有东西可审。
+>
+> 本仓库里 "trajectory" 一律指 **checkpoint-over-training-steps**，从来不是
+> agent rollout；所有 `*trajector*` 命中都是 Paper B 图、A03 CPT 轨迹、或本仓库
+> 自己的 agent 编排代码。
+>
+> 最接近的资产是 `data/olmo2_sft/tulu3_general_*`（两盘都有；zwfy6 侧 234,483
+> conversations → 122,070 条 2048-packed sequences；wzc1 侧 107,740×2048）。
+> **它不能替代**：无 parent trajectory（`source` 是数据集名，9 个源 × ~26K，
+> 不是 ~10K 组 × ~10）、无 step/decision type、无 success/reward/tool family、
+> 无 branch 结构、且已按 Paper B 的 `deny_sources` 去污过滤打包。用它等于把
+> 自变量删掉。
+>
+> **真正的第一步是数据获取，不是审计**，且不是 Phase 0 声称的「无 GPU」小事：
+> 要么外网下载现成 agent-trajectory 语料（需代理 + licence 核查，仍零 GPU，
+> 最便宜），要么自己 rollout ~10K 条（大额 GPU + 本仓库没有的 agent task
+> harness）。
+>
+> 完整证据、搜索范围与审计局限见 **`DATA_AUDIT_VERDICT_20260810.md`**；
+> 机器可读状态见 `STATUS.json` 的 `blocker_2026_08_10`。下面原文保留不改。
+
+**BACKLOG / READY FOR DATA AUDIT。**（← 已被上面 banner 取代）
 
 科学问题、方法和 falsification protocol 已明确，但本项目尚无下游 SFT 结果。
 在完成候选池审计和无训练 selector pilot 之前，不进入 active。

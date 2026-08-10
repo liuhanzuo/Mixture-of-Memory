@@ -1,9 +1,20 @@
 {
   "id": "B09",
   "slug": "trajectory-aware-sft-data-selection",
-  "status": "backlog_ready_for_data_audit",
-  "updated": "2026-08-08",
-  "evidence_level": "literature_design_and_novelty_collision_audit",
+  "status": "backlog_blocked_data_does_not_exist",
+  "status_superseded": "backlog_ready_for_data_audit (2026-08-08) -> backlog_blocked_data_does_not_exist (2026-08-10)",
+  "updated": "2026-08-10T19:15+0800",
+  "blocker_2026_08_10": {
+    "finding": "The ~10K agent trajectories / ~100K derived SFT rows candidate pool that PROPOSAL.md section 1 (lines 47-58) treats as an existing, VISIBLE asset (line 168: 'Candidate U | 100K candidate pool | visible') DOES NOT EXIST ON EITHER DISK. next_gate[0] was therefore not executable: there is nothing to audit.",
+    "search_scope": "both physical disks -- /apdcephfs_wzc1/share_304376610/pighzliu_code/ locally, and /apdcephfs_zwfy6/share_304376610/pighzliu_code/ read-only over ssh on .73 (zwfy6 is not mounted on LOCAL). Patterns: *trajector*; dirs *agent*/*swe*/*toolbench*/*tool_use*/*tulu*; named corpora *agentinstruct*/*toolllama*/*webarena*/*react*traj*/*agentbench*/*swe_gym*/*nemotron*tool*/*glaive*; *traj*.{jsonl,parquet,json}. Full data/ enumerated on both disks (18 entries wzc1, 14 zwfy6).",
+    "every_trajectory_hit_is_unrelated": "In this repo 'trajectory' means CHECKPOINT-OVER-TRAINING-STEPS, never agent rollout. Hits are Paper B figures (fig_trajectory.py, fig_1b_trajectory.py, tab_trajectory_audit.tex), A03 CPT checkpoint trajectories (arm3/arm4/arm6_cpt_trajectory_*.json), A03 watcher logs, this repo's own src/agents + mom_agent.egg-info, locomo/generative_agents (a conversational memory benchmark), and .openclaw/agents (CLI harness configs).",
+    "nearest_asset_is_not_a_substitute": "data/olmo2_sft/tulu3_general_* exists on BOTH disks: 234,483 conversations -> 122,070 packed 2048-token sequences on zwfy6 (249,999,360 tokens; 161,118,687 supervised), and a 107,740 x 2048 uint32 clean variant on wzc1. The 107,740 figure is deceptively close to '~100K rows'. It fails every structural requirement: (1) no parent trajectory -- text.jsonl carries {source, prompt, response} where source is a DATASET NAME, giving 9 groups of ~26K rather than ~10K groups of ~10; (2) no step index or decision type, so critical-step selection has no substrate; (3) no success/reward or tool family, both required by section 1; (4) no branch structure, so branch-verified decision credit is undefined; (5) already packed/tokenized with an OLMo-2 tokenizer under a Paper-B-specific 19-pattern deny_sources decontamination filter. Using it would delete the independent variable, not substitute for it.",
+    "cost_reframe": "PROPOSAL.md scopes Phase 0 as 'Data audit, no GPU training'. The real first step is a data-ACQUISITION project: either (a) download an existing agent-trajectory corpus (external, needs proxy hy-proxy.woa.com:3128 + licence check; cheapest, still zero GPU) or (b) generate ~10K rollouts ourselves (large GPU spend PLUS an agent task harness this repo does not have). Neither is the cheap CPU audit the proposal implies.",
+    "audit_limitation_disclosed": "This was a filename/directory search, not a content scan of every file on both disks. Bounded by: both disks searched to depth 4-6, and data/ fully enumerated on both (all entries accounted for as C4 / dolmino / fineweb / redpajama / wikitext / hf_datasets MC benchmarks / tulu3 SFT / instruct-prep scripts). If a pool is later found, correct this record rather than ignoring it -- but the burden is now on producing the path.",
+    "verdict_file": "DATA_AUDIT_VERDICT_20260810.md",
+    "gpu_used": "none"
+  },
+  "evidence_level": "literature_design_and_novelty_collision_audit; NO internal data asset (SOURCES.md cites only literature plus status/RESEARCHER_REPORTS.jsonl and names no internal data path -- the tell that the pool was never located)",
   "novelty_status": "combination_gap_found_but_strong_component_collisions",
   "closest_prior_art": [
     "TopoCurate (arXiv:2603.01714)",
@@ -16,7 +27,8 @@
     "LESS (arXiv:2402.04333)"
   ],
   "next_gate": [
-    "audit trajectory expansion, sibling redundancy, token distribution, and benchmark imbalance",
+    "GATE -1 (NEW 2026-08-10, BLOCKING, was never scheduled): obtain a trajectory-STRUCTURED candidate pool -- rows carrying parent trajectory id, step/decision type, success/reward, and tool family. Either download an existing agent-trajectory corpus (zero GPU, needs proxy + licence check) or generate rollouts (large GPU + a task harness we lack). Until this lands, every gate below is undefined.",
+    "audit trajectory expansion, sibling redundancy, token distribution, and benchmark imbalance -- KEPT VERBATIM; it is a good gate, it is simply downstream of GATE -1",
     "freeze task-family-level candidate/query/validation/test split",
     "implement constraint-matched stratified random, RDS+, and TA-Coreset selectors",
     "implement a row-multiplicity stress test",

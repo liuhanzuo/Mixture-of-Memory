@@ -37,7 +37,13 @@ SOURCES.md       证据源路径
 shared/literature/RELATED_WORK_GAP_AUDIT_20260808.md
 ```
 
-其中 A03、A02、A04、B01 是最高优先级补洞项；B09 当前最完整。
+其中 A03、A02、A04、B01 是最高优先级补洞项。
+
+> ⚠️ **2026-08-10 更正**：本行原写「B09 当前最完整」。那说的是**文献/设计完整度**，
+> 但会被读成「最接近可跑」，而 B09 恰恰相反——它的候选池（~10K agent trajectories
+> / ~100K SFT rows）**在两个盘上都不存在**，Phase 0 数据审计无法执行，状态已改为
+> `backlog_blocked_data_does_not_exist`。见
+> `backlog/B09-trajectory-aware-sft-data-selection/DATA_AUDIT_VERDICT_20260810.md`。
 
 ## 当前排序
 
@@ -62,11 +68,17 @@ shared/literature/RELATED_WORK_GAP_AUDIT_20260808.md
 - `backlog/B02-adaptive-depth-and-read-budget/`
 - `backlog/B03-cyclic-layer-reset-boundary/`
 - `backlog/B04-eval-fragility-incubator/`
+  - `NARROWED_TO_OLMO_2_ONLY`。2026-08-10：Qwen cross-family「kill」降级为
+    `NON_MATCHED_INCONCLUSIVE`（该 ladder 把 damage 与 training budget 混在一起）
+    → 跨家族**未被检验**，而非被证伪。这**不是**晋升理由。见
+    `DIRECTION_A_QWEN_LADDER_CONFOUND_ADDENDUM.md`。
 - `backlog/B05-semantic-handoff-phase-diagram/`
 - `backlog/B06-portable-decompression-adapter/`
 - `backlog/B07-mutable-comem-serving/`
 - `backlog/B08-memory-applications/`
 - `backlog/B09-trajectory-aware-sft-data-selection/`
+  - **`backlog_blocked_data_does_not_exist`（2026-08-10）**：候选池两盘皆无，
+    先要做数据获取项目，Phase 0 审计才有对象。见 `DATA_AUDIT_VERDICT_20260810.md`。
   - 从 10K agent trajectories 展开的约 100K SFT rows 中选择 5K；
     以 trajectory/decision credit、target relevance 和集合覆盖替代 flat Top-K。
 
