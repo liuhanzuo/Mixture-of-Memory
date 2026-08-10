@@ -1,10 +1,10 @@
 {
   "id": "A03",
-  "status": "active_TRAJECTORY_CPT_CLAIM_RETRACTED_only_gate1_pilot_survives",
+  "status": "active_arm6_replicated_arm3_at_step220_BUT_all_arms_share_one_data_order_needs_dataorder_replication",
   "priority": 3,
-  "updated": "2026-08-10T13:50+0800",
+  "updated": "2026-08-10T16:35+0800",
   "arm6_midlowLR_cpt": {
-    "status": "DECIDED at step215000 (2026-08-10 13:37 GMT+8) -- see ARM6_STEP215_VERDICT.md. 3 of 4 dose points evaluated; training continues on .73 to step220000 for symmetry but the verdict no longer depends on it. step215000: Arm6 triviaqa em -0.06 ns, Arm3 -0.02 ns, Arm4 -0.12 ns -- ALL THREE ARMS NULL on the headline axis.",
+    "status": "COMPLETE. All 4 dose points evaluated; watcher exited cleanly 16:28:36. step220000 (the PRE-REGISTERED decision point) evaluated 16:27:36, 32/32 shards verified.",
     "purpose": "discriminate whether Arm 3's +0.48pp SIG triviaqa em at [0.32x, 0.25x] peak is a general low-LR CPT phenomenon or specific to the exact cosine-tail schedule. If Arm 6 also +0.48 SIG, low-LR is a real regime; if Arm 6 nulls/sign-flips, Arm 3 was a fluke and A03's trajectory-CPT claim dies.",
     "config": "warmup_steps=150 (matches Arm 3), max_steps=373000 (extends Arm 3's 300000); LR band [0.50x, 0.43x] peak across step 200000-220000 (verified from log: 9.98e-06 at step 200040 matches predicted 0.499x)",
     "lr_ladder_all_arms": {
@@ -12,7 +12,7 @@
       "Arm6_new": "[0.499x, 0.425x]",
       "Arm4": "[0.998x, 0.559x]"
     },
-    "verdict": "TRAJECTORY-CPT CLAIM RETRACTED (not narrowed). The pre-registered 'Arm 6 nulls -> Arm 3 was a fluke' branch fired, and step215000 additionally exposed a measurement defect that invalidates the whole dose-response apparatus: within-arm step-to-step swing is 2.4x the bootstrap CI half-width at the median (10.0x worst case, 4.7x on the headline axis), and 7/12 arm-axis combinations with >=2 SIG cells contain two SIG cells of OPPOSITE SIGN. Arm 3's +0.48pp headline is the argmax of an oscillating 4-point series whose mean is +0.088pp.",
+    "verdict": "\u2605 CORRECTION OF MY OWN 13:37 VERDICT. Arm 6 step220000 triviaqa em = +0.50 SIG, which REPLICATES Arm 3's +0.48 SIG to within 0.02pp, with contains (+0.38 SIG) and f1 (+0.36 SIG) also positive. The pre-registered 'arm6_step220_positive_SIG' branch FIRED. My step215-based retraction (ARM6_STEP215_VERDICT.md) is WITHDRAWN -- it called the verdict one dose point early, at a step that ARM6_LOWERBAND_INTERIM.md had already flagged as null for Arm3/Arm4 too. HOWEVER the replication is NOT independent: see phase_locked_defect. See ARM6_FINAL_VERDICT.md.",
     "dose_points_measured": {
       "step205000": {
         "evaluated": "2026-08-10 07:55:28 GMT+8",
@@ -78,7 +78,7 @@
     "eval_watcher": ".82 /tmp/a03_arm6_trajectory_watcher.sh (v3, pid 2477305 since 04:58:33). Fired step205000 at 07:51:34 and step210000 at 10:42:29; each eval takes ~3m45s (MMLU 77s + CB(pt) 106s + CB(nq) 39s). Canonical copy: code/a03_arm6_trajectory_watcher.sh.",
     "driver": "scripts/_run_a03_arm6_lowerband.sh (commit 8e5b67d, task #235)",
     "ext_driver": ".82 /tmp/a03_arm6_ext_driver.sh (canonical copy code/a03_arm6_ext_driver.sh); has an internal torch.load probe so partial writes get bounced regardless of the size guard",
-    "evidence_file": "evidence/arm3_arm4_arm6_cpt_trajectory_paired_full.json -- md5 36fed7ad8cce952c2c406c4abad80da7 (SUPERSEDES f92fe250cbd38061d8cbc460be73d70f, which predated step215000). Regenerate with code/recompute_cpt_trajectory_paired.py; hard-fails on incomplete shard sets.",
+    "evidence_file": "evidence/arm3_arm4_arm6_cpt_trajectory_paired_full.json -- md5 28584639f120aaff07bd1a52120f983e (supersedes 36fed7ad... which predated step220000, and f92fe250... which predated step215000)",
     "commits": "8e5b67d launch, 2fd5dc0 status, f44a5fb step205000, 028455d step210000, (this) step215000 + RETRACTION",
     "retracts": [
       "ARM4_PEAKLR_VERDICT.md 'peak-LR CPT actively harms' -- Arm4's -0.93 SIG at step220 sits in a series that also contains +1.26 SIG at step210. Same defect, opposite sign.",
@@ -104,7 +104,6 @@
     },
     "what_a_proper_design_needs": "NOT more dose points. (1) >=3 seeds per LR band with the DistributedSampler seed= fix ce5c298 actually in effect -- this repo's prior 'seed variance' arms were init-variance only; (2) a null arm = same data, same LR, same steps, run TWICE, to establish the run-to-run floor every arm difference must clear (nothing here has this); (3) average over a checkpoint window, not a single step; (4) pre-register the dose point before seeing the trajectory, or report trajectory-mean with a trajectory-level CI. Cost ~9 runs x 11.4h on 8xH20 ~= 4.3 node-days. Given the best effect estimate is +0.088pp, the honest prior is that there is nothing to find.",
     "evidence_md5": "36fed7ad8cce952c2c406c4abad80da7",
-    "still_pending": "step220000 eval will fire automatically from the .82 watcher (~15:00 GMT+8). It is CONFIRMATORY of the defect, not decisive of the claim -- no value can rescue a dose-response whose response oscillates in sign. If it lands positive SIG that is Arm 6's 4th sign change, not a replication of Arm 3.",
     "additional_defects_from_tcodex_audit_20260810": {
       "audit_file": "evidence/TCODEX_AUDIT_20260810.md (md5 8ba6b5da31c3af2fd02c5d5d86d93b2c, 589 lines)",
       "arm4_dataloader_offset": "Arm 4's first step220 ckpt was watcher-truncated. Resume from step215 restarted the epoch from batch 0 (checkpoint saves epoch but NOT within-epoch batch offset), so Arm 4's last 5k steps REPLAYED the epoch opening. Original Arm4 vs redo loss correlation at global steps 215020-220000 is -0.0667. Arm3 step220 vs Arm4 step220 is therefore not a matched-20k-data-exposure comparison; even the LR-vs-noise story is confounded by data path.",
@@ -112,6 +111,56 @@
       "metric_independence_defect": "em/contains/f1 are NOT independent metrics on the same 17,944 predictions. Item-level delta corrs: em-f1 0.781, contains-f1 0.497, em-contains 0.380; raw metric corrs em-f1 ~0.86. Effective dimension of the corr matrix ~1.8-1.9 tests, not 3. The 'three metrics agree so not noise' argument was 1.8 tests not 3.",
       "bh_correction_on_90_test_family": "After BH q=0.05 across the 90 successful tests (Arm3 36 + Arm4 36 + Arm6 18): NOT surviving = Arm3 step210 nq_open.contains, Arm4 step205 nq_open.f1, Arm4 step210 popqa.em, Arm6 step210 nq_open.contains. Surviving = Arm3 step210 triviaqa.em, Arm3 step220 triviaqa em/contains/f1. Note: 'surviving BH' is a necessary condition; oscillation defect + data-path defect kill the claim regardless.",
       "tcodex_verdict": "A03: Reject current empirical claim, allow redesign. floor gate \u53ef\u4fdd\u7559; CPT recovery / LR-regime \u7ed3\u8bba\u5728\u771f\u6b63\u591a seed \u524d\u4e0d\u5e94\u53d1\u8868; 6-arm \u4e3b\u5b9e\u9a8c\u672a\u5b8c\u6210 (raw-text RAG, residual memory, joint \u4e09\u7c7b\u6838\u5fc3 arm \u90fd\u8fd8\u6ca1\u6d4b\u8fc7)."
+    },
+    "phase_locked_defect": {
+      "finding": "The three arms do not merely agree at step220 -- they trace the SAME CURVE at every dose point.",
+      "pearson_r_between_arm_trajectories": {
+        "arm3_vs_arm6_all4pts": 0.9642,
+        "arm3_vs_arm4_first3pts_before_arm4_datapath_broke": 0.9974,
+        "arm6_vs_arm4_first3pts": 0.9992,
+        "arm3_vs_arm4_all4pts_incl_broken_step220": 0.5304
+      },
+      "mechanism": "tcodex + MAIN verified .73:train_olmo2_arch_probe2.py:863 = DistributedSampler(ds, shuffle=True) with NO seed= (ce5c298 fix exists on wzc1, never scp'd to zwfy6). All three arms consumed the IDENTICAL minibatch sequence; training-loss corr Arm3-Arm6 = 0.99982.",
+      "reading": "The oscillation is a DETERMINISTIC function of data order, not noise -- and all three arms share that data order. So 'Arm 6 replicates Arm 3' reduces to 'the same data prefix produces the same effect at the same step', which it must. Arm 4 is the sole divergent arm at step220 and is precisely the arm whose data path is known-broken (redo from step215 without dataloader offset; original-vs-redo loss r = -0.0667). Most parsimonious account: data order determines the trajectory; the one arm that diverges is the one whose data order changed. LR is NOT demonstrated to be the causal variable."
+    },
+    "what_is_established": [
+      "At step220000 on this fixed data order, both low-LR arms show triviaqa em ~+0.5pp SIG with contains and f1 also SIG positive. A real, reproducible-under-identical-data effect, not a single-run fluke.",
+      "Arm 3's headline is not 'argmax of an oscillating series' in the sense my step215 verdict claimed -- an adjacent LR band lands on the same value at the same step."
+    ],
+    "what_is_NOT_established": [
+      "That LR is the causal variable. Arm3 (0.249x) and Arm6 (0.425x) differ 1.7x in LR yet land within 0.02pp. Varying LR across arms while holding data order fixed cannot separate LR effect from data-order effect at this step.",
+      "That the effect generalizes past this data order. ZERO data-order replication exists.",
+      "That the trajectory shape means anything -- the step210 spike and step215 null are shared across arms at r~0.99, i.e. properties of the data stream at those steps.",
+      "Arm 4's 'peak-LR harms' -- still retracted, data-path-broken. Banner on ARM4_PEAKLR_VERDICT.md stands."
+    ],
+    "THE_decisive_next_experiment": {
+      "not": "more LR bands, more init seeds, or more dose points",
+      "is": "VARY THE DATA ORDER",
+      "steps": [
+        "scp -O the ce5c298-fixed train_olmo2_arch_probe2.py from wzc1 to zwfy6, verify md5",
+        "re-run Arm 3's EXACT config (warmup=150, max_steps=300000) at 3 different --seed values, 20k steps, from the same step200000 ckpt",
+        "evaluate step220000 ONLY (the pre-registered point), 4 axes, same harness"
+      ],
+      "decision_rule": "triviaqa em ~+0.48 SIG at all 3 data orders -> effect is real, A03 has a publishable narrow claim. Scatters across [-0.9,+1.3] -> data-order artifact, retraction returns correctly grounded.",
+      "cost": "3 runs x 20k steps x 2.05 s/step ~= 11.4h each, parallel across .73/.82/.104 = one overnight cycle",
+      "auto_launch": true
+    },
+    "step220_full_row": {
+      "triviaqa": {
+        "em": "+0.50 SIG",
+        "contains": "+0.38 SIG",
+        "f1": "+0.36 SIG"
+      },
+      "popqa": {
+        "em": "-0.18 SIG",
+        "contains": "+0.29 SIG",
+        "f1": "+0.00 ns"
+      },
+      "nq_open": {
+        "em": "+0.25 ns",
+        "contains": "+0.17 ns",
+        "f1": "+0.27 ns"
+      }
     }
   },
   "arm4_peaklr_cpt": {

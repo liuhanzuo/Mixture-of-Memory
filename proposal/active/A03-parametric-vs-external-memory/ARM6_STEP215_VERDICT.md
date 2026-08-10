@@ -7,6 +7,23 @@ protocol: per-item paired difference bootstrap, n_boot=5000, seed=42, CI95 perce
 supersedes: ARM6_LOWERBAND_INTERIM.md (which correctly refused to call step210 a result)
 ---
 
+> ## ⚠️ WITHDRAWN 2026-08-10 16:30 — see `ARM6_FINAL_VERDICT.md`
+>
+> **This verdict was called one dose point too early and its headline conclusion is
+> wrong.** step220000 — the point `ARM6_LOWERBAND_INTERIM.md` actually pre-registered
+> as decisive — landed at 16:20 and Arm 6 read **triviaqa em +0.50 SIG**, replicating
+> Arm 3's +0.48 to within 0.02pp, with contains and f1 also SIG positive. The
+> pre-registered `arm6_step220_positive_SIG` branch fired, not the null branch.
+>
+> step215000 being null in all three arms was *expected* (Arm 3 and Arm 4 were already
+> known null there); treating it as the verdict was my error.
+>
+> The arithmetic below (swing/CI ratios, sign-contradiction counts) is correct, but the
+> **interpretation** is superseded: the oscillation is not noise being over-resolved —
+> it is reproducible across arms at r≈0.96–0.999 because all three arms share one data
+> order (sampler `seed=` fix never reached zwfy6). The real open question is data-order
+> sensitivity, not LR. See `ARM6_FINAL_VERDICT.md`.
+
 # A03 CPT trajectory: the dose-response design cannot support any conclusion
 
 ## What the pre-registered outcomes said
