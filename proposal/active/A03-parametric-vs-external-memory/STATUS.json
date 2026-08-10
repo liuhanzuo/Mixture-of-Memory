@@ -1,8 +1,23 @@
 {
   "id": "A03",
-  "status": "active_arm6_replicated_arm3_at_step220_BUT_all_arms_share_one_data_order_needs_dataorder_replication",
+  "status": "active_dataorder_replication_RUNNING_seed43_82_seed44_73_prereg_locked_verdict_due_~0420",
   "priority": 3,
-  "updated": "2026-08-10T16:35+0800",
+  "updated": "2026-08-10T19:25+0800",
+  "dataorder_replication": {
+    "status": "RUNNING. seed43 on .82 (started 16:55:29), seed44 on .73 (16:57:29); both at step ~204100/220000 at 19:16. step220000 ETA ~04:19-04:21 GMT+8. seed45 queued for .104, BLOCKED on the keep12 7B run (still training 2d05h, 8/8 GPUs at 96421MiB at 19:16).",
+    "prereg": "DATAORDER_PREREG.md (md5 e72a5c7abff64661b8355a1cfd9b0591, identical on wzc1+zwfy6). WRITTEN PRE-DATA -- no step220000 ckpt existed and all dataorder cells read PENDING at time of writing. Decision rule is BINDING; do not re-derive it after seeing numbers.",
+    "question": "Does Arm 3's triviaqa em +0.4793 SIG @step220000 (Arm 6 +0.5016) survive a change in DATA ORDER? All 3 prior arms shared sampler seed 0 because ce5c298 was never scp'd to zwfy6 -> phase-locked at Pearson r=0.9642 (traj) / 0.99982 (loss).",
+    "decision_rule_numeric": "theta_ref=+0.4905pp (mean of Arm3 0.4793 + Arm6 0.5016). sigma_item=halfwidth/1.96=0.108pp. Assuming sigma_run<=sigma_item, predictive SE=0.156pp -> REPLICATION BAND [+0.20,+0.80]pp. CONFIRM_i iff CI_i excludes 0 AND theta_i>0 AND theta_i in band. ALL landed seeds CONFIRM => REPLICATES (narrow claim stands). ZERO CONFIRM => ARTIFACT (ARM6_FINAL_VERDICT positive reading RETRACTED). MIXED (>=1 each) => PRE-DECLARED AS FAILURE of the claim, conjunctive not majority-vote, disposition hold_in_backlog requiring n>=5; NO tie-breaking seed may be added after seeing the split.",
+    "primary_endpoint": "triviaqa em ONLY, vs baseline A03_1B_keep7_step200k (same baseline as all prior arms). popqa/nq_open/MMLU and contains/f1 are SECONDARY and may NOT rescue a failed primary (item-level effective tests = 1.8-1.9, not 3, per TCODEX_AUDIT_20260810.md).",
+    "n2_limitation": "Plan for n=2. n=2 CAN falsify (one counterexample suffices, so ARTIFACT/MIXED are decidable at n=2) but CANNOT bound sigma_run (1 dof; E[s]=0.80*sigma). If both land CONFIRM => record as 'consistent with a real effect; NOT established', A03 STAYS at proposal stage, n=2 caveat mandatory in any write-up. <2 land => INCONCLUSIVE_INSUFFICIENT_N, no verdict.",
+    "manipulation_check_PASSED": "MAIN computed loss-series Pearson r over the common window step200020-202880 (144 pts, 4 zwfy6 logs): arm3-arm6 +0.99966 (still phase-locked), arm3-seed43 -0.0101, arm3-seed44 +0.0087, seed43-seed44 +0.0041. Phase-lock BROKEN -> --seed now genuinely reaches DistributedSampler. Config otherwise = Arm 3 exactly (max_steps=300000, warmup=150, lr_fresh(now)=6.504e-06 identical in arm3/seed43/seed44 logs).",
+    "arm4_defect_immunity_VERIFIED": "NOT assumed. Both runs: grep -c 'resume] loading ckpt' == 1 (single resume from step200000, no mid-run restart), 'sampler.set_epoch(1)' exactly once (same as Arm3/Arm6 -> all start epoch-1 batch 0, differ only in shuffle permutation), 'RNG restore skipped' == 0, single wrapper pid alive since launch (.82/2686795, .73/1072179). Immunity is conditional on NO restart and is VOID if one occurs.",
+    "LIVE_RISK_v1_truncation_race": "*** scripts/_run_a03_dataorder_repl.sh (RUNNING NOW for both seeds) carries the v1 bare-[-f] trainer-side stop guard: kill -TERM; sleep 20; kill -9. That is the exact race that truncated Arm 4's step220000.pt at 5,956,287,104B/12,181,311,650B (49%). Fixed in _run_a03_arm4_peaklr.sh and _run_a03_arm6_lowerband.sh (v3 settled-size) but NEVER back-ported here. Measured save window from arm6 log: step line 16:20:04 -> 'saved' 16:20:17 = 13s; v1 polls 60s => ~13/60 = 1-in-5 truncation risk per run. Runs NOT patched (bash reads a running script incrementally; editing mid-flight is itself a corruption risk). The new watcher DETECTS instead: 10 consecutive size refusals -> writes TRUNCATED_step220000.ALARM and scores nothing. REMEDY: re-run full 20k from step200000 with v3 guard; NEVER resume from step215000 (= Arm 4's dataloader-offset defect, original-vs-redo loss r=-0.0667).",
+    "eval_automation": "code/a03_dataorder_trajectory_watcher.sh (md5 fd1894e96608ce54c3460be0c2ca0ce5) + code/a03_dataorder_ext_driver.sh (md5 2246a2e0d7eb781cbdd6eeb1c06b3874), identical on wzc1+zwfy6. One watcher per node, SEED-pinned (zwfy6 is shared by .73/.82/.104 so an unpinned watcher would race on another node's result dirs). Running DETACHED (ppid=1) since 19:14: .82 pid 2792301, .73 pid 1175671. Staged at /tmp on each node. v3 guard: mtime>=120s + size within 64KiB of a same-run sibling + stable across 60s + torch.load probe. step220000 ONLY; 8 shards x 4 axes; nq_open -> *_nq dir.",
+    "result_dirs": "olmo2_mmlu_content_results/A03_1B_dataorder_seed{43,44,45}_step220000; olmo2_closedbook_results/A03_1B_dataorder_seed{43,44,45}_step220000 (popqa,triviaqa) and ..._nq (nq_open). Registered in code/recompute_cpt_trajectory_paired.py ARMS as dataorder_seed43/44/45, step220000 only.",
+    "analysis_locked": "Protocol UNCHANGED (n_boot=5000, seed=42, CI95 percentile, BASE=A03_1B_keep7_step200k). Regression-verified: extended script reproduces the Arm3/Arm4/Arm6 subset BYTE-IDENTICALLY vs canonical wzc1 evidence (0 diffs / 12 arm-step cells). Absent result dir -> {'pending'}; present-but-<8-shards -> hard SystemExit for closedbook AND mmlu (load_mmlu previously returned None on a short set, making 5/8 indistinguishable from 'not evaluated' -- now fails loudly).",
+    "stale_evidence_corrected": "zwfy6's copy of evidence/arm3_arm4_arm6_cpt_trajectory_paired_full.json was STALE at md5 f92fe250cbd38061d8cbc460be73d70f (the pre-step215000 version, 24454B, 10:52) while canonical wzc1 is 28584639f120aaff07bd1a52120f983e (27810B, 16:31). A regression check run on zwfy6 against the stale copy reported 6 spurious 'DIFF' cells. Re-synced 19:12; both disks now 28584639. Lesson: verify evidence md5 across BOTH disks before using a zwfy6 copy as a regression baseline."
+  },
   "arm6_midlowLR_cpt": {
     "status": "COMPLETE. All 4 dose points evaluated; watcher exited cleanly 16:28:36. step220000 (the PRE-REGISTERED decision point) evaluated 16:27:36, 32/32 shards verified.",
     "purpose": "discriminate whether Arm 3's +0.48pp SIG triviaqa em at [0.32x, 0.25x] peak is a general low-LR CPT phenomenon or specific to the exact cosine-tail schedule. If Arm 6 also +0.48 SIG, low-LR is a real regime; if Arm 6 nulls/sign-flips, Arm 3 was a fluke and A03's trajectory-CPT claim dies.",
@@ -12,7 +27,7 @@
       "Arm6_new": "[0.499x, 0.425x]",
       "Arm4": "[0.998x, 0.559x]"
     },
-    "verdict": "\u2605 CORRECTION OF MY OWN 13:37 VERDICT. Arm 6 step220000 triviaqa em = +0.50 SIG, which REPLICATES Arm 3's +0.48 SIG to within 0.02pp, with contains (+0.38 SIG) and f1 (+0.36 SIG) also positive. The pre-registered 'arm6_step220_positive_SIG' branch FIRED. My step215-based retraction (ARM6_STEP215_VERDICT.md) is WITHDRAWN -- it called the verdict one dose point early, at a step that ARM6_LOWERBAND_INTERIM.md had already flagged as null for Arm3/Arm4 too. HOWEVER the replication is NOT independent: see phase_locked_defect. See ARM6_FINAL_VERDICT.md.",
+    "verdict": "★ CORRECTION OF MY OWN 13:37 VERDICT. Arm 6 step220000 triviaqa em = +0.50 SIG, which REPLICATES Arm 3's +0.48 SIG to within 0.02pp, with contains (+0.38 SIG) and f1 (+0.36 SIG) also positive. The pre-registered 'arm6_step220_positive_SIG' branch FIRED. My step215-based retraction (ARM6_STEP215_VERDICT.md) is WITHDRAWN -- it called the verdict one dose point early, at a step that ARM6_LOWERBAND_INTERIM.md had already flagged as null for Arm3/Arm4 too. HOWEVER the replication is NOT independent: see phase_locked_defect. See ARM6_FINAL_VERDICT.md.",
     "dose_points_measured": {
       "step205000": {
         "evaluated": "2026-08-10 07:55:28 GMT+8",
@@ -72,7 +87,7 @@
     "what_each_outcome_would_mean": {
       "_RESOLVED": "The 'arm6_step220_null_or_negative' branch fired EARLY, at step215000 -- see ARM6_STEP215_VERDICT.md. Branches kept verbatim below as the pre-registration record.",
       "arm6_step220_positive_SIG": "(did not fire) low-LR IS a real regime -> A03 keeps a NARROW claim.",
-      "arm6_step220_null_or_negative": "\u2605 THIS ONE FIRED (at step215, not step220): Arm 3's +0.48 SIG is a fluke Arm 6 fails to replicate at an adjacent LR band -> the trajectory-CPT claim dies entirely; A03 retains only its Gate-1 pilot.",
+      "arm6_step220_null_or_negative": "★ THIS ONE FIRED (at step215, not step220): Arm 3's +0.48 SIG is a fluke Arm 6 fails to replicate at an adjacent LR band -> the trajectory-CPT claim dies entirely; A03 retains only its Gate-1 pilot.",
       "arm6_step220_larger_than_arm3_and_monotone_in_LR_within_low_band": "(did not fire)"
     },
     "eval_watcher": ".82 /tmp/a03_arm6_trajectory_watcher.sh (v3, pid 2477305 since 04:58:33). Fired step205000 at 07:51:34 and step210000 at 10:42:29; each eval takes ~3m45s (MMLU 77s + CB(pt) 106s + CB(nq) 39s). Canonical copy: code/a03_arm6_trajectory_watcher.sh.",
@@ -110,7 +125,7 @@
       "distributedsampler_fix_not_on_disk": "MAIN verified 2026-08-10 14:39: .73's scripts/train_olmo2_arch_probe2.py:863 still reads `DistributedSampler(ds, shuffle=True)` -- NO seed= arg. The ce5c298 fix landed on wzc1 (LOCAL) but was never scp'd to zwfy6. All Arm 3/4/6 runs used the same default sampler seed 0. Cross-arm loss correlations Arm3-Arm6 0.99982, Arm3-Arm4 (to step215) 0.99187 -- near-identical data paths, not n=1 seed but n=1 data path.",
       "metric_independence_defect": "em/contains/f1 are NOT independent metrics on the same 17,944 predictions. Item-level delta corrs: em-f1 0.781, contains-f1 0.497, em-contains 0.380; raw metric corrs em-f1 ~0.86. Effective dimension of the corr matrix ~1.8-1.9 tests, not 3. The 'three metrics agree so not noise' argument was 1.8 tests not 3.",
       "bh_correction_on_90_test_family": "After BH q=0.05 across the 90 successful tests (Arm3 36 + Arm4 36 + Arm6 18): NOT surviving = Arm3 step210 nq_open.contains, Arm4 step205 nq_open.f1, Arm4 step210 popqa.em, Arm6 step210 nq_open.contains. Surviving = Arm3 step210 triviaqa.em, Arm3 step220 triviaqa em/contains/f1. Note: 'surviving BH' is a necessary condition; oscillation defect + data-path defect kill the claim regardless.",
-      "tcodex_verdict": "A03: Reject current empirical claim, allow redesign. floor gate \u53ef\u4fdd\u7559; CPT recovery / LR-regime \u7ed3\u8bba\u5728\u771f\u6b63\u591a seed \u524d\u4e0d\u5e94\u53d1\u8868; 6-arm \u4e3b\u5b9e\u9a8c\u672a\u5b8c\u6210 (raw-text RAG, residual memory, joint \u4e09\u7c7b\u6838\u5fc3 arm \u90fd\u8fd8\u6ca1\u6d4b\u8fc7)."
+      "tcodex_verdict": "A03: Reject current empirical claim, allow redesign. floor gate 可保留; CPT recovery / LR-regime 结论在真正多 seed 前不应发表; 6-arm 主实验未完成 (raw-text RAG, residual memory, joint 三类核心 arm 都还没测过)."
     },
     "phase_locked_defect": {
       "finding": "The three arms do not merely agree at step220 -- they trace the SAME CURVE at every dose point.",
@@ -298,8 +313,8 @@
     "then build the 6 arms (intact / pruned / +CPT / +raw-text RAG / +residual memory / +CPT+memory) on the four certified axes, each arm re-checked against its own null"
   ],
   "related_proposals_tcodex_verdicts": {
-    "A01": "Major revision. \u4fdd\u7559 'floor \u662f\u5fc5\u8981\u6761\u4ef6' \u548c tie \u673a\u5236\u53cd\u8bc1; \u64a4\u56de phase-transition \u4e00\u822c\u5b9a\u5f8b\u3001oracle convention flip\u3001\u8de8 construct \u4e00\u6570\u91cf\u7ea7 span\u3002",
-    "A02": "Reject / archive \u539f thesis. CoMem storage 2048x cost vs raw-token; \u81ea\u7136\u4efb\u52a1 quality-win \u4e0d\u6210\u7acb; write-repair arms \u672a\u6d4b\u3002\u4ec5\u5269\u7a84 systems microbenchmark \u53ef\u4f5c observation\u3002",
-    "A04": "Design paper / preregistration only. Pilot Zero \u4e0d\u662f gate pass; \u6ca1\u6709\u4efb\u4f55\u6a21\u578b\u5df2\u88ab 'certified recovered'; K1 \u5e94\u6539\u4e3a INDETERMINATE\u3002"
+    "A01": "Major revision. 保留 'floor 是必要条件' 和 tie 机制反证; 撤回 phase-transition 一般定律、oracle convention flip、跨 construct 一数量级 span。",
+    "A02": "Reject / archive 原 thesis. CoMem storage 2048x cost vs raw-token; 自然任务 quality-win 不成立; write-repair arms 未测。仅剩窄 systems microbenchmark 可作 observation。",
+    "A04": "Design paper / preregistration only. Pilot Zero 不是 gate pass; 没有任何模型已被 'certified recovered'; K1 应改为 INDETERMINATE。"
   }
 }
