@@ -1164,9 +1164,18 @@
       "launchability_verified": "transplant_front() prunes from --model_path; --resume_from optional. So keep12 is launchable despite PILOT_ZERO_VERDICT 5 noting no 1B keep12 arm exists on either disk -- that statement is about MEASURED RECOVERY, not launchability. Assets verified on zwfy6 2026-08-10 23:40.",
       "gate": "runs only if Stage A does not fire",
       "not_authorised": "Pilot Two (the 1077-4309 GPU-h full gate) needs user approval",
-      "status": "LICENSED_BUT_ON_HOLD_PENDING_A03_IMPLICATION",
+      "status": "RUNNING",
       "hold_reason": "A03 dataorder falsification (same-day) shows the apparatus produces 0.46pp seed spreads at this arm, and Arm 3's \"signal\" evaporated under randomization. Expected effect at keep12 is SMALLER (less room to recover), which may put it inside the just-measured noise floor. See STAGE_B_DECISION.md for Path A vs Path B and the recommendation to HOLD.",
-      "decision_doc": "STAGE_B_DECISION.md"
+      "decision_doc": "STAGE_B_DECISION.md",
+      "launched_at": "2026-08-11 05:53 GMT+8",
+      "nodes": {
+        ".73": "seed 101 (pid 1615256)",
+        ".82": "seed 102 (pid 3229316)"
+      },
+      "seed_103_queue": "waiting for .104 (keep12 resume) or .73/.82 wave-2 after seed 101/102 land ~09:00-09:30 GMT+8",
+      "config": "keep_front=12 fresh=2, 5000 steps, lr 2e-5, warmup 150, seq_len 2048, bs 8 gaccum 2 eff_bs 128 (matches intact-anchor recipe)",
+      "launcher": "scripts/_run_a04_stageB.sh (v3-guarded stop at step5000)",
+      "expected_wall_h": 3
     }
   },
   "defects_found_20260811": [
