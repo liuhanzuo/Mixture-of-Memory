@@ -1,1122 +1,1157 @@
 {
- "id": "A04",
- "status": "needs_revision_K1_INDETERMINATE_pilot_zero_done_full_gate_not_authorised",
- "priority": 4,
- "updated": "2026-08-10",
- "warning": "Do not use the historical depth ladder as a controlled scaling law.",
- "warning_evidence_reverified_20260809": {
-  "two_corpora": "data/dolmino_now15b.npy is 62,020,903,040 B on wzc1 (= 7,570,911 rows x 2048 x int32) but 126,907,244,672 B on zwfy6 (= 15,491,607 rows). Ratio 2.0462x. SAME FILENAME, DIFFERENT FILE (wzc1 is a byte-prefix). Row counts re-derived here from ls -l on BOTH disks; they match the 'dataset rows=' lines in status/PAPERB_TWO_CORPORA_DEFECT.md.",
-  "unequal_steps": "keep14 200k / keep12 124k / keep10 83.5k / keep8 121k -- depth x steps x corpus are entangled in one table.",
-  "seed_unrecorded": "--seed postdates the original runs (added in c57c4cb); trainer afdfa66 called no seeding function at all (status/PAPERB_P12_SEED2.md).",
-  "differential_lr_never_active": "all fresh_* param groups were empty in every historical arm; the module.-prefix strip landed only in 7a330ce (status/PAPERB_DIFFERENTIAL_LR_NEVER_ACTIVE.md). Do NOT claim differential LR."
- },
- "related_work_status": {
-  "status": "audited",
-  "audited": "2026-08-09",
-  "document": "RELATED_WORK.md",
-  "supersedes": "RELATED_WORK_GAP_AUDIT_20260808.md rating of 'insufficient' for A04",
-  "verdict": "GATE CLEARED FOR THE TOPIC, BUT A04 MUST BE NARROWED. No paper preempts A04's residual claim at A04's scope, but the collisions jointly strip four things the current PROPOSAL.md implicitly claims. PROPOSAL.md must be rewritten to the narrowed claim before any writeup.",
-  "closest_prior_art": [
-   {
-    "id": "arXiv:2606.14150",
-    "title": "Small LLMs: Pruning vs. Training from Scratch",
-    "venue_verified": "PREPRINT (DBLP journals/corr/abs-2606-14150, CoRR 2026, timestamp 2026-07-07; OpenReview no match)",
-    "verified_by": "DBLP direct .bib record + OpenReview absence. S2 was 429 rate-limited on this ID -- this is the one call resting on one positive source plus an absence.",
-    "why_closest": "THE CLOSEST METHODOLOGICAL COLLISION, and it was NOT named by the 2026-08-08 audit. Llama-3.1-8B at ratios 0.5-0.8, six pruning methods incl. depth, under two CONTROLLED TOKEN-MATCHED settings (same-budget pruned-init vs random-init; and scratch given the whole pipeline's budget). This is largely A04's proposed experimental design.",
-    "kills": "A04's claim to novelty for 'controlled matched-token comparison of pruned vs from-scratch initialisation'. Must cite and adopt, not claim.",
-    "does_not_kill": "Its outcomes are superiority comparisons and a pipeline-choice recommendation. No per-metric best-constant floor, no multi-seed variance model, no equivalence/non-inferiority statistic, no stopping rule for a given recovery run.",
-    "concurrency": "2026-06-12, under two months before this audit -> concurrent by the standing directive, so it could not preempt A04 even if scope matched."
-   },
-   {
-    "id": "arXiv:2607.00368",
-    "title": "Beyond Perplexity: A Behavioral Evaluation Framework for Deployment-Memory Claims in LLM Test-Time Training",
-    "venue_verified": "PREPRINT (DBLP journals/corr/abs-2607-00368, CoRR 2026; S2 venue empty; OpenReview no match)",
-    "verified_by": "DBLP direct .bib + S2 cross-check",
-    "why_closest": "CLOSEST COLLISION TO A04'S FRAMING -- closer than any paper the audit named. 'A protocol that calibrates a claim to the evidence that licenses it, because likelihood proxies improve while the target capability does not move' summarises both it and A04. Its LoRA diagnostic (support/answer loss down, free-form recall at ZERO across three Qwen3 scales) is structurally A04's own robust starting point.",
-    "kills": "A04's claim to the framing 'proxy metrics overstate capability, so calibrate claims to evidence'.",
-    "does_not_kill": "Its injury is test-time training on an INTACT model; A04's is structural depth injury healed by continued pretraining. Its ladder separates claim types; it supplies no quantitative stopping threshold for a training run."
-   },
-   {
-    "id": "arXiv:2602.01997",
-    "title": "On the Limits of Layer Pruning for Generative Reasoning in Large Language Models",
-    "venue_verified": "UNDER REVIEW, NOT PUBLISHED. DBLP journals/corr/abs-2602-01997 = CoRR 2026 only. OpenReview note LUBdOuX62N venueid=aclweb.org/ACL/ARR/2026/May/Submission, its own bibtex reads 'Submitted to ACL Rolling Review - May 2026, note={under review}'. S2 venue empty.",
-    "verified_by": "ACL family -> DBLP + Anthology is the authority (NOT OpenReview venueid). Anthology search page is client-side rendered and unscrapable; but a paper still in ARR May 2026 review cannot be in the Anthology. CITE AS ARXIV PREPRINT / ARR UNDER REVIEW.",
-    "why_closest": "Sharpest of the three collisions the audit DID name. Already establishes A04's most quotable intuition: recovery is metric-dependent -- classification recovers to ~90% while generative reasoning (GSM8K, HumanEval+) does not, persisting even at ~100B post-pruning tokens and under task-aligned full FT on self-generated GSM8K.",
-    "kills": "A04 may NOT present 'different metrics disagree about recovery' as a discovery.",
-    "does_not_kill": "Recovery axis is SFT on self-generated data under a constrained budget, not matched-corpus CPT. One run per config, no variance model. Reports THAT recovery is limited; offers no threshold, equivalence test, or stopping criterion.",
-    "positioning": "follow-up-that-fixes-a-defect (procedural: multi-seed, matched budget, pre-registered decision rule), NOT differentiation-by-topic. Credit C2 for metric-dependence."
-   },
-   {
-    "id": "arXiv:2508.13533",
-    "title": "Compressed Models are NOT Trust-equivalent to Their Large Counterparts",
-    "venue_verified": "PREPRINT (DBLP journals/corr/abs-2508-13533, CoRR 2025; OpenReview no match)",
-    "verified_by": "DBLP direct .bib + OpenReview absence",
-    "why_closest": "CLOSEST PAPER TO THE WORD 'CERTIFICATION'. Same claim structure (matched top-line does not imply equivalent) and same prescription (multi-axis equivalence check before drop-in replacement). Finds low interpretability alignment and calibration mismatch between BERT-base and compressed variants even at near-identical accuracy.",
-    "kills": "A04 may not claim to be first to argue performance parity != equivalence for a compressed model; and may not use 'certification' undefined.",
-    "does_not_kill": "BERT-base classification, no structural depth injury, NO recovery training at all, axes are interpretability/calibration not capability-vs-null. Static two-model comparison, not a trajectory with a stopping decision."
-   },
-   {
-    "id": "arXiv:2601.22950",
-    "title": "Perplexity Cannot Always Tell Right from Wrong",
-    "venue_verified": "ICML 2026 Workshop CTB *SUBMISSION*, NOT an accepted poster. OpenReview venueid=ICML.cc/2026/Workshop/CTB/Submission -- note the /Submission suffix, contrast the accepted C1 whose venueid has no suffix and whose venue reads 'AdaptFM Poster'. DBLP: CoRR 2026.",
-    "verified_by": "OpenReview venueid + DBLP",
-    "why_closest": "THEORETICALLY PROVES A04's central negative premise. Via Transformer continuity: if a compact decoder-only Transformer predicts any sequence accurately and confidently, another sequence must exist with very low perplexity that it predicts incorrectly; iso-perplexity analysis shows perplexity does not always select the more accurate model. The term 'iso-perplexity' is already in use.",
-    "kills": "A04 may not claim the PPL-insufficiency insight.",
-    "does_not_kill": "Model-selection theory on intact models. No protocol, no damage regime, no empirical recovery ladder. Usefully means A04's matched-PPL arm tests a theoretically predicted effect rather than fishing."
-   },
-   {
-    "id": "arXiv:2605.15491",
-    "title": "Ghosted Layers: Unconstrained Activation Alignment for Recovering Layer-Pruned LLMs",
-    "venue_verified": "ICML 2026 Workshop AdaptFM, POSTER (accepted). OpenReview note U37zxXMEE0, venue='AdaptFM Poster', venueid=ICML.cc/2026/Workshop/AdaptFM. DBLP has it only as CoRR 2026. S2 reports venue 'arXiv.org' -- EXACTLY the S2 lag the repo rule warns about; S2 alone would have called it a preprint.",
-    "verified_by": "OpenReview venueid (ICML = OpenReview family)",
-    "overlap": "Same object (layer-pruned LLM to be brought back), same reported quantities (accuracy + perplexity), same interface-mismatch-at-the-cut intuition. Closed-form optimal LINEAR operator from a small calibration set, training-free.",
-    "does_not_kill": "Training-free BY CONSTRUCTION -> no training trajectory, hence no token budget, no seed, no checkpoint grid, and NO POSSIBLE STOPPING QUESTION. Reports improvement vs baseline, never sufficiency. A04 is downstream of it, not competing.",
-    "also_kills": "A04 may not claim novelty for 'a layer-pruned model can be repaired by a linear map at the cut'."
-   },
-   {
-    "id": "arXiv:2510.15304",
-    "title": "Layer as Puzzle Pieces: Compressing Large Language Models through Layer Concatenation (CoMe)",
-    "venue_verified": "NeurIPS 2025 POSTER. OpenReview note enhFXzKii4, venue='NeurIPS 2025 poster', venueid=NeurIPS.cc/2025/Conference, and invitations include NeurIPS.cc/2025/Conference/Submission22642/-/Camera_Ready_Revision (the accept signal). NOTE volume disagreement: S2 says 'Advances in NeurIPS 38', OpenReview's own bibtex says Thirty-ninth -- cite from OpenReview.",
-    "verified_by": "OpenReview venueid + Camera_Ready_Revision invitation",
-    "overlap": "Progressive layer pruning + concatenation-based merging + hierarchical distillation recovery. 30% of LLaMA-2-7b removed retains 83% of original average accuracy over seven benchmarks.",
-    "does_not_kill": "Compression-METHOD paper whose recovery stage is instrumental. The '83% retention' is a ratio against an unconditioned baseline averaged over seven benchmarks -- no per-benchmark best-constant floor, no seeds, no equivalence test, no stopping rule. Its headline is a TARGET for A04's critique. A04's RATIO(rho)=0.85 rule is calibrated to this style of headline deliberately."
-   },
-   {
-    "id": "arXiv:2606.03002",
-    "title": "Perplexity Can Miss SAE Feature Damage Under Quantization",
-    "venue_verified": "UNDER REVIEW FOR TMLR (not accepted). OpenReview venue='Under review for TMLR', venueid=TMLR/Under_Review. DBLP: CoRR 2026.",
-    "verified_by": "OpenReview venueid (TMLR = OpenReview family) + DBLP",
-    "overlap": "Same logical move (behavioural parity != recovery) in quantization, and it ALREADY USES matched-perplexity magnitude pruning as a comparison (Jaccard 0.79-0.86 feature-damage overlap with RTN, damage-score Spearman 0.98). INT7 improves perplexity while degrading 18.7% of active features.",
-    "kills": "A04 may not claim matched-PPL comparison between arms as a new manoeuvre.",
-    "does_not_kill": "Residual axis is interpretability-feature fidelity, not task capability. No training trajectory, no stopping question."
-   }
-  ],
-  "mandatory_citations_venue_verified": {
-   "arXiv:2403.17887 The Unreasonable Ineffectiveness of the Deeper Layers": "ICLR 2025 Poster (OpenReview venueid=ICLR.cc/2025/Conference + Submission13737/-/Camera_Ready_Revision); also NeurIPS 2024 SciForDL workshop",
-   "arXiv:2407.14679 Compact Language Models via Pruning and Knowledge Distillation (Minitron)": "NeurIPS 2024 Poster (OpenReview venueid=NeurIPS.cc/2024/Conference + Submission15087/-/Camera_Ready_Revision)",
-   "arXiv:2402.02834 Shortened LLaMA": "ICLR 2024 Workshop ME-FoMo Poster (venueid=ICLR.cc/2024/Workshop/ME-FoMo) + CoRR 2024. TITLE DIFFERS between arXiv ('...Depth Pruning for LLMs with Comparison of Retraining Methods') and the venue record ('...A Simple Depth Pruning for Large Language Models') -- cite carefully.",
-   "arXiv:2408.11796 LLM Pruning and Distillation in Practice (Minitron Approach)": "UNVERIFIED -- not checked in this pass"
+  "id": "A04",
+  "status": "needs_revision_K1_INDETERMINATE_pilot_zero_done_full_gate_not_authorised",
+  "priority": 4,
+  "updated": "2026-08-10",
+  "warning": "Do not use the historical depth ladder as a controlled scaling law.",
+  "warning_evidence_reverified_20260809": {
+    "two_corpora": "data/dolmino_now15b.npy is 62,020,903,040 B on wzc1 (= 7,570,911 rows x 2048 x int32) but 126,907,244,672 B on zwfy6 (= 15,491,607 rows). Ratio 2.0462x. SAME FILENAME, DIFFERENT FILE (wzc1 is a byte-prefix). Row counts re-derived here from ls -l on BOTH disks; they match the 'dataset rows=' lines in status/PAPERB_TWO_CORPORA_DEFECT.md.",
+    "unequal_steps": "keep14 200k / keep12 124k / keep10 83.5k / keep8 121k -- depth x steps x corpus are entangled in one table.",
+    "seed_unrecorded": "--seed postdates the original runs (added in c57c4cb); trainer afdfa66 called no seeding function at all (status/PAPERB_P12_SEED2.md).",
+    "differential_lr_never_active": "all fresh_* param groups were empty in every historical arm; the module.-prefix strip landed only in 7a330ce (status/PAPERB_DIFFERENTIAL_LR_NEVER_ACTIVE.md). Do NOT claim differential LR."
   },
-  "must_not_claim": [
-   "First to study layer-pruning recovery (C1/C2/C3 + the 2026-08-08 audit's own wording).",
-   "First to observe recovery is metric-dependent / classification recovers while generative reasoning does not -- arXiv:2602.01997 owns this.",
-   "First to run a controlled token-matched pruned-init vs scratch-init comparison -- arXiv:2606.14150 owns this, at 8B across six pruning methods and two budget regimes, broader than A04's 1B MVP.",
-   "First to note perplexity is an unreliable capability proxy -- arXiv:2601.22950 PROVES it; 2606.03002 (quantization) and 2607.00368 (TTT) show it empirically.",
-   "First to propose calibrating claims to the evidence that supports them -- arXiv:2607.00368 owns this framing.",
-   "First to argue performance parity != equivalence for a compressed model -- arXiv:2508.13533 owns this.",
-   "First to compare arms at matched perplexity -- arXiv:2606.03002 already does it.",
-   "'Certification' left undefined -- it must mean equivalence-to-target on null-calibrated capability axes with a pre-registered threshold, else it collides directly with arXiv:2508.13533.",
-   "A depth SCALING LAW from the existing Paper B keepN ladder -- confounded three ways in our own data (see warning_evidence_reverified_20260809).",
-   "That Paper B used differential LR -- verified false.",
-   "Novelty for 'a layer-pruned model can be repaired by a linear map at the cut' -- arXiv:2605.15491 owns this in closed form, training-free.",
-   "Permutation-null / BH novelty -- A01's prior art rules apply here too; the null-calibration protocol is cited FROM A01, not re-claimed."
-  ],
-  "safe_residual_claim": "A pre-registered, multi-seed, matched-corpus/matched-token STOPPING RULE for post-injury recovery training, whose accept decision is an EQUIVALENCE (non-inferiority) test against the intact target on capability axes each calibrated to its own best-constant floor, plus a demonstration that the stopping rules currently in use (likelihood/PPL plateau; aggregate retention ratio) accept models this rule rejects.",
-  "why_the_residual_claim_survives": "Searches for abs:'non-inferiority' AND abs:'language model', abs:'equivalence test' AND abs:'neural network', and abs:'TOST' OR abs:'two one-sided tests' returned ZERO pruning/recovery papers. The only ML-adjacent TOST hit is arXiv:2604.14419 (Equifinality in MoE), which TOSTs MoE ROUTING-TOPOLOGY perplexity at 76-84M params -- unrelated object. Every collision above runs SUPERIORITY comparisons; 2508.13533 argues for equivalence but supplies no test statistic. Equivalence testing is essentially absent from the pruning-recovery literature."
- },
- "blocked_by": {
-  "related_work_gate": "CLEARED 2026-08-09 (see related_work_status). NO LONGER BLOCKING.",
-  "still_blocking_before_any_gate_gpu": [
-   "PROPOSAL.md rewrite to the narrowed safe_residual_claim -- its current '提案' list is largely arXiv:2606.14150's design and its motivation is largely 2607.00368/2601.22950's argument.",
-   "CODE (CPU, ~1 line, BLOCKING for K2): scripts/train_olmo2_arch_probe2.py:863 is DistributedSampler(ds, shuffle=True) with NO seed= argument, so its private generator uses self.seed=0 regardless of --seed. attention_dropout=0.0 and grep -c dropout on the trainer = 0. Therefore --seed moves ONLY the fresh-tail init: every 'seed' arm in this repo is fresh-block-INIT variance, NOT training-seed variance, and data order is identical across seeds. Without the fix, K2's variance estimate omits the data-order component and a K2 PASS would be unearned. Arm A2 (n_fresh_layers=0) has no fresh block at all, so its seeds are byte-identical and its sd_run is exactly 0 -- a missing measurement, not a variance estimate.",
-   "USER APPROVAL for GPU. The full gate is 1,077-4,309 GPU-h; nothing beyond Pilot Zero may be launched without it."
-  ]
- },
- "gate_design": {
-  "document": "A04_GATE_DESIGN.md",
-  "written": "2026-08-09",
-  "gpu_spent_designing": 0,
-  "kill_condition_verbatim": "A04 is killed if ANY of the following three clauses fires. K1 -- no rule disagreement: across the arms, at every checkpoint on the pre-frozen grid where the PPL-plateau rule PLATEAU(T) accepts, the non-inferiority rule NI(delta) also accepts on at least 3 of the 4 capability axes; AND the count of (arm, checkpoint) cells where the two rules disagree is <= 1 out of >= 24 evaluated cells. K2 -- disagreement drowned by seed variance: for the primary axis (TriviaQA EM), the between-seed standard deviation of the calibrated residual at the pre-frozen apex checkpoint, pooled across arms with S >= 3 seeds each, is >= 50% of the smallest between-arm residual difference the paper wants to claim; equivalently, the one-sided 95% run-level bound t_{0.05,S-1} * sd_run / sqrt(S) exceeds the pre-registered non-inferiority margin delta = 10% of the intact arm's own calibrated residual on >= 2 of the 4 axes. K3 -- axes at floor: at the target scale, >= 3 of the 4 capability axes have the INTACT arm's calibrated residual (reported minus construct-appropriate best-constant null) below 5pp, or have every damaged arm indistinguishable from its own best-constant predictor at BH q=.05.",
-  "frozen_constants": {
-   "T_plateau": "2.0% relative in-domain val PPL improvement per 5,000 steps",
-   "rho_retention": 0.85,
-   "delta_noninferiority": "0.10 * residual(intact, axis), per-axis",
-   "checkpoint_grid_steps": [
-    2500,
-    5000,
-    10000,
-    20000,
-    40000,
-    80000
-   ],
-   "note": "frozen by this commit; if any is later changed the gate is VOID and must be re-run"
-  },
-  "primary_statistic": "PER-ARM ONE-SIDED NON-INFERIORITY BOUND, deliberately NOT a rank correlation over rungs. B04 hit the n=6 exact-permutation floor (2/720=0.002778) TWICE on OLMo-2-7B and still died on Qwen3-8B (rho fell to +0.4286 p=0.42 / -0.4857 p=0.36, p x130-150) -- so maximal significance at n=6 is not evidence of a real effect, and adding rungs to buy permutation p is the move that failed. Power here comes from S (seeds) and item count n."
- },
- "nulls_per_metric": {
-  "source": "proposal/active/A03-parametric-vs-external-memory/evidence/a03_1b_floor_nulls.json + GATE_FOURAXES_VERDICT.md, both measured on OLMo-2 1B (same scale as this gate)",
-  "TriviaQA_EM_PRIMARY": {
-   "n": 17944,
-   "null": 0.0025635309852875612,
-   "null_kind": "best-constant answer string 'australia commonwealth realm'",
-   "intact_1B": 0.4069,
-   "intact_residual": 0.4043,
-   "delta_pp": 4.043
-  },
-  "PopQA_EM": {
-   "n": 14267,
-   "null": 0.0229200252330553,
-   "null_kind": "best-constant string 'association football', argmax over 303 candidates",
-   "intact_1B": 0.155,
-   "intact_residual": 0.1321,
-   "delta_pp": 1.321
-  },
-  "MMLU_content": {
-   "n": 14042,
-   "null": 0.28445022076627263,
-   "null_kind": "longest-option, split-tie convention (pre-registered; 34.22% of items have >=2 maximal-length options)",
-   "intact_1B": 0.3868,
-   "intact_residual": 0.1023,
-   "delta_pp": 1.023
-  },
-  "NQ_open_EM": {
-   "n": 3610,
-   "null": 0.0055,
-   "null_kind": "best-constant answer",
-   "intact_1B": 0.1025,
-   "intact_residual": 0.097,
-   "delta_pp": 0.97,
-   "DEMOTED": "item-level 95% CI half-width is 1.459-2.063pp at n=3610, which ALREADY EXCEEDS delta=0.970pp. NQ-open cannot carry a 10%-of-residual non-inferiority decision at this n and must be secondary/descriptive only."
-  },
-  "in_domain_PPL": {
-   "role": "used ONLY by PLATEAU(T); never a capability axis; gets no null",
-   "intact_1B": 10.6416,
-   "n_windows": 4096,
-   "n_tokens": 8384512
-  },
-  "BANNED_interfaces": {
-   "MMLU_letter": "at 1B the pruned arm scores 0.2512 vs best-constant always-D 0.2689 = significantly BELOW floor (p=3.4e-3) and indistinguishable from its own modal-C constant (p=0.28); the barely-healed control emits A on 14042/14042 items. 0.25 IS NEVER THE MMLU NULL.",
-   "raw_contains_on_generative_QA": "healing changes verbosity ~6x (mean pred chars 13.4 intact -> 80.8 pruned+healed) and contains rewards length. PopQA contains residual fraction reads 56.4% naive but 17.0% length-matched. Use contains_lenmatched only."
-  },
-  "nulls_if_gate_widened": {
-   "boolq": "0.6217 always-B, NOT 0.50",
-   "openbookqa": "0.3635 longest-option, NOT 0.25",
-   "arc_challenge": 0.2654,
-   "piqa": 0.5049,
-   "commonsense_qa": 0.2088,
-   "winogrande": "structurally degenerate (identical norm_lens, 100% tie rate) -- control only, never evidence",
-   "source": "status/scout_21/lane2_a01_gate2.md"
-  }
- },
- "power_analysis": {
-  "unit_of_replication": "the RUN, so the decision statistic is a run-level one-sided bound t_{0.05,S-1} * sd_run / sqrt(S)",
-  "S2_is_unusable": "df=1 -> t=6.314, so even sd_run=0.3pp gives a 1.339pp bound, LARGER than delta on three of four axes (1.023 / 1.321 / 0.970pp). A 2-seed design can only certify on TriviaQA (delta=4.043pp) and only if sd_run < ~0.9pp. PROPOSAL.md's '至少 2 seeds' is NOT a viable minimum for a non-inferiority decision -- it was written for a superiority comparison, and equivalence is harder.",
-  "S3_is_the_minimum": "df=2 -> t=2.920; bound 0.506pp at sd_run=0.3pp, 0.843pp at 0.5pp, 1.686pp at 1.0pp. Works only if sd_run <= ~0.5pp.",
-  "sd_run_is_UNVERIFIED": "no multi-seed 1B recovery run exists on either disk; the only 1B arm is keep7fresh2, one draw, seed not even recorded. Measuring sd_run is itself a gate output and is Pilot One's entire purpose.",
-  "no_post_hoc_seed_addition": "if the measured sd_run implies a bound > delta on >=2 axes, K2 FIRES rather than seeds being added post hoc. Adding seeds after seeing the variance is the selective-reporting move A01's gate-4 exists to prevent.",
-  "multiplicity": "4 axes x 4 arms x 6 checkpoints = 96 cells -> BH q=.05 across the whole declared family, family size declared in advance. One-sided NI bounds must not be silently mixed into a two-sided BH family."
- },
- "cost": {
-  "measured_anchors": {
-   "1B_8xH20": "median 2.02 s/step (n=36, logs/olmo2_1B_keep7fresh2_1node.log, world_size=8 bs=16 gaccum=1 eff_bs=128 seq_len=2048)",
-   "1B_16xH20": "median 1.48 s/step, mean 1.5218 (n=10,000 samples, logs/olmo2_1B_keep7fresh2_16card_node0.log). Wall cross-check 2026-07-16 22:40:29 -> 2026-07-20 11:18:11 = 84.63h for 200,000 steps = 1.5233 s/step avg, consistent.",
-   "scaling_note": "16 cards give only 1.36x throughput for 2x the GPUs -> 8-card runs are the EFFICIENT UNIT; use extra nodes for more arms in parallel, not faster single arms.",
-   "tokens_per_step": 262144
-  },
-  "pilot_zero_eval_only_GPU_h": 3,
-  "pilot_one_3runs_5k_GPU_h": 135,
-  "gate_4arm_3seed_20k_GPU_h": 1077,
-  "gate_4arm_2seed_80k_GPU_h": 2873,
-  "gate_4arm_3seed_80k_GPU_h": 4309,
-  "proposal_as_literally_written_24_trainings_GPU_h": 3771,
-  "affordability_verdict": "The statistically defensible full version (S=3, 80k steps) is 4,309 GPU-h ~ 8.4 days on all three H20 nodes running nothing else. With all five nodes occupied and proposal work competing with Paper A/B, this is NOT affordable as a speculative gate. The affordable defensible version is 4 arms x 3 seeds x 20,000 steps = 1,077 GPU-h ~ 45h on three nodes. Treating the three token budgets as CHECKPOINTS of one trajectory rather than three separate runs removes 898 GPU-h (24%) for zero scientific loss.",
-  "spend_recommendation": "Authorise Pilot Zero (~3 GPU-h) now; Pilot One (135 GPU-h) only if Pilot Zero fires positively. Do NOT authorise the 1,077-4,309 GPU-h gate until sd_run is known -- K2 is the most likely killer and Pilot One buys the K2 answer for 3-5% of the full cost."
- },
- "pilot_zero_evidence_already_on_disk": {
-  "status": "READY -- no training needed; per-example shards exist; analysis is pure CPU",
-  "ppl_trajectory_verified": {
-   "source": "zwfy6:olmo2_ppl_results/{1B_base_full,1B_keep7_step50000,1B_keep7_step100000,1B_keep7_step147000,1B_keep7_step200000}/summary.json -- all n_shards=8, n_tokens=8384512, n_windows=4096",
-   "intact_1B_16L_ppl": 10.6416,
-   "keep7f2_step50000_ppl": 17.6194,
-   "keep7f2_step100000_ppl": 16.1613,
-   "keep7f2_step147000_ppl": 15.6285,
-   "keep7f2_step200000_ppl": 15.4116,
-   "interval_rel_improvements_pct": [
-    8.276,
-    3.297,
-    1.388
-   ],
-   "gap_to_intact_at_200k": "+4.7700 = +44.8% above intact, after 52.43 B heal tokens"
-  },
-  "capability_at_step200000_verified": {
-   "source": "A03 GATE_FOURAXES_VERDICT.md; per-example shards at zwfy6:olmo2_closedbook_results/A03_1B_keep7_step200k/ and olmo2_mmlu_content_results/A03_1B_keep7_step200k/",
-   "MMLU_content_fraction_of_intact_residual_recovered": 0.39,
-   "TriviaQA_EM_fraction_recovered": 0.231,
-   "NQ_open_EM_fraction_recovered": 0.237
-  },
-  "the_disagreement": "ANY plateau threshold T in (1.388%, 3.297%] accepts at step 200,000 -- a wide, plausible band -- while the arm has recovered only 23-39% of the intact null-calibrated residual, i.e. NI(delta=10%) rejects by an enormous margin on all three measured axes.",
-  "HONESTY_CAVEAT": "that band was computed AFTER looking at these numbers, so Pilot Zero as described is ILLUSTRATIVE, NOT CONFIRMATORY. To be evidence, T must be committed in git BEFORE the comparison is re-run. Also the grid is only 4 points with 47k-53k spacing and cannot exercise a 5,000-step-resolution rule. Pilot Zero's honest output is: 'does a disagreement of the required shape exist at all, on one arm, one seed?' It can fire K1 and has provisionally cleared K3; it CANNOT clear K2.",
-  "also_picks_j": "the only existing 1B arm is keep7+fresh2 = 9 of 16 layers = 56.2% depth, and after 52.43 B heal tokens it recovers only 23-39% of the intact residual -- so a rule tested only there is a constant-REJECT and proves nothing. The gate needs a j where a well-run recovery plausibly DOES approach non-inferiority; candidates keep12+fresh2 (14L, 87.5% depth) or keep10+fresh2 (12L, 75%). Choosing j from evidence rather than assumption is worth Pilot Zero's cost alone.",
-  "other_free_ckpts": "zwfy6 also has olmo2_probe2_1B_keep7f2_dolmino_cpt20k/step{205000,210000,215000,220000}.pt and .../arm4_peaklr20k/step{205000,210000,215000}.pt"
- },
- "next_gate": [
-  "PILOT ZERO (CPU + <=3 GPU-h, run FIRST): commit T=2.0%/5k and rho=0.85 to git BEFORE analysis, then use the checkpoints already on disk to ask whether a PLATEAU-accepts / NI-rejects disagreement exists at all. Can fire K1 for ~zero GPU. Also selects j for the gate. Blocking sub-step: the T commit must precede the comparison, else the result is illustrative only.",
-  "CPU CODE FIX (~1 line, blocking for K2): pass seed=args.seed into DistributedSampler at scripts/train_olmo2_arch_probe2.py:863 so seeds actually vary data order. Without it every 'seed' arm is fresh-block-init variance only and arm A2 (n_fresh=0) has sd_run identically 0.",
-  "PROPOSAL.md rewrite to the narrowed safe_residual_claim; paste the must_not_claim list into its scope section; drop the ShortGPT/non-contiguous arm (second damage variable) and the '3 budgets = 3 runs' reading.",
-  "PILOT ONE (135 GPU-h, ~5.6h wall on 3 nodes, ONLY if Pilot Zero fires positively AND the sampler fix landed): one arm at the chosen j, S=3 seeds, 5,000 steps. Output = the first real sd_run for a 1B recovery arm. Plug into the S=3 power table; if the bound exceeds delta on >=2 axes, K2 FIRES and A04 dies for 135 GPU-h instead of ~2,900.",
-  "PILOT TWO / full gate (1,077-4,309 GPU-h): REQUIRES EXPLICIT USER APPROVAL. Do not launch on the strength of this design document."
- ],
- "protocol_invariants": [
-  "chat_template=False for EVERY eval -- these are BASE LMs with no SFT/RL; a chat template is unfair and any chat=True number is void.",
-  "prune-heal OLMo-2 is a BASE LM: base protocol only (ppl + LL-based MC), no chat template, no BOS (--add_bos 0), no system prompt, no few-shot, greedy decode for QA, compared against vanilla OLMo-2 BASE.",
-  "sharded eval MUST assert every shard present AND the exact expected item count before merging -- reuse the pattern in scripts/_run_a03_1b_floor_82.sh which asserts n_shards==8, MMLU n==14042, n_valid+n_nan==exp, and v['n']==e. A silently merged 5-of-8 shard set has corrupted results here before.",
-  "same-arch/same-harness re-runs in this repo are BYTE-IDENTICAL (0 flips). Do not budget for or excuse anything as 'runtime noise' without a same-code control proving it.",
-  "every scoring step must IMPORT the canonical scorer from the harness that produced the predictions, never reimplement it (two subagents reimplemented a metric in one session and both times produced a significant result where canonical produced a tie)."
- ],
- "recommendation": "PROCEED, BUT NARROWED AND CHEAPLY. Do not archive: nothing preempts the residual claim at its scope, and equivalence/non-inferiority testing is essentially absent from the pruning-recovery literature. But A04 as written in PROPOSAL.md is not fundable -- its experimental design is largely arXiv:2606.14150's and its motivation is largely 2607.00368/2601.22950's. The residual contribution is real but NARROW and METHODOLOGICAL: worth at most a short paper or a methods section. Run Pilot Zero (~3 GPU-h) before spending anything else. If the gate's kill condition fires, ARCHIVE with a POSTMORTEM rather than reframing -- the reframing space has just been shown to be occupied.",
- "unverified": [
-  "sd_run for any 1B recovery arm -- no multi-seed 1B run exists on either disk. Pilot One's entire purpose.",
-  "whether 20,000 steps suffices for any arm to approach non-inferiority at a shallower cut -- depends on j; only keep7 (52.43 B tokens, 44.8% residual PPL gap) is measured.",
-  "PPL for any 1B arm other than keep7+fresh2 -- olmo2_ppl_results/ contains only 1B_base_full and 1B_keep7_step{50000,100000,147000,200000} (+2 sanity dirs).",
-  "whether the disagreement replicates at 7B -- out of scope, unfunded.",
-  "arXiv:2408.11796 (Minitron Approach) venue -- not verified in this pass.",
-  "arXiv:2606.14150 venue rests on DBLP-positive + OpenReview-absence only; S2 was 429 rate-limited on that ID.",
-  "Pilot Zero's T band (1.388, 3.297] is post-hoc -- illustrative only until T is committed to git first."
- ],
- "ops_notes_for_the_next_agent": [
-  "arXiv API requires a non-default User-Agent through hy-proxy; with curl's default UA the endpoint returns an EMPTY BODY and any XML parse fails in a way that looks like a parse bug. Use -A 'Mozilla/5.0 (research-audit)'.",
-  "DBLP /search/publ/api returned HTTP 500 for every query on 2026-08-09; the per-record https://dblp.org/rec/journals/corr/abs-<id>.bib URLs DO work (some need one retry past a 503). DBLP 500 does not mean 'not in DBLP'.",
-  "ACL Anthology's /search/ page is client-side rendered -- the server HTML contains no hits and cannot be scraped. For ACL-family venue calls, use DBLP records plus the ARR OpenReview note's own bibtex ('under review') as negative evidence.",
-  "Semantic Scholar graph API 429s after ~3 calls without a key; usable as cross-check only, never as venue authority.",
-  "OpenReview venueid SUFFIX matters: ICML.cc/2026/Workshop/CTB/Submission (submitted) vs ICML.cc/2026/Workshop/AdaptFM with venue='AdaptFM Poster' (accepted)."
- ],
- "pilot_zero": {
-  "status": "DONE -- executed 2026-08-09, ZERO GPU (CPU re-analysis of on-disk shards)",
-  "verdict_file": "PILOT_ZERO_VERDICT.md",
-  "evidence_files": [
-   "evidence/pilot_zero_rule_disagreement.json",
-   "evidence/pilot_zero_rule_disagreement.csv"
-  ],
-  "code": "code/pilot_zero_rule_disagreement.py",
-  "K1_FIRES": "INDETERMINATE -- see K1_FIRES_RETRACTED_20260810 (was false, retracted 2026-08-10)",
-  "K1_reason": "at the PLATEAU-accept checkpoint (step 200,000) NI REJECTS on 3/3 decision axes (triviaqa, popqa, mmlu_content), so NI accepts on 0/4 < 3 -> clause (a) fails; and 3 > 1 disagreement cells -> clause (b) fails. A disagreement of the required shape EXISTS.",
-  "K1_headline": "A disagreement of the required shape EXISTS: at the PLATEAU-accept checkpoint (step 200,000) NI rejects on 3/3 decision axes by 6-9x the margin. Both K1 clauses fail (NI accepts 0/4 < 3; 3 > 1 disagreement cells). A04 is NOT killed.",
-  "K1_survives_all_five_null_conventions": {
-   "split": false,
-   "first": false,
-   "last": false,
-   "credit": false,
-   "wrong": false
-  },
-  "K1_survives_both_plateau_readings": {
-   "split": false,
-   "first": false,
-   "last": false,
-   "credit": false,
-   "wrong": false
-  },
-  "why_convention_robust": "residual(arm)-residual(intact) = reported(arm)-reported(intact): the same input-blind null applies to both arms on the same item set so the null CANCELS exactly. The convention moves only Delta (=0.10*residual(intact)), never the measured difference. Observed gaps exceed every convention's Delta by 6-9x.",
-  "K3_FIRES": false,
-  "K3_note": "intact 1B calibrated residuals 40.431/13.205/10.239/9.695 pp -- 0 of 4 below 5pp, so ample dynamic range. Provisionally cleared for keep7 only; UNVERIFIED for the gate's j=12.",
-  "K2_STATUS": "OUT OF SCOPE (needs S>=3 seeds). WORSE THAN DESIGN ASSUMED: the DistributedSampler(seed=) defect (fixed 2026-08-09) means NO true run-to-run variance exists anywhere in this repo and none can be recovered retroactively -- pre-fix seeds shared a byte-identical data order, so all existing 'seed' evidence is fresh-block INIT variance, a strict subset. Any sd_run from pre-fix runs is an UNDERESTIMATE. See SEED_SEMANTICS_DEFECT.md.",
-  "ni_results_step200000_prereg_split": {
-   "triviaqa": {
-    "frac_of_intact_residual_recovered": 0.23073742246726395,
-    "diff_mean_pp": -31.10231832367365,
-    "diff_lower95_one_sided_pp": -31.69861792242532,
-    "delta_pp": 4.043134195274186,
-    "ni_accept": false,
-    "demoted_descriptive_only": false
-   },
-   "popqa": {
-    "frac_of_intact_residual_recovered": 0.12473460721868367,
-    "diff_mean_pp": -11.558141164926052,
-    "diff_lower95_one_sided_pp": -12.020747178804234,
-    "delta_pp": 1.3205298941613512,
-    "ni_accept": false,
-    "demoted_descriptive_only": false
-   },
-   "mmlu_content": {
-    "frac_of_intact_residual_recovered": 0.3900191271083288,
-    "diff_mean_pp": -6.245549067084461,
-    "diff_lower95_one_sided_pp": -6.801025494943739,
-    "delta_pp": 1.0238926078906136,
-    "ni_accept": false,
-    "demoted_descriptive_only": false
-   },
-   "nq_open": {
-    "frac_of_intact_residual_recovered": 0.23714285714285713,
-    "diff_mean_pp": -7.396121883656509,
-    "diff_lower95_one_sided_pp": -8.254847645429363,
-    "delta_pp": 0.9695290858725762,
-    "ni_accept": false,
-    "demoted_descriptive_only": true
-   }
-  },
-  "FIRST_ORDER_NARROWING_of_A04_claim": {
-   "finding": "RATIO(rho=0.85) REJECTS at step200000 (mean retention ratio 0.4017 << 0.85), i.e. it AGREES with NI. It rejects at all 8 arm x checkpoint cells (range 0.3694-0.4185).",
-   "consequence": "A04_GATE_DESIGN.md SS1 claims the disagreement for BOTH incumbent rules (a) PPL plateau and (b) aggregate retained-accuracy ratio. Clause (b) is FALSIFIED by this data. A04 must claim the disagreement for the PLATEAU rule ONLY.",
-   "per_axis_ratio": {
-    "triviaqa": 0.23558416655252706,
-    "popqa": 0.2541836273179557,
-    "mmlu_content": 0.8385493372606775,
-    "nq_open": 0.27837837837837837
-   }
-  },
-  "recommended_j": {
-   "j": 12,
-   "arm": "keep12+fresh2 at 1B = 14 of 16 layers = 87.5% depth kept",
-   "second_choice_j": 10,
-   "rejected_j": 7,
-   "why": "keep7+fresh2 (56.25% depth) is CONFIRMED a constant-REJECT rung (12-39% of intact residual recovered after 52.43B tokens, NI rejects by 6-9x). A rule tested only there can never be observed to ACCEPT, so the disagreement is unfalsifiable. The only measured depth->recovery curve (7B MMLU-content split-tie) is monotone with no saturation: 0.3106@31.2% / 0.3224@37.5% / 0.4215@43.8% / 0.5306@50.0% depth kept. keep12 at 1B keeps 87.5%, far shallower than any measured rung, so it is most likely to let NI sometimes accept.",
-   "UNVERIFIED": "no 1B keep12 or keep10 arm exists on EITHER disk; the recommendation extrapolates from a 7B ladder that spans two corpora and unequal steps (ordering evidence only, never absolute level). Whether keep12@1B is instead a constant-ACCEPT rung is UNKNOWN."
-  },
-  "caveats_not_dropped": [
-   "The SS6.1 band (1.388%, 3.297%] is POST-HOC and remains illustrative, not confirmatory. T was committed in git d1ba737 (2026-08-09 23:02:27 +0800, verified; design file byte-unchanged since) BEFORE this comparison, so the ordering is procedurally correct -- but T lands inside a band chosen with knowledge of the data, so this specific point is epistemically weak.",
-   "The 4-point grid at 47k-53k spacing CANNOT exercise a 5,000-step-resolution rule. Both readings are reported; K1 fails to fire under BOTH, so the conclusion is insensitive. But the disagreement is only SHARP under the unscaled (design SS6.1) reading; testing the rule as written needs --milestone_every 2500.",
-   "K1's own '>= 24 evaluated cells' precondition is NOT met: 24 decision cells exist but PLATEAU is DEFINED at only 3 of them, because no in-domain PPL exists for cpt20k or arm4_peaklr20k. Clause (a) fails decisively on the cells that do exist, which suffices not to fire K1, but this is not the 4-arm x 6-checkpoint family the real gate would evaluate.",
-   "arm4_peaklr20k intermediate cells are NOT settled capability numbers (A03 STATUS NOT_YET_JUDGED). Instability independently reproduced here: triviaqa EM -1.404pp @205k then +1.259pp @210k vs the 200k baseline, non-monotone, both directions. Grid coverage only; the K1 verdict does not depend on them (the 4 stable cpt20k cells also all reject).",
-   "NQ-open DEMOTED per design SS5.2 (item CI half-width 1.459-2.063pp > its own Delta 0.970pp at n=3610): descriptive only, excluded from decision cells.",
-   "Delta = 0.10*residual(intact,x) is ILL-DEFINED when residual(intact,x) <= 0. Under the 'credit' convention the INTACT 1B model falls BELOW its own MMLU null (0.3868 vs 0.4537), so residual(intact) = -6.687pp and Delta is NEGATIVE, turning NI into a strict-superiority test. FLAGGED, NOT CHANGED (pre-registered). The gate must add a documented guard or fold the convention into Delta's definition."
-  ],
-  "provenance": {
-   "ppl": "recomputed exp(sum_nll/n_tokens) from zwfy6:olmo2_ppl_results/*/shard{0..7}of8.json; asserted 8/8 shards + index set {0..7} + n_tokens=8384512 + n_windows=4096 + n_shards=8; agrees with every summary.json to <1e-9",
-   "capability": "merged from per-example shards with HARD assertions: 8/8 shards, exact item counts (mmlu 14042 / triviaqa 17944 / popqa 14267 / nq_open 3610), no duplicate item_id, no shard-index gap. Any shortfall raises.",
-   "scorers": "IMPORTED from A03/code/analyze_1b_knowledge_floor.py (best_constant_qa, longest_option_vector, best_constant_letter, paired_bootstrap) -- never reimplemented. MMLU content_norm recomputed from stored per-option scores and ASSERTED equal to the harness's own 'correct' flag on all 14042 items.",
-   "cross_check": "recomputed reported/reported_intact/null match A03/evidence/a03_1b_floor_nulls_4axes.json EXACTLY (delta=0.00e+00) on all four axes; all five MMLU convention nulls match to <1e-12; measured convention spread 25.7584pp reproduces A01's reported 25.76pp.",
-   "nulls": "construct-appropriate only; 'above chance' never used. MMLU-letter always-D 0.2689 (not 0.25) recorded but BANNED as an axis. BoolQ always-B 0.6217 (not 0.50) quoted from design SS4.2 and marked UNVERIFIED_here (no BoolQ shards opened).",
-   "gpu": "ZERO. No training, no eval, no torchrun, no model load."
-  },
-  "unverified": [
-   "sd_run for any 1B recovery arm -- and now, no TRUE seed variance anywhere in the repo. K2 untested.",
-   "recovery level at j=12 or j=10 at 1B (no such arm on either disk)",
-   "whether 20,000 steps (5.24B tokens) suffices at the recommended j",
-   "PPL for cpt20k / arm4_peaklr20k (does not exist -> PLATEAU undefined for those 7 ckpts)",
-   "BoolQ null 0.6217 (quoted from design SS4.2, not recomputed here)",
-   "whether the disagreement replicates at 7B (out of scope, unfunded)",
-   "arm4_peaklr20k intermediate capability numbers (A03 NOT_YET_JUDGED)"
-  ],
-  "recommendation": "DO NOT ARCHIVE (K1 did not fire), but DO NOT authorise the full gate. (1) Narrow the claim to the PLATEAU rule only -- the ratio-rule half is falsified. (2) Pilot One is now strictly MANDATORY and more valuable than the design assumed, because K2 is the likeliest killer AND no usable sd_run exists; it must run UNDER the seed fix, at j=12, S=3 (~135 GPU-h). (3) Do not authorise the 1,077-4,309 GPU-h gate until sd_run is known. (4) Decide the Delta guard for residual(intact)<=0 explicitly before Pilot One.",
-  "delta_guard_RESOLVED": "the SS4.1 / caveats_not_dropped item 'Delta = 0.10*residual(intact,x) is ILL-DEFINED when residual(intact,x) <= 0 ... FLAGGED, NOT CHANGED' is now ADDRESSED by the pre-registered guard in A04_MARGIN_GUARD_PREREG.md (see margin_guard_prereg). Resolution = option (c) RETIRE THE CELL; Delta is never substituted. Also NARROWS this file's own SS4 claim: 'survives all five conventions' -> 'unchanged under the FOUR ADMISSIBLE conventions; credit is inadmissible on MMLU-content'.",
-  "K1_FIRES_RETRACTED_20260810": {
-   "old_value": false,
-   "old_headline": "K1 DOES NOT FIRE",
-   "new_value": "INDETERMINATE",
-   "why": "K1's verbatim text (A04_GATE_DESIGN.md:45-47) requires the rule-disagreement count to be '<= 1 out of >= 24 evaluated cells'. Pilot Zero evaluated 3 axes at ONE checkpoint (step200000) = 3 cells. You cannot conclude a >= 24-cell clause did or did not fire from 3 cells: the denominator the rule names was never reached. 'K1 does not fire' was therefore a positive result inferred from a sample smaller than its own governing denominator.",
-   "what_the_pilot_DID_establish": "At the single PLATEAU-accept checkpoint, NI(Delta=0.10*residual(intact)) rejects on 3/3 decision axes by 6.6-9.1x the margin, and this is invariant across all five null conventions and both plateau readings (because residual(arm)-residual(intact) = reported(arm)-reported(intact), so the null cancels). That is a real, convention-robust finding about ONE checkpoint. It is evidence that a disagreement of the required SHAPE exists; it is not a verdict on the >= 24-cell clause.",
-   "correct_reading": "K1 INDETERMINATE -- not killed, not cleared. The gate remains un-run.",
-   "audit_concordance": "TCODEX_AUDIT_20260810.md section 7 independently reached the same conclusion: 'Pilot Zero 不是 gate pass ... K1 does not fire / survived cheapest gate 应撤回, 改为 K1 INDETERMINATE.'",
-   "also_retracted": "Any statement of the form 'A04 is NOT killed' that rests on K1_FIRES=false. A04 is not killed, but the reason is that the gate has not been run, not that it passed."
-  },
-  "K2_STATUS_UPDATED_20260810": {
-   "old_claim": "OUT OF SCOPE (needs S>=3 seeds). WORSE THAN DESIGN ASSUMED: no true run-to-run variance anywhere in the repo.",
-   "now": "RECOVERABLE, measurement IN FLIGHT as of 2026-08-10 16:57.",
-   "why": "The DistributedSampler(seed=) fix ce5c298 has now been deployed to zwfy6 (MAIN scp'd it 2026-08-10 16:53, md5 284b286f90b526e4e8ad93a68e2a3b16 verified on both disks; pre-fix copy preserved as .PRE_CE5C298_BAK md5 879541f001568ceea16528e2e5d8035f). Two A03 data-order runs are training now with genuinely different data order: .82 seed=43 and .73 seed=44, both Arm 3's exact config, step220000 landing ~04:20 GMT+8. Their spread on the four A03 closed-book axes IS a true run-to-run sd_run estimate for a 1B CPT arm -- the exact quantity K2 needs and that this block previously called unobtainable.",
-   "caveat": "n=2 (a 3rd, seed=45, is queued for .104 behind keep12). n=2 gives a range, not a variance with useful CI. Treat as an order-of-magnitude bound on sd_run, not a point estimate.",
-   "driver": "scripts/_run_a03_dataorder_repl.sh (commit 44840f1), tracked as task #236",
-   "prereg": "A03's DATAORDER_PREREG.md is being written BEFORE the checkpoints land, so this harvest is pre-registered rather than post-hoc."
-  }
- },
- "margin_guard_prereg": {
-  "status": "PRE-REGISTERED 2026-08-10, ZERO GPU (CPU re-analysis of on-disk per-example records + read-only ssh/scp -O of 3 JSONL files)",
-  "document": "A04_MARGIN_GUARD_PREREG.md",
-  "amends": "A04_GATE_DESIGN.md SS2 definition of Delta_x, via additive amendment SS2.0.1. The pre-registered text is UNCHANGED -- nothing retuned or replaced.",
-  "prereg_timing_evidence": "registered BEFORE any recovered-arm datum exists. Verified 2026-08-10 by ls outputs/ on BOTH disks: the only 1B recovery runs anywhere are zwfy6:outputs/olmo2_probe2_1B_keep7fresh2{,_16card}, ..._keep7f2_dolmino_cpt20k, ..._keep7f2_dolmino_arm4_peaklr20k -- all keep7. NO j=12 or j=10 arm on either disk, and NO 1B recovery output at all on wzc1. Delta depends ONLY on the intact anchor, so every cell's verdict is computable now and cannot be tuned later.",
-  "defect_addressed": "Delta_x = 0.10*residual(intact,x) is a well-formed NON-INFERIORITY margin only while residual(intact,x) is comfortably positive. When it is negative, Delta<0 so -Delta>0 and NI(Delta) silently becomes a STRICT SUPERIORITY test. Direction of error matters: it cannot create a false ACCEPT (superiority is strictly harder), but it creates a SILENT FALSE REJECT plus a SWAPPED HYPOTHESIS, which in a pre-registered gate is the more serious failure. Pilot Zero flagged this (PILOT_ZERO_VERDICT.md SS4.1, delta_degenerate_negative_margin per cell) and correctly did NOT change the rule.",
-  "verdict": "RECOMMENDED GUARD = option (c) RETIRE THE CELL (NOT_CERTIFIABLE). Delta is NEVER substituted.",
-  "one_line_reason": "an arm below its own input-blind floor has no measured capability on that axis, so 'recover to be no worse than it' is vacuous -- and a re-margined Delta (via max(Delta,eps) or 0.10*|residual|) would be a plausible-LOOKING number over a scientifically empty comparison, i.e. it converts a visible degeneracy into an invisible one.",
-  "rejected_alternatives": {
-   "a_absolute_floor_max_delta_eps": "REJECTED. Restores a positive margin but does nothing about WHAT is compared: under credit the target is 6.687pp BELOW its own null. Also eps=1pp is comparable to the entire legitimate Delta_MMLU=1.0239pp, so the guard would silently SET the margin on the very axis it was meant to rescue.",
-   "b_abs_residual_0.10_times_abs": "REJECTED, and it is the specific failure mode to avoid. Gives Delta=+0.6687pp -- a normal-looking number -- while all 8 damaged credit cells sit 6.2-6.6pp below a sub-null target. Also NON-MONOTONE: as the intact arm degrades past its null, |residual| grows so Delta GROWS, i.e. the test gets EASIER as the reference gets worse. A margin that loosens as the reference degrades is not a margin.",
-   "c_retire_cell": "RECOMMENDED. Honest (A01's own below-floor-carries-no-signal logic, applied to the REFERENCE arm), preserves the pre-registration (Delta's formula untouched; only cell ADMISSIBILITY changes, which is a scope statement not a threshold), and FAILS LOUD -- a retired cell is visibly absent and cannot be mistaken for a passed or failed test, whereas (a) and (b) both fail SILENTLY. Cost: removes cells; SS5 shows it does not empty A04.",
-   "d_change_anchor": "REJECTED. Damaged-arm anchor is circular (a worse arm buys itself a wider margin). Intact ABSOLUTE score re-imports the exact error A01 exists to kill: the MMLU null 0.2845 is 73.5% of the intact 0.3868, so a null-blind margin would be 3.78x the null-calibrated one -- dominated by label/length artefacts, and self-contradictory for a proposal whose claim IS null-calibrated non-inferiority."
-  },
-  "six_conditions_enumerated": {
-   "D1_residual_negative": "CONFIRMED IN DATA: credit convention x MMLU-content ONLY. intact reported 0.386839481555334 vs credit null 0.4537102976783934 -> residual = -6.687081612305939pp, CI95 [-7.7199,-5.6402], p=1e-4 (entirely below zero, not marginal). Delta = -0.6687081612305939pp. Exhaustively checked: 1 of 20 (axis x convention) combinations.",
-   "D2_residual_at_zero": "DOES NOT FIRE at 1B. Smallest positive intact residual is NQ-open 9.6953pp. Threshold pre-registered anyway at residual_floor_pp=1.0 (=> Delta=0.10pp, BELOW every item-level half-width measured in this project, min 0.5429pp PopQA). NEAR-MISS RECORDED at 7B: credit/7B_base residual +1.6878pp => Delta=0.1688pp vs CI half-width 1.0541pp, i.e. Delta 6.2x smaller than the half-width (A01 gate3_content_null_conventions.json). 7B is out of A04 scope.",
-   "D3_residual_ci_straddles_zero": "DOES NOT FIRE. Measured for MMLU-content under all 5 conventions (new) + taken from A03 intact cells for the 3 QA axes: 0 of 20 combinations straddle 0, all at p=1e-4. Enumerated because it is the condition under which the guard would be UNRESOLVABLE rather than merely restrictive.",
-   "D4_baseline_illegitimate": "CONFIRMED, and the honest reason to retire rather than re-margin: under credit at 1B, 8 of 8 damaged cells (-12.93 to -13.24pp) PLUS the intact arm (-6.69pp) are below the null. A floor above the entire arm population is not a floor. A01 found the same at 7B (credit: n_arms_above=1, n_arms_below=5).",
-   "D5_intact_anchor_unstable": "MEASURED, below the fatal threshold but procedurally load-bearing. Two independent admissible intact 1B measurements exist: zwfy6 A03_1B_base content_norm 0.3868394816 vs wzc1 a01_1B_intact_base_full 0.3869819114, identical meta, 48/14042 item flips -> residual drift +0.014243pp -> Delta drift +0.001424pp (0.14% of Delta_MMLU). The 5 nulls are BIT-IDENTICAL between dumps (<1e-12), confirming the null is a tokenizer+dataset property. Consequence: 'Delta = 0.10*residual(intact)' does not by itself NAME a number -> rule G0 pins the anchor.",
-   "D6_delta_below_measurement_resolution": "FIRES for NQ-open; BORDERLINE for MMLU-content. Generalises the design's own SS5.2 NQ-open demotion and makes it checkable BEFORE data by pre-registering a critical discordance rate p*_crit = n*(Delta/(100*1.959964))^2 instead of a half-width nobody can know yet."
-  },
-  "D5_48_flips_named_cause": "the repo rule is that same-arch/same-harness re-runs are BYTE-IDENTICAL (0 flips), so a nonzero difference needs a NAMED cause. Named cause: a HARNESS CODE CHANGE falls strictly between the two evals (A03_1B_base written 2026-08-08 20:49; a01_1B_intact_base_full 2026-08-09 08:25; scripts/eval_olmo2_mmlu_content.py modified by commit 7ac9653 at 2026-08-08 22:29:43 +0800). UNVERIFIED: causality is NOT proven -- the dumps also sit on different disks/nodes. The verified claim is only the weaker one: this is a code-VERSION difference, not a same-code runtime-jitter claim. NO noise floor is asserted.",
-  "d6_critical_values_frozen": {
-   "triviaqa": {
-    "n": 17944,
-    "delta_pp_split": 4.043134195274186,
-    "p_disc_crit": 7.635885208165257,
-    "p_disc_observed_min": 0.22730989393474452,
-    "p_disc_observed_max": 0.2447254984391229,
-    "d6_status": "clear"
-   },
-   "popqa": {
-    "n": 14267,
-    "delta_pp_split": 1.3205298941613515,
-    "p_disc_crit": 0.6476389404977257,
-    "p_disc_observed_min": 0.10945599127378829,
-    "p_disc_observed_max": 0.13059589396713886,
-    "d6_status": "clear"
-   },
-   "mmlu_content": {
-    "n": 14042,
-    "delta_pp_split": 1.0238926078906136,
-    "p_disc_crit": 0.3832142073382244,
-    "p_disc_observed_min": 0.1601421751605534,
-    "p_disc_observed_max": 0.30109670987038883,
-    "d6_status": "recheck"
-   },
-   "nq_open": {
-    "n": 3610,
-    "delta_pp_split": 0.9695290858725762,
-    "p_disc_crit": 0.08833497790667091,
-    "p_disc_observed_min": 0.08610617159633002,
-    "p_disc_observed_max": 0.09839242675870818,
-    "d6_status": "fires"
-   }
-  },
-  "d6_note_barely_healed_is_the_risk": "Pilot Zero scored only arms at >=200k steps (MMLU p_disc 0.1601-0.1727), but the gate's frozen grid STARTS at 2,500 steps. The closest on-disk analogue (A03_1B_keep7_step500, barely healed) has p_disc=0.301097 = 79% of the way to p*_crit=0.3832; its half-width 0.8831pp vs Delta 1.0239pp gives Delta/hw=1.16, only 16% headroom. Restricting to well-healed arms would have produced a FALSELY COMFORTABLE CERTIFIABLE verdict. THE EARLY CHECKPOINTS ARE THE D6 RISK, NOT THE LATE ONES. Also: NQ-open's p*_crit=0.0883 sits INSIDE its observed range 0.0861-0.0984, so its SS5.2 demotion is independently confirmed here from a different statistic.",
-  "guard_rules_verbatim_ids": {
-   "G0": "anchor pinning by path + SHA256 before any gate GPU. 2026-08-10 pinning = zwfy6:olmo2_mmlu_content_results/A03_1B_base/per_example_mmlu.jsonl (md5 d1a7b1cefc0031afa84e7b9334a08bc5) + matching A03_1B_base* closed-book dumps, i.e. A03's anchor, the one Pilot Zero used. The wzc1 a01_1B_intact_base_full dump is a D5 sensitivity check ONLY and is not used for Delta.",
-   "G1": "admissibility precedes testing: D1-D6 evaluated per cell BEFORE NI(Delta). A cell failing D1/D2/D3/D4/D6 is NOT_CERTIFIABLE -- NI is NOT RUN, no accept/reject reported, and the cell is EXCLUDED FROM THE BH FAMILY (declare the reduced family size).",
-   "G2": "NO MARGIN SUBSTITUTION EVER. max(.,eps), 0.10*|residual|, and any anchor change are PROHIBITED for the remainder of A04. Only admissible responses: retire the cell, or (with explicit re-registration) change the INTERFACE so the null becomes admissible.",
-   "G3": "frozen numeric triggers: D1 residual<0; D2 0<=residual<=1.0pp; D3 two-sided 95% paired-bootstrap CI (10,000 resamples, A03 paired_bootstrap) contains 0; D4 intact AND every damaged arm below null, OR structural degeneracy (a single constant on >99% of items, or >=99% tie rate in the null's winner set); D5 |Delta drift across admissible anchors| >= 0.10*Delta (recorded, mandates G0, not fatal); D6 measured p_disc > p*_crit.",
-   "G4": "the ONLY post-data step is arithmetic: a NEEDS_RECHECK_AFTER_DATA cell is so marked ONLY because D6's input p_disc is a property of the unseen arm. The recheck is the single comparison p_disc > p*_crit with p*_crit ALREADY FIXED. No threshold may be adjusted then.",
-   "G5": "convention is part of Delta's definition. Decision convention remains split (A01, unchanged). The other four are sensitivity only and CANNOT promote a NOT_CERTIFIABLE cell to CERTIFIABLE.",
-   "G6": "every NOT_CERTIFIABLE cell is listed in the writeup with the condition and the triggering number. Retired cells are NEVER reported as 'NI rejected'."
-  },
-  "d4_threshold_calibration_check": "the >99%-constant / >=99%-tie-rate thresholds in G3 were checked against data so they separate the real cases: barely_healed modal_pred_share=1.0 (FIRES, emits letter A on 14042/14042); pruned_healed 0.6440 and intact 0.5762 (do NOT fire); MMLU longest-option tied_longest_rate=0.3422 (does NOT fire); winogrande tie rate 1.0000 (FIRES, quoted from status/scout_21/lane2_a01_gate2.md, UNVERIFIED here).",
-  "cell_classification": {
-   "family": "4 arms (A1..A4) x 6 checkpoints {2500,5000,10000,20000,40000,80000} x 4 axes = 96 cells; 72 DECISION cells after the design's own NQ-open demotion (SS5.2)",
-   "why_fixable_pre_data": "the guard's verdict is a property of (axis, convention) ONLY, because residual(intact,x) depends on neither the arm nor the checkpoint -- the intact anchor is the same model in every cell.",
-   "by_convention": {
-    "split": {
-     "all_96_cells": {
-      "CERTIFIABLE": 48,
-      "NOT_CERTIFIABLE": 24,
-      "NEEDS_RECHECK_AFTER_DATA": 24
-     },
-     "decision_72_cells": {
-      "CERTIFIABLE": 48,
-      "NOT_CERTIFIABLE": 0,
-      "NEEDS_RECHECK_AFTER_DATA": 24
-     },
-     "per_axis": {
-      "triviaqa": {
-       "verdict": "CERTIFIABLE",
-       "residual_intact_pp": 40.43134195274186,
-       "residual_intact_ci95_pp": [
-        39.706865804725815,
-        41.139099420419086
-       ],
-       "delta_pp": 4.043134195274186,
-       "conditions_fired": [],
-       "conditions_needing_recheck": []
+  "related_work_status": {
+    "status": "audited",
+    "audited": "2026-08-09",
+    "document": "RELATED_WORK.md",
+    "supersedes": "RELATED_WORK_GAP_AUDIT_20260808.md rating of 'insufficient' for A04",
+    "verdict": "GATE CLEARED FOR THE TOPIC, BUT A04 MUST BE NARROWED. No paper preempts A04's residual claim at A04's scope, but the collisions jointly strip four things the current PROPOSAL.md implicitly claims. PROPOSAL.md must be rewritten to the narrowed claim before any writeup.",
+    "closest_prior_art": [
+      {
+        "id": "arXiv:2606.14150",
+        "title": "Small LLMs: Pruning vs. Training from Scratch",
+        "venue_verified": "PREPRINT (DBLP journals/corr/abs-2606-14150, CoRR 2026, timestamp 2026-07-07; OpenReview no match)",
+        "verified_by": "DBLP direct .bib record + OpenReview absence. S2 was 429 rate-limited on this ID -- this is the one call resting on one positive source plus an absence.",
+        "why_closest": "THE CLOSEST METHODOLOGICAL COLLISION, and it was NOT named by the 2026-08-08 audit. Llama-3.1-8B at ratios 0.5-0.8, six pruning methods incl. depth, under two CONTROLLED TOKEN-MATCHED settings (same-budget pruned-init vs random-init; and scratch given the whole pipeline's budget). This is largely A04's proposed experimental design.",
+        "kills": "A04's claim to novelty for 'controlled matched-token comparison of pruned vs from-scratch initialisation'. Must cite and adopt, not claim.",
+        "does_not_kill": "Its outcomes are superiority comparisons and a pipeline-choice recommendation. No per-metric best-constant floor, no multi-seed variance model, no equivalence/non-inferiority statistic, no stopping rule for a given recovery run.",
+        "concurrency": "2026-06-12, under two months before this audit -> concurrent by the standing directive, so it could not preempt A04 even if scope matched."
       },
-      "popqa": {
-       "verdict": "CERTIFIABLE",
-       "residual_intact_pp": 13.205298941613513,
-       "residual_intact_ci95_pp": [
-        12.616527651223103,
-        13.787061049975469
-       ],
-       "delta_pp": 1.3205298941613515,
-       "conditions_fired": [],
-       "conditions_needing_recheck": []
+      {
+        "id": "arXiv:2607.00368",
+        "title": "Beyond Perplexity: A Behavioral Evaluation Framework for Deployment-Memory Claims in LLM Test-Time Training",
+        "venue_verified": "PREPRINT (DBLP journals/corr/abs-2607-00368, CoRR 2026; S2 venue empty; OpenReview no match)",
+        "verified_by": "DBLP direct .bib + S2 cross-check",
+        "why_closest": "CLOSEST COLLISION TO A04'S FRAMING -- closer than any paper the audit named. 'A protocol that calibrates a claim to the evidence that licenses it, because likelihood proxies improve while the target capability does not move' summarises both it and A04. Its LoRA diagnostic (support/answer loss down, free-form recall at ZERO across three Qwen3 scales) is structurally A04's own robust starting point.",
+        "kills": "A04's claim to the framing 'proxy metrics overstate capability, so calibrate claims to evidence'.",
+        "does_not_kill": "Its injury is test-time training on an INTACT model; A04's is structural depth injury healed by continued pretraining. Its ladder separates claim types; it supplies no quantitative stopping threshold for a training run."
       },
-      "mmlu_content": {
-       "verdict": "NEEDS_RECHECK_AFTER_DATA",
-       "residual_intact_pp": 10.238926078906136,
-       "residual_intact_ci95_pp": [
-        9.314912405640221,
-        11.180164862555191
-       ],
-       "delta_pp": 1.0238926078906136,
-       "conditions_fired": [],
-       "conditions_needing_recheck": [
-        "D6_delta_below_measurement_resolution"
-       ]
+      {
+        "id": "arXiv:2602.01997",
+        "title": "On the Limits of Layer Pruning for Generative Reasoning in Large Language Models",
+        "venue_verified": "UNDER REVIEW, NOT PUBLISHED. DBLP journals/corr/abs-2602-01997 = CoRR 2026 only. OpenReview note LUBdOuX62N venueid=aclweb.org/ACL/ARR/2026/May/Submission, its own bibtex reads 'Submitted to ACL Rolling Review - May 2026, note={under review}'. S2 venue empty.",
+        "verified_by": "ACL family -> DBLP + Anthology is the authority (NOT OpenReview venueid). Anthology search page is client-side rendered and unscrapable; but a paper still in ARR May 2026 review cannot be in the Anthology. CITE AS ARXIV PREPRINT / ARR UNDER REVIEW.",
+        "why_closest": "Sharpest of the three collisions the audit DID name. Already establishes A04's most quotable intuition: recovery is metric-dependent -- classification recovers to ~90% while generative reasoning (GSM8K, HumanEval+) does not, persisting even at ~100B post-pruning tokens and under task-aligned full FT on self-generated GSM8K.",
+        "kills": "A04 may NOT present 'different metrics disagree about recovery' as a discovery.",
+        "does_not_kill": "Recovery axis is SFT on self-generated data under a constrained budget, not matched-corpus CPT. One run per config, no variance model. Reports THAT recovery is limited; offers no threshold, equivalence test, or stopping criterion.",
+        "positioning": "follow-up-that-fixes-a-defect (procedural: multi-seed, matched budget, pre-registered decision rule), NOT differentiation-by-topic. Credit C2 for metric-dependence."
       },
-      "nq_open": {
-       "verdict": "NOT_CERTIFIABLE",
-       "residual_intact_pp": 9.695290858725762,
-       "residual_intact_ci95_pp": [
-        8.698060941828254,
-        10.720221606648199
-       ],
-       "delta_pp": 0.9695290858725762,
-       "conditions_fired": [
-        "D6_delta_below_measurement_resolution"
-       ],
-       "conditions_needing_recheck": []
+      {
+        "id": "arXiv:2508.13533",
+        "title": "Compressed Models are NOT Trust-equivalent to Their Large Counterparts",
+        "venue_verified": "PREPRINT (DBLP journals/corr/abs-2508-13533, CoRR 2025; OpenReview no match)",
+        "verified_by": "DBLP direct .bib + OpenReview absence",
+        "why_closest": "CLOSEST PAPER TO THE WORD 'CERTIFICATION'. Same claim structure (matched top-line does not imply equivalent) and same prescription (multi-axis equivalence check before drop-in replacement). Finds low interpretability alignment and calibration mismatch between BERT-base and compressed variants even at near-identical accuracy.",
+        "kills": "A04 may not claim to be first to argue performance parity != equivalence for a compressed model; and may not use 'certification' undefined.",
+        "does_not_kill": "BERT-base classification, no structural depth injury, NO recovery training at all, axes are interpretability/calibration not capability-vs-null. Static two-model comparison, not a trajectory with a stopping decision."
+      },
+      {
+        "id": "arXiv:2601.22950",
+        "title": "Perplexity Cannot Always Tell Right from Wrong",
+        "venue_verified": "ICML 2026 Workshop CTB *SUBMISSION*, NOT an accepted poster. OpenReview venueid=ICML.cc/2026/Workshop/CTB/Submission -- note the /Submission suffix, contrast the accepted C1 whose venueid has no suffix and whose venue reads 'AdaptFM Poster'. DBLP: CoRR 2026.",
+        "verified_by": "OpenReview venueid + DBLP",
+        "why_closest": "THEORETICALLY PROVES A04's central negative premise. Via Transformer continuity: if a compact decoder-only Transformer predicts any sequence accurately and confidently, another sequence must exist with very low perplexity that it predicts incorrectly; iso-perplexity analysis shows perplexity does not always select the more accurate model. The term 'iso-perplexity' is already in use.",
+        "kills": "A04 may not claim the PPL-insufficiency insight.",
+        "does_not_kill": "Model-selection theory on intact models. No protocol, no damage regime, no empirical recovery ladder. Usefully means A04's matched-PPL arm tests a theoretically predicted effect rather than fishing."
+      },
+      {
+        "id": "arXiv:2605.15491",
+        "title": "Ghosted Layers: Unconstrained Activation Alignment for Recovering Layer-Pruned LLMs",
+        "venue_verified": "ICML 2026 Workshop AdaptFM, POSTER (accepted). OpenReview note U37zxXMEE0, venue='AdaptFM Poster', venueid=ICML.cc/2026/Workshop/AdaptFM. DBLP has it only as CoRR 2026. S2 reports venue 'arXiv.org' -- EXACTLY the S2 lag the repo rule warns about; S2 alone would have called it a preprint.",
+        "verified_by": "OpenReview venueid (ICML = OpenReview family)",
+        "overlap": "Same object (layer-pruned LLM to be brought back), same reported quantities (accuracy + perplexity), same interface-mismatch-at-the-cut intuition. Closed-form optimal LINEAR operator from a small calibration set, training-free.",
+        "does_not_kill": "Training-free BY CONSTRUCTION -> no training trajectory, hence no token budget, no seed, no checkpoint grid, and NO POSSIBLE STOPPING QUESTION. Reports improvement vs baseline, never sufficiency. A04 is downstream of it, not competing.",
+        "also_kills": "A04 may not claim novelty for 'a layer-pruned model can be repaired by a linear map at the cut'."
+      },
+      {
+        "id": "arXiv:2510.15304",
+        "title": "Layer as Puzzle Pieces: Compressing Large Language Models through Layer Concatenation (CoMe)",
+        "venue_verified": "NeurIPS 2025 POSTER. OpenReview note enhFXzKii4, venue='NeurIPS 2025 poster', venueid=NeurIPS.cc/2025/Conference, and invitations include NeurIPS.cc/2025/Conference/Submission22642/-/Camera_Ready_Revision (the accept signal). NOTE volume disagreement: S2 says 'Advances in NeurIPS 38', OpenReview's own bibtex says Thirty-ninth -- cite from OpenReview.",
+        "verified_by": "OpenReview venueid + Camera_Ready_Revision invitation",
+        "overlap": "Progressive layer pruning + concatenation-based merging + hierarchical distillation recovery. 30% of LLaMA-2-7b removed retains 83% of original average accuracy over seven benchmarks.",
+        "does_not_kill": "Compression-METHOD paper whose recovery stage is instrumental. The '83% retention' is a ratio against an unconditioned baseline averaged over seven benchmarks -- no per-benchmark best-constant floor, no seeds, no equivalence test, no stopping rule. Its headline is a TARGET for A04's critique. A04's RATIO(rho)=0.85 rule is calibrated to this style of headline deliberately."
+      },
+      {
+        "id": "arXiv:2606.03002",
+        "title": "Perplexity Can Miss SAE Feature Damage Under Quantization",
+        "venue_verified": "UNDER REVIEW FOR TMLR (not accepted). OpenReview venue='Under review for TMLR', venueid=TMLR/Under_Review. DBLP: CoRR 2026.",
+        "verified_by": "OpenReview venueid (TMLR = OpenReview family) + DBLP",
+        "overlap": "Same logical move (behavioural parity != recovery) in quantization, and it ALREADY USES matched-perplexity magnitude pruning as a comparison (Jaccard 0.79-0.86 feature-damage overlap with RTN, damage-score Spearman 0.98). INT7 improves perplexity while degrading 18.7% of active features.",
+        "kills": "A04 may not claim matched-PPL comparison between arms as a new manoeuvre.",
+        "does_not_kill": "Residual axis is interpretability-feature fidelity, not task capability. No training trajectory, no stopping question."
       }
-     }
+    ],
+    "mandatory_citations_venue_verified": {
+      "arXiv:2403.17887 The Unreasonable Ineffectiveness of the Deeper Layers": "ICLR 2025 Poster (OpenReview venueid=ICLR.cc/2025/Conference + Submission13737/-/Camera_Ready_Revision); also NeurIPS 2024 SciForDL workshop",
+      "arXiv:2407.14679 Compact Language Models via Pruning and Knowledge Distillation (Minitron)": "NeurIPS 2024 Poster (OpenReview venueid=NeurIPS.cc/2024/Conference + Submission15087/-/Camera_Ready_Revision)",
+      "arXiv:2402.02834 Shortened LLaMA": "ICLR 2024 Workshop ME-FoMo Poster (venueid=ICLR.cc/2024/Workshop/ME-FoMo) + CoRR 2024. TITLE DIFFERS between arXiv ('...Depth Pruning for LLMs with Comparison of Retraining Methods') and the venue record ('...A Simple Depth Pruning for Large Language Models') -- cite carefully.",
+      "arXiv:2408.11796 LLM Pruning and Distillation in Practice (Minitron Approach)": "UNVERIFIED -- not checked in this pass"
     },
-    "first": {
-     "all_96_cells": {
-      "CERTIFIABLE": 48,
-      "NOT_CERTIFIABLE": 24,
-      "NEEDS_RECHECK_AFTER_DATA": 24
-     },
-     "decision_72_cells": {
-      "CERTIFIABLE": 48,
-      "NOT_CERTIFIABLE": 0,
-      "NEEDS_RECHECK_AFTER_DATA": 24
-     },
-     "per_axis": {
-      "triviaqa": {
-       "verdict": "CERTIFIABLE",
-       "residual_intact_pp": 40.43134195274186,
-       "residual_intact_ci95_pp": [
-        39.706865804725815,
-        41.139099420419086
-       ],
-       "delta_pp": 4.043134195274186,
-       "conditions_fired": [],
-       "conditions_needing_recheck": []
-      },
-      "popqa": {
-       "verdict": "CERTIFIABLE",
-       "residual_intact_pp": 13.205298941613513,
-       "residual_intact_ci95_pp": [
-        12.616527651223103,
-        13.787061049975469
-       ],
-       "delta_pp": 1.3205298941613515,
-       "conditions_fired": [],
-       "conditions_needing_recheck": []
-      },
-      "mmlu_content": {
-       "verdict": "NEEDS_RECHECK_AFTER_DATA",
-       "residual_intact_pp": 10.575416607320893,
-       "residual_intact_ci95_pp": [
-        9.535678678250962,
-        11.586668565731378
-       ],
-       "delta_pp": 1.0575416607320893,
-       "conditions_fired": [],
-       "conditions_needing_recheck": [
-        "D6_delta_below_measurement_resolution"
-       ]
-      },
-      "nq_open": {
-       "verdict": "NOT_CERTIFIABLE",
-       "residual_intact_pp": 9.695290858725762,
-       "residual_intact_ci95_pp": [
-        8.698060941828254,
-        10.720221606648199
-       ],
-       "delta_pp": 0.9695290858725762,
-       "conditions_fired": [
-        "D6_delta_below_measurement_resolution"
-       ],
-       "conditions_needing_recheck": []
-      }
-     }
+    "must_not_claim": [
+      "First to study layer-pruning recovery (C1/C2/C3 + the 2026-08-08 audit's own wording).",
+      "First to observe recovery is metric-dependent / classification recovers while generative reasoning does not -- arXiv:2602.01997 owns this.",
+      "First to run a controlled token-matched pruned-init vs scratch-init comparison -- arXiv:2606.14150 owns this, at 8B across six pruning methods and two budget regimes, broader than A04's 1B MVP.",
+      "First to note perplexity is an unreliable capability proxy -- arXiv:2601.22950 PROVES it; 2606.03002 (quantization) and 2607.00368 (TTT) show it empirically.",
+      "First to propose calibrating claims to the evidence that supports them -- arXiv:2607.00368 owns this framing.",
+      "First to argue performance parity != equivalence for a compressed model -- arXiv:2508.13533 owns this.",
+      "First to compare arms at matched perplexity -- arXiv:2606.03002 already does it.",
+      "'Certification' left undefined -- it must mean equivalence-to-target on null-calibrated capability axes with a pre-registered threshold, else it collides directly with arXiv:2508.13533.",
+      "A depth SCALING LAW from the existing Paper B keepN ladder -- confounded three ways in our own data (see warning_evidence_reverified_20260809).",
+      "That Paper B used differential LR -- verified false.",
+      "Novelty for 'a layer-pruned model can be repaired by a linear map at the cut' -- arXiv:2605.15491 owns this in closed form, training-free.",
+      "Permutation-null / BH novelty -- A01's prior art rules apply here too; the null-calibration protocol is cited FROM A01, not re-claimed."
+    ],
+    "safe_residual_claim": "A pre-registered, multi-seed, matched-corpus/matched-token STOPPING RULE for post-injury recovery training, whose accept decision is an EQUIVALENCE (non-inferiority) test against the intact target on capability axes each calibrated to its own best-constant floor, plus a demonstration that the stopping rules currently in use (likelihood/PPL plateau; aggregate retention ratio) accept models this rule rejects.",
+    "why_the_residual_claim_survives": "Searches for abs:'non-inferiority' AND abs:'language model', abs:'equivalence test' AND abs:'neural network', and abs:'TOST' OR abs:'two one-sided tests' returned ZERO pruning/recovery papers. The only ML-adjacent TOST hit is arXiv:2604.14419 (Equifinality in MoE), which TOSTs MoE ROUTING-TOPOLOGY perplexity at 76-84M params -- unrelated object. Every collision above runs SUPERIORITY comparisons; 2508.13533 argues for equivalence but supplies no test statistic. Equivalence testing is essentially absent from the pruning-recovery literature."
+  },
+  "blocked_by": {
+    "related_work_gate": "CLEARED 2026-08-09 (see related_work_status). NO LONGER BLOCKING.",
+    "still_blocking_before_any_gate_gpu": [
+      "PROPOSAL.md rewrite to the narrowed safe_residual_claim -- its current '\u63d0\u6848' list is largely arXiv:2606.14150's design and its motivation is largely 2607.00368/2601.22950's argument.",
+      "CODE (CPU, ~1 line, BLOCKING for K2): scripts/train_olmo2_arch_probe2.py:863 is DistributedSampler(ds, shuffle=True) with NO seed= argument, so its private generator uses self.seed=0 regardless of --seed. attention_dropout=0.0 and grep -c dropout on the trainer = 0. Therefore --seed moves ONLY the fresh-tail init: every 'seed' arm in this repo is fresh-block-INIT variance, NOT training-seed variance, and data order is identical across seeds. Without the fix, K2's variance estimate omits the data-order component and a K2 PASS would be unearned. Arm A2 (n_fresh_layers=0) has no fresh block at all, so its seeds are byte-identical and its sd_run is exactly 0 -- a missing measurement, not a variance estimate.",
+      "USER APPROVAL for GPU. The full gate is 1,077-4,309 GPU-h; nothing beyond Pilot Zero may be launched without it."
+    ]
+  },
+  "gate_design": {
+    "document": "A04_GATE_DESIGN.md",
+    "written": "2026-08-09",
+    "gpu_spent_designing": 0,
+    "kill_condition_verbatim": "A04 is killed if ANY of the following three clauses fires. K1 -- no rule disagreement: across the arms, at every checkpoint on the pre-frozen grid where the PPL-plateau rule PLATEAU(T) accepts, the non-inferiority rule NI(delta) also accepts on at least 3 of the 4 capability axes; AND the count of (arm, checkpoint) cells where the two rules disagree is <= 1 out of >= 24 evaluated cells. K2 -- disagreement drowned by seed variance: for the primary axis (TriviaQA EM), the between-seed standard deviation of the calibrated residual at the pre-frozen apex checkpoint, pooled across arms with S >= 3 seeds each, is >= 50% of the smallest between-arm residual difference the paper wants to claim; equivalently, the one-sided 95% run-level bound t_{0.05,S-1} * sd_run / sqrt(S) exceeds the pre-registered non-inferiority margin delta = 10% of the intact arm's own calibrated residual on >= 2 of the 4 axes. K3 -- axes at floor: at the target scale, >= 3 of the 4 capability axes have the INTACT arm's calibrated residual (reported minus construct-appropriate best-constant null) below 5pp, or have every damaged arm indistinguishable from its own best-constant predictor at BH q=.05.",
+    "frozen_constants": {
+      "T_plateau": "2.0% relative in-domain val PPL improvement per 5,000 steps",
+      "rho_retention": 0.85,
+      "delta_noninferiority": "0.10 * residual(intact, axis), per-axis",
+      "checkpoint_grid_steps": [
+        2500,
+        5000,
+        10000,
+        20000,
+        40000,
+        80000
+      ],
+      "note": "frozen by this commit; if any is later changed the gate is VOID and must be re-run"
     },
-    "last": {
-     "all_96_cells": {
-      "CERTIFIABLE": 48,
-      "NOT_CERTIFIABLE": 24,
-      "NEEDS_RECHECK_AFTER_DATA": 24
-     },
-     "decision_72_cells": {
-      "CERTIFIABLE": 48,
-      "NOT_CERTIFIABLE": 0,
-      "NEEDS_RECHECK_AFTER_DATA": 24
-     },
-     "per_axis": {
-      "triviaqa": {
-       "verdict": "CERTIFIABLE",
-       "residual_intact_pp": 40.43134195274186,
-       "residual_intact_ci95_pp": [
-        39.706865804725815,
-        41.139099420419086
-       ],
-       "delta_pp": 4.043134195274186,
-       "conditions_fired": [],
-       "conditions_needing_recheck": []
-      },
-      "popqa": {
-       "verdict": "CERTIFIABLE",
-       "residual_intact_pp": 13.205298941613513,
-       "residual_intact_ci95_pp": [
-        12.616527651223103,
-        13.787061049975469
-       ],
-       "delta_pp": 1.3205298941613515,
-       "conditions_fired": [],
-       "conditions_needing_recheck": []
-      },
-      "mmlu_content": {
-       "verdict": "NEEDS_RECHECK_AFTER_DATA",
-       "residual_intact_pp": 10.468594217347954,
-       "residual_intact_ci95_pp": [
-        9.443099273607748,
-        11.47984617575844
-       ],
-       "delta_pp": 1.0468594217347955,
-       "conditions_fired": [],
-       "conditions_needing_recheck": [
-        "D6_delta_below_measurement_resolution"
-       ]
-      },
-      "nq_open": {
-       "verdict": "NOT_CERTIFIABLE",
-       "residual_intact_pp": 9.695290858725762,
-       "residual_intact_ci95_pp": [
-        8.698060941828254,
-        10.720221606648199
-       ],
-       "delta_pp": 0.9695290858725762,
-       "conditions_fired": [
-        "D6_delta_below_measurement_resolution"
-       ],
-       "conditions_needing_recheck": []
-      }
-     }
+    "primary_statistic": "PER-ARM ONE-SIDED NON-INFERIORITY BOUND, deliberately NOT a rank correlation over rungs. B04 hit the n=6 exact-permutation floor (2/720=0.002778) TWICE on OLMo-2-7B and still died on Qwen3-8B (rho fell to +0.4286 p=0.42 / -0.4857 p=0.36, p x130-150) -- so maximal significance at n=6 is not evidence of a real effect, and adding rungs to buy permutation p is the move that failed. Power here comes from S (seeds) and item count n."
+  },
+  "nulls_per_metric": {
+    "source": "proposal/active/A03-parametric-vs-external-memory/evidence/a03_1b_floor_nulls.json + GATE_FOURAXES_VERDICT.md, both measured on OLMo-2 1B (same scale as this gate)",
+    "TriviaQA_EM_PRIMARY": {
+      "n": 17944,
+      "null": 0.0025635309852875612,
+      "null_kind": "best-constant answer string 'australia commonwealth realm'",
+      "intact_1B": 0.4069,
+      "intact_residual": 0.4043,
+      "delta_pp": 4.043
     },
-    "credit": {
-     "all_96_cells": {
-      "CERTIFIABLE": 48,
-      "NOT_CERTIFIABLE": 48,
-      "NEEDS_RECHECK_AFTER_DATA": 0
-     },
-     "decision_72_cells": {
-      "CERTIFIABLE": 48,
-      "NOT_CERTIFIABLE": 24,
-      "NEEDS_RECHECK_AFTER_DATA": 0
-     },
-     "per_axis": {
-      "triviaqa": {
-       "verdict": "CERTIFIABLE",
-       "residual_intact_pp": 40.43134195274186,
-       "residual_intact_ci95_pp": [
-        39.706865804725815,
-        41.139099420419086
-       ],
-       "delta_pp": 4.043134195274186,
-       "conditions_fired": [],
-       "conditions_needing_recheck": []
-      },
-      "popqa": {
-       "verdict": "CERTIFIABLE",
-       "residual_intact_pp": 13.205298941613513,
-       "residual_intact_ci95_pp": [
-        12.616527651223103,
-        13.787061049975469
-       ],
-       "delta_pp": 1.3205298941613515,
-       "conditions_fired": [],
-       "conditions_needing_recheck": []
-      },
-      "mmlu_content": {
-       "verdict": "NOT_CERTIFIABLE",
-       "residual_intact_pp": -6.687081612305939,
-       "residual_intact_ci95_pp": [
-        -7.719876086027631,
-        -5.640222190571144
-       ],
-       "delta_pp": -0.668708161230594,
-       "conditions_fired": [
-        "D1_residual_negative",
-        "D4_baseline_illegitimate"
-       ],
-       "conditions_needing_recheck": [],
-       "d4_reason": "all 8/8 damaged cells AND the intact arm are below this null -- it is above the entire arm population, so it is not a floor (A01 gate-3 found the same at 7B: 5 of 6 arms below, only intact above by 1.69pp)"
-      },
-      "nq_open": {
-       "verdict": "NOT_CERTIFIABLE",
-       "residual_intact_pp": 9.695290858725762,
-       "residual_intact_ci95_pp": [
-        8.698060941828254,
-        10.720221606648199
-       ],
-       "delta_pp": 0.9695290858725762,
-       "conditions_fired": [
-        "D6_delta_below_measurement_resolution"
-       ],
-       "conditions_needing_recheck": []
-      }
-     }
+    "PopQA_EM": {
+      "n": 14267,
+      "null": 0.0229200252330553,
+      "null_kind": "best-constant string 'association football', argmax over 303 candidates",
+      "intact_1B": 0.155,
+      "intact_residual": 0.1321,
+      "delta_pp": 1.321
     },
-    "wrong": {
-     "all_96_cells": {
-      "CERTIFIABLE": 72,
-      "NOT_CERTIFIABLE": 24,
-      "NEEDS_RECHECK_AFTER_DATA": 0
-     },
-     "decision_72_cells": {
-      "CERTIFIABLE": 72,
-      "NOT_CERTIFIABLE": 0,
-      "NEEDS_RECHECK_AFTER_DATA": 0
-     },
-     "per_axis": {
-      "triviaqa": {
-       "verdict": "CERTIFIABLE",
-       "residual_intact_pp": 40.43134195274186,
-       "residual_intact_ci95_pp": [
-        39.706865804725815,
-        41.139099420419086
-       ],
-       "delta_pp": 4.043134195274186,
-       "conditions_fired": [],
-       "conditions_needing_recheck": []
-      },
-      "popqa": {
-       "verdict": "CERTIFIABLE",
-       "residual_intact_pp": 13.205298941613513,
-       "residual_intact_ci95_pp": [
-        12.616527651223103,
-        13.787061049975469
-       ],
-       "delta_pp": 1.3205298941613515,
-       "conditions_fired": [],
-       "conditions_needing_recheck": []
-      },
-      "mmlu_content": {
-       "verdict": "CERTIFIABLE",
-       "residual_intact_pp": 19.071357356501924,
-       "residual_intact_ci95_pp": [
-        18.11707733941034,
-        20.018515880928643
-       ],
-       "delta_pp": 1.9071357356501926,
-       "conditions_fired": [],
-       "conditions_needing_recheck": []
-      },
-      "nq_open": {
-       "verdict": "NOT_CERTIFIABLE",
-       "residual_intact_pp": 9.695290858725762,
-       "residual_intact_ci95_pp": [
-        8.698060941828254,
-        10.720221606648199
-       ],
-       "delta_pp": 0.9695290858725762,
-       "conditions_fired": [
-        "D6_delta_below_measurement_resolution"
-       ],
-       "conditions_needing_recheck": []
-      }
-     }
+    "MMLU_content": {
+      "n": 14042,
+      "null": 0.28445022076627263,
+      "null_kind": "longest-option, split-tie convention (pre-registered; 34.22% of items have >=2 maximal-length options)",
+      "intact_1B": 0.3868,
+      "intact_residual": 0.1023,
+      "delta_pp": 1.023
+    },
+    "NQ_open_EM": {
+      "n": 3610,
+      "null": 0.0055,
+      "null_kind": "best-constant answer",
+      "intact_1B": 0.1025,
+      "intact_residual": 0.097,
+      "delta_pp": 0.97,
+      "DEMOTED": "item-level 95% CI half-width is 1.459-2.063pp at n=3610, which ALREADY EXCEEDS delta=0.970pp. NQ-open cannot carry a 10%-of-residual non-inferiority decision at this n and must be secondary/descriptive only."
+    },
+    "in_domain_PPL": {
+      "role": "used ONLY by PLATEAU(T); never a capability axis; gets no null",
+      "intact_1B": 10.6416,
+      "n_windows": 4096,
+      "n_tokens": 8384512
+    },
+    "BANNED_interfaces": {
+      "MMLU_letter": "at 1B the pruned arm scores 0.2512 vs best-constant always-D 0.2689 = significantly BELOW floor (p=3.4e-3) and indistinguishable from its own modal-C constant (p=0.28); the barely-healed control emits A on 14042/14042 items. 0.25 IS NEVER THE MMLU NULL.",
+      "raw_contains_on_generative_QA": "healing changes verbosity ~6x (mean pred chars 13.4 intact -> 80.8 pruned+healed) and contains rewards length. PopQA contains residual fraction reads 56.4% naive but 17.0% length-matched. Use contains_lenmatched only."
+    },
+    "nulls_if_gate_widened": {
+      "boolq": "0.6217 always-B, NOT 0.50",
+      "openbookqa": "0.3635 longest-option, NOT 0.25",
+      "arc_challenge": 0.2654,
+      "piqa": 0.5049,
+      "commonsense_qa": 0.2088,
+      "winogrande": "structurally degenerate (identical norm_lens, 100% tie rate) -- control only, never evidence",
+      "source": "status/scout_21/lane2_a01_gate2.md"
     }
-   },
-   "HEADLINE_prereg_split": "24 of 96 cells (25%) are NOT_CERTIFIABLE -- ALL 24 are NQ-open, and ALL 24 were ALREADY excluded from decisions by the design's own SS5.2 demotion. Of the 72 DECISION cells, 0 are NOT_CERTIFIABLE; 48 CERTIFIABLE + 24 (MMLU-content) NEEDS_RECHECK_AFTER_DATA on the fixed trigger p_disc>0.3832. => THE GUARD REMOVES NO DECISION CAPACITY A04 POSSESSED BEFORE IT."
   },
-  "kill_clause_impact": {
-   "split": {
-    "surviving_decision_axes": [
-     "triviaqa",
-     "popqa",
-     "mmlu_content"
-    ],
-    "n_surviving_decision_axes": 3,
-    "K1_clause_a_literal_3_of_4_satisfiable": true,
-    "K1_DISABLED_if_not_satisfiable": false,
-    "K1_rescaled_threshold": 3,
-    "K1_ge24_cell_precondition_met": true,
-    "n_cells_remaining_decision": 72,
-    "K2_literal_2_of_4_satisfiable": true,
-    "K2_rescaled_threshold": 2,
-    "K3_n_axes_intact_residual_below_5pp": 0,
-    "K3_axes_below_5pp": [],
-    "K3_literal_fires": false
-   },
-   "first": {
-    "surviving_decision_axes": [
-     "triviaqa",
-     "popqa",
-     "mmlu_content"
-    ],
-    "n_surviving_decision_axes": 3,
-    "K1_clause_a_literal_3_of_4_satisfiable": true,
-    "K1_DISABLED_if_not_satisfiable": false,
-    "K1_rescaled_threshold": 3,
-    "K1_ge24_cell_precondition_met": true,
-    "n_cells_remaining_decision": 72,
-    "K2_literal_2_of_4_satisfiable": true,
-    "K2_rescaled_threshold": 2,
-    "K3_n_axes_intact_residual_below_5pp": 0,
-    "K3_axes_below_5pp": [],
-    "K3_literal_fires": false
-   },
-   "last": {
-    "surviving_decision_axes": [
-     "triviaqa",
-     "popqa",
-     "mmlu_content"
-    ],
-    "n_surviving_decision_axes": 3,
-    "K1_clause_a_literal_3_of_4_satisfiable": true,
-    "K1_DISABLED_if_not_satisfiable": false,
-    "K1_rescaled_threshold": 3,
-    "K1_ge24_cell_precondition_met": true,
-    "n_cells_remaining_decision": 72,
-    "K2_literal_2_of_4_satisfiable": true,
-    "K2_rescaled_threshold": 2,
-    "K3_n_axes_intact_residual_below_5pp": 0,
-    "K3_axes_below_5pp": [],
-    "K3_literal_fires": false
-   },
-   "credit": {
-    "surviving_decision_axes": [
-     "triviaqa",
-     "popqa"
-    ],
-    "n_surviving_decision_axes": 2,
-    "K1_clause_a_literal_3_of_4_satisfiable": false,
-    "K1_DISABLED_if_not_satisfiable": true,
-    "K1_rescaled_threshold": 2,
-    "K1_ge24_cell_precondition_met": true,
-    "n_cells_remaining_decision": 48,
-    "K2_literal_2_of_4_satisfiable": true,
-    "K2_rescaled_threshold": 1,
-    "K3_n_axes_intact_residual_below_5pp": 1,
-    "K3_axes_below_5pp": [
-     "mmlu_content"
-    ],
-    "K3_literal_fires": false,
-    "K3_coupling_warning": "K3 counts a NEGATIVE intact residual as 'below 5pp', so a convention that pushes axes below their null pushes K3 towards firing -- but for the wrong reason (an inadmissible null, not an unmeasurable scale). Axes retired by D1/D4 must be EXCLUDED from K3's count, not counted as at-floor."
-   },
-   "wrong": {
-    "surviving_decision_axes": [
-     "triviaqa",
-     "popqa",
-     "mmlu_content"
-    ],
-    "n_surviving_decision_axes": 3,
-    "K1_clause_a_literal_3_of_4_satisfiable": true,
-    "K1_DISABLED_if_not_satisfiable": false,
-    "K1_rescaled_threshold": 3,
-    "K1_ge24_cell_precondition_met": true,
-    "n_cells_remaining_decision": 72,
-    "K2_literal_2_of_4_satisfiable": true,
-    "K2_rescaled_threshold": 2,
-    "K3_n_axes_intact_residual_below_5pp": 0,
-    "K3_axes_below_5pp": [],
-    "K3_literal_fires": false
-   }
+  "power_analysis": {
+    "unit_of_replication": "the RUN, so the decision statistic is a run-level one-sided bound t_{0.05,S-1} * sd_run / sqrt(S)",
+    "S2_is_unusable": "df=1 -> t=6.314, so even sd_run=0.3pp gives a 1.339pp bound, LARGER than delta on three of four axes (1.023 / 1.321 / 0.970pp). A 2-seed design can only certify on TriviaQA (delta=4.043pp) and only if sd_run < ~0.9pp. PROPOSAL.md's '\u81f3\u5c11 2 seeds' is NOT a viable minimum for a non-inferiority decision -- it was written for a superiority comparison, and equivalence is harder.",
+    "S3_is_the_minimum": "df=2 -> t=2.920; bound 0.506pp at sd_run=0.3pp, 0.843pp at 0.5pp, 1.686pp at 1.0pp. Works only if sd_run <= ~0.5pp.",
+    "sd_run_is_UNVERIFIED": "no multi-seed 1B recovery run exists on either disk; the only 1B arm is keep7fresh2, one draw, seed not even recorded. Measuring sd_run is itself a gate output and is Pilot One's entire purpose.",
+    "no_post_hoc_seed_addition": "if the measured sd_run implies a bound > delta on >=2 axes, K2 FIRES rather than seeds being added post hoc. Adding seeds after seeing the variance is the selective-reporting move A01's gate-4 exists to prevent.",
+    "multiplicity": "4 axes x 4 arms x 6 checkpoints = 96 cells -> BH q=.05 across the whole declared family, family size declared in advance. One-sided NI bounds must not be silently mixed into a two-sided BH family."
   },
-  "kill_clause_new_prereg_rules": {
-   "K1_K2_rescaling": "if the guard retires a decision axis, K1's '>=3 of 4' rescales to ceil(0.75*n_surviving) and K2's '>=2 of 4' to ceil(0.50*n_surviving), preserving the original proportions. NECESSARY because retiring one of three decision axes makes K1 clause (a) PERMANENTLY FALSE -> K1 could never fire -> A04 becomes UNKILLABLE by K1, which is strictly worse than being killed. Under split this is a no-op (3 of 3 / 2 of 3); under credit it gives 2 of 2 / 1 of 2. Fixed BEFORE data so it cannot be chosen later to suit an outcome.",
-   "K3_sign_decoupling": "axes retired by D1 or D4 are EXCLUDED from K3's 'residual below 5pp' count, NOT counted as at-floor. A NEGATIVE residual is trivially below 5pp, so a convention that pushes an axis under its null would push K3 towards firing FOR THE WRONG REASON -- K3 detects an UNMEASURABLE SCALE, not an INADMISSIBLE NULL. With the exclusion, K3 does not fire under ANY convention (consistent with Pilot Zero SS2, but now for a stated reason rather than by luck)."
+  "cost": {
+    "measured_anchors": {
+      "1B_8xH20": "median 2.02 s/step (n=36, logs/olmo2_1B_keep7fresh2_1node.log, world_size=8 bs=16 gaccum=1 eff_bs=128 seq_len=2048)",
+      "1B_16xH20": "median 1.48 s/step, mean 1.5218 (n=10,000 samples, logs/olmo2_1B_keep7fresh2_16card_node0.log). Wall cross-check 2026-07-16 22:40:29 -> 2026-07-20 11:18:11 = 84.63h for 200,000 steps = 1.5233 s/step avg, consistent.",
+      "scaling_note": "16 cards give only 1.36x throughput for 2x the GPUs -> 8-card runs are the EFFICIENT UNIT; use extra nodes for more arms in parallel, not faster single arms.",
+      "tokens_per_step": 262144
+    },
+    "pilot_zero_eval_only_GPU_h": 3,
+    "pilot_one_3runs_5k_GPU_h": 135,
+    "gate_4arm_3seed_20k_GPU_h": 1077,
+    "gate_4arm_2seed_80k_GPU_h": 2873,
+    "gate_4arm_3seed_80k_GPU_h": 4309,
+    "proposal_as_literally_written_24_trainings_GPU_h": 3771,
+    "affordability_verdict": "The statistically defensible full version (S=3, 80k steps) is 4,309 GPU-h ~ 8.4 days on all three H20 nodes running nothing else. With all five nodes occupied and proposal work competing with Paper A/B, this is NOT affordable as a speculative gate. The affordable defensible version is 4 arms x 3 seeds x 20,000 steps = 1,077 GPU-h ~ 45h on three nodes. Treating the three token budgets as CHECKPOINTS of one trajectory rather than three separate runs removes 898 GPU-h (24%) for zero scientific loss.",
+    "spend_recommendation": "Authorise Pilot Zero (~3 GPU-h) now; Pilot One (135 GPU-h) only if Pilot Zero fires positively. Do NOT authorise the 1,077-4,309 GPU-h gate until sd_run is known -- K2 is the most likely killer and Pilot One buys the K2 answer for 3-5% of the full cost."
   },
-  "does_this_kill_A04": "NO -- and A04's survival does NOT depend on the guard being lenient. Under the pre-registered split convention 72 of 72 decision cells remain admissible (48 CERTIFIABLE + 24 pending one arithmetic check); the PRIMARY axis TriviaQA EM is the safest cell in the family (Delta=4.0431pp, p*_crit=7.6359 vs observed p_disc<=0.2447, ~31x headroom) and cannot be retired by any of D1-D6 at 1B; and the 24 retired cells are entirely NQ-open, an axis already demoted to descriptive on independent grounds. K2 -- untestable with anything on disk (SEED_SEMANTICS_DEFECT.md) -- remains the likeliest killer, exactly as Pilot Zero concluded. The guard changes nothing about that.",
-  "what_the_guard_DOES_cost": [
-   "A04 loses the ability to report a credit-convention MMLU non-inferiority result. Because residual(arm)-residual(intact) = reported(arm)-reported(intact) (the null cancels EXACTLY; ni_rule's null_vec_* arguments are provably unused -- 0 references in the function body, verified by AST), the MEASURED DIFFERENCE is convention-invariant and A04's headline is unaffected. Only the credit MARGIN is lost. CONSEQUENCE FOR A CLAIM ALREADY WRITTEN DOWN: PILOT_ZERO_VERDICT.md SS4's 'survives ALL FIVE conventions' must now read 'the verdict is unchanged under the FOUR ADMISSIBLE conventions; credit is inadmissible on MMLU-content by the margin guard'. That is a real narrowing, and it is this amendment's doing.",
-   "MMLU-content's admissibility now depends on the unseen arm (16% headroom at the barely-healed p_disc). If early-checkpoint MMLU cells retire, the pre-registered rescaling leaves K1 at ceil(0.75*2)=2 of 2 -- still satisfiable, so still falsifiable, but on a thinner base.",
-   "UNRESOLVED TENSION between K3 and D6: an axis can PASS K3 (residual>=5pp => 'measurable') yet FAIL D6 (Delta=0.10*5pp=0.5pp is below every measured item-level half-width, 0.54-1.02pp) => 'not certifiable at a 10% margin'. No 1B axis is in that window (smallest surviving residual 10.2389pp), so it does not bite here -- but it is NOT RESOLVED and must NOT be resolved by adjusting Delta after data."
+  "pilot_zero_evidence_already_on_disk": {
+    "status": "READY -- no training needed; per-example shards exist; analysis is pure CPU",
+    "ppl_trajectory_verified": {
+      "source": "zwfy6:olmo2_ppl_results/{1B_base_full,1B_keep7_step50000,1B_keep7_step100000,1B_keep7_step147000,1B_keep7_step200000}/summary.json -- all n_shards=8, n_tokens=8384512, n_windows=4096",
+      "intact_1B_16L_ppl": 10.6416,
+      "keep7f2_step50000_ppl": 17.6194,
+      "keep7f2_step100000_ppl": 16.1613,
+      "keep7f2_step147000_ppl": 15.6285,
+      "keep7f2_step200000_ppl": 15.4116,
+      "interval_rel_improvements_pct": [
+        8.276,
+        3.297,
+        1.388
+      ],
+      "gap_to_intact_at_200k": "+4.7700 = +44.8% above intact, after 52.43 B heal tokens"
+    },
+    "capability_at_step200000_verified": {
+      "source": "A03 GATE_FOURAXES_VERDICT.md; per-example shards at zwfy6:olmo2_closedbook_results/A03_1B_keep7_step200k/ and olmo2_mmlu_content_results/A03_1B_keep7_step200k/",
+      "MMLU_content_fraction_of_intact_residual_recovered": 0.39,
+      "TriviaQA_EM_fraction_recovered": 0.231,
+      "NQ_open_EM_fraction_recovered": 0.237
+    },
+    "the_disagreement": "ANY plateau threshold T in (1.388%, 3.297%] accepts at step 200,000 -- a wide, plausible band -- while the arm has recovered only 23-39% of the intact null-calibrated residual, i.e. NI(delta=10%) rejects by an enormous margin on all three measured axes.",
+    "HONESTY_CAVEAT": "that band was computed AFTER looking at these numbers, so Pilot Zero as described is ILLUSTRATIVE, NOT CONFIRMATORY. To be evidence, T must be committed in git BEFORE the comparison is re-run. Also the grid is only 4 points with 47k-53k spacing and cannot exercise a 5,000-step-resolution rule. Pilot Zero's honest output is: 'does a disagreement of the required shape exist at all, on one arm, one seed?' It can fire K1 and has provisionally cleared K3; it CANNOT clear K2.",
+    "also_picks_j": "the only existing 1B arm is keep7+fresh2 = 9 of 16 layers = 56.2% depth, and after 52.43 B heal tokens it recovers only 23-39% of the intact residual -- so a rule tested only there is a constant-REJECT and proves nothing. The gate needs a j where a well-run recovery plausibly DOES approach non-inferiority; candidates keep12+fresh2 (14L, 87.5% depth) or keep10+fresh2 (12L, 75%). Choosing j from evidence rather than assumption is worth Pilot Zero's cost alone.",
+    "other_free_ckpts": "zwfy6 also has olmo2_probe2_1B_keep7f2_dolmino_cpt20k/step{205000,210000,215000,220000}.pt and .../arm4_peaklr20k/step{205000,210000,215000}.pt"
+  },
+  "next_gate": [
+    "PILOT ZERO (CPU + <=3 GPU-h, run FIRST): commit T=2.0%/5k and rho=0.85 to git BEFORE analysis, then use the checkpoints already on disk to ask whether a PLATEAU-accepts / NI-rejects disagreement exists at all. Can fire K1 for ~zero GPU. Also selects j for the gate. Blocking sub-step: the T commit must precede the comparison, else the result is illustrative only.",
+    "CPU CODE FIX (~1 line, blocking for K2): pass seed=args.seed into DistributedSampler at scripts/train_olmo2_arch_probe2.py:863 so seeds actually vary data order. Without it every 'seed' arm is fresh-block-init variance only and arm A2 (n_fresh=0) has sd_run identically 0.",
+    "PROPOSAL.md rewrite to the narrowed safe_residual_claim; paste the must_not_claim list into its scope section; drop the ShortGPT/non-contiguous arm (second damage variable) and the '3 budgets = 3 runs' reading.",
+    "PILOT ONE (135 GPU-h, ~5.6h wall on 3 nodes, ONLY if Pilot Zero fires positively AND the sampler fix landed): one arm at the chosen j, S=3 seeds, 5,000 steps. Output = the first real sd_run for a 1B recovery arm. Plug into the S=3 power table; if the bound exceeds delta on >=2 axes, K2 FIRES and A04 dies for 135 GPU-h instead of ~2,900.",
+    "PILOT TWO / full gate (1,077-4,309 GPU-h): REQUIRES EXPLICIT USER APPROVAL. Do not launch on the strength of this design document."
   ],
-  "evidence_files": [
-   "evidence/a04_margin_guard_classification.json (new)",
-   "evidence/a04_intact_residual_ci_1b_mmlu.json (new)",
-   "evidence/a04_pdisc_mmlu_1b.json + _full.json (new)",
-   "evidence/pilot_zero_rule_disagreement.json (existing, re-read)"
+  "protocol_invariants": [
+    "chat_template=False for EVERY eval -- these are BASE LMs with no SFT/RL; a chat template is unfair and any chat=True number is void.",
+    "prune-heal OLMo-2 is a BASE LM: base protocol only (ppl + LL-based MC), no chat template, no BOS (--add_bos 0), no system prompt, no few-shot, greedy decode for QA, compared against vanilla OLMo-2 BASE.",
+    "sharded eval MUST assert every shard present AND the exact expected item count before merging -- reuse the pattern in scripts/_run_a03_1b_floor_82.sh which asserts n_shards==8, MMLU n==14042, n_valid+n_nan==exp, and v['n']==e. A silently merged 5-of-8 shard set has corrupted results here before.",
+    "same-arch/same-harness re-runs in this repo are BYTE-IDENTICAL (0 flips). Do not budget for or excuse anything as 'runtime noise' without a same-code control proving it.",
+    "every scoring step must IMPORT the canonical scorer from the harness that produced the predictions, never reimplement it (two subagents reimplemented a metric in one session and both times produced a significant result where canonical produced a tie)."
   ],
-  "code": [
-   "code/a04_margin_guard_classify.py (new)",
-   "code/a04_intact_residual_ci.py (new)",
-   "code/a04_measure_pdisc.py (new)"
-  ],
-  "method_compliance": "scorers/nulls (longest_option_vector, paired_bootstrap) IMPORTED from A03/code/analyze_1b_knowledge_floor.py, never reimplemented; item counts hard-asserted at 14042 with nan-row and duplicate-item_id checks; item_id and gold_letter alignment asserted across every pair of dumps; the 5 nulls asserted bit-identical between the two intact artefacts; the p_disc range recovered from bootstrap gaps asserted to CONTAIN the directly measured 0.168708; T/rho/delta_fraction asserted equal to evidence/pilot_zero_rule_disagreement.json:preregistration. GPU: ZERO (no training, no eval, no torchrun, no model load; remote access read-only ls/md5sum/scp -O of 3 JSONL files).",
-  "correction_prose_vs_json": "REPORTED DISCREPANCY, JSON WINS: A04_GATE_DESIGN.md SS4 and STATUS.json nulls_per_metric.NQ_open_EM.null both give the NQ-open null as 0.0055; the evidence JSONs give 0.00554016620498615 (a03_1b_floor_nulls_4axes.json cells[intact,nq_open,em].null and pilot_zero_rule_disagreement.json nulls.nq_open.acc). This is a DISPLAY ROUNDING, not a conflict: it moves Delta_NQ-open from 0.9695290858725762pp to 0.9699307479224377pp (+0.000402pp) and p*_crit from 0.088335 to 0.088408 -- NQ-open is retired by D6 under either value, so no verdict changes. CANONICAL VALUE = 0.00554016620498615; 0.0055 must not be used in arithmetic. No other prose/JSON inconsistency was found in the quantities this guard depends on (the 4 intact residuals, the 5 MMLU nulls, and the 8 credit cells were each re-derived and matched to <1e-6).",
+  "recommendation": "PROCEED, BUT NARROWED AND CHEAPLY. Do not archive: nothing preempts the residual claim at its scope, and equivalence/non-inferiority testing is essentially absent from the pruning-recovery literature. But A04 as written in PROPOSAL.md is not fundable -- its experimental design is largely arXiv:2606.14150's and its motivation is largely 2607.00368/2601.22950's. The residual contribution is real but NARROW and METHODOLOGICAL: worth at most a short paper or a methods section. Run Pilot Zero (~3 GPU-h) before spending anything else. If the gate's kill condition fires, ARCHIVE with a POSTMORTEM rather than reframing -- the reframing space has just been shown to be occupied.",
   "unverified": [
-   "whether MMLU-content survives D6 at the gate's EARLY checkpoints -- p*_crit=0.3832 vs barely-healed p_disc=0.301097 leaves 16% headroom on Delta/hw; the arm that would settle it does not exist. This IS the NEEDS_RECHECK_AFTER_DATA verdict; the trigger is fixed.",
-   "p_disc at a barely-healed checkpoint for triviaqa/popqa/nq_open -- only mmlu_content has a step-500 arm scored. Since p_disc rises as the arm degrades, those three D6 verdicts rest on an OPTIMISTIC range. TriviaQA's ~31x headroom is safe by any margin; PopQA's ~5x is very likely safe but unproven at step 2,500.",
-   "the CAUSAL attribution of the 48-item D5 drift to harness commit 7ac9653 -- verified only that the commit falls strictly between the two evals; no same-code control was run; no noise floor is claimed.",
-   "BoolQ 0.6217 always-B / OpenBookQA 0.3635 / winogrande 100% tie rate -- quoted from status/scout_21/lane2_a01_gate2.md, underlying shards NOT re-opened in this pass. They inform only the widened-axis discussion, not any A04 verdict.",
-   "whether residual(intact) stays positive at j=12 -- the intact anchor is the same model regardless of j so Delta itself is unaffected, but K3's clearance is arm-dependent and remains UNVERIFIED for j=12 (as PILOT_ZERO_VERDICT.md SS2 already states).",
-   "7B behaviour: the credit/7B_base near-D2 case (Delta=0.1688pp vs half-width 1.0541pp) is recorded from A01's JSON but 7B is out of A04 scope and unfunded.",
-   "the K3-vs-D6 tension is IDENTIFIED, NOT RESOLVED. No 1B axis falls in the window.",
-   "SHA256 for the pinned anchors: G0 asks for SHA256; this pass verified MD5 after scp -O (matched at both ends). SHA256 must be recorded at gate launch."
-  ]
- },
- "status_note": "Previous status string was 'active_design_gate_specified_awaiting_pilot_zero' while pilot_zero.status in this same file said 'DONE -- executed 2026-08-09'. Corrected 2026-08-10.",
- "tcodex_audit_20260810_disposition": {
-  "audit_file": "../A03-parametric-vs-external-memory/evidence/TCODEX_AUDIT_20260810.md (589 lines, md5 8ba6b5da31c3af2fd02c5d5d86d93b2c)",
-  "audit_verdict_on_A04": "Design paper / preregistration only. Pilot Zero 不是 gate pass; K1 应改为 INDETERMINATE; 没有任何模型已被 'certified recovered'; K2/run variance 完全未测.",
-  "actioned_20260810": [
-   "K1_FIRES false -> INDETERMINATE with the cell-unit arithmetic recorded",
-   "top-level status string corrected (it contradicted pilot_zero.status DONE in the same file)",
-   "K2 re-opened as RECOVERABLE with the in-flight A03 seed-43/44 measurement identified as its data source",
-   "PLATEAU(T) dimensional incoherence REPAIRED -> rule R3 (per-5k geometric rate). Both previously implemented readings characterised with measured numbers: unscaled = 15.70x stringency spread across the frozen grid {2500..80000}; linear-scaled = accepts a run still improving at exactly T for every d>5000, 174/200000 composition violations, vacuous at d>=250000. R3 equals the pre-registered arithmetic EXACTLY at d=5000 (asserted <1e-12), is composition-consistent 0/200000 both directions and both seeds, never vacuous. T=2.0%/5k UNCHANGED. Evidence: evidence/a04_plateau_rule_repair.json; code/a04_plateau_rule_repair.py; A04_PLATEAU_REPAIR_AND_MARGIN_SENSITIVITY.md section 1. THE GATE IS NOW RUNNABLE ON AN IRREGULAR GRID.",
-   "G0 SHA256 anchor pinning DONE for all 4 axes (merged + all 24 shard files), verified BOTH remotely on .82 against canonical zwfy6 paths AND locally against the read-only staging copies; identical. MMLU anchor sha256 8cbbb008f2f606b039d61f6fedfb54ae4b44aedf7430f9322fab3150027e2378. Evidence: evidence/a04_g0_anchor_sha256_pinning.json.",
-   "D5 48-flip drift RE-VERIFIED: reproduces EXACTLY (48/14042, acc drift +0.014242985329726565 pp, delta drift +0.0014242985329726565 pp). No correction needed to A04_MARGIN_GUARD_PREREG.md section 2.5.",
-   "Margin-sensitivity sweep over Delta fractions 0.10-0.66 DONE (extended to 1.00 so crossings could be reported). Evidence: evidence/a04_margin_sensitivity_sweep.json; code/a04_margin_sensitivity_sweep.py."
+    "sd_run for any 1B recovery arm -- no multi-seed 1B run exists on either disk. Pilot One's entire purpose.",
+    "whether 20,000 steps suffices for any arm to approach non-inferiority at a shallower cut -- depends on j; only keep7 (52.43 B tokens, 44.8% residual PPL gap) is measured.",
+    "PPL for any 1B arm other than keep7+fresh2 -- olmo2_ppl_results/ contains only 1B_base_full and 1B_keep7_step{50000,100000,147000,200000} (+2 sanity dirs).",
+    "whether the disagreement replicates at 7B -- out of scope, unfunded.",
+    "arXiv:2408.11796 (Minitron Approach) venue -- not verified in this pass.",
+    "arXiv:2606.14150 venue rests on DBLP-positive + OpenReview-absence only; S2 was 429 rate-limited on that ID.",
+    "Pilot Zero's T band (1.388, 3.297] is post-hoc -- illustrative only until T is committed to git first."
   ],
-  "remaining": [
-   "Rewrite PROPOSAL.md to the narrowed safe_residual_claim -- RELATED_WORK finds the current experimental design largely covered by arXiv:2606.1xxxx.",
-   "No model has been certified recovered; do not state otherwise anywhere.",
-   "NEW, created by the PLATEAU repair: under R3 the first PLATEAU-accept checkpoint on the pilot trajectory moves from step 200000 to step 100000, where NO capability axis was scored. The earliest PLATEAU-vs-NI cell is therefore UNMEASURED. Step 200000 still accepts under R3 (rate_5k 0.13173 %/5k), so the pilot's single measured cell survives, but any claim about WHERE the earliest disagreement lies needs step-100000 capability scoring = GPU."
-  ]
- },
- "plateau_rule_repair_20260810": {
-  "status": "DONE -- the gate-blocking defect is closed",
-  "gpu_spent": 0,
-  "what_was_broken": "A04_GATE_DESIGN.md:69-71 states T = 2.0 % per 5000 steps; code/pilot_zero_rule_disagreement.py:168-202 implemented two readings, BOTH invalid on an irregular grid.",
-  "R1_unscaled_defect": {
-   "mechanism": "compares an interval-length-dependent quantity to a per-5k threshold; stringency is set by the grid, not the training",
-   "effective_per5k_threshold_on_frozen_grid_pct": {
-    "2500": 3.960000000000008,
-    "5000": 3.960000000000008,
-    "10000": 2.0000000000000018,
-    "20000": 1.005050633883342,
-    "40000": 0.5037943607311912,
-    "80000": 0.2522152430096347,
-    "_note": "keyed by CHECKPOINT step, not interval width; the stated T is 2.0, so 2500/5000 are 1.980x too lenient and 80000 is 7.93x too strict"
-   },
-   "fold_spread": 15.7,
-   "correct_at_exactly_one_of_six_checkpoints": "step 10000, where d = 5000",
-   "real_data_symptom": "holding the terminal checkpoint at step 200000 and varying the preceding checkpoint, rel spans 1.3875 .. 12.5305 (9.03x) and R1's verdict is NOT unanimous; rate_5k spans 0.13173 .. 0.44527 (3.38x) and R3's verdict IS unanimous"
-  },
-  "R2_linear_defect": {
-   "mechanism": "correct units, wrong algebra -- relative improvement compounds, a linear allowance does not",
-   "accepts_a_run_still_at_threshold_rate_for_all_d_gt_5000": true,
-   "over_allowance_pp": {
-    "20000": 0.2368,
-    "53000": 1.9228,
-    "80000": 4.3798,
-    "250000": 36.417
-   },
-   "composition_backward_violations_per_200000_pairs": {
-    "seed0": 174,
-    "seed1": 161
-   },
-   "vacuous_at_interval_steps_ge": 250000
-  },
-  "R3_repair": {
-   "formula": "rate_5k(c) = 100*(1 - (ppl_c/ppl_prev)**(5000/d)); accept iff rate_5k(c) < T",
-   "T_unchanged": 2.0,
-   "new_numeric_constants_introduced": 0,
-   "equals_prereg_arithmetic_at_d_5000": "asserted |R1-R3| < 1e-12 on four trajectories including the real 17.6194->16.1613 pair",
-   "composition_violations": {
-    "forward": 0,
-    "backward": 0,
-    "seeds": [
-     0,
-     1
+  "ops_notes_for_the_next_agent": [
+    "arXiv API requires a non-default User-Agent through hy-proxy; with curl's default UA the endpoint returns an EMPTY BODY and any XML parse fails in a way that looks like a parse bug. Use -A 'Mozilla/5.0 (research-audit)'.",
+    "DBLP /search/publ/api returned HTTP 500 for every query on 2026-08-09; the per-record https://dblp.org/rec/journals/corr/abs-<id>.bib URLs DO work (some need one retry past a 503). DBLP 500 does not mean 'not in DBLP'.",
+    "ACL Anthology's /search/ page is client-side rendered -- the server HTML contains no hits and cannot be scraped. For ACL-family venue calls, use DBLP records plus the ARR OpenReview note's own bibtex ('under review') as negative evidence.",
+    "Semantic Scholar graph API 429s after ~3 calls without a key; usable as cross-check only, never as venue authority.",
+    "OpenReview venueid SUFFIX matters: ICML.cc/2026/Workshop/CTB/Submission (submitted) vs ICML.cc/2026/Workshop/AdaptFM with venue='AdaptFM Poster' (accepted)."
+  ],
+  "pilot_zero": {
+    "status": "DONE -- executed 2026-08-09, ZERO GPU (CPU re-analysis of on-disk shards)",
+    "verdict_file": "PILOT_ZERO_VERDICT.md",
+    "evidence_files": [
+      "evidence/pilot_zero_rule_disagreement.json",
+      "evidence/pilot_zero_rule_disagreement.csv"
     ],
-    "n_trials": 200000
-   },
-   "never_vacuous": true,
-   "preregistration_status": "T is PRE-REGISTERED (d1ba737) and unchanged. The CHOICE of R3 over R1/R2 is POST-HOC (2026-08-10, after the PPL trajectory was seen) and is disclosed as such. Justified by invariance/composition properties that hold for ANY T, not by which arm it accepts.",
-   "repair_direction_is_costly_to_A04": "R3 is strictly stricter than R2 at every d > 5000, so it makes PLATEAU harder to accept and A04's target disagreement harder to find."
+    "code": "code/pilot_zero_rule_disagreement.py",
+    "K1_FIRES": "INDETERMINATE -- see K1_FIRES_RETRACTED_20260810 (was false, retracted 2026-08-10)",
+    "K1_reason": "at the PLATEAU-accept checkpoint (step 200,000) NI REJECTS on 3/3 decision axes (triviaqa, popqa, mmlu_content), so NI accepts on 0/4 < 3 -> clause (a) fails; and 3 > 1 disagreement cells -> clause (b) fails. A disagreement of the required shape EXISTS.",
+    "K1_headline": "A disagreement of the required shape EXISTS: at the PLATEAU-accept checkpoint (step 200,000) NI rejects on 3/3 decision axes by 6-9x the margin. Both K1 clauses fail (NI accepts 0/4 < 3; 3 > 1 disagreement cells). A04 is NOT killed.",
+    "K1_survives_all_five_null_conventions": {
+      "split": false,
+      "first": false,
+      "last": false,
+      "credit": false,
+      "wrong": false
+    },
+    "K1_survives_both_plateau_readings": {
+      "split": false,
+      "first": false,
+      "last": false,
+      "credit": false,
+      "wrong": false
+    },
+    "why_convention_robust": "residual(arm)-residual(intact) = reported(arm)-reported(intact): the same input-blind null applies to both arms on the same item set so the null CANCELS exactly. The convention moves only Delta (=0.10*residual(intact)), never the measured difference. Observed gaps exceed every convention's Delta by 6-9x.",
+    "K3_FIRES": false,
+    "K3_note": "intact 1B calibrated residuals 40.431/13.205/10.239/9.695 pp -- 0 of 4 below 5pp, so ample dynamic range. Provisionally cleared for keep7 only; UNVERIFIED for the gate's j=12.",
+    "K2_STATUS": "OUT OF SCOPE (needs S>=3 seeds). WORSE THAN DESIGN ASSUMED: the DistributedSampler(seed=) defect (fixed 2026-08-09) means NO true run-to-run variance exists anywhere in this repo and none can be recovered retroactively -- pre-fix seeds shared a byte-identical data order, so all existing 'seed' evidence is fresh-block INIT variance, a strict subset. Any sd_run from pre-fix runs is an UNDERESTIMATE. See SEED_SEMANTICS_DEFECT.md.",
+    "ni_results_step200000_prereg_split": {
+      "triviaqa": {
+        "frac_of_intact_residual_recovered": 0.23073742246726395,
+        "diff_mean_pp": -31.10231832367365,
+        "diff_lower95_one_sided_pp": -31.69861792242532,
+        "delta_pp": 4.043134195274186,
+        "ni_accept": false,
+        "demoted_descriptive_only": false
+      },
+      "popqa": {
+        "frac_of_intact_residual_recovered": 0.12473460721868367,
+        "diff_mean_pp": -11.558141164926052,
+        "diff_lower95_one_sided_pp": -12.020747178804234,
+        "delta_pp": 1.3205298941613512,
+        "ni_accept": false,
+        "demoted_descriptive_only": false
+      },
+      "mmlu_content": {
+        "frac_of_intact_residual_recovered": 0.3900191271083288,
+        "diff_mean_pp": -6.245549067084461,
+        "diff_lower95_one_sided_pp": -6.801025494943739,
+        "delta_pp": 1.0238926078906136,
+        "ni_accept": false,
+        "demoted_descriptive_only": false
+      },
+      "nq_open": {
+        "frac_of_intact_residual_recovered": 0.23714285714285713,
+        "diff_mean_pp": -7.396121883656509,
+        "diff_lower95_one_sided_pp": -8.254847645429363,
+        "delta_pp": 0.9695290858725762,
+        "ni_accept": false,
+        "demoted_descriptive_only": true
+      }
+    },
+    "FIRST_ORDER_NARROWING_of_A04_claim": {
+      "finding": "RATIO(rho=0.85) REJECTS at step200000 (mean retention ratio 0.4017 << 0.85), i.e. it AGREES with NI. It rejects at all 8 arm x checkpoint cells (range 0.3694-0.4185).",
+      "consequence": "A04_GATE_DESIGN.md SS1 claims the disagreement for BOTH incumbent rules (a) PPL plateau and (b) aggregate retained-accuracy ratio. Clause (b) is FALSIFIED by this data. A04 must claim the disagreement for the PLATEAU rule ONLY.",
+      "per_axis_ratio": {
+        "triviaqa": 0.23558416655252706,
+        "popqa": 0.2541836273179557,
+        "mmlu_content": 0.8385493372606775,
+        "nq_open": 0.27837837837837837
+      }
+    },
+    "recommended_j": {
+      "j": 12,
+      "arm": "keep12+fresh2 at 1B = 14 of 16 layers = 87.5% depth kept",
+      "second_choice_j": 10,
+      "rejected_j": 7,
+      "why": "keep7+fresh2 (56.25% depth) is CONFIRMED a constant-REJECT rung (12-39% of intact residual recovered after 52.43B tokens, NI rejects by 6-9x). A rule tested only there can never be observed to ACCEPT, so the disagreement is unfalsifiable. The only measured depth->recovery curve (7B MMLU-content split-tie) is monotone with no saturation: 0.3106@31.2% / 0.3224@37.5% / 0.4215@43.8% / 0.5306@50.0% depth kept. keep12 at 1B keeps 87.5%, far shallower than any measured rung, so it is most likely to let NI sometimes accept.",
+      "UNVERIFIED": "no 1B keep12 or keep10 arm exists on EITHER disk; the recommendation extrapolates from a 7B ladder that spans two corpora and unequal steps (ordering evidence only, never absolute level). Whether keep12@1B is instead a constant-ACCEPT rung is UNKNOWN."
+    },
+    "caveats_not_dropped": [
+      "The SS6.1 band (1.388%, 3.297%] is POST-HOC and remains illustrative, not confirmatory. T was committed in git d1ba737 (2026-08-09 23:02:27 +0800, verified; design file byte-unchanged since) BEFORE this comparison, so the ordering is procedurally correct -- but T lands inside a band chosen with knowledge of the data, so this specific point is epistemically weak.",
+      "The 4-point grid at 47k-53k spacing CANNOT exercise a 5,000-step-resolution rule. Both readings are reported; K1 fails to fire under BOTH, so the conclusion is insensitive. But the disagreement is only SHARP under the unscaled (design SS6.1) reading; testing the rule as written needs --milestone_every 2500.",
+      "K1's own '>= 24 evaluated cells' precondition is NOT met: 24 decision cells exist but PLATEAU is DEFINED at only 3 of them, because no in-domain PPL exists for cpt20k or arm4_peaklr20k. Clause (a) fails decisively on the cells that do exist, which suffices not to fire K1, but this is not the 4-arm x 6-checkpoint family the real gate would evaluate.",
+      "arm4_peaklr20k intermediate cells are NOT settled capability numbers (A03 STATUS NOT_YET_JUDGED). Instability independently reproduced here: triviaqa EM -1.404pp @205k then +1.259pp @210k vs the 200k baseline, non-monotone, both directions. Grid coverage only; the K1 verdict does not depend on them (the 4 stable cpt20k cells also all reject).",
+      "NQ-open DEMOTED per design SS5.2 (item CI half-width 1.459-2.063pp > its own Delta 0.970pp at n=3610): descriptive only, excluded from decision cells.",
+      "Delta = 0.10*residual(intact,x) is ILL-DEFINED when residual(intact,x) <= 0. Under the 'credit' convention the INTACT 1B model falls BELOW its own MMLU null (0.3868 vs 0.4537), so residual(intact) = -6.687pp and Delta is NEGATIVE, turning NI into a strict-superiority test. FLAGGED, NOT CHANGED (pre-registered). The gate must add a documented guard or fold the convention into Delta's definition."
+    ],
+    "provenance": {
+      "ppl": "recomputed exp(sum_nll/n_tokens) from zwfy6:olmo2_ppl_results/*/shard{0..7}of8.json; asserted 8/8 shards + index set {0..7} + n_tokens=8384512 + n_windows=4096 + n_shards=8; agrees with every summary.json to <1e-9",
+      "capability": "merged from per-example shards with HARD assertions: 8/8 shards, exact item counts (mmlu 14042 / triviaqa 17944 / popqa 14267 / nq_open 3610), no duplicate item_id, no shard-index gap. Any shortfall raises.",
+      "scorers": "IMPORTED from A03/code/analyze_1b_knowledge_floor.py (best_constant_qa, longest_option_vector, best_constant_letter, paired_bootstrap) -- never reimplemented. MMLU content_norm recomputed from stored per-option scores and ASSERTED equal to the harness's own 'correct' flag on all 14042 items.",
+      "cross_check": "recomputed reported/reported_intact/null match A03/evidence/a03_1b_floor_nulls_4axes.json EXACTLY (delta=0.00e+00) on all four axes; all five MMLU convention nulls match to <1e-12; measured convention spread 25.7584pp reproduces A01's reported 25.76pp.",
+      "nulls": "construct-appropriate only; 'above chance' never used. MMLU-letter always-D 0.2689 (not 0.25) recorded but BANNED as an axis. BoolQ always-B 0.6217 (not 0.50) quoted from design SS4.2 and marked UNVERIFIED_here (no BoolQ shards opened).",
+      "gpu": "ZERO. No training, no eval, no torchrun, no model load."
+    },
+    "unverified": [
+      "sd_run for any 1B recovery arm -- and now, no TRUE seed variance anywhere in the repo. K2 untested.",
+      "recovery level at j=12 or j=10 at 1B (no such arm on either disk)",
+      "whether 20,000 steps (5.24B tokens) suffices at the recommended j",
+      "PPL for cpt20k / arm4_peaklr20k (does not exist -> PLATEAU undefined for those 7 ckpts)",
+      "BoolQ null 0.6217 (quoted from design SS4.2, not recomputed here)",
+      "whether the disagreement replicates at 7B (out of scope, unfunded)",
+      "arm4_peaklr20k intermediate capability numbers (A03 NOT_YET_JUDGED)"
+    ],
+    "recommendation": "DO NOT ARCHIVE (K1 did not fire), but DO NOT authorise the full gate. (1) Narrow the claim to the PLATEAU rule only -- the ratio-rule half is falsified. (2) Pilot One is now strictly MANDATORY and more valuable than the design assumed, because K2 is the likeliest killer AND no usable sd_run exists; it must run UNDER the seed fix, at j=12, S=3 (~135 GPU-h). (3) Do not authorise the 1,077-4,309 GPU-h gate until sd_run is known. (4) Decide the Delta guard for residual(intact)<=0 explicitly before Pilot One.",
+    "delta_guard_RESOLVED": "the SS4.1 / caveats_not_dropped item 'Delta = 0.10*residual(intact,x) is ILL-DEFINED when residual(intact,x) <= 0 ... FLAGGED, NOT CHANGED' is now ADDRESSED by the pre-registered guard in A04_MARGIN_GUARD_PREREG.md (see margin_guard_prereg). Resolution = option (c) RETIRE THE CELL; Delta is never substituted. Also NARROWS this file's own SS4 claim: 'survives all five conventions' -> 'unchanged under the FOUR ADMISSIBLE conventions; credit is inadmissible on MMLU-content'.",
+    "K1_FIRES_RETRACTED_20260810": {
+      "old_value": false,
+      "old_headline": "K1 DOES NOT FIRE",
+      "new_value": "INDETERMINATE",
+      "why": "K1's verbatim text (A04_GATE_DESIGN.md:45-47) requires the rule-disagreement count to be '<= 1 out of >= 24 evaluated cells'. Pilot Zero evaluated 3 axes at ONE checkpoint (step200000) = 3 cells. You cannot conclude a >= 24-cell clause did or did not fire from 3 cells: the denominator the rule names was never reached. 'K1 does not fire' was therefore a positive result inferred from a sample smaller than its own governing denominator.",
+      "what_the_pilot_DID_establish": "At the single PLATEAU-accept checkpoint, NI(Delta=0.10*residual(intact)) rejects on 3/3 decision axes by 6.6-9.1x the margin, and this is invariant across all five null conventions and both plateau readings (because residual(arm)-residual(intact) = reported(arm)-reported(intact), so the null cancels). That is a real, convention-robust finding about ONE checkpoint. It is evidence that a disagreement of the required SHAPE exists; it is not a verdict on the >= 24-cell clause.",
+      "correct_reading": "K1 INDETERMINATE -- not killed, not cleared. The gate remains un-run.",
+      "audit_concordance": "TCODEX_AUDIT_20260810.md section 7 independently reached the same conclusion: 'Pilot Zero \u4e0d\u662f gate pass ... K1 does not fire / survived cheapest gate \u5e94\u64a4\u56de, \u6539\u4e3a K1 INDETERMINATE.'",
+      "also_retracted": "Any statement of the form 'A04 is NOT killed' that rests on K1_FIRES=false. A04 is not killed, but the reason is that the gate has not been run, not that it passed."
+    },
+    "K2_STATUS_UPDATED_20260810": {
+      "old_claim": "OUT OF SCOPE (needs S>=3 seeds). WORSE THAN DESIGN ASSUMED: no true run-to-run variance anywhere in the repo.",
+      "now": "RECOVERABLE, measurement IN FLIGHT as of 2026-08-10 16:57.",
+      "why": "The DistributedSampler(seed=) fix ce5c298 has now been deployed to zwfy6 (MAIN scp'd it 2026-08-10 16:53, md5 284b286f90b526e4e8ad93a68e2a3b16 verified on both disks; pre-fix copy preserved as .PRE_CE5C298_BAK md5 879541f001568ceea16528e2e5d8035f). Two A03 data-order runs are training now with genuinely different data order: .82 seed=43 and .73 seed=44, both Arm 3's exact config, step220000 landing ~04:20 GMT+8. Their spread on the four A03 closed-book axes IS a true run-to-run sd_run estimate for a 1B CPT arm -- the exact quantity K2 needs and that this block previously called unobtainable.",
+      "caveat": "n=2 (a 3rd, seed=45, is queued for .104 behind keep12). n=2 gives a range, not a variance with useful CI. Treat as an order-of-magnitude bound on sd_run, not a point estimate.",
+      "driver": "scripts/_run_a03_dataorder_repl.sh (commit 44840f1), tracked as task #236",
+      "prereg": "A03's DATAORDER_PREREG.md is being written BEFORE the checkpoints land, so this harvest is pre-registered rather than post-hoc."
+    }
   },
-  "consequence_for_pilot_zero": {
-   "first_accept_R1_unscaled": 200000,
-   "first_accept_R2_linear": 100000,
-   "first_accept_R3_repaired": 100000,
-   "step200000_rate_5k_pct": 0.13172979283519895,
-   "step200000_still_accepts_under_R3": true,
-   "honest_cost": "the repaired rule's EARLIEST accept (step 100000) has no capability scoring, so that PLATEAU-vs-NI cell is UNMEASURED, not resolved. 4.6386 % further relative PPL improvement lies between step 100000 and step 200000."
+  "margin_guard_prereg": {
+    "status": "PRE-REGISTERED 2026-08-10, ZERO GPU (CPU re-analysis of on-disk per-example records + read-only ssh/scp -O of 3 JSONL files)",
+    "document": "A04_MARGIN_GUARD_PREREG.md",
+    "amends": "A04_GATE_DESIGN.md SS2 definition of Delta_x, via additive amendment SS2.0.1. The pre-registered text is UNCHANGED -- nothing retuned or replaced.",
+    "prereg_timing_evidence": "registered BEFORE any recovered-arm datum exists. Verified 2026-08-10 by ls outputs/ on BOTH disks: the only 1B recovery runs anywhere are zwfy6:outputs/olmo2_probe2_1B_keep7fresh2{,_16card}, ..._keep7f2_dolmino_cpt20k, ..._keep7f2_dolmino_arm4_peaklr20k -- all keep7. NO j=12 or j=10 arm on either disk, and NO 1B recovery output at all on wzc1. Delta depends ONLY on the intact anchor, so every cell's verdict is computable now and cannot be tuned later.",
+    "defect_addressed": "Delta_x = 0.10*residual(intact,x) is a well-formed NON-INFERIORITY margin only while residual(intact,x) is comfortably positive. When it is negative, Delta<0 so -Delta>0 and NI(Delta) silently becomes a STRICT SUPERIORITY test. Direction of error matters: it cannot create a false ACCEPT (superiority is strictly harder), but it creates a SILENT FALSE REJECT plus a SWAPPED HYPOTHESIS, which in a pre-registered gate is the more serious failure. Pilot Zero flagged this (PILOT_ZERO_VERDICT.md SS4.1, delta_degenerate_negative_margin per cell) and correctly did NOT change the rule.",
+    "verdict": "RECOMMENDED GUARD = option (c) RETIRE THE CELL (NOT_CERTIFIABLE). Delta is NEVER substituted.",
+    "one_line_reason": "an arm below its own input-blind floor has no measured capability on that axis, so 'recover to be no worse than it' is vacuous -- and a re-margined Delta (via max(Delta,eps) or 0.10*|residual|) would be a plausible-LOOKING number over a scientifically empty comparison, i.e. it converts a visible degeneracy into an invisible one.",
+    "rejected_alternatives": {
+      "a_absolute_floor_max_delta_eps": "REJECTED. Restores a positive margin but does nothing about WHAT is compared: under credit the target is 6.687pp BELOW its own null. Also eps=1pp is comparable to the entire legitimate Delta_MMLU=1.0239pp, so the guard would silently SET the margin on the very axis it was meant to rescue.",
+      "b_abs_residual_0.10_times_abs": "REJECTED, and it is the specific failure mode to avoid. Gives Delta=+0.6687pp -- a normal-looking number -- while all 8 damaged credit cells sit 6.2-6.6pp below a sub-null target. Also NON-MONOTONE: as the intact arm degrades past its null, |residual| grows so Delta GROWS, i.e. the test gets EASIER as the reference gets worse. A margin that loosens as the reference degrades is not a margin.",
+      "c_retire_cell": "RECOMMENDED. Honest (A01's own below-floor-carries-no-signal logic, applied to the REFERENCE arm), preserves the pre-registration (Delta's formula untouched; only cell ADMISSIBILITY changes, which is a scope statement not a threshold), and FAILS LOUD -- a retired cell is visibly absent and cannot be mistaken for a passed or failed test, whereas (a) and (b) both fail SILENTLY. Cost: removes cells; SS5 shows it does not empty A04.",
+      "d_change_anchor": "REJECTED. Damaged-arm anchor is circular (a worse arm buys itself a wider margin). Intact ABSOLUTE score re-imports the exact error A01 exists to kill: the MMLU null 0.2845 is 73.5% of the intact 0.3868, so a null-blind margin would be 3.78x the null-calibrated one -- dominated by label/length artefacts, and self-contradictory for a proposal whose claim IS null-calibrated non-inferiority."
+    },
+    "six_conditions_enumerated": {
+      "D1_residual_negative": "CONFIRMED IN DATA: credit convention x MMLU-content ONLY. intact reported 0.386839481555334 vs credit null 0.4537102976783934 -> residual = -6.687081612305939pp, CI95 [-7.7199,-5.6402], p=1e-4 (entirely below zero, not marginal). Delta = -0.6687081612305939pp. Exhaustively checked: 1 of 20 (axis x convention) combinations.",
+      "D2_residual_at_zero": "DOES NOT FIRE at 1B. Smallest positive intact residual is NQ-open 9.6953pp. Threshold pre-registered anyway at residual_floor_pp=1.0 (=> Delta=0.10pp, BELOW every item-level half-width measured in this project, min 0.5429pp PopQA). NEAR-MISS RECORDED at 7B: credit/7B_base residual +1.6878pp => Delta=0.1688pp vs CI half-width 1.0541pp, i.e. Delta 6.2x smaller than the half-width (A01 gate3_content_null_conventions.json). 7B is out of A04 scope.",
+      "D3_residual_ci_straddles_zero": "DOES NOT FIRE. Measured for MMLU-content under all 5 conventions (new) + taken from A03 intact cells for the 3 QA axes: 0 of 20 combinations straddle 0, all at p=1e-4. Enumerated because it is the condition under which the guard would be UNRESOLVABLE rather than merely restrictive.",
+      "D4_baseline_illegitimate": "CONFIRMED, and the honest reason to retire rather than re-margin: under credit at 1B, 8 of 8 damaged cells (-12.93 to -13.24pp) PLUS the intact arm (-6.69pp) are below the null. A floor above the entire arm population is not a floor. A01 found the same at 7B (credit: n_arms_above=1, n_arms_below=5).",
+      "D5_intact_anchor_unstable": "MEASURED, below the fatal threshold but procedurally load-bearing. Two independent admissible intact 1B measurements exist: zwfy6 A03_1B_base content_norm 0.3868394816 vs wzc1 a01_1B_intact_base_full 0.3869819114, identical meta, 48/14042 item flips -> residual drift +0.014243pp -> Delta drift +0.001424pp (0.14% of Delta_MMLU). The 5 nulls are BIT-IDENTICAL between dumps (<1e-12), confirming the null is a tokenizer+dataset property. Consequence: 'Delta = 0.10*residual(intact)' does not by itself NAME a number -> rule G0 pins the anchor.",
+      "D6_delta_below_measurement_resolution": "FIRES for NQ-open; BORDERLINE for MMLU-content. Generalises the design's own SS5.2 NQ-open demotion and makes it checkable BEFORE data by pre-registering a critical discordance rate p*_crit = n*(Delta/(100*1.959964))^2 instead of a half-width nobody can know yet."
+    },
+    "D5_48_flips_named_cause": "the repo rule is that same-arch/same-harness re-runs are BYTE-IDENTICAL (0 flips), so a nonzero difference needs a NAMED cause. Named cause: a HARNESS CODE CHANGE falls strictly between the two evals (A03_1B_base written 2026-08-08 20:49; a01_1B_intact_base_full 2026-08-09 08:25; scripts/eval_olmo2_mmlu_content.py modified by commit 7ac9653 at 2026-08-08 22:29:43 +0800). UNVERIFIED: causality is NOT proven -- the dumps also sit on different disks/nodes. The verified claim is only the weaker one: this is a code-VERSION difference, not a same-code runtime-jitter claim. NO noise floor is asserted.",
+    "d6_critical_values_frozen": {
+      "triviaqa": {
+        "n": 17944,
+        "delta_pp_split": 4.043134195274186,
+        "p_disc_crit": 7.635885208165257,
+        "p_disc_observed_min": 0.22730989393474452,
+        "p_disc_observed_max": 0.2447254984391229,
+        "d6_status": "clear"
+      },
+      "popqa": {
+        "n": 14267,
+        "delta_pp_split": 1.3205298941613515,
+        "p_disc_crit": 0.6476389404977257,
+        "p_disc_observed_min": 0.10945599127378829,
+        "p_disc_observed_max": 0.13059589396713886,
+        "d6_status": "clear"
+      },
+      "mmlu_content": {
+        "n": 14042,
+        "delta_pp_split": 1.0238926078906136,
+        "p_disc_crit": 0.3832142073382244,
+        "p_disc_observed_min": 0.1601421751605534,
+        "p_disc_observed_max": 0.30109670987038883,
+        "d6_status": "recheck"
+      },
+      "nq_open": {
+        "n": 3610,
+        "delta_pp_split": 0.9695290858725762,
+        "p_disc_crit": 0.08833497790667091,
+        "p_disc_observed_min": 0.08610617159633002,
+        "p_disc_observed_max": 0.09839242675870818,
+        "d6_status": "fires"
+      }
+    },
+    "d6_note_barely_healed_is_the_risk": "Pilot Zero scored only arms at >=200k steps (MMLU p_disc 0.1601-0.1727), but the gate's frozen grid STARTS at 2,500 steps. The closest on-disk analogue (A03_1B_keep7_step500, barely healed) has p_disc=0.301097 = 79% of the way to p*_crit=0.3832; its half-width 0.8831pp vs Delta 1.0239pp gives Delta/hw=1.16, only 16% headroom. Restricting to well-healed arms would have produced a FALSELY COMFORTABLE CERTIFIABLE verdict. THE EARLY CHECKPOINTS ARE THE D6 RISK, NOT THE LATE ONES. Also: NQ-open's p*_crit=0.0883 sits INSIDE its observed range 0.0861-0.0984, so its SS5.2 demotion is independently confirmed here from a different statistic.",
+    "guard_rules_verbatim_ids": {
+      "G0": "anchor pinning by path + SHA256 before any gate GPU. 2026-08-10 pinning = zwfy6:olmo2_mmlu_content_results/A03_1B_base/per_example_mmlu.jsonl (md5 d1a7b1cefc0031afa84e7b9334a08bc5) + matching A03_1B_base* closed-book dumps, i.e. A03's anchor, the one Pilot Zero used. The wzc1 a01_1B_intact_base_full dump is a D5 sensitivity check ONLY and is not used for Delta.",
+      "G1": "admissibility precedes testing: D1-D6 evaluated per cell BEFORE NI(Delta). A cell failing D1/D2/D3/D4/D6 is NOT_CERTIFIABLE -- NI is NOT RUN, no accept/reject reported, and the cell is EXCLUDED FROM THE BH FAMILY (declare the reduced family size).",
+      "G2": "NO MARGIN SUBSTITUTION EVER. max(.,eps), 0.10*|residual|, and any anchor change are PROHIBITED for the remainder of A04. Only admissible responses: retire the cell, or (with explicit re-registration) change the INTERFACE so the null becomes admissible.",
+      "G3": "frozen numeric triggers: D1 residual<0; D2 0<=residual<=1.0pp; D3 two-sided 95% paired-bootstrap CI (10,000 resamples, A03 paired_bootstrap) contains 0; D4 intact AND every damaged arm below null, OR structural degeneracy (a single constant on >99% of items, or >=99% tie rate in the null's winner set); D5 |Delta drift across admissible anchors| >= 0.10*Delta (recorded, mandates G0, not fatal); D6 measured p_disc > p*_crit.",
+      "G4": "the ONLY post-data step is arithmetic: a NEEDS_RECHECK_AFTER_DATA cell is so marked ONLY because D6's input p_disc is a property of the unseen arm. The recheck is the single comparison p_disc > p*_crit with p*_crit ALREADY FIXED. No threshold may be adjusted then.",
+      "G5": "convention is part of Delta's definition. Decision convention remains split (A01, unchanged). The other four are sensitivity only and CANNOT promote a NOT_CERTIFIABLE cell to CERTIFIABLE.",
+      "G6": "every NOT_CERTIFIABLE cell is listed in the writeup with the condition and the triggering number. Retired cells are NEVER reported as 'NI rejected'."
+    },
+    "d4_threshold_calibration_check": "the >99%-constant / >=99%-tie-rate thresholds in G3 were checked against data so they separate the real cases: barely_healed modal_pred_share=1.0 (FIRES, emits letter A on 14042/14042); pruned_healed 0.6440 and intact 0.5762 (do NOT fire); MMLU longest-option tied_longest_rate=0.3422 (does NOT fire); winogrande tie rate 1.0000 (FIRES, quoted from status/scout_21/lane2_a01_gate2.md, UNVERIFIED here).",
+    "cell_classification": {
+      "family": "4 arms (A1..A4) x 6 checkpoints {2500,5000,10000,20000,40000,80000} x 4 axes = 96 cells; 72 DECISION cells after the design's own NQ-open demotion (SS5.2)",
+      "why_fixable_pre_data": "the guard's verdict is a property of (axis, convention) ONLY, because residual(intact,x) depends on neither the arm nor the checkpoint -- the intact anchor is the same model in every cell.",
+      "by_convention": {
+        "split": {
+          "all_96_cells": {
+            "CERTIFIABLE": 48,
+            "NOT_CERTIFIABLE": 24,
+            "NEEDS_RECHECK_AFTER_DATA": 24
+          },
+          "decision_72_cells": {
+            "CERTIFIABLE": 48,
+            "NOT_CERTIFIABLE": 0,
+            "NEEDS_RECHECK_AFTER_DATA": 24
+          },
+          "per_axis": {
+            "triviaqa": {
+              "verdict": "CERTIFIABLE",
+              "residual_intact_pp": 40.43134195274186,
+              "residual_intact_ci95_pp": [
+                39.706865804725815,
+                41.139099420419086
+              ],
+              "delta_pp": 4.043134195274186,
+              "conditions_fired": [],
+              "conditions_needing_recheck": []
+            },
+            "popqa": {
+              "verdict": "CERTIFIABLE",
+              "residual_intact_pp": 13.205298941613513,
+              "residual_intact_ci95_pp": [
+                12.616527651223103,
+                13.787061049975469
+              ],
+              "delta_pp": 1.3205298941613515,
+              "conditions_fired": [],
+              "conditions_needing_recheck": []
+            },
+            "mmlu_content": {
+              "verdict": "NEEDS_RECHECK_AFTER_DATA",
+              "residual_intact_pp": 10.238926078906136,
+              "residual_intact_ci95_pp": [
+                9.314912405640221,
+                11.180164862555191
+              ],
+              "delta_pp": 1.0238926078906136,
+              "conditions_fired": [],
+              "conditions_needing_recheck": [
+                "D6_delta_below_measurement_resolution"
+              ]
+            },
+            "nq_open": {
+              "verdict": "NOT_CERTIFIABLE",
+              "residual_intact_pp": 9.695290858725762,
+              "residual_intact_ci95_pp": [
+                8.698060941828254,
+                10.720221606648199
+              ],
+              "delta_pp": 0.9695290858725762,
+              "conditions_fired": [
+                "D6_delta_below_measurement_resolution"
+              ],
+              "conditions_needing_recheck": []
+            }
+          }
+        },
+        "first": {
+          "all_96_cells": {
+            "CERTIFIABLE": 48,
+            "NOT_CERTIFIABLE": 24,
+            "NEEDS_RECHECK_AFTER_DATA": 24
+          },
+          "decision_72_cells": {
+            "CERTIFIABLE": 48,
+            "NOT_CERTIFIABLE": 0,
+            "NEEDS_RECHECK_AFTER_DATA": 24
+          },
+          "per_axis": {
+            "triviaqa": {
+              "verdict": "CERTIFIABLE",
+              "residual_intact_pp": 40.43134195274186,
+              "residual_intact_ci95_pp": [
+                39.706865804725815,
+                41.139099420419086
+              ],
+              "delta_pp": 4.043134195274186,
+              "conditions_fired": [],
+              "conditions_needing_recheck": []
+            },
+            "popqa": {
+              "verdict": "CERTIFIABLE",
+              "residual_intact_pp": 13.205298941613513,
+              "residual_intact_ci95_pp": [
+                12.616527651223103,
+                13.787061049975469
+              ],
+              "delta_pp": 1.3205298941613515,
+              "conditions_fired": [],
+              "conditions_needing_recheck": []
+            },
+            "mmlu_content": {
+              "verdict": "NEEDS_RECHECK_AFTER_DATA",
+              "residual_intact_pp": 10.575416607320893,
+              "residual_intact_ci95_pp": [
+                9.535678678250962,
+                11.586668565731378
+              ],
+              "delta_pp": 1.0575416607320893,
+              "conditions_fired": [],
+              "conditions_needing_recheck": [
+                "D6_delta_below_measurement_resolution"
+              ]
+            },
+            "nq_open": {
+              "verdict": "NOT_CERTIFIABLE",
+              "residual_intact_pp": 9.695290858725762,
+              "residual_intact_ci95_pp": [
+                8.698060941828254,
+                10.720221606648199
+              ],
+              "delta_pp": 0.9695290858725762,
+              "conditions_fired": [
+                "D6_delta_below_measurement_resolution"
+              ],
+              "conditions_needing_recheck": []
+            }
+          }
+        },
+        "last": {
+          "all_96_cells": {
+            "CERTIFIABLE": 48,
+            "NOT_CERTIFIABLE": 24,
+            "NEEDS_RECHECK_AFTER_DATA": 24
+          },
+          "decision_72_cells": {
+            "CERTIFIABLE": 48,
+            "NOT_CERTIFIABLE": 0,
+            "NEEDS_RECHECK_AFTER_DATA": 24
+          },
+          "per_axis": {
+            "triviaqa": {
+              "verdict": "CERTIFIABLE",
+              "residual_intact_pp": 40.43134195274186,
+              "residual_intact_ci95_pp": [
+                39.706865804725815,
+                41.139099420419086
+              ],
+              "delta_pp": 4.043134195274186,
+              "conditions_fired": [],
+              "conditions_needing_recheck": []
+            },
+            "popqa": {
+              "verdict": "CERTIFIABLE",
+              "residual_intact_pp": 13.205298941613513,
+              "residual_intact_ci95_pp": [
+                12.616527651223103,
+                13.787061049975469
+              ],
+              "delta_pp": 1.3205298941613515,
+              "conditions_fired": [],
+              "conditions_needing_recheck": []
+            },
+            "mmlu_content": {
+              "verdict": "NEEDS_RECHECK_AFTER_DATA",
+              "residual_intact_pp": 10.468594217347954,
+              "residual_intact_ci95_pp": [
+                9.443099273607748,
+                11.47984617575844
+              ],
+              "delta_pp": 1.0468594217347955,
+              "conditions_fired": [],
+              "conditions_needing_recheck": [
+                "D6_delta_below_measurement_resolution"
+              ]
+            },
+            "nq_open": {
+              "verdict": "NOT_CERTIFIABLE",
+              "residual_intact_pp": 9.695290858725762,
+              "residual_intact_ci95_pp": [
+                8.698060941828254,
+                10.720221606648199
+              ],
+              "delta_pp": 0.9695290858725762,
+              "conditions_fired": [
+                "D6_delta_below_measurement_resolution"
+              ],
+              "conditions_needing_recheck": []
+            }
+          }
+        },
+        "credit": {
+          "all_96_cells": {
+            "CERTIFIABLE": 48,
+            "NOT_CERTIFIABLE": 48,
+            "NEEDS_RECHECK_AFTER_DATA": 0
+          },
+          "decision_72_cells": {
+            "CERTIFIABLE": 48,
+            "NOT_CERTIFIABLE": 24,
+            "NEEDS_RECHECK_AFTER_DATA": 0
+          },
+          "per_axis": {
+            "triviaqa": {
+              "verdict": "CERTIFIABLE",
+              "residual_intact_pp": 40.43134195274186,
+              "residual_intact_ci95_pp": [
+                39.706865804725815,
+                41.139099420419086
+              ],
+              "delta_pp": 4.043134195274186,
+              "conditions_fired": [],
+              "conditions_needing_recheck": []
+            },
+            "popqa": {
+              "verdict": "CERTIFIABLE",
+              "residual_intact_pp": 13.205298941613513,
+              "residual_intact_ci95_pp": [
+                12.616527651223103,
+                13.787061049975469
+              ],
+              "delta_pp": 1.3205298941613515,
+              "conditions_fired": [],
+              "conditions_needing_recheck": []
+            },
+            "mmlu_content": {
+              "verdict": "NOT_CERTIFIABLE",
+              "residual_intact_pp": -6.687081612305939,
+              "residual_intact_ci95_pp": [
+                -7.719876086027631,
+                -5.640222190571144
+              ],
+              "delta_pp": -0.668708161230594,
+              "conditions_fired": [
+                "D1_residual_negative",
+                "D4_baseline_illegitimate"
+              ],
+              "conditions_needing_recheck": [],
+              "d4_reason": "all 8/8 damaged cells AND the intact arm are below this null -- it is above the entire arm population, so it is not a floor (A01 gate-3 found the same at 7B: 5 of 6 arms below, only intact above by 1.69pp)"
+            },
+            "nq_open": {
+              "verdict": "NOT_CERTIFIABLE",
+              "residual_intact_pp": 9.695290858725762,
+              "residual_intact_ci95_pp": [
+                8.698060941828254,
+                10.720221606648199
+              ],
+              "delta_pp": 0.9695290858725762,
+              "conditions_fired": [
+                "D6_delta_below_measurement_resolution"
+              ],
+              "conditions_needing_recheck": []
+            }
+          }
+        },
+        "wrong": {
+          "all_96_cells": {
+            "CERTIFIABLE": 72,
+            "NOT_CERTIFIABLE": 24,
+            "NEEDS_RECHECK_AFTER_DATA": 0
+          },
+          "decision_72_cells": {
+            "CERTIFIABLE": 72,
+            "NOT_CERTIFIABLE": 0,
+            "NEEDS_RECHECK_AFTER_DATA": 0
+          },
+          "per_axis": {
+            "triviaqa": {
+              "verdict": "CERTIFIABLE",
+              "residual_intact_pp": 40.43134195274186,
+              "residual_intact_ci95_pp": [
+                39.706865804725815,
+                41.139099420419086
+              ],
+              "delta_pp": 4.043134195274186,
+              "conditions_fired": [],
+              "conditions_needing_recheck": []
+            },
+            "popqa": {
+              "verdict": "CERTIFIABLE",
+              "residual_intact_pp": 13.205298941613513,
+              "residual_intact_ci95_pp": [
+                12.616527651223103,
+                13.787061049975469
+              ],
+              "delta_pp": 1.3205298941613515,
+              "conditions_fired": [],
+              "conditions_needing_recheck": []
+            },
+            "mmlu_content": {
+              "verdict": "CERTIFIABLE",
+              "residual_intact_pp": 19.071357356501924,
+              "residual_intact_ci95_pp": [
+                18.11707733941034,
+                20.018515880928643
+              ],
+              "delta_pp": 1.9071357356501926,
+              "conditions_fired": [],
+              "conditions_needing_recheck": []
+            },
+            "nq_open": {
+              "verdict": "NOT_CERTIFIABLE",
+              "residual_intact_pp": 9.695290858725762,
+              "residual_intact_ci95_pp": [
+                8.698060941828254,
+                10.720221606648199
+              ],
+              "delta_pp": 0.9695290858725762,
+              "conditions_fired": [
+                "D6_delta_below_measurement_resolution"
+              ],
+              "conditions_needing_recheck": []
+            }
+          }
+        }
+      },
+      "HEADLINE_prereg_split": "24 of 96 cells (25%) are NOT_CERTIFIABLE -- ALL 24 are NQ-open, and ALL 24 were ALREADY excluded from decisions by the design's own SS5.2 demotion. Of the 72 DECISION cells, 0 are NOT_CERTIFIABLE; 48 CERTIFIABLE + 24 (MMLU-content) NEEDS_RECHECK_AFTER_DATA on the fixed trigger p_disc>0.3832. => THE GUARD REMOVES NO DECISION CAPACITY A04 POSSESSED BEFORE IT."
+    },
+    "kill_clause_impact": {
+      "split": {
+        "surviving_decision_axes": [
+          "triviaqa",
+          "popqa",
+          "mmlu_content"
+        ],
+        "n_surviving_decision_axes": 3,
+        "K1_clause_a_literal_3_of_4_satisfiable": true,
+        "K1_DISABLED_if_not_satisfiable": false,
+        "K1_rescaled_threshold": 3,
+        "K1_ge24_cell_precondition_met": true,
+        "n_cells_remaining_decision": 72,
+        "K2_literal_2_of_4_satisfiable": true,
+        "K2_rescaled_threshold": 2,
+        "K3_n_axes_intact_residual_below_5pp": 0,
+        "K3_axes_below_5pp": [],
+        "K3_literal_fires": false
+      },
+      "first": {
+        "surviving_decision_axes": [
+          "triviaqa",
+          "popqa",
+          "mmlu_content"
+        ],
+        "n_surviving_decision_axes": 3,
+        "K1_clause_a_literal_3_of_4_satisfiable": true,
+        "K1_DISABLED_if_not_satisfiable": false,
+        "K1_rescaled_threshold": 3,
+        "K1_ge24_cell_precondition_met": true,
+        "n_cells_remaining_decision": 72,
+        "K2_literal_2_of_4_satisfiable": true,
+        "K2_rescaled_threshold": 2,
+        "K3_n_axes_intact_residual_below_5pp": 0,
+        "K3_axes_below_5pp": [],
+        "K3_literal_fires": false
+      },
+      "last": {
+        "surviving_decision_axes": [
+          "triviaqa",
+          "popqa",
+          "mmlu_content"
+        ],
+        "n_surviving_decision_axes": 3,
+        "K1_clause_a_literal_3_of_4_satisfiable": true,
+        "K1_DISABLED_if_not_satisfiable": false,
+        "K1_rescaled_threshold": 3,
+        "K1_ge24_cell_precondition_met": true,
+        "n_cells_remaining_decision": 72,
+        "K2_literal_2_of_4_satisfiable": true,
+        "K2_rescaled_threshold": 2,
+        "K3_n_axes_intact_residual_below_5pp": 0,
+        "K3_axes_below_5pp": [],
+        "K3_literal_fires": false
+      },
+      "credit": {
+        "surviving_decision_axes": [
+          "triviaqa",
+          "popqa"
+        ],
+        "n_surviving_decision_axes": 2,
+        "K1_clause_a_literal_3_of_4_satisfiable": false,
+        "K1_DISABLED_if_not_satisfiable": true,
+        "K1_rescaled_threshold": 2,
+        "K1_ge24_cell_precondition_met": true,
+        "n_cells_remaining_decision": 48,
+        "K2_literal_2_of_4_satisfiable": true,
+        "K2_rescaled_threshold": 1,
+        "K3_n_axes_intact_residual_below_5pp": 1,
+        "K3_axes_below_5pp": [
+          "mmlu_content"
+        ],
+        "K3_literal_fires": false,
+        "K3_coupling_warning": "K3 counts a NEGATIVE intact residual as 'below 5pp', so a convention that pushes axes below their null pushes K3 towards firing -- but for the wrong reason (an inadmissible null, not an unmeasurable scale). Axes retired by D1/D4 must be EXCLUDED from K3's count, not counted as at-floor."
+      },
+      "wrong": {
+        "surviving_decision_axes": [
+          "triviaqa",
+          "popqa",
+          "mmlu_content"
+        ],
+        "n_surviving_decision_axes": 3,
+        "K1_clause_a_literal_3_of_4_satisfiable": true,
+        "K1_DISABLED_if_not_satisfiable": false,
+        "K1_rescaled_threshold": 3,
+        "K1_ge24_cell_precondition_met": true,
+        "n_cells_remaining_decision": 72,
+        "K2_literal_2_of_4_satisfiable": true,
+        "K2_rescaled_threshold": 2,
+        "K3_n_axes_intact_residual_below_5pp": 0,
+        "K3_axes_below_5pp": [],
+        "K3_literal_fires": false
+      }
+    },
+    "kill_clause_new_prereg_rules": {
+      "K1_K2_rescaling": "if the guard retires a decision axis, K1's '>=3 of 4' rescales to ceil(0.75*n_surviving) and K2's '>=2 of 4' to ceil(0.50*n_surviving), preserving the original proportions. NECESSARY because retiring one of three decision axes makes K1 clause (a) PERMANENTLY FALSE -> K1 could never fire -> A04 becomes UNKILLABLE by K1, which is strictly worse than being killed. Under split this is a no-op (3 of 3 / 2 of 3); under credit it gives 2 of 2 / 1 of 2. Fixed BEFORE data so it cannot be chosen later to suit an outcome.",
+      "K3_sign_decoupling": "axes retired by D1 or D4 are EXCLUDED from K3's 'residual below 5pp' count, NOT counted as at-floor. A NEGATIVE residual is trivially below 5pp, so a convention that pushes an axis under its null would push K3 towards firing FOR THE WRONG REASON -- K3 detects an UNMEASURABLE SCALE, not an INADMISSIBLE NULL. With the exclusion, K3 does not fire under ANY convention (consistent with Pilot Zero SS2, but now for a stated reason rather than by luck)."
+    },
+    "does_this_kill_A04": "NO -- and A04's survival does NOT depend on the guard being lenient. Under the pre-registered split convention 72 of 72 decision cells remain admissible (48 CERTIFIABLE + 24 pending one arithmetic check); the PRIMARY axis TriviaQA EM is the safest cell in the family (Delta=4.0431pp, p*_crit=7.6359 vs observed p_disc<=0.2447, ~31x headroom) and cannot be retired by any of D1-D6 at 1B; and the 24 retired cells are entirely NQ-open, an axis already demoted to descriptive on independent grounds. K2 -- untestable with anything on disk (SEED_SEMANTICS_DEFECT.md) -- remains the likeliest killer, exactly as Pilot Zero concluded. The guard changes nothing about that.",
+    "what_the_guard_DOES_cost": [
+      "A04 loses the ability to report a credit-convention MMLU non-inferiority result. Because residual(arm)-residual(intact) = reported(arm)-reported(intact) (the null cancels EXACTLY; ni_rule's null_vec_* arguments are provably unused -- 0 references in the function body, verified by AST), the MEASURED DIFFERENCE is convention-invariant and A04's headline is unaffected. Only the credit MARGIN is lost. CONSEQUENCE FOR A CLAIM ALREADY WRITTEN DOWN: PILOT_ZERO_VERDICT.md SS4's 'survives ALL FIVE conventions' must now read 'the verdict is unchanged under the FOUR ADMISSIBLE conventions; credit is inadmissible on MMLU-content by the margin guard'. That is a real narrowing, and it is this amendment's doing.",
+      "MMLU-content's admissibility now depends on the unseen arm (16% headroom at the barely-healed p_disc). If early-checkpoint MMLU cells retire, the pre-registered rescaling leaves K1 at ceil(0.75*2)=2 of 2 -- still satisfiable, so still falsifiable, but on a thinner base.",
+      "UNRESOLVED TENSION between K3 and D6: an axis can PASS K3 (residual>=5pp => 'measurable') yet FAIL D6 (Delta=0.10*5pp=0.5pp is below every measured item-level half-width, 0.54-1.02pp) => 'not certifiable at a 10% margin'. No 1B axis is in that window (smallest surviving residual 10.2389pp), so it does not bite here -- but it is NOT RESOLVED and must NOT be resolved by adjusting Delta after data."
+    ],
+    "evidence_files": [
+      "evidence/a04_margin_guard_classification.json (new)",
+      "evidence/a04_intact_residual_ci_1b_mmlu.json (new)",
+      "evidence/a04_pdisc_mmlu_1b.json + _full.json (new)",
+      "evidence/pilot_zero_rule_disagreement.json (existing, re-read)"
+    ],
+    "code": [
+      "code/a04_margin_guard_classify.py (new)",
+      "code/a04_intact_residual_ci.py (new)",
+      "code/a04_measure_pdisc.py (new)"
+    ],
+    "method_compliance": "scorers/nulls (longest_option_vector, paired_bootstrap) IMPORTED from A03/code/analyze_1b_knowledge_floor.py, never reimplemented; item counts hard-asserted at 14042 with nan-row and duplicate-item_id checks; item_id and gold_letter alignment asserted across every pair of dumps; the 5 nulls asserted bit-identical between the two intact artefacts; the p_disc range recovered from bootstrap gaps asserted to CONTAIN the directly measured 0.168708; T/rho/delta_fraction asserted equal to evidence/pilot_zero_rule_disagreement.json:preregistration. GPU: ZERO (no training, no eval, no torchrun, no model load; remote access read-only ls/md5sum/scp -O of 3 JSONL files).",
+    "correction_prose_vs_json": "REPORTED DISCREPANCY, JSON WINS: A04_GATE_DESIGN.md SS4 and STATUS.json nulls_per_metric.NQ_open_EM.null both give the NQ-open null as 0.0055; the evidence JSONs give 0.00554016620498615 (a03_1b_floor_nulls_4axes.json cells[intact,nq_open,em].null and pilot_zero_rule_disagreement.json nulls.nq_open.acc). This is a DISPLAY ROUNDING, not a conflict: it moves Delta_NQ-open from 0.9695290858725762pp to 0.9699307479224377pp (+0.000402pp) and p*_crit from 0.088335 to 0.088408 -- NQ-open is retired by D6 under either value, so no verdict changes. CANONICAL VALUE = 0.00554016620498615; 0.0055 must not be used in arithmetic. No other prose/JSON inconsistency was found in the quantities this guard depends on (the 4 intact residuals, the 5 MMLU nulls, and the 8 credit cells were each re-derived and matched to <1e-6).",
+    "unverified": [
+      "whether MMLU-content survives D6 at the gate's EARLY checkpoints -- p*_crit=0.3832 vs barely-healed p_disc=0.301097 leaves 16% headroom on Delta/hw; the arm that would settle it does not exist. This IS the NEEDS_RECHECK_AFTER_DATA verdict; the trigger is fixed.",
+      "p_disc at a barely-healed checkpoint for triviaqa/popqa/nq_open -- only mmlu_content has a step-500 arm scored. Since p_disc rises as the arm degrades, those three D6 verdicts rest on an OPTIMISTIC range. TriviaQA's ~31x headroom is safe by any margin; PopQA's ~5x is very likely safe but unproven at step 2,500.",
+      "the CAUSAL attribution of the 48-item D5 drift to harness commit 7ac9653 -- verified only that the commit falls strictly between the two evals; no same-code control was run; no noise floor is claimed.",
+      "BoolQ 0.6217 always-B / OpenBookQA 0.3635 / winogrande 100% tie rate -- quoted from status/scout_21/lane2_a01_gate2.md, underlying shards NOT re-opened in this pass. They inform only the widened-axis discussion, not any A04 verdict.",
+      "whether residual(intact) stays positive at j=12 -- the intact anchor is the same model regardless of j so Delta itself is unaffected, but K3's clearance is arm-dependent and remains UNVERIFIED for j=12 (as PILOT_ZERO_VERDICT.md SS2 already states).",
+      "7B behaviour: the credit/7B_base near-D2 case (Delta=0.1688pp vs half-width 1.0541pp) is recorded from A01's JSON but 7B is out of A04 scope and unfunded.",
+      "the K3-vs-D6 tension is IDENTIFIED, NOT RESOLVED. No 1B axis falls in the window.",
+      "SHA256 for the pinned anchors: G0 asks for SHA256; this pass verified MD5 after scp -O (matched at both ends). SHA256 must be recorded at gate launch."
+    ]
   },
-  "evidence": [
-   "evidence/a04_plateau_rule_repair.json",
-   "evidence/a04_1b_keep7f2_ppl_trajectory.json",
-   "code/a04_plateau_rule_repair.py",
-   "A04_PLATEAU_REPAIR_AND_MARGIN_SENSITIVITY.md"
+  "status_note": "Previous status string was 'active_design_gate_specified_awaiting_pilot_zero' while pilot_zero.status in this same file said 'DONE -- executed 2026-08-09'. Corrected 2026-08-10.",
+  "tcodex_audit_20260810_disposition": {
+    "audit_file": "../A03-parametric-vs-external-memory/evidence/TCODEX_AUDIT_20260810.md (589 lines, md5 8ba6b5da31c3af2fd02c5d5d86d93b2c)",
+    "audit_verdict_on_A04": "Design paper / preregistration only. Pilot Zero \u4e0d\u662f gate pass; K1 \u5e94\u6539\u4e3a INDETERMINATE; \u6ca1\u6709\u4efb\u4f55\u6a21\u578b\u5df2\u88ab 'certified recovered'; K2/run variance \u5b8c\u5168\u672a\u6d4b.",
+    "actioned_20260810": [
+      "K1_FIRES false -> INDETERMINATE with the cell-unit arithmetic recorded",
+      "top-level status string corrected (it contradicted pilot_zero.status DONE in the same file)",
+      "K2 re-opened as RECOVERABLE with the in-flight A03 seed-43/44 measurement identified as its data source",
+      "PLATEAU(T) dimensional incoherence REPAIRED -> rule R3 (per-5k geometric rate). Both previously implemented readings characterised with measured numbers: unscaled = 15.70x stringency spread across the frozen grid {2500..80000}; linear-scaled = accepts a run still improving at exactly T for every d>5000, 174/200000 composition violations, vacuous at d>=250000. R3 equals the pre-registered arithmetic EXACTLY at d=5000 (asserted <1e-12), is composition-consistent 0/200000 both directions and both seeds, never vacuous. T=2.0%/5k UNCHANGED. Evidence: evidence/a04_plateau_rule_repair.json; code/a04_plateau_rule_repair.py; A04_PLATEAU_REPAIR_AND_MARGIN_SENSITIVITY.md section 1. THE GATE IS NOW RUNNABLE ON AN IRREGULAR GRID.",
+      "G0 SHA256 anchor pinning DONE for all 4 axes (merged + all 24 shard files), verified BOTH remotely on .82 against canonical zwfy6 paths AND locally against the read-only staging copies; identical. MMLU anchor sha256 8cbbb008f2f606b039d61f6fedfb54ae4b44aedf7430f9322fab3150027e2378. Evidence: evidence/a04_g0_anchor_sha256_pinning.json.",
+      "D5 48-flip drift RE-VERIFIED: reproduces EXACTLY (48/14042, acc drift +0.014242985329726565 pp, delta drift +0.0014242985329726565 pp). No correction needed to A04_MARGIN_GUARD_PREREG.md section 2.5.",
+      "Margin-sensitivity sweep over Delta fractions 0.10-0.66 DONE (extended to 1.00 so crossings could be reported). Evidence: evidence/a04_margin_sensitivity_sweep.json; code/a04_margin_sensitivity_sweep.py."
+    ],
+    "remaining": [
+      "Rewrite PROPOSAL.md to the narrowed safe_residual_claim -- RELATED_WORK finds the current experimental design largely covered by arXiv:2606.1xxxx.",
+      "No model has been certified recovered; do not state otherwise anywhere.",
+      "NEW, created by the PLATEAU repair: under R3 the first PLATEAU-accept checkpoint on the pilot trajectory moves from step 200000 to step 100000, where NO capability axis was scored. The earliest PLATEAU-vs-NI cell is therefore UNMEASURED. Step 200000 still accepts under R3 (rate_5k 0.13173 %/5k), so the pilot's single measured cell survives, but any claim about WHERE the earliest disagreement lies needs step-100000 capability scoring = GPU."
+    ]
+  },
+  "plateau_rule_repair_20260810": {
+    "status": "DONE -- the gate-blocking defect is closed",
+    "gpu_spent": 0,
+    "what_was_broken": "A04_GATE_DESIGN.md:69-71 states T = 2.0 % per 5000 steps; code/pilot_zero_rule_disagreement.py:168-202 implemented two readings, BOTH invalid on an irregular grid.",
+    "R1_unscaled_defect": {
+      "mechanism": "compares an interval-length-dependent quantity to a per-5k threshold; stringency is set by the grid, not the training",
+      "effective_per5k_threshold_on_frozen_grid_pct": {
+        "2500": 3.960000000000008,
+        "5000": 3.960000000000008,
+        "10000": 2.0000000000000018,
+        "20000": 1.005050633883342,
+        "40000": 0.5037943607311912,
+        "80000": 0.2522152430096347,
+        "_note": "keyed by CHECKPOINT step, not interval width; the stated T is 2.0, so 2500/5000 are 1.980x too lenient and 80000 is 7.93x too strict"
+      },
+      "fold_spread": 15.7,
+      "correct_at_exactly_one_of_six_checkpoints": "step 10000, where d = 5000",
+      "real_data_symptom": "holding the terminal checkpoint at step 200000 and varying the preceding checkpoint, rel spans 1.3875 .. 12.5305 (9.03x) and R1's verdict is NOT unanimous; rate_5k spans 0.13173 .. 0.44527 (3.38x) and R3's verdict IS unanimous"
+    },
+    "R2_linear_defect": {
+      "mechanism": "correct units, wrong algebra -- relative improvement compounds, a linear allowance does not",
+      "accepts_a_run_still_at_threshold_rate_for_all_d_gt_5000": true,
+      "over_allowance_pp": {
+        "20000": 0.2368,
+        "53000": 1.9228,
+        "80000": 4.3798,
+        "250000": 36.417
+      },
+      "composition_backward_violations_per_200000_pairs": {
+        "seed0": 174,
+        "seed1": 161
+      },
+      "vacuous_at_interval_steps_ge": 250000
+    },
+    "R3_repair": {
+      "formula": "rate_5k(c) = 100*(1 - (ppl_c/ppl_prev)**(5000/d)); accept iff rate_5k(c) < T",
+      "T_unchanged": 2.0,
+      "new_numeric_constants_introduced": 0,
+      "equals_prereg_arithmetic_at_d_5000": "asserted |R1-R3| < 1e-12 on four trajectories including the real 17.6194->16.1613 pair",
+      "composition_violations": {
+        "forward": 0,
+        "backward": 0,
+        "seeds": [
+          0,
+          1
+        ],
+        "n_trials": 200000
+      },
+      "never_vacuous": true,
+      "preregistration_status": "T is PRE-REGISTERED (d1ba737) and unchanged. The CHOICE of R3 over R1/R2 is POST-HOC (2026-08-10, after the PPL trajectory was seen) and is disclosed as such. Justified by invariance/composition properties that hold for ANY T, not by which arm it accepts.",
+      "repair_direction_is_costly_to_A04": "R3 is strictly stricter than R2 at every d > 5000, so it makes PLATEAU harder to accept and A04's target disagreement harder to find."
+    },
+    "consequence_for_pilot_zero": {
+      "first_accept_R1_unscaled": 200000,
+      "first_accept_R2_linear": 100000,
+      "first_accept_R3_repaired": 100000,
+      "step200000_rate_5k_pct": 0.13172979283519895,
+      "step200000_still_accepts_under_R3": true,
+      "honest_cost": "the repaired rule's EARLIEST accept (step 100000) has no capability scoring, so that PLATEAU-vs-NI cell is UNMEASURED, not resolved. 4.6386 % further relative PPL improvement lies between step 100000 and step 200000."
+    },
+    "evidence": [
+      "evidence/a04_plateau_rule_repair.json",
+      "evidence/a04_1b_keep7f2_ppl_trajectory.json",
+      "code/a04_plateau_rule_repair.py",
+      "A04_PLATEAU_REPAIR_AND_MARGIN_SENSITIVITY.md"
+    ]
+  },
+  "g0_anchor_sha256_20260810": {
+    "status": "DONE -- A04_MARGIN_GUARD_PREREG.md section 8 item 8 CLOSED",
+    "gpu_spent": 0,
+    "sha256": {
+      "mmlu_content": "8cbbb008f2f606b039d61f6fedfb54ae4b44aedf7430f9322fab3150027e2378",
+      "triviaqa_em": "c30b9072e139b6828c585f169c77bf60a6b28b6ea1c1048b404dc8ef1cbf9d00",
+      "popqa_em": "500e45070bd9dea20d104f80b9443ee257eab1dfda6d0a83cbc9cbf9e3f736a5",
+      "nq_open_em": "58ced6e6bdd34d3d08ff7be11b05031679373c7f2fed2d9869f720561a104c6d",
+      "_d5_second_measurement_NOT_for_delta": "8797e77a314117eb4cdb1e03d68af448966e248795c48aa8bfeb79a30f200029"
+    },
+    "all_24_shard_files_hashed": true,
+    "verified_both_ends": "remote sha256sum on .82 against canonical zwfy6 paths AND local sha256sum on the read-only /tmp/a04src staging copies; identical on all 24 shards and all 4 merged files",
+    "discovery": "the md5 recorded at A04_MARGIN_GUARD_PREREG.md:347 pins the MERGED per_example_mmlu.jsonl, but every A04 analysis reads the EIGHT shard files. A naive shard-order concatenation gives md5 759e8d639d388e652323d29f15cff197, NOT the recorded d1a7b1cefc0031afa84e7b9334a08bc5. The recorded md5 is reproduced only by merging the shards AND re-sorting by item_id -- verified exactly, all four axes. The pin is valid; that fact was undemonstrated until now.",
+    "d5_48_flip_reverification": {
+      "verdict": "REPRODUCES EXACTLY -- no correction needed",
+      "item_flips": 48,
+      "n": 14042,
+      "acc_A03_1B_base": 0.386839481555334,
+      "acc_a01_1B_intact_base_full": 0.38698191140863125,
+      "acc_drift_pp": 0.014242985329726565,
+      "delta_drift_pp": 0.0014242985329726565,
+      "new_flip_counts_prereg_did_not_report": {
+        "letter": 191,
+        "content_raw": 33,
+        "content_norm": 48,
+        "content_norm_prediction_flips": 80
+      },
+      "reading": "three interfaces disagreeing by 33/48/191 items rules out one bad shard or one truncated file; it is a scoring-path difference touching all three interfaces with different sensitivity, consistent with harness commit 7ac9653 falling strictly between the two evals",
+      "still_unverified": "causality. No same-code control (needs GPU). No noise floor is claimed; the repo's byte-identical-rerun rule means a nonzero flip count requires a named cause."
+    },
+    "evidence": [
+      "evidence/a04_g0_anchor_sha256_pinning.json"
+    ]
+  },
+  "margin_sensitivity_sweep_20260810": {
+    "status": "DONE -- the 'arbitrary 10% margin' objection is answered, with one claim NARROWED",
+    "gpu_spent": 0,
+    "delta_is_NOT_rereg": "guard G2 prohibits substitution; the pre-registered fraction stays 0.10. This is a sensitivity report ON that number.",
+    "bit_comparability": "the sweep's 0.10 column reproduces the pilot's cells bit-for-bit: all four diff_lower95_one_sided_pp identical to 10 dp, all four nulls identical",
+    "arm": "keep7f2_step200000 -- the only cell where PLATEAU is defined and accepts",
+    "assigned_range": [
+      0.1,
+      0.66
+    ],
+    "extended_range_and_why": "extended to 1.00 because two of three decision-axis crossings sit ABOVE 0.66 and could not otherwise be reported; every point above 0.66 flagged in_assigned_range=false; nothing at or below 0.66 changes",
+    "Q1_disagreement_still_EXISTS_ge1_axis_rejects": {
+      "assigned_0.10_to_0.66": {
+        "split": true,
+        "first": true,
+        "last": true,
+        "credit": true,
+        "wrong": true
+      },
+      "extended_0.10_to_1.00": {
+        "split": false,
+        "first": false,
+        "last": false,
+        "credit": false,
+        "wrong": false
+      },
+      "meaning": "this is the K1-relevant question, because K1 fires only if the rules AGREE. INVARIANT across the whole assigned range under all five null conventions -> the K1-shaped disagreement is NOT an artefact of the 0.10 margin."
+    },
+    "Q2_ALL_three_axes_still_reject": {
+      "assigned_0.10_to_0.66": {
+        "split": true,
+        "first": false,
+        "last": false,
+        "credit": true,
+        "wrong": false
+      },
+      "extended_0.10_to_1.00": {
+        "split": false,
+        "first": false,
+        "last": false,
+        "credit": false,
+        "wrong": false
+      },
+      "meaning": "NOT invariant. The stronger 3/3 phrasing used in PILOT_ZERO_VERDICT.md must not be generalised across margins."
+    },
+    "first_grid_fraction_where_any_axis_accepts": {
+      "split": 0.68,
+      "first": 0.66,
+      "last": 0.66,
+      "credit": 0.8,
+      "wrong": 0.36
+    },
+    "exact_crossing_fractions_split_one_sided_lower95": {
+      "mmlu_content": 0.6642323074247959,
+      "triviaqa": 0.7840110268780152,
+      "popqa": 0.9102972399150743,
+      "nq_open_demoted": 0.8514285714285713
+    },
+    "crossing_fractions_point_estimate_for_contrast_split": {
+      "mmlu_content": 0.61,
+      "triviaqa": 0.7693,
+      "popqa": 0.8753
+    },
+    "credit_mmlu_has_no_crossing": "residual(intact) = -6.687081612305939 pp under credit, so Delta < 0, NI degenerates to strict superiority, and WIDENING the fraction makes it HARDER. Guard D1/G1 marks the cell NOT_CERTIFIABLE and NI is not run.",
+    "near_miss_recorded": "MMLU-content's split crossing is 0.6642 -- only 0.0042 above the assigned upper endpoint. A sweep truncated at 0.66 would have reported 'invariant' for the pre-registered convention while 0.4 points of fraction from a flip. My pre-run estimate of 0.610 came from the POINT ESTIMATE; the rule uses the one-sided lower 95% bound, which is systematically more demanding.",
+    "may_say": [
+      "over the assigned 0.10-0.66 range, under all five null conventions, a disagreement of the K1-required shape persists; K1 does not become fireable by widening the margin sixfold",
+      "under the pre-registered split convention the earliest axis-level flip is at Delta-fraction 0.6642 (MMLU-content), a margin 6.6x the pre-registered one"
+    ],
+    "must_not_say": [
+      "all three axes reject for any plausible margin -- under wrong that fails at 0.36, under first/last at 0.66, both INSIDE the assigned range",
+      "the range was chosen to be safe -- it was assigned before the script existed and came within 0.0042 of concealing the split flip"
+    ],
+    "does_not_touch": "K1's >=24-cell denominator (3 cells exist; retraction b93247f stands, K1 = INDETERMINATE) or K2 (still needs seeds). The margin objection is answered; the gate is still not run.",
+    "evidence": [
+      "evidence/a04_margin_sensitivity_sweep.json",
+      "code/a04_margin_sensitivity_sweep.py"
+    ]
+  },
+  "pilot_one": {
+    "status": "PREPARED_STAGE_A_ARMED",
+    "prereg": "PILOT_ONE_PREREG.md (commit 2ac0b5a, PRE-DATA)",
+    "driver": "code/pilot_one_stage_a_sd_run.py (commit 49e665d)",
+    "precondition_resolved": "6.2 gates Pilot One on the disagreement EXISTING. The b93247f retraction withdrew K1's >=24-cell VERDICT, not the existence finding, which is margin-robust over Delta fractions 0.10-0.66 under all 5 null conventions. Precondition SATISFIED.",
+    "stage_a": {
+      "cost_gpu_h": 0,
+      "what": "sd_run from A03 seeds 43/44 step220000 -- the repo's FIRST true run-to-run draws under the fixed sampler (ce5c298 on zwfy6 since 2026-08-10 16:53).",
+      "estimator": "sd_run=|m43-m44|/sqrt(2); bound_3=2.920*sd_run/sqrt(3)",
+      "rule": "K2 FIRES iff bound_3>Delta on >=2 of 3 decision axes (triviaqa 4.043 / popqa 1.321 / mmlu_content 1.024 pp). Exactly 1 -> INDETERMINATE. NQ-open demoted, no decision weight.",
+      "one_directional": "large sd_run KILLS; small sd_run does NOT clear K2 (wrong arm keep7 vs keep12, wrong budget 20k vs 5k, n=2 is a range not a variance). Script can never emit K2_CLEARED.",
+      "eta": "seeds at step210000 as of 2026-08-11 00:20 GMT+8; ~5.7h to step220000",
+      "harvest_blocked_on": "task #236 step220000 ckpts + the 4-axis eval"
+    },
+    "stage_b": {
+      "cost_gpu_h": 135,
+      "what": "keep12+fresh2 1B, S=3 seeds {101,102,103} x 5000 steps",
+      "launchability_verified": "transplant_front() prunes from --model_path; --resume_from optional. So keep12 is launchable despite PILOT_ZERO_VERDICT 5 noting no 1B keep12 arm exists on either disk -- that statement is about MEASURED RECOVERY, not launchability. Assets verified on zwfy6 2026-08-10 23:40.",
+      "gate": "runs only if Stage A does not fire",
+      "not_authorised": "Pilot Two (the 1077-4309 GPU-h full gate) needs user approval"
+    }
+  },
+  "defects_found_20260811": [
+    {
+      "what": "zwfy6 carried the PRE-FIX load_mmlu (flat guessed keys vs nested record)",
+      "impact": "returned (None,None) for all 14042 MMLU items on zwfy6, so any MMLU recompute run there would silently drop the axis -- the same cross-disk propagation failure as the DistributedSampler seed= bug",
+      "fix": "fixed module scp'd to zwfy6; both disks now md5 e937b3fa39ac6bc33cc5d32538ab673f; stale copy preserved as .PRE_MMLUFIX_BAK md5 cb5a3c4585deed35206bec02b772d5d9",
+      "guard_added": "Stage-A driver asserts the fixed loader's nested-read marker at startup; POSITIVE check because the fixed version quotes the old key names in its docstring"
+    },
+    {
+      "what": "A03's recompute module has no __main__ guard",
+      "impact": "importing it to reuse load_cb/load_mmlu re-runs its entire trajectory analysis and can SystemExit on an unrelated arm's partial shards",
+      "fix": "Stage-A driver execs only the pre-driver prefix, cut at 'BASE = '"
+    }
   ]
- },
- "g0_anchor_sha256_20260810": {
-  "status": "DONE -- A04_MARGIN_GUARD_PREREG.md section 8 item 8 CLOSED",
-  "gpu_spent": 0,
-  "sha256": {
-   "mmlu_content": "8cbbb008f2f606b039d61f6fedfb54ae4b44aedf7430f9322fab3150027e2378",
-   "triviaqa_em": "c30b9072e139b6828c585f169c77bf60a6b28b6ea1c1048b404dc8ef1cbf9d00",
-   "popqa_em": "500e45070bd9dea20d104f80b9443ee257eab1dfda6d0a83cbc9cbf9e3f736a5",
-   "nq_open_em": "58ced6e6bdd34d3d08ff7be11b05031679373c7f2fed2d9869f720561a104c6d",
-   "_d5_second_measurement_NOT_for_delta": "8797e77a314117eb4cdb1e03d68af448966e248795c48aa8bfeb79a30f200029"
-  },
-  "all_24_shard_files_hashed": true,
-  "verified_both_ends": "remote sha256sum on .82 against canonical zwfy6 paths AND local sha256sum on the read-only /tmp/a04src staging copies; identical on all 24 shards and all 4 merged files",
-  "discovery": "the md5 recorded at A04_MARGIN_GUARD_PREREG.md:347 pins the MERGED per_example_mmlu.jsonl, but every A04 analysis reads the EIGHT shard files. A naive shard-order concatenation gives md5 759e8d639d388e652323d29f15cff197, NOT the recorded d1a7b1cefc0031afa84e7b9334a08bc5. The recorded md5 is reproduced only by merging the shards AND re-sorting by item_id -- verified exactly, all four axes. The pin is valid; that fact was undemonstrated until now.",
-  "d5_48_flip_reverification": {
-   "verdict": "REPRODUCES EXACTLY -- no correction needed",
-   "item_flips": 48,
-   "n": 14042,
-   "acc_A03_1B_base": 0.386839481555334,
-   "acc_a01_1B_intact_base_full": 0.38698191140863125,
-   "acc_drift_pp": 0.014242985329726565,
-   "delta_drift_pp": 0.0014242985329726565,
-   "new_flip_counts_prereg_did_not_report": {
-    "letter": 191,
-    "content_raw": 33,
-    "content_norm": 48,
-    "content_norm_prediction_flips": 80
-   },
-   "reading": "three interfaces disagreeing by 33/48/191 items rules out one bad shard or one truncated file; it is a scoring-path difference touching all three interfaces with different sensitivity, consistent with harness commit 7ac9653 falling strictly between the two evals",
-   "still_unverified": "causality. No same-code control (needs GPU). No noise floor is claimed; the repo's byte-identical-rerun rule means a nonzero flip count requires a named cause."
-  },
-  "evidence": [
-   "evidence/a04_g0_anchor_sha256_pinning.json"
-  ]
- },
- "margin_sensitivity_sweep_20260810": {
-  "status": "DONE -- the 'arbitrary 10% margin' objection is answered, with one claim NARROWED",
-  "gpu_spent": 0,
-  "delta_is_NOT_rereg": "guard G2 prohibits substitution; the pre-registered fraction stays 0.10. This is a sensitivity report ON that number.",
-  "bit_comparability": "the sweep's 0.10 column reproduces the pilot's cells bit-for-bit: all four diff_lower95_one_sided_pp identical to 10 dp, all four nulls identical",
-  "arm": "keep7f2_step200000 -- the only cell where PLATEAU is defined and accepts",
-  "assigned_range": [
-   0.1,
-   0.66
-  ],
-  "extended_range_and_why": "extended to 1.00 because two of three decision-axis crossings sit ABOVE 0.66 and could not otherwise be reported; every point above 0.66 flagged in_assigned_range=false; nothing at or below 0.66 changes",
-  "Q1_disagreement_still_EXISTS_ge1_axis_rejects": {
-   "assigned_0.10_to_0.66": {
-    "split": true,
-    "first": true,
-    "last": true,
-    "credit": true,
-    "wrong": true
-   },
-   "extended_0.10_to_1.00": {
-    "split": false,
-    "first": false,
-    "last": false,
-    "credit": false,
-    "wrong": false
-   },
-   "meaning": "this is the K1-relevant question, because K1 fires only if the rules AGREE. INVARIANT across the whole assigned range under all five null conventions -> the K1-shaped disagreement is NOT an artefact of the 0.10 margin."
-  },
-  "Q2_ALL_three_axes_still_reject": {
-   "assigned_0.10_to_0.66": {
-    "split": true,
-    "first": false,
-    "last": false,
-    "credit": true,
-    "wrong": false
-   },
-   "extended_0.10_to_1.00": {
-    "split": false,
-    "first": false,
-    "last": false,
-    "credit": false,
-    "wrong": false
-   },
-   "meaning": "NOT invariant. The stronger 3/3 phrasing used in PILOT_ZERO_VERDICT.md must not be generalised across margins."
-  },
-  "first_grid_fraction_where_any_axis_accepts": {
-   "split": 0.68,
-   "first": 0.66,
-   "last": 0.66,
-   "credit": 0.8,
-   "wrong": 0.36
-  },
-  "exact_crossing_fractions_split_one_sided_lower95": {
-   "mmlu_content": 0.6642323074247959,
-   "triviaqa": 0.7840110268780152,
-   "popqa": 0.9102972399150743,
-   "nq_open_demoted": 0.8514285714285713
-  },
-  "crossing_fractions_point_estimate_for_contrast_split": {
-   "mmlu_content": 0.61,
-   "triviaqa": 0.7693,
-   "popqa": 0.8753
-  },
-  "credit_mmlu_has_no_crossing": "residual(intact) = -6.687081612305939 pp under credit, so Delta < 0, NI degenerates to strict superiority, and WIDENING the fraction makes it HARDER. Guard D1/G1 marks the cell NOT_CERTIFIABLE and NI is not run.",
-  "near_miss_recorded": "MMLU-content's split crossing is 0.6642 -- only 0.0042 above the assigned upper endpoint. A sweep truncated at 0.66 would have reported 'invariant' for the pre-registered convention while 0.4 points of fraction from a flip. My pre-run estimate of 0.610 came from the POINT ESTIMATE; the rule uses the one-sided lower 95% bound, which is systematically more demanding.",
-  "may_say": [
-   "over the assigned 0.10-0.66 range, under all five null conventions, a disagreement of the K1-required shape persists; K1 does not become fireable by widening the margin sixfold",
-   "under the pre-registered split convention the earliest axis-level flip is at Delta-fraction 0.6642 (MMLU-content), a margin 6.6x the pre-registered one"
-  ],
-  "must_not_say": [
-   "all three axes reject for any plausible margin -- under wrong that fails at 0.36, under first/last at 0.66, both INSIDE the assigned range",
-   "the range was chosen to be safe -- it was assigned before the script existed and came within 0.0042 of concealing the split flip"
-  ],
-  "does_not_touch": "K1's >=24-cell denominator (3 cells exist; retraction b93247f stands, K1 = INDETERMINATE) or K2 (still needs seeds). The margin objection is answered; the gate is still not run.",
-  "evidence": [
-   "evidence/a04_margin_sensitivity_sweep.json",
-   "code/a04_margin_sensitivity_sweep.py"
-  ]
- }
 }
