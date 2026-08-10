@@ -9,6 +9,16 @@ evidence: evidence/arm3_arm4_cpt_trajectory_paired_full.json (regenerated with a
 protocol: per-item paired difference bootstrap, n_boot=5000, seed=42, CI95 percentile; SIG = CI excludes 0
 ---
 
+> ## ⚠️ RETRACTED 2026-08-10 — see `ARM6_STEP215_VERDICT.md`
+>
+> The 'peak-LR CPT actively harms' conclusion below does NOT hold. Arm 4's
+> `-0.93pp SIG` triviaqa em at step220000 is one point in a 4-point series that
+> also contains **+1.26pp SIG** at step210000 — a 2.66pp swing, **10.0x** the
+> bootstrap CI half-width, with Arm 4's trajectory mean at −0.298pp. The paired
+> bootstrap here measures item-resampling variance while the dominant variance is
+> checkpoint-to-checkpoint. Read below as a record of what was believed, not as a
+> finding.
+
 # A03 Arm 4 (peak-LR CPT) — VERDICT
 
 ## 0. Bottom line

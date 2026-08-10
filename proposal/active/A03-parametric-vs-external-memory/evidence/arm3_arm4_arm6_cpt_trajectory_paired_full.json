@@ -901,13 +901,91 @@
       },
       "step215000": {
         "popqa": {
-          "error": "FATAL A03_1B_arm6_lowerband_step215000/popqa: 0/8 shards -- refusing (a silently-merged partial set has ruined results here before)"
+          "em": {
+            "n": 14267,
+            "delta_pp": -0.18223873273988925,
+            "ci95_pp": [
+              -0.33644073736594937,
+              -0.028036728113829117
+            ],
+            "verdict": "SIG"
+          },
+          "contains": {
+            "n": 14267,
+            "delta_pp": -0.2663489170813766,
+            "ci95_pp": [
+              -0.5256886521342959,
+              0.0
+            ],
+            "verdict": "TIE"
+          },
+          "f1": {
+            "n": 14267,
+            "delta_pp": -0.34506553585196603,
+            "ci95_pp": [
+              -0.5053998037429032,
+              -0.18318358800028042
+            ],
+            "verdict": "SIG"
+          }
         },
         "triviaqa": {
-          "error": "FATAL A03_1B_arm6_lowerband_step215000/triviaqa: 0/8 shards -- refusing (a silently-merged partial set has ruined results here before)"
+          "em": {
+            "n": 17944,
+            "delta_pp": -0.05572893446277308,
+            "ci95_pp": [
+              -0.27307177886758804,
+              0.17833259028087384
+            ],
+            "verdict": "TIE"
+          },
+          "contains": {
+            "n": 17944,
+            "delta_pp": 0.18947837717342844,
+            "ci95_pp": [
+              -0.13932233615693268,
+              0.5071333036112349
+            ],
+            "verdict": "TIE"
+          },
+          "f1": {
+            "n": 17944,
+            "delta_pp": -0.03380015604101651,
+            "ci95_pp": [
+              -0.2608118730494873,
+              0.19413696778867584
+            ],
+            "verdict": "TIE"
+          }
         },
         "nq_open": {
-          "error": "FATAL A03_1B_arm6_lowerband_step215000_nq/nq_open: 0/8 shards -- refusing (a silently-merged partial set has ruined results here before)"
+          "em": {
+            "n": 3610,
+            "delta_pp": 0.2493074792243767,
+            "ci95_pp": [
+              -0.08310249307479224,
+              0.5817174515235457
+            ],
+            "verdict": "TIE"
+          },
+          "contains": {
+            "n": 3610,
+            "delta_pp": -0.08310249307479224,
+            "ci95_pp": [
+              -0.5817174515235457,
+              0.41551246537396125
+            ],
+            "verdict": "TIE"
+          },
+          "f1": {
+            "n": 3610,
+            "delta_pp": 0.13885595567867037,
+            "ci95_pp": [
+              -0.229115027700831,
+              0.5042583795013852
+            ],
+            "verdict": "TIE"
+          }
         }
       },
       "step220000": {

@@ -9,6 +9,15 @@ evidence: evidence/arm3_arm4_arm6_cpt_trajectory_paired_full.json (md5 f92fe250c
 protocol: per-item paired difference bootstrap, n_boot=5000, seed=42, CI95 percentile; SIG = CI excludes 0
 ---
 
+> ## ✅ SUPERSEDED 2026-08-10 — see `ARM6_STEP215_VERDICT.md`
+>
+> This interim record was correct to refuse to call step210000 a result. step215000
+> landed at 13:37 GMT+8: **all three arms null** on triviaqa em (Arm3 −0.02, Arm6
+> −0.06, Arm4 −0.12, all ns), firing the pre-registered 'Arm 6 nulls → Arm 3 was a
+> fluke' branch. The trajectory-CPT claim is **retracted**. The step205000
+> 'damage monotone in LR' reading survives only as weakly suggestive (one dose
+> point, reverses at the next).
+
 # A03 Arm 6 (mid-low-LR CPT) — interim record
 
 ## Why this arm exists

@@ -1,40 +1,110 @@
 {
   "id": "A03",
-  "status": "active_measurable_but_trajectory_claim_weakened_by_LR_sensitivity_arm6_in_progress",
+  "status": "active_TRAJECTORY_CPT_CLAIM_RETRACTED_only_gate1_pilot_survives",
   "priority": 3,
-  "updated": "2026-08-10T11:05+0800",
+  "updated": "2026-08-10T13:50+0800",
   "arm6_midlowLR_cpt": {
-    "status": "RUNNING on .73 since 04:56:33 GMT+8; step210360/373000 as of 10:51. Two of four dose points evaluated. Watcher self-stops at step220000.pt; revised ETA ~13:00 GMT+8 (2.05 s/step measured).",
+    "status": "DECIDED at step215000 (2026-08-10 13:37 GMT+8) -- see ARM6_STEP215_VERDICT.md. 3 of 4 dose points evaluated; training continues on .73 to step220000 for symmetry but the verdict no longer depends on it. step215000: Arm6 triviaqa em -0.06 ns, Arm3 -0.02 ns, Arm4 -0.12 ns -- ALL THREE ARMS NULL on the headline axis.",
     "purpose": "discriminate whether Arm 3's +0.48pp SIG triviaqa em at [0.32x, 0.25x] peak is a general low-LR CPT phenomenon or specific to the exact cosine-tail schedule. If Arm 6 also +0.48 SIG, low-LR is a real regime; if Arm 6 nulls/sign-flips, Arm 3 was a fluke and A03's trajectory-CPT claim dies.",
     "config": "warmup_steps=150 (matches Arm 3), max_steps=373000 (extends Arm 3's 300000); LR band [0.50x, 0.43x] peak across step 200000-220000 (verified from log: 9.98e-06 at step 200040 matches predicted 0.499x)",
-    "lr_ladder_all_arms": {"Arm3": "[0.325x, 0.249x]", "Arm6_new": "[0.499x, 0.425x]", "Arm4": "[0.998x, 0.559x]"},
-    "verdict": "NOT_YET_JUDGED -- 2 of 4 dose points in; do NOT cite step205/210 as a verdict, see transient_warning",
+    "lr_ladder_all_arms": {
+      "Arm3": "[0.325x, 0.249x]",
+      "Arm6_new": "[0.499x, 0.425x]",
+      "Arm4": "[0.998x, 0.559x]"
+    },
+    "verdict": "TRAJECTORY-CPT CLAIM RETRACTED (not narrowed). The pre-registered 'Arm 6 nulls -> Arm 3 was a fluke' branch fired, and step215000 additionally exposed a measurement defect that invalidates the whole dose-response apparatus: within-arm step-to-step swing is 2.4x the bootstrap CI half-width at the median (10.0x worst case, 4.7x on the headline axis), and 7/12 arm-axis combinations with >=2 SIG cells contain two SIG cells of OPPOSITE SIGN. Arm 3's +0.48pp headline is the argmax of an oscillating 4-point series whose mean is +0.088pp.",
     "dose_points_measured": {
       "step205000": {
         "evaluated": "2026-08-10 07:55:28 GMT+8",
-        "triviaqa": {"em": "-0.73 SIG", "contains": "+0.48 SIG", "f1": "-0.85 SIG"},
-        "popqa": {"em": "-0.59 SIG", "contains": "+0.06 ns", "f1": "-1.08 SIG"},
-        "nq_open": {"em": "-0.17 ns", "contains": "-0.17 ns", "f1": "-0.29 ns"},
+        "triviaqa": {
+          "em": "-0.73 SIG",
+          "contains": "+0.48 SIG",
+          "f1": "-0.85 SIG"
+        },
+        "popqa": {
+          "em": "-0.59 SIG",
+          "contains": "+0.06 ns",
+          "f1": "-1.08 SIG"
+        },
+        "nq_open": {
+          "em": "-0.17 ns",
+          "contains": "-0.17 ns",
+          "f1": "-0.29 ns"
+        },
         "reading": "LR-monotone early CPT damage: at 5k steps the em/f1 loss orders Arm3 (-0.48) < Arm6 (-0.73) < Arm4 (-1.40) on triviaqa em, and the same ordering holds on popqa em and both f1 axes. Arm 3 and Arm 6 both use warmup=150 so neither has Arm 4's Adam-moment mismatch -- this is a genuine shared 'early CPT overshoot', not an artifact."
       },
       "step210000": {
         "evaluated": "2026-08-10 10:46:26 GMT+8",
-        "triviaqa": {"em": "+0.77 SIG", "contains": "+0.04 ns", "f1": "+0.60 SIG"},
-        "popqa": {"em": "+0.08 ns", "contains": "-0.12 ns", "f1": "-0.22 SIG"},
-        "reading": "Arm 6 at 10k CPT already EXCEEDS Arm 3's step220000 headline (+0.77 vs +0.48 SIG, i.e. +0.29pp higher) with 10k steps still to run."
+        "triviaqa": {
+          "em": "+0.77 SIG",
+          "contains": "+0.04 ns",
+          "f1": "+0.60 SIG"
+        },
+        "popqa": {
+          "em": "+0.08 ns",
+          "contains": "-0.12 ns",
+          "f1": "-0.22 SIG"
+        },
+        "reading": "RETRACTED READING. This cell originally said 'Arm 6 at 10k CPT already EXCEEDS Arm 3's step220000 headline'. step215000 then showed all three arms null and revealed the oscillation defect. The step210000 positive is noise: the same arm reads -0.73 SIG at step205000 and -0.06 ns at step215000."
+      },
+      "step215000": {
+        "evaluated": "2026-08-10 13:37:29 GMT+8 (shards verified 8/8 for popqa/triviaqa/nq_open/mmlu before recompute)",
+        "triviaqa": {
+          "em": "-0.06 ns",
+          "contains": "+0.19 ns",
+          "f1": "-0.03 ns"
+        },
+        "popqa": {
+          "em": "-0.18 SIG",
+          "contains": "-0.27 ns",
+          "f1": "-0.35 SIG"
+        },
+        "nq_open": {
+          "em": "+0.25 ns",
+          "contains": "-0.08 ns",
+          "f1": "+0.14 ns"
+        },
+        "cross_arm": "ALL THREE ARMS NULL on triviaqa em: Arm3 -0.02 ns, Arm6 -0.06 ns, Arm4 -0.12 ns.",
+        "reading": "THE DECIDING POINT. Fires the pre-registered 'Arm 6 nulls -> Arm 3 was a fluke' branch AND exposes that the step-to-step swing exceeds the bootstrap CI by 2-10x, so the apparatus was measuring the wrong variance component."
       }
     },
-    "transient_warning": "★ DO NOT read step210000 as evidence for Arm 6. All THREE arms show a positive step210k excursion that does not survive: Arm 3 step210 +0.37 SIG -> step215 -0.02 ns -> step220 +0.48 SIG; Arm 4 step210 +1.26 SIG -> step215 -0.12 ns -> step220 -0.93 SIG (full collapse). The step210k positive is therefore a shared non-monotone feature of the trajectory, NOT an arm-specific signal. Arm 6's step215/220 are what decide the verdict.",
+    "transient_warning": "SUPERSEDED by verdict (kept for history): the warning that step210000's positive excursion is a shared non-monotone trajectory feature rather than an arm-specific signal was CORRECT, and step215000 confirmed it. The defect is broader than step210 -- see defect_quantified.",
     "what_each_outcome_would_mean": {
-      "arm6_step220_positive_SIG": "low-LR IS a real regime (Arm 3 + Arm 6 agree, Arm 4 dissents) -> A03 keeps a NARROW claim: 'CPT recovers triviaqa em only in the low-LR band, and peak-LR CPT actively harms'. That is publishable but much weaker than the original trajectory claim.",
-      "arm6_step220_null_or_negative": "Arm 3's +0.48 SIG is a fluke that Arm 6 fails to replicate at an adjacent LR band -> the trajectory-CPT claim dies entirely, and A03 is left with only its Gate-1 pilot result (pruned+healed 1B is above its own construct-appropriate null).",
-      "arm6_step220_larger_than_arm3_and_monotone_in_LR_within_low_band": "would imply a non-monotone-in-LR effect peaking somewhere in [0.43x, 0.50x] -- interesting but would need a 4th arm to locate the optimum, and with n=1 seed per arm that is not defensible yet."
+      "_RESOLVED": "The 'arm6_step220_null_or_negative' branch fired EARLY, at step215000 -- see ARM6_STEP215_VERDICT.md. Branches kept verbatim below as the pre-registration record.",
+      "arm6_step220_positive_SIG": "(did not fire) low-LR IS a real regime -> A03 keeps a NARROW claim.",
+      "arm6_step220_null_or_negative": "\u2605 THIS ONE FIRED (at step215, not step220): Arm 3's +0.48 SIG is a fluke Arm 6 fails to replicate at an adjacent LR band -> the trajectory-CPT claim dies entirely; A03 retains only its Gate-1 pilot.",
+      "arm6_step220_larger_than_arm3_and_monotone_in_LR_within_low_band": "(did not fire)"
     },
     "eval_watcher": ".82 /tmp/a03_arm6_trajectory_watcher.sh (v3, pid 2477305 since 04:58:33). Fired step205000 at 07:51:34 and step210000 at 10:42:29; each eval takes ~3m45s (MMLU 77s + CB(pt) 106s + CB(nq) 39s). Canonical copy: code/a03_arm6_trajectory_watcher.sh.",
     "driver": "scripts/_run_a03_arm6_lowerband.sh (commit 8e5b67d, task #235)",
     "ext_driver": ".82 /tmp/a03_arm6_ext_driver.sh (canonical copy code/a03_arm6_ext_driver.sh); has an internal torch.load probe so partial writes get bounced regardless of the size guard",
-    "evidence_file": "evidence/arm3_arm4_arm6_cpt_trajectory_paired_full.json -- md5 f92fe250cbd38061d8cbc460be73d70f, identical on wzc1 and zwfy6. Regenerate with code/recompute_cpt_trajectory_paired.py (already extended to include arm6_lowerband; hard-fails on incomplete shard sets).",
-    "commits": "8e5b67d launch, 2fd5dc0 status, f44a5fb step205000 point, 028455d step210000 point"
+    "evidence_file": "evidence/arm3_arm4_arm6_cpt_trajectory_paired_full.json -- md5 36fed7ad8cce952c2c406c4abad80da7 (SUPERSEDES f92fe250cbd38061d8cbc460be73d70f, which predated step215000). Regenerate with code/recompute_cpt_trajectory_paired.py; hard-fails on incomplete shard sets.",
+    "commits": "8e5b67d launch, 2fd5dc0 status, f44a5fb step205000, 028455d step210000, (this) step215000 + RETRACTION",
+    "retracts": [
+      "ARM4_PEAKLR_VERDICT.md 'peak-LR CPT actively harms' -- Arm4's -0.93 SIG at step220 sits in a series that also contains +1.26 SIG at step210. Same defect, opposite sign.",
+      "The step210000 positive excursion as evidence for anything (already flagged in ARM6_LOWERBAND_INTERIM.md, now confirmed as noise).",
+      "Implicitly: any A03 claim of the form 'CPT recovers/harms parametric knowledge by X pp' from single-checkpoint paired diffs on this trajectory."
+    ],
+    "what_survives": "Only the Gate-1 pilot: pruned+healed 1B keep7+fresh2 @200k is BH-significantly above its own construct-appropriate null on 4/5 knowledge interfaces. That is a LEVEL vs a computed floor at one checkpoint, not a DIFFERENCE between adjacent checkpoints, so it does not inherit the oscillation defect. Weakly suggestive (single dose point, has a mechanism, reverses at the next point): step205000 early-CPT damage orders Arm3 < Arm6 < Arm4 on 4 axes, consistent with larger LR -> larger early overshoot.",
+    "defect_quantified": {
+      "median_swing_over_bootstrap_halfwidth": 2.4,
+      "n_arm_axis_combos": 27,
+      "frac_combos_over_2x": 0.52,
+      "worst_case": "arm4 triviaqa.em 10.0x (swing 2.66pp vs half-width 0.27pp)",
+      "headline_axis": "arm3 triviaqa.em 4.7x (swing 0.96pp vs half-width 0.21pp)",
+      "sign_contradictions": "7/12 arm-axis combos with >=2 SIG cells contain two SIG cells of opposite sign",
+      "arm3_triviaqa_em_trajectory_pp": [
+        -0.48,
+        0.37,
+        -0.02,
+        0.48
+      ],
+      "arm3_triviaqa_em_mean_pp": 0.088,
+      "reading": "the bootstrap CI measures item-resampling variance; the dominant variance is checkpoint-to-checkpoint and is 2-10x larger. Tight CIs here were false confidence."
+    },
+    "what_a_proper_design_needs": "NOT more dose points. (1) >=3 seeds per LR band with the DistributedSampler seed= fix ce5c298 actually in effect -- this repo's prior 'seed variance' arms were init-variance only; (2) a null arm = same data, same LR, same steps, run TWICE, to establish the run-to-run floor every arm difference must clear (nothing here has this); (3) average over a checkpoint window, not a single step; (4) pre-register the dose point before seeing the trajectory, or report trajectory-mean with a trajectory-level CI. Cost ~9 runs x 11.4h on 8xH20 ~= 4.3 node-days. Given the best effect estimate is +0.088pp, the honest prior is that there is nothing to find.",
+    "evidence_md5": "36fed7ad8cce952c2c406c4abad80da7",
+    "still_pending": "step220000 eval will fire automatically from the .82 watcher (~15:00 GMT+8). It is CONFIRMATORY of the defect, not decisive of the claim -- no value can rescue a dose-response whose response oscillates in sign. If it lands positive SIG that is Arm 6's 4th sign change, not a replication of Arm 3."
   },
   "arm4_peaklr_cpt": {
     "status": "COMPLETED 08-10 03:58 GMT+8 (all 4 ckpts evaluated on 4 axes); training killed via SIGTERM after step220000 landed on disk (see ckpt_corruption_incident_20260810 for the size-guard drama). All 8 GPUs on both .73 and .82 released.",
@@ -53,7 +123,8 @@
     "prior_intermediate_reading_supersede": "The earlier 'why_not_yet' note (triviaqa swings 3x Arm 3's magnitude in both directions at step205/210, interpret as Adam-moment mismatch, judge only at step220) is now closed by the step220 data itself: peak-LR CPT ends step220 significantly WORSE than intact on the primary axis, not better and not saturating. The Adam-moment window was correctly diagnosed but the terminal cell now speaks for itself.",
     "naming_warning": "This Arm 4 is the peak-LR CONTROL. It is NOT the 6-arm study's Arm 4 (pruned+heal+raw-text RAG), which is still unimplemented.",
     "manual_step_required": "the eval driver writes per-item shards but computes NO CIs (grep bootstrap|ci95|n_boot|SIG over /tmp/a03_arm4_ext_driver.sh = 0 matches). Run code/recompute_cpt_trajectory_paired.py after step220000 lands. CPU, ~1 min.",
-    "evidence_file": "evidence/arm3_arm4_cpt_trajectory_paired_full.json"
+    "evidence_file": "evidence/arm3_arm4_cpt_trajectory_paired_full.json",
+    "RETRACTED_20260810": "The 'peak-LR CPT actively harms' reading is RETRACTED. Arm 4's -0.93 SIG triviaqa em at step220000 sits in a 4-point series that also contains +1.26 SIG at step210000 (swing 2.66pp = 10.0x the bootstrap half-width). Arm 4's trajectory mean is -0.298pp. See ARM6_STEP215_VERDICT.md."
   },
   "arm3_cpt_trajectory": {
     "tested": "2026-08-09",
@@ -61,7 +132,12 @@
     "revised_from": "prior interim verdict said NO_COHERENT_TRAJECTORY -- retracted after step220000 evaluation showed 3-metric coherent triviaqa gain",
     "node_train": ".73 (8x H20, zwfy6) 20k steps, watcher-stopped at step220000.pt",
     "node_eval": ".82 (8x H20, zwfy6) 4 ckpts, ~4min each",
-    "arms_covered": ["step205000 (5k CPT)", "step210000 (10k CPT)", "step215000 (15k CPT)", "step220000 (20k CPT, final)"],
+    "arms_covered": [
+      "step205000 (5k CPT)",
+      "step210000 (10k CPT)",
+      "step215000 (15k CPT)",
+      "step220000 (20k CPT, final)"
+    ],
     "mmlu_across_trajectory": "letter delta in [-0.23,+0.26]pp all TIE; cn delta in [-0.24,-0.11]pp all TIE. No movement on MMLU.",
     "popqa_across_trajectory": "step205-215 mixed SIG-negative (small); step220000 all 3 metrics TIE. Cleaned up.",
     "triviaqa_step220000_headline": "em +0.48pp SIG [+0.27,+0.69]; contains +0.47pp SIG [+0.16,+0.79]; f1 +0.47pp SIG [+0.26,+0.69]. 3 co-moving SIG cells at 20k CPT only, absent at 5/10/15k. n=17944.",
@@ -85,9 +161,21 @@
     "node": ".82 (8x H20, zwfy6)",
     "wall": "5 min for 3 arms via scripts/_run_a03_axes_floor_82.sh",
     "results_em_vs_maj_em": {
-      "A03_1B_base_36L_intact": {"em": 0.1025, "contains": 0.1429, "n": 3610},
-      "A03_1B_keep7_step200k_9L_healed": {"em": 0.0285, "contains": 0.0787, "n": 3610},
-      "A03_1B_keep7_step500_9L_barely_healed": {"em": 0.0017, "contains": 0.0097, "n": 3610},
+      "A03_1B_base_36L_intact": {
+        "em": 0.1025,
+        "contains": 0.1429,
+        "n": 3610
+      },
+      "A03_1B_keep7_step200k_9L_healed": {
+        "em": 0.0285,
+        "contains": 0.0787,
+        "n": 3610
+      },
+      "A03_1B_keep7_step500_9L_barely_healed": {
+        "em": 0.0017,
+        "contains": 0.0097,
+        "n": 3610
+      },
       "best_constant_null_maj_em": 0.0055
     },
     "null_value_correction_20260809": "this block previously carried 0.0053 for the NQ-open best-constant null in two places. The canonical value is 0.0055, per GATE_FOURAXES_VERDICT.md lines 41-43, which is the file that ran the floor-calibrated comparison. Both readings reach the same verdict (intact 0.1025 and pruned+healed 0.0285 ABOVE; barely-healed 0.0017 BELOW), so no conclusion changes -- but 0.0053 must not be quoted.",
