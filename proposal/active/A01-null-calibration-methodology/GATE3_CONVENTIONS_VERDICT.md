@@ -1,10 +1,56 @@
 ---
 gate: A01 gate-3 follow-on — the content interface x five longest-option null conventions
 date: 2026-08-09
+revised: 2026-08-10 — verdict DEMOTED, see banner below
 compute: CPU only, ZERO GPU (re-analysis of per-item records already on disk)
 closes: STATUS.json gate_results.gate3_fp32_causal_tie_test.remaining_analysis_TODO
-verdict: THE NULL A01 RECOMMENDS HAS ITS OWN UNDECLARED CONVENTION DEGREE OF FREEDOM, AND IT FLIPS 5/6 ARM VERDICTS
+verdict: ⚠️ DEMOTED 2026-08-10. Correct form: "the longest-option null is
+  under-specified on ties, and the tie POLICY must be printed. Among the THREE
+  EXECUTABLE policies (split/first/last) the null moves 0.34 pp and 0/6 arm
+  verdicts change; the 25.76 pp figure and the 5/6 reversal come from two
+  NON-EXECUTABLE BOUNDS (credit = oracle UB, wrong = pessimistic LB)."
+  Replacement: TCODEX_AUDIT_RESPONSE.md §3.
 ---
+
+> # ⚠️ DEMOTION BANNER — 2026-08-10
+>
+> An independent skeptical audit
+> (`proposal/active/A03-parametric-vs-external-memory/evidence/TCODEX_AUDIT_20260810.md`
+> §2.1, "应撤回" item 3) says this file's headline should be retracted, and it is
+> **right on the substance**. The claim is **DEMOTED, not deleted**. Full response
+> with recomputed numbers: **`TCODEX_AUDIT_RESPONSE.md` §3**; machine-readable in
+> `evidence/a01_audit_response_recompute.json` key `R3_tie_conventions`
+> (`code/a01_audit_response_recompute.py`).
+>
+> **The defect.** This file calls all five readings "defensible" and headlines
+> "**FLIPS 5/6 ARM VERDICTS**" and a "**25.76 pp**" spread. But:
+> * `credit` scores 1 whenever gold ∈ the token-count winner set — attaining it
+>   requires breaking the tie *in gold's favour*, i.e. **knowing the gold letter**.
+>   An input-blind baseline cannot. `credit` is an **ORACLE UPPER BOUND**, not a
+>   policy.
+> * `wrong` scores 0 on every tie; a baseline that must answer gets 1/|W| in
+>   expectation. `wrong` is a **PESSIMISTIC LOWER BOUND**, not a policy.
+>
+> **The 25.76 pp spread and the entire 5/6 reversal are produced by those two
+> bounds alone.** §4's table already shows this and the file failed to draw the
+> conclusion: `split`, `first`, `last` all give **6 above / 0 at / 0 below**.
+>
+> **Recomputed, executable-only:** null spans **0.3365 pp** (0.281085 … 0.284450),
+> **0 of 6 arm verdicts change**, and the per-arm residual-fraction ratio across the
+> three executable policies is **1.018×–1.058×** (not 16.26×).
+>
+> **What survives.** (a) The under-specification is real: 34.22% of MMLU items tie
+> on continuation-token count, 13.37% (1,877) have all four tied, so the tie policy
+> must be printed. (b) With the policy *unstated*, the honest null is an interval,
+> and `credit`/`wrong` legitimately bracket it at 25.76 pp — report it as an
+> identified-set/bounds statement. (c) Everything in §3's tokenizer box **survives
+> untouched and is now the stronger leg** — the audit never challenged it, and
+> `TCODEX_AUDIT_RESPONSE.md` §6 shows the tokenizer null span (0.9003 pp) is
+> **2.68×** the executable tie-convention span and does flip one arm robustly.
+>
+> **Not affected:** every published A01 number used `split`, said so, and
+> reproduces the archived summaries to <1e-12.
+
 
 # A01 gate-3 follow-on — the longest-option null is under-specified
 
@@ -43,11 +89,16 @@ token counts over the available options; `g` = gold letter.
 
 | convention | rule | reading |
 |---|---|---|
-| `split` | `1/|W|` if `g ∈ W` | expected accuracy of *uniform random* tie-breaking. **A01's pre-registered canonical choice.** |
-| `first` | `1` iff `W[0] == g` | break ties by lowest letter index — what `argmax` actually does |
-| `last` | `1` iff `W[-1] == g` | break ties by highest letter index |
-| `credit` | `1` iff `g ∈ W` | **optimistic / oracle** tie-breaking |
-| `wrong` | `1` iff `|W| == 1` and `W[0] == g` | **pessimistic**: any tie scores 0 |
+| `split` | `1/|W|` if `g ∈ W` | expected accuracy of *uniform random* tie-breaking. **A01's pre-registered canonical choice.** **EXECUTABLE.** |
+| `first` | `1` iff `W[0] == g` | break ties by lowest letter index — what `argmax` actually does. **EXECUTABLE.** |
+| `last` | `1` iff `W[-1] == g` | break ties by highest letter index. **EXECUTABLE.** |
+| `credit` | `1` iff `g ∈ W` | ~~**optimistic / oracle** tie-breaking~~ **NOT A POLICY — ORACLE UPPER BOUND** (2026-08-10). Requires knowing `g`; no input-blind baseline attains it. |
+| `wrong` | `1` iff `|W| == 1` and `W[0] == g` | ~~**pessimistic**: any tie scores 0~~ **NOT A POLICY — PESSIMISTIC LOWER BOUND** (2026-08-10). A baseline that answers gets `1/|W|` in expectation. |
+
+> ⚠️ 2026-08-10: this table's original framing ("five defensible readings of one
+> sentence") is the defect the audit caught. Three of the five are executable tie
+> policies; two are bounds on the null when the policy is left unstated. Report them
+> as **3 + 2**, never as 5. See banner and `TCODEX_AUDIT_RESPONSE.md` §3.
 
 ## 3. The null is a property of MMLU **and of the tokenizer**, not of any arm
 
@@ -87,6 +138,11 @@ heuristic at all — it is a coin flip among all options, and the five conventio
 1/4, 1 or 0 depending purely on convention.
 
 ## 4. The verdict table — `credit` flips 5 of 6 arms
+
+> ⚠️ **2026-08-10: this section's heading is the retracted claim.** `credit` is an
+> oracle bound, so "credit flips 5/6" is a statement about what an oracle would
+> conclude, not about a defensible reader choice. **The three executable policies
+> give 6 above / 0 at / 0 below, identically.** Read the table for that fact.
 
 bf16 `content_norm`, paired bootstrap 10,000 resamples, seed 7 (same estimator and seed as
 gate-3's own arm-vs-floor test). Δ in pp; every `p` here is 0.0001–0.0010, i.e. at or near
@@ -135,6 +191,19 @@ On the intact base arm the two extreme conventions give **0.0359** vs **0.5832**
 **16.26×** ratio, on one arm, from one undeclared convention. Even discarding `credit`
 entirely (as arguably indefensible, since it grants oracle tie-breaking to an input-blind
 baseline), `wrong`-vs-`split` still spans **1.47×** on base and **2.53×** on keep8.
+
+> ⚠️ **2026-08-10 correction.** The parenthesis above ("as arguably indefensible")
+> is right and should have been the headline, not an aside — and `wrong` is
+> indefensible for the mirror-image reason. Restricting to the **three executable
+> policies**, the per-arm residual-fraction ratio is:
+> base **1.018×**, shortgpt16 **1.029×**, keep14 **1.034×**, keep12 **1.043×**,
+> keep10 **1.056×**, keep8 **1.058×** — i.e. **≤6% on every arm**, absolute span
+> 0.0072–0.0098. The 16.26× is a **bounds width**, not a convention sensitivity.
+> Note too that the five damaged/healed arms have *negative* `credit` residual
+> fractions, so "16.26×"-style ratios are undefined for them (the residual changes
+> **sign**) — another sign that `credit` is a bound and not a convention.
+> See `TCODEX_AUDIT_RESPONSE.md` §3.
+
 
 **This is directly comparable to gate-4.** Gate-4 (`GATE4_VERDICT.md`) found the paper's
 headline span moves 6.86×–10.04× under defensible C4 *aggregation* choices and concluded

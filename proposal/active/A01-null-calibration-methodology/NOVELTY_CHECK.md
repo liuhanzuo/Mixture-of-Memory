@@ -5,6 +5,24 @@ compute: CPU + web only, ZERO GPU
 verdict: KILL CLAUSE 3 DOES NOT FIRE
 ---
 
+> **⚠️ 2026-08-10 SCOPE NOTICE (verdict UNCHANGED).** An external audit
+> (`../A03-parametric-vs-external-memory/evidence/TCODEX_AUDIT_20260810.md` §2.1)
+> returned **Major revision** on A01. It attacks claim STRENGTH, not originality, so
+> **kill clause 3 still does not fire**. But two things this file leans on have moved:
+> 1. The phrase "**a letter readout is a step function of depth**" (§2.4's gap
+>    argument) has been RETRACTED as a family-general claim — read it as "a large
+>    single-layer letter jump in three of four families". See
+>    `TCODEX_AUDIT_RESPONSE.md` §1.
+> 2. `STATUS.json:novelty_check.strongest_remaining_novel_claim` used to name the
+>    tie-convention finding. That was **demoted** (the three executable conventions
+>    move the null 0.3365 pp and flip 0/6 arms; the 25.76 pp / 5-of-6 figures come
+>    from two non-executable bounds). The strongest remaining A01-owned claim is now
+>    the **tokenizer-dependence** of the longest-option null (0.9003 pp span, 2.68×
+>    the executable convention span, 1 robust verdict flip in 63 arms). See
+>    `TCODEX_AUDIT_RESPONSE.md` §3 and §6.
+>
+> The citation obligations and per-candidate venue verifications below are unaffected.
+
 # A01 — novelty check against the third kill clause
 
 ## 0. The clause being tested, verbatim

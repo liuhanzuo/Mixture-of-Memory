@@ -6,6 +6,16 @@ verdict: HEAL SOFTENS THE LETTER STEP BUT DOES NOT CLOSE THE INTERFACE ASYMMETRY
 n: 14042 per arm, 0 nan, 8/8-shard + exact-n asserted before every merge
 ---
 
+> **⚠️ 2026-08-10 TERMINOLOGY NOTICE.** This file says "letter = step function of
+> depth" (§4 item 1, §4.1, §7.4), inheriting the phrasing from
+> `GATE1_DEPTHCURVE_VERDICT.md`. **That phrasing has since been RETRACTED as a
+> family-general functional-form claim** — see that file's retraction banner and
+> `TCODEX_AUDIT_RESPONSE.md` §1 (Llama-2 has 6 BH-significant letter decreases and
+> its floor verdict crosses 4 times). Read every "step function" here as "the large
+> single-layer letter jump seen in three of four families". **Nothing measured in
+> THIS file changes**; its own findings (heal moves the arm off the floor but not to
+> the plateau; shortgpt16's sign; §7's self-correction) are unaffected.
+
 > **★ 2026-08-09 05:56 CORRECTION — see §7.** The "shortgpt16 INVERTS the sign vs
 > every other arm we have measured, including intact base" framing below is WRONG.
 > Intact base OLMo-2-7B under this exact protocol gives **letter 0.6060, cn 0.4702,
