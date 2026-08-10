@@ -421,3 +421,49 @@ generative floor 0.0187 at n=19086 is genuinely good).
   2026-08-10, CPU-only on LOCAL. Tokenizer stats via `models/OLMo-2-1124-7B`.
 * MDE convention: α=.05 two-sided, 80 % power, one-sample binomial vs p₀,
   solved by fixed-point iteration on `p₁ = p₀ + z_.975·√(p₀(1−p₀)/n) + z_.80·√(p₁(1−p₁)/n)`.
+
+---
+
+## MAIN independent verification (2026-08-10 12:0x GMT+8)
+
+I re-derived the load-bearing number myself from the parquet files rather than
+accepting the report, because the whole recommendation rests on it.
+
+**Reproduced exactly.** Candidate-only heuristic — score each candidate string by
+`count(appears as target_true) − count(appears as target_new)` in the *other*
+split, pick the higher, never look at the subject or the fact:
+
+| direction | n | accuracy | leak vs naive 0.50 |
+|---|---:|---:|---:|
+| train → test | 2191 | **0.5429** | +4.29 pp |
+| test → train | 19728 | **0.5364** | +3.64 pp |
+| in-sample (pooled) | 21919 | 0.5697 | +6.97 pp |
+
+Held-out values match the report's 0.5364 / 0.5429 to 4 decimal places.
+
+**One correction.** The agent's chat summary said the in-sample figure was
+**64.3%**; with the heuristic as described I measure **57.0%**. The committed
+report does not contain 64.3 anywhere, so nothing here depends on it — but
+**64.3% must not be quoted**; it is not reproducible from the stated procedure
+(it may have come from a relation-stratified variant that was not written down).
+The conclusion is unaffected: the floor is empirically ≈0.54, not 0.50.
+
+**The leak mechanism, made concrete.** First test item is
+`prompt="{} is located in", subject="Angola", target_true="Africa",
+target_new="Antarctica"`. `Africa` is a common true target across the dataset;
+`Antarctica` is a common *counterfactual* target. So "prefer whichever string
+more often plays the true-answer role" wins without any knowledge of Angola.
+CounterFact's counterfactuals were not sampled uniformly over the candidate
+vocabulary, and that asymmetry is worth 3.6–4.3 pp.
+
+**Consequence for A03.** Had this axis been run against a 0.50 floor, a pruned
+arm scoring 0.55 would have been reported as "+5 pp above floor / knowledge
+retained" when the honest reading is "+1 pp, indistinguishable from a
+fact-blind string-frequency heuristic." That is the same class of error A01
+exists to catch, on a new dataset.
+
+Verified by MAIN directly from
+`data/knowledge_axes/counterfact/{test,train}-*.parquet`
+(fields live under `requested_rewrite.{target_true,target_new}.str`, not at top
+level — a detail worth recording since the obvious top-level column scan finds
+nothing).
