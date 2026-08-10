@@ -40,6 +40,30 @@ python code/pilot_zero_rule_disagreement.py \
 >
 > `TCODEX_AUDIT_20260810.md` §7 reached the same conclusion independently.
 
+> ⚠️ **NARROWED 2026-08-10 by the margin-sensitivity sweep, and the PLATEAU reading it
+> depends on has been REPAIRED.** Two amendments to the paragraph above, both from
+> `A04_PLATEAU_REPAIR_AND_MARGIN_SENSITIVITY.md`:
+>
+> 1. **"3/3 decision axes" is margin-dependent and must not be stated unqualified.** Over
+>    Δ fractions 0.10 → 0.66 the **existence** of a disagreement (≥1 axis rejects) is
+>    invariant under all five null conventions — that part survives and is now a measured
+>    robustness result. But **all three** axes reject only for `split` and `credit`; under
+>    `wrong` an axis flips to accept at fraction **0.36** and under `first`/`last` at
+>    **0.66**, both inside that range. Under the pre-registered `split` convention the
+>    earliest flip is at **0.6642** (MMLU-content) — a margin **6.6×** the pre-registered
+>    one, and only **0.0042** above the swept range's endpoint.
+>    → `evidence/a04_margin_sensitivity_sweep.json`.
+> 2. **"both plateau readings" — both of those readings are now superseded.** Both were
+>    dimensionally invalid on an irregular grid (15.70× stringency spread; the linear one
+>    also non-composition-consistent and vacuous at `d ≥ 250 000`). Under the repaired rule
+>    `rate_5k < T`, step 200 000 **still accepts** (`0.13173 %/5k`), so this checkpoint's
+>    cell survives — but the *earliest* accept moves to step **100 000**, where **no
+>    capability axis was scored**. The "single PLATEAU-accept checkpoint" above is no longer
+>    the only one; it is the only one that was **measured**.
+>    → `evidence/a04_plateau_rule_repair.json`.
+>
+> The retraction in `b93247f` (K1 = INDETERMINATE) is unaffected and still stands.
+
 ### Original section text (retained as the record of what was measured)
 
 
