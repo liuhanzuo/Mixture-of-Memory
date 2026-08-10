@@ -1,0 +1,29 @@
+% Portable self-distillation control on the retrieval-free HCache read path.
+\begin{table}[!t]
+\centering
+\small
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{@{}lcc@{}}
+\toprule
+\textbf{Configuration} & \textbf{LoRA} & \textbf{LoCoMo Judge$_{1:4}$} \\
+\midrule
+HCache-style ($j{=}12$) & no  & 16.69 \\
+HCache-style ($j{=}12$) & yes & \textbf{39.81} \\
+\bottomrule
+\end{tabular}
+\caption{Interface-adaptation diagnostic on an HCache-style, retrieval-free
+checkpoint path. The two configurations share the $j{=}12$ split and evaluation
+harness, isolating the adapter. Scores are GPT-4o Judge on the 1,540 answerable
+LoCoMo items (categories 1--4), the same Judge$_{1:4}$ instrument as
+Table~\ref{tab:locomo}; the 446 adversarial items are excluded because they are
+scored by a local refusal rule rather than by the judge, so averaging them into
+this column would mix two instruments in a single-variable ablation. Both arms
+are graded from the identical 1,540-item cache, so the contrast is exactly
+paired: $+23.12$ points (McNemar $414/58$ discordant, exact two-sided
+$p<10^{-60}$; paired item bootstrap 95\% CI $[20.58,25.58]$). The gain shows
+that aligning intermediate states to native upper-layer readout transfers beyond
+CoMem; this is not a head-to-head long-term-memory comparison. Earlier versions
+of this table reported 13.29/31.17 on a mixed-instrument 1,986-item
+denominator; see \texttt{ERRATA\_LOCOMO\_MIXED\_INSTRUMENT\_20260810.md}.}
+\label{tab:hcache-lora}
+\end{table}

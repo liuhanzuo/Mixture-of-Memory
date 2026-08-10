@@ -378,6 +378,21 @@ pack = [ sink(BOS 的 h_j, 1 token) ]           # sink=bos
 - **工程等价性**：论文里的 HCache = 「中层缓存 + **无检索**（读全部 chunk）+ 无 LoRA」。给它接上**同一 BM25 检索（同 top-12、同 j、无 LoRA）**得到的，正是 **CoMem adapter-free arm（#65 / §3.1；depth-sweep §3.3）** ——即「HCache-read + 检索」≡ CoMem 去掉 LoRA 的那一支。所以「retrieval-matched HCache vs CoMem-read」这个对照**已经存在**：§3.3 的 frozen j9=29.15 / j12=24.52（检索版）就是它。**建议在论文里直接点明此等价性以预防 reviewer。**
 - **补充硬证据（P1 portable-adapter，#75，2026-07-25 LOCAL）**：在 **retrieval-free** HCache（`no_retrieval=True`）read path 上做**单变量 LoRA on/off toggle**（同 node/commit/harness，resume_j=12，chat=False）：
 
+  > ⚠️ **2026-08-10 ERRATA — 本小节下面的 13.29 / 31.17 / +17.88 已被撤回。**
+  > 它们是 `scores.json` 的 `overall_judge`，而该字段把**两种不同的评分工具混成一列**：
+  > cat1–4 的 1,540 条由 GPT-4o judge 打分，cat5 的 446 条**从不进 judge**，由
+  > `eval_qcmem_locomo.py:687-690` 的 refusal 正则本地打分。单变量 ablation 不能在
+  > header 写 "Judge" 而 cell 里混两种仪器。
+  > **正确的单仪器数字（Judge$_{1:4}$，n=1540，两臂 id 完全配对）：
+  > noLoRA 16.69（257/1540）、LoRA 39.81（613/1540）、delta +23.12**
+  > （McNemar 414/58，exact two-sided p=2.6e-67；paired item bootstrap 95% CI [20.58, 25.58]）。
+  > paperA 的两张表已改。完整机制、复算与口径选择依据见
+  > `paperA/ERRATA_LOCOMO_MIXED_INSTRUMENT_20260810.md`。
+  > 下面的原文**保留不删**作为历史记录。注意 cat4 的 23.31→55.77 与 caveat 里
+  > 「跨 node 8.11 vs 13.29 drift」**不受本次撤回影响**（前者本身就是单仪器 per-category
+  > 数字；后者是另一个仍未解决的缺陷，但它是拿旧的混合口径 13.29 量的，需换算到
+  > Judge$_{1:4}$ 尺度后才能再比）。
+
   | arm | 配置 | **LoCoMo judge (n=1986)** | 源 |
   |---|---|:---:|---|
   | A（control，无 LoRA） | HCache j12, no retrieval | **13.29** | `locomo_results/hcache_j12_noLoRA_chatFALSE/scores.json` |

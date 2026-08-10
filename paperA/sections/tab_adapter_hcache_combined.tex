@@ -1,0 +1,51 @@
+% Combined adapter controls to keep closely related evidence together.
+\begin{table}[!htbp]
+\centering
+\small
+\begin{minipage}[t]{\textwidth}
+\centering
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{@{}llccc@{}}
+\toprule
+\textbf{Task} & \textbf{Adapter} & \textbf{8k} & \textbf{16k} & \textbf{32k} \\
+\midrule
+\multirow{2}{*}{niah\_single\_2}
+  & off & 36 & 7 & 22 \\
+  & on  & \textbf{100} & \textbf{100} & \textbf{100} \\
+\midrule
+\multirow{2}{*}{niah\_multikey\_1}
+  & off & 8 & 3 & 1 \\
+  & on  & \textbf{91} & \textbf{95} & \textbf{92} \\
+\bottomrule
+\end{tabular}
+\captionof{table}{Same-$j{=}12$ RULER adapter ablation ($n{=}100$/cell).
+Each on/off pair shares task, length, selector, and cohort.}
+\label{tab:adapter}
+\end{minipage}
+
+\vspace{6pt}
+\begin{minipage}[t]{\textwidth}
+\centering
+\setlength{\tabcolsep}{6pt}
+\begin{tabular}{@{}lcc@{}}
+\toprule
+\textbf{Path} & \textbf{LoRA} & \textbf{LoCoMo Judge$_{1:4}$} \\
+\midrule
+HCache-style ($j{=}12$) & no  & 16.69 \\
+HCache-style ($j{=}12$) & yes & \textbf{39.81} \\
+\bottomrule
+\end{tabular}
+\captionof{table}{Retrieval-free HCache-style checkpoint control. The shared
+split and harness isolate interface adaptation, showing that the readout repair
+transfers beyond CoMem. Scores are GPT-4o Judge on the 1,540 answerable LoCoMo
+items (categories 1--4), i.e.\ the Judge$_{1:4}$ instrument of
+Table~\ref{tab:locomo}; the 446 adversarial items are locally refusal-scored and
+are excluded so the column reports one instrument rather than a blend of two.
+Both arms are graded from the identical 1,540-item cache, so the contrast is
+exactly paired: $+23.12$ points (McNemar $414/58$ discordant, exact two-sided
+$p<10^{-60}$; paired item bootstrap 95\% CI $[20.58,25.58]$). Earlier versions
+reported 13.29/31.17 on a mixed-instrument 1,986-item denominator; see
+\texttt{ERRATA\_LOCOMO\_MIXED\_INSTRUMENT\_20260810.md}.}
+\label{tab:hcache-lora}
+\end{minipage}
+\end{table}
