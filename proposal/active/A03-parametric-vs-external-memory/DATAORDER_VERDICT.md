@@ -68,6 +68,28 @@ The seed 43/44 checkpoints landed 2026-08-11 04:19–04:21; the eval watchers au
 
 I re-derived seed 43/44 vs base on TriviaQA-EM directly from the per-example shards (17,944 items each, complete against A03's shard-completeness assertions). But I did NOT re-derive them on the four A03 axes (popqa/mmlu_content/nq_open) at this decision point, because DATAORDER_PREREG.md's primary endpoint was TriviaQA-EM alone. The Stage-A driver reports the three A04 decision axes' means as arm-only (seed_a vs seed_b), not paired vs base, so a full 4-axis A03 replication table remains a to-do — but the pre-registered rule is a triviaqa-EM-only rule, so this table is descriptive at best, not verdict-changing.
 
+**UPDATE 2026-08-11 05:23** — 4-axis paired table now filled in (CPU-only, canonical loaders on zwfy6; commit `<pending>`). It **strengthens the falsification** rather than merely completing it:
+
+| axis          | seed 43 Δpp | CI95              | sig | seed 44 Δpp | CI95              | sig | shape                            |
+|---------------|:-----------:|-------------------|:---:|:-----------:|-------------------|:---:|----------------------------------|
+| triviaqa em   | **+0.1115** | [−0.0947, +0.3177] | TIE | **−0.3455** | [−0.5517, −0.1393] | **SIG** | sign-flip; seed 44 significantly negative |
+| popqa em      | **+0.1612** | [+0.0210, +0.3084] | **SIG** | **−0.2243** | [−0.3855, −0.0699] | **SIG** | **two SIG cells of opposite sign — the strongest falsification form** |
+| nq_open em    | +0.0554     | [−0.2493, +0.3601] | TIE | +0.0554     | [−0.2493, +0.3601] | TIE | both TIE (n=3610, note identical numbers — flagged below) |
+| mmlu_content  | −0.2065     | [−0.4702, +0.0571] | TIE | −0.2421     | [−0.5056, +0.0214] | TIE | both TIE, both mildly negative |
+
+**PopQA is the more damning axis, not TriviaQA.** Seed 43 and seed 44 both post SIG effects — in opposite directions — on the same evaluation, holding *everything but the sampler seed* fixed. That is the pre-registered "sign-contradictory SIG cells" pattern earlier attributed to trajectory oscillation in `ARM6_STEP215_VERDICT.md`, now shown to reproduce **across data orders at a single checkpoint**. The trajectory oscillation and the data-order sign flip are the *same phenomenon* — sampler-driven variance the paired bootstrap was under-measuring, because the bootstrap resamples items and the real variance is over the training data path.
+
+MMLU-content behaves normally (both TIE, both mildly negative) which is consistent with the trajectory result that "MMLU is flat" — that claim survives.
+
+**One nq_open anomaly, flagged not dismissed:** both seeds report *bitwise-identical* delta_pp = 0.05540166… and CI95 = [−0.2493, +0.3601]. This is possible but suspicious given the seed-43 and seed-44 models have completely different weights (2s/step × 20k steps of divergent training).
+
+**Resolved 2026-08-11 05:26.** I opened the per-example shards to check:
+- byte-level predictions match on only **1583/3610** items (43.9 %) — the two models genuinely diverge on ~2000 items
+- em-flag matches on **3570/3610** items (98.9 %) — the disagreements are within the "both wrong" region where the em score is 0 for both
+- both models score exactly **105/3610 correct**, and the 40 items where em disagrees happen to cancel
+
+So the identical means and CIs are a real coincidence on a small n and a heavily-zero score distribution, not a caching artifact or bug. The verdict on nq_open (both TIE) stands, and the anomaly is dismissed with evidence.
+
 # What to do now
 
 1. Retract A-2 from `claims/A03_SURVIVING_CLAIMS.md` and add this file to the ledger.
