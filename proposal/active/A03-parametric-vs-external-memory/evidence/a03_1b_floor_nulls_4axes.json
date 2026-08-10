@@ -401,7 +401,9 @@
    "mcnemar_p": 5.754426825930498e-74,
    "bh_reject_q05": true,
    "bh_adj_p": 0.00011379310344827586,
-   "verdict": "ABOVE floor"
+   "verdict": "ABOVE floor",
+   "residual_fraction_of_reported": 0.2936775158997381,
+   "residual_fraction_of_headroom": 0.15293200857198516
   },
   {
    "arm": "intact",
@@ -422,7 +424,9 @@
    "mcnemar_p": null,
    "bh_reject_q05": true,
    "bh_adj_p": 0.00011379310344827586,
-   "verdict": "ABOVE floor"
+   "verdict": "ABOVE floor",
+   "residual_fraction_of_reported": 0.2646815169366715,
+   "residual_fraction_of_headroom": 0.14309173695603492
   },
   {
    "arm": "pruned_healed",
@@ -445,7 +449,9 @@
    "mcnemar_p": 0.0036438615131326683,
    "bh_reject_q05": true,
    "bh_adj_p": 0.00374,
-   "verdict": "BELOW floor"
+   "verdict": "BELOW floor",
+   "residual_fraction_of_reported": -0.07059824213212354,
+   "residual_fraction_of_headroom": -0.024254821741671508
   },
   {
    "arm": "pruned_healed",
@@ -466,7 +472,9 @@
    "mcnemar_p": null,
    "bh_reject_q05": true,
    "bh_adj_p": 0.00011379310344827586,
-   "verdict": "ABOVE floor"
+   "verdict": "ABOVE floor",
+   "residual_fraction_of_reported": 0.12310647639956084,
+   "residual_fraction_of_headroom": 0.05580851434400733
   },
   {
    "arm": "barely_healed",
@@ -489,7 +497,9 @@
    "mcnemar_p": 3.742550339532043e-11,
    "bh_reject_q05": true,
    "bh_adj_p": 0.00011379310344827586,
-   "verdict": "BELOW floor"
+   "verdict": "BELOW floor",
+   "residual_fraction_of_reported": -0.17194289261328358,
+   "residual_fraction_of_headroom": -0.053964543152152704
   },
   {
    "arm": "barely_healed",
@@ -510,7 +520,9 @@
    "mcnemar_p": null,
    "bh_reject_q05": true,
    "bh_adj_p": 0.00011379310344827586,
-   "verdict": "BELOW floor"
+   "verdict": "BELOW floor",
+   "residual_fraction_of_reported": -0.08069534632034633,
+   "residual_fraction_of_headroom": -0.02968326242193527
   },
   {
    "arm": "intact",
@@ -533,7 +545,9 @@
    "mcnemar_p": 0.0,
    "bh_reject_q05": true,
    "bh_adj_p": 0.00011379310344827586,
-   "verdict": "ABOVE floor"
+   "verdict": "ABOVE floor",
+   "residual_fraction_of_reported": 0.8521031207598372,
+   "residual_fraction_of_headroom": 0.13515064562410328
   },
   {
    "arm": "pruned_healed",
@@ -556,7 +570,9 @@
    "mcnemar_p": 8.066861143339899e-16,
    "bh_reject_q05": true,
    "bh_adj_p": 0.00011379310344827586,
-   "verdict": "ABOVE floor"
+   "verdict": "ABOVE floor",
+   "residual_fraction_of_reported": 0.41814946619217086,
+   "residual_fraction_of_headroom": 0.01685796269727403
   },
   {
    "arm": "barely_healed",
@@ -579,7 +595,9 @@
    "mcnemar_p": 7.31511930420656e-99,
    "bh_reject_q05": true,
    "bh_adj_p": 0.00011379310344827586,
-   "verdict": "BELOW floor"
+   "verdict": "BELOW floor",
+   "residual_fraction_of_reported": null,
+   "residual_fraction_of_headroom": -0.023457675753228116
   },
   {
    "arm": "intact",
@@ -602,7 +620,9 @@
    "mcnemar_p": 0.0,
    "bh_reject_q05": true,
    "bh_adj_p": 0.00011379310344827586,
-   "verdict": "ABOVE floor"
+   "verdict": "ABOVE floor",
+   "residual_fraction_of_reported": 0.7092731829573934,
+   "residual_fraction_of_headroom": 0.1251197406233881
   },
   {
    "arm": "pruned_healed",
@@ -625,7 +645,9 @@
    "mcnemar_p": 5.0287582771852444e-138,
    "bh_reject_q05": true,
    "bh_adj_p": 0.00011379310344827586,
-   "verdict": "ABOVE floor"
+   "verdict": "ABOVE floor",
+   "residual_fraction_of_reported": 0.5639097744360902,
+   "residual_fraction_of_headroom": 0.06631788372264388
   },
   {
    "arm": "barely_healed",
@@ -648,7 +670,9 @@
    "mcnemar_p": 8.50678514174299e-47,
    "bh_reject_q05": true,
    "bh_adj_p": 0.00011379310344827586,
-   "verdict": "BELOW floor"
+   "verdict": "BELOW floor",
+   "residual_fraction_of_reported": -0.8031088082901553,
+   "residual_fraction_of_headroom": -0.022842826615577332
   },
   {
    "arm": "intact",
@@ -671,7 +695,9 @@
    "mcnemar_p": 0.0,
    "bh_reject_q05": true,
    "bh_adj_p": 0.00011379310344827586,
-   "verdict": "ABOVE floor"
+   "verdict": "ABOVE floor",
+   "residual_fraction_of_reported": 0.8458646616541353,
+   "residual_fraction_of_headroom": 0.14570441790185637
   },
   {
    "arm": "pruned_healed",
@@ -694,7 +720,9 @@
    "mcnemar_p": 7.723237808918734e-11,
    "bh_reject_q05": true,
    "bh_adj_p": 0.00011379310344827586,
-   "verdict": "ABOVE floor"
+   "verdict": "ABOVE floor",
+   "residual_fraction_of_reported": 0.17042606516290723,
+   "residual_fraction_of_headroom": 0.02101522058255427
   },
   {
    "arm": "barely_healed",
@@ -717,7 +745,9 @@
    "mcnemar_p": 2.2383383410351675e-276,
    "bh_reject_q05": true,
    "bh_adj_p": 0.00011379310344827586,
-   "verdict": "BELOW floor"
+   "verdict": "BELOW floor",
+   "residual_fraction_of_reported": -2.8082901554404147,
+   "residual_fraction_of_headroom": -0.0847073532859264
   },
   {
    "arm": "intact",
@@ -740,7 +770,9 @@
    "mcnemar_p": 0.0,
    "bh_reject_q05": true,
    "bh_adj_p": 0.00011379310344827586,
-   "verdict": "ABOVE floor"
+   "verdict": "ABOVE floor",
+   "residual_fraction_of_reported": 0.9936994932201069,
+   "residual_fraction_of_headroom": 0.4053525533579171
   },
   {
    "arm": "pruned_healed",
@@ -763,7 +795,9 @@
    "mcnemar_p": 0.0,
    "bh_reject_q05": true,
    "bh_adj_p": 0.00011379310344827586,
-   "verdict": "ABOVE floor"
+   "verdict": "ABOVE floor",
+   "residual_fraction_of_reported": 0.9732558139534883,
+   "residual_fraction_of_headroom": 0.09353000335232987
   },
   {
    "arm": "barely_healed",
@@ -786,7 +820,9 @@
    "mcnemar_p": 4.461782054931973e-10,
    "bh_reject_q05": true,
    "bh_adj_p": 0.00011379310344827586,
-   "verdict": "BELOW floor"
+   "verdict": "BELOW floor",
+   "residual_fraction_of_reported": -10.5,
+   "residual_fraction_of_headroom": -0.0023466309084813944
   },
   {
    "arm": "intact",
@@ -809,7 +845,9 @@
    "mcnemar_p": 0.0,
    "bh_reject_q05": true,
    "bh_adj_p": 0.00011379310344827586,
-   "verdict": "ABOVE floor"
+   "verdict": "ABOVE floor",
+   "residual_fraction_of_reported": 0.9808830784410458,
+   "residual_fraction_of_headroom": 0.447074034515712
   },
   {
    "arm": "pruned_healed",
@@ -832,7 +870,9 @@
    "mcnemar_p": 0.0,
    "bh_reject_q05": true,
    "bh_adj_p": 0.00011379310344827586,
-   "verdict": "ABOVE floor"
+   "verdict": "ABOVE floor",
+   "residual_fraction_of_reported": 0.9622043404047794,
+   "residual_fraction_of_headroom": 0.22182247456293216
   },
   {
    "arm": "barely_healed",
@@ -855,7 +895,9 @@
    "mcnemar_p": 0.4237736910837464,
    "bh_reject_q05": false,
    "bh_adj_p": 0.399,
-   "verdict": "AT floor (not distinguishable)"
+   "verdict": "AT floor (not distinguishable)",
+   "residual_fraction_of_reported": -0.09154929577464777,
+   "residual_fraction_of_headroom": -0.0007307886896396641
   },
   {
    "arm": "intact",
@@ -878,7 +920,9 @@
    "mcnemar_p": 0.0,
    "bh_reject_q05": true,
    "bh_adj_p": 0.00011379310344827586,
-   "verdict": "ABOVE floor"
+   "verdict": "ABOVE floor",
+   "residual_fraction_of_reported": 0.9861864824864331,
+   "residual_fraction_of_headroom": 0.4484073575594437
   },
   {
    "arm": "pruned_healed",
@@ -901,7 +945,9 @@
    "mcnemar_p": 0.0,
    "bh_reject_q05": true,
    "bh_adj_p": 0.00011379310344827586,
-   "verdict": "ABOVE floor"
+   "verdict": "ABOVE floor",
+   "residual_fraction_of_reported": 0.9283101682516459,
+   "residual_fraction_of_headroom": 0.2156940509915014
   },
   {
    "arm": "barely_healed",
@@ -924,7 +970,9 @@
    "mcnemar_p": 6.035461559519634e-53,
    "bh_reject_q05": true,
    "bh_adj_p": 0.00011379310344827586,
-   "verdict": "BELOW floor"
+   "verdict": "BELOW floor",
+   "residual_fraction_of_reported": -2.4084507042253516,
+   "residual_fraction_of_headroom": -0.019587628865979378
   },
   {
    "arm": "intact",
@@ -947,7 +995,9 @@
    "mcnemar_p": 1.390899896453219e-84,
    "bh_reject_q05": true,
    "bh_adj_p": 0.00011379310344827586,
-   "verdict": "ABOVE floor"
+   "verdict": "ABOVE floor",
+   "residual_fraction_of_reported": 0.9459459459459459,
+   "residual_fraction_of_headroom": 0.09749303621169916
   },
   {
    "arm": "pruned_healed",
@@ -970,7 +1020,9 @@
    "mcnemar_p": 1.1701818604131554e-14,
    "bh_reject_q05": true,
    "bh_adj_p": 0.00011379310344827586,
-   "verdict": "ABOVE floor"
+   "verdict": "ABOVE floor",
+   "residual_fraction_of_reported": 0.8058252427184466,
+   "residual_fraction_of_headroom": 0.023119777158774373
   },
   {
    "arm": "barely_healed",
@@ -993,7 +1045,9 @@
    "mcnemar_p": 0.009355306625366211,
    "bh_reject_q05": true,
    "bh_adj_p": 0.006387096774193549,
-   "verdict": "BELOW floor"
+   "verdict": "BELOW floor",
+   "residual_fraction_of_reported": -2.3333333333333335,
+   "residual_fraction_of_headroom": -0.0038997214484679664
   },
   {
    "arm": "intact",
@@ -1016,7 +1070,9 @@
    "mcnemar_p": 1.015643044154761e-102,
    "bh_reject_q05": true,
    "bh_adj_p": 0.00011379310344827586,
-   "verdict": "ABOVE floor"
+   "verdict": "ABOVE floor",
+   "residual_fraction_of_reported": 0.8992248062015503,
+   "residual_fraction_of_headroom": 0.13041034288926362
   },
   {
    "arm": "pruned_healed",
@@ -1039,7 +1095,9 @@
    "mcnemar_p": 6.606173607350715e-42,
    "bh_reject_q05": true,
    "bh_adj_p": 0.00011379310344827586,
-   "verdict": "ABOVE floor"
+   "verdict": "ABOVE floor",
+   "residual_fraction_of_reported": 0.8169014084507044,
+   "residual_fraction_of_headroom": 0.06520517144463181
   },
   {
    "arm": "barely_healed",
@@ -1062,7 +1120,9 @@
    "mcnemar_p": 0.036343179957053884,
    "bh_reject_q05": true,
    "bh_adj_p": 0.03465,
-   "verdict": "BELOW floor"
+   "verdict": "BELOW floor",
+   "residual_fraction_of_reported": -0.4857142857142858,
+   "residual_fraction_of_headroom": -0.00477796514896009
   },
   {
    "arm": "intact",
@@ -1085,7 +1145,9 @@
    "mcnemar_p": 1.615555039772333e-70,
    "bh_reject_q05": true,
    "bh_adj_p": 0.00011379310344827586,
-   "verdict": "ABOVE floor"
+   "verdict": "ABOVE floor",
+   "residual_fraction_of_reported": 0.7829457364341086,
+   "residual_fraction_of_headroom": 0.11549456832475702
   },
   {
    "arm": "pruned_healed",
@@ -1108,7 +1170,9 @@
    "mcnemar_p": 8.266683130045114e-10,
    "bh_reject_q05": true,
    "bh_adj_p": 0.00011379310344827586,
-   "verdict": "ABOVE floor"
+   "verdict": "ABOVE floor",
+   "residual_fraction_of_reported": 0.43309859154929575,
+   "residual_fraction_of_headroom": 0.03566251087271672
   },
   {
    "arm": "barely_healed",
@@ -1131,7 +1195,10 @@
    "mcnemar_p": 7.361303006079904e-27,
    "bh_reject_q05": true,
    "bh_adj_p": 0.00011379310344827586,
-   "verdict": "BELOW floor"
+   "verdict": "BELOW floor",
+   "residual_fraction_of_reported": -3.6000000000000005,
+   "residual_fraction_of_headroom": -0.036532328211075674
   }
- ]
+ ],
+ "residual_fraction_definition": "residual_fraction == (reported-null)/reported == residual_fraction_of_reported. This is the column that was published in GATE_FOURAXES_VERDICT.md's table and it matches A01 (a01_gate3_content_conventions.py:215, a01_gate4_c4_prereg.py:113). GATE_FOURAXES_VERDICT.md:21 WRONGLY described it as (reported-null)/(1-null); that different quantity is now emitted separately as residual_fraction_of_headroom. No published number changes -- only the prose definition was wrong. Backfilled 2026-08-10; regenerating with the patched analyzer gives the same values."
 }
