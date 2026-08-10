@@ -1,0 +1,22 @@
+{
+  "second_judge": "deepseek-v3",
+  "per_cat": 50,
+  "seed": 777,
+  "n_common_cat14": 1540,
+  "n_sampled_ids": 200,
+  "n_judge_calls": 400,
+  "n_failed_calls": 0,
+  "agreement_po": 0.81,
+  "chance_pe": 0.4922,
+  "cohen_kappa": 0.6258,
+  "sample_gpt4o": {
+    "comem": 36.5,
+    "kvd": 32.5,
+    "diff": 4.0
+  },
+  "sample_deepseek": {
+    "comem": 56.0,
+    "kvd": 49.0,
+    "diff": 7.0
+  }
+}

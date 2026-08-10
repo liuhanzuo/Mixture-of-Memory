@@ -1,0 +1,86 @@
+{
+  "B": 10000,
+  "seed": 1234,
+  "comem_dir": "status/p3_locomo_cluster/locomo_results/qcmem_8b_iter_chatFALSE",
+  "kvd_dir": "status/p3_locomo_cluster/locomo_results/kvdirect_8b_chatFALSE",
+  "n_common_judged": 1540,
+  "n_cat14": 1540,
+  "n_conversations": 10,
+  "comem_judge": 48.64,
+  "kvd_judge": 43.83,
+  "point_diff": 4.81,
+  "per_item_ci": [
+    2.34,
+    7.34
+  ],
+  "per_item_p": 0.0006,
+  "cluster_ci": [
+    1.27,
+    8.32
+  ],
+  "cluster_p": 0.0042,
+  "cluster_ci_above_zero": true,
+  "n_conv_favor_comem": 8,
+  "per_conv": {
+    "conv0": {
+      "n": 152,
+      "comem": 44.08,
+      "kvd": 36.84,
+      "diff": 7.24
+    },
+    "conv1": {
+      "n": 81,
+      "comem": 46.91,
+      "kvd": 43.21,
+      "diff": 3.7
+    },
+    "conv2": {
+      "n": 152,
+      "comem": 48.68,
+      "kvd": 46.05,
+      "diff": 2.63
+    },
+    "conv3": {
+      "n": 199,
+      "comem": 48.74,
+      "kvd": 34.67,
+      "diff": 14.07
+    },
+    "conv4": {
+      "n": 178,
+      "comem": 49.44,
+      "kvd": 50.56,
+      "diff": -1.12
+    },
+    "conv5": {
+      "n": 123,
+      "comem": 56.1,
+      "kvd": 52.85,
+      "diff": 3.25
+    },
+    "conv6": {
+      "n": 150,
+      "comem": 43.33,
+      "kvd": 48.0,
+      "diff": -4.67
+    },
+    "conv7": {
+      "n": 191,
+      "comem": 48.69,
+      "kvd": 44.5,
+      "diff": 4.19
+    },
+    "conv8": {
+      "n": 156,
+      "comem": 42.95,
+      "kvd": 39.1,
+      "diff": 3.85
+    },
+    "conv9": {
+      "n": 158,
+      "comem": 57.59,
+      "kvd": 45.57,
+      "diff": 12.03
+    }
+  }
+}

@@ -58,10 +58,10 @@ Compare against the flagship **CoMem + LoRA (j=12)** row and the **CoMem frozen 
 
 ---
 
-## Known (NOT rerun for this control)
+## Existing local results (raw-verified)
 
-- BABILong = 24.52
-- LoCoMo = 24.52
+- BABILong qa1/qa2/qa5 means = **33.43 / 18.00 / 60.29**; 21-cell macro = **37.24**, recomputed from all 84 shard JSONs under `babilong_results/qcmem_8b_zeroshot_j12_frozen_iterbm25_chatFALSE/`.
+- LoCoMo full-set GPT-4o Judge = **24.5217** (`n=1986`), from `locomo_results/qcmem_8b_zeroshot_j12_frozen_iterbm25_chatFALSE/scores.json`.
 
 ## Provenance / logs
 
@@ -71,4 +71,4 @@ Compare against the flagship **CoMem + LoRA (j=12)** row and the **CoMem frozen 
 
 ## Interpretation
 
-Frozen j=12 (no LoRA) collapses vs the flagship **CoMem + LoRA (j=12)** RULER 97.05 (this control: 8.01) and even vs **CoMem frozen (j=9)** RULER 59.41. At the deeper j=12 split the frozen backbone cannot read the compressed memory buffer without distillation/LoRA adaptation — i.e. the adaptation gain is essential at j=12, not a free property of the depth. This isolates the distillation/LoRA contribution at fixed depth.
+Frozen j=12 (no LoRA) collapses vs the matched-n flagship **CoMem + LoRA (j=12)** RULER 96.07 (this control: 8.01) and even vs **CoMem frozen (j=9)** RULER 59.41. At the deeper j=12 split the frozen backbone cannot read the compressed memory buffer without distillation/LoRA adaptation — i.e. the adaptation gain is essential at j=12, not a free property of the depth. This isolates the distillation/LoRA contribution at fixed depth.

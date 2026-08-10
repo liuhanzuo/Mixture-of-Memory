@@ -1941,3 +1941,79 @@ dirs（diskB）：`ruler_results/ablation9_selector_chatFALSE/sel{sel}_tk{tk}/`�
 - **transplant sanity（两新臂启动即验）**：keep12 = copied 135 tensors（前12层 + embed/norm/lm_head from 32L base）+ fresh tail[12,13]；keep8 = copied 91 tensors（前8层）+ fresh tail[8,9]；均 unexpected=0 / max|model−base|=0（exact）/ fresh post_attn_ln & q_norm all-ones / fresh_q_std=0.02 → **ALL 6 CHECKS PASS**。
 - **待铺（ablation frontier 控制臂）**：`--freeze_front`（冻结前 keep 层只训 fresh tail）/ `--from_scratch`（前 keep 层随机初始化对照）——脚本已支持，待空节点。
 - **数据/运维**：`/dev/shm/dolmino_now15b.npy`（126.9GB，diskB 两台已 stage）；DataLoader `multiprocessing_context="fork"`（防 pickle 61G memmap 卡死）；WANDB offline；单节点 `torch.distributed.run --standalone --nproc 8`。
+
+### 当前节点分配 + 进度（2026-08-02 05:29 +08:00，覆盖上表 07-20 stale 状态）
+
+| 臂 | 节点 (FS) | 当前 step/200k | train-ppl | s/step | 备注 |
+|---|---|---|---|---|---|
+| **#100 full-32L 续训对照** | LOCAL wzc1 8×L20A | ~14.8k | 8.34 | 3.16 | causal continued-pretrain 对照（非剪层） |
+| **keep8** (0.25L) | .252(28.89.19.252) **wzc1** 8×L20A | ~99.3k | 14.20 | 1.02 | ⚠️ 跑在 wzc1 非 diskB；~1.1d 剩→完成后迁 keep10→.252（需 diskB→wzc1 rsync keep10 ckpt） |
+| **keep10** (0.3125L) | .104(28.83.24.104) **diskB** 8×H20 | ~80.8k | 13.47 | 6.84 | 最长杆 ~9.4d 剩 |
+| **keep12** (0.375L) | .73(28.85.35.73) **diskB** 8×H20 | ~121.9k | 11.83 | 7.81 | ~7d 剩 |
+
+### Frontier trajectory eval（base protocol chat=False / no-BOS / LL-based MC；PPL 8-shard held-out dolmino_now_val + core6 + know5；MAIN 已核对 JSON）
+
+core6 = mean(hellaswag·arc_c·arc_e·piqa·openbookqa=acc_norm, winogrande=acc)；know5 = mean(mmlu·lambada_openai·boolq·commonsense_qa·social_iqa=acc)。
+
+> **P0.7 审计（2026-08-02）命名对齐**：本表 `know5`（acc-based mean）= 论文口径 **`aux5_raw`**，是异质任务的描述性均值，**禁称 knowledge recovery**（MMLU 单列报告）。本表所有 know5 值经 raw-JSON 核对数值正确，仅论文侧改名为 aux5_raw；唯一数值修正是 keep14 的旧 `.5071`（acc_norm 污染，虚高 ~1.4pp）→ **`.4935`**，该错误值不在本表。详见 `paperB/P0_7_AGGREGATE_AUDIT.md`。
+
+| 臂 · step | held-out PPL | core6_mean | know5_mean | mmlu | 源 |
+|---|---:|---:|---:|---:|---|
+| keep10 · 10000 | 17.2389 | 0.4757 | 0.4109 | .2539 | batch(.82) 2026-08-02 |
+| keep10 · 70000 | 13.0616 | 0.5298 | 0.4430 | .2629 | batch(.82) 2026-08-02 |
+| keep10 · 73500 | 12.9938 | 0.5301 | 0.4415 | .2677 | batch(.82) 2026-08-02 |
+| keep10 · 74000 | 12.9881 | 0.5299 | 0.4413 | .2630 | batch(.82) 2026-08-02 |
+| keep10 · 74500 | 12.9754 | 0.5299 | 0.4357 | .2587 | batch(.82) 2026-08-02 |
+| keep10 · 75000 | 12.9619 | 0.5327 | 0.4322 | .2630 | batch82b(.82) 2026-08-02 |
+| keep10 · 75500 | 12.9552 | 0.5319 | 0.4339 | .2553 | batch(.82) 2026-08-02 |
+| keep10 · 76000 | 12.9486 | 0.5317 | 0.4412 | .2607 | batch(.82) 2026-08-02 |
+| keep10 · 76500 | 12.9451 | 0.5294 | 0.4461 | .2620 | batch(.82) 2026-08-02 |
+| keep10 · 77000 | 12.9306 | 0.5296 | 0.4402 | .2619 | batch(.82) 2026-08-02 |
+| keep10 · 78000 | 12.9207 | 0.5301 | 0.4425 | .2662 | batch82(.82) 2026-08-02 |
+| keep10 · 78500 | 12.9113 | 0.5324 | 0.4392 | .2572 | batch82(.82) 2026-08-02 |
+| keep10 · 79000 | 12.9010 | 0.5333 | 0.4417 | .2641 | batch82c(.82) 2026-08-02 |
+| keep10 · 80000 | 12.8725 | 0.5308 | 0.4387 | .2611 | batch82d(.82) 2026-08-02 |
+| keep10 · 80500 | 12.8698 | 0.5350 | 0.4397 | .2587 | batch82d(.82) 2026-08-02 |
+| keep10 · 81000 | 12.8563 | 0.5315 | 0.4419 | .2633 | batch82e(.82) 2026-08-02 |
+| keep10 · 81500 | 12.8493 | 0.5308 | 0.4458 | .2655 | batch82f(.82) 2026-08-02 |
+| keep10 · 82000 | 12.8462 | 0.5263 | 0.4348 | .2609 | batch82g(.82) 2026-08-02 |
+| keep10 · 82500 | 12.8360 | 0.5318 | 0.4344 | .2563 | batch82h(.82) 2026-08-02 |
+| keep10 · 83000 | 12.8241 | 0.5314 | 0.4418 | .2585 | batch82i(.82) 2026-08-02 |
+| **keep10 · 83500 ⇒ ≈200k** | **12.8160** | **0.5303** | **0.4491** | **.2718** | **batch82k(.82) 2026-08-02 — 平台期冻结=200k，训练已 kill(.104)** |
+| keep12 · 115000 | 11.5378 | 0.5631 | 0.4690 | .2733 | batch82b(.82) 2026-08-02 |
+| keep12 · 115500 | 11.5270 | 0.5618 | 0.4677 | .2686 | batch(.82) 2026-08-02 |
+| keep12 · 116000 | 11.5248 | 0.5628 | 0.4613 | .2686 | batch(.82) 2026-08-02 |
+| keep12 · 116500 | 11.5211 | 0.5669 | 0.4646 | .2631 | batch(.82) 2026-08-02 |
+| keep12 · 117000 | 11.5125 | 0.5678 | 0.4641 | .2689 | batch(.82) 2026-08-02 |
+| keep12 · 117500 | 11.5106 | 0.5702 | 0.4631 | .2582 | batch(.82) 2026-08-02 |
+| keep12 · 118000 | 11.5031 | 0.5698 | 0.4573 | .2628 | batch(.82) 2026-08-02 |
+| keep12 · 118500 | 11.4957 | 0.5674 | 0.4662 | .2735 | batch(.82) 2026-08-02 |
+| keep12 · 119500 | 11.4826 | 0.5684 | 0.4624 | .2699 | batch82(.82) 2026-08-02 |
+| keep12 · 120000 | 11.4797 | 0.5679 | 0.4675 | .2733 | batch82b(.82) 2026-08-02 |
+| keep12 · 120500 | 11.4740 | 0.5686 | 0.4554 | .2707 | batch82c(.82) 2026-08-02 |
+| keep12 · 121500 | 11.4645 | 0.5692 | 0.4604 | .2668 | batch82d(.82) 2026-08-02 |
+| keep12 · 122000 | 11.4605 | 0.5696 | 0.4634 | .2665 | batch82e(.82) 2026-08-02 |
+| keep12 · 122500 | 11.4573 | 0.5670 | 0.4593 | .2634 | batch82f(.82) 2026-08-02 |
+| keep12 · 123000 | 11.4513 | 0.5683 | 0.4630 | .2572 | batch82g(.82) 2026-08-02 |
+| keep12 · 123500 | 11.4475 | 0.5736 | 0.4736 | .2749 | batch82h(.82) 2026-08-02 |
+| keep12 · 124000 ⇒ ≈200k | 11.4426 | 0.5669 | 0.4608 | .2752 | batch82j(.82) 2026-08-02 — 平台期冻结=200k，训练已 kill(.73) |
+
+- **★ 2026-08-02 平台期冻结决定（用户指令）**：keep10 / keep12 的 core6/know5/MMLU 在最近 ~13k step 已在噪声内持平（MMLU 钉 chance .25-.28，浅层 12L/14L 无法恢复世界知识），故按用户「已到平台期直接用当前数据=200k 数据、然后 kill」冻结 **keep10·83500 / keep12·124000 作 ≈200k 端点**，训练于 2026-08-02 kill（keep10 .104 parent PID 3995588 / keep12 .73 parent PID 3983054，各 0 残留进程 + 0 GPU compute-apps，16×H20 释放）。⚠️ 知识轴已平台但 **PPL 仍缓降**（keep14 完整轨迹实测 PPL 一路降到 200k），故上述两点 PPL 相对真实 200k **略偏乐观**——论文须标注 mid-trajectory frozen。深度阶梯 200k 端点表见 `paperB/TODOList.md` §深度阶梯 200k 端点。keep8(.252) / full32(#100 LOCAL) 不冻结，继续跑满 200k。
+
+- 趋势与深度阶梯一致：keep12(14L) > keep10(12L)，PPL 更低（~11.5 vs ~12.9）+ core6（~.567 vs ~.531）/know5（~.464 vs ~.440）更高。mmlu 全轨迹仍 ~chance（.25-.27）= 与 THREE_ARM_200K 的「PPL 早收敛但 knowledge 恢复滞后」一致（此为轨迹中点非 200k 终点）。轨迹内 PPL 单调降但 core6/know5 已近平台。
+- ⚠️ **batch1（01:12–01:45）名义 4 点实产 3 点**：keep12 **step119000 被静默 SKIP**（该 ckpt 已不在盘上，harness 仍 touch DONE marker=已知 bug，不足信 done marker）。keep12 高端由 batch82b 的 **step120000**（在盘）覆盖。
+- batch82b（2026-08-02 01:56 起，log `logs/frontier_batch_82b_20260802.log`）已跑完 keep12 {120000,115000} + keep10 {75000,70000}，末点 keep10·75000 downstream 收尾中；上表所有点均 MAIN 从 JSON 核对。原始 JSON：`.82:olmo2_ppl_results/7B_<tag>_step<N>/summary.json` + `.82:olmo2_downstream_results/7B_<tag>_step<N>{,_know}/summary.json`。step0（degenerate ppl~1e6）+ step77500（缺 know5）未入表。
+- batch82c（2026-08-02 02:55 起，log `logs/frontier_batch_82c_20260802.log`，03:17 跑完）补 keep12·120500 + keep10·79000（含 silent-skip 修复：仅当 PPL summary.json 实存才 touch DONE marker），两点均 MAIN 从 JSON 核对已入表。
+- batch82d（2026-08-02 05:35 起，log `logs/frontier_batch_82d_20260802.log`，06:12 ALL DONE）名义 4 点实产 3 点：keep12·121500 + keep10·{80500,80000} 三点已 MAIN 从 JSON 核对入表；**keep12·121000 被 silent-skip 保护正确跳过（该 ckpt 不在盘上，无 summary.json → 未 touch DONE marker，符合预期）**。keep10 高端由此覆盖到 80.5k。
+
+#### ShortGPT external baseline (#98) — 200k heal ENDPOINT（非轨迹中点，base protocol chat=False；MAIN 从 JSON 核对；datasets 5.0.0）
+
+ShortGPT-influence 选层保留 16 非连续层 [0-12,16,17,31]（含最终层 31，NO fresh tail；`keep_front_layers=16 n_fresh_layers=0`；ckpt 已 compact 到 0..15），同 200k Dolmino heal 配方。heal COMPLETE。
+
+| 臂 · step | held-out PPL | core6_mean | know5_mean | mmlu | 源 |
+|---|---:|---:|---:|---:|---|
+| **7B_shortgpt16 · 200000** | **9.7803** | **0.6215** | **0.5596** | **.4739** | #98 external baseline · MAIN-verified JSON(.82) · datasets 5.0.0 |
+
+- per-task：hellaswag .6851·arc_c .4761·arc_e .7462·piqa .7584·openbookqa .408(acc_norm)·winogrande .6551(acc)；mmlu .4739·lambada .6194·boolq .7287·commonsense_qa .5340·social_iqa .4422(acc)。
+- ★ **该终点在 PPL(1.322× tax) 和 MMLU(63.0% above-chance recovery) 两轴同时优于全部三个 16L 连续截断臂**（keep14 train-all 19.4% / freeze-front 3.6% / random-front ~0%）。混淆项：继承 16 vs 14 层 + 保留原生 readout(层31) vs 丢顶换 2 fresh 层——两效应尚未拆分（需 keep16-inherited/0-fresh 连续控制隔离 policy）。详见 `status/PAPERB_THREE_ARM_200K.md`。
+- 源：`.82:olmo2_ppl_results/7B_shortgpt16_step200000/summary.json` + `.82:olmo2_downstream_results/7B_shortgpt16_step200000{,_know}/summary.json`；driver `scripts/_run_shortgpt_downstream_only.sh`（downstream-only 复跑，PPL 早前经 `_run_olmo2_eval_shortgpt.sh`）；env `.82:$DB/olmo2_venv`（elsa torch2.7 + transformers 5.5.4 + datasets 5.0.0）。轨迹中点 128000/153500 未跑（需 46GB scp LOCAL→.82，deferred）。

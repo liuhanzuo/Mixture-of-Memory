@@ -2,7 +2,7 @@
 
 **Date**: 2026-06-05
 **Reference**: "Auxiliary-Loss-Free Load Balancing Strategy for Mixture-of-Experts" (DeepSeek, arXiv:2408.15664)
-**Researcher provenance**: ops/research_notes/benchmark_survey_and_improvements_20260604.md BLOCK 3b #1 (confidence: high)
+**Researcher provenance**: legacy/research_notes_superseded/benchmark_survey_and_improvements_20260604.md BLOCK 3b #1 (confidence: high)
 
 ## Motivation
 

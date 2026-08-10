@@ -1,11 +1,62 @@
 # PENDING_TASKS.md — Task Board
-## Updated 2026-07-15 21:35 CST
+## Updated 2026-07-31 00:45 CST
 
 ---
 
-## 📋 [PLAN 2026-07-15] QCMem 收尾（当前最高优先，覆盖下方旧计划）
+## 🔴 [PLAN 2026-07-31] Paper B #1 reviewer control — full-32L continued-pretraining（用户确认最高优先训练）
 
-### T21 [PENDING, auto_launch, P0] 32B vt recall-vs-speed frontier（用户 idea：深 j 掉 recall 但 read 变快）
+### #100 [PENDING, auto_launch=TRUE @ ShortGPT-frees-LOCAL-B200] Full-32L + Dolmino 200k
+- **用户 2026-07-31 确认**：ShortGPT 之后**第一优先级训练**，回答审稿人最危险的因果问题——MMLU 崩塌来自**剪层**还是 **Dolmino continued-pretraining 本身**（corpus-induced forgetting）？现有 full-base `.6053` 是**未续训**原始模型，keep14 `.3191` 已 Dolmino 200k → 二者同时改了深度+结构+语料暴露，无法归因。
+- **配置**（launcher 已就绪 + CPU dry-run 验证 transplant 355/355 exact 6 checks pass，commit 7489443）：
+  - `scripts/_run_olmo2_full32_dolmino_heal.sh`，keep_front=32 / n_fresh=0（不剪枝，全 32 层 transplant）；
+  - **uniform LR 2e-5**（`--lr 2e-5 --lr_inherited 2e-5`，lm_head fresh 桶也 2e-5）；
+  - 同 Dolmino（`/dev/shm/dolmino_now15b.npy` 已 staged 本机 B200，58G，与 ShortGPT 同文件，无需重新 stage）、seq_len 2048、eff_bs 128、200k、warmup 150、gradient_checkpointing、fp32 master；
+  - save_every=5000（trajectory 覆盖 44k/111.5k/128k/153.5k/200k 附近，MMLU 判决 ~44k≈第 1 天即可读）。
+- **启动方式**（ShortGPT@200k 腾出 LOCAL B200 后）：`cd <PROJECT_ROOT> && RUN=1 bash scripts/_run_olmo2_full32_dolmino_heal.sh`（BS=16 GA=1，B200 183GB）。
+- **⚠️ 资源优先级（用户 2026-07-31 待确认）**：full32 **优先于 distill** 上 B200。distill（更强恢复目标）属后续方法论文，非当前机制论文必须；full32 是主 claim 承重控制。distill 继续留 .73 慢跑或暂停。
+- **成本**：满 32 层 ≈ 剪枝臂 2× → ~6 天到 200k（B200）。但不必等满：full32@44k/100k MMLU 若仍 0.55–0.60 结论已定（非 Dolmino 的锅）。
+- **完成/中途**：eval PPL + core6 + know5（同 keep14 口径），回填 RUN_REGISTRY + 报告给用户。
+- **后续次优先训练**（full32 之后，仅当资源充裕）：`keep16+fresh0`（front-16 无 fresh，回答"是否 2 fresh 层的锅"）→ `random-init@2e-5`（消 LR confound，当前 random 用 1e-4）。二者非硬条件，可 limitation 顶过。
+
+### 顺手免费评测（forward-only / CPU，不占训练卡，可随时穿插）
+- ShortGPT `step0.pt` PPL/MMLU/downstream（量化 importance-pruning 即时损伤）；
+- per-example predictions 重评 keep14/frozen/random → `scripts/paired_analysis_paperb.py`（McNemar + bootstrap CI）；
+- OLMo semantic/next-token probe（把 Qwen-only depth 证据变同模型证据）。
+
+---
+
+## 🔴 [PLAN 2026-07-24] Paper A 收尾 — adapter-free CoMem 全 benchmark（当前最高优先，覆盖下方所有旧计划）
+
+### #65 [PENDING, auto_launch=TRUE] CoMem adapter-free（无训练）chat=False 全 5-benchmark 行
+- **用户 2026-07-24 明确要求**：论文主表需补「真正 adapter-free」行，回击 reviewer「架构本身无需训练也能工作」的质疑。现有 `tab_adapter.tex` 只在 **固定 j=12** 比 adapter on/off（证「深切点 j12 处 LoRA 很关键」），**不代表** CoMem 零训练最佳能力（需浅的 readout-safe 切点 j=9）。
+- **固定一套配置，不 per-benchmark 调 j**：Qwen3-8B 冻结（`models/Qwen3-8b-local`）· `chat_template=False` · **无 LoRA** · `resume_j=9`（8B readout-safe，权威值见 RUN_REGISTRY §1）· `chunk_size=512` · `topk=12` · `sink=bos` · `selector=iter_bm25`（与旗舰同）· 同 data/seed/samples/scorer。
+- **覆盖全部 5 benchmark**，输出 dir：`{ruler,longeval,longbench,babilong,locomo}_results/qcmem_8b_zeroshot_j9_chatFALSE`。
+- **adapter-free 实现方式**：RULER/LongBench/BABILong eval 脚本用 `--zero_training_no_adapter`；LongEval/LoCoMo 直接**省略** `--lora_adapter`（留 None）。**绝不加** `--use_chat_template`。
+- **⚠️ 资源约束**：需 **diskB 8-GPU 空节点**（Qwen3-8B + 全 eval 数据只在 diskB；wzc1 缺 RULER/longeval/locomo 数据）。旗舰 chat=False 配方可克隆 `ruler_results/qcmem_8b_iter_chatFALSE_ad/` 的 eval_config（把 lora_adapter 去掉、resume_j 12→9）。RULER/BABILong 用 `_eval_taskpool_2group.sh` 口径；LongEval/LongBench 用现成 chatFALSE driver。
+- **⚠️ 不可复用现有 zeroshot 数据**：`qcmem_8b_zs_iter_chatnothink` / `qcmem_8b_zeroshot_j9_n500` / `qcmem_8b_zeroshot_babilong` 全是 **chat=TRUE**（scale-consistency 研究产物）→ chat=False 主表必须**全新跑**。
+- **完成后**（#67）：主表加两行 `CoMem (adapter-free)` + `CoMem (+ distilled LoRA)`；保留**两个** ablation：(a) tab_adapter 同-j12 on/off = LoRA 因果隔离；(b) adapter-free@j9 vs 旗舰@j12 = 实用部署点对照。
+
+### #66 [RUNNING, subagent] 旗舰 LoRA 训练成本报告
+- 派 subagent 中（`status/FLAGSHIP_TRAINING_COST.md`）：LoRA 可训参数 + %backbone、训练卡数 + wall-clock、PG19 token 数、无 benchmark 标签声明。纯 CPU 分析，不占 GPU。
+
+### #67 [PENDING, 部分不占 GPU] 论文措辞 + 主表行 + 效率表
+- **措辞**（可现在做，不依赖 #65 数字）：全文**禁写「CoMem is training-free」**，统一用用户指定原句：*"CoMem's memory architecture and inference-time operations require no parameter updates. The flagship uses a lightweight self-distilled LoRA on a frozen backbone, while an adapter-free variant operates at a shallower readout-safe split."*
+- **主表两行 + 效率表 LoRA-on latency 控制**：依赖 #65 数字，跑完再填。
+
+### #68 [PENDING, auto_launch=TRUE (next-free-diskB-node)] MemoryLLM chat=False overlay
+- **用户 2026-07-24「两者都要」的延迟半部分**。现状：master 矩阵（`status/BENCHMARK_CHATFALSE_MASTER.md`）MemoryLLM 的 LongEval/LongBench/BABILong **已用 chat=True ᵀ 占位**（14.0 / 12.80 / qa1 26.9·qa2 21.1·qa5 42.6，明确标 ᵀ 不进 chat=False 排名）。本任务=待 diskB 空节点跑**真 chat=False** 覆盖成双行。
+- **缺的 3 项**（LoCoMo 16.11 / RULER 16.55 已有真 chat=False，不重跑）：LongEval 8k-128k(n=50,max48)；LongBench 完整 6-ds(官方 qa_f1，现仅 narrativeqa)；BABILong qa1/qa2/qa5×0k-32k(n=100,compare_answers，现 `babilong_results/memoryllm_8b_chatFALSE/` 误命名实 chat=True 需重跑)。chat=False=去 `--use_chat_template`。
+- **⚠️ 资源**：MemoryLLM=Llama-3-8B-chat，env/权重/harness **仅在 diskB**（.73/.104），NOT wzc1。当前无我控制的空 diskB 节点（wzc1 满载 LOCAL训练+#65；diskB H20 .73/.104 归用户、.82=dllm）。
+- **⚠️ MemoryLLM venv python 坑**（memory memoryllm-venv-python-broken）：diskB venv bin/python 被 reset 成 py3.14（包在 py3.11）→ 用 `/usr/bin/python3.11` + `PYTHONPATH=<venv-site-packages>`。参考 #50 效率修复 + #46 baseline chat=False driver。
+- **完成后**：把 master ᵀ 行改成真 chat=False + 回填 PAPERA_ALL_RESULTS §0/§1.7 + §6 状态。
+
+---
+
+## 📋 [PLAN 2026-07-15] QCMem 收尾（旧计划，已被上方 Paper A 收尾覆盖）
+
+### T21 [DONE 2026-07-20] 32B vt recall-vs-speed frontier（用户 idea：深 j 掉 recall 但 read 变快）
+- **结论（`status/QCMEM_RECALL_SPEED_FRONTIER.md`）**：32B zero-shot vt / iter_bm25 / chat+no-think / n=50 / string_match / j∈{3,6,13,20,27,34,41,48}（.73 diskB `ruler_results/qcmem_32b_t21_vt_j*` + `logs/t21_profile_j*.log`）。**read_prefill = 56.8×(L−j) ms 近乎完美线性**（j3=3461ms/61层 → j48=909ms/16层 = **3.81× read 提速**）；decode/step 恒 ~46ms（HBM 瓶颈，对 j 不敏感，read+gen@48tok 加速摊薄到 1.84×）；显存全程恒定 ~65.6–66.2GB（算量变、显存不变）。**recall 峰在极浅 j3（16k=93.6/32k=52.0），随 j 阶梯下滑，过 readout-safe 上限（~j34/0.53L）后 j41=3.6/j48=2.0 坠崖（真重建失败=非空错答，非空输出）**。Pareto 拐点 ≈ j34（recall 33/22 未塌 + read 2.03× 快）。**旧 RUN_REGISTRY:1604 的 32B vt sweep（j3~18）是 2026-07-17 chat+no-think 前的 thinking 污染 → 本轮修正：干净口径 32B vt 浅 j 很强（≈8B+adapter/30B-A3B zs），非"全 scale 唯一崩"**。铁律2：全 16 cell empty=0，官方 string_match_all，n=50。.73 8 卡已释放，无代码改动/无 git。
+- ~~以下为原 PENDING 计划（已由上面执行取代：改用 8 j 深档 + eval_ruler_qcmem 测 recall + bench profile 测 latency + nvidia-smi 测显存）~~
 - **动机**：32B vt recall 随 j 变深而降（j3≈24 > j6≈15 ≈ j9≈16，j13/16/20 探针跑中）。但 QCMem read 成本 ∝ (L-j)/L 层 → 深 j = read/decode 更快。所以 vt j-sweep 不是"确认下降"，而是 **recall vs read 算力的 Pareto frontier**（论文素材：j = 精度↔算力旋钮）。
 - **理论预览（32B L=64, decode∝(L-j)）**：j3=95.3%层/1.00× · j6=90.6%/1.05× · j9=85.9%/1.11× · j13=79.7%/1.20× · j16=75%/1.27× · j20=68.8%/**1.39×**。
 - **动作**：等 .24 上 vt 探针跑完腾卡（或 .82.250 3b ~23:05 跑完），用**1 张卡**跑实测 latency sweep：
@@ -27,17 +78,20 @@
 - .85/.24 上跑的 32B/14B LongBench/LoCoMo/vs-Dense 跑完后 → 聚合官方判分 → 回填 `status/QCMEM_BENCHMARK_PLAN.md` 主表 + `RUN_REGISTRY.md`（32B/14B 行）。
 - ⚠️ balance-j 修正未回填计划表 §1b（zero-shot 最优 j 浅=j3，非固定 0.25L）——待用户确认后一并更新。
 
-### T23 [PENDING, auto_launch, P0-数据质量] BABILong 重跑（thinking 污染）
-- **发现（2026-07-17）**：Qwen3-scale BABILong 结果（`babilong_results/qcmem_8b_{adapter_mid,zeroshot}_babilong` 等，文件 2026-07-14）在 thinking-fix `30bb2ab`（2026-07-16）之前生成 → 原始输出 ~90% 带 thinking/MC 标记，长档答案被挤出首句（8B-adapter qa1 首句命中 8k/16k/32k=65/56/**23**，但答案出现在输出任意处=66/68/**57**）→ **32k=21 被污染压低，非干净长程效应**。
-- **动作**：一有空卡即用 `scripts/eval_qcmem_babilong.py --enable_thinking False` 重跑 8B（adapter+zs）qa1/qa2/qa5 × 0k-32k；**先验证 `chat_template_no` 配置下 thinking 是否真被抑制**（fix 在 apply_chat_template 路径；这批是 chat_template_no → 可能要改走 chat_template=True + enable_thinking=False，或在 raw-prompt 生成里加 thinking 抑制/清洗）。重判后回填主表 §1a + RUN_REGISTRY，撤掉 caveat。
-- **连带**：核 4B/1.7B/0.6B/14B/32B BABILong 是否同批（2026-07-14 前）污染，一并重跑。
-- **阻塞**：当前 32/32 卡在跑 OLMo，无空卡；待任一 run 出 plateau/结束后执行。
+### T23 [DONE 2026-07-20] BABILong 8B clean 重跑（thinking 污染）+ 打分回填
+- **发现（2026-07-17）**：Qwen3-scale BABILong 结果（`babilong_results/qcmem_8b_{adapter_mid,zeroshot}_babilong` 等，文件 2026-07-14）在 thinking-fix `30bb2ab`（2026-07-16）之前生成 → 原始输出带 thinking/MC 标记，长档答案被挤出首句（官方 compare_answers = 首句 + 恰好一 label）。
+- **完成（2026-07-20，节点 .73）**：干净口径 `chat_template=ON + enable_thinking=False + selector=iter_bm25`（GPU 部分先前已跑完）经官方 `compare_answers`+4-shard 合并（`score_nested_babilong.py`）打分回填。**8B overall(21 cell)：adapter(j12)=57.10 / zero-shot(j9)=48.43；全 cell empty_output=0，输出 well-formed**。
+- **vs 旧污染版**：zs 39.2→48.4（+9.2）、adapter 55.5→57.1（+1.6 持平），增益集中 0k–8k。**修正旧估计**：32k qa1/qa2 干净口径仍低（真长程失败非 artifact，"真值 35–50" 不成立）；**新 caveat**：iter_bm25 对 qa1 单事实中档反掉分（adapter qa1 16k 55→23）。回填 `QCMEM_BENCHMARK_PLAN.md §1a` + `RUN_REGISTRY.md`。
+- **连带（未做）**：4B/1.7B/0.6B/14B/32B 未重跑（仍旧口径 legacy），如需 scale 一致性后续补。
 
-### T24 [PENDING, auto_launch] 方向4「极简架构」缺的控制臂 + healed eval（= 用户"论文实验缺的部分"）
-- **方向4**（QCMEM_AUTONOMOUS_AGENDA §1）：「前 j 层已承载语义 → 前 j 层 + k fresh NTP 层构成更小 transformer，去中间冗余层」。剪层-heal(keep14/12/10) = 正臂。
-- **缺的关键控制臂**：`--from_scratch`（同 j+k 架构、不 transplant 前层、从头训）→ 证「前层语义 warm-start ≫ 同小架构从头练」；可选 `--freeze_front`（冻结前层只训 fresh，测前层是否需微调）。三臂 + C0(7.55) 才能下方向4 结论。
-- **healed-ckpt eval**：keep14 ppl 已出(12.55 heal 曲线)；补 keep12/keep10 收敛后的 ppl + 下游（同 held-out dolmino / eval_olmo2_ppl.py）。keep10 最新完整 ckpt step8000 尚欠 heal(ppl17.8)，待收敛。
-- **状态（2026-07-17）**：local 节点现被 keep14-resume 占；from_scratch 控制臂需整节点 DDP → 待 keep10/keep12/1B 任一出 plateau 或结束腾节点后 auto-launch（`KEEP=14 FROM_SCRATCH=1` 需给 run_olmo2_7B_keepN.sh 加 --from_scratch 透传）。keep12 亦待 resume。
+### T24 [RUNNING, auto_launch=true] Paper B 缺失实验与最终评测（2026-07-28 审计更新）
+- **P0-1 keep14 final eval**：继承 train-all 主臂已于 step200000 完训，现有 `outputs/olmo2_probe2_7B_keep14fresh2/{step200000.pt,final.pt}`；但完整 held-out PPL/core-6/knowledge-5(MMLU) 只评到 step153500。下一个可用整节点直接评 step200000，无需训练。
+- **P0-2 freeze_front control**：LOCAL 健康训练中，2026-07-28 13:05 已到 step179720/200000（1.32s/step，约剩 7.5h）；完成后立即跑 held-out PPL + core-6 + knowledge-5，与 keep14 train-all@200k 和 fully-random-init@200k 三臂同步对照。精确 128k/153.5k ckpt 已轮转掉，仅保留 125/130k、150/155k；论文主对照改用干净 200k。
+- **P1 compute-matched depth ladder**：keep8 仅 44k、keep10 仅 10k、keep12 仅 111.5k 的完整 eval；现有深度梯不等训练预算。若论文要声称 architectural threshold，必须补 keep8/10/12 至 200k 或至少 matched-step 比较。当前只能称 available-checkpoint frontier。
+- **P1 keep12**：最高 ckpt/eval step111500，目标200k，当前本机未运行；需确认 diskB 远程 run 是否 crash 后再 resume。
+- **P2 1B replication**：keep7 最高知识 eval 150k、PPL 147k，仍在下降；作为 qualitative replication 已够，补到200k为可选。
+- **已闭合**：fully-random-init 16L 已训练并完整评到200k；旧“from_scratch 只随机 decoder”叙事已纠正为全模型随机初始化。
+- **发布仓库 URL（P1, auto_launch=false）**：本地匿名仓库 `perplexity-heals-knowledge-lags/` 已就绪；待用户创建匿名远程并提供 URL 后，将链接加入 `paperB/main.tex` 与匿名 release 的 `paper/main.tex`，重新编译。
 
 ---
 
@@ -567,3 +621,42 @@ setsid nohup bash -c "
 " > logs/probe_b25_P1_posPacked_driver.log 2>&1 &
 ```
 (其他 probe 类比,改 EXTRA_ARGS 即可。注意 .7.53 / .245.174 / 本机 / .196 / B200 用各自的 PROJECT_ROOT 和 PYTHON_BIN。)
+
+## [PENDING] distill 迁移 .73 H20 → B200 (auto_launch: true, ShortGPT@200k 完成时触发)
+
+**触发条件**: LOCAL B200 的 ShortGPT heal 跑到 step200000 完成（当前 ~96k，~1.8 天后）。
+
+**动作**:
+1. ShortGPT 200k 完成 → 4-point eval (step0/50k/128k/200k) 排队
+2. .73 distill 当前 checkpoint (outputs/olmo2_probe2_7B_keep14fresh2_distill/step{N}.pt, save_every=5000) 迁到 B200
+   - .73 diskB → B200 wzc1 跨盘, 需 scp ckpt (~46GB student + 8bit opt state)
+   - 或: .73 distill 继续跑 (H20 14.4s/step), B200 空了跑**别的** (keep12 resume / keep8 到200k)
+3. B200 resume distill: `--resume_from <ckpt>`, bs=16 gaccum=1 eff_bs=128, ~3s/step
+   - ⚠️ 8bit adam ckpt: B200 若保持 bnb.optim.AdamW8bit 则 optimizer state 兼容直接 resume;
+     若换 fp32 torch.optim.AdamW 则 optimizer state 加载会 skip (model 权重保留, opt 从头, 影响小)
+   - B200 183GB 装得下 fp32 adam (56GB) + model(42GB) + teacher(14GB) = 112GB, 可不用 8bit
+
+**决策点** (ShortGPT 完成时): distill 迁 B200 (7天完成) vs .73 继续 H20 (33天) + B200 跑其他。用户 2026-07-30 指令: "先跑着吧 B200空出来可以迁移" → 迁移。
+
+## [DONE] Paper B P0.6 content-MMLU 全 sweep (2026-08-02，9 arms 全跑完，.73 + .104 并行)
+
+**状态**: **DONE (2026-08-02)** —— 9 arms 全部跑完 (base/full32/keep8/keep10/keep12/keep14/freezefront/random-init/ShortGPT-16)，双协议 (letter+content_raw+content_norm)，14042 题，base 协议 chat=False/add_bos=0/LL-MC，每 arm n_valid=14042 nan=0。letter 逐题复现 P0.7 (base=.6054 vs P0.7 .6053；full32=.5877 vs P1.1 .5867；各 keep 臂全对齐)。**harness bug 已修**: `mcnemar_exact_p` 在全 14042 题 merge 时 `OverflowError`（`math.comb(n,i)*0.5**n` 上溢），改成 log-space (lgamma+logsumexp)，commit `324a44f`（committer=LiuHanzuo，未 push）。
+- 结果 raw (.73 + .104 上 `olmo2_mmlu_content_results/<TAG>/`，已汇总到 LOCAL `olmo2_mmlu_content_results/P0_6_content_mmlu_summary.json`)。
+- **核心发现 (dissociation)**：content 协议 above-chance recovery 远高于 letter。base=.6054 为分母。keep14: letter recovery 19.3% vs content_norm 60.4%；ShortGPT-16: 63.1% vs 68.5%；full32(intact 续训): 95.0% vs 98.0%(≈无损上锚)。**random-init@200k 是关键 control**: letter recovery ≈0 (−0.85%，纯 chance) 但 content_norm=.3598 (recovery 49.8%) → content_norm 有一个 fluency 驱动的"地板"，与知识无关；因此 content recovery 必须相对 random-init 地板解读，不能直接当"知识恢复"。→ 主结论支持 answer-symbol/readout binding lag（content>>letter），但 competence lag 仍在（content 也远低于 base，且 random-init 地板抬高了绝对值）。
+- MAIN 待回填 paperB/TODOList.md P0.6 表 (数据在上述 summary.json + `*_vs_base_*_compare.json`)，不碰 `.tex`。
+
+<details><summary>原 PENDING 记录 (harness-ready 阶段)</summary>
+
+**状态**: harness DONE (2026-08-02，`scripts/eval_olmo2_mmlu_content.py` + `_run_olmo2_mmlu_content.sh`，commit `d2e28f2`，self-test 通过，未 push)。**只差 GPU 节点** —— 当前 5 台全忙 (LOCAL full32 / .252 P1.6 / .104+.73 P0.5 / .82 P1.7)。
+
+**动作** (第一个空节点，按 letter+content_raw+content_norm 双协议，14042 题，base 协议 chat=False/no-BOS)：
+```bash
+cd /apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory   # 或对应节点 root
+TAG=7B_base CKDIR= bash scripts/_run_olmo2_mmlu_content.sh                                                   # 分母
+TAG=7B_keep14  CKDIR=outputs/olmo2_probe2_7B_keep14fresh2            STEPS=200000 KEEP_FRONT=14 N_FRESH=2 bash scripts/_run_olmo2_mmlu_content.sh
+TAG=7B_scratch16L CKDIR=outputs/olmo2_probe2_7B_keep14fresh2_fromscratch STEPS=200000 KEEP_FRONT=14 N_FRESH=2 bash scripts/_run_olmo2_mmlu_content.sh
+TAG=7B_shortgpt16 CKDIR=outputs/olmo2_probe2_7B_shortgpt16           STEPS=200000 KEEP_FRONT=16 N_FRESH=0 bash scripts/_run_olmo2_mmlu_content.sh
+# 可选补: keep8/keep12/freezefront；full32 待 final.pt 出 (KEEP_FRONT=32 N_FRESH=0)
+```
+跨臂对比: `eval_olmo2_mmlu_content.py --compare --file_a <arm> --file_b <base> --protocol content_norm`。跑完 MAIN 回填 paperB/TODOList.md P0.6 表 + status，不碰 `.tex`。⚠️ ShortGPT `KEEP_INDICES="0-12,31"` 是占位 provenance，用前核对真实选层。优先级: Paper A 待跑项 > 此项 (P0.6 是 Paper B REQUIRED 但仅推理)。
+</details>

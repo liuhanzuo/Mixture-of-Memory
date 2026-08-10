@@ -8,7 +8,7 @@
 # Gate on caller side: PPL finite, nan_chunks == 0, no traceback.
 # Fix1 (2026-04-26): --slot_init random --slot_init_noise 1.0 to avoid the
 # oracle-slot-leak pathology diagnosed in
-# ops/research_notes/20260426_mem_space_v0_jointattn_diagnosis.md
+# legacy/research_notes_superseded/20260426_mem_space_v0_jointattn_diagnosis.md
 # (expected PPL in [15, 30] vs pre-fix 406.74).
 
 set -e

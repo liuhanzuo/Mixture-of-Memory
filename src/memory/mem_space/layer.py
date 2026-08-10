@@ -695,7 +695,7 @@ class MemorySpaceLayer(nn.Module):
         # Learnable slot↔hidden projections. We do NOT take the slot_dim==d_model
         # shortcut (Identity) because that path has zero trainable capacity and was
         # empirically responsible for the residual-gap pathology after fix1+fix2
-        # (see ops/research_notes/20260426_mem_space_v0_tier2_residual_gap.md).
+        # (see legacy/research_notes_superseded/20260426_mem_space_v0_tier2_residual_gap.md).
         # Fix3 (2026-04-26): always-on Linear so there is a parameterised path
         # between the slot bank and the decoder's K/V projections.
         self.slot_to_hidden = nn.Linear(slot_dim, d_model, bias=False)

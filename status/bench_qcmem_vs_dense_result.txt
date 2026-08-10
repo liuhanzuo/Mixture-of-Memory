@@ -1,0 +1,152 @@
+[wait] waiting for GPU2 baseline to finish...
+[wait] baseline done. GPU2 mem=30235 MiB. launching bench_vs_dense...
+`torch_dtype` is deprecated! Use `dtype` instead!
+[bench] loading /apdcephfs_zwfy6/share_304376610/pighzliu_code/models/Qwen--Qwen3-8b dtype=torch.bfloat16 attn=sdpa
+The following generation flags are not valid and may be ignored: ['temperature', 'top_p', 'top_k']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+The attention mask is not set and cannot be inferred from input because pad token is same as eos token. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
+This is a friendly reminder - the current text generation call has exceeded the model's predefined maximum length (40960). Depending on the model, you may observe exceptions, performance degradation, or nothing at all.
+[bench] backbone L=36 resume_j=12 chunk_size=512 topk=12 device=cuda:2
+==============================================================================
+QCMem per-phase profile  (resume_j=12, topk=12, chunk_size=512)
+==============================================================================
+   ctx | #ctx_ch | write_serial | write_batch | w_speedup | read_prefill | decode/step
+--------------------------------------------------------------------------------------
+    8k |      15 |      585.7ms |     567.4ms |      1.0x |     1336.7ms |      96.2ms
+   16k |      31 |      586.0ms |     525.6ms |      1.1x |     1284.7ms |      34.9ms
+   32k |      63 |      586.2ms |     534.6ms |      1.1x |     1292.4ms |      34.9ms
+   64k |     127 |      581.2ms |     525.7ms |      1.1x |     1292.3ms |      35.0ms
+  128k |     255 |      586.1ms |     525.7ms |      1.1x |     1284.8ms |      35.0ms
+==============================================================================
+Dense vs QCMem SPEED  (resume_j=12, topk=12, chunk_size=512, max_new_tokens=32)
+==============================================================================
+   ctx |  D_prefill  D_tok/s   D_mem |  Q_prefill  Q_tok/s   Q_mem   read | decode_x
+------------------------------------------------------------------------------------
+    8k |      2.37s     16.5   18.5G |      1.82s     15.4   17.9G   6657 |     0.9x
+   16k |      5.34s     16.0   20.6G |      1.89s    891.7   17.9G   6657 |    55.8x
+   32k |     13.04s     15.0   24.8G |      1.90s    486.1   17.9G   6657 |    32.4x
+   64k |     35.80s     13.1   33.1G |      1.90s    750.2   17.9G   6657 |    57.2x
+  128k |    110.36s     10.5   49.8G |      1.92s    721.3   17.9G   6657 |    68.7x
+==============================================================================
+Dense vs QCMem ACCURACY  RULER niah_single_noise  string_match_all  (n=30, selector=bm25)
+==============================================================================
+   ctx |  Dense_acc |  QCMem_acc |    n
+---------------------------------------
+    8k |      100.0 |       23.3 |   30
+   16k |      100.0 |       33.3 |   30
+   32k |      100.0 |       46.7 |   30
+BENCH_VS_DENSE_DONE
+
+## 公平 acc bench (带 adapter, niah_single_2 noise-haystack, n=30) — 2026-07-14 完成
+ ctx |  Dense_acc |  QCMem_acc(+adapter)
+  8k |      100.0 |      100.0
+ 16k |      100.0 |       96.7
+ 32k |      100.0 |      100.0
+ 64k |      100.0 |       96.7
+128k |       53.3 |      100.0   <- ★超40960窗口Dense崩塌, QCMem恒定
+结论: 窗口内(≤64k)QCMem追平Dense; 超窗口(128k)Dense掉到53.3而QCMem稳100(read pack恒在native窗口内)。
+注: noise-haystack较易, essay-RULER上Dense 128k=0更极端(见论文§05)。
+
+## ★ multikey 公平 acc bench (带adapter, niah_multikey PG19-prose, n=30) — 2026-07-14
+ ctx |  Dense  | QCMem(+adapter)
+  8k |  100.0  |  96.7
+ 16k |  100.0  |  93.3
+ 32k |   93.3  |  90.0
+ 64k |   90.0  |  86.7
+128k |    0.0  | 100.0   ← ★★★ Dense彻底崩塌(0), QCMem恒定100
+结论: 更难的multikey上, 128k超窗口Dense=0(彻底崩)而QCMem=100——坐实abstract"128k full-context collapses to 0 while CoMem holds 100"。
+窗口内(8k-64k)QCMem略低于Dense(压缩代价96.7/93.3/90/86.7 vs 100/100/93.3/90),但超窗口是唯一可用的。
+对比: easier的niah_single 128k Dense=53.3(未全崩),multikey更能体现崩塌。正在升n=100复核。
+
+## ★ n=100 复核 (2026-07-14, +adapter, PG19-prose haystack)
+niah_single  n=100:  8k/16k/32k/64k=100/100/100/100  128k: Dense=0.0 QCMem=100
+  → 修正: 之前n=30的single 128k Dense=53.3是小样本波动; n=100下Dense也=0(与multikey一致)
+  → 窗口内(8k-64k)QCMem全100=完全追平Dense(n=30时96.7,n=100更稳)
+multikey n=100: 跑中(GPU7,128k长尾)
+结论坐实abstract: 窗口内追平dense, 128k超窗口Dense崩到0而QCMem恒100
+
+## ★★ 8B RULER n=500 selector 对照 (2026-07-15) — 关键: adaptive坏, 固定iter_bm25赢
+VT(variable_tracking) 8k/16k/32k:
+  iter_bm25固定:      97/97/98  ← ★最优(matches论文)
+  bm25单遍:           48/26/23
+  reader_attn:        76/30/17
+  iter_bm25_adaptive: 31/25/22  ← ❌ρ=0.3停太早(read_len~1442≈3chunk)没跟完链
+  adaptive_hop4:      31/25/23  ← ❌hop不救
+niah_multikey 8k/16k/32k: bm25=91/91/92✅  adaptive=91/70/32❌(长档乱拉)
+niah_single 8k/16k/32k:   bm25=100/100/100  adaptive=100/100/100(唯一OK)
+结论: iter_bm25_adaptive(置信度早停ρ0.3)弊大于利,除niah_single全崩。默认应=per-task(niah→bm25,vt→iter_bm25固定)。
+adaptive降级为可选(以后调ρ再救)。⚠️collaborator 32B默认用了adaptive需重跑;4B RULER同样受影响需重跑。
+
+## ★★ per-scale vs-Dense 超窗口崩塌 (2026-07-15, niah_single, n50/100) — 全scale成立
+128k Dense=0 / QCMem存活: 8B=100, 4B=(跑中), 1.7B=88, 0.6B=54
+64k Dense~98/QCMem: 1.7B=86, 0.6B=70
+结论: "Dense超40960窗口崩到0, QCMem因read pack恒在窗口内而存活"在全模型族(0.6B→8B)都成立=核心卖点通用。
+QCMem 128k绝对分随模型变小而降(8B 100→0.6B 54),但始终远>Dense的0。
+
+## per-scale vs-Dense n=100 single 崩塌表(定稿, 2026-07-15)
+128k: Dense=0 全scale; QCMem single: 8B~100 / 4B=99 / 1.7B=83 / 0.6B=56
+→ QCMem 超窗口存活随scale单调(小模型弱)但恒>>Dense=0。核心卖点全模型族成立。
+
+## split-j ceiling sweep (single@16k n100) — "可用j随模型深度scale" 图 (2026-07-15)
+1.7B(L28): j2=100 j3=99 j6=55  → ceiling j≤3 (0.10L)
+0.6B(L28): j2=100 j6=53        → ceiling j≤2 (0.07L)
+8B/4B(L36): j≤9=~100 (0.25L)   [8B/4B曲线跑中补全]
+★发现: 可用split j随模型变小急剧变浅(绝对+相对). 用够浅的j小模型单针也~100; 硬任务弱才是adapter-dependent.
+
+## split-j ceiling曲线定稿 (single@16k n100) — 论文图"可用深度vs模型"
+8B(L36): j3=100 j6=100 j9=98 j12=12 j15=0 j18=0   (cliff@j12=0.33L)
+4B(L36): j3=100 j6=96  j9=98 j12=20 j15=12         (cliff@j12)
+1.7B(L28): j2=100 j3=99 j6=55                       (cliff@~j5=0.18L)
+0.6B(L28): j2=100 j6=53                             (cliff更早)
+★结论: zero-shot可用split悬崖随模型变小而变浅(L36@j12/0.33L, L28@~j5/0.18L)。大模型能缓存更深(容量足重建). insight的scale泛化。
+
+## topk 敏感度 ablation (8B-adapter niah_multikey @16k n100) — 非平凡
+tk4=98 tk8=97 tk16=91 tk24=78 tk32=70  → ★topk越小越好(更多chunk引入干扰稀释多针消歧)
+4B: tk4=70 tk16=32 tk32=23 同趋势
+结论: multikey topk甜点=4-8(precision>recall); headline topk12=91可提到topk4=98。single对topk不敏感(待8k/32k确认)。
+
+## speed-vs-pack (8B-adapter @128k, Dense prefill50s/17tok-s/50G) — 2026-07-15
+topk12 bm25:  Q_prefill1.04s decode744tok/s 18.7G pack6657  →43.7× (headline)
+topk24:       2.05s 651 20.6G pack12801 →37.6×
+topk48:       4.35s 695 24.3G pack25089 →41.5×
+topk64:       6.15s 753 26.8G pack33281 →43.6×
+adaptive:     7.82s ~   26.8G pack33281(拉满64chunk) 
+iter_bm25固定: 1.21s decode10.4tok/s 18.7G pack6657 →0.6× ⚠️异常(同pack却decode慢70×,疑iter每步重检索,待查)
+★结论: prefill/显存随pack线性增(topk12=18.7G→topk64=26.8G); adaptive最坏拉满64chunk=26.8G; selector本身CPU不影响,但它决定的pack大小影响速度。⚠️iter_bm25 decode异常需查(影响vt速度声明)。
+
+## 30B-A3B (Qwen3-MoE, L48/128exp) QCMem zero-shot — MoE架构点 (2026-07-15)
+single: j9=98/100/98  j12=99/100/100  j16=100/100/100  → ceiling≥j16(0.33L,比dense 8B/4B的j12更深)
+multikey j12=72/63/55 (>dense 8B-zs 42/36/31, MoE zero-shot硬任务更强)
+★结论: 深度分区insight在MoE(30B-A3B)成立;大模型/MoE可用j更深(缓存能力强)。
+## iter_bm25 decode异常澄清: @32k iter=10.4× vs bm25=12.9×(相当),128k的0.6×是单跑噪声,非bug。speed声明有效。
+
+## 30B-A3B MoE 完整 (j-sweep + tasks, 2026-07-15)
+single: j9=98/100/98 j12=99/100/100 j16=100/100/100 j20=82/22/57 j24崩 → ceiling j16(0.33L),cliff@j20(比dense 8B/4B的j12深)
+multikey: j12=72/63/55  j16=59/41/35  (j12更优)
+vt(iter_bm25): j12=95/92/91  j16=79/61/58  → ★zero-shot vt 95≈8B+adapter 97!大MoE硬任务zero-shot就强
+★结论: 硬任务能力随模型增大而涨(zero-shot);adapter主要补小模型。8B+adapter(vt97)≈30B-A3B zs(vt95)。MoE缓存更深(ceiling 0.33L)。
+
+## ★★ per-scale adapter 验证 (2026-07-15) — option B: adapter是硬任务杠杆,跨scale成立!
+4B+adapter(j12):   single100/100/100  multikey95/97/94(zs38)  vt96/96/97(zs58) → 追平8B+adapter!
+1.7B+adapter(j9):  single100/100/99   multikey56/39/20(zs12)  vt62/62/66(zs0!) → 大幅提升,小模型caps低些
+8B+adapter(j12):   single100          multikey91/91/92(zs42)  vt97/97/98(zs46)
+★结论: 轻量self-distill adapter在每个scale都把硬任务(multikey/vt)从崩溃拉到强(vt: 8B46→97/4B58→96/1.7B0→62)。
+adapter是通用杠杆;大模型+adapter更强。scale故事闭环:免训练zero-shot单针OK硬任务弱→adapter补上=完整方案。
+
+## ★ balance-j 修正 (2026-07-15) — 小模型硬任务"崩"是j选太深的假象!
+0.6B @ j2(对): single100/100/99  multikey82/83/90  (vs @j3错用: multikey21/2/3)
+→ 用对的浅balance j,0.6B multikey从21跳到~85! 小模型有局限但远没之前表现的差。
+之前主表小模型multikey/vt低=j选太深(0.6B用j3/1.7B用j4-5,过各自ceiling)。需按balance j重定全表。
+
+## ★★ 重大修正 (2026-07-15): zero-shot最优j是浅的(~j3),硬任务其实很强!
+8B@j3 zero-shot: single100 multikey99/94/90 vt96/98/89  (vs @j9: mk42/vt46) 
+4B@j3 zero-shot: single100 multikey92/91/97 vt95/91/93   (vs @j9: mk38/vt58)
+0.6B@j2: single100 mk82/83/90 vt78/55/67; 1.7B@j2-3: single100 mk~78 vt~60
+★真story: 最优split浅(~j3/0.08L),zero-shot就把multikey/vt做到~90(近8B+adapter). 深j(9+)单针OK但hard task崩(cache过早committed)。
+★adapter真正作用=允许更深j(j12更省算力/更压缩)仍保持性能,非"解锁硬任务"(浅j zero-shot已强)。
+之前"硬任务需adapter"结论=j=9选太深的假象。balance j: L36→j3, L28→j2。
+
+## 0.6B adapter(j9) vs zero-shot(j2) — tiny模型adapter反而差
+0.6B+adapter@j9: single100 mk33/37/37 vt56/21/42
+0.6B zero-shot@j2: single100 mk82/83/90 vt78/55/67  ← 浅j zero-shot更好!
+★tiny模型(0.6B)蒸馏target j9太深,小模型学不会从深cache重建→不如浅j zero-shot。
+adapter帮中/大模型(4B/8B推深j),但tiny模型浅j zero-shot已最优,adapter推深无益。

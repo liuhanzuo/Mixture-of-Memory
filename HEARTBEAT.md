@@ -76,15 +76,15 @@ sshpass 前先 `export PATH=/opt/conda/bin:$PATH`。**全部共享同一 wzc1 �
 
 ## ⚡ 执行计划书（2026-05-11 起，已被上方「当前阶段」取代，保留作参考）
 
-**~~首要任务：对照 `status/H_V2_PLAN.md` 推进 H-series v2 训练和基线复现。~~（过时）**
+**~~首要任务：对照 `legacy/status_superseded/H_V2_PLAN.md` 推进 H-series v2 训练和基线复现。~~（过时）**
 
-每次 heartbeat 必须先读取 `CODEBUDDY.md` 和 `status/H_V2_PLAN.md`，理解当前阶段和下一步。计划书里明确列出：
+每次 heartbeat 必须先读取 `CODEBUDDY.md` 和 `legacy/status_superseded/H_V2_PLAN.md`，理解当前阶段和下一步。计划书里明确列出：
 - 每个节点当前跑什么
 - 每个任务的完成标志
 - 完成后自动触发的下一步
 - 哪些操作无需审批（auto_launch=true）
 
-**`status/H_V2_PLAN.md` 现在视为常态化 / 持续维护的 plan 文件，不是一次性草案。**
+**`legacy/status_superseded/H_V2_PLAN.md` 现在视为常态化 / 持续维护的 plan 文件，不是一次性草案。**
 - heartbeat 在处理完问题、推进任务、确认新状态后，**可以直接更新 `H_V2_PLAN.md`**，把它当作当前执行面的主 plan 文档持续维护
 - 允许更新的内容包括：节点映射、正在运行/已完成状态、next action、H20 eval 进度、以及新的执行决议
 

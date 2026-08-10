@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Llama-3.0-8B kv_budget curve @ filter_rank=2.
-# Motivated by the rank sweep result (ops/research_notes/20260425_qfilters_postfix_sweep_analysis.md §8
+# Motivated by the rank sweep result (legacy/research_notes_superseded/20260425_qfilters_postfix_sweep_analysis.md §8
 # + rank sweep addendum): rank=2 dominates rank=4/8 (74.9 < 108/106 PPL), so
 # the 48.4x cross-family compression cost is NOT a GQA-averaging problem —
 # candidate mechanism is Llama-3's sharp-loss regime. This sweep finds

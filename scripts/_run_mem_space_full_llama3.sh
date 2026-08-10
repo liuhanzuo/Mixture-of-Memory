@@ -7,7 +7,7 @@
 #
 # Fix1 (2026-04-26): --slot_init random --slot_init_noise 1.0 (avoids oracle-
 # slot-leak pathology diagnosed in
-# ops/research_notes/20260426_mem_space_v0_jointattn_diagnosis.md). Fix2 is
+# legacy/research_notes_superseded/20260426_mem_space_v0_jointattn_diagnosis.md). Fix2 is
 # architectural and lives in src/memory/mem_space/layer.py (slot-streaming mask
 # guard).  Combined smoke PPL=71.92 < 100 red-line.
 #

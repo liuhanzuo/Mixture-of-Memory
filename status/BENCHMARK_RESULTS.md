@@ -2,7 +2,151 @@
 # 所有实验结果汇总，方便查阅和对比。
 # 格式：10 task × 7 length (0k/1k/2k/4k/8k/16k/32k) × 100 samples per cell。
 # 评分：babilong.metrics.compare_answers（与论文口径一致）。
-# 更新时间：2026-05-18
+# 更新时间：2026-05-18（下方 chat=False campaign 段 2026-07-23 追加）
+
+---
+
+# ★ 论文 chat=False 全量结果汇总（2026-07-23，campaign 完成）
+
+> **协议双支柱**：`selector=iter_bm25` + `chat_template=False`。官方判分：RULER=`string_match_all`，BABILong=`compare_answers`+`TASK_LABELS`（禁 re.search），LongBench/LoCoMo=`run_scoring`，LoCoMo headline=GPT-4o judge。
+> **为何 chat=False**：论文所有模型都是 continue-train 的 **BASE LM（无 SFT/RL）**，套 chat template 会注入 OOD token，对 base 不公平；故**所有方法统一 chat=False**。旧 chat=True 数字（`*_chatnothink`）作废。
+> **flagship**：Qwen3-8B + LoRA `qcmem_distill_qwen_j12_r32_4k`，resume_j=12，chunk1024，sink=bos。
+> **完整性**：以下所有 RULER 消融格均通过 **Iron-Law-2**（8/8 shard、empty=0、recall 重算与 on-disk 0 mismatch）。数据在 diskB（.73/.82/.104 共享 FS）。判分脚本：`scripts/score_ruler_taskbreadth.py`（RULER）、`scripts/score_flat_babilong.py`（BABILong）。
+> **⭐ 本段表格只记 CoMem（本文方法）自身数字**；baseline 对照方法（KV-Direct/HCache/StreamingLLM/MemoryLLM）不入表，数字见 `ruler_results/*_chatFALSE/`（.82）+ `status/STREAMINGLLM_EQUALBUDGET_RESULTS.md` + RUN_REGISTRY。标 **🚫 论文无关** 的条目=不进论文正文。
+
+## Phase 1 — 核心 benchmark（Qwen3-8B）
+
+### CoMem flagship（chat=False，iter_bm25）
+| benchmark | 分数 |
+|---|---:|
+| RULER（niah 主体） | **97.05** |
+| LongEval | **72.83** |
+| LongBench（AVG） | **12.15** |
+| BABILong qa1 / qa2 / qa5 | **53.6 / 25.6 / 66.7** |
+
+> **baseline 对照（不入本表）**：同 chat=False 下 KV-Direct（8k–64k near-perfect→128k=0，非 OOM）/ HCache（极弱 33/5/3）/ StreamingLLM（85/36/20/10/2）/ MemoryLLM（niah 29/40/37/21/21、VT≈0）——全线 << CoMem 97.05。数字见 `ruler_results/*_chatFALSE/`（.82）。⚠️ KV-Direct/HCache 用 `sel=bm25` 非 `iter_bm25`（errata §8c，task#10 待统一）。
+
+### LoCoMo（n=1986，chat=False，官方 scorer + GPT-4o judge）— CoMem only（2026-07-23 verified，appendix §1）
+| method | **judge (headline)** | F1 | acc | EM |
+|---|---:|---:|---:|---:|
+| **CoMem（iter_bm25）** | **38.27** | 9.15 | 23.36 | 0.55 |
+
+> **headline = GPT-4o judge 38.27**（over n=1986；cat5 adversarial n=446 不送 gpt-4o，本地 abstention 判分 folded 进 headline，非丢弃；judged-only cat1–4 n=1540 = **48.64**）。判分 endpoint=maas `gpt-4o`（无 client 端 dated snapshot），seed=1、prompt 全文见 `status/QCMEM_STATS_APPENDIX_chatFALSE.md` §1d。per-cat：cat1 26.95/cat2 19.00/cat3 30.21/cat4 69.32/cat5 2.47。
+> baseline 对照（不入本表）：**KV-Direct（full-ctx 上界）judge 34.59 / F1 9.02**（同 chat=False）。**paired bootstrap（judged n=1540，B=10000 seed1234）：CoMem−KVD judge diff=+4.81，95%CI[2.34,7.27]，p<0.0001 → CoMem 显著优于 full-ctx KV oracle**（unpaired CI 重叠是配对设计下的 power artifact；judge 是 protocol-robust headline，token-F1 9.15≈9.02 打平=formatting artifact）。
+> ⚠️ 旧值 F1 19.51/EM 5.99/acc 28.65 是 **chat=TRUE**，已作废（chat=False F1=9.15）。
+
+## Phase 2 — 消融表（Qwen3-8B RULER，内部相对比较，全 Iron-Law-2 OK）
+
+### #9 tab_selector — CoMem 单遍 selector 消融（BM25/Recency/ReaderAttn/Oracle 均为 CoMem 内部 selector 变体，RULER n=100，峰值 top-k over {4,8,12,16,24}）
+| Task | Len | BM25 | Recency | ReaderAttn | Oracle |
+|---|---|---:|---:|---:|---:|
+| niah_single   | 8k  | 100 | 100 | 100 | 100 |
+| niah_single   | 16k | 100 | 100 | 100 | 100 |
+| niah_single   | 32k | 100 | 82  | 73  | 100 |
+| niah_multikey | 8k  | 99  | 98  | 97  | 100 |
+| niah_multikey | 16k | 99  | 88  | 90  | 100 |
+| niah_multikey | 32k | 99  | 54  | 60  | 100 |
+| var-track     | 8k  | 99.4 | 99.2 | 99.8 | N/A |
+| var-track     | 16k | 92.6 | 92.4 | 92.4 | N/A |
+| var-track     | 32k | 32.0 | 41.2 | 27.8 | N/A |
+
+> 结论：Oracle 两 needle 任务恒 100（读出无损，长程差距=检索问题）；BM25 单遍在 niah 追平 Oracle（≤1pp）。**VT 单遍 selector 32k 全部崩塌**（32.0/41.2/27.8）→ 迭代检索（#10）的动机。
+
+### #10 tab_itervt — 迭代检索（RULER variable_tracking，n=100，chat=False；2×2 one-shot vs iterative 见 #55 P0#2）
+| arm | 8k | 16k | 32k | 64k | 128k |
+|---|---:|---:|---:|---:|---:|
+| **单遍 bm25**（明码单次检索，无跳；2×2 CoMem+bm25） | 48.0 | 25.0 | 23.4 | 21.2 | 20.4 |
+| **iter_bm25 3 跳**（flagship `_ad`：topk12/hop4/chunk512，read≈6.6k） | **96.6** | **97.6** | **98.8** | **99.0** | **95.8** |
+| iter_bm25 4 跳（`ablation10`：topk16/hop4/chunk1024，read≈17k，大预算变体） | 99.0 | 95.6 | 89.8 | 89.8 | 87.4 |
+| oracle_vt（🚫论文无关：诊断上界，不入正文） | 15.6 | 10.4 | 4.8 | 1.2 | 2.4 |
+
+> **headline（#61 已裁决）**：迭代检索把 VT 从**单遍 bm25 的 20–48 全崩**救到 **96–99 长档恒定** → 链式追踪任务必须多跳检索。`rounds:0`=auto=ceil(topk/hop) 是**多跳**（3/4 跳），非单遍（曾误标致"叙事反转"，已纠正）。3 跳小预算 flagship（`_ad`）长档略优于 4 跳大预算（99.0/95.8 vs 89.8/87.4）=多召回 distractor 链在 128k 略伤，flagship 取 `_ad`。
+
+### #11 tab_chunk — chunk-size 消融（RULER niah_multikey，n=100，chat=False，本轮判分）
+| chunk_size | 8k | 16k | 32k | 64k |
+|---|---:|---:|---:|---:|
+| 128  | 91.0 | 90.0 | 81.0 | 85.0 |
+| 256  | 80.0 | 90.0 | 90.0 | 94.0 |
+| 512  | 89.0 | 95.0 | 97.0 | 94.0 |
+| 1024 | 100.0 | 89.0 | 92.0 | 94.0 |
+
+> 结论：chunk 512–1024 长档最稳（64k 均 94，512 在 32k 达 97）；chunk128 长档略降（32k 81）。flagship 用 chunk1024 与此一致。
+
+### #12 tab_crosschunk — cross-chunk attention（full vs block-diag KV reuse，selector=iter_bm25 tk12）
+| Task | Full | Block-diag | Δ(full−bd) |
+|---|---|---|---|
+| RULER niah_single (8k/16k, n=50) | 100 / 100 | 100 / 96 | 0 / +4 |
+| RULER niah_multikey (8k/16k, n=50) | 96 / 94 | 60 / 32 | **+36 / +62** |
+| BABILong qa2 (8k/16k, n=100) | 36 / 20 | 17 / 13 | +19 / +7 |
+| BABILong qa5 (8k/16k, n=100) | 78 / 69 | 78 / 55 | 0 / +14 |
+
+> 结论：cross-chunk recompute 对**多事实消歧** load-bearing（multikey Δ+36/+62、qa2/qa5 有 gap），对单 needle 无关。
+
+### tab_slm — 等预算档 CoMem（budget = sink4+window6653 = 6657 tok ≈ CoMem 恒定 read）
+| RULER task | 8k | 16k | 32k | 64k | 128k |
+|---|---:|---:|---:|---:|---:|
+| **CoMem** niah_single | 100 | 100 | 100 | 100 | 100 |
+| **CoMem** var-track (equal-budget, single-pass) | 96.6 | 97.6 | 98.8 | **99.0** | **95.8** |
+
+> ⚠️ **VT 行 = chat=False 等预算精确值**（dir `qcmem_8b_iter_chatFALSE_ad`，selector=iter_bm25 topk12/hop4 → **`rounds:0`=auto=ceil(12/4)=3 跳迭代**（非单遍！见 #61），read≈6.6k，全档单一 config，Iron-Law-2 OK）；取代旧 `~95/~95` 占位 + 混配 95.2/93.8/96.8。**这是 3 跳迭代 flagship，长档 99.0/95.8**；比 tab_itervt 的 4 跳大预算变体（89.8/87.4）略优（#61 已裁决：within-iterative 差异，flagship 取 `_ad`）。
+
+> baseline 对照（不入本表）：等预算 StreamingLLM（recency 截断）single 90/42/18/16/4、multikey 86/48/26/8/6、vt 38/3.6/1.2/0/0 → 长档全崩，见 `status/STREAMINGLLM_EQUALBUDGET_RESULTS.md`。**结论**：等预算下唯一变量=保留**哪些** token；CoMem 的 relevance-based selection + 迭代检索恒定，recency 截断全崩（single 25× gap） → fixed budget 必要但不充分。
+
+### 投稿前补缺 GPU eval（2026-07-23，.73 H20，agent a8ef76da；详报 diskB `status/QCMEM_GPU_EVAL_PRESUB_20260723.md` untracked）
+
+**P0#2 — VT selector-fairness 2×2（chat=False，RULER var-track，n=100，全 Iron-Law-2 OK）**
+| Len | KVD+iter_bm25 | KVD+bm25(1-shot) | CoMem+bm25(1-shot) | CoMem+iter_bm25(flagship) |
+|---|---:|---:|---:|---:|
+| 8k | 100.0 | 48.4 | 48.0 | 96.6 |
+| 16k | 100.0 | 26.0 | 25.0 | 97.6 |
+| 32k | 100.0 | 22.4 | 23.4 | 98.8 |
+| 64k | 100.0 | 22.6 | 21.2 | 99.0 |
+| 128k | 100.0 | 21.2 | 20.4 | 95.8 |
+> **归因结论**：固定 selector 下 KVD≈CoMem 各档（one-shot 48/26/…≈48/25/…；iter KVD=100 vs CoMem 96.6–99.0，full-depth reader 高 1–4pp）；**大杠杆=selector（one-shot→iter：VT 20–48→96–100，两个架构都是）**。**CoMem 架构价值=效率非 VT 精度**（同检索下 matches 自身 one-shot 且距 uncompressed KVD reader 仅几 pp）。这决定论文口径：CoMem = "以极低显存/算力 match KVD 精度"，非"VT 精度超 KVD"（VT 上 KVD 反略高；LoCoMo judge 上 CoMem 38.27>KVD 34.59 显著——不同任务不同）。
+
+**P1#4 — chunk1024 效率（vs chunk512 tab_eff，H20，median-of-3）**
+| Len | Full prefill | CoMem prefill | Speedup | Full peak | CoMem peak |
+|---|---:|---:|---:|---:|---:|
+| 8k | 1.39s | 1.15s | 1.21× | 19.9GB | 17.8GB |
+| 16k | 2.60s | 2.08s | 1.25× | 24.6GB | 19.4GB |
+| 32k | 6.26s | 2.75s | 2.27× | 33.8GB | 19.5GB |
+| 64k | 18.05s | 4.10s | 4.40× | 52.3GB | 19.8GB |
+| 128k | **OOM** | 7.98s | ∞ | **OOM** | **20.3GB** |
+> chunk1024 read pack=1+12·1024+1024=13313 tok（2× chunk512）→ CoMem mem≈18–20GB flat（+~2GB vs c512）。**同硬件 headline：128k full-ctx 在 H20 OOM**（all-pos logits `[1,131072,151936]` bf16=39.8GB 单次 alloc）而 CoMem 20.3GB 跑通。⚠️ c512 tab_eff 的 "128k full=89GB/7.83×" 是 B200 上测；chunk_size 不影响 full-ctx path，c1024 128k full 有限值需 B200 rerun（低优先，OOM-on-H20 已足够讲故事）。
+
+**P1#6 — 迭代检索开销（CPU micro-bench，median-of-5）**
+| Len | one-shot ms | iter ms | ratio | mem |
+|---|---:|---:|---:|---|
+| 8k | 2.34 | 9.82 | 4.20× | 相同(<0.05MB 差) |
+| 32k | 9.62 | 45.74 | 4.75× | 相同 |
+| 128k | 41.04 | 188.77 | 4.60× | 相同 |
+> iter_bm25 ≈ one-shot 的 ~4.2–4.9× 延迟（3 跳），两者均 length-linear，CPU 内存一致。绝对开销可忽略：128k 迭代检索 ~189ms/19MB vs 模型 forward ~25s/样本 → 多跳 selector 占端到端 ~0.1%，却换来 VT 20→100 的提升（**基本免费**）。
+
+
+## 🚫 论文无关 / 范围外
+**🚫 论文无关（不进论文正文）**：
+- **oracle_vt 控制（#10 内）**：诊断用单遍上界，不入正文。
+- **tab_scale（模型规模 0.6B–32B 扫描）**：未被 `\input`，**不在论文**。
+
+**在论文、但本 chat=False campaign 不重跑**：
+- **tab_eff（#13）**：纯 prefill 计时 + 显存 MB，chat 不敏感，无需重跑。
+- **tab_hy3_ruler / tab_hy3_distill（#14/#15）**：独立 Hunyuan Hy3 80L MoE backbone（非 Qwen3-8B），另一 harness。
+
+## ★ 全局洞察（写论文时必须处理，task#10）
+chat=False 大幅利好 exact-match / completion 任务（如 BM25 VT16k **27.6 → 92.6**、Recency niah_single 16k 72 → 100），但对 extractive token-F1 QA 略降。因公平性要求**所有方法统一 chat=False**，故 tab_selector / tab_itervt / tab_chunk / tab_crosschunk / tab_slm / tab_overview / tab_h2h / tab_scaling **整套表都要换成上面这批 chat=False 数字**。
+
+### ★★ task#61 — VT config provenance ✅ RESOLVED（2026-07-23，P0#2 2×2 + code trace，high confidence）
+**根因=`rounds:0` 被误读为"单遍"。** 实测 sidecar `qcmem` 配置 + code (`eval_qcmem_babilong.py:253` `rounds = iter_rounds if >0 else ceil(topk/hop)`) 证明 **`rounds=0` = auto = ceil(topk/hop_topk)，是多跳迭代，不是单遍**：
+- **flagship 等预算 dir `qcmem_8b_iter_chatFALSE_ad`**：selector=iter_bm25, topk12/hop4 → **ceil(12/4)=3 跳迭代**，chunk512，read≈6.6k（实测 avg_read_len 6630）→ VT **96.6/97.6/98.8/99.0/95.8**（8k→128k）。
+- **tab_itervt dir `ablation10_itervt_chatFALSE/iterbm25_vt`**：selector=iter_bm25, topk16/hop4 → **ceil(16/4)=4 跳迭代**，chunk1024，read≈17k → VT **99.0/95.6/89.8/89.8/87.4**。
+- **真·单遍 = 明码 `bm25` selector（无跳）** = P0#2 2×2 CoMem+bm25 = **48/25/23/21/20**（长档全崩）。
+
+**裁决（三问全清）**：
+- (a) **RULER headline 97.05 的 VT 用 3 跳 iter_bm25（`_ad` legit flagship）**，非单遍——合法。
+- (b) **等预算行用 `_ad`（3 跳 top12/chunk512 read6.6k）；tab_itervt 对照用「单遍 bm25(20–48) → 迭代 iter_bm25(96–99)」**（用 2×2 的干净 one-shot vs iter 两行，取代旧 32→89.8）。
+- (c) **迭代确实救 VT，叙事未反转**：所谓"单遍反超 hop4"纯属 rounds=0 误标；`_ad`(3 跳) 与 `ablation10`(4 跳) 都是迭代，`_ad` 小预算长档略优（99.0/95.8 vs 89.8/87.4）= 4 跳多召回的 distractor 链在 128k VT 上略伤，属 within-iterative 次要发现，flagship 取 `_ad`。
+- **归因（P0#2 2×2）**：固定 selector 下 KVD≈CoMem 各档 → **VT 精度来自迭代 selector，非架构；架构价值=效率**（128k full-ctx OOM，CoMem 20GB）。
+- **残留（并入 #10 论文集成）**：#9 tab_selector "BM25 单遍" VT 8k=99.4 vs 2×2 CoMem+bm25 fixed-top12 8k=48.0——tab_selector 用**峰值 top-k 扫描**（best over {4,8,12,16,24}，且可能 chat=True）、2×2 用固定 top12 chat=False；最终 tab_selector 换 chat=False 时需再核 top-k 口径。不阻塞本裁决。
 
 ---
 

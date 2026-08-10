@@ -272,3 +272,79 @@ power artifact of ignoring the pairing. The full-headline diff (+3.68 over
 n=1986) is dominated by these same judged samples plus near-identical cat5
 abstention, so it remains significant. Paper MAY claim CoMem > KVD oracle
 under the canonical judge.
+
+
+## §1f — LoCoMo judge: conversation-CLUSTER bootstrap (P3.3, 2026-07-26, main)
+
+Resolves a reviewer critique of §1e: the §1e paired bootstrap resamples the
+**1,540 nested cat1–4 questions as if independent**, but questions are nested
+within only **10 LoCoMo conversations**, so the effective sample size is closer
+to 10 clusters than 1,540. This recomputes the same paired diff with a
+**conversation-level cluster bootstrap** (resample the 10 conversations with
+replacement) and compares it to the naive question-level resample.
+
+- Kernel: `status/p3_locomo_cluster/cluster_bootstrap.py`. Matched judged ids
+  (both runs, cat1–4) = **1540 = 10 conversations**. `conv_of(id)=id.split('_',1)[0]`.
+  Paired per-question diff d(id)=judge_CoMem−judge_KVD; B=20000, seed=12345.
+- **CoMem 48.64, KVD 43.83, point diff = +4.81** (identical to §1e).
+- **(A) question-level bootstrap** (what §1e / the paper reports): 95% CI
+  **[+2.34, +7.27]**, p~0.0001 — reproduces §1e exactly.
+- **(B) conversation-cluster bootstrap** (correct unit): 95% CI
+  **[+1.29, +8.40]**, p~0.0064 — **wider, but still excludes 0.**
+
+Per-conversation diff (CoMem − KVD, judge-acc pts), **8/10 favor CoMem**:
+
+| conv | n | CoMem | KVD | diff |
+|---|---:|---:|---:|---:|
+| conv0 | 152 | 44.08 | 36.84 | **+7.24** |
+| conv1 |  81 | 46.91 | 43.21 | +3.70 |
+| conv2 | 152 | 48.68 | 46.05 | +2.63 |
+| conv3 | 199 | 48.74 | 34.67 | **+14.07** |
+| conv4 | 178 | 49.44 | 50.56 | −1.12 |
+| conv5 | 123 | 56.10 | 52.85 | +3.25 |
+| conv6 | 150 | 43.33 | 48.00 | −4.67 |
+| conv7 | 191 | 48.69 | 44.50 | +4.19 |
+| conv8 | 156 | 42.95 | 39.10 | +3.85 |
+| conv9 | 158 | 57.59 | 45.57 | **+12.03** |
+
+**Verdict:** the CoMem > KV-Direct judge advantage **survives the correct
+conversation-level clustering** — the CI widens ([1.29, 8.40] vs the naive
+[2.34, 7.27]) but the lower bound stays above 0 (cluster p<0.01). Only 2 of 10
+conversations (conv4, conv6) slightly favor KV-Direct; the gap is broad-based,
+not driven by a single conversation. The +4.81 claim is robust to the reviewer's
+statistical-unit critique. (Result: `status/p3_locomo_cluster/cluster_bootstrap_result.json`.)
+
+
+## §1g — LoCoMo judge: independent SECOND-judge verification (P3.3b, 2026-07-26, main)
+
+Resolves the other half of the reviewer's P3.3 critique: the headline judge rests
+on a **single GPT-4o judge**. This re-grades a stratified sample of the *same*
+cat1–4 questions — for **both** the CoMem and KV-Direct runs — with an
+**independent model family (`deepseek-v3`)** on the same maas endpoint, using the
+**verbatim `_JUDGE_TEMPLATE`** and identical verdict parsing, so the second judge
+sees exactly the GPT-4o prompt. GPU-free; hits maas via hy-proxy.
+
+- Kernel: `status/p3_locomo_cluster/judge_verify_deepseek.py`. Stratified sample =
+  **50 ids per cat1–4 → 200 ids** (seed=777), each re-judged for both runs =
+  **400 deepseek-v3 calls, 0 failed**. Cache: GPT-4o verdicts read from the
+  committed `judge_cache.jsonl` (no re-call).
+- **Judge agreement (gpt-4o cached vs deepseek-v3), n=400 (id,run) pairs:**
+  observed agreement **p_o = 81.0%**, chance p_e = 49.2%, **Cohen's κ = 0.626**
+  — *substantial* agreement (Landis–Koch 0.61–0.80). The two judges independently
+  agree on 4 of every 5 verdicts, well above chance.
+- **Headline replication on the same 200-id stratified subset** (equal 50/cat
+  weighting, so absolute levels are lower than the natural-distribution cat1–4
+  headline 48.64/43.83 — the natural mix is dominated by high-scoring cat4
+  open-domain; only the **direction + gap** matter here):
+
+  | judge | CoMem | KV-Direct | diff |
+  |---|---:|---:|---:|
+  | gpt-4o (cached) | 36.50 | 32.50 | **+4.00** |
+  | deepseek-v3 (independent) | 56.00 | 49.00 | **+7.00** |
+
+**Verdict:** the CoMem > KV-Direct advantage is **not a single-judge artifact** —
+it *replicates under an independent judge, and is in fact larger* under
+deepseek-v3 (+7.00 vs +4.00 on the same subset), with substantial cross-judge
+agreement (κ=0.63). Combined with §1f (survives conversation-cluster resampling),
+the +4.81 LoCoMo claim is robust to both the statistical-unit and the
+single-judge critiques. (Result: `status/p3_locomo_cluster/judge_verify_deepseek_result.json`.)

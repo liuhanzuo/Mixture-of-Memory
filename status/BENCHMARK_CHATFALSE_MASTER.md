@@ -17,20 +17,20 @@
 | KV-Direct（full-ctx 上界，j=0） | 78.80² | 65.2 | **12.17** | **78.7 / 48.9** / 61.4 | 34.59 |
 | InfLLM（thunlp 旗舰 baseline） | 77.83 | 21.6 | 11.86 | 69.9 / 43.9 / 64.9 | 22.21 |
 | StreamingLLM（等预算 recency） | 23.37 | 30.8 | 11.11 | 56.1 / 33.1 / 55.1 | 25.63 |
-| MemoryLLM（Llama-3-8B-**chat**，异基座）³ | 16.55 | 14.0ᵀ | 12.80ᵀ | 26.9 / 21.1 / 42.6ᵀ | 16.11 |
+| MemoryLLM（Llama-3-8B-**chat**，异基座）³ | 16.55 | 13.6 | 9.01 | 30.4 / 21.4 / 38.1 | 16.11 |
 | HCache（retrieval-free mid-layer） | 3.73 | 0.0 | 9.20 | 32.9 / 18.0 / 50.3 | 8.11 |
 
 **排名（headline 各基准 chat=False）：**
 - **RULER**：CoMem 97.05 > KVD 78.80 ≳ InfLLM 77.83 ≫ StreamingLLM 23.37 > MemoryLLM 16.55 > HCache 3.73
-- **LongEval**：CoMem 69.0 > KVD 65.2 > StreamingLLM 30.8 > InfLLM 21.6 > HCache 0.0（MemoryLLM 14.0ᵀ=chat=True，不进 chat=False 排名）
-- **LongBench**：KVD 12.17 ≈ CoMem 12.15 > InfLLM 11.86 > StreamingLLM 11.11 > HCache 9.20（全方法被 chat=False 压到 9–12 窄带，见下注；MemoryLLM 12.80ᵀ=chat=True 不可比，chat=True 虚高，勿混排）
-- **BABILong**：KVD 全档最强（full-ctx 上界）；CoMem qa5 68.7 > KVD 61.4（唯一超上界项）（MemoryLLM qa1 26.9ᵀ/qa2 21.1ᵀ/qa5 42.6ᵀ=chat=True）
+- **LongEval**：CoMem 69.0 > KVD 65.2 > StreamingLLM 30.8 > InfLLM 21.6 > MemoryLLM 13.6 > HCache 0.0（MemoryLLM 现为真 chat=False，异基座 Llama-3 参考）
+- **LongBench**：KVD 12.17 ≈ CoMem 12.15 > InfLLM 11.86 > StreamingLLM 11.11 > HCache 9.20 > MemoryLLM 9.01（全方法被 chat=False 压到 9–12 窄带，见下注；MemoryLLM 现为真 chat=False=最低，异基座 Llama-3 参考）
+- **BABILong**：KVD 全档最强（full-ctx 上界）；CoMem qa5 68.7 > KVD 61.4（唯一超上界项）（MemoryLLM 真 chat=False qa1 30.4/qa2 21.4/qa5 38.1，异基座参考）
 - **LoCoMo（judge）**：**CoMem(+distilled LoRA) 38.27 > KVD 34.59 > CoMem(adapter-free j9) 29.15 > StreamingLLM 25.63 > InfLLM 22.21 > MemoryLLM 16.11 > HCache 8.11** —— distilled LoRA 把 CoMem 从 full-ctx 上界之**下**(29.15)抬到之**上**(38.27)，是超越 KVD oracle 的关键。
 
 ¹ CoMem LongEval 6-档（4k–128k）headline=**72.83**；此列取 8k–128k 5 档与 baseline 对齐=69.0。
 ² KVD RULER 15-cell 含 **128k=0（131072>Qwen3 max_pos 窗口溢出，非 OOM）**；≤64k near-perfect。CoMem 恒定 read 128k 仍 93–100 = 核心卖点。
-³ MemoryLLM 是 Llama-3-8B-**chat**（真·chat 模型，非 continue-train base LM）；chat=False 会**剥离它训练时的原生 chat 模板 = 对它反而是 OOD/不公平**，故 chat=True 才是它的公平/原生协议。RULER 16.55 + LoCoMo 16.11 有真 chat=False dir 故用 chat=False；LongEval/LongBench/BABILong 缺 chat=False（见 ⁴），暂用其 chat=True 数字（标 **ᵀ**）填格，作异基座 cross-base 参考。
-⁴ **ᵀ = chat=True 数字**（源 `PAPERA_ALL_RESULTS.md` §3.2）：MemoryLLM 的 chat=False LongEval 无目录、LongBench 仅 narrativeqa（缺 5/6 ds）、BABILong 目录误命名实为 chat=True → 三项无有效 chat=False cell。用户 2026-07-24 决定「两者都要」：**现用 chat=True 立即填满（本行 ᵀ 格）**，待 diskB 节点空出再跑 MemoryLLM chat=False LongEval/LongBench(6-ds)/BABILong 覆盖/并列成双行（**pending #68**，需 diskB=MemoryLLM env/权重所在盘；当前 wzc1 两节点满载、diskB H20 归用户）。⚠️ ᵀ 格与其余 chat=False 格协议不同，不进 chat=False ranking（见下）。
+³ MemoryLLM 是 Llama-3-8B-**chat**（真·chat 模型，非 continue-train base LM）；chat=False 会**剥离它训练时的原生 chat 模板 = 对它反而是 OOD/不公平**，故 chat=True 才是它的公平/原生协议。**全 5 benchmark 均有真 chat=False**：RULER 16.55 / LoCoMo 16.11 / LongBench 9.01 / BABILong 30.4/21.4/38.1（2026-07-25 .82，见 ⁴）+ **LongEval 13.6（2026-07-25 .104 补跑）**。全矩阵已无 chat=True 占位；MemoryLLM 行作异基座 cross-base 参考。
+⁴ **MemoryLLM chat=False 全 5 benchmark 已补齐（无 ᵀ 占位）**。2026-07-25：**LongBench** 全 6-ds 全新 8-GPU（`--no_chat_template`，config 确认 `use_chat_template:false`）→ macro **9.01**（.82，`longbench_results/memoryllm_8b_chatFALSE/scores.json`）；**BABILong** config 确认 chat=False 的 21-cell 目录经官方 `compare_answers` 重判 → qa1 30.4/qa2 21.4/qa5 38.1（.82）；**LongEval 13.6**（.104，8k22/16k22/32k16/64k6/128k2，n=50/档，8-GPU 分片，全 shard config 确认 `use_chat_template:false`，`longeval_results/memoryllm_8b_chatFALSE/_summary_merged.json`）。.82 一直被外部 co-tenant 占卡，LongEval 改用**同盘空节点 .104（wzc1 共享盘）**跑完。MemoryLLM 行为异基座 Llama-3 cross-base 参考。
 
 ---
 
@@ -70,9 +70,9 @@
 | StreamingLLM | 86 | 34 | 18 | 10 | 6 | 30.8 |
 | InfLLM | 60 | 30 | 12 | 4 | 2 | 21.6 |
 | HCache | 0 | 0 | 0 | 0 | 0 | 0.0 |
-| MemoryLLM（chat=True ᵀ）| 20 | 20 | 18 | 8 | 4 | 14.0ᵀ |
+| MemoryLLM（chat=False，异基座）| 22 | 22 | 16 | 6 | 2 | 13.6 |
 
-> CoMem 6-档（含 4k=92）headline=72.83。KVD 长档 64k 骤降 38、128k 归零（RoPE 溢出）；CoMem 恒 64–75。InfLLM 长档快速衰减（8k=60→128k=2）。**MemoryLLM 行=chat=True**（chat=False 未跑，pending #68）——它是 chat 模型，chat=True 是其原生协议；数字仅供异基座参考，不与上面 chat=False 行同排。
+> CoMem 6-档（含 4k=92）headline=72.83。KVD 长档 64k 骤降 38、128k 归零（RoPE 溢出）；CoMem 恒 64–75。InfLLM 长档快速衰减（8k=60→128k=2）。**MemoryLLM 行现为真 chat=False**（2026-07-25 .104 补跑，8k22/16k22/32k16/64k6/128k2，mean 13.6）——它是 chat 模型、chat=False 对它 OOD，数字仅供异基座 Llama-3 参考，与其 chat=True 14.0 接近。
 
 ---
 
@@ -85,9 +85,9 @@
 | InfLLM | 2.99 | 11.35 | 12.08 | 12.50 | 25.33 | 6.94 | **11.86** |
 | StreamingLLM | 3.49 | 11.64 | 11.02 | 12.19 | 22.42 | 5.88 | **11.11** |
 | HCache | 2.56 | 10.71 | 7.33 | 9.19 | 20.39 | 5.05 | **9.20** |
-| MemoryLLM（chat=True ᵀ）| 17.71 | 17.37 | 7.11 | 7.42 | 22.75 | 4.45 | **12.80ᵀ** |
+| MemoryLLM（chat=False）| 3.13 | 8.46 | 8.76 | 10.27 | 17.43 | 5.98 | **9.01** |
 
-> ⚠️ **chat=False 把所有方法的 LongBench extractive token-F1 全线压到 9–12**（chat=True 时 KVD 42.97/InfLLM 41.54/CoMem 35.79）——CoMem 12.15 ≈ full-ctx 上界 KVD 12.17（打平），低分是**协议效应非压缩损失**。**MemoryLLM 行=chat=True（ᵀ，6-ds 全）**：chat=False 只跑了 narrativeqa（4.09，1/6 ds 无 macro），故用 chat=True 12.80 填；⚠️ chat=True 会虚高（同口径 chat=True 全方法都在 12–43 高带），**勿与本表 chat=False 9–12 行同排**。chat=False 覆盖 pending #68。
+> ⚠️ **chat=False 把所有方法的 LongBench extractive token-F1 全线压到 9–12**（chat=True 时 KVD 42.97/InfLLM 41.54/CoMem 35.79）——CoMem 12.15 ≈ full-ctx 上界 KVD 12.17（打平），低分是**协议效应非压缩损失**。**MemoryLLM 行现为真 chat=False**（2026-07-25 .82 全 6-ds 全新 8-GPU 跑，macro 9.01=最低；异基座 Llama-3-chat 剥离原生模板=OOD，仅作 cross-base 参考）。
 
 ---
 
@@ -110,11 +110,11 @@
 | **HCache** | qa1 | 96 | 63 | 53 | 15 | 3 | 0 | 0 | 32.9 |
 | | qa2 | 57 | 15 | 35 | 17 | 2 | 0 | 0 | 18.0 |
 | | qa5 | 75 | 72 | 69 | 64 | 51 | 16 | 5 | 50.3 |
-| **MemoryLLM（chat=True ᵀ）** | qa1 | 53 | 42 | 35 | 23 | 18 | 10 | 7 | 26.9ᵀ |
-| | qa2 | 37 | 34 | 16 | 15 | 15 | 15 | 16 | 21.1ᵀ |
-| | qa5 | 48 | 50 | 47 | 40 | 40 | 36 | 37 | 42.6ᵀ |
+| **MemoryLLM（chat=False）** | qa1 | 52 | 46 | 35 | 28 | 23 | 17 | 12 | 30.4 |
+| | qa2 | 37 | 29 | 17 | 18 | 21 | 17 | 11 | 21.4 |
+| | qa5 | 50 | 45 | 39 | 35 | 35 | 34 | 29 | 38.1 |
 
-> ⚠️ BABILong ≤32k 全在 full-ctx 窗口内 → **full-ctx 上界 KVD 在 qa1/qa2 明显强于 CoMem**（诚实的压缩 tax，非 CoMem 优势项）；CoMem qa5 68.7 略超 KVD 61.4。InfLLM qa1 69.9 居中（长档 32k=34 掉更快）。CoMem 卖点在**超出 full-ctx 的长度 + 效率**（128k full-ctx OOM vs CoMem 20GB），非 ≤32k 精度超上界。MemoryLLM BABILong chat=False 目录误命名（实 chat=True），用 chat=True 基线 qa1 26.9/qa2 21.1/qa5 42.6。
+> ⚠️ BABILong ≤32k 全在 full-ctx 窗口内 → **full-ctx 上界 KVD 在 qa1/qa2 明显强于 CoMem**（诚实的压缩 tax，非 CoMem 优势项）；CoMem qa5 68.7 略超 KVD 61.4。InfLLM qa1 69.9 居中（长档 32k=34 掉更快）。CoMem 卖点在**超出 full-ctx 的长度 + 效率**（128k full-ctx OOM vs CoMem 20GB），非 ≤32k 精度超上界。MemoryLLM BABILong 现为真 chat=False（2026-07-25 .82 找到 config 确认 chat=False 的 21-cell 目录，官方 compare_answers 重判：qa1 30.4/qa2 21.4/qa5 38.1，异基座 Llama-3 参考）。
 
 ---
 
@@ -175,7 +175,7 @@
 | **InfLLM chat=False（#63，本表 §A–§D 的 InfLLM 行）** | `logs/infllm_chatFALSE_taskpool/SUMMARY.txt`（LOCAL/.252 wzc1，2026-07-24 17:09 SCHED_DONE，全 cell Iron-Law-2 OK）|
 | LoCoMo GPT-4o judge 全 6 方（§E）| `status/LOCOMO_JUDGE_AGGREGATE.md`（.73 各 `locomo_results/*/scores.json`，judge=gpt-4o via maas-openapi 有余额 JWT）|
 | CoMem adapter-free（#65，§F）| ✅ `logs/qcmem_adapterfree_j9_chatFALSE/SUMMARY.txt`+`SCHED_DONE`（.252 wzc1 共享 FS，本地可见；5-benchmark 2026-07-24 23:35 完成 + LoCoMo GPT-4o judge=29.15 于 `locomo_results/qcmem_8b_zeroshot_j9_chatFALSE/scores.json`，2026-07-25 完成）|
-| **MemoryLLM chat=True（ᵀ 格：LongEval 14.0 / LongBench 12.80 / BABILong 26.9·21.1·42.6）** | `status/PAPERA_ALL_RESULTS.md` §3.2（Llama-3-8B-chat 异基座；chat=False LongEval/LongBench/BABILong 未跑=pending #68，需 diskB）|
+| **MemoryLLM chat=False 全 5 benchmark：RULER 16.55 / LoCoMo 16.11 / LongBench 9.01 / BABILong 30.4·21.4·38.1 / LongEval 13.6** | `longbench_results/memoryllm_8b_chatFALSE/scores.json` + `babilong_results/memoryllm_8b_chatFALSE/_summary_merged.json`（.82）+ `longeval_results/memoryllm_8b_chatFALSE/_summary_merged.json`（.104 wzc1 共享盘，2026-07-25，8-GPU 分片，config 确认 chat=False）|
 
 **磁盘拓扑**：LOCAL 与 .252(28.89.19.252) 共享 wzc1 物理盘（InfLLM #63 + adapter-free #65 结果本地直接可见）；CoMem 旗舰 + KVD/HCache/StreamingLLM/MemoryLLM chat=False + LoCoMo judge 在 **.73(28.85.35.73)** diskB（另一物理盘，需 SSH）。
 
