@@ -2,17 +2,39 @@
   "id": "A03",
   "status": "active_measurable_but_trajectory_claim_weakened_by_LR_sensitivity_arm6_in_progress",
   "priority": 3,
-  "updated": "2026-08-10T05:01+0800",
+  "updated": "2026-08-10T11:05+0800",
   "arm6_midlowLR_cpt": {
-    "status": "RUNNING on .73 since 04:56:33 GMT+8, guarded watcher self-stops at step220000.pt; ETA ~16:20 GMT+8",
+    "status": "RUNNING on .73 since 04:56:33 GMT+8; step210360/373000 as of 10:51. Two of four dose points evaluated. Watcher self-stops at step220000.pt; revised ETA ~13:00 GMT+8 (2.05 s/step measured).",
     "purpose": "discriminate whether Arm 3's +0.48pp SIG triviaqa em at [0.32x, 0.25x] peak is a general low-LR CPT phenomenon or specific to the exact cosine-tail schedule. If Arm 6 also +0.48 SIG, low-LR is a real regime; if Arm 6 nulls/sign-flips, Arm 3 was a fluke and A03's trajectory-CPT claim dies.",
     "config": "warmup_steps=150 (matches Arm 3), max_steps=373000 (extends Arm 3's 300000); LR band [0.50x, 0.43x] peak across step 200000-220000 (verified from log: 9.98e-06 at step 200040 matches predicted 0.499x)",
     "lr_ladder_all_arms": {"Arm3": "[0.325x, 0.249x]", "Arm6_new": "[0.499x, 0.425x]", "Arm4": "[0.998x, 0.559x]"},
-    "eval_watcher": ".82 /tmp/a03_arm6_trajectory_watcher.sh (v3, pid 2477305 since 04:58:33). REF_SIZE=unknown at start (no sibling ckpts yet, will be picked up from step205000 once written); primary protection is the 60s double-probe stability check.",
-    "driver": "scripts/_run_a03_arm6_lowerband.sh (commit for task #235)",
-    "ext_driver": ".82 /tmp/a03_arm6_ext_driver.sh (torch.load probe internal to it, so partial writes get bounced regardless of the size guard)",
-    "verdict": "NOT_YET_JUDGED",
-    "evidence_file_target": "evidence/arm3_arm4_arm6_cpt_trajectory_paired_full.json (recompute script will need to include arm6_midlowLR alongside arm3_cosine_tail and arm4_peaklr; not yet edited)"
+    "verdict": "NOT_YET_JUDGED -- 2 of 4 dose points in; do NOT cite step205/210 as a verdict, see transient_warning",
+    "dose_points_measured": {
+      "step205000": {
+        "evaluated": "2026-08-10 07:55:28 GMT+8",
+        "triviaqa": {"em": "-0.73 SIG", "contains": "+0.48 SIG", "f1": "-0.85 SIG"},
+        "popqa": {"em": "-0.59 SIG", "contains": "+0.06 ns", "f1": "-1.08 SIG"},
+        "nq_open": {"em": "-0.17 ns", "contains": "-0.17 ns", "f1": "-0.29 ns"},
+        "reading": "LR-monotone early CPT damage: at 5k steps the em/f1 loss orders Arm3 (-0.48) < Arm6 (-0.73) < Arm4 (-1.40) on triviaqa em, and the same ordering holds on popqa em and both f1 axes. Arm 3 and Arm 6 both use warmup=150 so neither has Arm 4's Adam-moment mismatch -- this is a genuine shared 'early CPT overshoot', not an artifact."
+      },
+      "step210000": {
+        "evaluated": "2026-08-10 10:46:26 GMT+8",
+        "triviaqa": {"em": "+0.77 SIG", "contains": "+0.04 ns", "f1": "+0.60 SIG"},
+        "popqa": {"em": "+0.08 ns", "contains": "-0.12 ns", "f1": "-0.22 SIG"},
+        "reading": "Arm 6 at 10k CPT already EXCEEDS Arm 3's step220000 headline (+0.77 vs +0.48 SIG, i.e. +0.29pp higher) with 10k steps still to run."
+      }
+    },
+    "transient_warning": "★ DO NOT read step210000 as evidence for Arm 6. All THREE arms show a positive step210k excursion that does not survive: Arm 3 step210 +0.37 SIG -> step215 -0.02 ns -> step220 +0.48 SIG; Arm 4 step210 +1.26 SIG -> step215 -0.12 ns -> step220 -0.93 SIG (full collapse). The step210k positive is therefore a shared non-monotone feature of the trajectory, NOT an arm-specific signal. Arm 6's step215/220 are what decide the verdict.",
+    "what_each_outcome_would_mean": {
+      "arm6_step220_positive_SIG": "low-LR IS a real regime (Arm 3 + Arm 6 agree, Arm 4 dissents) -> A03 keeps a NARROW claim: 'CPT recovers triviaqa em only in the low-LR band, and peak-LR CPT actively harms'. That is publishable but much weaker than the original trajectory claim.",
+      "arm6_step220_null_or_negative": "Arm 3's +0.48 SIG is a fluke that Arm 6 fails to replicate at an adjacent LR band -> the trajectory-CPT claim dies entirely, and A03 is left with only its Gate-1 pilot result (pruned+healed 1B is above its own construct-appropriate null).",
+      "arm6_step220_larger_than_arm3_and_monotone_in_LR_within_low_band": "would imply a non-monotone-in-LR effect peaking somewhere in [0.43x, 0.50x] -- interesting but would need a 4th arm to locate the optimum, and with n=1 seed per arm that is not defensible yet."
+    },
+    "eval_watcher": ".82 /tmp/a03_arm6_trajectory_watcher.sh (v3, pid 2477305 since 04:58:33). Fired step205000 at 07:51:34 and step210000 at 10:42:29; each eval takes ~3m45s (MMLU 77s + CB(pt) 106s + CB(nq) 39s). Canonical copy: code/a03_arm6_trajectory_watcher.sh.",
+    "driver": "scripts/_run_a03_arm6_lowerband.sh (commit 8e5b67d, task #235)",
+    "ext_driver": ".82 /tmp/a03_arm6_ext_driver.sh (canonical copy code/a03_arm6_ext_driver.sh); has an internal torch.load probe so partial writes get bounced regardless of the size guard",
+    "evidence_file": "evidence/arm3_arm4_arm6_cpt_trajectory_paired_full.json -- md5 f92fe250cbd38061d8cbc460be73d70f, identical on wzc1 and zwfy6. Regenerate with code/recompute_cpt_trajectory_paired.py (already extended to include arm6_lowerband; hard-fails on incomplete shard sets).",
+    "commits": "8e5b67d launch, 2fd5dc0 status, f44a5fb step205000 point, 028455d step210000 point"
   },
   "arm4_peaklr_cpt": {
     "status": "COMPLETED 08-10 03:58 GMT+8 (all 4 ckpts evaluated on 4 axes); training killed via SIGTERM after step220000 landed on disk (see ckpt_corruption_incident_20260810 for the size-guard drama). All 8 GPUs on both .73 and .82 released.",
