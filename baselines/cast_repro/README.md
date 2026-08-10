@@ -434,6 +434,47 @@ RESUME=auto bash scripts/launch_cast_llama.sh full  # continue from the newest c
 262 MB/s, so ~81 GiB is minutes during which non-zero ranks sit in a barrier — the 10-minute NCCL
 default is too close for comfort. Do not lower it.
 
+## 5c. THE RUN COMPLETED — result (2026-08-11)
+
+The full 7500-step run finished on `.21` under `--parallel zero2`
+(`outputs/cast_repro_zero2/`, log `logs/cast_repro_full_20260809_211514.log`,
+110,842 s ≈ 30.8 h wall, 14.8 s/step, peak 145.7 GB/rank, `aligned=224/224` and
+`decayed=3,238,002,688` on every step, `flips` decaying 6.78M → 72k).
+
+**WikiText-2 PPL @ 4096, one harness (`baselines/eval_hf_sparse_model.py`), same
+box, same tokenizer:**
+
+| model | Wiki PPL | linear zero ratio | exact-2:4 tile ratio |
+|---|---|---|---|
+| LLaMA-2-7B dense reference | **5.2004** | 1.4e-06 | 0.0 |
+| CAST @7500 steps (7.86B tok) | **6.1372** | 0.500000 | **1.0** |
+
+Provenance: `outputs/cast_eval_spec/{cast_7500,dense_ref}/ppl_metrics.json`,
+`logs/cast_eval_spec_0811_045836.log`. 335,872 target tokens, 82 sequences of
+4096 (the whole of `wiki.test.raw`; the harness drops the final partial
+sequence). Sparse model exported by `tools/export_final_to_hf.py`.
+
+**Verdict against the §8 criteria: PASS on all three.**
+1. Masked weights → 0 with exact 2:4: `exact_2of4_tile_ratio = 1.0` over all
+   1.619e9 groups, `linear_zero_ratio` exactly 0.5, 0 violations. Independently
+   re-derived from the saved tensors (not from the trainer's own counters, which
+   §8 documents as vacuous): recomputing the 2:4 mask from `prefinal.pt` weights
+   agrees with the saved mask at **0.99998** on a 12-tensor sample, against
+   **0.500** for a permuted-mask control; and `final_sparse.pt` weights equal
+   `prefinal.scaled_weight × mask` with `max|diff| = 0` (fold is exact, and
+   `cast_scale` is all-ones afterwards, so the module is a bare `nn.Linear`).
+2. PPL in the AST-ckpt band, far from 23.45: **6.137**, i.e. **+0.94 (+18.0%)
+   over dense**. Slightly *better* than the 6.2–6.5 the §8 harness-offset
+   argument predicted, so it is not a lucky-band artifact in the pessimistic
+   direction. The broken FSDP run was 23.45.
+3. Explainable ordering: CAST (6.137) sits between dense (5.200) and the broken
+   run (23.45), under one harness.
+
+⚠️ **Not yet measured**: the 7-task zero-shot average (SPEC §7 wants HellaSwag,
+RACE, PIQA, WinoGrande, ARC-e, ARC-c, OBQA via LM Harness), and the
+Wanda/naive-retraining arms that criterion 3 wants for a full ordering. The PPL
+comparison above is dense-vs-CAST only.
+
 ## 6. Reporting rules
 
 - Cite CAST reference numbers **only from Table III** (LLaMA2-7B @7.5B: Wiki PPL **5.58**, 7-task avg **55.91**). Table III is self-consistent with Table XII and all seven row averages recompute exactly. **Table VI contradicts it** (5.56 for the same run) and its `CAST w SRSTE` row appears to have ARC-e/ARC-c swapped. See SPEC.md §7.
