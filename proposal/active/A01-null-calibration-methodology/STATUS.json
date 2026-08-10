@@ -1,236 +1,287 @@
 {
-  "id": "A01",
-  "status": "active_all_gates_passed_novelty_clear",
-  "priority": 1,
-  "updated": "2026-08-09T22:10+0800",
-  "gate_results": {
-    "gate1_third_model_family_INTACT": {
-      "verdict": "SUPERSEDED -- tested the wrong condition",
-      "ran": "2026-08-08 on .21 (8x L20A), 5 min wall",
-      "summary": "0/3 INTACT non-OLMo families show letter-interface failure. Llama-2-7B letter 0.4100 (+14.11pp vs always-D 0.2689), Llama-3-8B 0.6220 (+35.31pp), Qwen3-8B-Base 0.7464 (+47.75pp). All n=14042, 0 nan. On Llama-3 and Qwen3 letter is 16-23pp BETTER than content.",
-      "why_superseded": "A01's kill claim is about DAMAGED models. Intact bases were never expected to show the pathology; measuring them cannot trigger or clear the kill clause. GATE1_VERDICT.md's 'kill clause 2 triggered / narrow to OLMo-only' conclusion was WRONG and is retracted -- see gate1_third_model_family_DAMAGED.",
-      "still_useful_for": "the second-order observation that on three of four HEALTHY strong models the letter interface is substantially BETTER than the label-free content interface (+13 to +23pp), so 'content is the fair interface' is not a general statement about MC interfaces",
-      "evidence": "GATE1_VERDICT.md (keep for the intact numbers; its verdict section is retracted), evidence/a01_gate1_third_family.json"
+ "id": "A01",
+ "status": "active_MAJOR_REVISION_IN_PROGRESS_after_external_audit",
+ "priority": 1,
+ "updated": "2026-08-10T20:30+0800",
+ "gate_results": {
+  "gate1_third_model_family_INTACT": {
+   "verdict": "SUPERSEDED -- tested the wrong condition",
+   "ran": "2026-08-08 on .21 (8x L20A), 5 min wall",
+   "summary": "0/3 INTACT non-OLMo families show letter-interface failure. Llama-2-7B letter 0.4100 (+14.11pp vs always-D 0.2689), Llama-3-8B 0.6220 (+35.31pp), Qwen3-8B-Base 0.7464 (+47.75pp). All n=14042, 0 nan. On Llama-3 and Qwen3 letter is 16-23pp BETTER than content.",
+   "why_superseded": "A01's kill claim is about DAMAGED models. Intact bases were never expected to show the pathology; measuring them cannot trigger or clear the kill clause. GATE1_VERDICT.md's 'kill clause 2 triggered / narrow to OLMo-only' conclusion was WRONG and is retracted -- see gate1_third_model_family_DAMAGED.",
+   "still_useful_for": "the second-order observation that on three of four HEALTHY strong models the letter interface is substantially BETTER than the label-free content interface (+13 to +23pp), so 'content is the fair interface' is not a general statement about MC interfaces",
+   "evidence": "GATE1_VERDICT.md (keep for the intact numbers; its verdict section is retracted), evidence/a01_gate1_third_family.json"
+  },
+  "gate1_third_model_family_DAMAGED": {
+   "verdict": "A01_GENERAL_CLAIM_CONFIRMED",
+   "ran": "2026-08-08 on .21, 6.5 min wall for 6 arms",
+   "summary": "6/6 DAMAGED non-OLMo arms land at/below their own best-constant floor 0.2689. Llama-2 k8 0.2415 (-2.74pp), Llama-3 k8 0.2329 (-3.60), Qwen3 k8 0.2286 (-4.03), Llama-2 k12 0.2295 (-3.94), Llama-3 k12 0.2527 (-1.62), Qwen3 k12 0.2300 (-3.89). Damage = front-N truncation, NO fresh block, NO heal (deliberately worst-case).",
+   "mechanism_finding": "The collapse ROUTE differs by family but the OUTCOME does not. Non-OLMo damaged arms become constant-letter emitters with NEAR-ZERO exact ties (Llama-2 k12 is 100.0% modal with 0.00% ties; Qwen3 k12 is 99.1% modal with 0.03% ties). OLMo damaged arms reach the same place via 30.64% exact ties + argmax index tie-breaking. So ties are ONE road, not THE mechanism -- this over-determines the gate-3 refutation.",
+   "content_also_fails": "every damaged arm has content_norm within +/-3pp of its letter accuracy and both hover at their floors -- switching interface does NOT rescue a damaged arm",
+   "evidence": "GATE1_DAMAGED_VERDICT.md",
+   "code": "scripts/eval_olmo2_probe2_ppl.py::load_truncated_any_family, scripts/_a01_gate1_damaged_driver_21.sh",
+   "scope_narrowed_20260810": "The 'A01_GENERAL_CLAIM_CONFIRMED' label overstates what these six arms show. They are EXTREME FRONT-TRUNCATION at k8/k12 with NO fresh block and NO heal. Correct scope: 'extreme front-truncation with no heal, in four families' plus one healed OLMo-2 keep8 arm from a different regime. The audit's counterexample stands and is recorded: OLMo-2 HEALED keep8 has content_norm 0.342259, clearly ABOVE the split null 0.284450 (+5.78pp, boot p=0.0001), so 'switching interface does NOT rescue a damaged arm' is true of the six pure-truncation non-OLMo arms and FALSE of that healed arm."
+  },
+  "gate1_depth_curve": {
+   "verdict": "PARTIALLY RETRACTED 2026-08-10. WAS: 'letter is a STEP function of depth, content_norm is SMOOTH and MONOTONE'. NOW: three of four families show a SINGLE-LAYER letter jump far larger than any content step at the same layer (Qwen3 k24->k25 +48.02pp, Llama-3 k17->k18 +30.34pp, OLMo-2 k18->k19 +26.68pp) -- that stands. 'STEP FUNCTION' and 'FAMILY-GENERAL' are RETRACTED: Llama-2 is a clean counterexample and even the three clean families have 9-13 raw letter reversals. See TCODEX_AUDIT_RESPONSE.md section 1.",
+   "ran": "2026-08-08/09, four families across .21/.73/.82; 58 arms x 14042 items, thresholds pinned to a single layer",
+   "headline": "Letter accuracy sits pinned at its 0.2689 floor over a wide depth range, then jumps 27-48pp at ONE layer, then plateaus. Content_norm over the SAME forward passes rises smoothly and monotonically with no jump anywhere. At the layer where Qwen3 letter moves +48.0pp (k24 0.2297 -> k25 0.7099), Qwen3 content moves +1.4pp (0.3045 -> 0.3180).",
+   "thresholds_pinned": {
+    "qwen3_8b_36L": "k24->k25, +48.0pp. Pinned at 0.2295-0.2301 for k=4..24 -- twenty depths agreeing within 0.06pp",
+    "llama3_8b_32L": "k17->k18, +30.3pp (0.3016 -> 0.6050)",
+    "olmo2_7b_32L": "k18->k19, +26.7pp (0.3218 -> 0.5886)",
+    "relative_depth": "thresholds at k/L = 0.69 / 0.56 / 0.59 -- past the midpoint in all three, but n=3, NOT a law"
+   },
+   "llama2_anomaly": "CORRECTED 2026-08-10 -- the previous text said the gap-fill was 'in flight on .21'. IT FINISHED. All five arms gate1_dmg_llama2_7b_depth_gap2_k{8,12,18,22,26} are on wzc1 and were unreported for a day while the retracted claim stood on 'the disconfirming run has not landed yet'. Recomputed on the full 15-depth grid (k=4,6,8,10,12,14,16,18,20,22,24,26,28,30,31; n=14042 each, 0 nan, 8/8 shards asserted): letter has 6 DECREASES out of 14 adjacent steps and ALL 6 ARE BH-SIGNIFICANT at alpha=0.05; 5 BH-significant direction reversals (7 raw); and the floor verdict CROSSES THE FLOOR 4 TIMES -- BELOW x6 (k4..k14) -> above x3 (k16,k18,k20) -> BELOW (k22, 0.230238, -3.867pp, p=9.1e-26) -> AT (k24, 0.272255, +0.335pp, p=0.371) -> above x4 (k26..k31). The k22 collapse back below floor after three above-floor depths is the fact that kills 'family-general step'. Content over the SAME 15 depths: 2 decreases, both <=0.121pp, NEITHER BH-significant (p=0.749, p=0.984), and 0 of its 8 BH-significant steps is a decrease -- so the letter-vs-content contrast SURVIVES and sharpens.",
+   "why_it_matters": "Supplies a mechanism-free version of A01's protocol argument. Below threshold the letter interface IS a constant predictor; above it, a competent one. Averaging arms that straddle the threshold mixes two regimes. Any damage-scaling regression on letter accuracy that includes sub-threshold rungs is fitting a step, and its slope is an artifact of how many rungs land on each side. This also EXPLAINS the 6/6 damaged result: those arms were keep8/keep12, deep inside every family's sub-threshold range.",
+   "does_not_show": "no mechanism (tie explanation stays triple-falsified, this does not resurrect it); nothing about HEALED arms (all arms here are truncation-only); no per-subject breakdown",
+   "evidence": "GATE1_DEPTHCURVE_VERDICT.md",
+   "code": "scripts/_a01_gate1_depth_curve.sh, scripts/eval_olmo2_probe2_ppl.py::load_truncated_any_family",
+   "ops_note": ".21's .venv/bin/python is a broken symlink to a torch-less py3.11; use /opt/conda/envs/torch-base/bin/python on .21 too",
+   "llama2_gap_fill_status": "DONE and reported (2026-08-10). 15 unique depths on wzc1.",
+   "strictly_monotone_wording_corrected": "GATE1_DEPTHCURVE_VERDICT.md's table said Llama-2 content is 'yes, strictly' monotone. FALSE as printed: k8->k10 0.254237->0.253027 (-0.121pp) and k10->k12 0.253027->0.252884 (-0.014pp). The (0.2650->0.2877->0.3139->0.3548) parenthesis was the k16/k20/k24/k28 subset only. 'strictly' removed; replaced with 'monotone at every BH-significant step, and its only two decreases are within noise'."
+  },
+  "gate2_second_mc_benchmark": {
+   "verdict": "REPLICATES_FAILURE (so the AND-gate cannot fire)",
+   "ran": "2026-08-08, CPU only, no GPU needed",
+   "summary": "On non-MMLU MC the interface/floor failure DOES reproduce. BoolQ's construct-appropriate null is 0.6217 (always-B), not 0.5: keep12/keep10/keep8 all sit BELOW it on the raw-LL interface and keep14 is n.s. (p=0.20) -> 4/6 arms indistinguishable from a constant predictor while their nominal 0.59-0.64 look 'passing' against a 0.50 chance line. OpenBookQA: longest-option null 0.3635 vs chance 0.2500; keep10 acc_norm 0.3560 is below that floor, and 3/15 arm-pair sign flips between acc and acc_norm. Residual fraction for base OBQA drops 45.9% -> 21.3% under the correct null (2.15x inflation from using chance).",
+   "caveat": "The two interfaces used here are raw sum-LL vs length-normalised acc_norm, NOT MMLU's letter-vs-content. Report that difference explicitly; it is an analogous but not identical interface contrast.",
+   "negative_control": "winogrande is structurally degenerate (both options share the continuation -> identical norm_lens, acc == acc_norm exactly, 100% tie rate). Cannot serve as an interface case; report as a control, not evidence.",
+   "clean_cases": "CommonsenseQA (5-way) and SocialIQA (3-way): all 6 arms significantly ABOVE their constant-letter nulls on both interfaces -- the 'not everything collapses' side of the protocol.",
+   "evidence": "status/scout_21/lane2_a01_gate2.md"
+  },
+  "gate3_fp32_causal_tie_test": {
+   "verdict": "ALL SIX ARMS DONE. Ties are NOT the mechanism: fp32 eliminates every exact tie and changes no arm's floor verdict except one marginal case.",
+   "stale_verdict_corrected_20260809": "this field read 'base arm DONE; keep8 arm running on .73'. Both halves were stale -- keep8 finished AND four further arms were run. All six dtype_summary.json exist under results/a01_gate3/dtype_runs/ on zwfy6, and `ps` on .73 shows no A01 process. Four arms of completed evidence were sitting unreported.",
+   "six_arm_table_n14042_floor_0.2689": {
+    "7B_base": {
+     "bf16_letter": 0.6054,
+     "fp32_letter": 0.6054,
+     "delta_pp": 0.0,
+     "bf16_tie_pct": 0.13,
+     "fp32_tie_pct": 0.0,
+     "bf16_verdict": "above",
+     "fp32_verdict": "above"
     },
-    "gate1_third_model_family_DAMAGED": {
-      "verdict": "A01_GENERAL_CLAIM_CONFIRMED",
-      "ran": "2026-08-08 on .21, 6.5 min wall for 6 arms",
-      "summary": "6/6 DAMAGED non-OLMo arms land at/below their own best-constant floor 0.2689. Llama-2 k8 0.2415 (-2.74pp), Llama-3 k8 0.2329 (-3.60), Qwen3 k8 0.2286 (-4.03), Llama-2 k12 0.2295 (-3.94), Llama-3 k12 0.2527 (-1.62), Qwen3 k12 0.2300 (-3.89). Damage = front-N truncation, NO fresh block, NO heal (deliberately worst-case).",
-      "mechanism_finding": "The collapse ROUTE differs by family but the OUTCOME does not. Non-OLMo damaged arms become constant-letter emitters with NEAR-ZERO exact ties (Llama-2 k12 is 100.0% modal with 0.00% ties; Qwen3 k12 is 99.1% modal with 0.03% ties). OLMo damaged arms reach the same place via 30.64% exact ties + argmax index tie-breaking. So ties are ONE road, not THE mechanism -- this over-determines the gate-3 refutation.",
-      "content_also_fails": "every damaged arm has content_norm within +/-3pp of its letter accuracy and both hover at their floors -- switching interface does NOT rescue a damaged arm",
-      "evidence": "GATE1_DAMAGED_VERDICT.md",
-      "code": "scripts/eval_olmo2_probe2_ppl.py::load_truncated_any_family, scripts/_a01_gate1_damaged_driver_21.sh"
+    "7B_shortgpt16_step200000": {
+     "bf16_letter": 0.4742,
+     "fp32_letter": 0.478,
+     "delta_pp": 0.377,
+     "bf16_tie_pct": 10.4,
+     "fp32_tie_pct": 0.01,
+     "bf16_verdict": "above",
+     "fp32_verdict": "above"
     },
-    "gate1_depth_curve": {
-      "verdict": "THE TWO INTERFACES HAVE DIFFERENT FUNCTIONAL FORMS -- letter is a STEP function of depth, content_norm is SMOOTH and MONOTONE",
-      "ran": "2026-08-08/09, four families across .21/.73/.82; 58 arms x 14042 items, thresholds pinned to a single layer",
-      "headline": "Letter accuracy sits pinned at its 0.2689 floor over a wide depth range, then jumps 27-48pp at ONE layer, then plateaus. Content_norm over the SAME forward passes rises smoothly and monotonically with no jump anywhere. At the layer where Qwen3 letter moves +48.0pp (k24 0.2297 -> k25 0.7099), Qwen3 content moves +1.4pp (0.3045 -> 0.3180).",
-      "thresholds_pinned": {
-        "qwen3_8b_36L": "k24->k25, +48.0pp. Pinned at 0.2295-0.2301 for k=4..24 -- twenty depths agreeing within 0.06pp",
-        "llama3_8b_32L": "k17->k18, +30.3pp (0.3016 -> 0.6050)",
-        "olmo2_7b_32L": "k18->k19, +26.7pp (0.3218 -> 0.5886)",
-        "relative_depth": "thresholds at k/L = 0.69 / 0.56 / 0.59 -- past the midpoint in all three, but n=3, NOT a law"
-      },
-      "llama2_anomaly": "letter NON-MONOTONE (k16 0.3289 +6.0pp -> k20 0.3054 -> k24 0.2723 +0.3pp back at floor -> k28 0.4315) while content over the same range is STRICTLY monotone (0.2650->0.2877->0.3139->0.3548). The non-monotonicity is in the readout, not the model. Gap-fill k=8,12,18,22,26 in flight on .21. Also: Llama-2's k28 letter 0.4315 already exceeds its INTACT 0.4100, so its plateau is at intact level -- it is a weak-model case, not a damage case.",
-      "why_it_matters": "Supplies a mechanism-free version of A01's protocol argument. Below threshold the letter interface IS a constant predictor; above it, a competent one. Averaging arms that straddle the threshold mixes two regimes. Any damage-scaling regression on letter accuracy that includes sub-threshold rungs is fitting a step, and its slope is an artifact of how many rungs land on each side. This also EXPLAINS the 6/6 damaged result: those arms were keep8/keep12, deep inside every family's sub-threshold range.",
-      "does_not_show": "no mechanism (tie explanation stays triple-falsified, this does not resurrect it); nothing about HEALED arms (all arms here are truncation-only); no per-subject breakdown",
-      "evidence": "GATE1_DEPTHCURVE_VERDICT.md",
-      "code": "scripts/_a01_gate1_depth_curve.sh, scripts/eval_olmo2_probe2_ppl.py::load_truncated_any_family",
-      "ops_note": ".21's .venv/bin/python is a broken symlink to a torch-less py3.11; use /opt/conda/envs/torch-base/bin/python on .21 too"
+    "7B_keep14_step200000": {
+     "bf16_letter": 0.3184,
+     "fp32_letter": 0.329,
+     "delta_pp": 1.061,
+     "bf16_tie_pct": 24.36,
+     "fp32_tie_pct": 0.0,
+     "bf16_verdict": "above",
+     "fp32_verdict": "above"
     },
-    "gate2_second_mc_benchmark": {
-      "verdict": "REPLICATES_FAILURE (so the AND-gate cannot fire)",
-      "ran": "2026-08-08, CPU only, no GPU needed",
-      "summary": "On non-MMLU MC the interface/floor failure DOES reproduce. BoolQ's construct-appropriate null is 0.6217 (always-B), not 0.5: keep12/keep10/keep8 all sit BELOW it on the raw-LL interface and keep14 is n.s. (p=0.20) -> 4/6 arms indistinguishable from a constant predictor while their nominal 0.59-0.64 look 'passing' against a 0.50 chance line. OpenBookQA: longest-option null 0.3635 vs chance 0.2500; keep10 acc_norm 0.3560 is below that floor, and 3/15 arm-pair sign flips between acc and acc_norm. Residual fraction for base OBQA drops 45.9% -> 21.3% under the correct null (2.15x inflation from using chance).",
-      "caveat": "The two interfaces used here are raw sum-LL vs length-normalised acc_norm, NOT MMLU's letter-vs-content. Report that difference explicitly; it is an analogous but not identical interface contrast.",
-      "negative_control": "winogrande is structurally degenerate (both options share the continuation -> identical norm_lens, acc == acc_norm exactly, 100% tie rate). Cannot serve as an interface case; report as a control, not evidence.",
-      "clean_cases": "CommonsenseQA (5-way) and SocialIQA (3-way): all 6 arms significantly ABOVE their constant-letter nulls on both interfaces -- the 'not everything collapses' side of the protocol.",
-      "evidence": "status/scout_21/lane2_a01_gate2.md"
+    "7B_keep12_step124000": {
+     "bf16_letter": 0.2728,
+     "fp32_letter": 0.2771,
+     "delta_pp": 0.434,
+     "bf16_tie_pct": 24.61,
+     "fp32_tie_pct": 0.0,
+     "bf16_verdict": "AT the floor",
+     "fp32_verdict": "above the floor -- THE ONE FLIP, see below"
     },
-    "gate3_fp32_causal_tie_test": {
-      "verdict": "ALL SIX ARMS DONE. Ties are NOT the mechanism: fp32 eliminates every exact tie and changes no arm's floor verdict except one marginal case.",
-      "stale_verdict_corrected_20260809": "this field read 'base arm DONE; keep8 arm running on .73'. Both halves were stale -- keep8 finished AND four further arms were run. All six dtype_summary.json exist under results/a01_gate3/dtype_runs/ on zwfy6, and `ps` on .73 shows no A01 process. Four arms of completed evidence were sitting unreported.",
-      "six_arm_table_n14042_floor_0.2689": {
-        "7B_base": {
-          "bf16_letter": 0.6054,
-          "fp32_letter": 0.6054,
-          "delta_pp": 0.0,
-          "bf16_tie_pct": 0.13,
-          "fp32_tie_pct": 0.0,
-          "bf16_verdict": "above",
-          "fp32_verdict": "above"
-        },
-        "7B_shortgpt16_step200000": {
-          "bf16_letter": 0.4742,
-          "fp32_letter": 0.478,
-          "delta_pp": 0.377,
-          "bf16_tie_pct": 10.4,
-          "fp32_tie_pct": 0.01,
-          "bf16_verdict": "above",
-          "fp32_verdict": "above"
-        },
-        "7B_keep14_step200000": {
-          "bf16_letter": 0.3184,
-          "fp32_letter": 0.329,
-          "delta_pp": 1.061,
-          "bf16_tie_pct": 24.36,
-          "fp32_tie_pct": 0.0,
-          "bf16_verdict": "above",
-          "fp32_verdict": "above"
-        },
-        "7B_keep12_step124000": {
-          "bf16_letter": 0.2728,
-          "fp32_letter": 0.2771,
-          "delta_pp": 0.434,
-          "bf16_tie_pct": 24.61,
-          "fp32_tie_pct": 0.0,
-          "bf16_verdict": "AT the floor",
-          "fp32_verdict": "above the floor -- THE ONE FLIP, see below"
-        },
-        "7B_keep10_step83500": {
-          "bf16_letter": 0.272,
-          "fp32_letter": 0.27,
-          "delta_pp": -0.207,
-          "bf16_tie_pct": 13.8,
-          "fp32_tie_pct": 0.0,
-          "bf16_verdict": "AT the floor",
-          "fp32_verdict": "AT the floor"
-        },
-        "7B_keep8_step121000": {
-          "bf16_letter": 0.255,
-          "fp32_letter": 0.2535,
-          "delta_pp": -0.15,
-          "bf16_tie_pct": 30.64,
-          "fp32_tie_pct": 0.0,
-          "bf16_verdict": "BELOW the floor",
-          "fp32_verdict": "BELOW the floor"
-        }
-      },
-      "headline_1_fp32_kills_all_ties": "fp32 drives the exact-tie rate to 0.00% on five of six arms (shortgpt16 0.01%), from a bf16 rate that rises monotonically with damage to 30.64% on keep8. The ties are unambiguously a bf16 artifact.",
-      "headline_2_verdicts_do_not_move": "removing every tie leaves the floor verdict unchanged on 5/6 arms. keep8 stays BELOW and gets MORE significant (bf16 -1.389pp p=0.0192 -> fp32 -1.538pp p=0.0062). This is the triple-falsification of 'ties are the mechanism', now at n=6 arms instead of 2.",
-      "the_one_flip_keep12_MARGINAL": {
-        "bf16": "+0.385pp CI95 [-0.463,+1.239] p=0.3736 -> AT the floor",
-        "fp32": "+0.819pp CI95 [+0.078,+1.545] p=0.0272 -> above the floor",
-        "do_not_overclaim": "ONE arm of six; the fp32 CI clears zero by 0.078pp; p=0.0272 is UNCORRECTED and would not survive BH across the six arms. Report as 'one arm's verdict is dtype-fragile at the margin', NOT as 'fp32 rescues keep12'. It argues for reporting dtype alongside every verdict -- which is A01's own thesis -- not for a mechanism claim.",
-        "modal_shift_cuts_the_other_way": "keep12's modal-letter concentration RISES under fp32: D@49.3% -> D@61.3%. So fp32 nudges accuracy up while making the arm a MORE degenerate constant predictor. The two move in opposite directions."
-      },
-      "headline_3_fp32_makes_damaged_arms_more_degenerate": "modal concentration rises under fp32 on every damaged arm: keep10 D 60.1->65.1%, keep12 D 49.3->61.3%, keep8 C 48.8->55.9%. Removing index tie-breaking does not make a damaged arm less degenerate -- it makes it more visibly constant. Worth a sentence in the paper.",
-      "base_arm_result": "fp32 removes ALL exact ties (18 -> 0) but letter acc is UNCHANGED: 0.6054 both dtypes, delta +0.0000 CI95 [-0.0011,+0.0011], McNemar p=1.000. 96 letter argmax flips (0.68%), of which only 12 were the bf16-tied items. So on the intact model, ties are a bf16 artifact AND removing them changes nothing measurable.",
-      "note": "gate-1's Llama-2 result (15.79% ties, fully healthy) now serves as an external positive control for 'ties without failure', which reframes what the keep8 arm can show.",
-      "evidence": "results/a01_gate3/dtype_runs/{7B_base,7B_shortgpt16_step200000,7B_keep14_step200000,7B_keep12_step124000,7B_keep10_step83500,7B_keep8_step121000}_dtype/dtype_summary.json -- all on zwfy6 ONLY, wzc1 does not have them",
-      "remaining_analysis_TODO": "CLOSED 2026-08-09 by code/a01_gate3_content_conventions.py -> evidence/gate3_content_null_conventions.{json,csv} + GATE3_CONVENTIONS_VERDICT.md. See gate3b_longest_option_conventions below."
+    "7B_keep10_step83500": {
+     "bf16_letter": 0.272,
+     "fp32_letter": 0.27,
+     "delta_pp": -0.207,
+     "bf16_tie_pct": 13.8,
+     "fp32_tie_pct": 0.0,
+     "bf16_verdict": "AT the floor",
+     "fp32_verdict": "AT the floor"
     },
-    "gate3b_longest_option_conventions": {
-      "verdict": "THE NULL A01 RECOMMENDS HAS ITS OWN UNDECLARED CONVENTION DEGREE OF FREEDOM, AND IT REVERSES 5/6 ARM VERDICTS",
-      "ran": "2026-08-09, CPU only, ZERO GPU, ~4 min single process (re-analysis of on-disk per-item records)",
-      "regression_gate": "PASSED -- all five null values and all letter_acc / content_norm_acc / content_raw_acc reproduce evidence/gate3_dtype_runs/*_dtype_summary.json to <1e-12 on all six arms x both dtypes",
-      "the_finding": "'the null is the longest option' does not say what to do when several options tie on token count, and 34.22% of MMLU items have such a tie (13.37% = 1877 items have ALL FOUR tied). The five defensible readings of that one sentence put the null between 0.196126 and 0.453710 -- a 25.76pp spread, LARGER than the whole distance from chance 0.25 to the intact base's content 0.4706.",
-      "longest_option_null_by_convention_n14042": {
-        "split_CANONICAL": 0.28445,
-        "first": 0.281085,
-        "last": 0.282154,
-        "credit_optimistic": 0.45371,
-        "wrong_pessimistic": 0.196126,
-        "note": "identical to 9dp across all six arms -- it is a property of MMLU, not of any arm"
-      },
-      "verdict_counts_bf16_content_norm_of_6_arms": {
-        "split": "6 above / 0 at / 0 below",
-        "first": "6 above",
-        "last": "6 above",
-        "credit": "1 above / 0 at / 5 BELOW (significantly; p=0.0001 on all five)",
-        "wrong": "6 above"
-      },
-      "residual_fraction_spread": "intact base arm: 0.0359 (credit) vs 0.5832 (wrong) = 16.26x, from one undeclared convention on one arm. Excluding credit entirely, wrong-vs-split is still 1.47x on base and 2.53x on keep8. Compare gate-4, where AGGREGATION choice moved the headline span 6.86x-10.04x: the null's own convention parameter has a LARGER effect than the aggregation effect gate-4 was built to police.",
-      "C1_leg_under_each_convention": "C1 reported = 0.3597778 (scratch16L@200k content_norm). split 0.2094 (as published, CORRECT) / first 0.2187 / last 0.2158 / credit -0.2611 / wrong +0.4549. The C1 row's residual fraction can be made to change SIGN by a tie convention.",
-      "fp32_adds_nothing_here": "content_norm moves <=0.093pp between dtypes on every arm (largest keep10 0.3445->0.3454); no convention's verdict changes with dtype. The content side is precision-insensitive, consistent with gate-3's finding that the tie/precision story is letter-side only.",
-      "claim_impact": "ADDS the strongest A01-owned claim: the protocol must be 'report a construct-appropriate null AND print the null's convention'. Not found in any verified prior art (see NOVELTY_CHECK.md section 3). Does NOT change any published A01 number -- all used split and said so.",
-      "corrects_must_not_resurrect": "0.2822 is NOT a miscomputation. It is exactly the 'last'-of-maximal convention (0.282154). It should be described as a different, less defensible convention superseded by the pre-registered 'split', and PRINTED in the convention table rather than merely banned. evidence/C5_self_falsification.md section 3 already said this; the must_not_resurrect entry had not caught up.",
-      "evidence": "GATE3_CONVENTIONS_VERDICT.md, evidence/gate3_content_null_conventions.json, evidence/gate3_content_null_conventions.csv (120 rows = 6 arms x 2 dtypes x 2 readouts x 5 conventions)",
-      "code": "code/a01_gate3_content_conventions.py",
-      "raw_inputs": "results/a01_gate3/dtype_runs/*_dtype/per_example_dtype_shard{0..7}of8.jsonl -- zwfy6 ONLY; wzc1 holds only the six dtype_summary.json under evidence/gate3_dtype_runs/",
-      "estimator": "paired item-level bootstrap, n_boot=10000, seed=7, p floored at 1/n_boot=0.0001 -- identical to a01_gate3_fp32_vs_bf16.py",
-      "null_is_family_dependent_too": "ADDED 2026-08-09. The five nulls are identical to 9dp across the six OLMo-2 arms, but the longest-option null is measured in CONTINUATION TOKENS and therefore differs by TOKENIZER: evidence/a01_gate1_third_family.json field longest_option_split_tie_null gives Llama-2-7B 0.2757 / Qwen3-8B 0.2833 / Llama-3-8B 0.2847 / OLMo-2 0.2845 -- a 0.90pp spread on the SAME items under the SAME split convention. So any cross-family content comparison against a single shared 0.2845 is mis-calibrated independently of the tie-convention issue. Cross-family content claims need per-family, per-convention nulls."
-    },
-    "gate4_c4_aggregation_prereg": {
-      "verdict": "HEADLINE_IS_AGGREGATION_SENSITIVE -- must be reported as a range, not '10x'",
-      "ran": "2026-08-09, CPU only, seconds",
-      "summary": "V1 pre-registered primary (Qwen+OLMo, 3-task native, pooled) gives span 10.04x. Defensible alternatives V2-V5 give 6.86-9.98x, with C4 fraction 0.5278-0.7724 (1.46x spread within the construct). 'Exactly 10x' is a selected number; the correct headline is 'residual fractions span roughly 7-10x'.",
-      "note": "Not a kill gate; removes a reviewer selective-reporting attack surface by enumerating and pre-registering all defensible aggregations.",
-      "evidence": "GATE4_VERDICT.md, evidence/gate4_c4_prereg.json, code/a01_gate4_c4_prereg.py"
+    "7B_keep8_step121000": {
+     "bf16_letter": 0.255,
+     "fp32_letter": 0.2535,
+     "delta_pp": -0.15,
+     "bf16_tie_pct": 30.64,
+     "fp32_tie_pct": 0.0,
+     "bf16_verdict": "BELOW the floor",
+     "fp32_verdict": "BELOW the floor"
     }
+   },
+   "headline_1_fp32_kills_all_ties": "fp32 drives the exact-tie rate to 0.00% on five of six arms (shortgpt16 0.01%), from a bf16 rate that rises monotonically with damage to 30.64% on keep8. The ties are unambiguously a bf16 artifact.",
+   "headline_2_verdicts_do_not_move": "removing every tie leaves the floor verdict unchanged on 5/6 arms. keep8 stays BELOW and gets MORE significant (bf16 -1.389pp p=0.0192 -> fp32 -1.538pp p=0.0062). This is the triple-falsification of 'ties are the mechanism', now at n=6 arms instead of 2.",
+   "the_one_flip_keep12_MARGINAL": {
+    "bf16": "+0.385pp CI95 [-0.463,+1.239] p=0.3736 -> AT the floor",
+    "fp32": "+0.819pp CI95 [+0.078,+1.545] p=0.0272 -> above the floor",
+    "do_not_overclaim": "ONE arm of six; the fp32 CI clears zero by 0.078pp; p=0.0272 is UNCORRECTED and would not survive BH across the six arms. Report as 'one arm's verdict is dtype-fragile at the margin', NOT as 'fp32 rescues keep12'. It argues for reporting dtype alongside every verdict -- which is A01's own thesis -- not for a mechanism claim.",
+    "modal_shift_cuts_the_other_way": "keep12's modal-letter concentration RISES under fp32: D@49.3% -> D@61.3%. So fp32 nudges accuracy up while making the arm a MORE degenerate constant predictor. The two move in opposite directions."
+   },
+   "headline_3_fp32_makes_damaged_arms_more_degenerate": "modal concentration rises under fp32 on every damaged arm: keep10 D 60.1->65.1%, keep12 D 49.3->61.3%, keep8 C 48.8->55.9%. Removing index tie-breaking does not make a damaged arm less degenerate -- it makes it more visibly constant. Worth a sentence in the paper.",
+   "base_arm_result": "fp32 removes ALL exact ties (18 -> 0) but letter acc is UNCHANGED: 0.6054 both dtypes, delta +0.0000 CI95 [-0.0011,+0.0011], McNemar p=1.000. 96 letter argmax flips (0.68%), of which only 12 were the bf16-tied items. So on the intact model, ties are a bf16 artifact AND removing them changes nothing measurable.",
+   "note": "gate-1's Llama-2 result (15.79% ties, fully healthy) now serves as an external positive control for 'ties without failure', which reframes what the keep8 arm can show.",
+   "evidence": "results/a01_gate3/dtype_runs/{7B_base,7B_shortgpt16_step200000,7B_keep14_step200000,7B_keep12_step124000,7B_keep10_step83500,7B_keep8_step121000}_dtype/dtype_summary.json -- all on zwfy6 ONLY, wzc1 does not have them",
+   "remaining_analysis_TODO": "CLOSED 2026-08-09 by code/a01_gate3_content_conventions.py -> evidence/gate3_content_null_conventions.{json,csv} + GATE3_CONVENTIONS_VERDICT.md. See gate3b_longest_option_conventions below."
   },
-  "claim_scope_after_gates": {
-    "RETRACTED_must_narrow": "An earlier version of this file said 'drop any claim that the letter MC interface is GENERALLY an unreliable instrument'. RETRACTED: that was based on INTACT bases only. The damaged-arm gate (6/6 non-OLMo below floor) confirms the general claim.",
-    "must_drop": "'Exact ties are the mechanism of interface failure' as a family-general CAUSAL claim. QUADRUPLE-falsified: (a) gate-3 base, ties 18->0 in fp32, acc unchanged p=1.000; (b) gate-3 keep8, ties 4303->0, 18.03% argmax flips, acc unchanged p=0.570, still below floor; (c) damaged non-OLMo collapse to the same place with 0.00-1.35% ties; (d) ADDED 2026-08-09 -- all SIX OLMo-2 arms now have fp32-vs-bf16: fp32 drives tie rate to 0.00% (shortgpt16 0.01%) from a bf16 rate rising monotonically to 30.64% on keep8, and the floor verdict is UNCHANGED on 5/6 arms; keep8 stays BELOW and gets MORE significant (bf16 -1.389pp p=0.0192 -> fp32 -1.538pp p=0.0062). Verified per-arm from evidence/gate3_dtype_runs/*_dtype_summary.json.",
-    "confirmed_general": [
-      "Under structural damage the letter MC interface degenerates to at/below its own best-constant floor. Demonstrated on FOUR families: OLMo-2-7B (healed keep8, 0.2550), Llama-2-7B (trunc, 0.2295-0.2415), Llama-3-8B (trunc, 0.2329-0.2527), Qwen3-8B-Base (trunc, 0.2286-0.2301).",
-      "The collapse is a SHARP phase transition in depth, not a gradual decay -- Qwen3-8B-Base letter is pinned at 0.229454-0.230309 (span 0.0855pp) across the TWELVE measured depths k=4..24, then jumps +48.02pp at k24->k25 (0.229739 -> 0.709942), then plateaus 0.647-0.730. content_norm over the SAME forward passes moves only +1.35pp at that layer (0.3045 -> 0.3180). CORRECTED 2026-08-09: this field previously read 'jumps +45.74pp at keep30', which contradicted gate_results.gate1_depth_curve's 'k24->k25 +48.0pp'. gate1_depth_curve was RIGHT. +45.74pp is k30's RESIDUAL vs the floor (0.726321-0.268908=+45.7413pp), NOT a single-layer jump and NOT the transition point -- k25 is already on the plateau (0.709942, +44.10pp vs floor). Re-verified 2026-08-09 from olmo2_mmlu_content_results/gate1_dmg_qwen3_8b_depth_k{24,25,30}/summary.json on zwfy6.",
-      "Interface swap does NOT rescue a damaged arm: content_norm sits within +/-3pp of letter on every damaged arm.",
-      "Report every construct against a construct-appropriate null (best-constant, not chance) before comparing arms. Demonstrations: keep8 0.2550 reads 'above chance' at .25 but is BELOW the 0.2689 floor; BoolQ 0.59-0.64 reads 'passing' at .50 but is below the 0.6217 always-B floor; OBQA residual fraction inflates 2.15x under the chance line.",
-      "gate-2's non-MMLU replication: the wrong-null problem is not an MMLU artifact.",
-      "The self-falsification narrative (using the protocol to retract one's own headline) -- now including this file's own retraction of the intact-only verdict.",
-      "ADDED 2026-08-09 -- the input-blind null A01 recommends is itself UNDER-SPECIFIED, and its convention degree of freedom reverses verdicts. On MMLU the longest-option null takes values 0.196126/0.281085/0.282154/0.284450/0.453710 under the five defensible tie conventions (wrong/first/last/split/credit); 34.22% of items have a tie, 13.37% have all four tied. Under 'credit' 5 of 6 OLMo-2 arms flip from 'above the null' to 'significantly BELOW the null'. So the protocol must be 'report a construct-appropriate null AND print its convention'. This is A01's protocol applied reflexively and is the strongest claim it owns outright. The same null is ALSO tokenizer-dependent across families (Llama-2 0.2757 / Qwen3 0.2833 / Llama-3 0.2847 / OLMo-2 0.2845 under the same split convention), so cross-family content comparisons need per-family nulls."
+  "gate3b_longest_option_conventions": {
+   "verdict": "DEMOTED 2026-08-10. WAS: 'THE NULL A01 RECOMMENDS HAS ITS OWN UNDECLARED CONVENTION DEGREE OF FREEDOM, AND IT REVERSES 5/6 ARM VERDICTS'. NOW: the longest-option null IS under-specified on ties and the tie POLICY must be printed -- but among the THREE conventions an input-blind baseline can actually EXECUTE (split/first/last) the null spans only 0.3365pp (0.281085..0.284450) and 0/6 arm verdicts change (6 above under all three). The 25.76pp spread and the entire 5/6 reversal come from credit (ORACLE UPPER BOUND -- requires knowing the gold letter, unattainable by an input-blind baseline) and wrong (PESSIMISTIC LOWER BOUND -- a baseline that answers gets 1/|W| in expectation). Report as 'three executable conventions + two bounds': the bounds give the null's identified set when the policy is unstated. See TCODEX_AUDIT_RESPONSE.md section 3.",
+   "ran": "2026-08-09, CPU only, ZERO GPU, ~4 min single process (re-analysis of on-disk per-item records)",
+   "regression_gate": "PASSED -- all five null values and all letter_acc / content_norm_acc / content_raw_acc reproduce evidence/gate3_dtype_runs/*_dtype_summary.json to <1e-12 on all six arms x both dtypes",
+   "the_finding": "'the null is the longest option' does not say what to do when several options tie on token count, and 34.22% of MMLU items have such a tie (13.37% = 1877 items have ALL FOUR tied). The five defensible readings of that one sentence put the null between 0.196126 and 0.453710 -- a 25.76pp spread, LARGER than the whole distance from chance 0.25 to the intact base's content 0.4706.",
+   "longest_option_null_by_convention_n14042": {
+    "split_CANONICAL": 0.28445,
+    "first": 0.281085,
+    "last": 0.282154,
+    "credit_optimistic": 0.45371,
+    "wrong_pessimistic": 0.196126,
+    "note": "identical to 9dp across all six arms -- it is a property of MMLU, not of any arm"
+   },
+   "verdict_counts_bf16_content_norm_of_6_arms": {
+    "split": "6 above / 0 at / 0 below",
+    "first": "6 above",
+    "last": "6 above",
+    "credit": "1 above / 0 at / 5 BELOW (significantly; p=0.0001 on all five)",
+    "wrong": "6 above"
+   },
+   "residual_fraction_spread": "REWRITTEN 2026-08-10. Executable-only (split/first/last): per-arm residual-fraction ratio 1.018x-1.058x, absolute span 0.0072-0.0098. The previously headlined 16.26x (base 0.0359 credit vs 0.5832 wrong) is the width of the null's identified set under an UNSTATED tie policy, i.e. a bounds statement -- not the effect of choosing among defensible conventions. Gate-4's aggregation span (6.86x-10.04x) is a genuine choice-among-defensible-options sensitivity and is NOT comparable to a bounds width; the old text compared them directly and should not have.",
+   "C1_leg_under_each_convention": "C1 reported = 0.3597778 (scratch16L@200k content_norm). split 0.2094 (as published, CORRECT) / first 0.2187 / last 0.2158 / credit -0.2611 / wrong +0.4549. The C1 row's residual fraction can be made to change SIGN by a tie convention.",
+   "fp32_adds_nothing_here": "content_norm moves <=0.093pp between dtypes on every arm (largest keep10 0.3445->0.3454); no convention's verdict changes with dtype. The content side is precision-insensitive, consistent with gate-3's finding that the tie/precision story is letter-side only.",
+   "claim_impact": "ADDS the strongest A01-owned claim: the protocol must be 'report a construct-appropriate null AND print the null's convention'. Not found in any verified prior art (see NOVELTY_CHECK.md section 3). Does NOT change any published A01 number -- all used split and said so.",
+   "corrects_must_not_resurrect": "0.2822 is NOT a miscomputation. It is exactly the 'last'-of-maximal convention (0.282154). It should be described as a different, less defensible convention superseded by the pre-registered 'split', and PRINTED in the convention table rather than merely banned. evidence/C5_self_falsification.md section 3 already said this; the must_not_resurrect entry had not caught up.",
+   "evidence": "GATE3_CONVENTIONS_VERDICT.md, evidence/gate3_content_null_conventions.json, evidence/gate3_content_null_conventions.csv (120 rows = 6 arms x 2 dtypes x 2 readouts x 5 conventions)",
+   "code": "code/a01_gate3_content_conventions.py",
+   "raw_inputs": "results/a01_gate3/dtype_runs/*_dtype/per_example_dtype_shard{0..7}of8.jsonl -- zwfy6 ONLY; wzc1 holds only the six dtype_summary.json under evidence/gate3_dtype_runs/",
+   "estimator": "paired item-level bootstrap, n_boot=10000, seed=7, p floored at 1/n_boot=0.0001 -- identical to a01_gate3_fp32_vs_bf16.py",
+   "null_is_family_dependent_too": "ADDED 2026-08-09. The five nulls are identical to 9dp across the six OLMo-2 arms, but the longest-option null is measured in CONTINUATION TOKENS and therefore differs by TOKENIZER: evidence/a01_gate1_third_family.json field longest_option_split_tie_null gives Llama-2-7B 0.2757 / Qwen3-8B 0.2833 / Llama-3-8B 0.2847 / OLMo-2 0.2845 -- a 0.90pp spread on the SAME items under the SAME split convention. So any cross-family content comparison against a single shared 0.2845 is mis-calibrated independently of the tie-convention issue. Cross-family content claims need per-family, per-convention nulls. || STRENGTHENED 2026-08-10 (this leg was NOT attacked by the audit and is now A01's strongest null-convention claim). Measured span across the four tokenizers = 0.9003pp (Llama-2 0.275661 / Qwen3 0.283346 / OLMo-2 0.284450 / Llama-3 0.284664), which is 2.68x the entire EXECUTABLE tie-convention span (0.3365pp). And it FLIPS A VERDICT: re-tested all 63 non-OLMo damaged depth arms with own-tokenizer null vs the shared OLMo-2 0.284450 (exact two-sided binomial, alpha=0.05), 2 of 63 flip and 1 is ROBUST -- gate1_dmg_llama2_7b_depth_k20, content_norm 0.287708, is ABOVE Llama-2's own null 0.275661 (p=0.00146) but AT / n.s. against the shared 0.284450 (p=0.395). The other flip (llama3 depth_k17, p=0.0507 vs 0.0443) straddles alpha and is reported as a boundary artifact, robust=false. The robust=min(p)<0.005 flag was defined AFTER seeing the two flips and is disclosed as post-hoc in TCODEX_AUDIT_RESPONSE.md section 6; it makes the claim weaker, not stronger.",
+   "executable_only_recompute_20260810": {
+    "conventions_that_are_executable": [
+     "split",
+     "first",
+     "last"
     ],
-    "family_specific_not_general": [
-      "The collapse MECHANISM. OLMo-2 gets there via exact bf16 ties (30.64% on keep8) resolved by argmax index bias; Llama/Qwen get there via direct modal collapse with near-zero ties. Same destination, different road.",
-      "On HEALTHY strong models the letter interface is substantially BETTER than the label-free content interface (+13 to +23pp on OLMo-2 base, Llama-3, Qwen3). So 'content is the fair interface' is not a general statement about MC interfaces -- it is a statement about damaged models."
-    ],
-    "contradiction_resolved_2026_08_09": {
-      "what": "confirmed_general[1] said 'keep30 +45.74pp'; gate_results.gate1_depth_curve said 'k24->k25 +48.0pp'",
-      "which_was_right": "gate1_depth_curve (k24->k25, +48.02pp exact)",
-      "root_cause": "confirmed_general[1] conflated a SINGLE-LAYER JUMP with a RESIDUAL-VS-FLOOR. 45.7413pp = 0.726321(k30) - 0.268908(floor).",
-      "verified_from": "zwfy6 olmo2_mmlu_content_results/gate1_dmg_qwen3_8b_depth_k{4,6,8,12,18,24,25,26,27,28,29,30,32,34}/summary.json + depth_fine_k{10,14,16,20,22,23}/summary.json, letter_acc field, n_valid=14042 each",
-      "action": "confirmed_general[1] rewritten; +45.74pp added to must_not_resurrect with its correct interpretation"
-    }
+    "conventions_that_are_bounds_not_policies": {
+     "credit": "oracle upper bound 0.453710",
+     "wrong": "pessimistic lower bound 0.196126"
+    },
+    "executable_null_span_pp": 0.33649052827275666,
+    "all_five_null_span_pp": 25.758438968807866,
+    "n_arms_above_floor_split": "6 of 6",
+    "n_arms_above_floor_first": "6 of 6",
+    "n_arms_above_floor_last": "6 of 6",
+    "n_verdict_changes_across_executable_conventions": 0,
+    "per_arm_residual_fraction_ratio_executable_only": {
+     "7B_base": 1.0181,
+     "7B_shortgpt16_step200000": 1.0288,
+     "7B_keep14_step200000": 1.0341,
+     "7B_keep12_step124000": 1.0429,
+     "7B_keep10_step83500": 1.0561,
+     "7B_keep8_step121000": 1.0582
+    },
+    "note": "16.26x is a BOUNDS WIDTH on one arm, not a convention sensitivity. The five damaged/healed arms have NEGATIVE credit residual fractions, so an all-five ratio is undefined for them -- the residual changes SIGN, which a bound can do and a convention should not."
+   },
+   "what_survives_20260810": "(1) 34.22% of MMLU items tie on continuation-token count and 13.37% (1877 items) have all four tied, so the tie policy is genuinely undetermined by the phrase 'the null is the longest option' and MUST be printed. (2) With the policy unstated the honest null is an INTERVAL [0.196126, 0.453710] and under the oracle end 5/6 arms would read BELOW -- report as an identified set. (3) The TOKENIZER leg is untouched by the audit and is now the STRONGER leg -- see null_is_family_dependent_too and TCODEX_AUDIT_RESPONSE.md section 6."
   },
-  "next_gate": [
-    "gate-1 depth-curve gap-fill: COMPLETE (all four families pinned, incl Llama-2 non-monotone anomaly)",
-    "gate-4 C4 aggregation pre-registration: COMPLETE (span 6.86-10.04x, headline is a range not a point)",
-    "gate-3b longest-option convention table: COMPLETE 2026-08-09 (credit convention flips 5/6 arms; see gate3b_longest_option_conventions)",
-    "rewrite PROPOSAL.md claims section to the CONFIRMED-general scope: COMPLETE 2026-08-09 (retraction history preserved as a table; mechanism explicitly scoped family-specific; Qwen3 transition contradiction resolved)",
-    "novelty check (third kill clause): COMPLETE 2026-08-09, DOES NOT FIRE -- see novelty_check_2026_08_09 and NOVELTY_CHECK.md",
-    "REMAINING before promotion to paper<X>: (a) full-text pass on Balepur et al. ACL 2024 and Oostermeijer ICML 2026; (b) verify the three UNVERIFIED venues (Ding et al. via OpenReview, Hewitt+Liang and Feng et al. via ACL Anthology); (c) decide whether the four constructs are comparable enough for a 'span' to be the right summary statistic at all (GATE4_VERDICT.md section 5 leaves this open)"
-  ],
-  "must_not_resurrect": {
-    "4.8x": "should be 4.69x relative to .25, or 3.22x relative to content's own floor",
-    "0.2822": "CORRECTED 2026-08-09: 0.2822 is NOT wrong arithmetic -- it is the 'last'-of-maximal tie convention, exactly 0.282154. Publish the split-tie 0.2845 (0.284450) as canonical, but describe 0.2822 as a different, less defensible convention and print it in the convention table (GATE3_CONVENTIONS_VERDICT.md section 3) rather than banning it silently.",
-    "58/91": "un-BH-corrected; canonical is ~50-52/91",
-    "0.25_as_mmlu_null": "the MMLU letter null is always-D = 0.2689; the content null is 0.2845",
-    "0.50_as_boolq_null": "BoolQ's null is always-B = 0.6217 (gold 2033 B / 1237 A)",
-    "45.74pp_as_qwen3_transition_jump": "ADDED 2026-08-09. Qwen3's transition is k24->k25, +48.02pp (0.229739 -> 0.709942). +45.7413pp is k30's RESIDUAL vs the floor (0.726321 - 0.268908), not any single-layer jump and not the transition point. Do not write 'jumps +45.74pp at keep30'.",
-    "acc_vs_accnorm_length_sensitivity_as_OURS": "ADDED 2026-08-09 from NOVELTY_CHECK.md. Preempted by Oostermeijer, ICML 2026 (arXiv:2607.12767; OpenReview venueid=ICML.cc/2026/Conference + Camera_Ready_Revision), which shows length normalisation OVER-corrects. A01's OBQA acc-vs-acc_norm sign flips must be reframed as a replication under damage, not as an A01 finding."
-  },
-  "novelty_check_2026_08_09": {
-    "verdict": "kill_clause_3_DOES_NOT_FIRE",
-    "clause_tested_verbatim": "'论文只能退化为已有 similarity-null 方法的案例集合。' -- i.e. the clause fires IFF everything A01 contributes reduces to applying already-published SIMILARITY-NULL machinery to new data. It is NOT a generic 'is anything novel' test.",
-    "rationale": "Two independent reasons. (1) The clause is scoped to the similarity-null (C3/representation) leg, which A01 already concedes it does not own -- but A01's surviving load-bearing findings are all on the MC-ACCURACY construct: four-family letter collapse to at/below the best-constant floor under damage, letter-as-step-function-of-depth vs content-as-smooth over the same forward passes, the six-arm fp32 refutation of the tie mechanism, and the newly tabulated convention-sensitivity of the longest-option null. None is an instance of a similarity-null method. (2) No verified prior work covers that scope. Closest is Balepur et al. ACL 2024 main, which argues for stronger-than-chance baselines in MCQA -- but on INTACT models, as a dataset-artifact claim, with no damage axis, no depth curve, no per-arm floor validity gate, and no convention analysis of the null.",
-    "key_prior_work": [
-      "Balepur, Ravichander, Rudinger. Artifacts or Abduction: How Do LLMs Answer Multiple-Choice Questions Without the Question? arXiv:2402.12483. ACL 2024 MAIN, Vol 1 Long Papers, pp. 10308-10330 (ACL Anthology bibtex 2024.acl-long.555, doi 10.18653/v1/2024.acl-long.555).",
-      "Oostermeijer. Accuracy and Normalized Accuracy under Length Bias: Analysis, Guidelines, and a Bayesian Alternative. arXiv:2607.12767. ICML 2026 (OpenReview forum SbSFZ9N6DN, venueid=ICML.cc/2026/Conference, Camera_Ready_Revision present).",
-      "Cho, So, Lee. Choices Speak Louder than Questions. arXiv:2502.18798. ICLR 2026 Poster (OpenReview venueid=ICLR.cc/2026/Conference, Submission17078 Camera_Ready_Revision).",
-      "Bean, Kearns, Romanou et al. Measuring what Matters: Construct Validity in Large Language Model Benchmarks. arXiv:2511.04703. NeurIPS 2025 Datasets and Benchmarks Track poster (OpenReview forum mdA5lVvNcU, venueid=NeurIPS.cc/2025/Datasets_and_Benchmarks_Track, Camera_Ready_Revision present).",
-      "Zheng, Pang, Du, Liu, Jiang, Lin. Cheating Automatic LLM Benchmarks: Null Models Achieve High Win Rates. arXiv:2410.07137. ICLR 2025 Oral (OpenReview venueid=ICLR.cc/2025/Conference).",
-      "Gu, Tafjord, Kuehl, Haddad, Dodge, Hajishirzi. OLMES: A Standard for Language Model Evaluations. arXiv:2406.08446. FINDINGS of NAACL 2025, pp. 5020-5048 (ACL Anthology bibtex 2025.findings-naacl.282, doi 10.18653/v1/2025.findings-naacl.282).",
-      "Ding, Denain, Steinhardt. Grounding Representation Similarity with Statistical Testing. arXiv:2108.01661. NeurIPS 2021 per author arXiv comment -- VENUE UNVERIFIED at the OpenReview standard this session.",
-      "Hewitt, Liang. Designing and Interpreting Probes with Control Tasks. arXiv:1909.03368. EMNLP 2019 per author arXiv comment -- VENUE UNVERIFIED at the Anthology standard this session.",
-      "Feng, Wallace, Boyd-Graber. Misleading Failures of Partial-input Baselines. arXiv:1905.05778. ACL 2019 per author arXiv comment -- VENUE UNVERIFIED at the Anthology standard this session. COUNTER-citation: clearing a floor is NECESSARY, not sufficient."
-    ],
-    "kill_definition": "Clause 3 fires iff a paper (or the union of existing similarity-null papers) already does A01's scope, i.e. (1) uses an input-blind / best-constant null as a per-arm VALIDITY GATE that disqualifies an arm from cross-arm comparison, (2) on structurally DAMAGED models (not intact ones), (3) across more than one model family, AND (4) shows the interface/readout choice interacts with the damage. No candidate satisfies any two of these four simultaneously. Balepur et al. satisfies a weak form of (1) only, on intact models. Overlap on the RECOMMENDATION ('use stronger baselines') is not preemption of the SCOPE.",
-    "citation_obligations_created": [
-      "Balepur et al. ACL 2024 main -- origin of 'use stronger than chance baselines in MCQA'; do not claim it.",
-      "Zheng et al. ICLR 2025 Oral -- origin of 'null model' terminology and 'a constant predictor can top a benchmark'; do not claim it.",
-      "Oostermeijer ICML 2026 -- DROP A01's acc-vs-acc_norm length-sensitivity sub-claim; reframe OBQA sign flips as replication under damage.",
-      "OLMES Findings-NAACL 2025 -- origin of the letter/cloze interface split; position A01's floor test as a FIX to a defect in OLMES's SIZE-keyed interface-selection rule (a damaged 7B gets routed to the letter interface, where it sits below its own best-constant floor).",
-      "Cho et al. ICLR 2026 + Bean et al. NeurIPS 2025 D&B -- framing/parallel literature; do not claim 'MC interface validity is unexamined'.",
-      "Feng et al. -- state explicitly that clearing a floor is necessary, NOT sufficient.",
-      "Downgrade the layer-order-null claim from 'first' to 'we are not aware of a prior layer-order null for layer correspondence' (arXiv searches on layer permutation + similarity nulls returned zero relevant hits -- 'not found', which is weaker than 'does not exist')."
-    ],
-    "strongest_remaining_novel_claim": "The input-blind null A01 recommends has its own undeclared convention degree of freedom, large enough to reverse verdicts: on the same 14042 MMLU items the longest-option null ranges 0.1961-0.4537 by tie convention alone (34.22% of items tie, 13.37% have all four tied), and under the 'credit' convention 5/6 OLMo-2 arms flip from above-null to significantly-below-null. Not stated in any candidate paper, for this null or any other. See gate3b_longest_option_conventions and NOVELTY_CHECK.md section 3.",
-    "confidence": "medium-high",
-    "search_scope": "arXiv API: 30 queries across majority/best-constant/input-blind nulls, construct validity, letter-vs-content and cloze interfaces, degenerate/constant predictors, above-chance-as-wrong-reference, partial-input and hypothesis-only baselines, length normalisation, chance correction, CKA/permutation nulls, control tasks, layer permutation, bf16 ties and precision-in-eval. OpenReview /notes/search for the ICML/ICLR/NeurIPS family (checking venueid AND Camera_Ready_Revision). ACL Anthology bibtex + volume indices for the ACL family (Balepur main-vs-Findings; OLMES Findings).",
-    "tooling_failures_this_session": "Semantic Scholar HTTP 429 (rate-limited) and DBLP /search/publ/api HTTP 500 -- BOTH UNAVAILABLE. They are normally cross-checks, so every venue claim in NOVELTY_CHECK.md names the specific authority actually used, and three older papers are explicitly marked VENUE UNVERIFIED rather than asserted.",
-    "limits": "No full-text (PDF) pass on any candidate; all overlap/gap judgements are from title + abstract + venue metadata. For Balepur et al. and Oostermeijer -- the two carrying real citation obligations -- a full-text pass is advisable before submission.",
-    "concurrency_window": "For a 2026-08-09 check, <=3 months means >=2026-05-09. The ICML 2026 length-bias paper's arXiv v1 (2026-07-14) is inside the window, but its OpenReview cdate 2026-01-24 / pdate 2026-04-30 are outside. Judged NOT concurrent, i.e. treated as the stricter case: real prior art A01 must cite. No candidate was dismissed on concurrency grounds.",
-    "output_file": "NOVELTY_CHECK.md"
+  "gate4_c4_aggregation_prereg": {
+   "verdict": "HEADLINE_IS_AGGREGATION_SENSITIVE -- must be reported as a range, not '10x'",
+   "ran": "2026-08-09, CPU only, seconds",
+   "summary": "V1 pre-registered primary (Qwen+OLMo, 3-task native, pooled) gives span 10.04x. Defensible alternatives V2-V5 give 6.86-9.98x, with C4 fraction 0.5278-0.7724 (1.46x spread within the construct). 'Exactly 10x' is a selected number; the correct headline is 'residual fractions span roughly 7-10x'.",
+   "note": "Not a kill gate; removes a reviewer selective-reporting attack surface by enumerating and pre-registering all defensible aggregations.",
+   "evidence": "GATE4_VERDICT.md, evidence/gate4_c4_prereg.json, code/a01_gate4_c4_prereg.py",
+   "audit_narrowing_20260810": "The audit adds that accuracy / EM / CKA / depth-fraction have no common estimand, so the 6.86x-10.04x span is a descriptive sensitivity of the LISTED aggregation over four NON-COMMENSURABLE constructs, not a range for one quantity. Accepted; number unchanged, interpretation narrowed."
   }
+ },
+ "claim_scope_after_gates": {
+  "RETRACTED_must_narrow": "An earlier version of this file said 'drop any claim that the letter MC interface is GENERALLY an unreliable instrument'. RETRACTED: that was based on INTACT bases only. The damaged-arm gate (6/6 non-OLMo below floor) confirms the general claim.",
+  "must_drop": "'Exact ties are the mechanism of interface failure' as a family-general CAUSAL claim. QUADRUPLE-falsified: (a) gate-3 base, ties 18->0 in fp32, acc unchanged p=1.000; (b) gate-3 keep8, ties 4303->0, 18.03% argmax flips, acc unchanged p=0.570, still below floor; (c) damaged non-OLMo collapse to the same place with 0.00-1.35% ties; (d) ADDED 2026-08-09 -- all SIX OLMo-2 arms now have fp32-vs-bf16: fp32 drives tie rate to 0.00% (shortgpt16 0.01%) from a bf16 rate rising monotonically to 30.64% on keep8, and the floor verdict is UNCHANGED on 5/6 arms; keep8 stays BELOW and gets MORE significant (bf16 -1.389pp p=0.0192 -> fp32 -1.538pp p=0.0062). Verified per-arm from evidence/gate3_dtype_runs/*_dtype_summary.json.",
+  "confirmed_general": [
+   "Under structural damage the letter MC interface degenerates to at/below its own best-constant floor. Demonstrated on FOUR families: OLMo-2-7B (healed keep8, 0.2550), Llama-2-7B (trunc, 0.2295-0.2415), Llama-3-8B (trunc, 0.2329-0.2527), Qwen3-8B-Base (trunc, 0.2286-0.2301).",
+   "The collapse is a SHARP phase transition in depth, not a gradual decay -- Qwen3-8B-Base letter is pinned at 0.229454-0.230309 (span 0.0855pp) across the TWELVE measured depths k=4..24, then jumps +48.02pp at k24->k25 (0.229739 -> 0.709942), then plateaus 0.647-0.730. content_norm over the SAME forward passes moves only +1.35pp at that layer (0.3045 -> 0.3180). CORRECTED 2026-08-09: this field previously read 'jumps +45.74pp at keep30', which contradicted gate_results.gate1_depth_curve's 'k24->k25 +48.0pp'. gate1_depth_curve was RIGHT. +45.74pp is k30's RESIDUAL vs the floor (0.726321-0.268908=+45.7413pp), NOT a single-layer jump and NOT the transition point -- k25 is already on the plateau (0.709942, +44.10pp vs floor). Re-verified 2026-08-09 from olmo2_mmlu_content_results/gate1_dmg_qwen3_8b_depth_k{24,25,30}/summary.json on zwfy6.",
+   "Interface swap does NOT rescue a damaged arm: content_norm sits within +/-3pp of letter on every damaged arm.",
+   "Report every construct against a construct-appropriate null (best-constant, not chance) before comparing arms. Demonstrations: keep8 0.2550 reads 'above chance' at .25 but is BELOW the 0.2689 floor; BoolQ 0.59-0.64 reads 'passing' at .50 but is below the 0.6217 always-B floor; OBQA residual fraction inflates 2.15x under the chance line.",
+   "gate-2's non-MMLU replication: the wrong-null problem is not an MMLU artifact.",
+   "The self-falsification narrative (using the protocol to retract one's own headline) -- now including this file's own retraction of the intact-only verdict.",
+   "ADDED 2026-08-09 -- the input-blind null A01 recommends is itself UNDER-SPECIFIED, and its convention degree of freedom reverses verdicts. On MMLU the longest-option null takes values 0.196126/0.281085/0.282154/0.284450/0.453710 under the five defensible tie conventions (wrong/first/last/split/credit); 34.22% of items have a tie, 13.37% have all four tied. Under 'credit' 5 of 6 OLMo-2 arms flip from 'above the null' to 'significantly BELOW the null'. So the protocol must be 'report a construct-appropriate null AND print its convention'. This is A01's protocol applied reflexively and is the strongest claim it owns outright. The same null is ALSO tokenizer-dependent across families (Llama-2 0.2757 / Qwen3 0.2833 / Llama-3 0.2847 / OLMo-2 0.2845 under the same split convention), so cross-family content comparisons need per-family nulls."
+  ],
+  "family_specific_not_general": [
+   "The collapse MECHANISM. OLMo-2 gets there via exact bf16 ties (30.64% on keep8) resolved by argmax index bias; Llama/Qwen get there via direct modal collapse with near-zero ties. Same destination, different road.",
+   "On HEALTHY strong models the letter interface is substantially BETTER than the label-free content interface (+13 to +23pp on OLMo-2 base, Llama-3, Qwen3). So 'content is the fair interface' is not a general statement about MC interfaces -- it is a statement about damaged models."
+  ],
+  "contradiction_resolved_2026_08_09": {
+   "what": "confirmed_general[1] said 'keep30 +45.74pp'; gate_results.gate1_depth_curve said 'k24->k25 +48.0pp'",
+   "which_was_right": "gate1_depth_curve (k24->k25, +48.02pp exact)",
+   "root_cause": "confirmed_general[1] conflated a SINGLE-LAYER JUMP with a RESIDUAL-VS-FLOOR. 45.7413pp = 0.726321(k30) - 0.268908(floor).",
+   "verified_from": "zwfy6 olmo2_mmlu_content_results/gate1_dmg_qwen3_8b_depth_k{4,6,8,12,18,24,25,26,27,28,29,30,32,34}/summary.json + depth_fine_k{10,14,16,20,22,23}/summary.json, letter_acc field, n_valid=14042 each",
+   "action": "confirmed_general[1] rewritten; +45.74pp added to must_not_resurrect with its correct interpretation"
+  },
+  "RETRACTED_20260810_family_general_step": "'letter is a family-general step function / sharp phase transition' is RETRACTED. Kept in per-family descriptive form only. See TCODEX_AUDIT_RESPONSE.md section 1.",
+  "NARROWED_20260810_constant_predictor": "'damage turns letter into a constant predictor' is NARROWED to 'damage drives letter to or below its best-constant FLOOR'. Modal share and floor verdict DECOUPLE on the Llama-2 grid: k12 modal A@100.0% and k22 modal A@99.9% ARE constant emitters and below floor, but k8 modal A@44.9% and k6 modal D@43.5% are ALSO below floor without being constant, and k28 modal D@45.4% has the SAME modal share as k8 while sitting +16.26pp ABOVE floor. Being at or below a constant predictor's accuracy is not the same property as being one."
+ },
+ "next_gate": [
+  "gate-1 depth-curve gap-fill: COMPLETE (all four families pinned, incl Llama-2 non-monotone anomaly)",
+  "gate-4 C4 aggregation pre-registration: COMPLETE (span 6.86-10.04x, headline is a range not a point)",
+  "gate-3b longest-option convention table: COMPLETE 2026-08-09 (credit convention flips 5/6 arms; see gate3b_longest_option_conventions)",
+  "rewrite PROPOSAL.md claims section to the CONFIRMED-general scope: COMPLETE 2026-08-09 (retraction history preserved as a table; mechanism explicitly scoped family-specific; Qwen3 transition contradiction resolved)",
+  "novelty check (third kill clause): COMPLETE 2026-08-09, DOES NOT FIRE -- see novelty_check_2026_08_09 and NOVELTY_CHECK.md",
+  "REMAINING before promotion to paper<X>: (a) full-text pass on Balepur et al. ACL 2024 and Oostermeijer ICML 2026; (b) verify the three UNVERIFIED venues (Ding et al. via OpenReview, Hewitt+Liang and Feng et al. via ACL Anthology); (c) decide whether the four constructs are comparable enough for a 'span' to be the right summary statistic at all (GATE4_VERDICT.md section 5 leaves this open)"
+ ],
+ "must_not_resurrect": {
+  "4.8x": "should be 4.69x relative to .25, or 3.22x relative to content's own floor",
+  "0.2822": "CORRECTED 2026-08-09: 0.2822 is NOT wrong arithmetic -- it is the 'last'-of-maximal tie convention, exactly 0.282154. Publish the split-tie 0.2845 (0.284450) as canonical, but describe 0.2822 as a different, less defensible convention and print it in the convention table (GATE3_CONVENTIONS_VERDICT.md section 3) rather than banning it silently.",
+  "58/91": "un-BH-corrected; canonical is ~50-52/91",
+  "0.25_as_mmlu_null": "the MMLU letter null is always-D = 0.2689; the content null is 0.2845",
+  "0.50_as_boolq_null": "BoolQ's null is always-B = 0.6217 (gold 2033 B / 1237 A)",
+  "45.74pp_as_qwen3_transition_jump": "ADDED 2026-08-09. Qwen3's transition is k24->k25, +48.02pp (0.229739 -> 0.709942). +45.7413pp is k30's RESIDUAL vs the floor (0.726321 - 0.268908), not any single-layer jump and not the transition point. Do not write 'jumps +45.74pp at keep30'.",
+  "acc_vs_accnorm_length_sensitivity_as_OURS": "ADDED 2026-08-09 from NOVELTY_CHECK.md. Preempted by Oostermeijer, ICML 2026 (arXiv:2607.12767; OpenReview venueid=ICML.cc/2026/Conference + Camera_Ready_Revision), which shows length normalisation OVER-corrects. A01's OBQA acc-vs-acc_norm sign flips must be reframed as a replication under damage, not as an A01 finding."
+ },
+ "novelty_check_2026_08_09": {
+  "verdict": "kill_clause_3_DOES_NOT_FIRE",
+  "clause_tested_verbatim": "'论文只能退化为已有 similarity-null 方法的案例集合。' -- i.e. the clause fires IFF everything A01 contributes reduces to applying already-published SIMILARITY-NULL machinery to new data. It is NOT a generic 'is anything novel' test.",
+  "rationale": "Two independent reasons. (1) The clause is scoped to the similarity-null (C3/representation) leg, which A01 already concedes it does not own -- but A01's surviving load-bearing findings are all on the MC-ACCURACY construct: four-family letter collapse to at/below the best-constant floor under damage, letter-as-step-function-of-depth vs content-as-smooth over the same forward passes, the six-arm fp32 refutation of the tie mechanism, and the newly tabulated convention-sensitivity of the longest-option null. None is an instance of a similarity-null method. (2) No verified prior work covers that scope. Closest is Balepur et al. ACL 2024 main, which argues for stronger-than-chance baselines in MCQA -- but on INTACT models, as a dataset-artifact claim, with no damage axis, no depth curve, no per-arm floor validity gate, and no convention analysis of the null.",
+  "key_prior_work": [
+   "Balepur, Ravichander, Rudinger. Artifacts or Abduction: How Do LLMs Answer Multiple-Choice Questions Without the Question? arXiv:2402.12483. ACL 2024 MAIN, Vol 1 Long Papers, pp. 10308-10330 (ACL Anthology bibtex 2024.acl-long.555, doi 10.18653/v1/2024.acl-long.555).",
+   "Oostermeijer. Accuracy and Normalized Accuracy under Length Bias: Analysis, Guidelines, and a Bayesian Alternative. arXiv:2607.12767. ICML 2026 (OpenReview forum SbSFZ9N6DN, venueid=ICML.cc/2026/Conference, Camera_Ready_Revision present).",
+   "Cho, So, Lee. Choices Speak Louder than Questions. arXiv:2502.18798. ICLR 2026 Poster (OpenReview venueid=ICLR.cc/2026/Conference, Submission17078 Camera_Ready_Revision).",
+   "Bean, Kearns, Romanou et al. Measuring what Matters: Construct Validity in Large Language Model Benchmarks. arXiv:2511.04703. NeurIPS 2025 Datasets and Benchmarks Track poster (OpenReview forum mdA5lVvNcU, venueid=NeurIPS.cc/2025/Datasets_and_Benchmarks_Track, Camera_Ready_Revision present).",
+   "Zheng, Pang, Du, Liu, Jiang, Lin. Cheating Automatic LLM Benchmarks: Null Models Achieve High Win Rates. arXiv:2410.07137. ICLR 2025 Oral (OpenReview venueid=ICLR.cc/2025/Conference).",
+   "Gu, Tafjord, Kuehl, Haddad, Dodge, Hajishirzi. OLMES: A Standard for Language Model Evaluations. arXiv:2406.08446. FINDINGS of NAACL 2025, pp. 5020-5048 (ACL Anthology bibtex 2025.findings-naacl.282, doi 10.18653/v1/2025.findings-naacl.282).",
+   "Ding, Denain, Steinhardt. Grounding Representation Similarity with Statistical Testing. arXiv:2108.01661. NeurIPS 2021 per author arXiv comment -- VENUE UNVERIFIED at the OpenReview standard this session.",
+   "Hewitt, Liang. Designing and Interpreting Probes with Control Tasks. arXiv:1909.03368. EMNLP 2019 per author arXiv comment -- VENUE UNVERIFIED at the Anthology standard this session.",
+   "Feng, Wallace, Boyd-Graber. Misleading Failures of Partial-input Baselines. arXiv:1905.05778. ACL 2019 per author arXiv comment -- VENUE UNVERIFIED at the Anthology standard this session. COUNTER-citation: clearing a floor is NECESSARY, not sufficient."
+  ],
+  "kill_definition": "Clause 3 fires iff a paper (or the union of existing similarity-null papers) already does A01's scope, i.e. (1) uses an input-blind / best-constant null as a per-arm VALIDITY GATE that disqualifies an arm from cross-arm comparison, (2) on structurally DAMAGED models (not intact ones), (3) across more than one model family, AND (4) shows the interface/readout choice interacts with the damage. No candidate satisfies any two of these four simultaneously. Balepur et al. satisfies a weak form of (1) only, on intact models. Overlap on the RECOMMENDATION ('use stronger baselines') is not preemption of the SCOPE.",
+  "citation_obligations_created": [
+   "Balepur et al. ACL 2024 main -- origin of 'use stronger than chance baselines in MCQA'; do not claim it.",
+   "Zheng et al. ICLR 2025 Oral -- origin of 'null model' terminology and 'a constant predictor can top a benchmark'; do not claim it.",
+   "Oostermeijer ICML 2026 -- DROP A01's acc-vs-acc_norm length-sensitivity sub-claim; reframe OBQA sign flips as replication under damage.",
+   "OLMES Findings-NAACL 2025 -- origin of the letter/cloze interface split; position A01's floor test as a FIX to a defect in OLMES's SIZE-keyed interface-selection rule (a damaged 7B gets routed to the letter interface, where it sits below its own best-constant floor).",
+   "Cho et al. ICLR 2026 + Bean et al. NeurIPS 2025 D&B -- framing/parallel literature; do not claim 'MC interface validity is unexamined'.",
+   "Feng et al. -- state explicitly that clearing a floor is necessary, NOT sufficient.",
+   "Downgrade the layer-order-null claim from 'first' to 'we are not aware of a prior layer-order null for layer correspondence' (arXiv searches on layer permutation + similarity nulls returned zero relevant hits -- 'not found', which is weaker than 'does not exist')."
+  ],
+  "strongest_remaining_novel_claim": "REVISED 2026-08-10 after the external audit. The tie-convention claim is NO LONGER the strongest -- it was demoted (see gate3b_longest_option_conventions.verdict): among executable conventions the null moves 0.34pp and 0/6 verdicts change. The strongest remaining A01-owned claim is now the TOKENIZER-DEPENDENCE of the longest-option null: on the same 14042 MMLU items under the same split convention the null is 0.275661 (Llama-2) / 0.283346 (Qwen3) / 0.284450 (OLMo-2) / 0.284664 (Llama-3), a 0.9003pp span = 2.68x the executable tie-convention span, and reusing another family's published null erases a real above-null verdict on 1 of 63 arms robustly (Llama-2 k20: p=0.00146 own vs p=0.395 shared). So the protocol requirement is 'report a construct-appropriate null AND its tie policy AND its tokenizer'. Weaker headline than before, and the tie-policy half is now the smaller half.",
+  "confidence": "medium-high",
+  "search_scope": "arXiv API: 30 queries across majority/best-constant/input-blind nulls, construct validity, letter-vs-content and cloze interfaces, degenerate/constant predictors, above-chance-as-wrong-reference, partial-input and hypothesis-only baselines, length normalisation, chance correction, CKA/permutation nulls, control tasks, layer permutation, bf16 ties and precision-in-eval. OpenReview /notes/search for the ICML/ICLR/NeurIPS family (checking venueid AND Camera_Ready_Revision). ACL Anthology bibtex + volume indices for the ACL family (Balepur main-vs-Findings; OLMES Findings).",
+  "tooling_failures_this_session": "Semantic Scholar HTTP 429 (rate-limited) and DBLP /search/publ/api HTTP 500 -- BOTH UNAVAILABLE. They are normally cross-checks, so every venue claim in NOVELTY_CHECK.md names the specific authority actually used, and three older papers are explicitly marked VENUE UNVERIFIED rather than asserted.",
+  "limits": "No full-text (PDF) pass on any candidate; all overlap/gap judgements are from title + abstract + venue metadata. For Balepur et al. and Oostermeijer -- the two carrying real citation obligations -- a full-text pass is advisable before submission.",
+  "concurrency_window": "For a 2026-08-09 check, <=3 months means >=2026-05-09. The ICML 2026 length-bias paper's arXiv v1 (2026-07-14) is inside the window, but its OpenReview cdate 2026-01-24 / pdate 2026-04-30 are outside. Judged NOT concurrent, i.e. treated as the stricter case: real prior art A01 must cite. No candidate was dismissed on concurrency grounds.",
+  "output_file": "NOVELTY_CHECK.md",
+  "audit_impact_on_novelty": "The audit does NOT touch kill clause 3 (novelty) -- it attacks claim STRENGTH, not originality. kill_clause_3_DOES_NOT_FIRE stands. But the citation obligations and the 'is this worth a paper' calculus shift, because the claim the novelty check called strongest has been demoted."
+ },
+ "status_note": "CHANGED 2026-08-10. Was 'active_all_gates_passed_novelty_clear', which was false while an unincorporated external Major-revision verdict existed: proposal/active/A03-parametric-vs-external-memory/evidence/TCODEX_AUDIT_20260810.md sections 2.1 + 7. All gates HAVE been RUN and none KILLED A01; that is not the same as 'all gates passed' in the sense of 'claims validated'. Three claims are now retracted or demoted -- see TCODEX_AUDIT_RESPONSE.md for the item-by-item ledger. The novelty check (kill clause 3) remains not-fired and is unaffected.",
+ "audit_response": {
+  "ledger": "TCODEX_AUDIT_RESPONSE.md",
+  "recompute_code": "code/a01_audit_response_recompute.py",
+  "recompute_output": "evidence/a01_audit_response_recompute.json",
+  "audit": "proposal/active/A03-parametric-vs-external-memory/evidence/TCODEX_AUDIT_20260810.md sections 2.1 + 7",
+  "audit_verdict_on_A01": "Major revision",
+  "accepted_retractions": [
+   "letter is a family-general step function / sharp phase transition -- RETRACTED",
+   "GATE1_DEPTHCURVE_VERDICT.md 'Llama-2 content strictly monotone' -- CORRECTED (two decreases)",
+   "five equally defensible tie conventions flip 5/6 verdicts -- DEMOTED to three executable conventions (0/6 flip) + two bounds",
+   "damage generally turns letter into a constant predictor -- NARROWED (modal share 43-45% on several below-floor arms)",
+   "cross-C1-C4 residual span 7-10x is one estimand -- NARROWED to descriptive sensitivity of the listed aggregation",
+   "active_all_gates_passed as 'claims validated' -- RETRACTED (status field changed)"
+  ],
+  "open_defect_not_fixed_this_pass": "evidence/gate3_dtype_runs/7B_base_dtype_summary.json:letter_acc_diff_boot_p = 1.042 is an ILLEGAL p-value (>1). Needs the two-sided bootstrap p construction in code/a01_gate3_fp32_vs_bf16.py clamped and all six dtype summaries re-emitted. The base arm's CONCLUSION does not depend on it (letter acc byte-identical across dtypes, McNemar p=1.000, CI95 [-0.0011,+0.0011])."
+ }
 }

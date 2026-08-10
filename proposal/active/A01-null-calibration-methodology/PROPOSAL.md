@@ -2,10 +2,23 @@
 
 ## 状态
 
-**ACTIVE。所有 gate 已跑完；第三条 kill clause（novelty）已核查、未触发。**
-当前范围 = `STATUS.json:claim_scope_after_gates` 的 `confirmed_general`。
+**ACTIVE，但处于 MAJOR REVISION。** 所有 gate 已跑完、无一 gate 杀死 A01；
+第三条 kill clause（novelty）已核查、未触发。**但这不等于"claims 已验证"** ——
+2026-08-10 一份外部怀疑论审计
+（`../A03-parametric-vs-external-memory/evidence/TCODEX_AUDIT_20260810.md` §2.1 + §7）
+对 A01 给出 **Major revision**，其中三条被点名的 claim 经本仓复核后
+**两条撤回、一条降级**。逐条回应 = **`TCODEX_AUDIT_RESPONSE.md`**（含实测数字），
+复现脚本 = `code/a01_audit_response_recompute.py`，输出 =
+`evidence/a01_audit_response_recompute.json`。
+`STATUS.json:status` 已从 `active_all_gates_passed_novelty_clear` 改为
+`active_MAJOR_REVISION_IN_PROGRESS_after_external_audit`。
+
+当前范围 = `STATUS.json:claim_scope_after_gates` 的 `confirmed_general`
+**减去 2026-08-10 的撤回项**（见 `claim_scope_after_gates.RETRACTED_20260810_*`
+与 `NARROWED_20260810_*`）。
 本文件的 claims 部分已于 2026-08-09 重写以对齐该范围
-（此前它仍停留在一个**已被撤回的收窄范围**上）。
+（此前它仍停留在一个**已被撤回的收窄范围**上），并于 2026-08-10 按审计回应再次修订。
+
 
 ## 一句话主张
 
@@ -22,9 +35,15 @@ calibrated residual / residual fraction
 自己对这个 headline 的第一次撤回。
 
 > ⚠️ **`null 的 convention` 是 2026-08-09 新增的必报字段。**
-> 见下方 §「协议本身也需要被校准」。这不是格式要求，是一个实测结论：
-> 同一个 null 的 tie convention 单独就能把 6 个 arm 里 5 个的判定从
-> “above null” 翻成 “significantly BELOW null”。
+> 见下方 §「协议本身也需要被校准」。这不是格式要求，是一个实测结论。
+> **⚠️ 2026-08-10 降级**：原文写"同一个 null 的 tie convention 单独就能把 6 个 arm
+> 里 5 个的判定从 above 翻成 significantly BELOW"——**那 5/6 翻转来自
+> `credit`（oracle 上界），不是任何可执行的 tie policy**。三个可执行 convention
+> （split/first/last）下 null 只摆动 **0.3365 pp**、**0/6 判定改变**。
+> 必报字段本身保留（tie policy **和** tokenizer 都要打印），但理由改成：
+> policy 未申明时 null 是**区间**；且 **tokenizer** 差异（0.9003 pp，2.68× 于
+> 可执行 convention 跨度）会**真的翻掉一个臂的判定**。见
+> `TCODEX_AUDIT_RESPONSE.md` §3/§6。
 
 ---
 
@@ -32,8 +51,8 @@ calibrated residual / residual fraction
 
 ### 撤回史（必须保留，不得静默删除）
 
-A01 经历了**一次撤回 + 一次对该撤回的反撤回**。读者必须能看到claim过什么、
-撤回了什么、为什么。这不是难堪，这是本文的方法论论点本身。
+A01 经历了**一次撤回 + 一次对该撤回的反撤回 + 一轮外部审计触发的两撤一降**。
+读者必须能看到claim过什么、撤回了什么、为什么。这不是难堪，这是本文的方法论论点本身。
 
 | # | 时间 | 事件 | 依据 |
 |---|---|---|---|
@@ -41,6 +60,13 @@ A01 经历了**一次撤回 + 一次对该撤回的反撤回**。读者必须能
 | 2 | 2026-08-06 | **自我撤回 #1（成立，保留）**：3/3 参与 flip 的 arm 在 letter 口径上都**处于或低于**自己的 best-constant floor。限制到两口径都显著高于 floor 的 4 个 arm → 6 pair、**0 sign flip、0 显著 flip**。flip 真实存在，但完全发生在仪器已失效的区域。 | `evidence/C5_self_falsification.md` §4 |
 | 3 | 2026-08-09 | **撤回 #2（❌ 本身已被撤回）**：`GATE1_VERDICT.md` §1 曾判 `KILL_CONDITION_CLAUSE_2_TRIGGERED`，结论是“把 A01 收窄为 *letter interface 只在结构损伤的 OLMo-2 上退化*”，并要求 drop “letter MC interface 一般而言是不可靠仪器”这一 claim。 | `GATE1_VERDICT.md` §1（原文保留，标注 RETRACTED） |
 | 4 | 2026-08-09 | **反撤回（当前有效）**：撤回 #2 测的是**错误的条件**。A01 的 kill clause 讲的是**受损**模型；`GATE1_VERDICT.md` 测的是**完好** base，完好 base 从未被预期出现该病理，因此既不能触发也不能解除该 clause。受损臂实验（**6/6** 非 OLMo 受损臂在自己的 floor 之下）**确认**了一般性 claim。 | `GATE1_DAMAGED_VERDICT.md`、`STATUS.json:claim_scope_after_gates.RETRACTED_must_narrow` |
+| **5** | **2026-08-10** | **撤回 #3（外部审计触发）："letter 是 family-general 的 step function / sharp phase transition"。** Llama-2 的 gap-fill 早已跑完却被记成 "in flight"，补齐后全 15 深度网格上 letter 有 **6 个 BH 显著下降**、**5 次 BH 显著方向反转**、floor 判定**穿越 4 次**（k22 从连续三个 above-floor 掉回 `0.230238`，p=9.1e−26）。**per-family 单层大跳保留**（+26.7/+30.3/+48.0 pp），"step function"/"family-general" 撤回。同时更正 `GATE1_DEPTHCURVE_VERDICT.md` 的 "Llama-2 content strictly monotone"（实际两次下降，均在噪声内）。 | `TCODEX_AUDIT_RESPONSE.md` §1–§2、`evidence/a01_audit_response_recompute.json`、`GATE1_DEPTHCURVE_VERDICT.md`（已加 banner） |
+| **6** | **2026-08-10** | **降级 #1（外部审计触发）："五种同等 defensible 的 tie convention 翻 5/6 臂"。** `credit` 是 **oracle 上界**（要求知道 gold），`wrong` 是**悲观下界**，两者都不是可执行的 input-blind policy。三个可执行 policy（split/first/last）下 null 只摆 **0.3365 pp**、**0/6 判定改变**、per-arm residual fraction 比值 **1.018×–1.058×**。改写为"三个可执行 convention + 两个 bound"；**tokenizer 那一支（审计未攻击）升为更强的一支**（0.9003 pp = 2.68×，且 63 臂里 robust 翻 1 个）。 | `TCODEX_AUDIT_RESPONSE.md` §3/§6、`GATE3_CONVENTIONS_VERDICT.md`（已加 banner）、`evidence/gate3_content_null_conventions.csv` |
+
+**从 #5/#6 学到的、要写进论文的第二条教训**：一条 claim 若靠"反证它的 run 还没落地"
+站着，就必须在那个 run 落地的当天重新判定 —— 而不是让台账替它续命一天。
+以及：**在把一个自由度称为"N 种同等合理的选择"之前，先逐个问"这个选择我们的 baseline
+真的执行得出来吗"**；执行不出来的那些是 bound，不是 convention。
 
 **从 #3→#4 学到的、要写进论文的教训**：判定一条 kill clause 之前，先确认
 自己测的是不是该 clause 说的那个条件。撤回 #2 是在 intact base 上做的，
@@ -57,15 +83,42 @@ A01 经历了**一次撤回 + 一次对该撤回的反撤回**。读者必须能
    Qwen3-8B-Base（截断，`0.2286`–`0.2301`）。floor = always-D `0.2689`，n=14042/臂。
    → `GATE1_DAMAGED_VERDICT.md`
 
-2. **这个塌陷是深度上的 SHARP PHASE TRANSITION，不是渐进衰减。**
-   Qwen3-8B（36L）在 **k=4…24 共 12 个实测深度**上 letter 钉在
-   `0.229454`–`0.230309`（**跨度 0.0855 pp**），随后在 **k24→k25 一层之内跳
-   `+48.02` pp**（`0.229739` → `0.709942`），此后 plateau `0.647`–`0.730`。
-   同一批 forward pass 上 content_norm 在 k24→k25 只动 **`+1.35` pp**
-   （`0.3045` → `0.3180`）且全程单调平滑。
-   Llama-3-8B 在 k17→k18 跳 `+30.34` pp；OLMo-2-7B 在 k18→k19 跳 `+26.68` pp。
-   → `GATE1_DEPTHCURVE_VERDICT.md`；数值本次复核自
-   `olmo2_mmlu_content_results/gate1_dmg_{qwen3_8b,llama3_8b,olmo2_7b}_depth*_k*/summary.json`（zwfy6）
+2. ~~**这个塌陷是深度上的 SHARP PHASE TRANSITION，不是渐进衰减。**~~
+   **⚠️ 2026-08-10 撤回 —— 见 `TCODEX_AUDIT_RESPONSE.md` §1。**
+   **现在只能主张（per-family 描述性）**：四个家族里有**三个**在**单一层**上出现
+   letter 跳变，其幅度远大于同一层 content 的任何变化 ——
+   Qwen3-8B（36L）在 **k24→k25 一层之内跳 `+48.02` pp**
+   （`0.229739` → `0.709942`），而同一批 forward pass 上 content_norm 只动
+   **`+1.35` pp**（`0.304515` → `0.317975`）；Llama-3-8B 在 k17→k18 跳
+   `+30.34` pp；OLMo-2-7B 在 k18→k19 跳 `+26.68` pp。
+   Qwen3 在 k=4…24 上 letter 钉在 `0.229454`–`0.230309`（跨度 `0.0855` pp）。
+   **不得**再写成 "step function" / "sharp phase transition" / "family-general"：
+
+   > **❌ 撤回的部分（2026-08-10，外部审计 §2.1 触发）**
+   > `STATUS.json:gate1_depth_curve.llama2_anomaly` 曾写 Llama-2 的 gap-fill
+   > "in flight on .21" —— **它早已跑完**，五个臂
+   > `gate1_dmg_llama2_7b_depth_gap2_k{8,12,18,22,26}` 就在 wzc1 上未被报告，
+   > 而被撤回的 claim 却靠 "反证的 run 还没落地" 站着。
+   > 补齐后的 Llama-2 全 15 深度网格（n=14042/臂，0 nan，8/8 shard 已断言）：
+   > **14 个相邻步里有 6 个是下降，且 6 个全部 BH 显著**（α=0.05）；
+   > **BH 显著的方向反转 5 次**（raw 7 次）；floor 判定**穿越 floor 4 次**：
+   > BELOW×6(k4..k14) → above×3(k16,k18,k20) → **BELOW**(k22 `0.230238`，
+   > −3.867pp，p=9.1e−26) → **AT**(k24 `0.272255`，+0.335pp，p=0.371) →
+   > above×4(k26..k31)。k22 在连续三个 above-floor 深度之后**整个掉回 floor 之下**,
+   > 这就是杀死 "family-general step" 的事实。
+   > 三个"干净"家族本身也不单调：raw letter 反转数 Qwen3 **13**、OLMo-2 **11**、
+   > Llama-3 **9**、Llama-2 **7**；最大单步 letter 下降 Qwen3 **−7.49** pp、
+   > Llama-2 **−7.52** pp。跳变远大于抖动，但抖动不是零。
+   > **仍然成立的**：本 claim 的*用途*不需要 step —— 低于 transition 的臂给出的是
+   > floor 值而不是测量值，所以混合 sub-/supra-transition rung 的 damage-scaling
+   > 回归不是在估一个量。Llama-2 反而**加强**这一点：它的 floor 判定在深度上非单调，
+   > 所以连"按可测性给 rung 排序"都做不到。
+
+   → `GATE1_DEPTHCURVE_VERDICT.md`（已加撤回 banner）、
+     `TCODEX_AUDIT_RESPONSE.md` §1–§2、
+     `evidence/a01_audit_response_recompute.json`；数值复核自
+     `olmo2_mmlu_content_results/gate1_dmg_llama2_7b*_k*/per_example_mmlu_shard*of8.jsonl`（wzc1）
+     与 `gate1_dmg_{qwen3_8b,llama3_8b,olmo2_7b}_depth*_k*/summary.json`（zwfy6）
 
    > **⚠️ 已修正的内部矛盾（2026-08-09）**：`STATUS.json` 曾在两处给出不同的
    > Qwen3 transition：`confirmed_general[1]` 写 “keep30 跳 +45.74pp”，
@@ -155,44 +208,78 @@ tie count 是这种压缩的**读数**，不是它的**原因**。**interface �
 
 ---
 
-## 协议本身也需要被校准（2026-08-09 新增，A01 目前最强的自有 claim）
+## 协议本身也需要被校准（2026-08-09 新增；**2026-08-10 降级重写**）
 
-A01 让别人用 construct-appropriate null 取代 chance line。**但 A01 自己的 MC
-content null 存在同一类未申明的自由度。** “null 取最长选项”这句话没有规定
-多个选项在 token 数上打平时怎么办，而 MMLU 上 **34.22%** 的 item 存在这种平局
-（其中 **13.37%（1877 item）四个选项全平**）。同一句英文的五种合理读法给出：
+> **⚠️ 本节的 headline 已于 2026-08-10 降级。** 原文写"五种同等合理的 convention
+> 把 6 臂里 5 臂翻转 / null 摆动 25.76 pp"，被外部审计
+> （`../A03-parametric-vs-external-memory/evidence/TCODEX_AUDIT_20260810.md` §2.1）
+> 判为应撤回，**审计在实质上是对的**。逐条回应见 `TCODEX_AUDIT_RESPONSE.md` §3。
+> 本节已按"**三个可执行 convention + 两个 bound**"重写。这条**不再是 A01 最强的
+> claim**；最强的是下面的 tokenizer 那半条。
 
-| convention | null | 六臂判定（bf16 content_norm） |
-|---|---:|---|
-| `split`（预注册 canonical） | **0.284450** | 6/6 above |
-| `first`（最低索引） | 0.281085 | 6/6 above |
-| `last`（最高索引） | 0.282154 | 6/6 above |
-| **`credit`（乐观/oracle）** | **0.453710** | **1/6 above，5/6 显著 BELOW** |
-| **`wrong`（悲观）** | **0.196126** | 6/6 above |
+A01 让别人用 construct-appropriate null 取代 chance line。**A01 自己的 MC content
+null 确实存在同一类未申明的自由度**："null 取最长选项"这句话没有规定多个选项在
+token 数上打平时怎么办，而 MMLU 上 **34.22%** 的 item 存在这种平局（其中
+**13.37%（1877 item）四个选项全平**）。但必须区分**三个可执行的 tie policy** 与
+**两个 bound**：
 
-**null 本身摆动 25.76 pp，比 chance `0.25` 到 intact base content `0.4706` 的
-全部距离还大。** intact base 的 residual fraction 在两个极端 convention 下是
-`0.0359` vs `0.5832`——**16.26×**，单臂、单一个未申明的 convention。
-即便完全弃用 `credit`，`wrong`-vs-`split` 在 base 上仍差 `1.47×`、在 keep8 上
-`2.53×`。
+| | convention | null | 六臂判定（bf16 content_norm） |
+|---|---|---:|---|
+| **可执行** | `split`（预注册 canonical，均分） | **0.284450** | **6/6 above** |
+| **可执行** | `first`（最低索引 = argmax 的实际行为） | 0.281085 | **6/6 above** |
+| **可执行** | `last`（最高索引） | 0.282154 | **6/6 above** |
+| ❌ **不是 policy，是 oracle 上界** | `credit`（gold ∈ W 即得 1） | 0.453710 | 1/6 above，5/6 显著 BELOW |
+| ❌ **不是 policy，是悲观下界** | `wrong`（任何平局判 0） | 0.196126 | 6/6 above |
 
-**结论：协议必须写成“报 construct-appropriate null **并且打印该 null 的
-convention**”。** 这与 gate-4 是同一种纪律，只是深了一层：gate-4 发现
-**aggregation** 选择让 headline span 在 `6.86×`–`10.04×` 之间移动，所以 headline
-必须是区间；这里发现 **null 自己**有 convention 参数，其影响（单臂 residual
-fraction `16.26×`）比 gate-4 担心的 aggregation 效应更大。
+**为什么 `credit` / `wrong` 不是 convention**：`credit` 要求把平局朝 gold 的方向打破，
+即**必须知道 gold 是哪个字母** —— input-blind baseline 定义上做不到；`wrong` 要求
+平局永远判错，而一个必须给出答案的 baseline 期望得 `1/|W|`，也无法达到。两者**夹住
+的是"tie policy 未申明时 null 的 identified set"**，不是读者可选的五种读法。
 
-**并且这个 null 还依赖 tokenizer。** “最长选项”是按 **continuation token 数**
-量的，各家族分词不同，所以同一个 `split` convention 在同一批 item 上给出
-Llama-2-7B `0.2757` / Qwen3-8B `0.2833` / Llama-3-8B `0.2847` / OLMo-2 `0.2845`
-（`evidence/a01_gate1_third_family.json` 的 `longest_option_split_tie_null`
-字段，跨度 `0.90` pp）。因此**任何跨家族的 content 比较都必须用 per-family、
-per-convention 的 null**，不能共用一个 `0.2845`。这一条与 tie convention 相互
-独立，两者叠加。
+**实测（executable-only）**：null 只摆动 **`0.3365` pp**（`0.281085`…`0.284450`），
+**6 臂判定 0 个改变**；per-arm residual fraction 比值 base **1.018×**、
+shortgpt16 **1.029×**、keep14 **1.034×**、keep12 **1.043×**、keep10 **1.056×**、
+keep8 **1.058×** —— **每臂 ≤6%**。原先 headline 的 `16.26×`（base `0.0359` vs
+`0.5832`）是**bound 宽度**，不是 convention 敏感度；而且五个受损/heal 臂的
+`credit` residual fraction 是**负数**，比值无定义（residual **变号**）—— 这本身就
+说明 `credit` 是 bound 而不是 convention。**因此不能像原文那样把它与 gate-4 的
+`6.86×`–`10.04×` aggregation span 直接对比**：后者是"可辩护选项之间"的敏感度。
 
-→ `GATE3_CONVENTIONS_VERDICT.md`、`evidence/gate3_content_null_conventions.{json,csv}`、
-  `code/a01_gate3_content_conventions.py`。所有已发表的 A01 数字都用的是 `split`
-  且已标注，**as published 全部正确**（对档案 summary 复核到 `<1e-12`）。
+**降级后的正确表述**：协议要求"报 construct-appropriate null **并且打印该 null 的
+tie policy**"。这个要求是**真的但对点估计影响不大**（0.34 pp，0/6 翻转）；它变得
+load-bearing 只在 tie policy **未申明**时 —— 那时诚实的 null 是**区间**
+`[0.196126, 0.453710]`（25.76 pp），且在 oracle 端 5/6 臂会读成 BELOW。
+
+**并且这个 null 还依赖 tokenizer —— 这一条审计没有攻击，现在是更强的那半条。**
+"最长选项"是按 **continuation token 数**量的，各家族分词不同，所以同一个 `split`
+convention 在同一批 14042 item 上给出
+Llama-2-7B `0.275661` / Qwen3-8B `0.283346` / OLMo-2 `0.284450` / Llama-3-8B `0.284664`
+（`evidence/a01_gate1_third_family.json:longest_option_split_tie_null`），
+**跨度 `0.9003` pp = 可执行 tie-convention 跨度（`0.3365` pp）的 `2.68×`**。
+**而且它真的会翻判定**：本次把全部 **63** 个非 OLMo 受损深度臂用"自家 tokenizer 的
+null" vs "共用的 OLMo-2 `0.284450`"重测（exact two-sided binomial，α=0.05），
+**2/63 翻转，其中 1 个 robust** —— `gate1_dmg_llama2_7b_depth_k20`
+（content_norm `0.287708`）对自家 null `0.275661` 是 **above，p=`0.00146`**，
+对共用 null `0.284450` 却是 **AT / 不显著，p=`0.395`**。另一个
+（llama3 `depth_k17`，p=`0.0507` vs `0.0443`）跨在 α 两侧，作为**边界 artifact**
+报告、不作证据。因此**任何跨家族的 content 比较都必须用 per-family、per-policy
+的 null**，不能共用一个 `0.2845`。这一条与 tie policy 相互独立，两者叠加。
+
+> ⚠️ **阈值披露（A01 自己的协议要求）**：α=0.05 与 above/AT/BELOW 三分法沿用
+> `code/a01_gate3_fp32_vs_bf16.py` / `code/a01_gate1_verdict.py`，是**既有的**；
+> 但 `robust = min(p) < 0.005` 这个标记是**看到两个翻转之后才定义的**，属**事后**，
+> 已在 `TCODEX_AUDIT_RESPONSE.md` §6 明确披露。它的作用是阻止 A01 把
+> `0.0507`-vs-`0.0443` 当成发现，所以它让 claim **更弱**而非更强。63 个 per-arm
+> 检验**未做多重比较校正**；若对 63 个做 BH，那个 robust 翻转（p=`0.00146`）在
+> α=0.05 下仍然存活，边界那个不存活。
+
+→ `GATE3_CONVENTIONS_VERDICT.md`（已加降级 banner）、`TCODEX_AUDIT_RESPONSE.md` §3/§6、
+  `evidence/gate3_content_null_conventions.{json,csv}`、
+  `evidence/a01_audit_response_recompute.json`、
+  `code/a01_gate3_content_conventions.py`、`code/a01_audit_response_recompute.py`。
+  所有已发表的 A01 数字都用的是 `split` 且已标注，**as published 全部正确**
+  （对档案 summary 复核到 `<1e-12`）。
+
 
 ---
 
@@ -252,8 +339,16 @@ random-init `0.0912` 是错误 null；使用它会把可用 correspondence signa
 ### 可以主张
 
 1. 跨多个无关 construct 的统一 null-calibrated reporting（含 convention 字段）；
-2. **null 自身的 convention 自由度会反转判定**（`credit` 翻 5/6 臂，
-   单臂 residual fraction 16.26×）——未在任何已核实的 prior art 中出现；
+2. ~~**null 自身的 convention 自由度会反转判定**（`credit` 翻 5/6 臂，
+   单臂 residual fraction 16.26×）~~ **2026-08-10 降级重写**：
+   **null 自身有两个未申明的自由度，且 tokenizer 那个会真的反转判定** ——
+   (a) tie policy：三个可执行 policy 下 null 只摆 `0.3365` pp、`0/6` 判定改变；
+   policy 未申明时 null 是区间 `[0.196126, 0.453710]`（`credit` 是 oracle 上界、
+   `wrong` 是悲观下界，两者都不是可执行 policy）；
+   (b) **tokenizer**：同一 `split` policy 下四家族 null 跨度 `0.9003` pp
+   （= 可执行 tie 跨度的 `2.68×`），且用别家的 null 会**抹掉一个真实的 above-null
+   判定**（Llama-2 k20：自家 null p=`0.00146` above，共用 null p=`0.395` AT）。
+   未在任何已核实的 prior art 中出现；
 3. 针对 layer correspondence 问题的 **layer-order null**
    （措辞降级为“我们未发现更早的 layer-order null”，而非“首创”）；
 4. 把该协议先用于**撤回自己的结果**，并且用它撤回自己的第一次撤回；
@@ -277,11 +372,11 @@ random-init `0.0912` 是错误 null；使用它会把可用 correspondence signa
 | gate | 状态 | 结论 |
 |---|---|---|
 | 1. 第三个模型家族的 MC interface case | ✅ DONE | intact 腿测错了条件（已撤回）；damaged 腿 **6/6 确认一般性 claim** |
-| 1b. depth curve（四家族，单层分辨率） | ✅ DONE | letter 是 step function，content 平滑单调；三家族 transition 钉到单层 |
+| 1b. depth curve（四家族，单层分辨率） | ✅ DONE，**结论 2026-08-10 部分撤回** | ~~letter 是 step function~~ → **三家族有单层大跳（+26.7/+30.3/+48.0 pp），Llama-2 是反例（6 个 BH 显著下降、穿越 floor 4 次）；"step function / family-general" 已撤回** |
 | 1c. healed arms | ✅ DONE | heal 软化 step 但不闭合 interface gap；shortgpt16 保住 intact 的排序 |
 | 2. 非 MMLU 的 MC benchmark | ✅ DONE | **复现**（所以 AND-gate 不可能触发） |
 | 3. OLMo full-fp32 forward | ✅ DONE（六臂） | ties 是 bf16 artifact；移除后判定 5/6 不变 → 机制被证伪 |
-| 3b. longest-option convention 表 | ✅ DONE（2026-08-09） | **null 自己有 convention 自由度，翻 5/6 臂** |
+| 3b. longest-option convention 表 | ✅ DONE（2026-08-09），**2026-08-10 降级** | ~~null 自己有 convention 自由度，翻 5/6 臂~~ → **可执行 policy 只摆 0.3365 pp / 0-6 翻转；5/6 来自 oracle 上界。tokenizer 才是更强的那半条（0.9003 pp，翻 1/63 robust）** |
 | 4. C4 aggregation 预注册 | ✅ DONE | headline 必须是区间 `6.86×–10.04×` |
 | 5. novelty / prior-art 边界 | ✅ DONE（2026-08-09） | **kill clause 3 未触发**；6 条引用义务 + 1 条 sub-claim 撤回 |
 

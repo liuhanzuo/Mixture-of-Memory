@@ -53,6 +53,13 @@ shared/literature/RELATED_WORK_GAP_AUDIT_20260808.md
    - 跨 construct 的 input-blind null calibration。
    - MMLU interface failure、SQuAD majority prior、CKA layer-order null 和
      probe/native readout 是同一方法学框架的案例。
+   - ⚠️ **2026-08-10：MAJOR REVISION**（外部审计
+     `active/A03-parametric-vs-external-memory/evidence/TCODEX_AUDIT_20260810.md`
+     §2.1+§7）。两条 claim 撤回（family-general step function；Llama-2 content
+     strictly monotone）+ 一条降级（tie convention 翻 5/6 → 可执行 convention 翻
+     0/6）。**读任何 2026-08-10 之前的 A01 verdict 文件前先读
+     `active/A01-null-calibration-methodology/TCODEX_AUDIT_RESPONSE.md`。**
+     `STATUS.json:status` 已不再声称 all gates passed。
 2. `active/A02-comem-write-read-repair/`
    - 先验证已有 Write-LoRA/overlap repair 是否迁移到自然任务，再重做
      equal-latency frontier。
