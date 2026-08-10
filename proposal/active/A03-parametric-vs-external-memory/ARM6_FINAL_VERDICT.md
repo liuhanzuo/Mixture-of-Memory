@@ -94,8 +94,8 @@ changed.** LR is not doing the work the design attributes to it.
 | earlier claim | status |
 |---|---|
 | "trajectory-CPT claim RETRACTED" (step215 verdict) | **WITHDRAWN — called too early.** step220 is the pre-registered point and it replicated. |
-| "swing/CI = 2.4× median, 10.0× worst" | **stands as arithmetic**, but my *interpretation* ("bootstrap measures the wrong variance / tight CIs are false confidence") was wrong in an important way — the swing is not random, it is reproducible at r≈0.99 across arms. The CI is not mis-measuring noise; the oscillation is real signal driven by data order. |
-| "7/12 arm-axis combos are sign-contradictory" | stands, and is now *explained*: the sign flips are shared across arms because they are data-order-driven, not independent errors. |
+| "swing/CI = 2.4× median (2.388), 10.0× worst (10.01×); 15/27 = 55.6% of combos exceed 2× — NOT the 52% printed in the withdrawn step-215 file, which was 14/27 pre-step220000 | **stands as arithmetic**, but my *interpretation* ("bootstrap measures the wrong variance / tight CIs are false confidence") was wrong in an important way — the swing is not random, it is reproducible at r≈0.99 across arms. The CI is not mis-measuring noise; the oscillation is real signal driven by data order. |
+| "7/12 arm-axis combos are sign-contradictory" | **numerator stands, denominator corrected to 7/13** (2026-08-11). The count of contradictory combos is still 7, but 12 was computed while Arm 6 had only 3 dose points; step220000 promoted `arm6/triviaqa/contains` to 2 SIG cells (+0.4848, +0.3790), making 13 combos with >=2 SIG. The phenomenon is unchanged and is now *explained*: the sign flips are shared across arms because they are data-order-driven, not independent errors. |
 | "Arm3's +0.48 is the argmax of a series with mean +0.088" | true arithmetically, but Arm 6 independently landing +0.50 at the same step weakens "argmax-picking" as the explanation. |
 | Arm 4 "peak-LR harms" retraction | **stands** (data-path defect, independent of all the above). |
 
