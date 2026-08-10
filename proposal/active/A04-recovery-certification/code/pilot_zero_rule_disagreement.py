@@ -169,6 +169,35 @@ def plateau_rule(ppl_traj, T_pct_per_5k):
     """PLATEAU(T): accept at checkpoint c iff the relative in-domain val PPL
     improvement over the PRECEDING grid interval is < T.
 
+    ⚠️ SUPERSEDED 2026-08-10 — BOTH readings computed below are dimensionally
+    broken on an irregular grid, and neither should be used to run the gate.
+    They are retained ONLY so this script keeps reproducing the numbers in
+    evidence/pilot_zero_rule_disagreement.json byte-for-byte.
+
+      accept_unscaled: 15.70x stringency spread across A04's own frozen grid
+                       {2500,5000,10000,20000,40000,80000} when re-expressed in
+                       the %/5k units the threshold claims; correct at exactly
+                       one of the six checkpoints (d=5000).
+      accept_scaled:   accepts a run still improving at exactly T for every
+                       d > 5000 (relative improvement compounds, the linear
+                       allowance does not); NOT composition-consistent
+                       (174/200,000 random checkpoint pairs accept a merged
+                       interval while accepting neither half); VACUOUS at
+                       d >= 250,000 steps.
+
+    The rule now in force converts to a per-5k GEOMETRIC rate first:
+        rate_5k = 100 * (1 - (ppl_c/ppl_prev) ** (5000/d))  <  T
+    which equals the arithmetic below EXACTLY at d = 5000 (asserted < 1e-12).
+    → code/a04_plateau_rule_repair.py,
+      evidence/a04_plateau_rule_repair.json,
+      A04_PLATEAU_REPAIR_AND_MARGIN_SENSITIVITY.md section 1.
+
+    Consequence for this script's output: under the repaired rule PLATEAU first
+    accepts at step 100,000, NOT step 200,000. This script's K1 bookkeeping
+    (PLATEAU_DEFINED_ARMS = {keep7f2_step200000}) therefore evaluates a cell
+    that the repaired rule still accepts, but no longer the EARLIEST one. Step
+    100,000 has no capability scoring, so that cell is UNMEASURED.
+
     T is expressed per 5,000 steps, so the raw interval improvement is compared
     against T scaled by (interval_steps / 5000). Reported both ways: the
     literal-rate reading (scaled, honours the units as written) and the

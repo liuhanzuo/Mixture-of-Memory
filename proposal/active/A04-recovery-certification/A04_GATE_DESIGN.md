@@ -69,6 +69,19 @@ Fixed before any data is seen. Style matched to A02's `kill_gate_verbatim` and A
 > * `PLATEAU(T)` accepts at checkpoint `c` iff the relative in-domain validation PPL improvement
 >   over the preceding grid interval is `< T`, with **`T = 2.0 %` per 5 000 steps** — a single
 >   number, fixed here, never re-tuned after seeing data.
+>   > ⚠️ **SUPERSEDED IN ITS ARITHMETIC (2026-08-10), NOT IN ITS THRESHOLD.** `T = 2.0 %/5k` above
+>   > is **unchanged and still binding**. But the sentence "the relative improvement over the
+>   > preceding grid interval is `< T`" is **dimensionally incoherent on an irregular grid**, and
+>   > both readings that were implemented (`code/pilot_zero_rule_disagreement.py:168-202`) are
+>   > broken: the unscaled one has a **15.70× stringency spread** across this document's own frozen
+>   > grid `{2500,…,80000}`, and the linear-scaled one accepts a run still improving at exactly
+>   > `T` for every `d > 5000`, is **not composition-consistent** (174/200 000 violations), and is
+>   > **vacuous** at `d ≥ 250 000`. The rule now in force converts to a per-5k **geometric** rate
+>   > first: `rate_5k = 100·(1 − (ppl_c/ppl_prev)^(5000/d)) < T`, which equals the arithmetic above
+>   > **exactly** at `d = 5000`. **→ `A04_PLATEAU_REPAIR_AND_MARGIN_SENSITIVITY.md` §1 and
+>   > `evidence/a04_plateau_rule_repair.json`.** The repair is stricter than the linear reading, so
+>   > it makes A04's target disagreement harder to find. Consequence: on the pilot trajectory the
+>   > first accept moves from step 200 000 to step **100 000**, where no capability axis was scored.
 > * `RATIO(ρ)` accepts iff `mean_over_axes(reported_a / reported_intact) ≥ ρ`, with
 >   **`ρ = 0.85`**, chosen to match the published style of retention headline (CoMe reports
 >   "retains 83% of original average accuracy", arXiv:2510.15304 abstract) rather than to fit our
