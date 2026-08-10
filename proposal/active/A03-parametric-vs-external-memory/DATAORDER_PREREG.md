@@ -267,6 +267,30 @@ step215000** — that reproduces Arm 4's defect exactly and voids the
 matched-exposure premise. A seed whose ckpt is truncated and not re-run simply
 does not land (§4, `INCONCLUSIVE_INSUFFICIENT_N`).
 
+### 5.4 A guard that was never actually armed (found while building this)
+
+The Arm 6 eval watcher is described in `STATUS.json` as the v3 guard that
+"survived 4 dose points". Two of its three size-related protections did run, but
+**guard (b), the sibling-size comparison, never did**: it resolves `REF_SIZE`
+**once at startup**, and it started at 04:58:33 while its first sibling ckpt
+(step205000) landed at 07:47:51. Its log line reads
+`v3 started for Arm 6; REF_SIZE=unknown bytes`, and
+`logs/a03_arm6_trajectory_progress.log` contains **0** `REFUSE` lines.
+
+So Arm 6's four dose points were validated on mtime-age + size-stability +
+`torch.load` only. Arm 4's watcher, started with siblings already present,
+captured `REF_SIZE=12181311650` and logged **12** `REFUSE` lines — that is the
+run where the guard actually did the work it is credited with.
+
+The new watcher re-resolves the reference **every loop**, so the guard arms
+itself as soon as a sibling appears, and it refuses to score while no sibling
+exists rather than proceeding unguarded. This matters directly here: with only
+step220000 being evaluated, a startup-time lookup could easily have found no
+sibling and disabled the very guard that §5.3's truncation risk requires.
+Checkpoint retention is not a threat to this — rotation keeps every multiple of
+`--milestone_every=5000` with `keep_milestones=0` (unlimited), and Arm 6's four
+ckpts are all still on disk at identical size 12,181,311,650 B.
+
 ## 6. Analysis is fixed too
 
 Cells are produced only by

@@ -16,6 +16,22 @@
 # (b) is what caught Arm 4's step220000.pt truncated at 5,956,287,104 B of
 # 12,181,311,650 B (49%). Do not weaken it.
 #
+# ⚠️ ONE REAL FIX vs the Arm 6 watcher, do not "simplify" it back:
+# the Arm 6 / Arm 4 watchers resolve REF_SIZE **once at startup**. Arm 6's
+# watcher started 04:58:33, its first sibling ckpt landed 07:47:51, so it logged
+# "REF_SIZE=unknown bytes" and guard (b) was silently DISABLED for all four of
+# its dose points (0 REFUSE lines in logs/a03_arm6_trajectory_progress.log). Arm 6
+# is therefore only "known-good" on guards (a)+(c)+(d); its size guard never ran.
+# By contrast Arm 4's watcher started with siblings present, captured
+# REF_SIZE=12181311650, and logged 12 REFUSE lines -- that is the incident the
+# tolerance exists for. Here ref_size() is re-resolved EVERY loop, so the guard
+# arms itself as soon as a sibling appears, and the watcher refuses to score at
+# all while no sibling exists (better to wait than to score unguarded).
+# Safe against retention: rotation keeps every multiple of --milestone_every=5000
+# (keep_milestones=0 = unlimited), so step205000/210000/215000 all survive to
+# serve as references -- verified on Arm 6, whose four ckpts are all still on disk
+# at identical size 12,181,311,650 B.
+#
 # ---------------------------------------------------------------------------
 # ⚠️ KNOWN UPSTREAM DEFECT THIS WATCHER CANNOT FIX (2026-08-10, MAIN)
 # ---------------------------------------------------------------------------
