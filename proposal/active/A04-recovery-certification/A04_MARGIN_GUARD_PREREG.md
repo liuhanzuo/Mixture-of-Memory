@@ -605,3 +605,19 @@ the five MMLU nulls, and the eight `credit` cells were each re-derived and match
    in the window, so it does not bite here.
 8. **SHA256 for the pinned anchors.** G0 asks for SHA256; this pass verified **md5** after
    `scp -O` (matched at both ends). SHA256 must be recorded at gate launch.
+   > ✅ **CLOSED 2026-08-10** — `evidence/a04_g0_anchor_sha256_pinning.json`. SHA256 recorded
+   > for all four axes (merged + all 24 shard files), computed **both** remotely on `.82`
+   > against the canonical zwfy6 paths and locally against the read-only staging copies;
+   > identical. MMLU anchor sha256 =
+   > `8cbbb008f2f606b039d61f6fedfb54ae4b44aedf7430f9322fab3150027e2378`.
+   > **Also discovered while closing this**: the md5 recorded at line 347 pins the *merged*
+   > `per_example_mmlu.jsonl`, but every analysis in A04 reads the *eight shard files*. A naive
+   > shard-order concatenation gives md5 `759e8d639d388e652323d29f15cff197`, **not** the
+   > recorded value. The recorded md5 is reproduced only by merging the shards **and re-sorting
+   > by `item_id`** — verified exactly, for all four axes. So the pin is valid, but that fact
+   > was undemonstrated until now.
+   > **The 48-flip D5 number was re-verified in the same pass and REPRODUCES EXACTLY**
+   > (§2.5 of this document needs no correction); three additional flip counts the prereg did
+   > not report are recorded there — letter **191**, `content_raw` **33**, `content_norm` **48**,
+   > plus **80** `content_norm` *prediction* flips — which strengthen the "harness code change
+   > between the two evals" reading and still do **not** establish causality.

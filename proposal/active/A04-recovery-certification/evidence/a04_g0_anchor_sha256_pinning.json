@@ -1,0 +1,149 @@
+{
+ "what": "A04 G0 anchor pinning: SHA256 for every intact-anchor artefact, closing open item 8 of A04_MARGIN_GUARD_PREREG.md section 8, plus an independent re-verification of the D5 48-flip drift number.",
+ "date": "2026-08-10",
+ "gpu_spent": 0,
+ "closes_open_item": "A04_MARGIN_GUARD_PREREG.md section 8 item 8: 'SHA256 for the pinned anchors. G0 asks for SHA256; this pass verified md5 after scp -O (matched at both ends). SHA256 must be recorded at gate launch.'",
+ "g0_requirement_verbatim": "A04_MARGIN_GUARD_PREREG.md:344 -- 'Before any gate GPU is spent, one intact-arm artefact is named by path + SHA256 for each axis, and residual(intact, x) is computed from that artefact only.'",
+
+ "how_the_recorded_md5_was_reproduced": {
+  "problem": "the prereg records md5 d1a7b1cefc0031afa84e7b9334a08bc5 for zwfy6:.../A03_1B_base/per_example_mmlu.jsonl, but Pilot Zero and the guard classifier both read the EIGHT per-shard files, not the merged file. The two are not the same byte stream: a naive shard-order concatenation gives md5 759e8d639d388e652323d29f15cff197.",
+  "resolution": "the canonical merged file is the shards merged and re-sorted by item_id. Reconstructing that byte stream from the eight shards reproduces md5 d1a7b1cefc0031afa84e7b9334a08bc5 EXACTLY, and sha256 8cbbb008f2f606b039d61f6fedfb54ae4b44aedf7430f9322fab3150027e2378, which equals the sha256sum of the merged file computed remotely on zwfy6 (.82, read-only ssh).",
+  "why_this_matters": "it establishes that the analysis inputs (shards) and the pinned artefact (merged file) are the same data, so the md5 in the prereg does pin what the prereg says it pins. Without this the md5 documented one file while the numbers came from eight others."
+ },
+
+ "pinned_anchors": {
+  "_disk": "zwfy6",
+  "_project_root": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory",
+  "_note": "sha256 values below were computed BOTH remotely on .82 against the canonical zwfy6 paths and locally against the read-only scp -O staging copies in /tmp/a04src; the two agree on all 24 shard files and all 4 merged files.",
+  "mmlu_content": {
+   "merged_path": "olmo2_mmlu_content_results/A03_1B_base/per_example_mmlu.jsonl",
+   "n_items": 14042,
+   "md5": "d1a7b1cefc0031afa84e7b9334a08bc5",
+   "sha256": "8cbbb008f2f606b039d61f6fedfb54ae4b44aedf7430f9322fab3150027e2378",
+   "shard_dir": "olmo2_mmlu_content_results/A03_1B_base",
+   "shard_sha256": {
+    "per_example_mmlu_shard0of8.jsonl": "c341cd86114c587770519e95b2860c86092bd611277c4f92c5dd970aeafa5aa5",
+    "per_example_mmlu_shard1of8.jsonl": "fe8096a777bf86d2c22659a3e714c6472bee9e81a10734582e675b899ad68cde",
+    "per_example_mmlu_shard2of8.jsonl": "98d07c739f8dceb4c85fcb1a3ad800ddd20e196bf73473ba396656801d908121",
+    "per_example_mmlu_shard3of8.jsonl": "1b2c3cf4669cda7d5a7363b9e2e6074b36007bcf087a501d34046feda1bcb252",
+    "per_example_mmlu_shard4of8.jsonl": "07904fc2b497a9d54e76334bac38ea0f57ccaf572b58480ad456b724577314fe",
+    "per_example_mmlu_shard5of8.jsonl": "bd163b12f96b58d2ecf5f9b6578b3cdadc789de82e1e18fef04b922288d11012",
+    "per_example_mmlu_shard6of8.jsonl": "1b8b868b616daf56d26b78663ef21a635ad2a77ac62c3f875311bd739bf2c3aa",
+    "per_example_mmlu_shard7of8.jsonl": "7d4086f320534ab3282dd6ef8b18fab1415edf00ee30bbf32feacf4e6c007b03"
+   }
+  },
+  "triviaqa_em": {
+   "merged_path": "olmo2_closedbook_results/A03_1B_base/per_example_triviaqa.jsonl",
+   "n_items": 17944,
+   "md5_of_canonical_merge": "46bdb7b050406f8df7e141346ebe1de1",
+   "sha256": "c30b9072e139b6828c585f169c77bf60a6b28b6ea1c1048b404dc8ef1cbf9d00",
+   "sha256_source": "computed remotely on .82 against the zwfy6 merged file AND reconstructed locally from the 8 shards; identical",
+   "shard_dir": "olmo2_closedbook_results/A03_1B_base",
+   "shard_sha256": {
+    "per_example_triviaqa_shard0of8.jsonl": "329377d9c8057c3dcb3fd78e6cc39cd1566a6b98c48253606f1c590c54733fc1",
+    "per_example_triviaqa_shard1of8.jsonl": "3ac5875c3ac1f9d177837e627a8b0fb83a2050946ff1b7c935acc4f4ee926e2d",
+    "per_example_triviaqa_shard2of8.jsonl": "3c5b4d1028a1db2b1d225376edf303e87c9f538bce65c33857cc19d88c363696",
+    "per_example_triviaqa_shard3of8.jsonl": "83e3c7c651b99c2f1fd85db08b509179fbd5fcf02e380818d40e91c5f5513f0a",
+    "per_example_triviaqa_shard4of8.jsonl": "70b7e75dbeba0b0efec85acb79fb21367f35c16a7bce7e846f75db86ef719c9f",
+    "per_example_triviaqa_shard5of8.jsonl": "e905e0ec0bf0608d3c0d310030eb9d49cf9f2873e7beb1f4f2a382387627406f",
+    "per_example_triviaqa_shard6of8.jsonl": "d4895c2eba1a08b8af14ac77d6fc104e72e62ca75bf525da44cd92a70ded0bb4",
+    "per_example_triviaqa_shard7of8.jsonl": "5329d16a60c966e5b6e4ae2a78ee9c28466373a050083e8719868a1608a9d208"
+   }
+  },
+  "popqa_em": {
+   "merged_path": "olmo2_closedbook_results/A03_1B_base/per_example_popqa.jsonl",
+   "n_items": 14267,
+   "md5_of_canonical_merge": "efdbc5f9adf5b024948b28cd1eabf5df",
+   "sha256": "500e45070bd9dea20d104f80b9443ee257eab1dfda6d0a83cbc9cbf9e3f736a5",
+   "sha256_source": "computed remotely on .82 against the zwfy6 merged file AND reconstructed locally from the 8 shards; identical",
+   "shard_dir": "olmo2_closedbook_results/A03_1B_base",
+   "shard_sha256": {
+    "per_example_popqa_shard0of8.jsonl": "cdc2ca7a8eeb136276b2b1db03e1a0ce19374ea7acb97acf6b837442b14f61e9",
+    "per_example_popqa_shard1of8.jsonl": "652251796e3a54de4333d63287855816328a27209c7be052fba26ef074d2a7ed",
+    "per_example_popqa_shard2of8.jsonl": "75223811d1a079bbab976c21aabf54e7a03a8920b376f7a3c38cf20350f2c1a6",
+    "per_example_popqa_shard3of8.jsonl": "fc6291800521138428040468bdf89f3f35ca35b38f80ebf13a1ee9be03bf4320",
+    "per_example_popqa_shard4of8.jsonl": "5f3340f1ab7eac854d417232a6d294301f9328a8bef3788e3a1a19534f843d6b",
+    "per_example_popqa_shard5of8.jsonl": "c24c2d692f9ab9b2cfdff48aed07239794d5e1543a48c2a47752544e3da311ad",
+    "per_example_popqa_shard6of8.jsonl": "301f6c6840d33d15466036bd22843ba6036a079d6e8e86aec33cb29f44e194a3",
+    "per_example_popqa_shard7of8.jsonl": "a713ccfaca5c9d87e3147cb3f2a5e518cd91bf62b3fdc1ac6496e17480cde6a7"
+   }
+  },
+  "nq_open_em": {
+   "merged_path": "olmo2_closedbook_results/A03_1B_base_nq/per_example_nq_open.jsonl",
+   "n_items": 3610,
+   "md5_of_canonical_merge": "a6020d9b6158bbeefd31f2571573926e",
+   "sha256": "58ced6e6bdd34d3d08ff7be11b05031679373c7f2fed2d9869f720561a104c6d",
+   "sha256_source": "computed remotely on .82 against the zwfy6 merged file AND reconstructed locally from the 8 shards; identical",
+   "axis_status": "DEMOTED to descriptive-only by A04_GATE_DESIGN.md section 5.2 and retired by guard D6; pinned anyway because the design still reports it",
+   "shard_dir": "olmo2_closedbook_results/A03_1B_base_nq",
+   "shard_sha256": {
+    "per_example_nq_open_shard0of8.jsonl": "12c2b944dfdbd7d079d4ca6f213c4f619bfde1dbfb91ad1d9d3a816b58b610cb",
+    "per_example_nq_open_shard1of8.jsonl": "d4e66c11d4bd95bea590bace0085bff6a3c5cebc089c130bffeabdacf8e3031d",
+    "per_example_nq_open_shard2of8.jsonl": "5db2a7430b24644ba88502056defa86c7666d5cad9e21a9490ff34bb27f8e3f2",
+    "per_example_nq_open_shard3of8.jsonl": "90a8e59cf190d63bb8026122699c61c6aaefe22f529556cde75748cacb172f8b",
+    "per_example_nq_open_shard4of8.jsonl": "fdbfcb51ae386e378f51d978ed10d23b3b0c4435b289b13572ba7739b5026831",
+    "per_example_nq_open_shard5of8.jsonl": "cb0b92ca061f42c93e74825bd8a016b60f86b25370d2e67c67cba15fe28b8c74",
+    "per_example_nq_open_shard6of8.jsonl": "8b1b747eb3da38dcef7eaf3ab66d76d2dba04b7e9889b2740211ce962319a676",
+    "per_example_nq_open_shard7of8.jsonl": "5df12bc16f028aee6531b8e9d2bab1869d2a9eed942efcc7fa10460e145e187b"
+   }
+  }
+ },
+
+ "d5_second_measurement_NOT_used_for_delta": {
+  "path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/olmo2_mmlu_content_results/a01_1B_intact_base_full/per_example_mmlu.jsonl",
+  "disk": "wzc1",
+  "md5": "d62d3882c7d7e67d65d5d3176ae62d3b",
+  "sha256": "8797e77a314117eb4cdb1e03d68af448966e248795c48aa8bfeb79a30f200029",
+  "role": "D5 sensitivity check ONLY; guard G0 forbids using it for Delta",
+  "shard_sha256": {
+   "per_example_mmlu_shard0of8.jsonl": "f82b6d32933f3c4f624dfe738c645095876430fbc95b17b976df3df6abb6dffb",
+   "per_example_mmlu_shard1of8.jsonl": "b43232910e6f1c44479d669973fceffbe82e5b99e5b0838e49391af46756f4ff",
+   "per_example_mmlu_shard2of8.jsonl": "0cd3a7ba08ff16e612eae3cda7d20561b85e8017b5a8b6c6da96757a26998671",
+   "per_example_mmlu_shard3of8.jsonl": "bac6631ca5385eaabea9a83983a7e70aeca081190e6301835ec783c068668e2c",
+   "per_example_mmlu_shard4of8.jsonl": "f9ddd488493becbe41cba41fdb600fb6c7d460ff45980a036fe85035a68039ea",
+   "per_example_mmlu_shard5of8.jsonl": "41cfe1d44a2fd625a061eaa0e0e990aed0b211c4d09427d0f6a6d9be87993283",
+   "per_example_mmlu_shard6of8.jsonl": "aa3860d57918bbf905c036d701556941cfbcbbb74d157618c502def123c69236",
+   "per_example_mmlu_shard7of8.jsonl": "308c1c415f4d92fc5d3a315136a8462b9095b7221a2e6c9263d6de29879f3a68"
+  }
+ },
+
+ "d5_48_flip_reverification": {
+  "question": "does A04_MARGIN_GUARD_PREREG.md:212's '48 / 14,042 item flips' reproduce?",
+  "verdict": "YES -- reproduces exactly, and so does every derived number.",
+  "method": "both dumps merged from their own 8 shards, sorted by item_id, item_id and gold_letter sequences asserted identical, per-item content_norm correctness compared elementwise. No reimplementation of the metric: correctness taken from the harness-stored 'correct' flag.",
+  "reproduced": {
+   "n_items": 14042,
+   "acc_A03_1B_base_zwfy6": 0.386839481555334,
+   "acc_a01_1B_intact_base_full_wzc1": 0.38698191140863125,
+   "content_norm_item_flips": 48,
+   "acc_drift_pp": 0.014242985329726565,
+   "delta_drift_pp": 0.0014242985329726565
+  },
+  "prereg_values_for_comparison": {
+   "content_norm_A03": 0.3868394816,
+   "content_norm_a01": 0.3869819114,
+   "item_flips": 48,
+   "residual_drift_pp": 0.014243,
+   "delta_drift_pp": 0.001424,
+   "match": "all match to the precision printed in the prereg"
+  },
+  "NEW_numbers_the_prereg_did_not_report": {
+   "note": "the prereg reported flips on content_norm only. The same two dumps differ on the other two interfaces too, and by DIFFERENT amounts, which sharpens the 'a harness code change sits between the two evals' reading and rules out a single flipped subset.",
+   "letter_interface": {"acc_A03": 0.3807149978635522, "acc_a01": 0.38164079190998434, "item_flips": 191},
+   "content_raw_interface": {"acc_A03": 0.35992023928215355, "acc_a01": 0.3594217347956132, "item_flips": 33},
+   "content_norm_interface": {"acc_A03": 0.386839481555334, "acc_a01": 0.38698191140863125, "item_flips": 48},
+   "content_norm_PREDICTION_flips": 80,
+   "reading": "80 items change PREDICTED option under content_norm while only 48 change correctness -- i.e. 32 prediction changes are wrong-to-wrong. The three interfaces disagree by 33/48/191 items, so the difference is not one bad shard or one truncated file; it is a scoring-path difference that touches all three interfaces with different sensitivity. This is consistent with the prereg's 'harness commit 7ac9653 falls strictly between the two evals' and remains, as the prereg says, NOT a proven causal attribution."
+  },
+  "still_UNVERIFIED": "causality. No same-code control was run (that would need GPU). The prereg's refusal to call this a 'noise floor' stands, and this pass does not weaken it. See memory note same-harness-runs-bit-identical: same-arch/same-harness re-runs in this repo are byte-identical, so a nonzero flip count REQUIRES a named cause and 'jitter' is not available as an explanation."
+ },
+
+ "verification_log": [
+  "remote sha256sum on .82 (read-only ssh, no GPU) against the canonical zwfy6 paths -- all 24 anchor shards + 4 merged files",
+  "local sha256sum on the /tmp/a04src read-only scp -O staging copies -- identical on all 24 shards",
+  "canonical-merge reconstruction (concat 8 shards, sort by item_id) reproduces the merged file's md5 AND sha256 for all four axes",
+  "item count asserted per axis: mmlu 14042, triviaqa 17944, popqa 14267, nq_open 3610",
+  "no *.pt / *.bin / weights touched; nothing written to zwfy6"
+ ],
+ "gpu_spent_confirm": "ZERO. Remote access limited to ls / md5sum / sha256sum."
+}
