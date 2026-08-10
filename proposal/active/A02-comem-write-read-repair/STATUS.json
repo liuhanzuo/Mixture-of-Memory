@@ -1,8 +1,8 @@
 {
   "id": "A02",
-  "status": "active_storage_DEAD_readcompute_weak_phase1_BABILONG_evidence_reattributed_to_retrieval",
+  "status": "needs_revision_original_thesis_dead_diagnostic_result_is_the_asset",
   "priority": 2,
-  "updated": "2026-08-10T01:30+0800",
+  "updated": "2026-08-10T18:40+0800",
   "phase": "depth-vs-retrieval quality gate MEASURED (the question the cost gate exposed but could not answer)",
   "premise_check_2026_08_08": {
     "claim_under_test": "A02 stage-1 needs NO new training -- only eval of ~5 configs x 5 benchmarks",
@@ -40,7 +40,7 @@
     "If A02 continues, two candidates, NEITHER CoMem-specific: (a) sublinear retrieval -- selection is the dominant per-query cost at 1M (1014.8 ms vs 678 ms read); (b) a better selector than top-12 iter_bm25 -- it misses the gold support on 37-77% of BABILong qa1/qa2 samples. Both would benefit plain text-RAG identically, so neither supports a CoMem thesis.",
     "NOT tested anywhere yet: a matched-quality depth control (a LoRA distilled for j=0) -- without it, depth cannot be isolated from adapter quality. This is the only remaining way to make a clean depth claim, and it requires TRAINING, not eval."
   ],
-  "kill_gate_verbatim": "若 paired quality CI 仍显著低于 0，则停止 CoMem 优于 RAG 的叙事，定位为高复用 workload 的 storage/read-compute 方案",
+  "kill_gate_verbatim": "\u82e5 paired quality CI \u4ecd\u663e\u8457\u4f4e\u4e8e 0\uff0c\u5219\u505c\u6b62 CoMem \u4f18\u4e8e RAG \u7684\u53d9\u4e8b\uff0c\u5b9a\u4f4d\u4e3a\u9ad8\u590d\u7528 workload \u7684 storage/read-compute \u65b9\u6848",
   "phase1_c1_vs_c2_gate": {
     "tested": "2026-08-09",
     "verdict": "KILL_CONDITION_FIRES -- honour the reframe the kill clause itself prescribes",
@@ -193,5 +193,24 @@
       "ruler_results/a02_dvr_ruler_j12_frozen/ (32 records.json)"
     ],
     "promotion_impact": "Does NOT clear A02. The kill clause's quality finding survives in WEAKENED, NARROWED form: CoMem's read does cost accuracy where retrieval is not the bottleneck (RULER, -3 to -12pp), but the headline magnitude was inflated 2-5x by a retrieval confound. Combined with the cost gate (storage DEAD, read-compute 1.03-1.37x), positioning is unchanged."
+  },
+  "status_long": "Original PROPOSAL.md thesis is DEAD: no protocol-clean benchmark shows C2 significantly better in aggregate, so 'CoMem beats RAG on quality' does not hold. Storage framing is DEAD on arithmetic (h12 8192 B/token vs raw text 4 B/token = 2048x; CoMem-total/RAG-total 632-1129x). What SURVIVES and is worth writing up: (1) the depth-vs-retrieval DIAGNOSTIC protocol -- a 4-arm single-variable chain showing a 4-way-confounded A-vs-B comparison inflated its headline 2-5x; this is publishable as methodology independent of whether CoMem is good; (2) the RULER read tax at corrected magnitude (-10.0/-12.0/-11.0pp SIG with retrieval held byte-identical and recall@12 at 99-100%); (3) a modest read-compute win (1.33x at G=1 decaying to 1.03x at G=128, N* 8-225 queries vs matched-pack text-RAG).",
+  "tcodex_audit_20260810_disposition": {
+    "audit_file": "../A03-parametric-vs-external-memory/evidence/TCODEX_AUDIT_20260810.md (589 lines, md5 8ba6b5da31c3af2fd02c5d5d86d93b2c)",
+    "audit_verdict_on_A02": "Reject / archive \u539f thesis. \u82e5\u7ee7\u7eed, \u4ec5\u4f5c\u4e3a\u7a84 systems microbenchmark observation \u91cd\u65b0\u5b9a\u4f4d; \u4e0d\u80fd\u518d\u79f0 storage method \u6216 natural-task quality win.",
+    "item_1_unexecuted_storage_clause": {
+      "status": "FIXED 2026-08-10",
+      "defect": "code/build_a02_reframe_verdict.py gated verdict on cost_survives alone; clause (c) of its own 3-clause decision rule was computed (ratios) then never used. evidence/a02_storage_readcompute_verdict.json therefore said 'SURVIVES' while A02_STORAGE_READCOMPUTE_VERDICT.md said storage form is DEAD -- the machine output asserted the opposite of the human verdict.",
+      "fix": "Added PREREG_STORAGE_PREMIUM_MAX=100.0 (justified on principle in the module docstring; disclosed as set after measurement), split the gate into per-clause evaluation, and emit SURVIVES_AS_READ_COMPUTE_ONLY when cost passes but storage fails -- the case the docstring already described in words.",
+      "regenerated_verdict": "SURVIVES_AS_READ_COMPUTE_ONLY",
+      "clause_c_result": "FAILED: max(h12/raw)=2048.0 vs threshold 100",
+      "measurements_unchanged": "verdict_basis, cost, quality_phase1_per_cell byte-identical to pre-fix payload; only verdict + decision_rule changed, clause_evaluation added."
+    },
+    "remaining_audit_items_not_yet_actioned": [
+      "Add explicit retraction keys to the 3 evidence JSONs that still serve retracted significant numbers bare (prose retracts them; JSON does not).",
+      "Reconcile A02's BABILong recall@12 against paperA's PUBLISHED P0.19 recall -- same cells/selector/seed/n=100 but different recall; one denominator is wrong. This is a live defect in a published paperA artifact.",
+      "Disclose the storage-premium-vs-raw-text number in paperA, which currently discloses only the favourable 18x vs full-depth-KV comparison.",
+      "Write A02's missing NOVELTY_CHECK.md against the two named collisions."
+    ]
   }
 }

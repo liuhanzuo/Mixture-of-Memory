@@ -2,9 +2,28 @@
   "gate": "A02_storage_readcompute_reframe",
   "decision_rule": {
     "survives_iff": "finite N* vs phase-1 C1 AND N* <= 1e5 AND bounded storage premium",
-    "prereg_nstar_max": 100000.0
+    "prereg_nstar_max": 100000.0,
+    "prereg_storage_premium_max": 100.0
   },
-  "verdict": "SURVIVES",
+  "verdict": "SURVIVES_AS_READ_COMPUTE_ONLY",
+  "clause_evaluation": {
+    "a_finite_nstar": {
+      "passed": true,
+      "value_tested": 12,
+      "threshold": "> 0 cells with finite N* vs phase-1 C1"
+    },
+    "b_nstar_reachable": {
+      "passed": true,
+      "value_tested": 12,
+      "threshold": "> 0 cells with N* <= 100000"
+    },
+    "c_storage_premium_bounded": {
+      "passed": false,
+      "value_tested": 2048.0,
+      "threshold": "max(h12/raw ratio) <= 100",
+      "note": "Computed but NOT gated on before the 2026-08-10 fix; see the block comment in build_a02_reframe_verdict.py."
+    }
+  },
   "verdict_basis": {
     "n_cells_with_finite_nstar_vs_c1": 12,
     "n_cells_reachable_within_prereg": 12,

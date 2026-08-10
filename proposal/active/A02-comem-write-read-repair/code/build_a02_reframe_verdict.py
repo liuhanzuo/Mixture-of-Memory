@@ -42,6 +42,21 @@ from pathlib import Path
 
 PREREG_NSTAR_MAX = 1e5
 
+# Clause (c) threshold. Pre-registered 2026-08-10 when the unexecuted-clause bug
+# was found (the rule was stated in the docstring above but never evaluated in
+# code, so this bar is being set AFTER the ratios were measured -- that is
+# disclosed here rather than hidden).
+#
+# JUSTIFICATION, set on principle rather than to fit the measurement: the word
+# "storage" in "CoMem is a storage method" is only meaningful if CoMem's store is
+# within a small constant factor of what the baseline stores. RAG stores raw text
+# at ~4 B/token. A 100x premium is already generous -- it admits ~400 B/token,
+# roughly a fp16 vector of dim 200 per token. Anything that admits the measured
+# 2048x (h12 = 8192 B/token) would make the claim vacuous, since at that point the
+# method stores three orders of magnitude more than the thing it replaces and the
+# only honest framing is read-compute.
+PREREG_STORAGE_PREMIUM_MAX = 100.0
+
 
 def _sign(cell):
     lo, hi = cell["ci_lo"], cell["ci_hi"]
@@ -155,7 +170,28 @@ def build(agg, phase1):
                   if c["storage"].get("ratio_comem_total_over_rag_total")]
 
     cost_survives = len(reachable) > 0
-    verdict = ("SURVIVES" if cost_survives else "DEAD")
+
+    # --- clause (c): the storage-premium bound ---------------------------------
+    # BUG FIXED 2026-08-10. Clause (c) is stated in this module's decision rule and
+    # its inputs were computed just above (`ratios`, `tot_ratios`), but the verdict
+    # was gated on `cost_survives` ALONE. The gate therefore emitted a bare
+    # "SURVIVES" while the storage premium went unchecked -- asserting the OPPOSITE
+    # of the human verdict in A02_STORAGE_READCOMPUTE_VERDICT.md ("STORAGE FORM:
+    # DEAD"). Clause (c) is now actually evaluated, and every clause records the
+    # value tested plus its threshold so a skipped clause cannot recur silently.
+    max_ratio = max(ratios) if ratios else None
+    storage_survives = (max_ratio is not None
+                        and max_ratio <= PREREG_STORAGE_PREMIUM_MAX)
+
+    if not cost_survives:
+        verdict = "DEAD"
+    elif storage_survives:
+        verdict = "SURVIVES"
+    else:
+        # Exactly the case the docstring already describes in words:
+        # "Passing (a)+(b) but with a large storage premium => SURVIVES ONLY AS
+        # READ-COMPUTE, not as storage."
+        verdict = "SURVIVES_AS_READ_COMPUTE_ONLY"
 
     return {
         "gate": "A02_storage_readcompute_reframe",
@@ -163,8 +199,29 @@ def build(agg, phase1):
             "survives_iff": "finite N* vs phase-1 C1 AND N* <= 1e5 AND bounded "
                             "storage premium",
             "prereg_nstar_max": PREREG_NSTAR_MAX,
+            "prereg_storage_premium_max": PREREG_STORAGE_PREMIUM_MAX,
         },
         "verdict": verdict,
+        "clause_evaluation": {
+            "a_finite_nstar": {
+                "passed": len(finite) > 0,
+                "value_tested": len(finite),
+                "threshold": "> 0 cells with finite N* vs phase-1 C1",
+            },
+            "b_nstar_reachable": {
+                "passed": cost_survives,
+                "value_tested": len(reachable),
+                "threshold": f"> 0 cells with N* <= {PREREG_NSTAR_MAX:g}",
+            },
+            "c_storage_premium_bounded": {
+                "passed": storage_survives,
+                "value_tested": max_ratio,
+                "threshold": f"max(h12/raw ratio) <= "
+                             f"{PREREG_STORAGE_PREMIUM_MAX:g}",
+                "note": "Computed but NOT gated on before the 2026-08-10 fix; "
+                        "see the block comment in build_a02_reframe_verdict.py.",
+            },
+        },
         "verdict_basis": {
             "n_cells_with_finite_nstar_vs_c1": len(finite),
             "n_cells_reachable_within_prereg": len(reachable),

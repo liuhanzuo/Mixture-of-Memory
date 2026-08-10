@@ -37,6 +37,39 @@ SURVIVES iff a finite N\* exists against the phase-1 C1 arm, AND N\* ≤ 1e5
 queries/corpus, AND the storage premium is bounded enough to still call it a
 "storage" method.
 
+> **⚠️ Gate-code defect found and fixed 2026-08-10 — the third conjunct was never
+> evaluated.** `code/build_a02_reframe_verdict.py` computed the storage ratios and
+> then gated the verdict on `cost_survives` **alone**, so
+> `evidence/a02_storage_readcompute_verdict.json` carried a bare
+> **`"verdict": "SURVIVES"`** — asserting the *opposite* of this document's own
+> "storage form is DEAD" bottom line. Anything reading the JSON instead of this
+> prose (a downstream aggregator, a reviewer reproducing the gate) would have been
+> told the storage reframe passed. Flagged as A02 retraction item #1 by
+> `TCODEX_AUDIT_20260810.md`.
+>
+> The clause now evaluates against a pre-registered bound
+> `PREREG_STORAGE_PREMIUM_MAX = 100.0`, justified in the module docstring on
+> principle: RAG stores raw text at ~4 B/token, so 100× already admits ~400
+> B/token (≈ a fp16 vector of dim 200 per token); admitting the measured 2048×
+> would make the word "storage" vacuous. **The bar was set after the ratios were
+> measured, and that is disclosed in the code rather than hidden.**
+>
+> Regenerated verdict: **`SURVIVES_AS_READ_COMPUTE_ONLY`**, plus a new
+> `clause_evaluation` block recording each clause's boolean, the value tested and
+> its threshold, so a silently-skipped clause cannot recur:
+>
+> | clause | passed | tested | threshold |
+> |---|---|---|---|
+> | (a) finite N\* | ✅ | 12 cells | > 0 cells |
+> | (b) N\* reachable | ✅ | 12 cells | > 0 cells with N\* ≤ 1e5 |
+> | (c) storage premium bounded | ❌ | **2048.0** | ≤ 100 |
+>
+> **Every measurement is unchanged.** `verdict_basis`, `cost` and
+> `quality_phase1_per_cell` are byte-identical to the pre-fix payload; only
+> `verdict` and `decision_rule` changed, and `clause_evaluation` was added. The
+> pre-fix JSON said `SURVIVES` while carrying the very
+> `storage_ratio_h12_over_raw_range: [2048.0, 2048.0]` that convicts it.
+
 ### The arm the published bench was missing
 
 The critical design point. Phase-1's on-disk eval configs show **C1 =
