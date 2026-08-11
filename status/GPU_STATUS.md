@@ -16,11 +16,11 @@
 |---|---|---|---|---|
 | **LOCAL** | 8×L20A wzc1 | **空闲**（2026-08-12 01:39 起） | #181 `keep14fresh2_seed1234` 训练**已于 08-12 00:22 跑满 step200000**（`final.pt` + `DONE`）；随后 01:06→01:39 跑完 seed-variance eval battery（seed42+seed1234 × 6 轴，8 卡，33 min），**8 卡已释放 0 MiB** | ✅ 空闲可投 |
 | **.21** | 8×L20A wzc1 | `keep10fresh2 resume` | 等待 dolmino 传输完成（ETA ~17:02 CST）；launch script PID 4516 | ⏳ WAITING |
-| **.73** | 8×H20 zwfy6 | **空闲**（2026-08-12 03:32 起） | task #252：#251 的 15 臂 cross-family MMLU-Pro **重跑完成**（`MAXLEN=2048` + `use_cache=False`，02:17→03:32，8 卡 75 min）→ `ALL ARMS DONE`，15/15 MERGE OK，`n_trunc=0`／`n=12032`／`nan=0` 全部逐 shard 复核 | ✅ 空闲可投 |
+| **.73** | 8×H20 zwfy6 | `keep10fresh2 resume`（**另一 agent 于 03:3x 接手**，commit `2796744`） | 03:32 前：task #252 的 15 臂 cross-family MMLU-Pro **重跑完成**（`MAXLEN=2048` + `use_cache=False`，02:17→03:32，8 卡 75 min）→ `ALL ARMS DONE`，15/15 MERGE OK，`n_trunc=0`／`n=12032`／`nan=0` 逐 shard 复核；卡释放后立刻被 Paper B `keep10fresh2 step86500→200000` 占用（PID 2438724，90.5GB/卡，8 卡满载） | ▶️ 运行中（非本任务） |
 | **.82** | 8×H20 zwfy6 | `keep10fresh2 resume` | step83980+, 6.80s/step, 82.7GB，将在 .21 keep10 确认后被 kill | ▶️ 运行中（待 kill） |
 | **.104** | 8×H20 zwfy6 | `keep12fresh2 resume` | step124220+, 7.87s/step, 91.9GB，用户管理 | ▶️ 运行中（用户控制） |
 
-> ✅ **2026-08-12 03:55 更新（task #252 收尾，.73 释放）**：修完 #251 cross-family 的两个完整性缺陷并重跑 15 臂，`.73` 8 卡已全部释放（0 MiB）。
+> ✅ **2026-08-12 03:55 更新（task #252 收尾）**：修完 #251 cross-family 的两个完整性缺陷并重跑 15 臂，`.73` 8 卡于 03:32 释放，**随即被另一 agent 接手跑 Paper B keep10 resume**（零空转，无需补卡）。
 > 缺陷 1 = `MAXLEN=1536` 是按 **OLMo-2** tokenizer 量的（max 1226 tok），对 Llama-2（1678）/ Qwen3（1660）过小 → 10/15 cell 的 labelled option body 被左截断，且溢出集**因 tokenizer 而异**故跨家族表**不 item-matched**。修法选 **(a) 抬到 2048**（不是排除 item，那会破坏与已归档 MMLU cell 的全 n 匹配）。实测影响：**0/14 cell 结论变化**，最大 letter acc 变化 **+0.0083 pp**（一个 item），9 次 argmax 翻转全落在受影响 item 上、受影响之外 **0** 翻转。
 > 缺陷 2 = `llama2_7b_base` 整臂 OOM（5/8 shard 死，guard 正确拒绝 3/8 merge）。根因是 **KV cache**：Llama-2 无 GQA（`num_kv_heads=32`×32 层 = fp32 KV **72.0 GiB** @B=48/L=1536，而 Llama-3/Qwen3 是 18.0/20.2）→ 只有 intact Llama-2 会死。修法 `use_cache=False`（teacher-forced 单次前向根本不用 cache），94 GiB → 41-50 GiB。
 > ⚠️ **`n_trunc` 已从 driver 层 WARNING 升级为 scoring 脚本内的硬 assert** —— 当初正是因为它只是 warning，10 个被截断的 cell 才照样写出了 summary。
