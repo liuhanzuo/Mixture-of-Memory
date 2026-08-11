@@ -230,6 +230,83 @@ Independently measured: the *same* AST official checkpoint scores AST-7 58.62→
 > ⚠️ §8.2's "~6.2–6.5 band" still does not state its own seqlen. Our 6.5268 sits at the band's
 > upper edge under 2048; 6.1372 is below the lower edge under 4096. **Attach a seqlen to that band
 > before using it as pass/fail.**
+>
+> ---
+>
+> ## ⛔ RETRACTED 2026-08-11 15:5x — "Normalise to 2048" was built on a false premise
+>
+> **The claim "SparseForge's entire PPL column is 2048" is FALSE. SparseForge's own headline
+> 6.2179 is measured at block_size 4096.** Two independent on-disk files say so:
+>
+> | file | field | value |
+> |---|---|---|
+> | `outputs/paper_v2/ast7_eval/sparseforge_5b_table2/ast7_eval.json` | `config.block_size` | **4096** |
+> | (same file) | `wiki_ppl["model_best_lm_eval.pt"]` | 6.217872812481326 |
+> | `out_llama/models_Llama--Llama2-7b_mask-unstructured_s0.5_m-hessian_obd_20260413_201320/best_lm_eval.json` | `wiki_ppl` @ iter 17900 | 6.215503215789795 |
+> | (same run) `config.json` | `block_size` | **4096** |
+>
+> (run dir lives at `/apdcephfs_wzc1/share_304376610/pighzliu_code/out_llama/…`, one level *above*
+> the repo — it is not under `Mixture-of-Memory/`, which is why a first pass reported it absent.)
+>
+> **Independent corroboration by a second route.** Our own re-export of that exact checkpoint,
+> scored in *our* harness at 2048, reads **6.6510** (`outputs/cast_eval_spec/sparseforge_5b/hard_fold/ppl_metrics.json`).
+> De-windowing by the measured mean 2048/4096 ratio 1.0664 gives **6.2367** vs the headline 6.2179 —
+> a **+0.30 %** agreement. Had the headline been a 2048 number, our harness would have to disagree
+> with theirs by **+7.0 %** on the same model at the same seqlen, which is untenable given every
+> other arm reproduces bit-identically or to 3–4 decimals. So `block_size: 4096` is corroborated,
+> not merely asserted.
+>
+> ### What the retracted block actually did
+>
+> The ordering `SparseForge 6.2179 < AST 6.3430 < CAST-repro 6.5268` compares **SparseForge@4096
+> against AST@2048 and CAST@2048**. It is a category error, and it happens to flatter us by the
+> entire +6…+7 % window offset. The "trap this closes" paragraph is exactly inverted: I described
+> avoiding a protocol artifact while constructing one.
+>
+> ### The matched-seqlen ordering (all @4096, all 335,872 tokens, same harness)
+>
+> | arm | Wiki-2 PPL @4096 | 2:4 exact? | live linear params |
+> |---|---:|:---:|---:|
+> | dense LLaMA-2-7B | **5.2004** | n/a | 6.476 G |
+> | AST official (Naive, no SLoRB) | **5.9125** | yes | 3.238 G |
+> | CAST-repro (ours) | **6.1372** | yes | 3.238 G |
+> | **SparseForge-5B (with SLoRB)** | **6.2179** | see below | 3.238 G + 0.848 G SLoRB |
+> | Wanda 2:4 | 11.7733 | yes | 3.238 G |
+>
+> **At matched seqlen SparseForge's headline PPL is worse than AST-official AND worse than our own
+> CAST reproduction.** That is the honest number and it must be reported as such. It is 0.3055
+> above AST-official, i.e. ~8.8× the 0.0347 that separates it from CAST-repro.
+>
+> ### The fairness problem this exposes, and why it points at the AST+SLoRB control
+>
+> The comparison above is **not budget-matched**. SparseForge's 6.2179 is measured with the SLoRB
+> branch active (+848,429,056 live params = **+26.2 %** over the 3.238 G surviving weights), while
+> AST-official 5.9125 has no SLoRB at all — verified: that checkpoint has 291 standard Llama tensors,
+> no `SLoRB_Weight`/`x_proj`, and is exact 2:4 (0 bad tiles of 1,619,001,344), which a merged SLoRB
+> could not be. So SparseForge loses on PPL *while spending 26 % more parameters*.
+>
+> This is precisely the gap the AST+SLoRB reproduction (`AST_SLORB_REPRO_PREREG.md`) has to close
+> before any PPL claim is made. Until that control exists, the only defensible statements are:
+> (a) at matched seqlen SparseForge does not lead on WikiText-2 PPL, and (b) the existing
+> AST comparison is confounded by SLoRB's parameter budget in *our* favour, not theirs.
+>
+> ### Also note: the "fold" exports are dense
+>
+> `hard_fold` and `soft_fold` have `linear_zero_ratio ≈ 1.7e-09 / 3.1e-10` and
+> `exact_2of4_tile_ratio = 0.0` — folding `SLoRB_W @ x_proj` into the masked weight destroys the
+> sparsity pattern, as predicted. `hard_drop` is exact 2:4 (`linear_zero_ratio 0.5`,
+> `exact_2of4_tile_ratio 1.0`) but reads **9.3770** @2048, because it amputates a branch the weights
+> were trained with. **Neither export is "SparseForge's 2:4 PPL"**: fold is dense, drop is damaged.
+> The deployable-sparsity question is open and is not answered by picking whichever export reads better.
+>
+> ### Actions
+>
+> 1. `appendix.tex:324` ("AST official deployable … 6.3430") — still wrong, still 2048. Re-measure
+>    at 4096 (5.9125) or label the seqlen explicitly.
+> 2. Any table placing 6.2179 next to a 2048 number is invalid. Audit the whole PPL column for
+>    mixed windows before it ships.
+> 3. `outputs/cast_eval_spec_ppl2048/` stays as legitimate provenance for the window-offset
+>    measurement; it just does not license the normalisation direction I drew from it.
 
 1. **Algorithmic correctness** — masked weights → 0; exact 2:4; AdamS actually running on the in-scope weights.
 

@@ -48,10 +48,21 @@ def main() -> int:
     print(f"[verify_2of4] in-scope tensors: {len(scope)}", flush=True)
 
     # Global aggregate over the entire in-scope set.
+    #
+    # Two directions must be distinguished, because they are not symmetric on
+    # hardware: 2:4 sparse tensor cores require *at most* 2 nonzeros per group of
+    # 4. A tile with 1 (or 0) nonzeros is a legal subset -- it is over-pruned, and
+    # it runs fine. Only a tile with >2 nonzeros violates the format.
+    #
+    # Gating on `tile_nz != 2` therefore FAILS arms that prune more aggressively
+    # (SparseGPT and ProxSparse both trip it: their "bad tiles" are exactly their
+    # excess zeros, i.e. 3-zero/1-nonzero tiles). The deployability gate is
+    # `tiles_gt2 == 0`; `tiles_lt2` is reported for information only.
     total_elems = 0
     total_zeros = 0
     total_tiles = 0
-    total_bad_tiles = 0
+    total_tiles_gt2 = 0
+    total_tiles_lt2 = 0
     for name, w in scope:
         wf = w.detach().float()
         r, c = wf.shape
@@ -62,13 +73,19 @@ def main() -> int:
         total_zeros += int((wf == 0).sum())
         tile_nz = (wf != 0).reshape(r, c // 4, 4).sum(-1)
         total_tiles += tile_nz.numel()
-        total_bad_tiles += int((tile_nz != 2).sum())
+        total_tiles_gt2 += int((tile_nz > 2).sum())
+        total_tiles_lt2 += int((tile_nz < 2).sum())
 
     zero_frac = total_zeros / total_elems if total_elems else 0.0
+    # "exact" keeps its old meaning (tiles with precisely 2 nonzeros) but is now
+    # descriptive, not the gate.
+    total_bad_tiles = total_tiles_gt2 + total_tiles_lt2
     exact_frac = 1.0 - (total_bad_tiles / total_tiles) if total_tiles else 0.0
+    legal_frac = 1.0 - (total_tiles_gt2 / total_tiles) if total_tiles else 0.0
     print(f"[verify_2of4] global: elems={total_elems:,} zeros={total_zeros:,} "
           f"zero_frac={zero_frac:.9f} tiles={total_tiles:,} "
-          f"bad_tiles={total_bad_tiles} exact_2of4_frac={exact_frac:.9f}", flush=True)
+          f"tiles_gt2={total_tiles_gt2} tiles_lt2={total_tiles_lt2} "
+          f"exact_2of4_frac={exact_frac:.9f} legal_2of4_frac={legal_frac:.9f}", flush=True)
 
     # Detail per-sample-layer.
     random.seed(args.seed)
@@ -79,25 +96,35 @@ def main() -> int:
         r, c = wf.shape
         tile_nz = (wf != 0).reshape(r, c // 4, 4).sum(-1)
         zeros = int((wf == 0).sum())
-        bad = int((tile_nz != 2).sum())
+        gt2 = int((tile_nz > 2).sum())
+        lt2 = int((tile_nz < 2).sum())
         entry = {
             "layer": name,
             "shape": [r, c],
             "zero_fraction": zeros / wf.numel(),
-            "exact_2of4_fraction": 1.0 - bad / tile_nz.numel(),
-            "bad_tiles": bad,
+            "exact_2of4_fraction": 1.0 - (gt2 + lt2) / tile_nz.numel(),
+            "legal_2of4_fraction": 1.0 - gt2 / tile_nz.numel(),
+            "tiles_gt2": gt2,
+            "tiles_lt2": lt2,
+            "bad_tiles": gt2 + lt2,
         }
         per_layer.append(entry)
         print(f"[verify_2of4]   {name} shape={r}x{c} "
               f"zero_frac={entry['zero_fraction']:.6f} "
               f"exact_2of4={entry['exact_2of4_fraction']:.9f} "
-              f"bad={bad}", flush=True)
+              f"gt2={gt2} lt2={lt2}", flush=True)
 
+    # The gate: no tile may exceed 2 nonzeros, and the layer scope must be complete.
+    # zero_frac is checked as a floor (>= 0.5 - eps), not an equality, so that
+    # over-pruned arms are not failed for being sparser than required.
     ok = (
-        abs(zero_frac - 0.5) < 1e-4
-        and total_bad_tiles == 0
+        zero_frac >= 0.5 - 1e-4
+        and total_tiles_gt2 == 0
         and len(scope) == 224
     )
+    if ok and total_tiles_lt2 > 0:
+        print(f"[verify_2of4] NOTE: {total_tiles_lt2:,} tiles are over-pruned (<2 nonzeros). "
+              f"Legal on 2:4 tensor cores; reported for information.", flush=True)
     print(f"[verify_2of4] VERDICT: {'PASS' if ok else 'FAIL'}", flush=True)
 
     return 0 if ok else 2
