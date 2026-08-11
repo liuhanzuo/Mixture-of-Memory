@@ -48,7 +48,7 @@
         -2.5567939040022787,
         -0.24907420595357047
       ],
-      "letter_vs_null_boot_p": 0.0192,
+      "letter_vs_null_boot_p": 0.019,
       "letter_verdict": "BELOW the floor (significantly)",
       "content_norm_vs_null_pp": 5.780871670702179,
       "content_norm_vs_null_ci95_pp": [
@@ -91,7 +91,7 @@
         -2.663438256658596,
         -0.4272895598917533
       ],
-      "letter_vs_null_boot_p": 0.0062,
+      "letter_vs_null_boot_p": 0.005999999999999999,
       "letter_verdict": "BELOW the floor (significantly)",
       "content_norm_vs_null_pp": 5.823600626691355,
       "content_norm_vs_null_ci95_pp": [
@@ -123,7 +123,7 @@
       -0.0064093433983762995,
       0.003347101552485401
     ],
-    "letter_acc_diff_boot_p": 0.5598
+    "letter_acc_diff_boot_p": 0.5491
   },
   "output_name": "7B_keep8_step121000_dtype",
   "n_shards": 8,

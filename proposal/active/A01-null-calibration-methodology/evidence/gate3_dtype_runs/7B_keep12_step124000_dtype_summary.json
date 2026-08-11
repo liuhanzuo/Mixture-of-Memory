@@ -48,7 +48,7 @@
         -0.4628970232160661,
         1.2391397236860846
       ],
-      "letter_vs_null_boot_p": 0.3736,
+      "letter_vs_null_boot_p": 0.36920000000000003,
       "letter_verdict": "AT the floor (indistinguishable)",
       "content_norm_vs_null_pp": 7.846104543512321,
       "content_norm_vs_null_ci95_pp": [
@@ -91,7 +91,7 @@
         0.0783364193134881,
         1.5453639082751744
       ],
-      "letter_vs_null_boot_p": 0.0272,
+      "letter_vs_null_boot_p": 0.0268,
       "letter_verdict": "above the floor",
       "content_norm_vs_null_pp": 7.881712006836633,
       "content_norm_vs_null_ci95_pp": [
@@ -123,7 +123,7 @@
       -0.0004985044865403788,
       0.009046076057541635
     ],
-    "letter_acc_diff_boot_p": 0.0748
+    "letter_acc_diff_boot_p": 0.0728
   },
   "output_name": "7B_keep12_step124000_dtype",
   "n_shards": 8,

@@ -48,7 +48,7 @@
         -0.41304657456202826,
         1.0682238997293834
       ],
-      "letter_vs_null_boot_p": 0.415,
+      "letter_vs_null_boot_p": 0.4094,
       "letter_verdict": "AT the floor (indistinguishable)",
       "content_norm_vs_null_pp": 6.001637943312919,
       "content_norm_vs_null_ci95_pp": [
@@ -91,7 +91,7 @@
         -0.5697194131890044,
         0.8047286711294687
       ],
-      "letter_vs_null_boot_p": 0.7756,
+      "letter_vs_null_boot_p": 0.7671,
       "letter_verdict": "AT the floor (indistinguishable)",
       "content_norm_vs_null_pp": 6.094217347956132,
       "content_norm_vs_null_ci95_pp": [
@@ -123,7 +123,7 @@
       -0.0052699045719982905,
       0.0011394388263780088
     ],
-    "letter_acc_diff_boot_p": 0.226
+    "letter_acc_diff_boot_p": 0.2177
   },
   "output_name": "7B_keep10_step83500_dtype",
   "n_shards": 8,

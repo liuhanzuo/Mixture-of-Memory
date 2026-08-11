@@ -123,7 +123,7 @@
       0.006051488391966958,
       0.015239994302805869
     ],
-    "letter_acc_diff_boot_p": 0.0
+    "letter_acc_diff_boot_p": 0.0001
   },
   "output_name": "7B_keep14_step200000_dtype",
   "n_shards": 8,

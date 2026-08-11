@@ -342,8 +342,10 @@ def analyse(records, verbose=True):
         bs[i] = d[rng.integers(0, d.size, d.size)].mean()
     out["contrast"]["letter_acc_diff_ci95"] = [float(np.percentile(bs, 2.5)),
                                                float(np.percentile(bs, 97.5))]
-    out["contrast"]["letter_acc_diff_boot_p"] = float(
-        2 * min((bs <= 0).mean(), (bs >= 0).mean()))
+    # R-7 fix 2026-08-11: was `2 * min((bs <= 0).mean(), (bs >= 0).mean())`,
+    # which double-counts resamples landing exactly on 0 and emitted an ILLEGAL
+    # p = 1.042 on the base arm. See two_sided_boot_p().
+    out["contrast"]["letter_acc_diff_boot_p"] = two_sided_boot_p(bs, 10000)
 
     # ---- arm-vs-floor test under EACH dtype (paired bootstrap) ----
     letter_null = np.asarray([1.0 if g == const_letter else 0.0
@@ -382,6 +384,59 @@ def analyse(records, verbose=True):
     return out
 
 
+def two_sided_boot_p(bs, n_boot=None):
+    """Two-sided bootstrap p for H0: E[d] == 0, from the resample means `bs`.
+
+    R-7 FIX (2026-08-11).  The previous construction, used in two places, was
+
+        p = 2 * min((bs <= 0).mean(), (bs >= 0).mean())
+
+    which is not a p-value: `<=` and `>=` BOTH include the resamples that land
+    exactly on 0, so that mass is counted in both tails and
+    `(bs<=0).mean() + (bs>=0).mean() == 1 + (bs==0).mean()`.  Whenever the
+    smaller tail already exceeds 0.5 the doubled value exceeds 1.  This is not a
+    corner case for us: `d` here is a difference of two 0/1 correctness vectors,
+    so it is integer-valued and mostly exactly 0, and the bootstrap mean lands
+    exactly on 0 with non-trivial probability.  On the `7B_base` arm
+    (b = c = 28 discordant items out of 14042, true delta 0) 5.44% of resamples
+    are exactly 0, and the emitted value was p = 1.042 (measured: the two tails
+    were 0.5210 and 0.5334, summing to 1.0544 = 1 + 0.0544).
+
+    The fix keeps the same doubled-smaller-tail estimand but splits the atom at
+    zero evenly between the two tails ("mid-p" / half-correction), which is the
+    standard remedy for a discrete null and is what makes the two tails sum to 1
+    again:
+
+        p_lo = P(bs < 0) + 0.5 * P(bs == 0)
+        p_hi = P(bs > 0) + 0.5 * P(bs == 0)      # p_lo + p_hi == 1 exactly
+        p    = min(1.0, 2 * min(p_lo, p_hi))
+
+    Properties:
+      * p in [1/n_boot, 1] always (upper bound is now structural, not a clamp:
+        min(p_lo, p_hi) <= 0.5 because the two sum to 1).
+      * d == 0 identically  ->  bs == 0 identically  ->  p_lo = p_hi = 0.5
+        ->  p = 1.0 exactly.  This is the correct answer for "no difference at
+        all", where the old code gave 2.0.
+      * far from 0  ->  reduces to the usual 2 x (empirical tail), unchanged
+        from the old construction whenever no resample lands exactly on 0
+        (which is the case for every continuous-ish `d`, i.e. all the
+        `*_vs_null_boot_p` values, so those are numerically unaffected).
+
+    Why not just `min(p, 1.0)`: that would report p = 1.0 for the base arm too,
+    but by truncating an out-of-range statistic rather than by computing a
+    well-defined one, and it would leave the doubled-zero-mass bias in every
+    other near-null value it did not happen to push past 1.
+    """
+    bs = np.asarray(bs, dtype=np.float64)
+    if n_boot is None:
+        n_boot = bs.size
+    tie = float((bs == 0).mean())
+    p_lo = float((bs < 0).mean()) + 0.5 * tie
+    p_hi = float((bs > 0).mean()) + 0.5 * tie
+    p = 2.0 * min(p_lo, p_hi)
+    return float(min(1.0, max(p, 1.0 / n_boot)))
+
+
 def paired_bootstrap(d, n_boot=10000, seed=0):
     d = np.asarray(d, dtype=np.float64)
     rng = np.random.default_rng(seed)
@@ -389,8 +444,9 @@ def paired_bootstrap(d, n_boot=10000, seed=0):
     for i in range(n_boot):
         bs[i] = d[rng.integers(0, d.size, d.size)].mean()
     lo, hi = np.percentile(bs, [2.5, 97.5])
-    p = 2 * min((bs <= 0).mean(), (bs >= 0).mean())
-    return float(d.mean()), float(lo), float(hi), float(max(p, 1.0 / n_boot))
+    # R-7 fix 2026-08-11: was `2*min((bs<=0).mean(),(bs>=0).mean())` clamped
+    # only from BELOW by `max(p, 1/n_boot)`; the upper side could exceed 1.
+    return float(d.mean()), float(lo), float(hi), two_sided_boot_p(bs, n_boot)
 
 
 def mcnemar_exact_p(b, c):
@@ -568,6 +624,11 @@ def main():
     results_dir = os.path.join(a.results_root, a.output_name)
 
     if a.merge:
+        _log("[merge] bootstrap two-sided p uses the R-7 fix (2026-08-11): the "
+             "zero atom of the resample-mean distribution is split evenly "
+             "between the tails, so p in [1/n_boot, 1] and p=1.0 when d==0 "
+             "identically. The old `2*min((bs<=0).mean(),(bs>=0).mean())` "
+             "double-counted that atom and emitted p=1.042 on 7B_base.")
         recs, tot = read_shards(results_dir, a.num_shards, a.expect_n)
         res = analyse(recs, verbose=True)
         res["output_name"] = a.output_name

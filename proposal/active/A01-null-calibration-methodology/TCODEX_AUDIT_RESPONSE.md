@@ -34,7 +34,7 @@ Disposition vocabulary: **ACCEPT** = the audit is right and A01 changes;
 | R-4 | "damage generally turns letter into a constant predictor" → retract when modal share is 45–47% | **ACCEPT** | modal share now printed per depth in the recompute JSON; see §4 below |
 | R-5 | cross-C1–C4 residual span "7–10×" is not one estimand | **ACCEPT** — already partly conceded by gate-4; see §5 | `STATUS.json:gate4...` note |
 | R-6 | `active_all_gates_passed` overclaims while an unincorporated Major-revision verdict exists | **ACCEPT** | `STATUS.json:status` changed |
-| R-7 | `7B_base_dtype_summary.json: letter_acc_diff_boot_p = 1.042` is an illegal p-value | **ACCEPT as a real defect**, not fixed in this pass | logged in §7, needs the estimator patched, not a doc edit |
+| R-7 | `7B_base_dtype_summary.json: letter_acc_diff_boot_p = 1.042` is an illegal p-value | **ACCEPT as a real defect**; ~~not fixed in this pass~~ → **FIXED & CLOSED 2026-08-11** | §7 + update note; estimator patched (`two_sided_boot_p`) and all six summaries re-emitted, 0 of 24 verdicts changed — `paperG/evidence/R7_BOOTSTRAP_P_FIX.md` |
 | R-8 | narrow "general structural damage response" to extreme front-truncation | **ACCEPT** (was already the wording in `GATE1_DAMAGED_VERDICT.md`; the overreach is in `STATUS.json`'s headline) | §8 |
 | R-9 | the tokenizer-dependence leg | **not attacked by the audit; KEPT and strengthened** | §6 |
 
@@ -385,6 +385,22 @@ Logged as the top open item. Note the affected arm's *conclusion* does not depen
 on it: the base arm's letter accuracy is byte-identical across dtypes
 (0.6053980914399658 both), McNemar p=1.000, CI95 [−0.0011, +0.0011] — the verdict
 is carried by McNemar and the CI, not by the malformed bootstrap p.
+
+> **UPDATE 2026-08-11 — R-7 is now FIXED and CLOSED** (the "not fixed here" above
+> describes the 2026-08-10 pass and is retained for provenance).
+> The audit's guessed cause ("missing `min(1,·)` clamp") was the symptom; the real
+> mechanism is that `2*min((bs<=0).mean(),(bs>=0).mean())` **double-counts** the
+> resamples whose mean is exactly 0, so the two tails sum to `1 + P(bs==0)`. On the
+> base arm `d` is a difference of 0/1 correctness vectors with only 28+28 discordant
+> items out of 14042, and **5.44%** of bootstrap means land exactly on 0 —
+> reproducing `1.0420` bit-for-bit from the per-example shards. Fixed with a shared
+> `two_sided_boot_p()` that splits the zero atom evenly between the tails, making
+> `p ≤ 1` structural rather than a truncation; `paired_bootstrap()` (which feeds
+> every `*_vs_null_boot_p`, i.e. the floor verdicts, and had the same bug clamped
+> only from below) now uses it too. All six summaries re-emitted from disk, 0 GPU,
+> 8/8 shards / n=14042 / nan=0 each. Base arm **1.042 → 0.9876**; **0 of 24 verdicts
+> changed, 0 of 30 p-values crossed α=0.05**, all non-p fields byte-identical.
+> Full writeup: `paperG/evidence/R7_BOOTSTRAP_P_FIX.md`.
 
 ---
 

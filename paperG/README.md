@@ -110,13 +110,24 @@ only after both disks have been searched.
 
 ## Open defects (carried over, must be closed before submission)
 
-1. `evidence/gate3_dtype_runs/7B_base_dtype_summary.json:letter_acc_diff_boot_p = 1.042`
-   — an **illegal p-value** (>1). The construction
-   `2 * min((bs<=0).mean(), (bs>=0).mean())` in `code/a01_gate3_fp32_vs_bf16.py:345`
-   is unclamped; ties in the bootstrap distribution let both tails exceed 0.5.
-   Note `paired_bootstrap()` at line 393 already clamps *below* (`max(p, 1/n_boot)`)
-   but not above. All six dtype summaries need re-emitting. **0 GPU** — the
-   per-example shards are on disk.
+*(item 1 closed 2026-08-11; item 2 still open)*
+
+1. ~~`evidence/gate3_dtype_runs/7B_base_dtype_summary.json:letter_acc_diff_boot_p = 1.042`
+   — an **illegal p-value** (>1).~~ **CLOSED 2026-08-11** — see
+   [`evidence/R7_BOOTSTRAP_P_FIX.md`](evidence/R7_BOOTSTRAP_P_FIX.md).
+   The root cause was *not* a missing clamp: `2 * min((bs<=0).mean(), (bs>=0).mean())`
+   **double-counts** the resamples whose mean is exactly 0 (`<=` and `>=` both
+   include them), so the two tails sum to `1 + P(bs==0)` rather than 1. `d` is a
+   difference of two 0/1 correctness vectors, so on the base arm 13986/14042 items
+   have `d = 0` and **5.44%** of bootstrap means land exactly on 0 — enough to push
+   the doubled smaller tail to 1.042. Fixed by a shared `two_sided_boot_p()` that
+   splits the zero atom evenly between the tails (mid-p), making the `p ≤ 1` bound
+   *structural*; `paired_bootstrap()` (which feeds every `*_vs_null_boot_p` and had
+   the same bug, clamped only from below) now uses it too. All six dtype summaries
+   re-emitted from the on-disk shards, **0 GPU**, all 8/8 shards / n=14042 / nan=0.
+   **Impact on conclusions: none.** Base arm 1.042 → **0.9876**; 0 of 24 verdicts
+   changed, 0 of 30 p-values crossed α=0.05, every non-p field byte-identical.
+   The keep8 below-floor headline is unchanged (p = 0.0190 bf16 / 0.0060 fp32).
 2. Full second-MC-benchmark replication. BoolQ/OBQA are point evidence today;
    gate-2's winogrande is a structural degenerate (both options share the
    continuation → identical norm_lens, acc == acc_norm exactly, 100% tie rate) and

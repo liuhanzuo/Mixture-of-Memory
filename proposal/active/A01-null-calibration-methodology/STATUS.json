@@ -282,7 +282,22 @@
    "cross-C1-C4 residual span 7-10x is one estimand -- NARROWED to descriptive sensitivity of the listed aggregation",
    "active_all_gates_passed as 'claims validated' -- RETRACTED (status field changed)"
   ],
-  "open_defect_not_fixed_this_pass": "evidence/gate3_dtype_runs/7B_base_dtype_summary.json:letter_acc_diff_boot_p = 1.042 is an ILLEGAL p-value (>1). Needs the two-sided bootstrap p construction in code/a01_gate3_fp32_vs_bf16.py clamped and all six dtype summaries re-emitted. The base arm's CONCLUSION does not depend on it (letter acc byte-identical across dtypes, McNemar p=1.000, CI95 [-0.0011,+0.0011])."
+  "open_defect_not_fixed_this_pass": "[SUPERSEDED 2026-08-11 by fixed_2026_08_11 below -- original text retained verbatim per proposal/README.md retraction-history rule] evidence/gate3_dtype_runs/7B_base_dtype_summary.json:letter_acc_diff_boot_p = 1.042 is an ILLEGAL p-value (>1). Needs the two-sided bootstrap p construction in code/a01_gate3_fp32_vs_bf16.py clamped and all six dtype summaries re-emitted. The base arm's CONCLUSION does not depend on it (letter acc byte-identical across dtypes, McNemar p=1.000, CI95 [-0.0011,+0.0011]).",
+  "fixed_2026_08_11": {
+   "defect": "R-7 illegal p-value letter_acc_diff_boot_p = 1.042 (>1) on 7B_base_dtype",
+   "status": "CLOSED",
+   "root_cause_verified": "NOT merely a missing clamp. `2*min((bs<=0).mean(),(bs>=0).mean())` double-counts the resamples whose mean is EXACTLY 0, because `<=` and `>=` both include them; hence (bs<=0).mean()+(bs>=0).mean() == 1 + (bs==0).mean() and the doubled smaller tail can exceed 1. `d = Lf - Lb` is a difference of two 0/1 correctness vectors, so it is integer-valued with 13986/14042 exact zeros on the base arm and the bootstrap mean lands exactly on 0 for 5.44% of resamples -- measured on the real per-example shards, which reproduce p_old = 1.0420 bit-for-bit.",
+   "fix": "new shared helper two_sided_boot_p() in code/a01_gate3_fp32_vs_bf16.py splits the zero atom evenly between the tails (mid-p / half-correction): p_lo = P(bs<0) + 0.5*P(bs==0), p_hi = P(bs>0) + 0.5*P(bs==0) (these sum to exactly 1), p = min(1, 2*min(p_lo,p_hi)) further floored at 1/n_boot. Upper bound is now STRUCTURAL, not a truncation. Used by BOTH the contrast p and paired_bootstrap() (which fed every *_vs_null_boot_p and had the same double-counting bug, clamped only from below).",
+   "behaviour_at_d_identically_zero": "p = 1.0 exactly (old construction gave 2.0)",
+   "new_p_on_base_arm": 0.9876,
+   "all_six_summaries_re_emitted": true,
+   "re_emitted_from": "results/a01_gate3/dtype_runs/<arm>/per_example_dtype_shard{0..7}of8.jsonl on the zwfy6 disk (.73), --merge only, 0 GPU",
+   "shard_integrity": "all 6 arms: 8/8 shards, n_scored=14042, nan=0 -- read_shards() hard assertions left in place, none bypassed",
+   "verdict_impact": "NONE. 0 of 24 verdicts changed (6 arms x 2 dtypes x {letter,content_norm}); 0 of 30 p-values crossed alpha=0.05. Every non-p field in all six summaries is byte-identical to the pre-fix version, so the re-merge is also a regression test on the merge path.",
+   "p_changes": "only 3 field paths moved at all: contrast.letter_acc_diff_boot_p, by_dtype.{bf16,fp32}.letter_vs_null_boot_p. Largest move is the base arm 1.0420 -> 0.9876; all others move by <= 0.0107 (the content_norm_vs_null_boot_p values are unchanged because their bootstrap distributions have no atom at 0).",
+   "main_conclusion_impact": "NONE -- the A01/paperG headline that keep8 reads BELOW its own letter floor (p = 0.0190 bf16 / 0.0060 fp32, was 0.0192 / 0.0062) and that keep10/keep12-bf16 read AT the floor are unchanged.",
+   "writeup": "paperG/evidence/R7_BOOTSTRAP_P_FIX.md"
+  }
  },
  "promoted_to": "paperG",
  "promotion": {
@@ -295,7 +310,7 @@
   "proposal_dir_retained_why": "CLAUDE.md: 'proposal 目录不删，它是该方向的证据与决策历史入口'. paperG/README.md points every number back here.",
   "carried_forward_unchanged": [
    "the 2026-08-10 external-audit MAJOR REVISION: all six accepted retractions/narrowings stand and are restated in paperG/README.md",
-   "open defect: letter_acc_diff_boot_p = 1.042 (illegal p-value) -- NOT fixed by promotion",
+   "open defect: letter_acc_diff_boot_p = 1.042 (illegal p-value) -- NOT fixed by promotion; CLOSED 2026-08-11, see audit_response.fixed_2026_08_11 (0 of 24 verdicts changed)",
    "three UNVERIFIED venues (Ding 2021, Hewitt&Liang 2019, Feng 2019) still need Anthology/OpenReview confirmation",
    "no full-text PDF pass on any novelty-check candidate"
   ],
