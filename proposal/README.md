@@ -88,6 +88,21 @@ shared/literature/RELATED_WORK_GAP_AUDIT_20260808.md
     先要做数据获取项目，Phase 0 审计才有对象。见 `DATA_AUDIT_VERDICT_20260810.md`。
   - 从 10K agent trajectories 展开的约 100K SFT rows 中选择 5K；
     以 trajectory/decision credit、target relevance 和集合覆盖替代 flat Top-K。
+- `backlog/B10-dllm-infilling-ar-dominance/`
+  - **`backlog_headline_not_significant_motivation_false`（2026-08-11）**。
+    从 `archive/revival-slate/SLATE.md#3` 提升（live 方向不能挂在 archive 下）。
+  - 数字**全部精确复现**（六个 arm 的 pass@1 与四个 cost 值，从
+    `score.json:per_task[]` + `metrics.jsonl` 重算，10 位小数吻合），但
+    **headline 与 motivation 都不成立**：
+    (1) AR vs 最强 diffusion arm 只差 5/1033 题，McNemar `p=0.635`，CI 跨 0；
+    (2) 该 split 自身 plus 轴 gold ceiling 只有 **0.8025**（204 题按构造不可能通过），
+    只取 829 个 gold-feasible 题后**排序反转**（diffusion .9337 vs AR .9324）；
+    (3) SLATE 的动机「DreamOn 没有 matched AR 对照」**是错的**——DreamOn
+    camera-ready Table 1 就有 Qwen2.5-Coder-7B **92.6**；
+    (4) claim (b)「length-elastic toggle 是 inert」**被推翻**：expansion 由 token id
+    驱动、默认就开，实测 84.3% 的题输出长度被改过；且 README 从未 advertise 那两个 kwarg。
+  - **Gate 1 花 0 GPU**（把已存在的 solutions 用 `--which base` 重打分），
+    且大概率直接杀掉方向 → 先跑它再谈任何 GPU。详见 `NUMBER_AUDIT.md`。
 
 ### Archive
 
@@ -96,6 +111,12 @@ shared/literature/RELATED_WORK_GAP_AUDIT_20260808.md
 - `archive/paperD-cross-family-stitching/`：跨家族 layer stitching 方法已死亡；
   存活的 CKA/null 与 affine readout pilot 已迁到 A01/shared。
 - `archive/revival-slate/`：旧 proposal slate，包含后来被修正的数字，仅供 provenance。
+  - ⚠️ **其 `#3 dllm-infilling-ar-dominance` 已被 `backlog/B10-.../` 取代（2026-08-11）**。
+    SLATE 的数字是对的，但 **claim 与路径都不能再引用**：headline 不显著、
+    gold ceiling 会让排序反转、motivation（「DreamOn 无 AR 对照」）是错的、
+    claim (b) 被推翻，且 SLATE 写的资产路径是 stale 的
+    （真实路径 = `pighzliu_code/dllm_draft{,_104}/`，且 DreamOn 权重**在盘上**，
+    SLATE 说「两盘都没有」是错的）。**一律读 B10，不要读 SLATE#3。**
 - `archive/superseded/`：明确错误或已被更正的 proposal 文档。
 
 ## 使用规则

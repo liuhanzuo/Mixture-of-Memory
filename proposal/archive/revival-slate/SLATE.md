@@ -67,6 +67,27 @@
 
 ## #3 `dllm-infilling-ar-dominance`
 
+> ⚠️⚠️ **SUPERSEDED 2026-08-11 by `proposal/backlog/B10-dllm-infilling-ar-dominance/`.
+> Do NOT cite this entry.** Every number below was re-derived from disk and is
+> **arithmetically EXACT** — but the claims built on them are not:
+> - the headline ordering is **not significant** (paired McNemar p=0.635, margin
+>   5 tasks / 1033, CI straddles zero);
+> - this split's own plus-axis **gold ceiling is 0.8025**, so 204 items are
+>   unpassable by construction, and on the 829 feasible items the **ordering
+>   REVERSES** (dreamon_oracle .9337 vs qwen_fim .9324, p=1.000);
+> - the stated motivation is **false** — DreamOn's camera-ready Table 1 already
+>   contains the matched AR control (Qwen2.5-Coder-7B **92.6** single-line);
+> - **claim (b) is refuted**: expansion is token-driven and live by default
+>   (output length changed on 84.3% of tasks), and the README never advertises
+>   `mask_expansion` / `delete_eos_token`;
+> - the lineage sentence names **Dream-Coder-v0-Base-7B**, but the run used
+>   **Instruct**;
+> - the asset paths here are **stale**, and "DreamOn weights are absent from both
+>   disks" is **wrong** — they are on zwfy6 (`models/` is a symlink).
+>
+> See `B10/NUMBER_AUDIT.md` for the line-by-line audit.
+
+
 **Diffusion's Home Turf, Measured: A Matched-Lineage AR FIM Control Overturns the Infilling Case, and a Headline Toggle That Does Nothing**
 
 **复活论点**: Two coupled results on the one task surface where masked diffusion is claimed to structurally dominate autoregressive models. (a) On n=1033 single-line infilling graded by official evalplus with zero generation errors, Qwen2.5-Coder-7B native FIM reaches pass@1 .7638 -- ABOVE DreamOn's oracle-assisted .7590 and its own-prediction .7018, and above Dream-FIM's .7115 -- while feeding 20.6-24.4x fewer tokens than either DreamOn arm. Qwen2.5-Coder-7B is a true matched lineage for Dream-Coder-v0-Base-7B (identical hidden 3584 / 28 layers / 28 heads / 4 KV heads / intermediate 18944 / vocab 152064 / rope_theta 1e6, differing only in mask_token_id), so this is not a convenience baseline. The mechanism story falls with it: suffix-visibility gain is +.2314 for AR vs +.2991 for diffusion, comparable, so bidirectional context is an affordance of the task FRAMING (FIM), not of the model class. (b) DreamOn's advertised mask_expansion and delete_eos_token kwargs are absorbed by **kwargs and are not parameters, so the length-elasticity that is its headline contribution is not exercised by the public call path -- and every DreamOn number in circulation, including ours, was produced with the toggle inert.

@@ -1,0 +1,177 @@
+{
+  "id": "B10",
+  "slug": "dllm-infilling-ar-dominance",
+  "title": "dLLM infilling: does a matched AR control overturn the diffusion infilling case?",
+  "status": "backlog_headline_not_significant_motivation_false",
+  "created": "2026-08-11T20:10+0800",
+  "updated": "2026-08-11T20:10+0800",
+  "promoted_from": "proposal/archive/revival-slate/SLATE.md#3 (rank 3 of 5, est. 24 GPU-h)",
+  "promotion_reason": "A live direction must not be sourced from archive/, which is defined as dead-or-superseded. Promotion is to backlog, NOT active, and deliberately does not carry SLATE's claims forward as stated.",
+  "gpu_used_for_this_promotion": "none -- documentation + recomputation from data already on disk + novelty check",
+  "gpu_authorised_by_this_document": "none",
+
+  "audit_summary": {
+    "arithmetic": "ALL SIX pass@1 values and ALL FOUR cost values in SLATE are EXACT to 10 decimal places, reproduced twice from raw per-task records (score.json:per_task[] and metrics.jsonl), independently of the roll-up summary.",
+    "claims": "Two of three headline claims do not survive. The direction's stated motivation is factually false.",
+    "detail": "NUMBER_AUDIT.md"
+  },
+
+  "true_surface": {
+    "benchmark": "HumanEval-SingleLineInfilling (loubnabnl/humaneval_infilling; Bavarian et al. 2022)",
+    "n": 1033,
+    "n_verified_how": "wc -l on the split file = 1033, sha256 6fffc71ec2f1674372fcc177511f92312f1a27a9eacd8e43255c9f5ee9eca8c8; every per_task task_id matches SingleLineInfilling/HumanEval/<k>/L<i> and is a strict subset of the split's own ids",
+    "slate_mislabel_suspicion": "REFUTED -- the brief asked whether n=1033 was actually RandomSpan. It is not: SingleLine=1033, RandomSpan=1640, MultiLine=5815. SLATE labelled the surface correctly.",
+    "grading_axis_as_run": "plus (HumanEval+ extended tests)",
+    "grading_axis_official": "base -- this mismatch is the largest single correction in the audit",
+    "grader": "evalplus.eval.untrusted_check with per-invocation self-test (canonical PASS 10/10, stub FAIL 10/10) on every arm",
+    "generation_errors": 0
+  },
+
+  "headline_values_rederived": {
+    "note": "recomputed as sum(per_task[].pass)/1033; all agree exactly with score.json:pass_at_1 and with results/infilling/single_line_summary.json",
+    "qwen_fim": {"pass_at_1": 0.7637947725072604, "n_pass": 789, "slate": 0.7638, "match": "EXACT", "tokens_fed_per_task": 238.90416263310746, "attended_per_task": 2313.862536302033},
+    "dreamon_oracle": {"pass_at_1": 0.7589545014520813, "n_pass": 784, "slate": 0.7590, "match": "EXACT", "tokens_fed_per_task": 5826.759922555663, "attended_per_task": 5826.759922555663},
+    "dream_fim": {"pass_at_1": 0.7115198451113263, "n_pass": 735, "slate": 0.7115, "match": "EXACT", "tokens_fed_per_task": 2035.027105517909, "attended_per_task": 2035.027105517909},
+    "dreamon_fim": {"pass_at_1": 0.7018393030009681, "n_pass": 725, "slate": 0.7018, "match": "EXACT", "tokens_fed_per_task": 4922.613746369797, "attended_per_task": 4922.613746369797},
+    "qwen_prefix": {"pass_at_1": 0.5324298160696999, "n_pass": 550, "slate": 0.5324, "match": "EXACT"},
+    "dream_prefix": {"pass_at_1": 0.4123910939012584, "n_pass": 426, "slate": 0.4124, "match": "EXACT"}
+  },
+
+  "corrections_to_slate": [
+    {
+      "id": "C1",
+      "severity": "fatal_to_headline",
+      "claim": "Qwen2.5-Coder-7B native FIM .7638 is ABOVE DreamOn oracle-assisted .7590",
+      "verdict": "NOT STATISTICALLY SUPPORTED",
+      "evidence": "paired McNemar exact two-sided p=0.6353 (discordant b=38, c=33); margin is 5 tasks of 1033; paired bootstrap 95% CI of the difference = [-0.0116, +0.0213], straddles zero"
+    },
+    {
+      "id": "C2",
+      "severity": "fatal_to_headline",
+      "claim": "the ordering AR > best diffusion arm",
+      "verdict": "SIGN FLIPS once the benchmark's own feasibility ceiling is respected",
+      "evidence": "gold_ceiling_plus = 0.8025169409486931 on this exact split (splicing the benchmark's own gold middle back in), so 204 of 1033 items are unpassable by construction. On the 829 gold-feasible items: dreamon_oracle 0.9337 vs qwen_fim 0.9324, McNemar b=31 c=32 p=1.000, delta=-0.0012"
+    },
+    {
+      "id": "C3",
+      "severity": "high",
+      "claim": "AR dominates on both cost units / 20.6-24.4x fewer tokens",
+      "verdict": "FALSE on the second unit (SLATE flags this itself; carried through)",
+      "evidence": "attended_context_sum ratios vs qwen_fim: dream_fim 0.88x (CHEAPER than AR), dream_prefix 0.75x, dreamon_fim 2.13x, dreamon_oracle 2.52x. tokens_fed ratios: 8.52x / 7.28x / 20.60x / 24.39x. Additional undisclosed asymmetry: for every diffusion arm tokens_fed == attended_context_sum exactly, while for AR they differ ~10x due to KV caching, so the unit choice IS the winner choice"
+    },
+    {
+      "id": "C4",
+      "severity": "fatal_to_claim_b",
+      "claim": "DreamOn's advertised mask_expansion/delete_eos_token kwargs are inert, so its headline length-elasticity was never exercised",
+      "verdict": "the mechanical fact is TRUE; the inference is REFUTED; the word 'advertised' is FALSE",
+      "evidence": "(1) both names appear 0 times in DreamOn generation_utils.py (sha256 9ef97ad61d77cfbe...); cfg.update(**both) returns them as unused and hasattr stays False. (2) BUT expansion is token-driven, not flag-gated: sampler tests x[0]==expand_token_id and ==delete_token_id, there is no 'if generation_config.mask_expansion' anywhere; config.json ships expand_token_id 151667 and mask_token_id 151666, and expand_budget=None becomes max_gen_len*2. (3) Our own telemetry proves it ran: dreamon_fim changed the output length on 871/1033 = 84.3% of tasks (803 longer, 68 shorter) from a constant 4 initial masks. (4) DreamOn's README Parameters section never documents either kwarg.",
+      "consequence": "Claim (b) is DEAD as a finding about DreamOn. It must NOT be published as a functional defect in a public model. What remains is an internal lab-notebook correction: OUR harness passed two no-op kwargs, and any of our wording claiming 'with mask_expansion=True' must be retracted (DLLM_RESULTS_20260807.md already does)."
+    },
+    {
+      "id": "C5",
+      "severity": "fatal_to_motivation",
+      "claim": "DreamOn ships no matched-lineage AR native-FIM control on its own evaluation surface, and the missing control reverses the conclusion",
+      "verdict": "FALSE -- the control exists in the camera-ready",
+      "evidence": "DreamOn Table 1 (ICLR 2026 camera-ready, verified via OpenReview venueid=ICLR.cc/2026/Conference; arXiv:2602.01326v1 PDF read directly) reports Qwen2.5-Coder-7B single-line 92.6 vs DreamCoder-7B+DreamOn 92.1. AR is already ahead on single-line in the AUTHORS' OWN numbers; they claim to surpass AR only on multi-line (63.8 vs 58.7). Our repo note TASK_SURFACE_LIT_GAPS.md had already recorded this, including the 92.6."
+    },
+    {
+      "id": "C6",
+      "severity": "high",
+      "claim": "Qwen2.5-Coder-7B is a true matched lineage for Dream-Coder-v0-Base-7B, differing only in mask_token_id",
+      "verdict": "architectural facts TRUE, but the WRONG MODEL was run",
+      "evidence": "_run_infilling_5arm_8gpu.sh maps dream_fim|dream_prefix -> models/Dream-Coder-v0-Instruct-7B. So an INSTRUCT diffusion model was compared against a BASE AR model; post-training differs across arms. The six architectural fields are indeed identical across Qwen2.5-Coder-7B / Dream-Coder-Base / Dream-Coder-Instruct / DreamOn (hidden 3584, 28 layers, 28 heads, 4 KV heads, intermediate 18944, vocab 152064, rope_theta 1e6), verified from config.json on disk. Dream-Coder-v0-Base-7B IS on disk, so this is repairable."
+    },
+    {
+      "id": "C7",
+      "severity": "medium",
+      "claim": "suffix-visibility gain +.2314 AR vs +.2991 diffusion -- comparable",
+      "verdict": "values EXACT; the word 'comparable' overstates it",
+      "evidence": "difference of gains = +0.0678, paired bootstrap 95% CI [+0.0407, +0.0949], EXCLUDES zero. Diffusion's suffix gain is reliably ~6.8pp larger. Also dream_prefix retains an ORACLE length while qwen_prefix does not, so the two gains are not measured under matched conditions."
+    },
+    {
+      "id": "C8",
+      "severity": "informational_but_large",
+      "claim": "(implicit) these numbers are comparable to published infilling results",
+      "verdict": "FALSE -- neither arm reproduces the published value",
+      "evidence": "published single-line pass@1: DreamCoder+DreamOn 92.1, Qwen2.5-Coder-7B 92.6. Ours: 70.18 and 76.38 -- gaps of -21.9pp and -16.2pp. Dominant identified cause is the plus-axis ceiling of 0.8025: after restricting to gold-feasible items ours become 86.25 and 93.24, i.e. close to published. Reassuring about the harness, damning for the raw headline."
+    }
+  ],
+
+  "slate_paths_stale": {
+    "verdict": "confirmed stale; corrected in SOURCES.md",
+    "real_tree": "/apdcephfs_wzc1/share_304376610/pighzliu_code/dllm_draft/ (ABOVE the Mixture-of-Memory repo, not inside it)",
+    "headline_arms_location": "zwfy6 ONLY: /apdcephfs_zwfy6/share_304376610/pighzliu_code/dllm_draft_104/outputs/infilling_single_line/<arm>/{score.json,metrics.jsonl,solutions.jsonl}",
+    "only_file_with_all_four_values": "zwfy6 dllm_draft_104/results/infilling/single_line_summary.json (sha256 576cf5d3f046e57e..., 6168 B) -- committed as dllm_draft_104@eedd0075; SLATE never names it",
+    "why_main_could_not_find_them": "MAIN searched dllm_draft/runs/spanlen/, which is a DIFFERENT later experiment (RandomSpan n=1640, MultiLine_sub n=420). The headline arms are under outputs/, on the other checkout. Nothing is lost and nothing needs re-running.",
+    "slate_error_dreamon_weights": "SLATE says DreamOn weights are absent from both disks. They are PRESENT at zwfy6 dllm_draft/models/DreamOn-v0-7B/ (4 safetensors shards ~15.2GB + generation_utils.py). dllm_draft_104/models is a SYMLINK to dllm_draft/models, which likely defeated a find on the _104 tree. No re-download needed.",
+    "salvage_roadmap_error": "wzc1 DLLM_SALVAGE_ROADMAP_20260808.md calls scripts/generate_infilling.py 'missing' and lists rewriting it as a blocker. True of wzc1, FALSE of zwfy6 -- it was committed to dllm_draft_104 only. Do NOT rewrite the generator."
+  },
+
+  "robust_findings_that_survive": [
+    "Suffix visibility is worth +0.2314 (AR) and +0.2991 (diffusion), both p<1e-56; bidirectional context is an affordance of the FIM task FRAMING, available to AR, not a property of the model class. This is the most defensible result in the pilot.",
+    "AR beats the two non-oracle-equivalent diffusion arms by 5-6pp (p<=1.9e-09), and this survives ceiling restriction (p<=3.7e-06).",
+    "The oracle length handout is worth +5.7pp to DreamOn (p=4.1e-14), so which diffusion configuration is the comparator decides whether AR 'wins'.",
+    "Zero generation errors and a passing grader self-test in all six arms; merge asserted 8/8 shards and no duplicate ids."
+  ],
+
+  "kill_gate": {
+    "gate_1": {
+      "name": "base-axis re-score of all 6 existing arms",
+      "gpu": "ZERO -- CPU only, solutions already on disk (score_infilling.py --which base)",
+      "kill_if": "on the base axis (gold ceiling 0.9894) the qwen_fim vs dreamon_oracle paired contrast is not significant at alpha=0.05 AND |delta| < 0.02",
+      "expected_outcome": "KILL -- plus axis gives delta=+0.0048 p=0.635, feasible subset gives delta=-0.0012 p=1.000",
+      "if_killed": "rewrite as a protocol note or archive. Do NOT re-frame to hunt a different ranking from the same six arms -- that is the nested-ladder error already retracted twice in this line of work (Retractions 6 and 7)."
+    },
+    "gate_2": {"name": "lineage repair on Dream-Coder-v0-Base-7B", "gpu": "~2-4 GPU-h", "kill_if": "AR advantage does not survive removing the Instruct-vs-base post-training confound"},
+    "gate_3": {"name": "matched suffix-gain (equalise the oracle handout across the two prefix arms)", "gpu": "~1-2 GPU-h", "kill_if": "the two suffix gains stop being of comparable magnitude once matched"},
+    "gate_4": {"name": "memorisation companion", "gpu": "design only, not authorised", "rule": "no absolute pass@1 from this surface may be reported as a capability measurement without a decontaminated companion -- KSPAN_INFILLING_RESULTS.md section 4.5 measured a 26-28pp drop from identifier renaming + docstring replacement on a set whose gold refill still scores 1.000"}
+  },
+
+  "novelty_verdict": {
+    "verdict": "hold_in_backlog_motivation_refuted",
+    "closest_collisions": [
+      {"work": "DreamOn (arXiv:2602.01326)", "venue": "ICLR 2026 Poster", "venue_verified_via": "OpenReview venueid=ICLR.cc/2026/Conference + camera-ready PDF footer", "overlap": "maximal -- same benchmark and split, ALREADY contains the Qwen2.5-Coder-7B matched AR control (92.6) and an oracle-length column"},
+      {"work": "A3 -- Autoregressive Models Rival Diffusion Models at ANY-ORDER Generation (arXiv:2601.13228)", "venue": "ICLR 2026 Poster", "venue_verified_via": "OpenReview venueid=ICLR.cc/2026/Conference", "overlap": "thesis-level -- the conclusion B10 wanted to claim is already peer-reviewed"},
+      {"work": "Diffusion LMs Can Approximate Optimal Infilling Lengths Implicitly (arXiv:2602.00476)", "venue": "preprint (no OpenReview venue found)", "overlap": "training-free adaptive infilling length"},
+      {"work": "Diffusion Language Models Are Natively Length-Aware (arXiv:2603.06123)", "venue": "preprint", "overlap": "reports FLOPs -- the cost-accounting niche is being occupied"},
+      {"work": "From Interface to Inference (arXiv:2607.26504)", "venue": "preprint", "overlap": "insertion-based / latent masked diffusion for any-order code inference"},
+      {"work": "Bavarian et al. FIM (arXiv:2207.14255)", "venue": "-", "overlap": "defines the benchmark and establishes AR can infill via sentinels"}
+    ],
+    "residual_gap": [
+      "No paper in the collision set measures the benchmark's own feasibility ceiling on the axis it grades (our plus-axis gold ceiling is 0.8025, traced to 23 buggy parent tasks, and it silently changes the arm ordering).",
+      "No paper reports cost in two units and shows the winner changes with the unit.",
+      "No paper isolates the oracle-length handout as a controlled factor against a non-oracle AR comparator."
+    ],
+    "must_not_claim": [
+      "AR beats masked diffusion on diffusion's home turf",
+      "a missing matched AR control reverses DreamOn's conclusion",
+      "AR dominates on both cost units",
+      "DreamOn's advertised length-elasticity toggle is inert / is a functional defect in a public model",
+      "every DreamOn number in circulation was produced with the toggle inert",
+      "matched lineage differing only in mask_token_id (for the arms as actually run)",
+      "any comparison of our raw plus-axis numbers to published values",
+      "any priority claim -- DreamOn and A3 are both ICLR 2026; this can only be a follow-up audit"
+    ],
+    "venue_rule_applied": "OpenReview venueid + camera-ready for ICLR/NeurIPS/ICML; aclanthology + DBLP for the ACL family. S2/DBLP lag and misreport 2026 papers as preprints, so neither was used as the authority."
+  },
+
+  "original_kill_reassessment": {
+    "original_kill": "dropped on a literature scan reporting 'DreamOn covers this capability' (DLLM_RESULTS_20260807.md: 'Length-elastic bei DreamOn chidiao')",
+    "was_the_kill_reasoning_sound": "NO -- it graded a title, not the artefact, which violates the standing instruction that the bar is 'identical' not 'overlapping'",
+    "was_the_kill_conclusion_right": "YES, on re-examination. DreamOn demonstrably performs on its own surface (92.1 published; 0.8625 on our feasible subset) AND its paper carries the AR control. The reasoning was lazy and the answer was right anyway. Both halves belong in any write-up."
+  },
+
+  "cost_to_first_result": {
+    "slate_estimate": "24 GPU-h, 'marginal cost is prose'",
+    "audited_estimate": "~4-8 GPU-h, and the FIRST step is 0 GPU",
+    "why_slate_wrong": "The arms are a complete well-instrumented pilot with three specific defects (plus-axis ceiling, Instruct-vs-base lineage, asymmetric oracle handout in the prefix arms). They do not support the claim as written, so the cost is not 'prose'. Conversely it is far less than 24 GPU-h because the decisive step is a CPU re-score of solutions already on disk.",
+    "sequencing": "Gate 1 (free) before any GPU spend, because it determines whether the direction has a headline at all."
+  },
+
+  "files": ["PROPOSAL.md", "STATUS.json", "SOURCES.md", "NUMBER_AUDIT.md"],
+  "disks": {
+    "wzc1": "gold_ceiling_SingleLine.json, generate_evalplus_dreamon.py, all narrative/retraction docs, runs/spanlen (8 arm dirs), runs/kspan_*",
+    "zwfy6": "the six scored SingleLine arms, single_line_summary.json, the infilling harness (generate_infilling.py / score_infilling.py / launcher), the benchmark split files, DreamOn+Qwen+Dream-Coder weights",
+    "warning": "the two are DIFFERENT PHYSICAL DISKS with different checkouts; a file is 'missing' only after searching both"
+  }
+}

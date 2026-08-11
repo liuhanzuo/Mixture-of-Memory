@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-08",
+  "updated": "2026-08-11",
   "active": [
     {
       "id": "A01",
@@ -35,7 +35,8 @@
     "B06-portable-decompression-adapter",
     "B07-mutable-comem-serving",
     "B08-memory-applications",
-    "B09-trajectory-aware-sft-data-selection"
+    "B09-trajectory-aware-sft-data-selection",
+    "B10-dllm-infilling-ar-dominance"
   ],
   "archive": [
     "paperC-v1-frozen-cap",
