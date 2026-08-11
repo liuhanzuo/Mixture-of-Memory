@@ -256,6 +256,27 @@ modified; BoolQ+RTE were added as `zeroshot_boolq_rte.json`.
 which independently validates the whole harness including the new BoolQ/RTE cells. Our CAST
 reproduction lands **1.54 pp below** CAST Table III's 55.91 on the same plain-acc convention.
 
+A **second, independent** confirmation that the source convention is plain acc, via the AST official
+checkpoint as a cross-harness anchor. §8 records that the same official ckpt scores AST-7 58.62 →
+**57.94** across two harnesses. Ours, on that same ckpt:
+
+| our convention, AST-official AST-7 | value | vs 57.94 |
+|---|---:|---:|
+| primary-metric mix (`acc_norm` where available) | 61.9938 | **+4.05 pp** |
+| **plain `acc`** | **57.5976** | **−0.34 pp** ✅ |
+
+Two anchors of different kinds — a dense row from AST's own table, and a fixed sparse checkpoint
+measured under two harnesses — both land within 0.34 pp under plain acc and 4 pp off under the mixed
+convention. The convention question is settled empirically, not by preference.
+
+**Why this matters beyond bookkeeping**: MAIN reported on 2026-08-11 that our CAST reproduction
+(59.27) *beat* CAST's paper (55.91) and began constructing an explanation for the "anomaly". Both
+inputs were wrong — the mixed `acc_norm` convention inflates the average (HellaSwag alone moves
++18.8 pp: 53.92 acc → 72.93 acc_norm), and `SPEC.md` itself mislabelled 55.91's task set. The two
+errors compounded in the same direction and manufactured a 3.36 pp "win" out of a real 1.54 pp
+shortfall. **Never compare an `acc_norm`-mixed average to a published number.** The mixed convention
+is valid only for internal arm-vs-arm ordering, where all arms share it.
+
 **The headline is a tie, not a win**: on the CAST-7 plain-acc slice our CAST repro scores 54.3698 vs
 the AST official checkpoint's 54.3507 — a **+0.02 pp** difference. On Union-9 primary the gap is
 +0.92 pp, but leave-one-task-out shows it is carried *entirely by RTE*: dropping RTE collapses the
