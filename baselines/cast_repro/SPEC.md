@@ -195,6 +195,41 @@ Independently measured: the *same* AST official checkpoint scores AST-7 58.62→
 > which is *better* than our CAST reproduction's **6.1372** — the opposite of the direction implied
 > when 6.3430 is placed next to 4096-context numbers. `appendix.tex:324` ("AST official deployable
 > … 6.3430") has the same defect and must be re-measured at 4096 or explicitly labelled 2048.
+>
+> **★ MEASURED 2026-08-11 12:55 on `.21` (32 s, both sparse arms at 2048) — this settles which
+> direction to normalise, and it is the OPPOSITE of "re-measure everything at 4096".**
+>
+> | arm | @2048 | @4096 | rel |
+> |---|---:|---:|---:|
+> | dense LLaMA-2-7B | 5.5637 | 5.2004 | +6.99 % |
+> | CAST-repro (ours) | **6.5268** | 6.1372 | +6.35 % |
+> | Wanda 2:4 | 12.4749 | 11.7733 | +5.96 % |
+> | AST official | 6.3430 | 5.9125 | +7.28 % |
+>
+> The offset is **+6.0…+7.3 % on all four arms** with identical token counts (335,872 =
+> 164×2048 = 82×4096), so it is purely the window. New provenance:
+> `outputs/cast_eval_spec_ppl2048/{cast_7500,wanda}/ppl_metrics.json`.
+>
+> **Normalise to 2048, not 4096.** SparseForge's entire PPL column is 2048, and SparseForge's own
+> headline is **6.2179**. At 2048 the ordering is
+>
+>     SparseForge 6.2179  <  AST official 6.3430  <  CAST-repro 6.5268
+>
+> i.e. **AST official is 0.18 better than our CAST reproduction, and SparseForge is best** — which
+> is the honest and internally consistent story. Normalising to 4096 instead would require
+> re-running dense, AST, Wanda, SparseGPT, ALPS, ELSA, ProxSparse *and SparseForge itself*, and
+> would put CAST-repro's 6.1372 above SparseForge's 6.2179 — a 7 % protocol artifact beating a
+> 2 % real claim.
+>
+> **The trap this closes:** pasting the 4096 value 6.1372 into the existing 2048 column would have
+> shown our CAST reimplementation beating SparseForge on perplexity, purely from a longer context
+> window. The artifact is **3.5×** the size of the headline PPL claim it would have contaminated.
+>
+> §8 criterion 3 (relative ordering) is unaffected: dense < CAST < Wanda holds in both conventions.
+>
+> ⚠️ §8.2's "~6.2–6.5 band" still does not state its own seqlen. Our 6.5268 sits at the band's
+> upper edge under 2048; 6.1372 is below the lower edge under 4096. **Attach a seqlen to that band
+> before using it as pass/fail.**
 
 1. **Algorithmic correctness** — masked weights → 0; exact 2:4; AdamS actually running on the in-scope weights.
 
