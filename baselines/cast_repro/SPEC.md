@@ -157,11 +157,44 @@ Two consequences for the full run:
 
 - WikiText-2 perplexity at **4096** context, train and eval (Appendix B). The audit's first debug used 2048 — not comparable.
 - Zero-shot: HellaSwag, RACE, PIQA, WinoGrande, ARC-e, ARC-c, OBQA via LM Harness (Sec. VI-A).
-- **Reference numbers must come from Table III only**: CAST @7.5B = Wiki PPL **5.58**, AST-7 average **55.91**. Table III is internally consistent with Table XII's scaling row (2-7B @7.5B = 5.58) and all seven row averages recompute exactly. Table VI's "5.56" for the same run contradicts Table III, and Table VI's `CAST w SRSTE` row has ARC-e/ARC-c apparently swapped (41.89/76.39 vs 76.52/43.68 elsewhere) — do not cite Table VI.
+- **Reference numbers must come from Table III only**: CAST @7.5B = Wiki PPL **5.58**, **CAST-7** average **55.91**. Table III is internally consistent with Table XII's scaling row (2-7B @7.5B = 5.58) and all seven row averages recompute exactly. Table VI's "5.56" for the same run contradicts Table III, and Table VI's `CAST w SRSTE` row has ARC-e/ARC-c apparently swapped (41.89/76.39 vs 76.52/43.68 elsewhere) — do not cite Table VI.
+
+  > ⚠️ **2026-08-11 correction — 55.91 is a CAST-7 average, NOT an "AST-7" average.** This line
+  > previously mislabelled it while line 159 above lists the CAST seven. The two suites differ and
+  > are not interchangeable:
+  > * **CAST-7** (CAST Table III) = HellaSwag, RACE, PIQA, WinoGrande, ARC-e, ARC-c, OBQA
+  > * **AST-7** (AST Table 2)   = BoolQ, RTE, HellaSwag, WinoGrande, ARC-e, ARC-c, OBQA
+  >
+  > They intersect in only **5** tasks: RACE/PIQA are CAST-only, BoolQ/RTE are AST-only. Comparing a
+  > CAST-7 mean against an AST-7 mean is invalid. Use the Union-9 table
+  > (`outputs/cast_eval_spec_union9/union9_four_arm_table.json`, 9 tasks x 4 arms, one harness),
+  > which lets each subset mean be sliced from the same run.
+  >
+  > **Also: 55.91 is a PLAIN-ACC average.** Table III's row `[54.50, 40.48, 77.09, 68.27, 76.52,
+  > 43.68, 30.80]` recomputes to 55.9057 exactly, and HellaSwag 54.50 / OBQA 30.80 are on the
+  > plain-acc scale (acc_norm would read ~73 / ~40). AST-7 is plain acc too. So the mixed
+  > acc_norm/acc convention behind our internal `zeroshot_avg_primary` **cannot** be compared to
+  > either paper's headline: under the mixed map our CAST repro reads 59.27 (+3.36 "better" than
+  > 55.91), but on the papers' own plain-acc convention it is 54.37 — **1.54 pp worse**.
 
 ## 8. Success criteria (not "hit 5.58")
 
 Independently measured: the *same* AST official checkpoint scores AST-7 58.62→57.94 and Wiki PPL 5.69→**6.3430** (+11%) across two harnesses. So even a perfect CAST reproduction lands near ~6.2 in our harness, not 5.58. Judge instead on:
+
+> ⚠️⚠️ **2026-08-11: the 6.3430 anchor above is measured at seqlen 2048, so it must NOT be compared
+> with the 4096-context PPLs this SPEC mandates in §7.** Measured on `.21`, same harness
+> (`baselines/eval_hf_sparse_model.py`), same 335,872 target tokens, same AST checkpoint
+> (`models/AST-official-LLaMA2-7B-2of4`, exact-2:4 verified):
+> * seqlen **2048** → **6.342995328699181** — reproduces the archived value *bit-identically*
+>   (`rebuttal_artifacts/2026-07-27/ast_official/ppl_metrics.json`, whose own `"seqlen": 2048` field
+>   confirms it), so seqlen is the sole cause of the gap.
+> * seqlen **4096** → **5.9125** (`outputs/cast_eval_spec/ast_official/ppl_metrics.json`).
+>
+> **Consequence: the "+11% harness tax" framing is wrong, and so is the "~6.2 is the realistic
+> target" reasoning built on it.** At the SPEC-mandated 4096 the AST checkpoint reads **5.9125**,
+> which is *better* than our CAST reproduction's **6.1372** — the opposite of the direction implied
+> when 6.3430 is placed next to 4096-context numbers. `appendix.tex:324` ("AST official deployable
+> … 6.3430") has the same defect and must be re-measured at 4096 or explicitly labelled 2048.
 
 1. **Algorithmic correctness** — masked weights → 0; exact 2:4; AdamS actually running on the in-scope weights.
 
@@ -175,3 +208,61 @@ Independently measured: the *same* AST official checkpoint scores AST-7 58.62→
    The strongest *cheap* signal that AdamS is running at all is the DIAG pair: `masked_mean_magnitude` must fall while `kept_mean_magnitude` holds (observed 0.00740 → 0.00344 vs 0.02233 → 0.02243). Vanilla Adam moves both.
 2. **PPL in the same band as the AST official ckpt under our harness** (~6.2–6.5), far from 23.45.
 3. **Explainable relative ordering** vs dense / Wanda / naive-retraining under one harness.
+
+## 9. Union-9 four-arm zero-shot table (2026-08-11, node .21)
+
+Provenance: `outputs/cast_eval_spec_union9/` (per-arm `zeroshot_union9.json` +
+`union9_four_arm_table.json`); driver `scripts/_union9_eval_spec_21.sh`; aggregator
+`baselines/cast_repro/tools/aggregate_zeroshot_union9.py`. One harness for all four arms
+(lm-eval 0.4.8, bf16, `add_bos_token=False`, no chat template, `num_fewshot=0`,
+`batch_size auto`→64, `seed 0`); only `pretrained` differs.
+
+**Why Union-9 exists**: CAST-7 and AST-7 share only 5 tasks, so a CAST-7 mean can never be compared
+to an AST-7 mean. Running all 9 lets both subset means be sliced from the *same* numbers.
+
+Primary metric map (identical across arms, asserted in the aggregator): `acc_norm` for
+hellaswag/arc_easy/arc_challenge/openbookqa; `acc` for piqa/winogrande/race/**boolq**/**rte**.
+BoolQ/RTE are binary classification / entailment, where option length is not a confound, so
+`acc_norm` is meaningless — the harness emits none for them.
+
+| task (n) | dense | CAST@7500 | Wanda | AST official |
+|---|---|---|---|---|
+| boolq (3270) | 77.7676 | 69.2355 | 68.1957 | 72.9052 |
+| rte (277) | 63.1769 | 74.7292 | 53.4296 | 66.4260 |
+| hellaswag\* (10042) | 75.9709 | 72.9337 | 55.1384 | 72.7146 |
+| race (1045) | 39.7129 | 39.5215 | 35.4067 | 39.6172 |
+| piqa (1838) | 77.8564 | 76.3330 | 70.2938 | 76.9859 |
+| winogrande (1267) | 69.2976 | 66.2983 | 62.9834 | 67.3244 |
+| arc_easy\* (2376) | 74.6633 | 74.2424 | 57.1128 | 71.3805 |
+| arc_challenge\* (1172) | 46.2457 | 45.7338 | 31.7406 | 42.4061 |
+| openbookqa\* (500) | 44.2000 | 39.8000 | 35.8000 | 40.8000 |
+| **Union-9 mean** | **63.2101** | **62.0919** | **52.2335** | **61.1733** |
+| CAST-7 slice | 61.1353 | 59.2661 | 49.7822 | 58.7470 |
+| AST-7 slice | 64.4746 | 63.2818 | 52.0572 | 61.9938 |
+| WikiText-2 PPL @4096 | 5.2004 | 6.1372 | 11.7733 | **5.9125** |
+
+\* = `acc_norm`. **Plain-acc slice** (the convention both papers use, for paper-facing comparisons):
+Union-9 59.5625 / 58.2837 / 49.4569 / 57.7540; CAST-7 56.4454 / 54.3698 / 46.2123 / 54.3507;
+AST-7 59.7847 / 58.3856 / 48.4873 / 57.5976.
+
+**Harness integrity**: re-running the 7 previously-published tasks reproduced the on-disk
+`zeroshot_metrics.json` for all three existing arms with worst |Δ| = **0.000000 pp** (3 arms × 7
+tasks × {acc, acc_norm}) — bit-identical, so the new BoolQ/RTE cells are on the same footing as the
+old ones. The three pre-existing `zeroshot_metrics.json` / `ppl_metrics.json` files were not
+modified; BoolQ+RTE were added as `zeroshot_boolq_rte.json`.
+
+**External validation**: our dense arm reproduces AST Table 2's dense LLaMA-2-7B row to
+**0.004 pp** on the AST-7 plain-acc mean (59.7847 vs the paper's 59.78; mean per-task |Δ| 0.21 pp),
+which independently validates the whole harness including the new BoolQ/RTE cells. Our CAST
+reproduction lands **1.54 pp below** CAST Table III's 55.91 on the same plain-acc convention.
+
+**The headline is a tie, not a win**: on the CAST-7 plain-acc slice our CAST repro scores 54.3698 vs
+the AST official checkpoint's 54.3507 — a **+0.02 pp** difference. On Union-9 primary the gap is
++0.92 pp, but leave-one-task-out shows it is carried *entirely by RTE*: dropping RTE collapses the
+gap to **−0.0045 pp**, while dropping any other task leaves it at +0.62…+1.49 pp. RTE is the
+smallest task (n=277, worst-case stderr 3.0 pp) and behaves anomalously — CAST scores 74.73 there,
+**11.55 pp above dense** (McNemar exact p=0.00053), which is not a credible sparsification gain;
+Wanda's 53.43 is at the 52.71% majority-class floor. Per-task McNemar (CAST vs AST, paired):
+significant on rte (+23, p=0.017) and arc-nothing else in CAST's favour, while AST significantly
+*wins* boolq (−120, p<1e-5) and hellaswag (−59, p=0.024). **Do not claim our CAST reproduction beats
+the AST checkpoint.** Report the tie and footnote RTE.
