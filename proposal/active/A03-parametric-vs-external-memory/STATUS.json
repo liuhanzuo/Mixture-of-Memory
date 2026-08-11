@@ -1,9 +1,9 @@
 {
   "id": "A03",
   "surviving_claims_doc": "claims/A03_SURVIVING_CLAIMS.md -- READ THIS FIRST. Authoritative single statement of what A03 may and may not claim (SURVIVING / RETRACTED / OPEN). It overrides any other .md headline in this directory; all its numbers were read from the evidence JSONs (trajectory md5 28584639f120aaff07bd1a52120f983e), not from prose. Also records 4 new prose-vs-JSON discrepancies (sign-contradiction denominator is 7/13 not 7/12; frac_combos_over_2x is 0.5556 not 0.52; the canonical trajectory JSON has NO mmlu axis despite three files calling it 'four-axis'; the zwfy6 copy of a03_1b_floor_nulls_4axes.json is pre-erratum).",
-  "status": "active_dataorder_replication_RUNNING_seed43_82_seed44_73_prereg_locked_verdict_due_~0420",
+  "status": "dataorder_replication_CLOSED_2026-08-11_ARTIFACT -- A-2 RETRACTED, A03 retains only A-1 (level-vs-null). Proposal stage; NOT promotable.",
   "priority": 3,
-  "updated": "2026-08-10T19:25+0800",
+  "updated": "2026-08-11 11:15 GMT+8",
   "dataorder_replication": {
     "status": "ARTIFACT",
     "verdict_doc": "DATAORDER_VERDICT.md",
@@ -344,14 +344,17 @@
     }
   },
   "next_gate": [
-    "extend analyze_1b_knowledge_floor.py to include nq_open (small CPU task, ~15 min)",
-    "then A03's certified axes are: MMLU-content, PopQA EM (+ length-matched contains), TriviaQA EM (primary), NQ-open EM (new). Four closed-book parametric-knowledge axes measurable at 1B",
-    "narrow A03's scope explicitly to closed-book parametric knowledge (drop the three blocked axes, or move them to a follow-up paper)",
-    "then build the 6 arms (intact / pruned / +CPT / +raw-text RAG / +residual memory / +CPT+memory) on the four certified axes, each arm re-checked against its own null"
+    "DECIDE FIRST (no GPU): is the 6-arm plan still worth ~N GPU-h now that A-2 is retracted? The retraction removes the '+CPT' arm's motivating result, so arms 3 and 6 of the original six lose their headline. Re-derive the minimum arm set that can still produce a novel claim.",
+    "IF the 6-arm plan proceeds: every cross-arm delta must now be reported with a run-to-run spread estimate at n>=3 per arm. A-2 died because n=1 data path was mistaken for a real effect; repeating the design without per-arm replication repeats the error.",
+    "Do NOT quote any sigma_run figure from the n=2 seeds 43/44 -- prereg s4 forbids it (chi2 95% CI for sigma is ~[0.14, 10.3] pp).",
+    "SUPERSEDED by the retraction, kept for provenance: 'extend analyze_1b_knowledge_floor.py to include nq_open' (DONE), 'narrow A03 scope to closed-book parametric knowledge' (still valid), 'build the 6 arms' (now gated on the decision above)."
   ],
   "related_proposals_tcodex_verdicts": {
     "A01": "Major revision. 保留 'floor 是必要条件' 和 tie 机制反证; 撤回 phase-transition 一般定律、oracle convention flip、跨 construct 一数量级 span。",
     "A02": "Reject / archive 原 thesis. CoMem storage 2048x cost vs raw-token; 自然任务 quality-win 不成立; write-repair arms 未测。仅剩窄 systems microbenchmark 可作 observation。",
     "A04": "Design paper / preregistration only. Pilot Zero 不是 gate pass; 没有任何模型已被 'certified recovered'; K1 应改为 INDETERMINATE。"
-  }
+  },
+  "status_prev": "active_dataorder_replication_RUNNING_seed43_82_seed44_73_prereg_locked_verdict_due_~0420",
+  "disposition": "hold_in_backlog_pending_rescope",
+  "disposition_why": "The C-1 gate returned ARTIFACT (DATAORDER_PREREG.md s3.4, 0/2 seeds CONFIRM), so the trajectory-CPT claim A-2 is retracted and A03's only surviving claim is A-1: pruned+healed 1B keep7+fresh2 @200k sits BH-significantly above its own construct-appropriate null on 4/5 certified closed-book interfaces. A-1 is a level-vs-floor result, immune to the sampler-seed variance that killed A-2. It does not by itself satisfy the CLAUDE.md promotion gate (one significant finding, independently replicated) because the 6-arm comparison the proposal was built around has not been run."
 }
