@@ -82,6 +82,11 @@ shared/literature/RELATED_WORK_GAP_AUDIT_20260808.md
 
 其中 A03、A02、A04、B01 是最高优先级补洞项。
 
+> ⚠️ **2026-08-11 更正**：**A03 已不再是补洞项**——它已 `ARCHIVE` decided
+> （`active/A03-parametric-vs-external-memory/ARM_SET_DECISION.md`），
+> 死于 effect-size-vs-apparatus-spread 而不是死于 related-work 覆盖，所以给它补
+> Related Work 不会改变任何结论。当前补洞优先级为 **A02 → A04 → B01**。
+
 > ⚠️ **2026-08-10 更正**：本行原写「B09 当前最完整」。那说的是**文献/设计完整度**，
 > 但会被读成「最接近可跑」，而 B09 恰恰相反——它的候选池（~10K agent trajectories
 > / ~100K SFT rows）**在两个盘上都不存在**，Phase 0 数据审计无法执行，状态已改为
@@ -114,11 +119,57 @@ shared/literature/RELATED_WORK_GAP_AUDIT_20260808.md
 2. `active/A02-comem-write-read-repair/`
    - 先验证已有 Write-LoRA/overlap repair 是否迁移到自然任务，再重做
      equal-latency frontier。
-3. `active/A03-parametric-vs-external-memory/`
-   - 结构压缩后，知识应恢复进参数，还是迁移到显式外部 memory interface。
-4. `active/A04-recovery-certification/`
+3. `active/A04-recovery-certification/`
    - 用干净、多 seed、同语料同 token 的实验研究 recovery certification，
      而非把现有混杂 depth ladder 当 scaling law。
+   - ⚠️ **2026-08-11：A03 归档削弱了下一笔算力的理由**（**不是**否证 Pilot Zero ——
+     Pilot Zero 是单 checkpoint 的 level 对比，结构上不继承杀死 A-2 的 sampler-seed
+     方差，`DATAORDER_VERDICT.md`「Does NOT mean」#1 已明写）。真正的依赖是：
+     A03 在**共用同一套装置**上把 CPT recovery increment 测成
+     **+0.0818 pp，CI95 [−0.945, +1.108]**（= 31.10 pp 缺口的 **0.26%**，CI 含 0），
+     而 certification rule 只能对**会动**的 recovery trajectory 做出有信息量的裁决。
+   - ⚠️ `STAGE_B_DECISION.md` 问的那 **135 GPU-h 已经花掉了**（Path A 于 08-11 05:53
+     启动；seeds 101/102/103 全部训完并在四轴评完，
+     `evidence/stageB_S3_verdict.json` = `STAGE_A_DOES_NOT_FIRE`）。真正待批的是
+     **Pilot Two（1077-4309 GPU-h，需用户显式批准）**。**批之前必须先在 prereg 里
+     pre-data 写明「要裁决多大的 recovery，并证明它大于所选 S 对应的 MDE」**
+     （S=3 → 1.10 pp @ σ̂=0.362；σ 的 χ² 上界处 3.16 pp）。
+   - 另一条已被证伪的设计假设：**spread 不随 damage 单调**——keep12 在
+     popqa/mmlu_content/nq_open 上的 σ 比 keep7 **更大**（mmlu 高 3.1×）。
+     按「损伤越小方差越小」排 seed 预算是错的。
+     完整表述见 `active/A03-.../STATUS.json:consequence_for_A04_135gpuh` 与
+     `active/A03-.../ARM_SET_DECISION.md` §4。
+
+### 已决定归档，但物理目录暂留 `active/`
+
+- `active/A03-parametric-vs-external-memory/` — **`ARCHIVE` decided 2026-08-11**
+  （执行了它自己的 `next_gate[0]`，**零 GPU**）。判定：`ARM_SET_DECISION.md`；
+  死因复盘：`POSTMORTEM.md`。
+  - **不是 kill clause 触发**，而是 **effect size vs 装置自身 spread**：
+    pooled σ_run = **0.3620 pp（df=4，χ² 95% CI [0.217, 1.040]）** →
+    两臂 S=3 的 MDE = **1.10 pp**（σ 上界处 **3.16 pp**）。A03 剩下的**训练配方类臂**
+    目标效应全部 ≤1 pp，**任何可负担的 S 都测不出来**（S=8 要 1451 GPU-h，
+    在 σ 上界处也只到 1.57 pp）。
+  - 三条腿的结局：**参数腿（CPT）测出来是 0**（+0.0818 pp，CI 含 0，= 缺口的 0.26%；
+    而 200k heal 的 **52.43 B token**、906.7 GPU-h 也没补上 31.10 pp 的缺口）；
+    **RAG 腿两个盘都没有资产**（实测：PopQA 缓存 arrow schema 17 列**无 passage 字段**、
+    TriviaQA 只缓存 `rc.nocontext`、`data/` 无 Wikipedia passage index、
+    closed-book harness 按设计不吃 context）；**residual-memory 腿**要的 1B adapter
+    从未存在（canonical 那个是 Qwen3-8B layers 12..35/36、hidden 4096），
+    且该 thesis **A02 已在 8B 上测成负**（storage 2048×、read-compute 仅 1.03-1.37×、
+    86-93% 的收益来自 retrieval）。
+  - **A-1 存活但不属于 A03**：它是 level-vs-floor 的 null-calibration case study，
+    即 **A01 的 thesis**（`GATE_FOURAXES_VERDICT.md` §2 自己承认与 A01 同定义、同数字），
+    因此 **migrate 到 A01**，而不是把 A03 narrow 成 A-1。
+  - ⚠️ **物理 `git mv` 被阻塞，现在不要搬**：`A04/code/pilot_one_stage_a_sd_run.py:81`
+    用硬编码路径 import A03 的 canonical loaders（A04 全部 Stage-A/B 数字依赖其
+    8/8-shard、item-count、dup-id、NaN 断言）；
+    `A01/code/a01_audit_response_recompute.py:5,310` 引用 A03 的 audit。
+    正确顺序：先把 loaders 提到 `shared/` 并 repoint，然后才搬目录。
+    见 `STATUS.json:arm_set_decision.archive_move_blocked_by`。
+  - 读该目录前先读 `claims/A03_SURVIVING_CLAIMS.md`（claim 的唯一权威；§B 有 9 条
+    已死 claim，不得复活）。**seed 45 仍在跑，但两个可达分支都撤回 A-2**
+    （`SEED45_PREDECLARATION.md` §3），它落地不改变本判定。
 
 ### Backlog
 

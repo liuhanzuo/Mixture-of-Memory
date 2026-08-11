@@ -1,9 +1,98 @@
 {
   "id": "A03",
   "surviving_claims_doc": "claims/A03_SURVIVING_CLAIMS.md -- READ THIS FIRST. Authoritative single statement of what A03 may and may not claim (SURVIVING / RETRACTED / OPEN). It overrides any other .md headline in this directory; all its numbers were read from the evidence JSONs (trajectory md5 28584639f120aaff07bd1a52120f983e), not from prose. Also records 4 new prose-vs-JSON discrepancies (sign-contradiction denominator is 7/13 not 7/12; frac_combos_over_2x is 0.5556 not 0.52; the canonical trajectory JSON has NO mmlu axis despite three files calling it 'four-axis'; the zwfy6 copy of a03_1b_floor_nulls_4axes.json is pre-erratum).",
-  "status": "dataorder_replication_CLOSED_2026-08-11_ARTIFACT -- A-2 RETRACTED, A03 retains only A-1 (level-vs-null). Proposal stage; NOT promotable.",
+  "status": "ARCHIVE_DECIDED_2026-08-11 -- next_gate[0] (the no-GPU arm-set decision) EXECUTED; verdict ARCHIVE. See ARM_SET_DECISION.md + POSTMORTEM.md. A-2 RETRACTED (ARTIFACT branch); A-1 survives but is A01's thesis, not A03's, so it MIGRATES rather than narrowing A03. Directory physically STAYS at proposal/active/ until two hardcoded code paths are repointed -- see arm_set_decision.archive_move_blocked_by. NOT promotable; no further GPU authorised for this proposal.",
   "priority": 3,
-  "updated": "2026-08-11 11:15 GMT+8",
+  "updated": "2026-08-11 21:10 GMT+8",
+  "arm_set_decision": {
+    "gate": "STATUS.json:next_gate[0] as it read before this update -- 'DECIDE FIRST (no GPU): is the 6-arm plan still worth ~N GPU-h now that A-2 is retracted?'",
+    "executed": "2026-08-11 21:10 GMT+8",
+    "gpu_spent": "ZERO. All numbers recomputed from JSONs already on disk plus read-only ls/arrow-schema inspection on zwfy6.",
+    "decision_doc": "ARM_SET_DECISION.md",
+    "postmortem_doc": "POSTMORTEM.md",
+    "verdict": "ARCHIVE",
+    "why_not_PROCEED_WITH_REDUCED_SET": "No reduced arm set both (a) targets an effect larger than the apparatus's own measured run-to-run spread and (b) answers A03's parametric-vs-external question. Four candidate sets were costed; see ARM_SET_DECISION.md s2. The arms that die with A-2 are precisely the ones carrying the scientific question.",
+    "why_not_NARROW_TO_A1_ONLY": "A-1 contains no CPT arm, no RAG arm and no residual-memory arm, so it is not a narrower A03 -- it is a floor-calibration case study, i.e. A01's thesis applied to generative QA (a point GATE_FOURAXES_VERDICT.md s2 already concedes: 'this is also the definition A01 uses in both code and prose'). Keeping A03 active with A-1 as its headline would also keep 9 retracted claims and 6 prose-vs-JSON discrepancies in an active directory.",
+    "arms_status": {
+      "arm1_intact": "ALIVE, already scored (not a new cost)",
+      "arm2_pruned_healed": "ALIVE, already scored = claim A-1",
+      "arm3_CPT": "DEAD as measured (+0.0818 pp pooled, CI95 [-0.945,+1.108], = 0.26% of the 31.10 pp deficit); the DESIGNED knowledge-targeted variant never had a headline to lose and is killed instead by the MDE bar. The brief's 'arm 3 loses its headline' is VERIFIED, with this correction.",
+      "arm4_rawtext_RAG": "NEVER BUILT, assets absent on BOTH disks -- verified: cached akariasai___pop_qa test-split arrow schema has 17 columns and NO passage/context field; TriviaQA cached rc.nocontext only (120 MB); no Wikipedia passage index in data/; eval_olmo2_closedbook_qa.py is strict closed-book by design (docstring line 16).",
+      "arm5_residual_memory": "NEVER BUILT (canonical read-LoRA is Qwen3-8B layers 12..35 of 36, hidden 4096 -- inapplicable to 9-layer hidden-2048) AND its thesis already measured negative at 8B by A02: storage 2048x bytes/token vs raw text, read-compute 1.03-1.37x vs matched-pack text-RAG, N* grows with L, 86-93% of the win is retrieval. That is A03 kill condition #1 in all but formal firing (different scale/family, so recorded as effective-not-formal).",
+      "arm6_joint": "DEGENERATE. Its CPT main effect is ~0, and a 2x2 interaction contrast has ~2x the variance of a main effect at the same S -- it needs MORE power than the main-effect test that already failed. Also inherits all of arm 5's blockers. The brief's 'arm 6 loses its headline' is VERIFIED; the mechanism is that it degenerates into arm 5."
+    },
+    "the_decisive_arithmetic": {
+      "pooled_sigma_run_triviaqa_em_pp": 0.362,
+      "pooled_dof": 4,
+      "pooled_chi2_95ci_pp": [0.217, 1.04],
+      "pooling": "sqrt((df1*s1^2 + df2*s2^2)/(df1+df2)) over keep7-20k (s=0.4132, df=2) and keep12-5k (s=0.3023, df=2)",
+      "mde_two_arm_alpha05_power80": {
+        "S3": "1.10 pp at sigma_hat; 3.16 pp at the chi2 95% upper bound",
+        "S4": "0.86 / 2.47 pp",
+        "S5": "0.73 / 2.10 pp",
+        "S8": "0.55 / 1.57 pp (and 1451 GPU-h for two arms)"
+      },
+      "what_there_is_to_detect_pp": {
+        "triviaqa_em_intact_minus_pruned": 31.1,
+        "popqa_em": 11.56,
+        "nq_open_em": 7.4,
+        "mmlu_content": 6.24
+      },
+      "measured_CPT_increment": "+0.0818 pp, s=0.4132, df=2, t.975=4.303, CI95 [-0.945,+1.108] pp = +0.26% of the 31.10 pp deficit, CI [-3.04%,+3.56%], at 5.243 B tokens/run (90.7 GPU-h)",
+      "conclusion": "Every training-recipe arm A03 has left targets <=1 pp, which is inside the apparatus's own sigma interval. They are unresolvable at any affordable S. Every evidence-injection arm targets tens of pp but either cannot answer the comparison (arm 4 alone) or requires an artefact that does not exist (arm 5). There is no third class of arm."
+    },
+    "arm3_is_the_sampler_seed_0_draw": {
+      "claim": "The original Arm 3 IS the sampler-seed-0 draw of the identical config, so seeds {0,43,44} form an n=3 family of the SAME arm at zero marginal cost.",
+      "evidence": [
+        "DATAORDER_VERDICT.md line 20 states it: 'Arm 3, trained pre-ce5c298, i.e. sampler seed 0'",
+        "scripts/_run_a03_dataorder_repl.sh header: config-identical to _run_a03_arm3_cpt.sh except OUT path, --seed, PROG/LOG names",
+        "these are RESUMED runs (all weights load from step200000.pt, train_olmo2_arch_probe2.py:752-775) and the trainer has NO dropout (grep -c dropout = 0), so --seed's only material channel is DistributedSampler(seed=args.seed) at line 869"
+      ],
+      "consequence_for_A04": "A04 STAGE_B_DECISION.md's 'Path B' (spend ~135 GPU-h on two extra keep7 20k seeds to reach n=4/df=3) is ALREADY BOUGHT: n=3 exists now at 0 GPU-h and seed 45 (already running) takes it to df=3. Do not buy Path B."
+    },
+    "seed45_note": "NOT LANDED as of 2026-08-11 20:54 GMT+8 (live read-only check on .73: step 215460/300000, i.e. 15.5k of its 20k CPT steps, ~2.6 h remaining). SEED45_PREDECLARATION.md s3 already fixes both reachable branches mechanically (NOT-CONFIRM -> ARTIFACT unchanged; CONFIRM -> MIXED, pre-declared a FAILURE by prereg s3.5), so NO outcome of seed 45 changes this decision. When it lands, its only job is to move the keep7 CPT family from df=2 to df=3 (sigma-interval multiplicative width 12.1x -> 6.6x) and hand that to A04. Do NOT launch seed 46.",
+    "assets_that_migrate": [
+      "A-1 -> A01 as a generative-QA null-calibration case study, carrying the length-matched contains null result (naive null inflates one cell 1.9x: 81.7% vs the correct 43.3%) and the B-4 erratum (/reported != recovery of headroom; TriviaQA 97.3% vs 9.4%)",
+      "the phase-locking diagnostic + the null CPT result -> a methods note (r=0.99982 agreement was engineered by a shared minibatch sequence; the effect vanished once the sampler seed varied). Worth more than the claim it killed.",
+      "the sigma_run draws -> A04, the only consumer; A04's K2 arithmetic ingests them directly",
+      "code/analyze_1b_knowledge_floor.py + code/recompute_cpt_trajectory_paired.py -> lift into proposal/shared/ (their assertions are load-bearing for A04's numbers)"
+    ],
+    "archive_move_blocked_by": {
+      "rule": "CLAUDE.md archive rule: a directory referenced by live code is FORBIDDEN to delete/move without repointing first. Reference check was run.",
+      "code_dependencies": [
+        "proposal/active/A04-recovery-certification/code/pilot_one_stage_a_sd_run.py:81 -- builds a path through 'A03-parametric-vs-external-memory'/'code' to import A03's canonical load_cb/load_mmlu, which carry the 8/8-shard, exact-item-count, duplicate-id and NaN assertions every A04 Stage-A/B number rests on",
+        "proposal/active/A01-null-calibration-methodology/code/a01_audit_response_recompute.py:5,310 -- cites A03/evidence/TCODEX_AUDIT_20260810.md"
+      ],
+      "doc_dependencies": "A01 (7 files), A02 (1), A04 (6)",
+      "clean_fix": "lift the shared loaders into proposal/shared/ and repoint both importers; the physical git mv follows that. A half-moved directory is worse than an unmoved one."
+    },
+    "kill_conditions_checked": {
+      "1_RAG_dominates_residual_memory": "EFFECTIVELY SATISFIED at a different scale (A02, 8B/Qwen). Not a formal firing.",
+      "2_CPT_recovers_all_at_lower_cost": "DOES NOT FIRE, and fails in the opposite direction: CPT recovers ~nothing (0.26% of the gap, CI contains zero) at 5.243 B tokens, and 52.43 B tokens of the same corpus (the 200k heal, 906.7 GPU-h) left the gap open.",
+      "3_all_1B_metrics_at_floor": "DOES NOT FIRE -- this is exactly what A-1 refutes, which is why A-1 migrates rather than being discarded.",
+      "summary": "A03 is NOT archived because a kill clause fired. It is archived because the leg that was supposed to win was measured at zero, the leg that would win is uninformative, and the comparison that would be interesting needs an artefact that does not exist and whose nearest measurement is negative."
+    },
+    "consequence_for_A04": "WEAKENS the case for committing A04's next tranche -- but NOT via STAGE_B_DECISION.md's retracted 'inside the noise floor' argument, and NOT by touching Pilot Zero. See ARM_SET_DECISION.md s4 for the full statement, and consequence_for_A04_135gpuh below."
+  },
+  "consequence_for_A04_135gpuh": {
+    "first_fact": "The 135 GPU-h STAGE_B_DECISION.md asks about was ALREADY SPENT on 2026-08-11 under standing autonomy (that doc's own correction banner records Path A launching 05:53). Verified read-only on zwfy6: all 3 pre-registered seeds {101,102,103} trained (step2500/step5000/final.pt each), all 3 evaluated on all 4 axes (17,944-row merged triviaqa per-example files present), and A04/evidence/stageB_S3_verdict.json exists (md5 7145d569f46ec0fa10dd56368071adf2, written 14:53) with verdict STAGE_A_DOES_NOT_FIRE, n_decision_axes_exceeding 0. So the live A04 question is the NEXT tranche (Pilot Two, 1077-4309 GPU-h, which A04 next_gate[4] already marks as requiring explicit user approval).",
+    "direction": "WEAKENS",
+    "the_real_dependency": "A04 certifies that a damaged model has RECOVERED. Its value is proportional to the size of the recovery effect its rule adjudicates. A03 has now measured the CPT recovery increment on the SHARED apparatus at +0.0818 pp, CI95 [-0.945,+1.108] -- 0.26% of the 31.10 pp deficit, a CI containing zero -- and shown that 10x that token budget does not close the gap either. If the increment a certification rule adjudicates is indistinguishable from zero at affordable budgets, the rule's DISCRIMINATIVE content is untested: NI and PLATEAU can only disagree informatively about a trajectory that moves.",
+    "what_pushes_the_other_way": [
+      "A04's Pilot Zero is UNTOUCHED by A03's retraction, structurally (it is a level at one checkpoint against intact -- no second-checkpoint and no second-training-run term in the estimator), exactly as DATAORDER_VERDICT.md 'Does NOT mean' #1 states. A03's ARTIFACT verdict must NOT be cited as evidence against it.",
+      "A04's K2 arithmetic is now BETTER supported than at Stage B launch: S=3 on the correct arm and budget. At point estimates bound_3 sits under Delta on all three decision axes with margins 7.9x (triviaqa 0.510 vs 4.043), 2.4x (popqa 0.561 vs 1.321), 7.8x (mmlu_content 0.132 vs 1.024)."
+    ],
+    "caveat_A04_should_carry": "Evaluated at the chi2 95% UPPER bound of each sigma (df=2), triviaqa (3.203 vs 4.043) and mmlu_content (0.829 vs 1.024) still do not fire, but popqa WOULD (3.527 vs 1.321) and demoted nq_open would (2.215 vs 0.970). Honest statement: 'K2 does not fire at the point estimate, and one decision axis would fire at the pessimistic end of a df=2 sigma interval.' That argues for MORE SEEDS before Pilot Two, not for Pilot Two.",
+    "spread_is_not_monotone_in_damage": {
+      "finding": "STAGE_B_DECISION.md's prediction that keep12 spread would be SMALLER than keep7's is refuted on 3 of 4 axes, now at S=3 rather than the S=2 the banner used.",
+      "keep7_20k_S3_sampler_seeds_0_43_44": {"triviaqa_em_s_pp": 0.4132, "dof": 2, "chi2_95ci_pp": [0.215, 2.597]},
+      "keep12_5k_S3_seeds_101_102_103": {"triviaqa_em_s_pp": 0.3023, "popqa_em_s_pp": 0.3328, "mmlu_content_s_pp": 0.0783, "nq_open_em_s_pp": 0.2091, "dof": 2},
+      "direction": "keep12 SMALLER on triviaqa only; LARGER on popqa, mmlu_content (3.1x) and nq_open. Any A04 design that budgets seeds by assuming less damage => less variance is mis-budgeted.",
+      "do_not_quote": "the keep7 popqa/mmlu/nq_open pairwise values (0.2726 / 0.0252 / 0.0000) as sigma -- they are df=1 ranges, shown in ARM_SET_DECISION.md s4.2 only to locate the earlier claim."
+    },
+    "what_A04_should_be_required_to_state_before_the_next_tranche": "In its own prereg, pre-data: WHAT RECOVERY MAGNITUDE its certification is meant to adjudicate, and a showing that this magnitude exceeds the MDE its chosen S implies (1.10 pp at S=3 and sigma_hat=0.362; 3.16 pp at the chi2 upper bound). That is the discipline A03 lacked, and it is why A03 is archived.",
+    "not_deciding_A04": "This block states the DEPENDENCY, not A04's decision. Pilot Two remains A04's call and requires explicit user approval per A04 next_gate[4]."
+  },
   "dataorder_replication": {
     "status": "ARTIFACT",
     "verdict_doc": "DATAORDER_VERDICT.md",
@@ -344,10 +433,11 @@
     }
   },
   "next_gate": [
-    "DECIDE FIRST (no GPU): is the 6-arm plan still worth ~N GPU-h now that A-2 is retracted? The retraction removes the '+CPT' arm's motivating result, so arms 3 and 6 of the original six lose their headline. Re-derive the minimum arm set that can still produce a novel claim.",
-    "IF the 6-arm plan proceeds: every cross-arm delta must now be reported with a run-to-run spread estimate at n>=3 per arm. A-2 died because n=1 data path was mistaken for a real effect; repeating the design without per-arm replication repeats the error.",
-    "Do NOT quote any sigma_run figure from the n=2 seeds 43/44 -- prereg s4 forbids it (chi2 95% CI for sigma is ~[0.14, 10.3] pp).",
-    "SUPERSEDED by the retraction, kept for provenance: 'extend analyze_1b_knowledge_floor.py to include nq_open' (DONE), 'narrow A03 scope to closed-book parametric knowledge' (still valid), 'build the 6 arms' (now gated on the decision above)."
+    "CLOSED 2026-08-11 -- next_gate[0] (the no-GPU arm-set decision) was EXECUTED. Verdict: ARCHIVE. See ARM_SET_DECISION.md (the decision, with the effect-size-vs-spread arithmetic) and POSTMORTEM.md (the archive-rule postmortem). NO further GPU is authorised for A03.",
+    "REMAINING WORK IS CPU-ONLY AND IS MOSTLY OTHER PROPOSALS' WORK: (a) lift code/analyze_1b_knowledge_floor.py and code/recompute_cpt_trajectory_paired.py into proposal/shared/ and repoint A04/code/pilot_one_stage_a_sd_run.py:81 -- ONLY after that is the physical git mv of this directory into proposal/archive/ safe (see arm_set_decision.archive_move_blocked_by); (b) migrate A-1 into A01 as a generative-QA null-calibration case study; (c) write the phase-locking + null-CPT methods note.",
+    "WHEN SEED 45 LANDS (~2.6 h after 2026-08-11 20:54; it was at step 215460/300000): the analysis is MECHANICAL per SEED45_PREDECLARATION.md s3 -- classify by prereg s3.3, both reachable branches retract A-2, then recompute the keep7 20k CPT family at n=4 draws (sampler seeds 0/43/44/45, df=3) and report sigma WITH its d.o.f. and chi2 interval. Hand it to A04, the only consumer. Do NOT launch seed 46 (prereg: seed 45 is the last run). Do NOT re-argue the branch rule.",
+    "STANDING PROHIBITION: do NOT quote any sigma_run figure without its d.o.f. and chi2 interval -- prereg s4. The multiplicative 95% width of a chi2 sigma interval is 71.5x at df=1, 12.1x at df=2, 6.6x at df=3, 4.8x at df=4. The retracted 0.3231 pp 'noise floor' was df=1 with interval ~[0.14, 10.3] pp.",
+    "SUPERSEDED, kept for provenance: the pre-2026-08-11 next_gate read 'DECIDE FIRST (no GPU): is the 6-arm plan still worth ~N GPU-h now that A-2 is retracted? ... Re-derive the minimum arm set that can still produce a novel claim.' -- that IS the gate this update closes. Its two follow-on items ('every cross-arm delta needs n>=3 per arm' and 'build the 6 arms') are moot under ARCHIVE. Earlier items: 'extend analyze_1b_knowledge_floor.py to include nq_open' (DONE), 'narrow A03 scope to closed-book parametric knowledge' (DONE, and now superseded by ARCHIVE)."
   ],
   "related_proposals_tcodex_verdicts": {
     "A01": "Major revision. 保留 'floor 是必要条件' 和 tie 机制反证; 撤回 phase-transition 一般定律、oracle convention flip、跨 construct 一数量级 span。",
@@ -355,6 +445,8 @@
     "A04": "Design paper / preregistration only. Pilot Zero 不是 gate pass; 没有任何模型已被 'certified recovered'; K1 应改为 INDETERMINATE。"
   },
   "status_prev": "active_dataorder_replication_RUNNING_seed43_82_seed44_73_prereg_locked_verdict_due_~0420",
-  "disposition": "hold_in_backlog_pending_rescope",
-  "disposition_why": "The C-1 gate returned ARTIFACT (DATAORDER_PREREG.md s3.4, 0/2 seeds CONFIRM), so the trajectory-CPT claim A-2 is retracted and A03's only surviving claim is A-1: pruned+healed 1B keep7+fresh2 @200k sits BH-significantly above its own construct-appropriate null on 4/5 certified closed-book interfaces. A-1 is a level-vs-floor result, immune to the sampler-seed variance that killed A-2. It does not by itself satisfy the CLAUDE.md promotion gate (one significant finding, independently replicated) because the 6-arm comparison the proposal was built around has not been run."
+  "status_prev_2": "dataorder_replication_CLOSED_2026-08-11_ARTIFACT -- A-2 RETRACTED, A03 retains only A-1 (level-vs-null). Proposal stage; NOT promotable. (superseded 2026-08-11 21:10 by ARCHIVE_DECIDED; the ARTIFACT verdict itself is unchanged and still standing.)",
+  "disposition": "ARCHIVE_decided_2026-08-11_physical_move_blocked_on_two_code_paths",
+  "disposition_prev": "hold_in_backlog_pending_rescope (2026-08-11 11:15 -- superseded 21:10 when next_gate[0] was actually executed; 'pending_rescope' was the placeholder for the decision that has now been made)",
+  "disposition_why": "next_gate[0] executed with ZERO GPU (ARM_SET_DECISION.md). No reduced arm set both targets an effect larger than the apparatus's own measured spread (pooled sigma_run = 0.3620 pp, df=4, chi2 95% CI [0.217, 1.040] on triviaqa em => MDE 1.10 pp at S=3, 3.16 pp at the interval's upper end) and answers A03's parametric-vs-external question. The CPT leg is measured at +0.0818 pp, CI95 [-0.945,+1.108] = 0.26% of the 31.10 pp deficit; the RAG leg's assets are absent from BOTH disks (verified: PopQA's cached arrow schema has no passage field; TriviaQA is rc.nocontext-only; no Wikipedia passage index in data/); the residual-memory leg needs a 1B adapter that has never existed and its thesis is already measured negative at 8B by A02. A-1 survives but is a floor-calibration case study -- A01's thesis, not A03's -- so it MIGRATES to A01 rather than becoming a narrowed A03. Not a kill-clause firing; an effect-size-versus-apparatus-spread decision."
 }

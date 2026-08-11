@@ -571,4 +571,31 @@ the stale hash as a provenance check.
 | C-1 | sampler-seed replication, seeds 43/44 | **CLOSED 2026-08-11 → ARTIFACT** (0/2 CONFIRM) | yes, as a negative result: `DATAORDER_VERDICT.md` |
 | C-2 | run-to-run variance floor | **does not exist** | — |
 | C-3 | MMLU trajectory | **provisional**, untracked evidence | no |
-| C-4 | the 6-arm parametric-vs-external-memory study | **never run** | — |
+| C-4 | the 6-arm parametric-vs-external-memory study | **never run**; and as of **2026-08-11 it will not be** — `../ARM_SET_DECISION.md` executed A03's own no-GPU arm-set gate and returned **ARCHIVE**. No reduced arm set both targets an effect larger than the apparatus's measured spread (pooled σ_run 0.3620 pp, df=4, χ² 95 % CI [0.217, 1.040] ⇒ MDE 1.10 pp at S=3) and answers A03's question. | — |
+
+---
+
+## §F. Disposition (added 2026-08-11 21:10 GMT+8)
+
+**A03 is `ARCHIVE` decided.** This does not change one word of §A-§E — that is the
+point of putting it here rather than editing above. Specifically:
+
+* **A-1 still stands exactly as stated in §A-1**, with all its scope conditions. What
+  changed is its *home*: A-1 is a level-vs-floor null-calibration result, i.e. **A01's
+  thesis**, and §B-4's own erratum note already records that A03's analyzer and A01's
+  agree on the number. So A-1 **migrates to A01** rather than becoming a narrowed A03.
+* **A-2 remains RETRACTED** (branch ARTIFACT). Pooling the three sampler-seed draws of
+  that same arm — seed 0 (the original Arm 3), 43, 44 — gives mean **+0.0818 pp,
+  s = 0.4132, df = 2, CI95 [−0.945, +1.108] pp** = **0.26 % [−3.04 %, +3.56 %]** of the
+  31.10 pp intact-minus-pruned TriviaQA EM deficit. This is a **post-hoc descriptive**
+  aggregate, reported for the *design* question only (prereg §3.6 keeps triviaqa em the
+  sole primary endpoint; §4 bars σ claims from tiny d.o.f.). It does **not** revive,
+  restate or amend A-2.
+* **C-1's verdict is untouched.** Seed 45 was still training at 20:54 GMT+8
+  (`step 215460/300000`); `../SEED45_PREDECLARATION.md` §3 pre-fixes both reachable
+  branches and both retract A-2, so no outcome of it changes anything here.
+* Decision + arithmetic: `../ARM_SET_DECISION.md`. Cause-of-death write-up:
+  `../POSTMORTEM.md`. Machine-readable: `../STATUS.json:arm_set_decision`.
+
+**This file remains the authority on what A03 may claim.** The disposition documents
+say why no more will be added; they do not license anything §B retracted.

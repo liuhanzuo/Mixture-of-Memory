@@ -39,6 +39,76 @@ status: SUPERSEDED 2026-08-11 11:05 — Path A was launched under standing auton
 
 ---
 
+---
+
+> ## ⚠️ ADDENDUM 2026-08-11 21:10 GMT+8 — the A03 side has now been decided; three corrections to this doc
+>
+> A03 executed its own no-GPU arm-set gate (`../A03-parametric-vs-external-memory/ARM_SET_DECISION.md`)
+> and returned **ARCHIVE**. That decision touches this doc in four ways. **This addendum
+> does not decide A04** — Stage B is already spent and Pilot Two is A04's call requiring
+> explicit user approval per `STATUS.json:next_gate[4]`.
+>
+> 1. **The question this doc asks is moot: the 135 GPU-h was spent.** Verified read-only
+>    on zwfy6: all three pre-registered seeds `{101,102,103}` trained
+>    (`step2500/step5000/final.pt` each), all three evaluated on all four axes
+>    (17,944-row merged TriviaQA per-example files present for each), and
+>    `evidence/stageB_S3_verdict.json` exists (md5 `7145d569f46ec0fa10dd56368071adf2`,
+>    written 14:53) with `STAGE_A_DOES_NOT_FIRE`, `n_decision_axes_exceeding: 0`.
+>    The live question is the **next** tranche (Pilot Two, 1,077-4,309 GPU-h).
+>
+> 2. **★ Path B is already bought — do NOT spend 135 GPU-h on it.** Path B proposed "two
+>    extra keep7 seeds at 20,000 steps to nail down the noise floor at n=4 (df=3)". A
+>    keep7 20k family at **n = 3** exists *now* at zero marginal cost: the original A03
+>    Arm 3 **is** the sampler-seed-0 draw of the identical config —
+>    `DATAORDER_VERDICT.md` line 20 labels it so, `_run_a03_dataorder_repl.sh` is
+>    config-identical to `_run_a03_arm3_cpt.sh` apart from `--seed`, these are *resumed*
+>    runs and the trainer has **no dropout**, so `--seed`'s only material channel is
+>    `DistributedSampler(seed=args.seed)`. That family: **s = 0.4132 pp, df = 2, χ² 95 %
+>    CI [0.215, 2.597]**. Seed 45 is **already running** and takes it to df = 3.
+>    **Path B's deliverable costs 0 additional GPU-h, not 135.**
+>
+> 3. **Spread is not monotone in damage — now confirmed at S = 3, not S = 2.** The
+>    banner above already flagged this; here it is with d.o.f. attached. keep12 5k
+>    (seeds 101/102/103, df = 2 each): triviaqa **0.3023**, popqa **0.3328**,
+>    mmlu_content **0.0783**, nq_open **0.2091** pp. keep7 20k (sampler seeds 0/43/44,
+>    df = 2): triviaqa **0.4132** pp. keep12 is smaller on triviaqa only and **larger**
+>    on the other three (mmlu_content 3.1×). Any seed budget premised on "less damage ⇒
+>    less variance" is mis-budgeted. Do **not** quote the keep7 popqa/mmlu/nq_open
+>    pairwise values (0.2726 / 0.0252 / 0.0000) as σ — they are df = 1 ranges.
+>
+> 4. **The dependency A04 must now write down, and the caveat that comes with it.**
+>    A04 certifies *recovery*; its value scales with the size of the recovery effect its
+>    rule adjudicates. A03 has measured the CPT recovery increment **on the shared
+>    apparatus** at **+0.0818 pp, CI95 [−0.945, +1.108] pp** = **0.26 %** of the 31.10 pp
+>    deficit (a CI containing zero), and shown that 10× that token budget (the 200k-step
+>    heal, 52.43 B tokens) does not close the gap either. NI and PLATEAU can only
+>    disagree *informatively* about a trajectory that moves. **This weakens the case for
+>    Pilot Two.** Two things fairly push the other way and must be recorded alongside:
+>    (a) **Pilot Zero is untouched** — it is a level at one checkpoint against intact,
+>    with no second-checkpoint and no second-training-run term in its estimator, exactly
+>    as `DATAORDER_VERDICT.md` "Does NOT mean" #1 states; A03's ARTIFACT verdict must not
+>    be cited against it. (b) **K2 is better supported than at Stage B launch**: at the
+>    S = 3 point estimates `bound₃` clears Δ on all three decision axes with margins
+>    7.9× (triviaqa 0.510 vs 4.043), 2.4× (popqa 0.561 vs 1.321), 7.8× (mmlu_content
+>    0.132 vs 1.024). **But** evaluated at the χ² 95 % *upper* bound of each σ (df = 2),
+>    triviaqa (3.203 vs 4.043) and mmlu_content (0.829 vs 1.024) still do not fire while
+>    **popqa would** (3.527 vs 1.321) and demoted nq_open would (2.215 vs 0.970). So the
+>    honest line is: *"K2 does not fire at the point estimate, and one decision axis
+>    would fire at the pessimistic end of a df = 2 σ interval"* — which argues for **more
+>    seeds before Pilot Two**, not for Pilot Two.
+>
+> **What A04 should be required to state before committing the next tranche** (this is a
+> recommendation to A04, not a ruling on it): in its own prereg, **pre-data**, *what
+> recovery magnitude the certification is meant to adjudicate*, plus a showing that this
+> magnitude exceeds the MDE its chosen S implies — **1.10 pp at S = 3 and σ̂ = 0.362 pp;
+> 3.16 pp at the χ² 95 % upper bound**. That is precisely the discipline A03 lacked, and
+> it is why A03 is archived.
+>
+> Full arithmetic and provenance: `../A03-parametric-vs-external-memory/ARM_SET_DECISION.md` §2, §4
+> and `../A03-parametric-vs-external-memory/STATUS.json:consequence_for_A04_135gpuh`.
+
+---
+
 # Question
 
 `PILOT_ONE_PREREG.md` §3 says Stage B (keep12+fresh2 × 3 seeds × 5,000 steps, ~135 GPU-h, ~5.6h wall on 3 nodes) proceeds when Stage A does not fire. Stage A did not fire. Should we launch Stage B?
