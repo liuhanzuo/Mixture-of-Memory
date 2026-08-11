@@ -29,14 +29,21 @@ Where it has been demonstrated:
 | CommonsenseQA letter (5-way) | always-B = `0.208845` | `0.20` |
 | PIQA letter | always-B = `0.504897` | `0.50` |
 
-> ⚠️ The longest-option null is under-specified in **two** ways, not one: the tie
-> convention (`split`/`first`/`last`/`credit`/`wrong`) **and the length unit**
-> (characters vs continuation tokens). Always print both. The character-vs-token
-> choice moves the `split` null by up to 2.0 pp and the `credit` null by up to 35 pp.
-> See `evidence/SECOND_MC_BENCHMARK_VERDICT.md` §5a.
+> ⚠️ The longest-option null is under-specified in **three** ways, not one: the tie
+> convention (`split`/`first`/`last`/`credit`/`wrong`), the **length unit**
+> (characters vs continuation tokens), and — within the token unit — the
+> **tokenizer**. Always print all three. The character-vs-token choice moves the
+> `split` null by up to 2.0 pp and the `credit` null by up to 35 pp; the tokenizer
+> moves `split` by up to 1.5 pp and `credit` by up to **10.6 pp** across
+> Llama-2 / Llama-3 / Qwen3 on the identical items (larger BPE vocabularies tie more
+> option lengths). So a content floor is a property of (dataset, convention, unit,
+> **tokenizer**), not of the dataset alone — unlike the letter floor, which *is* a
+> pure dataset property. See `evidence/SECOND_MC_BENCHMARK_VERDICT.md` §5a and
+> `evidence/GATE2_CROSSFAMILY_VERDICT.md` §2b.
 
 **Headline empirical result.** Under structural damage the letter MC interface
-degenerates to at or below its own best-constant floor. Four families, n=14042/arm:
+degenerates to at or below its own best-constant floor. Four families, n=14042/arm
+(MMLU); all four now also verified on five **non-MMLU** MC benchmarks:
 
 | family | damaged-arm letter acc | vs always-D floor `0.2689` |
 |---|---|---|
@@ -44,6 +51,13 @@ degenerates to at or below its own best-constant floor. Four families, n=14042/a
 | Llama-2-7B | `0.2295`–`0.2415` | below |
 | Llama-3-8B | `0.2329`–`0.2527` | below |
 | Qwen3-8B-Base | `0.2286`–`0.2301` | below |
+
+On MMLU all **9/9** damaged non-OLMo arms are *significantly* below floor (boot
+p ≤ 0.0008; recomputed 2026-08-11 with the R-7 mid-p estimators). Off MMLU the
+verdict holds — **0 of 60** damaged non-OLMo arm×benchmark cells clear their own
+floor, and **25 of 60 read "above chance"** under the naive null — but only 7/60
+reach p<0.05 because those benchmarks are 6–28× smaller than MMLU; see
+`evidence/GATE2_CROSSFAMILY_VERDICT.md`.
 
 **Why this is not a numerical bug** (gate-3, `GATE3_VERDICT.md`, verdict
 `MECHANISM_FALSIFIED`): full-fp32 forward removes **100%** of bf16 exact ties and
@@ -80,9 +94,25 @@ They are load-bearing; the self-falsification narrative is part of the contribut
   large: `keep8` content−letter is **+38.76 pp** on ARC-Easy, +22.77 on CommonsenseQA,
   +19.15 on PIQA. See `evidence/SECOND_MC_BENCHMARK_VERDICT.md` §4.
 - ✗ "the damaged letter interface is **significantly** below its floor on benchmarks
-  other than MMLU" — only ARC-Easy (`keep10`, p = 0.029) shows this; four of five
-  non-MMLU tasks are **underpowered** to detect MMLU's own −1.39 pp. Cite the power
-  table with any null result there.
+  other than MMLU" — only ARC-Easy (`keep10`, p = 0.029) shows this on OLMo-2, and
+  cross-family only **7 of 60** damaged non-OLMo cells reach p<0.05 while **52 of 60
+  are underpowered to have detected MMLU's own −1.389 pp**. The point estimates are
+  NOT smaller (arc_challenge's median damaged effect is −3.840 pp vs MMLU's −3.603),
+  so this is a power limit, not a null result. Cite the power table with any null
+  there, or use the pooled n=7107 construction
+  (`GATE2_CROSSFAMILY_VERDICT.md` §4: 12/12 negative, 4/12 significant).
+- ✗ "**k14 is the last arm that still clears its floor**" as a family-general
+  ordering — ADDED 2026-08-11 (#250). True of OLMo-2's *healed* arms; **false in all
+  three non-OLMo families**, whose k14 is already at/below floor. Their damaged
+  ladder is a **cliff, not a gradient** (k14→k8 spread 0.46–7.00 pp, monotone in
+  2/15 ladders) so **no depth curve may be fitted to those rungs**. ⚠️ confounded
+  with heal-vs-no-heal; do not report it as a family effect.
+- ✗ a **pooled** across-benchmark floor verdict quoted as a per-benchmark verdict —
+  the pooled floor `0.318700` mixes five floors spanning `0.2088`–`0.5049`.
+- ✗ a longest-option **content** floor quoted without its **tokenizer** — the token
+  unit is tokenizer-dependent (`credit` moves up to 10.6 pp across families on
+  identical items). The **letter** floor, by contrast, IS a pure dataset property and
+  is asserted invariant across all 15 arms.
 - ✗ "clearing a floor is **sufficient**" — Feng et al. requires the opposite: state
   explicitly that it is necessary, not sufficient.
 - ✗ the numbers in `STATUS.json:must_not_resurrect` (`4.8x`, `0.2822` as an
@@ -124,6 +154,12 @@ They are load-bearing; the self-falsification narrative is part of the contribut
 | MMLU letter/content per-item records | **zwfy6** `olmo2_mmlu_content_results/` |
 | non-MMLU letter/content per-item records (6 arms × 6 tasks × 8 shards) | **BOTH DISKS** `olmo2_mc_letter_content_results/` (52 MB) |
 | second-MC-benchmark nulls + stats | `paperG/evidence/second_mc_benchmark/gate2_letter_content_nulls.{json,csv}` |
+| **cross-family** letter/content per-item records (15 arms × 6 tasks × 8 shards) | **BOTH DISKS** `mc_lc_crossfamily_results/` (130 MB) |
+| **cross-family** nulls + stats (1122 rows) | **BOTH DISKS** `paperG/evidence/second_mc_benchmark_crossfamily/gate2_crossfamily_nulls.{json,csv}` |
+| **cross-family** MMLU per-item records (`gate1_*`, incl. the 12 recomputed cells) | **wzc1 ONLY** `olmo2_mmlu_content_results/gate1_*` (190 MB) |
+| cross-family recompute code (CPU, 0 GPU) | `paperG/code/gate2_crossfamily_nulls.py` |
+| cross-family driver | `scripts/_run_mc_letter_content_crossfamily_8gpu.sh` |
+| Qwen3-8B-**Base** weights | wzc1 `../models/Qwen3-8B-Base`; copied to zwfy6 same name. ⚠️ zwfy6's pre-existing `models/Qwen--Qwen3-8b` and the `models/Qwen3-8b-local` symlink are **Qwen3-8B-Instruct** (`eos 151645`, has `chat_template`) — **not** a valid base arm |
 
 ⚠️ Two-disk rule (`memory/cluster-two-disks-not-shared`): this repo copy is on
 **wzc1**; the bulk gate-3 and MMLU evidence lives on **zwfy6**. A file is "missing"
@@ -175,3 +211,49 @@ only after both disks have been searched.
    `confirmed_general[2]`'s "content_norm within ±3 pp of letter on every damaged
    arm" is **false off MMLU** (arc_easy `keep8` is at its letter floor `0.2584` while
    scoring `0.6460` on content, +38.76 pp, McNemar p = 1e-147).
+
+   **CROSS-FAMILY EXTENSION 2026-08-11** (task #250) — see
+   [`evidence/GATE2_CROSSFAMILY_VERDICT.md`](evidence/GATE2_CROSSFAMILY_VERDICT.md),
+   verdict `REPLICATES_IN_DIRECTION_ACROSS_FAMILIES_BUT_THE_LADDER_DOES_NOT`.
+   #248 closed the *contrast* but left the whole second-benchmark leg inside ONE
+   family, while MMLU's headline is four-family. That asymmetry is now closed: the
+   same harness, unchanged, ran on **Llama-2-7B / Llama-3-8B / Qwen3-8B-Base** ×
+   {intact, k14, k12, k10, k8} × the same six tasks — 90 cells, 8/8 shards,
+   `n_nan = 0` everywhere, 12.5 min on `.73` (damage is an **eval-time**
+   front-N truncation, no fresh block, no heal, so no training was needed).
+   **Replicates:** **0 of 60** damaged non-OLMo arm×task cells clear their own
+   best-constant letter floor, in any family on any benchmark, and **25 of 60 read
+   "above chance"** under the naive null — the wrong-null flip, now in three more
+   families off MMLU. 51/60 point estimates negative. Recomputing the archived MMLU
+   cross-family cells with the R-7 mid-p estimators gives **9/9 significantly below
+   floor**, so `STATUS.json:gate1_third_model_family_DAMAGED`'s point deltas survive
+   proper statistics.
+   **Does NOT replicate (two separate narrowings).** (a) *Significance*: only 7/60
+   non-MMLU cells reach p<0.05, and **52/60 are underpowered to have detected MMLU's
+   own −1.389 pp**. This is purely n, not effect size — arc_challenge's median
+   damaged effect is **−3.840 pp, larger than MMLU's −3.603 pp**, yet n.s. because
+   its CI95 half-width is 3.92 pp vs MMLU's 1.18. Pooling the five **disjoint**
+   benchmarks into one n=7107 paired sample (same estimator, no new assumption)
+   recovers part of it: 12/12 damaged arms negative, **4/12 significant**; a pooled
+   verdict must never be quoted per-benchmark. (b) **#248's "k14 is the last arm
+   above its floor" is NOT family-general** — all three non-OLMo k14 arms are
+   *already* at/below their floors, and the damaged ladder is a **cliff, not a
+   gradient** (k14→k8 spread 0.46–7.00 pp, monotone in only 2/15 ladders), so **no
+   depth curve may be fitted to these rungs**. ⚠️ (b) is confounded with
+   **heal vs no-heal** (OLMo-2's arms had 121k–200k heal steps, these have none) and
+   this run cannot separate regime from family.
+   **Third self-falsification of the longest-option null:** beyond the tie
+   convention and the character-vs-token unit, *within* the token unit the null is
+   **TOKENIZER-dependent** — arc_challenge `split` moves `0.268871` (Llama-2) →
+   `0.283902` (Llama-3), and the `credit` convention moves up to **10.6 pp** across
+   families, because larger BPE vocabularies tie more option lengths (tied-longest
+   fraction 33.8% → 48.2% on OBQA, 48.4% → **86.5%** on winogrande). **A content
+   floor must be quoted with its tokenizer.** Also newly measured: damaged
+   `content_norm` is below its own `split` floor on **12/12** OBQA cells, and 16
+   damaged cells are *literal* constant emitters whose accuracy equals the marginal
+   of the emitted letter to machine precision — two of them landing exactly on the
+   **optimal** constant (`0.276000`, Δ = 0.000 pp, CI95 `[0,0]`), which is invisible
+   against chance. Modal share and floor verdict stay **DECOUPLED** (99.91% modal at
+   p = 0.0499 vs 96.46% modal at p = 0.0015).
+   **Residual to-do:** healed non-OLMo arms would be needed to separate the
+   heal-vs-no-heal confound in (b); that is real training and is not in scope.
