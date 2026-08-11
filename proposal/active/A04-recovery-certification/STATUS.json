@@ -117,7 +117,7 @@
   "blocked_by": {
     "related_work_gate": "CLEARED 2026-08-09 (see related_work_status). NO LONGER BLOCKING.",
     "still_blocking_before_any_gate_gpu": [
-      "PROPOSAL.md rewrite to the narrowed safe_residual_claim -- its current '\u63d0\u6848' list is largely arXiv:2606.14150's design and its motivation is largely 2607.00368/2601.22950's argument.",
+      "PROPOSAL.md rewrite to the narrowed safe_residual_claim -- its current '提案' list is largely arXiv:2606.14150's design and its motivation is largely 2607.00368/2601.22950's argument.",
       "CODE (CPU, ~1 line, BLOCKING for K2): scripts/train_olmo2_arch_probe2.py:863 is DistributedSampler(ds, shuffle=True) with NO seed= argument, so its private generator uses self.seed=0 regardless of --seed. attention_dropout=0.0 and grep -c dropout on the trainer = 0. Therefore --seed moves ONLY the fresh-tail init: every 'seed' arm in this repo is fresh-block-INIT variance, NOT training-seed variance, and data order is identical across seeds. Without the fix, K2's variance estimate omits the data-order component and a K2 PASS would be unearned. Arm A2 (n_fresh_layers=0) has no fresh block at all, so its seeds are byte-identical and its sd_run is exactly 0 -- a missing measurement, not a variance estimate.",
       "USER APPROVAL for GPU. The full gate is 1,077-4,309 GPU-h; nothing beyond Pilot Zero may be launched without it."
     ]
@@ -200,7 +200,7 @@
   },
   "power_analysis": {
     "unit_of_replication": "the RUN, so the decision statistic is a run-level one-sided bound t_{0.05,S-1} * sd_run / sqrt(S)",
-    "S2_is_unusable": "df=1 -> t=6.314, so even sd_run=0.3pp gives a 1.339pp bound, LARGER than delta on three of four axes (1.023 / 1.321 / 0.970pp). A 2-seed design can only certify on TriviaQA (delta=4.043pp) and only if sd_run < ~0.9pp. PROPOSAL.md's '\u81f3\u5c11 2 seeds' is NOT a viable minimum for a non-inferiority decision -- it was written for a superiority comparison, and equivalence is harder.",
+    "S2_is_unusable": "df=1 -> t=6.314, so even sd_run=0.3pp gives a 1.339pp bound, LARGER than delta on three of four axes (1.023 / 1.321 / 0.970pp). A 2-seed design can only certify on TriviaQA (delta=4.043pp) and only if sd_run < ~0.9pp. PROPOSAL.md's '至少 2 seeds' is NOT a viable minimum for a non-inferiority decision -- it was written for a superiority comparison, and equivalence is harder.",
     "S3_is_the_minimum": "df=2 -> t=2.920; bound 0.506pp at sd_run=0.3pp, 0.843pp at 0.5pp, 1.686pp at 1.0pp. Works only if sd_run <= ~0.5pp.",
     "sd_run_is_UNVERIFIED": "no multi-seed 1B recovery run exists on either disk; the only 1B arm is keep7fresh2, one draw, seed not even recorded. Measuring sd_run is itself a gate output and is Pilot One's entire purpose.",
     "no_post_hoc_seed_addition": "if the measured sd_run implies a bound > delta on >=2 axes, K2 FIRES rather than seeds being added post hoc. Adding seeds after seeing the variance is the selective-reporting move A01's gate-4 exists to prevent.",
@@ -395,16 +395,17 @@
       "why": "K1's verbatim text (A04_GATE_DESIGN.md:45-47) requires the rule-disagreement count to be '<= 1 out of >= 24 evaluated cells'. Pilot Zero evaluated 3 axes at ONE checkpoint (step200000) = 3 cells. You cannot conclude a >= 24-cell clause did or did not fire from 3 cells: the denominator the rule names was never reached. 'K1 does not fire' was therefore a positive result inferred from a sample smaller than its own governing denominator.",
       "what_the_pilot_DID_establish": "At the single PLATEAU-accept checkpoint, NI(Delta=0.10*residual(intact)) rejects on 3/3 decision axes by 6.6-9.1x the margin, and this is invariant across all five null conventions and both plateau readings (because residual(arm)-residual(intact) = reported(arm)-reported(intact), so the null cancels). That is a real, convention-robust finding about ONE checkpoint. It is evidence that a disagreement of the required SHAPE exists; it is not a verdict on the >= 24-cell clause.",
       "correct_reading": "K1 INDETERMINATE -- not killed, not cleared. The gate remains un-run.",
-      "audit_concordance": "TCODEX_AUDIT_20260810.md section 7 independently reached the same conclusion: 'Pilot Zero \u4e0d\u662f gate pass ... K1 does not fire / survived cheapest gate \u5e94\u64a4\u56de, \u6539\u4e3a K1 INDETERMINATE.'",
+      "audit_concordance": "TCODEX_AUDIT_20260810.md section 7 independently reached the same conclusion: 'Pilot Zero 不是 gate pass ... K1 does not fire / survived cheapest gate 应撤回, 改为 K1 INDETERMINATE.'",
       "also_retracted": "Any statement of the form 'A04 is NOT killed' that rests on K1_FIRES=false. A04 is not killed, but the reason is that the gate has not been run, not that it passed."
     },
     "K2_STATUS_UPDATED_20260810": {
       "old_claim": "OUT OF SCOPE (needs S>=3 seeds). WORSE THAN DESIGN ASSUMED: no true run-to-run variance anywhere in the repo.",
       "now": "RECOVERABLE, measurement IN FLIGHT as of 2026-08-10 16:57.",
-      "why": "The DistributedSampler(seed=) fix ce5c298 has now been deployed to zwfy6 (MAIN scp'd it 2026-08-10 16:53, md5 284b286f90b526e4e8ad93a68e2a3b16 verified on both disks; pre-fix copy preserved as .PRE_CE5C298_BAK md5 879541f001568ceea16528e2e5d8035f). Two A03 data-order runs are training now with genuinely different data order: .82 seed=43 and .73 seed=44, both Arm 3's exact config, step220000 landing ~04:20 GMT+8. Their spread on the four A03 closed-book axes IS a true run-to-run sd_run estimate for a 1B CPT arm -- the exact quantity K2 needs and that this block previously called unobtainable.",
+      "why": "The DistributedSampler(seed=) fix ce5c298 has now been deployed to zwfy6 (MAIN scp'd it 2026-08-10 16:53, md5 284b286f90b526e4e8ad93a68e2a3b16 verified on both disks; pre-fix copy preserved as .PRE_CE5C298_BAK md5 879541f001568ceea16528e2e5d8035f). Two A03 data-order runs are training now with genuinely different data order: .82 seed=43 and .73 seed=44, both Arm 3's exact config, step220000 landing ~04:20 GMT+8. Their spread on the four A03 closed-book axes is a run-to-run sd_run *point estimate* for a 1B CPT arm. CORRECTED 2026-08-11 11:05: it is NOT 'the exact quantity K2 needs'. (a) At n=2 the SD has 1 d.o.f.; A03's DATAORDER_PREREG.md s4 forbids estimating sigma_run from it (chi2 95% interval for sigma is ~[0.14, 10.3] pp on the triviaqa value 0.3231). (b) PILOT_ONE_PREREG.md declares the Stage-A inference ONE-DIRECTIONAL: a large sd_run kills, a small sd_run clears nothing. (c) The seeds also varied WHICH data was seen, not just its order -- 20k steps x eff-bs 128 = 16.53% of the 15,491,607-row epoch.",
       "caveat": "n=2 (a 3rd, seed=45, is queued for .104 behind keep12). n=2 gives a range, not a variance with useful CI. Treat as an order-of-magnitude bound on sd_run, not a point estimate.",
       "driver": "scripts/_run_a03_dataorder_repl.sh (commit 44840f1), tracked as task #236",
-      "prereg": "A03's DATAORDER_PREREG.md is being written BEFORE the checkpoints land, so this harvest is pre-registered rather than post-hoc."
+      "prereg": "A03's DATAORDER_PREREG.md is being written BEFORE the checkpoints land, so this harvest is pre-registered rather than post-hoc.",
+      "sd_run_scope_correction_20260811": "sd_run harvested from A03 seeds 43/44 is a 1-dof point estimate, usable ONLY as the one-directional Stage-A input. Do not quote it as an apparatus noise floor. Empirically also non-monotone in damage: keep12 spread > keep7 spread on popqa (0.451 vs 0.273) and mmlu_content (0.055 vs 0.025)."
     }
   },
   "margin_guard_prereg": {
@@ -923,7 +924,7 @@
   "status_note": "Previous status string was 'active_design_gate_specified_awaiting_pilot_zero' while pilot_zero.status in this same file said 'DONE -- executed 2026-08-09'. Corrected 2026-08-10.",
   "tcodex_audit_20260810_disposition": {
     "audit_file": "../A03-parametric-vs-external-memory/evidence/TCODEX_AUDIT_20260810.md (589 lines, md5 8ba6b5da31c3af2fd02c5d5d86d93b2c)",
-    "audit_verdict_on_A04": "Design paper / preregistration only. Pilot Zero \u4e0d\u662f gate pass; K1 \u5e94\u6539\u4e3a INDETERMINATE; \u6ca1\u6709\u4efb\u4f55\u6a21\u578b\u5df2\u88ab 'certified recovered'; K2/run variance \u5b8c\u5168\u672a\u6d4b.",
+    "audit_verdict_on_A04": "Design paper / preregistration only. Pilot Zero 不是 gate pass; K1 应改为 INDETERMINATE; 没有任何模型已被 'certified recovered'; K2/run variance 完全未测.",
     "actioned_20260810": [
       "K1_FIRES false -> INDETERMINATE with the cell-unit arithmetic recorded",
       "top-level status string corrected (it contradicted pilot_zero.status DONE in the same file)",
@@ -1155,7 +1156,7 @@
           "mmlu_content": 1.0239,
           "nq_open": 0.9695
         },
-        "note": "ONE-DIRECTIONAL by prereg \u2014 NOT a K2 clearance. Stage B licensed to proceed per prereg \u00a73."
+        "note": "ONE-DIRECTIONAL by prereg — NOT a K2 clearance. Stage B licensed to proceed per prereg §3."
       }
     },
     "stage_b": {

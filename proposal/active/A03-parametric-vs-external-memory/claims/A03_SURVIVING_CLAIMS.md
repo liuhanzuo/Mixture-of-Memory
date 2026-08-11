@@ -129,7 +129,21 @@ and `olmo2_mmlu_content_results/` for the same three arms. Narrative:
 
 ---
 
-### A-2. (WEAKER, HEAVILY CONDITIONED) At step220000, under one fixed data order, two low-LR CPT arms both read TriviaQA EM ≈ +0.5 pp SIG
+### A-2. ❌ **RETRACTED 2026-08-11** (was: WEAKER, HEAVILY CONDITIONED) At step220000, under one fixed sampler seed, two low-LR CPT arms both read TriviaQA EM ≈ +0.5 pp SIG
+
+> **RETRACTION NOTICE.** C-1 (§C-1 below) ran and returned the **ARTIFACT** branch of
+> `DATAORDER_PREREG.md` §3.4: **zero** of the two landed seeds is CONFIRM (seed 43 = +0.1115 TIE,
+> seed 44 = −0.3455 SIG-negative; band was [+0.20,+0.80]pp). Per that branch's pre-registered
+> disposition, the positive reading is **RETRACTED and A03 retains only A-1**.
+> Verdict doc: `DATAORDER_VERDICT.md`. Prereg: commit `a25d780` (2026-08-10 19:20:02 GMT+8).
+>
+> ⚠️ Two wording corrections that also apply to the text below: (a) the manipulation varied
+> the **sampler seed**, which at 20k steps × eff-bs 128 = 16.53 % of the 15,491,607-row epoch means
+> each seed saw a **different data subset**, not merely a different order — say "sampler-seed /
+> data-subset variation"; (b) **no run-to-run variance floor may be quoted** from n=2 — prereg §4
+> forbids it.
+>
+> The text below is preserved unedited as the historical record of what was claimed.
 
 **Claim, stated with every condition attached.** On the **single minibatch sequence
 that all three CPT arms shared**, at the pre-registered dose point step220000, both
@@ -187,10 +201,11 @@ than "it's noise", and it is why the decisive experiment is a data-order manipul
 (Dolmino), **one data order**, one dose point (step220000), n = 1 realisation per LR
 band, no run-to-run variance floor measured anywhere in this proposal.
 
-**A-2 is provisional and is the thing §C-1 is testing.** Until seeds 43/44 land it may
-be stated only as written above, i.e. with "under one fixed data order" **inside** the
-claim, never as a footnote. It is **not** promotable and it does **not** satisfy the
-CLAUDE.md promotion gate.
+**~~A-2 is provisional and is the thing §C-1 is testing.~~ SUPERSEDED 2026-08-11:
+§C-1 ran and A-2 is RETRACTED** via the ARTIFACT branch. It may no longer be stated at
+all — not with scope conditions, not as a footnote, not as "suggestive". The +0.4793 /
++0.5016 numbers remain in the record only as an example of what a phase-locked sampler
+seed can manufacture.
 
 **Evidence path:** `evidence/arm3_arm4_arm6_cpt_trajectory_paired_full.json`;
 `code/recompute_cpt_trajectory_paired.py` (hard-fails on <8/8 shards). Narrative:
@@ -550,10 +565,10 @@ the stale hash as a provenance check.
 | # | claim | strength | may be published as-is? |
 |---|---|---|---|
 | A-1 | pruned+healed 1B `keep7+fresh2` @200k is BH-significantly above its own construct-appropriate null on 4/5 certified closed-book interfaces; step-500 control at/below floor | **solid**; level-vs-floor, immune to §B-1 | yes, with its scope conditions and with `/reported` ≠ recovery (B-4) |
-| A-2 | at step220000, on **one fixed data order**, Arm 3 (+0.4793 SIG) and Arm 6 (+0.5016 SIG) both show TriviaQA EM ≈ +0.5 pp | **provisional**; phase-locked, n=1 data path | no — only with "under one fixed data order" **inside** the sentence; awaiting C-1 |
+| A-2 | ~~at step220000, on one fixed sampler seed, Arm 3 (+0.4793 SIG) and Arm 6 (+0.5016 SIG) both show TriviaQA EM ≈ +0.5 pp~~ | ❌ **RETRACTED 2026-08-11** — C-1 returned the ARTIFACT branch (0/2 seeds CONFIRM; −0.3455 SIG-negative on seed 44) | **never** — see `DATAORDER_VERDICT.md` |
 | A-3 | early-CPT (step205000) damage orders Arm3 < Arm6 < Arm4 on 4 axes | **suggestive only** | no |
 | B-1..B-9 | see §B | **dead** | never |
-| C-1 | data-order replication, seeds 43/44 | **OPEN, no result** | no verdict may be written |
+| C-1 | sampler-seed replication, seeds 43/44 | **CLOSED 2026-08-11 → ARTIFACT** (0/2 CONFIRM) | yes, as a negative result: `DATAORDER_VERDICT.md` |
 | C-2 | run-to-run variance floor | **does not exist** | — |
 | C-3 | MMLU trajectory | **provisional**, untracked evidence | no |
 | C-4 | the 6-arm parametric-vs-external-memory study | **never run** | — |

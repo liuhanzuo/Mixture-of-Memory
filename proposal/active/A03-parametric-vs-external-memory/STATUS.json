@@ -5,9 +5,9 @@
   "priority": 3,
   "updated": "2026-08-10T19:25+0800",
   "dataorder_replication": {
-    "status": "FALSIFIED",
+    "status": "ARTIFACT",
     "verdict_doc": "DATAORDER_VERDICT.md",
-    "prereg_commit": "44840f1",
+    "prereg_commit": "a25d780",
     "evidence_json": "evidence/pilot_one_stage_a_verdict.json (md5 4ced4582cce6772a797a7f41e94e2a7a)",
     "seed_43": {
       "triviaqa_em_paired_delta_pp": 0.1115,
@@ -32,8 +32,23 @@
       0.8
     ],
     "both_seeds_outside_band": true,
-    "apparatus_noise_floor_measured_pp": 0.323,
-    "implication": "Arm 3 headline +0.4793 SIG on triviaqa em is data-order-dependent; retract A-2 in claims/A03_SURVIVING_CLAIMS.md. Phase-locking (r=0.99982 across arms) is real and now explains WHY the effect looked reproducible."
+    "implication": "Arm 3 headline +0.4793 SIG on triviaqa em is sampler-seed-dependent (ARTIFACT branch); retract A-2 in claims/A03_SURVIVING_CLAIMS.md. Phase-locking (r=0.99982 across arms) is real and is the mechanism.",
+    "status_note": "ARTIFACT is the pre-registered branch name (DATAORDER_PREREG.md s3.4: zero landed seeds are CONFIRM). The earlier label 'FALSIFIED' appears nowhere in the prereg -- corrected 2026-08-11 11:05 GMT+8.",
+    "prereg_commit_note": "Corrected from 44840f1, which adds only scripts/_run_a03_dataorder_repl.sh and pre-registers a different band [+0.3,+0.7]. a25d780 (2026-08-10 19:20:02 GMT+8) is the commit that added DATAORDER_PREREG.md.",
+    "apparatus_noise_floor_RETRACTED": {
+      "retracted_value_pp": 0.323,
+      "why": "DATAORDER_PREREG.md s4 'n=2 CANNOT' explicitly forbids estimating sigma_run at n=2 ('cannot distinguish sigma_run ~ 0 from sigma_run ~ 0.3 pp'). The 0.323 figure is a 1-dof point estimate; its chi2 95% interval for sigma is ~[0.14, 10.3] pp. Do not cite it as a noise floor.",
+      "legitimate_use_only": "as the sd_run input to A04 Pilot One Stage A, where PILOT_ONE_PREREG.md declares the inference one-directional (a small sd_run clears nothing)."
+    },
+    "manipulation_scope": {
+      "characterisation": "sampler-seed / data-subset variation, NOT data-order-only",
+      "sequences_consumed": 2560000,
+      "epoch_rows": 15491607,
+      "fraction_of_epoch_pct": 16.53,
+      "full_epoch_steps_at_eff_bs_128": 121028,
+      "why_it_matters": "each seed consumed a different 16.5% subset of the corpus, so the seeds trained on largely different data, not merely a reshuffle. Does not weaken ARTIFACT; does forbid saying 'data order only'."
+    },
+    "four_axis_table_scope": "DESCRIPTIVE ONLY. prereg s3.6 makes triviaqa em the sole primary endpoint; popqa/nq_open/mmlu are secondary and may not be used to rescue OR strengthen the primary verdict."
   },
   "arm6_midlowLR_cpt": {
     "status": "COMPLETE. All 4 dose points evaluated; watcher exited cleanly 16:28:36. step220000 (the PRE-REGISTERED decision point) evaluated 16:27:36, 32/32 shards verified.",
@@ -44,7 +59,7 @@
       "Arm6_new": "[0.499x, 0.425x]",
       "Arm4": "[0.998x, 0.559x]"
     },
-    "verdict": "\u2605 CORRECTION OF MY OWN 13:37 VERDICT. Arm 6 step220000 triviaqa em = +0.50 SIG, which REPLICATES Arm 3's +0.48 SIG to within 0.02pp, with contains (+0.38 SIG) and f1 (+0.36 SIG) also positive. The pre-registered 'arm6_step220_positive_SIG' branch FIRED. My step215-based retraction (ARM6_STEP215_VERDICT.md) is WITHDRAWN -- it called the verdict one dose point early, at a step that ARM6_LOWERBAND_INTERIM.md had already flagged as null for Arm3/Arm4 too. HOWEVER the replication is NOT independent: see phase_locked_defect. See ARM6_FINAL_VERDICT.md.",
+    "verdict": "★ CORRECTION OF MY OWN 13:37 VERDICT. Arm 6 step220000 triviaqa em = +0.50 SIG, which REPLICATES Arm 3's +0.48 SIG to within 0.02pp, with contains (+0.38 SIG) and f1 (+0.36 SIG) also positive. The pre-registered 'arm6_step220_positive_SIG' branch FIRED. My step215-based retraction (ARM6_STEP215_VERDICT.md) is WITHDRAWN -- it called the verdict one dose point early, at a step that ARM6_LOWERBAND_INTERIM.md had already flagged as null for Arm3/Arm4 too. HOWEVER the replication is NOT independent: see phase_locked_defect. See ARM6_FINAL_VERDICT.md.",
     "dose_points_measured": {
       "step205000": {
         "evaluated": "2026-08-10 07:55:28 GMT+8",
@@ -104,7 +119,7 @@
     "what_each_outcome_would_mean": {
       "_RESOLVED": "The 'arm6_step220_null_or_negative' branch fired EARLY, at step215000 -- see ARM6_STEP215_VERDICT.md. Branches kept verbatim below as the pre-registration record.",
       "arm6_step220_positive_SIG": "(did not fire) low-LR IS a real regime -> A03 keeps a NARROW claim.",
-      "arm6_step220_null_or_negative": "\u2605 THIS ONE FIRED (at step215, not step220): Arm 3's +0.48 SIG is a fluke Arm 6 fails to replicate at an adjacent LR band -> the trajectory-CPT claim dies entirely; A03 retains only its Gate-1 pilot.",
+      "arm6_step220_null_or_negative": "★ THIS ONE FIRED (at step215, not step220): Arm 3's +0.48 SIG is a fluke Arm 6 fails to replicate at an adjacent LR band -> the trajectory-CPT claim dies entirely; A03 retains only its Gate-1 pilot.",
       "arm6_step220_larger_than_arm3_and_monotone_in_LR_within_low_band": "(did not fire)"
     },
     "eval_watcher": ".82 /tmp/a03_arm6_trajectory_watcher.sh (v3, pid 2477305 since 04:58:33). Fired step205000 at 07:51:34 and step210000 at 10:42:29; each eval takes ~3m45s (MMLU 77s + CB(pt) 106s + CB(nq) 39s). Canonical copy: code/a03_arm6_trajectory_watcher.sh.",
@@ -144,7 +159,7 @@
       "distributedsampler_fix_not_on_disk": "MAIN verified 2026-08-10 14:39: .73's scripts/train_olmo2_arch_probe2.py:863 still reads `DistributedSampler(ds, shuffle=True)` -- NO seed= arg. The ce5c298 fix landed on wzc1 (LOCAL) but was never scp'd to zwfy6. All Arm 3/4/6 runs used the same default sampler seed 0. Cross-arm loss correlations Arm3-Arm6 0.99982, Arm3-Arm4 (to step215) 0.99187 -- near-identical data paths, not n=1 seed but n=1 data path.",
       "metric_independence_defect": "em/contains/f1 are NOT independent metrics on the same 17,944 predictions. Item-level delta corrs: em-f1 0.781, contains-f1 0.497, em-contains 0.380; raw metric corrs em-f1 ~0.86. Effective dimension of the corr matrix ~1.8-1.9 tests, not 3. The 'three metrics agree so not noise' argument was 1.8 tests not 3.",
       "bh_correction_on_90_test_family": "After BH q=0.05 across the 90 successful tests (Arm3 36 + Arm4 36 + Arm6 18): NOT surviving = Arm3 step210 nq_open.contains, Arm4 step205 nq_open.f1, Arm4 step210 popqa.em, Arm6 step210 nq_open.contains. Surviving = Arm3 step210 triviaqa.em, Arm3 step220 triviaqa em/contains/f1. Note: 'surviving BH' is a necessary condition; oscillation defect + data-path defect kill the claim regardless.",
-      "tcodex_verdict": "A03: Reject current empirical claim, allow redesign. floor gate \u53ef\u4fdd\u7559; CPT recovery / LR-regime \u7ed3\u8bba\u5728\u771f\u6b63\u591a seed \u524d\u4e0d\u5e94\u53d1\u8868; 6-arm \u4e3b\u5b9e\u9a8c\u672a\u5b8c\u6210 (raw-text RAG, residual memory, joint \u4e09\u7c7b\u6838\u5fc3 arm \u90fd\u8fd8\u6ca1\u6d4b\u8fc7)."
+      "tcodex_verdict": "A03: Reject current empirical claim, allow redesign. floor gate 可保留; CPT recovery / LR-regime 结论在真正多 seed 前不应发表; 6-arm 主实验未完成 (raw-text RAG, residual memory, joint 三类核心 arm 都还没测过)."
     },
     "phase_locked_defect": {
       "finding": "The three arms do not merely agree at step220 -- they trace the SAME CURVE at every dose point.",
@@ -197,7 +212,7 @@
       }
     },
     "evidence_md5_CORRECTED_20260811": "was 36fed7ad8cce952c2c406c4abad80da7, the pre-step220000 payload superseded when step220000 was added; the sibling key already named the current one.",
-    "claim": "RETRACTED_BY_DATAORDER_FALSIFICATION (2026-08-11 04:53 GMT+8)",
+    "claim": "RETRACTED_BY_DATAORDER_ARTIFACT_BRANCH (DATAORDER_PREREG.md s3.4; 2026-08-11 04:53, branch label corrected 11:05 GMT+8)",
     "retraction_source": "DATAORDER_VERDICT.md; both seeds outside prereg band [+0.20, +0.80], seed44 SIG at -0.35"
   },
   "arm4_peaklr_cpt": {
@@ -335,8 +350,8 @@
     "then build the 6 arms (intact / pruned / +CPT / +raw-text RAG / +residual memory / +CPT+memory) on the four certified axes, each arm re-checked against its own null"
   ],
   "related_proposals_tcodex_verdicts": {
-    "A01": "Major revision. \u4fdd\u7559 'floor \u662f\u5fc5\u8981\u6761\u4ef6' \u548c tie \u673a\u5236\u53cd\u8bc1; \u64a4\u56de phase-transition \u4e00\u822c\u5b9a\u5f8b\u3001oracle convention flip\u3001\u8de8 construct \u4e00\u6570\u91cf\u7ea7 span\u3002",
-    "A02": "Reject / archive \u539f thesis. CoMem storage 2048x cost vs raw-token; \u81ea\u7136\u4efb\u52a1 quality-win \u4e0d\u6210\u7acb; write-repair arms \u672a\u6d4b\u3002\u4ec5\u5269\u7a84 systems microbenchmark \u53ef\u4f5c observation\u3002",
-    "A04": "Design paper / preregistration only. Pilot Zero \u4e0d\u662f gate pass; \u6ca1\u6709\u4efb\u4f55\u6a21\u578b\u5df2\u88ab 'certified recovered'; K1 \u5e94\u6539\u4e3a INDETERMINATE\u3002"
+    "A01": "Major revision. 保留 'floor 是必要条件' 和 tie 机制反证; 撤回 phase-transition 一般定律、oracle convention flip、跨 construct 一数量级 span。",
+    "A02": "Reject / archive 原 thesis. CoMem storage 2048x cost vs raw-token; 自然任务 quality-win 不成立; write-repair arms 未测。仅剩窄 systems microbenchmark 可作 observation。",
+    "A04": "Design paper / preregistration only. Pilot Zero 不是 gate pass; 没有任何模型已被 'certified recovered'; K1 应改为 INDETERMINATE。"
   }
 }
