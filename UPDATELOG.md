@@ -5960,3 +5960,89 @@ Sanity 已四重验证(adapter_config 配置正确、cmdline 无 SWA、CSV 完�
 - **旧笔记的 [19.4, 26.6] 区间不完整**（只算了排除并列一种），并列判错口径给出 3.0，真实区间更宽。
 - **未做（需用户定）**：OLMES / Alzahrani 两条 related-work 引用（MMLU-Redux 已在 bib 中）——
   在审论文加引用会改变 positioning。
+
+## 2026-08-08 14:00 — Paper B keep10/keep12/keep8 resume 200k v2 启动
+
+### 补丁
+- commit `5578ed0`: `fix(resume): remap 2-group ckpt optimizer state to 4-group HEAD for keep8/10/12`
+- 位置: `scripts/train_olmo2_arch_probe2.py` lines ~886-972
+- 功能: 检测 ckpt 2-group vs HEAD 4-group 不兼容时，按 param-name 双射重映射 Adam 状态
+
+### keep10 (.82)
+- resume_from: `outputs/olmo2_probe2_7B_keep10fresh2/step83500.pt`
+- 启动时间: 13:58:48
+- remap: 135/135 states REMAPPED
+- 验证: [step 83520/200000] loss=2.5249 ppl=12.49 lr=1.33e-05 6.86s/step
+- 所有 group base_lr=2.00e-05 ✓
+
+### keep12 (.104)
+- resume_from: `outputs/olmo2_probe2_7B_keep12fresh2/step124000.pt`
+- 启动时间: 13:59:02
+- remap: 157/157 states REMAPPED
+- 验证: [step 124020/200000] loss=2.3699 ppl=10.70 lr=7.69e-06 8.02s/step
+- 所有 group base_lr=2.00e-05 ✓
+
+### keep8 (.73)
+- scp 进行中: wzc1 step121000.pt (34.2G) -> zwfy6 step121000_full.pt
+- scp PID: 2131287, 预计约 30-40 分钟完成
+- 完成后 md5 校验通过后启动
+
+## 2026-08-08 — SFT data-selection literature review (research only)
+- Completed a primary-paper/official-project survey of training-free and low-training-cost instruction data selection (2023–2026) for the proposed 100K-candidate → 5K agent-SFT setting.
+- Main recommendation: group-aware hybrid selection (quality + target relevance + diversity), with a zero-update pipeline as the default and LESS as the low-training upper-bound comparator.
+- Key caveats recorded: preserve trajectory grouping, cap samples per trajectory/benchmark, separate selection-dev prompts from final test prompts, and include random/stratified-random baselines.
+- Detailed structured report delivered in the conversation; summary appended to `status/RESEARCHER_REPORTS.jsonl`.
+
+## 2026-08-08 — Added B09 trajectory-aware SFT data-selection proposal
+- Added `proposal/backlog/B09-trajectory-aware-sft-data-selection/`.
+- Proposal formalizes the 10K trajectories → 100K candidate rows → 5K SFT
+  problem as constrained hierarchical coreset selection rather than flat Top-K.
+- Added explicit leakage protocol, zero-update and LESS variants, strong
+  constraint-matched baselines, fixed-token evaluation, promotion gates and
+  kill conditions.
+- Updated `proposal/README.md` and `proposal/INDEX.json`.
+
+## 2026-08-08 — B09 novelty collision audit
+- Added `proposal/backlog/B09-trajectory-aware-sft-data-selection/NOVELTY.md`.
+- Identified direct collisions: TopoCurate for whole agent-trajectory selection,
+  MDS for multi-turn dialogue selection, ATLAS/CSO for critical-step learning,
+  RDS+/LESS for target-aware selection, and DELIFT/SMART for submodular
+  coverage and budget allocation.
+- Narrowed the safe novelty claim to the parent-expanded child-row setting:
+  jointly selecting across parent trajectories and within-trajectory decisions
+  under target-token and coverage constraints.
+- Added a novelty gate requiring row-multiplicity stress testing and either
+  joint hierarchical marginal gain or branch-verified decision credit; without
+  such a core, B09 remains a controlled empirical study / robust recipe rather
+  than a new selection algorithm.
+
+## 2026-08-11 11:10 GMT+8 — 模型统一 Opus 5 + A03 verdict 五项审计缺陷修正
+
+### 1. 全部 agent 统一 Claude Opus 5 (commit `6003a6c`)
+
+**真正的病根不是文档，是 7 个 slash command 的 frontmatter 写死了 `model: claude-opus-4-7`** —— 所以 `/heartbeat` `/coder` `/researcher` 等无论主会话选什么模型都跑在 4-7 上。本轮 transcript 实测混用：`claude-opus-4-8`(18751) / `claude-opus-4-7`(5705) / `claude-opus-5`(4365) / `sonnet`(45) / `reasoning`(18)。
+
+改动：
+- `.claude/commands/{heartbeat,coder,researcher,trainer,status,approve,gitpush}.md` frontmatter → `model: opus`
+- `.claude/commands/heartbeat.md:74` + `HEARTBEAT.md:128` 内联 `model="reasoning"` → `"opus"`（`reasoning` 是间接别名，历史上映射到 4-7）
+- `CODEBUDDY.md`：删掉 2026-05-11 的分层配置（gpt-5.4 主 / claude-opus-4.7 subagent / sonnet-4.6 lite）和 `主模型: GLM-5.1` 那行，换成单一权威规则 + 禁止拼写清单 + 自查 grep
+- `scripts/heartbeat_cron.sh`：`MODEL` → `opus`；并标注该脚本**当前不在 crontab**、且其 `PROJECT_ROOT`(share_303098609) 在任何节点都已不存在
+- `.github/scripts/{generate_cleanup_suggestions,summarize_diff}.py` + 两个 CI workflow：改读 `ANTHROPIC_DEFAULT_OPUS_MODEL`，不再走 SONNET/HAIKU 别名（**需在 GitHub Secrets 里加 `ANTHROPIC_DEFAULT_OPUS_MODEL`**）
+
+别名解析链已实测：`.claude/settings.json` 的 `"model": "opus"` → env `ANTHROPIC_DEFAULT_OPUS_MODEL=claude-opus-5[1m]`。**教训：写死版本号会绕过网关别名，每次模型迭代都静默降级；一律写 `opus`。**
+
+### 2. A03 data-order verdict 五项审计缺陷 (commit `dc1cd82`)
+
+审计 workflow `wf_f3a7a246-913` 复核了 `DATAORDER_VERDICT.md`：**所有数字逐位复现无误**，但标签/出处/scope 有 5 处错，其中 1 处推翻了我自己的 headline 用词。
+
+| # | 缺陷 | 修正 |
+|---|---|---|
+| 1 | **"FALSIFIED" 不是预注册分支名** —— `grep -c FALSIFIED DATAORDER_PREREG.md` = 0；§3.4 穷尽枚举只有 REPLICATES/ARTIFACT/MIXED，0/2 seed CONFIRM → 触发的是 **ARTIFACT** | verdict + STATUS.json 全改 ARTIFACT；旧 body 还编造了分支条件（"both in band → REPLICATED"，实际 REPLICATES 要求 CONFIRM，更严：CI 还须排除 0） |
+| 2 | prereg commit 引错：`44840f1`(17:00:39) 只加了 driver 脚本、且其 message 预注册的是**另一个 band [+0.3,+0.7]** | 真实 prereg = **`a25d780`**(19:20:02)；分支表在 **§3.4** 非 §2.2。时序本身合法：最早 dataorder ckpt 19:47:23，晚 27 分钟；seed 45 确实从未跑 |
+| 3 | **noise-floor 声称违反我自己的 prereg §4** —— §4「n=2 CANNOT」明写无法区分 σ_run≈0 与 ≈0.3pp | **撤销**。0.3231 是 1-dof 点估计，σ 的 χ² 95% 区间约 **[0.14, 10.3] pp**。仅保留其合法用途：A04 Stage-A 的 `sd_run` 输入（prereg 声明单向推断，小值不清关）。已连带修 A04 STATUS.json（原写「the exact quantity K2 needs」）和 STAGE_B_DECISION.md（Path B 的论证建在这个幻影 floor 上） |
+| 4 | popqa 被违规提拔为「更致命的轴」 | §3.6 定 triviaqa em 为唯一 primary、禁止 secondary 救 primary；用来**加强**判定是同一动作反向。4-axis 表改标 descriptive-only；去掉对 `ARM6_STEP215_VERDICT.md` 的引用 |
+| 5 | 操作不是「只改 data order」 | 20000 步 × eff-bs 128 = 2,560,000 seq ÷ 15,491,607 行 = **16.53% of one epoch**（整 epoch = 121,028 步）。换 sampler seed 改的是**看到哪 16.5% 子集**。全部下游措辞 → 「sampler-seed / data-subset variation」 |
+
+另补：follow-through 之前没做完 —— `claims/A03_SURVIVING_CLAIMS.md` 仍写 A-2 provisional / C-1 OPEN，与 verdict 要求的撤稿矛盾。A-2 四处全标 RETRACTED，C-1 标 CLOSED→ARTIFACT。
+
+**顺带一条经验结论**：keep12 的 run-to-run spread **不比 keep7 小**（popqa 0.451 vs 0.273，mmlu_content 0.055 vs 0.025），反驳了我在 `STAGE_B_DECISION.md` 里的「recover 空间小 → 效应小」预测。**spread 不随 damage 单调。**
