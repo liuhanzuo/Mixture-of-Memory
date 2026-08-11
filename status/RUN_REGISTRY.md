@@ -2017,3 +2017,74 @@ ShortGPT-influence 选层保留 16 非连续层 [0-12,16,17,31]（含最终层 3
 - per-task：hellaswag .6851·arc_c .4761·arc_e .7462·piqa .7584·openbookqa .408(acc_norm)·winogrande .6551(acc)；mmlu .4739·lambada .6194·boolq .7287·commonsense_qa .5340·social_iqa .4422(acc)。
 - ★ **该终点在 PPL(1.322× tax) 和 MMLU(63.0% above-chance recovery) 两轴同时优于全部三个 16L 连续截断臂**（keep14 train-all 19.4% / freeze-front 3.6% / random-front ~0%）。混淆项：继承 16 vs 14 层 + 保留原生 readout(层31) vs 丢顶换 2 fresh 层——两效应尚未拆分（需 keep16-inherited/0-fresh 连续控制隔离 policy）。详见 `status/PAPERB_THREE_ARM_200K.md`。
 - 源：`.82:olmo2_ppl_results/7B_shortgpt16_step200000/summary.json` + `.82:olmo2_downstream_results/7B_shortgpt16_step200000{,_know}/summary.json`；driver `scripts/_run_shortgpt_downstream_only.sh`（downstream-only 复跑，PPL 早前经 `_run_olmo2_eval_shortgpt.sh`）；env `.82:$DB/olmo2_venv`（elsa torch2.7 + transformers 5.5.4 + datasets 5.0.0）。轨迹中点 128000/153500 未跑（需 46GB scp LOCAL→.82，deferred）。
+
+---
+
+## ★★ Paper B keep14+fresh2 **种子方差**（task #181，2026-08-12，LOCAL 8×L20A，33 min）
+
+**这是 Paper B 第一个 same-recipe 双 seed 端点对照。** 两个臂配方完全相同（front14 继承 + 2 fresh tail，
+Dolmino heal 到 step200000，seq_len 2048，均匀 lr 2e-5），只差 seed（42 vs 1234）。
+⚠️ `arch_meta.json` 里 `lr_fresh` 一个写 1e-4 一个写 2e-5 是**元数据假象**：`_classify_param` 未剥 `module.`
+前缀导致 fresh 组从未生成，两臂**实际都是均匀 2e-5**（见 CLAUDE.md 同 bug 条），**不得声称差分 LR**。
+
+| 项 | seed 42 | seed 1234 |
+|---|---|---|
+| ckpt | `outputs/olmo2_probe2_7B_keep14fresh2/step200000.pt` | `outputs/olmo2_probe2_7B_keep14fresh2_seed1234/step200000.pt` |
+| 训练收尾 | 早前完成（Paper B 主表来源） | `loss=2.3286 ppl=10.26` @200000，`final.pt` + `DONE` |
+
+### 同口径逐轴结果（8 shard，`chat_template=False`，`add_bos=0`，per-item 配对）
+
+| 轴 | n | seed 42 | seed 1234 | Δ(42−1234) | McNemar p | 结论 |
+|---|---:|---:|---:|---:|---:|---|
+| held-out PPL (Dolmino) | 8.38M tok | **10.5613** | **10.5673** | −0.0060 (0.06%) | — | **种子稳** |
+| OOD PPL WikiText-103 | 289k tok | 11.5562 | 11.5375 | +0.0186 | — | 种子稳（符号还反向） |
+| OOD PPL PG-19 | 2.46M tok | 15.4263 | 15.4654 | −0.0391 | — | 种子稳 |
+| **MMLU-L (letter)** | 14042 | 31.85 | **33.04** | **−1.19 pp** | 0.0092 | 摆动最大；4061 item 翻转(28.9%) |
+| MMLU-C (content_norm) | 14042 | 38.41 | 38.24 | +0.18 pp | 0.512 | 稳（仅 9.5% 翻转） |
+| **BoolQ** (acc_norm) | 3270 | **68.87** | 66.82 | **+2.05 pp** | 0.0035 | **Holm 校正后唯一显著** |
+| ARC-E (acc_norm) | 2376 | 70.50 | 71.89 | −1.39 pp | 0.032 | Holm 后不显著 |
+| core6 macro (acc_norm) | — | .5938 | .5999 | −0.62 pp | — | — |
+| aux5_raw (acc mean) | — | .4935 | .4918 | +0.17 pp | — | — |
+| HellaSwag / OpenBookQA | 10042 / 500 | 64.46 / 40.40 | 64.44 / 40.40 | +0.02 / 0.00 pp | 0.97 / 1.00 | 极稳 |
+
+- **符号混杂**（7 轴利于 s42、5 轴利于 s1234、1 平）→ 这是**离散度**不是某个 run 更好。
+- Holm-Bonferroni（13 轴主族）：**仅 BoolQ 过**（0.00353 < 0.00385）；MMLU-L(0.0092) / ARC-E(0.032) 不过。
+  但 3/13 名义 p<0.05 vs 全零假设期望 0.65 → 确有真实种子信号，**可用量是幅度包络而非"哪轴显著"**。
+- **接口不对称**：MMLU-**letter** 跨种子翻 28.9% item，MMLU-**content_norm** 只翻 9.5% → letter 接口对种子
+  更敏感 ~3×，与 Paper B 已有的 interface-dependence 结论同向加强。
+
+### 对 Paper B 主张的影响
+
+| 论文主张 | 差距 | vs 种子包络 | 判定 |
+|---|---|---|---|
+| ShortGPT−keep14 **MMLU-L +15.6pp** | 15.6 | 13.1× | **安全** |
+| ShortGPT−keep14 **MMLU-C +1.8pp** | 1.8 | **1.5×（同量级）** | ⚠️ **n=1/臂 不能归因于构造** |
+| ShortGPT−keep14 core6 +2.8pp | 2.8 | 4.5× | 大概安全，需注明 n=1/臂 |
+| BoolQ +9.1pp / ARC-C +3.8pp / HellaSwag +4.1pp | — | 4.4× / 3.4× / 206× | 安全 |
+| `tab_ood_audit` PPL 序 Base<ShortGPT<keep14 | ≥0.78 PPL | 种子 Δ ≤0.039 | **安全，序不可能被种子翻** |
+
+### ⚠️ 统计红线
+
+- **n=2 → df=1，两个 draw 的 sd 不是可报的 σ_run。** χ²₁ 的 95% CI 把 sample sd 乘 `[0.446, 31.91]`
+  （**~72× 宽**）：MMLU-L sd=0.841pp → σ ∈ [0.375, 26.84]pp。**报 delta，不报 σ。**
+- **不得与 A03 的 σ 混用**（A03 = **1B** keep7/keep12 on TriviaQA，df=5，0.3666pp，χ² CI [0.229,0.899]）——
+  不同模型/规模/任务/harness。
+
+### 口径与 provenance（关键）
+
+- **两臂都在本次重跑**（一个 driver / 一个 commit `b3626c3` / 一个解释器 / 一台机 / 背靠背），所以 delta 是纯种子。
+  必要性：归档的 seed42 数字产于**已退役的 .252 + `$WD/.venv`**，而 LOCAL 的 `.venv` 自 2026-08-04 起无 torch
+  → 只能用 `/opt/conda/envs/torch-base/bin/python`（torch 2.13.0）。
+- **归档可移植性实测**：seed42 重跑在 PPL(`sum_nll` 19763937.398438 逐位相同)、两个 OOD PPL、**全部 11 个
+  downstream task（acc 与 acc_norm，max |Δ|=0.000000pp）** 上与 .252/.venv 归档**逐位一致**；
+  **唯一漂移是 MMLU-content**（content_norm −0.0926pp），源自 `36ddb1e`+`7ac9653`（2026-08-08）晚于归档的
+  2026-08-02 run —— 即 `PAPERB_WITHIN_DISK_FLOOR_V3.md` 说的 **driver 版本漂移（系统性偏差，非零均值噪声）**。
+- 完整性：12/12 结果目录齐（8 dirs×8/8 shard + 4 OOD×1/1）；11 个 task 的 `n_scored==expected`、`n_nan=0`；
+  failure-syntax grep `Traceback \(most recent call last\)|CUDA out of memory|loss=nan` **0 命中**。
+- **未测轴**：closed-book PopQA/TriviaQA/NQ-open（seed42 基线**只在 zwfy6**，且 wzc1 HF cache 无 `nq_open`；
+  若在此跑会把 seed 与 L20A-vs-H20 架构混淆）。要补必须**两臂**在同一节点重跑。
+- 结果路径（wzc1）：`olmo2_{ppl,downstream,mmlu_content}_results/keep14_s{42,1234}_step200000_sv181*`、
+  `ood_ppl_results/keep14_s{42,1234}_step200000_sv181_{wikitext103,pg19}`（含 per-item jsonl，配对检验用）。
+- 文档：`paperB/SEEDVAR_KEEP14_PROTOCOL.md`（口径钉死表）· `paperB/SEEDVAR_KEEP14_VERDICT.md`（结论）·
+  `paperB/SEEDVAR_KEEP14_RESULTS.json`（机器可读）· driver `scripts/_run_paperB_keep14_seedvar_local.sh` ·
+  分析 `scripts/analyze_paperB_keep14_seedvar.py`。

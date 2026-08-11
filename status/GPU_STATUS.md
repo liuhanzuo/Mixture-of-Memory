@@ -14,13 +14,15 @@
 
 | 节点 | 硬件 | 任务 | 细节 | 状态 |
 |---|---|---|---|---|
-| **LOCAL** | 8×L20A wzc1 | `keep14fresh2_seed1234` (#181) | step ~25.8k/200k, loss 2.59, 1.56s/step, ETA ~76h | ▶️ 运行中 |
+| **LOCAL** | 8×L20A wzc1 | **空闲**（2026-08-12 01:39 起） | #181 `keep14fresh2_seed1234` 训练**已于 08-12 00:22 跑满 step200000**（`final.pt` + `DONE`）；随后 01:06→01:39 跑完 seed-variance eval battery（seed42+seed1234 × 6 轴，8 卡，33 min），**8 卡已释放 0 MiB** | ✅ 空闲可投 |
 | **.21** | 8×L20A wzc1 | `keep10fresh2 resume` | 等待 dolmino 传输完成（ETA ~17:02 CST）；launch script PID 4516 | ⏳ WAITING |
 | **.73** | 8×H20 zwfy6 | `keep8fresh2 resume` | step121000_full.pt → step 121160+, 5.79s/step, 73.5GB REMAPPED ✓ | ▶️ 运行中 |
 | **.82** | 8×H20 zwfy6 | `keep10fresh2 resume` | step83980+, 6.80s/step, 82.7GB，将在 .21 keep10 确认后被 kill | ▶️ 运行中（待 kill） |
 | **.104** | 8×H20 zwfy6 | `keep12fresh2 resume` | step124220+, 7.87s/step, 91.9GB，用户管理 | ▶️ 运行中（用户控制） |
 
-> ⚠️ LOCAL 还在跑 keep14 seed1234 训练。
+> ✅ **2026-08-12 01:39 更新（task #181 收尾）**：LOCAL 的 keep14 seed1234 训练已 DONE(200k)，seed-variance eval 也已跑完并释放 8 卡 → **LOCAL 现在空闲可投**。
+> 结论见 `paperB/SEEDVAR_KEEP14_VERDICT.md`：PPL 种子稳（10.5613 vs 10.5673，0.06%）但 MMLU-L 摆动 −1.19pp、BoolQ +2.05pp；Holm 校正后仅 BoolQ 显著；n=2→df=1 **不可报 σ_run**。
+> ⚠️ 本表 .21/.73/.82/.104 四行是 2026-08-08 的旧状态，本次未核实（本任务只准动 LOCAL），下一个 heartbeat 请对照 nvidia-smi 重核。
 
 ## 传输进度（2026-08-08 15:02）
 
