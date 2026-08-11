@@ -1,29 +1,41 @@
 # paperG #251 — THE POWER WALL, pushed down with MMLU-scale n
 
-Task #251. Ran 2026-08-12 on `.73` (8×H20), 6 arm×task cells, 34.5 min wall-clock
-scoring + CPU analysis.
+Task #251 (OLMo-2 leg, §§1-5). Ran 2026-08-12 on `.73` (8×H20), 6 arm×task cells,
+34.5 min wall-clock scoring + CPU analysis.
+**Task #252** (cross-family leg, **§6**) extended it to 15 non-OLMo cells and
+fixed two integrity defects of the first cross-family launch — see §6g. All 21
+cells are now in one table, `mmlu_pro_power_nulls_v2.json`.
 
-**Verdict: `POWER_WALL_CLEARED_AND_THE_MMLU_EFFECT_DOES_NOT_REPLICATE`.**
+**Verdict: `POWER_WALL_CLEARED_AND_THE_MMLU_EFFECT_DOES_NOT_REPLICATE`**
+**(on OLMo-2's healed arms — §6c shows it DOES replicate on two un-healed
+cross-family arms, so the "MMLU-specific" reading of §2b is retracted).**
 
 The acceptance criterion was one number, and it passed decisively: the achieved
-CI95 half-width on the letter-vs-floor test is **0.582–0.906 pp on all 6 cells**,
-against MMLU's own effect size of **1.389 pp**. **6/6 cells are powered** —
-compared with 1/6 of #248's task set and 8/60 of #250's cells. For the first time
-off MMLU, a null result here means *"the effect is not there"* rather than
-*"we could not have seen it."*
+CI95 half-width on the letter-vs-floor test is **0.582–0.906 pp on all 6** OLMo-2
+cells and **0.083–0.968 pp on all 21** cells, against MMLU's own effect size of
+**1.389 pp**. **21/21 cells are powered** — compared with 1/6 of #248's task set
+and 8/60 of #250's cells. For the first time off MMLU, a null result here means
+*"the effect is not there"* rather than *"we could not have seen it."*
 
-And the answer that new resolution buys is **negative**. MMLU's headline (the most
-damaged arm sits *significantly below* its own best-constant floor, −1.389 pp,
-p=0.019) **does not reproduce on MMLU-Pro**. `keep8` is **−0.116 pp with CI95
-`[−0.698, +0.465]`** — an interval that **excludes MMLU's −1.389 pp entirely**.
-This is not a non-observation. It is a **positive exclusion** of an effect of
-MMLU's magnitude on this benchmark.
+And the answer that new resolution buys is **negative on the healed arms**. MMLU's
+headline (the most damaged arm sits *significantly below* its own best-constant
+floor, −1.389 pp, p=0.019) **does not reproduce on MMLU-Pro for OLMo-2**. `keep8`
+is **−0.116 pp with CI95 `[−0.698, +0.465]`** — an interval that **excludes
+MMLU's −1.389 pp entirely**. This is not a non-observation. It is a **positive
+exclusion** of an effect of MMLU's magnitude on this benchmark, for this arm.
 
 > This is the outcome the power table was built to make possible: #248 and #250
 > could not distinguish "no effect" from "invisible". Now we can, and the answer
 > is "no effect of that size, here". That is a **narrowing of paperG's headline**,
 > not a confirmation, and it is the fourth self-falsification this direction has
 > produced against itself.
+>
+> ⚠️ **Then §6 partially un-narrowed it**: two *un-healed* cross-family arms on
+> the *same* benchmark ARE significantly below floor (`llama2_7b/k8` p=0.0168,
+> `qwen3_8b_base/k8` p=0.0362), so the limiting factor is **heal vs no-heal**, not
+> MMLU. And §6 added a *new* counterexample in the other direction
+> (`qwen3_8b_base/k14` significantly **above** floor). Read §§1-5 and §6 together;
+> neither alone gives the scope.
 
 ---
 
@@ -192,10 +204,17 @@ than the five underpowered nulls it replaces.
 that yields a significant below-floor verdict.** arc_easy (hw 1.305, powered) and
 mmlu_pro (hw 0.582, best in class) both say `AT the floor`. That materially
 weakens the generality of the below-floor headline and **strengthens** the
-`AT-or-below` formulation. It also means the below-floor result may be an
-**MMLU-specific** property — compare the already-recorded narrowing of
-Direction A to OLMo-2-only, and treat "significantly below floor" as
-**MMLU-specific until shown otherwise**.
+`AT-or-below` formulation.
+
+> ⚠️ **CORRECTED 2026-08-12 by §6.** This subsection originally continued: "It
+> also means the below-floor result may be an **MMLU-specific** property … treat
+> 'significantly below floor' as **MMLU-specific until shown otherwise**." The
+> cross-family leg **falsifies that**: on MMLU-Pro, `llama2_7b/k8` (−0.914 pp,
+> p = 0.0168) and `qwen3_8b_base/k8` (−0.881 pp, p = 0.0362) are both
+> significantly below floor. So MMLU-Pro *does* produce below-floor verdicts —
+> just not on OLMo-2's **healed** arms. The live hypothesis is **heal vs
+> no-heal**, which is #250's known confound, **not** benchmark identity. Do not
+> cite the "MMLU-specific" phrasing; it was inferred from the OLMo-2 leg alone.
 
 ⚠️ The keep14 row is instructive in the opposite direction: on the four
 underpowered small tasks keep14 reads `above the floor` (obqa +9.400 pp p=5e-4,
@@ -360,7 +379,10 @@ pooled number is not a benchmark property. Winogrande is excluded (control).
   arm. `max_len=1536` was chosen from a measured max letter-prompt length of
   **1226 tokens**, so zero truncation is expected and confirmed — important,
   because left-truncating the labelled option body would change the letter
-  *interface itself*.
+  *interface itself*. ⚠️ **That 1226 is the OLMo-2 tokenizer's number and does
+  NOT transfer**: Llama-2 encodes the same items up to **1678** tokens and Qwen3
+  up to **1660**, so the cross-family leg needed `max_len=2048`. The first
+  cross-family launch used 1536 and truncated 10 of 15 cells — see §6g.
 * Failure grep with **failure syntax**
   (`Traceback \(most recent call last\)|CUDA out of memory|SHARD INTEGRITY
   FAILURE|CARDINALITY FAILURE|AssertionError|loss=nan`) over all 56 logs of the
@@ -406,20 +428,27 @@ nodes, so the `n_trunc` roll-up printed a cosmetic `?` (now `awk`, and a nonzero
 `n_trunc` is now a hard failure); and the harness's `Counter` import was
 function-local.
 
+> ⚠️ **The `bc` bug and the `n_trunc` guard's weakness compounded.** Because the
+> roll-up printed `?`, the OLMo-2 driver never actually *displayed* a truncation
+> count — the zeros above were recovered afterwards by recounting the shard json.
+> And because a nonzero count was only a **WARNING** at the time, the
+> cross-family launch printed real nonzero counts and still wrote summaries
+> (§6g). A cosmetic bug in a guard and a too-weak guard are the same class of
+> problem: **the check must fail the run, not narrate it.** `n_trunc` is now a
+> hard per-shard assert inside the scoring script, alongside `n_scored`/`n_nan`.
+
 ---
 
-## 6. Cross-family extension — IN FLIGHT, not part of this verdict
+## 6. Cross-family extension — LANDED 2026-08-12 (task #252)
 
-The same harness is running on #250's 15 non-OLMo arms (Llama-2-7B / Llama-3-8B /
-Qwen3-8B-Base × {intact, k14, k12, k10, k8}, eval-time front-N truncation, no
-heal) into `mmlu_pro_lc_crossfamily_results/`. It will answer two questions this
-document deliberately does **not**:
+The same harness ran on #250's 15 non-OLMo arms (Llama-2-7B / Llama-3-8B /
+Qwen3-8B-Base × {intact, k14, k12, k10, k8}; damage is **eval-time front-N
+truncation, no fresh block, no heal**, so no training was needed).
 
-1. does the `AT the floor` (rather than below-floor) result hold in three more
-   families at MMLU-scale power;
-2. how large is the **tokenizer** dependence of the 10-way longest-option content
-   null (expected to exceed #250's 4-way spread of 1.50 pp `split` / 10.6 pp
-   `credit`, given the 56% tied-longest fraction).
+> ⚠️ **The first launch of this run shipped two real integrity defects and its
+> numbers must not be quoted.** They were root-caused and fixed in #252; the run
+> was redone in full into `mmlu_pro_lc_crossfamily_results_fix/`. See §6e. The
+> statistics below are all from the **redone** run.
 
 ⚠️ Uses `../models/Qwen3-8B-**Base**`. zwfy6's `models/Qwen--Qwen3-8b` and the
 `Qwen3-8b-local` symlink are Qwen3-8B-**Instruct** (`eos 151645` = `<|im_end|>`,
@@ -427,9 +456,204 @@ ctx 40960) and are **not** valid base arms under `chat_template=False`. The
 criterion is **eos id + ctx length**, not the presence of a `chat_template`
 (both have one).
 
-**Nothing in §§1-5 depends on that run.** When it lands, re-run
-`paperG/code/mmlu_pro_power_nulls.py` pointing at both result roots and append a
-§6 replacement.
+### 6a. All 21 cells, letter vs the best-constant floor
+
+Letter null `always-A 0.116606` is **bit-identical across all 21 cells** (asserted,
+not assumed: the script aborts if it drifts, because a drift would mean the item
+sets differ). `+` above floor, `=` AT floor, `−` BELOW floor.
+
+| family | arm | letter acc | Δ vs floor | CI95 | hw | boot p | modal | n_letters | tie | verdict |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Llama-2-7B | base | `0.131981` | **+1.538 pp** | [+0.765, +2.311] | 0.773 | 1e-4 | D 0.494 | 10 | 0.165 | `+` |
+| | k14 | `0.116772` | +0.017 | [−0.066, +0.100] | **0.083** | 0.707 | A 0.991 | 4 | 0.001 | `=` |
+| | k12 | `0.115858` | −0.075 | [−0.158, +0.008] | **0.083** | 0.069 | A 0.988 | 4 | 0.000 | `=` |
+| | k10 | `0.113198` | −0.341 | [−0.756, +0.075] | 0.416 | 0.113 | A 0.798 | 5 | 0.003 | `=` |
+| | **k8** | `0.107463` | **−0.914 pp** | **[−1.646, −0.175]** | 0.736 | **0.0168** | C 0.291 | 6 | 0.001 | **`−`** |
+| Llama-3-8B | base | `0.329205` | **+21.260 pp** | [+20.312, +22.207] | 0.947 | 1e-4 | A 0.297 | 10 | 0.111 | `+` |
+| | k14 | `0.114694` | −0.191 | [−1.031, +0.673] | 0.852 | 0.663 | D 0.627 | 8 | 0.003 | `=` |
+| | k12 | `0.111868` | −0.474 | [−1.322, +0.382] | 0.852 | 0.285 | G 0.339 | 8 | 0.003 | `=` |
+| | k10 | `0.111951` | −0.465 | [−1.288, +0.366] | 0.827 | 0.289 | D 0.758 | 7 | 0.001 | `=` |
+| | k8 | `0.113531` | −0.308 | [−0.723, +0.091] | 0.407 | 0.130 | A 0.775 | 4 | 0.002 | `=` |
+| Qwen3-8B-Base | base | `0.461104` | **+34.450 pp** | [+33.485, +35.422] | 0.968 | 1e-4 | A 0.263 | 10 | 0.134 | `+` |
+| | k14 | `0.118933` | **+0.233 pp** | [+0.042, +0.424] | 0.191 | **0.0192** | A 0.946 | 6 | 0.002 | **`+`** |
+| | k12 | `0.115027` | −0.158 | [−0.582, +0.274] | 0.428 | 0.465 | A 0.730 | 4 | 0.007 | `=` |
+| | k10 | `0.118185` | +0.158 | [−0.075, +0.391] | 0.233 | 0.187 | A 0.919 | 4 | 0.004 | `=` |
+| | **k8** | `0.107796` | **−0.881 pp** | **[−1.695, −0.058]** | 0.819 | **0.0362** | E 0.945 | 5 | 0.001 | **`−`** |
+
+**Power: 21/21 cells powered** (hw `0.083`–`0.968` pp, median `0.727`, all
+< 1.389). The wall is down for the cross-family leg too, and the two Llama-2
+`k14`/`k12` cells reach hw **0.083 pp** — the finest resolution anywhere in
+paperG, ~14× better than MMLU's 1.154.
+
+### 6b. What REPLICATES
+
+1. **The wrong-null flip, 12/12 damaged non-OLMo cells.** Under `mean(1/n_opt)`
+   = `0.110877`, **10 of 12** damaged cells read "above chance"; under naive
+   `0.10`, **12 of 12** do. Yet only **1 of 12** clears its own floor. Combined
+   with the OLMo-2 leg's 3/3, that is **15 damaged cells at MMLU-scale power in
+   four families where the null choice alone flips the verdict.** This is
+   paperG's core claim and it is now its best-powered result.
+2. **`AT-or-below` holds 14/15**, and **9 of 12** damaged cross-family point
+   estimates are negative.
+3. **Floor arrival is immediate under un-healed damage**, confirming #250: every
+   family's k14 is already at (or below) floor, with the single exception noted
+   in §6c.
+
+### 6c. What does NOT replicate, and one genuine reversal
+
+* **Two cells ARE significantly below floor** — `llama2_7b/k8` (−0.914 pp,
+  p = 0.0168) and `qwen3_8b_base/k8` (−0.881 pp, p = 0.0362). §2b's conclusion
+  from the OLMo-2 leg alone ("treat below-floor as **MMLU-specific** until shown
+  otherwise") is therefore **too pessimistic and must be corrected**: MMLU-Pro
+  does yield significant below-floor verdicts, just not on OLMo-2's *healed*
+  arms. The distinguishing factor is plausibly **heal vs no-heal**, not benchmark
+  — and it is exactly the confound #250 already flagged as unresolvable without
+  healed non-OLMo arms. **State it as heal-confounded, not as a family effect.**
+* **`qwen3_8b_base/k14` is significantly ABOVE its floor** (+0.233 pp,
+  p = 0.0192) — the only damaged cell in the paper that clears its floor at
+  MMLU-scale power. With hw 0.191 pp this is a real, tiny effect, not noise.
+  It is a **counterexample to any universal "damage ⇒ at-or-below floor"
+  phrasing**: the honest form is "14/15 damaged cells at or below floor".
+* **The ladder is still a cliff, not a gradient** (#250's finding, reconfirmed):
+  k14→k8 is non-monotone in all three families (Llama-3's most-negative rung is
+  k12; Qwen3's k10 is *above* its k12). **Do not fit a depth curve.**
+
+### 6d. Modal/floor decoupling — a THIRD independent confirmation, at both extremes
+
+This is the cleanest instance in the paper:
+
+| cell | modal share | distinct letters | verdict |
+|---|---|---|---|
+| `llama2_7b/k14` | **99.13%** (A) | 4 | `=` AT floor |
+| `llama2_7b/k12` | **98.83%** (A) | 4 | `=` AT floor |
+| `qwen3_8b_base/k8` | **94.48%** (E) | 5 | **`−` BELOW floor** |
+| `llama2_7b/k8` | **29.12%** (C) | 6 | **`−` BELOW floor** |
+| `llama3_8b/k12` | 33.87% (G) | 8 | `=` AT floor |
+
+Two cells at ~99% modal sit **AT** the floor while a 29%-modal cell sits
+**BELOW** it. So modal share neither implies nor is implied by the floor verdict,
+**in both directions** — the 2026-08-10 narrowing ("damage drives letter to or
+below its floor", NOT "damage makes letter constant") is confirmed a third time,
+independently of OLMo-2 MMLU and of #250.
+
+Note also `qwen3_8b_base/k8`'s modal letter is **E**, not the best-constant `A`:
+a 94% single-letter emitter that picked the *wrong* constant lands **below** the
+floor. That is the mechanism by which a below-floor verdict arises here, and it is
+**not** the bf16 exact-tie mechanism (tie rate 0.0012) that gate-3 falsified —
+consistent with #250's "Llama/Qwen degrade by direct modal collapse".
+
+### 6e. The 10-way content null is TOKENIZER-dependent, but far less than at 4-way
+
+Longest-option floor, continuation-token unit, per tokenizer, on the identical
+12032 items:
+
+| tokenizer | `len(tok)` | `split` | `first` | `last` | `credit` | `wrong` | tied-longest frac | mean winner-set |
+|---|---|---|---|---|---|---|---|---|
+| OLMo-2 | 100278 | `0.193150` | `0.195894` | `0.190824` | `0.532164` | `0.125914` | 56.24% | 4.178 |
+| Llama-2 | 32000 | `0.191402` | `0.196310` | `0.187749` | `0.439578` | `0.133311` | 49.72% | 3.317 |
+| Llama-3 | 128256 | `0.192813` | `0.195229` | `0.190991` | `0.531998` | `0.125748` | 56.23% | 4.180 |
+| Qwen3 | 151669 | `0.196083` | `0.199634` | `0.194648` | `0.455203` | `0.134309` | 51.94% | 3.407 |
+
+> `len(tok)` is the **tokenizer's** vocabulary, which is what determines how the
+> option strings segment. It is not always the model config's `vocab_size` (OLMo-2:
+> 100278 vs 100352; Qwen3: 151669 vs 151936 — the gap is padding/reserved ids).
+
+* `split` spread across tokenizers: **0.47 pp** (`0.191402`–`0.196083`) — *smaller*
+  than #250's 1.50 pp at 4-way, contrary to the §6-prediction that it would be
+  larger.
+* `credit` spread: **9.26 pp** (`0.439578`–`0.532164`) — comparable to #250's
+  10.6 pp. **The `credit` convention remains the dominant under-specification.**
+* The vocabulary-size ordering **fails**: the 32k Llama-2 and the 152k Qwen3 tie
+  *less* (49.7 / 51.9%) than the 100k OLMo-2 and 128k Llama-3 (both 56.2%).
+  #250's "larger BPE vocabularies tie more option lengths" is therefore **not a
+  monotone function of vocab size** — retract the mechanism, keep the fact of
+  tokenizer dependence. The near-identity of OLMo-2 and Llama-3 (56.24 vs 56.23%,
+  winner-set 4.178 vs 4.180) suggests what matters is tokenizer *lineage /
+  training corpus*, not size.
+* ⚠️ **A content floor must still be quoted with its tokenizer** — the claim
+  survives, its explanation does not.
+
+### 6f. content_norm vs letter: the ±3 pp bullet holds here too
+
+All 12 damaged cross-family cells have |content_norm − letter| ≤ **3.97 pp**
+(range −3.97 to −0.77 pp), versus arc_easy's +38.76 pp blow-up. Note the **sign**:
+unlike OLMo-2's mixed signs, all 12 non-OLMo damaged cells have content_norm
+*below* letter. The intact arms are far larger and also negative
+(Qwen3 −17.28 pp, Llama-3 −11.31 pp; Llama-2 is the lone positive at +2.09 pp),
+which again contradicts "content is the fair interface" as a general statement.
+
+### 6g. The two integrity defects of the first launch, and the fix
+
+**Defect 1 — truncation (10 of 15 cells).** The driver ran at `MAXLEN=1536`, a cap
+measured with the **OLMo-2** tokenizer (max letter prompt 1226 tok). Re-encoding
+all 12032 items with each tokenizer on CPU
+(`paperG/code/mmlu_pro_trunc_audit.py`) reproduces the shipped counts exactly:
+
+| family | `len(tok)` | max encoded tok | `n_trunc` @1536 | affected item_ids |
+|---|---|---|---|---|
+| OLMo-2 | 100278 | 1226 | **0** | — |
+| Llama-3 | 128256 | 1226 | **0** | — |
+| Qwen3 | 151669 | 1660 | **20** | 11603, 11790 |
+| Llama-2 | 32000 | 1678 | **40** | 10500, 11603, 11790 |
+
+`n_trunc` counts **candidate encodings** (10 per item per interface at 10-way),
+not items — which is why it is a multiple of 10, constant across rungs, and
+independent of damage. Only **three distinct items** overflow at all. The harness
+*left*-truncates, so for those candidates part of the labelled `A. …`/`B. …` body
+that the letter interface is defined to read was gone: the thing being scored
+changed. Worse, the overflow set is tokenizer-specific, so the cross-family table
+was **not item-matched**.
+
+**Fix (a), not (b).** Raise the cap to `MAXLEN=2048` (clears the global max 1678
+for all four tokenizers with 370 tok of headroom) and re-run, rather than
+excluding the affected items. Excluding would have cost the full-n item match
+with the archived MMLU / #248 / #250 cells for the sake of 3 items. Re-run
+`n_trunc = 0` on **15/15** cells, independently recounted from the shard json.
+
+**Measured impact — this defect was real but small.** Per-cell before/after
+(`paperG/evidence/mmlu_scale_power/trunc_fix_before_after.json`):
+
+* **0 of 14 comparable cells changed verdict.**
+* Largest letter-accuracy change: **+0.0083 pp** (`qwen3_8b_base/k12`,
+  `0.114943` → `0.115027`, i.e. one item). **13 of 14 cells changed by 0.0000 pp.**
+* Total argmax flips: **9**, every one of them on a truncation-affected item;
+  **0 flips on unaffected items** across all 14 cells × 12032 items.
+* So the a-priori worst case (40/12032 = 0.332%, same order as the 0.1–0.9 pp
+  effects) did **not** materialise: the truncated candidates were mostly still
+  ranked the same way. **The defect had to be fixed to make the claim sound —
+  and fixing it did not change a single conclusion.** Both statements matter.
+
+**Defect 2 — `llama2_7b_base` produced nothing.** It appeared in the failure list
+*without* a `:trunc` tag: it **OOM'd on 5 of 8 shards** and the driver correctly
+reported `SHARD FAIL 3/8 -- NOT merging`. This is a **second, distinct** OOM from
+§5a's whole-tensor `log_softmax`: it is the **KV cache**. Llama-2 has
+`num_key_value_heads = 32` (**no GQA**) × 32 layers = **72.0 GiB** of fp32 KV at
+B=48/L=1536, versus 18.0 (Llama-3) and 20.2 (Qwen3), both `num_kv_heads = 8`.
+That is exactly why **only the intact Llama-2 arm** died while every GQA arm and
+every *truncated* Llama-2 rung (fewer layers ⇒ smaller cache) survived.
+
+Fixed by passing **`use_cache=False`**: a single teacher-forced forward writes the
+cache and immediately discards it, so it was pure waste. Peak memory on `.73`
+went **94 GiB (OOM) → 41–50 GiB**, and the arm now completes with n=12032,
+`nan=0`, `n_trunc=0` — giving the intact-Llama-2 cell that was missing entirely:
+letter `0.131981`, **+1.538 pp above floor**, p=1e-4. (Note how *low* that is: an
+intact Llama-2-7B is only 1.5 pp above a constant predictor on MMLU-Pro, vs
+Llama-3's +21.3 and Qwen3's +34.5.)
+
+**The fix changes no numbers, and that is tested, not asserted.** `--selftest`
+keeps `_score_examples_wholetensor_REFERENCE` calling the model *without*
+`use_cache=False` and asserts the live path is bit-identical to it (44/44
+candidate scores, two chunk sizes). On GPU, the `llama3_8b_base` cell — which had
+`n_trunc = 0` in **both** runs, so `use_cache=False` is the *only* difference —
+reproduces the old run to every printed digit: `letter=0.329205
+craw=0.204704 cnorm=0.216090 modal=0.2974 tie=0.1107 McNemar_p=4.452e-100`.
+
+**Hardening.** `n_trunc` was only a driver-level **WARNING**, which is precisely
+why 10 truncated cells shipped with summaries written. It is now a **hard
+per-shard assert** in `eval_olmo2_mc_letter_content.py` (opt out only via the new
+`--allow_truncation`), so an arm that cannot be scored at full prompt length
+produces **no summary at all**. `n_scored`/`n_nan` were already hard asserts;
+`n_trunc` now joins them.
 
 ---
 
@@ -440,11 +664,15 @@ criterion is **eos id + ctx length**, not the presence of a `chat_template`
    benchmark now exists (n=12032, hw 0.582-0.906 pp), and on it the below-floor
    headline **does not reproduce** while the wrong-null flip **does** (3/3).
 2. **Narrow the below-floor claim.** "Significantly below its floor" is now
-   supported on **MMLU + arc_easy's keep10** only; of the three adequately
-   powered benchmarks, **two say `AT the floor`**. The safe general form is the
-   one the 2026-08-10 narrowing already adopted: **"to or below"**. Add
-   MMLU-Pro's `keep8` CI `[−0.698, +0.465]` as a **positive exclusion** of a
-   −1.389 pp effect.
+   supported on **MMLU + arc_easy's keep10** — and, per §6, on **MMLU-Pro's
+   `llama2_7b/k8` and `qwen3_8b_base/k8`**. What does *not* hold is that it
+   reproduces on OLMo-2's **healed** arms at MMLU-scale power: there, all four
+   say `AT the floor`. The safe general form remains the one the 2026-08-10
+   narrowing adopted — **"to or below"** — now with the added qualifier that
+   **14/15**, not 15/15, of the cross-family damaged cells satisfy it
+   (`qwen3_8b_base/k14` is significantly *above*). Add MMLU-Pro's OLMo-2 `keep8`
+   CI `[−0.698, +0.465]` as a **positive exclusion** of a −1.389 pp effect *on a
+   healed arm*.
 3. **Un-narrow `confirmed_general[2]` partially** — the ±3 pp interface-swap
    bullet holds on MMLU-Pro (max |Δ| 1.31 pp on damaged arms), so "MMLU only" is
    too tight. Re-scope to "holds where the damaged arm has little residual
@@ -465,6 +693,15 @@ criterion is **eos id + ctx length**, not the presence of a `chat_template`
    makes "print your tie convention" non-negotiable.
 7. Add the harness memory fix + bit-identity test to the reproducibility notes:
    any re-run of #248/#250 on the new code is numerically identical to the old.
+8. **`n_trunc` is now a hard assert, and `max_len` is a per-TOKENIZER quantity**
+   (§6g). Any benchmark whose prompts approach the cap must have the cap probed
+   per tokenizer before launch (`paperG/code/mmlu_pro_trunc_audit.py`, CPU-only);
+   a cap validated on one tokenizer is not validated on another. This is the
+   defect that shipped 10 of #251's 15 cross-family cells.
+9. **Retract the vocab-size mechanism for content-null tokenizer dependence**
+   (§6e). The dependence is real; "larger BPE vocabularies tie more option
+   lengths" is **not** monotone in vocab size (32k Llama-2 and 152k Qwen3 both tie
+   *less* than 100k OLMo-2 and 128k Llama-3). Keep the fact, drop the explanation.
 
 **Not claimed / not resurrected:** nothing from
 `STATUS.json:must_not_resurrect`; no MMLU null of `0.25`; no BoolQ null of
@@ -477,20 +714,32 @@ clearing a floor is sufficient.
 
 ## 8. Bottom line
 
-* ✅ **The power wall is down.** hw **0.582-0.906 pp**, 6/6 cells powered, vs
-  MMLU's 1.154 and openbookqa's 6.400. Median hw implies n≈3186 sufficed;
-  MMLU-Pro's 12032 clears it **3.8×** (and 5.7× on the keep8 cell's own hw).
-  **No smaller benchmark could have done this**
+* ✅ **The power wall is down.** hw **0.582-0.906 pp** on the OLMo-2 leg and
+  **0.083-0.968 pp** across all **21** cells (§6), 21/21 powered, vs MMLU's 1.154
+  and openbookqa's 6.400. Median hw implies n≈3186 sufficed; MMLU-Pro's 12032
+  clears it **3.8×**. **No smaller benchmark could have done this**
   (obqa would need ~10615 items and has 500).
-* ✅ **The wrong-null flip replicates, 3/3**, on a 10-way benchmark, under **both**
-  chance definitions — paperG's core claim, at the paper's best resolution.
-* ❌ **MMLU's significant below-floor headline does NOT replicate.** keep8 is
-  −0.116 pp, CI `[−0.698, +0.465]`, which **excludes −1.389 pp**. This is a
-  *powered* null: an informative negative, not a blind spot. Of the three
-  adequately powered benchmarks, only **MMLU** yields a significant below-floor
-  verdict → treat below-floor as **MMLU-specific until shown otherwise**.
-* ✅ **`AT the floor` still satisfies the post-2026-08-10 claim** ("to or below"),
-  so the direction survives; what dies is the strong form.
+* ✅ **The wrong-null flip replicates, 3/3 on OLMo-2 and 12/12 cross-family**
+  (10/12 read "above chance" under `mean(1/n_opt)`, 12/12 under naive `0.10`,
+  while 1/12 clears its floor), in **four families** on a 10-way benchmark under
+  **both** chance definitions — paperG's core claim, at the paper's best
+  resolution.
+* ❌ **MMLU's significant below-floor headline does NOT replicate on OLMo-2's
+  healed arms.** keep8 is −0.116 pp, CI `[−0.698, +0.465]`, which **excludes
+  −1.389 pp**. This is a *powered* null: an informative negative, not a blind
+  spot.
+* ⚠️ **But below-floor is NOT MMLU-specific** (§6c): on the same benchmark,
+  `llama2_7b/k8` (−0.914 pp, p=0.0168) and `qwen3_8b_base/k8` (−0.881 pp,
+  p=0.0362) *are* significantly below floor. The live explanation is **heal vs
+  no-heal**, #250's known confound — not benchmark identity. An earlier draft of
+  §2b said "MMLU-specific until shown otherwise"; §6 shows otherwise.
+* ✅ **`AT-or-below` still satisfies the post-2026-08-10 claim**, at **14/15**
+  cross-family damaged cells — with one honest counterexample,
+  `qwen3_8b_base/k14`, significantly **above** its floor (+0.233 pp, p=0.0192,
+  hw 0.191).
+* ✅ **Modal/floor decoupling confirmed a THIRD time and at BOTH extremes** (§6d):
+  99.13% and 98.83% modal cells sit **AT** the floor while a **29.12%** modal cell
+  sits **BELOW** it.
 * ⚠️ **A fourth under-specification found, on the letter side**: with variable
   `n_opt`, "chance" itself is ambiguous (+1.661 vs +0.573 pp).
 * ⚠️ **The `credit` content null (`0.532164`) beats the intact base model by
@@ -498,12 +747,21 @@ clearing a floor is sufficient.
 * ✅ **Pooling to n=19139 halves the pooled CI** (hw 0.60-0.82 pp) and flips
   keep10 to significantly-below — but on a *shrinking* point estimate, so report
   it as a power artefact, and never per-benchmark.
-* ✅ **The integrity guards earned their keep**: a genuine 5/8-GPU OOM was caught
-  and the partial merge **refused**; the memory fix is asserted **bit-identical**
-  to the path that produced #248/#250.
+* ✅ **The integrity guards earned their keep — twice.** Two genuinely distinct
+  OOMs were caught and the partial merges **refused** (§5a whole-tensor
+  `log_softmax`; §6g the KV cache on the non-GQA Llama-2), and both fixes are
+  asserted **bit-identical** to the path that produced #248/#250.
+* ⚠️ **One guard was too weak and it cost a full re-run**: `n_trunc` was a
+  warning, not an assert, so 10 of 15 cross-family cells shipped truncated
+  (§6g). Fixed at the source. The measured impact turned out to be **0/14
+  verdicts and ≤0.0083 pp**, but that was not knowable in advance — the a-priori
+  bound (0.332% of items vs 0.1-0.9 pp effects) was the same order as the signal.
 
 The load-bearing part is that this task **replaced five uninterpretable nulls
 with one interpretable one, and the interpretable one narrows our own headline.**
+The cross-family leg then **partially un-narrowed it** (below-floor is not
+MMLU-specific) while adding a fresh counterexample (`qwen3_8b_base/k14` above
+floor) — self-falsification in both directions on the same run.
 
 ---
 
@@ -512,20 +770,30 @@ with one interpretable one, and the interpretable one narrows our own headline.*
 | what | where |
 |---|---|
 | per-item records, 6 arms × 8 shards + merged (**~1.1 GB**) | **zwfy6 ONLY** `/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/mmlu_pro_letter_content_results/` (too large for wzc1 round-trip; not git-tracked, same as the MMLU records) |
-| nulls + statistics | `paperG/evidence/mmlu_scale_power/mmlu_pro_power_nulls.json` + `.csv` (66 rows) — **BOTH DISKS**, md5 `564c2f74…` / `891e7eb9…` |
-| harness (extended for `mmlu_pro` + the memory fix) | `scripts/eval_olmo2_mc_letter_content.py` |
-| driver | `scripts/_run_mmlu_pro_letter_content_8gpu.sh` |
+| nulls + statistics, OLMo-2 leg only (66 rows) | `paperG/evidence/mmlu_scale_power/mmlu_pro_power_nulls.json` + `.csv` — **BOTH DISKS**, md5 `564c2f74…` / `891e7eb9…` |
+| **nulls + statistics, ALL 21 CELLS (231 rows) — the canonical table for §6** | `paperG/evidence/mmlu_scale_power/mmlu_pro_power_nulls_v2.json` + `.csv` — **BOTH DISKS**, md5 `8a96c6c2…` / `204f910f…` |
+| harness (extended for `mmlu_pro` + the memory fix + `use_cache=False` + the hard `n_trunc` assert) | `scripts/eval_olmo2_mc_letter_content.py` |
+| driver | `scripts/_run_mmlu_pro_letter_content_8gpu.sh` (`MAXLEN` default now **2048**) |
 | analysis (CPU, 0 GPU) | `paperG/code/mmlu_pro_power_nulls.py` |
+| **truncation audit (CPU, 0 GPU, all 4 tokenizers)** | `paperG/code/mmlu_pro_trunc_audit.py` → `paperG/evidence/mmlu_scale_power/trunc_audit_1536.json`, md5 `6279a823…` |
+| **before/after of the truncation + OOM fixes (per-cell, per-item flips)** | `paperG/code/mmlu_pro_trunc_fix_compare.py` → `paperG/evidence/mmlu_scale_power/trunc_fix_before_after.json`, md5 `2b84371c…` |
 | logs (56 files: 48 shard + 6 merge + prepare + DRIVER) | **zwfy6** `logs/mmlu_pro_lc_*.log` |
 | dataset | `TIGER-Lab/MMLU-Pro` test parquet, **BOTH DISKS** `data/hf_datasets/TIGER-Lab___mmlu_pro/data/test-00000-of-00001.parquet`, sha256 `0e24a191…`, md5 `7e40550a…` (4.1 MB) |
 | ckpts | **zwfy6** `outputs/olmo2_probe2_7B_{keep8fresh2/step121000,keep10fresh2/step83500,keep12fresh2/step124000,keep14fresh2/step200000,shortgpt16/step200000}.pt` (all `ls`-verified before launch) |
 | #248 comparison | `paperG/evidence/second_mc_benchmark/gate2_letter_content_nulls.json` |
 | #250 comparison | `paperG/evidence/second_mc_benchmark_crossfamily/gate2_crossfamily_nulls.json` |
-| cross-family MMLU-Pro (IN FLIGHT) | **zwfy6** `mmlu_pro_lc_crossfamily_results/`, `logs/mmlu_pro_lc_DRIVER_xf.log` |
+| **cross-family MMLU-Pro per-item records — USE THIS ONE** | **zwfy6 ONLY** `mmlu_pro_lc_crossfamily_results_fix/` (15 arms × 8 shards, `MAXLEN=2048`, `n_trunc=0`), `logs/mmlu_pro_lc_DRIVER_xf_fix.log` |
+| ⛔ cross-family MMLU-Pro, FIRST launch — **defective, do not quote** | **zwfy6** `mmlu_pro_lc_crossfamily_results/` (`MAXLEN=1536`: 10 cells with `n_trunc>0`, `llama2_7b_base` only 3/8 shards), `logs/mmlu_pro_lc_DRIVER_xf.log`. Retained **only** as the BEFORE side of `trunc_fix_before_after.json`. |
+| combined root used for the 21-cell table (symlinks, no data copied) | **zwfy6** `mmlu_pro_lc_COMBINED_fix/` → the 6 OLMo-2 dirs + the 15 `_fix` dirs |
 
 Protocol: `chat_template=False`, `add_bos=0`, fp32 master weights + bf16-autocast
-forward, `batch_size=48`, `max_len=1536`, `lp_chunk=512`, paired bootstrap
+forward, `batch_size=48`, `lp_chunk=512`, `use_cache=False`, paired bootstrap
 `n_boot=10000` `boot_seed=7`, R-7 mid-p `two_sided_boot_p`, exact McNemar.
+`max_len` = **1536** for the OLMo-2 leg (max encoded 1226, `n_trunc=0` verified)
+and **2048** for the cross-family leg (global max encoded **1678** over all four
+tokenizers, `n_trunc=0` verified). ⚠️ `max_len` is a **per-tokenizer** quantity —
+see §6g; the two values do not affect comparability because **both** yield
+`n_trunc = 0`, i.e. no prompt is truncated under either.
 `batch_size=48` is deliberately #248/#250's value (bf16 batch composition
 perturbs low-order bits, so changing it is a protocol difference); measured
 bs=96 gives **no** speedup (0.409 vs 0.398 s/item), so the eval is compute-bound

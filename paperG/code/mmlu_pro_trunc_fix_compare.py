@@ -122,8 +122,15 @@ def main():
             ns = cell_stats(new_recs)
 
             oldd = os.path.join(args.old_root, arm)
-            has_old = bool(glob.glob(os.path.join(
-                oldd, f"per_example_{TASK}_shard*of8.jsonl")))
+            # A BEFORE cell exists only if it is COMPLETE. llama2_7b_base has
+            # 3/8 shards in the old root (it OOMed on 5/8), which is exactly why
+            # the driver refused to merge it -- so it is a NEW-ONLY cell here,
+            # not a comparable one. Counting shards rather than testing for any
+            # shard keeps that distinction, and load_records' 8/8 assert stays
+            # a real guard instead of something this script trips over.
+            old_shards = glob.glob(os.path.join(
+                oldd, f"per_example_{TASK}_shard*of8.jsonl"))
+            has_old = len(old_shards) == 8
             entry = {
                 "family": fam, "rung": rung,
                 "damaged": rung in XF_DAMAGED,
@@ -179,10 +186,19 @@ def main():
                       flush=True)
             else:
                 entry["before"] = None
-                entry["delta"] = {"note": "no BEFORE cell -- this arm produced no "
-                                          "scoreable output in the original run "
-                                          "(llama2_7b_base OOMed on 5/8 shards)"}
-                print(f"[cmp] {arm:22s} NEW ONLY letter={ns['letter_acc']:.6f} "
+                entry["delta"] = {
+                    "note": "no COMPLETE before cell -- this arm produced no "
+                            "scoreable output in the original run",
+                    "n_before_shards": len(old_shards),
+                    "before_failure_mode": (
+                        "CUDA OOM on 5/8 shards. Llama-2 has "
+                        "num_key_value_heads=32 (no GQA) x 32 layers = 72.0 GiB "
+                        "of fp32 KV at B=48/L=1536, vs 18.0 (llama3) and 20.2 "
+                        "(qwen3), both num_kv_heads=8 -- so only the INTACT "
+                        "llama2 arm OOMed. Fixed by use_cache=False."),
+                }
+                print(f"[cmp] {arm:22s} NEW ONLY ({len(old_shards)}/8 before) "
+                      f"letter={ns['letter_acc']:.6f} "
                       f"floor_d={ns['delta_pp']:+.3f} pp p={ns['boot_p']:.4f} "
                       f"{ns['verdict']}", flush=True)
             out["cells"][arm] = entry

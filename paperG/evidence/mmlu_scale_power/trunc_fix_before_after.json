@@ -1,0 +1,978 @@
+{
+  "what": "before/after comparison of the MMLU-Pro cross-family cells across the #251 truncation fix (MAXLEN 1536 -> 2048) and the use_cache=False OOM fix",
+  "old_root": "mmlu_pro_lc_crossfamily_results",
+  "new_root": "mmlu_pro_lc_crossfamily_results_fix",
+  "old_max_len": 1536,
+  "new_max_len": 2048,
+  "truncation_audit": {
+    "union_affected_item_ids": [
+      10500,
+      11603,
+      11790
+    ],
+    "n_union_affected": 3,
+    "global_max_encoded_tokens": 1678,
+    "per_family": {
+      "llama2_7b": {
+        "n_trunc_at_1536": 40,
+        "affected_item_ids": [
+          10500,
+          11603,
+          11790
+        ],
+        "max_encoded_tokens": 1678,
+        "vocab_size": 32000
+      },
+      "llama3_8b": {
+        "n_trunc_at_1536": 0,
+        "affected_item_ids": [],
+        "max_encoded_tokens": 1226,
+        "vocab_size": 128256
+      },
+      "qwen3_8b_base": {
+        "n_trunc_at_1536": 20,
+        "affected_item_ids": [
+          11603,
+          11790
+        ],
+        "max_encoded_tokens": 1660,
+        "vocab_size": 151669
+      },
+      "olmo2_7b": {
+        "n_trunc_at_1536": 0,
+        "affected_item_ids": [],
+        "max_encoded_tokens": 1226,
+        "vocab_size": 100278
+      }
+    }
+  },
+  "estimators": {
+    "n_boot": 10000,
+    "boot_seed": 7,
+    "reference_effect_pp": -1.389
+  },
+  "cells": {
+    "llama2_7b_base": {
+      "family": "llama2_7b",
+      "rung": "base",
+      "damaged": false,
+      "n_trunc_before": 40,
+      "n_trunc_after": 0,
+      "integrity_after": {
+        "n_shards": 8,
+        "n_scored": 12032,
+        "expected_n": 12032,
+        "n_nan": 0
+      },
+      "after": {
+        "letter_acc": 0.13198138297872342,
+        "floor_letter": "A",
+        "floor_acc": 0.11660571808510638,
+        "delta_pp": 1.537566489361702,
+        "ci95_pp": [
+          0.7646276595744681,
+          2.310505319148936
+        ],
+        "ci95_half_width_pp": 0.772938829787234,
+        "boot_p": 0.0001,
+        "verdict": "above the floor",
+        "modal_letter_share": 0.4936003989361702
+      },
+      "before": null,
+      "delta": {
+        "note": "no COMPLETE before cell -- this arm produced no scoreable output in the original run",
+        "n_before_shards": 3,
+        "before_failure_mode": "CUDA OOM on 5/8 shards. Llama-2 has num_key_value_heads=32 (no GQA) x 32 layers = 72.0 GiB of fp32 KV at B=48/L=1536, vs 18.0 (llama3) and 20.2 (qwen3), both num_kv_heads=8 -- so only the INTACT llama2 arm OOMed. Fixed by use_cache=False."
+      }
+    },
+    "llama2_7b_k14": {
+      "family": "llama2_7b",
+      "rung": "k14",
+      "damaged": true,
+      "n_trunc_before": 40,
+      "n_trunc_after": 0,
+      "integrity_after": {
+        "n_shards": 8,
+        "n_scored": 12032,
+        "expected_n": 12032,
+        "n_nan": 0
+      },
+      "after": {
+        "letter_acc": 0.11677194148936171,
+        "floor_letter": "A",
+        "floor_acc": 0.11660571808510638,
+        "delta_pp": 0.016622340425531915,
+        "ci95_pp": [
+          -0.06648936170212766,
+          0.09973404255319149
+        ],
+        "ci95_half_width_pp": 0.08311170212765957,
+        "boot_p": 0.7071999999999999,
+        "verdict": "AT the floor (n.s.)",
+        "modal_letter_share": 0.9912732712765957
+      },
+      "integrity_before": {
+        "n_shards": 8,
+        "n_scored": 12032,
+        "expected_n": 12032,
+        "n_nan": 0
+      },
+      "before": {
+        "letter_acc": 0.11677194148936171,
+        "floor_letter": "A",
+        "floor_acc": 0.11660571808510638,
+        "delta_pp": 0.016622340425531915,
+        "ci95_pp": [
+          -0.06648936170212766,
+          0.09973404255319149
+        ],
+        "ci95_half_width_pp": 0.08311170212765957,
+        "boot_p": 0.7071999999999999,
+        "verdict": "AT the floor (n.s.)",
+        "modal_letter_share": 0.9912732712765957
+      },
+      "delta": {
+        "letter_acc_pp": 0.0,
+        "floor_delta_pp_change": 0.0,
+        "boot_p_before": 0.7071999999999999,
+        "boot_p_after": 0.7071999999999999,
+        "verdict_before": "AT the floor (n.s.)",
+        "verdict_after": "AT the floor (n.s.)",
+        "verdict_changed": false,
+        "n_argmax_flips_total": 0,
+        "n_argmax_flips_on_truncation_affected_items": 0,
+        "n_argmax_flips_outside_affected_items": 0,
+        "flip_item_ids_affected": [],
+        "flip_item_ids_outside": [],
+        "floor_unchanged": true
+      }
+    },
+    "llama2_7b_k12": {
+      "family": "llama2_7b",
+      "rung": "k12",
+      "damaged": true,
+      "n_trunc_before": 40,
+      "n_trunc_after": 0,
+      "integrity_after": {
+        "n_shards": 8,
+        "n_scored": 12032,
+        "expected_n": 12032,
+        "n_nan": 0
+      },
+      "after": {
+        "letter_acc": 0.11585771276595745,
+        "floor_letter": "A",
+        "floor_acc": 0.11660571808510638,
+        "delta_pp": -0.07480053191489362,
+        "ci95_pp": [
+          -0.15791223404255317,
+          0.008311170212765957
+        ],
+        "ci95_half_width_pp": 0.08311170212765956,
+        "boot_p": 0.0693,
+        "verdict": "AT the floor (n.s.)",
+        "modal_letter_share": 0.98828125
+      },
+      "integrity_before": {
+        "n_shards": 8,
+        "n_scored": 12032,
+        "expected_n": 12032,
+        "n_nan": 0
+      },
+      "before": {
+        "letter_acc": 0.11585771276595745,
+        "floor_letter": "A",
+        "floor_acc": 0.11660571808510638,
+        "delta_pp": -0.07480053191489362,
+        "ci95_pp": [
+          -0.15791223404255317,
+          0.008311170212765957
+        ],
+        "ci95_half_width_pp": 0.08311170212765956,
+        "boot_p": 0.0693,
+        "verdict": "AT the floor (n.s.)",
+        "modal_letter_share": 0.9881981382978723
+      },
+      "delta": {
+        "letter_acc_pp": 0.0,
+        "floor_delta_pp_change": 0.0,
+        "boot_p_before": 0.0693,
+        "boot_p_after": 0.0693,
+        "verdict_before": "AT the floor (n.s.)",
+        "verdict_after": "AT the floor (n.s.)",
+        "verdict_changed": false,
+        "n_argmax_flips_total": 1,
+        "n_argmax_flips_on_truncation_affected_items": 1,
+        "n_argmax_flips_outside_affected_items": 0,
+        "flip_item_ids_affected": [
+          11603
+        ],
+        "flip_item_ids_outside": [],
+        "floor_unchanged": true
+      }
+    },
+    "llama2_7b_k10": {
+      "family": "llama2_7b",
+      "rung": "k10",
+      "damaged": true,
+      "n_trunc_before": 40,
+      "n_trunc_after": 0,
+      "integrity_after": {
+        "n_shards": 8,
+        "n_scored": 12032,
+        "expected_n": 12032,
+        "n_nan": 0
+      },
+      "after": {
+        "letter_acc": 0.11319813829787234,
+        "floor_letter": "A",
+        "floor_acc": 0.11660571808510638,
+        "delta_pp": -0.3407579787234043,
+        "ci95_pp": [
+          -0.7563164893617021,
+          0.07480053191489362
+        ],
+        "ci95_half_width_pp": 0.4155585106382979,
+        "boot_p": 0.1132,
+        "verdict": "AT the floor (n.s.)",
+        "modal_letter_share": 0.7977892287234043
+      },
+      "integrity_before": {
+        "n_shards": 8,
+        "n_scored": 12032,
+        "expected_n": 12032,
+        "n_nan": 0
+      },
+      "before": {
+        "letter_acc": 0.11319813829787234,
+        "floor_letter": "A",
+        "floor_acc": 0.11660571808510638,
+        "delta_pp": -0.3407579787234043,
+        "ci95_pp": [
+          -0.7563164893617021,
+          0.07480053191489362
+        ],
+        "ci95_half_width_pp": 0.4155585106382979,
+        "boot_p": 0.1132,
+        "verdict": "AT the floor (n.s.)",
+        "modal_letter_share": 0.7977061170212766
+      },
+      "delta": {
+        "letter_acc_pp": 0.0,
+        "floor_delta_pp_change": 0.0,
+        "boot_p_before": 0.1132,
+        "boot_p_after": 0.1132,
+        "verdict_before": "AT the floor (n.s.)",
+        "verdict_after": "AT the floor (n.s.)",
+        "verdict_changed": false,
+        "n_argmax_flips_total": 1,
+        "n_argmax_flips_on_truncation_affected_items": 1,
+        "n_argmax_flips_outside_affected_items": 0,
+        "flip_item_ids_affected": [
+          11603
+        ],
+        "flip_item_ids_outside": [],
+        "floor_unchanged": true
+      }
+    },
+    "llama2_7b_k8": {
+      "family": "llama2_7b",
+      "rung": "k8",
+      "damaged": true,
+      "n_trunc_before": 40,
+      "n_trunc_after": 0,
+      "integrity_after": {
+        "n_shards": 8,
+        "n_scored": 12032,
+        "expected_n": 12032,
+        "n_nan": 0
+      },
+      "after": {
+        "letter_acc": 0.10746343085106383,
+        "floor_letter": "A",
+        "floor_acc": 0.11660571808510638,
+        "delta_pp": -0.9142287234042553,
+        "ci95_pp": [
+          -1.6456117021276595,
+          -0.1745345744680851
+        ],
+        "ci95_half_width_pp": 0.7355385638297872,
+        "boot_p": 0.0168,
+        "verdict": "BELOW the floor",
+        "modal_letter_share": 0.2912234042553192
+      },
+      "integrity_before": {
+        "n_shards": 8,
+        "n_scored": 12032,
+        "expected_n": 12032,
+        "n_nan": 0
+      },
+      "before": {
+        "letter_acc": 0.10746343085106383,
+        "floor_letter": "A",
+        "floor_acc": 0.11660571808510638,
+        "delta_pp": -0.9142287234042553,
+        "ci95_pp": [
+          -1.6456117021276595,
+          -0.1745345744680851
+        ],
+        "ci95_half_width_pp": 0.7355385638297872,
+        "boot_p": 0.0168,
+        "verdict": "BELOW the floor",
+        "modal_letter_share": 0.2911402925531915
+      },
+      "delta": {
+        "letter_acc_pp": 0.0,
+        "floor_delta_pp_change": 0.0,
+        "boot_p_before": 0.0168,
+        "boot_p_after": 0.0168,
+        "verdict_before": "BELOW the floor",
+        "verdict_after": "BELOW the floor",
+        "verdict_changed": false,
+        "n_argmax_flips_total": 1,
+        "n_argmax_flips_on_truncation_affected_items": 1,
+        "n_argmax_flips_outside_affected_items": 0,
+        "flip_item_ids_affected": [
+          11790
+        ],
+        "flip_item_ids_outside": [],
+        "floor_unchanged": true
+      }
+    },
+    "llama3_8b_base": {
+      "family": "llama3_8b",
+      "rung": "base",
+      "damaged": false,
+      "n_trunc_before": 0,
+      "n_trunc_after": 0,
+      "integrity_after": {
+        "n_shards": 8,
+        "n_scored": 12032,
+        "expected_n": 12032,
+        "n_nan": 0
+      },
+      "after": {
+        "letter_acc": 0.32920545212765956,
+        "floor_letter": "A",
+        "floor_acc": 0.11660571808510638,
+        "delta_pp": 21.25997340425532,
+        "ci95_pp": [
+          20.3125,
+          22.20744680851064
+        ],
+        "ci95_half_width_pp": 0.9474734042553195,
+        "boot_p": 0.0001,
+        "verdict": "above the floor",
+        "modal_letter_share": 0.29737367021276595
+      },
+      "integrity_before": {
+        "n_shards": 8,
+        "n_scored": 12032,
+        "expected_n": 12032,
+        "n_nan": 0
+      },
+      "before": {
+        "letter_acc": 0.32920545212765956,
+        "floor_letter": "A",
+        "floor_acc": 0.11660571808510638,
+        "delta_pp": 21.25997340425532,
+        "ci95_pp": [
+          20.3125,
+          22.20744680851064
+        ],
+        "ci95_half_width_pp": 0.9474734042553195,
+        "boot_p": 0.0001,
+        "verdict": "above the floor",
+        "modal_letter_share": 0.29737367021276595
+      },
+      "delta": {
+        "letter_acc_pp": 0.0,
+        "floor_delta_pp_change": 0.0,
+        "boot_p_before": 0.0001,
+        "boot_p_after": 0.0001,
+        "verdict_before": "above the floor",
+        "verdict_after": "above the floor",
+        "verdict_changed": false,
+        "n_argmax_flips_total": 0,
+        "n_argmax_flips_on_truncation_affected_items": 0,
+        "n_argmax_flips_outside_affected_items": 0,
+        "flip_item_ids_affected": [],
+        "flip_item_ids_outside": [],
+        "floor_unchanged": true
+      }
+    },
+    "llama3_8b_k14": {
+      "family": "llama3_8b",
+      "rung": "k14",
+      "damaged": true,
+      "n_trunc_before": 0,
+      "n_trunc_after": 0,
+      "integrity_after": {
+        "n_shards": 8,
+        "n_scored": 12032,
+        "expected_n": 12032,
+        "n_nan": 0
+      },
+      "after": {
+        "letter_acc": 0.1146941489361702,
+        "floor_letter": "A",
+        "floor_acc": 0.11660571808510638,
+        "delta_pp": -0.19115691489361702,
+        "ci95_pp": [
+          -1.0305851063829787,
+          0.6734125664893587
+        ],
+        "ci95_half_width_pp": 0.8519988364361687,
+        "boot_p": 0.6631,
+        "verdict": "AT the floor (n.s.)",
+        "modal_letter_share": 0.6274933510638298
+      },
+      "integrity_before": {
+        "n_shards": 8,
+        "n_scored": 12032,
+        "expected_n": 12032,
+        "n_nan": 0
+      },
+      "before": {
+        "letter_acc": 0.1146941489361702,
+        "floor_letter": "A",
+        "floor_acc": 0.11660571808510638,
+        "delta_pp": -0.19115691489361702,
+        "ci95_pp": [
+          -1.0305851063829787,
+          0.6734125664893587
+        ],
+        "ci95_half_width_pp": 0.8519988364361687,
+        "boot_p": 0.6631,
+        "verdict": "AT the floor (n.s.)",
+        "modal_letter_share": 0.6274933510638298
+      },
+      "delta": {
+        "letter_acc_pp": 0.0,
+        "floor_delta_pp_change": 0.0,
+        "boot_p_before": 0.6631,
+        "boot_p_after": 0.6631,
+        "verdict_before": "AT the floor (n.s.)",
+        "verdict_after": "AT the floor (n.s.)",
+        "verdict_changed": false,
+        "n_argmax_flips_total": 0,
+        "n_argmax_flips_on_truncation_affected_items": 0,
+        "n_argmax_flips_outside_affected_items": 0,
+        "flip_item_ids_affected": [],
+        "flip_item_ids_outside": [],
+        "floor_unchanged": true
+      }
+    },
+    "llama3_8b_k12": {
+      "family": "llama3_8b",
+      "rung": "k12",
+      "damaged": true,
+      "n_trunc_before": 0,
+      "n_trunc_after": 0,
+      "integrity_after": {
+        "n_shards": 8,
+        "n_scored": 12032,
+        "expected_n": 12032,
+        "n_nan": 0
+      },
+      "after": {
+        "letter_acc": 0.1118683510638298,
+        "floor_letter": "A",
+        "floor_acc": 0.11660571808510638,
+        "delta_pp": -0.4737367021276596,
+        "ci95_pp": [
+          -1.3216838430851061,
+          0.38231382978723405
+        ],
+        "ci95_half_width_pp": 0.8519988364361701,
+        "boot_p": 0.2847,
+        "verdict": "AT the floor (n.s.)",
+        "modal_letter_share": 0.3386801861702128
+      },
+      "integrity_before": {
+        "n_shards": 8,
+        "n_scored": 12032,
+        "expected_n": 12032,
+        "n_nan": 0
+      },
+      "before": {
+        "letter_acc": 0.1118683510638298,
+        "floor_letter": "A",
+        "floor_acc": 0.11660571808510638,
+        "delta_pp": -0.4737367021276596,
+        "ci95_pp": [
+          -1.3216838430851061,
+          0.38231382978723405
+        ],
+        "ci95_half_width_pp": 0.8519988364361701,
+        "boot_p": 0.2847,
+        "verdict": "AT the floor (n.s.)",
+        "modal_letter_share": 0.3386801861702128
+      },
+      "delta": {
+        "letter_acc_pp": 0.0,
+        "floor_delta_pp_change": 0.0,
+        "boot_p_before": 0.2847,
+        "boot_p_after": 0.2847,
+        "verdict_before": "AT the floor (n.s.)",
+        "verdict_after": "AT the floor (n.s.)",
+        "verdict_changed": false,
+        "n_argmax_flips_total": 0,
+        "n_argmax_flips_on_truncation_affected_items": 0,
+        "n_argmax_flips_outside_affected_items": 0,
+        "flip_item_ids_affected": [],
+        "flip_item_ids_outside": [],
+        "floor_unchanged": true
+      }
+    },
+    "llama3_8b_k10": {
+      "family": "llama3_8b",
+      "rung": "k10",
+      "damaged": true,
+      "n_trunc_before": 0,
+      "n_trunc_after": 0,
+      "integrity_after": {
+        "n_shards": 8,
+        "n_scored": 12032,
+        "expected_n": 12032,
+        "n_nan": 0
+      },
+      "after": {
+        "letter_acc": 0.11195146276595745,
+        "floor_letter": "A",
+        "floor_acc": 0.11660571808510638,
+        "delta_pp": -0.4654255319148936,
+        "ci95_pp": [
+          -1.2882313829787235,
+          0.36569148936170215
+        ],
+        "ci95_half_width_pp": 0.8269614361702129,
+        "boot_p": 0.2885,
+        "verdict": "AT the floor (n.s.)",
+        "modal_letter_share": 0.7576462765957447
+      },
+      "integrity_before": {
+        "n_shards": 8,
+        "n_scored": 12032,
+        "expected_n": 12032,
+        "n_nan": 0
+      },
+      "before": {
+        "letter_acc": 0.11195146276595745,
+        "floor_letter": "A",
+        "floor_acc": 0.11660571808510638,
+        "delta_pp": -0.4654255319148936,
+        "ci95_pp": [
+          -1.2882313829787235,
+          0.36569148936170215
+        ],
+        "ci95_half_width_pp": 0.8269614361702129,
+        "boot_p": 0.2885,
+        "verdict": "AT the floor (n.s.)",
+        "modal_letter_share": 0.7576462765957447
+      },
+      "delta": {
+        "letter_acc_pp": 0.0,
+        "floor_delta_pp_change": 0.0,
+        "boot_p_before": 0.2885,
+        "boot_p_after": 0.2885,
+        "verdict_before": "AT the floor (n.s.)",
+        "verdict_after": "AT the floor (n.s.)",
+        "verdict_changed": false,
+        "n_argmax_flips_total": 0,
+        "n_argmax_flips_on_truncation_affected_items": 0,
+        "n_argmax_flips_outside_affected_items": 0,
+        "flip_item_ids_affected": [],
+        "flip_item_ids_outside": [],
+        "floor_unchanged": true
+      }
+    },
+    "llama3_8b_k8": {
+      "family": "llama3_8b",
+      "rung": "k8",
+      "damaged": true,
+      "n_trunc_before": 0,
+      "n_trunc_after": 0,
+      "integrity_after": {
+        "n_shards": 8,
+        "n_scored": 12032,
+        "expected_n": 12032,
+        "n_nan": 0
+      },
+      "after": {
+        "letter_acc": 0.11353058510638298,
+        "floor_letter": "A",
+        "floor_acc": 0.11660571808510638,
+        "delta_pp": -0.30751329787234044,
+        "ci95_pp": [
+          -0.7230718085106382,
+          0.09142287234042554
+        ],
+        "ci95_half_width_pp": 0.4072473404255319,
+        "boot_p": 0.1296,
+        "verdict": "AT the floor (n.s.)",
+        "modal_letter_share": 0.7754321808510638
+      },
+      "integrity_before": {
+        "n_shards": 8,
+        "n_scored": 12032,
+        "expected_n": 12032,
+        "n_nan": 0
+      },
+      "before": {
+        "letter_acc": 0.11353058510638298,
+        "floor_letter": "A",
+        "floor_acc": 0.11660571808510638,
+        "delta_pp": -0.30751329787234044,
+        "ci95_pp": [
+          -0.7230718085106382,
+          0.09142287234042554
+        ],
+        "ci95_half_width_pp": 0.4072473404255319,
+        "boot_p": 0.1296,
+        "verdict": "AT the floor (n.s.)",
+        "modal_letter_share": 0.7754321808510638
+      },
+      "delta": {
+        "letter_acc_pp": 0.0,
+        "floor_delta_pp_change": 0.0,
+        "boot_p_before": 0.1296,
+        "boot_p_after": 0.1296,
+        "verdict_before": "AT the floor (n.s.)",
+        "verdict_after": "AT the floor (n.s.)",
+        "verdict_changed": false,
+        "n_argmax_flips_total": 0,
+        "n_argmax_flips_on_truncation_affected_items": 0,
+        "n_argmax_flips_outside_affected_items": 0,
+        "flip_item_ids_affected": [],
+        "flip_item_ids_outside": [],
+        "floor_unchanged": true
+      }
+    },
+    "qwen3_8b_base_base": {
+      "family": "qwen3_8b_base",
+      "rung": "base",
+      "damaged": false,
+      "n_trunc_before": 20,
+      "n_trunc_after": 0,
+      "integrity_after": {
+        "n_shards": 8,
+        "n_scored": 12032,
+        "expected_n": 12032,
+        "n_nan": 0
+      },
+      "after": {
+        "letter_acc": 0.4611037234042553,
+        "floor_letter": "A",
+        "floor_acc": 0.11660571808510638,
+        "delta_pp": 34.449800531914896,
+        "ci95_pp": [
+          33.48549700797873,
+          35.422207446808514
+        ],
+        "ci95_half_width_pp": 0.9683552194148923,
+        "boot_p": 0.0001,
+        "verdict": "above the floor",
+        "modal_letter_share": 0.2634640957446808
+      },
+      "integrity_before": {
+        "n_shards": 8,
+        "n_scored": 12032,
+        "expected_n": 12032,
+        "n_nan": 0
+      },
+      "before": {
+        "letter_acc": 0.4611037234042553,
+        "floor_letter": "A",
+        "floor_acc": 0.11660571808510638,
+        "delta_pp": 34.449800531914896,
+        "ci95_pp": [
+          33.48549700797873,
+          35.422207446808514
+        ],
+        "ci95_half_width_pp": 0.9683552194148923,
+        "boot_p": 0.0001,
+        "verdict": "above the floor",
+        "modal_letter_share": 0.2634640957446808
+      },
+      "delta": {
+        "letter_acc_pp": 0.0,
+        "floor_delta_pp_change": 0.0,
+        "boot_p_before": 0.0001,
+        "boot_p_after": 0.0001,
+        "verdict_before": "above the floor",
+        "verdict_after": "above the floor",
+        "verdict_changed": false,
+        "n_argmax_flips_total": 0,
+        "n_argmax_flips_on_truncation_affected_items": 0,
+        "n_argmax_flips_outside_affected_items": 0,
+        "flip_item_ids_affected": [],
+        "flip_item_ids_outside": [],
+        "floor_unchanged": true
+      }
+    },
+    "qwen3_8b_base_k14": {
+      "family": "qwen3_8b_base",
+      "rung": "k14",
+      "damaged": true,
+      "n_trunc_before": 20,
+      "n_trunc_after": 0,
+      "integrity_after": {
+        "n_shards": 8,
+        "n_scored": 12032,
+        "expected_n": 12032,
+        "n_nan": 0
+      },
+      "after": {
+        "letter_acc": 0.11893284574468085,
+        "floor_letter": "A",
+        "floor_acc": 0.11660571808510638,
+        "delta_pp": 0.2327127659574468,
+        "ci95_pp": [
+          0.041555851063829786,
+          0.4238696808510638
+        ],
+        "ci95_half_width_pp": 0.191156914893617,
+        "boot_p": 0.0192,
+        "verdict": "above the floor",
+        "modal_letter_share": 0.9456449468085106
+      },
+      "integrity_before": {
+        "n_shards": 8,
+        "n_scored": 12032,
+        "expected_n": 12032,
+        "n_nan": 0
+      },
+      "before": {
+        "letter_acc": 0.11893284574468085,
+        "floor_letter": "A",
+        "floor_acc": 0.11660571808510638,
+        "delta_pp": 0.2327127659574468,
+        "ci95_pp": [
+          0.041555851063829786,
+          0.4238696808510638
+        ],
+        "ci95_half_width_pp": 0.191156914893617,
+        "boot_p": 0.0192,
+        "verdict": "above the floor",
+        "modal_letter_share": 0.945561835106383
+      },
+      "delta": {
+        "letter_acc_pp": 0.0,
+        "floor_delta_pp_change": 0.0,
+        "boot_p_before": 0.0192,
+        "boot_p_after": 0.0192,
+        "verdict_before": "above the floor",
+        "verdict_after": "above the floor",
+        "verdict_changed": false,
+        "n_argmax_flips_total": 1,
+        "n_argmax_flips_on_truncation_affected_items": 1,
+        "n_argmax_flips_outside_affected_items": 0,
+        "flip_item_ids_affected": [
+          11790
+        ],
+        "flip_item_ids_outside": [],
+        "floor_unchanged": true
+      }
+    },
+    "qwen3_8b_base_k12": {
+      "family": "qwen3_8b_base",
+      "rung": "k12",
+      "damaged": true,
+      "n_trunc_before": 20,
+      "n_trunc_after": 0,
+      "integrity_after": {
+        "n_shards": 8,
+        "n_scored": 12032,
+        "expected_n": 12032,
+        "n_nan": 0
+      },
+      "after": {
+        "letter_acc": 0.11502659574468085,
+        "floor_letter": "A",
+        "floor_acc": 0.11660571808510638,
+        "delta_pp": -0.15791223404255317,
+        "ci95_pp": [
+          -0.581781914893617,
+          0.2742686170212766
+        ],
+        "ci95_half_width_pp": 0.4280252659574468,
+        "boot_p": 0.4645,
+        "verdict": "AT the floor (n.s.)",
+        "modal_letter_share": 0.729720744680851
+      },
+      "integrity_before": {
+        "n_shards": 8,
+        "n_scored": 12032,
+        "expected_n": 12032,
+        "n_nan": 0
+      },
+      "before": {
+        "letter_acc": 0.1149434840425532,
+        "floor_letter": "A",
+        "floor_acc": 0.11660571808510638,
+        "delta_pp": -0.16622340425531915,
+        "ci95_pp": [
+          -0.590093085106383,
+          0.26595744680851063
+        ],
+        "ci95_half_width_pp": 0.42802526595744683,
+        "boot_p": 0.4407,
+        "verdict": "AT the floor (n.s.)",
+        "modal_letter_share": 0.729720744680851
+      },
+      "delta": {
+        "letter_acc_pp": 0.00831117021276584,
+        "floor_delta_pp_change": 0.008311170212765978,
+        "boot_p_before": 0.4407,
+        "boot_p_after": 0.4645,
+        "verdict_before": "AT the floor (n.s.)",
+        "verdict_after": "AT the floor (n.s.)",
+        "verdict_changed": false,
+        "n_argmax_flips_total": 2,
+        "n_argmax_flips_on_truncation_affected_items": 2,
+        "n_argmax_flips_outside_affected_items": 0,
+        "flip_item_ids_affected": [
+          11603,
+          11790
+        ],
+        "flip_item_ids_outside": [],
+        "floor_unchanged": true
+      }
+    },
+    "qwen3_8b_base_k10": {
+      "family": "qwen3_8b_base",
+      "rung": "k10",
+      "damaged": true,
+      "n_trunc_before": 20,
+      "n_trunc_after": 0,
+      "integrity_after": {
+        "n_shards": 8,
+        "n_scored": 12032,
+        "expected_n": 12032,
+        "n_nan": 0
+      },
+      "after": {
+        "letter_acc": 0.11818484042553191,
+        "floor_letter": "A",
+        "floor_acc": 0.11660571808510638,
+        "delta_pp": 0.15791223404255317,
+        "ci95_pp": [
+          -0.07480053191489362,
+          0.390625
+        ],
+        "ci95_half_width_pp": 0.2327127659574468,
+        "boot_p": 0.18719999999999998,
+        "verdict": "AT the floor (n.s.)",
+        "modal_letter_share": 0.9189660904255319
+      },
+      "integrity_before": {
+        "n_shards": 8,
+        "n_scored": 12032,
+        "expected_n": 12032,
+        "n_nan": 0
+      },
+      "before": {
+        "letter_acc": 0.11818484042553191,
+        "floor_letter": "A",
+        "floor_acc": 0.11660571808510638,
+        "delta_pp": 0.15791223404255317,
+        "ci95_pp": [
+          -0.07480053191489362,
+          0.390625
+        ],
+        "ci95_half_width_pp": 0.2327127659574468,
+        "boot_p": 0.18719999999999998,
+        "verdict": "AT the floor (n.s.)",
+        "modal_letter_share": 0.9187998670212766
+      },
+      "delta": {
+        "letter_acc_pp": 0.0,
+        "floor_delta_pp_change": 0.0,
+        "boot_p_before": 0.18719999999999998,
+        "boot_p_after": 0.18719999999999998,
+        "verdict_before": "AT the floor (n.s.)",
+        "verdict_after": "AT the floor (n.s.)",
+        "verdict_changed": false,
+        "n_argmax_flips_total": 2,
+        "n_argmax_flips_on_truncation_affected_items": 2,
+        "n_argmax_flips_outside_affected_items": 0,
+        "flip_item_ids_affected": [
+          11603,
+          11790
+        ],
+        "flip_item_ids_outside": [],
+        "floor_unchanged": true
+      }
+    },
+    "qwen3_8b_base_k8": {
+      "family": "qwen3_8b_base",
+      "rung": "k8",
+      "damaged": true,
+      "n_trunc_before": 20,
+      "n_trunc_after": 0,
+      "integrity_after": {
+        "n_shards": 8,
+        "n_scored": 12032,
+        "expected_n": 12032,
+        "n_nan": 0
+      },
+      "after": {
+        "letter_acc": 0.10779587765957446,
+        "floor_letter": "A",
+        "floor_acc": 0.11660571808510638,
+        "delta_pp": -0.8809840425531914,
+        "ci95_pp": [
+          -1.6954787234042552,
+          -0.0581781914893617
+        ],
+        "ci95_half_width_pp": 0.8186502659574467,
+        "boot_p": 0.036199999999999996,
+        "verdict": "BELOW the floor",
+        "modal_letter_share": 0.944813829787234
+      },
+      "integrity_before": {
+        "n_shards": 8,
+        "n_scored": 12032,
+        "expected_n": 12032,
+        "n_nan": 0
+      },
+      "before": {
+        "letter_acc": 0.10779587765957446,
+        "floor_letter": "A",
+        "floor_acc": 0.11660571808510638,
+        "delta_pp": -0.8809840425531914,
+        "ci95_pp": [
+          -1.6954787234042552,
+          -0.0581781914893617
+        ],
+        "ci95_half_width_pp": 0.8186502659574467,
+        "boot_p": 0.036199999999999996,
+        "verdict": "BELOW the floor",
+        "modal_letter_share": 0.944813829787234
+      },
+      "delta": {
+        "letter_acc_pp": 0.0,
+        "floor_delta_pp_change": 0.0,
+        "boot_p_before": 0.036199999999999996,
+        "boot_p_after": 0.036199999999999996,
+        "verdict_before": "BELOW the floor",
+        "verdict_after": "BELOW the floor",
+        "verdict_changed": false,
+        "n_argmax_flips_total": 0,
+        "n_argmax_flips_on_truncation_affected_items": 0,
+        "n_argmax_flips_outside_affected_items": 0,
+        "flip_item_ids_affected": [],
+        "flip_item_ids_outside": [],
+        "floor_unchanged": true
+      }
+    }
+  },
+  "summary": {
+    "n_cells_with_before_and_after": 14,
+    "n_verdict_changed": 0,
+    "max_abs_letter_acc_change_pp": 0.00831117021276584,
+    "n_argmax_flips_outside_affected_items_total": 0,
+    "interpretation": "flips are only POSSIBLE on the truncation-affected items; a flip outside them would mean nondeterminism, not the fix"
+  }
+}
