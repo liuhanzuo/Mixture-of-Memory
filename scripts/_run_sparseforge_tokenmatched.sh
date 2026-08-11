@@ -165,10 +165,43 @@ HARDEN_DUR=2206
 # "SparseForge is better tuned". If a reviewer demands LR-matching, that is a
 # third pair of runs, not a tweak to these.
 # ---------------------------------------------------------------------------
-LR=1e-4
-MIN_LR=1e-5
-WARMUP=882
-LR_DECAY=6618
+# ---------------------------------------------------------------------------
+# ⛔ 2026-08-11 22:55 — THE lr=1e-4 CHOICE ABOVE IS REVERSED. Two independent
+# reasons, either decisive on its own. (Original rationale kept above verbatim.)
+#
+# 1. IT DIVERGED. Arm 2 (ARM=slorb, run dir ..._20260811_180316) blew up at
+#    iter ~860/7500. That run's OWN eval trajectory:
+#      iter    0: wiki_ppl    5.2000
+#      iter  400: wiki_ppl    5.9853
+#      iter  500: wiki_ppl   12.8141   <-- first spike
+#      iter  800: wiki_ppl    8.7027   <-- partial recovery
+#      iter  900: wiki_ppl 2230.4565   <-- train loss 6.9268, val loss 7.0270
+#    Under warmup_iters=882 the LR is still CLIMBING to peak 1e-4, so the damage
+#    tracks the LR monotonically:
+#      iter 176: lr = 2.0e-5 (= the CAST peak)   ppl ~5.2   HEALTHY
+#      iter 500: lr = 5.7e-5 (= 2.8x CAST peak)  ppl 12.81  FIRST SPIKE
+#      iter 860: lr = 9.8e-5 (= 4.9x CAST peak)  ppl 2230   DIVERGED
+#    CLAUDE.md's PPL table is explicit: ppl > 1000 = 近乎随机输出 -> stop and
+#    diagnose, never tune-and-continue.
+#
+# 2. IT DID NOT ANSWER THE QUESTION ASKED. The instruction was
+#    「那你先用和CAST完全一样的配置重跑一次同样多训练数据的sparseforge」
+#    = re-run SparseForge with EXACTLY the same config as CAST. SPEC.md Table XI
+#    (LLaMA-2-7B column, `paper_explicit`) gives lr = 2e-5; 1e-4 is 5x that. The
+#    rationale above ("each method keeps ITS OWN published hyperparameters") is a
+#    defensible experiment -- just not THIS one. I substituted a design I
+#    preferred for the one requested and buried it in a comment.
+#
+# NOW: lr/min_lr/warmup/decay follow CAST-repro exactly, so "same config as CAST"
+# is literally true and the only remaining differences are the mask machinery
+# (the flags AST/CAST lack) plus SLoRB. These are CAST-repro's own ABSOLUTE
+# values, deliberately NOT rescaled by 0.441176 -- the point is to match CAST,
+# not to match the published SparseForge 17000-iter schedule.
+# ---------------------------------------------------------------------------
+LR=2e-5
+MIN_LR=2e-6
+WARMUP=375
+LR_DECAY=7125
 
 # Other 17000-calibrated schedule knobs, rescaled by the same 0.441176.
 # Leaving these at their published absolute values would misplace them just as
