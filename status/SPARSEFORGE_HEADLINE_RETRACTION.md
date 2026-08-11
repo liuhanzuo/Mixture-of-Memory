@@ -80,7 +80,32 @@ saved iter           = 17900  (best_lm_eval.json)
 
 PPL 的优势（6.2179 vs 6.3430）**不受这个 bug 影响**，是独立的、真实的。
 
-而 token 效率表（`SparseForge 1.25B → 59.22` vs `AST 7.5B → 57.68/58.62`）**用的是另一个 run（1.25B）**，与主表的 5B/18.77B 行不是同一个 ckpt。这张表我**还没核**，它现在是最有力的卖点（6x 更少 token 还更高分），所以必须优先核实 —— 如果它也有类似问题，SparseForge 的核心论证就只剩 PPL。
+### ⚠️ 更正（12:55，同日）：我说「token 效率表是最有力的卖点」也讲错了
+
+核实后两点都不成立：
+
+1. **那张表已被关闭。** `experiments.tex:42` 是 `\iffalse`，`:60` 是 `\fi`，`label` 本身写着
+   `tab:llama2_compare_deprecated_ast7`。它不在编译产物的论证链里。
+
+2. **活着的 scaling curve 反而削弱这个论证。** `appendix.tex:336`「(b) Historical
+   SparseForge token scaling」是活的：
+
+   | tokens | 0.625B | 1.25B | 2.5B | 5B | 7.5B |
+   |---|---:|---:|---:|---:|---:|
+   | CAST-7 | 55.70 | 55.96 | 56.65 | 57.27 | 57.40 |
+
+   1.25B → 7.5B 只涨 **1.44pp**，5B → 7.5B 只涨 **0.13pp**（已饱和）。
+   如果 1.25B 就已接近饱和，那 AST 用 7.5B 拿 57.68 **不是 token 效率的差距**，而是
+   AST 方法本身在任何 budget 下都该拿这么多。真要支撑 token 效率，需要
+   **同一条 curve 上低 budget 处显著高于 AST** —— 但 AST 只有 7.5B 一个点，
+   **做不出 budget-matched 对比**。
+
+   （注：两表口径不同，A 表是 AST-7、curve 是 CAST-7，数值不可直接对比；但趋势可比，
+   而趋势的方向对这个论证不利。）
+
+**所以 SparseForge 目前真正站得住的只有两条**：AVG-9 **+0.53pp**（修正后）和
+**PPL 6.2179 vs 6.3430**。token 效率这条论证需要新证据（AST 的 budget ladder）才能立起来，
+而我们跑不了 AST 的 ladder（没有它的训练代码）。
 
 ### ★ 这也印证了用户的原始判断，但方向要改
 
