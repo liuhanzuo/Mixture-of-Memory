@@ -1,5 +1,5 @@
 ---
-model: claude-opus-4-7
+model: opus
 ---
 
 # /researcher — 文献调研 + 实验分析

@@ -42,11 +42,15 @@ def build_client():
     return anthropic.Anthropic(**kwargs)
 
 
-def get_model(tier="haiku"):
-    """Get model name, respecting Tencent gateway aliases."""
-    if tier == "haiku":
-        return os.environ.get("ANTHROPIC_DEFAULT_HAIKU_MODEL", "claude-3-5-haiku-20241022")
-    return os.environ.get("ANTHROPIC_DEFAULT_SONNET_MODEL", "claude-3-5-sonnet-20241022")
+def get_model(tier="opus"):
+    """Get model name, respecting Tencent gateway aliases.
+
+    Policy (CODEBUDDY.md 2026-08-11): Opus 5 everywhere, no sonnet/haiku tiering.
+    The `tier` arg is kept only so existing call sites don't break; every tier
+    resolves to the same Opus alias. The literal is a last-resort CI default --
+    prefer setting ANTHROPIC_DEFAULT_OPUS_MODEL as a repo secret.
+    """
+    return os.environ.get("ANTHROPIC_DEFAULT_OPUS_MODEL", "claude-opus-5")
 
 
 def main():

@@ -1,5 +1,5 @@
 ---
-model: claude-opus-4-7
+model: opus
 ---
 
 # /coder — 代码实现与修复

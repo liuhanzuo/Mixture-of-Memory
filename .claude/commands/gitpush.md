@@ -1,5 +1,5 @@
 ---
-model: claude-opus-4-7
+model: opus
 ---
 
 # /gitpush — 安全 git push 到 GitHub（含 subagent 审核）

@@ -1,5 +1,5 @@
 ---
-model: claude-opus-4-7
+model: opus
 ---
 
 # /status — 项目状态快速总览

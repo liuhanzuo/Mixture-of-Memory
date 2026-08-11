@@ -1,5 +1,5 @@
 ---
-model: claude-opus-4-7
+model: opus
 ---
 
 # /heartbeat — 闭环巡检与推进
@@ -71,7 +71,7 @@ grep "eval step" logs/prepend_all_fastmem_10k_h20.log 2>/dev/null | tail -1
 
 ### ★写代码 + 启动新实验授权（2026-06-21 用户指令）
 
-**heartbeat 可自主写代码 + 启动新实验，无需 emit needs_code 等审批。** GPU 空闲时即使没有现成 PENDING 任务，只要能据当前结论推断有价值的下一步，就直接派 `/coder`（或 general-purpose，`model="reasoning"`，`run_in_background=true`）写代码 + 跑多卡实验，把空闲卡用起来。代码改动遵守 CODEBUDDY.md（committer=LiuHanzuo，不加 AI 署名，`git add <具体文件>`）。完成后落账 + emit train_done。**仅重大方向切换/架构重构仍 emit needs_code 等主会话。绝不允许有空闲卡却只报 HEARTBEAT_OK 不行动。**
+**heartbeat 可自主写代码 + 启动新实验，无需 emit needs_code 等审批。** GPU 空闲时即使没有现成 PENDING 任务，只要能据当前结论推断有价值的下一步，就直接派 `/coder`（或 general-purpose，`model="opus"`，`run_in_background=true`）写代码 + 跑多卡实验，把空闲卡用起来。代码改动遵守 CODEBUDDY.md（committer=LiuHanzuo，不加 AI 署名，`git add <具体文件>`）。完成后落账 + emit train_done。**仅重大方向切换/架构重构仍 emit needs_code 等主会话。绝不允许有空闲卡却只报 HEARTBEAT_OK 不行动。**
 
 ---
 

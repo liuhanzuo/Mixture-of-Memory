@@ -25,8 +25,10 @@ Supports Tencent Claude gateway via ANTHROPIC_BASE_URL env var.
 GitHub Secrets to configure:
   - ANTHROPIC_API_KEY: Tencent token (same as local ANTHROPIC_AUTH_TOKEN)
   - ANTHROPIC_BASE_URL: https://copilot.code.woa.com/server/chat/codebuddy-gateway/codebuddy-code
-  - ANTHROPIC_DEFAULT_SONNET_MODEL: claude-sonnet-4-6 (Tencent model alias)
-  - ANTHROPIC_DEFAULT_HAIKU_MODEL: claude-haiku-4-5 (Tencent model alias)
+  - ANTHROPIC_DEFAULT_OPUS_MODEL: claude-opus-5[1m] (Tencent model alias)
+
+Model policy (CODEBUDDY.md, 2026-08-11): everything runs on Claude Opus 5. This
+script therefore reads ANTHROPIC_DEFAULT_OPUS_MODEL, not the sonnet/haiku aliases.
 """
 
 import subprocess
@@ -107,8 +109,11 @@ def main():
         client_kwargs["base_url"] = base_url
         client_kwargs["default_headers"] = {"x-api-key": api_key}
 
-    # Use environment-aliased model names (supports Tencent gateway aliases)
-    sonnet_model = os.environ.get("ANTHROPIC_DEFAULT_SONNET_MODEL", "claude-3-5-sonnet-20241022")
+    # Use environment-aliased model names (supports Tencent gateway aliases).
+    # Policy (CODEBUDDY.md 2026-08-11): Opus 5 everywhere -- do NOT fall back to
+    # sonnet/haiku. The literal below is only a last-resort default if the env
+    # var is unset in CI; prefer setting ANTHROPIC_DEFAULT_OPUS_MODEL as a secret.
+    review_model = os.environ.get("ANTHROPIC_DEFAULT_OPUS_MODEL", "claude-opus-5")
 
     file_tree = get_file_tree()
     git_log = get_git_log_summary()
@@ -123,7 +128,7 @@ def main():
 
     client = anthropic.Anthropic(**client_kwargs)
     resp = client.messages.create(
-        model=sonnet_model,
+        model=review_model,
         max_tokens=2500,
         messages=[{
             "role": "user",

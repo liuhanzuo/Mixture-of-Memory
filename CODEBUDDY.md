@@ -149,8 +149,8 @@ setsid nohup bash scripts/_eval_taskpool_2group.sh >logs/...sched.out 2>&1 &
 8. **实验完成后不能等用户回复。** 分析 → 决定下一步 → 立即执行，形成闭环（详见 HEARTBEAT.md "实验生命周期自动化"章节）
 
 ### 模型配置
-- 主模型: GLM-5.1
-- Heartbeat 模型: 同主模型，使用 GLM5.1->GLM5-turbo->GLM5->GLM4.7 fallback 顺序
+- 主模型 / heartbeat / 所有 subagent：**Claude Opus 5**（写别名 `opus`，不写具体版本号）。
+- 权威条款见下方「## 模型配置（2026-08-11 用户指令）」章节；本行只是索引。
 
 ### 多节点并行消融 (strongly encouraged)
 
@@ -410,65 +410,61 @@ configs/
 
 ---
 
-## 模型配置建议（2026-05-11）
+## 模型配置（2026-08-11 用户指令，权威，覆盖 2026-05-11 旧版）
 
-**推荐组合：**
-- **日常主模型**：`gpt-5.4`
-- **长上下文主模型**：`claude-sonnet-4.6-1m`
-- **coder subagent**：`claude-opus-4.7`（注意是 `4.7`，不是旧的 `4-7`）
-- **轻量调研 / 快速任务**：`claude-sonnet-4.6`
+**★ 一律用 Claude Opus 5。main 会话、所有 subagent、所有 workflow agent，全部 opus 5，不降级。**
 
-**临时切换（日常最常用）：**
+用户 2026-08-11 指令：「你看看现在还有哪里用的不是 claude opus 5 么 都改过来」。
+
+### 唯一正确写法
+
+| 场景 | 写法 |
+|---|---|
+| `Agent` tool | `model="opus"` |
+| Workflow `agent()` opts | **省略 `model`** —— 继承 main loop 的已解析模型。这是最稳的写法，不会因为 alias 映射变化而静默降级。 |
+| 主会话切换 | `/model opus` |
+| `.claude/settings.json` | `"model": "opus"` |
+
+### ⛔ 禁止出现的写法
+
+- **`model="sonnet"` / `model="lite"` / `model="haiku"`** —— 任何理由都不行，包括"轻量调研/搜索/枚举"。旧手册说轻量任务可用 `lite`，**该条已作废**。
+- **`model="reasoning"`** —— 这是间接别名，历史上映射到 Opus 4.7。它把用哪个模型的决定权交给了环境变量，是静默降级的主要来源。**不要再用。**
+- 任何写死的旧版本名：`claude-opus-4.7` / `claude-opus-4-7` / `claude-opus-4-8` / `claude-sonnet-4.6*` / `gpt-5.4` / `GLM-*`。
+- 旧的 `CODEBUDDY_*_MODEL` 环境变量分层（`BIG_SLOW` / `SMALL_FAST` / `CODE_SUBAGENT`）—— 这套分层的**目的就是让不同任务走不同档位的模型**，与「全部 opus 5」直接冲突。不要再设置，若环境里已有则视为需清理。
+
+### 为什么不要用别名分层（2026-08-11 实测教训）
+
+本 session 的 transcript 里同时出现了 `claude-opus-4-7`(5705 次)、`claude-opus-4-8`(18751 次)、`claude-opus-5`(4365 次)、`sonnet`(45 次)。**在没人显式降级的情况下，实际执行的模型是混的。** 根因是 `settings.json` 只写了别名 `"model": "opus"`，而 `reasoning`/`lite` 这类间接别名进一步把选择权交给了环境。
+
+结论：**宁可省略 `model` 参数继承 main，也不要写别名。** 省略 = 跟随 main；写别名 = 赌环境映射。
+
+### 自查
+
+派 agent 或写 workflow 前，grep 一遍自己要提交的内容：
+
 ```bash
-/model gpt-5.4
+grep -nE 'model\s*[:=]\s*"?(sonnet|lite|haiku|reasoning|claude-opus-4|claude-sonnet|gpt-|glm)' <file>
 ```
 
-**长文档 / 大仓库切换：**
-```bash
-/model claude-sonnet-4.6-1m
-```
-
-**永久配置（推荐写进 shell rc，如 `~/.bashrc`）：**
-```bash
-export CODEBUDDY_MODEL=gpt-5.4
-export CODEBUDDY_BIG_SLOW_MODEL=claude-opus-4.7
-export CODEBUDDY_CODE_SUBAGENT_MODEL=claude-opus-4.7
-export CODEBUDDY_SMALL_FAST_MODEL=claude-sonnet-4.6
-```
-
-**含义：**
-- `CODEBUDDY_MODEL`：主会话默认模型
-- `CODEBUDDY_BIG_SLOW_MODEL`：复杂推理 / `model="reasoning"` 默认走的模型
-- `CODEBUDDY_CODE_SUBAGENT_MODEL`：子 agent 默认模型
-- `CODEBUDDY_SMALL_FAST_MODEL`：轻量 / `model="lite"` 默认走的模型
-
-> 依据 CodeBuddy Code 内置文档 `models.md`：`CODEBUDDY_CODE_SUBAGENT_MODEL` 决定子代理默认模型；`CODEBUDDY_BIG_SLOW_MODEL` / `CODEBUDDY_SMALL_FAST_MODEL` 决定 `reasoning` / `lite` 变体映射。
+有命中就是 bug。历史 transcript（`.claude/projects/**/*.jsonl`）里的旧模型名是**归档记录，不要改**——那是当时真实发生的事，改了就毁了 provenance。
 
 ## Subagent 使用准则
 
-> **⚠️ 严格禁止：把 Opus 4.7 写成旧错名 `claude-opus-4-7`。**
-> **Agent tool 调用时优先用 `model="reasoning"`（映射到 Opus 4.7），不要写失效 alias。**
-> **轻量调研/搜索再使用 `lite`。**
-
-**写代码规则（2026-05-08 用户指令，2026-05-12 修正）**:
+**写代码规则（2026-05-08 用户指令，2026-08-11 更新模型口径）**:
 - **优先派 subagent 改代码**：超过 1 个文件、或单文件超过 5 行、或涉及架构/新功能 → 优先通过 Agent tool 派 coder
-- **尽量用 Opus 4.7**：coder / repro / 复杂修复任务优先 `model="reasoning"`
-- **错误根因已确认**：之前失败是因为把外部模型名写成了 `claude-opus-4-7`，正确配置名是 `claude-opus-4.7`
-- **默认稳定用法**：代码任务显式写 `model="reasoning"`，并把环境里的 reasoning/subagent 路由指到 `claude-opus-4.7`
-- **轻量任务**：调研/搜索/枚举可用 `model="lite"`
+- **模型一律 opus 5**：`Agent(model="opus")`；workflow 里的 `agent()` 省略 `model` 让它继承 main。**不再区分"重任务用大模型、轻任务用小模型"**——全部 opus 5。
 - **唯一例外 1**：修改在 **1 个文件、5 行以内** 的简单 bug fix → main 可以直接改
-- **唯一例外 2**：如果当前主会话模型本身已足够且直接修改更快，可以直接改，不必为了形式强行派 agent
+- **唯一例外 2**：如果 main 自己做更快（例如一次 grep 就能确认的事实核查），直接做，不必为形式派 agent
 - **标准调用方式**：
 ```python
 Agent(
     subagent_type="general-purpose",
-    model="reasoning",
+    model="opus",
     description="实现/修复 <功能描述>",
-    prompt="工作目录：/apdcephfs_wzc1/share_303098609/pighzliu_code/Mixture-of-Memory/\n请先读取 CODEBUDDY.md...\n[详细修改要求，包含文件路径、代码片段]",
+    prompt="工作目录：/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/\n请先读取 CODEBUDDY.md...\n[详细修改要求，包含文件路径、代码片段]\n[必须写明 GPU 预算：可用哪些节点、禁碰哪些、用前自查 nvidia-smi]",
     run_in_background=True
 )
 ```
-- `reasoning` 路由当前应映射到 Opus 4.7；轻量调研再用 `lite`
 
 **训练派 subagent 的阈值**:
 - **每个 8-GPU 训练都派一个后台 subagent**(run_in_background=true)

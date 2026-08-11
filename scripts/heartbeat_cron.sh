@@ -15,9 +15,15 @@
 
 set -uo pipefail
 
+# ⚠️ STALE (2026-08-11 实测): 此脚本当前 **未在 crontab 中**, 且下面的 PROJECT_ROOT
+# (/apdcephfs_zwfy6/share_303098609/...) 在任何节点上都已不存在 —— 盘 303098609 已退役。
+# 若要复活: PROJECT_ROOT 改为 /apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory
+# (wzc1) 或 /apdcephfs_zwfy6/share_304376610/... (zwfy6)。
 PROJECT_ROOT="/apdcephfs_zwfy6/share_303098609/pighzliu_code/Mixture-of-Memory"
 CODEBUDDY_BIN="/root/.nvm/versions/node/v20.20.2/bin/codebuddy"
-MODEL="claude-opus-4.8-1m"
+# 模型别名 `opus` → 由 ANTHROPIC_DEFAULT_OPUS_MODEL 解析 (当前 claude-opus-5[1m])。
+# 不要写死版本号 —— 写死会在网关升级后静默降级。见 CODEBUDDY.md 模型配置章节。
+MODEL="opus"
 LOG_DIR="${PROJECT_ROOT}/logs/heartbeat_cron"
 
 cd "$PROJECT_ROOT" || exit 1

@@ -125,7 +125,7 @@ Agent(
 ```python
 Agent(
     subagent_type="general-purpose",
-    model="reasoning",
+    model="opus",
     description="修复 cross_attn_memory 中的 bug",
     prompt="""你是 Mixture-of-Memory 项目的 coder subagent。
     工作目录：/apdcephfs_wzc1/share_303098609/pighzliu_code/Mixture-of-Memory/
