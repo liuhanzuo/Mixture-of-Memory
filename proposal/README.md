@@ -92,8 +92,16 @@ shared/literature/RELATED_WORK_GAP_AUDIT_20260808.md
 
 ### Active
 
-1. `active/A01-null-calibration-methodology/`
+1. `active/A01-null-calibration-methodology/` — **✅ 已晋升 → `paperG/`（2026-08-11）**
    - 跨 construct 的 input-blind null calibration。
+   - ⚠️ **晋升 ≠ claim 被验证。** 它是一个**资源决定**（给这个方向一个 paper 目录 +
+     算力优先级）。2026-08-10 外部审计的 **Major revision** 判定仍然有效，六条
+     retraction/narrowing 全部随之带走，见 `paperG/README.md` 的「Scope discipline」。
+   - **本目录不删**：它仍是该方向证据与决策历史的**唯一权威入口**，`paperG/` 里每个
+     数字都必须能追回这里。
+   - 命名：用 `paperG` 而非 `paperE` —— `paperE` 是**烧掉的名字**（task #171 把
+     "Paper E: eval-interface construct validity" 判为 NO-GO 并把资产并入 Paper B
+     #172），复用会撞 provenance；`paperC`/`paperD` 同理已归档。`paperG` 在全仓 0 引用。
    - MMLU interface failure、SQuAD majority prior、CKA layer-order null 和
      probe/native readout 是同一方法学框架的案例。
    - ⚠️ **2026-08-10：MAJOR REVISION**（外部审计
