@@ -15,7 +15,7 @@ verdict: ⚠️ DEMOTED 2026-08-10. Correct form: "the longest-option null is
 > # ⚠️ DEMOTION BANNER — 2026-08-10
 >
 > An independent skeptical audit
-> (`proposal/active/A03-parametric-vs-external-memory/evidence/TCODEX_AUDIT_20260810.md`
+> (`proposal/archive/A03-parametric-vs-external-memory/evidence/TCODEX_AUDIT_20260810.md`
 > §2.1, "应撤回" item 3) says this file's headline should be retracted, and it is
 > **right on the substance**. The claim is **DEMOTED, not deleted**. Full response
 > with recomputed numbers: **`TCODEX_AUDIT_RESPONSE.md` §3**; machine-readable in

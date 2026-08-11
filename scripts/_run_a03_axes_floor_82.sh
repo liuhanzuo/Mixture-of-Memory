@@ -186,4 +186,4 @@ done
 echo ""
 echo "Next step: run analyze_1b_knowledge_floor.py on the new arm results to get"
 echo "floor-calibrated residuals (will require a new --tasks nq_open branch)."
-echo "See: proposal/active/A03-parametric-vs-external-memory/code/analyze_1b_knowledge_floor.py"
+echo "See: proposal/archive/A03-parametric-vs-external-memory/code/analyze_1b_knowledge_floor.py"

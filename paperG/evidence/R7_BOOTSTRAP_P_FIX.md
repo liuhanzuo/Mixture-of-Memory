@@ -16,7 +16,7 @@
 ```
 
 A p-value cannot exceed 1. Raised as **R-7** by the 2026-08-10 external audit
-(`proposal/active/A03-parametric-vs-external-memory/evidence/TCODEX_AUDIT_20260810.md` §7),
+(`proposal/archive/A03-parametric-vs-external-memory/evidence/TCODEX_AUDIT_20260810.md` §7),
 accepted as a real defect in `TCODEX_AUDIT_RESPONSE.md` §7 but explicitly *not*
 fixed in that pass ("needs the estimator patched, not a doc edit"), and carried
 through the promotion to `paperG` as open defect #1.

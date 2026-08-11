@@ -62,7 +62,7 @@ axes now certified.
 
 ## 4. What's next for A03
 
-1. **CPU: extend the analyzer.** `proposal/active/A03-parametric-vs-external-memory/code/analyze_1b_knowledge_floor.py` hardcodes popqa+triviaqa at lines 427-428. Adding one tuple `("nq_open", 3610, "em")` to that loop gives paired bootstrap CI, exact McNemar and BH-corrected floor calibration for NQ-open, matching the format used for PopQA/TriviaQA. ~15 min coder work.
+1. **CPU: extend the analyzer.** `proposal/archive/A03-parametric-vs-external-memory/code/analyze_1b_knowledge_floor.py` hardcodes popqa+triviaqa at lines 427-428. Adding one tuple `("nq_open", 3610, "em")` to that loop gives paired bootstrap CI, exact McNemar and BH-corrected floor calibration for NQ-open, matching the format used for PopQA/TriviaQA. ~15 min coder work.
 2. **Design the 6-arm study on the four certified axes.** The 6 arms are the ones A03's PROPOSAL already names: intact, pruned+heal, pruned+heal+CPT-on-corpus, pruned+heal+raw-text RAG, pruned+heal+residual memory, pruned+heal+CPT+memory. Each arm is measured on {MMLU-content, PopQA EM, TriviaQA EM, NQ-open EM} against its own construct-appropriate null.
 3. **NOT next**: do not spend cycles on CounterFact/MQuAKE/HotpotQA — those are separate papers.
 

@@ -5,7 +5,7 @@
 **ACTIVE，但处于 MAJOR REVISION。** 所有 gate 已跑完、无一 gate 杀死 A01；
 第三条 kill clause（novelty）已核查、未触发。**但这不等于"claims 已验证"** ——
 2026-08-10 一份外部怀疑论审计
-（`../A03-parametric-vs-external-memory/evidence/TCODEX_AUDIT_20260810.md` §2.1 + §7）
+（`../../archive/A03-parametric-vs-external-memory/evidence/TCODEX_AUDIT_20260810.md` §2.1 + §7）
 对 A01 给出 **Major revision**，其中三条被点名的 claim 经本仓复核后
 **两条撤回、一条降级**。逐条回应 = **`TCODEX_AUDIT_RESPONSE.md`**（含实测数字），
 复现脚本 = `code/a01_audit_response_recompute.py`，输出 =
@@ -212,7 +212,7 @@ tie count 是这种压缩的**读数**，不是它的**原因**。**interface �
 
 > **⚠️ 本节的 headline 已于 2026-08-10 降级。** 原文写"五种同等合理的 convention
 > 把 6 臂里 5 臂翻转 / null 摆动 25.76 pp"，被外部审计
-> （`../A03-parametric-vs-external-memory/evidence/TCODEX_AUDIT_20260810.md` §2.1）
+> （`../../archive/A03-parametric-vs-external-memory/evidence/TCODEX_AUDIT_20260810.md` §2.1）
 > 判为应撤回，**审计在实质上是对的**。逐条回应见 `TCODEX_AUDIT_RESPONSE.md` §3。
 > 本节已按"**三个可执行 convention + 两个 bound**"重写。这条**不再是 A01 最强的
 > claim**；最强的是下面的 tokenizer 那半条。

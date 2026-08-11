@@ -535,7 +535,7 @@ about that.
 
 | number | file |
 |---|---|
-| intact 1B `content_norm` 0.386839481555334; MMLU-letter cells; QA intact residuals + CIs | `proposal/active/A03-parametric-vs-external-memory/evidence/a03_1b_floor_nulls_4axes.json` |
+| intact 1B `content_norm` 0.386839481555334; MMLU-letter cells; QA intact residuals + CIs | `proposal/archive/A03-parametric-vs-external-memory/evidence/a03_1b_floor_nulls_4axes.json` |
 | five MMLU nulls (`split` 0.28445022076627263 … `credit` 0.4537102976783934); 7B `credit` flips 5/6 | `proposal/active/A01-null-calibration-methodology/evidence/gate3_content_null_conventions.json` |
 | per-cell `credit` residuals (−12.93 … −13.24 pp); `delta_degenerate_negative_margin`; bootstrap gaps → `p_disc` | `proposal/active/A04-recovery-certification/evidence/pilot_zero_rule_disagreement.json` |
 | intact residual CIs under all 5 conventions; D5 anchor drift (48 flips, 0.0014 pp on `Δ`) | `proposal/active/A04-recovery-certification/evidence/a04_intact_residual_ci_1b_mmlu.json` **(new)** |

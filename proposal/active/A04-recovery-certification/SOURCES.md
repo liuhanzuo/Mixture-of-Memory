@@ -33,9 +33,9 @@
 - `../A01-null-calibration-methodology/PROPOSAL.md` + `STATUS.json` — construct-appropriate
   best-constant nulls; MMLU letter null is **always-D 0.2689**, never 0.25; MMLU content null is
   longest-option split-tie **0.2845**.
-- `../A03-parametric-vs-external-memory/evidence/a03_1b_floor_nulls.json` — **the 1B nulls A04 uses
+- `../../archive/A03-parametric-vs-external-memory/evidence/a03_1b_floor_nulls.json` — **the 1B nulls A04 uses
   verbatim**: TriviaQA EM 0.0025635, PopQA EM 0.0229200, MMLU-content 0.2844502.
-- `../A03-parametric-vs-external-memory/GATE_FOURAXES_VERDICT.md` — NQ-open EM null **0.0055**
+- `../../archive/A03-parametric-vs-external-memory/GATE_FOURAXES_VERDICT.md` — NQ-open EM null **0.0055**
   (canonical; 0.0053 must not be quoted), plus intact/pruned/barely-healed 1B residual table.
 - `../../../status/A03_1B_FLOOR_VERDICT.md` — 1B knowledge axes are measurable (K3 provisionally
   cleared); MMLU-letter must be dropped at 1B; `contains` needs a length-matched null.

@@ -196,7 +196,7 @@
   },
   "status_long": "Original PROPOSAL.md thesis is DEAD: no protocol-clean benchmark shows C2 significantly better in aggregate, so 'CoMem beats RAG on quality' does not hold. Storage framing is DEAD on arithmetic (h12 8192 B/token vs raw text 4 B/token = 2048x; CoMem-total/RAG-total 632-1129x). What SURVIVES and is worth writing up: (1) the depth-vs-retrieval DIAGNOSTIC protocol -- a 4-arm single-variable chain showing a 4-way-confounded A-vs-B comparison inflated its headline 2-5x; this is publishable as methodology independent of whether CoMem is good; (2) the RULER read tax at corrected magnitude (-10.0/-12.0/-11.0pp SIG with retrieval held byte-identical and recall@12 at 99-100%); (3) a modest read-compute win (1.33x at G=1 decaying to 1.03x at G=128, N* 8-225 queries vs matched-pack text-RAG).",
   "tcodex_audit_20260810_disposition": {
-    "audit_file": "../A03-parametric-vs-external-memory/evidence/TCODEX_AUDIT_20260810.md (589 lines, md5 8ba6b5da31c3af2fd02c5d5d86d93b2c)",
+    "audit_file": "../../archive/A03-parametric-vs-external-memory/evidence/TCODEX_AUDIT_20260810.md (589 lines, md5 8ba6b5da31c3af2fd02c5d5d86d93b2c)",
     "audit_verdict_on_A02": "Reject / archive \u539f thesis. \u82e5\u7ee7\u7eed, \u4ec5\u4f5c\u4e3a\u7a84 systems microbenchmark observation \u91cd\u65b0\u5b9a\u4f4d; \u4e0d\u80fd\u518d\u79f0 storage method \u6216 natural-task quality win.",
     "item_1_unexecuted_storage_clause": {
       "status": "FIXED 2026-08-10",

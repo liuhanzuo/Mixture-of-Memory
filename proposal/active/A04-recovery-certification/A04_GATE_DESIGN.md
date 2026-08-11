@@ -229,7 +229,7 @@ A01 established that "above chance" is the wrong reference. Every axis gets its 
 best-constant floor**, and every number below is copied from a file in this repo, not recomputed
 from memory.
 
-Source: `proposal/active/A03-parametric-vs-external-memory/evidence/a03_1b_floor_nulls.json` and
+Source: `proposal/archive/A03-parametric-vs-external-memory/evidence/a03_1b_floor_nulls.json` and
 `GATE_FOURAXES_VERDICT.md`, both measured on **OLMo-2 1B**, the same scale as this gate.
 
 | Axis | n | Null (construct-appropriate) | Null value | Intact 1B | Intact calibrated residual | Δ = 10% |

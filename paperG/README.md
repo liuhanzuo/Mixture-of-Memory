@@ -20,9 +20,20 @@ Where it has been demonstrated:
 | construct | correct null | what chance would have said |
 |---|---|---|
 | MMLU letter | always-D = `0.2689` | `0.25` |
-| MMLU content | longest-option split = `0.2845` | `0.25` |
+| MMLU content | longest-option split = `0.2845` (token unit) | `0.25` |
 | BoolQ | always-B = `0.6217` (2033 B / 1237 A) | `0.50` |
-| OpenBookQA | longest-option = `0.3635` | `0.25` |
+| OpenBookQA | longest-option = `0.3635` **(character unit)**; `0.3680` token unit | `0.25` |
+| ARC-Challenge letter | always-B = `0.265358` | `0.250156` |
+| ARC-Easy letter | always-C = `0.266414` | `0.250161` |
+| OpenBookQA letter | always-A = `0.276000` | `0.25` |
+| CommonsenseQA letter (5-way) | always-B = `0.208845` | `0.20` |
+| PIQA letter | always-B = `0.504897` | `0.50` |
+
+> ⚠️ The longest-option null is under-specified in **two** ways, not one: the tie
+> convention (`split`/`first`/`last`/`credit`/`wrong`) **and the length unit**
+> (characters vs continuation tokens). Always print both. The character-vs-token
+> choice moves the `split` null by up to 2.0 pp and the `credit` null by up to 35 pp.
+> See `evidence/SECOND_MC_BENCHMARK_VERDICT.md` §5a.
 
 **Headline empirical result.** Under structural damage the letter MC interface
 degenerates to at or below its own best-constant floor. Four families, n=14042/arm:
@@ -64,6 +75,14 @@ They are load-bearing; the self-falsification narrative is part of the contribut
   content, so "content is the fair interface" is not a general statement either.
 - ✗ acc-vs-acc_norm length sensitivity as **ours** — preempted by Oostermeijer,
   ICML 2026 (arXiv:2607.12767). Reframe OBQA sign flips as replication under damage.
+- ✗ "interface swap does not rescue a damaged arm: content_norm sits within **±3 pp**
+  of letter on every damaged arm" — RE-SCOPED TO MMLU 2026-08-11. Off MMLU the gap is
+  large: `keep8` content−letter is **+38.76 pp** on ARC-Easy, +22.77 on CommonsenseQA,
+  +19.15 on PIQA. See `evidence/SECOND_MC_BENCHMARK_VERDICT.md` §4.
+- ✗ "the damaged letter interface is **significantly** below its floor on benchmarks
+  other than MMLU" — only ARC-Easy (`keep10`, p = 0.029) shows this; four of five
+  non-MMLU tasks are **underpowered** to detect MMLU's own −1.39 pp. Cite the power
+  table with any null result there.
 - ✗ "clearing a floor is **sufficient**" — Feng et al. requires the opposite: state
   explicitly that it is necessary, not sufficient.
 - ✗ the numbers in `STATUS.json:must_not_resurrect` (`4.8x`, `0.2822` as an
@@ -103,6 +122,8 @@ They are load-bearing; the self-falsification narrative is part of the contribut
 | recompute code | `.../code/` |
 | gate-3 per-example records (6 arms × 8 shards) | **zwfy6** `results/a01_gate3/dtype_runs/` — reachable from `.73`/`.82`/`.104` only |
 | MMLU letter/content per-item records | **zwfy6** `olmo2_mmlu_content_results/` |
+| non-MMLU letter/content per-item records (6 arms × 6 tasks × 8 shards) | **BOTH DISKS** `olmo2_mc_letter_content_results/` (52 MB) |
+| second-MC-benchmark nulls + stats | `paperG/evidence/second_mc_benchmark/gate2_letter_content_nulls.{json,csv}` |
 
 ⚠️ Two-disk rule (`memory/cluster-two-disks-not-shared`): this repo copy is on
 **wzc1**; the bulk gate-3 and MMLU evidence lives on **zwfy6**. A file is "missing"
@@ -110,7 +131,7 @@ only after both disks have been searched.
 
 ## Open defects (carried over, must be closed before submission)
 
-*(item 1 closed 2026-08-11; item 2 still open)*
+*(both items closed 2026-08-11; the residual to-dos they created are listed at the end of item 2)*
 
 1. ~~`evidence/gate3_dtype_runs/7B_base_dtype_summary.json:letter_acc_diff_boot_p = 1.042`
    — an **illegal p-value** (>1).~~ **CLOSED 2026-08-11** — see
@@ -128,9 +149,29 @@ only after both disks have been searched.
    **Impact on conclusions: none.** Base arm 1.042 → **0.9876**; 0 of 24 verdicts
    changed, 0 of 30 p-values crossed α=0.05, every non-p field byte-identical.
    The keep8 below-floor headline is unchanged (p = 0.0190 bf16 / 0.0060 fp32).
-2. Full second-MC-benchmark replication. BoolQ/OBQA are point evidence today;
-   gate-2's winogrande is a structural degenerate (both options share the
-   continuation → identical norm_lens, acc == acc_norm exactly, 100% tie rate) and
-   is a **negative control only**. Also: gate-2's interface contrast is raw sum-LL
-   vs length-normalised acc_norm, which is *analogous to but not identical with*
-   MMLU's letter-vs-content — that difference must be stated wherever it is used.
+2. ~~Full second-MC-benchmark replication. BoolQ/OBQA are point evidence today;
+   gate-2's interface contrast is raw sum-LL vs length-normalised acc_norm, which is
+   *analogous to but not identical with* MMLU's letter-vs-content.~~
+   **CLOSED 2026-08-11** (task #248) — see
+   [`evidence/SECOND_MC_BENCHMARK_VERDICT.md`](evidence/SECOND_MC_BENCHMARK_VERDICT.md),
+   verdict `REPLICATES_PARTIALLY_AND_NARROWS_THE_CLAIM`.
+   MMLU's *exact* letter-vs-content contrast (letter prompt = content prompt with the
+   labelled `A./B./C./D.` body spliced in before `\nAnswer:`) now exists on five
+   non-MMLU MC benchmarks — **arc_challenge** (always-B `0.265358`), **arc_easy**
+   (always-C `0.266414`), **openbookqa** (always-A `0.276000`), **commonsense_qa**
+   (5-way, always-B `0.208845`), **piqa** (always-B `0.504897`) — plus **winogrande**
+   (always-B `0.504341`) as the negative control, across the same six arms, 36/36
+   cells shard-complete with `n_nan = 0`. **Replicates:** of the 15 damaged arm×task
+   cells, **10 read "above chance" and 0 clear their own best-constant floor**; the
+   arm ordering and floor-arrival point hold on 5/5; the `credit` tie convention
+   flips 5/6 arms below the content floor on arc_challenge, as on MMLU.
+   **Does NOT replicate:** the *significant* below-floor letter verdict — only
+   arc_easy yields one (`keep10`, −2.694 pp, p = 0.029), and **four of the five
+   tasks are underpowered to have detected MMLU's own −1.389 pp** (CI95 half-width
+   1.31–6.40 pp vs MMLU's 1.15 pp). That power table must accompany any citation of a
+   null result here. Two self-falsifications fell out: the longest-option null has a
+   **second** under-specification (character vs **token** length unit; OBQA `0.3635`
+   is the *character* null, token is `0.3680`), and
+   `confirmed_general[2]`'s "content_norm within ±3 pp of letter on every damaged
+   arm" is **false off MMLU** (arc_easy `keep8` is at its letter floor `0.2584` while
+   scoring `0.6460` on content, +38.76 pp, McNemar p = 1e-147).

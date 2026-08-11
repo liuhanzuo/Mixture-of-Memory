@@ -83,7 +83,7 @@ shared/literature/RELATED_WORK_GAP_AUDIT_20260808.md
 其中 A03、A02、A04、B01 是最高优先级补洞项。
 
 > ⚠️ **2026-08-11 更正**：**A03 已不再是补洞项**——它已 `ARCHIVE` decided
-> （`active/A03-parametric-vs-external-memory/ARM_SET_DECISION.md`），
+> （`archive/A03-parametric-vs-external-memory/ARM_SET_DECISION.md`），
 > 死于 effect-size-vs-apparatus-spread 而不是死于 related-work 覆盖，所以给它补
 > Related Work 不会改变任何结论。当前补洞优先级为 **A02 → A04 → B01**。
 
@@ -110,7 +110,7 @@ shared/literature/RELATED_WORK_GAP_AUDIT_20260808.md
    - MMLU interface failure、SQuAD majority prior、CKA layer-order null 和
      probe/native readout 是同一方法学框架的案例。
    - ⚠️ **2026-08-10：MAJOR REVISION**（外部审计
-     `active/A03-parametric-vs-external-memory/evidence/TCODEX_AUDIT_20260810.md`
+     `archive/A03-parametric-vs-external-memory/evidence/TCODEX_AUDIT_20260810.md`
      §2.1+§7）。两条 claim 撤回（family-general step function；Llama-2 content
      strictly monotone）+ 一条降级（tie convention 翻 5/6 → 可执行 convention 翻
      0/6）。**读任何 2026-08-10 之前的 A01 verdict 文件前先读
@@ -137,12 +137,12 @@ shared/literature/RELATED_WORK_GAP_AUDIT_20260808.md
    - 另一条已被证伪的设计假设：**spread 不随 damage 单调**——keep12 在
      popqa/mmlu_content/nq_open 上的 σ 比 keep7 **更大**（mmlu 高 3.1×）。
      按「损伤越小方差越小」排 seed 预算是错的。
-     完整表述见 `active/A03-.../STATUS.json:consequence_for_A04_135gpuh` 与
-     `active/A03-.../ARM_SET_DECISION.md` §4。
+     完整表述见 `archive/A03-.../STATUS.json:consequence_for_A04_135gpuh` 与
+     `archive/A03-.../ARM_SET_DECISION.md` §4。
 
-### 已决定归档，但物理目录暂留 `active/`
+### 已归档（物理目录 2026-08-11 已移入 `archive/`）
 
-- `active/A03-parametric-vs-external-memory/` — **`ARCHIVE` decided 2026-08-11**
+- `archive/A03-parametric-vs-external-memory/` — **`ARCHIVE` decided 2026-08-11**
   （执行了它自己的 `next_gate[0]`，**零 GPU**）。判定：`ARM_SET_DECISION.md`；
   死因复盘：`POSTMORTEM.md`。
   - **不是 kill clause 触发**，而是 **effect size vs 装置自身 spread**：
@@ -161,15 +161,38 @@ shared/literature/RELATED_WORK_GAP_AUDIT_20260808.md
   - **A-1 存活但不属于 A03**：它是 level-vs-floor 的 null-calibration case study，
     即 **A01 的 thesis**（`GATE_FOURAXES_VERDICT.md` §2 自己承认与 A01 同定义、同数字），
     因此 **migrate 到 A01**，而不是把 A03 narrow 成 A-1。
-  - ⚠️ **物理 `git mv` 被阻塞，现在不要搬**：`A04/code/pilot_one_stage_a_sd_run.py:81`
-    用硬编码路径 import A03 的 canonical loaders（A04 全部 Stage-A/B 数字依赖其
-    8/8-shard、item-count、dup-id、NaN 断言）；
-    `A01/code/a01_audit_response_recompute.py:5,310` 引用 A03 的 audit。
-    正确顺序：先把 loaders 提到 `shared/` 并 repoint，然后才搬目录。
-    见 `STATUS.json:arm_set_decision.archive_move_blocked_by`。
+  - ✅ **物理 `git mv` 已于 2026-08-11 完成（commit `3949f14` 重构 + 本次搬移）。
+    曾被阻塞的原因保留在此，不得静默删除**：`A04/code/pilot_one_stage_a_sd_run.py`
+    当时用**硬编码路径 + 读源码文本 + `exec`** 的方式取 A03 的 canonical loaders
+    （A04 全部 Stage-A/B 数字依赖其 8/8-shard、item-count、dup-id、NaN 断言），
+    另有 **5 个** A04 脚本用硬编码相对路径 `sys.path.insert` 后
+    `from analyze_1b_knowledge_floor import ...`；
+    `A01/code/a01_audit_response_recompute.py:5,310` 引用 A03 的 audit（仅文档路径）。
+    解除办法（已执行，顺序不可颠倒）：
+    1. loaders **逐字节**提到 `shared/code/canonical_eval_loaders.py`（断言、
+       `n_boot=5000/seed=42/CI95` 协议一字未改），A03 自己改为 import 而非留副本；
+    2. A03 目录位置收敛到唯一 resolver `shared/code/proposal_paths.py`
+       （先找 `archive/`，回退 `active/`，找不到就**大声报错**，不返回猜测路径）；
+    3. **搬移前**在 zwfy6 用重构后代码重跑并逐字段比对：Stage-A(43/44)、
+       Stage-B(101/102)、`stageB_pair_101_103` 各 **68/68 字段完全一致**，
+       `stageB_S3_verdict` 的 means/`sd_run_pp`/`bound_S3_pp` **逐位一致**，
+       A03 trajectory recompute **664 个重叠字段 0 差异**；只有指向 loader 模块的
+       provenance 字符串变了。
+    ⚠️ **zwfy6 的 `proposal/` 是手抄目录、不是 git checkout**
+    （`git ls-files proposal/` 返回 0），所以 `git mv` **不会**传播到那边；
+    A04 脚本里那个 positive `_FIX_MARKER` stale-copy 断言因此**必须保留**。
   - 读该目录前先读 `claims/A03_SURVIVING_CLAIMS.md`（claim 的唯一权威；§B 有 9 条
     已死 claim，不得复活）。**seed 45 仍在跑，但两个可达分支都撤回 A-2**
     （`SEED45_PREDECLARATION.md` §3），它落地不改变本判定。
+  - ★ **seed 45 落地后的接力（归档不作废它）**：它给 keep7-20k 组加第三个 draw，
+    把 pooled σ_run 从 df=4 提到 df=5，收紧的正是支撑本归档判定与 A04 Pilot Two
+    MDE 门槛的那个 χ² 区间。**不要 kill、不要改 output_dir / result namespace**
+    （`A03_1B_dataorder_seed45_step220000` + `_nq`）。
+    ⚠️ **实测 2026-08-11 21:30：`.82` 上只有 trainer 在跑，watcher 进程不存在**
+    （`pgrep -af watcher` 空、`logs/a03_dataorder_seed45_eval_progress.log` 不存在），
+    所以 step220000 落地后**不会自动 eval**，必须有人手动投。
+    具体命令与 σ_run/χ² 重算口径见
+    `archive/A03-parametric-vs-external-memory/SEED45_HANDOFF.md`。
 
 ### Backlog
 

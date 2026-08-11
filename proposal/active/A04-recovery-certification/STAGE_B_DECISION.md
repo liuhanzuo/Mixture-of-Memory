@@ -43,7 +43,7 @@ status: SUPERSEDED 2026-08-11 11:05 — Path A was launched under standing auton
 
 > ## ⚠️ ADDENDUM 2026-08-11 21:10 GMT+8 — the A03 side has now been decided; three corrections to this doc
 >
-> A03 executed its own no-GPU arm-set gate (`../A03-parametric-vs-external-memory/ARM_SET_DECISION.md`)
+> A03 executed its own no-GPU arm-set gate (`../../archive/A03-parametric-vs-external-memory/ARM_SET_DECISION.md`)
 > and returned **ARCHIVE**. That decision touches this doc in four ways. **This addendum
 > does not decide A04** — Stage B is already spent and Pilot Two is A04's call requiring
 > explicit user approval per `STATUS.json:next_gate[4]`.
@@ -104,8 +104,8 @@ status: SUPERSEDED 2026-08-11 11:05 — Path A was launched under standing auton
 > 3.16 pp at the χ² 95 % upper bound**. That is precisely the discipline A03 lacked, and
 > it is why A03 is archived.
 >
-> Full arithmetic and provenance: `../A03-parametric-vs-external-memory/ARM_SET_DECISION.md` §2, §4
-> and `../A03-parametric-vs-external-memory/STATUS.json:consequence_for_A04_135gpuh`.
+> Full arithmetic and provenance: `../../archive/A03-parametric-vs-external-memory/ARM_SET_DECISION.md` §2, §4
+> and `../../archive/A03-parametric-vs-external-memory/STATUS.json:consequence_for_A04_135gpuh`.
 
 ---
 

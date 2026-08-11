@@ -1,6 +1,6 @@
 ---
 doc: A01 response ledger for the TCODEX skeptical audit
-audit: proposal/active/A03-parametric-vs-external-memory/evidence/TCODEX_AUDIT_20260810.md
+audit: proposal/archive/A03-parametric-vs-external-memory/evidence/TCODEX_AUDIT_20260810.md
 audit_date: 2026-08-10
 audit_verdict_on_A01: "Major revision"
 this_response: 2026-08-10

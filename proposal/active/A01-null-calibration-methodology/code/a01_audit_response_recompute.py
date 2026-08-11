@@ -2,7 +2,7 @@
 """A01 audit-response recompute — CPU only, ZERO GPU.
 
 Recomputes, from on-disk records only, the three numbers the TCODEX audit
-(proposal/active/A03-parametric-vs-external-memory/evidence/TCODEX_AUDIT_20260810.md
+(proposal/archive/A03-parametric-vs-external-memory/evidence/TCODEX_AUDIT_20260810.md
 sections 2.1 + 7) says A01 got wrong:
 
   R1  the Llama-2 gate-1 letter depth curve INCLUDING the gap-fill arms
@@ -307,7 +307,7 @@ def main():
 
     arms, dups = load_llama2_arms()
     res = {"generated_by": "code/a01_audit_response_recompute.py",
-           "responds_to": "proposal/active/A03-parametric-vs-external-memory/evidence/"
+           "responds_to": "proposal/archive/A03-parametric-vs-external-memory/evidence/"
                           "TCODEX_AUDIT_20260810.md sections 2.1 and 7",
            "compute": "CPU only, ZERO GPU",
            "alpha": ALPHA,

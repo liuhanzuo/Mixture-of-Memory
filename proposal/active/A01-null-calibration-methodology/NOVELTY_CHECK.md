@@ -6,7 +6,7 @@ verdict: KILL CLAUSE 3 DOES NOT FIRE
 ---
 
 > **⚠️ 2026-08-10 SCOPE NOTICE (verdict UNCHANGED).** An external audit
-> (`../A03-parametric-vs-external-memory/evidence/TCODEX_AUDIT_20260810.md` §2.1)
+> (`../../archive/A03-parametric-vs-external-memory/evidence/TCODEX_AUDIT_20260810.md` §2.1)
 > returned **Major revision** on A01. It attacks claim STRENGTH, not originality, so
 > **kill clause 3 still does not fire**. But two things this file leans on have moved:
 > 1. The phrase "**a letter readout is a step function of depth**" (§2.4's gap

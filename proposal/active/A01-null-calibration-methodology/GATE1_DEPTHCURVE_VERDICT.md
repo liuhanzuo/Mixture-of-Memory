@@ -13,7 +13,7 @@ verdict: ⚠️ SUPERSEDED IN PART. The per-family single-layer jumps stand. "le
 > # ⚠️ RETRACTION BANNER — 2026-08-10
 >
 > An independent skeptical audit
-> (`proposal/active/A03-parametric-vs-external-memory/evidence/TCODEX_AUDIT_20260810.md`
+> (`proposal/archive/A03-parametric-vs-external-memory/evidence/TCODEX_AUDIT_20260810.md`
 > §2.1, verdict **Major revision**) attacked two things in this file. Both attacks
 > are **accepted**. The replacement analysis, with the recomputed numbers, is
 > **`TCODEX_AUDIT_RESPONSE.md` §1 (R-1) and §2 (R-2)**; the machine-readable

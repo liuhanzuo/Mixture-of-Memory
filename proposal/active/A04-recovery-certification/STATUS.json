@@ -144,7 +144,7 @@
     "primary_statistic": "PER-ARM ONE-SIDED NON-INFERIORITY BOUND, deliberately NOT a rank correlation over rungs. B04 hit the n=6 exact-permutation floor (2/720=0.002778) TWICE on OLMo-2-7B and still died on Qwen3-8B (rho fell to +0.4286 p=0.42 / -0.4857 p=0.36, p x130-150) -- so maximal significance at n=6 is not evidence of a real effect, and adding rungs to buy permutation p is the move that failed. Power here comes from S (seeds) and item count n."
   },
   "nulls_per_metric": {
-    "source": "proposal/active/A03-parametric-vs-external-memory/evidence/a03_1b_floor_nulls.json + GATE_FOURAXES_VERDICT.md, both measured on OLMo-2 1B (same scale as this gate)",
+    "source": "proposal/archive/A03-parametric-vs-external-memory/evidence/a03_1b_floor_nulls.json + GATE_FOURAXES_VERDICT.md, both measured on OLMo-2 1B (same scale as this gate)",
     "TriviaQA_EM_PRIMARY": {
       "n": 17944,
       "null": 0.0025635309852875612,
@@ -923,7 +923,7 @@
   },
   "status_note": "Previous status string was 'active_design_gate_specified_awaiting_pilot_zero' while pilot_zero.status in this same file said 'DONE -- executed 2026-08-09'. Corrected 2026-08-10.",
   "tcodex_audit_20260810_disposition": {
-    "audit_file": "../A03-parametric-vs-external-memory/evidence/TCODEX_AUDIT_20260810.md (589 lines, md5 8ba6b5da31c3af2fd02c5d5d86d93b2c)",
+    "audit_file": "../../archive/A03-parametric-vs-external-memory/evidence/TCODEX_AUDIT_20260810.md (589 lines, md5 8ba6b5da31c3af2fd02c5d5d86d93b2c)",
     "audit_verdict_on_A04": "Design paper / preregistration only. Pilot Zero 不是 gate pass; K1 应改为 INDETERMINATE; 没有任何模型已被 'certified recovered'; K2/run variance 完全未测.",
     "actioned_20260810": [
       "K1_FIRES false -> INDETERMINATE with the cell-unit arithmetic recorded",

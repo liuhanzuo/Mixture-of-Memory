@@ -213,14 +213,14 @@ PYTHON_BIN=/opt/conda/envs/torch-base/bin/python \
 bash scripts/_run_a03_1b_floor_82.sh
 
 # null calibration + significance (CPU, ~2 min)
-python proposal/active/A03-parametric-vs-external-memory/code/analyze_1b_knowledge_floor.py \
+python proposal/archive/A03-parametric-vs-external-memory/code/analyze_1b_knowledge_floor.py \
   --arms intact_1B_16L=A03_1B_base \
          pruned_healed_keep7f2_200k=A03_1B_keep7_step200k \
          pruned_healed_keep7f2_step500=A03_1B_keep7_step500 \
-  --out proposal/active/A03-parametric-vs-external-memory/evidence/a03_1b_floor_nulls.json
+  --out proposal/archive/A03-parametric-vs-external-memory/evidence/a03_1b_floor_nulls.json
 ```
 
-Artefacts: `proposal/active/A03-parametric-vs-external-memory/evidence/a03_1b_floor_nulls.json`
+Artefacts: `proposal/archive/A03-parametric-vs-external-memory/evidence/a03_1b_floor_nulls.json`
 (all 24 cells + null diagnostics) and the 6 harness `summary.json` under
 `evidence/olmo2_{mmlu_content,closedbook}_results/`. Per-example dumps (needed to recompute any
 null) live on `.82` at `olmo2_mmlu_content_results/A03_1B_*/per_example_mmlu.jsonl` and

@@ -24,7 +24,7 @@
 
 ## External audit and the response to it
 
-- `../A03-parametric-vs-external-memory/evidence/TCODEX_AUDIT_20260810.md` §2.1 + §7 —
+- `../../archive/A03-parametric-vs-external-memory/evidence/TCODEX_AUDIT_20260810.md` §2.1 + §7 —
   an independent skeptical audit that returned **Major revision** on A01.
   **Read this before trusting any pre-2026-08-10 A01 verdict file.**
 - `TCODEX_AUDIT_RESPONSE.md` — A01's item-by-item ACCEPT / NARROW / REJECT ledger with

@@ -267,7 +267,7 @@ and run it to get BH-corrected floor-calibrated residuals for all 4 axes × 3 ar
 Command (on .82, after applying patch and symlinking nq files):
 ```bash
 /opt/conda/envs/torch-base/bin/python \
-  proposal/active/A03-parametric-vs-external-memory/code/analyze_1b_knowledge_floor.py \
+  proposal/archive/A03-parametric-vs-external-memory/code/analyze_1b_knowledge_floor.py \
   --mmlu_root olmo2_mmlu_content_results \
   --cb_root olmo2_closedbook_results \
   --arms "A03_1B_base:A03_1B_base" \

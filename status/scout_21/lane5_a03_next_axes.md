@@ -5,7 +5,7 @@ STATUS: IN PROGRESS (written early, updated as evidence lands)
 ## Read so far
 - status/A03_1B_FLOOR_VERDICT.md — verdict 1B_PILOT_VIABLE; only "old parametric knowledge"
   axis floor-certified (MMLU-content / PopQA / TriviaQA). Primary axis = TriviaQA EM.
-- proposal/active/A03-parametric-vs-external-memory/{PROPOSAL.md,STATUS.json}
+- proposal/archive/A03-parametric-vs-external-memory/{PROPOSAL.md,STATUS.json}
 - scripts/_run_a03_1b_floor_82.sh (driver template, 114 lines)
 - scripts/eval_olmo2_closedbook_qa.py (510 lines)
 
@@ -246,7 +246,7 @@ Three steps; MAIN writes files 1+2 (or dispatches a coder), then runs step 3.
 All paths absolute-from-`$W` where `W=/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory`.
 
 ### Step 1 — fetch + convert (CPU on .82, ~2 min, proxy)
-New file `$W/proposal/active/A03-parametric-vs-external-memory/code/build_a03_newaxes.py`
+New file `$W/proposal/archive/A03-parametric-vs-external-memory/code/build_a03_newaxes.py`
 must: (a) read the two parquet files, (b) emit the paperC 4-field jsonl shape
 (`input_text` / `target_text` / `memory_texts` / `relevant_indices`, plus
 `question_type` + `item_key` for stratification), (c) print exact n, (d) be seeded.
@@ -291,7 +291,7 @@ sshpass -f /apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/confi
   ls -la data/a03_newaxes/
   unset http_proxy https_proxy
   /opt/conda/envs/torch-base/bin/python \
-    proposal/active/A03-parametric-vs-external-memory/code/build_a03_newaxes.py \
+    proposal/archive/A03-parametric-vs-external-memory/code/build_a03_newaxes.py \
     --out_dir data/a03_newaxes --seed 20260808'
 ```
 Expected: `hotpot_distractor_val.parquet` **27452575 B**, `counterfact_test.parquet`
@@ -393,7 +393,7 @@ on the `hpqa_full` phase is the only expected quiet period.
 ### Step 3 — floor analysis (CPU, ~3 min, LOCAL or .82 — both have scipy 1.18.0)
 Needs the new sibling entry point (do NOT call `analyze_1b_knowledge_floor.main()`, it
 asserts n==14042). New file
-`proposal/active/A03-parametric-vs-external-memory/code/analyze_newaxes_floor.py` that
+`proposal/archive/A03-parametric-vs-external-memory/code/analyze_newaxes_floor.py` that
 `import`s `best_constant_qa`, `lengthmatched_contains_null`, `paired_bootstrap`,
 `mcnemar_exact`, `bh_reject`, `cell`, `score_prediction` from the existing module
 (all verified importable + working on paperC-shaped rows) and:

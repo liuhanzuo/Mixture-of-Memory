@@ -24,7 +24,10 @@
     "the_decisive_arithmetic": {
       "pooled_sigma_run_triviaqa_em_pp": 0.362,
       "pooled_dof": 4,
-      "pooled_chi2_95ci_pp": [0.217, 1.04],
+      "pooled_chi2_95ci_pp": [
+        0.217,
+        1.04
+      ],
       "pooling": "sqrt((df1*s1^2 + df2*s2^2)/(df1+df2)) over keep7-20k (s=0.4132, df=2) and keep12-5k (s=0.3023, df=2)",
       "mde_two_arm_alpha05_power80": {
         "S3": "1.10 pp at sigma_hat; 3.16 pp at the chi2 95% upper bound",
@@ -58,13 +61,33 @@
       "code/analyze_1b_knowledge_floor.py + code/recompute_cpt_trajectory_paired.py -> lift into proposal/shared/ (their assertions are load-bearing for A04's numbers)"
     ],
     "archive_move_blocked_by": {
-      "rule": "CLAUDE.md archive rule: a directory referenced by live code is FORBIDDEN to delete/move without repointing first. Reference check was run.",
-      "code_dependencies": [
-        "proposal/active/A04-recovery-certification/code/pilot_one_stage_a_sd_run.py:81 -- builds a path through 'A03-parametric-vs-external-memory'/'code' to import A03's canonical load_cb/load_mmlu, which carry the 8/8-shard, exact-item-count, duplicate-id and NaN assertions every A04 Stage-A/B number rests on",
-        "proposal/active/A01-null-calibration-methodology/code/a01_audit_response_recompute.py:5,310 -- cites A03/evidence/TCODEX_AUDIT_20260810.md"
-      ],
-      "doc_dependencies": "A01 (7 files), A02 (1), A04 (6)",
-      "clean_fix": "lift the shared loaders into proposal/shared/ and repoint both importers; the physical git mv follows that. A half-moved directory is worse than an unmoved one."
+      "RESOLVED": "2026-08-11 -- blocker lifted and the directory MOVED to proposal/archive/A03-parametric-vs-external-memory. The original blocker text is preserved verbatim under `original_record` below; it is decision history and must not be deleted.",
+      "original_record": {
+        "rule": "CLAUDE.md archive rule: a directory referenced by live code is FORBIDDEN to delete/move without repointing first. Reference check was run.",
+        "code_dependencies": [
+          "proposal/active/A04-recovery-certification/code/pilot_one_stage_a_sd_run.py:81 -- builds a path through 'A03-parametric-vs-external-memory'/'code' to import A03's canonical load_cb/load_mmlu, which carry the 8/8-shard, exact-item-count, duplicate-id and NaN assertions every A04 Stage-A/B number rests on",
+          "proposal/active/A01-null-calibration-methodology/code/a01_audit_response_recompute.py:5,310 -- cites A03/evidence/TCODEX_AUDIT_20260810.md"
+        ],
+        "doc_dependencies": "A01 (7 files), A02 (1), A04 (6)",
+        "clean_fix": "lift the shared loaders into proposal/shared/ and repoint both importers; the physical git mv follows that. A half-moved directory is worse than an unmoved one."
+      },
+      "what_was_actually_found": "The blocker was UNDERSTATED. Beyond the two references listed above there were 5 MORE code dependencies, all of which would have broken: A04/code/{pilot_zero_rule_disagreement,a04_measure_pdisc,a04_margin_sensitivity_sweep,a04_intact_residual_ci}.py each did sys.path.insert(os.path.join(_HERE,'..','..','A03-...','code')) then `from analyze_1b_knowledge_floor import ...`; and A04/code/a04_margin_guard_classify.py:231 hard-coded A03's evidence/ dir as the DEFAULT for --a03_4axes (a measured null table -- a silently wrong default would have been read as data). A01's two references were documentation strings only and could not crash.",
+      "how_it_was_lifted": {
+        "1_loaders_to_shared": "load_cb / load_mmlu / paired / NotRunYet and the ROOT/CB/MM/N_BOOT/SEED/NSHARD/N_MMLU constants relocated BYTE-FOR-BYTE into proposal/shared/code/canonical_eval_loaders.py (verified programmatically, not by eye). Every assertion kept verbatim: 8/8 shard completeness, N_MMLU=14042 exact count, duplicate item_id rejection, nan-row rejection, the NotRunYet-vs-SystemExit distinction, and paired()'s n_boot=5000 / seed=42 / CI95-percentile protocol. code/recompute_cpt_trajectory_paired.py now IMPORTS them instead of keeping a second copy, so the two cannot drift.",
+        "2_single_resolver": "proposal/shared/code/proposal_paths.py::a03_code_dir() is the only place A03's location is written down (archive/ first, active/ fallback for the hand-copied zwfy6 tree). It RAISES rather than returning a guessed path.",
+        "3_loud_failure_preserved": "Every repointed consumer keeps its original fail-loudly semantics (sys.exit(2) + FATAL log, or SystemExit from the resolver). No silent fallback was introduced -- a silent fallback is the exact shape of the 2026-08-10 MMLU loader defect. The positive _FIX_MARKER stale-copy check in pilot_one_stage_a_sd_run.py is RETAINED and still necessary, because zwfy6's proposal/ is a hand-copied directory, not a git checkout (`git ls-files proposal/` returns 0 there), so `git mv` does not propagate to it and a stale loader copy remains possible."
+      },
+      "verification_before_the_move": {
+        "protocol": "Re-derived every archived A04 Stage-A/B number on zwfy6 with the REFACTORED code, from the same per-item shards, then compared field-by-field to the archived JSONs. CPU only, 0 GPU.",
+        "pilot_one_stage_a_verdict_seeds_43_44": "68/68 fields identical",
+        "pilot_one_stageB_S2_verdict_seeds_101_102": "68/68 fields identical",
+        "stageB_pair_101_102": "68/68 fields identical",
+        "stageB_pair_101_103": "68/68 fields identical",
+        "stageB_S3_verdict": "means, sd_run_pp and bound_S3_pp reproduced bit-identically on all 4 axes (triviaqa 0.30229201489958313, popqa 0.33279470298495434, mmlu_content 0.07833641931348723, nq_open 0.2091366879576385)",
+        "a03_trajectory_recompute": "0 diffs across 664 overlapping fields vs evidence/arm3_arm4_arm6_cpt_trajectory_paired_full_MMLUFIXED.json; the 110 extra fields are seeds 43/44, which were still PENDING when that JSON was written on 08-10 (data landing, not refactor drift)",
+        "only_intended_changes": "the provenance strings naming the loader module",
+        "refactor_commit": "3949f14"
+      }
     },
     "kill_conditions_checked": {
       "1_RAG_dominates_residual_memory": "EFFECTIVELY SATISFIED at a different scale (A02, 8B/Qwen). Not a formal firing.",
@@ -85,8 +108,21 @@
     "caveat_A04_should_carry": "Evaluated at the chi2 95% UPPER bound of each sigma (df=2), triviaqa (3.203 vs 4.043) and mmlu_content (0.829 vs 1.024) still do not fire, but popqa WOULD (3.527 vs 1.321) and demoted nq_open would (2.215 vs 0.970). Honest statement: 'K2 does not fire at the point estimate, and one decision axis would fire at the pessimistic end of a df=2 sigma interval.' That argues for MORE SEEDS before Pilot Two, not for Pilot Two.",
     "spread_is_not_monotone_in_damage": {
       "finding": "STAGE_B_DECISION.md's prediction that keep12 spread would be SMALLER than keep7's is refuted on 3 of 4 axes, now at S=3 rather than the S=2 the banner used.",
-      "keep7_20k_S3_sampler_seeds_0_43_44": {"triviaqa_em_s_pp": 0.4132, "dof": 2, "chi2_95ci_pp": [0.215, 2.597]},
-      "keep12_5k_S3_seeds_101_102_103": {"triviaqa_em_s_pp": 0.3023, "popqa_em_s_pp": 0.3328, "mmlu_content_s_pp": 0.0783, "nq_open_em_s_pp": 0.2091, "dof": 2},
+      "keep7_20k_S3_sampler_seeds_0_43_44": {
+        "triviaqa_em_s_pp": 0.4132,
+        "dof": 2,
+        "chi2_95ci_pp": [
+          0.215,
+          2.597
+        ]
+      },
+      "keep12_5k_S3_seeds_101_102_103": {
+        "triviaqa_em_s_pp": 0.3023,
+        "popqa_em_s_pp": 0.3328,
+        "mmlu_content_s_pp": 0.0783,
+        "nq_open_em_s_pp": 0.2091,
+        "dof": 2
+      },
       "direction": "keep12 SMALLER on triviaqa only; LARGER on popqa, mmlu_content (3.1x) and nq_open. Any A04 design that budgets seeds by assuming less damage => less variance is mis-budgeted.",
       "do_not_quote": "the keep7 popqa/mmlu/nq_open pairwise values (0.2726 / 0.0252 / 0.0000) as sigma -- they are df=1 ranges, shown in ARM_SET_DECISION.md s4.2 only to locate the earlier claim."
     },
@@ -349,7 +385,7 @@
   "kill_condition_1b_pilot_at_floor": {
     "tested": "2026-08-08",
     "verdict": "1B_PILOT_VIABLE",
-    "evidence": "status/A03_1B_FLOOR_VERDICT.md, proposal/active/A03-parametric-vs-external-memory/evidence/a03_1b_floor_nulls.json",
+    "evidence": "status/A03_1B_FLOOR_VERDICT.md, proposal/archive/A03-parametric-vs-external-memory/evidence/a03_1b_floor_nulls.json",
     "summary": "pruned+healed OLMo-2 1B (keep7+fresh2 @200k) is BH-significantly ABOVE its own construct-appropriate null on 4/5 usable knowledge interfaces (MMLU-content +3.99pp/12.3%, PopQA EM +1.65pp/41.8%, PopQA contains length-matched +1.91pp/17.0%, TriviaQA EM +9.33pp/97.3%); barely-healed step500 control is at/below floor on all 6, so 'at floor' is detectable. Kill condition NOT met.",
     "interfaces_retired": "MMLU-letter at 1B: pruned arm 0.2512 vs best-constant always-D 0.2689 = significantly BELOW floor (p=3.4e-3) and indistinguishable from its own modal-C constant (p=0.28); step500 arm emits always-A on 14042/14042 items"
   },
