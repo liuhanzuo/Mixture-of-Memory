@@ -121,3 +121,52 @@ PPL 的优势（6.2179 vs 6.3430）**不受这个 bug 影响**，是独立的、
 4. token budget：要么改成 18.77B 并重算 GPU-h，要么找到 5B 的真实依据。**不能两个数并存。**
 
 其余 30 条 finding（含 SF-02 contamination 80 GPU-h、SF-06 ablation 无 artifact 32 GPU-h、CAST-01..09、RO-01..05、S8-*、PN-*）在 `w677cpnqo` 的完整输出里，**我尚未逐条复核，不得直接引用**。
+
+---
+
+# 追加：workflow `wsxo6dv4n`(#242) 的两条新缺陷（12:59 独立复核完毕）
+
+## D4 (P0) — 两套结果集不是同一个 harness，同模型差最多 1.60pp
+
+同一个 **dense LLaMA-2-7B**、同为 **plain acc**，两处结果不同：
+
+| task | `SparseForge_Data/tables/*.csv` | `outputs/cast_eval_spec/` | delta |
+|---|---:|---:|---:|
+| openbookqa | 33.2000 | 31.6000 | **−1.6000** |
+| arc_easy | 75.5471 | 76.3468 | +0.7997 |
+| arc_challenge | 42.7474 | 43.1741 | +0.4267 |
+| winogrande | 69.6133 | 69.2976 | −0.3157 |
+| race | 39.5215 | 39.7129 | +0.1914 |
+| hellaswag | 57.1002 | 57.1301 | +0.0299 |
+| piqa | 77.8564 | 77.8564 | 0.0000 |
+
+mean |Δ| = 0.4805，max |Δ| = 1.60（obqa）。**这是第三个口径陷阱**（前两个：acc_norm 混用、PPL seqlen）。
+
+**对 D1 的影响 —— 一个好消息**：SparseForge-5B 行和 AST official 行**都来自同一个
+`cast9_dense_ast_current_harness.csv`**，即同一 harness。所以修正后的 **+0.53pp margin
+内部是自洽的**，不受这个 drift 污染。但**任何把该 csv 的数字与 `cast_eval_spec/` 的数字
+放进同一张表的做法都是错的**（例如想把我们新跑的 CAST-repro union-9 直接拼到 SparseForge 主表里）。
+
+## D5 (P1) — csv 自己的 cell 列与 mean 列不一致，已定位到 obqa
+
+`cast9_dense_ast_current_harness.csv` 的 `SparseForge-5B` 行：
+
+* 7 个 cell 重算 → **58.3195**
+* csv 印的 `ast7_mean` → **58.3481**
+* 差 **0.0286**
+
+追因：`0.2 / 7 = 0.0286`。**csv 的 mean 列是用 `obqa = 35.4` 算的，而它自己的 cell 列写 35.2**
+（`ast7_eval.json` 里是 35.4）。同一个文件里 cell 与 aggregate 用了不同的值。
+
+AST official 那行**没有**这个问题（重算 57.9436 = csv 57.9436，delta 0.0000），
+再次说明只有我们这行有账目问题。
+
+> 这条不改变 +0.53pp 的量级（0.03pp 级），但它说明该 csv 不能当权威源直接引用 ——
+> 必须回到 `ast7_eval.json` 重算。
+
+## 其他 workflow 报告但我尚未复核的项（不得引用）
+
+* AST ckpt 的 2:4 已验证 PASS（zero_frac 0.500000000，bad_tiles 0，1,619,001,344 tiles）—— 这条与我 union-9 时的验证一致，可信度高但我这轮没重跑。
+* `SPEC.md` 里 `ast_official_clean` 的路径写错了（那是 AST **源码仓**，不是 ckpt；ckpt 在 `models/AST-official-LLaMA2-7B-2of4`）。
+* ⚠️ **环境被改过**：`lm_eval` 的 piqa yaml 被就地改成 `dataset_path: ybisk/piqa`，**没有 `.bak`/`.orig`** —— 这是对 site-packages 的未版本化修改，应记进 SPEC 的环境说明，否则换机器复现不出来。
+* RTE 精度地板：n=277 → worst-case stderr **3.00pp**（boolq n=3270 → 0.87pp）。**RTE 会主导 union-9 的噪声**，需要脚注 —— 这与 union-9 的 leave-one-out 发现（+0.92pp 全靠 RTE）互相印证。
