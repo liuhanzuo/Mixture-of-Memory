@@ -86,7 +86,8 @@
         "stageB_S3_verdict": "means, sd_run_pp and bound_S3_pp reproduced bit-identically on all 4 axes (triviaqa 0.30229201489958313, popqa 0.33279470298495434, mmlu_content 0.07833641931348723, nq_open 0.2091366879576385)",
         "a03_trajectory_recompute": "0 diffs across 664 overlapping fields vs evidence/arm3_arm4_arm6_cpt_trajectory_paired_full_MMLUFIXED.json; the 110 extra fields are seeds 43/44, which were still PENDING when that JSON was written on 08-10 (data landing, not refactor drift)",
         "only_intended_changes": "the provenance strings naming the loader module",
-        "refactor_commit": "3949f14"
+        "refactor_commit": "3949f14",
+        "provenance_finding_the_mmlu_fix_was_never_committed": "Discovered while proving byte-identity: git HEAD at 3949f14^ carried the PRE-FIX buggy load_mmlu (md5 cb5a3c4585deed35206bec02b772d5d9) -- the version that guessed flat key names r.get('letter_correct', ...) and returned (None, None) for all 14,042 items. The 2026-08-10 nested-key FIX existed ONLY in the working tree (md5 e937b3fa39ac6bc33cc5d32538ab673f, identical on wzc1 and zwfy6) and was never committed: `git log --all -S 'for iface in (\"letter\", \"content_norm\")'` returns nothing before 3949f14. So for ~1 day the repository's committed history disagreed with the code that actually produced every A03 MMLU cell and every A04 Stage-A/B number. The refactor commit 3949f14 is what finally committed the fix (inside the shared module). Byte-identity was therefore verified against the WORKING-TREE copy, not against git HEAD: the docstring + shared-module body + driver tail reassemble to exactly e937b3fa39ac6bc33cc5d32538ab673f. Comparing against HEAD instead would have falsely reported drift -- and, worse, silently 'restoring' HEAD's loader would have reintroduced the defect."
       }
     },
     "kill_conditions_checked": {
