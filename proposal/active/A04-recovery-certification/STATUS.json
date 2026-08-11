@@ -2,7 +2,7 @@
   "id": "A04",
   "status": "needs_revision_K1_INDETERMINATE_pilot_zero_done_full_gate_not_authorised",
   "priority": 4,
-  "updated": "2026-08-10",
+  "updated": "2026-08-12 00:10 GMT+8 (sigma_run input restated at df=5 after A03 seed 45; next_gate[4] given an explicit MDE bar)",
   "warning": "Do not use the historical depth ladder as a controlled scaling law.",
   "warning_evidence_reverified_20260809": {
     "two_corpora": "data/dolmino_now15b.npy is 62,020,903,040 B on wzc1 (= 7,570,911 rows x 2048 x int32) but 126,907,244,672 B on zwfy6 (= 15,491,607 rows). Ratio 2.0462x. SAME FILENAME, DIFFERENT FILE (wzc1 is a byte-prefix). Row counts re-derived here from ls -l on BOTH disks; they match the 'dataset rows=' lines in status/PAPERB_TWO_CORPORA_DEFECT.md.",
@@ -254,7 +254,7 @@
     "CPU CODE FIX (~1 line, blocking for K2): pass seed=args.seed into DistributedSampler at scripts/train_olmo2_arch_probe2.py:863 so seeds actually vary data order. Without it every 'seed' arm is fresh-block-init variance only and arm A2 (n_fresh=0) has sd_run identically 0.",
     "PROPOSAL.md rewrite to the narrowed safe_residual_claim; paste the must_not_claim list into its scope section; drop the ShortGPT/non-contiguous arm (second damage variable) and the '3 budgets = 3 runs' reading.",
     "PILOT ONE (135 GPU-h, ~5.6h wall on 3 nodes, ONLY if Pilot Zero fires positively AND the sampler fix landed): one arm at the chosen j, S=3 seeds, 5,000 steps. Output = the first real sd_run for a 1B recovery arm. Plug into the S=3 power table; if the bound exceeds delta on >=2 axes, K2 FIRES and A04 dies for 135 GPU-h instead of ~2,900.",
-    "PILOT TWO / full gate (1,077-4,309 GPU-h): REQUIRES EXPLICIT USER APPROVAL. Do not launch on the strength of this design document."
+    "PILOT TWO / full gate (1,077-4,309 GPU-h): REQUIRES EXPLICIT USER APPROVAL. Do not launch on the strength of this design document. ** MDE THRESHOLD IT MUST CLEAR, pre-data (added 2026-08-12; previously stated only in STAGE_B_DECISION.md prose, so this gate carried no bar of its own): state in A04's own prereg WHAT RECOVERY MAGNITUDE the certification adjudicates, and show it exceeds the MDE the chosen S implies -- 1.11 pp at S=3 against pooled sigma_hat = 0.3666 pp (df=5, chi2 95% CI [0.229, 0.899]), or 2.73 pp at that interval's upper bound; 0.55 / 1.35 pp at S=8. RESTATED at df=5 from the earlier df=4 figures (1.10 pp at sigma_hat=0.362; 3.16 pp at chi2 upper 1.040) after A03 sampler seed 45 landed 2026-08-11 23:29. The pessimistic-end bar DROPPED 14%, so this showing is marginally easier -- but the case for spending the tranche is WEAKER, not stronger, because the effect the rule adjudicates moved from +0.0818 pp to -0.0293 pp (CI95 [-0.672,+0.613], 4 sampler-seed draws). Provenance: ../../archive/A03-parametric-vs-external-memory/SEED45_VERDICT.md s3-s4."
   ],
   "protocol_invariants": [
     "chat_template=False for EVERY eval -- these are BASE LMs with no SFT/RL; a chat template is unfair and any chat=True number is void.",
@@ -1191,5 +1191,65 @@
       "impact": "importing it to reuse load_cb/load_mmlu re-runs its entire trajectory analysis and can SystemExit on an unrelated arm's partial shards",
       "fix": "Stage-A driver execs only the pre-driver prefix, cut at 'BASE = '"
     }
-  ]
+  ],
+  "sigma_run_input_from_A03": {
+    "added": "2026-08-12 00:10 GMT+8, after A03 sampler seed 45 landed (the last run under DATAORDER_PREREG.md)",
+    "why_A04_owns_this": "A04 is the ONLY consumer of A03's run-to-run draws (ARM_SET_DECISION.md s3.4 asset 3). A03 is archived; these numbers are the part of it that stays live.",
+    "source_of_truth": "proposal/archive/A03-parametric-vs-external-memory/evidence/a03_sigma_run_n3.json (md5 5fb6cd4c3d693831e50d0817bda93ab8), produced by that proposal's code/recompute_sigma_run_n3.py from per-item shards on zwfy6. Estimator = per-axis ARM MEAN per seed (absolute accuracy), NOT the paired delta -- the delta shares the baseline term across seeds and understates single-arm spread.",
+    "standing_rule": "NEVER quote a sigma_run point estimate without its d.o.f. and chi2 interval (A03 DATAORDER_PREREG.md s4). chi2 multiplicative 95% width: 71.5x at df=1, 12.1x df=2, 6.6x df=3, 4.8x df=4, 3.9x df=5.",
+    "keep7_20k_cpt_df3": {
+      "seeds": "sampler 0 (= original A03 Arm 3) / 43 / 44 / 45",
+      "S": 4,
+      "df": 3,
+      "triviaqa_em_pp": 0.4039,
+      "triviaqa_chi2_95ci_pp": [
+        0.229,
+        1.506
+      ],
+      "popqa_em_pp": 0.1959,
+      "nq_open_em_pp": 0.075,
+      "mmlu_content_norm_pp": 0.0555,
+      "supersedes": "s=0.4132 df=2 chi2 [0.215, 2.597] on triviaqa, and the df=1 PAIRWISE RANGES 0.2726 / 0.0000 / 0.0252 on popqa / nq_open / mmlu_content which were never quotable as sigma. nq_open's 0.0000 was a coincidence of two draws scoring identically (105/3610 each); its true s is 0.0750 pp.",
+      "delivers": "exactly STAGE_B_DECISION.md Path B's stated deliverable (n=4 / df=3 keep7 variance table), for 0 additional GPU-h"
+    },
+    "keep12_5k_df2": {
+      "seeds": "101 / 102 / 103",
+      "S": 3,
+      "df": 2,
+      "triviaqa_em_pp": 0.3023,
+      "popqa_em_pp": 0.3328,
+      "nq_open_em_pp": 0.2091,
+      "mmlu_content_norm_pp": 0.0783,
+      "note": "UNCHANGED by seed 45 -- seed 45 is a keep7 draw. Re-derived from shards with the same estimator and matches evidence/stageB_S3_verdict.json to 4 decimals."
+    },
+    "pooled_df5": {
+      "df": 5,
+      "triviaqa_em_pp": 0.3666,
+      "triviaqa_chi2_95ci_pp": [
+        0.229,
+        0.899
+      ],
+      "popqa_em_pp": 0.2595,
+      "nq_open_em_pp": 0.1445,
+      "mmlu_content_norm_pp": 0.0656,
+      "pooling": "sqrt((df1*s1^2+df2*s2^2)/(df1+df2))",
+      "supersedes": "0.3620 pp df=4 chi2 [0.217, 1.040]",
+      "what_seed45_actually_bought": "the point estimate moved +1.3% (0.3620 -> 0.3666) while the chi2 upper bound tightened 14% (1.040 -> 0.899). One more run buys KNOWLEDGE of sigma, not a different sigma."
+    },
+    "mde_t_based": {
+      "form": "(t_.975,2S-2 + t_.80,2S-2) * sigma * sqrt(2/S); t not z because d.o.f. is small",
+      "S3": "1.11 pp at sigma_hat; 2.73 pp at chi2 upper",
+      "S4": "0.87 / 2.13",
+      "S5": "0.74 / 1.82",
+      "S8": "0.55 / 1.35"
+    },
+    "K2_STATUS_UNCHANGED_BY_SEED45": {
+      "why": "PILOT_ONE_PREREG.md's K2 estimator is the KEEP12 family's own sd_run at df=2 (bound_3 = t_.05,df2 * s/sqrt(3) = 2.920*s/sqrt(3)). Seed 45 is a KEEP7 draw, so K2's arithmetic is NUMERICALLY UNTOUCHED.",
+      "at_point_estimates": "bound_3 clears Delta on all 3 decision axes: triviaqa 0.510 vs 4.043 (7.9x), popqa 0.561 vs 1.321 (2.4x), mmlu_content 0.132 vs 1.024 (7.8x) -> n_decision_axes_exceeding = 0, does not fire",
+      "at_chi2_upper_of_each_df2_sigma": "popqa WOULD fire (3.526 vs 1.321) and demoted nq_open would (2.216 vs 0.970); triviaqa (3.203 vs 4.043) and mmlu_content (0.830 vs 1.024) would not. That is 1 decision axis, and K2's rule needs >=2, so K2 STILL DOES NOT FIRE -- but the honest line stays: 'one decision axis would fire at the pessimistic end of a df=2 sigma interval'.",
+      "tempting_but_NOT_LICENSED": "substituting the pooled df=5 sigma makes NOTHING fire (popqa 0.740 vs 1.321). That is a CHANGE OF ESTIMATOR chosen after seeing which answer each gives, and it is not licensed. Do not present it as 'seed 45 closed the popqa trigger'.",
+      "what_would_actually_close_it": "d.o.f. on the KEEP12 family -- i.e. more keep12 seeds. That, not more keep7 seeds, is what 'more seeds before Pilot Two' means."
+    },
+    "consequence_for_pilot_two": "WEAKENED slightly further. The recovery increment A04's rule adjudicates moved from +0.0818 pp (CI [-0.945,+1.108]) to -0.0293 pp (CI [-0.672,+0.613]) over 4 sampler-seed draws -- still indistinguishable from zero, now with a marginally negative point estimate. NI and PLATEAU can only disagree informatively about a trajectory that moves. Pilot Zero is UNTOUCHED by any of this (it is a level at one checkpoint against intact, with no second-checkpoint or second-training-run term in its estimator) and A03's ARTIFACT verdict must not be cited against it."
+  }
 }

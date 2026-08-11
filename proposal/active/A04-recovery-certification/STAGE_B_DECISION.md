@@ -63,9 +63,20 @@ status: SUPERSEDED 2026-08-11 11:05 — Path A was launched under standing auton
 >    `DATAORDER_VERDICT.md` line 20 labels it so, `_run_a03_dataorder_repl.sh` is
 >    config-identical to `_run_a03_arm3_cpt.sh` apart from `--seed`, these are *resumed*
 >    runs and the trainer has **no dropout**, so `--seed`'s only material channel is
->    `DistributedSampler(seed=args.seed)`. That family: **s = 0.4132 pp, df = 2, χ² 95 %
->    CI [0.215, 2.597]**. Seed 45 is **already running** and takes it to df = 3.
+>    `DistributedSampler(seed=args.seed)`. That family: ~~**s = 0.4132 pp, df = 2, χ² 95 %
+>    CI [0.215, 2.597]**~~. Seed 45 is **already running** and takes it to df = 3.
 >    **Path B's deliverable costs 0 additional GPU-h, not 135.**
+>
+>    > **★ UPDATE 2026-08-12 00:10 — Path B is now DELIVERED, not merely "bought".**
+>    > Sampler seed 45 landed on `.82` at 2026-08-11 23:29:10 and was scored on all four
+>    > axes. The keep7 20k family is now **n = 4, df = 3, s = 0.4039 pp, χ² 95 % CI
+>    > [0.229, 1.506]** (multiplicative width 12.1× → 6.6×) — *exactly* Path B's stated
+>    > deliverable, for **0** additional GPU-h. Seed 45 also gave keep7 its first real σ
+>    > on the other three axes (**popqa 0.1959 / nq_open 0.0750 / mmlu_content 0.0555 pp**,
+>    > all df = 3), replacing the df = 1 pairwise ranges (0.2726 / 0.0000 / 0.0252) that
+>    > `ARM_SET_DECISION.md` forbade quoting as σ. **Do not budget Path B.**
+>    > Provenance: `../../archive/A03-parametric-vs-external-memory/SEED45_VERDICT.md` §3,
+>    > `evidence/a03_sigma_run_n3.json` there (md5 `5fb6cd4c3d693831e50d0817bda93ab8`).
 >
 > 3. **Spread is not monotone in damage — now confirmed at S = 3, not S = 2.** The
 >    banner above already flagged this; here it is with d.o.f. attached. keep12 5k
@@ -75,6 +86,18 @@ status: SUPERSEDED 2026-08-11 11:05 — Path A was launched under standing auton
 >    on the other three (mmlu_content 3.1×). Any seed budget premised on "less damage ⇒
 >    less variance" is mis-budgeted. Do **not** quote the keep7 popqa/mmlu/nq_open
 >    pairwise values (0.2726 / 0.0252 / 0.0000) as σ — they are df = 1 ranges.
+>
+>    > **UPDATE 2026-08-12 — the same conclusion, now σ-vs-σ on all four axes.** With
+>    > seed 45 the keep7 20k family is df = 3 on every axis: triviaqa **0.4039**, popqa
+>    > **0.1959**, nq_open **0.0750**, mmlu_content **0.0555** pp. keep12 is *larger* on
+>    > popqa (1.7×), nq_open (2.8×) and mmlu_content (1.4×), and smaller only on triviaqa
+>    > — **3 of 4 axes still go the "wrong" way**, and the claim no longer rests on
+>    > comparing a σ against a df=1 range. Two corrections to the paragraph above: the
+>    > mmlu_content multiplier is **1.4×, not 3.1×** (the 3.1× came from the df=1 range
+>    > 0.0252, which understated keep7's true spread), and nq_open's pairwise **0.0000**
+>    > was a coincidence of two draws scoring identically (105/3610 each) — its true
+>    > s is 0.0750 pp. The df=1 pairwise values are now superseded outright and should
+>    > not be quoted at all.
 >
 > 4. **The dependency A04 must now write down, and the caveat that comes with it.**
 >    A04 certifies *recovery*; its value scales with the size of the recovery effect its
@@ -97,12 +120,45 @@ status: SUPERSEDED 2026-08-11 11:05 — Path A was launched under standing auton
 >    would fire at the pessimistic end of a df = 2 σ interval"* — which argues for **more
 >    seeds before Pilot Two**, not for Pilot Two.
 >
+>    > **★ UPDATE 2026-08-12 00:10 — restated at df = 5. Direction unchanged; the K2
+>    > caveat is NOT closed.** Three separate points, and the third is the one that is
+>    > easy to get wrong:
+>    >
+>    > * **The CPT increment moved further toward zero, not away.** Over sampler seeds
+>    >   {0,43,44,**45**}: **−0.0293 pp, s = 0.4039, df = 3, CI95 [−0.672, +0.613]** =
+>    >   **−0.09 %** of the 31.10 pp deficit (was +0.0818 pp / +0.26 % at 3 draws). The
+>    >   point estimate crossed zero and the CI tightened ~38 %. Still indistinguishable
+>    >   from zero. So the *dependency* above — "the effect this rule adjudicates is ~0" —
+>    >   is **strengthened**, and the case for Pilot Two is weakened slightly further.
+>    > * **The MDE bar A04 must clear is restated**: **1.11 pp at S = 3 and σ̂ = 0.3666 pp
+>    >   (df = 5, χ² 95 % CI [0.229, 0.899]); 2.73 pp at the χ² 95 % upper bound**
+>    >   (~~1.10 pp / σ̂ = 0.362 / 3.16 pp at df = 4~~). The pessimistic-end bar *dropped*
+>    >   14 %, which makes A04's required showing marginally **easier**. The requirement
+>    >   itself is unchanged.
+>    > * **★ popqa's fire-at-the-pessimistic-end is NOT closed by seed 45.** K2's
+>    >   pre-registered estimator is the **keep12** family's own `sd_run` at df = 2
+>    >   (`bound₃ = 2.920·s/√3`). **Seed 45 is a keep7 draw and adds nothing to keep12**,
+>    >   so every number in item (b) above is *numerically untouched*: popqa still fires
+>    >   at 3.526 vs Δ = 1.321, demoted nq_open at 2.216 vs 0.970, and K2 itself still
+>    >   does not fire (its rule needs ≥2 of 3 decision axes; 1 ≠ 2). Substituting the
+>    >   **pooled df = 5** σ would make nothing fire (popqa 0.740 vs 1.321, triviaqa
+>    >   1.046 vs 4.043, mmlu_content 0.187 vs 1.024) — but that is a **change of
+>    >   estimator** chosen after seeing which answer each gives, and it is not licensed.
+>    >   **The way to close popqa's trigger is d.o.f. on the keep12 family, which only
+>    >   keep12 seeds buy.** The "more seeds before Pilot Two" recommendation stands,
+>    >   and it should be read specifically as *more keep12 seeds*.
+>    >
+>    > Provenance: `../../archive/A03-parametric-vs-external-memory/SEED45_VERDICT.md`
+>    > §3-§4; `evidence/a03_sigma_run_n3.json` there (md5 `5fb6cd4c3d693831e50d0817bda93ab8`)
+>    > carries the full K2 sensitivity table under key `a04_k2`.
+>
 > **What A04 should be required to state before committing the next tranche** (this is a
 > recommendation to A04, not a ruling on it): in its own prereg, **pre-data**, *what
 > recovery magnitude the certification is meant to adjudicate*, plus a showing that this
-> magnitude exceeds the MDE its chosen S implies — **1.10 pp at S = 3 and σ̂ = 0.362 pp;
-> 3.16 pp at the χ² 95 % upper bound**. That is precisely the discipline A03 lacked, and
-> it is why A03 is archived.
+> magnitude exceeds the MDE its chosen S implies — **1.11 pp at S = 3 and σ̂ = 0.3666 pp
+> (df = 5); 2.73 pp at the χ² 95 % upper bound 0.899** (restated 2026-08-12 from
+> ~~1.10 pp / σ̂ = 0.362 pp; 3.16 pp~~ at df = 4). That is precisely the discipline A03
+> lacked, and it is why A03 is archived.
 >
 > Full arithmetic and provenance: `../../archive/A03-parametric-vs-external-memory/ARM_SET_DECISION.md` §2, §4
 > and `../../archive/A03-parametric-vs-external-memory/STATUS.json:consequence_for_A04_135gpuh`.
@@ -130,6 +186,7 @@ status: SUPERSEDED 2026-08-11 11:05 — Path A was launched under standing auton
   * The disagreement test at keep12 is falsifiable in principle (NI can accept), but the RECOVERY effect being tested has to itself be real to matter — and after A03, that is exactly what is in question.
 * The 135 GPU-h buys **one arm at one depth**. If it comes back "keep12 recovers 60%, NI accepts, PLATEAU accepts" — great, A04 lives, but that is one uncontrolled data point. If it comes back "keep12 recovers 25%, both reject, disagreement persists" — hmm, but is the disagreement itself an artifact of the same apparatus that just gave us a falsified headline?
 * **Stronger option, same GPU budget**: spend the 135 GPU-h on *two* seeds of `keep7` at 20,000 steps (matching the A03 arms) to build a proper 4-seed variance table at that arm, plus 1 seed of `keep12`. That gives a real sd_run at keep7 (n=4 → df=3 → t=2.353, tighter bound) AND a pilot data point at keep12. It also directly settles whether the A03 ARTIFACT verdict was a fluke of n=2.
+  > **⛔ OBSOLETE 2026-08-12 — do not spend this.** Both of this bullet's deliverables already exist for **0** additional GPU-h. (i) The **4-seed keep7 variance table** is done: sampler seeds {0,43,44,45}, **n=4, df=3, s = 0.4039 pp, χ² 95 % CI [0.229, 1.506]** on triviaqa em, plus df=3 σ on the other three axes (popqa 0.1959 / nq_open 0.0750 / mmlu_content 0.0555 pp) — seed 0 *is* the original A03 Arm 3 and seed 45 landed 2026-08-11 23:29 on already-committed GPU-h. (ii) The **A03 ARTIFACT-at-n=2 question is settled**: it was not a fluke — seed 45 came back **−0.3622 pp, CI [−0.5517, −0.1838], SIG negative**, a second sign-flip, taking the aggregate to **0/3 CONFIRM**. If GPU is to be spent on variance, spend it on **keep12** seeds — that is the family K2's pre-registered estimator actually uses, and the only one whose df can close popqa's fire-at-the-pessimistic-end (see addendum item 4). Provenance: `../../archive/A03-parametric-vs-external-memory/SEED45_VERDICT.md`.
 
 # What I am NOT recommending
 

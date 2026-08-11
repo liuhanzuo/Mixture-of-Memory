@@ -81,3 +81,19 @@
 - ⚠️ driver log 里每个 arm 都有一条**假的** `MERGE FAIL ...: 0/6 tasks merged` —— 是 driver 自检 `grep -c "^\[merge\]"` 锚了 `^` 而 `_log()` 会加时间戳前缀，纯 cosmetic bug，**跑完后已修**。15/15 arm 实际都成功 merge（各 6/6 `summary_<task>.json`，已 `ls` 逐个核对）。
 - 后续 nulls/统计是 **CPU-only**，在 LOCAL(wzc1) 跑（MMLU cross-family per-item 记录 190MB 只在 wzc1），未占任何 GPU。
 - **未 kill 任何非本任务进程**；.73 上另一 agent 的纯 CPU 工作不受影响。
+
+---
+
+## 2026-08-11 23:51 – 23:55 +08:00 — `.82` A03 seed45 四轴 eval (task #243) 已完成，卡已释放
+
+| 节点 | 硬件 | 任务 | 细节 | 状态 |
+|---|---|---|---|---|
+| **.82** | 8×H20 zwfy6 | `A03_1B_dataorder_seed45_step220000` (#243) | A03 dataorder 第三个（也是最后一个）pre-registered sampler seed 的四轴 eval：mmlu_content + popqa/triviaqa + nq_open，8-way sharded GPU0-7。23:51:01 起，23:54:46 全完（MMLU 81s / CB(pt) 104s / CB(nq) 40s） | ✅ 完成，GPU 0-7 已释放（0 MiB） |
+
+- **占卡前实测**：`.82` 8 卡全 0 MiB、无 trainer/watcher 残留进程（seed45 训练已于 23:29:10 由自己的 watcher 停在 step220000，wrapper 已退出）。**未 kill 任何进程。**
+- **ckpt 完整性（关键，因为 driver 带的是 v1 停止竞态守卫）**：`step220000.pt` 与 `step205000/210000/215000.pt` **字节数完全相同 = 12,181,311,650 B（delta +0 B）**；ext driver 自带的 `torch.load(weights_only=False)` 探针独立返回 ok。曾把 Arm 4 的 step220000.pt 截到 49% 的那个竞态**这次没触发**。trainer `rc=1` 是 `kill -TERM` 的预期返回码，不是崩溃。
+- **shard 完整性**：四轴 ×（arm + baseline）= 8 个 cell **全部 8/8 shard、`n_scored == expected`（popqa 14267 / triviaqa 17944 / nq_open 3610 / mmlu 14042）、0 重复 item_id、0 nan**；MMLU `summary.json` 独立报 `n_valid=14042 n_nan=0`。失败语法 grep（`Traceback (most recent call last)` / `CUDA out of memory` / `loss=nan`）**零命中**。
+  ⚠️ 不要用 `grep -icE 'nan'` 判失败——它会命中 harness 自己的**通过**行 `✓ No NaN/Inf in model parameters`。
+- **结果**：primary 轴 triviaqa em **θ = −0.3622 pp，CI95 [−0.5517, −0.1838]，SIG 负 → NOT-CONFIRM**；聚合 **0/3 CONFIRM → ARTIFACT**（维持现状，A-2 仍撤回）。σ_run：keep7-20k → S=4/df=3/s=0.4039 pp；pooled → **df=5 / 0.3666 pp / χ² [0.229, 0.899]**。
+- 判定文档 `proposal/archive/A03-parametric-vs-external-memory/SEED45_VERDICT.md`；证据三份 JSON 在同目录 `evidence/`（两盘 md5 一致）。
+- 后续配对差分 + σ 重算是 **CPU-only**（在 `.82` 上跑，各 <1 min），未额外占卡。

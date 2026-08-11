@@ -1,0 +1,283 @@
+{
+  "scope": "A03 sigma_run at n=3 draws per family (pooled df=5) after sampler seed 45 landed",
+  "supersedes": "pooled sigma_run = 0.3620 pp at df=4 (keep7 seeds {0,43,44} + keep12 seeds {101,102,103}), quoted in ARM_SET_DECISION.md 0/2, POSTMORTEM.md, STATUS.json, A04/STAGE_B_DECISION.md addendum item 4, proposal/README.md",
+  "estimator": "per-axis ARM MEAN per seed (absolute accuracy, not the paired delta); s = sample sd (ddof=1); df = S-1; chi2 95% CI for sigma; pooled = sqrt((df1*s1^2+df2*s2^2)/(df1+df2))",
+  "standing_prohibition": "prereg s4: never quote a sigma_run point estimate without its d.o.f. and its chi2 interval",
+  "families": {
+    "keep7_20k_cpt": {
+      "seeds": [
+        0,
+        43,
+        44,
+        45
+      ],
+      "dirs": {
+        "0": "A03_1B_arm3_cpt_step220000",
+        "43": "A03_1B_dataorder_seed43_step220000",
+        "44": "A03_1B_dataorder_seed44_step220000",
+        "45": "A03_1B_dataorder_seed45_step220000"
+      },
+      "axes": {
+        "triviaqa": {
+          "S": 4,
+          "df": 3,
+          "s_pp": 0.40385537753737,
+          "chi2_ci95_pp": [
+            0.22877984971402363,
+            1.505793867745346
+          ],
+          "chi2_width_multiplicative": 6.581846563967931,
+          "means_pct": [
+            10.064645563976816,
+            9.696834596522514,
+            9.239857333927775,
+            9.223138653588943
+          ],
+          "n_items": 17944
+        },
+        "popqa": {
+          "S": 4,
+          "df": 3,
+          "s_pp": 0.19587079438308358,
+          "chi2_ci95_pp": [
+            0.11095875750269478,
+            0.7303135168112624
+          ],
+          "chi2_width_multiplicative": 6.581846563967931,
+          "means_pct": [
+            3.9391602999929907,
+            4.100371486647508,
+            3.714866475082358,
+            3.6868297469685283
+          ],
+          "n_items": 14267
+        },
+        "nq_open": {
+          "S": 4,
+          "df": 3,
+          "s_pp": 0.0750142050289564,
+          "chi2_ci95_pp": [
+            0.042494762995581435,
+            0.2796940098090992
+          ],
+          "chi2_width_multiplicative": 6.58184656396793,
+          "means_pct": [
+            2.936288088642659,
+            2.9085872576177287,
+            2.9085872576177287,
+            2.7700831024930745
+          ],
+          "n_items": 3610
+        },
+        "mmlu_content": {
+          "S": 4,
+          "df": 3,
+          "s_pp": 0.055468458650466713,
+          "chi2_ci95_pp": [
+            0.03142230199162832,
+            0.20681677039556154
+          ],
+          "chi2_width_multiplicative": 6.581846563967931,
+          "means_pct": [
+            32.23899729383279,
+            32.231875801167924,
+            32.19626833784361,
+            32.117931918530125
+          ],
+          "n_items": 14042
+        }
+      }
+    },
+    "keep12_5k": {
+      "seeds": [
+        101,
+        102,
+        103
+      ],
+      "dirs": {
+        "101": "A04_1B_stageB_keep12_seed101_step5000",
+        "102": "A04_1B_stageB_keep12_seed102_step5000",
+        "103": "A04_1B_stageB_keep12_seed103_step5000"
+      },
+      "axes": {
+        "triviaqa": {
+          "S": 3,
+          "df": 2,
+          "s_pp": 0.30229201489958313,
+          "chi2_ci95_pp": [
+            0.15739083651451005,
+            1.8998251145098863
+          ],
+          "chi2_width_multiplicative": 12.070747932867992,
+          "means_pct": [
+            9.256576014266606,
+            9.663397235844851,
+            9.072670530539456
+          ],
+          "n_items": 17944
+        },
+        "popqa": {
+          "S": 3,
+          "df": 2,
+          "s_pp": 0.33279470298495445,
+          "chi2_ci95_pp": [
+            0.17327231322269415,
+            2.0915264166560905
+          ],
+          "chi2_width_multiplicative": 12.070747932867992,
+          "means_pct": [
+            5.579308894651994,
+            4.941473330062382,
+            5.095675334688441
+          ],
+          "n_items": 14267
+        },
+        "nq_open": {
+          "S": 3,
+          "df": 2,
+          "s_pp": 0.20913668795763832,
+          "chi2_ci95_pp": [
+            0.10888874545515541,
+            1.3143685991154062
+          ],
+          "chi2_width_multiplicative": 12.070747932867992,
+          "means_pct": [
+            2.714681440443213,
+            2.2991689750692523,
+            2.4653739612188366
+          ],
+          "n_items": 3610
+        },
+        "mmlu_content": {
+          "S": 3,
+          "df": 2,
+          "s_pp": 0.07833641931348723,
+          "chi2_ci95_pp": [
+            0.040786504299152024,
+            0.4923236124579008
+          ],
+          "chi2_width_multiplicative": 12.070747932867993,
+          "means_pct": [
+            31.619427431989745,
+            31.697763851303236,
+            31.77610027061672
+          ],
+          "n_items": 14042
+        }
+      }
+    }
+  },
+  "pooled": {
+    "triviaqa": {
+      "df": 5,
+      "sigma_pp": 0.3666219912775704,
+      "chi2_ci95_pp": [
+        0.22884838075958233,
+        0.8991822243168011
+      ],
+      "chi2_width_multiplicative": 3.9291614008029225
+    },
+    "popqa": {
+      "df": 5,
+      "sigma_pp": 0.25946126221325166,
+      "chi2_ci95_pp": [
+        0.16195779614972786,
+        0.6363583211906187
+      ],
+      "chi2_width_multiplicative": 3.9291614008029216
+    },
+    "nq_open": {
+      "df": 5,
+      "sigma_pp": 0.1444698593950725,
+      "chi2_ci95_pp": [
+        0.09017924231963431,
+        0.3543287980759605
+      ],
+      "chi2_width_multiplicative": 3.929161400802922
+    },
+    "mmlu_content": {
+      "df": 5,
+      "sigma_pp": 0.06557962930192972,
+      "chi2_ci95_pp": [
+        0.040935329395442185,
+        0.16084151618972464
+      ],
+      "chi2_width_multiplicative": 3.929161400802922
+    }
+  },
+  "mde": {
+    "axis": "triviaqa em",
+    "form": "(t_.975,2S-2 + t_.80,2S-2) * sigma * sqrt(2/S)",
+    "at_sigma_hat": {
+      "3": 1.1127902406478756,
+      "4": 0.8691349524356434,
+      "5": 0.7408067215135049,
+      "8": 0.5522869694713242
+    },
+    "at_chi2_upper": {
+      "3": 2.7292449105330063,
+      "4": 2.131652542279918,
+      "5": 1.8169129279946252,
+      "8": 1.3545467470183161
+    },
+    "sigma_hat_pp": 0.3666219912775704,
+    "chi2_upper_pp": 0.8991822243168011
+  },
+  "a04_k2": {
+    "triviaqa": {
+      "S": 3,
+      "df": 2,
+      "t_05_onesided": 2.9199855803537242,
+      "s_pp": 0.30229201489958313,
+      "delta_pp": 4.043134195274186,
+      "bound_at_point_pp": 0.5096203417969046,
+      "bound_at_chi2_upper_pp": 3.2028286441257463,
+      "fires_at_point": false,
+      "fires_at_chi2_upper": false,
+      "margin_at_point": 7.933620116140238,
+      "decision_axis": true
+    },
+    "popqa": {
+      "S": 3,
+      "df": 2,
+      "t_05_onesided": 2.9199855803537242,
+      "s_pp": 0.33279470298495445,
+      "delta_pp": 1.3205298941613512,
+      "bound_at_point_pp": 0.561043434573454,
+      "bound_at_chi2_upper_pp": 3.5260091394991124,
+      "fires_at_point": false,
+      "fires_at_chi2_upper": true,
+      "margin_at_point": 2.353703497422288,
+      "decision_axis": true
+    },
+    "mmlu_content": {
+      "S": 3,
+      "df": 2,
+      "t_05_onesided": 2.9199855803537242,
+      "s_pp": 0.07833641931348723,
+      "delta_pp": 1.0238926078906136,
+      "bound_at_point_pp": 0.1320638019464273,
+      "bound_at_chi2_upper_pp": 0.8299859582424856,
+      "fires_at_point": false,
+      "fires_at_chi2_upper": false,
+      "margin_at_point": 7.753014776191008,
+      "decision_axis": true
+    },
+    "nq_open": {
+      "S": 3,
+      "df": 2,
+      "t_05_onesided": 2.9199855803537242,
+      "s_pp": 0.20913668795763832,
+      "delta_pp": 0.9695290858725762,
+      "bound_at_point_pp": 0.3525740183201618,
+      "bound_at_chi2_upper_pp": 2.215834166015993,
+      "fires_at_point": false,
+      "fires_at_chi2_upper": true,
+      "margin_at_point": 2.749859704614355,
+      "decision_axis": false
+    },
+    "_rule": "K2 FIRES iff bound_S > Delta on >= 2 of the 3 decision axes (triviaqa, popqa, mmlu_content); nq_open is demoted",
+    "_n_decision_axes_firing_at_point": 0,
+    "_n_decision_axes_firing_at_chi2_upper": 1
+  }
+}

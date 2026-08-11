@@ -1,0 +1,217 @@
+{
+  "tag": "A03_1B_dataorder_seed45_step220000",
+  "baseline": "A03_1B_keep7_step200k",
+  "note": "boot_p is a supplement; CONFIRM_45 is defined by the CI95 interval and the theta window only (prereg 3.3). p floors at 1/n_boot = 2e-4.",
+  "integrity": {
+    "popqa": {
+      "arm": {
+        "n_shards": 8,
+        "per_shard": [
+          1784,
+          1784,
+          1784,
+          1783,
+          1783,
+          1783,
+          1783,
+          1783
+        ],
+        "n_rows": 14267,
+        "n_scored": 14267,
+        "expected": 14267,
+        "n_dup": 0,
+        "n_nan": 0,
+        "ok": true
+      },
+      "baseline": {
+        "n_shards": 8,
+        "per_shard": [
+          1784,
+          1784,
+          1784,
+          1783,
+          1783,
+          1783,
+          1783,
+          1783
+        ],
+        "n_rows": 14267,
+        "n_scored": 14267,
+        "expected": 14267,
+        "n_dup": 0,
+        "n_nan": 0,
+        "ok": true
+      }
+    },
+    "triviaqa": {
+      "arm": {
+        "n_shards": 8,
+        "per_shard": [
+          2243,
+          2243,
+          2243,
+          2243,
+          2243,
+          2243,
+          2243,
+          2243
+        ],
+        "n_rows": 17944,
+        "n_scored": 17944,
+        "expected": 17944,
+        "n_dup": 0,
+        "n_nan": 0,
+        "ok": true
+      },
+      "baseline": {
+        "n_shards": 8,
+        "per_shard": [
+          2243,
+          2243,
+          2243,
+          2243,
+          2243,
+          2243,
+          2243,
+          2243
+        ],
+        "n_rows": 17944,
+        "n_scored": 17944,
+        "expected": 17944,
+        "n_dup": 0,
+        "n_nan": 0,
+        "ok": true
+      }
+    },
+    "nq_open": {
+      "arm": {
+        "n_shards": 8,
+        "per_shard": [
+          452,
+          452,
+          451,
+          451,
+          451,
+          451,
+          451,
+          451
+        ],
+        "n_rows": 3610,
+        "n_scored": 3610,
+        "expected": 3610,
+        "n_dup": 0,
+        "n_nan": 0,
+        "ok": true
+      },
+      "baseline": {
+        "n_shards": 8,
+        "per_shard": [
+          452,
+          452,
+          451,
+          451,
+          451,
+          451,
+          451,
+          451
+        ],
+        "n_rows": 3610,
+        "n_scored": 3610,
+        "expected": 3610,
+        "n_dup": 0,
+        "n_nan": 0,
+        "ok": true
+      }
+    },
+    "mmlu_content_norm": {
+      "arm": {
+        "n_shards": 8,
+        "per_shard": [
+          1756,
+          1756,
+          1755,
+          1755,
+          1755,
+          1755,
+          1755,
+          1755
+        ],
+        "n_rows": 14042,
+        "n_scored": 14042,
+        "expected": 14042,
+        "n_dup": 0,
+        "n_nan": 0,
+        "ok": true
+      },
+      "baseline": {
+        "n_shards": 8,
+        "per_shard": [
+          1756,
+          1756,
+          1755,
+          1755,
+          1755,
+          1755,
+          1755,
+          1755
+        ],
+        "n_rows": 14042,
+        "n_scored": 14042,
+        "expected": 14042,
+        "n_dup": 0,
+        "n_nan": 0,
+        "ok": true
+      }
+    }
+  },
+  "paired": {
+    "popqa": {
+      "n": 14267,
+      "delta_pp": -0.25233055302446206,
+      "ci95_pp": [
+        -0.4065325576505222,
+        -0.10513773042685919
+      ],
+      "boot_p_two_sided": 0.0002,
+      "p_is_floor": true,
+      "verdict": "SIG",
+      "n_overlap": 14267
+    },
+    "triviaqa": {
+      "n": 17944,
+      "delta_pp": -0.362238074008025,
+      "ci95_pp": [
+        -0.5517164511814534,
+        -0.18376616139099622
+      ],
+      "boot_p_two_sided": 0.0002,
+      "p_is_floor": true,
+      "verdict": "SIG",
+      "n_overlap": 17944
+    },
+    "nq_open": {
+      "n": 3610,
+      "delta_pp": -0.08310249307479224,
+      "ci95_pp": [
+        -0.41551246537396125,
+        0.2493074792243767
+      ],
+      "boot_p_two_sided": 0.6684,
+      "p_is_floor": false,
+      "verdict": "TIE",
+      "n_overlap": 3610
+    },
+    "mmlu_content_norm": {
+      "n": 14042,
+      "delta_pp": -0.32046716991881496,
+      "ci95_pp": [
+        -0.5910838911835921,
+        -0.05697194131890044
+      ],
+      "boot_p_two_sided": 0.0168,
+      "p_is_floor": false,
+      "verdict": "SIG",
+      "n_overlap": 14042
+    }
+  }
+}

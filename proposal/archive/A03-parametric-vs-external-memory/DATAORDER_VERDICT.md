@@ -1,12 +1,35 @@
 ---
 scope: A03 data-order replication of the trajectory-CPT claim — VERDICT
-date: 2026-08-11 04:53 GMT+8 (corrected 2026-08-11 11:05 GMT+8 after self-audit — see "Corrections" at the bottom)
-status: ARTIFACT (the pre-registered branch name, DATAORDER_PREREG.md §3.4). Zero landed seeds are CONFIRM, so the Arm 3 step220000 headline (+0.4793 SIG on triviaqa em) is a sampler-seed artifact, not a real effect.
+date: 2026-08-11 04:53 GMT+8 (corrected 2026-08-11 11:05 GMT+8 after self-audit — see "Corrections" at the bottom; seed 45 folded in 2026-08-12 00:10 — see the SEED 45 banner below)
+status: ARTIFACT (the pre-registered branch name, DATAORDER_PREREG.md §3.4). Zero landed seeds are CONFIRM, so the Arm 3 step220000 headline (+0.4793 SIG on triviaqa em) is a sampler-seed artifact, not a real effect. **Confirmed at n=3 on 2026-08-12: 0/3 CONFIRM.**
 prereg: DATAORDER_PREREG.md, added by commit `a25d780` (2026-08-10 19:20:02 GMT+8) — band [+0.20, +0.80]pp on triviaqa em; branches enumerated in §3.4; MIXED pre-declared a FAILURE in §3.5
-evidence: evidence/pilot_one_stage_a_verdict.json (md5 4ced4582cce6772a797a7f41e94e2a7a); per-example shards at olmo2_closedbook_results/A03_1B_dataorder_seed{43,44}_step220000/
-seeds_pinned_pre_data: 43 (on .82), 44 (on .73). Seed 45 was queued for .104 but never run — per §4 the ARTIFACT branch is fully decidable at n=2.
+evidence: evidence/pilot_one_stage_a_verdict.json (md5 4ced4582cce6772a797a7f41e94e2a7a); per-example shards at olmo2_closedbook_results/A03_1B_dataorder_seed{43,44,45}_step220000/; seed-45 cells in evidence/a03_cpt_trajectory_paired_full_with_seed45.json (md5 7b5cc4c7040561d9cdb8bd9d4916ad83)
+seeds_pinned_pre_data: 43 (on .82), 44 (on .73), 45 (declared in prereg §5, ran on .82 2026-08-11 12:04→23:29). Per §4 the ARTIFACT branch was already fully decidable at n=2; seed 45 is a σ_run draw, not a verdict input.
 supersedes: `A-2 (provisional)` in claims/A03_SURVIVING_CLAIMS.md — that claim's step220000 SIG is now known sampler-seed-dependent and must be retracted.
 ---
+
+> ## SEED 45 LANDED 2026-08-12 00:10 GMT+8 — verdict UNCHANGED, now at n=3
+>
+> The third and final pre-registered sampler seed returned **θ = −0.3622 pp, CI95
+> [−0.5517, −0.1838], SIG negative** on the primary axis → **NOT-CONFIRM** (fails both
+> `θ > 0` and the band). Aggregate is now **0/3 CONFIRM → ARTIFACT**, the same branch
+> this document already decided. **A-2 stays retracted.** Both reachable branches
+> retracted it, and that was written down in `SEED45_PREDECLARATION.md` before the run,
+> so no re-argument after the fact is possible or permitted.
+>
+> Full analysis, σ_run recompute and consumer updates: **`SEED45_VERDICT.md`**.
+> Two things there that change numbers elsewhere in the repo:
+>
+> 1. **Pooled σ_run: 0.3620 pp (df=4) → 0.3666 pp (df=5, χ² 95 % CI [0.229, 0.899])**;
+>    keep7's own triviaqa σ is 0.4039 pp (df=3, χ² [0.229, 1.506]). MDE at S=3 goes
+>    1.10 → **1.11 pp** at σ̂ and 3.16 → **2.73 pp** at the χ² upper bound.
+> 2. **The pooled CPT increment crosses zero**: mean over sampler seeds {0,43,44,45} is
+>    **−0.0293 pp, CI95 [−0.672, +0.613]** (df=3), vs the +0.0817 pp [−0.945, +1.108]
+>    quoted at n=3 draws. Still indistinguishable from zero — but the point estimate is
+>    now negative and the CI is ~38 % tighter.
+>
+> §-references in the body below that say "both seeds" / "n=2" describe the 04:53
+> decision faithfully and are left as written; the n=3 table is in `SEED45_VERDICT.md` §2.
 
 # The result
 
@@ -16,8 +39,9 @@ Both seeds, paired against the same intact-pruned+healed base (A03_1B_keep7_step
 |------|--------------------|------------------------|---------|-------------------------|------------|
 | 43   | **+0.1115**        | [−0.0947, +0.3177]     | TIE     | **NO** (below floor)    | NOT-CONFIRM |
 | 44   | **−0.3455**        | [−0.5517, −0.1393]     | **SIG** | **NO** (below zero)     | NOT-CONFIRM |
+| 45 *(added 2026-08-12)* | **−0.3622** | [−0.5517, −0.1838] | **SIG** | **NO** (below zero) | NOT-CONFIRM |
 
-Under the ORIGINAL sampler seed (Arm 3, trained pre-`ce5c298`, i.e. sampler seed 0), the same measurement returned +0.4793 SIG (`ARM6_FINAL_VERDICT.md`). Under two different sampler seeds it returns +0.11 (TIE) and −0.35 (SIG negative). **The headline effect flips sign when the sampler seed changes.**
+Under the ORIGINAL sampler seed (Arm 3, trained pre-`ce5c298`, i.e. sampler seed 0), the same measurement returned +0.4793 SIG (`ARM6_FINAL_VERDICT.md`). Under three different sampler seeds it returns +0.11 (TIE), −0.35 (SIG negative) and −0.36 (SIG negative). **The headline effect flips sign when the sampler seed changes, and three of the four draws are ≤ 0.**
 
 # Which pre-registered branch fires, and why
 
@@ -25,13 +49,13 @@ Under the ORIGINAL sampler seed (Arm 3, trained pre-`ce5c298`, i.e. sampler seed
 
 | outcome | condition | fires here? |
 |---|---|---|
-| REPLICATES | every landed seed is CONFIRM | no — neither seed is CONFIRM |
-| **ARTIFACT** | **zero** landed seeds are CONFIRM | **YES** |
+| REPLICATES | every landed seed is CONFIRM | no — no seed is CONFIRM |
+| **ARTIFACT** | **zero** landed seeds are CONFIRM | **YES** (0/2 at 04:53; **0/3** after seed 45) |
 | MIXED | ≥1 CONFIRM and ≥1 NOT-CONFIRM | no — there are no CONFIRM seeds |
 
 **The verdict is ARTIFACT.** §3.4's disposition for that branch, verbatim: *"Effect is a data-order artifact. `ARM6_FINAL_VERDICT.md`'s positive reading is RETRACTED, this time grounded. A03 retains only its Gate-1 pilot."*
 
-Seed 44's −0.35 SIG is a stronger empirical picture than ARTIFACT strictly requires (a sign flip rather than a null), but ARTIFACT is the branch, and the branch is what the disposition attaches to. There is no separate stronger branch to escalate into.
+Seed 44's −0.35 SIG is a stronger empirical picture than ARTIFACT strictly requires (a sign flip rather than a null), but ARTIFACT is the branch, and the branch is what the disposition attaches to. There is no separate stronger branch to escalate into. Seed 45's −0.36 SIG reproduces seed 44's sign flip.
 
 # What this means, precisely — and does NOT mean
 
@@ -76,22 +100,24 @@ Everything the verdict rests on was committed BEFORE the numbers existed:
 
 The seed 43/44 checkpoints landed 2026-08-11 04:19–04:21; the eval watchers auto-fired 04:23; both evals completed 04:27–04:29; MAIN ran the driver at 04:51. Nothing about the rule changed after the numbers were visible.
 
-Timing audit (2026-08-11): the earliest dataorder checkpoint on disk is 19:47:23, **27 minutes after** the prereg commit at 19:20:02. Seed 45 genuinely never ran, so there is no optional-stopping concern.
+Timing audit (2026-08-11): the earliest dataorder checkpoint on disk is 19:47:23, **27 minutes after** the prereg commit at 19:20:02. Seed 45 had not run at the time of the 04:53 verdict, so there is no optional-stopping concern with the n=2 decision.
+
+**Seed 45 addendum (2026-08-12).** Seed 45 ran 2026-08-11 12:04:08 → 23:29:10 on `.82`, i.e. *after* the ARTIFACT verdict was written. That is not optional stopping, for a reason fixed in advance rather than argued afterwards: prereg §5 names {43,44,**45**} as the whole pre-registered set; §3.5 item 4 forbids adding a **tie-breaking** seed to resolve a MIXED split, and the landed outcome was ARTIFACT (no split); and REPLICATES was **unreachable** at n=3 because 43 and 44 were already NOT-CONFIRM on disk, so the only two reachable branches (ARTIFACT, MIXED) *both* retract A-2 — §3.5 pre-declares MIXED itself a FAILURE. The full argument is `SEED45_PREDECLARATION.md`, committed before launch with no seed-45 number in existence. **No seed 46.**
 
 # The 4-axis table — descriptive only, NOT part of the verdict
 
 **UPDATE 2026-08-11 05:23, scope corrected 11:05.** The 4-axis paired table below was filled in after the verdict (CPU-only, canonical loaders on zwfy6). Per prereg §3.6 the primary endpoint is **triviaqa em alone**; popqa / nq_open / mmlu are **secondary, "reported for completeness"**. §3.6 forbids using a secondary axis to *rescue* a failed primary; the symmetric restriction applies to using one to *strengthen* an already-decided verdict. So this table is **descriptive context, not evidence the verdict rests on**:
 
-| axis          | seed 43 Δpp | CI95              | sig | seed 44 Δpp | CI95              | sig | shape                            |
-|---------------|:-----------:|-------------------|:---:|:-----------:|-------------------|:---:|----------------------------------|
-| triviaqa em (**PRIMARY**) | **+0.1115** | [−0.0947, +0.3177] | TIE | **−0.3455** | [−0.5517, −0.1393] | **SIG** | sign-flip; seed 44 significantly negative |
-| popqa em (secondary)     | **+0.1612** | [+0.0210, +0.3084] | **SIG** | **−0.2243** | [−0.3855, −0.0699] | **SIG** | two SIG cells of opposite sign |
-| nq_open em (secondary)   | +0.0554     | [−0.2493, +0.3601] | TIE | +0.0554     | [−0.2493, +0.3601] | TIE | both TIE (n=3610, note identical numbers — resolved below) |
-| mmlu_content (secondary) | −0.2065     | [−0.4702, +0.0571] | TIE | −0.2421     | [−0.5056, +0.0214] | TIE | both TIE, both mildly negative |
+| axis          | seed 43 Δpp | CI95              | sig | seed 44 Δpp | CI95              | sig | seed 45 Δpp | CI95              | sig | shape                            |
+|---------------|:-----------:|-------------------|:---:|:-----------:|-------------------|:---:|:-----------:|-------------------|:---:|----------------------------------|
+| triviaqa em (**PRIMARY**) | **+0.1115** | [−0.0947, +0.3177] | TIE | **−0.3455** | [−0.5517, −0.1393] | **SIG** | **−0.3622** | [−0.5517, −0.1838] | **SIG** | sign-flip; seeds 44 and 45 both significantly negative |
+| popqa em (secondary)     | **+0.1612** | [+0.0210, +0.3084] | **SIG** | **−0.2243** | [−0.3855, −0.0699] | **SIG** | **−0.2523** | [−0.4065, −0.1051] | **SIG** | three SIG cells, first positive then two negative |
+| nq_open em (secondary)   | +0.0554     | [−0.2493, +0.3601] | TIE | +0.0554     | [−0.2493, +0.3601] | TIE | −0.0831 | [−0.4155, +0.2493] | TIE | all TIE (n=3610; the 43/44 identical numbers resolved below) |
+| mmlu_content (secondary) | −0.2065     | [−0.4702, +0.0571] | TIE | −0.2421     | [−0.5056, +0.0214] | TIE | **−0.3205** | [−0.5911, −0.0570] | **SIG** | all three negative; seed 45 crosses into SIG |
 
 popqa's two opposite-signed SIG cells are the most visually striking pattern in the table, and they are consistent with the primary verdict. But popqa is secondary and the verdict does not depend on it — the earlier version of this doc called popqa "the more damning axis" and promoted it into the argument, which the prereg does not permit. Corrected.
 
-MMLU-content behaves normally (both TIE, both mildly negative), consistent with the trajectory result that "MMLU is flat" — that observation survives.
+MMLU-content behaves normally at n=2 (both TIE, both mildly negative), consistent with the trajectory result that "MMLU is flat" — that observation survives. **Seed 45 update:** its mmlu_content cell is −0.3205, CI [−0.5911, −0.0570], **SIG**. MMLU-content is a *secondary* axis and §3.6 bars it from strengthening the verdict, so this does not add to the ARTIFACT finding; it does mean the flat-MMLU observation should be stated as "flat or mildly negative", not "flat".
 
 **One nq_open anomaly, flagged not dismissed:** both seeds report *bitwise-identical* delta_pp = 0.05540166… and CI95 = [−0.2493, +0.3601], despite completely different weights.
 

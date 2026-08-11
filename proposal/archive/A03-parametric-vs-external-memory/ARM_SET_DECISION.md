@@ -2,15 +2,20 @@
 scope: A03 — execution of `STATUS.json:next_gate[0]`, the no-GPU decision gate.
        "Is the 6-arm plan still worth ~N GPU-h now that A-2 is retracted?
         Re-derive the minimum arm set that can still produce a publishable result."
-date: 2026-08-11 21:10 GMT+8
-gpu_spent: ZERO. Every number here is recomputed from JSONs already on disk, plus
-       read-only `ls`/schema inspection on zwfy6. No job launched, no weights downloaded.
-recommendation: ARCHIVE (see §3), with three assets migrated rather than discarded (§3.4)
-       and the physical move BLOCKED on two hardcoded path dependencies (§3.5).
+date: 2026-08-11 21:10 GMT+8 (σ / MDE / CPT-increment numbers updated 2026-08-12 00:10 after sampler seed 45 landed — every superseded value is struck through in place, never silently replaced)
+gpu_spent: ZERO by this document. Every number here is recomputed from JSONs already on
+       disk, plus read-only `ls`/schema inspection on zwfy6. No job launched, no weights
+       downloaded. (The 2026-08-12 update consumed seed 45, whose ~91 GPU-h was already
+       committed before this gate ran, plus ~4 min of 8×H20 eval.)
+recommendation: ARCHIVE (see §3) — **UNCHANGED by seed 45; reinforced from both sides**
+       (§3.6, and `SEED45_VERDICT.md` §4.1: the MDE bar barely moved while the effect
+       being chased crossed zero). Three assets migrate rather than being discarded (§3.4);
+       the physical move was BLOCKED on two hardcoded path dependencies (§3.5) and has
+       since been unblocked by lifting the loaders to `proposal/shared/code/`.
 authority: this file decides the arm-set question only. It does NOT re-open
-       `DATAORDER_VERDICT.md` (branch ARTIFACT, standing) and does NOT decide A04 (§4).
+       `DATAORDER_VERDICT.md` (branch ARTIFACT, standing — now 0/3 CONFIRM) and does NOT decide A04 (§4).
 reads_as_fact: claims/A03_SURVIVING_CLAIMS.md (A-1 survives, A-2 retracted),
-       DATAORDER_VERDICT.md, SEED45_PREDECLARATION.md, DATAORDER_PREREG.md §3.4/§3.6/§4
+       DATAORDER_VERDICT.md, SEED45_PREDECLARATION.md, SEED45_VERDICT.md, DATAORDER_PREREG.md §3.4/§3.6/§4
 ---
 
 # A03 — minimum arm set decision
@@ -31,34 +36,48 @@ A03's own instability is now measured on two different arms:
 
 | arm | axis | S | s (pp) | d.o.f. | χ² 95 % CI for σ (pp) |
 |---|---|---:|---:|---:|---|
-| keep7+fresh2, 20k CPT (sampler seeds 0 / 43 / 44) | triviaqa em | 3 | **0.4132** | 2 | [0.215, 2.597] |
+| keep7+fresh2, 20k CPT (sampler seeds 0 / 43 / 44 / **45**) | triviaqa em | **4** | **0.4039** | **3** | **[0.229, 1.506]** |
 | keep12+fresh2, 5k (seeds 101 / 102 / 103) | triviaqa em | 3 | **0.3023** | 2 | [0.157, 1.900] |
 | keep12+fresh2, 5k | popqa em | 3 | 0.3328 | 2 | [0.173, 2.092] |
 | keep12+fresh2, 5k | mmlu content_norm | 3 | 0.0783 | 2 | [0.041, 0.492] |
 | keep12+fresh2, 5k | nq_open em | 3 | 0.2091 | 2 | [0.109, 1.314] |
-| **pooled, triviaqa em, both arms** | triviaqa em | 3+3 | **0.3620** | **4** | **[0.217, 1.040]** |
+| **pooled, triviaqa em, both arms** | triviaqa em | 4+3 | **0.3666** | **5** | **[0.229, 0.899]** |
+
+> **UPDATED 2026-08-12 00:10 (seed 45).** ~~keep7 20k triviaqa s = **0.4132**, df = **2**,
+> χ² **[0.215, 2.597]**; pooled σ = **0.3620**, df = **4**, χ² **[0.217, 1.040]**~~
+> **SUPERSEDED** — sampler seed 45 landed as the 4th keep7 draw. The old values are struck
+> through, not deleted, because several other files quoted them and the retraction history
+> is part of the record. Seed 45 also converted keep7's popqa/nq_open/mmlu_content from
+> df=1 *pairwise ranges* (0.2726 / 0.0000 / 0.0252 — never quotable as σ) into real df=3
+> estimates: **0.1959 / 0.0750 / 0.0555 pp**. See `SEED45_VERDICT.md` §3.
 
 At the pooled estimate, a two-arm comparison at S = 3 seeds/arm can detect
-**1.10 pp** (α = 0.05 two-sided, power 0.80); at the honest upper end of that σ
-interval it can detect only **3.16 pp**. Every training-recipe arm A03 has left
-targets an effect *smaller* than that. That is the whole decision.
+**1.11 pp** (α = 0.05 two-sided, power 0.80); at the honest upper end of that σ
+interval it can detect only **2.73 pp**. Every training-recipe arm A03 has left
+targets an effect *smaller* than that. That is the whole decision. (At df=4 these read
+1.10 pp and 3.16 pp — the point-estimate MDE is unchanged to 2 s.f.; the pessimistic
+end improved 14 %. The decision is unaffected: see `SEED45_VERDICT.md` §4.1.)
 
 > **Note on σ, per `DATAORDER_PREREG.md` §4.** No point estimate above may be quoted
 > bare. Each carries its d.o.f. and its χ² interval. The interval is wide because
 > d.o.f. is small: the multiplicative 95 % width of a χ²-based σ interval is
-> **71.5× at df = 1**, **12.1× at df = 2**, 6.6× at df = 3, 4.8× at df = 4. This is
+> **71.5× at df = 1**, **12.1× at df = 2**, 6.6× at df = 3, 4.8× at df = 4,
+> **3.9× at df = 5**. This is
 > also why the retracted 0.3231 pp "noise floor" (df = 1) was unusable, and why the
 > numbers above are still weak — they are usable for *design* decisions (which is a
 > one-directional use: a wide σ cannot license a small-effect experiment) and not for
 > any claim of the form "the apparatus is ±Y pp".
 
-**Seed 45 status, checked live (read-only, `.73`, 20:54 GMT+8):** still training,
-`step 215460/300000`, i.e. 15.5k of its 20k CPT steps, ~2.6 h from `step220000.pt`.
-It has **not** landed, so there is nothing to fold in. `SEED45_PREDECLARATION.md` §3
-already fixes both reachable branches mechanically (NOT-CONFIRM → ARTIFACT unchanged;
-CONFIRM → MIXED, pre-declared a FAILURE in prereg §3.5), so **no outcome of seed 45
-changes this decision.** When it lands, its only job is to move the keep7 CPT family
-from df = 2 to df = 3 (σ-interval width 12.1× → 6.6×). §3.6 records what to do then.
+**Seed 45 status — LANDED 2026-08-12 00:10 GMT+8. This decision is UNCHANGED.**
+Primary axis **θ = −0.3622 pp, CI95 [−0.5517, −0.1838], SIG negative → NOT-CONFIRM**;
+aggregate **0/3 CONFIRM → ARTIFACT**, exactly as `SEED45_PREDECLARATION.md` §3 fixed in
+advance (both reachable branches retract A-2). Its two effects on this document are
+folded in above and in §2: keep7 20k goes to **S = 4, df = 3** (σ-interval width
+12.1× → 6.6×) and the pooled estimate to **df = 5** (4.8× → 3.9×). It also moved the
+descriptive CPT increment in §1.1 from +0.0818 pp to **−0.0293 pp**, i.e. *further from*
+the effect any surviving arm would need. Full analysis: `SEED45_VERDICT.md`.
+~~(pre-landing text: "still training, step 215460/300000 … it has **not** landed, so
+there is nothing to fold in")~~
 
 ---
 
@@ -88,7 +107,8 @@ retracted (`DATAORDER_VERDICT.md`, branch ARTIFACT). But the retraction is stron
 than "the headline is gone": pooling the three sampler-seed draws that exist for that
 exact arm gives an effect estimate centred on zero.
 
-The three draws are the same arm at the same dose point under three sampler seeds.
+The three draws are the same arm at the same dose point under three sampler seeds
+(**four**, since sampler seed 45 landed 2026-08-12 — see the addendum below this table).
 `DATAORDER_VERDICT.md` line 20 states this explicitly — "Arm 3, trained
 pre-`ce5c298`, i.e. **sampler seed 0**" — and `scripts/_run_a03_dataorder_repl.sh`
 is, by its own header, config-identical to `scripts/_run_a03_arm3_cpt.sh` apart from
@@ -103,12 +123,23 @@ what the fix's own load-bearing comment says.
 | 0 (the original Arm 3) | **+0.4793** | [+0.2675, +0.6910] | SIG |
 | 43 | **+0.1115** | [−0.0947, +0.3177] | TIE |
 | 44 | **−0.3455** | [−0.5517, −0.1393] | SIG (negative) |
+| **45** *(added 2026-08-12)* | **−0.3622** | [−0.5517, −0.1838] | **SIG (negative)** |
 
-**Aggregate: mean +0.0818 pp, s = 0.4132 pp, df = 2, t₀.₉₇₅ = 4.303 →
-CI95 = [−0.945, +1.108] pp.** Against the quantity CPT is supposed to recover — the
+**Aggregate at n = 4 draws: mean −0.0293 pp, s = 0.4039 pp, df = 3, t₀.₉₇₅ = 3.182 →
+CI95 = [−0.672, +0.613] pp.** Against the quantity CPT is supposed to recover — the
 intact-minus-pruned TriviaQA EM deficit of **31.10 pp** — that is
-**+0.26 %, CI [−3.04 %, +3.56 %]** of the gap, for 20,000 steps = **5.243 B tokens**
+**−0.09 %, CI [−2.16 %, +1.97 %]** of the gap, for 20,000 steps = **5.243 B tokens**
 = **90.7 GPU-h** per seed.
+
+> ~~**Aggregate at n = 3: mean +0.0818 pp, s = 0.4132 pp, df = 2, t₀.₉₇₅ = 4.303 →
+> CI95 = [−0.945, +1.108] pp** = **+0.26 %, CI [−3.04 %, +3.56 %]** of the gap~~
+> **SUPERSEDED 2026-08-12** by the n=4 row above. The point estimate **crossed zero**
+> (+0.0818 → −0.0293 pp) and the CI tightened ~38 %. Struck through rather than deleted
+> because `POSTMORTEM.md`, `STATUS.json`, `A04/STAGE_B_DECISION.md` and
+> `proposal/README.md` all quoted the n=3 figure. The scientific reading is unchanged —
+> **indistinguishable from zero** — and the "mildly harmful" alternative is *not*
+> established either (the CI still contains 0 comfortably). What is now excluded is
+> recovery of more than ~2 % of the deficit at this budget.
 
 > This aggregate is **post-hoc and descriptive**, not a verdict. Prereg §3.6 makes
 > triviaqa em the sole primary endpoint and §4 bars σ claims from tiny d.o.f.; the
@@ -215,21 +246,22 @@ so 20k steps = 2,560,000 sequences = **5.243 B tokens** = 16.53 % of the
 15,491,607-row `dolmino_now15b.npy` epoch (full epoch = 121,028 steps).
 
 **The bar every candidate must clear.** Two-arm comparison, α = 0.05 two-sided,
-power 0.80, S seeds/arm, pooled triviaqa σ̂ = 0.3620 pp (df = 4, χ² 95 % CI
-[0.217, 1.040]):
+power 0.80, S seeds/arm, pooled triviaqa σ̂ = **0.3666 pp (df = 5, χ² 95 % CI
+[0.229, 0.899])** — updated 2026-08-12 from ~~σ̂ = 0.3620 pp (df = 4, χ² [0.217, 1.040])~~:
 
-| S | MDE at σ̂ = 0.362 | MDE at σ = 1.040 (χ² 95 % upper) | training GPU-h for 2 arms × S at 20k steps |
-|---:|---:|---:|---:|
-| 3 | 1.10 pp | 3.16 pp | 544 |
-| 4 | 0.86 pp | 2.47 pp | 726 |
-| 5 | 0.73 pp | 2.10 pp | 907 |
-| 8 | 0.55 pp | 1.57 pp | 1,451 |
+| S | MDE at σ̂ = 0.3666 (df 5) | MDE at σ = 0.899 (χ² 95 % upper) | training GPU-h for 2 arms × S at 20k steps | *(old: MDE @ 0.362 / 1.040)* |
+|---:|---:|---:|---:|---|
+| 3 | **1.11 pp** | **2.73 pp** | 544 | *1.10 / 3.16* |
+| 4 | 0.87 pp | 2.13 pp | 726 | *0.86 / 2.47* |
+| 5 | 0.74 pp | 1.82 pp | 907 | *0.73 / 2.10* |
+| 8 | 0.55 pp | 1.35 pp | 1,451 | *0.55 / 1.57* |
 
 Read that against what there is to detect. The intact-minus-pruned deficits — the
 total amount of knowledge available to be recovered — are TriviaQA EM **31.10 pp**,
 PopQA EM 11.56, NQ-open EM 7.40, MMLU-content 6.24. So at S = 3 an arm must recover
-**≥3.5 %** of the TriviaQA gap to be detectable at σ̂, or **≥10.2 %** at the honest
-upper end of σ. The measured CPT arm recovered **0.26 % [−3.04 %, +3.56 %]**.
+**≥3.6 %** of the TriviaQA gap to be detectable at σ̂, or **≥8.8 %** at the honest
+upper end of σ. The measured CPT arm recovered **−0.09 % [−2.16 %, +1.97 %]** (n=4
+draws; at n=3 it read +0.26 % [−3.04 %, +3.56 %]).
 
 ### Candidate set A — {1, 2} only: no new arms
 
@@ -242,9 +274,11 @@ topology is at/below floor on every one.
 apparatus instability, and for a structural reason, not a lucky one — it is a **LEVEL**
 against a floor computed from the same checkpoint's own predictions, so no second
 checkpoint and no second training run enters the estimator. Residuals: TriviaQA EM
-+9.329 pp (CI [+8.905, +9.769]) = **25.8× the pooled σ̂**; MMLU-content +3.993
-([+3.104, +4.874]) = 11.0×; NQ-open +2.299 = 6.4×; PopQA EM +1.647 = 4.5×. Even at
-the χ² upper bound σ = 1.040 the smallest of these is 1.6×.
++9.329 pp (CI [+8.905, +9.769]) = **25.4× the pooled σ̂** (σ̂ = 0.3666, df 5); MMLU-content +3.993
+([+3.104, +4.874]) = 10.9×; NQ-open +2.299 = 6.3×; PopQA EM +1.647 = 4.5×. Even at
+the χ² upper bound σ = 0.899 the smallest of these is 1.8×. *(At the superseded df = 4
+σ̂ = 0.3620 these read 25.8× / 11.0× / 6.4× / 4.5×, and 1.6× at the old upper bound
+1.040 — the argument is unchanged and marginally stronger.)*
 *Verdict:* **sound, and already in hand — but it is not an A03 claim.** A03's thesis
 is the parametric-vs-external *comparison*. Set A contains no external arm at all. It
 is a floor-calibration case study, i.e. **A01's** thesis applied to generative QA —
@@ -260,12 +294,13 @@ overlap, or acquire a Wikipedia subset), then 2 conditions × S seeds × 20k ste
 *GPU-h:* **544 at S = 3**, plus pipeline engineering, plus (for the Wikipedia variant)
 a download.
 *Effect-vs-spread:* **fails the bar.** To beat generic CPT detectably it must recover
-≥1.10 pp of TriviaQA EM (≥3.5 % of the gap) at σ̂, or ≥3.16 pp (≥10.2 %) at the χ²
+≥1.11 pp of TriviaQA EM (≥3.6 % of the gap) at σ̂, or ≥2.73 pp (≥8.8 %) at the χ²
 upper bound. The prior for that is poor and is set by evidence already in hand: 200k
 steps / 52.43 B tokens of the same corpus family — **10× this design's per-arm token
-budget** — left a 31.10 pp gap, and the 20k top-up moved it by 0.26 %. Proposing to
+budget** — left a 31.10 pp gap, and the 20k top-up moved it by **−0.09 %** (n=4 draws;
++0.26 % at n=3). Proposing to
 detect a ~1 pp difference between two low-dose CPT recipes on an apparatus whose own
-σ interval reaches 1.04 pp is a restatement of the mistake that killed A-2: a
+σ interval reaches 0.90 pp is a restatement of the mistake that killed A-2: a
 sub-1 pp target inside the apparatus's own instability.
 *Verdict:* **rejected.**
 
@@ -310,9 +345,10 @@ Sort A03's remaining arms by target effect size and there are only two classes:
 
 * **Training-recipe arms** (3, 3-targeted, 6): target effects are *marginal
   differences between pretraining recipes*, empirically ≤1 pp on this model and this
-  budget. The apparatus's σ interval reaches 1.04 pp on the primary axis at df = 4.
+  budget. The apparatus's σ interval reaches **0.90 pp** on the primary axis at df = 5
+  (1.04 pp at the superseded df = 4).
   These arms are **unresolvable at any S we can afford** — S = 8 (1,451 GPU-h for two
-  arms) still only reaches 1.57 pp at the honest end of σ.
+  arms) still only reaches **1.35 pp** at the honest end of σ (1.57 pp at df = 4).
 * **Evidence-injection arms** (4, 5): target effects are tens of pp, far above the
   noise — but the interesting comparison among them (4 vs 5) requires building an
   artefact that does not exist, and its answer is already indicated negative by A02.
@@ -361,8 +397,9 @@ precisely what this directory needs.
    1.03-1.37×, N\* growing with L, 86-93 % of the win attributable to retrieval. Not a
    formal firing (8B/Qwen, not 1B/OLMo-2), and it is recorded here as such.
 2. *"CPT 能以更低总成本恢复全部目标能力"* — **does NOT fire, and its failure is
-   informative in the opposite direction:** CPT recovers ~nothing (0.26 % of the
-   31.10 pp gap, CI [−3.04 %, +3.56 %]) at 5.243 B tokens, and 52.43 B tokens of the
+   informative in the opposite direction:** CPT recovers ~nothing (**−0.09 %** of the
+   31.10 pp gap, CI [−2.16 %, +1.97 %], n=4 draws; +0.26 % [−3.04 %, +3.56 %] at n=3)
+   at 5.243 B tokens, and 52.43 B tokens of the
    same corpus left the gap open. The parametric leg does not win; it does not
    measurably move.
 3. *"1B pilot 所有知识指标均处于 floor"* — **does NOT fire.** This is exactly what A-1
@@ -422,19 +459,28 @@ two hardcoded paths are repointed (the clean fix is to lift the shared loaders i
 project's own rule says a directory referenced by live code is **禁删**, and half-moving
 it is worse than not moving it.
 
-### §3.6 What to do when seed 45 lands (~2.6 h from 20:54 GMT+8)
+### §3.6 What to do when seed 45 lands — **✅ DONE 2026-08-12 00:10**
 
 Mechanical, and pre-committed by `SEED45_PREDECLARATION.md` §"Pre-declared analysis
-rules". Nothing here reopens this decision.
+rules". Nothing here reopens this decision. All four items executed; see
+`SEED45_VERDICT.md`.
 
-1. Classify it by prereg §3.3 (CONFIRM ⟺ CI excludes 0 **and** θ > 0 **and**
-   θ ∈ [+0.20, +0.80] pp). NOT-CONFIRM → ARTIFACT stands (0/3). CONFIRM → MIXED,
-   which prereg §3.5 pre-declares a FAILURE. **Both branches retract A-2.**
-2. Recompute the keep7 20k CPT family at n = 4 draws (sampler seeds 0/43/44/45),
-   df = 3, and report σ with its d.o.f. and χ² interval — never bare. Expected gain:
-   σ-interval multiplicative width 12.1× → 6.6×.
-3. Hand the updated σ to A04 (§4) — it is the only consumer.
-4. Do **not** launch seed 46. Prereg: seed 45 is the last run under it.
+1. ✅ Classified by prereg §3.3 (CONFIRM ⟺ CI excludes 0 **and** θ > 0 **and**
+   θ ∈ [+0.20, +0.80] pp). Result **θ = −0.3622 pp, CI95 [−0.5517, −0.1838] →
+   NOT-CONFIRM** (fails θ > 0 and the band) → **ARTIFACT stands (0/3)**.
+   **A-2 remains retracted** — and both branches would have retracted it.
+2. ✅ keep7 20k CPT family recomputed at n = 4 draws (sampler seeds 0/43/44/45),
+   **df = 3, s = 0.4039 pp, χ² [0.229, 1.506]**, width 12.1× → 6.6× as expected.
+   Pooled: **0.3666 pp, df = 5, χ² [0.229, 0.899]**, width 4.8× → 3.9×.
+   Bonus: keep7's popqa/nq_open/mmlu_content went from unusable df=1 pairwise ranges to
+   real df=3 σ estimates (0.1959 / 0.0750 / 0.0555 pp).
+3. ✅ Handed to A04 — `A04/STAGE_B_DECISION.md` addendum item 4 and
+   `A04/STATUS.json:next_gate[4]` restated at df = 5 (MDE 1.11 pp at S=3 and σ̂;
+   2.73 pp at the χ² upper bound). **A04's own pre-registered K2 arithmetic is
+   numerically untouched** — it uses the *keep12* family's σ at df=2, and seed 45 is a
+   keep7 draw — so popqa's fire-at-the-pessimistic-end still stands and the "more
+   keep12 seeds before Pilot Two" recommendation is unchanged (see `SEED45_VERDICT.md` §4.3).
+4. ✅ No seed 46 launched. Prereg: seed 45 is the last run under it.
 
 ---
 
@@ -466,31 +512,42 @@ correctly marks as requiring explicit user approval?"** I answer that question's
 on "< 0.5 pp, i.e. inside the noise floor we just measured". Its own banner retracts
 that (no floor was measured; the 0.3231 pp figure is df = 1 with a χ² σ interval of
 ≈[0.14, 10.3] pp). Independently, its prediction that keep12 spread would be *smaller*
-than keep7's is **refuted**, and now on three seeds rather than two:
+than keep7's is **refuted**, and now with keep7 at df = 3 rather than df = 1 pairwise
+ranges on three of the four axes:
 
-| axis | keep7 20k, S = 3 (sampler seeds 0/43/44) | keep12 5k, S = 3 (seeds 101/102/103) | direction |
+| axis | keep7 20k, S = 4 (sampler seeds 0/43/44/**45**) | keep12 5k, S = 3 (seeds 101/102/103) | direction |
 |---|---:|---:|---|
-| triviaqa em | s = 0.4132 (df 2, χ² [0.215, 2.597]) | s = 0.3023 (df 2, χ² [0.157, 1.900]) | keep12 smaller |
-| popqa em | — (pairwise 0.2726, df 1) | s = 0.3328 (df 2, χ² [0.173, 2.092]) | **keep12 LARGER** |
-| mmlu content_norm | — (pairwise 0.0252, df 1) | s = 0.0783 (df 2, χ² [0.041, 0.492]) | **keep12 LARGER (3.1×)** |
-| nq_open em | — (pairwise 0.0000, df 1) | s = 0.2091 (df 2, χ² [0.109, 1.314]) | **keep12 LARGER** |
+| triviaqa em | s = **0.4039** (df 3, χ² [0.229, 1.506]) | s = 0.3023 (df 2, χ² [0.157, 1.900]) | keep12 smaller |
+| popqa em | s = **0.1959** (df 3, χ² [0.111, 0.730]) | s = 0.3328 (df 2, χ² [0.173, 2.092]) | **keep12 LARGER (1.7×)** |
+| mmlu content_norm | s = **0.0555** (df 3, χ² [0.031, 0.207]) | s = 0.0783 (df 2, χ² [0.041, 0.492]) | **keep12 LARGER (1.4×)** |
+| nq_open em | s = **0.0750** (df 3, χ² [0.042, 0.280]) | s = 0.2091 (df 2, χ² [0.109, 1.314]) | **keep12 LARGER (2.8×)** |
 
 **Spread is not monotone in damage** — three of four axes go the wrong way, and the
 one that goes the "right" way has overlapping σ intervals. Any A04 design that budgets
-seeds by assuming less damage ⇒ less variance is mis-budgeted. (Note the df = 1
-entries are pairwise ranges, not σ estimates; they are shown only to locate the earlier
-claim, and must not be quoted as σ.)
+seeds by assuming less damage ⇒ less variance is mis-budgeted.
+
+> **UPDATED 2026-08-12 (seed 45).** The keep7 row for triviaqa was
+> ~~s = 0.4132 (df 2, χ² [0.215, 2.597])~~, and popqa/mmlu/nq_open were
+> ~~df = 1 *pairwise ranges* 0.2726 / 0.0252 / 0.0000~~ that this section explicitly
+> warned "must not be quoted as σ". Seed 45 replaced all four with df = 3 σ estimates,
+> so the non-monotonicity claim now rests on real σ estimates on **both** sides instead
+> of σ-vs-range. Note nq_open's old pairwise 0.0000 was a coincidence of two draws
+> scoring identically (105/3610 each); its true s is 0.0750 pp. The multiplier on
+> mmlu_content changes from "3.1×" (range-based) to **1.4×** (σ-based) — the direction
+> is the same, the magnitude was overstated by the df=1 artefact.
 
 **The real dependency, stated plainly.** A04 certifies that a structurally damaged
 model has *recovered*. Its value is proportional to the size of the recovery effect
 its rule adjudicates. A03 has now measured the **CPT recovery increment** on the shared
-apparatus at **+0.0818 pp, CI95 [−0.945, +1.108] pp — 0.26 % of the 31.10 pp deficit,
-a CI that contains zero** — at 5.243 B tokens/run, and the 200k-step heal shows 52.43 B
+apparatus at **−0.0293 pp, CI95 [−0.672, +0.613] pp — −0.09 % of the 31.10 pp deficit,
+a CI that contains zero** (n = 4 draws; ~~+0.0818 pp, CI [−0.945, +1.108], 0.26 %~~ at
+n = 3) — at 5.243 B tokens/run, and the 200k-step heal shows 52.43 B
 tokens of the same corpus does not close the gap either. If the increment a
 certification rule is meant to adjudicate is statistically indistinguishable from zero
 at the budgets we can afford, then the rule's *discriminative* content is untested:
 NI and PLATEAU can only disagree informatively about a recovery trajectory that moves.
-**That weakens the case for the next tranche.**
+**That weakens the case for the next tranche** — and seed 45 weakened it slightly
+further, by moving the point estimate from marginally positive to marginally negative.
 
 **Two things that fairly push the other way, and must be recorded with the above:**
 
@@ -511,25 +568,35 @@ NI and PLATEAU can only disagree informatively about a recovery trajectory that 
    statement is "K2 does not fire at the point estimate, and one decision axis would
    fire at the pessimistic end of a df = 2 σ interval." That argues for **more seeds
    before Pilot Two**, not for Pilot Two.
+   **★ Seed 45 does NOT close this** (checked 2026-08-12): K2's pre-registered estimator
+   is the *keep12* family's own `sd_run` at df = 2, and seed 45 is a *keep7* draw, so
+   every number in this item is numerically unchanged — popqa still fires at
+   3.526 vs 1.321. Substituting the pooled df = 5 σ would make nothing fire
+   (popqa 0.740 vs 1.321), but that is a **change of estimator** after seeing which
+   answer each gives, and it is not licensed. The way to close popqa's pessimistic-end
+   trigger is d.o.f. on the **keep12** family, which only keep12 seeds buy. See
+   `SEED45_VERDICT.md` §4.3.
 
 **Net, and it is A04's call not mine:** my A03 decision **weakens** the case for
 committing the next A04 tranche. Before it is committed, A04 should have to state — in
 its own prereg, pre-data — **what recovery magnitude its certification is meant to
 adjudicate, and show that magnitude exceeds the MDE its chosen S implies** (§2's table:
-1.10 pp at S = 3 and σ̂ = 0.362; 3.16 pp at the χ² upper bound). That is the discipline
+**1.11 pp at S = 3 and σ̂ = 0.3666 (df 5); 2.73 pp at the χ² upper bound** —
+~~1.10 / 3.16 at df = 4~~). That is the discipline
 A03 lacked, and it is why A03 is being archived.
 
-### §4.3 A free correction for A04: Path B is mostly already bought
+### §4.3 A free correction for A04: Path B is already fully bought
 
 `STAGE_B_DECISION.md` Path B proposed spending ~135 GPU-h on "two extra keep7 seeds at
 20,000 steps to nail down the noise floor at n = 4 (df = 3)". **Do not buy that.** A
-keep7 20k family at **n = 3** already exists at zero marginal cost — the original
+keep7 20k family at **n = 4, df = 3** now exists at zero marginal cost — the original
 Arm 3 *is* the sampler-seed-0 draw of the identical config (§1.1: same checkpoint,
 same schedule, config-identical driver, no dropout, `--seed`'s only channel is the
-sampler), and `DATAORDER_VERDICT.md` line 20 already labels it that way. Its σ is
-0.4132 pp, df = 2, χ² [0.215, 2.597]. **Seed 45 is already running** and takes it to
-n = 4, df = 3, for GPU-h that is already committed. Path B's stated deliverable
-therefore costs **0 additional GPU-h**, not 135.
+sampler), and `DATAORDER_VERDICT.md` line 20 already labels it that way; seeds 43/44
+were already on disk, and **seed 45 landed 2026-08-11 23:29 on GPU-h already committed**.
+Its σ is **0.4039 pp, df = 3, χ² [0.229, 1.506]** (~~0.4132, df = 2, χ² [0.215, 2.597]~~
+before seed 45). Path B's stated deliverable — *exactly* n = 4 / df = 3 — therefore cost
+**0 additional GPU-h**, not 135, and it is **delivered**, not pending.
 
 ---
 
@@ -541,6 +608,9 @@ Every number recomputed this session; no GPU.
 |---|---|
 | A-1 residuals, nulls, BH p, intact-vs-pruned deficits | `evidence/a03_1b_floor_nulls_4axes.json` (md5 `5e443b424bfde44397bc497a39062504`, wzc1) |
 | Arm 3 step220000 Δ = +0.4792688363798484, CI, n = 17944 | `evidence/arm3_arm4_arm6_cpt_trajectory_paired_full.json` (md5 `28584639f120aaff07bd1a52120f983e`) |
+| **seed 45 Δ = −0.36223807400802494, CI, n = 17944** *(added 2026-08-12)* | `evidence/a03_cpt_trajectory_paired_full_with_seed45.json` (md5 `7b5cc4c7040561d9cdb8bd9d4916ad83`) |
+| **σ_run at n=3 draws/family, pooled df = 5, MDE table, K2 sensitivity** *(added 2026-08-12)* | `evidence/a03_sigma_run_n3.json` (md5 `5fb6cd4c3d693831e50d0817bda93ab8`), produced by `code/recompute_sigma_run_n3.py` |
+| **seed 45 shard integrity (8/8 × 4 axes × arm+baseline, 0 dup, 0 nan)** *(added 2026-08-12)* | `evidence/a03_seed45_integrity.json` (md5 `df1535f0bab24f4ebdeade806935b9fb`) |
 | seeds 43/44 Δ and absolute means | `evidence/pilot_one_stage_a_verdict.json` (md5 `4ced4582cce6772a797a7f41e94e2a7a`) |
 | keep12 S = 3 σ_run, bound₃, Δ per axis | `A04/evidence/stageB_S3_verdict.json` (md5 `7145d569f46ec0fa10dd56368071adf2`, zwfy6) |
 | keep12 S = 2 pairwise | `A04/evidence/pilot_one_stageB_S2_verdict.json` |

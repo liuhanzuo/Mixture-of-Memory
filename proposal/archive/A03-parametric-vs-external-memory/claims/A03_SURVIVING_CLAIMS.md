@@ -205,12 +205,20 @@ band, no run-to-run variance floor measured anywhere in this proposal.
 §C-1 ran and A-2 is RETRACTED** via the ARTIFACT branch. It may no longer be stated at
 all — not with scope conditions, not as a footnote, not as "suggestive". The +0.4793 /
 +0.5016 numbers remain in the record only as an example of what a phase-locked sampler
-seed can manufacture.
+seed can manufacture. **[Re-confirmed 2026-08-12 at n = 3: the third and final
+pre-registered seed returned −0.3622 pp SIG-negative, so 0/3 seeds CONFIRM. Two of the
+three new seeds are significantly *negative*, and the 4-draw pooled increment is
+−0.0293 pp, CI95 [−0.672, +0.613]. The retraction is not merely upheld; the effect has
+no stable sign.]**
 
-**Evidence path:** `evidence/arm3_arm4_arm6_cpt_trajectory_paired_full.json`;
-`code/recompute_cpt_trajectory_paired.py` (hard-fails on <8/8 shards). Narrative:
-`ARM6_FINAL_VERDICT.md` (current), with the phase-locking caveat in
-`STATUS.json:arm6_midlowLR_cpt.phase_locked_defect`.
+**Evidence path:** `evidence/arm3_arm4_arm6_cpt_trajectory_paired_full.json`, and
+`evidence/a03_cpt_trajectory_paired_full_with_seed45.json` (md5
+`7b5cc4c7040561d9cdb8bd9d4916ad83`) for the same 12 arm×step cells **plus** all three
+dataorder seeds; `code/recompute_cpt_trajectory_paired.py` (hard-fails on <8/8 shards,
+loaders imported from `proposal/shared/code/canonical_eval_loaders.py`). Narrative:
+`ARM6_FINAL_VERDICT.md` (superseded on the positive reading), with the phase-locking
+caveat in `STATUS.json:arm6_midlowLR_cpt.phase_locked_defect`, and the n=3 close-out in
+`SEED45_VERDICT.md`.
 
 ---
 
@@ -382,9 +390,18 @@ file is stale. Do not resurrect any of it without new data.
 
 ## §C. OPEN questions — no verdict exists
 
-### C-1. **THE** open question: does A-2 survive a change in data order?
+### C-1. **THE** open question: does A-2 survive a change in data order? — **CLOSED: no.**
 
-**Status: RUNNING, no result. Do not write a verdict for this.** As of 2026-08-11
+> **★ CLOSED 2026-08-12 00:10 GMT+8 at n = 3 (0/3 CONFIRM → ARTIFACT).** All three
+> pre-registered sampler seeds landed and none confirms:
+> **43 = +0.1115 (TIE)**, **44 = −0.3455 (SIG negative)**, **45 = −0.3622 (SIG negative)**,
+> against the band [+0.20, +0.80] pp. **A-2 is retracted, grounded.** Seed 45 was the
+> last run under this prereg — **no seed 46**. Verdicts: `../DATAORDER_VERDICT.md`
+> (the n=2 decision) and `../SEED45_VERDICT.md` (the n=3 close-out + σ_run at df=5).
+> The "RUNNING, no result" paragraph below is the 2026-08-11 00:00 snapshot and is kept
+> only so the reader can see what was and was not known at rule-writing time.
+
+**~~Status: RUNNING, no result. Do not write a verdict for this.~~** As of 2026-08-11
 00:00 GMT+8 neither seed has produced a `step220000.pt`; read-only check on zwfy6
 shows `outputs/olmo2_probe2_1B_keep7f2_dolmino_dataorder_seed{43,44}/` each containing
 only `step205000.pt` and `step210000.pt`, and **no** `A03_1B_dataorder_seed*`
@@ -415,7 +432,12 @@ the rule after seeing numbers.
 * **NO tie-breaking seed may be added after seeing a split.** That is optional
   stopping and it is forbidden. Seeds 43/44/45 are the whole pre-registered set;
   seed 45 counts only because it was declared in advance (it is queued for .104,
-  blocked).
+  blocked). **[2026-08-12: seed 45 ran on `.82` — not `.104` — 12:04→23:29 on 08-11,
+  i.e. AFTER the n=2 ARTIFACT verdict. That is not the forbidden move: this clause bars
+  a tie-breaker added to resolve a **split**, and there was no split (0/2 CONFIRM, not
+  1/1). It was also pre-declared, and REPLICATES was already unreachable because 43/44
+  were on disk NOT-CONFIRM — so both reachable branches retracted A-2 before the run
+  started. Argument locked in `../SEED45_PREDECLARATION.md`.]**
 * popqa / nq_open / MMLU and TriviaQA `contains`/`f1` are **SECONDARY** and **may not
   rescue a failed primary**. `contains`/`f1` agreeing with `em` is not extra
   replication: item-level delta correlations on Arm 3 step220000 are
@@ -435,13 +457,47 @@ watcher **detects** rather than prevents (writes `TRUNCATED_step220000.ALARM` an
 scores nothing). Pre-registered remedy: **re-run the full 20k from step200000** with
 the v3 guard; **never resume from step215000** (that reproduces Arm 4's
 dataloader-offset defect).
+**[2026-08-12 outcome: the race did NOT fire on any of the three seeds.** Seed 45's
+`step220000.pt` is byte-for-byte the same size as its step205/210/215000 siblings
+(12,181,311,650 B, delta +0 B), and the ext driver's independent
+`torch.load(weights_only=False)` probe passed before scoring. The remedy was not needed.
+Note also that seed 45's trainer exited **`rc=1`**, which is the expected return code for
+`kill -TERM` on a live `torchrun` and **not** evidence of truncation — the byte sizes are
+what settle it.**]**
 
 ### C-2. Is there any run-to-run variance floor at all?
 
-**No.** Nothing in this proposal has a null arm — same data, same LR, same steps, run
-twice. Every cross-arm difference in A-2/A-3 is therefore uncalibrated against the
-floor it would have to clear. C-1 will supply two draws at n = 2, which falsifies but
-does not estimate. Any future positive claim needs this.
+**No — and "floor" is the wrong object to ask for.** Nothing in this proposal has a null
+arm in the strict sense (same data, same LR, same steps, run twice); the sampler-seed
+draws vary *which 16.53 % subset of the corpus* is consumed, which is the practically
+relevant variance component but is not a pure "same-everything" replicate. Every
+cross-arm difference in A-2/A-3 is therefore uncalibrated against the floor it would
+have to clear.
+
+**What C-1 actually supplied (2026-08-12, at n = 3 new seeds → 4 draws of the arm):**
+σ_run *estimates with intervals*, which is a different and more honest object than a
+"floor". keep7+fresh2 20k CPT, sampler seeds {0, 43, 44, 45}, per-axis **arm mean**
+(not the paired delta):
+
+| axis | s (pp) | df | χ² 95 % CI for σ (pp) |
+|---|---:|---:|---|
+| triviaqa em | **0.4039** | 3 | [0.229, 1.506] |
+| popqa em | 0.1959 | 3 | [0.111, 0.730] |
+| nq_open em | 0.0750 | 3 | [0.042, 0.280] |
+| mmlu content_norm | 0.0555 | 3 | [0.031, 0.207] |
+
+Pooled with A04's keep12 5k family (seeds 101/102/103, df = 2): triviaqa
+**0.3666 pp, df = 5, χ² [0.229, 0.899]**.
+
+**Publication rule (prereg §4, binding):** these may be quoted **only** as
+"σ̂ = X pp at df = Y, χ² 95 % CI [lo, hi]". A bare point estimate is forbidden, and the
+phrase "the apparatus noise floor is Z pp" is forbidden outright — that is the exact
+error that produced the retracted 0.3231 pp figure (df = 1, interval ≈[0.14, 10.3] pp).
+The df = 1 *pairwise ranges* that circulated for keep7's popqa/nq_open/mmlu_content
+(0.2726 / 0.0000 / 0.0252) are now **superseded by the σ estimates above and must not be
+quoted at all** — note nq_open's 0.0000 was a coincidence of two draws scoring
+identically (105/3610 each), not low variance. Full derivation:
+`../SEED45_VERDICT.md` §3; machine-readable `../evidence/a03_sigma_run_n3.json`.
 
 ### C-3. Does the MMLU axis move at all across the CPT trajectory?
 
@@ -565,13 +621,13 @@ the stale hash as a provenance check.
 | # | claim | strength | may be published as-is? |
 |---|---|---|---|
 | A-1 | pruned+healed 1B `keep7+fresh2` @200k is BH-significantly above its own construct-appropriate null on 4/5 certified closed-book interfaces; step-500 control at/below floor | **solid**; level-vs-floor, immune to §B-1 | yes, with its scope conditions and with `/reported` ≠ recovery (B-4) |
-| A-2 | ~~at step220000, on one fixed sampler seed, Arm 3 (+0.4793 SIG) and Arm 6 (+0.5016 SIG) both show TriviaQA EM ≈ +0.5 pp~~ | ❌ **RETRACTED 2026-08-11** — C-1 returned the ARTIFACT branch (0/2 seeds CONFIRM; −0.3455 SIG-negative on seed 44) | **never** — see `DATAORDER_VERDICT.md` |
+| A-2 | ~~at step220000, on one fixed sampler seed, Arm 3 (+0.4793 SIG) and Arm 6 (+0.5016 SIG) both show TriviaQA EM ≈ +0.5 pp~~ | ❌ **RETRACTED 2026-08-11, re-confirmed at n=3 on 2026-08-12** — C-1 returned the ARTIFACT branch (**0/3** seeds CONFIRM; −0.3455 SIG-negative on seed 44 and −0.3622 SIG-negative on seed 45) | **never** — see `DATAORDER_VERDICT.md` + `SEED45_VERDICT.md` |
 | A-3 | early-CPT (step205000) damage orders Arm3 < Arm6 < Arm4 on 4 axes | **suggestive only** | no |
 | B-1..B-9 | see §B | **dead** | never |
-| C-1 | sampler-seed replication, seeds 43/44 | **CLOSED 2026-08-11 → ARTIFACT** (0/2 CONFIRM) | yes, as a negative result: `DATAORDER_VERDICT.md` |
-| C-2 | run-to-run variance floor | **does not exist** | — |
+| C-1 | sampler-seed replication, seeds 43/44/**45** | **CLOSED 2026-08-11 → ARTIFACT; re-confirmed 2026-08-12 at n=3** (0/3 CONFIRM). Seed 45 was the last run under the prereg — **no seed 46**. | yes, as a negative result: `DATAORDER_VERDICT.md` + `SEED45_VERDICT.md` |
+| C-2 | run-to-run variance **floor** | **does not exist, and never will** — but σ_run *estimates with intervals* now do: keep7-20k triviaqa em **s = 0.4039 pp, df = 3, χ² 95 % CI [0.229, 1.506]** (4 sampler-seed draws); pooled with keep12-5k **0.3666 pp, df = 5, χ² [0.229, 0.899]** | only in the form "σ̂ = X pp at df = Y, χ² 95 % CI [lo, hi]" — **never** as a bare point estimate and **never** as a "noise floor" (prereg §4) |
 | C-3 | MMLU trajectory | **provisional**, untracked evidence | no |
-| C-4 | the 6-arm parametric-vs-external-memory study | **never run**; and as of **2026-08-11 it will not be** — `../ARM_SET_DECISION.md` executed A03's own no-GPU arm-set gate and returned **ARCHIVE**. No reduced arm set both targets an effect larger than the apparatus's measured spread (pooled σ_run 0.3620 pp, df=4, χ² 95 % CI [0.217, 1.040] ⇒ MDE 1.10 pp at S=3) and answers A03's question. | — |
+| C-4 | the 6-arm parametric-vs-external-memory study | **never run**; and as of **2026-08-11 it will not be** — `../ARM_SET_DECISION.md` executed A03's own no-GPU arm-set gate and returned **ARCHIVE**. No reduced arm set both targets an effect larger than the apparatus's measured spread (pooled σ_run **0.3666 pp, df=5, χ² 95 % CI [0.229, 0.899] ⇒ MDE 1.11 pp at S=3**, 2.73 pp at that interval's upper end; ~~0.3620 pp, df=4, [0.217, 1.040], MDE 1.10 pp~~ before sampler seed 45 landed) and answers A03's question. | — |
 
 ---
 
@@ -584,16 +640,23 @@ point of putting it here rather than editing above. Specifically:
   changed is its *home*: A-1 is a level-vs-floor null-calibration result, i.e. **A01's
   thesis**, and §B-4's own erratum note already records that A03's analyzer and A01's
   agree on the number. So A-1 **migrates to A01** rather than becoming a narrowed A03.
-* **A-2 remains RETRACTED** (branch ARTIFACT). Pooling the three sampler-seed draws of
-  that same arm — seed 0 (the original Arm 3), 43, 44 — gives mean **+0.0818 pp,
-  s = 0.4132, df = 2, CI95 [−0.945, +1.108] pp** = **0.26 % [−3.04 %, +3.56 %]** of the
+* **A-2 remains RETRACTED** (branch ARTIFACT). Pooling the **four** sampler-seed draws of
+  that same arm — seed 0 (the original Arm 3), 43, 44, **45** — gives mean **−0.0293 pp,
+  s = 0.4039, df = 3, CI95 [−0.672, +0.613] pp** = **−0.09 % [−2.16 %, +1.97 %]** of the
   31.10 pp intact-minus-pruned TriviaQA EM deficit. This is a **post-hoc descriptive**
   aggregate, reported for the *design* question only (prereg §3.6 keeps triviaqa em the
   sole primary endpoint; §4 bars σ claims from tiny d.o.f.). It does **not** revive,
-  restate or amend A-2.
-* **C-1's verdict is untouched.** Seed 45 was still training at 20:54 GMT+8
-  (`step 215460/300000`); `../SEED45_PREDECLARATION.md` §3 pre-fixes both reachable
-  branches and both retract A-2, so no outcome of it changes anything here.
+  restate or amend A-2 — and note it moved *away* from the retracted claim's sign, not
+  toward it. *(~~n = 3 draws: mean +0.0818 pp, s = 0.4132, df = 2,
+  CI95 [−0.945, +1.108] = 0.26 % [−3.04 %, +3.56 %]~~ — superseded 2026-08-12.)*
+* **C-1's verdict is untouched, and is now closed at n=3.** ~~Seed 45 was still training
+  at 20:54 GMT+8 (`step 215460/300000`)~~ — it landed 2026-08-11 23:29 and returned
+  **θ = −0.3622 pp, CI95 [−0.5517, −0.1838], SIG negative → NOT-CONFIRM**, so the
+  aggregate is **0/3 CONFIRM** and ARTIFACT stands. `../SEED45_PREDECLARATION.md` §3
+  pre-fixed both reachable branches and both retract A-2, so this outcome changes
+  nothing here — which is exactly what made running it legitimate rather than optional
+  stopping. **Seed 45 was the last run under the prereg; there is no seed 46.**
+  Verdict + σ recompute: `../SEED45_VERDICT.md`.
 * Decision + arithmetic: `../ARM_SET_DECISION.md`. Cause-of-death write-up:
   `../POSTMORTEM.md`. Machine-readable: `../STATUS.json:arm_set_decision`.
 

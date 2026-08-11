@@ -126,19 +126,33 @@ shared/literature/RELATED_WORK_GAP_AUDIT_20260808.md
      Pilot Zero 是单 checkpoint 的 level 对比，结构上不继承杀死 A-2 的 sampler-seed
      方差，`DATAORDER_VERDICT.md`「Does NOT mean」#1 已明写）。真正的依赖是：
      A03 在**共用同一套装置**上把 CPT recovery increment 测成
-     **+0.0818 pp，CI95 [−0.945, +1.108]**（= 31.10 pp 缺口的 **0.26%**，CI 含 0），
+     **−0.0293 pp，CI95 [−0.672, +0.613]**（4 个 sampler-seed draw；= 31.10 pp 缺口的
+     **−0.09%**，CI 含 0；n=3 时读作 +0.0818 pp / +0.26%），
      而 certification rule 只能对**会动**的 recovery trajectory 做出有信息量的裁决。
+     **2026-08-12 seed 45 落地后这条理由更强了**：点估计跨过零，从 +0.08 pp 变成 −0.03 pp。
    - ⚠️ `STAGE_B_DECISION.md` 问的那 **135 GPU-h 已经花掉了**（Path A 于 08-11 05:53
      启动；seeds 101/102/103 全部训完并在四轴评完，
      `evidence/stageB_S3_verdict.json` = `STAGE_A_DOES_NOT_FIRE`）。真正待批的是
      **Pilot Two（1077-4309 GPU-h，需用户显式批准）**。**批之前必须先在 prereg 里
      pre-data 写明「要裁决多大的 recovery，并证明它大于所选 S 对应的 MDE」**
-     （S=3 → 1.10 pp @ σ̂=0.362；σ 的 χ² 上界处 3.16 pp）。
+     （S=3 → **1.11 pp @ σ̂=0.3666（df=5）**；σ 的 χ² 上界 0.899 处 **2.73 pp**；
+     S=8 → 0.55 / 1.35 pp。~~df=4 时是 1.10 / 3.16~~，2026-08-12 已按 df=5 重述。
+     悲观端门槛**降低**了 14%，但**该不该花这笔算力的理由反而更弱**——见上一条）。
+     该门槛现已写进 `A04/STATUS.json:next_gate[4]` 本身（此前只存在于 prose 里，
+     gate 自己不带 bar）。
+   - ★ **Path B 不要买**：它要的「keep7 两个额外 seed 跑到 n=4/df=3」在 seed 45
+     落地后**已经交付**，边际成本 **0 GPU-h**（keep7-20k 现为 S=4、df=3、
+     s=0.4039 pp、χ² [0.229, 1.506]，另三轴也首次有了 df=3 的真 σ）。
+     ⚠️ 但这**不能**关掉 K2 的悲观端：K2 的 prereg estimator 用的是 **keep12** 组
+     自己 df=2 的 σ，seed 45 是 keep7 draw，**K2 算术分毫未动**——popqa 在 keep12
+     σ 的 χ² 上界处仍会触发（3.526 vs Δ=1.321）。要关掉它只能加 **keep12** 的 seed。
    - 另一条已被证伪的设计假设：**spread 不随 damage 单调**——keep12 在
-     popqa/mmlu_content/nq_open 上的 σ 比 keep7 **更大**（mmlu 高 3.1×）。
+     popqa/mmlu_content/nq_open 上的 σ 比 keep7 **更大**（2026-08-12 更新：keep7 四轴
+     现均为 df=3 的真 σ，所以这条不再是「σ 对比 df=1 range」；倍数为 popqa 1.7×、
+     nq_open 2.8×、mmlu_content **1.4×**——旧文写的 3.1× 是 df=1 range 造成的高估）。
      按「损伤越小方差越小」排 seed 预算是错的。
      完整表述见 `archive/A03-.../STATUS.json:consequence_for_A04_135gpuh` 与
-     `archive/A03-.../ARM_SET_DECISION.md` §4。
+     `archive/A03-.../ARM_SET_DECISION.md` §4、`archive/A03-.../SEED45_VERDICT.md` §4。
 
 ### 已归档（物理目录 2026-08-11 已移入 `archive/`）
 
@@ -146,11 +160,16 @@ shared/literature/RELATED_WORK_GAP_AUDIT_20260808.md
   （执行了它自己的 `next_gate[0]`，**零 GPU**）。判定：`ARM_SET_DECISION.md`；
   死因复盘：`POSTMORTEM.md`。
   - **不是 kill clause 触发**，而是 **effect size vs 装置自身 spread**：
-    pooled σ_run = **0.3620 pp（df=4，χ² 95% CI [0.217, 1.040]）** →
-    两臂 S=3 的 MDE = **1.10 pp**（σ 上界处 **3.16 pp**）。A03 剩下的**训练配方类臂**
+    pooled σ_run = **0.3666 pp（df=5，χ² 95% CI [0.229, 0.899]）** →
+    两臂 S=3 的 MDE = **1.11 pp**（σ 上界处 **2.73 pp**）。A03 剩下的**训练配方类臂**
     目标效应全部 ≤1 pp，**任何可负担的 S 都测不出来**（S=8 要 1451 GPU-h，
-    在 σ 上界处也只到 1.57 pp）。
-  - 三条腿的结局：**参数腿（CPT）测出来是 0**（+0.0818 pp，CI 含 0，= 缺口的 0.26%；
+    在 σ 上界处也只到 1.35 pp）。
+    *（~~df=4 时：0.3620 pp、χ² [0.217, 1.040]、MDE 1.10 / 3.16 / S=8 上界 1.57~~ ——
+    2026-08-12 seed 45 落地后已重算为 df=5；旧值保留划线，不静默删除。
+    点估计只动了 +1.3%，χ² 上界收紧 22%，**判定不翻转、反而两头都更硬**：
+    见 `SEED45_VERDICT.md` §4.1。）*
+  - 三条腿的结局：**参数腿（CPT）测出来是 0**（**−0.0293 pp**，CI95 [−0.672, +0.613]，
+    = 缺口的 **−0.09%**，4 个 sampler-seed draw；~~n=3 时 +0.0818 pp / 0.26%~~；
     而 200k heal 的 **52.43 B token**、906.7 GPU-h 也没补上 31.10 pp 的缺口）；
     **RAG 腿两个盘都没有资产**（实测：PopQA 缓存 arrow schema 17 列**无 passage 字段**、
     TriviaQA 只缓存 `rc.nocontext`、`data/` 无 Wikipedia passage index、
@@ -182,17 +201,29 @@ shared/literature/RELATED_WORK_GAP_AUDIT_20260808.md
     （`git ls-files proposal/` 返回 0），所以 `git mv` **不会**传播到那边；
     A04 脚本里那个 positive `_FIX_MARKER` stale-copy 断言因此**必须保留**。
   - 读该目录前先读 `claims/A03_SURVIVING_CLAIMS.md`（claim 的唯一权威；§B 有 9 条
-    已死 claim，不得复活）。**seed 45 仍在跑，但两个可达分支都撤回 A-2**
-    （`SEED45_PREDECLARATION.md` §3），它落地不改变本判定。
-  - ★ **seed 45 落地后的接力（归档不作废它）**：它给 keep7-20k 组加第三个 draw，
-    把 pooled σ_run 从 df=4 提到 df=5，收紧的正是支撑本归档判定与 A04 Pilot Two
-    MDE 门槛的那个 χ² 区间。**不要 kill、不要改 output_dir / result namespace**
-    （`A03_1B_dataorder_seed45_step220000` + `_nq`）。
-    ⚠️ **实测 2026-08-11 21:30：`.82` 上只有 trainer 在跑，watcher 进程不存在**
-    （`pgrep -af watcher` 空、`logs/a03_dataorder_seed45_eval_progress.log` 不存在），
-    所以 step220000 落地后**不会自动 eval**，必须有人手动投。
-    具体命令与 σ_run/χ² 重算口径见
-    `archive/A03-parametric-vs-external-memory/SEED45_HANDOFF.md`。
+    已死 claim，不得复活）。
+  - ✅ **seed 45 已收尾（2026-08-12 00:10，task #243）—— 判定不变，A-2 仍撤回。**
+    它是本 prereg 下的**最后一个 run**（**没有 seed 46**）。结果：
+    primary 轴 triviaqa em **θ = −0.3622 pp，CI95 [−0.5517, −0.1838]，SIG 负**
+    → **NOT-CONFIRM**（同时不满足 θ>0 与 [+0.20,+0.80] band）→ 聚合
+    **0/3 CONFIRM → ARTIFACT**（维持现状）。两个可达分支**都**撤回 A-2，且这一点在
+    run 之前就写死在 `SEED45_PREDECLARATION.md` §3 里，数字落地后不得重新论证。
+    - ckpt 完好：`step220000.pt` 与 step205/210/215000 **字节数完全相同**
+      （12,181,311,650 B），v1 停止竞态（曾把 Arm 4 截到 49%）**这次没触发**；
+      trainer `rc=1` 是 `kill -TERM` 的预期返回码，不是崩溃。
+    - shard 完整性：四轴 × (arm + baseline) 共 8 个 cell 全部 **8/8 shard、
+      n_scored == expected**（popqa 14267 / triviaqa 17944 / nq_open 3610 / mmlu 14042）、
+      **0 重复 item_id、0 nan**。
+    - σ_run 交付：keep7-20k → **S=4、df=3、s=0.4039 pp、χ² [0.229, 1.506]**
+      （另三轴首次有真 σ：popqa 0.1959 / nq_open 0.0750 / mmlu_content 0.0555 pp，
+      取代此前不可引用的 df=1 pairwise range 0.2726 / 0.0000 / 0.0252）；
+      pooled → **df=5、0.3666 pp、χ² [0.229, 0.899]**。
+    - 判定文档 `archive/A03-.../SEED45_VERDICT.md`；证据
+      `evidence/a03_cpt_trajectory_paired_full_with_seed45.json`、
+      `evidence/a03_sigma_run_n3.json`、`evidence/a03_seed45_integrity.json`。
+    - ⚠️ 历史坑（保留）：seed 45 的 eval **不会自动触发**——
+      `_run_a03_dataorder_repl.sh` 只有 trainer-stop watcher，没有 eval watcher
+      （2026-08-11 21:30 实测 `pgrep -af watcher` 为空）。这次是手动投的。
 
 ### Backlog
 
