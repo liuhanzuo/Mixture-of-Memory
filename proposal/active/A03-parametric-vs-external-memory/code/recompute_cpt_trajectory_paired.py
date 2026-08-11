@@ -18,83 +18,39 @@ arm simply has not run yet). A result dir that EXISTS but holds fewer than 8
 shards is a hard SystemExit for both closedbook and MMLU. That distinction is
 load-bearing: a silently-merged 5/8 shard set has ruined results in this repo
 before.
+
+MMLU loader defect, fixed 2026-08-10 (see load_mmlu docstring): the previous
+`load_mmlu` guessed FLAT key names (`letter_correct` / `content_norm_correct`
+/ `em`) that the eval harness never writes -- the real records are NESTED
+(`letter.correct`, `content_norm.correct`). Every lookup fell through to a None
+default and the caller's `is not None` guard then dropped the cell with no
+marker, so ALL 12 MMLU cells (arm3/arm4/arm6 x 4 dose points) were missing from
+the canonical evidence JSON while four .md files asserted MMLU was flat. The
+loader now reads the nested keys and hard-fails on any schema surprise.
+
+LOADERS RELOCATED 2026-08-11 -- no behavioural change.
+`load_cb` / `load_mmlu` / `paired` / `NotRunYet` and the ROOT/CB/MM/N_BOOT/SEED/
+NSHARD/N_MMLU constants now live in `proposal/shared/code/canonical_eval_loaders.py`
+and are imported below. Their bodies were moved BYTE-FOR-BYTE; the assertions
+(8/8 shards, exact item count, duplicate item_id, nan rejection) and the
+bootstrap protocol (n_boot=5000, seed=42, CI95 percentile) are unchanged, and the
+A04 Stage-A/Stage-B verdict JSONs were re-derived after the move and compared
+field-by-field to the archived copies before the A03 directory was moved. The
+reason for the lift: A03 is archived, while A04's numbers and this script's own
+seed-45 recompute both depend on these loaders -- leaving them inside an archived
+proposal is what blocked the move. A04 also used to obtain them by reading THIS
+file's source text and exec-ing everything before the `BASE = ` line (this module
+has no __main__ guard); that textual coupling is now gone.
 """
 import json, os, sys
 from pathlib import Path
 import numpy as np
 
-ROOT = Path("/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory")
-CB = ROOT / "olmo2_closedbook_results"
-MM = ROOT / "olmo2_mmlu_content_results"
-N_BOOT, SEED, NSHARD = 5000, 42, 8
-
-
-class NotRunYet(Exception):
-    """Result dir absent entirely -- the arm has not been evaluated yet.
-
-    Kept strictly separate from the partial-shard case below: 'not run' is a
-    schedule fact, '5/8 shards' is a data-integrity FAILURE. Collapsing the two
-    is how a partial set gets silently merged, which has ruined results here
-    before. Only the first is tolerated.
-    """
-
-
-def load_cb(d, task):
-    """item_id -> (em, contains, f1); asserts all 8 shards present."""
-    got = {}
-    if not (CB / d).is_dir():
-        raise NotRunYet(f"{d} absent")
-    files = sorted((CB / d).glob(f"per_example_{task}_shard*of{NSHARD}.jsonl"))
-    if len(files) != NSHARD:
-        raise SystemExit(f"FATAL {d}/{task}: {len(files)}/{NSHARD} shards -- refusing "
-                         "(a silently-merged partial set has ruined results here before)")
-    for f in files:
-        for ln in f.open():
-            ln = ln.strip()
-            if not ln:
-                continue
-            r = json.loads(ln)
-            got[r["item_id"]] = (r["em"], r["contains"], r["f1"])
-    return got
-
-
-def load_mmlu(d):
-    got = {}
-    if not (MM / d).is_dir():
-        raise NotRunYet(f"{d} absent")
-    files = sorted((MM / d).glob(f"per_example_mmlu_shard*of{NSHARD}.jsonl"))
-    if len(files) != NSHARD:
-        # Same rule as load_cb: a present-but-partial set is a FAILURE, never a
-        # silent skip. Previously this returned None, which made a 5/8 MMLU set
-        # indistinguishable from "not evaluated" and simply dropped the cell.
-        raise SystemExit(f"FATAL {d}/mmlu: {len(files)}/{NSHARD} shards -- refusing "
-                         "(a silently-merged partial set has ruined results here before)")
-    for f in files:
-        for ln in f.open():
-            ln = ln.strip()
-            if not ln:
-                continue
-            r = json.loads(ln)
-            iid = r.get("item_id", r.get("idx"))
-            L = r.get("letter_correct", r.get("correct_letter", r.get("em")))
-            C = r.get("content_norm_correct", r.get("correct_content_norm",
-                r.get("content_correct")))
-            got[iid] = (L, C)
-    return got
-
-
-def paired(base, arm, idx):
-    """CI95 of mean(arm-base) in percentage points."""
-    b = np.array([base[i] for i in idx], dtype=float)
-    a = np.array([arm[i] for i in idx], dtype=float)
-    d = a - b
-    rng = np.random.default_rng(SEED)
-    n = len(d)
-    boots = d[rng.integers(0, n, size=(N_BOOT, n))].mean(axis=1) * 100.0
-    lo, hi = np.percentile(boots, [2.5, 97.5])
-    delta = float(d.mean() * 100.0)
-    return {"n": n, "delta_pp": delta, "ci95_pp": [float(lo), float(hi)],
-            "verdict": "SIG" if (lo > 0 or hi < 0) else "TIE"}
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "shared" / "code"))
+from canonical_eval_loaders import (  # noqa: E402
+    CB, MM, N_BOOT, N_MMLU, NSHARD, ROOT, SEED,
+    NotRunYet, load_cb, load_mmlu, paired,
+)
 
 
 BASE = "A03_1B_keep7_step200k"
@@ -124,12 +80,22 @@ ARMS = {
 out = {
     "protocol": f"per-item paired diff bootstrap n_boot={N_BOOT} seed={SEED}, CI95 percentile; SIG = CI excludes 0",
     "baseline": BASE,
-    "regenerated": "2026-08-09 from 8/8 per-item shards; supersedes the volatile "
+    "regenerated": "2026-08-10 from 8/8 per-item shards. Supersedes (a) the volatile "
                    ".82:/tmp/a03_arm3_cpt_trajectory_paired.json (md5 37149d4d59bf941c1dbc05f17260f0b2), "
-                   "which held MMLU step205/210k only and never contained triviaqa",
+                   "which held MMLU step205/210k only and never contained triviaqa, and "
+                   "(b) evidence/arm3_arm4_arm6_cpt_trajectory_paired_full.json (2026-08-09), "
+                   "which had NO mmlu key on any of its 12 cells because load_mmlu read "
+                   "flat key names the harness never writes. Closed-book cells are "
+                   "byte-identical to (b); the mmlu axis is newly recovered.",
     "shard_integrity": f"every cell asserts {NSHARD}/{NSHARD} shards; script exits non-zero otherwise",
+    "mmlu_axis": f"letter + content_norm, n={N_MMLU} asserted per arm, nan rows rejected; "
+                 "recovered 2026-08-10 after a silent loader defect had dropped it entirely",
     "arms": {},
 }
+
+# Every cell must carry every axis. The defect this script was fixed for was a
+# MISSING key, not a wrong number, so absence is what gets asserted.
+EXPECTED_AXES = ("popqa", "triviaqa", "nq_open", "mmlu")
 
 for arm, ckpts in ARMS.items():
     out["arms"][arm] = {}
@@ -155,21 +121,36 @@ for arm, ckpts in ARMS.items():
                 "contains": paired({i: bb[i][1] for i in idx}, {i: aa[i][1] for i in idx}, idx),
                 "f1":       paired({i: bb[i][2] for i in idx}, {i: aa[i][2] for i in idx}, idx),
             }
+        # --- MMLU (letter + content_norm) -----------------------------------
+        # Both interfaces are ALWAYS emitted when the dirs exist. The old code
+        # wrapped these in `if idx and all(... is not None ...)` guards, which
+        # -- combined with the None-filled loader -- deleted the cell key
+        # entirely and left no trace in the JSON. Any failure now either raises
+        # (load_mmlu) or lands as an explicit "pending"/"error" marker.
         try:
             mb, ma = load_mmlu(BASE), load_mmlu(d)
         except NotRunYet as e:
-            mb, ma = None, None
             cell["mmlu"] = {"pending": str(e)}
-        if mb and ma:
+        except SystemExit as e:
+            cell["mmlu"] = {"error": str(e)}
+        else:
             idx = sorted(set(mb) & set(ma))
-            if idx and all(mb[i][0] is not None for i in idx[:5]):
-                cell["mmlu"] = {
-                    "letter": paired({i: mb[i][0] for i in idx}, {i: ma[i][0] for i in idx}, idx),
-                }
-                if all(mb[i][1] is not None for i in idx[:5]):
-                    cell["mmlu"]["content_norm"] = paired(
-                        {i: mb[i][1] for i in idx}, {i: ma[i][1] for i in idx}, idx)
+            if len(idx) != N_MMLU:
+                raise SystemExit(
+                    f"FATAL {d}/mmlu: only {len(idx)}/{N_MMLU} item_ids overlap the "
+                    f"baseline {BASE} -- paired MMLU requires the identical item set")
+            cell["mmlu"] = {
+                "letter": paired({i: mb[i][0] for i in idx},
+                                 {i: ma[i][0] for i in idx}, idx),
+                "content_norm": paired({i: mb[i][1] for i in idx},
+                                       {i: ma[i][1] for i in idx}, idx),
+            }
         out["arms"][arm][label] = cell
+        missing = [a for a in EXPECTED_AXES if a not in cell]
+        if missing:
+            raise SystemExit(f"FATAL {arm}/{label}: axes {missing} produced NO key at all. "
+                             "This is exactly the 2026-08-10 mmlu defect -- an axis must "
+                             "always land as a result, a 'pending', or an 'error'.")
 
 dest = sys.argv[1] if len(sys.argv) > 1 else "/tmp/a03_cpt_trajectory_paired_full.json"
 Path(dest).write_text(json.dumps(out, indent=2))

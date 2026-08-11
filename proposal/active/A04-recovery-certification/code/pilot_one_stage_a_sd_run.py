@@ -18,7 +18,7 @@ arm3-vs-arm6 +0.99966).
 
 LOADERS ARE IMPORTED, NEVER REIMPLEMENTED
 -----------------------------------------
-`load_cb` and `load_mmlu` come from A03's `recompute_cpt_trajectory_paired.py`.
+`load_cb` and `load_mmlu` come from `proposal/shared/code/canonical_eval_loaders.py`.
 This is not merely a style rule here: on 2026-08-10 a hand-written `load_mmlu`
 that GUESSED flat key names (`letter_correct`, `content_norm_correct`) against a
 NESTED record silently returned None for every MMLU cell, dropping a whole axis
@@ -27,6 +27,20 @@ Re-deriving a loader for this script would reopen exactly that defect. The
 imported versions also carry the shard-completeness assertions (8/8, exact item
 counts, duplicate-item_id and NaN checks) that a silent 5-of-8 merge has
 previously defeated.
+
+RELOCATED 2026-08-11 -- same loaders, same numbers, no longer inside A03.
+They used to live in
+`A03-parametric-vs-external-memory/code/recompute_cpt_trajectory_paired.py`, and
+this script obtained them by reading that file's SOURCE TEXT, truncating it at the
+first `BASE = ` assignment, and `exec`-ing the remainder -- necessary because the
+A03 module has no `__main__` guard and runs its whole trajectory driver at module
+scope. On 2026-08-11 A03 was decided ARCHIVE (`ARM_SET_DECISION.md`), and that
+textual coupling to A03's directory was the one thing physically blocking the
+move. The loader bodies were therefore lifted to `proposal/shared/code/`
+BYTE-FOR-BYTE -- every assertion and the n_boot=5000 / seed=42 / CI95 protocol
+unchanged -- and this script now imports them normally. This script's Stage-A
+verdict and the Stage-B S2/S3 verdicts were re-derived after the lift and compared
+field-by-field against the archived JSONs BEFORE the move was made.
 
 THE ESTIMATOR AND THE RULE, BOTH FIXED BEFORE THE DATA
 ------------------------------------------------------
@@ -63,49 +77,37 @@ import os
 import sys
 from pathlib import Path
 
-# --- import A03's canonical loaders by path (its dir is not a package) --------
+# --- canonical loaders: a NORMAL import from proposal/shared/code -------------
 #
-# ⚠️ A03's module has NO `if __name__ == "__main__":` guard -- its whole trajectory
-# analysis runs at module scope. A naive exec_module() therefore re-runs that
-# entire analysis (printing dozens of cell lines, re-reading every arm, and
-# potentially calling sys.exit) just to obtain two functions. Worse, its
-# module-level code can raise SystemExit on an unrelated arm's partial shards,
-# which would abort THIS script for a reason having nothing to do with Stage A.
+# This used to read A03's module source, cut it at the first `BASE = `, and exec
+# the prefix (A03's module has no `__main__` guard, so a plain import would have
+# re-run its whole trajectory driver and could have raised SystemExit on an
+# unrelated arm's partial shards). That textual coupling also hard-wired A03's
+# directory path, which is what blocked archiving A03. The loaders now live in
+# `proposal/shared/code/canonical_eval_loaders.py` -- definitions only, so a
+# normal import is both safe and path-stable.
 #
-# So: exec the module source with its trailing module-level driver stripped. We
-# keep everything up to the first top-level statement after the function/class
-# definitions, which is exactly the loader + helper block. If the file's shape
-# ever changes such that the loaders are not found, this fails loudly rather than
-# silently importing a partial module.
-_A03_CODE = (Path(__file__).resolve().parent.parent.parent
-             / "A03-parametric-vs-external-memory" / "code"
-             / "recompute_cpt_trajectory_paired.py")
-if not _A03_CODE.is_file():
-    print(f"[stageA][FATAL] canonical loader module not found: {_A03_CODE}",
+# Failure is LOUD, never a fallback to a locally-derived loader: a silent
+# fallback is exactly the shape the 2026-08-10 MMLU defect took.
+_SHARED_CODE = Path(__file__).resolve().parents[3] / "shared" / "code"
+_LOADER_MODULE = _SHARED_CODE / "canonical_eval_loaders.py"
+if not _LOADER_MODULE.is_file():
+    print(f"[stageA][FATAL] canonical loader module not found: {_LOADER_MODULE}",
           file=sys.stderr)
     sys.exit(2)
 
-_SRC = _A03_CODE.read_text()
-# The module-level driver begins at the first assignment to BASE (the arm table).
-# Everything before it is imports + constants + class + the loader functions.
-_CUT = _SRC.find("\nBASE = ")
-if _CUT < 0:
-    print("[stageA][FATAL] cannot locate the module-level driver boundary "
-          "('BASE = ') in the A03 loader module. Its shape changed; refusing to "
-          "exec it wholesale because it has no __main__ guard.", file=sys.stderr)
+sys.path.insert(0, str(_SHARED_CODE))
+try:
+    from canonical_eval_loaders import (  # noqa: E402
+        ROOT as _A03_ROOT,
+        NotRunYet,
+        load_cb,
+        load_mmlu,
+    )
+except Exception as _e:      # ImportError, or a numpy/etc. failure inside it
+    print(f"[stageA][FATAL] cannot import canonical loaders from "
+          f"{_LOADER_MODULE}: {_e!r}", file=sys.stderr)
     sys.exit(2)
-
-_a03_ns: dict = {"__name__": "a03_loaders_only", "__file__": str(_A03_CODE)}
-exec(compile(_SRC[:_CUT], str(_A03_CODE), "exec"), _a03_ns)   # noqa: S102
-
-_missing = [n for n in ("load_cb", "load_mmlu", "NotRunYet", "ROOT")
-            if n not in _a03_ns]
-if _missing:
-    print(f"[stageA][FATAL] canonical loaders missing after import: {_missing}",
-          file=sys.stderr)
-    sys.exit(2)
-load_cb, load_mmlu = _a03_ns["load_cb"], _a03_ns["load_mmlu"]
-NotRunYet, _A03_ROOT = _a03_ns["NotRunYet"], _a03_ns["ROOT"]
 
 # Guard against the stale-copy defect that cost this script its first run: the
 # zwfy6 checkout carried the PRE-FIX `load_mmlu` which guessed FLAT key names
@@ -118,10 +120,15 @@ NotRunYet, _A03_ROOT = _a03_ns["NotRunYet"], _a03_ns["ROOT"]
 # flat key names in its own docstring while explaining the bug, so a
 # forbid-the-string test flags the good copy. Assert the fix is present; do not
 # try to enumerate the ways it could be absent.
+#
+# STILL NECESSARY after the 2026-08-11 relocation: zwfy6's `proposal/` tree is a
+# hand-copied directory, NOT a git checkout (`git ls-files proposal/` returns 0
+# there), so it does not receive commits automatically and a stale loader copy on
+# that disk remains possible. This is the check that catches it.
 _FIX_MARKER = 'for iface in ("letter", "content_norm")'
-if _FIX_MARKER not in _SRC[:_CUT]:
-    print("[stageA][FATAL] the A03 loader module on this disk lacks the fixed "
-          "nested-key `load_mmlu` (marker not found: "
+if _FIX_MARKER not in _LOADER_MODULE.read_text():
+    print("[stageA][FATAL] the canonical loader module on this disk lacks the "
+          "fixed nested-key `load_mmlu` (marker not found: "
           f"{_FIX_MARKER!r}). The pre-fix version guesses flat keys against a "
           "nested record and yields (None, None) for every one of the 14,042 "
           "MMLU items, which silently drops the whole axis. Copy the fixed "
@@ -276,12 +283,17 @@ def main():
             "consequence": "this script can never emit K2_CLEARED",
         },
         "provenance": {
-            "loaders": "load_cb / load_mmlu IMPORTED from A03 (module has no "
-                       "__main__ guard, so only its pre-driver prefix is exec'd) "
-                       "code/recompute_cpt_trajectory_paired.py -- not "
+            "loaders": "load_cb / load_mmlu IMPORTED from "
+                       "proposal/shared/code/canonical_eval_loaders.py -- not "
                        "reimplemented; they carry the 8/8 shard, exact-item-count, "
-                       "duplicate-id and NaN assertions",
-            "loader_module": str(_A03_CODE),
+                       "duplicate-id and NaN assertions. Relocated 2026-08-11 "
+                       "BYTE-FOR-BYTE out of A03's "
+                       "code/recompute_cpt_trajectory_paired.py (which has no "
+                       "__main__ guard, so this script used to exec only its "
+                       "pre-driver prefix) so that archiving A03 could not break "
+                       "these numbers; re-verified field-by-field against the "
+                       "pre-move verdict JSONs.",
+            "loader_module": str(_LOADER_MODULE),
             "results_root": str(_A03_ROOT),
             "seeds": [a.seed_a, a.seed_b],
             "dir_template": a.dir_template,

@@ -27,8 +27,18 @@ import sys
 import numpy as np
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
-_A03_CODE = os.path.abspath(os.path.join(
-    _HERE, "..", "..", "A03-parametric-vs-external-memory", "code"))
+# A03 was ARCHIVED 2026-08-11 (proposal/active -> proposal/archive). Its
+# `analyze_1b_knowledge_floor.py` is still the canonical scorer/null source and
+# is imported, never reimplemented. Resolve its directory through the shared
+# helper so the location lives in ONE place and a missing A03 fails loudly
+# instead of silently falling back to a re-derived metric.
+_SHARED_CODE = os.path.abspath(os.path.join(
+    _HERE, "..", "..", "..", "shared", "code"))
+if _SHARED_CODE not in sys.path:
+    sys.path.insert(0, _SHARED_CODE)
+from proposal_paths import a03_code_dir  # noqa: E402
+
+_A03_CODE = a03_code_dir()
 if _A03_CODE not in sys.path:
     sys.path.insert(0, _A03_CODE)
 from analyze_1b_knowledge_floor import SEED, paired_bootstrap  # noqa: E402

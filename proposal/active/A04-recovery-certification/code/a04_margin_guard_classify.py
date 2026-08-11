@@ -42,6 +42,25 @@ import argparse
 import json
 import math
 import os
+import sys
+
+
+def _a03_dir(proposal_dir):
+    """Absolute path to A03's proposal dir, wherever it currently lives.
+
+    A03 was ARCHIVED 2026-08-11 (`proposal/active` -> `proposal/archive`), so a
+    hard-coded `../A03-...` no longer resolves. The location is kept in ONE place
+    (`proposal/shared/code/proposal_paths.py`) and a genuinely missing A03 raises
+    rather than yielding a path that silently does not exist -- this script's
+    `--a03_4axes` default is a *measured* null table, and a wrong-but-plausible
+    default would be read as data.
+    """
+    shared = os.path.abspath(os.path.join(
+        proposal_dir, "..", "..", "shared", "code"))
+    if shared not in sys.path:
+        sys.path.insert(0, shared)
+    from proposal_paths import a03_code_dir  # noqa: E402
+    return os.path.dirname(a03_code_dir())
 
 # ---------------------------------------------------------------------------
 # The pre-registered constants this guard is an amendment to. Copied here ONLY
@@ -228,8 +247,7 @@ def main():
     ap.add_argument("--pilot_zero", default=os.path.join(
         root, "evidence", "pilot_zero_rule_disagreement.json"))
     ap.add_argument("--a03_4axes", default=os.path.abspath(os.path.join(
-        root, "..", "A03-parametric-vs-external-memory", "evidence",
-        "a03_1b_floor_nulls_4axes.json")))
+        _a03_dir(root), "evidence", "a03_1b_floor_nulls_4axes.json")))
     ap.add_argument("--a01_conv", default=os.path.abspath(os.path.join(
         root, "..", "A01-null-calibration-methodology", "evidence",
         "gate3_content_null_conventions.json")))
