@@ -1130,7 +1130,8 @@
     "tightest_axis": "popqa, bound_3 0.5610 vs Delta 1.3205 = 2.35x headroom",
     "superseded_file": "evidence/pilot_one_stageB_S2_verdict.json (carried Stage A's gate string + caveat on Stage B data)",
     "CRITICAL_CAVEAT": "K2 not firing is NECESSARY not sufficient. keep12 is a CONSTANT-REJECT rung: NI rejects on 4/4 axes by 27.0-90.4x sd_run, recovery only 22.06-31.77%. A saturated deficit is highly reproducible, so low seed variance is exactly what saturation looks like; K2 is a variance gate and is structurally BLIND to it. Stage B passed its kill gate and still failed its purpose.",
-    "pilot_two_status": "BLOCKED. 1,077-4,309 GPU-h must not be committed until a NEW pre-data doc shows a rung exists where NI can be OBSERVED TO ACCEPT; otherwise the gate can only ever confirm rejection."
+    "pilot_two_status": "BLOCKED. 1,077-4,309 GPU-h must not be committed until a NEW pre-data doc shows a rung exists where NI can be OBSERVED TO ACCEPT; otherwise the gate can only ever confirm rejection.",
+    "MAIN_correction_20260812_1630": "My 3fbf49a S=3 recompute DUPLICATED d8ba7b7 (95 min earlier). Numbers agree exactly, so the arithmetic is independently corroborated -- but the EARLIER file is canonical because it also carries a chi2 95% CI on sigma_run that I omitted. Consequence I had missed and which must ship with any K2 statement: at the UPPER end of sigma's CI, popqa's bound_S3 rises to 3.526 pp vs delta 1.3205 pp and WOULD exceed (n_decision_axes_exceeding_at_sigma_ci_hi = 1). With df=2 the sigma estimate is very imprecise. K2 DOES NOT FIRE under the pre-registered point-estimate rule, but the verdict is FRAGILE on one of three decision axes and must be reported as such."
   },
   "defects_found_20260811": [
     {

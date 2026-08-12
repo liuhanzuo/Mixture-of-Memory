@@ -6,7 +6,11 @@
   "gpu_h_spent_this_step": 0,
   "statistic": {
     "S": 3,
-    "seeds": ["101", "102", "103"],
+    "seeds": [
+      "101",
+      "102",
+      "103"
+    ],
     "dir_template": "A04_1B_stageB_keep12_seed{seed}_step5000",
     "note_nq_dir": "nq_open lives in a SEPARATE dir suffixed _nq, not alongside triviaqa/popqa",
     "sd": "proper sample sd over 3 draws, df=2 (NOT Stage A's |m_a-m_b|/sqrt(2))",
@@ -14,22 +18,74 @@
     "rule": "K2 FIRES iff bound_3 > Delta on >= 2 of the 3 DECISION axes (PILOT_ONE_PREREG.md 2.2)"
   },
   "axes": {
-    "triviaqa":     {"role": "decision", "em": [9.2566, 9.6634, 9.0727],    "sd_run": 0.3023, "bound_3": 0.5096, "delta": 4.043134195274186,  "bound_gt_delta": false},
-    "popqa":        {"role": "decision", "em": [5.5793, 4.9415, 5.0957],    "sd_run": 0.3328, "bound_3": 0.5610, "delta": 1.3205298941613512, "bound_gt_delta": false},
-    "mmlu_content": {"role": "decision", "acc": [31.6194, 31.6978, 31.7761], "sd_run": 0.0783, "bound_3": 0.1321, "delta": 1.0238926078906136, "bound_gt_delta": false},
-    "nq_open":      {"role": "DEMOTED -- no decision weight", "em": [2.7147, 2.2992, 2.4654], "sd_run": 0.2091, "bound_3": 0.3526, "delta": 0.9695290858725762, "bound_gt_delta": false}
+    "triviaqa": {
+      "role": "decision",
+      "em": [
+        9.2566,
+        9.6634,
+        9.0727
+      ],
+      "sd_run": 0.3023,
+      "bound_3": 0.5096,
+      "delta": 4.043134195274186,
+      "bound_gt_delta": false
+    },
+    "popqa": {
+      "role": "decision",
+      "em": [
+        5.5793,
+        4.9415,
+        5.0957
+      ],
+      "sd_run": 0.3328,
+      "bound_3": 0.561,
+      "delta": 1.3205298941613512,
+      "bound_gt_delta": false
+    },
+    "mmlu_content": {
+      "role": "decision",
+      "acc": [
+        31.6194,
+        31.6978,
+        31.7761
+      ],
+      "sd_run": 0.0783,
+      "bound_3": 0.1321,
+      "delta": 1.0238926078906136,
+      "bound_gt_delta": false
+    },
+    "nq_open": {
+      "role": "DEMOTED -- no decision weight",
+      "em": [
+        2.7147,
+        2.2992,
+        2.4654
+      ],
+      "sd_run": 0.2091,
+      "bound_3": 0.3526,
+      "delta": 0.9695290858725762,
+      "bound_gt_delta": false
+    }
   },
   "verdict": "K2_DOES_NOT_FIRE",
   "axes_exceeding_delta": "0 of 3 decision axes (rule needs >= 2)",
   "margin": "the tightest axis is popqa: bound_3 0.5610 vs Delta 1.3205 = 2.35x headroom. triviaqa 7.93x, mmlu_content 7.75x.",
   "integrity_asserts_passed": {
     "shards": "8/8 on every seed x every task (9/9 cells)",
-    "exact_item_counts": {"triviaqa": 17944, "popqa": 14267, "nq_open": 3610, "mmlu_content": 14042},
+    "exact_item_counts": {
+      "triviaqa": 17944,
+      "popqa": 14267,
+      "nq_open": 3610,
+      "mmlu_content": 14042
+    },
     "duplicate_item_id": "0 in all 9 cells",
     "nan_rows": "0 in all 9 cells",
     "note": "item counts were DERIVED from disk (constant across 6 independent 7B arms), not assumed"
   },
   "correction_to_prior_record": "README_MISLABEL_WARNING_20260812.md said seed 103 lacked eval numbers and told the harvesting agent to check before spending GPU. It was WRONG: seed 103 has complete 8/8 evals on all four axes, dated 2026-08-11. So Pilot One needed ZERO additional GPU, not a 3rd-seed eval.",
   "WHAT_THIS_DOES_NOT_MEAN": "K2 not firing is NECESSARY, not sufficient. The separate and more important finding stands: keep12 is a CONSTANT-REJECT rung -- non-inferiority rejects on 4/4 axes, recovery only 22.06-31.77%. A saturated deficit is highly REPRODUCIBLE, so low seed variance is exactly what saturation looks like; K2 is a variance gate and is therefore structurally BLIND to it. Stage B passed its kill gate and still failed its purpose.",
-  "next_step_unchanged": "Pilot Two (1,077-4,309 GPU-h) must NOT be launched until a new pre-data document shows a rung exists where NI can be OBSERVED TO ACCEPT. Otherwise the gate can only ever confirm rejection."
+  "next_step_unchanged": "Pilot Two (1,077-4,309 GPU-h) must NOT be launched until a new pre-data document shows a rung exists where NI can be OBSERVED TO ACCEPT. Otherwise the gate can only ever confirm rejection.",
+  "SUPERSEDED_BY": "pilot_one_stage_b_s3_verdict.json (committed d8ba7b7 at 11:38, i.e. 95 MINUTES BEFORE this file's 3fbf49a at 13:13)",
+  "MAIN_self_correction_20260812_1630": "I recomputed a verdict that ALREADY EXISTED. The earlier file has the SAME numbers (triviaqa sd 0.30229201489958313 / bound 0.5096228584343542; popqa sd 0.33279470298495434 / bound 0.5610462051514753) so the arithmetic is corroborated by two independent computations -- but it is ALSO STRICTLY MORE COMPLETE than mine: it carries a chi-squared 95% CI on sigma_run per axis, which I did not compute. That sensitivity matters and I missed it: at the UPPER bound of sigma's CI, popqa's bound rises to 3.526 pp vs delta 1.3205 -> it WOULD exceed, and the file records n_decision_axes_exceeding_at_sigma_ci_hi = 1 with axes_exceeding_at_sigma_ci_hi = ['popqa']. So 'K2 does not fire' is a POINT-ESTIMATE verdict; with only df=2 the sigma estimate is so imprecise that one decision axis flips at the CI's upper end. K2 still does not fire under the pre-registered rule (which is stated on the point estimate), but the honest report must carry this fragility. USE THE EARLIER FILE as canonical.",
+  "why_this_happened": "I read A04's next-step as 'the S=3 statistic has not been computed' from the MISLABELLED S2 file and from STATUS.json, and did not grep evidence/ for an existing S3 artefact before spending the effort. Same error class as the A02 j=0 case: a status note is not an assertion about what is on disk."
 }
