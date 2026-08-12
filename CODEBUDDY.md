@@ -496,17 +496,36 @@ append-only 文件写错了**不要 edit**,追加一条 correction 行:
 
 ---
 
-## ★★ 算力优先级：proposal > Paper B 补跑 / 3-seed（2026-08-08 用户指令）
+## ★★ 算力优先级：paperC + proposal > Paper B resume / 补跑 / 3-seed（2026-08-08 立，2026-08-12 强化）
 
-**`proposal/` 的 gate 实验优先级高于 Paper B 的补跑和 3-seed variance。只要 proposal 有东西要跑，就可以打断 Paper B 的 run 去跑它。**
+**`proposal/` 的 gate 实验 + `paperC/`（已晋升论文，原 paperG）的实验，优先级高于 Paper B 的一切 resume / 补跑 / 3-seed variance。只要 paperC 或 proposal 有东西要跑，就可以打断 Paper B 的 run 去跑它。**
 
-### 节点分工（2026-08-08 用户指令，权威）
+### ⛔ 2026-08-12 用户指令：三个 Paper B resume 明确降级
+
+用户原话：**「这几个 resume 的优先级低于 paperC 和 proposal 的实验」**，指的就是下面这三个（当天为腾卡给 paperC 已全部 kill）：
+
+| arm | kill 时 step | 可 resume 的 ckpt | 还差 |
+|---|---|---|---|
+| keep8 | 131000 | `outputs/olmo2_probe2_7B_keep8fresh2/step131000.pt` | ~4.6 d |
+| keep10 | 90300 | `outputs/olmo2_probe2_7B_keep10fresh2/step90000.pt` | ~8.7 d |
+| keep12 | 166020 | `outputs/olmo2_probe2_7B_keep12fresh2/step166000.pt` | ~2.9 d |
+
+三者都带完整 optimizer state，可忠实 resume，**不会因为等待而失效**。所以：
+- **GPU 空闲时不要用它们填卡** —— 先问「paperC / proposal 有没有待跑的」。
+- 只有在 **paperC 和 proposal 都确认无待跑项** 时，才可以接回去跑完。
+- 一旦 paperC 或 proposal 有新 gate，**可以再次打断它们**（ckpt 一直在，代价只是时间）。
+
+> **⚠️ 这条是为修正 2026-08-12 的真实违规而写的。** 当天 `.73` 因 #251 跑完空出 22 分钟，main 就把 Paper B keep10 resume 放了进去，理由是「卡空了 + keep10 是 zwfy6-resident 的待跑任务」—— 那是**按「哪台卡空」调度，而不是按优先级调度**，而且全程没查 proposal 有什么在等。更糟的是连报 14 个 heartbeat「5/5 busy, no stalls」，把**卡满**当成了**跑对**。同期 A04 Stage B 的 3 个 seed 早在 08-11 就跑完 step5000，eval 和 verdict 一直没做 —— proposal 的下一棒就在手上没接（它最终只花 0 GPU-h 就收割完，见 commit `d8ba7b7`）。
+>
+> **判据不是「有没有空卡」，而是「paperC / proposal 是不是真的没活了」。「卡 100% 占用」≠「在跑对的东西」。**
+
+### 节点分工（2026-08-08 用户指令，2026-08-12 更新）
 
 | 节点 | 盘 | 归属 |
 |---|---|---|
 | **`.21`**（8×L20A 183GB） | wzc1 | **SparseForge / CAST**（下载 + tokenize + 训练） |
-| **`.73` / `.82` / `.104`**（各 8×H20） | zwfy6 | **全部给 proposal** |
-| **LOCAL**（8×L20A） | wzc1 | Paper B 训练（当前 keep14 seed1234），proposal 需要时可让位 |
+| **`.73` / `.82` / `.104`**（各 8×H20） | zwfy6 | **paperC + proposal**（原写「全部给 proposal」；2026-08-12 起 paperC 同级） |
+| **LOCAL**（8×L20A） | wzc1 | SparseForge / Paper B；paperC 或 proposal 需要时让位 |
 
 ### 铁律
 
