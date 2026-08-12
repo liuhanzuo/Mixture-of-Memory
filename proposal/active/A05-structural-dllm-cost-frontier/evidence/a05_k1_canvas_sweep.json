@@ -1,0 +1,447 @@
+{
+  "gate": "K1",
+  "proposal": "A05-structural-dllm-cost-frontier",
+  "registered_rule": "K1 fires iff DreamOn at its best NON-ORACLE canvas is within 5.0 pp of Scaffold Medium on BOTH benchmarks (oracle arm excluded).",
+  "k1_threshold_pp": 5.0,
+  "scaffold_reference": {
+    "values": {
+      "humaneval": 0.177,
+      "mbpp": 0.354
+    },
+    "provenance": "dllm_draft/DLLM_RESULTS_20260807.md:447 (HE+ tier table) and :456 (MBPP+ tier table); checkpoint scaffold_sft_stage1 global_step_4465, wzc1-only, NOT recomputed by K1"
+  },
+  "verdict": "K1_FIRES",
+  "k1_fires": true,
+  "per_benchmark_decision": {
+    "humaneval": {
+      "benchmark": "HE+",
+      "scaffold_medium": 0.177,
+      "best_nonoracle_canvas": "32",
+      "best_nonoracle_pass_at_1_plus": 0.2134,
+      "gap_pp_scaffold_minus_dreamon": -3.64,
+      "within_5pp": true,
+      "dreamon_exceeds_scaffold": true,
+      "archive_r2_reference": 0.122,
+      "ar_ceiling": 0.707
+    },
+    "mbpp": {
+      "benchmark": "MBPP+",
+      "scaffold_medium": 0.354,
+      "best_nonoracle_canvas": "32",
+      "best_nonoracle_pass_at_1_plus": 0.3545,
+      "gap_pp_scaffold_minus_dreamon": -0.05,
+      "within_5pp": true,
+      "dreamon_exceeds_scaffold": true,
+      "archive_r2_reference": 0.085,
+      "ar_ceiling": 0.68
+    }
+  },
+  "mechanism_under_generation": {
+    "HE+": {
+      "ratio_median_by_canvas": {
+        "8": 0.0,
+        "32": 0.03829772378159475,
+        "128": 0.22708487540093758
+      },
+      "parseability_by_canvas": {
+        "8": 0.9878,
+        "32": 0.8598,
+        "128": 0.2866
+      },
+      "empty_output_by_canvas": {
+        "8": 128,
+        "32": 75,
+        "128": 0
+      },
+      "gen_tokens_mean_by_canvas": {
+        "8": 2.35,
+        "32": 12.87,
+        "128": 48.53
+      },
+      "long_span_ge65_by_canvas": {
+        "8": {
+          "n": 159,
+          "emitted_gold_ratio_median": 0.0,
+          "parseability": 0.9874213836477987
+        },
+        "32": {
+          "n": 159,
+          "emitted_gold_ratio_median": 0.034782608695652174,
+          "parseability": 0.8553459119496856
+        },
+        "128": {
+          "n": 159,
+          "emitted_gold_ratio_median": 0.23115577889447236,
+          "parseability": 0.2641509433962264
+        }
+      },
+      "continuation_criteria": {
+        "criterion_ratio_median_ge": 0.8,
+        "criterion_parseability_ge": 0.9,
+        "best_nonoracle_canvas_by_ratio": "128",
+        "ratio_median_there": 0.22708487540093758,
+        "ratio_criterion_met": false,
+        "long_span_ratio_median": 0.23115577889447236,
+        "long_span_parseability": 0.2641509433962264,
+        "long_span_ratio_criterion_met": false,
+        "long_span_parseability_criterion_met": false
+      }
+    },
+    "MBPP+": {
+      "ratio_median_by_canvas": {
+        "8": 0.0,
+        "32": 0.46003134796238243
+      },
+      "parseability_by_canvas": {
+        "8": 0.9894,
+        "32": 0.9841
+      },
+      "empty_output_by_canvas": {
+        "8": 332,
+        "32": 165
+      },
+      "gen_tokens_mean_by_canvas": {
+        "8": 1.57,
+        "32": 11.43
+      },
+      "long_span_ge65_by_canvas": {
+        "8": {
+          "n": 51,
+          "emitted_gold_ratio_median": 0.0,
+          "parseability": 1.0
+        },
+        "32": {
+          "n": 51,
+          "emitted_gold_ratio_median": 0.0,
+          "parseability": 1.0
+        }
+      },
+      "continuation_criteria": {
+        "criterion_ratio_median_ge": 0.8,
+        "criterion_parseability_ge": 0.9,
+        "best_nonoracle_canvas_by_ratio": "32",
+        "ratio_median_there": 0.46003134796238243,
+        "ratio_criterion_met": false,
+        "long_span_ratio_median": 0.0,
+        "long_span_parseability": 1.0,
+        "long_span_ratio_criterion_met": false,
+        "long_span_parseability_criterion_met": true
+      }
+    }
+  },
+  "table": [
+    {
+      "label": "he_c8",
+      "dataset": "humaneval",
+      "benchmark": "HE+",
+      "canvas": "8",
+      "is_oracle": false,
+      "n": 164,
+      "pass_at_1_base": 0.1402,
+      "pass_at_1_plus": 0.128,
+      "n_pass_plus": 21,
+      "nfe_mean": 172.3,
+      "nfe_median": 8.0,
+      "tokens_fed_effective_mean": 39944.5,
+      "tokens_fed_padded_mean": 115989.0,
+      "generated_tokens_mean": 2.35,
+      "generated_tokens_median": 0.0,
+      "emitted_gold_ratio_median": 0.0,
+      "emitted_gold_ratio_mean": 0.024203886235471646,
+      "parseability": 0.9878,
+      "empty_raw_output": 128,
+      "generation_errors": 0,
+      "initial_masks_observed": [
+        8
+      ],
+      "initial_masks_clamped_items": 0,
+      "long_span_gold_ge65": {
+        "n": 159,
+        "emitted_gold_ratio_median": 0.0,
+        "parseability": 0.9874213836477987
+      },
+      "wall_seconds_sum": 2802.0,
+      "gpu_hours": 0.778,
+      "status": "OK"
+    },
+    {
+      "label": "he_c32",
+      "dataset": "humaneval",
+      "benchmark": "HE+",
+      "canvas": "32",
+      "is_oracle": false,
+      "n": 164,
+      "pass_at_1_base": 0.2256,
+      "pass_at_1_plus": 0.2134,
+      "n_pass_plus": 35,
+      "nfe_mean": 393.7,
+      "nfe_median": 32.0,
+      "tokens_fed_effective_mean": 124348.0,
+      "tokens_fed_padded_mean": 267924.2,
+      "generated_tokens_mean": 12.87,
+      "generated_tokens_median": 6.0,
+      "emitted_gold_ratio_median": 0.03829772378159475,
+      "emitted_gold_ratio_mean": 0.09273855838536488,
+      "parseability": 0.8598,
+      "empty_raw_output": 75,
+      "generation_errors": 0,
+      "initial_masks_observed": [
+        32
+      ],
+      "initial_masks_clamped_items": 0,
+      "long_span_gold_ge65": {
+        "n": 159,
+        "emitted_gold_ratio_median": 0.034782608695652174,
+        "parseability": 0.8553459119496856
+      },
+      "wall_seconds_sum": 6480.0,
+      "gpu_hours": 1.8,
+      "status": "OK"
+    },
+    {
+      "label": "he_c128",
+      "dataset": "humaneval",
+      "benchmark": "HE+",
+      "canvas": "128",
+      "is_oracle": false,
+      "n": 164,
+      "pass_at_1_base": 0.1829,
+      "pass_at_1_plus": 0.1707,
+      "n_pass_plus": 28,
+      "nfe_mean": 593.4,
+      "nfe_median": 128.0,
+      "tokens_fed_effective_mean": 240413.9,
+      "tokens_fed_padded_mean": 410292.5,
+      "generated_tokens_mean": 48.53,
+      "generated_tokens_median": 38.0,
+      "emitted_gold_ratio_median": 0.22708487540093758,
+      "emitted_gold_ratio_mean": 0.26056072415771286,
+      "parseability": 0.2866,
+      "empty_raw_output": 0,
+      "generation_errors": 0,
+      "initial_masks_observed": [
+        128
+      ],
+      "initial_masks_clamped_items": 0,
+      "long_span_gold_ge65": {
+        "n": 159,
+        "emitted_gold_ratio_median": 0.23115577889447236,
+        "parseability": 0.2641509433962264
+      },
+      "wall_seconds_sum": 21849.9,
+      "gpu_hours": 6.069,
+      "status": "OK"
+    },
+    {
+      "label": "he_c512",
+      "dataset": "humaneval",
+      "canvas": "512",
+      "status": "MISSING"
+    },
+    {
+      "label": "he_oracle",
+      "dataset": "humaneval",
+      "canvas": "oracle",
+      "status": "MISSING"
+    },
+    {
+      "label": "mbpp_c8",
+      "dataset": "mbpp",
+      "benchmark": "MBPP+",
+      "canvas": "8",
+      "is_oracle": false,
+      "n": 378,
+      "pass_at_1_base": 0.0979,
+      "pass_at_1_plus": 0.0899,
+      "n_pass_plus": 34,
+      "nfe_mean": 153.4,
+      "nfe_median": 8.0,
+      "tokens_fed_effective_mean": 23367.4,
+      "tokens_fed_padded_mean": 91762.5,
+      "generated_tokens_mean": 1.57,
+      "generated_tokens_median": 0.0,
+      "emitted_gold_ratio_median": 0.0,
+      "emitted_gold_ratio_mean": 0.09306312021441433,
+      "parseability": 0.9894,
+      "empty_raw_output": 332,
+      "generation_errors": 0,
+      "initial_masks_observed": [
+        8
+      ],
+      "initial_masks_clamped_items": 0,
+      "long_span_gold_ge65": {
+        "n": 51,
+        "emitted_gold_ratio_median": 0.0,
+        "parseability": 1.0
+      },
+      "wall_seconds_sum": 5073.0,
+      "gpu_hours": 1.409,
+      "status": "OK"
+    },
+    {
+      "label": "mbpp_c32",
+      "dataset": "mbpp",
+      "benchmark": "MBPP+",
+      "canvas": "32",
+      "is_oracle": false,
+      "n": 378,
+      "pass_at_1_base": 0.3968,
+      "pass_at_1_plus": 0.3545,
+      "n_pass_plus": 134,
+      "nfe_mean": 466.0,
+      "nfe_median": 32.0,
+      "tokens_fed_effective_mean": 101202.1,
+      "tokens_fed_padded_mean": 279393.0,
+      "generated_tokens_mean": 11.43,
+      "generated_tokens_median": 12.0,
+      "emitted_gold_ratio_median": 0.46003134796238243,
+      "emitted_gold_ratio_mean": 0.45927467768087826,
+      "parseability": 0.9841,
+      "empty_raw_output": 165,
+      "generation_errors": 0,
+      "initial_masks_observed": [
+        32
+      ],
+      "initial_masks_clamped_items": 0,
+      "long_span_gold_ge65": {
+        "n": 51,
+        "emitted_gold_ratio_median": 0.0,
+        "parseability": 1.0
+      },
+      "wall_seconds_sum": 15585.4,
+      "gpu_hours": 4.329,
+      "status": "OK"
+    },
+    {
+      "label": "mbpp_c128",
+      "dataset": "mbpp",
+      "canvas": "128",
+      "status": "MISSING"
+    },
+    {
+      "label": "mbpp_c512",
+      "dataset": "mbpp",
+      "canvas": "512",
+      "status": "MISSING"
+    },
+    {
+      "label": "mbpp_oracle",
+      "dataset": "mbpp",
+      "canvas": "oracle",
+      "status": "MISSING"
+    }
+  ],
+  "total_gpu_hours": 14.39,
+  "run_provenance": {
+    "node": ".73 (28.85.35.73), 8x H20, zwfy6 disk",
+    "repo": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/dllm_draft",
+    "run_dirs": "runs/a05_k1/<cell>/ (solutions.rank*.jsonl + metrics.rank*.jsonl, 8 shards each)",
+    "python": ".venv_dream/bin/python (py3.11.6, torch 2.5.1+cu124, transformers 4.46.2, evalplus 0.1.0.dev1)",
+    "model": "models/DreamOn-v0-7B (bf16)",
+    "date": "2026-08-12",
+    "harness": "proposal/active/A05-structural-dllm-cost-frontier/code/a05_k1_dreamon_canvas.py",
+    "grader": "evalplus.eval.untrusted_check via a05_k1_merge_and_grade.py, per-invocation self-test (canonical PASS / empty stub FAIL) logged in every cell json",
+    "evalplus_groundtruth_cache": "HumanEvalPlus fe585eb4...pkl (already on .73); MbppPlus ee43ecab...pkl + MbppPlus-v0.2.0.jsonl copied wzc1->zwfy6, md5 verified identical (e7486a78... / ee43ecab...) so MBPP+ grading uses the SAME tables as the archived r2 run"
+  },
+  "cells_not_run": {
+    "cells": [
+      "he_c512",
+      "mbpp_c128",
+      "mbpp_c512",
+      "he_oracle",
+      "mbpp_oracle"
+    ],
+    "reason": "GPU budget. The dispatch cap was 25 GPU-h; billed node occupancy reached 20.66 GPU-h after 5 cells (compute 14.39 GPU-h; the gap is straggler idle, see cost_accounting). mbpp_c128 was killed after 30/378 items and is NOT graded.",
+    "why_the_verdict_is_unaffected": "K1 compares Scaffold against the BEST non-oracle canvas, i.e. a max over settings. Both benchmarks already satisfy the <=5.0 pp clause at canvas=32 (HE+ -3.64 pp, MBPP+ -0.05 pp). Adding further canvas settings can only raise the max, so it can only keep K1 fired -- it cannot unfire it. Oracle cells are excluded from the K1 decision by invariant 4.",
+    "what_is_therefore_NOT_established": "the location of the canvas optimum on MBPP+ (only 8 and 32 measured, and HE+ shows the curve is non-monotone: .128 -> .213 -> .171), and the oracle-arm headroom on either benchmark."
+  },
+  "cost_accounting": {
+    "compute_gpu_hours_sum_of_per_item_elapsed": 14.39,
+    "billed_gpu_hours_node_occupancy_8_cards": 20.66,
+    "note": "per-cell wall x 8 cards. The 1.3-2.7x gap over compute is shard stragglers: a few items hit DreamOn's own iteration cap (2*max_gen_len+2*expand_budget) at ~2060 forwards / ~200 s while the median item takes <1 s.",
+    "per_cell_billed_gpu_h": {
+      "he_c8": 2.14,
+      "mbpp_c8": 2.34,
+      "he_c32": 2.88,
+      "mbpp_c32": 5.59,
+      "he_c128": 7.71
+    },
+    "proposal_estimate_was": "~14 GPU-h for 10 cells -- an underestimate; 5 cells cost 20.66 billed."
+  },
+  "he_plus_stitch_bug": {
+    "he_c8": {
+      "n": 164,
+      "parseable_as_run": 162,
+      "parseable_with_dedent_aware_stitch": 164,
+      "unparseable_caused_by_double_indent": 2,
+      "unparseable_genuinely_malformed": 0
+    },
+    "he_c32": {
+      "n": 164,
+      "parseable_as_run": 141,
+      "parseable_with_dedent_aware_stitch": 161,
+      "unparseable_caused_by_double_indent": 20,
+      "unparseable_genuinely_malformed": 3
+    },
+    "he_c128": {
+      "n": 164,
+      "parseable_as_run": 47,
+      "parseable_with_dedent_aware_stitch": 158,
+      "unparseable_caused_by_double_indent": 113,
+      "unparseable_genuinely_malformed": 4
+    },
+    "what": "combine_humaneval_prompt() (archived driver, reproduced verbatim) indents the raw output by 4 spaces under the prompt whenever the raw has no top-level 'def'. DreamOn already emits a 4-space-indented body, so the stitch double-indents it -> SyntaxError. This is why HE+ parseability falls to .287 at canvas=128 while MBPP+ (which uses extract_python, no stitching) stays at .984. A dedent-aware stitch would restore 158/164 parseable at canvas=128. The bug is shared with the archived runs, so it does not break comparability, but it means HE+ pass@1 at large canvases is UNDERSTATED -- which strengthens K1 rather than weakening it."
+  },
+  "falsification_checks": {
+    "repro_canvas8_vs_archive_r2": {
+      "he_plus": {
+        "ours": 0.128,
+        "archive": 0.122,
+        "delta_pp": 0.6
+      },
+      "mbpp_plus": {
+        "ours": 0.0899,
+        "archive": 0.085,
+        "delta_pp": 0.49
+      },
+      "he_base": {
+        "ours": 0.1402,
+        "archive": 0.14
+      },
+      "generated_tokens_mean": {
+        "he_ours": 2.35,
+        "he_archive": 2.29,
+        "mbpp_ours": 1.57,
+        "mbpp_archive": 1.52
+      },
+      "empty_raw_output": {
+        "he_ours": 128,
+        "he_archive": 128,
+        "mbpp_ours": 332,
+        "mbpp_archive": 333
+      },
+      "verdict": "PASS -- within the pre-registered +-3 pp tolerance on both benchmarks, and the behavioural telemetry matches almost exactly."
+    },
+    "degenerate_empty_output_passes": {
+      "he_c8": 0,
+      "he_c32": 0,
+      "he_c128": 0,
+      "mbpp_c8": 0,
+      "mbpp_c32": 0,
+      "gen_tokens_of_passing_items_mbpp_c32": {
+        "min": 9,
+        "median": 18,
+        "max": 73
+      },
+      "verdict": "PASS -- 0 of 134 MBPP+ passes at canvas=32 had generated_tokens==0 or empty raw. The gain is real emitted code, not the HE+ 'pass' fallback."
+    },
+    "ceiling_reached": {
+      "he_plus": "YES -- non-monotone, peaks at canvas=32 (.213) then falls to .171 at 128",
+      "mbpp_plus": "NOT ESTABLISHED -- only 8 and 32 measured; 32 already matches Scaffold"
+    },
+    "clamping": {
+      "clamped_items_in_run_cells": 0,
+      "note": "canvas<=128 is below the 512 max_new_tokens bound; only the unrun oracle arm would have clamped (HE+ gold+32 exceeds 512 for a few items)"
+    }
+  }
+}

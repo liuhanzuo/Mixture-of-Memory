@@ -1,0 +1,707 @@
+{
+  "label": "he_c8",
+  "dataset": "humaneval",
+  "run_dir": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/dllm_draft/runs/a05_k1/he_c8",
+  "expected_items": 164,
+  "scores": {
+    "n": 164,
+    "pass_at_1_base": 0.1402439024390244,
+    "pass_at_1_plus": 0.12804878048780488,
+    "n_pass_base": 23,
+    "n_pass_plus": 21,
+    "grader_self_test": {
+      "probe_task": "HumanEval/0",
+      "canonical_base": "pass",
+      "canonical_plus": "pass",
+      "stub_base": "fail",
+      "stub_plus": "fail"
+    }
+  },
+  "cost_and_behaviour": {
+    "n_items": 164,
+    "nfe_mean": 172.29268292682926,
+    "nfe_median": 8.0,
+    "nfe_total": 28256,
+    "tokens_fed_effective_mean": 39944.48170731707,
+    "tokens_fed_effective_total": 6550895,
+    "tokens_fed_padded_mean": 115989.0487804878,
+    "generated_tokens_mean": 2.347560975609756,
+    "generated_tokens_median": 0.0,
+    "generated_tokens_max": 22,
+    "emitted_gold_ratio_mean": 0.024203886235471646,
+    "emitted_gold_ratio_median": 0.0,
+    "parseability": 0.9878048780487805,
+    "n_parseable": 162,
+    "empty_raw_output": 128,
+    "generation_errors": 0,
+    "initial_masks_observed": [
+      8
+    ],
+    "initial_masks_clamped_items": 0,
+    "wall_seconds_sum": 2801.9516578856856,
+    "peak_memory_gib_max": 16.779317378997803,
+    "long_span_gold_ge65": {
+      "n": 159,
+      "emitted_gold_ratio_median": 0.0,
+      "parseability": 0.9874213836477987
+    }
+  },
+  "per_item_pass": {
+    "HumanEval/0": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/8": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/16": {
+      "base": true,
+      "plus": true
+    },
+    "HumanEval/24": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/32": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/40": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/48": {
+      "base": true,
+      "plus": true
+    },
+    "HumanEval/56": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/64": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/72": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/80": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/88": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/96": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/104": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/112": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/120": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/128": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/136": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/144": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/152": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/160": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/1": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/9": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/17": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/25": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/33": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/41": {
+      "base": true,
+      "plus": true
+    },
+    "HumanEval/49": {
+      "base": true,
+      "plus": true
+    },
+    "HumanEval/57": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/65": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/73": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/81": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/89": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/97": {
+      "base": true,
+      "plus": false
+    },
+    "HumanEval/105": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/113": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/121": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/129": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/137": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/145": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/153": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/161": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/2": {
+      "base": true,
+      "plus": true
+    },
+    "HumanEval/10": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/18": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/26": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/34": {
+      "base": true,
+      "plus": true
+    },
+    "HumanEval/42": {
+      "base": true,
+      "plus": true
+    },
+    "HumanEval/50": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/58": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/66": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/74": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/82": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/90": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/98": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/106": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/114": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/122": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/130": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/138": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/146": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/154": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/162": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/3": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/11": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/19": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/27": {
+      "base": true,
+      "plus": true
+    },
+    "HumanEval/35": {
+      "base": true,
+      "plus": true
+    },
+    "HumanEval/43": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/51": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/59": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/67": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/75": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/83": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/91": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/99": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/107": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/115": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/123": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/131": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/139": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/147": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/155": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/163": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/4": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/12": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/20": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/28": {
+      "base": true,
+      "plus": true
+    },
+    "HumanEval/36": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/44": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/52": {
+      "base": true,
+      "plus": true
+    },
+    "HumanEval/60": {
+      "base": true,
+      "plus": true
+    },
+    "HumanEval/68": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/76": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/84": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/92": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/100": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/108": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/116": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/124": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/132": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/140": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/148": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/156": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/5": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/13": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/21": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/29": {
+      "base": true,
+      "plus": true
+    },
+    "HumanEval/37": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/45": {
+      "base": true,
+      "plus": true
+    },
+    "HumanEval/53": {
+      "base": true,
+      "plus": true
+    },
+    "HumanEval/61": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/69": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/77": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/85": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/93": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/101": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/109": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/117": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/125": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/133": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/141": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/149": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/157": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/6": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/14": {
+      "base": true,
+      "plus": true
+    },
+    "HumanEval/22": {
+      "base": true,
+      "plus": false
+    },
+    "HumanEval/30": {
+      "base": true,
+      "plus": true
+    },
+    "HumanEval/38": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/46": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/54": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/62": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/70": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/78": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/86": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/94": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/102": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/110": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/118": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/126": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/134": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/142": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/150": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/158": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/7": {
+      "base": true,
+      "plus": true
+    },
+    "HumanEval/15": {
+      "base": true,
+      "plus": true
+    },
+    "HumanEval/23": {
+      "base": true,
+      "plus": true
+    },
+    "HumanEval/31": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/39": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/47": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/55": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/63": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/71": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/79": {
+      "base": true,
+      "plus": true
+    },
+    "HumanEval/87": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/95": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/103": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/111": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/119": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/127": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/135": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/143": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/151": {
+      "base": false,
+      "plus": false
+    },
+    "HumanEval/159": {
+      "base": false,
+      "plus": false
+    }
+  }
+}

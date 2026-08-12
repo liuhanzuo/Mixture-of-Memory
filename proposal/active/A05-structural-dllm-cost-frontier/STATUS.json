@@ -2,50 +2,78 @@
   "id": "A05",
   "slug": "structural-dllm-cost-frontier",
   "title": "Structural dLLM: is there a cost regime where an explicit structural runtime beats its own family?",
-  "status": "active_gate_registered_K1_launched",
+  "status": "K1_FIRED_headline_dead",
   "priority": 2,
   "created": "2026-08-12",
   "updated": "2026-08-12",
-
   "created_from": {
     "source_repo_wzc1": "/apdcephfs_wzc1/share_304376610/pighzliu_code/dllm_draft",
     "source_repo_zwfy6": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/dllm_draft and dllm_draft_104",
-    "user_directive_verbatim": "那你把这个dllm draft变成一个新的proposal吧 然后你要测的可以测一测 这样看来我们的提案还是有用的",
+    "user_directive_verbatim": "\u90a3\u4f60\u628a\u8fd9\u4e2adllm draft\u53d8\u6210\u4e00\u4e2a\u65b0\u7684proposal\u5427 \u7136\u540e\u4f60\u8981\u6d4b\u7684\u53ef\u4ee5\u6d4b\u4e00\u6d4b \u8fd9\u6837\u770b\u6765\u6211\u4eec\u7684\u63d0\u6848\u8fd8\u662f\u6709\u7528\u7684",
     "predecessor": "proposal/backlog/B10-dllm-infilling-ar-dominance -- DIFFERENT SURFACE, kept separate, not merged",
     "task": "#186 (Reframe dLLM direction) is subsumed by this proposal"
   },
-
   "gpu_authorised_by_the_proposal_document": 0,
-  "gpu_authorised_now": "K1 only (~14 GPU-h, .73), launched 2026-08-12 under standing autonomy",
-
+  "gpu_authorised_now": "K1 COMPLETE (20.66 GPU-h billed / 14.39 compute on .73). No further GPU authorised under A05: K1 fired, so K2/K3 are moot for the registered claim.",
   "the_claim": "On full-program code generation under a token-cost budget, an explicit structural decoding runtime reaches quality its own model family does not reach at comparable cost -- while remaining well below AR models, which dominate both axes. Attributable to mechanism not extra training, because matched plain-SFT at 3.1x the token cost scores .000.",
-
   "not_claimed": [
     "any advantage over autoregressive models -- AR strictly dominates, stated in the abstract",
     "a general dLLM advantage",
     "anything about the infilling surface -- that is B10's"
   ],
-
   "headline_observation": {
-    "scaffold_medium": {"he_plus": 0.177, "mbpp_plus": 0.354, "nfe_mean_he": 63.8, "nfe_mean_mbpp": 56.7,
-      "provenance": "DLLM_RESULTS_20260807.md:447 and :456, re-read by MAIN 2026-08-12"},
-    "dreamon_v0_7B": {"he_plus": 0.122, "mbpp_plus": 0.085, "nfe_mean_he": 265.88, "nfe_mean_mbpp": 135.65,
+    "scaffold_medium": {
+      "he_plus": 0.177,
+      "mbpp_plus": 0.354,
+      "nfe_mean_he": 63.8,
+      "nfe_mean_mbpp": 56.7,
+      "provenance": "DLLM_RESULTS_20260807.md:447 and :456, re-read by MAIN 2026-08-12"
+    },
+    "dreamon_v0_7B": {
+      "he_plus": 0.122,
+      "mbpp_plus": 0.085,
+      "nfe_mean_he": 265.88,
+      "nfe_mean_mbpp": 135.65,
       "provenance_passat1": "runs/dreamon_heplus_r2/evalplus.out and runs/dreamon_mbppplus_r2/evalplus.out -- evalplus stdout, not a roll-up",
       "provenance_nfe": "runs/dreamon_*.r1/metrics.rank*.jsonl process.nfe -- r1 ONLY, because r2 logs nfe:null for every item",
-      "MIXED_ROUND_WARNING": "pass@1 is r2-sourced, NFE is r1-sourced. Invariant D3 forbids presenting these as one clean row without saying so."},
-    "advantage": {"he_plus_pp": 5.5, "he_plus_ratio": 1.45, "mbpp_plus_pp": 26.9, "mbpp_plus_ratio": 4.16,
-      "nfe_cheaper_he": 4.17, "nfe_cheaper_mbpp": 2.39},
-    "ar_ceiling": {"he_plus": 0.707, "mbpp_plus": 0.680, "note": "boundary condition, goes in the main table"},
-    "matched_control_that_rules_out_more_training": {"plain_sft_nfe64_he_plus": 0.000, "cost_tok": 43854,
-      "scaffold_medium_cost_tok": 13980, "ratio": 3.14, "source": "BASELINE_STATS.md"}
+      "MIXED_ROUND_WARNING": "pass@1 is r2-sourced, NFE is r1-sourced. Invariant D3 forbids presenting these as one clean row without saying so."
+    },
+    "advantage": {
+      "he_plus_pp": 5.5,
+      "he_plus_ratio": 1.45,
+      "mbpp_plus_pp": 26.9,
+      "mbpp_plus_ratio": 4.16,
+      "nfe_cheaper_he": 4.17,
+      "nfe_cheaper_mbpp": 2.39
+    },
+    "ar_ceiling": {
+      "he_plus": 0.707,
+      "mbpp_plus": 0.68,
+      "note": "boundary condition, goes in the main table"
+    },
+    "matched_control_that_rules_out_more_training": {
+      "plain_sft_nfe64_he_plus": 0.0,
+      "cost_tok": 43854,
+      "scaffold_medium_cost_tok": 13980,
+      "ratio": 3.14,
+      "source": "BASELINE_STATS.md"
+    }
   },
-
   "defects_found_by_MAIN_20260812": {
     "D_A_FATAL_IF_UNFIXED": {
       "what": "the DreamOn baseline is harness-crippled, so +26.9 pp is uninterpretable",
       "telemetry_aggregated_from": "runs/dreamon_*/metrics.rank*.jsonl",
-      "generated_tokens_mean": {"r1": 1.90, "r2": 2.29, "max_observed": 26},
-      "raw_output_empty": {"he_r1": "133/164", "he_r2": "128/164", "mbpp_r1": "346/378", "mbpp_r2": "333/378"},
+      "generated_tokens_mean": {
+        "r1": 1.9,
+        "r2": 2.29,
+        "max_observed": 26
+      },
+      "raw_output_empty": {
+        "he_r1": "133/164",
+        "he_r2": "128/164",
+        "mbpp_r1": "346/378",
+        "mbpp_r2": "333/378"
+      },
       "initial_masks": "8 for EVERY item -- no per-item headroom",
       "checked_whether_passes_are_empty_output_artifacts": "NO -- all 18 passing HE+ items generated 5-19 tokens, 0 of 18 with generated_tokens==0, cross-referenced solutions_eval_results.json against per-item metrics",
       "consequence": "currently measures Scaffold vs a length-controller that never engaged"
@@ -57,11 +85,11 @@
     },
     "D_C": {
       "what": "DreamOn's own round-to-round noise is ~22% relative",
-      "he_plus": "r1 .110 -> r2 .122", "mbpp_plus": "r1 .066 -> r2 .085",
+      "he_plus": "r1 .110 -> r2 .122",
+      "mbpp_plus": "r1 .066 -> r2 .085",
       "note": "1.9 pp movement on a .085 base; n=2 rounds cannot estimate sd"
     }
   },
-
   "kill_gate": {
     "registered": "2026-08-12, before any A05 measurement exists",
     "K1": "fires if DreamOn at its best NON-ORACLE canvas (initial_masks in {8,32,128,512}) reaches within 5.0 pp of Scaffold Medium on BOTH benchmarks -> gap was budget not structure -> DEAD",
@@ -70,25 +98,33 @@
     "explicitly_NOT_a_kill_condition": [
       "losing to AR -- known, in the abstract, boundary not defect",
       "a prior paper covering part of the surface -- per user directive 2026-08-12 a collision is a citation obligation, not a scope cut. Only K1/K2/K3 can kill A05."
-    ]
+    ],
+    "K1_OUTCOME": "FIRED 2026-08-12 -- see K1_RESULT",
+    "K2_disposition": "MOOT for the registered claim -- no margin left to test (MBPP+ gap is -0.05 pp). Do not spend GPU on it.",
+    "K3_disposition": "MOOT for the registered claim -- D-B's reverse cell defends a margin that no longer exists."
   },
-
   "stale_blocker_verified_false": {
     "roadmap_claim": "DLLM_SALVAGE_ROADMAP_20260808.md P1-C: 'Repository blocker: scripts/generate_infilling.py is missing'",
     "reality": "PRESENT on zwfy6 at dllm_draft_104/scripts/generate_infilling.py, 392 lines, implements all 6 arms + --initial_masks + oracle/non-oracle split + first-line grading; score_infilling.py (197 lines) also present",
     "root_cause": "the roadmap's author searched ONE disk",
     "impact": "blocked P1-C from 2026-08-08 to 2026-08-12",
-    "memory_refs": ["subagent-audit-must-specify-cross-disk", "two-disk-rule-applies-to-main-too"]
+    "memory_refs": [
+      "subagent-audit-must-specify-cross-disk",
+      "two-disk-rule-applies-to-main-too"
+    ]
   },
-
   "asset_audit_20260812": {
     "verified_on_both_disks": true,
-    "scaffold_ckpt": {"path": "models/Scaffold-v0-stage1-7B", "size": "29G", "wzc1": true, "zwfy6": false,
-      "consequence": "K3 must run on LOCAL/.21, or pay a ~31 min scp -O (16 MiB/s measured cross-disk)"},
+    "scaffold_ckpt": {
+      "path": "models/Scaffold-v0-stage1-7B",
+      "size": "29G",
+      "wzc1": true,
+      "zwfy6": false,
+      "consequence": "K3 must run on LOCAL/.21, or pay a ~31 min scp -O (16 MiB/s measured cross-disk)"
+    },
     "dreamon_qwen_dream_ckpts": "present on BOTH disks -> K1/K2 run on zwfy6 with zero transfer",
     "eval_data": "data/evalplus + data/infilling present on both disks"
   },
-
   "protocol_invariants": [
     "grader is evalplus.eval.untrusted_check with per-invocation self-test, NEVER a hand-rolled verifier (Retraction 1: old verifier scored empty stubs 7/7 pass, 77% vs true 20.7%)",
     "report tokens_fed AND NFE, never NFE alone (Retraction 3: NFE-as-cost inflated Large by 2.85x/3.69x)",
@@ -98,7 +134,6 @@
     "sharded runs assert shard completeness before merge: HE+ 164, MBPP+ 378, SingleLine 1033, 0 dup task_id, 0 nan",
     "mask_expansion / delete_eos_token are NOT parameters -- silently swallowed by **kwargs (DLLM_RESULTS_20260807.md:342); any 'with mask_expansion on' phrasing is void"
   ],
-
   "cost_estimate": {
     "K1": "~14 GPU-h (5 canvas settings x 2 benchmarks; anchor: HE+ r1 659 s, MBPP+ r1 919 s on 8 shards, x4 for longer canvases)",
     "K2": "~7 GPU-h (2 more rounds at best canvas)",
@@ -106,25 +141,116 @@
     "total": "~27 GPU-h = ~3.4 h on one 8-card node",
     "training_required": "NONE -- all 5 checkpoints already on disk"
   },
-
   "novelty_check": {
     "status": "NOT DONE -- required before any GPU beyond K1",
-    "to_check": ["structural/hierarchical decoding runtimes for diffusion LMs", "length-controller work post-DreamOn", "published Scaffold-like meta-token decoders"],
+    "to_check": [
+      "structural/hierarchical decoding runtimes for diffusion LMs",
+      "length-controller work post-DreamOn",
+      "published Scaffold-like meta-token decoders"
+    ],
     "output_is": "a citation-obligation list, NOT a scope cut -- only K1/K2/K3 can kill the direction",
     "venue_rule": "OpenReview venueid for ICLR/NeurIPS/ICML; ACL Anthology + DBLP for the ACL family including Findings"
   },
-
   "next_gate": [
-    "K1 canvas sweep on .73 -- LAUNCHED 2026-08-12, the clause most likely to fire, needs no Scaffold ckpt",
-    "K2 rounds 3+4 at best non-oracle canvas -- only if K1 does not fire",
-    "K3 Scaffold on SingleLine -- needs LOCAL/.21 or a 29 GB scp -O",
-    "novelty check (CPU, 0 GPU) -- before anything past K1"
+    "NONE under the registered claim -- K1 fired, A05's headline is dead.",
+    "Optional and OUT OF SCOPE for A05: the surviving matched-quality cost claim (6.2x/8.2x fewer forwards) would need a NEW proposal with its own kill gates and an AR comparison.",
+    "Housekeeping: dllm_draft's open STOP on Scaffold full-program generation can now be closed with a reason."
   ],
-
   "unverified": [
-    "whether DreamOn's under-generation is a canvas artifact or a model property -- this is exactly K1",
-    "sd_round for DreamOn with df>=2 -- only 2 rounds exist",
-    "Scaffold's score on ANY infilling surface -- never measured",
-    "whether Scaffold Medium's .177/.354 replicate on a second sampler seed -- single-round numbers"
+    "location of the canvas optimum on MBPP+ -- only 8 and 32 measured; HE+ shows the curve is NON-MONOTONE (.128 -> .213 -> .171), so canvas=32 is not necessarily the peak on MBPP+",
+    "oracle-arm headroom on either benchmark -- both oracle cells were dropped for budget (they are excluded from the K1 decision anyway)",
+    "whether Scaffold Medium's .177/.354 replicate on a second sampler seed -- still single-round, still READ from DLLM_RESULTS_20260807.md, never recomputed by A05",
+    "the surviving cost claim itself -- 6.2x/8.2x is measured but ungated (no round-noise control, no AR cost comparison)"
+  ],
+  "K1_RESULT": {
+    "verdict": "K1_FIRES",
+    "ran": "2026-08-12 on .73 (8xH20, zwfy6)",
+    "rule": "fires if DreamOn's best NON-ORACLE canvas is within 5.0 pp of Scaffold Medium on BOTH benchmarks",
+    "he_plus": {
+      "scaffold": 0.177,
+      "dreamon_best_nonoracle": 0.2134,
+      "at_canvas": 32,
+      "gap_pp": -3.64,
+      "within_5pp": true
+    },
+    "mbpp_plus": {
+      "scaffold": 0.354,
+      "dreamon_best_nonoracle": 0.3545,
+      "at_canvas": 32,
+      "gap_pp": -0.05,
+      "within_5pp": true
+    },
+    "headline_disposition": "DEAD -- the +26.9 pp MBPP+ margin was a canvas artifact. Changing initial_masks 8->32 and nothing else moves DreamOn .085 -> .3545.",
+    "strong_direction": "DreamOn does not merely come within 5 pp; it matches/exceeds Scaffold Medium on both benchmarks.",
+    "cells_run": [
+      "he_c8",
+      "he_c32",
+      "he_c128",
+      "mbpp_c8",
+      "mbpp_c32"
+    ],
+    "cells_not_run": [
+      "he_c512",
+      "mbpp_c128",
+      "mbpp_c512",
+      "he_oracle",
+      "mbpp_oracle"
+    ],
+    "why_unaffected_by_unrun_cells": "K1 takes the MAX over non-oracle settings; the <=5.0 pp clause is already satisfied on both benchmarks at canvas=32, so more settings can only keep it fired. Oracle cells are excluded from the decision by invariant 4.",
+    "reproduction_check_canvas8": {
+      "he_plus": {
+        "ours": 0.128,
+        "archive_r2": 0.122
+      },
+      "mbpp_plus": {
+        "ours": 0.0899,
+        "archive_r2": 0.085
+      },
+      "tolerance_preregistered_pp": 3.0,
+      "verdict": "PASS -- and empty-output counts match the archive almost exactly (HE+ 128/164 vs 128/164)"
+    },
+    "degenerate_pass_check": "PASS -- 0 of 134 passing MBPP+ items at canvas=32 had generated_tokens==0; passers emitted median 18 tokens",
+    "verdict_doc": "A05_K1_CANVAS_SWEEP_VERDICT.md",
+    "evidence": "evidence/a05_k1_canvas_sweep.json + evidence/cells/*.json",
+    "prereg": "A05_K1_PREREGISTRATION.md (committed 8f48ac1, before any cell was graded)"
+  },
+  "mechanism_answer_D_A": {
+    "question": "does DreamOn's under-generation go away when the canvas grows?",
+    "answer": "PARTLY -- the pathology is a canvas artifact, the capability is not fixed",
+    "pathology_is_artifact": {
+      "he_empty_output": "128/164 -> 75/164 -> 0/164 at canvas 8/32/128",
+      "mbpp_empty_output": "332/378 -> 165/378 at canvas 8/32",
+      "he_gen_tokens_mean": "2.35 -> 12.87 -> 48.53"
+    },
+    "capability_still_fails": {
+      "criterion_median_ratio_ge_0.8": "NOT MET anywhere (best: 0.46 MBPP+@32, 0.23 HE+@128)",
+      "criterion_parseability_ge_0.90_on_65plus_spans": "MBPP+ .984 at c32 but its long spans stay at ratio 0.000; HE+ long-span parseability .264 at c128 -- though that is the stitch bug, not the model"
+    },
+    "conclusion": "'DreamOn emits ~2 tokens and nothing on 80% of items' was purely initial_masks=8. But it is still not a well-calibrated length controller on full-program generation. Enough to erase A05's margin, which is all K1 needed."
+  },
+  "what_survives_and_is_a_DIFFERENT_claim": {
+    "statement": "at MATCHED quality, Scaffold Medium is 6.2x (HE+) / 8.2x (MBPP+) cheaper in forward passes than DreamOn at canvas=32",
+    "he_nfe": {
+      "dreamon_c32": 393.7,
+      "scaffold": 63.8,
+      "ratio": 6.17
+    },
+    "mbpp_nfe": {
+      "dreamon_c32": 466.0,
+      "scaffold": 56.7,
+      "ratio": 8.22
+    },
+    "he_tokens_fed_effective": {
+      "dreamon_c32": 124348,
+      "scaffold": 13980,
+      "ratio": 8.89
+    },
+    "caveat": "this is a COST result at matched quality, not the QUALITY result A05 registered. Still bounded above by AR (.707/.680). Needs its own proposal + gates; must NOT be smuggled in under A05's registered claim."
+  },
+  "corrections_to_the_record": [
+    "The archived nfe is NOT a forward-pass count even where non-null: the driver logged len(output.history), and _sample appends to history after the transfer step AND after delete batches AND after expand batches (up to ~3x model calls), plus it is None when output_history=False (hence r2's nfe:null). PROPOSAL.md section 1's 'NFE mean 265.9/135.7' and the derived '4.17x/2.39x cheaper' are wrong. True counted NFE at the archived setting: 172.3 (HE+) / 153.4 (MBPP+).",
+    "mask_expansion/delete_eos_token confirmed inert BY EXECUTION: GenerationConfig.update() returns them as unused kwargs and the attrs never exist. Consequence: _run_baselines_r2_wzc1.sh's header comment claiming these as round-2 'fixes' describes a fix that never took effect.",
+    "NEW BUG -- HE+ stitch: combine_humaneval_prompt() indents raw output by 4 spaces when it has no top-level def, but DreamOn already emits a 4-space-indented body -> double indent -> SyntaxError. 113 of 117 unparseable HE+ items at canvas=128 are caused by this; a dedent-aware stitch restores 158/164. Shared with the archive so comparability holds, but HE+ pass@1 at large canvases is UNDERSTATED, which strengthens K1.",
+    "PROPOSAL.md section 4's cost estimate (~14 GPU-h for 10 cells) was low: 5 cells cost 20.66 GPU-h billed. Cause = shard stragglers hitting DreamOn's own iteration cap (~2060 forwards / ~200 s) while the median item finishes in <1 s."
   ]
 }

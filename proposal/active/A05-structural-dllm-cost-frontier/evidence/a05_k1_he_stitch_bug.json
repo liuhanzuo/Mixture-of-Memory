@@ -1,0 +1,23 @@
+{
+  "he_c8": {
+    "n": 164,
+    "parseable_as_run": 162,
+    "parseable_with_dedent_aware_stitch": 164,
+    "unparseable_caused_by_double_indent": 2,
+    "unparseable_genuinely_malformed": 0
+  },
+  "he_c32": {
+    "n": 164,
+    "parseable_as_run": 141,
+    "parseable_with_dedent_aware_stitch": 161,
+    "unparseable_caused_by_double_indent": 20,
+    "unparseable_genuinely_malformed": 3
+  },
+  "he_c128": {
+    "n": 164,
+    "parseable_as_run": 47,
+    "parseable_with_dedent_aware_stitch": 158,
+    "unparseable_caused_by_double_indent": 113,
+    "unparseable_genuinely_malformed": 4
+  }
+}
