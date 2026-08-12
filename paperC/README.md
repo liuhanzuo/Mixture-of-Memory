@@ -409,8 +409,8 @@ only after both disks have been searched.
    arms, i.e. real training. **That training is now running.** A healed
    **Qwen3-8B-Base `keep_front=8` + `n_fresh=2`** arm (10 layers, 3.1741B params,
    eff_bs 128, cosine horizon 200k, **read-out pre-registered at step 121000** =
-   `olmo2_7b/keep8`'s own scored step) started 2026-08-12 13:48 on `.104`,
-   measured **5.716 s/step** ⇒ ≈ **8.0 days** to the read-out. See
+   `olmo2_7b/keep8`'s own scored step) started 2026-08-12 14:18 on `.104`,
+   measured **5.718 s/step** ⇒ ≈ **8.0 days** to the read-out. See
    [`HEAL_CONFOUND_PREREGISTRATION.md`](HEAL_CONFOUND_PREREGISTRATION.md) (written
    and committed **before** any GPU, so the arm cannot be re-chosen post-hoc) and
    [`HEAL_CONFOUND_LAUNCH_RECORD.md`](HEAL_CONFOUND_LAUNCH_RECORD.md).
@@ -435,8 +435,11 @@ only after both disks have been searched.
    pre-registration §9): it is **n = 1 family at 1 depth** — Llama-2/Llama-3 and
    k10/k12/k14 stay confounded; the **corpus stays unmatched** (Qwen3 cannot
    consume OLMo-2-token Dolmino and raw Dolmino text is on **neither disk**, so the
-   arm heals on SlimPajama — 13.7 epochs of 2.31B tok vs OLMo-2's 1.0 epoch of
-   31.7B); **relative depth stays untested**; and it says **nothing** about the
+   arm heals on SlimPajama — **5.72 epochs of 5.541B** tok vs OLMo-2's 1.0 epoch of
+   31.7B; the corpus was re-tokenized from all 48 shards with the correct **Base**
+   EOS 151643 and the arm restarted onto it at step 240, which *shrinks* this
+   caveat but does not remove it); **relative depth stays untested**; and it says
+   **nothing** about the
    null-calibration methodology claim, which is paperC's actual contribution and
    does not depend on this leg at all.
 
