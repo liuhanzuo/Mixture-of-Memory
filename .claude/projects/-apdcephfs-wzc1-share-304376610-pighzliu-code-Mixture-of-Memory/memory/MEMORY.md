@@ -34,3 +34,4 @@
 - [Continue an agent with SendMessage, not Agent](continue-agent-with-sendmessage-not-agent.md) — ★2026-08-11 同轮犯两次: 接续在跑的 background agent 必须 SendMessage(to=agentId), Agent() 会另起新 agent; 共烧 342k token + 差点撞 edit war; 附带教训=说 job 需人工 kill 前先读它的 wrapper 而非只看 --max_steps
 - [One sample is not a trend or a state](one-sample-is-not-a-trend-or-state.md) — ★★瞬时采样不能判趋势/状态: tqdm s/it≠cadence(用elapsed/iter), GPU mem需≥3次采样, 卡死从resume banner起算; 2026-08-12 一天同类错4次全是自己推翻
 - [Read the trainer docstring before designing a control](read-the-trainer-docstring-before-designing-a-control.md) — ★派对照实验前先读trainer docstring: 退化性常已写在源码(train_qcmem_distill.py:37 明文 teacher==student at resume_j=0); "NOT tested yet"是某人判断非代码断言; 怀疑退化先跑1GPU/20step GATE0探针
+- [L20A name string is really B200 (sm_100)](l20a-name-string-is-really-b200-sm100.md) — ★★「NVIDIA L20A」只是name显示问题, LOCAL/.21 真实硬件=B200(sm_100/148SM/178GB); 判代际看capability不看name; 我曾按name误"纠正"过, 旧记录才是对的
