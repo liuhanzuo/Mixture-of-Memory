@@ -1,0 +1,34 @@
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+\textbf{Qwen3-8B-Instruct arm} & \textbf{Depth} & \textbf{PPL}$\downarrow$ & \textbf{MMLU letter} \\
+\midrule
+Unpruned reference & 36/36 & 11.42 & .7297 \\
+keep12 + fresh2, 200k & 14/36 & 23.49 & .2495 \\
+\bottomrule
+\end{tabular}
+\caption{\textbf{Cross-family endpoint diagnostic.} The Qwen3-8B~\citep{qwen3} arm heals on
+SlimPajama rather than Dolmino and is more compressed than the principal OLMo
+arm. It supports only the directional answer-letter finding; absolute PPL and
+recovery magnitude are not compared across families. This endpoint does not
+include the content-MMLU and closed-book diagnostics used in the principal study.
+\textbf{Both rows are derived from Qwen3-8B-\emph{Instruct}}, not from the Qwen3-8B
+base model: the checkpoint's recorded provenance is the instruction-tuned release
+(\texttt{eos\_token\_id} 151645, context 40960), and the pruned arm was carved from
+those same weights. Every other arm in this paper is base-derived, so this row is
+the one place where the evaluated model has undergone instruction tuning. Two
+consequences. First, we still evaluate it without a chat template, for
+comparability with the rest of the paper, but the justification we give elsewhere
+for that choice --- that the model has no instruction tuning to invoke --- does not
+apply here; the reference accuracy of $.7297$ should be read as an
+instruction-tuned model's score. Second, the reference and the pruned arm are
+mutually consistent (identical starting weights), so the \emph{within-arm}
+comparison that this table is used for is unaffected; what is not established is
+that a base-derived Qwen3 arm would give the same numbers. We therefore treat this
+as a directional, single-family observation and not as evidence about base models
+of other families.}
+\label{tab:app-crossfamily}
+\end{table}
