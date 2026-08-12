@@ -1,0 +1,1147 @@
+{
+ "generated_by": "analyze_a02_babilong_misorder.py",
+ "prereg": "A02_BABILONG_MISORDER_PREREG.md",
+ "protocol": {
+  "inputs": [
+   "evidence/read_tax_ruler/a02_read_tax_per_item_vectors.json",
+   "evidence/a02_depth_vs_retrieval_per_item.json"
+  ],
+  "gpu_spent": "ZERO -- pure CPU re-analysis of per-item vectors on disk",
+  "mcnemar": "two-sided EXACT binomial on discordant pairs, direct summation",
+  "ci": "paired-difference bootstrap n_boot=5000 seed=42, CI95 percentile",
+  "ladder_test": "Spearman over j in {0,6,9,12,18} (A0,A2,A3,A4,A5); exact permutation over all 120 orderings; min |p| = 0.0167",
+  "multiplicity": "Holm-Bonferroni within each 6-cell BABILong family",
+  "conditioning_validity": "the retrieval pack is arm-independent (identical selector config, input_ids_sha256 asserted equal across arms), so HIT/MISS is a pre-treatment covariate of (cell,sample), not of the arm",
+  "aggregation_hygiene": "per-cell only; NO pooled BABILong/LongEval figure (banned -17.89pp / +2.00pp) is computed anywhere",
+  "scorers": "canonical per-item `correct` vectors consumed verbatim"
+ },
+ "gates": {
+  "J1_integrity": "PASS",
+  "J2_exact_index_join": "PASS",
+  "J3_reproduce_published_acc": "PASS",
+  "J4_refuse_conditioning_without_gold": [
+   "ruler|variable_tracking|16k",
+   "ruler|variable_tracking|32k"
+  ],
+  "errors": [],
+  "refused_cells": []
+ },
+ "per_cell": {
+  "ruler|niah_multikey_1|16k": {
+   "acc": {
+    "A0": 100.0,
+    "A1": 100.0,
+    "A2": 99.0,
+    "A3": 99.0,
+    "A4": 90.0,
+    "A5": 32.0,
+    "A6": 90.0
+   },
+   "a4_vs_a5": {
+    "A4": 90.0,
+    "A5": 32.0,
+    "delta_pp": 58.0,
+    "ci95": [
+     48.0,
+     68.0
+    ],
+    "sig": true,
+    "mcnemar": {
+     "b_A4only": 58,
+     "c_A5only": 0,
+     "n_discordant": 58,
+     "p_two_sided_exact": 0.0
+    },
+    "point_inverted": false,
+    "inversion_significant": false
+   },
+   "a0_vs_a5": {
+    "delta_pp": 68.0,
+    "ci95": [
+     58.0,
+     77.0
+    ],
+    "sig": true,
+    "mcnemar": {
+     "b_A0only": 68,
+     "c_A5only": 0,
+     "n_discordant": 68,
+     "p_two_sided_exact": 0.0
+    }
+   },
+   "ladder": {
+    "arms": [
+     "A0",
+     "A2",
+     "A3",
+     "A4",
+     "A5"
+    ],
+    "j": [
+     0,
+     6,
+     9,
+     12,
+     18
+    ],
+    "acc": [
+     100.0,
+     99.0,
+     99.0,
+     90.0,
+     32.0
+    ],
+    "spearman_rho": -0.9747,
+    "p_two_sided_exact_perm": 0.033333,
+    "n_permutations": 120,
+    "recovers_true_order": true
+   },
+   "conditional": {
+    "hit": {
+     "n": 97,
+     "A4": 89.69,
+     "A5": 29.9,
+     "delta_pp": 59.79,
+     "ci95": [
+      50.52,
+      70.1
+     ],
+     "sig": true,
+     "mcnemar": {
+      "b_A4only": 58,
+      "c_A5only": 0,
+      "n_discordant": 58,
+      "p_two_sided_exact": 0.0
+     },
+     "point_inverted": false,
+     "min_detectable_delta_pp_approx": 13.8
+    },
+    "miss": {
+     "n": 0,
+     "status": "EMPTY"
+    }
+   },
+   "n_gold_locatable": 97,
+   "recall_at_12_published": 100.0
+  },
+  "ruler|niah_multikey_1|32k": {
+   "acc": {
+    "A0": 99.0,
+    "A1": 99.0,
+    "A2": 99.0,
+    "A3": 95.0,
+    "A4": 96.0,
+    "A5": 42.0,
+    "A6": 96.0
+   },
+   "a4_vs_a5": {
+    "A4": 96.0,
+    "A5": 42.0,
+    "delta_pp": 54.0,
+    "ci95": [
+     44.0,
+     64.0
+    ],
+    "sig": true,
+    "mcnemar": {
+     "b_A4only": 54,
+     "c_A5only": 0,
+     "n_discordant": 54,
+     "p_two_sided_exact": 0.0
+    },
+    "point_inverted": false,
+    "inversion_significant": false
+   },
+   "a0_vs_a5": {
+    "delta_pp": 57.0,
+    "ci95": [
+     47.0,
+     66.0
+    ],
+    "sig": true,
+    "mcnemar": {
+     "b_A0only": 57,
+     "c_A5only": 0,
+     "n_discordant": 57,
+     "p_two_sided_exact": 0.0
+    }
+   },
+   "ladder": {
+    "arms": [
+     "A0",
+     "A2",
+     "A3",
+     "A4",
+     "A5"
+    ],
+    "j": [
+     0,
+     6,
+     9,
+     12,
+     18
+    ],
+    "acc": [
+     99.0,
+     99.0,
+     95.0,
+     96.0,
+     42.0
+    ],
+    "spearman_rho": -0.8721,
+    "p_two_sided_exact_perm": 0.1,
+    "n_permutations": 120,
+    "recovers_true_order": false
+   },
+   "conditional": {
+    "hit": {
+     "n": 99,
+     "A4": 96.97,
+     "A5": 42.42,
+     "delta_pp": 54.55,
+     "ci95": [
+      44.44,
+      64.65
+     ],
+     "sig": true,
+     "mcnemar": {
+      "b_A4only": 54,
+      "c_A5only": 0,
+      "n_discordant": 54,
+      "p_two_sided_exact": 0.0
+     },
+     "point_inverted": false,
+     "min_detectable_delta_pp_approx": 12.8
+    },
+    "miss": {
+     "n": 1,
+     "A4": 0.0,
+     "A5": 0.0,
+     "delta_pp": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "sig": false,
+     "mcnemar": {
+      "b_A4only": 0,
+      "c_A5only": 0,
+      "n_discordant": 0,
+      "p_two_sided_exact": 1.0
+     },
+     "point_inverted": true,
+     "min_detectable_delta_pp_approx": 38.81
+    }
+   },
+   "n_gold_locatable": 100,
+   "recall_at_12_published": 99.0
+  },
+  "ruler|variable_tracking|16k": {
+   "acc": {
+    "A0": 100.0,
+    "A1": 100.0,
+    "A2": 99.0,
+    "A3": 99.0,
+    "A4": 88.0,
+    "A5": 4.0,
+    "A6": 88.0
+   },
+   "a4_vs_a5": {
+    "A4": 88.0,
+    "A5": 4.0,
+    "delta_pp": 84.0,
+    "ci95": [
+     77.0,
+     91.0
+    ],
+    "sig": true,
+    "mcnemar": {
+     "b_A4only": 84,
+     "c_A5only": 0,
+     "n_discordant": 84,
+     "p_two_sided_exact": 0.0
+    },
+    "point_inverted": false,
+    "inversion_significant": false
+   },
+   "a0_vs_a5": {
+    "delta_pp": 96.0,
+    "ci95": [
+     92.0,
+     99.0
+    ],
+    "sig": true,
+    "mcnemar": {
+     "b_A0only": 96,
+     "c_A5only": 0,
+     "n_discordant": 96,
+     "p_two_sided_exact": 0.0
+    }
+   },
+   "ladder": {
+    "arms": [
+     "A0",
+     "A2",
+     "A3",
+     "A4",
+     "A5"
+    ],
+    "j": [
+     0,
+     6,
+     9,
+     12,
+     18
+    ],
+    "acc": [
+     100.0,
+     99.0,
+     99.0,
+     88.0,
+     4.0
+    ],
+    "spearman_rho": -0.9747,
+    "p_two_sided_exact_perm": 0.033333,
+    "n_permutations": 120,
+    "recovers_true_order": true
+   },
+   "conditional": {
+    "status": "REFUSED_J4_NO_GOLD_LOCATABLE",
+    "n_gold_locatable": 0
+   },
+   "n_gold_locatable": 0,
+   "recall_at_12_published": null
+  },
+  "ruler|variable_tracking|32k": {
+   "acc": {
+    "A0": 100.0,
+    "A1": 100.0,
+    "A2": 100.0,
+    "A3": 100.0,
+    "A4": 89.0,
+    "A5": 5.0,
+    "A6": 88.0
+   },
+   "a4_vs_a5": {
+    "A4": 89.0,
+    "A5": 5.0,
+    "delta_pp": 84.0,
+    "ci95": [
+     76.0,
+     91.0
+    ],
+    "sig": true,
+    "mcnemar": {
+     "b_A4only": 84,
+     "c_A5only": 0,
+     "n_discordant": 84,
+     "p_two_sided_exact": 0.0
+    },
+    "point_inverted": false,
+    "inversion_significant": false
+   },
+   "a0_vs_a5": {
+    "delta_pp": 95.0,
+    "ci95": [
+     90.0,
+     99.0
+    ],
+    "sig": true,
+    "mcnemar": {
+     "b_A0only": 95,
+     "c_A5only": 0,
+     "n_discordant": 95,
+     "p_two_sided_exact": 0.0
+    }
+   },
+   "ladder": {
+    "arms": [
+     "A0",
+     "A2",
+     "A3",
+     "A4",
+     "A5"
+    ],
+    "j": [
+     0,
+     6,
+     9,
+     12,
+     18
+    ],
+    "acc": [
+     100.0,
+     100.0,
+     100.0,
+     89.0,
+     5.0
+    ],
+    "spearman_rho": -0.8944,
+    "p_two_sided_exact_perm": 0.1,
+    "n_permutations": 120,
+    "recovers_true_order": false
+   },
+   "conditional": {
+    "status": "REFUSED_J4_NO_GOLD_LOCATABLE",
+    "n_gold_locatable": 0
+   },
+   "n_gold_locatable": 0,
+   "recall_at_12_published": null
+  },
+  "babilong|qa1|16k": {
+   "acc": {
+    "A0": 33.0,
+    "A1": 32.0,
+    "A2": 23.0,
+    "A3": 21.0,
+    "A4": 17.0,
+    "A5": 19.0,
+    "A6": 19.0
+   },
+   "a4_vs_a5": {
+    "A4": 17.0,
+    "A5": 19.0,
+    "delta_pp": -2.0,
+    "ci95": [
+     -11.0,
+     8.0
+    ],
+    "sig": false,
+    "mcnemar": {
+     "b_A4only": 11,
+     "c_A5only": 13,
+     "n_discordant": 24,
+     "p_two_sided_exact": 0.83882
+    },
+    "point_inverted": true,
+    "inversion_significant": false
+   },
+   "a0_vs_a5": {
+    "delta_pp": 14.0,
+    "ci95": [
+     2.98,
+     26.0
+    ],
+    "sig": true,
+    "mcnemar": {
+     "b_A0only": 25,
+     "c_A5only": 11,
+     "n_discordant": 36,
+     "p_two_sided_exact": 0.028817
+    }
+   },
+   "ladder": {
+    "arms": [
+     "A0",
+     "A2",
+     "A3",
+     "A4",
+     "A5"
+    ],
+    "j": [
+     0,
+     6,
+     9,
+     12,
+     18
+    ],
+    "acc": [
+     33.0,
+     23.0,
+     21.0,
+     17.0,
+     19.0
+    ],
+    "spearman_rho": -0.9,
+    "p_two_sided_exact_perm": 0.083333,
+    "n_permutations": 120,
+    "recovers_true_order": false
+   },
+   "conditional": {
+    "hit": {
+     "n": 60,
+     "A4": 15.0,
+     "A5": 21.67,
+     "delta_pp": -6.67,
+     "ci95": [
+      -18.33,
+      5.0
+     ],
+     "sig": false,
+     "mcnemar": {
+      "b_A4only": 5,
+      "c_A5only": 9,
+      "n_discordant": 14,
+      "p_two_sided_exact": 0.42395
+     },
+     "point_inverted": true,
+     "min_detectable_delta_pp_approx": 13.85
+    },
+    "miss": {
+     "n": 35,
+     "A4": 17.14,
+     "A5": 8.57,
+     "delta_pp": 8.57,
+     "ci95": [
+      -8.57,
+      25.71
+     ],
+     "sig": false,
+     "mcnemar": {
+      "b_A4only": 6,
+      "c_A5only": 3,
+      "n_discordant": 9,
+      "p_two_sided_exact": 0.507812
+     },
+     "point_inverted": false,
+     "min_detectable_delta_pp_approx": 15.68
+    }
+   },
+   "n_gold_locatable": 95,
+   "recall_at_12_published": 63.2
+  },
+  "babilong|qa1|32k": {
+   "acc": {
+    "A0": 35.0,
+    "A1": 34.0,
+    "A2": 21.0,
+    "A3": 14.0,
+    "A4": 12.0,
+    "A5": 12.0,
+    "A6": 12.0
+   },
+   "a4_vs_a5": {
+    "A4": 12.0,
+    "A5": 12.0,
+    "delta_pp": 0.0,
+    "ci95": [
+     -9.0,
+     9.0
+    ],
+    "sig": false,
+    "mcnemar": {
+     "b_A4only": 11,
+     "c_A5only": 11,
+     "n_discordant": 22,
+     "p_two_sided_exact": 1.0
+    },
+    "point_inverted": true,
+    "inversion_significant": false
+   },
+   "a0_vs_a5": {
+    "delta_pp": 23.0,
+    "ci95": [
+     12.0,
+     34.0
+    ],
+    "sig": true,
+    "mcnemar": {
+     "b_A0only": 30,
+     "c_A5only": 7,
+     "n_discordant": 37,
+     "p_two_sided_exact": 0.000191
+    }
+   },
+   "ladder": {
+    "arms": [
+     "A0",
+     "A2",
+     "A3",
+     "A4",
+     "A5"
+    ],
+    "j": [
+     0,
+     6,
+     9,
+     12,
+     18
+    ],
+    "acc": [
+     35.0,
+     21.0,
+     14.0,
+     12.0,
+     12.0
+    ],
+    "spearman_rho": -0.9747,
+    "p_two_sided_exact_perm": 0.033333,
+    "n_permutations": 120,
+    "recovers_true_order": true
+   },
+   "conditional": {
+    "hit": {
+     "n": 57,
+     "A4": 12.28,
+     "A5": 17.54,
+     "delta_pp": -5.26,
+     "ci95": [
+      -19.3,
+      8.77
+     ],
+     "sig": false,
+     "mcnemar": {
+      "b_A4only": 6,
+      "c_A5only": 9,
+      "n_discordant": 15,
+      "p_two_sided_exact": 0.607239
+     },
+     "point_inverted": true,
+     "min_detectable_delta_pp_approx": 13.08
+    },
+    "miss": {
+     "n": 43,
+     "A4": 11.63,
+     "A5": 4.65,
+     "delta_pp": 6.98,
+     "ci95": [
+      -4.65,
+      18.6
+     ],
+     "sig": false,
+     "mcnemar": {
+      "b_A4only": 5,
+      "c_A5only": 2,
+      "n_discordant": 7,
+      "p_two_sided_exact": 0.453125
+     },
+     "point_inverted": false,
+     "min_detectable_delta_pp_approx": 11.56
+    }
+   },
+   "n_gold_locatable": 100,
+   "recall_at_12_published": 57.0
+  },
+  "babilong|qa2|16k": {
+   "acc": {
+    "A0": 17.0,
+    "A1": 16.0,
+    "A2": 13.0,
+    "A3": 8.0,
+    "A4": 8.0,
+    "A5": 9.0,
+    "A6": 8.0
+   },
+   "a4_vs_a5": {
+    "A4": 8.0,
+    "A5": 9.0,
+    "delta_pp": -1.0,
+    "ci95": [
+     -8.0,
+     6.0
+    ],
+    "sig": false,
+    "mcnemar": {
+     "b_A4only": 6,
+     "c_A5only": 7,
+     "n_discordant": 13,
+     "p_two_sided_exact": 1.0
+    },
+    "point_inverted": true,
+    "inversion_significant": false
+   },
+   "a0_vs_a5": {
+    "delta_pp": 8.0,
+    "ci95": [
+     0.0,
+     16.0
+    ],
+    "sig": false,
+    "mcnemar": {
+     "b_A0only": 13,
+     "c_A5only": 5,
+     "n_discordant": 18,
+     "p_two_sided_exact": 0.096252
+    }
+   },
+   "ladder": {
+    "arms": [
+     "A0",
+     "A2",
+     "A3",
+     "A4",
+     "A5"
+    ],
+    "j": [
+     0,
+     6,
+     9,
+     12,
+     18
+    ],
+    "acc": [
+     17.0,
+     13.0,
+     8.0,
+     8.0,
+     9.0
+    ],
+    "spearman_rho": -0.6669,
+    "p_two_sided_exact_perm": 0.266667,
+    "n_permutations": 120,
+    "recovers_true_order": false
+   },
+   "conditional": {
+    "hit": {
+     "n": 47,
+     "A4": 12.77,
+     "A5": 14.89,
+     "delta_pp": -2.13,
+     "ci95": [
+      -17.02,
+      10.64
+     ],
+     "sig": false,
+     "mcnemar": {
+      "b_A4only": 5,
+      "c_A5only": 6,
+      "n_discordant": 11,
+      "p_two_sided_exact": 1.0
+     },
+     "point_inverted": true,
+     "min_detectable_delta_pp_approx": 13.96
+    },
+    "miss": {
+     "n": 48,
+     "A4": 2.08,
+     "A5": 2.08,
+     "delta_pp": 0.0,
+     "ci95": [
+      -6.25,
+      6.25
+     ],
+     "sig": false,
+     "mcnemar": {
+      "b_A4only": 1,
+      "c_A5only": 1,
+      "n_discordant": 2,
+      "p_two_sided_exact": 1.0
+     },
+     "point_inverted": true,
+     "min_detectable_delta_pp_approx": 5.71
+    }
+   },
+   "n_gold_locatable": 95,
+   "recall_at_12_published": 49.5
+  },
+  "babilong|qa2|32k": {
+   "acc": {
+    "A0": 11.0,
+    "A1": 10.0,
+    "A2": 3.0,
+    "A3": 2.0,
+    "A4": 1.0,
+    "A5": 7.0,
+    "A6": 1.0
+   },
+   "a4_vs_a5": {
+    "A4": 1.0,
+    "A5": 7.0,
+    "delta_pp": -6.0,
+    "ci95": [
+     -12.0,
+     -1.0
+    ],
+    "sig": true,
+    "mcnemar": {
+     "b_A4only": 1,
+     "c_A5only": 7,
+     "n_discordant": 8,
+     "p_two_sided_exact": 0.070312
+    },
+    "point_inverted": true,
+    "inversion_significant": true
+   },
+   "a0_vs_a5": {
+    "delta_pp": 4.0,
+    "ci95": [
+     -3.0,
+     11.0
+    ],
+    "sig": false,
+    "mcnemar": {
+     "b_A0only": 9,
+     "c_A5only": 5,
+     "n_discordant": 14,
+     "p_two_sided_exact": 0.42395
+    }
+   },
+   "ladder": {
+    "arms": [
+     "A0",
+     "A2",
+     "A3",
+     "A4",
+     "A5"
+    ],
+    "j": [
+     0,
+     6,
+     9,
+     12,
+     18
+    ],
+    "acc": [
+     11.0,
+     3.0,
+     2.0,
+     1.0,
+     7.0
+    ],
+    "spearman_rho": -0.4,
+    "p_two_sided_exact_perm": 0.516667,
+    "n_permutations": 120,
+    "recovers_true_order": false
+   },
+   "conditional": {
+    "hit": {
+     "n": 22,
+     "A4": 0.0,
+     "A5": 13.64,
+     "delta_pp": -13.64,
+     "ci95": [
+      -27.27,
+      0.0
+     ],
+     "sig": false,
+     "mcnemar": {
+      "b_A4only": 0,
+      "c_A5only": 3,
+      "n_discordant": 3,
+      "p_two_sided_exact": 0.25
+     },
+     "point_inverted": true,
+     "min_detectable_delta_pp_approx": 14.9
+    },
+    "miss": {
+     "n": 74,
+     "A4": 0.0,
+     "A5": 5.41,
+     "delta_pp": -5.41,
+     "ci95": [
+      -10.81,
+      -1.35
+     ],
+     "sig": true,
+     "mcnemar": {
+      "b_A4only": 0,
+      "c_A5only": 4,
+      "n_discordant": 4,
+      "p_two_sided_exact": 0.125
+     },
+     "point_inverted": true,
+     "min_detectable_delta_pp_approx": 5.23
+    }
+   },
+   "n_gold_locatable": 96,
+   "recall_at_12_published": 22.9
+  },
+  "babilong|qa5|16k": {
+   "acc": {
+    "A0": 53.0,
+    "A1": 53.0,
+    "A2": 62.0,
+    "A3": 63.0,
+    "A4": 58.0,
+    "A5": 49.0,
+    "A6": 61.0
+   },
+   "a4_vs_a5": {
+    "A4": 58.0,
+    "A5": 49.0,
+    "delta_pp": 9.0,
+    "ci95": [
+     -1.0,
+     19.0
+    ],
+    "sig": false,
+    "mcnemar": {
+     "b_A4only": 18,
+     "c_A5only": 9,
+     "n_discordant": 27,
+     "p_two_sided_exact": 0.122078
+    },
+    "point_inverted": false,
+    "inversion_significant": false
+   },
+   "a0_vs_a5": {
+    "delta_pp": 4.0,
+    "ci95": [
+     -8.0,
+     15.0
+    ],
+    "sig": false,
+    "mcnemar": {
+     "b_A0only": 20,
+     "c_A5only": 16,
+     "n_discordant": 36,
+     "p_two_sided_exact": 0.617719
+    }
+   },
+   "ladder": {
+    "arms": [
+     "A0",
+     "A2",
+     "A3",
+     "A4",
+     "A5"
+    ],
+    "j": [
+     0,
+     6,
+     9,
+     12,
+     18
+    ],
+    "acc": [
+     53.0,
+     62.0,
+     63.0,
+     58.0,
+     49.0
+    ],
+    "spearman_rho": -0.3,
+    "p_two_sided_exact_perm": 0.683333,
+    "n_permutations": 120,
+    "recovers_true_order": false
+   },
+   "conditional": {
+    "hit": {
+     "n": 59,
+     "A4": 62.71,
+     "A5": 57.63,
+     "delta_pp": 5.08,
+     "ci95": [
+      -8.47,
+      18.64
+     ],
+     "sig": false,
+     "mcnemar": {
+      "b_A4only": 10,
+      "c_A5only": 7,
+      "n_discordant": 17,
+      "p_two_sided_exact": 0.629059
+     },
+     "point_inverted": false,
+     "min_detectable_delta_pp_approx": 17.67
+    },
+    "miss": {
+     "n": 33,
+     "A4": 42.42,
+     "A5": 21.21,
+     "delta_pp": 21.21,
+     "ci95": [
+      6.06,
+      39.39
+     ],
+     "sig": true,
+     "mcnemar": {
+      "b_A4only": 8,
+      "c_A5only": 1,
+      "n_discordant": 9,
+      "p_two_sided_exact": 0.039062
+     },
+     "point_inverted": false,
+     "min_detectable_delta_pp_approx": 22.47
+    }
+   },
+   "n_gold_locatable": 92,
+   "recall_at_12_published": 64.1
+  },
+  "babilong|qa5|32k": {
+   "acc": {
+    "A0": 61.0,
+    "A1": 63.0,
+    "A2": 62.0,
+    "A3": 57.0,
+    "A4": 58.0,
+    "A5": 48.0,
+    "A6": 59.0
+   },
+   "a4_vs_a5": {
+    "A4": 58.0,
+    "A5": 48.0,
+    "delta_pp": 10.0,
+    "ci95": [
+     0.0,
+     20.0
+    ],
+    "sig": false,
+    "mcnemar": {
+     "b_A4only": 18,
+     "c_A5only": 8,
+     "n_discordant": 26,
+     "p_two_sided_exact": 0.075519
+    },
+    "point_inverted": false,
+    "inversion_significant": false
+   },
+   "a0_vs_a5": {
+    "delta_pp": 13.0,
+    "ci95": [
+     3.0,
+     24.0
+    ],
+    "sig": true,
+    "mcnemar": {
+     "b_A0only": 21,
+     "c_A5only": 8,
+     "n_discordant": 29,
+     "p_two_sided_exact": 0.02412
+    }
+   },
+   "ladder": {
+    "arms": [
+     "A0",
+     "A2",
+     "A3",
+     "A4",
+     "A5"
+    ],
+    "j": [
+     0,
+     6,
+     9,
+     12,
+     18
+    ],
+    "acc": [
+     61.0,
+     62.0,
+     57.0,
+     58.0,
+     48.0
+    ],
+    "spearman_rho": -0.8,
+    "p_two_sided_exact_perm": 0.133333,
+    "n_permutations": 120,
+    "recovers_true_order": false
+   },
+   "conditional": {
+    "hit": {
+     "n": 55,
+     "A4": 63.64,
+     "A5": 54.55,
+     "delta_pp": 9.09,
+     "ci95": [
+      -5.45,
+      23.64
+     ],
+     "sig": false,
+     "mcnemar": {
+      "b_A4only": 11,
+      "c_A5only": 6,
+      "n_discordant": 17,
+      "p_two_sided_exact": 0.332306
+     },
+     "point_inverted": false,
+     "min_detectable_delta_pp_approx": 18.38
+    },
+    "miss": {
+     "n": 40,
+     "A4": 45.0,
+     "A5": 35.0,
+     "delta_pp": 10.0,
+     "ci95": [
+      -2.5,
+      25.0
+     ],
+     "sig": false,
+     "mcnemar": {
+      "b_A4only": 6,
+      "c_A5only": 2,
+      "n_discordant": 8,
+      "p_two_sided_exact": 0.289062
+     },
+     "point_inverted": false,
+     "min_detectable_delta_pp_approx": 21.47
+    }
+   },
+   "n_gold_locatable": 95,
+   "recall_at_12_published": 57.9
+  }
+ },
+ "families": {
+  "babilong_a4_vs_a5_holm": {
+   "babilong|qa1|16k": 1.0,
+   "babilong|qa1|32k": 1.0,
+   "babilong|qa2|16k": 1.0,
+   "babilong|qa2|32k": 0.421872,
+   "babilong|qa5|16k": 0.488312,
+   "babilong|qa5|32k": 0.421872
+  },
+  "babilong_ladder_holm": {
+   "babilong|qa1|16k": 0.416665,
+   "babilong|qa1|32k": 0.199998,
+   "babilong|qa2|16k": 0.800001,
+   "babilong|qa2|32k": 1.0,
+   "babilong|qa5|16k": 1.0,
+   "babilong|qa5|32k": 0.533332
+  }
+ },
+ "mechanism": {
+  "recall_vs_separation": {
+   "cells": [
+    "babilong|qa1|16k",
+    "babilong|qa1|32k",
+    "babilong|qa2|16k",
+    "babilong|qa2|32k",
+    "babilong|qa5|16k",
+    "babilong|qa5|32k"
+   ],
+   "recall_at_12": [
+    63.2,
+    57.0,
+    49.5,
+    22.9,
+    64.1,
+    57.9
+   ],
+   "signed_sep_A4_minus_A5_pp": [
+    -2.0,
+    0.0,
+    -1.0,
+    -6.0,
+    9.0,
+    10.0
+   ],
+   "spearman_rho": 0.5429,
+   "p_two_sided_exact_perm": 0.297222,
+   "n_permutations": 720,
+   "prediction": "positive rho => higher recall restores the true ordering"
+  },
+  "floor_vs_separation": {
+   "cells": [
+    "babilong|qa1|16k",
+    "babilong|qa1|32k",
+    "babilong|qa2|16k",
+    "babilong|qa2|32k",
+    "babilong|qa5|16k",
+    "babilong|qa5|32k"
+   ],
+   "A0_acc": [
+    33.0,
+    35.0,
+    17.0,
+    11.0,
+    53.0,
+    61.0
+   ],
+   "signed_sep_A4_minus_A5_pp": [
+    -2.0,
+    0.0,
+    -1.0,
+    -6.0,
+    9.0,
+    10.0
+   ],
+   "spearman_rho": 0.9429,
+   "p_two_sided_exact_perm": 0.016667
+  },
+  "recall_vs_floor_collinearity": {
+   "spearman_rho": 0.7143,
+   "p_two_sided_exact_perm": 0.136111,
+   "note": "if |rho| is large the two explanations are mutually confounded across these 6 cells and the mechanism is NOT identified"
+  }
+ }
+}

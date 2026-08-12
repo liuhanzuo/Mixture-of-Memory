@@ -1,8 +1,8 @@
 {
  "id": "A02",
- "status": "needs_revision_original_thesis_dead_diagnostic_result_is_the_asset",
+ "status": "CLOSED_NO_THESIS_DIAGNOSTIC_ASSETS_RETAINED",
  "priority": 2,
- "updated": "2026-08-12T22:40+0800",
+ "updated": "2026-08-12T23:55+0800",
  "phase": "read-tax RULER read-out COMPLETE (2026-08-12 22:25). The step the training log named as next has been executed: A0/A1/A2/A3/A4/A5/A6 evaluated on RULER (retrieval-closed) + BABILong (contrast only). ALL 4 pre-registered predictions CONFIRMED. See A02_READ_TAX_RULER_VERDICT.md. Status unchanged: every number is a TAX; A0 (no adapter) is the best arm, so no quality win exists here.",
  "premise_check_2026_08_08": {
   "claim_under_test": "A02 stage-1 needs NO new training -- only eval of ~5 configs x 5 benchmarks",
@@ -324,5 +324,136 @@
    "NO claim of differential LR or capacity matching ACROSS the ladder (only A2-vs-A6 and A4-vs-A6 are matched)."
   ],
   "node_discipline": "Only .82 touched. LOCAL/.21 (SparseForge #246), .104 (paperC Qwen3 heal) and .73 were never contacted - no ssh, no process, no file write. .82 verified 8/8 cards 0 MiB/0% before launch and released to 0 MiB/0% after."
- }
+ },
+ "disposition_2026_08_12": {
+  "moved": "already at proposal/backlog/ in git as of commit 135707b (NOT this gate's doing -- see provenance_correction). This gate changed the STATUS and wrote the closeout argument; it did not move the directory.",
+  "why_not_active": "no thesis and no path to one. A0 (no adapter) is the best arm on every retrieval-closed cell; every number A02 produces is a TAX. Storage form dead (h12 = 2048x raw text); read-compute is a 1.03-1.37x micro-optimisation. This gate made it slightly worse, not better: the shallow end now carries a SIGNIFICANT tax at 16k on a harder retrieval-closed cell (-8.00 pp at j=6), so even 'the knob is cheap' is narrowed to two saturated tasks.",
+  "why_not_archived": "archiving signals 'evidence spent, do not reuse'. A02's artefacts are actively load-bearing: the read-tax ladder, the exact capacity-matched pair, the depth-vs-retrieval decomposition, the per-item vectors, the newly measured VT recall, and the new de-saturation cell are the reference artefacts for any future depth/read claim -- and B11 is built directly on A02's generations.",
+  "is_a_priced_knob_plus_a_benchmark_finding_a_paper": "NO. The priced knob is CoMem-internal (it prices OUR dead mechanism; nobody needs the price of a knob on a discarded design, and doing nothing wins). The benchmark finding is real but reduced (inversion NOT significant; mechanism = a metric-preprocessing line + a floor) and is now owned by B11 with novelty UNCHECKED. Binding them would produce exactly the 'two orphan facts' failure mode, with the interesting one not even A02's to keep.",
+  "gpu_policy": "NO further A02 GPU. Resurrection requires a NEW MECHANISM, not another read-out of the same ladder.",
+  "assets_retained": [
+   "5-point depth-tax curve on retrieval-closed RULER (free -> -9 -> -79 pp), NOW SCOPED to niah_multikey_1 + variable_tracking",
+   "depth != capacity at exactly 72,744,960 params (-8.75 pp)",
+   "the j=0 control is a NULL ADAPTER (0/400 correctness flips) -> 'optimal j=0 adapter == base model' is measured",
+   "variable_tracking recall@12 = 100.0% DIRECTLY MEASURED (supersedes dvr's n/a)",
+   "a harder retrieval-closed cell (niah_single_3) + the 0-GPU screen that found it",
+   "the generations and per-item vectors B11 is built on"
+  ],
+  "provenance_correction": "I initially recorded that this gate performed the active/ -> backlog/ move. It did not: commit 135707b (not mine, after the read-tax commit 3c9f8f9) had already moved A02 to proposal/backlog/ in git, while the working tree still showed it under active/. My git mv re-applied an already-recorded move, which is why the commit shows no deletions under active/. Verified nothing lost: all 50 HEAD-tracked A02 files present in the worktree plus this gate's 18 new files; evidence/read_tax_ruler/ intact."
+ },
+ "babilong_misorder_gate": {
+  "date": "2026-08-12",
+  "prereg": "A02_BABILONG_MISORDER_PREREG.md (written before any statistic was computed)",
+  "verdict_doc": "A02_BABILONG_MISORDER_VERDICT.md",
+  "gpu_spent": "~1.5 GPU-h of a <=30 budget; Jobs 1 and 2.1 were pure CPU; .82 only",
+  "job1_answer": {
+   "claim_S_significant_inversion": "NOT ESTABLISHED (F1 fires) -- best exact McNemar p=0.0703 on 8 discordant items (b=1,c=7); Holm 0.4219",
+   "claim_M_ranking_failure": "ESTABLISHED -- 6/6 BABILong cells fail to recover an ordering whose true effect is +70 to +84 pp; 4/6 point estimates inverted; qa2x32k rho=-0.40, qa5x16k rho=-0.30 retain almost no rank info",
+   "power_caveat": "the n=5 ladder test caps exact p at 0.0167 and 4/10 cells miss significance INCLUDING two RULER cells -> descriptive rank recovery, not a powered test",
+   "F4_control": "BABILong is NOT globally orderless: the uncontested A0-vs-A5 contrast is significant on 3/6 cells. It can detect a 79-pp collapse vs BASE; it cannot order the j=12 vs j=18 step."
+  },
+  "job1_mechanism": {
+   "retrieval_domination_PREREGISTERED": "REFUTED -- the inversion is LARGER on retrieval-HIT items (qa1x16k HIT -6.67 vs MISS +8.57; qa2x32k -13.64 vs -5.41), the opposite of the prediction",
+   "recall_vs_separation_across_cells": "Spearman +0.543, exact p=0.2972 (right sign, not significant, cannot be with 6 cells)",
+   "floor_F3": "Spearman(A0_acc, signed_sep) = +0.943, exact p=0.0167 (n=6 lower bound)",
+   "collinearity": "Spearman(recall, A0_acc) = +0.714 -> retrieval vs floor NOT IDENTIFIED by 6 cells; floor has the better sign/p/story but the two cannot be separated here",
+   "actual_mechanism_found": "the metric scores OUTPUT FORMAT: preprocess_output truncates at the FIRST period and compare_answers requires the target to be the ONLY surviving label, so 'Choices: A. In the kitchen B. ...' -> 'choices: a' -> scored WRONG whether or not the fact was located. A4 loses 22-43% of items to truncation-kill vs A5's 5-16%; list-format 60-75% vs 25-42% (McNemar p<1e-4 on all four inverting cells)",
+   "one_operation_ablation": "removing ONLY the truncation repairs 2/6 inversions and makes qa1x32k a perfect ladder (rho=-1.000, p=0.0167); qa2 unrepairable (floor, A4=1%)",
+   "dissociation": "the 4 inverting cells are EXACTLY the 4 high-list-format cells; [[4,0],[0,2]], Fisher p=0.0667 (minimum attainable with 6 cells, descriptive)",
+   "retracted_intermediate": "a lenient target_in_raw read gave 4/6 sign flips but is chance-inflated for multiple-choice outputs; the strict ablation gives 2/6, which is the number that stands"
+  },
+  "ownership_decision": {
+   "assigned_to": "NEW backlog proposal B11-generative-scorer-format-fragility",
+   "not_A02": "separable -- holds for any base LM scored by babilong.metrics, with or without CoMem or a depth knob; A02 keeps provenance, not ownership",
+   "not_B04": "B04's construct is per-item acc_norm decision-margin compression under damage (likelihood ranking over MC options, no generation, no retrieval, no string matching), status NARROWED_TO_OLMO_2_ONLY. This is a generative string-matching scorer's TEXT PREPROCESSING x output format. Different construct, mechanism and failure surface; filing it under B04 would let the OLMo-2-only margin claim borrow support from an unrelated mechanism. NOT a cross-family extension of B04's claim.",
+   "B11_starts_at": "BACKLOG_UNVERIFIED_NOVELTY_UNCHECKED, no GPU until the novelty gate passes"
+  },
+  "job2_caveat1_vt_recall": {
+   "status": "DISCHARGED BY DIRECT MEASUREMENT -- no restatement needed",
+   "recall_at_12_strict": {
+    "variable_tracking_16k": 100.0,
+    "variable_tracking_32k": 100.0
+   },
+   "wilson_ci95": {
+    "variable_tracking_16k": [
+     95.72,
+     100.0
+    ],
+    "variable_tracking_32k": [
+     96.07,
+     100.0
+    ]
+   },
+   "sha_pairing": "PASS -- every regenerated prompt's input_ids_sha256 matched all 7 arms' records, so the regeneration is bit-identical",
+   "why_dvr_said_na": "an INTERFACE BUG, not an intrinsic limit: _make_vt() returns the chain and variable names but _build_sample() DISCARDS them for VT (returns gold_needle=None), so the dvr locator had nothing to localise",
+   "coverage_caveat": "14/100 (16k) and 6/100 (32k) samples had exactly ONE chain sentence the locator could not place (whitespace normalisation at a decode boundary) and are excluded from the strict denominator. In ALL 20, every located chunk is in the pack, so recall is 100% across all 200 samples under either treatment.",
+   "consequence": "the 4-cell primary read tax (-0.50 / -1.50 / -9.00 / -79.00 pp) STANDS AS WRITTEN; dvr's n/a is superseded",
+   "own_bugs_found_and_fixed": [
+    "a per-chunk substring locator silently lost every chain sentence straddling a 512-token boundary -> 0/100 locatable",
+    "prompt.rfind('value ') landed in VT_ANSWER_PREFIX and returned the value WITH A TRAILING COMMA, making exactly one sentence per sample unfindable while frac_in_pack read a reassuring 1.0"
+   ]
+  },
+  "job2_caveat2_desaturation": {
+   "status": "A DE-SATURATING CELL EXISTS, WAS RUN, AND CHANGES THE SHALLOW-END CONCLUSION AT 16k",
+   "cell": "ruler|niah_single_3|{16k,32k} (36-char UUID values), n=100/cell, 8 shards, all gates 0 errors, 0 sha failures",
+   "screen_0_gpu": {
+    "niah_single_3": [
+     97.5,
+     95.0
+    ],
+    "niah_multiquery": [
+     100.0,
+     95.0
+    ],
+    "niah_multivalue": [
+     100.0,
+     92.31
+    ]
+   },
+   "screen_choice_reason": "niah_single_3 is the ONLY candidate whose retrieval-closure is EXACTLY screened: it is single-needle, whereas _make_niah returns only the FIRST of 4 queried needles as gold, making multivalue/multiquery recall an UPPER BOUND. multivalue also fails the >=95% criterion at 32k.",
+   "length_knob_rejected_a_priori": "dvr measured recall DEGRADING with length (qa2 49.5 -> 22.9%), so 64k/128k de-saturates by BREAKING RETRIEVAL -- the exact confound the primary read-out excludes",
+   "result_16k": {
+    "A0": 97.0,
+    "A2": 89.0,
+    "A3": 89.0,
+    "A4": 90.0,
+    "tax_vs_A0_pp": {
+     "A2": -8.0,
+     "A3": -8.0,
+     "A4": -7.0
+    },
+    "all_three_SIG": true
+   },
+   "result_32k": {
+    "A0": 96.0,
+    "A2": 95.0,
+    "A3": 96.0,
+    "A4": 95.0,
+    "tax_vs_A0_pp": {
+     "A2": -1.0,
+     "A3": 0.0,
+     "A4": -1.0
+    },
+    "any_SIG": false
+   },
+   "what_it_falsifies": "'the knob is nearly free to j~9' is PARTIALLY FALSIFIED: on the harder cell at 16k, j=6 already costs -8.00 pp SIGNIFICANT vs -0.50 pp on the saturated primary cell. The shallow end was not free; it was UNMEASURABLE.",
+   "honest_limits": [
+    "the cell did NOT fully de-saturate (A0 = 97.0/96.0), so this is 'a harder cell that resolves a difference the easier cell could not', not 'a cell with headroom'",
+    "at 16k the depth ORDERING flattens (A2 89, A3 89, A4 90): the tax appears immediately then stops growing, unlike the primary cell's clean -0.5 -> -1.5 -> -9.0",
+    "at 32k nothing is significant at all",
+    "net: the headline shape (free -> -9 -> -79) is a niah_multikey_1 + variable_tracking statement, NOT a depth law"
+   ]
+  },
+  "retractions_and_narrowings_forced": [
+   "read-tax verdict 4: 'misorders ... would have been WRONG IN SIGN' -> NARROW to 'fails to recover the ordering; 4/6 point estimates invert; the inversion is NOT statistically significant'",
+   "read-tax verdict caveat 1 (VT recall unmeasured) -> DISCHARGED, recall = 100.0% measured directly",
+   "read-tax verdict 5 'no claim that j<=9 is free in general' -> STRENGTHENED from a caveat to a MEASURED LIMITATION: niah_single_3 x 16k gives -8.00 pp SIG at j=6",
+   "the premise's proposed mechanism (retrieval domination) -> REFUTED for the inversion; retrieval domination remains correct as the reason these cells cannot support depth inference in general"
+  ],
+  "gates": "J1/J2/J3/J4 + GATE C/C2/D all PASS; J4 FIRED on both VT cells (refused conditioning where gold_locatable==0); analyzer selftest validates McNemar against a closed form, Spearman against rho=-1/p=2/120, Holm, and a J3 negative test",
+  "chat_template": "verified False with `is not False` (never `is not True`); confirmed RULER records.json is FLAT and carries NO chat_template (it lives in the sibling summary)",
+  "aggregation_hygiene": "per-cell only; no pooled BABILong/LongEval figure computed anywhere",
+  "nodes": ".82 only; LOCAL/.21 (SparseForge #246), .73 (another agent) and .104 (paperC) never contacted"
+ },
+ "next_gate_note_2026_08_12": "A02 is CLOSED; next_gate entries are historical. The two caveats the read-tax gate flagged are now closed: VT recall measured directly (100%), and the ceiling caveat resolved by running a harder retrieval-closed cell (which partially falsified the shallow-end claim). The methodological finding moved to B11."
 }

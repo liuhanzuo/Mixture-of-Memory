@@ -1,0 +1,631 @@
+{
+ "generated_by": "analyze_a02_truncation_ablation.py",
+ "gpu_spent": "ZERO",
+ "ablation": "score_notrunc = babilong compare_answers WITHOUT preprocess_output's first-period truncation; uniqueness requirement RETAINED so multiple-choice lists still score 0 (removes chance inflation)",
+ "no_conditioning": "the notrunc contrast uses ALL 100 items in every cell -- no subsetting, hence no collider risk",
+ "per_cell": {
+  "babilong|qa1|16k": {
+   "n": 100,
+   "acc": {
+    "A0": {
+     "canonical": 33.0,
+     "notrunc": 31.0
+    },
+    "A2": {
+     "canonical": 23.0,
+     "notrunc": 28.0
+    },
+    "A3": {
+     "canonical": 21.0,
+     "notrunc": 28.0
+    },
+    "A4": {
+     "canonical": 17.0,
+     "notrunc": 26.0
+    },
+    "A5": {
+     "canonical": 19.0,
+     "notrunc": 21.0
+    }
+   },
+   "mean_n_labels_raw": {
+    "A0": 1.5,
+    "A2": 1.45,
+    "A3": 1.67,
+    "A4": 1.39,
+    "A5": 0.82
+   },
+   "listfmt": {
+    "A0": 48.0,
+    "A2": 58.0,
+    "A3": 65.0,
+    "A4": 62.0,
+    "A5": 31.0
+   },
+   "a4_vs_a5_canonical": {
+    "delta_pp": -2.0,
+    "ci95": [
+     -11.0,
+     8.0
+    ],
+    "mcnemar": {
+     "b_A4only": 11,
+     "c_A5only": 13,
+     "n_discordant": 24,
+     "p_two_sided_exact": 0.83882
+    },
+    "point_inverted": true,
+    "sig": false
+   },
+   "a4_vs_a5_notrunc": {
+    "delta_pp": 5.0,
+    "ci95": [
+     -6.0,
+     16.0
+    ],
+    "mcnemar": {
+     "b_A4only": 19,
+     "c_A5only": 14,
+     "n_discordant": 33,
+     "p_two_sided_exact": 0.48685
+    },
+    "point_inverted": false,
+    "sig": false
+   },
+   "ladder_canonical": {
+    "acc": [
+     33.0,
+     23.0,
+     21.0,
+     17.0,
+     19.0
+    ],
+    "spearman_rho": -0.9,
+    "p_exact_perm": 0.083333,
+    "recovers": false
+   },
+   "ladder_notrunc": {
+    "acc": [
+     31.0,
+     28.0,
+     28.0,
+     26.0,
+     21.0
+    ],
+    "spearman_rho": -0.9747,
+    "p_exact_perm": 0.033333,
+    "recovers": true
+   },
+   "a4_vs_a5_canonical_nonlist_only": {
+    "n": 35,
+    "delta_pp": 8.57,
+    "ci95": [
+     -11.43,
+     28.57
+    ],
+    "point_inverted": false,
+    "CAVEAT": "post-treatment conditioning -- diagnostic only"
+   }
+  },
+  "babilong|qa1|32k": {
+   "n": 100,
+   "acc": {
+    "A0": {
+     "canonical": 35.0,
+     "notrunc": 40.0
+    },
+    "A2": {
+     "canonical": 21.0,
+     "notrunc": 28.0
+    },
+    "A3": {
+     "canonical": 14.0,
+     "notrunc": 21.0
+    },
+    "A4": {
+     "canonical": 12.0,
+     "notrunc": 20.0
+    },
+    "A5": {
+     "canonical": 12.0,
+     "notrunc": 15.0
+    }
+   },
+   "mean_n_labels_raw": {
+    "A0": 1.33,
+    "A2": 1.61,
+    "A3": 1.62,
+    "A4": 1.45,
+    "A5": 0.89
+   },
+   "listfmt": {
+    "A0": 54.0,
+    "A2": 67.0,
+    "A3": 75.0,
+    "A4": 75.0,
+    "A5": 42.0
+   },
+   "a4_vs_a5_canonical": {
+    "delta_pp": 0.0,
+    "ci95": [
+     -9.0,
+     9.0
+    ],
+    "mcnemar": {
+     "b_A4only": 11,
+     "c_A5only": 11,
+     "n_discordant": 22,
+     "p_two_sided_exact": 1.0
+    },
+    "point_inverted": true,
+    "sig": false
+   },
+   "a4_vs_a5_notrunc": {
+    "delta_pp": 5.0,
+    "ci95": [
+     -5.0,
+     15.0
+    ],
+    "mcnemar": {
+     "b_A4only": 15,
+     "c_A5only": 10,
+     "n_discordant": 25,
+     "p_two_sided_exact": 0.424356
+    },
+    "point_inverted": false,
+    "sig": false
+   },
+   "ladder_canonical": {
+    "acc": [
+     35.0,
+     21.0,
+     14.0,
+     12.0,
+     12.0
+    ],
+    "spearman_rho": -0.9747,
+    "p_exact_perm": 0.033333,
+    "recovers": true
+   },
+   "ladder_notrunc": {
+    "acc": [
+     40.0,
+     28.0,
+     21.0,
+     20.0,
+     15.0
+    ],
+    "spearman_rho": -1.0,
+    "p_exact_perm": 0.016667,
+    "recovers": true
+   },
+   "a4_vs_a5_canonical_nonlist_only": {
+    "n": 21,
+    "delta_pp": 23.81,
+    "ci95": [
+     -4.76,
+     47.62
+    ],
+    "point_inverted": false,
+    "CAVEAT": "post-treatment conditioning -- diagnostic only"
+   }
+  },
+  "babilong|qa2|16k": {
+   "n": 100,
+   "acc": {
+    "A0": {
+     "canonical": 17.0,
+     "notrunc": 17.0
+    },
+    "A2": {
+     "canonical": 13.0,
+     "notrunc": 15.0
+    },
+    "A3": {
+     "canonical": 8.0,
+     "notrunc": 9.0
+    },
+    "A4": {
+     "canonical": 8.0,
+     "notrunc": 10.0
+    },
+    "A5": {
+     "canonical": 9.0,
+     "notrunc": 12.0
+    }
+   },
+   "mean_n_labels_raw": {
+    "A0": 1.21,
+    "A2": 1.36,
+    "A3": 1.54,
+    "A4": 1.41,
+    "A5": 0.74
+   },
+   "listfmt": {
+    "A0": 42.0,
+    "A2": 56.0,
+    "A3": 59.0,
+    "A4": 60.0,
+    "A5": 25.0
+   },
+   "a4_vs_a5_canonical": {
+    "delta_pp": -1.0,
+    "ci95": [
+     -8.0,
+     6.0
+    ],
+    "mcnemar": {
+     "b_A4only": 6,
+     "c_A5only": 7,
+     "n_discordant": 13,
+     "p_two_sided_exact": 1.0
+    },
+    "point_inverted": true,
+    "sig": false
+   },
+   "a4_vs_a5_notrunc": {
+    "delta_pp": -2.0,
+    "ci95": [
+     -10.0,
+     6.0
+    ],
+    "mcnemar": {
+     "b_A4only": 7,
+     "c_A5only": 9,
+     "n_discordant": 16,
+     "p_two_sided_exact": 0.803619
+    },
+    "point_inverted": true,
+    "sig": false
+   },
+   "ladder_canonical": {
+    "acc": [
+     17.0,
+     13.0,
+     8.0,
+     8.0,
+     9.0
+    ],
+    "spearman_rho": -0.6669,
+    "p_exact_perm": 0.266667,
+    "recovers": false
+   },
+   "ladder_notrunc": {
+    "acc": [
+     17.0,
+     15.0,
+     9.0,
+     10.0,
+     12.0
+    ],
+    "spearman_rho": -0.6,
+    "p_exact_perm": 0.35,
+    "recovers": false
+   },
+   "a4_vs_a5_canonical_nonlist_only": {
+    "n": 36,
+    "delta_pp": 5.56,
+    "ci95": [
+     -8.33,
+     19.44
+    ],
+    "point_inverted": false,
+    "CAVEAT": "post-treatment conditioning -- diagnostic only"
+   }
+  },
+  "babilong|qa2|32k": {
+   "n": 100,
+   "acc": {
+    "A0": {
+     "canonical": 11.0,
+     "notrunc": 12.0
+    },
+    "A2": {
+     "canonical": 3.0,
+     "notrunc": 7.0
+    },
+    "A3": {
+     "canonical": 2.0,
+     "notrunc": 5.0
+    },
+    "A4": {
+     "canonical": 1.0,
+     "notrunc": 7.0
+    },
+    "A5": {
+     "canonical": 7.0,
+     "notrunc": 8.0
+    }
+   },
+   "mean_n_labels_raw": {
+    "A0": 0.93,
+    "A2": 0.99,
+    "A3": 1.17,
+    "A4": 1.09,
+    "A5": 0.65
+   },
+   "listfmt": {
+    "A0": 37.0,
+    "A2": 53.0,
+    "A3": 63.0,
+    "A4": 74.0,
+    "A5": 32.0
+   },
+   "a4_vs_a5_canonical": {
+    "delta_pp": -6.0,
+    "ci95": [
+     -12.0,
+     -1.0
+    ],
+    "mcnemar": {
+     "b_A4only": 1,
+     "c_A5only": 7,
+     "n_discordant": 8,
+     "p_two_sided_exact": 0.070312
+    },
+    "point_inverted": true,
+    "sig": true
+   },
+   "a4_vs_a5_notrunc": {
+    "delta_pp": -1.0,
+    "ci95": [
+     -6.0,
+     4.0
+    ],
+    "mcnemar": {
+     "b_A4only": 3,
+     "c_A5only": 4,
+     "n_discordant": 7,
+     "p_two_sided_exact": 1.0
+    },
+    "point_inverted": true,
+    "sig": false
+   },
+   "ladder_canonical": {
+    "acc": [
+     11.0,
+     3.0,
+     2.0,
+     1.0,
+     7.0
+    ],
+    "spearman_rho": -0.4,
+    "p_exact_perm": 0.516667,
+    "recovers": false
+   },
+   "ladder_notrunc": {
+    "acc": [
+     12.0,
+     7.0,
+     5.0,
+     7.0,
+     8.0
+    ],
+    "spearman_rho": -0.2052,
+    "p_exact_perm": 0.766667,
+    "recovers": false
+   },
+   "a4_vs_a5_canonical_nonlist_only": {
+    "n": 25,
+    "delta_pp": 4.0,
+    "ci95": [
+     0.0,
+     12.0
+    ],
+    "point_inverted": false,
+    "CAVEAT": "post-treatment conditioning -- diagnostic only"
+   }
+  },
+  "babilong|qa5|16k": {
+   "n": 100,
+   "acc": {
+    "A0": {
+     "canonical": 53.0,
+     "notrunc": 53.0
+    },
+    "A2": {
+     "canonical": 62.0,
+     "notrunc": 62.0
+    },
+    "A3": {
+     "canonical": 63.0,
+     "notrunc": 63.0
+    },
+    "A4": {
+     "canonical": 58.0,
+     "notrunc": 57.0
+    },
+    "A5": {
+     "canonical": 49.0,
+     "notrunc": 47.0
+    }
+   },
+   "mean_n_labels_raw": {
+    "A0": 0.94,
+    "A2": 0.96,
+    "A3": 0.98,
+    "A4": 1.0,
+    "A5": 0.94
+   },
+   "listfmt": {
+    "A0": 2.0,
+    "A2": 2.0,
+    "A3": 2.0,
+    "A4": 2.0,
+    "A5": 6.0
+   },
+   "a4_vs_a5_canonical": {
+    "delta_pp": 9.0,
+    "ci95": [
+     -1.0,
+     19.0
+    ],
+    "mcnemar": {
+     "b_A4only": 18,
+     "c_A5only": 9,
+     "n_discordant": 27,
+     "p_two_sided_exact": 0.122078
+    },
+    "point_inverted": false,
+    "sig": false
+   },
+   "a4_vs_a5_notrunc": {
+    "delta_pp": 10.0,
+    "ci95": [
+     1.0,
+     19.0
+    ],
+    "mcnemar": {
+     "b_A4only": 16,
+     "c_A5only": 6,
+     "n_discordant": 22,
+     "p_two_sided_exact": 0.052479
+    },
+    "point_inverted": false,
+    "sig": true
+   },
+   "ladder_canonical": {
+    "acc": [
+     53.0,
+     62.0,
+     63.0,
+     58.0,
+     49.0
+    ],
+    "spearman_rho": -0.3,
+    "p_exact_perm": 0.683333,
+    "recovers": false
+   },
+   "ladder_notrunc": {
+    "acc": [
+     53.0,
+     62.0,
+     63.0,
+     57.0,
+     47.0
+    ],
+    "spearman_rho": -0.3,
+    "p_exact_perm": 0.683333,
+    "recovers": false
+   },
+   "a4_vs_a5_canonical_nonlist_only": {
+    "n": 92,
+    "delta_pp": 7.61,
+    "ci95": [
+     -3.26,
+     18.48
+    ],
+    "point_inverted": false,
+    "CAVEAT": "post-treatment conditioning -- diagnostic only"
+   }
+  },
+  "babilong|qa5|32k": {
+   "n": 100,
+   "acc": {
+    "A0": {
+     "canonical": 61.0,
+     "notrunc": 59.0
+    },
+    "A2": {
+     "canonical": 62.0,
+     "notrunc": 61.0
+    },
+    "A3": {
+     "canonical": 57.0,
+     "notrunc": 52.0
+    },
+    "A4": {
+     "canonical": 58.0,
+     "notrunc": 57.0
+    },
+    "A5": {
+     "canonical": 48.0,
+     "notrunc": 48.0
+    }
+   },
+   "mean_n_labels_raw": {
+    "A0": 1.03,
+    "A2": 0.95,
+    "A3": 0.91,
+    "A4": 0.9,
+    "A5": 0.94
+   },
+   "listfmt": {
+    "A0": 4.0,
+    "A2": 3.0,
+    "A3": 3.0,
+    "A4": 2.0,
+    "A5": 5.0
+   },
+   "a4_vs_a5_canonical": {
+    "delta_pp": 10.0,
+    "ci95": [
+     0.0,
+     20.0
+    ],
+    "mcnemar": {
+     "b_A4only": 18,
+     "c_A5only": 8,
+     "n_discordant": 26,
+     "p_two_sided_exact": 0.075519
+    },
+    "point_inverted": false,
+    "sig": false
+   },
+   "a4_vs_a5_notrunc": {
+    "delta_pp": 9.0,
+    "ci95": [
+     0.0,
+     18.0
+    ],
+    "mcnemar": {
+     "b_A4only": 16,
+     "c_A5only": 7,
+     "n_discordant": 23,
+     "p_two_sided_exact": 0.09314
+    },
+    "point_inverted": false,
+    "sig": false
+   },
+   "ladder_canonical": {
+    "acc": [
+     61.0,
+     62.0,
+     57.0,
+     58.0,
+     48.0
+    ],
+    "spearman_rho": -0.8,
+    "p_exact_perm": 0.133333,
+    "recovers": false
+   },
+   "ladder_notrunc": {
+    "acc": [
+     59.0,
+     61.0,
+     52.0,
+     57.0,
+     48.0
+    ],
+    "spearman_rho": -0.8,
+    "p_exact_perm": 0.133333,
+    "recovers": false
+   },
+   "a4_vs_a5_canonical_nonlist_only": {
+    "n": 95,
+    "delta_pp": 9.47,
+    "ci95": [
+     0.0,
+     20.0
+    ],
+    "point_inverted": false,
+    "CAVEAT": "post-treatment conditioning -- diagnostic only"
+   }
+  }
+ },
+ "inversion_repaired_by_removing_truncation": [
+  "babilong|qa1|16k",
+  "babilong|qa1|32k"
+ ],
+ "errors": []
+}

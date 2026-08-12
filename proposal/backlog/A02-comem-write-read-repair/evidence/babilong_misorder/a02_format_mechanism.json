@@ -1,0 +1,349 @@
+{
+ "generated_by": "analyze_a02_format_mechanism.py",
+ "prereg": "A02_BABILONG_MISORDER_PREREG.md (1.2 mechanism, F3)",
+ "gpu_spent": "ZERO",
+ "scorer": "babilong.metrics.compare_answers + preprocess_output, IMPORTED",
+ "pairing": "idx = shard + row*8 (dvr convention), VERIFIED by (question,target) equality across arms per index; cell refused on mismatch",
+ "post_treatment_warning": "canonical_no_trunc_kill conditions on a variable produced BY the arm (output format) -- collider risk, DIAGNOSTIC not causal",
+ "per_cell": {
+  "babilong|qa1|16k": {
+   "n": 100,
+   "is_list": {
+    "A4_rate": 62.0,
+    "A5_rate": 31.0,
+    "mcnemar": {
+     "b_A4only": 34,
+     "c_A5only": 3,
+     "n_discordant": 37,
+     "p_two_sided_exact": 0.0
+    },
+    "significant": true
+   },
+   "trunc_kill": {
+    "A4_rate": 40.0,
+    "A5_rate": 12.0,
+    "mcnemar": {
+     "b_A4only": 29,
+     "c_A5only": 1,
+     "n_discordant": 30,
+     "p_two_sided_exact": 0.0
+    },
+    "significant": true
+   },
+   "canonical_full": {
+    "A4": 17.0,
+    "A5": 19.0,
+    "delta_pp": -2.0,
+    "ci95": [
+     -11.0,
+     8.0
+    ],
+    "point_inverted": true
+   },
+   "canonical_no_trunc_kill": {
+    "n": 59,
+    "A4": 27.1,
+    "A5": 22.0,
+    "delta_pp": 5.08,
+    "ci95": [
+     -8.47,
+     18.64
+    ],
+    "mcnemar_p": 0.629059,
+    "point_inverted": false,
+    "CAVEAT": "POST-TREATMENT conditioning (collider risk) -- DIAGNOSTIC ONLY"
+   },
+   "tgt_in_raw": {
+    "A4": 57.0,
+    "A5": 31.0
+   }
+  },
+  "babilong|qa1|32k": {
+   "n": 100,
+   "is_list": {
+    "A4_rate": 75.0,
+    "A5_rate": 42.0,
+    "mcnemar": {
+     "b_A4only": 37,
+     "c_A5only": 4,
+     "n_discordant": 41,
+     "p_two_sided_exact": 0.0
+    },
+    "significant": true
+   },
+   "trunc_kill": {
+    "A4_rate": 43.0,
+    "A5_rate": 16.0,
+    "mcnemar": {
+     "b_A4only": 30,
+     "c_A5only": 3,
+     "n_discordant": 33,
+     "p_two_sided_exact": 1e-06
+    },
+    "significant": true
+   },
+   "canonical_full": {
+    "A4": 12.0,
+    "A5": 12.0,
+    "delta_pp": 0.0,
+    "ci95": [
+     -9.0,
+     9.0
+    ],
+    "point_inverted": true
+   },
+   "canonical_no_trunc_kill": {
+    "n": 54,
+    "A4": 20.4,
+    "A5": 9.3,
+    "delta_pp": 11.11,
+    "ci95": [
+     -1.85,
+     24.07
+    ],
+    "mcnemar_p": 0.179565,
+    "point_inverted": false,
+    "CAVEAT": "POST-TREATMENT conditioning (collider risk) -- DIAGNOSTIC ONLY"
+   },
+   "tgt_in_raw": {
+    "A4": 55.0,
+    "A5": 30.0
+   }
+  },
+  "babilong|qa2|16k": {
+   "n": 100,
+   "is_list": {
+    "A4_rate": 60.0,
+    "A5_rate": 25.0,
+    "mcnemar": {
+     "b_A4only": 39,
+     "c_A5only": 4,
+     "n_discordant": 43,
+     "p_two_sided_exact": 0.0
+    },
+    "significant": true
+   },
+   "trunc_kill": {
+    "A4_rate": 25.0,
+    "A5_rate": 9.0,
+    "mcnemar": {
+     "b_A4only": 18,
+     "c_A5only": 2,
+     "n_discordant": 20,
+     "p_two_sided_exact": 0.000402
+    },
+    "significant": true
+   },
+   "canonical_full": {
+    "A4": 8.0,
+    "A5": 9.0,
+    "delta_pp": -1.0,
+    "ci95": [
+     -8.0,
+     6.0
+    ],
+    "point_inverted": true
+   },
+   "canonical_no_trunc_kill": {
+    "n": 73,
+    "A4": 9.6,
+    "A5": 5.5,
+    "delta_pp": 4.11,
+    "ci95": [
+     -2.74,
+     10.96
+    ],
+    "mcnemar_p": 0.453125,
+    "point_inverted": false,
+    "CAVEAT": "POST-TREATMENT conditioning (collider risk) -- DIAGNOSTIC ONLY"
+   },
+   "tgt_in_raw": {
+    "A4": 34.0,
+    "A5": 18.0
+   }
+  },
+  "babilong|qa2|32k": {
+   "n": 100,
+   "is_list": {
+    "A4_rate": 74.0,
+    "A5_rate": 32.0,
+    "mcnemar": {
+     "b_A4only": 43,
+     "c_A5only": 1,
+     "n_discordant": 44,
+     "p_two_sided_exact": 0.0
+    },
+    "significant": true
+   },
+   "trunc_kill": {
+    "A4_rate": 22.0,
+    "A5_rate": 5.0,
+    "mcnemar": {
+     "b_A4only": 19,
+     "c_A5only": 2,
+     "n_discordant": 21,
+     "p_two_sided_exact": 0.000221
+    },
+    "significant": true
+   },
+   "canonical_full": {
+    "A4": 1.0,
+    "A5": 7.0,
+    "delta_pp": -6.0,
+    "ci95": [
+     -12.0,
+     -1.0
+    ],
+    "point_inverted": true
+   },
+   "canonical_no_trunc_kill": {
+    "n": 76,
+    "A4": 1.3,
+    "A5": 1.3,
+    "delta_pp": 0.0,
+    "ci95": [
+     -3.95,
+     3.95
+    ],
+    "mcnemar_p": 1.0,
+    "point_inverted": true,
+    "CAVEAT": "POST-TREATMENT conditioning (collider risk) -- DIAGNOSTIC ONLY"
+   },
+   "tgt_in_raw": {
+    "A4": 25.0,
+    "A5": 12.0
+   }
+  },
+  "babilong|qa5|16k": {
+   "n": 100,
+   "is_list": {
+    "A4_rate": 2.0,
+    "A5_rate": 6.0,
+    "mcnemar": {
+     "b_A4only": 2,
+     "c_A5only": 6,
+     "n_discordant": 8,
+     "p_two_sided_exact": 0.289062
+    },
+    "significant": false
+   },
+   "trunc_kill": {
+    "A4_rate": 4.0,
+    "A5_rate": 4.0,
+    "mcnemar": {
+     "b_A4only": 4,
+     "c_A5only": 4,
+     "n_discordant": 8,
+     "p_two_sided_exact": 1.0
+    },
+    "significant": false
+   },
+   "canonical_full": {
+    "A4": 58.0,
+    "A5": 49.0,
+    "delta_pp": 9.0,
+    "ci95": [
+     -1.0,
+     19.0
+    ],
+    "point_inverted": false
+   },
+   "canonical_no_trunc_kill": {
+    "n": 92,
+    "A4": 62.0,
+    "A5": 51.1,
+    "delta_pp": 10.87,
+    "ci95": [
+     1.09,
+     21.74
+    ],
+    "mcnemar_p": 0.063915,
+    "point_inverted": false,
+    "CAVEAT": "POST-TREATMENT conditioning (collider risk) -- DIAGNOSTIC ONLY"
+   },
+   "tgt_in_raw": {
+    "A4": 65.0,
+    "A5": 60.0
+   }
+  },
+  "babilong|qa5|32k": {
+   "n": 100,
+   "is_list": {
+    "A4_rate": 2.0,
+    "A5_rate": 5.0,
+    "mcnemar": {
+     "b_A4only": 0,
+     "c_A5only": 3,
+     "n_discordant": 3,
+     "p_two_sided_exact": 0.25
+    },
+    "significant": false
+   },
+   "trunc_kill": {
+    "A4_rate": 3.0,
+    "A5_rate": 4.0,
+    "mcnemar": {
+     "b_A4only": 2,
+     "c_A5only": 3,
+     "n_discordant": 5,
+     "p_two_sided_exact": 1.0
+    },
+    "significant": false
+   },
+   "canonical_full": {
+    "A4": 58.0,
+    "A5": 48.0,
+    "delta_pp": 10.0,
+    "ci95": [
+     0.0,
+     20.0
+    ],
+    "point_inverted": false
+   },
+   "canonical_no_trunc_kill": {
+    "n": 94,
+    "A4": 60.6,
+    "A5": 50.0,
+    "delta_pp": 10.64,
+    "ci95": [
+     1.06,
+     20.21
+    ],
+    "mcnemar_p": 0.063915,
+    "point_inverted": false,
+    "CAVEAT": "POST-TREATMENT conditioning (collider risk) -- DIAGNOSTIC ONLY"
+   },
+   "tgt_in_raw": {
+    "A4": 62.0,
+    "A5": 61.0
+   }
+  }
+ },
+ "dissociation": {
+  "table_flip_x_highlist": [
+   [
+    4,
+    0
+   ],
+   [
+    0,
+    2
+   ]
+  ],
+  "fisher_exact_p_two_sided": 0.066667,
+  "cells_flipped": [
+   "babilong|qa1|16k",
+   "babilong|qa1|32k",
+   "babilong|qa2|16k",
+   "babilong|qa2|32k"
+  ],
+  "cells_high_list": [
+   "babilong|qa1|16k",
+   "babilong|qa1|32k",
+   "babilong|qa2|16k",
+   "babilong|qa2|32k"
+  ],
+  "note": "6 cells is the whole family, so the minimum attainable Fisher p is bounded; report as descriptive dissociation, not as a powered test"
+ },
+ "errors": []
+}

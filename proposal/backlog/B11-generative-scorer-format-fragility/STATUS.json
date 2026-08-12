@@ -1,0 +1,129 @@
+{
+ "id": "B11",
+ "name": "generative-scorer-format-fragility",
+ "status": "BACKLOG_UNVERIFIED_NOVELTY_UNCHECKED",
+ "created": "2026-08-12",
+ "origin": {
+  "produced_by": "A02 read-tax gate (commit 3c9f8f9) + A02 misorder gate (this one)",
+  "why_not_owned_by_A02": "separable: the claim concerns any base LM scored by babilong.metrics on a generative task, with or without CoMem or a depth knob. A02 retains provenance and the source generations, not ownership.",
+  "why_not_owned_by_B04": "B04's construct is per-item acc_norm decision-margin compression under model damage -- a likelihood-ranking metric over MC options, no generation, no retrieval, no string matching, status NARROWED_TO_OLMO_2_ONLY. This is a generative string-matching scorer's TEXT PREPROCESSING interacting with output format. Same umbrella word 'eval fragility', different measured construct, different mechanism, different failure surface. Merging would let the OLMo-2-only margin claim borrow support from an unrelated mechanism.",
+  "verdict_doc": "proposal/backlog/A02-comem-write-read-repair/A02_BABILONG_MISORDER_VERDICT.md"
+ },
+ "claim": "A generative long-context benchmark scorer's text preprocessing can encode output-format conventions strongly enough to destroy the RANKING of a true effect of +70 to +84 pp, and the failure localises to specific auditable lines of the metric.",
+ "established_measurements": {
+  "true_effect_on_retrieval_closed_ruler_pp": [
+   58.0,
+   54.0,
+   84.0,
+   84.0
+  ],
+  "babilong_cells_failing_to_recover_ordering": "6 of 6",
+  "babilong_cells_with_inverted_point_estimate": "4 of 6 (qa1x16k, qa1x32k, qa2x16k, qa2x32k)",
+  "inversion_significance": "NOT significant: best exact McNemar p = 0.0703 on 8 discordant items (b=1,c=7); Holm-adjusted within the 6-cell family = 0.4219",
+  "claim_strength": "RANKING FAILURE, not demonstrated sign error",
+  "list_format_rate_A4_vs_A5_pct": {
+   "qa1_16k": [
+    62.0,
+    31.0
+   ],
+   "qa1_32k": [
+    75.0,
+    42.0
+   ],
+   "qa2_16k": [
+    60.0,
+    25.0
+   ],
+   "qa2_32k": [
+    74.0,
+    32.0
+   ],
+   "qa5_16k": [
+    2.0,
+    6.0
+   ],
+   "qa5_32k": [
+    2.0,
+    5.0
+   ]
+  },
+  "truncation_kill_rate_A4_vs_A5_pct": {
+   "qa1_16k": [
+    40.0,
+    12.0
+   ],
+   "qa1_32k": [
+    43.0,
+    16.0
+   ],
+   "qa2_16k": [
+    25.0,
+    9.0
+   ],
+   "qa2_32k": [
+    22.0,
+    5.0
+   ],
+   "qa5_16k": [
+    4.0,
+    4.0
+   ],
+   "qa5_32k": [
+    3.0,
+    4.0
+   ]
+  },
+  "one_operation_ablation": "removing ONLY preprocess_output's first-period truncation (uniqueness requirement retained, so multiple-choice lists still score 0 and chance inflation is removed by construction) repairs the inversion on 2 of 6 cells and makes qa1x32k a perfect ladder rho=-1.000 p=0.0167; qa2 is unrepairable (floor, A4=1%)",
+  "cell_level_dissociation": "the 4 inverting cells are EXACTLY the 4 high-list-format cells; [[4,0],[0,2]], Fisher exact p=0.0667 = the minimum attainable with 6 cells, so DESCRIPTIVE dissociation, not a powered test"
+ },
+ "refuted_hypotheses": {
+  "retrieval_domination": "REFUTED as the mechanism for the inversion. Conditioning on the arm-independent retrieval HIT/MISS label, the inversion is LARGER on HIT (qa1x16k HIT -6.67 vs MISS +8.57; qa2x32k -13.64 vs -5.41). Low recall@12 (22.9-63.2%) remains the correct reason these cells cannot support depth inference IN GENERAL, but it does not explain the inversion.",
+  "retracted_intermediate_number": "a lenient format-insensitive read (target_in_raw) showed 4/6 sign flips, but it is chance-inflated for multiple-choice outputs and A4 emits lists far more often. The strict ablation gives 2/6. 2/6 is the number that stands."
+ },
+ "not_identified": "retrieval vs floor cannot be separated across 6 cells: Spearman(A0_acc, signed_sep) = +0.943 exact p=0.0167 (n=6 lower bound) but Spearman(recall, A0_acc) = +0.714, i.e. substantially collinear. Floor has the better sign, p and story, but the mechanism is NOT IDENTIFIED and must not be claimed.",
+ "kill_gates": [
+  {
+   "id": "K1",
+   "type": "novelty",
+   "gpu": 0,
+   "blocking": true,
+   "test": "check answer-extraction / metric-robustness literature: lm-evaluation-harness answer extraction, exact_match variants, MCQ answer-parsing robustness, LLM-as-judge vs string match. Venue rules: OpenReview venueid for ICLR/NeurIPS/ICML; aclanthology+DBLP for the ACL family incl. Findings.",
+   "kill_if": "the literature already covers 'preprocessing truncation changes model ranking'"
+  },
+  {
+   "id": "K2",
+   "type": "cross-family replication",
+   "blocking": true,
+   "test": "a second model family; output-format habit is a family property",
+   "kill_if": "no arm-wise list-format asymmetry in the second family AND the inversion disappears -> degrades to 'Qwen3 format habit + one scorer bug', archive as an A02 appendix negative result"
+  },
+  {
+   "id": "K3",
+   "type": "cross-benchmark",
+   "blocking": false,
+   "test": "do LongBench / RULER / LongEval scorers have the same class of preprocessing?",
+   "kill_if": "no other generative long-context scorer does -> downgrade to an upstream bug report"
+  }
+ ],
+ "forbidden_claims": [
+  "'BABILong inverts conclusions' -- the inversion is NOT significant (p=0.0703, Holm 0.4219)",
+  "retrieval is the mechanism -- refuted, inversion is larger on HIT",
+  "attributing to retrieval OR floor separately -- collinear across 6 cells, not identified",
+  "the 4/6 figure from target_in_raw -- chance-inflated, superseded by 2/6",
+  "merging with B04 -- different construct and mechanism"
+ ],
+ "gpu_policy": "NO GPU until K1 (novelty, 0 GPU) passes.",
+ "evidence_files": [
+  "proposal/backlog/A02-comem-write-read-repair/evidence/babilong_misorder/a02_babilong_misorder.json",
+  "proposal/backlog/A02-comem-write-read-repair/evidence/babilong_misorder/a02_babilong_format_diagnosis.json",
+  "proposal/backlog/A02-comem-write-read-repair/evidence/babilong_misorder/a02_format_mechanism.json",
+  "proposal/backlog/A02-comem-write-read-repair/evidence/babilong_misorder/a02_truncation_ablation.json"
+ ],
+ "source_generations": "zwfy6 babilong_results/a02_{rtax,dvr,babilong_c2}_* (8 shards/cell, n=100)",
+ "protocol_invariants": [
+  "chat_template=False",
+  "selector=iter_bm25",
+  "per-cell only, never pooled",
+  "canonical scorers imported, never reimplemented"
+ ]
+}

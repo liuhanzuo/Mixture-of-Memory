@@ -67,7 +67,7 @@ import numpy as np
 
 BASE = Path(os.environ.get(
     "A02_BASE", "/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory"))
-_CODE = BASE / "proposal/active/A02-comem-write-read-repair/code"
+_CODE = BASE / "proposal/backlog/A02-comem-write-read-repair/code"
 for _p in (str(BASE), str(_CODE), str(BASE / "scripts"),
            str(BASE / "third_party" / "babilong-pkg")):
     if _p not in sys.path:
@@ -444,7 +444,7 @@ def selftest_gate():
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", type=str,
-                    default=str(BASE / "proposal/active/A02-comem-write-read-repair"
+                    default=str(BASE / "proposal/backlog/A02-comem-write-read-repair"
                                       "/evidence/read_tax_ruler"))
     ap.add_argument("--nshard", type=int, default=NSHARD)
     ap.add_argument("--selftest_gate", action="store_true")

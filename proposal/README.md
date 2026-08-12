@@ -87,6 +87,25 @@ shared/literature/RELATED_WORK_GAP_AUDIT_20260808.md
 > 死于 effect-size-vs-apparatus-spread 而不是死于 related-work 覆盖，所以给它补
 > Related Work 不会改变任何结论。当前补洞优先级为 **A02 → A04 → B01**。
 
+> ⚠️ **2026-08-12 更正（覆盖上面两条里关于 A02 的排序）**：**A02 已 CLOSED 并移入
+> `backlog/A02-comem-write-read-repair/`**，`status:
+> CLOSED_NO_THESIS_DIAGNOSTIC_ASSETS_RETAINED`，不再是补洞项，**不再消耗算力**。
+> 理由：A0（完全不加 adapter）在所有 retrieval-closed cell 上都是最优臂，A02 产出的
+> 每个数字都是 **tax**；storage form 死（h12 = 2048× 原文），read-compute 只有
+> 1.03–1.37×。2026-08-12 的 gate 让它**更差而非更好**：在更难的 retrieval-closed cell
+> (`niah_single_3`×16k) 上 j=6 已有 **−8.00 pp（显著）**，所以连「knob 便宜」也被收窄为
+> 「只在两个饱和任务上成立」。**不 archive** 是因为它的证据仍在承重（depth-tax ladder、
+> 精确 capacity-matched pair、**直接测出的 VT recall = 100%**、新的 de-saturation cell），
+> 且 **B11 建立在它的 generation 之上**。
+> 详见 `backlog/A02-comem-write-read-repair/A02_BABILONG_MISORDER_VERDICT.md`。
+> **当前补洞优先级为 A04 → B01。**
+>
+> 同日新建 **`backlog/B11-generative-scorer-format-fragility/`**（A02 的方法论副产品：
+> 生成式 scorer 的文本预处理可以把输出格式编码进分数，强到**破坏一个真实 +70pp 效应的排序**；
+> 但**反向不显著**，机制是 metric 预处理 + floor，**不是** retrieval）。
+> 它**不归 A02、也不归 B04**（B04 是 damage 下的 per-item `acc_norm` margin compression，
+> likelihood ranking，不同 construct / 不同机制）。**novelty 未核查，通过前不得花任何 GPU。**
+
 > ⚠️ **2026-08-10 更正**：本行原写「B09 当前最完整」。那说的是**文献/设计完整度**，
 > 但会被读成「最接近可跑」，而 B09 恰恰相反——它的候选池（~10K agent trajectories
 > / ~100K SFT rows）**在两个盘上都不存在**，Phase 0 数据审计无法执行，状态已改为
@@ -116,9 +135,14 @@ shared/literature/RELATED_WORK_GAP_AUDIT_20260808.md
      0/6）。**读任何 2026-08-10 之前的 A01 verdict 文件前先读
      `active/A01-null-calibration-methodology/TCODEX_AUDIT_RESPONSE.md`。**
      `STATUS.json:status` 已不再声称 all gates passed。
-2. `active/A02-comem-write-read-repair/`
-   - 先验证已有 Write-LoRA/overlap repair 是否迁移到自然任务，再重做
-     equal-latency frontier。
+2. ~~`active/A02-comem-write-read-repair/`~~ → **已 CLOSED，移入
+   `backlog/A02-comem-write-read-repair/`（2026-08-12）**
+   - 原计划「先验证已有 Write-LoRA/overlap repair 是否迁移到自然任务，再重做
+     equal-latency frontier」**已作废**：phase-1 的自然任务信号被证明主要是
+     top-12 `iter_bm25` 的 recall/pack-narrowing artifact，且 A0（不加 adapter）
+     在所有 retrieval-closed cell 上是最优臂 —— 没有可迁移的正信号。
+   - `status: CLOSED_NO_THESIS_DIAGNOSTIC_ASSETS_RETAINED`，**不再消耗算力**；
+     复活需要**新机制**，而不是把同一个 ladder 再读一遍。
 3. `active/A04-recovery-certification/`
    - 用干净、多 seed、同语料同 token 的实验研究 recovery certification，
      而非把现有混杂 depth ladder 当 scaling law。

@@ -1,0 +1,406 @@
+{
+ "generated_by": "diagnose_a02_babilong_format.py",
+ "prereg": "A02_BABILONG_MISORDER_PREREG.md (1.2 mechanism / F3)",
+ "gpu_spent": "ZERO -- re-scores generations already on disk",
+ "scorer": "babilong.metrics.compare_answers + preprocess_output, IMPORTED",
+ "caveat_target_in_raw": "lenient LOWER BOUND on 'knew the answer'; would also credit an incidental mention. Used ONLY to show the canonical metric and a format-insensitive read of the SAME generations order arms differently. NOT proposed as a replacement metric.",
+ "per_cell": {
+  "babilong|qa1|16k": {
+   "A0": {
+    "n": 100,
+    "score": 33.0,
+    "listfmt": 48.0,
+    "trunc_kills": 34.0,
+    "no_label": 46.0,
+    "multi_label": 3.0,
+    "target_in_raw": 69.0
+   },
+   "A1": {
+    "n": 100,
+    "score": 32.0,
+    "listfmt": 49.0,
+    "trunc_kills": 35.0,
+    "no_label": 48.0,
+    "multi_label": 3.0,
+    "target_in_raw": 69.0
+   },
+   "A2": {
+    "n": 100,
+    "score": 23.0,
+    "listfmt": 58.0,
+    "trunc_kills": 39.0,
+    "no_label": 66.0,
+    "multi_label": 2.0,
+    "target_in_raw": 64.0
+   },
+   "A3": {
+    "n": 100,
+    "score": 21.0,
+    "listfmt": 65.0,
+    "trunc_kills": 43.0,
+    "no_label": 65.0,
+    "multi_label": 5.0,
+    "target_in_raw": 68.0
+   },
+   "A4": {
+    "n": 100,
+    "score": 17.0,
+    "listfmt": 62.0,
+    "trunc_kills": 40.0,
+    "no_label": 71.0,
+    "multi_label": 0.0,
+    "target_in_raw": 57.0
+   },
+   "A5": {
+    "n": 100,
+    "score": 19.0,
+    "listfmt": 31.0,
+    "trunc_kills": 12.0,
+    "no_label": 60.0,
+    "multi_label": 0.0,
+    "target_in_raw": 31.0
+   },
+   "A6": {
+    "n": 100,
+    "score": 19.0,
+    "listfmt": 58.0,
+    "trunc_kills": 37.0,
+    "no_label": 68.0,
+    "multi_label": 1.0,
+    "target_in_raw": 57.0
+   }
+  },
+  "babilong|qa1|32k": {
+   "A0": {
+    "n": 100,
+    "score": 35.0,
+    "listfmt": 54.0,
+    "trunc_kills": 33.0,
+    "no_label": 55.0,
+    "multi_label": 3.0,
+    "target_in_raw": 71.0
+   },
+   "A1": {
+    "n": 100,
+    "score": 34.0,
+    "listfmt": 55.0,
+    "trunc_kills": 34.0,
+    "no_label": 55.0,
+    "multi_label": 3.0,
+    "target_in_raw": 71.0
+   },
+   "A2": {
+    "n": 100,
+    "score": 21.0,
+    "listfmt": 67.0,
+    "trunc_kills": 49.0,
+    "no_label": 73.0,
+    "multi_label": 0.0,
+    "target_in_raw": 70.0
+   },
+   "A3": {
+    "n": 100,
+    "score": 14.0,
+    "listfmt": 75.0,
+    "trunc_kills": 46.0,
+    "no_label": 77.0,
+    "multi_label": 4.0,
+    "target_in_raw": 63.0
+   },
+   "A4": {
+    "n": 100,
+    "score": 12.0,
+    "listfmt": 75.0,
+    "trunc_kills": 43.0,
+    "no_label": 80.0,
+    "multi_label": 0.0,
+    "target_in_raw": 55.0
+   },
+   "A5": {
+    "n": 100,
+    "score": 12.0,
+    "listfmt": 42.0,
+    "trunc_kills": 16.0,
+    "no_label": 68.0,
+    "multi_label": 2.0,
+    "target_in_raw": 30.0
+   },
+   "A6": {
+    "n": 100,
+    "score": 12.0,
+    "listfmt": 77.0,
+    "trunc_kills": 45.0,
+    "no_label": 79.0,
+    "multi_label": 0.0,
+    "target_in_raw": 57.0
+   }
+  },
+  "babilong|qa2|16k": {
+   "A0": {
+    "n": 100,
+    "score": 17.0,
+    "listfmt": 42.0,
+    "trunc_kills": 18.0,
+    "no_label": 49.0,
+    "multi_label": 10.0,
+    "target_in_raw": 38.0
+   },
+   "A1": {
+    "n": 100,
+    "score": 16.0,
+    "listfmt": 41.0,
+    "trunc_kills": 18.0,
+    "no_label": 49.0,
+    "multi_label": 8.0,
+    "target_in_raw": 37.0
+   },
+   "A2": {
+    "n": 100,
+    "score": 13.0,
+    "listfmt": 56.0,
+    "trunc_kills": 25.0,
+    "no_label": 70.0,
+    "multi_label": 3.0,
+    "target_in_raw": 40.0
+   },
+   "A3": {
+    "n": 100,
+    "score": 8.0,
+    "listfmt": 59.0,
+    "trunc_kills": 23.0,
+    "no_label": 62.0,
+    "multi_label": 7.0,
+    "target_in_raw": 36.0
+   },
+   "A4": {
+    "n": 100,
+    "score": 8.0,
+    "listfmt": 60.0,
+    "trunc_kills": 25.0,
+    "no_label": 69.0,
+    "multi_label": 1.0,
+    "target_in_raw": 34.0
+   },
+   "A5": {
+    "n": 100,
+    "score": 9.0,
+    "listfmt": 25.0,
+    "trunc_kills": 9.0,
+    "no_label": 58.0,
+    "multi_label": 0.0,
+    "target_in_raw": 18.0
+   },
+   "A6": {
+    "n": 100,
+    "score": 8.0,
+    "listfmt": 63.0,
+    "trunc_kills": 26.0,
+    "no_label": 69.0,
+    "multi_label": 2.0,
+    "target_in_raw": 35.0
+   }
+  },
+  "babilong|qa2|32k": {
+   "A0": {
+    "n": 100,
+    "score": 11.0,
+    "listfmt": 37.0,
+    "trunc_kills": 10.0,
+    "no_label": 53.0,
+    "multi_label": 6.0,
+    "target_in_raw": 26.0
+   },
+   "A1": {
+    "n": 100,
+    "score": 10.0,
+    "listfmt": 36.0,
+    "trunc_kills": 12.0,
+    "no_label": 55.0,
+    "multi_label": 5.0,
+    "target_in_raw": 26.0
+   },
+   "A2": {
+    "n": 100,
+    "score": 3.0,
+    "listfmt": 53.0,
+    "trunc_kills": 19.0,
+    "no_label": 77.0,
+    "multi_label": 2.0,
+    "target_in_raw": 23.0
+   },
+   "A3": {
+    "n": 100,
+    "score": 2.0,
+    "listfmt": 63.0,
+    "trunc_kills": 17.0,
+    "no_label": 74.0,
+    "multi_label": 6.0,
+    "target_in_raw": 25.0
+   },
+   "A4": {
+    "n": 100,
+    "score": 1.0,
+    "listfmt": 74.0,
+    "trunc_kills": 22.0,
+    "no_label": 86.0,
+    "multi_label": 2.0,
+    "target_in_raw": 25.0
+   },
+   "A5": {
+    "n": 100,
+    "score": 7.0,
+    "listfmt": 32.0,
+    "trunc_kills": 5.0,
+    "no_label": 69.0,
+    "multi_label": 0.0,
+    "target_in_raw": 12.0
+   },
+   "A6": {
+    "n": 100,
+    "score": 1.0,
+    "listfmt": 74.0,
+    "trunc_kills": 21.0,
+    "no_label": 84.0,
+    "multi_label": 2.0,
+    "target_in_raw": 24.0
+   }
+  },
+  "babilong|qa5|16k": {
+   "A0": {
+    "n": 100,
+    "score": 53.0,
+    "listfmt": 2.0,
+    "trunc_kills": 3.0,
+    "no_label": 17.0,
+    "multi_label": 3.0,
+    "target_in_raw": 59.0
+   },
+   "A1": {
+    "n": 100,
+    "score": 53.0,
+    "listfmt": 2.0,
+    "trunc_kills": 3.0,
+    "no_label": 15.0,
+    "multi_label": 5.0,
+    "target_in_raw": 61.0
+   },
+   "A2": {
+    "n": 100,
+    "score": 62.0,
+    "listfmt": 2.0,
+    "trunc_kills": 4.0,
+    "no_label": 17.0,
+    "multi_label": 1.0,
+    "target_in_raw": 67.0
+   },
+   "A3": {
+    "n": 100,
+    "score": 63.0,
+    "listfmt": 2.0,
+    "trunc_kills": 3.0,
+    "no_label": 15.0,
+    "multi_label": 2.0,
+    "target_in_raw": 67.0
+   },
+   "A4": {
+    "n": 100,
+    "score": 58.0,
+    "listfmt": 2.0,
+    "trunc_kills": 4.0,
+    "no_label": 15.0,
+    "multi_label": 3.0,
+    "target_in_raw": 65.0
+   },
+   "A5": {
+    "n": 100,
+    "score": 49.0,
+    "listfmt": 6.0,
+    "trunc_kills": 4.0,
+    "no_label": 27.0,
+    "multi_label": 7.0,
+    "target_in_raw": 60.0
+   },
+   "A6": {
+    "n": 100,
+    "score": 61.0,
+    "listfmt": 2.0,
+    "trunc_kills": 6.0,
+    "no_label": 14.0,
+    "multi_label": 3.0,
+    "target_in_raw": 70.0
+   }
+  },
+  "babilong|qa5|32k": {
+   "A0": {
+    "n": 100,
+    "score": 61.0,
+    "listfmt": 4.0,
+    "trunc_kills": 4.0,
+    "no_label": 14.0,
+    "multi_label": 3.0,
+    "target_in_raw": 68.0
+   },
+   "A1": {
+    "n": 100,
+    "score": 63.0,
+    "listfmt": 4.0,
+    "trunc_kills": 2.0,
+    "no_label": 14.0,
+    "multi_label": 4.0,
+    "target_in_raw": 69.0
+   },
+   "A2": {
+    "n": 100,
+    "score": 62.0,
+    "listfmt": 3.0,
+    "trunc_kills": 2.0,
+    "no_label": 18.0,
+    "multi_label": 4.0,
+    "target_in_raw": 67.0
+   },
+   "A3": {
+    "n": 100,
+    "score": 57.0,
+    "listfmt": 3.0,
+    "trunc_kills": 3.0,
+    "no_label": 25.0,
+    "multi_label": 0.0,
+    "target_in_raw": 60.0
+   },
+   "A4": {
+    "n": 100,
+    "score": 58.0,
+    "listfmt": 2.0,
+    "trunc_kills": 3.0,
+    "no_label": 22.0,
+    "multi_label": 1.0,
+    "target_in_raw": 62.0
+   },
+   "A5": {
+    "n": 100,
+    "score": 48.0,
+    "listfmt": 5.0,
+    "trunc_kills": 4.0,
+    "no_label": 25.0,
+    "multi_label": 10.0,
+    "target_in_raw": 61.0
+   },
+   "A6": {
+    "n": 100,
+    "score": 59.0,
+    "listfmt": 2.0,
+    "trunc_kills": 4.0,
+    "no_label": 20.0,
+    "multi_label": 1.0,
+    "target_in_raw": 64.0
+   }
+  }
+ },
+ "canonical_vs_raw_sign_flips": [
+  "babilong|qa1|16k",
+  "babilong|qa1|32k",
+  "babilong|qa2|16k",
+  "babilong|qa2|32k"
+ ],
+ "errors": []
+}

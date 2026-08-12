@@ -24,7 +24,7 @@
 # Usage (on .82):
 #   PROJECT_ROOT=/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory \
 #   PYTHON_BIN=/opt/conda/envs/torch-base/bin/python \
-#   RUN=1 setsid nohup bash proposal/active/A02-comem-write-read-repair/code/run_a02_storage_readcompute.sh \
+#   RUN=1 setsid nohup bash proposal/backlog/A02-comem-write-read-repair/code/run_a02_storage_readcompute.sh \
 #     >logs/a02_storage_readcompute.out 2>&1 &
 #   # omit RUN=1 for a dry preview (prints commands, no GPU work).
 # ============================================================================
@@ -35,7 +35,7 @@ PYBIN="${PYTHON_BIN:-/opt/conda/envs/torch-base/bin/python}"
 RUN="${RUN:-0}"
 GPUS_STR="${GPUS:-0 1 2 3}"          # bounded pool: leave GPUs free for A03
 
-DRIVER="proposal/active/A02-comem-write-read-repair/code/bench_a02_storage_readcompute.py"
+DRIVER="proposal/backlog/A02-comem-write-read-repair/code/bench_a02_storage_readcompute.py"
 MODEL="${MODEL:-models/Qwen3-8b-local}"
 LORA="${LORA:-outputs/qcmem_distill_qwen_j12_r32_4k/final}"
 OUTDIR="${OUTDIR:-bench_results/a02_storage_readcompute}"

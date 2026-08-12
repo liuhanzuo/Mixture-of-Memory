@@ -5,7 +5,7 @@ Consumes:
   * `bench_results/a02_storage_readcompute/a02_storage_readcompute_aggregate.json`
     (this gate's measured cost/storage, produced by
     `bench_a02_storage_readcompute.py --mode aggregate`)
-  * `proposal/active/A02-comem-write-read-repair/evidence/phase1_full_summary.json`
+  * `proposal/backlog/A02-comem-write-read-repair/evidence/phase1_full_summary.json`
     (the phase-1 quality legs, already on disk)
 
 Emits ONE json under the proposal's `evidence/` holding every number the verdict
@@ -245,9 +245,9 @@ def build(agg, phase1):
         "provenance": {
             "cost_source": "bench_results/a02_storage_readcompute/"
                            "a02_storage_readcompute_aggregate.json",
-            "quality_source": "proposal/active/A02-comem-write-read-repair/"
+            "quality_source": "proposal/backlog/A02-comem-write-read-repair/"
                               "evidence/phase1_full_summary.json",
-            "driver": "proposal/active/A02-comem-write-read-repair/code/"
+            "driver": "proposal/backlog/A02-comem-write-read-repair/code/"
                       "bench_a02_storage_readcompute.py",
             "n_cost_files": agg.get("n_files"),
             "partial_cells": agg.get("partial_cells"),

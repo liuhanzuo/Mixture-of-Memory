@@ -1,0 +1,123 @@
+{
+ "generated_by": "probe_a02_desaturation_candidates.py",
+ "prereg": "A02_BABILONG_MISORDER_PREREG.md 3 (Job 2.2)",
+ "gpu_spent": "ZERO (CPU generation + BM25 only)",
+ "purpose": "pre-GPU screen: which harder RULER task would STILL be retrieval-closed at 16k/32k under the primary selector",
+ "length_knob_rejected": "dvr measured recall DEGRADING with length (qa2 49.5%->22.9%, 16k->32k), so 64k/128k de-saturates by breaking retrieval -- disqualifying",
+ "selector": "iter_bm25 topk=12 iter_hop_topk=4 chunk_size=512",
+ "n_per_cell": 40,
+ "criterion": "recall@12 >= 95%",
+ "cells": {
+  "ruler|niah_multikey_1|16k": {
+   "n": 40,
+   "n_locatable": 39,
+   "recall_at_12": 100.0,
+   "ci95": [
+    91.03,
+    100
+   ],
+   "mean_n_needles": 1.0,
+   "mean_n_gold_chunks": 1.0,
+   "mean_n_ctx": 30.0,
+   "retrieval_closed": true
+  },
+  "ruler|niah_multikey_1|32k": {
+   "n": 40,
+   "n_locatable": 40,
+   "recall_at_12": 100.0,
+   "ci95": [
+    91.24,
+    100
+   ],
+   "mean_n_needles": 1.0,
+   "mean_n_gold_chunks": 1.02,
+   "mean_n_ctx": 62.0,
+   "retrieval_closed": true
+  },
+  "ruler|niah_single_3|16k": {
+   "n": 40,
+   "n_locatable": 40,
+   "recall_at_12": 97.5,
+   "ci95": [
+    87.12,
+    99.56
+   ],
+   "mean_n_needles": 1.0,
+   "mean_n_gold_chunks": 1.12,
+   "mean_n_ctx": 30.0,
+   "retrieval_closed": true
+  },
+  "ruler|niah_single_3|32k": {
+   "n": 40,
+   "n_locatable": 40,
+   "recall_at_12": 95.0,
+   "ci95": [
+    83.5,
+    98.62
+   ],
+   "mean_n_needles": 1.0,
+   "mean_n_gold_chunks": 1.12,
+   "mean_n_ctx": 61.0,
+   "retrieval_closed": true
+  },
+  "ruler|niah_multivalue|16k": {
+   "n": 40,
+   "n_locatable": 39,
+   "recall_at_12": 100.0,
+   "ci95": [
+    91.03,
+    100
+   ],
+   "mean_n_needles": 1.0,
+   "mean_n_gold_chunks": 1.07,
+   "mean_n_ctx": 30.0,
+   "retrieval_closed": true
+  },
+  "ruler|niah_multivalue|32k": {
+   "n": 40,
+   "n_locatable": 39,
+   "recall_at_12": 92.31,
+   "ci95": [
+    79.68,
+    97.35
+   ],
+   "mean_n_needles": 1.0,
+   "mean_n_gold_chunks": 1.0,
+   "mean_n_ctx": 62.0,
+   "retrieval_closed": false
+  },
+  "ruler|niah_multiquery|16k": {
+   "n": 40,
+   "n_locatable": 39,
+   "recall_at_12": 100.0,
+   "ci95": [
+    91.03,
+    100
+   ],
+   "mean_n_needles": 1.0,
+   "mean_n_gold_chunks": 1.07,
+   "mean_n_ctx": 30.0,
+   "retrieval_closed": true
+  },
+  "ruler|niah_multiquery|32k": {
+   "n": 40,
+   "n_locatable": 40,
+   "recall_at_12": 95.0,
+   "ci95": [
+    83.5,
+    98.62
+   ],
+   "mean_n_needles": 1.0,
+   "mean_n_gold_chunks": 1.02,
+   "mean_n_ctx": 62.0,
+   "retrieval_closed": true
+  }
+ },
+ "passing_candidates": [
+  "ruler|niah_single_3|16k",
+  "ruler|niah_single_3|32k",
+  "ruler|niah_multivalue|16k",
+  "ruler|niah_multiquery|16k",
+  "ruler|niah_multiquery|32k"
+ ]
+}

@@ -49,7 +49,7 @@
 # Usage (on .82):
 #   PROJECT_ROOT=/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory \
 #   PYTHON_BIN=/opt/conda/envs/torch-base/bin/python \
-#   setsid nohup bash proposal/active/A02-comem-write-read-repair/code/run_a02_read_tax_eval.sh \
+#   setsid nohup bash proposal/backlog/A02-comem-write-read-repair/code/run_a02_read_tax_eval.sh \
 #     >logs/a02_read_tax_eval.out 2>&1 &
 # ============================================================================
 set -u

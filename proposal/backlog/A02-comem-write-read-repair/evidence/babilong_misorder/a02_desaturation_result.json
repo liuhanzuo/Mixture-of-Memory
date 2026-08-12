@@ -1,0 +1,217 @@
+{
+ "generated_by": "analyze_a02_desaturation.py",
+ "prereg": "A02_BABILONG_MISORDER_PREREG.md 3 (Job 2.2)",
+ "cell": "ruler|niah_single_3|{16k,32k}",
+ "why_this_cell": "passed the 0-GPU retrieval-closure screen at 97.5%/95.0% recall@12 AND is single-needle, so the screen's gold locator is exact (multivalue/multiquery gold = first needle only)",
+ "protocol": {
+  "chat_template": "asserted False via `is not False` (never `is not True`)",
+  "chat_template_location": "RULER records.json is FLAT and has NO chat_template; it lives in the sibling summary",
+  "selector": "iter_bm25 topk=12 iter_hop_topk=4 chunk_size=512",
+  "shards": "8, n=100/cell asserted, 0 dup, 0 NaN",
+  "ci": "paired bootstrap n_boot=5000 seed=42; Wilson for proportions",
+  "aggregation": "per-cell only; never pooled with BABILong/LongEval"
+ },
+ "gate_errors": [],
+ "cells": {
+  "ruler|niah_single_3|16k": {
+   "n_common": 100,
+   "acc": {
+    "A0": {
+     "acc": 97.0,
+     "wilson_ci95": [
+      91.55,
+      98.97
+     ],
+     "n": 100
+    },
+    "A2": {
+     "acc": 89.0,
+     "wilson_ci95": [
+      81.37,
+      93.75
+     ],
+     "n": 100
+    },
+    "A3": {
+     "acc": 89.0,
+     "wilson_ci95": [
+      81.37,
+      93.75
+     ],
+     "n": 100
+    },
+    "A4": {
+     "acc": 90.0,
+     "wilson_ci95": [
+      82.56,
+      94.48
+     ],
+     "n": 100
+    }
+   },
+   "tax_vs_A0": {
+    "A2": {
+     "delta_pp": -8.0,
+     "ci95": [
+      -14.0,
+      -3.0
+     ],
+     "sig": true
+    },
+    "A3": {
+     "delta_pp": -8.0,
+     "ci95": [
+      -14.0,
+      -3.0
+     ],
+     "sig": true
+    },
+    "A4": {
+     "delta_pp": -7.0,
+     "ci95": [
+      -13.0,
+      -2.0
+     ],
+     "sig": true
+    }
+   },
+   "sha_pairing_failures": 0
+  },
+  "ruler|niah_single_3|32k": {
+   "n_common": 100,
+   "acc": {
+    "A0": {
+     "acc": 96.0,
+     "wilson_ci95": [
+      90.16,
+      98.43
+     ],
+     "n": 100
+    },
+    "A2": {
+     "acc": 95.0,
+     "wilson_ci95": [
+      88.82,
+      97.85
+     ],
+     "n": 100
+    },
+    "A3": {
+     "acc": 96.0,
+     "wilson_ci95": [
+      90.16,
+      98.43
+     ],
+     "n": 100
+    },
+    "A4": {
+     "acc": 95.0,
+     "wilson_ci95": [
+      88.82,
+      97.85
+     ],
+     "n": 100
+    }
+   },
+   "tax_vs_A0": {
+    "A2": {
+     "delta_pp": -1.0,
+     "ci95": [
+      -3.0,
+      0.0
+     ],
+     "sig": false
+    },
+    "A3": {
+     "delta_pp": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "sig": false
+    },
+    "A4": {
+     "delta_pp": -1.0,
+     "ci95": [
+      -3.0,
+      0.0
+     ],
+     "sig": false
+    }
+   },
+   "sha_pairing_failures": 0
+  }
+ },
+ "de_saturation": {
+  "16k": {
+   "niah_multikey_1_primary": {
+    "A0": 100.0,
+    "A2": 99.0,
+    "A3": 99.0,
+    "A4": 90.0
+   },
+   "niah_single_3_new": {
+    "A0": 97.0,
+    "A2": 89.0,
+    "A3": 89.0,
+    "A4": 90.0
+   },
+   "shallow_max_primary": 100.0,
+   "shallow_max_new": 97.0,
+   "de_saturated": false,
+   "shallow_tax_now_resolvable": {
+    "A2": {
+     "delta_pp": -8.0,
+     "ci95": [
+      -14.0,
+      -3.0
+     ],
+     "sig": true
+    },
+    "A3": {
+     "delta_pp": -8.0,
+     "ci95": [
+      -14.0,
+      -3.0
+     ],
+     "sig": true
+    }
+   }
+  },
+  "32k": {
+   "niah_multikey_1_primary": {
+    "A0": 99.0,
+    "A2": 99.0,
+    "A3": 95.0,
+    "A4": 96.0
+   },
+   "niah_single_3_new": {
+    "A0": 96.0,
+    "A2": 95.0,
+    "A3": 96.0,
+    "A4": 95.0
+   },
+   "shallow_max_primary": 99.0,
+   "shallow_max_new": 96.0,
+   "de_saturated": false,
+   "shallow_tax_now_resolvable": {
+    "A2": {
+     "delta_pp": -1.0,
+     "ci95": [
+      -3.0,
+      0.0
+     ],
+     "sig": false
+    },
+    "A3": {
+     "delta_pp": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "sig": false
+    }
+   }
+  }
+ }
+}
