@@ -1,251 +1,328 @@
 {
-  "id": "A02",
-  "status": "needs_revision_original_thesis_dead_diagnostic_result_is_the_asset",
-  "priority": 2,
-  "updated": "2026-08-12T15:45+0800",
-  "phase": "matched-quality depth control LAUNCHED on .82 (the last open confound). GATE 0: the literal j=0 control is DEGENERATE BY CONSTRUCTION -- see matched_quality_depth_control.",
-  "premise_check_2026_08_08": {
-    "claim_under_test": "A02 stage-1 needs NO new training -- only eval of ~5 configs x 5 benchmarks",
-    "verdict": "PARTIALLY TRUE; blocked on identifying the canonical Read-LoRA",
-    "write_lora": {
-      "status": "ON DISK",
-      "path": "outputs/qcmem_writepath_distill_qwen_j12_r32/",
-      "size": "556 MB",
-      "disk": "zwfy6 only",
-      "contents": "distill_args.json + step{500,1000,1500,2000,2500}",
-      "provenance": "task #142 (P1.10 write-path distillation, Qwen3-8B, lower-12 Write LoRA)",
-      "transfer_note": "556 MB cross-disk is ~15-45 min at measured 12-37 MB/s -- tolerable. But irrelevant if the run happens on a zwfy6 node, which is the better choice."
-    },
-    "read_lora": {
-      "status": "RESOLVED 2026-08-09 -- canonical Read-LoRA pinned via provenance grep",
-      "canonical_path": "outputs/qcmem_distill_qwen_j12_r32_4k/final/",
-      "size": "223 MB",
-      "config": "r=32, alpha=64, layers 12..35 (upper band), sha dd09cd17",
-      "disk": "BOTH wzc1 and zwfy6 -- no transfer needed on either side",
-      "provenance": ">10 citation points incl paperA/P0_16_E0_NOTES.md; and the Write-LoRA's own distill_args.json records this path as its read_lora_path, which independently confirms it is the flagship Read adapter the Write path was distilled against",
-      "retracted_suspect_path": "outputs/lora_best_ref/ -- an EMPTY DIRECTORY, not a 512-byte file. The earlier '512 bytes' claim in this file was wrong (512 B is a directory inode size, not file content). It is not a stale/broken adapter, it is simply empty; not evidence of anything.",
-      "unblocks": "the 5-config x 5-benchmark stage-1 sweep is now interpretable"
-    },
-    "base_model": {
-      "note": "the path recorded in some docs (models/Qwen3-8b-local) is a 512-byte SYMLINK, not the weights",
-      "real_path_zwfy6": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/models/Qwen--Qwen3-8b",
-      "real_path_wzc1": "/apdcephfs_wzc1/share_304376610/pighzliu_code/models/Qwen--Qwen3-8b (5 safetensors shards)",
-      "verdict": "present on BOTH disks -- not a blocker on either"
-    },
-    "recommended_node": "a zwfy6 node (.73/.82/.104) so the Write-LoRA needs no transfer at all"
+ "id": "A02",
+ "status": "needs_revision_original_thesis_dead_diagnostic_result_is_the_asset",
+ "priority": 2,
+ "updated": "2026-08-12T22:40+0800",
+ "phase": "read-tax RULER read-out COMPLETE (2026-08-12 22:25). The step the training log named as next has been executed: A0/A1/A2/A3/A4/A5/A6 evaluated on RULER (retrieval-closed) + BABILong (contrast only). ALL 4 pre-registered predictions CONFIRMED. See A02_READ_TAX_RULER_VERDICT.md. Status unchanged: every number is a TAX; A0 (no adapter) is the best arm, so no quality win exists here.",
+ "premise_check_2026_08_08": {
+  "claim_under_test": "A02 stage-1 needs NO new training -- only eval of ~5 configs x 5 benchmarks",
+  "verdict": "PARTIALLY TRUE; blocked on identifying the canonical Read-LoRA",
+  "write_lora": {
+   "status": "ON DISK",
+   "path": "outputs/qcmem_writepath_distill_qwen_j12_r32/",
+   "size": "556 MB",
+   "disk": "zwfy6 only",
+   "contents": "distill_args.json + step{500,1000,1500,2000,2500}",
+   "provenance": "task #142 (P1.10 write-path distillation, Qwen3-8B, lower-12 Write LoRA)",
+   "transfer_note": "556 MB cross-disk is ~15-45 min at measured 12-37 MB/s -- tolerable. But irrelevant if the run happens on a zwfy6 node, which is the better choice."
   },
-  "next_gate": [
-    "A02 is NOT cleared for promotion. Storage form DEAD (2048x raw text). Read-compute form is a 1.03-1.37x per-query micro-optimisation. AND (2026-08-10) the phase-1 BABILong quality evidence has been RE-ATTRIBUTED: 54.9-78.6% of the C1-vs-C2 change on qa1/qa2 is the RETRIEVAL axis, not mid-layer read.",
-    "RESOLVED 2026-08-10 (was the top open question): 'whether C2's quality losses are mid-layer-read failures or retrieval-recall failures'. ANSWER: benchmark-dependent. BABILong qa1/qa2 -> retrieval dominates (recall@12 only 22.9-63.2%). RULER -> retrieval is ~0 (recall 99-100%) and the whole loss is the read (deployed -3 to -12pp). See A02_DEPTH_VS_RETRIEVAL_VERDICT.md.",
-    "If A02 continues, two candidates, NEITHER CoMem-specific: (a) sublinear retrieval -- selection is the dominant per-query cost at 1M (1014.8 ms vs 678 ms read); (b) a better selector than top-12 iter_bm25 -- it misses the gold support on 37-77% of BABILong qa1/qa2 samples. Both would benefit plain text-RAG identically, so neither supports a CoMem thesis.",
-    "SUPERSEDED 2026-08-12 by matched_quality_depth_control (below): 'NOT tested anywhere yet: a matched-quality depth control (a LoRA distilled for j=0) -- without it, depth cannot be isolated from adapter quality. This is the only remaining way to make a clean depth claim, and it requires TRAINING, not eval.' The training was launched on .82. GATE 0 finding: the literal control is DEGENERATE BY CONSTRUCTION -- at resume_j=0 the trainer's teacher and student are the SAME computational path differing only by a zero-init LoRA delta, so the objective is already globally minimised at init (measured loss 0.0000 at step 1, and ~0.001-0.002 through step 580 on 8 GPUs, vs flagship j=12's 0.2991). The optimal j=0 adapter is the IDENTITY, i.e. the base model, which is ALREADY on disk as the dvr arm j0_top12. Therefore the depth_vs_retrieval gate's read_deployed step (-3 to -12pp on RULER) ALREADY IS the matched-quality depth contrast, and A02_DEPTH_VS_RETRIEVAL_VERDICT.md 7.1's 'no arm isolates depth with a matched-quality adapter' is over-pessimistic."
+  "read_lora": {
+   "status": "RESOLVED 2026-08-09 -- canonical Read-LoRA pinned via provenance grep",
+   "canonical_path": "outputs/qcmem_distill_qwen_j12_r32_4k/final/",
+   "size": "223 MB",
+   "config": "r=32, alpha=64, layers 12..35 (upper band), sha dd09cd17",
+   "disk": "BOTH wzc1 and zwfy6 -- no transfer needed on either side",
+   "provenance": ">10 citation points incl paperA/P0_16_E0_NOTES.md; and the Write-LoRA's own distill_args.json records this path as its read_lora_path, which independently confirms it is the flagship Read adapter the Write path was distilled against",
+   "retracted_suspect_path": "outputs/lora_best_ref/ -- an EMPTY DIRECTORY, not a 512-byte file. The earlier '512 bytes' claim in this file was wrong (512 B is a directory inode size, not file content). It is not a stale/broken adapter, it is simply empty; not evidence of anything.",
+   "unblocks": "the 5-config x 5-benchmark stage-1 sweep is now interpretable"
+  },
+  "base_model": {
+   "note": "the path recorded in some docs (models/Qwen3-8b-local) is a 512-byte SYMLINK, not the weights",
+   "real_path_zwfy6": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/models/Qwen--Qwen3-8b",
+   "real_path_wzc1": "/apdcephfs_wzc1/share_304376610/pighzliu_code/models/Qwen--Qwen3-8b (5 safetensors shards)",
+   "verdict": "present on BOTH disks -- not a blocker on either"
+  },
+  "recommended_node": "a zwfy6 node (.73/.82/.104) so the Write-LoRA needs no transfer at all"
+ },
+ "next_gate": [
+  "A02 is NOT cleared for promotion. Storage form DEAD (2048x raw text). Read-compute form is a 1.03-1.37x per-query micro-optimisation. AND (2026-08-10) the phase-1 BABILong quality evidence has been RE-ATTRIBUTED: 54.9-78.6% of the C1-vs-C2 change on qa1/qa2 is the RETRIEVAL axis, not mid-layer read.",
+  "RESOLVED 2026-08-10 (was the top open question): 'whether C2's quality losses are mid-layer-read failures or retrieval-recall failures'. ANSWER: benchmark-dependent. BABILong qa1/qa2 -> retrieval dominates (recall@12 only 22.9-63.2%). RULER -> retrieval is ~0 (recall 99-100%) and the whole loss is the read (deployed -3 to -12pp). See A02_DEPTH_VS_RETRIEVAL_VERDICT.md.",
+  "If A02 continues, two candidates, NEITHER CoMem-specific: (a) sublinear retrieval -- selection is the dominant per-query cost at 1M (1014.8 ms vs 678 ms read); (b) a better selector than top-12 iter_bm25 -- it misses the gold support on 37-77% of BABILong qa1/qa2 samples. Both would benefit plain text-RAG identically, so neither supports a CoMem thesis.",
+  "SUPERSEDED 2026-08-12 by matched_quality_depth_control (below): 'NOT tested anywhere yet: a matched-quality depth control (a LoRA distilled for j=0) -- without it, depth cannot be isolated from adapter quality. This is the only remaining way to make a clean depth claim, and it requires TRAINING, not eval.' The training was launched on .82. GATE 0 finding: the literal control is DEGENERATE BY CONSTRUCTION -- at resume_j=0 the trainer's teacher and student are the SAME computational path differing only by a zero-init LoRA delta, so the objective is already globally minimised at init (measured loss 0.0000 at step 1, and ~0.001-0.002 through step 580 on 8 GPUs, vs flagship j=12's 0.2991). The optimal j=0 adapter is the IDENTITY, i.e. the base model, which is ALREADY on disk as the dvr arm j0_top12. Therefore the depth_vs_retrieval gate's read_deployed step (-3 to -12pp on RULER) ALREADY IS the matched-quality depth contrast, and A02_DEPTH_VS_RETRIEVAL_VERDICT.md 7.1's 'no arm isolates depth with a matched-quality adapter' is over-pessimistic."
+ ],
+ "kill_gate_verbatim": "若 paired quality CI 仍显著低于 0，则停止 CoMem 优于 RAG 的叙事，定位为高复用 workload 的 storage/read-compute 方案",
+ "phase1_c1_vs_c2_gate": {
+  "tested": "2026-08-09",
+  "verdict": "KILL_CONDITION_FIRES -- honour the reframe the kill clause itself prescribes",
+  "protocol_clean_legs": {
+   "babilong_qa1_qa2_at_16k_32k": "DECISIVE C1 WIN, -35pp to -55pp per cell, all four CIs entirely below 0",
+   "babilong_qa5_at_4k_16k": "C2 WINS, +0.16 / +0.14, both CIs entirely above 0 -- the pooled BABILong headline hides this sign flip",
+   "ruler": "DECISIVE C1 WIN -5.17pp CI [-6.77,-3.70]; MAIN spot-checked raw shard logs (C1 100.0 on all 8 cells; C2 niah_multikey_1 92.3/76.9/84.6/100.0)",
+   "longbench": "TIE -0.13pp CI [-0.61,+0.32] n=1150",
+   "locomo_f1": "TIE +0.20pp CI [-0.36,+0.75] n=1986 (deterministic string scoring, no judge)",
+   "longeval_pooled": "TIE +2.00pp CI [-5.33,+9.00]; but C2 far better at 64k/128k where C1 collapses"
+  },
+  "aggregation_correction": "the -17.89pp pooled BABILong figure is a mean over 9 cells with OPPOSITE true signs (4 sig negative, 2 sig POSITIVE, 3 n.s.). Pooling summarises nothing. Report per-cell always. This is exactly the aggregation artifact A01's null-calibration protocol exists to catch.",
+  "no_clean_c2_advantage": "There is NO protocol-clean benchmark on which C2 is significantly better in aggregate. The quarantined GPT-4o leg has been replaced by the open-weight Qwen3-8B result (+1.76pp, CI [-0.35,+3.78], CROSSES ZERO), which is also non-significant. Confirmed 2026-08-09.",
+  "prescribed_reframe": "Position CoMem as a storage / read-compute method for high-reuse workloads, NOT a quality win. This is what the kill clause literally instructs.",
+  "reframe_NOT_supported": "Do NOT reframe as 'C2 worse at exact-match, better at semantic'. qa5 lives INSIDE BABILong, a synthetic exact-match benchmark, so that split does not carve the data. The honest axis is single-span retrieval (C2 loses badly at long context) vs multi-mention relation (C2 can win), and that needs more than 2 significant cells to assert.",
+  "blocks": [
+   "Do NOT build Configs 3/4/5 (~400 lines per status/proposal_prep/A02_CONFIG345_WIRING.md) on the premise that C2 is the strong quality arm -- the gate says it is not. If built, it should test the storage/read-compute framing, which needs a latency/storage axis."
   ],
-  "kill_gate_verbatim": "\u82e5 paired quality CI \u4ecd\u663e\u8457\u4f4e\u4e8e 0\uff0c\u5219\u505c\u6b62 CoMem \u4f18\u4e8e RAG \u7684\u53d9\u4e8b\uff0c\u5b9a\u4f4d\u4e3a\u9ad8\u590d\u7528 workload \u7684 storage/read-compute \u65b9\u6848",
-  "phase1_c1_vs_c2_gate": {
-    "tested": "2026-08-09",
-    "verdict": "KILL_CONDITION_FIRES -- honour the reframe the kill clause itself prescribes",
-    "protocol_clean_legs": {
-      "babilong_qa1_qa2_at_16k_32k": "DECISIVE C1 WIN, -35pp to -55pp per cell, all four CIs entirely below 0",
-      "babilong_qa5_at_4k_16k": "C2 WINS, +0.16 / +0.14, both CIs entirely above 0 -- the pooled BABILong headline hides this sign flip",
-      "ruler": "DECISIVE C1 WIN -5.17pp CI [-6.77,-3.70]; MAIN spot-checked raw shard logs (C1 100.0 on all 8 cells; C2 niah_multikey_1 92.3/76.9/84.6/100.0)",
-      "longbench": "TIE -0.13pp CI [-0.61,+0.32] n=1150",
-      "locomo_f1": "TIE +0.20pp CI [-0.36,+0.75] n=1986 (deterministic string scoring, no judge)",
-      "longeval_pooled": "TIE +2.00pp CI [-5.33,+9.00]; but C2 far better at 64k/128k where C1 collapses"
-    },
-    "aggregation_correction": "the -17.89pp pooled BABILong figure is a mean over 9 cells with OPPOSITE true signs (4 sig negative, 2 sig POSITIVE, 3 n.s.). Pooling summarises nothing. Report per-cell always. This is exactly the aggregation artifact A01's null-calibration protocol exists to catch.",
-    "no_clean_c2_advantage": "There is NO protocol-clean benchmark on which C2 is significantly better in aggregate. The quarantined GPT-4o leg has been replaced by the open-weight Qwen3-8B result (+1.76pp, CI [-0.35,+3.78], CROSSES ZERO), which is also non-significant. Confirmed 2026-08-09.",
-    "prescribed_reframe": "Position CoMem as a storage / read-compute method for high-reuse workloads, NOT a quality win. This is what the kill clause literally instructs.",
-    "reframe_NOT_supported": "Do NOT reframe as 'C2 worse at exact-match, better at semantic'. qa5 lives INSIDE BABILong, a synthetic exact-match benchmark, so that split does not carve the data. The honest axis is single-span retrieval (C2 loses badly at long context) vs multi-mention relation (C2 can win), and that needs more than 2 significant cells to assert.",
-    "blocks": [
-      "Do NOT build Configs 3/4/5 (~400 lines per status/proposal_prep/A02_CONFIG345_WIRING.md) on the premise that C2 is the strong quality arm -- the gate says it is not. If built, it should test the storage/read-compute framing, which needs a latency/storage axis."
-    ],
-    "evidence": "PHASE1_C1_VS_C2_VERDICT.md (incl. MAIN CORRECTIONS + LoCoMo judge re-run sections), evidence/{babilong,ruler,longbench,longeval,locomo}_paired_ci.json + phase1_full_summary.json + evidence/locomo_judge_openweight.json",
-    "locomo_judge_resolved": {
-      "resolved": "2026-08-09",
-      "open_weight_result": "judge acc C1=50.55% C2=52.32% diff=+1.76pp CI[-0.35,+3.78] -- CROSSES 0, NOT SIGNIFICANT",
-      "supersedes": "the GPT-4o number (+3.22pp CI[+1.21,+5.04], significant) is retracted; it used the wrong measurement instrument",
-      "judge_method": "transformers.generate with Qwen3-8B, enable_thinking=False, do_sample=False, max_new_tokens=8, canonical prompt+refusal regex. vLLM 0.26.0 could NOT load Qwen3 (pydantic ValidationError: Qwen3ForCausalLM failed to be inspected -- version predates the arch; fix needs torch 2.11 vs env 2.13). transformers substitution IS acceptable (open weights, deterministic, versionable); the GPT-4o substitution was NOT. Label tables as transformers_generate, not vLLM.",
-      "script": "scripts/a02_judge_openweight.py"
-    },
-    "f1_leg_retraction": {
-      "retracted": "the re-run's F1 leg (+0.68pp CI[+0.31,+1.02], reported as 'significantly positive / new minor finding')",
-      "reason": "scripts/a02_judge_openweight.py:423-445 REIMPLEMENTED F1 instead of importing the canonical compute_f1/normalize_answer from eval_qcmem_locomo.py:313-343. Two bugs: (1) normalize_answer operation order swapped -- canonical does remove_punc THEN remove_articles, the re-run does remove_articles THEN remove_punc, so \\b(a|an|the)\\b lands on different word boundaries while punctuation is still present ('the-house' -> canonical 'thehouse' vs re-run 'house'; 'a.k.a. Bob' -> 'aka bob' vs 'k bob'; 'an-apple' -> 'anapple' vs 'apple'). (2) zero-overlap: canonical returns 0.0, the re-run `continue`s.",
-      "canonical_value": "+0.20pp CI[-0.36,+0.75] -- a TIE. This is the value to cite, because it is the F1 definition every other LoCoMo number in this project used.",
-      "principle": "using a different normaliser for one cell of a comparison table makes cross-row comparison meaningless regardless of which normaliser is better in the abstract"
-    },
-    "verdict_after_all_corrections": "UNCHANGED. No protocol-clean benchmark shows C2 significantly better in aggregate. Kill condition still fires. Prescribed reframe (storage/read-compute, not quality win) stands. Corrected legs: BABILong qa1/qa2@16k-32k C1 wins decisively; BABILong qa5@4k,16k C2 wins; RULER C1 wins; LongBench tie; LoCoMo F1 tie; LoCoMo judge (open-weight) tie; LongEval pooled tie.",
-    "meta_note_for_future_scoring": "TWICE in one session a subagent reimplemented a metric rather than importing the canonical one, and the reimplementation produced a SIGNIFICANT result where canonical produced a tie -- both times in the more exciting direction. Any scoring run MUST import the canonical scorer from the harness that produced the predictions. Canonical LoCoMo scorers: eval_qcmem_locomo.py::{normalize_answer, compute_f1, compute_f1_multi, compute_em_multi, substring_acc}."
+  "evidence": "PHASE1_C1_VS_C2_VERDICT.md (incl. MAIN CORRECTIONS + LoCoMo judge re-run sections), evidence/{babilong,ruler,longbench,longeval,locomo}_paired_ci.json + phase1_full_summary.json + evidence/locomo_judge_openweight.json",
+  "locomo_judge_resolved": {
+   "resolved": "2026-08-09",
+   "open_weight_result": "judge acc C1=50.55% C2=52.32% diff=+1.76pp CI[-0.35,+3.78] -- CROSSES 0, NOT SIGNIFICANT",
+   "supersedes": "the GPT-4o number (+3.22pp CI[+1.21,+5.04], significant) is retracted; it used the wrong measurement instrument",
+   "judge_method": "transformers.generate with Qwen3-8B, enable_thinking=False, do_sample=False, max_new_tokens=8, canonical prompt+refusal regex. vLLM 0.26.0 could NOT load Qwen3 (pydantic ValidationError: Qwen3ForCausalLM failed to be inspected -- version predates the arch; fix needs torch 2.11 vs env 2.13). transformers substitution IS acceptable (open weights, deterministic, versionable); the GPT-4o substitution was NOT. Label tables as transformers_generate, not vLLM.",
+   "script": "scripts/a02_judge_openweight.py"
   },
-  "storage_readcompute_reframe_gate": {
-    "tested": "2026-08-09",
-    "node": ".82 (8x H20, zwfy6), bounded 4-GPU pool; A03 watcher left untouched",
-    "verdict": "STORAGE FORM: DEAD. READ-COMPUTE FORM: SURVIVES WEAKLY.",
-    "headline": "Finite N* exists vs the phase-1 C1 arm (0.13-0.38 queries, 12/12 cells within the pre-registered 1e5 bar), BUT 86-93% of that win is RETRIEVAL, which plain text-RAG gets for free. Against a matched-pack text-RAG control, CoMem's own contribution is 1.03-1.37x per-query, needing N*=8-226 queries to repay its Write, at 2048x the bytes/token of raw text.",
-    "crossover_n_star": {
-      "vs_phase1_C1_pack_all": "32k: 0.35-0.38 | 128k: 0.13 | 1M: N/A (C1 arm OOMs, 88.3GB peak) -- recorded as ARM-ABSENT, explicitly NOT as infinite N* and NOT as a CoMem win",
-      "vs_matched_pack_text_RAG": "32k: 8.1-11.9 | 128k: 25.2-42.6 | 1M: 185.5-225.5; grows ~linearly in L because Write is O(L) while the per-query saving is constant -> break-even gets WORSE for the big corpora the method is pitched at",
-      "prereg_threshold": "N* <= 1e5 queries/corpus, fixed before the run in the driver docstring"
-    },
-    "storage_ratio": {
-      "h12_over_raw_text": "2048x LARGER (8192 vs 4 bytes/token, exact and constant across all L) -> 'storage method' framing FAILS",
-      "comem_total_over_rag_total": "632-1129x (store + BM25 index on both sides)",
-      "h12_over_fulldepth_KV": "18x SMALLER (8192 vs 147456 B/tok) -- the ONLY sense in which 'storage win' holds, and it is vs KV-caching, not vs what RAG stores",
-      "method": "real bytes: in-memory tensor bytes AND actual file size after torch.save+fsync; agree to a 1577-byte pickle header"
-    },
-    "latency_decomposition_128k_gpu_G1_ms": {
-      "comem": "select 117.7 + fetch 1.50 + read 677.9 + decode 0.0 = 797.2 (read_len 6177)",
-      "j0_top12": "select 117.7 + fetch 0.02 + read 938.4 + decode 0.0 = 1056.2 (read_len 6177, SAME pack)",
-      "c1_all": "select 0.0 + fetch 0.22 + read 53009.6 + decode 0.0 = 53009.8 (read_len 131105, O(L))",
-      "what_the_memory_removes": "the bottom-12-layer prefill: read 938.4 -> 677.9 ms = 1.38x on the read component, 1.33x on the per-query total",
-      "G_decay": "CoMem-specific per-query speedup 1.33x (G=1) -> 1.11x (G=32) -> 1.03x (G=128); decode is identical across arms so larger G dilutes the advantage to within 3%",
-      "NEW_FINDING_selection_cost": "iter_bm25 selection is O(L) on CPU per query and CoMem does NOT remove it: 17.1 ms @32k, 117.7 ms @128k, 1014.8 ms @1M = 59.9% of CoMem's entire per-query budget at 1M and LARGER than its 678 ms read. Any 'CoMem per-query cost is constant in L' claim is false once selection is counted. The published P1.8 crossover let this cancel because both its arms retrieved."
-    },
-    "quality_not_held_fixed": "'Same quality, better cost' does NOT hold, so even the weak read-compute win is not free. Per-cell: BABILong qa1x16k -55pp / qa1x32k -51pp / qa2x16k -42pp / qa2x32k -35pp (all 4 CIs <0) but qa5x4k +16pp / qa5x16k +14pp (both CIs >0); RULER -5.17pp; LongEval -30pp@8k to +68pp@128k; LongBench / LoCoMo F1 / LoCoMo judge(open-weight) all ties.",
-    "protocol_defect_status": "phase-1's FOUR-way confound {read depth}x{LoRA}x{retrieval vs pack-all}x{selector} is REDUCED, not eliminated. This gate holds selector fixed at iter_bm25 and separates depth from retrieval via a 2-hop single-variable chain (comem -> j0_top12 -> c1_all). REMAINING confound: depth and LoRA move together (irreducible -- j=12 without the Read-LoRA is not a functional arm). NOT resolved: whether phase-1's quality losses are depth failures or retrieval-recall failures.",
-    "unverified": [
-      "single example / single task (niah_multikey_1, example_index=0, read_sample_length=32k); 3 procs x 5 repeats; no cross-task variance (matches released P1.8 protocol)",
-      "store tail beyond the real 32k sample is random-token padding; BM25 select time over random tokens may not match real text -- the 1014.8 ms @1M select is the least-confident number and it is load-bearing",
-      "c1_all @1M is an OOM, not a timing: its per-query cost at 1M is unmeasured; only 'does not fit in 97.8 GB' is established",
-      "no NVMe / networked storage tier measured (only gpu-resident + cpu-pinned); scripts/bench_persistent_store_io.py exists for this and was NOT run",
-      "batch=1 single-stream, no continuous batching / paged attention; a served RAG system amortises prefill across concurrent requests, further eroding a 1.33x single-stream advantage",
-      "H20 cc9.0 / torch 2.13.0 / bf16 / sdpa only; L20A absolute latencies would differ (ratios should be more stable)"
-    ],
-    "integrity_gates": "ALL PASSED: (1) Read-LoRA sha == flagship dd09cd17 fail-closed; (2) comem/j0_top12 share ONE pack (read_len 6177 both); (3) c1_all packs exactly range(N) matching the no_retrieval branch verbatim; (4) persistent bytes == N*chunk*d*2 exactly; (5) finite logits everywhere; (6) store-fetched h12 == fresh recompute max_abs == 0.0 bit-identical; (7) 18/18 procs present, aggregator ABORTS on partial cells.",
-    "cross_check_vs_published": "j0_top12 and comem reproduce the released Paper A P1.8 artifact to 0.06% and 0.21% (128k|gpu G=1) -- the new harness measures the same thing the paper did.",
-    "bugs_found_and_fixed": [
-      "out-of-bounds index_select when store_length < read_sample_length (opaque device-side assert) -> now fail-closed GATE 0 with an actionable message",
-      "CPU/CUDA device mismatch in the on-disk size probe",
-      "REPORTING bug caught in review: aggregator printed 'N*=inf' for an arm that had OOM'd, conflating 'measured but never cheaper' with 'could not run'. Console output and verdict builder now keep the categories separate."
-    ],
-    "aggregation_hygiene": "No pooled BABILong (-17.89pp) or pooled LongEval (+2.00pp) figure is quoted anywhere in this gate. Both average over cells with opposite true signs. The verdict JSON stores them ONLY under the key 'pooled_diff_pt_DO_NOT_QUOTE' so their exclusion is auditable, and classifies every cell by CI sign instead.",
-    "code": [
-      "proposal/active/A02-comem-write-read-repair/code/bench_a02_storage_readcompute.py",
-      "proposal/active/A02-comem-write-read-repair/code/run_a02_storage_readcompute.sh",
-      "proposal/active/A02-comem-write-read-repair/code/build_a02_reframe_verdict.py"
-    ],
-    "evidence": [
-      "A02_STORAGE_READCOMPUTE_VERDICT.md",
-      "evidence/a02_storage_readcompute_verdict.json (every headline recomputable; 42-point self-check passes)",
-      "evidence/a02_storage_readcompute_aggregate.json",
-      "evidence/a02_storage_readcompute_serve/ (18 raw per-unit records)"
-    ],
-    "promotion_impact": "Does NOT clear A02 for promotion to paper<X>. Recommended positioning: not a storage method and not a large serving win; the defensible claim is 'given you are already doing retrieval, caching mid-depth residuals removes the bottom-12-layer prefill for 1.03-1.37x per-query, repaid after ~8-226 queries/corpus, at a 2048x storage premium over raw text and with a measurable accuracy cost on long-context single-span retrieval' = a systems micro-optimisation, not a paper thesis."
+  "f1_leg_retraction": {
+   "retracted": "the re-run's F1 leg (+0.68pp CI[+0.31,+1.02], reported as 'significantly positive / new minor finding')",
+   "reason": "scripts/a02_judge_openweight.py:423-445 REIMPLEMENTED F1 instead of importing the canonical compute_f1/normalize_answer from eval_qcmem_locomo.py:313-343. Two bugs: (1) normalize_answer operation order swapped -- canonical does remove_punc THEN remove_articles, the re-run does remove_articles THEN remove_punc, so \\b(a|an|the)\\b lands on different word boundaries while punctuation is still present ('the-house' -> canonical 'thehouse' vs re-run 'house'; 'a.k.a. Bob' -> 'aka bob' vs 'k bob'; 'an-apple' -> 'anapple' vs 'apple'). (2) zero-overlap: canonical returns 0.0, the re-run `continue`s.",
+   "canonical_value": "+0.20pp CI[-0.36,+0.75] -- a TIE. This is the value to cite, because it is the F1 definition every other LoCoMo number in this project used.",
+   "principle": "using a different normaliser for one cell of a comparison table makes cross-row comparison meaningless regardless of which normaliser is better in the abstract"
   },
-  "depth_vs_retrieval_quality_gate": {
-    "tested": "2026-08-10",
-    "node": ".82 (8x H20, zwfy6), bounded 4-GPU pool (GPUs 0-3); A03 watcher PID 2165190 left untouched and still alive at exit; all GPUs released on completion",
-    "question": "Phase-1's C1-vs-C2 moved FOUR variables at once (verified from on-disk cell configs: C1 no_retrieval=True/selector=None/topk=None/resume_j=0/lora=None vs C2 no_retrieval=False/selector=iter_bm25/topk=12/resume_j=12/lora=flagship). Were C2's quality losses MID-LAYER-READ failures (A02's thesis) or RETRIEVAL-RECALL failures (a property of top-12 iter_bm25, unrelated to CoMem)?",
-    "verdict": "BOTH ARE REAL AND WHICH DOMINATES IS DECIDED BY THE BENCHMARK. BABILong qa1/qa2 -> RETRIEVAL dominates (54.9-78.6%). RULER -> READ dominates (retrieval ~0, recall 99-100%). BABILong qa5 -> neither step significant.",
-    "headline": "Phase-1's four 'decisive C1 wins' on BABILong qa1/qa2 (-35 to -55pp) are MOSTLY a retrieval/pack-narrowing artifact, NOT evidence about mid-layer reading. A02's read thesis was only ever properly tested by RULER, where the DEPLOYED read costs a significant but modest -3 to -12pp with retrieval held identical.",
-    "arms": {
-      "c1_pack_all": "phase-1 C1 (on disk): j=0, no LoRA, packs ALL chunks, no selector",
-      "j0_top12": "NEW: j=0, no LoRA, top-12 iter_bm25 == matched-pack text-RAG",
-      "j12_frozen": "NEW: j=12, NO LoRA, SAME top-12 pack -- this is what breaks the depth<->LoRA confound the cost gate called irreducible",
-      "c2_comem": "phase-1 C2 (on disk): j=12 + flagship Read-LoRA, same top-12 pack"
-    },
-    "steps": "retrieval=c1->j0_top12; read_depth=j0_top12->j12_frozen; read_lora=j12_frozen->c2_comem; read_deployed=j0_top12->c2_comem (the like-for-like shipped read). retrieval+read_deployed EXACTLY partitions the total c1->c2 change and read_depth+read_lora EXACTLY equals read_deployed (both asserted to 1e-6 on all 10 cells), so nothing is double-counted.",
-    "per_cell_retrieval_vs_deployed_pp": {
-      "babilong_qa1_16k": "RETR -39.0* / DEPLOY -16.0* -> retrieval 70.9%",
-      "babilong_qa1_32k": "RETR -28.0* / DEPLOY -23.0* -> retrieval 54.9% (NOT decisive, near-tie)",
-      "babilong_qa2_16k": "RETR -33.0* / DEPLOY -9.0 ns -> retrieval 78.6%",
-      "babilong_qa2_32k": "RETR -25.0* / DEPLOY -10.0* -> retrieval 71.4%",
-      "babilong_qa5_16k": "RETR +9.0 ns / DEPLOY +5.0 ns -> unattributable",
-      "babilong_qa5_32k": "RETR +2.0 ns / DEPLOY -3.0 ns -> unattributable",
-      "ruler_niah_mk1_16k": "RETR +0.0 ns / DEPLOY -10.0* [-16,-5] -> read 100%",
-      "ruler_niah_mk1_32k": "RETR +1.0 ns / DEPLOY -3.0 ns -> read 75.0%",
-      "ruler_vt_16k": "RETR +0.0 ns / DEPLOY -12.0* [-19,-6] -> read 100%",
-      "ruler_vt_32k": "RETR +1.0 ns / DEPLOY -11.0* [-18,-5] -> read 91.7%"
-    },
-    "retrieval_recall_at_12": {
-      "method": "HIT iff EVERY gold-support chunk is in the top-12 iter_bm25 pack; decided INDEPENDENTLY of answer accuracy; flagship selector + harness gold locator both imported unmodified",
-      "babilong": "qa1x16k 63.2% [53.1,72.2] | qa1x32k 57.0% [47.2,66.3] | qa2x16k 49.5% [39.6,59.4] | qa2x32k 22.9% [15.7,32.3] | qa5x16k 64.1% | qa5x32k 57.9%",
-      "ruler": "niah_mk1x16k 100.0% [96.2,100.0] | niah_mk1x32k 99.0% [94.6,99.8] | variable_tracking NOT MEASURABLE (0 gold-locatable)",
-      "interpretation": "the retrieval channel is wide open on BABILong (misses gold on 37-77% of samples, degrading with length) and closed on RULER -- exactly matching where each cause dominates"
-    },
-    "NEW_FINDING_adapter_dependence": "Mid-depth resume is almost ENTIRELY adapter-supplied: j12_frozen scores 0.0-3.0% on RULER while c2_comem scores 88-96% (read_depth -97 to -100pp, read_lora +87 to +95pp). Resuming at layer 12 on chunk-local hiddens is non-functional untrained. This is clean, previously unmeasured, and is a fact about distillation, not about memory efficiency. NOTE it is task-dependent: read_lora is n.s. on BABILong qa2 (+4.0, -1.0).",
-    "conditional_on_recall": "Confirms retrieval is causal (penalty always larger on MISS than HIT: qa1x16k -45.7 vs -36.7; qa2x16k -43.8 vs -21.3; j0_top12 collapses to 5-20% on MISS) AND qualifies it (the retrieval step stays significantly negative on the HIT subset too, so 'gold chunk in pack' is NOT sufficient -- narrowing 30-60 chunks to 12 also removes distractor/aggregation context). On RULER the retrieval step is +2.02 ns on the 99-sample HIT subset.",
-    "confound_KEPT_stated_plainly": "There is NO arm here that isolates depth with a matched-quality adapter. j12_frozen runs j=12 WITHOUT the adapter distilled for it, so it is a LOWER BOUND on depth-12 capability, not a fair depth arm; read_deployed bundles depth+adapter. Both are reported. The read_depth -97pp on RULER must NOT be read as 'depth costs 97pp' -- it means 'untrained depth-12 resume is non-functional'. The defensible depth-effect numbers are the read_deployed ones (-3 to -12pp). Removing this confound needs a j=0 control LoRA = TRAINING, out of scope for an eval gate.",
-    "unverified": [
-      "gold-support locator for qa2/qa5 matches the ANSWER string, which for multi-fact tasks marks only the answer-bearing fact, not the full support chain -> reported qa2/qa5 recall is an UPPER BOUND (making the retrieval attribution conservative, but the absolute percentages should not be quoted as exact)",
-      "variable_tracking retrieval recall NOT measured at all (0 gold-locatable); its 'retrieval ~0' rests only on the accuracy step (j0_top12 100.0 vs c1 100.0/99.0)",
-      "10 cells only, n=100/cell, ONE seed (42), Qwen3-8B only, H20/bf16/sdpa; 4k NOT re-run (phase-1 showed n.s.) so the length trend rests on 2 points per task",
-      "LongBench / LoCoMo / LongEval NOT re-run (phase-1 TIEs cannot discriminate depth from retrieval); LongEval's 8k->128k sign flip remains unexplained",
-      "whether a better selector (higher topk / oracle / semantic retriever) closes the BABILong gap is untested -- and would NOT be CoMem-specific"
-    ],
-    "integrity_gates": "ALL PASSED: G0 Read-LoRA sha==dd09cd17 fail-closed; G1 shard completeness 8/8 every cell every arm, 0 refused, NEGATIVE-TESTED (deleting one shard -> G1_SHARD_INCOMPLETE 7/8, refuses to merge); G2 BABILong (question,target) identical across arms; G2 RULER input_ids_sha256 identical across all 4 arms AND vs crc32 regeneration, 0 failures; G3 config identity 0 errors; chat_template=False asserted in every cell config; both partition identities exact to 1e-6; canonical scorers IMPORTED not reimplemented (babilong.metrics.compare_answers, RULER harness per-item correct); evidence md5-identical on wzc1 and zwfy6.",
-    "aggregation_hygiene": "No pooled BABILong or pooled LongEval figure is computed or quoted anywhere in this gate; evidence JSON contains per-cell blocks only. The banned -17.89pp / +2.00pp pooled values are absent by construction.",
-    "restates_phase1": "YES for BABILong qa1/qa2: phase-1's verdict should no longer cite those cells as evidence about mid-layer reading. NO for RULER: phase-1's reading stands there, at a corrected (smaller) magnitude. Phase-1's overall KILL conclusion is UNCHANGED -- C2 is still not significantly better anywhere protocol-clean -- but its stated CAUSE was wrong for 4 of its 5 decisive cells.",
-    "code": [
-      "proposal/active/A02-comem-write-read-repair/code/run_a02_depth_vs_retrieval.sh",
-      "proposal/active/A02-comem-write-read-repair/code/analyze_a02_depth_vs_retrieval.py",
-      "proposal/active/A02-comem-write-read-repair/code/analyze_a02_conditional_recall.py"
-    ],
-    "evidence": [
-      "A02_DEPTH_VS_RETRIEVAL_VERDICT.md",
-      "evidence/a02_depth_vs_retrieval_ci.json (every headline recomputable; audited number-by-number against the doc)",
-      "evidence/a02_depth_vs_retrieval_per_item.json (raw per-item correctness + per-sample recall, all 4 arms, 10 cells)",
-      "evidence/a02_depth_vs_retrieval_conditional.json"
-    ],
-    "raw_results_on_zwfy6": [
-      "babilong_results/a02_dvr_babilong_j0_top12/ (6 cells x 8 shards)",
-      "babilong_results/a02_dvr_babilong_j12_frozen/ (6 cells x 8 shards)",
-      "ruler_results/a02_dvr_ruler_j0_top12/ (32 records.json)",
-      "ruler_results/a02_dvr_ruler_j12_frozen/ (32 records.json)"
-    ],
-    "promotion_impact": "Does NOT clear A02. The kill clause's quality finding survives in WEAKENED, NARROWED form: CoMem's read does cost accuracy where retrieval is not the bottleneck (RULER, -3 to -12pp), but the headline magnitude was inflated 2-5x by a retrieval confound. Combined with the cost gate (storage DEAD, read-compute 1.03-1.37x), positioning is unchanged."
+  "verdict_after_all_corrections": "UNCHANGED. No protocol-clean benchmark shows C2 significantly better in aggregate. Kill condition still fires. Prescribed reframe (storage/read-compute, not quality win) stands. Corrected legs: BABILong qa1/qa2@16k-32k C1 wins decisively; BABILong qa5@4k,16k C2 wins; RULER C1 wins; LongBench tie; LoCoMo F1 tie; LoCoMo judge (open-weight) tie; LongEval pooled tie.",
+  "meta_note_for_future_scoring": "TWICE in one session a subagent reimplemented a metric rather than importing the canonical one, and the reimplementation produced a SIGNIFICANT result where canonical produced a tie -- both times in the more exciting direction. Any scoring run MUST import the canonical scorer from the harness that produced the predictions. Canonical LoCoMo scorers: eval_qcmem_locomo.py::{normalize_answer, compute_f1, compute_f1_multi, compute_em_multi, substring_acc}."
+ },
+ "storage_readcompute_reframe_gate": {
+  "tested": "2026-08-09",
+  "node": ".82 (8x H20, zwfy6), bounded 4-GPU pool; A03 watcher left untouched",
+  "verdict": "STORAGE FORM: DEAD. READ-COMPUTE FORM: SURVIVES WEAKLY.",
+  "headline": "Finite N* exists vs the phase-1 C1 arm (0.13-0.38 queries, 12/12 cells within the pre-registered 1e5 bar), BUT 86-93% of that win is RETRIEVAL, which plain text-RAG gets for free. Against a matched-pack text-RAG control, CoMem's own contribution is 1.03-1.37x per-query, needing N*=8-226 queries to repay its Write, at 2048x the bytes/token of raw text.",
+  "crossover_n_star": {
+   "vs_phase1_C1_pack_all": "32k: 0.35-0.38 | 128k: 0.13 | 1M: N/A (C1 arm OOMs, 88.3GB peak) -- recorded as ARM-ABSENT, explicitly NOT as infinite N* and NOT as a CoMem win",
+   "vs_matched_pack_text_RAG": "32k: 8.1-11.9 | 128k: 25.2-42.6 | 1M: 185.5-225.5; grows ~linearly in L because Write is O(L) while the per-query saving is constant -> break-even gets WORSE for the big corpora the method is pitched at",
+   "prereg_threshold": "N* <= 1e5 queries/corpus, fixed before the run in the driver docstring"
   },
-  "matched_quality_depth_control": {
-    "launched": "2026-08-12T15:20:47+0800",
-    "state": "TRAINING IN FLIGHT on .82 (8x H20, zwfy6). Only .82 touched; .73/.104/LOCAL/.21 never contacted.",
-    "addresses": "the former next_gate[3] -- the matched-quality depth control (a LoRA distilled for j=0)",
-    "prereg": "A02_J0_DEPTH_CONTROL_PREREG.md (written BEFORE any training GPU was spent)",
-    "launch_record": "A02_J0_DEPTH_CONTROL_LAUNCH.md",
-    "driver": "proposal/active/A02-comem-write-read-repair/code/run_a02_j0_depth_control.sh (sha256 8c2740748da8ab12, identical on wzc1 and zwfy6)",
-    "derived_from": "scripts/_launch_p2_4_depthcurve.sh -- the on-disk launcher that produced outputs/qcmem_distill_qwen_j{6,9,18}_r32_4k. NO new trainer written; scripts/train_qcmem_distill.py used unmodified (zwfy6 md5 a8c56b100432bb10293820b0936a6874).",
-    "GATE_0_HEADLINE_FINDING": "THE REQUESTED CONTROL IS DEGENERATE BY CONSTRUCTION. train_qcmem_distill.py defines TEACHER = QCMem read at j=0 (adapters disabled, no_grad) and STUDENT = QCMem read at j=resume_j (adapters on). At resume_j=0 these are the SAME path -- same pack, same depth, same RoPE, same mask -- differing ONLY by a zero-init LoRA delta, so teacher==student and the top-64 KL is identically 0 at init. MEASURED (not argued): a 1-GPU 20-step probe of the flagship recipe with ONLY resume_j 12->0 gives loss 0.0000 at step 1 and ~0.0015 thereafter, vs the flagship j=12's 0.2991 at step 10; the full 8-GPU arm holds ~0.001-0.002 (max 0.0077) through step 580. The trainer's own docstring states the same: 'at --resume_j 0 teacher==student by construction'.",
-    "CONSEQUENCE_the_defect_dissolves": "A 'LoRA distilled for j=0' under this recipe is not a matched-quality j=0 adapter, it is a NULL adapter whose optimum is the identity == the base model. That arm is ALREADY on disk as the dvr arm j0_top12 (ruler_results/a02_dvr_ruler_j0_top12, verified config resume_j=0 selector=iter_bm25 topk=12 iter_hop_topk=4 lora_adapter=None baseline=none seed=42). Hence depth_vs_retrieval's read_deployed step (j0_top12 -> c2_comem, -3 to -12pp on RULER) ALREADY IS the matched-quality depth contrast: each depth carries the adapter its own distillation objective optimally supplies (identity for j=0, the 58.20M flagship for j=12). A02_DEPTH_VS_RETRIEVAL_VERDICT.md 7.1's claim that no arm isolates depth with a matched-quality adapter is OVER-PESSIMISTIC and should be restated.",
-    "second_order_effect_being_measured": "At q==p both the KL and its gradient are exactly zero, but in bf16 the two paths are numerically distinguishable, so gradients are tiny-but-nonzero. AdamW normalises by sqrt(v) and is SCALE-INVARIANT, so arbitrarily small noise gradients still produce full lr-sized updates. Over 4000 steps at lr 8e-5 the j=0 control adapter is predicted to become an Adam-amplified random walk on bf16 noise -- plausibly WORSE than base, certainly not better. Running to completion so this is measured rather than asserted.",
-    "arms": {
-      "A1_a02_j0control_lora_r32": "NEW TRAINING. j=0, r32/a64, LoRA on layers[0:36], 87.29M trainable (= 75776*32*36 exactly). The literal requested control.",
-      "A6_a02_j12_capmatch_r40": "NEW TRAINING. j=12, r40/a80, 72,744,960 params == 75776*32*30 == the on-disk j=6 arm EXACTLY. Answers 'is the j6-vs-j12 gap depth or capacity?'",
-      "reused_on_disk": "A0 j0_top12 (dvr) | A2/A3/A5 = outputs/qcmem_distill_qwen_j{6,9,18}_r32_4k | A4 = flagship c2_comem. The j={6,9,18} ladder has NEVER been evaluated on RULER (ruler_results/*p2_4* and *depth* are both empty) -- that is the cheap real gap this gate fills."
-    },
-    "what_is_matched": "backbone (Qwen--Qwen3-8b, NOT Qwen3-8B-Base -- the flagship adapter's base_model_name_or_path and every phase-1/dvr arm used Qwen--Qwen3-8b); teacher (j=0 adapters-off no-grad); data + order + token count (PG19, seed 42, ws 8, n_ctx 3 -> 65.5M tok/arm; pg19_train.jsonl is 11450766349 B with md5(first 100MB)=ed2868281b1dc815dc96e2f3592cccbe and md5(last 100MB)=bec4b5f244b85f1dbd66cd9054058630 IDENTICAL on wzc1 and zwfy6, and PG19Packer shards deterministically by wcount%world_size); LR schedule (8e-5, warmup 100, cosine, AdamW betas 0.9/0.95, wd 0, clip 1.0); seq_len/eff batch (2048-tok window, 1 window/rank/step, grad_accum 1 -> 8 windows/step); loss (bidir top-64 KL lam 0.6, ce 0); bf16/sdpa/grad_ckpt off; eval-side retrieval byte-identical (iter_bm25 topk12 iter_hop_topk4 sink bos chunk512, chat_template=False).",
-    "what_is_varied": "ONLY resume_j (0/6/9/12/18) -- plus, in A6 alone, the LoRA rank, deliberately, to make capacity exactly matched.",
-    "the_one_unmatched_axis_and_its_control": "Adapter capacity is STRUCTURALLY tied to j (span = layers[j:36]): r=32 gives 87.29/72.74/65.47/58.20/43.65M at j=0/6/9/12/18. It cannot be matched at fixed r. It CAN be matched by moving r: 75776*40*24 (j=12,r40) == 75776*32*30 (j=6,r32) == 72,744,960 EXACTLY. That is arm A6, and GATE C asserts the arithmetic fail-closed before launch.",
-    "gates_passed_pre_launch": "GATE A flagship Read-LoRA sha == dd09cd17457c63578c0f fail-closed. GATE B machine-verifies the three reused ladder arms against the flagship on 22 recipe fields + adapter span [j..35] r32/a64, aborting on any mismatch (this is what makes the match REAL, not nominal; it PASSED). GATE C capacity arithmetic exact. Planned at scoring time: GATE C-shard completeness (refuse partial cells), GATE D chat_template=False asserted per cell, GATE E canonical scorers IMPORTED never reimplemented.",
-    "training_verification": "world_size=8; param groups 87.29M on layers[0:36] matching the architecture formula exactly; monotone step counter with loss + warmup->cosine lr; 41015/97871 MiB = 41.9% per card at 98-100% util on all 8; zero failure syntax (grep filtered with -viE 'No NaN/Inf' so the PASSING no-NaN line cannot cause a false alarm); 9 procs = 1 launcher + 8 ranks.",
-    "measured_cadence": "1.088 s/step over a REAL 420-step window (step 160->580, 457 s); cross-checked 1.046 (160->290) and 1.107 (290->580). A1 ETA ~73 min; A6 (24 vs 36 grad layers) ~55-62 min; both ~2.1-2.3 h. NOTE the flagship's logged 24.5 samp/s is NOT comparable -- its distill_args.json model_path is the wzc1 path, i.e. it ran on L20A not H20, and using it would understate ETA ~3x.",
-    "batch_size_reasoning": "UNCHANGED and NOT TUNABLE. (1) The trainer has no batch dimension -- no --batch_size flag exists; PG19Packer yields one window per step and write_chunk takes a single [1,T] chunk. (2) The only volume knobs, n_ctx=3 and grad_accum=1, are PART OF THE RECIPE BEING MATCHED; raising them would change tokens/step and the data partition, destroying the matched-tokens property this gate exists to establish. Per-rank memory is a FULL REPLICA (the trainer deliberately avoids DDP because QCMem calls layers[i] directly, and does explicit all_reduce instead), so per CLAUDE.md adding cards does not reduce per-card memory: ~16.4 GB frozen bf16 backbone + 0.17 grads + 0.35 AdamW on LoRA only = ~17.1 GB static, ~41.9 GB observed. Filling the card would INVALIDATE the experiment; 41.9% occupancy is the correct outcome, not an under-utilisation.",
-    "no_eval_interval_flag": "This trainer HAS NO --eval_interval flag and NO inline eval in its step loop (verified by grep; only a docstring mention of run_self_test). The NCCL-watchdog SIGABRT mode therefore cannot occur, and passing --eval_interval 0 would be a bogus arg that argparse would REJECT and kill the launch -- exactly how a probe died on --keep_last_n (the zwfy6 trainer predates the rotation args). All eval is offline on saved adapters.",
-    "readout_planned": "PRIMARY: RULER niah_multikey_1 + variable_tracking x {16k,32k}, n=100/cell, 8 shards -- the retrieval-CLOSED benchmark (dvr recall@12 = 99-100%), so depth cannot be confounded by retrieval. Paired per-cell delta vs A0 = the read tax at depth j. SECONDARY: BABILong qa1/qa2/qa5 x {16k,32k} for contrast ONLY -- dvr established those cells are retrieval-dominated (54.9-78.6%, recall@12 22.9-63.2%) and CANNOT support depth inference. Per-cell only; no pooled BABILong/LongEval figure will be computed or quoted.",
-    "prereg_predictions": [
-      "A1 ~= A0, or A1 < A0. If A1 is significantly BETTER than base, the GATE 0 vacuity argument is wrong and must be retracted.",
-      "A1 training loss stays ~1e-3 for all 4000 steps (CONFIRMED so far: ~0.001-0.002, max 0.0077, through step 580, vs flagship 0.2991 -> 0.0555).",
-      "Read tax monotone-ish in j across A0/A2/A3/A4/A5 on RULER.",
-      "A6 ~= A4. If A6 >> A4, the depth curve is partly a CAPACITY artefact and every depth claim -- including the dvr's -- must be restated at matched capacity."
-    ],
-    "what_it_WILL_license": "Retiring next_gate[3] by DEMONSTRATION rather than assertion; restating verdict 7.1 (read_deployed already IS the matched-quality depth contrast); a 5-point depth-tax curve (j=0/6/9/12/18) with retrieval held byte-identical and the distillation recipe fixed -- the first such curve on a retrieval-closed benchmark; and whether that curve survives EXACT capacity matching.",
-    "what_it_will_NOT_license": "Nothing here revives A02's thesis. Storage stays DEAD (2048x raw text); read-compute stays a 1.03-1.37x micro-optimisation. EVERY number this gate can produce is a TAX (an accuracy cost of the depth knob), so NO outcome can be a quality win. It does NOT license: any 'CoMem beats RAG on quality' claim; reading j12_frozen's -97pp as a depth effect (that remains 'untrained depth-12 resume is non-functional'); any BABILong-based depth claim (retrieval-dominated); any cross-model/cross-family claim (Qwen3-8B only, one seed 42, H20/bf16/sdpa); any claim of capacity matching ACROSS the ladder (only A6-vs-A4 is matched).",
-    "is_this_in_the_benefits_text_RAG_identically_bucket": "NO. STATUS flags that trap for the two other candidate directions (sublinear retrieval, better selector), and it is a real trap. Plain text-RAG has no depth knob -- it always reads at full depth -- so the depth axis IS specific to mid-depth resume. But that only makes the result CoMem-SPECIFIC, not GOOD: this gate prices a knob, it does not find a win, and it does not change A02's promotion status."
+  "storage_ratio": {
+   "h12_over_raw_text": "2048x LARGER (8192 vs 4 bytes/token, exact and constant across all L) -> 'storage method' framing FAILS",
+   "comem_total_over_rag_total": "632-1129x (store + BM25 index on both sides)",
+   "h12_over_fulldepth_KV": "18x SMALLER (8192 vs 147456 B/tok) -- the ONLY sense in which 'storage win' holds, and it is vs KV-caching, not vs what RAG stores",
+   "method": "real bytes: in-memory tensor bytes AND actual file size after torch.save+fsync; agree to a 1577-byte pickle header"
   },
-  "status_long": "Original PROPOSAL.md thesis is DEAD: no protocol-clean benchmark shows C2 significantly better in aggregate, so 'CoMem beats RAG on quality' does not hold. Storage framing is DEAD on arithmetic (h12 8192 B/token vs raw text 4 B/token = 2048x; CoMem-total/RAG-total 632-1129x). What SURVIVES and is worth writing up: (1) the depth-vs-retrieval DIAGNOSTIC protocol -- a 4-arm single-variable chain showing a 4-way-confounded A-vs-B comparison inflated its headline 2-5x; this is publishable as methodology independent of whether CoMem is good; (2) the RULER read tax at corrected magnitude (-10.0/-12.0/-11.0pp SIG with retrieval held byte-identical and recall@12 at 99-100%); (3) a modest read-compute win (1.33x at G=1 decaying to 1.03x at G=128, N* 8-225 queries vs matched-pack text-RAG). ADDED 2026-08-12: (4) the last open confound (no matched-quality depth control) is DEGENERATE BY CONSTRUCTION -- at j=0 the distillation teacher and student are the same path, so the optimal j=0 adapter is the identity and the existing read_deployed step already is the matched contrast; see matched_quality_depth_control.",
-  "tcodex_audit_20260810_disposition": {
-    "audit_file": "../../archive/A03-parametric-vs-external-memory/evidence/TCODEX_AUDIT_20260810.md (589 lines, md5 8ba6b5da31c3af2fd02c5d5d86d93b2c)",
-    "audit_verdict_on_A02": "Reject / archive \u539f thesis. \u82e5\u7ee7\u7eed, \u4ec5\u4f5c\u4e3a\u7a84 systems microbenchmark observation \u91cd\u65b0\u5b9a\u4f4d; \u4e0d\u80fd\u518d\u79f0 storage method \u6216 natural-task quality win.",
-    "item_1_unexecuted_storage_clause": {
-      "status": "FIXED 2026-08-10",
-      "defect": "code/build_a02_reframe_verdict.py gated verdict on cost_survives alone; clause (c) of its own 3-clause decision rule was computed (ratios) then never used. evidence/a02_storage_readcompute_verdict.json therefore said 'SURVIVES' while A02_STORAGE_READCOMPUTE_VERDICT.md said storage form is DEAD -- the machine output asserted the opposite of the human verdict.",
-      "fix": "Added PREREG_STORAGE_PREMIUM_MAX=100.0 (justified on principle in the module docstring; disclosed as set after measurement), split the gate into per-clause evaluation, and emit SURVIVES_AS_READ_COMPUTE_ONLY when cost passes but storage fails -- the case the docstring already described in words.",
-      "regenerated_verdict": "SURVIVES_AS_READ_COMPUTE_ONLY",
-      "clause_c_result": "FAILED: max(h12/raw)=2048.0 vs threshold 100",
-      "measurements_unchanged": "verdict_basis, cost, quality_phase1_per_cell byte-identical to pre-fix payload; only verdict + decision_rule changed, clause_evaluation added."
-    },
-    "remaining_audit_items_not_yet_actioned": [
-      "Add explicit retraction keys to the 3 evidence JSONs that still serve retracted significant numbers bare (prose retracts them; JSON does not).",
-      "Reconcile A02's BABILong recall@12 against paperA's PUBLISHED P0.19 recall -- same cells/selector/seed/n=100 but different recall; one denominator is wrong. This is a live defect in a published paperA artifact.",
-      "Disclose the storage-premium-vs-raw-text number in paperA, which currently discloses only the favourable 18x vs full-depth-KV comparison.",
-      "Write A02's missing NOVELTY_CHECK.md against the two named collisions."
-    ]
-  }
+  "latency_decomposition_128k_gpu_G1_ms": {
+   "comem": "select 117.7 + fetch 1.50 + read 677.9 + decode 0.0 = 797.2 (read_len 6177)",
+   "j0_top12": "select 117.7 + fetch 0.02 + read 938.4 + decode 0.0 = 1056.2 (read_len 6177, SAME pack)",
+   "c1_all": "select 0.0 + fetch 0.22 + read 53009.6 + decode 0.0 = 53009.8 (read_len 131105, O(L))",
+   "what_the_memory_removes": "the bottom-12-layer prefill: read 938.4 -> 677.9 ms = 1.38x on the read component, 1.33x on the per-query total",
+   "G_decay": "CoMem-specific per-query speedup 1.33x (G=1) -> 1.11x (G=32) -> 1.03x (G=128); decode is identical across arms so larger G dilutes the advantage to within 3%",
+   "NEW_FINDING_selection_cost": "iter_bm25 selection is O(L) on CPU per query and CoMem does NOT remove it: 17.1 ms @32k, 117.7 ms @128k, 1014.8 ms @1M = 59.9% of CoMem's entire per-query budget at 1M and LARGER than its 678 ms read. Any 'CoMem per-query cost is constant in L' claim is false once selection is counted. The published P1.8 crossover let this cancel because both its arms retrieved."
+  },
+  "quality_not_held_fixed": "'Same quality, better cost' does NOT hold, so even the weak read-compute win is not free. Per-cell: BABILong qa1x16k -55pp / qa1x32k -51pp / qa2x16k -42pp / qa2x32k -35pp (all 4 CIs <0) but qa5x4k +16pp / qa5x16k +14pp (both CIs >0); RULER -5.17pp; LongEval -30pp@8k to +68pp@128k; LongBench / LoCoMo F1 / LoCoMo judge(open-weight) all ties.",
+  "protocol_defect_status": "phase-1's FOUR-way confound {read depth}x{LoRA}x{retrieval vs pack-all}x{selector} is REDUCED, not eliminated. This gate holds selector fixed at iter_bm25 and separates depth from retrieval via a 2-hop single-variable chain (comem -> j0_top12 -> c1_all). REMAINING confound: depth and LoRA move together (irreducible -- j=12 without the Read-LoRA is not a functional arm). NOT resolved: whether phase-1's quality losses are depth failures or retrieval-recall failures.",
+  "unverified": [
+   "single example / single task (niah_multikey_1, example_index=0, read_sample_length=32k); 3 procs x 5 repeats; no cross-task variance (matches released P1.8 protocol)",
+   "store tail beyond the real 32k sample is random-token padding; BM25 select time over random tokens may not match real text -- the 1014.8 ms @1M select is the least-confident number and it is load-bearing",
+   "c1_all @1M is an OOM, not a timing: its per-query cost at 1M is unmeasured; only 'does not fit in 97.8 GB' is established",
+   "no NVMe / networked storage tier measured (only gpu-resident + cpu-pinned); scripts/bench_persistent_store_io.py exists for this and was NOT run",
+   "batch=1 single-stream, no continuous batching / paged attention; a served RAG system amortises prefill across concurrent requests, further eroding a 1.33x single-stream advantage",
+   "H20 cc9.0 / torch 2.13.0 / bf16 / sdpa only; L20A absolute latencies would differ (ratios should be more stable)"
+  ],
+  "integrity_gates": "ALL PASSED: (1) Read-LoRA sha == flagship dd09cd17 fail-closed; (2) comem/j0_top12 share ONE pack (read_len 6177 both); (3) c1_all packs exactly range(N) matching the no_retrieval branch verbatim; (4) persistent bytes == N*chunk*d*2 exactly; (5) finite logits everywhere; (6) store-fetched h12 == fresh recompute max_abs == 0.0 bit-identical; (7) 18/18 procs present, aggregator ABORTS on partial cells.",
+  "cross_check_vs_published": "j0_top12 and comem reproduce the released Paper A P1.8 artifact to 0.06% and 0.21% (128k|gpu G=1) -- the new harness measures the same thing the paper did.",
+  "bugs_found_and_fixed": [
+   "out-of-bounds index_select when store_length < read_sample_length (opaque device-side assert) -> now fail-closed GATE 0 with an actionable message",
+   "CPU/CUDA device mismatch in the on-disk size probe",
+   "REPORTING bug caught in review: aggregator printed 'N*=inf' for an arm that had OOM'd, conflating 'measured but never cheaper' with 'could not run'. Console output and verdict builder now keep the categories separate."
+  ],
+  "aggregation_hygiene": "No pooled BABILong (-17.89pp) or pooled LongEval (+2.00pp) figure is quoted anywhere in this gate. Both average over cells with opposite true signs. The verdict JSON stores them ONLY under the key 'pooled_diff_pt_DO_NOT_QUOTE' so their exclusion is auditable, and classifies every cell by CI sign instead.",
+  "code": [
+   "proposal/active/A02-comem-write-read-repair/code/bench_a02_storage_readcompute.py",
+   "proposal/active/A02-comem-write-read-repair/code/run_a02_storage_readcompute.sh",
+   "proposal/active/A02-comem-write-read-repair/code/build_a02_reframe_verdict.py"
+  ],
+  "evidence": [
+   "A02_STORAGE_READCOMPUTE_VERDICT.md",
+   "evidence/a02_storage_readcompute_verdict.json (every headline recomputable; 42-point self-check passes)",
+   "evidence/a02_storage_readcompute_aggregate.json",
+   "evidence/a02_storage_readcompute_serve/ (18 raw per-unit records)"
+  ],
+  "promotion_impact": "Does NOT clear A02 for promotion to paper<X>. Recommended positioning: not a storage method and not a large serving win; the defensible claim is 'given you are already doing retrieval, caching mid-depth residuals removes the bottom-12-layer prefill for 1.03-1.37x per-query, repaid after ~8-226 queries/corpus, at a 2048x storage premium over raw text and with a measurable accuracy cost on long-context single-span retrieval' = a systems micro-optimisation, not a paper thesis."
+ },
+ "depth_vs_retrieval_quality_gate": {
+  "tested": "2026-08-10",
+  "node": ".82 (8x H20, zwfy6), bounded 4-GPU pool (GPUs 0-3); A03 watcher PID 2165190 left untouched and still alive at exit; all GPUs released on completion",
+  "question": "Phase-1's C1-vs-C2 moved FOUR variables at once (verified from on-disk cell configs: C1 no_retrieval=True/selector=None/topk=None/resume_j=0/lora=None vs C2 no_retrieval=False/selector=iter_bm25/topk=12/resume_j=12/lora=flagship). Were C2's quality losses MID-LAYER-READ failures (A02's thesis) or RETRIEVAL-RECALL failures (a property of top-12 iter_bm25, unrelated to CoMem)?",
+  "verdict": "BOTH ARE REAL AND WHICH DOMINATES IS DECIDED BY THE BENCHMARK. BABILong qa1/qa2 -> RETRIEVAL dominates (54.9-78.6%). RULER -> READ dominates (retrieval ~0, recall 99-100%). BABILong qa5 -> neither step significant.",
+  "headline": "Phase-1's four 'decisive C1 wins' on BABILong qa1/qa2 (-35 to -55pp) are MOSTLY a retrieval/pack-narrowing artifact, NOT evidence about mid-layer reading. A02's read thesis was only ever properly tested by RULER, where the DEPLOYED read costs a significant but modest -3 to -12pp with retrieval held identical.",
+  "arms": {
+   "c1_pack_all": "phase-1 C1 (on disk): j=0, no LoRA, packs ALL chunks, no selector",
+   "j0_top12": "NEW: j=0, no LoRA, top-12 iter_bm25 == matched-pack text-RAG",
+   "j12_frozen": "NEW: j=12, NO LoRA, SAME top-12 pack -- this is what breaks the depth<->LoRA confound the cost gate called irreducible",
+   "c2_comem": "phase-1 C2 (on disk): j=12 + flagship Read-LoRA, same top-12 pack"
+  },
+  "steps": "retrieval=c1->j0_top12; read_depth=j0_top12->j12_frozen; read_lora=j12_frozen->c2_comem; read_deployed=j0_top12->c2_comem (the like-for-like shipped read). retrieval+read_deployed EXACTLY partitions the total c1->c2 change and read_depth+read_lora EXACTLY equals read_deployed (both asserted to 1e-6 on all 10 cells), so nothing is double-counted.",
+  "per_cell_retrieval_vs_deployed_pp": {
+   "babilong_qa1_16k": "RETR -39.0* / DEPLOY -16.0* -> retrieval 70.9%",
+   "babilong_qa1_32k": "RETR -28.0* / DEPLOY -23.0* -> retrieval 54.9% (NOT decisive, near-tie)",
+   "babilong_qa2_16k": "RETR -33.0* / DEPLOY -9.0 ns -> retrieval 78.6%",
+   "babilong_qa2_32k": "RETR -25.0* / DEPLOY -10.0* -> retrieval 71.4%",
+   "babilong_qa5_16k": "RETR +9.0 ns / DEPLOY +5.0 ns -> unattributable",
+   "babilong_qa5_32k": "RETR +2.0 ns / DEPLOY -3.0 ns -> unattributable",
+   "ruler_niah_mk1_16k": "RETR +0.0 ns / DEPLOY -10.0* [-16,-5] -> read 100%",
+   "ruler_niah_mk1_32k": "RETR +1.0 ns / DEPLOY -3.0 ns -> read 75.0%",
+   "ruler_vt_16k": "RETR +0.0 ns / DEPLOY -12.0* [-19,-6] -> read 100%",
+   "ruler_vt_32k": "RETR +1.0 ns / DEPLOY -11.0* [-18,-5] -> read 91.7%"
+  },
+  "retrieval_recall_at_12": {
+   "method": "HIT iff EVERY gold-support chunk is in the top-12 iter_bm25 pack; decided INDEPENDENTLY of answer accuracy; flagship selector + harness gold locator both imported unmodified",
+   "babilong": "qa1x16k 63.2% [53.1,72.2] | qa1x32k 57.0% [47.2,66.3] | qa2x16k 49.5% [39.6,59.4] | qa2x32k 22.9% [15.7,32.3] | qa5x16k 64.1% | qa5x32k 57.9%",
+   "ruler": "niah_mk1x16k 100.0% [96.2,100.0] | niah_mk1x32k 99.0% [94.6,99.8] | variable_tracking NOT MEASURABLE (0 gold-locatable)",
+   "interpretation": "the retrieval channel is wide open on BABILong (misses gold on 37-77% of samples, degrading with length) and closed on RULER -- exactly matching where each cause dominates"
+  },
+  "NEW_FINDING_adapter_dependence": "Mid-depth resume is almost ENTIRELY adapter-supplied: j12_frozen scores 0.0-3.0% on RULER while c2_comem scores 88-96% (read_depth -97 to -100pp, read_lora +87 to +95pp). Resuming at layer 12 on chunk-local hiddens is non-functional untrained. This is clean, previously unmeasured, and is a fact about distillation, not about memory efficiency. NOTE it is task-dependent: read_lora is n.s. on BABILong qa2 (+4.0, -1.0).",
+  "conditional_on_recall": "Confirms retrieval is causal (penalty always larger on MISS than HIT: qa1x16k -45.7 vs -36.7; qa2x16k -43.8 vs -21.3; j0_top12 collapses to 5-20% on MISS) AND qualifies it (the retrieval step stays significantly negative on the HIT subset too, so 'gold chunk in pack' is NOT sufficient -- narrowing 30-60 chunks to 12 also removes distractor/aggregation context). On RULER the retrieval step is +2.02 ns on the 99-sample HIT subset.",
+  "confound_KEPT_stated_plainly": "There is NO arm here that isolates depth with a matched-quality adapter. j12_frozen runs j=12 WITHOUT the adapter distilled for it, so it is a LOWER BOUND on depth-12 capability, not a fair depth arm; read_deployed bundles depth+adapter. Both are reported. The read_depth -97pp on RULER must NOT be read as 'depth costs 97pp' -- it means 'untrained depth-12 resume is non-functional'. The defensible depth-effect numbers are the read_deployed ones (-3 to -12pp). Removing this confound needs a j=0 control LoRA = TRAINING, out of scope for an eval gate.",
+  "unverified": [
+   "gold-support locator for qa2/qa5 matches the ANSWER string, which for multi-fact tasks marks only the answer-bearing fact, not the full support chain -> reported qa2/qa5 recall is an UPPER BOUND (making the retrieval attribution conservative, but the absolute percentages should not be quoted as exact)",
+   "variable_tracking retrieval recall NOT measured at all (0 gold-locatable); its 'retrieval ~0' rests only on the accuracy step (j0_top12 100.0 vs c1 100.0/99.0)",
+   "10 cells only, n=100/cell, ONE seed (42), Qwen3-8B only, H20/bf16/sdpa; 4k NOT re-run (phase-1 showed n.s.) so the length trend rests on 2 points per task",
+   "LongBench / LoCoMo / LongEval NOT re-run (phase-1 TIEs cannot discriminate depth from retrieval); LongEval's 8k->128k sign flip remains unexplained",
+   "whether a better selector (higher topk / oracle / semantic retriever) closes the BABILong gap is untested -- and would NOT be CoMem-specific"
+  ],
+  "integrity_gates": "ALL PASSED: G0 Read-LoRA sha==dd09cd17 fail-closed; G1 shard completeness 8/8 every cell every arm, 0 refused, NEGATIVE-TESTED (deleting one shard -> G1_SHARD_INCOMPLETE 7/8, refuses to merge); G2 BABILong (question,target) identical across arms; G2 RULER input_ids_sha256 identical across all 4 arms AND vs crc32 regeneration, 0 failures; G3 config identity 0 errors; chat_template=False asserted in every cell config; both partition identities exact to 1e-6; canonical scorers IMPORTED not reimplemented (babilong.metrics.compare_answers, RULER harness per-item correct); evidence md5-identical on wzc1 and zwfy6.",
+  "aggregation_hygiene": "No pooled BABILong or pooled LongEval figure is computed or quoted anywhere in this gate; evidence JSON contains per-cell blocks only. The banned -17.89pp / +2.00pp pooled values are absent by construction.",
+  "restates_phase1": "YES for BABILong qa1/qa2: phase-1's verdict should no longer cite those cells as evidence about mid-layer reading. NO for RULER: phase-1's reading stands there, at a corrected (smaller) magnitude. Phase-1's overall KILL conclusion is UNCHANGED -- C2 is still not significantly better anywhere protocol-clean -- but its stated CAUSE was wrong for 4 of its 5 decisive cells.",
+  "code": [
+   "proposal/active/A02-comem-write-read-repair/code/run_a02_depth_vs_retrieval.sh",
+   "proposal/active/A02-comem-write-read-repair/code/analyze_a02_depth_vs_retrieval.py",
+   "proposal/active/A02-comem-write-read-repair/code/analyze_a02_conditional_recall.py"
+  ],
+  "evidence": [
+   "A02_DEPTH_VS_RETRIEVAL_VERDICT.md",
+   "evidence/a02_depth_vs_retrieval_ci.json (every headline recomputable; audited number-by-number against the doc)",
+   "evidence/a02_depth_vs_retrieval_per_item.json (raw per-item correctness + per-sample recall, all 4 arms, 10 cells)",
+   "evidence/a02_depth_vs_retrieval_conditional.json"
+  ],
+  "raw_results_on_zwfy6": [
+   "babilong_results/a02_dvr_babilong_j0_top12/ (6 cells x 8 shards)",
+   "babilong_results/a02_dvr_babilong_j12_frozen/ (6 cells x 8 shards)",
+   "ruler_results/a02_dvr_ruler_j0_top12/ (32 records.json)",
+   "ruler_results/a02_dvr_ruler_j12_frozen/ (32 records.json)"
+  ],
+  "promotion_impact": "Does NOT clear A02. The kill clause's quality finding survives in WEAKENED, NARROWED form: CoMem's read does cost accuracy where retrieval is not the bottleneck (RULER, -3 to -12pp), but the headline magnitude was inflated 2-5x by a retrieval confound. Combined with the cost gate (storage DEAD, read-compute 1.03-1.37x), positioning is unchanged."
+ },
+ "matched_quality_depth_control": {
+  "launched": "2026-08-12T15:20:47+0800",
+  "state": "TRAINING IN FLIGHT on .82 (8x H20, zwfy6). Only .82 touched; .73/.104/LOCAL/.21 never contacted.",
+  "addresses": "the former next_gate[3] -- the matched-quality depth control (a LoRA distilled for j=0)",
+  "prereg": "A02_J0_DEPTH_CONTROL_PREREG.md (written BEFORE any training GPU was spent)",
+  "launch_record": "A02_J0_DEPTH_CONTROL_LAUNCH.md",
+  "driver": "proposal/active/A02-comem-write-read-repair/code/run_a02_j0_depth_control.sh (sha256 8c2740748da8ab12, identical on wzc1 and zwfy6)",
+  "derived_from": "scripts/_launch_p2_4_depthcurve.sh -- the on-disk launcher that produced outputs/qcmem_distill_qwen_j{6,9,18}_r32_4k. NO new trainer written; scripts/train_qcmem_distill.py used unmodified (zwfy6 md5 a8c56b100432bb10293820b0936a6874).",
+  "GATE_0_HEADLINE_FINDING": "THE REQUESTED CONTROL IS DEGENERATE BY CONSTRUCTION. train_qcmem_distill.py defines TEACHER = QCMem read at j=0 (adapters disabled, no_grad) and STUDENT = QCMem read at j=resume_j (adapters on). At resume_j=0 these are the SAME path -- same pack, same depth, same RoPE, same mask -- differing ONLY by a zero-init LoRA delta, so teacher==student and the top-64 KL is identically 0 at init. MEASURED (not argued): a 1-GPU 20-step probe of the flagship recipe with ONLY resume_j 12->0 gives loss 0.0000 at step 1 and ~0.0015 thereafter, vs the flagship j=12's 0.2991 at step 10; the full 8-GPU arm holds ~0.001-0.002 (max 0.0077) through step 580. The trainer's own docstring states the same: 'at --resume_j 0 teacher==student by construction'.",
+  "CONSEQUENCE_the_defect_dissolves": "A 'LoRA distilled for j=0' under this recipe is not a matched-quality j=0 adapter, it is a NULL adapter whose optimum is the identity == the base model. That arm is ALREADY on disk as the dvr arm j0_top12 (ruler_results/a02_dvr_ruler_j0_top12, verified config resume_j=0 selector=iter_bm25 topk=12 iter_hop_topk=4 lora_adapter=None baseline=none seed=42). Hence depth_vs_retrieval's read_deployed step (j0_top12 -> c2_comem, -3 to -12pp on RULER) ALREADY IS the matched-quality depth contrast: each depth carries the adapter its own distillation objective optimally supplies (identity for j=0, the 58.20M flagship for j=12). A02_DEPTH_VS_RETRIEVAL_VERDICT.md 7.1's claim that no arm isolates depth with a matched-quality adapter is OVER-PESSIMISTIC and should be restated.",
+  "second_order_effect_being_measured": "At q==p both the KL and its gradient are exactly zero, but in bf16 the two paths are numerically distinguishable, so gradients are tiny-but-nonzero. AdamW normalises by sqrt(v) and is SCALE-INVARIANT, so arbitrarily small noise gradients still produce full lr-sized updates. Over 4000 steps at lr 8e-5 the j=0 control adapter is predicted to become an Adam-amplified random walk on bf16 noise -- plausibly WORSE than base, certainly not better. Running to completion so this is measured rather than asserted.",
+  "arms": {
+   "A1_a02_j0control_lora_r32": "NEW TRAINING. j=0, r32/a64, LoRA on layers[0:36], 87.29M trainable (= 75776*32*36 exactly). The literal requested control.",
+   "A6_a02_j12_capmatch_r40": "NEW TRAINING. j=12, r40/a80, 72,744,960 params == 75776*32*30 == the on-disk j=6 arm EXACTLY. Answers 'is the j6-vs-j12 gap depth or capacity?'",
+   "reused_on_disk": "A0 j0_top12 (dvr) | A2/A3/A5 = outputs/qcmem_distill_qwen_j{6,9,18}_r32_4k | A4 = flagship c2_comem. The j={6,9,18} ladder has NEVER been evaluated on RULER (ruler_results/*p2_4* and *depth* are both empty) -- that is the cheap real gap this gate fills."
+  },
+  "what_is_matched": "backbone (Qwen--Qwen3-8b, NOT Qwen3-8B-Base -- the flagship adapter's base_model_name_or_path and every phase-1/dvr arm used Qwen--Qwen3-8b); teacher (j=0 adapters-off no-grad); data + order + token count (PG19, seed 42, ws 8, n_ctx 3 -> 65.5M tok/arm; pg19_train.jsonl is 11450766349 B with md5(first 100MB)=ed2868281b1dc815dc96e2f3592cccbe and md5(last 100MB)=bec4b5f244b85f1dbd66cd9054058630 IDENTICAL on wzc1 and zwfy6, and PG19Packer shards deterministically by wcount%world_size); LR schedule (8e-5, warmup 100, cosine, AdamW betas 0.9/0.95, wd 0, clip 1.0); seq_len/eff batch (2048-tok window, 1 window/rank/step, grad_accum 1 -> 8 windows/step); loss (bidir top-64 KL lam 0.6, ce 0); bf16/sdpa/grad_ckpt off; eval-side retrieval byte-identical (iter_bm25 topk12 iter_hop_topk4 sink bos chunk512, chat_template=False).",
+  "what_is_varied": "ONLY resume_j (0/6/9/12/18) -- plus, in A6 alone, the LoRA rank, deliberately, to make capacity exactly matched.",
+  "the_one_unmatched_axis_and_its_control": "Adapter capacity is STRUCTURALLY tied to j (span = layers[j:36]): r=32 gives 87.29/72.74/65.47/58.20/43.65M at j=0/6/9/12/18. It cannot be matched at fixed r. It CAN be matched by moving r: 75776*40*24 (j=12,r40) == 75776*32*30 (j=6,r32) == 72,744,960 EXACTLY. That is arm A6, and GATE C asserts the arithmetic fail-closed before launch.",
+  "gates_passed_pre_launch": "GATE A flagship Read-LoRA sha == dd09cd17457c63578c0f fail-closed. GATE B machine-verifies the three reused ladder arms against the flagship on 22 recipe fields + adapter span [j..35] r32/a64, aborting on any mismatch (this is what makes the match REAL, not nominal; it PASSED). GATE C capacity arithmetic exact. Planned at scoring time: GATE C-shard completeness (refuse partial cells), GATE D chat_template=False asserted per cell, GATE E canonical scorers IMPORTED never reimplemented.",
+  "training_verification": "world_size=8; param groups 87.29M on layers[0:36] matching the architecture formula exactly; monotone step counter with loss + warmup->cosine lr; 41015/97871 MiB = 41.9% per card at 98-100% util on all 8; zero failure syntax (grep filtered with -viE 'No NaN/Inf' so the PASSING no-NaN line cannot cause a false alarm); 9 procs = 1 launcher + 8 ranks.",
+  "measured_cadence": "1.088 s/step over a REAL 420-step window (step 160->580, 457 s); cross-checked 1.046 (160->290) and 1.107 (290->580). A1 ETA ~73 min; A6 (24 vs 36 grad layers) ~55-62 min; both ~2.1-2.3 h. NOTE the flagship's logged 24.5 samp/s is NOT comparable -- its distill_args.json model_path is the wzc1 path, i.e. it ran on L20A not H20, and using it would understate ETA ~3x.",
+  "batch_size_reasoning": "UNCHANGED and NOT TUNABLE. (1) The trainer has no batch dimension -- no --batch_size flag exists; PG19Packer yields one window per step and write_chunk takes a single [1,T] chunk. (2) The only volume knobs, n_ctx=3 and grad_accum=1, are PART OF THE RECIPE BEING MATCHED; raising them would change tokens/step and the data partition, destroying the matched-tokens property this gate exists to establish. Per-rank memory is a FULL REPLICA (the trainer deliberately avoids DDP because QCMem calls layers[i] directly, and does explicit all_reduce instead), so per CLAUDE.md adding cards does not reduce per-card memory: ~16.4 GB frozen bf16 backbone + 0.17 grads + 0.35 AdamW on LoRA only = ~17.1 GB static, ~41.9 GB observed. Filling the card would INVALIDATE the experiment; 41.9% occupancy is the correct outcome, not an under-utilisation.",
+  "no_eval_interval_flag": "This trainer HAS NO --eval_interval flag and NO inline eval in its step loop (verified by grep; only a docstring mention of run_self_test). The NCCL-watchdog SIGABRT mode therefore cannot occur, and passing --eval_interval 0 would be a bogus arg that argparse would REJECT and kill the launch -- exactly how a probe died on --keep_last_n (the zwfy6 trainer predates the rotation args). All eval is offline on saved adapters.",
+  "readout_planned": "PRIMARY: RULER niah_multikey_1 + variable_tracking x {16k,32k}, n=100/cell, 8 shards -- the retrieval-CLOSED benchmark (dvr recall@12 = 99-100%), so depth cannot be confounded by retrieval. Paired per-cell delta vs A0 = the read tax at depth j. SECONDARY: BABILong qa1/qa2/qa5 x {16k,32k} for contrast ONLY -- dvr established those cells are retrieval-dominated (54.9-78.6%, recall@12 22.9-63.2%) and CANNOT support depth inference. Per-cell only; no pooled BABILong/LongEval figure will be computed or quoted.",
+  "prereg_predictions": [
+   "A1 ~= A0, or A1 < A0. If A1 is significantly BETTER than base, the GATE 0 vacuity argument is wrong and must be retracted.",
+   "A1 training loss stays ~1e-3 for all 4000 steps (CONFIRMED so far: ~0.001-0.002, max 0.0077, through step 580, vs flagship 0.2991 -> 0.0555).",
+   "Read tax monotone-ish in j across A0/A2/A3/A4/A5 on RULER.",
+   "A6 ~= A4. If A6 >> A4, the depth curve is partly a CAPACITY artefact and every depth claim -- including the dvr's -- must be restated at matched capacity."
+  ],
+  "what_it_WILL_license": "Retiring next_gate[3] by DEMONSTRATION rather than assertion; restating verdict 7.1 (read_deployed already IS the matched-quality depth contrast); a 5-point depth-tax curve (j=0/6/9/12/18) with retrieval held byte-identical and the distillation recipe fixed -- the first such curve on a retrieval-closed benchmark; and whether that curve survives EXACT capacity matching.",
+  "what_it_will_NOT_license": "Nothing here revives A02's thesis. Storage stays DEAD (2048x raw text); read-compute stays a 1.03-1.37x micro-optimisation. EVERY number this gate can produce is a TAX (an accuracy cost of the depth knob), so NO outcome can be a quality win. It does NOT license: any 'CoMem beats RAG on quality' claim; reading j12_frozen's -97pp as a depth effect (that remains 'untrained depth-12 resume is non-functional'); any BABILong-based depth claim (retrieval-dominated); any cross-model/cross-family claim (Qwen3-8B only, one seed 42, H20/bf16/sdpa); any claim of capacity matching ACROSS the ladder (only A6-vs-A4 is matched).",
+  "is_this_in_the_benefits_text_RAG_identically_bucket": "NO. STATUS flags that trap for the two other candidate directions (sublinear retrieval, better selector), and it is a real trap. Plain text-RAG has no depth knob -- it always reads at full depth -- so the depth axis IS specific to mid-depth resume. But that only makes the result CoMem-SPECIFIC, not GOOD: this gate prices a knob, it does not find a win, and it does not change A02's promotion status."
+ },
+ "status_long": "Original PROPOSAL.md thesis is DEAD: no protocol-clean benchmark shows C2 significantly better in aggregate, so 'CoMem beats RAG on quality' does not hold. Storage framing is DEAD on arithmetic (h12 8192 B/token vs raw text 4 B/token = 2048x; CoMem-total/RAG-total 632-1129x). What SURVIVES and is worth writing up: (1) the depth-vs-retrieval DIAGNOSTIC protocol -- a 4-arm single-variable chain showing a 4-way-confounded A-vs-B comparison inflated its headline 2-5x; this is publishable as methodology independent of whether CoMem is good; (2) the RULER read tax at corrected magnitude (-10.0/-12.0/-11.0pp SIG with retrieval held byte-identical and recall@12 at 99-100%); (3) a modest read-compute win (1.33x at G=1 decaying to 1.03x at G=128, N* 8-225 queries vs matched-pack text-RAG). ADDED 2026-08-12: (4) the last open confound (no matched-quality depth control) is DEGENERATE BY CONSTRUCTION -- at j=0 the distillation teacher and student are the same path, so the optimal j=0 adapter is the identity and the existing read_deployed step already is the matched contrast; see matched_quality_depth_control.",
+ "tcodex_audit_20260810_disposition": {
+  "audit_file": "../../archive/A03-parametric-vs-external-memory/evidence/TCODEX_AUDIT_20260810.md (589 lines, md5 8ba6b5da31c3af2fd02c5d5d86d93b2c)",
+  "audit_verdict_on_A02": "Reject / archive 原 thesis. 若继续, 仅作为窄 systems microbenchmark observation 重新定位; 不能再称 storage method 或 natural-task quality win.",
+  "item_1_unexecuted_storage_clause": {
+   "status": "FIXED 2026-08-10",
+   "defect": "code/build_a02_reframe_verdict.py gated verdict on cost_survives alone; clause (c) of its own 3-clause decision rule was computed (ratios) then never used. evidence/a02_storage_readcompute_verdict.json therefore said 'SURVIVES' while A02_STORAGE_READCOMPUTE_VERDICT.md said storage form is DEAD -- the machine output asserted the opposite of the human verdict.",
+   "fix": "Added PREREG_STORAGE_PREMIUM_MAX=100.0 (justified on principle in the module docstring; disclosed as set after measurement), split the gate into per-clause evaluation, and emit SURVIVES_AS_READ_COMPUTE_ONLY when cost passes but storage fails -- the case the docstring already described in words.",
+   "regenerated_verdict": "SURVIVES_AS_READ_COMPUTE_ONLY",
+   "clause_c_result": "FAILED: max(h12/raw)=2048.0 vs threshold 100",
+   "measurements_unchanged": "verdict_basis, cost, quality_phase1_per_cell byte-identical to pre-fix payload; only verdict + decision_rule changed, clause_evaluation added."
+  },
+  "remaining_audit_items_not_yet_actioned": [
+   "Add explicit retraction keys to the 3 evidence JSONs that still serve retracted significant numbers bare (prose retracts them; JSON does not).",
+   "Reconcile A02's BABILong recall@12 against paperA's PUBLISHED P0.19 recall -- same cells/selector/seed/n=100 but different recall; one denominator is wrong. This is a live defect in a published paperA artifact.",
+   "Disclose the storage-premium-vs-raw-text number in paperA, which currently discloses only the favourable 18x vs full-depth-KV comparison.",
+   "Write A02's missing NOVELTY_CHECK.md against the two named collisions."
+  ]
+ },
+ "read_tax_ruler_gate": {
+  "executed": "2026-08-12T21:06:59+0800 -> 22:25:10+0800 (78 min wall), .82 only (8x H20, zwfy6)",
+  "triggered_by": "logs/a02_j0_depth_control_progress.log: 'next: offline eval of A0/A1/A2/A3/A4/A5/A6 on RULER (retrieval-closed) per PREREG 2.6'",
+  "prereg": "A02_J0_DEPTH_CONTROL_PREREG.md 2.6 (read-out) / 2.7 (predictions)",
+  "verdict_doc": "A02_READ_TAX_RULER_VERDICT.md",
+  "driver": "code/run_a02_read_tax_eval.sh sha256 295f6f56ac42b2cb594e2dee7801c25f9e93d1429c0a81318aa5fa153cbaa912 (identical wzc1+zwfy6)",
+  "analyzer": "code/analyze_a02_read_tax.py sha256 3123319d7cc8bea17ab6a0365aec58112f0d131234eb5009116db63f6a4a8730 (imports analyze_a02_depth_vs_retrieval.py loaders/scorers/CI; GATE E - nothing reimplemented)",
+  "evidence": [
+   "evidence/read_tax_ruler/a02_read_tax_ruler.json (md5 fcb32b6dddb90cc5ca64925b5740462b)",
+   "evidence/read_tax_ruler/a02_read_tax_per_item_vectors.json (md5 3044dbf9f9e9929921c359b1dffe1ced)"
+  ],
+  "evidence_both_disks": true,
+  "RAN_vs_READ": {
+   "RAN_new_gpu": "A1 A2 A3 A5 A6 x (4 RULER cells + 6 BABILong cells), 8 shards, limit 100. A2/A3/A5 had NEVER been evaluated on RULER before - that was the cheap real gap.",
+   "READ_reused_from_disk": "A0 = ruler_results/a02_dvr_ruler_j0_top12 + babilong_results/a02_dvr_babilong_j0_top12; A4 = ruler_results/a02_ruler_c2_j12_readlora + babilong_results/a02_babilong_c2_j12_readlora. NOT re-run: re-running would change nothing but risk overwriting the paired-delta anchors. Their configs were re-verified field-by-field before use.",
+   "READ_recall_numbers": "recall@12 = 99-100% on niah_mk1 comes from the dvr gate, NOT re-measured here."
+  },
+  "gates": {
+   "GATE_A_flagship_sha": "PASS dd09cd17457c63578c0f",
+   "GATE_B_adapter_spans_and_capacity": "PASS - A1 r32[0..35]=87.29M, A2 r32[6..35]=72.74M, A3 r32[9..35]=65.47M, A5 r32[18..35]=43.65M, A6 r40[12..35]=72.74M; A2==A6==72,744,960 exact",
+   "GATE_C_shard_completeness_n_dups_nan": "PASS - 0 refused cells; per-cell n==100, 0 duplicate ids, 0 NaN. NEGATIVE-TESTED (deleting 1 shard -> G1_SHARD_INCOMPLETE 7/8) and it also fired in production on the not-yet-finished BABILong cells.",
+   "GATE_C2_ruler_sha_pairing": "PASS - 0 failures; input_ids_sha256 identical across all 7 arms for all 400 items",
+   "GATE_D_config_identity": "PASS - 0 config errors across 7 arms x 10 cells (chat_template=False, selector=iter_bm25, topk=12, chunk_size=512, expected resume_j, expected adapter)",
+   "GATE_D_bug_found_and_fixed": "My first analyzer read chat_template from the wrong nesting level (RULER records.json stores config FLAT and has no chat_template - it lives in the sibling summary json; BABILong nests it under 'prompt'). It emitted 192 spurious errors. Had the test been 'is not True' instead of 'is not False' it would have SILENTLY PASSED on a None. Fixed to read each field from the level it actually lives at.",
+   "GATE_E_scorers": "PASS - imported, never reimplemented"
+  },
+  "PRIMARY_ruler_mean_acc_4_retrieval_closed_cells": {
+   "A0_j0_noadapter": 99.75,
+   "A1_j0_control_87M": 99.75,
+   "A2_j6": 99.25,
+   "A3_j9": 98.25,
+   "A4_j12_flagship": 90.75,
+   "A5_j18": 20.75,
+   "A6_j12_r40_capmatch": 90.5
+  },
+  "PRIMARY_read_tax_vs_A0_pp": {
+   "A1": 0.0,
+   "A2": -0.5,
+   "A3": -1.5,
+   "A4": -9.0,
+   "A5": -79.0,
+   "A6": -9.25
+  },
+  "HEADLINE_the_read_tax_is_a_cliff_not_a_slope": "j=0->9 costs <=1.5 pp (n.s.); j=12 costs -9 pp (3/4 cells SIG); j=18 costs -79 pp. Spearman rho(acc, j) = -1.000 (p=1.4e-24) on the r=32 ladder, 4/4 successive steps non-increasing. Pearson r = -0.800 (p=0.104) only because the shape is a cliff, not a line. A5 (j=18) is qualitatively broken: variable_tracking outputs are token salad ('EDI RPY DTM QRF ZIF' vs target 'WNHQX | ZGRCN | ...') at 4-5% accuracy - and that is WITH a fully distilled 43.65M adapter.",
+  "DEPTH_SURVIVES_EXACT_CAPACITY_MATCHING": "A2 (j=6,r32) vs A6 (j=12,r40), both exactly 72,744,960 trainable params: mean -8.75 pp, 3/4 cells SIG. Compare A2->A4 on the unmatched ladder: -8.50 pp. So the curve is DEPTH, not a capacity artefact.",
+  "predictions_2_7": {
+   "pred1_A1_approx_or_worse_than_A0": "CONFIRMED in the strongest form: delta +0.00 pp CI95 [+0.00,+0.00] on all 4 RULER cells and ZERO correctness flips out of 400 paired items. A1 is not significantly better than A0 anywhere, so GATE 0's vacuity argument stands and PREREG 1 does NOT need retracting.",
+   "pred2_A1_loss_stays_1e-3": "CONFIRMED: 0.0011@step10 / 0.0015@step2010 / 0.0012@step4000 over 400 logged points, no descent, ~250x below flagship j=12's STARTING loss (0.2991).",
+   "pred3_monotone_ish_in_j": "CONFIRMED: Spearman rho = -1.000 (p=1.4e-24); 4/4 steps non-increasing; 4/4 monotone per-cell in 3 of 4 cells (one +1.0 pp blip at niah_mk1x32k A3->A4).",
+   "pred4_A6_approx_A4": "CONFIRMED: +0.00/+0.00/+0.00/-1.00 pp, ALL FOUR n.s. (363 vs 362 correct /400). A 25% capacity increase at fixed depth buys nothing, so the dvr verdict's depth numbers stand as written and no re-statement at matched capacity is required.",
+   "score": "4/4 CONFIRMED - no retraction required"
+  },
+  "A1_is_null_in_EFFECT_not_in_WEIGHTS": "||lora_B||_2 = 15.20 vs flagship 15.47, 100% of entries non-zero: 4000 AdamW steps DID write a full-norm update. But max|B| = 1.38e-2 vs flagship 6.52e-2 (4.7x smaller) = a diffuse isotropic perturbation, not concentrated learned structure. Exactly PREREG 1.2's predicted 'Adam-amplified random walk on bf16 noise'. Visible in outputs: A1's generations differ from A0's on 30/32/12/49 of 100 samples per cell, yet ZERO of those differences change correctness - the divergence is confined to post-answer continuation text, the answer span is untouched. This is why the PREREG insisted on running 4000 steps rather than asserting vacuity from the 20-step probe.",
+  "SECONDARY_babilong_masks_AND_MISORDERS_the_depth_effect": "Same arms, same protocol: A5 (j=18) is -79.00 pp on RULER but only -14.00 pp on qa1x16k and -4.0 pp n.s. on qa5x16k. Worse, BABILong RANKS A5 (RULER 20.75) at or above A4 (RULER 90.75) on 4 of 6 cells (qa1x16k 19 vs 17, qa2x16k 9 vs 8, qa2x32k 7 vs 1, qa1x32k 12 vs 12) - a depth conclusion drawn there would be WRONG IN SIGN, not merely attenuated. Floor effect (qa2x32k spans 1-11%) does it. This is the argument for the retrieval-closed protocol.",
+  "aggregation_hygiene": "PER-CELL ONLY. No pooled BABILong/LongEval figure computed. The banned pooled numbers (-17.89 pp / +2.00 pp) appear nowhere in the evidence JSON except inside the note naming them as banned (verified by grep: 1 occurrence, in the aggregation_hygiene string). The only cross-cell mean is over the 4 RULER retrieval-closed cells and is labelled as such.",
+  "caveats_carried_forward": [
+   "variable_tracking recall@12 was NEVER directly measured (dvr 7.3: n/a, 0 gold-locatable). 2 of the 4 primary cells are VT; their 'retrieval-closed' status is INHERITED from the dvr accuracy step, not from a recall number. Mitigation: niah_mk1 alone (recall 99-100% measured) still gives -68/-57 pp at j=18, so the cliff does not depend on VT.",
+   "CEILING at j<=9: A0/A1/A2/A3 sit at 95-100% on all 4 cells, so 'tax ~ 0' at shallow j is a statement about a saturated benchmark. A harder retrieval-closed task could resolve differences these cells cannot.",
+   "One seed (42), n=100/cell. The +-1 pp differences among A0/A1/A2/A3 are NOT resolvable; only the j=12 (-9 pp) and j=18 (-79 pp) steps are.",
+   "Qwen3-8B only, H20/bf16/sdpa. No cross-model or cross-family claim."
+  ],
+  "licenses": [
+   "next_gate[3] is RETIRED BY EXECUTION: the requested j=0 matched-quality control was trained to completion (4000 steps, 87.29M params, 73 min) and evaluated -> a NULL adapter, 0/400 correctness flips. The defect DISSOLVES rather than being repaired.",
+   "A02_DEPTH_VS_RETRIEVAL_VERDICT.md 7.1 should be RESTATED: its 'no arm isolates depth with a matched-quality adapter' is over-pessimistic - since the optimal j=0 adapter IS the identity (now measured), read_deployed already was the matched-quality depth contrast.",
+   "A 5-point depth-tax curve (j=0/6/9/12/18) on a retrieval-closed benchmark, retrieval byte-identical, recipe matched on 22 fields. Shape: free to j~9, -9 pp at j=12, -79 pp at j=18.",
+   "The curve is depth, not capacity (A2 vs A6 exact match: -8.75 pp; A6 vs A4 fixed depth: 0.00 pp n.s.).",
+   "A methodological result with reach beyond A02: on the SAME arms, a retrieval-dominated benchmark under-reports a read failure by ~65 pp and inverts the arm ordering."
+  ],
+  "does_NOT_license": [
+   "NO revival of A02's thesis. Storage form stays DEAD (2048x raw text); read-compute stays 1.03-1.37x.",
+   "NO quality win: A0 (no adapter at all) is the BEST arm on RULER at 99.75. Nothing beat doing nothing.",
+   "NO claim that j<=9 is 'free' in general - it is free on two RULER tasks where the base model is already at ceiling.",
+   "NO BABILong-based depth claim, and no pooled figure of any kind.",
+   "NO claim of differential LR or capacity matching ACROSS the ladder (only A2-vs-A6 and A4-vs-A6 are matched)."
+  ],
+  "node_discipline": "Only .82 touched. LOCAL/.21 (SparseForge #246), .104 (paperC Qwen3 heal) and .73 were never contacted - no ssh, no process, no file write. .82 verified 8/8 cards 0 MiB/0% before launch and released to 0 MiB/0% after."
+ }
 }
