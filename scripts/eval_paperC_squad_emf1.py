@@ -151,7 +151,7 @@ def main():
     p.add_argument("--add_bos", type=int, default=0)
     p.add_argument("--limit", type=int, default=0)
     p.add_argument("--output_name", type=str, required=False)
-    p.add_argument("--results_root", type=str, default="paperC_squad_results")
+    p.add_argument("--results_root", type=str, default="evidence_squad_label_prior")
     p.add_argument("--merge", action="store_true")
     args = p.parse_args()
 

@@ -23,7 +23,7 @@ retracted claims (Paper E Obs4).
   C2  Generative label prior      (n = 2,000 SQuAD-style items)
       reported  = best arm EM on the original val set
       null      = majority-label constant, and empty string
-      source    = data/squad_val.jsonl + paperC_squad_results/*_summary.json
+      source    = data/squad_val.jsonl + evidence_squad_label_prior/*_summary.json
 
   C3  Representation similarity   (n = 91 model pairs, 14 models)
       reported  = mean midband z-CKA
@@ -75,7 +75,7 @@ CKA_DIR = "proposal/shared/representation/cka_matrices"
 RESULTS_JSON = "proposal/shared/representation/repr_alignment_results.json"
 MMLU_DIR = "olmo2_mmlu_content_results"
 SQUAD_VAL = "data/squad_val.jsonl"
-SQUAD_RES = "paperC_squad_results"
+SQUAD_RES = "evidence_squad_label_prior"
 P1_2 = "results/p1_2/p1_2_summary.json"
 
 # 9 OLMo-2 arms sharing one item set.  scratch16L is the load-bearing arm: it is

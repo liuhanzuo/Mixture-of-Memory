@@ -553,7 +553,7 @@ append-only 文件写错了**不要 edit**,追加一条 correction 行:
   grep -rl "<dirname>" --include='*.py' --include='*.sh' --include='*.md' --include='*.tex' . | grep -v "^./<dirname>"
   ```
   若被 `proposal/active/*/SOURCES.md` 或 `code/` 引用 → **禁删**（那是活提案的证据源）。
-  ⚠️ 2026-08-08 实测反例：`paperC_squad_results` 被 A01 的 `SOURCES.md` + `build_null_calibration_table.py` 引用；`paperF_evalfragility` 被 B04 引用 —— 两者**看似死方向残留，实为活提案证据源，禁删**。
+  ⚠️ 2026-08-08 实测反例：`evidence_squad_label_prior` 被 A01 的 `SOURCES.md` + `build_null_calibration_table.py` 引用；`evidence_evalfragility_code` 被 B04 引用 —— 两者**看似死方向残留，实为活提案证据源，禁删**。
 
 ### 铁律
 

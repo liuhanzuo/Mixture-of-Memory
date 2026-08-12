@@ -216,7 +216,7 @@ eval_a4(){                         # $1=KEEP
   local ck="$PROJECT_ROOT/outputs/paperC_pc1_squad_${tag}/final.pt"
   local name="${tag}"
   [ -f "$ck" ] || { log "eval SKIP $tag (no final.pt)"; return 0; }
-  if [ -f "$PROJECT_ROOT/paperC_squad_results/$name/summary.json" ]; then
+  if [ -f "$PROJECT_ROOT/evidence_squad_label_prior/$name/summary.json" ]; then
     log "eval SKIP $tag (summary.json exists)"; return 0
   fi
   log "=== eval $tag ==="
@@ -228,7 +228,7 @@ eval_a4(){                         # $1=KEEP
       >> "$PROJECT_ROOT/logs/paperC_pc2_fresh4_eval_${name}.log" 2>&1
   "$PYTHON_BIN" scripts/eval_paperC_squad_emf1.py --merge --output_name "$name" \
       >> "$PROJECT_ROOT/logs/paperC_pc2_fresh4_eval_${name}.log" 2>&1
-  if [ -f "$PROJECT_ROOT/paperC_squad_results/$name/summary.json" ]; then
+  if [ -f "$PROJECT_ROOT/evidence_squad_label_prior/$name/summary.json" ]; then
     log "eval $tag DONE"
     note "$tag" "EVAL_DONE"
   else
@@ -247,7 +247,7 @@ import json, os
 root  = os.environ["ROOT"]
 fresh = int(os.environ.get("FRESH_N", "4"))
 keeps = [int(k) for k in os.environ.get("KEEPS", "20 24 28").split()]
-res   = os.path.join(root, "paperC_squad_results")
+res   = os.path.join(root, "evidence_squad_label_prior")
 
 def get(name):
     p = os.path.join(res, name, "summary.json")

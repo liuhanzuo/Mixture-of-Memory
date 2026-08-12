@@ -83,7 +83,7 @@ log "=== P-C1 SQuAD EM/F1 SUMMARY ==="
 $PY - <<'PY'
 import glob, json, os
 rows=[]
-for d in sorted(glob.glob("paperC_squad_results/*/summary.json")):
+for d in sorted(glob.glob("evidence_squad_label_prior/*/summary.json")):
     s=json.load(open(d))
     rows.append((os.path.basename(os.path.dirname(d)), s.get("em"), s.get("f1"), s.get("n")))
 print(f"{'arm':22s} {'EM':>8s} {'F1':>8s} {'n':>6s}")

@@ -188,7 +188,7 @@ fi
 
 # ---- 4. EVAL: SQuAD dev EM/F1 (n=2000, base protocol, chat=False, add_bos=0) --
 NAME="A1_full32ft"
-if [ -f "$PROJECT_ROOT/paperC_squad_results/$NAME/summary.json" ]; then
+if [ -f "$PROJECT_ROOT/evidence_squad_label_prior/$NAME/summary.json" ]; then
   log "eval SKIP $NAME (summary.json already exists)"
 else
   log "=== eval $NAME ==="
@@ -199,10 +199,10 @@ else
       >> "$PROJECT_ROOT/logs/paperC_134_eval_${NAME}.log" 2>&1
   "$PYTHON_BIN" scripts/eval_paperC_squad_emf1.py --merge --output_name "$NAME" \
       >> "$PROJECT_ROOT/logs/paperC_134_eval_${NAME}.log" 2>&1
-  if [ -f "$PROJECT_ROOT/paperC_squad_results/$NAME/summary.json" ]; then
+  if [ -f "$PROJECT_ROOT/evidence_squad_label_prior/$NAME/summary.json" ]; then
     log "eval $NAME DONE"
     note "A1_full32ft" "EVAL_DONE"
-    "$PYTHON_BIN" -c "import json;s=json.load(open('$PROJECT_ROOT/paperC_squad_results/$NAME/summary.json'));print('A1 EM=%.4f F1=%.4f n=%d'%(s['em'],s['f1'],s['n']))" | tee -a "$LOG_FILE"
+    "$PYTHON_BIN" -c "import json;s=json.load(open('$PROJECT_ROOT/evidence_squad_label_prior/$NAME/summary.json'));print('A1 EM=%.4f F1=%.4f n=%d'%(s['em'],s['f1'],s['n']))" | tee -a "$LOG_FILE"
   else
     log "eval $NAME FAILED"
     note "A1_full32ft" "EVAL_FAIL"

@@ -54,7 +54,8 @@
 # ---- DATA / VAL: the legacy SQuAD split is VOID ----------------------------
 # `data/squad_val.jsonl` (old VAL_PATH default) and
 # `data/squad_sft_olmo2_2048_train.npy` (old DATA_PATH default) are BOTH VOID as
-# capability evidence -- see versions/paperC_scoping.md (2026-08-05) and the
+# Historical capability experiment for the abandoned Paper C v1 proposal.
+# See proposal/archive/paperC-v1-frozen-cap/scoping/SCOPING_AND_POSTMORTEM.md.
 # forensics docstring of scripts/build_paperC_squad_eval.py:
 #   * 997/2000 = 49.85% of legacy val target_text is one Chinese refusal string,
 #     vs 17.56% in legacy train (32.29pp skew) -> an INPUT-BLIND CONSTANT scores
@@ -283,7 +284,7 @@ log "=== DEPTH-SWEEP SQuAD EM/F1 SUMMARY -> $SUMMARY_LOG ==="
 VAL_PATH="$VAL_PATH" "$PYBIN" - <<'PY' | tee "$SUMMARY_LOG"
 import glob, json, os, subprocess, sys
 rows = []
-for sm in sorted(glob.glob("paperC_squad_results/depthsweep_*/summary.json")):
+for sm in sorted(glob.glob("evidence_squad_label_prior/depthsweep_*/summary.json")):
     name = os.path.basename(os.path.dirname(sm))
     try:
         s = json.load(open(sm))

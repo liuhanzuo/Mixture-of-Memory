@@ -18,7 +18,7 @@ Generated: 2026-08-08 (CPU-only prep work)
 | `results/p1_2/p1_2_summary.json` | present | YES |
 | `olmo2_mmlu_content_results/7B_base/` | present | YES (all 9 arms) |
 | `data/squad_val.jsonl` | 2000 lines | YES |
-| `paperC_squad_results/*.json` | present | YES |
+| `evidence_squad_label_prior/*.json` | present | YES |
 
 ### What the script does
 

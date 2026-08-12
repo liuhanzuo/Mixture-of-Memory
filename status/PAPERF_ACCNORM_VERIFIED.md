@@ -103,7 +103,7 @@ item，core6 不可能只动 +0.0778 pp。
 ## Provenance
 
 - harness 改动: commit `a163a89`, `scripts/eval_olmo2_probe2_downstream.py`
-- 新工具: `scripts/enrich_per_example_normscores.py`, `paperF_evalfragility/accnorm.py`
+- 新工具: `scripts/enrich_per_example_normscores.py`, `evidence_evalfragility_code/accnorm.py`
 - agent 交付: `status/PAPERF_ACCNORM_REDO.md`
 - 我的复核: zwfy6 上逐 rung 重算 6×17,195 个 item 的 norm_scores margin + exact permutation p
 - 前置: `status/PAPERB_TWO_CORPORA_DEFECT.md`（今天更严重的那个发现）

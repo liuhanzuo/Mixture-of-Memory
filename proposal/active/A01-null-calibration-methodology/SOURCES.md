@@ -69,7 +69,7 @@
   (the 6/6 damaged-arm result)
 - `olmo2_mmlu_content_results/a01_*_intact_base_*/summary.json` (intact cross-scale grid)
 - `status/scout_21/lane2_a01_gate2.md` — **gate-2's only writeup; wzc1 ONLY, not on zwfy6**
-- `paperC_squad_results/`
+- `evidence_squad_label_prior/`
 - `data/squad_val.jsonl`
 - `results/p1_2/p1_2_summary.json`
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-paperF_evalfragility/accnorm.py  (2026-08-08)
+evidence_evalfragility_code/accnorm.py  (2026-08-08)
 
 Recompute the "eval fragility vs damage" analysis on the CORRECT metric: acc_norm
 (argmax over norm_scores = option_scores[k] / norm_len[k]).
@@ -25,7 +25,7 @@ This script:
            vs null models (a) constant flip rate (b) logit-scale-only null
            Proper LOO avoids the in-sample algebraic identity Sigma_obs = Sigma_pred
 
-Output: printed to stdout, also written to paperF_evalfragility/accnorm_results.txt
+Output: printed to stdout, also written to evidence_evalfragility_code/accnorm_results.txt
 
 IMPORTANT: does NOT touch xarch.py, pert.py, or margin_flip.py.
 

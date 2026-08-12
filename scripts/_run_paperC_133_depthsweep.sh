@@ -23,7 +23,7 @@
 #
 # ⚠️ NODE .82 IS ON zwfy6, NOT wzc1 (CLAUDE.md's "all 5 nodes share wzc1" does
 # NOT hold for .82). ROOT below is the zwfy6 checkout, which already carries the
-# #92 data / base model / outputs / paperC_squad_results.
+# #92 data / base model / outputs / evidence_squad_label_prior.
 #
 # Usage (on .82):
 #   cd /apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory
@@ -130,7 +130,7 @@ eval_arm(){           # $1=ARM  $2=KEEP
   local ck="$ROOT/outputs/paperC_pc1_squad_${tag}/final.pt"
   local name="${tag}"
   [ -f "$ck" ] || { log "eval SKIP $tag (no final.pt)"; return 0; }
-  if [ -f "$ROOT/paperC_squad_results/$name/summary.json" ]; then
+  if [ -f "$ROOT/evidence_squad_label_prior/$name/summary.json" ]; then
     log "eval SKIP $tag (summary.json exists)"; return 0
   fi
   log "=== eval $tag ==="
@@ -140,7 +140,7 @@ eval_arm(){           # $1=ARM  $2=KEEP
       >> "$ROOT/logs/paperC_133_eval_${name}.log" 2>&1
   "$PY" scripts/eval_paperC_squad_emf1.py --merge --output_name "$name" \
       >> "$ROOT/logs/paperC_133_eval_${name}.log" 2>&1
-  if [ -f "$ROOT/paperC_squad_results/$name/summary.json" ]; then
+  if [ -f "$ROOT/evidence_squad_label_prior/$name/summary.json" ]; then
     note "$tag" "EVAL_DONE"
     grep -hE 'pruned\]|shard 0|merge\]' "$ROOT/logs/paperC_133_eval_${name}.log" | tail -3
   else
@@ -176,7 +176,7 @@ import json, os
 root = os.environ.get("ROOT", ".")
 fresh = int(os.environ.get("FRESH_N", "2"))
 keeps = [int(k) for k in os.environ.get("KEEPS", "20 24 28").split()]
-res = os.path.join(root, "paperC_squad_results")
+res = os.path.join(root, "evidence_squad_label_prior")
 
 def get(name):
     p = os.path.join(res, name, "summary.json")
