@@ -96,6 +96,12 @@ from eval_olmo2_probe2_ppl import (  # noqa: E402
     load_pruned_model,
     load_truncated_any_family,
 )
+# NOTE the Qwen3 pruned loader is imported LAZILY inside _load_pruned_dispatch,
+# NOT here. Importing `eval_qwen3_probe2_ppl` at module scope would add
+# Qwen3Config/Qwen3ForCausalLM to the import graph of every OLMo-2 run, so an
+# OLMo cell could start failing because of an unrelated Qwen3 transformers
+# change. Every archived number came from a process that never imported those
+# classes; keeping the lazy import preserves that exactly.
 from eval_olmo2_probe2_downstream import (  # noqa: E402
     _safe_lp,
     encode_pair,
@@ -153,6 +159,158 @@ FLAN_DESC = {
 }
 
 ALL_TASKS = list(EXPECTED_N.keys())
+
+
+# ---------------------------------------------------------------------------
+# family dispatch for PRUNED checkpoints (paperC heal-confound arm)
+# ---------------------------------------------------------------------------
+# `load_pruned_model` (imported above) hardcodes Olmo2Config/Olmo2ForCausalLM via
+# `build_pruned_shell`, so it can only rebuild an OLMo-2 pruned shell. paperC's
+# healed Qwen3-8B-Base front8+fresh2 arm is a Qwen3 pruned checkpoint and must be
+# scored by THIS harness at read-out.
+#
+# Design, and why this shape and not another:
+#
+# * ROUTE to the existing sibling, do NOT parameterise build_pruned_shell.
+#   `scripts/eval_qwen3_probe2_ppl.py` already implements the identical builder
+#   contract for Qwen3 -- same signature, same {'model_state': ...} ckpt format,
+#   same ckpt-meta-vs-CLI agreement check, same fp32 + strict load, same returned
+#   meta shape -- and it additionally does the one thing the OLMo builder must
+#   NOT do: reset `cfg.layer_types` to length keep+fresh unconditionally (Qwen3's
+#   layer_types is not recomputed from num_hidden_layers and would stay length-36
+#   -> crash). Adding a family branch INSIDE the OLMo builder would duplicate
+#   that Qwen3-specific quirk in a second place and put a new conditional on the
+#   code path of every archived OLMo-2 number. Routing keeps the OLMo path
+#   textually untouched.
+#
+# * DISPATCH ON THE CHECKPOINT, not on a CLI flag. Every trainer in this repo
+#   writes `model_family` into the .pt (`train_olmo2_arch_probe2.py:538`,
+#   `train_olmo2_shortgpt.py:271`, `train_qwen3_arch_probe2.py:352`), so the
+#   family is a property of the artefact and cannot be mis-specified at the
+#   command line. `--model_family` exists only as an override for a ckpt that
+#   predates the field, and it is a HARD ERROR if it contradicts the ckpt.
+#
+# * The OLMo-2 default is bit-preserving. When the resolved family is olmo2 this
+#   function calls exactly `load_pruned_model(...)` with exactly the same
+#   arguments -- no re-ordering, no extra kwargs, no added logging on that path.
+#
+# Note what this is NOT protecting against: a family mismatch could never have
+# corrupted a number silently. Measured, an OLMo-2 shell strict-loading a Qwen3
+# state_dict raises immediately -- OLMo-2 layers have
+# `post_feedforward_layernorm.weight` and no `input_layernorm.weight`, Qwen3 the
+# reverse, and the vocabularies differ (100352 vs 151936). So today's behaviour
+# is a crash on day 8, not a wrong number. This change converts that crash into
+# a score.
+_PRUNED_LOADERS = {"olmo2", "qwen3"}
+
+
+def _load_pruned_dispatch(ckpt_path, base_path, keep_front_layers,
+                          n_fresh_layers, device, model_family=None):
+    """Load a pruned prune-then-heal ckpt of EITHER family.
+
+    Returns exactly what `load_pruned_model` returns: (model, meta_dict).
+    """
+    # Read only the family tag; `torch.load` of the whole ckpt happens once,
+    # inside the family loader, so this does not double the (11-38 GB) read.
+    fam_ck = None
+    try:
+        _hdr = torch.load(ckpt_path, map_location="cpu", weights_only=False,
+                          mmap=True)
+        if isinstance(_hdr, dict):
+            fam_ck = _hdr.get("model_family")
+        del _hdr
+    except Exception as e:  # noqa: BLE001 - mmap unsupported / odd ckpt: fall back
+        _log(f"[dispatch] could not mmap-peek {ckpt_path} for model_family "
+             f"({type(e).__name__}: {e}); relying on --model_family")
+
+    if fam_ck is not None and model_family and str(fam_ck) != str(model_family):
+        raise ValueError(
+            f"--model_family={model_family} contradicts ckpt meta "
+            f"model_family={fam_ck} in {ckpt_path}. The ckpt is authoritative; "
+            f"drop the flag or fix it.")
+    fam = str(fam_ck or model_family or "olmo2").lower()
+    if fam not in _PRUNED_LOADERS:
+        raise ValueError(
+            f"pruned ckpt {ckpt_path} declares model_family={fam!r}, which has "
+            f"no pruned-shell builder here (known: {sorted(_PRUNED_LOADERS)}). "
+            f"Port the family's build_pruned_shell first -- do NOT score it "
+            f"through another family's shell.")
+    if fam_ck is None:
+        _log(f"[dispatch] ckpt has no model_family field; using {fam!r} "
+             f"({'--model_family' if model_family else 'default'})")
+
+    if fam == "olmo2":
+        # BIT-PRESERVING: identical call to the pre-change code path.
+        return load_pruned_model(ckpt_path, base_path, keep_front_layers,
+                                 n_fresh_layers, device)
+
+    # Lazy import (see the note at the top of this file): Qwen3Config /
+    # Qwen3ForCausalLM must never enter an OLMo-2 run's import graph.
+    from eval_qwen3_probe2_ppl import (  # noqa: PLC0415
+        load_pruned_model as load_pruned_model_qwen3,
+    )
+    _assert_not_instruct(base_path)
+    model, meta = load_pruned_model_qwen3(ckpt_path, base_path,
+                                          keep_front_layers, n_fresh_layers,
+                                          device)
+    # The Qwen3 sibling already sets model_family="qwen3"; assert rather than
+    # assume, so a future edit there cannot silently produce an untagged cell.
+    assert meta.get("model_family") == "qwen3", meta
+    return model, meta
+
+
+# Qwen3-8B-**Base** vs Qwen3-8B-**Instruct** are two directories that differ in
+# ~50 bytes of tokenizer metadata and are trivially confusable:
+#   models/Qwen3-8B-Base   eos 151643 <|endoftext|>  ctx 32768   <- BASE
+#   models/Qwen--Qwen3-8b  eos 151645 <|im_end|>     ctx 40960   <- INSTRUCT
+# Both have a chat_template and both share vocab.json/merges.txt byte-for-byte,
+# so `model_type`, `architectures`, vocab_size and the encoding of ordinary text
+# are ALL identical -- there is no signal in the obvious places. The criterion is
+# eos_token_id + max_position_embeddings, verified on disk 2026-08-12.
+#
+# This matters because the whole project evaluates at chat_template=False on the
+# stated grounds that the models have no SFT/RL (memory:
+# paper-eval-chat-false-mandatory). An Instruct checkpoint HAS been SFT'd, so
+# scoring it under that protocol and labelling it "base" is exactly the defect
+# `status/ISSUES.jsonl :: paperB-crossfamily-qwen-instruct-mislabelled-as-base`
+# records. Refuse by default; `ALLOW_INSTRUCT_BASE=1` opts in for someone who
+# deliberately wants an Instruct arm and will label it as such.
+_QWEN3_INSTRUCT_EOS = 151645
+_QWEN3_BASE_EOS = 151643
+
+
+def _assert_not_instruct(base_path):
+    """Refuse a Qwen3-8B-Instruct dir where a Base model is expected."""
+    cfg_path = os.path.join(base_path or "", "config.json")
+    if not base_path or not os.path.exists(cfg_path):
+        _log(f"[guard][WARN] cannot check base/instruct identity: no "
+             f"config.json at {cfg_path!r} -- proceeding UNVERIFIED")
+        return
+    with open(cfg_path) as f:
+        cfg = json.load(f)
+    eos = cfg.get("eos_token_id")
+    ctx = cfg.get("max_position_embeddings")
+    if eos == _QWEN3_INSTRUCT_EOS:
+        msg = (f"{base_path} is Qwen3-8B-**INSTRUCT** (eos_token_id={eos} "
+               f"= <|im_end|>, max_position_embeddings={ctx}), not Base "
+               f"(eos {_QWEN3_BASE_EOS} = <|endoftext|>, ctx 32768). This "
+               f"harness scores at chat_template=False on the stated grounds "
+               f"that the model has no SFT/RL, which is false for an Instruct "
+               f"checkpoint -- and a cell produced from it must not be labelled "
+               f"'base' (see status/ISSUES.jsonl :: "
+               f"paperB-crossfamily-qwen-instruct-mislabelled-as-base). Use "
+               f"models/Qwen3-8B-Base, or set ALLOW_INSTRUCT_BASE=1 to proceed "
+               f"and label the resulting row as Instruct-derived.")
+        if os.environ.get("ALLOW_INSTRUCT_BASE") == "1":
+            _log(f"[guard][WARN] ALLOW_INSTRUCT_BASE=1 -> proceeding. {msg}")
+            return
+        raise ValueError(msg)
+    if eos != _QWEN3_BASE_EOS:
+        _log(f"[guard][WARN] {base_path} has unexpected eos_token_id={eos} "
+             f"(expected {_QWEN3_BASE_EOS} for Qwen3-8B-Base); not the known "
+             f"Instruct signature ({_QWEN3_INSTRUCT_EOS}) either -- proceeding")
+        return
+    _log(f"[guard] OK: {base_path} is Qwen3 **Base** (eos={eos}, ctx={ctx})")
 
 
 # ---------------------------------------------------------------------------
@@ -819,7 +977,120 @@ def _selftest():
         except AssertionError as e:
             assert "CARDINALITY FAILURE" in str(e), str(e)
     _log("[selftest] OK: merge REFUSES a wrong-cardinality set (24 != 1172)")
+    _selftest_family_dispatch()
     _log("[selftest] ALL CHECKS PASSED")
+
+
+def _selftest_family_dispatch():
+    """CPU-only proof that the pruned-ckpt family dispatch routes on the CKPT and
+    that the Base-vs-Instruct guard fires. Builds TINY real Olmo2/Qwen3 shells,
+    saves them in the trainers' `{'model_state': ...}` format, and round-trips
+    them through `_load_pruned_dispatch` -- so this exercises the actual
+    `build_pruned_shell` of each family, not a mock.
+
+    Cheap on purpose: 2-layer/32-hidden models, so the whole check is <1 s and
+    needs no weights, no GPU and no dataset."""
+    import tempfile
+    from transformers import (Olmo2Config, Olmo2ForCausalLM,
+                              Qwen3Config, Qwen3ForCausalLM)
+
+    olmo_base = os.environ.get("SELFTEST_BASE", "../models/OLMo-2-1124-7B")
+    qwen_base = os.environ.get("SELFTEST_QWEN3_BASE", "../models/Qwen3-8B-Base")
+    dev = torch.device("cpu")
+
+    def _tiny(cfg):
+        cfg.hidden_size, cfg.intermediate_size = 32, 64
+        cfg.num_attention_heads, cfg.num_key_value_heads = 2, 2
+        cfg.num_hidden_layers = 2          # keep_front 1 + n_fresh 1
+        if hasattr(cfg, "head_dim"):
+            cfg.head_dim = cfg.hidden_size // cfg.num_attention_heads
+        if getattr(cfg, "layer_types", None) is not None:
+            cfg.layer_types = ["full_attention"] * cfg.num_hidden_layers
+        return cfg
+
+    with tempfile.TemporaryDirectory() as td:
+        # ---- write a tiny shrunken copy of each base config -----------------
+        specs = {}
+        for fam, cfgcls, mcls, real_base in (
+                ("olmo2", Olmo2Config, Olmo2ForCausalLM, olmo_base),
+                ("qwen3", Qwen3Config, Qwen3ForCausalLM, qwen_base)):
+            if not os.path.exists(os.path.join(real_base, "config.json")):
+                _log(f"[selftest] SKIP dispatch/{fam}: no config.json at "
+                     f"{real_base}")
+                continue
+            cfg = _tiny(cfgcls.from_pretrained(real_base, local_files_only=True))
+            bdir = os.path.join(td, f"base_{fam}")
+            os.makedirs(bdir, exist_ok=True)
+            cfg.save_pretrained(bdir)
+            torch.manual_seed(0)
+            m = mcls(cfg).to(torch.float32)
+            ck = os.path.join(td, f"{fam}.pt")
+            torch.save({"model_state": m.state_dict(), "step": 7,
+                        "model_family": fam, "keep_front_layers": 1,
+                        "n_fresh_layers": 1}, ck)
+            specs[fam] = (ck, bdir, m.state_dict())
+
+        # ---- routes on the ckpt's model_family, and the weights survive -----
+        for fam, (ck, bdir, sd) in specs.items():
+            model, meta = _load_pruned_dispatch(ck, bdir, None, None, dev)
+            got = type(model).__name__
+            want = {"olmo2": "Olmo2ForCausalLM", "qwen3": "Qwen3ForCausalLM"}[fam]
+            assert got == want, f"{fam}: dispatch built {got}, expected {want}"
+            assert meta["num_hidden_layers"] == 2, meta
+            assert meta["ckpt_step"] == 7, meta
+            new = model.state_dict()
+            assert set(new) == set(sd), f"{fam}: key set changed on round-trip"
+            worst = max(float((new[k].float() - sd[k].float()).abs().max())
+                        for k in sd)
+            assert worst == 0.0, f"{fam}: round-trip not exact (max|d|={worst})"
+            _log(f"[selftest] OK: dispatch/{fam} -> {want}, "
+                 f"state_dict round-trip EXACT ({len(sd)} tensors)")
+
+        # ---- a contradicting --model_family is a hard error ------------------
+        if "qwen3" in specs:
+            ck, bdir, _ = specs["qwen3"]
+            try:
+                _load_pruned_dispatch(ck, bdir, None, None, dev,
+                                      model_family="olmo2")
+                raise AssertionError("dispatch accepted --model_family=olmo2 "
+                                     "for a qwen3 ckpt")
+            except ValueError as e:
+                assert "contradicts ckpt meta" in str(e), str(e)
+            _log("[selftest] OK: dispatch REFUSES --model_family contradicting "
+                 "the ckpt")
+
+        # ---- an untagged ckpt defaults to olmo2 (pre-change behaviour) -------
+        if "olmo2" in specs:
+            ck, bdir, _ = specs["olmo2"]
+            d = torch.load(ck, map_location="cpu", weights_only=False)
+            d.pop("model_family")
+            ck2 = os.path.join(td, "untagged.pt")
+            torch.save(d, ck2)
+            model, meta = _load_pruned_dispatch(ck2, bdir, None, None, dev)
+            assert type(model).__name__ == "Olmo2ForCausalLM"
+            _log("[selftest] OK: ckpt with NO model_family field still loads as "
+                 "olmo2 (pre-change default preserved)")
+
+        # ---- the Base-vs-Instruct guard, on the REAL config.json files -------
+        # eos 151643/151645 is the only reliable discriminator; assert both
+        # directions so a future config edit cannot quietly disarm the guard.
+        inst = os.environ.get("SELFTEST_QWEN3_INSTRUCT", "../models/Qwen--Qwen3-8b")
+        if os.path.exists(os.path.join(qwen_base, "config.json")):
+            _assert_not_instruct(qwen_base)   # must NOT raise
+            _log("[selftest] OK: guard ACCEPTS Qwen3-8B-Base")
+        if os.path.exists(os.path.join(inst, "config.json")):
+            try:
+                _assert_not_instruct(inst)
+                raise AssertionError(f"guard accepted Instruct dir {inst}")
+            except ValueError as e:
+                assert "INSTRUCT" in str(e), str(e)
+            _log(f"[selftest] OK: guard REFUSES Instruct dir ({inst})")
+            os.environ["ALLOW_INSTRUCT_BASE"] = "1"
+            try:
+                _assert_not_instruct(inst)   # opt-in must NOT raise
+            finally:
+                del os.environ["ALLOW_INSTRUCT_BASE"]
+            _log("[selftest] OK: ALLOW_INSTRUCT_BASE=1 opts in explicitly")
 
 
 # ---------------------------------------------------------------------------
@@ -828,6 +1099,13 @@ def main():
     p.add_argument("--base_model", type=str, default="")
     p.add_argument("--ckpt", type=str, default="")
     p.add_argument("--any_family", action="store_true")
+    p.add_argument("--model_family", type=str, default="",
+                   choices=["", "olmo2", "qwen3"],
+                   help="OVERRIDE the pruned-ckpt family for a ckpt written "
+                        "before trainers recorded `model_family`. Normally "
+                        "unnecessary and better left unset: the family is read "
+                        "FROM THE CKPT, and if this flag contradicts the ckpt "
+                        "it is a hard error. Ignored unless --ckpt is given.")
     p.add_argument("--keep_front_layers", type=int, default=None)
     p.add_argument("--n_fresh_layers", type=int, default=None)
     p.add_argument("--keep_indices", type=str, default="")
@@ -907,9 +1185,10 @@ def main():
         pad_id = tok.eos_token_id if tok.eos_token_id is not None else 0
 
     if args.ckpt:
-        model, meta = load_pruned_model(args.ckpt, args.base_model,
-                                        args.keep_front_layers,
-                                        args.n_fresh_layers, device)
+        model, meta = _load_pruned_dispatch(args.ckpt, args.base_model,
+                                            args.keep_front_layers,
+                                            args.n_fresh_layers, device,
+                                            model_family=args.model_family)
     elif args.any_family:
         if args.keep_front_layers:
             model, meta = load_truncated_any_family(
@@ -920,7 +1199,11 @@ def main():
         model, meta = load_base_model(args.base_model, device)
     meta["base_model"] = args.base_model
     meta["add_bos"] = bool(args.add_bos)
-    meta["chat_template"] = False  # paperC-wide: OLMo-2 is a BASE LM, no SFT
+    meta["chat_template"] = False  # paperC-wide: every arm here is a BASE LM
+    #                                (no SFT/RL) -- OLMo-2, and Qwen3-8B-Base
+    #                                for the healed cross-family arm, whose
+    #                                base/Instruct identity is asserted by
+    #                                _assert_not_instruct before the load.
     meta["desc_style"] = args.desc_style
     if args.keep_indices:
         meta["keep_indices"] = args.keep_indices
