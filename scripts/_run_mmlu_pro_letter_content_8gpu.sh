@@ -113,10 +113,39 @@ if [ "$MODE" = "olmo2" ]; then
     case "$1" in
       base)       echo "7B_base|-|-|-" ;;
       keep8)      echo "7B_keep8_step121000|outputs/olmo2_probe2_7B_keep8fresh2/step121000.pt|8|2" ;;
+      # An EARLIER point on OLMo-2 keep8's own heal trajectory. Exists so the
+      # "is the Qwen3 heal arm merely EARLY?" question can be answered with a
+      # measurement instead of an assertion: keep8@121000 is only 1 point, and a
+      # single point cannot distinguish "OLMo-2 is non-degenerate because it is
+      # OLMo-2" from "OLMo-2 is non-degenerate because it healed 121k steps".
+      keep8_45000) echo "7B_keep8_step45000|outputs/olmo2_probe2_7B_keep8fresh2/step45000.pt|8|2" ;;
       keep10)     echo "7B_keep10_step83500|outputs/olmo2_probe2_7B_keep10fresh2/step83500.pt|10|2" ;;
       keep12)     echo "7B_keep12_step124000|outputs/olmo2_probe2_7B_keep12fresh2/step124000.pt|12|2" ;;
       keep14)     echo "7B_keep14_step200000|outputs/olmo2_probe2_7B_keep14fresh2/step200000.pt|14|2" ;;
       shortgpt16) echo "7B_shortgpt16_step200000|outputs/olmo2_probe2_7B_shortgpt16/step200000.pt|16|0" ;;
+      # paperC heal-confound arm (HEAL_CONFOUND_PREREGISTRATION.md): a HEALED
+      # front-8+fresh2 **Qwen3-8B-Base** ckpt, i.e. the within-family twin of the
+      # un-healed `qwen3_8b_base_k8` cell in MODE=crossfamily.
+      #
+      # ⚠️ It MUST go through this --ckpt path, NOT MODE=crossfamily: the latter
+      # does eval-time truncation of an INTACT model via --any_family and would
+      # silently score an UN-healed front-8 Qwen3, i.e. re-measure the control
+      # while labelling it the treatment. `model_family` is read from the ckpt by
+      # _load_pruned_dispatch, so no family flag has to be threaded here.
+      #
+      # `qwen3heal:<step>` is step-parameterised because the read-out is a
+      # TRAJECTORY (step -> accuracy), not a single cell. Milestones are read from
+      # `..._pinned/`, NOT the live `outputs/paperC_qwen3base_heal_k8f2/`, because
+      # that dir is under active rotation (keep_last_n=3, milestone_every=5000,
+      # keep_milestones=8): non-multiples of 5000 are deleted a few saves later,
+      # so scoring straight out of the live dir races the rotator and a mid-run
+      # trajectory point can vanish between enumeration and load. The pinned dir
+      # holds HARDLINKS (same inodes, 0 extra bytes) and the rotator only globs
+      # its own output_dir, so pinned copies survive.
+      qwen3heal:*)
+        _S="${1##*:}"
+        case "$_S" in ''|*[!0-9]*) echo ""; return 1 ;; esac
+        echo "qwen3base_heal_k8f2_step${_S}|outputs/paperC_qwen3base_heal_k8f2_pinned/step${_S}.pt|8|2" ;;
       *) echo ""; return 1 ;;
     esac
   }

@@ -1,0 +1,735 @@
+{
+  "what": "paperC heal-confound: MMLU-Pro letter-vs-floor read-out of the healed Qwen3-8B-Base front8+fresh2 heal TRAJECTORY",
+  "estimator_source": "imported from a01_gate3_fp32_vs_bf16.py; local verbatim copies asserted identical",
+  "prereg": {
+    "floor": "always-A 0.116606",
+    "n": 12032,
+    "read_out_step": 121000,
+    "note": "121000 is the PRE-REGISTERED read-out. Every cell here is a mid-run milestone at step <= 9000, i.e. 4-7% of it. These are pipeline + trajectory-shape evidence, NOT the P1/P2 verdict, and must never be quoted as the healed result."
+  },
+  "n_cells": 10,
+  "cells": [
+    {
+      "label": "qwen3_8b_base/k8+fresh2 heal@5000",
+      "arm_dir": "qwen3base_heal_k8f2_step5000",
+      "results_root": "mmlu_pro_lc_paperC_heal_results",
+      "step": 5000,
+      "family": "qwen3_8b_base",
+      "regime": "prune_then_heal",
+      "letter_acc": 0.11527593085106383,
+      "floor_letter": "A",
+      "floor_acc": 0.11660571808510638,
+      "delta_pp": -0.13297872340425482,
+      "ci95_lo_pp": -0.37421043882978705,
+      "ci95_hi_pp": 0.10804521276595745,
+      "ci95_half_width_pp": 0.24112782579787223,
+      "boot_p": 0.2834,
+      "powered_vs_mmlu_effect": true,
+      "verdict": "AT floor",
+      "degeneracy": {
+        "pred_hist": {
+          "A": 10973,
+          "B": 19,
+          "C": 39,
+          "D": 43,
+          "E": 22,
+          "F": 51,
+          "G": 28,
+          "H": 67,
+          "I": 775,
+          "J": 15
+        },
+        "modal_pred_letter": "A",
+        "modal_pred_share": 0.9119847074468085,
+        "always_modal_pred_acc": 0.11660571808510638,
+        "n_distinct_pred_letters": 10
+      },
+      "integrity": {
+        "shard_index_set": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "n_scored": 12032,
+        "n_dup_ids": 0,
+        "n_nan": 0,
+        "n_trunc": 0,
+        "chat_template": false,
+        "add_bos": false,
+        "desc_style": "none",
+        "meta": {
+          "mode": "pruned",
+          "model_family": "qwen3",
+          "keep_front_layers": 8,
+          "n_fresh_layers": 2,
+          "num_hidden_layers": 10,
+          "ckpt_step": 5000,
+          "ckpt": "outputs/paperC_qwen3base_heal_k8f2_pinned/step5000.pt",
+          "base_model": "../models/Qwen3-8B-Base",
+          "add_bos": false,
+          "chat_template": false,
+          "desc_style": "none"
+        },
+        "loader_integrity": {
+          "n_shards": 8,
+          "n_scored": 12032,
+          "expected_n": 12032,
+          "n_nan": 0
+        }
+      }
+    },
+    {
+      "label": "qwen3_8b_base/k8+fresh2 heal@5500",
+      "arm_dir": "qwen3base_heal_k8f2_step5500",
+      "results_root": "mmlu_pro_lc_paperC_heal_results",
+      "step": 5500,
+      "family": "qwen3_8b_base",
+      "regime": "prune_then_heal",
+      "letter_acc": 0.11569148936170212,
+      "floor_letter": "A",
+      "floor_acc": 0.11660571808510638,
+      "delta_pp": -0.09142287234042562,
+      "ci95_lo_pp": -0.44880319148936176,
+      "ci95_hi_pp": 0.2576462765957447,
+      "ci95_half_width_pp": 0.3532247340425532,
+      "boot_p": 0.6075999999999999,
+      "powered_vs_mmlu_effect": true,
+      "verdict": "AT floor",
+      "degeneracy": {
+        "pred_hist": {
+          "A": 9854,
+          "B": 15,
+          "C": 34,
+          "D": 44,
+          "E": 16,
+          "F": 32,
+          "G": 18,
+          "H": 57,
+          "I": 1944,
+          "J": 18
+        },
+        "modal_pred_letter": "A",
+        "modal_pred_share": 0.8189827127659575,
+        "always_modal_pred_acc": 0.11660571808510638,
+        "n_distinct_pred_letters": 10
+      },
+      "integrity": {
+        "shard_index_set": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "n_scored": 12032,
+        "n_dup_ids": 0,
+        "n_nan": 0,
+        "n_trunc": 0,
+        "chat_template": false,
+        "add_bos": false,
+        "desc_style": "none",
+        "meta": {
+          "mode": "pruned",
+          "model_family": "qwen3",
+          "keep_front_layers": 8,
+          "n_fresh_layers": 2,
+          "num_hidden_layers": 10,
+          "ckpt_step": 5500,
+          "ckpt": "outputs/paperC_qwen3base_heal_k8f2_pinned/step5500.pt",
+          "base_model": "../models/Qwen3-8B-Base",
+          "add_bos": false,
+          "chat_template": false,
+          "desc_style": "none"
+        },
+        "loader_integrity": {
+          "n_shards": 8,
+          "n_scored": 12032,
+          "expected_n": 12032,
+          "n_nan": 0
+        }
+      }
+    },
+    {
+      "label": "qwen3_8b_base/k8+fresh2 heal@6000",
+      "arm_dir": "qwen3base_heal_k8f2_step6000",
+      "results_root": "mmlu_pro_lc_paperC_heal_results",
+      "step": 6000,
+      "family": "qwen3_8b_base",
+      "regime": "prune_then_heal",
+      "letter_acc": 0.11486037234042554,
+      "floor_letter": "A",
+      "floor_acc": 0.11660571808510638,
+      "delta_pp": -0.174534574468084,
+      "ci95_lo_pp": -0.4820478723404255,
+      "ci95_hi_pp": 0.12466755319148937,
+      "ci95_half_width_pp": 0.30335771276595747,
+      "boot_p": 0.2638,
+      "powered_vs_mmlu_effect": true,
+      "verdict": "AT floor",
+      "degeneracy": {
+        "pred_hist": {
+          "A": 10298,
+          "B": 14,
+          "C": 77,
+          "D": 59,
+          "E": 25,
+          "F": 41,
+          "G": 27,
+          "H": 84,
+          "I": 1392,
+          "J": 15
+        },
+        "modal_pred_letter": "A",
+        "modal_pred_share": 0.8558843085106383,
+        "always_modal_pred_acc": 0.11660571808510638,
+        "n_distinct_pred_letters": 10
+      },
+      "integrity": {
+        "shard_index_set": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "n_scored": 12032,
+        "n_dup_ids": 0,
+        "n_nan": 0,
+        "n_trunc": 0,
+        "chat_template": false,
+        "add_bos": false,
+        "desc_style": "none",
+        "meta": {
+          "mode": "pruned",
+          "model_family": "qwen3",
+          "keep_front_layers": 8,
+          "n_fresh_layers": 2,
+          "num_hidden_layers": 10,
+          "ckpt_step": 6000,
+          "ckpt": "outputs/paperC_qwen3base_heal_k8f2_pinned/step6000.pt",
+          "base_model": "../models/Qwen3-8B-Base",
+          "add_bos": false,
+          "chat_template": false,
+          "desc_style": "none"
+        },
+        "loader_integrity": {
+          "n_shards": 8,
+          "n_scored": 12032,
+          "expected_n": 12032,
+          "n_nan": 0
+        }
+      }
+    },
+    {
+      "label": "qwen3_8b_base/k8+fresh2 heal@6500",
+      "arm_dir": "qwen3base_heal_k8f2_step6500",
+      "results_root": "mmlu_pro_lc_paperC_heal_results",
+      "step": 6500,
+      "family": "qwen3_8b_base",
+      "regime": "prune_then_heal",
+      "letter_acc": 0.1149434840425532,
+      "floor_letter": "A",
+      "floor_acc": 0.11660571808510638,
+      "delta_pp": -0.16622340425531817,
+      "ci95_lo_pp": -0.4820478723404255,
+      "ci95_hi_pp": 0.1412898936170213,
+      "ci95_half_width_pp": 0.3116688829787234,
+      "boot_p": 0.28359999999999996,
+      "powered_vs_mmlu_effect": true,
+      "verdict": "AT floor",
+      "degeneracy": {
+        "pred_hist": {
+          "A": 10374,
+          "B": 9,
+          "C": 29,
+          "D": 35,
+          "E": 6,
+          "F": 30,
+          "G": 23,
+          "H": 69,
+          "I": 1444,
+          "J": 13
+        },
+        "modal_pred_letter": "A",
+        "modal_pred_share": 0.8622007978723404,
+        "always_modal_pred_acc": 0.11660571808510638,
+        "n_distinct_pred_letters": 10
+      },
+      "integrity": {
+        "shard_index_set": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "n_scored": 12032,
+        "n_dup_ids": 0,
+        "n_nan": 0,
+        "n_trunc": 0,
+        "chat_template": false,
+        "add_bos": false,
+        "desc_style": "none",
+        "meta": {
+          "mode": "pruned",
+          "model_family": "qwen3",
+          "keep_front_layers": 8,
+          "n_fresh_layers": 2,
+          "num_hidden_layers": 10,
+          "ckpt_step": 6500,
+          "ckpt": "outputs/paperC_qwen3base_heal_k8f2_pinned/step6500.pt",
+          "base_model": "../models/Qwen3-8B-Base",
+          "add_bos": false,
+          "chat_template": false,
+          "desc_style": "none"
+        },
+        "loader_integrity": {
+          "n_shards": 8,
+          "n_scored": 12032,
+          "expected_n": 12032,
+          "n_nan": 0
+        }
+      }
+    },
+    {
+      "label": "qwen3_8b_base/k8+fresh2 heal@7000",
+      "arm_dir": "qwen3base_heal_k8f2_step7000",
+      "results_root": "mmlu_pro_lc_paperC_heal_results",
+      "step": 7000,
+      "family": "qwen3_8b_base",
+      "regime": "prune_then_heal",
+      "letter_acc": 0.1157746010638298,
+      "floor_letter": "A",
+      "floor_acc": 0.11660571808510638,
+      "delta_pp": -0.0831117021276584,
+      "ci95_lo_pp": -0.3407579787234043,
+      "ci95_hi_pp": 0.16622340425531915,
+      "ci95_half_width_pp": 0.2534906914893617,
+      "boot_p": 0.5206000000000001,
+      "powered_vs_mmlu_effect": true,
+      "verdict": "AT floor",
+      "degeneracy": {
+        "pred_hist": {
+          "A": 10884,
+          "B": 12,
+          "C": 51,
+          "D": 44,
+          "E": 9,
+          "F": 32,
+          "G": 25,
+          "H": 78,
+          "I": 878,
+          "J": 19
+        },
+        "modal_pred_letter": "A",
+        "modal_pred_share": 0.9045877659574468,
+        "always_modal_pred_acc": 0.11660571808510638,
+        "n_distinct_pred_letters": 10
+      },
+      "integrity": {
+        "shard_index_set": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "n_scored": 12032,
+        "n_dup_ids": 0,
+        "n_nan": 0,
+        "n_trunc": 0,
+        "chat_template": false,
+        "add_bos": false,
+        "desc_style": "none",
+        "meta": {
+          "mode": "pruned",
+          "model_family": "qwen3",
+          "keep_front_layers": 8,
+          "n_fresh_layers": 2,
+          "num_hidden_layers": 10,
+          "ckpt_step": 7000,
+          "ckpt": "outputs/paperC_qwen3base_heal_k8f2_pinned/step7000.pt",
+          "base_model": "../models/Qwen3-8B-Base",
+          "add_bos": false,
+          "chat_template": false,
+          "desc_style": "none"
+        },
+        "loader_integrity": {
+          "n_shards": 8,
+          "n_scored": 12032,
+          "expected_n": 12032,
+          "n_nan": 0
+        }
+      }
+    },
+    {
+      "label": "olmo2_7b/keep8+fresh2 heal@45000",
+      "arm_dir": "7B_keep8_step45000",
+      "results_root": "mmlu_pro_lc_paperC_heal_results",
+      "step": 45000,
+      "family": "olmo2_7b",
+      "regime": "prune_then_heal",
+      "letter_acc": 0.11727061170212766,
+      "floor_letter": "A",
+      "floor_acc": 0.11660571808510638,
+      "delta_pp": 0.0664893617021281,
+      "ci95_lo_pp": -0.3740026595744681,
+      "ci95_hi_pp": 0.5152925531914894,
+      "ci95_half_width_pp": 0.44464760638297873,
+      "boot_p": 0.7525999999999999,
+      "powered_vs_mmlu_effect": true,
+      "verdict": "AT floor",
+      "degeneracy": {
+        "pred_hist": {
+          "A": 9226,
+          "B": 65,
+          "C": 1318,
+          "D": 1392,
+          "E": 25,
+          "G": 1,
+          "I": 1,
+          "J": 4
+        },
+        "modal_pred_letter": "A",
+        "modal_pred_share": 0.7667885638297872,
+        "always_modal_pred_acc": 0.11660571808510638,
+        "n_distinct_pred_letters": 8
+      },
+      "integrity": {
+        "shard_index_set": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "n_scored": 12032,
+        "n_dup_ids": 0,
+        "n_nan": 0,
+        "n_trunc": 0,
+        "chat_template": false,
+        "add_bos": false,
+        "desc_style": "none",
+        "meta": {
+          "mode": "pruned",
+          "keep_front_layers": 8,
+          "n_fresh_layers": 2,
+          "num_hidden_layers": 10,
+          "ckpt_step": 45000,
+          "ckpt": "outputs/olmo2_probe2_7B_keep8fresh2/step45000.pt",
+          "base_model": "../models/OLMo-2-1124-7B",
+          "add_bos": false,
+          "chat_template": false,
+          "desc_style": "none"
+        },
+        "loader_integrity": {
+          "n_shards": 8,
+          "n_scored": 12032,
+          "expected_n": 12032,
+          "n_nan": 0
+        }
+      }
+    },
+    {
+      "label": "qwen3_8b_base/k8 UN-healed (P1 control)",
+      "arm_dir": "qwen3_8b_base_k8",
+      "results_root": "mmlu_pro_lc_crossfamily_results_fix",
+      "step": 0,
+      "family": "qwen3_8b_base",
+      "regime": "eval_time_truncation_no_heal",
+      "letter_acc": 0.10779587765957446,
+      "floor_letter": "A",
+      "floor_acc": 0.11660571808510638,
+      "delta_pp": -0.8809840425531914,
+      "ci95_lo_pp": -1.6954787234042552,
+      "ci95_hi_pp": -0.0581781914893617,
+      "ci95_half_width_pp": 0.8186502659574468,
+      "boot_p": 0.036199999999999996,
+      "powered_vs_mmlu_effect": true,
+      "verdict": "BELOW floor",
+      "degeneracy": {
+        "pred_hist": {
+          "A": 298,
+          "B": 279,
+          "C": 62,
+          "E": 11368,
+          "F": 25
+        },
+        "modal_pred_letter": "E",
+        "modal_pred_share": 0.944813829787234,
+        "always_modal_pred_acc": 0.09549534574468085,
+        "n_distinct_pred_letters": 5
+      },
+      "integrity": {
+        "shard_index_set": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "n_scored": 12032,
+        "n_dup_ids": 0,
+        "n_nan": 0,
+        "n_trunc": 0,
+        "chat_template": false,
+        "add_bos": false,
+        "desc_style": "none",
+        "meta": {
+          "mode": "truncated_any_family",
+          "architecture": "Qwen3ForCausalLM",
+          "keep_front_layers": 8,
+          "original_num_hidden_layers": 36,
+          "num_hidden_layers": 8,
+          "n_fresh_layers": 0,
+          "heal_steps": 0,
+          "base_model": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/models/Qwen3-8B-Base",
+          "add_bos": false,
+          "chat_template": false,
+          "desc_style": "none"
+        },
+        "loader_integrity": {
+          "n_shards": 8,
+          "n_scored": 12032,
+          "expected_n": 12032,
+          "n_nan": 0
+        }
+      }
+    },
+    {
+      "label": "olmo2_7b/keep8+fresh2 heal@121000 (P2)",
+      "arm_dir": "7B_keep8_step121000",
+      "results_root": "mmlu_pro_letter_content_results",
+      "step": 121000,
+      "family": "olmo2_7b",
+      "regime": "prune_then_heal",
+      "letter_acc": 0.11544215425531915,
+      "floor_letter": "A",
+      "floor_acc": 0.11660571808510638,
+      "delta_pp": -0.11635638297872314,
+      "ci95_lo_pp": -0.6981382978723404,
+      "ci95_hi_pp": 0.4654255319148936,
+      "ci95_half_width_pp": 0.581781914893617,
+      "boot_p": 0.7118,
+      "powered_vs_mmlu_effect": true,
+      "verdict": "AT floor",
+      "degeneracy": {
+        "pred_hist": {
+          "A": 6919,
+          "B": 283,
+          "C": 3246,
+          "D": 1319,
+          "E": 69,
+          "F": 30,
+          "G": 22,
+          "H": 25,
+          "I": 1,
+          "J": 118
+        },
+        "modal_pred_letter": "A",
+        "modal_pred_share": 0.5750498670212766,
+        "always_modal_pred_acc": 0.11660571808510638,
+        "n_distinct_pred_letters": 10
+      },
+      "integrity": {
+        "shard_index_set": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "n_scored": 12032,
+        "n_dup_ids": 0,
+        "n_nan": 0,
+        "n_trunc": 0,
+        "chat_template": false,
+        "add_bos": false,
+        "desc_style": "none",
+        "meta": {
+          "mode": "pruned",
+          "keep_front_layers": 8,
+          "n_fresh_layers": 2,
+          "num_hidden_layers": 10,
+          "ckpt_step": 121000,
+          "ckpt": "outputs/olmo2_probe2_7B_keep8fresh2/step121000.pt",
+          "base_model": "../models/OLMo-2-1124-7B",
+          "add_bos": false,
+          "chat_template": false,
+          "desc_style": "none"
+        },
+        "loader_integrity": {
+          "n_shards": 8,
+          "n_scored": 12032,
+          "expected_n": 12032,
+          "n_nan": 0
+        }
+      }
+    },
+    {
+      "label": "qwen3_8b_base INTACT (ref)",
+      "arm_dir": "qwen3_8b_base_base",
+      "results_root": "mmlu_pro_lc_crossfamily_results_fix",
+      "step": 0,
+      "family": "qwen3_8b_base",
+      "regime": "intact",
+      "letter_acc": 0.4611037234042553,
+      "floor_letter": "A",
+      "floor_acc": 0.11660571808510638,
+      "delta_pp": 34.449800531914896,
+      "ci95_lo_pp": 33.48549700797873,
+      "ci95_hi_pp": 35.422207446808514,
+      "ci95_half_width_pp": 0.9683552194148931,
+      "boot_p": 0.0001,
+      "powered_vs_mmlu_effect": true,
+      "verdict": "ABOVE floor",
+      "degeneracy": {
+        "pred_hist": {
+          "A": 3170,
+          "B": 2377,
+          "C": 1473,
+          "D": 1096,
+          "E": 884,
+          "F": 587,
+          "G": 714,
+          "H": 665,
+          "I": 626,
+          "J": 440
+        },
+        "modal_pred_letter": "A",
+        "modal_pred_share": 0.2634640957446808,
+        "always_modal_pred_acc": 0.11660571808510638,
+        "n_distinct_pred_letters": 10
+      },
+      "integrity": {
+        "shard_index_set": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "n_scored": 12032,
+        "n_dup_ids": 0,
+        "n_nan": 0,
+        "n_trunc": 0,
+        "chat_template": false,
+        "add_bos": false,
+        "desc_style": "none",
+        "meta": {
+          "mode": "base_any_family",
+          "architecture": "Qwen3ForCausalLM",
+          "num_hidden_layers": 36,
+          "base_model": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/models/Qwen3-8B-Base",
+          "add_bos": false,
+          "chat_template": false,
+          "desc_style": "none"
+        },
+        "loader_integrity": {
+          "n_shards": 8,
+          "n_scored": 12032,
+          "expected_n": 12032,
+          "n_nan": 0
+        }
+      }
+    },
+    {
+      "label": "olmo2_7b INTACT (ref)",
+      "arm_dir": "7B_base",
+      "results_root": "mmlu_pro_letter_content_results",
+      "step": 0,
+      "family": "olmo2_7b",
+      "regime": "intact",
+      "letter_acc": 0.2718583776595745,
+      "floor_letter": "A",
+      "floor_acc": 0.11660571808510638,
+      "delta_pp": 15.525265957446809,
+      "ci95_lo_pp": 14.611037234042554,
+      "ci95_hi_pp": 16.42287234042553,
+      "ci95_half_width_pp": 0.9059175531914889,
+      "boot_p": 0.0001,
+      "powered_vs_mmlu_effect": true,
+      "verdict": "ABOVE floor",
+      "degeneracy": {
+        "pred_hist": {
+          "A": 3626,
+          "B": 1796,
+          "C": 2861,
+          "D": 1427,
+          "E": 434,
+          "F": 596,
+          "G": 351,
+          "H": 269,
+          "I": 474,
+          "J": 198
+        },
+        "modal_pred_letter": "A",
+        "modal_pred_share": 0.3013630319148936,
+        "always_modal_pred_acc": 0.11660571808510638,
+        "n_distinct_pred_letters": 10
+      },
+      "integrity": {
+        "shard_index_set": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "n_scored": 12032,
+        "n_dup_ids": 0,
+        "n_nan": 0,
+        "n_trunc": 0,
+        "chat_template": false,
+        "add_bos": false,
+        "desc_style": "none",
+        "meta": {
+          "mode": "base",
+          "num_hidden_layers": 32,
+          "base_model": "../models/OLMo-2-1124-7B",
+          "add_bos": false,
+          "chat_template": false,
+          "desc_style": "none"
+        },
+        "loader_integrity": {
+          "n_shards": 8,
+          "n_scored": 12032,
+          "expected_n": 12032,
+          "n_nan": 0
+        }
+      }
+    }
+  ]
+}

@@ -2,7 +2,48 @@
 > 每次启动/kill GPU 任务更新。heartbeat 先读→对照 nvidia-smi→台账说跑但空=补卡。★29.162.226.120=dllm 绝不碰。
 > 2026-08-08 15:03 更新：用户指令「B200跑resume，H20跑新方向」→ Paper B resume 迁移到 .21/.73。
 
+## ✅ 2026-08-13 01:40-02:08 — paperC heal-confound **milestone 轨迹 MMLU-Pro 打分 完成**（.73 + .82，共 **5.57 GPU-h** / 授权 120）
+
+兑现 `paperC/HEAL_CONFOUND_PREREGISTRATION.md` §10 预留的 16 卡（「其余 16 卡留给 milestone 的
+offline MMLU-Pro 打分，这是真正的下一个瓶颈」）—— 该预留自 08-12 launch 起一直空置未用。
+**两节点已于 02:08 全部释放（实测 8×0 MiB / 0 compute apps，可投）。**
+
+| 节点 | 硬件 | 任务 | 细节 | 状态 |
+|---|---|---|---|---|
+| **.73** | 8×H20 zwfy6 | heal 轨迹 `step5000,6000` + `step7000` | 01:40:59 起，各 409/408/410 s。`ALL ARMS DONE`，3/3 MERGE OK | ✅ 完成，已释放 |
+| **.82** | 8×H20 zwfy6 | heal 轨迹 `step5500,6500` + **OLMo-2 `keep8@45000`** | 01:44:17 起，各 434/437/407 s，3/3 MERGE OK | ✅ 完成，已释放 |
+| **.104** | 8×H20 zwfy6 | **paperC heal 训练本体（未打扰）** | pid 3343471，02:11 实测 step 7260/200000。**实测 elapsed/iter = 5.847 s/step**（非 tqdm 瞬时值；逐区间中位 5.750、最大 8.300 落在 ckpt flush）⇒ 距 prereg read-out step121000 还有 **184.8 h ≈ 7.70 d**。本次只读它的 ckpt | ▶️ 运行中（勿动） |
+| **LOCAL / .21** | 8×B200 ×2 wzc1 | SparseForge #246（**未打扰**） | 本次禁用，**全程未连接** | ▶️ 运行中（勿动） |
+
+**结论（详见 `paperC/HEAL_TRAJECTORY_READOUT_1.md`）**：10 cell 全部 `n=12032`/`0 nan`/`0 trunc`/
+`chat_template is False`，并**复现**两个已归档 cell（qwen3 k8 −0.881pp p=0.0362 BELOW；olmo2 keep8@121k
+−0.116pp p=0.7118 AT）。轨迹 5000→7000 **平**（Δ −0.175..−0.083 pp，p 全 >0.26）。
+⚠️ **发现 read-out 统计量缺陷**：`always-<L>` 精度是**非平坦的数据集属性**（A .1166 … J .0785，跨度 3.81pp），
+healed Qwen3 塌缩到 **A**（82-91% 的 item）= argmax = **floor 本身**，un-healed 塌缩到 **E**（94.5%，只出 5 个字母）
+= always-E **−2.11pp** ⇒ **「AT floor」与「BELOW floor」是同一现象、只差塌缩到哪个字母，不含任何 competence**。
+独立性模型 `acc_hat=Σ P(pred=L)P(gold=L)` 把**每个 damaged cell** 解释到 +0.07..+1.13pp，却在 intact 模型上
+失效（+35.4/+16.3pp）。故 prereg §8 的 H_heal 判据**可被「换塌缩字母」满足**。建议在 step121000 打分前
+（保持 pre-hoc）把 `modal_pred_share` + 独立性残差与每个 cell 并列报告，区分 degenerate-at-floor 与
+competent-at-floor —— **0 GPU 成本**。
+
+> ⚠️⚠️ **本次发现并已规避的真实数据丢失（后续 agent 必读）**：live 目录
+> `outputs/paperC_qwen3base_heal_k8f2/` 处于 rotation 下（`keep_last_n=3 milestone_every=5000
+> keep_milestones=8`）⇒ **非 5000 倍数的 milestone 会被删**。**实测**：`step5500.pt` 01:34 还在、
+> **01:46 step7000 落盘时已从 live 目录消失**，仅因已 hardlink 而存活。本次打分前把 5000/5500/6000/6500
+> （及后来的 7000）**hardlink** 到 `outputs/paperC_qwen3base_heal_k8f2_pinned/`（同 inode、`df` 不变、
+> **0 额外字节**；rotator 只 glob 自己的 output_dir 故 pinned 免疫）。
+> **规则：打 mid-run milestone 必须「先 pin 再打」**，直接读 live 目录会与 rotator 竞态、`--ckpt` 可能在
+> 枚举与载入之间消失。
+
+**两节点分工=两个独立 8 卡分片，不合 16 卡 DDP**：打分是「一 ckpt 一臂、臂内 8 shard」，臂间无通信，
+不同 milestone 分给两节点是 **线性 2×**；而 prereg §10 实测 16 卡 DDP 只有 **1.10×** 且多一个 TCPStore
+失败模式。milestone **交错**分配（.73=5000/6000、.82=5500/6500）使单节点故障只丢间隔点、不丢连续半条轨迹。
+两节点排空即刻补任务（.73 01:55、.82 02:01），**无空转**。
+> 📌 每臂仅 **0.93 GPU-h** ⇒ §10 说的「打分是下一个瓶颈」在 **GPU-小时意义上不成立**；但它确实是**唯一能
+> 暴露上述 read-out 缺陷**的动作，且**有时效**（再等到 day 8 会永久丢掉 5 个 milestone 中的 3 个）。
+
 ## 🟡 2026-08-13 — `.73` 实测【空闲】8 卡 0 MiB；#99 keep14-distill resume **审查后决定不投**（花费 0 GPU-h）
+> ⚠️ 本行的「.73 空闲」是 01:3x 的状态，**已被上面 01:40-02:08 的 paperC 打分任务取代**（该任务已完成、卡已释放）。
 
 | 节点 | 硬件 | 任务 | 细节 | 状态 |
 |---|---|---|---|---|
