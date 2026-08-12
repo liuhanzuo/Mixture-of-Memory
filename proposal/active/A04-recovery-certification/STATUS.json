@@ -117,7 +117,7 @@
   "blocked_by": {
     "related_work_gate": "CLEARED 2026-08-09 (see related_work_status). NO LONGER BLOCKING.",
     "still_blocking_before_any_gate_gpu": [
-      "PROPOSAL.md rewrite to the narrowed safe_residual_claim -- its current '\u63d0\u6848' list is largely arXiv:2606.14150's design and its motivation is largely 2607.00368/2601.22950's argument.",
+      "PROPOSAL.md rewrite to the narrowed safe_residual_claim -- its current '提案' list is largely arXiv:2606.14150's design and its motivation is largely 2607.00368/2601.22950's argument.",
       "CODE (CPU, ~1 line, BLOCKING for K2): scripts/train_olmo2_arch_probe2.py:863 is DistributedSampler(ds, shuffle=True) with NO seed= argument, so its private generator uses self.seed=0 regardless of --seed. attention_dropout=0.0 and grep -c dropout on the trainer = 0. Therefore --seed moves ONLY the fresh-tail init: every 'seed' arm in this repo is fresh-block-INIT variance, NOT training-seed variance, and data order is identical across seeds. Without the fix, K2's variance estimate omits the data-order component and a K2 PASS would be unearned. Arm A2 (n_fresh_layers=0) has no fresh block at all, so its seeds are byte-identical and its sd_run is exactly 0 -- a missing measurement, not a variance estimate.",
       "USER APPROVAL for GPU. The full gate is 1,077-4,309 GPU-h; nothing beyond Pilot Zero may be launched without it."
     ]
@@ -200,7 +200,7 @@
   },
   "power_analysis": {
     "unit_of_replication": "the RUN, so the decision statistic is a run-level one-sided bound t_{0.05,S-1} * sd_run / sqrt(S)",
-    "S2_is_unusable": "df=1 -> t=6.314, so even sd_run=0.3pp gives a 1.339pp bound, LARGER than delta on three of four axes (1.023 / 1.321 / 0.970pp). A 2-seed design can only certify on TriviaQA (delta=4.043pp) and only if sd_run < ~0.9pp. PROPOSAL.md's '\u81f3\u5c11 2 seeds' is NOT a viable minimum for a non-inferiority decision -- it was written for a superiority comparison, and equivalence is harder.",
+    "S2_is_unusable": "df=1 -> t=6.314, so even sd_run=0.3pp gives a 1.339pp bound, LARGER than delta on three of four axes (1.023 / 1.321 / 0.970pp). A 2-seed design can only certify on TriviaQA (delta=4.043pp) and only if sd_run < ~0.9pp. PROPOSAL.md's '至少 2 seeds' is NOT a viable minimum for a non-inferiority decision -- it was written for a superiority comparison, and equivalence is harder.",
     "S3_is_the_minimum": "df=2 -> t=2.920; bound 0.506pp at sd_run=0.3pp, 0.843pp at 0.5pp, 1.686pp at 1.0pp. Works only if sd_run <= ~0.5pp.",
     "sd_run_is_UNVERIFIED": "no multi-seed 1B recovery run exists on either disk; the only 1B arm is keep7fresh2, one draw, seed not even recorded. Measuring sd_run is itself a gate output and is Pilot One's entire purpose.",
     "no_post_hoc_seed_addition": "if the measured sd_run implies a bound > delta on >=2 axes, K2 FIRES rather than seeds being added post hoc. Adding seeds after seeing the variance is the selective-reporting move A01's gate-4 exists to prevent.",
@@ -263,7 +263,7 @@
     "same-arch/same-harness re-runs in this repo are BYTE-IDENTICAL (0 flips). Do not budget for or excuse anything as 'runtime noise' without a same-code control proving it.",
     "every scoring step must IMPORT the canonical scorer from the harness that produced the predictions, never reimplement it (two subagents reimplemented a metric in one session and both times produced a significant result where canonical produced a tie)."
   ],
-  "recommendation": "PROCEED, BUT NARROWED AND CHEAPLY. Do not archive: nothing preempts the residual claim at its scope, and equivalence/non-inferiority testing is essentially absent from the pruning-recovery literature. But A04 as written in PROPOSAL.md is not fundable -- its experimental design is largely arXiv:2606.14150's and its motivation is largely 2607.00368/2601.22950's. The residual contribution is real but NARROW and METHODOLOGICAL: worth at most a short paper or a methods section. Run Pilot Zero (~3 GPU-h) before spending anything else. If the gate's kill condition fires, ARCHIVE with a POSTMORTEM rather than reframing -- the reframing space has just been shown to be occupied.",
+  "recommendation": "PROCEED. Reframed 2026-08-12 by user directive (verbatim: 「小的点被抢走了并不意味着我们需要 narrow. 相反我们的论文如果印证了他们每篇的观点并组合起来反而是我们的优势」). The prior recommendation ran a novelty audit and then wrote it up as a SCOPE REDUCTION -- sliding from 'cannot claim priority' to 'contribution is small' with no argument. That inference is VOID. The audit's legitimate output is a CITATION-OBLIGATION list, not a contribution ceiling. Correct framing: six independent works (N2 test-time training, N3 theory on intact models, N4 quantization, N5 compression, C2 layer-pruning+SFT) each report proxy-metric failure in a DIFFERENT injury modality with a DIFFERENT and mutually incomparable yardstick, and NOBODY has shown these are the same phenomenon. A04 supplies precisely what all of them lack -- a common measurement (residual vs construct-appropriate best-constant null), a common pre-registered decision rule (non-inferiority), and run-level variance (C1/C2/C3/N1 report ZERO seeds between them). So the paper is: 'proxy-metric failure is ONE measurable phenomenon across modalities, and here is the procedure that adjudicates it.' Corroborating a published prediction is EASIER to defend than carrying a novel claim alone, and contradicting one would also be a finding -- both directions produce a result. BINDING: a direction may be killed only by its own experimental kill gate (A04_GATE_DESIGN.md §2), never by a literature count. Still true and unchanged: run Pilot Zero-class cheap checks before expensive ones, and cite N1's design / N2+N3's motivation rather than claiming them.",
   "unverified": [
     "sd_run for any 1B recovery arm -- no multi-seed 1B run exists on either disk. Pilot One's entire purpose.",
     "whether 20,000 steps suffices for any arm to approach non-inferiority at a shallower cut -- depends on j; only keep7 (52.43 B tokens, 44.8% residual PPL gap) is measured.",
@@ -395,7 +395,7 @@
       "why": "K1's verbatim text (A04_GATE_DESIGN.md:45-47) requires the rule-disagreement count to be '<= 1 out of >= 24 evaluated cells'. Pilot Zero evaluated 3 axes at ONE checkpoint (step200000) = 3 cells. You cannot conclude a >= 24-cell clause did or did not fire from 3 cells: the denominator the rule names was never reached. 'K1 does not fire' was therefore a positive result inferred from a sample smaller than its own governing denominator.",
       "what_the_pilot_DID_establish": "At the single PLATEAU-accept checkpoint, NI(Delta=0.10*residual(intact)) rejects on 3/3 decision axes by 6.6-9.1x the margin, and this is invariant across all five null conventions and both plateau readings (because residual(arm)-residual(intact) = reported(arm)-reported(intact), so the null cancels). That is a real, convention-robust finding about ONE checkpoint. It is evidence that a disagreement of the required SHAPE exists; it is not a verdict on the >= 24-cell clause.",
       "correct_reading": "K1 INDETERMINATE -- not killed, not cleared. The gate remains un-run.",
-      "audit_concordance": "TCODEX_AUDIT_20260810.md section 7 independently reached the same conclusion: 'Pilot Zero \u4e0d\u662f gate pass ... K1 does not fire / survived cheapest gate \u5e94\u64a4\u56de, \u6539\u4e3a K1 INDETERMINATE.'",
+      "audit_concordance": "TCODEX_AUDIT_20260810.md section 7 independently reached the same conclusion: 'Pilot Zero 不是 gate pass ... K1 does not fire / survived cheapest gate 应撤回, 改为 K1 INDETERMINATE.'",
       "also_retracted": "Any statement of the form 'A04 is NOT killed' that rests on K1_FIRES=false. A04 is not killed, but the reason is that the gate has not been run, not that it passed."
     },
     "K2_STATUS_UPDATED_20260810": {
@@ -924,7 +924,7 @@
   "status_note": "Previous status string was 'active_design_gate_specified_awaiting_pilot_zero' while pilot_zero.status in this same file said 'DONE -- executed 2026-08-09'. Corrected 2026-08-10.",
   "tcodex_audit_20260810_disposition": {
     "audit_file": "../../archive/A03-parametric-vs-external-memory/evidence/TCODEX_AUDIT_20260810.md (589 lines, md5 8ba6b5da31c3af2fd02c5d5d86d93b2c)",
-    "audit_verdict_on_A04": "Design paper / preregistration only. Pilot Zero \u4e0d\u662f gate pass; K1 \u5e94\u6539\u4e3a INDETERMINATE; \u6ca1\u6709\u4efb\u4f55\u6a21\u578b\u5df2\u88ab 'certified recovered'; K2/run variance \u5b8c\u5168\u672a\u6d4b.",
+    "audit_verdict_on_A04": "Design paper / preregistration only. Pilot Zero 不是 gate pass; K1 应改为 INDETERMINATE; 没有任何模型已被 'certified recovered'; K2/run variance 完全未测.",
     "actioned_20260810": [
       "K1_FIRES false -> INDETERMINATE with the cell-unit arithmetic recorded",
       "top-level status string corrected (it contradicted pilot_zero.status DONE in the same file)",
@@ -1425,5 +1425,10 @@
       "That a rung exists where NI can accept. Still unmeasured at 1B.",
       "Causality of the D5 48-item drift. Untouched; still needs a same-code control."
     ]
+  },
+  "recommendation_superseded_20260812": "PROCEED, BUT NARROWED AND CHEAPLY. Do not archive: nothing preempts the residual claim at its scope, and equivalence/non-inferiority testing is essentially absent from the pruning-recovery literature. But A04 as written in PROPOSAL.md is not fundable -- its experimental design is largely arXiv:2606.14150's and its motivation is largely 2607.00368/2601.22950's. The residual contribution is real but NARROW and METHODOLOGICAL: worth at most a short paper or a methods section. Run Pilot Zero (~3 GPU-h) before spending anything else. If the gate's kill condition fires, ARCHIVE with a POSTMORTEM rather than reframing -- the reframing space has just been shown to be occupied.",
+  "reframe_20260812": {
+    "what_stands_unchanged": "Everything factual in RELATED_WORK.md §2/§3 -- what each paper does, its VERIFIED venue (C1=ICML2026 Workshop AdaptFM Poster; C2=ACL ARR under review NOT published; C3=NeurIPS2025 Poster; N3=ICML2026 Workshop CTB *Submission* not accepted; N4=under review TMLR; N5=preprint), and where each does not reach A04. Also unchanged: all 11 attribution obligations in §4.2, and the three kill clauses K1/K2/K3.",
+    "what_is_void": "'must be renamed and narrowed', 'not fundable', 'worth at most a short paper or a methods section'. These were inferences from the audit, not findings of it."
   }
 }

@@ -312,8 +312,64 @@ Venues verified in this pass:
 
 ## 4. Net verdict on the Related Work gate
 
-**The gate is CLEARED for the topic, but it forces A04 to be renamed and narrowed. It is not
-cleared for A04 as currently written in `PROPOSAL.md`.**
+> ## ★★ REFRAMED 2026-08-12 BY USER DIRECTIVE — READ THIS BEFORE §4.1/§4.2
+>
+> User, verbatim: 「小的点被抢走了并不意味着我们需要 narrow。相反我们的论文如果印证了他们每篇的
+> 观点并组合起来反而是我们的优势」
+>
+> **The original verdict below committed a specific error: it ran a novelty audit and then wrote the
+> result up as a SCOPE REDUCTION.** Those are two different actions. The legitimate output of this
+> audit is a **citation-obligation list** — these points are credited to others. What was written
+> instead was a **contribution ceiling** ("must be renamed and **narrowed**", "worth at most a short
+> paper or a methods section"). *"Cannot claim priority"* does **not** entail *"the contribution is
+> small."* There is no logical step connecting them, and none was given.
+>
+> ### The correct framing: converging evidence across independent injury modalities
+>
+> Six papers each report proxy-metric failure, **each in a different modality, each with a
+> different and mutually incomparable yardstick**:
+>
+> | paper | modality | what it establishes |
+> |---|---|---|
+> | **N3** | intact models, **theoretical proof** | perplexity cannot always tell right from wrong |
+> | **N4** | **quantization** | PPL *improves* while 18.7% of SAE features degrade |
+> | **N2** | **test-time training** | local proxy metrics are weak evidence for capability claims |
+> | **C2** | **layer pruning + SFT recovery** | classification recovers, generative reasoning does not |
+> | **N5** | **compression** (BERT classification) | performance parity ≠ equivalence |
+> | **A04** | **structural depth injury + matched-corpus continued pretraining** | ← our cell |
+>
+> **Nobody has shown these are the same phenomenon.** Six unrelated author groups, six injuries,
+> six incommensurable measurements. Making them commensurable is itself the contribution, and A04
+> supplies exactly the three things all six lack: a **common measurement** (residual against a
+> construct-appropriate best-constant null), a **common decision rule** (pre-registered
+> non-inferiority), and **run-level variance** (C1/C2/C3/N1 report **zero** seeds between them).
+>
+> So the claim is not "we found one more small thing". It is:
+>
+> > **Six independent works report proxy-metric failure in their own modality. We show it is one
+> > measurable phenomenon and supply the procedure that adjudicates it.**
+>
+> ### Why this is EASIER to defend, not harder
+>
+> Every corroboration is *a literature-supported prediction that we confirmed*, not a novel claim we
+> must carry alone. And if our data **contradicts** one of them, that is also a finding. **Both
+> directions produce a result** — that is robustness by design, not luck.
+>
+> ### Binding rules from here
+>
+> 1. §4.2's list is a **citation-obligation table**, NOT a scope cap. Use it to decide *whom to
+>    credit*, never to decide *how small to be*.
+> 2. A direction may be killed **only by its own experimental kill gate** (`A04_GATE_DESIGN.md` §2),
+>    never by a literature count.
+> 3. "We corroborate X and extend it to modality Y" is a **legitimate and strong** paper section.
+> 4. The 「顶多值 short paper / must be narrowed」 language below is **RETRACTED** as a conclusion.
+>    Everything factual in §2/§3 (what each paper does, its verified venue, where it does not reach
+>    A04) **stands unchanged and remains load-bearing** — only the inference drawn from it is void.
+>
+> See `memory/prior-work-differentiate-dont-abandon.md`, which this directive strengthened.
+
+**The gate is CLEARED for the topic.** ~~but it forces A04 to be renamed and narrowed~~ — see the
+reframe above; the audit constrains **attribution**, not ambition.
 
 Nothing found does A04's residual thing at A04's scope, so **no paper preempts A04** under the
 standing directive ("overlap is not preemption; the bar is essentially identical scope"; work
@@ -333,6 +389,10 @@ But the collisions jointly strip four things A04's current `PROPOSAL.md` implici
 | "certification of a compressed model" is a new idea | **N5** | must cite and distinguish on all four axes |
 
 ### 4.1 What A04 may claim after this audit
+
+⚠️ **Read §4's 2026-08-12 reframe first.** The sentence below is the *attribution-safe core* — the
+part that is A04's alone. It is a floor, **not a ceiling**: the paper is that core **plus** the
+cross-modality synthesis, which is legitimate and is the larger contribution.
 
 A single sentence, and it is much narrower than the current `PROPOSAL.md`:
 
@@ -382,6 +442,12 @@ The load-bearing, checked-for-absence components are:
     this**, in closed form and training-free.
 
 ### 4.3 Kill recommendation for the direction
+
+> ⚠️ **PARTIALLY RETRACTED 2026-08-12** — see §4's reframe. The «not fundable / worth at most a
+> short paper» inference is **void**: it slid from "cannot claim priority" to "contribution is
+> small" with no argument. What **stands**: the attribution constraints (cite N1's design, cite
+> N2/N3's motivation), and the rule that if **the experimental gate's own kill condition fires**,
+> archive with a POSTMORTEM instead of reframing. Death by kill gate — never by literature count.
 
 **Do not archive.** But A04 as written is not fundable: its `## 提案` list is now mostly N1's
 design and its motivation is now mostly N2/N3's argument. The residual contribution is real but
