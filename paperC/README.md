@@ -146,20 +146,70 @@ They are load-bearing; the self-falsification narrative is part of the contribut
 - **Zheng et al., ICLR 2025 Oral** (arXiv:2410.07137) — origin of "null model" and
   "a constant predictor can top a benchmark". Do not claim it.
 - **Oostermeijer, ICML 2026** (arXiv:2607.12767) — drop the acc/acc_norm sub-claim.
-- **OLMES, Findings of NAACL 2025** (arXiv:2406.08446) — origin of the letter/cloze
-  interface split. Position the floor test as a FIX to a defect in OLMES's
-  SIZE-keyed interface-selection rule.
+- **OLMES, Findings of NAACL 2025** (arXiv:2406.08446, `2025.findings-naacl.282`) —
+  origin of the letter(MCF)/cloze(CF) interface split. ⚠️ **Do NOT describe OLMES's
+  rule as SIZE-keyed** — corrected 2026-08-12 after a full-text read of the Anthology
+  camera-ready (verified independently by MAIN, not just by the audit subagent).
+  OLMES's actual rule is **max-over-interfaces, per task per model**: "we standardize
+  to evaluate each model using both the MCF and CF formulations, and the best
+  performing one is used" (p. 5026); Table 7's `max` column is defined as "taking the
+  best of MCF and CF for each task" (p. 5038). Model size is only their *narrative*
+  for why the max lands where it does, not the selection key. The correctly-stated
+  defect, which is a *stronger* claim: OLMES's only reference line for "is MCF
+  meaningful for this model" is **"random"** — the string "chance" occurs **0 times**
+  in the paper, and "majority" / "marginal" occur **0 times** as well — and its Part-1
+  discussion asserts *without measuring* that a model which "might highly prefer a
+  given label (like B)" "would not be much better than random" because "the benchmarks
+  in OLMES are generally balanced" (p. 5035). paperC measures exactly that quantity and
+  it is **not** the chance line: always-B on ARC-Challenge is `0.265358` vs `0.250156`,
+  always-A on OpenBookQA is `0.276000` vs `0.25`, always-A on MMLU-Pro is `0.116606`
+  vs `0.100000` (**1.1661×**). Position the floor test as (i) supplying the null
+  OLMES's own robustness argument presupposes, and (ii) noting that max-over-interfaces
+  is an *uncalibrated* selection — it can report a number from an interface that does
+  not clear its own floor, because no floor is ever computed. Also: OLMES dismisses the
+  tokenizer objection to per-token normalisation ("this does not seem like a relevant
+  argument", p. 5037) — that dismissal is **valid in its own scope** (ranking answer
+  choices "keeping model and tokenizer fixed") and does **not** cover paperC's finding,
+  which is that a *content floor compared across models* is tokenizer-dependent. Say so
+  explicitly rather than presenting OLMES as simply wrong.
 - **Cho et al. ICLR 2026** (arXiv:2502.18798) + **Bean et al. NeurIPS 2025 D&B**
   (arXiv:2511.04703) — framing/parallel literature. Do not claim "MC interface
   validity is unexamined".
 - **Layer-order null**: downgrade from "first" to "we are not aware of a prior
   layer-order null for layer correspondence".
-- ⚠️ Three venues still **UNVERIFIED** at the Anthology/OpenReview level
-  (Ding et al. NeurIPS 2021, Hewitt & Liang EMNLP 2019, Feng et al. ACL 2019) —
-  verify per `memory/venue-verify-acl-family-needs-anthology` before submission.
-  S2 and DBLP were both DOWN (HTTP 429 / 500) during the novelty check.
-- No full-text PDF pass has been done on any candidate. All overlap judgements are
-  from title + abstract + venue metadata.
+- ~~Three venues still **UNVERIFIED** at the Anthology/OpenReview level.~~
+  **CLOSED 2026-08-12** — all three verified at the family-correct authority; see
+  [`VENUE_AND_NOVELTY_VERIFICATION.md`](VENUE_AND_NOVELTY_VERIFICATION.md) §1.
+  **Ding et al.** = NeurIPS 2021 Poster, *Advances in NeurIPS* 34, pp. 1556–1568,
+  OpenReview `venueid = NeurIPS.cc/2021/Conference` + DBLP `conf/nips/DingDS21` +
+  the official proceedings page. ⚠️ **The camera-ready title differs from arXiv's:**
+  cite "Grounding Representation Similarity **Through** Statistical Testing"
+  (arXiv:2108.01661 says "**with**"). **Hewitt & Liang** = EMNLP-IJCNLP 2019 **main**,
+  Anthology `D19-1275`, DOI `10.18653/v1/D19-1275`, pp. 2733–2743, DBLP
+  `conf/emnlp/HewittL19` (`booktitle = EMNLP/IJCNLP (1)` = main volume, not Findings —
+  Findings did not exist in 2019). **Feng et al.** = ACL 2019 **main**, Anthology
+  `P19-1554`, DOI `10.18653/v1/P19-1554`, pp. 5533–5538, DBLP `conf/acl/FengWB19`
+  (`booktitle = ACL (1)` = main). All three are peer-reviewed main-track; none is a
+  workshop or preprint.
+- ~~No full-text PDF pass has been done on any candidate.~~ **CLOSED 2026-08-12** —
+  all nine candidates read in full (camera-ready where obtainable); see
+  [`VENUE_AND_NOVELTY_VERIFICATION.md`](VENUE_AND_NOVELTY_VERIFICATION.md) §2.
+  **No candidate preempts.** 0 of 9 computes a best-constant/input-blind null
+  per-construct as a *precondition on arm comparison*; **none** reports any of
+  paperC's floors (`0.2689` / `0.2845` / `0.6217` / `0.3635` / `0.116606` appear in
+  zero candidate PDFs); only OLMES touches BoolQ and only Oostermeijer touches OBQA.
+  Two of the mandatory citations contain **defects paperC can correct**: Balepur et al.
+  impute `0.25` ("random guessing") for invalid outputs (ACL p. 10310) inside the very
+  experiment that argues chance is the wrong reference — under their own MMLU letter
+  marginal the correct imputation is `0.2689`; and OLMES's interface diagnostic is
+  stated against "random", never against a label-marginal floor (see the corrected
+  OLMES bullet above). One residual gap: **Cho et al.'s ICLR camera-ready PDF could
+  not be fetched** (OpenReview `/pdf` is behind a bot challenge from this network), so
+  the full-text read is of **arXiv v4 (2026-01-12)**, two weeks before the
+  camera-ready `pdate` 2026-01-26. arXiv-vs-camera-ready was diffed successfully for
+  Balepur (no substantive change).
+- Venue/full-text provenance: `paperC/VENUE_AND_NOVELTY_VERIFICATION.md` (the
+  authority actually queried is named per paper; the PDFs were read, not the abstracts).
 
 ## Provenance
 

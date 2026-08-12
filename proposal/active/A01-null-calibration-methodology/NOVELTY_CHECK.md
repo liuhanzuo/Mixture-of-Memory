@@ -278,18 +278,25 @@ novel. That is a citation obligation, not a kill. See §2.2.
 Named explicitly because clause 3 is about this leg and it must be shown to *not* carry
 the paper.
 
-* **Ding, Denain, Steinhardt.** "Grounding Representation Similarity with Statistical
-  Testing." arXiv:2108.01661v2. Venue per the paper's own arXiv comment field: "Accepted
-  at NeurIPS 2021". **UNVERIFIED at the OpenReview/`venueid` standard** — not re-checked
-  against OpenReview in this session. Treat the venue as author-asserted until verified.
+* **Ding, Denain, Steinhardt.** "Grounding Representation Similarity **Through**
+  Statistical Testing." NeurIPS 2021 Poster, *Advances in NeurIPS* 34, pp. 1556–1568.
+  **VENUE VERIFIED 2026-08-12** — OpenReview forum `_kwj6V53ZqB`,
+  `venueid = NeurIPS.cc/2021/Conference`; DBLP `conf/nips/DingDS21`; official NeurIPS
+  proceedings page. ⚠️ **Cite the camera-ready title, which says "Through" — the arXiv
+  title (arXiv:2108.01661) says "with"**; the discrepancy is confirmed by three
+  independent records (OpenReview note, DBLP, official NeurIPS bibtex). See
+  `paperC/VENUE_AND_NOVELTY_VERIFICATION.md` §1.1.
   Establishes sensitivity/specificity testing for CKA-style measures; this is the prior art
   A01 already concedes.
 * **Hewitt, Liang.** "Designing and Interpreting Probes with Control Tasks."
-  arXiv:1909.03368v1, comment "EMNLP 2019". **UNVERIFIED at the Anthology standard** —
-  not fetched from ACL Anthology in this session. Establishes control tasks / selectivity,
-  the canonical "your probe needs a null" result, directly relevant to A01's C4 probe leg.
+  EMNLP-IJCNLP 2019 **main**, Anthology `D19-1275`, DOI `10.18653/v1/D19-1275`,
+  pp. 2733–2743, DBLP `conf/emnlp/HewittL19`. **VENUE VERIFIED 2026-08-12** (main
+  volume, not Findings — Findings did not exist in 2019). Establishes control tasks /
+  selectivity, the canonical "your probe needs a null" result, directly relevant to
+  A01's C4 probe leg.
 * **Feng, Wallace, Boyd-Graber.** "Misleading Failures of Partial-input Baselines."
-  arXiv:1905.05778v3, comment "ACL 2019". **UNVERIFIED at the Anthology standard.**
+  ACL 2019 **main** (short), Anthology `P19-1554`, DOI `10.18653/v1/P19-1554`,
+  pp. 5533–5538, DBLP `conf/acl/FengWB19`. **VENUE VERIFIED 2026-08-12.**
   Important as a *counter*-citation: it shows a partial-input (input-blind) baseline
   *failing* does not certify a dataset is artifact-free. A01 must therefore not claim that
   clearing the floor certifies validity — clearing the floor is necessary, not sufficient.
@@ -388,5 +395,12 @@ A01 does not reduce to a case collection of existing similarity-null methods. It
 surviving contributions are on a different construct (MC accuracy under structural
 damage), and no verified prior work covers that scope. What the check *does* produce is a
 list of six mandatory citations and one sub-claim (§2.2) that must be withdrawn — plus a
-new, stronger, and apparently unclaimed contribution (§3) that arrived from re-analysing
-evidence already on disk.
+new, stronger contribution (§3) that arrived from re-analysing evidence already on disk.
+
+> ⚠️ **Softened 2026-08-12 after the full-text pass** (`paperC/VENUE_AND_NOVELTY_VERIFICATION.md`
+> §2.2). This §3 contribution was originally described as "apparently unclaimed"; that is
+> **too strong**. Oostermeijer (ICML 2026) already establishes the *generic*
+> tokenizer-dependence of length-based MC scoring and recommends bytes-over-tokens, which
+> anticipates our character-vs-token observation in spirit. The correct claim is
+> **"not previously computed for an input-blind null"** — he never computes a null, so the
+> floor-level result stands, but the generic observation must be cited to him, not claimed.
