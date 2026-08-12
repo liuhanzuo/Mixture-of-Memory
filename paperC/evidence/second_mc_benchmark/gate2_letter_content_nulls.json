@@ -1,6 +1,6 @@
 {
-  "what": "paperG gate-2 FULL replication: MMLU's letter-vs-content interface contrast on non-MMLU MC, vs construct-appropriate nulls",
-  "closes": "paperG/README.md open defect 2; STATUS.json gate_results.gate2_second_mc_benchmark caveat ('raw sum-LL vs acc_norm is analogous but not identical')",
+  "what": "paperC gate-2 FULL replication: MMLU's letter-vs-content interface contrast on non-MMLU MC, vs construct-appropriate nulls",
+  "closes": "paperC/README.md open defect 2; STATUS.json gate_results.gate2_second_mc_benchmark caveat ('raw sum-LL vs acc_norm is analogous but not identical')",
   "protocol": {
     "chat_template": false,
     "add_bos": 0,
@@ -1516,7 +1516,7 @@
         "pairs": [
           "7B_keep10_step83500 vs 7B_keep8_step121000"
         ],
-        "attribution": "REPLICATION under damage of Oostermeijer, ICML 2026 (arXiv:2607.12767). NOT an A01/paperG finding."
+        "attribution": "REPLICATION under damage of Oostermeijer, ICML 2026 (arXiv:2607.12767). NOT an A01/paperC finding."
       }
     },
     "arc_easy": {
@@ -3011,7 +3011,7 @@
         "n_flips": 0,
         "n_pairs": 15,
         "pairs": [],
-        "attribution": "REPLICATION under damage of Oostermeijer, ICML 2026 (arXiv:2607.12767). NOT an A01/paperG finding."
+        "attribution": "REPLICATION under damage of Oostermeijer, ICML 2026 (arXiv:2607.12767). NOT an A01/paperC finding."
       }
     },
     "openbookqa": {
@@ -4496,7 +4496,7 @@
         "n_flips": 0,
         "n_pairs": 15,
         "pairs": [],
-        "attribution": "REPLICATION under damage of Oostermeijer, ICML 2026 (arXiv:2607.12767). NOT an A01/paperG finding."
+        "attribution": "REPLICATION under damage of Oostermeijer, ICML 2026 (arXiv:2607.12767). NOT an A01/paperC finding."
       }
     },
     "commonsense_qa": {
@@ -6001,7 +6001,7 @@
         "n_flips": 0,
         "n_pairs": 15,
         "pairs": [],
-        "attribution": "REPLICATION under damage of Oostermeijer, ICML 2026 (arXiv:2607.12767). NOT an A01/paperG finding."
+        "attribution": "REPLICATION under damage of Oostermeijer, ICML 2026 (arXiv:2607.12767). NOT an A01/paperC finding."
       }
     },
     "piqa": {
@@ -7448,7 +7448,7 @@
         "pairs": [
           "7B_shortgpt16_step200000 vs 7B_keep14_step200000"
         ],
-        "attribution": "REPLICATION under damage of Oostermeijer, ICML 2026 (arXiv:2607.12767). NOT an A01/paperG finding."
+        "attribution": "REPLICATION under damage of Oostermeijer, ICML 2026 (arXiv:2607.12767). NOT an A01/paperC finding."
       }
     },
     "winogrande": {
@@ -8895,7 +8895,7 @@
         "pairs": [
           "7B_keep14_step200000 vs 7B_keep10_step83500"
         ],
-        "attribution": "REPLICATION under damage of Oostermeijer, ICML 2026 (arXiv:2607.12767). NOT an A01/paperG finding."
+        "attribution": "REPLICATION under damage of Oostermeijer, ICML 2026 (arXiv:2607.12767). NOT an A01/paperC finding."
       }
     }
   },

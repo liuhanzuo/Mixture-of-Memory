@@ -19,7 +19,7 @@ A p-value cannot exceed 1. Raised as **R-7** by the 2026-08-10 external audit
 (`proposal/archive/A03-parametric-vs-external-memory/evidence/TCODEX_AUDIT_20260810.md` §7),
 accepted as a real defect in `TCODEX_AUDIT_RESPONSE.md` §7 but explicitly *not*
 fixed in that pass ("needs the estimator patched, not a doc edit"), and carried
-through the promotion to `paperG` as open defect #1.
+through the promotion to `paperC` as open defect #1.
 
 ## 2. Root cause — it is **not** a missing clamp
 
@@ -102,7 +102,7 @@ p    = min(1.0, max(2 * min(p_lo, p_hi), 1.0 / n_boot))
   was rejected because it changes the estimand from a percentile-tail p to a
   symmetric-deviation p, which would not be comparable with the CI95 already
   reported next to it in the same JSON, and would silently redefine the
-  `*_vs_null_boot_p` values that A01/paperG's floor verdicts are keyed to.
+  `*_vs_null_boot_p` values that A01/paperC's floor verdicts are keyed to.
 * **Behaviour at `d ≡ 0`** (complete absence of any difference): `bs ≡ 0`, so
   `p_lo = p_hi = 0.5` and **`p = 1.0` exactly** — the correct answer. The old code
   returned `2.0` in that limit, which is what 1.042 is an instance of.
@@ -213,7 +213,7 @@ In particular the load-bearing claims are untouched:
   [−0.0011, +0.0011]. The fix simply makes the bootstrap p agree (0.9876) instead
   of contradicting arithmetic (1.042).
 
-**Nothing in A01 or paperG needs to be re-argued as a result of this fix.** What
+**Nothing in A01 or paperC needs to be re-argued as a result of this fix.** What
 changes is that the numbers are now legal, the estimator is defined for the
 discrete/degenerate case it actually faces, and the same bug is no longer sitting
 under the `*_vs_null_boot_p` values that carry the floor verdicts.
@@ -228,4 +228,4 @@ under the `*_vs_null_boot_p` values that carry the floor verdicts.
 * ledger entries: `.../STATUS.json:audit_response.fixed_2026_08_11`
   (original `open_defect_not_fixed_this_pass` text retained verbatim and marked
   SUPERSEDED, per the retraction-history rule in `proposal/README.md`);
-  `paperG/README.md` open defect #1 struck through and closed.
+  `paperC/README.md` open defect #1 struck through and closed.

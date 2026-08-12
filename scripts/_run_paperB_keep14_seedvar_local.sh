@@ -30,8 +30,8 @@
 #   (5) OOD PPL wikitext103   eval_olmo2_probe2_ppl.py
 #   (6) OOD PPL pg19          eval_olmo2_probe2_ppl.py
 # NOT run: closed-book PopQA/TriviaQA (seed42 baseline exists only on zwfy6 and
-# the HF nq_open/popqa generation path is not cached on wzc1) and the paperG
-# mc_letter_content axis (that is a paperG gate, not a Paper B seed axis).
+# the HF nq_open/popqa generation path is not cached on wzc1) and the paperC
+# mc_letter_content axis (that is a paperC gate, not a Paper B seed axis).
 #
 # PROTOCOL (identical to the archived seed42 rows)
 #   chat_template=False (OLMo-2 is a BASE LM, no SFT), --add_bos 0,

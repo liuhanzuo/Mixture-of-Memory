@@ -1,4 +1,4 @@
-# paperG gate-2 — CROSS-FAMILY REPLICATION (task #250)
+# paperC gate-2 — CROSS-FAMILY REPLICATION (task #250)
 
 Ran 2026-08-11 22:19–22:32 on `.73` (8×H20), **12.5 min wall**, 15 arms × 6 tasks =
 **90 arm×task cells**, every cell 8/8 shards, `n_scored == expected`, `n_nan = 0`.
@@ -11,7 +11,7 @@ Short form, for the impatient:
 * **The floor claim replicates.** **0 of 60** damaged non-OLMo arm×task cells clear
   their own best-constant letter floor, on any of the three families, on any of the
   five evidence benchmarks. **25 of those 60 read "above chance"** under the naive
-  null — the wrong-null flip paperG exists to point at, now reproduced in three
+  null — the wrong-null flip paperC exists to point at, now reproduced in three
   families off MMLU. 51 of 60 point estimates are negative.
 * **The *significance* does not replicate per-benchmark, for a reason that is now
   measured rather than assumed: power.** Only 7 of 60 reach p<0.05, and **52 of 60
@@ -27,7 +27,7 @@ Short form, for the impatient:
   family×task ladders. That is a **regime difference, not a family difference**
   (these arms are truncate-only, no heal; OLMo-2's are pruned *and* healed), and it
   is a confound that must be stated whenever the two are put side by side.
-* **Two new self-falsifications** fell out, both against paperG's own text — see §6.
+* **Two new self-falsifications** fell out, both against paperC's own text — see §6.
 
 ---
 
@@ -94,13 +94,13 @@ and the cells are not comparable). Every floor reproduces #248's value exactly:
 | MMLU (reference) | 14042 | 4 | — | **always-D `0.268908`** | `0.250000` | +1.891 pp |
 
 ⚠️ **These floors are only +0.43 to +2.60 pp above chance** — flatter than MMLU's
-+1.89 pp. paperG's "chance badly misstates the null" rhetoric stays **weak on the
++1.89 pp. paperC's "chance badly misstates the null" rhetoric stays **weak on the
 letter side of these five tasks**; the dramatic case is still BoolQ (`0.6217` vs
 `0.50`). **`0.25` is never the null for any of these.**
 
 ### 2b. NEW: the longest-option content null is **TOKENIZER-dependent**
 
-`paperG/README.md` documents *two* under-specifications of the longest-option null
+`paperC/README.md` documents *two* under-specifications of the longest-option null
 (tie convention; character-vs-token length unit). There is a **third**: *within* the
 token unit the null is **not a dataset property at all** — "longest" is counted in
 continuation tokens, and three families have three tokenizers, so the winner set
@@ -263,7 +263,7 @@ per-item records, same estimators as everything above:
 So the **direction and the floor verdict replicate perfectly (0/60 above floor)**,
 the **significance collapses**, and the collapse is **fully explained by n** — the
 effect is if anything larger. This is the same shape as #248's OLMo-2 finding, now
-with three more families: paperG's substantive claim survives cross-family, its
+with three more families: paperC's substantive claim survives cross-family, its
 *statistical* claim needs MMLU-scale n or the pooled construction of §4.
 
 ### 5c. Arm-by-arm against OLMo-2's healed arms (⚠️ regime confound)
@@ -331,14 +331,14 @@ Note `Llama-2 k12 / obqa` and `Qwen3 k10 / obqa`: these emit always-`A`, which o
 OBQA *is* the best constant, so they land **exactly on** `0.276000` with
 Δ = `+0.000 pp`, CI95 = `[0,0]`, p = 1.000. A model that has become a constant
 predictor and happens to pick the *optimal* constant is the cleanest possible
-illustration of paperG's point — and it is invisible against chance (`0.25`).
+illustration of paperC's point — and it is invisible against chance (`0.25`).
 
 **But keep the narrowing.** `modal share` and `floor verdict` remain **DECOUPLED**:
 Llama-2 k12 / arc_challenge is 99.91% modal yet only p = 0.0499, while Llama-3
 k12 / piqa is 96.46% modal *and* p = 0.0015. High modal share does not imply a
 significant below-floor verdict, nor conversely.
 
-## 6. Two self-falsifications, against paperG's own text
+## 6. Two self-falsifications, against paperC's own text
 
 **(i) `confirmed_general`'s "content_norm within ±3 pp of letter on every damaged
 arm" fails again, in the opposite direction from #248.** #248 found the gap can be
@@ -356,7 +356,7 @@ half of them) — but on the **healthy bases** the interfaces disagree enormousl
 (letter − content_norm, pp.) On Llama-2 **content is up to 21.8 pp better**; on
 Qwen3 **letter is up to 38.0 pp better**. Neither "letter is the fair interface"
 nor "content is the fair interface" is a family-general statement — reinforcing
-paperG's existing retraction of "letter MC is *generally* unreliable", and adding
+paperC's existing retraction of "letter MC is *generally* unreliable", and adding
 its mirror image.
 
 **(ii) The longest-option content null is tokenizer-dependent (§2b)** — a third
@@ -410,8 +410,8 @@ it from the tie diagnostics, never assume it.
 | harness (unchanged from #248) | `scripts/eval_olmo2_mc_letter_content.py` |
 | damage constructor | `scripts/eval_olmo2_probe2_ppl.py::load_truncated_any_family` |
 | driver | `scripts/_run_mc_letter_content_crossfamily_8gpu.sh` |
-| nulls + stats (CPU, re-runnable) | `paperG/code/gate2_crossfamily_nulls.py` |
-| results json/csv (1122 rows) | `paperG/evidence/second_mc_benchmark_crossfamily/` — **both disks** |
+| nulls + stats (CPU, re-runnable) | `paperC/code/gate2_crossfamily_nulls.py` |
+| results json/csv (1122 rows) | `paperC/evidence/second_mc_benchmark_crossfamily/` — **both disks** |
 | per-item records (15 arms × 6 tasks × 8 shards, 130 MB) | `mc_lc_crossfamily_results/` — **both disks** |
 | MMLU cross-family per-item records (190 MB) | `olmo2_mmlu_content_results/gate1_*` — **wzc1 ONLY** |
 | Qwen3-8B-Base weights | wzc1 `../models/Qwen3-8B-Base`; copied to zwfy6 same name |

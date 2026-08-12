@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""paperG gate-2 CROSS-FAMILY: construct-appropriate nulls for the
+"""paperC gate-2 CROSS-FAMILY: construct-appropriate nulls for the
 letter-vs-content MC interface on non-MMLU benchmarks, in NON-OLMo families.
 
 What this closes
 ----------------
-`paperG/README.md` open defect 2 was closed by task #248, but only inside ONE
+`paperC/README.md` open defect 2 was closed by task #248, but only inside ONE
 model family. MMLU's headline is four-family; the second-benchmark leg was
 OLMo-2-only. This script is the analysis half of the cross-family extension
 (task #250): it consumes the per-item records written by
@@ -354,10 +354,10 @@ def main():
     args = ap.parse_args()
 
     res = {
-        "what": "paperG gate-2 CROSS-FAMILY: MMLU's letter-vs-content contrast on "
+        "what": "paperC gate-2 CROSS-FAMILY: MMLU's letter-vs-content contrast on "
                 "non-MMLU MC benchmarks, in three NON-OLMo families, vs "
                 "construct-appropriate nulls",
-        "closes": "the one-family scope of paperG/README.md open defect 2 "
+        "closes": "the one-family scope of paperC/README.md open defect 2 "
                   "(#248 closed the contrast, in OLMo-2 only)",
         "damage": "front-N truncation applied AT EVAL TIME by "
                   "eval_olmo2_probe2_ppl.py::load_truncated_any_family: "
@@ -401,7 +401,7 @@ def main():
     #     Llama-2 0.268871 / Llama-3 0.283902 / Qwen3 0.282338 -- a 1.50 pp spread,
     #     with the tied-longest fraction moving 41.6% -> 50.8%. This is a THIRD
     #     under-specification of the longest-option null, on top of the two
-    #     paperG/README.md already documents (tie convention, character-vs-token
+    #     paperC/README.md already documents (tie convention, character-vs-token
     #     unit): within the token unit the null is TOKENIZER-dependent. It is
     #     therefore recorded PER FAMILY, never shared, and the invariance assert
     #     applies only to the arms of one family.
@@ -487,7 +487,7 @@ def main():
                    "unit is TOKENIZER-dependent, i.e. it is NOT a pure dataset "
                    "property. This is a THIRD under-specification on top of the "
                    "tie convention and the character-vs-token length unit that "
-                   "paperG/README.md already documents.",
+                   "paperC/README.md already documents.",
         "by_task": tok_dep,
     }
 

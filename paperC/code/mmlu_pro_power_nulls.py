@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""paperG task #251 — THE POWER WALL. Construct-appropriate nulls for the
+"""paperC task #251 — THE POWER WALL. Construct-appropriate nulls for the
 letter-vs-content MC interface on MMLU-Pro (n=12032, 10-way).
 
 WHAT THIS CLOSES
@@ -29,7 +29,7 @@ off MMLU. If not, the direction can only be rescued by pooling.
 10-WAY SPECIFICS (why MMLU-Pro is also the right SUBSTANTIVE test)
 -----------------------------------------------------------------
 #248 recorded honestly that on arc/obqa/piqa/csqa the best-constant letter
-floor is only +0.43 to +2.60 pp above chance, i.e. paperG's "chance badly
+floor is only +0.43 to +2.60 pp above chance, i.e. paperC's "chance badly
 misstates the null" rhetoric is WEAK there. On a 10-way benchmark the marginal
 has 10 cells to be skewed across, so this is the strongest available test of
 that rhetoric. `chance` has TWO defensible readings here and both are reported:
@@ -102,7 +102,7 @@ N_LAYERS = {"llama2_7b": 32, "llama3_8b": 32, "qwen3_8b_base": 36,
             "olmo2_7b": 32}
 
 # The #248 five-benchmark power table, for the head-to-head. Values are quoted
-# from paperG/evidence/SECOND_MC_BENCHMARK_VERDICT.md section 2b (keep8 cells).
+# from paperC/evidence/SECOND_MC_BENCHMARK_VERDICT.md section 2b (keep8 cells).
 REF_POWER_TABLE = {
     "mmlu":           {"n": 14042, "keep8_delta_pp": -1.389, "half_width_pp": 1.154},
     "arc_easy":       {"n": 2376,  "keep8_delta_pp": -0.800, "half_width_pp": 1.305},
@@ -226,7 +226,7 @@ def best_constant_letter(recs):
     chance_naive = 1.0 / max(r["n_opt"] for r in recs)
     acc = float(vec.mean())
     # WORST constant, so the SPREAD of the marginal is on the record too: a flat
-    # marginal means the best-constant floor is close to chance and paperG's
+    # marginal means the best-constant floor is close to chance and paperC's
     # rhetoric is weak on this benchmark. This is the honesty check #248 made.
     worst, wcnt = min(gold.items(), key=lambda kv: (kv[1], LETTERS.index(kv[0])))
     return best, vec, {
@@ -255,7 +255,7 @@ def best_constant_letter(recs):
 
 def longest_option_nulls(recs):
     """Longest-option content null, CONTINUATION-TOKEN unit, five tie
-    conventions. ⚠️ paperG has falsified this null against itself THREE times:
+    conventions. ⚠️ paperC has falsified this null against itself THREE times:
     the tie convention, the character-vs-token length unit, and (within the
     token unit) the TOKENIZER. Only the token unit is recoverable from these
     records. At ~9.5 candidates/item the tie structure is under far more
@@ -396,7 +396,7 @@ def main():
     args = ap.parse_args()
 
     res = {
-        "what": "paperG task #251: MMLU's letter-vs-content contrast on MMLU-Pro "
+        "what": "paperC task #251: MMLU's letter-vs-content contrast on MMLU-Pro "
                 "(n=12032, up to 10-way), vs construct-appropriate nulls",
         "why": "#248 and #250 both returned PARTIAL for the SAME reason -- the "
                "five non-MMLU benchmarks are 6-28x smaller than MMLU, so 52/60 "

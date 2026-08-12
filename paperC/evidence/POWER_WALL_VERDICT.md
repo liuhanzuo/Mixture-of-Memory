@@ -1,4 +1,4 @@
-# paperG #251 — THE POWER WALL, pushed down with MMLU-scale n
+# paperC #251 — THE POWER WALL, pushed down with MMLU-scale n
 
 Task #251 (OLMo-2 leg, §§1-5). Ran 2026-08-12 on `.73` (8×H20), 6 arm×task cells,
 34.5 min wall-clock scoring + CPU analysis.
@@ -26,7 +26,7 @@ exclusion** of an effect of MMLU's magnitude on this benchmark, for this arm.
 
 > This is the outcome the power table was built to make possible: #248 and #250
 > could not distinguish "no effect" from "invisible". Now we can, and the answer
-> is "no effect of that size, here". That is a **narrowing of paperG's headline**,
+> is "no effect of that size, here". That is a **narrowing of paperC's headline**,
 > not a confirmation, and it is the fourth self-falsification this direction has
 > produced against itself.
 >
@@ -80,7 +80,7 @@ zwfy6, md5 verified identical on both disks
 ## 1. The 10-way letter null, computed on 0 GPU before a card was touched
 
 This was the gate: if MMLU-Pro's letter floor were barely above chance, the
-benchmark would be weak for paperG's rhetoric and not worth the cards.
+benchmark would be weak for paperC's rhetoric and not worth the cards.
 
 | quantity | value |
 |---|---|
@@ -96,7 +96,7 @@ benchmark would be weak for paperG's rhetoric and not worth the cards.
 ### 1a. The honest reading of "+1.661 pp": strong in RELATIVE terms, mid-pack in absolute
 
 #248 recorded that on its five benchmarks the letter floor is only **+0.43 to
-+2.60 pp** above chance, making paperG's "chance badly misstates the null"
++2.60 pp** above chance, making paperC's "chance badly misstates the null"
 rhetoric **weak there**. MMLU-Pro's **absolute** gap (+1.661 pp vs naive chance)
 sits in the middle of that same range — it is **not** dramatic in pp.
 
@@ -126,7 +126,7 @@ freedom**, and a reader told "10-way" will assume `0.10`. The verdicts below are
 identical under both (3/3 damaged arms above chance and not above floor either
 way), so nothing here depends on the choice — but it must be **printed**, and
 this is a *fourth* under-specification, now on the **letter** side, of a kind
-paperG had only documented for the content null.
+paperC had only documented for the content null.
 
 ---
 
@@ -150,7 +150,7 @@ paperG had only documented for the content null.
    and also vs `0.110877`) yet **0/3 clear their own best-constant floor**
    `0.116606`. Under the wrong null all three read "above chance, residual
    competence"; under the right one all three are indistinguishable from a
-   constant predictor. **This is paperG's core substantive claim and it holds on
+   constant predictor. **This is paperC's core substantive claim and it holds on
    a 10-way benchmark with the strongest resolution in the paper, under BOTH
    chance definitions.**
 2. **The healthy → damaged ordering.** base `0.2719` > shortgpt16 `0.1533` >
@@ -179,7 +179,7 @@ So the correct statement is **not** "MMLU-Pro is another underpowered null". It 
 > statistically indistinguishable from a constant predictor, and measurably NOT
 > below it by anything like the margin MMLU shows.**
 
-Which is, note, still fully consistent with the *claim paperG actually makes after
+Which is, note, still fully consistent with the *claim paperC actually makes after
 its 2026-08-10 narrowing*: "damage drives letter **to or below** its
 best-constant floor". `AT the floor` satisfies that. What fails is only the
 **strong** below-floor form, and it now fails **with power**, which is worth more
@@ -483,7 +483,7 @@ sets differ). `+` above floor, `=` AT floor, `−` BELOW floor.
 **Power: 21/21 cells powered** (hw `0.083`–`0.968` pp, median `0.727`, all
 < 1.389). The wall is down for the cross-family leg too, and the two Llama-2
 `k14`/`k12` cells reach hw **0.083 pp** — the finest resolution anywhere in
-paperG, ~14× better than MMLU's 1.154.
+paperC, ~14× better than MMLU's 1.154.
 
 ### 6b. What REPLICATES
 
@@ -492,7 +492,7 @@ paperG, ~14× better than MMLU's 1.154.
    `0.10`, **12 of 12** do. Yet only **1 of 12** clears its own floor. Combined
    with the OLMo-2 leg's 3/3, that is **15 damaged cells at MMLU-scale power in
    four families where the null choice alone flips the verdict.** This is
-   paperG's core claim and it is now its best-powered result.
+   paperC's core claim and it is now its best-powered result.
 2. **`AT-or-below` holds 14/15**, and **9 of 12** damaged cross-family point
    estimates are negative.
 3. **Floor arrival is immediate under un-healed damage**, confirming #250: every
@@ -587,7 +587,7 @@ which again contradicts "content is the fair interface" as a general statement.
 **Defect 1 — truncation (10 of 15 cells).** The driver ran at `MAXLEN=1536`, a cap
 measured with the **OLMo-2** tokenizer (max letter prompt 1226 tok). Re-encoding
 all 12032 items with each tokenizer on CPU
-(`paperG/code/mmlu_pro_trunc_audit.py`) reproduces the shipped counts exactly:
+(`paperC/code/mmlu_pro_trunc_audit.py`) reproduces the shipped counts exactly:
 
 | family | `len(tok)` | max encoded tok | `n_trunc` @1536 | affected item_ids |
 |---|---|---|---|---|
@@ -611,7 +611,7 @@ with the archived MMLU / #248 / #250 cells for the sake of 3 items. Re-run
 `n_trunc = 0` on **15/15** cells, independently recounted from the shard json.
 
 **Measured impact — this defect was real but small.** Per-cell before/after
-(`paperG/evidence/mmlu_scale_power/trunc_fix_before_after.json`):
+(`paperC/evidence/mmlu_scale_power/trunc_fix_before_after.json`):
 
 * **0 of 14 comparable cells changed verdict.**
 * Largest letter-accuracy change: **+0.0083 pp** (`qwen3_8b_base/k12`,
@@ -657,7 +657,7 @@ produces **no summary at all**. `n_scored`/`n_nan` were already hard asserts;
 
 ---
 
-## 7. What must change elsewhere in paperG
+## 7. What must change elsewhere in paperC
 
 1. **`README.md` Open defects item 2** — the "power limit" residual is **closed**
    for the OLMo-2 leg. Replace "52/60 underpowered" framing with: a powered
@@ -681,7 +681,7 @@ produces **no summary at all**. `n_scored`/`n_nan` were already hard asserts;
 4. **Add a fourth under-specification, on the LETTER side**: when `n_opt` varies,
    "chance" is ambiguous (naive `1/max(n_opt)` = `0.10` vs `mean(1/n_opt)` =
    `0.110877`), moving the floor−chance gap from +1.661 pp to +0.573 pp. Print
-   which one is meant. paperG had previously asserted the letter floor to be a
+   which one is meant. paperC had previously asserted the letter floor to be a
    **pure dataset property** — that is still true of the *floor*, but not of the
    *gap to chance*.
 5. **Report the floor/chance RATIO alongside the pp gap** whenever benchmarks with
@@ -695,7 +695,7 @@ produces **no summary at all**. `n_scored`/`n_nan` were already hard asserts;
    any re-run of #248/#250 on the new code is numerically identical to the old.
 8. **`n_trunc` is now a hard assert, and `max_len` is a per-TOKENIZER quantity**
    (§6g). Any benchmark whose prompts approach the cap must have the cap probed
-   per tokenizer before launch (`paperG/code/mmlu_pro_trunc_audit.py`, CPU-only);
+   per tokenizer before launch (`paperC/code/mmlu_pro_trunc_audit.py`, CPU-only);
    a cap validated on one tokenizer is not validated on another. This is the
    defect that shipped 10 of #251's 15 cross-family cells.
 9. **Retract the vocab-size mechanism for content-null tokenizer dependence**
@@ -722,7 +722,7 @@ clearing a floor is sufficient.
 * ✅ **The wrong-null flip replicates, 3/3 on OLMo-2 and 12/12 cross-family**
   (10/12 read "above chance" under `mean(1/n_opt)`, 12/12 under naive `0.10`,
   while 1/12 clears its floor), in **four families** on a 10-way benchmark under
-  **both** chance definitions — paperG's core claim, at the paper's best
+  **both** chance definitions — paperC's core claim, at the paper's best
   resolution.
 * ❌ **MMLU's significant below-floor headline does NOT replicate on OLMo-2's
   healed arms.** keep8 is −0.116 pp, CI `[−0.698, +0.465]`, which **excludes
@@ -770,18 +770,18 @@ floor) — self-falsification in both directions on the same run.
 | what | where |
 |---|---|
 | per-item records, 6 arms × 8 shards + merged (**~1.1 GB**) | **zwfy6 ONLY** `/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/mmlu_pro_letter_content_results/` (too large for wzc1 round-trip; not git-tracked, same as the MMLU records) |
-| nulls + statistics, OLMo-2 leg only (66 rows) | `paperG/evidence/mmlu_scale_power/mmlu_pro_power_nulls.json` + `.csv` — **BOTH DISKS**, md5 `564c2f74…` / `891e7eb9…` |
-| **nulls + statistics, ALL 21 CELLS (231 rows) — the canonical table for §6** | `paperG/evidence/mmlu_scale_power/mmlu_pro_power_nulls_v2.json` + `.csv` — **BOTH DISKS**, md5 `8a96c6c2…` / `204f910f…` |
+| nulls + statistics, OLMo-2 leg only (66 rows) | `paperC/evidence/mmlu_scale_power/mmlu_pro_power_nulls.json` + `.csv` — **BOTH DISKS**, md5 `564c2f74…` / `891e7eb9…` |
+| **nulls + statistics, ALL 21 CELLS (231 rows) — the canonical table for §6** | `paperC/evidence/mmlu_scale_power/mmlu_pro_power_nulls_v2.json` + `.csv` — **BOTH DISKS**, md5 `8a96c6c2…` / `204f910f…` |
 | harness (extended for `mmlu_pro` + the memory fix + `use_cache=False` + the hard `n_trunc` assert) | `scripts/eval_olmo2_mc_letter_content.py` |
 | driver | `scripts/_run_mmlu_pro_letter_content_8gpu.sh` (`MAXLEN` default now **2048**) |
-| analysis (CPU, 0 GPU) | `paperG/code/mmlu_pro_power_nulls.py` |
-| **truncation audit (CPU, 0 GPU, all 4 tokenizers)** | `paperG/code/mmlu_pro_trunc_audit.py` → `paperG/evidence/mmlu_scale_power/trunc_audit_1536.json`, md5 `6279a823…` |
-| **before/after of the truncation + OOM fixes (per-cell, per-item flips)** | `paperG/code/mmlu_pro_trunc_fix_compare.py` → `paperG/evidence/mmlu_scale_power/trunc_fix_before_after.json`, md5 `2b84371c…` |
+| analysis (CPU, 0 GPU) | `paperC/code/mmlu_pro_power_nulls.py` |
+| **truncation audit (CPU, 0 GPU, all 4 tokenizers)** | `paperC/code/mmlu_pro_trunc_audit.py` → `paperC/evidence/mmlu_scale_power/trunc_audit_1536.json`, md5 `6279a823…` |
+| **before/after of the truncation + OOM fixes (per-cell, per-item flips)** | `paperC/code/mmlu_pro_trunc_fix_compare.py` → `paperC/evidence/mmlu_scale_power/trunc_fix_before_after.json`, md5 `2b84371c…` |
 | logs (56 files: 48 shard + 6 merge + prepare + DRIVER) | **zwfy6** `logs/mmlu_pro_lc_*.log` |
 | dataset | `TIGER-Lab/MMLU-Pro` test parquet, **BOTH DISKS** `data/hf_datasets/TIGER-Lab___mmlu_pro/data/test-00000-of-00001.parquet`, sha256 `0e24a191…`, md5 `7e40550a…` (4.1 MB) |
 | ckpts | **zwfy6** `outputs/olmo2_probe2_7B_{keep8fresh2/step121000,keep10fresh2/step83500,keep12fresh2/step124000,keep14fresh2/step200000,shortgpt16/step200000}.pt` (all `ls`-verified before launch) |
-| #248 comparison | `paperG/evidence/second_mc_benchmark/gate2_letter_content_nulls.json` |
-| #250 comparison | `paperG/evidence/second_mc_benchmark_crossfamily/gate2_crossfamily_nulls.json` |
+| #248 comparison | `paperC/evidence/second_mc_benchmark/gate2_letter_content_nulls.json` |
+| #250 comparison | `paperC/evidence/second_mc_benchmark_crossfamily/gate2_crossfamily_nulls.json` |
 | **cross-family MMLU-Pro per-item records — USE THIS ONE** | **zwfy6 ONLY** `mmlu_pro_lc_crossfamily_results_fix/` (15 arms × 8 shards, `MAXLEN=2048`, `n_trunc=0`), `logs/mmlu_pro_lc_DRIVER_xf_fix.log` |
 | ⛔ cross-family MMLU-Pro, FIRST launch — **defective, do not quote** | **zwfy6** `mmlu_pro_lc_crossfamily_results/` (`MAXLEN=1536`: 10 cells with `n_trunc>0`, `llama2_7b_base` only 3/8 shards), `logs/mmlu_pro_lc_DRIVER_xf.log`. Retained **only** as the BEFORE side of `trunc_fix_before_after.json`. |
 | combined root used for the 21-cell table (symlinks, no data copied) | **zwfy6** `mmlu_pro_lc_COMBINED_fix/` → the 6 OLMo-2 dirs + the 15 `_fix` dirs |

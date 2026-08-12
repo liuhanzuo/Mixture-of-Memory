@@ -1,4 +1,4 @@
-# Paper G — Null Calibration for Construct Validity
+# Paper C — Null Calibration for Construct Validity
 
 Promoted from `proposal/active/A01-null-calibration-methodology/` on **2026-08-11**
 per the user's instruction 「可以 那就晋升」 and the revised promotion rule in
@@ -171,15 +171,15 @@ They are load-bearing; the self-falsification narrative is part of the contribut
 | gate-3 per-example records (6 arms × 8 shards) | **zwfy6** `results/a01_gate3/dtype_runs/` — reachable from `.73`/`.82`/`.104` only |
 | MMLU letter/content per-item records | **zwfy6** `olmo2_mmlu_content_results/` |
 | non-MMLU letter/content per-item records (6 arms × 6 tasks × 8 shards) | **BOTH DISKS** `olmo2_mc_letter_content_results/` (52 MB) |
-| second-MC-benchmark nulls + stats | `paperG/evidence/second_mc_benchmark/gate2_letter_content_nulls.{json,csv}` |
+| second-MC-benchmark nulls + stats | `paperC/evidence/second_mc_benchmark/gate2_letter_content_nulls.{json,csv}` |
 | **cross-family** letter/content per-item records (15 arms × 6 tasks × 8 shards) | **BOTH DISKS** `mc_lc_crossfamily_results/` (130 MB) |
-| **cross-family** nulls + stats (1122 rows) | **BOTH DISKS** `paperG/evidence/second_mc_benchmark_crossfamily/gate2_crossfamily_nulls.{json,csv}` |
+| **cross-family** nulls + stats (1122 rows) | **BOTH DISKS** `paperC/evidence/second_mc_benchmark_crossfamily/gate2_crossfamily_nulls.{json,csv}` |
 | **cross-family** MMLU per-item records (`gate1_*`, incl. the 12 recomputed cells) | **wzc1 ONLY** `olmo2_mmlu_content_results/gate1_*` (190 MB) |
-| cross-family recompute code (CPU, 0 GPU) | `paperG/code/gate2_crossfamily_nulls.py` |
+| cross-family recompute code (CPU, 0 GPU) | `paperC/code/gate2_crossfamily_nulls.py` |
 | cross-family driver | `scripts/_run_mc_letter_content_crossfamily_8gpu.sh` |
-| **MMLU-Pro** nulls + stats, all 21 cells (231 rows) | **BOTH DISKS** `paperG/evidence/mmlu_scale_power/mmlu_pro_power_nulls_v2.{json,csv}` (the `_v2`-less pair is the OLMo-2-only 66-row predecessor) |
+| **MMLU-Pro** nulls + stats, all 21 cells (231 rows) | **BOTH DISKS** `paperC/evidence/mmlu_scale_power/mmlu_pro_power_nulls_v2.{json,csv}` (the `_v2`-less pair is the OLMo-2-only 66-row predecessor) |
 | **MMLU-Pro** per-item records | **zwfy6 ONLY** `mmlu_pro_letter_content_results/` (6 OLMo-2 arms, ~1.1 GB) + `mmlu_pro_lc_crossfamily_results_fix/` (15 non-OLMo arms). ⛔ `mmlu_pro_lc_crossfamily_results/` (no `_fix`) is the **defective** first launch — BEFORE side only |
-| **MMLU-Pro** recompute + audit code (CPU, 0 GPU) | `paperG/code/mmlu_pro_power_nulls.py`, `paperG/code/mmlu_pro_trunc_audit.py`, `paperG/code/mmlu_pro_trunc_fix_compare.py` |
+| **MMLU-Pro** recompute + audit code (CPU, 0 GPU) | `paperC/code/mmlu_pro_power_nulls.py`, `paperC/code/mmlu_pro_trunc_audit.py`, `paperC/code/mmlu_pro_trunc_fix_compare.py` |
 | **MMLU-Pro** driver | `scripts/_run_mmlu_pro_letter_content_8gpu.sh` (`MODE=olmo2\|crossfamily`, `MAXLEN` default 2048) |
 | Qwen3-8B-**Base** weights | wzc1 `../models/Qwen3-8B-Base`; copied to zwfy6 same name. ⚠️ zwfy6's pre-existing `models/Qwen--Qwen3-8b` and the `models/Qwen3-8b-local` symlink are **Qwen3-8B-Instruct** (`eos 151645`, has `chat_template`) — **not** a valid base arm |
 

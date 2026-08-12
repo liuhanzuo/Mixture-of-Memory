@@ -1,6 +1,6 @@
 {
-  "what": "paperG gate-2 CROSS-FAMILY: MMLU's letter-vs-content contrast on non-MMLU MC benchmarks, in three NON-OLMo families, vs construct-appropriate nulls",
-  "closes": "the one-family scope of paperG/README.md open defect 2 (#248 closed the contrast, in OLMo-2 only)",
+  "what": "paperC gate-2 CROSS-FAMILY: MMLU's letter-vs-content contrast on non-MMLU MC benchmarks, in three NON-OLMo families, vs construct-appropriate nulls",
+  "closes": "the one-family scope of paperC/README.md open defect 2 (#248 closed the contrast, in OLMo-2 only)",
   "damage": "front-N truncation applied AT EVAL TIME by eval_olmo2_probe2_ppl.py::load_truncated_any_family: model.model.layers <- layers[:N], config synced. NO fresh block, NO heal steps, NO training. Identical construction to the archived MMLU gate-1 DAMAGED leg, which is why the k8/k12 rungs are directly comparable with it.",
   "protocol": {
     "chat_template": false,
@@ -25991,7 +25991,7 @@
     }
   },
   "content_null_tokenizer_dependence": {
-    "finding": "the longest-option content null in the CONTINUATION-TOKEN unit is TOKENIZER-dependent, i.e. it is NOT a pure dataset property. This is a THIRD under-specification on top of the tie convention and the character-vs-token length unit that paperG/README.md already documents.",
+    "finding": "the longest-option content null in the CONTINUATION-TOKEN unit is TOKENIZER-dependent, i.e. it is NOT a pure dataset property. This is a THIRD under-specification on top of the tie convention and the character-vs-token length unit that paperC/README.md already documents.",
     "by_task": {
       "arc_challenge": {
         "split": {

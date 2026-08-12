@@ -24,7 +24,7 @@
 > 缺陷 1 = `MAXLEN=1536` 是按 **OLMo-2** tokenizer 量的（max 1226 tok），对 Llama-2（1678）/ Qwen3（1660）过小 → 10/15 cell 的 labelled option body 被左截断，且溢出集**因 tokenizer 而异**故跨家族表**不 item-matched**。修法选 **(a) 抬到 2048**（不是排除 item，那会破坏与已归档 MMLU cell 的全 n 匹配）。实测影响：**0/14 cell 结论变化**，最大 letter acc 变化 **+0.0083 pp**（一个 item），9 次 argmax 翻转全落在受影响 item 上、受影响之外 **0** 翻转。
 > 缺陷 2 = `llama2_7b_base` 整臂 OOM（5/8 shard 死，guard 正确拒绝 3/8 merge）。根因是 **KV cache**：Llama-2 无 GQA（`num_kv_heads=32`×32 层 = fp32 KV **72.0 GiB** @B=48/L=1536，而 Llama-3/Qwen3 是 18.0/20.2）→ 只有 intact Llama-2 会死。修法 `use_cache=False`（teacher-forced 单次前向根本不用 cache），94 GiB → 41-50 GiB。
 > ⚠️ **`n_trunc` 已从 driver 层 WARNING 升级为 scoring 脚本内的硬 assert** —— 当初正是因为它只是 warning，10 个被截断的 cell 才照样写出了 summary。
-> 结论见 `paperG/evidence/POWER_WALL_VERDICT.md` §6：21/21 cell 有功效（hw 0.083-0.968 pp）；**AT-the-floor 主结论不变**；但新增两处自我纠正——below-floor **不是 MMLU-specific**（llama2/k8 p=0.0168、qwen3/k8 p=0.0362 显著低于 floor，分界像是 heal vs no-heal），且 `qwen3_8b_base/k14` 显著**高于** floor（+0.233 pp, p=0.0192）故"damage ⇒ at-or-below"是 **14/15** 而非普适。
+> 结论见 `paperC/evidence/POWER_WALL_VERDICT.md` §6：21/21 cell 有功效（hw 0.083-0.968 pp）；**AT-the-floor 主结论不变**；但新增两处自我纠正——below-floor **不是 MMLU-specific**（llama2/k8 p=0.0168、qwen3/k8 p=0.0362 显著低于 floor，分界像是 heal vs no-heal），且 `qwen3_8b_base/k14` 显著**高于** floor（+0.233 pp, p=0.0192）故"damage ⇒ at-or-below"是 **14/15** 而非普适。
 > ⚠️ 本表 .21/.82/.104 三行是 2026-08-08 的旧状态，本次未核实（本任务只动 .73），下一个 heartbeat 请对照 nvidia-smi 重核。
 
 ## 传输进度（2026-08-08 15:02）
@@ -57,23 +57,23 @@
 
 ---
 
-## 2026-08-11 21:22–21:34 +08:00 — `.73` paperG gate-2 (task #248) 已完成，卡已释放
+## 2026-08-11 21:22–21:34 +08:00 — `.73` paperC gate-2 (task #248) 已完成，卡已释放
 
 | 节点 | 硬件 | 任务 | 细节 | 状态 |
 |---|---|---|---|---|
-| **.73** | 8×H20 zwfy6 | `gate2_mc_letter_content` (#248) | paperG gate-2 全量复现：MMLU 同口径 letter-vs-content × 6 个非 MMLU MC benchmark × 6 arm × 8 shard = 36 cell；21:22 起，21:34 完；36/36 cell 8/8 shard、n_scored==expected、n_nan=0；失败语法 grep 零命中 | ✅ 完成，GPU 0-7 已释放（0 MiB） |
+| **.73** | 8×H20 zwfy6 | `gate2_mc_letter_content` (#248) | paperC gate-2 全量复现：MMLU 同口径 letter-vs-content × 6 个非 MMLU MC benchmark × 6 arm × 8 shard = 36 cell；21:22 起，21:34 完；36/36 cell 8/8 shard、n_scored==expected、n_nan=0；失败语法 grep 零命中 | ✅ 完成，GPU 0-7 已释放（0 MiB） |
 
-- 结论：`REPLICATES_PARTIALLY_AND_NARROWS_THE_CLAIM`，详见 `paperG/evidence/SECOND_MC_BENCHMARK_VERDICT.md`。
+- 结论：`REPLICATES_PARTIALLY_AND_NARROWS_THE_CLAIM`，详见 `paperC/evidence/SECOND_MC_BENCHMARK_VERDICT.md`。
 - 上面 2026-08-08 那张表里 `.73 = keep8fresh2 resume ▶️ 运行中` 已过期：本次占卡前 `nvidia-smi` 实测 8 卡全 0 MiB、无 compute app。**未 kill 任何进程**（.73 上另一 agent 的纯 CPU jsonl 重算未受影响）。
 - 结果落盘两盘：`olmo2_mc_letter_content_results/`（zwfy6 + wzc1，各 52 MB，各自校验完整）。
 
 ---
 
-## 2026-08-11 22:19 +08:00 — `.73` paperG gate-2 CROSS-FAMILY (task #250) 启动
+## 2026-08-11 22:19 +08:00 — `.73` paperC gate-2 CROSS-FAMILY (task #250) 启动
 
 | 节点 | 硬件 | 任务 | 细节 | 状态 |
 |---|---|---|---|---|
-| **.73** | 8×H20 zwfy6 | `gate2_xf` (#250) | paperG gate-2 跨家族扩展：#248 harness 原封不动跑 **非 OLMo** 三家族 × 5 arm × 6 task。arm = {llama2_7b, llama3_8b, qwen3_8b_base} × {base, k8, k10, k12, k14}，damage = **eval 期 front-N truncation（无 fresh block、无 heal）**，与 gate-1 DAMAGED 同构造故与已归档 MMLU 数字直接可比。8 shard/arm，bs=48（与 #248 同值），22:19 起 | ▶️ 运行中 |
+| **.73** | 8×H20 zwfy6 | `gate2_xf` (#250) | paperC gate-2 跨家族扩展：#248 harness 原封不动跑 **非 OLMo** 三家族 × 5 arm × 6 task。arm = {llama2_7b, llama3_8b, qwen3_8b_base} × {base, k8, k10, k12, k14}，damage = **eval 期 front-N truncation（无 fresh block、无 heal）**，与 gate-1 DAMAGED 同构造故与已归档 MMLU 数字直接可比。8 shard/arm，bs=48（与 #248 同值），22:19 起 | ▶️ 运行中 |
 
 - 占卡前 `nvidia-smi` 实测 8 卡全 0 MiB、无 compute app；**未 kill 任何进程**（.73 上另一 agent 的纯 CPU 工作不受影响）。
 - 前置：`Qwen3-8B-Base` 原本 **wzc1-only**，已 `scp -O` 16 GB 到 zwfy6，12 个文件 md5 全对。⚠️ zwfy6 原有的 `models/Qwen--Qwen3-8b`（含 `Qwen3-8b-local` symlink）是 **Instruct** 模型（`eos=151645` im_end、有 chat_template、40960 ctx），**不能当 base arm 用**。
@@ -82,7 +82,7 @@
 ## 2026-08-11 22:32 +08:00 — `.73` #250 scoring完成，8 卡已释放（0 MiB，无 compute app）
 
 - 15 arm × 6 task = **90 cell 全部 8/8 shard、`n_scored==EXPECTED_N`、`n_nan=0`**；128 个 shard/merge log 跑失败语法 grep（`Traceback (most recent call last)` / `CUDA out of memory` / `AssertionError` / `*INTEGRITY FAILURE` / `CARDINALITY FAILURE`）**零命中**。
-- 判定 `REPLICATES_IN_DIRECTION_ACROSS_FAMILIES_BUT_THE_LADDER_DOES_NOT`，详见 `paperG/evidence/GATE2_CROSSFAMILY_VERDICT.md`。
+- 判定 `REPLICATES_IN_DIRECTION_ACROSS_FAMILIES_BUT_THE_LADDER_DOES_NOT`，详见 `paperC/evidence/GATE2_CROSSFAMILY_VERDICT.md`。
 - ⚠️ driver log 里每个 arm 都有一条**假的** `MERGE FAIL ...: 0/6 tasks merged` —— 是 driver 自检 `grep -c "^\[merge\]"` 锚了 `^` 而 `_log()` 会加时间戳前缀，纯 cosmetic bug，**跑完后已修**。15/15 arm 实际都成功 merge（各 6/6 `summary_<task>.json`，已 `ls` 逐个核对）。
 - 后续 nulls/统计是 **CPU-only**，在 LOCAL(wzc1) 跑（MMLU cross-family per-item 记录 190MB 只在 wzc1），未占任何 GPU。
 - **未 kill 任何非本任务进程**；.73 上另一 agent 的纯 CPU 工作不受影响。

@@ -1,5 +1,5 @@
 {
-  "what": "paperG task #251: MMLU's letter-vs-content contrast on MMLU-Pro (n=12032, up to 10-way), vs construct-appropriate nulls",
+  "what": "paperC task #251: MMLU's letter-vs-content contrast on MMLU-Pro (n=12032, up to 10-way), vs construct-appropriate nulls",
   "why": "#248 and #250 both returned PARTIAL for the SAME reason -- the five non-MMLU benchmarks are 6-28x smaller than MMLU, so 52/60 of #250's damaged cells could not have detected MMLU's own -1.389 pp effect. This is a POWER limit, not a null result (arc_challenge's median damaged effect -3.840 pp is LARGER than MMLU's -3.603 pp). No additional SMALL benchmark can fix it: openbookqa would need ~10615 items and its test set is 500.",
   "acceptance_criterion": {
     "question": "does the achieved CI95 half-width on the letter-vs-best-constant-floor test fall below MMLU's own effect size of 1.389 pp?",

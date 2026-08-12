@@ -1,4 +1,4 @@
-# paperG gate-2 — SECOND MC BENCHMARK, FULL REPLICATION
+# paperC gate-2 — SECOND MC BENCHMARK, FULL REPLICATION
 
 Task #248. Ran 2026-08-11 on `.73` (8×H20), ~11 min wall-clock, 36 arm×task cells.
 
@@ -54,7 +54,7 @@ Exact McNemar against the deterministic constant predictor wherever the null is 
 Selected on 0 GPU before any card was touched. Criterion: the benchmark must
 admit a **real letter interface** (labelled options → score the letter) *and* a
 real content interface, and its gold marginal must be **skewed** so the
-best-constant floor is above chance — otherwise there is nothing for paperG to say.
+best-constant floor is above chance — otherwise there is nothing for paperC to say.
 
 | task | n | n_opt | gold marginal | **best-constant floor** | chance | floor − chance |
 |---|---|---|---|---|---|---|
@@ -80,7 +80,7 @@ comparable to the MMLU 4-way arms.
 
 **Important honesty note on the floors.** These best-constant floors are only
 **+0.43 to +2.60 pp** above chance, i.e. *much* flatter than MMLU's `0.2689` vs
-`0.25` (+1.89 pp) is relative to its own n. paperG's "chance badly misstates the
+`0.25` (+1.89 pp) is relative to its own n. paperC's "chance badly misstates the
 null" rhetoric is therefore **weak on the letter side of these five tasks** — the
 dramatic cases remain BoolQ (`0.6217` vs `0.50`, +12.2 pp) and, on the *content*
 side, OpenBookQA (see §3). Do not oversell the letter floors here.
@@ -118,7 +118,7 @@ rate, residual fractions) in `gate2_letter_content_nulls.{json,csv}` — 396 CSV
    × 3 arms), **10 sit above their naive chance line** — yet **0 of 15** are above
    their own best-constant floor. So ten cells read "above chance, model has
    residual competence" under the wrong null and "indistinguishable from a constant
-   predictor" under the right one. This is exactly the substantive claim paperG
+   predictor" under the right one. This is exactly the substantive claim paperC
    makes, reproduced off MMLU with MMLU's own interface.
    (The other 5 cells are below chance too, so the chance line does not mislead
    there — it just happens to agree. Do not write "all fifteen": the honest count
@@ -231,7 +231,7 @@ OpenBookQA's **2.11×** inflation replicates the 2.15× the old gate-2 reported 
 small difference is the length-unit change documented in §5). Note honestly that
 **PIQA and arc_easy go the other way** — their token-longest floors are *below*
 chance, so the chance line *understates* the residual there. "Chance inflates the
-claim" is not universal; it is construct-specific, which is precisely paperG's
+claim" is not universal; it is construct-specific, which is precisely paperC's
 point but must be stated symmetrically.
 
 ---
@@ -255,7 +255,7 @@ divergence from MMLU in this run:
 On **arc_easy the keep8 arm is at its letter floor (`0.2584`) while scoring
 `0.6460` on content** — 38.8 pp higher, and far above every content convention's
 floor. The competence is demonstrably present; the letter readout simply cannot
-express it. That is a *stronger* version of paperG's readout-vs-knowledge
+express it. That is a *stronger* version of paperC's readout-vs-knowledge
 separation than MMLU provides, and it is the single most publication-worthy number
 in this run.
 
@@ -274,7 +274,7 @@ So "content is the fair interface" remains **not** a general claim.
 
 ### 5a. OpenBookQA's longest-option null is `0.3680`, not `0.3635` — because the old number is a CHARACTER-length null
 
-`gate_results.gate2_second_mc_benchmark` and `paperG/README.md` both publish
+`gate_results.gate2_second_mc_benchmark` and `paperC/README.md` both publish
 OpenBookQA's longest-option floor as **`0.3635`**. That number is **not wrong**,
 but it is computed in a **different length unit** than MMLU's: the published
 `acc_norm` / `norm_lens` pipeline normalises by `len(text)` in **characters**,
@@ -294,7 +294,7 @@ The `credit` convention is *far* more unit-sensitive (Δ up to **+0.352** on
 winogrande, +0.228 on obqa) because token-count ties are much rarer than
 character-length ties.
 
-**Consequence for paperG: the longest-option null has a SECOND, previously
+**Consequence for paperC: the longest-option null has a SECOND, previously
 undocumented degree of freedom — the length UNIT — on top of the tie convention.**
 It moves the null by up to 2.0 pp under `split` and up to 35 pp under `credit`.
 This strengthens `confirmed_general[5]` ("the null A01 recommends is itself
@@ -367,7 +367,7 @@ significantly below floor. Do **not** count it as an interface case.
 
 ---
 
-## 7. What must be changed elsewhere in paperG because of this run
+## 7. What must be changed elsewhere in paperC because of this run
 
 1. `STATUS.json:gate_results.gate2_second_mc_benchmark` — **add** a
    `full_replication_20260811` sub-record (do not overwrite; the retraction history
@@ -380,7 +380,7 @@ significantly below floor. Do **not** count it as an interface case.
    +22.77 pp; on piqa +19.15 pp. As a general statement it is false.
 3. `confirmed_general[5]` — extend the under-specification claim from *tie
    convention* to *tie convention **and length unit*** (§5a).
-4. `paperG/README.md` "Where it has been demonstrated" table — label the
+4. `paperC/README.md` "Where it has been demonstrated" table — label the
    OpenBookQA `0.3635` as a **character-length** null, and add the token-unit
    `0.3680` next to it.
 5. Anywhere the second-benchmark leg is cited, the **power table (§2b)** must
@@ -388,7 +388,7 @@ significantly below floor. Do **not** count it as an interface case.
    ±3.88 pp CI would be a misuse of a non-observation.
 6. The acc-vs-acc_norm sign flips found here (arc_challenge 1/15, piqa 1/15,
    winogrande 1/15; arc_easy / obqa / csqa 0/15) are a **replication under damage
-   of Oostermeijer, ICML 2026 (arXiv:2607.12767)**, not a paperG finding. The JSON
+   of Oostermeijer, ICML 2026 (arXiv:2607.12767)**, not a paperC finding. The JSON
    records this attribution inline.
 
 ---
@@ -414,7 +414,7 @@ partial answer is more informative than a clean yes would have been.**
   MMLU + arc_easy, and 4 of 5 tasks are too small to have detected MMLU's own
   −1.39 pp. This is a genuine limitation of the second-benchmark leg and is now on
   the record.
-* ⚠️ A **new degree of freedom** (length unit) was found in paperG's own
+* ⚠️ A **new degree of freedom** (length unit) was found in paperC's own
   recommended null, and MMLU's `±3pp interface-swap` bullet is **falsified as a
   general claim** by this run's own data.
 
@@ -428,7 +428,7 @@ itself, which is the part of this direction that is actually its own.
 | what | where |
 |---|---|
 | per-item records, 6 arms × 6 tasks × 8 shards + merged | **zwfy6** `/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/olmo2_mc_letter_content_results/` **AND wzc1** `/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/olmo2_mc_letter_content_results/` (52 MB, both disks, integrity re-verified on each; not git-tracked, same as the MMLU records) |
-| null/statistics output | `paperG/evidence/second_mc_benchmark/gate2_letter_content_nulls.json` + `.csv` (396 rows) |
+| null/statistics output | `paperC/evidence/second_mc_benchmark/gate2_letter_content_nulls.json` + `.csv` (396 rows) |
 | harness | `scripts/eval_olmo2_mc_letter_content.py` |
 | driver | `scripts/_run_olmo2_mc_letter_content_8gpu.sh` |
 | analysis | `proposal/active/A01-null-calibration-methodology/code/a01_gate2_letter_content_nulls.py` |

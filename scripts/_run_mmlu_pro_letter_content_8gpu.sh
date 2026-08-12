@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ============================================================================
-# paperG task #251 — THE POWER WALL. MMLU-Pro letter-vs-content MC eval driver.
+# paperC task #251 — THE POWER WALL. MMLU-Pro letter-vs-content MC eval driver.
 #
 # WHY THIS EXISTS
 # ---------------
@@ -20,7 +20,7 @@
 #
 # WHY MMLU-Pro SPECIFICALLY, beyond n
 # -----------------------------------
-# It is 10-way (A-J), so it attacks the WEAKEST part of paperG's rhetoric.
+# It is 10-way (A-J), so it attacks the WEAKEST part of paperC's rhetoric.
 # #248 honestly recorded that on arc/obqa/piqa/csqa the best-constant letter
 # floor is only +0.43 to +2.60 pp above chance, i.e. "chance badly misstates the
 # null" is WEAK there. Measured on disk before any GPU was touched, MMLU-Pro's
@@ -73,7 +73,7 @@ N_BOOT="${N_BOOT:-10000}"
 #   qwen3_8b_base  151669             1660                   20  (2 items)
 #   llama2_7b       32000             1678                   40  (3 items)
 #
-# Measured on CPU by paperG/code/mmlu_pro_trunc_audit.py, which reproduces the
+# Measured on CPU by paperC/code/mmlu_pro_trunc_audit.py, which reproduces the
 # 40/20/0/0 counts of the first #251 run exactly. Only THREE distinct items
 # (10500, 11603, 11790 -- all 10-option) overflow at all; n_trunc counts
 # candidate encodings (10 per item per interface), which is why it is a
@@ -234,7 +234,7 @@ for A in $ARMS; do
     echo "  labelled option body was left-truncated, which changes the letter"
     echo "  INTERFACE itself, and the overflow set is tokenizer-specific so"
     echo "  item-matching across families is broken too. Raise MAXLEN (probe with"
-    echo "  paperG/code/mmlu_pro_trunc_audit.py) and re-run this arm. NOT merging."
+    echo "  paperC/code/mmlu_pro_trunc_audit.py) and re-run this arm. NOT merging."
     FAILED="$FAILED ${NAME}:trunc"
     continue
   fi

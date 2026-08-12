@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
-"""Dual-INTERFACE (letter | content) MC eval for NON-MMLU benchmarks — paperG
+"""Dual-INTERFACE (letter | content) MC eval for NON-MMLU benchmarks — paperC
 gate-2 full replication.
 
 Why this file exists
 --------------------
-`scripts/eval_olmo2_mmlu_content.py` established paperG's headline on cais/mmlu:
+`scripts/eval_olmo2_mmlu_content.py` established paperC's headline on cais/mmlu:
 the *letter* interface (question + `A./B./C./D.` labelled options, score the bare
 letter token after `Answer:`) collapses to at-or-below its own best-constant
 floor under structural damage, while the *content* interface (label-free, score
 the option TEXT) does not collapse the same way.
 
-paperG's second open defect is that the non-MMLU replication (A01 gate-2) used a
+paperC's second open defect is that the non-MMLU replication (A01 gate-2) used a
 DIFFERENT interface contrast: **raw sum-LL vs length-normalised acc_norm**, which
 is analogous to but NOT identical with letter-vs-content. This harness closes
 that gap: it reproduces MMLU's *exact* letter-vs-content contrast on non-MMLU MC
@@ -49,7 +49,7 @@ and every McNemar test is computed on CPU by
 `proposal/active/A01-null-calibration-methodology/code/a01_gate2_letter_content_nulls.py`
 from these records, so the statistics are re-runnable without a GPU.
 
-Protocol discipline (paperG-wide, non-negotiable)
+Protocol discipline (paperC-wide, non-negotiable)
 ------------------------------------------------
 * `chat_template=False`, `add_bos=0` — OLMo-2 is a BASE LM with no SFT/RL.
 * fp32 master weights, bf16-autocast forward (identical to the MMLU harness and
@@ -101,7 +101,7 @@ from eval_olmo2_probe2_downstream import (  # noqa: E402
     encode_pair,
 )
 # reuse the SAME estimators the MMLU harness used (exact McNemar in log space +
-# paired bootstrap), so paperG's MMLU and non-MMLU tables share statistics code.
+# paired bootstrap), so paperC's MMLU and non-MMLU tables share statistics code.
 from eval_olmo2_mmlu_content import (  # noqa: E402
     mcnemar_exact_p,
     paired_bootstrap_diff,
@@ -488,7 +488,7 @@ def aggregate(records, n_boot=10000, seed=0):
         preds = [r["letter"]["pred_letter"] for r in valid]
         out["modal_letter_share"] = max(Counter(preds).values()) / n_valid
         out["letter_pred_hist"] = dict(sorted(Counter(preds).items()))
-        # exact-tie rate in the letter readout (paperG's OLMo-2 bf16 tie mechanism)
+        # exact-tie rate in the letter readout (paperC's OLMo-2 bf16 tie mechanism)
         nties = 0
         for r in valid:
             v = [r["letter"]["scores"][_LETTERS[k]] for k in range(r["n_opt"])]
@@ -920,7 +920,7 @@ def main():
         model, meta = load_base_model(args.base_model, device)
     meta["base_model"] = args.base_model
     meta["add_bos"] = bool(args.add_bos)
-    meta["chat_template"] = False  # paperG-wide: OLMo-2 is a BASE LM, no SFT
+    meta["chat_template"] = False  # paperC-wide: OLMo-2 is a BASE LM, no SFT
     meta["desc_style"] = args.desc_style
     if args.keep_indices:
         meta["keep_indices"] = args.keep_indices
@@ -958,7 +958,7 @@ def main():
                 f"different letter interface than the untruncated cells and the "
                 f"overflow set is tokenizer-specific (item-matching across "
                 f"families breaks). Raise --max_len until n_trunc == 0 (probe it "
-                f"on CPU with paperG/code/mmlu_pro_trunc_audit.py), or pass "
+                f"on CPU with paperC/code/mmlu_pro_trunc_audit.py), or pass "
                 f"--allow_truncation if you deliberately want the old behaviour.")
         agg = aggregate(records, n_boot=200, seed=args.boot_seed)
         pe = os.path.join(

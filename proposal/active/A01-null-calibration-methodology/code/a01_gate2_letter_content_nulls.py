@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""paperG gate-2 FULL replication: construct-appropriate nulls for the
+"""paperC gate-2 FULL replication: construct-appropriate nulls for the
 letter-vs-content MC interface on NON-MMLU benchmarks.
 
 What this closes
 ----------------
-`paperG/README.md` open defect 2 / `STATUS.json:gate_results.gate2_second_mc_benchmark`.
+`paperC/README.md` open defect 2 / `STATUS.json:gate_results.gate2_second_mc_benchmark`.
 The 2026-08-08 gate-2 leg reproduced the wrong-null problem off MMLU, but its two
 "interfaces" were **raw sum-LL vs length-normalised acc_norm**, which is analogous
 to but NOT identical with MMLU's **letter vs content**. This script consumes the
@@ -216,9 +216,9 @@ def main():
     assert len(arms) == 6, f"expected 6 arms, found {len(arms)}: {arms}"
 
     res = {
-        "what": "paperG gate-2 FULL replication: MMLU's letter-vs-content "
+        "what": "paperC gate-2 FULL replication: MMLU's letter-vs-content "
                 "interface contrast on non-MMLU MC, vs construct-appropriate nulls",
-        "closes": "paperG/README.md open defect 2; STATUS.json "
+        "closes": "paperC/README.md open defect 2; STATUS.json "
                   "gate_results.gate2_second_mc_benchmark caveat "
                   "('raw sum-LL vs acc_norm is analogous but not identical')",
         "protocol": {
@@ -358,7 +358,7 @@ def main():
             "n_flips": len(flips), "n_pairs": len(arms) * (len(arms) - 1) // 2,
             "pairs": flips,
             "attribution": "REPLICATION under damage of Oostermeijer, ICML 2026 "
-                           "(arXiv:2607.12767). NOT an A01/paperG finding.",
+                           "(arXiv:2607.12767). NOT an A01/paperC finding.",
         }
         res["tasks"][task] = t_out
         print(f"[done] {task}")

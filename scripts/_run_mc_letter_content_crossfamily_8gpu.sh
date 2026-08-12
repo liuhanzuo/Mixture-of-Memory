@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ============================================================================
-# paperG gate-2 CROSS-FAMILY extension (task #250).
+# paperC gate-2 CROSS-FAMILY extension (task #250).
 #
 # WHAT THIS ADDS
 # --------------

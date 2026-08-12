@@ -1,6 +1,6 @@
 {
  "id": "A01",
- "status": "PROMOTED_to_paperG_2026_08_11_major_revision_carried_forward",
+ "status": "PROMOTED_to_paperC_2026_08_11_major_revision_carried_forward",
  "priority": 1,
  "updated": "2026-08-11",
  "gate_results": {
@@ -60,7 +60,7 @@
      "commonsense_qa": "n=1221, 5-way, always-B = 0.208845 (chance 0.200000, +0.885pp)",
      "piqa": "n=1838, 2-way, always-B = 0.504897 (chance 0.500000, +0.490pp)",
      "winogrande_CONTROL": "n=1267, 2-way, always-B = 0.504341 (chance 0.500000, +0.434pp)",
-     "honesty_note": "These letter floors are only +0.43 to +2.60pp above chance -- much flatter than BoolQ's 0.6217-vs-0.50. Do NOT reuse paperG's 'chance badly misstates the null' rhetoric on the letter side of these five; the dramatic cases stay BoolQ (letter-ish) and OpenBookQA (content)."
+     "honesty_note": "These letter floors are only +0.43 to +2.60pp above chance -- much flatter than BoolQ's 0.6217-vs-0.50. Do NOT reuse paperC's 'chance badly misstates the null' rhetoric on the letter side of these five; the dramatic cases stay BoolQ (letter-ish) and OpenBookQA (content)."
     },
     "what_replicated": [
      "The construct-validity claim, on 5/5 evidence tasks: of the 15 damaged arm x task cells (keep12/keep10/keep8 x 5 tasks), 10 sit ABOVE their naive chance line and 0 clear their own best-constant floor. Ten cells flip verdict under the correct null. NOT 15/15 above chance -- the honest count is 10/15 flipped, 0/15 above floor.",
@@ -73,19 +73,19 @@
     "new_finding_readout_dissociation": "arc_easy keep8 is AT its letter floor (0.258418) while scoring 0.646044 on content_norm -- +38.763pp, exact McNemar p=9.8e-148, and above the content floor under all five conventions. The competence is present; the letter readout cannot express it. This is a STRONGER readout-vs-knowledge dissociation than MMLU provides.",
     "FALSIFIES_confirmed_general_2": "claim_scope_after_gates.confirmed_general[2] ('content_norm sits within +/-3pp of letter on every damaged arm') is FALSE as a general statement and must be re-scoped to MMLU. keep8 content-minus-letter: arc_easy +38.76pp, csqa +22.77pp, piqa +19.15pp, arc_ch +9.64pp, obqa +8.20pp (MMLU itself is +8.72pp).",
     "NEW_degree_of_freedom_length_unit": "The longest-option null has a SECOND under-specification on top of the tie convention: the LENGTH UNIT. The published acc_norm/norm_lens pipeline normalises by len(text) in CHARACTERS; the MMLU letter/content harness normalises by continuation-TOKEN count. Recomputed on identical items, split convention: obqa 0.363500(char) vs 0.368000(token); arc_ch 0.274104 vs 0.283902; arc_easy 0.255296 vs 0.238054; csqa 0.221977 vs 0.201775; piqa 0.475245 vs 0.465452; winogrande 0.491713 vs 0.501184. The 'credit' convention is far more unit-sensitive (delta up to +0.352 on winogrande, +0.228 on obqa). CONSEQUENCE: the protocol sentence must become 'report a construct-appropriate null AND print its convention AND its length unit'. Extends confirmed_general[5]; nothing retracted.",
-    "obqa_0_3635_is_a_CHARACTER_length_null": "paperG/README.md and this record publish OpenBookQA's longest-option floor as 0.3635. That is correct AS A CHARACTER-LENGTH null. The token-unit value on identical items is 0.368000. Label the unit; where OBQA appears next to an MMLU number prefer 0.3680 so the units match. NOT a retraction.",
+    "obqa_0_3635_is_a_CHARACTER_length_null": "paperC/README.md and this record publish OpenBookQA's longest-option floor as 0.3635. That is correct AS A CHARACTER-LENGTH null. The token-unit value on identical items is 0.368000. Label the unit; where OBQA appears next to an MMLU number prefer 0.3680 so the units match. NOT a retraction.",
     "winogrande_control_quantified": "The old record's '100% tie rate, acc==acc_norm exactly' is a property of the PUBLISHED partial-scoring construction. Rebuilt label-free like every other task here, winogrande is only PARTIALLY degenerate: 86.50% of items still have identical continuation-token counts, acc==acc_norm on 94.6-96.8% of items, split null 0.501184 (not exactly 0.5). Its 'credit' null is 0.933702 -- a length heuristic with oracle tie-breaking beats the full base model (0.580110) by 35pp. Still a NEGATIVE CONTROL ONLY, now with a quantitative reason rather than an assumption. Its keep8 letter modal share is 0.9534 (a near-constant emitter) yet the floor verdict is AT (+0.552pp p=0.357).",
     "modal_share_floor_decoupling_reconfirmed": "Consistent with NARROWED_20260810_constant_predictor and if anything wider: arc_challenge keep8 modal 0.8038 -> only AT the floor (-0.939pp p=0.644); arc_challenge keep10 modal 0.3848 with a POSITIVE delta (+1.621pp); winogrande keep8 modal 0.9534 -> AT; piqa keep12 modal 0.8781 -> AT.",
     "residual_fraction_inflation": "OpenBookQA content_norm base: 22.4% under the token-longest floor vs 47.3% under chance = 2.11x inflation (replicates the 2.15x from the 2026-08-08 leg; the small difference is the length-unit change). BUT piqa (0.90x) and arc_easy (0.98x) go the OTHER way -- their token-longest floors are below chance, so the chance line UNDERSTATES the residual there. 'Chance inflates the claim' is construct-specific, not universal; state it symmetrically.",
-    "acc_vs_accnorm_sign_flips": "arc_challenge 1/15, piqa 1/15, winogrande 1/15, arc_easy 0/15, obqa 0/15, csqa 0/15. Attributed in the JSON as a REPLICATION under damage of Oostermeijer ICML 2026 (arXiv:2607.12767), NOT a paperG finding.",
+    "acc_vs_accnorm_sign_flips": "arc_challenge 1/15, piqa 1/15, winogrande 1/15, arc_easy 0/15, obqa 0/15, csqa 0/15. Attributed in the JSON as a REPLICATION under damage of Oostermeijer ICML 2026 (arXiv:2607.12767), NOT a paperC finding.",
     "shard_integrity": "36/36 cells: 8/8 shards, n_scored == expected exactly (1172/2376/500/1221/1838/1267), n_nan == 0, n_trunc == 0. Asserted twice (harness merge RAISES on a partial set; analysis loader re-asserts). Failure grep over 60 logs with failure syntax: zero hits.",
     "cross_validation": "Content prompts for arc_challenge/arc_easy/commonsense_qa are BYTE-IDENTICAL (1172/1172, 2376/2376, 1221/1221 verified programmatically) to eval_olmo2_probe2_downstream.py::load_task_examples, so content_raw must reproduce the published 'correct' field -- it agrees at 99.41-99.96% item-level, accuracy within 0.30pp, with disagreements only on near-ties (median top1-top2 gap 0.012-0.048). OpenBookQA deliberately deviates (0/500): the published loader uses the bare question_stem with NO 'Answer:' cue, which cannot host a letter interface; the 85-87% agreement is the size of that prompt effect.",
     "reproducibility": "Full analysis run on zwfy6 and re-run independently on the wzc1 copy -> byte-identical JSON after key-sorting (cf. memory/same-harness-runs-bit-identical).",
     "statistics": "paired bootstrap n_boot=10000 seed=7; two-sided p from two_sided_boot_p (the R-7 mid-p fix, imported verbatim from a01_gate3_fp32_vs_bf16.py, NOT the old unclamped 2*min((bs<=0),(bs>=0))); exact McNemar vs the deterministic constant predictor wherever the null is a 0/1 per-item decision.",
     "protocol": "chat_template=False, add_bos=0, fp32 master weights + bf16-autocast forward, batch_size=48. Arms identical to the MMLU letter/content table and gate-3: 7B_base, keep8@121000, keep10@83500, keep12@124000, keep14@200000, shortgpt16@200000 (every ckpt ls-verified on zwfy6 before launch).",
     "evidence": {
-     "verdict_doc": "paperG/evidence/SECOND_MC_BENCHMARK_VERDICT.md",
-     "stats": "paperG/evidence/second_mc_benchmark/gate2_letter_content_nulls.json + .csv (396 rows)",
+     "verdict_doc": "paperC/evidence/SECOND_MC_BENCHMARK_VERDICT.md",
+     "stats": "paperC/evidence/second_mc_benchmark/gate2_letter_content_nulls.json + .csv (396 rows)",
      "per_item_records": "BOTH DISKS: zwfy6 and wzc1 olmo2_mc_letter_content_results/ (52MB, 6 arms x 6 tasks x 8 shards + merged; integrity re-verified on each; not git-tracked, same as the MMLU records)",
      "harness": "scripts/eval_olmo2_mc_letter_content.py (--selftest passes on CPU incl. asserts that merge REFUSES a 1/8 shard set and a wrong-cardinality set)",
      "driver": "scripts/_run_olmo2_mc_letter_content_8gpu.sh",
@@ -95,7 +95,7 @@
     "todo_elsewhere": [
      "re-scope claim_scope_after_gates.confirmed_general[2] to MMLU (the +/-3pp interface-swap statement is falsified generally)",
      "extend confirmed_general[5] from 'tie convention' to 'tie convention AND length unit'",
-     "paperG/README.md 'Where it has been demonstrated' table: label OBQA 0.3635 as a character-length null, add token-unit 0.3680",
+     "paperC/README.md 'Where it has been demonstrated' table: label OBQA 0.3635 as a character-length null, add token-unit 0.3680",
      "any citation of the second-benchmark leg must carry the power table"
     ]
    }
@@ -246,7 +246,7 @@
   "confirmed_general": [
    "Under structural damage the letter MC interface degenerates to at/below its own best-constant floor. Demonstrated on FOUR families: OLMo-2-7B (healed keep8, 0.2550), Llama-2-7B (trunc, 0.2295-0.2415), Llama-3-8B (trunc, 0.2329-0.2527), Qwen3-8B-Base (trunc, 0.2286-0.2301).",
    "The collapse is a SHARP phase transition in depth, not a gradual decay -- Qwen3-8B-Base letter is pinned at 0.229454-0.230309 (span 0.0855pp) across the TWELVE measured depths k=4..24, then jumps +48.02pp at k24->k25 (0.229739 -> 0.709942), then plateaus 0.647-0.730. content_norm over the SAME forward passes moves only +1.35pp at that layer (0.3045 -> 0.3180). CORRECTED 2026-08-09: this field previously read 'jumps +45.74pp at keep30', which contradicted gate_results.gate1_depth_curve's 'k24->k25 +48.0pp'. gate1_depth_curve was RIGHT. +45.74pp is k30's RESIDUAL vs the floor (0.726321-0.268908=+45.7413pp), NOT a single-layer jump and NOT the transition point -- k25 is already on the plateau (0.709942, +44.10pp vs floor). Re-verified 2026-08-09 from olmo2_mmlu_content_results/gate1_dmg_qwen3_8b_depth_k{24,25,30}/summary.json on zwfy6.",
-   "RE-SCOPED TO MMLU 2026-08-11 (task #248). Original text: 'Interface swap does NOT rescue a damaged arm: content_norm sits within +/-3pp of letter on every damaged arm.' That +/-3pp statement holds ON MMLU only. On the non-MMLU letter/content run it is FALSE: keep8 content_norm-minus-letter is +38.763pp on arc_easy (McNemar p=9.8e-148), +22.768pp on commonsense_qa, +19.151pp on piqa, +9.642pp on arc_challenge, +8.200pp on openbookqa (MMLU itself +8.72pp). On arc_easy keep8 sits AT its letter floor (0.258418) while scoring 0.646044 on content -- the competence is present and the letter readout cannot express it. Keep the +/-3pp claim MMLU-scoped. See paperG/evidence/SECOND_MC_BENCHMARK_VERDICT.md section 4. MAIN INDEPENDENT RECOUNT 2026-08-11: the violation is BROADER than the keep8 enumeration above. Recomputed from gate2_letter_content_nulls.json over ALL damaged arm x task cells (excluding base and shortgpt16 as undamaged): 20 of 24 cells exceed the +/-3pp band, not just keep8's five. Largest are arc_easy keep12 +42.088pp, keep10 +39.899pp, keep8 +38.763pp, keep14 +25.421pp; then piqa keep12 +24.429pp and commonsense_qa keep12 +24.242pp. So the correct statement is not 'keep8 violates it off MMLU' but 'the +/-3pp coupling is an MMLU-specific coincidence and does not describe the letter/content relationship in general'.",
+   "RE-SCOPED TO MMLU 2026-08-11 (task #248). Original text: 'Interface swap does NOT rescue a damaged arm: content_norm sits within +/-3pp of letter on every damaged arm.' That +/-3pp statement holds ON MMLU only. On the non-MMLU letter/content run it is FALSE: keep8 content_norm-minus-letter is +38.763pp on arc_easy (McNemar p=9.8e-148), +22.768pp on commonsense_qa, +19.151pp on piqa, +9.642pp on arc_challenge, +8.200pp on openbookqa (MMLU itself +8.72pp). On arc_easy keep8 sits AT its letter floor (0.258418) while scoring 0.646044 on content -- the competence is present and the letter readout cannot express it. Keep the +/-3pp claim MMLU-scoped. See paperC/evidence/SECOND_MC_BENCHMARK_VERDICT.md section 4. MAIN INDEPENDENT RECOUNT 2026-08-11: the violation is BROADER than the keep8 enumeration above. Recomputed from gate2_letter_content_nulls.json over ALL damaged arm x task cells (excluding base and shortgpt16 as undamaged): 20 of 24 cells exceed the +/-3pp band, not just keep8's five. Largest are arc_easy keep12 +42.088pp, keep10 +39.899pp, keep8 +38.763pp, keep14 +25.421pp; then piqa keep12 +24.429pp and commonsense_qa keep12 +24.242pp. So the correct statement is not 'keep8 violates it off MMLU' but 'the +/-3pp coupling is an MMLU-specific coincidence and does not describe the letter/content relationship in general'.",
    "Report every construct against a construct-appropriate null (best-constant, not chance) before comparing arms. Demonstrations: keep8 0.2550 reads 'above chance' at .25 but is BELOW the 0.2689 floor; BoolQ 0.59-0.64 reads 'passing' at .50 but is below the 0.6217 always-B floor; OBQA residual fraction inflates 2.15x under the chance line.",
    "gate-2's non-MMLU replication: the wrong-null problem is not an MMLU artifact. || STRENGTHENED AND NARROWED 2026-08-11 (task #248): the wrong-null problem now reproduces under MMLU's EXACT letter-vs-content contrast on five non-MMLU benchmarks (10 of 15 damaged arm x task cells read 'above chance', 0 of 15 clear their own best-constant floor). BUT the SIGNIFICANT below-floor letter verdict reproduces only on arc_easy (keep10, -2.694pp p=0.0290); four of the five tasks are UNDERPOWERED to detect MMLU's own -1.389pp (CI95 half-width 1.31-6.40pp vs MMLU's 1.15pp). Cite the power table with any null result from the smaller sets.",
    "The self-falsification narrative (using the protocol to retract one's own headline) -- now including this file's own retraction of the intact-only verdict.",
@@ -345,25 +345,26 @@
    "shard_integrity": "all 6 arms: 8/8 shards, n_scored=14042, nan=0 -- read_shards() hard assertions left in place, none bypassed",
    "verdict_impact": "NONE. 0 of 24 verdicts changed (6 arms x 2 dtypes x {letter,content_norm}); 0 of 30 p-values crossed alpha=0.05. Every non-p field in all six summaries is byte-identical to the pre-fix version, so the re-merge is also a regression test on the merge path.",
    "p_changes": "only 3 field paths moved at all: contrast.letter_acc_diff_boot_p, by_dtype.{bf16,fp32}.letter_vs_null_boot_p. Largest move is the base arm 1.0420 -> 0.9876; all others move by <= 0.0107 (the content_norm_vs_null_boot_p values are unchanged because their bootstrap distributions have no atom at 0).",
-   "main_conclusion_impact": "NONE -- the A01/paperG headline that keep8 reads BELOW its own letter floor (p = 0.0190 bf16 / 0.0060 fp32, was 0.0192 / 0.0062) and that keep10/keep12-bf16 read AT the floor are unchanged.",
-   "writeup": "paperG/evidence/R7_BOOTSTRAP_P_FIX.md"
+   "main_conclusion_impact": "NONE -- the A01/paperC headline that keep8 reads BELOW its own letter floor (p = 0.0190 bf16 / 0.0060 fp32, was 0.0192 / 0.0062) and that keep10/keep12-bf16 read AT the floor are unchanged.",
+   "writeup": "paperC/evidence/R7_BOOTSTRAP_P_FIX.md"
   }
  },
- "promoted_to": "paperG",
+ "promoted_to": "paperC",
  "promotion": {
   "date": "2026-08-11",
   "authorised_by": "user: 「我感觉没必要晋升条件卡这么死(所有的proposal都是) 只要有发现就可以继续作」 then 「可以 那就晋升 看看哪里有空闲开始干」",
-  "target_dir": "paperG/",
-  "why_paperG_not_paperE": "paperE is a BURNED name: task #171 closed 'Paper E: eval-interface construct validity' as NO-GO and folded its assets into Paper B #172. Reusing it would collide with that provenance. paperC/paperD are also burned (archived directions). paperG had 0 references anywhere in the repo.",
+  "target_dir": "paperC/",
   "rule_applied": "proposal/README.md 'D0 晋升规则' (2026-08-11): a verified finding suffices; the old 'must satisfy all three' gate was itself defective -- its condition 1 required fp32 to RESTORE letter validity, which GATE3_VERDICT.md showed can never happen.",
   "proposal_dir_retained": true,
-  "proposal_dir_retained_why": "CLAUDE.md: 'proposal 目录不删，它是该方向的证据与决策历史入口'. paperG/README.md points every number back here.",
+  "proposal_dir_retained_why": "CLAUDE.md: 'proposal 目录不删，它是该方向的证据与决策历史入口'. paperC/README.md points every number back here.",
   "carried_forward_unchanged": [
-   "the 2026-08-10 external-audit MAJOR REVISION: all six accepted retractions/narrowings stand and are restated in paperG/README.md",
+   "the 2026-08-10 external-audit MAJOR REVISION: all six accepted retractions/narrowings stand and are restated in paperC/README.md",
    "open defect: letter_acc_diff_boot_p = 1.042 (illegal p-value) -- NOT fixed by promotion; CLOSED 2026-08-11, see audit_response.fixed_2026_08_11 (0 of 24 verdicts changed)",
    "three UNVERIFIED venues (Ding 2021, Hewitt&Liang 2019, Feng 2019) still need Anthology/OpenReview confirmation",
    "no full-text PDF pass on any novelty-check candidate"
   ],
-  "not_claimed_by_promotion": "Promotion is a RESOURCE decision (this direction gets a paper dir and GPU priority), NOT a validation of the claims. The audit verdict is still 'Major revision'."
+  "not_claimed_by_promotion": "Promotion is a RESOURCE decision (this direction gets a paper dir and GPU priority), NOT a validation of the claims. The audit verdict is still 'Major revision'.",
+  "dir_name_history": "Promoted 2026-08-11 into paperG/ (paperE was burned by task #171's NO-GO, and paperC/paperD were then still occupied by archived directions). RENAMED to paperC/ on 2026-08-12 on user instruction 「把paperG重命名为paperC」 + 「paperxxx指的都是一个完整的论文」. The paperC name is now free at the repo root: the old direction lives on only at proposal/archive/paperC-v1-frozen-cap/ (a different path, POSTMORTEM retained), and its result dir paperC_squad_results/ was renamed to evidence_squad_label_prior/ earlier the same day (commit 7c25317) precisely so the paperXXX namespace holds only complete papers. NOTE the two are unrelated in content: archived paperC was cyclic prune-regrow / frozen-cap; this paperC is null calibration for construct validity.",
+  "dir_name_history_superseded_text": "paperE is a BURNED name: task #171 closed 'Paper E: eval-interface construct validity' as NO-GO and folded its assets into Paper B #172. Reusing it would collide with that provenance. paperC/paperD are also burned (archived directions). paperC had 0 references anywhere in the repo."
  }
 }

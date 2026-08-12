@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ============================================================================
-# paperG gate-2 (task #248) — non-MMLU letter-vs-content MC eval driver.
+# paperC gate-2 (task #248) — non-MMLU letter-vs-content MC eval driver.
 #
 # Runs scripts/eval_olmo2_mc_letter_content.py over the SIX item-aligned OLMo-2-7B
 # prune-then-heal arms (the same batch as the MMLU letter/content table and

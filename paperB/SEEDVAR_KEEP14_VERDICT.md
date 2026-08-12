@@ -186,7 +186,7 @@ excluded: the seed-42 baseline for keep14 exists **only on zwfy6**
 (`olmo2_closedbook_results/7B_keep14_step200000{,_v2}`), wzc1 has no keep14 closed-book dir, and
 wzc1's HF cache lacks `nq_open`. Measuring them here would put seed 42 on H20 and seed 1234 on
 L20A, confounding seed with architecture. To close these axes, re-run **both** arms' closed-book
-leg on one node. Also excluded: `olmo2_mc_letter_content_results` (a paperG gate-2 artefact from
+leg on one node. Also excluded: `olmo2_mc_letter_content_results` (a paperC gate-2 artefact from
 .73, not a Paper B keep14 row).
 
 ## 7. Reproduce

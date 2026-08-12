@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""paperG task #251 follow-up — BEFORE/AFTER audit of the MMLU-Pro truncation fix.
+"""paperC task #251 follow-up — BEFORE/AFTER audit of the MMLU-Pro truncation fix.
 
 WHAT THIS ANSWERS
 -----------------

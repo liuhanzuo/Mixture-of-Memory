@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""paperG task #251 follow-up — quantify the MMLU-Pro truncation defect.
+"""paperC task #251 follow-up — quantify the MMLU-Pro truncation defect.
 
 WHY
 ---
@@ -28,7 +28,7 @@ For each tokenizer, re-encodes every (item, proto, candidate) exactly as
     costed against option (a) (raise the cap and re-run)
 
 Usage:
-  python paperG/code/mmlu_pro_trunc_audit.py --max_len 1536 [--out audit.json]
+  python paperC/code/mmlu_pro_trunc_audit.py --max_len 1536 [--out audit.json]
 """
 import argparse
 import json
