@@ -327,8 +327,16 @@ only after both disks have been searched.
    **optimal** constant (`0.276000`, Δ = 0.000 pp, CI95 `[0,0]`), which is invisible
    against chance. Modal share and floor verdict stay **DECOUPLED** (99.91% modal at
    p = 0.0499 vs 96.46% modal at p = 0.0015).
-   **Residual to-do:** healed non-OLMo arms would be needed to separate the
-   heal-vs-no-heal confound in (b); that is real training and is not in scope.
+   **Residual to-do — TRAINING NOW RUNNING 2026-08-12:** healed non-OLMo arms are
+   needed to separate the heal-vs-no-heal confound in (b). A healed
+   **Qwen3-8B-Base front8+fresh2** arm is now training on `.104`
+   (pre-registered: [`HEAL_CONFOUND_PREREGISTRATION.md`](HEAL_CONFOUND_PREREGISTRATION.md);
+   launch evidence: [`HEAL_CONFOUND_LAUNCH_RECORD.md`](HEAL_CONFOUND_LAUNCH_RECORD.md)).
+   ⚠️ It will **not** rehabilitate (b) as phrased: (b) is about the *ladder shape*
+   over k14→k8 in three families, and **one arm at one depth in one family cannot
+   fit a depth curve** — the "no depth curve may be fitted to these rungs"
+   prohibition stands regardless of how this arm lands. What it addresses is the
+   narrower question in the POWER WALL residual below.
 
    **POWER WALL CLOSED 2026-08-11/12** (tasks #251 + #252) — see
    [`evidence/POWER_WALL_VERDICT.md`](evidence/POWER_WALL_VERDICT.md), verdict
@@ -395,6 +403,57 @@ only after both disks have been searched.
    +34.5. **Hardening: `n_trunc` was a WARNING and is now a hard per-shard
    assert** — that weakness is exactly why 10 truncated cells shipped with
    summaries written.
-   **Residual to-do:** the heal-vs-no-heal confound is now the single biggest open
-   question in the direction — it is what separates (a) from (b) — and it still
-   needs healed non-OLMo arms, i.e. real training.
+   **Residual to-do — TRAINING NOW RUNNING 2026-08-12, read-out ETA ≈ 2026-08-20:**
+   the heal-vs-no-heal confound is the single biggest open question in the
+   direction — it is what separates (a) from (b) — and it needs healed non-OLMo
+   arms, i.e. real training. **That training is now running.** A healed
+   **Qwen3-8B-Base `keep_front=8` + `n_fresh=2`** arm (10 layers, 3.1741B params,
+   eff_bs 128, cosine horizon 200k, **read-out pre-registered at step 121000** =
+   `olmo2_7b/keep8`'s own scored step) started 2026-08-12 13:48 on `.104`,
+   measured **5.716 s/step** ⇒ ≈ **8.0 days** to the read-out. See
+   [`HEAL_CONFOUND_PREREGISTRATION.md`](HEAL_CONFOUND_PREREGISTRATION.md) (written
+   and committed **before** any GPU, so the arm cannot be re-chosen post-hoc) and
+   [`HEAL_CONFOUND_LAUNCH_RECORD.md`](HEAL_CONFOUND_LAUNCH_RECORD.md).
+
+   **Design choice, stated so it is not mistaken for a relative-depth match:** the
+   arm matches OLMo-2's **absolute** keep-depth (front-**8**), *not* its depth
+   fraction. Qwen3-8B has **36** layers vs OLMo-2-7B's **32**, so `keep8` is 22.2%
+   vs 25.0% and no integer depth is both absolute- and fraction-matched. Absolute
+   was chosen because all 15 existing non-OLMo cells are literal front-N slices
+   (`load_truncated_any_family`), so front-8 keeps the healed arm paired with the
+   **`qwen3_8b_base/k8`** cell whose verdict disagrees with `olmo2_7b/keep8`; a
+   front-9 arm would have traded the heal confound for a **depth** confound.
+
+   **What it will resolve:** the within-family contrast `qwen3_8b_base/k8`
+   (un-healed, −0.881 pp, p = 0.0362, **BELOW** floor) vs the same arch **healed**,
+   holding family / tokenizer / benchmark / floor / keep-depth fixed and varying
+   **only heal**. That identifies whether "significantly below floor" is a property
+   of the **un-healed regime** (which would explain why healed `keep8` reads AT
+   floor with a CI that excludes −1.389 pp) or a **family** property.
+
+   **What it will NOT resolve, even if it succeeds** (full list in the
+   pre-registration §9): it is **n = 1 family at 1 depth** — Llama-2/Llama-3 and
+   k10/k12/k14 stay confounded; the **corpus stays unmatched** (Qwen3 cannot
+   consume OLMo-2-token Dolmino and raw Dolmino text is on **neither disk**, so the
+   arm heals on SlimPajama — 13.7 epochs of 2.31B tok vs OLMo-2's 1.0 epoch of
+   31.7B); **relative depth stays untested**; and it says **nothing** about the
+   null-calibration methodology claim, which is paperC's actual contribution and
+   does not depend on this leg at all.
+
+   ⚠️ **Do not describe either side of this comparison as using differential LR.**
+   Verified in the logs: `keep8`/`keep14` and the new Qwen3 arm all log **only**
+   `inh_decay` + `inh_nodecay` at a **uniform 2e-5** with **no `fresh_*` group**,
+   because `_classify_param` lacks the `module.` prefix strip while
+   `build_param_groups` runs *after* the DDP wrap — so `--lr 1e-4` is a **no-op** on
+   both sides. This bug-for-bug match is what makes them comparable, but the claim
+   "differential LR" would be false. (`keep14fresh2_seed1234`, launched after the
+   fix, *does* show a `fresh_decay` group and is therefore **not** comparable on
+   this axis.)
+
+   ⚠️ **`models/Qwen--Qwen3-8b` is Qwen3-8B-*Instruct*** (`eos 151645`
+   `<|im_end|>`, ctx 40960), **not** base — reconfirming line 184. All five
+   pre-existing `qwen3_minarch_*` arms record it as `base_model_path`, so they are
+   invalid under paperC's `chat_template=False` protocol; this, not just their short
+   7.5k/19k-step budgets, is why a fresh arm was required. The new arm uses
+   `models/Qwen3-8B-Base` (`eos 151643`, ctx 32768) and the launcher **hard-refuses
+   to start** if `eos_token_id != 151643`.
