@@ -271,3 +271,79 @@ last step produces it, because `final.pt` is exempt from rotation by design
 2. A cheap permanent fix would be for `_save(..., final=True)` to hardlink when an identical
    `step{N}.pt` already exists. **Not implemented here** — that is a trainer code change and three
    trainings are mid-flight.
+
+---
+
+## 8. MAIN's disposition of the four NEEDS-DECISION items (2026-08-12, post-audit)
+
+Decided by MAIN after independent re-verification, not by accepting the audit's framing. **Headline:
+none of the four is deleted, and the reason is that the disk is not under pressure.** Measured now:
+wzc1 `109T used / 11T free / 91%`, zwfy6 `650T / 39T free / 95%`. ~3 TB was already reclaimed
+losslessly. Spending irreversible deletions to buy headroom we do not need is the wrong trade.
+
+### 8.1 `out_llama/` (4.7 TB) — **KEEP, but the audit's own framing was too permissive**
+
+I re-derived the composition rather than trusting the "7/96 cited" summary:
+
+| family | size | dirs |
+|---|---|---|
+| **Llama2-7b** | **2,628 G** | **39** |
+| Qwen3-8b | 423 G | 7 |
+| Llama2-13b | 398 G | 4 |
+| opt-2.7b | 308 G | 3 |
+| deepseek-moe | 207 G | 2 |
+| gpt2 | 144 G | 13 |
+
+Llama-2-7B is SparseForge's **subject model** (17 mentions across
+`SPARSEFORGE_RESUBMISSION_PLAN.md` + `SPARSEFORGE_REBUTTAL_DATA_AND_RESPONSE.md`, vs 5 for
+Qwen3-8b), and task **#245 (Reproduce AST+SLoRB as the parameter-matched control) is still PENDING**
+on exactly that model. Deleting 2.6 TB of Llama-2-7B runs while its parameter-matched control is
+unrun risks destroying the comparison baseline.
+
+**Correction to the audit's own reasoning**: it justified consideration by "only 7/96 dirs cited by
+name." That is the **same inference the audit itself refuted for `mem_space`** — absence of a
+name-mention does not prove absence of use, because these dirs are referenced through
+`--out_dir`/glob patterns, not literal paths. The audit applied the strict standard to `mem_space`
+and the loose one here. **Verdict: KEEP.** Revisit only after #245 closes, and then per-family.
+
+*Also verified*: the running #246 writes `out_llama_tokenmatched_noslorb`, a **sibling** of
+`out_llama/`, so `out_llama/` is not being written to right now. That makes it safe to *read*,
+not safe to delete.
+
+### 8.2 `distill_cache/512` (946 G) — **KEEP**
+
+Regenerable in principle, but it is the **primary** dolmino result cache (74k npz regeneration
+bill), and 0 references in `PENDING_TASKS.md` means nothing here — QCMem distill work is live.
+Regenerable ≠ free: we would pay GPU/CPU hours to undo a deletion made for headroom we already
+have. The `nctx{15,63}` variants the audit deleted were a *different, dead* direction (v21) — that
+deletion was correct and this one does not follow from it.
+
+### 8.3 `hyv3_probe2_keep36_fresh2/step200.pt` (285 G) — **KEEP**
+
+`SESSION_HANDOFF.md:302` records that a prior cleanup **already deleted the siblings and
+deliberately kept only this file** under the same 92%-full pressure. The Hy-MT2 frontier
+(keep36→ppl12, keep24→ppl42, monotone) is marked *"当前非主线"* — dormant, not refuted. This is the
+sole surviving artifact of a 30B prune-heal frontier; the loss curves survive in logs but the
+weights do not exist elsewhere. Overriding a deliberate prior survivor decision needs a *reason*,
+and "it is large" is not one.
+
+### 8.4 `watchdog_ckpts` remainder (231 G, zwfy6) — **KEEP for now, closable later**
+
+This is the only one I would actually delete, and I still did not. Evidence for closure is
+genuinely strong: daemon killed 2026-05-11 (**verified: no `watchdog` process on any node**), the
+only refs are its own `scripts/babilong_ckpt_watchdog.py` + `.watchdog_state.json`, and every
+recorded H-series cell is 0.0. But 231 G is ~2% of free space on a disk at 95%, and the direction
+has no `POSTMORTEM.md` in `proposal/archive/`. **Cheapest correct order: write the postmortem
+first, then delete.** Deleting first turns a 0.0 result into an unverifiable one.
+
+### 8.5 Structural finding worth acting on separately
+
+The `final.pt` ↔ `step{max}.pt` duplication the audit hardlinked away is **structural** — the
+trainer's `save_every` writes `step200000.pt`, then `_save(final=True)` rewrites the same tensors
+seconds later. Running trainings will recreate it. The real fix is a hardlink inside
+`_save(final=True)`; correctly **not** attempted while three trainings are mid-flight. Filed as a
+follow-up under task #199 (ckpt save/resume mechanism), which already owns this surface.
+
+**Net: 0 additional bytes deleted, 4 decisions recorded, 1 follow-up filed.** The ~3 TB already
+reclaimed was all lossless (hardlink dedup with both filenames still resolving, plus dead-direction
+caches).
