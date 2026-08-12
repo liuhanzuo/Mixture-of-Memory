@@ -112,6 +112,34 @@ The **evaluation-practice finding**, which is real and is *not* a claim about st
 it is the same species of finding as A01's, on a new surface. Deliberately **not** auto-promoted:
 recorded in `STATUS.json:finding_that_outlives_a05` so the next agent picks it up on purpose.
 
+> ### ★ 2026-08-12 FOLLOW-UP — the two paragraphs above are both CORRECTED. See `A05_BLAST_RADIUS_AND_SCAFFOLD_VERDICT.md`.
+>
+> **(i) The owner is B10, not A01.** A01 is a *null-calibration* protocol (input-blind nulls,
+> best-constant floors, permutation nulls, calibrated residual fractions). This finding contains **no
+> null** — it is baseline-configuration + harness-validity. It went to
+> **`backlog/B10-dllm-infilling-ar-dominance` as pre-registered sub-claim `S4`** (same model family,
+> same repo, same run tree; B10's own `NUMBER_AUDIT.md` is already an audit of exactly this shape).
+> B10 stays in `backlog/`. Novelty (S4-G0) is a **hard blocker and still owed** — attempted and
+> failed on HTTP 429.
+>
+> **(ii) "understated its HE+ by up to 31 pp" is true only at a canvas nobody published.** Measured:
+> the stitch defect moves the **published** operating point (`initial_masks=8`) by **+0.61 pp = 1
+> item** (`HumanEval/13`, 0 lost) — then +4.27 pp at c32 and +31.10 pp at c128. Reason: at
+> `initial_masks=8` only **1 of 164** raw outputs is multi-line, and a double-indent can only corrupt
+> a multi-line body. So this is **one artifact (canvas) plus a second defect whose severity the first
+> was masking** — an *interaction*, not two independent artifacts of comparable size. The canvas leg
+> stands unchanged: MBPP+ `.0899 → .3545` is measured on a path with **no stitch at all**.
+>
+> **(iii) The blast radius is nil, and this was pre-registered as a falsifiable test
+> (`A05_BLAST_RADIUS_PREREGISTRATION.md`, committed `bed7e43` before the first grep).** 17 arms
+> re-graded as-run vs corrected, 0 GPU: **2** move, both the already-known DreamOn HE+ arms. Every
+> other arm — AR control, all Dream-Coder arms, all four Scaffold tiers — has **exactly 0** items on
+> the buggy branch. `combine_humaneval_prompt` exists in **one** driver on **one** branch
+> (`dataset=="humaneval"`) across all three checkouts. There is **no shared stitch**, so the
+> "diffusion outputs get mangled while AR survives" asymmetry **does not exist**. As a by-product, all
+> 15 published DreamOn / Dream-Coder / Scaffold values reproduce within **±0.28 pp** under an
+> independently written grader on the other disk.
+
 **Also outliving A05**: the three source fixes (wzc1 `58bbb20`, zwfy6 `9651406`, `_104` `d214d37c`),
 the corrections in `DLLM_RESULTS_20260807.md` / `DLLM_SALVAGE_ROADMAP_20260808.md` /
 `SPANLEN_STRATIFIED_AUDIT.md`, and a reusable cost-audit harness that puts DreamOn, Scaffold and AR
@@ -120,9 +148,20 @@ on NFE + `tokens_fed` + `attended_context_sum` with mean/median/tail-share
 
 ## What was NOT resolved (do not record these as settled)
 
-* **Scaffold's `.177`/`.354` was never recomputed by A05.** Both verdicts lean on it and it is READ
-  from `DLLM_RESULTS_20260807.md`, single round, 29 GB checkpoint wzc1-only. This is the weakest
-  provenance link in the whole direction.
+* ~~**Scaffold's `.177`/`.354` was never recomputed by A05.**~~ **✅ RESOLVED 2026-08-12, 0 GPU.**
+  Recomputed on `.73` from the run's **own stored per-item programs** (evalplus, per-invocation
+  self-test): **HE+ `.1768`, MBPP+ `.3545`** versus READ `.177`/`.354`; all four tiers reproduce.
+  The 29 GB wzc1-only checkpoint was **never needed** — `generate_evalplus_scaffold.py` writes
+  `solution = result.text` with **no post-processing**, so `solutions.jsonl` *is* the graded artefact,
+  not an approximation of it (1.6 MB staged, md5-verified). Pre-registered condition **F3** — "is
+  Scaffold's own number understated by the same stitch bug, which would move the K1 margin in A05's
+  favour?" — **does NOT fire**: 0/8 Scaffold cells reach the buggy branch, and 162/164 Scaffold Medium
+  HE+ programs already contain a top-level `def`, so they would short-circuit it regardless.
+  **K1 recomputed against measured Scaffold still fires on both clauses (HE+ −30.49 pp, MBPP+
+  −0.00 pp): A05 was not killed on a mis-measured comparison and stays archived.**
+  *Still open*: single round only — re-grading fixes **provenance**, not **seed variance**. A second
+  Scaffold Medium generation with a different seed (~1-2 GPU-h, must run on wzc1 where the checkpoint
+  lives) would close that; judged not worth spending against a 30 pp / 0.00 pp pair.
 * **Oracle (per-item headroom) arms were never graded** — dropped for budget; excluded from the
   headline by invariant anyway.
 * **`he_c512` / `mbpp_c128` / `mbpp_c512` never completed.** The corrected HE+ curve is *monotone up

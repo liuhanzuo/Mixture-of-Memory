@@ -4,18 +4,16 @@
   "title": "dLLM infilling: does a matched AR control overturn the diffusion infilling case?",
   "status": "backlog_headline_not_significant_motivation_false",
   "created": "2026-08-11T20:10+0800",
-  "updated": "2026-08-11T20:10+0800",
+  "updated": "2026-08-12T22:40+0800",
   "promoted_from": "proposal/archive/revival-slate/SLATE.md#3 (rank 3 of 5, est. 24 GPU-h)",
   "promotion_reason": "A live direction must not be sourced from archive/, which is defined as dead-or-superseded. Promotion is to backlog, NOT active, and deliberately does not carry SLATE's claims forward as stated.",
   "gpu_used_for_this_promotion": "none -- documentation + recomputation from data already on disk + novelty check",
   "gpu_authorised_by_this_document": "none",
-
   "audit_summary": {
     "arithmetic": "ALL SIX pass@1 values and ALL FOUR cost values in SLATE are EXACT to 10 decimal places, reproduced twice from raw per-task records (score.json:per_task[] and metrics.jsonl), independently of the roll-up summary.",
     "claims": "Two of three headline claims do not survive. The direction's stated motivation is factually false.",
     "detail": "NUMBER_AUDIT.md"
   },
-
   "true_surface": {
     "benchmark": "HumanEval-SingleLineInfilling (loubnabnl/humaneval_infilling; Bavarian et al. 2022)",
     "n": 1033,
@@ -26,17 +24,53 @@
     "grader": "evalplus.eval.untrusted_check with per-invocation self-test (canonical PASS 10/10, stub FAIL 10/10) on every arm",
     "generation_errors": 0
   },
-
   "headline_values_rederived": {
     "note": "recomputed as sum(per_task[].pass)/1033; all agree exactly with score.json:pass_at_1 and with results/infilling/single_line_summary.json",
-    "qwen_fim": {"pass_at_1": 0.7637947725072604, "n_pass": 789, "slate": 0.7638, "match": "EXACT", "tokens_fed_per_task": 238.90416263310746, "attended_per_task": 2313.862536302033},
-    "dreamon_oracle": {"pass_at_1": 0.7589545014520813, "n_pass": 784, "slate": 0.7590, "match": "EXACT", "tokens_fed_per_task": 5826.759922555663, "attended_per_task": 5826.759922555663},
-    "dream_fim": {"pass_at_1": 0.7115198451113263, "n_pass": 735, "slate": 0.7115, "match": "EXACT", "tokens_fed_per_task": 2035.027105517909, "attended_per_task": 2035.027105517909},
-    "dreamon_fim": {"pass_at_1": 0.7018393030009681, "n_pass": 725, "slate": 0.7018, "match": "EXACT", "tokens_fed_per_task": 4922.613746369797, "attended_per_task": 4922.613746369797},
-    "qwen_prefix": {"pass_at_1": 0.5324298160696999, "n_pass": 550, "slate": 0.5324, "match": "EXACT"},
-    "dream_prefix": {"pass_at_1": 0.4123910939012584, "n_pass": 426, "slate": 0.4124, "match": "EXACT"}
+    "qwen_fim": {
+      "pass_at_1": 0.7637947725072604,
+      "n_pass": 789,
+      "slate": 0.7638,
+      "match": "EXACT",
+      "tokens_fed_per_task": 238.90416263310746,
+      "attended_per_task": 2313.862536302033
+    },
+    "dreamon_oracle": {
+      "pass_at_1": 0.7589545014520813,
+      "n_pass": 784,
+      "slate": 0.759,
+      "match": "EXACT",
+      "tokens_fed_per_task": 5826.759922555663,
+      "attended_per_task": 5826.759922555663
+    },
+    "dream_fim": {
+      "pass_at_1": 0.7115198451113263,
+      "n_pass": 735,
+      "slate": 0.7115,
+      "match": "EXACT",
+      "tokens_fed_per_task": 2035.027105517909,
+      "attended_per_task": 2035.027105517909
+    },
+    "dreamon_fim": {
+      "pass_at_1": 0.7018393030009681,
+      "n_pass": 725,
+      "slate": 0.7018,
+      "match": "EXACT",
+      "tokens_fed_per_task": 4922.613746369797,
+      "attended_per_task": 4922.613746369797
+    },
+    "qwen_prefix": {
+      "pass_at_1": 0.5324298160696999,
+      "n_pass": 550,
+      "slate": 0.5324,
+      "match": "EXACT"
+    },
+    "dream_prefix": {
+      "pass_at_1": 0.4123910939012584,
+      "n_pass": 426,
+      "slate": 0.4124,
+      "match": "EXACT"
+    }
   },
-
   "corrections_to_slate": [
     {
       "id": "C1",
@@ -96,7 +130,6 @@
       "evidence": "published single-line pass@1: DreamCoder+DreamOn 92.1, Qwen2.5-Coder-7B 92.6. Ours: 70.18 and 76.38 -- gaps of -21.9pp and -16.2pp. Dominant identified cause is the plus-axis ceiling of 0.8025: after restricting to gold-feasible items ours become 86.25 and 93.24, i.e. close to published. Reassuring about the harness, damning for the raw headline."
     }
   ],
-
   "slate_paths_stale": {
     "verdict": "confirmed stale; corrected in SOURCES.md",
     "real_tree": "/apdcephfs_wzc1/share_304376610/pighzliu_code/dllm_draft/ (ABOVE the Mixture-of-Memory repo, not inside it)",
@@ -106,14 +139,12 @@
     "slate_error_dreamon_weights": "SLATE says DreamOn weights are absent from both disks. They are PRESENT at zwfy6 dllm_draft/models/DreamOn-v0-7B/ (4 safetensors shards ~15.2GB + generation_utils.py). dllm_draft_104/models is a SYMLINK to dllm_draft/models, which likely defeated a find on the _104 tree. No re-download needed.",
     "salvage_roadmap_error": "wzc1 DLLM_SALVAGE_ROADMAP_20260808.md calls scripts/generate_infilling.py 'missing' and lists rewriting it as a blocker. True of wzc1, FALSE of zwfy6 -- it was committed to dllm_draft_104 only. Do NOT rewrite the generator."
   },
-
   "robust_findings_that_survive": [
     "Suffix visibility is worth +0.2314 (AR) and +0.2991 (diffusion), both p<1e-56; bidirectional context is an affordance of the FIM task FRAMING, available to AR, not a property of the model class. This is the most defensible result in the pilot.",
     "AR beats the two non-oracle-equivalent diffusion arms by 5-6pp (p<=1.9e-09), and this survives ceiling restriction (p<=3.7e-06).",
     "The oracle length handout is worth +5.7pp to DreamOn (p=4.1e-14), so which diffusion configuration is the comparator decides whether AR 'wins'.",
     "Zero generation errors and a passing grader self-test in all six arms; merge asserted 8/8 shards and no duplicate ids."
   ],
-
   "kill_gate": {
     "gate_1": {
       "name": "base-axis re-score of all 6 existing arms",
@@ -122,20 +153,57 @@
       "expected_outcome": "KILL -- plus axis gives delta=+0.0048 p=0.635, feasible subset gives delta=-0.0012 p=1.000",
       "if_killed": "rewrite as a protocol note or archive. Do NOT re-frame to hunt a different ranking from the same six arms -- that is the nested-ladder error already retracted twice in this line of work (Retractions 6 and 7)."
     },
-    "gate_2": {"name": "lineage repair on Dream-Coder-v0-Base-7B", "gpu": "~2-4 GPU-h", "kill_if": "AR advantage does not survive removing the Instruct-vs-base post-training confound"},
-    "gate_3": {"name": "matched suffix-gain (equalise the oracle handout across the two prefix arms)", "gpu": "~1-2 GPU-h", "kill_if": "the two suffix gains stop being of comparable magnitude once matched"},
-    "gate_4": {"name": "memorisation companion", "gpu": "design only, not authorised", "rule": "no absolute pass@1 from this surface may be reported as a capability measurement without a decontaminated companion -- KSPAN_INFILLING_RESULTS.md section 4.5 measured a 26-28pp drop from identifier renaming + docstring replacement on a set whose gold refill still scores 1.000"}
+    "gate_2": {
+      "name": "lineage repair on Dream-Coder-v0-Base-7B",
+      "gpu": "~2-4 GPU-h",
+      "kill_if": "AR advantage does not survive removing the Instruct-vs-base post-training confound"
+    },
+    "gate_3": {
+      "name": "matched suffix-gain (equalise the oracle handout across the two prefix arms)",
+      "gpu": "~1-2 GPU-h",
+      "kill_if": "the two suffix gains stop being of comparable magnitude once matched"
+    },
+    "gate_4": {
+      "name": "memorisation companion",
+      "gpu": "design only, not authorised",
+      "rule": "no absolute pass@1 from this surface may be reported as a capability measurement without a decontaminated companion -- KSPAN_INFILLING_RESULTS.md section 4.5 measured a 26-28pp drop from identifier renaming + docstring replacement on a set whose gold refill still scores 1.000"
+    }
   },
-
   "novelty_verdict": {
     "verdict": "hold_in_backlog_motivation_refuted",
     "closest_collisions": [
-      {"work": "DreamOn (arXiv:2602.01326)", "venue": "ICLR 2026 Poster", "venue_verified_via": "OpenReview venueid=ICLR.cc/2026/Conference + camera-ready PDF footer", "overlap": "maximal -- same benchmark and split, ALREADY contains the Qwen2.5-Coder-7B matched AR control (92.6) and an oracle-length column"},
-      {"work": "A3 -- Autoregressive Models Rival Diffusion Models at ANY-ORDER Generation (arXiv:2601.13228)", "venue": "ICLR 2026 Poster", "venue_verified_via": "OpenReview venueid=ICLR.cc/2026/Conference", "overlap": "thesis-level -- the conclusion B10 wanted to claim is already peer-reviewed"},
-      {"work": "Diffusion LMs Can Approximate Optimal Infilling Lengths Implicitly (arXiv:2602.00476)", "venue": "preprint (no OpenReview venue found)", "overlap": "training-free adaptive infilling length"},
-      {"work": "Diffusion Language Models Are Natively Length-Aware (arXiv:2603.06123)", "venue": "preprint", "overlap": "reports FLOPs -- the cost-accounting niche is being occupied"},
-      {"work": "From Interface to Inference (arXiv:2607.26504)", "venue": "preprint", "overlap": "insertion-based / latent masked diffusion for any-order code inference"},
-      {"work": "Bavarian et al. FIM (arXiv:2207.14255)", "venue": "-", "overlap": "defines the benchmark and establishes AR can infill via sentinels"}
+      {
+        "work": "DreamOn (arXiv:2602.01326)",
+        "venue": "ICLR 2026 Poster",
+        "venue_verified_via": "OpenReview venueid=ICLR.cc/2026/Conference + camera-ready PDF footer",
+        "overlap": "maximal -- same benchmark and split, ALREADY contains the Qwen2.5-Coder-7B matched AR control (92.6) and an oracle-length column"
+      },
+      {
+        "work": "A3 -- Autoregressive Models Rival Diffusion Models at ANY-ORDER Generation (arXiv:2601.13228)",
+        "venue": "ICLR 2026 Poster",
+        "venue_verified_via": "OpenReview venueid=ICLR.cc/2026/Conference",
+        "overlap": "thesis-level -- the conclusion B10 wanted to claim is already peer-reviewed"
+      },
+      {
+        "work": "Diffusion LMs Can Approximate Optimal Infilling Lengths Implicitly (arXiv:2602.00476)",
+        "venue": "preprint (no OpenReview venue found)",
+        "overlap": "training-free adaptive infilling length"
+      },
+      {
+        "work": "Diffusion Language Models Are Natively Length-Aware (arXiv:2603.06123)",
+        "venue": "preprint",
+        "overlap": "reports FLOPs -- the cost-accounting niche is being occupied"
+      },
+      {
+        "work": "From Interface to Inference (arXiv:2607.26504)",
+        "venue": "preprint",
+        "overlap": "insertion-based / latent masked diffusion for any-order code inference"
+      },
+      {
+        "work": "Bavarian et al. FIM (arXiv:2207.14255)",
+        "venue": "-",
+        "overlap": "defines the benchmark and establishes AR can infill via sentinels"
+      }
     ],
     "residual_gap": [
       "No paper in the collision set measures the benchmark's own feasibility ceiling on the axis it grades (our plus-axis gold ceiling is 0.8025, traced to 23 buggy parent tasks, and it silently changes the arm ordering).",
@@ -154,24 +222,50 @@
     ],
     "venue_rule_applied": "OpenReview venueid + camera-ready for ICLR/NeurIPS/ICML; aclanthology + DBLP for the ACL family. S2/DBLP lag and misreport 2026 papers as preprints, so neither was used as the authority."
   },
-
   "original_kill_reassessment": {
     "original_kill": "dropped on a literature scan reporting 'DreamOn covers this capability' (DLLM_RESULTS_20260807.md: 'Length-elastic bei DreamOn chidiao')",
     "was_the_kill_reasoning_sound": "NO -- it graded a title, not the artefact, which violates the standing instruction that the bar is 'identical' not 'overlapping'",
     "was_the_kill_conclusion_right": "YES, on re-examination. DreamOn demonstrably performs on its own surface (92.1 published; 0.8625 on our feasible subset) AND its paper carries the AR control. The reasoning was lazy and the answer was right anyway. Both halves belong in any write-up."
   },
-
   "cost_to_first_result": {
     "slate_estimate": "24 GPU-h, 'marginal cost is prose'",
     "audited_estimate": "~4-8 GPU-h, and the FIRST step is 0 GPU",
     "why_slate_wrong": "The arms are a complete well-instrumented pilot with three specific defects (plus-axis ceiling, Instruct-vs-base lineage, asymmetric oracle handout in the prefix arms). They do not support the claim as written, so the cost is not 'prose'. Conversely it is far less than 24 GPU-h because the decisive step is a CPU re-score of solutions already on disk.",
     "sequencing": "Gate 1 (free) before any GPU spend, because it determines whether the direction has a headline at all."
   },
-
-  "files": ["PROPOSAL.md", "STATUS.json", "SOURCES.md", "NUMBER_AUDIT.md"],
+  "files": [
+    "PROPOSAL.md",
+    "STATUS.json",
+    "SOURCES.md",
+    "NUMBER_AUDIT.md"
+  ],
   "disks": {
     "wzc1": "gold_ceiling_SingleLine.json, generate_evalplus_dreamon.py, all narrative/retraction docs, runs/spanlen (8 arm dirs), runs/kspan_*",
     "zwfy6": "the six scored SingleLine arms, single_line_summary.json, the infilling harness (generate_infilling.py / score_infilling.py / launcher), the benchmark split files, DreamOn+Qwen+Dream-Coder weights",
     "warning": "the two are DIFFERENT PHYSICAL DISKS with different checkouts; a file is 'missing' only after searching both"
+  },
+  "subclaim_S4_inherited_from_A05": {
+    "added": "2026-08-12",
+    "why_here": "A05 died 2026-08-12 by its own K1 gate; its closeout left this finding ownerless and SUGGESTED A01. That suggestion was examined and REJECTED: A01 is a null-calibration protocol (input-blind nulls / best-constant floors / permutation tests) and this finding contains no null. It is a baseline-configuration + harness-validity result on the SAME model family, repo and run tree B10 already owns, and is the full-program counterpart of B10's own infilling audit.",
+    "why_not_a_new_proposal": "after measurement the evidence base is one integer on one model on two benchmarks plus a one-driver post-processing bug with NIL blast radius whose effect at the published operating point is 1 item. No live hypothesis remains for a standalone kill gate to fail.",
+    "statement": "On full-program code generation, DreamOn-v0-7B's reported weakness is substantially an artefact of one sampler-config integer: initial_masks 8->32 (all else frozen) moves MBPP+ .0899->.3545 (+26.5 pp) and HE+ .1280->.2561. The MBPP+ leg runs on a code path with NO stitch, so it is uncontaminated by the HE+ post-processing defect.",
+    "must_not_claim_1": "NOT 'two independent artefacts each larger than typical method deltas'. The stitch defect's severity is CREATED by fixing the canvas: +0.61 pp at canvas=8, +4.27 pp at 32, +31.10 pp at 128. At the published operating point (initial_masks=8) only 1 of 164 raw outputs is multi-line, so the double-indent corrupts almost nothing and costs exactly 1 item (HumanEval/13). It is an INTERACTION, not a second standalone 31 pp defect.",
+    "must_not_claim_2": "NOT 'published numbers across the repo are affected, including the AR control'. Measured NIL blast radius: 17 arms re-graded, 2 move (both already-known DreamOn HE+ arms, +0.61 pp). All others have exactly 0 items on the buggy branch. There is no shared stitch, hence no diffusion-vs-AR asymmetry to claim.",
+    "kill_gate": {
+      "S4-G0_novelty": "HARD BLOCKER, NOT DONE (Semantic Scholar HTTP 429 on every attempt 2026-08-12). Must cover baseline-tuning literature, code-eval harness/post-processing sensitivity, dLLM length/canvas budget sensitivity. KILL if an existing paper already shows a mask-diffusion LM's full-program code score is dominated by its initial-canvas budget -> S4 is a reproduction, citable as caveat only.",
+      "S4-G1_generality": "~4-6 GPU-h, only after G0 clears. Sweep initial_masks on a SECOND mask-diffusion model. KILL S4 as a general claim if that model does not move >=10 pp across a comparable sweep; S4 then collapses to 'DreamOn was mis-invoked in this repo' = a footnote. THIS IS THE EXPECTED OUTCOME and S4 must not be rescued from it.",
+      "S4-G2_ceiling": "DreamOn HE+ is monotone in canvas up to c128; he_c512/mbpp_c128/mbpp_c512 never ran, so its peak is UNKNOWN and >= .4817. All 'DreamOn reaches X' statements must be lower bounds."
+    },
+    "gpu_authorised_by_this_subclaim": "none",
+    "evidence": "../../archive/A05-structural-dllm-cost-frontier/A05_BLAST_RADIUS_AND_SCAFFOLD_VERDICT.md ; evidence/a05_blast_radius.json ; evidence/cells_corrected/a05_closeout_stitch_regrade.json"
+  },
+  "scaffold_provenance_hole_closed_20260812": {
+    "what": "A05 POSTMORTEM flagged Scaffold Medium .177/.354 as READ-only from a summary table, single round, 29 GB wzc1-only checkpoint -- 'the weakest provenance link in the whole direction'. Both A05 verdicts leaned on it.",
+    "now": "RAN. HE+ .1768 and MBPP+ .3545, recomputed on .73 (zwfy6) from the run's OWN stored per-item programs with evalplus + per-invocation self-test. All four tiers reproduce: HE+ tiny .0000 / small .0427 / medium .1768 / large .1768 ; MBPP+ tiny .0000 / small .1561 / medium .3545 / large .3254.",
+    "gpu": "0",
+    "why_no_29GB_transfer_was_needed": "generate_evalplus_scaffold.py writes solution = result.text with NO post-processing, so runs/scaffold_*/solutions.jsonl IS the graded artefact, not an approximation of it. 1.6 MB staged cross-disk via scp -O, md5 2b1e289852d2ac5628f80674e90260e9 verified.",
+    "F3_scaffold_contamination": "DOES NOT FIRE. 0 of 8 Scaffold cells reach the buggy indent branch; 162/164 Scaffold Medium HE+ programs already contain a top-level def so they would short-circuit it anyway. Scaffold's numbers are NOT understated.",
+    "consequence_for_A05": "A05 stays dead and on firmer ground. K1 clauses recomputed against measured Scaffold: HE+ -30.49 pp, MBPP+ -0.00 pp, both still fire. The one thing that could have revived A05 is now measured and excluded.",
+    "still_open": "single round only -- re-grading fixes provenance, not seed variance. Closing that needs a second Scaffold Medium generation with a different seed on LOCAL or .21 (wzc1, where the ckpt lives), ~1-2 GPU-h. Judged NOT worth spending against a 30 pp / 0.00 pp pair."
   }
 }

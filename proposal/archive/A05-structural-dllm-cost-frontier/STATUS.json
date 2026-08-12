@@ -5,7 +5,7 @@
   "status": "ARCHIVED_K1_FIRED_headline_dead_cost_claim_also_dead",
   "priority": 2,
   "created": "2026-08-12",
-  "updated": "2026-08-12",
+  "updated": "2026-08-12T22:45+0800",
   "created_from": {
     "source_repo_wzc1": "/apdcephfs_wzc1/share_304376610/pighzliu_code/dllm_draft",
     "source_repo_zwfy6": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/dllm_draft and dllm_draft_104",
@@ -158,11 +158,11 @@
   ],
   "unverified": [
     "RETRACTED 2026-08-12: the previous entry claiming 'HE+ shows the curve is NON-MONOTONE (.128 -> .213 -> .171), so canvas=32 is not necessarily the peak on MBPP+' was an ARTIFACT of the stitch bug. Corrected HE+ is MONOTONE (.134 -> .256 -> .482).",
-    "Scaffold Medium's .177/.354 was NEVER recomputed by A05 -- READ from DLLM_RESULTS_20260807.md:447/:456, single round, 29GB ckpt wzc1-only. BOTH the K1 verdict and the cost verdict lean on it. This is the weakest provenance link in the direction.",
+    "RESOLVED 2026-08-12 (original text preserved next): CLOSED at 0 GPU. Scaffold Medium recomputed on .73 from the run's OWN stored per-item programs (evalplus + per-invocation self-test): HE+ .1768, MBPP+ .3545 vs READ .177/.354; all four tiers reproduce. The 29 GB wzc1-only checkpoint was never needed -- generate_evalplus_scaffold.py writes solution = result.text with NO post-processing, so solutions.jsonl IS the graded artefact rather than an approximation of it. F3 (is Scaffold itself understated by the stitch bug?) does NOT fire: 0/8 Scaffold cells reach the buggy indent branch. K1 recomputed against measured Scaffold still fires on BOTH clauses (HE+ -30.49 pp, MBPP+ -0.00 pp), so A05 was NOT killed on a mis-measured comparison. STILL OPEN: single round only -- re-grading fixes provenance, not seed variance (~1-2 GPU-h on wzc1 would close it; judged not worth spending against a 30 pp / 0.00 pp pair). See A05_BLAST_RADIUS_AND_SCAFFOLD_VERDICT.md. || ORIGINAL ENTRY: Scaffold Medium's .177/.354 was NEVER recomputed by A05 -- READ from DLLM_RESULTS_20260807.md:447/:456, single round, 29GB ckpt wzc1-only. BOTH the K1 verdict and the cost verdict lean on it. This is the weakest provenance link in the direction.",
     "DreamOn's true HE+ ceiling is UNKNOWN and at least .4817: the corrected curve is monotone up to c128 and he_c512 / mbpp_c128 / mbpp_c512 never completed. Cannot change K1 (which takes the max) but nobody knows where the full-program peak is.",
     "oracle-arm headroom on either benchmark -- both oracle cells were never graded (dropped for budget; excluded from the K1 decision by invariant anyway)",
     "max_new per-item headroom was never varied -- only the initial canvas. SPANLEN's original hypothesis was about max_new=256; that half remains formally untested.",
-    "the novelty check was never done (it was gated on 'before any GPU beyond K1' and K1 killed the direction first). Moot for A05; still owed if the evaluation-practice finding is taken up under A01."
+    "the novelty check was never done (it was gated on 'before any GPU beyond K1' and K1 killed the direction first). Moot for A05; still owed if the evaluation-practice finding is taken up under A01. || 2026-08-12: the finding was taken up under B10 (sub-claim S4), NOT A01, so this novelty debt is now live and is registered as S4-G0, a HARD BLOCKER. It was attempted 2026-08-12 and FAILED to run (Semantic Scholar HTTP 429 on every query through the proxy). Still owed."
   ],
   "K1_RESULT": {
     "verdict": "K1_FIRES",
@@ -396,8 +396,15 @@
   "finding_that_outlives_a05": {
     "statement": "A widely-reported diffusion baseline's apparent weakness on full-program generation is a CANVAS-BUDGET ARTIFACT: one sampler-config integer (initial_masks 8->32) moves MBPP+ from .085 to .3545, and a post-processing bug additionally understated its HE+ by up to 31 pp. A substantial fraction of the gap between a proposed method and its baseline was produced by how the baseline was invoked and post-processed, not by either model.",
     "is_this_a05s_contribution": "NO. It is an EVALUATION-PRACTICE result, not a result about structural decoding runtimes, which is what A05 registered.",
-    "suggested_owner": "A01-null-calibration-methodology -- same species of finding ('what survives when the baseline is calibrated properly') on a new surface (code generation instead of QA). NOT B10 (owns infilling). NOT a revived A05.",
-    "deliberately_not_auto_promoted": "per the promotion rules a new direction needs its own PROPOSAL.md + kill gate; recorded here so the next agent picks it up ON PURPOSE rather than inheriting it by accident. Novelty check still owed if taken up."
+    "deliberately_not_auto_promoted": "per the promotion rules a new direction needs its own PROPOSAL.md + kill gate; recorded here so the next agent picks it up ON PURPOSE rather than inheriting it by accident. Novelty check still owed if taken up.",
+    "suggested_owner_SUPERSEDED_20260812": "A01-null-calibration-methodology -- same species of finding ('what survives when the baseline is calibrated properly') on a new surface (code generation instead of QA). NOT B10 (owns infilling). NOT a revived A05.",
+    "owner_RESOLVED_20260812": {
+      "owner": "B10-dllm-infilling-ar-dominance, as pre-registered sub-claim S4 (see B10/PROPOSAL.md §5b and B10/STATUS.json:subclaim_S4_inherited_from_A05). B10 stays in backlog/.",
+      "A01_suggestion_rejected": "A01 is a null-calibration protocol -- input-blind nulls, best-constant floors, permutation nulls, calibrated residual fractions. This finding contains NO null; it is baseline-configuration + harness-validity. Filing it under A01 would dilute A01's single crisp claim while A01 is already in MAJOR REVISION after an external audit retracted two claims and downgraded a third.",
+      "new_proposal_rejected": "after measurement the evidence is one integer on one model on two benchmarks + a one-driver bug with nil blast radius. No live hypothesis remains that a standalone kill gate could fail.",
+      "novelty_still_owed": "YES -- S4-G0 is a hard blocker and was NOT done (Semantic Scholar HTTP 429 on every attempt)."
+    },
+    "statement_CORRECTED_20260812": "The original statement overstated the post-processing defect. Measured correction: the stitch defect's severity is CONDITIONAL on the canvas -- +0.61 pp at canvas=8 (the published operating point, 1 item: HumanEval/13), +4.27 pp at 32, +31.10 pp at 128 -- because at initial_masks=8 only 1 of 164 raw outputs is multi-line and a double-indent can only corrupt a multi-line body. So this is ONE artefact (canvas) plus a second defect whose severity the first was masking, i.e. an INTERACTION -- not two independent artefacts of comparable size. The canvas leg itself is unaffected by this correction: the MBPP+ .0899->.3545 measurement runs on a code path with no stitch at all."
   },
   "source_repo_corrections_propagated": {
     "two_disk_note": "dllm_draft exists on BOTH disks with DIFFERENT contents, and dllm_draft_104 is a third checkout. All three were checked and handled differently on purpose.",
@@ -416,5 +423,17 @@
     "blast_radius_checked_not_assumed": "defect (a) is confined to generate_evalplus_dreamon.py: generate_evalplus_dream.py and generate_evalplus_dream_alg.py log nfe=args.steps (fixed schedule, correct by construction), and generate_kspan.py / generate_infilling.py use the hook-based ForwardCostTracker. Defect (c) touches only combine_humaneval_prompt. So the infilling / k-span numbers do NOT inherit either defect.",
     "regression_tests": "test_combines_already_indented_dreamon_body + test_stitch_preserves_relative_indentation_depth (asserts depths [4,8,4]). The pre-existing test covered only the UNINDENTED body, which is why the bug survived. All 4 stitch tests pass on both zwfy6 checkouts.",
     "preexisting_unrelated_breakage": "the full test module cannot import on the zwfy6 checkouts due to a stale scaffold_coder.tokenizer_utils missing edit_source_token_ids -- PRE-EXISTING and unrelated to these fixes; the stitch functions were exercised in isolation rather than 'fixing' an unrelated checkout."
+  },
+  "blast_radius_20260812": {
+    "prereg": "A05_BLAST_RADIUS_PREREGISTRATION.md, F1-F4, committed bed7e43 BEFORE the first grep",
+    "verdict": "F2 CONFIRMED (nil blast radius). F1 does NOT fire. F3 does NOT fire. F4 does NOT fire.",
+    "gpu": "0 -- re-grade of stored outputs only, no model loaded",
+    "arms_regraded": 17,
+    "arms_affected": 2,
+    "arms_affected_which": "dreamon_heplus.r1 (+0.61 pp) and dreamon_heplus_r2 (+0.61 pp) -- both the already-known DreamOn HE+ path; 1 item each (HumanEval/13), 0 items lost",
+    "structural_reason": "combine_humaneval_prompt -- the only function containing the buggy textwrap.indent -- is defined and called in exactly ONE driver (scripts/generate_evalplus_dreamon.py) and only on the branch args.dataset=='humaneval'. Verified on all three checkouts (wzc1 5735d72, zwfy6 9651406, _104 d214d37c). AR and Dream drivers use combine_base_continuation = extract_python(prompt+continuation), which never indents. Scaffold writes solution = result.text with no post-processing. kspan/refine have their own separate logic on a different surface.",
+    "brief_premise_rejected": "The premise that published numbers in DLLM_RESULTS_20260807.md are affected, including the AR control .707/.680, is WRONG. Both reproduce exactly (.7073/.6772) with 0 items on the buggy branch. There is NO shared stitch, therefore also NO diffusion-vs-AR asymmetry finding.",
+    "table_reproduction_bonus": "all 15 published DreamOn/Dream-Coder/Scaffold values reproduce within +-0.28 pp (worst case 1 item of 378) under an independently written grader on the OTHER disk -- a cross-disk reproduction of the results table",
+    "evidence": "evidence/a05_blast_radius.json ; code/a05_blast_radius_audit.py ; A05_BLAST_RADIUS_AND_SCAFFOLD_VERDICT.md"
   }
 }

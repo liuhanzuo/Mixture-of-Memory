@@ -247,6 +247,80 @@ this repo already retracted twice (Retractions 6 and 7).
 
 ---
 
+## 5b. Sub-claim S4 — baseline invocation on FULL-PROGRAM generation (inherited from A05, 2026-08-12)
+
+**Provenance**: A05 was killed 2026-08-12 by its own K1 gate. Its closeout left one finding without an
+owner and *suggested* A01. **That suggestion was examined and rejected** — A01 is a null-calibration
+protocol (input-blind nulls, floors, permutation tests) and this finding contains no null. It is a
+**baseline-configuration / harness-validity** result on the **same model family, same repo, same run
+tree** that B10 already owns, and it is the full-program counterpart of B10's own infilling audit.
+Full argument + evidence:
+`../../archive/A05-structural-dllm-cost-frontier/A05_BLAST_RADIUS_AND_SCAFFOLD_VERDICT.md`.
+
+### S4 as it may be stated (and no stronger)
+
+> On full-program code generation (HumanEval+ / MBPP+), the reported weakness of DreamOn-v0-7B is
+> substantially an artefact of **one sampler-config integer**: `initial_masks` 8→32, every other knob
+> frozen, moves MBPP+ `.0899 → .3545` (+26.5 pp) and HE+ `.1280 → .2561`. The MBPP+ leg is measured on
+> a code path with **no** post-processing stitch, so it is uncontaminated by the HE+ stitch defect.
+> A second, **one-driver** post-processing defect (a double-indent in `combine_humaneval_prompt`)
+> additionally understates HE+ — but **only once the canvas is large**: +0.61 pp at canvas=8,
+> +4.27 pp at 32, +31.10 pp at 128.
+
+### Two things S4 must NOT be written as (both were in the handoff framing; both are wrong)
+
+1. **NOT "two independent artefacts each larger than typical method deltas."** The stitch defect's
+   severity is *created* by fixing the canvas: at the published operating point (`initial_masks=8`)
+   only **1 of 164** raw outputs is multi-line, so the double-indent has almost nothing to corrupt and
+   costs exactly **1 item**. It is an **interaction**, not a second standalone 31 pp defect.
+2. **NOT "published numbers across the repo are affected, including the AR control."** Measured: **nil
+   blast radius.** 17 arms re-graded as-run vs corrected; **2** move (both already-known DreamOn HE+
+   arms, +0.61 pp each). Every other arm has **exactly 0** items on the buggy branch — AR, Dream-Coder
+   and all four Scaffold tiers are immune **structurally** (different drivers; Scaffold does no
+   post-processing at all). There is **no shared stitch**, so there is also **no diffusion-vs-AR
+   asymmetry** to claim.
+
+### ★ S4 KILL GATE (pre-registered; **0 GPU authorised by this document**)
+
+**S4-G0 — novelty, and it is a hard blocker.** Not yet done (Semantic Scholar returned HTTP 429 on
+every attempt 2026-08-12). Must cover: (i) the baseline-tuning literature, i.e. properly-configured
+baselines erasing claimed gains; (ii) code-eval harness sensitivity — post-processing / answer
+extraction / prompt format moving HumanEval pass@1; (iii) dLLM generation-length or canvas budget
+sensitivity. Venue rules: OpenReview `venueid` + `Camera_Ready_Revision` for ICLR/NeurIPS/ICML;
+ACL Anthology + DBLP for the ACL family.
+
+> **KILL S4 if** any existing paper already shows that a mask-diffusion LM's full-program code score
+> is dominated by its initial-canvas/length budget. In that case S4 is a **reproduction**, and it may
+> be cited as a protocol caveat but must not be presented as a finding.
+
+**S4-G1 — does it generalise beyond one model? (~4–6 GPU-h, only if S4-G0 clears.)**
+Sweep `initial_masks` on a **second** mask-diffusion model on the same two benchmarks.
+
+> **KILL S4 as a general claim if** the second model's pass@1 does not move by ≥10 pp across a
+> comparable canvas sweep. Then S4 collapses to "DreamOn-v0-7B specifically was mis-invoked in this
+> repo" — a **correction to our own record, already applied in `DLLM_RESULTS_20260807.md`**, worth a
+> footnote and nothing more. **This is the expected outcome and S4 must not be rescued from it.**
+
+**S4-G2 — is the ceiling known?** DreamOn's HE+ is monotone in canvas up to c128 and its true peak is
+**unknown and ≥ .4817**; `he_c512` / `mbpp_c128` / `mbpp_c512` never ran. Any "DreamOn reaches X"
+statement must be written as a **lower bound**.
+
+### What S4 already settles for B10's benefit (0 GPU, done, evidence on disk)
+
+* Scaffold Medium `.177`/`.354` — previously READ from a summary table, single round, from a wzc1-only
+  29 GB checkpoint — is now **RAN**: `.1768` / `.3545`, re-graded from its own stored per-item programs
+  on `.73` with a self-tested grader. All four Scaffold tiers reproduce. 1.6 MB staged; the 29 GB
+  checkpoint was **never needed**, because that driver writes `solution = result.text` with no
+  post-processing, so the stored program *is* the graded artefact.
+* Every published DreamOn / Dream-Coder / Scaffold value in `DLLM_RESULTS_20260807.md` reproduces to
+  **±0.28 pp** (worst case 1 item of 378) under an independently written grader on the other disk —
+  a **cross-disk reproduction of the results table**, reusable for B10's own number-integrity claims.
+* Defect (a) (`nfe = len(output.history)`, not a forward count) is confirmed confined to **one**
+  driver. `generate_evalplus_dream*.py` log `nfe = args.steps` (a declared step budget); the two smoke
+  scripts correctly name the field `history_length`.
+
+---
+
 ## 6. Cost to first result
 
 | step | GPU | note |
