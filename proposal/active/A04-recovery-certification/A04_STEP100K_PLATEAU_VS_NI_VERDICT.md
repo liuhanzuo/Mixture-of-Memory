@@ -143,6 +143,18 @@ was UNMEASURED is now measured.
 | 150 000 | **UNDEFINED** (no in-domain PPL on disk at this step) | — | 3/3 | not evaluable |
 | 200 000 | ACCEPT | 0.13173 | 3/3 | YES (the pilot's cell, unchanged) |
 
+> ⚠️ **SUPERSEDED IN PART, 2026-08-12 (`ac70809`) — every `rate_5k` in this table is
+> conditional on the 4-point PPL grid `{50k, 100k, 147k, 200k}`, and two entries changed
+> when a 150 000 PPL point was measured.** See
+> [`A04_STEP150K_PPL_CLOSES_PLATEAU_GRID.md`](A04_STEP150K_PPL_CLOSES_PLATEAU_GRID.md).
+> On the 5-point grid: step 150 000 becomes **ACCEPT** (`rate_5k = 0.22602`) and therefore
+> **evaluable and disagreeing**, no longer "not evaluable"; and step 200 000's `rate_5k`
+> moves **`0.13173 → 0.12607`** because its predecessor interval changes from
+> `147k→200k` (d=53 000) to `150k→200k` (d=50 000). **Both values are correct on their own
+> grid** — `rate_5k` is a function of the grid, not of the run, so it must always be quoted
+> with its grid. No verdict changes (all ≪ T = 2.0) and the earliest disagreement stays at
+> **100 000**, since the new point is later and cannot move it earlier.
+
 **Two checkpoints where PLATEAU is UNDEFINED, reported because it limits the bracket.**
 `olmo2_ppl_results/` carries the keep7f2 in-domain PPL at steps **{50 000, 100 000, 147 000,
 200 000}** only. Step **150 000 has no PPL**, and step **50 000 is the first trajectory point**

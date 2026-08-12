@@ -139,6 +139,13 @@ Under R3, `PLATEAU` first accepts at **step 100 000** (`rate_5k = 0.86012 %/5k`)
   this is not a negligible relocation.
 * Step 200 000 **still accepts** under R3 (`rate_5k = 0.13173 %/5k` ≪ 2.0), so the pilot's
   single measured cell survives the repair and the disagreement it found is not withdrawn.
+  > ⚠️ **2026-08-12 (`ac70809`)**: `0.13173` is the value on the **4-point** PPL grid
+  > `{50k, 100k, 147k, 200k}` — the grid every `rate_5k` in §1's table above is computed on.
+  > A 150 000 PPL point has since been measured, moving step 200 000's predecessor interval
+  > from d=53 000 to d=50 000 and its `rate_5k` to **`0.12607`**. Both values are correct on
+  > their own grid: `rate_5k` is a function of the grid, not of the run, so it must always be
+  > quoted with its grid. Verdict unchanged (both ≪ T = 2.0). 5-point values:
+  > [`A04_STEP150K_PPL_CLOSES_PLATEAU_GRID.md`](A04_STEP150K_PPL_CLOSES_PLATEAU_GRID.md).
 * But **any claim about *where* the earliest disagreement lies now requires step-100 000
   capability scoring**, which is GPU work and was **not done here**.
 

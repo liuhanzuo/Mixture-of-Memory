@@ -56,11 +56,18 @@ python code/pilot_zero_rule_disagreement.py \
 > 2. **"both plateau readings" — both of those readings are now superseded.** Both were
 >    dimensionally invalid on an irregular grid (15.70× stringency spread; the linear one
 >    also non-composition-consistent and vacuous at `d ≥ 250 000`). Under the repaired rule
->    `rate_5k < T`, step 200 000 **still accepts** (`0.13173 %/5k`), so this checkpoint's
+>    `rate_5k < T`, step 200 000 **still accepts** (`0.13173 %/5k` on the 4-point PPL grid
+>    `{50k,100k,147k,200k}`; **`0.12607` on the 5-point grid** after a 150 000 point was
+>    measured 2026-08-12 — `rate_5k` is a function of the grid, not of the run, so it must be
+>    quoted with its grid. Both accept; verdict unchanged), so this checkpoint's
 >    cell survives — but the *earliest* accept moves to step **100 000**, where **no
 >    capability axis was scored**. The "single PLATEAU-accept checkpoint" above is no longer
 >    the only one; it is the only one that was **measured**.
->    → `evidence/a04_plateau_rule_repair.json`.
+>    → `evidence/a04_plateau_rule_repair.json` (4-point),
+>    `evidence/a04_plateau_rule_repair_5pt.json` (5-point).
+>    ★ Step 100 000 has since BEEN scored — see `A04_STEP100K_PLATEAU_VS_NI_VERDICT.md`
+>    (PLATEAU accepts, NI rejects 3/3 → they disagree) and
+>    `A04_STEP150K_PPL_CLOSES_PLATEAU_GRID.md`.
 >
 > The retraction in `b93247f` (K1 = INDETERMINATE) is unaffected and still stands.
 
