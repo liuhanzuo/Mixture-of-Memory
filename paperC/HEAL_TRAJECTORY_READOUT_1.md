@@ -1,5 +1,29 @@
 # Heal-trajectory read-out #1 — MMLU-Pro on the first five milestones
 
+> ⚠️⚠️ **SUPERSEDED AS A COMPETENCE READ-OUT, 2026-08-13** — see
+> `paperC/READOUT_V2_PREREGISTRATION.md`. §4 of this document identified the
+> defect; v2 fixes it and **re-judges all cells**. Three things in the table below
+> must not be quoted as they stand:
+>
+> 1. **`qwen3_8b_base/k8` un-healed is NOT below its null.** The `−0.881 pp`
+>    BELOW-floor reading is the `always-E`-vs-`always-A` marginal gap. Under the
+>    permutation null it is **−0.139 pp, p = 0.0964, n.s.** This dissolves P1, the
+>    contrast §8 uses to identify `H_heal`.
+> 2. **§4's `+1.132 pp` "largest residual" is an artefact of NOT stratifying by
+>    `n_opt`.** The modal letter `E` is only a legal option on 11405/12032 items;
+>    `P(gold=E | E legal) = .100745`, not `.095495`. Stratified, the residual is
+>    **−0.139 pp**. Stratification moves this cell by **−1.271 pp**.
+> 3. **The §4 recommendation (`modal_share > 0.6` + `residual < 0.5 pp` ⇒
+>    degenerate) is NOT adopted.** paperC's own scope discipline says modal share
+>    and floor verdict are decoupled, and the new table confirms it:
+>    `llama3/k12` has modal share **0.339** and is still empty (+0.002 pp,
+>    p = 0.997). Modal share is descriptive only in v2; the *capacity* gate does
+>    the admissibility work.
+>
+> Everything else here stands: the integrity assertions (§7), the rotation race
+> and its fix (§6), the corpus caveat (§8), and the refusal to apply §8's outcome
+> labels (§4) — which v2 upholds for a second, stronger reason.
+
 **Date** 2026-08-13, 01:40-02:08 +08:00. **Cost 5.57 GPU-h** of a 120 GPU-h budget (4.6%).
 Nodes `.73` + `.82` (8×H20 each, zwfy6). Training on `.104` was **not touched**.
 

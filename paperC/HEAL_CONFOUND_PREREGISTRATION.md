@@ -177,6 +177,33 @@ disable.** All eval is offline on checkpoints, which is what the rule wants.
 
 ## 8. Pre-registered read-out
 
+> ⚠️⚠️ **AMENDED 2026-08-13 — the outcome labels below are NOT APPLICABLE AS
+> WRITTEN.** See `paperC/READOUT_V2_PREREGISTRATION.md`.
+>
+> The `H_heal` / `H_family` dichotomy is operationalised on "letter accuracy vs
+> the best-constant floor", which is **satisfiable by changing which letter a
+> degenerate model collapses onto** — `always-A` *is* the floor by construction,
+> and the statistic swings **2.193 pp** across collapse letters with no competence
+> involved. Two specific consequences:
+>
+> * **`H_heal supported` has a false antecedent.** It requires the un-healed twin
+>   to "sit below" its floor. Under the letter-collapse-proof permutation null the
+>   un-healed `qwen3_8b_base/k8` is at **−0.139 pp, p = 0.0964, n.s.** — not below.
+>   The asymmetry the branch depends on does not exist.
+> * **`H_family supported` is equally unavailable.** It requires the healed arm to
+>   be "significantly BELOW floor", and **no cell** among the 27 measured is
+>   significantly below its permutation null.
+>
+> **What replaces them** (v2 §8): at step 121000, ask whether the healed arm shows
+> **material item-level signal** (`Delta_perm = acc − acc_hat` significant,
+> positive, and `≥ 0.10 ×` the same family's intact anchor) or remains at
+> `NO_ITEM_LEVEL_SIGNAL` like every damaged cell measured so far.
+>
+> **Everything else in this section stands unchanged** — the harness, `MAXLEN=2048`,
+> `add_bos 0`, `desc_style none`, `chat_template=False`, 8 shards, the integrity
+> assertions, the fixed floor `always-A 0.116606` (still the *instrument-validity*
+> null, per v2 §3), and the read-out step **121000**, which must NOT be re-chosen.
+
 Scored with the **unchanged** harness — `scripts/_run_mmlu_pro_letter_content_8gpu.sh`
 plus `paperC/code/mmlu_pro_power_nulls.py` — at `MAXLEN=2048`, `add_bos 0`,
 `desc_style none`, `chat_template=False`, 8 shards, asserting `n_trunc == 0` and

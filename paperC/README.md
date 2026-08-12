@@ -123,9 +123,24 @@ They are load-bearing; the self-falsification narrative is part of the contribut
   from the OLMo-2 leg alone, RETRACTED by #252: MMLU-Pro's `llama2_7b/k8`
   (p = 0.0168) and `qwen3_8b_base/k8` (p = 0.0362) are significantly below floor.
   The separating variable looks like **heal vs no-heal**, not benchmark.
+  > ⚠️ **NARROWED 2026-08-13** (`READOUT_V2_PREREGISTRATION.md`). These two cells
+  > are below the **arm-independent best-constant** floor, which is the correct
+  > null for the *instrument-validity* claim and that claim stands. But both are
+  > below it **because they collapse onto a letter other than `A`**, and `always-A`
+  > is the floor by construction. Against an arm-conditional permutation null
+  > neither is below: `qwen3/k8` **−0.139 pp, p = 0.0964**; `llama2/k8` **−0.416 pp,
+  > p = 0.1002**. So "below floor" here is a statement about the **interface**, not
+  > evidence that the arm is *worse than input-blind*. Do not use these cells to
+  > argue heal-vs-no-heal: under the collapse-proof null the P1 asymmetry vanishes.
 - ✗ "damage drives letter to or below its floor" as a **universal** — it is **14/15**
   on the cross-family MMLU-Pro cells; `qwen3_8b_base/k14` is significantly **above**
   its floor (+0.233 pp, p = 0.0192) at hw 0.191 pp, i.e. a real exception, not noise.
+  > ⚠️ **The `k14` exception is WEAKER than this reads, 2026-08-13.** It is
+  > significant against the permutation null too (+0.267 pp, p = 0.0066) but at
+  > `recovery_fraction = 0.049`, i.e. **9.1%** of the same family's intact anchor —
+  > under A04's 10% materiality bar — while emitting `A` on **94.6%** of 12032
+  > items. v2 labels it `TRACE_SIGNAL`, not a capability. Report it as "a real but
+  > immaterial exception", never as "k14 retains MMLU-Pro competence".
 - ✗ **any number from the FIRST cross-family MMLU-Pro launch**
   (`mmlu_pro_lc_crossfamily_results/`, `MAXLEN=1536`) — 10 of its 15 cells were
   scored with the labelled option body partly left-truncated and `llama2_7b_base`
