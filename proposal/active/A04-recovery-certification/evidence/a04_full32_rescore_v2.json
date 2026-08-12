@@ -1,0 +1,181 @@
+{
+ "what": "independent re-scoring of full32_dolmino@step25000 on the two RATIO-flip-critical axes (nq_open, popqa) plus triviaqa, protocol-identical to the 2026-08-03 archive, to settle whether A04's first non-trivial rule disagreement survives",
+ "date": "2026-08-12",
+ "node": ".73 (8xH20 sm_90)",
+ "control_reproduces_archived_json": true,
+ "protocol_recovered": {
+  "source": "logs/cb_full32_step25000_sched.out and logs/cb_full32_step25000_nqopen_sched.out on zwfy6 -- the archive's OWN scheduler logs, which echo the full parameter set",
+  "driver": "scripts/_run_closedbook_8shard.sh",
+  "base_model": "../models/OLMo-2-1124-7B",
+  "model_args": "--ckpt outputs/olmo2_probe2_7B_full32_dolmino/step25000.pt --keep_front_layers 32 --n_fresh_layers 0",
+  "batch_size": 32,
+  "add_bos": 0,
+  "num_shards": 8,
+  "max_new_tokens": 32,
+  "max_ctx_len": 512,
+  "chat_template": false,
+  "protocol": "base LM (mode=pruned, greedy do_sample=False, num_beams=1)",
+  "task_split": "popqa,triviaqa in one invocation then nq_open in a second -- matching the archive's two-call structure",
+  "scorer_md5": "2ed41993241226c795a3ca38375933f7",
+  "scorer_md5_identical_on_both_disks": true,
+  "scorer_unchanged_since": "commit 9fabb88 (2026-08-02), i.e. before the 2026-08-03 archive -- so this is a same-CODE comparison, not a code-version diff",
+  "stack": {
+   "python": "3.14.6",
+   "torch": "2.13.0",
+   "transformers": "5.5.4",
+   "cuda": "13.2",
+   "installed": "2026-07-10, before the archive"
+  },
+  "archive_node": ".104 (8xH20 sm_90)",
+  "rescore_node": ".73 (8xH20 sm_90)",
+  "same_arch_same_stack": true
+ },
+ "integrity": {
+  "loader": "proposal/shared/code/canonical_eval_loaders.py::load_cb -- enforces 8/8 shards, exact n, no duplicate item_id, no nan; merge NOT hand-rolled",
+  "n_expected": {
+   "triviaqa": 17944,
+   "popqa": 14267,
+   "nq_open": 3610
+  },
+  "n_observed_v2": {
+   "triviaqa": 17944,
+   "popqa": 14267,
+   "nq_open": 3610
+  },
+  "shards": "8/8 on every axis, shard_fail=0 on both merges",
+  "duplicate_item_ids": 0,
+  "nan_rows": 0,
+  "item_ids_aligned_across_arms": true
+ },
+ "result": {
+  "headline": "BIT-IDENTICAL. All three re-scored axes reproduce the archive to the last digit, with ZERO item flips and ZERO prediction-string flips; 24/24 per-example shard files are byte-identical (sha256).",
+  "per_axis": {
+   "triviaqa": {
+    "decision_axis": true,
+    "acc_archived": 0.5715002229157379,
+    "acc_v2": 0.5715002229157379,
+    "delta_pp": 0.0,
+    "bit_identical": true,
+    "ni_margin_pp_archived": -0.6035443602318322,
+    "ni_margin_pp_v2": -0.6035443602318322,
+    "ni_accept_archived": false,
+    "ni_accept_v2": false,
+    "ni_verdict_changed": false
+   },
+   "popqa": {
+    "decision_axis": true,
+    "acc_archived": 0.18420130370785728,
+    "acc_v2": 0.18420130370785728,
+    "delta_pp": 0.0,
+    "bit_identical": true,
+    "ni_margin_pp_archived": -4.539146281628934,
+    "ni_margin_pp_v2": -4.539146281628934,
+    "ni_accept_archived": false,
+    "ni_accept_v2": false,
+    "ni_verdict_changed": false
+   },
+   "mmlu_content": {
+    "decision_axis": true,
+    "acc_archived": 0.4662441247685515,
+    "acc_v2": 0.4662441247685515,
+    "delta_pp": 0.0,
+    "bit_identical": true,
+    "ni_margin_pp_archived": 1.049529981484119,
+    "ni_margin_pp_v2": 1.049529981484119,
+    "ni_accept_archived": true,
+    "ni_accept_v2": true,
+    "ni_verdict_changed": false
+   },
+   "nq_open": {
+    "decision_axis": false,
+    "acc_archived": 0.15817174515235458,
+    "acc_v2": 0.15817174515235458,
+    "delta_pp": 0.0,
+    "bit_identical": true,
+    "ni_margin_pp_archived": -3.6578947368421035,
+    "ni_margin_pp_v2": -3.6578947368421035,
+    "ni_accept_archived": false,
+    "ni_accept_v2": false,
+    "ni_verdict_changed": false
+   }
+  },
+  "em_flips": {
+   "triviaqa": 0,
+   "popqa": 0,
+   "nq_open": 0
+  },
+  "pred_string_flips": {
+   "triviaqa": 0,
+   "popqa": 0,
+   "nq_open": 0
+  },
+  "shard_files_byte_identical": "24/24",
+  "ratio_rule": {
+   "rho": 0.85,
+   "per_axis_ratio_archived": {
+    "triviaqa": 0.8993247391037447,
+    "popqa": 0.7442650807136788,
+    "mmlu_content": 0.9907687651331719,
+    "nq_open": 0.7716216216216216
+   },
+   "per_axis_ratio_v2": {
+    "triviaqa": 0.8993247391037447,
+    "popqa": 0.7442650807136788,
+    "mmlu_content": 0.9907687651331719,
+    "nq_open": 0.7716216216216216
+   },
+   "mean_ratio_archived": 0.8514950516430542,
+   "mean_ratio_v2": 0.8514950516430542,
+   "margin_over_rho_archived": 0.0014950516430541905,
+   "margin_over_rho_v2": 0.0014950516430541905,
+   "ratio_accept_archived": true,
+   "ratio_accept_v2": true,
+   "RATIO_STILL_ACCEPTS": true
+  },
+  "disagreement_archived": {
+   "ratio_accept": true,
+   "n_decision_axes": 3,
+   "n_ni_reject": 2,
+   "ni_rejects_on_ge2_of_3": true,
+   "DISAGREEMENT": true
+  },
+  "disagreement_v2": {
+   "ratio_accept": true,
+   "n_decision_axes": 3,
+   "n_ni_reject": 2,
+   "ni_rejects_on_ge2_of_3": true,
+   "DISAGREEMENT": true
+  },
+  "DISAGREEMENT_SURVIVES": true,
+  "full_json_identical_excluding_paths": true
+ },
+ "sensitivity_batch_size_probe": {
+  "why": "a same-protocol re-run is bit-identical, so it bounds RUNTIME jitter at exactly 0.0 pp but says nothing about how fragile RATIO is to a perturbation that DOES move items. Batch size is the known such perturbation on this harness (bf16 numerics depend on left-pad width). bs=48 vs the archive's 32 is therefore the informative probe.",
+  "admissibility": "NOT an admissible re-measurement -- the frozen protocol is bs=32. These numbers quantify fragility; they never enter a verdict.",
+  "per_axis": [
+   {
+    "task": "popqa",
+    "acc_bs32": 0.18420130370785728,
+    "acc_bs48": 0.18406112006728814,
+    "delta_pp": -0.014018364056914145,
+    "em_flips": 12
+   },
+   {
+    "task": "nq_open",
+    "acc_bs32": 0.15817174515235458,
+    "acc_bs48": 0.1587257617728532,
+    "delta_pp": 0.05540166204986152,
+    "em_flips": 10
+   }
+  ],
+  "ratio_under_probe": {
+   "mean_ratio_bs32": 0.8514950516430542,
+   "mean_ratio_bs48": 0.8520291243733886,
+   "margin_bs32": 0.0014950516430541905,
+   "margin_bs48": 0.0020291243733886466,
+   "ratio_accept_bs48": true,
+   "margin_moved_by": 0.0005340727303344561
+  },
+  "finding": "under a genuine item-moving perturbation (22 items flipped across the two axes) RATIO's margin WIDENS from +0.0014951 to +0.0020291 -- it does not approach the flip point. The two flip-critical axes moved in OPPOSITE directions (popqa -0.014 pp, nq_open +0.055 pp), which is why the mean is more stable than any single axis."
+ }
+}

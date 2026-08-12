@@ -1523,5 +1523,84 @@
     "a03_scorer_md5_differs_across_disks": "zwfy6 8b454b55800b622564ec08c5c8c4dd4b vs wzc1 4571d7606b99bfd5463a0246282ec478. DIFFED: the only difference is inside cell()'s reporting (residual_fraction_of_reported/_of_headroom split, 2026-08-10) and console format. NO null- or metric-producing function differs, so nulls and metrics are identical under either copy.",
     "nodes_used": ".73 as a CPU host only (0% GPU throughout). NOT touched: .104 (paperC Qwen3 heal), .82 (A02 j=0), LOCAL/.21 (SparseForge).",
     "paperB_qwen_defect_does_not_reach_this": "no paperB Qwen number is used; all rows are OLMo-2, so the OPEN Instruct-mislabelled-as-base defect in status/ISSUES.jsonl does not affect these results."
+  },
+  "full32_rescore_v2_20260812": {
+    "what": "ADDITIVE. Independent re-scoring of full32_dolmino@step25000 on triviaqa/popqa/nq_open, protocol-identical to the 2026-08-03 archive, to settle whether the RATIO-accepts-while-NI-rejects disagreement of shallow_rung_ni_discrimination_20260812 4.3 survives a second measurement. Archived dirs NOT overwritten; results in *_v2 dirs.",
+    "verdict": "DISAGREEMENT_SURVIVES_RESCORING_IS_BIT_IDENTICAL",
+    "document": "A04_FULL32_RESCORE_V2_VERDICT.md",
+    "evidence": [
+      "evidence/a04_full32_rescore_v2.json",
+      "evidence/a04_shallow_rung_ni_7b_full32v2.json"
+    ],
+    "code": [
+      "code/a04_full32_rescore_v2_compare.py",
+      "code/a04_shallow_rung_ni_7b.py (2 inert optional flags added; defaults = archived dirs)"
+    ],
+    "node": ".73 only (8xH20 sm_90). .104/.82/LOCAL/.21 untouched.",
+    "wall_time_s": {
+      "rescore": 962,
+      "bs48_probe": 286
+    },
+    "gpu_h_spent": 2.7733333333333334,
+    "protocol_recovered": {
+      "source": "the archive's OWN scheduler logs zwfy6:logs/cb_full32_step25000{,_nqopen}_sched.out, which echo the full parameter set",
+      "driver": "scripts/_run_closedbook_8shard.sh",
+      "batch_size": 32,
+      "add_bos": 0,
+      "num_shards": 8,
+      "max_new_tokens": 32,
+      "max_ctx_len": 512,
+      "chat_template": false,
+      "protocol": "base LM, mode=pruned, greedy do_sample=False num_beams=1",
+      "scorer_md5": "2ed41993241226c795a3ca38375933f7 -- identical on BOTH disks and identical to commit 9fabb88 (2026-08-02), i.e. committed BEFORE the archive and unmodified since => same-CODE comparison, not code-version drift",
+      "stack": "py3.14.6 / torch2.13.0 / tf5.5.4 / cuda13.2, installed 2026-07-10 on both .73 and .104",
+      "archive_node": ".104",
+      "rescore_node": ".73",
+      "same_arch_same_stack": true
+    },
+    "result": {
+      "headline": "BIT-IDENTICAL. All 3 re-scored axes reproduce the archive to the last digit; 0 EM flips, 0 pred-string flips, 24/24 per-example shard files byte-identical by sha256.",
+      "em": {
+        "triviaqa": "0.5715002229157379 -> 0.5715002229157379 (delta 0.000000 pp, 0 flips)",
+        "popqa": "0.18420130370785728 -> 0.18420130370785728 (delta 0.000000 pp, 0 flips)",
+        "nq_open": "0.15817174515235458 -> 0.15817174515235458 (delta 0.000000 pp, 0 flips)"
+      },
+      "ratio_mean_ratio": "0.8514950516430542 unchanged; margin over rho +0.0014950516430541905 unchanged",
+      "RATIO_STILL_ACCEPTS": true,
+      "NI_full32": "triviaqa REJECT -0.603544 / popqa REJECT -4.539146 / mmlu_content ACCEPT +1.049530 -- all identical",
+      "DISAGREEMENT_SURVIVES": true,
+      "control_run": "re-running the committed analysis with NO overrides reproduces evidence/a04_shallow_rung_ni_7b.json structurally identically, so the equality is demonstrated against a re-execution, not a transcribed table",
+      "all_conventions": "split/first/last/credit x all 3 arms x all cells identical"
+    },
+    "correction_to_the_jitter_premise": {
+      "prior_claim": "A04_SHALLOW_RUNG_NI_DISCRIMINATION_VERDICT.md 6.2 said 0.1353 pp of harness jitter would flip RATIO; the dispatch corrected that to a same-code bound of 0.0892 pp.",
+      "my_finding": "the 0.0892 pp figure is ALSO not runtime jitter. It is shortgpt16 STAGE(bs=32, _run_closedbook_8shard.sh) vs _v2/_v3(bs=8, _run_olmo2_p24_eval_ladder_prev2_73.sh:189 / _run_olmo2_within_disk_floor_v3.sh:183) -- a BATCH-SIZE difference. _v2 vs _v3, same bs on DIFFERENT nodes (.73 vs .104), agree at 0.33097414177440926 exactly: 0.0000 pp, 0 EM flips.",
+      "conclusion": "there is NO measured runtime-jitter floor on this harness. Every 'jitter' number in evidence/a04_shallow_rung_remeasurement_sensitivity.json is either a code-version diff or a batch-size diff. memory/same-harness-runs-bit-identical confirmed and extended to the closed-book axes and across nodes.",
+      "footnote": "_v2 vs _v3 differ in 2/17944 prediction STRINGS (items 9697, 17733; degenerate repetition loops, em=0 both), so 2 shard files differ byte-wise while the metric does not. On full32 even that did not occur: 0 pred-string flips."
+    },
+    "sensitivity_bs48_probe": {
+      "why": "a bit-identical re-run bounds RUNTIME jitter at 0.0 pp but says nothing about robustness to a perturbation that DOES move items. Batch size is the known such perturbation (bf16 numerics depend on left-pad width).",
+      "admissibility": "NOT admissible -- frozen protocol is bs=32. Quantifies fragility only; never enters a verdict.",
+      "popqa": "0.18420130370785728 -> 0.18406112006728814 (-0.014018 pp, 12/14267 flips)",
+      "nq_open": "0.15817174515235458 -> 0.15872576177285320 (+0.055402 pp, 10/3610 flips)",
+      "ratio_under_probe": "mean_ratio 0.8514950516430542 -> 0.8520291243733886; margin over rho +0.0014950516 -> +0.0020291244, i.e. it WIDENS by +0.000534 and still ACCEPTS",
+      "mechanism": "the two flip-critical axes moved in OPPOSITE directions, so the 4-axis mean is materially more stable than any single axis. The prior 6.2 fragility table computed each axis's flip threshold one axis at a time, which assumes the worst case that only the fragile axis moves."
+    },
+    "what_this_does_and_does_not_clear": {
+      "cleared": "the 6.2 fragility blocker: RATIO's accept of full32 is no longer 'one re-scoring away from vanishing'. A04's first NON-TRIVIAL rule disagreement (on the one arm where 'recovered' is defensible at 97.7% MMLU recovery) is verified.",
+      "NOT_cleared": [
+        "full32 is a ZERO-DAMAGE control, so the disagreement is about continued-pretraining drift, not recovery from structural injury",
+        "every DAMAGED rung is still constant-REJECT at 16.5-72.4 bootstrap SE across two scales, 50-87.5% depth kept, 5k-220k heal steps",
+        "the margin is still thin in ABSOLUTE terms (+0.0015 ~ 3.3 nq_open items) even though it did not move -- report the number, not 'robust'",
+        "no 7B sd_run exists (one seed per rung, seeds unrecorded); the cross-scale caveat stands"
+      ],
+      "supersedes": "A04_SHALLOW_RUNG_NI_DISCRIMINATION_VERDICT.md 6.2 -- its concern was legitimate and correctly flagged; the test it asked for has now been run and came back clean."
+    },
+    "trajectory_scan_NOT_run": {
+      "why": "the four intermediate full32 ckpts (step5000/10000/15000/20000, 81.6 GiB each) are wzc1-ONLY. find outputs -name 'step*.pt' -path '*full32*' on zwfy6 returns ONLY step25000.pt. LOCAL/.21 (where they live) are running SparseForge #246 until 08-13 ~11:10/~15:30 and are outside this dispatch's GPU budget.",
+      "measured_transfer_rate": "3 GiB dd|ssh wzc1->.73 took 183 s = 16 MiB/s => 89 min per ckpt, ~5 h for all four (326 GiB) BEFORE any GPU work",
+      "recommendation": "run it on LOCAL/.21 when SparseForge frees them -- the ckpts are already there, zero transfer. Est. 4 ckpts x 3 axes ~ 1.4 h wall / 11 GPU-h at this run's measured rate, plus a separate MMLU-content invocation.",
+      "expectation_to_design_for": "full32@25k is the ENDPOINT of the trajectory and already sits at 97.7% MMLU recovery with triviaqa only 1.86 SE from accepting. Earlier ckpts are LESS converged so should reject HARDER: the accept boundary is most likely BEYOND step25000 or off this trajectory, not between 5000 and 25000. The scan is worth having as the discrimination curve but should not be sold in advance as likely to find an accept."
+    }
   }
 }

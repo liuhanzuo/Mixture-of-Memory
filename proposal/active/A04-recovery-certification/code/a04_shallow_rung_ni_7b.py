@@ -247,6 +247,21 @@ def main():
     ap.add_argument("--d5_cb", default="", help="2nd intact CB measurement dir")
     ap.add_argument("--d5_mm", default="", help="2nd intact MMLU measurement dir")
     ap.add_argument("--out_json", required=True)
+    # 2026-08-12: independent-re-scoring overrides for the full32 zero-damage
+    # control. DEFAULTS ARE THE ARCHIVED DIR NAMES, so omitting them reproduces
+    # the 2026-08-12 16:20 run byte-for-byte -- verified by re-running with no
+    # overrides and diffing the output JSON. Added because `RATIO(0.85)`'s
+    # accept of full32 clears rho by only +0.0014951, i.e. 0.0924 pp (nq_open)
+    # / 0.1116 pp (popqa) of accuracy from flipping, and full32 had exactly ONE
+    # scoring per axis, so the fragility flagged in
+    # `A04_SHALLOW_RUNG_NI_DISCRIMINATION_VERDICT.md` §6.2 was uncheckable.
+    # These flags let a second, protocol-identical scoring be substituted
+    # WITHOUT touching `ni_rule`, `ratio_rule`, the anchor (guard G2), `Delta`,
+    # `rho`, or any threshold. Only the full32 ARM's input directories move.
+    ap.add_argument("--full32_cb", default="full32_step25000",
+                    help="full32 closed-book dir (triviaqa+popqa)")
+    ap.add_argument("--full32_nq", default="full32_step25000_nqopen",
+                    help="full32 nq_open dir")
     args = ap.parse_args()
 
     mm_root = os.path.join(args.raw_root, "olmo2_mmlu_content_results")
@@ -263,8 +278,8 @@ def main():
         # zero-damage control: undamaged 32L, continued-pretrained on the heal
         # corpus. An ARM, never the anchor (guard G2).
         "full32_dolmino_step25k": {"mmlu": "7B_full32_step25000",
-                                   "cb": "full32_step25000",
-                                   "nq": "full32_step25000_nqopen"},
+                                   "cb": args.full32_cb,
+                                   "nq": args.full32_nq},
     }
 
     data, prov = {}, {}
