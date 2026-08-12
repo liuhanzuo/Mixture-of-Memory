@@ -1,0 +1,563 @@
+{
+ "what": "A04 PLATEAU(T) dimensional repair: diagnose the unscaled and linear-scaled readings, define a grid-invariant rule, and exercise all three on the real irregular trajectory.",
+ "date": "2026-08-10",
+ "gpu_spent": 0,
+ "preregistration": {
+  "T_pct_per_5k": 2.0,
+  "frozen_by_commit": "d1ba737",
+  "T_is_unchanged_by_this_repair": true,
+  "what_is_post_hoc": "the CHOICE of reading R3 over R1/R2, decided 2026-08-10 after the PPL trajectory was seen. Disclosed, not concealed. No new numeric constant is introduced and T is not retuned.",
+  "repair_direction_is_costly_to_A04": "R3 is strictly stricter than R2 at every d > 5000, so the repair makes PLATEAU harder to accept and the PLATEAU-vs-NI disagreement harder to find."
+ },
+ "defect_R1_unscaled": {
+  "statement": "compares an interval-length-dependent quantity to a per-5k threshold; stringency is set by the grid.",
+  "frozen_gate_grid": [
+   2500,
+   5000,
+   10000,
+   20000,
+   40000,
+   80000
+  ],
+  "per_checkpoint": [
+   {
+    "checkpoint": 2500,
+    "preceding": 0,
+    "interval_steps": 2500,
+    "R1_effective_per5k_threshold_pct": 3.960000000000008,
+    "distortion_vs_T": 1.980000000000004,
+    "T_linear_pct": 1.0,
+    "T_compounded_pct": 1.005050633883342,
+    "R2_over_allowance_pp": -0.005050633883342037
+   },
+   {
+    "checkpoint": 5000,
+    "preceding": 2500,
+    "interval_steps": 2500,
+    "R1_effective_per5k_threshold_pct": 3.960000000000008,
+    "distortion_vs_T": 1.980000000000004,
+    "T_linear_pct": 1.0,
+    "T_compounded_pct": 1.005050633883342,
+    "R2_over_allowance_pp": -0.005050633883342037
+   },
+   {
+    "checkpoint": 10000,
+    "preceding": 5000,
+    "interval_steps": 5000,
+    "R1_effective_per5k_threshold_pct": 2.0000000000000018,
+    "distortion_vs_T": 1.0000000000000009,
+    "T_linear_pct": 2.0,
+    "T_compounded_pct": 2.0000000000000018,
+    "R2_over_allowance_pp": -1.7763568394002505e-15
+   },
+   {
+    "checkpoint": 20000,
+    "preceding": 10000,
+    "interval_steps": 10000,
+    "R1_effective_per5k_threshold_pct": 1.005050633883342,
+    "distortion_vs_T": 0.502525316941671,
+    "T_linear_pct": 4.0,
+    "T_compounded_pct": 3.960000000000008,
+    "R2_over_allowance_pp": 0.03999999999999204
+   },
+   {
+    "checkpoint": 40000,
+    "preceding": 20000,
+    "interval_steps": 20000,
+    "R1_effective_per5k_threshold_pct": 0.5037943607311912,
+    "distortion_vs_T": 0.2518971803655956,
+    "T_linear_pct": 8.0,
+    "T_compounded_pct": 7.763184000000011,
+    "R2_over_allowance_pp": 0.2368159999999886
+   },
+   {
+    "checkpoint": 80000,
+    "preceding": 40000,
+    "interval_steps": 40000,
+    "R1_effective_per5k_threshold_pct": 0.2522152430096347,
+    "distortion_vs_T": 0.12610762150481736,
+    "T_linear_pct": 16.0,
+    "T_compounded_pct": 14.923697741821451,
+    "R2_over_allowance_pp": 1.0763022581785489
+   }
+  ],
+  "effective_threshold_fold_spread_across_frozen_grid": 15.700874985770525,
+  "most_lenient_checkpoint": 2500,
+  "most_strict_checkpoint": 80000
+ },
+ "defect_R2_linear": {
+  "statement": "correct units, wrong algebra: relative improvement compounds, so a linear allowance over-permits, and the over-permission grows with the interval.",
+  "over_allowance_table": [
+   {
+    "interval_steps": 2500,
+    "T_linear_pct": 1.0,
+    "T_compounded_pct": 1.005050633883342,
+    "over_allowance_pp": -0.005050633883342037,
+    "ratio": 0.9949747468305877,
+    "R2_vacuous": false
+   },
+   {
+    "interval_steps": 5000,
+    "T_linear_pct": 2.0,
+    "T_compounded_pct": 2.0000000000000018,
+    "over_allowance_pp": -1.7763568394002505e-15,
+    "ratio": 0.9999999999999991,
+    "R2_vacuous": false
+   },
+   {
+    "interval_steps": 10000,
+    "T_linear_pct": 4.0,
+    "T_compounded_pct": 3.960000000000008,
+    "over_allowance_pp": 0.03999999999999204,
+    "ratio": 1.0101010101010082,
+    "R2_vacuous": false
+   },
+   {
+    "interval_steps": 20000,
+    "T_linear_pct": 8.0,
+    "T_compounded_pct": 7.763184000000011,
+    "over_allowance_pp": 0.2368159999999886,
+    "ratio": 1.0305050092848487,
+    "R2_vacuous": false
+   },
+   {
+    "interval_steps": 40000,
+    "T_linear_pct": 16.0,
+    "T_compounded_pct": 14.923697741821451,
+    "over_allowance_pp": 1.0763022581785489,
+    "ratio": 1.0721203469005118,
+    "R2_vacuous": false
+   },
+   {
+    "interval_steps": 47000,
+    "T_linear_pct": 18.8,
+    "T_compounded_pct": 17.296267236890994,
+    "over_allowance_pp": 1.5037327631090065,
+    "ratio": 1.0869397276599493,
+    "R2_vacuous": false
+   },
+   {
+    "interval_steps": 50000,
+    "T_linear_pct": 20.0,
+    "T_compounded_pct": 18.29271931124533,
+    "over_allowance_pp": 1.7072806887546683,
+    "ratio": 1.0933311586815377,
+    "R2_vacuous": false
+   },
+   {
+    "interval_steps": 53000,
+    "T_linear_pct": 21.2,
+    "T_compounded_pct": 19.27716567916644,
+    "over_allowance_pp": 1.9228343208335588,
+    "ratio": 1.0997467341846647,
+    "R2_vacuous": false
+   },
+   {
+    "interval_steps": 80000,
+    "T_linear_pct": 32.0,
+    "T_compounded_pct": 27.620227940750443,
+    "over_allowance_pp": 4.379772059249557,
+    "ratio": 1.1585711772055187,
+    "R2_vacuous": false
+   },
+   {
+    "interval_steps": 100000,
+    "T_linear_pct": 40.0,
+    "T_compounded_pct": 33.239202824490576,
+    "over_allowance_pp": 6.760797175509424,
+    "ratio": 1.203398294814943,
+    "R2_vacuous": false
+   },
+   {
+    "interval_steps": 150000,
+    "T_linear_pct": 60.0,
+    "T_compounded_pct": 45.45156806175631,
+    "over_allowance_pp": 14.548431938243688,
+    "ratio": 1.3200864691505545,
+    "R2_vacuous": false
+   },
+   {
+    "interval_steps": 250000,
+    "T_linear_pct": 100.0,
+    "T_compounded_pct": 63.58303199128832,
+    "over_allowance_pp": 36.41696800871168,
+    "ratio": 1.5727466411746653,
+    "R2_vacuous": true
+   }
+  ],
+  "boundary_rate_test": [
+   {
+    "interval_steps": 2500,
+    "rel_improve_pct": 1.0050506338833465,
+    "T_linear_pct": 1.0,
+    "R2_accepts_a_run_still_at_threshold_rate": false,
+    "rate_5k_pct": 1.9999999999999907,
+    "R3_accepts": true
+   },
+   {
+    "interval_steps": 5000,
+    "rel_improve_pct": 1.999999999999993,
+    "T_linear_pct": 2.0,
+    "R2_accepts_a_run_still_at_threshold_rate": true,
+    "rate_5k_pct": 1.9999999999999907,
+    "R3_accepts": true
+   },
+   {
+    "interval_steps": 10000,
+    "rel_improve_pct": 3.960000000000008,
+    "T_linear_pct": 4.0,
+    "R2_accepts_a_run_still_at_threshold_rate": true,
+    "rate_5k_pct": 2.0000000000000018,
+    "R3_accepts": false
+   },
+   {
+    "interval_steps": 20000,
+    "rel_improve_pct": 7.76318400000001,
+    "T_linear_pct": 8.0,
+    "R2_accepts_a_run_still_at_threshold_rate": true,
+    "rate_5k_pct": 2.0000000000000018,
+    "R3_accepts": false
+   },
+   {
+    "interval_steps": 40000,
+    "rel_improve_pct": 14.923697741821442,
+    "T_linear_pct": 16.0,
+    "R2_accepts_a_run_still_at_threshold_rate": true,
+    "rate_5k_pct": 2.0000000000000018,
+    "R3_accepts": false
+   },
+   {
+    "interval_steps": 53000,
+    "rel_improve_pct": 19.277165679166437,
+    "T_linear_pct": 21.2,
+    "R2_accepts_a_run_still_at_threshold_rate": true,
+    "rate_5k_pct": 2.0000000000000018,
+    "R3_accepts": false
+   },
+   {
+    "interval_steps": 80000,
+    "rel_improve_pct": 27.620227940750443,
+    "T_linear_pct": 32.0,
+    "R2_accepts_a_run_still_at_threshold_rate": true,
+    "rate_5k_pct": 2.0000000000000018,
+    "R3_accepts": false
+   }
+  ],
+  "vacuous_at_interval_steps_ge": 250000.0,
+  "composition_consistency": {
+   "n_trials": 200000,
+   "seed": 0,
+   "forward_violations": 0,
+   "backward_violations": 174
+  },
+  "composition_consistency_alt_seed": {
+   "n_trials": 200000,
+   "seed": 1,
+   "forward_violations": 0,
+   "backward_violations": 161
+  }
+ },
+ "repair_R3": {
+  "formula": "rate_5k(c) = 100*(1 - (ppl_c/ppl_prev)**(5000/d)); accept iff rate_5k(c) < T with T = 2.0 unchanged",
+  "equals_prereg_arithmetic_at_d_5000": [
+   {
+    "ppl_prev": 17.6,
+    "ppl": 17.2,
+    "rel_pct": 2.2727272727272845,
+    "rate_5k_pct": 2.272727272727282,
+    "abs_diff": 2.6645352591003757e-15
+   },
+   {
+    "ppl_prev": 10.0,
+    "ppl": 9.8,
+    "rel_pct": 1.999999999999993,
+    "rate_5k_pct": 1.9999999999999907,
+    "abs_diff": 2.220446049250313e-15
+   },
+   {
+    "ppl_prev": 16.1613,
+    "ppl": 15.9,
+    "rel_pct": 1.6168253791464815,
+    "rate_5k_pct": 1.6168253791464804,
+    "abs_diff": 1.1102230246251565e-15
+   },
+   {
+    "ppl_prev": 17.619441896079884,
+    "ppl": 16.161295049729876,
+    "rel_pct": 8.275783392857797,
+    "rate_5k_pct": 8.275783392857793,
+    "abs_diff": 3.552713678800501e-15
+   }
+  ],
+  "composition_consistency": {
+   "n_trials": 200000,
+   "seed": 0,
+   "forward_violations": 0,
+   "backward_violations": 0
+  },
+  "composition_consistency_alt_seed": {
+   "n_trials": 200000,
+   "seed": 1,
+   "forward_violations": 0,
+   "backward_violations": 0
+  },
+  "never_vacuous": true,
+  "vacuity_note": "rate_5k has the same range at every d, so no spacing makes the rule unfalsifiable -- unlike R2, which cannot reject at d >= 250000."
+ },
+ "trajectory_per_checkpoint": [
+  {
+   "step": 50000,
+   "ppl": 17.619441896079884,
+   "interval_steps": null,
+   "rel_improve_pct": null,
+   "rate_5k_pct": null,
+   "R1_unscaled_accept": null,
+   "R2_linear_accept": null,
+   "R3_repaired_accept": null,
+   "T_linear_pct": null,
+   "R1_effective_per5k_threshold_pct": null
+  },
+  {
+   "step": 100000,
+   "ppl": 16.161295049729876,
+   "interval_steps": 50000,
+   "rel_improve_pct": 8.275783392857797,
+   "rate_5k_pct": 0.8601172081512454,
+   "R1_unscaled_accept": false,
+   "R2_linear_accept": true,
+   "R3_repaired_accept": true,
+   "T_linear_pct": 20.0,
+   "R1_effective_per5k_threshold_pct": 0.2018231358430378
+  },
+  {
+   "step": 147000,
+   "ppl": 15.628480830626273,
+   "interval_steps": 47000,
+   "rel_improve_pct": 3.2968534852193576,
+   "rate_5k_pct": 0.3560056972761516,
+   "R1_unscaled_accept": false,
+   "R2_linear_accept": true,
+   "R3_repaired_accept": true,
+   "T_linear_pct": 18.8,
+   "R1_effective_per5k_threshold_pct": 0.21469162541357667
+  },
+  {
+   "step": 150000,
+   "ppl": 15.607276788333472,
+   "interval_steps": 3000,
+   "rel_improve_pct": 0.1356756457815712,
+   "rate_5k_pct": 0.22602379487420832,
+   "R1_unscaled_accept": true,
+   "R2_linear_accept": true,
+   "R3_repaired_accept": true,
+   "T_linear_pct": 1.2,
+   "R1_effective_per5k_threshold_pct": 3.311061396069681
+  },
+  {
+   "step": 200000,
+   "ppl": 15.411630407090653,
+   "interval_steps": 50000,
+   "rel_improve_pct": 1.2535587335073433,
+   "rate_5k_pct": 0.12606867323571302,
+   "R1_unscaled_accept": true,
+   "R2_linear_accept": true,
+   "R3_repaired_accept": true,
+   "T_linear_pct": 20.0,
+   "R1_effective_per5k_threshold_pct": 0.2018231358430378
+  }
+ ],
+ "grid_robustness_same_terminal_different_preceding": {
+  "step100000": {
+   "terminal_step": 100000,
+   "n_subgrids": 1,
+   "rows": [
+    {
+     "preceding_step": 50000,
+     "interval_steps": 50000,
+     "rel_improve_pct": 8.275783392857797,
+     "rate_5k_pct": 0.8601172081512454,
+     "R1_accept": false,
+     "R2_accept": true,
+     "R3_accept": true
+    }
+   ],
+   "rel_min": 8.275783392857797,
+   "rel_max": 8.275783392857797,
+   "rel_fold_spread": 1.0,
+   "rate_min": 0.8601172081512454,
+   "rate_max": 0.8601172081512454,
+   "rate_fold_spread": 1.0,
+   "R1_verdict_unanimous": true,
+   "R3_verdict_unanimous": true
+  },
+  "step147000": {
+   "terminal_step": 147000,
+   "n_subgrids": 2,
+   "rows": [
+    {
+     "preceding_step": 50000,
+     "interval_steps": 97000,
+     "rel_improve_pct": 11.299796424860517,
+     "rate_5k_pct": 0.6161762819037686,
+     "R1_accept": false,
+     "R2_accept": true,
+     "R3_accept": true
+    },
+    {
+     "preceding_step": 100000,
+     "interval_steps": 47000,
+     "rel_improve_pct": 3.2968534852193576,
+     "rate_5k_pct": 0.3560056972761516,
+     "R1_accept": false,
+     "R2_accept": true,
+     "R3_accept": true
+    }
+   ],
+   "rel_min": 3.2968534852193576,
+   "rel_max": 11.299796424860517,
+   "rel_fold_spread": 3.4274487706294536,
+   "rate_min": 0.3560056972761516,
+   "rate_max": 0.6161762819037686,
+   "rate_fold_spread": 1.7308045534614132,
+   "R1_verdict_unanimous": true,
+   "R3_verdict_unanimous": true
+  },
+  "step150000": {
+   "terminal_step": 150000,
+   "n_subgrids": 3,
+   "rows": [
+    {
+     "preceding_step": 50000,
+     "interval_steps": 100000,
+     "rel_improve_pct": 11.420140998870657,
+     "rate_5k_pct": 0.6044939351862788,
+     "R1_accept": false,
+     "R2_accept": true,
+     "R3_accept": true
+    },
+    {
+     "preceding_step": 100000,
+     "interval_steps": 50000,
+     "rel_improve_pct": 3.4280561037443853,
+     "rate_5k_pct": 0.34821156059803293,
+     "R1_accept": false,
+     "R2_accept": true,
+     "R3_accept": true
+    },
+    {
+     "preceding_step": 147000,
+     "interval_steps": 3000,
+     "rel_improve_pct": 0.1356756457815712,
+     "rate_5k_pct": 0.22602379487420832,
+     "R1_accept": true,
+     "R2_accept": true,
+     "R3_accept": true
+    }
+   ],
+   "rel_min": 0.1356756457815712,
+   "rel_max": 11.420140998870657,
+   "rel_fold_spread": 84.17237252186237,
+   "rate_min": 0.22602379487420832,
+   "rate_max": 0.6044939351862788,
+   "rate_fold_spread": 2.6744703385000013,
+   "R1_verdict_unanimous": false,
+   "R3_verdict_unanimous": true
+  },
+  "step200000": {
+   "terminal_step": 200000,
+   "n_subgrids": 4,
+   "rows": [
+    {
+     "preceding_step": 50000,
+     "interval_steps": 150000,
+     "rel_improve_pct": 12.530541557507803,
+     "rate_5k_pct": 0.4452740355922691,
+     "R1_accept": false,
+     "R2_accept": true,
+     "R3_accept": true
+    },
+    {
+     "preceding_step": 100000,
+     "interval_steps": 100000,
+     "rel_improve_pct": 4.63864214057371,
+     "rate_5k_pct": 0.23720194789003113,
+     "R1_accept": false,
+     "R2_accept": true,
+     "R3_accept": true
+    },
+    {
+     "preceding_step": 147000,
+     "interval_steps": 53000,
+     "rel_improve_pct": 1.3875336053819771,
+     "rate_5k_pct": 0.13172918300312642,
+     "R1_accept": true,
+     "R2_accept": true,
+     "R3_accept": true
+    },
+    {
+     "preceding_step": 150000,
+     "interval_steps": 50000,
+     "rel_improve_pct": 1.2535587335073433,
+     "rate_5k_pct": 0.12606867323571302,
+     "R1_accept": true,
+     "R2_accept": true,
+     "R3_accept": true
+    }
+   ],
+   "rel_min": 1.2535587335073433,
+   "rel_max": 12.530541557507803,
+   "rel_fold_spread": 9.995974837531934,
+   "rate_min": 0.12606867323571302,
+   "rate_max": 0.4452740355922691,
+   "rate_fold_spread": 3.53199588893691,
+   "R1_verdict_unanimous": false,
+   "R3_verdict_unanimous": true
+  }
+ },
+ "what_changes_for_pilot_zero": {
+  "first_accept_step_R1_unscaled": 150000,
+  "first_accept_step_R2_linear": 100000,
+  "first_accept_step_R3_repaired": 100000,
+  "R3_accepts_earlier_than_R1": true,
+  "relative_ppl_improvement_remaining_after_R3_first_accept_pct": 4.63864214057371,
+  "honest_consequence": "under R3 the PLATEAU-accept checkpoint on this trajectory moves EARLIER (step 100,000, not 200,000). Pilot Zero's capability axes were only scored at step 200,000, so the repaired rule's own first-accept checkpoint has NO capability measurement -- the PLATEAU-vs-NI cell at step 100,000 is UNMEASURED, not resolved. Step 200,000 still accepts under R3 (rate 0.1317 %/5k), so the pilot's single measured cell survives the repair; but a claim about WHERE the earliest disagreement lies would need step-100,000 capability scoring, which is GPU work and is not done here."
+ },
+ "HEADLINE": {
+  "R1_stringency_fold_spread_on_frozen_grid": 15.700874985770525,
+  "R2_backward_composition_violations": 174,
+  "R3_backward_composition_violations": 0,
+  "R3_first_accept_step": 100000,
+  "R1_first_accept_step": 150000,
+  "step200000_rate_5k_pct": 0.12606867323571302,
+  "step200000_accepts_under_R3": true,
+  "gate_is_now_runnable_on_an_irregular_grid": true
+ },
+ "provenance": {
+  "ppl_json": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/proposal/active/A04-recovery-certification/evidence/a04_1b_keep7f2_ppl_trajectory_5pt.json",
+  "trajectory": [
+   [
+    50000,
+    17.619441896079884
+   ],
+   [
+    100000,
+    16.161295049729876
+   ],
+   [
+    147000,
+    15.628480830626273
+   ],
+   [
+    150000,
+    15.607276788333472
+   ],
+   [
+    200000,
+    15.411630407090653
+   ]
+  ],
+  "canonical_ppl_source": "zwfy6:olmo2_ppl_results/1B_keep7_step{50000,100000,147000,200000}/summary.json (n_shards=8, n_tokens=8384512, n_windows=4096) + 1B_base_full for the intact reference; these four values also appear in evidence/pilot_zero_rule_disagreement.json:ppl_trajectory.",
+  "frozen_grid_source": "A04_GATE_DESIGN.md:155",
+  "defect_site": "code/pilot_zero_rule_disagreement.py:168-202 (plateau_rule, both readings)"
+ }
+}

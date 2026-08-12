@@ -575,8 +575,22 @@ def main():
             "It is one, and these cells reinforce that rather than rescue it: "
             "a rung where NI can never accept cannot demonstrate that a rule "
             "DISCRIMINATES, only that the two rules differ somewhere.",
+            # R1's earliest accept is DERIVED, never asserted. This string used
+            # to hardcode "step 200 000", which was true on the 4-point PPL grid
+            # {50k,100k,147k,200k} but became FALSE the moment a 150 000 point
+            # was added: R1 compares an interval-length-dependent quantity to a
+            # per-5k threshold, so the short d=3000 interval 147k->150k yields
+            # rel=0.1357 % < T and R1 accepts at 150 000. That is R1's
+            # grid-dependence defect (the very thing R3 repairs) showing up as a
+            # relocation of its own first accept, so it must be read off the
+            # trajectory rather than frozen in prose.
             "Any claim about the pre-registered reading R1. R1's earliest "
-            "accept is step 200 000 and is unaffected by these cells.",
+            f"accept on this PPL grid is step {min(r1_accepts) if r1_accepts else None} "
+            "and is unaffected by these capability cells (R1 is a function of "
+            "the PPL trajectory alone). NOTE: unlike R3, R1's first accept is "
+            "GRID-DEPENDENT -- adding a checkpoint with a short preceding "
+            "interval can move it earlier without any change to the underlying "
+            "run, which is exactly the defect the repair documents.",
         ],
         "provenance": {
             "raw_root": os.path.abspath(args.raw_root),
