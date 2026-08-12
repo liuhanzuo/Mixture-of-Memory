@@ -1,0 +1,223 @@
+{
+  "analysis": "A04_pilot_one_stage_B_falsifiability_and_recovery_level",
+  "what_it_answers": "PILOT_ONE_PREREG.md \u00a75 known-unverified item 3: 'Whether 5,000 steps at keep12 produces enough recovery for NI to ever accept.' K2 is BLIND to this: a saturated deficit is highly reproducible across seeds, so a constant-REJECT rung passes K2 easily.",
+  "gpu_h_additional": 0,
+  "arm": "keep12+fresh2, OLMo-2-0425-1B, 5,000 steps, dolmino, seeds {101,102,103}",
+  "intact_anchor": {
+    "pinned_by": "rule G0; evidence/a04_g0_anchor_sha256_pinning.json",
+    "cb_dir": "A03_1B_base",
+    "nq_dir": "A03_1B_base_nq",
+    "mmlu_dir": "A03_1B_base"
+  },
+  "estimator": {
+    "residual": "reported - null (construct-appropriate best-constant)",
+    "deficit": "residual(intact) - residual(arm) == reported(intact) - reported(arm); the null cancels EXACTLY, so the deficit is convention-independent",
+    "ni_rule": "NI(Delta) ACCEPTS iff deficit <= Delta, Delta = 0.10 * residual(intact) (never substituted -- margin-guard verdict is RETIRE, not re-margin)",
+    "falsifiability_statistic": "(deficit - Delta) / sd_run, in units of the measured keep12 run-to-run sd"
+  },
+  "anchor_reproduces_prereg_delta": {
+    "triviaqa": {
+      "delta_recomputed_from_pinned_anchor_pp": 4.043134195274186,
+      "delta_prereg_pp": 4.043134195274186,
+      "abs_drift_pp": 0.0,
+      "reproduces_prereg_to_1e6": true
+    },
+    "popqa": {
+      "delta_recomputed_from_pinned_anchor_pp": 1.3205298941613515,
+      "delta_prereg_pp": 1.3205298941613512,
+      "abs_drift_pp": 2.220446049250313e-16,
+      "reproduces_prereg_to_1e6": true
+    },
+    "mmlu_content": {
+      "delta_recomputed_from_pinned_anchor_pp": 1.0238926078906136,
+      "delta_prereg_pp": 1.0238926078906136,
+      "abs_drift_pp": 0.0,
+      "reproduces_prereg_to_1e6": true
+    },
+    "nq_open": {
+      "delta_recomputed_from_pinned_anchor_pp": 0.9722991689750693,
+      "delta_prereg_pp": 0.9695290858725762,
+      "abs_drift_pp": 0.0027700831024930483,
+      "reproduces_prereg_to_1e6": false
+    }
+  },
+  "per_axis": {
+    "triviaqa": {
+      "decision_weight": true,
+      "null_pp": 0.2563530985287561,
+      "intact_reported_pp": 40.687695051270616,
+      "intact_residual_pp": 40.43134195274186,
+      "delta_pp": 4.043134195274186,
+      "keep12_seed_means_pct": {
+        "101": 9.256576014266606,
+        "102": 9.663397235844851,
+        "103": 9.072670530539456
+      },
+      "keep12_mean_pct": 9.330881260216971,
+      "keep12_sd_run_pp": 0.30229201489958313,
+      "keep12_residual_pp": 9.074528161688216,
+      "keep12_recovery_fraction_pct": 22.4442912933609,
+      "deficit_pp": 31.356813791053646,
+      "ni_verdict": "REJECT",
+      "deficit_minus_delta_pp": 27.313679595779462,
+      "deficit_minus_delta_in_sd_run": 90.3552798271984,
+      "deficit_in_sd_run": 103.7302086906593,
+      "keep7_20k_mean_pct": 9.556119037004013,
+      "keep7_20k_sd_run_pp": 0.40385537753737,
+      "keep7_20k_recovery_fraction_pct": 23.0013783597519,
+      "keep7_20k_ni_verdict": "REJECT"
+    },
+    "popqa": {
+      "decision_weight": true,
+      "null_pp": 2.29200252330553,
+      "intact_reported_pp": 15.497301464919044,
+      "intact_residual_pp": 13.205298941613513,
+      "delta_pp": 1.3205298941613512,
+      "keep12_seed_means_pct": {
+        "101": 5.579308894651994,
+        "102": 4.941473330062382,
+        "103": 5.095675334688441
+      },
+      "keep12_mean_pct": 5.205485853134273,
+      "keep12_sd_run_pp": 0.33279470298495445,
+      "keep12_residual_pp": 2.913483329828743,
+      "keep12_recovery_fraction_pct": 22.06298655343242,
+      "deficit_pp": 10.29181561178477,
+      "ni_verdict": "REJECT",
+      "deficit_minus_delta_pp": 8.971285717623418,
+      "deficit_minus_delta_in_sd_run": 26.957417402250563,
+      "deficit_in_sd_run": 30.925418942891227,
+      "keep7_20k_mean_pct": 3.8603070021728465,
+      "keep7_20k_sd_run_pp": 0.19587079438308358,
+      "keep7_20k_recovery_fraction_pct": 11.876326963906584,
+      "keep7_20k_ni_verdict": "REJECT"
+    },
+    "mmlu_content": {
+      "decision_weight": true,
+      "null_pp": 28.445022076627264,
+      "intact_reported_pp": 38.6839481555334,
+      "intact_residual_pp": 10.238926078906136,
+      "delta_pp": 1.0238926078906136,
+      "keep12_seed_means_pct": {
+        "101": 31.619427431989745,
+        "102": 31.697763851303236,
+        "103": 31.77610027061672
+      },
+      "keep12_mean_pct": 31.697763851303232,
+      "keep12_sd_run_pp": 0.07833641931348723,
+      "keep12_residual_pp": 3.252741774675968,
+      "keep12_recovery_fraction_pct": 31.768388106416246,
+      "deficit_pp": 6.986184304230168,
+      "ni_verdict": "REJECT",
+      "deficit_minus_delta_pp": 5.9622916963395545,
+      "deficit_minus_delta_in_sd_run": 76.11136363636452,
+      "deficit_in_sd_run": 89.1818181818192,
+      "keep7_20k_mean_pct": 32.19626833784361,
+      "keep7_20k_sd_run_pp": 0.05546845865046671,
+      "keep7_20k_recovery_fraction_pct": 36.63710659015822,
+      "keep7_20k_ni_verdict": "REJECT"
+    },
+    "nq_open": {
+      "decision_weight": false,
+      "null_pp": 0.5263157894736842,
+      "intact_reported_pp": 10.249307479224377,
+      "intact_residual_pp": 9.722991689750693,
+      "delta_pp": 0.9695290858725762,
+      "keep12_seed_means_pct": {
+        "101": 2.714681440443213,
+        "102": 2.2991689750692523,
+        "103": 2.4653739612188366
+      },
+      "keep12_mean_pct": 2.4930747922437675,
+      "keep12_sd_run_pp": 0.2091366879576383,
+      "keep12_residual_pp": 1.9667590027700834,
+      "keep12_recovery_fraction_pct": 20.22792022792023,
+      "deficit_pp": 7.756232686980609,
+      "ni_verdict": "REJECT",
+      "deficit_minus_delta_pp": 6.786703601108033,
+      "deficit_minus_delta_in_sd_run": 32.451042748093606,
+      "deficit_in_sd_run": 37.08690599782126,
+      "keep7_20k_mean_pct": 2.880886426592798,
+      "keep7_20k_sd_run_pp": 0.0750142050289564,
+      "keep7_20k_recovery_fraction_pct": 24.216524216524217,
+      "keep7_20k_ni_verdict": "REJECT"
+    }
+  },
+  "n_decision_axes_ni_rejects": 3,
+  "n_all_axes_ni_rejects": 4,
+  "min_decision_axis_excess_in_sd_run": 26.957417402250563,
+  "falsifiability_verdict": "CONSTANT_REJECT_AT_KEEP12",
+  "finding": "NI(Delta) REJECTS on 3/3 decision axes (and 4/4 including demoted nq_open). The SMALLEST margin by which any decision axis rejects is 27.0 x the measured keep12 sd_run, so no realisable seed draw flips NI to accept. keep12+fresh2 at 5,000 steps is a CONSTANT-REJECT rung -- the same defect that disqualified keep7 (PILOT_ZERO_VERDICT.md \u00a75) and precisely what prereg \u00a73 chose keep12 to escape. The NI-vs-PLATEAU disagreement is therefore automatic and uninformative at this rung, so Stage B did NOT deliver the falsifiable test it was launched to deliver.",
+  "engages_STAGE_B_DECISION_noise_floor_worry": {
+    "the_worry_verbatim": "STAGE_B_DECISION.md: 'the effect we'd measure at keep12 is plausibly < 0.5pp', i.e. inside run-to-run noise.",
+    "resolution": "The worry conflated TWO different quantities, and they land on opposite sides of the noise floor.",
+    "quantity_1_the_level_NI_adjudicates": "The keep12 DEFICIT vs the intact anchor is triviaqa 31.3568pp (104 sd_run), popqa 10.2918pp (31 sd_run), mmlu_content 6.9862pp (89 sd_run). This is FAR OUTSIDE the noise floor -- by 1-2 orders of magnitude. So NI's accept/reject decision at keep12 is not noise-limited at all; it is SATURATED. The noise-floor worry does not apply to it.",
+    "quantity_2_the_marginal_CPT_effect": "The marginal effect of MORE continued pre-training -- what A03 measured at -0.0293pp, CI95 [-0.672,+0.613], df=3 -- IS inside the noise floor. The worry was correct about this one.",
+    "why_that_is_worse_not_better_for_A04": "A04 needed the deficit to be COMPARABLE to Delta so that NI could sometimes accept and sometimes reject. Instead the deficit exceeds Delta by triviaqa 90 sd, popqa 27 sd, mmlu_content 76 sd. Being far outside the noise floor in the REJECT direction is not a rescue -- it is the constant-REJECT degeneracy. A04 is not killed by noise here; it is stalled by SATURATION, which no number of extra seeds can fix."
+  },
+  "bracketing_consequence": {
+    "prereg_anticipated_only_the_other_failure": "prereg \u00a75 item 3 says 'If keep12 turns out to be a constant-ACCEPT rung, the gate must bracket downward to keep10'. The observed failure is the OPPOSITE: constant-REJECT.",
+    "so_keep10_is_the_wrong_direction": "keep10 (75% depth) is MORE damaged than keep12 (87.5%), so it would reject harder. Bracketing DOWN cannot repair a constant-REJECT rung.",
+    "what_would_be_needed": "either LESS damage (keep14) or MANY more heal steps -- and A03 has already shown that 10x the token budget (200k steps / 52.43B tokens at keep7) does not close the gap. Neither option is authorised by any current prereg, and both are new GPU tranches, not re-analyses."
+  },
+  "keep7_comparison": {
+    "note": "keep7+fresh2 after 220,000 steps vs keep12+fresh2 after 5,000. keep12 reaches a COMPARABLE OR BETTER recovery fraction in 1/44th the steps, yet is still constant-REJECT.",
+    "recovery_fraction_pct": {
+      "triviaqa": {
+        "keep12_5k": 22.4442912933609,
+        "keep7_220k": 23.0013783597519
+      },
+      "popqa": {
+        "keep12_5k": 22.06298655343242,
+        "keep7_220k": 11.876326963906584
+      },
+      "mmlu_content": {
+        "keep12_5k": 31.768388106416246,
+        "keep7_220k": 36.63710659015822
+      },
+      "nq_open": {
+        "keep12_5k": 20.22792022792023,
+        "keep7_220k": 24.216524216524217
+      }
+    },
+    "both_rungs_ni_verdict": {
+      "triviaqa": {
+        "keep12_5k": "REJECT",
+        "keep7_220k": "REJECT"
+      },
+      "popqa": {
+        "keep12_5k": "REJECT",
+        "keep7_220k": "REJECT"
+      },
+      "mmlu_content": {
+        "keep12_5k": "REJECT",
+        "keep7_220k": "REJECT"
+      },
+      "nq_open": {
+        "keep12_5k": "REJECT",
+        "keep7_220k": "REJECT"
+      }
+    }
+  },
+  "plateau_side_not_measurable": {
+    "problem": "PLATEAU(T) needs in-domain val PPL on the checkpoint grid, and NO val PPL was computed for any Stage B checkpoint: the training logs contain zero val/eval lines and olmo2_ppl_results/ has no *stageB* directory.",
+    "consequence": "the NI-vs-PLATEAU DISAGREEMENT itself cannot be evaluated at keep12 from what is on disk -- only NI's half. K1 remains unadjudicated at this rung independently of everything above.",
+    "grid_coverage": "prereg grid is [2500,5000,10000,20000,40000,80000]; Stage B produced only 2500 and 5000 = 2 of 6 points."
+  },
+  "provenance": {
+    "results_root": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory",
+    "keep12_dirs": [
+      "A04_1B_stageB_keep12_seed101_step5000",
+      "A04_1B_stageB_keep12_seed102_step5000",
+      "A04_1B_stageB_keep12_seed103_step5000"
+    ],
+    "keep7_dirs": [
+      "A03_1B_arm3_cpt_step220000",
+      "A03_1B_dataorder_seed43_step220000",
+      "A03_1B_dataorder_seed44_step220000",
+      "A03_1B_dataorder_seed45_step220000"
+    ],
+    "integrity": "the 12 keep12 cells were asserted 8/8 shards + exact item counts + nan=0 by pilot_one_stage_b_s3.py; see evidence/pilot_one_stage_b_s3_verdict.json:integrity",
+    "mmlu_null_convention": "longest-option, split-tie (pre-registered). 0.25 is NEVER the MMLU null (design \u00a74.2); the letter interface is banned as a decision axis."
+  }
+}

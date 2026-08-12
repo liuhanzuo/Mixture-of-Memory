@@ -1,0 +1,98 @@
+{
+  "gate": "A04_pilot_one_stage_A_free_sd_run",
+  "prereg": {
+    "doc": "proposal/active/A04-recovery-certification/PILOT_ONE_PREREG.md",
+    "commit": "2ac0b5a",
+    "committed_before_data": true,
+    "estimator": "sd_run = |m_a - m_b| / sqrt(2)",
+    "bound": "t_(0.05,2)=2.92 * sd_run / sqrt(3)",
+    "rule": "K2 FIRES iff bound_3 > Delta on >= 2 of 3 decision axes",
+    "delta_pp": {
+      "triviaqa": 4.043134195274186,
+      "popqa": 1.3205298941613512,
+      "mmlu_content": 1.0238926078906136,
+      "nq_open": 0.9695290858725762
+    },
+    "decision_axes": [
+      "triviaqa",
+      "popqa",
+      "mmlu_content"
+    ],
+    "demoted_axes": [
+      "nq_open"
+    ]
+  },
+  "verdict": "STAGE_A_DOES_NOT_FIRE",
+  "rationale": "bound_3 <= Delta on all 3 decision axes. This is NOT a K2 clearance -- see one_directional_caveat. Stage B proceeds.",
+  "n_decision_axes_exceeding": 0,
+  "axes_exceeding": [],
+  "per_axis": {
+    "triviaqa": {
+      "status": "OK",
+      "mean_seed_a_pct": 9.256576014266606,
+      "mean_seed_b_pct": 9.663397235844851,
+      "abs_diff_pp": 0.4068212215782445,
+      "sd_run_pp": 0.2876660445085717,
+      "bound_S3_pp": 0.4849654792425171,
+      "delta_pp": 4.043134195274186,
+      "bound_exceeds_delta": false,
+      "decision_weight": true
+    },
+    "popqa": {
+      "status": "OK",
+      "mean_seed_a_pct": 5.579308894651994,
+      "mean_seed_b_pct": 4.941473330062382,
+      "abs_diff_pp": 0.6378355645896123,
+      "sd_run_pp": 0.45101785300326497,
+      "bound_S3_pp": 0.7603542142150254,
+      "delta_pp": 1.3205298941613512,
+      "bound_exceeds_delta": false,
+      "decision_weight": true
+    },
+    "mmlu_content": {
+      "status": "OK",
+      "mean_seed_a_pct": 31.619427431989745,
+      "mean_seed_b_pct": 31.697763851303232,
+      "abs_diff_pp": 0.07833641931348723,
+      "sd_run_pp": 0.05539221331043964,
+      "bound_S3_pp": 0.09338367105611117,
+      "delta_pp": 1.0238926078906136,
+      "bound_exceeds_delta": false,
+      "decision_weight": true
+    },
+    "nq_open": {
+      "status": "OK",
+      "mean_seed_a_pct": 2.714681440443213,
+      "mean_seed_b_pct": 2.299168975069252,
+      "abs_diff_pp": 0.41551246537396125,
+      "sd_run_pp": 0.2938116819334685,
+      "bound_S3_pp": 0.4953261806736067,
+      "delta_pp": 0.9695290858725762,
+      "bound_exceeds_delta": false,
+      "decision_weight": false
+    }
+  },
+  "one_directional_caveat": {
+    "large_sd_run": "KILLS -- shared apparatus, Pilot One would inherit it",
+    "small_sd_run": "does NOT clear K2",
+    "why_not": [
+      "wrong arm: keep7+fresh2 (56.2% depth), not keep12+fresh2 (87.5%)",
+      "wrong budget: 20,000 steps, not the 5,000 Pilot One would run",
+      "n=2 yields a range, not a variance with a usable CI"
+    ],
+    "consequence": "this script can never emit K2_CLEARED"
+  },
+  "provenance": {
+    "loaders": "load_cb / load_mmlu IMPORTED from A03 (module has no __main__ guard, so only its pre-driver prefix is exec'd) code/recompute_cpt_trajectory_paired.py -- not reimplemented; they carry the 8/8 shard, exact-item-count, duplicate-id and NaN assertions",
+    "loader_module": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/proposal/active/A03-parametric-vs-external-memory/code/recompute_cpt_trajectory_paired.py",
+    "results_root": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory",
+    "seeds": [
+      "101",
+      "102"
+    ],
+    "dir_template": "A04_1B_stageB_keep12_seed{seed}_step5000",
+    "mmlu_interface": "content_norm (letter interface is BANNED as a decision axis by A04 design 4.2)",
+    "manipulation_check": "arm3-vs-seed43 training-loss r=-0.0101 vs arm3-vs-arm6 +0.99966 (phase-lock broken)"
+  },
+  "problems": {}
+}

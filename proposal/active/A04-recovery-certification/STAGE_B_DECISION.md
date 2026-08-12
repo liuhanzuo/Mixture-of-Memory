@@ -1,8 +1,53 @@
 ---
 scope: A04 Pilot One Stage B — should we spend the 135 GPU-h? DECISION.
 date: 2026-08-11 05:00 GMT+8
-status: SUPERSEDED 2026-08-11 11:05 — Path A was launched under standing autonomy (seeds 101/102 done, 103 running on .73). Original recommendation was HOLD; the reasoning contained a retracted noise-floor claim. See the CORRECTION banner below before citing anything here.
+status: CLOSED 2026-08-12 — Stage B is harvested and adjudicated. See `STAGE_B_VERDICT.md`. This doc is retained for decision provenance only; do not cite its reasoning without reading the banners below.
 ---
+
+---
+
+> ## ✅ CLOSED 2026-08-12 — Stage B is harvested; this doc's question is settled
+>
+> Read **`STAGE_B_VERDICT.md`** instead of this file. Evidence:
+> `evidence/pilot_one_stage_b_s3_verdict.json` (md5 `7dc77ca81551b708d9bfaa582739cfad`) and
+> `evidence/pilot_one_stage_b_falsifiability.json` (md5 `1fd27cbed050a696cdf8a3b573ab5aa7`);
+> drivers `code/pilot_one_stage_b_s3.py` and `code/pilot_one_stage_b_falsifiability.py`.
+>
+> **What the harvest found, in two parts:**
+>
+> 1. **K2 does NOT fire.** S=3 `sd_run` at keep12 = 0.3023 / 0.3328 / 0.0783 pp →
+>    `bound₃` = 0.5096 / 0.5610 / 0.1321 pp against Δ = 4.0431 / 1.3205 / 1.0239 pp.
+>    0 of 3 decision axes exceed Δ (margins 7.93× / 2.35× / 7.75×). All 12 eval cells
+>    passed 8/8 shards + exact item counts + nan=0. **A04 does not die of seed variance.**
+> 2. **★ But the rung is CONSTANT-REJECT, and K2 is structurally blind to that.** NI(Δ)
+>    rejects on **4/4** axes by **27.0–90.4 × `sd_run`**. keep12@5k recovers only
+>    22.06–31.77% of the intact residual — comparable to keep7@220k in 1/44th the steps.
+>    No realisable seed draw flips NI to accept, so the NI-vs-PLATEAU disagreement is
+>    automatic and uninformative at keep12 — **the exact defect prereg §3 chose keep12 to
+>    escape.** K2 could not see it because a saturated deficit is highly *reproducible*
+>    across seeds; low variance is what saturation looks like.
+>
+> **This doc's central HOLD argument is now resolved — and it was wrong in a specific,
+> instructive way.** The worry was that the keep12 effect would be "< 0.5pp, i.e. inside
+> the noise floor". It conflated **two** quantities that land on **opposite** sides of the
+> floor:
+> * the **level NI adjudicates** — deficits of 31.3568 / 10.2918 / 6.9862 pp = **104 / 31 /
+>   89 × `sd_run`** — is *far outside* the floor. NI at keep12 is not noise-limited; it is
+>   **saturated**, so the noise-floor worry does not apply to it at all.
+> * the **marginal CPT effect** (A03: −0.0293 pp, CI95 [−0.672, +0.613], df=3) *is* inside
+>   the floor. The worry was right about this one.
+>
+> And being far outside the floor is **worse** for A04, not better: A04 needed the deficit
+> *comparable* to Δ so NI could sometimes accept. **A04 is not killed by noise; it is
+> stalled by saturation, and no number of extra seeds can fix saturation.**
+>
+> **Path B is moot** (already delivered at 0 GPU-h per the 2026-08-12 addendum) and
+> **bracketing down to keep10 provably goes the wrong way** — keep10 is *more* damaged than
+> keep12, so it rejects *harder*. prereg §5 item 3 anticipated only the opposite
+> (constant-ACCEPT) failure, so its prescribed repair does not apply.
+>
+> Pilot Two still requires explicit user approval and is **not** authorised by this or by
+> `STAGE_B_VERDICT.md`.
 
 ---
 

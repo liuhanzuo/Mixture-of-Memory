@@ -1,0 +1,440 @@
+{
+  "gate": "A04_pilot_one_stage_B_S3_sd_run",
+  "stage": "B",
+  "S": 3,
+  "seeds": [
+    101,
+    102,
+    103
+  ],
+  "arm": "keep12+fresh2 (--keep_front_layers 12 --n_fresh_layers 2), OLMo-2-0425-1B base, 5,000 steps, dolmino, 8xH20, zwfy6",
+  "gpu_h_spent": 135,
+  "gpu_h_additional_for_this_analysis": 0,
+  "prereg": {
+    "doc": "proposal/active/A04-recovery-certification/PILOT_ONE_PREREG.md",
+    "commit": "2ac0b5a",
+    "committed_before_data": true,
+    "estimator": "sd_run = sample sd over the S=3 seed means (ddof=1, df=2). Prereg \u00a73: 'recompute sd_run from S=3 (proper sd, df=2, t=2.920)'. Continuous with Stage A's |a-b|/sqrt(2), which is the n=2 case of this.",
+    "bound": "t_(0.05,2)=2.92 * sd_run / sqrt(3)",
+    "rule": "K2 FIRES iff bound_3 > Delta on >= 2 of 3 decision axes; exactly 1 -> INDETERMINATE (\u00a72.4)",
+    "rule_unchanged_from_stage_a": true,
+    "delta_pp": {
+      "triviaqa": 4.043134195274186,
+      "popqa": 1.3205298941613512,
+      "mmlu_content": 1.0238926078906136,
+      "nq_open": 0.9695290858725762
+    },
+    "decision_axes": [
+      "triviaqa",
+      "popqa",
+      "mmlu_content"
+    ],
+    "demoted_axes": [
+      "nq_open"
+    ],
+    "seeds_pinned_pre_data": [
+      101,
+      102,
+      103
+    ],
+    "no_post_hoc_seed_addition": "prereg \u00a73 forbids S=4 (t=2.353) or S=5 (t=2.132) chosen after seeing S=3."
+  },
+  "verdict": "K2_DOES_NOT_FIRE_AT_STAGE_B",
+  "rationale": "bound_3 <= Delta on all 3 decision axes at the S=3 point estimate. See k2_clearance_analysis before reading this as a clearance.",
+  "n_decision_axes_exceeding": 0,
+  "axes_exceeding": [],
+  "n_decision_axes_exceeding_at_sigma_ci_hi": 1,
+  "axes_exceeding_at_sigma_ci_hi": [
+    "popqa"
+  ],
+  "per_axis": {
+    "triviaqa": {
+      "status": "OK",
+      "seed_means_pct": {
+        "101": 9.256576014266606,
+        "102": 9.663397235844851,
+        "103": 9.072670530539456
+      },
+      "mean_of_seed_means_pct": 9.330881260216971,
+      "range_pp": 0.5907267053053946,
+      "sd_run_pp": 0.30229201489958313,
+      "df": 2,
+      "bound_S3_pp": 0.5096228584343542,
+      "delta_pp": 4.043134195274186,
+      "bound_exceeds_delta": false,
+      "margin_ratio_delta_over_bound": 7.933580938059498,
+      "sigma_chi2_95ci_pp": [
+        0.15739083651451005,
+        1.8998250277021267
+      ],
+      "bound_at_sigma_ci_lo_pp": 0.26533935414252763,
+      "bound_at_sigma_ci_hi_pp": 3.2028443141784724,
+      "would_fire_at_sigma_ci_hi": false,
+      "decision_weight": true
+    },
+    "popqa": {
+      "status": "OK",
+      "seed_means_pct": {
+        "101": 5.579308894651994,
+        "102": 4.941473330062382,
+        "103": 5.095675334688442
+      },
+      "mean_of_seed_means_pct": 5.205485853134273,
+      "range_pp": 0.6378355645896123,
+      "sd_run_pp": 0.33279470298495434,
+      "df": 2,
+      "bound_S3_pp": 0.5610462051514753,
+      "delta_pp": 1.3205298941613512,
+      "bound_exceeds_delta": false,
+      "margin_ratio_delta_over_bound": 2.3536918742812367,
+      "sigma_chi2_95ci_pp": [
+        0.1732723132226941,
+        2.0915263210890185
+      ],
+      "bound_at_sigma_ci_lo_pp": 0.29211334471211625,
+      "bound_at_sigma_ci_hi_pp": 3.526026390733963,
+      "would_fire_at_sigma_ci_hi": true,
+      "decision_weight": true
+    },
+    "mmlu_content": {
+      "status": "OK",
+      "seed_means_pct": {
+        "101": 31.619427431989745,
+        "102": 31.697763851303232,
+        "103": 31.77610027061672
+      },
+      "mean_of_seed_means_pct": 31.697763851303232,
+      "range_pp": 0.15667283862697445,
+      "sd_run_pp": 0.07833641931348723,
+      "df": 2,
+      "bound_S3_pp": 0.13206445411174028,
+      "delta_pp": 1.0238926078906136,
+      "bound_exceeds_delta": false,
+      "margin_ratio_delta_over_bound": 7.752976489981883,
+      "sigma_chi2_95ci_pp": [
+        0.040786504299152024,
+        0.492323589962404
+      ],
+      "bound_at_sigma_ci_lo_pp": 0.0687604497703442,
+      "bound_at_sigma_ci_hi_pp": 0.8299900190041349,
+      "would_fire_at_sigma_ci_hi": false,
+      "decision_weight": true
+    },
+    "nq_open": {
+      "status": "OK",
+      "seed_means_pct": {
+        "101": 2.714681440443213,
+        "102": 2.299168975069252,
+        "103": 2.4653739612188366
+      },
+      "mean_of_seed_means_pct": 2.493074792243767,
+      "range_pp": 0.41551246537396125,
+      "sd_run_pp": 0.2091366879576385,
+      "df": 2,
+      "bound_S3_pp": 0.35257575942212654,
+      "delta_pp": 0.9695290858725762,
+      "bound_exceeds_delta": false,
+      "margin_ratio_delta_over_bound": 2.749846125160843,
+      "sigma_chi2_95ci_pp": [
+        0.1088887454551555,
+        1.31436853905862
+      ],
+      "bound_at_sigma_ci_lo_pp": 0.18357148378074364,
+      "bound_at_sigma_ci_hi_pp": 2.215845007132419,
+      "would_fire_at_sigma_ci_hi": true,
+      "decision_weight": false
+    }
+  },
+  "integrity": {
+    "triviaqa": {
+      "101": {
+        "dir": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/olmo2_closedbook_results/A04_1B_stageB_keep12_seed101_step5000",
+        "shard_indices_present": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "shard_indices_missing": [],
+        "n_shards_present": 8,
+        "shards_complete": true,
+        "n_scored": 17944,
+        "n_expected": 17944,
+        "n_matches_expected": true,
+        "n_nan": 0,
+        "nan_is_zero": true
+      },
+      "102": {
+        "dir": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/olmo2_closedbook_results/A04_1B_stageB_keep12_seed102_step5000",
+        "shard_indices_present": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "shard_indices_missing": [],
+        "n_shards_present": 8,
+        "shards_complete": true,
+        "n_scored": 17944,
+        "n_expected": 17944,
+        "n_matches_expected": true,
+        "n_nan": 0,
+        "nan_is_zero": true
+      },
+      "103": {
+        "dir": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/olmo2_closedbook_results/A04_1B_stageB_keep12_seed103_step5000",
+        "shard_indices_present": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "shard_indices_missing": [],
+        "n_shards_present": 8,
+        "shards_complete": true,
+        "n_scored": 17944,
+        "n_expected": 17944,
+        "n_matches_expected": true,
+        "n_nan": 0,
+        "nan_is_zero": true
+      }
+    },
+    "popqa": {
+      "101": {
+        "dir": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/olmo2_closedbook_results/A04_1B_stageB_keep12_seed101_step5000",
+        "shard_indices_present": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "shard_indices_missing": [],
+        "n_shards_present": 8,
+        "shards_complete": true,
+        "n_scored": 14267,
+        "n_expected": 14267,
+        "n_matches_expected": true,
+        "n_nan": 0,
+        "nan_is_zero": true
+      },
+      "102": {
+        "dir": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/olmo2_closedbook_results/A04_1B_stageB_keep12_seed102_step5000",
+        "shard_indices_present": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "shard_indices_missing": [],
+        "n_shards_present": 8,
+        "shards_complete": true,
+        "n_scored": 14267,
+        "n_expected": 14267,
+        "n_matches_expected": true,
+        "n_nan": 0,
+        "nan_is_zero": true
+      },
+      "103": {
+        "dir": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/olmo2_closedbook_results/A04_1B_stageB_keep12_seed103_step5000",
+        "shard_indices_present": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "shard_indices_missing": [],
+        "n_shards_present": 8,
+        "shards_complete": true,
+        "n_scored": 14267,
+        "n_expected": 14267,
+        "n_matches_expected": true,
+        "n_nan": 0,
+        "nan_is_zero": true
+      }
+    },
+    "mmlu_content": {
+      "101": {
+        "dir": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/olmo2_mmlu_content_results/A04_1B_stageB_keep12_seed101_step5000",
+        "shard_indices_present": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "shard_indices_missing": [],
+        "n_shards_present": 8,
+        "shards_complete": true,
+        "n_scored": 14042,
+        "n_expected": 14042,
+        "n_matches_expected": true,
+        "n_nan": 0,
+        "nan_is_zero": true
+      },
+      "102": {
+        "dir": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/olmo2_mmlu_content_results/A04_1B_stageB_keep12_seed102_step5000",
+        "shard_indices_present": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "shard_indices_missing": [],
+        "n_shards_present": 8,
+        "shards_complete": true,
+        "n_scored": 14042,
+        "n_expected": 14042,
+        "n_matches_expected": true,
+        "n_nan": 0,
+        "nan_is_zero": true
+      },
+      "103": {
+        "dir": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/olmo2_mmlu_content_results/A04_1B_stageB_keep12_seed103_step5000",
+        "shard_indices_present": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "shard_indices_missing": [],
+        "n_shards_present": 8,
+        "shards_complete": true,
+        "n_scored": 14042,
+        "n_expected": 14042,
+        "n_matches_expected": true,
+        "n_nan": 0,
+        "nan_is_zero": true
+      }
+    },
+    "nq_open": {
+      "101": {
+        "dir": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/olmo2_closedbook_results/A04_1B_stageB_keep12_seed101_step5000_nq",
+        "shard_indices_present": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "shard_indices_missing": [],
+        "n_shards_present": 8,
+        "shards_complete": true,
+        "n_scored": 3610,
+        "n_expected": 3610,
+        "n_matches_expected": true,
+        "n_nan": 0,
+        "nan_is_zero": true
+      },
+      "102": {
+        "dir": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/olmo2_closedbook_results/A04_1B_stageB_keep12_seed102_step5000_nq",
+        "shard_indices_present": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "shard_indices_missing": [],
+        "n_shards_present": 8,
+        "shards_complete": true,
+        "n_scored": 3610,
+        "n_expected": 3610,
+        "n_matches_expected": true,
+        "n_nan": 0,
+        "nan_is_zero": true
+      },
+      "103": {
+        "dir": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/olmo2_closedbook_results/A04_1B_stageB_keep12_seed103_step5000_nq",
+        "shard_indices_present": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "shard_indices_missing": [],
+        "n_shards_present": 8,
+        "shards_complete": true,
+        "n_scored": 3610,
+        "n_expected": 3610,
+        "n_matches_expected": true,
+        "n_nan": 0,
+        "nan_is_zero": true
+      }
+    }
+  },
+  "k2_clearance_analysis": {
+    "stage_a_could_never_clear": [
+      "wrong arm: keep7+fresh2 (56.2% depth), not keep12+fresh2 (87.5%)",
+      "wrong budget: 20,000 steps, not the 5,000 Pilot One would run",
+      "n=2 yields a range, not a variance with a usable CI"
+    ],
+    "which_of_those_stage_b_repairs": {
+      "wrong_arm": "REPAIRED -- Stage B IS keep12+fresh2 at 87.5% depth, the arm the gate would use.",
+      "wrong_budget": "REPAIRED -- Stage B IS 5,000 steps.",
+      "n2_is_a_range_not_a_variance": "PARTIALLY repaired only. S=3 gives a real sample sd but df=2, whose chi-square 95% interval for sigma spans a multiplicative factor of 12.1x. A point estimate under Delta is therefore not the same as sigma being under Delta."
+    },
+    "reading_1_point_estimate": "K2 does not fire: 0 of 3 decision axes exceed Delta at the S=3 point estimate.",
+    "reading_2_pessimistic_end_of_sigma_ci": "At the chi-square 97.5th-percentile end of each df=2 sigma interval, 1 of 3 decision axes would exceed Delta (['popqa']). The K2 rule needs >= 2, so this does NOT reach a fire.",
+    "honest_summary": "Stage B removes Stage A's arm and budget objections but not its d.o.f. objection. The prereg does not define a Stage-B 'K2_CLEARED' state, so this script does not invent one; the terminal value it emits is the rule's own output.",
+    "how_to_close_it": "d.o.f. on the KEEP12 family specifically. A03's seed-45 keep7 draw does not help: K2's estimator is the keep12 family's own sd_run. Substituting a pooled keep7+keep12 sigma after seeing which answer each gives is a post-hoc estimator change and is not licensed."
+  },
+  "provenance": {
+    "loaders": "load_cb / load_mmlu IMPORTED from proposal/shared/code/canonical_eval_loaders.py -- never reimplemented.",
+    "loader_module": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/proposal/shared/code/canonical_eval_loaders.py",
+    "results_root": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory",
+    "dir_template": "A04_1B_stageB_keep12_seed{seed}_step5000",
+    "mmlu_interface": "content_norm (the letter interface is BANNED as a decision axis by A04 design \u00a74.2)",
+    "integrity_beyond_the_loader": "load_cb asserts only 8/8 shard FILES: it has NO exact-item-count check and NO duplicate-item_id check (it merges into a dict). So prereg \u00a74's exact counts (triviaqa 17,944 / popqa 14,267 / nq_open 3,610) were unenforced for the closed-book axes until this script. Enforced here, outside the loader, because the loader is shared with A03's archived numbers and is not edited by this harvest.",
+    "shard_index_set_checked": "explicitly {0..7}, not merely a glob count of 8 -- a duplicated shard with one missing passes a count check.",
+    "add_bos": "false in every cell's summary.json meta (prereg \u00a74, protocol_invariants: BASE LM, no chat template, no BOS)",
+    "chat_template": "False -- the closed-book and mmlu_content harnesses have no chat path at all; they build raw prompts.",
+    "manipulation_check": "training-loss series across the 3 seeds, tail window step>=1000, detrended per-seed by its own rolling median (w=9): r = +0.0089 (101,102), +0.0496 (101,103), +0.0118 (102,103). Compare A03's phase-locked pair +0.99966 and its independent pair -0.0101. Data order genuinely varies; the DistributedSampler(seed=) fix (ce5c298) is active. RAW (untrended) tail r is +0.944 to +0.948, which is the shared 5k-step loss DECAY, not phase-lock -- Stage A's A03 runs were resumed and flat, so raw r was already interpretable there; here it is not.",
+    "optim_groups_per_run": "fresh_decay 339.7M @2e-5 / fresh_nodecay 0.0M @2e-5 / inh_decay 1010.8M @2e-5 / inh_nodecay 0.1M @2e-5, torch AdamW fp32. All four groups at the SAME 2e-5, so the run is UNIFORM-LR. Differential LR must NOT be claimed. Unlike the distill trainer's _classify_param defect, the fresh groups DO exist here (339.7M is classified), so this is a config choice (--lr 2e-5 == --lr_inherited 2e-5), not the silent no-op bug."
+  },
+  "problems": {}
+}

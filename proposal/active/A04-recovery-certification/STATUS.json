@@ -2,7 +2,7 @@
   "id": "A04",
   "status": "needs_revision_K1_INDETERMINATE_pilot_zero_done_full_gate_not_authorised",
   "priority": 4,
-  "updated": "2026-08-12 00:10 GMT+8 (sigma_run input restated at df=5 after A03 seed 45; next_gate[4] given an explicit MDE bar)",
+  "updated": "2026-08-12",
   "warning": "Do not use the historical depth ladder as a controlled scaling law.",
   "warning_evidence_reverified_20260809": {
     "two_corpora": "data/dolmino_now15b.npy is 62,020,903,040 B on wzc1 (= 7,570,911 rows x 2048 x int32) but 126,907,244,672 B on zwfy6 (= 15,491,607 rows). Ratio 2.0462x. SAME FILENAME, DIFFERENT FILE (wzc1 is a byte-prefix). Row counts re-derived here from ls -l on BOTH disks; they match the 'dataset rows=' lines in status/PAPERB_TWO_CORPORA_DEFECT.md.",
@@ -1165,7 +1165,7 @@
       "launchability_verified": "transplant_front() prunes from --model_path; --resume_from optional. So keep12 is launchable despite PILOT_ZERO_VERDICT 5 noting no 1B keep12 arm exists on either disk -- that statement is about MEASURED RECOVERY, not launchability. Assets verified on zwfy6 2026-08-10 23:40.",
       "gate": "runs only if Stage A does not fire",
       "not_authorised": "Pilot Two (the 1077-4309 GPU-h full gate) needs user approval",
-      "status": "RUNNING",
+      "status": "COMPLETE_K2_DOES_NOT_FIRE_BUT_RUNG_IS_CONSTANT_REJECT",
       "hold_reason": "A03 dataorder falsification (same-day) shows the apparatus produces 0.46pp seed spreads at this arm, and Arm 3's \"signal\" evaporated under randomization. Expected effect at keep12 is SMALLER (less room to recover), which may put it inside the just-measured noise floor. See STAGE_B_DECISION.md for Path A vs Path B and the recommendation to HOLD.",
       "decision_doc": "STAGE_B_DECISION.md",
       "launched_at": "2026-08-11 05:53 GMT+8",
@@ -1176,7 +1176,113 @@
       "seed_103_queue": "waiting for .104 (keep12 resume) or .73/.82 wave-2 after seed 101/102 land ~09:00-09:30 GMT+8",
       "config": "keep_front=12 fresh=2, 5000 steps, lr 2e-5, warmup 150, seq_len 2048, bs 8 gaccum 2 eff_bs 128 (matches intact-anchor recipe)",
       "launcher": "scripts/_run_a04_stageB.sh (v3-guarded stop at step5000)",
-      "expected_wall_h": 3
+      "expected_wall_h": 3,
+      "harvested": "2026-08-12 (the 3 seeds FINISHED 2026-08-11 and sat unharvested; STATUS said RUNNING)",
+      "verdict_doc": "STAGE_B_VERDICT.md",
+      "drivers": [
+        "code/pilot_one_stage_b_s3.py",
+        "code/pilot_one_stage_b_falsifiability.py"
+      ],
+      "result": {
+        "verdict": "K2_DOES_NOT_FIRE_AT_STAGE_B",
+        "verdict_json": "evidence/pilot_one_stage_b_s3_verdict.json (md5 7dc77ca81551b708d9bfaa582739cfad)",
+        "n_decision_axes_exceeding": 0,
+        "per_axis_sd_run_pp": {
+          "triviaqa": 0.3023,
+          "popqa": 0.3328,
+          "mmlu_content": 0.0783,
+          "nq_open_demoted": 0.2091
+        },
+        "per_axis_bound_S3_pp": {
+          "triviaqa": 0.5096,
+          "popqa": 0.561,
+          "mmlu_content": 0.1321,
+          "nq_open_demoted": 0.3526
+        },
+        "delta_pp": {
+          "triviaqa": 4.0431,
+          "popqa": 1.3205,
+          "mmlu_content": 1.0239,
+          "nq_open": 0.9695
+        },
+        "per_seed_means_pct": {
+          "triviaqa": {
+            "101": 9.2566,
+            "102": 9.6634,
+            "103": 9.0727
+          },
+          "popqa": {
+            "101": 5.5793,
+            "102": 4.9415,
+            "103": 5.0957
+          },
+          "mmlu_content": {
+            "101": 31.6194,
+            "102": 31.6978,
+            "103": 31.7761
+          },
+          "nq_open": {
+            "101": 2.7147,
+            "102": 2.2992,
+            "103": 2.4654
+          }
+        },
+        "estimator": "sd_run = sample sd over S=3 seed means (ddof=1, df=2); bound_3=2.920*sd_run/sqrt(3). Prereg S3 says \"proper sd, df=2, t=2.920\"; continuous with Stage A (n=2 ddof=1 sd IS |a-b|/sqrt(2)).",
+        "rule": "UNCHANGED from Stage A: K2 FIRES iff bound_3>Delta on >=2 of 3 decision axes; exactly 1 -> INDETERMINATE (prereg 2.4). Rule is NOT ambiguous for S=3.",
+        "integrity": "ALL 12 cells (4 axes x 3 seeds) PASS: 8/8 shards, shard index set exactly {0..7}, n_scored==expected (triviaqa 17944 / popqa 14267 / mmlu 14042 / nq_open 3610), nan==0. Nothing re-run.",
+        "integrity_gap_found_and_closed": "load_cb asserts only 8/8 shard FILES -- it has NO exact-item-count and NO duplicate-item_id check (merges into a dict). So prereg 4 exact counts were UNENFORCED for triviaqa/popqa/nq_open until this harvest. Now enforced outside the loader (loader untouched: shared with A03 archived numbers). Shard INDEX SET checked, not just glob count.",
+        "can_stage_b_clear_K2": "NO state defined. Stage B REPAIRS 2 of Stage A 3 objections (right arm keep12, right budget 5000) but only PARTIALLY the third: S=3 -> df=2, chi2 95% interval on sigma spans 12.1x multiplicative. Prereg defines no Stage-B K2_CLEARED, so none was invented.",
+        "pessimistic_reading": "At the chi2 97.5th-pct end of each df=2 sigma interval, 1 of 3 decision axes would fire (popqa 3.5260 vs 1.3205; demoted nq_open 2.2158 vs 0.9695). Rule needs >=2, so NOT a fire. Closing popqa requires MORE KEEP12 seeds -- A03 seed 45 is a keep7 draw and adds nothing; substituting pooled df=5 sigma is a post-hoc estimator change and is NOT licensed.",
+        "cross_check": "sd_run values agree <1e-12 with the a04_k2 block of archive/A03.../evidence/a03_sigma_run_n3.json (md5 5fb6cd4c3d693831e50d0817bda93ab8), computed independently from the same shards.",
+        "note": "K2 MISSED. A04 does NOT die of seed variance. But see falsifiability_finding -- K2 is structurally BLIND to the defect that Stage B actually revealed."
+      },
+      "falsifiability_finding": {
+        "verdict": "CONSTANT_REJECT_AT_KEEP12",
+        "json": "evidence/pilot_one_stage_b_falsifiability.json (md5 1fd27cbed050a696cdf8a3b573ab5aa7)",
+        "answers": "PILOT_ONE_PREREG.md 5 known-unverified item 3: \"Whether 5,000 steps at keep12 produces enough recovery for NI to ever accept.\" ANSWER: NO.",
+        "why_K2_is_blind": "K2 compares run-to-run noise vs Delta. A SATURATED deficit is highly reproducible across seeds -- low variance is what a saturated axis LOOKS like. So a constant-REJECT rung passes K2 easily. Passing K2 means the gate is READABLE, not that there is anything to read.",
+        "ni_rejects_on": "4 of 4 axes (3 of 3 decision axes)",
+        "per_axis_deficit_pp": {
+          "triviaqa": 31.3568,
+          "popqa": 10.2918,
+          "mmlu_content": 6.9862,
+          "nq_open": 7.7562
+        },
+        "per_axis_excess_in_sd_run": {
+          "triviaqa": 90.4,
+          "popqa": 27.0,
+          "mmlu_content": 76.1,
+          "nq_open": 32.5
+        },
+        "min_decision_axis_excess_in_sd_run": 27.0,
+        "keep12_recovery_fraction_pct": {
+          "triviaqa": 22.44,
+          "popqa": 22.06,
+          "mmlu_content": 31.77,
+          "nq_open": 20.23
+        },
+        "keep7_220k_recovery_fraction_pct": {
+          "triviaqa": 23.0,
+          "popqa": 11.88,
+          "mmlu_content": 36.64,
+          "nq_open": 24.22
+        },
+        "finding": "keep12+fresh2 @5000 is a CONSTANT-REJECT rung: NI rejects by 27.0-90.4 x the measured sd_run, so NO realisable seed draw flips NI to accept. This is the SAME defect that disqualified keep7 (PILOT_ZERO_VERDICT 5) and precisely what prereg 3 chose keep12 to ESCAPE. Stage B passed its kill gate and still FAILED to deliver the falsifiable test it was launched for.",
+        "depth_was_not_the_bottleneck": "keep12@5k reaches comparable-or-better recovery than keep7@220k in 1/44th the steps and is STILL constant-REJECT. Recovery pinned ~20-32% of intact residual across a 44x heal-budget span and a 31.3pp damage span.",
+        "prereg_repair_goes_the_WRONG_WAY": "prereg 5 item 3 anticipated only CONSTANT-ACCEPT, prescribing bracket DOWN to keep10. Observed failure is the OPPOSITE. keep10 (75% depth) is MORE damaged than keep12 (87.5%) so it rejects HARDER. Bracketing down cannot repair constant-REJECT. Escape needs LESS damage (keep14) or far more heal tokens -- and A03 showed 10x tokens (52.43B @keep7) does not close the gap. Neither is authorised by any current prereg.",
+        "engages_STAGE_B_DECISION_hold_reason": "The HOLD worry conflated TWO quantities that land on OPPOSITE sides of the noise floor. (1) The LEVEL NI adjudicates: deficits are 104/31/89 x sd_run -> FAR OUTSIDE the floor, i.e. SATURATED, so NI at keep12 is not noise-limited at all and the worry does not apply. (2) The MARGINAL CPT effect (A03: -0.0293pp, CI95 [-0.672,+0.613], df=3) IS inside the floor -- the worry was right about that one. And being far outside the floor in the REJECT direction is WORSE for A04, not better: A04 needed the deficit COMPARABLE to Delta so NI could sometimes accept. A04 is not killed by noise; it is STALLED BY SATURATION, which no number of extra seeds can fix."
+      },
+      "not_established": [
+        "The DISAGREEMENT itself was NOT measured at keep12: PLATEAU(T) needs in-domain val PPL and NO val PPL exists for any Stage B ckpt (zero val/eval lines in the 3 training logs; no *stageB* dir in olmo2_ppl_results/). Only NI half is on disk -> K1 remains UNADJUDICATED at this rung, independently of everything else.",
+        "Grid coverage 2 of 6: prereg grid [2500,5000,10000,20000,40000,80000]; Stage B produced 2500+5000 only. K1 >=24-cell denominator untouched.",
+        "nq_open Delta has a 2.77e-3 pp provenance drift (prereg used rounded null 0.0055->0.5500pp; harness majority_em is 0.5263pp). Decision axes reproduce Delta EXACTLY (drift 0.00e0/2.22e-16/0.00e0). nq_open is DEMOTED so no verdict changes; recorded for honesty.",
+        "UNIFORM LR, not differential: all 4 optim groups logged at 2.00e-05 (fresh_decay 339.7M / fresh_nodecay 0.0M / inh_decay 1010.8M / inh_nodecay 0.1M). Differential LR must NOT be claimed. Unlike the distill trainer _classify_param defect, fresh groups DO exist here (339.7M classified) -> config choice, not the silent no-op bug."
+      ],
+      "manipulation_check": "PASSES, but the RAW statistic is misleading for these runs. Raw tail (step>=1000) loss r = +0.944..+0.948 would look phase-locked vs A03 reference (+0.99966 locked / -0.0101 independent) -- NOT interpretable here because A03 runs were RESUMED and flat while these are fresh 5k runs with a strong shared loss DECAY that dominates r. Detrended per-seed by own rolling median (w=9): r=+0.0089/+0.0496/+0.0118, matching A03 independent-pair reference. No two loss series identical. DistributedSampler(seed=) fix ce5c298 active; seeds ARE independent draws.",
+      "ckpt_sanity": "arch_meta.json per seed: keep_front_layers 12, n_fresh_layers 2, num_hidden_layers 14, transplant_max_abs_diff 0.0, n_copied 135 == expected_copied, missing_fresh_layer_ids [12,13]. Each log ends \"DONE [healing_front12+fresh2] at step 5000\". Checkpoints are the right artefacts.",
+      "consequence_for_pilot_two": "LOAD-BEARING: Pilot Two as designed would spend 1,077-4,309 GPU-h adjudicating a disagreement that is AUTOMATIC at every rung measured so far. keep7@220k constant-REJECT; keep12@5k constant-REJECT. Before further GPU, A04 must show PRE-DATA that some rung exists where NI can be OBSERVED TO ACCEPT. Nothing measured to date is such a rung, and the prereg own repair (bracket down to keep10) provably goes the wrong way. This verdict does NOT itself kill A04 and does NOT authorise Pilot Two either way (needs explicit user approval per next_gate). Pilot Zero level-at-one-checkpoint finding is UNTOUCHED.",
+      "gate_design_assessment": "The gate design WORKED. 135 GPU-h bought a decisive answer about a 1,077-4,309 GPU-h tranche. K2 -- the clause the design nominated as most likely killer -- MISSED, and that is recorded honestly. But the same 135 GPU-h surfaced a defect NO clause was watching for: the rung the gate would run on cannot produce an informative disagreement.",
+      "disk_note": "All raw shards + ckpts are on zwfy6 ONLY. A Stage-B S3 verdict had been written on zwfy6 2026-08-11 14:53 (stageB_S3_verdict.json md5 7145d569f46ec0fa10dd56368071adf2) but was NEVER harvested to wzc1, never committed, had no driver, was MISLABELLED \"gate\": \"A04 Pilot One Stage A\", and carried NO integrity counts. Superseded by this harvest; numbers agree."
     }
   },
   "defects_found_20260811": [
