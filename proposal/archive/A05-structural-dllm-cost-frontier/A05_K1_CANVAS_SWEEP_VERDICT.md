@@ -47,6 +47,16 @@ Every sampler knob except `initial_masks` is frozen at the archived r2 values
 
 † harness artifact, not model behaviour — see "The HE+ stitch bug" below.
 
+> **★ 2026-08-12 — the three HE+ rows above are SUPERSEDED by corrected cells.** The stitch bug was
+> fixed and the same `raw_output` re-graded (generation byte-identical, 0 GPU, evalplus self-tested):
+> `he_c8` **.1280 → .1341**, `he_c32` **.2134 → .2561**, `he_c128` **.1707 → .4817**; parseability
+> `.988 → 1.000`, `.860 → .982`, `.287 → .963`. **The HE+ canvas curve is therefore MONOTONE
+> (.134 → .256 → .482), not the non-monotone .128 → .213 → .171 shown above** — so the reading that
+> "canvas=32 is the peak and c128 degrades" was itself the harness artifact, and DreamOn's best
+> non-oracle HE+ is **.4817 at c128**, a **−30.5 pp** gap versus Scaffold rather than −3.64 pp.
+> K1 fires harder, not weaker. MBPP+ rows are unaffected (no stitch). See
+> `evidence/cells_corrected/a05_closeout_stitch_regrade.json`.
+
 **Not run** (budget): `he_c512`, `mbpp_c128`, `mbpp_c512`, and both oracle cells. `mbpp_c128` was
 killed at 30/378 and is not graded. **This does not affect the verdict**: K1 takes the *max* over
 non-oracle settings, and the ≤5.0 pp clause is already satisfied on both benchmarks at canvas=32, so
@@ -110,6 +120,26 @@ margin, which is all K1 needed to decide.
 ---
 
 ## Cost: the parity is bought at 6–8× Scaffold's cost (falsification condition #3)
+
+> ### ⛔ SUPERSEDED 2026-08-12 — this section's "surviving" cost claim was subsequently FALSIFIED.
+> Do **not** revive the 6.2×/8.2× figure from here. `A05_CLOSEOUT_VERDICT.md` §2 tested it against
+> five conditions registered in advance (`A05_CLOSEOUT_PREREGISTRATION.md`, commit `32f4e96`) and
+> **four fired**:
+> * The ratio of **means** below **reverses on the median** — DreamOn's median item is *cheaper*
+>   than Scaffold's on all four benchmark×axis pairs (0.56×–0.96×). Note `nfe_median` is 32 versus
+>   Scaffold's 57; the table below quotes means only.
+> * 12–13% of DreamOn's items sit at its own **iteration cap** (~2060–2180 forwards) and carry
+>   **57–61%** of all its NFE mass. Scaffold's cap is a different, unmatched number (512).
+> * Quality is matched only on **MBPP+**; on HE+ Scaffold is **30.5 pp worse** once the stitch bug
+>   is fixed (DreamOn reaches **.4817**, not .2134).
+> * The **AR control** — absent from this section — is ~**70× cheaper than Scaffold on
+>   `tokens_fed`** *and* +.29/+.35 more accurate, i.e. strict Pareto domination. Scaffold looks
+>   competitive only on NFE, which `scripts/forward_cost.py` documents as **not** comparable across
+>   families.
+>
+> Net: the claim is a diffusion-family internal point — exactly the description under which the
+> Pareto claim was already RETRACTED. It was **not** promoted to its own proposal, and **no further
+> GPU** is authorised for it.
 
 The A05 claim is explicitly *"under a token-cost budget"*, so parity at any cost does not preserve it —
 but the cost must be stated, because it is the one thing that partially survives:
@@ -209,6 +239,6 @@ bash a05_k1/a05_k1_run_sweep.sh                    # generation, 8 shards/cell
     --cells-dir runs/a05_k1/_cells --out-json runs/a05_k1/a05_k1_canvas_sweep.json
 ```
 
-Code: `proposal/active/A05-structural-dllm-cost-frontier/code/`.
+Code: `proposal/archive/A05-structural-dllm-cost-frontier/code/` (A05 was ARCHIVED 2026-08-12 -- see `A05_CLOSEOUT_VERDICT.md` and `POSTMORTEM.md`; the cost claim recorded below as "surviving" was subsequently falsified).
 Evidence: `evidence/a05_k1_canvas_sweep.json` (+ `evidence/cells/*.json` per-cell, with per-item pass
 maps and the grader self-test result recorded in each).

@@ -156,6 +156,31 @@ shared/literature/RELATED_WORK_GAP_AUDIT_20260808.md
 
 ### 已归档（物理目录 2026-08-11 已移入 `archive/`）
 
+- `archive/A05-structural-dllm-cost-frontier/` — **`ARCHIVE` decided 2026-08-12**
+  （**K1 实验 gate 触发**，~21 GPU-h；closeout 零 GPU）。
+  判定：`A05_K1_CANVAS_SWEEP_VERDICT.md` + `A05_CLOSEOUT_VERDICT.md`；死因复盘：`POSTMORTEM.md`。
+  - **是 kill clause 触发**（与 A03 不同）：预注册的 K1 说「DreamOn 在最佳 non-oracle canvas 上
+    若逼近 scaffold Medium 5.0 pp 以内则方向死」。只把 `initial_masks` 从 8 改成 32
+    （其余 sampler 旋钮全冻结），DreamOn 的 **MBPP+ .085 → .3545**、**HE+ .122 → .2134**
+    （再修一个 HE+ stitch bug 后 **.4817**）→ 两个 benchmark 都**追平/反超** scaffold
+    （.177/.354）。**A05 赖以立项的 +26.9 pp margin 是 canvas 预算 artifact。**
+  - **K1 之后唯一存活的 cost claim（"matched quality 下 scaffold 便宜 6.2×/8.2×"）也已判死**：
+    5 条预注册 falsification 条件中 **4 条触发** —— 均值比在**中位数上方向翻转**
+    （DreamOn 中位 item 反而更便宜，0.56-0.96×）；12-13% 打到**未对齐的迭代上限**的 item
+    扛了 57-61% 的 NFE；HE+ 上质量根本没 matched（scaffold 差 30.5 pp）；
+    **AR 对照（Qwen2.5-Coder-7B）在 `tokens_fed` 上比 scaffold 便宜 ~70× 且质量高 +.29/+.35**
+    = 严格 Pareto 支配 —— 正是当年 Pareto claim 被 RETRACTED 的那个「家族内部点」描述。
+    **故未晋升为独立 proposal，且不得再花 GPU（K2/K3 明确不跑）。**
+  - **存活并外溢的**：三个 harness 缺陷已在源仓修好（wzc1 `58bbb20`、zwfy6 `9651406`、
+    `_104` `d214d37c`）—— 归档 `nfe` 其实是 `len(output.history)`（真值 172.3/153.4 而非
+    265.88/135.65）；`mask_expansion`/`delete_eos_token` 一直是 inert（已由执行证实）；
+    HE+ stitch 双重缩进**低估**了本仓所有 HE+ 数字（c128 处 `.1707 → .4817`）。
+    另外顺手撤掉 roadmap 里那条**假的** "`generate_infilling.py` is missing" blocker（它在另一个盘）。
+  - **可发表的那条不属于 A05**：「一个被广泛引用的 diffusion baseline 在 full-program 上的弱
+    是 canvas 预算 artifact，一个配置整数就把 MBPP+ 从 .085 抬到 .3545」是**评测实践**结论，
+    建议归 **A01**（同类方法论、换 surface），已记在
+    `A05/STATUS.json:finding_that_outlives_a05`，**故意不自动晋升**。
+
 - `archive/A03-parametric-vs-external-memory/` — **`ARCHIVE` decided 2026-08-11**
   （执行了它自己的 `next_gate[0]`，**零 GPU**）。判定：`ARM_SET_DECISION.md`；
   死因复盘：`POSTMORTEM.md`。
