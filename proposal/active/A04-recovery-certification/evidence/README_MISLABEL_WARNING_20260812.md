@@ -1,5 +1,31 @@
 # ⚠️ `pilot_one_stageB_S2_verdict.json` IS MISLABELED — read this before using it
 
+> ## ✅ SUPERSEDED 2026-08-12 13:35 GMT+8 — and one claim below was WRONG
+>
+> The correct S=3 file now exists: **`pilot_one_stageB_S3_verdict.json`**, verdict
+> **`K2_DOES_NOT_FIRE`** (0 of 3 decision axes; tightest is popqa, `bound_3` 0.5610
+> vs Δ 1.3205 = 2.35× headroom). It cost **ZERO GPU**.
+>
+> **My error in §"State of the three Stage B seeds" below:** I wrote that seed 103
+> "does **not**" have eval numbers and told the harvesting agent to check before
+> spending GPU. That was **wrong**. Seed 103 has **complete 8/8-shard evals on all
+> four axes**, written 2026-08-11, in
+> `A04_1B_stageB_keep12_seed103_step5000` (+ `..._nq` for nq_open). All three seeds
+> passed every integrity assert: 8/8 shards, exact item counts
+> (triviaqa 17944 / popqa 14267 / nq_open 3610 / mmlu 14042), 0 duplicate
+> `item_id`, 0 `nan`. So Pilot One needed **no additional GPU at all** — the S=3
+> statistic was computable from disk the whole time.
+>
+> Root cause of my error: I inferred seed 103's status from the S=2 verdict file's
+> `provenance.seeds` field (`["101","102"]`) instead of listing the results
+> directory. **The absence of a seed from a summary's provenance is not evidence
+> that its data is absent** — that summary simply hadn't harvested it. Also worth
+> recording: `nq_open` lives in a **separate `_nq`-suffixed directory**, so a glob
+> that only looks alongside triviaqa/popqa will conclude nq_open is missing.
+>
+> Everything below is retained as the original record. The mislabel diagnosis of
+> the S2 file itself was correct and still stands.
+
 Written by MAIN 2026-08-12 11:25 GMT+8, after nearly briefing a subagent off the
 wrong baseline.
 

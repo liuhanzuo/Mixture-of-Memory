@@ -1,0 +1,35 @@
+{
+  "gate": "A04_pilot_one_stage_B_S3_sd_run",
+  "supersedes": "pilot_one_stageB_S2_verdict.json (which carried Stage A's gate string and caveat on Stage B data -- see README_MISLABEL_WARNING_20260812.md)",
+  "date": "2026-08-12T13:35:00+08:00",
+  "computed_by": "MAIN, on .73 (zwfy6), CPU only, ZERO GPU -- all three seeds were already evaluated on 2026-08-11 and sat unharvested",
+  "gpu_h_spent_this_step": 0,
+  "statistic": {
+    "S": 3,
+    "seeds": ["101", "102", "103"],
+    "dir_template": "A04_1B_stageB_keep12_seed{seed}_step5000",
+    "note_nq_dir": "nq_open lives in a SEPARATE dir suffixed _nq, not alongside triviaqa/popqa",
+    "sd": "proper sample sd over 3 draws, df=2 (NOT Stage A's |m_a-m_b|/sqrt(2))",
+    "bound_formula": "bound_3 = t_{0.05,2} * sd_run / sqrt(3) = 2.920 * sd / 1.7321",
+    "rule": "K2 FIRES iff bound_3 > Delta on >= 2 of the 3 DECISION axes (PILOT_ONE_PREREG.md 2.2)"
+  },
+  "axes": {
+    "triviaqa":     {"role": "decision", "em": [9.2566, 9.6634, 9.0727],    "sd_run": 0.3023, "bound_3": 0.5096, "delta": 4.043134195274186,  "bound_gt_delta": false},
+    "popqa":        {"role": "decision", "em": [5.5793, 4.9415, 5.0957],    "sd_run": 0.3328, "bound_3": 0.5610, "delta": 1.3205298941613512, "bound_gt_delta": false},
+    "mmlu_content": {"role": "decision", "acc": [31.6194, 31.6978, 31.7761], "sd_run": 0.0783, "bound_3": 0.1321, "delta": 1.0238926078906136, "bound_gt_delta": false},
+    "nq_open":      {"role": "DEMOTED -- no decision weight", "em": [2.7147, 2.2992, 2.4654], "sd_run": 0.2091, "bound_3": 0.3526, "delta": 0.9695290858725762, "bound_gt_delta": false}
+  },
+  "verdict": "K2_DOES_NOT_FIRE",
+  "axes_exceeding_delta": "0 of 3 decision axes (rule needs >= 2)",
+  "margin": "the tightest axis is popqa: bound_3 0.5610 vs Delta 1.3205 = 2.35x headroom. triviaqa 7.93x, mmlu_content 7.75x.",
+  "integrity_asserts_passed": {
+    "shards": "8/8 on every seed x every task (9/9 cells)",
+    "exact_item_counts": {"triviaqa": 17944, "popqa": 14267, "nq_open": 3610, "mmlu_content": 14042},
+    "duplicate_item_id": "0 in all 9 cells",
+    "nan_rows": "0 in all 9 cells",
+    "note": "item counts were DERIVED from disk (constant across 6 independent 7B arms), not assumed"
+  },
+  "correction_to_prior_record": "README_MISLABEL_WARNING_20260812.md said seed 103 lacked eval numbers and told the harvesting agent to check before spending GPU. It was WRONG: seed 103 has complete 8/8 evals on all four axes, dated 2026-08-11. So Pilot One needed ZERO additional GPU, not a 3rd-seed eval.",
+  "WHAT_THIS_DOES_NOT_MEAN": "K2 not firing is NECESSARY, not sufficient. The separate and more important finding stands: keep12 is a CONSTANT-REJECT rung -- non-inferiority rejects on 4/4 axes, recovery only 22.06-31.77%. A saturated deficit is highly REPRODUCIBLE, so low seed variance is exactly what saturation looks like; K2 is a variance gate and is therefore structurally BLIND to it. Stage B passed its kill gate and still failed its purpose.",
+  "next_step_unchanged": "Pilot Two (1,077-4,309 GPU-h) must NOT be launched until a new pre-data document shows a rung exists where NI can be OBSERVED TO ACCEPT. Otherwise the gate can only ever confirm rejection."
+}

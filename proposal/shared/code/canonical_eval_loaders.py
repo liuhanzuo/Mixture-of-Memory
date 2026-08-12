@@ -55,8 +55,15 @@ CB = ROOT / "olmo2_closedbook_results"
 MM = ROOT / "olmo2_mmlu_content_results"
 N_BOOT, SEED, NSHARD = 5000, 42, 8
 # cais/mmlu "all" test split, the exact n every A03 MMLU summary.json reports.
-# Asserted rather than trusted so a partial/wrong dump cannot be paired silently.
 N_MMLU = 14042
+# Exact merged item counts per closed-book task, DERIVED from disk 2026-08-12:
+# each value is constant across six independent 7B arm dirs in
+# `olmo2_closedbook_results/` on zwfy6 and equals the merged unique-id count.
+# Asserted for the same reason as N_MMLU -- so a truncated shard cannot pair.
+# ⚠️ `nq_open` per-example files live in a SEPARATE dir suffixed `_nq`
+# (e.g. `A04_1B_stageB_keep12_seed101_step5000_nq`), not alongside the others;
+# a caller that globs only the main arm dir will wrongly conclude it is missing.
+N_CB = {"triviaqa": 17944, "popqa": 14267, "nq_open": 3610}
 
 
 class NotRunYet(Exception):
@@ -70,10 +77,34 @@ class NotRunYet(Exception):
 
 
 def load_cb(d, task):
-    """item_id -> (em, contains, f1); asserts all 8 shards present."""
+    """item_id -> (em, contains, f1); asserts 8/8 shards, exact n, no dup, no nan.
+
+    ⚠️ 2026-08-12 HARDENING. The pre-2026-08-12 body asserted ONLY the shard file
+    COUNT and then did a bare `got[r["item_id"]] = ...`, so three failure modes
+    were silent:
+
+      * a duplicate `item_id` across shards (overlapping shard ranges) was
+        OVERWRITTEN, not detected -- the merged set would look complete while
+        double-counting one item and dropping another;
+      * a shard that was present but TRUNCATED (writer died mid-flush) passed,
+        because 8 files existed; the merged n was simply short;
+      * a `nan:true` row was merged as a real score, breaking the identical-
+        valid-item-set assumption that `paired()` depends on.
+
+    `load_mmlu` already asserted all three (its own 2026-08-10 fix). This function
+    is the one A04's Pilot One decision axes actually go through, so the asymmetry
+    was the live risk, not a cosmetic one.
+
+    `N_CB` counts are DERIVED, not assumed: each is constant across six
+    independent 7B arm dirs on zwfy6 and equals the merged unique-id count there.
+    """
     got = {}
     if not (CB / d).is_dir():
         raise NotRunYet(f"{d} absent")
+    if task not in N_CB:
+        raise SystemExit(f"FATAL load_cb: unknown task {task!r} -- add its exact "
+                         f"item count to N_CB (known: {sorted(N_CB)}) rather than "
+                         "letting an unchecked task through")
     files = sorted((CB / d).glob(f"per_example_{task}_shard*of{NSHARD}.jsonl"))
     if len(files) != NSHARD:
         raise SystemExit(f"FATAL {d}/{task}: {len(files)}/{NSHARD} shards -- refusing "
@@ -84,7 +115,24 @@ def load_cb(d, task):
             if not ln:
                 continue
             r = json.loads(ln)
-            got[r["item_id"]] = (r["em"], r["contains"], r["f1"])
+            if "item_id" not in r:
+                raise SystemExit(f"FATAL {d}/{task}: record has no 'item_id' "
+                                 f"(keys={sorted(r)}) -- schema changed, refusing to guess")
+            iid = r["item_id"]
+            if iid in got:
+                raise SystemExit(f"FATAL {d}/{task}: duplicate item_id {iid} across shards "
+                                 "-- overlapping shard ranges would double-count")
+            if r.get("nan"):
+                raise SystemExit(f"FATAL {d}/{task}: item_id {iid} has nan=true -- "
+                                 "paired analysis needs an identical valid item set")
+            for k in ("em", "contains", "f1"):
+                if k not in r:
+                    raise SystemExit(f"FATAL {d}/{task}: item_id {iid} has no {k!r} "
+                                     f"(keys={sorted(r)}) -- schema changed")
+            got[iid] = (r["em"], r["contains"], r["f1"])
+    if len(got) != N_CB[task]:
+        raise SystemExit(f"FATAL {d}/{task}: merged {len(got)} items, expected "
+                         f"{N_CB[task]} -- truncated shard or wrong eval set")
     return got
 
 
