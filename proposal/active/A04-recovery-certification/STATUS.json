@@ -1431,5 +1431,97 @@
   "reframe_20260812": {
     "what_stands_unchanged": "Everything factual in RELATED_WORK.md §2/§3 -- what each paper does, its VERIFIED venue (C1=ICML2026 Workshop AdaptFM Poster; C2=ACL ARR under review NOT published; C3=NeurIPS2025 Poster; N3=ICML2026 Workshop CTB *Submission* not accepted; N4=under review TMLR; N5=preprint), and where each does not reach A04. Also unchanged: all 11 attribution obligations in §4.2, and the three kill clauses K1/K2/K3.",
     "what_is_void": "'must be renamed and narrowed', 'not fundable', 'worth at most a short paper or a methods section'. These were inferences from the audit, not findings of it."
+  },
+  "shallow_rung_ni_discrimination_20260812": {
+    "what": "ADDITIVE. Answers the promotion blocker 'NI(Delta) has never been observed to ACCEPT, so it has not been shown to discriminate'. CPU-only re-analysis of 7B per-example shards already on disk. GPU spent: ZERO.",
+    "verdict": "NI_ACCEPTS_BUT_ONLY_AT_ZERO_DAMAGE",
+    "document": "A04_SHALLOW_RUNG_NI_DISCRIMINATION_VERDICT.md",
+    "evidence": [
+      "evidence/a04_shallow_rung_ni_7b.json",
+      "evidence/a04_shallow_rung_remeasurement_sensitivity.json"
+    ],
+    "code": [
+      "code/a04_shallow_rung_ni_7b.py",
+      "code/a04_shallow_rung_remeasurement_sensitivity.py"
+    ],
+    "gpu_h_spent": 0,
+    "intact_anchor": {
+      "chosen": "vanilla models/OLMo-2-1124-7B: zwfy6:olmo2_closedbook_results/base_full{,_nqopen} + zwfy6:olmo2_mmlu_content_results/7B_base (mode=base, num_hidden_layers=32, add_bos=false, 8/8 shards)",
+      "why": "exact analogue of guard G0's 1B pinning to A03_1B_base, whose meta is mode=base/base_model=../models/OLMo-2-0425-1B i.e. the VANILLA base.",
+      "full32_step25000_is_NOT_the_anchor": "its meta is mode=pruned keep_front_layers=32 ckpt=outputs/olmo2_probe2_7B_full32_dolmino/step25000.pt -- an UNDAMAGED 32L model CONTINUED-PRETRAINED on the heal corpus. It scores BELOW vanilla base on all 4 axes (TriviaQA 57.15 vs 63.55, PopQA 18.42 vs 24.75, MMLU-content 46.62 vs 47.06, NQ-open 15.82 vs 20.50), so substituting it would shrink every Delta AND lower the target -- manufacturing accepts. Guard G2 forbids it. Carried as an ARM (zero-damage control) only.",
+      "D5_anchor_drift_fraction_of_delta": {
+        "triviaqa": 0.0007,
+        "popqa": 0.00218,
+        "mmlu_content": 0.00153,
+        "D5_fires": false
+      }
+    },
+    "guard_D1_D6_at_7B": {
+      "split_convention": "0 of 9 decision cells retired; decision family 9 -> 9. Nothing NOT_CERTIFIABLE.",
+      "residual_intact_pp": {
+        "triviaqa": 63.2914,
+        "popqa": 22.4574,
+        "mmlu_content": 18.6138,
+        "nq_open": 19.9446
+      },
+      "delta_pp": {
+        "triviaqa": 6.3291,
+        "popqa": 2.2457,
+        "mmlu_content": 1.8614,
+        "nq_open": 1.9945
+      },
+      "pstar_crit_7B_recomputed": {
+        "triviaqa": 18.7116,
+        "popqa": 1.8731,
+        "mmlu_content": 1.2665,
+        "nq_open": 0.3738
+      },
+      "p_disc_max": {
+        "triviaqa": 0.3837,
+        "popqa": 0.1896,
+        "mmlu_content": 0.1885,
+        "nq_open": 0.1795
+      },
+      "note_7B_better_instrumented_than_1B": "residuals 1.57-2.06x the 1B values. MMLU-content's 1B NEEDS_RECHECK_AFTER_DATA resolves at 7B with a 6.7x margin (p_disc 0.1885 vs p*_crit 1.2665). Design-demoted NQ-open would PASS the guard at 7B but stays demoted (design 5.2 demotion is not a guard verdict; the guard cannot promote it).",
+      "credit_convention": "MMLU-content NOT_CERTIFIABLE by D6 (residual +1.6878pp, Delta 0.1688pp, Delta/hw 0.24) -- exactly as A04_MARGIN_GUARD_PREREG.md 2.2 predicted for 7B. Decision family 9 -> 6. Fires D6 not D1: at 7B the credit residual is POSITIVE, unlike 1B's -6.69pp which fired D1+D4. No verdict depends on it.",
+      "delta_never_substituted": true
+    },
+    "NI_results_split": {
+      "keep14fresh2_step200k": "REJECT 3/3 decision axes. margins -28.4624/-15.0810/-7.4749 pp; 20.6-72.4 bootstrap SE from flipping. Recovery 25.3-53.1%.",
+      "shortgpt16_step200k": "REJECT 3/3 decision axes. margins -24.8512/-15.7819/-5.6447 pp; 16.5-63.8 SE. Recovery 22.2-62.7%.",
+      "full32_dolmino_step25k": "*** FIRST NI ACCEPT IN A04 *** mmlu_content margin +1.0495 pp (recovery 97.7%). REJECTS on triviaqa (-0.6035 pp, only 1.86 SE from accepting) and popqa (-4.5391 pp). 1 of 3 decision axes -> below the 2/3 bar.",
+      "answer_to_the_blocker": "NO damaged rung accepts on >=2 of 3. BUT the premise 'NI has never been observed to accept' is now FALSE: NI accepts, stably, on the zero-damage control. So NI is not a constant function and its margin is calibrated near the right scale (full32/triviaqa misses by 1.1% of its deficit).",
+      "identical_under": "first, last, wrong. Under credit, MMLU is retired so full32 shows 0/2."
+    },
+    "the_load_bearing_new_finding": {
+      "what": "RATIO(rho=0.85) ACCEPTS full32 (mean ratio 0.8515) while NI REJECTS it on 2 of 3 decision axes (triviaqa 6.3977pp deficit = 1.01x Delta; popqa 6.3293pp = 2.82x Delta). This is A04's target rule-disagreement, found on the ONE arm where 'recovered' is a defensible word -- escaping the 'disagreement is automatic because the arm is simply bad' defect that killed keep7 and keep12.",
+      "caveat": "full32 has ZERO structural damage, so this is a disagreement about continued-pretraining DRIFT, not about recovery from structural injury. Evidence that RATIO is too permissive; not yet evidence about healing damaged models.",
+      "FRAGILITY_MUST_TRAVEL_WITH_IT": "RATIO's accept margin over rho is only +0.001495. Accuracy drops that flip it to REJECT: nq_open 0.0924pp, popqa 0.1116pp, mmlu_content 0.2121pp, triviaqa 0.2865pp. Measured harness jitter on this ladder reaches 0.1353pp -- so a re-scoring of full32 on nq_open or popqa WITHIN NOISE would flip RATIO and destroy the disagreement. full32 has only ONE scoring per axis so this cannot currently be checked. The NI side is solid; it is RATIO's accept that is one re-scoring away from vanishing."
+    },
+    "sensitivity": {
+      "remeasurement": "Every ckpt scored 1-3 times; NI recomputed under every (anchor x arm) measurement pair, 46 recomputations. 0 of 12 cells flip. full32/mmlu_content accept margin range [+1.0567,+1.0680] -- STABLE ACCEPT. Max acc spread same-ckpt 0.1353pp; max NI margin spread 0.1609pp.",
+      "three_distinct_variance_quantities": "bootstrap SE = item-set sampling within ONE scoring run (measured at 7B); harness jitter = scoring-run variability on a FIXED ckpt (measured at 7B); sd_run = SEED variance (1B ONLY). Not interchangeable."
+    },
+    "cross_scale_caveat": {
+      "sd_run_is_1B_only": "sd_run is from 1B keep12+fresh2 S=3 seeds df=2 (pilot_one_stage_b_s3_verdict.json). EVERY 7B rung here has exactly ONE seed, so NO 7B sd_run is computable; and the historical 7B ladder's seeds are UNRECORDED (--seed postdates them; trainer afdfa66 called no seeding function), so retrospective reconstruction is impossible too.",
+      "licensed": "7B deficits, Delta, lo95 bounds, margins; and 'no realisable perturbation of the ITEM SAMPLE flips these verdicts' (16.5-72.4 SE, measured at 7B).",
+      "NOT_licensed": "any claim that 7B deficits are large 'relative to seed variance'. The deficit/sd_run ratios 5.5-112.9 in the JSON are LABELLED cross-scale extrapolation (1B sd_run on 7B deficit), NOT a 7B variance statement. Also NOT licensed: treating the 7B ladder as a controlled scaling law (STATUS.json:warning two-corpora/unequal-steps still holds; the two shallow rungs are comparable to EACH OTHER -- same 16/32 damage, same 200k steps -- but not to the 1B rungs as a matched experiment)."
+    },
+    "implication_for_pilot_two": {
+      "not": "'fund it' -- and not 'the gate cannot discriminate'.",
+      "reading": "The disagreement A04 wants exists and has been exhibited for 0 GPU-h, but on a zero-damage control, and its RATIO side is fragile to 0.09pp of harness jitter. The DAMAGED rungs are constant-REJECT at every depth (50-87.5% kept) and budget (5k-220k steps) across two scales.",
+      "cheap_next_steps_dominate": [
+        "(1) EVAL-ONLY: re-score full32_dolmino_step25k on nq_open and popqa to settle whether the disagreement survives harness jitter. Highest-value GPU in A04 right now; hours, not days.",
+        "(2) EVAL-ONLY: score the intermediate 7B ckpts that already exist on the keep14fresh2 and full32_dolmino trajectories. full32 sits at 97.7% MMLU recovery with one axis 1.86 SE from accepting -- the accept BOUNDARY is on that trajectory, and locating it is what 'the gate discriminates' would actually mean. Zero training.",
+        "(3) Only if (1)-(2) locate a real accept/reject boundary does a new damaged-arm tranche have a defensible prior of landing near it."
+      ],
+      "K1_K2_K3": "NONE fires on this evidence and this document claims none does: the 7B ladder is not the gate's pre-registered 1B arm set, so it CANNOT fire a clause defined over those arms. What it establishes is a fact the clauses were not written to see: NI's discriminating power is demonstrable, but only ABOVE the damage level any of our arms has ever recovered to."
+    },
+    "two_disk_gotcha": "shortgpt16_step200k exists on BOTH disks but is 8/8-sharded ONLY on wzc1; the zwfy6 copy holds merged per_example_*.jsonl with NO shards, which the canonical loader correctly refuses. Analysing only on zwfy6 would have wrongly concluded shortgpt16's closed-book axes were unavailable. wzc1 shards verified to merge to exactly 17944/14267/3610 and to agree bit-for-bit with the merged file, then scp -O'd to zwfy6:a04_shallow_stage/ and md5-verified (24/24 + 24/24 for the D5 set).",
+    "code_reuse": "ni_rule/ratio_rule/load_shards/build_nulls/mmlu_content_norm_vec/qa_metric_vec/EXPECTED_N/AXES/DEMOTED_AXES/PREREG IMPORTED from pilot_zero_rule_disagreement; paired_bootstrap/longest_option_vector/best_constant_qa/TIE_CONVS/N_BOOT/SEED from A03's analyze_1b_knowledge_floor via proposal_paths.a03_code_dir(). Nothing reimplemented. Bootstrap seed offsets 97*(200+i)+13*axis are disjoint from Pilot Zero's (ai in {0,1}) and the step100k pass's (ai in 100..102), so no archived cell is perturbed.",
+    "independent_cross_check": "A01's gate3_content_null_conventions.json independently gives 7B MMLU split null 0.28445022076627263 and 7B_base bf16 content_norm_acc 0.47058823529411764 -> residual 18.6138pp, matching this analysis to all printed digits; keep14 0.3832075202962541 and shortgpt16 0.40115368181170774 likewise. Two independently written pipelines agree on the 7B MMLU axis.",
+    "a03_scorer_md5_differs_across_disks": "zwfy6 8b454b55800b622564ec08c5c8c4dd4b vs wzc1 4571d7606b99bfd5463a0246282ec478. DIFFED: the only difference is inside cell()'s reporting (residual_fraction_of_reported/_of_headroom split, 2026-08-10) and console format. NO null- or metric-producing function differs, so nulls and metrics are identical under either copy.",
+    "nodes_used": ".73 as a CPU host only (0% GPU throughout). NOT touched: .104 (paperC Qwen3 heal), .82 (A02 j=0), LOCAL/.21 (SparseForge).",
+    "paperB_qwen_defect_does_not_reach_this": "no paperB Qwen number is used; all rows are OLMo-2, so the OPEN Instruct-mislabelled-as-base defect in status/ISSUES.jsonl does not affect these results."
   }
 }
