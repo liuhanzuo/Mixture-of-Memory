@@ -2,7 +2,7 @@
   "id": "A04",
   "status": "needs_revision_K1_INDETERMINATE_pilot_zero_done_full_gate_not_authorised",
   "priority": 4,
-  "updated": "2026-08-12",
+  "updated": "2026-08-13",
   "warning": "Do not use the historical depth ladder as a controlled scaling law.",
   "warning_evidence_reverified_20260809": {
     "two_corpora": "data/dolmino_now15b.npy is 62,020,903,040 B on wzc1 (= 7,570,911 rows x 2048 x int32) but 126,907,244,672 B on zwfy6 (= 15,491,607 rows). Ratio 2.0462x. SAME FILENAME, DIFFERENT FILE (wzc1 is a byte-prefix). Row counts re-derived here from ls -l on BOTH disks; they match the 'dataset rows=' lines in status/PAPERB_TWO_CORPORA_DEFECT.md.",
@@ -1655,5 +1655,148 @@
       "unverified[0]",
       "power_analysis.sd_run_is_UNVERIFIED"
     ]
+  },
+  "keep14_trajectory_ni_20260813": {
+    "what": "ADDITIVE. Answers cheap_next_steps_dominate[1] for the half that is resident on zwfy6: the 4-axis NI DISCRIMINATION CURVE along the keep14+fresh2 7B heal trajectory (step128000, step153500, and the already-archived step200000 endpoint). EVAL-ONLY, zero training. Archived dirs NOT overwritten; the two new ckpts get their own A04_7B_keep14f2_step* dirs.",
+    "verdict": "CONSTANT_REJECT_MARGIN_NON_MONOTONE_AND_RESOLVED",
+    "document": "A04_KEEP14_TRAJECTORY_NI_VERDICT.md",
+    "evidence": [
+      "evidence/a04_keep14_trajectory_ni.json"
+    ],
+    "code": [
+      "code/a04_keep14_trajectory_axes_driver.sh",
+      "code/a04_keep14_trajectory_ni.py"
+    ],
+    "gpu_h_spent": 2.0756,
+    "nodes": ".73 (step128000) + .82 (step153500), 8xH20 each, zwfy6, fully parallel. NOT touched: .104 (paperC Qwen3 heal), LOCAL/.21 (SparseForge #246).",
+    "wall_time_s": {
+      "node_73_step128000": 449,
+      "node_82_step153500": 485,
+      "axes_only_73": 427,
+      "axes_only_82": 434
+    },
+    "protocol": {
+      "source": "the archive's OWN logs: logs/cb_driver_73.out echoes bs=32 for base_full AND keep14_step200k; scripts/p06_run_transferred.sh leaves BS unset so _run_olmo2_mmlu_content.sh's default BS=16 produced 7B_base and 7B_keep14_step200000, and git log -p --follow shows exactly ONE revision of that line (d2e28f2), so 16 is not later drift.",
+      "closedbook_bs": 32,
+      "mmlu_content_bs": 16,
+      "add_bos": 0,
+      "num_shards": 8,
+      "max_new_tokens": 32,
+      "max_ctx_len": 512,
+      "chat_template": false,
+      "chat_template_note": "never set: neither harness has a chat-template code path at all. BASE LMs, no SFT/RL.",
+      "mode": "pruned keep_front_layers=14 n_fresh_layers=2 (asserted against the ckpt meta by load_pruned_model; CLI mismatch raises)",
+      "greedy": "do_sample=False num_beams=1",
+      "harness_md5": {
+        "eval_olmo2_closedbook_qa.py": "2ed41993241226c795a3ca38375933f7",
+        "eval_olmo2_mmlu_content.py": "fe4a62dbdf884a1e2aedc6ed26887b4e"
+      },
+      "harness_md5_note": "identical on BOTH disks and identical to the copies that produced the archive => same-CODE comparison, not code-version drift",
+      "bs_is_not_free": "full32_rescore_v2_20260812.sensitivity_bs48_probe measured bs32->bs48 flipping 12/14267 popqa and 10/3610 nq_open items, so bs was pinned to the anchor's and the endpoint's values.",
+      "stack": "py3.14 / torch2.13.0 / tf5.5.4 / cuda13.2 on both .73 and .82"
+    },
+    "protocol_gap_closed": {
+      "addresses": "A04_KEEP14_TRAJECTORY_PROTOCOL_GAP.md (MAIN, 2026-08-13, filed WHILE this scan was running)",
+      "the_gap": "summary.json:meta records mode/keep_front_layers/n_fresh_layers/num_hidden_layers/ckpt_step/ckpt/base_model/add_bos/max_new_tokens and NEITHER batch_size NOR chat_template -> the two most decision-critical fields cannot be reconstructed from the result dirs after the fact, only from the invocation.",
+      "how_closed": "a04_keep14_trajectory_ni.protocol_asserted() runs BEFORE anything is scored and PARSES the driver's own echoed lines out of the launch logs; it hard-fails on any deviation. Recorded in evidence/a04_keep14_trajectory_ni.json:protocol_asserted.",
+      "evidence_from_logs": {
+        "logs/a04_keep14_traj_128000.out (.73)": "DRIVER START ... mmlu_bs=16 cb_bs=32; closedbook START bs=32; nq_open START bs=32; mmlu START bs=16",
+        "logs/a04_keep14_traj_153500.out (.82)": "same four lines"
+      },
+      "add_bos": "meta.add_bos is False on all 9 result dirs, asserted with `is False` (never `is not True`, which passes silently on None)",
+      "chat_template": "False, established STRUCTURALLY not by a flag: neither eval_olmo2_closedbook_qa.py nor eval_olmo2_mmlu_content.py contains a chat-template code path -- the only occurrence of the string in either file is a docstring. A protocol that cannot be switched on cannot have been switched on.",
+      "gate_fails_closed_negative_tested": "a doctored log reading cb_bs=48 -> 'FATAL protocol deviation ... != {cb_bs:32, mmlu_bs:16}' and NO output file written; a missing log -> 'FATAL: driver log ... absent -- ... Refusing to publish cells whose protocol cannot be established.'",
+      "endpoint_predates_this_driver": "step200000 (2026-08-02) has no log from this driver; its protocol is re-verified from the archive's OWN logs -- logs/cb_driver_73.out echoes 'START base_full ... bs=32' AND 'START keep14_step200k ... bs=32', logs/nqopen_driver_73.log echoes 'START base_full_nqopen ... bs=32'. So the new cells match BOTH the endpoint and the anchor.",
+      "durable_fix_NOT_done_here": "MAIN's suggestion to have the harness write batch_size + chat_template into summary.json:meta is deliberately NOT done here: it would modify a shared scoring harness whose md5 is pinned identical across both disks AND to the copies that produced the anchor and the endpoint, breaking the same-code guarantee this comparison rests on. File it as a separate change that re-baselines nothing."
+    },
+    "anchor_and_delta": {
+      "anchor": "vanilla models/OLMo-2-1124-7B: olmo2_closedbook_results/base_full{,_nqopen} + olmo2_mmlu_content_results/7B_base",
+      "imported_not_redeclared": "a04_shallow_rung_ni_7b.ANCHOR",
+      "delta_never_substituted": true,
+      "anchor_never_changed": true,
+      "guard_G2": "full32_step25000 was NOT used as anchor; substituting it would shrink every Delta AND lower every target."
+    },
+    "guard_D1_D6": {
+      "all_four_axes": "CERTIFIABLE",
+      "decision_cells_retired": 0,
+      "decision_family": "9 -> 9",
+      "note": "identical to shallow_rung_ni_discrimination_20260812 for D1-D4 by construction (anchor properties); D6 recomputed over the trajectory arm set, not inherited."
+    },
+    "archived_endpoint_reproduction": {
+      "what": "re-deriving keep14fresh2@200k under its ARCHIVED bootstrap offset (arm_index=201) must return the archived margins, else the script hard-fails. Proves guard+anchor+rule did not drift, so the new points are on the same scale as the endpoint.",
+      "triviaqa": "-28.4624 archived -> -28.4624 recomputed (diff 3.87e-05 pp)",
+      "popqa": "-15.0810 -> -15.0810 (diff 4.39e-05 pp)",
+      "mmlu_content": "-7.4749 -> -7.4749 (diff 3.26e-06 pp)",
+      "all_reproduced": true
+    },
+    "margins_pp_split": {
+      "triviaqa": {
+        "step128000": -29.61045474810522,
+        "step153500": -29.086602764155153,
+        "step200000_archived_endpoint": -28.462438698172093
+      },
+      "popqa": {
+        "step128000": -14.842643863461134,
+        "step153500": -15.536552884278404,
+        "step200000_archived_endpoint": -15.080956052428682
+      },
+      "mmlu_content": {
+        "step128000": -7.866578834923801,
+        "step153500": -7.482018231021221,
+        "step200000_archived_endpoint": -7.474896738356359
+      },
+      "nq_open": {
+        "step128000": -13.933518005540167,
+        "step153500": -13.628808864265926,
+        "step200000_archived_endpoint": -13.573407202216066
+      }
+    },
+    "verdict_per_checkpoint": "0 of 3 decision axes accepting at EVERY checkpoint (threshold 2). Identical under all 5 tie conventions (credit retires MMLU -> 0 of 2). RATIO(0.85) also rejects all three (mean_ratio 0.4644/0.4654/0.4728), so there is NO rule disagreement anywhere on this trajectory.",
+    "the_load_bearing_finding": {
+      "monotone": {
+        "triviaqa": true,
+        "popqa": false,
+        "mmlu_content": true,
+        "nq_open": true
+      },
+      "popqa_regression": "the popqa margin got WORSE by -0.6939 pp over 25,500 steps of healing (128000 -> 153500), then partially recovered (+0.4556 pp). The accuracy move is RESOLVED on the item sample: -0.6729 pp, CI95 [-0.9252,-0.4206], boot p=0.0001, 218 right->wrong vs 122 wrong->right of 14267.",
+      "not_a_degeneracy_artefact": "labelled diagnostic: 0.000% empty preds at all three ckpts, top-constant share FALLING 2.481->1.703->1.213%, distinct preds RISING 8436->8556->9205. Sampled right->wrong flips are content substitutions (Moscow.-> 'Nekrasov was born in Moscow.'; 'New York City.'->'Chicago, Illinois'), not format breakage.",
+      "consequence_for_the_rule": "a certification rule evaluated at ONE arbitrary checkpoint can return a BETTER verdict than a later checkpoint of the same run. Any future accept obtained at a hand-picked checkpoint must be shown to survive its NEIGHBOURS, or the reported margin is partly a checkpoint-selection artefact. The current gate design contains no such requirement.",
+      "EM_is_coarse": "only 30.17% (popqa) / 47.18% (triviaqa) of prediction STRINGS are identical between 128k and 153.5k while EM moves <=0.7 pp -- the rule reads a stable-looking scalar off a model whose outputs are rewritten wholesale."
+    },
+    "accept_boundary_is_not_on_this_trajectory": {
+      "extra_heal_steps_to_margin_zero_naive_last_interval_line": {
+        "triviaqa": "2,120,442 = 10.6x the whole 200k run",
+        "popqa": "1,539,222 = 7.7x",
+        "mmlu_content": "48,807,563 = 244.0x",
+        "nq_open": "11,392,500 = 57.0x"
+      },
+      "popqa_all_points_slope_is_NEGATIVE": "-0.001709 pp/1k: under the OLS slope through all three points no forward extrapolation reaches margin=0 at all.",
+      "mmlu_has_PLATEAUED_not_converged": "the axis that looks closest to accepting (53.06% recovery) bought +0.0071 pp over the last 46,500 steps, p=0.9264 i.e. within item noise. Proximity is not approach.",
+      "caveat": "a straight line through 3 checkpoints of ONE run is NOT a healing model (heal curves are concave); the extrapolated steps are reported as DISTANCES to expose the scale of the gap, never as forecasts.",
+      "so": "'heal it longer' is NOT a route to certification at 7B, and any future tranche priced on that premise is mispriced."
+    },
+    "integrity": {
+      "shard_assertions": "for all 16 arm x axis cells: shard index set EXACTLY {0..7} (not merely '8 files'), merged n exactly EXPECTED_N (triviaqa 17944 / popqa 14267 / nq_open 3610 / mmlu 14042), 0 duplicate item_ids, 0 nan, identical item_id sequences across arms. Per-shard row counts recorded in the JSON.",
+      "cells_checked": 16,
+      "cells_failing": 0,
+      "driver_side": "a present-but-partial shard set is REMOVED by the driver, never left for a later analysis to merge short.",
+      "independent_harness_cross_check": "pre-existing letter-protocol MMLU runs (olmo2_downstream_results/7B_keep14_step{128000,153500,200000}_know, a DIFFERENT script at bs=8, run 2026-07-20 and 2026-08-02) give letter acc 0.30117/0.31242/0.31797; this dispatch's harness gives 0.302094/0.311423/0.318402 -- within 0.10 pp and same ordering, from code and runs predating this analysis.",
+      "ckpts_are_distinct_weights": "step128000.pt and keep14_step153500.pt have IDENTICAL byte size (48724473850; both carry optimizer_state, the 200k endpoint does not -> 16.2 GiB). Size is not identity: head-400MiB md5 29474e2b vs ec9ed051, mid-200MiB-at-20GiB dfe33568 vs 2c6eb15a; torch.load metas report step 128000 vs 153500, both keep_front=14 n_fresh=2, 179 tensors, strict. The driver asserts meta step == requested step before spending GPU.",
+      "bootstrap_offsets_disjoint": "new arms arm_index 300-301 (form 97*arm_index+13*axis); pilot_zero 0-1, step100k 100-102, shallow_rung 200-203. The endpoint is re-derived under its own archived offset 201 for the reproduction check, so no archived cell is perturbed.",
+      "add_bos_assertion_form": "asserted as `is False`, NOT `is not True` -- the latter passes silently on None.",
+      "code_reuse": "ni_rule/ratio_rule/load_shards/build_nulls/mmlu_content_norm_vec/qa_metric_vec/EXPECTED_N/AXES/DEMOTED_AXES/PREREG imported from pilot_zero_rule_disagreement; paired_bootstrap/TIE_CONVS/N_BOOT/SEED from A03's analyze_1b_knowledge_floor; and ANCHOR/_load_arm/assert_aligned/d4_interface_degenerate/SD_RUN_1B_PP/guard constants imported from a04_shallow_rung_ni_7b so the guard and anchor CANNOT drift between the endpoint cell and the new cells. Nothing reimplemented."
+    },
+    "full32_half_NOT_run": "the four intermediate full32_dolmino ckpts (step5000/10000/15000/20000, 81.6 GiB each) are wzc1-ONLY; measured cross-disk rate 16 MiB/s = ~89 min/ckpt before any GPU work, and LOCAL/.21 were outside this dispatch's node budget (SparseForge #246). That half remains open exactly as full32_rescore_v2_20260812.trajectory_scan_NOT_run describes it, and is now the highest-value remaining cheap step: full32 is the only arm where 'recovered' is defensible, hence the only place the boundary has been seen from.",
+    "licensed": "the 7B accuracies, nulls, residuals, Delta, lo95 bounds and margins; the reproduction of the archived endpoint; 'no realisable perturbation of the ITEM SAMPLE flips these verdicts' (20.6-77.3 bootstrap SE, measured at 7B); 'the popqa margin regressed by more than item sampling can explain'; and 'the accept boundary is not on this trajectory'.",
+    "NOT_licensed": [
+      "ANY claim that the 7B deficits are large 'relative to seed variance'. sd_run is 1B-ONLY (S=3, keep12@5000). Every 7B rung including all three points here has EXACTLY ONE seed, and the historical 7B ladder's seeds are UNRECORDED (--seed postdates them; trainer afdfa66 called no seeding function), so NO 7B sd_run is computable or retrospectively reconstructible. The deficit/sd_run column in the JSON is labelled cross-scale extrapolation only.",
+      "treating the three checkpoints as replicates of each other -- they are three checkpoints of ONE run, so their spread is heal progress plus data order, not independent-run variance. In particular the popqa dip cannot be attributed to (or excused as) SEED variance, because no seed-variance estimate exists at this scale; it is established only as larger than ITEM noise.",
+      "calling the popqa dip 'harness noise': full32_rescore_v2_20260812.correction_to_the_jitter_premise established there is NO measured runtime-jitter floor on this harness (same-code re-runs are bit-identical; every prior 'jitter' number was a code-version or batch-size difference). These are three DIFFERENT models so bit-identity does not apply -- but 'noise' is also not available as an explanation.",
+      "any claim that the mmlu 128k->153.5k move is real: its CI lower bound landed EXACTLY at 0.0000 pp while p=0.0514, so the two criteria disagree (the bootstrap of a 0/1 metric is discrete). Recorded as criteria_disagree=true and treated as NOT resolved (conservative AND of CI-excludes-zero AND p<0.05). Picking the favourable criterion would turn a tie into a result.",
+      "any K1/K2/K3 clause: they are defined over the pre-registered 1B arm set and a 7B ladder cannot fire them. STATUS.json:warning's two-corpora / unequal-steps caveat also still holds, so this ladder is not a controlled scaling law.",
+      "anything about the full32 trajectory -- it was not run."
+    ],
+    "recommendation": "do NOT fund a new damaged-arm tranche on the premise that more heal steps approach the boundary: this pass measures that premise at 7B and it is false (8-244x the entire heal budget away, negative slope on popqa). Remaining cheap step: the full32 trajectory on LOCAL/.21 when SparseForge frees them (zero transfer, ckpts already there). And ADD A CHECKPOINT-NEIGHBOURHOOD ROBUSTNESS REQUIREMENT to the gate design before any accept is reported from a single checkpoint."
   }
 }
