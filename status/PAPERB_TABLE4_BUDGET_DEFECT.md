@@ -93,3 +93,48 @@ was the `final.pt` symlink, `PAPERB_P24_SHORTGPT16_ARM.md`).
 - core6 recomputation over all `zwfy6:olmo2_downstream_results/7B_*/summary.json`.
 - False claim: `paperB/TODOList.md:267`.
 - Agent report: `status/PAPERB_P24_LADDER_PREV2_EVAL.md`; driver `scripts/_run_olmo2_p24_eval_ladder_prev2_73.sh`, commits `6c3e329`, `82feb86`.
+
+---
+
+## Correction (MAIN, 2026-08-13): the step inventory was ONE-DISK and the option (b) price is 22 % too high
+
+The original audit recorded max-on-disk as *"identical wzc1+zwfy6"*. **It is not identical.** The
+three parked resume arms ran on **zwfy6**, and that is where their newest checkpoints live:
+
+| arm | wzc1 max | zwfy6 max | **best** | steps to a genuine 200k |
+|---|---:|---:|---:|---:|
+| keep8 | 121,000 | **131,000** | 131,000 | 69,000 |
+| keep10 | 83,500 | **90,000** | 90,000 | 110,000 |
+| keep12 | 111,500 | **166,000** | 166,000 | **34,000** |
+| keep14 | 200,000 | 200,000 | 200,000 | 0 |
+| ShortGPT-16 | 200,000 | 200,000 | 200,000 | 0 |
+
+`keep12` is the sharp one: the audit read **111,500** off wzc1 and reported **124,000**; the real
+newest checkpoint is **166,000** on zwfy6. So keep12 needs **34k** more steps, not 76k.
+
+**Option (b) re-priced**: **213,000** steps remain, not 271,500 — the audit over-priced it by
+**58,500 steps (22 %)**. At keep14's observed 1.56 s/step on 8 cards that is **≈92 GPU-h ≈ 11.5 h
+wall on one 8-card node**, not the "~118 GPU-h = ~5 days" originally quoted. The 5-day figure
+appears to have assumed one-rung-at-a-time on a partly-busy node.
+
+### Why the defect itself still stands
+
+Nothing here rescues the *claim*. `paperB/TODOList.md:267` says every rung ran to 200k; **three of
+five did not**, on either disk. The bias direction is unchanged and still unfavourable: keep10 has
+had **2.2×** less healing than keep14 (90k vs 200k), and the shallower rungs that look worst are
+exactly the ones that got less budget, which **inflates the apparent depth effect**. "Compute-matched"
+remains unsupportable as written.
+
+What changes is only the **cost of fixing it properly** — from a 5-day commitment to a
+half-day one, which materially affects the (a)-vs-(b) tradeoff.
+
+### Provenance note
+
+Tasks #95/#96 are marked completed with titles claiming resumes "to 200k". Against the disk, those
+resumes **did run and did advance** (keep12 111,500 → 166,000; keep8 → 131,000; keep10 → 90,000) but
+**none reached 200k** before being killed on 2026-08-12 to free nodes for paperC/proposal work. So
+the task titles overstate; the underlying work is real and its checkpoints carry optimizer state,
+so a faithful resume is still available.
+
+**Method lesson**: this audit asserted "identical wzc1+zwfy6" without measuring both. The two-disk
+rule applies to step inventories exactly as it applies to file existence.
