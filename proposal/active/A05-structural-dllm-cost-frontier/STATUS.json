@@ -1,0 +1,130 @@
+{
+  "id": "A05",
+  "slug": "structural-dllm-cost-frontier",
+  "title": "Structural dLLM: is there a cost regime where an explicit structural runtime beats its own family?",
+  "status": "active_gate_registered_K1_launched",
+  "priority": 2,
+  "created": "2026-08-12",
+  "updated": "2026-08-12",
+
+  "created_from": {
+    "source_repo_wzc1": "/apdcephfs_wzc1/share_304376610/pighzliu_code/dllm_draft",
+    "source_repo_zwfy6": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/dllm_draft and dllm_draft_104",
+    "user_directive_verbatim": "那你把这个dllm draft变成一个新的proposal吧 然后你要测的可以测一测 这样看来我们的提案还是有用的",
+    "predecessor": "proposal/backlog/B10-dllm-infilling-ar-dominance -- DIFFERENT SURFACE, kept separate, not merged",
+    "task": "#186 (Reframe dLLM direction) is subsumed by this proposal"
+  },
+
+  "gpu_authorised_by_the_proposal_document": 0,
+  "gpu_authorised_now": "K1 only (~14 GPU-h, .73), launched 2026-08-12 under standing autonomy",
+
+  "the_claim": "On full-program code generation under a token-cost budget, an explicit structural decoding runtime reaches quality its own model family does not reach at comparable cost -- while remaining well below AR models, which dominate both axes. Attributable to mechanism not extra training, because matched plain-SFT at 3.1x the token cost scores .000.",
+
+  "not_claimed": [
+    "any advantage over autoregressive models -- AR strictly dominates, stated in the abstract",
+    "a general dLLM advantage",
+    "anything about the infilling surface -- that is B10's"
+  ],
+
+  "headline_observation": {
+    "scaffold_medium": {"he_plus": 0.177, "mbpp_plus": 0.354, "nfe_mean_he": 63.8, "nfe_mean_mbpp": 56.7,
+      "provenance": "DLLM_RESULTS_20260807.md:447 and :456, re-read by MAIN 2026-08-12"},
+    "dreamon_v0_7B": {"he_plus": 0.122, "mbpp_plus": 0.085, "nfe_mean_he": 265.88, "nfe_mean_mbpp": 135.65,
+      "provenance_passat1": "runs/dreamon_heplus_r2/evalplus.out and runs/dreamon_mbppplus_r2/evalplus.out -- evalplus stdout, not a roll-up",
+      "provenance_nfe": "runs/dreamon_*.r1/metrics.rank*.jsonl process.nfe -- r1 ONLY, because r2 logs nfe:null for every item",
+      "MIXED_ROUND_WARNING": "pass@1 is r2-sourced, NFE is r1-sourced. Invariant D3 forbids presenting these as one clean row without saying so."},
+    "advantage": {"he_plus_pp": 5.5, "he_plus_ratio": 1.45, "mbpp_plus_pp": 26.9, "mbpp_plus_ratio": 4.16,
+      "nfe_cheaper_he": 4.17, "nfe_cheaper_mbpp": 2.39},
+    "ar_ceiling": {"he_plus": 0.707, "mbpp_plus": 0.680, "note": "boundary condition, goes in the main table"},
+    "matched_control_that_rules_out_more_training": {"plain_sft_nfe64_he_plus": 0.000, "cost_tok": 43854,
+      "scaffold_medium_cost_tok": 13980, "ratio": 3.14, "source": "BASELINE_STATS.md"}
+  },
+
+  "defects_found_by_MAIN_20260812": {
+    "D_A_FATAL_IF_UNFIXED": {
+      "what": "the DreamOn baseline is harness-crippled, so +26.9 pp is uninterpretable",
+      "telemetry_aggregated_from": "runs/dreamon_*/metrics.rank*.jsonl",
+      "generated_tokens_mean": {"r1": 1.90, "r2": 2.29, "max_observed": 26},
+      "raw_output_empty": {"he_r1": "133/164", "he_r2": "128/164", "mbpp_r1": "346/378", "mbpp_r2": "333/378"},
+      "initial_masks": "8 for EVERY item -- no per-item headroom",
+      "checked_whether_passes_are_empty_output_artifacts": "NO -- all 18 passing HE+ items generated 5-19 tokens, 0 of 18 with generated_tokens==0, cross-referenced solutions_eval_results.json against per-item metrics",
+      "consequence": "currently measures Scaffold vs a length-controller that never engaged"
+    },
+    "D_B": {
+      "what": "reverse cell empty -- Scaffold never run on DreamOn's home turf",
+      "verified": "grep -i scaffold KSPAN_INFILLING_RESULTS.md -> 0 hits",
+      "dreamon_home_turf_score": 0.702
+    },
+    "D_C": {
+      "what": "DreamOn's own round-to-round noise is ~22% relative",
+      "he_plus": "r1 .110 -> r2 .122", "mbpp_plus": "r1 .066 -> r2 .085",
+      "note": "1.9 pp movement on a .085 base; n=2 rounds cannot estimate sd"
+    }
+  },
+
+  "kill_gate": {
+    "registered": "2026-08-12, before any A05 measurement exists",
+    "K1": "fires if DreamOn at its best NON-ORACLE canvas (initial_masks in {8,32,128,512}) reaches within 5.0 pp of Scaffold Medium on BOTH benchmarks -> gap was budget not structure -> DEAD",
+    "K2": "fires if the Scaffold-DreamOn MBPP+ margin < t_{0.05,df} * sd_round * sqrt(2) from 4 rounds at best non-oracle canvas -> indistinguishable from round noise -> DEAD",
+    "K3": "fires if Scaffold < half of DreamOn's .702 on SingleLine infilling AND K1/K2 leave the MBPP+ margin under 15 pp -> task-surface result not mechanism result -> DEAD",
+    "explicitly_NOT_a_kill_condition": [
+      "losing to AR -- known, in the abstract, boundary not defect",
+      "a prior paper covering part of the surface -- per user directive 2026-08-12 a collision is a citation obligation, not a scope cut. Only K1/K2/K3 can kill A05."
+    ]
+  },
+
+  "stale_blocker_verified_false": {
+    "roadmap_claim": "DLLM_SALVAGE_ROADMAP_20260808.md P1-C: 'Repository blocker: scripts/generate_infilling.py is missing'",
+    "reality": "PRESENT on zwfy6 at dllm_draft_104/scripts/generate_infilling.py, 392 lines, implements all 6 arms + --initial_masks + oracle/non-oracle split + first-line grading; score_infilling.py (197 lines) also present",
+    "root_cause": "the roadmap's author searched ONE disk",
+    "impact": "blocked P1-C from 2026-08-08 to 2026-08-12",
+    "memory_refs": ["subagent-audit-must-specify-cross-disk", "two-disk-rule-applies-to-main-too"]
+  },
+
+  "asset_audit_20260812": {
+    "verified_on_both_disks": true,
+    "scaffold_ckpt": {"path": "models/Scaffold-v0-stage1-7B", "size": "29G", "wzc1": true, "zwfy6": false,
+      "consequence": "K3 must run on LOCAL/.21, or pay a ~31 min scp -O (16 MiB/s measured cross-disk)"},
+    "dreamon_qwen_dream_ckpts": "present on BOTH disks -> K1/K2 run on zwfy6 with zero transfer",
+    "eval_data": "data/evalplus + data/infilling present on both disks"
+  },
+
+  "protocol_invariants": [
+    "grader is evalplus.eval.untrusted_check with per-invocation self-test, NEVER a hand-rolled verifier (Retraction 1: old verifier scored empty stubs 7/7 pass, 77% vs true 20.7%)",
+    "report tokens_fed AND NFE, never NFE alone (Retraction 3: NFE-as-cost inflated Large by 2.85x/3.69x)",
+    "never merge an r1 NFE with an r2 pass@1 -- r2 logs nfe:null",
+    "oracle arms labelled *_oracle and excluded from headline comparisons (~5.7 pp on infilling)",
+    "the AR ceiling .707/.680 appears in the MAIN table, not an appendix",
+    "sharded runs assert shard completeness before merge: HE+ 164, MBPP+ 378, SingleLine 1033, 0 dup task_id, 0 nan",
+    "mask_expansion / delete_eos_token are NOT parameters -- silently swallowed by **kwargs (DLLM_RESULTS_20260807.md:342); any 'with mask_expansion on' phrasing is void"
+  ],
+
+  "cost_estimate": {
+    "K1": "~14 GPU-h (5 canvas settings x 2 benchmarks; anchor: HE+ r1 659 s, MBPP+ r1 919 s on 8 shards, x4 for longer canvases)",
+    "K2": "~7 GPU-h (2 more rounds at best canvas)",
+    "K3": "~6 GPU-h (Scaffold on SingleLine n=1033)",
+    "total": "~27 GPU-h = ~3.4 h on one 8-card node",
+    "training_required": "NONE -- all 5 checkpoints already on disk"
+  },
+
+  "novelty_check": {
+    "status": "NOT DONE -- required before any GPU beyond K1",
+    "to_check": ["structural/hierarchical decoding runtimes for diffusion LMs", "length-controller work post-DreamOn", "published Scaffold-like meta-token decoders"],
+    "output_is": "a citation-obligation list, NOT a scope cut -- only K1/K2/K3 can kill the direction",
+    "venue_rule": "OpenReview venueid for ICLR/NeurIPS/ICML; ACL Anthology + DBLP for the ACL family including Findings"
+  },
+
+  "next_gate": [
+    "K1 canvas sweep on .73 -- LAUNCHED 2026-08-12, the clause most likely to fire, needs no Scaffold ckpt",
+    "K2 rounds 3+4 at best non-oracle canvas -- only if K1 does not fire",
+    "K3 Scaffold on SingleLine -- needs LOCAL/.21 or a 29 GB scp -O",
+    "novelty check (CPU, 0 GPU) -- before anything past K1"
+  ],
+
+  "unverified": [
+    "whether DreamOn's under-generation is a canvas artifact or a model property -- this is exactly K1",
+    "sd_round for DreamOn with df>=2 -- only 2 rounds exist",
+    "Scaffold's score on ANY infilling surface -- never measured",
+    "whether Scaffold Medium's .177/.354 replicate on a second sampler seed -- single-round numbers"
+  ]
+}
