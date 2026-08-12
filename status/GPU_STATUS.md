@@ -2,6 +2,14 @@
 > 每次启动/kill GPU 任务更新。heartbeat 先读→对照 nvidia-smi→台账说跑但空=补卡。★29.162.226.120=dllm 绝不碰。
 > 2026-08-08 15:03 更新：用户指令「B200跑resume，H20跑新方向」→ Paper B resume 迁移到 .21/.73。
 
+## 🟡 2026-08-13 — `.73` 实测【空闲】8 卡 0 MiB；#99 keep14-distill resume **审查后决定不投**（花费 0 GPU-h）
+
+| 节点 | 硬件 | 任务 | 细节 | 状态 |
+|---|---|---|---|---|
+| **.73** | 8×H20 zwfy6 | **空闲**（本次未占卡） | 派来 resume #99 keep14-distill heal。`nvidia-smi` 实测 GPU 0-7 全 **0% / 0 MiB**（下面 2026-08-12 那行「.73 = keep10fresh2 resume 运行中」**已过期**，该 run 已不在）。**审查后没有启动**：`--save_every 5000` + resume 起点 step5000 ⇒ 下一次落盘在 step10000 = 5000 步 × 13.11 s/step = **18.2 h wall = 146 GPU-h**，是本次 80 GPU-h 授权的 **1.8×**；80 GPU-h 只到 ~step7745，**差 2255 步落不了盘 ⇒ 必然 0 checkpoint**。08-05 那次已经这样烧掉 81 GPU-h（5000→7780，盘上仍只有 step5000.pt），07-31 同样（→5200）；再投就是**第三次全损**。详见 `status/PENDING_TASKS.md` #99 `[BLOCKED]`。**未 kill 任何进程。** | ⏸️ 空闲，待用户就 (a) 放弃 / (b) 迁 B200 / (c) 降 save_every 拍板 |
+
+> 同时查出三个前提性问题（不改代码、仅记录）：① 任务给的「teacher」`outputs/olmo2_probe2_7B_keep14fresh2/step200000.pt` 其实是 **keep14 学生自己**（16,241,486,089 B = 4.0604B×4B fp32），真 teacher 是 HF 目录 `../models/OLMo-2-1124-7B`（32L/7.2986B，`from_pretrained` 载**目录**，喂 `.pt` 会崩）。② 差分 LR 缺陷在 zwfy6 **确认存在**（三次启动 log 只有 `inh_decay 4060.1M` + `inh_nodecay 0.3M` 两组、无 `fresh` 组 ⇒ 均匀 2e-5），且 zwfy6 版 trainer **缺** `train_olmo2_arch_probe2.py:912` 的 2→4 组 remap shim ⇒ 若补 `module.` 剥离会让 optimizer `load_state_dict` 失败降级 warm-restart、**丢 Adam 动量**，故只能选「原样均匀 LR」。③ 两盘 trainer md5 不同（LOCAL `228812e8` / zwfy6 `9e824f7d`），zwfy6 版**无** `--seed`、无 rotation flags ⇒ 照 LOCAL 写 flag 会 `unrecognized arguments` 直接崩。
+
 ## ⚠️ 节点调度规则变更（2026-08-08 15:03 用户指令）
 
 > **用户指令**：「B200可以拿去直接跑resume 然后H20跑得比较慢 可以跑你的新方向. 其他H20你想用可以随时kill paperB的resume」

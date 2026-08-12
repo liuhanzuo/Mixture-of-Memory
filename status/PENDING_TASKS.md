@@ -622,7 +622,33 @@ setsid nohup bash -c "
 ```
 (其他 probe 类比,改 EXTRA_ARGS 即可。注意 .7.53 / .245.174 / 本机 / .196 / B200 用各自的 PROJECT_ROOT 和 PYTHON_BIN。)
 
-## [PENDING] distill 迁移 .73 H20 → B200 (auto_launch: true, ShortGPT@200k 完成时触发)
+## [BLOCKED] #99 keep14-distill heal — auto_launch: **false**（2026-08-13 决定不在 .73 恢复，原因不是「没有空节点」）
+
+**结论：`.73` 已空闲，但 resume 仍不该跑。阻塞原因是 `save_every` 与预算不相容，不是节点可用性。改 auto_launch=false，需要用户就下面的取舍拍板后才动。**
+
+**证据（全部在 .73 = zwfy6 实测，log=`logs/olmo2_7B_keep14_distill.log`）**：
+
+1. **★ 关键：08-05 已经用光同样的预算，产出为 0。** 该 run 11:53→22:03 跑了 **10.2 h wall = 81 GPU-h**，从 step5000 推到 **step7780**，然后停了——**盘上依然只有 `step5000.pt`**（log 里 `saved` 只出现过一次，即 07-31 的 step5000）。因为 `--save_every 5000` 且 resume 起点正好是 5000 → **下一次落盘在 step10000**。
+   - 实测 sustained rate **13.11 s/step**（`elapsed/iter` 与 tqdm 一致，全程稳定，maxmem 94.6GB/97.8GB）。
+   - 5000→10000 = 5000 步 = **18.2 h wall = 146 GPU-h**，是 80 GPU-h 上限的 **1.8×**。
+   - 80 GPU-h 只能到 **step ~7745**，**再次差 2255 步落不了盘**。→ 在给定预算内 resume 必然重演 08-05：烧满 80 GPU-h、0 checkpoint、0 可 eval 产物。**07-31 那次同样如此（到 step5200 就没了）。这会是第三次。**
+   - 若要落盘必须改 `--save_every`（如 500/1000）——但那是**新配置**，且 200k 全程 = **5681 GPU-h ≈ 71× 预算**，本节点不可能完成。
+
+2. **teacher 路径前提是错的。** 任务给的 `outputs/olmo2_probe2_7B_keep14fresh2/step200000.pt` **不是 teacher**：它 16,241,486,089 B = 4.0604B×4B fp32 = **keep14 学生自己**（16 层）。真 teacher 是 HF 目录 `../models/OLMo-2-1124-7B`（32L，7.2986B，log 第 26 行 `[distill] teacher loaded: 7.2986B`），trainer 用 `AutoModelForCausalLM.from_pretrained` 加载**目录**，喂 `.pt` 会直接失败。`--distill_teacher_model` 必须是那个 HF 目录。
+
+3. **差分 LR 缺陷：选项 (1) 成立，但本身不是阻塞项。** zwfy6 的 `_classify_param`（line 287-298）确实**没有 `module.` 剥离**，而 DDP wrap（line ~595）在 `build_param_groups`（line 620）**之前** → 全部参数落入 inherited。log 三次启动都只有 `inh_decay 4060.1M @2e-5` + `inh_nodecay 0.3M @2e-5`，**无 fresh 组** → 实际是**均匀 2e-5**，与 keepN ladder 同 bug 同行为（故可比）。**写作时不得声称差分 LR。**
+   - 且 ckpt 的 optimizer state 是 **2 组 bnb 8-bit** 格式；zwfy6 版 trainer **没有** `train_olmo2_arch_probe2.py:912` 那个 2→4 组 remap shim（grep=0）→ 一旦补上 `module.` 剥离就变 4 组，`load_state_dict` 抛 ValueError 降级 warm-restart，**Adam 动量全丢**。所以选项 (2) 不只是「破坏可比性」，在 zwfy6 上还会**破坏忠实 resume**。→ 若要恢复，只能选 **(1) 原样均匀 LR**。
+
+4. 两盘 trainer **不同**（LOCAL md5 `228812e8` / zwfy6 `9e824f7d`）：zwfy6 版**没有** `--seed`、没有 rotation flags（`--keep_last_n` 等硬编码 latest-2+每 5000），LOCAL 版有。**照 LOCAL 的 flag 写命令行会在 .73 上 `unrecognized arguments` 直接崩。**
+5. 该 trainer **完全没有 inline eval 代码**（grep `eval_interval|babilong|quick_eval` = 0 命中）→ NCCL desync 风险结构性不存在，`--eval_interval 0` 这个 flag 也不存在，传了会崩。
+6. 资产确认存在：`step5000.pt`(24,489,312,843 B, has_optimizer=True) / 数据 `/dev/shm/dolmino_now15b.npy`(126.9GB, 在 shm 与 data/ 双份) / bnb 0.50.0 / zwfy6 剩 3.4T。**资产不是问题。**
+
+**要拍板的取舍**（任一都超本次 80 GPU-h 授权，故不自行启动）：
+- (a) **放弃 #99**：distill 属「后续方法论文」（见本文件 line 16 用户 2026-07-31 定调），非当前机制论文承重项；step5000 已有完整 base-协议 eval（PPL+core6+know5，`olmo2_*_results/7B_keep14distill_step5000/`）可作为 distill 的唯一数据点。
+- (b) **迁 B200**（原任务本意，~3s/step，约 7 天到 200k）——但 LOCAL/.21 现跑 SparseForge #246，且 **B200 无 bnb** → 需先装 bnb 或换 fp32 AdamW（后者丢动量）。
+- (c) **降 `--save_every` 到 500 继续在 .73 慢跑**：需接受这是新配置 + 200k 需 ~33 天独占。
+
+<details><summary>原 PENDING 记录（2026-07-30，触发条件已过期）</summary>
 
 **触发条件**: LOCAL B200 的 ShortGPT heal 跑到 step200000 完成（当前 ~96k，~1.8 天后）。
 
@@ -637,6 +663,7 @@ setsid nohup bash -c "
    - B200 183GB 装得下 fp32 adam (56GB) + model(42GB) + teacher(14GB) = 112GB, 可不用 8bit
 
 **决策点** (ShortGPT 完成时): distill 迁 B200 (7天完成) vs .73 继续 H20 (33天) + B200 跑其他。用户 2026-07-30 指令: "先跑着吧 B200空出来可以迁移" → 迁移。
+</details>
 
 ## [DONE] Paper B P0.6 content-MMLU 全 sweep (2026-08-02，9 arms 全跑完，.73 + .104 并行)
 
