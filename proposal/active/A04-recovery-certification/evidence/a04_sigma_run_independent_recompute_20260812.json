@@ -1,0 +1,88 @@
+{
+  "scope": "INDEPENDENT recompute of Stage-B sigma_run from raw shards (no verdict JSON read)",
+  "seeds": [
+    101,
+    102,
+    103
+  ],
+  "S": 3,
+  "df": 2,
+  "t_0.05_df2": 2.9199855803537123,
+  "per_axis": {
+    "triviaqa": {
+      "means_pct": [
+        9.256576014266606,
+        9.663397235844851,
+        9.072670530539456
+      ],
+      "sd_run_pp": 0.30229201489958313,
+      "bound_S3_pp": 0.5096203417969025,
+      "delta_pp": 4.043134195274186,
+      "sigma_chi2_95ci_pp": [
+        0.15739083651451005,
+        1.8998251145098854
+      ],
+      "bound_at_sigma_ci_hi_pp": 3.202828644125732,
+      "exceeds_delta": false,
+      "would_exceed_at_sigma_ci_hi": false,
+      "decision_weight": true
+    },
+    "popqa": {
+      "means_pct": [
+        5.579308894651994,
+        4.941473330062382,
+        5.095675334688441
+      ],
+      "sd_run_pp": 0.33279470298495445,
+      "bound_S3_pp": 0.5610434345734516,
+      "delta_pp": 1.3205298941613512,
+      "sigma_chi2_95ci_pp": [
+        0.17327231322269415,
+        2.0915264166560896
+      ],
+      "bound_at_sigma_ci_hi_pp": 3.526009139499097,
+      "exceeds_delta": false,
+      "would_exceed_at_sigma_ci_hi": true,
+      "decision_weight": true
+    },
+    "mmlu_content": {
+      "means_pct": [
+        31.619427431989745,
+        31.697763851303236,
+        31.77610027061672
+      ],
+      "sd_run_pp": 0.07833641931348723,
+      "bound_S3_pp": 0.13206380194642678,
+      "delta_pp": 1.0238926078906136,
+      "sigma_chi2_95ci_pp": [
+        0.040786504299152024,
+        0.4923236124579006
+      ],
+      "bound_at_sigma_ci_hi_pp": 0.8299859582424818,
+      "exceeds_delta": false,
+      "would_exceed_at_sigma_ci_hi": false,
+      "decision_weight": true
+    },
+    "nq_open": {
+      "means_pct": [
+        2.714681440443213,
+        2.2991689750692523,
+        2.4653739612188366
+      ],
+      "sd_run_pp": 0.20913668795763832,
+      "bound_S3_pp": 0.3525740183201603,
+      "delta_pp": 0.9695290858725762,
+      "sigma_chi2_95ci_pp": [
+        0.10888874545515541,
+        1.3143685991154057
+      ],
+      "bound_at_sigma_ci_hi_pp": 2.2158341660159833,
+      "exceeds_delta": false,
+      "would_exceed_at_sigma_ci_hi": true,
+      "decision_weight": false
+    }
+  },
+  "n_decision_axes_exceeding": 0,
+  "n_decision_axes_exceeding_at_sigma_ci_hi": 1,
+  "verdict": "K2_DOES_NOT_FIRE"
+}

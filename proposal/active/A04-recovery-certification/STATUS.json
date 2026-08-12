@@ -1602,5 +1602,58 @@
       "recommendation": "run it on LOCAL/.21 when SparseForge frees them -- the ckpts are already there, zero transfer. Est. 4 ckpts x 3 axes ~ 1.4 h wall / 11 GPU-h at this run's measured rate, plus a separate MMLU-content invocation.",
       "expectation_to_design_for": "full32@25k is the ENDPOINT of the trajectory and already sits at 97.7% MMLU recovery with triviaqa only 1.86 SE from accepting. Earlier ckpts are LESS converged so should reject HARDER: the accept boundary is most likely BEYOND step25000 or off this trajectory, not between 5000 and 25000. The scan is worth having as the discrimination curve but should not be sold in advance as likely to find an accept."
     }
+  },
+  "sampler_fix_and_pilot_one_disposition_20260812": {
+    "scope": "Job 1 (sampler fix verification, BOTH disks, by EXECUTION) + Job 2 (Pilot One affordability on one node). GPU spent: 0. .73 used as a CPU host only; nvidia-smi 0%/0MiB on all 8 cards at dispatch and at exit.",
+    "headline": "The blocking one-line fix is NOT outstanding -- it landed 2026-08-09 23:21:09 +0800 as commit ce5c298 and is present on BOTH disks, byte-identical (md5 284b286f90b526e4e8ad93a68e2a3b16). Every run A04 consumes as sigma_run input is POST-fix. next_gate's 'CPU CODE FIX (~1 line, BLOCKING for K2)' item and blocked_by.still_blocking_before_any_gate_gpu[1] are STALE and are retired by this entry.",
+    "fix_state_per_disk": {
+      "wzc1": "scripts/train_olmo2_arch_probe2.py:869 = DistributedSampler(ds, shuffle=True, seed=args.seed), guarded by a 6-line load-bearing comment. Tracked; ce5c298 in history.",
+      "zwfy6": "line 869 IDENTICAL, md5 matches wzc1 exactly. Propagated by FILE COPY, NOT by git: zwfy6 HEAD is still 2d98c5a and does not contain ce5c298 (git cat-file -t ce5c298 -> 'Not a valid object name'). Pre-fix copy preserved as scripts/train_olmo2_arch_probe2.py.PRE_CE5C298_BAK (md5 879541f001568ceea16528e2e5d8035f), whose line 863 is the old DistributedSampler(ds, shuffle=True).",
+      "line_number_note": "next_gate says line 863; that was the PRE-fix line number and is now the line number inside .PRE_CE5C298_BAK. The live call is at 869 on both disks -- the fix added 6 comment lines above it."
+    },
+    "verified_by_execution": {
+      "driver": "code/a04_sampler_seed_probe.py (CPU, no GPU, no model). Instantiates the real torch DistributedSampler both ways over a 15,491,607-row index (the dolmino_now15b.npy row count) at num_replicas=8, rank=0, set_epoch(0).",
+      "pre_fix_result": "6 seeds {42,43,44,101,102,103} -> sampler.seed==0 for ALL, and ONE distinct batch order (first-12 indices byte-identical across all six). The defect, reproduced.",
+      "post_fix_result": "the same 6 seeds -> sampler.seed==seed, and SIX distinct batch orders.",
+      "slice_overlap": "on the 16.53%-of-epoch slice each 20k-step run actually consumes: post-fix seed43 vs seed44 rank-0 Jaccard = 0.0102 (near-disjoint data subsets); pre-fix = 1.0000 (identical). Confirms DATAORDER_VERDICT.md's 'sampler-seed / data-subset variation, not order-only' characterisation.",
+      "conclusion": "the argument is load-bearing, not cosmetic: without it 'seed variance' collapses to fresh-block-init variance and arm A2 (n_fresh=0) would have sd_run identically 0."
+    },
+    "provenance_of_sigma_run_inputs_ALL_POST_FIX": {
+      "method": "every launcher writes a POSITIVE preflight assertion of the fixed line into logs/*_progress.log before launching; checked all six.",
+      "keep7_dataorder_seed43": "launched 2026-08-10 16:55:29, preflight 'trainer post-ce5c298 OK: 869: ... seed=args.seed'",
+      "keep7_dataorder_seed44": "launched 2026-08-10 16:57:29, same assertion",
+      "keep7_dataorder_seed45": "launched 2026-08-11 12:04:07, same assertion",
+      "keep12_stageB_seed101": "launched 2026-08-11 05:53:47, same assertion",
+      "keep12_stageB_seed102": "launched 2026-08-11 05:53:57, same assertion",
+      "keep12_stageB_seed103": "launched 2026-08-11 10:22:27, same assertion",
+      "timing_margin": "zwfy6's trainer file mtime is 2026-08-10 16:54:16, i.e. 73 SECONDS before the first seeded run (seed43, 16:55:29). The fix reached zwfy6 immediately before the sigma_run campaign began; nothing in the campaign predates it.",
+      "cross_check": "A03 DATAORDER_PREREG.md s2 independently measured training-loss correlation over steps 200020-202880: Arm3-vs-Arm6 (both PRE-fix, sampler seed 0) r=+0.99966, while seed43/44 are mutually uncorrelated (r=+0.0041) and uncorrelated with the old arms (-0.0101/+0.0087). The phase-lock is absent in exactly the runs used for sigma_run."
+    },
+    "scientific_consequence_REJECTS_THE_PREMISE": "The stated worry -- 'A03 seeds 43/44/45 are init-variance only, so A04's sigma_run measures the wrong thing and every power calculation is mis-specified' -- is FALSE. Those three runs, and the three keep12 runs that actually feed K2, all ran post-fix with verified-varying data subsets. sigma_run measures run-to-run (sampler-seed / data-subset + init) variance as intended. No power calculation is mis-specified on this account. What WAS pre-fix is A03's Arms 3/4/6 -- already recorded as the phase_locked_defect that produced the ARTIFACT verdict; those are not sigma_run inputs.",
+    "pilot_one_ALREADY_RAN": {
+      "finding": "unverified[0] ('sd_run for any 1B recovery arm -- no multi-seed 1B run exists on either disk. Pilot One's entire purpose.') is STALE. It was answered 2026-08-11 by Stage B: keep12+fresh2, seeds {101,102,103}, S=3, 5,000 steps each -- which IS Pilot One's design (one arm at chosen j, S=3, 5,000 steps). Also stale: power_analysis.sd_run_is_UNVERIFIED.",
+      "independent_corroboration": "sigma_run recomputed from the RAW per-example shards without reading any verdict JSON (code/a04_sigma_run_independent_recompute.py -> evidence/a04_sigma_run_independent_recompute_20260812.json, md5 920c710c9612d0ccfea6c1723393b460). All four axes reproduce evidence/pilot_one_stage_b_s3_verdict.json to <=1.9e-16: triviaqa 0.30229, popqa 0.33279, mmlu_content 0.07834, nq_open 0.20914 pp. Integrity re-asserted independently of the loader: shard INDEX SET exactly {0..7} (not merely a count of 8), exact item counts 17944/14267/3610/14042, 0 duplicate item_ids, 0 nan, MMLU read via the nested content_norm.correct key.",
+      "chi2_interval_as_required": "df=2; chi2 95% CI on sigma computed closed-form (df=2 CDF=1-exp(-x/2) => ppf(p)=-2ln(1-p); scipy absent on .73). triviaqa [0.1574,1.8998], popqa [0.1733,2.0915], mmlu_content [0.0408,0.4923] pp -- 6.1x multiplicative width. K2 does not fire at the point estimate (0/3 decision axes); popqa WOULD exceed at the chi2 upper bound (3.526 vs Delta 1.3205), so 1/3, below the >=2 rule. The FRAGILE-on-one-axis reading stands and must ship with any K2 statement.",
+      "what_remains_genuinely_unmeasured": "sd_run for keep7+fresh2 at 1B is a SEPARATE family, measured at df=3 (S=4, seeds {0,43,44,45}) -- also already on disk, 0 GPU. NOT measured: sd_run for any 1B arm at a rung where NI can be observed to ACCEPT. Neither keep7 nor keep12 is such a rung (both constant-REJECT), which is why Stage B 'passed its kill gate and still failed its purpose'. More seeds on either family cannot fix that -- it is a rung-selection problem, not a variance problem."
+    },
+    "pilot_one_not_rerun_and_why": {
+      "decision": "NOT RUN. Re-running would spend GPU to recompute a statistic already on disk, and could not fit the budget anyway.",
+      "cost_arithmetic_from_measured_anchor": "STATUS.json:cost anchor = 2.02 s/step for 1B on 8xH20 -> 5000 steps = 10,100 s = 2.81 h wall = 22.4 GPU-h/seed; S=3 = 67.3 GPU-h. The MEASURED Stage-B walls (2026-08-11) are worse: seed101 05:53:54->10:03:06 = 4.153 h, seed102 4.148 h, seed103 4.150 h => 33.2 GPU-h/seed (the 2.02 s/step anchor omits prune+transplant+ckpt I/O). S=3 = 99.6 GPU-h; S=2 = 66.4 GPU-h.",
+      "budget_verdict": "The 50 GPU-h ceiling on one node admits NEITHER S=3 (99.6) NOR S=2 (66.4) at measured cost. Only S=1 fits (33.2), and S=1 has no variance. A budget-respecting re-run was arithmetically impossible -- and unnecessary, since S=3 already exists.",
+      "S2_not_offered": "Per power_analysis.S2_is_unusable (df=1 -> t=6.314; bound exceeds Delta on 3 of 4 axes) an S=2 result could not certify. Not proposed even as a variance measurement, because the S=3 measurement it would approximate is already on disk at better precision.",
+      "guards_respected": "Delta NOT substituted or retuned. Pre-registered Delta used verbatim (triviaqa 4.0431, popqa 1.3205, mmlu_content 1.0239, nq_open 0.9695 pp); fixed fraction stays 0.10; anchor untouched. Guard G2 intact."
+    },
+    "falsification_condition_prereg_before_measuring": "Declared before running the probe: the premise would be CONFIRMED (and sigma_run declared mis-specified) if EITHER (a) zwfy6's live trainer lacked seed=, OR (b) any of the six sigma_run runs launched before its disk received the fix. Both were testable from mtimes + preflight logs independently of the outcome. Neither held: (a) md5-identical fixed file on both disks; (b) all six launched after, with positive per-run assertions. The premise is rejected on its own pre-declared terms.",
+    "ops_risk_found": {
+      "what": "On zwfy6 the FIXED trainer is UNTRACKED by git (HEAD 2d98c5a lacks ce5c298), so `git clean -nd scripts/` reports 'Would remove scripts/train_olmo2_arch_probe2.py'. A routine git clean on zwfy6 would silently delete the fixed trainer; restoring .PRE_CE5C298_BAK afterwards would resurrect the pre-fix sampler.",
+      "also_removable": "train_olmo2_arch_probe2_distill.py and train_qwen3_arch_probe2.py are untracked on zwfy6 too.",
+      "recommendation": "Do not run git clean in zwfy6 scripts/. Any future seeded run must keep the positive preflight assertion (grep the live line for seed=args.seed) -- that assertion made this audit possible and is the only defence, since git on zwfy6 cannot vouch for the file."
+    },
+    "stale_flags_to_retire": [
+      "next_gate item 2 (the 'CPU CODE FIX ~1 line BLOCKING for K2')",
+      "blocked_by.still_blocking_before_any_gate_gpu[1]",
+      "unverified[0]",
+      "power_analysis.sd_run_is_UNVERIFIED"
+    ]
   }
 }
