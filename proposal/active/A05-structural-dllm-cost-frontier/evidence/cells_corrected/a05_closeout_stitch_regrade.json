@@ -1,0 +1,2602 @@
+{
+  "what": "A05 closeout -- HE+ cells re-graded with the CORRECTED stitch (defect c).",
+  "corrected_not_replacement": "generation is byte-identical to K1 (same raw_output rows, no model loaded, 0 GPU); only post-processing changed",
+  "bug": "combine_humaneval_prompt ran extract_python FIRST; its .strip() de-indents line 1 only, so textwrap.indent then double-indents lines 2..n. A dedent applied AFTER extract_python is a no-op -- it must be applied BEFORE extraction.",
+  "grader": "evalplus.eval.untrusted_check, self-tested (canonical PASS / stub FAIL)",
+  "cells": {
+    "he_c8": {
+      "n": 164,
+      "parseability_as_run": 0.9878,
+      "parseability_corrected": 1.0,
+      "pass_at_1_base_as_run": 0.1402,
+      "pass_at_1_plus_as_run": 0.128,
+      "pass_at_1_base_corrected": 0.1463,
+      "pass_at_1_plus_corrected": 0.1341,
+      "n_pass_plus_as_run": 21,
+      "n_pass_plus_corrected": 22,
+      "delta_pp_plus": 0.61,
+      "items_gained": [
+        "HumanEval/13"
+      ],
+      "items_lost": [],
+      "grader_self_test": {
+        "probe_task": "HumanEval/0",
+        "canonical_base": "pass",
+        "canonical_plus": "pass",
+        "stub_base": "fail",
+        "stub_plus": "fail"
+      },
+      "per_item_pass": {
+        "HumanEval/0": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/8": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/16": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/24": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/32": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/40": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/48": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/56": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/64": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/72": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/80": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/88": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/96": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/104": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/112": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/120": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/128": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/136": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/144": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/152": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/160": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/1": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/9": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/17": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/25": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/33": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/41": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/49": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/57": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/65": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/73": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/81": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/89": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/97": {
+          "base": true,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/105": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/113": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/121": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/129": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/137": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/145": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/153": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/161": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/2": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/10": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/18": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/26": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/34": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/42": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/50": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/58": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/66": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/74": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/82": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/90": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/98": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/106": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/114": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/122": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/130": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/138": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/146": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/154": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/162": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/3": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/11": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/19": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/27": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/35": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/43": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/51": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/59": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/67": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/75": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/83": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/91": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/99": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/107": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/115": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/123": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/131": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/139": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/147": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/155": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/163": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/4": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/12": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/20": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/28": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/36": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/44": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/52": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/60": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/68": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/76": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/84": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/92": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/100": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/108": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/116": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/124": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/132": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/140": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/148": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/156": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/5": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/13": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": false
+        },
+        "HumanEval/21": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/29": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/37": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/45": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/53": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/61": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/69": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/77": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/85": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/93": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/101": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/109": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/117": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/125": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/133": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/141": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/149": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/157": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/6": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/14": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/22": {
+          "base": true,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/30": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/38": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/46": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/54": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/62": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/70": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/78": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/86": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/94": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/102": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/110": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/118": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/126": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/134": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/142": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/150": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/158": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/7": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/15": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/23": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/31": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/39": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/47": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/55": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/63": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/71": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/79": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/87": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/95": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/103": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/111": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/119": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/127": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/135": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/143": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/151": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/159": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        }
+      }
+    },
+    "he_c32": {
+      "n": 164,
+      "parseability_as_run": 0.8598,
+      "parseability_corrected": 0.9817,
+      "pass_at_1_base_as_run": 0.2256,
+      "pass_at_1_plus_as_run": 0.2134,
+      "pass_at_1_base_corrected": 0.2744,
+      "pass_at_1_plus_corrected": 0.2561,
+      "n_pass_plus_as_run": 35,
+      "n_pass_plus_corrected": 42,
+      "delta_pp_plus": 4.27,
+      "items_gained": [
+        "HumanEval/56",
+        "HumanEval/112",
+        "HumanEval/3",
+        "HumanEval/59",
+        "HumanEval/4",
+        "HumanEval/13",
+        "HumanEval/21"
+      ],
+      "items_lost": [],
+      "grader_self_test": {
+        "probe_task": "HumanEval/0",
+        "canonical_base": "pass",
+        "canonical_plus": "pass",
+        "stub_base": "fail",
+        "stub_plus": "fail"
+      },
+      "per_item_pass": {
+        "HumanEval/0": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/8": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/16": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/24": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/32": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/40": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/48": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/56": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": false
+        },
+        "HumanEval/64": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/72": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/80": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/88": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/96": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/104": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/112": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": false
+        },
+        "HumanEval/120": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/128": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/136": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/144": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/152": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/160": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/1": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/9": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/17": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/25": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/33": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/41": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/49": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/57": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/65": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/73": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/81": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/89": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/97": {
+          "base": true,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/105": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/113": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/121": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/129": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/137": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/145": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/153": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/161": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/2": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/10": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/18": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/26": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/34": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/42": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/50": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/58": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/66": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/74": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/82": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/90": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/98": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/106": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/114": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/122": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/130": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/138": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/146": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/154": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/162": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/3": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": false
+        },
+        "HumanEval/11": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/19": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/27": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/35": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/43": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/51": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/59": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": false
+        },
+        "HumanEval/67": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/75": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/83": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/91": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/99": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/107": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/115": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/123": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/131": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/139": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/147": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/155": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/163": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/4": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": false
+        },
+        "HumanEval/12": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/20": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/28": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/36": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/44": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/52": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/60": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/68": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/76": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/84": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/92": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/100": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/108": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/116": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/124": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/132": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/140": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/148": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/156": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/5": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/13": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": false
+        },
+        "HumanEval/21": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": false
+        },
+        "HumanEval/29": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/37": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/45": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/53": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/61": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/69": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/77": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/85": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/93": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/101": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/109": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/117": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/125": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/133": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/141": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/149": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/157": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/6": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/14": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/22": {
+          "base": true,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/30": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/38": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/46": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/54": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/62": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/70": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/78": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/86": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/94": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/102": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/110": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/118": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/126": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/134": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/142": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/150": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/158": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/7": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/15": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/23": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/31": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/39": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/47": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/55": {
+          "base": true,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/63": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/71": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/79": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/87": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/95": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/103": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/111": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/119": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/127": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/135": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/143": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/151": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/159": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        }
+      }
+    },
+    "he_c128": {
+      "n": 164,
+      "parseability_as_run": 0.2866,
+      "parseability_corrected": 0.9634,
+      "pass_at_1_base_as_run": 0.1829,
+      "pass_at_1_plus_as_run": 0.1707,
+      "pass_at_1_base_corrected": 0.5366,
+      "pass_at_1_plus_corrected": 0.4817,
+      "n_pass_plus_as_run": 28,
+      "n_pass_plus_corrected": 79,
+      "delta_pp_plus": 31.1,
+      "items_gained": [
+        "HumanEval/0",
+        "HumanEval/8",
+        "HumanEval/24",
+        "HumanEval/56",
+        "HumanEval/72",
+        "HumanEval/80",
+        "HumanEval/96",
+        "HumanEval/104",
+        "HumanEval/112",
+        "HumanEval/136",
+        "HumanEval/144",
+        "HumanEval/1",
+        "HumanEval/17",
+        "HumanEval/25",
+        "HumanEval/73",
+        "HumanEval/153",
+        "HumanEval/10",
+        "HumanEval/18",
+        "HumanEval/82",
+        "HumanEval/114",
+        "HumanEval/146",
+        "HumanEval/3",
+        "HumanEval/11",
+        "HumanEval/43",
+        "HumanEval/51",
+        "HumanEval/59",
+        "HumanEval/99",
+        "HumanEval/107",
+        "HumanEval/147",
+        "HumanEval/155",
+        "HumanEval/4",
+        "HumanEval/12",
+        "HumanEval/20",
+        "HumanEval/84",
+        "HumanEval/156",
+        "HumanEval/13",
+        "HumanEval/21",
+        "HumanEval/37",
+        "HumanEval/61",
+        "HumanEval/69",
+        "HumanEval/117",
+        "HumanEval/6",
+        "HumanEval/78",
+        "HumanEval/110",
+        "HumanEval/118",
+        "HumanEval/142",
+        "HumanEval/150",
+        "HumanEval/47",
+        "HumanEval/71",
+        "HumanEval/79",
+        "HumanEval/87",
+        "HumanEval/151"
+      ],
+      "items_lost": [
+        "HumanEval/50"
+      ],
+      "grader_self_test": {
+        "probe_task": "HumanEval/0",
+        "canonical_base": "pass",
+        "canonical_plus": "pass",
+        "stub_base": "fail",
+        "stub_plus": "fail"
+      },
+      "per_item_pass": {
+        "HumanEval/0": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": false
+        },
+        "HumanEval/8": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": false
+        },
+        "HumanEval/16": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/24": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": false
+        },
+        "HumanEval/32": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/40": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/48": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/56": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": false
+        },
+        "HumanEval/64": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/72": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": false
+        },
+        "HumanEval/80": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": false
+        },
+        "HumanEval/88": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/96": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": false
+        },
+        "HumanEval/104": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": false
+        },
+        "HumanEval/112": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": false
+        },
+        "HumanEval/120": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/128": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/136": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": false
+        },
+        "HumanEval/144": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": false
+        },
+        "HumanEval/152": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/160": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/1": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": false
+        },
+        "HumanEval/9": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/17": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": false
+        },
+        "HumanEval/25": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": false
+        },
+        "HumanEval/33": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/41": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/49": {
+          "base": true,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/57": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/65": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/73": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": false
+        },
+        "HumanEval/81": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/89": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/97": {
+          "base": true,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/105": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/113": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/121": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/129": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/137": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/145": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/153": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": false
+        },
+        "HumanEval/161": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/2": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/10": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": false
+        },
+        "HumanEval/18": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": false
+        },
+        "HumanEval/26": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/34": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/42": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/50": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": true
+        },
+        "HumanEval/58": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/66": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/74": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/82": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": false
+        },
+        "HumanEval/90": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/98": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/106": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/114": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": false
+        },
+        "HumanEval/122": {
+          "base": true,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/130": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/138": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/146": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": false
+        },
+        "HumanEval/154": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/162": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/3": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": false
+        },
+        "HumanEval/11": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": false
+        },
+        "HumanEval/19": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/27": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/35": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/43": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": false
+        },
+        "HumanEval/51": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": false
+        },
+        "HumanEval/59": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": false
+        },
+        "HumanEval/67": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/75": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/83": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/91": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/99": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": false
+        },
+        "HumanEval/107": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": false
+        },
+        "HumanEval/115": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/123": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/131": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/139": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/147": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": false
+        },
+        "HumanEval/155": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": false
+        },
+        "HumanEval/163": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/4": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": false
+        },
+        "HumanEval/12": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": false
+        },
+        "HumanEval/20": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": false
+        },
+        "HumanEval/28": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/36": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/44": {
+          "base": true,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/52": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/60": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/68": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/76": {
+          "base": true,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/84": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": false
+        },
+        "HumanEval/92": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/100": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/108": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/116": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/124": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/132": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/140": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/148": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/156": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": false
+        },
+        "HumanEval/5": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/13": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": false
+        },
+        "HumanEval/21": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": false
+        },
+        "HumanEval/29": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/37": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": false
+        },
+        "HumanEval/45": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/53": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/61": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": false
+        },
+        "HumanEval/69": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": false
+        },
+        "HumanEval/77": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/85": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/93": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/101": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/109": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/117": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": false
+        },
+        "HumanEval/125": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/133": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/141": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/149": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/157": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/6": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": false
+        },
+        "HumanEval/14": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/22": {
+          "base": true,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/30": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/38": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/46": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/54": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/62": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/70": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/78": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": false
+        },
+        "HumanEval/86": {
+          "base": true,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/94": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/102": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/110": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": false
+        },
+        "HumanEval/118": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": false
+        },
+        "HumanEval/126": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/134": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/142": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": false
+        },
+        "HumanEval/150": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": false
+        },
+        "HumanEval/158": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/7": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/15": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/23": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": true
+        },
+        "HumanEval/31": {
+          "base": true,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/39": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/47": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": false
+        },
+        "HumanEval/55": {
+          "base": true,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/63": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/71": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": false
+        },
+        "HumanEval/79": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": false
+        },
+        "HumanEval/87": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": false
+        },
+        "HumanEval/95": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/103": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/111": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/119": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/127": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/135": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/143": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        },
+        "HumanEval/151": {
+          "base": true,
+          "plus": true,
+          "as_run_plus": false
+        },
+        "HumanEval/159": {
+          "base": false,
+          "plus": false,
+          "as_run_plus": false
+        }
+      }
+    }
+  }
+}

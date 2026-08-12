@@ -1,0 +1,302 @@
+{
+  "note": "A05 closeout cost audit. DreamOn+AR from zwfy6 per-item rows; Scaffold from wzc1 per-item rows (29GB ckpt is wzc1-only). All recomputed, none read from summary tables.",
+  "axes": {
+    "nfe": "true counted model.forward calls (DreamOn/AR) or model_calls (Scaffold)",
+    "tokens_fed_effective": "DreamOn tokens_fed_effective / Scaffold cumulative_model_tokens / AR hook tokens_fed",
+    "attended_context_sum": "AR only measured separately; for the no-KV-cache diffusion arms it equals tokens_fed"
+  },
+  "dreamon_he_c32": {
+    "benchmark": "HE+",
+    "n": 164,
+    "nfe": {
+      "mean": 393.6951219512195,
+      "median": 32.0,
+      "total": 64566,
+      "p90": 2084,
+      "max": 2084,
+      "top15pct_share": 0.7055725923860856
+    },
+    "tokens_fed_effective": {
+      "mean": 124347.96341463414,
+      "median": 8048.0,
+      "total": 20393066,
+      "p90": 460798,
+      "max": 1441716,
+      "top15pct_share": 0.7028072188850858
+    },
+    "tokens_fed_padded": {
+      "mean": 267924.1951219512,
+      "median": 24064.0,
+      "total": 43939568,
+      "p90": 1289996,
+      "max": 1683872,
+      "top15pct_share": 0.7121398189440552
+    }
+  },
+  "dreamon_mbpp_c32": {
+    "benchmark": "MBPP+",
+    "n": 378,
+    "nfe": {
+      "mean": 466.010582010582,
+      "median": 32.0,
+      "total": 176152,
+      "p90": 2084,
+      "max": 2084,
+      "top15pct_share": 0.6185907625232754
+    },
+    "tokens_fed_effective": {
+      "mean": 101202.0925925926,
+      "median": 5059.0,
+      "total": 38254391,
+      "p90": 351090,
+      "max": 972298,
+      "top15pct_share": 0.5728656352155757
+    },
+    "tokens_fed_padded": {
+      "mean": 279392.97883597884,
+      "median": 21104.0,
+      "total": 105610546,
+      "p90": 1223308,
+      "max": 1352516,
+      "top15pct_share": 0.6209061924554391
+    }
+  },
+  "dreamon_he_c8": {
+    "benchmark": "HE+_c8",
+    "n": 164,
+    "nfe": {
+      "mean": 172.29268292682926,
+      "median": 8.0,
+      "total": 28256,
+      "p90": 122,
+      "max": 2060,
+      "top15pct_share": 0.9595130237825594
+    },
+    "tokens_fed_effective": {
+      "mean": 39944.48170731707,
+      "median": 1452.0,
+      "total": 6550895,
+      "p90": 15934,
+      "max": 557222,
+      "top15pct_share": 0.9681776306901576
+    },
+    "tokens_fed_padded": {
+      "mean": 115989.0487804878,
+      "median": 5568.0,
+      "total": 19022204,
+      "p90": 75518,
+      "max": 1600620,
+      "top15pct_share": 0.9585316191541211
+    }
+  },
+  "dreamon_mbpp_c8": {
+    "benchmark": "MBPP+_c8",
+    "n": 378,
+    "nfe": {
+      "mean": 153.43915343915344,
+      "median": 8.0,
+      "total": 58000,
+      "p90": 40,
+      "max": 2060,
+      "top15pct_share": 0.9554827586206897
+    },
+    "tokens_fed_effective": {
+      "mean": 23367.43650793651,
+      "median": 764.0,
+      "total": 8832891,
+      "p90": 4493,
+      "max": 430553,
+      "top15pct_share": 0.9716029553630855
+    },
+    "tokens_fed_padded": {
+      "mean": 91762.51322751323,
+      "median": 4824.0,
+      "total": 34686230,
+      "p90": 24240,
+      "max": 1330760,
+      "top15pct_share": 0.9549228613198956
+    }
+  },
+  "dreamon_he_c128": {
+    "benchmark": "HE+_c128",
+    "n": 164,
+    "nfe": {
+      "mean": 593.4268292682926,
+      "median": 128.0,
+      "total": 97322,
+      "p90": 2180,
+      "max": 2180,
+      "top15pct_share": 0.5470705493105361
+    },
+    "tokens_fed_effective": {
+      "mean": 240413.88414634147,
+      "median": 40558.5,
+      "total": 39427877,
+      "p90": 598969,
+      "max": 1560946,
+      "top15pct_share": 0.5340979936606782
+    },
+    "tokens_fed_padded": {
+      "mean": 410292.5487804878,
+      "median": 94336.0,
+      "total": 67287978,
+      "p90": 1443160,
+      "max": 1824660,
+      "top15pct_share": 0.545039769214049
+    }
+  },
+  "ar_ar_qwen25coder7b_base_greedy_humaneval": {
+    "benchmark": "HE+",
+    "n": 164,
+    "nfe": {
+      "mean": 73.3170731707317,
+      "median": 42.0,
+      "total": 12024,
+      "p90": 117,
+      "max": 512,
+      "top15pct_share": 0.5685296074517632
+    },
+    "tokens_fed_effective": {
+      "mean": 206.39634146341464,
+      "median": 162.5,
+      "total": 33849,
+      "p90": 339,
+      "max": 833,
+      "top15pct_share": 0.3489320216254542
+    },
+    "attended_context_sum": {
+      "mean": 20092.536585365855,
+      "median": 5384.0,
+      "total": 3295176,
+      "p90": 28350,
+      "max": 295680,
+      "top15pct_share": 0.7627076672080642
+    }
+  },
+  "ar_ar_qwen25coder7b_base_humaneval": {
+    "benchmark": "HE+",
+    "n": 164,
+    "nfe": {
+      "mean": 71.01829268292683,
+      "median": 37.0,
+      "total": 11647,
+      "p90": 122,
+      "max": 512,
+      "top15pct_share": 0.5927706705589422
+    },
+    "tokens_fed_effective": {
+      "mean": 204.09756097560975,
+      "median": 161.0,
+      "total": 33472,
+      "p90": 324,
+      "max": 833,
+      "top15pct_share": 0.35531190248565964
+    },
+    "attended_context_sum": {
+      "mean": 20083.09756097561,
+      "median": 4762.5,
+      "total": 3293628,
+      "p90": 27755,
+      "max": 295680,
+      "top15pct_share": 0.7851469564868893
+    }
+  },
+  "ar_ar_qwen25coder7b_base_greedy_mbpp": {
+    "benchmark": "MBPP+",
+    "n": 378,
+    "nfe": {
+      "mean": 51.3994708994709,
+      "median": 37.0,
+      "total": 19429,
+      "p90": 85,
+      "max": 512,
+      "top15pct_share": 0.43162283184929745
+    },
+    "tokens_fed_effective": {
+      "mean": 100.9047619047619,
+      "median": 82.5,
+      "total": 38142,
+      "p90": 152,
+      "max": 637,
+      "top15pct_share": 0.3237900477164281
+    },
+    "attended_context_sum": {
+      "mean": 6077.539682539683,
+      "median": 2262.0,
+      "total": 2297310,
+      "p90": 8400,
+      "max": 195328,
+      "top15pct_share": 0.6712206885444281
+    }
+  },
+  "ar_ar_qwen25coder7b_base_mbpp": {
+    "benchmark": "MBPP+",
+    "n": 378,
+    "nfe": {
+      "mean": 51.42063492063492,
+      "median": 37.0,
+      "total": 19437,
+      "p90": 82,
+      "max": 512,
+      "top15pct_share": 0.43885373257189897
+    },
+    "tokens_fed_effective": {
+      "mean": 100.92592592592592,
+      "median": 84.0,
+      "total": 38150,
+      "p90": 149,
+      "max": 579,
+      "top15pct_share": 0.325740498034076
+    },
+    "attended_context_sum": {
+      "mean": 6143.153439153439,
+      "median": 2256.0,
+      "total": 2322112,
+      "p90": 8283,
+      "max": 165632,
+      "top15pct_share": 0.6785831174379185
+    }
+  },
+  "scaffold_scaffold_medium_heplus": {
+    "benchmark": "HE+",
+    "n": 164,
+    "nfe": {
+      "mean": 64.09146341463415,
+      "median": 57.0,
+      "total": 10511,
+      "p90": 111,
+      "max": 172,
+      "top15pct_share": 0.2924555227856531
+    },
+    "tokens_fed_effective": {
+      "mean": 13980.036585365853,
+      "median": 11165.5,
+      "total": 2292726,
+      "p90": 26606,
+      "max": 68609,
+      "top15pct_share": 0.3551353279894763
+    },
+    "note": "tokens_fed==cumulative_model_tokens; no KV cache so attended==tokens_fed"
+  },
+  "scaffold_scaffold_medium_mbppplus": {
+    "benchmark": "MBPP+",
+    "n": 378,
+    "nfe": {
+      "mean": 56.74867724867725,
+      "median": 47.0,
+      "total": 21451,
+      "p90": 101,
+      "max": 225,
+      "top15pct_share": 0.32175656146566595
+    },
+    "tokens_fed_effective": {
+      "mean": 7080.071428571428,
+      "median": 5280.0,
+      "total": 2676267,
+      "p90": 13566,
+      "max": 33550,
+      "top15pct_share": 0.3691728067491024
+    },
+    "note": "tokens_fed==cumulative_model_tokens; no KV cache so attended==tokens_fed"
+  }
+}

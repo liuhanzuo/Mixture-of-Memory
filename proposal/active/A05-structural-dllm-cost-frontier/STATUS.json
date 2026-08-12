@@ -2,19 +2,19 @@
   "id": "A05",
   "slug": "structural-dllm-cost-frontier",
   "title": "Structural dLLM: is there a cost regime where an explicit structural runtime beats its own family?",
-  "status": "K1_FIRED_headline_dead",
+  "status": "ARCHIVED_K1_FIRED_headline_dead_cost_claim_also_dead",
   "priority": 2,
   "created": "2026-08-12",
   "updated": "2026-08-12",
   "created_from": {
     "source_repo_wzc1": "/apdcephfs_wzc1/share_304376610/pighzliu_code/dllm_draft",
     "source_repo_zwfy6": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/dllm_draft and dllm_draft_104",
-    "user_directive_verbatim": "\u90a3\u4f60\u628a\u8fd9\u4e2adllm draft\u53d8\u6210\u4e00\u4e2a\u65b0\u7684proposal\u5427 \u7136\u540e\u4f60\u8981\u6d4b\u7684\u53ef\u4ee5\u6d4b\u4e00\u6d4b \u8fd9\u6837\u770b\u6765\u6211\u4eec\u7684\u63d0\u6848\u8fd8\u662f\u6709\u7528\u7684",
+    "user_directive_verbatim": "那你把这个dllm draft变成一个新的proposal吧 然后你要测的可以测一测 这样看来我们的提案还是有用的",
     "predecessor": "proposal/backlog/B10-dllm-infilling-ar-dominance -- DIFFERENT SURFACE, kept separate, not merged",
     "task": "#186 (Reframe dLLM direction) is subsumed by this proposal"
   },
   "gpu_authorised_by_the_proposal_document": 0,
-  "gpu_authorised_now": "K1 COMPLETE (20.66 GPU-h billed / 14.39 compute on .73). No further GPU authorised under A05: K1 fired, so K2/K3 are moot for the registered claim.",
+  "gpu_authorised_now": "ZERO. K1 fired; the surviving cost claim was adjudicated DEAD on CPU only. No further GPU under A05 ever.",
   "the_claim": "On full-program code generation under a token-cost budget, an explicit structural decoding runtime reaches quality its own model family does not reach at comparable cost -- while remaining well below AR models, which dominate both axes. Attributable to mechanism not extra training, because matched plain-SFT at 3.1x the token cost scores .000.",
   "not_claimed": [
     "any advantage over autoregressive models -- AR strictly dominates, stated in the abstract",
@@ -152,15 +152,17 @@
     "venue_rule": "OpenReview venueid for ICLR/NeurIPS/ICML; ACL Anthology + DBLP for the ACL family including Findings"
   },
   "next_gate": [
-    "NONE under the registered claim -- K1 fired, A05's headline is dead.",
-    "Optional and OUT OF SCOPE for A05: the surviving matched-quality cost claim (6.2x/8.2x fewer forwards) would need a NEW proposal with its own kill gates and an AR comparison.",
-    "Housekeeping: dllm_draft's open STOP on Scaffold full-program generation can now be closed with a reason."
+    "NONE. A05 is archived. Both the registered quality claim and the surviving cost claim are experimentally dead.",
+    "Do NOT run K2 or K3. Do NOT open a proposal for the 6.2x/8.2x cost claim -- it failed 4 of 5 pre-registered conditions.",
+    "Optional, owned by A01 if anyone wants it: the evaluation-practice finding in finding_that_outlives_a05."
   ],
   "unverified": [
-    "location of the canvas optimum on MBPP+ -- only 8 and 32 measured; HE+ shows the curve is NON-MONOTONE (.128 -> .213 -> .171), so canvas=32 is not necessarily the peak on MBPP+",
-    "oracle-arm headroom on either benchmark -- both oracle cells were dropped for budget (they are excluded from the K1 decision anyway)",
-    "whether Scaffold Medium's .177/.354 replicate on a second sampler seed -- still single-round, still READ from DLLM_RESULTS_20260807.md, never recomputed by A05",
-    "the surviving cost claim itself -- 6.2x/8.2x is measured but ungated (no round-noise control, no AR cost comparison)"
+    "RETRACTED 2026-08-12: the previous entry claiming 'HE+ shows the curve is NON-MONOTONE (.128 -> .213 -> .171), so canvas=32 is not necessarily the peak on MBPP+' was an ARTIFACT of the stitch bug. Corrected HE+ is MONOTONE (.134 -> .256 -> .482).",
+    "Scaffold Medium's .177/.354 was NEVER recomputed by A05 -- READ from DLLM_RESULTS_20260807.md:447/:456, single round, 29GB ckpt wzc1-only. BOTH the K1 verdict and the cost verdict lean on it. This is the weakest provenance link in the direction.",
+    "DreamOn's true HE+ ceiling is UNKNOWN and at least .4817: the corrected curve is monotone up to c128 and he_c512 / mbpp_c128 / mbpp_c512 never completed. Cannot change K1 (which takes the max) but nobody knows where the full-program peak is.",
+    "oracle-arm headroom on either benchmark -- both oracle cells were never graded (dropped for budget; excluded from the K1 decision by invariant anyway)",
+    "max_new per-item headroom was never varied -- only the initial canvas. SPANLEN's original hypothesis was about max_new=256; that half remains formally untested.",
+    "the novelty check was never done (it was gated on 'before any GPU beyond K1' and K1 killed the direction first). Moot for A05; still owed if the evaluation-practice finding is taken up under A01."
   ],
   "K1_RESULT": {
     "verdict": "K1_FIRES",
@@ -252,5 +254,167 @@
     "mask_expansion/delete_eos_token confirmed inert BY EXECUTION: GenerationConfig.update() returns them as unused kwargs and the attrs never exist. Consequence: _run_baselines_r2_wzc1.sh's header comment claiming these as round-2 'fixes' describes a fix that never took effect.",
     "NEW BUG -- HE+ stitch: combine_humaneval_prompt() indents raw output by 4 spaces when it has no top-level def, but DreamOn already emits a 4-space-indented body -> double indent -> SyntaxError. 113 of 117 unparseable HE+ items at canvas=128 are caused by this; a dedent-aware stitch restores 158/164. Shared with the archive so comparability holds, but HE+ pass@1 at large canvases is UNDERSTATED, which strengthens K1.",
     "PROPOSAL.md section 4's cost estimate (~14 GPU-h for 10 cells) was low: 5 cells cost 20.66 GPU-h billed. Cause = shard stragglers hitting DreamOn's own iteration cap (~2060 forwards / ~200 s) while the median item finishes in <1 s."
-  ]
+  ],
+  "disposition": {
+    "decision": "ARCHIVE -> proposal/archive/A05-structural-dllm-cost-frontier/",
+    "attributed_to": "K1, a PRE-REGISTERED EXPERIMENTAL GATE that ran on GPU and fired (canvas sweep on .73, ~21 GPU-h). NOT a literature argument, NOT an opinion, NOT a novelty collision.",
+    "evidence_preserved": "nothing deleted -- PROPOSAL.md, both pre-registrations, evidence/ (per-item pass maps + grader self-tests + corrected cells + cost audit), code/ all travel to archive/",
+    "why_not_backlog": "backlog is for directions whose gate has not fired or which await an asset. A05's gate fired, and the one claim that survived K1 was then also falsified on 4 of 5 pre-registered conditions. There is nothing to resume.",
+    "closeout_doc": "A05_CLOSEOUT_VERDICT.md",
+    "postmortem": "POSTMORTEM.md"
+  },
+  "closeout_20260812": {
+    "gpu_used": "0 -- all CPU. Re-grading reused raw_output rows already on disk; all cost numbers re-aggregated from per-item JSONL.",
+    "prereg": "A05_CLOSEOUT_PREREGISTRATION.md, commit 32f4e96, written BEFORE any ratio was computed",
+    "corrections_verified_independently": {
+      "a_nfe_not_forward_count": "CONFIRMED. histories.append at 3 sites (generation_utils.py lines 445/476/495). r1 non-null 164/164 & 378/378 with means 265.88/135.65 (= mean(len(history))); r2 non-null 0/164 & 0/378. True counted NFE 172.3/153.4. NOT a uniform inflation: HE+ 265.88->172.3 DOWN but MBPP+ 135.65->153.4 UP, so old values cannot be rescaled, only recounted.",
+      "b_inert_kwargs": "CONFIRMED BY EXECUTION with a positive control: update(mask_expansion=True, delete_eos_token=True) returns both as UNUSED and hasattr is False before/after, while update(temperature=0.2) returns {} and assigns. r2 therefore differs from r1 ONLY in temperature/top_p.",
+      "c_he_stitch_double_indent": "CONFIRMED, and the K1 report's MECHANISM was imprecise in a way that matters. The de-indent happens inside extract_python's trailing .strip(), which strips line 1 ONLY -> a dedent applied AFTER extraction is a NO-OP (my first fix altered 0/164 outputs). Must dedent BEFORE extraction. All 117 unparseable HE+ items at c128 are indentation errors (86 'unexpected indent' + 31 'unindent does not match'), lines 10-38, never the signature."
+    },
+    "corrected_cells_0_gpu": {
+      "what": "CORRECTED CELLS, not replacements: generation byte-identical to K1 (same raw_output, no model loaded), only post-processing fixed. evalplus self-test canonical PASS / stub FAIL on every cell; 164 items, 0 dups, 0 generation errors.",
+      "he_c8": {
+        "plus_as_run": 0.128,
+        "plus_corrected": 0.1341,
+        "parse_as_run": 0.9878,
+        "parse_corrected": 1.0,
+        "gained": 1,
+        "lost": 0
+      },
+      "he_c32": {
+        "plus_as_run": 0.2134,
+        "plus_corrected": 0.2561,
+        "parse_as_run": 0.8598,
+        "parse_corrected": 0.9817,
+        "gained": 7,
+        "lost": 0
+      },
+      "he_c128": {
+        "plus_as_run": 0.1707,
+        "plus_corrected": 0.4817,
+        "parse_as_run": 0.2866,
+        "parse_corrected": 0.9634,
+        "gained": 52,
+        "lost": 1
+      },
+      "why_no_rerun": "the bug is PURELY post-processing, so re-grading stored raw_output is not an approximation of a re-run -- it IS the re-run, at 0 GPU instead of ~6 GPU-h. Spot-checked by hand: rescued programs are ordinary correct code, not degenerate passes.",
+      "evidence": "evidence/cells_corrected/a05_closeout_stitch_regrade.json"
+    },
+    "k1_fires_harder_after_correction": {
+      "he_plus_best_nonoracle": 0.4817,
+      "scaffold": 0.177,
+      "gap_pp": -30.5,
+      "was_gap_pp": -3.64,
+      "note": "K1's threshold was 'within 5.0 pp'; now exceeded by ~6x. K1's kill is strengthened, not weakened."
+    },
+    "he_curve_shape_CORRECTED": {
+      "as_run": "NON-monotone .128 -> .213 -> .171, read by the K1 verdict as 'canvas=32 is the peak, c128 degrades'",
+      "corrected": "MONOTONE INCREASING .134 -> .256 -> .482",
+      "consequence": "'DreamOn degrades at large canvases' was a harness artifact. The prior STATUS.json 'unverified' entry asserting the HE+ curve is non-monotone was WRONG and is retracted below."
+    }
+  },
+  "cost_claim_adjudication": {
+    "claim_tested": "at MATCHED quality Scaffold Medium is 6.2x (HE+) / 8.2x (MBPP+) cheaper in forward passes than DreamOn c32",
+    "verdict": "(iii) DEAD -- on the same grounds as the quality claim. NOT 'needs more work': the failure is not missing controls, it is that the available controls point the other way.",
+    "decision_rule_preregistered": "2 or more of 5 conditions firing => not publishable as stated; F3 alone caps it at a within-family internal point",
+    "conditions_fired": "F1, F2, F3, F5 fired; F4 partially. 4 of 5.",
+    "F1_mean_vs_median_REVERSES": {
+      "he_nfe": {
+        "mean_ratio": 6.14,
+        "median_ratio": 0.561,
+        "dreamon_median": 32.0,
+        "scaffold_median": 57.0
+      },
+      "he_tokens_fed": {
+        "mean_ratio": 8.89,
+        "median_ratio": 0.721
+      },
+      "mbpp_nfe": {
+        "mean_ratio": 8.21,
+        "median_ratio": 0.681
+      },
+      "mbpp_tokens_fed": {
+        "mean_ratio": 14.29,
+        "median_ratio": 0.958
+      },
+      "reading": "on the MEDIAN item DreamOn is CHEAPER than Scaffold on all four benchmark x axis combinations. The headline is a ratio of means between two heavy-tailed distributions."
+    },
+    "F5_tail_is_an_unmatched_budget_knob": {
+      "he_c32": {
+        "items_at_cap": "19/164 (11.6%)",
+        "share_of_total_nfe": 0.613,
+        "items_where_nfe_eq_canvas": "97/164"
+      },
+      "mbpp_c32": {
+        "items_at_cap": "48/378 (12.7%)",
+        "share_of_total_nfe": 0.568,
+        "items_where_nfe_eq_canvas": "196/378"
+      },
+      "he_c8": {
+        "items_at_cap": "10/164 (6.1%)",
+        "share_of_total_nfe": 0.729
+      },
+      "caps": "DreamOn ~2060-2180 forwards (2*max_gen_len + 2*expand_budget) vs Scaffold max_model_calls=512 -- DIFFERENT, UNMATCHED knobs",
+      "preregistered_trigger": ">50% of NFE mass from <15% of items -- measured 57-73% from 6-13%"
+    },
+    "F2_quality_not_matched": {
+      "mbpp": "genuinely matched (.354 vs .3545, inside DreamOn's own 1.9pp round noise) -- so the cost ratio WAS doing all the work, exactly as suspected",
+      "he": "NOT matched: Scaffold .177 vs DreamOn .4817 = Scaffold is 30.5 pp WORSE. 'cheaper at matched quality' cannot be asserted for a system 30 pp worse on one of two benchmarks."
+    },
+    "F3_AR_control_FATAL_ALONE": {
+      "ar_model": "Qwen2.5-Coder-7B (matched architecture family), measured_matches_analytic=true, 0 errors, exact item counts",
+      "he_plus": {
+        "ar_pass": 0.5244,
+        "scaffold_pass": 0.177,
+        "ar_tokens_fed": 206.4,
+        "scaffold_tokens_fed": 13980.0,
+        "scaffold_over_ar_tokens_fed": 67.73,
+        "ar_nfe": 73.3,
+        "scaffold_nfe": 64.1,
+        "ar_attended": 20092.5,
+        "scaffold_attended": 13980.0
+      },
+      "mbpp_plus": {
+        "ar_pass": 0.6481,
+        "scaffold_pass": 0.354,
+        "ar_tokens_fed": 100.9,
+        "scaffold_tokens_fed": 7080.1,
+        "scaffold_over_ar_tokens_fed": 70.17,
+        "ar_nfe": 51.4,
+        "scaffold_nfe": 56.7,
+        "ar_attended": 6077.5,
+        "scaffold_attended": 7080.1
+      },
+      "reading": "On tokens_fed -- the axis this repo designates as the cross-family-comparable one -- AR is ~70x CHEAPER than Scaffold AND +.29/+.35 more accurate: strict Pareto domination. Scaffold looks competitive ONLY on NFE, which scripts/forward_cost.py documents as NOT comparable across families. On attended_context_sum Scaffold is 0.70x/1.16x -- the one axis where it is not dominated, reported here rather than dropped.",
+      "consequence": "the surviving claim is a diffusion-family INTERNAL POINT = exactly the description under which this repo's Pareto claim was RETRACTED. F3 alone caps it; it was NOT promoted to its own proposal."
+    },
+    "F4_axis_disagreement": "PARTIAL: NFE vs tokens_fed disagree by >2x in magnitude on MBPP+ (8.21x vs 14.29x) and in DIRECTION against AR (Scaffold 1.10x on NFE, 70x worse on tokens_fed). No single 'Nx cheaper' scalar may be quoted; every statement must name its axis.",
+    "premise_of_the_task_i_reject": "The instruction to 'recompute the ratio with the corrected NFE (172.3/153.4)' mixes cells: 172.3/153.4 are canvas=8 while 6.2x/8.2x came from canvas=32 (393.7/466.0). Substituting one into the other describes no experiment. Corrected NFE at canvas=8 vs Scaffold gives 2.69x/2.71x, but that pairs Scaffold against the CRIPPLED canvas -- the very comparison K1 killed. The defensible recomputation is the canvas=32 one, and it fails via F1/F3/F5, not because 6.2 becomes a different number.",
+    "no_further_gpu": "K2/K3 must NOT be run: K2 would defend a margin whose SIGN FLIPS between mean and median, and would not touch F3 at all.",
+    "honest_one_liner": "On MBPP+ Scaffold Medium and DreamOn c32 are statistically indistinguishable; Scaffold uses ~8x fewer forwards IN THE MEAN but ~1.5x MORE on the median item, because 13% of DreamOn's items sit at an iteration cap and carry 57% of its cost. On HE+ Scaffold is 30.5 pp worse. Both are dominated by a matched AR control by ~70x on tokens_fed."
+  },
+  "finding_that_outlives_a05": {
+    "statement": "A widely-reported diffusion baseline's apparent weakness on full-program generation is a CANVAS-BUDGET ARTIFACT: one sampler-config integer (initial_masks 8->32) moves MBPP+ from .085 to .3545, and a post-processing bug additionally understated its HE+ by up to 31 pp. A substantial fraction of the gap between a proposed method and its baseline was produced by how the baseline was invoked and post-processed, not by either model.",
+    "is_this_a05s_contribution": "NO. It is an EVALUATION-PRACTICE result, not a result about structural decoding runtimes, which is what A05 registered.",
+    "suggested_owner": "A01-null-calibration-methodology -- same species of finding ('what survives when the baseline is calibrated properly') on a new surface (code generation instead of QA). NOT B10 (owns infilling). NOT a revived A05.",
+    "deliberately_not_auto_promoted": "per the promotion rules a new direction needs its own PROPOSAL.md + kill gate; recorded here so the next agent picks it up ON PURPOSE rather than inheriting it by accident. Novelty check still owed if taken up."
+  },
+  "source_repo_corrections_propagated": {
+    "two_disk_note": "dllm_draft exists on BOTH disks with DIFFERENT contents, and dllm_draft_104 is a third checkout. All three were checked and handled differently on purpose.",
+    "wzc1_dllm_draft": {
+      "commit": "58bbb20",
+      "what": "DLLM_RESULTS_20260807.md CORRECTION BLOCK + '+mask_expansion' table row + the 2026-08-07 bullet whose own conclusion is overturned; DLLM_SALVAGE_ROADMAP_20260808.md 1.1 row + P1-C (incl. striking the FALSE 'generate_infilling.py is missing' blocker); SPANLEN_STRATIFIED_AUDIT.md 2's follow-up bullet; generate_evalplus_dreamon.py (all 3 code defects); _run_baselines_r2_wzc1.sh header; 2 regression tests"
+    },
+    "zwfy6_dllm_draft": {
+      "commit": "9651406",
+      "what": "code + tests only -- this checkout has no DLLM_RESULTS / SPANLEN / r2 launcher. It DOES hold runs/a05_k1/, so the fixed stitch is what any re-grade there uses."
+    },
+    "zwfy6_dllm_draft_104": {
+      "commit": "d214d37c",
+      "what": "code + tests + r2 launcher + a dated CORRECTION POINTER inserted into its DLLM_RESULTS_20260807.md. That file is an EARLIER 275-line BRANCH of the wzc1 739-line file (which carries 9 later retractions), NOT a stale copy -- overwriting would have destroyed provenance, so the pointer names wzc1 authoritative and lists the wrong statements by line number."
+    },
+    "blast_radius_checked_not_assumed": "defect (a) is confined to generate_evalplus_dreamon.py: generate_evalplus_dream.py and generate_evalplus_dream_alg.py log nfe=args.steps (fixed schedule, correct by construction), and generate_kspan.py / generate_infilling.py use the hook-based ForwardCostTracker. Defect (c) touches only combine_humaneval_prompt. So the infilling / k-span numbers do NOT inherit either defect.",
+    "regression_tests": "test_combines_already_indented_dreamon_body + test_stitch_preserves_relative_indentation_depth (asserts depths [4,8,4]). The pre-existing test covered only the UNINDENTED body, which is why the bug survived. All 4 stitch tests pass on both zwfy6 checkouts.",
+    "preexisting_unrelated_breakage": "the full test module cannot import on the zwfy6 checkouts due to a stale scaffold_coder.tokenizer_utils missing edit_source_token_ids -- PRE-EXISTING and unrelated to these fixes; the stitch functions were exercised in isolation rather than 'fixing' an unrelated checkout."
+  }
 }
