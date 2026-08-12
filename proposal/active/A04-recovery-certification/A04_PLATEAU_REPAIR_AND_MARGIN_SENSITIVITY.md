@@ -133,14 +133,28 @@ justification above appeals only to invariance and composition properties that h
 Under R3, `PLATEAU` first accepts at **step 100 000** (`rate_5k = 0.86012 %/5k`), not step
 200 000. **Pilot Zero scored capability axes only at step 200 000.** So:
 
-* The repaired rule's own *earliest* accept checkpoint has **no capability measurement** —
-  the `PLATEAU`-vs-`NI` cell at step 100 000 is **UNMEASURED, not resolved**. There is
+* The repaired rule's own *earliest* accept checkpoint had **no capability measurement** —
+  the `PLATEAU`-vs-`NI` cell at step 100 000 was **UNMEASURED, not resolved**. There is
   **4.6386 %** further relative PPL improvement between step 100 000 and step 200 000, so
   this is not a negligible relocation.
 * Step 200 000 **still accepts** under R3 (`rate_5k = 0.13173 %/5k` ≪ 2.0), so the pilot's
   single measured cell survives the repair and the disagreement it found is not withdrawn.
 * But **any claim about *where* the earliest disagreement lies now requires step-100 000
-  capability scoring**, which is GPU work and is **not done here**.
+  capability scoring**, which is GPU work and was **not done here**.
+
+> **★ CLOSED 2026-08-12 — see `A04_STEP100K_PLATEAU_VS_NI_VERDICT.md`.**
+> Step 100 000 was scored on all four axes (`.73`, 8×H20, **1.17 GPU-h measured**), same
+> harness and same protocol as the step-200000 cells (`--add_bos 0`, base LM, no chat
+> template; archived cells reproduce to **0.000e+00 pp**). Result: **PLATEAU(R3) accepts and
+> NI rejects on 3/3 decision axes by 7.34–9.54× Δ, unanimously across all five null
+> conventions.** The rules **DISAGREE** at R3's own earliest accept point, so the
+> earliest-disagreement claim **moves from step 200 000 to step 100 000**.
+> Steps 50 000 and 150 000 were also scored, but PLATEAU is **UNDEFINED** at both
+> (150 000 has no in-domain PPL on disk; 50 000 is the trajectory's first point), so the
+> intended bracket around the accept boundary is only half-built.
+> **This does not rescue A04**: `keep7+fresh2` is confirmed a CONSTANT-REJECT rung across
+> all four measured checkpoints (16 cells, **zero** NI accepts), K1 stays INDETERMINATE, K2
+> is untouched, and RATIO(ρ=0.85) still *agrees* with NI everywhere.
 
 The gate is now runnable on an irregular grid. That was the blocker.
 
@@ -331,8 +345,12 @@ hard-asserted.
 
 ## 5. What this document does NOT establish
 
-1. **Capability measurement at step 100 000**, the repaired rule's own first-accept
-   checkpoint. GPU required. The `PLATEAU`-vs-`NI` cell there is unmeasured.
+1. ~~**Capability measurement at step 100 000**, the repaired rule's own first-accept
+   checkpoint. GPU required. The `PLATEAU`-vs-`NI` cell there is unmeasured.~~
+   **CLOSED 2026-08-12** (`A04_STEP100K_PLATEAU_VS_NI_VERDICT.md`): measured, the rules
+   DISAGREE (3/3 axes), earliest disagreement moves to step 100 000. Still open in its
+   place: **no in-domain PPL exists at step 150 000**, so PLATEAU has no verdict there and
+   the bracket around the accept boundary is half-built.
 2. **Causality of the 48-item D5 drift.** Needs a same-code control (GPU). No noise floor
    is claimed.
 3. **K1's ≥24-cell clause.** Still INDETERMINATE (`b93247f`). Nothing here changes it.

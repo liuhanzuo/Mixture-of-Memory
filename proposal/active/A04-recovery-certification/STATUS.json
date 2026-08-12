@@ -1204,5 +1204,108 @@
       "what_would_actually_close_it": "d.o.f. on the KEEP12 family -- i.e. more keep12 seeds. That, not more keep7 seeds, is what 'more seeds before Pilot Two' means."
     },
     "consequence_for_pilot_two": "WEAKENED slightly further. The recovery increment A04's rule adjudicates moved from +0.0818 pp (CI [-0.945,+1.108]) to -0.0293 pp (CI [-0.672,+0.613]) over 4 sampler-seed draws -- still indistinguishable from zero, now with a marginally negative point estimate. NI and PLATEAU can only disagree informatively about a trajectory that moves. Pilot Zero is UNTOUCHED by any of this (it is a level at one checkpoint against intact, with no second-checkpoint or second-training-run term in its estimator) and A03's ARTIFACT verdict must not be cited against it."
+  },
+  "step100k_plateau_vs_ni_20260812": {
+    "status": "DONE -- the UNMEASURED cell at R3 earliest accept is now MEASURED; the rules DISAGREE there",
+    "closes": "A04_PLATEAU_REPAIR_AND_MARGIN_SENSITIVITY.md 1.4 and 5 item 1 -- \"any claim about *where* the earliest disagreement lies now requires step-100 000 capability scoring, which is GPU work and is not done here\"",
+    "verdict_file": "A04_STEP100K_PLATEAU_VS_NI_VERDICT.md",
+    "evidence": "evidence/a04_step100k_plateau_vs_ni.json",
+    "code": [
+      "code/a04_step100k_axes_driver.sh (GPU)",
+      "code/a04_step100k_plateau_vs_ni.py (CPU analysis)"
+    ],
+    "gpu_h_measured": 1.17,
+    "gpu_h_measurement_basis": "8xH20 on .73, wall 14:19:03->14:27:49 = 526 s for 3 ckpts x 4 axes; step100000 alone 162 s. MEASURED from the driver progress log, not extrapolated from the first shard.",
+    "node": ".73 (8xH20, zwfy6), confirmed 0% idle before launch",
+    "ANSWER_at_step100000": {
+      "plateau_R3_accepts": true,
+      "plateau_R3_rate_5k_pct": 0.8601172081512454,
+      "ni_reject_of_decision_axes": "3/3",
+      "ni_reject_axes": [
+        "triviaqa",
+        "popqa",
+        "mmlu_content"
+      ],
+      "rules_disagree": true,
+      "reject_margin_multiple_of_delta": {
+        "triviaqa": 8.295,
+        "popqa": 9.5382,
+        "mmlu_content": 7.3379
+      }
+    },
+    "earliest_disagreement_step": 100000,
+    "earliest_disagreement_claim_MOVES": true,
+    "claim_movement": "the earliest MEASURED PLATEAU-vs-NI disagreement moves from step 200000 to step 100000",
+    "disagreement_unanimous_across_five_null_conventions": {
+      "split": true,
+      "first": true,
+      "last": true,
+      "credit": true,
+      "wrong": true
+    },
+    "steps_scored_this_pass": [
+      50000,
+      100000,
+      150000
+    ],
+    "steps_where_PLATEAU_is_UNDEFINED": {
+      "50000": "step is the first point of the PPL trajectory, so it has no preceding interval",
+      "150000": "no in-domain val PPL exists on disk for this step (olmo2_ppl_results/ has the keep7f2 trajectory only at steps 50000/100000/147000/200000)"
+    },
+    "bracket_is_only_half_built": "Capability was scored at 50k and 150k, but olmo2_ppl_results/ has the keep7f2 in-domain PPL only at {50000,100000,147000,200000}. So PLATEAU has NO verdict at 150000 (no PPL) and none at 50000 (first trajectory point, no preceding interval). Neither can form a disagreement. Closing the 150k side needs an in-domain PPL run at step 150000 -- NOT done here.",
+    "protocol_identity_demonstrated": {
+      "same_driver_params_recovered_from_logs": "ngpu=8 mmlu_bs=64 cb_bs=48 (logs/a03_1b_floor_progress.log:1) and nq_bs=48 (logs/a03_axes_floor_progress.log:2)",
+      "flags": "--content_desc full --add_bos 0 --max_new_tokens 32 --merge --n_boot 10000",
+      "chat_template": false,
+      "add_bos": false,
+      "base_protocol_note": "OLMo-2-0425-1B is a BASE LM (no SFT/RL): base protocol only, no chat template, no BOS. Both new summaries record add_bos:false.",
+      "harness_md5_identical_across_disks": {
+        "eval_olmo2_mmlu_content.py": "fe4a62dbdf884a1e2aedc6ed26887b4e",
+        "eval_olmo2_closedbook_qa.py": "2ed41993241226c795a3ca38375933f7"
+      },
+      "only_harness_commit_since_baseline": "7ac9653 (2026-08-08 22:29) touches ONLY the --any_family base-mode routing branch (adds load_truncated_any_family). The OLMo --ckpt -> load_pruned_model path used here is UNCHANGED, so step100000 is scored by the same code that scored step200000.",
+      "arch_asserted_not_guessed": "load_pruned_model reads keep/fresh FROM the ckpt meta and raises if the CLI disagrees; keep=7 fresh=2 num_hidden_layers=9 confirmed in all three summaries."
+    },
+    "integrity_asserts": {
+      "n_cells": 20,
+      "shards": "8/8 on all 20 cells; every index 0..7 present exactly once",
+      "exact_item_counts": {
+        "mmlu": 14042,
+        "triviaqa": 17944,
+        "popqa": 14267,
+        "nq_open": 3610
+      },
+      "duplicate_item_id": 0,
+      "nan_rows": 0,
+      "cross_arm_item_id_alignment": "asserted identical per axis -- load_shards sorts by item_id, so mismatched sets would pair item k against a DIFFERENT item k and give a silently wrong difference",
+      "nq_open_separate_dir": "nq_open per-example files live in a SEPARATE dir suffixed _nq; a glob of only the main arm dir would wrongly report the axis missing"
+    },
+    "regression_guard": {
+      "what": "archived step-200000 cells recomputed through the same code path and compared to evidence/pilot_zero_rule_disagreement.json BEFORE reporting anything new",
+      "max_abs_diff_pp": 0.0,
+      "all_four_axes_reproduce": true,
+      "rate_5k_cross_check_vs_repair_json_max_abs_diff": 0.0,
+      "why": "a new cell computed by a path that cannot reproduce the published one is not comparable to it; the script exits non-zero rather than publishing",
+      "nothing_reimplemented": "ni_rule / ratio_rule / build_nulls / build_axis_data / frozen PREREG are IMPORTED from pilot_zero_rule_disagreement.py, which imports A03 canonical scorers/nulls"
+    },
+    "RATIO_still_AGREES_with_NI": {
+      "mean_ratio_by_step": {
+        "50000": 0.321481,
+        "100000": 0.366854,
+        "150000": 0.392508,
+        "200000": 0.401674
+      },
+      "rho": 0.85,
+      "accepts_anywhere": false,
+      "consequence": "the disagreement remains PLATEAU-specific; it must NOT be widened to the aggregate retained-accuracy ratio rule"
+    },
+    "DOES_NOT_RESCUE_A04": {
+      "keep7f2_is_a_CONSTANT_REJECT_rung": "NI rejects 4/4 axes at every one of the four measured checkpoints (50k/100k/150k/200k) by 6.64-9.88x delta; recovery max 39.00%, min 4.78% (PopQA@50k). 16 cells, 12 decision cells, ZERO NI accepts.",
+      "K1": "UNCHANGED -- still INDETERMINATE (b93247f). 12 decision cells now, up from 3, still < the >=24-cell clause.",
+      "K2": "UNCHANGED. Untouched by this pass.",
+      "keep12_constant_reject_finding": "UNCHANGED -- NI rejects 4/4, recovery 22-32%; K2 not firing remains necessary-not-sufficient.",
+      "R1_reading": "UNAFFECTED -- R1 earliest accept remains step 200000.",
+      "net_effect_on_claims": "EXACTLY ONE claim changes: the LOCATION of the earliest disagreement, step 200000 -> step 100000. Every verdict, kill condition and gate status is unchanged."
+    }
   }
 }
