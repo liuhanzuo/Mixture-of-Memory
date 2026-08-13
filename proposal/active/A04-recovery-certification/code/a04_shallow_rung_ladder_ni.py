@@ -478,6 +478,119 @@ def assert_seeds_disjoint(evidence_dir, used_arm_indices, used_offsets,
                                    "(the fixed self-excluding version); NOT weakened")}
 
 
+def _measure_gpu_h(raw_root, keeps):
+    """Measure training wall time from each arm's OWN trainer log, then convert to
+    GPU-h. NOT a hardcoded estimate and NOT a single tqdm s/it sample.
+
+    memory: one-sample-is-not-a-trend-or-state -- a tqdm-style instantaneous
+    `s/step` is not the cadence. The wall time here is (timestamp of the LAST
+    logged step) - (timestamp of the FIRST logged step), i.e. elapsed/iter over
+    the whole run, and the step numbers are read so the extrapolation to step
+    max_steps is explicit rather than assumed.
+
+    Eval GPU-h is measured the same way from the eval progress log's DRIVER
+    START -> 'all 4 axes done' span when present; otherwise it is recorded as
+    None rather than guessed.
+    """
+    import datetime as _dt
+
+    def _ts(line):
+        # trainer log format: '2026-08-13 18:40:24,368 - INFO - ...'
+        try:
+            return _dt.datetime.strptime(line[:19], "%Y-%m-%d %H:%M:%S")
+        except Exception:
+            return None
+
+    per_arm, total_gpu_h = {}, 0.0
+    for k in keeps:
+        lp = os.path.join(raw_root, "logs",
+                          f"a04_shallow_keep{k}_seed{SEED_TRAIN}.log")
+        rec = {"log": lp}
+        if not os.path.isfile(lp):
+            rec["measured"] = False
+            rec["why"] = "trainer log not found on this disk"
+            per_arm[f"keep{k}"] = rec
+            continue
+        steps = []
+        for line in open(lp, errors="replace"):
+            if "] loss=" not in line or "[step" not in line:
+                continue
+            t = _ts(line)
+            if t is None:
+                continue
+            try:
+                s = int(line.split("[step")[1].split("/")[0].strip())
+            except Exception:
+                continue
+            steps.append((t, s))
+        if len(steps) < 2:
+            rec["measured"] = False
+            rec["why"] = f"only {len(steps)} step lines parsed"
+            per_arm[f"keep{k}"] = rec
+            continue
+        (t0, s0), (t1, s1) = steps[0], steps[-1]
+        span_h = (t1 - t0).total_seconds() / 3600.0
+        n_steps = s1 - s0
+        h_per_step = span_h / n_steps if n_steps else None
+        wall_h = h_per_step * STEP if h_per_step else None
+        gpu_h = wall_h * 8 if wall_h else None
+        rec.update({
+            "measured": True,
+            "first_logged_step": s0, "last_logged_step": s1,
+            "n_steps_observed": n_steps,
+            "observed_span_h": span_h,
+            "h_per_step": h_per_step,
+            "s_per_step": h_per_step * 3600.0 if h_per_step else None,
+            "extrapolated_wall_h_for_%d_steps" % STEP: wall_h,
+            "gpu_h_at_8_gpus": gpu_h,
+            "estimator": ("(t_last - t_first) / (step_last - step_first), i.e. "
+                          "elapsed/iter over the WHOLE run -- NOT an instantaneous "
+                          "s/step sample"),
+        })
+        if gpu_h:
+            total_gpu_h += gpu_h
+        per_arm[f"keep{k}"] = rec
+
+    # eval span, measured where the progress log exists
+    eval_gpu_h, eval_per_arm = 0.0, {}
+    for k in keeps:
+        ep = os.path.join(raw_root, "logs",
+                          f"a04_shallow_keep{k}_seed{SEED_TRAIN}_eval_progress.log")
+        if not os.path.isfile(ep):
+            eval_per_arm[f"keep{k}"] = {"measured": False, "log": ep}
+            continue
+        lines = [l for l in open(ep, errors="replace") if l.strip()]
+        ts = []
+        for l in lines:
+            # driver format: '[08-13 23:31:02] a04-shallow(keep14): ...'
+            if l.startswith("["):
+                try:
+                    ts.append(_dt.datetime.strptime(
+                        l[1:l.index("]")], "%m-%d %H:%M:%S"))
+                except Exception:
+                    pass
+        if len(ts) >= 2:
+            span_h = (ts[-1] - ts[0]).total_seconds() / 3600.0
+            eval_per_arm[f"keep{k}"] = {"measured": True, "span_h": span_h,
+                                        "gpu_h_at_8_gpus": span_h * 8, "log": ep}
+            eval_gpu_h += span_h * 8
+        else:
+            eval_per_arm[f"keep{k}"] = {"measured": False, "log": ep,
+                                        "why": f"{len(ts)} timestamps parsed"}
+
+    return {
+        "training": {"per_arm": per_arm, "total_gpu_h": total_gpu_h},
+        "eval": {"per_arm": eval_per_arm, "total_gpu_h": eval_gpu_h},
+        "analysis_gpu_h": 0.0,
+        "analysis_note": ("this analysis is CPU-only and read-only on every input: no "
+                          "model load, no CUDA context, no scoring."),
+        "total_gpu_h": total_gpu_h + eval_gpu_h,
+        "context": ("Pilot Two is priced at 1,077-4,309 GPU-h. This pass is the only "
+                    "expenditure that can decide whether Pilot Two's blocker is "
+                    "dischargeable at all."),
+    }
+
+
 def _load_keep12_canonical(evidence_dir):
     """Read keep12 seed101's per-axis accuracy from the canonical Stage B JSON AT
     RUNTIME. No hand transcription: the control_arms pass caught its own
@@ -547,6 +660,7 @@ def main():
     else:
         gpu_guard = assert_gpu_clear()
     gates = selftest_gate_constants()
+    gpu_h = _measure_gpu_h(args.raw_root, keeps or list(NEW_KEEPS))
 
     out = {
         "scope": ("A04 SHALLOW RUNG LADDER: NI on the two lightest damaged 1B rungs "
@@ -564,6 +678,7 @@ def main():
         "numpy_version": np.__version__,
         "python_version": sys.version.split()[0],
         "gpu_refuse_guard": gpu_guard,
+        "gpu_h": gpu_h,
         "gate_constant_selftest": gates,
         "RANGE_CONSTANTS_DECLARED_UNUSED": RANGE_CONSTANTS_DECLARED_UNUSED,
         "preregistered_constants": dict(PREREG),
