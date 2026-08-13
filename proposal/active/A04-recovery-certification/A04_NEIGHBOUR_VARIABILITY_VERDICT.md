@@ -425,3 +425,46 @@ two independent counterexamples (keep14 popqa at 25.5k spacing, keep8 triviaqa a
 500-step spacing), and a third would not change the gate. Separately, **pin numpy
 across the cluster** before the next analysis that relies on the 5e-4 pp
 reproduction assertion.
+
+---
+
+## 7. CORRECTION NOTE (appended 2026-08-13, after the fact — §6.1's original sentence is left INTACT above)
+
+⚠️ **§6.1's "49.9 % of popqa's entire Δ (2.2457 pp), and 60.2 % of
+mmlu_content's (1.8614 pp)" is a CROSS-AXIS division and must not be reused.**
+
+Both figures divide a **triviaqa** range (1.1202 pp) by a **different axis's**
+Δ. `ni_rule` only ever compares a margin to *its own* axis's `delta_pp` — the
+per-cell `delta_pp` in `evidence/a04_neighbour_variability.json` confirms this
+(`per_convention.split.delta_pp`: triviaqa 6.3291, popqa 2.2457,
+mmlu_content 1.8614 pp). A triviaqa range is never weighed against popqa's Δ by
+any rule in this gate.
+
+**Same-axis (correct) values:**
+
+| cell | axis | range / move (pp) | that axis's OWN Δ (pp) | % of own Δ |
+|---|---|---|---|---|
+| keep8 c2 (clean, 500-step) | triviaqa | 1.1202 | 6.3291 | **17.70 %** |
+| keep8 c2 | popqa | 0.2523 | 2.2457 | 11.24 % *(sub-noise, not a measured gap)* |
+| keep8 c2 | mmlu_content | 0.2208 | 1.8614 | 11.86 % *(sub-noise, not a measured gap)* |
+| keep14 (25 500-step, §3 reference) | popqa | 0.6939 (margin) | 2.2457 | **30.90 %** |
+
+Recompute: `1.1202/6.3291 = 0.1770`; `0.6939/2.2457 = 0.3090`.
+
+**Scope of this correction.** It changes a *magnitude*, not a finding. Every
+verdict boolean, `range_exceeds_item_noise`, the 1.703× noise-gate ratio, the
+§2.5 tolerance in pp, the resolved 130500→131000 drop, and the Leg B replication
+failure are **all unaffected** — none of them involves a Δ ratio. 17.7–30.9 % of
+the quantity under test is still material.
+
+Two downstream texts inherit the error and are corrected in place of record
+rather than by editing this file:
+- `A04_GATE_DESIGN.md` §2.0.2's empirical-basis bullet ("= 49.9 % of popqa's
+  entire Δ") — same cross-axis error, same substitution.
+- `PROPOSAL.md` §5 (rewritten 2026-08-13) now carries the same-axis numbers and
+  retires 49.9 % / 60.2 % explicitly.
+
+First flagged in
+`../../shared/literature/MARGIN_TRAJECTORY_INSTABILITY_NOVELTY_20260813.md` §C1
+(commit `75cf173`); independently recomputed from the canonical JSON on
+2026-08-13 before this note was written.

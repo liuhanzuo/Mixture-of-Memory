@@ -147,14 +147,40 @@ The pre-registered kill-condition text in §2 is UNCHANGED — this adds a preco
 Empirical basis (EVAL-ONLY, 8.6556 GPU-h, `evidence/a04_neighbour_variability.json`):
 
 - On `keep8fresh2`, three checkpoints **500 steps apart** in one uninterrupted process
-  (130000/130500/131000) show a **triviaqa margin range of 1.1202 pp** = **49.9% of
-  popqa's entire Δ**. It is one *resolved* drop (130500→131000 = −1.0867 pp,
+  (130000/130500/131000) show a **triviaqa margin range of 1.1202 pp** = ~~**49.9% of
+  popqa's entire Δ**~~ → **CORRECTED 2026-08-13: 17.70 % of triviaqa's OWN Δ (6.3291 pp).**
+  The struck figure was a **cross-axis** division (a triviaqa range over popqa's Δ);
+  `ni_rule` only ever compares a margin to its own axis's `delta_pp`. Same-axis
+  companion value: keep14's popqa move 0.6939 pp = **30.90 %** of popqa's own Δ.
+  See `A04_NEIGHBOUR_VARIABILITY_VERDICT.md` §7 (correction note) and `PROPOSAL.md` §5.
+  **The correction changes a magnitude only** — the 1.703× noise-gate ratio, the §2.5
+  tolerance in pp and every verdict boolean are unaffected.
+  It is one *resolved* drop (130500→131000 = −1.0867 pp,
   CI95 [−1.3319, −0.8359], p = 0.0001, 355 right→wrong vs 160 wrong→right of 17944),
   not diffuse jitter and not output degeneracy.
 - **7 of 8** decision-axis ranges across both clusters are **inside item noise** and are
   NOT evidence of anything. A max−min of 3 noisy cells is biased upward even at zero true
   spread — `E[range of 3 iid N(0,σ)] = (3/√π)·σ = 1.6926·σ` — so every range must be
   gated on `range_exceeds_item_noise` before it may be quoted.
+  > **Restricted to the 3 DECISION axes it is 1 of 6** (both clusters × triviaqa/popqa/
+  > mmlu_content); "7 of 8" counts the design-demoted `nq_open` cells as well. Either
+  > count supports the same conclusion; use **1 of 6** when speaking about decision axes.
+
+> **ADDITIONAL EMPIRICAL BASIS, added 2026-08-13 after `full32_trajectory_ni_20260813`
+> (`evidence/a04_full32_trajectory_ni.json`).** This precondition has now **fired on a
+> live ACCEPT**, which it had never done when it was written: `triviaqa|full32@step20000`
+> accepts at **+2.4504 pp** while its upper neighbour `step25000` **rejects** at
+> **−0.6035 pp** → `ACCEPT_IS_CHECKPOINT_SELECTION_DEPENDENT`. The gap is **3.0539 pp =
+> 48.25 %** of triviaqa's own Δ, over a 5 000-step spacing. On the same trajectory
+> `mmlu_content`'s 5 accepts **all** survive their neighbours, so the axis-concentration
+> below is reproduced on a second arm.
+>
+> ⚠️ Do **not** convert the full32 5-point spread into a neighbour range: its
+> `k=5` ranges (triviaqa 4.2967 pp = 6.02× the `k=5` gate; popqa 2.4883 pp = 4.17×;
+> mmlu_content 0.6765 pp = 1.28×, using `E[range of 5] = 2.325929`) span **25 000
+> steps of training progress**, not a neighbourhood. The comparable 2-point
+> endpoint-neighbour value on mmlu_content is **0.1353 pp against a `k=2` gate of
+> 0.2540 pp → FAILS the gate.**
 
 **PRECONDITION.** Any `NI(Δ)` accept reported by this gate must be accompanied by the same
 axis's margin at the **immediately adjacent saved checkpoints on both sides** (or a statement
@@ -238,6 +264,51 @@ the arm is measurable but not saturated; **j must be chosen by Pilot Zero (§6),
   on the same trajectory.
 
 ### 3.3 Seeds — and a defect that must be fixed first
+
+> ### ⚠️ SUPERSEDED IN ITS PREMISE 2026-08-13 — the fix LANDED on 2026-08-09
+>
+> **The rest of §3.3 below is preserved verbatim for provenance and its
+> *reasoning* is still correct, but its factual premise ("no `seed=` argument",
+> "must be fixed first", "with the current trainer") is STALE.** The one-line
+> change it demands landed as commit **`ce5c298`** (2026-08-09 23:21:09 +0800),
+> which fixed **all 20** shuffling `DistributedSampler` sites in tracked
+> `scripts/*.py`. The live wzc1 line is
+> **`scripts/train_olmo2_arch_probe2.py:869`**:
+>
+> ```python
+> sampler = DistributedSampler(ds, shuffle=True, seed=args.seed)
+> ```
+>
+> "Line 863" below is now the line number **inside**
+> `scripts/train_olmo2_arch_probe2.py.PRE_CE5C298_BAK` on zwfy6 — the fix added
+> 6 comment lines above the call. `blocked_by.still_blocking_before_any_gate_gpu[1]`
+> and `next_gate[1]` in `STATUS.json` were retired by
+> `sampler_fix_and_pilot_one_disposition_20260812`; if you are reading them as
+> outstanding, they are not.
+>
+> **What replaces consequence (1):** it is discharged. **Consequence (2) is
+> narrowed but NOT retired** — it still binds every **pre-fix** run:
+>
+> - Pre-fix arms (which is **every 7B rung in this repository**, plus
+>   `outputs/olmo2_probe2_7B_keep14fresh2_seed1234`) are labelled
+>   **`init-variance only`**, and their spread may not be called seed variance.
+> - **A pre-fix arm and a post-fix arm may NEVER enter the same `σ_run`
+>   estimate.** They are not draws from the same distribution: measured rank-0
+>   Jaccard on the slice a 20k-step run consumes is **0.0102** post-fix
+>   (near-disjoint data *subsets*) vs **1.0000** pre-fix (identical). Post-fix
+>   `--seed` varies the data *subset*, not merely its order.
+> - The six runs A04 consumes as `σ_run` input (A03 keep7 seeds 43/44/45;
+>   Stage-B keep12 seeds 101/102/103) are **all post-fix**, each with a positive
+>   preflight assertion of the fixed line in `logs/*_progress.log`. That estimate
+>   is口径-clean **on its own** — it just may not be extended backwards.
+> - Arm A2's `sd_run` is **no longer** structurally 0: post-fix its two seeds see
+>   different data subsets even with no fresh block. The sentence at the end of
+>   this section describing A2 as byte-identical applies to the **pre-fix**
+>   trainer only.
+>
+> See `PROPOSAL.md` §7.2 (binding口径 rule), `SEED_SEMANTICS_DEFECT.md`, and
+> `STATUS.json:sampler_fix_and_pilot_one_disposition_20260812` (verification by
+> execution on both disks, md5 `284b286f90b526e4e8ad93a68e2a3b16`).
 
 `--seed` in `scripts/train_olmo2_arch_probe2.py` moves **only the fresh-tail random init**. Verified
 live at line 863:

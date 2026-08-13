@@ -2078,5 +2078,139 @@
     },
     "cheapest_next_step": "NONE outstanding on these arms. outputs/olmo2_probe2_7B_full32_dolmino/ holds only these five saves, so the (20000, 25000] reject boundary cannot be narrowed without new training. cheap_next_steps_dominate[1] is now COMPLETE on both halves (keep14 in 517c8d2, full32 here).",
     "staged_copies_cleanup": "the four staged ckpts (outputs/a04_staged/full32_step*_from_wzc1.pt, 326 GiB) were REMOVED after the evidence JSON was written and copied to wzc1; the sources remain on wzc1 and the staging script + the recorded sha256s make them reproducible. outputs/a04_staged/sg16_step128000_from_wzc1.pt belongs to neighbour_variability_20260813 and was NOT touched."
+  },
+  "full32_endpoint_is_not_the_accept_20260813": {
+    "what": "ADDITIVE, ZERO GPU. Records the DISPOSITION of the full32_dolmino arm after full32_trajectory_ni_20260813 measured its 4 unscored earlier checkpoints. This key changes no measurement -- it retires a CLAIM LABEL that three earlier keys attached to full32@step25000 (shallow_rung_ni_discrimination_20260812.NI_results_split.full32_dolmino_step25k called it '*** FIRST NI ACCEPT IN A04 ***'; the_load_bearing_new_finding called its RATIO/NI disagreement 'A04's target rule-disagreement'; full32_rescore_v2_20260812 rested on it). Those keys are LEFT BYTE-IDENTICAL on purpose (retraction history must not be silently rewritten) -- read this key alongside them.",
+    "verdict": "FULL32_ENDPOINT_IS_NOT_THE_ACCEPT__REJECT_BOUNDARY_IN_20000_25000__RATIO_TOO_PERMISSIVE_CLAIM_WEAKENED",
+    "evidence_canonical": "evidence/a04_full32_trajectory_ni.json",
+    "evidence_precedence": "CANONICAL JSON OVERRIDES EVERY .md HAND CALCULATION for full32, including A04_FULL32_READING_B_IS_FIRING.md (MAIN's interim note, which forbade its own use) and any margin quoted in prose. Three hand-computed full32/keep14 margins were wrong on 2026-08-13 alone (worst: an mmlu_content margin off by +0.36 pp because build_nulls was not imported; and an mmlu range under-stated ~3x). Recompute from the JSON, never from a table.",
+    "document": "A04_FULL32_TRAJECTORY_NI_VERDICT.md",
+    "gpu_h_spent": 0,
+    "step25000_is_no_longer_described_as_A04s_accept": {
+      "statement": "full32@step25000 MUST NOT be called A04's NI accept. It is the ONLY checkpoint on its own 5-point trajectory that FAILS the 2-of-3 decision bar (1 of 3 accepting), and it was selected as the arm for one non-scientific reason: it was the last save in outputs/olmo2_probe2_7B_full32_dolmino/.",
+      "the_five_points_split_convention": {
+        "step5000": "triviaqa +3.6932 A / popqa -2.0509 R / mmlu_content +0.5439 A -> 2 of 3 -> ACCEPT",
+        "step10000": "triviaqa +3.0467 A / popqa -2.1911 R / mmlu_content +0.3730 A -> 2 of 3 -> ACCEPT",
+        "step15000": "triviaqa +2.3331 A / popqa -3.0742 R / mmlu_content +0.9142 A -> 2 of 3 -> ACCEPT",
+        "step20000": "triviaqa +2.4504 A / popqa -3.5088 R / mmlu_content +0.6222 A -> 2 of 3 -> ACCEPT",
+        "step25000": "triviaqa -0.6035 R / popqa -4.5391 R / mmlu_content +1.0495 A -> 1 of 3 -> REJECT (the archived endpoint)"
+      },
+      "what_survives_from_the_old_label": "NI is NOT a constant function: it accepts, and it accepts stably (4 of 5 checkpoints) on the ZERO-DAMAGE control. The blocker 'NI has never been observed to accept' is still answered YES. What is retracted is only that the ENDPOINT is where the accept lives.",
+      "what_the_97p7_percent_recovery_framing_now_belongs_to": "the four earlier checkpoints, which nobody had scored. mmlu_content recovery_fraction: 0.9480 / 0.9415 / 0.9686 / 0.9541 / 0.9767 at 5k/10k/15k/20k/25k -- the endpoint IS the best point on mmlu_content, so 97.7% itself is not withdrawn; the 2-of-3 VERDICT attached to it is.",
+      "convention_invariance": "Identical ordering and verdict flip under split / first / last / wrong. Under credit, D6 retires mmlu_content (5 of 15 cells) so the family is 2 axes and the pattern reads 1-of-2 accepting at the four earlier steps vs 0-of-2 at the endpoint -- same direction, same flip."
+    },
+    "reject_boundary_in_20000_25000": {
+      "statement": "The one boundary this trajectory contains is a REJECT boundary in the half-open interval (20000, 25000], NOT an accept boundary. Nothing in A04's design anticipated that direction: full32_rescore_v2_20260812.trajectory_scan_NOT_run.expectation_to_design_for had pre-committed to 'earlier ckpts are LESS converged so should reject HARDER: the accept boundary is most likely BEYOND step25000.' That expectation is FALSIFIED.",
+      "accept_boundary_located": false,
+      "accept_set_on_triviaqa": [
+        5000,
+        10000,
+        15000,
+        20000
+      ],
+      "accept_set_is_a_suffix": false,
+      "first_accepting_step": 5000,
+      "reading_that_fired": "pre-registered reading (b), in its strongest form: the accept is present at the EARLIEST checkpoint that exists and is LOST by the endpoint. This is not a boundary approached from below; it is a capability walked away from.",
+      "cannot_be_narrowed_without_new_training": "outputs/olmo2_probe2_7B_full32_dolmino/ holds only these five saves, so (20000, 25000] cannot be tightened by any eval-only step.",
+      "resolved_moves_20000_to_25000": "triviaqa -3.0205 pp resolved p=0.0001; popqa -1.0023 pp resolved p=0.0001; mmlu_content +0.4202 pp NOT resolved (CI lower bound exactly 0.0000 while p=0.0508, criteria_disagree=true, treated as NOT resolved by the conservative AND). Picking the favourable criterion would turn a tie into a result."
+    },
+    "ratio_too_permissive_claim_is_substantially_WEAKENED": {
+      "statement": "The claim that RATIO(rho=0.85) is too permissive -- recorded in shallow_rung_ni_discrimination_20260812.the_load_bearing_new_finding as 'A04's target rule-disagreement' -- rested on ONE checkpoint. Measured along its own trajectory, the NI/RATIO disagreement occurs at exactly 1 of 5 checkpoints: the endpoint.",
+      "per_step_ratio_and_disagreement": {
+        "step5000": "mean_ratio 0.898062, margin over rho +0.048062, RATIO A / NI A -> agree",
+        "step10000": "mean_ratio 0.893552, margin +0.043552, RATIO A / NI A -> agree",
+        "step15000": "mean_ratio 0.886364, margin +0.036364, RATIO A / NI A -> agree",
+        "step20000": "mean_ratio 0.879378, margin +0.029378, RATIO A / NI A -> agree",
+        "step25000": "mean_ratio 0.851495, margin +0.001495, RATIO A / NI R -> DISAGREE (1 of 5)"
+      },
+      "n_disagreeing_of_5": 1,
+      "mechanism": "RATIO decays MONOTONICALLY (0.8981 -> 0.8515) and accepts at all five points; NI CHANGES STATE. So the endpoint is where RATIO's decay happens to cross NI's, not where the two rules differ in principle. RATIO is 32x further from its threshold at step5000 than at the endpoint.",
+      "what_is_NOT_retracted": "The endpoint disagreement itself is real and reproduced (archived_endpoint_disagreement_reproduced=true; mean_ratio 0.8514950516430542 with abs diff exactly 0.0 against the archive). And the pre-existing FRAGILITY_MUST_TRAVEL_WITH_IT caveat still holds: RATIO's accept margin is +0.001495, and accuracy drops of 0.0924-0.2865 pp on any single axis flip it to REJECT.",
+      "net": "A04 may state 'we found a cell where an aggregate retention ratio accepts what non-inferiority rejects' and must immediately state 'at 1 of 5 checkpoints of 1 zero-damage arm, with RATIO's margin at +0.0015'. It may NOT state 'RATIO is systematically too permissive'."
+    },
+    "heal_longer_is_falsified_on_BOTH_a_damaged_and_an_undamaged_arm": {
+      "statement": "The premise that additional heal steps approach certification is now falsified at 7B on two structurally different arms, so it may not be used to price any future tranche.",
+      "undamaged_full32": "On a ZERO-DAMAGE model, more continued pretraining moved 3 of 4 axes AWAY from the anchor: popqa margin is monotone non-increasing across all five points (-2.05 -> -4.54), triviaqa EM falls 61.40 -> 57.15, nq_open falls; only mmlu_content drifts mildly up (+0.54 -> +1.05, non-monotone). Both triviaqa and popqa have NEGATIVE slopes on the last interval AND on the all-points OLS, so no forward extrapolation reaches margin=0.",
+      "damaged_keep14": "keep14_trajectory_ni_20260813: the accept boundary is 7.7x/10.6x/244.0x the whole 200k heal budget away under a naive last-interval line, and popqa's all-points OLS slope is negative (-0.001709 pp/1k). popqa got RESOLVEDLY WORSE over 25 500 steps (-0.6729 pp, CI [-0.9252,-0.4206], p=0.0001, 218 right->wrong vs 122 wrong->right).",
+      "consequence_for_cost": "Any Pilot-Two-class tranche justified as 'heal longer to reach the boundary' is MISPRICED. next_gate[4]'s MDE showing is necessary but not sufficient: the effect must also be reachable, and on both measured arms it is not on the trajectory at all."
+    },
+    "threat_to_validity_the_flipping_axis_is_about_half_verbosity": {
+      "statement": "MANDATORY caveat on any writeup that quotes the endpoint's verdict flip. The axis whose REJECT flips the verdict (triviaqa EM) is measuring, to nearly half its movement, a base LM that stopped emitting SHORT answers -- expected behaviour for continued pretraining on raw text with no SFT -- and NOT demonstrated forgetting.",
+      "numbers": "Of the 1313 items that went EM right->wrong over 20000->25000, 622 (47.37%) STILL CONTAIN the gold answer, and mean prediction length on exactly those items explodes 10.92 -> 50.37 characters. Across the whole trajectory triviaqa EM falls 61.40 -> 57.15 (-4.25 pp) while contains moves only 69.87 -> 68.38 (-1.49 pp), and the contains-minus-EM gap widens 8.47 -> 11.23 pp versus 3.87 pp for the vanilla anchor.",
+      "the_other_half_is_real": "52.6% are genuine content substitutions (Richard Noble -> Andy Green; David Hockney -> David Bowie), so verbosity is not the whole story either. BOTH halves are on the record.",
+      "metric_discipline": "contains may NOT be substituted for EM. The decision metric is and stays EM; this diagnostic characterises what an EM move CONSISTS OF and re-scores no cell.",
+      "consequence_for_the_RULE_not_just_this_cell": "A generative-EM decision axis in a base-LM regime partly measures OUTPUT FORMAT, and A04's certification rule inherits that. Every accept or reject on triviaqa/popqa/nq_open must ship this caveat. Corroborating coarseness: only 30-47% of generative prediction strings are identical between adjacent checkpoints while EM moves <=0.7 pp.",
+      "design_implication_NOT_yet_decided": "Either add a format-insensitive axis whose null is equally well defined, or pre-register a verbosity diagnostic as a REPORTING requirement alongside every generative cell. Not decided, not funded, and NOT a licence to swap metrics after seeing data.",
+      "written_into": "PROPOSAL.md 4.4 (threats to validity)",
+      "two_decimal_correction_vs_the_verdict_md": "A04_FULL32_TRAJECTORY_NI_VERDICT.md 4 prints the endpoint contains as 68.39 and the contains move as -1.48 pp. Canonical em_and_contains_per_checkpoint.triviaqa is 68.384975 -> 68.38 and -1.487963 -> -1.49; the md rounded up. No verdict depends on it, but it is the fourth hand-arithmetic slip found in these documents on 2026-08-13 -- hence evidence_precedence above. PROPOSAL.md 4.4 carries the corrected figures and the correction note."
+    },
+    "neighbour_precondition_2_0_2_fired_on_a_LIVE_accept": {
+      "statement": "This is the first time A04's 2.0.2 neighbour precondition had an actual ACCEPT to gate, and it fired on a real cell rather than decorating the design.",
+      "cell": "triviaqa|full32@step20000 accepts at +2.4504 pp while its upper neighbour step25000 REJECTS at -0.6035 pp -> ACCEPT_IS_CHECKPOINT_SELECTION_DEPENDENT. Gap 3.0539 pp = 48.25% of triviaqa's OWN Delta (6.3291 pp), at 5 000-step spacing.",
+      "axis_concentration_reproduced": "mmlu_content's 5 accepts ALL survive their neighbours at every step including the endpoint -- so 'per-axis, not blanket' is now supported on a second arm, not just on keep8.",
+      "endpoints_stated_not_assumed": "step5000 (both axes) and step25000 have only ONE neighbour each; recorded as such rather than silently treated as satisfied.",
+      "do_not_convert_the_5_point_spread_into_a_neighbour_range": "full32's k=5 margin ranges DO clear the k=5 noise gate (E[range of 5]=2.325929): triviaqa 4.2967 pp = 6.02x, popqa 2.4883 pp = 4.17x, mmlu_content 0.6765 pp = 1.28x. But those span 25 000 steps of TRAINING PROGRESS and are not a neighbourhood. The comparable 2-point endpoint-neighbour value on mmlu_content is 0.1353 pp against a k=2 gate of 0.2540 pp -> FAILS the gate."
+    },
+    "cross_axis_delta_ratio_error_corrected": {
+      "what_was_wrong": "A04_NEIGHBOUR_VARIABILITY_VERDICT.md 6.1 -- and, following it, A04_GATE_DESIGN.md 2.0.2's empirical-basis bullet -- stated the neighbour loophole is worth '1.1202 pp -- 49.9% of popqa's entire Delta (2.2457 pp), and 60.2% of mmlu_content's (1.8614 pp)'. Both ratios divide a TRIVIAQA range by a DIFFERENT axis's Delta. ni_rule only ever compares a margin to its own axis's delta_pp.",
+      "correct_same_axis_values": "1.1202/6.3291 = 17.70% (keep8 c2 triviaqa); 0.6939/2.2457 = 30.90% (keep14 popqa). Sub-noise companions, not quotable as gaps: keep8 c2 popqa 0.2523/2.2457 = 11.24%, mmlu_content 0.2208/1.8614 = 11.86%.",
+      "scope_of_the_correction": "MAGNITUDE ONLY. Every verdict boolean, range_exceeds_item_noise, the 1.703x noise-gate ratio, the per-axis tolerance in pp, the resolved 130500->131000 drop and the Leg B replication failure are UNAFFECTED -- none involves a Delta ratio. 17.7-30.9% of the quantity under test is still material.",
+      "where_recorded": "correction note APPENDED as A04_NEIGHBOUR_VARIABILITY_VERDICT.md 7 (original 6.1 sentence left intact, per proposal/README.md's retraction-history rule); A04_GATE_DESIGN.md 2.0.2 bullet struck through in place with the corrected value; PROPOSAL.md 5 carries the same-axis table and retires 49.9%/60.2% explicitly.",
+      "first_flagged_by": "proposal/shared/literature/MARGIN_TRAJECTORY_INSTABILITY_NOVELTY_20260813.md C1 (commit 75cf173); independently recomputed from canonical JSON on 2026-08-13.",
+      "also_corrected_in_that_note": "its C2 evaluated full32's mmlu_content range by HAND as 0.2280 pp (1.2775-1.0495) against a k=2 gate of 0.4201 pp -> ratio 0.543 FAIL. Canonical: range 0.1353 pp, gate 0.2540 pp, ratio 0.533 -> still FAIL. Conclusion right, inputs 1.69x off."
+    },
+    "what_this_key_does_NOT_do": [
+      "Does NOT fire K1, K2 or K3. Those are defined over the pre-registered 1B arm set; a 7B trajectory cannot fire them.",
+      "Does NOT re-score, re-derive or perturb any archived cell. Bootstrap offsets 500-503 for the new arms; the endpoint keeps its archived 203.",
+      "Does NOT substitute the anchor or Delta. Guard G2 honoured: full32 is an ARM (zero-damage control), never the intact anchor.",
+      "Does NOT license any statement about recovery from STRUCTURAL damage. full32 = keep_front_layers 32 / n_fresh_layers 0: nothing pruned, nothing transplanted. Every full32 statement is about CPT DRIFT on the heal corpus.",
+      "Does NOT license any 'relative to seed variance' reading. sd_run is 1B-only (S=3, keep12@5000); every 7B rung has exactly one seed and the historical seeds are unrecorded.",
+      "Does NOT treat the five checkpoints as replicates. They are five states of ONE optimisation run; their spread is training progress plus data order.",
+      "Does NOT make 'harness noise' available as an explanation (same-code re-runs are bit-identical; these are five DIFFERENT models, so neither bit-identity nor 'noise' applies).",
+      "Does NOT modify any pre-existing STATUS.json key. shallow_rung_ni_discrimination_20260812, the_load_bearing_new_finding, full32_rescore_v2_20260812 and full32_trajectory_ni_20260813 are left byte-identical and must be read together with this key."
+    ],
+    "dispatch_premise_that_was_wrong_recorded_for_the_next_agent": "'~5.7 h of transfer at a measured 16.3 MiB/s' -- the measurement was right (17.4 MiB/s single-stream reproduced) but the inference was wrong: 16-17 MiB/s is a PER-STREAM ceiling, not the link's capacity. 8 concurrent streams to ONE node measured 130.7 MiB/s; realised per-ckpt rate 137-138 MiB/s; all four checkpoints staged and sha256-verified in ~31 min. Cross-disk staging cost estimates in this repo that assume single-stream are overstated by ~8x.",
+    "updated": "2026-08-13"
+  },
+  "blockers_discharged_20260813": {
+    "what": "ADDITIVE, ZERO GPU. Discharges blocked_by.still_blocking_before_any_gate_gpu items [0] and [1] and next_gate items [1] and [2]. Those four entries are LEFT BYTE-IDENTICAL (retraction history must not be silently rewritten); this key is the disposition record that must be read with them.",
+    "item_0_PROPOSAL_rewrite": {
+      "state": "DONE 2026-08-13, 0 GPU.",
+      "what_was_required": "'PROPOSAL.md rewrite to the narrowed safe_residual_claim; paste the must_not_claim list into its scope section; drop the ShortGPT/non-contiguous arm (second damage variable) and the 3-budgets=3-runs reading.'",
+      "what_was_done": [
+        "PROPOSAL.md 1 is now verbatim safe_residual_claim, with an explicit 'what A04 is NOT' subsection.",
+        "PROPOSAL.md 2 pastes all 12 must_not_claim entries verbatim, and adds 13 NEW entries (2.1) from the three 2026-08-13 verdicts plus the checkpoint-noise / equivalence-margin literature. Those 13 are NOT in STATUS.json:must_not_claim (that key is unmodified) and are binding from PROPOSAL.md.",
+        "ShortGPT/non-contiguous DROPPED from the arm set (PROPOSAL.md 7.1), with the reason recorded and with the existing 7B shortgpt16 runs explicitly re-labelled DIAGNOSTIC-only (they are keep_layer_indices [0..12,16,17,31], never a rung of the keepN ladder).",
+        "'3 budgets = 3 runs' DROPPED (PROPOSAL.md 7.1) with the 3771-vs-2873 GPU-h arithmetic retained.",
+        "Four negative/narrowing evidence streams written in as PROPOSAL.md 4.1-4.4, each stating which part of the claim it compresses; the verbosity confound is a dedicated threats-to-validity section (4.4).",
+        "Related Work addendum (PROPOSAL.md 6) covering arXiv:2508.13144 (NeurIPS 2025 Spotlight) and arXiv:2603.16213, with the residual stated as the ASYMMETRY of the equivalence decision.",
+        "Pre-2026-08-13 text preserved verbatim under a SUPERSEDED banner as PROPOSAL.md 9, per proposal/README.md."
+      ]
+    },
+    "item_1_sampler_fix_PREMISE_WAS_STALE": {
+      "state": "NOT OUTSTANDING. The fix landed 2026-08-09 23:21:09 +0800 as commit ce5c298, FOUR DAYS before this dispatch asked for it. First established by sampler_fix_and_pilot_one_disposition_20260812; RE-CONFIRMED by execution on 2026-08-13.",
+      "live_line_wzc1": "scripts/train_olmo2_arch_probe2.py:869 = DistributedSampler(ds, shuffle=True, seed=args.seed), guarded by a 6-line load-bearing comment. md5 284b286f90b526e4e8ad93a68e2a3b16, git-tracked, ce5c298 in history. NO EDIT WAS MADE OR NEEDED on 2026-08-13.",
+      "the_line_863_in_next_gate_is_the_PRE_FIX_number": "The fix inserted 6 comment lines above the call, so the pre-fix line 863 is now the line number inside scripts/train_olmo2_arch_probe2.py.PRE_CE5C298_BAK on zwfy6. Any future reference should say 869 (wzc1, live).",
+      "re_verified_by_execution_20260813": "code path re-checked against the installed torch 2.13.0 source (DistributedSampler ctor default seed=0; __iter__ builds its own Generator seeded self.seed+self.epoch) and a CPU-only probe over a 15,491,607-row index at num_replicas=8/rank=0/set_epoch(0): the PRE-FIX call yields sampler.seed=0 and ONE distinct rank-0 order across seeds {42,43,44,101,102,103}; the POST-FIX call yields sampler.seed==seed and SIX distinct orders. 0 GPU.",
+      "repo_wide_audit_20260813": "23 shuffle=True DistributedSampler sites exist in scripts/*.py. ALL tracked ones pass seed=args.seed. The only two omissions are scripts/train_slot_memory.py:282 and scripts/train_rmt_slot.py:583, which are UNTRACKED by git (never committed) and belong to the abandoned slot_memory / RMT directions -- outside ce5c298's stated scope ('tracked scripts/*.py'), not consumed by A04, and NOT touched. The 9 shuffle=False samplers are unaffected by design.",
+      "qwen3_trainer_checked_NOT_modified": "scripts/train_qwen3_arch_probe2.py:584 ALREADY has seed=args.seed (fixed by the same commit ce5c298; md5 50d51117ca6c8193010e44c7868dfcb1). It does NOT have the bug, so no change was made -- which also means paperC's in-flight Qwen3 heal on .104 was not disturbed and its reproducibility narrative is unchanged. Same for scripts/train_olmo2_arch_probe2_distill.py:615.",
+      "consequence_2_is_narrowed_not_retired": "A04_GATE_DESIGN.md 3.3 consequence (1) is discharged; consequence (2) still binds every PRE-FIX run. See the binding kou-jing rule below."
+    },
+    "BINDING_kou_jing_rule_pre_fix_and_post_fix_runs_may_not_be_pooled": {
+      "rule": "A run launched BEFORE ce5c298 and a run launched AFTER it are NOT draws from the same distribution and MUST NEVER enter the same sigma_run estimate, be averaged, or be reported as replicates of each other.",
+      "why": "Post-fix --seed varies the data SUBSET, not merely its order: measured rank-0 Jaccard on the 16.53%-of-epoch slice a 20k-step run consumes is 0.0102 post-fix (near-disjoint) vs 1.0000 pre-fix (identical). Pre-fix, the sampler used self.seed=0 regardless of --seed; the trainer has no dropout (grep -c dropout = 0) and NpyChunkDataset is a deterministic mmap slice, so --seed moved ONLY the fresh-tail init.",
+      "existing_seed_arms_are_labelled_init_variance_only": "EVERY 7B rung in this repository is pre-fix AND has an unrecorded seed (--seed postdates the trainer revision that produced them), so no 7B sigma_run is computable or reconstructible. This explicitly includes outputs/olmo2_probe2_7B_keep14fresh2_seed1234 -- the only run on either disk with seed != 42, historically filed as 'seed-variance evidence', which it is NOT.",
+      "A04s_own_sigma_run_inputs_are_all_post_fix": "A03 keep7 seeds 43/44/45 and Stage-B keep12 seeds 101/102/103, each with a positive per-run preflight assertion of the fixed line in logs/*_progress.log. That estimate is kou-jing-clean ON ITS OWN; it just may not be extended backwards. Unchanged by this key.",
+      "arm_A2_is_no_longer_structurally_zero": "A2 (n_fresh_layers 0) had sd_run identically 0 pre-fix because it has no fresh block at all. Post-fix its seeds see different data subsets, so its sd_run becomes a real measurement. A04_GATE_DESIGN.md 3.3's closing sentence about A2 being byte-identical describes the PRE-FIX trainer only.",
+      "where_written": "PROPOSAL.md 7.2 (binding); A04_GATE_DESIGN.md 3.3 SUPERSEDED-IN-ITS-PREMISE banner; SEED_SEMANTICS_DEFECT.md (full defect analysis)."
+    },
+    "zwfy6_needs_separate_attention_NOT_done_here": {
+      "state": "NOT ACTIONED (0 GPU dispatch, wzc1-local only; /apdcephfs_zwfy6 is not mounted on LOCAL, so the other disk could not be inspected or written in this pass).",
+      "what_is_known_from_the_20260812_audit": "zwfy6's scripts/train_olmo2_arch_probe2.py line 869 is IDENTICAL and md5-matches wzc1 exactly -- it was propagated by FILE COPY, not by git. zwfy6 HEAD is 2d98c5a and does NOT contain ce5c298 (git cat-file -t ce5c298 -> 'Not a valid object name'). The pre-fix copy is preserved there as scripts/train_olmo2_arch_probe2.py.PRE_CE5C298_BAK (md5 879541f001568ceea16528e2e5d8035f).",
+      "standing_ops_risk_carried_forward": "Because the fixed trainer is UNTRACKED on zwfy6, `git clean -nd scripts/` reports 'Would remove scripts/train_olmo2_arch_probe2.py'. A routine git clean there would silently delete the fixed trainer, and restoring the .PRE_CE5C298_BAK afterwards would resurrect the pre-fix sampler. train_olmo2_arch_probe2_distill.py and train_qwen3_arch_probe2.py are untracked there too. DO NOT run git clean in zwfy6 scripts/. Every future seeded run must keep the positive preflight assertion (grep the live line for seed=args.seed) -- git on zwfy6 cannot vouch for the file.",
+      "if_the_wzc1_trainer_is_ever_changed_again": "it must be re-copied to zwfy6 with scp -O and the md5 re-checked on both disks; git will not propagate it. No such change was made in this pass."
+    },
+    "gpu_h_spent": 0,
+    "updated": "2026-08-13"
   }
 }
