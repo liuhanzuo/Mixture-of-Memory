@@ -968,6 +968,117 @@ def classify_monotonicity(steps, margins_pp, ses_pp, delta_pp, k_constants,
     }
 
 
+# An INDEPENDENT re-score of one of our own checkpoints already exists on disk at
+# a DIFFERENT batch size, which makes a real bs-sensitivity measurement free.
+#
+# `olmo2_closedbook_results/7B_keep12_step124000_v2` and
+# `olmo2_mmlu_content_results/7B_keep12_step124000_v2` were written 2026-08-08 by
+# `scripts/_run_olmo2_p24_eval_ladder_prev2_73.sh`, which passes
+# `--batch_size 8` for BOTH the closed-book and the MMLU-content harness (lines
+# 140/165/189). This dispatch re-scores the SAME step124000.pt at cb=32 / mmlu=16.
+# Same ckpt file, same harness md5s, same `add_bos=false`, 8/8 shards on both
+# sides -- so the ONLY difference is batch size.
+#
+# Why this matters: A04's only existing batch-size sensitivity number is
+# `full32_rescore_v2_20260812.sensitivity_bs48_probe` (bs32->bs48 flipped
+# 12/14267 popqa and 10/3610 nq_open). bs8->bs32 is a 4x wider gap and has never
+# been measured. If it moves items materially, then EVERY cross-protocol
+# comparison in A04 that mixes bs8-era dirs with bs32-era dirs inherits that
+# much slop -- which is a fact about the archive, not about this trajectory.
+ARCHIVED_BS8_RESCORE = {
+    "step": 124000,
+    "cb_dir": "7B_keep12_step124000_v2",
+    "mmlu_dir": "7B_keep12_step124000_v2",
+    "archived_bs": {"closedbook": 8, "mmlu_content": 8},
+    "this_dispatch_bs": {"closedbook": 32, "mmlu_content": 16},
+    "archived_written": "2026-08-08 03:15-03:19 (.73)",
+    "archived_driver": "scripts/_run_olmo2_p24_eval_ladder_prev2_73.sh",
+    "what_is_held_identical": (
+        "the same physical ckpt (outputs/olmo2_probe2_7B_keep12fresh2/"
+        "step124000.pt), the same harness files (md5 2ed41993… / fe4a62db…), "
+        "add_bos=false on both sides, 8/8 shards on both sides, greedy decoding. "
+        "ONLY batch size differs."),
+    "why_it_is_worth_reporting": (
+        "A04's only bs-sensitivity datum is bs32->bs48 (12/14267 popqa). "
+        "bs8->bs32 is a 4x wider gap and unmeasured. Any A04 comparison that "
+        "mixes bs8-era result dirs with bs32-era ones inherits whatever this is."),
+}
+
+
+def archived_bs8_comparison(data, raw_root, mm_root, cb_root, step):
+    """Per-ITEM comparison of our step124000 cells against the archived bs=8 ones.
+
+    LABELLED DIAGNOSTIC. It never enters the Q1/Q2/Q3/Q4 verdicts -- every cell
+    used by those comes from THIS dispatch's uniform protocol. This block exists
+    to price a protocol difference in the ARCHIVE, and it is reported whether the
+    answer is comfortable or not.
+    """
+    spec = {"cb": ARCHIVED_BS8_RESCORE["cb_dir"],
+            "mmlu": ARCHIVED_BS8_RESCORE["mmlu_dir"]}
+    for key, root in (("cb", cb_root), ("mmlu", mm_root)):
+        if not os.path.isdir(os.path.join(root, spec[key])):
+            return {"run": False,
+                    "reason": f"archived {key} dir {spec[key]} absent on this disk"}
+    try:
+        integ = shard_integrity_report(mm_root, cb_root, {"archived_bs8": spec})
+        arch, _ = _load_arm(mm_root, cb_root, spec)
+    except SystemExit as e:
+        return {"run": False, "reason": f"archived dirs failed integrity: {e}"}
+
+    # the archived summaries must agree that add_bos was False, else the
+    # comparison confounds two protocol axes at once and is not interpretable
+    meta_check = {}
+    for key, root in (("cb", "olmo2_closedbook_results"),
+                      ("mmlu", "olmo2_mmlu_content_results")):
+        sp = os.path.join(raw_root, root, spec[key], "summary.json")
+        m = json.load(open(sp)).get("meta", {})
+        if m.get("add_bos") is not False:
+            return {"run": False,
+                    "reason": (f"archived {key} add_bos={m.get('add_bos')!r} is not "
+                               "False -- comparison would confound two protocol "
+                               "axes")}
+        if int(m.get("ckpt_step", -1)) != int(step):
+            return {"run": False,
+                    "reason": (f"archived {key} ckpt_step={m.get('ckpt_step')} != "
+                               f"{step}")}
+        meta_check[key] = {"add_bos": False, "ckpt_step": int(m["ckpt_step"]),
+                           "ckpt": m.get("ckpt")}
+
+    ours = data[_arm_name(step)]
+    per_axis = {}
+    for axis in AXES:
+        if axis not in arch or axis not in ours:
+            continue
+        a = np.asarray(ours[axis], float)
+        b = np.asarray(arch[axis], float)
+        if a.size != b.size:
+            per_axis[axis] = {"skipped": f"size {a.size} vs {b.size}"}
+            continue
+        n_dis = int((a != b).sum())
+        per_axis[axis] = {
+            "n": int(a.size),
+            "acc_this_dispatch": float(a.mean()),
+            "acc_archived_bs8": float(b.mean()),
+            "acc_diff_pp": 100.0 * float(a.mean() - b.mean()),
+            "n_item_disagreements": n_dis,
+            "frac_item_disagreements": n_dis / a.size,
+            "right_in_ours_wrong_in_archived": int(((a == 1) & (b == 0)).sum()),
+            "wrong_in_ours_right_in_archived": int(((a == 0) & (b == 1)).sum()),
+            "bit_identical": bool(n_dis == 0),
+        }
+    return {
+        "run": True,
+        **ARCHIVED_BS8_RESCORE,
+        "archived_meta_verified": meta_check,
+        "archived_shard_integrity": integ["archived_bs8"],
+        "per_axis": per_axis,
+        "NOT_used_in_any_verdict": (
+            "labelled diagnostic. Every cell in Q1-Q4 comes from THIS dispatch's "
+            "uniform cb=32 / mmlu=16 protocol; this block only prices a protocol "
+            "difference that exists in the ARCHIVE."),
+    }
+
+
 def selftest_statistics():
     """Executed self-test of the two statistics this verdict's Q1 label depends on.
 
@@ -1469,6 +1580,10 @@ def main():
                     "interval test in this file uses the control dirs"),
             }
 
+    # ---- 9b. free bs8-vs-bs32 sensitivity from an archived re-score ----
+    bs8_cmp = archived_bs8_comparison(
+        data, args.raw_root, mm_root, cb_root, OFFGRID_ANCHOR_STEP)
+
     # ---- 10. the HEADLINE, generated mechanically ----------------------
     dec = [a for a in DECISION_AXES if a in q1]
     verdicts = {a: q1[a]["verdict"] for a in dec}
@@ -1609,6 +1724,7 @@ def main():
                 "samplers."),
         },
         "cross_node_scoring_determinism_control": node_ctrl,
+        "archived_bs8_vs_this_bs32_sensitivity": bs8_cmp,
         "bootstrap_offsets": {
             "arm_index": arm_index,
             "form": "97*arm_index + 13*axis_index",
@@ -1794,6 +1910,20 @@ def main():
         for ax, v in node_ctrl["per_axis"].items():
             print(f"  {ax:<14} disagreements {v['n_item_disagreements']}/{v['n']}"
                   f"  acc_diff={v['acc_diff_pp']:+.6f}pp")
+    if bs8_cmp.get("run"):
+        print("\nARCHIVED bs=8 vs THIS bs=32/16 on the SAME step124000 ckpt "
+              "(diagnostic, in no verdict):")
+        for ax, v in bs8_cmp["per_axis"].items():
+            if v.get("skipped"):
+                print(f"  {ax:<14} skipped: {v['skipped']}")
+                continue
+            print(f"  {ax:<14} acc {100*v['acc_this_dispatch']:.4f}% (bs32/16) vs "
+                  f"{100*v['acc_archived_bs8']:.4f}% (bs8)  diff="
+                  f"{v['acc_diff_pp']:+.4f}pp  items differing "
+                  f"{v['n_item_disagreements']}/{v['n']} "
+                  f"({100*v['frac_item_disagreements']:.3f}%)")
+    else:
+        print(f"\nARCHIVED bs=8 comparison NOT run: {bs8_cmp.get('reason')}")
     print(f"\nHEADLINE: {headline}")
     print(f"READING : {reading}")
     print(f"wrote {args.out_json}")
