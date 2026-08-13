@@ -7,8 +7,12 @@
 
 **Added 2026-08-13 by MAIN. 0 GPU. Nothing below is deleted — it is provenance.**
 
-This board contains **14 `auto_launch:true` entries**, and **78 references to nodes that
-NO LONGER EXIST**: `.196`, `.76`, `.249`, `.245.174`, `.252`, `.48.7.53`, `28.88.184.53`,
+This board contains **24 auto-launch-TRUE entries across THREE spellings** —
+`auto_launch:true` (12), `auto_launch: true` (9), `auto_launch=TRUE` (3) — and **78
+references to nodes that NO LONGER EXIST**
+
+> ⚠️ **Grep for all three forms.** A pattern matching only `auto_launch:true` finds 12 of
+> 24 and understates the hazard by half. Use `grep -nE 'auto_launch[:=] ?(true|TRUE)'`.: `.196`, `.76`, `.249`, `.245.174`, `.252`, `.48.7.53`, `28.88.184.53`,
 `28.58.245.174`, `28.59.80.196`. Line ~605 even reads *"any node frees + all GPUs idle →
 heartbeat auto-launches the next probe, priority P0."*
 
@@ -29,7 +33,7 @@ an arm name whose provenance no longer matches.
 
 ### Ruling for any future heartbeat
 
-1. **Every `auto_launch:true` entry below whose node is not in that table is STALE.**
+1. **Every auto-launch-TRUE entry below (any of the three spellings) whose node is not in that table is STALE.**
    Treat it as `auto_launch:false` regardless of what its own line says.
 2. The 2026-06 `mem_space` / `b25` / `F2` / `ROUTE-A` / `N16-TOP16` / `LONGEVAL-RULER-COMPARE`
    blocks are from a **retired research direction on retired hardware**. They are kept for
