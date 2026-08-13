@@ -1933,5 +1933,23 @@
     ],
     "recommendation": "Adopt the per-axis neighbour tolerance into A04_GATE_DESIGN.md as a PRE-CONDITION on any reported accept, phrased PER-AXIS rather than blanket (7 of 8 decision-axis ranges are inside item noise, so blanket distrust of single-checkpoint numbers is not supported). Do NOT spend GPU widening this to more arms until there is an accept to protect: the requirement is already established by two independent counterexamples (keep14 popqa at 25.5k spacing, keep8 triviaqa at 500-step spacing) and a third would not change the gate. Separately, PIN NUMPY across the cluster before the next analysis that relies on the 5e-4 pp reproduction assertion.",
     "what_this_changes_for_the_rule": "(1) the neighbour-robustness requirement is VINDICATED and now has a number: at 500-step spacing the loophole is worth 1.1202 pp on the widest decision axis = 49.9% of popqa's entire Delta. (2) but it is AXIS-CONCENTRATED, not diffuse -- 7 of 8 ranges are inside item noise, so state it as 'an accept must clear its threshold by more than the measured neighbour range ON THE AXIS IT ACCEPTS ON'. (3) the mechanism is worse than 'the margin wobbles': the 1.09 pp drop is a resolved ONE-INTERVAL event with 355 items going right->wrong while only 45.5% of prediction strings are stable, so WHICH checkpoint you grab is a live degree of freedom. (4) the popqa dip is ARM-SPECIFIC -- cite keep14's non-monotonicity as an existence proof about CHECKPOINT SELECTION, never as evidence about healing in general. (5) two infrastructure defects are now on the record: a corrupt zwfy6 checkpoint no existence-based inventory would flag, and a cross-node numpy bootstrap drift TIGHTER than an existing hard-fail tolerance."
+  },
+  "full32_trajectory_staging_remeasured_20260813": {
+    "what": "ADDITIVE, 0 GPU. MAIN re-derived the deferral decision for the full32 trajectory scan instead of repeating it for a 4th heartbeat, and MEASURED the transfer rate rather than reusing the recorded one.",
+    "corrects_a_count": "shallow_rung_ni_discrimination_20260812.implication_for_pilot_two and full32_rescore_v2_20260812.trajectory_scan_NOT_run both say FOUR intermediate ckpts (step5000/10000/15000/20000). There are FIVE unscored-on-this-battery points on wzc1: step5000, 10000, 15000, 20000 AND 25000.pt all exist at 81.6 GiB each. step25000 is the already-scored endpoint, so the SCAN is 4 new points, but the STAGING cost if moved cross-disk is whatever subset you move -- state the number you mean.",
+    "measured_rate_2026_08_13_0956": {
+      "method": "dd 2 GiB from outputs/olmo2_probe2_7B_full32_dolmino/step5000.pt piped over ssh wzc1 -> .73, wall-clocked",
+      "result": "2 GiB in 126 s = 16.3 MiB/s single stream",
+      "agrees_with_archive": "full32_rescore_v2_20260812.trajectory_scan_NOT_run recorded 16 MiB/s (3 GiB in 183 s). Independently reproduced 10 days later -- this is a stable property of the link, not a one-off."
+    },
+    "arithmetic": {
+      "per_ckpt": "81.6 GiB at 16.3 MiB/s = 1.43 h",
+      "four_new_points": "5.7 h of transfer before any GPU work",
+      "all_five": "7.1 h",
+      "alternative": "wait for SparseForge to free LOCAL/.21 (~19-24 h as of 2026-08-13 09:56) and run with ZERO transfer, since the ckpts are already on wzc1"
+    },
+    "not_a_space_problem": "zwfy6 has 38 T free vs ~400 GiB needed. The constraint is bandwidth, not capacity -- do not 'solve' this by freeing disk.",
+    "decision": "WAIT for the wzc1 nodes. But the margin is narrower than a casual reading suggests: 5.7-7.1 h of transfer vs ~19-24 h of waiting. If the B200 run were to slip past ~2026-08-14 06:00, staging to an idle H20 becomes the faster path and the decision should be RE-DERIVED, not inherited.",
+    "gpu_h_spent": 0
   }
 }
