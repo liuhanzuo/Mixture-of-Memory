@@ -1798,5 +1798,140 @@
       "anything about the full32 trajectory -- it was not run."
     ],
     "recommendation": "do NOT fund a new damaged-arm tranche on the premise that more heal steps approach the boundary: this pass measures that premise at 7B and it is false (8-244x the entire heal budget away, negative slope on popqa). Remaining cheap step: the full32 trajectory on LOCAL/.21 when SparseForge frees them (zero transfer, ckpts already there). And ADD A CHECKPOINT-NEIGHBOURHOOD ROBUSTNESS REQUIREMENT to the gate design before any accept is reported from a single checkpoint."
+  },
+  "neighbour_variability_20260813": {
+    "what": "Tests the RULE-LEVEL claim in keep14_trajectory_ni_20260813.the_load_bearing_finding / A04_KEEP14_TRAJECTORY_NI_VERDICT.md §7.2 ('any future accept obtained at a hand-picked checkpoint must be shown to survive its neighbours'). That claim rested on n=1 arm at 25,500-step spacing and carried NO tolerance. LEG A measures the NI-margin range across ADJACENT (500-step) checkpoints of keep8+fresh2 -- two clusters of 3 -- which is the spacing at which hand-picking actually happens. LEG B tests whether the keep14 popqa 128k->153.5k regression replicates on an INDEPENDENT arm (shortgpt16, same three step numbers). EVAL-ONLY, zero training.",
+    "verdict": "NEIGHBOUR_RANGE_MATERIAL_GE_0p5PP_TOLERANCE_REQUIRED_LEGB_DOES_NOT_REPLICATE",
+    "document": "A04_NEIGHBOUR_VARIABILITY_VERDICT.md",
+    "evidence": "evidence/a04_neighbour_variability.json",
+    "code": [
+      "code/a04_neighbour_variability_driver.sh",
+      "code/a04_neighbour_variability.py"
+    ],
+    "gpu_h_spent": 8.6556,
+    "gpu_h_note": "wall-clock driver start->end x 8 GPUs: .73 2317s x8 = 5.1489 (Leg A, 6 ckpts); .82 1131s x8 = 2.5133 + 447s x8 = 0.9933 (Leg B, 3 ckpts). The 4-axis scoring itself was 2298s + 1567s = 8.5889 GPU-h. Analysis is CPU-only.",
+    "nodes": ".73 (Leg A) and .82 (Leg B), 8xH20 each, zwfy6. Both verified 0 MiB/0% before launch; the driver refuses to start if >8000 MiB is held. NOT touched: .104 (paperC Qwen3 heal), LOCAL/.21 (SparseForge #246).",
+    "leg_A_headline": {
+      "clean_cluster": "cluster2_130000_131000 -- all three saves inside ONE .82 process, no resume seam",
+      "margin_range_pp_split": {
+        "triviaqa": 1.1202,
+        "popqa": 0.2523,
+        "mmlu_content": 0.2208,
+        "nq_open_demoted": 0.3324
+      },
+      "expected_range_if_pure_noise_pp": {
+        "triviaqa": 0.6577,
+        "popqa": 0.5818,
+        "mmlu_content": 0.6522,
+        "nq_open_demoted": 1.1401
+      },
+      "range_exceeds_item_noise": {
+        "triviaqa": true,
+        "popqa": false,
+        "mmlu_content": false,
+        "nq_open_demoted": false
+      },
+      "only_1_of_8_decision_axis_ranges_beats_noise": "7 of the 8 decision-axis ranges across BOTH clusters FAIL the noise guard. Reporting them as neighbour gaps would have been a fake finding: max-minus-min of k noisy cells is biased UPWARD even at zero true spread -- E[range of 3 iid N(0,s)] = 3/sqrt(pi)*s = 1.6926s. Only triviaqa/cluster-2 clears it, at 1.70x.",
+      "what_produces_the_one_real_range": "NOT diffuse jitter -- ONE resolved drop in the final 500 steps: triviaqa 130500->131000 -1.0867 pp, CI95 [-1.3319,-0.8359], p=0.0001, 355 right->wrong vs 160 wrong->right of 17944. 130000->130500 is flat (-0.0223 pp, p=0.8798).",
+      "not_output_degeneracy": "across 130000/130500/131000: 0.000% empty predictions, top_constant_frac FALLING 0.440%->0.435%->0.368%, distinct predictions RISING 9519->9457->9686. Only 45.50% of triviaqa prediction STRINGS are identical across the resolved interval -- EM is a coarse read on a model whose outputs are rewritten wholesale between ADJACENT saves.",
+      "best_minus_last_pp_the_realised_false_advantage": {
+        "cluster2": {
+          "triviaqa": 1.1202,
+          "popqa": 0.2523,
+          "mmlu_content": 0.0
+        },
+        "cluster1": {
+          "triviaqa": 0.0,
+          "popqa": 0.1192,
+          "mmlu_content": 0.1211
+        }
+      },
+      "proposed_neighbour_tolerance": "an accept must clear its threshold by more than ~1.2 pp on triviaqa and ~0.35 pp on popqa/mmlu_content, or be demonstrated on its +/-500-step neighbours. ONE-ARM estimate; widen if a second arm is ever measured. 1.1202 pp = 49.9% of popqa's entire Delta (2.2457 pp) and 60.2% of mmlu_content's (1.8614 pp).",
+      "resume_seam_did_NOT_widen_the_range": "cluster1 (which straddles a process boundary) has SMALLER ranges than cluster2 on every axis, so the seam is a caveat on cluster1's interpretation, not a driver of the finding. The material range is in the CLEAN cluster."
+    },
+    "leg_B_headline": {
+      "REPLICATES": false,
+      "interval": "popqa 128000->153500",
+      "keep14fresh2_archived": {
+        "acc_delta_pp": -0.6729,
+        "ci95_pp": [
+          -0.9252,
+          -0.4206
+        ],
+        "p": 0.0001,
+        "wrong_to_right": 122,
+        "right_to_wrong": 218
+      },
+      "shortgpt16_measured_here": {
+        "acc_delta_pp": 0.0841,
+        "ci95_pp": [
+          -0.1542,
+          0.3224
+        ],
+        "p": 0.5084,
+        "wrong_to_right": 152,
+        "right_to_wrong": 140
+      },
+      "reading_as_prereg": "OPPOSITE SIGN and NOT resolved -> the pre-committed non-replication branch fires: the claim is DOWNGRADED from a property of healing to 'there EXISTS at least one arm on which a later checkpoint scores worse'. That still makes single-checkpoint accepts unsafe (one counterexample suffices) but may NOT be stated as a general property of healing.",
+      "shortgpt16_has_its_own_regression_on_the_OTHER_interval": "popqa 153500->200000: -0.2383 pp, CI95 [-0.4416,-0.0350], p=0.0264, +95/-129 -- RESOLVED but a DIFFERENT interval and 2.8x smaller. So mid-heal popqa regressions are not unique to keep14, but the specific 128k->153.5k dip is.",
+      "the_requirement_survives_anyway": "Leg A independently supplies a SECOND, stronger counterexample (a resolved 1.09 pp drop over 500 steps on a different arm), so the neighbour-check requirement stands even though this cross-arm replication failed.",
+      "shortgpt16_is_the_strongest_damaged_arm_and_still_rejects": "mmlu_content recovery 61.78/61.47/62.70%, margin only -5.6518 pp at 200k -- the closest any damaged 7B arm has come -- and 0 of 3 decision axes accept."
+    },
+    "premises_of_the_dispatch_that_were_WRONG": {
+      "1_shortgpt16_step128000_ckpt_is_CORRUPT_on_zwfy6": "outputs/olmo2_probe2_7B_shortgpt16/step128000.pt is 7,755,268,096 B = 15.9% of its 48,724,473,978 B siblings; BOTH zipfile and torch.load fail with 'failed finding central directory ... checkpoint file is corrupted'. A TRUNCATED WRITE. The dispatch's ledger listed this arm as n_ckpt=6 with this step available, and warned about a DIFFERENT shortgpt16 hazard (merged-without-shards EVAL RESULTS); the actual blocker was the CHECKPOINT. `ls -l` cannot catch it -- present, non-zero, dated like its siblings, and this arm's ckpts do not all share one size. FIXED by staging the intact wzc1 copy (scp -O, 2592s, 18.8 MiB/s) to outputs/a04_staged/sg16_step128000_from_wzc1.pt and verifying FULL-FILE sha256 on both disks (858eb32f389b5fd9b95fa551f296cab329feb176efb49eb70247eecec386643c, identical). A head/tail sample would be the wrong check when truncation is the failure mode. The corrupt original was NOT deleted -- it is the evidence, and the same defect may exist in other arms.",
+      "2_leg_A_cluster1_straddles_a_RESUME_SEAM": "step124000+step124500 were written by the .73 process of 2026-08-08 (resumed from step121000_full.pt, DIED 20:26 TCPStore error); step125000 by a DIFFERENT process on .82 on 2026-08-12, resumed FROM step124500.pt. The trainer restores optimizer+RNG but rebuilds the loader (sampler.set_epoch(epoch); data_iter=iter(loader)) WITHOUT fast-forwarding inside the epoch, so 124500->125000 saw a different DATA ORDER than an uninterrupted 500 steps. Cluster 2 (130000/130500/131000) is entirely inside one .82 process and IS clean -- it is the headline. Both reported separately.",
+      "3_keep8fresh2_is_a_DIFFERENT_ARCHITECTURE_from_keep14fresh2": "keep8fresh2 = keep_front 8 / n_fresh 2 / 10 layers / 113 tensors; keep14fresh2 = 14/2/16/179; shortgpt16 = 16/0/16/179 with NON-CONTIGUOUS keep_layer_indices [0..12,16,17,31]. Three architectures -- absolute margins are NEVER rungs of one ladder. Does not weaken Leg A: the claim is about WITHIN-run checkpoint selection, which is what a within-arm range measures.",
+      "4_same_step_is_NOT_synonymous_across_arms": "'step' is an optimizer-step count only. shortgpt16 is epoch 2 at 153500 and epoch 3 at 200000; keep14fresh2 is epoch 1 at 128000 and epoch 2 at 153500. Same step != same data seen, so Leg B is a replication of a PHENOMENON, never a matched pairwise comparison.",
+      "5_byte_size_is_NOT_identity_and_this_was_checked": "124000/124500 share a size (34,152,197,522) and 125000/130000/130500/131000 share another (34,152,196,306). All six confirmed DISTINCT weights via per-tensor sha256 of lm_head/embed_tokens/layers.0.q_proj AND the float64 sum of every parameter."
+    },
+    "reproducibility_defect_found": {
+      "what": "Running this ANALYSIS on .73 vs .82 -- same code, same shards, same seeds -- gives margins differing in the 4th decimal.",
+      "root_cause": "np.random.Generator.multinomial(n, p, size=10000) differs in 19 of 10000 ROWS between numpy 2.5.1 (.73) and 2.4.6 (.82) for the same seed (first divergence at row 2598: [8655,9082,207] vs [8655,9115,174]). The multinomial sampler changed between those versions.",
+      "what_is_bit_identical": "the per-item difference vector d (sha256 4d0d81b938392a262fd67c5e on both nodes), its (vals,counts)=([-1,0,1],[8653,9092,199]), d.mean() to 20 sig figs, AND the raw RNG bit stream (.integers/.binomial agree exactly). So it is neither the data nor the metric.",
+      "measured_effect": {
+        "n_cells_compared": 24,
+        "n_cells_differing": 3,
+        "max_abs_margin_drift_pp": 0.005294,
+        "axes_affected": [
+          "triviaqa"
+        ],
+        "verdict_booleans_changed": 0,
+        "headline_changed": false,
+        "finding_over_drift_ratio": 211.6
+      },
+      "within_node_is_byte_identical": "re-running twice on .82 gives a BYTE-IDENTICAL json (sha256 1f88d6eb2e75a45a5c3660ba both times), so the drift is purely cross-version, never run-to-run. Published on .82 (numpy 2.4.6).",
+      "why_it_matters_beyond_this_pass": "(1) the standing same-harness-runs-bit-identical rule is about the SCORING harness; this is the ANALYSIS layer and is a genuine counter-example there. (2) a04_keep14_trajectory_ni.py HARD-FAILS if the archived endpoint margins do not reproduce to 5e-4 pp, which is TIGHTER than this 5.3e-3 pp drift -- so that assertion is only guaranteed on a node whose numpy matches the one that produced the archive. A latent TOOLING hard-fail, not scientific drift.",
+      "NOT_an_excuse": "may NOT be cited to explain away any move larger than ~0.006 pp. Every resolved interval reported here is 15-200x larger, and the drift does not touch popqa or mmlu_content at all.",
+      "fix": "pin numpy across the cluster before the next analysis that relies on the 5e-4 pp reproduction assertion. Out of scope for this dispatch."
+    },
+    "protocol": "FROZEN and identical to keep14_trajectory_ni_20260813: cb bs=32, mmlu bs=16, add_bos=0, num_shards=8, max_new_tokens=32, greedy, base LM, chat_template=False. protocol_asserted() runs BEFORE anything is scored and parses the drivers' echoed lines out of ALL THREE launch logs (Leg B ran as two invocations; --legB_driver_log takes a comma-separated list and EVERY entry is gated). NEGATIVE-TESTED twice: a doctored log reading cb_bs=48 -> 'FATAL protocol deviation'; a missing log -> 'FATAL: driver log ... absent'; in BOTH cases NO output file is written. add_bos asserted `is False` (never `is not True`, which passes on None) on all 27 result dirs; max_new_tokens==32 on all 18 generative dirs. chat_template established STRUCTURALLY -- neither harness has a chat-template code path.",
+    "anchor_and_delta": "anchor = vanilla models/OLMo-2-1124-7B, IMPORTED from a04_shallow_rung_ni_7b.ANCHOR, never redeclared, never substituted (G0/G2); full32_step25000 remains FORBIDDEN as an anchor. Delta = 0.10*residual(intact), imported through the guard, never recomputed against a different intact.",
+    "guard_D1_D6": "all four axes CERTIFIABLE on the anchor; D6 recomputed over THIS arm set rather than inherited. 0 of 36 decision cells retired (the 9 retired cells are `credit`-convention MMLU only).",
+    "integrity": "40 of 40 shard cells: index set EXACTLY {0..7} (not a file count), merged n exactly EXPECTED_N (triviaqa 17944 / popqa 14267 / nq_open 3610 / mmlu 14042), 0 duplicate item_ids, 0 nan, identical item_id sequences across all 10 arms. NEGATIVE-TESTED: a hand-built 7-of-8 popqa set is refused with 'shard index set [0,1,2,4,5,6,7] != {0..7}'. Driver asserts the LOADED ckpt meta's step/keep/fresh/num_hidden_layers before spending 8 GPUs, and re-checks ckpt_step at merge time.",
+    "verdict_invariance": "0 NI accepts across all 5 tie conventions x 36 cells. RATIO(0.85) also rejects all 9 checkpoints (mean ratios 0.315-0.343 keep8, 0.491-0.499 shortgpt16). No rule disagreement anywhere.",
+    "bootstrap_offsets": "new arm_index 400-408; guard SEED+1700+13*axis; intervals SEED+1900+13*axis+7*pair (Leg A) and SEED+2400+... (Leg B). Disjoint from pilot_zero {0,1}, step100k 100-102, shallow_rung 200-203, keep14 trajectory 300-301 + endpoint 201, and keep14's guard/interval offsets 700/900. No archived number can be perturbed by this run.",
+    "everything_imported": "ni_rule/ratio_rule/load_shards/build_nulls/mmlu_content_norm_vec/qa_metric_vec/EXPECTED_N/AXES/DEMOTED_AXES/PREREG from pilot_zero_rule_disagreement; paired_bootstrap/TIE_CONVS/N_BOOT/SEED from A03's analyze_1b_knowledge_floor; ANCHOR/_load_arm/assert_aligned/d4_interface_degenerate/D2_RESIDUAL_FLOOR_PP/Z95_TWO_SIDED/D4_*/SD_RUN_1B_PP from a04_shallow_rung_ni_7b. No metric, null, rule, guard or anchor re-derived.",
+    "licensed": [
+      "the 9 checkpoints' accuracies, nulls, residuals, Delta, lo95 bounds and margins, and the 0-accept verdict under all 5 tie conventions and RATIO(0.85).",
+      "'across three ADJACENT (500-step) checkpoints of one clean uninterrupted heal segment, the NI margin ranges by 1.1202 pp on triviaqa -- 1.70x what item noise alone would produce -- and by <=0.34 pp, indistinguishable from noise, on every other axis.'",
+      "'a single 500-step interval cost 1.0867 pp of TriviaQA EM, resolved at p=0.0001 (355 right->wrong vs 160 wrong->right of 17944), and it is not output degeneracy.'",
+      "'the keep14 popqa 128k->153.5k regression does NOT replicate on shortgpt16' (+0.0841 pp, p=0.5084, opposite sign, CI straddles zero).",
+      "'shortgpt16 has its own resolved popqa regression on 153.5k->200k (-0.2383 pp, p=0.0264)' -- a DIFFERENT interval, 2.8x smaller.",
+      "the proposed per-axis neighbour tolerance, AS A ONE-ARM ESTIMATE."
+    ],
+    "NOT_licensed": [
+      "ANY form of 'the 7B deficits are large relative to seed variance'. sd_run is a 1B-ONLY quantity (S=3, keep12@5000). EVERY 7B rung here has EXACTLY ONE seed and the historical 7B ladder's seeds are UNRECORDED (--seed postdates them; trainer afdfa66 called no seeding function), so NO 7B sd_run is computable or retrospectively reconstructible.",
+      "treating the checkpoints within a cluster as REPLICATES of each other. They are successive states of ONE optimisation; their spread is heal progress + data order. The range measured here is a CHECKPOINT-SELECTION quantity, NOT an estimate of seed variance -- the whole point of the noise guard is that even ITEM noise had to be subtracted before the range meant anything.",
+      "calling any of this 'harness noise'. full32_rescore_v2_20260812.correction_to_the_jitter_premise established there is NO measured runtime-jitter floor on this harness (same-code re-runs are bit-identical). These are different models so bit-identity does not apply -- but it also removes 'noise' as an available explanation. Item-sampling variability is a different thing and IS quantified here.",
+      "reporting the 7 sub-noise ranges (0.119-0.332 pp) as measured neighbour gaps. They FAIL range_exceeds_item_noise; a max-minus-min of 3 noisy cells is biased upward even at zero true spread.",
+      "reading cluster 1 (124000/124500/125000) as an uninterrupted 500-step neighbourhood -- it straddles a process/resume boundary with a loader restart.",
+      "comparing keep8fresh2 / shortgpt16 / keep14fresh2 margins as rungs of one ladder. Three architectures; the two-corpora / unequal-steps STATUS.json:warning also still holds.",
+      "treating Leg B as a matched pairwise comparison with keep14 -- same step number != same data seen.",
+      "quoting any margin here to better than 0.01 pp ACROSS NODES (see reproducibility_defect_found).",
+      "any K1/K2/K3 clause -- they are defined over the pre-registered 1B arm set.",
+      "generalising the proposed tolerance beyond one arm / two clusters."
+    ],
+    "recommendation": "Adopt the per-axis neighbour tolerance into A04_GATE_DESIGN.md as a PRE-CONDITION on any reported accept, phrased PER-AXIS rather than blanket (7 of 8 decision-axis ranges are inside item noise, so blanket distrust of single-checkpoint numbers is not supported). Do NOT spend GPU widening this to more arms until there is an accept to protect: the requirement is already established by two independent counterexamples (keep14 popqa at 25.5k spacing, keep8 triviaqa at 500-step spacing) and a third would not change the gate. Separately, PIN NUMPY across the cluster before the next analysis that relies on the 5e-4 pp reproduction assertion.",
+    "what_this_changes_for_the_rule": "(1) the neighbour-robustness requirement is VINDICATED and now has a number: at 500-step spacing the loophole is worth 1.1202 pp on the widest decision axis = 49.9% of popqa's entire Delta. (2) but it is AXIS-CONCENTRATED, not diffuse -- 7 of 8 ranges are inside item noise, so state it as 'an accept must clear its threshold by more than the measured neighbour range ON THE AXIS IT ACCEPTS ON'. (3) the mechanism is worse than 'the margin wobbles': the 1.09 pp drop is a resolved ONE-INTERVAL event with 355 items going right->wrong while only 45.5% of prediction strings are stable, so WHICH checkpoint you grab is a live degree of freedom. (4) the popqa dip is ARM-SPECIFIC -- cite keep14's non-monotonicity as an existence proof about CHECKPOINT SELECTION, never as evidence about healing in general. (5) two infrastructure defects are now on the record: a corrupt zwfy6 checkpoint no existence-based inventory would flag, and a cross-node numpy bootstrap drift TIGHTER than an existing hard-fail tolerance."
   }
 }
