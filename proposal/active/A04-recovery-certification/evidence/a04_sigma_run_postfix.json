@@ -1,0 +1,1223 @@
+{
+  "scope": "A04 sigma_run from the POST-ce5c298 keep7+fresh2 data-order triplet (seeds [43, 44, 45]) at step 220000, and the K2 re-adjudication it licenses.",
+  "prereg": "A04_SIGMA_RUN_POSTFIX_K2_PREREG.md (commit 94839e8, PRE-DATA)",
+  "gpu_h_spent": 0.0,
+  "node": "TENCENT64.site",
+  "numpy_version": "2.5.1",
+  "python_version": "3.14.6",
+  "scipy_available": false,
+  "chi2_method": "df=2 closed form: CDF=1-exp(-x/2) => ppf(p)=-2ln(1-p); asserted df==2. scipy absent on .73.",
+  "estimator": "per-axis ARM MEAN per seed (absolute accuracy), NOT the paired delta -- a paired delta shares the baseline term across seeds and understates single-arm spread. s = sample sd (ddof=1), df = S-1 = 2.",
+  "preregistered_constants": {
+    "commit": "d1ba737",
+    "commit_utc": "2026-08-09 23:02:27 +0800",
+    "T_pct_per_5k": 2.0,
+    "rho": 0.85,
+    "delta_rule": "0.10 * residual(intact, x)",
+    "delta_fraction": 0.1
+  },
+  "mmlu_tie_convention": "split",
+  "canonical_imports": {
+    "build_nulls": "pilot_zero_rule_disagreement.build_nulls (IMPORTED and CALLED)",
+    "scorers_nulls": "analyze_1b_knowledge_floor: best_constant_qa / longest_option_vector / best_constant_letter / paired_bootstrap",
+    "SEED": 0,
+    "N_BOOT": 10000,
+    "TIE_CONVS": [
+      "split",
+      "first",
+      "last",
+      "credit",
+      "wrong"
+    ],
+    "no_constant_copied_from_prose": true
+  },
+  "RANGE_CONSTANTS_DECLARED_UNUSED": {
+    "why_recorded": "prereg s2.1: this analysis computes NO range statistic, so E[range of k] constants are unused. Recorded so nobody can later reuse a c_n from this document. sigma here is a SAMPLE SD (ddof=1), df=2.",
+    "c_3_E_range_of_3": 1.6925687506,
+    "c_8_E_range_of_8": 2.8475,
+    "used_in_this_analysis": false
+  },
+  "gpu_refuse_guard": {
+    "threshold_mib": 8000,
+    "per_gpu": [
+      {
+        "index": 0,
+        "memory_used_mib": 0
+      },
+      {
+        "index": 1,
+        "memory_used_mib": 0
+      },
+      {
+        "index": 2,
+        "memory_used_mib": 0
+      },
+      {
+        "index": 3,
+        "memory_used_mib": 0
+      },
+      {
+        "index": 4,
+        "memory_used_mib": 0
+      },
+      {
+        "index": 5,
+        "memory_used_mib": 0
+      },
+      {
+        "index": 6,
+        "memory_used_mib": 0
+      },
+      {
+        "index": 7,
+        "memory_used_mib": 0
+      }
+    ],
+    "max_used_mib": 0
+  },
+  "bootstrap_offsets": {
+    "arm_index": {
+      "seed43": 900,
+      "seed44": 901,
+      "seed45": 902
+    },
+    "guard_seed_offset": "SEED+8700 (unused: no guard bootstrap here)",
+    "interval_seed_offset": null,
+    "note": "This analysis computes NO bootstrap: sigma_run is a sample sd over 3 arm means and the chi2 interval is closed-form. Offsets are still CLAIMED and recorded so the disjointness ledger stays complete and a future run cannot collide with it."
+  },
+  "seed_disjointness_checked": {
+    "archives_scanned": 6,
+    "per_archive": {
+      "a04_control_arms_ni.json": {
+        "arm_index": [
+          201,
+          800,
+          801
+        ],
+        "guard_seed_offset": "SEED+5700+13*axis_index",
+        "interval_seed_offset": null
+      },
+      "a04_full32_trajectory_ni.json": {
+        "arm_index": [
+          203,
+          500,
+          501,
+          502,
+          503
+        ],
+        "guard_seed_offset": "SEED+2700+13*axis_index (imported guard_cell uses SEED+700; see note)",
+        "interval_seed_offset": "SEED+2900+13*axis+7*pair"
+      },
+      "a04_keep10_neighbour_range.json": {
+        "arm_index": [
+          700,
+          701,
+          702
+        ],
+        "guard_seed_offset": "SEED+4700+13*axis_index",
+        "interval_seed_offset": "SEED+4900+13*axis+7*pair"
+      },
+      "a04_keep12_trajectory_monotonicity.json": {
+        "arm_index": [
+          600,
+          601,
+          602,
+          603,
+          604,
+          605,
+          606,
+          607,
+          608,
+          609,
+          610
+        ],
+        "guard_seed_offset": "SEED+3700+13*axis_index",
+        "interval_seed_offset": "SEED+3900+13*axis+7*pair (grid), SEED+4600+... (Q4), SEED+7000+... (endpoint spans), SEED+7100 (Q3 window)"
+      },
+      "a04_keep14_trajectory_ni.json": {
+        "arm_index": [
+          201,
+          300,
+          301
+        ],
+        "guard_seed_offset": null,
+        "interval_seed_offset": null
+      },
+      "a04_neighbour_variability.json": {
+        "arm_index": [
+          400,
+          401,
+          402,
+          403,
+          404,
+          405,
+          406,
+          407,
+          408
+        ],
+        "guard_seed_offset": "SEED+1700+13*axis_index",
+        "interval_seed_offset": "SEED+1900+13*axis+7*pair (legA), SEED+2400+13*axis+7*pair (legB)"
+      }
+    },
+    "archives_skipped": {
+      "a04_1b_keep7f2_ppl_trajectory.json": "top-level list, carries no offsets",
+      "a04_1b_keep7f2_ppl_trajectory_5pt.json": "top-level list, carries no offsets"
+    },
+    "this_run_arm_indices": [
+      900,
+      901,
+      902
+    ],
+    "this_run_offsets": {
+      "arm_index_base": 900,
+      "guard": "SEED+8700"
+    },
+    "checked_mechanically": true,
+    "checker_provenance": "verbatim from a04_keep12_trajectory_monotonicity.py (the fixed self-excluding version); NOT weakened"
+  },
+  "protocol_audit": {
+    "structural_scripts": {
+      "eval_olmo2_closedbook_qa.py": {
+        "apply_chat_template_sites": 0,
+        "n_lines": 511
+      },
+      "eval_olmo2_mmlu_content.py": {
+        "apply_chat_template_sites": 0,
+        "n_lines": 804
+      }
+    },
+    "per_cell": {
+      "seed43|cb": {
+        "chat_template": false,
+        "add_bos": false,
+        "assertion": "chat_template is not False -> FAIL",
+        "max_new_tokens": 32,
+        "base_model": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/models/OLMo-2-0425-1B",
+        "ckpt": "outputs/olmo2_probe2_1B_keep7f2_dolmino_dataorder_seed43/step220000.pt",
+        "ckpt_step": 220000
+      },
+      "seed43|mmlu": {
+        "chat_template": false,
+        "add_bos": false,
+        "assertion": "chat_template is not False -> FAIL",
+        "max_new_tokens": null,
+        "base_model": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/models/OLMo-2-0425-1B",
+        "ckpt": "outputs/olmo2_probe2_1B_keep7f2_dolmino_dataorder_seed43/step220000.pt",
+        "ckpt_step": 220000
+      },
+      "seed44|cb": {
+        "chat_template": false,
+        "add_bos": false,
+        "assertion": "chat_template is not False -> FAIL",
+        "max_new_tokens": 32,
+        "base_model": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/models/OLMo-2-0425-1B",
+        "ckpt": "outputs/olmo2_probe2_1B_keep7f2_dolmino_dataorder_seed44/step220000.pt",
+        "ckpt_step": 220000
+      },
+      "seed44|mmlu": {
+        "chat_template": false,
+        "add_bos": false,
+        "assertion": "chat_template is not False -> FAIL",
+        "max_new_tokens": null,
+        "base_model": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/models/OLMo-2-0425-1B",
+        "ckpt": "outputs/olmo2_probe2_1B_keep7f2_dolmino_dataorder_seed44/step220000.pt",
+        "ckpt_step": 220000
+      },
+      "seed45|cb": {
+        "chat_template": false,
+        "add_bos": false,
+        "assertion": "chat_template is not False -> FAIL",
+        "max_new_tokens": 32,
+        "base_model": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/models/OLMo-2-0425-1B",
+        "ckpt": "outputs/olmo2_probe2_1B_keep7f2_dolmino_dataorder_seed45/step220000.pt",
+        "ckpt_step": 220000
+      },
+      "seed45|mmlu": {
+        "chat_template": false,
+        "add_bos": false,
+        "assertion": "chat_template is not False -> FAIL",
+        "max_new_tokens": null,
+        "base_model": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/models/OLMo-2-0425-1B",
+        "ckpt": "outputs/olmo2_probe2_1B_keep7f2_dolmino_dataorder_seed45/step220000.pt",
+        "ckpt_step": 220000
+      },
+      "intact|cb": {
+        "chat_template": false,
+        "add_bos": false,
+        "assertion": "chat_template is not False -> FAIL",
+        "max_new_tokens": 32,
+        "base_model": "../models/OLMo-2-0425-1B",
+        "ckpt": null,
+        "ckpt_step": null
+      },
+      "intact|mmlu": {
+        "chat_template": false,
+        "add_bos": false,
+        "assertion": "chat_template is not False -> FAIL",
+        "max_new_tokens": null,
+        "base_model": "../models/OLMo-2-0425-1B",
+        "ckpt": null,
+        "ckpt_step": null
+      }
+    },
+    "note": "chat_template is False STRUCTURALLY: neither eval script has an apply_chat_template call site or a flag to enable one. These are BASE LMs (no SFT/RL); any chat=True number is void."
+  },
+  "intact_anchor": {
+    "dirs": {
+      "mmlu": "A03_1B_base",
+      "cb": "A03_1B_base",
+      "nq": "A03_1B_base_nq"
+    },
+    "integrity": {
+      "mmlu_content": {
+        "dir": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/olmo2_mmlu_content_results/A03_1B_base",
+        "shard_index_set": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "n_shards": 8,
+        "n_items": 14042,
+        "n_items_expected": 14042,
+        "n_duplicate_item_ids": 0,
+        "assertions": [
+          "index set == {0..7} (not a count)",
+          "exact item count",
+          "0 duplicate item_ids",
+          "0 nan"
+        ],
+        "n_nan_in_metric_vector": 0
+      },
+      "triviaqa": {
+        "dir": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/olmo2_closedbook_results/A03_1B_base",
+        "shard_index_set": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "n_shards": 8,
+        "n_items": 17944,
+        "n_items_expected": 17944,
+        "n_duplicate_item_ids": 0,
+        "assertions": [
+          "index set == {0..7} (not a count)",
+          "exact item count",
+          "0 duplicate item_ids",
+          "0 nan"
+        ],
+        "n_nan_in_metric_vector": 0
+      },
+      "popqa": {
+        "dir": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/olmo2_closedbook_results/A03_1B_base",
+        "shard_index_set": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "n_shards": 8,
+        "n_items": 14267,
+        "n_items_expected": 14267,
+        "n_duplicate_item_ids": 0,
+        "assertions": [
+          "index set == {0..7} (not a count)",
+          "exact item count",
+          "0 duplicate item_ids",
+          "0 nan"
+        ],
+        "n_nan_in_metric_vector": 0
+      },
+      "nq_open": {
+        "dir": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/olmo2_closedbook_results/A03_1B_base_nq",
+        "shard_index_set": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "n_shards": 8,
+        "n_items": 3610,
+        "n_items_expected": 3610,
+        "n_duplicate_item_ids": 0,
+        "assertions": [
+          "index set == {0..7} (not a count)",
+          "exact item count",
+          "0 duplicate item_ids",
+          "0 nan"
+        ],
+        "n_nan_in_metric_vector": 0
+      }
+    },
+    "rule": "G0 -- anchor pinned by path; sha256 pins in a04_g0_anchor_sha256_pinning.json",
+    "nulls_used": {
+      "triviaqa": 0.0025635309852875612,
+      "popqa": 0.0229200252330553,
+      "mmlu_content": 0.28445022076627263,
+      "nq_open": 0.00554016620498615
+    },
+    "residual_intact_pp": {
+      "triviaqa": 40.43134195274186,
+      "popqa": 13.205298941613513,
+      "mmlu_content": 10.238926078906136,
+      "nq_open": 9.695290858725762
+    },
+    "delta_pp": {
+      "triviaqa": 4.043134195274186,
+      "popqa": 1.3205298941613512,
+      "mmlu_content": 1.0238926078906134,
+      "nq_open": 0.9695290858725762
+    },
+    "delta_rule": "0.10 * residual(intact, x); fraction frozen by git d1ba737",
+    "delta_cross_check_vs_canonical": {
+      "triviaqa": {
+        "delta_built_pp": 4.043134195274186,
+        "delta_canonical_pp": 4.043134195274186,
+        "abs_diff": 0.0,
+        "tol": 1e-09,
+        "ok": true
+      },
+      "popqa": {
+        "delta_built_pp": 1.3205298941613512,
+        "delta_canonical_pp": 1.3205298941613512,
+        "abs_diff": 0.0,
+        "tol": 1e-09,
+        "ok": true
+      },
+      "mmlu_content": {
+        "delta_built_pp": 1.0238926078906134,
+        "delta_canonical_pp": 1.0238926078906136,
+        "abs_diff": 2.220446049250313e-16,
+        "tol": 1e-09,
+        "ok": true
+      },
+      "nq_open": {
+        "delta_built_pp": 0.9695290858725762,
+        "delta_canonical_pp": 0.9695290858725762,
+        "abs_diff": 0.0,
+        "tol": 1e-09,
+        "ok": true
+      }
+    },
+    "delta_never_substituted": true
+  },
+  "per_seed_integrity": {
+    "seed43": {
+      "mmlu_content": {
+        "dir": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/olmo2_mmlu_content_results/A03_1B_dataorder_seed43_step220000",
+        "shard_index_set": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "n_shards": 8,
+        "n_items": 14042,
+        "n_items_expected": 14042,
+        "n_duplicate_item_ids": 0,
+        "assertions": [
+          "index set == {0..7} (not a count)",
+          "exact item count",
+          "0 duplicate item_ids",
+          "0 nan"
+        ],
+        "n_nan_in_metric_vector": 0
+      },
+      "triviaqa": {
+        "dir": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/olmo2_closedbook_results/A03_1B_dataorder_seed43_step220000",
+        "shard_index_set": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "n_shards": 8,
+        "n_items": 17944,
+        "n_items_expected": 17944,
+        "n_duplicate_item_ids": 0,
+        "assertions": [
+          "index set == {0..7} (not a count)",
+          "exact item count",
+          "0 duplicate item_ids",
+          "0 nan"
+        ],
+        "n_nan_in_metric_vector": 0
+      },
+      "popqa": {
+        "dir": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/olmo2_closedbook_results/A03_1B_dataorder_seed43_step220000",
+        "shard_index_set": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "n_shards": 8,
+        "n_items": 14267,
+        "n_items_expected": 14267,
+        "n_duplicate_item_ids": 0,
+        "assertions": [
+          "index set == {0..7} (not a count)",
+          "exact item count",
+          "0 duplicate item_ids",
+          "0 nan"
+        ],
+        "n_nan_in_metric_vector": 0
+      },
+      "nq_open": {
+        "dir": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/olmo2_closedbook_results/A03_1B_dataorder_seed43_step220000_nq",
+        "shard_index_set": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "n_shards": 8,
+        "n_items": 3610,
+        "n_items_expected": 3610,
+        "n_duplicate_item_ids": 0,
+        "assertions": [
+          "index set == {0..7} (not a count)",
+          "exact item count",
+          "0 duplicate item_ids",
+          "0 nan"
+        ],
+        "n_nan_in_metric_vector": 0
+      }
+    },
+    "seed44": {
+      "mmlu_content": {
+        "dir": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/olmo2_mmlu_content_results/A03_1B_dataorder_seed44_step220000",
+        "shard_index_set": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "n_shards": 8,
+        "n_items": 14042,
+        "n_items_expected": 14042,
+        "n_duplicate_item_ids": 0,
+        "assertions": [
+          "index set == {0..7} (not a count)",
+          "exact item count",
+          "0 duplicate item_ids",
+          "0 nan"
+        ],
+        "n_nan_in_metric_vector": 0
+      },
+      "triviaqa": {
+        "dir": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/olmo2_closedbook_results/A03_1B_dataorder_seed44_step220000",
+        "shard_index_set": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "n_shards": 8,
+        "n_items": 17944,
+        "n_items_expected": 17944,
+        "n_duplicate_item_ids": 0,
+        "assertions": [
+          "index set == {0..7} (not a count)",
+          "exact item count",
+          "0 duplicate item_ids",
+          "0 nan"
+        ],
+        "n_nan_in_metric_vector": 0
+      },
+      "popqa": {
+        "dir": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/olmo2_closedbook_results/A03_1B_dataorder_seed44_step220000",
+        "shard_index_set": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "n_shards": 8,
+        "n_items": 14267,
+        "n_items_expected": 14267,
+        "n_duplicate_item_ids": 0,
+        "assertions": [
+          "index set == {0..7} (not a count)",
+          "exact item count",
+          "0 duplicate item_ids",
+          "0 nan"
+        ],
+        "n_nan_in_metric_vector": 0
+      },
+      "nq_open": {
+        "dir": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/olmo2_closedbook_results/A03_1B_dataorder_seed44_step220000_nq",
+        "shard_index_set": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "n_shards": 8,
+        "n_items": 3610,
+        "n_items_expected": 3610,
+        "n_duplicate_item_ids": 0,
+        "assertions": [
+          "index set == {0..7} (not a count)",
+          "exact item count",
+          "0 duplicate item_ids",
+          "0 nan"
+        ],
+        "n_nan_in_metric_vector": 0
+      }
+    },
+    "seed45": {
+      "mmlu_content": {
+        "dir": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/olmo2_mmlu_content_results/A03_1B_dataorder_seed45_step220000",
+        "shard_index_set": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "n_shards": 8,
+        "n_items": 14042,
+        "n_items_expected": 14042,
+        "n_duplicate_item_ids": 0,
+        "assertions": [
+          "index set == {0..7} (not a count)",
+          "exact item count",
+          "0 duplicate item_ids",
+          "0 nan"
+        ],
+        "n_nan_in_metric_vector": 0
+      },
+      "triviaqa": {
+        "dir": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/olmo2_closedbook_results/A03_1B_dataorder_seed45_step220000",
+        "shard_index_set": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "n_shards": 8,
+        "n_items": 17944,
+        "n_items_expected": 17944,
+        "n_duplicate_item_ids": 0,
+        "assertions": [
+          "index set == {0..7} (not a count)",
+          "exact item count",
+          "0 duplicate item_ids",
+          "0 nan"
+        ],
+        "n_nan_in_metric_vector": 0
+      },
+      "popqa": {
+        "dir": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/olmo2_closedbook_results/A03_1B_dataorder_seed45_step220000",
+        "shard_index_set": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "n_shards": 8,
+        "n_items": 14267,
+        "n_items_expected": 14267,
+        "n_duplicate_item_ids": 0,
+        "assertions": [
+          "index set == {0..7} (not a count)",
+          "exact item count",
+          "0 duplicate item_ids",
+          "0 nan"
+        ],
+        "n_nan_in_metric_vector": 0
+      },
+      "nq_open": {
+        "dir": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/olmo2_closedbook_results/A03_1B_dataorder_seed45_step220000_nq",
+        "shard_index_set": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "n_shards": 8,
+        "n_items": 3610,
+        "n_items_expected": 3610,
+        "n_duplicate_item_ids": 0,
+        "assertions": [
+          "index set == {0..7} (not a count)",
+          "exact item count",
+          "0 duplicate item_ids",
+          "0 nan"
+        ],
+        "n_nan_in_metric_vector": 0
+      }
+    }
+  },
+  "per_axis": {
+    "triviaqa": {
+      "means_pct": [
+        9.696834596522514,
+        9.239857333927775,
+        9.223138653588943
+      ],
+      "S": 3,
+      "df": 2,
+      "sigma_run_pp": 0.2687922305277745,
+      "sigma_chi2_95ci_pp": [
+        0.13994889684870004,
+        1.6892878573436012
+      ],
+      "chi2_width_multiplicative": 12.070747932867986,
+      "bound_S3_pp": 0.45314458087627496,
+      "bound_at_sigma_ci_hi_pp": 2.8478934699574507,
+      "delta_pp": 4.043134195274186,
+      "exceeds_delta": false,
+      "would_exceed_at_sigma_ci_hi": false,
+      "headroom_multiple_delta_over_bound": 8.922393350607253,
+      "decision_weight": true,
+      "spread_pp_max_minus_min": 0.47369594293357054
+    },
+    "popqa": {
+      "means_pct": [
+        4.100371486647508,
+        3.714866475082358,
+        3.6868297469685283
+      ],
+      "S": 3,
+      "df": 2,
+      "sigma_run_pp": 0.23109050987361796,
+      "sigma_chi2_95ci_pp": [
+        0.12031918432134388,
+        1.452342545431224
+      ],
+      "chi2_width_multiplicative": 12.070747932867988,
+      "bound_S3_pp": 0.3895849669298561,
+      "bound_at_sigma_ci_hi_pp": 2.4484381588931763,
+      "delta_pp": 1.3205298941613512,
+      "exceeds_delta": false,
+      "would_exceed_at_sigma_ci_hi": true,
+      "headroom_multiple_delta_over_bound": 3.3895812370991965,
+      "decision_weight": true,
+      "spread_pp_max_minus_min": 0.4135417396789798
+    },
+    "mmlu_content": {
+      "means_pct": [
+        32.231875801167924,
+        32.19626833784361,
+        32.117931918530125
+      ],
+      "S": 3,
+      "df": 2,
+      "sigma_run_pp": 0.05829192972420083,
+      "sigma_chi2_95ci_pp": [
+        0.03035017509273168,
+        0.3663493132627724
+      ],
+      "chi2_width_multiplicative": 12.070747932867988,
+      "bound_S3_pp": 0.09827170975692623,
+      "bound_at_sigma_ci_hi_pp": 0.6176116239922951,
+      "delta_pp": 1.0238926078906134,
+      "exceeds_delta": false,
+      "would_exceed_at_sigma_ci_hi": false,
+      "headroom_multiple_delta_over_bound": 10.418996580228411,
+      "decision_weight": true,
+      "spread_pp_max_minus_min": 0.11394388263779831
+    },
+    "nq_open": {
+      "means_pct": [
+        2.9085872576177287,
+        2.9085872576177287,
+        2.7700831024930745
+      ],
+      "S": 3,
+      "df": 2,
+      "sigma_run_pp": 0.07996541124510079,
+      "sigma_chi2_95ci_pp": [
+        0.0416346524147323,
+        0.5025613945708071
+      ],
+      "chi2_width_multiplicative": 12.070747932867988,
+      "bound_S3_pp": 0.13481004526102133,
+      "bound_at_sigma_ci_hi_pp": 0.8472453688867052,
+      "delta_pp": 0.9695290858725762,
+      "exceeds_delta": false,
+      "would_exceed_at_sigma_ci_hi": false,
+      "headroom_multiple_delta_over_bound": 7.191816336797149,
+      "decision_weight": false,
+      "spread_pp_max_minus_min": 0.1385041551246542
+    }
+  },
+  "t_0.05_df2": 2.9199855803537123,
+  "K2": {
+    "clause_verbatim": "K2 -- disagreement drowned by seed variance. ... the one-sided 95% run-level bound t_{0.05,S-1} * sd_run / sqrt(S) exceeds the pre-registered non-inferiority margin Delta = 10% of the intact arm's own calibrated residual on >= 2 of the 4 axes.",
+    "operationalisation": "PILOT_ONE_PREREG.md s2.2: >=2 of the 3 DECISION axes (triviaqa/popqa/mmlu_content). nq_open DEMOTED by design s5.2, zero decision weight. Exactly 1 of 3 = K2_INDETERMINATE (s2.4), neither fire nor clearance.",
+    "n_decision_axes_exceeding": 0,
+    "n_decision_axes_exceeding_at_sigma_ci_hi": 1,
+    "rule_needs": ">= 2 of 3",
+    "verdict": "K2_DOES_NOT_FIRE",
+    "chi2_upper_is_NOT_a_second_rule": "prereg s4.3: the pre-registered test is on the POINT ESTIMATE. The chi2-upper column is reported for honesty (df=2 sigma is imprecise, 12.07x multiplicative width) and MUST ship with any K2 statement, but is NOT OR-ed into the verdict -- in EITHER direction.",
+    "NOT_A_CLEARANCE": "prereg s4.2: a large sigma KILLS, a small sigma does NOT clear. This family is (i) the wrong arm -- keep7 = 56.2% depth, a confirmed constant-REJECT rung, and K2 is structurally blind to a saturated deficit; (ii) the wrong budget -- 20k warm-resume steps; (iii) only PARTIALLY stochastic -- common init, so this sigma is DOWNWARD-BIASED for full run-to-run variance, i.e. optimistic for K2."
+  },
+  "Q2_comparison_to_A03": {
+    "a03_json": "/tmp/a04_sigma_postfix/a03_sigma_run_n3.json",
+    "a03_json_md5": "5fb6cd4c3d693831e50d0817bda93ab8",
+    "a03_json_md5_expected": "5fb6cd4c3d693831e50d0817bda93ab8",
+    "a03_json_md5_ok": true,
+    "WHAT_THE_RATIO_IS": "clean-vs-CONTAMINATED, not pre-vs-post. A03's keep7_20k_cpt family is seeds [0,43,44,45]; seed 0 is Arm 3, launched 2026-08-09 01:11:43, 22h09m BEFORE ce5c298 (23:21:09). So the df=3 value is 3 post-fix draws + 1 PRE-fix draw pooled, which PROPOSAL.md s7.2 forbids. The ratio therefore measures the effect of REMOVING one pre-fix draw.",
+    "CLEAN_PRE_VS_POST_IS_NOT_COMPUTABLE": "It needs >=2 PRE-fix seed replicates of one arm with evals on these axes. The only pre-fix multi-'seed' object in the repo is outputs/olmo2_probe2_7B_keep14fresh2_seed1234 -- 7B, NO eval shards on either disk, labelled init-variance-only. A03 Arms 3/4/6 are pre-fix but are DIFFERENT LR SCHEDULES (arm4=peaklr, arm6=lowerband), so their spread is a schedule effect, not seed variance. Reported as not-computable rather than proxied.",
+    "per_axis": {
+      "triviaqa": {
+        "sigma_postfix_only_df2_pp": 0.2687922305277745,
+        "sigma_A03_keep7_MIXED_df3_pp": 0.40385537753737,
+        "ratio_clean_over_mixed": 0.6655655600448265,
+        "sigma_A03_keep12_postfix_df2_pp": 0.30229201489958313,
+        "ratio_keep7clean_over_keep12": 0.8891807169205685
+      },
+      "popqa": {
+        "sigma_postfix_only_df2_pp": 0.23109050987361796,
+        "sigma_A03_keep7_MIXED_df3_pp": 0.19587079438308358,
+        "ratio_clean_over_mixed": 1.1798109595739514,
+        "sigma_A03_keep12_postfix_df2_pp": 0.33279470298495445,
+        "ratio_keep7clean_over_keep12": 0.6943935940112168
+      },
+      "mmlu_content": {
+        "sigma_postfix_only_df2_pp": 0.05829192972420083,
+        "sigma_A03_keep7_MIXED_df3_pp": 0.055468458650466713,
+        "ratio_clean_over_mixed": 1.0509022810878188,
+        "sigma_A03_keep12_postfix_df2_pp": 0.07833641931348723,
+        "ratio_keep7clean_over_keep12": 0.7441229792611248
+      },
+      "nq_open": {
+        "sigma_postfix_only_df2_pp": 0.07996541124510079,
+        "sigma_A03_keep7_MIXED_df3_pp": 0.0750142050289564,
+        "ratio_clean_over_mixed": 1.0660035817780535,
+        "sigma_A03_keep12_postfix_df2_pp": 0.20913668795763832,
+        "ratio_keep7clean_over_keep12": 0.3823595564509379
+      }
+    },
+    "a03_keep7_family_seeds": [
+      0,
+      43,
+      44,
+      45
+    ],
+    "a03_keep7_family_dirs": {
+      "0": "A03_1B_arm3_cpt_step220000",
+      "43": "A03_1B_dataorder_seed43_step220000",
+      "44": "A03_1B_dataorder_seed44_step220000",
+      "45": "A03_1B_dataorder_seed45_step220000"
+    },
+    "a03_keep12_family_seeds": [
+      101,
+      102,
+      103
+    ],
+    "a03_pooled_df5_recorded_in_STATUS_POOLS_THE_NONCOMPLIANT_FAMILY": {
+      "note": "STATUS.json:sigma_run_input_from_A03.pooled_df5 pools keep7(df=3, contaminated) with keep12(df=2, clean). Since the keep7 term is 口径-noncompliant, the pooled value inherits that. Recorded, not recomputed -- and per STATUS.json's own 'tempting_but_NOT_LICENSED', substituting the pooled sigma into K2 is a change of estimator and remains unlicensed.",
+      "triviaqa_pp": 0.3666,
+      "popqa_pp": 0.2595,
+      "nq_open_pp": 0.1445,
+      "mmlu_content_pp": 0.0656,
+      "source": "STATUS.json:sigma_run_input_from_A03.pooled_df5"
+    }
+  },
+  "EXCHANGEABILITY_PROBE_seed0_is_a_LEGITIMATE_4th_DRAW": {
+    "question": "is PRE-fix Arm 3 (sampler.seed=0) exchangeable with post-fix seeds 43/44/45 on THIS arm, given a COMMON resume ckpt?",
+    "why_it_matters": "s7.2 excludes pre-fix arms because pre-fix seeds varied ONLY fresh-tail init. But all four keep7 arms resume from one common step200000.pt, so init variance is identically ZERO in all four and the only stochastic input is the sampler order. The exclusion's PREMISE does not obtain on this particular arm.",
+    "arm3_prefix_sampler_seed": 0,
+    "postfix_seed0_sampler_seed": 0,
+    "first12_identical": true,
+    "distinct_orders_among_4_draws": 4,
+    "rank0_20k_slice_jaccard": {
+      "arm3_prefix_vs_seed43": 0.010526847645709287,
+      "arm3_prefix_vs_seed44": 0.010442289535922801,
+      "arm3_prefix_vs_seed45": 0.010056373771361114,
+      "seed43_vs_seed44": 0.010383266790122872,
+      "seed43_vs_seed45": 0.010553973056104693,
+      "seed44_vs_seed45": 0.010399218203604914
+    },
+    "finding": "PRE-fix Arm 3's data order is BIT-IDENTICAL to post-fix DistributedSampler(seed=0), and its rank-0 slice is near-disjoint from each post-fix draw (Jaccard ~0.0101-0.0105, indistinguishable from the 0.0104 between post-fix draws themselves). All 4 orders are distinct. => On THIS arm, seed 0 is a LEGITIMATE 4th draw from the SAME data-order family, not a degenerate one.",
+    "consequence_for_this_document": "The s7.2 EXCLUSION IS STILL APPLIED for the headline sigma, because s7.2 is a binding pre-registered rule and this document does not get to reinterpret it after seeing that the wider family would be convenient. But the exclusion is now known to be CONSERVATIVE ON THIS ARM rather than necessary, and BOTH readings are reported (see SENSITIVITY_K2_under_every_estimator). The K2 verdict is the same under every one of them, so nothing rests on the choice.",
+    "generalisation_PROHIBITED": "This does NOT rehabilitate pre-fix seeds in general. It holds only where a COMMON resume checkpoint makes init variance zero. For any arm pruned fresh per seed (e.g. the keep12 Stage-B family, and every gate arm in the design) pre-fix seeds genuinely carry init-only variance and s7.2 applies with full force."
+  },
+  "SENSITIVITY_K2_under_every_estimator": {
+    "PRE_REGISTERED_ESTIMATOR": "keep12_S3_df2 (PILOT_ONE_PREREG.md s2.2)",
+    "keep12_S3_df2_PREREGISTERED": {
+      "per_axis": {
+        "triviaqa": {
+          "sigma_pp": 0.30229201489958313,
+          "sigma_chi2_95ci_pp": [
+            0.15739083651451005,
+            1.8998251145098854
+          ],
+          "bound_pp": 0.5096203417969025,
+          "bound_at_chi2_hi_pp": 3.202828644125732,
+          "delta_pp": 4.043134195274186,
+          "exceeds": false,
+          "exceeds_at_chi2_hi": false
+        },
+        "popqa": {
+          "sigma_pp": 0.33279470298495445,
+          "sigma_chi2_95ci_pp": [
+            0.17327231322269415,
+            2.0915264166560896
+          ],
+          "bound_pp": 0.5610434345734516,
+          "bound_at_chi2_hi_pp": 3.526009139499097,
+          "delta_pp": 1.3205298941613512,
+          "exceeds": false,
+          "exceeds_at_chi2_hi": true
+        },
+        "mmlu_content": {
+          "sigma_pp": 0.07833641931348723,
+          "sigma_chi2_95ci_pp": [
+            0.040786504299152024,
+            0.4923236124579006
+          ],
+          "bound_pp": 0.13206380194642678,
+          "bound_at_chi2_hi_pp": 0.8299859582424818,
+          "delta_pp": 1.0238926078906134,
+          "exceeds": false,
+          "exceeds_at_chi2_hi": false
+        },
+        "nq_open": {
+          "sigma_pp": 0.20913668795763832,
+          "sigma_chi2_95ci_pp": [
+            0.10888874545515541,
+            1.3143685991154057
+          ],
+          "bound_pp": 0.3525740183201603,
+          "bound_at_chi2_hi_pp": 2.2158341660159833,
+          "delta_pp": 0.9695290858725762,
+          "exceeds": false,
+          "exceeds_at_chi2_hi": true
+        }
+      },
+      "n_decision_axes_exceeding": 0,
+      "n_decision_axes_exceeding_at_chi2_hi": 1,
+      "t_used": 2.9199855803537123,
+      "S": 3,
+      "df": 2,
+      "verdict": "K2_DOES_NOT_FIRE"
+    },
+    "keep7_clean_S3_df2_this_document": {
+      "per_axis": {
+        "triviaqa": {
+          "sigma_pp": 0.2687922305277745,
+          "sigma_chi2_95ci_pp": [
+            0.13994889684870004,
+            1.6892878573436012
+          ],
+          "bound_pp": 0.45314458087627496,
+          "bound_at_chi2_hi_pp": 2.8478934699574507,
+          "delta_pp": 4.043134195274186,
+          "exceeds": false,
+          "exceeds_at_chi2_hi": false
+        },
+        "popqa": {
+          "sigma_pp": 0.23109050987361796,
+          "sigma_chi2_95ci_pp": [
+            0.12031918432134388,
+            1.452342545431224
+          ],
+          "bound_pp": 0.3895849669298561,
+          "bound_at_chi2_hi_pp": 2.4484381588931763,
+          "delta_pp": 1.3205298941613512,
+          "exceeds": false,
+          "exceeds_at_chi2_hi": true
+        },
+        "mmlu_content": {
+          "sigma_pp": 0.05829192972420083,
+          "sigma_chi2_95ci_pp": [
+            0.03035017509273168,
+            0.3663493132627724
+          ],
+          "bound_pp": 0.09827170975692623,
+          "bound_at_chi2_hi_pp": 0.6176116239922951,
+          "delta_pp": 1.0238926078906134,
+          "exceeds": false,
+          "exceeds_at_chi2_hi": false
+        },
+        "nq_open": {
+          "sigma_pp": 0.07996541124510079,
+          "sigma_chi2_95ci_pp": [
+            0.0416346524147323,
+            0.5025613945708071
+          ],
+          "bound_pp": 0.13481004526102133,
+          "bound_at_chi2_hi_pp": 0.8472453688867052,
+          "delta_pp": 0.9695290858725762,
+          "exceeds": false,
+          "exceeds_at_chi2_hi": false
+        }
+      },
+      "n_decision_axes_exceeding": 0,
+      "n_decision_axes_exceeding_at_chi2_hi": 1,
+      "t_used": 2.9199855803537123,
+      "S": 3,
+      "df": 2,
+      "verdict": "K2_DOES_NOT_FIRE"
+    },
+    "keep7_mixed_S4_df3_as_A03_recorded": {
+      "per_axis": {
+        "triviaqa": {
+          "sigma_pp": 0.40385537753737,
+          "sigma_chi2_95ci_pp": [
+            0.22877984971402376,
+            1.5057938677453455
+          ],
+          "bound_pp": 0.47520923922226654,
+          "bound_at_chi2_hi_pp": 1.7718401143503562,
+          "delta_pp": 4.043134195274186,
+          "exceeds": false,
+          "exceeds_at_chi2_hi": false
+        },
+        "popqa": {
+          "sigma_pp": 0.19587079438308358,
+          "sigma_chi2_95ci_pp": [
+            0.11095875750269485,
+            0.7303135168112622
+          ],
+          "bound_pp": 0.23047758272336785,
+          "bound_at_chi2_hi_pp": 0.8593465632025764,
+          "delta_pp": 1.3205298941613512,
+          "exceeds": false,
+          "exceeds_at_chi2_hi": false
+        },
+        "mmlu_content": {
+          "sigma_pp": 0.055468458650466713,
+          "sigma_chi2_95ci_pp": [
+            0.03142230199162834,
+            0.20681677039556146
+          ],
+          "bound_pp": 0.06526872118641269,
+          "bound_at_chi2_hi_pp": 0.2433575125763595,
+          "delta_pp": 1.0238926078906134,
+          "exceeds": false,
+          "exceeds_at_chi2_hi": false
+        },
+        "nq_open": {
+          "sigma_pp": 0.0750142050289564,
+          "sigma_chi2_95ci_pp": [
+            0.042494762995581456,
+            0.27969400980909914
+          ],
+          "bound_pp": 0.0882678436029366,
+          "bound_at_chi2_hi_pp": 0.32911082780891854,
+          "delta_pp": 0.9695290858725762,
+          "exceeds": false,
+          "exceeds_at_chi2_hi": false
+        }
+      },
+      "n_decision_axes_exceeding": 0,
+      "n_decision_axes_exceeding_at_chi2_hi": 0,
+      "t_used": 2.3533634348018255,
+      "S": 4,
+      "df": 3,
+      "verdict": "K2_DOES_NOT_FIRE"
+    },
+    "pooled_keep7clean_plus_keep12_df4": {
+      "per_axis": {
+        "triviaqa": {
+          "sigma_pp": 0.286032974903372,
+          "sigma_chi2_95ci_pp": [
+            0.17137183414973423,
+            0.8219316665657387
+          ],
+          "bound_pp": 0.4822099666901995,
+          "bound_at_chi2_hi_pp": 1.3856571665912936,
+          "delta_pp": 4.043134195274186,
+          "exceeds": false,
+          "exceeds_at_chi2_hi": false
+        },
+        "popqa": {
+          "sigma_pp": 0.28649183067628015,
+          "sigma_chi2_95ci_pp": [
+            0.1716467498493665,
+            0.8232502141572083
+          ],
+          "bound_pp": 0.4829835307418422,
+          "bound_at_chi2_hi_pp": 1.3878800459302119,
+          "delta_pp": 1.3205298941613512,
+          "exceeds": false,
+          "exceeds_at_chi2_hi": true
+        },
+        "mmlu_content": {
+          "sigma_pp": 0.06904543309238369,
+          "sigma_chi2_95ci_pp": [
+            0.04136740707151614,
+            0.19840589326998995
+          ],
+          "bound_pp": 0.11640055137991098,
+          "bound_at_chi2_hi_pp": 0.3344834602275546,
+          "delta_pp": 1.0238926078906134,
+          "exceeds": false,
+          "exceeds_at_chi2_hi": false
+        },
+        "nq_open": {
+          "sigma_pp": 0.1583234367449884,
+          "sigma_chi2_95ci_pp": [
+            0.0948568176555305,
+            0.4549512036651881
+          ],
+          "bound_pp": 0.2669102720931731,
+          "bound_at_chi2_hi_pp": 0.7669815161666883,
+          "delta_pp": 0.9695290858725762,
+          "exceeds": false,
+          "exceeds_at_chi2_hi": false
+        }
+      },
+      "n_decision_axes_exceeding": 0,
+      "n_decision_axes_exceeding_at_chi2_hi": 1,
+      "t_used": 2.9199855803537123,
+      "S": 3,
+      "df": 4,
+      "verdict": "K2_DOES_NOT_FIRE"
+    },
+    "ALL_ESTIMATORS_AGREE": true,
+    "verdicts": {
+      "keep12_S3_df2_PREREGISTERED": "K2_DOES_NOT_FIRE",
+      "keep7_clean_S3_df2_this_document": "K2_DOES_NOT_FIRE",
+      "keep7_mixed_S4_df3_as_A03_recorded": "K2_DOES_NOT_FIRE",
+      "pooled_keep7clean_plus_keep12_df4": "K2_DOES_NOT_FIRE"
+    },
+    "interpretation": "K2 does not fire under ANY of the four estimators, on the point estimate. So the headline verdict is NOT an artefact of choosing the s7.2-clean family, and equally it is not rescued by choosing the wider one. The estimator choice is immaterial to K2 here -- which is the only honest way to report a result that depends on a contested inclusion decision.",
+    "pooling_still_NOT_LICENSED_as_the_verdict": "STATUS.json:...K2_STATUS_UNCHANGED_BY_SEED45.tempting_but_NOT_LICENSED: substituting a pooled sigma after seeing which answer each gives is a change of estimator and is prohibited. It is reported here as a SENSITIVITY only, and it agrees, so it changes nothing."
+  },
+  "Q4_1B_sigma_against_7B_delta": {
+    "question": "A04's rungs are 7B; this sigma is 1B. What is the cost of the extrapolation, and is it an upper or a lower bound?",
+    "delta_7B_source": "CANONICAL: evidence/a04_keep14_trajectory_ni.json and evidence/a04_control_arms_ni.json, per_convention.split.delta_pp -- identical in both. NOT re-derived here.",
+    "per_axis": {
+      "triviaqa": {
+        "sigma_run_1B_pp": 0.2687922305277745,
+        "bound_S3_1B_pp": 0.45314458087627496,
+        "delta_1B_pp": 4.043134195274186,
+        "delta_7B_pp": 6.3291350869371374,
+        "delta_7B_over_1B": 1.5654031702274294,
+        "exceeds_delta_7B": false,
+        "headroom_delta7B_over_bound": 13.967142837056729,
+        "sigma_inflation_needed_to_breach_delta_1B": 8.922393350607253,
+        "sigma_inflation_needed_to_breach_delta_7B": 13.967142837056729
+      },
+      "popqa": {
+        "sigma_run_1B_pp": 0.23109050987361796,
+        "bound_S3_1B_pp": 0.3895849669298561,
+        "delta_1B_pp": 1.3205298941613512,
+        "delta_7B_pp": 2.245741921917712,
+        "delta_7B_over_1B": 1.7006369426751593,
+        "exceeds_delta_7B": false,
+        "headroom_delta7B_over_bound": 5.764447072009462,
+        "sigma_inflation_needed_to_breach_delta_1B": 3.3895812370991965,
+        "sigma_inflation_needed_to_breach_delta_7B": 5.764447072009462
+      },
+      "mmlu_content": {
+        "sigma_run_1B_pp": 0.05829192972420083,
+        "bound_S3_1B_pp": 0.09827170975692623,
+        "delta_1B_pp": 1.0238926078906134,
+        "delta_7B_pp": 1.8613801452784504,
+        "delta_7B_over_1B": 1.8179447052686497,
+        "exceeds_delta_7B": false,
+        "headroom_delta7B_over_bound": 18.94115966723841,
+        "sigma_inflation_needed_to_breach_delta_1B": 10.418996580228411,
+        "sigma_inflation_needed_to_breach_delta_7B": 18.94115966723841
+      },
+      "nq_open": {
+        "sigma_run_1B_pp": 0.07996541124510079,
+        "bound_S3_1B_pp": 0.13481004526102133,
+        "delta_1B_pp": 0.9695290858725762,
+        "delta_7B_pp": 1.994459833795014,
+        "delta_7B_over_1B": 2.057142857142857,
+        "exceeds_delta_7B": false,
+        "headroom_delta7B_over_bound": 14.794593607125563,
+        "sigma_inflation_needed_to_breach_delta_1B": 7.191816336797149,
+        "sigma_inflation_needed_to_breach_delta_7B": 14.794593607125563
+      }
+    },
+    "n_decision_axes_exceeding_delta_7B": 0,
+    "verdict_if_the_1B_sigma_were_a_7B_sigma": "K2_DOES_NOT_FIRE",
+    "KEY_STRUCTURAL_FACT": "Every 7B Delta is LARGER than its 1B counterpart (x1.57-x2.06), because Delta = 0.10 x residual(intact) and the 7B intact residual is larger. So a sigma held constant IN pp is MORE easily accommodated at 7B, not less. The K2 test therefore gets EASIER to pass as the anchor's residual grows -- which is a property of a data-dependent margin (must_not_claim[22], arXiv:2603.16213), not a property of the model.",
+    "BOUND_DIRECTION": "CANNOT BE SIGNED, and this document declines to sign it. Two effects act in OPPOSITE directions and neither is measured: (i) Delta is 1.57-2.06x larger at 7B, which makes the 1B sigma CONSERVATIVE (pessimistic) as a 7B gate input; (ii) the 1B sigma here is itself DOWNWARD-biased because all three arms share one init (see EXCHANGEABILITY / prereg s1.5), which makes it OPTIMISTIC. There is no measurement of how sigma_run itself scales with parameter count on THIS harness, so the product of the two effects has unknown sign. Writing 'upper bound' or 'lower bound' here would be a guess.",
+    "external_evidence_may_inform_direction_but_NOT_be_tabulated": "arXiv:2508.13144 (NeurIPS 2025 Spotlight) Table 4 publishes OLMo-2 per-task noise at 1.5B/7B/13B/32B, i.e. the only published handle on the sign of the scale effect for this family. But it is INTACT-model noise, a rel-std over 30 consecutive checkpoints of ONE run (a checkpoint-selection quantity), on their OLMES protocol -- not a cross-run sigma on A04's base protocol. Per must_not_claim[20] and the literature note's own prohibition it may be discussed but NOT tabulated against these numbers.",
+    "how_far_from_firing": {
+      "sigma_inflation_needed_for_K2_at_1B_delta": 8.922393350607253,
+      "sigma_inflation_needed_for_K2_at_7B_delta": 13.967142837056729,
+      "reading": "K2 needs >=2 of 3 decision axes, so the SECOND-easiest axis sets the bar. sigma would have to be ~8.9x larger to fire against the 1B Delta and ~14.0x larger against the 7B Delta. The margin is not marginal -- but see NOT_A_CLEARANCE: a constant-REJECT rung is EXPECTED to have small sigma, so a large distance from firing is not evidence the gate is safe."
+    },
+    "no_7B_sigma_exists": "must_not_claim[23]: one seed per 7B rung, historical seeds unrecorded, --seed postdates the trainer revision that produced them. No 7B sigma_run is computable or reconstructible. This block is a SENSITIVITY, never a 7B result."
+  },
+  "DEFECT_FOUND_a03_keep7_family_violates_PROPOSAL_7_2": {
+    "what": "a03_sigma_run_n3.json families.keep7_20k_cpt pools seed 0 (= A03 Arm 3, PRE-ce5c298) with post-fix seeds 43/44/45, and families.pooled_df5 pools that family further.",
+    "evidence": {
+      "arm3_launch": "logs/a03_arm3_progress.log: '[08-09 01:11:43] launched torchrun pid=3642559'",
+      "arm3_seed_line": "logs/a03_arm3_cpt20k.log line 1: '[seed] set_seed(42) on all ranks' -- and its DistributedSampler had no seed= argument",
+      "fix_commit": "ce5c298, 2026-08-09 23:21:09 +0800",
+      "margin": "Arm 3 launched 22h09m BEFORE the fix",
+      "arm3_has_no_preflight_assertion": "its progress log has no 'trainer post-ce5c298 OK' line, unlike seeds 43/44/45/101/102/103"
+    },
+    "rule_violated": "PROPOSAL.md s7.2: 'A pre-fix seed arm and a post-fix seed arm are therefore not draws from the same distribution, and must never enter the same sigma_run estimate.'",
+    "consequence": "The keep7 df=3 sigma and the pooled df=5 sigma are NOT 口径-clean. STATUS.json:sampler_fix_and_pilot_one_disposition_20260812's line 'Every run A04 consumes as sigma_run input is POST-fix' is TRUE of the six runs it enumerates (43/44/45/101/102/103) but FALSE of the keep7 FAMILY as recorded, which carries a 4th draw it did not enumerate.",
+    "does_NOT_affect": "K2's pre-registered estimator, which is the KEEP12 family (101/102/103) -- all three post-fix with positive preflight assertions. K2's arithmetic is untouched.",
+    "not_retroactively_edited": "a03_sigma_run_n3.json is ARCHIVED provenance and is NOT modified. This entry records the defect; the archive keeps its history."
+  }
+}
