@@ -1,5 +1,103 @@
 # SparseForge 5B on the CAST-repro harness — one harness, seven arms
 
+> # ⛔⛔ CORRECTION 2026-08-13 — READ BEFORE CITING ANY NUMBER BELOW
+>
+> The user rejected two premises of this document. Both objections are **correct** and were
+> verified against the files. **The §"Verdict" section's headline conclusion is RETRACTED.**
+> Every number in the table is still a faithfully measured number; what is wrong is **what the
+> `hard_drop` row was claimed to mean**, and **the identity of the checkpoint**.
+>
+> ## Defect 1 — `hard_drop` is NOT a trained 2:4 arm. It is a post-hoc amputation.
+>
+> User: 「你现在的真2:4是你直接把SLoRB去掉的结果 根本没在训练里面训」
+>
+> `hard_drop` comes from `tools/export_sparseforge_to_hf.py --mask hard --slorb drop`, whose own
+> help text (line 122) says *"drop = discard the low-rank branch"* and whose emitted metadata
+> (line 285) says *"SLoRB_Weight and x_proj discarded — this REMOVES an active …"*.
+>
+> SLoRB participated in **every forward pass of training** (`sparse_modeling.py:819-822` adds
+> `(x @ x_proj.T) @ SLoRB_Weight.T` to every in-scope projection). The mask search, the weights,
+> and the whole optimisation trajectory were formed **with that dense branch present**. Deleting
+> it at export time therefore measures:
+>
+> > **the damage from amputating SLoRB out of a model that was trained to depend on it**
+>
+> — NOT "how good SparseForge's 2:4 support is". The −3.84 pp vs AST-official and −4.63 pp vs
+> CAST-repro **cannot be decomposed** into "the 2:4 support is worse" versus "we broke the
+> function the model had learned". This experiment does not separate them.
+>
+> **RETRACTED sentence** (Verdict §1): *"The 2:4 support that SparseForge's mask search produces
+> is worse than AST's."* No evidence in this document supports that. Do not repeat it.
+>
+> The experiment that CAN answer it is a **from-scratch no-SLoRB training arm** — which is
+> exactly what task #246's `noslorb` arm is (LOCAL, 7.86 B token, finishing ~2026-08-14 06:00).
+> So Verdict §1 is **not an established result; it is the hypothesis #246 is running to test.**
+>
+> ## Defect 2 — ~~the checkpoint identity is UNPROVEN~~ → **CHECKED: the ckpt IS the paper's**
+>
+> User: 「而且你找的ckpt也不对啊」
+>
+> **I checked, and on this point the checkpoint turns out to be correct.** The paper's Table 2 was
+> rendered from `outputs/paper_v2/ast7_eval/sparseforge_5b_table2/eval.log`, whose line 16 reads
+> *"Loading checkpoint from: …/models_…_20260413_201320/model_best_lm_eval.pt"*, and
+> `grep -c 'out_llama/models_'` on that log returns **1** — one checkpoint loaded, no ambiguity.
+> This document scored the right file. Full trail: `SPARSEFORGE_CKPT_IDENTITY.md`.
+>
+> My first version of this block claimed identity was unproven because three runs have `wiki_ppl`
+> within 0.02 of the headline 6.2179 (`20260404_110624` 6.219058 on `dolmino-mix-1124-raw`;
+> `20260413_201320` 6.215503 on `qa_format_sft_llama`; `20260327_114738` 6.210766 on `c4_llama`).
+> The collision is real but says **nothing** about identity — I was PPL-matching instead of reading
+> the paper's own log. **That claim is retracted.** Transferable lesson: *a `wiki_ppl` value is not
+> a run fingerprint in this repo; attribute numbers via the rendering log, never via PPL.*
+>
+> **Two things did fall out of the check, and they stand:**
+>
+> - **The paper's headline run trained on `qa_format_sft_llama`** — benchmark-derived MC/SFT built
+>   from 8 benchmark *train* splits, 129,752,281 tokens on disk ⇒ **≈144.7 epochs**, with RACE both
+>   a training source and a CAST-7 eval task (`AST_VS_SPARSEFORGE_DATA_CONFOUND.md`). Confirming
+>   identity makes that confound **stronger**: it provably applies to the headline arm, not to some
+>   unidentified sibling. This is now the load-bearing defect for this checkpoint.
+> - **The "5B" label is wrong by ~3.75×** — see Defect 3.
+>
+> ## Defect 3 (found while checking 1 and 2) — the "5B" label in this title is wrong
+>
+> `args.json` for `20260413_201320`: `global_batch_size = 256`, and the checkpoint is at
+> `iter_num = 17900`. At `block_size = 4096` that is **17,900 × 256 × 4096 = 18.77 B token**,
+> not 5 B. The `5B` in this document's title and in `outputs/.../sparseforge_5b/` is unverified
+> and appears to be off by ~3.75×. (`args.json` records `block_size: None`, so 4096 comes from
+> the runtime default — this too needs pinning from the run's log, not assumed.)
+>
+> ## What still stands (independent of both defects)
+>
+> These are code/file facts, not comparisons, and survive unchanged:
+>
+> 1. **SLoRB adds 848,429,056 live params = +26.2 %** over the 3.238 G surviving weights
+>    (`SLoRB_Weight` 404,750,336 + `x_proj` 443,678,720), Frobenius norm 0.204–0.469× the masked
+>    weight, ~50 % of its energy on positions the 2:4 mask prunes — and
+>    `deploy_sparse_24/convert.py:189` **silently drops both tensors as "training auxiliaries"**.
+>    So the deployed model is not the evaluated model.
+> 2. **The headline PPL 6.2179 is a seqlen-4096 number sitting in a 2048 column.**
+>    `ast7_eval.json` records `"block_size": 4096` (82 × 4096 = 335,872 target tokens) while the
+>    AST row in the *same* CSV comes from a file whose own field says `"seqlen": 2048`.
+> 3. **The published RTE 69.82 is a transcription error** — 139/277 = 50.1805 on this harness.
+> 4. **This checkpoint is not a 2:4 model as stored**: `zero_frac = 0.000000000`, `.mask`
+>    continuous in [7.96e-11, 1.0]. "2:4" only exists after the `nm_2_4` projection.
+> 5. **A separate, larger confound is already documented** in
+>    `AST_VS_SPARSEFORGE_DATA_CONFOUND.md`: this run trained on `qa_format_sft_llama`
+>    (multiple-choice QA/SFT built from 8 benchmark train splits, 129,752,281 tokens on disk
+>    ⇒ **≈144.7 epochs**) while AST trained on C4 web text. RACE is both a training source and a
+>    CAST-7 eval task. That confound is orthogonal to Defects 1–2 and is **not** repaired by
+>    fixing them.
+>
+> ## Why this was not caught before publishing the verdict
+>
+> MAIN (2026-08-13) relayed this document's Verdict to the user as an established finding —
+> including the framing-level claim "SparseForge does not beat the baselines" — **without
+> asking how the `hard_drop` arm was produced or verifying the checkpoint identity**. Same
+> failure mode as three hand-computed margin errors earlier the same day: **treating a
+> well-formatted secondary write-up as primary evidence.** The check that would have caught
+> Defect 1 was one grep of the export tool's own `--help` text.
+
 **Task**: #244. **Date**: 2026-08-11. **Node**: `.21` (8×L20A, wzc1).
 **Driver**: `scripts/_sparseforge_same_harness_21.sh` + `scripts/_sparseforge_ppl_grid_21.sh`
 **Provenance**: `outputs/cast_eval_spec/sparseforge_5b/` (+ `outputs/cast_eval_spec_ppl4096_sf/`)
@@ -72,6 +170,14 @@ AST 184, CAST-repro 207, `hard_drop` 158, Wanda 148. (139/277 = 50.1805 corrobor
 already-established 49.82 ≈ 138/277 truth and re-confirms the paper's 69.82 is a transcription error.)
 
 ## ★ Verdict — SparseForge does NOT beat the baselines under matched conditions
+
+> **⛔ SUPERSEDED 2026-08-13 — see the CORRECTION block at the top of this file.**
+> §1 below is **RETRACTED**: `hard_drop` is a post-hoc SLoRB amputation, not a trained 2:4 arm,
+> so it cannot support any claim about the quality of SparseForge's 2:4 support. §2 and §3 are
+> **weakened but not retracted** — the SLoRB parameter count and the deploy-time drop are code
+> facts, and the +0.28 pp being inside the −0.346 pp cross-harness offset still holds — but both
+> are stated against a checkpoint whose identity is unproven (three runs match the headline PPL
+> within 0.02 on three different datasets). Original text preserved below unedited.
 
 **AST-7 plain-acc gap vs baselines, same harness:**
 
