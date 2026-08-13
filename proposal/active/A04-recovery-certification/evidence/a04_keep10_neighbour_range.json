@@ -1,0 +1,5141 @@
+{
+ "gate": "A04_keep10_neighbour_range_second_arm_7B",
+ "question": "(Q1) per-axis NI-margin range across a 500-step checkpoint triple of keep10+fresh2, gated on 1.6926*sigma; (Q2) does keep8's single supra-noise range (triviaqa 1.1202 pp) replicate on this second, differently-damaged arm? (Q3) the same data restated as Heineman et al.'s rel.std, against their published intact OLMo-2 7B values.",
+ "date": "2026-08-13",
+ "headline_verdict": "KEEP10_NEIGHBOUR_RANGE_REPLICATES_MATERIAL_TRIVIAQA",
+ "prereg_document": "A04_KEEP10_NEIGHBOUR_RANGE_PREREG.md",
+ "prereg_readings_fixed_in_advance": {
+  "prereg_document": "A04_KEEP10_NEIGHBOUR_RANGE_PREREG.md",
+  "replicates_and_material": "keep10 triviaqa range clears the item-noise gate AND is >= 0.5 pp: the pp-scale adjacent-500-step margin move is ARM-INDEPENDENT, and A04_GATE_DESIGN 2.5's per-axis tolerance is corroborated on a second, differently-damaged arm",
+  "replicates_in_kind_only": "clears the gate but is < 0.5 pp: the phenomenon replicates in KIND but not in SIZE; 2.5's tolerance stays a keep8-specific number and the general statement must be 'supra-noise but arm-dependent in magnitude'",
+  "does_not_replicate": "keep10's triviaqa range FAILS the gate: keep8's 1.1202 pp is an ISOLATED CELL. 2.0.2 retains its logical force (one counterexample still makes single-checkpoint accepts unsafe) but LOSES its claim to generality, and 2.5's per-axis numbers must be labelled keep8-only / not reproduced on keep10. This WEAKENS our position and is to be written exactly that way -- a non-replication may NOT be re-described as 'consistent with noise, so no problem'"
+ },
+ "prereg_commit_note": "the pre-registration was committed as its own commit BEFORE the first checkpoint was scored, so the readings' git timestamp precedes every number in this file",
+ "tests_the_claim_from": "A04_GATE_DESIGN.md 2.0.2 + 2.5 / STATUS.json:neighbour_variability_20260813 -- the neighbour precondition and its per-axis tolerance, both resting on ONE arm and, on the decision axes, ONE supra-noise cell. 2.5 itself says the numbers 'should be widened if a second arm is ever measured'.",
+ "arm": {
+  "key": "keep10fresh2",
+  "dir": "olmo2_probe2_7B_keep10fresh2",
+  "steps": [
+   89000,
+   89500,
+   90000
+  ],
+  "spacing_steps": 500,
+  "arch": {
+   "keep10fresh2": {
+    "keep_front": 10,
+    "n_fresh": 2,
+    "num_hidden_layers": 12,
+    "contiguous_front": true,
+    "n_params": 3250786304,
+    "arch_meta": "outputs/olmo2_probe2_7B_keep10fresh2/arch_meta.json",
+    "arm_label_in_meta": "healing_front10+fresh2",
+    "lr_fresh": 2e-05,
+    "lr_inherited": 2e-05,
+    "seed_in_meta": 42,
+    "note": "--seed moves only the fresh-tail init, NOT data order (DistributedSampler has no seed=), so `seed: 42` is NOT a training-seed and no sd_run follows from it."
+   },
+   "keep8fresh2": {
+    "keep_front": 8,
+    "n_fresh": 2,
+    "num_hidden_layers": 10,
+    "note": "the ONE arm A04_NEIGHBOUR_VARIABILITY measured"
+   }
+  },
+  "resume_seam": false,
+  "is_clean_neighbour_measurement": true,
+  "training_log": "logs/olmo2_7B_keep10fresh2_resume200k_73.log",
+  "evidence": "the log contains EXACTLY ONE '[resume] loading ckpt ... step86500.pt' banner (2026-08-12 03:57:09, has_optimizer=True, 135 model tensors restored, 'continue @ step=86500 epoch=0 warmup=150 max_steps=200000'), then 'saved ... step89000.pt' 08:44:52 (line 154), 'step89500.pt' 09:42:19 (line 182), 'step90000.pt' 10:39:43 (line 210). The process died at 11:15 on a TCPStore/NCCL heartbeat error -- AFTER all three saves. One process, one loader, continuous data order.",
+  "why_this_check_exists": "A04_NEIGHBOUR_VARIABILITY 1.2: keep8's cluster 1 (124000/124500/125000) STRADDLED a process boundary -- 124000/124500 from a .73 run that died, 125000 from a different .82 process four days later. The trainer restores optimizer+RNG but rebuilds the loader without fast-forwarding inside the epoch, so a seam-crossing interval saw a different data order than an uninterrupted 500 steps. That was found only after scoring; here it is cleared BEFORE.",
+  "checkpoint_bytes_all_equal": 39009621855,
+  "why_bytes_are_not_identity": "keep8's 130000/130500/131000 also share one size, and shortgpt16/step128000.pt was a 7.7 GB TRUNCATED write that `ls -l` could not distinguish from healthy. The driver therefore asserts the LOADED meta's step/keep_front/n_fresh/depth per checkpoint before spending 8 GPUs, and the torch.load exercises the zip central directory."
+ },
+ "estimator_selftest": {
+  "range_report_floor_is_3_over_sqrt_pi": {
+   "range_pp": 1.0,
+   "expected_floor": 1.692568750643269,
+   "closed_form_3_over_sqrt_pi": 1.692568750643269,
+   "gate_false_as_expected": false,
+   "ok": true
+  },
+  "range_report_gate_fires_when_it_should": {
+   "range_pp": 2.0,
+   "ok": true
+  },
+  "relstd_hand_case": {
+   "n": 3,
+   "values": [
+    1.0,
+    2.0,
+    3.0
+   ],
+   "mean": 2.0,
+   "sd_ddof1": 1.0,
+   "sd_pp": 100.0,
+   "mean_pp": 200.0,
+   "rel_std": 0.5,
+   "ddof": 1,
+   "denominator_warning": "rel.std divides by the mean, so a LOWER-accuracy model gets a HIGHER rel.std at equal absolute stability. Compare sd_pp too.",
+   "expected": 0.5,
+   "ok": true
+  },
+  "c4_textbook_values": {
+   "c4_n2": 0.7978845608028655,
+   "c4_n3": 0.886226925452758,
+   "ok": true
+  },
+  "all_ok": true
+ },
+ "seed_disjointness_checked": {
+  "archives_scanned": 3,
+  "per_archive": {
+   "a04_full32_trajectory_ni.json": {
+    "arm_index": [
+     203,
+     500,
+     501,
+     502,
+     503
+    ],
+    "guard_seed_offset": "SEED+2700+13*axis_index (imported guard_cell uses SEED+700; see note)",
+    "interval_seed_offset": "SEED+2900+13*axis+7*pair"
+   },
+   "a04_keep14_trajectory_ni.json": {
+    "arm_index": [
+     201,
+     300,
+     301
+    ],
+    "guard_seed_offset": null,
+    "interval_seed_offset": null
+   },
+   "a04_neighbour_variability.json": {
+    "arm_index": [
+     400,
+     401,
+     402,
+     403,
+     404,
+     405,
+     406,
+     407,
+     408
+    ],
+    "guard_seed_offset": "SEED+1700+13*axis_index",
+    "interval_seed_offset": "SEED+1900+13*axis+7*pair (legA), SEED+2400+13*axis+7*pair (legB)"
+   }
+  },
+  "archives_skipped": {
+   "a04_1b_keep7f2_ppl_trajectory.json": "top-level list, carries no offsets",
+   "a04_1b_keep7f2_ppl_trajectory_5pt.json": "top-level list, carries no offsets",
+   "a04_keep10_neighbour_range.json": "THIS RUN'S OWN OUTPUT -- excluded by absolute path so that an idempotent re-run does not self-collide"
+  },
+  "self_output_excluded": "a04_keep10_neighbour_range.json",
+  "self_exclusion_defect_note": "the inherited version of this check had no self-exclusion, so it FIRED ON ITS OWN OUTPUT on the second run of this script (arm_index 700-702 'already used by' this script's own JSON). That is a false positive affecting every idempotent re-run of every A04 analysis that carries this check; fixed here by excluding the output path being written. Worth porting.",
+  "this_run_arm_indices": [
+   700,
+   701,
+   702
+  ],
+  "this_run_offsets": {
+   "arm_index_base": 700,
+   "guard_seed_offset": "SEED+4700+13*axis_index",
+   "interval_seed_offset": "SEED+4900+13*axis+7*pair"
+  },
+  "checked_mechanically": true
+ },
+ "protocol_asserted": {
+  "frozen_expectation": {
+   "cb_bs": 32,
+   "mmlu_bs": 16
+  },
+  "why_bs_is_not_free": "full32_rescore_v2_20260812.sensitivity_bs48_probe: bs32->bs48 flipped 12/14267 popqa and 10/3610 nq_open items (bf16 numerics depend on left-pad width)",
+  "artefact_gap_acknowledged": "summary.json:meta records neither batch_size nor chat_template (A04_KEEP14_TRAJECTORY_PROTOCOL_GAP.md), so both are confirmed from the INVOCATION, not inferred from the result dirs",
+  "from_driver_logs": {
+   "keep10_nbr": {
+    "log": "logs/a04_keep10_nbr_82.out",
+    "header_mmlu_bs": 16,
+    "header_cb_bs": 32,
+    "per_axis_bs_echoed": {
+     "closedbook": [
+      32
+     ],
+     "nq_open": [
+      32
+     ],
+     "mmlu": [
+      16
+     ]
+    }
+   }
+  },
+  "from_driver_source": {
+   "MMLU_BS": 16,
+   "CB_BS": 32,
+   "note": "source defaults agree with the values the logs show were used; the LOGS are the evidence, the source is the corroboration"
+  },
+  "add_bos_from_summaries": {
+   "keep10|89000|cb": false,
+   "keep10|89000|nq": false,
+   "keep10|89000|mmlu": false,
+   "keep10|89500|cb": false,
+   "keep10|89500|nq": false,
+   "keep10|89500|mmlu": false,
+   "keep10|90000|cb": false,
+   "keep10|90000|nq": false,
+   "keep10|90000|mmlu": false
+  },
+  "max_new_tokens_from_summaries": {
+   "keep10|89000|cb": 32,
+   "keep10|89000|nq": 32,
+   "keep10|89500|cb": 32,
+   "keep10|89500|nq": 32,
+   "keep10|90000|cb": 32,
+   "keep10|90000|nq": 32
+  },
+  "chat_template": {
+   "value": false,
+   "how_established": "STRUCTURAL, not a flag: neither scripts/eval_olmo2_closedbook_qa.py nor scripts/eval_olmo2_mmlu_content.py contains a chat-template code path -- the only occurrence of the string in either file is a docstring line. A protocol that cannot be switched on cannot have been switched on.",
+   "assertion_form_note": "add_bos is asserted with `is False`, never `is not True`, because `is not True` passes silently on None.",
+   "why_it_must_be_False": "OLMo-2 is a BASE LM with no SFT/RL; a chat template would be unfair AND would break comparability with every existing cell."
+  }
+ },
+ "shard_integrity_explicit": {
+  "intact_7B_base": {
+   "mmlu_content": {
+    "dir": "./olmo2_mmlu_content_results/7B_base",
+    "shard_index_set": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7
+    ],
+    "shard_index_set_equals_0_to_7": true,
+    "n_shard_files": 8,
+    "rows_per_shard": {
+     "0": 1756,
+     "1": 1756,
+     "2": 1755,
+     "3": 1755,
+     "4": 1755,
+     "5": 1755,
+     "6": 1755,
+     "7": 1755
+    },
+    "merged_n": 14042,
+    "expected_n": 14042,
+    "merged_n_equals_expected": true,
+    "n_duplicate_item_ids": 0
+   },
+   "triviaqa": {
+    "dir": "./olmo2_closedbook_results/base_full",
+    "shard_index_set": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7
+    ],
+    "shard_index_set_equals_0_to_7": true,
+    "n_shard_files": 8,
+    "rows_per_shard": {
+     "0": 2243,
+     "1": 2243,
+     "2": 2243,
+     "3": 2243,
+     "4": 2243,
+     "5": 2243,
+     "6": 2243,
+     "7": 2243
+    },
+    "merged_n": 17944,
+    "expected_n": 17944,
+    "merged_n_equals_expected": true,
+    "n_duplicate_item_ids": 0
+   },
+   "popqa": {
+    "dir": "./olmo2_closedbook_results/base_full",
+    "shard_index_set": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7
+    ],
+    "shard_index_set_equals_0_to_7": true,
+    "n_shard_files": 8,
+    "rows_per_shard": {
+     "0": 1784,
+     "1": 1784,
+     "2": 1784,
+     "3": 1783,
+     "4": 1783,
+     "5": 1783,
+     "6": 1783,
+     "7": 1783
+    },
+    "merged_n": 14267,
+    "expected_n": 14267,
+    "merged_n_equals_expected": true,
+    "n_duplicate_item_ids": 0
+   },
+   "nq_open": {
+    "dir": "./olmo2_closedbook_results/base_full_nqopen",
+    "shard_index_set": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7
+    ],
+    "shard_index_set_equals_0_to_7": true,
+    "n_shard_files": 8,
+    "rows_per_shard": {
+     "0": 452,
+     "1": 452,
+     "2": 451,
+     "3": 451,
+     "4": 451,
+     "5": 451,
+     "6": 451,
+     "7": 451
+    },
+    "merged_n": 3610,
+    "expected_n": 3610,
+    "merged_n_equals_expected": true,
+    "n_duplicate_item_ids": 0
+   }
+  },
+  "keep10fresh2_step89000": {
+   "mmlu_content": {
+    "dir": "./olmo2_mmlu_content_results/A04_7B_keep10f2_NBR_step89000",
+    "shard_index_set": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7
+    ],
+    "shard_index_set_equals_0_to_7": true,
+    "n_shard_files": 8,
+    "rows_per_shard": {
+     "0": 1756,
+     "1": 1756,
+     "2": 1755,
+     "3": 1755,
+     "4": 1755,
+     "5": 1755,
+     "6": 1755,
+     "7": 1755
+    },
+    "merged_n": 14042,
+    "expected_n": 14042,
+    "merged_n_equals_expected": true,
+    "n_duplicate_item_ids": 0
+   },
+   "triviaqa": {
+    "dir": "./olmo2_closedbook_results/A04_7B_keep10f2_NBR_step89000",
+    "shard_index_set": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7
+    ],
+    "shard_index_set_equals_0_to_7": true,
+    "n_shard_files": 8,
+    "rows_per_shard": {
+     "0": 2243,
+     "1": 2243,
+     "2": 2243,
+     "3": 2243,
+     "4": 2243,
+     "5": 2243,
+     "6": 2243,
+     "7": 2243
+    },
+    "merged_n": 17944,
+    "expected_n": 17944,
+    "merged_n_equals_expected": true,
+    "n_duplicate_item_ids": 0
+   },
+   "popqa": {
+    "dir": "./olmo2_closedbook_results/A04_7B_keep10f2_NBR_step89000",
+    "shard_index_set": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7
+    ],
+    "shard_index_set_equals_0_to_7": true,
+    "n_shard_files": 8,
+    "rows_per_shard": {
+     "0": 1784,
+     "1": 1784,
+     "2": 1784,
+     "3": 1783,
+     "4": 1783,
+     "5": 1783,
+     "6": 1783,
+     "7": 1783
+    },
+    "merged_n": 14267,
+    "expected_n": 14267,
+    "merged_n_equals_expected": true,
+    "n_duplicate_item_ids": 0
+   },
+   "nq_open": {
+    "dir": "./olmo2_closedbook_results/A04_7B_keep10f2_NBR_step89000_nqopen",
+    "shard_index_set": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7
+    ],
+    "shard_index_set_equals_0_to_7": true,
+    "n_shard_files": 8,
+    "rows_per_shard": {
+     "0": 452,
+     "1": 452,
+     "2": 451,
+     "3": 451,
+     "4": 451,
+     "5": 451,
+     "6": 451,
+     "7": 451
+    },
+    "merged_n": 3610,
+    "expected_n": 3610,
+    "merged_n_equals_expected": true,
+    "n_duplicate_item_ids": 0
+   }
+  },
+  "keep10fresh2_step89500": {
+   "mmlu_content": {
+    "dir": "./olmo2_mmlu_content_results/A04_7B_keep10f2_NBR_step89500",
+    "shard_index_set": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7
+    ],
+    "shard_index_set_equals_0_to_7": true,
+    "n_shard_files": 8,
+    "rows_per_shard": {
+     "0": 1756,
+     "1": 1756,
+     "2": 1755,
+     "3": 1755,
+     "4": 1755,
+     "5": 1755,
+     "6": 1755,
+     "7": 1755
+    },
+    "merged_n": 14042,
+    "expected_n": 14042,
+    "merged_n_equals_expected": true,
+    "n_duplicate_item_ids": 0
+   },
+   "triviaqa": {
+    "dir": "./olmo2_closedbook_results/A04_7B_keep10f2_NBR_step89500",
+    "shard_index_set": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7
+    ],
+    "shard_index_set_equals_0_to_7": true,
+    "n_shard_files": 8,
+    "rows_per_shard": {
+     "0": 2243,
+     "1": 2243,
+     "2": 2243,
+     "3": 2243,
+     "4": 2243,
+     "5": 2243,
+     "6": 2243,
+     "7": 2243
+    },
+    "merged_n": 17944,
+    "expected_n": 17944,
+    "merged_n_equals_expected": true,
+    "n_duplicate_item_ids": 0
+   },
+   "popqa": {
+    "dir": "./olmo2_closedbook_results/A04_7B_keep10f2_NBR_step89500",
+    "shard_index_set": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7
+    ],
+    "shard_index_set_equals_0_to_7": true,
+    "n_shard_files": 8,
+    "rows_per_shard": {
+     "0": 1784,
+     "1": 1784,
+     "2": 1784,
+     "3": 1783,
+     "4": 1783,
+     "5": 1783,
+     "6": 1783,
+     "7": 1783
+    },
+    "merged_n": 14267,
+    "expected_n": 14267,
+    "merged_n_equals_expected": true,
+    "n_duplicate_item_ids": 0
+   },
+   "nq_open": {
+    "dir": "./olmo2_closedbook_results/A04_7B_keep10f2_NBR_step89500_nqopen",
+    "shard_index_set": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7
+    ],
+    "shard_index_set_equals_0_to_7": true,
+    "n_shard_files": 8,
+    "rows_per_shard": {
+     "0": 452,
+     "1": 452,
+     "2": 451,
+     "3": 451,
+     "4": 451,
+     "5": 451,
+     "6": 451,
+     "7": 451
+    },
+    "merged_n": 3610,
+    "expected_n": 3610,
+    "merged_n_equals_expected": true,
+    "n_duplicate_item_ids": 0
+   }
+  },
+  "keep10fresh2_step90000": {
+   "mmlu_content": {
+    "dir": "./olmo2_mmlu_content_results/A04_7B_keep10f2_NBR_step90000",
+    "shard_index_set": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7
+    ],
+    "shard_index_set_equals_0_to_7": true,
+    "n_shard_files": 8,
+    "rows_per_shard": {
+     "0": 1756,
+     "1": 1756,
+     "2": 1755,
+     "3": 1755,
+     "4": 1755,
+     "5": 1755,
+     "6": 1755,
+     "7": 1755
+    },
+    "merged_n": 14042,
+    "expected_n": 14042,
+    "merged_n_equals_expected": true,
+    "n_duplicate_item_ids": 0
+   },
+   "triviaqa": {
+    "dir": "./olmo2_closedbook_results/A04_7B_keep10f2_NBR_step90000",
+    "shard_index_set": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7
+    ],
+    "shard_index_set_equals_0_to_7": true,
+    "n_shard_files": 8,
+    "rows_per_shard": {
+     "0": 2243,
+     "1": 2243,
+     "2": 2243,
+     "3": 2243,
+     "4": 2243,
+     "5": 2243,
+     "6": 2243,
+     "7": 2243
+    },
+    "merged_n": 17944,
+    "expected_n": 17944,
+    "merged_n_equals_expected": true,
+    "n_duplicate_item_ids": 0
+   },
+   "popqa": {
+    "dir": "./olmo2_closedbook_results/A04_7B_keep10f2_NBR_step90000",
+    "shard_index_set": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7
+    ],
+    "shard_index_set_equals_0_to_7": true,
+    "n_shard_files": 8,
+    "rows_per_shard": {
+     "0": 1784,
+     "1": 1784,
+     "2": 1784,
+     "3": 1783,
+     "4": 1783,
+     "5": 1783,
+     "6": 1783,
+     "7": 1783
+    },
+    "merged_n": 14267,
+    "expected_n": 14267,
+    "merged_n_equals_expected": true,
+    "n_duplicate_item_ids": 0
+   },
+   "nq_open": {
+    "dir": "./olmo2_closedbook_results/A04_7B_keep10f2_NBR_step90000_nqopen",
+    "shard_index_set": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7
+    ],
+    "shard_index_set_equals_0_to_7": true,
+    "n_shard_files": 8,
+    "rows_per_shard": {
+     "0": 452,
+     "1": 452,
+     "2": 451,
+     "3": 451,
+     "4": 451,
+     "5": 451,
+     "6": 451,
+     "7": 451
+    },
+    "merged_n": 3610,
+    "expected_n": 3610,
+    "merged_n_equals_expected": true,
+    "n_duplicate_item_ids": 0
+   }
+  }
+ },
+ "integrity_aligned": {
+  "intact_7B_base": {
+   "triviaqa": {
+    "n": 17944,
+    "n_nan": 0,
+    "shards": 8,
+    "item_ids_aligned": true,
+    "dir": "./olmo2_closedbook_results/base_full"
+   },
+   "popqa": {
+    "n": 14267,
+    "n_nan": 0,
+    "shards": 8,
+    "item_ids_aligned": true,
+    "dir": "./olmo2_closedbook_results/base_full"
+   },
+   "mmlu_content": {
+    "n": 14042,
+    "n_nan": 0,
+    "shards": 8,
+    "item_ids_aligned": true,
+    "dir": "./olmo2_mmlu_content_results/7B_base"
+   },
+   "nq_open": {
+    "n": 3610,
+    "n_nan": 0,
+    "shards": 8,
+    "item_ids_aligned": true,
+    "dir": "./olmo2_closedbook_results/base_full_nqopen"
+   }
+  },
+  "keep10fresh2_step89000": {
+   "triviaqa": {
+    "n": 17944,
+    "n_nan": 0,
+    "shards": 8,
+    "item_ids_aligned": true,
+    "dir": "./olmo2_closedbook_results/A04_7B_keep10f2_NBR_step89000"
+   },
+   "popqa": {
+    "n": 14267,
+    "n_nan": 0,
+    "shards": 8,
+    "item_ids_aligned": true,
+    "dir": "./olmo2_closedbook_results/A04_7B_keep10f2_NBR_step89000"
+   },
+   "mmlu_content": {
+    "n": 14042,
+    "n_nan": 0,
+    "shards": 8,
+    "item_ids_aligned": true,
+    "dir": "./olmo2_mmlu_content_results/A04_7B_keep10f2_NBR_step89000"
+   },
+   "nq_open": {
+    "n": 3610,
+    "n_nan": 0,
+    "shards": 8,
+    "item_ids_aligned": true,
+    "dir": "./olmo2_closedbook_results/A04_7B_keep10f2_NBR_step89000_nqopen"
+   }
+  },
+  "keep10fresh2_step89500": {
+   "triviaqa": {
+    "n": 17944,
+    "n_nan": 0,
+    "shards": 8,
+    "item_ids_aligned": true,
+    "dir": "./olmo2_closedbook_results/A04_7B_keep10f2_NBR_step89500"
+   },
+   "popqa": {
+    "n": 14267,
+    "n_nan": 0,
+    "shards": 8,
+    "item_ids_aligned": true,
+    "dir": "./olmo2_closedbook_results/A04_7B_keep10f2_NBR_step89500"
+   },
+   "mmlu_content": {
+    "n": 14042,
+    "n_nan": 0,
+    "shards": 8,
+    "item_ids_aligned": true,
+    "dir": "./olmo2_mmlu_content_results/A04_7B_keep10f2_NBR_step89500"
+   },
+   "nq_open": {
+    "n": 3610,
+    "n_nan": 0,
+    "shards": 8,
+    "item_ids_aligned": true,
+    "dir": "./olmo2_closedbook_results/A04_7B_keep10f2_NBR_step89500_nqopen"
+   }
+  },
+  "keep10fresh2_step90000": {
+   "triviaqa": {
+    "n": 17944,
+    "n_nan": 0,
+    "shards": 8,
+    "item_ids_aligned": true,
+    "dir": "./olmo2_closedbook_results/A04_7B_keep10f2_NBR_step90000"
+   },
+   "popqa": {
+    "n": 14267,
+    "n_nan": 0,
+    "shards": 8,
+    "item_ids_aligned": true,
+    "dir": "./olmo2_closedbook_results/A04_7B_keep10f2_NBR_step90000"
+   },
+   "mmlu_content": {
+    "n": 14042,
+    "n_nan": 0,
+    "shards": 8,
+    "item_ids_aligned": true,
+    "dir": "./olmo2_mmlu_content_results/A04_7B_keep10f2_NBR_step90000"
+   },
+   "nq_open": {
+    "n": 3610,
+    "n_nan": 0,
+    "shards": 8,
+    "item_ids_aligned": true,
+    "dir": "./olmo2_closedbook_results/A04_7B_keep10f2_NBR_step90000_nqopen"
+   }
+  }
+ },
+ "node_of_record": {
+  "node": ".82 (8xH20, zwfy6, numpy 2.4.6)",
+  "numpy": "2.4.6",
+  "why_it_matters": "Generator.multinomial differs in 19/10000 rows between numpy 2.4.6 (.82) and 2.5.1 (.73/.104/.21); max observed margin drift 0.005294 pp, triviaqa only. The keep8 Leg A numbers replicated here were published on .82/2.4.6, so this comparison is WITHIN one sampler. The drift is 10.6x looser than the 5e-4 pp hard-fail in a04_keep14_trajectory_ni.py and may NOT be cited to explain away any move larger than ~0.006 pp.",
+  "keep8_archive_published_on": ".82 (numpy 2.4.6)"
+ },
+ "bootstrap_offsets": {
+  "arm_index": {
+   "keep10fresh2_step89000": 700,
+   "keep10fresh2_step89500": 701,
+   "keep10fresh2_step90000": 702
+  },
+  "form": "97*arm_index + 13*axis_index",
+  "guard_seed_offset": "SEED+4700+13*axis_index",
+  "interval_seed_offset": "SEED+4900+13*axis+7*pair",
+  "n_boot": 10000,
+  "base_seed": 0,
+  "disjointness": "checked mechanically, see seed_disjointness_checked"
+ },
+ "prereg": {
+  "gate_design": "A04_GATE_DESIGN.md 2 + 2.0.2",
+  "delta_fraction": 0.1,
+  "rho": 0.85,
+  "commit_freezing_constants": "d1ba737",
+  "ni_definition": "accept iff one-sided lower 95% bound on residual(arm)-residual(intact) > -Delta, Delta = 0.10*residual(intact); imported ni_rule",
+  "noise_gate": "range_exceeds_item_noise := range_pp > 1.6926 * mean(per-cell bootstrap SE); 1.6926 = 3/sqrt(pi) = E[range of 3 iid N(0,1)], exact for the normal. Imported range_report -- the SAME code object that gated keep8.",
+  "decision_axes": [
+   "triviaqa",
+   "popqa",
+   "mmlu_content"
+  ],
+  "demoted_axes": [
+   "nq_open"
+  ],
+  "delta_never_substituted": true,
+  "anchor_never_changed": true
+ },
+ "intact_anchor": {
+  "choice": "vanilla models/OLMo-2-1124-7B (mode=base, 32 layers)",
+  "dirs": {
+   "mmlu": "7B_base",
+   "cb": "base_full",
+   "nq": "base_full_nqopen"
+  },
+  "imported_from": "a04_shallow_rung_ni_7b.ANCHOR (not redeclared)"
+ },
+ "nulls": {
+  "mmlu_content": {
+   "kind": "longest-option (continuation-token argmax set)",
+   "preregistered_convention": "split",
+   "by_convention": {
+    "split": 0.28445022076627263,
+    "first": 0.28108531548212506,
+    "last": 0.28215353938185445,
+    "credit": 0.4537102976783934,
+    "wrong": 0.19612590799031476
+   },
+   "winner_set_size_hist": {
+    "1": 9237,
+    "2": 2174,
+    "3": 754,
+    "4": 1877
+   },
+   "frac_items_with_tied_longest": 0.34218772254664576,
+   "frac_items_gold_in_winner_set": 0.4537102976783934,
+   "convention_spread_pp": 25.758438968807862
+  },
+  "triviaqa": {
+   "kind": "best-constant answer string 'australia commonwealth realm' (argmax over candidates)",
+   "acc": 0.0025635309852875612,
+   "diagnostics": {
+    "n_candidates": 303,
+    "top5": [
+     {
+      "constant": "australia commonwealth realm",
+      "em": 0.002564
+     },
+     {
+      "constant": "la republique francaise",
+      "em": 0.002229
+     },
+     {
+      "constant": "3",
+      "em": 0.002118
+     },
+     {
+      "constant": "south africa",
+      "em": 0.001951
+     },
+     {
+      "constant": "islands of spain",
+      "em": 0.001895
+     }
+    ],
+    "majority_gold_string": "australia commonwealth realm"
+   }
+  },
+  "popqa": {
+   "kind": "best-constant answer string 'association football' (argmax over candidates)",
+   "acc": 0.0229200252330553,
+   "diagnostics": {
+    "n_candidates": 303,
+    "top5": [
+     {
+      "constant": "association football",
+      "em": 0.02292
+     },
+     {
+      "constant": "united states of america",
+      "em": 0.020046
+     },
+     {
+      "constant": "politician",
+      "em": 0.010654
+     },
+     {
+      "constant": "catholic church",
+      "em": 0.009603
+     },
+     {
+      "constant": "actor",
+      "em": 0.008131
+     }
+    ],
+    "majority_gold_string": "association football"
+   }
+  },
+  "nq_open": {
+   "kind": "best-constant answer string '2017' (argmax over candidates)",
+   "acc": 0.00554016620498615,
+   "diagnostics": {
+    "n_candidates": 303,
+    "top5": [
+     {
+      "constant": "2017",
+      "em": 0.00554
+     },
+     {
+      "constant": "2018",
+      "em": 0.005263
+     },
+     {
+      "constant": "1998",
+      "em": 0.003047
+     },
+     {
+      "constant": "france",
+      "em": 0.00277
+     },
+     {
+      "constant": "united states",
+      "em": 0.002493
+     }
+    ],
+    "majority_gold_string": "2018"
+   }
+  }
+ },
+ "reported_acc": {
+  "intact_7B_base": {
+   "triviaqa": 0.6354770396790014,
+   "popqa": 0.24749421742482652,
+   "mmlu_content": 0.47058823529411764,
+   "nq_open": 0.20498614958448755
+  },
+  "keep10fresh2_step89000": {
+   "triviaqa": 0.1798372715113687,
+   "popqa": 0.04633069320810262,
+   "mmlu_content": 0.3468879077054551,
+   "nq_open": 0.037396121883656507
+  },
+  "keep10fresh2_step89500": {
+   "triviaqa": 0.16774409273294694,
+   "popqa": 0.04338683675615056,
+   "mmlu_content": 0.3486682808716707,
+   "nq_open": 0.0332409972299169
+  },
+  "keep10fresh2_step90000": {
+   "triviaqa": 0.17498885421310745,
+   "popqa": 0.04338683675615056,
+   "mmlu_content": 0.3478137017518872,
+   "nq_open": 0.0407202216066482
+  }
+ },
+ "guard_D1_D6": {
+  "split": {
+   "triviaqa": {
+    "residual_intact_pp": 63.29135086937138,
+    "null": 0.0025635309852875612,
+    "reported_intact": 0.6354770396790014,
+    "ci95_pp": [
+     62.60588497547926,
+     63.993535443602326
+    ],
+    "boot_p": 0.0001,
+    "delta_pp": 6.3291350869371374,
+    "n": 17944,
+    "pstar_crit_7B_recomputed": 18.711637792695775,
+    "p_disc_by_arm": {
+     "keep10fresh2_step89000": 0.47815425769059294,
+     "keep10fresh2_step89500": 0.4869037004012483,
+     "keep10fresh2_step90000": 0.48233392777530093
+    },
+    "p_disc_max": 0.4869037004012483,
+    "hw95_pp_by_arm": {
+     "keep10fresh2_step89000": 1.0117482870905072,
+     "keep10fresh2_step89500": 1.020962996038061,
+     "keep10fresh2_step90000": 1.016160642464802
+    },
+    "delta_over_hw_worst": 6.199181666228763,
+    "d4_interface_by_arm": {
+     "keep10fresh2_step89000": {
+      "top_constant_frac": 0.005294248773963442,
+      "tie_frac": null,
+      "degenerate": false
+     },
+     "keep10fresh2_step89500": {
+      "top_constant_frac": 0.0033994650022291573,
+      "tie_frac": null,
+      "degenerate": false
+     },
+     "keep10fresh2_step90000": {
+      "top_constant_frac": 0.0033437360677663844,
+      "tie_frac": null,
+      "degenerate": false
+     },
+     "intact_7B_base": {
+      "top_constant_frac": 0.002953633526526973,
+      "tie_frac": null,
+      "degenerate": false
+     }
+    },
+    "all_arms_below_null": false,
+    "conditions": {
+     "D1_residual_negative": false,
+     "D2_residual_at_zero": false,
+     "D3_ci_straddles_zero": false,
+     "D4_null_inadmissible": false,
+     "D6_delta_finer_than_instrument": false
+    },
+    "fatal_conditions": [],
+    "classification": "CERTIFIABLE",
+    "decision_axis": true
+   },
+   "popqa": {
+    "residual_intact_pp": 22.457419219177122,
+    "null": 0.0229200252330553,
+    "reported_intact": 0.24749421742482652,
+    "ci95_pp": [
+     21.749491834302937,
+     23.172355786079766
+    ],
+    "boot_p": 0.0001,
+    "delta_pp": 2.245741921917712,
+    "n": 14267,
+    "pstar_crit_7B_recomputed": 1.8730793014233278,
+    "p_disc_by_arm": {
+     "keep10fresh2_step89000": 0.2106960117754258,
+     "keep10fresh2_step89500": 0.21209784818111727,
+     "keep10fresh2_step90000": 0.21195766454054812
+    },
+    "p_disc_max": 0.21209784818111727,
+    "hw95_pp_by_arm": {
+     "keep10fresh2_step89000": 0.7531993235933232,
+     "keep10fresh2_step89500": 0.7557008227534789,
+     "keep10fresh2_step90000": 0.7554510455783355
+    },
+    "delta_over_hw_worst": 2.9717341232144023,
+    "d4_interface_by_arm": {
+     "keep10fresh2_step89000": {
+      "top_constant_frac": 0.017663138711712344,
+      "tie_frac": null,
+      "degenerate": false
+     },
+     "keep10fresh2_step89500": {
+      "top_constant_frac": 0.010443681222401345,
+      "tie_frac": null,
+      "degenerate": false
+     },
+     "keep10fresh2_step90000": {
+      "top_constant_frac": 0.006728814747318988,
+      "tie_frac": null,
+      "degenerate": false
+     },
+     "intact_7B_base": {
+      "top_constant_frac": 0.023761127076470177,
+      "tie_frac": null,
+      "degenerate": false
+     }
+    },
+    "all_arms_below_null": false,
+    "conditions": {
+     "D1_residual_negative": false,
+     "D2_residual_at_zero": false,
+     "D3_ci_straddles_zero": false,
+     "D4_null_inadmissible": false,
+     "D6_delta_finer_than_instrument": false
+    },
+    "fatal_conditions": [],
+    "classification": "CERTIFIABLE",
+    "decision_axis": true
+   },
+   "mmlu_content": {
+    "residual_intact_pp": 18.613801452784504,
+    "null": 0.28445022076627263,
+    "reported_intact": 0.47058823529411764,
+    "ci95_pp": [
+     17.65596068936049,
+     19.585885201538243
+    ],
+    "boot_p": 0.0001,
+    "delta_pp": 1.8613801452784504,
+    "n": 14042,
+    "pstar_crit_7B_recomputed": 1.2664934091602653,
+    "p_disc_by_arm": {
+     "keep10fresh2_step89000": 0.2171343113516593,
+     "keep10fresh2_step89500": 0.21563879789203816,
+     "keep10fresh2_step90000": 0.21763281583819968
+    },
+    "p_disc_max": 0.21763281583819968,
+    "hw95_pp_by_arm": {
+     "keep10fresh2_step89000": 0.7707221454809566,
+     "keep10fresh2_step89500": 0.7680633835440417,
+     "keep10fresh2_step90000": 0.7716063635900441
+    },
+    "delta_over_hw_worst": 2.412344212168013,
+    "d4_interface_by_arm": {
+     "keep10fresh2_step89000": {
+      "top_constant_frac": 0.30002848597065945,
+      "tie_frac": 0.34218772254664576,
+      "degenerate": false
+     },
+     "keep10fresh2_step89500": {
+      "top_constant_frac": 0.29810568295114653,
+      "tie_frac": 0.34218772254664576,
+      "degenerate": false
+     },
+     "keep10fresh2_step90000": {
+      "top_constant_frac": 0.2998860561173622,
+      "tie_frac": 0.34218772254664576,
+      "degenerate": false
+     },
+     "intact_7B_base": {
+      "top_constant_frac": 0.2906993305796895,
+      "tie_frac": 0.34218772254664576,
+      "degenerate": false
+     }
+    },
+    "all_arms_below_null": false,
+    "conditions": {
+     "D1_residual_negative": false,
+     "D2_residual_at_zero": false,
+     "D3_ci_straddles_zero": false,
+     "D4_null_inadmissible": false,
+     "D6_delta_finer_than_instrument": false
+    },
+    "fatal_conditions": [],
+    "classification": "CERTIFIABLE",
+    "decision_axis": true
+   },
+   "nq_open": {
+    "residual_intact_pp": 19.94459833795014,
+    "null": 0.00554016620498615,
+    "reported_intact": 0.20498614958448755,
+    "ci95_pp": [
+     18.642659279778393,
+     21.274238227146814
+    ],
+    "boot_p": 0.0001,
+    "delta_pp": 1.994459833795014,
+    "n": 3610,
+    "pstar_crit_7B_recomputed": 0.3738191985665458,
+    "p_disc_by_arm": {
+     "keep10fresh2_step89000": 0.19085872576177285,
+     "keep10fresh2_step89500": 0.19002770083102494,
+     "keep10fresh2_step90000": 0.189196675900277
+    },
+    "p_disc_max": 0.19085872576177285,
+    "hw95_pp_by_arm": {
+     "keep10fresh2_step89000": 1.4251169433964632,
+     "keep10fresh2_step89500": 1.422010981963352,
+     "keep10fresh2_step90000": 1.418898221611781
+    },
+    "delta_over_hw_worst": 1.399506084771993,
+    "d4_interface_by_arm": {
+     "keep10fresh2_step89000": {
+      "top_constant_frac": 0.024653739612188367,
+      "tie_frac": null,
+      "degenerate": false
+     },
+     "keep10fresh2_step89500": {
+      "top_constant_frac": 0.03573407202216067,
+      "tie_frac": null,
+      "degenerate": false
+     },
+     "keep10fresh2_step90000": {
+      "top_constant_frac": 0.03656509695290859,
+      "tie_frac": null,
+      "degenerate": false
+     },
+     "intact_7B_base": {
+      "top_constant_frac": 0.013573407202216066,
+      "tie_frac": null,
+      "degenerate": false
+     }
+    },
+    "all_arms_below_null": false,
+    "conditions": {
+     "D1_residual_negative": false,
+     "D2_residual_at_zero": false,
+     "D3_ci_straddles_zero": false,
+     "D4_null_inadmissible": false,
+     "D6_delta_finer_than_instrument": false
+    },
+    "fatal_conditions": [],
+    "classification": "CERTIFIABLE",
+    "decision_axis": false
+   }
+  },
+  "first": {
+   "triviaqa": {
+    "residual_intact_pp": 63.29135086937138,
+    "null": 0.0025635309852875612,
+    "reported_intact": 0.6354770396790014,
+    "ci95_pp": [
+     62.60588497547926,
+     63.993535443602326
+    ],
+    "boot_p": 0.0001,
+    "delta_pp": 6.3291350869371374,
+    "n": 17944,
+    "pstar_crit_7B_recomputed": 18.711637792695775,
+    "p_disc_by_arm": {
+     "keep10fresh2_step89000": 0.47815425769059294,
+     "keep10fresh2_step89500": 0.4869037004012483,
+     "keep10fresh2_step90000": 0.48233392777530093
+    },
+    "p_disc_max": 0.4869037004012483,
+    "hw95_pp_by_arm": {
+     "keep10fresh2_step89000": 1.0117482870905072,
+     "keep10fresh2_step89500": 1.020962996038061,
+     "keep10fresh2_step90000": 1.016160642464802
+    },
+    "delta_over_hw_worst": 6.199181666228763,
+    "d4_interface_by_arm": {
+     "keep10fresh2_step89000": {
+      "top_constant_frac": 0.005294248773963442,
+      "tie_frac": null,
+      "degenerate": false
+     },
+     "keep10fresh2_step89500": {
+      "top_constant_frac": 0.0033994650022291573,
+      "tie_frac": null,
+      "degenerate": false
+     },
+     "keep10fresh2_step90000": {
+      "top_constant_frac": 0.0033437360677663844,
+      "tie_frac": null,
+      "degenerate": false
+     },
+     "intact_7B_base": {
+      "top_constant_frac": 0.002953633526526973,
+      "tie_frac": null,
+      "degenerate": false
+     }
+    },
+    "all_arms_below_null": false,
+    "conditions": {
+     "D1_residual_negative": false,
+     "D2_residual_at_zero": false,
+     "D3_ci_straddles_zero": false,
+     "D4_null_inadmissible": false,
+     "D6_delta_finer_than_instrument": false
+    },
+    "fatal_conditions": [],
+    "classification": "CERTIFIABLE",
+    "decision_axis": true
+   },
+   "popqa": {
+    "residual_intact_pp": 22.457419219177122,
+    "null": 0.0229200252330553,
+    "reported_intact": 0.24749421742482652,
+    "ci95_pp": [
+     21.749491834302937,
+     23.172355786079766
+    ],
+    "boot_p": 0.0001,
+    "delta_pp": 2.245741921917712,
+    "n": 14267,
+    "pstar_crit_7B_recomputed": 1.8730793014233278,
+    "p_disc_by_arm": {
+     "keep10fresh2_step89000": 0.2106960117754258,
+     "keep10fresh2_step89500": 0.21209784818111727,
+     "keep10fresh2_step90000": 0.21195766454054812
+    },
+    "p_disc_max": 0.21209784818111727,
+    "hw95_pp_by_arm": {
+     "keep10fresh2_step89000": 0.7531993235933232,
+     "keep10fresh2_step89500": 0.7557008227534789,
+     "keep10fresh2_step90000": 0.7554510455783355
+    },
+    "delta_over_hw_worst": 2.9717341232144023,
+    "d4_interface_by_arm": {
+     "keep10fresh2_step89000": {
+      "top_constant_frac": 0.017663138711712344,
+      "tie_frac": null,
+      "degenerate": false
+     },
+     "keep10fresh2_step89500": {
+      "top_constant_frac": 0.010443681222401345,
+      "tie_frac": null,
+      "degenerate": false
+     },
+     "keep10fresh2_step90000": {
+      "top_constant_frac": 0.006728814747318988,
+      "tie_frac": null,
+      "degenerate": false
+     },
+     "intact_7B_base": {
+      "top_constant_frac": 0.023761127076470177,
+      "tie_frac": null,
+      "degenerate": false
+     }
+    },
+    "all_arms_below_null": false,
+    "conditions": {
+     "D1_residual_negative": false,
+     "D2_residual_at_zero": false,
+     "D3_ci_straddles_zero": false,
+     "D4_null_inadmissible": false,
+     "D6_delta_finer_than_instrument": false
+    },
+    "fatal_conditions": [],
+    "classification": "CERTIFIABLE",
+    "decision_axis": true
+   },
+   "mmlu_content": {
+    "residual_intact_pp": 18.95029198119926,
+    "null": 0.28108531548212506,
+    "reported_intact": 0.47058823529411764,
+    "ci95_pp": [
+     17.931918530123912,
+     19.968665432274605
+    ],
+    "boot_p": 0.0001,
+    "delta_pp": 1.895029198119926,
+    "n": 14042,
+    "pstar_crit_7B_recomputed": 1.3126972986096024,
+    "p_disc_by_arm": {
+     "keep10fresh2_step89000": 0.2171343113516593,
+     "keep10fresh2_step89500": 0.21563879789203816,
+     "keep10fresh2_step90000": 0.21763281583819968
+    },
+    "p_disc_max": 0.21763281583819968,
+    "hw95_pp_by_arm": {
+     "keep10fresh2_step89000": 0.7707221454809566,
+     "keep10fresh2_step89500": 0.7680633835440417,
+     "keep10fresh2_step90000": 0.7716063635900441
+    },
+    "delta_over_hw_worst": 2.4559533040952974,
+    "d4_interface_by_arm": {
+     "keep10fresh2_step89000": {
+      "top_constant_frac": 0.30002848597065945,
+      "tie_frac": 0.34218772254664576,
+      "degenerate": false
+     },
+     "keep10fresh2_step89500": {
+      "top_constant_frac": 0.29810568295114653,
+      "tie_frac": 0.34218772254664576,
+      "degenerate": false
+     },
+     "keep10fresh2_step90000": {
+      "top_constant_frac": 0.2998860561173622,
+      "tie_frac": 0.34218772254664576,
+      "degenerate": false
+     },
+     "intact_7B_base": {
+      "top_constant_frac": 0.2906993305796895,
+      "tie_frac": 0.34218772254664576,
+      "degenerate": false
+     }
+    },
+    "all_arms_below_null": false,
+    "conditions": {
+     "D1_residual_negative": false,
+     "D2_residual_at_zero": false,
+     "D3_ci_straddles_zero": false,
+     "D4_null_inadmissible": false,
+     "D6_delta_finer_than_instrument": false
+    },
+    "fatal_conditions": [],
+    "classification": "CERTIFIABLE",
+    "decision_axis": true
+   },
+   "nq_open": {
+    "residual_intact_pp": 19.94459833795014,
+    "null": 0.00554016620498615,
+    "reported_intact": 0.20498614958448755,
+    "ci95_pp": [
+     18.642659279778393,
+     21.274238227146814
+    ],
+    "boot_p": 0.0001,
+    "delta_pp": 1.994459833795014,
+    "n": 3610,
+    "pstar_crit_7B_recomputed": 0.3738191985665458,
+    "p_disc_by_arm": {
+     "keep10fresh2_step89000": 0.19085872576177285,
+     "keep10fresh2_step89500": 0.19002770083102494,
+     "keep10fresh2_step90000": 0.189196675900277
+    },
+    "p_disc_max": 0.19085872576177285,
+    "hw95_pp_by_arm": {
+     "keep10fresh2_step89000": 1.4251169433964632,
+     "keep10fresh2_step89500": 1.422010981963352,
+     "keep10fresh2_step90000": 1.418898221611781
+    },
+    "delta_over_hw_worst": 1.399506084771993,
+    "d4_interface_by_arm": {
+     "keep10fresh2_step89000": {
+      "top_constant_frac": 0.024653739612188367,
+      "tie_frac": null,
+      "degenerate": false
+     },
+     "keep10fresh2_step89500": {
+      "top_constant_frac": 0.03573407202216067,
+      "tie_frac": null,
+      "degenerate": false
+     },
+     "keep10fresh2_step90000": {
+      "top_constant_frac": 0.03656509695290859,
+      "tie_frac": null,
+      "degenerate": false
+     },
+     "intact_7B_base": {
+      "top_constant_frac": 0.013573407202216066,
+      "tie_frac": null,
+      "degenerate": false
+     }
+    },
+    "all_arms_below_null": false,
+    "conditions": {
+     "D1_residual_negative": false,
+     "D2_residual_at_zero": false,
+     "D3_ci_straddles_zero": false,
+     "D4_null_inadmissible": false,
+     "D6_delta_finer_than_instrument": false
+    },
+    "fatal_conditions": [],
+    "classification": "CERTIFIABLE",
+    "decision_axis": false
+   }
+  },
+  "last": {
+   "triviaqa": {
+    "residual_intact_pp": 63.29135086937138,
+    "null": 0.0025635309852875612,
+    "reported_intact": 0.6354770396790014,
+    "ci95_pp": [
+     62.60588497547926,
+     63.993535443602326
+    ],
+    "boot_p": 0.0001,
+    "delta_pp": 6.3291350869371374,
+    "n": 17944,
+    "pstar_crit_7B_recomputed": 18.711637792695775,
+    "p_disc_by_arm": {
+     "keep10fresh2_step89000": 0.47815425769059294,
+     "keep10fresh2_step89500": 0.4869037004012483,
+     "keep10fresh2_step90000": 0.48233392777530093
+    },
+    "p_disc_max": 0.4869037004012483,
+    "hw95_pp_by_arm": {
+     "keep10fresh2_step89000": 1.0117482870905072,
+     "keep10fresh2_step89500": 1.020962996038061,
+     "keep10fresh2_step90000": 1.016160642464802
+    },
+    "delta_over_hw_worst": 6.199181666228763,
+    "d4_interface_by_arm": {
+     "keep10fresh2_step89000": {
+      "top_constant_frac": 0.005294248773963442,
+      "tie_frac": null,
+      "degenerate": false
+     },
+     "keep10fresh2_step89500": {
+      "top_constant_frac": 0.0033994650022291573,
+      "tie_frac": null,
+      "degenerate": false
+     },
+     "keep10fresh2_step90000": {
+      "top_constant_frac": 0.0033437360677663844,
+      "tie_frac": null,
+      "degenerate": false
+     },
+     "intact_7B_base": {
+      "top_constant_frac": 0.002953633526526973,
+      "tie_frac": null,
+      "degenerate": false
+     }
+    },
+    "all_arms_below_null": false,
+    "conditions": {
+     "D1_residual_negative": false,
+     "D2_residual_at_zero": false,
+     "D3_ci_straddles_zero": false,
+     "D4_null_inadmissible": false,
+     "D6_delta_finer_than_instrument": false
+    },
+    "fatal_conditions": [],
+    "classification": "CERTIFIABLE",
+    "decision_axis": true
+   },
+   "popqa": {
+    "residual_intact_pp": 22.457419219177122,
+    "null": 0.0229200252330553,
+    "reported_intact": 0.24749421742482652,
+    "ci95_pp": [
+     21.749491834302937,
+     23.172355786079766
+    ],
+    "boot_p": 0.0001,
+    "delta_pp": 2.245741921917712,
+    "n": 14267,
+    "pstar_crit_7B_recomputed": 1.8730793014233278,
+    "p_disc_by_arm": {
+     "keep10fresh2_step89000": 0.2106960117754258,
+     "keep10fresh2_step89500": 0.21209784818111727,
+     "keep10fresh2_step90000": 0.21195766454054812
+    },
+    "p_disc_max": 0.21209784818111727,
+    "hw95_pp_by_arm": {
+     "keep10fresh2_step89000": 0.7531993235933232,
+     "keep10fresh2_step89500": 0.7557008227534789,
+     "keep10fresh2_step90000": 0.7554510455783355
+    },
+    "delta_over_hw_worst": 2.9717341232144023,
+    "d4_interface_by_arm": {
+     "keep10fresh2_step89000": {
+      "top_constant_frac": 0.017663138711712344,
+      "tie_frac": null,
+      "degenerate": false
+     },
+     "keep10fresh2_step89500": {
+      "top_constant_frac": 0.010443681222401345,
+      "tie_frac": null,
+      "degenerate": false
+     },
+     "keep10fresh2_step90000": {
+      "top_constant_frac": 0.006728814747318988,
+      "tie_frac": null,
+      "degenerate": false
+     },
+     "intact_7B_base": {
+      "top_constant_frac": 0.023761127076470177,
+      "tie_frac": null,
+      "degenerate": false
+     }
+    },
+    "all_arms_below_null": false,
+    "conditions": {
+     "D1_residual_negative": false,
+     "D2_residual_at_zero": false,
+     "D3_ci_straddles_zero": false,
+     "D4_null_inadmissible": false,
+     "D6_delta_finer_than_instrument": false
+    },
+    "fatal_conditions": [],
+    "classification": "CERTIFIABLE",
+    "decision_axis": true
+   },
+   "mmlu_content": {
+    "residual_intact_pp": 18.843469591226324,
+    "null": 0.28215353938185445,
+    "reported_intact": 0.47058823529411764,
+    "ci95_pp": [
+     17.810853154821253,
+     19.86896453496653
+    ],
+    "boot_p": 0.0001,
+    "delta_pp": 1.8843469591226323,
+    "n": 14042,
+    "pstar_crit_7B_recomputed": 1.29793971715151,
+    "p_disc_by_arm": {
+     "keep10fresh2_step89000": 0.2171343113516593,
+     "keep10fresh2_step89500": 0.21563879789203816,
+     "keep10fresh2_step90000": 0.21763281583819968
+    },
+    "p_disc_max": 0.21763281583819968,
+    "hw95_pp_by_arm": {
+     "keep10fresh2_step89000": 0.7707221454809566,
+     "keep10fresh2_step89500": 0.7680633835440417,
+     "keep10fresh2_step90000": 0.7716063635900441
+    },
+    "delta_over_hw_worst": 2.442109147927906,
+    "d4_interface_by_arm": {
+     "keep10fresh2_step89000": {
+      "top_constant_frac": 0.30002848597065945,
+      "tie_frac": 0.34218772254664576,
+      "degenerate": false
+     },
+     "keep10fresh2_step89500": {
+      "top_constant_frac": 0.29810568295114653,
+      "tie_frac": 0.34218772254664576,
+      "degenerate": false
+     },
+     "keep10fresh2_step90000": {
+      "top_constant_frac": 0.2998860561173622,
+      "tie_frac": 0.34218772254664576,
+      "degenerate": false
+     },
+     "intact_7B_base": {
+      "top_constant_frac": 0.2906993305796895,
+      "tie_frac": 0.34218772254664576,
+      "degenerate": false
+     }
+    },
+    "all_arms_below_null": false,
+    "conditions": {
+     "D1_residual_negative": false,
+     "D2_residual_at_zero": false,
+     "D3_ci_straddles_zero": false,
+     "D4_null_inadmissible": false,
+     "D6_delta_finer_than_instrument": false
+    },
+    "fatal_conditions": [],
+    "classification": "CERTIFIABLE",
+    "decision_axis": true
+   },
+   "nq_open": {
+    "residual_intact_pp": 19.94459833795014,
+    "null": 0.00554016620498615,
+    "reported_intact": 0.20498614958448755,
+    "ci95_pp": [
+     18.642659279778393,
+     21.274238227146814
+    ],
+    "boot_p": 0.0001,
+    "delta_pp": 1.994459833795014,
+    "n": 3610,
+    "pstar_crit_7B_recomputed": 0.3738191985665458,
+    "p_disc_by_arm": {
+     "keep10fresh2_step89000": 0.19085872576177285,
+     "keep10fresh2_step89500": 0.19002770083102494,
+     "keep10fresh2_step90000": 0.189196675900277
+    },
+    "p_disc_max": 0.19085872576177285,
+    "hw95_pp_by_arm": {
+     "keep10fresh2_step89000": 1.4251169433964632,
+     "keep10fresh2_step89500": 1.422010981963352,
+     "keep10fresh2_step90000": 1.418898221611781
+    },
+    "delta_over_hw_worst": 1.399506084771993,
+    "d4_interface_by_arm": {
+     "keep10fresh2_step89000": {
+      "top_constant_frac": 0.024653739612188367,
+      "tie_frac": null,
+      "degenerate": false
+     },
+     "keep10fresh2_step89500": {
+      "top_constant_frac": 0.03573407202216067,
+      "tie_frac": null,
+      "degenerate": false
+     },
+     "keep10fresh2_step90000": {
+      "top_constant_frac": 0.03656509695290859,
+      "tie_frac": null,
+      "degenerate": false
+     },
+     "intact_7B_base": {
+      "top_constant_frac": 0.013573407202216066,
+      "tie_frac": null,
+      "degenerate": false
+     }
+    },
+    "all_arms_below_null": false,
+    "conditions": {
+     "D1_residual_negative": false,
+     "D2_residual_at_zero": false,
+     "D3_ci_straddles_zero": false,
+     "D4_null_inadmissible": false,
+     "D6_delta_finer_than_instrument": false
+    },
+    "fatal_conditions": [],
+    "classification": "CERTIFIABLE",
+    "decision_axis": false
+   }
+  },
+  "credit": {
+   "triviaqa": {
+    "residual_intact_pp": 63.29135086937138,
+    "null": 0.0025635309852875612,
+    "reported_intact": 0.6354770396790014,
+    "ci95_pp": [
+     62.60588497547926,
+     63.993535443602326
+    ],
+    "boot_p": 0.0001,
+    "delta_pp": 6.3291350869371374,
+    "n": 17944,
+    "pstar_crit_7B_recomputed": 18.711637792695775,
+    "p_disc_by_arm": {
+     "keep10fresh2_step89000": 0.47815425769059294,
+     "keep10fresh2_step89500": 0.4869037004012483,
+     "keep10fresh2_step90000": 0.48233392777530093
+    },
+    "p_disc_max": 0.4869037004012483,
+    "hw95_pp_by_arm": {
+     "keep10fresh2_step89000": 1.0117482870905072,
+     "keep10fresh2_step89500": 1.020962996038061,
+     "keep10fresh2_step90000": 1.016160642464802
+    },
+    "delta_over_hw_worst": 6.199181666228763,
+    "d4_interface_by_arm": {
+     "keep10fresh2_step89000": {
+      "top_constant_frac": 0.005294248773963442,
+      "tie_frac": null,
+      "degenerate": false
+     },
+     "keep10fresh2_step89500": {
+      "top_constant_frac": 0.0033994650022291573,
+      "tie_frac": null,
+      "degenerate": false
+     },
+     "keep10fresh2_step90000": {
+      "top_constant_frac": 0.0033437360677663844,
+      "tie_frac": null,
+      "degenerate": false
+     },
+     "intact_7B_base": {
+      "top_constant_frac": 0.002953633526526973,
+      "tie_frac": null,
+      "degenerate": false
+     }
+    },
+    "all_arms_below_null": false,
+    "conditions": {
+     "D1_residual_negative": false,
+     "D2_residual_at_zero": false,
+     "D3_ci_straddles_zero": false,
+     "D4_null_inadmissible": false,
+     "D6_delta_finer_than_instrument": false
+    },
+    "fatal_conditions": [],
+    "classification": "CERTIFIABLE",
+    "decision_axis": true
+   },
+   "popqa": {
+    "residual_intact_pp": 22.457419219177122,
+    "null": 0.0229200252330553,
+    "reported_intact": 0.24749421742482652,
+    "ci95_pp": [
+     21.749491834302937,
+     23.172355786079766
+    ],
+    "boot_p": 0.0001,
+    "delta_pp": 2.245741921917712,
+    "n": 14267,
+    "pstar_crit_7B_recomputed": 1.8730793014233278,
+    "p_disc_by_arm": {
+     "keep10fresh2_step89000": 0.2106960117754258,
+     "keep10fresh2_step89500": 0.21209784818111727,
+     "keep10fresh2_step90000": 0.21195766454054812
+    },
+    "p_disc_max": 0.21209784818111727,
+    "hw95_pp_by_arm": {
+     "keep10fresh2_step89000": 0.7531993235933232,
+     "keep10fresh2_step89500": 0.7557008227534789,
+     "keep10fresh2_step90000": 0.7554510455783355
+    },
+    "delta_over_hw_worst": 2.9717341232144023,
+    "d4_interface_by_arm": {
+     "keep10fresh2_step89000": {
+      "top_constant_frac": 0.017663138711712344,
+      "tie_frac": null,
+      "degenerate": false
+     },
+     "keep10fresh2_step89500": {
+      "top_constant_frac": 0.010443681222401345,
+      "tie_frac": null,
+      "degenerate": false
+     },
+     "keep10fresh2_step90000": {
+      "top_constant_frac": 0.006728814747318988,
+      "tie_frac": null,
+      "degenerate": false
+     },
+     "intact_7B_base": {
+      "top_constant_frac": 0.023761127076470177,
+      "tie_frac": null,
+      "degenerate": false
+     }
+    },
+    "all_arms_below_null": false,
+    "conditions": {
+     "D1_residual_negative": false,
+     "D2_residual_at_zero": false,
+     "D3_ci_straddles_zero": false,
+     "D4_null_inadmissible": false,
+     "D6_delta_finer_than_instrument": false
+    },
+    "fatal_conditions": [],
+    "classification": "CERTIFIABLE",
+    "decision_axis": true
+   },
+   "mmlu_content": {
+    "residual_intact_pp": 1.6877937615724254,
+    "null": 0.4537102976783934,
+    "reported_intact": 0.47058823529411764,
+    "ci95_pp": [
+     0.6124483691781798,
+     2.720410197977496
+    ],
+    "boot_p": 0.001,
+    "delta_pp": 0.16877937615724256,
+    "n": 14042,
+    "pstar_crit_7B_recomputed": 0.010412896085919153,
+    "p_disc_by_arm": {
+     "keep10fresh2_step89000": 0.2171343113516593,
+     "keep10fresh2_step89500": 0.21563879789203816,
+     "keep10fresh2_step90000": 0.21763281583819968
+    },
+    "p_disc_max": 0.21763281583819968,
+    "hw95_pp_by_arm": {
+     "keep10fresh2_step89000": 0.7707221454809566,
+     "keep10fresh2_step89500": 0.7680633835440417,
+     "keep10fresh2_step90000": 0.7716063635900441
+    },
+    "delta_over_hw_worst": 0.2187376674447897,
+    "d4_interface_by_arm": {
+     "keep10fresh2_step89000": {
+      "top_constant_frac": 0.30002848597065945,
+      "tie_frac": 0.34218772254664576,
+      "degenerate": false
+     },
+     "keep10fresh2_step89500": {
+      "top_constant_frac": 0.29810568295114653,
+      "tie_frac": 0.34218772254664576,
+      "degenerate": false
+     },
+     "keep10fresh2_step90000": {
+      "top_constant_frac": 0.2998860561173622,
+      "tie_frac": 0.34218772254664576,
+      "degenerate": false
+     },
+     "intact_7B_base": {
+      "top_constant_frac": 0.2906993305796895,
+      "tie_frac": 0.34218772254664576,
+      "degenerate": false
+     }
+    },
+    "all_arms_below_null": false,
+    "conditions": {
+     "D1_residual_negative": false,
+     "D2_residual_at_zero": false,
+     "D3_ci_straddles_zero": false,
+     "D4_null_inadmissible": false,
+     "D6_delta_finer_than_instrument": true
+    },
+    "fatal_conditions": [
+     "D6_delta_finer_than_instrument"
+    ],
+    "classification": "NOT_CERTIFIABLE",
+    "decision_axis": true
+   },
+   "nq_open": {
+    "residual_intact_pp": 19.94459833795014,
+    "null": 0.00554016620498615,
+    "reported_intact": 0.20498614958448755,
+    "ci95_pp": [
+     18.642659279778393,
+     21.274238227146814
+    ],
+    "boot_p": 0.0001,
+    "delta_pp": 1.994459833795014,
+    "n": 3610,
+    "pstar_crit_7B_recomputed": 0.3738191985665458,
+    "p_disc_by_arm": {
+     "keep10fresh2_step89000": 0.19085872576177285,
+     "keep10fresh2_step89500": 0.19002770083102494,
+     "keep10fresh2_step90000": 0.189196675900277
+    },
+    "p_disc_max": 0.19085872576177285,
+    "hw95_pp_by_arm": {
+     "keep10fresh2_step89000": 1.4251169433964632,
+     "keep10fresh2_step89500": 1.422010981963352,
+     "keep10fresh2_step90000": 1.418898221611781
+    },
+    "delta_over_hw_worst": 1.399506084771993,
+    "d4_interface_by_arm": {
+     "keep10fresh2_step89000": {
+      "top_constant_frac": 0.024653739612188367,
+      "tie_frac": null,
+      "degenerate": false
+     },
+     "keep10fresh2_step89500": {
+      "top_constant_frac": 0.03573407202216067,
+      "tie_frac": null,
+      "degenerate": false
+     },
+     "keep10fresh2_step90000": {
+      "top_constant_frac": 0.03656509695290859,
+      "tie_frac": null,
+      "degenerate": false
+     },
+     "intact_7B_base": {
+      "top_constant_frac": 0.013573407202216066,
+      "tie_frac": null,
+      "degenerate": false
+     }
+    },
+    "all_arms_below_null": false,
+    "conditions": {
+     "D1_residual_negative": false,
+     "D2_residual_at_zero": false,
+     "D3_ci_straddles_zero": false,
+     "D4_null_inadmissible": false,
+     "D6_delta_finer_than_instrument": false
+    },
+    "fatal_conditions": [],
+    "classification": "CERTIFIABLE",
+    "decision_axis": false
+   }
+  },
+  "wrong": {
+   "triviaqa": {
+    "residual_intact_pp": 63.29135086937138,
+    "null": 0.0025635309852875612,
+    "reported_intact": 0.6354770396790014,
+    "ci95_pp": [
+     62.60588497547926,
+     63.993535443602326
+    ],
+    "boot_p": 0.0001,
+    "delta_pp": 6.3291350869371374,
+    "n": 17944,
+    "pstar_crit_7B_recomputed": 18.711637792695775,
+    "p_disc_by_arm": {
+     "keep10fresh2_step89000": 0.47815425769059294,
+     "keep10fresh2_step89500": 0.4869037004012483,
+     "keep10fresh2_step90000": 0.48233392777530093
+    },
+    "p_disc_max": 0.4869037004012483,
+    "hw95_pp_by_arm": {
+     "keep10fresh2_step89000": 1.0117482870905072,
+     "keep10fresh2_step89500": 1.020962996038061,
+     "keep10fresh2_step90000": 1.016160642464802
+    },
+    "delta_over_hw_worst": 6.199181666228763,
+    "d4_interface_by_arm": {
+     "keep10fresh2_step89000": {
+      "top_constant_frac": 0.005294248773963442,
+      "tie_frac": null,
+      "degenerate": false
+     },
+     "keep10fresh2_step89500": {
+      "top_constant_frac": 0.0033994650022291573,
+      "tie_frac": null,
+      "degenerate": false
+     },
+     "keep10fresh2_step90000": {
+      "top_constant_frac": 0.0033437360677663844,
+      "tie_frac": null,
+      "degenerate": false
+     },
+     "intact_7B_base": {
+      "top_constant_frac": 0.002953633526526973,
+      "tie_frac": null,
+      "degenerate": false
+     }
+    },
+    "all_arms_below_null": false,
+    "conditions": {
+     "D1_residual_negative": false,
+     "D2_residual_at_zero": false,
+     "D3_ci_straddles_zero": false,
+     "D4_null_inadmissible": false,
+     "D6_delta_finer_than_instrument": false
+    },
+    "fatal_conditions": [],
+    "classification": "CERTIFIABLE",
+    "decision_axis": true
+   },
+   "popqa": {
+    "residual_intact_pp": 22.457419219177122,
+    "null": 0.0229200252330553,
+    "reported_intact": 0.24749421742482652,
+    "ci95_pp": [
+     21.749491834302937,
+     23.172355786079766
+    ],
+    "boot_p": 0.0001,
+    "delta_pp": 2.245741921917712,
+    "n": 14267,
+    "pstar_crit_7B_recomputed": 1.8730793014233278,
+    "p_disc_by_arm": {
+     "keep10fresh2_step89000": 0.2106960117754258,
+     "keep10fresh2_step89500": 0.21209784818111727,
+     "keep10fresh2_step90000": 0.21195766454054812
+    },
+    "p_disc_max": 0.21209784818111727,
+    "hw95_pp_by_arm": {
+     "keep10fresh2_step89000": 0.7531993235933232,
+     "keep10fresh2_step89500": 0.7557008227534789,
+     "keep10fresh2_step90000": 0.7554510455783355
+    },
+    "delta_over_hw_worst": 2.9717341232144023,
+    "d4_interface_by_arm": {
+     "keep10fresh2_step89000": {
+      "top_constant_frac": 0.017663138711712344,
+      "tie_frac": null,
+      "degenerate": false
+     },
+     "keep10fresh2_step89500": {
+      "top_constant_frac": 0.010443681222401345,
+      "tie_frac": null,
+      "degenerate": false
+     },
+     "keep10fresh2_step90000": {
+      "top_constant_frac": 0.006728814747318988,
+      "tie_frac": null,
+      "degenerate": false
+     },
+     "intact_7B_base": {
+      "top_constant_frac": 0.023761127076470177,
+      "tie_frac": null,
+      "degenerate": false
+     }
+    },
+    "all_arms_below_null": false,
+    "conditions": {
+     "D1_residual_negative": false,
+     "D2_residual_at_zero": false,
+     "D3_ci_straddles_zero": false,
+     "D4_null_inadmissible": false,
+     "D6_delta_finer_than_instrument": false
+    },
+    "fatal_conditions": [],
+    "classification": "CERTIFIABLE",
+    "decision_axis": true
+   },
+   "mmlu_content": {
+    "residual_intact_pp": 27.446232730380288,
+    "null": 0.19612590799031476,
+    "reported_intact": 0.47058823529411764,
+    "ci95_pp": [
+     26.47058823529412,
+     28.436120210796183
+    ],
+    "boot_p": 0.0001,
+    "delta_pp": 2.744623273038029,
+    "n": 14042,
+    "pstar_crit_7B_recomputed": 2.7535835788303213,
+    "p_disc_by_arm": {
+     "keep10fresh2_step89000": 0.2171343113516593,
+     "keep10fresh2_step89500": 0.21563879789203816,
+     "keep10fresh2_step90000": 0.21763281583819968
+    },
+    "p_disc_max": 0.21763281583819968,
+    "hw95_pp_by_arm": {
+     "keep10fresh2_step89000": 0.7707221454809566,
+     "keep10fresh2_step89500": 0.7680633835440417,
+     "keep10fresh2_step90000": 0.7716063635900441
+    },
+    "delta_over_hw_worst": 3.557025191275188,
+    "d4_interface_by_arm": {
+     "keep10fresh2_step89000": {
+      "top_constant_frac": 0.30002848597065945,
+      "tie_frac": 0.34218772254664576,
+      "degenerate": false
+     },
+     "keep10fresh2_step89500": {
+      "top_constant_frac": 0.29810568295114653,
+      "tie_frac": 0.34218772254664576,
+      "degenerate": false
+     },
+     "keep10fresh2_step90000": {
+      "top_constant_frac": 0.2998860561173622,
+      "tie_frac": 0.34218772254664576,
+      "degenerate": false
+     },
+     "intact_7B_base": {
+      "top_constant_frac": 0.2906993305796895,
+      "tie_frac": 0.34218772254664576,
+      "degenerate": false
+     }
+    },
+    "all_arms_below_null": false,
+    "conditions": {
+     "D1_residual_negative": false,
+     "D2_residual_at_zero": false,
+     "D3_ci_straddles_zero": false,
+     "D4_null_inadmissible": false,
+     "D6_delta_finer_than_instrument": false
+    },
+    "fatal_conditions": [],
+    "classification": "CERTIFIABLE",
+    "decision_axis": true
+   },
+   "nq_open": {
+    "residual_intact_pp": 19.94459833795014,
+    "null": 0.00554016620498615,
+    "reported_intact": 0.20498614958448755,
+    "ci95_pp": [
+     18.642659279778393,
+     21.274238227146814
+    ],
+    "boot_p": 0.0001,
+    "delta_pp": 1.994459833795014,
+    "n": 3610,
+    "pstar_crit_7B_recomputed": 0.3738191985665458,
+    "p_disc_by_arm": {
+     "keep10fresh2_step89000": 0.19085872576177285,
+     "keep10fresh2_step89500": 0.19002770083102494,
+     "keep10fresh2_step90000": 0.189196675900277
+    },
+    "p_disc_max": 0.19085872576177285,
+    "hw95_pp_by_arm": {
+     "keep10fresh2_step89000": 1.4251169433964632,
+     "keep10fresh2_step89500": 1.422010981963352,
+     "keep10fresh2_step90000": 1.418898221611781
+    },
+    "delta_over_hw_worst": 1.399506084771993,
+    "d4_interface_by_arm": {
+     "keep10fresh2_step89000": {
+      "top_constant_frac": 0.024653739612188367,
+      "tie_frac": null,
+      "degenerate": false
+     },
+     "keep10fresh2_step89500": {
+      "top_constant_frac": 0.03573407202216067,
+      "tie_frac": null,
+      "degenerate": false
+     },
+     "keep10fresh2_step90000": {
+      "top_constant_frac": 0.03656509695290859,
+      "tie_frac": null,
+      "degenerate": false
+     },
+     "intact_7B_base": {
+      "top_constant_frac": 0.013573407202216066,
+      "tie_frac": null,
+      "degenerate": false
+     }
+    },
+    "all_arms_below_null": false,
+    "conditions": {
+     "D1_residual_negative": false,
+     "D2_residual_at_zero": false,
+     "D3_ci_straddles_zero": false,
+     "D4_null_inadmissible": false,
+     "D6_delta_finer_than_instrument": false
+    },
+    "fatal_conditions": [],
+    "classification": "CERTIFIABLE",
+    "decision_axis": false
+   }
+  }
+ },
+ "per_convention": {
+  "split": {
+   "intact_residual_pp": {
+    "triviaqa": 63.29135086937138,
+    "popqa": 22.457419219177122,
+    "mmlu_content": 18.613801452784504,
+    "nq_open": 19.94459833795014
+   },
+   "delta_pp": {
+    "triviaqa": 6.3291350869371374,
+    "popqa": 2.245741921917712,
+    "mmlu_content": 1.8613801452784504,
+    "nq_open": 1.994459833795014
+   },
+   "cells": [
+    {
+     "arm": "keep10fresh2_step89000",
+     "axis": "triviaqa",
+     "decision_axis": true,
+     "reported": 0.1798372715113687,
+     "reported_intact": 0.6354770396790014,
+     "null": 0.0025635309852875612,
+     "residual_arm_pp": 17.727374052608113,
+     "residual_intact_pp": 63.29135086937138,
+     "residual_fraction_recovered": 0.28009157347891167,
+     "deficit_pp": 45.563976816763265,
+     "margin_pp": -39.870151582701745,
+     "bootstrap_se_pp": 0.3862300765247826,
+     "se_to_flip_NI": 103.22901815789444,
+     "diff_mean_pp": -45.563976816763265,
+     "diff_lower95_one_sided_pp": -46.19928666963888,
+     "delta_pp": 6.3291350869371374,
+     "ni_accept": false,
+     "n": 17944,
+     "n_boot": 10000,
+     "boot_seed": 67900
+    },
+    {
+     "arm": "keep10fresh2_step89000",
+     "axis": "popqa",
+     "decision_axis": true,
+     "reported": 0.04633069320810262,
+     "reported_intact": 0.24749421742482652,
+     "null": 0.0229200252330553,
+     "residual_arm_pp": 2.3410667975047317,
+     "residual_intact_pp": 22.457419219177122,
+     "residual_fraction_recovered": 0.1042446941323346,
+     "deficit_pp": 20.116352421672392,
+     "margin_pp": -18.43169552113268,
+     "bootstrap_se_pp": 0.34110585529698184,
+     "se_to_flip_NI": 54.03511911305431,
+     "diff_mean_pp": -20.11635242167239,
+     "diff_lower95_one_sided_pp": -20.677437443050394,
+     "delta_pp": 2.245741921917712,
+     "ni_accept": false,
+     "n": 14267,
+     "n_boot": 10000,
+     "boot_seed": 67913
+    },
+    {
+     "arm": "keep10fresh2_step89000",
+     "axis": "mmlu_content",
+     "decision_axis": true,
+     "reported": 0.3468879077054551,
+     "reported_intact": 0.47058823529411764,
+     "null": 0.28445022076627263,
+     "residual_arm_pp": 6.243768693918245,
+     "residual_intact_pp": 18.613801452784504,
+     "residual_fraction_recovered": 0.3354375896700143,
+     "deficit_pp": 12.370032758866259,
+     "margin_pp": -11.12822247543085,
+     "bootstrap_se_pp": 0.37666111121833645,
+     "se_to_flip_NI": 29.544389224137962,
+     "diff_mean_pp": -12.370032758866259,
+     "diff_lower95_one_sided_pp": -12.9896026207093,
+     "delta_pp": 1.8613801452784504,
+     "ni_accept": false,
+     "n": 14042,
+     "n_boot": 10000,
+     "boot_seed": 67926
+    },
+    {
+     "arm": "keep10fresh2_step89000",
+     "axis": "nq_open",
+     "decision_axis": false,
+     "reported": 0.037396121883656507,
+     "reported_intact": 0.20498614958448755,
+     "null": 0.00554016620498615,
+     "residual_arm_pp": 3.1855955678670353,
+     "residual_intact_pp": 19.94459833795014,
+     "residual_fraction_recovered": 0.15972222222222218,
+     "deficit_pp": 16.759002770083104,
+     "margin_pp": -15.872576177285316,
+     "bootstrap_se_pp": 0.6736173876814556,
+     "se_to_flip_NI": 23.56319250000007,
+     "diff_mean_pp": -16.759002770083104,
+     "diff_lower95_one_sided_pp": -17.86703601108033,
+     "delta_pp": 1.9944598337950141,
+     "ni_accept": false,
+     "n": 3610,
+     "n_boot": 10000,
+     "boot_seed": 67939
+    },
+    {
+     "arm": "keep10fresh2_step89500",
+     "axis": "triviaqa",
+     "decision_axis": true,
+     "reported": 0.16774409273294694,
+     "reported_intact": 0.6354770396790014,
+     "null": 0.0025635309852875612,
+     "residual_arm_pp": 16.51805617476594,
+     "residual_intact_pp": 63.29135086937138,
+     "residual_fraction_recovered": 0.2609844148983006,
+     "deficit_pp": 46.77329469460544,
+     "margin_pp": -41.0850423539902,
+     "bootstrap_se_pp": 0.38961805965219326,
+     "se_to_flip_NI": 105.44953278260832,
+     "diff_mean_pp": -46.77329469460544,
+     "diff_lower95_one_sided_pp": -47.41417744092733,
+     "delta_pp": 6.3291350869371374,
+     "ni_accept": false,
+     "n": 17944,
+     "n_boot": 10000,
+     "boot_seed": 67997
+    },
+    {
+     "arm": "keep10fresh2_step89500",
+     "axis": "popqa",
+     "decision_axis": true,
+     "reported": 0.04338683675615056,
+     "reported_intact": 0.24749421742482652,
+     "null": 0.0229200252330553,
+     "residual_arm_pp": 2.0466811523095254,
+     "residual_intact_pp": 22.457419219177122,
+     "residual_fraction_recovered": 0.09113607990012484,
+     "deficit_pp": 20.410738066867598,
+     "margin_pp": -18.74675825331184,
+     "bootstrap_se_pp": 0.35367627719737194,
+     "se_to_flip_NI": 53.00541614457805,
+     "diff_mean_pp": -20.410738066867594,
+     "diff_lower95_one_sided_pp": -20.99250017522955,
+     "delta_pp": 2.245741921917712,
+     "ni_accept": false,
+     "n": 14267,
+     "n_boot": 10000,
+     "boot_seed": 68010
+    },
+    {
+     "arm": "keep10fresh2_step89500",
+     "axis": "mmlu_content",
+     "decision_axis": true,
+     "reported": 0.3486682808716707,
+     "reported_intact": 0.47058823529411764,
+     "null": 0.28445022076627263,
+     "residual_arm_pp": 6.421806010539805,
+     "residual_intact_pp": 18.613801452784504,
+     "residual_fraction_recovered": 0.34500239120038234,
+     "deficit_pp": 12.1919954422447,
+     "margin_pp": -10.943063666144424,
+     "bootstrap_se_pp": 0.3723316731583562,
+     "se_to_flip_NI": 29.3906332848837,
+     "diff_mean_pp": -12.191995442244695,
+     "diff_lower95_one_sided_pp": -12.804443811422875,
+     "delta_pp": 1.8613801452784504,
+     "ni_accept": false,
+     "n": 14042,
+     "n_boot": 10000,
+     "boot_seed": 68023
+    },
+    {
+     "arm": "keep10fresh2_step89500",
+     "axis": "nq_open",
+     "decision_axis": false,
+     "reported": 0.0332409972299169,
+     "reported_intact": 0.20498614958448755,
+     "null": 0.00554016620498615,
+     "residual_arm_pp": 2.770083102493075,
+     "residual_intact_pp": 19.94459833795014,
+     "residual_fraction_recovered": 0.1388888888888889,
+     "deficit_pp": 17.174515235457065,
+     "margin_pp": -16.26038781163435,
+     "bootstrap_se_pp": 0.6567769529894196,
+     "se_to_flip_NI": 24.75785384615391,
+     "diff_mean_pp": -17.174515235457065,
+     "diff_lower95_one_sided_pp": -18.25484764542936,
+     "delta_pp": 1.9944598337950141,
+     "ni_accept": false,
+     "n": 3610,
+     "n_boot": 10000,
+     "boot_seed": 68036
+    },
+    {
+     "arm": "keep10fresh2_step90000",
+     "axis": "triviaqa",
+     "decision_axis": true,
+     "reported": 0.17498885421310745,
+     "reported_intact": 0.6354770396790014,
+     "null": 0.0025635309852875612,
+     "residual_arm_pp": 17.24253232278199,
+     "residual_intact_pp": 63.29135086937138,
+     "residual_fraction_recovered": 0.27243109976226115,
+     "deficit_pp": 46.04881854658939,
+     "margin_pp": -40.36613909942042,
+     "bootstrap_se_pp": 0.3930060427796039,
+     "se_to_flip_NI": 102.71124284482715,
+     "diff_mean_pp": -46.04881854658939,
+     "diff_lower95_one_sided_pp": -46.69527418635756,
+     "delta_pp": 6.3291350869371374,
+     "ni_accept": false,
+     "n": 17944,
+     "n_boot": 10000,
+     "boot_seed": 68094
+    },
+    {
+     "arm": "keep10fresh2_step90000",
+     "axis": "popqa",
+     "decision_axis": true,
+     "reported": 0.04338683675615056,
+     "reported_intact": 0.24749421742482652,
+     "null": 0.0229200252330553,
+     "residual_arm_pp": 2.0466811523095254,
+     "residual_intact_pp": 22.457419219177122,
+     "residual_fraction_recovered": 0.09113607990012484,
+     "deficit_pp": 20.410738066867598,
+     "margin_pp": -18.725730707226464,
+     "bootstrap_se_pp": 0.3408927972986702,
+     "se_to_flip_NI": 54.931435499999964,
+     "diff_mean_pp": -20.410738066867594,
+     "diff_lower95_one_sided_pp": -20.971472629144177,
+     "delta_pp": 2.245741921917712,
+     "ni_accept": false,
+     "n": 14267,
+     "n_boot": 10000,
+     "boot_seed": 68107
+    },
+    {
+     "arm": "keep10fresh2_step90000",
+     "axis": "mmlu_content",
+     "decision_axis": true,
+     "reported": 0.3478137017518872,
+     "reported_intact": 0.47058823529411764,
+     "null": 0.28445022076627263,
+     "residual_arm_pp": 6.336348098561456,
+     "residual_intact_pp": 18.613801452784504,
+     "residual_fraction_recovered": 0.3404112864658057,
+     "deficit_pp": 12.277453354223049,
+     "margin_pp": -11.035643070787636,
+     "bootstrap_se_pp": 0.37666111121833645,
+     "se_to_flip_NI": 29.298599568965546,
+     "diff_mean_pp": -12.277453354223045,
+     "diff_lower95_one_sided_pp": -12.897023216066087,
+     "delta_pp": 1.8613801452784504,
+     "ni_accept": false,
+     "n": 14042,
+     "n_boot": 10000,
+     "boot_seed": 68120
+    },
+    {
+     "arm": "keep10fresh2_step90000",
+     "axis": "nq_open",
+     "decision_axis": false,
+     "reported": 0.0407202216066482,
+     "reported_intact": 0.20498614958448755,
+     "null": 0.00554016620498615,
+     "residual_arm_pp": 3.5180055401662047,
+     "residual_intact_pp": 19.94459833795014,
+     "residual_fraction_recovered": 0.17638888888888885,
+     "deficit_pp": 16.426592797783936,
+     "margin_pp": -15.512465373961218,
+     "bootstrap_se_pp": 0.6567769529894218,
+     "se_to_flip_NI": 23.619076923076904,
+     "diff_mean_pp": -16.426592797783933,
+     "diff_lower95_one_sided_pp": -17.506925207756233,
+     "delta_pp": 1.9944598337950141,
+     "ni_accept": false,
+     "n": 3610,
+     "n_boot": 10000,
+     "boot_seed": 68133
+    }
+   ],
+   "retired_cells": [],
+   "ratio_rule": {
+    "keep10fresh2_step89000": {
+     "per_axis_ratio": {
+      "triviaqa": 0.2829957028852056,
+      "popqa": 0.18719909374114982,
+      "mmlu_content": 0.7371368038740921,
+      "nq_open": 0.1824324324324324
+     },
+     "mean_ratio": 0.34744100823322,
+     "rho": 0.85,
+     "ratio_accept": false,
+     "axes_used": [
+      "triviaqa",
+      "popqa",
+      "mmlu_content",
+      "nq_open"
+     ]
+    },
+    "keep10fresh2_step89500": {
+     "per_axis_ratio": {
+      "triviaqa": 0.2639656230816452,
+      "popqa": 0.1753044463324837,
+      "mmlu_content": 0.7409200968523002,
+      "nq_open": 0.16216216216216217
+     },
+     "mean_ratio": 0.33558808210714786,
+     "rho": 0.85,
+     "ratio_accept": false,
+     "axes_used": [
+      "triviaqa",
+      "popqa",
+      "mmlu_content",
+      "nq_open"
+     ]
+    },
+    "keep10fresh2_step90000": {
+     "per_axis_ratio": {
+      "triviaqa": 0.27536613171972285,
+      "popqa": 0.1753044463324837,
+      "mmlu_content": 0.7391041162227603,
+      "nq_open": 0.19864864864864862
+     },
+     "mean_ratio": 0.3471058357309038,
+     "rho": 0.85,
+     "ratio_accept": false,
+     "axes_used": [
+      "triviaqa",
+      "popqa",
+      "mmlu_content",
+      "nq_open"
+     ]
+    }
+   }
+  },
+  "first": {
+   "intact_residual_pp": {
+    "triviaqa": 63.29135086937138,
+    "popqa": 22.457419219177122,
+    "mmlu_content": 18.95029198119926,
+    "nq_open": 19.94459833795014
+   },
+   "delta_pp": {
+    "triviaqa": 6.3291350869371374,
+    "popqa": 2.245741921917712,
+    "mmlu_content": 1.895029198119926,
+    "nq_open": 1.994459833795014
+   },
+   "cells": [
+    {
+     "arm": "keep10fresh2_step89000",
+     "axis": "triviaqa",
+     "decision_axis": true,
+     "reported": 0.1798372715113687,
+     "reported_intact": 0.6354770396790014,
+     "null": 0.0025635309852875612,
+     "residual_arm_pp": 17.727374052608113,
+     "residual_intact_pp": 63.29135086937138,
+     "residual_fraction_recovered": 0.28009157347891167,
+     "deficit_pp": 45.563976816763265,
+     "margin_pp": -39.870151582701745,
+     "bootstrap_se_pp": 0.3862300765247826,
+     "se_to_flip_NI": 103.22901815789444,
+     "diff_mean_pp": -45.563976816763265,
+     "diff_lower95_one_sided_pp": -46.19928666963888,
+     "delta_pp": 6.3291350869371374,
+     "ni_accept": false,
+     "n": 17944,
+     "n_boot": 10000,
+     "boot_seed": 67900
+    },
+    {
+     "arm": "keep10fresh2_step89000",
+     "axis": "popqa",
+     "decision_axis": true,
+     "reported": 0.04633069320810262,
+     "reported_intact": 0.24749421742482652,
+     "null": 0.0229200252330553,
+     "residual_arm_pp": 2.3410667975047317,
+     "residual_intact_pp": 22.457419219177122,
+     "residual_fraction_recovered": 0.1042446941323346,
+     "deficit_pp": 20.116352421672392,
+     "margin_pp": -18.43169552113268,
+     "bootstrap_se_pp": 0.34110585529698184,
+     "se_to_flip_NI": 54.03511911305431,
+     "diff_mean_pp": -20.11635242167239,
+     "diff_lower95_one_sided_pp": -20.677437443050394,
+     "delta_pp": 2.245741921917712,
+     "ni_accept": false,
+     "n": 14267,
+     "n_boot": 10000,
+     "boot_seed": 67913
+    },
+    {
+     "arm": "keep10fresh2_step89000",
+     "axis": "mmlu_content",
+     "decision_axis": true,
+     "reported": 0.3468879077054551,
+     "reported_intact": 0.47058823529411764,
+     "null": 0.28108531548212506,
+     "residual_arm_pp": 6.580259222333002,
+     "residual_intact_pp": 18.95029198119926,
+     "residual_fraction_recovered": 0.34723788049605414,
+     "deficit_pp": 12.370032758866259,
+     "margin_pp": -11.094573422589374,
+     "bootstrap_se_pp": 0.37666111121833645,
+     "se_to_flip_NI": 29.455054137931064,
+     "diff_mean_pp": -12.370032758866259,
+     "diff_lower95_one_sided_pp": -12.9896026207093,
+     "delta_pp": 1.895029198119926,
+     "ni_accept": false,
+     "n": 14042,
+     "n_boot": 10000,
+     "boot_seed": 67926
+    },
+    {
+     "arm": "keep10fresh2_step89000",
+     "axis": "nq_open",
+     "decision_axis": false,
+     "reported": 0.037396121883656507,
+     "reported_intact": 0.20498614958448755,
+     "null": 0.00554016620498615,
+     "residual_arm_pp": 3.1855955678670353,
+     "residual_intact_pp": 19.94459833795014,
+     "residual_fraction_recovered": 0.15972222222222218,
+     "deficit_pp": 16.759002770083104,
+     "margin_pp": -15.872576177285316,
+     "bootstrap_se_pp": 0.6736173876814556,
+     "se_to_flip_NI": 23.56319250000007,
+     "diff_mean_pp": -16.759002770083104,
+     "diff_lower95_one_sided_pp": -17.86703601108033,
+     "delta_pp": 1.9944598337950141,
+     "ni_accept": false,
+     "n": 3610,
+     "n_boot": 10000,
+     "boot_seed": 67939
+    },
+    {
+     "arm": "keep10fresh2_step89500",
+     "axis": "triviaqa",
+     "decision_axis": true,
+     "reported": 0.16774409273294694,
+     "reported_intact": 0.6354770396790014,
+     "null": 0.0025635309852875612,
+     "residual_arm_pp": 16.51805617476594,
+     "residual_intact_pp": 63.29135086937138,
+     "residual_fraction_recovered": 0.2609844148983006,
+     "deficit_pp": 46.77329469460544,
+     "margin_pp": -41.0850423539902,
+     "bootstrap_se_pp": 0.38961805965219326,
+     "se_to_flip_NI": 105.44953278260832,
+     "diff_mean_pp": -46.77329469460544,
+     "diff_lower95_one_sided_pp": -47.41417744092733,
+     "delta_pp": 6.3291350869371374,
+     "ni_accept": false,
+     "n": 17944,
+     "n_boot": 10000,
+     "boot_seed": 67997
+    },
+    {
+     "arm": "keep10fresh2_step89500",
+     "axis": "popqa",
+     "decision_axis": true,
+     "reported": 0.04338683675615056,
+     "reported_intact": 0.24749421742482652,
+     "null": 0.0229200252330553,
+     "residual_arm_pp": 2.0466811523095254,
+     "residual_intact_pp": 22.457419219177122,
+     "residual_fraction_recovered": 0.09113607990012484,
+     "deficit_pp": 20.410738066867598,
+     "margin_pp": -18.74675825331184,
+     "bootstrap_se_pp": 0.35367627719737194,
+     "se_to_flip_NI": 53.00541614457805,
+     "diff_mean_pp": -20.410738066867594,
+     "diff_lower95_one_sided_pp": -20.99250017522955,
+     "delta_pp": 2.245741921917712,
+     "ni_accept": false,
+     "n": 14267,
+     "n_boot": 10000,
+     "boot_seed": 68010
+    },
+    {
+     "arm": "keep10fresh2_step89500",
+     "axis": "mmlu_content",
+     "decision_axis": true,
+     "reported": 0.3486682808716707,
+     "reported_intact": 0.47058823529411764,
+     "null": 0.28108531548212506,
+     "residual_arm_pp": 6.7582965389545615,
+     "residual_intact_pp": 18.95029198119926,
+     "residual_fraction_recovered": 0.3566328447951896,
+     "deficit_pp": 12.1919954422447,
+     "margin_pp": -10.909414613302948,
+     "bootstrap_se_pp": 0.3723316731583562,
+     "se_to_flip_NI": 29.300259418604632,
+     "diff_mean_pp": -12.191995442244695,
+     "diff_lower95_one_sided_pp": -12.804443811422875,
+     "delta_pp": 1.895029198119926,
+     "ni_accept": false,
+     "n": 14042,
+     "n_boot": 10000,
+     "boot_seed": 68023
+    },
+    {
+     "arm": "keep10fresh2_step89500",
+     "axis": "nq_open",
+     "decision_axis": false,
+     "reported": 0.0332409972299169,
+     "reported_intact": 0.20498614958448755,
+     "null": 0.00554016620498615,
+     "residual_arm_pp": 2.770083102493075,
+     "residual_intact_pp": 19.94459833795014,
+     "residual_fraction_recovered": 0.1388888888888889,
+     "deficit_pp": 17.174515235457065,
+     "margin_pp": -16.26038781163435,
+     "bootstrap_se_pp": 0.6567769529894196,
+     "se_to_flip_NI": 24.75785384615391,
+     "diff_mean_pp": -17.174515235457065,
+     "diff_lower95_one_sided_pp": -18.25484764542936,
+     "delta_pp": 1.9944598337950141,
+     "ni_accept": false,
+     "n": 3610,
+     "n_boot": 10000,
+     "boot_seed": 68036
+    },
+    {
+     "arm": "keep10fresh2_step90000",
+     "axis": "triviaqa",
+     "decision_axis": true,
+     "reported": 0.17498885421310745,
+     "reported_intact": 0.6354770396790014,
+     "null": 0.0025635309852875612,
+     "residual_arm_pp": 17.24253232278199,
+     "residual_intact_pp": 63.29135086937138,
+     "residual_fraction_recovered": 0.27243109976226115,
+     "deficit_pp": 46.04881854658939,
+     "margin_pp": -40.36613909942042,
+     "bootstrap_se_pp": 0.3930060427796039,
+     "se_to_flip_NI": 102.71124284482715,
+     "diff_mean_pp": -46.04881854658939,
+     "diff_lower95_one_sided_pp": -46.69527418635756,
+     "delta_pp": 6.3291350869371374,
+     "ni_accept": false,
+     "n": 17944,
+     "n_boot": 10000,
+     "boot_seed": 68094
+    },
+    {
+     "arm": "keep10fresh2_step90000",
+     "axis": "popqa",
+     "decision_axis": true,
+     "reported": 0.04338683675615056,
+     "reported_intact": 0.24749421742482652,
+     "null": 0.0229200252330553,
+     "residual_arm_pp": 2.0466811523095254,
+     "residual_intact_pp": 22.457419219177122,
+     "residual_fraction_recovered": 0.09113607990012484,
+     "deficit_pp": 20.410738066867598,
+     "margin_pp": -18.725730707226464,
+     "bootstrap_se_pp": 0.3408927972986702,
+     "se_to_flip_NI": 54.931435499999964,
+     "diff_mean_pp": -20.410738066867594,
+     "diff_lower95_one_sided_pp": -20.971472629144177,
+     "delta_pp": 2.245741921917712,
+     "ni_accept": false,
+     "n": 14267,
+     "n_boot": 10000,
+     "boot_seed": 68107
+    },
+    {
+     "arm": "keep10fresh2_step90000",
+     "axis": "mmlu_content",
+     "decision_axis": true,
+     "reported": 0.3478137017518872,
+     "reported_intact": 0.47058823529411764,
+     "null": 0.28108531548212506,
+     "residual_arm_pp": 6.672838626976213,
+     "residual_intact_pp": 18.95029198119926,
+     "residual_fraction_recovered": 0.3521232619316046,
+     "deficit_pp": 12.277453354223049,
+     "margin_pp": -11.00199401794616,
+     "bootstrap_se_pp": 0.37666111121833645,
+     "se_to_flip_NI": 29.20926448275865,
+     "diff_mean_pp": -12.277453354223045,
+     "diff_lower95_one_sided_pp": -12.897023216066087,
+     "delta_pp": 1.895029198119926,
+     "ni_accept": false,
+     "n": 14042,
+     "n_boot": 10000,
+     "boot_seed": 68120
+    },
+    {
+     "arm": "keep10fresh2_step90000",
+     "axis": "nq_open",
+     "decision_axis": false,
+     "reported": 0.0407202216066482,
+     "reported_intact": 0.20498614958448755,
+     "null": 0.00554016620498615,
+     "residual_arm_pp": 3.5180055401662047,
+     "residual_intact_pp": 19.94459833795014,
+     "residual_fraction_recovered": 0.17638888888888885,
+     "deficit_pp": 16.426592797783936,
+     "margin_pp": -15.512465373961218,
+     "bootstrap_se_pp": 0.6567769529894218,
+     "se_to_flip_NI": 23.619076923076904,
+     "diff_mean_pp": -16.426592797783933,
+     "diff_lower95_one_sided_pp": -17.506925207756233,
+     "delta_pp": 1.9944598337950141,
+     "ni_accept": false,
+     "n": 3610,
+     "n_boot": 10000,
+     "boot_seed": 68133
+    }
+   ],
+   "retired_cells": [],
+   "ratio_rule": {
+    "keep10fresh2_step89000": {
+     "per_axis_ratio": {
+      "triviaqa": 0.2829957028852056,
+      "popqa": 0.18719909374114982,
+      "mmlu_content": 0.7371368038740921,
+      "nq_open": 0.1824324324324324
+     },
+     "mean_ratio": 0.34744100823322,
+     "rho": 0.85,
+     "ratio_accept": false,
+     "axes_used": [
+      "triviaqa",
+      "popqa",
+      "mmlu_content",
+      "nq_open"
+     ]
+    },
+    "keep10fresh2_step89500": {
+     "per_axis_ratio": {
+      "triviaqa": 0.2639656230816452,
+      "popqa": 0.1753044463324837,
+      "mmlu_content": 0.7409200968523002,
+      "nq_open": 0.16216216216216217
+     },
+     "mean_ratio": 0.33558808210714786,
+     "rho": 0.85,
+     "ratio_accept": false,
+     "axes_used": [
+      "triviaqa",
+      "popqa",
+      "mmlu_content",
+      "nq_open"
+     ]
+    },
+    "keep10fresh2_step90000": {
+     "per_axis_ratio": {
+      "triviaqa": 0.27536613171972285,
+      "popqa": 0.1753044463324837,
+      "mmlu_content": 0.7391041162227603,
+      "nq_open": 0.19864864864864862
+     },
+     "mean_ratio": 0.3471058357309038,
+     "rho": 0.85,
+     "ratio_accept": false,
+     "axes_used": [
+      "triviaqa",
+      "popqa",
+      "mmlu_content",
+      "nq_open"
+     ]
+    }
+   }
+  },
+  "last": {
+   "intact_residual_pp": {
+    "triviaqa": 63.29135086937138,
+    "popqa": 22.457419219177122,
+    "mmlu_content": 18.843469591226324,
+    "nq_open": 19.94459833795014
+   },
+   "delta_pp": {
+    "triviaqa": 6.3291350869371374,
+    "popqa": 2.245741921917712,
+    "mmlu_content": 1.8843469591226323,
+    "nq_open": 1.994459833795014
+   },
+   "cells": [
+    {
+     "arm": "keep10fresh2_step89000",
+     "axis": "triviaqa",
+     "decision_axis": true,
+     "reported": 0.1798372715113687,
+     "reported_intact": 0.6354770396790014,
+     "null": 0.0025635309852875612,
+     "residual_arm_pp": 17.727374052608113,
+     "residual_intact_pp": 63.29135086937138,
+     "residual_fraction_recovered": 0.28009157347891167,
+     "deficit_pp": 45.563976816763265,
+     "margin_pp": -39.870151582701745,
+     "bootstrap_se_pp": 0.3862300765247826,
+     "se_to_flip_NI": 103.22901815789444,
+     "diff_mean_pp": -45.563976816763265,
+     "diff_lower95_one_sided_pp": -46.19928666963888,
+     "delta_pp": 6.3291350869371374,
+     "ni_accept": false,
+     "n": 17944,
+     "n_boot": 10000,
+     "boot_seed": 67900
+    },
+    {
+     "arm": "keep10fresh2_step89000",
+     "axis": "popqa",
+     "decision_axis": true,
+     "reported": 0.04633069320810262,
+     "reported_intact": 0.24749421742482652,
+     "null": 0.0229200252330553,
+     "residual_arm_pp": 2.3410667975047317,
+     "residual_intact_pp": 22.457419219177122,
+     "residual_fraction_recovered": 0.1042446941323346,
+     "deficit_pp": 20.116352421672392,
+     "margin_pp": -18.43169552113268,
+     "bootstrap_se_pp": 0.34110585529698184,
+     "se_to_flip_NI": 54.03511911305431,
+     "diff_mean_pp": -20.11635242167239,
+     "diff_lower95_one_sided_pp": -20.677437443050394,
+     "delta_pp": 2.245741921917712,
+     "ni_accept": false,
+     "n": 14267,
+     "n_boot": 10000,
+     "boot_seed": 67913
+    },
+    {
+     "arm": "keep10fresh2_step89000",
+     "axis": "mmlu_content",
+     "decision_axis": true,
+     "reported": 0.3468879077054551,
+     "reported_intact": 0.47058823529411764,
+     "null": 0.28215353938185445,
+     "residual_arm_pp": 6.473436832360063,
+     "residual_intact_pp": 18.843469591226324,
+     "residual_fraction_recovered": 0.34353741496598633,
+     "deficit_pp": 12.37003275886626,
+     "margin_pp": -11.105255661586668,
+     "bootstrap_se_pp": 0.37666111121833645,
+     "se_to_flip_NI": 29.48341448275865,
+     "diff_mean_pp": -12.370032758866259,
+     "diff_lower95_one_sided_pp": -12.9896026207093,
+     "delta_pp": 1.8843469591226327,
+     "ni_accept": false,
+     "n": 14042,
+     "n_boot": 10000,
+     "boot_seed": 67926
+    },
+    {
+     "arm": "keep10fresh2_step89000",
+     "axis": "nq_open",
+     "decision_axis": false,
+     "reported": 0.037396121883656507,
+     "reported_intact": 0.20498614958448755,
+     "null": 0.00554016620498615,
+     "residual_arm_pp": 3.1855955678670353,
+     "residual_intact_pp": 19.94459833795014,
+     "residual_fraction_recovered": 0.15972222222222218,
+     "deficit_pp": 16.759002770083104,
+     "margin_pp": -15.872576177285316,
+     "bootstrap_se_pp": 0.6736173876814556,
+     "se_to_flip_NI": 23.56319250000007,
+     "diff_mean_pp": -16.759002770083104,
+     "diff_lower95_one_sided_pp": -17.86703601108033,
+     "delta_pp": 1.9944598337950141,
+     "ni_accept": false,
+     "n": 3610,
+     "n_boot": 10000,
+     "boot_seed": 67939
+    },
+    {
+     "arm": "keep10fresh2_step89500",
+     "axis": "triviaqa",
+     "decision_axis": true,
+     "reported": 0.16774409273294694,
+     "reported_intact": 0.6354770396790014,
+     "null": 0.0025635309852875612,
+     "residual_arm_pp": 16.51805617476594,
+     "residual_intact_pp": 63.29135086937138,
+     "residual_fraction_recovered": 0.2609844148983006,
+     "deficit_pp": 46.77329469460544,
+     "margin_pp": -41.0850423539902,
+     "bootstrap_se_pp": 0.38961805965219326,
+     "se_to_flip_NI": 105.44953278260832,
+     "diff_mean_pp": -46.77329469460544,
+     "diff_lower95_one_sided_pp": -47.41417744092733,
+     "delta_pp": 6.3291350869371374,
+     "ni_accept": false,
+     "n": 17944,
+     "n_boot": 10000,
+     "boot_seed": 67997
+    },
+    {
+     "arm": "keep10fresh2_step89500",
+     "axis": "popqa",
+     "decision_axis": true,
+     "reported": 0.04338683675615056,
+     "reported_intact": 0.24749421742482652,
+     "null": 0.0229200252330553,
+     "residual_arm_pp": 2.0466811523095254,
+     "residual_intact_pp": 22.457419219177122,
+     "residual_fraction_recovered": 0.09113607990012484,
+     "deficit_pp": 20.410738066867598,
+     "margin_pp": -18.74675825331184,
+     "bootstrap_se_pp": 0.35367627719737194,
+     "se_to_flip_NI": 53.00541614457805,
+     "diff_mean_pp": -20.410738066867594,
+     "diff_lower95_one_sided_pp": -20.99250017522955,
+     "delta_pp": 2.245741921917712,
+     "ni_accept": false,
+     "n": 14267,
+     "n_boot": 10000,
+     "boot_seed": 68010
+    },
+    {
+     "arm": "keep10fresh2_step89500",
+     "axis": "mmlu_content",
+     "decision_axis": true,
+     "reported": 0.3486682808716707,
+     "reported_intact": 0.47058823529411764,
+     "null": 0.28215353938185445,
+     "residual_arm_pp": 6.651474148981623,
+     "residual_intact_pp": 18.843469591226324,
+     "residual_fraction_recovered": 0.35298563869992416,
+     "deficit_pp": 12.1919954422447,
+     "margin_pp": -10.920096852300242,
+     "bootstrap_se_pp": 0.3723316731583562,
+     "se_to_flip_NI": 29.328949534883705,
+     "diff_mean_pp": -12.191995442244695,
+     "diff_lower95_one_sided_pp": -12.804443811422875,
+     "delta_pp": 1.8843469591226327,
+     "ni_accept": false,
+     "n": 14042,
+     "n_boot": 10000,
+     "boot_seed": 68023
+    },
+    {
+     "arm": "keep10fresh2_step89500",
+     "axis": "nq_open",
+     "decision_axis": false,
+     "reported": 0.0332409972299169,
+     "reported_intact": 0.20498614958448755,
+     "null": 0.00554016620498615,
+     "residual_arm_pp": 2.770083102493075,
+     "residual_intact_pp": 19.94459833795014,
+     "residual_fraction_recovered": 0.1388888888888889,
+     "deficit_pp": 17.174515235457065,
+     "margin_pp": -16.26038781163435,
+     "bootstrap_se_pp": 0.6567769529894196,
+     "se_to_flip_NI": 24.75785384615391,
+     "diff_mean_pp": -17.174515235457065,
+     "diff_lower95_one_sided_pp": -18.25484764542936,
+     "delta_pp": 1.9944598337950141,
+     "ni_accept": false,
+     "n": 3610,
+     "n_boot": 10000,
+     "boot_seed": 68036
+    },
+    {
+     "arm": "keep10fresh2_step90000",
+     "axis": "triviaqa",
+     "decision_axis": true,
+     "reported": 0.17498885421310745,
+     "reported_intact": 0.6354770396790014,
+     "null": 0.0025635309852875612,
+     "residual_arm_pp": 17.24253232278199,
+     "residual_intact_pp": 63.29135086937138,
+     "residual_fraction_recovered": 0.27243109976226115,
+     "deficit_pp": 46.04881854658939,
+     "margin_pp": -40.36613909942042,
+     "bootstrap_se_pp": 0.3930060427796039,
+     "se_to_flip_NI": 102.71124284482715,
+     "diff_mean_pp": -46.04881854658939,
+     "diff_lower95_one_sided_pp": -46.69527418635756,
+     "delta_pp": 6.3291350869371374,
+     "ni_accept": false,
+     "n": 17944,
+     "n_boot": 10000,
+     "boot_seed": 68094
+    },
+    {
+     "arm": "keep10fresh2_step90000",
+     "axis": "popqa",
+     "decision_axis": true,
+     "reported": 0.04338683675615056,
+     "reported_intact": 0.24749421742482652,
+     "null": 0.0229200252330553,
+     "residual_arm_pp": 2.0466811523095254,
+     "residual_intact_pp": 22.457419219177122,
+     "residual_fraction_recovered": 0.09113607990012484,
+     "deficit_pp": 20.410738066867598,
+     "margin_pp": -18.725730707226464,
+     "bootstrap_se_pp": 0.3408927972986702,
+     "se_to_flip_NI": 54.931435499999964,
+     "diff_mean_pp": -20.410738066867594,
+     "diff_lower95_one_sided_pp": -20.971472629144177,
+     "delta_pp": 2.245741921917712,
+     "ni_accept": false,
+     "n": 14267,
+     "n_boot": 10000,
+     "boot_seed": 68107
+    },
+    {
+     "arm": "keep10fresh2_step90000",
+     "axis": "mmlu_content",
+     "decision_axis": true,
+     "reported": 0.3478137017518872,
+     "reported_intact": 0.47058823529411764,
+     "null": 0.28215353938185445,
+     "residual_arm_pp": 6.566016237003275,
+     "residual_intact_pp": 18.843469591226324,
+     "residual_fraction_recovered": 0.34845049130763406,
+     "deficit_pp": 12.277453354223049,
+     "margin_pp": -11.012676256943454,
+     "bootstrap_se_pp": 0.37666111121833645,
+     "se_to_flip_NI": 29.237624827586234,
+     "diff_mean_pp": -12.277453354223045,
+     "diff_lower95_one_sided_pp": -12.897023216066087,
+     "delta_pp": 1.8843469591226327,
+     "ni_accept": false,
+     "n": 14042,
+     "n_boot": 10000,
+     "boot_seed": 68120
+    },
+    {
+     "arm": "keep10fresh2_step90000",
+     "axis": "nq_open",
+     "decision_axis": false,
+     "reported": 0.0407202216066482,
+     "reported_intact": 0.20498614958448755,
+     "null": 0.00554016620498615,
+     "residual_arm_pp": 3.5180055401662047,
+     "residual_intact_pp": 19.94459833795014,
+     "residual_fraction_recovered": 0.17638888888888885,
+     "deficit_pp": 16.426592797783936,
+     "margin_pp": -15.512465373961218,
+     "bootstrap_se_pp": 0.6567769529894218,
+     "se_to_flip_NI": 23.619076923076904,
+     "diff_mean_pp": -16.426592797783933,
+     "diff_lower95_one_sided_pp": -17.506925207756233,
+     "delta_pp": 1.9944598337950141,
+     "ni_accept": false,
+     "n": 3610,
+     "n_boot": 10000,
+     "boot_seed": 68133
+    }
+   ],
+   "retired_cells": [],
+   "ratio_rule": {
+    "keep10fresh2_step89000": {
+     "per_axis_ratio": {
+      "triviaqa": 0.2829957028852056,
+      "popqa": 0.18719909374114982,
+      "mmlu_content": 0.7371368038740921,
+      "nq_open": 0.1824324324324324
+     },
+     "mean_ratio": 0.34744100823322,
+     "rho": 0.85,
+     "ratio_accept": false,
+     "axes_used": [
+      "triviaqa",
+      "popqa",
+      "mmlu_content",
+      "nq_open"
+     ]
+    },
+    "keep10fresh2_step89500": {
+     "per_axis_ratio": {
+      "triviaqa": 0.2639656230816452,
+      "popqa": 0.1753044463324837,
+      "mmlu_content": 0.7409200968523002,
+      "nq_open": 0.16216216216216217
+     },
+     "mean_ratio": 0.33558808210714786,
+     "rho": 0.85,
+     "ratio_accept": false,
+     "axes_used": [
+      "triviaqa",
+      "popqa",
+      "mmlu_content",
+      "nq_open"
+     ]
+    },
+    "keep10fresh2_step90000": {
+     "per_axis_ratio": {
+      "triviaqa": 0.27536613171972285,
+      "popqa": 0.1753044463324837,
+      "mmlu_content": 0.7391041162227603,
+      "nq_open": 0.19864864864864862
+     },
+     "mean_ratio": 0.3471058357309038,
+     "rho": 0.85,
+     "ratio_accept": false,
+     "axes_used": [
+      "triviaqa",
+      "popqa",
+      "mmlu_content",
+      "nq_open"
+     ]
+    }
+   }
+  },
+  "credit": {
+   "intact_residual_pp": {
+    "triviaqa": 63.29135086937138,
+    "popqa": 22.457419219177122,
+    "mmlu_content": 1.6877937615724254,
+    "nq_open": 19.94459833795014
+   },
+   "delta_pp": {
+    "triviaqa": 6.3291350869371374,
+    "popqa": 2.245741921917712,
+    "mmlu_content": 0.16877937615724256,
+    "nq_open": 1.994459833795014
+   },
+   "cells": [
+    {
+     "arm": "keep10fresh2_step89000",
+     "axis": "triviaqa",
+     "decision_axis": true,
+     "reported": 0.1798372715113687,
+     "reported_intact": 0.6354770396790014,
+     "null": 0.0025635309852875612,
+     "residual_arm_pp": 17.727374052608113,
+     "residual_intact_pp": 63.29135086937138,
+     "residual_fraction_recovered": 0.28009157347891167,
+     "deficit_pp": 45.563976816763265,
+     "margin_pp": -39.870151582701745,
+     "bootstrap_se_pp": 0.3862300765247826,
+     "se_to_flip_NI": 103.22901815789444,
+     "diff_mean_pp": -45.563976816763265,
+     "diff_lower95_one_sided_pp": -46.19928666963888,
+     "delta_pp": 6.3291350869371374,
+     "ni_accept": false,
+     "n": 17944,
+     "n_boot": 10000,
+     "boot_seed": 67900
+    },
+    {
+     "arm": "keep10fresh2_step89000",
+     "axis": "popqa",
+     "decision_axis": true,
+     "reported": 0.04633069320810262,
+     "reported_intact": 0.24749421742482652,
+     "null": 0.0229200252330553,
+     "residual_arm_pp": 2.3410667975047317,
+     "residual_intact_pp": 22.457419219177122,
+     "residual_fraction_recovered": 0.1042446941323346,
+     "deficit_pp": 20.116352421672392,
+     "margin_pp": -18.43169552113268,
+     "bootstrap_se_pp": 0.34110585529698184,
+     "se_to_flip_NI": 54.03511911305431,
+     "diff_mean_pp": -20.11635242167239,
+     "diff_lower95_one_sided_pp": -20.677437443050394,
+     "delta_pp": 2.245741921917712,
+     "ni_accept": false,
+     "n": 14267,
+     "n_boot": 10000,
+     "boot_seed": 67913
+    },
+    {
+     "arm": "keep10fresh2_step89000",
+     "axis": "nq_open",
+     "decision_axis": false,
+     "reported": 0.037396121883656507,
+     "reported_intact": 0.20498614958448755,
+     "null": 0.00554016620498615,
+     "residual_arm_pp": 3.1855955678670353,
+     "residual_intact_pp": 19.94459833795014,
+     "residual_fraction_recovered": 0.15972222222222218,
+     "deficit_pp": 16.759002770083104,
+     "margin_pp": -15.872576177285316,
+     "bootstrap_se_pp": 0.6736173876814556,
+     "se_to_flip_NI": 23.56319250000007,
+     "diff_mean_pp": -16.759002770083104,
+     "diff_lower95_one_sided_pp": -17.86703601108033,
+     "delta_pp": 1.9944598337950141,
+     "ni_accept": false,
+     "n": 3610,
+     "n_boot": 10000,
+     "boot_seed": 67939
+    },
+    {
+     "arm": "keep10fresh2_step89500",
+     "axis": "triviaqa",
+     "decision_axis": true,
+     "reported": 0.16774409273294694,
+     "reported_intact": 0.6354770396790014,
+     "null": 0.0025635309852875612,
+     "residual_arm_pp": 16.51805617476594,
+     "residual_intact_pp": 63.29135086937138,
+     "residual_fraction_recovered": 0.2609844148983006,
+     "deficit_pp": 46.77329469460544,
+     "margin_pp": -41.0850423539902,
+     "bootstrap_se_pp": 0.38961805965219326,
+     "se_to_flip_NI": 105.44953278260832,
+     "diff_mean_pp": -46.77329469460544,
+     "diff_lower95_one_sided_pp": -47.41417744092733,
+     "delta_pp": 6.3291350869371374,
+     "ni_accept": false,
+     "n": 17944,
+     "n_boot": 10000,
+     "boot_seed": 67997
+    },
+    {
+     "arm": "keep10fresh2_step89500",
+     "axis": "popqa",
+     "decision_axis": true,
+     "reported": 0.04338683675615056,
+     "reported_intact": 0.24749421742482652,
+     "null": 0.0229200252330553,
+     "residual_arm_pp": 2.0466811523095254,
+     "residual_intact_pp": 22.457419219177122,
+     "residual_fraction_recovered": 0.09113607990012484,
+     "deficit_pp": 20.410738066867598,
+     "margin_pp": -18.74675825331184,
+     "bootstrap_se_pp": 0.35367627719737194,
+     "se_to_flip_NI": 53.00541614457805,
+     "diff_mean_pp": -20.410738066867594,
+     "diff_lower95_one_sided_pp": -20.99250017522955,
+     "delta_pp": 2.245741921917712,
+     "ni_accept": false,
+     "n": 14267,
+     "n_boot": 10000,
+     "boot_seed": 68010
+    },
+    {
+     "arm": "keep10fresh2_step89500",
+     "axis": "nq_open",
+     "decision_axis": false,
+     "reported": 0.0332409972299169,
+     "reported_intact": 0.20498614958448755,
+     "null": 0.00554016620498615,
+     "residual_arm_pp": 2.770083102493075,
+     "residual_intact_pp": 19.94459833795014,
+     "residual_fraction_recovered": 0.1388888888888889,
+     "deficit_pp": 17.174515235457065,
+     "margin_pp": -16.26038781163435,
+     "bootstrap_se_pp": 0.6567769529894196,
+     "se_to_flip_NI": 24.75785384615391,
+     "diff_mean_pp": -17.174515235457065,
+     "diff_lower95_one_sided_pp": -18.25484764542936,
+     "delta_pp": 1.9944598337950141,
+     "ni_accept": false,
+     "n": 3610,
+     "n_boot": 10000,
+     "boot_seed": 68036
+    },
+    {
+     "arm": "keep10fresh2_step90000",
+     "axis": "triviaqa",
+     "decision_axis": true,
+     "reported": 0.17498885421310745,
+     "reported_intact": 0.6354770396790014,
+     "null": 0.0025635309852875612,
+     "residual_arm_pp": 17.24253232278199,
+     "residual_intact_pp": 63.29135086937138,
+     "residual_fraction_recovered": 0.27243109976226115,
+     "deficit_pp": 46.04881854658939,
+     "margin_pp": -40.36613909942042,
+     "bootstrap_se_pp": 0.3930060427796039,
+     "se_to_flip_NI": 102.71124284482715,
+     "diff_mean_pp": -46.04881854658939,
+     "diff_lower95_one_sided_pp": -46.69527418635756,
+     "delta_pp": 6.3291350869371374,
+     "ni_accept": false,
+     "n": 17944,
+     "n_boot": 10000,
+     "boot_seed": 68094
+    },
+    {
+     "arm": "keep10fresh2_step90000",
+     "axis": "popqa",
+     "decision_axis": true,
+     "reported": 0.04338683675615056,
+     "reported_intact": 0.24749421742482652,
+     "null": 0.0229200252330553,
+     "residual_arm_pp": 2.0466811523095254,
+     "residual_intact_pp": 22.457419219177122,
+     "residual_fraction_recovered": 0.09113607990012484,
+     "deficit_pp": 20.410738066867598,
+     "margin_pp": -18.725730707226464,
+     "bootstrap_se_pp": 0.3408927972986702,
+     "se_to_flip_NI": 54.931435499999964,
+     "diff_mean_pp": -20.410738066867594,
+     "diff_lower95_one_sided_pp": -20.971472629144177,
+     "delta_pp": 2.245741921917712,
+     "ni_accept": false,
+     "n": 14267,
+     "n_boot": 10000,
+     "boot_seed": 68107
+    },
+    {
+     "arm": "keep10fresh2_step90000",
+     "axis": "nq_open",
+     "decision_axis": false,
+     "reported": 0.0407202216066482,
+     "reported_intact": 0.20498614958448755,
+     "null": 0.00554016620498615,
+     "residual_arm_pp": 3.5180055401662047,
+     "residual_intact_pp": 19.94459833795014,
+     "residual_fraction_recovered": 0.17638888888888885,
+     "deficit_pp": 16.426592797783936,
+     "margin_pp": -15.512465373961218,
+     "bootstrap_se_pp": 0.6567769529894218,
+     "se_to_flip_NI": 23.619076923076904,
+     "diff_mean_pp": -16.426592797783933,
+     "diff_lower95_one_sided_pp": -17.506925207756233,
+     "delta_pp": 1.9944598337950141,
+     "ni_accept": false,
+     "n": 3610,
+     "n_boot": 10000,
+     "boot_seed": 68133
+    }
+   ],
+   "retired_cells": [
+    {
+     "arm": "keep10fresh2_step89000",
+     "axis": "mmlu_content",
+     "fatal_conditions": [
+      "D6_delta_finer_than_instrument"
+     ],
+     "ni_run": false,
+     "note": "NI NOT RUN; excluded from the decision family. Never to be reported as 'NI rejected'."
+    },
+    {
+     "arm": "keep10fresh2_step89500",
+     "axis": "mmlu_content",
+     "fatal_conditions": [
+      "D6_delta_finer_than_instrument"
+     ],
+     "ni_run": false,
+     "note": "NI NOT RUN; excluded from the decision family. Never to be reported as 'NI rejected'."
+    },
+    {
+     "arm": "keep10fresh2_step90000",
+     "axis": "mmlu_content",
+     "fatal_conditions": [
+      "D6_delta_finer_than_instrument"
+     ],
+     "ni_run": false,
+     "note": "NI NOT RUN; excluded from the decision family. Never to be reported as 'NI rejected'."
+    }
+   ],
+   "ratio_rule": {
+    "keep10fresh2_step89000": {
+     "per_axis_ratio": {
+      "triviaqa": 0.2829957028852056,
+      "popqa": 0.18719909374114982,
+      "mmlu_content": 0.7371368038740921,
+      "nq_open": 0.1824324324324324
+     },
+     "mean_ratio": 0.34744100823322,
+     "rho": 0.85,
+     "ratio_accept": false,
+     "axes_used": [
+      "triviaqa",
+      "popqa",
+      "mmlu_content",
+      "nq_open"
+     ]
+    },
+    "keep10fresh2_step89500": {
+     "per_axis_ratio": {
+      "triviaqa": 0.2639656230816452,
+      "popqa": 0.1753044463324837,
+      "mmlu_content": 0.7409200968523002,
+      "nq_open": 0.16216216216216217
+     },
+     "mean_ratio": 0.33558808210714786,
+     "rho": 0.85,
+     "ratio_accept": false,
+     "axes_used": [
+      "triviaqa",
+      "popqa",
+      "mmlu_content",
+      "nq_open"
+     ]
+    },
+    "keep10fresh2_step90000": {
+     "per_axis_ratio": {
+      "triviaqa": 0.27536613171972285,
+      "popqa": 0.1753044463324837,
+      "mmlu_content": 0.7391041162227603,
+      "nq_open": 0.19864864864864862
+     },
+     "mean_ratio": 0.3471058357309038,
+     "rho": 0.85,
+     "ratio_accept": false,
+     "axes_used": [
+      "triviaqa",
+      "popqa",
+      "mmlu_content",
+      "nq_open"
+     ]
+    }
+   }
+  },
+  "wrong": {
+   "intact_residual_pp": {
+    "triviaqa": 63.29135086937138,
+    "popqa": 22.457419219177122,
+    "mmlu_content": 27.446232730380288,
+    "nq_open": 19.94459833795014
+   },
+   "delta_pp": {
+    "triviaqa": 6.3291350869371374,
+    "popqa": 2.245741921917712,
+    "mmlu_content": 2.744623273038029,
+    "nq_open": 1.994459833795014
+   },
+   "cells": [
+    {
+     "arm": "keep10fresh2_step89000",
+     "axis": "triviaqa",
+     "decision_axis": true,
+     "reported": 0.1798372715113687,
+     "reported_intact": 0.6354770396790014,
+     "null": 0.0025635309852875612,
+     "residual_arm_pp": 17.727374052608113,
+     "residual_intact_pp": 63.29135086937138,
+     "residual_fraction_recovered": 0.28009157347891167,
+     "deficit_pp": 45.563976816763265,
+     "margin_pp": -39.870151582701745,
+     "bootstrap_se_pp": 0.3862300765247826,
+     "se_to_flip_NI": 103.22901815789444,
+     "diff_mean_pp": -45.563976816763265,
+     "diff_lower95_one_sided_pp": -46.19928666963888,
+     "delta_pp": 6.3291350869371374,
+     "ni_accept": false,
+     "n": 17944,
+     "n_boot": 10000,
+     "boot_seed": 67900
+    },
+    {
+     "arm": "keep10fresh2_step89000",
+     "axis": "popqa",
+     "decision_axis": true,
+     "reported": 0.04633069320810262,
+     "reported_intact": 0.24749421742482652,
+     "null": 0.0229200252330553,
+     "residual_arm_pp": 2.3410667975047317,
+     "residual_intact_pp": 22.457419219177122,
+     "residual_fraction_recovered": 0.1042446941323346,
+     "deficit_pp": 20.116352421672392,
+     "margin_pp": -18.43169552113268,
+     "bootstrap_se_pp": 0.34110585529698184,
+     "se_to_flip_NI": 54.03511911305431,
+     "diff_mean_pp": -20.11635242167239,
+     "diff_lower95_one_sided_pp": -20.677437443050394,
+     "delta_pp": 2.245741921917712,
+     "ni_accept": false,
+     "n": 14267,
+     "n_boot": 10000,
+     "boot_seed": 67913
+    },
+    {
+     "arm": "keep10fresh2_step89000",
+     "axis": "mmlu_content",
+     "decision_axis": true,
+     "reported": 0.3468879077054551,
+     "reported_intact": 0.47058823529411764,
+     "null": 0.19612590799031476,
+     "residual_arm_pp": 15.076199971514031,
+     "residual_intact_pp": 27.446232730380288,
+     "residual_fraction_recovered": 0.5492994291645045,
+     "deficit_pp": 12.370032758866257,
+     "margin_pp": -10.244979347671272,
+     "bootstrap_se_pp": 0.37666111121833645,
+     "se_to_flip_NI": 27.199461379310375,
+     "diff_mean_pp": -12.370032758866259,
+     "diff_lower95_one_sided_pp": -12.9896026207093,
+     "delta_pp": 2.744623273038029,
+     "ni_accept": false,
+     "n": 14042,
+     "n_boot": 10000,
+     "boot_seed": 67926
+    },
+    {
+     "arm": "keep10fresh2_step89000",
+     "axis": "nq_open",
+     "decision_axis": false,
+     "reported": 0.037396121883656507,
+     "reported_intact": 0.20498614958448755,
+     "null": 0.00554016620498615,
+     "residual_arm_pp": 3.1855955678670353,
+     "residual_intact_pp": 19.94459833795014,
+     "residual_fraction_recovered": 0.15972222222222218,
+     "deficit_pp": 16.759002770083104,
+     "margin_pp": -15.872576177285316,
+     "bootstrap_se_pp": 0.6736173876814556,
+     "se_to_flip_NI": 23.56319250000007,
+     "diff_mean_pp": -16.759002770083104,
+     "diff_lower95_one_sided_pp": -17.86703601108033,
+     "delta_pp": 1.9944598337950141,
+     "ni_accept": false,
+     "n": 3610,
+     "n_boot": 10000,
+     "boot_seed": 67939
+    },
+    {
+     "arm": "keep10fresh2_step89500",
+     "axis": "triviaqa",
+     "decision_axis": true,
+     "reported": 0.16774409273294694,
+     "reported_intact": 0.6354770396790014,
+     "null": 0.0025635309852875612,
+     "residual_arm_pp": 16.51805617476594,
+     "residual_intact_pp": 63.29135086937138,
+     "residual_fraction_recovered": 0.2609844148983006,
+     "deficit_pp": 46.77329469460544,
+     "margin_pp": -41.0850423539902,
+     "bootstrap_se_pp": 0.38961805965219326,
+     "se_to_flip_NI": 105.44953278260832,
+     "diff_mean_pp": -46.77329469460544,
+     "diff_lower95_one_sided_pp": -47.41417744092733,
+     "delta_pp": 6.3291350869371374,
+     "ni_accept": false,
+     "n": 17944,
+     "n_boot": 10000,
+     "boot_seed": 67997
+    },
+    {
+     "arm": "keep10fresh2_step89500",
+     "axis": "popqa",
+     "decision_axis": true,
+     "reported": 0.04338683675615056,
+     "reported_intact": 0.24749421742482652,
+     "null": 0.0229200252330553,
+     "residual_arm_pp": 2.0466811523095254,
+     "residual_intact_pp": 22.457419219177122,
+     "residual_fraction_recovered": 0.09113607990012484,
+     "deficit_pp": 20.410738066867598,
+     "margin_pp": -18.74675825331184,
+     "bootstrap_se_pp": 0.35367627719737194,
+     "se_to_flip_NI": 53.00541614457805,
+     "diff_mean_pp": -20.410738066867594,
+     "diff_lower95_one_sided_pp": -20.99250017522955,
+     "delta_pp": 2.245741921917712,
+     "ni_accept": false,
+     "n": 14267,
+     "n_boot": 10000,
+     "boot_seed": 68010
+    },
+    {
+     "arm": "keep10fresh2_step89500",
+     "axis": "mmlu_content",
+     "decision_axis": true,
+     "reported": 0.3486682808716707,
+     "reported_intact": 0.47058823529411764,
+     "null": 0.19612590799031476,
+     "residual_arm_pp": 15.254237288135592,
+     "residual_intact_pp": 27.446232730380288,
+     "residual_fraction_recovered": 0.5557861961598338,
+     "deficit_pp": 12.191995442244696,
+     "margin_pp": -10.059820538384846,
+     "bootstrap_se_pp": 0.3723316731583562,
+     "se_to_flip_NI": 27.01843883720929,
+     "diff_mean_pp": -12.191995442244695,
+     "diff_lower95_one_sided_pp": -12.804443811422875,
+     "delta_pp": 2.744623273038029,
+     "ni_accept": false,
+     "n": 14042,
+     "n_boot": 10000,
+     "boot_seed": 68023
+    },
+    {
+     "arm": "keep10fresh2_step89500",
+     "axis": "nq_open",
+     "decision_axis": false,
+     "reported": 0.0332409972299169,
+     "reported_intact": 0.20498614958448755,
+     "null": 0.00554016620498615,
+     "residual_arm_pp": 2.770083102493075,
+     "residual_intact_pp": 19.94459833795014,
+     "residual_fraction_recovered": 0.1388888888888889,
+     "deficit_pp": 17.174515235457065,
+     "margin_pp": -16.26038781163435,
+     "bootstrap_se_pp": 0.6567769529894196,
+     "se_to_flip_NI": 24.75785384615391,
+     "diff_mean_pp": -17.174515235457065,
+     "diff_lower95_one_sided_pp": -18.25484764542936,
+     "delta_pp": 1.9944598337950141,
+     "ni_accept": false,
+     "n": 3610,
+     "n_boot": 10000,
+     "boot_seed": 68036
+    },
+    {
+     "arm": "keep10fresh2_step90000",
+     "axis": "triviaqa",
+     "decision_axis": true,
+     "reported": 0.17498885421310745,
+     "reported_intact": 0.6354770396790014,
+     "null": 0.0025635309852875612,
+     "residual_arm_pp": 17.24253232278199,
+     "residual_intact_pp": 63.29135086937138,
+     "residual_fraction_recovered": 0.27243109976226115,
+     "deficit_pp": 46.04881854658939,
+     "margin_pp": -40.36613909942042,
+     "bootstrap_se_pp": 0.3930060427796039,
+     "se_to_flip_NI": 102.71124284482715,
+     "diff_mean_pp": -46.04881854658939,
+     "diff_lower95_one_sided_pp": -46.69527418635756,
+     "delta_pp": 6.3291350869371374,
+     "ni_accept": false,
+     "n": 17944,
+     "n_boot": 10000,
+     "boot_seed": 68094
+    },
+    {
+     "arm": "keep10fresh2_step90000",
+     "axis": "popqa",
+     "decision_axis": true,
+     "reported": 0.04338683675615056,
+     "reported_intact": 0.24749421742482652,
+     "null": 0.0229200252330553,
+     "residual_arm_pp": 2.0466811523095254,
+     "residual_intact_pp": 22.457419219177122,
+     "residual_fraction_recovered": 0.09113607990012484,
+     "deficit_pp": 20.410738066867598,
+     "margin_pp": -18.725730707226464,
+     "bootstrap_se_pp": 0.3408927972986702,
+     "se_to_flip_NI": 54.931435499999964,
+     "diff_mean_pp": -20.410738066867594,
+     "diff_lower95_one_sided_pp": -20.971472629144177,
+     "delta_pp": 2.245741921917712,
+     "ni_accept": false,
+     "n": 14267,
+     "n_boot": 10000,
+     "boot_seed": 68107
+    },
+    {
+     "arm": "keep10fresh2_step90000",
+     "axis": "mmlu_content",
+     "decision_axis": true,
+     "reported": 0.3478137017518872,
+     "reported_intact": 0.47058823529411764,
+     "null": 0.19612590799031476,
+     "residual_arm_pp": 15.168779376157243,
+     "residual_intact_pp": 27.446232730380288,
+     "residual_fraction_recovered": 0.5526725480020758,
+     "deficit_pp": 12.277453354223045,
+     "margin_pp": -10.152399943028058,
+     "bootstrap_se_pp": 0.37666111121833645,
+     "se_to_flip_NI": 26.95367172413796,
+     "diff_mean_pp": -12.277453354223045,
+     "diff_lower95_one_sided_pp": -12.897023216066087,
+     "delta_pp": 2.744623273038029,
+     "ni_accept": false,
+     "n": 14042,
+     "n_boot": 10000,
+     "boot_seed": 68120
+    },
+    {
+     "arm": "keep10fresh2_step90000",
+     "axis": "nq_open",
+     "decision_axis": false,
+     "reported": 0.0407202216066482,
+     "reported_intact": 0.20498614958448755,
+     "null": 0.00554016620498615,
+     "residual_arm_pp": 3.5180055401662047,
+     "residual_intact_pp": 19.94459833795014,
+     "residual_fraction_recovered": 0.17638888888888885,
+     "deficit_pp": 16.426592797783936,
+     "margin_pp": -15.512465373961218,
+     "bootstrap_se_pp": 0.6567769529894218,
+     "se_to_flip_NI": 23.619076923076904,
+     "diff_mean_pp": -16.426592797783933,
+     "diff_lower95_one_sided_pp": -17.506925207756233,
+     "delta_pp": 1.9944598337950141,
+     "ni_accept": false,
+     "n": 3610,
+     "n_boot": 10000,
+     "boot_seed": 68133
+    }
+   ],
+   "retired_cells": [],
+   "ratio_rule": {
+    "keep10fresh2_step89000": {
+     "per_axis_ratio": {
+      "triviaqa": 0.2829957028852056,
+      "popqa": 0.18719909374114982,
+      "mmlu_content": 0.7371368038740921,
+      "nq_open": 0.1824324324324324
+     },
+     "mean_ratio": 0.34744100823322,
+     "rho": 0.85,
+     "ratio_accept": false,
+     "axes_used": [
+      "triviaqa",
+      "popqa",
+      "mmlu_content",
+      "nq_open"
+     ]
+    },
+    "keep10fresh2_step89500": {
+     "per_axis_ratio": {
+      "triviaqa": 0.2639656230816452,
+      "popqa": 0.1753044463324837,
+      "mmlu_content": 0.7409200968523002,
+      "nq_open": 0.16216216216216217
+     },
+     "mean_ratio": 0.33558808210714786,
+     "rho": 0.85,
+     "ratio_accept": false,
+     "axes_used": [
+      "triviaqa",
+      "popqa",
+      "mmlu_content",
+      "nq_open"
+     ]
+    },
+    "keep10fresh2_step90000": {
+     "per_axis_ratio": {
+      "triviaqa": 0.27536613171972285,
+      "popqa": 0.1753044463324837,
+      "mmlu_content": 0.7391041162227603,
+      "nq_open": 0.19864864864864862
+     },
+     "mean_ratio": 0.3471058357309038,
+     "rho": 0.85,
+     "ratio_accept": false,
+     "axes_used": [
+      "triviaqa",
+      "popqa",
+      "mmlu_content",
+      "nq_open"
+     ]
+    }
+   }
+  }
+ },
+ "Q1_per_axis_range_and_gate": {
+  "triviaqa": {
+   "decision_axis": true,
+   "per_step": {
+    "89000": {
+     "acc": 0.1798372715113687,
+     "margin_pp": -39.870151582701745,
+     "deficit_pp": 45.563976816763265,
+     "lo95_pp": -46.19928666963888,
+     "delta_pp": 6.3291350869371374,
+     "recovery_fraction": 0.28009157347891167,
+     "bootstrap_se_pp": 0.3862300765247826,
+     "se_to_flip_NI": 103.22901815789444,
+     "ni_accept": false
+    },
+    "89500": {
+     "acc": 0.16774409273294694,
+     "margin_pp": -41.0850423539902,
+     "deficit_pp": 46.77329469460544,
+     "lo95_pp": -47.41417744092733,
+     "delta_pp": 6.3291350869371374,
+     "recovery_fraction": 0.2609844148983006,
+     "bootstrap_se_pp": 0.38961805965219326,
+     "se_to_flip_NI": 105.44953278260832,
+     "ni_accept": false
+    },
+    "90000": {
+     "acc": 0.17498885421310745,
+     "margin_pp": -40.36613909942042,
+     "deficit_pp": 46.04881854658939,
+     "lo95_pp": -46.69527418635756,
+     "delta_pp": 6.3291350869371374,
+     "recovery_fraction": 0.27243109976226115,
+     "bootstrap_se_pp": 0.3930060427796039,
+     "se_to_flip_NI": 102.71124284482715,
+     "ni_accept": false
+    }
+   },
+   "margin_range": {
+    "label": "keep10|triviaqa|margin",
+    "k_checkpoints": 3,
+    "margins_pp": [
+     -39.870151582701745,
+     -41.0850423539902,
+     -40.36613909942042
+    ],
+    "range_pp": 1.2148907712884522,
+    "argmax_index": 0,
+    "argmin_index": 1,
+    "best_minus_last_pp": 0.495987516718678,
+    "best_is_not_last": true,
+    "successive_differences_pp": [
+     -1.2148907712884522,
+     0.7189032545697742
+    ],
+    "monotone_nondecreasing": false,
+    "mean_bootstrap_se_pp": 0.3896180596521932,
+    "expected_range_if_pure_noise_pp": 0.6594553524535672,
+    "expected_range_formula": "E[range of k iid N(0,s)] * mean_SE; k=3 -> 3/sqrt(pi)=1.69257, k=2 -> 2/sqrt(pi)=1.12838 (exact for the normal)",
+    "range_over_expected_noise_range": 1.8422638724036948,
+    "range_over_mean_se": 3.1181582608695524,
+    "range_exceeds_item_noise": true,
+    "range_ge_0p5pp": true,
+    "range_lt_0p05pp": false,
+    "reading_note": "`range_pp` is the false advantage available to someone who reports the BEST of these k adjacent checkpoints instead of the last one (`best_minus_last_pp` is that advantage as actually realised). It may only be called a measured gap if `range_exceeds_item_noise` is true; otherwise it is a noise artefact of taking a max-minus-min."
+   },
+   "accuracy_range_pp": {
+    "label": "keep10|triviaqa|acc",
+    "k_checkpoints": 3,
+    "margins_pp": [
+     17.98372715113687,
+     16.774409273294694,
+     17.498885421310746
+    ],
+    "range_pp": 1.2093178778421745,
+    "argmax_index": 0,
+    "argmin_index": 1,
+    "best_minus_last_pp": 0.4848417298261225,
+    "best_is_not_last": true,
+    "successive_differences_pp": [
+     -1.2093178778421745,
+     0.724476148016052
+    ],
+    "monotone_nondecreasing": false,
+    "mean_bootstrap_se_pp": 0.3896180596521932,
+    "expected_range_if_pure_noise_pp": 0.6594553524535672,
+    "expected_range_formula": "E[range of k iid N(0,s)] * mean_SE; k=3 -> 3/sqrt(pi)=1.69257, k=2 -> 2/sqrt(pi)=1.12838 (exact for the normal)",
+    "range_over_expected_noise_range": 1.8338131206954205,
+    "range_over_mean_se": 3.1038547826086815,
+    "range_exceeds_item_noise": true,
+    "range_ge_0p5pp": true,
+    "range_lt_0p05pp": false,
+    "reading_note": "`range_pp` is the false advantage available to someone who reports the BEST of these k adjacent checkpoints instead of the last one (`best_minus_last_pp` is that advantage as actually realised). It may only be called a measured gap if `range_exceeds_item_noise` is true; otherwise it is a noise artefact of taking a max-minus-min."
+   },
+   "adjacent_interval_paired_tests": {
+    "89000->89500": {
+     "acc_delta_pp": -1.2093178778421758,
+     "ci95_pp": [
+      -1.5269728042799822,
+      -0.8972358448506464
+     ],
+     "boot_p_two_sided": 0.0001,
+     "ci_straddles_zero": false,
+     "ci95_excludes_zero": true,
+     "boot_p_below_0p05": true,
+     "distinguishable_from_zero_at_95": true,
+     "criteria_disagree": false,
+     "criteria_disagreement_note": null,
+     "n_items_improved": 288,
+     "n_items_regressed": 505,
+     "wrong_to_right": 288,
+     "right_to_wrong": 505,
+     "n_items_changed": 793,
+     "n": 17944,
+     "step_gap": 500
+    },
+    "89500->90000": {
+     "acc_delta_pp": 0.72447614801605,
+     "ci95_pp": [
+      0.42353990191707536,
+      1.0309852875613017
+     ],
+     "boot_p_two_sided": 0.0001,
+     "ci_straddles_zero": false,
+     "ci95_excludes_zero": true,
+     "boot_p_below_0p05": true,
+     "distinguishable_from_zero_at_95": true,
+     "criteria_disagree": false,
+     "criteria_disagreement_note": null,
+     "n_items_improved": 445,
+     "n_items_regressed": 315,
+     "wrong_to_right": 445,
+     "right_to_wrong": 315,
+     "n_items_changed": 760,
+     "n": 17944,
+     "step_gap": 500
+    }
+   },
+   "any_accept": false
+  },
+  "popqa": {
+   "decision_axis": true,
+   "per_step": {
+    "89000": {
+     "acc": 0.04633069320810262,
+     "margin_pp": -18.43169552113268,
+     "deficit_pp": 20.116352421672392,
+     "lo95_pp": -20.677437443050394,
+     "delta_pp": 2.245741921917712,
+     "recovery_fraction": 0.1042446941323346,
+     "bootstrap_se_pp": 0.34110585529698184,
+     "se_to_flip_NI": 54.03511911305431,
+     "ni_accept": false
+    },
+    "89500": {
+     "acc": 0.04338683675615056,
+     "margin_pp": -18.74675825331184,
+     "deficit_pp": 20.410738066867598,
+     "lo95_pp": -20.99250017522955,
+     "delta_pp": 2.245741921917712,
+     "recovery_fraction": 0.09113607990012484,
+     "bootstrap_se_pp": 0.35367627719737194,
+     "se_to_flip_NI": 53.00541614457805,
+     "ni_accept": false
+    },
+    "90000": {
+     "acc": 0.04338683675615056,
+     "margin_pp": -18.725730707226464,
+     "deficit_pp": 20.410738066867598,
+     "lo95_pp": -20.971472629144177,
+     "delta_pp": 2.245741921917712,
+     "recovery_fraction": 0.09113607990012484,
+     "bootstrap_se_pp": 0.3408927972986702,
+     "se_to_flip_NI": 54.931435499999964,
+     "ni_accept": false
+    }
+   },
+   "margin_range": {
+    "label": "keep10|popqa|margin",
+    "k_checkpoints": 3,
+    "margins_pp": [
+     -18.43169552113268,
+     -18.74675825331184,
+     -18.725730707226464
+    ],
+    "range_pp": 0.3150627321791575,
+    "argmax_index": 0,
+    "argmin_index": 1,
+    "best_minus_last_pp": 0.2940351860937831,
+    "best_is_not_last": true,
+    "successive_differences_pp": [
+     -0.3150627321791575,
+     0.021027546085374382
+    ],
+    "monotone_nondecreasing": false,
+    "mean_bootstrap_se_pp": 0.34522497659767465,
+    "expected_range_if_pure_noise_pp": 0.584317007330778,
+    "expected_range_formula": "E[range of k iid N(0,s)] * mean_SE; k=3 -> 3/sqrt(pi)=1.69257, k=2 -> 2/sqrt(pi)=1.12838 (exact for the normal)",
+    "range_over_expected_noise_range": 0.5391982917259203,
+    "range_over_mean_se": 0.9126301789755257,
+    "range_exceeds_item_noise": false,
+    "range_ge_0p5pp": false,
+    "range_lt_0p05pp": false,
+    "reading_note": "`range_pp` is the false advantage available to someone who reports the BEST of these k adjacent checkpoints instead of the last one (`best_minus_last_pp` is that advantage as actually realised). It may only be called a measured gap if `range_exceeds_item_noise` is true; otherwise it is a noise artefact of taking a max-minus-min."
+   },
+   "accuracy_range_pp": {
+    "label": "keep10|popqa|acc",
+    "k_checkpoints": 3,
+    "margins_pp": [
+     4.633069320810262,
+     4.338683675615056,
+     4.338683675615056
+    ],
+    "range_pp": 0.2943856451952058,
+    "argmax_index": 0,
+    "argmin_index": 1,
+    "best_minus_last_pp": 0.2943856451952058,
+    "best_is_not_last": true,
+    "successive_differences_pp": [
+     -0.2943856451952058,
+     0.0
+    ],
+    "monotone_nondecreasing": false,
+    "mean_bootstrap_se_pp": 0.34522497659767465,
+    "expected_range_if_pure_noise_pp": 0.584317007330778,
+    "expected_range_formula": "E[range of k iid N(0,s)] * mean_SE; k=3 -> 3/sqrt(pi)=1.69257, k=2 -> 2/sqrt(pi)=1.12838 (exact for the normal)",
+    "range_over_expected_noise_range": 0.5038115295325575,
+    "range_over_mean_se": 0.8527356511005951,
+    "range_exceeds_item_noise": false,
+    "range_ge_0p5pp": false,
+    "range_lt_0p05pp": false,
+    "reading_note": "`range_pp` is the false advantage available to someone who reports the BEST of these k adjacent checkpoints instead of the last one (`best_minus_last_pp` is that advantage as actually realised). It may only be called a measured gap if `range_exceeds_item_noise` is true; otherwise it is a noise artefact of taking a max-minus-min."
+   },
+   "adjacent_interval_paired_tests": {
+    "89000->89500": {
+     "acc_delta_pp": -0.2943856451952057,
+     "ci95_pp": [
+      -0.476624377935095,
+      -0.11214691245531647
+     ],
+     "boot_p_two_sided": 0.0014,
+     "ci_straddles_zero": false,
+     "ci95_excludes_zero": true,
+     "boot_p_below_0p05": true,
+     "distinguishable_from_zero_at_95": true,
+     "criteria_disagree": false,
+     "criteria_disagreement_note": null,
+     "n_items_improved": 66,
+     "n_items_regressed": 108,
+     "wrong_to_right": 66,
+     "right_to_wrong": 108,
+     "n_items_changed": 174,
+     "n": 14267,
+     "step_gap": 500
+    },
+    "89500->90000": {
+     "acc_delta_pp": 0.0,
+     "ci95_pp": [
+      -0.16822036868297469,
+      0.16822036868297469
+     ],
+     "boot_p_two_sided": 1.0,
+     "ci_straddles_zero": true,
+     "ci95_excludes_zero": false,
+     "boot_p_below_0p05": false,
+     "distinguishable_from_zero_at_95": false,
+     "criteria_disagree": false,
+     "criteria_disagreement_note": null,
+     "n_items_improved": 74,
+     "n_items_regressed": 74,
+     "wrong_to_right": 74,
+     "right_to_wrong": 74,
+     "n_items_changed": 148,
+     "n": 14267,
+     "step_gap": 500
+    }
+   },
+   "any_accept": false
+  },
+  "mmlu_content": {
+   "decision_axis": true,
+   "per_step": {
+    "89000": {
+     "acc": 0.3468879077054551,
+     "margin_pp": -11.12822247543085,
+     "deficit_pp": 12.370032758866259,
+     "lo95_pp": -12.9896026207093,
+     "delta_pp": 1.8613801452784504,
+     "recovery_fraction": 0.3354375896700143,
+     "bootstrap_se_pp": 0.37666111121833645,
+     "se_to_flip_NI": 29.544389224137962,
+     "ni_accept": false
+    },
+    "89500": {
+     "acc": 0.3486682808716707,
+     "margin_pp": -10.943063666144424,
+     "deficit_pp": 12.1919954422447,
+     "lo95_pp": -12.804443811422875,
+     "delta_pp": 1.8613801452784504,
+     "recovery_fraction": 0.34500239120038234,
+     "bootstrap_se_pp": 0.3723316731583562,
+     "se_to_flip_NI": 29.3906332848837,
+     "ni_accept": false
+    },
+    "90000": {
+     "acc": 0.3478137017518872,
+     "margin_pp": -11.035643070787636,
+     "deficit_pp": 12.277453354223049,
+     "lo95_pp": -12.897023216066087,
+     "delta_pp": 1.8613801452784504,
+     "recovery_fraction": 0.3404112864658057,
+     "bootstrap_se_pp": 0.37666111121833645,
+     "se_to_flip_NI": 29.298599568965546,
+     "ni_accept": false
+    }
+   },
+   "margin_range": {
+    "label": "keep10|mmlu_content|margin",
+    "k_checkpoints": 3,
+    "margins_pp": [
+     -11.12822247543085,
+     -10.943063666144424,
+     -11.035643070787636
+    ],
+    "range_pp": 0.1851588092864258,
+    "argmax_index": 1,
+    "argmin_index": 0,
+    "best_minus_last_pp": 0.09257940464321202,
+    "best_is_not_last": true,
+    "successive_differences_pp": [
+     0.1851588092864258,
+     -0.09257940464321202
+    ],
+    "monotone_nondecreasing": false,
+    "mean_bootstrap_se_pp": 0.375217965198343,
+    "expected_range_if_pure_noise_pp": 0.635082202574669,
+    "expected_range_formula": "E[range of k iid N(0,s)] * mean_SE; k=3 -> 3/sqrt(pi)=1.69257, k=2 -> 2/sqrt(pi)=1.12838 (exact for the normal)",
+    "range_over_expected_noise_range": 0.2915509339354475,
+    "range_over_mean_se": 0.49346999999999863,
+    "range_exceeds_item_noise": false,
+    "range_ge_0p5pp": false,
+    "range_lt_0p05pp": false,
+    "reading_note": "`range_pp` is the false advantage available to someone who reports the BEST of these k adjacent checkpoints instead of the last one (`best_minus_last_pp` is that advantage as actually realised). It may only be called a measured gap if `range_exceeds_item_noise` is true; otherwise it is a noise artefact of taking a max-minus-min."
+   },
+   "accuracy_range_pp": {
+    "label": "keep10|mmlu_content|acc",
+    "k_checkpoints": 3,
+    "margins_pp": [
+     34.68879077054551,
+     34.866828087167065,
+     34.78137017518872
+    ],
+    "range_pp": 0.17803731662155542,
+    "argmax_index": 1,
+    "argmin_index": 0,
+    "best_minus_last_pp": 0.08545791197834518,
+    "best_is_not_last": true,
+    "successive_differences_pp": [
+     0.17803731662155542,
+     -0.08545791197834518
+    ],
+    "monotone_nondecreasing": false,
+    "mean_bootstrap_se_pp": 0.375217965198343,
+    "expected_range_if_pure_noise_pp": 0.635082202574669,
+    "expected_range_formula": "E[range of k iid N(0,s)] * mean_SE; k=3 -> 3/sqrt(pi)=1.69257, k=2 -> 2/sqrt(pi)=1.12838 (exact for the normal)",
+    "range_over_expected_noise_range": 0.2803374364763795,
+    "range_over_mean_se": 0.47449038461536236,
+    "range_exceeds_item_noise": false,
+    "range_ge_0p5pp": false,
+    "range_lt_0p05pp": false,
+    "reading_note": "`range_pp` is the false advantage available to someone who reports the BEST of these k adjacent checkpoints instead of the last one (`best_minus_last_pp` is that advantage as actually realised). It may only be called a measured gap if `range_exceeds_item_noise` is true; otherwise it is a noise artefact of taking a max-minus-min."
+   },
+   "adjacent_interval_paired_tests": {
+    "89000->89500": {
+     "acc_delta_pp": 0.17803731662156388,
+     "ci95_pp": [
+      -0.14955134596211367,
+      0.4985044865403789
+     ],
+     "boot_p_two_sided": 0.299,
+     "ci_straddles_zero": true,
+     "ci95_excludes_zero": false,
+     "boot_p_below_0p05": false,
+     "distinguishable_from_zero_at_95": false,
+     "criteria_disagree": false,
+     "criteria_disagreement_note": null,
+     "n_items_improved": 282,
+     "n_items_regressed": 257,
+     "wrong_to_right": 282,
+     "right_to_wrong": 257,
+     "n_items_changed": 539,
+     "n": 14042,
+     "step_gap": 500
+    },
+    "89500->90000": {
+     "acc_delta_pp": -0.08545791197835066,
+     "ci95_pp": [
+      -0.4272895598917533,
+      0.24943028058680838
+     ],
+     "boot_p_two_sided": 0.635,
+     "ci_straddles_zero": true,
+     "ci95_excludes_zero": false,
+     "boot_p_below_0p05": false,
+     "distinguishable_from_zero_at_95": false,
+     "criteria_disagree": false,
+     "criteria_disagreement_note": null,
+     "n_items_improved": 281,
+     "n_items_regressed": 293,
+     "wrong_to_right": 281,
+     "right_to_wrong": 293,
+     "n_items_changed": 574,
+     "n": 14042,
+     "step_gap": 500
+    }
+   },
+   "any_accept": false
+  },
+  "nq_open": {
+   "decision_axis": false,
+   "per_step": {
+    "89000": {
+     "acc": 0.037396121883656507,
+     "margin_pp": -15.872576177285316,
+     "deficit_pp": 16.759002770083104,
+     "lo95_pp": -17.86703601108033,
+     "delta_pp": 1.9944598337950141,
+     "recovery_fraction": 0.15972222222222218,
+     "bootstrap_se_pp": 0.6736173876814556,
+     "se_to_flip_NI": 23.56319250000007,
+     "ni_accept": false
+    },
+    "89500": {
+     "acc": 0.0332409972299169,
+     "margin_pp": -16.26038781163435,
+     "deficit_pp": 17.174515235457065,
+     "lo95_pp": -18.25484764542936,
+     "delta_pp": 1.9944598337950141,
+     "recovery_fraction": 0.1388888888888889,
+     "bootstrap_se_pp": 0.6567769529894196,
+     "se_to_flip_NI": 24.75785384615391,
+     "ni_accept": false
+    },
+    "90000": {
+     "acc": 0.0407202216066482,
+     "margin_pp": -15.512465373961218,
+     "deficit_pp": 16.426592797783936,
+     "lo95_pp": -17.506925207756233,
+     "delta_pp": 1.9944598337950141,
+     "recovery_fraction": 0.17638888888888885,
+     "bootstrap_se_pp": 0.6567769529894218,
+     "se_to_flip_NI": 23.619076923076904,
+     "ni_accept": false
+    }
+   },
+   "margin_range": {
+    "label": "keep10|nq_open|margin",
+    "k_checkpoints": 3,
+    "margins_pp": [
+     -15.872576177285316,
+     -16.26038781163435,
+     -15.512465373961218
+    ],
+    "range_pp": 0.7479224376731306,
+    "argmax_index": 2,
+    "argmin_index": 1,
+    "best_minus_last_pp": 0.0,
+    "best_is_not_last": false,
+    "successive_differences_pp": [
+     -0.387811634349033,
+     0.7479224376731306
+    ],
+    "monotone_nondecreasing": false,
+    "mean_bootstrap_se_pp": 0.662390431220099,
+    "expected_range_if_pure_noise_pp": 1.1211413446082592,
+    "expected_range_formula": "E[range of k iid N(0,s)] * mean_SE; k=3 -> 3/sqrt(pi)=1.69257, k=2 -> 2/sqrt(pi)=1.12838 (exact for the normal)",
+    "range_over_expected_noise_range": 0.6671080691743324,
+    "range_over_mean_se": 1.1291262711864434,
+    "range_exceeds_item_noise": false,
+    "range_ge_0p5pp": true,
+    "range_lt_0p05pp": false,
+    "reading_note": "`range_pp` is the false advantage available to someone who reports the BEST of these k adjacent checkpoints instead of the last one (`best_minus_last_pp` is that advantage as actually realised). It may only be called a measured gap if `range_exceeds_item_noise` is true; otherwise it is a noise artefact of taking a max-minus-min."
+   },
+   "accuracy_range_pp": {
+    "label": "keep10|nq_open|acc",
+    "k_checkpoints": 3,
+    "margins_pp": [
+     3.739612188365651,
+     3.32409972299169,
+     4.07202216066482
+    ],
+    "range_pp": 0.7479224376731297,
+    "argmax_index": 2,
+    "argmin_index": 1,
+    "best_minus_last_pp": 0.0,
+    "best_is_not_last": false,
+    "successive_differences_pp": [
+     -0.4155124653739608,
+     0.7479224376731297
+    ],
+    "monotone_nondecreasing": false,
+    "mean_bootstrap_se_pp": 0.662390431220099,
+    "expected_range_if_pure_noise_pp": 1.1211413446082592,
+    "expected_range_formula": "E[range of k iid N(0,s)] * mean_SE; k=3 -> 3/sqrt(pi)=1.69257, k=2 -> 2/sqrt(pi)=1.12838 (exact for the normal)",
+    "range_over_expected_noise_range": 0.6671080691743316,
+    "range_over_mean_se": 1.129126271186442,
+    "range_exceeds_item_noise": false,
+    "range_ge_0p5pp": true,
+    "range_lt_0p05pp": false,
+    "reading_note": "`range_pp` is the false advantage available to someone who reports the BEST of these k adjacent checkpoints instead of the last one (`best_minus_last_pp` is that advantage as actually realised). It may only be called a measured gap if `range_exceeds_item_noise` is true; otherwise it is a noise artefact of taking a max-minus-min."
+   },
+   "adjacent_interval_paired_tests": {
+    "89000->89500": {
+     "acc_delta_pp": -0.41551246537396125,
+     "ci95_pp": [
+      -0.775623268698061,
+      -0.02770083102493075
+     ],
+     "boot_p_two_sided": 0.0362,
+     "ci_straddles_zero": false,
+     "ci95_excludes_zero": true,
+     "boot_p_below_0p05": true,
+     "distinguishable_from_zero_at_95": true,
+     "criteria_disagree": false,
+     "criteria_disagreement_note": null,
+     "n_items_improved": 16,
+     "n_items_regressed": 31,
+     "wrong_to_right": 16,
+     "right_to_wrong": 31,
+     "n_items_changed": 47,
+     "n": 3610,
+     "step_gap": 500
+    },
+    "89500->90000": {
+     "acc_delta_pp": 0.7479224376731302,
+     "ci95_pp": [
+      0.3878116343490305,
+      1.1357340720221607
+     ],
+     "boot_p_two_sided": 0.0001,
+     "ci_straddles_zero": false,
+     "ci95_excludes_zero": true,
+     "boot_p_below_0p05": true,
+     "distinguishable_from_zero_at_95": true,
+     "criteria_disagree": false,
+     "criteria_disagreement_note": null,
+     "n_items_improved": 37,
+     "n_items_regressed": 10,
+     "wrong_to_right": 37,
+     "right_to_wrong": 10,
+     "n_items_changed": 47,
+     "n": 3610,
+     "step_gap": 500
+    }
+   },
+   "any_accept": false
+  }
+ },
+ "Q1_decision_axis_summary": {
+  "triviaqa": {
+   "range_pp": 1.2148907712884522,
+   "expected_range_if_pure_noise_pp": 0.6594553524535672,
+   "range_over_floor": 1.8422638724036948,
+   "range_exceeds_item_noise": true,
+   "best_is_not_last": true,
+   "best_minus_last_pp": 0.495987516718678
+  },
+  "popqa": {
+   "range_pp": 0.3150627321791575,
+   "expected_range_if_pure_noise_pp": 0.584317007330778,
+   "range_over_floor": 0.5391982917259203,
+   "range_exceeds_item_noise": false,
+   "best_is_not_last": true,
+   "best_minus_last_pp": 0.2940351860937831
+  },
+  "mmlu_content": {
+   "range_pp": 0.1851588092864258,
+   "expected_range_if_pure_noise_pp": 0.635082202574669,
+   "range_over_floor": 0.2915509339354475,
+   "range_exceeds_item_noise": false,
+   "best_is_not_last": true,
+   "best_minus_last_pp": 0.09257940464321202
+  }
+ },
+ "Q1_n_decision_axes_clearing_gate": 1,
+ "Q2_replication_vs_keep8": {
+  "keep8_reference": {
+   "archive": "a04_neighbour_variability.json",
+   "cluster": "cluster2_130000_131000",
+   "steps": [
+    130000,
+    130500,
+    131000
+   ],
+   "spacing_steps": 500,
+   "resume_seam": false,
+   "numpy_that_published_it": ".82 (numpy 2.4.6)",
+   "per_axis": {
+    "triviaqa": {
+     "margins_pp": [
+      -41.41412171199287,
+      -41.45285332144449,
+      -42.53427329469461
+     ],
+     "range_pp": 1.1201515827017374,
+     "expected_range_if_pure_noise_pp": 0.6577350341428136,
+     "range_exceeds_item_noise": true,
+     "mean_bootstrap_se_pp": 0.388601664713967,
+     "best_minus_last_pp": 1.1201515827017374,
+     "acc_by_step": {
+      "130000": 0.16434462773071778,
+      "130500": 0.1641217119928667,
+      "131000": 0.15325456977262594
+     }
+    },
+    "popqa": {
+     "margins_pp": [
+      -18.059858414523024,
+      -18.136959416836053,
+      -18.31218896754749
+     ],
+     "range_pp": 0.25233055302446417,
+     "expected_range_if_pure_noise_pp": 0.581792700160658,
+     "range_exceeds_item_noise": false,
+     "mean_bootstrap_se_pp": 0.3437335706094921,
+     "best_minus_last_pp": 0.25233055302446417,
+     "acc_by_step": {
+      "130000": 0.05011565150346955,
+      "130500": 0.0492044578397701,
+      "131000": 0.047662437793509496
+     }
+    },
+    "mmlu_content": {
+     "margins_pp": [
+      -11.790521293263069,
+      -11.66233442529554,
+      -11.569755020652329
+     ],
+     "range_pp": 0.22076627261074044,
+     "expected_range_if_pure_noise_pp": 0.6521805695670646,
+     "range_exceeds_item_noise": false,
+     "mean_bootstrap_se_pp": 0.3853199873382988,
+     "best_minus_last_pp": 0.0,
+     "acc_by_step": {
+      "130000": 0.3404785643070788,
+      "130500": 0.3416892180601054,
+      "131000": 0.3425437971798889
+     }
+    },
+    "nq_open": {
+     "margins_pp": [
+      -15.844875346260386,
+      -15.706371191135732,
+      -16.038781163434905
+     ],
+     "range_pp": 0.3324099722991729,
+     "expected_range_if_pure_noise_pp": 1.1401437402795864,
+     "range_exceeds_item_noise": false,
+     "mean_bootstrap_se_pp": 0.6736173876814572,
+     "best_minus_last_pp": 0.3324099722991729,
+     "acc_by_step": {
+      "130000": 0.037673130193905814,
+      "130500": 0.03905817174515235,
+      "131000": 0.03573407202216067
+     }
+    }
+   },
+   "literals_checked_against_archive": true
+  },
+  "per_axis": {
+   "triviaqa": {
+    "decision_axis": true,
+    "keep8_range_pp": 1.1201515827017374,
+    "keep8_gate": true,
+    "keep8_floor_pp": 0.6577350341428136,
+    "keep8_margins_pp": [
+     -41.41412171199287,
+     -41.45285332144449,
+     -42.53427329469461
+    ],
+    "keep10_range_pp": 1.2148907712884522,
+    "keep10_gate": true,
+    "keep10_floor_pp": 0.6594553524535672,
+    "keep10_margins_pp": [
+     -39.870151582701745,
+     -41.0850423539902,
+     -40.36613909942042
+    ],
+    "keep10_over_floor": 1.8422638724036948,
+    "keep10_over_keep8_range": 1.0845771144278613,
+    "both_arms_clear_gate": true,
+    "gate_agreement": true,
+    "shape": {
+     "label": "V_shape_middle_is_minimum",
+     "successive_differences_pp": [
+      -1.2148907712884522,
+      0.7189032545697742
+     ],
+     "argmin_index": 1,
+     "argmax_index": 0,
+     "why_it_matters": "a TERMINAL drift (monotone) means the last checkpoint is the worst and the loophole is 'report an earlier one'; a V-shape means the MIDDLE checkpoint is the outlier and the endpoint has largely recovered, which is the case Heineman et al.'s average-the-final-k prescription actually fixes. Collapsing both into 'the range is big' loses the mechanism."
+    },
+    "keep8_shape": {
+     "label": "monotone_nonincreasing",
+     "successive_differences_pp": [
+      -0.03873160945162368,
+      -1.0814199732501137
+     ],
+     "argmin_index": 2,
+     "argmax_index": 0,
+     "why_it_matters": "a TERMINAL drift (monotone) means the last checkpoint is the worst and the loophole is 'report an earlier one'; a V-shape means the MIDDLE checkpoint is the outlier and the endpoint has largely recovered, which is the case Heineman et al.'s average-the-final-k prescription actually fixes. Collapsing both into 'the range is big' loses the mechanism."
+    },
+    "shape_agreement": false,
+    "replication_label": "REPLICATES_AND_MATERIAL",
+    "prereg_reading": "keep10 triviaqa range clears the item-noise gate AND is >= 0.5 pp: the pp-scale adjacent-500-step margin move is ARM-INDEPENDENT, and A04_GATE_DESIGN 2.5's per-axis tolerance is corroborated on a second, differently-damaged arm",
+    "note": "RANGES are compared across arms because a range is a WITHIN-arm quantity. The two arms' ABSOLUTE margins are NOT comparable: keep10 is 12 layers, keep8 is 10, and the keepN ladder additionally spans two corpora and unequal step counts (STATUS.json:warning)."
+   },
+   "popqa": {
+    "decision_axis": true,
+    "keep8_range_pp": 0.25233055302446417,
+    "keep8_gate": false,
+    "keep8_floor_pp": 0.581792700160658,
+    "keep8_margins_pp": [
+     -18.059858414523024,
+     -18.136959416836053,
+     -18.31218896754749
+    ],
+    "keep10_range_pp": 0.3150627321791575,
+    "keep10_gate": false,
+    "keep10_floor_pp": 0.584317007330778,
+    "keep10_margins_pp": [
+     -18.43169552113268,
+     -18.74675825331184,
+     -18.725730707226464
+    ],
+    "keep10_over_floor": 0.5391982917259203,
+    "keep10_over_keep8_range": 1.2486111111111116,
+    "both_arms_clear_gate": false,
+    "gate_agreement": true,
+    "shape": {
+     "label": "V_shape_middle_is_minimum",
+     "successive_differences_pp": [
+      -0.3150627321791575,
+      0.021027546085374382
+     ],
+     "argmin_index": 1,
+     "argmax_index": 0,
+     "why_it_matters": "a TERMINAL drift (monotone) means the last checkpoint is the worst and the loophole is 'report an earlier one'; a V-shape means the MIDDLE checkpoint is the outlier and the endpoint has largely recovered, which is the case Heineman et al.'s average-the-final-k prescription actually fixes. Collapsing both into 'the range is big' loses the mechanism."
+    },
+    "keep8_shape": {
+     "label": "monotone_nonincreasing",
+     "successive_differences_pp": [
+      -0.07710100231302874,
+      -0.17522955071143542
+     ],
+     "argmin_index": 2,
+     "argmax_index": 0,
+     "why_it_matters": "a TERMINAL drift (monotone) means the last checkpoint is the worst and the loophole is 'report an earlier one'; a V-shape means the MIDDLE checkpoint is the outlier and the endpoint has largely recovered, which is the case Heineman et al.'s average-the-final-k prescription actually fixes. Collapsing both into 'the range is big' loses the mechanism."
+    },
+    "shape_agreement": false,
+    "replication_label": "DOES_NOT_REPLICATE",
+    "prereg_reading": "keep10's triviaqa range FAILS the gate: keep8's 1.1202 pp is an ISOLATED CELL. 2.0.2 retains its logical force (one counterexample still makes single-checkpoint accepts unsafe) but LOSES its claim to generality, and 2.5's per-axis numbers must be labelled keep8-only / not reproduced on keep10. This WEAKENS our position and is to be written exactly that way -- a non-replication may NOT be re-described as 'consistent with noise, so no problem'",
+    "note": "RANGES are compared across arms because a range is a WITHIN-arm quantity. The two arms' ABSOLUTE margins are NOT comparable: keep10 is 12 layers, keep8 is 10, and the keepN ladder additionally spans two corpora and unequal step counts (STATUS.json:warning)."
+   },
+   "mmlu_content": {
+    "decision_axis": true,
+    "keep8_range_pp": 0.22076627261074044,
+    "keep8_gate": false,
+    "keep8_floor_pp": 0.6521805695670646,
+    "keep8_margins_pp": [
+     -11.790521293263069,
+     -11.66233442529554,
+     -11.569755020652329
+    ],
+    "keep10_range_pp": 0.1851588092864258,
+    "keep10_gate": false,
+    "keep10_floor_pp": 0.635082202574669,
+    "keep10_margins_pp": [
+     -11.12822247543085,
+     -10.943063666144424,
+     -11.035643070787636
+    ],
+    "keep10_over_floor": 0.2915509339354475,
+    "keep10_over_keep8_range": 0.8387096774193473,
+    "both_arms_clear_gate": false,
+    "gate_agreement": true,
+    "shape": {
+     "label": "inverted_V_middle_is_maximum",
+     "successive_differences_pp": [
+      0.1851588092864258,
+      -0.09257940464321202
+     ],
+     "argmin_index": 0,
+     "argmax_index": 1,
+     "why_it_matters": "a TERMINAL drift (monotone) means the last checkpoint is the worst and the loophole is 'report an earlier one'; a V-shape means the MIDDLE checkpoint is the outlier and the endpoint has largely recovered, which is the case Heineman et al.'s average-the-final-k prescription actually fixes. Collapsing both into 'the range is big' loses the mechanism."
+    },
+    "keep8_shape": {
+     "label": "monotone_nondecreasing",
+     "successive_differences_pp": [
+      0.12818686796752843,
+      0.09257940464321202
+     ],
+     "argmin_index": 0,
+     "argmax_index": 2,
+     "why_it_matters": "a TERMINAL drift (monotone) means the last checkpoint is the worst and the loophole is 'report an earlier one'; a V-shape means the MIDDLE checkpoint is the outlier and the endpoint has largely recovered, which is the case Heineman et al.'s average-the-final-k prescription actually fixes. Collapsing both into 'the range is big' loses the mechanism."
+    },
+    "shape_agreement": false,
+    "replication_label": "DOES_NOT_REPLICATE",
+    "prereg_reading": "keep10's triviaqa range FAILS the gate: keep8's 1.1202 pp is an ISOLATED CELL. 2.0.2 retains its logical force (one counterexample still makes single-checkpoint accepts unsafe) but LOSES its claim to generality, and 2.5's per-axis numbers must be labelled keep8-only / not reproduced on keep10. This WEAKENS our position and is to be written exactly that way -- a non-replication may NOT be re-described as 'consistent with noise, so no problem'",
+    "note": "RANGES are compared across arms because a range is a WITHIN-arm quantity. The two arms' ABSOLUTE margins are NOT comparable: keep10 is 12 layers, keep8 is 10, and the keepN ladder additionally spans two corpora and unequal step counts (STATUS.json:warning)."
+   },
+   "nq_open": {
+    "decision_axis": false,
+    "keep8_range_pp": 0.3324099722991729,
+    "keep8_gate": false,
+    "keep8_floor_pp": 1.1401437402795864,
+    "keep8_margins_pp": [
+     -15.844875346260386,
+     -15.706371191135732,
+     -16.038781163434905
+    ],
+    "keep10_range_pp": 0.7479224376731306,
+    "keep10_gate": false,
+    "keep10_floor_pp": 1.1211413446082592,
+    "keep10_margins_pp": [
+     -15.872576177285316,
+     -16.26038781163435,
+     -15.512465373961218
+    ],
+    "keep10_over_floor": 0.6671080691743324,
+    "keep10_over_keep8_range": 2.2499999999999747,
+    "both_arms_clear_gate": false,
+    "gate_agreement": true,
+    "shape": {
+     "label": "V_shape_middle_is_minimum",
+     "successive_differences_pp": [
+      -0.387811634349033,
+      0.7479224376731306
+     ],
+     "argmin_index": 1,
+     "argmax_index": 2,
+     "why_it_matters": "a TERMINAL drift (monotone) means the last checkpoint is the worst and the loophole is 'report an earlier one'; a V-shape means the MIDDLE checkpoint is the outlier and the endpoint has largely recovered, which is the case Heineman et al.'s average-the-final-k prescription actually fixes. Collapsing both into 'the range is big' loses the mechanism."
+    },
+    "keep8_shape": {
+     "label": "inverted_V_middle_is_maximum",
+     "successive_differences_pp": [
+      0.13850415512465375,
+      -0.3324099722991729
+     ],
+     "argmin_index": 2,
+     "argmax_index": 1,
+     "why_it_matters": "a TERMINAL drift (monotone) means the last checkpoint is the worst and the loophole is 'report an earlier one'; a V-shape means the MIDDLE checkpoint is the outlier and the endpoint has largely recovered, which is the case Heineman et al.'s average-the-final-k prescription actually fixes. Collapsing both into 'the range is big' loses the mechanism."
+    },
+    "shape_agreement": false,
+    "replication_label": "DOES_NOT_REPLICATE",
+    "prereg_reading": "keep10's triviaqa range FAILS the gate: keep8's 1.1202 pp is an ISOLATED CELL. 2.0.2 retains its logical force (one counterexample still makes single-checkpoint accepts unsafe) but LOSES its claim to generality, and 2.5's per-axis numbers must be labelled keep8-only / not reproduced on keep10. This WEAKENS our position and is to be written exactly that way -- a non-replication may NOT be re-described as 'consistent with noise, so no problem'",
+    "note": "RANGES are compared across arms because a range is a WITHIN-arm quantity. The two arms' ABSOLUTE margins are NOT comparable: keep10 is 12 layers, keep8 is 10, and the keepN ladder additionally spans two corpora and unequal step counts (STATUS.json:warning)."
+   }
+  },
+  "headline_axis": "triviaqa",
+  "headline_axis_why": "triviaqa is the ONLY axis on which keep8 cleared the gate (1.1202 pp = 1.70x floor); it is therefore the axis on which replication is defined. The other three keep8 ranges were sub-noise and there is nothing there to replicate.",
+  "REPLICATES": true,
+  "replication_label": "REPLICATES_AND_MATERIAL",
+  "reading": "keep10 triviaqa range clears the item-noise gate AND is >= 0.5 pp: the pp-scale adjacent-500-step margin move is ARM-INDEPENDENT, and A04_GATE_DESIGN 2.5's per-axis tolerance is corroborated on a second, differently-damaged arm"
+ },
+ "Q3_heineman_relstd_restatement": {
+  "their_work": {
+   "cite": "Heineman, Hofmann, Magnusson, Gu, Smith, Hajishirzi, Lo, Dodge, 'Signal and Noise: A Framework for Reducing Uncertainty in Language Model Evaluation', arXiv:2508.13144",
+   "venue": "NeurIPS 2025 Spotlight",
+   "venue_authority": "OpenReview note sAFottNlra: venue='NeurIPS 2025 spotlight', venueid=NeurIPS.cc/2025/Conference, invitations include Submission26329/-/Camera_Ready_Revision. DBLP has CoRR ONLY (journals/corr/abs-2508-13144), so DBLP or S2 alone would misread this as a preprint.",
+   "noise_definition": "Rel.Std.(m) = sqrt(sum_i (m_i - mbar)^2 / (n-1)) / mbar over the final n intermediate checkpoints; validated against init-seed / data-order / whole-curve noise at R^2 = 0.82 / 0.86 / 0.95",
+   "their_n_checkpoints": 30,
+   "their_spacing_steps": 1000,
+   "their_model_condition": "INTACT OLMo-2 (no pruning, no injury, no heal)",
+   "their_protocol": "OLMES / OLMo-2 evaluation setup",
+   "their_shot_setting": "FEW-SHOT. Their App. A.1: 'Notably, all tasks use few-shot examples and we evaluate MCQA benchmarks in both the rank choice (RC) and multiple choice (MC) setting.' OURS IS STRICT ZERO-SHOT (scripts/eval_olmo2_closedbook_qa.py docstring line 10: 'Strict zero-shot, NO retrieval, free-form greedy generation'; line 23: 'no few-shot exemplars'). This is an ADDITIONAL asymmetry beyond n and spacing, found by reading their PDF rather than the repo's summary of it, and it plausibly RAISES our noise relative to theirs independent of damage -- zero-shot short-form EM on a base LM is a less stabilised measurement than a few-shot one.",
+   "their_triviaqa_metric": "exact match of a short-form generation (their 4.1: 'generative tasks like TriviaQA or Jeopardy which evaluate the exact match of a short-form generation'), i.e. the SAME METRIC FAMILY as our triviaqa EM -- which is why triviaqa is the least unfair of the two comparators",
+   "olmo2_7B_4T_noise": {
+    "triviaqa": 0.003,
+    "mmlu": 0.023,
+    "popqa": null,
+    "nq_open": null
+   },
+   "their_mmlu_interface": "standard LETTER-choice MMLU (RC and MC settings)",
+   "table4_format_note": "Table 4's cells are 'SNR_{signal/noise}', e.g. TriviaQA 7B-4T reads '47.03_{0.135/0.003}' => signal 0.135, NOISE 0.003; MMLU reads '3.39_{0.078/0.023}' => NOISE 0.023. The bare integers are SNR, NOT noise -- misreading that column would inflate our comparator ~15000x.",
+   "extraction_provenance": "INDEPENDENTLY RE-EXTRACTED 2026-08-13 from arXiv:2508.13144v1 by this agent (`curl` via hy-proxy -> `pdftotext -layout`), NOT copied from the repo's prior summary: Table 4 p.22 line 'TriviaQA 28.15_{0.411/0.015} 47.03_{0.135/0.003} 60.37_{0.141/0.002} 27.19_{0.064/0.002}' and 'MMLU 14.52_{0.139/0.010} 3.39_{0.078/0.023} 7.51_{0.044/0.006} 5.19_{0.061/0.012}'. Their n and spacing re-verified from the same PDF: 'For noise, we use the final 30 intermediate checkpoints, one checkpoint for every 1000 training steps until the end of training.' Their ddof re-verified: 'Rel. Std.(m) = sqrt(1/(n-1) sum_i (m_i - mbar)^2)/mbar' -- ddof=1, matching `relstd` here. Venue re-verified live: OpenReview sAFottNlra venueid=NeurIPS.cc/2025/Conference, venue='NeurIPS 2025 spotlight', Camera_Ready_Revision present. This matches the repo's earlier extraction in MARGIN_TRAJECTORY_INSTABILITY_NOVELTY_20260813.md P1 exactly.",
+   "their_prescription": "AVERAGE the final k checkpoints instead of reporting the last one (+2.4% decision accuracy on a 30-task average); Appendix A.3.2 gives n=5 for a +-1sigma bound, n=20 for +-0.2sigma",
+   "what_they_do_NOT_do": "intact models only; their decision problem is SUPERIORITY/ranking and scaling-law extrapolation, never EQUIVALENCE-to-target; no construct-appropriate best-constant null; and they never ask what a single-checkpoint ACCEPT is worth, because they have no accept."
+  },
+  "comparability": {
+   "IS_AN_EQUAL_FOOTING_COMPARISON": false,
+   "may_be_tabulated_together": false,
+   "asymmetries": [
+    "n = 3 (ours) vs n = 30 (theirs)",
+    "spacing 500 steps (ours) vs 1000 steps (theirs)",
+    "DAMAGED, mid-heal, layer-pruned arm (ours) vs INTACT OLMo-2 (theirs)",
+    "this repo's base protocol (cb_bs=32 / add_bos=False / max_new_tokens=32 / greedy) vs OLMES",
+    "STRICT ZERO-SHOT (ours) vs FEW-SHOT (theirs, App. A.1) -- this plausibly raises our noise independent of damage, so it cuts AGAINST reading a gap as evidence about injury",
+    "our mmlu_content is CONTENT-continuation scoring; their MMLU is LETTER-choice (RC/MC). At the anchor the two interfaces disagree on 40.1% of items (7B_base letter_vs_content_norm.agreement = 0.5994)",
+    "our margins/accuracies are on a 12-layer pruned model whose triviaqa EM is ~0.15-0.16; theirs is a 32-layer intact 7B whose TriviaQA is ~0.6-0.7. rel.std has the MEAN IN THE DENOMINATOR, so a lower-accuracy model inflates rel.std for purely arithmetic reasons -- this alone can produce a multiplicative gap with no difference in absolute stability. The absolute SD is therefore reported next to every rel.std."
+   ],
+   "n3_estimator_noise": {
+    "n": 3,
+    "c4_bias_factor": 0.886226925452758,
+    "rel_sd_of_sample_sd": 0.5227232008770631,
+    "meaning": "the sample SD over n points has this relative SD itself; at n=3 it is ~0.52, so a ~2x rel.std ratio is uninformative even before protocol differences"
+   },
+   "how_it_may_be_used": "as a HYPOTHESIS ('are damaged arms noisier than intact models of the same family and scale?') worth a controlled test, never as a result. Any ratio quoted must carry 'n=3 vs n=30, different protocol' in the same sentence."
+  },
+  "per_axis": {
+   "triviaqa": {
+    "decision_axis": true,
+    "keep10_rel_std": {
+     "n": 3,
+     "values": [
+      0.1798372715113687,
+      0.16774409273294694,
+      0.17498885421310745
+     ],
+     "mean": 0.174190072819141,
+     "sd_ddof1": 0.006086031714362634,
+     "sd_pp": 0.6086031714362634,
+     "mean_pp": 17.4190072819141,
+     "rel_std": 0.03493902732724425,
+     "ddof": 1,
+     "denominator_warning": "rel.std divides by the mean, so a LOWER-accuracy model gets a HIGHER rel.std at equal absolute stability. Compare sd_pp too."
+    },
+    "keep8_clean_cluster_rel_std": {
+     "n": 3,
+     "values": [
+      0.16434462773071778,
+      0.1641217119928667,
+      0.15325456977262594
+     ],
+     "mean": 0.16057363649873682,
+     "sd_ddof1": 0.006339477593815825,
+     "sd_pp": 0.6339477593815825,
+     "mean_pp": 16.057363649873682,
+     "rel_std": 0.03948018947597102,
+     "ddof": 1,
+     "denominator_warning": "rel.std divides by the mean, so a LOWER-accuracy model gets a HIGHER rel.std at equal absolute stability. Compare sd_pp too."
+    },
+    "their_olmo2_7B_4T_noise": 0.003,
+    "their_task_name": "triviaqa",
+    "ratio_ours_over_theirs": 11.646342442414749,
+    "relstd_ratio_decomposition": {
+     "identity": "relstd_ours/relstd_theirs = (sd_ours/sd_theirs) * (mean_theirs/mean_ours)",
+     "our_mean_pp": 17.4190072819141,
+     "our_sd_pp": 0.6086031714362634,
+     "their_relstd": 0.003,
+     "their_mean_is_not_published_in_table4": "Table 4 gives Rel.Dispersion (signal) and Rel.Std (noise) only; the mean accuracy of their final 30 checkpoints appears only in Figure 12. It is therefore NOT read off and NOT guessed -- the grid below is a sensitivity, not a measurement.",
+     "raw_relstd_ratio": 11.646342442414749,
+     "sensitivity": [
+      {
+       "assumed_their_mean_acc": 0.4,
+       "implied_their_sd_pp": 0.12000000000000001,
+       "sd_ratio_ours_over_theirs": 5.071693095302194,
+       "denominator_inflation_factor": 2.2963421136824147
+      },
+      {
+       "assumed_their_mean_acc": 0.5,
+       "implied_their_sd_pp": 0.15,
+       "sd_ratio_ours_over_theirs": 4.057354476241756,
+       "denominator_inflation_factor": 2.870427642103018
+      },
+      {
+       "assumed_their_mean_acc": 0.6,
+       "implied_their_sd_pp": 0.18,
+       "sd_ratio_ours_over_theirs": 3.3811287302014637,
+       "denominator_inflation_factor": 3.444513170523622
+      },
+      {
+       "assumed_their_mean_acc": 0.65,
+       "implied_their_sd_pp": 0.195,
+       "sd_ratio_ours_over_theirs": 3.1210419048013507,
+       "denominator_inflation_factor": 3.7315559347339238
+      },
+      {
+       "assumed_their_mean_acc": 0.7,
+       "implied_their_sd_pp": 0.21,
+       "sd_ratio_ours_over_theirs": 2.898110340172683,
+       "denominator_inflation_factor": 4.018598698944226
+      }
+     ],
+     "reading": "across the whole grid the ABSOLUTE-SD ratio is several-fold smaller than the raw rel.std ratio, because the denominator factor mean_theirs/mean_ours is itself large. Any claim of the form 'damaged arms are Nx noisier' must state which of the two ratios it means."
+    },
+    "their_absolute_sd_pp_implied": null,
+    "why_absolute_sd_comparison_is_not_made": "Table 4 publishes rel.std (noise) and Rel.Dispersion (signal), NOT the mean accuracy of the 30 checkpoints, so their absolute SD cannot be reconstructed from the table. Our sd_pp is reported so a future reader who obtains their raw scores can complete the comparison; inventing their mean from Figure 12 would be a guess.",
+    "comparator_absent_reason": null,
+    "interface_mismatch": null,
+    "caveat_in_band": "n=3 @500 steps, damaged mid-heal arm, STRICT ZERO-SHOT, this repo's base protocol vs n=30 @1000 steps, intact OLMo-2, FEW-SHOT, OLMES. NOT an equal-footing comparison."
+   },
+   "popqa": {
+    "decision_axis": true,
+    "keep10_rel_std": {
+     "n": 3,
+     "values": [
+      0.04633069320810262,
+      0.04338683675615056,
+      0.04338683675615056
+     ],
+     "mean": 0.04436812224013457,
+     "sd_ddof1": 0.0016996363149901388,
+     "sd_pp": 0.1699636314990139,
+     "mean_pp": 4.436812224013456,
+     "rel_std": 0.03830760079931171,
+     "ddof": 1,
+     "denominator_warning": "rel.std divides by the mean, so a LOWER-accuracy model gets a HIGHER rel.std at equal absolute stability. Compare sd_pp too."
+    },
+    "keep8_clean_cluster_rel_std": {
+     "n": 3,
+     "values": [
+      0.05011565150346955,
+      0.0492044578397701,
+      0.047662437793509496
+     ],
+     "mean": 0.048994182378916375,
+     "sd_ddof1": 0.0012400508875695074,
+     "sd_pp": 0.12400508875695074,
+     "mean_pp": 4.899418237891638,
+     "rel_std": 0.025310165969891506,
+     "ddof": 1,
+     "denominator_warning": "rel.std divides by the mean, so a LOWER-accuracy model gets a HIGHER rel.std at equal absolute stability. Compare sd_pp too."
+    },
+    "their_olmo2_7B_4T_noise": null,
+    "their_task_name": null,
+    "ratio_ours_over_theirs": null,
+    "relstd_ratio_decomposition": null,
+    "their_absolute_sd_pp_implied": null,
+    "why_absolute_sd_comparison_is_not_made": "Table 4 publishes rel.std (noise) and Rel.Dispersion (signal), NOT the mean accuracy of the 30 checkpoints, so their absolute SD cannot be reconstructed from the table. Our sd_pp is reported so a future reader who obtains their raw scores can complete the comparison; inventing their mean from Figure 12 would be a guess.",
+    "comparator_absent_reason": "popqa is not in Heineman et al.'s 30-benchmark suite; the cell is LEFT BLANK and must not be filled with a neighbouring task",
+    "interface_mismatch": null,
+    "caveat_in_band": "n=3 @500 steps, damaged mid-heal arm, STRICT ZERO-SHOT, this repo's base protocol vs n=30 @1000 steps, intact OLMo-2, FEW-SHOT, OLMES. NOT an equal-footing comparison."
+   },
+   "mmlu_content": {
+    "decision_axis": true,
+    "keep10_rel_std": {
+     "n": 3,
+     "values": [
+      0.3468879077054551,
+      0.3486682808716707,
+      0.3478137017518872
+     ],
+     "mean": 0.34778996344300434,
+     "sd_ddof1": 0.000890423934553987,
+     "sd_pp": 0.0890423934553987,
+     "mean_pp": 34.77899634430043,
+     "rel_std": 0.002560234705277541,
+     "ddof": 1,
+     "denominator_warning": "rel.std divides by the mean, so a LOWER-accuracy model gets a HIGHER rel.std at equal absolute stability. Compare sd_pp too."
+    },
+    "keep8_clean_cluster_rel_std": {
+     "n": 3,
+     "values": [
+      0.3404785643070788,
+      0.3416892180601054,
+      0.3425437971798889
+     ],
+     "mean": 0.341570526515691,
+     "sd_ddof1": 0.0010377198402124214,
+     "sd_pp": 0.10377198402124214,
+     "mean_pp": 34.157052651569096,
+     "rel_std": 0.003038083674250363,
+     "ddof": 1,
+     "denominator_warning": "rel.std divides by the mean, so a LOWER-accuracy model gets a HIGHER rel.std at equal absolute stability. Compare sd_pp too."
+    },
+    "their_olmo2_7B_4T_noise": 0.023,
+    "their_task_name": "mmlu",
+    "ratio_ours_over_theirs": 0.11131455240337135,
+    "relstd_ratio_decomposition": {
+     "identity": "relstd_ours/relstd_theirs = (sd_ours/sd_theirs) * (mean_theirs/mean_ours)",
+     "our_mean_pp": 34.77899634430043,
+     "our_sd_pp": 0.0890423934553987,
+     "their_relstd": 0.023,
+     "their_mean_is_not_published_in_table4": "Table 4 gives Rel.Dispersion (signal) and Rel.Std (noise) only; the mean accuracy of their final 30 checkpoints appears only in Figure 12. It is therefore NOT read off and NOT guessed -- the grid below is a sensitivity, not a measurement.",
+     "raw_relstd_ratio": 0.11131455240337135,
+     "sensitivity": [
+      {
+       "assumed_their_mean_acc": 0.4,
+       "implied_their_sd_pp": 0.9199999999999999,
+       "sd_ratio_ours_over_theirs": 0.0967852102776073,
+       "denominator_inflation_factor": 1.1501194457716197
+      },
+      {
+       "assumed_their_mean_acc": 0.5,
+       "implied_their_sd_pp": 1.15,
+       "sd_ratio_ours_over_theirs": 0.07742816822208583,
+       "denominator_inflation_factor": 1.4376493072145247
+      },
+      {
+       "assumed_their_mean_acc": 0.6,
+       "implied_their_sd_pp": 1.38,
+       "sd_ratio_ours_over_theirs": 0.06452347351840486,
+       "denominator_inflation_factor": 1.7251791686574296
+      },
+      {
+       "assumed_their_mean_acc": 0.65,
+       "implied_their_sd_pp": 1.4949999999999999,
+       "sd_ratio_ours_over_theirs": 0.05956012940160449,
+       "denominator_inflation_factor": 1.868944099378882
+      },
+      {
+       "assumed_their_mean_acc": 0.7,
+       "implied_their_sd_pp": 1.6099999999999999,
+       "sd_ratio_ours_over_theirs": 0.05530583444434702,
+       "denominator_inflation_factor": 2.0127090301003343
+      }
+     ],
+     "reading": "across the whole grid the ABSOLUTE-SD ratio is several-fold smaller than the raw rel.std ratio, because the denominator factor mean_theirs/mean_ours is itself large. Any claim of the form 'damaged arms are Nx noisier' must state which of the two ratios it means."
+    },
+    "their_absolute_sd_pp_implied": null,
+    "why_absolute_sd_comparison_is_not_made": "Table 4 publishes rel.std (noise) and Rel.Dispersion (signal), NOT the mean accuracy of the 30 checkpoints, so their absolute SD cannot be reconstructed from the table. Our sd_pp is reported so a future reader who obtains their raw scores can complete the comparison; inventing their mean from Figure 12 would be a guess.",
+    "comparator_absent_reason": null,
+    "interface_mismatch": "their MMLU is LETTER-choice, our decision axis is content-continuation; letter_acc is recorded as the interface-matched secondary",
+    "caveat_in_band": "n=3 @500 steps, damaged mid-heal arm, STRICT ZERO-SHOT, this repo's base protocol vs n=30 @1000 steps, intact OLMo-2, FEW-SHOT, OLMES. NOT an equal-footing comparison."
+   },
+   "nq_open": {
+    "decision_axis": false,
+    "keep10_rel_std": {
+     "n": 3,
+     "values": [
+      0.037396121883656507,
+      0.0332409972299169,
+      0.0407202216066482
+     ],
+     "mean": 0.0371191135734072,
+     "sd_ddof1": 0.00374729896356473,
+     "sd_pp": 0.374729896356473,
+     "mean_pp": 3.71191135734072,
+     "rel_std": 0.10095335267513939,
+     "ddof": 1,
+     "denominator_warning": "rel.std divides by the mean, so a LOWER-accuracy model gets a HIGHER rel.std at equal absolute stability. Compare sd_pp too."
+    },
+    "keep8_clean_cluster_rel_std": {
+     "n": 3,
+     "values": [
+      0.037673130193905814,
+      0.03905817174515235,
+      0.03573407202216067
+     ],
+     "mean": 0.03748845798707295,
+     "sd_ddof1": 0.0016697268070198607,
+     "sd_pp": 0.16697268070198606,
+     "mean_pp": 3.7488457987072947,
+     "rel_std": 0.04453975694587461,
+     "ddof": 1,
+     "denominator_warning": "rel.std divides by the mean, so a LOWER-accuracy model gets a HIGHER rel.std at equal absolute stability. Compare sd_pp too."
+    },
+    "their_olmo2_7B_4T_noise": null,
+    "their_task_name": null,
+    "ratio_ours_over_theirs": null,
+    "relstd_ratio_decomposition": null,
+    "their_absolute_sd_pp_implied": null,
+    "why_absolute_sd_comparison_is_not_made": "Table 4 publishes rel.std (noise) and Rel.Dispersion (signal), NOT the mean accuracy of the 30 checkpoints, so their absolute SD cannot be reconstructed from the table. Our sd_pp is reported so a future reader who obtains their raw scores can complete the comparison; inventing their mean from Figure 12 would be a guess.",
+    "comparator_absent_reason": "nq_open is not in Heineman et al.'s 30-benchmark suite; the cell is LEFT BLANK and must not be filled with a neighbouring task",
+    "interface_mismatch": null,
+    "caveat_in_band": "n=3 @500 steps, damaged mid-heal arm, STRICT ZERO-SHOT, this repo's base protocol vs n=30 @1000 steps, intact OLMo-2, FEW-SHOT, OLMES. NOT an equal-footing comparison."
+   }
+  },
+  "mmlu_letter_interface_matched_secondary": {
+   "per_step": {
+    "89000": {
+     "letter_acc": 0.26499074205953566,
+     "content_norm_acc": 0.3468879077054551,
+     "content_raw_acc": 0.32730380287708305
+    },
+    "89500": {
+     "letter_acc": 0.259222333000997,
+     "content_norm_acc": 0.3486682808716707,
+     "content_raw_acc": 0.32652043868394814
+    },
+    "90000": {
+     "letter_acc": 0.2656316763993733,
+     "content_norm_acc": 0.3478137017518872,
+     "content_raw_acc": 0.32801595214356927
+    }
+   },
+   "letter_rel_std": {
+    "n": 3,
+    "values": [
+     0.26499074205953566,
+     0.259222333000997,
+     0.2656316763993733
+    ],
+    "mean": 0.2632815838199687,
+    "sd_ddof1": 0.0035299910928339832,
+    "sd_pp": 0.35299910928339834,
+    "mean_pp": 26.328158381996868,
+    "rel_std": 0.013407664302292342,
+    "ddof": 1,
+    "denominator_warning": "rel.std divides by the mean, so a LOWER-accuracy model gets a HIGHER rel.std at equal absolute stability. Compare sd_pp too."
+   },
+   "content_norm_rel_std": {
+    "n": 3,
+    "values": [
+     0.3468879077054551,
+     0.3486682808716707,
+     0.3478137017518872
+    ],
+    "mean": 0.34778996344300434,
+    "sd_ddof1": 0.000890423934553987,
+    "sd_pp": 0.0890423934553987,
+    "mean_pp": 34.77899634430043,
+    "rel_std": 0.002560234705277541,
+    "ddof": 1,
+    "denominator_warning": "rel.std divides by the mean, so a LOWER-accuracy model gets a HIGHER rel.std at equal absolute stability. Compare sd_pp too."
+   },
+   "their_mmlu_noise": 0.023,
+   "why": "their MMLU is letter-choice. This is the closest INTERFACE match to what they measured, and it is reported so a reader can see both rather than being handed only the axis that flatters the comparison. It is NOT a decision axis here (A03_1B_FLOOR_VERDICT dropped MMLU-letter at 1B; at 7B it is carried descriptively).",
+   "still_not_equal_footing": true
+  }
+ },
+ "output_shape_and_flips_diagnostic": {
+  "keep10fresh2|89000-90000|triviaqa": {
+   "per_checkpoint": {
+    "89000": {
+     "empty_pred_frac": 0.0,
+     "mean_pred_chars": 56.84903031654035,
+     "top_constant_frac": 0.005294248773963442,
+     "n_distinct_preds": 9208,
+     "n": 17944
+    },
+    "89500": {
+     "empty_pred_frac": 0.0,
+     "mean_pred_chars": 64.84652251448952,
+     "top_constant_frac": 0.0033994650022291573,
+     "n_distinct_preds": 9599,
+     "n": 17944
+    },
+    "90000": {
+     "empty_pred_frac": 0.0,
+     "mean_pred_chars": 57.21305171645118,
+     "top_constant_frac": 0.0033437360677663844,
+     "n_distinct_preds": 9358,
+     "n": 17944
+    }
+   },
+   "per_interval": {
+    "89000->89500": {
+     "right_to_wrong": 505,
+     "wrong_to_right": 288,
+     "net_items": -217,
+     "net_pp": -1.2093178778421756,
+     "identical_pred_string_frac": 0.3699843958983504
+    },
+    "89500->90000": {
+     "right_to_wrong": 315,
+     "wrong_to_right": 445,
+     "net_items": 130,
+     "net_pp": 0.72447614801605,
+     "identical_pred_string_frac": 0.3777307177886759
+    }
+   },
+   "reading_note": "Diagnostic only. If empty_pred_frac stays ~0, top_constant_frac stays low and n_distinct_preds does not collapse, a resolved accuracy move is NOT an output-degeneracy artefact."
+  },
+  "keep10fresh2|89000-90000|popqa": {
+   "per_checkpoint": {
+    "89000": {
+     "empty_pred_frac": 0.0,
+     "mean_pred_chars": 74.298521062592,
+     "top_constant_frac": 0.017663138711712344,
+     "n_distinct_preds": 9950,
+     "n": 14267
+    },
+    "89500": {
+     "empty_pred_frac": 0.0,
+     "mean_pred_chars": 82.3148524567183,
+     "top_constant_frac": 0.010443681222401345,
+     "n_distinct_preds": 10853,
+     "n": 14267
+    },
+    "90000": {
+     "empty_pred_frac": 0.0,
+     "mean_pred_chars": 82.38368262423775,
+     "top_constant_frac": 0.006728814747318988,
+     "n_distinct_preds": 10870,
+     "n": 14267
+    }
+   },
+   "per_interval": {
+    "89000->89500": {
+     "right_to_wrong": 108,
+     "wrong_to_right": 66,
+     "net_items": -42,
+     "net_pp": -0.2943856451952057,
+     "identical_pred_string_frac": 0.2429382491063293
+    },
+    "89500->90000": {
+     "right_to_wrong": 74,
+     "wrong_to_right": 74,
+     "net_items": 0,
+     "net_pp": 0.0,
+     "identical_pred_string_frac": 0.243148524567183
+    }
+   },
+   "reading_note": "Diagnostic only. If empty_pred_frac stays ~0, top_constant_frac stays low and n_distinct_preds does not collapse, a resolved accuracy move is NOT an output-degeneracy artefact."
+  },
+  "keep10fresh2|89000-90000|nq_open": {
+   "per_checkpoint": {
+    "89000": {
+     "empty_pred_frac": 0.0,
+     "mean_pred_chars": 65.95678670360111,
+     "top_constant_frac": 0.024653739612188367,
+     "n_distinct_preds": 3012,
+     "n": 3610
+    },
+    "89500": {
+     "empty_pred_frac": 0.0,
+     "mean_pred_chars": 69.53684210526316,
+     "top_constant_frac": 0.03573407202216067,
+     "n_distinct_preds": 3080,
+     "n": 3610
+    },
+    "90000": {
+     "empty_pred_frac": 0.0,
+     "mean_pred_chars": 63.742105263157896,
+     "top_constant_frac": 0.03656509695290859,
+     "n_distinct_preds": 3021,
+     "n": 3610
+    }
+   },
+   "per_interval": {
+    "89000->89500": {
+     "right_to_wrong": 31,
+     "wrong_to_right": 16,
+     "net_items": -15,
+     "net_pp": -0.4155124653739612,
+     "identical_pred_string_frac": 0.32742382271468146
+    },
+    "89500->90000": {
+     "right_to_wrong": 10,
+     "wrong_to_right": 37,
+     "net_items": 27,
+     "net_pp": 0.7479224376731302,
+     "identical_pred_string_frac": 0.33213296398891967
+    }
+   },
+   "reading_note": "Diagnostic only. If empty_pred_frac stays ~0, top_constant_frac stays low and n_distinct_preds does not collapse, a resolved accuracy move is NOT an output-degeneracy artefact."
+  }
+ },
+ "NOT_licensed": [
+  "Treating the three checkpoints as REPLICATES of one another. They are successive states of ONE optimisation; their spread is heal progress + data order. This is a CHECKPOINT-SELECTION quantity, NOT seed variance. No 7B sd_run exists or is reconstructible (one seed per rung; --seed moves only fresh-tail init, never data order; historical 7B seeds unrecorded).",
+  "Comparing keep10 / keep8 / keep12 / keep14 ABSOLUTE margins as rungs of one ladder. Four different depths, two corpora and unequal step counts (STATUS.json:warning). Only the RANGES -- a within-arm statistic -- are compared across arms.",
+  "Calling any of this 'harness noise'. Same-code re-runs on a fixed checkpoint are BIT-IDENTICAL (full32_rescore_v2_20260812.correction_to_the_jitter_premise). Item-sampling variability is a different thing and is what the gate quantifies.",
+  "Tabulating our rel.std alongside Heineman et al.'s as if measured together: n=3 vs n=30, 500 vs 1000-step spacing, damaged vs intact, base protocol vs OLMES, content-continuation vs letter-choice MMLU. At n=3 the sample SD's own relative SD is 52.3%, so a ~2x ratio is uninformative before any protocol difference. HYPOTHESIS ONLY.",
+  "Reporting any range that FAILS range_exceeds_item_noise as a measured neighbour gap. A max-minus-min of 3 noisy cells is biased upward even at zero true spread.",
+  "Any K1/K2/K3 clause -- defined over the pre-registered 1B arm set.",
+  "Quoting any margin here to better than 0.01 pp ACROSS NODES (numpy multinomial drift, see node_of_record)."
+ ],
+ "gpu_note": "CPU-only analysis. GPU cost was the 4-axis scoring of the three checkpoints on .82; this script loads only per-example shards."
+}

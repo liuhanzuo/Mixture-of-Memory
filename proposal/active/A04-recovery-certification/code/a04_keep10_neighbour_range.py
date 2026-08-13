@@ -338,7 +338,8 @@ def _tag_dirs(tag_prefix, step):
 
 
 # ---------------------------------------------------------------------------
-def assert_seeds_disjoint(evidence_dir, used_arm_indices, used_offsets):
+def assert_seeds_disjoint(evidence_dir, used_arm_indices, used_offsets,
+                         self_output=None):
     """EXECUTE the seed-disjointness claim instead of asserting it in prose.
 
     Verbatim in mechanism from `a04_keep12_trajectory_monotonicity`, and it is
@@ -347,16 +348,33 @@ def assert_seeds_disjoint(evidence_dir, used_arm_indices, used_offsets):
     arm_index/guard/interval triple that a later script picked as its FIRST
     choice. A prose disjointness list cannot catch a file that postdates it.
 
+    ! `self_output` EXISTS BECAUSE THE CHECK FIRED ON ITS OWN OUTPUT. The first
+    run of this script wrote `a04_keep10_neighbour_range.json` recording
+    arm_index 700-702; the second run then read that file back and aborted with
+    "arm_index [700,701,702] already used by a04_keep10_neighbour_range.json".
+    That is a FALSE POSITIVE and a latent defect in the inherited version: any
+    idempotent re-run of ANY of these analyses would abort the same way once its
+    own archive exists. The file being (re)written is therefore excluded BY
+    ABSOLUTE PATH -- not by name matching, which would let a genuinely different
+    file with a similar name slip through -- and the exclusion is RECORDED in the
+    JSON so it cannot be used to hide a real clash.
+
     Defensive about SHAPE: two evidence files here have a JSON LIST at top level
     (`a04_1b_keep7f2_ppl_trajectory*.json`), so a bare `.get` raises
     AttributeError -- which would look like a code bug and invite deletion.
     """
+    self_real = os.path.realpath(self_output) if self_output else None
     found, skipped = {}, {}
     for fn in sorted(os.listdir(evidence_dir)):
         if not fn.endswith(".json"):
             continue
+        p = os.path.join(evidence_dir, fn)
+        if self_real and os.path.realpath(p) == self_real:
+            skipped[fn] = ("THIS RUN'S OWN OUTPUT -- excluded by absolute path "
+                           "so that an idempotent re-run does not self-collide")
+            continue
         try:
-            blob = json.load(open(os.path.join(evidence_dir, fn)))
+            blob = json.load(open(p))
         except Exception as e:
             skipped[fn] = f"unreadable: {type(e).__name__}"
             continue
@@ -382,6 +400,15 @@ def assert_seeds_disjoint(evidence_dir, used_arm_indices, used_offsets):
                 "disjoint base.")
     return {"archives_scanned": len(found), "per_archive": found,
             "archives_skipped": skipped,
+            "self_output_excluded": (os.path.basename(self_output)
+                                     if self_output else None),
+            "self_exclusion_defect_note": (
+                "the inherited version of this check had no self-exclusion, so "
+                "it FIRED ON ITS OWN OUTPUT on the second run of this script "
+                "(arm_index 700-702 'already used by' this script's own JSON). "
+                "That is a false positive affecting every idempotent re-run of "
+                "every A04 analysis that carries this check; fixed here by "
+                "excluding the output path being written. Worth porting."),
             "this_run_arm_indices": sorted(used_arm_indices),
             "this_run_offsets": used_offsets, "checked_mechanically": True}
 
@@ -428,6 +455,98 @@ def relstd(vals):
             "denominator_warning": (
                 "rel.std divides by the mean, so a LOWER-accuracy model gets a "
                 "HIGHER rel.std at equal absolute stability. Compare sd_pp too.")}
+
+
+def _shape_of(margins_pp):
+    """Is the 3-point trajectory monotone, or an excursion (V / inverted-V)?
+
+    This distinction is NOT cosmetic and it is why the replication is only
+    partial. keep8's supra-noise triviaqa range was ONE terminal drop
+    (flat, then -1.09 pp): a reader who took the LAST checkpoint got the worst
+    number, so the loophole there is "someone reports an EARLIER checkpoint".
+    A V-shape (down then back up) is a different failure: the MIDDLE checkpoint
+    is the outlier, both legs are resolved, and the endpoint has largely
+    recovered -- so "average the neighbours" (Heineman et al.'s prescription)
+    would help, whereas for a terminal drift it would not.
+
+    Reported for both arms so the verdict can say WHICH of the two the second
+    arm reproduced, instead of collapsing both into "the range is big".
+    """
+    m = list(map(float, margins_pp))
+    d = [m[i + 1] - m[i] for i in range(len(m) - 1)]
+    if all(x >= 0 for x in d):
+        label = "monotone_nondecreasing"
+    elif all(x <= 0 for x in d):
+        label = "monotone_nonincreasing"
+    elif d[0] < 0 < d[-1]:
+        label = "V_shape_middle_is_minimum"
+    else:
+        label = "inverted_V_middle_is_maximum"
+    return {"label": label, "successive_differences_pp": d,
+            "argmin_index": int(min(range(len(m)), key=lambda i: m[i])),
+            "argmax_index": int(max(range(len(m)), key=lambda i: m[i])),
+            "why_it_matters": (
+                "a TERMINAL drift (monotone) means the last checkpoint is the "
+                "worst and the loophole is 'report an earlier one'; a V-shape "
+                "means the MIDDLE checkpoint is the outlier and the endpoint has "
+                "largely recovered, which is the case Heineman et al.'s "
+                "average-the-final-k prescription actually fixes. Collapsing "
+                "both into 'the range is big' loses the mechanism.")}
+
+
+def relstd_ratio_decomposition(ours, theirs_relstd, their_mean_grid=(0.40, 0.50,
+                                                                     0.60, 0.65,
+                                                                     0.70)):
+    """Split the rel.std ratio into an SD part and a DENOMINATOR part.
+
+    rel.std = sd/mean, so
+        relstd_ours / relstd_theirs = (sd_ours/sd_theirs) * (mean_theirs/mean_ours).
+    Our arms are LOW-accuracy (12-layer pruned, triviaqa ~17%) and theirs is an
+    intact 7B (TriviaQA in the 0.6-0.7 range for OLMo-2-class models). So the
+    second factor is large and POSITIVE, which means a raw rel.std ratio
+    OVERSTATES any difference in absolute stability -- possibly by several fold.
+
+    Their mean accuracy over the 30 checkpoints is NOT in Table 4 (which gives
+    only Rel.Dispersion = signal and Rel.Std = noise) and appears only in
+    Figure 12, so it is NOT read off and NOT guessed. Instead this returns a
+    SENSITIVITY STRIP: for each hypothetical mean, the implied absolute SD and
+    the implied SD ratio. A reader can then see how much of the headline ratio is
+    real dispersion and how much is arithmetic.
+
+    This is the single most load-bearing caveat on Q3 and it is computed rather
+    than asserted, because the raw ratio is the number a careless reader will
+    lift.
+    """
+    if not theirs_relstd or not ours.get("rel_std"):
+        return None
+    out = {
+        "identity": ("relstd_ours/relstd_theirs = (sd_ours/sd_theirs) * "
+                     "(mean_theirs/mean_ours)"),
+        "our_mean_pp": ours["mean_pp"], "our_sd_pp": ours["sd_pp"],
+        "their_relstd": theirs_relstd,
+        "their_mean_is_not_published_in_table4": (
+            "Table 4 gives Rel.Dispersion (signal) and Rel.Std (noise) only; the "
+            "mean accuracy of their final 30 checkpoints appears only in "
+            "Figure 12. It is therefore NOT read off and NOT guessed -- the grid "
+            "below is a sensitivity, not a measurement."),
+        "raw_relstd_ratio": ours["rel_std"] / theirs_relstd,
+        "sensitivity": [],
+    }
+    for m in their_mean_grid:
+        their_sd_pp = theirs_relstd * m * 100.0
+        out["sensitivity"].append({
+            "assumed_their_mean_acc": m,
+            "implied_their_sd_pp": their_sd_pp,
+            "sd_ratio_ours_over_theirs": (ours["sd_pp"] / their_sd_pp
+                                          if their_sd_pp else None),
+            "denominator_inflation_factor": (m * 100.0) / ours["mean_pp"],
+        })
+    out["reading"] = (
+        "across the whole grid the ABSOLUTE-SD ratio is several-fold smaller "
+        "than the raw rel.std ratio, because the denominator factor "
+        "mean_theirs/mean_ours is itself large. Any claim of the form 'damaged "
+        "arms are Nx noisier' must state which of the two ratios it means.")
+    return out
 
 
 def selftest_estimators():
@@ -571,7 +690,8 @@ def main():
         args.evidence_dir, list(arm_index.values()),
         {"arm_index_base": NEW_ARM_INDEX_BASE,
          "guard_seed_offset": f"SEED+{GUARD_SEED_OFF}+13*axis_index",
-         "interval_seed_offset": f"SEED+{INTERVAL_SEED_OFF}+13*axis+7*pair"})
+         "interval_seed_offset": f"SEED+{INTERVAL_SEED_OFF}+13*axis+7*pair"},
+        self_output=args.out_json)
 
     driver_logs = {}
     for i, lg in enumerate(
@@ -715,14 +835,20 @@ def main():
             "keep8_range_pp": k8["range_pp"],
             "keep8_gate": gate8,
             "keep8_floor_pp": k8["expected_range_if_pure_noise_pp"],
+            "keep8_margins_pp": k8["margins_pp"],
             "keep10_range_pp": k10["range_pp"],
             "keep10_gate": gate10,
             "keep10_floor_pp": k10["expected_range_if_pure_noise_pp"],
+            "keep10_margins_pp": k10["margins_pp"],
             "keep10_over_floor": k10["range_over_expected_noise_range"],
             "keep10_over_keep8_range": (k10["range_pp"] / k8["range_pp"]
                                         if k8["range_pp"] else None),
             "both_arms_clear_gate": bool(gate10 and gate8),
             "gate_agreement": bool(gate10 == gate8),
+            "shape": _shape_of(k10["margins_pp"]),
+            "keep8_shape": _shape_of(k8["margins_pp"]),
+            "shape_agreement": bool(_shape_of(k10["margins_pp"])["label"]
+                                    == _shape_of(k8["margins_pp"])["label"]),
             "replication_label": label,
             "prereg_reading": reading,
             "note": ("RANGES are compared across arms because a range is a "
@@ -796,6 +922,7 @@ def main():
             "their_task_name": (their_key if theirs is not None else None),
             "ratio_ours_over_theirs": ((rs["rel_std"] / theirs)
                                        if (theirs and rs["rel_std"]) else None),
+            "relstd_ratio_decomposition": relstd_ratio_decomposition(rs, theirs),
             "their_absolute_sd_pp_implied": (
                 # rel.std * their mean accuracy. Their accuracy is NOT in Table 4,
                 # so this is intentionally left None rather than guessed: the
@@ -1051,28 +1178,48 @@ def main():
               f"  {v['replication_label']}")
     print(f"\n  REPLICATES (triviaqa, the only axis keep8 cleared): "
           f"{q2['REPLICATES']}  -> {q2['replication_label']}")
+    for ax, v in q2["per_axis"].items():
+        print(f"    {ax:<14} shape keep10={v['shape']['label']:<28} "
+              f"keep8={v['keep8_shape']['label']:<28} "
+              f"agree={v['shape_agreement']}")
     print()
     print("=" * 110)
     print("Q3 -- Heineman et al. rel.std unit  ***n=3 vs n=30, DAMAGED vs INTACT, "
           "different protocol -- NOT equal footing***")
     print("=" * 110)
-    print(f"  {'axis':<14}{'keep10 rel.std':>16}{'keep8 rel.std':>16}"
-          f"{'their OLMo-2 7B':>18}{'ratio':>9}")
+    print(f"  {'axis':<14}{'keep10 rel.std':>16}{'keep10 sd(pp)':>15}"
+          f"{'keep8 rel.std':>15}{'their OLMo-2 7B':>17}{'raw ratio':>11}")
     for ax, v in q3["per_axis"].items():
         k8 = v["keep8_clean_cluster_rel_std"]
         th = v["their_olmo2_7B_4T_noise"]
         print(f"  {ax:<14}{v['keep10_rel_std']['rel_std']:>16.4f}"
-              f"{(k8['rel_std'] if k8 else float('nan')):>16.4f}"
-              f"{(th if th is not None else float('nan')):>18}"
-              f"{(v['ratio_ours_over_theirs'] or float('nan')):>9.2f}")
+              f"{v['keep10_rel_std']['sd_pp']:>15.4f}"
+              f"{(k8['rel_std'] if k8 else float('nan')):>15.4f}"
+              f"{(th if th is not None else float('nan')):>17}"
+              f"{(v['ratio_ours_over_theirs'] or float('nan')):>11.2f}")
     ls = q3["mmlu_letter_interface_matched_secondary"]
     print(f"  {'mmlu_LETTER':<14}{ls['letter_rel_std']['rel_std']:>16.4f}"
-          f"{'--':>16}{ls['their_mmlu_noise']:>18}"
-          f"{(ls['letter_rel_std']['rel_std']/ls['their_mmlu_noise']):>9.2f}"
+          f"{ls['letter_rel_std']['sd_pp']:>15.4f}{'--':>15}"
+          f"{ls['their_mmlu_noise']:>17}"
+          f"{(ls['letter_rel_std']['rel_std']/ls['their_mmlu_noise']):>11.2f}"
           "   <- interface-matched to theirs")
-    print(f"  at n=3 the sample SD's own relative SD is "
+    print(f"\n  at n=3 the sample SD's own relative SD is "
           f"{sd_rel_uncertainty(3)['rel_sd_of_sample_sd']:.3f} -- a ~2x ratio is "
           "uninformative before any protocol difference")
+    print("  DECOMPOSITION of the raw ratio (rel.std divides by the MEAN, and "
+          "our arm is low-accuracy):")
+    for ax, v in q3["per_axis"].items():
+        dc = v.get("relstd_ratio_decomposition")
+        if not dc:
+            continue
+        print(f"    {ax:<14} raw rel.std ratio {dc['raw_relstd_ratio']:.2f}x; "
+              f"our sd={dc['our_sd_pp']:.4f}pp at mean={dc['our_mean_pp']:.2f}pp")
+        for s in dc["sensitivity"]:
+            print(f"      if their mean acc = {s['assumed_their_mean_acc']:.2f} "
+                  f"-> their sd = {s['implied_their_sd_pp']:.4f}pp, "
+                  f"ABSOLUTE sd ratio = "
+                  f"{s['sd_ratio_ours_over_theirs']:.2f}x "
+                  f"(denominator factor {s['denominator_inflation_factor']:.2f}x)")
     print(f"\nHEADLINE: {headline}")
     print(f"READING : {q2['reading']}")
     print(f"wrote {args.out_json}")
