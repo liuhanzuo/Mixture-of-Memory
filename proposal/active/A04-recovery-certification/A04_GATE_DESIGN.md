@@ -138,6 +138,48 @@ hypothesis**, which in a pre-registered gate is the more serious failure.
   `residual(arm) − residual(intact)` — so only the `credit` **margin** is lost.
 
 
+### 2.0.2 ADDITIVE AMENDMENT — neighbour-checkpoint precondition on any reported accept
+
+**Added 2026-08-13 by MAIN, after `neighbour_variability_20260813` (commit `2d57da2`).
+The pre-registered kill-condition text in §2 is UNCHANGED — this adds a precondition on
+*reporting an accept*, it does not alter K1/K2/K3 or any threshold.**
+
+Empirical basis (EVAL-ONLY, 8.6556 GPU-h, `evidence/a04_neighbour_variability.json`):
+
+- On `keep8fresh2`, three checkpoints **500 steps apart** in one uninterrupted process
+  (130000/130500/131000) show a **triviaqa margin range of 1.1202 pp** = **49.9% of
+  popqa's entire Δ**. It is one *resolved* drop (130500→131000 = −1.0867 pp,
+  CI95 [−1.3319, −0.8359], p = 0.0001, 355 right→wrong vs 160 wrong→right of 17944),
+  not diffuse jitter and not output degeneracy.
+- **7 of 8** decision-axis ranges across both clusters are **inside item noise** and are
+  NOT evidence of anything. A max−min of 3 noisy cells is biased upward even at zero true
+  spread — `E[range of 3 iid N(0,σ)] = (3/√π)·σ = 1.6926·σ` — so every range must be
+  gated on `range_exceeds_item_noise` before it may be quoted.
+
+**PRECONDITION.** Any `NI(Δ)` accept reported by this gate must be accompanied by the same
+axis's margin at the **immediately adjacent saved checkpoints on both sides** (or a statement
+that none exist). An accept whose axis moves by more than that axis's measured neighbour
+range, without the neighbours also accepting, is **reported as checkpoint-selection dependent,
+not as a certified recovery.**
+
+**Stated PER-AXIS, not blanket.** The effect is axis-concentrated: only triviaqa cleared the
+noise floor. Blanket distrust of single-checkpoint numbers is **not** supported by this
+evidence, and claiming it would overstate what was measured.
+
+**Deliberately NOT funded.** Widening this to more arms is **declined until there is an accept
+to protect**: the precondition already rests on two independent counterexamples (keep14 popqa
+at 25 500-step spacing; keep8 triviaqa at 500-step spacing), and a third arm would not change
+the gate. See `neighbour_variability_20260813.recommendation`.
+
+**Two traps recorded for whoever runs this next.**
+1. Checkpoints within a cluster are **NOT replicates** — they are successive states of one
+   optimisation, so this is a checkpoint-SELECTION quantity and may never be reported as seed
+   variance. No 7B `sd_run` exists or is reconstructible (one seed per rung; historical seeds
+   unrecorded).
+2. A 500-step neighbourhood may **straddle a resume seam** (cluster 124000/124500/125000 does:
+   two processes, loader rebuilt without intra-epoch fast-forward). Verify one-process
+   provenance before calling checkpoints neighbours.
+
 ### 2.1 What the gate is NOT allowed to conclude
 
 * Not "our rule is better" — it can only conclude the rules **disagree** and quantify by how much.
