@@ -1192,7 +1192,8 @@ def output_shape_and_flips(data, axis, steps):
     return out
 
 
-def assert_seeds_disjoint(evidence_dir, used_arm_indices, used_offsets):
+def assert_seeds_disjoint(evidence_dir, used_arm_indices, used_offsets,
+                          self_output_basename=None):
     """EXECUTE the seed-disjointness claim instead of asserting it in prose.
 
     Every archived A04 json records the bootstrap offsets it used. If this run
@@ -1213,6 +1214,15 @@ def assert_seeds_disjoint(evidence_dir, used_arm_indices, used_offsets):
     found, skipped = {}, {}
     for fn in sorted(os.listdir(evidence_dir)):
         if not fn.endswith(".json"):
+            continue
+        # THIS run's own previous output is not a foreign archive: it is the file
+        # about to be overwritten, and it necessarily carries this run's own
+        # offsets. Excluding it is required for the script to be re-runnable at
+        # all; NOT excluding it made a re-run abort on itself (observed).
+        if self_output_basename and fn == self_output_basename:
+            skipped[fn] = ("this run's own output file (about to be "
+                           "overwritten); its offsets ARE this run's by "
+                           "construction, so it is not a clash")
             continue
         p = os.path.join(evidence_dir, fn)
         try:
@@ -1302,7 +1312,8 @@ def main():
         args.evidence_dir, list(arm_index.values()),
         {"arm_index_base": NEW_ARM_INDEX_BASE,
          "guard_seed_offset": f"SEED+{GUARD_SEED_OFF}+13*axis",
-         "interval_seed_offset": f"SEED+{INTERVAL_SEED_OFF}+13*axis+7*pair"})
+         "interval_seed_offset": f"SEED+{INTERVAL_SEED_OFF}+13*axis+7*pair"},
+        self_output_basename=os.path.basename(args.out_json))
 
     # ---- 1. PROTOCOL, before anything is scored. Fails closed. ---------
     proto = protocol_asserted(
@@ -1491,7 +1502,37 @@ def main():
                 "with 7 intervals a resolved move somewhere is easier to find "
                 "than in keep14's 2; see the BH block"),
         },
-        "REPLICATES": bool(span_is_regression or len(resolved_regressions) > 0),
+        # THE PREREG DESIGNATES READ (a) AS THE HEADLINE. It says, verbatim:
+        # "Its popqa Delta-acc + CI + p is the headline Q3 number." Read (b) is
+        # explicitly labelled "the weaker but more honest question". So the
+        # REPLICATES flag is read (a) ALONE.
+        #
+        # My first implementation set REPLICATES = (a) OR (b), which is the
+        # "pick the favourable criterion" error this protocol forbids elsewhere
+        # (see the conservative-AND note in adjacent_interval_tests). On this
+        # data it MATTERED: (a) is a resolved IMPROVEMENT of +1.3317 pp -- the
+        # OPPOSITE sign to keep14's -0.6729 pp -- while (b) finds 2 resolved
+        # regressions among 7 intervals. The OR would have reported
+        # "Q3 REPLICATES" off the weaker read while the pre-registered headline
+        # read says the opposite. Fixed to follow the prereg.
+        "REPLICATES": bool(span_is_regression),
+        "REPLICATES_definition": (
+            "read (a) ALONE -- the pre-registered headline: is the "
+            "length-matched 130000->155000 popqa move a RESOLVED REGRESSION, as "
+            "keep14's 128000->153500 was? Read (b) is reported beside it but does "
+            "NOT enter the flag; the prereg calls it 'the weaker but more honest "
+            "question' and combining them with OR would let the weaker read "
+            "override the designated headline."),
+        "read_b_secondary_does_not_set_the_flag": {
+            "n_resolved_regressions_among_7_intervals": len(resolved_regressions),
+            "n_resolved_improvements": len(resolved_improvements),
+            "why_it_cannot_set_the_flag": (
+                "with 7 intervals and 3 decision axes (21 tests) at alpha=0.05, "
+                "~1 resolved move is expected under a global null; and here the "
+                "resolved moves go BOTH ways (3 improvements vs 2 regressions), "
+                "so 'a regression exists somewhere' is not evidence of keep14's "
+                "directional phenomenon."),
+        },
         "reading": None,   # filled below
         "caveat": (
             "keep12fresh2 is 12+2 = 14 layers / 157 tensors; keep14fresh2 is "

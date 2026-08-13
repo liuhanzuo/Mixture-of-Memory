@@ -117,7 +117,7 @@
   "blocked_by": {
     "related_work_gate": "CLEARED 2026-08-09 (see related_work_status). NO LONGER BLOCKING.",
     "still_blocking_before_any_gate_gpu": [
-      "PROPOSAL.md rewrite to the narrowed safe_residual_claim -- its current '提案' list is largely arXiv:2606.14150's design and its motivation is largely 2607.00368/2601.22950's argument.",
+      "PROPOSAL.md rewrite to the narrowed safe_residual_claim -- its current '\u63d0\u6848' list is largely arXiv:2606.14150's design and its motivation is largely 2607.00368/2601.22950's argument.",
       "CODE (CPU, ~1 line, BLOCKING for K2): scripts/train_olmo2_arch_probe2.py:863 is DistributedSampler(ds, shuffle=True) with NO seed= argument, so its private generator uses self.seed=0 regardless of --seed. attention_dropout=0.0 and grep -c dropout on the trainer = 0. Therefore --seed moves ONLY the fresh-tail init: every 'seed' arm in this repo is fresh-block-INIT variance, NOT training-seed variance, and data order is identical across seeds. Without the fix, K2's variance estimate omits the data-order component and a K2 PASS would be unearned. Arm A2 (n_fresh_layers=0) has no fresh block at all, so its seeds are byte-identical and its sd_run is exactly 0 -- a missing measurement, not a variance estimate.",
       "USER APPROVAL for GPU. The full gate is 1,077-4,309 GPU-h; nothing beyond Pilot Zero may be launched without it."
     ]
@@ -200,7 +200,7 @@
   },
   "power_analysis": {
     "unit_of_replication": "the RUN, so the decision statistic is a run-level one-sided bound t_{0.05,S-1} * sd_run / sqrt(S)",
-    "S2_is_unusable": "df=1 -> t=6.314, so even sd_run=0.3pp gives a 1.339pp bound, LARGER than delta on three of four axes (1.023 / 1.321 / 0.970pp). A 2-seed design can only certify on TriviaQA (delta=4.043pp) and only if sd_run < ~0.9pp. PROPOSAL.md's '至少 2 seeds' is NOT a viable minimum for a non-inferiority decision -- it was written for a superiority comparison, and equivalence is harder.",
+    "S2_is_unusable": "df=1 -> t=6.314, so even sd_run=0.3pp gives a 1.339pp bound, LARGER than delta on three of four axes (1.023 / 1.321 / 0.970pp). A 2-seed design can only certify on TriviaQA (delta=4.043pp) and only if sd_run < ~0.9pp. PROPOSAL.md's '\u81f3\u5c11 2 seeds' is NOT a viable minimum for a non-inferiority decision -- it was written for a superiority comparison, and equivalence is harder.",
     "S3_is_the_minimum": "df=2 -> t=2.920; bound 0.506pp at sd_run=0.3pp, 0.843pp at 0.5pp, 1.686pp at 1.0pp. Works only if sd_run <= ~0.5pp.",
     "sd_run_is_UNVERIFIED": "no multi-seed 1B recovery run exists on either disk; the only 1B arm is keep7fresh2, one draw, seed not even recorded. Measuring sd_run is itself a gate output and is Pilot One's entire purpose.",
     "no_post_hoc_seed_addition": "if the measured sd_run implies a bound > delta on >=2 axes, K2 FIRES rather than seeds being added post hoc. Adding seeds after seeing the variance is the selective-reporting move A01's gate-4 exists to prevent.",
@@ -263,7 +263,7 @@
     "same-arch/same-harness re-runs in this repo are BYTE-IDENTICAL (0 flips). Do not budget for or excuse anything as 'runtime noise' without a same-code control proving it.",
     "every scoring step must IMPORT the canonical scorer from the harness that produced the predictions, never reimplement it (two subagents reimplemented a metric in one session and both times produced a significant result where canonical produced a tie)."
   ],
-  "recommendation": "PROCEED. Reframed 2026-08-12 by user directive (verbatim: 「小的点被抢走了并不意味着我们需要 narrow. 相反我们的论文如果印证了他们每篇的观点并组合起来反而是我们的优势」). The prior recommendation ran a novelty audit and then wrote it up as a SCOPE REDUCTION -- sliding from 'cannot claim priority' to 'contribution is small' with no argument. That inference is VOID. The audit's legitimate output is a CITATION-OBLIGATION list, not a contribution ceiling. Correct framing: six independent works (N2 test-time training, N3 theory on intact models, N4 quantization, N5 compression, C2 layer-pruning+SFT) each report proxy-metric failure in a DIFFERENT injury modality with a DIFFERENT and mutually incomparable yardstick, and NOBODY has shown these are the same phenomenon. A04 supplies precisely what all of them lack -- a common measurement (residual vs construct-appropriate best-constant null), a common pre-registered decision rule (non-inferiority), and run-level variance (C1/C2/C3/N1 report ZERO seeds between them). So the paper is: 'proxy-metric failure is ONE measurable phenomenon across modalities, and here is the procedure that adjudicates it.' Corroborating a published prediction is EASIER to defend than carrying a novel claim alone, and contradicting one would also be a finding -- both directions produce a result. BINDING: a direction may be killed only by its own experimental kill gate (A04_GATE_DESIGN.md §2), never by a literature count. Still true and unchanged: run Pilot Zero-class cheap checks before expensive ones, and cite N1's design / N2+N3's motivation rather than claiming them.",
+  "recommendation": "PROCEED. Reframed 2026-08-12 by user directive (verbatim: \u300c\u5c0f\u7684\u70b9\u88ab\u62a2\u8d70\u4e86\u5e76\u4e0d\u610f\u5473\u7740\u6211\u4eec\u9700\u8981 narrow. \u76f8\u53cd\u6211\u4eec\u7684\u8bba\u6587\u5982\u679c\u5370\u8bc1\u4e86\u4ed6\u4eec\u6bcf\u7bc7\u7684\u89c2\u70b9\u5e76\u7ec4\u5408\u8d77\u6765\u53cd\u800c\u662f\u6211\u4eec\u7684\u4f18\u52bf\u300d). The prior recommendation ran a novelty audit and then wrote it up as a SCOPE REDUCTION -- sliding from 'cannot claim priority' to 'contribution is small' with no argument. That inference is VOID. The audit's legitimate output is a CITATION-OBLIGATION list, not a contribution ceiling. Correct framing: six independent works (N2 test-time training, N3 theory on intact models, N4 quantization, N5 compression, C2 layer-pruning+SFT) each report proxy-metric failure in a DIFFERENT injury modality with a DIFFERENT and mutually incomparable yardstick, and NOBODY has shown these are the same phenomenon. A04 supplies precisely what all of them lack -- a common measurement (residual vs construct-appropriate best-constant null), a common pre-registered decision rule (non-inferiority), and run-level variance (C1/C2/C3/N1 report ZERO seeds between them). So the paper is: 'proxy-metric failure is ONE measurable phenomenon across modalities, and here is the procedure that adjudicates it.' Corroborating a published prediction is EASIER to defend than carrying a novel claim alone, and contradicting one would also be a finding -- both directions produce a result. BINDING: a direction may be killed only by its own experimental kill gate (A04_GATE_DESIGN.md \u00a72), never by a literature count. Still true and unchanged: run Pilot Zero-class cheap checks before expensive ones, and cite N1's design / N2+N3's motivation rather than claiming them.",
   "unverified": [
     "sd_run for any 1B recovery arm -- no multi-seed 1B run exists on either disk. Pilot One's entire purpose.",
     "whether 20,000 steps suffices for any arm to approach non-inferiority at a shallower cut -- depends on j; only keep7 (52.43 B tokens, 44.8% residual PPL gap) is measured.",
@@ -395,7 +395,7 @@
       "why": "K1's verbatim text (A04_GATE_DESIGN.md:45-47) requires the rule-disagreement count to be '<= 1 out of >= 24 evaluated cells'. Pilot Zero evaluated 3 axes at ONE checkpoint (step200000) = 3 cells. You cannot conclude a >= 24-cell clause did or did not fire from 3 cells: the denominator the rule names was never reached. 'K1 does not fire' was therefore a positive result inferred from a sample smaller than its own governing denominator.",
       "what_the_pilot_DID_establish": "At the single PLATEAU-accept checkpoint, NI(Delta=0.10*residual(intact)) rejects on 3/3 decision axes by 6.6-9.1x the margin, and this is invariant across all five null conventions and both plateau readings (because residual(arm)-residual(intact) = reported(arm)-reported(intact), so the null cancels). That is a real, convention-robust finding about ONE checkpoint. It is evidence that a disagreement of the required SHAPE exists; it is not a verdict on the >= 24-cell clause.",
       "correct_reading": "K1 INDETERMINATE -- not killed, not cleared. The gate remains un-run.",
-      "audit_concordance": "TCODEX_AUDIT_20260810.md section 7 independently reached the same conclusion: 'Pilot Zero 不是 gate pass ... K1 does not fire / survived cheapest gate 应撤回, 改为 K1 INDETERMINATE.'",
+      "audit_concordance": "TCODEX_AUDIT_20260810.md section 7 independently reached the same conclusion: 'Pilot Zero \u4e0d\u662f gate pass ... K1 does not fire / survived cheapest gate \u5e94\u64a4\u56de, \u6539\u4e3a K1 INDETERMINATE.'",
       "also_retracted": "Any statement of the form 'A04 is NOT killed' that rests on K1_FIRES=false. A04 is not killed, but the reason is that the gate has not been run, not that it passed."
     },
     "K2_STATUS_UPDATED_20260810": {
@@ -924,7 +924,7 @@
   "status_note": "Previous status string was 'active_design_gate_specified_awaiting_pilot_zero' while pilot_zero.status in this same file said 'DONE -- executed 2026-08-09'. Corrected 2026-08-10.",
   "tcodex_audit_20260810_disposition": {
     "audit_file": "../../archive/A03-parametric-vs-external-memory/evidence/TCODEX_AUDIT_20260810.md (589 lines, md5 8ba6b5da31c3af2fd02c5d5d86d93b2c)",
-    "audit_verdict_on_A04": "Design paper / preregistration only. Pilot Zero 不是 gate pass; K1 应改为 INDETERMINATE; 没有任何模型已被 'certified recovered'; K2/run variance 完全未测.",
+    "audit_verdict_on_A04": "Design paper / preregistration only. Pilot Zero \u4e0d\u662f gate pass; K1 \u5e94\u6539\u4e3a INDETERMINATE; \u6ca1\u6709\u4efb\u4f55\u6a21\u578b\u5df2\u88ab 'certified recovered'; K2/run variance \u5b8c\u5168\u672a\u6d4b.",
     "actioned_20260810": [
       "K1_FIRES false -> INDETERMINATE with the cell-unit arithmetic recorded",
       "top-level status string corrected (it contradicted pilot_zero.status DONE in the same file)",
@@ -1429,7 +1429,7 @@
   },
   "recommendation_superseded_20260812": "PROCEED, BUT NARROWED AND CHEAPLY. Do not archive: nothing preempts the residual claim at its scope, and equivalence/non-inferiority testing is essentially absent from the pruning-recovery literature. But A04 as written in PROPOSAL.md is not fundable -- its experimental design is largely arXiv:2606.14150's and its motivation is largely 2607.00368/2601.22950's. The residual contribution is real but NARROW and METHODOLOGICAL: worth at most a short paper or a methods section. Run Pilot Zero (~3 GPU-h) before spending anything else. If the gate's kill condition fires, ARCHIVE with a POSTMORTEM rather than reframing -- the reframing space has just been shown to be occupied.",
   "reframe_20260812": {
-    "what_stands_unchanged": "Everything factual in RELATED_WORK.md §2/§3 -- what each paper does, its VERIFIED venue (C1=ICML2026 Workshop AdaptFM Poster; C2=ACL ARR under review NOT published; C3=NeurIPS2025 Poster; N3=ICML2026 Workshop CTB *Submission* not accepted; N4=under review TMLR; N5=preprint), and where each does not reach A04. Also unchanged: all 11 attribution obligations in §4.2, and the three kill clauses K1/K2/K3.",
+    "what_stands_unchanged": "Everything factual in RELATED_WORK.md \u00a72/\u00a73 -- what each paper does, its VERIFIED venue (C1=ICML2026 Workshop AdaptFM Poster; C2=ACL ARR under review NOT published; C3=NeurIPS2025 Poster; N3=ICML2026 Workshop CTB *Submission* not accepted; N4=under review TMLR; N5=preprint), and where each does not reach A04. Also unchanged: all 11 attribution obligations in \u00a74.2, and the three kill clauses K1/K2/K3.",
     "what_is_void": "'must be renamed and narrowed', 'not fundable', 'worth at most a short paper or a methods section'. These were inferences from the audit, not findings of it."
   },
   "shallow_rung_ni_discrimination_20260812": {
@@ -1800,7 +1800,7 @@
     "recommendation": "do NOT fund a new damaged-arm tranche on the premise that more heal steps approach the boundary: this pass measures that premise at 7B and it is false (8-244x the entire heal budget away, negative slope on popqa). Remaining cheap step: the full32 trajectory on LOCAL/.21 when SparseForge frees them (zero transfer, ckpts already there). And ADD A CHECKPOINT-NEIGHBOURHOOD ROBUSTNESS REQUIREMENT to the gate design before any accept is reported from a single checkpoint."
   },
   "neighbour_variability_20260813": {
-    "what": "Tests the RULE-LEVEL claim in keep14_trajectory_ni_20260813.the_load_bearing_finding / A04_KEEP14_TRAJECTORY_NI_VERDICT.md §7.2 ('any future accept obtained at a hand-picked checkpoint must be shown to survive its neighbours'). That claim rested on n=1 arm at 25,500-step spacing and carried NO tolerance. LEG A measures the NI-margin range across ADJACENT (500-step) checkpoints of keep8+fresh2 -- two clusters of 3 -- which is the spacing at which hand-picking actually happens. LEG B tests whether the keep14 popqa 128k->153.5k regression replicates on an INDEPENDENT arm (shortgpt16, same three step numbers). EVAL-ONLY, zero training.",
+    "what": "Tests the RULE-LEVEL claim in keep14_trajectory_ni_20260813.the_load_bearing_finding / A04_KEEP14_TRAJECTORY_NI_VERDICT.md \u00a77.2 ('any future accept obtained at a hand-picked checkpoint must be shown to survive its neighbours'). That claim rested on n=1 arm at 25,500-step spacing and carried NO tolerance. LEG A measures the NI-margin range across ADJACENT (500-step) checkpoints of keep8+fresh2 -- two clusters of 3 -- which is the spacing at which hand-picking actually happens. LEG B tests whether the keep14 popqa 128k->153.5k regression replicates on an INDEPENDENT arm (shortgpt16, same three step numbers). EVAL-ONLY, zero training.",
     "verdict": "NEIGHBOUR_RANGE_MATERIAL_GE_0p5PP_TOLERANCE_REQUIRED_LEGB_DOES_NOT_REPLICATE",
     "document": "A04_NEIGHBOUR_VARIABILITY_VERDICT.md",
     "evidence": "evidence/a04_neighbour_variability.json",
@@ -2409,5 +2409,303 @@
       "4_a_third_3point_arm_is_NOT_worth_funding": "two arms now agree on all four gate booleans and on the triviaqa magnitude to 8%. What is NOT settled is the SHAPE/mechanism, and a third 3-point cluster cannot settle that -- it needs a DENSER trajectory on ONE arm, which .73's concurrent keep12 11-checkpoint scan is already producing. RECOMMEND reading the keep12 trajectory for the shape question instead of adding a fourth 3-point cluster.",
       "5_heineman_comparison_is_narrow": "axis-specific hypothesis, not a headline. The paper's defensible novelty remains the equivalence-decision argument."
     }
+  },
+  "keep12_trajectory_monotonicity_20260813": {
+    "what": "THE DENSE-GRID TEST OF CLAIM P. P (the would-be paperD thesis) said the NI margin of a damaged, healing arm WANDERS non-monotonically along training with amplitude comparable to Delta, so a single-point accept is uninterpretable without its neighbourhood. P rested on three defective legs: keep14_trajectory_ni_20260813 (3 points, UNEVEN 25500-step spacing -- only 2 differences, so 'non-monotone' meant ONE sign flip); neighbour_variability_20260813 (7 of 8 decision-axis ranges INSIDE the item-noise gate); and full32_trajectory_ni_20260813 (a ZERO-DAMAGE CPT arm, not a recovery arm). This scores keep12+fresh2 -- a genuinely damaged arm at a THIRD damage level (keep_front=12 => 14 layers, 157 tensors) -- on an 8-point EXACTLY 5000-step-spaced grid (130000..165000) plus the off-grid resume anchor 124000 and a 500-step triple (165000/165500/166000), all eleven checkpoints inside ONE uninterrupted training process. First A04 setting where monotonicity can be tested as a TREND rather than as a sign. EVAL-ONLY, zero training.",
+    "verdict": "P_NARROWED_KEEP12_MONOTONE_IMPROVING_NOT_A_GENERAL_LAW_Q3_DOES_NOT_REPLICATE",
+    "document": "A04_KEEP12_TRAJECTORY_MONOTONICITY_VERDICT.md",
+    "prereg": "A04_KEEP12_TRAJECTORY_PREREG.md",
+    "prereg_commit": "4840c10",
+    "prereg_note": "committed as its own commit BEFORE the first keep12 capability number was computed. It fixed the four verdict labels and their thresholds, the amplitude criterion max|d margin|/Delta >= 0.25, the BH family, and FIVE outcomes -- two of which NARROW or KILL P. The branch that fired (ge2_axes_monotone_improving_none_wander => 'P IS NARROWED HARD') was written down in advance as an outcome that weakens us. The verdict string is generated MECHANICALLY by the analysis script from those criteria; it was not chosen after seeing the table.",
+    "evidence": "evidence/a04_keep12_trajectory_monotonicity.json",
+    "evidence_sha256": "7202b159d63764b1003d75fa2b3169f4771dab4dc2ac68dba394d8ac79789f60",
+    "code": [
+      "code/a04_keep12_trajectory_axes_driver.sh",
+      "code/a04_keep12_trajectory_monotonicity.py"
+    ],
+    "gpu_h_spent": 13.1956,
+    "gpu_h_note": "driver wall-clock .73 12:54:46 -> 14:24:41 = 5395 s x 8 GPUs = 11.9889 GPU-h, plus the .82 cross-node scoring control 548 s x 8 = 1.2178, plus the pre-GPU checkpoint identity verification (torch.load + per-tensor sha256 + f64 param sums on 11 x 43.9 GB files) ~449 s single-process = 0.1247 core-h counted at 1 GPU-equivalent for honesty. Per-checkpoint 445-508 s for all four axes. Analysis is CPU-only.",
+    "nodes": ".73 for ALL 11 grid/aux checkpoints AND for every statistic (8xH20, zwfy6, numpy 2.5.1); .82 scored ONE control checkpoint (step150000) for the cross-node determinism test. Keeping the whole grid on one node means NODE IS NEVER CONFOUNDED WITH STEP, and keeping every bootstrap on one node avoids the numpy multinomial split (2.5.1 vs 2.4.6 differ in 19/10000 rows). Both nodes verified 8x0 MiB before launch; the driver refuses to start above 8000 MiB. NOT touched: .104 (paperC Qwen3 heal), LOCAL/.21 (SparseForge #246).",
+    "arm": {
+      "dir": "outputs/olmo2_probe2_7B_keep12fresh2",
+      "keep_front": 12,
+      "n_fresh": 2,
+      "num_hidden_layers": 14,
+      "n_tensors": 157,
+      "dtype": "fp32",
+      "n_params": 3655569408,
+      "grid_steps": [
+        130000,
+        135000,
+        140000,
+        145000,
+        150000,
+        155000,
+        160000,
+        165000
+      ],
+      "spacing_steps": 5000,
+      "spacing_exactly_uniform": true,
+      "offgrid_anchor_reported_not_fitted": 124000,
+      "q4_triple": [
+        165000,
+        165500,
+        166000
+      ],
+      "resume_seam_anywhere": false,
+      "single_process_provenance": "logs/olmo2_7B_keep12fresh2_resume200k_v2.log has EXACTLY ONE process start ('[seed] set_seed(42) on all ranks' 2026-08-08 13:58:02, one '[resume] loading ckpt ... step124000.pt', one '[resume] sampler.set_epoch(1)') and ALL ELEVEN checkpoints are saved by it (grid saves at log lines 348/626/904/1182/1460/1738/2016/2294; 165500 and 166000 at 2323/2351; last line step 166020). Every ckpt meta reports epoch=1, so no epoch boundary and no sampler reshuffle occurs inside the grid either. The keep8-cluster-1 seam trap was CHECKED AND CLEARED BEFORE spending GPU, not discovered afterwards.",
+      "ckpt_identity_proven": "steps 130000-166000 ALL share 43,867,049,986 B and only step124000 differs (43,867,047,810 B) -- byte size is NOT identity, and a repo sibling (shortgpt16/step128000.pt on zwfy6) is a 7.7 GB truncated zip ls -l cannot distinguish from healthy. Distinctness proven by the f64 sum of EVERY parameter, distinct and monotonically decreasing at every step (68640.843 / 67443.382 / 66041.978 / 65032.452 / 63042.541 / 62267.044 / 61244.476 / 60618.238 / 59721.344 / 59683.796 / 59540.192 for 124000/130000/.../166000), plus per-tensor sha256 of lm_head / embed_tokens / layers.0.q_proj, all distinct pairwise.",
+      "lr_decays_across_the_grid_UNCONTROLLED": "7.694e-06 at the resume to 3.25e-06 by step 166020 (cosine to max_steps=200000). Later grid points are taken at a SMALLER learning rate. This is NOT controlled for and is a live alternative explanation for excursions shrinking as the grid progresses."
+    },
+    "Q1_monotonicity_per_axis_split": {
+      "labels_fixed_in_prereg": {
+        "MONOTONE": "all 7 successive margin differences share a sign",
+        "MONOTONE_TREND": "not strictly monotone but |Spearman rho| >= 0.7 and p_perm < 0.05",
+        "WANDER": "neither, AND the range clears the item-noise gate",
+        "UNRESOLVED": "neither, AND the range is INSIDE the gate => 'no detectable diffusion', explicitly NOT a finding"
+      },
+      "margins_pp": {
+        "triviaqa": [
+          -35.0719,
+          -32.9932,
+          -34.3031,
+          -32.865,
+          -32.2579,
+          -31.4941,
+          -31.4941,
+          -31.1764
+        ],
+        "popqa": [
+          -18.6486,
+          -17.7795,
+          -18.6276,
+          -18.2912,
+          -17.4921,
+          -17.3099,
+          -17.5061,
+          -17.4571
+        ],
+        "mmlu_content": [
+          -9.12,
+          -9.1556,
+          -9.3478,
+          -9.3265,
+          -9.1342,
+          -9.1128,
+          -8.6856,
+          -8.7354
+        ],
+        "nq_open_demoted": [
+          -14.7091,
+          -14.2936,
+          -14.903,
+          -14.7368,
+          -14.4598,
+          -14.349,
+          -14.4598,
+          -14.1551
+        ]
+      },
+      "verdict_per_axis": {
+        "triviaqa": "MONOTONE_TREND",
+        "popqa": "MONOTONE_TREND",
+        "mmlu_content": "UNRESOLVED",
+        "nq_open_demoted": "UNRESOLVED"
+      },
+      "spearman_rho_and_perm_p": {
+        "triviaqa": [
+          0.9701,
+          0.0004
+        ],
+        "popqa": [
+          0.8095,
+          0.0213
+        ],
+        "mmlu_content": [
+          0.6667,
+          0.0818
+        ],
+        "nq_open_demoted": [
+          0.4791,
+          0.2288
+        ]
+      },
+      "ols_pp_per_1000_steps": {
+        "triviaqa": 0.10428,
+        "popqa": 0.03443,
+        "mmlu_content": 0.01414,
+        "nq_open_demoted": 0.01187
+      },
+      "sign_reversals": {
+        "triviaqa": 2,
+        "popqa": 4,
+        "mmlu_content": 2,
+        "nq_open_demoted": 4
+      },
+      "tally": {
+        "n_decision_axes": 3,
+        "n_monotone_or_trend": 2,
+        "n_monotone_improving": 2,
+        "n_wander": 0,
+        "n_unresolved": 1,
+        "n_meeting_amplitude_criterion": 2
+      },
+      "the_finding": "2 of 3 decision axes are MONOTONE-IMPROVING IN TREND and ZERO WANDER. P's directional claim is contradicted on the only densely sampled damaged arm. BUT the point-to-point excursions are material: max single-step |d margin| is 2.0787 pp = 0.328 x Delta (triviaqa) and 0.8691 pp = 0.387 x Delta (popqa), and the grid range is 61.5% / 59.6% of those axes' Delta. So P is right about AMPLITUDE and wrong about DIRECTION."
+    },
+    "Q2_noise_gate_and_the_k_constant_error_avoided": {
+      "the_error": "A04_NEIGHBOUR_VARIABILITY_VERDICT.md 2.3 gates every range on 1.6926*sigma. That constant is E[range of THREE iid N(0,1)] = 3/sqrt(pi) -- correct for a 3-point cluster and WRONG for an 8-point grid. Measured by Monte Carlo (n=2e6, fixed seed) c_8 = 2.8475, i.e. 1.683x larger, so reusing c_3 puts every noise floor 40.6% TOO LOW.",
+      "the_counterfactual_that_makes_it_concrete": "mmlu_content's observed range is 0.6623 pp. Against the correct c_8 floor (1.0494 pp) it FAILS the gate and is reported as no detectable diffusion. Against the wrong c_3 floor (0.6238 pp) it would have PASSED, and a '0.66 pp neighbour gap on mmlu_content' would have been reported that is a pure artefact of taking max-minus-min over 8 noisy cells -- the exact error that guard exists to prevent. mmlu_content is the ONLY axis whose gate boolean flips between the two constants.",
+      "estimator_validated_before_use": "c_2 recovered to 4.1e-05 and c_3 to 2.9e-04 relative error against the closed forms; the run ABORTS if that check fails, because a mis-estimated noise floor is worse than no gate -- it looks rigorous.",
+      "range_pp_vs_floor_pp": {
+        "triviaqa": [
+          3.8955,
+          1.1084,
+          true
+        ],
+        "popqa": [
+          1.3388,
+          0.9737,
+          true
+        ],
+        "mmlu_content": [
+          0.6623,
+          1.0494,
+          false
+        ],
+        "nq_open_demoted": [
+          0.7479,
+          1.8942,
+          false
+        ]
+      },
+      "IMPLICATION_FOR_THE_REPO": "any future A04 pass that quotes 1.6926 on a series longer than 3 points is WRONG. A04_NEIGHBOUR_VARIABILITY_VERDICT.md 2.3 must be read as k-SPECIFIC."
+    },
+    "Q3_keep14_popqa_dip_is_now_0_for_2": {
+      "prereg_headline_read": "read (a) alone -- the length-matched window 130000->155000 (25000 steps vs keep14's 25500)",
+      "keep12_result": {
+        "acc_delta_pp": 1.3317,
+        "ci95_pp": [
+          1.1075,
+          1.563
+        ],
+        "p": 0.0001,
+        "wrong_to_right": 231,
+        "right_to_wrong": 41,
+        "is_resolved_regression": false,
+        "note": "a resolved IMPROVEMENT, the OPPOSITE sign to keep14's -0.6729 pp"
+      },
+      "keep14_reference": {
+        "acc_delta_pp": -0.6729,
+        "ci95_pp": [
+          -0.9252,
+          -0.4206
+        ],
+        "p": 0.0001
+      },
+      "shortgpt16_reference": {
+        "acc_delta_pp": 0.0841,
+        "p": 0.5084,
+        "source": "neighbour_variability_20260813 Leg B"
+      },
+      "REPLICATES": false,
+      "tally": "0 for 2 on independent arms (shortgpt16 no, keep12 no-and-opposite)",
+      "consequence": "keep14's popqa mid-heal regression must be cited ONLY as an existence proof about CHECKPOINT SELECTION, never as evidence about healing. Extending it to a general property is over-reaching on 1 of 3 arms.",
+      "read_b_reported_but_does_NOT_set_the_flag": {
+        "n_resolved_adjacent_regressions": 2,
+        "n_resolved_adjacent_improvements": 3,
+        "n_intervals": 7,
+        "why": "with 21 decision-axis interval tests ~1 resolved move is expected under a global null, and here the resolved moves go BOTH ways, so 'a regression exists somewhere' is not evidence of keep14's DIRECTIONAL phenomenon"
+      }
+    },
+    "Q4_500step_triple_and_the_cross_arm_LR_ORDERING": {
+      "keep12_result": {
+        "triviaqa_range_pp": 0.1951,
+        "floor_pp": 0.6516,
+        "range_over_floor": 0.2994,
+        "clears_gate": false,
+        "n_decision_axes_clearing_gate": 0,
+        "popqa_range_pp": 0.1752,
+        "mmlu_content_range_pp": 0.2211
+      },
+      "does_NOT_reproduce_keep8": "keep8's 1.1202 pp triviaqa range vs keep12's 0.1951 pp = 5.74x smaller",
+      "BUT_keep10_DID_reproduce_it": "keep10_neighbour_range_20260813 ran CONCURRENTLY on .82 the same day and got 1.2149 pp (1.84x floor), within 8% of keep8. So the effect is CONDITIONAL, not spurious -- and that verdict explicitly recommended 'reading the keep12 trajectory for the shape question'.",
+      "THE_UNPLANNED_FINDING": {
+        "claim": "across the three arms now measured, the 500-step triviaqa range rank-orders EXACTLY by the learning rate at the triple",
+        "table": {
+          "keep10": {
+            "lr": 1.24e-05,
+            "range_pp": 1.2149,
+            "floor_pp": 0.6595
+          },
+          "keep8": {
+            "lr": 6.8e-06,
+            "range_pp": 1.1202,
+            "floor_pp": 0.6577
+          },
+          "keep12": {
+            "lr": 3.25e-06,
+            "range_pp": 0.1951,
+            "floor_pp": 0.6516
+          }
+        },
+        "floors_agree_to_within_1p2_percent": "so the range differences are NOT an artefact of differing item noise",
+        "depth_does_NOT_order_the_ranges": "keep_front 10 > 8 > 12 by range, so depth is non-monotone in range while LR is exactly monotone",
+        "status": "HYPOTHESIS_FROM_N_EQUALS_3_ARMS -- explicitly NOT causal and NOT fitted",
+        "confound_stated": "n=3 cannot separate LR from step count, epoch position or depth; keep12's triple is also its LATEST triple in absolute steps, so 'late in training' and 'low LR' are perfectly confounded here"
+      },
+      "falsification_test_recommended_next": {
+        "design": "an EARLY, HIGH-LR 500-step triple on keep12 ITSELF -- same arm, same depth, same corpus, same protocol; only schedule position changes",
+        "prediction_if_lr_drives_it": "large triviaqa range (~1.2 pp)",
+        "prediction_if_arm_drives_it": "small range (~0.2 pp)",
+        "estimated_gpu_h": 3.5,
+        "why_it_beats_a_fourth_arm": "keep10_neighbour_range_20260813 already declined to fund a fourth 3-point cluster because what is unsettled is the MECHANISM. A within-arm LR contrast tests the mechanism directly; a fourth arm adds another confounded point."
+      }
+    },
+    "consequences_for_the_gate": {
+      "1_2.0.2_survives_but_for_a_DIFFERENT_reason": "the neighbour precondition is justified by point-to-point excursions reaching ~1/3 of Delta INSIDE a strongly monotone trend (triviaqa 0.328 Delta, popqa 0.387 Delta, including a resolved -1.3208 pp accuracy step at p=0.0001 with 594 items right->wrong). It does NOT need P's directional claim, which this pass contradicts.",
+      "2_2.5's_TOLERANCE_IS_NOT_A_CONSTANT": "keep10_neighbour_range_20260813 recommended amending 2.5 to 'cite TWO arms with the tolerance UNCHANGED in value (~1.2 pp triviaqa)'. keep12 makes that amendment WRONG AS STATED: across three arms the triviaqa 500-step range spans 0.1951-1.2149 pp, a 6.2x spread, at near-identical floors. ~1.2 pp is an UPPER BOUND observed at moderate-to-high LR, not a universal tolerance. The defensible form of the rule is 'REPORT the neighbours' (which is what 2.0.2 already says), not 'clear a fixed number'.",
+      "3_per_axis_phrasing_confirmed_a_third_time": "on all three arms the same one axis (triviaqa) is the only one that ever clears the gate and the same three never do. 2.0.2's 'stated PER-AXIS, not blanket' is right; blanket distrust of single-checkpoint numbers remains unsupported.",
+      "4_the_axis_nearest_the_threshold_moves_LEAST_replicates": "keep14's mmlu_content had plateaued (+0.0071 pp over 46500 steps, p=0.9264). keep12's mmlu_content shows NO DETECTABLE DIFFUSION at all over 35000 steps (range 0.6623 pp vs a 1.0494 pp floor, 1 of 7 intervals resolved). Apparent proximity to accepting is not evidence of approach. This one REPLICATES."
+    },
+    "paperD_recommendation": "DO NOT promote P to paperD as written. P said margins WANDER; on the only damaged arm with a dense uniform grid they RISE, resolvedly, on every axis where anything resolves, and 0 of 3 axes wander. A paper built on 'recovery margins wander' would be contradicted by its own arm #3. The defensible thesis is 'certification margins on damaged arms carry checkpoint-selection uncertainty of order 1/3 Delta per save interval, the size is CONDITIONAL (plausibly on schedule position), and the direction of travel is upward' -- supported by keep8 + keep10 + keep14 + keep12 together, needing no new compute, and not depending on P's directional claim. The one experiment worth ~3.5 GPU-h is the within-arm LR probe in Q4, because it can FALSIFY the interpretation rather than decorate it.",
+    "free_findings_that_cost_no_extra_gpu": {
+      "1_cross_node_scoring_is_BIT_IDENTICAL": "A04 had repeatedly ASSERTED that GPU scoring is deterministic and only the analysis bootstrap drifts across numpy versions, but that had never been TESTED for the harness across two nodes. .82 re-scored step150000 with the identical driver: 0 item disagreements out of 17944 / 14267 / 14042 / 3610, all four axes bit-identical, acc_diff = 0.000000 pp. The claim is now MEASURED. This control enters no statistic.",
+      "2_bs8_to_bs32_moves_accuracy_by_at_most_0.05pp": "the archived 7B_keep12_step124000_v2 dirs were scored 2026-08-08 at --batch_size 8 on BOTH axes by scripts/_run_olmo2_p24_eval_ladder_prev2_73.sh; this dispatch re-scored the SAME step124000.pt at cb=32/mmlu=16 with the same harness md5s and add_bos=false. Only batch size differs. Result: +0.0223 pp triviaqa (104/17944 items differ), +0.0280 pp popqa (20/14267), +0.0499 pp mmlu_content (87/14042). A04's only prior datum was bs32->bs48 (12/14267 popqa); bs8->bs32 is a 4x wider gap and still moves accuracy by <=0.05 pp -- an order of magnitude below every finding here. This BOUNDS the slop in any A04 comparison that mixes bs8-era archive dirs with bs32-era ones."
+    },
+    "verification": [
+      "protocol confirmed from the INVOCATION and fail-closed, and RE-VERIFIED for this arm rather than inherited from keep14: DRIVER START ... mmlu_bs=16 cb_bs=32, per-axis closedbook/nq_open START ... bs=32 and mmlu START ... bs=16, DRIVER END rc=0. NEGATIVE-TESTED ON THE COMPUTE NODE: a doctored log reading cb_bs=48 -> 'FATAL protocol deviation'; a missing log -> 'FATAL: driver log ... absent'; the clean log passes. In both failure cases NO output file is written.",
+      "add_bos is False on all 33 result dirs, asserted with `is False` -- NEVER `is not True`, which passes silently on None. max_new_tokens == 32 on all 22 generative dirs. ckpt_step asserted equal to the requested step on all 33 dirs, so a mislabelled result dir cannot enter the curve. chat_template=False established STRUCTURALLY: neither harness contains a chat-template code path (the only occurrence of the string is a docstring).",
+      "shard integrity 44 of 44 cells: index set EXACTLY {0..7} (a set, not a file count), merged n exactly EXPECTED_N (triviaqa 17944 / popqa 14267 / nq_open 3610 / mmlu 14042), 0 duplicate item_id, 0 nan, identical item_id sequences across all 12 arms. NEGATIVE-TESTED ON THE COMPUTE NODE: a hand-built 7-of-8 popqa set is refused with 'shard index set [0,1,2,4,5,6,7] != {0..7}', and a duplicated shard with '1783 duplicate item_ids'.",
+      "the STATISTICS are self-tested in-process every run and the run aborts before writing anything if any case fails: monotone increasing/decreasing give rho=+-1; tie handling matches a hand-computed value to 1e-12; a symmetric V-shaped wander gives rho=0.0000 and must NOT satisfy the trend criterion (if it did, the classifier would mislabel exactly the phenomenon P describes); OLS recovers a known line. All passed. Spearman p is a PERMUTATION p (20000 draws) because at n=8 a t-approximation is the wrong instrument.",
+      "seed disjointness EXECUTED, not asserted -- AND IT CAUGHT A REAL COLLISION. The check reads every archive's own recorded offsets and intersects them. My first choice (arm_index 500.., guard 2700, interval 2900) collided EXACTLY with a04_full32_trajectory_ni.json, written THE SAME DAY at 12:33 and therefore absent from every prose disjointness list in the repo. Moved to 600.. / 3700 / 3900. Had the check been a comment, re-running the full32 archive would later have produced different numbers for reasons unrelated to science.",
+      "everything imported, nothing reimplemented: ni_rule / ratio_rule / load_shards / build_nulls / mmlu_content_norm_vec / qa_metric_vec / EXPECTED_N / AXES / DEMOTED_AXES / PREREG from pilot_zero_rule_disagreement; paired_bootstrap / bh_reject / TIE_CONVS / N_BOOT / SEED from A03's analyze_1b_knowledge_floor; ANCHOR / _load_arm / assert_aligned / d4_interface_degenerate / D2_RESIDUAL_FLOOR_PP / Z95_TWO_SIDED / D4_* from a04_shallow_rung_ni_7b. THE NULL IS NEVER HAND-COMPUTED -- MAIN's own subtraction of a recorded null was ~0.5 pp off twice.",
+      "the anchor reproduces the archive EXACTLY: intact residuals 63.2914 / 22.4574 / 18.6138 pp => Delta 6.3291 / 2.2457 / 1.8614 pp, identical to a04_shallow_rung_ni_7b. All four axes CERTIFIABLE under D1-D6; 0 of 44 cells retired.",
+      "verdict is convention-invariant: 0 NI accepts across all 5 tie conventions x 44 cells (33 decision cells under split/first/last/wrong, 22 under credit). RATIO(0.85) also rejects every checkpoint. The arm is FAR from certifiable -- recovery 9.5-46.6%, margins 8.7-35.1 pp short -- so no accept-boundary claim is made or possible.",
+      "not output degeneracy: popqa and triviaqa hold 0.000% empty predictions across the grid, top-constant share stays low, distinct predictions do not collapse. The models are changing answers, not breaking format.",
+      "BH over the 21 decision-axis adjacent intervals at q=0.05 rejects 12. Per axis, 6/7 triviaqa intervals resolve (5 upward), 5/7 popqa (3 upward), 1/7 mmlu_content. The Q1 verdict rests on the Spearman trend + the range gate, NOT on counting resolved intervals."
+    ],
+    "my_own_errors_found_and_corrected_before_publishing": {
+      "1_wrong_noise_constant_for_k=8": "would have reported a 0.66 pp mmlu_content 'gap' that is pure noise. Caught by deriving E[range of k] for the actual k instead of copying keep8's 1.6926. See Q2_noise_gate_and_the_k_constant_error_avoided.",
+      "2_Q3_flag_OR'd_the_weak_read_over_the_prereg_headline": "my first implementation set REPLICATES = (length-matched window is a regression) OR (any adjacent resolved regression exists). Those DISAGREE on this data: the pre-registered HEADLINE read is a resolved IMPROVEMENT (+1.3317 pp) while the weaker scan finds 2 regressions among 7 intervals. The OR printed 'Q3_REPLICATES' -- a conclusion drawn from the weaker read, AGAINST the designated headline. That is the 'pick the favourable criterion' failure this protocol forbids elsewhere. Fixed to read (a) alone; THE VERDICT STRING FLIPPED to Q3_DOES_NOT_REPLICATE.",
+      "3_seed_check_aborted_on_its_own_output": "on re-run, assert_seeds_disjoint found arm_index 600-610 in this run's OWN output file, about to be overwritten, and refused to proceed. This is the same defect keep10_neighbour_range_20260813.tooling_defects_found_and_fixed_here[1] flagged as 'WORTH PORTING' -- fixed here by excluding the output basename explicitly and recording the exclusion in the JSON, not by weakening the check."
+    },
+    "NOT_licensed": [
+      "Claim P as a general law. On the only densely sampled damaged arm the trend is upward on every axis where a trend resolves and 0 of 3 axes wander. P may be stated only as CONDITIONAL.",
+      "The converse over-correction 'recovery is monotone'. Two axes are TREND monotone, NOT strictly monotone (2 and 4 sign reversals), and one axis resolves nothing at all. The excursions are real and material relative to Delta.",
+      "Using the k=3 constant 1.6926 to gate a range over more than 3 points. c_8 = 2.8475; the k=3 constant puts the floor 40.6% too low and flips mmlu_content's gate boolean.",
+      "Reporting the 5 sub-noise ranges (mmlu_content 0.6623, nq_open 0.7479, and all three Q4 decision ranges) as measured gaps. They fail range_exceeds_item_noise.",
+      "Setting Q3 from read (b). The prereg designates the length-matched window as the headline.",
+      "Asserting the LR-vs-range ordering of Q4 as CAUSAL or fitted. n=3 arms; 'late in training' and 'low LR' are perfectly confounded, and depth does not order the ranges monotonically.",
+      "'The neighbour range is a keep8 artefact.' keep10 reproduced it at 1.84x its floor.",
+      "Treating the 8 grid checkpoints as REPLICATES. Successive states of ONE optimisation at a DECAYING learning rate; their spread is heal progress + data order + LR schedule, never independent-run variance. A checkpoint-SELECTION / trajectory quantity.",
+      "Anything of the form 'the 7B deficits are large relative to seed variance'. sd_run is a 1B-only quantity; every 7B rung has exactly ONE seed and the historical 7B ladder's seeds are unrecorded, so no 7B sd_run is computable or reconstructible.",
+      "Calling any of this 'harness noise'. There is no measured runtime-jitter floor on this harness, and the cross-node control now shows scoring is BIT-IDENTICAL across nodes.",
+      "Comparing keep12 / keep14 / keep8 / keep10 / shortgpt16 ABSOLUTE margins as rungs of one ladder -- five architectures, two corpora, unequal steps (see STATUS.json:warning). Only the RANGES, a within-arm statistic, are compared across arms.",
+      "Reading Q3 as step-matched. keep12 has no step128000; the window is LENGTH-matched (25000 vs 25500 steps) only, and 'same step' != 'same data seen' across arms.",
+      "Any accept-boundary claim. Every cell rejects by 8.7-35.1 pp at 9.5-46.6% recovery.",
+      "Any K1/K2/K3 clause -- defined over the pre-registered 1B arm set.",
+      "Quoting any margin here to better than 0.01 pp across nodes (numpy multinomial drift); all statistics here are single-node (.73, numpy 2.5.1)."
+    ],
+    "append_invariant": "appended as a NEW key to a file that had 42 pre-existing keys; 0 of 42 were modified, asserted by comparing the full pre-image dict to the post-image minus this key. Note the count is read FROM THE FILE at append time, not from any document -- concurrent A04 work has repeatedly made written key counts stale within hours."
   }
 }
