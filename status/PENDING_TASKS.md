@@ -1,5 +1,45 @@
 # PENDING_TASKS.md — Task Board
-## Updated 2026-07-31 00:45 CST
+## Updated 2026-08-13 09:30 GMT+8
+
+---
+
+## ⛔⛔ STALE-NODE WARNING — READ BEFORE ACTING ON ANY `auto_launch` ENTRY
+
+**Added 2026-08-13 by MAIN. 0 GPU. Nothing below is deleted — it is provenance.**
+
+This board contains **14 `auto_launch:true` entries**, and **78 references to nodes that
+NO LONGER EXIST**: `.196`, `.76`, `.249`, `.245.174`, `.252`, `.48.7.53`, `28.88.184.53`,
+`28.58.245.174`, `28.59.80.196`. Line ~605 even reads *"any node frees + all GPUs idle →
+heartbeat auto-launches the next probe, priority P0."*
+
+The heartbeat spec says *idle GPU + `auto_launch:true` → launch immediately*. Followed
+literally against this board, that **targets decommissioned hardware** — the launch either
+fails on SSH, or (worse) a stale path resolves on a surviving node and writes results under
+an arm name whose provenance no longer matches.
+
+### The only nodes that exist (2026-08-13, verified this session)
+
+| node | disk | hardware |
+|---|---|---|
+| LOCAL | wzc1 | 8× B200 (sm_100, 178 GB) |
+| `.21` = `28.89.19.21` | wzc1 | 8× B200 (sm_100, 178 GB) |
+| `.73` = `28.85.35.73` | zwfy6 | 8× H20 (95 GB) |
+| `.82` = `28.82.250.82` | zwfy6 | 8× H20 (95 GB) |
+| `.104` = `28.83.24.104` | zwfy6 | 8× H20 (95 GB) |
+
+### Ruling for any future heartbeat
+
+1. **Every `auto_launch:true` entry below whose node is not in that table is STALE.**
+   Treat it as `auto_launch:false` regardless of what its own line says.
+2. The 2026-06 `mem_space` / `b25` / `F2` / `ROUTE-A` / `N16-TOP16` / `LONGEVAL-RULER-COMPARE`
+   blocks are from a **retired research direction on retired hardware**. They are kept for
+   provenance and must not be auto-launched.
+3. **The live task queue is `proposal/active/*/STATUS.json` (`next_gate`) and the paper
+   directories — not this board.** Priority order is unchanged: paperC + proposal first,
+   and the judgement is *"does paperC/proposal still have work"*, never *"are there free cards"*.
+4. Before launching anything from here, re-verify the node **and** that the referenced
+   ckpt/data path exists on the disk that node actually mounts (wzc1 ≠ zwfy6; a path can
+   exist on one and not the other, and `.73`'s `/apdcephfs_wzc1` is a symlink to zwfy6).
 
 ---
 
