@@ -1,7 +1,47 @@
 # GPU_STATUS.md — 5 节点 GPU 台账（40 卡）
 > 每次启动/kill GPU 任务更新。heartbeat 先读→对照 nvidia-smi→台账说跑但空=补卡。★29.162.226.120=dllm 绝不碰。
 
-## 🔄 2026-08-15 02:00 — 32/40 忙；LOCAL 全空但 **GPU 4-7 被 watcher 契约预留**
+## 🔄 2026-08-15 05:47 — 24/40 忙；**LOCAL + `.212` 全空（16×B200）且预留已解除**
+
+| 节点 | 任务 | 实测（nvidia-smi + **log 自带时间戳**） | 状态 |
+|---|---|---|---|
+| **LOCAL** | **空** | 8×0 MiB / 0% / **0 PID**（连采 3 次） | ✅ **8 卡全部可用**（watcher 已退出，见下） |
+| **`.212`** | **空** | 8×0 MiB / 0% / **0 PID** | ✅ 全部可用（slorb 臂 04:18 收尾） |
+| **`.73`** | Paper B **keep12fresh2** | step **171400/200000**、loss 2.4498、ppl 11.59、**7.92 s/step**（自报 7.81，+1.4%）、maxmem 91.9GB、ETA **2.6 d** | ▶️ 健康 |
+| **`.82`** | Paper B **keep8fresh2** | step **138380/200000**、loss 2.6453、ppl 14.09、**5.85 s/step**（自报 5.78，+1.2%）、maxmem 73.5GB、ETA **4.2 d** | ▶️ 健康 |
+| **`.104`** | paperC **qwen3base_heal_k8f2** | step **38800/200000**、loss 2.7372、ppl 15.44、**5.84 s/step**（自报 5.74，+1.7%）、maxmem 77.5GB、ETA **10.9 d** | ▶️ 健康（**勿动**） |
+
+Monitor **http200 OK**（`latest` 键 5 节点各 8 卡，与直测一致）。三条 log **全 0 error**、mtime 新鲜、
+每节点恰好 8 PID、**无抢卡**。任务归属由 `/proc/<pid>/cmdline` 的 `--output_dir` 确认（不靠 `ls -t`，zwfy6 是共享盘）。
+
+### ✅ 上一版的「GPU 4-7 预留」已失效，现已解除
+
+watcher **PID 176751** 实测**已不存在**（`ps` 输出空），`ps -eo pid,cmd | grep union9_watcher` 亦为空。
+slorb 的 union-9 于 **05:00 全 6 stage 完成**（`STAGE 4 DONE rc=0`、summary 已写盘），#246 收官。
+⇒ **LOCAL 8 卡全部可用**，不再有任何契约预留。
+
+### ⚠️ 速率口径：只用 **log 自带时间戳**；trainer 自报值和台账 step 号都不可作基准
+
+本轮连踩两个，两个都是**我的测量口径错**，不是训练出问题：
+1. **trainer postfix 的 `s/step` 是冻结值** —— `.73` 的 `7.81s/step` 在相隔 3.5 h 的四条 log 行里**逐字节相同**。
+2. **拿上一版台账（02:00）的 step 号 + 台账时刻反推 → 得出「三臂齐降速 28-30%」，是错的。**
+   台账行是**事后**写的，把「写入时刻」当成「该 step 的发生时刻」会高估 Δt。
+   改用 log 里 `2026-08-15 HH:MM:SS - INFO - [step N/200000]` 的真实时间戳重算，三臂全部落在自报值 **±2%** 内。
+   > 「三个不同脚本 / 两个模型家族 / 齐刷刷同一个 −30%」本身就是**口径错**的信号，不是三个巧合。
+3. 附带：**短窗不能算速率** —— log 每 20 step 一行，我先取的 150 s 窗只含 20-40 step，
+   ±1 行边界误差就是 ±50%（实测短窗给出 4.22 / 8.50 / 4.22 s/step，全是量化噪声）。
+
+### ⛔ 16 张空闲 B200 本轮**故意不填**
+
+`proposal/ready_queue.py` 实测 **0 ready_gpu / 11 ready_cpu**，它自己的结论是
+「An idle GPU is NOT a reason to idle: there are 11 zero-GPU tasks blocking their own gates」。
+判据是「paperC / proposal 是不是真没活了」，**不是「哪台卡空了」**。
+真瓶颈 = **10/11 提案缺 `RELATED_WORK.md`**（`ready_queue.py:504` 硬检查，promotion 硬门槛，0 GPU 可清）。
+已派 2 个 0-GPU agent 在写（A02+B01、A01+B03）；**GPU 全程 0 占用已复核**。
+
+<!-- 以下为历史快照，按时间倒序保留。上方 05:47 为当前状态。 -->
+
+## 🔄 2026-08-15 02:00 — 32/40 忙；LOCAL 全空但 **GPU 4-7 被 watcher 契约预留** ⛔**该预留已于 05:00 失效（watcher 已退出）**
 
 | 节点 | 任务 | 实测 | 状态 |
 |---|---|---|---|
