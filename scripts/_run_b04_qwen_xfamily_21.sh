@@ -210,5 +210,5 @@ PYEOF
 done
 
 log "ALL DONE -- B04 cross-family Qwen ladder"
-log "Next: run proposal/backlog/B04-eval-fragility/analyze_b04_5rung.py adapted to"
+log "Next: run proposal/backlog/B04-eval-fragility-incubator/code/analyze_b04_5rung.py adapted to"
 log "      RESULTS_ROOT=$RESULTS_ROOT and the qwen_* rung names, then compare rho to the OLMo side."

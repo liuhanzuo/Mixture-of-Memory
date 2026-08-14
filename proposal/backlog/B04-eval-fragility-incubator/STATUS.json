@@ -50,9 +50,12 @@
   ],
   "evidence_files": {
     "olmo_verdict": "DIRECTION_A_VERDICT.md",
-    "olmo_analysis": "evidence/B04_6rung_bs16_analysis.json",    "qwen_verdict": "DIRECTION_A_QWEN_VERDICT.md (banner at head: its kill is downgraded)",
+    "olmo_analysis": "evidence/B04_6rung_bs16_analysis.json",
+    "qwen_verdict": "DIRECTION_A_QWEN_VERDICT.md (banner at head: its kill is downgraded)",
     "qwen_confound_addendum": "DIRECTION_A_QWEN_LADDER_CONFOUND_ADDENDUM.md",
-    "qwen_analysis": "evidence/B04_Qwen_6rung_bs16_analysis.json"
+    "qwen_analysis": "evidence/B04_Qwen_6rung_bs16_analysis.json",
+    "olmo_analyzer_code": "code/analyze_b04_5rung.py (moved here 2026-08-14 from the sibling B04-eval-fragility/ dir; run from repo root, its ROOT path is relative)",
+    "qwen_analyzer_code": "code/analyze_b04_qwen_6rung.py (same move; see SOURCES.md for move provenance)"
   },
   "complete_rungs_olmo": 6,
   "complete_rungs_qwen": 6,
@@ -68,6 +71,7 @@
     ],
     "kill_definition": "A paper is a kill iff it (1) uses depth-prune-then-heal (not just prune-only or attention-only) on >=3 rungs, (2) reports per-item acc_norm (or equivalent length-normalized) margin distribution on MC tasks, AND (3) reports either median_margin or frac(margin<threshold) co-varying with aggregate score on that ladder. None of the top-5 or also-noted set satisfies all three. Concurrent (<=3mo, arXiv only) same-lens work on a different family is NOT a kill.",
     "resurrection_gate_still_stands": {
+      "_superseded_2026_08_10": "The 'NOT_qwen' key below is STALE and is retained only as the dated 2026-08-09 record. It is overridden by resurrection_conditions[0] and status_note_2026_08_10.qwen_readmitted_as_candidate_family, which WITHDREW the 'NOT Qwen' exclusion because Qwen was never fairly tested. Qwen is re-admitted via a budget-matched ladder only. Same for any wording in NOVELTY_CHECK.md that calls the Qwen leg a 'kill': see the 2026-08-14 banner at the head of that file. Noticed 2026-08-14 during the two-directory bookkeeping merge; no scientific conclusion was changed.",
       "second_confirming_family_NOT_qwen": "required; e.g. Llama-3 or Mistral prune-heal ladder",
       "mechanism_level_hypothesis": "required a priori; candidate: fresh-layer-init variance shapes logit dispersion, which in turn shapes margin compression under damage"
     },

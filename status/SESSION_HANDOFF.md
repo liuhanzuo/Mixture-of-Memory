@@ -24,7 +24,7 @@
    - Spearman(core6, median_margin) = **+1.0000**, exact p = **0.0028** ★ n=6 exact下限
    - Spearman(core6, frac<0.005) [PRIMARY] = **−1.0000**, exact p = **0.0028** ★ n=6 exact下限
    - 复算了 archived `PAPERF_ACCNORM_REDO` 的 n=6 结果，用新的 8-shard 完整合并 + acc_norm 口径 → **独立验证 + 数据完整性 audit 均通过**
-   - Provenance：`proposal/backlog/B04-eval-fragility/analyze_b04_5rung.py` + `.73:/apdcephfs_zwfy6/.../olmo2_downstream_results/7B_*_bs16/per_example_*.jsonl`（每 rung n_scored=17195 assert 通过）
+   - Provenance：`proposal/backlog/B04-eval-fragility-incubator/code/analyze_b04_5rung.py` + `.73:/apdcephfs_zwfy6/.../olmo2_downstream_results/7B_*_bs16/per_example_*.jsonl`（每 rung n_scored=17195 assert 通过）
 
 2. **B04 是什么/不是什么**：
    - **是**：per-item acc_norm margin 分布单调随 damage 收缩（damaged model 做对答案时置信度更低，同时 near-tie 更多）。

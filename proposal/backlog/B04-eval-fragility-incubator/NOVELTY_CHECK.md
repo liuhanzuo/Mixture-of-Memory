@@ -7,6 +7,35 @@ outcome: hold_in_backlog (needs 2nd family + mechanism-level hypothesis; narrow 
 
 # B04 Novelty Check — OLMo-2-narrowed "damage × acc_norm margin fingerprint"
 
+> ## ⚠️ 2026-08-14 CROSS-REFERENCE BANNER — the Qwen "kill" cited below was downgraded on 2026-08-10
+>
+> This document was written **2026-08-09**, one day before the Qwen leg was re-analysed.
+> Its *verdict* (`hold_in_backlog`) is still current and `STATUS.json` says so explicitly
+> ("The hold_in_backlog novelty verdict of 2026-08-09 is unaffected"). But two statements
+> in the body are stale, and one of them is **actionable**:
+>
+> 1. Where the body says the general claim was **"killed"** / the "Qwen replication
+>    failed" (§Claim under test, and the Model-scope row of the differentiation table):
+>    `STATUS.json.kill_history[1]` downgraded that verdict `GENERAL_CLAIM_KILLED` →
+>    **`NON_MATCHED_INCONCLUSIVE`** on 2026-08-10, because the Qwen ladder confounds
+>    damage with training budget. Cross-family generality is **untested, not refuted**.
+>    (This is not a promotion — the narrowing to OLMo-2-only stands either way.)
+> 2. **Actionable:** the resurrection gate below asks for a second family **"NOT Qwen"**.
+>    That clause was **WITHDRAWN** on 2026-08-10 (`STATUS.json.resurrection_conditions[0]`,
+>    `status_note_2026_08_10.qwen_readmitted_as_candidate_family`) on the grounds that
+>    Qwen was never fairly tested. Qwen **is** re-admitted, but only via a
+>    budget-matched ladder meeting the six conditions in
+>    `status_note_2026_08_10.matched_ladder_requirements`. Do not exclude Qwen on the
+>    strength of the text below.
+>
+> Also disclosed by the same 2026-08-10 note and **not** reflected below: the OLMo ladder
+> is itself budget-varying, Spearman(core6, heal_steps) = **+0.8721** across its 5 damaged
+> rungs. It is defensible only because damage depth spans five values there and is a
+> perfect rank predictor. **Quote the +0.8721 wherever the +1.00 is quoted.**
+>
+> Nothing in the body has been edited — the scientific text is left as the dated record of
+> what was concluded on 2026-08-09. `STATUS.json` is the authority on current standing.
+
 ## Claim under test
 
 On a 6-rung damage ladder (`base + shortgpt16 + keep{14,12,10,8}`) of OLMo-2-7B, aggregate core6 degradation is accompanied by per-item acc_norm margin compression: **Spearman(core6, median_margin) = +1.00** and **Spearman(core6, frac<0.005) = −1.00**, both at n=6 exact-permutation lower bound p = 0.0028. General claim killed by Qwen3-8B replication (ρ=+0.43, p=0.42; ρ=−0.49, p=0.36). Remaining claim is OLMo-2-family-specific.

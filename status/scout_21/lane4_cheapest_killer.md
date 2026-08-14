@@ -176,7 +176,7 @@ B06 (see #3, likely already settled).
 | rung: scratch14L @ step 2000 | `outputs/qwen3_minarch_scratch_f12k2/final.pt` | **15G**, `from_scratch=True` |
 | harness | `scripts/eval_qwen3_probe2_downstream.py` | 32068 B; `ALL_TASKS` = exactly B04's core6; supports `--ckpt --keep_front_layers --n_fresh_layers --num_shards --shard_index --batch_size --add_bos --save_per_example --merge`; `results_root` default `qwen3_probe2_downstream_results` |
 | runner template | `scripts/_run_paperF_bs16_ladder_73.sh` | 5237 B; has the 8/8-shard assert + per-task `n_scored` assert + skip-if-`summary.json` idempotency guard |
-| analysis | `proposal/backlog/B04-eval-fragility/analyze_b04_5rung.py` | 5775 B; margin = `norm_scores[gold] - max_{d!=gold} norm_scores[d]`, exact-permutation p |
+| analysis | `proposal/backlog/B04-eval-fragility-incubator/code/analyze_b04_5rung.py` | 5775 B; margin = `norm_scores[gold] - max_{d!=gold} norm_scores[d]`, exact-permutation p |
 | reproduction gate reference | `qwen3_mmlu_content_results/qwen3_base/summary.json` letter_acc **0.7293832787352229**; `.../qwen3_f12k2_inherit_s200k/summary.json` letter_acc **0.2514599059962968** | both n=14042; these are the paperB-documented sanity targets (~.7297 / ~.2495) so the loader path is already proven correct on these exact ckpts |
 | datasets | `data/hf_datasets_cache/` on wzc1 | `Rowan___hellaswag`, `allenai___ai2_arc`, `ybisk___piqa`, `allenai___winogrande`, `allenai___openbookqa` all present |
 

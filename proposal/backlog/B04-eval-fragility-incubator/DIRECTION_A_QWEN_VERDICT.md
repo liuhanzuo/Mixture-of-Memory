@@ -142,7 +142,7 @@ That gate ran and killed the general claim. The self-limiting protocol worked.
 ## 6. Provenance
 
 * Qwen bs16 downstream: `.21:/apdcephfs_wzc1/.../qwen3_probe2_downstream_results/qwen_{base_full36,f12k2_step200000,f12k2_step20000,f12k2_step2000,f12k4_step2000,scratch14L_step2000}_bs16/` — all six with `per_example_*.jsonl` (n_scored asserted per task) + `norm_lens/norm_scores` enrichment verified via `[ENRICH CHECK] norm_scores present = True`.
-* Analyzer: `proposal/backlog/B04-eval-fragility/analyze_b04_qwen_6rung.py` (exact-permutation p, identical margin definition to the OLMo analyzer).
+* Analyzer: `proposal/backlog/B04-eval-fragility-incubator/code/analyze_b04_qwen_6rung.py` (exact-permutation p, identical margin definition to the OLMo analyzer).
 * Analysis JSON: `proposal/backlog/B04-eval-fragility-incubator/evidence/B04_Qwen_6rung_bs16_analysis.json`.
 * Driver: `scripts/_run_b04_qwen_xfamily_21.sh`; ~17 min wall on 8× L20A.
 * Commit: 36ddb1e (harness + driver + OLMo analysis), this verdict follows.

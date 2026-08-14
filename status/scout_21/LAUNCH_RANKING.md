@@ -365,9 +365,9 @@ cd /apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory && \
 sed -e 's#ROOT = Path("olmo2_downstream_results")#ROOT = Path("qwen3_probe2_downstream_results")#' \
     -e 's#^RUNGS = \[#RUNGS = [\n    ("base_full36",   "qwen3_base_full36_bs16"),\n    ("f12k2@200k",    "qwen3_f12k2_s200000_bs16"),\n    ("f12k2@20k",     "qwen3_f12k2_s20000_bs16"),\n    ("f12k4@2k",      "qwen3_f12k4_s2000_bs16"),\n    ("f12k2@2k",      "qwen3_f12k2_s2000_bs16"),\n    ("scratch14L@2k", "qwen3_scratch14L_s2000_bs16"),\n]\n_OLD_RUNGS = [#' \
     -e 's#olmo2_downstream_results/B04_5rung_bs16_analysis.json#qwen3_probe2_downstream_results/B04_qwen_crossfamily_bs16_analysis.json#' \
-    proposal/backlog/B04-eval-fragility/analyze_b04_5rung.py \
-  > proposal/backlog/B04-eval-fragility/analyze_b04_qwen_crossfamily.py && \
-/opt/conda/envs/torch-base/bin/python proposal/backlog/B04-eval-fragility/analyze_b04_qwen_crossfamily.py 2>&1 | tail -30
+    proposal/backlog/B04-eval-fragility-incubator/code/analyze_b04_5rung.py \
+  > proposal/backlog/B04-eval-fragility-incubator/code/analyze_b04_qwen_crossfamily.py && \
+/opt/conda/envs/torch-base/bin/python proposal/backlog/B04-eval-fragility-incubator/code/analyze_b04_qwen_crossfamily.py 2>&1 | tail -30
 ```
 
 `exact_p_two_sided` iterates `permutations(y)` generically, so n=6 needs no code change (only the
@@ -601,7 +601,7 @@ to `⚠️ 已过期 (2026-08-08 实测纠正)：models/Qwen3-8b-local 在 zwfy6
 
 ### 6.4 B04 analyzer docstring says n=5 but the verdict is n=6
 
-`proposal/backlog/B04-eval-fragility/analyze_b04_5rung.py` docstring says
+`proposal/backlog/B04-eval-fragility-incubator/code/analyze_b04_5rung.py` docstring says
 "Exact permutation p at n=5 (5! = 120 perms)" and `RUNGS` lists 5, but
 `DIRECTION_A_VERDICT.md` reports n=6 with 720 perms (shortgpt16 added). The code is generic
 (`permutations(y)`), so this is documentation-only — but it misleads.

@@ -93,7 +93,7 @@ Both PRIMARY metrics achieve **exact-permutation lower bound p = 1/360 = 0.00278
 
 ## Provenance
 
-- Script: `proposal/backlog/B04-eval-fragility/analyze_b04_5rung.py` (extended in place for n=6 by adding shortgpt16 rung)
+- Script: `proposal/backlog/B04-eval-fragility-incubator/code/analyze_b04_5rung.py` (extended in place for n=6 by adding shortgpt16 rung)
 - Per-item source: `.73:/apdcephfs_zwfy6/.../olmo2_downstream_results/7B_{base_full,keep14_step200000,keep12_step124000,keep10_step83500,keep8_step121000,shortgpt16_step200000}_bs16/per_example_*.jsonl` (all 8-shard `_shardXof8.jsonl` files merged, integrity asserted via n_scored counts matching HF task cardinalities: hellaswag=10042, arc_challenge=1172, arc_easy=2376, piqa=1838, openbookqa=500, winogrande=1267)
 - Output: `evidence/B04_6rung_bs16_analysis.json`
 - Runner shell: `scripts/_run_paperF_bs16_ladder_73.sh` (8-shard assertion + per-task n_scored assertion + idempotent skip-if-summary.json guard)
