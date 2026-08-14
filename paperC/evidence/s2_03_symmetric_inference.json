@@ -6,7 +6,8 @@
  "harness_validation": {
   "floor_side_reproduces_published_v1_delta": "15/15 exact to <1e-6",
   "chance_side_reproduces_papers_count": "10/12 above item-averaged chance by point estimate -- identical to 05_analysis.tex",
-  "floor_side_reproduces_papers_count": "1/12 clears the floor -- identical to 05_analysis.tex"
+  "floor_side_reproduces_papers_count": "1/12 clears the floor -- identical to 05_analysis.tex",
+  "floor_side_ci_also_reproduces_published": "ci95_lo_pp/ci95_hi_pp reproduce the published vs_null.ci95_pp to <1e-14 on 15/15 -- this is the STRONGER check and the load-bearing one, since the table's criterion is 'CI95 excludes 0', not p. Found by the round_01 reviewer; MAIN had only claimed the delta match at <1e-6."
  },
  "counts_12_damaged_non_olmo": {
   "above_chance_point": 10,
@@ -38,7 +39,7 @@
     "ci95_lo_pp": -1.695478723404256,
     "ci95_hi_pp": -0.058178191489360875,
     "half_width_pp": 0.8186502659574477,
-    "boot_p": 0.0376,
+    "boot_p": 0.036199999999999996,
     "ci_excludes_zero": true
    },
    "published_v1_delta_pp": -0.8809840425531914,
@@ -92,7 +93,7 @@
     "ci95_lo_pp": -0.07480053191489394,
     "ci95_hi_pp": 0.390625,
     "half_width_pp": 0.23271276595744697,
-    "boot_p": 0.1984,
+    "boot_p": 0.18719999999999998,
     "ci_excludes_zero": false
    },
    "published_v1_delta_pp": 0.15791223404255317,
@@ -119,7 +120,7 @@
     "ci95_lo_pp": -0.5817819148936171,
     "ci95_hi_pp": 0.27426861702127686,
     "half_width_pp": 0.42802526595744694,
-    "boot_p": 0.476,
+    "boot_p": 0.4645,
     "ci_excludes_zero": false
    },
    "published_v1_delta_pp": -0.15791223404255317,
@@ -146,7 +147,7 @@
     "ci95_lo_pp": 0.0415558510638292,
     "ci95_hi_pp": 0.42386968085106336,
     "half_width_pp": 0.19115691489361708,
-    "boot_p": 0.0206,
+    "boot_p": 0.0192,
     "ci_excludes_zero": true
    },
    "published_v1_delta_pp": 0.2327127659574468,
@@ -200,7 +201,7 @@
     "ci95_lo_pp": -1.6456117021276597,
     "ci95_hi_pp": -0.1745345744680854,
     "half_width_pp": 0.7355385638297872,
-    "boot_p": 0.0174,
+    "boot_p": 0.0168,
     "ci_excludes_zero": true
    },
    "published_v1_delta_pp": -0.9142287234042553,
@@ -227,7 +228,7 @@
     "ci95_lo_pp": -0.7563164893617011,
     "ci95_hi_pp": 0.07480053191489394,
     "half_width_pp": 0.4155585106382975,
-    "boot_p": 0.1176,
+    "boot_p": 0.1132,
     "ci_excludes_zero": false
    },
    "published_v1_delta_pp": -0.3407579787234043,
@@ -254,7 +255,7 @@
     "ci95_lo_pp": -0.1579122340425524,
     "ci95_hi_pp": 0.00831117021276584,
     "half_width_pp": 0.08311170212765912,
-    "boot_p": 0.0854,
+    "boot_p": 0.0693,
     "ci_excludes_zero": false
    },
    "published_v1_delta_pp": -0.07480053191489362,
@@ -281,7 +282,7 @@
     "ci95_lo_pp": -0.0664893617021281,
     "ci95_hi_pp": 0.09973404255319146,
     "half_width_pp": 0.08311170212765978,
-    "boot_p": 0.7758,
+    "boot_p": 0.7071999999999999,
     "ci_excludes_zero": false
    },
    "published_v1_delta_pp": 0.016622340425531915,
@@ -335,7 +336,7 @@
     "ci95_lo_pp": -0.7230718085106378,
     "ci95_hi_pp": 0.09142287234042562,
     "half_width_pp": 0.4072473404255317,
-    "boot_p": 0.1364,
+    "boot_p": 0.1296,
     "ci_excludes_zero": false
    },
    "published_v1_delta_pp": -0.30751329787234044,
@@ -362,7 +363,7 @@
     "ci95_lo_pp": -1.288231382978723,
     "ci95_hi_pp": 0.3656914893617025,
     "half_width_pp": 0.8269614361702128,
-    "boot_p": 0.2932,
+    "boot_p": 0.2885,
     "ci_excludes_zero": false
    },
    "published_v1_delta_pp": -0.4654255319148936,
@@ -389,7 +390,7 @@
     "ci95_lo_pp": -1.3216838430851068,
     "ci95_hi_pp": 0.38231382978723416,
     "half_width_pp": 0.8519988364361705,
-    "boot_p": 0.2886,
+    "boot_p": 0.2847,
     "ci_excludes_zero": false
    },
    "published_v1_delta_pp": -0.4737367021276596,
@@ -416,11 +417,47 @@
     "ci95_lo_pp": -1.0305851063829794,
     "ci95_hi_pp": 0.6734125664893588,
     "half_width_pp": 0.8519988364361691,
-    "boot_p": 0.669,
+    "boot_p": 0.6631,
     "ci_excludes_zero": false
    },
    "published_v1_delta_pp": -0.19115691489361702,
    "published_v1_boot_p": 0.6631
   }
- ]
+ ],
+ "boot_p_estimator_fix_20260815": {
+  "defect": "the first version used 2*min((d<=0).mean(), (d>=0).mean()) -- the PRE-R-7 doubled-tail formula that 05_analysis.tex:55 takes credit for repairing ('produced an illegal p=1.042'). Confirmed verbatim against the published estimator's own docstring at paperC/code/mmlu_pro_power_nulls.py:121-132.",
+  "effect": "inflated vs_floor.boot_p on 12/15 cells by exactly the tie mass, contradicting the published v1_boot_p stored in the SAME record",
+  "fix": "replaced with the R-7 mid-p (split the zero atom): 2*min(P(d<0)+0.5*tie, P(d>0)+0.5*tie)",
+  "verified_after_re_emit": {
+   "vs_floor_boot_p_vs_published": "15/15 EXACT (<1e-12)",
+   "counts_unchanged": "chance 10 point /3 CI, floor 3 point /1 CI -- identical, because the table reports CIs not p"
+  },
+  "why_two_sided_is_correct_here": "the published floor-side verdict() rule (mmlu_pro_power_nulls.py:182) also labels 'above the floor' using a TWO-SIDED p, so two-sided on both sides is the symmetric choice, not an extra-conservative one on the chance side.",
+  "one_sided_sensitivity": "if switched to one-sided mid-p at alpha=0.05 the chance count would be 4/12 (llama2/k12 enters: d=+0.4981, p_2s=0.0882, p_1s=0.0441) and floor stays 1/12 -- direction and 'much smaller than 10/12' unchanged."
+ },
+ "multiplicity_20260815": {
+  "raised_by": "round_01 reviewer: 04_experiments.tex's Multiplicity paragraph earns its exemption by citing NEAR-UNANIMOUS aggregates (e.g. 0/60), but 3/12 is a MINORITY count -- the opposite regime",
+  "MAIN_recomputed": {
+   "chance_side_p_sorted": [
+    0.0062,
+    0.0126,
+    0.0456,
+    0.0882,
+    0.1546,
+    0.1802,
+    0.2308,
+    0.2672,
+    0.3714,
+    0.421,
+    0.6938,
+    0.725
+   ],
+   "BH_q05_rejections": "0/12 (rank1 0.0062 > 0.00417 already fails)",
+   "bonferroni_rejections": "0/12 (alpha/12 = 0.00417)",
+   "expected_false_positives": 0.6,
+   "binomial_P_X_ge_3": 0.0196
+  },
+  "resolution": "05_analysis.tex now states that under BH or Bonferroni NEITHER reference retains a cell (0/12 both sides), so the corrected comparison is undefined rather than 3/12 vs 1/12; what survives is the COUNT (binomial p=0.0196). Framed as evidence the chance side is not uniformly null, NOT as three simultaneously valid per-cell claims.",
+  "also_added": "the floor side's exact McNemar has no analogue here -- mean(1/n_opt) is not a 0/1 predictor so there are no discordant pairs; stated so 'one standard' does not overclaim"
+ }
 }
