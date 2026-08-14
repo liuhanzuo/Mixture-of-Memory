@@ -42,8 +42,21 @@ On a 6-rung damage ladder (`base + shortgpt16 + keep{14,12,10,8}`) of OLMo-2-7B,
 
 ## Top 5 nearest candidates (venue-verified)
 
+> ⚠️ **AMENDED 2026-08-15 (MAIN): this table was INCOMPLETE and its ranking was wrong.**
+> The 2026-08-09 sweep and the 2026-08-14 gate design both missed an **ICML 2026 regular**
+> paper with a **same-named metric on the same task family under the same damage operation**.
+> It is added as row 0 below because it, not the TMLR paper, is the nearest candidate.
+> The `hold_in_backlog` verdict at the top of this file **survives** (see row 0's last column),
+> but any text that cited "top 5" as evidence of the residual must be re-read against row 0.
+> Surfaced by the B02/B04 RELATED_WORK pass; venue re-verified by MAIN at
+> `api2.openreview.net/notes/search` — `venueid=ICML.cc/2026/Conference`, `venue="ICML 2026 regular"`,
+> `invitations` includes `Submission31462/-/Camera_Ready_Revision`, `pdate=1777576923498`.
+> **DBLP still shows only `journals/corr/abs-2605-07271` (CoRR 2026), i.e. DBLP lags — OpenReview
+> is the authority here**, exactly as [[venue-verify-must-use-openreview-2026]] says.
+
 | # | Paper | Venue (verified) | What it covers | What B04 covers that it does NOT |
 |---|---|---|---|---|
+| **0** | **Understanding Performance Collapse in Layer-Pruned Large Language Models via Decision Representation Transitions.** arXiv:2605.07271, 2026-05-08 | **ICML 2026 regular** (OpenReview `venueid=ICML.cc/2026/Conference` + `Camera_Ready_Revision`; **DBLP lags at CoRR 2026**) | Defines **"Decision Margin"** verbatim as the probability gap between gold and the best alternative, **on MC tasks, under layer pruning**, on Llama3-8B / Llama2-7B / Qwen3-4B, and reports it collapsing. **2026-05-08 → NOT concurrent; real prior art.** | Its DM is a **layer-wise trajectory within one network**; B04's is a **cross-checkpoint distribution over 17,195 items**. Full text greps `heal` / `retrain` / `continued-pretrain` = **0** (bounded SFT only), `spearman` = **0**, `per-item` = **0**. It satisfies none of B04's three `kill_definition` conditions jointly. ⚠️ **But it costs B04 three must-not-claim items** — B04 may no longer claim "Decision Margin", nor margin collapse under pruning on MC tasks, as its own. What remains is the prune-**then-heal** ladder + the joint Spearman fingerprint. |
 | 1 | Tropeano, Maistro, Ruotsalo, Lioma. "Don't Go Breaking My LLM: The Impact of Pruning Attention Layers on Explanation Faithfulness and Confidence Calibration." arXiv:2606.24970 | **TMLR 2026** (OpenReview venueid `TMLR`, `Camera_Ready_Revision` present) | 5 LLMs × 8 datasets; attention-layer pruning degrades ECE/Brier calibration and faithfulness even when accuracy stays stable | Aggregate ECE/Brier only; no per-item acc_norm margin field, no joint Spearman(core6, margin-density) fingerprint, no depth-prune-then-heal ladder |
 | 2 | Madaan, Yuret, Hupkes et al. "Quantifying Variance in Evaluation Benchmarks." arXiv:2406.10229 | **NeurIPS 2024 RegML Workshop** (OpenReview venueid `NeurIPS.cc/2024/Workshop/RegML`) | Seed variance and monotonicity of benchmark scores across training; explicitly notes IRT and item analysis fail to reduce MMLU variance; continuous-vs-discrete framing | No structural damage axis (only seed / training-step variance); no acc_norm margin decomposition; no prune-heal ladder |
 | 3 | Men, Xu, Zhang et al. "ShortGPT: Layers in Large Language Models are More Redundant Than You Expect." arXiv:2403.03853 | **Findings of ACL 2025** (DBLP `conf/acl/MenXZYWL0HC25`, `booktitle=ACL (Findings)`, `10.18653/v1/2025.findings-acl.1035`) | Block Influence layer-drop pruning method; reports aggregate MMLU / MC accuracy vs #layers removed | Aggregate acc only; no per-item margin distribution; no joint fingerprint |
