@@ -2,6 +2,47 @@
 > 每次启动/kill GPU 任务更新。heartbeat 先读→对照 nvidia-smi→台账说跑但空=补卡。★29.162.226.120=dllm 绝不碰。
 > 2026-08-08 15:03 更新：用户指令「B200跑resume，H20跑新方向」→ Paper B resume 迁移到 .21/.73。
 
+## 🔄 2026-08-14 12:34-12:50 — **节点重启后重配 + SparseForge ±SLoRB 双臂忠实 resume**（用户指令：重启因两台 B200 利用率过低）
+
+> **★ roster 更正（我自己实测，覆盖旧记录）**：**LOCAL 就是 `28.89.19.21`**（`ifconfig` 实证）——
+> 旧的「.21 远程」与 LOCAL 现在是**同一台机器**，旧 LOCAL 已不存在。唯一**新增**节点是 **`.212`**
+> (`28.89.18.212`，密码 `configs/password_b200_18212.txt`)。
+> **`.212` 与 LOCAL 同属一个 wzc1 物理盘**（写随机 stamp 跨节点读回验证，`df` 同为 `dop-fuse 120T/109T/91%`）
+> ⇒ **两者之间无需 scp**。`.212` 上**没有** `/apdcephfs_zwfy6` 挂载。
+> 两台都是**真 B200**：`sm_100` / 148 SM / 192 GB（`L20A` 只是 name 显示 bug，见 [[l20a-name-string-is-really-b200-sm100]]）。
+
+> **⚠️ 重启把工具链也抹了（不只是 job）**：`sshpass` 在 LOCAL 和 `.212` **都已消失** → 改用 pexpect helper `/tmp/sshp.py`。
+> conda env 被重置为 **Python 3.14.6 + 仅 torch 2.13.0/numpy 2.5.1**，`transformers`/`tqdm`/`safetensors`/
+> `accelerate`/`wandb`/`sentencepiece` 全缺（两台一致）。已全部装回（`transformers` 5.15.0 是**大版本跳跃**，
+> 已显式验证 `LlamaConfig/LlamaForCausalLM` + 整条 trainer import 链在两台都通过**才**投 GPU）。
+
+| 节点 | 硬件 | 任务 | 细节 | 状态 |
+|---|---|---|---|---|
+| **LOCAL** (=`.21`) | 8×B200 wzc1 | **SparseForge noslorb resume** | `[RESUME] Resuming from iter_num=6700` + **Optimizer/Scaler state restored**，8 rank 全 sync，8×25260 MiB @100%。剩 800 iter × 44.81 s = **9.96 h ≈ 79.7 GPU-h** | ▶️ 运行中 |
+| **`.212`** | 8×B200 wzc1 | **SparseForge slorb resume** | `[RESUME] Resuming from iter_num=6500` + **Optimizer/Scaler state restored**。剩 1000 iter × 48.39 s = **13.44 h ≈ 107.5 GPU-h** | ▶️ 运行中 |
+| **`.104`** | 8×H20 zwfy6 | **paperC Qwen3 heal（未打扰）** | pid 3343485，step **28300/200000**，loss 2.868 ppl 17.60，5.74 s/step，maxmem 77.5 GB，已跑 1 d 22 h | ▶️ 运行中（勿动） |
+| **`.73`** | 8×H20 zwfy6 | A04 shallow keep14 **已跑完**；现跑 CPU 收割 | 8×0 MiB | ✅ 空/收割中 |
+| **`.82`** | 8×H20 zwfy6 | A04 shallow keep13 **已跑完**；现跑 CPU 收割 | 8×0 MiB | ✅ 空/收割中 |
+
+**重启只杀了 6 个文件、全是 SparseForge**（`find logs -newermt '2026-08-13 20:00'` 实证：2 训练 + 2 watcher×2）。
+noslorb 死在 iter 6700/7500 (89.3%)、slorb 死在 6500/7500 (86.7%)，**都带 optimizer state 可忠实 resume**。
+
+> ⚠️⚠️ **发现并关闭了一个「静默从 0 重训」陷阱（后续 agent 必读）**：两臂的 `last` symlink **都是坏的**
+> （按 `$ROOT` 相对路径写，却从 arm 目录内解析）。`main_llama.py:1570` 用 `os.path.islink()` 判断，而它对
+> **悬空链接返回 True** → `realpath` 得到不存在的目录 → `isdir()` 失败 → **只打一行 `[RESUME] Warning` 就从
+> iter 0 开始重训**，会白烧 ~43 h 并产出一条看着很正常的 loss 曲线。已修 symlink + 写 `last_dir.txt`，
+> 且 resume 脚本**显式传 `--resume_dir`** 不依赖 symlink。
+>
+> ⚠️ **optimizer state 是 rank-0-LOCAL 而非 FSDP-full**（存档走 `optimizer.state_dict()`，非
+> `full_optim_state_dict()`；实测 65 个 flat entry / 1,106,510,336 exp_avg 元素 vs 291 声明参数）
+> ⇒ **换 rank 数就丢 momentum**。本次因为用**同样的 8-rank hybrid_sharded 拓扑**重启，实测
+> `Optimizer state restored` 成功，**是完全忠实的 resume**。若将来要换卡数，必须先改存档路径。
+
+**resume 脚本 = `scripts/_run_sparseforge_tokenmatched_resume.sh`**，由原脚本**机械字符串替换**生成（保证无超参漂移，
+diff 已验证只改 log 名 + resume flag + preflight），**未改原脚本**（它被 provenance 文档引用）。
+preflight 断言 resume_dir/model.pt/iter_num 范围，且**校验 ckpt 自己的 `args['SLoRB']` 与 arm 一致** ——
+已做**反向测试**：拿 slorb ckpt 喂 `ARM=noslorb` 会正确报 `WRONG ARM'S CHECKPOINT` 退出。
+
 ## ✅ 2026-08-13 01:40-02:08 — paperC heal-confound **milestone 轨迹 MMLU-Pro 打分 完成**（.73 + .82，共 **5.57 GPU-h** / 授权 120）
 
 兑现 `paperC/HEAL_CONFOUND_PREREGISTRATION.md` §10 预留的 16 卡（「其余 16 卡留给 milestone 的
