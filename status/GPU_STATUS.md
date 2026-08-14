@@ -839,3 +839,20 @@ competent-at-floor —— **0 GPU 成本**。
 - **结果**：primary 轴 triviaqa em **θ = −0.3622 pp，CI95 [−0.5517, −0.1838]，SIG 负 → NOT-CONFIRM**；聚合 **0/3 CONFIRM → ARTIFACT**（维持现状，A-2 仍撤回）。σ_run：keep7-20k → S=4/df=3/s=0.4039 pp；pooled → **df=5 / 0.3666 pp / χ² [0.229, 0.899]**。
 - 判定文档 `proposal/archive/A03-parametric-vs-external-memory/SEED45_VERDICT.md`；证据三份 JSON 在同目录 `evidence/`（两盘 md5 一致）。
 - 后续配对差分 + σ 重算是 **CPU-only**（在 `.82` 上跑，各 <1 min），未额外占卡。
+
+---
+
+## 2026-08-15 02:08 – 02:47 +08:00 — LOCAL GPU 0-3：ALPS+SLoRB GATE0（task #245），已跑完，卡已释放
+
+| 节点 | 卡 | 任务 | 起止 | 状态 |
+|---|---|---|---|---|
+| **LOCAL** (wzc1, B200) | **0-3 only** | ALPS+SLoRB GATE0 20-step 对齐探针 ×2 | 02:08→02:29（run A）、02:32→02:47（run B） | ✅ 两次 **rc=0**，GPU 0-3 已归零 |
+
+- **GPU 4-7 全程未碰**：watcher **PID 176751**（`ARM=slorb`, `GPUS=4,5,6,7`）从头到尾存活，`.212` 的 ±SLoRB 另一半未被破坏。占卡前实测 8 卡全 0 MiB、无 compute app。
+- **判定：GATE0 PASSED**，`aligned=224/224 misaligned=0`（两次都是）。详见 `status/ALPS_SLORB_GATE0_VERDICT.md`。
+- ⚠️ **`status/ALPS_SLORB_GATE0_FAILED.md` 已撤回**（顶部加了 SUPERSEDED banner，正文保留作 provenance）。它的两条"failure"都是探针自己配置的产物：
+  - "96/224 masks visible"：`nm_2_4_tile_stats` 的 `processed`/`skipped` 是 **rank-0 本地**计数器，在 FSDP `all_reduce` **之前**累加；同一行 reduce 后的 `total_tiles=1619001344` **精确等于** `elems/4 = 6476005376/4`，证明跨 rank 全覆盖。
+  - "loss 冻结在 27.9"：我传了 `--output_flip_every 1000000`，而 tqdm postfix 只在 `iter_num % output_flip_every == 0` 时刷新（`main_llama.py:2917`）→ 那是**一个 iter-0 的值被重画 24 次**。改成 `=1` 重跑，loss 27.9→24.0 单调带噪下降。
+- **STEP 1 零 GPU-h**：ALPS mask **早已在盘上**（`outputs/paper_v2/alps/llama2_wandb_sf_alps_v1_alps_seed0/mask.pt`，6.6 GB，7/31），5 项校验全过（histogram 恰好 `{2: 1619001344}`、224 module、zero_frac 0.5）。**不需要重跑 ADMM。**
+- **实测速率 25.31 s/it @4 卡；全程 7500 iter = 52.7 h wall / 211 GPU-h**（8 卡 @85% ≈ 248 GPU-h）。**超 12 GPU-h 阈值约 17 倍 → 按指令只报告、未启动。**
+- 顺手修了两个 blocking bug：`--eval_interval 0` 会 `ZeroDivisionError`（而 CLAUDE.md 恰恰要求训练时用 0）；以及给 fixed-mask 路径加了 `srste_decay != 0` 就 raise 的护栏（argparse 默认 **6e-5 不是 0**）。

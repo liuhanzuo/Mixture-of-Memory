@@ -1,3 +1,28 @@
+> # ⛔ SUPERSEDED / RETRACTED 2026-08-15
+>
+> **This verdict was wrong. Both failure signals below are artifacts of the probe's own
+> configuration, not properties of the ALPS+SLoRB arm.** See
+> **`status/ALPS_SLORB_GATE0_VERDICT.md`** for the corrected adjudication (GATE0 **PASSED**,
+> `aligned=224/224`, twice, both `rc=0`).
+>
+> - "Failure 1: only 96 of 224 masks visible" — `processed`/`skipped` in `nm_2_4_tile_stats` are
+>   **rank-0-local** counters incremented *before* the FSDP `all_reduce`. The reduced
+>   `total_tiles = 1619001344` on the same line equals `elems/4 = 6476005376/4` **exactly**, so
+>   every tile was counted across ranks. Nothing was lost.
+> - "Failure 2: loss frozen at 27.9" — the probe passed `--output_flip_every 1000000`, and the
+>   tqdm postfix is only refreshed inside `if iter_num % args.output_flip_every == 0`
+>   (`main_llama.py:2917`). It was **one iter-0 value redrawn 24 times.** Re-running with
+>   `--output_flip_every 1` gives a moving, descending loss (27.9 → 24.0). Also, the logged
+>   number is `task_loss + 4*KL`, not a cross-entropy, so `exp(27.9)` is not a perplexity and
+>   the `PPL > 1000` rule does not apply.
+> - The `SLoRB`-inits-to-zero concern was also disproved by measurement: with the **real ALPS
+>   mask** installed, `max|W*(1-mask)| = 1.240e-01` and `max|SLoRB_Weight| = 2.666e-01` (it is
+>   only zero in the all-ones-mask context, which is not this path).
+>
+> Kept verbatim below as provenance. **Do not cite it as the outcome.**
+
+---
+
 # GATE0 FAILED for ALPS+SLoRB — the gate did its job (0.06 GPU-h, 2026-08-15)
 
 **Verdict: DO NOT proceed to a long run.** The 20-step probe returned two independent
