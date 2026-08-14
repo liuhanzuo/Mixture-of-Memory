@@ -18,8 +18,47 @@ one-line patch is applied (`("nq_open", 3610, "em")` added to the task loop at l
 
 ## 2. The complete table (n_perm bootstrap, BH-corrected across all 33 cells)
 
-Residual fraction = (reported − null) / (1 − null): what share of the *available*
-headroom above the construct-appropriate floor the arm actually captures.
+> **⚠️ ERRATUM 2026-08-10 — the `frac` column's definition was stated wrongly.**
+> This file previously said `Residual fraction = (reported − null) / (1 − null)`,
+> "what share of the *available* headroom the arm captures". **That is not what was
+> computed.** `code/analyze_1b_knowledge_floor.py` computed — and
+> `evidence/a03_1b_floor_nulls_4axes.json` published —
+> **`(reported − null) / reported`**: what share of *the score the arm reports* sits
+> above the floor. Verified cell-by-cell (MAIN, 2026-08-14): **32 of the 33** published
+> `frac` values reproduce under `/reported` to $<10^{-9}$, and **0 of 33** under
+> `/(1 − null)`. The 33rd cell — `barely_healed × PopQA × em` — has `reported = 0.0000`,
+> so `/reported` is a division by zero and the JSON stores `residual_fraction: null`;
+> the table below already prints `n/a` there. That undefined cell is not a blemish on
+> the erratum, it is the sharpest argument *for* it: the headroom denominator
+> $(1-\text{null})$ is defined for every cell and returns $-2.3\%$ here, whereas the
+> denominator actually used silently loses a row exactly where an arm scores zero.
+>
+> **No number in the table below changes.** The formula line was wrong; the data was
+> not. This is also the definition **A01** uses in both code and prose
+> (`a01_gate3_content_conventions.py:215`, `a01_gate4_c4_prereg.py:113`,
+> `GATE3_CONVENTIONS_VERDICT.md:123`) — so the two proposals **agree on the number**;
+> only A03's prose disagreed with A03's code.
+>
+> The distinction matters for interpretation, not for the verdicts. `/reported`
+> flatters low-scoring arms, because a tiny score that is *mostly* above a tiny floor
+> gives a large fraction. Both columns are now in the JSON as
+> `residual_fraction_of_reported` and `residual_fraction_of_headroom`:
+>
+> | arm × axis | `/reported` (published) | `/(1 − null)` (headroom) |
+> |---|---:|---:|
+> | pruned+healed × PopQA EM | 41.8% | **1.7%** |
+> | pruned+healed × TriviaQA EM | 97.3% | **9.4%** |
+> | pruned+healed × NQ-open EM | 80.6% | **2.3%** |
+> | pruned+healed × MMLU content_norm | 12.3% | **5.6%** |
+> | intact × TriviaQA EM | 99.4% | 40.5% |
+>
+> So "pruned+healed captures 97.3% on TriviaQA" must **not** be read as "recovered
+> 97% of what was lost" — it captures 9.4% of the available headroom, and its raw EM
+> is 0.0959 vs intact's 0.4069. Statements of the first kind should be treated as
+> retracted; see `claims/A03_SURVIVING_CLAIMS.md`.
+
+Residual fraction (`frac` below) = **(reported − null) / reported**: what share of the
+arm's *own reported score* sits above the construct-appropriate floor.
 
 | arm | axis | interface | reported | null | resid | frac | BH p | verdict |
 |---|---|---|---:|---:|---:|---:|---:|---|
@@ -105,8 +144,8 @@ So the next A03 GPU step is **Arm 3 only**. Arms 4-6 are a coder project, not a 
 
 ## 7. Provenance
 
-* Analyzer: `proposal/active/A03-parametric-vs-external-memory/code/analyze_1b_knowledge_floor.py` (patched line 427-429)
-* Output: `proposal/active/A03-parametric-vs-external-memory/evidence/a03_1b_floor_nulls_4axes.json` (30 KB, on wzc1)
+* Analyzer: `proposal/archive/A03-parametric-vs-external-memory/code/analyze_1b_knowledge_floor.py` (patched line 427-429)
+* Output: `proposal/archive/A03-parametric-vs-external-memory/evidence/a03_1b_floor_nulls_4axes.json` (30 KB, on wzc1)
 * Ran on: `.82` (zwfy6), CPU only, ~1 min
 * Per-example inputs (zwfy6): `olmo2_closedbook_results/A03_1B_{base,keep7_step200k,keep7_step500}/per_example_{popqa,triviaqa,nq_open}.jsonl` — nq_open symlinked in from the `_nq` sibling dirs
 * MMLU inputs (zwfy6): `olmo2_mmlu_content_results/` same three arms

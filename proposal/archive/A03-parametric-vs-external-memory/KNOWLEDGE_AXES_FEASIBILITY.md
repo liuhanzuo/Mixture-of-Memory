@@ -196,9 +196,15 @@ TriviaQA.** Reasoning from measured numbers, not vibes:
 * 2AFC is a far easier interface than free generation: the intact 1B gets 40.7 % EM on TriviaQA
   *generatively*, so a 2-way discrimination on head facts should land well above 0.54.
 * **But** the ceiling is 1.0 and the floor is 0.54, so the *available headroom is only 0.46* —
-  versus TriviaQA's 0.997 headroom (floor 0.0026). A03's residual-fraction statistic (which is
-  `(reported − null)/(1 − null)`) will therefore look inflated on this axis for the same absolute
-  gain. **Residual fractions must not be compared across axes with such different headroom**, and
+  versus TriviaQA's 0.997 headroom (floor 0.0026). A03's residual-fraction statistic
+  (**corrected 2026-08-10**: it is `(reported − null)/reported`, *not* `(reported − null)/(1 − null)`
+  as this bullet originally stated — see the erratum at `GATE_FOURAXES_VERDICT.md` §2 and the
+  `residual_fraction_of_{reported,headroom}` keys now in
+  `evidence/a03_1b_floor_nulls_4axes.json`) will therefore look inflated on this axis for the same
+  absolute gain. The direction of this warning is unchanged and if anything stronger under the real
+  formula: dividing by `reported` inflates *low-scoring* cells, so a 0.54-floor 2AFC axis whose
+  reported score is near the floor can post a large fraction off a trivial absolute gain.
+  **Residual fractions must not be compared across axes with such different headroom**, and
   the report should say so or it will invite exactly the error A01 documents.
 * The genuine risk is not "at floor", it is **"above floor but measuring the candidate-set prior
   rather than the fact"**. Mandatory control: run the 2AFC with the *subject masked out* of the
@@ -413,7 +419,7 @@ generative floor 0.0187 at n=19086 is genuinely good).
 
 * Data + sha256 manifest: `data/knowledge_axes/MANIFEST.md` (197 MB, wzc1 only, not in git)
 * Harnesses read: `scripts/eval_olmo2_closedbook_qa.py`, `scripts/eval_olmo2_mmlu_content.py`
-* Floor conventions: `proposal/active/A03-parametric-vs-external-memory/code/analyze_1b_knowledge_floor.py`,
+* Floor conventions: `proposal/archive/A03-parametric-vs-external-memory/code/analyze_1b_knowledge_floor.py`,
   `GATE_FOURAXES_VERDICT.md`
 * Contamination: `scripts/audit_olmo2_dolmino_contamination.py`,
   `logs/dolmino_contam_audit.log`, `bench_results/olmo2_dolmino_contamination/`

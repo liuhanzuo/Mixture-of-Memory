@@ -315,10 +315,40 @@ def lengthmatched_contains_null(rows, target_chars, top_k=4000):
 
 def cell(arm, task, interface, reported_vec, null_vec, null_name, seed_off=0,
          binary_null=True):
+    """One (arm, task, interface) floor-calibration cell.
+
+    TWO residual fractions, both emitted, because A03's prose and A03's code
+    disagreed about which one `residual_fraction` meant (fixed 2026-08-10):
+
+      residual_fraction_of_reported = (reported - null) / reported
+          "what share of the score the arm actually reports sits above the
+          floor". This is the quantity that was ACTUALLY computed and published
+          in evidence/a03_1b_floor_nulls_4axes.json and quoted in
+          GATE_FOURAXES_VERDICT.md's table (verified: it reproduces all 33
+          published `frac` values, e.g. pruned+healed PopQA EM
+          (0.03939-0.02292)/0.03939 = 41.8%). It is ALSO the definition A01 uses
+          in code and prose (a01_gate3_content_conventions.py:215,
+          a01_gate4_c4_prereg.py:113, GATE3_CONVENTIONS_VERDICT.md:123), so the
+          two proposals are consistent on the NUMBER; only A03's prose was wrong.
+
+      residual_fraction_of_headroom = (reported - null) / (1 - null)
+          "what share of the AVAILABLE headroom above the floor the arm
+          captures". This is what GATE_FOURAXES_VERDICT.md:21 and
+          KNOWLEDGE_AXES_FEASIBILITY.md:199 CLAIMED the column was. It was never
+          computed anywhere. It is strictly smaller whenever reported < 1, and
+          hugely so on low-scoring axes: pruned+healed PopQA EM is 41.8% of its
+          own reported score but only 1.7% of the available headroom.
+
+    `residual_fraction` is retained as an alias of ..._of_reported so existing
+    consumers keep reading the published number rather than silently switching
+    definitions. Both new keys are explicit so no future reader has to guess.
+    """
     rep = float(np.asarray(reported_vec, dtype=float).mean())
     nul = float(np.asarray(null_vec, dtype=float).mean())
     d = np.asarray(reported_vec, dtype=float) - np.asarray(null_vec, dtype=float)
     mean, lo, hi, p = paired_bootstrap(d, seed=SEED + seed_off)
+    frac_reported = (rep - nul) / rep if rep > 0 else None
+    frac_headroom = (rep - nul) / (1.0 - nul) if (1.0 - nul) > 0 else None
     out = {
         "arm": arm, "task": task, "interface": interface,
         "n": int(np.asarray(reported_vec).size),
@@ -326,7 +356,14 @@ def cell(arm, task, interface, reported_vec, null_vec, null_name, seed_off=0,
         "null_name": null_name,
         "null": nul,
         "residual": rep - nul,
-        "residual_fraction": (rep - nul) / rep if rep > 0 else None,
+        "residual_fraction": frac_reported,
+        "residual_fraction_of_reported": frac_reported,
+        "residual_fraction_of_headroom": frac_headroom,
+        "residual_fraction_definition": "residual_fraction == (reported-null)/reported "
+                                        "== residual_fraction_of_reported; this is the "
+                                        "published column and matches A01. "
+                                        "residual_fraction_of_headroom == (reported-null)/(1-null) "
+                                        "is the different quantity A03 prose wrongly claimed.",
         "boot_mean_pp": 100 * mean,
         "boot_ci95_pp": [100 * lo, 100 * hi],
         "boot_p": p,
@@ -527,14 +564,17 @@ def main():
                   f"'{diag[t]['contains']['best_constant']}' "
                   f"{diag[t]['contains']['acc']:.4f}")
     hdr = (f"\n{'arm':<22}{'task':<14}{'iface':<13}{'reported':>9}{'null':>9}"
-           f"{'resid':>9}{'frac':>8}{'boot_p':>10}{'bh_p':>10}  verdict")
+           f"{'resid':>9}{'/rep':>8}{'/hdrm':>8}{'boot_p':>10}{'bh_p':>10}  verdict")
     print(hdr)
     print("-" * len(hdr))
+    print("  /rep = (reported-null)/reported  [the published column, matches A01]")
+    print("  /hdrm = (reported-null)/(1-null) [share of AVAILABLE headroom]")
     for c in cells:
-        fr = "n/a" if c["residual_fraction"] is None else f"{100*c['residual_fraction']:.1f}%"
+        fr = "n/a" if c["residual_fraction_of_reported"] is None else f"{100*c['residual_fraction_of_reported']:.1f}%"
+        fh = "n/a" if c["residual_fraction_of_headroom"] is None else f"{100*c['residual_fraction_of_headroom']:.1f}%"
         print(f"{c['arm']:<22}{c['task']:<14}{c['interface']:<13}"
               f"{c['reported']:>9.4f}{c['null']:>9.4f}{c['residual']:>+9.4f}"
-              f"{fr:>8}{c['boot_p']:>10.2e}{c['bh_adj_p']:>10.2e}  {c['verdict']}")
+              f"{fr:>8}{fh:>8}{c['boot_p']:>10.2e}{c['bh_adj_p']:>10.2e}  {c['verdict']}")
 
     if args.out:
         os.makedirs(os.path.dirname(args.out) or ".", exist_ok=True)
