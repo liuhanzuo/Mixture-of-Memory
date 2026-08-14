@@ -2,51 +2,28 @@
 > 每次启动/kill GPU 任务更新。heartbeat 先读→对照 nvidia-smi→台账说跑但空=补卡。★29.162.226.120=dllm 绝不碰。
 > 2026-08-08 15:03 更新：用户指令「B200跑resume，H20跑新方向」→ Paper B resume 迁移到 .21/.73。
 
-## 🔄 2026-08-14 23:27 — 40/40 忙；23:24 显存暴跌**已确认是 eval 伪影**；已派 gate 修复（0 GPU）
+## 🔄 2026-08-15 00:25 — 40/40 忙，每节点恰好 8 个 compute-app PID（无抢卡）
 
-| 节点 | 任务 | 实测 | 状态 |
+| 节点 | 任务 | 实测（elapsed/iter 自算，非 tqdm 瞬时值） | 状态 |
 |---|---|---|---|
-| **LOCAL** | SparseForge **noslorb** | iter **7405/7500** (98.7%)、剩 **95**、**56.60**(200it)/**55.77**(400it) s/it、ETA **1.49 h**（≈01:00） | ▶️ 健康 |
-| **`.212`** | SparseForge **slorb** | iter **7202/7500** (96.0%)、剩 **298**、**56.10**/**54.81** s/it、ETA **4.64 h**（≈04:05） | ▶️ 健康 |
-| **`.73`** | Paper B **keep12** | step **168720/200000**、loss 2.3906、ppl 10.92、**7.81（13/14）** | ▶️ 健康 |
-| **`.82`** | Paper B **keep8** | step **134640/200000**、loss 2.5672、ppl 13.03、**5.78（13/14）** | ▶️ 健康 |
-| **`.104`** | paperC heal | step **35080/200000**（读出点 **121000**）、loss 2.7838、ppl 16.18、**5.74（10/14）** | ▶️ 健康（勿动） |
+| **LOCAL** | SparseForge **noslorb** | iter **7473/7500**、剩 **27**、**56.60** s/it（200-iter 窗口）、ETA **0.42 h**（≈00:50） | ▶️ 健康，即将完成 |
+| **`.212`** | SparseForge **slorb** | iter **7269/7500**、剩 **231**、**57.01** s/it（200-iter 窗口）、ETA **3.66 h**（≈04:05） | ▶️ 健康 |
+| **`.73`** | Paper B **keep12fresh2** | step **169120/200000**、loss 2.4100、ppl 11.13、**7.81 s/step**、maxmem 91.9GB | ▶️ 健康 |
+| **`.82`** | Paper B **keep8fresh2** | step **135200/200000**、loss 2.5833、ppl 13.24、**5.78 s/step**、maxmem 73.5GB | ▶️ 健康 |
+| **`.104`** | paperC **qwen3base_heal_k8f2** | step **35620/200000**、loss 2.7449、ppl 15.56、**5.74-5.75 s/step**、maxmem 77.5GB | ▶️ 健康（勿动） |
 
-Monitor **http200 OK**（5/5 × 8 卡）。5 份 log **0 error**。tripwire（62 s/it）未触发。
+Monitor **http200 OK**。5 份 log **0 error**（逐节点 grep Traceback/OOM/ChildFailedError）。
+两个 union-9 watcher（PID 176642=noslorb / 176751=slorb）已武装，`TRAIN_LOG` 取自 `/proc/*/environ` 实测指向当前 live log。
+三个 arm 全部处在各自**已记录的基线**上（56.6-57.0 / 7.81 / 5.78 / 5.74），无 >10% 偏离。
 
-### ✅ 23:24 的显存暴跌：**确认是 eval/存盘伪影，不是崩溃**
+### ⚠️ 本轮方法论纠正：zwfy6 三节点不能用 `ls -t logs/*.log` 认任务
 
-23:24 我看到 **LOCAL 每卡掉 ~9 GB**（117→108）、**`.212` 从 ~117 GB 崩到 ~20 GB 且 GPU0 读 0%**。
-按自己写下的规则**先查 log 再判生死**：LOCAL 刚跑完 iter-7400 的 `eval_ppl` + 存盘；
-`.212` 正在 `eval_ppl`（82/82 已完成）然后 `[save]`。**两者都没崩。**
+`.73/.82/.104` **共享同一个 zwfy6 文件系统**，所以 `ls -t` 返回的是**集群范围最新**的 log，不是本节点的。
+本轮三节点因此**全部返回同一份 `keep8fresh2` log**，看起来像「三台在跑同一个 run」。
+**节点归属必须从进程表拿**：`pgrep -f` → `/proc/<pid>/cmdline` 的 `--output_dir`。
+实测归属：`.73`=keep12fresh2、`.82`=keep8fresh2、`.104`=**qwen3base_heal_k8f2**（trainer 名是
+`train_qwen3_arch_probe2.py`，所以 `pgrep -f train_olmo2` 在 .104 上匹配不到，只匹配到我自己的 ssh 命令）。
 
-**本轮复查：两节点显存全部回满**（LOCAL 111-117、`.212` 114-121），16 卡全 100%。
-⇒ 那次下跌是瞬时的，与 eval 伪影的判读完全一致。
-（这正是 heartbeat 契约铁律 4 + `one-sample-is-not-a-trend-or-state` 警告的场景：
-**单个显存数字分不清「崩了」和「到点做 eval」。**）
-
-### ✅ union-9 watcher：**实测 2 个**，noslorb 落地后自动接手
-
-PID **176642**（`ARM=noslorb`）+ **176751**（`ARM=slorb`），存活 **9.2 h**、`Ss`。
-
-> ⚠️ 我第一次 grep 时出现**第三个 PID 且 `ARM=` 为空** —— 那会撞上脚本自己的
-> `FATAL: set ARM=slorb or ARM=noslorb`。**我去查了而不是直接上报**：
-> PID 2028967 是**我自己 pgrep 的那条 shell**，已消失。**真 watcher 恰好 2 个。**
-
-### ★ 已派 gate 修复 workflow（`wf_d1ecc3d1-9dd`，**0 GPU**）
-
-上一条消息我用「要我现在派吗？」结尾 —— **那是错的**。按 standing autonomy（2026-08-09
-「以后不用问我 你自己决定就好」），这是我该自己决定的事，**结尾带个问句本身就是违规**。已直接派出。
-
-**针对上一轮两个具体失败模式各设了一道防线**：
-
-| 上轮失败 | 本轮防线 |
-|---|---|
-| 起草者**自己**宣布 `lifecycle: ready_gpu`，在自己的 gate 被驳倒之前 | **明令禁止**起草者设 `ready_gpu`；促升只由**第二阶段独立复审**决定 |
-| workflow **只 return 不落盘**，`ready_queue.py` 永远看不到 | `files_written` 是**交付物**，且第二阶段专设一个 **`on_disk` lens 去开文件亲自核**，不信自述 |
-
-另外**允许起草者反驳 lens**（带证据），而不是为了顺从把 gate 改坏 ——
-**一个被辩护的拒绝比一个糟糕的顺从更有价值。**
 
 ## 🔄 2026-08-14 22:57 — ★**`ready_gpu` 从 0 变成 2**（Persist 修复生效）；⚠️ **我推翻了自己上一轮的磁盘假设**
 
