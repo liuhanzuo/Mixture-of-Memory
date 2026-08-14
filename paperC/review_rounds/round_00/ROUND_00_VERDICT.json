@@ -1,98 +1,109 @@
 {
-  "schema_version": "1.0.0",
-  "round": 0,
-  "verdict": "ROUND_ABORTED_BY_DESIGN_PLUS_ONE_CONFIRMED_CRITICAL",
-  "abort": {
-    "reason": "only 3/6 reviews returned; a panel median from 3 is not interpretable",
-    "guard": "review_round.js aborts below 4/6 -- it fired as designed and prevented a 3-reviewer median from being reported as a 6-reviewer panel",
-    "agent_failures": [
-      "1 subagent never called StructuredOutput",
-      "2 subagents stalled on all 6 attempts (180s no-progress each)"
-    ],
-    "cost": "980358 subagent tokens, 8042s wall"
-  },
-  "confirmed_critical_S2_01": {
-    "reviewer": "strict_2 (recommendation: reject)",
-    "claim": "f_const = max_L of |L| noisy marginals on one finite sample is upward-biased even under exactly uniform gold labels (winner's curse); the paper never estimates or subtracts that bias",
-    "MAIN_independent_verification": "CONFIRMED, and LARGER than the reviewer computed. 40k multinomial draws per construct under exact uniformity, at the paper's own (n,k).",
-    "table": [
-      {
-        "construct": "obqa",
-        "n": 500,
-        "k": 4,
-        "reported_floor_above_chance_pp": 2.6,
-        "MAIN_simulated_E_max_minus_chance_pp": 2.315,
-        "MAIN_simulated_95pct_quantile_pp": 4.4,
-        "gap_inside_pure_selection_noise": true
-      },
-      {
-        "construct": "arc_ch",
-        "n": 1172,
-        "k": 4,
-        "reported_floor_above_chance_pp": 1.52,
-        "MAIN_simulated_E_max_minus_chance_pp": 1.514,
-        "MAIN_simulated_95pct_quantile_pp": 2.816,
-        "gap_inside_pure_selection_noise": true
-      },
-      {
-        "construct": "csqa",
-        "n": 1221,
-        "k": 5,
-        "reported_floor_above_chance_pp": 0.885,
-        "MAIN_simulated_E_max_minus_chance_pp": 1.499,
-        "MAIN_simulated_95pct_quantile_pp": 2.686,
-        "gap_inside_pure_selection_noise": true
-      },
-      {
-        "construct": "winogrande",
-        "n": 1267,
-        "k": 2,
-        "reported_floor_above_chance_pp": 0.434,
-        "MAIN_simulated_E_max_minus_chance_pp": 1.122,
-        "MAIN_simulated_95pct_quantile_pp": 2.723,
-        "gap_inside_pure_selection_noise": true
-      },
-      {
-        "construct": "piqa",
-        "n": 1838,
-        "k": 2,
-        "reported_floor_above_chance_pp": 0.49,
-        "MAIN_simulated_E_max_minus_chance_pp": 0.929,
-        "MAIN_simulated_95pct_quantile_pp": 2.285,
-        "gap_inside_pure_selection_noise": true
-      },
-      {
-        "construct": "arc_easy",
-        "n": 2376,
-        "k": 4,
-        "reported_floor_above_chance_pp": 1.625,
-        "MAIN_simulated_E_max_minus_chance_pp": 1.058,
-        "MAIN_simulated_95pct_quantile_pp": 2.02,
-        "gap_inside_pure_selection_noise": true
-      }
-    ],
-    "headline": "all six constructs' reported floor-above-chance gaps fall INSIDE the 95th percentile of pure selection noise",
-    "example": "OBQA: MAIN E[max]-chance = 2.315 pp (reviewer said 1.017) vs the paper's reported gap of 2.600 pp; 95pct quantile 4.400 pp",
-    "the_papers_own_evidence_already_said_so": "EVIDENCE_PACK.md:39-42 reportedly contains 'the rhetoric is WEAK there ... Do not oversell'; the manuscript does not carry it. MAIN must verify that line verbatim before citing it.",
-    "same_class_as": "memory/a-range-is-not-a-measurement-until-it-clears-its-floor.md -- except here the floor IS the uncalibrated estimator",
-    "smallest_fix_0_GPU": "add E[max_L] + 95pct under the balanced null + a chi-square GOF p on the gold marginal to Table 1; restrict the 'floor differs from chance' claim to constructs whose GOF rejects uniformity; bootstrap Delta with argmax_L recomputed INSIDE each resample"
-  },
-  "other_criticals_NOT_yet_verified_by_MAIN": [
-    {
-      "id": "S2-02",
-      "claim": "the v1>=v2 ordering is proved for the UNSTRATIFIED mixture bound but the estimator used is stratified within n_opt, so the 'always' is unproven; reviewer supplies a 2-stratum counterexample giving stratified acc 0.85 > v1 floor 0.50",
-      "status": "PLAUSIBLE, needs MAIN to check argmax_L is the same letter in all 8 MMLU-Pro n_opt strata"
-    },
-    {
-      "id": "S2-03",
-      "claim": "the flip claim holds its two sides to different evidentiary standards -- floor comparisons carry p-values and CIs, chance comparisons are bare point comparisons",
-      "status": "NOT YET VERIFIED"
-    }
+ "schema_version": "1.0.0",
+ "round": 0,
+ "verdict": "ROUND_ABORTED_BY_DESIGN_PLUS_ONE_CONFIRMED_CRITICAL",
+ "abort": {
+  "reason": "only 3/6 reviews returned; a panel median from 3 is not interpretable",
+  "guard": "review_round.js aborts below 4/6 -- it fired as designed and prevented a 3-reviewer median from being reported as a 6-reviewer panel",
+  "agent_failures": [
+   "1 subagent never called StructuredOutput",
+   "2 subagents stalled on all 6 attempts (180s no-progress each)"
   ],
-  "gate_state_unaffected": "build/numbers/venue all still PASS on snapshot e1a4f5db; this is a CLAIMS defect, not an artifact defect",
-  "next_actions": [
-    "re-run the round with 6 reviewers (the 3 failures are infrastructure, not verdicts)",
-    "apply the S2-01 fix before any resubmission -- it touches the abstract, intro and Table 1",
-    "verify S2-02 and S2-03 myself rather than accepting or dismissing them"
-  ]
+  "cost": "980358 subagent tokens, 8042s wall"
+ },
+ "confirmed_critical_S2_01": {
+  "reviewer": "strict_2 (recommendation: reject)",
+  "claim": "f_const = max_L of |L| noisy marginals on one finite sample is upward-biased even under exactly uniform gold labels (winner's curse); the paper never estimates or subtracts that bias",
+  "MAIN_independent_verification": "CONFIRMED, and LARGER than the reviewer computed. 40k multinomial draws per construct under exact uniformity, at the paper's own (n,k).",
+  "table": [
+   {
+    "construct": "obqa",
+    "n": 500,
+    "k": 4,
+    "reported_floor_above_chance_pp": 2.6,
+    "MAIN_simulated_E_max_minus_chance_pp": 2.315,
+    "MAIN_simulated_95pct_quantile_pp": 4.4,
+    "gap_inside_pure_selection_noise": true
+   },
+   {
+    "construct": "arc_ch",
+    "n": 1172,
+    "k": 4,
+    "reported_floor_above_chance_pp": 1.52,
+    "MAIN_simulated_E_max_minus_chance_pp": 1.514,
+    "MAIN_simulated_95pct_quantile_pp": 2.816,
+    "gap_inside_pure_selection_noise": true
+   },
+   {
+    "construct": "csqa",
+    "n": 1221,
+    "k": 5,
+    "reported_floor_above_chance_pp": 0.885,
+    "MAIN_simulated_E_max_minus_chance_pp": 1.499,
+    "MAIN_simulated_95pct_quantile_pp": 2.686,
+    "gap_inside_pure_selection_noise": true
+   },
+   {
+    "construct": "winogrande",
+    "n": 1267,
+    "k": 2,
+    "reported_floor_above_chance_pp": 0.434,
+    "MAIN_simulated_E_max_minus_chance_pp": 1.122,
+    "MAIN_simulated_95pct_quantile_pp": 2.723,
+    "gap_inside_pure_selection_noise": true
+   },
+   {
+    "construct": "piqa",
+    "n": 1838,
+    "k": 2,
+    "reported_floor_above_chance_pp": 0.49,
+    "MAIN_simulated_E_max_minus_chance_pp": 0.929,
+    "MAIN_simulated_95pct_quantile_pp": 2.285,
+    "gap_inside_pure_selection_noise": true
+   },
+   {
+    "construct": "arc_easy",
+    "n": 2376,
+    "k": 4,
+    "reported_floor_above_chance_pp": 1.625,
+    "MAIN_simulated_E_max_minus_chance_pp": 1.058,
+    "MAIN_simulated_95pct_quantile_pp": 2.02,
+    "gap_inside_pure_selection_noise": true
+   }
+  ],
+  "headline": "all six constructs' reported floor-above-chance gaps fall INSIDE the 95th percentile of pure selection noise",
+  "example": "OBQA: MAIN E[max]-chance = 2.315 pp (reviewer said 1.017) vs the paper's reported gap of 2.600 pp; 95pct quantile 4.400 pp",
+  "the_papers_own_evidence_already_said_so": "EVIDENCE_PACK.md:39-42 reportedly contains 'the rhetoric is WEAK there ... Do not oversell'; the manuscript does not carry it. MAIN must verify that line verbatim before citing it.",
+  "same_class_as": "memory/a-range-is-not-a-measurement-until-it-clears-its-floor.md -- except here the floor IS the uncalibrated estimator",
+  "smallest_fix_0_GPU": "add E[max_L] + 95pct under the balanced null + a chi-square GOF p on the gold marginal to Table 1; restrict the 'floor differs from chance' claim to constructs whose GOF rejects uniformity; bootstrap Delta with argmax_L recomputed INSIDE each resample"
+ },
+ "other_criticals_NOT_yet_verified_by_MAIN": [],
+ "gate_state_unaffected": "build/numbers/venue all still PASS on snapshot e1a4f5db; this is a CLAIMS defect, not an artifact defect",
+ "next_actions": [
+  "re-run the round with 6 reviewers (the 3 failures are infrastructure, not verdicts)",
+  "apply the S2-01 fix before any resubmission -- it touches the abstract, intro and Table 1",
+  "verify S2-02 and S2-03 myself rather than accepting or dismissing them"
+ ],
+ "all_criticals_adjudicated_by_MAIN_20260815": {
+  "S2-01": {
+   "status": "CONFIRMED and fixed",
+   "fix": "tab_nulls gained E[f_hat]/q95/p under the balanced null; abstract scoped to the 3 surviving constructs (MMLU-Pro, MMLU, BoolQ)",
+   "evidence": "paperC/evidence/floor_winners_curse_calibration.json"
+  },
+  "S2-02": {
+   "status": "CONFIRMED and fixed",
+   "claim_was": "the v1>=v2 ordering is proved only for the UNSTRATIFIED mixture bound",
+   "what_MAIN_found": "argmax_L differs from the global best constant in 4 of 8 n_opt strata (623/12032 items); proof slack 0.2992 pp; reviewer's 2-stratum counterexample reproduced (acc_hat=1.0 > f_const=0.5). Ordering nevertheless holds 0/27 violated, but the tightest cell clears by 0.0078 pp = 38x narrower than the hole.",
+   "fix": "03_method.tex:62 restated as a measured property with its margin, not an identity",
+   "evidence": "paperC/evidence/s2_02_stratified_ordering.json"
+  },
+  "S2-03": {
+   "status": "CONFIRMED and fixed",
+   "claim_was": "the flip claim holds its two sides to different evidentiary standards",
+   "what_MAIN_found": "floor side carries ci95+boot_p+McNemar; chance side had no inference at all. Under one standard the flip is 3/12 vs 1/12, not 10/12 vs 1/12. Harness validated: reproduces published floor deltas 15/15 exact and both of the paper's counts.",
+   "fix": "05_analysis gained a both-sides table; abstract updated",
+   "evidence": "paperC/evidence/s2_03_symmetric_inference.json"
+  }
+ },
+ "MAIN_note": "All three criticals were re-derived by MAIN from the on-disk per-item data, not taken on the reviewer's word. Two of the three came back LARGER than the reviewer computed (S2-01's bias, S2-03's count change); S2-02 came back as 'unproven and nearly violated' rather than 'false in our data'."
 }
