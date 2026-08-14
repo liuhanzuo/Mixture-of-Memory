@@ -366,5 +366,36 @@
   "not_claimed_by_promotion": "Promotion is a RESOURCE decision (this direction gets a paper dir and GPU priority), NOT a validation of the claims. The audit verdict is still 'Major revision'.",
   "dir_name_history": "Promoted 2026-08-11 into paperG/ (paperE was burned by task #171's NO-GO, and paperC/paperD were then still occupied by archived directions). RENAMED to paperC/ on 2026-08-12 on user instruction 「把paperG重命名为paperC」 + 「paperxxx指的都是一个完整的论文」. The paperC name is now free at the repo root: the old direction lives on only at proposal/archive/paperC-v1-frozen-cap/ (a different path, POSTMORTEM retained), and its result dir paperC_squad_results/ was renamed to evidence_squad_label_prior/ earlier the same day (commit 7c25317) precisely so the paperXXX namespace holds only complete papers. NOTE the two are unrelated in content: archived paperC was cyclic prune-regrow / frozen-cap; this paperC is null calibration for construct validity.",
   "dir_name_history_superseded_text": "paperE is a BURNED name: task #171 closed 'Paper E: eval-interface construct validity' as NO-GO and folded its assets into Paper B #172. Reusing it would collide with that provenance. paperC/paperD are also burned (archived directions). paperC had 0 references anywhere in the repo."
+ },
+ "related_work_status": {
+  "verdict": "audited",
+  "date": "2026-08-15",
+  "file": "RELATED_WORK.md",
+  "compute": "0 GPU, 0 SSH, CPU + web only",
+  "closes": "proposal/ready_queue.py:504-515 'RELATED_WORK.md absent' + RELATED_WORK_GAP_AUDIT_20260808.md:26 (rating 部分充分)",
+  "kill_clause_3": "STILL DOES NOT FIRE. Unchanged from NOVELTY_CHECK.md 2026-08-09.",
+  "strongest_collision": "Balepur/Ravichander/Rudinger, ACL 2024 MAIN (Anthology 2024.acl-long.555, re-verified 2026-08-15). Owns the stronger-than-chance MCQA recommendation. Does NOT reach A01's damaged regime, per-arm gate semantics, floor-estimator calibration, or null-convention analysis. NOT preemption.",
+  "new_collision_family_not_in_gap_audit": "Chance-corrected agreement psychometrics, Crossref-verified: Bennett/Alpert/Goldstein 1954 (Bennett S, p_e=1/k) 10.1086/266520; Brennan & Prediger 1981 10.1177/001316448104100307; Lord 1975 10.1111/j.1745-3984.1975.tb01003.x; Frary 1988 10.1111/j.1745-3992.1988.tb00434.x; Brenner & Kliebsch 1996 10.1097/00001648-199603000-00016; De Vries et al. 2008 10.1177/1525822X08317166. These own 'the chance term must depend on the number of options' 38-72 years earlier and add 4 must-not-claim items (RELATED_WORK.md section 3 items 8-11). NONE is in paperC/refs.bib as of 2026-08-15 (only cohen1960kappa is).",
+  "residual_contributions_adjudicated": {
+   "_context": "paperC/sections/03_method.tex:36-48 already concedes the Delta_perm statistic (Cohen kappa numerator) and the constant-collapse identity (kappa=0 property) as NOT new; commit 7d39546 retracted them. Only two residuals were claimed. Both were tested.",
+   "(ii) arm-conditional pre-comparison gate + materiality bar": "HOLDS, and is the defensible core. No psychometrics work and none of the 9 verified MCQA/eval candidates uses a chance-corrected quantity as a PRECONDITION on whether a number may enter a comparison; the agreement literature uses kappa descriptively against verbal bands. paperC/VENUE_AND_NOVELTY_VERIFICATION.md section 3 records Q2=NO in 8/9 at full-text level.",
+   "(i) stratification within variable option count": "HOLDS ONLY AT 'NOT FOUND' STRENGTH, and is numerically small. Bennett 1954 / Brennan-Prediger 1981 use ONE global k; De Vries 2008 pools across items for efficiency, not per-item legality; Brenner & Kliebsch 1996 already own 'kappa drifts with k'. No prior work found with k varying item-to-item + per-stratum uniform permutation + per-item legality. Phrase as 'we are not aware of', NEVER 'first'. Measured footprint on MMLU-Pro is 36 items = 0.299 pp (1439/12032 vs 1403/12032), which 03_method.tex:62 already computes."
+  },
+  "concurrent_not_preempting": [
+   "arXiv:2602.02182 (arXiv-only; the metalinguistic paper the intro opens with -- reports the same above-chance/below-majority flip DESCRIPTIVELY on intact models)",
+   "arXiv:2602.04031 (ICML 2026 per its own arXiv jref ONLY; venueid unverified -- majority-class baseline dissolves a capability claim in the TABULAR modality)",
+   "arXiv:2605.24660 (arXiv-only; chance-corrected metric whose correction tracks candidate count, agent/tool-retrieval setting)",
+   "arXiv:2605.18857 (ICLR 2026 BLOG TRACK per arXiv comment+jref -- NOT main conference; >99% success at BoR~0)",
+   "arXiv:2607.29274 (arXiv-only; within-stratum resampling null whose calibration is DEMONSTRATED not asserted -- closest methodological sibling found)"
+  ],
+  "honest_gaps": [
+   "api2.openreview.net returned HTTP 403 ChallengeRequiredError on EVERY path this session, so NO Camera_Ready_Revision check was possible. The four OpenReview-family venues (Oostermeijer ICML 2026, Cho ICLR 2026, Zheng ICLR 2025 Oral, Bean NeurIPS 2025 D&B) are carried SECOND-HAND from NOVELTY_CHECK.md 2026-08-09 and paperC/VENUE_AND_NOVELTY_VERIFICATION.md 2026-08-12, both of which DID reach api2. Re-verify before submission.",
+   "arXiv API and Semantic Scholar both HTTP 429 all session; arXiv metadata came from arxiv.org/abs HTML citation_* meta. No venue claim rests on S2.",
+   "The 7 psychometrics rows were verified at Crossref METADATA level only (title/journal/volume/pages/DOI/year). NOT read in full text. The load-bearing negative ('none handles k varying item-to-item') is an inference from what those coefficients ARE. Bennett 1954 and Brennan & Prediger 1981 need a full-text pass before camera-ready -- this is the single largest remaining risk to contribution (i).",
+   "No .bib entries emitted. The 7 psychometrics DOIs are Crossref-verified and safe to add; the 5 concurrent papers are NOT (3 arXiv-only, 1 jref-only).",
+   "PROPOSAL.md NOT edited. Two stale spots for whoever next touches it: line 361 cites Feng et al. as 'arXiv:1905.05778, venue 待核实' (now VERIFIED as Anthology P19-1554, ACL 2019 main -- and that arXiv ID does not match the Anthology record); and '可以主张' item 2 is WIDER than what 03_method.tex now claims.",
+   "Zero cross-disk verification; the zwfy6-resident A01 evidence listed in SOURCES.md was not ls-confirmed. Nothing here asserts any file is absent."
+  ],
+  "not_claimed_by_this_update": "This is an ATTRIBUTION audit, not a scope reduction (memory/prior-work-differentiate-dont-abandon.md). It does not change any lifecycle field, does not re-open the 7d39546 retraction, and does not alter the standing external MAJOR REVISION verdict."
  }
 }
