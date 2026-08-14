@@ -1,0 +1,139 @@
+{
+  "binary": {
+    "outcome_scale": "binary",
+    "n_items": 200,
+    "n_configs": 8,
+    "per_config_marginal": [
+      0.035,
+      0.005,
+      0.0,
+      0.05,
+      0.275,
+      0.085,
+      0.0,
+      0.0
+    ],
+    "oracle_obs": 0.36,
+    "best_fixed": 0.275,
+    "raw_headroom_REPORTED_NOT_GATE": 0.08499999999999996,
+    "E_oracle_under_independence_closed_form": 0.3948917139062501,
+    "regret_vs_best_fixed": 0.08499999999999996,
+    "verdict": "CLOSE: configs positively coupled (hard items hard everywhere); worse than no-signal",
+    "n_perm": 10000,
+    "perm_seed": 12345,
+    "null_A_PRIMARY": {
+      "null": "A_column_margins",
+      "primary": true,
+      "null_mean": 0.39490650000000005,
+      "null_sd": 0.012518163930577808,
+      "delta_excess": -0.03490650000000006,
+      "ci95_excess": [
+        -0.06,
+        -0.010000000000000009
+      ],
+      "excludes_zero": true,
+      "p_two_sided": 0.0152
+    },
+    "null_B_RETIRED": {
+      "null": "B_both_margins_RETIRED_v0.2",
+      "primary": false,
+      "null_mean": 0.35999999999999993,
+      "null_sd": 5.551392699700355e-17,
+      "delta_excess": 5.551115123125783e-17,
+      "ci95_excess": [
+        0.0,
+        0.0
+      ],
+      "excludes_zero": false,
+      "p_two_sided": 1.0,
+      "DEGENERATE": true,
+      "degenerate_reason": "null sd is numerically zero: the statistic is invariant under this randomisation, so it cannot test anything. For the binary oracle, max_j M[i,j] = 1[rowsum_i>=1] depends on row margins alone and curveball preserves them exactly. NOT a verdict."
+    }
+  },
+  "fractional_CONFIRMATORY": {
+    "outcome_scale": "fractional",
+    "n_items": 200,
+    "n_configs": 8,
+    "per_config_marginal": [
+      0.23699999999999988,
+      0.10499999999999984,
+      0.1559999999999996,
+      0.09399999999999994,
+      0.3420000000000001,
+      0.2450000000000001,
+      0.03100000000000001,
+      0.025000000000000005
+    ],
+    "oracle_obs": 0.5910000000000001,
+    "best_fixed": 0.3420000000000001,
+    "raw_headroom_REPORTED_NOT_GATE": 0.249,
+    "E_oracle_under_independence_closed_form": null,
+    "regret_vs_best_fixed": 0.249,
+    "verdict": "CLOSE: configs positively coupled (hard items hard everywhere); worse than no-signal",
+    "n_perm": 10000,
+    "perm_seed": 12345,
+    "null_A_PRIMARY": {
+      "null": "A_column_margins",
+      "primary": true,
+      "null_mean": 0.6300067000000001,
+      "null_sd": 0.01038539555116103,
+      "delta_excess": -0.03900670000000006,
+      "ci95_excess": [
+        -0.05899999999999994,
+        -0.018999999999999906
+      ],
+      "excludes_zero": true,
+      "p_two_sided": 0.0008
+    }
+  },
+  "protocol_version": "0.2",
+  "primary_null": "A_column_margins (null B retired: provably invariant, see 5b)",
+  "task": "variable_tracking",
+  "length": "16k",
+  "resume_j": [
+    3,
+    6,
+    13,
+    20,
+    27,
+    34,
+    41,
+    48
+  ],
+  "cell_scores_pct": [
+    23.7,
+    10.5,
+    15.6,
+    9.4,
+    34.2,
+    24.5,
+    3.1,
+    2.5
+  ],
+  "integrity": {
+    "shard_sets_complete": true,
+    "item_counts_exact": true,
+    "n_duplicates": 0,
+    "n_nan": 0,
+    "cross_arm_input_ids_sha256_identical": true,
+    "chat_template": false,
+    "enable_thinking": false,
+    "selector": "iter_bm25",
+    "n_paired_items": 200
+  },
+  "provenance": {
+    "node": "TENCENT64.site",
+    "numpy": "2.5.1",
+    "python": "3.14.6",
+    "cells": [
+      "ruler_results/qcmem_32b_b02_confirm_j3/b02confirm",
+      "ruler_results/qcmem_32b_b02_confirm_j6/b02confirm",
+      "ruler_results/qcmem_32b_b02_confirm_j13/b02confirm",
+      "ruler_results/qcmem_32b_b02_confirm_j20/b02confirm",
+      "ruler_results/qcmem_32b_b02_confirm_j27/b02confirm",
+      "ruler_results/qcmem_32b_b02_confirm_j34/b02confirm",
+      "ruler_results/qcmem_32b_b02_confirm_j41/b02confirm",
+      "ruler_results/qcmem_32b_b02_confirm_j48/b02confirm"
+    ]
+  }
+}
