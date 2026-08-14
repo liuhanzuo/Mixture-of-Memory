@@ -1,0 +1,56 @@
+{
+  "status": "completed",
+  "task": "variable_tracking",
+  "length": "16k",
+  "n_requested": 20,
+  "sharding": {
+    "num_shards": 1,
+    "shard_index": 0
+  },
+  "summary": {
+    "score": 12.0,
+    "n": 20,
+    "approx_tokens": 16283,
+    "avg_read_len": 6557.8,
+    "last_read_len": 6556
+  },
+  "score": 12.0,
+  "oom_count": 0,
+  "elapsed_seconds": 142.056,
+  "runtime": {
+    "node": "TENCENT64.site",
+    "cuda_visible_devices": "1",
+    "device": "cuda:0",
+    "pythonhashseed": "0",
+    "seed": 42,
+    "dtype": "bfloat16",
+    "attn_implementation": "sdpa"
+  },
+  "chat_template": false,
+  "enable_thinking": false,
+  "scoring": "scripts.eval_ruler_mem_space._string_match_all_one",
+  "baseline": "none",
+  "no_retrieval": false,
+  "cacheblend": null,
+  "qcmem": {
+    "resume_j": 6,
+    "top_prepay_b": 0,
+    "reuse_kv_blockdiag": false,
+    "selector": "iter_bm25",
+    "topk": 12,
+    "iter": {
+      "rounds": 0,
+      "hop_topk": 4
+    },
+    "sink_tokens": "bos",
+    "num_layers": 64,
+    "lora_adapter": null,
+    "chunk_size": 512
+  },
+  "model": {
+    "model_path": "models/Qwen3-32B",
+    "num_hidden_layers": 64,
+    "bottleneck_ckpt": null
+  },
+  "zero_training_no_adapter": true
+}

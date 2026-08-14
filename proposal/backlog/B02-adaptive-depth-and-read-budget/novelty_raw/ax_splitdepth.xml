@@ -1,0 +1,26 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<feed xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/" xmlns:arxiv="http://arxiv.org/schemas/atom" xmlns="http://www.w3.org/2005/Atom">
+  <id>https://arxiv.org/api/8pVrIwqqXFwqy7x3tNH43RQ2Z84</id>
+  <title>arXiv Query: search_query=abs:"split" AND abs:"depth" AND abs:"KV cache" AND abs:"layer"&amp;id_list=&amp;start=0&amp;max_results=15</title>
+  <updated>2026-08-14T08:29:52Z</updated>
+  <link href="https://arxiv.org/api/query?search_query=abs:%22split%22+AND+(abs:%22depth%22+AND+(abs:%22KV+cache%22+AND+abs:%22layer%22))&amp;start=0&amp;max_results=15&amp;id_list=" type="application/atom+xml"/>
+  <opensearch:itemsPerPage>15</opensearch:itemsPerPage>
+  <opensearch:totalResults>1</opensearch:totalResults>
+  <opensearch:startIndex>0</opensearch:startIndex>
+  <entry>
+    <id>http://arxiv.org/abs/2605.10643v1</id>
+    <title>A Single-Layer Model Can Do Language Modeling</title>
+    <updated>2026-05-11T14:31:24Z</updated>
+    <link href="https://arxiv.org/abs/2605.10643v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2605.10643v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Modern language models scale depth by stacking layers, each holding its own state - a per-layer KV cache in transformers, a per-layer matrix in Mamba, Gated DeltaNet (GDN), RWKV, and xLSTM. Biological systems lean heavily on recurrence rather than on stacking. We ask how far that shape can go on language modeling. We propose Grounded Prediction Networks (GPN): one state vector revisited at every step through a single recurrent block - one FFN, one shared matrix memory. At 130M parameters, a 1-layer GPN+M reaches FineWeb-Edu perplexity 18.06, within 13% of a 12-layer Transformer++ (16.05) and 18% of a 10-layer GDN (15.34); a 2-layer variant closes the gap to 6%/11%. We do not match the deep baselines. Because the working context is a single vector, we can directly inspect its geometry: a persistent default-token direction, a content-bearing horizon of tens of tokens, and memory heads that split spontaneously into fast and slow retention pools.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-05-11T14:31:24Z</published>
+    <arxiv:comment>9 pages, 5 figures, 1 table. Code: https://github.com/steve-z-wang/grounded-prediction-network</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Zanmin Wang</name>
+    </author>
+  </entry>
+</feed>

@@ -1,0 +1,81 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<feed xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/" xmlns:arxiv="http://arxiv.org/schemas/atom" xmlns="http://www.w3.org/2005/Atom">
+  <id>https://arxiv.org/api/4KfmkbxB5PpfsTnjBecWp+yNX0M</id>
+  <title>arXiv Query: search_query=abs:"adaptive" AND abs:"retrieval budget" AND abs:"per-query"&amp;id_list=&amp;start=0&amp;max_results=12</title>
+  <updated>2026-08-14T08:29:58Z</updated>
+  <link href="https://arxiv.org/api/query?search_query=abs:%22adaptive%22+AND+(abs:%22retrieval+budget%22+AND+abs:%22per-query%22)&amp;start=0&amp;max_results=12&amp;id_list=" type="application/atom+xml"/>
+  <opensearch:itemsPerPage>12</opensearch:itemsPerPage>
+  <opensearch:totalResults>2</opensearch:totalResults>
+  <opensearch:startIndex>0</opensearch:startIndex>
+  <entry>
+    <id>http://arxiv.org/abs/2608.08237v1</id>
+    <title>SAGE: SLO-Aware Adaptive Retrieval for Production RAG Systems</title>
+    <updated>2026-08-08T17:05:36Z</updated>
+    <link href="https://arxiv.org/abs/2608.08237v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2608.08237v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Retrieval-Augmented Generation (RAG) systems in production operate under strict service level objectives (SLOs) on tail latency and infrastructure cost. However, standard retrieval pipelines rely on fixed retrieval budgets that ignore query difficulty, over-retrieving for easy queries and under-serving hard ones, forcing operators to trade answer quality against SLO compliance. This paper proposes SAGE, a learned SLO-aware adaptive retrieval policy that dynamically selects the number of passages k per query. SAGE uses lightweight features derived from initial retrieval (e.g., score distributions, rank gaps, lexical signals) and is trained offline via imitation learning from an oracle that approximates optimal latency-quality trade-offs. At inference, it adds no LLM calls and minimal overhead. On Natural Questions, under a 5s P95 latency SLO, SAGE achieves 95% SLO compliance versus 30% for the best static baseline (k=20), reduces P95 latency by 36% and retrieval cost by 51% with only 2 percentage points Exact Match (EM) loss. A single policy trained on Natural Questions generalizes across HotpotQA, UnSeenTimeQA, and four LLM families (Llama, Qwen, Mistral, Gemma), consistently yielding +45-52 point SLO improvements without quality degradation.</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.DC" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.IR" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-08-08T17:05:36Z</published>
+    <arxiv:comment>7 pages, 5 figures, 2 tables. Authors' accepted version of a paper published in Proc. IEEE CoDIT 2026. The version of record is available at the DOI below</arxiv:comment>
+    <arxiv:primary_category term="cs.LG"/>
+    <arxiv:journal_ref>2026 12th International Conference on Control, Decision and Information Technologies (CoDIT), Bari, Italy, 2026, pp. 169-175</arxiv:journal_ref>
+    <author>
+      <name>Muhammad Faizan Raza</name>
+      <arxiv:affiliation>Luna</arxiv:affiliation>
+    </author>
+    <author>
+      <name> Shuo</name>
+      <arxiv:affiliation>Luna</arxiv:affiliation>
+    </author>
+    <author>
+      <name> Yang</name>
+    </author>
+    <author>
+      <name>Satish Mahadevan Srinivasan</name>
+    </author>
+    <arxiv:doi>10.1109/CoDIT70676.2026.11631166</arxiv:doi>
+    <link rel="related" href="https://doi.org/10.1109/CoDIT70676.2026.11631166" title="doi"/>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2607.28263v1</id>
+    <title>Understanding Is Done Early: A Depth Division of Labor in Large Language Models and Its Use for Unbounded-Context Memory</title>
+    <updated>2026-07-30T14:19:11Z</updated>
+    <link href="https://arxiv.org/abs/2607.28263v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2607.28263v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Transformer depth is not used uniformly: lower and middle layers build semantic representations, while upper layers increasingly specialize them for prediction. We turn this division of labor into CoMem (Comprehension Memory), which writes each context chunk only through an intermediate layer, retrieves a fixed number of cached residual states, and recomputes the query-conditioned upper layers over the resulting pack. For a fixed retrieval budget, model-side read compute and memory are independent of stored-context length. We evaluate a continued-trained Qwen3-8B base LM under a unified chat-template-free protocol. The backbone is frozen; the flagship trains only a rank-32 self-distillation LoRA on plain PG19, and we report an adapter-free arm separately. CoMem reaches 97.05 on RULER and 38.27 on LoCoMo versus 34.59 for full-context KV-Direct; the dialogue-memory advantage survives conversation-cluster resampling and an independent judge. Results on additional long-context and long-document tasks expose both the benefits of bounded retrieval and its in-window compression tax. Controlled depth sweeps show that deeper caching lowers per-query recomputation but incurs a fidelity loss that self-distillation substantially repairs. In a separate adapter-free efficiency control on an NVIDIA H20 at 128k, CoMem uses 18.26 GB rather than 89.36 GB and achieves a 7.83x prefill speedup. These results show that long-context memory can be organized along the layer axis, not only the token axis.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-07-30T14:19:11Z</published>
+    <arxiv:comment>19 pages, 4 figures, 27 tables. Submitted to ACL Rolling Review</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Hanzuo Liu</name>
+    </author>
+    <author>
+      <name>Xuan Qi</name>
+    </author>
+    <author>
+      <name>Chunyu Liu</name>
+    </author>
+    <author>
+      <name>Haotian Zhong</name>
+    </author>
+    <author>
+      <name>Yulong Wang</name>
+    </author>
+    <author>
+      <name> Rayying</name>
+    </author>
+    <author>
+      <name> Key</name>
+    </author>
+    <author>
+      <name>Alex Lamb</name>
+    </author>
+    <author>
+      <name>Mingyu Gao</name>
+    </author>
+  </entry>
+</feed>

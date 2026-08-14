@@ -205,6 +205,61 @@ def read_one(path):
     promoted = ("promoted" in st) or ("promoted_to" in d)
     dead = st.startswith("dead") or "archive" in path
 
+    # ---- an EXPLICIT lifecycle overrides inference ---------------------------
+    # LIFECYCLE_SCHEMA.md sec 1 calls `lifecycle` "唯一的机器可读状态", but the
+    # first version of this reader never read it: it inferred lifecycle purely
+    # from which OTHER fields were present. That is exactly backwards for a
+    # terminal state. Measured 2026-08-14: B02, whose own pre-registered kill
+    # gate had just FIRED (Delta_excess negative at both lengths, p=0.0008) and
+    # which therefore recorded `"lifecycle": "dead"`, was classified
+    # **ready_gpu** -- because writing down the kill gate and the novelty
+    # verdict satisfied the three presence checks below. Filling in a
+    # proposal's paperwork made a killed direction look like the single most
+    # dispatchable item in the queue, and it would have been handed 8 idle H20s.
+    # A terminal state must be declarable, not only inferable.
+    explicit = d.get("lifecycle")
+    VALID_LC = ("ready_gpu", "ready_cpu", "needs_prior_gate", "running",
+                "promoted", "dead")
+    if isinstance(explicit, str) and explicit in VALID_LC:
+        rec["lifecycle_declared"] = explicit
+        if explicit in ("dead", "promoted", "running"):
+            # Terminal/in-flight states are authoritative: no amount of
+            # well-formed paperwork should re-open them.
+            rec["lifecycle"] = explicit
+            rec["lifecycle_reason"] = (
+                f"DECLARED lifecycle={explicit} in STATUS.json (authoritative; "
+                + _txt(d.get("lifecycle_reason", "no reason field"), 200) + ")")
+            if explicit == "running" and not d.get("running_on"):
+                rec["problems"].append(
+                    "lifecycle=running without running_on (schema sec 1)")
+            rec["needs_arch"] = d.get("needs_arch", "UNRECORDED")
+            return rec
+        if explicit == "ready_cpu":
+            # A DECLARED ready_cpu is also authoritative, and in the *safe*
+            # direction: it says "my next step needs no card." Inference cannot
+            # reach this conclusion, because whether the next gate costs GPU is
+            # a property of the gate's TEXT, not of which fields exist. B11 is
+            # the case in point: its gates are all specified and its novelty is
+            # adjudicated, so inference says ready_gpu -- but its own next_gate
+            # is "file the upstream bug report", explicitly 0 GPU, and its
+            # measured cost record says a card would buy ~1 GPU-h of provably
+            # low-information replication. Down-grading GPU->CPU on the owner's
+            # say-so can only ever free a card, never waste one, so it is
+            # honoured without further checks.
+            rec["lifecycle"] = "ready_cpu"
+            rec["lifecycle_reason"] = (
+                "DECLARED lifecycle=ready_cpu in STATUS.json (authoritative; "
+                + _txt(d.get("lifecycle_reason", "no reason field"), 260) + ")")
+            rec["needs_arch"] = d.get("needs_arch", "UNRECORDED")
+            return rec
+        # A declared ready_gpu is NOT taken on faith: it still has to pass the
+        # presence checks below, so that "I promise I'm ready" cannot skip the
+        # kill-gate / novelty requirements that the README makes prerequisites
+        # for spending GPU. Declaration can downgrade, not upgrade.
+    elif explicit is not None:
+        rec["problems"].append(
+            f"lifecycle={_txt(explicit, 40)!r} is not one of {VALID_LC}")
+
     # ---- lifecycle inference -------------------------------------------------
     # The novelty gate is satisfied by an ADJUDICATED verdict (in STATUS.json)
     # or novelty_checked=true. A missing RELATED_WORK.md is recorded as a

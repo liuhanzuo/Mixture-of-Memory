@@ -1,0 +1,75 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<feed xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/" xmlns:arxiv="http://arxiv.org/schemas/atom" xmlns="http://www.w3.org/2005/Atom">
+  <id>https://arxiv.org/api/uhhjYILIW3hHjA1N8Z6PRJUYmaU</id>
+  <title>arXiv Query: search_query=abs:"oracle" AND abs:"ceiling" AND abs:"realizable"&amp;id_list=&amp;start=0&amp;max_results=12</title>
+  <updated>2026-08-14T08:29:54Z</updated>
+  <link href="https://arxiv.org/api/query?search_query=abs:%22oracle%22+AND+(abs:%22ceiling%22+AND+abs:%22realizable%22)&amp;start=0&amp;max_results=12&amp;id_list=" type="application/atom+xml"/>
+  <opensearch:itemsPerPage>12</opensearch:itemsPerPage>
+  <opensearch:totalResults>2</opensearch:totalResults>
+  <opensearch:startIndex>0</opensearch:startIndex>
+  <entry>
+    <id>http://arxiv.org/abs/2605.10991v1</id>
+    <title>Test-Time Personalization: A Diagnostic Framework and Probabilistic Fix for Scaling Failures</title>
+    <updated>2026-05-09T12:09:11Z</updated>
+    <link href="https://arxiv.org/abs/2605.10991v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2605.10991v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Existing approaches to LLM personalization focus on constructing better personalized models or inputs, while treating inference as a single-shot process. In this work, we study Test-Time Personalization (TTP) along an unexplored axis: scaling inference-time computation by sampling N candidates from a personalized policy model and selecting the best with a personalized reward model. We prove that oracle selection yields expected utility growing logarithmically with the number of sampled candidates, establishing a theoretical ceiling for test-time scaling. However, standard reward models fail to realize this potential. To diagnose why, we derive a unified scaling law that decomposes any reward model's Best-of-N curve into four measurable quantities and reveals two failure modes, user-level collapse (near-constant prediction for some users) and query-level reward hacking (negative correlation with true quality for some queries). Guided by this law, we propose a probabilistic personalized reward model whose learned variance effectively mitigates both failure modes. Experiments confirm both elements of our framework: TTP delivers consistent scaling across multiple policy models and personalized text generation tasks, and our scaling law closely matches observed scaling curves across reward-model variants.</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-05-09T12:09:11Z</published>
+    <arxiv:primary_category term="cs.LG"/>
+    <author>
+      <name>Linhai Zhang</name>
+    </author>
+    <author>
+      <name>Yulan He</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2608.03764v1</id>
+    <title>GDPevo: Evaluating Agent Self-Evolution on Real Business Tasks</title>
+    <updated>2026-08-04T14:51:56Z</updated>
+    <link href="https://arxiv.org/abs/2608.03764v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2608.03764v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Agent self-evolution updates an agent's persistent state from prior experience and reuses it to solve related tasks more effectively. Evaluating self-evolution is difficult: existing benchmarks provide limited coverage of economically valuable task domains, do not always design training and test tasks such that test-time gains can be attributed to training experience, and remain vulnerable to data contamination. We present GDPevo, an evolution-native benchmark grounded in GDP-related enterprise workflows, together with the fully automated data pipeline that generates it. Its core mechanism, rule hybridization, decomposes each enterprise workflow into atomic business rules, distributes subsets of these rules across training tasks, and recombines them in held-out test tasks so that test-time gains are attributable. GDPevo spans CRM, ERP, finance, healthcare, legal, and data-centric workflows. Its V1 release contains 120 tasks in 12 groups, with five training and five held-out test tasks per group. Full automation enables the pipeline to expand the suite to 240 tasks in 24 groups (V2) within two days, providing a practical response to contamination. Using GDPevo, we evaluate four agents, each comprising a harness and a model, under four supervision types. Self-evolution consistently improves held-out accuracy by up to 16.44 percentage points. But the best evolved agents remain far below the fully informed oracle ceiling of 91.6%, indicating that the self-evolution ability of current agents remains far from fully realized. We publicly release the pipeline, benchmark, and full evaluation results at https://github.com/Prism-Shadow/GDPevo.</summary>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-08-04T14:51:56Z</published>
+    <arxiv:primary_category term="cs.AI"/>
+    <author>
+      <name>Leijun Zhou</name>
+    </author>
+    <author>
+      <name>Zhihao Liu</name>
+    </author>
+    <author>
+      <name>Xiang Qu</name>
+    </author>
+    <author>
+      <name>Chenxu Liu</name>
+    </author>
+    <author>
+      <name>Yifei Liu</name>
+    </author>
+    <author>
+      <name>Yanke Yu</name>
+    </author>
+    <author>
+      <name>Jingzhe Xu</name>
+    </author>
+    <author>
+      <name>Xuejun Wu</name>
+    </author>
+    <author>
+      <name>Buyue Qian</name>
+    </author>
+    <author>
+      <name>Xi Chen</name>
+    </author>
+    <author>
+      <name>Yaowei Zheng</name>
+    </author>
+    <author>
+      <name>Junhao Hu</name>
+    </author>
+  </entry>
+</feed>

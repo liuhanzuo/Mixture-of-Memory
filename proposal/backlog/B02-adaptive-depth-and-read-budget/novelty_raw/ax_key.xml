@@ -1,0 +1,84 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<feed xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/" xmlns:arxiv="http://arxiv.org/schemas/atom" xmlns="http://www.w3.org/2005/Atom">
+  <id>https://arxiv.org/api/3fkna5zbvfBeVc+FZP9JLCM7KVM</id>
+  <title>arXiv Query: search_query=&amp;id_list=2608.08265,2607.03436,2607.28263&amp;start=0&amp;max_results=10</title>
+  <updated>2026-08-14T08:30:12Z</updated>
+  <link href="https://arxiv.org/api/query?search_query=&amp;start=0&amp;max_results=10&amp;id_list=2608.08265,2607.03436,2607.28263" type="application/atom+xml"/>
+  <opensearch:itemsPerPage>10</opensearch:itemsPerPage>
+  <opensearch:totalResults>3</opensearch:totalResults>
+  <opensearch:startIndex>0</opensearch:startIndex>
+  <entry>
+    <id>http://arxiv.org/abs/2607.03436v2</id>
+    <title>How Much of the Routing Gap Is Real? Decomposing the Router-to-Oracle Gap into Reproducible Specialist Advantage and Single-Draw Label Noise</title>
+    <updated>2026-07-07T05:35:41Z</updated>
+    <link href="https://arxiv.org/abs/2607.03436v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2607.03436v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>On real open-model pools, 12--36% of the reported router-to-oracle gap is single-draw label noise that no single-commit router can capture, while the majority is genuine, recoverable specialist advantage; this work proves why (a recoverability asymmetry) and releases a protocol to measure it. Routing among large language models (LLMs) trades cost for quality, motivated by the gap between learned routers and a per-instance oracle. But under stochastic decoding that oracle is a single Bernoulli draw, not a reproducible property. We recast the question structurally: the expected oracle decomposes as $O^{\exp}=O^{\mathrm{repro}}+Δ$, into reproducible single-commit headroom $O^{\mathrm{repro}}$ and a non-negative single-commit selection floor $Δ$. Our main result is a recoverability asymmetry: this floor is closed by no single-commit router (deterministic or randomized), yet is provably recovered by test-time sampling: best-of-$K$ on the committed model, at the oracle's own budget, dominates the independent-pool single-draw oracle. This cap needs no cross-model independence, pinning "not recoverable" to single-commit selection, not to information. The floor's magnitude is a prospective, conservative localization, not an audit: LLMRouterBench (33 models, 391,645 instances) builds its oracle as a per-query union of single $T=0.2$ draws, so its 20-point gap is by construction a union of stochastic draws; since $O^{\mathrm{repro}}$ is non-identifiable at $k=1$, we re-estimate by fresh $k\ge20$ resampling under one-sided, dependence-corrected bounds. Across three controlled open-model re-generations (arithmetic, competition math, and non-math science), single-draw noise is a substantial minority of the gap, larger on unsaturated benchmarks and approaching half on the hardest queries. We release a multi-sample oracle protocol that routing benchmarks can adopt.</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-07-03T15:49:40Z</published>
+    <arxiv:comment>29 pages, 9 figures. v2: released reproducible artifacts; added a robustness subsection (k/K-sweeps, lineage jackknife, learned-router baseline) and GPQA-Diamond results; abstract takeaway + trim. Theorems and headline numbers unchanged</arxiv:comment>
+    <arxiv:primary_category term="cs.LG"/>
+    <author>
+      <name>Teng-Ruei Chen</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2608.08265v1</id>
+    <title>Opportunity Is Not Realizability: Selection-Valid Diagnostics for Multi-LLM Routing</title>
+    <updated>2026-08-08T17:53:43Z</updated>
+    <link href="https://arxiv.org/abs/2608.08265v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2608.08265v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Oracle routing measures how much a pool of language models could gain from per-query selection, but the diagnostic has two flaws: testing against a best fixed model selected on the same examples invalidates paired inference, and a full-information oracle sees outcomes no deployable router observes. We separate three estimands (outcome-oracle opportunity, the Bayes-optimal gain from a declared pre-answer signal, and the held-out gain of a learned router) and prove selection-valid confidence intervals that survive choosing the best fixed model or the best member of a router family, a signal-information sandwich, and a $(1-1/e)$ greedy guarantee for building compact pools from submodular complementary coverage. On eight checkpoints from six families over four benchmarks, selection-valid intervals certify a population oracle gap of $9.7$--$30.7$ points on every task, yet the strongest deployable prompt router recovers only $7.5$--$14.4\%$ of it, and the simultaneous interval for the best of eleven tested policies has lower limit zero throughout. The realizable share of oracle opportunity is small and certifiable: strong routers beat the best fixed model, and most of the gap remains.</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-08-08T17:53:43Z</published>
+    <arxiv:primary_category term="cs.LG"/>
+    <author>
+      <name>Ibne Farabi Shihab</name>
+    </author>
+    <author>
+      <name>Abu Sa-Adat Mohamed Moon-Im Al Ahsan</name>
+    </author>
+    <author>
+      <name>Md Najmus Swaqeeb</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2607.28263v1</id>
+    <title>Understanding Is Done Early: A Depth Division of Labor in Large Language Models and Its Use for Unbounded-Context Memory</title>
+    <updated>2026-07-30T14:19:11Z</updated>
+    <link href="https://arxiv.org/abs/2607.28263v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2607.28263v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Transformer depth is not used uniformly: lower and middle layers build semantic representations, while upper layers increasingly specialize them for prediction. We turn this division of labor into CoMem (Comprehension Memory), which writes each context chunk only through an intermediate layer, retrieves a fixed number of cached residual states, and recomputes the query-conditioned upper layers over the resulting pack. For a fixed retrieval budget, model-side read compute and memory are independent of stored-context length. We evaluate a continued-trained Qwen3-8B base LM under a unified chat-template-free protocol. The backbone is frozen; the flagship trains only a rank-32 self-distillation LoRA on plain PG19, and we report an adapter-free arm separately. CoMem reaches 97.05 on RULER and 38.27 on LoCoMo versus 34.59 for full-context KV-Direct; the dialogue-memory advantage survives conversation-cluster resampling and an independent judge. Results on additional long-context and long-document tasks expose both the benefits of bounded retrieval and its in-window compression tax. Controlled depth sweeps show that deeper caching lowers per-query recomputation but incurs a fidelity loss that self-distillation substantially repairs. In a separate adapter-free efficiency control on an NVIDIA H20 at 128k, CoMem uses 18.26 GB rather than 89.36 GB and achieves a 7.83x prefill speedup. These results show that long-context memory can be organized along the layer axis, not only the token axis.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-07-30T14:19:11Z</published>
+    <arxiv:comment>19 pages, 4 figures, 27 tables. Submitted to ACL Rolling Review</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Hanzuo Liu</name>
+    </author>
+    <author>
+      <name>Xuan Qi</name>
+    </author>
+    <author>
+      <name>Chunyu Liu</name>
+    </author>
+    <author>
+      <name>Haotian Zhong</name>
+    </author>
+    <author>
+      <name>Yulong Wang</name>
+    </author>
+    <author>
+      <name> Rayying</name>
+    </author>
+    <author>
+      <name> Key</name>
+    </author>
+    <author>
+      <name>Alex Lamb</name>
+    </author>
+    <author>
+      <name>Mingyu Gao</name>
+    </author>
+  </entry>
+</feed>

@@ -1,0 +1,1820 @@
+{
+  "task": "variable_tracking",
+  "length": "32k",
+  "sharding": {
+    "num_shards": 1,
+    "shard_index": 0
+  },
+  "resume_j": 48,
+  "selector": "iter_bm25",
+  "topk": 12,
+  "iter_hop_topk": 4,
+  "iter_rounds": 0,
+  "chunk_size": 512,
+  "lora_adapter": null,
+  "baseline": "none",
+  "seed": 42,
+  "pythonhashseed": "0",
+  "records": [
+    {
+      "sample_index": 0,
+      "input_ids_sha256": "b3f0e9889e3000dc68251d76e82441fc4bdbdaa38c474b3bdfcbd409179793a3",
+      "target": "CHNIX | BIMGE | MOPMQ | OVDRO | KCNNU",
+      "output": "1. VAR_1 2. VAR_2 3. VAR_3 4. VAR_4 5. VAR_5\n\nOkay, let's see. The user provided a block of text that seems to be a repetitive loop of the same sentence: \"The grass is green",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32717
+    },
+    {
+      "sample_index": 1,
+      "input_ids_sha256": "0c31c6c9102216901787a43e47a78d592b77f5d0760bed3451c9f44fe23d85a1",
+      "target": "YVFBB | AUMQR | QLFKF | VSPSA | ADZGV",
+      "output": "1. VAR1 2. VAR2 3. VAR3 4. VAR4 5. VAR5\nOkay, let's see. The user provided a block of text that seems to be a repetitive loop of a few sentences about the grass, sky, and sun, followed by",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32717
+    },
+    {
+      "sample_index": 2,
+      "input_ids_sha256": "c2bca283d3c1c9d82e3f2aca19a263bdb731c5748f6869667b45a5d48fdf6854",
+      "target": "JGAHL | XCCSM | SUYHZ | LLCGD | TWRMY",
+      "output": "(Please list the variables in the order of their assignment, from the first to the last assigned.)\n\nOkay, let's try to figure this out. The user wants me to find all variables that are assigned the value 15249 in the given text. Let me start by looking through",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32715
+    },
+    {
+      "sample_index": 3,
+      "input_ids_sha256": "3d1d5622afeccdb865e6d33aa6df54ea4e7df89f7f1adb4689d3d888ea75eddd",
+      "target": "LADOK | MREED | YIULS | YQDLV | FIQEL",
+      "output": "48421, VAR0, VAR1, VAR2, and VAR3.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32721
+    },
+    {
+      "sample_index": 4,
+      "input_ids_sha256": "e69b951742934eb98a7d6783ea26dfd037fe8474398725259a3eebb81916e220",
+      "target": "EHRLC | VGAMZ | AXHJR | NSSZC | OVFOS",
+      "output": "1. VAR1 2. VAR2 3. VAR3 4. VAR4 5. VAR5\nOkay, let's see. The user provided a block of text that seems to be a repetitive poem or a looped phrase. The question is asking to find all variables assigned",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32717
+    },
+    {
+      "sample_index": 5,
+      "input_ids_sha256": "057a64009ab0cb5eedc09e99d889315255a0b10092f7bfbbffa6ad0b95ec2dd7",
+      "target": "NGLNW | CGEKO | SLDIL | JNBRC | JYOCN",
+      "output": "1. VAR1 2. VAR2 3. VAR3 4. VAR4 5. VAR5\n\nOkay, let's see. The user provided a block of text that repeats the same lines multiple times. The lines are: \"The grass is green. The sky is blue",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32718
+    },
+    {
+      "sample_index": 6,
+      "input_ids_sha256": "f4ffb50a21b6a112dcd013d8e44721134947f7ab04304a7a4586f808b86d3fde",
+      "target": "AXUWT | NGBAO | YGHRN | CUISD | PCBPS",
+      "output": "90950, 90950, 90950, 90950, 90950.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32718
+    },
+    {
+      "sample_index": 7,
+      "input_ids_sha256": "8b93d6c7b09aed7d76079de6085d9e631f387c566773c243ce1ecf48ba6dcfb0",
+      "target": "QRJBT | CJFLG | GXLNF | WQVMR | MKGCL",
+      "output": "1. VAR1 = 15429 2. VAR2 = VAR1 3. VAR3 = VAR2 4. VAR4 = VAR3 5. VAR5 = VAR4\n\nOkay, let's see. The user provided a text that's just repeating the",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32719
+    },
+    {
+      "sample_index": 8,
+      "input_ids_sha256": "fc786adfe8f31ec308e97c0e4d99abd7d1ffbb2434bf70adb9a0cbb29d1197e6",
+      "target": "XRBXQ | VWWWG | UHOKO | SJDYF | AMPUF",
+      "output": "77600, VAR0, VAR1, VAR2, and VAR3.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32722
+    },
+    {
+      "sample_index": 9,
+      "input_ids_sha256": "ed0fc04f799a23186695e68bf2eabc455100ed6412894f9c841edbc92809f664",
+      "target": "AEEDA | PXVPE | QYKOY | MHMPD | XWKTV",
+      "output": "34964, 34964, 34964, 34964, 34964.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32717
+    },
+    {
+      "sample_index": 10,
+      "input_ids_sha256": "534643bbe4e93fb74e53696cd4285e583357475acc8fa9b784eb90007b6fff2a",
+      "target": "LVHLD | CMFHJ | NACVE | EDLWZ | ZZAQH",
+      "output": "49088, VAR0, VAR1, VAR2, and VAR3.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32720
+    },
+    {
+      "sample_index": 11,
+      "input_ids_sha256": "75a2a917d38ad6223a869bafee963c792fec59abf6ef2340a5e9685da7c3cd04",
+      "target": "FMBUW | VCHOD | IDIWU | NAFEA | NUZEY",
+      "output": "1. VAR1 = 20948 2. VAR2 = VAR1 3. VAR3 = VAR2 4. VAR4 = VAR3 5. VAR5 = VAR4\nOkay, let's see. The user provided a text that's just repeating the",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32719
+    },
+    {
+      "sample_index": 12,
+      "input_ids_sha256": "04edab3e1d16343a3de7f6c620a56d433f8b79231a8c17d702cd0539c957879e",
+      "target": "TQYLY | EZYFO | HIGYK | ELNXU | CRYXU",
+      "output": "1. VAR1 2. VAR2 3. VAR3 4. VAR4 5. VAR5\n\nOkay, let's see. The user provided a block of text that seems to be a repetitive loop of a few sentences about the grass, sky, and sun, followed by",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32722
+    },
+    {
+      "sample_index": 13,
+      "input_ids_sha256": "9828706d172b772a9a18921de7f16138f6168b1939a6e6093cc5dd8a5ea54654",
+      "target": "LTHHQ | ZFKTV | SCXLI | PPEIW | ZRSHF",
+      "output": "34334, 34334, 34334, 34334, 34334.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32718
+    },
+    {
+      "sample_index": 14,
+      "input_ids_sha256": "4f23e0bd8bb16fe4195044386eac266f65e613e3570ceb83f1b0adbe3642d7d2",
+      "target": "PQKWC | RHIGP | SQUQG | RXDOP | LTYJK",
+      "output": "34363, 34363, 34363, 34363, 34363.\nOkay, let's see. The user provided a text that's just repeating the same lines over and over again. The lines are",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32719
+    },
+    {
+      "sample_index": 15,
+      "input_ids_sha256": "011772868ef714e79114c30591e4843d70eb36817d2a574218a8199fd595d060",
+      "target": "NIULR | FSLCG | WGKDE | GAVAG | BLCFL",
+      "output": "74047, VAR0, VAR1, VAR2, and VAR3.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32717
+    },
+    {
+      "sample_index": 16,
+      "input_ids_sha256": "7d655210b8304272e0b341cedcddac424e0539536700c6678ecc33e68220934c",
+      "target": "BZBYL | ZHEOF | ONDJM | EPJRL | KGXEX",
+      "output": "25047, 25047, 25047, 25047, 25047.\nOkay, let's see. The user provided a text that's just repeating the same lines over and over again. The lines are",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32719
+    },
+    {
+      "sample_index": 17,
+      "input_ids_sha256": "30df08b7930b86534efa619864effcda0a2d944122bbe3c4e1e76df421c32322",
+      "target": "LKLKE | OEEYR | AGQZI | HQEES | BTQZR",
+      "output": "1. VAR1 2. VAR2 3. VAR3 4. VAR4 5. VAR5\n\nOkay, let's see. The user provided a block of text that seems to be a repetitive loop of a few sentences about the grass, sky, and sun, followed by",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32721
+    },
+    {
+      "sample_index": 18,
+      "input_ids_sha256": "d434fa0c05dd12a60d74903143d4947628fbb3469afd7ab3b288fdb9863519c6",
+      "target": "NXGVE | QJCZW | RLDPH | APJKP | TUZCV",
+      "output": "54884, 54884, 54884, 54884, 54884.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32717
+    },
+    {
+      "sample_index": 19,
+      "input_ids_sha256": "a1be063555d448a63e3471944659084aa8cf195fca4aba607ddf38e7b8aec708",
+      "target": "GEIUO | WDEUI | FSFFZ | YDQPD | JNNON",
+      "output": "1. VAR1 = 84771 2. VAR2 = VAR1 3. VAR3 = VAR2 4. VAR4 = VAR3 5. VAR5 = VAR4\n\nOkay, let's see. The user provided a text that's a repetition of",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32719
+    },
+    {
+      "sample_index": 20,
+      "input_ids_sha256": "7e1438c84e4233fe44fd4eec76019ab0d5bd0af543b5a16ce29d5d3982a70936",
+      "target": "ENIMF | YLPQU | BAMOL | KJWRF | VEBWU",
+      "output": "1. VAR1 2. VAR2 3. VAR3 4. VAR4 5. VAR5\nOkay, let's see. The user provided a block of text that repeats the same lines multiple times. The lines are: \"The grass is green. The sky is blue",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32718
+    },
+    {
+      "sample_index": 21,
+      "input_ids_sha256": "39585c55e8e3dc3f06b2fdf95976374f2fcea30fb3550877af9a9903c2d95c06",
+      "target": "FTYVV | ZIHEP | SAILT | ZMCCM | IOCJZ",
+      "output": "1. VAR1 2. VAR2 3. VAR3 4. VAR4 5. VAR5\nOkay, let's see. The user provided a text that seems to be a repetitive loop of a few sentences about the grass, sky, and sun, followed by a question",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32721
+    },
+    {
+      "sample_index": 22,
+      "input_ids_sha256": "76e8177f107b76073f9c0e3e10f0847a61f9dc1348875f82f0461bb6dcbe8867",
+      "target": "WQKVQ | JKBBY | KHKMR | FGLFH | WHHNJ",
+      "output": "24542, 24542, 24542, 24542, 24542.\nOkay, let's see. The user provided a text that's just repeating the same lines over and over again. The lines are",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32719
+    },
+    {
+      "sample_index": 23,
+      "input_ids_sha256": "edf25711a74519fbfd78fc9e2fb9a5ab47371b622447ce96f82593a509368743",
+      "target": "QIENL | GWDSF | IBEON | TDDVU | FVCAJ",
+      "output": "38848, 38848, 38848, 38848, 38848.\nAnswer:\n\nOkay, let's see. The user provided a block of text that's just repeating the same lines over and over again",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32722
+    },
+    {
+      "sample_index": 24,
+      "input_ids_sha256": "a43fe625cf41aba004c5ea65cb3c01bbee6437ca5a9b017049ece403fb35dd5a",
+      "target": "MIEZT | INYQF | OLBRP | IMJDF | YWZDX",
+      "output": "VAR IMJDF, VAR YWZDX, VAR QVZQ, VAR XWQ, and VAR XWQ. \n\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky",
+      "recall": 0.4,
+      "correct": 0,
+      "n_tok": 32722
+    },
+    {
+      "sample_index": 25,
+      "input_ids_sha256": "2eff533ce6f1acebe09fdcd81899504f0699be5ba8e598af052a66e5b5720d23",
+      "target": "FHMJG | YAIOA | GYUGD | FBYBA | ECRDB",
+      "output": "84425, VAR0, VAR1, VAR2, and VAR3.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32721
+    },
+    {
+      "sample_index": 26,
+      "input_ids_sha256": "16a10ddb15929813faa02f36caff3faa5b5f04a129a90cce2293a9fc9b45da6b",
+      "target": "NTEGU | UMZCP | ZBEUC | GKGOW | DERGB",
+      "output": "29883, 29883, 29883, 29883, 29883.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32716
+    },
+    {
+      "sample_index": 27,
+      "input_ids_sha256": "c2295ea6eab8ff6618f297e6659a8cc89384da5a86823db7e65946e7ed335753",
+      "target": "DLQQN | GJOTP | ZZZKQ | HXIMA | QCZBQ",
+      "output": "65627, 65627, 65627, 65627, 65627.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32720
+    },
+    {
+      "sample_index": 28,
+      "input_ids_sha256": "aff32b01cfc4a157bd520f56035d25815ecc5c758b46229432a5d5f8356427f4",
+      "target": "MWOWR | FHMYD | WSMUH | OFIOY | DLNDF",
+      "output": "96106, 96106, 96106, 96106, 96106.\nOkay, let's see. The user provided a text that's just repeating the same lines over and over again. The lines are",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32719
+    },
+    {
+      "sample_index": 29,
+      "input_ids_sha256": "981b32e251bc20b4a7cb87358d1e852ce6500a127297a9083e9c146078484368",
+      "target": "FEJGD | ZCDCD | JIEBF | FHBLO | ERSHS",
+      "output": "1. VAR_1 = 91526 2. VAR_2 = VAR_1 3. VAR_3 = VAR_2 4. VAR_4 = VAR_3 5. VAR_5 = VAR_4\nOkay, let's see. The",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32717
+    },
+    {
+      "sample_index": 30,
+      "input_ids_sha256": "aede037fc512722ba76f30355b54f739e13bed1a4dcb8909481ffe7a106cc93b",
+      "target": "HGPAV | WJPHZ | OBYIO | CLLJN | AVKUX",
+      "output": "50968, 50968, 50968, 50968, 50968.\nOkay, let's see. The user provided a text that's just repeating the same lines over and over again. The lines are",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32719
+    },
+    {
+      "sample_index": 31,
+      "input_ids_sha256": "615509312669a821c24fe619ae5a54ca15247e52124954a9df7a33b8749a96d7",
+      "target": "FBOEY | VDBMM | FOVPP | UJQFJ | DJDFJ",
+      "output": "24866, 24866, 24866, 24866, 24866.\nAnswer:\n\nOkay, let's see. The user provided a text that's a repetition of the same lines multiple times. The task",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32723
+    },
+    {
+      "sample_index": 32,
+      "input_ids_sha256": "797d2967061a55e207d123af28e480f29eb2bb74984994d1fd797ccf112ec2b9",
+      "target": "TGBOO | TKZWV | OCACQ | IDLZE | NCKNM",
+      "output": "52627, 52627, 52627, 52627, 52627.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32717
+    },
+    {
+      "sample_index": 33,
+      "input_ids_sha256": "6d99d40bae86e5e2c3749aea3d4f6516614ae0de3ea27e84e9924caaa701d746",
+      "target": "NDXFA | NMFGB | UUDNY | GETUS | OAQYN",
+      "output": "26844, N, M, O, and P.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32715
+    },
+    {
+      "sample_index": 34,
+      "input_ids_sha256": "44c7bf77ce7d0f36a1982233bb6c908b548470ee8200e54fd1aad718a351bd60",
+      "target": "MHXCU | ZVJJY | NMJXH | FCSBK | ZAHWS",
+      "output": "1. VAR1 = 40106 2. VAR2 = VAR1 3. VAR3 = VAR2 4. VAR4 = VAR3 5. VAR5 = VAR4\nOkay, let's see. The user provided a text that seems to be a",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32721
+    },
+    {
+      "sample_index": 35,
+      "input_ids_sha256": "4d9ae734df878a4e41d35e64284982d382ee4d7dc2b3425ce2f3db3d538acfe5",
+      "target": "LPJZV | PTTNZ | FZRUF | KKJWX | XVQGQ",
+      "output": "24093, 24093, 24093, 24093, 24093.\nOkay, let's see. The user provided a text that repeats the same lines multiple times. The lines are: \"The grass",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32720
+    },
+    {
+      "sample_index": 36,
+      "input_ids_sha256": "9190ce3a0145752e33bf1617bbaef3c9e0956010cb048740c19725851f39d6a2",
+      "target": "OSWMP | GWXOJ | JMVOU | KDRUW | XSHRU",
+      "output": "1. VAR_1 2. VAR_2 3. VAR_3 4. VAR_4 5. VAR_5\n\nOkay, let's see. The user provided a block of text that seems to be a repetitive loop of a few sentences about the grass, sky,",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32721
+    },
+    {
+      "sample_index": 37,
+      "input_ids_sha256": "6a01030c15c140b6355194a01aebcc0d1d836a56ecea7560ac45f9ea653e8797",
+      "target": "UCITV | FLSFP | BKSRN | DCEMG | BOOJR",
+      "output": "59341, 59341, 59341, 59341, 59341.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32717
+    },
+    {
+      "sample_index": 38,
+      "input_ids_sha256": "813552e813355af309e927633d856dde3636d5a4754ffb35672abbf2be8b8499",
+      "target": "TZOBN | XVVVV | WKKSX | PSWHN | QSCHE",
+      "output": "1. VAR1 2. VAR2 3. VAR3 4. VAR4 5. VAR5\nOkay, let's see. The user provided a block of text that seems to be a repetitive loop of a few sentences about the grass, sky, and sun, followed by",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32717
+    },
+    {
+      "sample_index": 39,
+      "input_ids_sha256": "7e59d99c092a4ebd95762a637eefd81d7f1fbec4024e46d3d983a7bd8179e3ac",
+      "target": "RYZMK | IBEYO | MUWYR | VVQOC | PKTSD",
+      "output": "58912, VAR0, VAR1, VAR2, and VAR3.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32721
+    },
+    {
+      "sample_index": 40,
+      "input_ids_sha256": "7858a60a3637e82260616e70fc8d6ddd944dd73f929dc5053e2840f6d05a20a9",
+      "target": "SJURV | BZLVW | NKRSZ | ITQAZ | PENAM",
+      "output": "1. VAR1 2. VAR2 3. VAR3 4. VAR4 5. VAR5\nOkay, let's see. The user provided a block of text that repeats the same lines multiple times. The lines are: \"The grass is green. The sky is blue",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32718
+    },
+    {
+      "sample_index": 41,
+      "input_ids_sha256": "8d1e5414db2612635ac054b2a1ea04c0c8bac85718086517f5b881c1e90bc455",
+      "target": "OOLOV | IUDHQ | GODOU | LLUCJ | GGLFL",
+      "output": "1. VAR1 2. VAR2 3. VAR3 4. VAR4 5. VAR5\n\nOkay, let's see. The user provided a block of text that seems to be a repetitive loop of a few sentences about the grass, sky, and sun, followed by",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32717
+    },
+    {
+      "sample_index": 42,
+      "input_ids_sha256": "2d9b83d087e380a9ed7920b7505d85acb181987641d36e7e2a771a778280833f",
+      "target": "SISRI | IIOND | DJHXE | FJZZK | FSXMP",
+      "output": "1. VAR1 = 83985 2. VAR2 = VAR1 3. VAR3 = VAR2 4. VAR4 = VAR3 5. VAR5 = VAR4\nOkay, let's see. The user provided a text that's just repeating the",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32719
+    },
+    {
+      "sample_index": 43,
+      "input_ids_sha256": "f3563462d2c5939a342206d1c783708b86770419aab05a06d16acf6b01a19ca2",
+      "target": "CUSXV | JHBHT | QVTBG | HLMKS | SSSSI",
+      "output": "1. VAR1 = 47273 2. VAR2 = VAR1 3. VAR3 = VAR2 4. VAR4 = VAR3 5. VAR5 = VAR4\nOkay, let's see. The user provided a text that's just repeating the",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32719
+    },
+    {
+      "sample_index": 44,
+      "input_ids_sha256": "ae19686a47a08e49b92f91a415c98f1e9d8b0cf078a8c46ec89c49b5a5f62cb2",
+      "target": "UVCNB | HFJXQ | GCWCD | JDJYU | KIWNR",
+      "output": "1. VAR1 2. VAR2 3. VAR3 4. VAR4 5. VAR5\n\nOkay, let's see. The user provided a text that seems to be a repetitive loop of a few sentences about the grass, sky, and sun, followed by a question",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32721
+    },
+    {
+      "sample_index": 45,
+      "input_ids_sha256": "761534e07d0a0642157f24639e051755976f9a23f8f39c6d5b4665cdf50b9328",
+      "target": "ZMCOR | QWIHH | UDJLT | RHVLW | IVQSX",
+      "output": "1. VAR1 2. VAR2 3. VAR3 4. VAR4 5. VAR5\n\nOkay, let's see. The user provided a block of text that seems to be a repetitive loop of a few sentences about the grass, sky, and sun, followed by",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32717
+    },
+    {
+      "sample_index": 46,
+      "input_ids_sha256": "4bbea25816607bf6ab68e1bbde1eacfe4600c5ac5436933163fec80f97952d09",
+      "target": "TDMME | PPHXR | BWYUV | QKAVU | WXJNK",
+      "output": "1. VAR1 = 61361 2. VAR2 = VAR1 3. VAR3 = VAR2 4. VAR4 = VAR3 5. VAR5 = VAR4\nOkay, let's see. The user provided a text that's just repeating the",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32719
+    },
+    {
+      "sample_index": 47,
+      "input_ids_sha256": "2308ad6a7fbb8e4bbdebabcc349a247bf1aeb606190aae9209d66a5bf92d488c",
+      "target": "WFPXA | SUTUF | QPWED | BOINN | TCMTO",
+      "output": "70953, BOB, A, B, and C.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32717
+    },
+    {
+      "sample_index": 48,
+      "input_ids_sha256": "98a87e60d56735512408489cb4f01f2174fc05781675c1e9aed655469c99c622",
+      "target": "KMMFK | CTEQF | IVGBL | ECBAN | JPNKI",
+      "output": "1. VAR1 2. VAR2 3. VAR3 4. VAR4 5. VAR5\nOkay, let's see. The user provided a text that seems to be a repetitive loop of a few sentences about the grass, sky, and sun colors, followed by a",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32717
+    },
+    {
+      "sample_index": 49,
+      "input_ids_sha256": "8bcd28c534f75fd1f141f05418f12bdac4e840c6eb6f6f239b81f6d73edd5714",
+      "target": "EBTFC | PEVVO | JEEAV | KDFKJ | TPMUH",
+      "output": "1. VAR1 = 98806 2. VAR2 = VAR1 3. VAR3 = VAR2 4. VAR4 = VAR3 5. VAR5 = VAR4\nOkay, let's see. The user provided a text that's just repeating the",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32719
+    },
+    {
+      "sample_index": 50,
+      "input_ids_sha256": "dd22d7bc7b894c559f43b105abafaffc21f13e28fb53c1a3beb1f85930bb910a",
+      "target": "WAVNJ | CQWKF | BVLOQ | UAOYX | VUPYV",
+      "output": "50365, 50365, 50365, 50365, 50365.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32720
+    },
+    {
+      "sample_index": 51,
+      "input_ids_sha256": "26764890759dccf1c74d12274375ebb6caaf2220e591b5a4a6fc72b15df6ae1c",
+      "target": "JJTJV | ZQBZO | TSRVZ | DUYPD | YBSNZ",
+      "output": "1. VAR_1 = 14557 2. VAR_2 = VAR_1 3. VAR_3 = VAR_2 4. VAR_4 = VAR_3 5. VAR_5 = VAR_4\nOkay, let's see. The",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32715
+    },
+    {
+      "sample_index": 52,
+      "input_ids_sha256": "785d0a4cc63ec35327ba59c3706f35d83b0b7a8beab7fdec260b72e6e73c3444",
+      "target": "ZXLIM | RURVZ | PPKRM | LLFSO | WDZGL",
+      "output": "1. VAR1 = 72158 2. VAR2 = VAR1 3. VAR3 = VAR2 4. VAR4 = VAR3 5. VAR5 = VAR4\nOkay, let's see. The user provided a text that's just repeating the",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32719
+    },
+    {
+      "sample_index": 53,
+      "input_ids_sha256": "3e9765c8ae82c9dc4c5e59d03e04a85dbe7675ba8383064f84fdd6409c0a4489",
+      "target": "YOUPU | QWTGO | OBNCM | SLQRR | YPZMR",
+      "output": "99213, 99213, 99213, 99213, 99213.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32720
+    },
+    {
+      "sample_index": 54,
+      "input_ids_sha256": "f4673d9050021f747f9e0c21ffbbb7d2e6b06a746208ddfdcc9d10ff1e8c8368",
+      "target": "CYZUM | CMIIR | KOPUR | NYZGH | SCWRU",
+      "output": "1. VAR1 2. VAR2 3. VAR3 4. VAR4 5. VAR5\n\nOkay, let's see. The user provided a block of text that seems to be a repetitive loop of a few sentences about the grass, sky, and sun, followed by",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32717
+    },
+    {
+      "sample_index": 55,
+      "input_ids_sha256": "b56dee2d06398c9549b6c1da30cb8c5063d424a3773d3773c1d577c1ed0fc97a",
+      "target": "COPCL | AMKCP | QZHAA | GRCER | QENGO",
+      "output": "23649, 23649, 23649, 23649, 23649.\nOkay, let's see. The user provided a text that repeats the same lines multiple times. The task is to find all variables",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32715
+    },
+    {
+      "sample_index": 56,
+      "input_ids_sha256": "bdea02089d9b5e19b953318595fb928ede8b5abb2474c7ec85add1a8b32cc2cb",
+      "target": "GVCLH | GTEXK | AUDXM | ZQNYN | SBHTJ",
+      "output": "VAR ZQNYN, VAR SBHTJ, VAR QYJXK, VAR XWZQK, VAR YXZQK.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green",
+      "recall": 0.4,
+      "correct": 0,
+      "n_tok": 32717
+    },
+    {
+      "sample_index": 57,
+      "input_ids_sha256": "0d301f39accde51d36064e65cdf0316df13a8e8bd582674a45b2a01a43c98dc6",
+      "target": "ORCGT | AKMVH | ZWRRY | AUCKY | FPOJE",
+      "output": "58298, 58298, 58298, 58298, 58298.\nOkay, let's see. The user provided a text that's just repeating the same lines over and over again. The lines are",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32719
+    },
+    {
+      "sample_index": 58,
+      "input_ids_sha256": "e6c4894c55a431c91c3cc613eec8aed56bc4d8344113b620a3a995ae7528f9ce",
+      "target": "SGIUU | ZPFIA | JGQGA | XHXVN | GLYFS",
+      "output": "1. VAR1 = 71298 2. VAR2 = VAR1 3. VAR3 = VAR2 4. VAR4 = VAR3 5. VAR5 = VAR4\nOkay, let's see. The user provided a text that's just repeating the",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32719
+    },
+    {
+      "sample_index": 59,
+      "input_ids_sha256": "03ce47226b4be2aafe6f9f59c4d057d385b656a61ad2fc6f748f00db0629af79",
+      "target": "HYNVD | QYBJA | PBWFY | VQVBS | NJQXW",
+      "output": "VAR QYJXW, VAR QYJXW, VAR QYJXW, VAR QYJXW, VAR QYJXW.\nAnswer:\n\nOkay, let's try to figure this out. The user provided a block of text that seems to have a lot",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32722
+    },
+    {
+      "sample_index": 60,
+      "input_ids_sha256": "aa9393e48cf6869bf17643ae85bef47166a653b7f586d1d77f2416652f128c80",
+      "target": "WCLWT | NIBRY | HLTYV | THIGO | FSYIN",
+      "output": "53598, 53598, 53598, 53598, 53598.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32715
+    },
+    {
+      "sample_index": 61,
+      "input_ids_sha256": "3528d81e5779bfaa48bd22936f6f8bd59ac494cc32b05298596e44376d2ebba5",
+      "target": "AOKBD | QUVIS | RDRIZ | FRZIB | CNKGH",
+      "output": "1. VAR_1 = 11937 2. VAR_2 = VAR_1 3. VAR_3 = VAR_2 4. VAR_4 = VAR_3 5. VAR_5 = VAR_4\nThe grass is green. The sky",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32717
+    },
+    {
+      "sample_index": 62,
+      "input_ids_sha256": "2c97cc59144f4a6632c87e9fc78ea46ad1f83784c9b3e2910409a65e76eebe86",
+      "target": "VFVNV | AXSIW | DMCSJ | YZPTL | TMIOJ",
+      "output": "56634, 56634, 56634, 56634, 56634.\nOkay, let's see. The user provided a text that's just repeating the same lines over and over again. The lines are",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32719
+    },
+    {
+      "sample_index": 63,
+      "input_ids_sha256": "14c05e0e551f20cb591cdf3823efdb2eb50b5ae0df147bc87608faa7a70e66c6",
+      "target": "USVRQ | EVOKX | EETIU | OWSMR | GHKJE",
+      "output": "1. VAR1 2. VAR2 3. VAR3 4. VAR4 5. VAR5\n\nOkay, let's see. The user provided a block of text that seems to be a repetitive loop of a few sentences about the grass, sky, and sun, followed by",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32717
+    },
+    {
+      "sample_index": 64,
+      "input_ids_sha256": "30b9a1f81ea3e8fdcef599cbf41d5fbde87a4bd3581795414b223be5867c38f2",
+      "target": "TIWAJ | HIQVE | UTWMM | OHABX | TOLOG",
+      "output": "1. VAR1 2. VAR2 3. VAR3 4. VAR4 5. VAR5\nOkay, let's see. The user provided a block of text that seems to be a repetitive poem or a mantra-like repetition of phrases about the grass, sky, and sun",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32716
+    },
+    {
+      "sample_index": 65,
+      "input_ids_sha256": "c25f5c6c90ae2bb3c597ff3a1dbc340c01ba4871a9a06a6c5ab6d9cc0c4fe7c9",
+      "target": "RPTAJ | EEIPN | MAURH | TZIEX | QTMYO",
+      "output": "51566, 51566, 51566, 51566, 51566.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32717
+    },
+    {
+      "sample_index": 66,
+      "input_ids_sha256": "4994590583d4385f16cf2778a9fd26f07d87099c7acc2012bdba532aacc675b7",
+      "target": "SZSPX | JCEBH | ULHVU | YYBEP | KNBON",
+      "output": "1. VAR_1 = 41535 2. VAR_2 = VAR_1 3. VAR_3 = VAR_2 4. VAR_4 = VAR_3 5. VAR_5 = VAR_4\nThe grass is green. The sky",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32717
+    },
+    {
+      "sample_index": 67,
+      "input_ids_sha256": "a43a1b9c516e56e916092fd88a72a678a9ee6d8099e7a4f976df80309d99bbec",
+      "target": "CHAUW | TWXUO | XVAQA | MAPTO | YNZTZ",
+      "output": "1. VAR1 2. VAR2 3. VAR3 4. VAR4 5. VAR5\n\nOkay, let's see. The user provided a block of text that seems to be a repetitive loop of a few sentences about the grass, sky, and sun, followed by",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32717
+    },
+    {
+      "sample_index": 68,
+      "input_ids_sha256": "f636c644a34e67de3770c8e6192f0d740fc916b0ceeb82709e34d824ffe4fa04",
+      "target": "YTAJV | UWHHR | UOPVN | OBVBP | DDKKX",
+      "output": "77548, 77548, 77548, 77548, 77548.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32718
+    },
+    {
+      "sample_index": 69,
+      "input_ids_sha256": "a8297dac1f9fbb11ffe9dfda680207ba3fc828427a52c43b37aca67f2a3da805",
+      "target": "IBTVZ | RVDNH | ZXPZD | WYKSH | KVZYJ",
+      "output": "(Please list the variables in the order of their assignment)\nOkay, let's try to figure out which variables are assigned the value 32156. Let me start by looking through the text provided. \n\nFirst, I need to parse the text and look for variable assignments. The user",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32721
+    },
+    {
+      "sample_index": 70,
+      "input_ids_sha256": "0c61ee2ab24cbf69152c0746de735a715e46a6c06fbc3037285ec0189a5d738d",
+      "target": "ZNQIE | XDSXP | SNQSU | AVYJJ | RHUSQ",
+      "output": "1. VAR1 = 32087 2. VAR2 = VAR1 3. VAR3 = VAR2 4. VAR4 = VAR3 5. VAR5 = VAR4\nOkay, let's see. The user provided a block of text that's just",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32719
+    },
+    {
+      "sample_index": 71,
+      "input_ids_sha256": "1fbc88cadc2f4aa275aa3b435a136151acbd50bce291a2e7668abfe9e32128a6",
+      "target": "PLBIB | TXEKF | TBRQM | QOMMX | QOYYP",
+      "output": "72136, 72136, 72136, 72136, 72136.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32718
+    },
+    {
+      "sample_index": 72,
+      "input_ids_sha256": "a8acad51284ff3e52ab677b6339cd09ebc64048f14863c16d072fdb586c65e4b",
+      "target": "OLPOF | QAQAH | SGHSE | IEQFA | QIDOH",
+      "output": "76761, 76761, 76761, 76761, 76761.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32717
+    },
+    {
+      "sample_index": 73,
+      "input_ids_sha256": "1d2813f611d983176e452fc03fc580ca2496183836d003272e09f2efe26fa847",
+      "target": "WEMBV | WCFJK | IDWPB | EJFJA | BJYCM",
+      "output": "1. VAR1 = 66453 2. VAR2 = VAR1 3. VAR3 = VAR2 4. VAR4 = VAR3 5. VAR5 = VAR4\n\nOkay, let's see. The user provided a text that's just repeating the",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32719
+    },
+    {
+      "sample_index": 74,
+      "input_ids_sha256": "b1611cdb5f618545497053d38ef7409a6f3655bb0195abcce2a1be255a1d2089",
+      "target": "EUWTE | EOOIU | OKZDO | LLYDR | PINRN",
+      "output": "57059, VAR0, VAR1, VAR2, and VAR3.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32716
+    },
+    {
+      "sample_index": 75,
+      "input_ids_sha256": "6cbac4fccbb4890d862fceb4449d7df60799e4ee4a3d5a2a0bfda9287adb9570",
+      "target": "HAQFU | LTSVV | POZYG | RSBIB | SRSUP",
+      "output": "78386, 78386, 78386, 78386, 78386.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32715
+    },
+    {
+      "sample_index": 76,
+      "input_ids_sha256": "f8a2a0a0693e3285651e55837b324aaee3459f2238e8a01a1a184aa8de671baa",
+      "target": "FTXOL | LQVQW | ZFFWW | OFMQW | SGEIE",
+      "output": "VAR SGEIE, VAR OFMQW, VAR QYJ, VAR QYJ, VAR QYJ. \n\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue.",
+      "recall": 0.4,
+      "correct": 0,
+      "n_tok": 32721
+    },
+    {
+      "sample_index": 77,
+      "input_ids_sha256": "c8e2971d3fc650088763b40cf5a884cc4ccc6ba03a19e044968c28562578f06b",
+      "target": "TNMUZ | QMPJY | XNOCD | KACME | HNCAD",
+      "output": "1. VAR1 = 63696 2. VAR2 = VAR1 3. VAR3 = VAR2 4. VAR4 = VAR3 5. VAR5 = VAR4\nOkay, let's see. The user provided a block of text that's just",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32719
+    },
+    {
+      "sample_index": 78,
+      "input_ids_sha256": "cbe13546fcdeff4da0faf5e0c3c324e2ea7706c45b329048405571ee5372f960",
+      "target": "CMCWE | JNEXK | GMGLC | TBONI | UGFVZ",
+      "output": "59049, 19683, 6561, 2187, 729.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32720
+    },
+    {
+      "sample_index": 79,
+      "input_ids_sha256": "62d4a195d0a798fa2522cab722081e490e61627b3b296867c08073b450577bbd",
+      "target": "TSVGZ | URCPB | VPMGO | VLLJR | JHERD",
+      "output": "1. VAR1 2. VAR2 3. VAR3 4. VAR4 5. VAR5\nOkay, let's see. The user provided a block of text that seems to be a repetitive loop of a few sentences about the grass, sky, and sun, followed by",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32717
+    },
+    {
+      "sample_index": 80,
+      "input_ids_sha256": "375cd0ab4bdf4ac61eee11e0e6e64eb108841d15a9563bf94b0193a76174b202",
+      "target": "IAPQI | GYEQW | IYGVA | TGKPW | TKXYT",
+      "output": "1. VAR1 2. VAR2 3. VAR3 4. VAR4 5. VAR5\nOkay, let's see. The user provided a block of text that seems to be a repetitive phrase repeated multiple times. The question is to find all variables assigned the value",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32721
+    },
+    {
+      "sample_index": 81,
+      "input_ids_sha256": "263f73f1977393bdcc97546882c9a74f0fd3a68fc987be71ce32252bc7eac9de",
+      "target": "BIRTQ | IXCBO | TOBAJ | KUGAZ | ZIBNV",
+      "output": "54470, 54470, 54470, 54470, 54470.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32717
+    },
+    {
+      "sample_index": 82,
+      "input_ids_sha256": "67632799a8c9eb31fd822684aee46978018867bf5151ec25ef103ca153cd76bb",
+      "target": "OOUPG | YXKMW | IIVGR | KGPRP | AVMHQ",
+      "output": "53851, 53851, 53851, 53851, 53851.\nOkay, let's see. The user provided a text that's just repeating the same lines over and over again. The lines are",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32719
+    },
+    {
+      "sample_index": 83,
+      "input_ids_sha256": "96ab9251702c8538b5b5f6199aeb8ea775150b3f19d0d21f2a453d675f153edc",
+      "target": "WBMWN | MRSYW | HYOWT | MVTSF | KULXT",
+      "output": "1. VAR_1 2. VAR_2 3. VAR_3 4. VAR_4 5. VAR_5\n\nOkay, let's see. The user provided a block of text that seems to be a repetitive loop of a few sentences about the grass, sky,",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32717
+    },
+    {
+      "sample_index": 84,
+      "input_ids_sha256": "c948a68103d34fc85252549c88a43ee654bf7c24b8401a892498034b6c817315",
+      "target": "VTFMX | XVTCL | GPXUS | HHSNH | XGZHU",
+      "output": "1. VAR1 2. VAR2 3. VAR3 4. VAR4 5. VAR5\nOkay, let's see. The user provided a block of text that repeats a few lines multiple times. The lines are: \"The grass is green. The sky is blue",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32718
+    },
+    {
+      "sample_index": 85,
+      "input_ids_sha256": "bf8b46590360ba33387d9bf9d160c06465f8a44e54d4ad136753b1027c3bff01",
+      "target": "BBEZA | YEISZ | ILVSF | WBGEO | BHFFE",
+      "output": "1. VAR_1 2. VAR_2 3. VAR_3 4. VAR_4 5. VAR_5\n\nOkay, let's see. The user provided a block of text that seems to be a repetitive loop of a few sentences about the grass, sky,",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32716
+    },
+    {
+      "sample_index": 86,
+      "input_ids_sha256": "c3b9764bfa9272f80aa439a95687ffd90ccbcdbd2c815884c91d130c8f61c991",
+      "target": "RYNPW | TMYGO | JAEJZ | OXJDZ | EUZSK",
+      "output": "1. VAR1 2. VAR2 3. VAR3 4. VAR4 5. VAR5\nOkay, let's see. The user provided a block of text that seems to be a repetitive loop of a few sentences about the grass, sky, and sun, followed by",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32721
+    },
+    {
+      "sample_index": 87,
+      "input_ids_sha256": "c872b71998cd16c20bb870d77044b0a812f2631f3da3144199d314cc79f228ad",
+      "target": "EZYVQ | MCBDM | TUDEM | VZBXQ | TRPHL",
+      "output": "1. VAR1 = 92755 2. VAR2 = VAR1 3. VAR3 = VAR2 4. VAR4 = VAR3 5. VAR5 = VAR4\n\nOkay, let's see. The user provided a text that's just repeating the",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32719
+    },
+    {
+      "sample_index": 88,
+      "input_ids_sha256": "344abe840c6048dacd4b318c9412afb2c72791b55e2c8fd1aab44bae0e29e00f",
+      "target": "ZNMVO | MCRZW | KIMOP | SAQTX | YFKLO",
+      "output": "1. VAR1 2. VAR2 3. VAR3 4. VAR4 5. VAR5\nOkay, let's see. The user provided a block of text that seems to be a repetitive loop of a few sentences about the grass, sky, and sun, followed by",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32717
+    },
+    {
+      "sample_index": 89,
+      "input_ids_sha256": "98e30c2a52a5f13a4f4bba5026cab7944f73a94b27d0f8533008e7e0864965d7",
+      "target": "KBSXN | NDGXP | GXKVV | FBXTW | GLCNN",
+      "output": "26635, 26635, 26635, 26635, 26635.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32718
+    },
+    {
+      "sample_index": 90,
+      "input_ids_sha256": "266da89c5a57a5cd504f30aef74f8dbd8761ea0fe76fec1e54a874d3dc6ce8d7",
+      "target": "FMQTC | XTXNH | SQIKH | QKRTB | OGJWD",
+      "output": "1. VAR1 = 83195 2. VAR2 = VAR1 3. VAR3 = VAR2 4. VAR4 = VAR3 5. VAR5 = VAR4\nOkay, let's see. The user provided a text that's just repeating the",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32719
+    },
+    {
+      "sample_index": 91,
+      "input_ids_sha256": "178b3e4229fc290ffbb930ddd979f14b01109b6c8c1d57a516fa8f5bb4341464",
+      "target": "YZTVT | VJAOU | TMSTH | JXXWL | UNTXE",
+      "output": "1. VAR1 = 32601 2. VAR2 = VAR1 3. VAR3 = VAR2 4. VAR4 = VAR3 5. VAR5 = VAR4\nOkay, let's see. The user provided a text that's just repeating the",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32719
+    },
+    {
+      "sample_index": 92,
+      "input_ids_sha256": "fb6b4dfb91a2e8c2d7ca4bdc91ff618aad93f31366a27ecfbd111368d9b8d453",
+      "target": "BDOQH | FFTLV | ZEIVA | REZTU | BOADP",
+      "output": "70539, 70539, 70539, 70539, 70539.\nOkay, let's see. The user provided a text that repeats the same sentence multiple times about the grass, sky, and sun",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32717
+    },
+    {
+      "sample_index": 93,
+      "input_ids_sha256": "9b8a06a8fba58f5ac1e1f66db3f97c42c82e7694f76a04947b15fe0ca28ccf46",
+      "target": "LGAOC | PPXKM | BPSXE | BNDHA | ADNRU",
+      "output": "1. VAR1 2. VAR2 3. VAR3 4. VAR4 5. VAR5\nOkay, let's see. The user provided a block of text that seems to be a repetitive loop of a few sentences about the grass, sky, and sun, followed by",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32717
+    },
+    {
+      "sample_index": 94,
+      "input_ids_sha256": "3bc54c1097c15f45e3370cbb5ae7a8794776acbd755a01e7ec612754f091ecfd",
+      "target": "XGIDO | XWEQO | LLNJL | SWAET | QERAG",
+      "output": "1. VAR1 = 30510 2. VAR2 = VAR1 3. VAR3 = VAR2 4. VAR4 = VAR3 5. VAR5 = VAR4\nOkay, let's see. The user provided a text that's just repeating the",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32719
+    },
+    {
+      "sample_index": 95,
+      "input_ids_sha256": "230a18138cf2bfe95d8151d39212412dda0c8280877c31a180842dc6bc6a1a40",
+      "target": "SNQUJ | USUXL | KKUPF | HZVCJ | UOQVQ",
+      "output": "1. VAR1 2. VAR2 3. VAR3 4. VAR4 5. VAR5\nOkay, let's see. The user provided a block of text that repeats a few lines multiple times. The lines are: \"The grass is green. The sky is blue",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32721
+    },
+    {
+      "sample_index": 96,
+      "input_ids_sha256": "5ea90bc4dc65c40c328277c67cb849e69b8ff72b0b3744853859c3aed81e8509",
+      "target": "IDDEO | RFLHK | MOTJJ | LVILM | LPDQX",
+      "output": "70817, 70817, 70810, 70817, 70817.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32716
+    },
+    {
+      "sample_index": 97,
+      "input_ids_sha256": "cec0f0016f4ccfea7e892365e2e5e1275e6852432aec2dd67f66b07a9f508db5",
+      "target": "RSJHQ | TJGTC | LNXHG | DJNRC | TEFZP",
+      "output": "1. VAR1 2. VAR2 3. VAR3 4. VAR4 5. VAR5\n\nOkay, let's see. The user provided a block of text that repeats the same lines multiple times. The lines are:\n\n\"The grass is green. The sky is blue.",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32718
+    },
+    {
+      "sample_index": 98,
+      "input_ids_sha256": "b46fcd37852023f5a7c80a4b606073323ce4b04c09e0015dbc7638f08a1333ee",
+      "target": "MEMBW | DAUWO | QDNJF | PRWVF | OUJCK",
+      "output": "1. VAR1 2. VAR2 3. VAR3 4. VAR4 5. VAR5\nOkay, let's see. The user provided a block of text that seems to be a repetitive loop of a few sentences about the grass, sky, and sun, followed by",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32717
+    },
+    {
+      "sample_index": 99,
+      "input_ids_sha256": "ffd07e46c2bb645cc47ca3dcdc976038bf349fc464423a793ec8365969ba752f",
+      "target": "CBHGO | EVROT | HYNUO | QGPMB | WKQXW",
+      "output": "88770, 88770, 88770, 88770, 88770.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32716
+    },
+    {
+      "sample_index": 100,
+      "input_ids_sha256": "ae4abaf55a69f5947ab66ccc5158bf3e90db62af7637aa73371507324be16bc0",
+      "target": "JKFFX | LIOAT | ASSHQ | NAFBM | HOFSK",
+      "output": "1. VAR1 2. VAR2 3. VAR3 4. VAR4 5. VAR5\nOkay, let's see. The user provided a block of text that seems to be a repetitive loop of the same sentence: \"The grass is green. The sky is blue",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32715
+    },
+    {
+      "sample_index": 101,
+      "input_ids_sha256": "c42fef5880b14dbbee8b936a3c093454bc0ac75550af917ba192ac985ea10282",
+      "target": "WLJPY | PULIN | JRRYF | WNYTN | GWVMQ",
+      "output": "1. VAR1 = 32905 2. VAR2 = VAR1 3. VAR3 = VAR2 4. VAR4 = VAR3 5. VAR5 = VAR4\nOkay, let's see. The user provided a text that's just repeating the",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32719
+    },
+    {
+      "sample_index": 102,
+      "input_ids_sha256": "dfdd5eb2ab14734f39cd39a68041a79c630ab650eb143681d98e13c7f47b0b96",
+      "target": "MTBPX | DHUWV | BILFQ | PPZJG | QGVXB",
+      "output": "1. VAR1 2. VAR2 3. VAR3 4. VAR4 5. VAR5\nOkay, let's see. The user provided a block of text that seems to be a repetitive loop of a few sentences about the grass, sky, and sun, followed by",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32723
+    },
+    {
+      "sample_index": 103,
+      "input_ids_sha256": "36724d082bd901555d583d96c95499614bf924c31e947a497e98ee671b0919d7",
+      "target": "MNFNR | XCAFQ | VKBRN | UPRWI | VJGXR",
+      "output": "1. VAR1 2. VAR2 3. VAR3 4. VAR4 5. VAR5\nOkay, let's see. The user provided a text that seems to be a repetitive loop of a few sentences about the grass, sky, and sun, followed by a question",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32718
+    },
+    {
+      "sample_index": 104,
+      "input_ids_sha256": "df64f9021fadb8955fe7adb20a694234a1f6ec7bdafc102bd0c4830c6a4d26a0",
+      "target": "KIPEJ | SZDOO | MIAVU | CQNGV | NYZCM",
+      "output": "1. VAR1 2. VAR2 3. VAR3 4. VAR4 5. VAR5\nOkay, let's see. The user provided a block of text that seems to be a repetitive loop of a few sentences about the grass, sky, and sun, followed by",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32723
+    },
+    {
+      "sample_index": 105,
+      "input_ids_sha256": "a8cbe84bb507004fcd3325f3e17bfa9d29577c41194e79a7000b4b98a97d4eca",
+      "target": "KSWEW | QVPTX | JHCIO | EUZML | BHCRE",
+      "output": "1. VAR_1 = 82912 2. VAR_2 = VAR_1 3. VAR_3 = VAR_2 4. VAR_4 = VAR_3 5. VAR_5 = VAR_4\nThe grass is green. The sky",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32718
+    },
+    {
+      "sample_index": 106,
+      "input_ids_sha256": "4092129d80a687a847237228e273c1830aa1f00c64421aeba904b55b25685487",
+      "target": "RYMML | FNYZK | LMSUF | POCIH | ELDVE",
+      "output": "1. VAR1 2. VAR2 3. VAR3 4. VAR4 5. VAR5\n\nOkay, let's see. The user provided a block of text that's just repeating the same lines over and over. The lines are: \"The grass is green. The",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32719
+    },
+    {
+      "sample_index": 107,
+      "input_ids_sha256": "69ce12ab523b0a65046a5e085b6419de20893a6346e6f0a19047ef1c452e3a83",
+      "target": "NDBZJ | QVNBU | YPEZD | HUVGE | PZWNA",
+      "output": "50541, 50541, 50541, 50541, 50541.\nAnswer:\n\nOkay, let's see. The user provided a block of text that's just repeating the same lines over and over again",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32721
+    },
+    {
+      "sample_index": 108,
+      "input_ids_sha256": "3317bdb46f2217e1ca5afde3bdc4a5c8c832d734f41695efb5b4a2c8178cf43b",
+      "target": "NYRIX | LESZH | EGRME | XEEPV | DDPYP",
+      "output": "61135, VAR0, VAR1, VAR2, and VAR3.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32713
+    },
+    {
+      "sample_index": 109,
+      "input_ids_sha256": "16be9cfccc43d8d61c71ba10dfba41cb57aa37978cf59ad381f4cdc419927443",
+      "target": "XVHIF | GVVCY | PLYHV | MAPYY | CEWXQ",
+      "output": "1. VAR1 2. VAR2 3. VAR3 4. VAR4 5. VAR5\n\nOkay, let's see. The user provided a block of text that seems to be a repetitive loop of a few sentences about the grass, sky, and sun, followed by",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32715
+    },
+    {
+      "sample_index": 110,
+      "input_ids_sha256": "16b17027136e2bb93356d96c95a045a30c41c56d30d7f3d754c02c78e234c269",
+      "target": "ZDSNX | KVVZE | FSVIR | ARUMF | WSUZX",
+      "output": "1. VAR_1 2. VAR_2 3. VAR_3 4. VAR_4 5. VAR_5\n\nOkay, let's see. The user provided a block of text that seems to be a repetitive loop of a few sentences about the grass, sky,",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32717
+    },
+    {
+      "sample_index": 111,
+      "input_ids_sha256": "7a78ea0b380f8692981fcb58c50bf4599ca3c925426af4d2c5ad21d12ea693c8",
+      "target": "WFGIU | DNGWD | VTAIC | TECFZ | KHZOW",
+      "output": "91443, 91443, 9143, 9144, and 91443.\nThe answer is 5.\nOkay, let's see. The user provided a text that's just repeating the same lines about the grass",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32719
+    },
+    {
+      "sample_index": 112,
+      "input_ids_sha256": "f3db7bc44cbf9be0620eb965c2eeef587674749c17fe70ad945363173baf65af",
+      "target": "OTILF | PIWII | GRBQQ | LKQVE | QXWSV",
+      "output": "69223, 69223, 69223, 69223, 69223.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32720
+    },
+    {
+      "sample_index": 113,
+      "input_ids_sha256": "8b91cfc88bdbe312a4b8a1f8fc03e2cfb4cb2da31af6956e98e775bd69a89011",
+      "target": "IQOOB | TBDHK | XFXKN | FGZNH | JZFMW",
+      "output": "1. VAR_1 = 88617 2. VAR_2 = VAR_1 3. VAR_3 = VAR_2 4. VAR_4 = VAR_3 5. VAR_5 = VAR_4\nThe grass is green. The sky",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32716
+    },
+    {
+      "sample_index": 114,
+      "input_ids_sha256": "f7bb036bfecbc48472b2da00e6ce6f26b63d859b0deec65c17b56a960a8579cd",
+      "target": "WZENI | FKBUS | ZGIDP | NCJRM | QGQOM",
+      "output": "1. VAR1 2. VAR2 3. VAR3 4. VAR4 5. VAR5\n\nOkay, let's see. The user provided a block of text that seems to be a repetitive loop of a few sentences about the grass, sky, and sun, followed by",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32722
+    },
+    {
+      "sample_index": 115,
+      "input_ids_sha256": "beaba6d88e320bb265391aa5ac5362a04ad28ff5b41765b8fe637f89e26a11a1",
+      "target": "ZQYCI | RSCCZ | HDPYC | YKWBJ | PSUPK",
+      "output": "73385, 73385, 73385, 73385, 73385.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32721
+    },
+    {
+      "sample_index": 116,
+      "input_ids_sha256": "fa65924620670f9e8efacc6713c513f716baf51a2b3d5ed81c77ad1f68bf568c",
+      "target": "JYSUN | RWVKX | PFDAA | HOYAV | WNBJX",
+      "output": "1. VAR1 2. VAR2 3. VAR3 4. VAR4 5. VAR5\n\nOkay, let's see. The user provided a block of text that seems to be a repetitive loop of a few sentences about the grass, sky, and sun, followed by",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32717
+    },
+    {
+      "sample_index": 117,
+      "input_ids_sha256": "cb7a7afd450a8a091273dc5d794d0cdaef581102ee066f638728af78c250f01e",
+      "target": "RFNBL | TVUAK | CAXPD | ZNMRD | AGYZV",
+      "output": "79753, 79753, 79753, 79753, 79753.\nOkay, let's see. The user provided a text that's just repeating the same lines over and over again. The lines are",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32719
+    },
+    {
+      "sample_index": 118,
+      "input_ids_sha256": "5a688336b8ad1617abf566a6ca3dc3d3a4706e0f8016186ec02fd4d4f49960a6",
+      "target": "LZZUI | NESRS | SQXVQ | ZTDAX | WRNCW",
+      "output": "1. VAR_1 = 42085 2. VAR_2 = VAR_1 3. VAR_3 = VAR_2 4. VAR_4 = VAR_3 5. VAR_5 = VAR_4\nThe grass is green. The sky",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32717
+    },
+    {
+      "sample_index": 119,
+      "input_ids_sha256": "e83b2fa7b2e0d891ad1c73ee11460f33506b3c4d98e9246fddf136c8ccf0b15c",
+      "target": "CVCWN | ASWHP | FFTXG | ZSRXX | DJNXZ",
+      "output": "76216, 76216, 76216, 76216, 76216.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32717
+    },
+    {
+      "sample_index": 120,
+      "input_ids_sha256": "21680ce49687cca3bfaf17d48df372d76f219c0ddedf16d999a53e8bedb37da3",
+      "target": "ESQIJ | OLWBT | PQFJH | LSIPZ | VWPTK",
+      "output": "1. VAR1 = 35237 2. VAR2 = VAR1 3. VAR3 = VAR2 4. VAR4 = VAR3 5. VAR5 = VAR4\nOkay, let's see. The user provided a text that's just repeating the",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32719
+    },
+    {
+      "sample_index": 121,
+      "input_ids_sha256": "0bfd8d79a887c1e9f87433f27f2259dc58fdff664973f063aac53434d9dd878f",
+      "target": "YKSDK | FCOYM | CUSHP | QNGEH | FXPTA",
+      "output": "55539, 55539, 55539, 55539, 55539.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32717
+    },
+    {
+      "sample_index": 122,
+      "input_ids_sha256": "f3a9b8e0d569a87c1df299689705fc6df7709ceceba28c65bd070fc3e8b2c20c",
+      "target": "QHGAG | FBGAX | NOZXR | SCPRM | OEAYL",
+      "output": "64301, VAR0, VAR1, VAR2, and VAR3.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32717
+    },
+    {
+      "sample_index": 123,
+      "input_ids_sha256": "54ebb191177ce6b8584a7ffe7914a12f45f45de99665761936cefd0b16c7d965",
+      "target": "FXPBZ | FEIUS | KXDTE | TTZON | RQGRU",
+      "output": "1. VAR1 = 42718 2. VAR2 = VAR1 3. VAR3 = VAR2 4. VAR4 = VAR3 5. VAR5 = VAR4\nOkay, let's see. The user provided a text that's just repeating the",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32720
+    },
+    {
+      "sample_index": 124,
+      "input_ids_sha256": "4ea497e6c5d76db9c913b93232ee7df2124b0a25cdc2ee8835c19932316f6aa5",
+      "target": "DZWMO | TWOEY | PSIWG | VPEYQ | YFUJI",
+      "output": "78710, 78710, 78710, 78710, 78710.\nOkay, let's see. The user provided a text that's a repetition of the same line: \"The grass is green.",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32719
+    },
+    {
+      "sample_index": 125,
+      "input_ids_sha256": "e1d74d0c6cc6879b7a0df8c2503d7b8e229d27c2172130ba969274993c1dbb24",
+      "target": "GBZYR | ZHDWJ | IXNCE | CJPLF | ITEUN",
+      "output": "1. VAR1 2. VAR2 3. VAR3 4. VAR4 5. VAR5\nOkay, let's see. The user provided a block of text that repeats a few lines multiple times. The lines are: \"The grass is green. The sky is blue",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32718
+    },
+    {
+      "sample_index": 126,
+      "input_ids_sha256": "e043811a48287b84fa858e3ec71af063fd7dfabc2c8691570f9da2c679d42ec6",
+      "target": "OXGTG | NSFAZ | CCDVB | IYMYJ | GKOZW",
+      "output": "1. VAR1 = 43139 2. VAR2 = VAR1 3. VAR3 = VAR2 4. VAR4 = VAR3 5. VAR5 = VAR4\nOkay, let's see. The user provided a text that's just repeating the",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32719
+    },
+    {
+      "sample_index": 127,
+      "input_ids_sha256": "82e72f8345e48316e21fe76ef76dd1f25b91d2dc38c930a54c82a30b6e239f22",
+      "target": "QCGFM | FHGSP | IVKLG | MJMGN | FAZBH",
+      "output": "1. VAR1 2. VAR2 3. VAR3 4. VAR4 5. VAR5\n\nOkay, let's see. The user provided a block of text that seems to be a repetitive loop of a few sentences about the grass, sky, and sun, followed by",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32717
+    },
+    {
+      "sample_index": 128,
+      "input_ids_sha256": "69096c4312dba60ac16e9db2f4094bbb7c93149800db7c263eceaa20a998ea97",
+      "target": "DNTWX | TTVZT | NCXMG | UORPQ | UBZHZ",
+      "output": "20118, 20118, 20118, 20118, 20118.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32721
+    },
+    {
+      "sample_index": 129,
+      "input_ids_sha256": "b8bd62a272433dfba2aff699d7452b27c3f11d76e20ea50bc78aa7b7553b5868",
+      "target": "EFLUR | KUBVW | DUNTO | JLMMT | QWRDN",
+      "output": "1. VAR1 = 84362 2. VAR2 = VAR1 3. VAR3 = VAR2 4. VAR4 = VAR3 5. VAR5 = VAR4\nOkay, let's see. The user provided a text that's just repeating the",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32719
+    },
+    {
+      "sample_index": 130,
+      "input_ids_sha256": "d0b2b16b0eb3d4583574deb7d93947f320d5d457a4e2510a9e7638bf6206e8d8",
+      "target": "LQBCI | DORLK | MCXSZ | TSVXY | PTDAC",
+      "output": "1. VAR1 = 41213 2. VAR2 = VAR1 3. VAR3 = VAR2 4. VAR4 = VAR3 5. VAR5 = VAR4\nOkay, let's see. The user provided a text that's just repeating the",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32719
+    },
+    {
+      "sample_index": 131,
+      "input_ids_sha256": "89bbe95193781937f4a7e7805191422c94af8b66792c6fcc6508d766468ee4a6",
+      "target": "BEBWG | BJCKS | VTFBF | XXJFX | UOXHY",
+      "output": "62235, 62235, 62235, 62235, 62235.\nOkay, let's see. The user provided a text that's just repeating the same lines about the grass, sky, and sun",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32717
+    },
+    {
+      "sample_index": 132,
+      "input_ids_sha256": "3d749f71b0906936da73c02616f1a27f877a540d5464a7ed31f9507910ea556b",
+      "target": "BLDHD | LGCEW | AOTRZ | TAXCU | WGSHU",
+      "output": "52856, 52856, 52856, 52856, 52856.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32717
+    },
+    {
+      "sample_index": 133,
+      "input_ids_sha256": "16d2acbdafc2fb6bc8960d2856b29daab174a328eba569e7d57c74c4c742dea7",
+      "target": "MSWFF | ZACDO | OBNRO | VXEAA | YXDKF",
+      "output": "1. VAR1 2. VAR2 3. VAR3 4. VAR4 5. VAR5\n\nOkay, let's see. The user provided a block of text that seems to be a repetitive loop of a few sentences about the grass, sky, and sun, followed by",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32718
+    },
+    {
+      "sample_index": 134,
+      "input_ids_sha256": "668a355686c97c5aaa823cbb9db60bf7b5eafeb856ac03552d3b82b1e549f7dc",
+      "target": "MSVZS | AOVSP | NJMCT | BAHHH | ZUOTD",
+      "output": "47462, VAR0, VAR1, VAR2, and VAR3.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32720
+    },
+    {
+      "sample_index": 135,
+      "input_ids_sha256": "2193b6d918efde2f25397d14952bb157f3472cbaf881b0a57743ef7c45fe9949",
+      "target": "QMJVR | UFTGP | CCCWC | NCTQS | XQKXZ",
+      "output": "73389, 73389, 73389, 73389, 73389.\nOkay, let's see. The user provided a text that repeats the same sentence multiple times about the grass, sky, and sun",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32717
+    },
+    {
+      "sample_index": 136,
+      "input_ids_sha256": "f381d68a7687a10cd3548f928900305bc35d7f6b9f2992c59010e311f66bb2b5",
+      "target": "XJHSY | BKURR | IKRXZ | XAZDU | HOEMX",
+      "output": "1. VAR1 = 88565 2. VAR2 = VAR1 3. VAR3 = VAR2 4. VAR4 = VAR3 5. VAR5 = VAR4\nOkay, let's see. The user provided a text that's just repeating the",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32719
+    },
+    {
+      "sample_index": 137,
+      "input_ids_sha256": "755fb00d4b398f6ccf2e5f02c4732599189de1464b424bcc2ea921a583bac934",
+      "target": "SQBIT | IVMPE | DSAZI | MSYEY | GDUOF",
+      "output": "1. VAR1 2. VAR2 3. VAR3 4. VAR4 5. VAR5\nOkay, let's see. The user provided a block of text that seems to be a repetitive poem or a looped phrase. The question is asking to find all variables assigned",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32717
+    },
+    {
+      "sample_index": 138,
+      "input_ids_sha256": "a7116103638256e63168b56dbd74f776ec6133ffd2bca3c8db9cf1bd10dfbc56",
+      "target": "ZCTHO | TGYSK | ZQVTG | VSSBQ | IMREW",
+      "output": "1. VAR1 2. VAR2 3. VAR3 4. VAR4 5. VAR5\n\nOkay, let's see. The user provided a text that's just repeating the same lines over and over again. The lines are: \"The grass is green. The sky",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32720
+    },
+    {
+      "sample_index": 139,
+      "input_ids_sha256": "45ec0e9913401862a00e1c1373d72bdd78b0a4306c6c64d3990fd4695b2565db",
+      "target": "QFRGE | TKOCC | OSBXL | PSUBD | NWZPQ",
+      "output": "1. VAR1 2. VAR2 3. VAR3 4. VAR4 5. VAR5\nOkay, let's see. The user provided a text that seems to be a repetitive loop of a few sentences about the grass, sky, and sun, followed by a question",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32718
+    },
+    {
+      "sample_index": 140,
+      "input_ids_sha256": "9f9091fde33ca9e92ebd76fc9b6fb0b2ed4fd58490f14ebc4682a6888a25abf1",
+      "target": "AWIXO | YQVLP | BXIAX | KTPIN | XYVRK",
+      "output": "57834, 57834, 57834, 57834, 5834.\nOkay, let's see. The user provided a text that's just repeating the same lines over and over again. The lines are:",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32719
+    },
+    {
+      "sample_index": 141,
+      "input_ids_sha256": "644a2af765f95db07546abf396fb94ace0db69e0285e2e90d28fc4c800ea9fb2",
+      "target": "WJBZK | VXCOO | SPQVC | PTSIS | KXVWG",
+      "output": "39958, 39958, 39958, 39958, 39958.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32718
+    },
+    {
+      "sample_index": 142,
+      "input_ids_sha256": "dad544bea613386a0e7d5c17e03d6628f9b41bfef7c89dbf17b2061e0001fab5",
+      "target": "PSXGE | CRHFQ | NTCYJ | QNDZV | QLTQW",
+      "output": "1. VAR1 2. VAR2 3. VAR3 4. VAR4 5. VAR5\n\nOkay, let's see. The user provided a block of text that seems to be a repetitive loop of a few sentences about the grass, sky, and sun, followed by",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32722
+    },
+    {
+      "sample_index": 143,
+      "input_ids_sha256": "ef9b412c1b9bf53eb171c91ec2b91cbe7b01c3def47607e52d08c5f9c03e15f9",
+      "target": "GEICR | ATPYI | FMNBM | BGKVB | JOQJZ",
+      "output": "1. VAR1 2. VAR2 3. VAR3 4. VAR4 5. VAR5\n\nOkay, let's see. The user provided a block of text that repeats a few lines multiple times. The lines are: \"The grass is green. The sky is blue",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32718
+    },
+    {
+      "sample_index": 144,
+      "input_ids_sha256": "eca25a8d59837f43817aeeda78b1edcdec00e06e3025a715f4bacba659dd2e6e",
+      "target": "LZTHR | VOWUY | IKCJC | BTZVY | DVGRJ",
+      "output": "69332, 69332, 69332, 69332, 69332.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32717
+    },
+    {
+      "sample_index": 145,
+      "input_ids_sha256": "2bffdf9590a60c7d79100cde4b2cb539e74237da2eba5859f981953aeffbcc22",
+      "target": "UPYWL | UHCFF | BCPWQ | NPQNC | CIIWI",
+      "output": "1. VAR1 = 75308 2. VAR2 = VAR1 3. VAR3 = VAR2 4. VAR4 = VAR3 5. VAR5 = VAR4\nOkay, let's see. The user provided a text that's just repeating the",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32719
+    },
+    {
+      "sample_index": 146,
+      "input_ids_sha256": "712e5c13415061524b493318bf38925a5bfa29fc3995bd66955f2c90901f681c",
+      "target": "BPVWJ | EMEOI | WZUEX | TTJEH | GOVEV",
+      "output": "90422, VAR0, VAR1, VAR2, and VAR3.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32721
+    },
+    {
+      "sample_index": 147,
+      "input_ids_sha256": "6729ecd9a597755d82d1440a037566bf60b627f8ae6f4b8a3b6ec9736143bc63",
+      "target": "VRPAN | XYDVR | SYAII | LESDT | UERIG",
+      "output": "57941, VAR0, VAR1, VAR2, and VAR3.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32715
+    },
+    {
+      "sample_index": 148,
+      "input_ids_sha256": "39d4a92940258a3afc8f4c27eebb6d235a212f03df72e1893e9d7b945ae19198",
+      "target": "EKALT | WRRKM | KIKNE | JVMUZ | TCTYP",
+      "output": "53362, VAR0, VAR1, VAR2, and VAR3.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32717
+    },
+    {
+      "sample_index": 149,
+      "input_ids_sha256": "9a6a58a52a4f4c70546b7269454ad7d755e2ef6646459148622d8d642b824bcc",
+      "target": "HVYRH | HGJRS | PJUQW | RQEKS | SZRPO",
+      "output": "1. VAR1 = 82954 2. VAR2 = VAR1 3. VAR3 = VAR2 4. VAR4 = VAR3 5. VAR5 = VAR4\nOkay, let's see. The user provided a text that's just repeating the",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32719
+    },
+    {
+      "sample_index": 150,
+      "input_ids_sha256": "e2029be2cf4ed466c47e754d6e379f47e1a5f330e9aada352f0f3921737d4eef",
+      "target": "RJTLL | WEOMU | NLCKF | QVLGJ | LDOUN",
+      "output": "1. VAR_1 = 17049 2. VAR_2 = VAR_1 3. VAR_3 = VAR_2 4. VAR_4 = VAR_3 5. VAR_5 = VAR_4\nThe grass is green. The sky",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32718
+    },
+    {
+      "sample_index": 151,
+      "input_ids_sha256": "bfdbda809af003725bf5e5b0bfc0948ec41c4a24d79474ffb531fd1f35422829",
+      "target": "XOAVL | ZQGKC | BLUMA | VNJSW | TBCCJ",
+      "output": "1. VAR1 = 47804 2. VAR2 = VAR1 3. VAR3 = VAR2 4. VAR4 = VAR3 5. VAR5 = VAR4\nOkay, let's see. The user provided a text that's just repeating the",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32719
+    },
+    {
+      "sample_index": 152,
+      "input_ids_sha256": "0f20b2f1f0dbdaab59064d0dcef83732fa68c8f0bfb3675320867022447757df",
+      "target": "REUUA | KHZZY | KWGLM | OATAX | NOGGW",
+      "output": "1. VAR OATAX 2. VAR KWJQ 3. VAR ZYXW 4. VAR NOGGW 5. VAR QWERTY\nOkay, let's see. I need to find all variables that are assigned the value 45259",
+      "recall": 0.4,
+      "correct": 0,
+      "n_tok": 32717
+    },
+    {
+      "sample_index": 153,
+      "input_ids_sha256": "89063ba163962ff17872bb2eadd62a93f4ec7e10be123ceea323609857a43fe5",
+      "target": "ALZYM | QKIND | XHEYU | MSSDS | VLWIE",
+      "output": "1. VAR1 2. VAR2 3. VAR3 4. VAR4 5. VAR5\n\nOkay, let's see. The user provided a text that seems to be a repetitive loop of a few sentences about the grass, sky, and sun, followed by a question",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32715
+    },
+    {
+      "sample_index": 154,
+      "input_ids_sha256": "455e22be08ec3a112528d74ce2de7a1a590d604d756f21566764151551a94d84",
+      "target": "CGADL | GPCAI | VCMMU | ZHYAO | FGXYN",
+      "output": "1. VAR1 2. VAR2 3. VAR3 4. VAR4 5. VAR5\nOkay, let's see. The user provided a block of text that seems to be a repetitive loop of a few sentences about the grass, sky, and sun, followed by",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32717
+    },
+    {
+      "sample_index": 155,
+      "input_ids_sha256": "bd26e72a7bb118dd693f104be90df66a78bddfc2abd5687489488ca6066eaddc",
+      "target": "VUKYP | VCLNN | SFGUY | TTHNP | KLQBB",
+      "output": "(Please list the variables in the order of their assignment)\nOkay, let's try to figure out which variables are assigned the value 72772. Let me start by looking through the text provided. \n\nFirst, I need to parse the text and identify all the variable assignments. The",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32717
+    },
+    {
+      "sample_index": 156,
+      "input_ids_sha256": "6153fe1f35498a0976fff50143bfc1fcdf7acf6b9e768059055257572b7820dd",
+      "target": "WWRHI | IKMBG | FXTWB | PBIXI | EYRVY",
+      "output": "1. VAR_1 = 40373 2. VAR_2 = VAR_1 3. VAR_3 = VAR_2 4. VAR_4 = VAR_3 5. VAR_5 = VAR_4\nThe grass is green. The sky",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32718
+    },
+    {
+      "sample_index": 157,
+      "input_ids_sha256": "0e6b435740f926d0c2a94ae285a73869c746f18701b7f844eb53906cb083ff90",
+      "target": "CNOXQ | WSHGV | HVZFM | UTBXU | QXZJL",
+      "output": "1. VAR1 2. VAR2 3. VAR3 4. VAR4 5. VAR5\nOkay, let's see. The user provided a block of text that seems to be a repetitive loop of a few sentences about the grass, sky, and sun, followed by",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32721
+    },
+    {
+      "sample_index": 158,
+      "input_ids_sha256": "bfbe3e45652429d51df8adeca22ac7ff3bba504cfd6baff797fcbccd9ad624fa",
+      "target": "MTXYD | BIPHO | VZUNG | IONIA | HSVMG",
+      "output": "IONIA, MT, VAR MT, VAR IONIA, and VAR HSVMG.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here",
+      "recall": 0.4,
+      "correct": 0,
+      "n_tok": 32717
+    },
+    {
+      "sample_index": 159,
+      "input_ids_sha256": "eb5d7e1c1bb9481843d9772b1cf5c9091ecf40b6845742e3c1b48b0125368687",
+      "target": "NXVNR | IYONN | GJSTJ | OPNIT | YDDZO",
+      "output": "1. VAR1 2. VAR2 3. VAR3 4. VAR4 5. VAR5\nOkay, let's see. The user provided a text that seems to be a repetitive loop of a few sentences about the grass, sky, and sun, followed by a question",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32721
+    },
+    {
+      "sample_index": 160,
+      "input_ids_sha256": "a0226a8cdcd1ab04b57ce385a7e070707a42ed98e78a575c0d70da1ae29e0ba4",
+      "target": "DRZQQ | RMBIE | RDEON | WFORO | TYIMS",
+      "output": "1. VAR1 2. VAR2 3. VAR3 4. VAR4 5. VAR5\nOkay, let's see. The user provided a block of text that seems to be a repetitive poem or a looped phrase. The question is to find all variables assigned the",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32716
+    },
+    {
+      "sample_index": 161,
+      "input_ids_sha256": "766d52f1a94a26f57738831de5e8717da6c8d963302df1e1852697c4e2771ae9",
+      "target": "MBBBX | ZABVW | YNMJS | OEFJV | QAGNV",
+      "output": "1. VAR1 = 42791 2. VAR2 = VAR1 3. VAR3 = VAR2 4. VAR4 = VAR3 5. VAR5 = VAR4\nOkay, let's see. The user provided a text that's just repeating the",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32719
+    },
+    {
+      "sample_index": 162,
+      "input_ids_sha256": "94a4e575bbe95857e07dcbe671fe5879f8ebad38b3259b11bf91e31bb89d30b1",
+      "target": "LQIJJ | OLREQ | HWCED | PMXGL | EJZFH",
+      "output": "1. VAR1 2. VAR2 3. VAR3 4. VAR4 5. VAR5\n\nOkay, let's see. The user provided a block of text that seems to be a repetitive loop of the same sentence, and then a question asking to find all variables assigned",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32718
+    },
+    {
+      "sample_index": 163,
+      "input_ids_sha256": "468c4e8c19579710a7cfe997ce5dda05f174242953075fc181a1b281a142d00e",
+      "target": "LZDXP | ATDID | TEPHW | MUKQI | PMEGN",
+      "output": "1. VAR1 = 41693 2. VAR2 = VAR1 3. VAR3 = VAR2 4. VAR4 = VAR3 5. VAR5 = VAR4\nOkay, let's see. The user provided a text that's just repeating the",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32719
+    },
+    {
+      "sample_index": 164,
+      "input_ids_sha256": "bde2d2ee7660b047f5d6eabbc3f73ea001f5ce97d6670233a27302431473282f",
+      "target": "VHIUB | USZLN | MQAZQ | CNSDJ | TJLUW",
+      "output": "27828, 27828, 27828, 27828, 27828.\nOkay, let's see. The user provided a text that repeats the same lines multiple times. The task is to find all variables",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32715
+    },
+    {
+      "sample_index": 165,
+      "input_ids_sha256": "f7ba2af87868d8585ea46149a16223d3d9bb153946305e4ea17464fe1c6c2548",
+      "target": "BNJBB | KTUDJ | XDSJP | ILESW | FVHPC",
+      "output": "69627, 69627, 69627, 69627, 69627.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32718
+    },
+    {
+      "sample_index": 166,
+      "input_ids_sha256": "fadab148488b237a0ca6664a3209fd520eea6af510d4a163228d8918c24afee9",
+      "target": "DBRLT | CTKZJ | HVBDJ | TKCQF | MXQXL",
+      "output": "80707, 80707, 80707, 80707, 80707.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32721
+    },
+    {
+      "sample_index": 167,
+      "input_ids_sha256": "ad2678062538ffd39e8177cf19549812de3753337ac6426c3df55126c9dd4380",
+      "target": "FNGCP | SUPJU | EABBF | FHMRI | CXMBA",
+      "output": "1. VAR FHMRI = 36900 2. VAR QYJQ = VAR FHMRI 3. VAR XWQ = VAR QYJQ 4. VAR CXMBA = VAR FHMRI 5. VAR XWQ = VAR",
+      "recall": 0.4,
+      "correct": 0,
+      "n_tok": 32717
+    },
+    {
+      "sample_index": 168,
+      "input_ids_sha256": "61b691e2d30f36c4d4a3f9d85dde10c40c99989c3e71e6cbd559b4775a6210e0",
+      "target": "SWIBO | YWHXB | FSQGK | NNLOC | JFLDD",
+      "output": "72225, VAR1, VAR2, VAR3, and VAR4.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32717
+    },
+    {
+      "sample_index": 169,
+      "input_ids_sha256": "1583dd7d59885fa69918d8e3955d8e3d022e50cf95ee18c26f48c30b50d99bdb",
+      "target": "YCSQU | ETCVN | DUKFL | HOWLM | RNYAH",
+      "output": "21771, 21771, 21771, 21771, 21771.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32715
+    },
+    {
+      "sample_index": 170,
+      "input_ids_sha256": "3486287b718cdff8899fdb000e40ffd9c054851e58e2edffe0aa4daac75b443b",
+      "target": "TIYHL | YKLMJ | UIRKM | UMJBM | XVUNV",
+      "output": "1. VAR1 = 68252 2. VAR2 = VAR1 3. VAR3 = VAR2 4. VAR4 = VAR3 5. VAR5 = VAR4\nOkay, let's see. The user provided a text that's just repeating the",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32719
+    },
+    {
+      "sample_index": 171,
+      "input_ids_sha256": "6e1114814ba0b151092a0e3f8845c8b59c6cbe10475f6f307ff06c3ab90a8ee3",
+      "target": "GNOAX | HIDKA | UFARE | CWBXQ | VOJOH",
+      "output": "71188, 71188, 71188, 71188, 71188.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32715
+    },
+    {
+      "sample_index": 172,
+      "input_ids_sha256": "9be690f896764af393a0ebf60b86a43c2eecf893d88aef24bc9dc0607c3d94f7",
+      "target": "THVCU | RKXHU | RHNOL | BTRDW | DLADU",
+      "output": "29603, 29603, 29603, 29603, 29603.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32717
+    },
+    {
+      "sample_index": 173,
+      "input_ids_sha256": "4cec4e5b41f5f5a9d7674d65d5b3328d72ed43ccede5bcb786908de7f83746d8",
+      "target": "GHLLP | ZDDQX | JUUJU | LIVHJ | AHUEB",
+      "output": "1. VAR1 2. VAR2 3. VAR3 4. VAR4 5. VAR5\n\nOkay, let's see. The user provided a block of text that repeats a certain phrase multiple times. The question is to find all variables assigned the value 686",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32723
+    },
+    {
+      "sample_index": 174,
+      "input_ids_sha256": "53568f1c65298f2a947af47fd84bd76e66a38bebd2081daceeded5e0fb9d5427",
+      "target": "VYAIA | LBNIU | FOOOV | CICNE | NFGJC",
+      "output": "74676, 74676, 7466, 74676, 74676.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32717
+    },
+    {
+      "sample_index": 175,
+      "input_ids_sha256": "4dc6b8f7df531f1678dd14761628aa7df4ae01c4214e7aaca16522493c5600f7",
+      "target": "EEQBB | CGHAI | AIMIS | SQXKO | IZPJM",
+      "output": "1. VAR_1 = 61511 2. VAR_2 = VAR_1 3. VAR_3 = VAR_2 4. VAR_4 = VAR_3 5. VAR_5 = VAR_4\nThe grass is green. The sky",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32716
+    },
+    {
+      "sample_index": 176,
+      "input_ids_sha256": "abd4f685cf3cc65df2358ce03ba19d41b6345dcbf9abc3bf59babd8a2619b5d0",
+      "target": "CEITY | AXEEC | YTPVC | BADJN | UQBJA",
+      "output": "51130, 51130, 51130, 51130, 51130.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32716
+    },
+    {
+      "sample_index": 177,
+      "input_ids_sha256": "b742c92d06f350db620c8d22cb473445fb50a6489042d644d921e6fe39e84b67",
+      "target": "PMXPE | TCONF | WWAKZ | SUBYI | POPXT",
+      "output": "78938, 78938, 78938, 78938, 78938.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32714
+    },
+    {
+      "sample_index": 178,
+      "input_ids_sha256": "efe4c0d31792cf0eb72fd52e4ab808a34dabe62dc2a149868f2b709289fdf603",
+      "target": "BFWLE | UNKVN | BZVUN | SJIQR | QUGPO",
+      "output": "1. VAR1 = 28346 2. VAR2 = VAR1 3. VAR3 = VAR2 4. VAR4 = VAR3 5. VAR5 = VAR4\nOkay, let's see. The user provided a text that's a repetition of",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32719
+    },
+    {
+      "sample_index": 179,
+      "input_ids_sha256": "5689e475ffb017e26a04d0239d4c9f393feb9052229b09a51f2c845866274672",
+      "target": "HFAAX | PJSOI | QRORL | LZVHH | OYUNX",
+      "output": "1. VAR1 2. VAR2 3. VAR3 4. VAR4 5. VAR5\n\nOkay, let's see. The user provided a block of text that repeats a few lines multiple times. The lines are: \"The grass is green. The sky is blue",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32718
+    },
+    {
+      "sample_index": 180,
+      "input_ids_sha256": "a6648ed51b34b4adc883b79bda72c8fe8b641155c3bb6c591cb4d173407b7920",
+      "target": "MMUGS | IXOHL | EVCAS | TGBWK | HUAQH",
+      "output": "41048, VAR0, VAR1, VAR2, and VAR3.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32718
+    },
+    {
+      "sample_index": 181,
+      "input_ids_sha256": "9ccde91a818ac936b2353a0635441e596e3de9255fcdf470eba607c199b7cf81",
+      "target": "HXVSN | NBWNT | GYERD | PFFPD | ZNEHU",
+      "output": "VAR ZNEHU, VAR PFFPD, VAR QYJQ, VAR XWQ, and VAR QYJQ. \n\nOkay, let's see. The user provided a text that seems to have a lot of repeated lines about the grass, sky, and sun, and then",
+      "recall": 0.4,
+      "correct": 0,
+      "n_tok": 32721
+    },
+    {
+      "sample_index": 182,
+      "input_ids_sha256": "7aeff89b7e8ff41ba059b968f10725da72f90f431152ec5548e92f3f38eb7835",
+      "target": "ATNZF | GRTOQ | DSZKB | QWDMC | HBEDW",
+      "output": "53840, 53840, 53840, 53840, 53840.\nOkay, let's see. The user provided a text that's just repeating the same lines over and over again. The lines are",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32719
+    },
+    {
+      "sample_index": 183,
+      "input_ids_sha256": "be5a0273d76ce6fbaff8662afd21d5433459fbb265d35326cd07855abd937131",
+      "target": "AERHW | QEHZY | QXDST | RTQIQ | JEBMM",
+      "output": "53490, 53490, 53490, 53490, 53490.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32717
+    },
+    {
+      "sample_index": 184,
+      "input_ids_sha256": "185dd30b11fa08fd4b90ebd5199001146935d9373119b7dc9be494bfcf0d811d",
+      "target": "CVLHY | IQUNQ | ZSJKA | KGOXR | WGRAQ",
+      "output": "1. VAR1 2. VAR2 3. VAR3 4. VAR4 5. VAR5\nOkay, let's see. The user provided a block of text that seems to be a repetitive loop of a few sentences about the grass, sky, and sun colors, followed",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32717
+    },
+    {
+      "sample_index": 185,
+      "input_ids_sha256": "a07b274b35eec9d58d1690f7c2c76d529b7a05c80519c5e37c5e80cd53c51477",
+      "target": "UVZXT | KTXFA | UZQYK | NJNZS | IREII",
+      "output": "1. VAR1 2. VAR2 3. VAR3 4. VAR4 5. VAR5\n\nOkay, let's see. The user provided a text that seems to be a repetitive loop of a few sentences about the grass, sky, and sun, followed by a question",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32721
+    },
+    {
+      "sample_index": 186,
+      "input_ids_sha256": "b9c33a6aa5409ea3b69e4c6c10cdca36c66bd2167bd00440b3b33afe2981d1a7",
+      "target": "AYNKE | VWVGM | VYEUZ | PRJEU | BQFMX",
+      "output": "94463, 94463, 94463, 94463, 94463.\nOkay, let's see. The user provided a text that's just repeating the same lines over and over again. The lines are",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32720
+    },
+    {
+      "sample_index": 187,
+      "input_ids_sha256": "2ae1a0c916adae2b0e4009298dbfef4236a62f37d0bb4a753df89ebc155906e0",
+      "target": "PCKAO | OKQMI | UHYDF | INIKU | RFUYA",
+      "output": "1. VAR1 2. VAR2 3. VAR3 4. VAR4 5. VAR5\n\nOkay, let's see. The user provided a block of text that seems to be a repetitive loop of a few sentences about the grass, sky, and sun, followed by",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32717
+    },
+    {
+      "sample_index": 188,
+      "input_ids_sha256": "47e84b4aee111d8ce0ee1c846112cda19db30082e49d552784d9a006d0bc9f5c",
+      "target": "AJKZQ | CIZOO | AENLD | CACMI | PTWVH",
+      "output": "1. VAR1 = 17607 2. VAR2 = VAR1 3. VAR3 = VAR2 4. VAR4 = VAR3 5. VAR5 = VAR4\nOkay, let's see. The user provided a text that seems to be a",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32720
+    },
+    {
+      "sample_index": 189,
+      "input_ids_sha256": "ffb76e392710b106597c2cb16836775f9d5992d61f0fb3315e7bfd1227c84a25",
+      "target": "LOGGO | APMHR | ENRPN | BPATX | VJFGM",
+      "output": "24825, A, B, C, D.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32716
+    },
+    {
+      "sample_index": 190,
+      "input_ids_sha256": "4f8ff5c2aeeb84d3a787b1b3dd49842a6060185b25cae5ab3241f31f6451947e",
+      "target": "MLKNA | CQLZT | NOLZZ | RIKZE | VKQXP",
+      "output": "29942, 29942, 29942, 29942, 29942.\nOkay, let's see. The user provided a text that's just repeating the same lines over and over again. The lines are",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32719
+    },
+    {
+      "sample_index": 191,
+      "input_ids_sha256": "2d50323be21ded1fbecf0f71b43eec251acc733e0f87e41b7a50e709e64ee60d",
+      "target": "PVTTK | HLULB | YGEFG | OBDQU | ZMJCM",
+      "output": "1. VAR1 2. VAR2 3. VAR3 4. VAR4 5. VAR5\nOkay, let's see. The user provided a block of text that seems to be a repetitive loop of a few sentences about the grass, sky, and sun, followed by",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32717
+    },
+    {
+      "sample_index": 192,
+      "input_ids_sha256": "ac452a5a5161cba0b339db1bd96849e32bf07a9bcf38546aa9960e524f939729",
+      "target": "OAHNV | DKALU | NOJYC | BQHHU | NRXKY",
+      "output": "1. VAR1 = 47332 2. VAR2 = VAR1 3. VAR3 = VAR2 4. VAR4 = VAR3 5. VAR5 = VAR4\nOkay, let's see. The user provided a text that's just repeating the",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32719
+    },
+    {
+      "sample_index": 193,
+      "input_ids_sha256": "31aeb1cba5f63fe8994fd511f56f25e4793a160ddbafa8986009dfa5819a2dbd",
+      "target": "JMDIA | AYXJN | BKLHX | WOFUK | PRBLZ",
+      "output": "1. VAR1 2. VAR2 3. VAR3 4. VAR4 5. VAR5\nOkay, let's see. The user provided a text that seems to be a repetitive loop of a few sentences about the grass, sky, and sun, followed by a question",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32721
+    },
+    {
+      "sample_index": 194,
+      "input_ids_sha256": "9e1b9fbd6ab2c1a6b3af88134d24027ec82f90d47f983c4563ecded0e86f9e0b",
+      "target": "QZOPC | MWBQZ | WNORT | QMWXU | TRPTT",
+      "output": "33839, Q, R, S, and T.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32721
+    },
+    {
+      "sample_index": 195,
+      "input_ids_sha256": "10498bfbfcd034dd8ad1d8d8ab7b4329d8d133b2479edaf7a3cf161801db10a9",
+      "target": "JTWZR | HAZFG | AKNXI | VLXJC | OUMPO",
+      "output": "67033, A, B, C, D.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32717
+    },
+    {
+      "sample_index": 196,
+      "input_ids_sha256": "df0acb3ad307c7b13c90c7bd2573c60dc48c2452f5a37cfeac1840e9813a08ae",
+      "target": "MJSXD | UFJSP | TSVJM | FUEAF | VXGCE",
+      "output": "52502, 52502, 52502, 52502, 52502.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32717
+    },
+    {
+      "sample_index": 197,
+      "input_ids_sha256": "0b4de7fdea09914e8bfaa552cbcfadaf1d7c6406a7b10d7d203a61cf9daae320",
+      "target": "IYFJI | OXCLC | BIFKG | ALAEK | BUVYY",
+      "output": "1. VAR1 2. VAR2 3. VAR3 4. VAR4 5. VAR5\nOkay, let's see. The user provided a block of text that seems to be a repetitive string of sentences about the grass, sky, and sun, followed by a question",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32721
+    },
+    {
+      "sample_index": 198,
+      "input_ids_sha256": "415dec89793e692dd83c3a621d633ef9c3fd1fc0f9a9c3954934d2b7924020a6",
+      "target": "JHCKM | CBSZR | CFOYJ | UNIUN | ZNZMO",
+      "output": "1. VAR1 2. VAR2 3. VAR3 4. VAR4 5. VAR5\nOkay, let's see. The user provided a block of text that seems to be a repetitive loop of a few sentences about the grass, sky, and sun, followed by",
+      "recall": 0.0,
+      "correct": 0,
+      "n_tok": 32717
+    },
+    {
+      "sample_index": 199,
+      "input_ids_sha256": "d913aaed93fdfee81bdc1202091fc9b6997b41d7d642c8acfda80975fd70551f",
+      "target": "LWBLY | INOCP | PJUTT | ONKOM | ZALVD",
+      "output": "70326, VAR PJT, VAR ZALVD, VAR ONKOM, and VAR QXK.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue.",
+      "recall": 0.4,
+      "correct": 0,
+      "n_tok": 32717
+    }
+  ]
+}

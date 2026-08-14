@@ -1,0 +1,113 @@
+{
+ "generated_by": "B02 realizability leg (0 GPU, re-analysis of the confirmatory records)",
+ "purpose": "the kill gate's clause-2: even the ORACLE's own headroom must be shown REACHABLE by a deployable router built only from pre-answer features. Reported alongside the Null-A excess, never alone.",
+ "estimator": "selection-valid: for each of 300 random 50/50 item splits, per-bucket best-j is learned on TRAIN and applied to TEST, and the comparator best-FIXED-j is ALSO selected on TRAIN. Comparing a router to a best-fixed chosen on the same items would invalidate the paired inference (cf. arXiv:2608.08265).",
+ "numpy": "2.5.1",
+ "python": "3.14.6",
+ "lengths": {
+  "16k": {
+   "n_items": 200,
+   "oracle_unrealizable": 0.5910000000000001,
+   "best_fixed": 0.3420000000000001,
+   "best_fixed_j": 27,
+   "feature_degeneracy": {
+    "n_tok": {
+     "min": 16279.0,
+     "max": 16290.0,
+     "span_tokens": 11.0,
+     "sd": 1.9539447279797861,
+     "note": "RULER pads every item to the target length, so 'document length' -- a PROPOSAL.md input feature -- varies by ~10 tokens out of 32k and carries no signal by construction"
+    },
+    "n_reference_strings": {
+     "distinct_values": [
+      9.0
+     ],
+     "note": "'estimated evidence count' -- another PROPOSAL.md feature -- is CONSTANT on variable_tracking, so a router keyed on it is identically the best fixed config"
+    }
+   },
+   "routers": {
+    "n_tok_2bucket": {
+     "mean_gain": -0.014333333333333335,
+     "ci95": [
+      -0.07200000000000004,
+      0.0
+     ],
+     "beats_best_fixed": false
+    },
+    "n_tok_4bucket": {
+     "mean_gain": -0.025046666666666672,
+     "ci95": [
+      -0.11210000000000005,
+      0.0020000000000000573
+     ],
+     "beats_best_fixed": false
+    }
+   },
+   "per_item_argmax_counts": {
+    "j3": 75,
+    "j6": 14,
+    "j13": 13,
+    "j20": 11,
+    "j27": 50,
+    "j34": 29,
+    "j41": 2,
+    "j48": 6
+   }
+  },
+  "32k": {
+   "n_items": 200,
+   "oracle_unrealizable": 0.5430000000000001,
+   "best_fixed": 0.33100000000000024,
+   "best_fixed_j": 27,
+   "feature_degeneracy": {
+    "n_tok": {
+     "min": 32713.0,
+     "max": 32723.0,
+     "span_tokens": 10.0,
+     "sd": 1.9615300150647708,
+     "note": "RULER pads every item to the target length, so 'document length' -- a PROPOSAL.md input feature -- varies by ~10 tokens out of 32k and carries no signal by construction"
+    },
+    "n_reference_strings": {
+     "distinct_values": [
+      9.0
+     ],
+     "note": "'estimated evidence count' -- another PROPOSAL.md feature -- is CONSTANT on variable_tracking, so a router keyed on it is identically the best fixed config"
+    }
+   },
+   "routers": {
+    "n_tok_2bucket": {
+     "mean_gain": -0.007526666666666673,
+     "ci95": [
+      -0.08400000000000005,
+      0.0
+     ],
+     "beats_best_fixed": false
+    },
+    "n_tok_4bucket": {
+     "mean_gain": -0.013960000000000007,
+     "ci95": [
+      -0.08600000000000002,
+      0.008000000000000037
+     ],
+     "beats_best_fixed": false
+    }
+   },
+   "per_item_argmax_counts": {
+    "j3": 92,
+    "j6": 15,
+    "j13": 18,
+    "j20": 4,
+    "j27": 51,
+    "j34": 19,
+    "j41": 0,
+    "j48": 1
+   }
+  }
+ },
+ "depth_curve_shape_stability": {
+  "spearman_over_j_16k_vs_32k": 0.9761904761904762,
+  "best_j_16k": 27,
+  "best_j_32k": 27,
+  "reading": "the depth curve's SHAPE and its peak are stable across lengths, so a single FIXED j transfers; this is evidence AGAINST needing a per-query router, and is the positive result that survives the kill."
+ }
+}

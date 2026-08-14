@@ -15,5 +15,177 @@
     "fix n (sample count) and a per-config RNG seed protocol so the same items are scored under every resume_j",
     "re-run the j-sweep with that fixed set (1 GPU x 8 configs x n items)",
     "only then compute per-example oracle and regret"
-  ]
+  ],
+  "lifecycle":   "dead",
+  "lifecycle_set":   "2026-08-14",
+  "lifecycle_reason":   "Own pre-registered kill gate FIRED on both lengths, both clauses. Not killed by prior art; killed by our own negative measurement. See KILL_GATE_VERDICT.md.",
+  "needs_arch":   "sm_90",
+  "kill_gate":   {
+    "id": "B02-KILL-1",
+    "adopted": "2026-08-14",
+    "doc": "proposal/backlog/B02-adaptive-depth-and-read-budget/KILL_GATE_VERDICT.md",
+    "why_it_had_to_be_written": "PROPOSAL.md Stage 0 says only 'if the oracle's gain over the best fixed config is insufficient, close the direction'. That is NOT decidable: with C configs and noisy per-item outcomes, oracle - best_fixed is positive by construction even with zero exploitable structure, so 'insufficient' has no non-arbitrary threshold.",
+    "verbatim": "B02's premise is that the best configuration varies per query, so a query-adaptive controller can beat the best single FIXED configuration. The direction is KILLED unless BOTH clauses pass, each on EACH length independently (no pooling across lengths). CLAUSE 1 (complementarity must clear its own independence floor): on the FRACTIONAL-recall scale, with Delta_excess = oracle_obs - mean(oracle under Null A), where Null A independently permutes each config's outcome column across items (B=10000 draws, seeded PCG64, single node, numpy version recorded), require Delta_excess > 0 AND its 95% permutation interval to EXCLUDE 0. CLAUSE 2 (the headroom must be REACHABLE, not merely present): a router restricted to PRE-ANSWER features (input length, evidence count, retrieval-score statistics) must beat the best fixed configuration OUT-OF-SAMPLE, where the comparator's fixed configuration is ALSO selected on the training half; pass requires the 95% interval of the held-out gain to EXCLUDE 0. Both clauses failing => B02 is killed as a router direction. Pre-committed wording: n=200 resolves |Delta_excess| >= 0.033 at 80% power, so an interval CONTAINING 0 must be written as 'no effect larger than 3.3 pp', never 'no effect'.",
+    "why_not_degenerate": [
+      "The statistic is not a function of the margins the null preserves. Null A preserves COLUMN margins and destroys item-x-config coupling; the oracle mean_i max_j M[i,j] is a function of ROWS. Permuting each column independently changes which values co-occur in a row, so there is no invariance argument. MEASURED Null-A sd on the real confirmatory matrices: 0.01039 (16k frac), 0.00897 (32k frac), vs Null B's 5.55e-17 = floating-point zero.",
+      "Moving to the FRACTIONAL scale removes the binary identity that caused the degeneracy at all. The Null-B proof needs max_j to be determined by the row sum, which holds only for {0,1} entries. Counterexample on [0,1] recall with 2 configs: row (0.50,0.00) and row (0.25,0.25) have the SAME row sum 0.50 but oracles 0.50 vs 0.25. So on the fractional scale even a row-margin-preserving null would NOT be invariant -- the gate is robust to the whole CLASS of failure that killed Null B, not just to one instance.",
+      "Clause 2 cannot degenerate into a tautology either: the comparator fixed config is re-selected on each training split, so the gate is not 'router beats a comparator tuned on the test set'. This is the selection-validity flaw named by arXiv:2608.08265."
+    ],
+    "explicitly_NOT_primary": "Null B (both-margins / curveball) is RETIRED for any binary per-item oracle and must never again be pre-registered as primary in this repo. PROOF: for binary correctness max_j M[i,j] = 1[rowsum_i >= 1], so the oracle depends on ROW MARGINS ALONE, and curveball preserves row margins exactly => the oracle is EXACTLY invariant under Null B, every draw, by construction (measured sd 2.22e-16, p=1.0). It would return p=1.0 on every dataset forever and be misread as 'the kill clause fired'. GENERALISES: for a binary per-item oracle, item difficulty and oracle value are THE SAME QUANTITY."
+  },
+  "kill_gate_verdict":   {
+    "verdict": "FIRED -- both clauses, both lengths. B02 closed as a router direction.",
+    "date": "2026-08-14",
+    "clause_1_complementarity": {
+      "result": "FAILED, and failed NEGATIVELY (interval excludes 0 on the negative side)",
+      "vt_16k_fractional": {
+        "oracle_obs": 0.591,
+        "best_fixed": 0.342,
+        "raw_headroom_NOT_THE_GATE": 0.249,
+        "null_A_mean": 0.6300067,
+        "null_A_sd": 0.01038539555116103,
+        "delta_excess": -0.0390067,
+        "ci95": [
+          -0.05899999999999994,
+          -0.018999999999999906
+        ],
+        "p_two_sided": 0.0008
+      },
+      "vt_32k_fractional": {
+        "oracle_obs": 0.543,
+        "best_fixed": 0.331,
+        "raw_headroom_NOT_THE_GATE": 0.212,
+        "null_A_mean": 0.5745067,
+        "null_A_sd": 0.008968907,
+        "delta_excess": -0.0315067,
+        "ci95": [
+          -0.04799999999999993,
+          -0.013999999999999901
+        ],
+        "p_two_sided": 0.0008
+      },
+      "vt_16k_binary_secondary": {
+        "delta_excess": -0.03490650000000006,
+        "ci95": [
+          -0.06,
+          -0.010000000000000009
+        ],
+        "p_two_sided": 0.0152
+      },
+      "vt_32k_binary_secondary": {
+        "delta_excess": -0.0263,
+        "ci95": [
+          -0.045,
+          -0.005
+        ],
+        "p_two_sided": 0.0224
+      },
+      "reading": "The raw headroom looks large (+21 to +25 pp) and is ENTIRELY BELOW its own independence floor. Configs are POSITIVELY COUPLED: hard items are hard at every depth. That is strictly worse for a router than no signal at all. 32k is an INDEPENDENT REPLICATION of the 16k kill: different length, same sign, same magnitude, same p."
+    },
+    "clause_2_realizability": {
+      "result": "FAILED -- no pre-answer-feature router beats a train-selected fixed j, at either length",
+      "estimator": "300 random 50/50 item splits; per-bucket best j learned on TRAIN and applied to held-out TEST; comparator fixed j ALSO train-selected (selection-valid)",
+      "held_out_gains": {
+        "16k_2bucket": {
+          "mean": -0.0143,
+          "ci95": [
+            -0.072,
+            0.0
+          ]
+        },
+        "16k_4bucket": {
+          "mean": -0.025,
+          "ci95": [
+            -0.1121,
+            0.002
+          ]
+        },
+        "32k_2bucket": {
+          "mean": -0.0075,
+          "ci95": [
+            -0.084,
+            0.0
+          ]
+        },
+        "32k_4bucket": {
+          "mean": -0.014,
+          "ci95": [
+            -0.086,
+            0.008
+          ]
+        }
+      },
+      "STRUCTURAL_finding_more_decisive_than_the_intervals": "B02's own input features are DEGENERATE on the task its own sweep uses. (a) 'document length': RULER pads every item to the target length -- measured span is 10 tokens out of 32713-32723, sd=1.96. (b) 'estimated evidence count': CONSTANT at 9 for every item in variable_tracking, so a router keyed on it is IDENTICALLY the best fixed config. PROPOSAL.md lists 7 input features; on this task two are constants and the retrieval-side ones (BM25/dense score gap, retrieval entropy) are not emitted per item by the harness. So Clause 2 could not have been passed on variable_tracking by ANY amount of GPU, and B02's Stage 0 as written was never decidable on this task alone.",
+      "evidence": "proposal/backlog/B02-adaptive-depth-and-read-budget/evidence/b02_realizability_leg.json"
+    },
+    "surviving_positive_result": "The depth curve's SHAPE and PEAK are stable across context length: Spearman over the 8 j values between 16k and 32k mean recall = +0.976, and j=27 is the best arm at BOTH lengths. Combined with the negative Delta_excess: on this task ONE well-chosen FIXED split depth is the right answer and it transfers across length. Per-query depth adaptation has no complementarity left to exploit.",
+    "independent_recompute": "The archived evidence JSONs were produced by the pre-registered analyze_b02_oracle.py. A separate ad-hoc script re-derived oracle/best_fixed/Null-A/CI/p directly from the raw *.records.json for all four (length x scale) combinations and agreed to every printed digit. Integrity assertions all pass: 8/8 arms cover an identical 200-item sample_index set, all cross-arm input_ids_sha256 identical, 0 duplicates, 0 NaN, chat_template=False, selector=iter_bm25 in all 16 cells."
+  },
+  "gpu_cost_estimate":   {
+    "value": "6.44 GPU-h for the full confirmatory sweep (16 cells = 8 resume_j x {16k,32k}, n=200); ALREADY SPENT, 0 remaining",
+    "measured_total_gpu_h": 6.438,
+    "basis": "MEASURED, not projected. Sum of elapsed_seconds over all 16 emitted cell JSONs on .73 (8xH20 sm_90, one cell per GPU, oom_count=0 in all 16): 16k mean 1340.0 s/cell (min 1311.2 max 1368.0) = 6.70 s/item -> 2.978 GPU-h; 32k mean 1557.3 s/cell (min 1527.1 max 1586.1) = 7.79 s/item -> 3.461 GPU-h; total 23179 GPU-s = 6.438 GPU-h. Wall clock on 8 GPUs (2 cells/GPU) = 48.3 min against 48 min projected in FIXED_SAMPLE_PROTOCOL.md sec 6b, i.e. the projection was accurate to ~1%. Pilot adds 0.32 GPU-h (8 cells, 142 s each, 7.1 s/item at 16k). TOTAL B02 SPEND = 6.76 GPU-h.",
+    "remaining_for_this_direction": "0 GPU-h -- the gate fired; no further GPU is authorised for B02 as a router direction.",
+    "provenance": "cell JSONs archived to proposal/backlog/B02-adaptive-depth-and-read-budget/evidence/ruler_results/qcmem_32b_b02_confirm_j*/b02confirm/ (48 files, 16 cell JSONs + 16 records.json + csv), copied from .73 zwfy6 to wzc1 so the numbers stay recomputable after the node is reused."
+  },
+  "novelty_checked":   true,
+  "novelty_verdict":   {
+    "verdict": "CLEARED_BUT_MOOT -- no located work preempts the construct; direction closes on its own kill gate, not on prior art",
+    "date": "2026-08-14",
+    "gpu_spent": "ZERO",
+    "doc": "proposal/backlog/B02-adaptive-depth-and-read-budget/NOVELTY_B02.md",
+    "raw_artefacts": "proposal/backlog/B02-adaptive-depth-and-read-budget/novelty_raw/ (arXiv Atom XML, DBLP JSON)",
+    "family_rule_applied": "OpenReview venueid + Camera_Ready_Revision for ICLR/NeurIPS/ICML; aclanthology + DBLP for the ACL family incl. Findings. S2 NOT used as a venue authority (429 on this pass, and it lags recent conference papers). Outcome: every located neighbour is a PREPRINT, so neither family's positive path was needed -- but the negative checks were run against both, which is what makes 'preprint' a finding rather than an assumption.",
+    "why_not_preempted": "The oracle-routing literature is uniformly BETWEEN-MODEL (pick model A or B per query). B02's action space is WITHIN-MODEL: split depth j, evidence budget k, retrieval rounds -- one model, one weight set. Four query shapes for a within-model depth oracle returned 0 hits.",
+    "closest_neighbours": [
+      {
+        "cite": "Opportunity Is Not Realizability: Selection-Valid Diagnostics for Multi-LLM Routing, arXiv:2608.08265",
+        "venue": "arXiv only",
+        "authority": "DBLP title search total=0; OpenReview notes/search 0 notes (term and source=forum); not ACL-family so aclanthology N/A",
+        "date": "2026-08-08",
+        "relation": "CLOSEST by construct. Names exactly the two flaws this kill gate guards against: best-fixed selected on the same examples invalidates paired inference, and a full-information oracle sees outcomes no deployable router observes. Certifies oracle gaps 9.7-30.7 pts of which the best deployable router recovers only 7.5-14.4%. CONCURRENT (6 days before this gate) -> per project rule does NOT constitute preemption. B02's result is a sharper negative: their realizable share is small, ours is zero BECAUSE THE FEATURES HAVE NO VARIANCE."
+      },
+      {
+        "cite": "How Much of the Routing Gap Is Real? Decomposing the Router-to-Oracle Gap, arXiv:2607.03436v2",
+        "venue": "CoRR 2026, Informal and Other Publications",
+        "authority": "DBLP",
+        "date": "2026-07-03",
+        "relation": "Same disease, different medicine. Its inflation source is STOCHASTIC DECODING (oracle = single Bernoulli draw), fixed by fresh k>=20 resampling. B02 decodes GREEDILY at k=1, so its inflation source is MAX-OVER-COLUMNS, for which a column-margin permutation null is the right correction and multi-sample oracles are not required."
+      },
+      {
+        "cite": "Statistical Scouting Finds Debate-Safe but Not Debate-Useful Cases, arXiv:2605.09618",
+        "venue": "arXiv only (own comment: technical report / preprint)",
+        "authority": "arXiv",
+        "date": "2026-05-10",
+        "relation": "Structurally the closest NEGATIVE result: per-example oracle over protocols gains +14.0/+13.7 pp over best fixed, and the headroom is hard to recover from cheap ex-ante signals (CIs include zero; learned LR/GBT fail). Same shape as Clause 2. BUT it does not correct its oracle for max-over-noise, so its '+14 pp headroom' is exactly the uncorrected quantity Clause 1 refuses to report."
+      },
+      {
+        "cite": "Resample or Reroute? Budget-Aware Test-Time Model Selection, arXiv:2607.08665v2",
+        "venue": "arXiv only",
+        "authority": "arXiv/DBLP posture",
+        "date": "2026-07-09",
+        "relation": "adjacent -- between-model budget allocation; presupposes headroom exists rather than testing it against a null"
+      }
+    ],
+    "self_citation_trap_avoided": "The query abs:'adaptive' AND abs:'retrieval budget' AND abs:'per-query' surfaces arXiv:2607.28263 'Understanding Is Done Early: A Depth Division of Labor', 2026-07-30, which uses CoMem + split depth j + Qwen3-8B. THAT IS OUR OWN paperA PREPRINT, NOT PRIOR ART -- confirmed at paperA/review_history/v12_strict_2_GPT56.md:213 ('not independent prior art and should not be counted against novelty') and by matching distinctive numbers. Counting it would have manufactured a false preemption of B02 by its own parent project. Flagged because a future automated sweep on these keywords WILL hit it again.",
+    "empty_searches_documenting_the_gap": [
+      "abs:'per-query' AND abs:'layer' AND abs:'depth' AND abs:'oracle' AND abs:'long context' -> 0",
+      "abs:'exit layer' AND abs:'per-example' AND abs:'oracle' -> 0",
+      "abs:'oracle' AND abs:'degenerate' AND abs:'null' AND abs:'binary' -> 0",
+      "abs:'permutation null' AND abs:'maximum' AND abs:'bias' -> 0",
+      "abs:'oracle' AND abs:'router' AND abs:'upper bound' -> 0",
+      "abs:'curveball' AND abs:'randomization' -> 5 hits, ALL ecology/bipartite-graph null-model literature (1609.05137, 1804.08487, 2112.04017, 1803.02624, 2607.29242). Curveball is imported from network null-model theory; nobody has applied it to a per-item x per-config LLM outcome matrix, which is why its degeneracy there was not already documented."
+    ]
+  },
+  "methodological_carry_forward":   {
+    "finding": "For a binary per-item oracle, item difficulty and oracle value are THE SAME QUANTITY: max_j M[i,j] = 1[rowsum_i >= 1], so any row-margin-preserving randomisation (curveball / swap / within-row permutation) leaves the oracle EXACTLY invariant. A both-margins null therefore cannot separate complementarity from difficulty, and pre-registering one as primary guarantees a p=1.0 that will be misread as 'the kill clause fired'.",
+    "novelty_of_the_finding": "The curveball/both-margins null is standard in ecology, and 'oracle max is upward biased' is folklore that arXiv:2607.03436 and arXiv:2605.09618 gesture at. The specific statement that the both-margins null is degenerate BY CONSTRUCTION for a binary max-statistic returned 0 hits on four separate query shapes.",
+    "HONEST_SIZING": "This is a paragraph, not a paper. Worth a footnote or methods appendix in any write-up reporting per-item oracle headroom, and worth recording so nobody in this project re-pre-registers Null B. NOT grounds for promotion. B02 is NOT promoted.",
+    "binding_rule_for_future_gates": "Any future per-item oracle gate in this repo MUST use a column-margin (Null A) primary on a NON-BINARY outcome scale, and MUST include a Clause-2 out-of-sample realizability leg with a TRAIN-SELECTED comparator. Both are encoded in KILL_GATE_VERDICT.md sec 2 and implemented in analyze_b02_oracle.py."
+  },
+  "abandoned":   {
+    "original_claim": "The optimal configuration varies per query, so a learned controller that jointly selects read method (raw replay / CoMem / reusable KV), split depth j, evidence budget k, retrieval rounds, and a low-confidence fallback will beat any single fixed configuration -- targeting quality within 1pp of the per-example oracle on a held-out task family together with a >=20% reduction in mean Read latency.",
+    "killed_by": "Its own pre-registered kill gate B02-KILL-1, fired on the n=200 confirmatory sweep (VT x {16k,32k}, Qwen3-32B, chat=False, 6.44 GPU-h measured on .73). CLAUSE 1: the per-item oracle sits BELOW its own independence floor at both lengths -- Delta_excess = -0.039 (16k) and -0.032 (32k), both p=0.0008, both 95% intervals excluding 0 on the NEGATIVE side -- i.e. configs are positively coupled (hard items are hard at every depth), which is strictly worse for a router than no signal. CLAUSE 2: no pre-answer-feature router beats a train-selected fixed j out-of-sample at either length, AND two of the seven input features PROPOSAL.md names are literally constant on this task (document length spans 10 tokens out of 32k; evidence count is exactly 9 for every item), so the clause was unpassable on variable_tracking by any amount of GPU. Prior art did NOT kill this -- the novelty gate came back CLEARED (no located work does within-model split-depth oracle headroom).",
+    "surviving_scope": "TWO things survive, both small and both honestly stated. (1) A POSITIVE empirical result about fixed depth: the depth curve's shape and peak are stable across context length (Spearman over the 8 j values, 16k vs 32k = +0.976; j=27 best at both), so ONE well-chosen fixed split depth transfers and per-query depth adaptation is unnecessary on this task -- this is a useful negative-space result for paperA's split-depth story, NOT a paper of its own. (2) A METHODOLOGICAL note: the both-margins (curveball) null is provably degenerate for any binary per-item oracle because max_j M[i,j] = 1[rowsum_i>=1]; worth a footnote wherever per-item oracle headroom is reported, and now a binding rule for future gates in this repo. WHAT DOES NOT SURVIVE: the controller, the +20% latency target, the <=1pp-to-oracle target, and any claim that query-adaptive depth/budget selection has exploitable headroom. Scope limits that must be stated with (1): ONE task (RULER variable_tracking), ONE model (Qwen3-32B), ONE selector (iter_bm25, topk=12), n=200 per arm. n=200 resolves |Delta_excess| >= 0.033 at 80% power, so the negative is 'no exploitable complementarity larger than 3.3 pp on this task', not 'no complementarity anywhere'. A different task with genuinely variable evidence count could still show headroom -- but B02 as scoped is closed, and re-opening it requires a task where the input features are not constants."
+  }
 }
