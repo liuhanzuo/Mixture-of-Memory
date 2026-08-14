@@ -2,6 +2,36 @@
 > 每次启动/kill GPU 任务更新。heartbeat 先读→对照 nvidia-smi→台账说跑但空=补卡。★29.162.226.120=dllm 绝不碰。
 > 2026-08-08 15:03 更新：用户指令「B200跑resume，H20跑新方向」→ Paper B resume 迁移到 .21/.73。
 
+## 🔄 2026-08-14 15:58 — heartbeat 实测（覆盖上一节的 12:34 台账数字）
+
+| 节点 | 硬件/盘 | 任务 | 实测 | 状态 |
+|---|---|---|---|---|
+| **LOCAL** | 8×B200 wzc1 | SparseForge **noslorb** resume | iter **6919/7500** (92.3%)、8×111-117 GB @100%、**55.86 s/it**（128-iter 窗口）、loss 2.04、wiki_ppl 6.6329 | ▶️ 健康 |
+| **`.212`** | 8×B200 wzc1 | SparseForge **slorb** resume | iter **6709/7500** (89.5%)、8×114-120 GB @100%、**56.29 s/it**（128-iter 窗口）、loss 1.53、wiki_ppl 6.1577 | ▶️ 健康 |
+| **`.73`** | 8×H20 zwfy6 | **B02 confirmatory n=200**（8 个 resume_j 并行） | 8×66-67 GB、util **0-99% 抖动**、8 lane 全在 90 s 内写过 CSV | ▶️ 健康 |
+| **`.82`** | 8×H20 zwfy6 | **空闲（有据）** | 8×0 MiB、napps=0 | ⏸️ 见下方判据 |
+| **`.104`** | 8×H20 zwfy6 | paperC Qwen3 heal | step **30440/200000**、8×77.5 GB @100%、5.74 s/step、ppl 16.17 | ▶️ 健康（勿动） |
+
+**★ 两个「看着像故障、实际不是」的实测（都按 heartbeat 铁律排除了）**
+- **LOCAL 15:30 时读到 8×17-22 GB**（vs 现在 111-117 GB）＝ iter 6900 的 `eval_ppl` 里程碑释放了训练
+  activation，**不是 OOM**（铁律 4）。同一份 log 里有 `evaluating: iter_num 6900 ... wiki_ppl 6.6329`。
+- **`.73` 的 `logs/b02_confirm_main.out` mtime 落后 42 分钟** —— 它是 **launcher**，spawn 完 8 个 worker 就退出了；
+  worker 直接写 CSV。改看 per-lane artifact mtime：j=3/6/13/20/27/34/41/48 **全部在 90 s 内有写入**。
+  **GPU4 瞬时 0% / GPU2 23% 是 lane 间长短档差异，不是 stall**（铁律 1）。
+- **速率一律用累积 tqdm elapsed 算**：两臂 128-iter 窗口都是 ~56 s/it；last-30 窗口读到 67-69 s/it 是
+  **eval 里程碑落在短窗口里**的假象，不是变慢。单跑基线 45-48 s/it 是重启前无 union-9 争抢时的数字。
+
+**`.82` 为何不补卡（三问全过，非静默留空）**
+1. **proposal 有没有 GPU 活？没有。** `proposal/ready_queue.py`（今日新增 layer-2 生成器）实测
+   **0 ready_gpu / 13 ready_cpu** —— 13 项全卡在自己的 0-GPU 前置门上。
+2. **架构/资产对不上。** 候选是 #245 AST+SLoRB 参数匹配对照，但 `.82`（zwfy6）**根本没有 `main_llama.py`**，
+   且只有 `dolmino_chunks_2048_olmo2.npy`（**olmo2 tokenizer，错的**），没有 dolmino-llama2 分词。
+   SparseForge trainer 是 **wzc1-only**。要在这跑得先跨盘搬代码 + 重分词 126 GB，
+   而两臂今晚就在**对的盘 + 对的架构**上跑完。
+3. **无 agent 冲突**：两个后台 agent 都是 CPU-only。
+⇒ 结论：**留空，并把理由写成可审计的字段**（`TRAINER_ACTIVITY.jsonl` 的 `idle_card_justification`），
+不是「卡空着没人管」。
+
 ## 🔄 2026-08-14 12:34-12:50 — **节点重启后重配 + SparseForge ±SLoRB 双臂忠实 resume**（用户指令：重启因两台 B200 利用率过低）
 
 > **★ roster 更正（我自己实测，覆盖旧记录）**：**LOCAL 就是 `28.89.19.21`**（`ifconfig` 实证）——
