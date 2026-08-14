@@ -1,5 +1,25 @@
 # B04 — Kill gate + next gate (written 2026-08-14, PRE-DATA, 0 GPU)
 
+> ## ⚠️ REVISION 2 — 2026-08-14, still PRE-DATA, still 0 GPU
+>
+> Revision 1 of §3 was submitted to an adversarial pass and returned **3/3 NEEDS_REVISION**,
+> one of them `decidable=false`. The drafting agent had also written
+> `STATUS.json.lifecycle = ready_gpu` itself; MAIN reverted it to `ready_cpu`. **The
+> adversarial verdicts are the authority here, not anyone's opinion.** What changed:
+>
+> | lens | its finding | fix, and where |
+> |---|---|---|
+> | **decidability** (`decidable=false`) | φ rescaled the slope to **116500**, the *damaged ladder's* span, while the read-out's own span is **175000**. The printed number was therefore not the measured excursion — it understated it by 175000/116500 = **1.5021×**. | Span in φ is now **175000** everywhere: §3, §3.1, §3.2, §7, `STATUS.json.kill_gate.{statement,threshold}`, `STATUS.json.next_gate.decidable_outcome`, `readout_preregistration`, and `code/analyze_b04_wzc1_floor.py:READOUT_SPAN`. 116500 survives **only** as a descriptive property of the comparator and is explicitly barred from φ. |
+> | **falsifiability** | a slope-only φ lets a **flat-but-noisy** budget response pass. | φ is now **max-guarded** — see §3 and the worked counterexample in §3.0. |
+> | **affordability** | φ **assumed a linear budget response**; wanted the shape-agnostic **range ratio**. | The range term is now the *first* argument of the max, and it is the **binding** term in all five constructed scenarios (§3.3). |
+>
+> The two live lenses asked for two different statistics (max-guarded vs range-ratio).
+> `max(range, |β|·175000)` satisfies both simultaneously: it *is* the range ratio whenever
+> the range term binds, and it can only ever exceed it (§3.0, sup ratio 1.1736).
+>
+> **lifecycle stays `ready_cpu`.** Promotion is the next adversarial pass's call, not this
+> revision's. That self-promotion is precisely what went wrong in revision 1.
+
 > **Why this file exists.** B04 sat at `ready_cpu` with the diagnosis "kill gate undefined".
 > That diagnosis was half right. A four-clause completion gate *did* exist at
 > `PROPOSAL.md:31-38` — it was simply never lifted into `STATUS.json`, so
@@ -21,7 +41,7 @@
 | 2. "exact test 成立" | **kept, thresholded** | Now: ρ must be exactly +1.0000 at exact two-sided p = 0.0028 (the n=6 floor, 2/720). Already PASSES. |
 | 3. "LOO margin model beats constant-rate null" | **replaced by a floor test** | The LOO/constant-rate framing was never operationalised and needs a flip endpoint that clause 1 just showed is untestable. Replaced with: full damaged-ladder range ≥ 6·σ̂. Already PASSES at 40.3·σ̂. |
 | 4. second nuisance (torch/GPU arch) | **withdrawn as a kill clause** | Crossing arch is exactly what `LIFECYCLE_SCHEMA.md §3` forbids for same-harness reproduction, and the within-arch term is *identically zero*. Keeping it as a kill clause would let a stack-version artefact kill a real finding. Demoted to a reported robustness check. |
-| — | **NEW clause 5: budget discrimination** | The only clause that can still kill B04. See §3. |
+| — | **NEW clause 5: budget discrimination** | The only clause that can still kill B04. See §3. **Revision 2** after 3/3 adversarial NEEDS_REVISION: statistic is now `φ = max(range, |β|·175000)/0.021820`, shape-agnostic and at the read-out's own span. |
 
 ---
 
@@ -79,59 +99,154 @@ ladder, `Spearman(core6, heal_steps) = +0.6669` across the 5 damaged rungs (step
 is *the exact defect that retired the Qwen leg*. The OLMo leg has only ever **disclosed**
 this confound — never **tested** it.
 
-**The test.** Measure the budget slope directly **at fixed damage**, then compare it to the
-damage-driven range it would have to explain away:
+### 3.0 Why revision 1's statistic was not decidable, in numbers
+
+Revision 1 was `phi = |beta_budget| * 116500 / 0.021820`. Two independent defects.
+
+**(D1) Wrong span — the decidability defect.** The read-out is at heal steps
+{25000, 50000, 100000, 128000, 200000}. Its span is **175000**. 116500 is the *damaged
+ladder's* heal-step span (200000−83500), a property of a **different set of five models
+with five different damage depths**. Multiplying a slope measured over 175000 by 116500
+produces a number that is not the excursion at any read-out point of any ladder. It is
+smaller than the measured excursion by exactly 175000/116500 = **1.5021×**, i.e. revision 1
+systematically **under-read** the nuisance it was built to detect, in the direction that
+favours B04's own hypothesis. Fixed: **the span in φ is the read-out's own 175000.**
+
+**(D2) Shape assumption — the falsifiability / affordability defect.** An OLS slope is a
+linear summary. A non-monotone budget response can sweep almost the whole damaged range
+while its slope is ≈ 0. On this exact 5-point x-grid:
+
+| y = median_margin at {25k, 50k, 100k, 128k, 200k} | range | \|β\|·116500 | rev-1 φ | rev-2 φ |
+|---|---|---|---|---|
+| `[0.1085, 0.0905, 0.0885, 0.0975, 0.1090]` | **0.020500** (94.0% of 0.021820) | 0.003790 | **0.1895 → PASS** | **0.9395 → KILL** |
+
+Revision 1 would have recorded "heal budget is negligible" for a budget response that
+reproduces **94% of the entire range B04 attributes to damage depth**. That is not a corner
+case: the only real fixed-damage budget ladder in this project (§3.1) *is* non-monotone.
+
+### 3.1 The test (REVISION 2)
+
+Measure the budget response **at fixed damage** over the pre-registered read-out, and
+compare its **magnitude** — not its linear trend — to the damage-driven range it would have
+to explain away:
 
 ```
-beta_budget = OLS slope of median_margin on heal_step
-              over the 5 fixed-damage points (keep_front=14, n_fresh=2, seed=1234)
-phi         = |beta_budget| * 116500 / 0.021820
-                                ^^^^^^   ^^^^^^^^
-                    damaged-ladder        damaged-ladder
-                    heal-step span        median_margin range
+S       = 175000                       # the READ-OUT's own heal-step span, max-min of
+                                       # {25000,50000,100000,128000,200000}. NOT 116500.
+y_i     = median_margin at those 5 steps of olmo2_probe2_7B_keep14fresh2_seed1234
+                                       # damage held EXACTLY at keep_front=14, n_fresh=2, seed=1234
+range_b = max(y) - min(y)              # shape-agnostic: assumes nothing about the response's form
+beta_b  = OLS slope of y on heal_step over exactly those 5 points
+D       = 0.021820                     # damaged-ladder median_margin range (the comparator, §3.3)
+
+phi     = max( range_b , |beta_b| * S ) / D
 ```
 
-| φ | verdict | in absolute margin units |
-|---|---|---|
-| φ ≤ 0.30 | **PASS** → family ladder authorised | excursion ≤ 0.006546 (\|β\| ≤ 5.6189e-08 /step) |
-| 0.30 < φ < 0.60 | **NARROWED** → joint damage+budget claim, spend still unauthorised | — |
-| φ ≥ 0.60 | **KILL** → fold into Paper B methods appendix | excursion ≥ 0.013092 (\|β\| ≥ 1.1238e-07 /step) |
+| φ | verdict | in absolute margin units | equivalent monotone \|β\| |
+|---|---|---|---|
+| φ ≤ 0.30 | **PASS** → family ladder authorised | excursion ≤ **0.006546** (= 12.1 σ̂) | ≤ 3.7406e-08 /step |
+| 0.30 < φ < 0.60 | **NARROWED** → joint damage+budget claim, spend still unauthorised | — | — |
+| φ ≥ 0.60 | **KILL** → fold into Paper B methods appendix | excursion ≥ **0.013092** (= 24.2 σ̂) | ≥ 7.4811e-08 /step |
 
-**Why 0.60.** At φ ≥ 0.60 the nuisance factor explains more of the observed range than the
-factor of interest — precisely the standard `status_note_2026_08_10.disclosure` already
-applied to retire the Qwen leg. **Why 0.30.** `6σ̂/0.021820 = 0.1486`, rounded up to ~2×;
-a PASS then means the budget excursion is not merely resolvable-but-small but small *with a
-2× margin over resolvability*.
+**Why the max, and why it satisfies both live lenses at once.** The affordability lens asked
+for the shape-agnostic range ratio; the falsifiability lens asked for a max-guard. On this
+fixed x-grid the slope term is bounded relative to the range term by
 
-### 3.1 This kill is reachable, not decorative
+```
+sup_y  |beta|*S / range(y)  =  S * sum_{i: w_i>0} w_i  =  1.173627 ,   w_i = (x_i - x̄)/Sxx
+```
+
+attained by a step function. So `max(range, |β|·S)` **equals** the range ratio whenever the
+range term binds, exceeds it by at most **17.4%** otherwise, and can **never** fall below
+it. It is therefore strictly the more conservative of the two requested statistics — and in
+all five constructed scenarios (§3.3) the **range term is the binding one**, so in practice
+the gate *is* the affordability lens's range ratio, with the slope term as a one-sided
+safety net that can only tighten it.
+
+**k-matching, which revision 1 lacked.** Numerator and denominator are now **both ranges at
+k = 5** (5 budget points / 5 damaged rungs), so `E[range of k]/σ` cancels between them.
+Revision 1's numerator was a slope and had no such correspondence — the exact error
+recorded in `memory/a-range-is-not-a-measurement-until-it-clears-its-floor.md` (E[range]/σ =
+1.1284 at k=2 vs 2.3259 at k=5; using the wrong k moved a floor by 40.6% and flipped a
+boolean).
+
+**Why 0.60.** At φ ≥ 0.60 the nuisance factor accounts for more of the observed range than
+the factor of interest — the exact standard `status_note_2026_08_10.disclosure` already
+applied to retire the Qwen leg. **Why 0.30.** `6σ̂/0.021820 = 0.1486`, rounded up to ~2×; a
+PASS then means the budget excursion is small *with a 2× margin over resolvability*.
+
+**PASS is not free.** Under pure run-to-run noise, E[range of 5]·σ̂ = 2.3259 × 0.000541 =
+0.001257, i.e. **φ_noise = 0.0576** — 5.2× below the PASS line. So a PASS is a real
+measurement of a small effect, not an artefact of a threshold set above the noise.
+
+### 3.2 This kill is reachable, not decorative
 
 Adversarial pre-check, 0 GPU. The only fixed-damage budget ladder that exists anywhere in
-this project is the Qwen `f12k2/14L` cell (steps 2000/20000/200000):
+this project is the Qwen `f12k2/14L` cell (steps 2000/20000/200000), **own span 198000**:
 
 | step | core6 | median_margin |
 |---|---|---|
 | 2000 | 0.384821 | 0.107388 |
-| 20000 | 0.446598 | 0.095181 |
-| 200000 | 0.463169 | **0.133933** |
+| 20000 | 0.446598 | **0.095181** ← non-monotone |
+| 200000 | 0.463169 | 0.133933 |
 
-β = +1.3407e-07 /step → rescaled to 116500 steps → Δ = 0.015619 → **φ = 0.716**, *above the
-kill line*. It is also **non-monotone** in budget. So the single most relevant empirical
-precedent **predicts KILL**. This gate can fail.
+Under revision 2, evaluated **at its own span** (198000, not 175000 and not 116500 — using
+a foreign span is the very defect D1):
 
-### 3.2 Denominator guard (φ is a ratio)
+```
+range_b = 0.038752      |beta_b| * 198000 = 0.033065      -> binding term: RANGE
+phi     = 0.038752 / 0.021820 = 1.7760   >=  0.60   ->  KILL
+```
 
-- **(a)** Denominator = damaged range 0.021820. Admissible only if ≥ 6σ̂ = 0.0032435.
-  Measured 6.73× the guard → PASS.
-- **(b)** If the denominator were ≤ 0 or below 6σ̂, φ is **UNDEFINED** — not large, not
-  small. Gate returns `DENOMINATOR_UNRESOLVED`, which **blocks the spend exactly as a KILL
-  would**: a ratio against an unresolved range cannot license 244–2560 GPU-h.
-- **(c)** σ̂ is itself a denominator in the floor check and is ill-defined at n=1. Requires
-  ≥ 2 arms holding damage depth **and** heal step exactly constant, with the k-appropriate
-  divisor.
+The most relevant empirical precedent scores **φ = 1.776 → KILL** (revision 1 scored it 0.892,
+also KILL, but only because its slope happened to be large; its *shape* is exactly the case
+revision 1 was blind to). **This gate can fail.**
+
+### 3.3 Constructed scenarios — all three verdicts are reachable
+
+Machine-checked, 0 GPU, PRE-DATA, by
+`code/analyze_b04_wzc1_floor.py --selftest` (it `sys.exit`s if any verdict is unreachable):
+
+| y at {25k, 50k, 100k, 128k, 200k} | range | \|β\|·175000 | φ | verdict |
+|---|---|---|---|---|
+| `[0.0902, 0.0951, 0.1005, 0.1042, 0.1085]` monotone compression | 0.018300 | 0.018035 | **0.8387** | **KILL** |
+| `[0.1085, 0.0905, 0.0885, 0.0975, 0.1090]` non-monotone V | 0.020500 | 0.006212 | **0.9395** | **KILL** (rev-1: PASS) |
+| `[0.1000, 0.1030, 0.1055, 0.1070, 0.1085]` mid excursion | 0.008500 | 0.008160 | 0.3896 | NARROWED |
+| `[0.1062, 0.1071, 0.1078, 0.1081, 0.1085]` early convergence | 0.002300 | 0.002168 | 0.1054 | PASS |
+| `[0.10850, 0.10796, 0.10904, 0.10812, 0.10850]` noise-scale wobble (2.0 σ̂) | 0.001080 | 0.000154 | 0.0495 | PASS |
+
+These y-vectors are **hypothetical**, written before the 4 arms are evaluated. They prove the
+gate *can* return each verdict; they do not predict which it will. The already-measured
+step200000 endpoint is 0.108500 (`keep14_s1234_step200000_sv181`), so the single-number
+boundary is direct: **with max(y) = 0.1085, any min(y) ≤ 0.095408 is a KILL** and any
+min(y) ≥ 0.101954 is a PASS. For scale, the damaged ladder's own keep8 rung sits at
+0.094779 — i.e. the KILL region is reached if budget alone spans what damage spans, which is
+neither a straw man nor guaranteed.
+
+### 3.4 Denominator guard (φ is a ratio)
+
+- **(a)** Denominator = damaged range **D = 0.021820**. Admissible only if D ≥ 6σ̂ =
+  0.0032435. Measured 6.73× the guard → PASS. Implemented at
+  `code/analyze_b04_wzc1_floor.py` `denom_ok = dam_range >= guard`.
+- **(b)** If D ≤ 0 or D < 6σ̂, φ is **UNDEFINED** — not large, not small. The gate returns
+  `DENOMINATOR_UNRESOLVED`, which **blocks the spend exactly as a KILL would**: a ratio
+  against an unresolved range cannot license 244–2560 GPU-h. `phi_budget()` returns this
+  branch without computing a number, so no φ can be quoted from an inadmissible denominator.
+- **(c)** σ̂ is itself a denominator (in the floor check and in the σ̂-units column of §3.1)
+  and is ill-defined at n=1. It requires ≥ 2 arms holding damage depth **and** heal step
+  exactly constant, with the **k-appropriate** divisor `E[range of k]/σ`.
 - **(d)** If σ̂ = 0 — the *normal* outcome for same-driver re-runs — return
   `FLOOR_UNMEASURABLE`, which **does not pass**: it means the contrast is not a real
   nuisance contrast. The seed pair is safe because it varies init seed (σ̂ ≠ 0 on all four
   metrics).
+- **(e) NEW in revision 2 — numerator/denominator k-matching.** φ is now a **range ÷ range**,
+  so both sides must be at the same k or the ratio silently carries an `E[range of k]/σ`
+  factor. Both are k = 5 (5 read-out budget points / 5 damaged rungs) and the factor cancels.
+  **If the read-out ever loses an arm** (e.g. one ckpt fails to load), the surviving-k range
+  is **not** comparable to a k=5 denominator: the gate must return
+  `PROTOCOL_VIOLATION` rather than compute φ at k=4. `phi_budget()` enforces this by
+  asserting the read-out steps equal `G1_READOUT_STEPS` exactly — which simultaneously
+  blocks *adding* points (§7).
 
 ---
 
@@ -221,13 +336,42 @@ step=48000`), i.e. 152k fresh steps → 1.33 s/step effective. Consistent with 1
 ## 7. Read-out pre-registration
 
 Primary read-out: `median_margin` at `ckpt_step ∈ {25000, 50000, 100000, 128000, 200000}` of
-`olmo2_probe2_7B_keep14fresh2_seed1234`. Decision statistic: β_budget over **exactly those
-5 points**, and φ.
+`olmo2_probe2_7B_keep14fresh2_seed1234`. **Span S = 200000 − 25000 = 175000** — this is the
+span that appears in φ, and it is the read-out's *own* span, not the damaged ladder's 116500.
+
+Decision statistic over **exactly those 5 points**:
+
+```
+phi = max( max(y) - min(y) ,  |OLS slope of y on heal_step| * 175000 )  /  0.021820
+```
+
+Pre-registered read-out points, file:line:
+
+| what | file:line (verified 2026-08-14) |
+|---|---|
+| the 5 read-out steps | `code/analyze_b04_wzc1_floor.py:120` (`G1_READOUT_STEPS`) |
+| **the span used in φ = 175000** | `code/analyze_b04_wzc1_floor.py:121` (`READOUT_SPAN`) |
+| slope-term sup ratio 1.173627 | `code/analyze_b04_wzc1_floor.py:124` (`SLOPE_TERM_SUP_RATIO`) |
+| thresholds 0.60 / 0.30 | `code/analyze_b04_wzc1_floor.py:125` (`PHI_KILL`, `PHI_PASS`) |
+| φ itself, both terms + binding-term audit field | `code/analyze_b04_wzc1_floor.py:128-152` (`phi_budget`) |
+| step-set equality assertion (blocks add **and** drop) | `code/analyze_b04_wzc1_floor.py:140-143` |
+| denominator D + its 6σ̂ guard | `code/analyze_b04_wzc1_floor.py:338-339` (`guard`, `denom_ok`) |
+| falsifiability selftest (all 3 verdicts reachable, exits if not) | `code/analyze_b04_wzc1_floor.py:485-512` (`selftest_phi`) |
+| already-measured 5th point (median_margin 0.108500) | `evidence/B04_wzc1_floor_analysis.json` → `seed_pair_metrics.s1234.median_margin`; raw source `olmo2_downstream_results/keep14_s1234_step200000_sv181/` |
+| machine-readable copy of the whole gate | `STATUS.json` → `kill_gate` / `next_gate` / `readout_preregistration` / `prereg_measured_constants_2026_08_14` |
 
 That directory also contains step153500/165000/170000/175000/180000/185000/190000/195000/
-199000/199500. **Those are not part of the read-out.** Extending n until the slope crosses a
-threshold would be the paperC `--max_steps` error in a new costume — there the
-pre-registered read-out was step121000, not the 200000 the flag mentions.
+199000/199500. **Those are not part of the read-out.** Extending n until the statistic
+crosses a threshold would be the paperC `--max_steps` error in a new costume — there the
+pre-registered read-out was step121000, not the 200000 the flag mentions. `phi_budget()`
+`sys.exit`s on any step-set mismatch, so this is enforced in code, not only in prose. Note
+the asymmetry that makes the assertion necessary: **adding** later steps can only shrink the
+range term (they cluster near 200000) and would bias the gate toward PASS.
+
+**Dropping** a point is equally barred, for a different reason: φ's numerator and denominator
+are both ranges at k=5, and a k=4 range has a systematically smaller expectation
+(`E[range]/σ` = 2.0588 at k=4 vs 2.3259 at k=5, i.e. −11.5%). A k=4 numerator over a k=5
+denominator would be biased toward PASS by construction (§3.4(e)) → `PROTOCOL_VIOLATION`.
 
 No metric substitution: a φ computed on any `frac` metric cannot overturn the primary.
 
@@ -237,8 +381,14 @@ No metric substitution: a φ computed on any `frac` metric cannot overturn the p
 
 Any quotation of `Spearman(core6, median_margin) = +1.00` must print beside it:
 (i) `Spearman(core6, heal_steps)` **for the same ladder, ladder named** (+0.6669 wzc1 /
-+0.8721 zwfy6); (ii) σ̂ and R; (iii) φ from clause 5.
++0.8721 zwfy6); (ii) σ̂ and R; (iii) φ from clause 5, **with its binding term named**
+(`range` or `slope`) and **with the span named (175000)**.
 Standing requirement from `STATUS.json.olmo_only_finding.budget_caveat_2026_08_10`.
+
+Added in revision 2: **never quote a φ without its span.** A φ carrying an unnamed span is
+exactly the artefact the decidability lens caught — 116500 and 175000 differ by 1.5021×, so
+"φ = 0.19" and "φ = 0.29" can be the same data. `phi_budget()` returns `span_used` in every
+result dict for this reason.
 
 ---
 

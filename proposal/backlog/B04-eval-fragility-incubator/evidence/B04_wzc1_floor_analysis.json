@@ -168,6 +168,7 @@
     }
   },
   "clause5_budget_discrimination": {
+    "revision": "2 (2026-08-14, PRE-DATA). Revision 1 was refuted 3/3 by the adversarial pass: it rescaled the slope to the DAMAGED span 116500 instead of the READ-OUT's own span 175000 (decidability), and a slope-only statistic lets a non-monotone budget response worth 94% of the damaged range pass with phi=0.19 (falsifiability/affordability).",
     "primary_metric": "median_margin",
     "damaged_rungs": [
       "shortgpt16@200k",
@@ -178,16 +179,58 @@
     ],
     "damaged_range_median_margin": 0.02181999999999995,
     "damaged_heal_step_span": 116500,
+    "G1_readout_steps": [
+      25000,
+      50000,
+      100000,
+      128000,
+      200000
+    ],
+    "readout_span_USED_IN_PHI": 175000,
+    "span_note": "phi uses the READ-OUT's own span 175000. The damaged ladder's 116500 is retained above only as a descriptive property of the comparator and MUST NOT enter phi (ratio 175000/116500 = 1.5021).",
+    "phi_definition": "phi = max( range(median_margin over the 5 prereg read-out steps), |OLS slope on heal_step| * 175000 ) / damaged_range",
+    "phi_is_shape_agnostic": "the range term assumes nothing about the functional form of the budget response; max() with the slope term can only raise phi, never lower it (sup ratio 1.173627 on this fixed x-grid), so max() is strictly more conservative than range-alone",
+    "k_matching": {
+      "numerator_k": 5,
+      "denominator_k": 5,
+      "E_range_over_sigma_at_k": 2.3259,
+      "phi_expected_under_pure_noise": 0.05762395332115335,
+      "note": "numerator and denominator are both RANGES at k=5, so E[range k]/sigma cancels between them. phi_expected_under_pure_noise is the value phi takes if the budget response is pure run-to-run noise; it must sit far below the PASS line or the PASS branch is unfalsifiable."
+    },
     "denominator_guard_threshold": 0.0032435306628854983,
     "denominator_guard_basis": "6*sigma_hat(median_margin)",
     "denominator_admissible": true,
     "denominator_verdict": "OK",
     "phi_kill_threshold": 0.6,
     "phi_pass_threshold": 0.3,
-    "beta_budget_kill_per_step": 1.1237768240343322e-07,
-    "beta_budget_pass_per_step": 5.618884120171661e-08,
+    "excursion_kill_absolute": 0.01309199999999997,
+    "excursion_pass_absolute": 0.006545999999999985,
+    "excursion_kill_in_sigma_hat": 24.21805377049177,
+    "excursion_pass_in_sigma_hat": 12.109026885245886,
+    "beta_budget_kill_per_step_at_readout_span": 7.48114285714284e-08,
+    "beta_budget_pass_per_step_at_readout_span": 3.74057142857142e-08,
     "S_damage_ols": 0.2179427672898059,
     "spearman_core6_heal_steps_MANDATORY_CODISCLOSURE": 0.6668859288553503,
-    "spearman_core6_layers_kept": 0.9999999999999998
+    "spearman_core6_layers_kept": 0.9999999999999998,
+    "adversarial_precedent_qwen_f12k2_14L": {
+      "steps": [
+        2000,
+        20000,
+        200000
+      ],
+      "median_margin": [
+        0.10738800000000004,
+        0.09518099999999996,
+        0.13393299999999986
+      ],
+      "own_span": 198000,
+      "range_term": 0.0387519999999999,
+      "slope_term": 0.033064810810810655,
+      "binding_term": "range",
+      "phi_revision2": 1.775985334555453,
+      "verdict_revision2": "KILL",
+      "non_monotone": true,
+      "note": "This is the single most relevant empirical precedent and revision 2 scores it KILL, as revision 1 also did (phi 0.8916 with the wrong span). It is non-monotone in budget, which is exactly the shape a slope-only statistic under-reads."
+    }
   }
 }
