@@ -455,5 +455,26 @@
   "aggregation_hygiene": "per-cell only; no pooled BABILong/LongEval figure computed anywhere",
   "nodes": ".82 only; LOCAL/.21 (SparseForge #246), .73 (another agent) and .104 (paperC) never contacted"
  },
- "next_gate_note_2026_08_12": "A02 is CLOSED; next_gate entries are historical. The two caveats the read-tax gate flagged are now closed: VT recall measured directly (100%), and the ceiling caveat resolved by running a harder retrieval-closed cell (which partially falsified the shallow-end claim). The methodological finding moved to B11."
+ "next_gate_note_2026_08_12": "A02 is CLOSED; next_gate entries are historical. The two caveats the read-tax gate flagged are now closed: VT recall measured directly (100%), and the ceiling caveat resolved by running a harder retrieval-closed cell (which partially falsified the shallow-end claim). The methodological finding moved to B11.",
+ "related_work_status": {
+  "verdict": "audited",
+  "file": "RELATED_WORK.md",
+  "written": "2026-08-15",
+  "gpu_spent": "0 -- CPU + proxied literature search only",
+  "closes": "proposal/shared/literature/RELATED_WORK_GAP_AUDIT_20260808.md:27 rating 不足 (A02 was priority 2 of 7 in that audit's fill order). All five named collision families now have named papers with per-family-verified venues, per-paper differences, a 16-item must-NOT-claim list, and a one-sentence safe gap.",
+  "novelty_verdict": "NOT PREEMPTED on the live claim. No candidate is 完全相同/抄袭. The two nearest (SeDeM arXiv:2608.00311 2026-07-31; RAC arXiv:2608.04991 2026-08-05) are CONCURRENT by days-to-weeks and both FIX the layer A02 sweeps.",
+  "closest_prior_art": [
+   "SeDeM: Selective Decompression of Hidden-State Memories (arXiv:2608.00311, 2026-07-31, arXiv-only -- NO DBLP record yet, 404) -- intermediate-layer hidden-state memory + query-conditioned selection + decompression to decoder-compatible states. CONCURRENT (<2 weeks). Fixes its layer; A02's dependent variable IS the layer. Reports wins; every A02 number is a TAX (A0 no-adapter is best at 99.75). Evaluates long-context QA, the family A02's own dvr gate showed is 54.9-78.6% retrieval.",
+   "RAC: Reference-Aware Activation Compression for Split LLM Inference (arXiv:2608.04991, 2026-08-05, arXiv-only -- NO DBLP record, 404) -- boundary-activation codec. CONCURRENT (10 days). Objective = bytes on a NETWORK LINK; A02 has no device/network/privacy and its bytes axis is disk-vs-raw-text (where it lost 2048x).",
+   "Block-Attention for Efficient RAG / 'for Efficient Prefilling' (ICLR 2025 Poster, OpenReview venueid ICLR.cc/2025/Conference + Camera_Ready_Revision) -- OWNS the chunk-local-context-loss diagnosis AND both of A02's proposed repairs (overlap, trained adapter), at full depth.",
+   "Cartridges (ICLR 2026 Poster, OpenReview venueid ICLR.cc/2026/Conference + Camera_Ready_Revision) + TurboRAG (EMNLP 2025, Anthology 2025.emnlp-main.334) -- OWN the offline-amortisation + break-even frame that A02's N* instantiates.",
+   "Why Limit the Residual Stream to Layers and Not Tokens? Persistent Memory for Continuous Latent Reasoning (arXiv:2606.07720; ICML 2026 Workshop MusIML Poster w/ Camera_Ready_Revision, note UlcVF4RsBz; ALSO AdaptFM + FoGen workshop records; workshops only, no main conference) -- OWNS learned write/read/forget gating over persistent memory = A02's UNEXECUTED stage 2."
+  ],
+  "must_not_claim_count": 16,
+  "safe_gap": "On a retrieval-closed read-out (gold-support recall@12 >= 99%, retrieval pack byte-identical across arms), the accuracy cost of resuming a frozen LLM's upper stack from a cached layer-j hidden state is a CLIFF in j, not a slope, and the cliff is attributable to DEPTH rather than adapter CAPACITY at exactly matched trainable-parameter count (72,744,960 both).",
+  "does_NOT_change_disposition": "A02 stays CLOSED_NO_THESIS_DIAGNOSTIC_ASSETS_RETAINED and gpu_policy stays 'NO further A02 GPU'. A02 was killed by its OWN pre-registered kill clause on 2026-08-09, BEFORE any of this literature was consulted -- per memory/prior-work-differentiate-dont-abandon.md a direction may be killed only by its own kill gate, never by a literature count. This pass produced an ATTRIBUTION list, not a scope ceiling.",
+  "honest_gaps": "Semantic Scholar HTTP 429 on every call (2 attempts) -> every venue call is SINGLE-AUTHORITY. arXiv API 429 for the first ~15 min; 2 searches returned implausible zero-hits and MUST be re-run. DBLP /search/publ/api intermittently 500/503 (5 queries). 8 entries are arXiv-only = venue UNVERIFIED FROM THIS NODE, not unpublished. Abstracts read for SeDeM/RAC/KV-CAT/Through-the-Bottleneck only; all other rows are title+venue+repo notes. ZERO cross-disk verification: all A02 raw results live on zwfy6, unmounted here. Full list in RELATED_WORK.md section 5.",
+  "promotion": "NO. Unchanged by this pass."
+ },
+ "gpu_policy": "NO further A02 GPU. Resurrection requires a NEW MECHANISM, not another read-out of the same ladder. [VERBATIM copy of disposition_2026_08_12.gpu_policy, surfaced to the TOP level 2026-08-15. Reason, measured not argued: ready_queue.py:_walk_blockers scans only TOP-LEVEL BLOCK_KEYS, so while this policy was nested inside disposition_2026_08_12 the scheduler could not see it -- and adding related_work_status alone flipped A02 from ready_cpu to **ready_gpu** in a sandbox copy, i.e. writing a Related Work file would have re-opened a CLOSED proposal for GPU by paperwork alone. No decision changed here; only its visibility. See memory/a-declared-lifecycle-is-not-an-adjudicated-one.md]"
 }

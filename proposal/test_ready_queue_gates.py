@@ -535,6 +535,46 @@ def main():
         # Guard the invariant the whole file exists for: a well-papered document
         # with no blocker SHOULD reach ready_gpu, or the blocker check has just
         # become a blanket refusal and the tests above would pass vacuously.
+        print("\n(j) a blocker nested in a dated disposition wrapper is BINDING")
+        # Shape copied from A02's real STATUS.json. MEASURED 2026-08-15: with the
+        # clause ONLY nested, and RELATED_WORK.md present, ready_queue.py reported
+        # `1 ready_gpu` -- i.e. it offered a proposal whose own record says
+        # "NO further A02 GPU". `_walk_blockers` scanned top level only.
+        r_j = read_fixture(tmp, "A02-like", base_doc(
+            disposition_2026_08_12={
+                "verdict": "CLOSED. Storage form dead; read-compute form a 1.03-1.37x micro-opt.",
+                "gpu_policy": ("NO further A02 GPU. Resurrection requires a NEW MECHANISM, "
+                               "not another read-out of the same ladder."),
+            },
+        ), related_work=True)
+        with open(os.path.join(tmp, "A02-like", "STATUS.json"), encoding="utf-8") as f:
+            doc_j = json.load(f)
+        paths_j = {p for p, _ in ready_queue._walk_blockers(doc_j)}
+        ok_j1 = check("nested disposition_*.gpu_policy is seen by _walk_blockers",
+                      "disposition_2026_08_12.gpu_policy" in paths_j,
+                      f"paths={sorted(paths_j)}")
+        ok_j2 = check("a nested closing gpu_policy keeps it OUT of ready_gpu",
+                      r_j["lifecycle"] != "ready_gpu",
+                      f"lifecycle={r_j['lifecycle']}")
+
+        print("\n(k) the nested blocker lookup must NOT fire on unrelated wrappers")
+        # Same clause text under a key that is not allow-listed: it must stay
+        # invisible, else the fix degenerates into a blind deep walk that reads
+        # prose merely MENTIONING a blocker as a live blocker -- the over-report
+        # failure mode, which strands work exactly like the under-report one.
+        r_k = read_fixture(tmp, "unrelated-nest", base_doc(
+            some_narrative_note={"gpu_policy": "we once considered stopping GPU here"},
+        ), related_work=True)
+        with open(os.path.join(tmp, "unrelated-nest", "STATUS.json"), encoding="utf-8") as f:
+            doc_k = json.load(f)
+        paths_k = {p for p, _ in ready_queue._walk_blockers(doc_k)}
+        ok_k1 = check("gpu_policy under a non-allow-listed key is NOT a blocker",
+                      "some_narrative_note.gpu_policy" not in paths_k,
+                      f"paths={sorted(paths_k)}")
+        ok_k2 = check("and that proposal is still dispatchable",
+                      r_k["lifecycle"] == "ready_gpu",
+                      f"lifecycle={r_k['lifecycle']}")
+
         print("\n(control) a fully specified, unblocked proposal IS ready_gpu")
         r = read_fixture(tmp, "clean", base_doc(), related_work=True)
         ok_ctl = check("control reaches ready_gpu (checks are not vacuous)",
@@ -558,6 +598,7 @@ def main():
         del ok_g1, ok_g2, ok_g3, ok_g4, ok_g5, ok_g6, ok_g7, ok_g8, ok_g9
         del ok_h1, ok_h2
         del ok_i1, ok_i2, ok_i3
+        del ok_j1, ok_j2, ok_k1, ok_k2
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
 

@@ -186,6 +186,12 @@ KILL_KEYS = [
 # search finds 40+ `*kill*`/`*next_gate*` paths, of which exactly one
 # (gate_design.kill_condition_verbatim) is an actual gate.
 NESTED_GATE_CONTAINERS = ("gate_design", "gates", "prereg", "preregistration")
+# Containers one level down that may hold a BLOCK_KEYS clause. Prefix-matched, so
+# a dated wrapper like `disposition_2026_08_12` is covered by "disposition".
+# Added 2026-08-15 after measuring that A02's nested `gpu_policy` was invisible
+# and the proposal therefore reported ready_gpu -- see `_walk_blockers`.
+NESTED_BLOCKER_CONTAINERS = ("disposition", "closure", "verdict", "kill_gate_verdict",
+                             "postmortem", "decision")
 NOVELTY_BOOL = ["novelty_checked"]
 NOVELTY_OTHER = ["novelty_status", "novelty_status_detail", "k1_novelty",
                  "novelty_check_2026_08_09", "novelty_verdict"]
@@ -367,27 +373,59 @@ def _walk_blockers(d):
     Container paths (`blocked_by.still_blocking_before_any_gate_gpu`) are yielded
     alongside their indexed clauses, so a pointer may discharge either one item
     or the whole list.
+
+    ONE level of nesting is searched, via the explicit `NESTED_BLOCKER_CONTAINERS`
+    allow-list, for the same reason `_first_nested` exists for gates.
+    MEASURED 2026-08-15: A02's disposition verdict is
+      disposition_2026_08_12.gpu_policy = "NO further A02 GPU. Resurrection
+      requires a NEW MECHANISM, not another read-out of the same ladder."
+    Scanning only the top level made that verdict INVISIBLE, and with A02's
+    RELATED_WORK.md in place the proposal reported `ready_gpu` -- i.e. the
+    scheduler would have offered me a proposal that its own record closes for
+    GPU. Reproduced both ways: nested-only -> `1 ready_gpu`; same file with the
+    policy also surfaced at top level -> `0 ready_gpu, blocker STILL LIVE`.
+    A dated disposition wrapper is exactly where a closing verdict naturally
+    gets written, so this is the common case, not an exotic one.
     """
-    for k in BLOCK_KEYS:
-        if k not in d:
-            continue
-        v = d[k]
+    seen = set()
+
+    def _emit(prefix, v):
         if isinstance(v, dict):
             for sk, sv in v.items():
                 if isinstance(sv, list):
-                    yield f"{k}.{sk}", sv          # the container itself
+                    yield f"{prefix}.{sk}", sv          # the container itself
                     for i, item in enumerate(sv):
-                        yield f"{k}.{sk}[{i}]", item
+                        yield f"{prefix}.{sk}[{i}]", item
                 elif isinstance(sv, str) and sv.strip():
-                    yield f"{k}.{sk}", sv
+                    yield f"{prefix}.{sk}", sv
                 elif isinstance(sv, dict) and sv:
-                    yield f"{k}.{sk}", sv
+                    yield f"{prefix}.{sk}", sv
         elif isinstance(v, list):
-            yield k, v
+            yield prefix, v
             for i, sv in enumerate(v):
-                yield f"{k}[{i}]", sv
+                yield f"{prefix}[{i}]", sv
         elif isinstance(v, str) and v.strip():
-            yield k, v
+            yield prefix, v
+
+    for k in BLOCK_KEYS:
+        if k in d:
+            for path, value in _emit(k, d[k]):
+                if path not in seen:
+                    seen.add(path)
+                    yield path, value
+
+    # one level down, allow-listed containers only -- never a blind deep walk,
+    # which would re-read prose mentioning a blocker as if it were one.
+    for c in NESTED_BLOCKER_CONTAINERS:
+        for ck, cv in d.items():
+            if not (ck == c or ck.startswith(c)) or not isinstance(cv, dict):
+                continue
+            for k in BLOCK_KEYS:
+                if k in cv:
+                    for path, value in _emit(f"{ck}.{k}", cv[k]):
+                        if path not in seen:
+                            seen.add(path)
+                            yield path, value
 
 
 def _live_blockers(d):
