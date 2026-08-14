@@ -17,6 +17,31 @@ BASE = "/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory"
 N_BOOT, SEED = 10000, 7
 LET = "ABCDEFGHIJ"
 
+
+def two_sided_boot_p(bs, n_boot=None):
+    """R-7-fixed mid-p two-sided bootstrap p -- VERBATIM the estimator the published
+    floor side uses (`_two_sided_boot_p_local`, mmlu_pro_power_nulls.py:121-132).
+
+    This function exists because the first version of this script wrote
+    `2*min((d<=0).mean(), (d>=0).mean())`, which is the PRE-R-7 doubled-tail formula that
+    double-counts the atom at zero -- i.e. the exact defect 05_analysis.tex:55 takes credit
+    for repairing ("produced an illegal p=1.042"). Using it here inflated vs_floor.boot_p on
+    12/15 cells relative to the published `v1_boot_p` sitting in the SAME record, by exactly
+    the tie mass. The counts in the paper's table use the CI, not p, so no reported number
+    moved -- but the evidence file contradicted both itself and the manuscript.
+
+    Splitting the zero atom evenly makes p <= 1 structural and makes this side's p directly
+    comparable to the floor side's, which is the whole point of the S2-03 fix.
+    """
+    bs = np.asarray(bs, dtype=np.float64)
+    if n_boot is None:
+        n_boot = bs.size
+    tie = float((bs == 0).mean())
+    p_lo = float((bs < 0).mean()) + 0.5 * tie
+    p_hi = float((bs > 0).mean()) + 0.5 * tie
+    return float(min(1.0, max(2.0 * min(p_lo, p_hi), 1.0 / n_boot)))
+
+
 CELLS = json.load(open("/tmp/heal_cells.json"))
 
 def load(root, arm):
@@ -53,9 +78,8 @@ for c in CELLS:
         d_fl[b] = corr[i].mean() - floor_vec[i].mean()
     def summ(d, obs):
         lo, hi = np.percentile(d, [2.5, 97.5])
-        # two-sided bootstrap p by the sign-symmetry convention used elsewhere
-        p = 2 * min((d <= 0).mean(), (d >= 0).mean())
-        p = max(p, 1.0 / N_BOOT)
+        # R-7 mid-p, identical to the published floor-side estimator (see docstring above).
+        p = two_sided_boot_p(d, N_BOOT)
         return dict(delta_pp=100*obs, ci95_lo_pp=100*lo, ci95_hi_pp=100*hi,
                     half_width_pp=100*(hi-lo)/2, boot_p=float(p),
                     ci_excludes_zero=bool(lo > 0 or hi < 0))

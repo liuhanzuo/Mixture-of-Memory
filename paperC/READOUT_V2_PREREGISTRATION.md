@@ -508,3 +508,39 @@ execution. Nothing is claimed missing on the basis of a one-disk search.
 non-multiples of 5000 transient. `outputs/paperC_qwen3base_heal_k8f2_pinned/`
 protects 5000–7000 by hardlink (same inodes, 0 extra bytes). **Pin before scoring
 any new milestone.**
+
+---
+
+## ADDENDUM 2026-08-15 — the "always" at lines 144-146 is RETRACTED
+
+**Lines 144-146 above are left byte-identical** (dated pre-registration provenance must not be
+silently rewritten). This addendum records that one of their claims no longer holds.
+
+Those lines assert `acc_hat <=` the best-constant floor **always**, and that "v2 is therefore a
+lower absolute bar". **The word "always" is withdrawn.** The proof behind it,
+`sum_L p_L m_L <= max_L m_L`, is *unstratified*, whereas the estimator permutes within `n_opt`
+strata. Stratification only gives `acc_hat <= sum_s w_s max_L m_(s,L)`, whose right-hand side
+dominates `f_const = max_L sum_s w_s m_(s,L)`.
+
+Measured on MMLU-Pro (0 GPU; the 8 per-item shards of `7B_base`, n=12032, 0 dup, 0 nan;
+integer counts independently reproduced twice):
+
+- `f_const = 1403/12032 = 0.1166057180851064` (always-A)
+- `sum_s w_s max_L m_(s,L) = 1439/12032 = 0.1195977393617021`
+- gap = **exactly 36 gold items = 0.2992021277 pp**
+- `argmax_L` differs from A in **4 of 8 strata** (`n_opt` = 5, 6, 7, 8 -> B, E, B, E),
+  covering 623/12032 items
+
+The ordering nevertheless holds in all 27 evaluated cells, but that count is weaker than it
+looks: 13 of the 27 clear the floor by more than the entire 0.2992 pp gap and so could not have
+violated it under any prediction vector. The inversion is realizable **on MMLU-Pro itself** by
+the `n_opt`-conditional emitter A,A,B,E,B,E,A,A.
+
+**What replaces it:** the ordering is a theorem under an explicit regularity condition ---
+`p_{s,L} = p_L` for all `s` gives `acc_hat = sum_L p_L f_L <= f_const` exactly. The 27 cells are
+evidence for *that condition*, not for the bound.
+
+Evidence: `paperC/evidence/s2_02_stratified_ordering.json` (now carries all 8 strata rows and
+the integer forms), `paperC/evidence/s2_02_strata_raw.json`,
+`paperC/code/s2_02_stratified_ordering.py`. Manuscript wording: `03_method.tex` final paragraph
+of §3.2. Adjudicated in `paperC/review_rounds/round_01/`.
