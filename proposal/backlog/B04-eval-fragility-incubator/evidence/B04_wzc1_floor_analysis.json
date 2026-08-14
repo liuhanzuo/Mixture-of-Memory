@@ -1,0 +1,193 @@
+{
+  "gate": "B04 G0 floor-first (0 GPU)",
+  "date": "2026-08-14",
+  "gpu_used": "none",
+  "arch": "sm_100 (wzc1, LOCAL/.212). Comparator provenance: paperB/SEEDVAR_KEEP14_VERDICT.md",
+  "prereg_note": "PRIMARY = median_margin, fixed BEFORE G1 arms exist. See GATE_DESIGN.md sec 1.",
+  "ladder_identity_warning": "keep12 rung here is step111500 (wzc1), NOT step124000 (zwfy6, evidence/B04_6rung_bs16_analysis.json). Quoting either Spearman(core6, heal_steps) requires naming its ladder.",
+  "sigma_hat_source": {
+    "pair": [
+      "keep14_s42_step200000_sv181",
+      "keep14_s1234_step200000_sv181"
+    ],
+    "k": 2,
+    "divisor": 1.1284,
+    "meta": {
+      "s42": {
+        "ckpt": "outputs/olmo2_probe2_7B_keep14fresh2/step200000.pt",
+        "ckpt_step": 200000,
+        "keep_front_layers": 14,
+        "n_fresh_layers": 2,
+        "core6": 0.5937559472407744
+      },
+      "s1234": {
+        "ckpt": "outputs/olmo2_probe2_7B_keep14fresh2_seed1234/step200000.pt",
+        "ckpt_step": 200000,
+        "keep_front_layers": 14,
+        "n_fresh_layers": 2,
+        "core6": 0.5999360754836806
+      }
+    }
+  },
+  "seed_pair_metrics": {
+    "s42": {
+      "n": 17195,
+      "median_margin": 0.10789000000000004,
+      "frac_lt_0.001": 0.006222739168362896,
+      "frac_lt_0.005": 0.028205873800523407,
+      "frac_lt_0.01": 0.05484152369874964
+    },
+    "s1234": {
+      "n": 17195,
+      "median_margin": 0.10850000000000004,
+      "frac_lt_0.001": 0.003896481535330038,
+      "frac_lt_0.005": 0.023320732771154404,
+      "frac_lt_0.01": 0.05024716487350974
+    }
+  },
+  "core6": {
+    "base_full": 0.7040247168543403,
+    "shortgpt16@200k": 0.621942297446674,
+    "keep14@200k": 0.5937559472407744,
+    "keep12@111.5k": 0.5694057248424728,
+    "keep10@83.5k": 0.5321676055953507,
+    "keep8@121k": 0.5237748180575631
+  },
+  "fragility_stats": {
+    "base_full": {
+      "n": 17195,
+      "median_margin": 0.13167799999999996,
+      "frac_lt_0.001": 0.003024134922942716,
+      "frac_lt_0.005": 0.018261122419307937,
+      "frac_lt_0.01": 0.03722012212852573
+    },
+    "shortgpt16@200k": {
+      "n": 17195,
+      "median_margin": 0.11659900000000001,
+      "frac_lt_0.001": 0.004419889502762431,
+      "frac_lt_0.005": 0.025356208200058156,
+      "frac_lt_0.01": 0.053911020645536496
+    },
+    "keep14@200k": {
+      "n": 17195,
+      "median_margin": 0.10789000000000004,
+      "frac_lt_0.001": 0.006222739168362896,
+      "frac_lt_0.005": 0.028205873800523407,
+      "frac_lt_0.01": 0.05484152369874964
+    },
+    "keep12@111.5k": {
+      "n": 17195,
+      "median_margin": 0.10022199999999998,
+      "frac_lt_0.001": 0.006280895609188718,
+      "frac_lt_0.005": 0.029369002617039838,
+      "frac_lt_0.01": 0.06199476592032568
+    },
+    "keep10@83.5k": {
+      "n": 17195,
+      "median_margin": 0.09557500000000002,
+      "frac_lt_0.001": 0.006455364931666182,
+      "frac_lt_0.005": 0.034370456528060485,
+      "frac_lt_0.01": 0.06874091305612097
+    },
+    "keep8@121k": {
+      "n": 17195,
+      "median_margin": 0.09477900000000006,
+      "frac_lt_0.001": 0.0068043035766211105,
+      "frac_lt_0.005": 0.03506833381797034,
+      "frac_lt_0.01": 0.06949694678685664
+    }
+  },
+  "per_metric_floor_analysis": {
+    "median_margin": {
+      "sigma_hat": 0.0005405884438142497,
+      "full_ladder_range": 0.036898999999999904,
+      "R_range_over_sigma": 68.25710098360645,
+      "adjacent_gaps_core6_ordered": [
+        0.0007959999999999634,
+        0.004646999999999957,
+        0.007668000000000064,
+        0.008708999999999967,
+        0.015078999999999954
+      ],
+      "two_sigma": 0.0010811768876284994,
+      "n_adjacent_gaps_clearing_2sigma": 4,
+      "n_adjacent_gaps": 5,
+      "spearman_core6": 1.0,
+      "exact_p_two_sided": 0.002777777777777778
+    },
+    "frac_lt_0.001": {
+      "sigma_hat": 0.0020615540881184493,
+      "full_ladder_range": 0.0037801686536783944,
+      "R_range_over_sigma": 1.8336499999999998,
+      "adjacent_gaps_core6_ordered": [
+        0.0003489386449549289,
+        0.00017446932247746402,
+        5.815644082582134e-05,
+        0.001802849665600465,
+        0.0013957545798197152
+      ],
+      "two_sigma": 0.004123108176236899,
+      "n_adjacent_gaps_clearing_2sigma": 0,
+      "n_adjacent_gaps": 5,
+      "spearman_core6": -1.0,
+      "exact_p_two_sided": 0.002777777777777778
+    },
+    "frac_lt_0.005": {
+      "sigma_hat": 0.004329263585048744,
+      "full_ladder_range": 0.0168072113986624,
+      "R_range_over_sigma": 3.882233333333333,
+      "adjacent_gaps_core6_ordered": [
+        0.0006978772899098526,
+        0.005001453911020647,
+        0.0011631288165164302,
+        0.0028496656004652517,
+        0.007095085780750219
+      ],
+      "two_sigma": 0.008658527170097487,
+      "n_adjacent_gaps_clearing_2sigma": 0,
+      "n_adjacent_gaps": 5,
+      "spearman_core6": -1.0,
+      "exact_p_two_sided": 0.002777777777777778
+    },
+    "frac_lt_0.01": {
+      "sigma_hat": 0.004071569324033939,
+      "full_ladder_range": 0.032276824658330906,
+      "R_range_over_sigma": 7.927367088607591,
+      "adjacent_gaps_core6_ordered": [
+        0.0007560337307356696,
+        0.006746147135795293,
+        0.007153242221576039,
+        0.0009305030532131414,
+        0.016690898517010763
+      ],
+      "two_sigma": 0.008143138648067878,
+      "n_adjacent_gaps_clearing_2sigma": 1,
+      "n_adjacent_gaps": 5,
+      "spearman_core6": -1.0,
+      "exact_p_two_sided": 0.002777777777777778
+    }
+  },
+  "clause5_budget_discrimination": {
+    "primary_metric": "median_margin",
+    "damaged_rungs": [
+      "shortgpt16@200k",
+      "keep14@200k",
+      "keep12@111.5k",
+      "keep10@83.5k",
+      "keep8@121k"
+    ],
+    "damaged_range_median_margin": 0.02181999999999995,
+    "damaged_heal_step_span": 116500,
+    "denominator_guard_threshold": 0.0032435306628854983,
+    "denominator_guard_basis": "6*sigma_hat(median_margin)",
+    "denominator_admissible": true,
+    "denominator_verdict": "OK",
+    "phi_kill_threshold": 0.6,
+    "phi_pass_threshold": 0.3,
+    "beta_budget_kill_per_step": 1.1237768240343322e-07,
+    "beta_budget_pass_per_step": 5.618884120171661e-08,
+    "S_damage_ols": 0.2179427672898059,
+    "spearman_core6_heal_steps_MANDATORY_CODISCLOSURE": 0.6668859288553503,
+    "spearman_core6_layers_kept": 0.9999999999999998
+  }
+}

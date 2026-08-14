@@ -85,5 +85,120 @@
       "refinement_2_madaan": "OpenReview returns THREE records for this title: RegML 2024 workshop (venueid NeurIPS.cc/2024/Workshop/RegML), CoRR 2024, AND ICLR.cc/2025/Conference/Rejected_Submission. Workshop claim is correct, but the paper was REJECTED at ICLR 2025. Do not treat its negative result about IRT/item-analysis failing on MMLU as settled -- which if anything leaves more room for B04 per-item margin lens.",
       "verdict_impact": "NONE on the HOLD verdict; both refinements make the novelty case marginally STRONGER"
     }
-  }
+  },
+  "lifecycle": "ready_gpu",
+  "needs_arch": "sm_100",
+  "needs_arch_reason": "Gate G1's noise floor sigma_hat and the entire comparison ladder are sm_100 (LOCAL/.212, B200). The seed pair keep14_s42/s1234_step200000_sv181 was produced on LOCAL per paperB/SEEDVAR_KEEP14_VERDICT.md line 3 ('Node: LOCAL (8xL20A, wzc1) only', L20A name string = B200 sm_100 per memory/l20a-name-string-is-really-b200-sm100.md). The 6 wzc1 ladder dirs are the same disk+arch. New arms MUST be sm_100 or the run-to-run term and the hardware term are confounded and even a FAIL is uninterpretable (LIFECYCLE_SCHEMA.md sec 3). The zwfy6/sm_90 _bs16 dirs that DIRECTION_A_VERDICT.md:97 cites are NOT admissible as G1 comparators for the same reason.",
+  "novelty_checked": true,
+  "novelty_verdict": "hold_in_backlog (novelty_check_2026_08_09). NOT a blocker for GPU: no prior work satisfies the 3-part kill_definition. RELATED_WORK.md absence blocks PROMOTION only.",
+  "gpu_cost_estimate": {
+    "value": "1.08 GPU-h (gate G1). G0 is 0 GPU-h. Downstream matched-family ladder 244-2560 GPU-h, NOT authorised until G1 passes.",
+    "basis": "MEASURED, same harness AND same arch (sm_100) as the comparator. logs/sv181_main.log:5-6 -- core6 downstream for keep14_s42 ran 01:12:18 -> 01:14:19 = 121 s wall on 8 GPUs = 0.269 GPU-h/rung (driver scripts/_run_paperB_keep14_seedvar_local.sh:116-125, 8 shards x batch_size 8, --save_per_example); G1 needs 4 new rungs => 4 x 0.269 = 1.08 GPU-h. Downstream: logs/qwen3_armB_f12k2_20k.log final step line 1.37 s/step x 20000 steps x 8 GPU / 3600 = 60.9 GPU-h/rung x 4 = 244 GPU-h at a common 20k step; logs/qwen3_armB_200k_local.log final step line 1.44 s/step x 200000 x 8 / 3600 = 640 GPU-h/rung x 4 = 2560 GPU-h at 200k.",
+    "value_gate_G1": "1.08 GPU-h",
+    "basis_gate_G1": "MEASURED, same harness + same arch as the comparator. logs/sv181_main.log:5-6 -- core6 downstream for keep14_s42 ran 01:12:18 -> 01:14:19 = 121 s wall on 8 GPUs = 0.269 GPU-h/rung (driver scripts/_run_paperB_keep14_seedvar_local.sh:116-125, 8 shards x batch_size 8, --save_per_example). G1 needs 4 new rungs (step25000/50000/100000/128000 of olmo2_probe2_7B_keep14fresh2_seed1234) => 4 x 0.269 = 1.08 GPU-h. Add ~0.1 GPU-h slack for the 8x48.7GB ckpt loads (logs/sv181_ppl_..._shard0.log shows load at 01:11:41 vs window start 01:06:18).",
+    "value_gate_G0": "0 GPU-h",
+    "basis_gate_G0": "Pure CPU. All 6 ladder dirs + both seed dirs already hold 54 per_example_*.jsonl each; norm_lens is a dataset property, so it transplants by item_id from the enriched donor. Verified 2026-08-14 at 0 GPU: transplant reproduces the natively-enriched donor EXACTLY on all 4 metrics (median_margin 0.10789000000000004 both ways).",
+    "value_downstream_matched_family_ladder": "244 GPU-h at a common 20k step, or 2560 GPU-h at 200k",
+    "basis_downstream": "logs/qwen3_armB_f12k2_20k.log final step line '1.37s/step' x 20000 steps x 8 GPU / 3600 = 60.9 GPU-h/rung x 4 damaged rungs = 244 GPU-h. At 200k: logs/qwen3_armB_200k_local.log final step line '1.44s/step' x 200000 x 8 / 3600 = 640 GPU-h/rung x 4 = 2560 GPU-h (cross-checked against that log's own wall clock 2026-07-13 20:15:57 -> 2026-07-16 18:36:34 = 70.3 h x 8 = 562 GPU-h for a run that resumed at step 48000, i.e. 152k fresh steps -> 1.33 s/step effective, consistent). THIS SPEND IS GATED BEHIND G1 AND IS NOT AUTHORISED YET.",
+    "why_this_ordering": "G1 costs 1.08 GPU-h and can kill the 244-2560 GPU-h leg. Ratio 226x-2370x."
+  },
+  "kill_gate": {
+    "id": "B04-KILL-2026-08-14",
+    "provenance": "PROPOSAL.md:31-38 lifted verbatim, with clauses 2/3/4 given numeric thresholds they never had. Original failure consequence retained: 'fails -> A01 appendix negative result, not a stand-alone paper'.",
+    "primary_metric": "median_margin = median over the pooled n=17195 core6 items of |norm_scores[gold] - max_{d!=gold} norm_scores[d]|, pooled-abs reading (code/analyze_b04_5rung.py:40-42,136-138)",
+    "primary_metric_choice_is_prereg_not_posthoc": "Chosen BEFORE G1's new arms exist, on the noise-floor argument alone, and the demotion of frac(margin<0.005) is recorded here rather than after seeing G1. frac(margin<0.005) fails its own floor: sigma_hat=0.004329 gives R=3.88 with 0/5 adjacent rung gaps clearing 2*sigma_hat. median_margin gives sigma_hat=0.000541, R=68.26, 4/5 gaps clearing. Both computed at 0 GPU on 2026-08-14 from the wzc1 ladder. This supersedes matched_ladder_requirements[6] ('reuse the already-designated PRIMARY frac(margin<0.005)'), whose intent was to forbid post-hoc threshold shopping -- honoured by fixing the primary here, pre-data.",
+    "clause_1_bs_ladder": "SUPERSEDED. status/PAPERF_BS_LADDER_VERDICT.md returned FLIP_RATE_MONOTONE=UNTESTABLE at 2/6 rungs, and status/PAPERB_WITHIN_DISK_FLOOR_V3.md shows same-driver same-arch re-runs are BIT-DETERMINISTIC (0 flips) -- so a bs8-vs-bs16 flip ladder has a structurally near-zero denominator and cannot carry the claim. Replaced by clause 5.",
+    "clause_2_exact_test": "Spearman(core6, median_margin) over the 6-rung wzc1 sm_100 ladder must be rho = +1.0000 with exact two-sided permutation p = 0.0028 (= 2/720, the n=6 floor). Measured 2026-08-14: rho=+1.0000, p=0.0028. PASS, already banked.",
+    "clause_3_beats_null": "Full-damaged-ladder range of median_margin must be >= 6 * sigma_hat, where sigma_hat comes from the seed pair. Threshold 6 chosen so the range survives even if sigma_hat is under-estimated by 3x (n=2 gives a very loose sigma). Measured: range 0.021820 over the 5 damaged rungs = 40.3 * sigma_hat. PASS, already banked.",
+    "clause_4_second_nuisance": "WITHDRAWN as a kill clause, DEMOTED to a reported robustness check. Reason: the only available second nuisance axis (torch/GPU arch) is exactly the axis LIFECYCLE_SCHEMA.md sec 3 forbids crossing for same-harness reproduction, and status/PAPERB_WITHIN_DISK_FLOOR_V3.md shows the within-arch term is identically zero, so 'replicates across arch' would be testing stack drift, not fragility. Retaining it as a kill clause would let a stack-version artefact kill a real finding.",
+    "clause_5_budget_discrimination_THE_LIVE_ONE": "This is the only clause not yet run and the only one that can still kill B04. See next_gate. The margin-compression claim is attributed to DAMAGE DEPTH. But on the same wzc1 ladder Spearman(core6, heal_steps) = +0.6669 across the 5 damaged rungs (steps 200000/200000/111500/83500/121000; recomputed 2026-08-14, and note this is NOT the +0.8721 in status_note_2026_08_10, which was computed on the zwfy6 ladder whose keep12 rung is step124000 -- both must be disclosed with their ladder identified). Heal budget is therefore a live alternative explanation. Clause 5 measures the budget slope DIRECTLY at fixed damage and requires it to be small relative to the damage slope.",
+    "statement": "B04 is KILLED if, on the fixed-damage budget ladder (keep14+fresh2 seed1234 at heal steps 25000/50000/100000/128000/200000 -- damage depth held EXACTLY at keep_front=14, n_fresh=2), the median_margin excursion attributable to heal budget alone, rescaled to the damaged ladder's own heal-step span of 116500 steps, reaches or exceeds 60% of the damaged ladder's total median_margin range of 0.021820.",
+    "threshold": "phi = |beta_budget| * 116500 / 0.021820 >= 0.60 => KILL. phi <= 0.30 => PASS. 0.30 < phi < 0.60 => NARROWED (claim must be restated as 'damage and heal budget jointly compress margins', family-generality spend stays unauthorised). beta_budget = OLS slope of median_margin on heal_step over the 5 fixed-damage points, units margin-per-step; the threshold in absolute margin units is Delta_budget = 0.006546 (phi=0.30) and 0.013092 (phi=0.60). Why 0.60: at phi>=0.60 the nuisance factor explains more of the observed range than the factor of interest does, which is the exact standard status_note_2026_08_10.disclosure already applied to retire the Qwen leg ('a correlation better explained by a nuisance factor than by the factor of interest cannot license a claim about the factor of interest'). Why 0.30: it is 6*sigma_hat/0.021820 = 0.149 rounded up to twice the floor, so a PASS means the budget excursion is not merely resolvable-but-small, it is small with a 2x margin over resolvability.",
+    "comparator": "The damaged-rung span of the wzc1 sm_100 6-rung ladder: olmo2_downstream_results/{7B_shortgpt16_step200000_wzc1, 7B_keep14_step200000_wzc1_v2, 7B_keep12_step111500_wzc1, 7B_keep10_step83500_wzc1, 7B_keep8_step121000_wzc1}, median_margin 0.116599 -> 0.094779, range 0.021820, heal-step span 116500. NOT compared against 'a baseline' -- against this named 5-arm set.",
+    "denominator_guard": "phi is a ratio; its denominator is the damaged-ladder range 0.021820. (a) The denominator is only admissible if it clears the floor: range >= 6*sigma_hat = 0.0032435. Measured 0.021820 = 6.73x the guard. PASS. (b) If the denominator were <= 0 or below 6*sigma_hat, phi is UNDEFINED, not large and not small, and the gate returns DENOMINATOR_UNRESOLVED -- which blocks the family-ladder spend exactly as a KILL would, because a ratio against an unresolved range cannot license 244-2560 GPU-h. (c) sigma_hat itself is a denominator in the floor check and is ill-defined at n=1: it may only be formed from >= 2 arms holding damage depth AND heal step EXACTLY constant, using divisor E[range of k]/sigma = 1.1284 at k=2 (1.6926 at k=3, 2.8472 at k=8; using 1.0 understates the floor by 11.4% and can flip the boolean -- memory/a-range-is-not-a-measurement-until-it-clears-its-floor.md). (d) If sigma_hat computes to exactly 0 -- the normal outcome for same-driver re-runs per status/PAPERB_WITHIN_DISK_FLOOR_V3.md -- the gate returns FLOOR_UNMEASURABLE and does NOT pass; that means the contrast is not a real nuisance contrast. The seed pair is safe here: it varies init seed and gives non-zero sigma_hat on all 4 metrics (median_margin |delta|=0.000610 -> 0.000541).",
+    "what_result_stops_the_work": "beta_budget large enough that phi >= 0.60. Concretely: if median_margin on the fixed-damage budget ladder moves by >= 0.013092 across a 116500-step-equivalent budget change, then heal budget alone reproduces >= 60% of what B04 attributes to damage depth, the OLMo leg falls to the SAME defect that retired the Qwen leg (DIRECTION_A_QWEN_LADDER_CONFOUND_ADDENDUM.md), and B04 folds into the Paper B methods appendix per olmo_only_finding.recommended_home. The 244-2560 GPU-h matched-family ladder is then never run.",
+    "this_kill_is_reachable_not_decorative": "Pre-registered adversarial check, 0 GPU, from data already on disk: the ONLY fixed-damage budget ladder that exists anywhere in this project is the Qwen f12k2/14L cell (steps 2000/20000/200000) in evidence/B04_Qwen_6rung_bs16_analysis.json. Its OLS budget slope is beta = +1.3407e-07 /step, which rescaled to 116500 steps gives Delta = 0.015619 and phi = 0.716 -- ABOVE the 0.60 kill line. Its median_margin is also non-monotone in budget (0.107388 -> 0.095181 -> 0.133933). So the single most relevant empirical precedent predicts KILL. This gate is not one that can only pass.",
+    "mandatory_disclosure_on_any_report": "Any quotation of Spearman(core6, median_margin)=+1.00 must print beside it (i) Spearman(core6, heal_steps) for the SAME ladder with the ladder named (+0.6669 wzc1 / +0.8721 zwfy6), (ii) sigma_hat and R, and (iii) the phi from clause 5. Standing requirement from STATUS.json.olmo_only_finding.budget_caveat_2026_08_10."
+  },
+  "next_gate": {
+    "id": "G1-budget-discrimination-at-fixed-damage",
+    "statement": "Eval median_margin at 4 additional heal checkpoints of ONE arm whose damage depth is held exactly constant (olmo2_probe2_7B_keep14fresh2_seed1234 at step 25000/50000/100000/128000, joining the already-measured step200000), then compute beta_budget and phi and apply the clause-5 thresholds. This isolates heal budget from damage depth for the first time in B04's history -- the confound that already retired the Qwen leg and that the OLMo leg has only ever disclosed, never tested.",
+    "single_variable": "heal step count. keep_front=14, n_fresh=2, seed=1234, base_model ../models/OLMo-2-1124-7B, harness scripts/eval_olmo2_probe2_downstream.py, 8 shards, batch_size 8, --save_per_example, node arch sm_100, one driver invocation back-to-back -- all held fixed. Only ckpt_step varies.",
+    "arms": [
+      "olmo2_probe2_7B_keep14fresh2_seed1234/step25000.pt (48724473567 B, on wzc1, verified 2026-08-14)",
+      "olmo2_probe2_7B_keep14fresh2_seed1234/step50000.pt (48724473567 B, on wzc1)",
+      "olmo2_probe2_7B_keep14fresh2_seed1234/step100000.pt (48724474298 B, on wzc1)",
+      "olmo2_probe2_7B_keep14fresh2_seed1234/step128000.pt (48724474298 B, on wzc1)",
+      "ALREADY MEASURED, no GPU: olmo2_downstream_results/keep14_s1234_step200000_sv181 (median_margin 0.108500)"
+    ],
+    "prereg_G0_first_0_GPU": "Before any card: (a) recompute the 6-rung wzc1 ladder margins read-only by transplanting norm_lens by item_id from the enriched donor keep14_s42_step200000_sv181 (validated exact on the donor itself), OR run scripts/enrich_per_example_normscores.py on the 6 dirs (idempotent, self-verifying, does not touch summary.json, HF cache present at data/hf_datasets_cache/); (b) emit evidence/B04_wzc1_floor_analysis.json with sigma_hat, R and adjacent-gap counts for all 4 metrics; (c) reconcile PROPOSAL.md against evidence/B04_6rung_bs16_analysis.json -- they disagree on every rung of median_margin (base 0.124594 vs 0.131806, keep8 0.075801 vs 0.094933) and on the p (0.0167 vs 0.0028). The JSON side reproduces; PROPOSAL.md's table must be marked superseded BEFORE a threshold is quoted against it.",
+    "decidable_outcome": "PASS: phi <= 0.30, i.e. |beta_budget| <= 5.6189e-08 /step, i.e. the budget-driven median_margin excursion over a 116500-step-equivalent span is <= 0.006546. Then damage depth is established as the dominant driver on OLMo-2, clause 5 closes, and the budget-matched second-family ladder (244 GPU-h at 20k) becomes authorised for the first time. KILL: phi >= 0.60, i.e. |beta_budget| >= 1.1238e-07 /step, i.e. excursion >= 0.013092. Then B04 folds into the Paper B methods appendix and the family ladder is never funded. NARROWED: 0.30 < phi < 0.60 -- claim restated as joint damage+budget compression, family spend still unauthorised, and B04 returns to backlog rather than proceeding. Additional hard aborts: DENOMINATOR_UNRESOLVED if the damaged range < 0.0032435; FLOOR_UNMEASURABLE if sigma_hat == 0; PROTOCOL_VIOLATION if any of the 5 arms is not 8/8 shards or n_scored != 17195 pooled or n_nan != 0 (status/PAPERB_WITHIN_DISK_FLOOR_V3.md and memory/same-harness-runs-bit-identical.md both require asserting n_scored per task, not just n_nan).",
+    "field_symmetry_assertion": "MANDATORY before any margin comparison, because an asymmetric-field paired comparison already produced a 56x artefact once (status/PAPERF_ACCNORM_VERIFIED.md:43-67 -- a reported 34.7% flip rate whose true value was 0.62%, root cause: one side had norm_scores and the other did not). The driver must assert that all 5 arms carry norm_scores/norm_lens on all 6 tasks, or refuse to compute.",
+    "reuses_existing_assets": [
+      "olmo2_downstream_results/keep14_s42_step200000_sv181 + keep14_s1234_step200000_sv181 -- the free noise floor, ALREADY carrying norm_scores; sigma_hat(median_margin)=0.000541 recomputed independently 2026-08-14",
+      "the 4 seed1234 intermediate ckpts -- a fixed-damage budget axis that already exists on wzc1 and that no prior B04 audit noticed; this is what turns a 244-2560 GPU-h question into a 1.08 GPU-h one",
+      "olmo2_downstream_results/7B_{full32_base_wzc1_v2,shortgpt16_step200000_wzc1,keep14_step200000_wzc1_v2,keep12_step111500_wzc1,keep10_step83500_wzc1,keep8_step121000_wzc1} -- the sm_100 comparison ladder, 54 per_example each",
+      "scripts/enrich_per_example_normscores.py -- 0-GPU norm_scores backfill; formula verified to the writer's 6-decimal rounding and argmax(norm_scores)==acc_norm_score on 17195/17195 donor rows",
+      "scripts/_run_paperB_keep14_seedvar_local.sh:112-125 -- the exact core6 invocation that produced the comparator, reusable verbatim with only --ckpt changed; also the source of the 121 s/rung cost anchor",
+      "evidence/B04_Qwen_6rung_bs16_analysis.json -- supplies the adversarial phi=0.716 precedent at 0 GPU",
+      "data/hf_datasets_cache/ -- all 5 core6 datasets present, offline resolution proven by the sv181 shard logs"
+    ],
+    "free_validation_hook": "The ladder rung 7B_keep14_step200000_wzc1_v2 and the seed arm keep14_s42_step200000_sv181 were verified 2026-08-14 to be BIT-IDENTICAL (0/17195 acc_norm_score mismatches, 0/17195 option_scores mismatches, all 6 acc_norm equal to 8 dp). So the floor and the ladder share a common point and sigma_hat is directly commensurable with the ladder's own units -- no cross-protocol rescaling. Any future re-run of that rung that does NOT reproduce bit-identically is a protocol break, not noise."
+  },
+  "readout_preregistration": {
+    "committed": "2026-08-14, BEFORE the 4 arms are evaluated",
+    "primary_readout_point": "median_margin at ckpt_step in {25000, 50000, 100000, 128000, 200000} of olmo2_probe2_7B_keep14fresh2_seed1234; the decision statistic is beta_budget = OLS slope over those exactly 5 points, and phi = |beta_budget| * 116500 / 0.021820.",
+    "not_a_decision_point": "The existence of step153500/165000/170000/175000/180000/185000/190000/195000/199000/199500 ckpts in that directory is NOT an invitation to extend n until the slope crosses a threshold. The 5 points above are the whole readout. Adding points post hoc is the paperC --max_steps error in a new costume (the prereg read-out there was step121000, not the 200000 the flag mentions).",
+    "no_metric_substitution": "median_margin is the primary. frac(margin<0.005), frac<0.001, frac<0.01 are reported for completeness and are explicitly UNDERPOWERED (R = 3.88 / 1.83 / 7.93; adjacent gaps clearing 2*sigma_hat = 0/5, 0/5, 1/5). A phi computed on any of them cannot overturn the primary."
+  },
+  "prereg_measured_constants_2026_08_14": {
+    "gpu_used": "none; all values below recomputed on wzc1 CPU from per_example jsonl + summary.json already on disk",
+    "sigma_hat_median_margin": 0.000541,
+    "sigma_hat_basis": "|0.107890 - 0.108500| / 1.1284, seed pair s42 vs s1234, damage depth AND heal step held exactly constant, one driver/commit b3626c3/interpreter/node per paperB/SEEDVAR_KEEP14_VERDICT.md",
+    "wzc1_ladder_median_margin": {
+      "base_full": 0.131678,
+      "shortgpt16@200k": 0.116599,
+      "keep14@200k": 0.10789,
+      "keep12@111.5k": 0.100222,
+      "keep10@83.5k": 0.095575,
+      "keep8@121k": 0.094779
+    },
+    "wzc1_ladder_core6": {
+      "base_full": 0.704025,
+      "shortgpt16@200k": 0.621942,
+      "keep14@200k": 0.593756,
+      "keep12@111.5k": 0.569406,
+      "keep10@83.5k": 0.532168,
+      "keep8@121k": 0.523775
+    },
+    "damaged_range_median_margin": 0.02182,
+    "damaged_heal_step_span": 116500,
+    "R_and_adjacent_gaps": {
+      "median_margin": {
+        "R": 68.26,
+        "gaps_clearing_2sigma": "4/5"
+      },
+      "frac_lt_0.005": {
+        "R": 3.88,
+        "gaps_clearing_2sigma": "0/5"
+      },
+      "frac_lt_0.001": {
+        "R": 1.83,
+        "gaps_clearing_2sigma": "0/5"
+      },
+      "frac_lt_0.01": {
+        "R": 7.93,
+        "gaps_clearing_2sigma": "1/5"
+      }
+    },
+    "S_damage_wzc1_5_damaged": 0.217943,
+    "spearman_core6_heal_steps_wzc1_5_damaged": 0.6669,
+    "note_on_two_ladders": "This wzc1 sm_100 ladder is NOT the zwfy6 ladder quoted in DIRECTION_A_VERDICT.md / evidence/B04_6rung_bs16_analysis.json: its keep12 rung is step111500, not step124000. Hence Spearman(core6, heal_steps)=+0.6669 here vs +0.8721 there. Both are real; each must be quoted with its ladder named. The zwfy6 _bs16 dirs could not be verified from this node (not mounted); per the two-disk rule that is 'unverified from here', NOT 'gone'."
+  },
+  "remaining_blockers_after_this_design": [
+    "RELATED_WORK.md still absent -- blocks PROMOTION to paper<X>/, does NOT block G1 (novelty is adjudicated hold_in_backlog and ready_queue.py's VERDICT_CLEARED accepts it).",
+    "PROPOSAL.md:9-15 still quotes numbers that disagree with evidence/B04_6rung_bs16_analysis.json on every rung; G0 step (c) must land before any external write-up quotes a threshold.",
+    "The 40 cards are all occupied as of 2026-08-14 (LOCAL/.212 SparseForge, .73/.82 Paper B resume, .104 paperC heal). G1 needs 8x sm_100 for ~121 s x 4 = ~8 min of exclusive wall time, so it is a queue-slot problem, not a capacity problem.",
+    "sigma_hat rests on n=2 (df=1). It is deliberately used only as a floor with a 6x safety factor, never reported as a run-to-run sd -- paperB/SEEDVAR_KEEP14_VERDICT.md sec 5 explicitly forbids the latter."
+  ]
 }
