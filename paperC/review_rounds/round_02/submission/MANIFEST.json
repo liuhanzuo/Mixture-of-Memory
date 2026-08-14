@@ -1,0 +1,211 @@
+{
+  "schema_version": "1.0.0",
+  "round": 2,
+  "paper": "paperC",
+  "snapshot_sha256": "06a5fa5182b2f59e3e9fffe2addafd78cae0dd435dd17a6587467053d9d50dd8",
+  "n_files": 32,
+  "missing_dependencies": [],
+  "excluded_by_blindness_rule": [
+    "review_rounds",
+    "review_history",
+    "tcodex_out",
+    "SCORE_HISTORY",
+    "review_prompts",
+    "WRITER_NOTES"
+  ],
+  "blindness_note": "This snapshot deliberately contains NO previous reviews, scores, response letters, writer notes, or target thresholds. Reviewers must see only this directory and the rubric.",
+  "files": [
+    {
+      "snapshot_path": "evidence/EVIDENCE_PACK.md",
+      "source_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/paperC/tcodex_out/EVIDENCE_PACK.md",
+      "sha256": "39c4160b890b4214e980ae0bc6719fd7e74ad11c592b0877c93e27013a54a879",
+      "size_bytes": 77766
+    },
+    {
+      "snapshot_path": "evidence/build_record.json",
+      "source_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/paperC/gate/build_record.json",
+      "sha256": "48b96abe0d37578a7691c5e77e614bc008f5839baabad4d18df96fd0aad481ce",
+      "size_bytes": 2447
+    },
+    {
+      "snapshot_path": "evidence/floor_winners_curse_calibration.json",
+      "source_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/paperC/evidence/floor_winners_curse_calibration.json",
+      "sha256": "275112623d057406811f5d77071d3c139b0ffa74d46fc6c8ed33d08c380cd399",
+      "size_bytes": 3296
+    },
+    {
+      "snapshot_path": "evidence/numbers_check.json",
+      "source_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/paperC/gate/numbers_check.json",
+      "sha256": "e0760d3709f22d30f18a23514e118332ab451266493ffdce82b20fc0409030c4",
+      "size_bytes": 8482
+    },
+    {
+      "snapshot_path": "manuscript/fancyhdr.sty",
+      "source_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/paperC/fancyhdr.sty",
+      "sha256": "b56ec4434b9f4607529a4b23dc68ad8d4b94f1f631c8cddaf7da78140d53a5ea",
+      "size_bytes": 20521
+    },
+    {
+      "snapshot_path": "manuscript/iclr2026_conference.bst",
+      "source_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/paperC/iclr2026_conference.bst",
+      "sha256": "2d67552db7ed38ccfccb5957b52f95656e25c249724761d3cf5f7922ad1844c5",
+      "size_bytes": 26973
+    },
+    {
+      "snapshot_path": "manuscript/iclr2026_conference.sty",
+      "source_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/paperC/iclr2026_conference.sty",
+      "sha256": "a4852f68e080d6c5245057ca2039100b409e31727898aa93c03d78ddb84374a3",
+      "size_bytes": 9025
+    },
+    {
+      "snapshot_path": "manuscript/main.pdf",
+      "source_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/paperC/main.pdf",
+      "sha256": "dcb3328ab20569895a5732649912d8483028a737cc5dedda1940de8da3c2cae9",
+      "size_bytes": 328885
+    },
+    {
+      "snapshot_path": "manuscript/main.tex",
+      "source_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/paperC/main.tex",
+      "sha256": "f649a44b9362e390cbd52a1c0655132a3e536963fcf3b1740606c8cee560ae1c",
+      "size_bytes": 887
+    },
+    {
+      "snapshot_path": "manuscript/natbib.sty",
+      "source_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/paperC/natbib.sty",
+      "sha256": "88bc70c0e48461934cab5b2accef06b74a8b3ac45ad03ccd3f2a6b7e0d6d530d",
+      "size_bytes": 45154
+    },
+    {
+      "snapshot_path": "manuscript/refs.bib",
+      "source_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/paperC/refs.bib",
+      "sha256": "656bb681e0eddf210f9d606f57230295a4ed0916b1844dbd98cefce6b3dcd973",
+      "size_bytes": 3987
+    },
+    {
+      "snapshot_path": "manuscript/sections/00_abstract.tex",
+      "source_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/paperC/sections/00_abstract.tex",
+      "sha256": "c831ead1b9976dc756435a9c0380d2491dae4414aeff00c338d314d00df6d457",
+      "size_bytes": 2587
+    },
+    {
+      "snapshot_path": "manuscript/sections/01_introduction.tex",
+      "source_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/paperC/sections/01_introduction.tex",
+      "sha256": "8a2588e7a154b84e7e4ada6665596d4d133ec0e5926611c9fcee7d96f6881b15",
+      "size_bytes": 5498
+    },
+    {
+      "snapshot_path": "manuscript/sections/02_related.tex",
+      "source_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/paperC/sections/02_related.tex",
+      "sha256": "7fffc04430c233cff6aae731e92b1f46a4df9b4ba4cf3ae594fffe476046ae1d",
+      "size_bytes": 4159
+    },
+    {
+      "snapshot_path": "manuscript/sections/03_method.tex",
+      "source_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/paperC/sections/03_method.tex",
+      "sha256": "7addb7dffabd6e9f83aeef0b5aa8160a7d93d936f9115cc15b415c7eb3a2d97b",
+      "size_bytes": 6107
+    },
+    {
+      "snapshot_path": "manuscript/sections/03b_nulls.tex",
+      "source_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/paperC/sections/03b_nulls.tex",
+      "sha256": "fcedb38144ac02f877bfb157b160d30291ba54748463e06dfbb9a2d7767eeb7a",
+      "size_bytes": 3550
+    },
+    {
+      "snapshot_path": "manuscript/sections/04_experiments.tex",
+      "source_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/paperC/sections/04_experiments.tex",
+      "sha256": "f29b921bcae03898bc787aae783e1ebaab62acc42296e4b6004ed2b176fc4788",
+      "size_bytes": 4373
+    },
+    {
+      "snapshot_path": "manuscript/sections/05_analysis.tex",
+      "source_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/paperC/sections/05_analysis.tex",
+      "sha256": "f1b69eeef786694ce5cfc3c11d36d10a361ba7952b3e5c3e97b946e7b07123df",
+      "size_bytes": 6436
+    },
+    {
+      "snapshot_path": "manuscript/sections/06_discussion.tex",
+      "source_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/paperC/sections/06_discussion.tex",
+      "sha256": "7b05dcffbfb404ce3d953f694b9794ddcf6e7fff769a7991704ed286bea260dc",
+      "size_bytes": 2771
+    },
+    {
+      "snapshot_path": "manuscript/sections/07_limitations.tex",
+      "source_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/paperC/sections/07_limitations.tex",
+      "sha256": "6e585e42d4bb574bf2eb71672c178fd221286725cdab1e155ec6d48038a0fe34",
+      "size_bytes": 2473
+    },
+    {
+      "snapshot_path": "manuscript/sections/08_ethics.tex",
+      "source_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/paperC/sections/08_ethics.tex",
+      "sha256": "f30f00510771abf76531a63eb807e552d1425a78a4086a25b71bf1a079e33623",
+      "size_bytes": 997
+    },
+    {
+      "snapshot_path": "manuscript/sections/09_appendix.tex",
+      "source_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/paperC/sections/09_appendix.tex",
+      "sha256": "7389b851706546e42c53481a74a73c78312cb80caa5dcaf24398b4090ab05b48",
+      "size_bytes": 2174
+    },
+    {
+      "snapshot_path": "manuscript/sections/tab_claims.tex",
+      "source_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/paperC/sections/tab_claims.tex",
+      "sha256": "38f8d48e125941e16cec8fd1851f80f07366fa2b2df0b96d6450ca7b7450af86",
+      "size_bytes": 2956
+    },
+    {
+      "snapshot_path": "manuscript/sections/tab_conventions.tex",
+      "source_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/paperC/sections/tab_conventions.tex",
+      "sha256": "343d580fbacc949a1ec3d136fca4bb577298762ed9c512fdd2add4741acf6eb5",
+      "size_bytes": 1106
+    },
+    {
+      "snapshot_path": "manuscript/sections/tab_integrity.tex",
+      "source_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/paperC/sections/tab_integrity.tex",
+      "sha256": "41c5dd054c4256599993fecdeb0cd3a03c6e2953cb5622c96eff4f7afa886549",
+      "size_bytes": 1085
+    },
+    {
+      "snapshot_path": "manuscript/sections/tab_mmlupro.tex",
+      "source_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/paperC/sections/tab_mmlupro.tex",
+      "sha256": "43c202dd305ad2de747ea1d943737d8b4a4dea7ea88f0c5a864210a4d1e4a803",
+      "size_bytes": 1623
+    },
+    {
+      "snapshot_path": "manuscript/sections/tab_nulls.tex",
+      "source_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/paperC/sections/tab_nulls.tex",
+      "sha256": "274019d8f1dd477a919e0d9a406b4646577f4ca37eb7070e5ea42fc1dc9475f5",
+      "size_bytes": 2778
+    },
+    {
+      "snapshot_path": "manuscript/sections/tab_power.tex",
+      "source_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/paperC/sections/tab_power.tex",
+      "sha256": "7de6fee1d37d1e663e093f5770e550d844186b292494310ca8d4846219b0bed4",
+      "size_bytes": 725
+    },
+    {
+      "snapshot_path": "manuscript/sections/tab_two_nulls.tex",
+      "source_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/paperC/sections/tab_two_nulls.tex",
+      "sha256": "9a97d690f6750e34127d12f7ab8867d80024b2b79bb2b81b8211d76a2592c934",
+      "size_bytes": 704
+    },
+    {
+      "snapshot_path": "manuscript/sections/tab_v2_alternatives.tex",
+      "source_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/paperC/sections/tab_v2_alternatives.tex",
+      "sha256": "1e39d182543ce248b2af969ef5835a91d38bbad954813f5ecececd6b87dd8a9d",
+      "size_bytes": 1146
+    },
+    {
+      "snapshot_path": "manuscript/sections/tab_v2_full.tex",
+      "source_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/paperC/sections/tab_v2_full.tex",
+      "sha256": "a5efba54d3a0a30334a090403a03d512efc75eca3677cd46d66805a5feafde93",
+      "size_bytes": 3072
+    },
+    {
+      "snapshot_path": "manuscript/sections/tab_v2_resort.tex",
+      "source_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/paperC/sections/tab_v2_resort.tex",
+      "sha256": "37ed4e14d6d505f507b72bec64580aa4aec062e174c65652a06e616521320a7b",
+      "size_bytes": 969
+    }
+  ]
+}
