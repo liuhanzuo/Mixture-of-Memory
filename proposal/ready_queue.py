@@ -49,6 +49,33 @@ well-specified their gate is — they are `ready_cpu`, and the CPU task is the
 related-work write-up. That is the difference between "idle because blocked" and
 "idle because nobody dispatched the free work", which is the whole point.
 
+Two reader defects that cancelled each other (fixed 2026-08-15)
+---------------------------------------------------------------
+Both were *under*-reads, and they were only harmless as a pair:
+
+1. **Nested gates were invisible.** `KILL_KEYS` was matched against the top
+   level of the document only. A04's kill gate is a fully pre-registered
+   three-clause condition with frozen constants, written 2026-08-09 for 0 GPU —
+   and it lives at `gate_design.kill_condition_verbatim`. So the reader printed
+   "no kill_gate field" and told the next agent the blocking 0-GPU task was to
+   *write* a gate that had existed for six days. Fix: `_first_nested`, an
+   EXPLICIT one-level container allow-list (`NESTED_GATE_CONTAINERS`), not a
+   recursive walk — a recursive `*kill*` search over the live files returns 40+
+   paths (`closest_prior_art[0].kills`, `history_20260808.next_gate_then`, …) of
+   which exactly one is a gate, and promoting prose to gate-hood is the
+   paperwork-counts-as-readiness bug this file exists to stop. The recorded key
+   is the dotted path, so the report shows where it was read from.
+
+2. **`BLOCK_KEYS` was display-only.** It was parsed into `rec["blocker"]` and
+   then ignored by lifecycle inference. Fixing (1) alone would therefore have
+   made A04 the queue's single `ready_gpu` item — while its own
+   `blocked_by.still_blocking_before_any_gate_gpu` reads "USER APPROVAL for GPU.
+   The full gate is 1,077-4,309 GPU-h; nothing beyond Pilot Zero may be launched
+   without it." Fix: `_live_blockers` reads blockers for CONTENT and an
+   un-discharged one forces `needs_prior_gate`. Values that state their own
+   closure ("CLEARED 2026-08-09 … NO LONGER BLOCKING.") do not count, or the
+   reader would hold proposals out citing gates that already passed.
+
 Usage:
   python proposal/ready_queue.py                 # human table
   python proposal/ready_queue.py --json          # machine-readable
@@ -78,7 +105,27 @@ NEXT_GATE_WEAK = [                     # present but explicitly NOT adopted
     "next_gate_candidate_not_yet_adopted",
     "next_gate_blocked_by_portfolio_shape",
 ]
-KILL_KEYS = ["kill_gate", "kill_gates", "kill_criteria", "kill_gate_verbatim"]
+KILL_KEYS = ["kill_gate", "kill_gates", "kill_criteria", "kill_gate_verbatim",
+             # A04 spells it `kill_condition_verbatim` and files it one level
+             # down under `gate_design`. Measured 2026-08-15: the reader
+             # therefore printed "no kill_gate field" for the ONE proposal in
+             # the repo whose kill gate is a fully pre-registered three-clause
+             # condition with frozen constants (T_plateau=2.0%/5k, rho=0.85,
+             # delta=0.10*residual(intact), a frozen checkpoint grid), written
+             # 2026-08-09 for 0 GPU. It then told the next agent the actionable
+             # 0-GPU task was "write the kill gate" -- i.e. rewrite a document
+             # that already existed. A reader that cannot see a gate manufactures
+             # busywork just as surely as one that hallucinates a gate spends a card.
+             "kill_condition_verbatim", "kill_condition"]
+# Containers searched ONE level down for the gate key names above.
+# Deliberately an EXPLICIT allow-list and NOT a recursive walk of the document:
+# a recursive search would promote any prose that happens to contain a key like
+# `closest_prior_art[0].kills` or `history_20260808.next_gate_then` into "this
+# proposal has a gate", which is the paperwork-counts-as-readiness failure this
+# whole file exists to block. Measured on the 15 live STATUS.json: a recursive
+# search finds 40+ `*kill*`/`*next_gate*` paths, of which exactly one
+# (gate_design.kill_condition_verbatim) is an actual gate.
+NESTED_GATE_CONTAINERS = ("gate_design", "gates", "prereg", "preregistration")
 NOVELTY_BOOL = ["novelty_checked"]
 NOVELTY_OTHER = ["novelty_status", "novelty_status_detail", "k1_novelty",
                  "novelty_check_2026_08_09", "novelty_verdict"]
@@ -97,6 +144,27 @@ VERDICT_CLEARED = ("hold_in_backlog", "gate cleared", "clear", "pass",
 VERDICT_PENDING = ("needs_narrowing", "unchecked", "not_checked", "todo")
 BLOCK_KEYS = ["blocking_dependency", "blocked_by", "required_before_stage0",
               "gpu_policy", "premise_falsified"]
+# A blocker value that says it has been discharged is NOT a blocker. A04's
+# `blocked_by.related_work_gate` is literally
+#   "CLEARED 2026-08-09 (see related_work_status). NO LONGER BLOCKING."
+# so a reader that counts every BLOCK_KEYS hit as live would hold A04 out of the
+# queue citing a gate that was cleared six days earlier -- the same
+# under-reporting stall, just with a more convincing excuse.
+#
+# The phrases are deliberately multi-word. A bare "done" was tried and rejected:
+# "abandoned" CONTAINS "done", so a blocker reading "that arm was abandoned"
+# would have been silently scored as discharged -- a substring match that fires
+# inside an unrelated word turns the blocker check into a random amnesty.
+BLOCKER_DISCHARGED = ("no longer blocking", "no longer blocks", "not blocking",
+                      "not outstanding", "cleared", "discharged", "resolved",
+                      "已解除", "已清除")
+# "cleared" / "resolved" / "discharged" survive as bare tokens because the repo's
+# own usage is the sentence-initial "CLEARED <date>" form. Their negations are
+# the obvious hazard ("not cleared" contains "cleared"), so they are enumerated
+# here and tested FIRST in _is_discharged.
+BLOCKER_NOT_DISCHARGED = ("not cleared", "uncleared", "not yet cleared",
+                          "not resolved", "unresolved", "not discharged",
+                          "still blocking", "still outstanding")
 
 UNSPEC = ("NOT_SPECIFIED", "UNKNOWN", "NO_KILL_GATE_DEFINED",
           "NO_KILL_GATE_BY_DESIGN")
@@ -112,6 +180,85 @@ def _first(d, keys):
         if k in d:
             return k, d[k]
     return None, None
+
+
+def _first_nested(d, keys, containers=NESTED_GATE_CONTAINERS):
+    """Top level first, then ONE level inside an explicit container allow-list.
+
+    Returns (dotted_path, value) so the report shows WHERE the gate was read
+    from -- `gate_design.kill_condition_verbatim` is traceable, a bare
+    `kill_condition_verbatim` would not be.
+    """
+    k, v = _first(d, keys)
+    if k is not None:
+        return k, v
+    for c in containers:
+        sub = d.get(c)
+        if not isinstance(sub, dict):
+            continue
+        k, v = _first(sub, keys)
+        if k is not None:
+            return f"{c}.{k}", v
+    return None, None
+
+
+def _is_discharged(v):
+    """True if this blocker value states, in its own words, that it is closed.
+
+    Negations are checked FIRST: "not cleared" contains "cleared", and reading
+    that as a discharge would let a proposal claim readiness with the exact
+    sentence that denies it.
+    """
+    if not isinstance(v, str):
+        return False
+    s = v.lower()
+    if any(n in s for n in BLOCKER_NOT_DISCHARGED):
+        return False
+    return any(p in s for p in BLOCKER_DISCHARGED)
+
+
+def _live_blockers(d):
+    """Enumerate blockers that are still blocking, with a citable path each.
+
+    Read for CONTENT, not merely for presence. Before 2026-08-15 BLOCK_KEYS was
+    parsed into rec["blocker"] for *display only* and lifecycle inference never
+    consulted it, so A04 -- whose own record says
+    `still_blocking_before_any_gate_gpu` contains a PROPOSAL.md narrowing, a
+    BLOCKING CPU code fix, and "USER APPROVAL for GPU. The full gate is
+    1,077-4,309 GPU-h" -- would have been promoted straight to ready_gpu the
+    moment its (already-written) kill gate became visible. Making the gate
+    visible without making the blocker binding converts one reporting bug into
+    a four-thousand-GPU-hour dispatch.
+    """
+    out = []
+    for k in BLOCK_KEYS:
+        if k not in d:
+            continue
+        v = d[k]
+        if isinstance(v, dict):
+            for sk, sv in v.items():
+                if _is_discharged(sv):
+                    continue
+                if isinstance(sv, list):
+                    # Enumerate each clause separately rather than collapsing to
+                    # "[+2 more]": A04's third clause is "USER APPROVAL for GPU.
+                    # The full gate is 1,077-4,309 GPU-h" -- the single most
+                    # important line in the record, and the one a truncated
+                    # summary would hide.
+                    for i, item in enumerate(sv):
+                        if not _is_discharged(item):
+                            out.append((f"{k}.{sk}[{i}]", _txt(item, 200)))
+                elif isinstance(sv, str) and sv.strip():
+                    out.append((f"{k}.{sk}", _txt(sv, 200)))
+                elif isinstance(sv, dict) and sv:
+                    out.append((f"{k}.{sk}", _txt(sv, 200)))
+        elif isinstance(v, list):
+            for i, sv in enumerate(v):
+                if not _is_discharged(sv):
+                    out.append((f"{k}[{i}]", _txt(sv, 200)))
+        elif isinstance(v, str) and v.strip() and not _is_discharged(v):
+            out.append((k, _txt(v, 200)))
+    return out
 
 
 def _is_unspec(v):
@@ -133,7 +280,7 @@ def read_one(path):
     rec["status_prose"] = _txt(d.get("status", ""), 120)
     rec["n_keys"] = len(d)
 
-    gk, gate = _first(d, NEXT_GATE_KEYS)
+    gk, gate = _first_nested(d, NEXT_GATE_KEYS)
     rec["next_gate_key"] = gk
     rec["next_gate"] = _txt(gate) if gate is not None else None
     if gate is None:
@@ -146,7 +293,7 @@ def read_one(path):
     if gate is None and not rec.get("next_gate_key"):
         rec["problems"].append("no next_gate field at all")
 
-    ck, kill = _first(d, KILL_KEYS)
+    ck, kill = _first_nested(d, KILL_KEYS)
     rec["kill_gate_key"] = ck
     kill_ok = kill is not None and not _is_unspec(kill)
     if kill is None:
@@ -200,6 +347,10 @@ def read_one(path):
     bk, blk = _first(d, BLOCK_KEYS)
     rec["blocker_key"] = bk
     rec["blocker"] = _txt(blk, 300) if blk is not None else None
+    # ...and, separately from that display string, the blockers that are still
+    # LIVE. This list is load-bearing for lifecycle inference below.
+    live = _live_blockers(d)
+    rec["live_blockers"] = [{"path": p, "text": t} for p, t in live]
 
     st = str(d.get("status", "")).lower()
     promoted = ("promoted" in st) or ("promoted_to" in d)
@@ -286,10 +437,53 @@ def read_one(path):
     elif not gate_ok:
         lc = "ready_cpu"
         why = "next_gate not operationalised -> writing it is 0 GPU and blocking"
+    elif live:
+        # ---- the un-discharged-blocker precondition (added 2026-08-15) --------
+        # Everything above this line asks "is the paperwork present?". Nothing
+        # asked "does this proposal's own record say it may not be launched
+        # yet?" -- BLOCK_KEYS was parsed for display and then dropped on the
+        # floor. That was survivable only because the nested-kill-gate bug was
+        # ALSO present: A04 failed the kill-gate presence check, so it never
+        # reached this branch. Fixing the reader's blindness to nested gates
+        # WITHOUT this branch would have made A04 the queue's single ready_gpu
+        # item while its own blocked_by said "USER APPROVAL for GPU. The full
+        # gate is 1,077-4,309 GPU-h; nothing beyond Pilot Zero may be launched
+        # without it." Two under-reads that cancelled each other; removing one
+        # is strictly worse than removing neither.
+        #
+        # `needs_prior_gate` and not a new `blocked` value: LIFECYCLE_SCHEMA.md
+        # sec 1 bans the word `blocked` outright ("它在 2026-08-14 把三件不同的事
+        # 混成了一个字符串"), and sec 1.1 already gives needs_prior_gate the exact
+        # semantics wanted here -- something ahead of the gate must close first,
+        # and whether that something costs a card is reported separately.
+        lc = "needs_prior_gate"
+        why = ("gate + kill gate + novelty all OK, but " + str(len(live)) +
+               " un-discharged blocker(s) in its own record: " +
+               "; ".join(f"{p} = {t}" for p, t in live[:3])[:600] +
+               (" ..." if len(live) > 3 else ""))
+        for p, t in live:
+            rec["problems"].append(f"blocker STILL LIVE [{p}]: {_txt(t, 150)}")
     else:
         lc = "ready_gpu"
         why = ("gate + kill gate + adjudicated novelty all present (" +
-               rec["novelty_evidence"] + ")")
+               rec["novelty_evidence"] + "), no un-discharged blocker")
+        if rec.get("lifecycle_declared") == "needs_prior_gate":
+            # Same "declaration can downgrade, not upgrade" rule the ready_cpu
+            # branch above already applies. Whether a prior gate is closed is a
+            # property of that gate's outcome, which no presence check can see;
+            # inferring ready_gpu over the owner's explicit needs_prior_gate
+            # would spend a card on the owner's stated say-so that it is too
+            # early. Costs at most a delay; the opposite error costs GPU-h.
+            pgg = d.get("prior_gate_needs_gpu", "UNRECORDED")
+            # LIFECYCLE_SCHEMA.md sec 1.1: a prior gate that costs no card must
+            # be surfaced in ready_cpu, not parked. That bool is the direct fix
+            # for the B11 stall (a 0-GPU blocking gate nobody dispatched).
+            lc = "ready_cpu" if pgg is False else "needs_prior_gate"
+            why = ("DECLARED lifecycle=needs_prior_gate (honoured over an "
+                   "inferred ready_gpu; prior_gate_needs_gpu=" + repr(pgg) +
+                   (" -> schema sec 1.1 folds a 0-GPU prior gate into ready_cpu"
+                    if pgg is False else "") + "): " +
+                   _txt(d.get("prior_gate", d.get("lifecycle_reason", "-")), 260))
     rec["lifecycle"] = lc
     rec["lifecycle_reason"] = why
 
@@ -317,9 +511,21 @@ def main():
                          "lifecycle": "NO_STATUS_JSON", "problems":
                          ["no STATUS.json -> invisible to the scheduler"]})
 
-    order = {"ready_gpu": 0, "ready_cpu": 1, "NO_STATUS_JSON": 2,
-             "UNREADABLE": 3, "promoted": 4, "dead": 5}
+    # needs_prior_gate sorts BELOW ready_cpu: schema sec 1.1 already folds the
+    # 0-GPU prior gates into ready_cpu, so what is left here genuinely cannot be
+    # dispatched yet. It must still be PRINTED -- a bucket that exists in the
+    # inference but not in this list is a silently dropped proposal, which is
+    # exactly how B06 vanished (schema sec 2: "不许静默略过").
+    order = {"ready_gpu": 0, "ready_cpu": 1, "needs_prior_gate": 2,
+             "NO_STATUS_JSON": 3, "UNREADABLE": 4, "promoted": 5, "dead": 6}
     recs.sort(key=lambda r: (order.get(r["lifecycle"], 9), r["id"]))
+
+    # Fail loudly if inference can emit a bucket main() would not print.
+    emitted = {r["lifecycle"] for r in recs}
+    unprintable = emitted - set(order)
+    if unprintable:
+        print(f"BUG: lifecycle value(s) {sorted(unprintable)} have no print "
+              f"bucket -> those proposals would be invisible", file=sys.stderr)
 
     if a.json:
         print(json.dumps({"generated_by": "proposal/ready_queue.py",
@@ -328,8 +534,8 @@ def main():
         buckets = {}
         for r in recs:
             buckets.setdefault(r["lifecycle"], []).append(r)
-        for lc in ("ready_gpu", "ready_cpu", "NO_STATUS_JSON", "UNREADABLE",
-                   "promoted", "dead"):
+        for lc in ("ready_gpu", "ready_cpu", "needs_prior_gate",
+                   "NO_STATUS_JSON", "UNREADABLE", "promoted", "dead"):
             if lc not in buckets:
                 continue
             print(f"\n=== {lc}  ({len(buckets[lc])}) ===")
@@ -347,7 +553,9 @@ def main():
                     print(f"     ! {p}")
         ng = len(buckets.get("ready_gpu", []))
         nc = len(buckets.get("ready_cpu", []))
-        print(f"\nSUMMARY: {ng} ready_gpu, {nc} ready_cpu (0 GPU, dispatchable NOW)")
+        nb = len(buckets.get("needs_prior_gate", []))
+        print(f"\nSUMMARY: {ng} ready_gpu, {nc} ready_cpu (0 GPU, dispatchable "
+              f"NOW), {nb} needs_prior_gate")
         if ng == 0 and nc > 0:
             print("  => An idle GPU is NOT a reason to idle: there are "
                   f"{nc} zero-GPU tasks that are blocking their own gates.")
