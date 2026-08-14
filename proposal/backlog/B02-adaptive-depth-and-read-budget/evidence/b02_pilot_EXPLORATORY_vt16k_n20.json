@@ -1,0 +1,94 @@
+{
+  "n_items": 20,
+  "n_configs": 8,
+  "per_config_marginal": [
+    0.2,
+    0.0,
+    0.0,
+    0.05,
+    0.5,
+    0.1,
+    0.0,
+    0.0
+  ],
+  "oracle_obs": 0.6,
+  "best_fixed": 0.5,
+  "raw_headroom_REPORTED_NOT_GATE": 0.09999999999999998,
+  "E_oracle_under_independence_closed_form": 0.6579999999999999,
+  "null_A": {
+    "null": "A_column_margins",
+    "null_mean": 0.657325,
+    "null_sd": 0.05715529493292318,
+    "delta_excess": -0.05732500000000007,
+    "ci95_excess": [
+      -0.15000000000000002,
+      0.04999999999999993
+    ],
+    "excludes_zero": false,
+    "p_two_sided": 0.583
+  },
+  "null_B_PRIMARY": {
+    "null": "B_both_margins_PRIMARY",
+    "null_mean": 0.5999999999999998,
+    "null_sd": 2.221001369016217e-16,
+    "delta_excess": 2.220446049250313e-16,
+    "ci95_excess": [
+      0.0,
+      0.0
+    ],
+    "excludes_zero": false,
+    "p_two_sided": 1.0
+  },
+  "regret_vs_best_fixed": 0.09999999999999998,
+  "verdict": "KILL_CLAUSE_FIRES: no per-item interaction beyond chance; the oracle is a max-over-noise artefact",
+  "n_perm": 2000,
+  "perm_seed": 12345,
+  "task": "variable_tracking",
+  "length": "16k",
+  "resume_j": [
+    3,
+    6,
+    13,
+    20,
+    27,
+    34,
+    41,
+    48
+  ],
+  "cell_scores_pct": [
+    39.0,
+    12.0,
+    14.0,
+    7.0,
+    58.0,
+    30.0,
+    2.0,
+    2.0
+  ],
+  "integrity": {
+    "shard_sets_complete": true,
+    "item_counts_exact": true,
+    "n_duplicates": 0,
+    "n_nan": 0,
+    "cross_arm_input_ids_sha256_identical": true,
+    "chat_template": false,
+    "enable_thinking": false,
+    "selector": "iter_bm25",
+    "n_paired_items": 20
+  },
+  "provenance": {
+    "node": "TENCENT64.site",
+    "numpy": "2.5.1",
+    "python": "3.14.6",
+    "cells": [
+      "ruler_results/qcmem_32b_b02_pilot_j3/b02pilot",
+      "ruler_results/qcmem_32b_b02_pilot_j6/b02pilot",
+      "ruler_results/qcmem_32b_b02_pilot_j13/b02pilot",
+      "ruler_results/qcmem_32b_b02_pilot_j20/b02pilot",
+      "ruler_results/qcmem_32b_b02_pilot_j27/b02pilot",
+      "ruler_results/qcmem_32b_b02_pilot_j34/b02pilot",
+      "ruler_results/qcmem_32b_b02_pilot_j41/b02pilot",
+      "ruler_results/qcmem_32b_b02_pilot_j48/b02pilot"
+    ]
+  }
+}

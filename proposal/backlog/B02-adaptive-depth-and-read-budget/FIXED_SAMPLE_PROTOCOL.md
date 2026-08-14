@@ -1,6 +1,13 @@
-# B02 — FIXED SAMPLE PROTOCOL (pre-data)
+# B02 — FIXED SAMPLE PROTOCOL
 
-> **Status: PRE-DATA.** Committed before any confirmatory number exists.
+> **v0.2, 2026-08-14.** §5 amended: the exploratory pilot **falsified this
+> protocol's own pre-registered primary null (Null B)**, which is provably
+> degenerate for a binary oracle. See §5b. The amendment was made *before* any
+> confirmatory run, and the falsifying pilot is archived at
+> `evidence/b02_pilot_EXPLORATORY_vt16k_n20.json`. v0.1 (commit `b983c8f`) is the
+> pre-data record; this file supersedes only its §5.
+>
+> **Status: PRE-CONFIRMATORY.** Committed before any confirmatory number exists.
 > Satisfies `STATUS.json → required_before_stage0[0]` ("fix n and a per-config RNG
 > seed protocol so the same items are scored under every `resume_j`").
 > Version 0.1 pre-registers the *mechanism*, the *estimator*, the *nulls* and the
@@ -162,6 +169,70 @@ All permutation/bootstrap draws for B02 are therefore pinned to **one node**, th
 and its `numpy.__version__` are recorded in the evidence JSON, and the resampler uses
 an explicitly seeded `numpy.random.Generator(PCG64(seed))` rather than legacy global state.
 
+## 5b. AMENDMENT — the pilot falsified Null B, this protocol's own primary null
+
+The exploratory pilot (§6, VT 16k, n=20, all 8 `j`) was run and analysed. It produced
+one result that matters more than any number about `resume_j`: **the primary null this
+protocol pre-registered in §5 is mathematically degenerate, and the analyzer measured
+its degeneracy rather than hiding it.**
+
+Measured on the pilot:
+
+```
+null_B (both margins, declared PRIMARY):  sd = 2.22e-16   CI95 = [0.0, 0.0]   p = 1.0
+```
+
+An `sd` of 2e-16 is floating-point zero. The reason is a proof, not a sampling accident:
+
+> For **binary** correctness, `max_j M[i,j] = 1[rowsum_i >= 1]`. The oracle
+> `mean_i max_j M[i,j]` is therefore a function of the **row margins alone**.
+> Curveball / swap randomisation preserves every row margin *exactly*. Hence the
+> oracle is **exactly invariant** under Null B, for every draw, by construction.
+
+Confirmed numerically: the pilot's row sums `[2,1,1,2,0,1,0,3,1,0,0,1,0,0,1,0,2,0,1,1]`
+give `12/20 = 0.600`, exactly the observed oracle, and no row-preserving permutation can
+move it. The same argument kills any within-row permutation null: `max_j` depends only on
+the row's multiset of outcomes.
+
+**This is a real methodological finding about the estimator, and it generalises beyond
+B02:** for a binary per-item oracle, "item difficulty" and "oracle value" are *the same
+quantity*, so a both-margins null cannot separate complementarity from difficulty at all.
+Had this protocol been executed as written in v0.1, the primary gate would have reported
+`p = 1.0` on every dataset forever and been misread as "the kill clause fires".
+
+### Amended estimator (v0.2)
+
+1. **Null A (column-margin-preserving) is promoted to PRIMARY** for the binary oracle.
+   It is the only admissible null of the two, because permuting columns independently does
+   *not* preserve row margins and therefore genuinely tests item×config coupling.
+   Verified non-degenerate on the pilot: `null_A sd = 0.0572`.
+2. **Null B is retired for the binary oracle** and recorded as a *proven-invariant*
+   negative result, not a failed test. It is **not** reported as evidence about `resume_j`.
+3. **The confirmatory statistic moves to fractional recall**, `mean_i max_j recall(i,j)`,
+   with Null A. Two independent reasons, both from the pilot:
+   - *Non-degeneracy:* the fractional oracle is not a pure function of row margins, so
+     Null A retains variance (checked: sd ≈ 0.013 on a synthetic 20×8 control).
+   - *Information:* the pilot's **binary** marginals were `[.20, .00, .00, .05, .50, .10,
+     .00, .00]` — **4 of 8 configs are exactly zero**, i.e. half the ladder contributes no
+     signal whatsoever to a binary analysis at this `n`. The **fractional** marginals
+     `[.39, .12, .14, .07, .58, .30, .02, .02]` are informative for all 8. VT is scored by
+     `string_match_all` (fraction of reference strings matched); binarising at 1.0 discards
+     most of what was measured.
+4. **Direction of the pilot's Null-A point estimate.** Excess was **negative**
+   (`oracle 0.600` vs `null_A mean 0.657`, `Δ = −0.057`, CI95 `[−0.150, +0.050]`, p = 0.58).
+   The interval contains 0, so at n=20 this is **not** a verdict — it is consistent with
+   both no interaction and mild positive coupling. It is quoted only as the pilot's
+   exploratory reading and **must not** be cited as a B02 result. What it does establish is
+   that the raw `+0.100` headroom (`0.600 − 0.500`) sits **below** its own independence
+   floor of `0.658`, so reporting that `+10 pp` as router headroom would have been the
+   exact error §5 was written to prevent.
+
+### Consequence for the confirmatory design
+
+The kill/proceed rule of §5 is unchanged in form; only the null and the outcome scale
+change (Null A, fractional recall). The `n` for the confirmatory run must be sized against
+Null A's sd at the fractional scale, which the pilot now makes estimable.
+
 ## 6. `n`, and the exploratory pilot that sets it
 
 `n` is **not** guessed. Measured cost from the T21 cells makes the sweep cheap enough
@@ -184,6 +255,67 @@ Pilot data are **exploratory and are not pooled** into the confirmatory estimate
 confirmatory `n` and the length set are pinned in **v1.0 of this file, committed before
 the confirmatory run**. Because sample sets are prefix-nested in `n` (§2b), enlarging
 `n` later is a valid extension rather than a re-randomisation.
+
+### Pilot outcome (executed 2026-08-14, `.73`, 8 GPUs, 0.32 GPU-h)
+
+VT 16k, n=20, `resume_j ∈ {3,6,13,20,27,34,41,48}`, `chat_template=False` in all 8 cells,
+`oom_count=0` in all 8, 142 s/cell wall (7.1 s/item, matching the 7.0 s/item projection).
+
+| `j` | 3 | 6 | 13 | 20 | 27 | 34 | 41 | 48 |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| mean recall (%) | 39.0 | 12.0 | 14.0 | 7.0 | **58.0** | 30.0 | 2.0 | 2.0 |
+| binary `correct` /20 | 4 | 0 | 0 | 1 | **10** | 2 | 0 | 0 |
+
+Findings, in order of importance:
+
+1. **The primary null was falsified** — see §5b. This is the pilot's main product.
+2. **口径 is non-degenerate under `chat=False`.** VT does not collapse to the floor; the
+   matrix is informative on the fractional scale for all 8 arms. The §6 degeneracy risk is
+   cleared, but only for fractional scoring — the binary matrix *is* half-degenerate
+   (4 of 8 marginals exactly 0).
+3. **Pairing is confirmed end-to-end on real GPU output.** All 8 arms cover the identical
+   `sample_index` set and every cross-arm `input_ids_sha256` matches (item 0 = `2ad1b7914361…`
+   in all eight). This is the assertion whose absence caused the T21 defect, now passing.
+4. **`chat=True → chat=False` is not a relabelling.** T21's j27 was 26.4 % at 16k under
+   `chat=True`; the pilot's j27 is 58.0 % under `chat=False`, and j27 — not the T21 peak
+   j3 — is the pilot's best arm. Small `n` accounts for part of this, but it confirms
+   T21's numbers cannot be reused for B02 under the current口径 and that the peak's
+   *location* along `j` is itself口径-dependent.
+
+## 6b. CONFIRMATORY DESIGN — pinned (v1.0), pre-data
+
+Pinned from the pilot's measured Null-A sd, before the confirmatory run starts.
+
+| item | value |
+|---|---|
+| **`n`** | **200** items per arm |
+| lengths | **16k** and **32k** (the pilot only probed 16k) |
+| `resume_j` | `{3, 6, 13, 20, 27, 34, 41, 48}` (all 8, as T21) |
+| outcome scale | **fractional recall** (primary), binary reported alongside |
+| primary null | **Null A**, column-margin-preserving, `B = 10000` draws |
+| cost | **6.44 GPU-h**, ~48 min wall on 8 GPUs |
+
+**Power justification.** The pilot measured `null_A sd = 0.0376` at n=20 on the
+fractional scale. A permutation-null sd scales as `1/sqrt(n)`, so:
+
+| `n` | projected Null-A sd | min detectable abs(Δ_excess) (α=.05, 80 % power) |
+|---:|---:|---:|
+| 50 | 0.0238 | 0.067 |
+| 100 | 0.0168 | 0.047 |
+| **200** | **0.0119** | **0.033** |
+| 300 | 0.0097 | 0.027 |
+
+`n = 200` resolves an excess of `>= 0.033`, i.e. ~3.3 pp of recall. That is the right
+target because **a router that beats its own null by less than ~3 pp is not actionable** —
+the engineering cost of query-adaptive `j` selection cannot be repaid by a sub-3 pp gain.
+
+**What `n=200` explicitly does NOT buy, stated in advance.** The pilot's point estimate
+was `abs(Δ) = 0.0126`. Resolving an effect *that* small at 80 % power would need
+`n ≈ 1394` per arm ≈ 22 GPU-h at 16k alone. **We are choosing not to.** So if the
+confirmatory run returns an interval containing 0, the honest reading is
+**"no effect larger than 3.3 pp"**, *not* "no effect". The kill clause fires on
+"no *actionable* headroom", and the write-up must use those words. Pre-committing to this
+wording is what stops an underpowered null from being reported as a proof of absence.
 
 ## 7. Cost, measured not guessed
 
