@@ -36,10 +36,15 @@ to be readable, the difference weakens sharply.**
 **That warning is currently a live, verified defect, not a hypothetical.**
 `STATUS.json:78-83` (`blocking_dependency`), re-derived from code this session:
 
-* `scripts/train_qwen_bottleneck_continued.py:112-133` — `inject_bottleneck` wraps
-  layer `j` in `BottleneckLayer` (**down → GELU → up, NO residual**); I read the
-  docstring and the body directly. The wrapper's **output is back at
-  `hidden_size`**, and `QCMemModel` caches *that* layer output as `h_j`.
+* `scripts/semantic_bottleneck_model.py:120-128` — `BottleneckLayer.forward` is
+  literally `h = self.up(self.act(self.down(h)))` with **no `+ h`**, so the layer's
+  *output* really is forced through a `d_bottle`-dimensional subspace. This is the
+  authoritative site, re-verified by MAIN 2026-08-15 by reading the `forward` body.
+  `scripts/train_qwen_bottleneck_continued.py:112-133` (`inject_bottleneck`) merely
+  *wraps* layer `j` in that class; its "down → GELU → up, NO residual" text is a
+  **docstring describing a class defined in another file**, so it is a pointer, not
+  evidence. The wrapper's **output is back at `hidden_size`**, and `QCMemModel`
+  caches *that* layer output as `h_j`.
 * **Consequence:** today the funnel constrains the **rank** of what is stored but not
   the **width of the bytes** stored. `bytes/token` is **identical** between the
   bottleneck and vanilla arms. Arms 2/3/4 of the next gate would differ **only in
@@ -220,8 +225,10 @@ residual-stream representations**.
 
 1. **Concurrent** (2026-06-16, under two months).
 2. **Residual-free vs residual-preserving.** B01's `BottleneckLayer` is
-   `down → GELU → up` with **NO residual** (verified in
-   `scripts/train_qwen_bottleneck_continued.py:112-133`). A narrowed-but-residual block
+   `down → GELU → up` with **NO residual** — the `forward` body is literally
+   `h = self.up(self.act(self.down(h)))`, no `+ h`
+   (`scripts/semantic_bottleneck_model.py:120-128`, re-verified by MAIN 2026-08-15).
+   A narrowed-but-residual block
    does **not** force the layer *output* through a `d_bottle`-dimensional subspace;
    B01's does. **This is the mechanical reason the two get opposite-signed taxes**
    (VWT: better than baseline; B01: +4.5–8.5 % worse) and is the sharpest available
@@ -237,8 +244,22 @@ residual-stream representations**.
 **Required:** cite VWT, drop any claim of novelty for "mid-depth width bottleneck
 trained into an LM changes the residual stream", and **state the residual-free
 distinction explicitly and early** — a reviewer who knows VWT will otherwise assume
-B01 is a worse-performing rediscovery. ⚠️ **A single ablation would settle it:
-residual-free vs residual-preserving at the same `(j, d)`.** B01 does not currently
+B01 is a worse-performing rediscovery.
+
+> ⚠️ **The two halves of this differentiator do NOT have equal evidentiary status,
+> and the asymmetry must be carried wherever it is used (MAIN, 2026-08-15).**
+> *Our* half is verified in source: `BottleneckLayer.forward` has no residual add
+> (`semantic_bottleneck_model.py:120-128`). *VWT's* half — that its bottleneck is
+> residual-**preserving** inside a standard block — is **inferred from its abstract**;
+> its architecture section was not read (arXiv API returned 429 all session, no PDF
+> fetched). If that inference is wrong, this differentiator collapses and §2.2 must be
+> rewritten. So the defensible sentence is "B01's bottleneck is residual-free, which
+> VWT's abstract does not claim for its own", **not** "VWT is residual-preserving".
+> The opposite-signed taxes are consistent with the distinction but do not prove it —
+> a from-scratch ×-shaped model beating a uniform baseline has many other
+> explanations (width schedule, FLOP reallocation, training budget).
+> ⚠️ **A single ablation would settle it: residual-free vs residual-preserving at the
+> same `(j, d)`.** B01 does not currently
 have that arm and should add it.
 
 ---
