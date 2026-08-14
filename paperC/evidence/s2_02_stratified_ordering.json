@@ -1,0 +1,57 @@
+{
+ "what": "S2-02 adjudication: the v1>=v2 ordering claim (03_method.tex:62) is proved only for the UNSTRATIFIED mixture bound, while the estimator is stratified within n_opt.",
+ "verified_by": "MAIN, 2026-08-15, 0 GPU. Per-stratum gold marginals read from the 8 per-item shards of 7B_base on zwfy6 (.73); shard set == {0..7}, n=12032, 0 dup, 0 nan.",
+ "algebra": {
+  "papers_proof": "sum_L p_L m_L <= max_L m_L   [unstratified]",
+  "what_stratification_gives": "acc_hat <= sum_s w_s max_L m_(s,L)   [per-stratum argmax]",
+  "why_that_is_weaker": "max_L sum_s w_s m_(s,L) <= sum_s w_s max_L m_(s,L); the ordering is recovered IFF argmax_L m_(s,L) is the same letter in every stratum",
+  "reviewer_counterexample_reproduced": "2 strata, w=(.5,.5), gold all-A in one and all-B in the other: f_const=0.5 but acc_hat=1.0, so acc_hat>f_const"
+ },
+ "measured_on_mmlu_pro": {
+  "n_strata": 8,
+  "global_best_constant_letter": "A",
+  "argmax_identical_across_strata": false,
+  "strata_where_argmax_differs": [
+   {
+    "n_opt": 5,
+    "n_s": 52,
+    "argmax_L": "B",
+    "m_argmax": 0.25,
+    "m_global_best": 0.17307692307692307
+   },
+   {
+    "n_opt": 6,
+    "n_s": 93,
+    "argmax_L": "E",
+    "m_argmax": 0.21505376344086022,
+    "m_global_best": 0.1827956989247312
+   },
+   {
+    "n_opt": 7,
+    "n_s": 158,
+    "argmax_L": "B",
+    "m_argmax": 0.18354430379746836,
+    "m_global_best": 0.11392405063291139
+   },
+   {
+    "n_opt": 8,
+    "n_s": 320,
+    "argmax_L": "E",
+    "m_argmax": 0.165625,
+    "m_global_best": 0.109375
+   }
+  ],
+  "f_const_v1": 0.11660571808510639,
+  "stratified_upper_bound": 0.11959773936170214,
+  "proof_slack_pp": 0.2992021276595744
+ },
+ "empirical_status_of_the_claim": {
+  "cells_checked": 27,
+  "cells_violating_ordering": 0,
+  "tightest_cell": "llama2/k12 UN-healed",
+  "tightest_margin_pp": 0.007783590975318777,
+  "ratio_slack_over_observed_margin": 38.44011441612533
+ },
+ "verdict": "The 'always' is FALSE as a theorem: argmax_L differs from the global best letter in 4 of 8 n_opt strata (n_opt=5,6,7,8). The ordering nevertheless HOLDS in 27/27 measured cells, but the tightest cell clears the floor by 0.0078 pp while the unproven region is 0.2992 pp wide -- 38x the observed margin. So the claim must be restated as an empirical property of these cells with its margin reported, not asserted as an identity.",
+ "same_class_as": "memory/a-range-is-not-a-measurement-until-it-clears-its-floor.md"
+}
