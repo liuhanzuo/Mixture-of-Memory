@@ -2,6 +2,28 @@
 > 每次启动/kill GPU 任务更新。heartbeat 先读→对照 nvidia-smi→台账说跑但空=补卡。★29.162.226.120=dllm 绝不碰。
 > 2026-08-08 15:03 更新：用户指令「B200跑resume，H20跑新方向」→ Paper B resume 迁移到 .21/.73。
 
+## 🔄 2026-08-14 17:57 — 40/40 卡全忙，两个新起的 Paper B 臂已有实测节拍
+
+| 节点 | 任务 | 实测 | 状态 |
+|---|---|---|---|
+| **LOCAL** | SparseForge **noslorb** | iter **7059/7500** (94.1%)、8×111-117 GB @100%、**last-60 47.35 s/it**（全程均值 53.04）、ETA **6.5 h** | ▶️ 健康，**且变快了** |
+| **`.212`** | SparseForge **slorb** | iter **6847/7500** (91.3%)、8×114-121 GB @100%、last-60 58.32（全程 53.77）、ETA **9.75 h** | ▶️ 健康 |
+| **`.73`** | Paper B **keep12** resume | step **166200/200000**、loss 2.4548、ppl 11.64、**7.81 s/step**（180 步/1406 s 实测）、96.4 GB @100% | ▶️ 健康 |
+| **`.82`** | Paper B **keep8** resume | step **131240/200000**、loss 2.5406、ppl 12.69、**5.78 s/step**（220 步/1272 s 实测）、78.5 GB @100% | ▶️ 健康 |
+| **`.104`** | paperC Qwen3 heal | step **31660/200000**、ppl 15.72、5.74 s/step、77.5 GB @100% | ▶️ 健康（勿动） |
+
+**★ LOCAL 变快是真事，不是噪声**：last-60 窗口 **47.35 s/it** 已回到 45-48 s/it 的**单跑基线**区间
+（全程均值 53.04 被今天早些时候的 union-9 eval 抢卡拉高）。即**抢卡结束**，不是随机波动。
+按 heartbeat 契约「偏离基线 >10% 要报实测值+基线+倍数」，这里是往好的方向偏，同样报出来。
+
+**两个新臂无相互干扰**：keep12 实测 7.81 s/step vs 瞬时 7.81、keep8 实测 5.78 vs 瞬时 5.78 —— 完全一致，
+说明两个 H20 job 之间、以及与 `.104` 之间都没有争抢。
+
+**收尾阶段已验证（从运行中进程的参数读，不是从 log 正文猜）**：两个 SparseForge 臂都带
+`--finalize_lm_eval True` + 7 个任务（hellaswag,winogrande,arc_easy,arc_challenge,openbookqa,piqa,race）。
+pinned harness `venv_union9` 完好：**lm_eval 0.4.8 + transformers 4.57.6 + torch 2.13.0 + datasets 5.0.1**。
+⚠️ **已知缺口仍在**：in-run finalize 只覆盖 union-9 的 **7/9**，**BoolQ + RTE 需另跑**。
+
 ## 🔄 2026-08-14 17:35 — **16 张空闲 H20 补上 Paper B resume**（40/40 卡全忙）
 
 **★ 台账与实测冲突，已按实测更正**：上一节记 `.73` 在跑 B02 confirmatory，实测 **8×0 MiB / napps=0**。
