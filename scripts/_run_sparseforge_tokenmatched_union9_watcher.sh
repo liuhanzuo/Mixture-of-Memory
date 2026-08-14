@@ -153,19 +153,26 @@
 set -u
 
 ARM="${ARM:-}"
+# ⚠️ TRAIN_NODE / TRAIN_LOG are OVERRIDABLE (`${VAR:-default}`), and must stay so.
+# They were originally hard-assigned (`TRAIN_NODE=local`), which silently ignored
+# any caller override. After the 2026-08-13 restart the topology INVERTED —
+# noslorb now trains on the scoring box (LOCAL, which is itself 28.89.19.21) while
+# slorb trains on .212 — so the baked-in mapping became exactly backwards. With a
+# hard assignment, ARM=slorb would pgrep locally for a trainer living on another
+# host, find nothing, conclude "training finished", and score a MID-TRAINING
+# checkpoint hours early. The defaults below are kept as the historical values;
+# scripts/_rearm_sparseforge_union9_watchers.sh passes the current topology in.
 case "$ARM" in
   slorb)
     SLORB_VARIANT=fold; EXPECT_SLORB_TENSORS=1
     GPUS="${GPUS:-4,5,6,7}"
-    # Trains on .21 = the node this watcher runs on -> pgrep works.
-    TRAIN_NODE=local
+    TRAIN_NODE="${TRAIN_NODE:-local}"
     TRAIN_LOG="${TRAIN_LOG:-logs/sparseforge_tokenmatched_slorb_0811_225720.log}"
     ;;
   noslorb)
     SLORB_VARIANT=drop; EXPECT_SLORB_TENSORS=0
     GPUS="${GPUS:-0,1,2,3}"
-    # Trains on LOCAL, scored on .21 -> pgrep cannot see it; use log mtime.
-    TRAIN_NODE=remote
+    TRAIN_NODE="${TRAIN_NODE:-remote}"
     TRAIN_LOG="${TRAIN_LOG:-logs/sparseforge_tokenmatched_noslorb_0812_022335.log}"
     ;;
   *) echo "FATAL: set ARM=slorb or ARM=noslorb"; exit 2 ;;

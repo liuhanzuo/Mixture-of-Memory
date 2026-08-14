@@ -1,0 +1,86 @@
+# piqa task override for the union-9 harness — RECOVERY of a lost dataset cache.
+#
+# WHY THIS FILE EXISTS
+# --------------------
+# Every arm in outputs/cast_eval_spec_union9/ loaded piqa from a SCRIPT-BUILT
+# datasets cache, visible verbatim in each arm's lm_eval.log:
+#
+#   Using the latest cached version of the dataset since ybisk/piqa couldn't be
+#   found on the Hugging Face Hub
+#   Found the latest cached dataset configuration 'plain_text' at
+#   /root/.cache/huggingface/datasets/ybisk___piqa/plain_text/1.1.0/6c611c1a9bf220943c4174e117d3b660859665baf1d43156230116185312d011
+#
+# i.e. the hub lookup FAILED on 2026-08-11 and `datasets` silently fell back to a
+# pre-existing local cache built by the (now-removed) `piqa.py` loading script.
+#
+# That cache no longer exists anywhere:
+#   LOCAL, .212        /root/.cache/huggingface/datasets/ is GONE (08-13 restart)
+#   .73                has only `default/0.0.0/142c5123...` = a DIFFERENT,
+#                      parquet-built cache, not `plain_text/1.1.0/6c611c1a...`
+#   .82, .104          no ybisk___piqa at all
+#
+# And the load path itself is now unreachable regardless of cache: datasets 5.0.1
+# hard-refuses loading scripts —
+#   RuntimeError: Dataset scripts are no longer supported, but found piqa.py
+# — so `dataset_path: piqa` (upstream lm_eval 0.4.8 piqa.yaml) CANNOT resolve on
+# any node today. Verified on LOCAL and .73, both online and with
+# HF_DATASETS_OFFLINE=1.
+#
+# WHAT MAKES THIS SAFE
+# --------------------
+# The substitution is justified only because the resulting DOCS are proven
+# identical to the ones the archive actually scored, not because "piqa is piqa".
+# The archived samples_piqa_*.jsonl carries all 1838 validation docs verbatim, so
+# the claim is checkable, and it is checked:
+#
+#   baselines/cast_repro/tools/check_piqa_source_matches_archive.py
+#     archive piqa docs: 1838
+#     hub ybisk/piqa parquet -> loaded n=1838, field diffs: 0
+#     >>> IDENTICAL to archive piqa docs (all 1838, all fields, same order)
+#
+# compared field-by-field (goal, sol1, sol2, label) at every index, in order —
+# not by comparing an accuracy number, which could coincide under a permuted or
+# partially-different split.
+#
+# The parquet was materialised OUT of the HF blob cache (which is evictable) to a
+# stable path so a future cache wipe cannot repeat this incident:
+#   data/union9_piqa_parquet/{train,validation}/0000.parquet
+#   md5 train      82cbf1cde7abde1d10a666023013861a
+#   md5 validation bb470a523f55e14d25ef4a7529dabcc1
+# provenance: .hf_cache/hub/datasets--ybisk--piqa/snapshots/142c51238b3ca2bc61e9a075913871b8b600e8e1/plain_text/
+#
+# EVERYTHING ELSE IS BYTE-COPIED from the installed lm_eval 0.4.8 piqa.yaml
+# (venv_union9/lib/python3.14/site-packages/lm_eval/tasks/piqa/piqa.yaml):
+# same task name, output_type, splits, doc_to_text, doc_to_target, doc_to_choice,
+# metric_list and metadata.version. ONLY `dataset_path`/`dataset_kwargs` change,
+# so prompts, targets, choices and metrics are untouched — the doc_hash and
+# prompt_hash in the new samples file must therefore equal the archive's, and the
+# control script asserts exactly that.
+#
+# `trust_remote_code` is dropped from dataset_kwargs on purpose: it is what
+# triggers the script path, and datasets 5.0.1 warns it "is not supported anymore".
+task: piqa
+dataset_path: parquet
+dataset_name: null
+dataset_kwargs:
+  data_files:
+    train: /apdcephfs_wzc1/share_304376610/pighzliu_code/data/union9_piqa_parquet/train/0000.parquet
+    validation: /apdcephfs_wzc1/share_304376610/pighzliu_code/data/union9_piqa_parquet/validation/0000.parquet
+output_type: multiple_choice
+training_split: train
+validation_split: validation
+test_split: null
+doc_to_text: "Question: {{goal}}\nAnswer:"
+doc_to_target: label
+doc_to_choice: "{{[sol1, sol2]}}"
+should_decontaminate: true
+doc_to_decontamination_query: goal
+metric_list:
+  - metric: acc
+    aggregation: mean
+    higher_is_better: true
+  - metric: acc_norm
+    aggregation: mean
+    higher_is_better: true
+metadata:
+  version: 1.0
