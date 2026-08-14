@@ -2,27 +2,44 @@
 > 每次启动/kill GPU 任务更新。heartbeat 先读→对照 nvidia-smi→台账说跑但空=补卡。★29.162.226.120=dllm 绝不碰。
 > 2026-08-08 15:03 更新：用户指令「B200跑resume，H20跑新方向」→ Paper B resume 迁移到 .21/.73。
 
-## 🔄 2026-08-15 00:25 — 40/40 忙，每节点恰好 8 个 compute-app PID（无抢卡）
+## 🔄 2026-08-15 01:30 — LOCAL 空出（noslorb 全链条完成）；32/40 忙
 
-| 节点 | 任务 | 实测（elapsed/iter 自算，非 tqdm 瞬时值） | 状态 |
+| 节点 | 任务 | 实测 | 状态 |
 |---|---|---|---|
-| **LOCAL** | SparseForge **noslorb** | iter **7473/7500**、剩 **27**、**56.60** s/it（200-iter 窗口）、ETA **0.42 h**（≈00:50） | ▶️ 健康，即将完成 |
-| **`.212`** | SparseForge **slorb** | iter **7269/7500**、剩 **231**、**57.01** s/it（200-iter 窗口）、ETA **3.66 h**（≈04:05） | ▶️ 健康 |
+| **LOCAL** | SparseForge **noslorb** ✅ **完成并干净退出** | 7500/7500 → finalization(224 masks) → union-9 eval，01:19 `ALL STAGES COMPLETE`；实测 **8×0 MiB / 0% / 0 PID** | 🆕 已派 #245 AST+SLoRB 对照（0-GPU 侦察先行） |
+| **`.212`** | SparseForge **slorb** | iter **7300/7500**、剩 200、**55.10**(100it)/**56.22**(200it)/**55.23**(400it) s/it、ETA **~3.1 h** | ▶️ 健康（**勿动：±SLoRB 对比的另一半**） |
 | **`.73`** | Paper B **keep12fresh2** | step **169120/200000**、loss 2.4100、ppl 11.13、**7.81 s/step**、maxmem 91.9GB | ▶️ 健康 |
 | **`.82`** | Paper B **keep8fresh2** | step **135200/200000**、loss 2.5833、ppl 13.24、**5.78 s/step**、maxmem 73.5GB | ▶️ 健康 |
-| **`.104`** | paperC **qwen3base_heal_k8f2** | step **35620/200000**、loss 2.7449、ppl 15.56、**5.74-5.75 s/step**、maxmem 77.5GB | ▶️ 健康（勿动） |
+| **`.104`** | paperC **qwen3base_heal_k8f2** | step **35620/200000**、loss 2.7449、ppl 15.56、**5.74 s/step**、maxmem 77.5GB | ▶️ 健康（**勿动**） |
 
-Monitor **http200 OK**。5 份 log **0 error**（逐节点 grep Traceback/OOM/ChildFailedError）。
-两个 union-9 watcher（PID 176642=noslorb / 176751=slorb）已武装，`TRAIN_LOG` 取自 `/proc/*/environ` 实测指向当前 live log。
-三个 arm 全部处在各自**已记录的基线**上（56.6-57.0 / 7.81 / 5.78 / 5.74），无 >10% 偏离。
+Monitor **http200 OK**。5 份 log **0 error**。每节点恰好 8 个 compute-app PID，**无抢卡**。
 
-### ⚠️ 本轮方法论纠正：zwfy6 三节点不能用 `ls -t logs/*.log` 认任务
+### ✅ noslorb 臂完整收口（provenance 齐全）
 
-`.73/.82/.104` **共享同一个 zwfy6 文件系统**，所以 `ls -t` 返回的是**集群范围最新**的 log，不是本节点的。
-本轮三节点因此**全部返回同一份 `keep8fresh2` log**，看起来像「三台在跑同一个 run」。
-**节点归属必须从进程表拿**：`pgrep -f` → `/proc/<pid>/cmdline` 的 `--output_dir`。
-实测归属：`.73`=keep12fresh2、`.82`=keep8fresh2、`.104`=**qwen3base_heal_k8f2**（trainer 名是
-`train_qwen3_arch_probe2.py`，所以 `pgrep -f train_olmo2` 在 .104 上匹配不到，只匹配到我自己的 ssh 命令）。
+- `eval.json`: iter **7501**, train 1.6357, val 1.6691, **wiki_ppl 6.6798**, `finalization_done: true`
+- `args.json`: **`SLoRB=False`** 确认、`sparsity_ratio=0.5`、`mask_penalty_mode=nm_2_4`、`max_iters=7500`
+- `model.pt` 39.4 GB（< `legacy_ckpt.pt` 43.8 GB，因 mask 已 finalize）
+- union-9: `outputs/cast_eval_spec/sparseforge_tokenmatched_noslorb/tokenmatched_union9_summary.json`
+  → **union9 mean_primary 0.5955 / mean_plain_acc 0.5586**；cast7 0.5676；ast7 0.6065
+  → 完整性：`verify_pre_rc=0`、`verify_post_rc=0`、`exact_2of4_tile_ratio=1.0`、9/9 task
+- log 尾 `[Prefetcher] Stopped.` + `Finalizing masks: 7501it`，**无 Traceback/OOM**
+- watcher（PID 176642）全程正确报「still alive; waiting」，**没有在计数器到 7500 时提前 fire**
+
+### ±SLoRB 配对结果（PARTIAL —— slorb 未跑完，不得当最终结论）
+
+**严格同 iter 配对**（不是拿 noslorb@7500 比 slorb@7300）：7 个共有 eval 点 slorb **全部更低**，
+且差距**单调扩大**：−0.276 → −0.428 → −0.451 → −0.464 → −0.475 → −0.478 → **−0.488** ppl。
+
+⚠️ 必须同时陈述的 caveat：(1) slorb 仍在跑（7300/7500）；(2) 两臂 **resume 起点不同**
+（noslorb 6700 / slorb 6500，见 `status/SPARSEFORGE_SLORB_ONLY_DIFFERENCE_ERRATUM.md`），
+所以「唯一差别是 ±SLoRB」**as written 是假的**；(3) 这些 eval 只覆盖 resume 段。
+
+### 为什么 LOCAL 没有被塞 Paper B resume
+
+按 heartbeat 契约的三问顺序：`proposal/ready_queue.py` 报 **0 ready_gpu**（11 ready_cpu 全是 0-GPU 活），
+A04 是 `needs_prior_gate` 且其自身记录写明 **「USER APPROVAL for GPU，全 gate 1,077-4,309 GPU-h」**
+未解除 → 没有合规的 proposal GPU 活。故 LOCAL 给 **SparseForge #245**（主表已知缺口、需 sm_100 同架构），
+**不是**给已降级的 Paper B keep8/keep10/keep12 resume。
 
 
 ## 🔄 2026-08-14 22:57 — ★**`ready_gpu` 从 0 变成 2**（Persist 修复生效）；⚠️ **我推翻了自己上一轮的磁盘假设**
