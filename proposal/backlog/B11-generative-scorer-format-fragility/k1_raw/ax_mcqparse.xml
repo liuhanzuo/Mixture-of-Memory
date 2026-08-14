@@ -1,0 +1,103 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<feed xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/" xmlns:arxiv="http://arxiv.org/schemas/atom" xmlns="http://www.w3.org/2005/Atom">
+  <id>https://arxiv.org/api/4G3GSoySLN58OER0NUl6zEGfz7A</id>
+  <title>arXiv Query: search_query=abs:"multiple choice" AND abs:"parsing" AND abs:"robustness"&amp;id_list=&amp;start=0&amp;max_results=40</title>
+  <updated>2026-08-14T06:45:49Z</updated>
+  <link href="https://arxiv.org/api/query?search_query=abs:%22multiple+choice%22+AND+(abs:%22parsing%22+AND+abs:%22robustness%22)&amp;start=0&amp;max_results=40&amp;id_list=" type="application/atom+xml"/>
+  <opensearch:itemsPerPage>40</opensearch:itemsPerPage>
+  <opensearch:totalResults>3</opensearch:totalResults>
+  <opensearch:startIndex>0</opensearch:startIndex>
+  <entry>
+    <id>http://arxiv.org/abs/2306.15103v1</id>
+    <title>Structured Dialogue Discourse Parsing</title>
+    <updated>2023-06-26T22:51:01Z</updated>
+    <link href="https://arxiv.org/abs/2306.15103v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2306.15103v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Dialogue discourse parsing aims to uncover the internal structure of a multi-participant conversation by finding all the discourse~\emph{links} and corresponding~\emph{relations}. Previous work either treats this task as a series of independent multiple-choice problems, in which the link existence and relations are decoded separately, or the encoding is restricted to only local interaction, ignoring the holistic structural information. In contrast, we propose a principled method that improves upon previous work from two perspectives: encoding and decoding. From the encoding side, we perform structured encoding on the adjacency matrix followed by the matrix-tree learning algorithm, where all discourse links and relations in the dialogue are jointly optimized based on latent tree-level distribution. From the decoding side, we perform structured inference using the modified Chiu-Liu-Edmonds algorithm, which explicitly generates the labeled multi-root non-projective spanning tree that best captures the discourse structure. In addition, unlike in previous work, we do not rely on hand-crafted features; this improves the model's robustness. Experiments show that our method achieves new state-of-the-art, surpassing the previous model by 2.3 on STAC and 1.5 on Molweni (F1 scores). \footnote{Code released at~\url{https://github.com/chijames/structured_dialogue_discourse_parsing}.}</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2023-06-26T22:51:01Z</published>
+    <arxiv:comment>9 pages, accepted at SIGDIAL 2022</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Ta-Chung Chi</name>
+    </author>
+    <author>
+      <name>Alexander I. Rudnicky</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2605.24481v3</id>
+    <title>OmniEgo-R$^2$: A Routed Reasoning Framework for the 1st Cross-Domain EgoCross Challenge at CVPR 2026</title>
+    <updated>2026-06-04T08:07:38Z</updated>
+    <link href="https://arxiv.org/abs/2605.24481v3" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2605.24481v3" rel="related" type="application/pdf" title="pdf"/>
+    <summary>The 1st Cross-Domain EgoCross Challenge at EgoVis, CVPR 2026 evaluates whether multimodal large language models can reason over egocentric videos across surgery, industry, extreme sports, and animal perspective. We achieved second place in both the Source-Limited and Open-Source tracks. In this report, we formulate EgoCross as a robust cross-domain embodied video reasoning problem rather than a simple multiple-choice visual question answering task. We identify three key challenges: (C1) temporal boundary ambiguity, where critical state transitions are sparsely sampled and often occur between frames; (C2) cross-domain semantic granularity mismatch, where the same capability requires different domain-specific visual grammar; and (C3) decision instability under close options, where long multimodal reasoning can select unsupported distractors or produce malformed outputs. To address them, we propose OmniEgo-R$^2$ (Omnidomain Egocentric Routed Reasoning), a unified routed reasoning pipeline consisting of temporal-evidence normalization, domain-agnostic capability routing, structured perception--dynamics--decision reasoning, boundary-aware option verification, and defensive answer calibration. OmniEgo-R$^2$ uses the Qwen3-VL-4B-SFT checkpoints on each EgoCross domain as the visual-language backbone, and wraps them with lightweight test-time reasoning and parsing programs. Our final submissions obtain 66.35% overall accuracy in the Source-Limited track and 66.77% in the Open-Source track, ranking second in both leaderboards. The codes are available on https://github.com/Lee-zixu/OmniEgo-R2</summary>
+    <category term="cs.CV" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-05-23T09:09:12Z</published>
+    <arxiv:comment>Technical Report for the 1st Cross-Domain EgoCross Challenge at CVPR 2026</arxiv:comment>
+    <arxiv:primary_category term="cs.CV"/>
+    <author>
+      <name>Zixu Li</name>
+    </author>
+    <author>
+      <name>Zhiwei Chen</name>
+    </author>
+    <author>
+      <name>Zhiheng Fu</name>
+    </author>
+    <author>
+      <name>Wenbo Wang</name>
+    </author>
+    <author>
+      <name>Yupeng Hu</name>
+    </author>
+    <author>
+      <name>Weili Guan</name>
+    </author>
+    <author>
+      <name>Liqiang Nie</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2604.26261v1</id>
+    <title>Multiple Consistent 2D-3D Mappings for Robust Zero-Shot 3D Visual Grounding</title>
+    <updated>2026-04-29T03:38:56Z</updated>
+    <link href="https://arxiv.org/abs/2604.26261v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2604.26261v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Zero-shot 3D Visual Grounding (3DVG) is a critical capability for open-world embodied AI. However, existing methods are fundamentally bottlenecked by the poor quality of open-vocabulary 3D proposals, suffering from inaccurate categories and imprecise geometries, as well as the spatial redundancy of exhaustive multi-view reasoning. To address these challenges, we propose MCM-VG, a novel framework that achieves robust zero-shot 3DVG by explicitly establishing Multiple Consistent 2D-3D Mappings. Instead of passively relying on noisy 3D segments, MCM-VG enforces 2D-3D consistency across three fundamental dimensions to achieve precise target localization and reliable reasoning. First, a Semantic Alignment module corrects category mismatches via LLM-driven query parsing and coarse-to-fine 2D-3D matching. Second, an Instance Rectification module leverages VLM-guided 2D segmentations to reconstruct missing targets, back-projecting these reliable visual priors to establish accurate 3D geometries. Finally, to eliminate spatial redundancy, a Viewpoint Distillation module clusters 3D camera directions to extract optimal frames. By pairing these optimal RGB frames with Bird's Eye View maps into concise visual prompt sets, we formulate the final target disambiguation as a multiple-choice reasoning task for Vision-Language Models.
+  Extensive evaluations on ScanRefer and Nr3D benchmarks demonstrate that MCM-VG sets a new state-of-the-art for zero-shot 3D visual grounding. Remarkably, it achieves 62.0\% and 53.6\% in Acc@0.25 and Acc@0.5 on ScanRefer, outperforming previous baselines by substantial margins of 6.4\% and 4.0\%.</summary>
+    <category term="cs.CV" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-04-29T03:38:56Z</published>
+    <arxiv:primary_category term="cs.CV"/>
+    <author>
+      <name>Yufei Yin</name>
+    </author>
+    <author>
+      <name>Jie Zheng</name>
+    </author>
+    <author>
+      <name>Qianke Meng</name>
+    </author>
+    <author>
+      <name>Zhou Yu</name>
+    </author>
+    <author>
+      <name>Minghao Chen</name>
+    </author>
+    <author>
+      <name>Jiajun Ding</name>
+    </author>
+    <author>
+      <name>Min Tan</name>
+    </author>
+    <author>
+      <name>Yuling Xi</name>
+    </author>
+    <author>
+      <name>Zhiwen Chen</name>
+    </author>
+    <author>
+      <name>Chengfei Lv</name>
+    </author>
+  </entry>
+</feed>

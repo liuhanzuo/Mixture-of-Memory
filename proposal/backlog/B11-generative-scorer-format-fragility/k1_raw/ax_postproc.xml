@@ -1,0 +1,31 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<feed xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/" xmlns:arxiv="http://arxiv.org/schemas/atom" xmlns="http://www.w3.org/2005/Atom">
+  <id>https://arxiv.org/api/+Yw8g1IrubgDLbKEAJzZq5g7oaw</id>
+  <title>arXiv Query: search_query=abs:"post-processing" AND abs:"benchmark" AND abs:"model comparison"&amp;id_list=&amp;start=0&amp;max_results=30</title>
+  <updated>2026-08-14T06:50:28Z</updated>
+  <link href="https://arxiv.org/api/query?search_query=abs:%22post-processing%22+AND+(abs:%22benchmark%22+AND+abs:%22model+comparison%22)&amp;start=0&amp;max_results=30&amp;id_list=" type="application/atom+xml"/>
+  <opensearch:itemsPerPage>30</opensearch:itemsPerPage>
+  <opensearch:totalResults>1</opensearch:totalResults>
+  <opensearch:startIndex>0</opensearch:startIndex>
+  <entry>
+    <id>http://arxiv.org/abs/2104.03577v2</id>
+    <title>Stable deep neural network architectures for mitochondria segmentation on electron microscopy volumes</title>
+    <updated>2021-07-27T19:26:30Z</updated>
+    <link href="https://arxiv.org/abs/2104.03577v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2104.03577v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Electron microscopy (EM) allows the identification of intracellular organelles such as mitochondria, providing insights for clinical and scientific studies. In recent years, a number of novel deep learning architectures have been published reporting superior performance, or even human-level accuracy, compared to previous approaches on public mitochondria segmentation datasets. Unfortunately, many of these publications do not make neither the code nor the full training details public to support the results obtained, leading to reproducibility issues and dubious model comparisons. For that reason, and following a recent code of best practices for reporting experimental results, we present an extensive study of the state-of-the-art deep learning architectures for the segmentation of mitochondria on EM volumes, and evaluate the impact in performance of different variations of 2D and 3D U-Net-like models for this task. To better understand the contribution of each component, a common set of pre- and post-processing operations has been implemented and tested with each approach. Moreover, an exhaustive sweep of hyperparameters values for all architectures have been performed and each configuration has been run multiple times to report the mean and standard deviation values of the evaluation metrics. Using this methodology, we found very stable architectures and hyperparameter configurations that consistently obtain state-of-the-art results in the well-known EPFL Hippocampus mitochondria segmentation dataset. Furthermore, we have benchmarked our proposed models on two other available datasets, Lucchi++ and Kasthuri++, where they outperform all previous works. The code derived from this research and its documentation are publicly available.</summary>
+    <category term="eess.IV" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CV" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2021-04-08T07:41:13Z</published>
+    <arxiv:primary_category term="eess.IV"/>
+    <author>
+      <name>Daniel Franco-Barranco</name>
+    </author>
+    <author>
+      <name>Arrate Muñoz-Barrutia</name>
+    </author>
+    <author>
+      <name>Ignacio Arganda-Carreras</name>
+    </author>
+  </entry>
+</feed>

@@ -1,0 +1,153 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<feed xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/" xmlns:arxiv="http://arxiv.org/schemas/atom" xmlns="http://www.w3.org/2005/Atom">
+  <id>https://arxiv.org/api/Tq2AF2dbQO1B8R/ISneaR43GXDU</id>
+  <title>arXiv Query: search_query=abs:"substring match" AND abs:"evaluation"&amp;id_list=&amp;start=0&amp;max_results=40</title>
+  <updated>2026-08-14T06:46:50Z</updated>
+  <link href="https://arxiv.org/api/query?search_query=abs:%22substring+match%22+AND+abs:%22evaluation%22&amp;start=0&amp;max_results=40&amp;id_list=" type="application/atom+xml"/>
+  <opensearch:itemsPerPage>40</opensearch:itemsPerPage>
+  <opensearch:totalResults>7</opensearch:totalResults>
+  <opensearch:startIndex>0</opensearch:startIndex>
+  <entry>
+    <id>http://arxiv.org/abs/2310.08102v1</id>
+    <title>QASiNa: Religious Domain Question Answering using Sirah Nabawiyah</title>
+    <updated>2023-10-12T07:52:19Z</updated>
+    <link href="https://arxiv.org/abs/2310.08102v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2310.08102v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Nowadays, Question Answering (QA) tasks receive significant research focus, particularly with the development of Large Language Model (LLM) such as Chat GPT [1]. LLM can be applied to various domains, but it contradicts the principles of information transmission when applied to the Islamic domain. In Islam we strictly regulates the sources of information and who can give interpretations or tafseer for that sources [2]. The approach used by LLM to generate answers based on its own interpretation is similar to the concept of tafseer, LLM is neither an Islamic expert nor a human which is not permitted in Islam. Indonesia is the country with the largest Islamic believer population in the world [3]. With the high influence of LLM, we need to make evaluation of LLM in religious domain. Currently, there is only few religious QA dataset available and none of them using Sirah Nabawiyah especially in Indonesian Language. In this paper, we propose the Question Answering Sirah Nabawiyah (QASiNa) dataset, a novel dataset compiled from Sirah Nabawiyah literatures in Indonesian language. We demonstrate our dataset by using mBERT [4], XLM-R [5], and IndoBERT [6] which fine-tuned with Indonesian translation of SQuAD v2.0 [7]. XLM-R model returned the best performance on QASiNa with EM of 61.20, F1-Score of 75.94, and Substring Match of 70.00. We compare XLM-R performance with Chat GPT-3.5 and GPT-4 [1]. Both Chat GPT version returned lower EM and F1-Score with higher Substring Match, the gap of EM and Substring Match get wider in GPT-4. The experiment indicate that Chat GPT tends to give excessive interpretations as evidenced by its higher Substring Match scores compared to EM and F1-Score, even after providing instruction and context. This concludes Chat GPT is unsuitable for question answering task in religious domain especially for Islamic religion.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2023-10-12T07:52:19Z</published>
+    <arxiv:comment>6 Pages. In Proceeding of 10th International Conference on Advanced Informatics: Concepts, Theory and Applications (ICAICTA 2023)</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Muhammad Razif Rizqullah</name>
+      <arxiv:affiliation>Bandung Institute of Technology</arxiv:affiliation>
+    </author>
+    <author>
+      <name>Ayu Purwarianti</name>
+      <arxiv:affiliation>Bandung Institute of Technology</arxiv:affiliation>
+    </author>
+    <author>
+      <name>Alham Fikri Aji</name>
+      <arxiv:affiliation>Mohamed bin Zayed University of Artificial Intelligence</arxiv:affiliation>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2603.15599v1</id>
+    <title>SmartSearch: How Ranking Beats Structure for Conversational Memory Retrieval</title>
+    <updated>2026-03-16T17:53:21Z</updated>
+    <link href="https://arxiv.org/abs/2603.15599v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2603.15599v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Recent conversational memory systems invest heavily in LLM-based structuring at ingestion time and learned retrieval policies at query time. We show that neither is necessary. SmartSearch retrieves from raw, unstructured conversation history using a fully deterministic pipeline: NER-weighted substring matching for recall, rule-based entity discovery for multi-hop expansion, and a CrossEncoder+ColBERT rank fusion stage -- the only learned component -- running on CPU in ~650ms. Oracle analysis on two benchmarks identifies a compilation bottleneck: retrieval recall reaches 98.6%, but without intelligent ranking only 22.5% of gold evidence survives truncation to the token budget. With score-adaptive truncation and no per-dataset tuning, SmartSearch achieves 93.5% on LoCoMo and 88.4% on LongMemEval-S, exceeding all known memory systems under the same evaluation protocol on both benchmarks while using 8.5x fewer tokens than full-context baselines.</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-03-16T17:53:21Z</published>
+    <arxiv:primary_category term="cs.LG"/>
+    <author>
+      <name>Jesper Derehag</name>
+    </author>
+    <author>
+      <name>Carlos Calva</name>
+    </author>
+    <author>
+      <name>Timmy Ghiurau</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2603.00840v1</id>
+    <title>Learning Nested Named Entity Recognition from Flat Annotations</title>
+    <updated>2026-02-28T23:37:03Z</updated>
+    <link href="https://arxiv.org/abs/2603.00840v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2603.00840v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Nested named entity recognition identifies entities contained within other entities, but requires expensive multi-level annotation. While flat NER corpora exist abundantly, nested resources remain scarce. We investigate whether models can learn nested structure from flat annotations alone, evaluating four approaches: string inclusions (substring matching), entity corruption (pseudo-nested data), flat neutralization (reducing false negative signal), and a hybrid fine-tuned + LLM pipeline. On NEREL, a Russian benchmark with 29 entity types where 21% of entities are nested, our best combined method achieves 26.37% inner F1, closing 40% of the gap to full nested supervision. Code is available at https://github.com/fulstock/Learning-from-Flat-Annotations.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-02-28T23:37:03Z</published>
+    <arxiv:comment>Accepted at EACL 2026, 15 pages, 2 figures, 8 tables</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Igor Rozhkov</name>
+    </author>
+    <author>
+      <name>Natalia Loukachevitch</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2607.21685v3</id>
+    <title>Evaluation design conditions the expert-vs-auto MeSH gap: a controlled comparison of bag-of-words and BiomedBERT on the Cohen benchmark</title>
+    <updated>2026-08-13T08:13:01Z</updated>
+    <link href="https://arxiv.org/abs/2607.21685v3" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2607.21685v3" rel="related" type="application/pdf" title="pdf"/>
+    <summary>A systematic review begins with someone reading thousands of abstracts to identify the few that are relevant, and classifiers are used to prioritise that reading. Their inputs are often augmented with Medical Subject Headings (MeSH), assigned either by expert indexers weeks or months after publication or by automatic tools at once. We did not identify prior work comparing the two directly as classifier features, or asking whether that comparison's outcome depends on how the classifier is evaluated. Using the Cohen et al. (2006) drug-class benchmark, we compare expert assignment against one mechanical procedure, substring matching against a MeSH vocabulary drawn from the benchmark, across a bag-of-words logistic regression classifier (seven reruns) and BiomedBERT (five seeds) on three topics.
+  Under the canonical 5-fold full-corpus design the bag-of-words gap on Statins is +0.096 WSS@95%. Stratified subsampling to matched corpus size (n=803) reduces it by roughly two thirds, to +0.033, with a bootstrap interval that includes zero; 10-fold cross-validation at full corpus size reduces it by roughly four fifths, to +0.021. BiomedBERT under canonical evaluation gives +0.020, a difference of 0.001 from the bag-of-words 10-fold result. An empirical power analysis on a single canonical run per topic indicates that a Statins-sized effect at the per-fold variances of the other two topics would not have been detectable at that design (MDE 0.254 for Opioids, 0.384 for ADHD); at the pooled fold count of the multi-run protocol the bound depends on an effective sample size the design does not determine.
+  The results bound the specific lexical matcher tested rather than automatic MeSH indexing in general. More broadly, benchmark conclusions about feature sources can change substantially under reasonable changes to the evaluation design.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-07-23T14:37:23Z</published>
+    <arxiv:comment>18 pages, 2 figures, 12 tables. v3 corrects: the design-sensitivity SD column; the minimum detectable effects, now exact noncentral-t and scoped to the single-run design; an attribution of the effect magnitude to prior work; the stated direction of cross-validation fold dependence; and interval comparisons presented as tests. Change record in the repository</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Samuel M. Okoe-Mensah</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2607.19359v1</id>
+    <title>Profile-Graph Memory for LLM Agents: Implicit Cross-Entity Traversal through Narrative Profiles</title>
+    <updated>2026-06-01T09:48:16Z</updated>
+    <link href="https://arxiv.org/abs/2607.19359v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2607.19359v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Long-term memory is essential for LLM agents that interact across sessions, yet current memory benchmarks primarily evaluate single-hop recall, leaving multi-hop association largely unmeasured. We make three contributions. First, we introduce MemHop, a multi-hop memory benchmark of 1,000 questions at hop depths 1-5 across 10 social-network scenarios, with per-hop evidence annotations. Second, we present Profile-Graph Memory (ProGraph), a two-layer memory architecture combining (i) profile expansion -- substring-matched traversal of entity names that naturally appear in LLM-written profile narratives, a minimal alternative to explicit knowledge-graph construction -- and (ii) compression residuals -- exact dates, quantities, and named items co-extracted with each profile update at zero extra API cost. Third, a full-grid ablation shows cross-benchmark mechanism specialization: profile expansion drives multi-hop reasoning (-22.6pp on MemHop when removed) while compression residuals drive precision recall (-8.6pp on LoCoMo when not co-extracted), with cross-effects under 3pp within a single architecture. ProGraph averages 80.1% on MemHop (matching the FullContext reference) and 78.4% on LoCoMo (exceeding FullContext by 11.3pp), outperforming Mem0, A-Mem, HippoRAG, and RAG on both. We release MemHop, ProGraph, and baseline implementations.</summary>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-06-01T09:48:16Z</published>
+    <arxiv:comment>11 pages, 2 figures, 7 tables. Code and MemHop benchmark: https://github.com/ShengtongZhu/ProGraph</arxiv:comment>
+    <arxiv:primary_category term="cs.AI"/>
+    <author>
+      <name>Shengtong Zhu</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2604.06277v1</id>
+    <title>Weakly Supervised Distillation of Hallucination Signals into Transformer Representations</title>
+    <updated>2026-04-07T08:14:48Z</updated>
+    <link href="https://arxiv.org/abs/2604.06277v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2604.06277v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Existing hallucination detection methods for large language models (LLMs) rely on external verification at inference time, requiring gold answers, retrieval systems, or auxiliary judge models. We ask whether this external supervision can instead be distilled into the model's own representations during training, enabling hallucination detection from internal activations alone at inference time.
+  We introduce a weak supervision framework that combines three complementary grounding signals: substring matching, sentence embedding similarity, and an LLM as a judge verdict to label generated responses as grounded or hallucinated without human annotation. Using this framework, we construct a 15000-sample dataset from SQuAD v2 (10500 train/development samples and a separate 5000-sample test set), where each example pairs a LLaMA-2-7B generated answer with its full per-layer hidden states and structured hallucination labels.
+  We then train five probing classifiers: ProbeMLP (M0), LayerWiseMLP (M1), CrossLayerTransformer (M2), HierarchicalTransformer (M3), and CrossLayerAttentionTransformerV2 (M4), directly on these hidden states, treating external grounding signals as training-time supervision only. Our central hypothesis is that hallucination detection signals can be distilled into transformer representations, enabling internal detection without any external verification at inference time.
+  Results support this hypothesis. Transformer-based probes achieve the strongest discrimination, with M2 performing best on 5-fold average AUC/F1, and M3 performing best on both single-fold validation and held-out test evaluation. We also benchmark inference efficiency: probe latency ranges from 0.15 to 5.62 ms (batched) and 1.55 to 6.66 ms (single sample), while end-to-end generation plus probe throughput remains approximately 0.231 queries per second, indicating negligible practical overhead.</summary>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-04-07T08:14:48Z</published>
+    <arxiv:comment>20 pages, 6 figures, 6 tables. Introduces a 15k-sample representation-level hallucination dataset with full transformer hidden states and multi-signal weak supervision. Evaluates 5 probing architectures and demonstrates internal hallucination detection without external inference-time signals. Includes held-out test evaluation and deployment benchmarks</arxiv:comment>
+    <arxiv:primary_category term="cs.AI"/>
+    <author>
+      <name>Shoaib Sadiq Salehmohamed</name>
+    </author>
+    <author>
+      <name>Jinal Prashant Thakkar</name>
+    </author>
+    <author>
+      <name>Hansika Aredla</name>
+    </author>
+    <author>
+      <name>Shaik Mohammed Omar</name>
+    </author>
+    <author>
+      <name>Shalmali Ayachit</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2607.20494v1</id>
+    <title>Isolating LLM Alignment from Regex: Zero Coverage and Metric-Dependent Divergence Under Adversarial Mutation</title>
+    <updated>2026-06-12T18:54:24Z</updated>
+    <link href="https://arxiv.org/abs/2607.20494v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2607.20494v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Production LLM applications commonly stack a regex filter in front of model-side alignment; prior work found no measurable coverage gain from adding a live Gemini backend behind an active regex filter. We ask whether that ceiling holds when the corpus is \emph{designed to bypass the regex}. We introduce $L_5$-no-regex -- identical to $L_4$-real (Gemini-2.5-flash, token-budget cap, rate limit, output scrub) but with the nine-pattern filter disabled -- and evaluate it against $N{=}45$ adversarial probes across three sub-corpora (carry-forward, regex-bypass, alignment-isolate), amplified by Gemini paraphrase and PAIR to ${\sim}1{,}555$ probe-run pairs over $N{=}5$ replications. Under the primary substring classifier, H1 is refuted: $L_5$ block rate is $0,%$ across all five OWASP LLM Top-10 categories ($Δ\text{pp}{=}0$ vs.\ $L_0$, $p{=}1.00$; Wilson upper bound ${&lt;}5,%$). A secondary LLM-judge metric on PAIR variants shows $56$--$100,%$ block rates ($p{&lt;}0.01$), revealing alignment does respond to adversarially-framed probes -- but produces refusals too nuanced for substring matching. The sub-corpus differential prediction is not supported ($p{=}1.00$). Alignment's contribution is \emph{metric-dependent}: on natural-language harmful-request probes, it adds zero observed coverage beyond the regex; on adversarially-framed variants, an LLM judge detects refusals the substring classifier misses. The locked corpus, mutation artifacts, and export scripts are released for replication.</summary>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CR" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-06-12T18:54:24Z</published>
+    <arxiv:comment>15 pages, 2 figures, 7 tables</arxiv:comment>
+    <arxiv:primary_category term="cs.AI"/>
+    <author>
+      <name>Alexandre Cristovão Maiorano</name>
+    </author>
+  </entry>
+</feed>

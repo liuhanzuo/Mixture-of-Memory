@@ -1,0 +1,114 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<feed xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/" xmlns:arxiv="http://arxiv.org/schemas/atom" xmlns="http://www.w3.org/2005/Atom">
+  <id>https://arxiv.org/api/oa/uLk2Zp+2HinkYALaHnltlA+c</id>
+  <title>arXiv Query: search_query=&amp;id_list=2608.03297,2607.20494,2406.10149,2607.21685,2605.07395&amp;start=0&amp;max_results=20</title>
+  <updated>2026-08-14T06:47:13Z</updated>
+  <link href="https://arxiv.org/api/query?search_query=&amp;start=0&amp;max_results=20&amp;id_list=2608.03297,2607.20494,2406.10149,2607.21685,2605.07395" type="application/atom+xml"/>
+  <opensearch:itemsPerPage>20</opensearch:itemsPerPage>
+  <opensearch:totalResults>5</opensearch:totalResults>
+  <opensearch:startIndex>0</opensearch:startIndex>
+  <entry>
+    <id>http://arxiv.org/abs/2608.03297v1</id>
+    <title>Distractor-Aware Truncation: Disentangling Context-Length Effects from Signal Loss in Long-Context LLM Benchmarks</title>
+    <updated>2026-08-04T08:08:04Z</updated>
+    <link href="https://arxiv.org/abs/2608.03297v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2608.03297v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>A standard claim in the literature on retrieval-augmented and memory-augmented language models is that shorter context is better when the relevant information is preserved. We test this claim by running every sample of two long-context benchmarks -- BABILong and GraphWalks (BFS) -- at four context-retention fractions (100%, 75%, 50%, 25%) under two truncation protocols. The first is the naive protocol implicitly used in much prior work: drop content from the middle of the prompt. The second is distractor-aware: identify the task-relevant content for each sample and drop only the rest. We evaluate three sizes of the Claude family (Haiku 4.5, Sonnet 4.6, Opus 4.7) and, to test cross-provider generality, GPT-5.5 from a different provider; we apply the same protocol to two further benchmarks (MRCR v2, Oolong). Under naive truncation, score collapses monotonically (paired Wilcoxon, Holm-corrected p_adj &lt; 0.05 in all eight BABILong and GraphWalks cells). Under the distractor-aware protocol -- which preserves the signal by construction -- performance is preserved or improves: the two smaller Claude models show statistically significant gains on BABILong, while the larger models (Opus 4.7 and GPT-5.5) sit at their full-context ceiling. The naive collapse and its distractor-aware recovery replicate on GPT-5.5, ruling out a single-provider artifact. The mechanism is direct: under the naive protocol the answer-bearing content survives in fewer than 1% of samples at 25% retention; under the distractor-aware protocol it is preserved by construction. The naive protocol is therefore not a measurement of context-window effects; it is a measurement of how often middle-removal happens to spare the answer. We conclude that future studies of context-length effects must specify how they distinguish signal from distractor, or they are at best ambiguous between two opposite hypotheses.</summary>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-08-04T08:08:04Z</published>
+    <arxiv:comment>14 pages, 2 figures. Code and data: https://github.com/evolutionIdGmbH/memoreach</arxiv:comment>
+    <arxiv:primary_category term="cs.AI"/>
+    <author>
+      <name>Mohsen Arjmandi</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2406.10149v2</id>
+    <title>BABILong: Testing the Limits of LLMs with Long Context Reasoning-in-a-Haystack</title>
+    <updated>2024-11-06T14:50:40Z</updated>
+    <link href="https://arxiv.org/abs/2406.10149v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2406.10149v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>In recent years, the input context sizes of large language models (LLMs) have increased dramatically. However, existing evaluation methods have not kept pace, failing to comprehensively assess the efficiency of models in handling long contexts. To bridge this gap, we introduce the BABILong benchmark, designed to test language models' ability to reason across facts distributed in extremely long documents. BABILong includes a diverse set of 20 reasoning tasks, including fact chaining, simple induction, deduction, counting, and handling lists/sets. These tasks are challenging on their own, and even more demanding when the required facts are scattered across long natural text. Our evaluations show that popular LLMs effectively utilize only 10-20\% of the context and their performance declines sharply with increased reasoning complexity. Among alternatives to in-context reasoning, Retrieval-Augmented Generation methods achieve a modest 60\% accuracy on single-fact question answering, independent of context length. Among context extension methods, the highest performance is demonstrated by recurrent memory transformers after fine-tuning, enabling the processing of lengths up to 50 million tokens. The BABILong benchmark is extendable to any length to support the evaluation of new upcoming models with increased capabilities, and we provide splits up to 10 million token lengths.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2024-06-14T16:00:29Z</published>
+    <arxiv:comment>NeurIPS 2024 Datasets and Benchmarks Track</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Yuri Kuratov</name>
+    </author>
+    <author>
+      <name>Aydar Bulatov</name>
+    </author>
+    <author>
+      <name>Petr Anokhin</name>
+    </author>
+    <author>
+      <name>Ivan Rodkin</name>
+    </author>
+    <author>
+      <name>Dmitry Sorokin</name>
+    </author>
+    <author>
+      <name>Artyom Sorokin</name>
+    </author>
+    <author>
+      <name>Mikhail Burtsev</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2607.20494v1</id>
+    <title>Isolating LLM Alignment from Regex: Zero Coverage and Metric-Dependent Divergence Under Adversarial Mutation</title>
+    <updated>2026-06-12T18:54:24Z</updated>
+    <link href="https://arxiv.org/abs/2607.20494v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2607.20494v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Production LLM applications commonly stack a regex filter in front of model-side alignment; prior work found no measurable coverage gain from adding a live Gemini backend behind an active regex filter. We ask whether that ceiling holds when the corpus is \emph{designed to bypass the regex}. We introduce $L_5$-no-regex -- identical to $L_4$-real (Gemini-2.5-flash, token-budget cap, rate limit, output scrub) but with the nine-pattern filter disabled -- and evaluate it against $N{=}45$ adversarial probes across three sub-corpora (carry-forward, regex-bypass, alignment-isolate), amplified by Gemini paraphrase and PAIR to ${\sim}1{,}555$ probe-run pairs over $N{=}5$ replications. Under the primary substring classifier, H1 is refuted: $L_5$ block rate is $0,%$ across all five OWASP LLM Top-10 categories ($Δ\text{pp}{=}0$ vs.\ $L_0$, $p{=}1.00$; Wilson upper bound ${&lt;}5,%$). A secondary LLM-judge metric on PAIR variants shows $56$--$100,%$ block rates ($p{&lt;}0.01$), revealing alignment does respond to adversarially-framed probes -- but produces refusals too nuanced for substring matching. The sub-corpus differential prediction is not supported ($p{=}1.00$). Alignment's contribution is \emph{metric-dependent}: on natural-language harmful-request probes, it adds zero observed coverage beyond the regex; on adversarially-framed variants, an LLM judge detects refusals the substring classifier misses. The locked corpus, mutation artifacts, and export scripts are released for replication.</summary>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CR" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-06-12T18:54:24Z</published>
+    <arxiv:comment>15 pages, 2 figures, 7 tables</arxiv:comment>
+    <arxiv:primary_category term="cs.AI"/>
+    <author>
+      <name>Alexandre Cristovão Maiorano</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2607.21685v3</id>
+    <title>Evaluation design conditions the expert-vs-auto MeSH gap: a controlled comparison of bag-of-words and BiomedBERT on the Cohen benchmark</title>
+    <updated>2026-08-13T08:13:01Z</updated>
+    <link href="https://arxiv.org/abs/2607.21685v3" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2607.21685v3" rel="related" type="application/pdf" title="pdf"/>
+    <summary>A systematic review begins with someone reading thousands of abstracts to identify the few that are relevant, and classifiers are used to prioritise that reading. Their inputs are often augmented with Medical Subject Headings (MeSH), assigned either by expert indexers weeks or months after publication or by automatic tools at once. We did not identify prior work comparing the two directly as classifier features, or asking whether that comparison's outcome depends on how the classifier is evaluated. Using the Cohen et al. (2006) drug-class benchmark, we compare expert assignment against one mechanical procedure, substring matching against a MeSH vocabulary drawn from the benchmark, across a bag-of-words logistic regression classifier (seven reruns) and BiomedBERT (five seeds) on three topics.
+  Under the canonical 5-fold full-corpus design the bag-of-words gap on Statins is +0.096 WSS@95%. Stratified subsampling to matched corpus size (n=803) reduces it by roughly two thirds, to +0.033, with a bootstrap interval that includes zero; 10-fold cross-validation at full corpus size reduces it by roughly four fifths, to +0.021. BiomedBERT under canonical evaluation gives +0.020, a difference of 0.001 from the bag-of-words 10-fold result. An empirical power analysis on a single canonical run per topic indicates that a Statins-sized effect at the per-fold variances of the other two topics would not have been detectable at that design (MDE 0.254 for Opioids, 0.384 for ADHD); at the pooled fold count of the multi-run protocol the bound depends on an effective sample size the design does not determine.
+  The results bound the specific lexical matcher tested rather than automatic MeSH indexing in general. More broadly, benchmark conclusions about feature sources can change substantially under reasonable changes to the evaluation design.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-07-23T14:37:23Z</published>
+    <arxiv:comment>18 pages, 2 figures, 12 tables. v3 corrects: the design-sensitivity SD column; the minimum detectable effects, now exact noncentral-t and scoped to the single-run design; an attribution of the effect magnitude to prior work; the stated direction of cross-validation fold dependence; and interval comparisons presented as tests. Change record in the repository</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Samuel M. Okoe-Mensah</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2605.07395v1</id>
+    <title>Unsolvability Ceiling in Multi-LLM Routing: An Empirical Study of Evaluation Artifacts</title>
+    <updated>2026-05-08T07:49:24Z</updated>
+    <link href="https://arxiv.org/abs/2605.07395v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2605.07395v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Efficient routing across multiple LLMs enables cost-quality tradeoffs by directing queries to the cheapest capable model. Prior work attributes routing headroom to an "unsolvability ceiling", queries no model in the pool can solve. We present a large-scale study of multi-tier LLM routing with 206,000 query-model pairs across six benchmarks (MMLU, MedQA, HumanEval, MBPP, Alpaca, ShareGPT) using the Gemma 4 and Llama 3.1 families. Evaluating with both LLM-as-a-judge and exact-match metrics, we show that a substantial portion of reported unsolvability stems from evaluation artifacts: (i) systematic judge biases favoring verbosity over correctness, (ii) truncation under fixed generation budgets, and (iii) output format mismatches. Through dual-judge validation and exact-match grounding, we reduce measured unsolvability across tasks. We introduce a decomposition framework attributing failures to these artifacts, revealing consistent patterns across domains and model families. These artifacts also distort router training signals: standard routers collapse to majority-class prediction (~79% smallest-tier optimal), confirmed via random-feature and shuffled-label controls, incurring a 13-17 percentage point opportunity cost. We provide actionable recommendations including dual-judge validation, exact-match anchoring, and cost-sensitive objectives. Our findings suggest existing routing headroom estimates are substantially inflated, underscoring the need for reliable evaluation protocols in multi-LLM systems.</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-05-08T07:49:24Z</published>
+    <arxiv:comment>12 pages, 14 tables</arxiv:comment>
+    <arxiv:primary_category term="cs.LG"/>
+    <author>
+      <name>Saloni Garg</name>
+    </author>
+    <author>
+      <name>Amit Sagtani</name>
+    </author>
+  </entry>
+</feed>

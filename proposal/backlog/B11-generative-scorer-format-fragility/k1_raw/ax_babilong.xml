@@ -1,0 +1,623 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<feed xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/" xmlns:arxiv="http://arxiv.org/schemas/atom" xmlns="http://www.w3.org/2005/Atom">
+  <id>https://arxiv.org/api/8MMhfUOqc8IwvhahToSfovtu/JM</id>
+  <title>arXiv Query: search_query=all:"BABILong"&amp;id_list=&amp;start=0&amp;max_results=40</title>
+  <updated>2026-08-14T06:46:48Z</updated>
+  <link href="https://arxiv.org/api/query?search_query=all:%22BABILong%22&amp;start=0&amp;max_results=40&amp;id_list=" type="application/atom+xml"/>
+  <opensearch:itemsPerPage>40</opensearch:itemsPerPage>
+  <opensearch:totalResults>22</opensearch:totalResults>
+  <opensearch:startIndex>0</opensearch:startIndex>
+  <entry>
+    <id>http://arxiv.org/abs/2406.10149v2</id>
+    <title>BABILong: Testing the Limits of LLMs with Long Context Reasoning-in-a-Haystack</title>
+    <updated>2024-11-06T14:50:40Z</updated>
+    <link href="https://arxiv.org/abs/2406.10149v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2406.10149v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>In recent years, the input context sizes of large language models (LLMs) have increased dramatically. However, existing evaluation methods have not kept pace, failing to comprehensively assess the efficiency of models in handling long contexts. To bridge this gap, we introduce the BABILong benchmark, designed to test language models' ability to reason across facts distributed in extremely long documents. BABILong includes a diverse set of 20 reasoning tasks, including fact chaining, simple induction, deduction, counting, and handling lists/sets. These tasks are challenging on their own, and even more demanding when the required facts are scattered across long natural text. Our evaluations show that popular LLMs effectively utilize only 10-20\% of the context and their performance declines sharply with increased reasoning complexity. Among alternatives to in-context reasoning, Retrieval-Augmented Generation methods achieve a modest 60\% accuracy on single-fact question answering, independent of context length. Among context extension methods, the highest performance is demonstrated by recurrent memory transformers after fine-tuning, enabling the processing of lengths up to 50 million tokens. The BABILong benchmark is extendable to any length to support the evaluation of new upcoming models with increased capabilities, and we provide splits up to 10 million token lengths.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2024-06-14T16:00:29Z</published>
+    <arxiv:comment>NeurIPS 2024 Datasets and Benchmarks Track</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Yuri Kuratov</name>
+    </author>
+    <author>
+      <name>Aydar Bulatov</name>
+    </author>
+    <author>
+      <name>Petr Anokhin</name>
+    </author>
+    <author>
+      <name>Ivan Rodkin</name>
+    </author>
+    <author>
+      <name>Dmitry Sorokin</name>
+    </author>
+    <author>
+      <name>Artyom Sorokin</name>
+    </author>
+    <author>
+      <name>Mikhail Burtsev</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2602.10410v1</id>
+    <title>LUCID: Attention with Preconditioned Representations</title>
+    <updated>2026-02-11T01:46:32Z</updated>
+    <link href="https://arxiv.org/abs/2602.10410v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2602.10410v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Softmax-based dot-product attention is a cornerstone of Transformer architectures, enabling remarkable capabilities such as in-context learning. However, as context lengths increase, a fundamental limitation of the softmax function emerges: it tends to diffuse probability mass to irrelevant tokens degrading performance in long-sequence scenarios. Furthermore, attempts to sharpen focus by lowering softmax temperature hinder learnability due to vanishing gradients. We introduce LUCID Attention, an architectural modification that applies a preconditioner to the attention probabilities. This preconditioner, derived from exponentiated key-key similarities, minimizes overlap between the keys in a Reproducing Kernel Hilbert Space, thus allowing the query to focus on important keys among large number of keys accurately with same computational complexity as standard attention. Additionally, LUCID's preconditioning-based approach to retrieval bypasses the need for low temperature and the learnability problems associated with it. We validate our approach by training ~1 billion parameter language models evaluated on up to 128K tokens. Our results demonstrate significant gains on long-context retrieval tasks, specifically retrieval tasks from BABILong, RULER, SCROLLS and LongBench. For instance, LUCID achieves up to 18% improvement in BABILong and 14% improvement in RULER multi-needle performance compared to standard attention.</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-02-11T01:46:32Z</published>
+    <arxiv:primary_category term="cs.LG"/>
+    <author>
+      <name>Sai Surya Duvvuri</name>
+    </author>
+    <author>
+      <name>Nirmal Patel</name>
+    </author>
+    <author>
+      <name>Nilesh Gupta</name>
+    </author>
+    <author>
+      <name>Inderjit S. Dhillon</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2608.03297v1</id>
+    <title>Distractor-Aware Truncation: Disentangling Context-Length Effects from Signal Loss in Long-Context LLM Benchmarks</title>
+    <updated>2026-08-04T08:08:04Z</updated>
+    <link href="https://arxiv.org/abs/2608.03297v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2608.03297v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>A standard claim in the literature on retrieval-augmented and memory-augmented language models is that shorter context is better when the relevant information is preserved. We test this claim by running every sample of two long-context benchmarks -- BABILong and GraphWalks (BFS) -- at four context-retention fractions (100%, 75%, 50%, 25%) under two truncation protocols. The first is the naive protocol implicitly used in much prior work: drop content from the middle of the prompt. The second is distractor-aware: identify the task-relevant content for each sample and drop only the rest. We evaluate three sizes of the Claude family (Haiku 4.5, Sonnet 4.6, Opus 4.7) and, to test cross-provider generality, GPT-5.5 from a different provider; we apply the same protocol to two further benchmarks (MRCR v2, Oolong). Under naive truncation, score collapses monotonically (paired Wilcoxon, Holm-corrected p_adj &lt; 0.05 in all eight BABILong and GraphWalks cells). Under the distractor-aware protocol -- which preserves the signal by construction -- performance is preserved or improves: the two smaller Claude models show statistically significant gains on BABILong, while the larger models (Opus 4.7 and GPT-5.5) sit at their full-context ceiling. The naive collapse and its distractor-aware recovery replicate on GPT-5.5, ruling out a single-provider artifact. The mechanism is direct: under the naive protocol the answer-bearing content survives in fewer than 1% of samples at 25% retention; under the distractor-aware protocol it is preserved by construction. The naive protocol is therefore not a measurement of context-window effects; it is a measurement of how often middle-removal happens to spare the answer. We conclude that future studies of context-length effects must specify how they distinguish signal from distractor, or they are at best ambiguous between two opposite hypotheses.</summary>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-08-04T08:08:04Z</published>
+    <arxiv:comment>14 pages, 2 figures. Code and data: https://github.com/evolutionIdGmbH/memoreach</arxiv:comment>
+    <arxiv:primary_category term="cs.AI"/>
+    <author>
+      <name>Mohsen Arjmandi</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2505.08651v1</id>
+    <title>Scaling Context, Not Parameters: Training a Compact 7B Language Model for Efficient Long-Context Processing</title>
+    <updated>2025-05-13T15:13:15Z</updated>
+    <link href="https://arxiv.org/abs/2505.08651v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2505.08651v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>We present MegaBeam-Mistral-7B, a language model that supports 512K-token context length. Our work addresses practical limitations in long-context training, supporting real-world tasks such as compliance monitoring and verification. Evaluated on three long-context benchmarks, our 7B-parameter model demonstrates superior in-context learning performance on HELMET and robust retrieval and tracing capability on RULER. It is currently the only open model to achieve competitive long-range reasoning on BABILong at 512K context length without RAG or targeted fine-tuning. Released as fully open source under the Apache 2.0 license, the model has been downloaded over 100,000 times on Hugging Face. Model available at: https://huggingface.co/aws-prototyping/MegaBeam-Mistral-7B-512k</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-05-13T15:13:15Z</published>
+    <arxiv:comment>8 pages, 6 figures, ACL 2025 (Industry Track)</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Chen Wu</name>
+    </author>
+    <author>
+      <name>Yin Song</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2503.10720v2</id>
+    <title>AttentionRAG: Attention-Guided Context Pruning in Retrieval-Augmented Generation</title>
+    <updated>2025-10-27T16:55:55Z</updated>
+    <link href="https://arxiv.org/abs/2503.10720v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2503.10720v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>While RAG demonstrates remarkable capabilities in LLM applications, its effectiveness is hindered by the ever-increasing length of retrieved contexts, which introduces information redundancy and substantial computational overhead. Existing context pruning methods, such as LLMLingua, lack contextual awareness and offer limited flexibility in controlling compression rates, often resulting in either insufficient pruning or excessive information loss. In this paper, we propose AttentionRAG, an attention-guided context pruning method for RAG systems. The core idea of AttentionRAG lies in its attention focus mechanism, which reformulates RAG queries into a next-token prediction paradigm. This mechanism isolates the query's semantic focus to a single token, enabling precise and efficient attention calculation between queries and retrieved contexts. Extensive experiments on LongBench and Babilong benchmarks show that AttentionRAG achieves up to 6.3$\times$ context compression while outperforming LLMLingua methods by around 10\% in key metrics.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-03-13T08:22:28Z</published>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Yixiong Fang</name>
+    </author>
+    <author>
+      <name>Tianran Sun</name>
+    </author>
+    <author>
+      <name>Yuling Shi</name>
+    </author>
+    <author>
+      <name>Xiaodong Gu</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2407.04841v2</id>
+    <title>Associative Recurrent Memory Transformer</title>
+    <updated>2025-02-13T20:10:59Z</updated>
+    <link href="https://arxiv.org/abs/2407.04841v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2407.04841v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>This paper addresses the challenge of creating a neural architecture for very long sequences that requires constant time for processing new information at each time step. Our approach, Associative Recurrent Memory Transformer (ARMT), is based on transformer self-attention for local context and segment-level recurrence for storage of task specific information distributed over a long context. We demonstrate that ARMT outperfors existing alternatives in associative retrieval tasks and sets a new performance record in the recent BABILong multi-task long-context benchmark by answering single-fact questions over 50 million tokens with an accuracy of 79.9%. The source code for training and evaluation is available on github.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2024-07-05T19:57:49Z</published>
+    <arxiv:comment>ICML 2024 Next Generation of Sequence Modeling Architectures Workshop</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Ivan Rodkin</name>
+    </author>
+    <author>
+      <name>Yuri Kuratov</name>
+    </author>
+    <author>
+      <name>Aydar Bulatov</name>
+    </author>
+    <author>
+      <name>Mikhail Burtsev</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2402.10790v2</id>
+    <title>In Search of Needles in a 11M Haystack: Recurrent Memory Finds What LLMs Miss</title>
+    <updated>2024-02-21T03:07:42Z</updated>
+    <link href="https://arxiv.org/abs/2402.10790v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2402.10790v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>This paper addresses the challenge of processing long documents using generative transformer models. To evaluate different approaches, we introduce BABILong, a new benchmark designed to assess model capabilities in extracting and processing distributed facts within extensive texts. Our evaluation, which includes benchmarks for GPT-4 and RAG, reveals that common methods are effective only for sequences up to $10^4$ elements. In contrast, fine-tuning GPT-2 with recurrent memory augmentations enables it to handle tasks involving up to $11\times 10^6$ elements. This achievement marks a substantial leap, as it is by far the longest input processed by any neural network model to date, demonstrating a significant improvement in the processing capabilities for long sequences.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2024-02-16T16:15:01Z</published>
+    <arxiv:comment>11M tokens, fix qa3 min facts per task in Table 1</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Yuri Kuratov</name>
+    </author>
+    <author>
+      <name>Aydar Bulatov</name>
+    </author>
+    <author>
+      <name>Petr Anokhin</name>
+    </author>
+    <author>
+      <name>Dmitry Sorokin</name>
+    </author>
+    <author>
+      <name>Artyom Sorokin</name>
+    </author>
+    <author>
+      <name>Mikhail Burtsev</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2606.23687v1</id>
+    <title>Randomized YaRN Improves Length Generalization for Long-Context Reasoning</title>
+    <updated>2026-06-22T17:59:53Z</updated>
+    <link href="https://arxiv.org/abs/2606.23687v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2606.23687v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Large language models (LLMs) are typically pretrained on short sequences and then extended to work on longer sequences with additional training. However, such LLMs still struggle to further generalize to very long sequences. We propose Randomized YaRN, a training method that improves length generalization by combining YaRN-based positional extrapolation with randomized positional encoding and a length curriculum. During training on short context data, tokens are assigned YaRN positional encodings sampled from a larger position range, exposing the model to out-of-distribution positional representations even on short-context inputs. We evaluate Randomized YaRN on two challenging long-context reasoning benchmarks, BABILong and Multi-Round Coreference Resolution (MRCR). When training on data with &lt;8K context, Randomized YaRN consistently improves reasoning performance on context lengths from 16K to 128K and outperforms standard fine-tuning, with the largest gains appearing at far out-of-distribution lengths. Our results suggest that progressively exposing models to OOD positional distributions provides an effective recipe for generalizable long-context reasoning.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-06-22T17:59:53Z</published>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Manas Mehta</name>
+    </author>
+    <author>
+      <name>Fangcong Yin</name>
+    </author>
+    <author>
+      <name>Greg Durrett</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2406.07528v2</id>
+    <title>QuickLLaMA: Query-aware Inference Acceleration for Large Language Models</title>
+    <updated>2024-08-22T06:09:53Z</updated>
+    <link href="https://arxiv.org/abs/2406.07528v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2406.07528v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>The capacity of Large Language Models (LLMs) to comprehend and reason over long contexts is pivotal for advancements in diverse fields. Yet, they still stuggle with capturing long-distance dependencies within sequences to deeply understand semantics. To address this issue, we introduce Query-aware Inference for LLMs (Q-LLM), a system designed to process extensive sequences akin to human cognition. By focusing on memory data relevant to a given query, Q-LLM can accurately capture pertinent information within a fixed window size and provide precise answers to queries. It doesn't require extra training and can be seamlessly integrated with any LLMs. Q-LLM using LLaMA3 (QuickLLaMA) can read Harry Potter within 30s and accurately answer the questions. On widely recognized benchmarks, Q-LLM improved by 7.17% compared to the current state-of-the-art on LLaMA3, and by 3.26% on Mistral on the $\infty$-bench. In the Needle-in-a-Haystack and BABILong task, Q-LLM improved upon the current SOTA by 7.0% and 6.1%. Our code can be found in https://github.com/dvlab-research/Q-LLM.</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2024-06-11T17:55:03Z</published>
+    <arxiv:primary_category term="cs.LG"/>
+    <author>
+      <name>Jingyao Li</name>
+    </author>
+    <author>
+      <name>Han Shi</name>
+    </author>
+    <author>
+      <name>Xin Jiang</name>
+    </author>
+    <author>
+      <name>Zhenguo Li</name>
+    </author>
+    <author>
+      <name>Hong Xu</name>
+    </author>
+    <author>
+      <name>Jiaya Jia</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2511.07328v2</id>
+    <title>Q-RAG: Long Context Multi-step Retrieval via Value-based Embedder Training</title>
+    <updated>2026-05-04T15:02:13Z</updated>
+    <link href="https://arxiv.org/abs/2511.07328v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2511.07328v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Retrieval-Augmented Generation (RAG) methods enhance LLM performance by efficiently filtering relevant context for LLMs, reducing hallucinations and inference cost. However, most existing RAG methods focus on single-step retrieval, which is often insufficient for answering complex questions that require multi-step search. Recently, multi-step retrieval approaches have emerged, typically involving the fine-tuning of small LLMs to perform multi-step retrieval. This type of fine-tuning is highly resource-intensive and does not enable the use of larger LLMs. In this work, we propose Q-RAG, a novel approach that fine-tunes the Embedder model for multi-step retrieval using reinforcement learning (RL). Q-RAG offers a competitive, resource-efficient alternative to existing multi-step retrieval methods for open-domain question answering and achieves state-of-the-art results on the popular long-context benchmarks BabiLong and RULER for contexts up to 10M tokens. Code is available at https://github.com/griver/Q-RAG</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.IR" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-11-10T17:31:02Z</published>
+    <arxiv:comment>Published as a conference paper at ICLR 2026. Code is available at https://github.com/griver/Q-RAG</arxiv:comment>
+    <arxiv:primary_category term="cs.LG"/>
+    <author>
+      <name>Artyom Sorokin</name>
+    </author>
+    <author>
+      <name>Nazar Buzun</name>
+    </author>
+    <author>
+      <name>Alexander Anokhin</name>
+    </author>
+    <author>
+      <name>Oleg Inozemcev</name>
+    </author>
+    <author>
+      <name>Egor Vedernikov</name>
+    </author>
+    <author>
+      <name>Petr Anokhin</name>
+    </author>
+    <author>
+      <name>Mikhail Burtsev</name>
+    </author>
+    <author>
+      <name>Trushkov Alexey</name>
+    </author>
+    <author>
+      <name>Yin Wenshuai</name>
+    </author>
+    <author>
+      <name>Evgeny Burnaev</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2602.02199v1</id>
+    <title>More Than a Quick Glance: Overcoming the Greedy Bias in KV-Cache Compression</title>
+    <updated>2026-02-02T15:05:03Z</updated>
+    <link href="https://arxiv.org/abs/2602.02199v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2602.02199v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>While Large Language Models (LLMs) can theoretically support extensive context windows, their actual deployment is constrained by the linear growth of Key-Value (KV) cache memory. Prevailing compression strategies mitigate this through various pruning mechanisms, yet trade-off semantic recall for memory efficiency. In this work, we present LASER-KV (Layer Accumulated Selection with Exact-LSH Recall), a framework designed to test the limits of KV compression under a strict accumulative budgeting policy. We deviate from the standard fixed summary size approach by implementing a block-wise accumulation strategy governed by a protection divisor (n). This allows us to isolate the effects of compression from sliding window artifacts. Our experiments on the Babilong benchmark reveal performance degradation in previous compression methods by 15-30% on various long context tasks. LASER-KV maintains stable performance, achieving superior accuracies by a margin of upto 10% at 128k. These findings challenge the prevailing assumption that attention scores alone are a sufficient proxy for token utility.</summary>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-02-02T15:05:03Z</published>
+    <arxiv:primary_category term="cs.AI"/>
+    <author>
+      <name>Aryan Sood</name>
+    </author>
+    <author>
+      <name>Tanvi Sharma</name>
+    </author>
+    <author>
+      <name>Vansh Agrawal</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2410.12859v1</id>
+    <title>Enhancing Long Context Performance in LLMs Through Inner Loop Query Mechanism</title>
+    <updated>2024-10-11T19:49:05Z</updated>
+    <link href="https://arxiv.org/abs/2410.12859v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2410.12859v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Transformers have a quadratic scaling of computational complexity with input size, which limits the input context window size of large language models (LLMs) in both training and inference. Meanwhile, retrieval-augmented generation (RAG) besed models can better handle longer contexts by using a retrieval system to filter out unnecessary information. However, most RAG methods only perform retrieval based on the initial query, which may not work well with complex questions that require deeper reasoning. We introduce a novel approach, Inner Loop Memory Augmented Tree Retrieval (ILM-TR), involving inner-loop queries, based not only on the query question itself but also on intermediate findings. At inference time, our model retrieves information from the RAG system, integrating data from lengthy documents at various levels of abstraction. Based on the information retrieved, the LLM generates texts stored in an area named Short-Term Memory (STM) which is then used to formulate the next query. This retrieval process is repeated until the text in STM converged. Our experiments demonstrate that retrieval with STM offers improvements over traditional retrieval-augmented LLMs, particularly in long context tests such as Multi-Needle In A Haystack (M-NIAH) and BABILong.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.IR" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2024-10-11T19:49:05Z</published>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Yimin Tang</name>
+    </author>
+    <author>
+      <name>Yurong Xu</name>
+    </author>
+    <author>
+      <name>Ning Yan</name>
+    </author>
+    <author>
+      <name>Masood Mortazavi</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2506.01215v2</id>
+    <title>Compress, Gather, and Recompute: REFORMing Long-Context Processing in Transformers</title>
+    <updated>2025-11-17T12:29:07Z</updated>
+    <link href="https://arxiv.org/abs/2506.01215v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2506.01215v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>As large language models increasingly gain popularity in real-world applications, processing extremely long contexts, often exceeding the model's pre-trained context limits, has emerged as a critical challenge. While existing approaches to efficient long-context processing show promise, recurrent compression-based methods struggle with information preservation, whereas random access approaches require substantial memory resources. We introduce REFORM, a novel inference framework that efficiently handles long contexts through a two-phase approach. First, it incrementally processes input chunks while maintaining a compressed KV cache, constructs cross-layer context embeddings, and utilizes early exit strategy for improved efficiency. Second, it identifies and gathers essential tokens via similarity matching and selectively recomputes the KV cache. Compared to baselines, REFORM achieves over 52% and 34% performance gains on RULER and BABILong respectively at 1M context length. It also outperforms baselines on Infinite-Bench, RepoEval, and MM-NIAH, demonstrating flexibility across diverse tasks and domains. Additionally, REFORM reduces inference time by 30% and peak memory usage by 5%, achieving both efficiency and superior performance.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-06-01T23:49:14Z</published>
+    <arxiv:comment>NeurIPS 2025</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Woomin Song</name>
+    </author>
+    <author>
+      <name>Sai Muralidhar Jayanthi</name>
+    </author>
+    <author>
+      <name>Srikanth Ronanki</name>
+    </author>
+    <author>
+      <name>Kanthashree Mysore Sathyendra</name>
+    </author>
+    <author>
+      <name>Jinwoo Shin</name>
+    </author>
+    <author>
+      <name>Aram Galstyan</name>
+    </author>
+    <author>
+      <name>Shubham Katiyar</name>
+    </author>
+    <author>
+      <name>Sravan Babu Bodapati</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2502.06049v1</id>
+    <title>LM2: Large Memory Models</title>
+    <updated>2025-02-09T22:11:42Z</updated>
+    <link href="https://arxiv.org/abs/2502.06049v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2502.06049v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>This paper introduces the Large Memory Model (LM2), a decoder-only Transformer architecture enhanced with an auxiliary memory module that aims to address the limitations of standard Transformers in multi-step reasoning, relational argumentation, and synthesizing information distributed over long contexts. The proposed LM2 incorporates a memory module that acts as a contextual representation repository, interacting with input tokens via cross attention and updating through gating mechanisms. To preserve the Transformers general-purpose capabilities, LM2 maintains the original information flow while integrating a complementary memory pathway. Experimental results on the BABILong benchmark demonstrate that the LM2model outperforms both the memory-augmented RMT model by 37.1% and the baseline Llama-3.2 model by 86.3% on average across tasks. LM2 exhibits exceptional capabilities in multi-hop inference, numerical reasoning, and large-context question-answering. On the MMLU dataset, it achieves a 5.0% improvement over a pre-trained vanilla model, demonstrating that its memory module does not degrade performance on general tasks. Further, in our analysis, we explore the memory interpretability, effectiveness of memory modules, and test-time behavior. Our findings emphasize the importance of explicit memory in enhancing Transformer architectures.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-02-09T22:11:42Z</published>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Jikun Kang</name>
+    </author>
+    <author>
+      <name>Wenqi Wu</name>
+    </author>
+    <author>
+      <name>Filippos Christianos</name>
+    </author>
+    <author>
+      <name>Alex J. Chan</name>
+    </author>
+    <author>
+      <name>Fraser Greenlee</name>
+    </author>
+    <author>
+      <name>George Thomas</name>
+    </author>
+    <author>
+      <name>Marvin Purtorab</name>
+    </author>
+    <author>
+      <name>Andy Toulis</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2509.18467v2</id>
+    <title>LAWCAT: Efficient Distillation from Quadratic to Linear Attention with Convolution across Tokens for Long Context Modeling</title>
+    <updated>2025-11-04T18:01:01Z</updated>
+    <link href="https://arxiv.org/abs/2509.18467v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2509.18467v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Although transformer architectures have achieved state-of-the-art performance across diverse domains, their quadratic computational complexity with respect to sequence length remains a significant bottleneck, particularly for latency-sensitive long-context applications. While recent linear-complexity alternatives are increasingly powerful, effectively training them from scratch is still resource-intensive. To overcome these limitations, we propose LAWCAT (Linear Attention with Convolution Across Time), a novel linearization framework designed to efficiently transfer the capabilities of pre-trained transformers into a performant linear attention architecture. LAWCAT integrates causal Conv1D layers to enhance local dependency modeling and employs normalized gated linear attention to improve generalization across varying context lengths. Our comprehensive evaluations demonstrate that, distilling Mistral-7B with only 1K-length sequences yields over 90\% passkey retrieval accuracy up to 22K tokens, significantly extending its effective context window. Similarly, Llama3.2-1B LAWCAT variant achieves competitive performance on S-NIAH 1\&amp;2\&amp;3 tasks (1K-8K context length) and BABILong benchmark (QA2\&amp;QA3, 0K-16K context length), requiring less than 0.1\% pre-training tokens compared with pre-training models. Furthermore, LAWCAT exhibits faster prefill speeds than FlashAttention-2 for sequences exceeding 8K tokens. LAWCAT thus provides an efficient pathway to high-performance, long-context linear models suitable for edge deployment, reducing reliance on extensive long-sequence training data and computational resources. Code is released at: https://github.com/zeyuliu1037/LAWCAT</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-09-22T22:43:44Z</published>
+    <arxiv:comment>17 pages, 8 figures. EMNLP2025 Findings</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Zeyu Liu</name>
+    </author>
+    <author>
+      <name>Souvik Kundu</name>
+    </author>
+    <author>
+      <name>Lianghao Jiang</name>
+    </author>
+    <author>
+      <name>Anni Li</name>
+    </author>
+    <author>
+      <name>Srikanth Ronanki</name>
+    </author>
+    <author>
+      <name>Sravan Bodapati</name>
+    </author>
+    <author>
+      <name>Gourav Datta</name>
+    </author>
+    <author>
+      <name>Peter A. Beerel</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2502.12462v1</id>
+    <title>Emulating Retrieval Augmented Generation via Prompt Engineering for Enhanced Long Context Comprehension in LLMs</title>
+    <updated>2025-02-18T02:49:40Z</updated>
+    <link href="https://arxiv.org/abs/2502.12462v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2502.12462v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>This paper addresses the challenge of comprehending very long contexts in Large Language Models (LLMs) by proposing a method that emulates Retrieval Augmented Generation (RAG) through specialized prompt engineering and chain-of-thought (CoT) reasoning. While recent LLMs support over 100,000 tokens in a single prompt, simply enlarging context windows has not guaranteed robust multi-hop reasoning when key details are scattered across massive input. Our approach treats the model as both the retriever and the reasoner: it first tags relevant segments within a long passage, then employs a stepwise CoT workflow to integrate these pieces of evidence. This single-pass method thereby reduces reliance on an external retriever, yet maintains focus on crucial segments. We evaluate our approach on selected tasks from BABILong, which interleaves standard bAbI QA problems with large amounts of distractor text. Compared to baseline (no retrieval) and naive RAG pipelines, our approach more accurately handles multi-fact questions such as object location tracking, counting, and indefinite knowledge. Furthermore, we analyze how prompt structure, including the order of question, relevant-text tags, and overall instructions, significantly affects performance. These findings underscore that optimized prompt engineering, combined with guided reasoning, can enhance LLMs' long-context comprehension and serve as a lightweight alternative to traditional retrieval pipelines.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-02-18T02:49:40Z</published>
+    <arxiv:comment>11 pages, 2 figures</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Joon Park</name>
+    </author>
+    <author>
+      <name>Kyohei Atarashi</name>
+    </author>
+    <author>
+      <name>Koh Takeuchi</name>
+    </author>
+    <author>
+      <name>Hisashi Kashima</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2604.05438v2</id>
+    <title>Residual-Mass Accounting for Partial-KV Decoding</title>
+    <updated>2026-05-07T00:35:54Z</updated>
+    <link href="https://arxiv.org/abs/2604.05438v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2604.05438v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>We study a controlled partial-KV decoding setting in which exact unnormalized softmax contributions are computed for sink/tail anchors and a retrieved token set, while the remaining prefill tokens are represented by a residual estimate. We focus on the accounting rule after the query-dependent exact support has been selected, and use exhaustive Top-K only as an oracle selector, not as a deployable retrieval system. The proposed rule leaves the backbone language model and the exact-branch KV tensors unchanged. It builds fixed-size summary states $(S,u)$ from learned positive feature maps $φ$, subtracts retrieved-token feature contributions to keep the exact and residual sets non-overlapping, and merges the estimated residual numerator and denominator with the exact branch under one normalization. At a 1% exact-support budget, our residual-completion method improves over the selection-only Top-K baseline on RULER and BABILong across frozen 1B and 3B Llama-3.2-Instruct backbones at all reported context lengths. In the 0.5-4% exact-support budget sweeps, this trend largely persists. On LongBench, summarization results are mostly favorable, while multi-document QA is mixed. Attention-output diagnostics support retrieved-token subtraction as the partition-consistent accounting rule, while indicating that the main remaining error is imperfect learned-$φ$ approximation of the unretrieved residual mass.</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-04-07T05:19:54Z</published>
+    <arxiv:primary_category term="cs.LG"/>
+    <author>
+      <name>Yasuto Hoshi</name>
+    </author>
+    <author>
+      <name>Daisuke Miyashita</name>
+    </author>
+    <author>
+      <name>Jun Deguchi</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2606.25156v4</id>
+    <title>ATMA: Long-Context Language Modeling via Polar Attention and Gated-Delta Compression Memory</title>
+    <updated>2026-08-12T09:48:23Z</updated>
+    <link href="https://arxiv.org/abs/2606.25156v4" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2606.25156v4" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Length extrapolation in language models involves competing objectives: retrieval fidelity, long-document likelihood, short-context quality, and inference cost. We present ATMA, a 378M-parameter hybrid recipe that combines Polar Attention with gated-delta recurrent memory, and study these objectives as a Pareto problem rather than claiming general architectural dominance. Polar Attention separates a normalized direction channel from a bounded participation-ratio magnitude channel. We select the recipe with a complete 120-cell, 1B-token factorial sweep, then train matched NoPE, RoPE, and Polar variants for 9.816B tokens at length 2K and evaluate them through 256K. Across the factorial, memory improves Polar's 64K retrieval score in all 20 matched cells (mean +47.8 points), whereas its effect on NoPE is small and inconsistent. At 256K, Polar retains 34.4% teacher-forced target-token accuracy and 9.0% exact five-token accuracy; exact retrieval is 18.0% on synthetic contexts but 0.0% on FinePDFs contexts. Polar also limits mean fixed-target bits-per-byte degradation to 1.26 times, at a 1.9-point mean cost on eight short-context tasks. Raven baselines lead BABILong and have length-independent decode state, illustrating a different point on the frontier. Finally, a post-hoc checkpoint audit shows that nearly identical 2K validation curves can conceal a 6.70-nat difference at 256K. Because those runs were neither seed-paired nor randomized across devices, we interpret this as checkpoint variability associated with an infrastructure transition, not a causal hardware effect. Code: https://github.com/kreasof-ai/atma</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-06-23T20:43:51Z</published>
+    <arxiv:primary_category term="cs.LG"/>
+    <author>
+      <name>Habibullah Akbar</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2605.09932v1</id>
+    <title>FocuSFT: Bilevel Optimization for Dilution-Aware Long-Context Fine-Tuning</title>
+    <updated>2026-05-11T03:30:35Z</updated>
+    <link href="https://arxiv.org/abs/2605.09932v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2605.09932v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Large language models can now process increasingly long inputs, yet their ability to effectively use information spread across long contexts remains limited. We trace this gap to how attention budget is spent during supervised fine-tuning (SFT) on long sequences: positional biases and attention sinks cause the model to allocate most of its attention to positionally privileged tokens rather than semantically relevant content. This training-time attention dilution (the starvation of content tokens in the attention distribution) weakens the gradient signal, limiting the model's ability to learn robust long-context capabilities. We introduce FocuSFT, a bilevel optimization framework that addresses this problem at training time. An inner loop adapts lightweight fast-weight parameters on the training context to form a parametric memory that concentrates attention on relevant content, and the outer loop performs SFT conditioned on this sharpened representation. Both loops apply bidirectional attention over context tokens while preserving causal masking for responses, reducing the causal asymmetry that gives rise to attention sinks and aligning inner-outer behavior. On BABILong, FocuSFT improves accuracy by up to +14pp across 4K--32K context lengths; on RULER, it raises CWE aggregation from 72.9\% to 81.1\% at 16K; and on GPQA with agentic tool use, it yields a 24\% relative gain in pass@1. Attention analysis shows that FocuSFT reduces attention sink mass by 529$\times$ and triples context engagement during training. Code: https://github.com/JarvisPei/FocuSFT</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-05-11T03:30:35Z</published>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Zehua Pei</name>
+    </author>
+    <author>
+      <name>Hui-Ling Zhen</name>
+    </author>
+    <author>
+      <name>Xianzhi Yu</name>
+    </author>
+    <author>
+      <name>Sinno Jialin Pan</name>
+    </author>
+    <author>
+      <name>Mingxuan Yuan</name>
+    </author>
+    <author>
+      <name>Bei Yu</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2510.17196v3</id>
+    <title>Understanding and Improving Length Generalization in Hierarchical Sparse Attention Models</title>
+    <updated>2026-04-30T15:40:24Z</updated>
+    <link href="https://arxiv.org/abs/2510.17196v3" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2510.17196v3" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Effectively processing long contexts is a critical challenge for language models. While standard Transformers are limited by quadratic complexity and poor length extrapolation, alternative architectures like sliding window attention and state space models sacrifice the ability to effectively utilize the full context due to their fixed-size memory. Chunk-based sparse attention has emerged as a promising paradigm for extreme length generalization, yet the key architectural principles underpinning its success are not yet fully understood. In this work, we present a systematic dissection of these models to identify the core components driving their performance. Through a unified framework and comprehensive ablation studies, we demonstrate that a combination of three design principles is critical: (1) an expressive, non-linear Chunk Encoder with a dedicated CLS token to produce representations for retrieval; (2) a Bypassing Residual Path to stably integrate retrieved global information without it being overridden by the local residual stream; and (3) enforced selection sparsity during pre-training to bridge the train-test distribution gap. We provide a theoretical motivation for intra-chunk information processing and landmark generation. By combining these principles, we establish a new state-of-the-art for training-free length extrapolation, successfully generalizing models trained on a 4K context to 32 million tokens on RULER and BABILong. Our findings provide a clear and empirically-grounded set of design principles for developing future, highly-capable long-context language models.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-10-20T06:17:57Z</published>
+    <arxiv:comment>ICLR 2026 camera-ready version</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Jiaqi Leng</name>
+    </author>
+    <author>
+      <name>Xiang Hu</name>
+    </author>
+    <author>
+      <name>Junxiong Wang</name>
+    </author>
+    <author>
+      <name>Jianguo Li</name>
+    </author>
+    <author>
+      <name>Wei Wu</name>
+    </author>
+    <author>
+      <name>Yucheng Lu</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2505.23735v1</id>
+    <title>ATLAS: Learning to Optimally Memorize the Context at Test Time</title>
+    <updated>2025-05-29T17:57:16Z</updated>
+    <link href="https://arxiv.org/abs/2505.23735v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2505.23735v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Transformers have been established as the most popular backbones in sequence modeling, mainly due to their effectiveness in in-context retrieval tasks and the ability to learn at scale. Their quadratic memory and time complexity, however, bound their applicability in longer sequences and so has motivated researchers to explore effective alternative architectures such as modern recurrent neural networks (a.k.a long-term recurrent memory module). Despite their recent success in diverse downstream tasks, they struggle in tasks that requires long context understanding and extrapolation to longer sequences. We observe that these shortcomings come from three disjoint aspects in their design: (1) limited memory capacity that is bounded by the architecture of memory and feature mapping of the input; (2) online nature of update, i.e., optimizing the memory only with respect to the last input; and (3) less expressive management of their fixed-size memory. To enhance all these three aspects, we present ATLAS, a long-term memory module with high capacity that learns to memorize the context by optimizing the memory based on the current and past tokens, overcoming the online nature of long-term memory models. Building on this insight, we present a new family of Transformer-like architectures, called DeepTransformers, that are strict generalizations of the original Transformer architecture. Our experimental results on language modeling, common-sense reasoning, recall-intensive, and long-context understanding tasks show that ATLAS surpasses the performance of Transformers and recent linear recurrent models. ATLAS further improves the long context performance of Titans, achieving +80\% accuracy in 10M context length of BABILong benchmark.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-05-29T17:57:16Z</published>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Ali Behrouz</name>
+    </author>
+    <author>
+      <name>Zeman Li</name>
+    </author>
+    <author>
+      <name>Praneeth Kacham</name>
+    </author>
+    <author>
+      <name>Majid Daliri</name>
+    </author>
+    <author>
+      <name>Yuan Deng</name>
+    </author>
+    <author>
+      <name>Peilin Zhong</name>
+    </author>
+    <author>
+      <name>Meisam Razaviyayn</name>
+    </author>
+    <author>
+      <name>Vahab Mirrokni</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2502.15007v1</id>
+    <title>LLM-Microscope: Uncovering the Hidden Role of Punctuation in Context Memory of Transformers</title>
+    <updated>2025-02-20T19:59:35Z</updated>
+    <link href="https://arxiv.org/abs/2502.15007v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2502.15007v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>We introduce methods to quantify how Large Language Models (LLMs) encode and store contextual information, revealing that tokens often seen as minor (e.g., determiners, punctuation) carry surprisingly high context. Notably, removing these tokens -- especially stopwords, articles, and commas -- consistently degrades performance on MMLU and BABILong-4k, even if removing only irrelevant tokens. Our analysis also shows a strong correlation between contextualization and linearity, where linearity measures how closely the transformation from one layer's embeddings to the next can be approximated by a single linear mapping. These findings underscore the hidden importance of filler tokens in maintaining context. For further exploration, we present LLM-Microscope, an open-source toolkit that assesses token-level nonlinearity, evaluates contextual memory, visualizes intermediate layer contributions (via an adapted Logit Lens), and measures the intrinsic dimensionality of representations. This toolkit illuminates how seemingly trivial tokens can be critical for long-range understanding.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-02-20T19:59:35Z</published>
+    <arxiv:comment>accepted to NAACL 2025</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Anton Razzhigaev</name>
+    </author>
+    <author>
+      <name>Matvey Mikhalchuk</name>
+    </author>
+    <author>
+      <name>Temurbek Rahmatullaev</name>
+    </author>
+    <author>
+      <name>Elizaveta Goncharova</name>
+    </author>
+    <author>
+      <name>Polina Druzhinina</name>
+    </author>
+    <author>
+      <name>Ivan Oseledets</name>
+    </author>
+    <author>
+      <name>Andrey Kuznetsov</name>
+    </author>
+  </entry>
+</feed>

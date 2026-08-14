@@ -1,0 +1,106 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<feed xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/" xmlns:arxiv="http://arxiv.org/schemas/atom" xmlns="http://www.w3.org/2005/Atom">
+  <id>https://arxiv.org/api/5j3AUQd4sAaDlRUDKdnOxJ0Rgvs</id>
+  <title>arXiv Query: search_query=abs:"memory-augmented" AND abs:"evaluation" AND abs:"artifact"&amp;id_list=&amp;start=0&amp;max_results=25</title>
+  <updated>2026-08-14T06:53:10Z</updated>
+  <link href="https://arxiv.org/api/query?search_query=abs:%22memory-augmented%22+AND+(abs:%22evaluation%22+AND+abs:%22artifact%22)&amp;start=0&amp;max_results=25&amp;id_list=" type="application/atom+xml"/>
+  <opensearch:itemsPerPage>25</opensearch:itemsPerPage>
+  <opensearch:totalResults>4</opensearch:totalResults>
+  <opensearch:startIndex>0</opensearch:startIndex>
+  <entry>
+    <id>http://arxiv.org/abs/2601.13748v1</id>
+    <title>EEG-Titans: Long-Horizon Seizure Forecasting via Dual-Branch Attention and Neural Memory</title>
+    <updated>2026-01-20T09:03:49Z</updated>
+    <link href="https://arxiv.org/abs/2601.13748v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2601.13748v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Accurate epileptic seizure prediction from electroencephalography (EEG) remains challenging because pre-ictal dynamics may span long time horizons while clinically relevant signatures can be subtle and transient. Many deep learning models face a persistent trade-off between capturing local spatiotemporal patterns and maintaining informative long-range context when operating on ultralong sequences. We propose EEG-Titans, a dualbranch architecture that incorporates a modern neural memory mechanism for long-context modeling. The model combines sliding-window attention to capture short-term anomalies with a recurrent memory pathway that summarizes slower, progressive trends over time. On the CHB-MIT scalp EEG dataset, evaluated under a chronological holdout protocol, EEG-Titans achieves 99.46% average segment-level sensitivity across 18 subjects. We further analyze safety-first operating points on artifact-prone recordings and show that a hierarchical context strategy extending the receptive field for high-noise subjects can markedly reduce false alarms (down to 0.00 FPR/h in an extreme outlier) without sacrificing sensitivity. These results indicate that memory-augmented long-context modeling can provide robust seizure forecasting under clinically constrained evaluation</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.HC" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-01-20T09:03:49Z</published>
+    <arxiv:primary_category term="cs.LG"/>
+    <author>
+      <name>Tien-Dat Pham</name>
+    </author>
+    <author>
+      <name>Xuan-The Tran</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2604.02834v1</id>
+    <title>ESL-Bench: An Event-Driven Synthetic Longitudinal Benchmark for Health Agents</title>
+    <updated>2026-04-03T07:55:56Z</updated>
+    <link href="https://arxiv.org/abs/2604.02834v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2604.02834v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Longitudinal health agents must reason across multi-source trajectories that combine continuous device streams, sparse clinical exams, and episodic life events - yet evaluating them is hard: real-world data cannot be released at scale, and temporally grounded attribution questions seldom admit definitive answers without structured ground truth. We present ESL-Bench, an event-driven synthesis framework and benchmark providing 100 synthetic users, each with a 1-5 year trajectory comprising a health profile, a multi-phase narrative plan, daily device measurements, periodic exam records, and an event log with explicit per-indicator impact parameters. Each indicator follows a baseline stochastic process driven by discrete events with sigmoid-onset, exponential-decay kernels under saturation and projection constraints; a hybrid pipeline delegates sparse semantic artifacts to LLM-based planning and dense indicator dynamics to algorithmic simulation with hard physiological bounds. Users are each paired with 100 evaluation queries across five dimensions - Lookup, Trend, Comparison, Anomaly, Explanation - stratified into Easy, Medium, and Hard tiers, with all ground-truth answers programmatically computable from the recorded event-indicator relationships. Evaluating 13 methods spanning LLMs with tools, DB-native agents, and memory-augmented RAG, we find that DB agents (48-58%) substantially outperform memory RAG baselines (30-38%), with the gap concentrated on Comparison and Explanation queries where multi-hop reasoning and evidence attribution are required.</summary>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-04-03T07:55:56Z</published>
+    <arxiv:primary_category term="cs.AI"/>
+    <author>
+      <name>Chao Li</name>
+    </author>
+    <author>
+      <name>Cailiang Liu</name>
+    </author>
+    <author>
+      <name>Ang Gao</name>
+    </author>
+    <author>
+      <name>Kexin Deng</name>
+    </author>
+    <author>
+      <name>Shu Zhang</name>
+    </author>
+    <author>
+      <name>Langping Xu</name>
+    </author>
+    <author>
+      <name>Xiaotong Shi</name>
+    </author>
+    <author>
+      <name>Xionghao Ding</name>
+    </author>
+    <author>
+      <name>Jian Pei</name>
+    </author>
+    <author>
+      <name>Xun Jiang</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2607.24873v1</id>
+    <title>MusiChat: Vibe Composing for Music Creation</title>
+    <updated>2026-07-27T03:51:40Z</updated>
+    <link href="https://arxiv.org/abs/2607.24873v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2607.24873v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Recent advances in AI music generation have enabled users to create complete musical pieces from natural-language prompts. However, most existing systems follow a prompt-and-regenerate paradigm, making iterative refinement difficult because users must repeatedly recreate compositions instead of directly evolving existing musical ideas. We present MusiChat, a conversational vibe composing system that enables collaborative human-AI music creation through natural-language interaction and iterative refinement. At the core of MusiChat is a hierarchical controllable music generation framework that separates lyric-aligned musical structure generation from expressive surface realization, allowing flexible stylistic transformations and structure-preserving edits. The system integrates a large language model with a hybrid symbolic music engine through a memory-augmented architecture that maintains the active composition state and user history across interactions. A hybrid intent-routing mechanism further enables efficient interpretation of both precise musical edits and open-ended creative requests. Rather than regenerating compositions from scratch, MusiChat incrementally transforms an evolving musical artifact while preserving relevant musical structure and user intent. We evaluate MusiChat through objective analysis and human studies, achieving 95.31% and 100% accuracy for single- and multi-turn interactions, respectively, and obtaining like-to-dislike ratios of 2:1 for melody naturalness and 3:1 for musical quality. Our results demonstrate that MusiChat supports coherent multi-turn music authoring and interactive human-AI co-creation through a conversational interface.</summary>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.SD" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-07-27T03:51:40Z</published>
+    <arxiv:primary_category term="cs.AI"/>
+    <author>
+      <name>Callie C. Liao</name>
+    </author>
+    <author>
+      <name>Duoduo Liao</name>
+    </author>
+    <author>
+      <name>Ellie L. Zhang</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2608.03297v1</id>
+    <title>Distractor-Aware Truncation: Disentangling Context-Length Effects from Signal Loss in Long-Context LLM Benchmarks</title>
+    <updated>2026-08-04T08:08:04Z</updated>
+    <link href="https://arxiv.org/abs/2608.03297v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2608.03297v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>A standard claim in the literature on retrieval-augmented and memory-augmented language models is that shorter context is better when the relevant information is preserved. We test this claim by running every sample of two long-context benchmarks -- BABILong and GraphWalks (BFS) -- at four context-retention fractions (100%, 75%, 50%, 25%) under two truncation protocols. The first is the naive protocol implicitly used in much prior work: drop content from the middle of the prompt. The second is distractor-aware: identify the task-relevant content for each sample and drop only the rest. We evaluate three sizes of the Claude family (Haiku 4.5, Sonnet 4.6, Opus 4.7) and, to test cross-provider generality, GPT-5.5 from a different provider; we apply the same protocol to two further benchmarks (MRCR v2, Oolong). Under naive truncation, score collapses monotonically (paired Wilcoxon, Holm-corrected p_adj &lt; 0.05 in all eight BABILong and GraphWalks cells). Under the distractor-aware protocol -- which preserves the signal by construction -- performance is preserved or improves: the two smaller Claude models show statistically significant gains on BABILong, while the larger models (Opus 4.7 and GPT-5.5) sit at their full-context ceiling. The naive collapse and its distractor-aware recovery replicate on GPT-5.5, ruling out a single-provider artifact. The mechanism is direct: under the naive protocol the answer-bearing content survives in fewer than 1% of samples at 25% retention; under the distractor-aware protocol it is preserved by construction. The naive protocol is therefore not a measurement of context-window effects; it is a measurement of how often middle-removal happens to spare the answer. We conclude that future studies of context-length effects must specify how they distinguish signal from distractor, or they are at best ambiguous between two opposite hypotheses.</summary>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-08-04T08:08:04Z</published>
+    <arxiv:comment>14 pages, 2 figures. Code and data: https://github.com/evolutionIdGmbH/memoreach</arxiv:comment>
+    <arxiv:primary_category term="cs.AI"/>
+    <author>
+      <name>Mohsen Arjmandi</name>
+    </author>
+  </entry>
+</feed>

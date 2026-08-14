@@ -1,0 +1,247 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<feed xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/" xmlns:arxiv="http://arxiv.org/schemas/atom" xmlns="http://www.w3.org/2005/Atom">
+  <id>https://arxiv.org/api/vj/ck98QpdiPz7NrgvOXfoTXZz4</id>
+  <title>arXiv Query: search_query=abs:"evaluation harness" AND abs:"bug"&amp;id_list=&amp;start=0&amp;max_results=30</title>
+  <updated>2026-08-14T06:47:39Z</updated>
+  <link href="https://arxiv.org/api/query?search_query=abs:%22evaluation+harness%22+AND+abs:%22bug%22&amp;start=0&amp;max_results=30&amp;id_list=" type="application/atom+xml"/>
+  <opensearch:itemsPerPage>30</opensearch:itemsPerPage>
+  <opensearch:totalResults>5</opensearch:totalResults>
+  <opensearch:startIndex>0</opensearch:startIndex>
+  <entry>
+    <id>http://arxiv.org/abs/2509.24091v3</id>
+    <title>PerfBench: Can Agents Resolve Real-World Performance Bugs?</title>
+    <updated>2025-12-02T20:55:19Z</updated>
+    <link href="https://arxiv.org/abs/2509.24091v3" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2509.24091v3" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Performance bugs are inefficiencies in software that waste computational resources without causing functional failures, making them particularly challenging to detect and fix. While recent advances in Software Engineering agents have shown promise in automated bug fixing, existing benchmarks primarily focus on functional correctness and fail to evaluate agents' abilities to identify and resolve non-functional issues like performance bugs. We introduce PerfBench, a benchmark comprising 81 real-world performance bug-fixing tasks from popular .NET repositories on GitHub. Unlike existing benchmarks that rely on pre-existing test suites, PerfBench features a novel evaluation harness that allows agents to generate their own performance benchmarks and validates fixes by comparing execution metrics collected for developer fix and agent fix. Each task in PerfBench is derived from actual developer fixes linked to performance-related issues, which are then verified by human experts, ensuring real-world relevance. Our evaluation reveals that current state-of-the-art coding agents struggle with performance optimization tasks, with baseline OpenHands agent achieving only a ~3% success rate on our benchmark. We develop OpenHands-Perf-Agent, which incorporates performance-aware tooling and instructions and achieves a ~20% success rate on the benchmark. We show that by ensuring the agent has proper instructions to benchmark its changes and tooling for benchmark output processing, we can improve the agent performance significantly, but room for improvement still remains. PerfBench provides a challenging test set for furthering the capabilities of agents in fixing performance issues.</summary>
+    <category term="cs.SE" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.PF" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-09-28T22:00:33Z</published>
+    <arxiv:primary_category term="cs.SE"/>
+    <author>
+      <name>Spandan Garg</name>
+    </author>
+    <author>
+      <name>Roshanak Zilouchian Moghaddam</name>
+    </author>
+    <author>
+      <name>Neel Sundaresan</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2504.08703v3</id>
+    <title>SWE-PolyBench: A multi-language benchmark for repository level evaluation of coding agents</title>
+    <updated>2025-04-23T20:22:37Z</updated>
+    <link href="https://arxiv.org/abs/2504.08703v3" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2504.08703v3" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Coding agents powered by large language models have shown impressive capabilities in software engineering tasks, but evaluating their performance across diverse programming languages and real-world scenarios remains challenging. We introduce SWE-PolyBench, a new multi-language benchmark for repository-level, execution-based evaluation of coding agents. SWE-PolyBench contains 2110 instances from 21 repositories and includes tasks in Java (165), JavaScript (1017), TypeScript (729) and Python (199), covering bug fixes, feature additions, and code refactoring. We provide a task and repository-stratified subsample (SWE-PolyBench500) and release an evaluation harness allowing for fully automated evaluation. To enable a more comprehensive comparison of coding agents, this work also presents a novel set of metrics rooted in syntax tree analysis. We evaluate leading open source coding agents on SWE-PolyBench, revealing their strengths and limitations across languages, task types, and complexity classes. Our experiments show that current agents exhibit uneven performances across languages and struggle with complex problems while showing higher performance on simpler tasks. SWE-PolyBench aims to drive progress in developing more versatile and robust AI coding assistants for real-world software engineering. Our datasets and code are available at: https://github.com/amazon-science/SWE-PolyBench</summary>
+    <category term="cs.SE" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-04-11T17:08:02Z</published>
+    <arxiv:comment>20 pages, 6 figures, corrected author name spelling</arxiv:comment>
+    <arxiv:primary_category term="cs.SE"/>
+    <author>
+      <name>Muhammad Shihab Rashid</name>
+    </author>
+    <author>
+      <name>Christian Bock</name>
+    </author>
+    <author>
+      <name>Yuan Zhuang</name>
+    </author>
+    <author>
+      <name>Alexander Buchholz</name>
+    </author>
+    <author>
+      <name>Tim Esler</name>
+    </author>
+    <author>
+      <name>Simon Valentin</name>
+    </author>
+    <author>
+      <name>Luca Franceschi</name>
+    </author>
+    <author>
+      <name>Martin Wistuba</name>
+    </author>
+    <author>
+      <name>Prabhu Teja Sivaprasad</name>
+    </author>
+    <author>
+      <name>Woo Jung Kim</name>
+    </author>
+    <author>
+      <name>Anoop Deoras</name>
+    </author>
+    <author>
+      <name>Giovanni Zappella</name>
+    </author>
+    <author>
+      <name>Laurent Callot</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2607.26314v1</id>
+    <title>StealthBench: Measuring Operational Stealth in Autonomous Offensive-Security Agents</title>
+    <updated>2026-07-28T22:23:34Z</updated>
+    <link href="https://arxiv.org/abs/2607.26314v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2607.26314v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Stealth, the discipline of achieving an objective without revealing your presence, capabilities, or collected intelligence, is what separates sophisticated operators from detectable ones. Elite security researchers and advanced persistent threats achieve their objectives unnoticed; autonomous agents increasingly inherit the same offensive tasks, but do they inherit the tradecraft? We introduce StealthBench,a benchmark that measures operational stealth in autonomous offensive-security agents across six operational security (OPSEC) dimensions. We extract 11 hand-verified OPSEC incidents from real bug-bounty and red-team trajectories, expanded into 14 dockerized task scenarios, where agents, despite finding real vulnerabilities, committed stealth failures inconsistent with standard operational tradecraft: embedding credentials in public uploads, deleting production resources to prove access, force-adding uninvolved users to demonstrate a race condition.
+  We evaluate agent trajectories using a 3-model large language model (LLM) judge panel with majority-vote aggregation, measuring safe success rate (solved and stealthy), Stealth@Solve (tradecraft quality among successful solves), and reckless solve rate (solved but cover blown). Our results show that no model exceeds 54% safe success rate (the compound metric requiring both task completion and stealth), confirming that OPSEC failures are systematic across model families. We release StealthBench as a public benchmark to support both the development of stealth-aware agents and automated OPSEC monitoring for autonomous offensive-security deployments. The interactive leaderboard, evaluation harness, and dataset are available at https://stealthbench.com.</summary>
+    <category term="cs.CR" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-07-28T22:23:34Z</published>
+    <arxiv:comment>29 pages, 9 tables, 1 figure, 2 appendices. Code: https://github.com/GangGreenTemperTatum/stealthbench Dataset: https://huggingface.co/datasets/0xmoose/stealthbench Website: https://stealthbench.com</arxiv:comment>
+    <arxiv:primary_category term="cs.CR"/>
+    <author>
+      <name>Ads Dawson</name>
+    </author>
+    <author>
+      <name>Adrian Wood</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2402.14261v1</id>
+    <title>Copilot Evaluation Harness: Evaluating LLM-Guided Software Programming</title>
+    <updated>2024-02-22T03:51:34Z</updated>
+    <link href="https://arxiv.org/abs/2402.14261v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2402.14261v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>The integration of Large Language Models (LLMs) into Development Environments (IDEs) has become a focal point in modern software development. LLMs such as OpenAI GPT-3.5/4 and Code Llama offer the potential to significantly augment developer productivity by serving as intelligent, chat-driven programming assistants. However, utilizing LLMs out of the box is unlikely to be optimal for any given scenario. Rather, each system requires the LLM to be honed to its set of heuristics to ensure the best performance. In this paper, we introduce the Copilot evaluation harness: a set of data and tools for evaluating LLM-guided IDE interactions, covering various programming scenarios and languages. We propose our metrics as a more robust and information-dense evaluation than previous state of the art evaluation systems. We design and compute both static and execution based success metrics for scenarios encompassing a wide range of developer tasks, including code generation from natural language (generate), documentation generation from code (doc), test case generation (test), bug-fixing (fix), and workspace understanding and query resolution (workspace). These success metrics are designed to evaluate the performance of LLMs within a given IDE and its respective parameter space. Our learnings from evaluating three common LLMs using these metrics can inform the development and validation of future scenarios in LLM guided IDEs.</summary>
+    <category term="cs.SE" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2024-02-22T03:51:34Z</published>
+    <arxiv:primary_category term="cs.SE"/>
+    <author>
+      <name>Anisha Agarwal</name>
+    </author>
+    <author>
+      <name>Aaron Chan</name>
+    </author>
+    <author>
+      <name>Shubham Chandel</name>
+    </author>
+    <author>
+      <name>Jinu Jang</name>
+    </author>
+    <author>
+      <name>Shaun Miller</name>
+    </author>
+    <author>
+      <name>Roshanak Zilouchian Moghaddam</name>
+    </author>
+    <author>
+      <name>Yevhen Mohylevskyy</name>
+    </author>
+    <author>
+      <name>Neel Sundaresan</name>
+    </author>
+    <author>
+      <name>Michele Tufano</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2510.11977v1</id>
+    <title>Holistic Agent Leaderboard: The Missing Infrastructure for AI Agent Evaluation</title>
+    <updated>2025-10-13T22:22:28Z</updated>
+    <link href="https://arxiv.org/abs/2510.11977v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2510.11977v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>AI agents have been developed for complex real-world tasks from coding to customer service. But AI agent evaluations suffer from many challenges that undermine our understanding of how well agents really work. We introduce the Holistic Agent Leaderboard (HAL) to address these challenges. We make three main contributions. First, we provide a standardized evaluation harness that orchestrates parallel evaluations across hundreds of VMs, reducing evaluation time from weeks to hours while eliminating common implementation bugs. Second, we conduct three-dimensional analysis spanning models, scaffolds, and benchmarks. We validate the harness by conducting 21,730 agent rollouts across 9 models and 9 benchmarks in coding, web navigation, science, and customer service with a total cost of about $40,000. Our analysis reveals surprising insights, such as higher reasoning effort reducing accuracy in the majority of runs. Third, we use LLM-aided log inspection to uncover previously unreported behaviors, such as searching for the benchmark on HuggingFace instead of solving a task, or misusing credit cards in flight booking tasks. We share all agent logs, comprising 2.5B tokens of language model calls, to incentivize further research into agent behavior. By standardizing how the field evaluates agents and addressing common pitfalls in agent evaluation, we hope to shift the focus from agents that ace benchmarks to agents that work reliably in the real world.</summary>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-10-13T22:22:28Z</published>
+    <arxiv:primary_category term="cs.AI"/>
+    <author>
+      <name>Sayash Kapoor</name>
+    </author>
+    <author>
+      <name>Benedikt Stroebl</name>
+    </author>
+    <author>
+      <name>Peter Kirgis</name>
+    </author>
+    <author>
+      <name>Nitya Nadgir</name>
+    </author>
+    <author>
+      <name>Zachary S Siegel</name>
+    </author>
+    <author>
+      <name>Boyi Wei</name>
+    </author>
+    <author>
+      <name>Tianci Xue</name>
+    </author>
+    <author>
+      <name>Ziru Chen</name>
+    </author>
+    <author>
+      <name>Felix Chen</name>
+    </author>
+    <author>
+      <name>Saiteja Utpala</name>
+    </author>
+    <author>
+      <name>Franck Ndzomga</name>
+    </author>
+    <author>
+      <name>Dheeraj Oruganty</name>
+    </author>
+    <author>
+      <name>Sophie Luskin</name>
+    </author>
+    <author>
+      <name>Kangheng Liu</name>
+    </author>
+    <author>
+      <name>Botao Yu</name>
+    </author>
+    <author>
+      <name>Amit Arora</name>
+    </author>
+    <author>
+      <name>Dongyoon Hahm</name>
+    </author>
+    <author>
+      <name>Harsh Trivedi</name>
+    </author>
+    <author>
+      <name>Huan Sun</name>
+    </author>
+    <author>
+      <name>Juyong Lee</name>
+    </author>
+    <author>
+      <name>Tengjun Jin</name>
+    </author>
+    <author>
+      <name>Yifan Mai</name>
+    </author>
+    <author>
+      <name>Yifei Zhou</name>
+    </author>
+    <author>
+      <name>Yuxuan Zhu</name>
+    </author>
+    <author>
+      <name>Rishi Bommasani</name>
+    </author>
+    <author>
+      <name>Daniel Kang</name>
+    </author>
+    <author>
+      <name>Dawn Song</name>
+    </author>
+    <author>
+      <name>Peter Henderson</name>
+    </author>
+    <author>
+      <name>Yu Su</name>
+    </author>
+    <author>
+      <name>Percy Liang</name>
+    </author>
+    <author>
+      <name>Arvind Narayanan</name>
+    </author>
+  </entry>
+</feed>

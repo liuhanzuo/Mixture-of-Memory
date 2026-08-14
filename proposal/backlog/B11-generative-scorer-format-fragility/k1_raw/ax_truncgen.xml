@@ -1,0 +1,79 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<feed xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/" xmlns:arxiv="http://arxiv.org/schemas/atom" xmlns="http://www.w3.org/2005/Atom">
+  <id>https://arxiv.org/api/jEKnH7c3jW23mrggfD6RUf47FVA</id>
+  <title>arXiv Query: search_query=abs:"first sentence" AND abs:"evaluation" AND abs:"generation"&amp;id_list=&amp;start=0&amp;max_results=30</title>
+  <updated>2026-08-14T06:50:31Z</updated>
+  <link href="https://arxiv.org/api/query?search_query=abs:%22first+sentence%22+AND+(abs:%22evaluation%22+AND+abs:%22generation%22)&amp;start=0&amp;max_results=30&amp;id_list=" type="application/atom+xml"/>
+  <opensearch:itemsPerPage>30</opensearch:itemsPerPage>
+  <opensearch:totalResults>3</opensearch:totalResults>
+  <opensearch:startIndex>0</opensearch:startIndex>
+  <entry>
+    <id>http://arxiv.org/abs/cs/9408102v1</id>
+    <title>Pattern Matching and Discourse Processing in Information Extraction from Japanese Text</title>
+    <updated>1994-08-01T00:00:00Z</updated>
+    <link href="https://arxiv.org/abs/cs/9408102v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/cs/9408102v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>  Information extraction is the task of automatically picking up information of interest from an unconstrained text. Information of interest is usually extracted in two steps. First, sentence level processing locates relevant pieces of information scattered throughout the text; second, discourse processing merges coreferential information to generate the output. In the first step, pieces of information are locally identified without recognizing any relationships among them. A key word search or simple pattern search can achieve this purpose. The second step requires deeper knowledge in order to understand relationships among separately identified pieces of information. Previous information extraction systems focused on the first step, partly because they were not required to link up each piece of information with other pieces. To link the extracted pieces of information and map them onto a structured output format, complex discourse processing is essential. This paper reports on a Japanese information extraction system that merges information using a pattern matcher and discourse processor. Evaluation results show a high level of system performance which approaches human performance.</summary>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>1994-08-01T00:00:00Z</published>
+    <arxiv:comment>See http://www.jair.org/ for any accompanying files</arxiv:comment>
+    <arxiv:primary_category term="cs.AI"/>
+    <arxiv:journal_ref>Journal of Artificial Intelligence Research, Vol 2, (1994), 89-110</arxiv:journal_ref>
+    <author>
+      <name>T. Kitani</name>
+    </author>
+    <author>
+      <name>Y. Eriguchi</name>
+    </author>
+    <author>
+      <name>M. Hara</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2305.12532v4</id>
+    <title>Multilingual Simplification of Medical Texts</title>
+    <updated>2023-10-18T04:20:05Z</updated>
+    <link href="https://arxiv.org/abs/2305.12532v4" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2305.12532v4" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Automated text simplification aims to produce simple versions of complex texts. This task is especially useful in the medical domain, where the latest medical findings are typically communicated via complex and technical articles. This creates barriers for laypeople seeking access to up-to-date medical findings, consequently impeding progress on health literacy. Most existing work on medical text simplification has focused on monolingual settings, with the result that such evidence would be available only in just one language (most often, English). This work addresses this limitation via multilingual simplification, i.e., directly simplifying complex texts into simplified texts in multiple languages. We introduce MultiCochrane, the first sentence-aligned multilingual text simplification dataset for the medical domain in four languages: English, Spanish, French, and Farsi. We evaluate fine-tuned and zero-shot models across these languages, with extensive human assessments and analyses. Although models can now generate viable simplified texts, we identify outstanding challenges that this dataset might be used to address.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2023-05-21T18:25:07Z</published>
+    <arxiv:comment>This version will be in EMNLP 2023 main</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Sebastian Joseph</name>
+    </author>
+    <author>
+      <name>Kathryn Kazanas</name>
+    </author>
+    <author>
+      <name>Keziah Reina</name>
+    </author>
+    <author>
+      <name>Vishnesh J. Ramanathan</name>
+    </author>
+    <author>
+      <name>Wei Xu</name>
+    </author>
+    <author>
+      <name>Byron C. Wallace</name>
+    </author>
+    <author>
+      <name>Junyi Jessy Li</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2606.06702v1</id>
+    <title>Adversarial Co-Thinking: Calibration and Triangulation Across Multiple GenAI Tools in HCI Writing</title>
+    <updated>2026-06-04T20:41:16Z</updated>
+    <link href="https://arxiv.org/abs/2606.06702v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2606.06702v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>This paper examines what happens when GenAI tools are fully embedded in the drafting of an academic paper rather than confined to late-stage polishing. To investigate how an intensive multi-tool GenAI workflow differs from conventional academic writing, I drafted this paper from the first sentence in parallel with three GenAI tools - Claude, ChatGPT, and Gemini - comparing their outputs against my own intended contribution. Across this process, a recurring pattern took shape that I call adversarial co-thinking: using past peer reviews to calibrate the tools, then setting their outputs against one another to be tested rather than deferred to. I argue that surfacing genuine critique from tools that default to praise is a central practical challenge of working with these tools, and that the skill at stake is evaluative rather than generative. Adversarial co-thinking is a high-skill epistemic practice: it can amplify expertise where it exists, but it can also mask its absence. I further argue that current disclosure frameworks are poorly equipped to capture this shift. The paper offers four propositions for workshop discussion concerning autonomy, supervision, equity of access, and disclosure.</summary>
+    <category term="cs.HC" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-06-04T20:41:16Z</published>
+    <arxiv:primary_category term="cs.HC"/>
+    <author>
+      <name>Pia Tukkinen</name>
+    </author>
+  </entry>
+</feed>

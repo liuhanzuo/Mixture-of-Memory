@@ -1,0 +1,151 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<feed xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/" xmlns:arxiv="http://arxiv.org/schemas/atom" xmlns="http://www.w3.org/2005/Atom">
+  <id>https://arxiv.org/api/N9ps8sR3tiTxOuTKqslxgzL1fv4</id>
+  <title>arXiv Query: search_query=&amp;id_list=2410.02694,2405.17915,2510.13494,2607.04429,2602.10144&amp;start=0&amp;max_results=20</title>
+  <updated>2026-08-14T06:46:53Z</updated>
+  <link href="https://arxiv.org/api/query?search_query=&amp;start=0&amp;max_results=20&amp;id_list=2410.02694,2405.17915,2510.13494,2607.04429,2602.10144" type="application/atom+xml"/>
+  <opensearch:itemsPerPage>20</opensearch:itemsPerPage>
+  <opensearch:totalResults>5</opensearch:totalResults>
+  <opensearch:startIndex>0</opensearch:startIndex>
+  <entry>
+    <id>http://arxiv.org/abs/2602.10144v2</id>
+    <title>When LLMs get significantly worse: A statistical approach to detect model degradations</title>
+    <updated>2026-05-06T17:38:45Z</updated>
+    <link href="https://arxiv.org/abs/2602.10144v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2602.10144v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Minimizing the inference cost and latency of foundation models has become a crucial area of research. Optimization approaches include theoretically lossless methods and others without accuracy guarantees like quantization. In all of these cases it is crucial to ensure that the model quality has not degraded. However, even at temperature zero, model generations are not necessarily robust even to theoretically lossless model optimizations due to numerical errors. We thus require statistical tools to decide whether a finite-sample accuracy deviation is an evidence of a model's degradation or whether it can be attributed to (harmless) noise in the evaluation. We propose a statistically sound hypothesis testing framework based on McNemar's test allowing to efficiently detect model degradations, while guaranteeing a controlled rate of false positives. The crucial insight is that we have to confront the model scores on each sample, rather than aggregated on the task level. Furthermore, we propose three approaches to aggregate accuracy estimates across multiple benchmarks into a single decision. We provide an implementation on top of the largely adopted open source LM Evaluation Harness and provide a case study illustrating that the method correctly flags degraded models, while not flagging model optimizations that are provably lossless. We find that with our tests even empirical accuracy degradations of 0.3% can be confidently attributed to actual degradations rather than noise.</summary>
+    <category term="stat.ML" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-02-09T10:45:13Z</published>
+    <arxiv:comment>https://openreview.net/forum?id=cM3gsqEI4K</arxiv:comment>
+    <arxiv:primary_category term="stat.ML"/>
+    <arxiv:journal_ref>ICLR 2026</arxiv:journal_ref>
+    <author>
+      <name>Jonas Kübler</name>
+    </author>
+    <author>
+      <name>Kailash Budhathoki</name>
+    </author>
+    <author>
+      <name>Matthäus Kleindessner</name>
+    </author>
+    <author>
+      <name>Xiong Zhou</name>
+    </author>
+    <author>
+      <name>Junming Yin</name>
+    </author>
+    <author>
+      <name>Ashish Khetan</name>
+    </author>
+    <author>
+      <name>George Karypis</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2405.17915v1</id>
+    <title>Long Context is Not Long at All: A Prospector of Long-Dependency Data for Large Language Models</title>
+    <updated>2024-05-28T07:36:56Z</updated>
+    <link href="https://arxiv.org/abs/2405.17915v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2405.17915v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Long-context modeling capabilities are important for large language models (LLMs) in various applications. However, directly training LLMs with long context windows is insufficient to enhance this capability since some training samples do not exhibit strong semantic dependencies across long contexts. In this study, we propose a data mining framework \textbf{ProLong} that can assign each training sample with a long dependency score, which can be used to rank and filter samples that are more advantageous for enhancing long-context modeling abilities in LLM training. Specifically, we first use delta perplexity scores to measure the \textit{Dependency Strength} between text segments in a given document. Then we refine this metric based on the \textit{Dependency Distance} of these segments to incorporate spatial relationships across long-contexts. Final results are calibrated with a \textit{Dependency Specificity} metric to prevent trivial dependencies introduced by repetitive patterns. Moreover, a random sampling approach is proposed to optimize the computational efficiency of ProLong. Comprehensive experiments on multiple benchmarks indicate that ProLong effectively identifies documents that carry long dependencies and LLMs trained on these documents exhibit significantly enhanced long-context modeling capabilities.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2024-05-28T07:36:56Z</published>
+    <arxiv:comment>13 pages, 5 figures, ACL 2024</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Longze Chen</name>
+    </author>
+    <author>
+      <name>Ziqiang Liu</name>
+    </author>
+    <author>
+      <name>Wanwei He</name>
+    </author>
+    <author>
+      <name>Yunshui Li</name>
+    </author>
+    <author>
+      <name>Run Luo</name>
+    </author>
+    <author>
+      <name>Min Yang</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2410.02694v3</id>
+    <title>HELMET: How to Evaluate Long-Context Language Models Effectively and Thoroughly</title>
+    <updated>2025-03-06T18:41:54Z</updated>
+    <link href="https://arxiv.org/abs/2410.02694v3" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2410.02694v3" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Many benchmarks exist for evaluating long-context language models (LCLMs), yet developers often rely on synthetic tasks such as needle-in-a-haystack (NIAH) or an arbitrary subset of tasks. However, it remains unclear whether these benchmarks reflect the diverse downstream applications of LCLMs, and such inconsistencies further complicate model comparison. We investigate the underlying reasons behind these practices and find that existing benchmarks often provide noisy signals due to limited coverage of applications, insufficient context lengths, unreliable metrics, and incompatibility with base models. In this work, we introduce HELMET (How to Evaluate Long-context Models Effectively and Thoroughly), a comprehensive benchmark encompassing seven diverse, application-centric categories. We also address several issues in previous benchmarks by adding controllable lengths up to 128K tokens, model-based evaluation for reliable metrics, and few-shot prompting for robustly evaluating base models. Consequently, we demonstrate that HELMET offers more reliable and consistent rankings of frontier LCLMs. Through a comprehensive study of 59 LCLMs, we find that (1) synthetic tasks like NIAH do not reliably predict downstream performance; (2) the diverse categories in HELMET exhibit distinct trends and low correlations with each other; and (3) while most LCLMs achieve perfect NIAH scores, open-source models significantly lag behind closed ones when tasks require full-context reasoning or following complex instructions -- the gap widens as length increases. Finally, we recommend using our RAG tasks for fast model development, as they are easy to run and better predict other downstream performance; ultimately, we advocate for a holistic evaluation across diverse tasks.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2024-10-03T17:20:11Z</published>
+    <arxiv:comment>ICLR 2025. Project page: https://princeton-nlp.github.io/HELMET/</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Howard Yen</name>
+    </author>
+    <author>
+      <name>Tianyu Gao</name>
+    </author>
+    <author>
+      <name>Minmin Hou</name>
+    </author>
+    <author>
+      <name>Ke Ding</name>
+    </author>
+    <author>
+      <name>Daniel Fleischer</name>
+    </author>
+    <author>
+      <name>Peter Izsak</name>
+    </author>
+    <author>
+      <name>Moshe Wasserblat</name>
+    </author>
+    <author>
+      <name>Danqi Chen</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2607.04429v1</id>
+    <title>evalci: A Python Library for Statistically Rigorous Comparison of Language Model Evaluations</title>
+    <updated>2026-07-05T17:48:22Z</updated>
+    <link href="https://arxiv.org/abs/2607.04429v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2607.04429v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>The dominant practice in language model evaluation is to report a single accuracy number per model and declare the higher one better, without testing whether the gap could plausibly be sampling noise. On benchmarks of a few thousand items, and under temperature sampling where a model can differ from itself run to run by more than the reported gap between models, this practice routinely overstates confidence in headline claims. The statistical machinery to fix this -- confidence intervals, paired significance tests, power analysis, clustered standard errors, multiple-comparison correction -- is well established, but no standard, pip-installable tool packages it in the shape an evaluation actually takes: a per-item results table. We present evalci, a pure-Python library (numpy/scipy/pandas only) that turns a per-item results table into a publication-ready claim -- e.g., "Model A beats Model B, $Δ=3.1$ pts, 95% CI [1.2, 5.0], paired permutation $p=0.002$, $n=1{,}319$" -- in one function call, with adapters for lm-evaluation-harness and HELM output. Every routine is validated against an independent reference (statsmodels, or brute-force exact enumeration) rather than only against itself. As a case study, we re-analyze a public comparison of nine language models' MMLU accuracy and find that 3 of the 8 adjacent leaderboard-rank gaps are not statistically significant after correcting for the 36 pairwise comparisons the ranking implies. evalci is available at https://pypi.org/project/evalci/ (source: https://github.com/Shreyaskc/evalci, DOI: https://doi.org/10.5281/zenodo.21201815)</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-07-05T17:48:22Z</published>
+    <arxiv:comment>7 pages, 1 figure. Software: https://pypi.org/project/evalci/ (source: https://github.com/Shreyaskc/evalci, Zenodo DOI: 10.5281/zenodo.21201815)</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Shreyas K Chandrahas</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2510.13494v1</id>
+    <title>LiteraryQA: Towards Effective Evaluation of Long-document Narrative QA</title>
+    <updated>2025-10-15T12:43:59Z</updated>
+    <link href="https://arxiv.org/abs/2510.13494v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2510.13494v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Question Answering (QA) on narrative text poses a unique challenge to current systems, requiring a deep understanding of long, complex documents. However, the reliability of NarrativeQA, the most widely used benchmark in this domain, is hindered by noisy documents and flawed QA pairs. In this work, we introduce LiteraryQA, a high-quality subset of NarrativeQA focused on literary works. Using a human- and LLM-validated pipeline, we identify and correct low-quality QA samples while removing extraneous text from source documents. We then carry out a meta-evaluation of automatic metrics to clarify how systems should be evaluated on LiteraryQA. This analysis reveals that all n-gram-based metrics have a low system-level correlation to human judgment, while LLM-as-a-Judge evaluations, even with small open-weight models, can strongly agree with the ranking identified by humans. Finally, we benchmark a set of long-context LLMs on LiteraryQA. We release our code and data at https://github.com/SapienzaNLP/LiteraryQA.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-10-15T12:43:59Z</published>
+    <arxiv:comment>Accepted to EMNLP 2025 Main Conference. 22 pages</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Tommaso Bonomo</name>
+    </author>
+    <author>
+      <name>Luca Gioffré</name>
+    </author>
+    <author>
+      <name>Roberto Navigli</name>
+    </author>
+  </entry>
+</feed>

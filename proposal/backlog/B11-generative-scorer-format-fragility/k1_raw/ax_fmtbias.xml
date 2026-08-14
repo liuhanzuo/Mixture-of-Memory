@@ -1,0 +1,161 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<feed xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/" xmlns:arxiv="http://arxiv.org/schemas/atom" xmlns="http://www.w3.org/2005/Atom">
+  <id>https://arxiv.org/api/kn3uD5NR6i78G7ui9BTBbNpdDfM</id>
+  <title>arXiv Query: search_query=abs:"format" AND abs:"scoring" AND abs:"model ranking"&amp;id_list=&amp;start=0&amp;max_results=30</title>
+  <updated>2026-08-14T06:47:41Z</updated>
+  <link href="https://arxiv.org/api/query?search_query=abs:%22format%22+AND+(abs:%22scoring%22+AND+abs:%22model+ranking%22)&amp;start=0&amp;max_results=30&amp;id_list=" type="application/atom+xml"/>
+  <opensearch:itemsPerPage>30</opensearch:itemsPerPage>
+  <opensearch:totalResults>6</opensearch:totalResults>
+  <opensearch:startIndex>0</opensearch:startIndex>
+  <entry>
+    <id>http://arxiv.org/abs/2606.12117v1</id>
+    <title>Soft-Prompt Tuning for Fair and Efficient LLM Benchmark Evaluation</title>
+    <updated>2026-06-10T14:12:19Z</updated>
+    <link href="https://arxiv.org/abs/2606.12117v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2606.12117v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Benchmark scores often misrepresent a large language model's (LLM's) knowledge, because they rely, e.g., on the model's ability to follow specific formatting requirements. This especially penalizes base models that may know the correct answers but lack the ability -- typically introduced in post-training -- to structure them as instructed. To overcome this, we propose soft-prompt tuning, an efficient, fair, and architecture-agnostic model evaluation. By optimizing only 10 soft-prompt vectors (roughly 0.0006% parameters for a 7B model) over a short tuning period, we adapt models to specific benchmark formats, closing gaps in format-following and ensuring that underlying knowledge is accurately reflected in benchmark scores. This allows one to fairly compare different base models -- trained with various pre-training recipes -- on benchmarks without the need for full post-training. We evaluated soft-prompt tuning across 7 models and 7 datasets. The results show that (a) soft-prompt tuning saturates format-following within 80 steps (~640 samples) making it highly efficient, (b) soft-prompt tuning significantly outperforms zero- and few-shot prompting, surfacing base model knowledge that standard prompting misses, that (c) even post-trained models can benefit from soft-prompts to maximize format compliance, and that (d) soft-prompted base model performance predicts post-trained model rankings more reliably than zero- and few-shot baselines, offering a low-cost proxy for downstream model quality. Our contributions include (1) metrics which disentangle format-following and knowledge accuracy, (2) a fairer benchmarking protocol of LLM knowledge, and (3) a cost- and memory-effective recipe to identify optimal pre-training strategies early in LLM development.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-06-10T14:12:19Z</published>
+    <arxiv:comment>10 pages, 4 figures</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Selen Erkan</name>
+    </author>
+    <author>
+      <name>Bastian Boll</name>
+    </author>
+    <author>
+      <name>Kristian Kersting</name>
+    </author>
+    <author>
+      <name>Björn Deiseroth</name>
+    </author>
+    <author>
+      <name>Letitia Parcalabescu</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2406.15227v3</id>
+    <title>A LLM-Based Ranking Method for the Evaluation of Automatic Counter-Narrative Generation</title>
+    <updated>2024-11-04T09:56:55Z</updated>
+    <link href="https://arxiv.org/abs/2406.15227v3" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2406.15227v3" rel="related" type="application/pdf" title="pdf"/>
+    <summary>This paper proposes a novel approach to evaluate Counter Narrative (CN) generation using a Large Language Model (LLM) as an evaluator. We show that traditional automatic metrics correlate poorly with human judgements and fail to capture the nuanced relationship between generated CNs and human perception. To alleviate this, we introduce a model ranking pipeline based on pairwise comparisons of generated CNs from different models, organized in a tournament-style format. The proposed evaluation method achieves a high correlation with human preference, with a $ρ$ score of 0.88. As an additional contribution, we leverage LLMs as zero-shot CN generators and provide a comparative analysis of chat, instruct, and base models, exploring their respective strengths and limitations. Through meticulous evaluation, including fine-tuning experiments, we elucidate the differences in performance and responsiveness to domain-specific data. We conclude that chat-aligned models in zero-shot are the best option for carrying out the task, provided they do not refuse to generate an answer due to security concerns.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2024-06-21T15:11:33Z</published>
+    <arxiv:comment>Accepted for Findings of the Association for Computational Linguistics: EMNLP 2024</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Irune Zubiaga</name>
+    </author>
+    <author>
+      <name>Aitor Soroa</name>
+    </author>
+    <author>
+      <name>Rodrigo Agerri</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2510.05152v1</id>
+    <title>A Single Character can Make or Break Your LLM Evals</title>
+    <updated>2025-10-02T13:27:28Z</updated>
+    <link href="https://arxiv.org/abs/2510.05152v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2510.05152v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Common Large Language model (LLM) evaluations rely on demonstration examples to steer models' responses to the desired style. While the number of examples used has been studied and standardized, the choice of how to format examples is less investigated. In evaluation protocols and real world usage, users face the choice how to separate in-context examples: use a comma? new line? semi-colon? hashtag? etc.? Surprisingly, we find this seemingly minor choice can dramatically alter model response quality. Across leading model families (Llama, Qwen, Gemma), performance on MMLU for example can vary by $\pm 23\%$ depending on the choice of delimiter. In fact, one can manipulate model rankings to put any model in the lead by only modifying the single character separating examples. We find LLMs' brittleness pervades topics, model families, and doesn't improve with scale. By probing attention head scores, we find that good-performing delimiters steer attention towards key tokens in the input. Finally, we explore methods to improve LLMs' robustness to the choice of delimiter. We find specifying the selected delimiter in the prompt boosts robustness and offer practical recommendations for the best-performing delimiters to select.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-10-02T13:27:28Z</published>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Jingtong Su</name>
+    </author>
+    <author>
+      <name>Jianyu Zhang</name>
+    </author>
+    <author>
+      <name>Karen Ullrich</name>
+    </author>
+    <author>
+      <name>Léon Bottou</name>
+    </author>
+    <author>
+      <name>Mark Ibrahim</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2406.18528v2</id>
+    <title>PrExMe! Large Scale Prompt Exploration of Open Source LLMs for Machine Translation and Summarization Evaluation</title>
+    <updated>2024-11-17T15:09:54Z</updated>
+    <link href="https://arxiv.org/abs/2406.18528v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2406.18528v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Large language models (LLMs) have revolutionized NLP research. Notably, in-context learning enables their use as evaluation metrics for natural language generation, making them particularly advantageous in low-resource scenarios and time-restricted applications. In this work, we introduce PrExMe, a large-scale Prompt Exploration for Metrics, where we evaluate more than 720 prompt templates for open-source LLM-based metrics on machine translation (MT) and summarization datasets, totalling over 6.6M evaluations. This extensive comparison (1) benchmarks recent open-source LLMs as metrics and (2) explores the stability and variability of different prompting strategies. We discover that, on the one hand, there are scenarios for which prompts are stable. For instance, some LLMs show idiosyncratic preferences and favor to grade generated texts with textual labels while others prefer to return numeric scores. On the other hand, the stability of prompts and model rankings can be susceptible to seemingly innocuous changes. For example, changing the requested output format from "0 to 100" to "-1 to +1" can strongly affect the rankings in our evaluation. Our study contributes to understanding the impact of different prompting approaches on LLM-based metrics for MT and summarization evaluation, highlighting the most stable prompting patterns and potential limitations.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2024-06-26T17:56:29Z</published>
+    <arxiv:comment>EMNLP 2024 main; camera-ready</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Christoph Leiter</name>
+    </author>
+    <author>
+      <name>Steffen Eger</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2605.21739v2</id>
+    <title>AttuneBench: A Conversation-Based Benchmark for LLM Emotional Intelligence</title>
+    <updated>2026-05-27T21:10:50Z</updated>
+    <link href="https://arxiv.org/abs/2605.21739v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2605.21739v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Emotional intelligence (EI), the ability to perceive, understand, and respond appropriately to others' emotional states, is central to human communication, and increasingly important to assess as LLMs assume conversational roles in everyday life. Existing EI benchmarks rely on synthetic prompts, single-turn cases, or third-party annotation. These approaches do not directly measure how models infer and respond to a participant's emotional state over the course of a real conversation. We introduce AttuneBench, a benchmark grounded in 200 genuine multi-turn human-model conversations in which participants conversed with anonymized LLMs and provided turn-by-turn annotations of their emotional state, the model's behavior, and their preferred responses. Across 11 evaluated models, we find that model rankings on emotion recognition, behavioral classification, preference prediction, and judged response quality are largely independent, indicating that emotionally intelligent behavior decomposes into separable capabilities. Preference alignment and response-quality judgments are substantially more model-discriminating than emotion-label accuracy. These results indicate that emotionally intelligent behavior requires predicting what kind of response a specific user wants in context, a distinction that aggregate scoring can obscure and that single-turn or synthetic formats cannot directly capture across turns. AttuneBench provides a framework for assessing each of these capabilities and for diagnosing model-specific strengths and failure modes in emotionally salient conversation.</summary>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-05-20T21:06:05Z</published>
+    <arxiv:comment>v2: Updated def_18 and def_20 supplemental figures to cover all 11 evaluated models (previously 9). Removed redundant supplemental figures. Corrected select captions (color descriptions, chance baselines, figure-content mismatches). No changes to experimental results, numerical claims, or conclusions</arxiv:comment>
+    <arxiv:primary_category term="cs.AI"/>
+    <author>
+      <name>Kate M. Lubrano</name>
+    </author>
+    <author>
+      <name>Faisal Sayed</name>
+    </author>
+    <author>
+      <name>Ankita Rathod</name>
+    </author>
+    <author>
+      <name> Akshansh</name>
+    </author>
+    <author>
+      <name>Craver Corbyn Thomas-Smith</name>
+    </author>
+    <author>
+      <name>Mark E. Whiting</name>
+    </author>
+    <author>
+      <name>Karina Nguyen</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2606.21689v1</id>
+    <title>Clinical Term Extraction using Open-Source Small Language Models</title>
+    <updated>2026-06-19T18:59:33Z</updated>
+    <link href="https://arxiv.org/abs/2606.21689v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2606.21689v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Clinical information for amyotrophic lateral sclerosis (ALS) care documented in unstructured clinical notes limits downstream analysis without extraction into structured formats. Open-source small language models with few-shot prompting for detecting the presence of ALS-relevant clinical terms in patient documentation were evaluated without task-specific training data. The detection task targeted 17 categories spanning functional scores, respiratory measures, medications, and related clinical and non-clinical attributes. Clinical note content was normalized from JSON-encoded discharge summaries and processed with a prompt template having structured JSON outputs. We compared 26 open-source models using aggregate, label-level, and manual-validation multilabel classification metrics. Manual validation showed that a regex rule baseline had higher overall micro-F1 and lower Hamming loss than any single SLM or TF-IDF baseline, while Qwen3-4B-Instruct-2507 was the highest-performing SLM by micro-F1. Model rankings varied by metric and label category, with the TF-IDF baseline showing high recall but low precision, some SLMs showing higher precision but lower recall, and Hammer2.1-7b showing strong performance for ALSFRS-R subscore detection. These findings support targeted hybrid extraction workflows rather than replacement of existing rule-based methods.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-06-19T18:59:33Z</published>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Noah Marchal</name>
+    </author>
+    <author>
+      <name>William E. Janes</name>
+    </author>
+    <author>
+      <name>Mihail Popescu</name>
+    </author>
+    <author>
+      <name>Xing Song</name>
+    </author>
+  </entry>
+</feed>

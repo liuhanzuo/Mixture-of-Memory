@@ -1,0 +1,246 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<feed xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/" xmlns:arxiv="http://arxiv.org/schemas/atom" xmlns="http://www.w3.org/2005/Atom">
+  <id>https://arxiv.org/api/M5SQsP2cwW7oO5kW80KZZsnk/kY</id>
+  <title>arXiv Query: search_query=&amp;id_list=2405.11874,2503.14996,2510.14773,2509.16720,2402.01781,2504.11972,2509.15020,2511.05162&amp;start=0&amp;max_results=20</title>
+  <updated>2026-08-14T06:46:17Z</updated>
+  <link href="https://arxiv.org/api/query?search_query=&amp;start=0&amp;max_results=20&amp;id_list=2405.11874,2503.14996,2510.14773,2509.16720,2402.01781,2504.11972,2509.15020,2511.05162" type="application/atom+xml"/>
+  <opensearch:itemsPerPage>20</opensearch:itemsPerPage>
+  <opensearch:totalResults>8</opensearch:totalResults>
+  <opensearch:startIndex>0</opensearch:startIndex>
+  <entry>
+    <id>http://arxiv.org/abs/2509.15020v1</id>
+    <title>Mind the Gap: A Closer Look at Tokenization for Multiple-Choice Question Answering with LLMs</title>
+    <updated>2025-09-18T14:47:58Z</updated>
+    <link href="https://arxiv.org/abs/2509.15020v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2509.15020v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>When evaluating large language models (LLMs) with multiple-choice question answering (MCQA), it is common to end the prompt with the string "Answer:" to facilitate automated answer extraction via next-token probabilities. However, there is no consensus on how to tokenize the space following the colon, often overlooked as a trivial choice. In this paper, we uncover accuracy differences of up to 11% due to this (seemingly irrelevant) tokenization variation as well as reshuffled model rankings, raising concerns about the reliability of LLM comparisons in prior work. Surprisingly, we are able to recommend one specific strategy -- tokenizing the space together with the answer letter -- as we observe consistent and statistically significant performance improvements. Additionally, it improves model calibration, enhancing the reliability of the model's confidence estimates. Our findings underscore the importance of careful evaluation design and highlight the need for standardized, transparent evaluation protocols to ensure reliable and comparable results.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-09-18T14:47:58Z</published>
+    <arxiv:comment>Accepted to EMNLP 2025 Main</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Mario Sanz-Guerrero</name>
+    </author>
+    <author>
+      <name>Minh Duc Bui</name>
+    </author>
+    <author>
+      <name>Katharina von der Wense</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2503.14996v2</id>
+    <title>Right Answer, Wrong Score: Uncovering the Inconsistencies of LLM Evaluation in Multiple-Choice Question Answering</title>
+    <updated>2025-06-08T14:56:13Z</updated>
+    <link href="https://arxiv.org/abs/2503.14996v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2503.14996v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>One of the most widely used tasks for evaluating Large Language Models (LLMs) is Multiple-Choice Question Answering (MCQA). While open-ended question answering tasks are more challenging to evaluate, MCQA tasks are, in principle, easier to assess, as the model's answer is thought to be simple to extract and is compared directly to a set of predefined choices. However, recent studies have started to question the reliability of MCQA evaluation, showing that multiple factors can significantly impact the reported performance of LLMs, especially when the model generates free-form text before selecting one of the answer choices. In this work, we shed light on the inconsistencies of MCQA evaluation strategies, which can lead to inaccurate and misleading model comparisons. We systematically analyze whether existing answer extraction methods are aligned with human judgment, and how they are influenced by answer constraints in the prompt across different domains. Our experiments demonstrate that traditional evaluation strategies often underestimate LLM capabilities, while LLM-based answer extractors are prone to systematic errors. Moreover, we reveal a fundamental trade-off between including format constraints in the prompt to simplify answer extraction and allowing models to generate free-form text to improve reasoning. Our findings call for standardized evaluation methodologies and highlight the need for more reliable and consistent MCQA evaluation practices.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-03-19T08:45:03Z</published>
+    <arxiv:comment>Findings of the Association for Computational Linguistics ACL 2025</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Francesco Maria Molfese</name>
+    </author>
+    <author>
+      <name>Luca Moroni</name>
+    </author>
+    <author>
+      <name>Luca Gioffré</name>
+    </author>
+    <author>
+      <name>Alessandro Scirè</name>
+    </author>
+    <author>
+      <name>Simone Conia</name>
+    </author>
+    <author>
+      <name>Roberto Navigli</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2402.01781v2</id>
+    <title>When Benchmarks are Targets: Revealing the Sensitivity of Large Language Model Leaderboards</title>
+    <updated>2024-07-03T11:20:43Z</updated>
+    <link href="https://arxiv.org/abs/2402.01781v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2402.01781v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Large Language Model (LLM) leaderboards based on benchmark rankings are regularly used to guide practitioners in model selection. Often, the published leaderboard rankings are taken at face value - we show this is a (potentially costly) mistake. Under existing leaderboards, the relative performance of LLMs is highly sensitive to (often minute) details. We show that for popular multiple-choice question benchmarks (e.g., MMLU), minor perturbations to the benchmark, such as changing the order of choices or the method of answer selection, result in changes in rankings up to 8 positions. We explain this phenomenon by conducting systematic experiments over three broad categories of benchmark perturbations and identifying the sources of this behavior. Our analysis results in several best-practice recommendations, including the advantage of a hybrid scoring method for answer selection. Our study highlights the dangers of relying on simple benchmark evaluations and charts the path for more robust evaluation schemes on the existing benchmarks. The code for this paper is available at https://github.com/National-Center-for-AI-Saudi-Arabia/lm-evaluation-harness.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2024-02-01T19:12:25Z</published>
+    <arxiv:comment>updated with ACL 2024 camera ready version</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Norah Alzahrani</name>
+    </author>
+    <author>
+      <name>Hisham Abdullah Alyahya</name>
+    </author>
+    <author>
+      <name>Yazeed Alnumay</name>
+    </author>
+    <author>
+      <name>Sultan Alrashed</name>
+    </author>
+    <author>
+      <name>Shaykhah Alsubaie</name>
+    </author>
+    <author>
+      <name>Yusef Almushaykeh</name>
+    </author>
+    <author>
+      <name>Faisal Mirza</name>
+    </author>
+    <author>
+      <name>Nouf Alotaibi</name>
+    </author>
+    <author>
+      <name>Nora Altwairesh</name>
+    </author>
+    <author>
+      <name>Areeb Alowisheq</name>
+    </author>
+    <author>
+      <name>M Saiful Bari</name>
+    </author>
+    <author>
+      <name>Haidar Khan</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2511.05162v2</id>
+    <title>Mind the Gap... or Not? How Translation Errors and Evaluation Details Skew Multilingual Results</title>
+    <updated>2026-06-22T06:54:24Z</updated>
+    <link href="https://arxiv.org/abs/2511.05162v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2511.05162v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Most current large language models (LLMs) support a wide variety of languages in addition to English, including high-resource languages (e.g. German, Chinese, French), as well as low-resource ones (e.g. Swahili, Telugu). In addition, they have shown impressive capabilities in different domains, like coding, science and math. In this paper, taking math as an example domain, we study the performance of different LLMs across languages. Experimental results show that there exists a non-negligible and consistent gap in the performance of the models across languages. Interestingly, and somewhat against expectations, the gap exists for both high- and low-resource languages. These results should impact further research into cross-lingual capability generalization for next generation LLMs. Or they would, if it weren't for the fact that they are distorted by data quality issues. By analyzing one of the standard multilingual math benchmarks (MGSM), we determine that several translation errors are present in the data. Furthermore, the lack of standardized answer extraction from LLM outputs further influences the final results. We propose a method for semi-automatic quality assurance to address the first issue at scale, and give recommendations to address the second one. Combining these two approaches we show that the aforementioned language gap mostly disappears, leading to completely different conclusions from our research. We additionally release the corrected dataset to the community (https://github.com/google-research-datasets/MGSM-Rev2).</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-11-07T11:30:10Z</published>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Jan-Thorsten Peter</name>
+    </author>
+    <author>
+      <name>David Vilar</name>
+    </author>
+    <author>
+      <name>Tobias Domhan</name>
+    </author>
+    <author>
+      <name>Dan Malkin</name>
+    </author>
+    <author>
+      <name>Markus Freitag</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2510.14773v1</id>
+    <title>Finding Answers in Thought Matters: Revisiting Evaluation on Large Language Models with Reasoning</title>
+    <updated>2025-10-16T15:09:22Z</updated>
+    <link href="https://arxiv.org/abs/2510.14773v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2510.14773v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Evaluating generative models, such as large language models (LLMs), commonly involves question-answering tasks where the final answer is selected based on probability of answer choices. On the other hand, for models requiring reasoning, the method of answer extraction plays a critical role. Our research reveals that the performance of reasoning models and their final answer distributions are highly sensitive to the answer extraction algorithm employed. In order to mitigate this, we propose a basic framework: Answer Regeneration. The method uses an additional model inference, providing the prior input and output prefaced by the prompt "Answer:". The final answer is then selected or extracted from the regenerated output. We show that this extraction-rule-agnostic approach exhibits improved performance and enhanced robustness. Furthermore, we have applied this framework to general math problems and open-ended question answering tasks. Our analysis and this framework could offer a more reliable results for model evaluation.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-10-16T15:09:22Z</published>
+    <arxiv:comment>ARR Submitted</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Hwiyeol Jo</name>
+    </author>
+    <author>
+      <name>Joosung Lee</name>
+    </author>
+    <author>
+      <name>Jaehone Lee</name>
+    </author>
+    <author>
+      <name>Sang-Woo Lee</name>
+    </author>
+    <author>
+      <name>Joonsuk Park</name>
+    </author>
+    <author>
+      <name>Kang Min Yoo</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2405.11874v3</id>
+    <title>xFinder: Large Language Models as Automated Evaluators for Reliable Evaluation</title>
+    <updated>2025-02-25T11:04:02Z</updated>
+    <link href="https://arxiv.org/abs/2405.11874v3" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2405.11874v3" rel="related" type="application/pdf" title="pdf"/>
+    <summary>The continuous advancement of large language models (LLMs) has brought increasing attention to the critical issue of developing fair and reliable methods for evaluating their performance. Particularly, the emergence of cheating phenomena, such as test set leakage and prompt format overfitting, poses significant challenges to the reliable evaluation of LLMs. As evaluation frameworks commonly use Regular Expression (RegEx) for answer extraction, models may adjust their responses to fit formats easily handled by RegEx. Nevertheless, the key answer extraction module based on RegEx frequently suffers from extraction errors. Furthermore, recent studies proposing fine-tuned LLMs as judge models for automated evaluation face challenges in terms of generalization ability and fairness. This paper comprehensively analyzes the entire LLM evaluation chain and demonstrates that optimizing the key answer extraction module improves extraction accuracy and enhances evaluation reliability. Our findings suggest that improving the key answer extraction module can lead to higher judgment accuracy and improved evaluation efficiency compared to the judge models. To address these issues, we propose xFinder, a novel evaluator for answer extraction and matching in LLM evaluation. As part of this process, we create a specialized dataset, the \textbf{K}ey \textbf{A}nswer \textbf{F}inder (KAF) dataset, to ensure effective model training and evaluation. Generalization tests and real-world evaluations show that the smallest xFinder model, with only 500 million parameters, achieves an average extraction accuracy of 93.42\%. In contrast, RegEx accuracy in the best evaluation framework is 74.38\%. The final judgment accuracy of xFinder reaches 97.61\%, outperforming existing evaluation frameworks and judge models.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2024-05-20T08:30:13Z</published>
+    <arxiv:comment>Accepted by ICLR 2025</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Qingchen Yu</name>
+    </author>
+    <author>
+      <name>Zifan Zheng</name>
+    </author>
+    <author>
+      <name>Shichao Song</name>
+    </author>
+    <author>
+      <name>Zhiyu Li</name>
+    </author>
+    <author>
+      <name>Feiyu Xiong</name>
+    </author>
+    <author>
+      <name>Bo Tang</name>
+    </author>
+    <author>
+      <name>Ding Chen</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2504.11972v3</id>
+    <title>Reassessing Extractive QA Datasets at Scale: LLM-as-a-Judge and In-Depth Analyses</title>
+    <updated>2026-05-29T09:22:41Z</updated>
+    <link href="https://arxiv.org/abs/2504.11972v3" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2504.11972v3" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Extractive QA tasks are commonly evaluated using Exact Match (EM) and F1-score, but these metrics often fail to reflect true model performance. Recent studies have proposed using large language models (LLMs) as judges (LLM-as-a-judge), yet they often lack comprehensive evaluation across datasets and overlook key factors such as sensitivity to answer types, prompt variations, and self-preference bias. In this work, we conduct a systematic study of LLM-as-a-judge across four extractive QA datasets and various prompt variations, assessing multiple LLM families in both answering and judging roles. Our results show that LLM-as-a-judge judgments correlate much more strongly with human evaluations than EM (0.22) and F1 (0.40), achieving correlations up to 0.85 with open-source models. Further analysis reveals that LLM-as-a-judge performs particularly well on number-related answers but faces challenges with more complex types, such as job titles. Contrary to findings in other NLP tasks, we observe no self-preference bias, even when the same model serves as both QA model and judge. Finally, we find that prompt phrasing has minimal impact, and zero-shot, context-free judging often yields the best evaluation performance.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-04-16T11:08:46Z</published>
+    <arxiv:comment>GEM Workshop at ACL 2026; code and data are available at https://github.com/Alab-NII/llm-judge-extract-qa</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Xanh Ho</name>
+    </author>
+    <author>
+      <name>Jiahao Huang</name>
+    </author>
+    <author>
+      <name>Florian Boudin</name>
+    </author>
+    <author>
+      <name>Akiko Aizawa</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2509.16720v1</id>
+    <title>Time to Revist Exact Match</title>
+    <updated>2025-09-20T15:10:26Z</updated>
+    <link href="https://arxiv.org/abs/2509.16720v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2509.16720v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Temporal question answering is an established method for evaluating temporal reasoning in large language models. Expected answers are often numeric (e.g., dates or durations), yet model responses are evaluated like regular text with exact match (EM), unable to distinguish small from large errors. In this investigative work, we frame temporal question answering as a numerical estimation task to assess the shortcomings of EM. We introduce TempAnswerQA, a benchmark distilled from Test of Time and TempTabQA, where all questions require a numerical, temporal answer, allowing us to evaluate models beyond EM. We use the forecasting metrics symmetric mean absolute percentage error (sMAPE) and mean absolute scaled error (MASE). With sMAPE, we find that error size and EM are decoupled. Models with low EM still have low sMAPE (both ~20%), and some models have high sMAPE despite high EM. Scaling errors by the deviation of the ground truth data with MASE reshuffles model rankings compared to EM, revealing gaps in models' understanding of temporal domain knowledge, especially when trained with synthetic data. Lastly, the models' most frequent error is to deviate by only $\pm1$ from the ground truth. sMAPE and MASE, unlike EM, adequately weight these errors. Our findings underscore the need for specialised metrics for temporal QA tasks. Code and data are available on https://github.com/aauss/temporal-answer-qa.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-09-20T15:10:26Z</published>
+    <arxiv:comment>Accepted for Findings of EMNLP 2025</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Auss Abbood</name>
+    </author>
+    <author>
+      <name>Zaiqiao Meng</name>
+    </author>
+    <author>
+      <name>Nigel Collier</name>
+    </author>
+  </entry>
+</feed>

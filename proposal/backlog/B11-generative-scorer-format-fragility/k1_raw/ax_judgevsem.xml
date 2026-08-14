@@ -1,0 +1,238 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<feed xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/" xmlns:arxiv="http://arxiv.org/schemas/atom" xmlns="http://www.w3.org/2005/Atom">
+  <id>https://arxiv.org/api/ptyF7xAbZf3kBQMd0em7Oz38q7I</id>
+  <title>arXiv Query: search_query=abs:"LLM-as-a-judge" AND abs:"exact match"&amp;id_list=&amp;start=0&amp;max_results=40</title>
+  <updated>2026-08-14T06:45:51Z</updated>
+  <link href="https://arxiv.org/api/query?search_query=abs:%22LLM-as-a-judge%22+AND+abs:%22exact+match%22&amp;start=0&amp;max_results=40&amp;id_list=" type="application/atom+xml"/>
+  <opensearch:itemsPerPage>40</opensearch:itemsPerPage>
+  <opensearch:totalResults>9</opensearch:totalResults>
+  <opensearch:startIndex>0</opensearch:startIndex>
+  <entry>
+    <id>http://arxiv.org/abs/2606.19544v1</id>
+    <title>Reliability without Validity: A Systematic, Large-Scale Evaluation of LLM-as-a-Judge Models Across Agreement, Consistency, and Bias</title>
+    <updated>2026-06-17T19:37:13Z</updated>
+    <link href="https://arxiv.org/abs/2606.19544v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2606.19544v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>LLM-as-a-Judge has become the dominant evaluation paradigm for language models, but judge validation in practice relies on exact-match agreement, a metric that does not correct for chance and systematically overstates discriminative ability. We present the largest systematic evaluation of LLM-as-a-Judge to date: 21 judges from nine providers across MT-Bench, JudgeBench, and RewardBench, evaluated under three protocols (agreement, consistency, bias audit) over 118 runs and approximately 541,000 individual judgments. Four findings emerge, consistent across the full cohort, including the April 2026 frontier: kappa deflation between exact match and Cohen's kappa is universal (33--41 pp on MT-Bench), judge rankings shift by up to 14 positions across benchmarks, high test--retest reliability (&gt;0.95) coexists with severe position bias (&gt;0.10) in two production-deployed judges (instantiating a consistency--bias paradox), and verbosity bias is small (&lt;0.011) across our cohort under a single pairwise rubric. We distill these into a Minimum Viable Validation Protocol.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-06-17T19:37:13Z</published>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Justin D. Norman</name>
+    </author>
+    <author>
+      <name>Michael U. Rivera</name>
+    </author>
+    <author>
+      <name>D. Alex Hughes</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2504.11972v3</id>
+    <title>Reassessing Extractive QA Datasets at Scale: LLM-as-a-Judge and In-Depth Analyses</title>
+    <updated>2026-05-29T09:22:41Z</updated>
+    <link href="https://arxiv.org/abs/2504.11972v3" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2504.11972v3" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Extractive QA tasks are commonly evaluated using Exact Match (EM) and F1-score, but these metrics often fail to reflect true model performance. Recent studies have proposed using large language models (LLMs) as judges (LLM-as-a-judge), yet they often lack comprehensive evaluation across datasets and overlook key factors such as sensitivity to answer types, prompt variations, and self-preference bias. In this work, we conduct a systematic study of LLM-as-a-judge across four extractive QA datasets and various prompt variations, assessing multiple LLM families in both answering and judging roles. Our results show that LLM-as-a-judge judgments correlate much more strongly with human evaluations than EM (0.22) and F1 (0.40), achieving correlations up to 0.85 with open-source models. Further analysis reveals that LLM-as-a-judge performs particularly well on number-related answers but faces challenges with more complex types, such as job titles. Contrary to findings in other NLP tasks, we observe no self-preference bias, even when the same model serves as both QA model and judge. Finally, we find that prompt phrasing has minimal impact, and zero-shot, context-free judging often yields the best evaluation performance.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-04-16T11:08:46Z</published>
+    <arxiv:comment>GEM Workshop at ACL 2026; code and data are available at https://github.com/Alab-NII/llm-judge-extract-qa</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Xanh Ho</name>
+    </author>
+    <author>
+      <name>Jiahao Huang</name>
+    </author>
+    <author>
+      <name>Florian Boudin</name>
+    </author>
+    <author>
+      <name>Akiko Aizawa</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2506.11237v1</id>
+    <title>LLM-as-a-Judge for Reference-less Automatic Code Validation and Refinement for Natural Language to Bash in IT Automation</title>
+    <updated>2025-06-12T19:15:05Z</updated>
+    <link href="https://arxiv.org/abs/2506.11237v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2506.11237v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>In an effort to automatically evaluate and select the best model and improve code quality for automatic incident remediation in IT Automation, it is crucial to verify if the generated code for remediation action is syntactically and semantically correct and whether it can be executed correctly as intended. There are three approaches: 1) conventional methods use surface form similarity metrics (token match, exact match, etc.) which have numerous limitations, 2) execution-based evaluation focuses more on code functionality based on pass/fail judgments for given test-cases, and 3) LLM-as-a-Judge employs LLMs for automated evaluation to judge if it is a correct answer for a given problem based on pre-defined metrics. In this work, we focused on enhancing LLM-as-a-Judge using bidirectional functionality matching and logic representation for reference-less automatic validation and refinement for Bash code generation to select the best model for automatic incident remediation in IT Automation. We used execution-based evaluation as ground-truth to evaluate our LLM-as-a-Judge metrics. Results show high accuracy and agreement with execution-based evaluation (and up to 8% over baseline). Finally, we built Reflection code agents to utilize judgments and feedback from our evaluation metrics which achieved significant improvement (up to 24% increase in accuracy) for automatic code refinement.</summary>
+    <category term="cs.SE" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-06-12T19:15:05Z</published>
+    <arxiv:comment>10 pages</arxiv:comment>
+    <arxiv:primary_category term="cs.SE"/>
+    <author>
+      <name>Ngoc Phuoc An Vo</name>
+    </author>
+    <author>
+      <name>Brent Paulovicks</name>
+    </author>
+    <author>
+      <name>Vadim Sheinin</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2605.07395v1</id>
+    <title>Unsolvability Ceiling in Multi-LLM Routing: An Empirical Study of Evaluation Artifacts</title>
+    <updated>2026-05-08T07:49:24Z</updated>
+    <link href="https://arxiv.org/abs/2605.07395v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2605.07395v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Efficient routing across multiple LLMs enables cost-quality tradeoffs by directing queries to the cheapest capable model. Prior work attributes routing headroom to an "unsolvability ceiling", queries no model in the pool can solve. We present a large-scale study of multi-tier LLM routing with 206,000 query-model pairs across six benchmarks (MMLU, MedQA, HumanEval, MBPP, Alpaca, ShareGPT) using the Gemma 4 and Llama 3.1 families. Evaluating with both LLM-as-a-judge and exact-match metrics, we show that a substantial portion of reported unsolvability stems from evaluation artifacts: (i) systematic judge biases favoring verbosity over correctness, (ii) truncation under fixed generation budgets, and (iii) output format mismatches. Through dual-judge validation and exact-match grounding, we reduce measured unsolvability across tasks. We introduce a decomposition framework attributing failures to these artifacts, revealing consistent patterns across domains and model families. These artifacts also distort router training signals: standard routers collapse to majority-class prediction (~79% smallest-tier optimal), confirmed via random-feature and shuffled-label controls, incurring a 13-17 percentage point opportunity cost. We provide actionable recommendations including dual-judge validation, exact-match anchoring, and cost-sensitive objectives. Our findings suggest existing routing headroom estimates are substantially inflated, underscoring the need for reliable evaluation protocols in multi-LLM systems.</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-05-08T07:49:24Z</published>
+    <arxiv:comment>12 pages, 14 tables</arxiv:comment>
+    <arxiv:primary_category term="cs.LG"/>
+    <author>
+      <name>Saloni Garg</name>
+    </author>
+    <author>
+      <name>Amit Sagtani</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2607.13501v2</id>
+    <title>LOTAPO: Leave-One-Turn Attribution for Self-Generated Process Rewards in Multi-Turn Search Reasoning</title>
+    <updated>2026-07-16T15:39:38Z</updated>
+    <link href="https://arxiv.org/abs/2607.13501v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2607.13501v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Reinforcement learning for multi-turn search reasoning typically relies on terminal outcome rewards, which cannot distinguish useful, redundant, and harmful intermediate interactions. We propose LOTAPO , a self-generated process-supervision method based on backward leave-one-turn attribution. For each search turn, LOTAPO replaces the turn and its retrieval observation with a fixed [DELETE] placeholder and measures the resulting change in the current policy's mean log-likelihood of the gold answer. This Answer-Likelihood Gain estimates the turn's contribution while preserving all downstream interactions, allowing early evidence to be evaluated in the complete reasoning context. LOTAPO further applies sign-consistency gating, retaining only normalized process advantages whose directions agree with their raw attribution scores. The method requires no additional reward model, teacher, verifier, or LLM-as-a-Judge. Across seven knowledge-intensive question-answering datasets with local retrieval, LOTAPO achieves an average exact-match score of 0.326, outperforming the strongest step-reward baseline, IGPO, by 0.053. Ablations show complementary benefits from backward attribution and sign-consistency gating, demonstrating that policy-derived retrospective attribution can provide effective process supervision for multi-turn search agents.</summary>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-07-15T06:55:28Z</published>
+    <arxiv:comment>20 pages, 5 figures</arxiv:comment>
+    <arxiv:primary_category term="cs.AI"/>
+    <author>
+      <name>Qiang Zhu</name>
+    </author>
+    <author>
+      <name>Jiajun Wu</name>
+    </author>
+    <author>
+      <name>Longyi Wang</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2604.26971v1</id>
+    <title>T2S-Metrics: Unified Library for Evaluating SPARQL Queries Generated From Natural Language</title>
+    <updated>2026-04-22T08:13:41Z</updated>
+    <link href="https://arxiv.org/abs/2604.26971v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2604.26971v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>The evaluation of Question Answering (QA) systems over Knowledge Graphs has historically suffered from fragmentation, inconsistency, and limited reproducibility. While significant progress has been made in semantic parsing and SPARQL query generation, evaluation methodologies remain diverse, ad hoc, and often incomparable across studies. Existing benchmarks typically focus on a small subset of metrics, such as query exact match or answer-level F1, neglecting syntactic validity, semantic faithfulness, execution correctness, results ranking quality, and computational efficiency. In this paper, we present t2s-metrics, an open-source, extensible, and unified evaluation library designed specifically for SPARQL query comparison and execution-based assessment. t2s-metrics provides a broad and extensible set of over 20 evaluation metrics, collected from the literature and practical evaluation needs, spanning lexical, syntactic, semantic, structural, execution-based and ranking-based dimensions. These include query-based metrics such as token-level Precision, Recall, and F1; BLEU, ROUGE, METEOR, and CodeBLEU variants; variable-normalized metrics (SP-BLEU, SP-F1); graph-and URI-based exact match metrics; as well as answer set-based metrics such as F1-QALD and Jaccard similarity; ranking metrics including MRR, NDCG, P@k, and Hit@k; and LLM-as-a-Judge metrics. Taking inspiration from the ir-metrics library for Information Retrieval, t2s-metrics provides a modular abstraction layer that decouples metric specification from implementation, enabling consistent, transparent, and reproducible evaluation of SPARQLbased QA systems. We argue that t2s-metrics constitutes a necessary step toward systematic, standardized evaluation in question answering over knowledge graphs and facilitates deeper diagnostic insights into system behavior beyond answer correctness.</summary>
+    <category term="cs.IR" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-04-22T08:13:41Z</published>
+    <arxiv:primary_category term="cs.IR"/>
+    <author>
+      <name>Yousouf Taghzouti</name>
+      <arxiv:affiliation>ICN, WIMMICS, Laboratoire I3S - SPARKS</arxiv:affiliation>
+    </author>
+    <author>
+      <name>Tao Jiang</name>
+      <arxiv:affiliation>ICN</arxiv:affiliation>
+    </author>
+    <author>
+      <name>Camille Juigné</name>
+      <arxiv:affiliation>WIMMICS, Laboratoire I3S - SPARKS</arxiv:affiliation>
+    </author>
+    <author>
+      <name>Benjamin Navet</name>
+      <arxiv:affiliation>ICN, WIMMICS, Laboratoire I3S - SPARKS</arxiv:affiliation>
+    </author>
+    <author>
+      <name>Fabien Gandon</name>
+      <arxiv:affiliation>WIMMICS, Laboratoire I3S - SPARKS</arxiv:affiliation>
+    </author>
+    <author>
+      <name>Franck Michel</name>
+      <arxiv:affiliation>Laboratoire I3S - SPARKS, WIMMICS</arxiv:affiliation>
+    </author>
+    <author>
+      <name>Louis-Felix Nothias</name>
+      <arxiv:affiliation>ICN</arxiv:affiliation>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2603.12396v1</id>
+    <title>Test-Time Strategies for More Efficient and Accurate Agentic RAG</title>
+    <updated>2026-03-12T19:18:59Z</updated>
+    <link href="https://arxiv.org/abs/2603.12396v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2603.12396v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Retrieval-Augmented Generation (RAG) systems face challenges with complex, multihop questions, and agentic frameworks such as Search-R1 (Jin et al., 2025), which operates iteratively, have been proposed to address these complexities. However, such approaches can introduce inefficiencies, including repetitive retrieval of previously processed information and challenges in contextualizing retrieved results effectively within the current generation prompt. Such issues can lead to unnecessary retrieval turns, suboptimal reasoning, inaccurate answers, and increased token consumption.
+  In this paper, we investigate test-time modifications to the Search-R1 pipeline to mitigate these identified shortcomings. Specifically, we explore the integration of two components and their combination: a contextualization module to better integrate relevant information from retrieved documents into reasoning, and a de-duplication module that replaces previously retrieved documents with the next most relevant ones. We evaluate our approaches using the HotpotQA (Yang et al., 2018) and the Natural Questions (Kwiatkowski et al., 2019) datasets, reporting the exact match (EM) score, an LLM-as-a-Judge assessment of answer correctness, and the average number of turns.
+  Our best-performing variant, utilizing GPT-4.1-mini for contextualization, achieves a 5.6% increase in EM score and reduces the number of turns by 10.5% compared to the Search-R1 baseline, demonstrating improved answer accuracy and retrieval efficiency.</summary>
+    <category term="cs.IR" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-03-12T19:18:59Z</published>
+    <arxiv:primary_category term="cs.IR"/>
+    <author>
+      <name>Brian Zhang</name>
+    </author>
+    <author>
+      <name>Deepti Guntur</name>
+    </author>
+    <author>
+      <name>Zhiyang Zuo</name>
+    </author>
+    <author>
+      <name>Abhinav Sharma</name>
+    </author>
+    <author>
+      <name>Shreyas Chaudhari</name>
+    </author>
+    <author>
+      <name>Wenlong Zhao</name>
+    </author>
+    <author>
+      <name>Franck Dernoncourt</name>
+    </author>
+    <author>
+      <name>Puneet Mathur</name>
+    </author>
+    <author>
+      <name>Ryan Rossi</name>
+    </author>
+    <author>
+      <name>Nedim Lipka</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2601.04819v1</id>
+    <title>AECV-Bench: Benchmarking Multimodal Models on Architectural and Engineering Drawings Understanding</title>
+    <updated>2026-01-08T10:54:32Z</updated>
+    <link href="https://arxiv.org/abs/2601.04819v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2601.04819v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>AEC drawings encode geometry and semantics through symbols, layout conventions, and dense annotation, yet it remains unclear whether modern multimodal and vision-language models can reliably interpret this graphical language. We present AECV-Bench, a benchmark for evaluating multimodal and vision-language models on realistic AEC artefacts via two complementary use cases: (i) object counting on 120 high-quality floor plans (doors, windows, bedrooms, toilets), and (ii) drawing-grounded document QA spanning 192 question-answer pairs that test text extraction (OCR), instance counting, spatial reasoning, and comparative reasoning over common drawing regions. Object-counting performance is reported using per-field exact-match accuracy and MAPE results, while document-QA performance is reported using overall accuracy and per-category breakdowns with an LLM-as-a-judge scoring pipeline and targeted human adjudication for edge cases. Evaluating a broad set of state-of-the-art models under a unified protocol, we observe a stable capability gradient; OCR and text-centric document QA are strongest (up to 0.95 accuracy), spatial reasoning is moderate, and symbol-centric drawing understanding - especially reliable counting of doors and windows - remains unsolved (often 0.40-0.55 accuracy) with substantial proportional errors. These results suggest that current systems function well as document assistants but lack robust drawing literacy, motivating domain-specific representations and tool-augmented, human-in-the-loop workflows for an efficient AEC automation.</summary>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-01-08T10:54:32Z</published>
+    <arxiv:primary_category term="cs.AI"/>
+    <author>
+      <name>Aleksei Kondratenko</name>
+    </author>
+    <author>
+      <name>Mussie Birhane</name>
+    </author>
+    <author>
+      <name>Houssame E. Hsain</name>
+    </author>
+    <author>
+      <name>Guido Maciocci</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2607.05904v1</id>
+    <title>More Convincing, Not More Correct: Self-Play Reward Hacking of Reference-Free LLM Judges</title>
+    <updated>2026-07-07T06:59:30Z</updated>
+    <link href="https://arxiv.org/abs/2607.05904v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2607.05904v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Training a language model against its own reference-free judgments (the premise of self-rewarding, self-play, and LLM-as-a-judge pipelines) assumes a model's verdict on a shown answer tracks correctness. We show it fails structurally: conditioned on a candidate, a judge scores plausibility, not correctness, leaving false-positive basins a policy learns to exploit. We measure this with a hidden-anchor audit: a held-out, cross-source exact-match check the judge never sees. On GSM8K with Qwen3 policies, self-play drives the judge's pass rate from 0.72 to 0.94 while true accuracy stays at 0.20 (three seeds). This reward hacking is not white-box gaming: the errors transfer across judge families (Qwen, Llama, Gemma) and scales, a strict three-judge ensemble still accepts 55% of them, and no plausibility-scoring defense closes the basin. The decisive variable is whether the judge commits an answer of its own before using the candidate: committing first drops the false-positive rate from 0.719 to 0.012, blind solving lifts discrimination to 0.96, and used as the training reward the de-anchored channel keeps false positives at zero, preventing the basin rather than only detecting it. A falsifiable bound (the gap is at most 1 - accuracy) predicts which regimes are exposed. The full arc replicates without training under best-of-N selection in code and competition math, and with a Gemma policy.</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-07-07T06:59:30Z</published>
+    <arxiv:comment>9 pages main text, 15 pages total including references and appendix; 4 figures</arxiv:comment>
+    <arxiv:primary_category term="cs.LG"/>
+    <author>
+      <name>Chenyu Zhou</name>
+    </author>
+  </entry>
+</feed>

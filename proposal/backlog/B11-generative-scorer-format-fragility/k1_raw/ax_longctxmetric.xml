@@ -1,0 +1,233 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<feed xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/" xmlns:arxiv="http://arxiv.org/schemas/atom" xmlns="http://www.w3.org/2005/Atom">
+  <id>https://arxiv.org/api/sGFoKCKst2pMO/sbQXI4Ewqp++k</id>
+  <title>arXiv Query: search_query=abs:"long-context" AND abs:"benchmark" AND abs:"metric" AND abs:"ranking"&amp;id_list=&amp;start=0&amp;max_results=40</title>
+  <updated>2026-08-14T06:45:55Z</updated>
+  <link href="https://arxiv.org/api/query?search_query=abs:%22long-context%22+AND+(abs:%22benchmark%22+AND+(abs:%22metric%22+AND+abs:%22ranking%22))&amp;start=0&amp;max_results=40&amp;id_list=" type="application/atom+xml"/>
+  <opensearch:itemsPerPage>40</opensearch:itemsPerPage>
+  <opensearch:totalResults>7</opensearch:totalResults>
+  <opensearch:startIndex>0</opensearch:startIndex>
+  <entry>
+    <id>http://arxiv.org/abs/2405.17915v1</id>
+    <title>Long Context is Not Long at All: A Prospector of Long-Dependency Data for Large Language Models</title>
+    <updated>2024-05-28T07:36:56Z</updated>
+    <link href="https://arxiv.org/abs/2405.17915v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2405.17915v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Long-context modeling capabilities are important for large language models (LLMs) in various applications. However, directly training LLMs with long context windows is insufficient to enhance this capability since some training samples do not exhibit strong semantic dependencies across long contexts. In this study, we propose a data mining framework \textbf{ProLong} that can assign each training sample with a long dependency score, which can be used to rank and filter samples that are more advantageous for enhancing long-context modeling abilities in LLM training. Specifically, we first use delta perplexity scores to measure the \textit{Dependency Strength} between text segments in a given document. Then we refine this metric based on the \textit{Dependency Distance} of these segments to incorporate spatial relationships across long-contexts. Final results are calibrated with a \textit{Dependency Specificity} metric to prevent trivial dependencies introduced by repetitive patterns. Moreover, a random sampling approach is proposed to optimize the computational efficiency of ProLong. Comprehensive experiments on multiple benchmarks indicate that ProLong effectively identifies documents that carry long dependencies and LLMs trained on these documents exhibit significantly enhanced long-context modeling capabilities.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2024-05-28T07:36:56Z</published>
+    <arxiv:comment>13 pages, 5 figures, ACL 2024</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Longze Chen</name>
+    </author>
+    <author>
+      <name>Ziqiang Liu</name>
+    </author>
+    <author>
+      <name>Wanwei He</name>
+    </author>
+    <author>
+      <name>Yunshui Li</name>
+    </author>
+    <author>
+      <name>Run Luo</name>
+    </author>
+    <author>
+      <name>Min Yang</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2510.13494v1</id>
+    <title>LiteraryQA: Towards Effective Evaluation of Long-document Narrative QA</title>
+    <updated>2025-10-15T12:43:59Z</updated>
+    <link href="https://arxiv.org/abs/2510.13494v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2510.13494v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Question Answering (QA) on narrative text poses a unique challenge to current systems, requiring a deep understanding of long, complex documents. However, the reliability of NarrativeQA, the most widely used benchmark in this domain, is hindered by noisy documents and flawed QA pairs. In this work, we introduce LiteraryQA, a high-quality subset of NarrativeQA focused on literary works. Using a human- and LLM-validated pipeline, we identify and correct low-quality QA samples while removing extraneous text from source documents. We then carry out a meta-evaluation of automatic metrics to clarify how systems should be evaluated on LiteraryQA. This analysis reveals that all n-gram-based metrics have a low system-level correlation to human judgment, while LLM-as-a-Judge evaluations, even with small open-weight models, can strongly agree with the ranking identified by humans. Finally, we benchmark a set of long-context LLMs on LiteraryQA. We release our code and data at https://github.com/SapienzaNLP/LiteraryQA.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-10-15T12:43:59Z</published>
+    <arxiv:comment>Accepted to EMNLP 2025 Main Conference. 22 pages</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Tommaso Bonomo</name>
+    </author>
+    <author>
+      <name>Luca Gioffré</name>
+    </author>
+    <author>
+      <name>Roberto Navigli</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2605.28079v1</id>
+    <title>ATLAS: All-round Testing of Long-context Abilities across Scales</title>
+    <updated>2026-05-27T07:33:47Z</updated>
+    <link href="https://arxiv.org/abs/2605.28079v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2605.28079v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Long-context language models now advertise context windows up to millions of tokens, yet evaluations typically report a single length or a narrow task family, masking two failure modes: performance can collapse as length grows, and strong retrieval need not transfer to downstream use. We present ATLAS, a benchmarking framework that redefines long-context evaluation as length-dependent capability profiling. ATLAS contributes three methodological principles:(i) a layered taxonomy separating foundational operations from application workloads so failures can be attributed, (ii) length-aware AUC scoring that integrates score-length curves over a fixed 8K-1M grid, replacing single-point metrics with full degradation profiles, and (iii) ATLAScore, a harmonic-mean aggregate over taxonomy categories that penalizes imbalanced profiles, with end-to-end uncertainty propagation from subset scores through the nonlinear final aggregate. We instantiate the framework across eight capability dimensions with nine auditable components and 6,438 instances, and evaluate 26 models. Gemini-3.1-Pro-Preview leads at 128K, Claude-Opus-4.6 leads at 1M. Rankings reshuffle substantially between ATLASscore@8K-128K and ATLASscore@8K-1M: 7 models move by at least two ranks, and the two taxonomy layers share only 61% of cross-model variance, with individual rank gaps up to 12 positions. These results support reporting long-context quality by capability and length, not by a single headline score.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-05-27T07:33:47Z</published>
+    <arxiv:comment>29 pages, 13 figures. Preprint</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Deli Huang</name>
+    </author>
+    <author>
+      <name>Cunguang Wang</name>
+    </author>
+    <author>
+      <name>Hongyin Tang</name>
+    </author>
+    <author>
+      <name>Zhe Tang</name>
+    </author>
+    <author>
+      <name>Linsen Guo</name>
+    </author>
+    <author>
+      <name>Dongyu Ru</name>
+    </author>
+    <author>
+      <name>Ruoshi Yuan</name>
+    </author>
+    <author>
+      <name>Ziyue Zhu</name>
+    </author>
+    <author>
+      <name>Xiaoyu Li</name>
+    </author>
+    <author>
+      <name>Ziwen Wang</name>
+    </author>
+    <author>
+      <name>Chen Zhang</name>
+    </author>
+    <author>
+      <name>Anchun Gui</name>
+    </author>
+    <author>
+      <name>Wen Zan</name>
+    </author>
+    <author>
+      <name>Jiaqi Zhang</name>
+    </author>
+    <author>
+      <name>Xuezhi Cao</name>
+    </author>
+    <author>
+      <name>Jingang Wang</name>
+    </author>
+    <author>
+      <name>Xunliang Cai</name>
+    </author>
+    <author>
+      <name>Yixin Cao</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2410.02694v3</id>
+    <title>HELMET: How to Evaluate Long-Context Language Models Effectively and Thoroughly</title>
+    <updated>2025-03-06T18:41:54Z</updated>
+    <link href="https://arxiv.org/abs/2410.02694v3" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2410.02694v3" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Many benchmarks exist for evaluating long-context language models (LCLMs), yet developers often rely on synthetic tasks such as needle-in-a-haystack (NIAH) or an arbitrary subset of tasks. However, it remains unclear whether these benchmarks reflect the diverse downstream applications of LCLMs, and such inconsistencies further complicate model comparison. We investigate the underlying reasons behind these practices and find that existing benchmarks often provide noisy signals due to limited coverage of applications, insufficient context lengths, unreliable metrics, and incompatibility with base models. In this work, we introduce HELMET (How to Evaluate Long-context Models Effectively and Thoroughly), a comprehensive benchmark encompassing seven diverse, application-centric categories. We also address several issues in previous benchmarks by adding controllable lengths up to 128K tokens, model-based evaluation for reliable metrics, and few-shot prompting for robustly evaluating base models. Consequently, we demonstrate that HELMET offers more reliable and consistent rankings of frontier LCLMs. Through a comprehensive study of 59 LCLMs, we find that (1) synthetic tasks like NIAH do not reliably predict downstream performance; (2) the diverse categories in HELMET exhibit distinct trends and low correlations with each other; and (3) while most LCLMs achieve perfect NIAH scores, open-source models significantly lag behind closed ones when tasks require full-context reasoning or following complex instructions -- the gap widens as length increases. Finally, we recommend using our RAG tasks for fast model development, as they are easy to run and better predict other downstream performance; ultimately, we advocate for a holistic evaluation across diverse tasks.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2024-10-03T17:20:11Z</published>
+    <arxiv:comment>ICLR 2025. Project page: https://princeton-nlp.github.io/HELMET/</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Howard Yen</name>
+    </author>
+    <author>
+      <name>Tianyu Gao</name>
+    </author>
+    <author>
+      <name>Minmin Hou</name>
+    </author>
+    <author>
+      <name>Ke Ding</name>
+    </author>
+    <author>
+      <name>Daniel Fleischer</name>
+    </author>
+    <author>
+      <name>Peter Izsak</name>
+    </author>
+    <author>
+      <name>Moshe Wasserblat</name>
+    </author>
+    <author>
+      <name>Danqi Chen</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2509.00141v1</id>
+    <title>Scaling Legal AI: Benchmarking Mamba and Transformers for Statutory Classification and Case Law Retrieval</title>
+    <updated>2025-08-29T17:38:47Z</updated>
+    <link href="https://arxiv.org/abs/2509.00141v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2509.00141v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>The rapid growth of statutory corpora and judicial decisions requires scalable legal AI systems capable of classification and retrieval over extremely long contexts. Transformer-based architectures (e.g., Longformer, DeBERTa) dominate current legal NLP benchmarks but struggle with quadratic attention costs, limiting efficiency and scalability. In this work, we present the first comprehensive benchmarking of Mamba, a state-space model (SSM) with linear-time selective mechanisms, against leading transformer models for statutory classification and case law retrieval. We evaluate models on open-source legal corpora including LexGLUE, EUR-Lex, and ILDC, covering statutory tagging, judicial outcome prediction, and case retrieval tasks. Metrics include accuracy, recall at k, mean reciprocal rank (MRR), and normalized discounted cumulative gain (nDCG), alongside throughput measured in tokens per second and maximum context length. Results show that Mamba's linear scaling enables processing of legal documents several times longer than transformers, while maintaining or surpassing retrieval and classification performance. This study introduces a new legal NLP benchmark suite for long-context modeling, along with open-source code and datasets to support reproducibility. Our findings highlight trade-offs between state-space models and transformers, providing guidance for deploying scalable legal AI in statutory analysis, judicial decision support, and policy research.</summary>
+    <category term="cs.CY" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-08-29T17:38:47Z</published>
+    <arxiv:primary_category term="cs.CY"/>
+    <author>
+      <name>Anuraj Maurya</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2607.04071v2</id>
+    <title>Beyond Multilingual Averages: MTEB-PT, a Benchmark for Portuguese Sentence Encoders</title>
+    <updated>2026-07-18T19:23:45Z</updated>
+    <link href="https://arxiv.org/abs/2607.04071v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2607.04071v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Portuguese remains underrepresented in text embedding evaluation, despite being one of the most widely spoken languages in the world. As a result, embedding models are often selected based on English or multilingual metrics, while their effectiveness in Portuguese remains unclear. We present MTEB-PT, a Portuguese benchmark constructed from a subset of MMTEB, comprising 14 existing datasets across Semantic Textual Similarity (STS), classification, retrieval, and reranking. We use this benchmark to evaluate 17 open- and closed-source embedding models under a unified protocol. Our results show that Portuguese performance is strongly task-dependent: multilingual rankings do not reliably predict Portuguese-specific performance across task families, no single model dominates all settings, and models with stronger long-context capacity are particularly advantageous on longer-input tasks such as retrieval and reranking. The benchmark also shows that language-specific fine-tuning still improves model performance in Portuguese, especially on task types that match the adaptation data most closely. To examine this effect, we fine-tune three representative backbone models with Portuguese contrastive supervision and Matryoshka Representation Learning (MRL). These benchmark-informed baselines yield their strongest gains on STS, consistent with the predominantly symmetric supervision used during training, while also improving retrieval and remaining competitive under dimensional truncation. We release the MTEB-PT benchmark, the fine-tuned models, and the training and evaluation code.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-07-05T01:06:29Z</published>
+    <arxiv:comment>Accepted at BRACIS 2026 - 36th Brazilian Conference on Intelligent Systems</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Lucas Hideki Takeuchi Okamura</name>
+    </author>
+    <author>
+      <name>Alexandre Alcoforado</name>
+    </author>
+    <author>
+      <name>Anna Helena Reali Costa</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2606.16494v3</id>
+    <title>Lost at the End: Primacy Bias in Multimodal Retrieval-Augmented Question Answering</title>
+    <updated>2026-07-04T08:04:59Z</updated>
+    <link href="https://arxiv.org/abs/2606.16494v3" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2606.16494v3" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Knowledge-based visual question answering (KB-VQA) lets vision-language systems answer questions that exceed their parametric knowledge by conditioning a reader on passages retrieved from a Wikipedia-scale knowledge base. In pure-text long-context LLMs, retrieved-context use follows the U-shaped "lost-in-the-middle" effect of Liu et al. (2024): information at the start and end of context is used, the middle is lost. Whether this transfers to deployed multimodal KB-VQA is open. To close this gap, we design the first controlled probe of reader-side position dependence in multimodal KB-VQA: a gold-position protocol in which only the gold passage's prompt slot varies within question. We run it on three open-source 7B/8B VLM readers and two KB-VQA benchmarks at k up to 20. The shape flips from U to primacy: gold-at-first beats gold-at-last by 16 to 26 points on every reader-by-benchmark cell, an effect we call "Lost at the End". Three targeted ablations narrow the cause: a text-only control shows the multimodal setting amplifies an already-present text-mode primacy 2.2 to 4.5 times, and image-position and distractor-shuffle ablations together pin the locus to prompt slot 0 of the instruction-tuned reader. On a frozen reader, three retrieval-side fixes (MMR, oracle reranking, rank-based reordering) all leave the gap intact (no separable improvement). Our findings indicate that recall@k is the wrong metric for deployed KB-VQA and that closing the gap requires reader-side intervention; we release our protocol as a controlled instrument for evaluating such interventions.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CV" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-06-15T09:57:48Z</published>
+    <arxiv:comment>15 pages, 9 figures</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Jieyuan Liu</name>
+    </author>
+    <author>
+      <name>Jianyang Gu</name>
+    </author>
+    <author>
+      <name>Shijie Chen</name>
+    </author>
+    <author>
+      <name>Jefferson Chen</name>
+    </author>
+    <author>
+      <name>Zhen Wang</name>
+    </author>
+  </entry>
+</feed>

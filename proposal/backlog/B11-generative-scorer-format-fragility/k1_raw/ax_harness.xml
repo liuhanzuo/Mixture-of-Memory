@@ -1,0 +1,398 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<feed xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/" xmlns:arxiv="http://arxiv.org/schemas/atom" xmlns="http://www.w3.org/2005/Atom">
+  <id>https://arxiv.org/api/E+XU7/6asmeaaPmh+bk2+iUrsHo</id>
+  <title>arXiv Query: search_query=abs:"lm-evaluation-harness"&amp;id_list=&amp;start=0&amp;max_results=40</title>
+  <updated>2026-08-14T06:45:52Z</updated>
+  <link href="https://arxiv.org/api/query?search_query=abs:%22lm-evaluation-harness%22&amp;start=0&amp;max_results=40&amp;id_list=" type="application/atom+xml"/>
+  <opensearch:itemsPerPage>40</opensearch:itemsPerPage>
+  <opensearch:totalResults>10</opensearch:totalResults>
+  <opensearch:startIndex>0</opensearch:startIndex>
+  <entry>
+    <id>http://arxiv.org/abs/2504.07749v2</id>
+    <title>NorEval: A Norwegian Language Understanding and Generation Evaluation Benchmark</title>
+    <updated>2025-06-05T10:51:26Z</updated>
+    <link href="https://arxiv.org/abs/2504.07749v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2504.07749v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>This paper introduces NorEval, a new and comprehensive evaluation suite for large-scale standardized benchmarking of Norwegian generative language models (LMs). NorEval consists of 24 high-quality human-created datasets -- of which five are created from scratch. In contrast to existing benchmarks for Norwegian, NorEval covers a broad spectrum of task categories targeting Norwegian language understanding and generation, establishes human baselines, and focuses on both of the official written standards of the Norwegian language: Bokmål and Nynorsk. All our datasets and a collection of over 100 human-written prompts are integrated into LM Evaluation Harness, ensuring flexible and reproducible evaluation. We describe the NorEval design and present the results of benchmarking 19 open-source pre-trained and instruction-tuned LMs for Norwegian in various scenarios. Our benchmark, evaluation framework, and annotation materials are publicly available.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-04-10T13:44:55Z</published>
+    <arxiv:comment>Accepted for Findings of the Association for Computational Linguistics: ACL 2025</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Vladislav Mikhailov</name>
+    </author>
+    <author>
+      <name>Tita Enstad</name>
+    </author>
+    <author>
+      <name>David Samuel</name>
+    </author>
+    <author>
+      <name>Hans Christian Farsethås</name>
+    </author>
+    <author>
+      <name>Andrey Kutuzov</name>
+    </author>
+    <author>
+      <name>Erik Velldal</name>
+    </author>
+    <author>
+      <name>Lilja Øvrelid</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2408.11796v4</id>
+    <title>LLM Pruning and Distillation in Practice: The Minitron Approach</title>
+    <updated>2024-12-09T18:31:01Z</updated>
+    <link href="https://arxiv.org/abs/2408.11796v4" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2408.11796v4" rel="related" type="application/pdf" title="pdf"/>
+    <summary>We present a comprehensive report on compressing the Llama 3.1 8B and Mistral NeMo 12B models to 4B and 8B parameters, respectively, using pruning and distillation. We explore two distinct pruning strategies: (1) depth pruning and (2) joint hidden/attention/MLP (width) pruning, and evaluate the results on common benchmarks from the LM Evaluation Harness. The models are then aligned with NeMo Aligner and tested in instruct-tuned versions. This approach produces a compelling 4B model from Llama 3.1 8B and a state-of-the-art Mistral-NeMo-Minitron-8B (MN-Minitron-8B for brevity) model from Mistral NeMo 12B. We found that with no access to the original data, it is beneficial to slightly fine-tune teacher models on the distillation dataset. We open-source our base model weights on Hugging Face with a permissive license.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2024-08-21T17:38:48Z</published>
+    <arxiv:comment>v4: Update author order</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Sharath Turuvekere Sreenivas</name>
+    </author>
+    <author>
+      <name>Saurav Muralidharan</name>
+    </author>
+    <author>
+      <name>Raviraj Joshi</name>
+    </author>
+    <author>
+      <name>Marcin Chochowski</name>
+    </author>
+    <author>
+      <name>Ameya Sunil Mahabaleshwarkar</name>
+    </author>
+    <author>
+      <name>Gerald Shen</name>
+    </author>
+    <author>
+      <name>Jiaqi Zeng</name>
+    </author>
+    <author>
+      <name>Zijia Chen</name>
+    </author>
+    <author>
+      <name>Yoshi Suhara</name>
+    </author>
+    <author>
+      <name>Shizhe Diao</name>
+    </author>
+    <author>
+      <name>Chenhan Yu</name>
+    </author>
+    <author>
+      <name>Wei-Chun Chen</name>
+    </author>
+    <author>
+      <name>Hayley Ross</name>
+    </author>
+    <author>
+      <name>Oluwatobi Olabiyi</name>
+    </author>
+    <author>
+      <name>Ashwath Aithal</name>
+    </author>
+    <author>
+      <name>Oleksii Kuchaiev</name>
+    </author>
+    <author>
+      <name>Daniel Korzekwa</name>
+    </author>
+    <author>
+      <name>Pavlo Molchanov</name>
+    </author>
+    <author>
+      <name>Mostofa Patwary</name>
+    </author>
+    <author>
+      <name>Mohammad Shoeybi</name>
+    </author>
+    <author>
+      <name>Jan Kautz</name>
+    </author>
+    <author>
+      <name>Bryan Catanzaro</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2402.01781v2</id>
+    <title>When Benchmarks are Targets: Revealing the Sensitivity of Large Language Model Leaderboards</title>
+    <updated>2024-07-03T11:20:43Z</updated>
+    <link href="https://arxiv.org/abs/2402.01781v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2402.01781v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Large Language Model (LLM) leaderboards based on benchmark rankings are regularly used to guide practitioners in model selection. Often, the published leaderboard rankings are taken at face value - we show this is a (potentially costly) mistake. Under existing leaderboards, the relative performance of LLMs is highly sensitive to (often minute) details. We show that for popular multiple-choice question benchmarks (e.g., MMLU), minor perturbations to the benchmark, such as changing the order of choices or the method of answer selection, result in changes in rankings up to 8 positions. We explain this phenomenon by conducting systematic experiments over three broad categories of benchmark perturbations and identifying the sources of this behavior. Our analysis results in several best-practice recommendations, including the advantage of a hybrid scoring method for answer selection. Our study highlights the dangers of relying on simple benchmark evaluations and charts the path for more robust evaluation schemes on the existing benchmarks. The code for this paper is available at https://github.com/National-Center-for-AI-Saudi-Arabia/lm-evaluation-harness.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2024-02-01T19:12:25Z</published>
+    <arxiv:comment>updated with ACL 2024 camera ready version</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Norah Alzahrani</name>
+    </author>
+    <author>
+      <name>Hisham Abdullah Alyahya</name>
+    </author>
+    <author>
+      <name>Yazeed Alnumay</name>
+    </author>
+    <author>
+      <name>Sultan Alrashed</name>
+    </author>
+    <author>
+      <name>Shaykhah Alsubaie</name>
+    </author>
+    <author>
+      <name>Yusef Almushaykeh</name>
+    </author>
+    <author>
+      <name>Faisal Mirza</name>
+    </author>
+    <author>
+      <name>Nouf Alotaibi</name>
+    </author>
+    <author>
+      <name>Nora Altwairesh</name>
+    </author>
+    <author>
+      <name>Areeb Alowisheq</name>
+    </author>
+    <author>
+      <name>M Saiful Bari</name>
+    </author>
+    <author>
+      <name>Haidar Khan</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2509.22463v2</id>
+    <title>IIET: Efficient Numerical Transformer via Implicit Iterative Euler Method</title>
+    <updated>2025-10-11T04:25:18Z</updated>
+    <link href="https://arxiv.org/abs/2509.22463v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2509.22463v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>High-order numerical methods enhance Transformer performance in tasks like NLP and CV, but introduce a performance-efficiency trade-off due to increased computational overhead. Our analysis reveals that conventional efficiency techniques, such as distillation, can be detrimental to the performance of these models, exemplified by PCformer. To explore more optimizable ODE-based Transformer architectures, we propose the Iterative Implicit Euler Transformer (IIET), which simplifies high-order methods using an iterative implicit Euler approach. This simplification not only leads to superior performance but also facilitates model compression compared to PCformer. To enhance inference efficiency, we introduce Iteration Influence-Aware Distillation (IIAD). Through a flexible threshold, IIAD allows users to effectively balance the performance-efficiency trade-off. On lm-evaluation-harness, IIET boosts average accuracy by 2.65% over vanilla Transformers and 0.8% over PCformer. Its efficient variant, E-IIET, significantly cuts inference overhead by 55% while retaining 99.4% of the original task accuracy. Moreover, the most efficient IIET variant achieves an average performance gain exceeding 1.6% over vanilla Transformer with comparable speed.</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-09-26T15:14:03Z</published>
+    <arxiv:primary_category term="cs.LG"/>
+    <author>
+      <name>Xinyu Liu</name>
+    </author>
+    <author>
+      <name>Bei Li</name>
+    </author>
+    <author>
+      <name>Jiahao Liu</name>
+    </author>
+    <author>
+      <name>Junhao Ruan</name>
+    </author>
+    <author>
+      <name>Kechen Jiao</name>
+    </author>
+    <author>
+      <name>Hongyin Tang</name>
+    </author>
+    <author>
+      <name>Jingang Wang</name>
+    </author>
+    <author>
+      <name>Xiao Tong</name>
+    </author>
+    <author>
+      <name>Jingbo Zhu</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2512.13330v1</id>
+    <title>FIN-bench-v2: A Unified and Robust Benchmark Suite for Evaluating Finnish Large Language Models</title>
+    <updated>2025-12-15T13:41:41Z</updated>
+    <link href="https://arxiv.org/abs/2512.13330v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2512.13330v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>We introduce FIN-bench-v2, a unified benchmark suite for evaluating large language models in Finnish. FIN-bench-v2 consolidates Finnish versions of widely used benchmarks together with an updated and expanded version of the original FIN-bench into a single, consistently formatted collection, covering multiple-choice and generative tasks across reading comprehension, commonsense reasoning, sentiment analysis, world knowledge, and alignment. All datasets are converted to HuggingFace Datasets, which include both cloze and multiple-choice prompt formulations with five variants per task, and we incorporate human annotation or review for machine-translated resources such as GoldenSwag and XED. To select robust tasks, we pretrain a set of 2.15B-parameter decoder-only models and use their learning curves to compute monotonicity, signal-to-noise, non-random performance, and model ordering consistency, retaining only tasks that satisfy all criteria. We further evaluate a set of larger instruction-tuned models to characterize performance across tasks and prompt formulations. All datasets, prompts, and evaluation configurations are publicly available via our fork of the Language Model Evaluation Harness at https://github.com/LumiOpen/lm-evaluation-harness. Supplementary resources are released in a separate repository at https://github.com/TurkuNLP/FIN-bench-v2.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-12-15T13:41:41Z</published>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Joona Kytöniemi</name>
+    </author>
+    <author>
+      <name>Jousia Piha</name>
+    </author>
+    <author>
+      <name>Akseli Reunamo</name>
+    </author>
+    <author>
+      <name>Fedor Vitiugin</name>
+    </author>
+    <author>
+      <name>Farrokh Mehryary</name>
+    </author>
+    <author>
+      <name>Sampo Pyysalo</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2602.10144v2</id>
+    <title>When LLMs get significantly worse: A statistical approach to detect model degradations</title>
+    <updated>2026-05-06T17:38:45Z</updated>
+    <link href="https://arxiv.org/abs/2602.10144v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2602.10144v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Minimizing the inference cost and latency of foundation models has become a crucial area of research. Optimization approaches include theoretically lossless methods and others without accuracy guarantees like quantization. In all of these cases it is crucial to ensure that the model quality has not degraded. However, even at temperature zero, model generations are not necessarily robust even to theoretically lossless model optimizations due to numerical errors. We thus require statistical tools to decide whether a finite-sample accuracy deviation is an evidence of a model's degradation or whether it can be attributed to (harmless) noise in the evaluation. We propose a statistically sound hypothesis testing framework based on McNemar's test allowing to efficiently detect model degradations, while guaranteeing a controlled rate of false positives. The crucial insight is that we have to confront the model scores on each sample, rather than aggregated on the task level. Furthermore, we propose three approaches to aggregate accuracy estimates across multiple benchmarks into a single decision. We provide an implementation on top of the largely adopted open source LM Evaluation Harness and provide a case study illustrating that the method correctly flags degraded models, while not flagging model optimizations that are provably lossless. We find that with our tests even empirical accuracy degradations of 0.3% can be confidently attributed to actual degradations rather than noise.</summary>
+    <category term="stat.ML" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-02-09T10:45:13Z</published>
+    <arxiv:comment>https://openreview.net/forum?id=cM3gsqEI4K</arxiv:comment>
+    <arxiv:primary_category term="stat.ML"/>
+    <arxiv:journal_ref>ICLR 2026</arxiv:journal_ref>
+    <author>
+      <name>Jonas Kübler</name>
+    </author>
+    <author>
+      <name>Kailash Budhathoki</name>
+    </author>
+    <author>
+      <name>Matthäus Kleindessner</name>
+    </author>
+    <author>
+      <name>Xiong Zhou</name>
+    </author>
+    <author>
+      <name>Junming Yin</name>
+    </author>
+    <author>
+      <name>Ashish Khetan</name>
+    </author>
+    <author>
+      <name>George Karypis</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2605.28827v1</id>
+    <title>RightNow-Arabic-0.5B-Turbo: An Open Sub-1B Arabic Language Model via Vocabulary Injection and Edge-First Deployment</title>
+    <updated>2026-04-10T00:56:50Z</updated>
+    <link href="https://arxiv.org/abs/2605.28827v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2605.28827v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Open Arabic large language models split into two classes: sub-1B multilingual models that treat Arabic as an afterthought (Qwen2.5-0.5B, Falcon-H1-0.5B), and 7B-70B Arabic-specialized models that require a server to run (Jais, AceGPT, ALLaM, SILMA). The one published attempt at a sub-2B Arabic-specialized model, Kuwain-1.5B, never released its weights. We present RightNow-Arabic-0.5B-Turbo, a 518M-parameter Arabic-specialized decoder LLM built on Qwen2.5-0.5B. The pipeline adds 27,032 Arabic tokens via mean-subtoken initialization, continues pretraining on 504M Arabic tokens on 8xH100 with FSDP, FlashAttention varlen packing, and Liger fused kernels, then applies supervised fine-tuning on 129,116 Arabic instruction pairs with response-only loss masking, direct preference optimization on 6,750 Arabic preference pairs, and weight soup merging across three checkpoints. On three lm-evaluation-harness Arabic benchmarks (COPA-ar, Arabic HellaSwag, ArabicMMLU) the merged model reaches 35.9% mean accuracy, beats every same-class open model, ties Falcon-H1-1.5B on COPA-ar (58.4%) at one-third the size, and recovers 67% of SILMA-9B's mean at 1/18 the parameters. The edge build quantizes to 398 MB (q4_k_m) and delivers 635 tokens/s at batch size 1 on a single H100 via llama.cpp. All code (5,555 lines across 25 scripts), weights (bf16, int8, and four GGUF quantizations), and benchmark scripts are released at https://huggingface.co/RightNowAI/RightNow-Arabic-0.5B-Turbo.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-04-10T00:56:50Z</published>
+    <arxiv:comment>12 pages, 7 tables, 4 figures, 1 algorithm. Weights: https://huggingface.co/RightNowAI/RightNow-Arabic-0.5B-Turbo</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Jaber Jaber</name>
+    </author>
+    <author>
+      <name>Osama Jaber</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2304.06762v3</id>
+    <title>Shall We Pretrain Autoregressive Language Models with Retrieval? A Comprehensive Study</title>
+    <updated>2023-12-21T00:18:48Z</updated>
+    <link href="https://arxiv.org/abs/2304.06762v3" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2304.06762v3" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Large decoder-only language models (LMs) can be largely improved in terms of perplexity by retrieval (e.g., RETRO), but its impact on text generation quality and downstream task accuracy is unclear. Thus, it is still an open question: shall we pretrain large autoregressive LMs with retrieval? To answer it, we perform a comprehensive study on a scalable pre-trained retrieval-augmented LM (i.e., RETRO) compared with standard GPT and retrieval-augmented GPT incorporated at fine-tuning or inference stages. We first provide the recipe to reproduce RETRO up to 9.5B parameters while retrieving a text corpus with 330B tokens. Based on that, we have the following novel findings: i) RETRO outperforms GPT on text generation with much less degeneration (i.e., repetition), moderately higher factual accuracy, and slightly lower toxicity with a nontoxic retrieval database. ii) On the LM Evaluation Harness benchmark, RETRO largely outperforms GPT on knowledge-intensive tasks, but is on par with GPT on other tasks. Furthermore, we introduce a simple variant of the model, RETRO++, which largely improves open-domain QA results of original RETRO (e.g., EM score +8.6 on Natural Question) and significantly outperforms retrieval-augmented GPT in both fine-tuning and zero-shot evaluation settings. Our findings highlight the promising direction of pretraining autoregressive LMs with retrieval as future foundation models. We release our code and model at: https://github.com/NVIDIA/Megatron-LM/blob/main/tools/retro/README.md</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.IR" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2023-04-13T18:04:19Z</published>
+    <arxiv:comment>EMNLP 2023</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Boxin Wang</name>
+    </author>
+    <author>
+      <name>Wei Ping</name>
+    </author>
+    <author>
+      <name>Peng Xu</name>
+    </author>
+    <author>
+      <name>Lawrence McAfee</name>
+    </author>
+    <author>
+      <name>Zihan Liu</name>
+    </author>
+    <author>
+      <name>Mohammad Shoeybi</name>
+    </author>
+    <author>
+      <name>Yi Dong</name>
+    </author>
+    <author>
+      <name>Oleksii Kuchaiev</name>
+    </author>
+    <author>
+      <name>Bo Li</name>
+    </author>
+    <author>
+      <name>Chaowei Xiao</name>
+    </author>
+    <author>
+      <name>Anima Anandkumar</name>
+    </author>
+    <author>
+      <name>Bryan Catanzaro</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2607.04429v1</id>
+    <title>evalci: A Python Library for Statistically Rigorous Comparison of Language Model Evaluations</title>
+    <updated>2026-07-05T17:48:22Z</updated>
+    <link href="https://arxiv.org/abs/2607.04429v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2607.04429v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>The dominant practice in language model evaluation is to report a single accuracy number per model and declare the higher one better, without testing whether the gap could plausibly be sampling noise. On benchmarks of a few thousand items, and under temperature sampling where a model can differ from itself run to run by more than the reported gap between models, this practice routinely overstates confidence in headline claims. The statistical machinery to fix this -- confidence intervals, paired significance tests, power analysis, clustered standard errors, multiple-comparison correction -- is well established, but no standard, pip-installable tool packages it in the shape an evaluation actually takes: a per-item results table. We present evalci, a pure-Python library (numpy/scipy/pandas only) that turns a per-item results table into a publication-ready claim -- e.g., "Model A beats Model B, $Δ=3.1$ pts, 95% CI [1.2, 5.0], paired permutation $p=0.002$, $n=1{,}319$" -- in one function call, with adapters for lm-evaluation-harness and HELM output. Every routine is validated against an independent reference (statsmodels, or brute-force exact enumeration) rather than only against itself. As a case study, we re-analyze a public comparison of nine language models' MMLU accuracy and find that 3 of the 8 adjacent leaderboard-rank gaps are not statistically significant after correcting for the 36 pairwise comparisons the ranking implies. evalci is available at https://pypi.org/project/evalci/ (source: https://github.com/Shreyaskc/evalci, DOI: https://doi.org/10.5281/zenodo.21201815)</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-07-05T17:48:22Z</published>
+    <arxiv:comment>7 pages, 1 figure. Software: https://pypi.org/project/evalci/ (source: https://github.com/Shreyaskc/evalci, Zenodo DOI: 10.5281/zenodo.21201815)</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Shreyas K Chandrahas</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2307.14430v1</id>
+    <title>Skill-it! A Data-Driven Skills Framework for Understanding and Training Language Models</title>
+    <updated>2023-07-26T18:01:49Z</updated>
+    <link href="https://arxiv.org/abs/2307.14430v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2307.14430v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>The quality of training data impacts the performance of pre-trained large language models (LMs). Given a fixed budget of tokens, we study how to best select data that leads to good downstream model performance across tasks. We develop a new framework based on a simple hypothesis: just as humans acquire interdependent skills in a deliberate order, language models also follow a natural order when learning a set of skills from their training data. If such an order exists, it can be utilized for improved understanding of LMs and for data-efficient training. Using this intuition, our framework formalizes the notion of a skill and of an ordered set of skills in terms of the associated data. First, using both synthetic and real data, we demonstrate that these ordered skill sets exist, and that their existence enables more advanced skills to be learned with less data when we train on their prerequisite skills. Second, using our proposed framework, we introduce an online data sampling algorithm, Skill-It, over mixtures of skills for both continual pre-training and fine-tuning regimes, where the objective is to efficiently learn multiple skills in the former and an individual skill in the latter. On the LEGO synthetic in the continual pre-training setting, Skill-It obtains 36.5 points higher accuracy than random sampling. On the Natural Instructions dataset in the fine-tuning setting, Skill-It reduces the validation loss on the target skill by 13.6% versus training on data associated with the target skill itself. We apply our skills framework on the recent RedPajama dataset to continually pre-train a 3B-parameter LM, achieving higher accuracy on the LM Evaluation Harness with 1B tokens than the baseline approach of sampling uniformly over data sources with 3B tokens.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2023-07-26T18:01:49Z</published>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Mayee F. Chen</name>
+    </author>
+    <author>
+      <name>Nicholas Roberts</name>
+    </author>
+    <author>
+      <name>Kush Bhatia</name>
+    </author>
+    <author>
+      <name>Jue Wang</name>
+    </author>
+    <author>
+      <name>Ce Zhang</name>
+    </author>
+    <author>
+      <name>Frederic Sala</name>
+    </author>
+    <author>
+      <name>Christopher Ré</name>
+    </author>
+  </entry>
+</feed>

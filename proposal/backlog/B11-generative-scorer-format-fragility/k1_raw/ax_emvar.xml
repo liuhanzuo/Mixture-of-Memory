@@ -1,0 +1,1003 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<feed xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/" xmlns:arxiv="http://arxiv.org/schemas/atom" xmlns="http://www.w3.org/2005/Atom">
+  <id>https://arxiv.org/api/wZnIUuYspW1jjKpGpsTuBRHpbbw</id>
+  <title>arXiv Query: search_query=abs:"exact match" AND abs:"evaluation" AND abs:"ranking"&amp;id_list=&amp;start=0&amp;max_results=40</title>
+  <updated>2026-08-14T06:45:45Z</updated>
+  <link href="https://arxiv.org/api/query?search_query=abs:%22exact+match%22+AND+(abs:%22evaluation%22+AND+abs:%22ranking%22)&amp;start=0&amp;max_results=40&amp;id_list=" type="application/atom+xml"/>
+  <opensearch:itemsPerPage>40</opensearch:itemsPerPage>
+  <opensearch:totalResults>41</opensearch:totalResults>
+  <opensearch:startIndex>0</opensearch:startIndex>
+  <entry>
+    <id>http://arxiv.org/abs/2604.26971v1</id>
+    <title>T2S-Metrics: Unified Library for Evaluating SPARQL Queries Generated From Natural Language</title>
+    <updated>2026-04-22T08:13:41Z</updated>
+    <link href="https://arxiv.org/abs/2604.26971v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2604.26971v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>The evaluation of Question Answering (QA) systems over Knowledge Graphs has historically suffered from fragmentation, inconsistency, and limited reproducibility. While significant progress has been made in semantic parsing and SPARQL query generation, evaluation methodologies remain diverse, ad hoc, and often incomparable across studies. Existing benchmarks typically focus on a small subset of metrics, such as query exact match or answer-level F1, neglecting syntactic validity, semantic faithfulness, execution correctness, results ranking quality, and computational efficiency. In this paper, we present t2s-metrics, an open-source, extensible, and unified evaluation library designed specifically for SPARQL query comparison and execution-based assessment. t2s-metrics provides a broad and extensible set of over 20 evaluation metrics, collected from the literature and practical evaluation needs, spanning lexical, syntactic, semantic, structural, execution-based and ranking-based dimensions. These include query-based metrics such as token-level Precision, Recall, and F1; BLEU, ROUGE, METEOR, and CodeBLEU variants; variable-normalized metrics (SP-BLEU, SP-F1); graph-and URI-based exact match metrics; as well as answer set-based metrics such as F1-QALD and Jaccard similarity; ranking metrics including MRR, NDCG, P@k, and Hit@k; and LLM-as-a-Judge metrics. Taking inspiration from the ir-metrics library for Information Retrieval, t2s-metrics provides a modular abstraction layer that decouples metric specification from implementation, enabling consistent, transparent, and reproducible evaluation of SPARQLbased QA systems. We argue that t2s-metrics constitutes a necessary step toward systematic, standardized evaluation in question answering over knowledge graphs and facilitates deeper diagnostic insights into system behavior beyond answer correctness.</summary>
+    <category term="cs.IR" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-04-22T08:13:41Z</published>
+    <arxiv:primary_category term="cs.IR"/>
+    <author>
+      <name>Yousouf Taghzouti</name>
+      <arxiv:affiliation>ICN, WIMMICS, Laboratoire I3S - SPARKS</arxiv:affiliation>
+    </author>
+    <author>
+      <name>Tao Jiang</name>
+      <arxiv:affiliation>ICN</arxiv:affiliation>
+    </author>
+    <author>
+      <name>Camille Juigné</name>
+      <arxiv:affiliation>WIMMICS, Laboratoire I3S - SPARKS</arxiv:affiliation>
+    </author>
+    <author>
+      <name>Benjamin Navet</name>
+      <arxiv:affiliation>ICN, WIMMICS, Laboratoire I3S - SPARKS</arxiv:affiliation>
+    </author>
+    <author>
+      <name>Fabien Gandon</name>
+      <arxiv:affiliation>WIMMICS, Laboratoire I3S - SPARKS</arxiv:affiliation>
+    </author>
+    <author>
+      <name>Franck Michel</name>
+      <arxiv:affiliation>Laboratoire I3S - SPARKS, WIMMICS</arxiv:affiliation>
+    </author>
+    <author>
+      <name>Louis-Felix Nothias</name>
+      <arxiv:affiliation>ICN</arxiv:affiliation>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2606.19544v1</id>
+    <title>Reliability without Validity: A Systematic, Large-Scale Evaluation of LLM-as-a-Judge Models Across Agreement, Consistency, and Bias</title>
+    <updated>2026-06-17T19:37:13Z</updated>
+    <link href="https://arxiv.org/abs/2606.19544v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2606.19544v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>LLM-as-a-Judge has become the dominant evaluation paradigm for language models, but judge validation in practice relies on exact-match agreement, a metric that does not correct for chance and systematically overstates discriminative ability. We present the largest systematic evaluation of LLM-as-a-Judge to date: 21 judges from nine providers across MT-Bench, JudgeBench, and RewardBench, evaluated under three protocols (agreement, consistency, bias audit) over 118 runs and approximately 541,000 individual judgments. Four findings emerge, consistent across the full cohort, including the April 2026 frontier: kappa deflation between exact match and Cohen's kappa is universal (33--41 pp on MT-Bench), judge rankings shift by up to 14 positions across benchmarks, high test--retest reliability (&gt;0.95) coexists with severe position bias (&gt;0.10) in two production-deployed judges (instantiating a consistency--bias paradox), and verbosity bias is small (&lt;0.011) across our cohort under a single pairwise rubric. We distill these into a Minimum Viable Validation Protocol.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-06-17T19:37:13Z</published>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Justin D. Norman</name>
+    </author>
+    <author>
+      <name>Michael U. Rivera</name>
+    </author>
+    <author>
+      <name>D. Alex Hughes</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2407.02095v3</id>
+    <title>TIGER: A Generating-Then-Ranking Framework for Practical Python Type Inference</title>
+    <updated>2024-08-13T14:21:47Z</updated>
+    <link href="https://arxiv.org/abs/2407.02095v3" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2407.02095v3" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Python's dynamic typing system offers flexibility and expressiveness but can lead to type-related errors, prompting the need for automated type inference to enhance type hinting. While existing learning-based approaches show promising inference accuracy, they struggle with practical challenges in comprehensively handling various types, including complex generic types and (unseen) user-defined types.
+  In this paper, we introduce TIGER, a two-stage generating-then-ranking (GTR) framework, designed to effectively handle Python's diverse type categories. TIGER leverages fine-tuned pre-trained code models to train a generative model with a span masking objective and a similarity model with a contrastive training objective. This approach allows TIGER to generate a wide range of type candidates, including complex generics in the generating stage, and accurately rank them with user-defined types in the ranking stage. Our evaluation on the ManyTypes4Py dataset shows TIGER's advantage over existing methods in various type categories, notably improving accuracy in inferring user-defined and unseen types by 11.2% and 20.1% respectively in Top-5 Exact Match. Moreover, the experimental results not only demonstrate TIGER's superior performance and efficiency, but also underscore the significance of its generating and ranking stages in enhancing automated type inference.</summary>
+    <category term="cs.SE" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2024-07-02T09:29:02Z</published>
+    <arxiv:comment>Accepted by ICSE'25</arxiv:comment>
+    <arxiv:primary_category term="cs.SE"/>
+    <author>
+      <name>Chong Wang</name>
+    </author>
+    <author>
+      <name>Jian Zhang</name>
+    </author>
+    <author>
+      <name>Yiling Lou</name>
+    </author>
+    <author>
+      <name>Mingwei Liu</name>
+    </author>
+    <author>
+      <name>Weisong Sun</name>
+    </author>
+    <author>
+      <name>Yang Liu</name>
+    </author>
+    <author>
+      <name>Xin Peng</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2402.13613v2</id>
+    <title>Overview of the VLSP 2023 -- ComOM Shared Task: A Data Challenge for Comparative Opinion Mining from Vietnamese Product Reviews</title>
+    <updated>2024-03-04T21:20:57Z</updated>
+    <link href="https://arxiv.org/abs/2402.13613v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2402.13613v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>This paper presents a comprehensive overview of the Comparative Opinion Mining from Vietnamese Product Reviews shared task (ComOM), held as part of the 10$^{th}$ International Workshop on Vietnamese Language and Speech Processing (VLSP 2023). The primary objective of this shared task is to advance the field of natural language processing by developing techniques that proficiently extract comparative opinions from Vietnamese product reviews. Participants are challenged to propose models that adeptly extract a comparative "quintuple" from a comparative sentence, encompassing Subject, Object, Aspect, Predicate, and Comparison Type Label. We construct a human-annotated dataset comprising $120$ documents, encompassing $7427$ non-comparative sentences and $2468$ comparisons within $1798$ sentences. Participating models undergo evaluation and ranking based on the Exact match macro-averaged quintuple F1 score.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2024-02-21T08:29:26Z</published>
+    <arxiv:comment>In Proceedings of VLSP 2023</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Hoang-Quynh Le</name>
+    </author>
+    <author>
+      <name>Duy-Cat Can</name>
+    </author>
+    <author>
+      <name>Khanh-Vinh Nguyen</name>
+    </author>
+    <author>
+      <name>Mai-Vu Tran</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2109.10497v2</id>
+    <title>A Simple Approach to Jointly Rank Passages and Select Relevant Sentences in the OBQA Context</title>
+    <updated>2022-08-02T06:04:15Z</updated>
+    <link href="https://arxiv.org/abs/2109.10497v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2109.10497v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>In the open book question answering (OBQA) task, selecting the relevant passages and sentences from distracting information is crucial to reason the answer to a question. HotpotQA dataset is designed to teach and evaluate systems to do both passage ranking and sentence selection. Many existing frameworks use separate models to select relevant passages and sentences respectively. Such systems not only have high complexity in terms of the parameters of models but also fail to take the advantage of training these two tasks together since one task can be beneficial for the other one. In this work, we present a simple yet effective framework to address these limitations by jointly ranking passages and selecting sentences. Furthermore, we propose consistency and similarity constraints to promote the correlation and interaction between passage ranking and sentence selection.The experiments demonstrate that our framework can achieve competitive results with previous systems and outperform the baseline by 28\% in terms of exact matching of relevant sentences on the HotpotQA dataset.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2021-09-22T03:11:17Z</published>
+    <arxiv:comment>Accepted to NAACL SWR 2022</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Man Luo</name>
+    </author>
+    <author>
+      <name>Shuguang Chen</name>
+    </author>
+    <author>
+      <name>Chitta Baral</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2607.01546v1</id>
+    <title>The General Stability of Ranking</title>
+    <updated>2026-07-01T23:55:22Z</updated>
+    <link href="https://arxiv.org/abs/2607.01546v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2607.01546v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Rankings derived from weighted scoring functions are widely used in settings such as university rankings and employment candidate evaluations. Since ranking weights are often chosen by organizations or analysts, ranking stability asks whether a reported ranking persists under reasonable weight changes. Prior work on stable rankings formalizes this idea through volume-based stability, which measures the fraction of the weight space that induces the target ranking exactly.
+  This exact-match requirement can be too blunt: once a perturbed weight vector produces a different ranking, exact stability gives it no credit, whether the change replaces the top-ranked item or only swaps two nearly tied lower-ranked items. We propose general stability, a distance-based generalization that aggregates ranking regions according to a user-defined distance from the target ranking. This lets users specify which ranking changes matter in the application, while recovering exact stability as a special case.
+  Our algorithmic focus is stability computation: given a reported or user-specified ranking and a distance function, estimate its general-stability score. We give a two-dimensional sweep algorithm and an unbiased multidimensional sampler that extend exact-stability methods, and analyze why sampling can scale poorly as the dimension grows. Motivated by this scaling challenge, we identify quasiconvex distance functions as a tractable subclass and introduce Conv-SC, which reduces stability computation for this subclass to convex-volume approximation, where randomized polynomial-time methods are available. Experiments on eight real datasets and generated instances show that distance-sensitive stability gives informative real-data results, that our estimators are accurate and practical, and that Conv-SC improves scaling with dimension for quasiconvex distance functions.</summary>
+    <category term="cs.DB" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-07-01T23:55:22Z</published>
+    <arxiv:comment>13 pages, 4 figures</arxiv:comment>
+    <arxiv:primary_category term="cs.DB"/>
+    <author>
+      <name>Houming Chen</name>
+    </author>
+    <author>
+      <name>H. V. Jagadish</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2606.23937v1</id>
+    <title>When Retrieval Metrics Mislead: Measuring Policy Signal in Long-Horizon Tool-Use Agents</title>
+    <updated>2026-06-22T20:57:11Z</updated>
+    <link href="https://arxiv.org/abs/2606.23937v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2606.23937v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Exact-match retrieval recall is often used as a proxy for whether a retriever supplies useful policy context to a downstream decision model. We test this proxy for pre-action policy classification in tau-bench using Qwen2.5-3B/7B classifiers. Under gold-policy conditioning, a compact structured state improves macro-F1 over raw trajectories by 0.13-0.17 after tuning. We then replace the benchmark-designated policy clause with the top-ranked clause retrieved from decision-time context. Although the exact governing clause is retrieved at rank 1 for only 7% of airline states, the primary 3B classifier obtains macro-F1 0.58 with retrieved clauses versus 0.60 with gold clauses (Delta=-0.02, task-cluster 95% CI [-0.23,+0.21]); mismatched-policy and no-policy controls score 0.32 and 0.21. We do not detect a macro-F1 difference between retrieved and gold clauses in this configuration, although the interval remains too wide to establish non-inferiority. The same qualitative pattern appears with a second retriever and at 7B, while varying across fine-tuning configurations. These results indicate that exact-match clause recall can underestimate downstream policy utility in this benchmark setting, motivating evaluation with retrieved policies in the classification loop rather than recall alone.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-06-22T20:57:11Z</published>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Tianyu Ding</name>
+    </author>
+    <author>
+      <name>Juan Pablo De la Cruz Weinstein</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2509.21845v1</id>
+    <title>A Comprehensive Evaluation of Transformer-Based Question Answering Models and RAG-Enhanced Design</title>
+    <updated>2025-09-26T04:11:10Z</updated>
+    <link href="https://arxiv.org/abs/2509.21845v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2509.21845v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Transformer-based models have advanced the field of question answering, but multi-hop reasoning, where answers require combining evidence across multiple passages, remains difficult. This paper presents a comprehensive evaluation of retrieval strategies for multi-hop question answering within a retrieval-augmented generation framework. We compare cosine similarity, maximal marginal relevance, and a hybrid method that integrates dense embeddings with lexical overlap and re-ranking. To further improve retrieval, we adapt the EfficientRAG pipeline for query optimization, introducing token labeling and iterative refinement while maintaining efficiency. Experiments on the HotpotQA dataset show that the hybrid approach substantially outperforms baseline methods, achieving a relative improvement of 50 percent in exact match and 47 percent in F1 score compared to cosine similarity. Error analysis reveals that hybrid retrieval improves entity recall and evidence complementarity, while remaining limited in handling distractors and temporal reasoning. Overall, the results suggest that hybrid retrieval-augmented generation provides a practical zero-shot solution for multi-hop question answering, balancing accuracy, efficiency, and interpretability.</summary>
+    <category term="cs.CV" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-09-26T04:11:10Z</published>
+    <arxiv:primary_category term="cs.CV"/>
+    <author>
+      <name>Zichen Zhang</name>
+    </author>
+    <author>
+      <name>Kunlong Zhang</name>
+    </author>
+    <author>
+      <name>Hongwei Ruan</name>
+    </author>
+    <author>
+      <name>Yiming Luo</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2602.18824v1</id>
+    <title>UniRank: A Multi-Agent Calibration Pipeline for Estimating University Rankings from Anonymized Bibliometric Signals</title>
+    <updated>2026-02-21T12:50:55Z</updated>
+    <link href="https://arxiv.org/abs/2602.18824v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2602.18824v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>We present UniRank, a multi-agent LLM pipeline that estimates university positions across global ranking systems using only publicly available bibliometric data from OpenAlex and Semantic Scholar. The system employs a three-stage architecture: (a) zero-shot estimation from anonymized institutional metrics, (b) per-system tool-augmented calibration against real ranked universities, and (c) final synthesis. Critically, institutions are anonymized -- names, countries, DOIs, paper titles, and collaboration countries are all redacted -- and their actual ranks are hidden from the calibration tools during evaluation, preventing LLM memorization from confounding results. On the Times Higher Education (THE) World University Rankings ($n=352$), the system achieves MAE = 251.5 rank positions, Median AE = 131.5, PNMAE = 12.03%, Spearman $ρ= 0.769$, Kendall $τ= 0.591$, hit rate @50 = 20.7%, hit rate @100 = 39.8%, and a Memorization Index of exactly zero (no exact-match zero-width predictions among all 352 universities). The systematic positive-signed error (+190.1 positions, indicating the system consistently predicts worse ranks than actual) and monotonic performance degradation from elite tier (MAE = 60.5, hit@100 = 90.5%) to tail tier (MAE = 328.2, hit@100 = 20.8%) provide strong evidence that the pipeline performs genuine analytical reasoning rather than recalling memorized rankings. A live demo is available at https://unirank.scinito.ai .</summary>
+    <category term="cs.SI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-02-21T12:50:55Z</published>
+    <arxiv:primary_category term="cs.SI"/>
+    <author>
+      <name>Pedram Riyazimehr</name>
+    </author>
+    <author>
+      <name>Seyyed Ehsan Mahmoudi</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2606.27474v1</id>
+    <title>Speculative Refinement: A Hybrid Autoregressive Diffusion Decoding Strategy and Its Behavior Across Benchmarks</title>
+    <updated>2026-06-25T18:52:24Z</updated>
+    <link href="https://arxiv.org/abs/2606.27474v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2606.27474v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>How should we evaluate generation systems that combine autoregressive (AR) and diffusion decoding? We study this question through Speculative Refinement (SpecRef), a training-free hybrid method that warm-starts a masked diffusion language model from an AR draft using entropy-guided selective masking. Evaluating SpecRef across six benchmarks (HumanEval, MBPP, GSM8K, BBH, ARC-Challenge, HellaSwag) with three distinct evaluation protocols (execution-based pass@1, exact-match, log-likelihood scoring), we surface several findings relevant beyond our specific system: (1) code benchmarks conflate structural discovery with logical correctness: providing a syntactic scaffold lifts accuracy from near zero to over 20% without changing the model, indicating that much of the baseline failure is structural; (2) a refinement tension phenomenon where multi-stage correction degrades already-correct tokens, exposing benchmark saturation ceilings invisible to single-model evaluation; (3) log-likelihood and generative evaluation produce different model rankings for the same model pair, suggesting they measure different capabilities; (4) standard Python post-processing silently breaks code evaluation for non-AR generators. These observations apply to any multi-stage or non-autoregressive generation pipeline and point toward more diagnostic evaluation practices.</summary>
+    <category term="cs.SE" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-06-25T18:52:24Z</published>
+    <arxiv:comment>7 pages + 2 pages References</arxiv:comment>
+    <arxiv:primary_category term="cs.SE"/>
+    <author>
+      <name>Aditi Gupta</name>
+    </author>
+    <author>
+      <name>Neel Mishra</name>
+    </author>
+    <author>
+      <name>Kushagra Trivedi</name>
+    </author>
+    <author>
+      <name>Pawan Kumar</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2411.12649v1</id>
+    <title>PseudoSeer: a Search Engine for Pseudocode</title>
+    <updated>2024-11-19T16:58:03Z</updated>
+    <link href="https://arxiv.org/abs/2411.12649v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2411.12649v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>A novel pseudocode search engine is designed to facilitate efficient retrieval and search of academic papers containing pseudocode. By leveraging Elasticsearch, the system enables users to search across various facets of a paper, such as the title, abstract, author information, and LaTeX code snippets, while supporting advanced features like combined facet searches and exact-match queries for more targeted results. A description of the data acquisition process is provided, with arXiv as the primary data source, along with methods for data extraction and text-based indexing, highlighting how different data elements are stored and optimized for search. A weighted BM25-based ranking algorithm is used by the search engine, and factors considered when prioritizing search results for both single and combined facet searches are described. We explain how each facet is weighted in a combined search. Several search engine results pages are displayed. Finally, there is a brief overview of future work and potential evaluation methodology for assessing the effectiveness and performance of the search engine is described.</summary>
+    <category term="cs.IR" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2024-11-19T16:58:03Z</published>
+    <arxiv:primary_category term="cs.IR"/>
+    <author>
+      <name>Levent Toksoz</name>
+    </author>
+    <author>
+      <name>Mukund Srinath</name>
+    </author>
+    <author>
+      <name>Gang Tan</name>
+    </author>
+    <author>
+      <name>C. Lee Giles</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2601.06974v1</id>
+    <title>UETQuintet at BioCreative IX -- MedHopQA: Enhancing Biomedical QA with Selective Multi-hop Reasoning and Contextual Retrieval</title>
+    <updated>2026-01-11T16:12:38Z</updated>
+    <link href="https://arxiv.org/abs/2601.06974v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2601.06974v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Biomedical Question Answering systems play a critical role in processing complex medical queries, yet they often struggle with the intricate nature of medical data and the demand for multi-hop reasoning. In this paper, we propose a model designed to effectively address both direct and sequential questions. While sequential questions are decomposed into a chain of sub-questions to perform reasoning across a chain of steps, direct questions are processed directly to ensure efficiency and minimise processing overhead. Additionally, we leverage multi-source information retrieval and in-context learning to provide rich, relevant context for generating answers. We evaluated our model on the BioCreative IX - MedHopQA Shared Task datasets. Our approach achieves an Exact Match score of 0.84, ranking second on the current leaderboard. These results highlight the model's capability to meet the challenges of Biomedical Question Answering, offering a versatile solution for advancing medical research and practice.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-01-11T16:12:38Z</published>
+    <arxiv:comment>In Proceedings of the BioCreative IX Challenge and Workshop (BC9): Large Language Models for Clinical and Biomedical NLP, IJCAI 2025</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Quoc-An Nguyen</name>
+    </author>
+    <author>
+      <name>Thi-Minh-Thu Vu</name>
+    </author>
+    <author>
+      <name>Bich-Dat Nguyen</name>
+    </author>
+    <author>
+      <name>Dinh-Quang-Minh Tran</name>
+    </author>
+    <author>
+      <name>Hoang-Quynh Le</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2109.09350v1</id>
+    <title>CUNI systems for WMT21: Terminology translation Shared Task</title>
+    <updated>2021-09-20T08:05:39Z</updated>
+    <link href="https://arxiv.org/abs/2109.09350v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2109.09350v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>This paper describes Charles University submission for Terminology translation Shared Task at WMT21. The objective of this task is to design a system which translates certain terms based on a provided terminology database, while preserving high overall translation quality. We competed in English-French language pair. Our approach is based on providing the desired translations alongside the input sentence and training the model to use these provided terms. We lemmatize the terms both during the training and inference, to allow the model to learn how to produce correct surface forms of the words, when they differ from the forms provided in the terminology database. Our submission ranked second in Exact Match metric which evaluates the ability of the model to produce desired terms in the translation.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2021-09-20T08:05:39Z</published>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Josef Jon</name>
+    </author>
+    <author>
+      <name>Michal Novák</name>
+    </author>
+    <author>
+      <name>João Paulo Aires</name>
+    </author>
+    <author>
+      <name>Dušan Variš</name>
+    </author>
+    <author>
+      <name>Ondřej Bojar</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2602.21456v2</id>
+    <title>Revisiting Text Ranking in Deep Research</title>
+    <updated>2026-06-19T07:08:02Z</updated>
+    <link href="https://arxiv.org/abs/2602.21456v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2602.21456v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Deep research has emerged as an important task that aims to address hard queries that need extensive open-web exploration. To tackle it, most prior work equips large language model (LLM)-based agents with opaque web search APIs, enabling agents to iteratively issue search queries, retrieve external evidence, and reason over it. Despite search's essential role in deep research, black-box web search APIs leave the behaviour of established text ranking methods in deep research largely unclear. To fill this gap, we reproduce key findings and best practices for text ranking methods in deep research. We examine their effectiveness from three perspectives: (i) retrieval units (documents vs. passages), (ii) pipeline configurations (different retrievers, re-rankers, and re-ranking depths), and (iii) query characteristics (the mismatch between agent-issued queries and the training queries of text rankers). We perform experiments on BrowseComp-Plus, a deep research dataset with a fixed corpus, evaluating 2 open-source agents, 5 retrievers, and 3 re-rankers. We find that agent-issued queries typically follow web-search-style syntax (e.g., quoted exact matches), favouring lexical, learned sparse, and multi-vector retrievers; passage-level units are more efficient under limited context windows, and avoid the difficulties of document length normalisation in lexical retrieval; re-ranking is highly effective. We further propose a query-to-question (Q2Q) method that translates agent-issued queries into natural language questions, significantly reducing the query mismatch.</summary>
+    <category term="cs.IR" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-02-25T00:18:07Z</published>
+    <arxiv:comment>Accepted at the 49th International ACM SIGIR Conference on Research and Development in Information Retrieval (SIGIR 2026)</arxiv:comment>
+    <arxiv:primary_category term="cs.IR"/>
+    <author>
+      <name>Chuan Meng</name>
+    </author>
+    <author>
+      <name>Litu Ou</name>
+    </author>
+    <author>
+      <name>Sean MacAvaney</name>
+    </author>
+    <author>
+      <name>Jeff Dalton</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2607.24846v1</id>
+    <title>Two Views, One Voice: Evidence-Grounded Conversational Music Recommendation</title>
+    <updated>2026-07-24T23:12:02Z</updated>
+    <link href="https://arxiv.org/abs/2607.24846v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2607.24846v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Traditional conversational recommenders entangle retrieval and response generation within a single text interface, so exact entity cues fade as the dialogue's intent evolves, which compromises explanation credibility. We address this within the ACM RecSys Challenge 2026, which mandates both top-20 ranking and evidence-grounded response generation. This paper presents the third-place solution by team "swyoo" for the Blind-B industry track. We decouple retrieval and response into separate pipelines connected strictly via ranked tracks and metadata. Retrieval combines a hybrid lexical-dense pool for exact matching with a task-adapted pool driven by fine-tuned Qwen 8B adapters. Candidates are calibrated via LightGBM, then routed to an evidence-grounded propose-assign-select (PAS) framework to structure responses. This system also ranked second on the explanation-quality leaderboard in the final blind evaluation. Our findings demonstrate that: (i) isolating retrieval and response preserves both catalog cues and fluid intent; (ii) structuring generation via explicit evidence assignment is key to this near-best-in-class explanation reliability.</summary>
+    <category term="cs.IR" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-07-24T23:12:02Z</published>
+    <arxiv:comment>5 pages, 4 figures, 5 tables. 4th-place solution (team swyoo) in the Blind-B industry track of the ACM RecSys Challenge 2026</arxiv:comment>
+    <arxiv:primary_category term="cs.IR"/>
+    <author>
+      <name>Sungwook Yoo</name>
+    </author>
+    <author>
+      <name>Sewook Yoo</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2207.09068v5</id>
+    <title>PiC: A Phrase-in-Context Dataset for Phrase Understanding and Semantic Search</title>
+    <updated>2023-02-02T05:19:44Z</updated>
+    <link href="https://arxiv.org/abs/2207.09068v5" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2207.09068v5" rel="related" type="application/pdf" title="pdf"/>
+    <summary>While contextualized word embeddings have been a de-facto standard, learning contextualized phrase embeddings is less explored and being hindered by the lack of a human-annotated benchmark that tests machine understanding of phrase semantics given a context sentence or paragraph (instead of phrases alone). To fill this gap, we propose PiC -- a dataset of ~28K of noun phrases accompanied by their contextual Wikipedia pages and a suite of three tasks for training and evaluating phrase embeddings. Training on PiC improves ranking models' accuracy and remarkably pushes span-selection (SS) models (i.e., predicting the start and end index of the target phrase) near-human accuracy, which is 95% Exact Match (EM) on semantic search given a query phrase and a passage. Interestingly, we find evidence that such impressive performance is because the SS models learn to better capture the common meaning of a phrase regardless of its actual context. SotA models perform poorly in distinguishing two senses of the same phrase in two contexts (~60% EM) and in estimating the similarity between two different phrases in the same context (~70% EM).</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2022-07-19T04:45:41Z</published>
+    <arxiv:comment>Accepted to EACL 2023</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Thang M. Pham</name>
+    </author>
+    <author>
+      <name>Seunghyun Yoon</name>
+    </author>
+    <author>
+      <name>Trung Bui</name>
+    </author>
+    <author>
+      <name>Anh Nguyen</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2607.27421v1</id>
+    <title>Selecting Open-Weight Language Models for Zero-Shot Intent Classification: A Systematic Evaluation of 41 Models</title>
+    <updated>2026-07-29T19:42:33Z</updated>
+    <link href="https://arxiv.org/abs/2607.27421v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2607.27421v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Intent classification is a core component of task-oriented dialogue systems, yet practitioners have limited systematic guidance for selecting deployable open-weight language models under compute, latency, and robustness constraints. We present a systematic zero-shot evaluation of 41 open-weight language models spanning 15 families and the 135M--9B parameter range across eight English single-label intent-classification datasets. A ninth dataset, ATIS, uses five labeled demonstrations and is reported as an auxiliary five-shot result. The evaluation includes standard benchmarks, a large-scale voice-assistant corpus, and production-derived e-commerce datasets. Beyond exact-match accuracy, we analyze confidence calibration, robustness to realistic input perturbations, statistical reliability of model rankings, deployment efficiency, and benchmark saturation. Our results show that instruction-tuned 3B models can outperform several evaluated 7B base models, that differences among leading models on MASSIVE are statistically indistinguishable under pairwise McNemar tests, and that widely used benchmarks such as SNIPS have become saturated and no longer meaningfully discriminate among current open-weight models. Instruction tuning's effect on confidence calibration is inconsistent rather than uniformly harmful. These findings provide practical guidance for selecting and evaluating open-weight language models for intent classification.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-07-29T19:42:33Z</published>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Parishruthi Ganesh</name>
+    </author>
+    <author>
+      <name>Gerry Dozier</name>
+    </author>
+    <author>
+      <name>Cheryl Seals</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2607.24192v2</id>
+    <title>LLM-based Source Code Compression via Thresholded Symbol Ranking</title>
+    <updated>2026-07-29T11:01:57Z</updated>
+    <link href="https://arxiv.org/abs/2607.24192v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2607.24192v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>We study the problem of lossless compression of source code, motivated by the storage demands of large-scale software archives, such as Software Heritage (https://www.softwareheritage.org/). General-purpose compressors (e.g., zstd, bzip2) offer a good trade-off between compression ratio and speed, but fail to exploit all special regularities inherent in source code. Recent approaches leverage Large Language Models (LLMs) within Shannon's symbol-ranking framework, relying on a scheme in which the predicted rank can grow arbitrarily. While effective at reducing space, this setting incurs significant throughput degradation, and leaves open the question whether it is necessary to explicitly encode all ranks. In this work, we introduce LLM-based compressors deploying two novel symbol-ranking variants that bound predictions to the top-$T$ ranks ($T=1$ or $63$), with out-of-threshold symbols stored as exceptions and compressed jointly with the rank stream via general-purpose compressors. We conduct the first large-scale evaluation of LLM-based source code compression across 30 LLMs, including general-domain, code-specialized, and quantized models. Our $T$-bounded approach outperforms prior LLM-based compressors both in compression ratio (up to 37% relative improvement) and compression throughput (40% faster). Compared to general-purpose compressors (e.g., zstd, bzip2), we obtain up to 82% relative compression gain but at a lower speed, thus offering a new trade-off point in the compression-speed spectrum. We also show that these gains are stronger on source code than on natural language, suggesting an interesting indication, namely that source code exposes regularities captured by LLMs but missed by general-purpose exact-match-based compressors. We conclude by commenting on open problems that offer theoretical and practical avenues of research.</summary>
+    <category term="cs.IT" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-07-27T09:12:00Z</published>
+    <arxiv:comment>This is the version of the paper submitted and then accepted for presentation at the 24th International Conference of the Italian Association for Artificial Intelligence (AIxIA 2026), Perugia, Italy, 6--9 October 2026. The paper will appear in the proceedings, published by Springer Verlag in the Lecture Notes in Artificial Intelligence (LNAI) series</arxiv:comment>
+    <arxiv:primary_category term="cs.IT"/>
+    <author>
+      <name>Angelo Nardone</name>
+    </author>
+    <author>
+      <name>Paolo Ferragina</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2608.09100v1</id>
+    <title>Real Data Closes Synthetic-to-Real Gap in Optical Chemical Structure Recognition</title>
+    <updated>2026-08-10T04:01:53Z</updated>
+    <link href="https://arxiv.org/abs/2608.09100v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2608.09100v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Millions of chemical structures appear in patents and papers only as drawings, and using that information at scale requires reading the drawings. OCSR appears nearly solved on synthetic images yet remains difficult on real documents: the starting recognizer, Qwen2.5-VL-7B, exceeds 91% accuracy on synthetic renders but falls below 16% on three real-world benchmarks (ACS, CLEF-IP, USPTO). To identify the main source of improvement, 21 recognizers were fine-tuned on mixtures of synthetically rendered structures and labeled real depictions from patents, journal figures, and hand-drawn collections, varying the vision language model (VLM) base, the fraction of real training data, and the vision-tower adaptation strategy. Labeled real training images make the largest difference. For Qwen2.5-VL, ACS exact match rises from 0.15 with no real data to 0.37 at 9.5% and 0.46 at 50.2%; a controlled experiment across three base models reproduces the trend. A vision-tower LoRA, in contrast, does nothing for Qwen (+0.00, paired p=1.00), substantially helps InternVL3-8B (+22.8 to +34.6 pt), and modestly helps GLM-4.1V-9B (+1.0 to +9.6 pt), so its value depends on the base model. The best configuration reaches 0.96 exact match on clean renders and 0.49, 0.65, 0.84, and 0.76 on ACS, CLEF-IP, UOB, and USPTO, respectively. Gaps between base models are largest without real data (0.21), shrink to 0.06 at 70% real data, and reorder the ranking; base model and real-data mixture must therefore be selected together. Small-scale experiments on handwritten image-to-LaTeX recognition and chart-to-table conversion show that base-model rankings also vary beyond chemistry. More generally, model and adaptation choices for visual structure recognition should be evaluated on the target task.</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CV" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-08-10T04:01:53Z</published>
+    <arxiv:primary_category term="cs.LG"/>
+    <author>
+      <name>Yani Guan</name>
+    </author>
+    <author>
+      <name>Dengpan Dong</name>
+    </author>
+    <author>
+      <name>Zi Wei</name>
+    </author>
+    <author>
+      <name>Shuang Luo</name>
+    </author>
+    <author>
+      <name>Dan Hannah</name>
+    </author>
+    <author>
+      <name>Yumin Zhang</name>
+    </author>
+    <author>
+      <name>Kang Xu</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2605.24663v1</id>
+    <title>CyBOKClaw: Human-in-the-Loop CyBOK Mapping for Cybersecurity Curriculum</title>
+    <updated>2026-05-23T17:04:31Z</updated>
+    <link href="https://arxiv.org/abs/2605.24663v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2605.24663v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>This paper presents CyBOKClaw, an interpretable human-in-the-loop retrieval framework for mapping cybersecurity keywords or phrases (KWoPs) to the Cyber Security Body of Knowledge (CyBOK). Rather than treating the task as strict exact classification, the framework is designed as a top-k candidate generator for expert review. It combines query normalization, curated term expansion, concept-level boosts, topic-description enrichment, and domain-sensitive ranking rules. Because educational KWoPs are often broad, ambiguous, and only approximately aligned with CyBOK terminology, strict exact matching provides only a partial account of practical utility. We therefore evaluate the framework using both structural retrieval metrics and an expert-guided top-5 usefulness metric, ECA-5 (Exact or Closest Acceptable Match at top-5), which records whether the returned candidates contain at least one mapping that an expert would judge exact or accept as the nearest practical CyBOK placement. On the development dataset, CyBOKClaw achieves 64.73% EXA-5 (Exact Match at top-5), 84.18% structural semantic alignment, and 91.88% ECA-5; on the validation dataset, it achieves 81.19% EXA-5, 93.32% structural semantic alignment, and 98.00% ECA-5. These results show that expert-guided top-k usefulness provides a more faithful account of practical CyBOK mapping utility than exact structural matching alone, and that CyBOKClaw is effective as a CyBOK-specific expert-support retrieval system.</summary>
+    <category term="cs.CR" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-05-23T17:04:31Z</published>
+    <arxiv:primary_category term="cs.CR"/>
+    <author>
+      <name>Yan Lin Aung</name>
+    </author>
+    <author>
+      <name>Kevin Togbe</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/0908.2588v1</id>
+    <title>Wild Card Queries for Searching Resources on the Web</title>
+    <updated>2009-08-18T15:17:19Z</updated>
+    <link href="https://arxiv.org/abs/0908.2588v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/0908.2588v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>  We propose a domain-independent framework for searching and retrieving facts and relationships within natural language text sources. In this framework, an extraction task over a text collection is expressed as a query that combines text fragments with wild cards, and the query result is a set of facts in the form of unary, binary and general $n$-ary tuples. A significance of our querying mechanism is that, despite being both simple and declarative, it can be applied to a wide range of extraction tasks. A problem in querying natural language text though is that a user-specified query may not retrieve enough exact matches. Unlike term queries which can be relaxed by removing some of the terms (as is done in search engines), removing terms from a wild card query without ruining its meaning is more challenging. Also, any query expansion has the potential to introduce false positives. In this paper, we address the problem of query expansion, and also analyze a few ranking alternatives to score the results and to remove false positives. We conduct experiments and report an evaluation of the effectiveness of our querying and scoring functions.</summary>
+    <category term="cs.DB" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.IR" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2009-08-18T15:17:19Z</published>
+    <arxiv:comment>11 pages</arxiv:comment>
+    <arxiv:primary_category term="cs.DB"/>
+    <author>
+      <name>Davood Rafiei</name>
+    </author>
+    <author>
+      <name>Haobin Li</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2604.20850v1</id>
+    <title>Association Is Not Similarity: Learning Corpus-Specific Associations for Multi-Hop Retrieval</title>
+    <updated>2026-02-13T21:02:53Z</updated>
+    <link href="https://arxiv.org/abs/2604.20850v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2604.20850v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Dense retrieval systems rank passages by embedding similarity to a query, but multi-hop questions require passages that are associatively related through shared reasoning chains. We introduce Association-Augmented Retrieval (AAR), a lightweight transductive reranking method that trains a small MLP (4.2M parameters) to learn associative relationships between passages in embedding space using contrastive learning on co-occurrence annotations. At inference time, AAR reranks an initial dense retrieval candidate set using bi-directional association scoring. On HotpotQA, AAR improves passage Recall@5 from 0.831 to 0.916 (+8.6 points) without evaluation-set tuning, with gains concentrated on hard questions where the dense baseline fails (+28.5 points). On MuSiQue, AAR achieves +10.1 points in the transductive setting. An inductive model trained on training-split associations and evaluated on unseen validation associations shows no significant improvement, suggesting that the method captures corpus-specific co-occurrences rather than transferable patterns. Ablation studies support this interpretation: training on semantically similar but non-associated passage pairs degrades retrieval below the baseline, while shuffling association pairs causes severe degradation. A downstream QA evaluation shows retrieval gains translate to +6.4 exact match improvement. The method adds 3.7ms per query, trains in under two minutes on a single GPU, and requires no LLM-based indexing.</summary>
+    <category term="cs.IR" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-02-13T21:02:53Z</published>
+    <arxiv:comment>10 pages, 7 appendices, 10 tables. Code: https://github.com/EridosAI/AAR</arxiv:comment>
+    <arxiv:primary_category term="cs.IR"/>
+    <author>
+      <name>Jason Dury</name>
+    </author>
+    <arxiv:doi>10.5281/zenodo.18602385</arxiv:doi>
+    <link rel="related" href="https://doi.org/10.5281/zenodo.18602385" title="doi"/>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2607.12334v1</id>
+    <title>QUBO-Optimized Evidence Selection for Retrieval-Augmented Question Answering with Unconventional Solvers</title>
+    <updated>2026-07-14T04:29:07Z</updated>
+    <link href="https://arxiv.org/abs/2607.12334v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2607.12334v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Retrieval-augmented question answering depends on selecting evidence passages that jointly support answer generation. However, many RAG pipelines rely on top-\(k\) ranking, where passages are selected mainly by individual relevance scores, even though multi-hop questions often require complementary evidence satisfying multiple information requirements. Recent LLM-based selectors address this by treating retrieval as set selection, but using an LLM for this intermediate stage can be costly and difficult to scale. In this work, we formulate evidence selection as a Quadratic Unconstrained Binary Optimization (QUBO) problem. Given a question, candidate passages, and decomposed information requirements, our method constructs an energy function that balances relevance, requirement coverage, support strength, redundancy, complementarity, and compactness. Low-energy solutions correspond to compact evidence subsets that cover the needed requirements while avoiding unnecessary or repetitive context. The selected passages are then passed to a downstream language model for answer generation, separating combinatorial evidence selection from semantic answer generation. We evaluate the proposed QUBO selector on HotpotQA and compare it with LLM-based set selectors and non-LLM baselines including BM25, relevance top-\(k\), maximal marginal relevance, hybrid lexical--semantic ranking, greedy coverage, and random selection. The QUBO selector achieves competitive exact-match and token-F1 performance relative to LLM-based selectors while providing a solver-compatible formulation for structured evidence selection. These results suggest that multi-hop evidence selection can be cast as discrete optimization, opening a path toward RAG pipelines where LLMs are reserved for semantic processing and answer generation, while context selection is handled by Ising/QUBO-compatible solvers.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.ET" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-07-14T04:29:07Z</published>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Rahul Singh</name>
+    </author>
+    <author>
+      <name>Madhav Vadlamani</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2310.03491v1</id>
+    <title>TPDR: A Novel Two-Step Transformer-based Product and Class Description Match and Retrieval Method</title>
+    <updated>2023-10-05T12:02:51Z</updated>
+    <link href="https://arxiv.org/abs/2310.03491v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2310.03491v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>There is a niche of companies responsible for intermediating the purchase of large batches of varied products for other companies, for which the main challenge is to perform product description standardization, i.e., matching an item described by a client with a product described in a catalog. The problem is complex since the client's product description may be: (1) potentially noisy; (2) short and uninformative (e.g., missing information about model and size); and (3) cross-language. In this paper, we formalize this problem as a ranking task: given an initial client product specification (query), return the most appropriate standardized descriptions (response). In this paper, we propose TPDR, a two-step Transformer-based Product and Class Description Retrieval method that is able to explore the semantic correspondence between IS and SD, by exploiting attention mechanisms and contrastive learning. First, TPDR employs the transformers as two encoders sharing the embedding vector space: one for encoding the IS and another for the SD, in which corresponding pairs (IS, SD) must be close in the vector space. Closeness is further enforced by a contrastive learning mechanism leveraging a specialized loss function. TPDR also exploits a (second) re-ranking step based on syntactic features that are very important for the exact matching (model, dimension) of certain products that may have been neglected by the transformers. To evaluate our proposal, we consider 11 datasets from a real company, covering different application contexts. Our solution was able to retrieve the correct standardized product before the 5th ranking position in 71% of the cases and its correct category in the first position in 80% of the situations. Moreover, the effectiveness gains over purely syntactic or semantic baselines reach up to 3.7 times, solving cases that none of the approaches in isolation can do by themselves.</summary>
+    <category term="cs.IR" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.SE" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2023-10-05T12:02:51Z</published>
+    <arxiv:comment>10 pages, 8 figures, 5 tables</arxiv:comment>
+    <arxiv:primary_category term="cs.IR"/>
+    <author>
+      <name>Washington Cunha</name>
+    </author>
+    <author>
+      <name>Celso França</name>
+    </author>
+    <author>
+      <name>Leonardo Rocha</name>
+    </author>
+    <author>
+      <name>Marcos André Gonçalves</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/1902.03902v1</id>
+    <title>Achieving Secure and Efficient Cloud Search Services: Cross-Lingual Multi-Keyword Rank Search over Encrypted Cloud Data</title>
+    <updated>2019-02-11T14:39:38Z</updated>
+    <link href="https://arxiv.org/abs/1902.03902v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/1902.03902v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Multi-user multi-keyword ranked search scheme in arbitrary language is a novel multi-keyword rank searchable encryption (MRSE) framework based on Paillier Cryptosystem with Threshold Decryption (PCTD). Compared to previous MRSE schemes constructed based on the k-nearest neighbor searcha-ble encryption (KNN-SE) algorithm, it can mitigate some draw-backs and achieve better performance in terms of functionality and efficiency. Additionally, it does not require a predefined keyword set and support keywords in arbitrary languages. However, due to the pattern of exact matching of keywords in the new MRSE scheme, multilingual search is limited to each language and cannot be searched across languages. In this pa-per, we propose a cross-lingual multi-keyword rank search (CLRSE) scheme which eliminates the barrier of languages and achieves semantic extension with using the Open Multilingual Wordnet. Our CLRSE scheme also realizes intelligent and per-sonalized search through flexible keyword and language prefer-ence settings. We evaluate the performance of our scheme in terms of security, functionality, precision and efficiency, via extensive experiments.</summary>
+    <category term="cs.CR" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2019-02-11T14:39:38Z</published>
+    <arxiv:primary_category term="cs.CR"/>
+    <author>
+      <name>Xueyan Liu</name>
+    </author>
+    <author>
+      <name>Zhitao Guan</name>
+    </author>
+    <author>
+      <name>Longfei Wu</name>
+    </author>
+    <author>
+      <name>Zain Ul Abedin</name>
+    </author>
+    <author>
+      <name>Mohsen Guizani</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2605.29446v1</id>
+    <title>CrystalXRD-Bench: Benchmarking Vision-Language Models for XRD Peak Indexing Across Diverse Crystalline Materials</title>
+    <updated>2026-05-28T06:39:45Z</updated>
+    <link href="https://arxiv.org/abs/2605.29446v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2605.29446v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Miller-index identification from powder XRD patterns requires capabilities untested by existing multimodal benchmarks: the model must read a narrow peak location from a rendered scientific curve and then connect that observation to multi-step crystallographic reasoning. We introduce CrystalXRD-Bench, a 250-sample benchmark built from 10 public crystallographic databases for a single task: recover the full set of HKLs contributing to the highest-intensity peak in an XRD pattern. Each sample pairs the rendered XRD image with the source CIF text and chemical formula, so visual extraction errors and reasoning errors can be examined side by side. We evaluate seven vision-language models. The best Jaccard score is 0.5888 (GPT-5.4) with an exact-match rate of 37.6%, yet six of seven models remain below Jaccard 0.50; the task is far from solved. Error patterns vary systematically: double-peak cases are especially brittle, recall-heavy models gain coverage by over-predicting HKLs, and access to CIF text does not close the gap in crystallographic calculation. Alongside model rankings, the benchmark identifies the conditions under which current VLMs fail on quantitative scientific figures. All data and evaluation code will be publicly available.</summary>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-05-28T06:39:45Z</published>
+    <arxiv:comment>18 pages, 10 figures</arxiv:comment>
+    <arxiv:primary_category term="cs.AI"/>
+    <author>
+      <name>Chengliang Xu</name>
+    </author>
+    <author>
+      <name>Xiaogang Li</name>
+    </author>
+    <author>
+      <name>Peiyao Xiao</name>
+    </author>
+    <author>
+      <name>Beng Wang</name>
+    </author>
+    <author>
+      <name>Hu Wei</name>
+    </author>
+    <author>
+      <name>Bing Zhao</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2606.04646v1</id>
+    <title>QO-Bench: Diagnosing Query-Operator-Preserving Retrieval over Typed Event Tuples</title>
+    <updated>2026-06-03T09:14:43Z</updated>
+    <link href="https://arxiv.org/abs/2606.04646v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2606.04646v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Many real-world questions over business, legal, and scientific corpora are natural-language versions of database-style queries over records latent in text. Existing retrieval-augmented generation (RAG) systems are optimized primarily for semantic relevance, but retrieving plausible passages does not guarantee correct query execution. We introduce QO-Bench, a diagnostic benchmark for query-operator question answering over typed event tuples. The benchmark covers 22,984 news articles and 614 corporate events across 18 query templates, evaluated on 785 questions. Each gold answer is deterministically computed from typed event tuples and scored by recall, with answers matched to the gold tuples by exact match rather than an LLM judge. This design enables operator-level diagnosis such as joins and intersection. We evaluate RAG, ReAct RAG, GraphRAG, and information-extraction-to-SQL under matched conditions, with a long-context oracle ceiling to isolate retrieval failure. A two-axis framework -- index-time preservation versus query-time execution -- predicts where each paradigm fails, and the results bear it out: systems retrieve relevant text but discard the typed values operators need, and the deployable paradigm ranking inverts across operators, with similarity retrieval leading on filter/project and extraction-to-SQL on intersection and counting. Even given the gold evidence, a long-context oracle stays far from saturated, so operator execution -- not retrieval alone -- is a core bottleneck that a stronger answer model does not remove. QO-Bench reframes the goal from passage relevance to query-operator-preserving retrieval.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.IR" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-06-03T09:14:43Z</published>
+    <arxiv:comment>14 pages</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Mengao Zhang</name>
+    </author>
+    <author>
+      <name>Xiang Yang</name>
+    </author>
+    <author>
+      <name>Chang Liu</name>
+    </author>
+    <author>
+      <name>Tianhui Tan</name>
+    </author>
+    <author>
+      <name>Ke-wei Huang</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2208.06042v1</id>
+    <title>CodeBERT-nt: code naturalness via CodeBERT</title>
+    <updated>2022-08-11T21:22:18Z</updated>
+    <link href="https://arxiv.org/abs/2208.06042v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2208.06042v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Much of software-engineering research relies on the naturalness of code, the fact that code, in small code snippets, is repetitive and can be predicted using statistical language models like n-gram. Although powerful, training such models on large code corpus is tedious, time-consuming and sensitive to code patterns (and practices) encountered during training. Consequently, these models are often trained on a small corpora and estimate the language naturalness that is relative to a specific style of programming or type of project. To overcome these issues, we propose using pre-trained language models to infer code naturalness. Pre-trained models are often built on big data, are easy to use in an out-of-the-box way and include powerful learning associations mechanisms. Our key idea is to quantify code naturalness through its predictability, by using state-of-the-art generative pre-trained language models. To this end, we infer naturalness by masking (omitting) code tokens, one at a time, of code-sequences, and checking the models' ability to predict them. To this end, we evaluate three different predictability metrics; a) measuring the number of exact matches of the predictions, b) computing the embedding similarity between the original and predicted code, i.e., similarity at the vector space, and c) computing the confidence of the model when doing the token completion task irrespective of the outcome. We implement this workflow, named CodeBERT-nt, and evaluate its capability to prioritize buggy lines over non-buggy ones when ranking code based on its naturalness. Our results, on 2510 buggy versions of 40 projects from the SmartShark dataset, show that CodeBERT-nt outperforms both, random-uniform and complexity-based ranking techniques, and yields comparable results (slightly better) than the n-gram models.</summary>
+    <category term="cs.SE" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2022-08-11T21:22:18Z</published>
+    <arxiv:primary_category term="cs.SE"/>
+    <author>
+      <name>Ahmed Khanfir</name>
+    </author>
+    <author>
+      <name>Matthieu Jimenez</name>
+    </author>
+    <author>
+      <name>Mike Papadakis</name>
+    </author>
+    <author>
+      <name>Yves Le Traon</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2601.18044v1</id>
+    <title>RGFL: Reasoning Guided Fault Localization for Automated Program Repair Using Large Language Models</title>
+    <updated>2026-01-25T23:41:42Z</updated>
+    <link href="https://arxiv.org/abs/2601.18044v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2601.18044v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Fault Localization (FL) is a critical step in Automated Program Repair (APR), and its importance has increased with the rise of Large Language Model (LLM)-based repair agents. In realistic project-level repair scenarios, software repositories often span millions of tokens, far exceeding current LLM context limits. Consequently, models must first identify a small, relevant subset of code, making accurate FL essential for effective repair. We present a novel project-level FL approach that improves both file- and element-level localization. Our method introduces a hierarchical reasoning module that (i) generates structured, bug-specific explanations for candidate files and elements, and (ii) leverages these explanations in a two-stage ranking scheme combining LLM-based and embedding-based signals. We further propose a counterfactual upper-bound analysis to quantify the contribution of each localization stage to repair success. We evaluate our approach on Python and Java projects from SWE-bench Verified, Lite, and Java. Compared to state-of-the-art baselines, including Agentless and OpenHands, our method consistently improves localization accuracy. On SWE-bench Verified, file-level Hit@1 improves from 71.4% to 85%, and MRR from 81.8% to 88.8%. At the element level, Exact Match under top-3 files increases from 36% to 69%. Integrating our localization into Agentless yields a 12.8% end-to-end repair success improvement.</summary>
+    <category term="cs.SE" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-01-25T23:41:42Z</published>
+    <arxiv:comment>23 pages, 5 figures</arxiv:comment>
+    <arxiv:primary_category term="cs.SE"/>
+    <author>
+      <name>Melika Sepidband</name>
+    </author>
+    <author>
+      <name>Hamed Taherkhani</name>
+    </author>
+    <author>
+      <name>Hung Viet Pham</name>
+    </author>
+    <author>
+      <name>Hadi Hemmati</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2601.23254v3</id>
+    <title>Better Call Grep: Evaluating and Improving Grep-Like Lexical Retrieval for Repository-Level Code Completion</title>
+    <updated>2026-07-29T07:40:43Z</updated>
+    <link href="https://arxiv.org/abs/2601.23254v3" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2601.23254v3" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Repository-level code completion remains challenging for large language models (LLMs) due to cross-file dependencies and limited context windows. Prior work addresses this challenge using Retrieval-Augmented Generation (RAG) frameworks based on semantic indexing or structure-aware graph analysis, but these approaches incur substantial computational overhead for index construction and maintenance. Motivated by common developer workflows that rely on lightweight search utilities (e.g., ripgrep), we revisit a fundamental yet underexplored question: how far can simple, index-free lexical retrieval support repository-level code completion before more complex retrieval mechanisms become necessary? To answer this question, we systematically investigate lightweight, index-free, intent-aware lexical retrieval through extensive empirical analysis. We first introduce Naive GrepRAG, a baseline framework in which LLMs autonomously generate ripgrep commands to retrieve relevant context. Despite its simplicity, Naive GrepRAG achieves performance comparable to sophisticated graph-based baselines. Further analysis shows that its effectiveness stems from retrieving lexically precise code fragments that are spatially closer to the completion site. We also identify key limitations of lexical retrieval, including sensitivity to noisy matches from high-frequency ambiguous keywords and context fragmentation caused by rigid truncation boundaries. To address these issues, we propose GrepRAG, which augments lexical retrieval with a lightweight post-processing pipeline featuring identifier-weighted re-ranking and structure-aware deduplication. Extensive evaluation on CrossCodeEval and RepoEval-Updated demonstrates that GrepRAG consistently outperforms state-of-the-art (SOTA) methods, achieving 7.04-15.58 percent relative improvement in code exact match (EM) over the best baseline on CrossCodeEval.</summary>
+    <category term="cs.SE" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-01-30T18:22:15Z</published>
+    <arxiv:comment>ISSTA2026</arxiv:comment>
+    <arxiv:primary_category term="cs.SE"/>
+    <author>
+      <name>Baoyi Wang</name>
+    </author>
+    <author>
+      <name>Xingliang Wang</name>
+    </author>
+    <author>
+      <name>Guochang Li</name>
+    </author>
+    <author>
+      <name>Chen Zhi</name>
+    </author>
+    <author>
+      <name>Junxiao Han</name>
+    </author>
+    <author>
+      <name>Xinkui Zhao</name>
+    </author>
+    <author>
+      <name>Nan Wang</name>
+    </author>
+    <author>
+      <name>Shuiguang Deng</name>
+    </author>
+    <author>
+      <name>Jianwei Yin</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2506.05748v1</id>
+    <title>Efficient Online RFT with Plug-and-Play LLM Judges: Unlocking State-of-the-Art Performance</title>
+    <updated>2025-06-06T05:18:54Z</updated>
+    <link href="https://arxiv.org/abs/2506.05748v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2506.05748v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Reward-model training is the cost bottleneck in modern Reinforcement Learning Human Feedback (RLHF) pipelines, often requiring tens of billions of parameters and an offline preference-tuning phase. In the proposed method, a frozen, instruction-tuned 7B LLM is augmented with only a one line JSON rubric and a rank-16 LoRA adapter (affecting just 0.8% of the model's parameters), enabling it to serve as a complete substitute for the previously used heavyweight evaluation models. The plug-and-play judge achieves 96.2% accuracy on RewardBench, outperforming specialized reward networks ranging from 27B to 70B parameters. Additionally, it allows a 7B actor to outperform the top 70B DPO baseline, which scores 61.8%, by achieving 92% exact match accuracy on GSM-8K utilizing online PPO. Thorough ablations indicate that (i) six in context demonstrations deliver the majority of the zero-to-few-shot improvements (+2pp), and (ii) the LoRA effectively addresses the remaining disparity, particularly in the safety and adversarial Chat-Hard segments. The proposed model introduces HH-Rationales, a subset of 10,000 pairs from Anthropic HH-RLHF, to examine interpretability, accompanied by human generated justifications. GPT-4 scoring indicates that our LoRA judge attains approximately = 9/10 in similarity to human explanations, while zero-shot judges score around =5/10. These results indicate that the combination of prompt engineering and tiny LoRA produces a cost effective, transparent, and easily adjustable reward function, removing the offline phase while achieving new state-of-the-art outcomes for both static evaluation and online RLHF.</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-06-06T05:18:54Z</published>
+    <arxiv:primary_category term="cs.LG"/>
+    <author>
+      <name>Rudransh Agnihotri</name>
+    </author>
+    <author>
+      <name>Ananya Pandey</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2509.16720v1</id>
+    <title>Time to Revist Exact Match</title>
+    <updated>2025-09-20T15:10:26Z</updated>
+    <link href="https://arxiv.org/abs/2509.16720v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2509.16720v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Temporal question answering is an established method for evaluating temporal reasoning in large language models. Expected answers are often numeric (e.g., dates or durations), yet model responses are evaluated like regular text with exact match (EM), unable to distinguish small from large errors. In this investigative work, we frame temporal question answering as a numerical estimation task to assess the shortcomings of EM. We introduce TempAnswerQA, a benchmark distilled from Test of Time and TempTabQA, where all questions require a numerical, temporal answer, allowing us to evaluate models beyond EM. We use the forecasting metrics symmetric mean absolute percentage error (sMAPE) and mean absolute scaled error (MASE). With sMAPE, we find that error size and EM are decoupled. Models with low EM still have low sMAPE (both ~20%), and some models have high sMAPE despite high EM. Scaling errors by the deviation of the ground truth data with MASE reshuffles model rankings compared to EM, revealing gaps in models' understanding of temporal domain knowledge, especially when trained with synthetic data. Lastly, the models' most frequent error is to deviate by only $\pm1$ from the ground truth. sMAPE and MASE, unlike EM, adequately weight these errors. Our findings underscore the need for specialised metrics for temporal QA tasks. Code and data are available on https://github.com/aauss/temporal-answer-qa.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-09-20T15:10:26Z</published>
+    <arxiv:comment>Accepted for Findings of EMNLP 2025</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Auss Abbood</name>
+    </author>
+    <author>
+      <name>Zaiqiao Meng</name>
+    </author>
+    <author>
+      <name>Nigel Collier</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2404.13081v1</id>
+    <title>SuRe: Summarizing Retrievals using Answer Candidates for Open-domain QA of LLMs</title>
+    <updated>2024-04-17T01:15:54Z</updated>
+    <link href="https://arxiv.org/abs/2404.13081v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2404.13081v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Large language models (LLMs) have made significant advancements in various natural language processing tasks, including question answering (QA) tasks. While incorporating new information with the retrieval of relevant passages is a promising way to improve QA with LLMs, the existing methods often require additional fine-tuning which becomes infeasible with recent LLMs. Augmenting retrieved passages via prompting has the potential to address this limitation, but this direction has been limitedly explored. To this end, we design a simple yet effective framework to enhance open-domain QA (ODQA) with LLMs, based on the summarized retrieval (SuRe). SuRe helps LLMs predict more accurate answers for a given question, which are well-supported by the summarized retrieval that could be viewed as an explicit rationale extracted from the retrieved passages. Specifically, SuRe first constructs summaries of the retrieved passages for each of the multiple answer candidates. Then, SuRe confirms the most plausible answer from the candidate set by evaluating the validity and ranking of the generated summaries. Experimental results on diverse ODQA benchmarks demonstrate the superiority of SuRe, with improvements of up to 4.6% in exact match (EM) and 4.0% in F1 score over standard prompting approaches. SuRe also can be integrated with a broad range of retrieval methods and LLMs. Finally, the generated summaries from SuRe show additional advantages to measure the importance of retrieved passages and serve as more preferred rationales by models and humans.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2024-04-17T01:15:54Z</published>
+    <arxiv:comment>Accepted at ICLR 2024</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Jaehyung Kim</name>
+    </author>
+    <author>
+      <name>Jaehyun Nam</name>
+    </author>
+    <author>
+      <name>Sangwoo Mo</name>
+    </author>
+    <author>
+      <name>Jongjin Park</name>
+    </author>
+    <author>
+      <name>Sang-Woo Lee</name>
+    </author>
+    <author>
+      <name>Minjoon Seo</name>
+    </author>
+    <author>
+      <name>Jung-Woo Ha</name>
+    </author>
+    <author>
+      <name>Jinwoo Shin</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2605.12313v1</id>
+    <title>Overview of the MedHopQA track at BioCreative IX: track description, participation and evaluation of systems for multi-hop medical question answering</title>
+    <updated>2026-05-12T15:59:28Z</updated>
+    <link href="https://arxiv.org/abs/2605.12313v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2605.12313v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Multi-hop question answering (QA) remains a significant challenge in the biomedical domain, requiring systems to integrate information across multiple sources to answer complex questions. To address this problem, the BioCreative IX MedHopQA shared task was designed to benchmark in multi-hop reasoning for large language models (LLMs). We developed a novel dataset of 1,000 challenging QA pairs spanning diseases, genes, and chemicals, with particular emphasis on rare diseases. Each question was constructed to require two-hop reasoning through the integration of information from two distinct Wikipedia pages. The challenge attracted 48 submissions from 13 teams. Systems were evaluated using both surface string comparison and conceptual accuracy (MedCPT score). The results showed a substantial performance gap between baseline LLMs and enhanced systems. The top-ranked submission achieved an 89.30% F1 score on the MedCPT metric and an 87.30% exact match (EM) score, compared with 67.40% and 60.20%, respectively, for the zero-shot baseline. A central finding of the challenge was that retrieval-augmented generation (RAG) and related retrieval-based strategies were critical for strong performance. In addition, concept-level evaluation improved answer assessment when correct responses differed in surface form. The MedHopQA dataset is publicly available to support continued progress in this important area. Challenge materials: https://www.ncbi.nlm.nih.gov/research/bionlp/medhopqa and benchmark https://www.codabench.org/competitions/7609/</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.IR" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-05-12T15:59:28Z</published>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Rezarta Islamaj</name>
+    </author>
+    <author>
+      <name>Joey Chan</name>
+    </author>
+    <author>
+      <name>Robert Leaman</name>
+    </author>
+    <author>
+      <name>Jongmyung Jung</name>
+    </author>
+    <author>
+      <name>Hyeongsoon Hwang</name>
+    </author>
+    <author>
+      <name>Quoc-An Nguyen</name>
+    </author>
+    <author>
+      <name>Hoang-Quynh Le</name>
+    </author>
+    <author>
+      <name>Harikrishnan Gurushankar Saisudha</name>
+    </author>
+    <author>
+      <name>Ganesh Chandrasekar</name>
+    </author>
+    <author>
+      <name>Rustam R. Taktashov</name>
+    </author>
+    <author>
+      <name>Nadezhda Yu. Bizyukova</name>
+    </author>
+    <author>
+      <name>Sofia I. R. Conceição</name>
+    </author>
+    <author>
+      <name>Paulo R. C. Lopes</name>
+    </author>
+    <author>
+      <name>Reem Abdel Salam</name>
+    </author>
+    <author>
+      <name>Mary Adewunmi</name>
+    </author>
+    <author>
+      <name>Zhiyong Lu</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2510.16089v1</id>
+    <title>STABLE: Gated Continual Learning for Large Language Models</title>
+    <updated>2025-10-17T16:14:05Z</updated>
+    <link href="https://arxiv.org/abs/2510.16089v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2510.16089v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Large language models (LLMs) increasingly require mechanisms for continual adaptation without full retraining. However, sequential updates can lead to catastrophic forgetting, where new edits degrade previously acquired knowledge. This work presents STABLE, a gated continual self editing framework that constrains forgetting during sequential updates using parameter efficient fine tuning via Low Rank Adaptation (LoRA; see arXiv:2106.09685). Each candidate edit is evaluated against a stability budget using one of three metrics: (i) Exact Match (EM) drop, capturing factual accuracy loss; (ii) bits increase, reflecting reduced model confidence; and (iii) KL divergence, quantifying distributional drift between the base and adapted models. If a threshold is exceeded, the LoRA update is rescaled through a clipping procedure or rejected. Experiments on the Qwen-2.5-7B model show that gating effectively mitigates forgetting while preserving adaptability. EM based gating achieved the highest cumulative performance in short continual learning sequences. Our results show that different gating strategies can achieve comparable distribution shift (measured by KL divergence) while producing different accuracy outcomes, highlighting the importance of gating design in continual adaptation. This approach offers a principled method for continual model editing, enabling LLMs to integrate new knowledge while maintaining reliability. Code: https://github.com/Bhoy1/STABLE</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-10-17T16:14:05Z</published>
+    <arxiv:primary_category term="cs.LG"/>
+    <author>
+      <name>William Hoy</name>
+    </author>
+    <author>
+      <name>Nurcin Celik</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2404.08678v1</id>
+    <title>Information Retrieval with Entity Linking</title>
+    <updated>2024-04-07T08:41:51Z</updated>
+    <link href="https://arxiv.org/abs/2404.08678v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2404.08678v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Despite the advantages of their low-resource settings, traditional sparse retrievers depend on exact matching approaches between high-dimensional bag-of-words (BoW) representations of both the queries and the collection. As a result, retrieval performance is restricted by semantic discrepancies and vocabulary gaps. On the other hand, transformer-based dense retrievers introduce significant improvements in information retrieval tasks by exploiting low-dimensional contextualized representations of the corpus. While dense retrievers are known for their relative effectiveness, they suffer from lower efficiency and lack of generalization issues, when compared to sparse retrievers. For a lightweight retrieval task, high computational resources and time consumption are major barriers encouraging the renunciation of dense models despite potential gains. In this work, I propose boosting the performance of sparse retrievers by expanding both the queries and the documents with linked entities in two formats for the entity names: 1) explicit and 2) hashed. A zero-shot end-to-end dense entity linking system is employed for entity recognition and disambiguation to augment the corpus. By leveraging the advanced entity linking methods, I believe that the effectiveness gap between sparse and dense retrievers can be narrowed. Experiments are conducted on the MS MARCO passage dataset using the original qrel set, the re-ranked qrels favoured by MonoT5 and the latter set further re-ranked by DuoT5. Since I am concerned with the early stage retrieval in cascaded ranking architectures of large information retrieval systems, the results are evaluated using recall@1000. The suggested approach is also capable of retrieving documents for query subsets judged to be particularly difficult in prior work.</summary>
+    <category term="cs.IR" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2024-04-07T08:41:51Z</published>
+    <arxiv:primary_category term="cs.IR"/>
+    <author>
+      <name>Dahlia Shehata</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2511.14214v2</id>
+    <title>Do Large Language Models (LLMs) Understand Chronology?</title>
+    <updated>2025-11-19T17:19:20Z</updated>
+    <link href="https://arxiv.org/abs/2511.14214v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2511.14214v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Large language models (LLMs) are increasingly used in finance and economics, where prompt-based attempts against look-ahead bias implicitly assume that models understand chronology. We test this fundamental question with a series of chronological ordering tasks with increasing complexities over facts the model already knows from pre-training. Our tasks cover (1) chronological ordering, (2) conditional sorting (filter, then order), and (3) anachronism detection. We evaluate GPT-4.1, Claude-3.7 Sonnet, with and without Extended Thinking (ET), and GPT-5 across multiple reasoning-effort settings. Across models, Exact match rate drops sharply as sequences lengthen even while rank correlations stay high as LLMs largely preserve local order but struggle to maintain a single globally consistent timeline. In conditional sorting, most failures stem from the filtering step rather than the ordering step, but GPT-5 and Claude-3.7 Sonnet with Extended Thinking outshine normal models significantly. Lastly, anachronism detection is found to be the easiest task for the LLMs but performance still declines with increasingly overlapping timelines or entities. Overall, our main contribution is showing that allocating explicit reasoning budget helps with chronological ordering with GPT-5 at medium/high reasoning effort achieving flawless ordering at all lengths and perfect conditional sorting (both self-filtered and given-subset), whereas low/minimal effort degrades with longer lists, mirroring earlier models. Our findings delineate limits of current LLMs on chronological tasks, providing insights into task complexity, and demonstrate scenarios in which reasoning helps. These patterns are important for the real-time application of LLMs in finance. We release all code and evaluation templates to support full reproducibility.</summary>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-11-18T07:45:12Z</published>
+    <arxiv:comment>Version 2: corrected footnote and added code repository link. Extended version of our work presented at the AAAI-26 AI4TS Workshop (poster) and AAAI-26 Student Abstract Program (oral)</arxiv:comment>
+    <arxiv:primary_category term="cs.AI"/>
+    <author>
+      <name>Pattaraphon Kenny Wongchamcharoen</name>
+    </author>
+    <author>
+      <name>Paul Glasserman</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2607.10198v1</id>
+    <title>Equal Accuracy, Unequal Evidence: Search APIs as Decision Surfaces for Tool-Using Agents</title>
+    <updated>2026-07-11T08:22:35Z</updated>
+    <link href="https://arxiv.org/abs/2607.10198v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2607.10198v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Search APIs are the fundamental retrieval layer for many agents and are often their most frequently used tool. Traditional search APIs provide URLs, titles, and snippets that preview website contents. Because full-page retrieval is token-intensive, agent retrieval architectures increasingly use progressive disclosure: the agent first sees snippets and then chooses whether to fetch full pages. In such systems, search API performance is often evaluated primarily by answer accuracy. We argue that a commercial search API is better understood as a decision surface: the ranked snippets, URLs, and metadata that determine whether an agent answers immediately, searches again, or spends tokens opening pages. We test this claim with one frozen GPT-5.4 agent, two tools (search_web and fetch_page), and 100 questions from SEALQA-HARD, varying only the search provider (Brave, Tavily, Firecrawl). A Kimi-K2.6 oracle labels every content element visible to the agent (URL, title, snippet, and fetched page, when fetched), producing 6,869 valid per-URL judgments. We use an audited correct-answer label, semantic match, which preserves exact matches while accepting harmless formatting and naming variants. Under this measure, the providers remain close (25, 25, 26 / 100), but their evidence economies differ sharply: Brave offers gold-answer-rich snippets, Tavily concentrates gold-supporting URLs at rank 1, and Firecrawl is associated with broader exploration under this fixed agent policy. We also introduce a surface contradiction-to-gold URL ratio, which varies from 0.92 to 2.59. Provider choice is therefore a retrieval-budget and policy decision, not merely a recall decision.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-07-11T08:22:35Z</published>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Sriram Selvam</name>
+    </author>
+    <author>
+      <name>Anneswa Ghosh</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2208.04887v2</id>
+    <title>Early Stage Sparse Retrieval with Entity Linking</title>
+    <updated>2022-08-10T17:18:20Z</updated>
+    <link href="https://arxiv.org/abs/2208.04887v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2208.04887v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Despite the advantages of their low-resource settings, traditional sparse retrievers depend on exact matching approaches between high-dimensional bag-of-words (BoW) representations of both the queries and the collection. As a result, retrieval performance is restricted by semantic discrepancies and vocabulary gaps. On the other hand, transformer-based dense retrievers introduce significant improvements in information retrieval tasks by exploiting low-dimensional contextualized representations of the corpus. While dense retrievers are known for their relative effectiveness, they suffer from lower efficiency and lack of generalization issues, when compared to sparse retrievers. For a lightweight retrieval task, high computational resources and time consumption are major barriers encouraging the renunciation of dense models despite potential gains. In this work, we propose boosting the performance of sparse retrievers by expanding both the queries and the documents with linked entities in two formats for the entity names: 1) explicit and 2) hashed. We employ a zero-shot end-to-end dense entity linking system for entity recognition and disambiguation to augment the corpus. By leveraging the advanced entity linking methods, we believe that the effectiveness gap between sparse and dense retrievers can be narrowed. We conduct our experiments on the MS MARCO passage dataset. Since we are concerned with the early stage retrieval in cascaded ranking architectures of large information retrieval systems, we evaluate our results using recall@1000. Our approach is also capable of retrieving documents for query subsets judged to be particularly difficult in prior work. We further demonstrate that the non-expanded and the expanded runs with both explicit and hashed entities retrieve complementary results. Consequently, we adopt a run fusion approach to maximize the benefits of entity linking.</summary>
+    <category term="cs.IR" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2022-08-09T16:35:28Z</published>
+    <arxiv:primary_category term="cs.IR"/>
+    <author>
+      <name>Dahlia Shehata</name>
+    </author>
+    <author>
+      <name>Negar Arabzadeh</name>
+    </author>
+    <author>
+      <name>Charles L. A. Clarke</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2012.04099v2</id>
+    <title>Using multiple ASR hypotheses to boost i18n NLU performance</title>
+    <updated>2020-12-14T18:44:37Z</updated>
+    <link href="https://arxiv.org/abs/2012.04099v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2012.04099v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Current voice assistants typically use the best hypothesis yielded by their Automatic Speech Recognition (ASR) module as input to their Natural Language Understanding (NLU) module, thereby losing helpful information that might be stored in lower-ranked ASR hypotheses. We explore the change in performance of NLU associated tasks when utilizing five-best ASR hypotheses when compared to status quo for two language datasets, German and Portuguese. To harvest information from the ASR five-best, we leverage extractive summarization and joint extractive-abstractive summarization models for Domain Classification (DC) experiments while using a sequence-to-sequence model with a pointer generator network for Intent Classification (IC) and Named Entity Recognition (NER) multi-task experiments. For the DC full test set, we observe significant improvements of up to 7.2% and 15.5% in micro-averaged F1 scores, for German and Portuguese, respectively. In cases where the best ASR hypothesis was not an exact match to the transcribed utterance (mismatched test set), we see improvements of up to 6.7% and 8.8% micro-averaged F1 scores, for German and Portuguese, respectively. For IC and NER multi-task experiments, when evaluating on the mismatched test set, we see improvements across all domains in German and in 17 out of 19 domains in Portuguese (improvements based on change in SeMER scores). Our results suggest that the use of multiple ASR hypotheses, as opposed to one, can lead to significant performance improvements in the DC task for these non-English datasets. In addition, it could lead to significant improvement in the performance of IC and NER tasks in cases where the ASR model makes mistakes.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2020-12-07T22:37:38Z</published>
+    <arxiv:comment>9 pages, 4 Figures, 5 Tables, Accepted to ICON 2020 (17th International Conference on Natural Language Processing)</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Charith Peris</name>
+    </author>
+    <author>
+      <name>Gokmen Oz</name>
+    </author>
+    <author>
+      <name>Khadige Abboud</name>
+    </author>
+    <author>
+      <name>Venkata sai Varada</name>
+    </author>
+    <author>
+      <name>Prashan Wanigasekara</name>
+    </author>
+    <author>
+      <name>Haidar Khan</name>
+    </author>
+  </entry>
+</feed>

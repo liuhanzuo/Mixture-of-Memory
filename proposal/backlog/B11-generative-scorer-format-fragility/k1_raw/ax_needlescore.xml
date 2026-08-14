@@ -1,0 +1,698 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<feed xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/" xmlns:arxiv="http://arxiv.org/schemas/atom" xmlns="http://www.w3.org/2005/Atom">
+  <id>https://arxiv.org/api/2cZIdgPt49zqciA2abE88j00li8</id>
+  <title>arXiv Query: search_query=abs:"needle in a haystack" AND abs:"metric"&amp;id_list=&amp;start=0&amp;max_results=40</title>
+  <updated>2026-08-14T06:46:51Z</updated>
+  <link href="https://arxiv.org/api/query?search_query=abs:%22needle+in+a+haystack%22+AND+abs:%22metric%22&amp;start=0&amp;max_results=40&amp;id_list=" type="application/atom+xml"/>
+  <opensearch:itemsPerPage>40</opensearch:itemsPerPage>
+  <opensearch:totalResults>19</opensearch:totalResults>
+  <opensearch:startIndex>0</opensearch:startIndex>
+  <entry>
+    <id>http://arxiv.org/abs/2504.03943v3</id>
+    <title>Multi-Variable Batch Bayesian Optimization in Materials Research: Synthetic Data Analysis of Noise Sensitivity and Problem Landscape Effects</title>
+    <updated>2025-10-15T16:42:43Z</updated>
+    <link href="https://arxiv.org/abs/2504.03943v3" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2504.03943v3" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Bayesian Optimization (BO) machine learning method is increasingly used to guide experimental optimization tasks in materials science. To emulate the large number of input variables and noise-containing results in experimental materials research, we perform batch BO simulation of six design variables with a range of noise levels. Two test cases relevant for materials science problems are examined: a needle-in-a-haystack case (Ackley function) that may be encountered in, e.g., molecule optimizations, and a smooth landscape with a local optimum in addition to the global optimum (Hartmann function) that may be encountered in, e.g., material composition optimization. We show learning curves, performance metrics, and visualization to effectively track the optimization progression and evaluate how the optimization outcomes are affected by noise, batch-picking method, choice of acquisition function, and exploration hyperparameter values. We find that the effects of noise depend on the problem landscape: noise degrades the optimization results of a needle-in-a-haystack search (Ackley) dramatically more. However, with increasing noise, we observe an increasing probability of landing on the local optimum in Hartmann. Therefore, prior knowledge of the problem domain structure and noise level is essential when designing BO for materials research experiments. Synthetic data studies -- with known ground truth and controlled noise levels -- enable us to isolate and evaluate the impact of different batch BO components, {\it e.g.}, acquisition policy, objective metrics, and hyperparameter values, before transitioning to the inherent uncertainties of real experimental systems. The results and methodology of this study will facilitate a greater utilization of BO in guiding experimental materials research, specifically in settings with a large number of design variables to optimize.</summary>
+    <category term="stat.ML" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cond-mat.mtrl-sci" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-04-04T21:20:11Z</published>
+    <arxiv:primary_category term="stat.ML"/>
+    <author>
+      <name>Imon Mia</name>
+    </author>
+    <author>
+      <name>Armi Tiihonen</name>
+    </author>
+    <author>
+      <name>Anna Ernst</name>
+    </author>
+    <author>
+      <name>Anusha Srivastava</name>
+    </author>
+    <author>
+      <name>Tonio Buonassisi</name>
+    </author>
+    <author>
+      <name>William Vandenberghe</name>
+    </author>
+    <author>
+      <name>Julia W. P. Hsu</name>
+    </author>
+    <arxiv:doi>10.1557/s43578-026-01803-y</arxiv:doi>
+    <link rel="related" href="https://doi.org/10.1557/s43578-026-01803-y" title="doi"/>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2404.05622v1</id>
+    <title>How to Evaluate Entity Resolution Systems: An Entity-Centric Framework with Application to Inventor Name Disambiguation</title>
+    <updated>2024-04-08T15:53:29Z</updated>
+    <link href="https://arxiv.org/abs/2404.05622v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2404.05622v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Entity resolution (record linkage, microclustering) systems are notoriously difficult to evaluate. Looking for a needle in a haystack, traditional evaluation methods use sophisticated, application-specific sampling schemes to find matching pairs of records among an immense number of non-matches. We propose an alternative that facilitates the creation of representative, reusable benchmark data sets without necessitating complex sampling schemes. These benchmark data sets can then be used for model training and a variety of evaluation tasks. Specifically, we propose an entity-centric data labeling methodology that integrates with a unified framework for monitoring summary statistics, estimating key performance metrics such as cluster and pairwise precision and recall, and analyzing root causes for errors. We validate the framework in an application to inventor name disambiguation and through simulation studies. Software: https://github.com/OlivierBinette/er-evaluation/</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="stat.ME" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2024-04-08T15:53:29Z</published>
+    <arxiv:comment>33 pages, 11 figures</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Olivier Binette</name>
+    </author>
+    <author>
+      <name>Youngsoo Baek</name>
+    </author>
+    <author>
+      <name>Siddharth Engineer</name>
+    </author>
+    <author>
+      <name>Christina Jones</name>
+    </author>
+    <author>
+      <name>Abel Dasylva</name>
+    </author>
+    <author>
+      <name>Jerome P. Reiter</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/1911.11201v2</id>
+    <title>Machine-learned metrics for predicting the likelihood of success in materials discovery</title>
+    <updated>2019-11-27T16:46:14Z</updated>
+    <link href="https://arxiv.org/abs/1911.11201v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/1911.11201v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Materials discovery is often compared to the challenge of finding a needle in a haystack. While much work has focused on accurately predicting the properties of candidate materials with machine learning (ML), which amounts to evaluating whether a given candidate is a piece of straw or a needle, less attention has been paid to a critical question: Are we searching in the right haystack? We refer to the haystack as the design space for a particular materials discovery problem (i.e. the set of possible candidate materials to synthesize), and thus frame this question as one of design space selection. In this paper, we introduce two metrics, the Predicted Fraction of Improved Candidates (PFIC), and the Cumulative Maximum Likelihood of Improvement (CMLI), which we demonstrate can identify discovery-rich and discovery-poor design spaces, respectively. Using CMLI and PFIC together to identify optimal design spaces can significantly accelerate ML-driven materials discovery.</summary>
+    <category term="cond-mat.mtrl-sci" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="physics.comp-ph" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2019-11-25T20:08:35Z</published>
+    <arxiv:comment>13 pages, 10 figures, 2 tables</arxiv:comment>
+    <arxiv:primary_category term="cond-mat.mtrl-sci"/>
+    <author>
+      <name>Yoolhee Kim</name>
+    </author>
+    <author>
+      <name>Edward Kim</name>
+    </author>
+    <author>
+      <name>Erin Antono</name>
+    </author>
+    <author>
+      <name>Bryce Meredig</name>
+    </author>
+    <author>
+      <name>Julia Ling</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2410.16848v2</id>
+    <title>ETHIC: Evaluating Large Language Models on Long-Context Tasks with High Information Coverage</title>
+    <updated>2025-02-27T08:15:49Z</updated>
+    <link href="https://arxiv.org/abs/2410.16848v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2410.16848v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Recent advancements in large language models (LLM) capable of processing extremely long texts highlight the need for a dedicated evaluation benchmark to assess their long-context capabilities. However, existing methods, like the needle-in-a-haystack test, do not effectively assess whether these models fully utilize contextual information, raising concerns about the reliability of current evaluation techniques. To thoroughly examine the effectiveness of existing benchmarks, we introduce a new metric called information coverage (IC), which quantifies the proportion of the input context necessary for answering queries. Our findings indicate that current benchmarks exhibit low IC; although the input context may be extensive, the actual usable context is often limited. To address this, we present ETHIC, a novel benchmark designed to assess LLMs' ability to leverage the entire context. Our benchmark comprises 1,986 test instances spanning four long-context tasks with high IC scores in the domains of books, debates, medicine, and law. Our evaluations reveal significant performance drops in contemporary LLMs, highlighting a critical challenge in managing long contexts. Our benchmark is available at https://github.com/dmis-lab/ETHIC.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2024-10-22T09:35:42Z</published>
+    <arxiv:comment>NAACL 2025</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Taewhoo Lee</name>
+    </author>
+    <author>
+      <name>Chanwoong Yoon</name>
+    </author>
+    <author>
+      <name>Kyochul Jang</name>
+    </author>
+    <author>
+      <name>Donghyeon Lee</name>
+    </author>
+    <author>
+      <name>Minju Song</name>
+    </author>
+    <author>
+      <name>Hyunjae Kim</name>
+    </author>
+    <author>
+      <name>Jaewoo Kang</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2309.02286v1</id>
+    <title>Haystack: A Panoptic Scene Graph Dataset to Evaluate Rare Predicate Classes</title>
+    <updated>2023-09-05T14:45:54Z</updated>
+    <link href="https://arxiv.org/abs/2309.02286v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2309.02286v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Current scene graph datasets suffer from strong long-tail distributions of their predicate classes. Due to a very low number of some predicate classes in the test sets, no reliable metrics can be retrieved for the rarest classes. We construct a new panoptic scene graph dataset and a set of metrics that are designed as a benchmark for the predictive performance especially on rare predicate classes. To construct the new dataset, we propose a model-assisted annotation pipeline that efficiently finds rare predicate classes that are hidden in a large set of images like needles in a haystack.
+  Contrary to prior scene graph datasets, Haystack contains explicit negative annotations, i.e. annotations that a given relation does not have a certain predicate class. Negative annotations are helpful especially in the field of scene graph generation and open up a whole new set of possibilities to improve current scene graph generation models.
+  Haystack is 100% compatible with existing panoptic scene graph datasets and can easily be integrated with existing evaluation pipelines. Our dataset and code can be found here: https://lorjul.github.io/haystack/. It includes annotation files and simple to use scripts and utilities, to help with integrating our dataset in existing work.</summary>
+    <category term="cs.CV" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2023-09-05T14:45:54Z</published>
+    <arxiv:primary_category term="cs.CV"/>
+    <author>
+      <name>Julian Lorenz</name>
+    </author>
+    <author>
+      <name>Florian Barthel</name>
+    </author>
+    <author>
+      <name>Daniel Kienzle</name>
+    </author>
+    <author>
+      <name>Rainer Lienhart</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2601.10108v1</id>
+    <title>SIN-Bench: Tracing Native Evidence Chains in Long-Context Multimodal Scientific Interleaved Literature</title>
+    <updated>2026-01-15T06:25:25Z</updated>
+    <link href="https://arxiv.org/abs/2601.10108v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2601.10108v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Evaluating whether multimodal large language models truly understand long-form scientific papers remains challenging: answer-only metrics and synthetic "Needle-In-A-Haystack" tests often reward answer matching without requiring a causal, evidence-linked reasoning trace in the document. We propose the "Fish-in-the-Ocean" (FITO) paradigm, which requires models to construct explicit cross-modal evidence chains within native scientific documents. To operationalize FITO, we build SIN-Data, a scientific interleaved corpus that preserves the native interleaving of text and figures. On top of it, we construct SIN-Bench with four progressive tasks covering evidence discovery (SIN-Find), hypothesis verification (SIN-Verify), grounded QA (SIN-QA), and evidence-anchored synthesis (SIN-Summary). We further introduce "No Evidence, No Score", scoring predictions when grounded to verifiable anchors and diagnosing evidence quality via matching, relevance, and logic. Experiments on eight MLLMs show that grounding is the primary bottleneck: Gemini-3-pro achieves the best average overall score (0.573), while GPT-5 attains the highest SIN-QA answer accuracy (0.767) but underperforms on evidence-aligned overall scores, exposing a gap between correctness and traceable support.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.MM" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-01-15T06:25:25Z</published>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Yiming Ren</name>
+    </author>
+    <author>
+      <name>Junjie Wang</name>
+    </author>
+    <author>
+      <name>Yuxin Meng</name>
+    </author>
+    <author>
+      <name>Yihang Shi</name>
+    </author>
+    <author>
+      <name>Zhiqiang Lin</name>
+    </author>
+    <author>
+      <name>Ruihang Chu</name>
+    </author>
+    <author>
+      <name>Yiran Xu</name>
+    </author>
+    <author>
+      <name>Ziming Li</name>
+    </author>
+    <author>
+      <name>Yunfei Zhao</name>
+    </author>
+    <author>
+      <name>Zihan Wang</name>
+    </author>
+    <author>
+      <name>Yu Qiao</name>
+    </author>
+    <author>
+      <name>Ruiming Tang</name>
+    </author>
+    <author>
+      <name>Minghao Liu</name>
+    </author>
+    <author>
+      <name>Yujiu Yang</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2509.09754v1</id>
+    <title>LAVa: Layer-wise KV Cache Eviction with Dynamic Budget Allocation</title>
+    <updated>2025-09-11T16:48:24Z</updated>
+    <link href="https://arxiv.org/abs/2509.09754v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2509.09754v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>KV Cache is commonly used to accelerate LLM inference with long contexts, yet its high memory demand drives the need for cache compression. Existing compression methods, however, are largely heuristic and lack dynamic budget allocation. To address this limitation, we introduce a unified framework for cache compression by minimizing information loss in Transformer residual streams. Building on it, we analyze the layer attention output loss and derive a new metric to compare cache entries across heads, enabling layer-wise compression with dynamic head budgets. Additionally, by contrasting cross-layer information, we also achieve dynamic layer budgets. LAVa is the first unified strategy for cache eviction and dynamic budget allocation that, unlike prior methods, does not rely on training or the combination of multiple strategies. Experiments with benchmarks (LongBench, Needle-In-A-Haystack, Ruler, and InfiniteBench) demonstrate its superiority. Moreover, our experiments reveal a new insight: dynamic layer budgets are crucial for generation tasks (e.g., code completion), while dynamic head budgets play a key role in extraction tasks (e.g., extractive QA). As a fully dynamic compression method, LAVa consistently maintains top performance across task types. Our code is available at https://github.com/MGDDestiny/Lava.</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-09-11T16:48:24Z</published>
+    <arxiv:primary_category term="cs.LG"/>
+    <author>
+      <name>Yiqun Shen</name>
+    </author>
+    <author>
+      <name>Song Yuan</name>
+    </author>
+    <author>
+      <name>Zhengze Zhang</name>
+    </author>
+    <author>
+      <name>Xiaoliang Wang</name>
+    </author>
+    <author>
+      <name>Daxin Jiang</name>
+    </author>
+    <author>
+      <name>Nguyen Cam-Tu</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2605.07234v1</id>
+    <title>Reformulating KV Cache Eviction Problem for Long-Context LLM Inference</title>
+    <updated>2026-05-08T04:37:22Z</updated>
+    <link href="https://arxiv.org/abs/2605.07234v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2605.07234v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Large language models (LLMs) support long-context inference but suffer from substantial memory and runtime overhead due to Key-Value (KV) Cache growth. Existing KV Cache eviction methods primarily rely on local attention weights, neglecting the influence of value representations, output projection, and inter-head interactions. In this work, we reformulate KV Cache eviction from a conventional head-wise, weight-averaging approach into an output-aware, layer-wise matrix multiplication approximation problem. We introduce LaProx, a novel eviction strategy that explicitly models the multiplicative interaction between attention maps and projected value states to accurately quantify token contributions while accounting for inter-head dependencies. Building on this metric, we propose the first unified eviction strategy that assigns globally comparable importance scores to tokens, enabling model-wide selection instead of local, head-wise decisions. Experimental results across 19 datasets on long-context benchmarks LongBench and Needle-In-A-Haystack demonstrate that our approach maintains model performance with only 5\% of the KV cache and consistently outperforms prior works across all configurations. Notably, our method achieves up to 2$\times$ accuracy loss reduction under extreme compression scenarios compared to existing state-of-the-art baselines with minimal overhead.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-05-08T04:37:22Z</published>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Tho Mai</name>
+    </author>
+    <author>
+      <name>Joo-Young Kim</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2503.13139v2</id>
+    <title>Logic-in-Frames: Dynamic Keyframe Search via Visual Semantic-Logical Verification for Long Video Understanding</title>
+    <updated>2025-05-17T13:22:07Z</updated>
+    <link href="https://arxiv.org/abs/2503.13139v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2503.13139v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Understanding long video content is a complex endeavor that often relies on densely sampled frame captions or end-to-end feature selectors, yet these techniques commonly overlook the logical relationships between textual queries and visual elements. In practice, computational constraints necessitate coarse frame subsampling, a challenge analogous to "finding a needle in a haystack." To address this issue, we introduce a semantics-driven search framework that reformulates keyframe selection under the paradigm of Visual Semantic-Logical Search. Specifically, we systematically define four fundamental logical dependencies: 1) spatial co-occurrence, 2) temporal proximity, 3) attribute dependency, and 4) causal order. These relations dynamically update frame sampling distributions through an iterative refinement process, enabling context-aware identification of semantically critical frames tailored to specific query requirements. Our method establishes new SOTA performance on the manually annotated benchmark in key-frame selection metrics. Furthermore, when applied to downstream video question-answering tasks, the proposed approach demonstrates the best performance gains over existing methods on LongVideoBench and Video-MME, validating its effectiveness in bridging the logical gap between textual queries and visual-temporal reasoning. The code will be publicly available.</summary>
+    <category term="cs.CV" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="eess.IV" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-03-17T13:07:34Z</published>
+    <arxiv:comment>32 pages, under review</arxiv:comment>
+    <arxiv:primary_category term="cs.CV"/>
+    <author>
+      <name>Weiyu Guo</name>
+    </author>
+    <author>
+      <name>Ziyang Chen</name>
+    </author>
+    <author>
+      <name>Shaoguang Wang</name>
+    </author>
+    <author>
+      <name>Jianxiang He</name>
+    </author>
+    <author>
+      <name>Yijie Xu</name>
+    </author>
+    <author>
+      <name>Jinhui Ye</name>
+    </author>
+    <author>
+      <name>Ying Sun</name>
+    </author>
+    <author>
+      <name>Hui Xiong</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2503.10704v2</id>
+    <title>Error Analyses of Auto-Regressive Video Diffusion Models: A Unified Framework</title>
+    <updated>2025-12-27T09:09:30Z</updated>
+    <link href="https://arxiv.org/abs/2503.10704v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2503.10704v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Auto-Regressive Video Diffusion Models (AR-VDMs) have shown strong capabilities in generating long, photorealistic videos, but suffer from two key limitations: (i) history forgetting, where the model loses track of previously generated content, and (ii) temporal degradation, where frame quality deteriorates over time. Yet a rigorous theoretical analysis of these phenomena is lacking, and existing empirical understanding remains insufficiently grounded. In this paper, we introduce Meta-ARVDM, a unified analytical framework that studies both errors through the shared autoregressive structure of AR-VDMs. We show that history forgetting is characterized by the conditional mutual information between the generated output and preceding frames, conditioned on inputs, and prove that incorporating more past frames monotonically alleviates history forgetting, thereby theoretically justifying a common belief in existing works. Moreover, our theory reveals that standard metrics fail to capture this effect, motivating a new evaluation protocol based on a ``needle-in-a-haystack'' task in closed-ended environments (DMLab and Minecraft). We further show that temporal degradation can be quantified by the cumulative sum of per-step errors, enabling prediction of degradation for different schedulers without video rollout. Finally, our evaluation uncovers a strong empirical correlation between history forgetting and temporal degradation, a connection not previously reported.</summary>
+    <category term="cs.CV" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.MM" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-03-12T15:32:44Z</published>
+    <arxiv:primary_category term="cs.CV"/>
+    <author>
+      <name>Jing Wang</name>
+    </author>
+    <author>
+      <name>Fengzhuo Zhang</name>
+    </author>
+    <author>
+      <name>Xiaoli Li</name>
+    </author>
+    <author>
+      <name>Vincent Y. F. Tan</name>
+    </author>
+    <author>
+      <name>Tianyu Pang</name>
+    </author>
+    <author>
+      <name>Chao Du</name>
+    </author>
+    <author>
+      <name>Aixin Sun</name>
+    </author>
+    <author>
+      <name>Zhuoran Yang</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2606.03821v2</id>
+    <title>Finding Needles in the Haystack: Transductive Active Labeling in Ecology</title>
+    <updated>2026-06-30T13:17:03Z</updated>
+    <link href="https://arxiv.org/abs/2606.03821v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2606.03821v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Active learning is now standard practice in labeling ecological data, enabling ecologists to quickly process large volumes of field data to understand and monitor natural environments. Current practices evaluate active learning inductively, estimating predictive performance on a held-out test set. We argue that this evaluation is misaligned with most ecological tasks, where the goal is to transductively label an entire pool of data as efficiently as possible. We demonstrate that ignoring the human-in-the-loop underestimates the importance of continuing to label, particularly for classes in the long tail which may be of disproportionate ecological importance (rare species, uncommon behaviors, etc.). Our analysis shows that, for this long tail, the transductive objective shifts importance from prediction to discovery: the true challenge becomes finding "needles in the haystack," examples of rare classes that are embedded within dense regions of abundant classes in the latent geometry, which we quantify with a novel metric of sampling difficulty. Finally, to translate these insights to practical ecological workflows, we propose a conservative hybrid stopping criterion inspired by ecological rarefaction curves, and show that combining predictive performance with discovery criteria reduces premature stopping on long-tailed pools, improving rare-class recovery when discovery, not classification, is the limiting factor.</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-06-02T16:01:22Z</published>
+    <arxiv:primary_category term="cs.LG"/>
+    <author>
+      <name>Rupa Kurinchi-Vendhan</name>
+    </author>
+    <author>
+      <name>Sara Beery</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2410.02694v3</id>
+    <title>HELMET: How to Evaluate Long-Context Language Models Effectively and Thoroughly</title>
+    <updated>2025-03-06T18:41:54Z</updated>
+    <link href="https://arxiv.org/abs/2410.02694v3" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2410.02694v3" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Many benchmarks exist for evaluating long-context language models (LCLMs), yet developers often rely on synthetic tasks such as needle-in-a-haystack (NIAH) or an arbitrary subset of tasks. However, it remains unclear whether these benchmarks reflect the diverse downstream applications of LCLMs, and such inconsistencies further complicate model comparison. We investigate the underlying reasons behind these practices and find that existing benchmarks often provide noisy signals due to limited coverage of applications, insufficient context lengths, unreliable metrics, and incompatibility with base models. In this work, we introduce HELMET (How to Evaluate Long-context Models Effectively and Thoroughly), a comprehensive benchmark encompassing seven diverse, application-centric categories. We also address several issues in previous benchmarks by adding controllable lengths up to 128K tokens, model-based evaluation for reliable metrics, and few-shot prompting for robustly evaluating base models. Consequently, we demonstrate that HELMET offers more reliable and consistent rankings of frontier LCLMs. Through a comprehensive study of 59 LCLMs, we find that (1) synthetic tasks like NIAH do not reliably predict downstream performance; (2) the diverse categories in HELMET exhibit distinct trends and low correlations with each other; and (3) while most LCLMs achieve perfect NIAH scores, open-source models significantly lag behind closed ones when tasks require full-context reasoning or following complex instructions -- the gap widens as length increases. Finally, we recommend using our RAG tasks for fast model development, as they are easy to run and better predict other downstream performance; ultimately, we advocate for a holistic evaluation across diverse tasks.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2024-10-03T17:20:11Z</published>
+    <arxiv:comment>ICLR 2025. Project page: https://princeton-nlp.github.io/HELMET/</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Howard Yen</name>
+    </author>
+    <author>
+      <name>Tianyu Gao</name>
+    </author>
+    <author>
+      <name>Minmin Hou</name>
+    </author>
+    <author>
+      <name>Ke Ding</name>
+    </author>
+    <author>
+      <name>Daniel Fleischer</name>
+    </author>
+    <author>
+      <name>Peter Izsak</name>
+    </author>
+    <author>
+      <name>Moshe Wasserblat</name>
+    </author>
+    <author>
+      <name>Danqi Chen</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2402.03931v1</id>
+    <title>Fully autonomous tuning of a spin qubit</title>
+    <updated>2024-02-06T12:01:00Z</updated>
+    <link href="https://arxiv.org/abs/2402.03931v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2402.03931v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Spanning over two decades, the study of qubits in semiconductors for quantum computing has yielded significant breakthroughs. However, the development of large-scale semiconductor quantum circuits is still limited by challenges in efficiently tuning and operating these circuits. Identifying optimal operating conditions for these qubits is complex, involving the exploration of vast parameter spaces. This presents a real 'needle in the haystack' problem, which, until now, has resisted complete automation due to device variability and fabrication imperfections. In this study, we present the first fully autonomous tuning of a semiconductor qubit, from a grounded device to Rabi oscillations, a clear indication of successful qubit operation. We demonstrate this automation, achieved without human intervention, in a Ge/Si core/shell nanowire device. Our approach integrates deep learning, Bayesian optimization, and computer vision techniques. We expect this automation algorithm to apply to a wide range of semiconductor qubit devices, allowing for statistical studies of qubit quality metrics. As a demonstration of the potential of full automation, we characterise how the Rabi frequency and g-factor depend on barrier gate voltages for one of the qubits found by the algorithm. Twenty years after the initial demonstrations of spin qubit operation, this significant advancement is poised to finally catalyze the operation of large, previously unexplored quantum circuits.</summary>
+    <category term="cond-mat.mes-hall" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="quant-ph" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2024-02-06T12:01:00Z</published>
+    <arxiv:primary_category term="cond-mat.mes-hall"/>
+    <arxiv:journal_ref>Nature Electronics (2026)</arxiv:journal_ref>
+    <author>
+      <name>Jonas Schuff</name>
+    </author>
+    <author>
+      <name>Miguel J. Carballido</name>
+    </author>
+    <author>
+      <name>Madeleine Kotzagiannidis</name>
+    </author>
+    <author>
+      <name>Juan Carlos Calvo</name>
+    </author>
+    <author>
+      <name>Marco Caselli</name>
+    </author>
+    <author>
+      <name>Jacob Rawling</name>
+    </author>
+    <author>
+      <name>David L. Craig</name>
+    </author>
+    <author>
+      <name>Barnaby van Straaten</name>
+    </author>
+    <author>
+      <name>Brandon Severin</name>
+    </author>
+    <author>
+      <name>Federico Fedele</name>
+    </author>
+    <author>
+      <name>Simon Svab</name>
+    </author>
+    <author>
+      <name>Pierre Chevalier Kwon</name>
+    </author>
+    <author>
+      <name>Rafael S. Eggli</name>
+    </author>
+    <author>
+      <name>Taras Patlatiuk</name>
+    </author>
+    <author>
+      <name>Nathan Korda</name>
+    </author>
+    <author>
+      <name>Dominik Zumbühl</name>
+    </author>
+    <author>
+      <name>Natalia Ares</name>
+    </author>
+    <arxiv:doi>10.1038/s41928-025-01562-4</arxiv:doi>
+    <link rel="related" href="https://doi.org/10.1038/s41928-025-01562-4" title="doi"/>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2402.05136v3</id>
+    <title>LV-Eval: A Balanced Long-Context Benchmark with 5 Length Levels Up to 256K</title>
+    <updated>2025-10-22T07:30:57Z</updated>
+    <link href="https://arxiv.org/abs/2402.05136v3" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2402.05136v3" rel="related" type="application/pdf" title="pdf"/>
+    <summary>State-of-the-art large language models (LLMs) are now claiming remarkable supported context lengths of 256k or even more. In contrast, the average context lengths of mainstream benchmarks are insufficient (5k-21k), and they suffer from potential knowledge leakage and inaccurate metrics, resulting in biased evaluation. This paper introduces LV-Eval, a challenging long-context benchmark with five length levels (16k, 32k, 64k, 128k, and 256k) reaching up to 256k words. LV-Eval features two main tasks, single-hop QA and multi-hop QA, comprising 11 bilingual datasets. The design of LV-Eval has incorporated three key techniques, namely confusing facts insertion, keyword and phrase replacement, and keyword-recall-based metric design. The advantages of LV-Eval include controllable evaluation across different context lengths, challenging test instances with confusing facts, mitigated knowledge leakage, and more objective evaluations. We evaluate 15 LLMs on LV-Eval and conduct ablation studies on the benchmarking techniques. The results reveal that: (i) Moonshot-v1 and recent large-scale open-source models, such as Qwen-2.5-72B and Llama-3.1-70B, achieve the highest performance on LV-Eval, particularly at lengths below 64k. (ii) Models exhibit distinct score trends. For example, GLM-4-9B-128k, Yi-6B-200k, and Llama3-8B-1M exhibit a relatively gentle degradation of performance, but their absolute performances may not necessarily be higher than those of LLMs with shorter context lengths. (iii) LLMs' performances can significantly degrade in the presence of confusing information, especially in the pressure test of "needle in a haystack". (iv) Issues related to knowledge leakage and inaccurate metrics introduce bias in evaluation, and these concerns are alleviated in LV-Eval. All datasets and evaluation codes are released at: https://github.com/infinigence/LVEval.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2024-02-06T13:11:19Z</published>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Tao Yuan</name>
+    </author>
+    <author>
+      <name>Xuefei Ning</name>
+    </author>
+    <author>
+      <name>Dong Zhou</name>
+    </author>
+    <author>
+      <name>Zhijie Yang</name>
+    </author>
+    <author>
+      <name>Shiyao Li</name>
+    </author>
+    <author>
+      <name>Minghui Zhuang</name>
+    </author>
+    <author>
+      <name>Zheyue Tan</name>
+    </author>
+    <author>
+      <name>Zhuyu Yao</name>
+    </author>
+    <author>
+      <name>Dahua Lin</name>
+    </author>
+    <author>
+      <name>Boxun Li</name>
+    </author>
+    <author>
+      <name>Guohao Dai</name>
+    </author>
+    <author>
+      <name>Shengen Yan</name>
+    </author>
+    <author>
+      <name>Yu Wang</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2603.06642v2</id>
+    <title>SR-TTT Does Not Learn Retrieval: A Correction and Mechanistic Post-Mortem of Surprisal-Aware Residual Test-Time Training</title>
+    <updated>2026-07-22T21:06:43Z</updated>
+    <link href="https://arxiv.org/abs/2603.06642v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2603.06642v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Test-Time Training (TTT) language models replace the KV-cache with fast weights updated during inference, achieving O(1) memory but suffering catastrophic failure on exact-recall tasks. Version 1 of this work proposed SR-TTT, which routes high-surprisal tokens to a sparse exact-attention Residual Cache, and reported large Needle-in-a-Haystack gains. We show those gains were evaluation artifacts: the loss and metric read logits at the answer positions rather than one position earlier, training both models to copy an answer already visible in their input (a model trained on retrieval-impossible data reaches 100% accuracy under the flawed metric); additionally, the cache attended non-causally over future tokens, including the answer itself. We release a corrected implementation with startup causality self-tests, then ask whether the SR-TTT hypothesis survives correction. It does not, and the failure decomposes into two independent, separately measured bottlenecks. Storage: surprisal gating is systematically position-biased - the TTT reconstruction loss requires burn-in before a needle becomes relatively surprising, so early-context needles are stored at near-zero rates (0-1% containment at depth 0.1) exactly where long-context memory matters most. Addressing: with storage solved by an oracle and with new trainable read-time projections, per-slot attention supervision raises addressing mass 2.5x (0.06 -&gt; 0.15) yet token accuracy is statistically unchanged, and retrieval extracts only approx. 0.06 nats of the 2.30-nat needle; position-free content addressing cannot resolve ordered slots whose contents are near-interchangeable. Exact match remains 0% in all 2,250 paired trials across all corrected conditions. We retract the claims of v1 and offer the corrected codebase, diagnostic protocol, and negative results as a cautionary reference for surprise-gated memory architectures.</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-02-26T01:54:24Z</published>
+    <arxiv:comment>7 pages, 3 figures</arxiv:comment>
+    <arxiv:primary_category term="cs.LG"/>
+    <author>
+      <name>Swamynathan V P</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2212.10252v1</id>
+    <title>MDL-based Compressing Sequential Rules</title>
+    <updated>2022-12-20T14:00:57Z</updated>
+    <link href="https://arxiv.org/abs/2212.10252v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2212.10252v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Nowadays, with the rapid development of the Internet, the era of big data has come. The Internet generates huge amounts of data every day. However, extracting meaningful information from massive data is like looking for a needle in a haystack. Data mining techniques can provide various feasible methods to solve this problem. At present, many sequential rule mining (SRM) algorithms are presented to find sequential rules in databases with sequential characteristics. These rules help people extract a lot of meaningful information from massive amounts of data. How can we achieve compression of mined results and reduce data size to save storage space and transmission time? Until now, there has been little research on the compression of SRM. In this paper, combined with the Minimum Description Length (MDL) principle and under the two metrics (support and confidence), we introduce the problem of compression of SRM and also propose a solution named ComSR for MDL-based compressing of sequential rules based on the designed sequential rule coding scheme. To our knowledge, we are the first to use sequential rules to encode an entire database. A heuristic method is proposed to find a set of compact and meaningful sequential rules as much as possible. ComSR has two trade-off algorithms, ComSR_non and ComSR_ful, based on whether the database can be completely compressed. Experiments done on a real dataset with different thresholds show that a set of compact and meaningful sequential rules can be found. This shows that the proposed method works.</summary>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2022-12-20T14:00:57Z</published>
+    <arxiv:comment>Preprint. 6 figures, 8 tables</arxiv:comment>
+    <arxiv:primary_category term="cs.AI"/>
+    <author>
+      <name>Xinhong Chen</name>
+    </author>
+    <author>
+      <name>Wensheng Gan</name>
+    </author>
+    <author>
+      <name>Shicheng Wan</name>
+    </author>
+    <author>
+      <name>Tianlong Gu</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2507.14615v1</id>
+    <title>Retrieval-Augmented Clinical Benchmarking for Contextual Model Testing in Kenyan Primary Care: A Methodology Paper</title>
+    <updated>2025-07-19T13:25:26Z</updated>
+    <link href="https://arxiv.org/abs/2507.14615v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2507.14615v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Large Language Models(LLMs) hold promise for improving healthcare access in low-resource settings, but their effectiveness in African primary care remains underexplored. We present a methodology for creating a benchmark dataset and evaluation framework focused on Kenyan Level 2 and 3 clinical care. Our approach uses retrieval augmented generation (RAG) to ground clinical questions in Kenya's national guidelines, ensuring alignment with local standards. These guidelines were digitized, chunked, and indexed for semantic retrieval. Gemini Flash 2.0 Lite was then prompted with guideline excerpts to generate realistic clinical scenarios, multiple-choice questions, and rationale based answers in English and Swahili. Kenyan physicians co-created and refined the dataset, and a blinded expert review process ensured clinical accuracy, clarity, and cultural appropriateness. The resulting Alama Health QA dataset includes thousands of regulator-aligned question answer pairs across common outpatient conditions. Beyond accuracy, we introduce evaluation metrics that test clinical reasoning, safety, and adaptability such as rare case detection (Needle in the Haystack), stepwise logic (Decision Points), and contextual adaptability. Initial results reveal significant performance gaps when LLMs are applied to localized scenarios, consistent with findings that LLM accuracy is lower on African medical content than on US-based benchmarks. This work offers a replicable model for guideline-driven, dynamic benchmarking to support safe AI deployment in African health systems.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-07-19T13:25:26Z</published>
+    <arxiv:comment>29 pages, 6 figs, 6 tables. Companion methods paper forthcoming</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Fred Mutisya</name>
+      <arxiv:affiliation>Qhala, Nairobi, Kenya</arxiv:affiliation>
+      <arxiv:affiliation>Kenya Medical Association, Nairobi, Kenya</arxiv:affiliation>
+    </author>
+    <author>
+      <name>Shikoh Gitau</name>
+      <arxiv:affiliation>Qhala, Nairobi, Kenya</arxiv:affiliation>
+    </author>
+    <author>
+      <name>Christine Syovata</name>
+      <arxiv:affiliation>Kenya Medical Association, Nairobi, Kenya</arxiv:affiliation>
+    </author>
+    <author>
+      <name>Diana Oigara</name>
+      <arxiv:affiliation>Kenya Medical Association, Nairobi, Kenya</arxiv:affiliation>
+    </author>
+    <author>
+      <name>Ibrahim Matende</name>
+      <arxiv:affiliation>Kenya Medical Association, Nairobi, Kenya</arxiv:affiliation>
+    </author>
+    <author>
+      <name>Muna Aden</name>
+      <arxiv:affiliation>Kenya Medical Association, Nairobi, Kenya</arxiv:affiliation>
+    </author>
+    <author>
+      <name>Munira Ali</name>
+      <arxiv:affiliation>Kenya Medical Association, Nairobi, Kenya</arxiv:affiliation>
+    </author>
+    <author>
+      <name>Ryan Nyotu</name>
+      <arxiv:affiliation>Kenya Medical Association, Nairobi, Kenya</arxiv:affiliation>
+    </author>
+    <author>
+      <name>Diana Marion</name>
+      <arxiv:affiliation>Kenya Medical Association, Nairobi, Kenya</arxiv:affiliation>
+    </author>
+    <author>
+      <name>Job Nyangena</name>
+      <arxiv:affiliation>Kenya Medical Association, Nairobi, Kenya</arxiv:affiliation>
+    </author>
+    <author>
+      <name>Nasubo Ongoma</name>
+      <arxiv:affiliation>Qhala, Nairobi, Kenya</arxiv:affiliation>
+    </author>
+    <author>
+      <name>Keith Mbae</name>
+      <arxiv:affiliation>Qhala, Nairobi, Kenya</arxiv:affiliation>
+    </author>
+    <author>
+      <name>Elizabeth Wamicha</name>
+      <arxiv:affiliation>Qhala, Nairobi, Kenya</arxiv:affiliation>
+    </author>
+    <author>
+      <name>Eric Mibuari</name>
+      <arxiv:affiliation>Qhala, Nairobi, Kenya</arxiv:affiliation>
+    </author>
+    <author>
+      <name>Jean Philbert Nsengemana</name>
+      <arxiv:affiliation>Africa CDC</arxiv:affiliation>
+    </author>
+    <author>
+      <name>Talkmore Chidede</name>
+      <arxiv:affiliation>AfCFTA</arxiv:affiliation>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2510.10081v1</id>
+    <title>A Mathematics-Guided Approach to Floating-Point Error Detection</title>
+    <updated>2025-10-11T07:38:14Z</updated>
+    <link href="https://arxiv.org/abs/2510.10081v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2510.10081v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Floating-point program errors can lead to severe consequences, particularly in critical domains such as military applications. Only a small subset of inputs may induce substantial floating-point errors, prompting researchers to develop methods for identifying these error-inducing inputs. Although existing approaches have achieved some success, they still suffer from two major limitations: (1) High computational cost: The evaluation of error magnitude for candidate inputs relies on high-precision programs, which are prohibitively time-consuming. (2) Limited long-range convergence capability: Current methods exhibit inefficiency in search, making the process akin to finding a needle in a haystack.
+  To address these two limitations, we propose a novel method, named MGDE, to detect error-inducing inputs based on mathematical guidance. By employing the Newton-Raphson method, which exhibits quadratic convergence properties, we achieve highly effective and efficient results. Since the goal of identifying error-inducing inputs is to uncover the underlying bugs, we use the number of bugs detected in floating-point programs as the primary evaluation metric in our experiments. As FPCC represents the most effective state-of-the-art approach to date, we use it as the baseline for comparison. The dataset of FPCC consists of 88 single-input floating-point programs. FPCC is able to detect 48 bugs across 29 programs, whereas our method successfully identifies 89 bugs across 44 programs. Moreover, FPCC takes 6.4096 times as long as our proposed method. We also deploy our method to multi-input programs, identifying a total of nine bugs with an average detection time of 0.6443 seconds per program. In contrast, FPCC fails to detect any bugs while requiring an average computation time of 100 seconds per program.</summary>
+    <category term="cs.SE" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-10-11T07:38:14Z</published>
+    <arxiv:primary_category term="cs.SE"/>
+    <author>
+      <name>Youshuai Tan</name>
+    </author>
+    <author>
+      <name>Zhanwei Zhang</name>
+    </author>
+    <author>
+      <name>Zishuo Ding</name>
+    </author>
+    <author>
+      <name>Lianyu Zheng</name>
+    </author>
+    <author>
+      <name>Jinfu Chen</name>
+    </author>
+    <author>
+      <name>Weiyi Shang</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2510.03486v1</id>
+    <title>Reasoning-based Anomaly Detection Framework: A Real-time, Scalable, and Automated Approach to Anomaly Detection Across Domains</title>
+    <updated>2025-10-03T20:06:31Z</updated>
+    <link href="https://arxiv.org/abs/2510.03486v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2510.03486v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Detecting anomalies in large, distributed systems presents several challenges. The first challenge arises from the sheer volume of data that needs to be processed. Flagging anomalies in a high-throughput environment calls for a careful consideration of both algorithm and system design. The second challenge comes from the heterogeneity of time-series datasets that leverage such a system in production. In practice, anomaly detection systems are rarely deployed for a single use case. Typically, there are several metrics to monitor, often across several domains (e.g. engineering, business and operations). A one-size-fits-all approach rarely works, so these systems need to be fine-tuned for every application - this is often done manually. The third challenge comes from the fact that determining the root-cause of anomalies in such settings is akin to finding a needle in a haystack. Identifying (in real time) a time-series dataset that is associated causally with the anomalous time-series data is a very difficult problem. In this paper, we describe a unified framework that addresses these challenges. Reasoning based Anomaly Detection Framework (RADF) is designed to perform real time anomaly detection on very large datasets. This framework employs a novel technique (mSelect) that automates the process of algorithm selection and hyper-parameter tuning for each use case. Finally, it incorporates a post-detection capability that allows for faster triaging and root-cause determination. Our extensive experiments demonstrate that RADF, powered by mSelect, surpasses state-of-the-art anomaly detection models in AUC performance for 5 out of 9 public benchmarking datasets. RADF achieved an AUC of over 0.85 for 7 out of 9 datasets, a distinction unmatched by any other state-of-the-art model.</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-10-03T20:06:31Z</published>
+    <arxiv:comment>11 pages, 7 figures</arxiv:comment>
+    <arxiv:primary_category term="cs.LG"/>
+    <author>
+      <name>Anupam Panwar</name>
+    </author>
+    <author>
+      <name>Himadri Pal</name>
+    </author>
+    <author>
+      <name>Jiali Chen</name>
+    </author>
+    <author>
+      <name>Kyle Cho</name>
+    </author>
+    <author>
+      <name>Riddick Jiang</name>
+    </author>
+    <author>
+      <name>Miao Zhao</name>
+    </author>
+    <author>
+      <name>Rajiv Krishnamurthy</name>
+    </author>
+  </entry>
+</feed>

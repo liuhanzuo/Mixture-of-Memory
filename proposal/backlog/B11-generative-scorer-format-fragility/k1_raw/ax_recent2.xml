@@ -1,0 +1,489 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<feed xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/" xmlns:arxiv="http://arxiv.org/schemas/atom" xmlns="http://www.w3.org/2005/Atom">
+  <id>https://arxiv.org/api/oPXEoZyV7aCUmrG6uYqTbtT5+mA</id>
+  <title>arXiv Query: search_query=abs:"scoring rule" AND abs:"ranking" AND abs:"benchmark"&amp;id_list=&amp;start=0&amp;max_results=25</title>
+  <updated>2026-08-14T06:57:07Z</updated>
+  <link href="https://arxiv.org/api/query?search_query=abs:%22scoring+rule%22+AND+(abs:%22ranking%22+AND+abs:%22benchmark%22)&amp;start=0&amp;max_results=25&amp;id_list=" type="application/atom+xml"/>
+  <opensearch:itemsPerPage>25</opensearch:itemsPerPage>
+  <opensearch:totalResults>20</opensearch:totalResults>
+  <opensearch:startIndex>0</opensearch:startIndex>
+  <entry>
+    <id>http://arxiv.org/abs/2608.05485v1</id>
+    <title>VideoArgus: Agentic Rubric-Grounded Unified Evaluation for Video Generation and Editing</title>
+    <updated>2026-08-06T00:28:38Z</updated>
+    <link href="https://arxiv.org/abs/2608.05485v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2608.05485v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Evaluating generated videos remains challenging because existing benchmarks rely on fixed evaluation content, cover only a subset of generation and editing settings, and provide limited evidence for their scores. We introduce VideoArgus, a unified rubric-grounded framework covering five video generation and editing settings. For each input instance, VideoArgus generates an output-blind, sample-specific rubric once and reuses it to evaluate all corresponding candidate videos. The rubric defines concrete criteria, scoring rules, failure modes, and evidence plans, which guide criterion-specific VLM QA and visual tools to produce evidence-grounded criterion scores, rationales, and a diagnostic report. We further construct VideoArgus-Bench, containing 1,026 curated input instances built from 653 high-quality images and 416 high-quality videos, with all benchmark rubrics pre-generated, frozen, and released. On a separate 1,260-video human-alignment set, VideoArgus achieves higher within-input Spearman and Kendall correlations with human judgments than the corresponding benchmark-specific evaluators across all five tasks. Model rankings also remain largely consistent across different rubric-generation and evaluation-VLM backbones. All code and data are released. Visit our project page: https://zzzmyyzeng.github.io/VideoArgus</summary>
+    <category term="cs.CV" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-08-06T00:28:38Z</published>
+    <arxiv:comment>Preprint</arxiv:comment>
+    <arxiv:primary_category term="cs.CV"/>
+    <author>
+      <name>Ziyun Zeng</name>
+    </author>
+    <author>
+      <name>Zixuan Wang</name>
+    </author>
+    <author>
+      <name>Yongsheng Yu</name>
+    </author>
+    <author>
+      <name>Hang Hua</name>
+    </author>
+    <author>
+      <name>Jiebo Luo</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2607.25891v1</id>
+    <title>Messier: A High-Resolution Corpus for Cross-Benchmark Agent Evaluation</title>
+    <updated>2026-07-28T15:50:19Z</updated>
+    <link href="https://arxiv.org/abs/2607.25891v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2607.25891v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Evaluating AI agents in interactive environments is hindered by fragmented tasks, scaffolds, verifiers, and scoring rules. Existing efforts focus on narrow settings, remain limited in scale, or require costly reruns, leaving much of the empirical record incomparable. We introduce Messier, a unified corpus of 957,253 records that span 30 benchmarks, 714 agents, 11,891 tasks, and 74,205 verifiers. Messier consolidates public benchmark scores and supplements them with five-agent runs across six underrepresented professional and scientific domains, including a recent legal benchmark. Each record is standardized by model, scaffold, environment, task, verifier, and aggregation rule, with SOC/NAICS classifications for occupational and industry analysis. Using this corpus, we show frontier progress is uneven across benchmark types, with "function calling" saturated, "programming" improving the fastest, and "enterprise workflows" remaining the most challenging. Furthermore, counterfactual rescoring shows that strict all-pass aggregation in multi-verifier tasks can obscure progress and artificially alter agent rankings. From these standardized records, we derive capability scales that align with Epoch's Evaluation Capability Index rankings at Spearman \r{ho} = 0.81 and can be specialized by domain, occupation, action space, or verifier type. Messier provides a foundational, reusable infrastructure for agent capability scaling, benchmark auditing, and fine-grained analysis of evaluation failures.</summary>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.DB" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-07-28T15:50:19Z</published>
+    <arxiv:primary_category term="cs.AI"/>
+    <author>
+      <name>Stefan Krsteski</name>
+    </author>
+    <author>
+      <name>Charlotte Meyer</name>
+    </author>
+    <author>
+      <name>Guillaume Allegre</name>
+    </author>
+    <author>
+      <name>Tony O'Halloran</name>
+    </author>
+    <author>
+      <name>Alexandre Sallinen</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2607.12767v1</id>
+    <title>Accuracy and Normalized Accuracy under Length Bias: Analysis, Guidelines, and a Bayesian Alternative</title>
+    <updated>2026-07-14T13:39:11Z</updated>
+    <link href="https://arxiv.org/abs/2607.12767v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2607.12767v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Multiple-choice benchmarks that rank candidate completions by conditional log-probability suffer from a length bias: because log-probabilities sum over tokens, longer answers tend to be penalized relative to shorter ones in practice. A common mitigation is to normalize scores by completion length, but we show empirically that this heuristic frequently over-corrects, introducing a bias toward longer answers instead. We first analyze these scoring rules, characterizing when standard and length-normalized accuracy are appropriate and how their length biases depend on the distribution of completion lengths. Motivated by this analysis, we introduce \emph{Bayesian accuracy}, a scoring rule that computes the posterior probability of each candidate under an explicit prior over answer length, thereby removing linear length effects. Bayesian accuracy is a drop-in replacement for likelihood-based multiple-choice evaluation, requires no additional forward passes, and consistently exhibits lower empirical length bias than both standard and length-normalized accuracy across benchmarks and few-shot settings.</summary>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-07-14T13:39:11Z</published>
+    <arxiv:comment>Accepted at ICML 2026</arxiv:comment>
+    <arxiv:primary_category term="cs.AI"/>
+    <author>
+      <name>Koen Oostermeijer</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2607.01211v2</id>
+    <title>Are Performance-Optimization Benchmarks Reliably Measuring Coding Agents?</title>
+    <updated>2026-07-16T08:45:07Z</updated>
+    <link href="https://arxiv.org/abs/2607.01211v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2607.01211v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Repository-level performance-optimization benchmarks such as GSO, SWE-Perf and SWE-fficiency evaluate coding agents by applying patches to real repositories and comparing runtime against unoptimized baselines and official reference patches. Their leaderboard scores are increasingly used as evidence of coding-agent progress, but those scores can conflate runtime instability, benchmark-specific scoring rules, and how many tasks are already solved by at least one public submission. We audit these issues across the three benchmarks. First, we replay the official reference patches for 740 code optimization tasks across four common types of Google Cloud machines. Most benchmark tasks can be replayed, but their reference patches satisfy the original benchmark validity rules in every cross-machine replay for only 39/102 GSO tasks, 11/140 SWE-Perf tasks, and 411/498 SWE-fficiency tasks; SWE-Perf is especially fragile because many reference patches produce close-to-zero runtime changes. Second, we show that public submission rankings depend strongly on the benchmark scoring rule. Among eight public submissions shared by GSO and SWE-fficiency, the official rankings disagree on 9 of 28 pairwise submission comparisons, and SWE-fficiency's leaderboard scoring rule assigns the worst ten tasks overly high score weights of 58.5%-82.8%. Third, looking across 10 public submissions for each task, we find that at least one submission matches or beats the reference patch on 85.3% (384/450) of replay-valid GSO and SWE-fficiency tasks, and beats the unoptimized base code on 99.8% (449/450). Our study complements leaderboard scores by identifying tasks with more reliable performance signals, quantifying per-task score contributions, and exposing the remaining performance gaps that are hidden by aggregate rankings.</summary>
+    <category term="cs.SE" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-07-01T17:50:48Z</published>
+    <arxiv:comment>12 pages, 7 figures. Public data: https://github.com/chenzhi-cz/performance-optimization-benchmark-reliability</arxiv:comment>
+    <arxiv:primary_category term="cs.SE"/>
+    <author>
+      <name>Zhi Chen</name>
+    </author>
+    <author>
+      <name>Zhensu Sun</name>
+    </author>
+    <author>
+      <name>Yuling Shi</name>
+    </author>
+    <author>
+      <name>David Lo</name>
+    </author>
+    <author>
+      <name>Lingxiao Jiang</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2606.15486v1</id>
+    <title>ST-DiffEye: Diffusion-based Continuous Gaze Generation via Joint Scanpath-Trajectory Modeling</title>
+    <updated>2026-06-13T21:56:08Z</updated>
+    <link href="https://arxiv.org/abs/2606.15486v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2606.15486v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>We study the problem of human gaze modeling, which aims to generate the gaze patterns a viewer produces while observing a visual stimulus. Gaze is primarily captured through two modalities: continuous eye-tracking trajectories, which describe fine-grained motion dynamics, and discrete scanpaths, which describe high-level fixation structure. Because gaze varies substantially across viewers and trials, we treat this variability as a defining property rather than noise and model gaze as a stochastic generative process. Existing generative gaze models supervise on only one of these two representations in isolation. We hypothesize that trajectories and scanpaths describe gaze at complementary scales and are jointly informative during training, and test this hypothesis through ST-DiffEye, a joint trajectory-scanpath diffusion framework that couples both modalities by concatenating them as an additional raw input channel, requiring no architectural overhead beyond an input and output channel expansion. We further introduce a principled evaluation framework based on the Continuous Ranked Probability Score (CRPS), which generalizes any existing sequence similarity metric into a proper scoring rule that jointly assesses the accuracy and diversity of generated gaze. Experiments on task-driven visual search, covering both target-present and target-absent scenarios, and on free-viewing benchmarks demonstrate state-of-the-art performance. These results, along with detailed ablations, confirm the benefit of joint modeling and the value of distribution-aware evaluation in capturing the intrinsic variability of human gaze. Project webpage: https://st-diffeye.github.io/</summary>
+    <category term="cs.CV" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-06-13T21:56:08Z</published>
+    <arxiv:primary_category term="cs.CV"/>
+    <author>
+      <name>Brian Nlong Zhao</name>
+    </author>
+    <author>
+      <name>Ozgur Kara</name>
+    </author>
+    <author>
+      <name>Junho Kim</name>
+    </author>
+    <author>
+      <name>James M. Rehg</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2606.08587v1</id>
+    <title>Improving the sharpness in neural network-based parametric post-processing of ensemble forecasts</title>
+    <updated>2026-06-07T11:57:09Z</updated>
+    <link href="https://arxiv.org/abs/2606.08587v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2606.08587v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Statistical post-processing has proven to be an effective tool in improving ensemble forecast of different weather variables. Case studies show that post-processing can remedy the typically underdispersive and potentially biased behaviour of the ensemble while optimizing a proper scoring rule expressing the forecast skill. The price of these positive effects is generally a deterioration in sharpness; the width of the central prediction intervals and the uncertainty of the predictions are increasing, especially for shorter lead times. This work aims to reduce the extent of the latter phenomenon for neural network-based parametric post-processing methods by extending the network's loss function with a penalty term. We demonstrate the effect of the proposed technique for 2m temperature ensemble forecasts of the European Centre for Medium-Range Weather Forecasts downloaded from the EUPPBench benchmark dataset and verified against synoptic observations. Here, the predictive distribution is Gaussian, and we use the continuous ranked probability score (CRPS) as loss function. The case studies confirm a substantial relative decrease ($8.2\%-12.5\%$) in the width of the nominal central prediction interval compared to the width of the predictive distribution computed without the penalty term, while there is no deterioration in the mean CRPS of probabilistic forecasts and in the RMSE of the predictive mean.</summary>
+    <category term="stat.ML" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-06-07T11:57:09Z</published>
+    <arxiv:comment>18 pages</arxiv:comment>
+    <arxiv:primary_category term="stat.ML"/>
+    <author>
+      <name>Ágnes Baran</name>
+    </author>
+    <author>
+      <name>Máté Mihalina</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2605.21130v1</id>
+    <title>VersusQ: Pairwise Margin Reasoning for Generalizable Video Quality Assessment</title>
+    <updated>2026-05-20T13:03:17Z</updated>
+    <link href="https://arxiv.org/abs/2605.21130v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2605.21130v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Large Multimodal Models (LMMs) have shown promise for video quality assessment, but most methods still predict an absolute score for each video. Such pointwise supervision often mixes perceptual quality with dataset-specific calibration, including annotation protocols, rating habits, and score distributions. As a result, the learned scoring rule may work well within a benchmark but transfer poorly across unseen domains. We argue that relative comparisons alleviate the absolute-scale calibration bias by focusing purely on perceptual differences rather than dataset-specific rating habits. Consequently, we propose \textbf{VersusQ}, a pairwise margin reasoning framework driven entirely by direct comparisons. Specifically, VersusQ performs LMM-based comparison between two videos, reasons about their visual and temporal quality differences, and predicts a signed continuous margin that captures both the preferred choice and the degree of difference. Furthermore, to align interpretable comparison rationales with fine-grained numerical differences, we introduce Margin-Coupled GRPO, which jointly optimizes rollout-based relational reasoning and continuous margin regression. Extensive experiments on multiple public VQA benchmarks demonstrate that VersusQ achieves state-of-the-art performance, strong cross-domain generalization, and reliable fine-grained ranking under heterogeneous evaluation scenarios.</summary>
+    <category term="cs.CV" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-05-20T13:03:17Z</published>
+    <arxiv:primary_category term="cs.CV"/>
+    <author>
+      <name>Shibei Meng</name>
+    </author>
+    <author>
+      <name>Binxin Yang</name>
+    </author>
+    <author>
+      <name>Yuan Liu</name>
+    </author>
+    <author>
+      <name>Jiexuan Zhang</name>
+    </author>
+    <author>
+      <name>Zhengyao Lv</name>
+    </author>
+    <author>
+      <name>Hubery Yin</name>
+    </author>
+    <author>
+      <name>Qiang Xu</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2605.19939v2</id>
+    <title>Uncertainty-aware Machine Learning Interatomic Potentials via Learned Functional Perturbations</title>
+    <updated>2026-05-25T20:58:41Z</updated>
+    <link href="https://arxiv.org/abs/2605.19939v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2605.19939v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Machine Learning Interatomic Potentials (MLIPs) achieve near ab initio accuracy at a fraction of the cost of quantum-mechanical simulations, yet they remain prone to silent failures on out-of-distribution configurations, making principled uncertainty quantification (UQ) essential for error-aware simulations and active learning. Existing non-ensemble UQ methods for MLIPs rely either on variational inference or on parametric distributional assumptions, both of which add architectural complexity and hyper-parameters that must be tuned per task. Inspired by recent advances in probabilistic weather forecasting, we propose a simpler alternative: turn a deterministic MLIP into a probabilistic one through learned functional perturbations and finetune it end-to-end with the Continuous Ranked Probability Score (CRPS), a proper scoring rule. We validate the approach with an equivariant GNN (P-EGNN) trained from scratch and by finetuning the foundation model the Orb-v3 for silica. On the N-body charged particle benchmark, P-EGNN improves CRPS over the state-of-the-art Bayesian MLIP method BLIP by 19-32% across all training sizes; on silica, P-Orb raises the Spearman correlation between predicted uncertainty and actual error from 0.75 (BLIP-Orb) to 0.84.</summary>
+    <category term="cs.CE" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-05-19T15:00:06Z</published>
+    <arxiv:primary_category term="cs.CE"/>
+    <author>
+      <name>Olga Zaghen</name>
+    </author>
+    <author>
+      <name>Maksim Zhdanov</name>
+    </author>
+    <author>
+      <name>Dario Coscia</name>
+    </author>
+    <author>
+      <name>David R. Wessels</name>
+    </author>
+    <author>
+      <name>Erik J. Bekkers</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2605.17602v2</id>
+    <title>AutoRubric-T2I: Robust Rule-Based Reward Model for Text-to-Image Alignment</title>
+    <updated>2026-05-20T20:58:48Z</updated>
+    <link href="https://arxiv.org/abs/2605.17602v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2605.17602v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Aligning Text-to-Image (T2I) generation models with human preferences increasingly relies on image reward models that score or rank generated images according to prompt alignment and perceptual quality. Existing reward models are commonly trained as Bradley-Terry (BT) preference models on large-scale human preference corpora, making them costly to train, difficult to adapt, and opaque in their evaluation criteria. Meanwhile, Vision-Language Model (VLM) judges can provide more fine-grained assessments through textual rubrics, but their manually designed or heuristically generated scoring rules may fail to reliably reflect human preferences. In this paper, we propose AutoRubric-T2I, the first rubric learning framework in T2I that automatically synthesizes and selects explicit rubrics for guiding VLM judges. AutoRubric-T2I first synthesizes reasoning traces from preference pairs into candidate rubrics, then uses a VLM judge to score paired images under each rubric, producing pairwise rubric-score differences for preference learning. To remove noisy and redundant rules, we further employ a $\ell_1$-Regularized Logistic Regression Refiner, which selects the Top-$N$ most discriminative rubrics. Extensive evaluations show that AutoRubric-T2I produces high-quality, interpretable reward signals using less than 0.01% of the annotated preference data, substantially reducing the need for large-scale reward-model training. On image reward benchmarks such as MMRB2, AutoRubric-T2I outperforms strong reward model baselines. We further validate AutoRubric-T2I as an RL reward on downstream T2I tasks, including TIIF and UniGenBench++, where it improves generation quality over scalar reward models using the Flow-GRPO pipeline on diffusion models.</summary>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CV" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-05-17T19:00:44Z</published>
+    <arxiv:comment>27 pages</arxiv:comment>
+    <arxiv:primary_category term="cs.AI"/>
+    <author>
+      <name>Kuei-Chun Kao</name>
+    </author>
+    <author>
+      <name>Daixuan Huo</name>
+    </author>
+    <author>
+      <name>Yuanhao Ban</name>
+    </author>
+    <author>
+      <name>Cho-Jui Hsieh</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2605.09702v1</id>
+    <title>Calibrate, Don't Curate: Label-Efficient Estimation from Noisy LLM Judges</title>
+    <updated>2026-05-10T18:49:58Z</updated>
+    <link href="https://arxiv.org/abs/2605.09702v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2605.09702v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Multi-judge evaluation is increasingly used to assess LLMs and reward models, and the prevailing heuristic is to curate: keep the most accurate judges and discard weaker ones. We show that this heuristic can reverse when the target is not point accuracy, but calibrated probabilistic evaluation from a labeled calibration set. Holding the aggregation and calibration procedures fixed, we compare accuracy-ranked top-$k$ judge selection with using the full judge panel. Across four labeled pairwise-evaluation benchmarks spanning LLM-as-judge and reward-model settings, the calibrated full panel consistently outperforms accuracy-based selection. On RewardBench2, retaining all judges achieves negative log-likelihood (NLL) of $0.006$ versus $0.013$ under top-5 selection, halving the calibration error. This advantage persists after judge-family deduplication and against stronger same-pipeline subset search. We explain this reversal with oracle analyses showing that the optimal calibrated risk under proper scoring rules cannot increase when additional judge signals are made available, and that even below-chance judges can be useful when their biases are learnable and their signals are non-redundant. The resulting operating principle is simple: in multi-judge evaluation with labeled calibration data, do not discard weak judges by accuracy alone; keep them when they are parseable, non-redundant, and calibratable.</summary>
+    <category term="stat.ME" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-05-10T18:49:58Z</published>
+    <arxiv:primary_category term="stat.ME"/>
+    <author>
+      <name>Yanran Li</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2605.02437v1</id>
+    <title>Multi-Rater Calibrated Segmentation Models</title>
+    <updated>2026-05-04T10:35:34Z</updated>
+    <link href="https://arxiv.org/abs/2605.02437v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2605.02437v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Objective: Accurate probability estimates are essential for the safe deployment of medical image segmentation models in clinical decision-making. However, modern deep segmentation networks are often poorly calibrated, a problem exacerbated when multiple expert annotations exhibit substantial disagreement. While inter-rater variability is typically treated as noise, it provides valuable information about intrinsic annotation ambiguity that must be reflected in model confidence. Methods: We improve the probabilistic calibration of medical image segmentation models by reformulating multi-rater supervision as an ordinal learning problem. Voxel-wise annotator agreement is treated as an ordered target, linking predictive confidence to the empirical variability in training data. This formulation allows the use of ordinal-aware scoring rules, such as the Ranked Probability Score ordinal loss, combined with a standard binary objective to preserve discriminative performance. Results: We evaluated the proposed approach across four public segmentation benchmarks spanning ophthalmology, histopathology, and thoracic imaging. Calibration was assessed using a multi-rater extension of expected calibration error. Results consistently show that ordinal-aware training yields substantially improved calibration with respect to inter-rater agreement without degrading segmentation accuracy. Conclusions: Treating multi-rater annotations as ordered information provides a principled and architecture-agnostic route to more reliable probabilistic segmentation models.</summary>
+    <category term="cs.CV" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-05-04T10:35:34Z</published>
+    <arxiv:primary_category term="cs.CV"/>
+    <author>
+      <name>Meritxell Riera-Marín</name>
+    </author>
+    <author>
+      <name>Javier García López</name>
+    </author>
+    <author>
+      <name>Júlia Rodríguez-Comas</name>
+    </author>
+    <author>
+      <name>Miguel A. González Ballester</name>
+    </author>
+    <author>
+      <name>Adrian Galdran</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2603.29928v3</id>
+    <title>ScoringBench: A Benchmark for Evaluating Tabular Foundation Models with Proper Scoring Rules</title>
+    <updated>2026-05-04T14:43:11Z</updated>
+    <link href="https://arxiv.org/abs/2603.29928v3" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2603.29928v3" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Tabular foundation models such as TabPFN and TabICL already produce full predictive distributions, yet prevailing regression benchmarks evaluate them almost exclusively via point-estimate metrics (RMSE, $R^2$). This discards precisely the distributional information these models are designed to provide - a critical gap for high-stakes domains where not all kinds of errors are equally costly.
+  We introduce ScoringBench, an open and extensible benchmark that evaluates tabular regression models under a comprehensive suite of proper scoring rules - including CRPS, CRLS, interval score, energy score, and weighted CRPS - alongside standard point metrics. ScoringBench covers 97 regression datasets from diverse domains, supports transparent community contributions via a git-based leaderboard, and provides two complementary ranking protocols: an ordinal Demsar/autorank approach and a magnitude-preserving z-score ranking approach.
+  Evaluating several models - spanning in-context learners, fine-tuned foundation models, gradient-boosted trees, and MLPs - we find that model rankings shift substantially depending on the scoring rule: models that excel on point-estimate metrics can rank poorly on probabilistic ones, and the top-performing model under one proper scoring rule may rank noticeably lower under another. These results demonstrate that the choice of evaluation metric is not a technicality but a modelling decision - and, for applications where e.g. tail errors are disproportionately costly, a domain-specific requirement with direct consequences for model deployment.</summary>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-03-31T16:01:56Z</published>
+    <arxiv:primary_category term="cs.AI"/>
+    <author>
+      <name>Jonas Landsgesell</name>
+    </author>
+    <author>
+      <name>Pascal Knoll</name>
+    </author>
+    <author>
+      <name>Tizian Wenzel</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2603.08206v5</id>
+    <title>Distributional Regression with Tabular Foundation Models: Evaluating Probabilistic Predictions via Proper Scoring Rules</title>
+    <updated>2026-06-22T15:37:03Z</updated>
+    <link href="https://arxiv.org/abs/2603.08206v5" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2603.08206v5" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Modern tabular foundation models such as TabPFN and TabICL naturally produce full predictive distributions, while the benchmarks used to evaluate them (TabArena, TALENT, and others) still rely almost exclusively on point-estimate metrics (RMSE, $R^2$). This mismatch implicitly rewards machine learning models or pipelines that elicit a good conditional mean while ignoring the quality of the predictive distribution. We make the case for using proper scoring rules for training, fine-tuning, and benchmarking (ranking) of tabular foundation models. Although all strictly proper scoring rules are theoretically equivalent at the population level, they may differ on finite data: We demonstrate analytically and empirically that different scoring rules can induce different inductive biases during finite-sample optimization, leading to different model performance. We validate this finding by running fine-tuning experiments with TabPFN and TabICL using different scoring rules for various data sets, revealing non-trivial interactions between training objectives and evaluation metrics. Our results show that practitioners can adapt tabular foundation models to task-specific scoring objectives, and that the choice of scoring rule can influence model behavior in practice.</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-03-09T10:38:01Z</published>
+    <arxiv:primary_category term="cs.LG"/>
+    <author>
+      <name>Jonas Landsgesell</name>
+    </author>
+    <author>
+      <name>Pascal Knoll</name>
+    </author>
+    <author>
+      <name>Tizian Wenzel</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2510.19328v2</id>
+    <title>Clustered Calibration: Representation-Aware Probability Calibration via Learned Subpopulations</title>
+    <updated>2026-05-23T15:34:18Z</updated>
+    <link href="https://arxiv.org/abs/2510.19328v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2510.19328v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Ensuring that predicted probabilities align with observed frequencies is critical in high-stakes domains such as clinical decision support, autonomous driving and financial risk assessment. Existing calibration methods typically apply a single global transformation or rely on post-hoc binning over predicted confidences, limiting their ability to exploit heterogeneous reliability across sub-populations. We propose Clustered Calibration, a representation-aware framework that identifies sub-populations via clustering in learned feature spaces (e.g., coverage vectors, SHAP values, CNN activations, Transformer embeddings) and fits a soft mixture of cluster-specific parametric calibrators under hierarchical shrinkage toward a global mapping. This design yields context-specific calibration while maintaining global stability. Across six tabular datasets and additional image and text benchmarks, clustered calibration consistently improves or matches strong global calibrators in terms of negative log-likelihood and Brier score, while preserving AUC and accuracy. We further show, both analytically and empirically, that fixed-bin Expected Calibration Error (ECE) can mis-rank soft, region-aware calibrators even when proper scoring rules improve, and we advocate for log-loss and Brier as more reliable bases for model selection in such settings.</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-10-22T07:41:30Z</published>
+    <arxiv:primary_category term="cs.LG"/>
+    <author>
+      <name>Tomer Lavi</name>
+    </author>
+    <author>
+      <name>Bracha Shapira</name>
+    </author>
+    <author>
+      <name>Nadav Rappoport</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2503.11250v2</id>
+    <title>CRPS-Based Targeted Sequential Design with Application in Chemical Space</title>
+    <updated>2025-12-15T10:58:38Z</updated>
+    <link href="https://arxiv.org/abs/2503.11250v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2503.11250v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Sequential design of real and computer experiments via Gaussian Process (GP) models has proven useful for parsimonious, goal-oriented data acquisition purposes. In this work, we focus on acquisition strategies for a GP model that needs to be accurate within a predefined range of the response of interest. Such an approach is useful in various fields including synthetic chemistry, where finding molecules with particular properties is essential for developing useful materials and effective medications. GP modeling and sequential design of experiments have been successfully applied to a plethora of domains, including molecule research. Our main contribution here is to use the threshold-weighted Continuous Ranked Probability Score (CRPS) as a basic building block for acquisition functions employed within sequential design. We study pointwise and integral criteria relying on two different weighting measures and benchmark them against competitors, demonstrating improved performance with respect to considered goals. The resulting acquisition strategies are applicable to a wide range of fields and pave the way to further developing sequential design relying on scoring rules.</summary>
+    <category term="stat.ML" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="stat.AP" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="stat.CO" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-03-14T10:00:24Z</published>
+    <arxiv:primary_category term="stat.ML"/>
+    <author>
+      <name>Lea Friedli</name>
+    </author>
+    <author>
+      <name>Athénaïs Gautier</name>
+    </author>
+    <author>
+      <name>Anna Broccard</name>
+    </author>
+    <author>
+      <name>David Ginsbourger</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2406.04098v2</id>
+    <title>A Large-Scale Neutral Comparison Study of Survival Models on Low-Dimensional Data</title>
+    <updated>2026-02-28T22:15:08Z</updated>
+    <link href="https://arxiv.org/abs/2406.04098v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2406.04098v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>This work presents the first large-scale neutral benchmark experiment focused on single-event, right-censored, low-dimensional survival data. Benchmark experiments are essential in methodological research to scientifically compare new and existing model classes through proper empirical evaluation. Existing benchmarks in the survival literature are smaller in scale regarding the number of used datasets and extent of empirical evaluation. They often lack appropriate tuning or evaluation procedures, while other comparison studies focus on qualitative reviews rather than quantitative comparisons. This comprehensive study aims to fill the gap by neutrally evaluating a broad range of methods and providing generalizable guidelines for practitioners. We benchmark 19 models, ranging from classical statistical approaches to many common machine learning methods, on 34 publicly available datasets. The benchmark tunes models using both a discrimination measure (Harrell's C-index) and a scoring rule (Integrated Survival Brier Score), and evaluates them across six metrics covering discrimination, calibration, and overall predictive performance. Despite superior average ranks in overall predictive performance from individual learners like oblique random survival forests and likelihood-based boosting, and better discrimination rankings from multiple boosting- and tree-based methods as well as parametric survival models, no method significantly outperforms the commonly used Cox proportional hazards model for either tuning measure. We conclude that for predictive purposes in the standard survival analysis setting of low-dimensional, right-censored data, the Cox Proportional Hazards model remains a simple and robust method, sufficient for most practitioners. All code, data, and results are publicly available on GitHub https://github.com/slds-lmu/paper_2023_survival_benchmark</summary>
+    <category term="stat.ML" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2024-06-06T14:13:38Z</published>
+    <arxiv:comment>44 pages, 20 figures</arxiv:comment>
+    <arxiv:primary_category term="stat.ML"/>
+    <author>
+      <name>Lukas Burk</name>
+    </author>
+    <author>
+      <name>John Zobolas</name>
+    </author>
+    <author>
+      <name>Bernd Bischl</name>
+    </author>
+    <author>
+      <name>Andreas Bender</name>
+    </author>
+    <author>
+      <name>Marvin N. Wright</name>
+    </author>
+    <author>
+      <name>Raphael Sonabend</name>
+    </author>
+    <arxiv:doi>10.1093/bioinformatics/btag186</arxiv:doi>
+    <link rel="related" href="https://doi.org/10.1093/bioinformatics/btag186" title="doi"/>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2405.04252v1</id>
+    <title>VAEneu: A New Avenue for VAE Application on Probabilistic Forecasting</title>
+    <updated>2024-05-07T12:13:11Z</updated>
+    <link href="https://arxiv.org/abs/2405.04252v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2405.04252v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>This paper presents VAEneu, an innovative autoregressive method for multistep ahead univariate probabilistic time series forecasting. We employ the conditional VAE framework and optimize the lower bound of the predictive distribution likelihood function by adopting the Continuous Ranked Probability Score (CRPS), a strictly proper scoring rule, as the loss function. This novel pipeline results in forecasting sharp and well-calibrated predictive distribution. Through a comprehensive empirical study, VAEneu is rigorously benchmarked against 12 baseline models across 12 datasets. The results unequivocally demonstrate VAEneu's remarkable forecasting performance. VAEneu provides a valuable tool for quantifying future uncertainties, and our extensive empirical study lays the foundation for future comparative studies for univariate multistep ahead probabilistic forecasting.</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2024-05-07T12:13:11Z</published>
+    <arxiv:primary_category term="cs.LG"/>
+    <author>
+      <name>Alireza Koochali</name>
+    </author>
+    <author>
+      <name>Ensiye Tahaei</name>
+    </author>
+    <author>
+      <name>Andreas Dengel</name>
+    </author>
+    <author>
+      <name>Sheraz Ahmed</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2303.06477v2</id>
+    <title>Reproduction Report for SV-COMP 2023</title>
+    <updated>2023-03-21T11:17:32Z</updated>
+    <link href="https://arxiv.org/abs/2303.06477v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2303.06477v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>The Competition on Software Verification (SV-COMP) is a large computational experiment benchmarking many different software verification tools on a vast collection of C and Java benchmarks. Such experimental research should be reproducible by researchers independent from the team that performed the original experiments. In this reproduction report, we present our recent attempt at reproducing SV-COMP 2023: We chose a meaningful subset of the competition and re-ran it on the competition organiser's infrastructure, using the scripts and tools provided in the competition's archived artifacts. We see minor differences in tool scores that appear explainable by the interaction of small runtime fluctuations with the competition's scoring rules, and successfully reproduce the overall ranking within our chosen subset. Overall, we consider SV-COMP 2023 to be reproducible.</summary>
+    <category term="cs.LO" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.SE" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2023-03-11T18:28:35Z</published>
+    <arxiv:comment>Presented at the RRRR 2023 workshop on April 22, 2023; see https://qcomp.org/rrrr/2023/. This work was part of the MISSION (Models in Space Systems: Integration, Operation, and Networking) project, funded by the European Union's Horizon 2020 research and innovation programme under Marie Skłodowska-Curie Actions grant number 101008233</arxiv:comment>
+    <arxiv:primary_category term="cs.LO"/>
+    <author>
+      <name>Marcus Gerhold</name>
+    </author>
+    <author>
+      <name>Arnd Hartmanns</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2106.00091v1</id>
+    <title>Optimal Algorithms for Multiwinner Elections and the Chamberlin-Courant Rule</title>
+    <updated>2021-05-31T20:28:59Z</updated>
+    <link href="https://arxiv.org/abs/2106.00091v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2106.00091v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>We consider the algorithmic question of choosing a subset of candidates of a given size $k$ from a set of $m$ candidates, with knowledge of voters' ordinal rankings over all candidates. We consider the well-known and classic scoring rule for achieving diverse representation: the Chamberlin-Courant (CC) or $1$-Borda rule, where the score of a committee is the average over the voters, of the rank of the best candidate in the committee for that voter; and its generalization to the average of the top $s$ best candidates, called the $s$-Borda rule.
+  Our first result is an improved analysis of the natural and well-studied greedy heuristic. We show that greedy achieves a $\left(1 - \frac{2}{k+1}\right)$-approximation to the maximization (or satisfaction) version of CC rule, and a $\left(1 - \frac{2s}{k+1}\right)$-approximation to the $s$-Borda score. Our result improves on the best known approximation algorithm for this problem. We show that these bounds are almost tight.
+  For the dissatisfaction (or minimization) version of the problem, we show that the score of $\frac{m+1}{k+1}$ can be viewed as an optimal benchmark for the CC rule, as it is essentially the best achievable score of any polynomial-time algorithm even when the optimal score is a polynomial factor smaller (under standard computational complexity assumptions). We show that another well-studied algorithm for this problem, called the Banzhaf rule, attains this benchmark.
+  We finally show that for the $s$-Borda rule, when the optimal value is small, these algorithms can be improved by a factor of $\tilde Ω(\sqrt{s})$ via LP rounding. Our upper and lower bounds are a significant improvement over previous results, and taken together, not only enable us to perform a finer comparison of greedy algorithms for these problems, but also provide analytic justification for using such algorithms in practice.</summary>
+    <category term="cs.GT" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.DS" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="econ.TH" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2021-05-31T20:28:59Z</published>
+    <arxiv:comment>Accepted by the Twenty-Second ACM Conference on Economics and Computation (EC 2021)</arxiv:comment>
+    <arxiv:primary_category term="cs.GT"/>
+    <author>
+      <name>Kamesh Munagala</name>
+    </author>
+    <author>
+      <name>Zeyu Shen</name>
+    </author>
+    <author>
+      <name>Kangning Wang</name>
+    </author>
+    <arxiv:doi>10.1145/3465456.3467624</arxiv:doi>
+    <link rel="related" href="https://doi.org/10.1145/3465456.3467624" title="doi"/>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2003.00987v4</id>
+    <title>Probabilistic performance estimators for computational chemistry methods: Systematic Improvement Probability and Ranking Probability Matrix. I. Theory</title>
+    <updated>2020-09-28T07:52:41Z</updated>
+    <link href="https://arxiv.org/abs/2003.00987v4" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2003.00987v4" rel="related" type="application/pdf" title="pdf"/>
+    <summary>The comparison of benchmark error sets is an essential tool for the evaluation of theories in computational chemistry. The standard ranking of methods by their Mean Unsigned Error is unsatisfactory for several reasons linked to the non-normality of the error distributions and the presence of underlying trends. Complementary statistics have recently been proposed to palliate such deficiencies, such as quantiles of the absolute errors distribution or the mean prediction uncertainty. We introduce here a new score, the systematic improvement probability (SIP), based on the direct system-wise comparison of absolute errors. Independently of the chosen scoring rule, the uncertainty of the statistics due to the incompleteness of the benchmark data sets is also generally overlooked. However, this uncertainty is essential to appreciate the robustness of rankings. In the present article, we develop two indicators based on robust statistics to address this problem: P_{inv}, the inversion probability between two values of a statistic, and \mathbf{P}_{r}, the ranking probability matrix. We demonstrate also the essential contribution of the correlations between error sets in these scores comparisons.</summary>
+    <category term="stat.ME" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="physics.chem-ph" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="physics.data-an" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2020-03-02T16:11:33Z</published>
+    <arxiv:primary_category term="stat.ME"/>
+    <arxiv:journal_ref>J. Chem. Phys. 152, 164108 (2020)</arxiv:journal_ref>
+    <author>
+      <name>Pascal Pernot</name>
+    </author>
+    <author>
+      <name>Andreas Savin</name>
+    </author>
+    <arxiv:doi>10.1063/5.0006202</arxiv:doi>
+    <link rel="related" href="https://doi.org/10.1063/5.0006202" title="doi"/>
+  </entry>
+</feed>

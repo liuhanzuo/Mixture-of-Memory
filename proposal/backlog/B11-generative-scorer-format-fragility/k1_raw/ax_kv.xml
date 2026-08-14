@@ -1,0 +1,58 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<feed xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/" xmlns:arxiv="http://arxiv.org/schemas/atom" xmlns="http://www.w3.org/2005/Atom">
+  <id>https://arxiv.org/api/lG/L67mqcymV+pmqkqyGLn632Jg</id>
+  <title>arXiv Query: search_query=&amp;id_list=2607.11942,2607.09683&amp;start=0&amp;max_results=5</title>
+  <updated>2026-08-14T06:50:46Z</updated>
+  <link href="https://arxiv.org/api/query?search_query=&amp;start=0&amp;max_results=5&amp;id_list=2607.11942,2607.09683" type="application/atom+xml"/>
+  <opensearch:itemsPerPage>5</opensearch:itemsPerPage>
+  <opensearch:totalResults>2</opensearch:totalResults>
+  <opensearch:startIndex>0</opensearch:startIndex>
+  <entry>
+    <id>http://arxiv.org/abs/2607.09683v1</id>
+    <title>Ablation, Statistical Inference, and Validation for KV-Cache Compression</title>
+    <updated>2026-06-14T22:44:55Z</updated>
+    <link href="https://arxiv.org/abs/2607.09683v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2607.09683v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>This study systematically compares Turbo-Quant and SpectralQuant KV-cache compression, evaluating non-dominated schemes, including WHT rotation with Beta Lloyd-Max and QJL, through a statistical validation methodology that separates systematic codec differences from implementation variance. Key findings reveal that while eigenbasis-based methods fail on heavy-tailed data due to covariance instability, they excel in structured regimes, with the effective semantic dimension ($d_{eff}$) adapting to calibration budgets rather than true data rank. (this is an abstract of the abstract thank you )</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.IT" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-06-14T22:44:55Z</published>
+    <arxiv:comment>15 pages, 8 figures, minimum number of citations</arxiv:comment>
+    <arxiv:primary_category term="cs.LG"/>
+    <author>
+      <name>Paolo D'Alberto</name>
+    </author>
+    <author>
+      <name>Ashish Siarasao</name>
+    </author>
+    <author>
+      <name>Elliott Delaye</name>
+    </author>
+    <author>
+      <name>Rajeev Patwari</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2607.11942v1</id>
+    <title>How Query Visibility Changes KV-Cache Compression Rankings: A Matched-Budget Audit</title>
+    <updated>2026-07-11T09:30:35Z</updated>
+    <link href="https://arxiv.org/abs/2607.11942v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2607.11942v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>KV-cache compression methods are predominantly evaluated with the query appended to the context before compression -- a query-aware protocol. Yet the economic case for a compressed KV cache is reuse: compress a document once, answer many future questions against it. In that deployment, compression must happen query-agnostic -- before any question is seen. We present a matched-budget audit of six published compression methods against three trivial baselines on three open 7-9B models (144,300 paired evaluations on RULER-8192; 40,800 on LongBench; 50,000-resample paired bootstrap throughout). Everything is held fixed -- model, compression ratio, instances, decoding -- except the scoring rule. Three findings. (1) Query visibility changes the rankings: under the agnostic protocol, of the five audited methods that share a common attention backend, only KeyDiff beats a best-of-3 trivial baseline consistently (31 of 36 cells), and the most widely deployed method, SnapKV, loses to "keep the start and the recent window" on average (-0.066). (2) The per-method drop between the two protocols is ordered consistently with how visible the question is to each method's scoring signal, legible in its source code: from Delta=+0.198 for SnapKV (the question sits inside its 64-token observation window) down to Delta=+0.011 for KeyDiff (its score contains no query term at all).</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-07-11T09:30:35Z</published>
+    <arxiv:comment>12 pages, 5 figures</arxiv:comment>
+    <arxiv:primary_category term="cs.LG"/>
+    <author>
+      <name>Daming Luo</name>
+    </author>
+    <author>
+      <name>Christy Liang</name>
+    </author>
+    <author>
+      <name>Junyu Xuan</name>
+    </author>
+  </entry>
+</feed>

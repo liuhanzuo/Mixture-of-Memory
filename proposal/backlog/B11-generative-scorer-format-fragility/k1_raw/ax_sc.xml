@@ -1,0 +1,66 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<feed xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/" xmlns:arxiv="http://arxiv.org/schemas/atom" xmlns="http://www.w3.org/2005/Atom">
+  <id>https://arxiv.org/api/pcDyN+u+AmalGpuKTxHVnZ9m0l0</id>
+  <title>arXiv Query: search_query=&amp;id_list=2510.05152,2606.16494&amp;start=0&amp;max_results=5</title>
+  <updated>2026-08-14T06:49:38Z</updated>
+  <link href="https://arxiv.org/api/query?search_query=&amp;start=0&amp;max_results=5&amp;id_list=2510.05152,2606.16494" type="application/atom+xml"/>
+  <opensearch:itemsPerPage>5</opensearch:itemsPerPage>
+  <opensearch:totalResults>2</opensearch:totalResults>
+  <opensearch:startIndex>0</opensearch:startIndex>
+  <entry>
+    <id>http://arxiv.org/abs/2510.05152v1</id>
+    <title>A Single Character can Make or Break Your LLM Evals</title>
+    <updated>2025-10-02T13:27:28Z</updated>
+    <link href="https://arxiv.org/abs/2510.05152v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2510.05152v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Common Large Language model (LLM) evaluations rely on demonstration examples to steer models' responses to the desired style. While the number of examples used has been studied and standardized, the choice of how to format examples is less investigated. In evaluation protocols and real world usage, users face the choice how to separate in-context examples: use a comma? new line? semi-colon? hashtag? etc.? Surprisingly, we find this seemingly minor choice can dramatically alter model response quality. Across leading model families (Llama, Qwen, Gemma), performance on MMLU for example can vary by $\pm 23\%$ depending on the choice of delimiter. In fact, one can manipulate model rankings to put any model in the lead by only modifying the single character separating examples. We find LLMs' brittleness pervades topics, model families, and doesn't improve with scale. By probing attention head scores, we find that good-performing delimiters steer attention towards key tokens in the input. Finally, we explore methods to improve LLMs' robustness to the choice of delimiter. We find specifying the selected delimiter in the prompt boosts robustness and offer practical recommendations for the best-performing delimiters to select.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-10-02T13:27:28Z</published>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Jingtong Su</name>
+    </author>
+    <author>
+      <name>Jianyu Zhang</name>
+    </author>
+    <author>
+      <name>Karen Ullrich</name>
+    </author>
+    <author>
+      <name>Léon Bottou</name>
+    </author>
+    <author>
+      <name>Mark Ibrahim</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2606.16494v3</id>
+    <title>Lost at the End: Primacy Bias in Multimodal Retrieval-Augmented Question Answering</title>
+    <updated>2026-07-04T08:04:59Z</updated>
+    <link href="https://arxiv.org/abs/2606.16494v3" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2606.16494v3" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Knowledge-based visual question answering (KB-VQA) lets vision-language systems answer questions that exceed their parametric knowledge by conditioning a reader on passages retrieved from a Wikipedia-scale knowledge base. In pure-text long-context LLMs, retrieved-context use follows the U-shaped "lost-in-the-middle" effect of Liu et al. (2024): information at the start and end of context is used, the middle is lost. Whether this transfers to deployed multimodal KB-VQA is open. To close this gap, we design the first controlled probe of reader-side position dependence in multimodal KB-VQA: a gold-position protocol in which only the gold passage's prompt slot varies within question. We run it on three open-source 7B/8B VLM readers and two KB-VQA benchmarks at k up to 20. The shape flips from U to primacy: gold-at-first beats gold-at-last by 16 to 26 points on every reader-by-benchmark cell, an effect we call "Lost at the End". Three targeted ablations narrow the cause: a text-only control shows the multimodal setting amplifies an already-present text-mode primacy 2.2 to 4.5 times, and image-position and distractor-shuffle ablations together pin the locus to prompt slot 0 of the instruction-tuned reader. On a frozen reader, three retrieval-side fixes (MMR, oracle reranking, rank-based reordering) all leave the gap intact (no separable improvement). Our findings indicate that recall@k is the wrong metric for deployed KB-VQA and that closing the gap requires reader-side intervention; we release our protocol as a controlled instrument for evaluating such interventions.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CV" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-06-15T09:57:48Z</published>
+    <arxiv:comment>15 pages, 9 figures</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Jieyuan Liu</name>
+    </author>
+    <author>
+      <name>Jianyang Gu</name>
+    </author>
+    <author>
+      <name>Shijie Chen</name>
+    </author>
+    <author>
+      <name>Jefferson Chen</name>
+    </author>
+    <author>
+      <name>Zhen Wang</name>
+    </author>
+  </entry>
+</feed>

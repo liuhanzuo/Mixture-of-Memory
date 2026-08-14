@@ -1,0 +1,838 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<feed xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/" xmlns:arxiv="http://arxiv.org/schemas/atom" xmlns="http://www.w3.org/2005/Atom">
+  <id>https://arxiv.org/api/z0FtyTC8FTWBWunTWGbZlwn03V4</id>
+  <title>arXiv Query: search_query=all:"answer extraction" AND abs:"large language model"&amp;id_list=&amp;start=0&amp;max_results=40</title>
+  <updated>2026-08-14T06:45:42Z</updated>
+  <link href="https://arxiv.org/api/query?search_query=all:%22answer+extraction%22+AND+abs:%22large+language+model%22&amp;start=0&amp;max_results=40&amp;id_list=" type="application/atom+xml"/>
+  <opensearch:itemsPerPage>40</opensearch:itemsPerPage>
+  <opensearch:totalResults>30</opensearch:totalResults>
+  <opensearch:startIndex>0</opensearch:startIndex>
+  <entry>
+    <id>http://arxiv.org/abs/2508.06971v2</id>
+    <title>Two-Stage Quranic QA via Ensemble Retrieval and Instruction-Tuned Answer Extraction</title>
+    <updated>2025-09-03T19:00:02Z</updated>
+    <link href="https://arxiv.org/abs/2508.06971v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2508.06971v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Quranic Question Answering presents unique challenges due to the linguistic complexity of Classical Arabic and the semantic richness of religious texts. In this paper, we propose a novel two-stage framework that addresses both passage retrieval and answer extraction. For passage retrieval, we ensemble fine-tuned Arabic language models to achieve superior ranking performance. For answer extraction, we employ instruction-tuned large language models with few-shot prompting to overcome the limitations of fine-tuning on small datasets. Our approach achieves state-of-the-art results on the Quran QA 2023 Shared Task, with a MAP@10 of 0.3128 and MRR@10 of 0.5763 for retrieval, and a pAP@10 of 0.669 for extraction, substantially outperforming previous methods. These results demonstrate that combining model ensembling and instruction-tuned language models effectively addresses the challenges of low-resource question answering in specialized domains.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.IR" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-08-09T12:37:19Z</published>
+    <arxiv:comment>8 pages , 4 figures , Accepted in Aiccsa 2025 , https://conferences.sigappfr.org/aiccsa2025/</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Mohamed Basem</name>
+    </author>
+    <author>
+      <name>Islam Oshallah</name>
+    </author>
+    <author>
+      <name>Ali Hamdi</name>
+    </author>
+    <author>
+      <name>Khaled Shaban</name>
+    </author>
+    <author>
+      <name>Hozaifa Kassab</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2606.06197v3</id>
+    <title>Improving Answer Extraction in Context-based Question Answering Systems Using LLMs</title>
+    <updated>2026-07-19T15:55:15Z</updated>
+    <link href="https://arxiv.org/abs/2606.06197v3" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2606.06197v3" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Question answering (QA) systems have achieved notable progress with the advent of large language models (LLMs). However, they still face challenges in accurately extracting and generating precise answers from given contexts, particularly when dealing with complex or ambiguous queries. Existing approaches often struggle with contextual understanding, answer consistency, and generalization across diverse domains. In this work, we propose a question answering system based on large language models, where the input consists of a textual context and a corresponding question, and the output is a concise and accurate answer. The motivation behind this research lies in addressing the limitations of current QA systems, particularly their tendency to produce irrelevant or imprecise responses despite having access to the correct context. Our methodology involves fine-tuning a pre-trained LLM on a benchmark QA dataset to improve its contextual comprehension and answer extraction capabilities. Specifically, we utilize the Stanford Question Answering Dataset (SQuAD1.1), which provides high-quality context-question-answer triplets for supervised training and evaluation. Experimental results show that the fine-tuned Roberta-base model achieves the highest performance, attaining a ROUGE-L score of 86.84%, a BLEU score of 28.24%, and a BERTScore of 95.38%. These results indicate strong accuracy and answer relevance, demonstrating the effectiveness of the proposed approach for context-based question answering tasks. Furthermore, the findings confirm that targeted fine-tuning substantially improves the reliability and precision of QA systems.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-06-04T14:04:11Z</published>
+    <arxiv:comment>7 pages, IMSA2026</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Hafez Abdelghaffar</name>
+    </author>
+    <author>
+      <name>Ahmed Alansary</name>
+    </author>
+    <author>
+      <name>Ali Hamdi</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2405.11874v3</id>
+    <title>xFinder: Large Language Models as Automated Evaluators for Reliable Evaluation</title>
+    <updated>2025-02-25T11:04:02Z</updated>
+    <link href="https://arxiv.org/abs/2405.11874v3" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2405.11874v3" rel="related" type="application/pdf" title="pdf"/>
+    <summary>The continuous advancement of large language models (LLMs) has brought increasing attention to the critical issue of developing fair and reliable methods for evaluating their performance. Particularly, the emergence of cheating phenomena, such as test set leakage and prompt format overfitting, poses significant challenges to the reliable evaluation of LLMs. As evaluation frameworks commonly use Regular Expression (RegEx) for answer extraction, models may adjust their responses to fit formats easily handled by RegEx. Nevertheless, the key answer extraction module based on RegEx frequently suffers from extraction errors. Furthermore, recent studies proposing fine-tuned LLMs as judge models for automated evaluation face challenges in terms of generalization ability and fairness. This paper comprehensively analyzes the entire LLM evaluation chain and demonstrates that optimizing the key answer extraction module improves extraction accuracy and enhances evaluation reliability. Our findings suggest that improving the key answer extraction module can lead to higher judgment accuracy and improved evaluation efficiency compared to the judge models. To address these issues, we propose xFinder, a novel evaluator for answer extraction and matching in LLM evaluation. As part of this process, we create a specialized dataset, the \textbf{K}ey \textbf{A}nswer \textbf{F}inder (KAF) dataset, to ensure effective model training and evaluation. Generalization tests and real-world evaluations show that the smallest xFinder model, with only 500 million parameters, achieves an average extraction accuracy of 93.42\%. In contrast, RegEx accuracy in the best evaluation framework is 74.38\%. The final judgment accuracy of xFinder reaches 97.61\%, outperforming existing evaluation frameworks and judge models.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2024-05-20T08:30:13Z</published>
+    <arxiv:comment>Accepted by ICLR 2025</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Qingchen Yu</name>
+    </author>
+    <author>
+      <name>Zifan Zheng</name>
+    </author>
+    <author>
+      <name>Shichao Song</name>
+    </author>
+    <author>
+      <name>Zhiyu Li</name>
+    </author>
+    <author>
+      <name>Feiyu Xiong</name>
+    </author>
+    <author>
+      <name>Bo Tang</name>
+    </author>
+    <author>
+      <name>Ding Chen</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2510.14773v1</id>
+    <title>Finding Answers in Thought Matters: Revisiting Evaluation on Large Language Models with Reasoning</title>
+    <updated>2025-10-16T15:09:22Z</updated>
+    <link href="https://arxiv.org/abs/2510.14773v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2510.14773v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Evaluating generative models, such as large language models (LLMs), commonly involves question-answering tasks where the final answer is selected based on probability of answer choices. On the other hand, for models requiring reasoning, the method of answer extraction plays a critical role. Our research reveals that the performance of reasoning models and their final answer distributions are highly sensitive to the answer extraction algorithm employed. In order to mitigate this, we propose a basic framework: Answer Regeneration. The method uses an additional model inference, providing the prior input and output prefaced by the prompt "Answer:". The final answer is then selected or extracted from the regenerated output. We show that this extraction-rule-agnostic approach exhibits improved performance and enhanced robustness. Furthermore, we have applied this framework to general math problems and open-ended question answering tasks. Our analysis and this framework could offer a more reliable results for model evaluation.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-10-16T15:09:22Z</published>
+    <arxiv:comment>ARR Submitted</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Hwiyeol Jo</name>
+    </author>
+    <author>
+      <name>Joosung Lee</name>
+    </author>
+    <author>
+      <name>Jaehone Lee</name>
+    </author>
+    <author>
+      <name>Sang-Woo Lee</name>
+    </author>
+    <author>
+      <name>Joonsuk Park</name>
+    </author>
+    <author>
+      <name>Kang Min Yoo</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2503.14996v2</id>
+    <title>Right Answer, Wrong Score: Uncovering the Inconsistencies of LLM Evaluation in Multiple-Choice Question Answering</title>
+    <updated>2025-06-08T14:56:13Z</updated>
+    <link href="https://arxiv.org/abs/2503.14996v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2503.14996v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>One of the most widely used tasks for evaluating Large Language Models (LLMs) is Multiple-Choice Question Answering (MCQA). While open-ended question answering tasks are more challenging to evaluate, MCQA tasks are, in principle, easier to assess, as the model's answer is thought to be simple to extract and is compared directly to a set of predefined choices. However, recent studies have started to question the reliability of MCQA evaluation, showing that multiple factors can significantly impact the reported performance of LLMs, especially when the model generates free-form text before selecting one of the answer choices. In this work, we shed light on the inconsistencies of MCQA evaluation strategies, which can lead to inaccurate and misleading model comparisons. We systematically analyze whether existing answer extraction methods are aligned with human judgment, and how they are influenced by answer constraints in the prompt across different domains. Our experiments demonstrate that traditional evaluation strategies often underestimate LLM capabilities, while LLM-based answer extractors are prone to systematic errors. Moreover, we reveal a fundamental trade-off between including format constraints in the prompt to simplify answer extraction and allowing models to generate free-form text to improve reasoning. Our findings call for standardized evaluation methodologies and highlight the need for more reliable and consistent MCQA evaluation practices.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-03-19T08:45:03Z</published>
+    <arxiv:comment>Findings of the Association for Computational Linguistics ACL 2025</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Francesco Maria Molfese</name>
+    </author>
+    <author>
+      <name>Luca Moroni</name>
+    </author>
+    <author>
+      <name>Luca Gioffré</name>
+    </author>
+    <author>
+      <name>Alessandro Scirè</name>
+    </author>
+    <author>
+      <name>Simone Conia</name>
+    </author>
+    <author>
+      <name>Roberto Navigli</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2510.14885v2</id>
+    <title>You May Speak Freely: Improving the Fine-Grained Visual Recognition Capabilities of Multimodal Large Language Models with Answer Extraction</title>
+    <updated>2025-12-09T10:07:37Z</updated>
+    <link href="https://arxiv.org/abs/2510.14885v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2510.14885v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Despite the renewed interest in zero-shot visual classification due to the rise of Multimodal Large Language Models (MLLMs), the problem of evaluating free-form responses of auto-regressive models remains a persistent challenge. Most existing works focus on language-only tasks or don't consider Multiple Choice Questions (MCQs) beyond 5-way options, both of which are critical capabilities to solve tasks in Fine-Grained Visual Classification (FGVC) where choice counts are in the hundreds to thousands and the choices are highly related. Furthermore, in this highly multi-way MCQ setting it is not clear how to extend LLM choice extraction to retrieval-based problems, where computing probabilities over the choice set is computationally costly. In this work we investigate nlg2choice, a simple two-stage method which first asks the MLLM an open-ended question for the task with minimal constraints, then uses text-only constrained decoding to predict the most likely choice. In retrieval settings, we compute the probability of the constrained response taking that choice with an early stopping method to significantly improve throughput. Our results show improvement over a suite of seven fine-grained visual datasets when evaluating in terms of classification and retrieval, and show that this performance holds over the various ways that users of LLMs can implement tasks in natural language.</summary>
+    <category term="cs.CV" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-10-16T17:04:25Z</published>
+    <arxiv:comment>Accepted to WACV26. 12 pages, 8 tables, 5 figures</arxiv:comment>
+    <arxiv:primary_category term="cs.CV"/>
+    <author>
+      <name>Logan Lawrence</name>
+    </author>
+    <author>
+      <name>Oindrila Saha</name>
+    </author>
+    <author>
+      <name>Megan Wei</name>
+    </author>
+    <author>
+      <name>Chen Sun</name>
+    </author>
+    <author>
+      <name>Subhransu Maji</name>
+    </author>
+    <author>
+      <name>Grant Van Horn</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2505.17162v1</id>
+    <title>DailyQA: A Benchmark to Evaluate Web Retrieval Augmented LLMs Based on Capturing Real-World Changes</title>
+    <updated>2025-05-22T15:13:33Z</updated>
+    <link href="https://arxiv.org/abs/2505.17162v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2505.17162v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>We propose DailyQA, an automatically updated dynamic dataset that updates questions weekly and contains answers to questions on any given date. DailyQA utilizes daily updates from Wikipedia revision logs to implement a fully automated pipeline of data filtering, query generation synthesis, quality checking, answer extraction, and query classification. The benchmark requires large language models (LLMs) to process and answer questions involving fast-changing factual data and covering multiple domains. We evaluate several open-source and closed-source LLMs using different RAG pipelines with web search augmentation. We compare the ability of different models to process time-sensitive web information and find that rerank of web retrieval results is critical. Our results indicate that LLMs still face significant challenges in handling frequently updated information, suggesting that DailyQA benchmarking provides valuable insights into the direction of progress for LLMs and RAG systems.</summary>
+    <category term="cs.IR" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-05-22T15:13:33Z</published>
+    <arxiv:primary_category term="cs.IR"/>
+    <author>
+      <name>Jiehan Cheng</name>
+    </author>
+    <author>
+      <name>Zhicheng Dou</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2509.15020v1</id>
+    <title>Mind the Gap: A Closer Look at Tokenization for Multiple-Choice Question Answering with LLMs</title>
+    <updated>2025-09-18T14:47:58Z</updated>
+    <link href="https://arxiv.org/abs/2509.15020v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2509.15020v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>When evaluating large language models (LLMs) with multiple-choice question answering (MCQA), it is common to end the prompt with the string "Answer:" to facilitate automated answer extraction via next-token probabilities. However, there is no consensus on how to tokenize the space following the colon, often overlooked as a trivial choice. In this paper, we uncover accuracy differences of up to 11% due to this (seemingly irrelevant) tokenization variation as well as reshuffled model rankings, raising concerns about the reliability of LLM comparisons in prior work. Surprisingly, we are able to recommend one specific strategy -- tokenizing the space together with the answer letter -- as we observe consistent and statistically significant performance improvements. Additionally, it improves model calibration, enhancing the reliability of the model's confidence estimates. Our findings underscore the importance of careful evaluation design and highlight the need for standardized, transparent evaluation protocols to ensure reliable and comparable results.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-09-18T14:47:58Z</published>
+    <arxiv:comment>Accepted to EMNLP 2025 Main</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Mario Sanz-Guerrero</name>
+    </author>
+    <author>
+      <name>Minh Duc Bui</name>
+    </author>
+    <author>
+      <name>Katharina von der Wense</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2511.01203v1</id>
+    <title>FEval-TTC: Fair Evaluation Protocol for Test-Time Compute</title>
+    <updated>2025-11-03T03:58:21Z</updated>
+    <link href="https://arxiv.org/abs/2511.01203v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2511.01203v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>The performance of Large Language Models (LLMs) and the associated dollar costs of API calls can fluctuate over time, potentially invalidating conclusions drawn in prior research. To address this, we propose a Fair Evaluation protocol for Test-Time Compute (FEval-TTC), designed to ensure consistent assessment of test-time compute (TTC) methods, regardless of such fluctuations. FEval-TTC focuses on the evaluation of TTC methods that utilize underlying Chains-of-Thought (CoT). It supports evaluations across multiple LLMs on a diverse set of mathematical and commonsense reasoning datasets. The few-shot prompting and answer extraction processes are standardized across datasets, reducing both time and monetary overhead for researchers. Furthermore, we provide a cost modelling procedure that estimates both the token and dollar cost per query, facilitating equitable comparisons of prevalent TTC methods. We open-source FEval-TTC for public use at https://github.com/networkslab/feval_ttc .</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-11-03T03:58:21Z</published>
+    <arxiv:primary_category term="cs.LG"/>
+    <author>
+      <name>Pavel Rumiantsev</name>
+    </author>
+    <author>
+      <name>Soumyasundar Pal</name>
+    </author>
+    <author>
+      <name>Yingxue Zhang</name>
+    </author>
+    <author>
+      <name>Mark Coates</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2509.09234v1</id>
+    <title>Agentic LLMs for Question Answering over Tabular Data</title>
+    <updated>2025-09-11T08:12:38Z</updated>
+    <link href="https://arxiv.org/abs/2509.09234v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2509.09234v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Question Answering over Tabular Data (Table QA) presents unique challenges due to the diverse structure, size, and data types of real-world tables. The SemEval 2025 Task 8 (DataBench) introduced a benchmark composed of large-scale, domain-diverse datasets to evaluate the ability of models to accurately answer structured queries. We propose a Natural Language to SQL (NL-to-SQL) approach leveraging large language models (LLMs) such as GPT-4o, GPT-4o-mini, and DeepSeek v2:16b to generate SQL queries dynamically. Our system follows a multi-stage pipeline involving example selection, SQL query generation, answer extraction, verification, and iterative refinement. Experiments demonstrate the effectiveness of our approach, achieving 70.5\% accuracy on DataBench QA and 71.6\% on DataBench Lite QA, significantly surpassing baseline scores of 26\% and 27\% respectively. This paper details our methodology, experimental results, and alternative approaches, providing insights into the strengths and limitations of LLM-driven Table QA.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-09-11T08:12:38Z</published>
+    <arxiv:comment>Accepted at ACL workshop SemEval 2025</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Rishit Tyagi</name>
+    </author>
+    <author>
+      <name>Mohit Gupta</name>
+    </author>
+    <author>
+      <name>Rahul Bouri</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2507.13827v1</id>
+    <title>Question-Answer Extraction from Scientific Articles Using Knowledge Graphs and Large Language Models</title>
+    <updated>2025-07-18T11:31:52Z</updated>
+    <link href="https://arxiv.org/abs/2507.13827v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2507.13827v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>When deciding to read an article or incorporate it into their research, scholars often seek to quickly identify and understand its main ideas. In this paper, we aim to extract these key concepts and contributions from scientific articles in the form of Question and Answer (QA) pairs. We propose two distinct approaches for generating QAs. The first approach involves selecting salient paragraphs, using a Large Language Model (LLM) to generate questions, ranking these questions by the likelihood of obtaining meaningful answers, and subsequently generating answers. This method relies exclusively on the content of the articles. However, assessing an article's novelty typically requires comparison with the existing literature. Therefore, our second approach leverages a Knowledge Graph (KG) for QA generation. We construct a KG by fine-tuning an Entity Relationship (ER) extraction model on scientific articles and using it to build the graph. We then employ a salient triplet extraction method to select the most pertinent ERs per article, utilizing metrics such as the centrality of entities based on a triplet TF-IDF-like measure. This measure assesses the saliency of a triplet based on its importance within the article compared to its prevalence in the literature. For evaluation, we generate QAs using both approaches and have them assessed by Subject Matter Experts (SMEs) through a set of predefined metrics to evaluate the quality of both questions and answers. Our evaluations demonstrate that the KG-based approach effectively captures the main ideas discussed in the articles. Furthermore, our findings indicate that fine-tuning the ER extraction model on our scientific corpus is crucial for extracting high-quality triplets from such documents.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.IR" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-07-18T11:31:52Z</published>
+    <arxiv:comment>SIGIR 2025</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Hosein Azarbonyad</name>
+    </author>
+    <author>
+      <name>Zi Long Zhu</name>
+    </author>
+    <author>
+      <name>Georgios Cheirmpos</name>
+    </author>
+    <author>
+      <name>Zubair Afzal</name>
+    </author>
+    <author>
+      <name>Vikrant Yadav</name>
+    </author>
+    <author>
+      <name>Georgios Tsatsaronis</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2311.17311v1</id>
+    <title>Universal Self-Consistency for Large Language Model Generation</title>
+    <updated>2023-11-29T02:07:09Z</updated>
+    <link href="https://arxiv.org/abs/2311.17311v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2311.17311v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Self-consistency with chain-of-thought prompting (CoT) has demonstrated remarkable performance gains on various challenging tasks, by utilizing multiple reasoning paths sampled from large language models (LLMs). However, self-consistency relies on the answer extraction process to aggregate multiple solutions, which is not applicable to free-form answers. In this work, we propose Universal Self-Consistency (USC), which leverages LLMs themselves to select the most consistent answer among multiple candidates. We evaluate USC on a variety of benchmarks, including mathematical reasoning, code generation, long-context summarization, and open-ended question answering. On open-ended generation tasks where the original self-consistency method is not applicable, USC effectively utilizes multiple samples and improves the performance. For mathematical reasoning, USC matches the standard self-consistency performance without requiring the answer formats to be similar. Finally, without access to execution results, USC also matches the execution-based voting performance on code generation.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2023-11-29T02:07:09Z</published>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Xinyun Chen</name>
+    </author>
+    <author>
+      <name>Renat Aksitov</name>
+    </author>
+    <author>
+      <name>Uri Alon</name>
+    </author>
+    <author>
+      <name>Jie Ren</name>
+    </author>
+    <author>
+      <name>Kefan Xiao</name>
+    </author>
+    <author>
+      <name>Pengcheng Yin</name>
+    </author>
+    <author>
+      <name>Sushant Prakash</name>
+    </author>
+    <author>
+      <name>Charles Sutton</name>
+    </author>
+    <author>
+      <name>Xuezhi Wang</name>
+    </author>
+    <author>
+      <name>Denny Zhou</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2407.12529v2</id>
+    <title>Crafting the Path: Robust Query Rewriting for Information Retrieval</title>
+    <updated>2024-08-26T04:28:41Z</updated>
+    <link href="https://arxiv.org/abs/2407.12529v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2407.12529v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Query rewriting aims to generate a new query that can complement the original query to improve the information retrieval system. Recent studies on query rewriting, such as query2doc, query2expand and querey2cot, rely on the internal knowledge of Large Language Models (LLMs) to generate a relevant passage to add information to the query. Nevertheless, the efficacy of these methodologies may markedly decline in instances where the requisite knowledge is not encapsulated within the model's intrinsic parameters. In this paper, we propose a novel structured query rewriting method called Crafting the Path tailored for retrieval systems. Crafting the Path involves a three-step process that crafts query-related information necessary for finding the passages to be searched in each step. Specifically, the Crafting the Path begins with Query Concept Comprehension, proceeds to Query Type Identification, and finally conducts Expected Answer Extraction. Experimental results show that our method outperforms previous rewriting methods, especially in less familiar domains for LLMs. We demonstrate that our method is less dependent on the internal parameter knowledge of the model and generates queries with fewer factual inaccuracies. Furthermore, we observe that \name{} demonstrates superior performance in the retrieval-augmented generation scenarios.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2024-07-17T13:11:28Z</published>
+    <arxiv:comment>3 figures, 13 tables</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Ingeol Baek</name>
+    </author>
+    <author>
+      <name>Jimin Lee</name>
+    </author>
+    <author>
+      <name>Joonho Yang</name>
+    </author>
+    <author>
+      <name>Hwanhee Lee</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2406.14277v2</id>
+    <title>QPaug: Question and Passage Augmentation for Open-Domain Question Answering of LLMs</title>
+    <updated>2024-09-27T12:18:34Z</updated>
+    <link href="https://arxiv.org/abs/2406.14277v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2406.14277v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Retrieval-augmented generation (RAG) has received much attention for Open-domain question-answering (ODQA) tasks as a means to compensate for the parametric knowledge of large language models (LLMs). While previous approaches focused on processing retrieved passages to remove irrelevant context, they still rely heavily on the quality of retrieved passages which can degrade if the question is ambiguous or complex. In this paper, we propose a simple yet efficient method called question and passage augmentation (QPaug) via LLMs for open-domain QA. QPaug first decomposes the original questions into multiple-step sub-questions. By augmenting the original question with detailed sub-questions and planning, we are able to make the query more specific on what needs to be retrieved, improving the retrieval performance. In addition, to compensate for the case where the retrieved passages contain distracting information or divided opinions, we augment the retrieved passages with self-generated passages by LLMs to guide the answer extraction. Experimental results show that QPaug outperforms the previous state-of-the-art and achieves significant performance gain over existing RAG methods. The source code is available at \url{https://github.com/kmswin1/QPaug}.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2024-06-20T12:59:27Z</published>
+    <arxiv:comment>The 2024 Conference on Empirical Methods in Natural Language Processing (EMNLP), Findings</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Minsang Kim</name>
+    </author>
+    <author>
+      <name>Cheoneum Park</name>
+    </author>
+    <author>
+      <name>Seungjun Baek</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2602.02842v1</id>
+    <title>Chain of Simulation: A Dual-Mode Reasoning Framework for Large Language Models with Dynamic Problem Routing</title>
+    <updated>2026-02-02T21:44:01Z</updated>
+    <link href="https://arxiv.org/abs/2602.02842v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2602.02842v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>We present Chain of Simulation (CoS), a novel dual-mode reasoning framework that dynamically routes problems to specialized reasoning strategies in Large Language Models (LLMs). Unlike existing uniform prompting approaches, CoS employs three distinct reasoning modes: (1) computational flow with self-consistency for mathematical problems, (2) symbolic state tracking with JSON representations for spatial reasoning, and (3) hybrid fact-extraction for multi-hop inference. Through comprehensive evaluation on GSM8K, StrategyQA, and bAbI benchmarks using four state-of-the-art models (Gemma-3 27B, LLaMA-3.1 8B, Mistral 7B, and Qwen-2.5 14B), we demonstrate that CoS achieves 71.5% accuracy on GSM8K (1.0% absolute improvement), 90.0% on StrategyQA (2.5% improvement), and 19.0% on bAbI (65.2% relative improvement) compared to the strongest baselines. The analysis reveals that problem-specific mode selection is crucial, with computational mode achieving 81.2% accuracy when correctly applied to mathematical problems, while misrouting leads to 0% accuracy. We provide detailed algorithms for mode selection, state tracking, and answer extraction, establishing CoS as an effective approach for improving LLM reasoning without additional training. The framework provides superior trade-offs between accuracy and efficiency compared to Self-Consistency, achieving comparable performance at 54% lower computational cost.</summary>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-02-02T21:44:01Z</published>
+    <arxiv:primary_category term="cs.AI"/>
+    <author>
+      <name>Saeid Sheikhi</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2512.19475v1</id>
+    <title>A Large-Language-Model Framework for Automated Humanitarian Situation Reporting</title>
+    <updated>2025-12-22T15:28:55Z</updated>
+    <link href="https://arxiv.org/abs/2512.19475v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2512.19475v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Timely and accurate situational reports are essential for humanitarian decision-making, yet current workflows remain largely manual, resource intensive, and inconsistent. We present a fully automated framework that uses large language models (LLMs) to transform heterogeneous humanitarian documents into structured and evidence-grounded reports. The system integrates semantic text clustering, automatic question generation, retrieval augmented answer extraction with citations, multi-level summarization, and executive summary generation, supported by internal evaluation metrics that emulate expert reasoning. We evaluated the framework across 13 humanitarian events, including natural disasters and conflicts, using more than 1,100 documents from verified sources such as ReliefWeb. The generated questions achieved 84.7 percent relevance, 84.0 percent importance, and 76.4 percent urgency. The extracted answers reached 86.3 percent relevance, with citation precision and recall both exceeding 76 percent. Agreement between human and LLM based evaluations surpassed an F1 score of 0.80. Comparative analysis shows that the proposed framework produces reports that are more structured, interpretable, and actionable than existing baselines. By combining LLM reasoning with transparent citation linking and multi-level evaluation, this study demonstrates that generative AI can autonomously produce accurate, verifiable, and operationally useful humanitarian situation reports.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-12-22T15:28:55Z</published>
+    <arxiv:comment>18 pages, 3 figures</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Ivan Decostanzi</name>
+    </author>
+    <author>
+      <name>Yelena Mejova</name>
+    </author>
+    <author>
+      <name>Kyriaki Kalimeri</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2408.08869v2</id>
+    <title>PEDAL: Enhancing Greedy Decoding with Large Language Models using Diverse Exemplars</title>
+    <updated>2024-08-19T04:29:34Z</updated>
+    <link href="https://arxiv.org/abs/2408.08869v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2408.08869v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Self-ensembling techniques with diverse reasoning paths such as Self-Consistency have demonstrated remarkable performance gains in text generation with Large Language Models (LLMs). However, such techniques depend on the availability of an accurate answer extraction process to aggregate across multiple outputs. Moreover, they acquire higher inference cost, in comparison to Greedy Decoding, due to generation of relatively higher number of output tokens. Research has shown that the free form text outputs from Self-Consistency can be aggregated reliably using LLMs to produce the final output. Additionally, recent advancements in LLM inference have demonstrated that usage of diverse exemplars in prompts have the ability to induce diversity in the LLM outputs. Such proven techniques can be easily extended to self-ensembling based approaches to achieve enhanced results in text generation. In this paper, we introduce PEDAL (Prompts based on Exemplar Diversity Aggregated using LLMs), a hybrid self-ensembling approach, that combines the strengths of diverse exemplar based prompts and LLM based aggregation to achieve improvement in overall performance. On the publicly available SVAMP and ARC datasets, our experiments reveal that PEDAL can achieve better accuracy than Greedy Decoding based strategies with lower inference cost compared to Self Consistency based approaches.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2024-08-16T17:54:09Z</published>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Sumanth Prabhu</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2503.08890v4</id>
+    <title>PlainQAFact: Retrieval-augmented Factual Consistency Evaluation Metric for Biomedical Plain Language Summarization</title>
+    <updated>2026-03-19T17:16:56Z</updated>
+    <link href="https://arxiv.org/abs/2503.08890v4" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2503.08890v4" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Hallucinated outputs from large language models (LLMs) pose risks in the medical domain, especially for lay audiences making health-related decisions. Existing automatic factual consistency evaluation methods, such as entailment- and question-answering (QA) -based, struggle with plain language summarization (PLS) due to elaborative explanation phenomenon, which introduces external content (e.g., definitions, background, examples) absent from the scientific abstract to enhance comprehension. To address this, we introduce PlainQAFact, an automatic factual consistency evaluation metric trained on a fine-grained, human-annotated dataset PlainFact, for evaluating factual consistency of both source-simplified and elaborately explained sentences. PlainQAFact first classifies sentence type, then applies a retrieval-augmented QA scoring method. Empirical results show that existing evaluation metrics fail to evaluate the factual consistency in PLS, especially for elaborative explanations, whereas PlainQAFact consistently outperforms them across all evaluation settings. We further analyze PlainQAFact's effectiveness across external knowledge sources, answer extraction strategies, answer overlap measures, and document granularity levels, refining its overall factual consistency assessment. Taken together, our work presents a sentence-aware, retrieval-augmented metric targeted at elaborative explanations in biomedical PLS tasks, providing the community with both a new benchmark and a practical evaluation tool to advance reliable and safe plain language communication in the medical domain. PlainQAFact and PlainFact are available at: https://github.com/zhiwenyou103/PlainQAFact</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-03-11T20:59:53Z</published>
+    <arxiv:comment>Accepted by Journal of Biomedical Informatics</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Zhiwen You</name>
+    </author>
+    <author>
+      <name>Yue Guo</name>
+    </author>
+    <arxiv:doi>10.1016/j.jbi.2026.105019</arxiv:doi>
+    <link rel="related" href="https://doi.org/10.1016/j.jbi.2026.105019" title="doi"/>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2303.05063v4</id>
+    <title>ICL-D3IE: In-Context Learning with Diverse Demonstrations Updating for Document Information Extraction</title>
+    <updated>2023-08-21T03:57:18Z</updated>
+    <link href="https://arxiv.org/abs/2303.05063v4" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2303.05063v4" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Large language models (LLMs), such as GPT-3 and ChatGPT, have demonstrated remarkable results in various natural language processing (NLP) tasks with in-context learning, which involves inference based on a few demonstration examples. Despite their successes in NLP tasks, no investigation has been conducted to assess the ability of LLMs to perform document information extraction (DIE) using in-context learning. Applying LLMs to DIE poses two challenges: the modality and task gap. To this end, we propose a simple but effective in-context learning framework called ICL-D3IE, which enables LLMs to perform DIE with different types of demonstration examples. Specifically, we extract the most difficult and distinct segments from hard training documents as hard demonstrations for benefiting all test instances. We design demonstrations describing relationships that enable LLMs to understand positional relationships. We introduce formatting demonstrations for easy answer extraction. Additionally, the framework improves diverse demonstrations by updating them iteratively. Our experiments on three widely used benchmark datasets demonstrate that the ICL-D3IE framework enables Davinci-003/ChatGPT to achieve superior performance when compared to previous pre-trained methods fine-tuned with full training in both the in-distribution (ID) setting and in the out-of-distribution (OOD) setting. Code is available at https://github.com/MAEHCM/ICL-D3IE.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2023-03-09T06:24:50Z</published>
+    <arxiv:comment>ICCV 2023. Code is available at https://github.com/MAEHCM/ICL-D3IE</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Jiabang He</name>
+    </author>
+    <author>
+      <name>Lei Wang</name>
+    </author>
+    <author>
+      <name>Yi Hu</name>
+    </author>
+    <author>
+      <name>Ning Liu</name>
+    </author>
+    <author>
+      <name>Hui Liu</name>
+    </author>
+    <author>
+      <name>Xing Xu</name>
+    </author>
+    <author>
+      <name>Heng Tao Shen</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2501.11885v5</id>
+    <title>Med-R$^2$: Crafting Trustworthy LLM Physicians via Retrieval and Reasoning of Evidence-Based Medicine</title>
+    <updated>2025-10-09T07:42:57Z</updated>
+    <link href="https://arxiv.org/abs/2501.11885v5" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2501.11885v5" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Large Language Models (LLMs) have exhibited remarkable capabilities in clinical scenarios. Despite their potential, existing works face challenges when applying LLMs to medical settings. Strategies relying on training with medical datasets are highly cost-intensive and may suffer from outdated training data. Leveraging external knowledge bases is a suitable alternative, yet it faces obstacles such as limited retrieval precision and poor effectiveness in answer extraction. These issues collectively prevent LLMs from demonstrating the expected level of proficiency in mastering medical expertise. To address these challenges, we introduce Med-R^2, a novel LLM physician framework that adheres to the Evidence-Based Medicine (EBM) process, efficiently integrating retrieval mechanisms as well as the selection and reasoning processes of evidence, thereby enhancing the problem-solving capabilities of LLMs in healthcare scenarios and fostering a trustworthy LLM physician. Our comprehensive experiments indicate that Med-R^2 achieves a 13.27\% improvement over vanilla RAG methods and even a 4.55\% enhancement compared to fine-tuning strategies, without incurring additional training costs. Furthermore, we find that our LLaMA3.1-70B + Med-R$^2$ surpasses frontier models, including GPT-4o, Claude3.5-Sonnet and DeepSeek-V3 by 1.05\%, 6.14\% and 1.91\%. Med-R$^2$ effectively enhances the capabilities of LLMs in the medical domain.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-01-21T04:40:43Z</published>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Keer Lu</name>
+    </author>
+    <author>
+      <name>Zheng Liang</name>
+    </author>
+    <author>
+      <name>Da Pan</name>
+    </author>
+    <author>
+      <name>Shusen Zhang</name>
+    </author>
+    <author>
+      <name>Guosheng Dong</name>
+    </author>
+    <author>
+      <name>Zhonghai Wu</name>
+    </author>
+    <author>
+      <name>Huang Leng</name>
+    </author>
+    <author>
+      <name>Bin Cui</name>
+    </author>
+    <author>
+      <name>Wentao Zhang</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2511.05162v2</id>
+    <title>Mind the Gap... or Not? How Translation Errors and Evaluation Details Skew Multilingual Results</title>
+    <updated>2026-06-22T06:54:24Z</updated>
+    <link href="https://arxiv.org/abs/2511.05162v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2511.05162v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Most current large language models (LLMs) support a wide variety of languages in addition to English, including high-resource languages (e.g. German, Chinese, French), as well as low-resource ones (e.g. Swahili, Telugu). In addition, they have shown impressive capabilities in different domains, like coding, science and math. In this paper, taking math as an example domain, we study the performance of different LLMs across languages. Experimental results show that there exists a non-negligible and consistent gap in the performance of the models across languages. Interestingly, and somewhat against expectations, the gap exists for both high- and low-resource languages. These results should impact further research into cross-lingual capability generalization for next generation LLMs. Or they would, if it weren't for the fact that they are distorted by data quality issues. By analyzing one of the standard multilingual math benchmarks (MGSM), we determine that several translation errors are present in the data. Furthermore, the lack of standardized answer extraction from LLM outputs further influences the final results. We propose a method for semi-automatic quality assurance to address the first issue at scale, and give recommendations to address the second one. Combining these two approaches we show that the aforementioned language gap mostly disappears, leading to completely different conclusions from our research. We additionally release the corrected dataset to the community (https://github.com/google-research-datasets/MGSM-Rev2).</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-11-07T11:30:10Z</published>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Jan-Thorsten Peter</name>
+    </author>
+    <author>
+      <name>David Vilar</name>
+    </author>
+    <author>
+      <name>Tobias Domhan</name>
+    </author>
+    <author>
+      <name>Dan Malkin</name>
+    </author>
+    <author>
+      <name>Markus Freitag</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2305.11461v8</id>
+    <title>Hint of Pseudo Code (HoPC): Zero-Shot Step by Step Pseudo Code Reasoning Prompting</title>
+    <updated>2025-10-08T05:44:17Z</updated>
+    <link href="https://arxiv.org/abs/2305.11461v8" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2305.11461v8" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Prompting a language model (LM) is an increasingly important research topic for better utilization of large language models (LLMs). While simple prompting is effective for single-step questions, it fails to activate the correct knowledge path for multi-step reasoning tasks consistently. The few-shot Chain of Thought (CoT), serves as an advanced prompting strategy that explains and demonstrates the reasoning process to the LLM, outperforming simple prompting in challenging reasoning tasks such as arithmetic and common-sense reasoning. The Program of Thought (PoT) aims to generate text and programming language solutions for multi-step reasoning problems. In zero-shot CoT, the prompt is simply ``Let's think step by step'', which is overly simplistic and does not adequately demonstrate a robust reasoning process for complex reasoning challenges. Additionally, PoT requires an extra interpreter to execute the answer and struggles with semantic reasoning problems like StrategyQA. This paper introduces a novel Hint of Pseudo Code (HoPC) prompting technique that does not require extra interpreter as in PoT and incorporates a more powerful zero-shot problem decomposition and semantic code reasoning capabilities than zero-shot CoT. It consists of three components: problem decomposition, semantic code reasoning, and answer extraction.
+  We prompt these components as hints in a sequential, step by step manner, making it easy to tailor and explain for various tasks.</summary>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2023-05-19T06:30:17Z</published>
+    <arxiv:primary_category term="cs.AI"/>
+    <author>
+      <name>Iok Tong Lei</name>
+    </author>
+    <author>
+      <name>Ziyu Zhu</name>
+    </author>
+    <author>
+      <name>Han Yu</name>
+    </author>
+    <author>
+      <name>Yige Yao</name>
+    </author>
+    <author>
+      <name>Zhidong Deng</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2411.00041v1</id>
+    <title>NeuroSym-BioCAT: Leveraging Neuro-Symbolic Methods for Biomedical Scholarly Document Categorization and Question Answering</title>
+    <updated>2024-10-29T14:45:12Z</updated>
+    <link href="https://arxiv.org/abs/2411.00041v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2411.00041v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>The growing volume of biomedical scholarly document abstracts presents an increasing challenge in efficiently retrieving accurate and relevant information. To address this, we introduce a novel approach that integrates an optimized topic modelling framework, OVB-LDA, with the BI-POP CMA-ES optimization technique for enhanced scholarly document abstract categorization. Complementing this, we employ the distilled MiniLM model, fine-tuned on domain-specific data, for high-precision answer extraction. Our approach is evaluated across three configurations: scholarly document abstract retrieval, gold-standard scholarly documents abstract, and gold-standard snippets, consistently outperforming established methods such as RYGH and bio-answer finder. Notably, we demonstrate that extracting answers from scholarly documents abstracts alone can yield high accuracy, underscoring the sufficiency of abstracts for many biomedical queries. Despite its compact size, MiniLM exhibits competitive performance, challenging the prevailing notion that only large, resource-intensive models can handle such complex tasks. Our results, validated across various question types and evaluation batches, highlight the robustness and adaptability of our method in real-world biomedical applications. While our approach shows promise, we identify challenges in handling complex list-type questions and inconsistencies in evaluation metrics. Future work will focus on refining the topic model with more extensive domain-specific datasets, further optimizing MiniLM and utilizing large language models (LLM) to improve both precision and efficiency in biomedical question answering.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.DL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.IR" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2024-10-29T14:45:12Z</published>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Parvez Zamil</name>
+    </author>
+    <author>
+      <name>Gollam Rabby</name>
+    </author>
+    <author>
+      <name>Md. Sadekur Rahman</name>
+    </author>
+    <author>
+      <name>Sören Auer</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2505.12495v2</id>
+    <title>KG-MuLQA: A Framework for KG-based Multi-Level QA Extraction and Long-Context LLM Evaluation</title>
+    <updated>2026-01-09T19:41:51Z</updated>
+    <link href="https://arxiv.org/abs/2505.12495v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2505.12495v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>We introduce KG-MuLQA (Knowledge-Graph-based Multi-Level Question-Answer Extraction): a framework that (1) extracts QA pairs at multiple complexity levels (2) along three key dimensions -- multi-hop retrieval, set operations, and answer plurality, (3) by leveraging knowledge-graph-based document representations. This approach enables fine-grained assessment of model performance across controlled difficulty levels. Using this framework, we construct a dataset of 20,139 QA pairs based on financial credit agreements and evaluate 16 proprietary and open-weight Large Language Models, observing that even the best-performing models struggle with set-based comparisons and multi-hop reasoning over long contexts. Our analysis reveals systematic failure modes tied to semantic misinterpretation and inability to handle implicit relations.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-05-18T16:46:39Z</published>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Nikita Tatarinov</name>
+    </author>
+    <author>
+      <name>Vidhyakshaya Kannan</name>
+    </author>
+    <author>
+      <name>Haricharana Srinivasa</name>
+    </author>
+    <author>
+      <name>Arnav Raj</name>
+    </author>
+    <author>
+      <name>Harpreet Singh Anand</name>
+    </author>
+    <author>
+      <name>Varun Singh</name>
+    </author>
+    <author>
+      <name>Aditya Luthra</name>
+    </author>
+    <author>
+      <name>Ravij Lade</name>
+    </author>
+    <author>
+      <name>Agam Shah</name>
+    </author>
+    <author>
+      <name>Sudheer Chava</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2509.00806v1</id>
+    <title>CaresAI at BioCreative IX Track 1 -- LLM for Biomedical QA</title>
+    <updated>2025-08-31T11:40:02Z</updated>
+    <link href="https://arxiv.org/abs/2509.00806v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2509.00806v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Large language models (LLMs) are increasingly evident for accurate question answering across various domains. However, rigorous evaluation of their performance on complex question-answering (QA) capabilities is essential before deployment in real-world biomedical and healthcare applications. This paper presents our approach to the MedHopQA track of the BioCreative IX shared task, which focuses on multi-hop biomedical question answering involving diseases, genes, and chemicals. We adopt a supervised fine-tuning strategy leveraging LLaMA 3 8B, enhanced with a curated biomedical question-answer dataset compiled from external sources including BioASQ, MedQuAD, and TREC. Three experimental setups are explored: fine-tuning on combined short and long answers, short answers only, and long answers only. While our models demonstrate strong domain understanding, achieving concept-level accuracy scores of up to 0.8, their Exact Match (EM) scores remain significantly lower, particularly in the test phase. We introduce a two-stage inference pipeline for precise short-answer extraction to mitigate verbosity and improve alignment with evaluation metrics. Despite partial improvements, challenges persist in generating strictly formatted outputs. Our findings highlight the gap between semantic understanding and exact answer evaluation in biomedical LLM applications, motivating further research in output control and post-processing strategies.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-08-31T11:40:02Z</published>
+    <arxiv:comment>Proceedings of the BioCreative IX Challenge and Workshop (BC9): Large Language Models for Clinical and Biomedical NLP at the International Joint Conference on Artificial Intelligence (IJCAI), Montreal, Canada, 2025</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Reem Abdel-Salam</name>
+    </author>
+    <author>
+      <name>Mary Adewunmi</name>
+    </author>
+    <author>
+      <name>Modinat A. Abayomi</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2509.05933v2</id>
+    <title>MapAgent: A Hierarchical Agent for Geospatial Reasoning with Dynamic Map Tool Integration</title>
+    <updated>2025-10-14T04:15:07Z</updated>
+    <link href="https://arxiv.org/abs/2509.05933v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2509.05933v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Agentic AI has significantly extended the capabilities of large language models (LLMs) by enabling complex reasoning and tool use. However, most existing frameworks are tailored to domains such as mathematics, coding, or web automation, and fall short on geospatial tasks that require spatial reasoning, multi-hop planning, and real-time map interaction. To address these challenges, we introduce MapAgent, a hierarchical multi-agent plug-and-play framework with customized toolsets and agentic scaffolds for map-integrated geospatial reasoning. Unlike existing flat agent-based approaches that treat tools uniformly-often overwhelming the LLM when handling similar but subtly different geospatial APIs-MapAgent decouples planning from execution. A high-level planner decomposes complex queries into subgoals, which are routed to specialized modules. For tool-heavy modules-such as map-based services-we then design a dedicated map-tool agent that efficiently orchestrates related APIs adaptively in parallel to effectively fetch geospatial data relevant for the query, while simpler modules (e.g., solution generation or answer extraction) operate without additional agent overhead. This hierarchical design reduces cognitive load, improves tool selection accuracy, and enables precise coordination across similar APIs. We evaluate MapAgent on four diverse geospatial benchmarks-MapEval-Textual, MapEval-API, MapEval-Visual, and MapQA-and demonstrate substantial gains over state-of-the-art tool-augmented and agentic baselines. We open-source our framwork at https://github.com/Hasebul/MapAgent.</summary>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-09-07T05:47:58Z</published>
+    <arxiv:comment>27 Pages</arxiv:comment>
+    <arxiv:primary_category term="cs.AI"/>
+    <author>
+      <name>Md Hasebul Hasan</name>
+    </author>
+    <author>
+      <name>Mahir Labib Dihan</name>
+    </author>
+    <author>
+      <name>Tanzima Hashem</name>
+    </author>
+    <author>
+      <name>Mohammed Eunus Ali</name>
+    </author>
+    <author>
+      <name>Md Rizwan Parvez</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2503.10408v3</id>
+    <title>Out-of-Context Reasoning in Large Language Models</title>
+    <updated>2025-09-17T09:28:46Z</updated>
+    <link href="https://arxiv.org/abs/2503.10408v3" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2503.10408v3" rel="related" type="application/pdf" title="pdf"/>
+    <summary>We study how large language models (LLMs) reason about memorized knowledge through simple binary relations such as equality ($=$), inequality ($&lt;$), and inclusion ($\subset$). Unlike in-context reasoning, the axioms (e.g., $a &lt; b, b &lt; c$) are only seen during training and not provided in the task prompt (e.g., evaluating $a &lt; c$). The tasks require one or more reasoning steps, and data aggregation from one or more sources, showing performance change with task complexity. We introduce a lightweight technique, out-of-context representation learning, which trains only new token embeddings on axioms and evaluates them on unseen tasks. Across reflexivity, symmetry, and transitivity tests, LLMs mostly perform statistically significant better than chance, making the correct answer extractable when testing multiple phrasing variations, but still fall short of consistent reasoning on every single query. Analysis shows that the learned embeddings are organized in structured ways, suggesting real relational understanding. Surprisingly, it also indicates that the core reasoning happens during the training, not inference.</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-03-13T14:32:30Z</published>
+    <arxiv:primary_category term="cs.LG"/>
+    <author>
+      <name>Jonathan Shaki</name>
+    </author>
+    <author>
+      <name>Emanuele La Malfa</name>
+    </author>
+    <author>
+      <name>Michael Wooldridge</name>
+    </author>
+    <author>
+      <name>Sarit Kraus</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2603.10001v2</id>
+    <title>Leveraging Wikidata for Geographically Informed Sociocultural Bias Dataset Creation: Application to Latin America</title>
+    <updated>2026-03-12T13:13:39Z</updated>
+    <link href="https://arxiv.org/abs/2603.10001v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2603.10001v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Large Language Models (LLMs) exhibit inequalities with respect to various cultural contexts. Most prominent open-weights models are trained on Global North data and show prejudicial behavior towards other cultures. Moreover, there is a notable lack of resources to detect biases in non-English languages, especially from Latin America (Latam), a continent containing various cultures, even though they share a common cultural ground. We propose to leverage the content of Wikipedia, the structure of the Wikidata knowledge graph, and expert knowledge from social science in order to create a dataset of question/answer (Q/As) pairs, based on the different popular and social cultures of various Latin American countries. We create the LatamQA database of over 26k questions and associated answers extracted from 26k Wikipedia articles, and transformed into multiple-choice questions (MCQ) in Spanish and Portuguese, in turn translated to English. We use this MCQ to quantify the degree of knowledge of various LLMs and find out (i) a discrepancy in performances between the Latam countries, ones being easier than others for the majority of the models, (ii) that the models perform better in their original language, and (iii) that Iberian Spanish culture is better known than Latam one.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-02-16T14:23:17Z</published>
+    <arxiv:primary_category term="cs.CL"/>
+    <arxiv:journal_ref>Workshop on Multilingual and Multicultural Evaluation (MME) of the 19th Conference of the European Chapter of the Association for Computational Linguistics (EACL), Pinzhen Chen; Vil{é}m Zouhar; Hanxu Hu; Simran Khanuja; Wenhao Zhu; Barry Haddow; Alexandra Birch; Alham Fikri Aji; Rico Sennrich; Sara Hooker, Mar 2026, Rabbat, Morocco</arxiv:journal_ref>
+    <author>
+      <name>Yannis Karmim</name>
+      <arxiv:affiliation>ALMAnaCH</arxiv:affiliation>
+    </author>
+    <author>
+      <name>Renato Pino</name>
+      <arxiv:affiliation>UCHILE</arxiv:affiliation>
+    </author>
+    <author>
+      <name>Hernan Contreras</name>
+      <arxiv:affiliation>UCHILE</arxiv:affiliation>
+    </author>
+    <author>
+      <name>Hernan Lira</name>
+      <arxiv:affiliation>CENIA</arxiv:affiliation>
+    </author>
+    <author>
+      <name>Sebastian Cifuentes</name>
+      <arxiv:affiliation>CENIA</arxiv:affiliation>
+    </author>
+    <author>
+      <name>Simon Escoffier</name>
+      <arxiv:affiliation>PUC</arxiv:affiliation>
+    </author>
+    <author>
+      <name>Luis Martí</name>
+      <arxiv:affiliation>ALMAnaCH</arxiv:affiliation>
+    </author>
+    <author>
+      <name>Djamé Seddah</name>
+      <arxiv:affiliation>ALMAnaCH</arxiv:affiliation>
+    </author>
+    <author>
+      <name>Valentin Barrière</name>
+      <arxiv:affiliation>UCHILE, CENIA</arxiv:affiliation>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2510.11217v2</id>
+    <title>Domain-Specific Data Generation Framework for RAG Adaptation</title>
+    <updated>2026-04-13T07:09:36Z</updated>
+    <link href="https://arxiv.org/abs/2510.11217v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2510.11217v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Retrieval-Augmented Generation (RAG) combines the language understanding and reasoning power of large language models (LLMs) with external retrieval to enable domain-grounded responses. Effectively adapting RAG systems to domain-specific settings requires specialized, context-rich training data beyond general-purpose question-answering. Here, we propose RAGen, a scalable and modular framework for generating domain-grounded question-answer-context (QAC) triples tailored to diverse RAG adaptation approaches. RAGen produces these QAC triples by identifying key concepts in documents, generating diverse questions guided by Bloom's Taxonomy-inspired principles, and pairing them with precise answers extracted from relevant contexts. RAGen supports multiple RAG adaptation strategies, including the optimization of key components such as the LLM, retriever, and embedding model, etc. Its modular pipeline features semantic chunking, hierarchical concept extraction, and multi-chunk retrieval, along with the introduction of curated distractor contexts to promote robust reasoning. Designed for scalability, RAGen efficiently handles large and evolving document corpora without redundant processing, making it especially suitable for dynamic evolving domains such as scientific research and enterprise knowledge bases.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-10-13T09:59:49Z</published>
+    <arxiv:comment>To appear in ACL 2026</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Chris Xing Tian</name>
+    </author>
+    <author>
+      <name>Weihao Xie</name>
+    </author>
+    <author>
+      <name>Zhen Chen</name>
+    </author>
+    <author>
+      <name>Zhengyuan Yi</name>
+    </author>
+    <author>
+      <name>Hui Liu</name>
+    </author>
+    <author>
+      <name>Haoliang Li</name>
+    </author>
+    <author>
+      <name>Shiqi Wang</name>
+    </author>
+    <author>
+      <name>Siwei Ma</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2402.18334v3</id>
+    <title>Learning to Generate Instruction Tuning Datasets for Zero-Shot Task Adaptation</title>
+    <updated>2024-09-11T16:28:29Z</updated>
+    <link href="https://arxiv.org/abs/2402.18334v3" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2402.18334v3" rel="related" type="application/pdf" title="pdf"/>
+    <summary>We introduce Bonito, an open-source model for conditional task generation that converts unannotated text into task-specific training datasets for instruction tuning. We aim to enable zero-shot task adaptation of large language models on users' specialized, private data. We train Bonito by fine-tuning a pretrained large language model on a new large-scale dataset with 1.65M examples created by remixing existing instruction tuning datasets into meta-templates. The meta-templates for a dataset produce training examples where the input is the unannotated text and the task attribute and the output consists of the instruction and the response. We use Bonito to generate synthetic tasks for seven datasets from specialized domains with unannotated text across three task types -- yes-no question answering, extractive question answering, and natural language inference -- and adapt language models. We show that Bonito significantly improves the average performance of pretrained and instruction tuned models over the de facto self supervised baseline. For example, adapting Mistral-Instruct-v2 and instruction tuned variants of Mistral and Llama2 with Bonito improves the strong zero-shot performance by 22.1 F1 points whereas the next word prediction objective undoes some of the benefits of instruction tuning and reduces the average performance by 0.8 F1 points. We conduct additional experiments with Bonito to understand the effects of the domain, the size of the training set, and the choice of alternative synthetic task generators. Overall, we show that learning with synthetic instruction tuning datasets is an effective way to adapt language models to new domains. The model, dataset, and code are available at https://github.com/BatsResearch/bonito.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2024-02-28T13:54:57Z</published>
+    <arxiv:comment>ACL Findings 2024</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Nihal V. Nayak</name>
+    </author>
+    <author>
+      <name>Yiyang Nan</name>
+    </author>
+    <author>
+      <name>Avi Trost</name>
+    </author>
+    <author>
+      <name>Stephen H. Bach</name>
+    </author>
+  </entry>
+</feed>

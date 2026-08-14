@@ -1,0 +1,152 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<feed xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/" xmlns:arxiv="http://arxiv.org/schemas/atom" xmlns="http://www.w3.org/2005/Atom">
+  <id>https://arxiv.org/api/ueJ5Xu0w3Pxe/7v4dyzAhW1vTFk</id>
+  <title>arXiv Query: search_query=abs:"metric implementation" AND abs:"conclusions"&amp;id_list=&amp;start=0&amp;max_results=30</title>
+  <updated>2026-08-14T06:47:42Z</updated>
+  <link href="https://arxiv.org/api/query?search_query=abs:%22metric+implementation%22+AND+abs:%22conclusions%22&amp;start=0&amp;max_results=30&amp;id_list=" type="application/atom+xml"/>
+  <opensearch:itemsPerPage>30</opensearch:itemsPerPage>
+  <opensearch:totalResults>4</opensearch:totalResults>
+  <opensearch:startIndex>0</opensearch:startIndex>
+  <entry>
+    <id>http://arxiv.org/abs/2002.00583v1</id>
+    <title>CoTK: An Open-Source Toolkit for Fast Development and Fair Evaluation of Text Generation</title>
+    <updated>2020-02-03T07:15:29Z</updated>
+    <link href="https://arxiv.org/abs/2002.00583v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2002.00583v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>In text generation evaluation, many practical issues, such as inconsistent experimental settings and metric implementations, are often ignored but lead to unfair evaluation and untenable conclusions. We present CoTK, an open-source toolkit aiming to support fast development and fair evaluation of text generation. In model development, CoTK helps handle the cumbersome issues, such as data processing, metric implementation, and reproduction. It standardizes the development steps and reduces human errors which may lead to inconsistent experimental settings. In model evaluation, CoTK provides implementation for many commonly used metrics and benchmark models across different experimental settings. As a unique feature, CoTK can signify when and which metric cannot be fairly compared. We demonstrate that it is convenient to use CoTK for model development and evaluation, particularly across different experimental settings.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2020-02-03T07:15:29Z</published>
+    <arxiv:comment>Submitting to ACL2020 demo</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Fei Huang</name>
+    </author>
+    <author>
+      <name>Dazhen Wan</name>
+    </author>
+    <author>
+      <name>Zhihong Shao</name>
+    </author>
+    <author>
+      <name>Pei Ke</name>
+    </author>
+    <author>
+      <name>Jian Guan</name>
+    </author>
+    <author>
+      <name>Yilin Niu</name>
+    </author>
+    <author>
+      <name>Xiaoyan Zhu</name>
+    </author>
+    <author>
+      <name>Minlie Huang</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2206.12858v1</id>
+    <title>Quality Metrics in Recommender Systems: Do We Calculate Metrics Consistently?</title>
+    <updated>2022-06-26T12:28:18Z</updated>
+    <link href="https://arxiv.org/abs/2206.12858v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2206.12858v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Offline evaluation is a popular approach to determine the best algorithm in terms of the chosen quality metric. However, if the chosen metric calculates something unexpected, this miscommunication can lead to poor decisions and wrong conclusions. In this paper, we thoroughly investigate quality metrics used for recommender systems evaluation. We look at the practical aspect of implementations found in modern RecSys libraries and at the theoretical aspect of definitions in academic papers. We find that Precision is the only metric universally understood among papers and libraries, while other metrics may have different interpretations. Metrics implemented in different libraries sometimes have the same name but measure different things, which leads to different results given the same input. When defining metrics in an academic paper, authors sometimes omit explicit formulations or give references that do not contain explanations either. In 47% of cases, we cannot easily know how the metric is defined because the definition is not clear or absent. These findings highlight yet another difficulty in recommender system evaluation and call for a more detailed description of evaluation protocols.</summary>
+    <category term="cs.IR" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2022-06-26T12:28:18Z</published>
+    <arxiv:primary_category term="cs.IR"/>
+    <author>
+      <name>Yan-Martin Tamm</name>
+    </author>
+    <author>
+      <name>Rinchin Damdinov</name>
+    </author>
+    <author>
+      <name>Alexey Vasilev</name>
+    </author>
+    <arxiv:doi>10.1145/3460231.3478848</arxiv:doi>
+    <link rel="related" href="https://doi.org/10.1145/3460231.3478848" title="doi"/>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2511.01878v1</id>
+    <title>Design-Based Supply Chain Operations Research Model: Fostering Resilience And Sustainability In Modern Supply Chains</title>
+    <updated>2025-10-22T14:44:26Z</updated>
+    <link href="https://arxiv.org/abs/2511.01878v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2511.01878v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>In the rapidly evolving landscape of global supply chains, where digital disruptions and sustainability imperatives converge, traditional operational frameworks often struggle to adapt. This paper introduces the Design-Based Supply Chain Operations Research Model, a novel extension of the Design SCOR framework, which embeds operational research techniques to enhance decision-making, resilience, and environmental stewardship. Building on the foundational processes of DSCOR such as Design, Orchestrate, Plan, Order, Source, Transform, Fulfil, and Return DSCORM incorporates predictive analytics, simulation modelling, and optimization algorithms to address contemporary challenges like supply chain volatility and ESG (environmental, social, governance) compliance. Through a comprehensive literature synthesis and methodological approach involving case-based simulations, we explore DSCORM's hierarchical structure, performance metrics, implementation strategies, and digital modernization pathways. Results from simulated scenarios indicate potential efficiency gains of 15to25 percent, reduced carbon footprints by up to 20 percent, and improved agility in dynamic markets. Discussions delve into practical implications for industries like manufacturing and logistics, highlighting barriers such as data integration hurdles and the need for skilled workforces. By humanizing supply chain management emphasizing collaborative, adaptive strategies over rigid automation DSCORM positions itself as a blueprint for sustainable growth. Conclusions underscore its role in advancing digital transformation, with recommendations for future empirical validations in real-world settings</summary>
+    <category term="cs.OH" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-10-22T14:44:26Z</published>
+    <arxiv:comment>https://aircconline.com/csit/papers/vol15/csit151927.pdf</arxiv:comment>
+    <arxiv:primary_category term="cs.OH"/>
+    <arxiv:journal_ref>Computer Science &amp; Information Technology (CS &amp; IT) ISSN : 2231 - 5403 Volume 15, Number 19, October 2025</arxiv:journal_ref>
+    <author>
+      <name>Sathish Krishna Anumula</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2507.06337v3</id>
+    <title>Integrated Open-Source Framework for Simulation of Transcatheter Pulmonary Valves in Native Right Ventricular Outflow Tracts</title>
+    <updated>2025-11-20T23:36:13Z</updated>
+    <link href="https://arxiv.org/abs/2507.06337v3" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2507.06337v3" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Background - Pulmonary insufficiency is a consequence of transannular patch repair in Tetralogy of Fallot (ToF), leading to late morbidity and mortality. Transcatheter native outflow tract pulmonary valve replacement (TPVR) has become common, but assessment of patient candidacy and selection of the optimal device remains challenging. We demonstrate an integrated open-source workflow for simulation of TPVR in image-derived models to inform device selection.
+  Methods - Machine learning-based segmentation of CT scans was implemented to define the right ventricular outflow tract (RVOT). A custom workflow for device positioning and pre-compression was implemented in SlicerHeart. Resulting geometries were exported to FEBio for simulation. Visualization of results and quantification were performed using custom metrics implemented in SlicerHeart and FEBio.
+  Results - RVOT model creation and device placement could be completed in under 1 minute. Virtual device placement using FE simulations visually mimicked actual device placement and allowed quantification of vessel strain, stress, and contact area. Regions of higher strain and stress were observed at the proximal and distal end locations of the TPVs where the devices impinge the RVOT wall. No other consistent trends were observed across simulations. The observed variability in mechanical metrics across RVOTS, stents, and locations in the RVOT highlights that no single device performs optimally in all anatomies, thereby reinforcing the need for simulation-based patient-specific assessment.
+  Conclusions - This study demonstrates the feasibility of a novel open-source workflow for the rapid simulation of TPVR which with further refinement may inform assessment of patient candidacy and optimal device selection.</summary>
+    <category term="q-bio.TO" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="physics.med-ph" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-07-08T18:56:15Z</published>
+    <arxiv:comment>27 pages, 7 figures, 2 videos, Preprint submitted to Engineering with Computers</arxiv:comment>
+    <arxiv:primary_category term="q-bio.TO"/>
+    <author>
+      <name>Christopher N. Zelonis</name>
+    </author>
+    <author>
+      <name>Jalaj Maheshwari</name>
+    </author>
+    <author>
+      <name>Wensi Wu</name>
+    </author>
+    <author>
+      <name>Steve A. Maas</name>
+    </author>
+    <author>
+      <name>Seda Aslan</name>
+    </author>
+    <author>
+      <name>Kyle Sunderland</name>
+    </author>
+    <author>
+      <name>Stephen Ching</name>
+    </author>
+    <author>
+      <name>Ashley Koluda</name>
+    </author>
+    <author>
+      <name>Yuval Barak-Corren</name>
+    </author>
+    <author>
+      <name>Nicolas Mangine</name>
+    </author>
+    <author>
+      <name>Patricia M. Sabin</name>
+    </author>
+    <author>
+      <name>Andras Lasso</name>
+    </author>
+    <author>
+      <name>Devin W. Laurence</name>
+    </author>
+    <author>
+      <name>Christian Herz</name>
+    </author>
+    <author>
+      <name>Matthew J. Gillespie</name>
+    </author>
+    <author>
+      <name>Jeffrey A. Weiss</name>
+    </author>
+    <author>
+      <name>Matthew A. Jolley</name>
+    </author>
+  </entry>
+</feed>

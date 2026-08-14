@@ -1,0 +1,479 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<feed xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/" xmlns:arxiv="http://arxiv.org/schemas/atom" xmlns="http://www.w3.org/2005/Atom">
+  <id>https://arxiv.org/api/ZeNDkqpkhmnzAo0fOvqi17fpr58</id>
+  <title>arXiv Query: search_query=abs:"metric" AND abs:"reverses" AND abs:"conclusion"&amp;id_list=&amp;start=0&amp;max_results=25</title>
+  <updated>2026-08-14T06:57:11Z</updated>
+  <link href="https://arxiv.org/api/query?search_query=abs:%22metric%22+AND+(abs:%22reverses%22+AND+abs:%22conclusion%22)&amp;start=0&amp;max_results=25&amp;id_list=" type="application/atom+xml"/>
+  <opensearch:itemsPerPage>25</opensearch:itemsPerPage>
+  <opensearch:totalResults>15</opensearch:totalResults>
+  <opensearch:startIndex>0</opensearch:startIndex>
+  <entry>
+    <id>http://arxiv.org/abs/2608.01559v1</id>
+    <title>Does the Competitive Component of Adversarial Self-Play Improve Legal Reasoning? A Controlled Negative Result</title>
+    <updated>2026-08-03T00:31:34Z</updated>
+    <link href="https://arxiv.org/abs/2608.01559v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2608.01559v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Adversarial self-play is an appealing recipe for legal reasoning: have a student model draft an argument, have an adversary attack it, and reward the student when its argument survives the attack. We designed exactly such a training signal -- a verifiable "survival" reward in which both the student's cited authorities and the adversary's counter-authorities are checked by a citation verifier, so that survival is decided on verified grounds rather than rhetoric, and fabricated citations are automatically neutralized. We then asked a narrow but important question: does the competitive component itself -- the adversary and the survival reward -- add anything on top of an otherwise identical non-competitive training run? Across four independent tests -- a bootstrap comparison, a two-seed replication, a paired per-case adversarial-robustness comparison, and a blinded head-to-head judgment of generated arguments, plus a follow-up pilot with a deliberately strengthened self-play adversary -- the competitive component produced no reliable benefit. The blinded judgment gave a 49% win rate (binomial p approx. 1.000); the strengthened-adversary pilot gave a 50% win rate (32:32, p approx. 1.000). An early apparent +29% advantage reversed and proved to be a small-sample artifact. We report this as an honest negative result. The value of the paper is reproducibility and the sharing of concrete pitfalls: an initially promising metric that inverted on more data, and an adversarial-robustness metric that silently collapsed to plain recall once the adversary stopped citing the same authorities as the gold answer. This null is consistent with, and reconfirms in the legal domain, the conclusion of the companion coding-domain study (Kim, 2026, arXiv:2607.08255) that the value of multi-teacher curricula arises from constructing a verifiable environment rather than from competition itself.</summary>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-08-03T00:31:34Z</published>
+    <arxiv:primary_category term="cs.AI"/>
+    <author>
+      <name>Miseog Shawn Kim</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2606.16555v1</id>
+    <title>Incentives and Evidence in Learned Service Orchestration</title>
+    <updated>2026-06-15T10:57:10Z</updated>
+    <link href="https://arxiv.org/abs/2606.16555v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2606.16555v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Reinforcement learning for service orchestration has been the subject of sustained research for over a decade, yet it is not used in production at scale. The usual explanation is that learned controllers degrade under delayed and noisy telemetry, workload shifts, and uncontrolled tenants. We test whether existing evidence supports that explanation. We evaluate three highly influential RL-based orchestration systems spanning resource allocation, DAG scheduling, and autoscaling, using pre-registered predictions about comparative degradation under production-relevant perturbations and paired inference with family-wise error correction. Across the tests, most predicted performance reversals do not occur. Diagnostic analyses show that these outcomes often reflect comparator collapse, artefact limitations, or evaluation choices rather than evidence that learned controllers tolerate the perturbations. One apparent advantage under observation lag is roughly fortyfold compared to a Kubernetes HPA-equivalent controller. Another widely cited result cannot be reconstructed from its released artefact, and the strongest reproducible margin is far smaller than the published results. Conclusions also reverse under changes in perturbation magnitude and evaluation mode. Based on these results and broader patterns in the literature, we identify an institutional problem. Publication and review incentives favour benchmark gains against convenient comparators, even when those gains provide little evidence of deployment performance. We argue that the problem is not solely technical. Rather, it is institutional, so learned orchestration needs production-grade comparators, registered perturbation models, separate operational metrics, and publication criteria that reward reproducible operational evidence. Without these changes, the literature can grow without establishing whether learning improves orchestration.</summary>
+    <category term="cs.DC" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-06-15T10:57:10Z</published>
+    <arxiv:comment>To be presented at the IEEE 2026 International Congress on Intelligent and Service Oriented Systems Engineering (CISOSE 2026)</arxiv:comment>
+    <arxiv:primary_category term="cs.DC"/>
+    <author>
+      <name>Syed Izhan Khilji</name>
+    </author>
+    <author>
+      <name>Alireza Furutanpey</name>
+    </author>
+    <author>
+      <name>Schahram Dustdar</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2605.22891v1</id>
+    <title>Pointwise Metrics Mislead: An Evaluation Protocol for Multimodal Inverse Problems</title>
+    <updated>2026-05-21T13:30:33Z</updated>
+    <link href="https://arxiv.org/abs/2605.22891v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2605.22891v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Evaluation in scientific reconstruction is dominated by pointwise metrics - RMSE, MAE, per-event resolution - under the implicit assumption that lower error means better reconstruction. We show that this assumption fails structurally for inverse problems with multimodal posteriors. By the law of total variance, point estimators trained to minimize MSE or MAE produce a marginal spectrum strictly narrower than the truth whenever the posterior has nonzero width. The resulting bias is independent of architecture, training, and dataset size, and it compresses precisely the spectral features - tails, modes, shapes - that downstream scientific measurements rely on. We propose a three-part evaluation protocol where each step targets a failure mode the others miss: per-event distributional accuracy via CRPS, population-level marginal accuracy via a spectrum-fidelity diagnostic, and uncertainty trustworthiness via coverage-based calibration. On a synthetic benchmark with an analytic posterior and on a realistic many-to-one inverse problem from particle physics, model rankings reverse between pointwise and distributional metrics, and calibration further separates architectures indistinguishable under CRPS. The evaluation protocol, not the model, determines the scientific conclusion.</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="hep-ex" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-05-21T13:30:33Z</published>
+    <arxiv:comment>29 pages, 9 figures, and 8 tables (including appendix)</arxiv:comment>
+    <arxiv:primary_category term="cs.LG"/>
+    <author>
+      <name>Mads H. Baattrup</name>
+    </author>
+    <author>
+      <name>Jörn Bach</name>
+    </author>
+    <author>
+      <name>Laurids Jeppe</name>
+    </author>
+    <author>
+      <name>Finn Labe</name>
+    </author>
+    <author>
+      <name>Alexander Grohsjean</name>
+    </author>
+    <author>
+      <name>Christian Schwanenberger</name>
+    </author>
+    <author>
+      <name>Peer Stelldinger</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2603.27539v1</id>
+    <title>Toward Reliable Evaluation of LLM-Based Financial Multi-Agent Systems: Taxonomy, Coordination Primacy, and Cost Awareness</title>
+    <updated>2026-03-29T06:35:07Z</updated>
+    <link href="https://arxiv.org/abs/2603.27539v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2603.27539v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Multi-agent systems based on large language models (LLMs) for financial trading have grown rapidly since 2023, yet the field lacks a shared framework for understanding what drives performance or for evaluating claims credibly. This survey makes three contributions. First, we introduce a four-dimensional taxonomy, covering architecture pattern, coordination mechanism, memory architecture, and tool integration; applied to 12 multi-agent systems and two single-agent baselines. Second, we formulate the Coordination Primacy Hypothesis (CPH): inter-agent coordination protocol design is a primary driver of trading decision quality, often exerting greater influence than model scaling. CPH is presented as a falsifiable research hypothesis supported by tiered structural evidence rather than as an empirically validated conclusion; its definitive validation requires evaluation infrastructure that does not yet exist in the field. Third, we document five pervasive evaluation failures (look-ahead bias, survivorship bias, backtesting overfitting, transaction cost neglect, and regime-shift blindness) and show that these can reverse the sign of reported returns. Building on the CPH and the evaluation critique, we introduce the Coordination Breakeven Spread (CBS), a metric for determining whether multi-agent coordination adds genuine value net of transaction costs, and propose minimum evaluation standards as prerequisites for validating the CPH.</summary>
+    <category term="cs.MA" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CE" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-03-29T06:35:07Z</published>
+    <arxiv:comment>Accepted at the DMO-FinTech Workshop, PAKDD 2026, Hong Kong</arxiv:comment>
+    <arxiv:primary_category term="cs.MA"/>
+    <author>
+      <name>Phat Nguyen</name>
+    </author>
+    <author>
+      <name>Thang Pham</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2601.07988v2</id>
+    <title>From Word Sequences to Behavioral Sequences: Adapting Modeling and Evaluation Paradigms for Longitudinal NLP</title>
+    <updated>2026-06-29T02:05:24Z</updated>
+    <link href="https://arxiv.org/abs/2601.07988v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2601.07988v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>While NLP typically treats documents as independent and unordered samples, in longitudinal studies, this assumption rarely holds: documents are nested within authors and ordered in time, forming person-indexed, time-ordered $\textit{behavioral sequences}$. Here, we demonstrate the need for and propose a longitudinal modeling and evaluation paradigm that consequently updates four parts of the NLP pipeline: (1) evaluation splits aligned to generalization over people ($\textit{cross-sectional}$) and/or time ($\textit{prospective}$); (2) accuracy metrics separating between-person differences from within-person dynamics; (3) sequence inputs to incorporate history by default; and (4) model internals that support different $\textit{coarseness}$ of latent state over histories (pooled summaries, explicit dynamics, or interaction-based models). We demonstrate the issues ensued by traditional pipeline and our proposed improvements on a dataset of 17k daily diary transcripts paired with PTSD symptom severity from 238 participants, finding that traditional document-level evaluation can yield substantially different and sometimes reversed conclusions compared to our ecologically valid modeling and evaluation. We tie our results to a broader discussion motivating a shift from word-sequence evaluation toward $\textit{behavior-sequence}$ paradigms for NLP.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-01-12T20:38:36Z</published>
+    <arxiv:comment>To appear in proceedings of the 64th annual meeting of the Association for Computational Linguistics, San Diego</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Adithya V Ganesan</name>
+    </author>
+    <author>
+      <name>Vasudha Varadarajan</name>
+    </author>
+    <author>
+      <name>Oscar NE Kjell</name>
+    </author>
+    <author>
+      <name>Whitney R Ringwald</name>
+    </author>
+    <author>
+      <name>Scott Feltman</name>
+    </author>
+    <author>
+      <name>Benjamin J Luft</name>
+    </author>
+    <author>
+      <name>Roman Kotov</name>
+    </author>
+    <author>
+      <name>Ryan L Boyd</name>
+    </author>
+    <author>
+      <name>H Andrew Schwartz</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2511.04754v1</id>
+    <title>Surprisal reveals diversity gaps in image captioning and different scorers change the story</title>
+    <updated>2025-11-06T19:07:09Z</updated>
+    <link href="https://arxiv.org/abs/2511.04754v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2511.04754v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>We quantify linguistic diversity in image captioning with surprisal variance - the spread of token-level negative log-probabilities within a caption set. On the MSCOCO test set, we compare five state-of-the-art vision-and-language LLMs, decoded with greedy and nucleus sampling, to human captions. Measured with a caption-trained n-gram LM, humans display roughly twice the surprisal variance of models, but rescoring the same captions with a general-language model reverses the pattern. Our analysis introduces the surprisal-based diversity metric for image captioning. We show that relying on a single scorer can completely invert conclusions, thus, robust diversity evaluation must report surprisal under several scorers.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-11-06T19:07:09Z</published>
+    <arxiv:comment>Accepted and presented at INLG 2025</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Nikolai Ilinykh</name>
+    </author>
+    <author>
+      <name>Simon Dobnik</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2509.03176v1</id>
+    <title>Systematic Evaluation of Attribution Methods: Eliminating Threshold Bias and Revealing Method-Dependent Performance Patterns</title>
+    <updated>2025-09-03T09:50:31Z</updated>
+    <link href="https://arxiv.org/abs/2509.03176v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2509.03176v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Attribution methods explain neural network predictions by identifying influential input features, but their evaluation suffers from threshold selection bias that can reverse method rankings and undermine conclusions. Current protocols binarize attribution maps at single thresholds, where threshold choice alone can alter rankings by over 200 percentage points. We address this flaw with a threshold-free framework that computes Area Under the Curve for Intersection over Union (AUC-IoU), capturing attribution quality across the full threshold spectrum. Evaluating seven attribution methods on dermatological imaging, we show single-threshold metrics yield contradictory results, while threshold-free evaluation provides reliable differentiation. XRAI achieves 31% improvement over LIME and 204% over vanilla Integrated Gradients, with size-stratified analysis revealing performance variations up to 269% across lesion scales. These findings establish methodological standards that eliminate evaluation artifacts and enable evidence-based method selection. The threshold-free framework provides both theoretical insight into attribution behavior and practical guidance for robust comparison in medical imaging and beyond.</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-09-03T09:50:31Z</published>
+    <arxiv:comment>15 pages, 9 figures</arxiv:comment>
+    <arxiv:primary_category term="cs.LG"/>
+    <author>
+      <name>Serra Aksoy</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2502.19439v1</id>
+    <title>Multi-objective Cat Swarm Optimization Algorithm based on a Grid System</title>
+    <updated>2025-02-22T09:13:21Z</updated>
+    <link href="https://arxiv.org/abs/2502.19439v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2502.19439v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>This paper presents a multi-objective version of the Cat Swarm Optimization Algorithm called the Grid-based Multi-objective Cat Swarm Optimization Algorithm (GMOCSO). Convergence and diversity preservation are the two main goals pursued by modern multi-objective algorithms to yield robust results. To achieve these goals, we first replace the roulette wheel method of the original CSO algorithm with a greedy method. Then, two key concepts from Pareto Archived Evolution Strategy Algorithm (PAES) are adopted: the grid system and double archive strategy. Several test functions and a real-world scenario called the Pressure vessel design problem are used to evaluate the proposed algorithm's performance. In the experiment, the proposed algorithm is compared with other well-known algorithms using different metrics such as Reversed Generational Distance, Spacing metric, and Spread metric. The optimization results show the robustness of the proposed algorithm, and the results are further confirmed using statistical methods and graphs. Finally, conclusions and future directions were presented..</summary>
+    <category term="cs.NE" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-02-22T09:13:21Z</published>
+    <arxiv:primary_category term="cs.NE"/>
+    <author>
+      <name>Aram M. Ahmed</name>
+    </author>
+    <author>
+      <name>Bryar A. Hassan</name>
+    </author>
+    <author>
+      <name>Tarik A. Rashid</name>
+    </author>
+    <author>
+      <name>Kaniaw A. Noori</name>
+    </author>
+    <author>
+      <name>Soran Ab. M. Saeed</name>
+    </author>
+    <author>
+      <name>Omed H. Ahmed</name>
+    </author>
+    <author>
+      <name>Shahla U. Umar</name>
+    </author>
+    <arxiv:doi>10.1201/9781003601555</arxiv:doi>
+    <link rel="related" href="https://doi.org/10.1201/9781003601555" title="doi"/>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2312.06203v2</id>
+    <title>Offloading and Quality Control for AI Generated Content Services in 6G Mobile Edge Computing Networks</title>
+    <updated>2024-03-23T06:38:37Z</updated>
+    <link href="https://arxiv.org/abs/2312.06203v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2312.06203v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>AI-Generated Content (AIGC), as a novel manner of providing Metaverse services in the forthcoming Internet paradigm, can resolve the obstacles of immersion requirements. Concurrently, edge computing, as an evolutionary paradigm of computing in communication systems, effectively augments real-time interactive services. In pursuit of enhancing the accessibility of AIGC services, the deployment of AIGC models (e.g., diffusion models) to edge servers and local devices has become a prevailing trend. Nevertheless, this approach faces constraints imposed by battery life and computational resources when tasks are offloaded to local devices, limiting the capacity to deliver high-quality content to users while adhering to stringent latency requirements. So there will be a tradeoff between the utility of AIGC models and offloading decisions in the edge computing paradigm. This paper proposes a joint optimization algorithm for offloading decisions, computation time, and diffusion steps of the diffusion models in the reverse diffusion stage. Moreover, we take the average error into consideration as the metric for evaluating the quality of the generated results. Experimental results conclusively demonstrate that the proposed algorithm achieves superior joint optimization performance compared to the baselines.</summary>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.NI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.PF" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2023-12-11T08:36:27Z</published>
+    <arxiv:comment>This paper appears in the 2024 IEEE 99th Vehicular Technology Conference (VTC)</arxiv:comment>
+    <arxiv:primary_category term="cs.AI"/>
+    <author>
+      <name>Yitong Wang</name>
+    </author>
+    <author>
+      <name>Chang Liu</name>
+    </author>
+    <author>
+      <name>Jun Zhao</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2210.11925v3</id>
+    <title>Unbiased constrained sampling with Self-Concordant Barrier Hamiltonian Monte Carlo</title>
+    <updated>2023-10-28T14:40:43Z</updated>
+    <link href="https://arxiv.org/abs/2210.11925v3" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2210.11925v3" rel="related" type="application/pdf" title="pdf"/>
+    <summary>In this paper, we propose Barrier Hamiltonian Monte Carlo (BHMC), a version of the HMC algorithm which aims at sampling from a Gibbs distribution $π$ on a manifold $\mathrm{M}$, endowed with a Hessian metric $\mathfrak{g}$ derived from a self-concordant barrier. Our method relies on Hamiltonian dynamics which comprises $\mathfrak{g}$. Therefore, it incorporates the constraints defining $\mathrm{M}$ and is able to exploit its underlying geometry. However, the corresponding Hamiltonian dynamics is defined via non separable Ordinary Differential Equations (ODEs) in contrast to the Euclidean case. It implies unavoidable bias in existing generalization of HMC to Riemannian manifolds. In this paper, we propose a new filter step, called "involution checking step", to address this problem. This step is implemented in two versions of BHMC, coined continuous BHMC (c-BHMC) and numerical BHMC (n-BHMC) respectively. Our main results establish that these two new algorithms generate reversible Markov chains with respect to $π$ and do not suffer from any bias in comparison to previous implementations. Our conclusions are supported by numerical experiments where we consider target distributions defined on polytopes.</summary>
+    <category term="stat.ML" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="math.PR" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2022-10-21T12:56:07Z</published>
+    <arxiv:primary_category term="stat.ML"/>
+    <author>
+      <name>Maxence Noble</name>
+    </author>
+    <author>
+      <name>Valentin De Bortoli</name>
+    </author>
+    <author>
+      <name>Alain Durmus</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2108.03817v1</id>
+    <title>Evaluation of distortion correction methods in diffusion MRI of the spinal cord</title>
+    <updated>2021-08-09T05:41:26Z</updated>
+    <link href="https://arxiv.org/abs/2108.03817v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2108.03817v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Background: Magnetic field inhomogeneities generate important geometric distortions in reconstructed echo-planar images. Various procedures were proposed for correcting these distortions on brain images; yet, few neuroimaging studies tailored and incorporated the use of these techniques in spinal cord diffusion MRI. Purpose: We present a comparative evaluation of distortion correction methods that use the reversed gradient polarity technique on spinal cord. We propose novel geometric metrics to measure the alignment of the reconstructed diffusion model with the apparent centerline of the spinal cord. Subjects: 95 subjects, among which 29 healthy controls and 66 multiple sclerosis patients. Assessment: Geometric distortions were corrected using 4 state-of-the-art methods. We measured the alignment of the principal direction of diffusion with the apparent centerline of the spine after correction and the correlation with the reference anatomical image. Results are computed per vertebral level, to evaluate the impact on different portions of the spine. Besides, subjective evaluation of the quality of the correction of healthy subjects images was performed by three expert raters. Results: As a result of distortion correction, the diffusion directions are better aligned locally with the centerline, in particular at both ends of the acquisition window. The cross-correlation with anatomical image is also improved by Hyperelastic Susceptibility Artefact Correction (HySCO) and block-matching. The subjective evaluation for HySCO is significantly better (p &lt; 0.05) than for Block-Matching; TOPUP performs significantly worse than the three other methods. Conclusion: Correction based on HySCO provide best results among the selected methods.</summary>
+    <category term="eess.IV" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="physics.med-ph" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2021-08-09T05:41:26Z</published>
+    <arxiv:primary_category term="eess.IV"/>
+    <author>
+      <name>Haykel Snoussi</name>
+    </author>
+    <author>
+      <name>Julien Cohen-Adad</name>
+    </author>
+    <author>
+      <name>Olivier Commowick</name>
+    </author>
+    <author>
+      <name>Benoit Combes</name>
+    </author>
+    <author>
+      <name>Elise Bannier</name>
+    </author>
+    <author>
+      <name>Soizic Leguy</name>
+    </author>
+    <author>
+      <name>Anne Kerbrat</name>
+    </author>
+    <author>
+      <name>Christian Barillot</name>
+    </author>
+    <author>
+      <name>Emmanuel Caruyer</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2008.03241v2</id>
+    <title>Quantum-metric-enabled exciton condensate in double twisted bilayer graphene</title>
+    <updated>2022-04-19T16:21:59Z</updated>
+    <link href="https://arxiv.org/abs/2008.03241v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2008.03241v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Flat-band systems are a promising platform for realizing exotic collective ground states with spontaneously broken symmetry because the electron-electron interactions dominate over the kinetic energy. A collective ground state of particular interest is the chased after exciton condensate (EC). However, in flat band systems other collective ground states can compete with an EC phase, and the conventional treatment of the effect of thermal and quantum fluctuations predicts the EC phase should be unstable. Here, using double twisted bilayer graphene (TBLG) heterostructures as an example, we show that for realistic interaction strengths the EC phase is favored with respect to other TBLG's phases -- orbital magnetism and superconductivity -- when the TBLGs have opposite doping, and that the quantum metric of the Bloch wave functions stabilizes the EC, reversing the conclusion that would be drawn from the conventional approach in which quantum metric contributions are neglected. Our results suggest that the quantum metric plays a critical role in determining the stability of exciton condensates in double layers formed by systems with flat-bands.</summary>
+    <category term="cond-mat.mes-hall" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cond-mat.supr-con" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2020-08-07T16:00:40Z</published>
+    <arxiv:comment>6 pages, 6 figures</arxiv:comment>
+    <arxiv:primary_category term="cond-mat.mes-hall"/>
+    <arxiv:journal_ref>Phys. Rev. B 105, L140506 (2022)</arxiv:journal_ref>
+    <author>
+      <name>Xiang Hu</name>
+    </author>
+    <author>
+      <name>Timo Hyart</name>
+    </author>
+    <author>
+      <name>Dmitry I. Pikulin</name>
+    </author>
+    <author>
+      <name>Enrico Rossi</name>
+    </author>
+    <arxiv:doi>10.1103/PhysRevB.105.L140506</arxiv:doi>
+    <link rel="related" href="https://doi.org/10.1103/PhysRevB.105.L140506" title="doi"/>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2005.01282v2</id>
+    <title>Distributional Discrepancy: A Metric for Unconditional Text Generation</title>
+    <updated>2020-07-02T15:40:14Z</updated>
+    <link href="https://arxiv.org/abs/2005.01282v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2005.01282v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>The purpose of unconditional text generation is to train a model with real sentences, then generate novel sentences of the same quality and diversity as the training data. However, when different metrics are used for comparing the methods of unconditional text generation, contradictory conclusions are drawn. The difficulty is that both the diversity and quality of the sample should be considered simultaneously when the models are evaluated. To solve this problem, a novel metric of distributional discrepancy (DD) is designed to evaluate generators based on the discrepancy between the generated and real training sentences. However, it cannot compute the DD directly because the distribution of real sentences is unavailable. Thus, we propose a method for estimating the DD by training a neural-network-based text classifier. For comparison, three existing metrics, bi-lingual evaluation understudy (BLEU) versus self-BLEU, language model score versus reverse language model score, and Fréchet embedding distance, along with the proposed DD, are used to evaluate two popular generative models of long short-term memory and generative pretrained transformer 2 on both syntactic and real data. Experimental results show that DD is significantly better than the three existing metrics for ranking these generative models.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2020-05-04T05:53:34Z</published>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Ping Cai</name>
+    </author>
+    <author>
+      <name>Xingyuan Chen</name>
+    </author>
+    <author>
+      <name>Peng Jin</name>
+    </author>
+    <author>
+      <name>Hongjun Wang</name>
+    </author>
+    <author>
+      <name>Tianrui Li</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/1901.09351v1</id>
+    <title>Automated Quality Control in Image Segmentation: Application to the UK Biobank Cardiac MR Imaging Study</title>
+    <updated>2019-01-27T10:52:34Z</updated>
+    <link href="https://arxiv.org/abs/1901.09351v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/1901.09351v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Background: The trend towards large-scale studies including population imaging poses new challenges in terms of quality control (QC). This is a particular issue when automatic processing tools, e.g. image segmentation methods, are employed to derive quantitative measures or biomarkers for later analyses. Manual inspection and visual QC of each segmentation isn't feasible at large scale. However, it's important to be able to automatically detect when a segmentation method fails so as to avoid inclusion of wrong measurements into subsequent analyses which could lead to incorrect conclusions. Methods: To overcome this challenge, we explore an approach for predicting segmentation quality based on Reverse Classification Accuracy, which enables us to discriminate between successful and failed segmentations on a per-cases basis. We validate this approach on a new, large-scale manually-annotated set of 4,800 cardiac magnetic resonance scans. We then apply our method to a large cohort of 7,250 cardiac MRI on which we have performed manual QC. Results: We report results used for predicting segmentation quality metrics including Dice Similarity Coefficient (DSC) and surface-distance measures. As initial validation, we present data for 400 scans demonstrating 99% accuracy for classifying low and high quality segmentations using predicted DSC scores. As further validation we show high correlation between real and predicted scores and 95% classification accuracy on 4,800 scans for which manual segmentations were available. We mimic real-world application of the method on 7,250 cardiac MRI where we show good agreement between predicted quality metrics and manual visual QC scores. Conclusions: We show that RCA has the potential for accurate and fully automatic segmentation QC on a per-case basis in the context of large-scale population imaging as in the UK Biobank Imaging Study.</summary>
+    <category term="cs.CV" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2019-01-27T10:52:34Z</published>
+    <arxiv:comment>14 pages, 7 figures, Journal of Cardiovascular Magnetic Resonance</arxiv:comment>
+    <arxiv:primary_category term="cs.CV"/>
+    <author>
+      <name>Robert Robinson</name>
+      <arxiv:affiliation>Biomedical Image Analysis Group, Department of Computing, Imperial College London</arxiv:affiliation>
+    </author>
+    <author>
+      <name>Vanya V. Valindria</name>
+      <arxiv:affiliation>Biomedical Image Analysis Group, Department of Computing, Imperial College London</arxiv:affiliation>
+    </author>
+    <author>
+      <name>Wenjia Bai</name>
+      <arxiv:affiliation>Biomedical Image Analysis Group, Department of Computing, Imperial College London</arxiv:affiliation>
+    </author>
+    <author>
+      <name>Ozan Oktay</name>
+      <arxiv:affiliation>Biomedical Image Analysis Group, Department of Computing, Imperial College London</arxiv:affiliation>
+    </author>
+    <author>
+      <name>Bernhard Kainz</name>
+      <arxiv:affiliation>Biomedical Image Analysis Group, Department of Computing, Imperial College London</arxiv:affiliation>
+    </author>
+    <author>
+      <name>Hideaki Suzuki</name>
+      <arxiv:affiliation>Division of Brain Sciences, Dept. of Medicine, Imperial College London</arxiv:affiliation>
+    </author>
+    <author>
+      <name>Mihir M. Sanghvi</name>
+      <arxiv:affiliation>William Harvey Research Institute, Queen Mary University of London</arxiv:affiliation>
+      <arxiv:affiliation>Barts Heart Centre, London</arxiv:affiliation>
+    </author>
+    <author>
+      <name>Nay Aung</name>
+      <arxiv:affiliation>William Harvey Research Institute, Queen Mary University of London</arxiv:affiliation>
+      <arxiv:affiliation>Barts Heart Centre, London</arxiv:affiliation>
+    </author>
+    <author>
+      <name>Jos$é$ Miguel Paiva</name>
+      <arxiv:affiliation>William Harvey Research Institute, Queen Mary University of London</arxiv:affiliation>
+    </author>
+    <author>
+      <name>Filip Zemrak</name>
+      <arxiv:affiliation>William Harvey Research Institute, Queen Mary University of London</arxiv:affiliation>
+      <arxiv:affiliation>Barts Heart Centre, London</arxiv:affiliation>
+    </author>
+    <author>
+      <name>Kenneth Fung</name>
+      <arxiv:affiliation>William Harvey Research Institute, Queen Mary University of London</arxiv:affiliation>
+      <arxiv:affiliation>Barts Heart Centre, London</arxiv:affiliation>
+    </author>
+    <author>
+      <name>Elena Lukaschuk</name>
+      <arxiv:affiliation>Division of Cardiovascular Medicine, Radcliffe Department of Medicine, University of Oxford</arxiv:affiliation>
+    </author>
+    <author>
+      <name>Aaron M. Lee</name>
+      <arxiv:affiliation>William Harvey Research Institute, Queen Mary University of London</arxiv:affiliation>
+      <arxiv:affiliation>Barts Heart Centre, London</arxiv:affiliation>
+    </author>
+    <author>
+      <name>Valentina Carapella</name>
+      <arxiv:affiliation>Division of Cardiovascular Medicine, Radcliffe Department of Medicine, University of Oxford</arxiv:affiliation>
+    </author>
+    <author>
+      <name>Young Jin Kim</name>
+      <arxiv:affiliation>Division of Cardiovascular Medicine, Radcliffe Department of Medicine, University of Oxford</arxiv:affiliation>
+      <arxiv:affiliation>Department of Radiology, Severance Hospital, South Korea</arxiv:affiliation>
+    </author>
+    <author>
+      <name>Stefan K. Piechnik</name>
+      <arxiv:affiliation>Division of Cardiovascular Medicine, Radcliffe Department of Medicine, University of Oxford</arxiv:affiliation>
+    </author>
+    <author>
+      <name>Stefan Neubauer</name>
+      <arxiv:affiliation>Division of Cardiovascular Medicine, Radcliffe Department of Medicine, University of Oxford</arxiv:affiliation>
+    </author>
+    <author>
+      <name>Steffen E. Petersen</name>
+      <arxiv:affiliation>William Harvey Research Institute, Queen Mary University of London</arxiv:affiliation>
+      <arxiv:affiliation>Barts Heart Centre, London</arxiv:affiliation>
+    </author>
+    <author>
+      <name>Chris Page</name>
+      <arxiv:affiliation>GlaxoSmithKline Research and Development, UK</arxiv:affiliation>
+    </author>
+    <author>
+      <name>Paul M. Matthews</name>
+      <arxiv:affiliation>Division of Brain Sciences, Dept. of Medicine, Imperial College London</arxiv:affiliation>
+      <arxiv:affiliation>UK Dementia Research Institute, Imperial College London</arxiv:affiliation>
+    </author>
+    <author>
+      <name>Daniel Rueckert</name>
+      <arxiv:affiliation>Biomedical Image Analysis Group, Department of Computing, Imperial College London</arxiv:affiliation>
+    </author>
+    <author>
+      <name>Ben Glocker</name>
+      <arxiv:affiliation>Biomedical Image Analysis Group, Department of Computing, Imperial College London</arxiv:affiliation>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/1412.1982v1</id>
+    <title>Topological characteristics of local atomic arrangements at crystalline-amorphous structural transition in graphite</title>
+    <updated>2014-12-05T12:45:40Z</updated>
+    <link href="https://arxiv.org/abs/1412.1982v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/1412.1982v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Quasi-continuous structural transformation from the crystalline to amorphous state takes place in graphite during ball-milling. The quantitative characteristics of a short- and a medium-range orders in carbon nanomaterials structure are determined by a combined application of X-ray diffraction analysis, reverse Monte Carlo modeling and Voronoi diagram method. High resolution TEM images revealed formation of globular carbon materials having onion-like structure. The Voronoi polyhedra (VP) constructed for simulated atomic configurations of the ball-milled graphite have an extraordinary variety in their topological and metric characteristics and contain a lot of 5-fold faces. The analysis of VP sphericity coefficient Ksph enables a conclusion about the change of the local atomic arrangement in a structure of ball-milled carbon from graphite- to diamond-like. The sphericity coefficient is proposed to be as a parameter of the topological order to quantitative estimation of disordering degree in amorphous structures.</summary>
+    <category term="cond-mat.mtrl-sci" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cond-mat.mes-hall" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2014-12-05T12:45:40Z</published>
+    <arxiv:comment>15 pages, 8 figures</arxiv:comment>
+    <arxiv:primary_category term="cond-mat.mtrl-sci"/>
+    <author>
+      <name>A. D. Rud</name>
+    </author>
+    <author>
+      <name>I. M. Kirian</name>
+    </author>
+    <author>
+      <name>A. M. Lakhnik</name>
+    </author>
+  </entry>
+</feed>

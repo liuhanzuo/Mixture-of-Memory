@@ -125,5 +125,104 @@
   "selector=iter_bm25",
   "per-cell only, never pooled",
   "canonical scorers imported, never reimplemented"
- ]
+ ],
+ "k1_novelty": {
+  "gate": "K1",
+  "date": "2026-08-14",
+  "gpu_spent": "ZERO",
+  "verdict": "NEEDS_NARROWING",
+  "doc": "proposal/backlog/B11-generative-scorer-format-fragility/K1_NOVELTY_CHECK.md",
+  "raw_artefacts": "proposal/backlog/B11-generative-scorer-format-fragility/k1_raw/ (arXiv Atom XML, ACL Anthology HTML, DBLP JSON, OpenReview JSON, HELMET camera-ready HTML)",
+  "why_not_pass": "the claim AS WRITTEN in this file's 'claim' key asserts a general 'scorer preprocessing destroys ranking', which IS covered: Alzahrani et al. ACL 2024 (2024.acl-long.744) moves leaderboard rank up to 8 positions by changing the answer-SELECTION method; Sanz-Guerrero et al. EMNLP 2025 (2025.emnlp-main.988) reshuffles rankings via tokenization of the 'Answer:' suffix; arXiv:2510.05152 states one can put any model in the lead by changing the single delimiter character. Proceeding unnarrowed walks into K1's kill_if.",
+  "why_not_fully_preempted": "no located work varies ONE operation inside an existing GENERATIVE scorer while holding the generations BYTE-FIXED, and no located work breaks a ladder over ARMS OF ONE MODEL differing in output-format habit. All prior art varies the prompt (delimiter/tokenization/demonstrations/format constraints), swaps the extraction module wholesale (RegEx->model, extra inference pass), changes the metric FAMILY (EM->sMAPE, ROUGE->judge, EM->judge), or perturbs the benchmark (choice order, input-context truncation). Those are between-model leaderboard claims; B11's is a within-model between-arm claim.",
+  "narrowed_claim": "In a generative long-context benchmark whose scorer matches free-form output against a closed task-label vocabulary (babilong.metrics.compare_answers), a SINGLE text-preprocessing operation in the scorer's source -- truncation of the model output at the first period, metrics.py:27 -- interacts with an ARM-DEPENDENT output-format habit strongly enough that the scorer FAILS TO RECOVER THE ORDERING of a within-model architectural manipulation whose true effect is +58 to +84 pp on a retrieval-closed reference task. Demonstrated by re-scoring BYTE-FIXED generations with that one operation removed and nothing else changed: on 2 of 6 cells the inverted point estimate is removed, and on qa1x32k the 5-point ladder becomes rho = -1.000 (exact permutation p = 0.0167). The operation is NOT a one-directional bug -- it LOWERS scores for arms emitting choice-lists (list-format rate 62-75%) and RAISES them for arms emitting continuations -- and the four inverting cells are EXACTLY the four high-list-format cells ([[4,0],[0,2]], Fisher exact p = 0.0667, the minimum attainable at 6 cells, hence descriptive). The scorer contains a SECOND, independently verifiable defect: the guard intended to stop continuation leakage, metrics.py:31 split('Question'), is UNREACHABLE because metrics.py:25 lowercases first.",
+  "venue_verified_prior_art": [
+   {
+    "cite": "Alzahrani et al., When Benchmarks are Targets, arXiv:2402.01781",
+    "venue": "ACL 2024 Long",
+    "authority": "aclanthology 2024.acl-long.744 metadata block (pp. 13787-13805, DOI 10.18653/v1/2024.acl-long.744) + DBLP 'ACL 2024'",
+    "relation": "MUST CITE -- owns 'answer-selection method changes leaderboard rank'"
+   },
+   {
+    "cite": "Molfese et al., Right Answer Wrong Score, arXiv:2503.14996v2",
+    "venue": "Findings of ACL 2025",
+    "authority": "aclanthology 2025.findings-acl.950 metadata block (pp. 18477-18494, DOI 10.18653/v1/2025.findings-acl.950) + DBLP 'ACL 2025'",
+    "relation": "adjacent -- MCQA only; full-text check: 0 occurrences of generative/long-context/ablation/BABILong/first sentence/source code; 'ranking' appears once, citing Alzahrani"
+   },
+   {
+    "cite": "Yu et al., xFinder, arXiv:2405.11874",
+    "venue": "ICLR 2025 Poster",
+    "authority": "OpenReview venueid=ICLR.cc/2025/Conference, forum 7UqQJUKaLM, invitations include Submission5699/-/Camera_Ready_Revision",
+    "relation": "MUST CITE -- closest stance (harness RegEx extraction is 74.38% accurate and is itself the defect), but replaces the module rather than ablating one operation, and shows no ranking destruction"
+   },
+   {
+    "cite": "Sanz-Guerrero et al., Mind the Gap: Tokenization for MCQA, arXiv:2509.15020",
+    "venue": "EMNLP 2025 Main",
+    "authority": "aclanthology 2025.emnlp-main.988 metadata block (pp. 19573-19583) + DBLP 'EMNLP 2025'",
+    "relation": "MUST CITE -- prompt-side 'reshuffled model rankings'; distinguish prompt side vs scorer side in the abstract"
+   },
+   {
+    "cite": "Yen et al., HELMET, arXiv:2410.02694v3",
+    "venue": "ICLR 2025 Poster",
+    "authority": "OpenReview venueid=ICLR.cc/2025/Conference, forum 293V3bJbmE, invitations include Submission12024/-/Camera_Ready_Revision. NOTE: DBLP still returns only 'CoRR 2024' for this title -- the two-family rule was load-bearing here",
+    "relation": "MUST CITE -- most dangerous neighbour: names 'Unreliable metrics' + 'inconsistent output formats' for long-context benchmarks. Read camera-ready 2.2/2.3 in full: its metric fix REPLACES ROUGE with a GPT-4o reference-based judge (human kappa 0.91/0.76), its format fix is PROMPT-SIDE two-shot demos, and it uses substring EM (SubEM) for RAG WITHOUT auditing SubEM's own preprocessing. Argues 'pick a better metric'; B11 argues 'the metric you already use has an identifiable line that inverts your ladder'"
+   },
+   {
+    "cite": "Su/Zhang/Ullrich/Bottou/Ibrahim, A Single Character can Make or Break Your LLM Evals, arXiv:2510.05152",
+    "venue": "CoRR 2025 only (DBLP: Informal and Other Publications; no conference venue located)",
+    "authority": "DBLP",
+    "relation": "MUST CITE -- strongest published 'one character controls ranking', but the character is in the PROMPT. SOURCES.md already flags this exact prompt/scorer distinction as the whole novelty question"
+   },
+   {
+    "cite": "Arjmandi, Distractor-Aware Truncation, arXiv:2608.03297",
+    "venue": "arXiv 2026-08-04 (10 days before this gate = CONCURRENT, does not constitute preemption per project rule)",
+    "authority": "arXiv",
+    "relation": "MUST CITE -- same benchmark (BABILong), same word 'truncation', OPPOSITE side of the pipeline (truncates the INPUT CONTEXT, not the model output inside the scorer). Cite or a reviewer will conflate the two truncations"
+   },
+   {
+    "cite": "Time to Revisit Exact Match, arXiv:2509.16720",
+    "venue": "arXiv only (DBLP total=0 for this title)",
+    "authority": "DBLP",
+    "relation": "adjacent -- EM->sMAPE/MASE 'reshuffles model rankings' on temporal QA; changes the metric FAMILY, not a preprocessing operation"
+   },
+   {
+    "cite": "Reassessing Extractive QA Datasets at Scale, arXiv:2504.11972v3",
+    "venue": "arXiv only (DBLP total=0)",
+    "authority": "DBLP",
+    "relation": "adjacent -- canonical 'judge beats string match' (EM r=0.22, F1 0.40, judge up to 0.85)"
+   },
+   {
+    "cite": "Garg & Sagtani, Unsolvability Ceiling in Multi-LLM Routing, arXiv:2605.07395",
+    "venue": "arXiv only",
+    "authority": "arXiv",
+    "relation": "adjacent -- lists 'output format mismatches' among lumped eval artifacts in routing-headroom estimation; no per-operation ablation"
+   }
+  ],
+  "empty_searches_documenting_the_gap": [
+   "abs:'generative' AND abs:'scorer' AND abs:'output format' -> 0",
+   "abs:'string matching' AND abs:'long context' AND abs:'evaluation' -> 0",
+   "abs:'scorer' AND abs:'benchmark' AND abs:'artifact' AND abs:'conclusion' -> 0",
+   "abs:'lenient' AND abs:'strict' AND abs:'match' AND abs:'benchmark' -> 0",
+   "abs:'LongBench' AND abs:'metric' AND abs:'reliab' -> 0",
+   "abs:'RULER' AND abs:'recall' AND abs:'string match' -> 0",
+   "booydar/babilong: 18 issues, NONE about metrics.py / preprocess_output / first-period truncation (issue #16 is Gemma chat-template/attention-backend, zero comments); GitHub issue search 'babilong metrics truncation' -> 0. The upstream-bug-report exit (K3) is UNCLAIMED."
+  ],
+  "new_findings_this_gate": {
+   "dead_code_second_defect": "metrics.py:31 output.split('Question')[0] is UNREACHABLE: metrics.py:25 lowercases first, so the token is already 'question'. Executed check: input '...kitchen Question: Where is the football? Answer: garden' -> preprocess_output returns '...kitchen question: where is the football? answer: garden', i.e. 'question' in output is True and the guard did not fire. Same applies to <CONTEXT>/<EXAMPLE> in any non-lowercase casing. This STRENGTHENS the surviving 'localises to auditable lines' half of the claim: the authors' intended defence against continuation leakage does not run at all. Was already noted in this repo's scripts/score_with_stopfix.py docstring (2026-06-30) as a Llama-3 diagnostic; re-confirmed here on the current canonical package.",
+   "truncation_is_a_tradeoff_not_a_bug": "CORRECTION to framing, unfavourable to the current wording. Executed on the canonical scorer: 'Choices: A. In the kitchen B. In the garden. The answer is kitchen.' scores False (truncation KILLS a correct list-format answer), while 'kitchen. Question: Where is the football? Answer: garden' scores True canonically and False under notrunc (truncation SAVES a correct continuation-leak answer). The evidence JSON agrees at cell level: notrunc raises qa1/qa2 but LOWERS qa5 (qa5x32k A0 61.0->59.0, A3 57.0->52.0). Correct description = 'a scorer operation whose sign depends on the arm's output-format habit', NOT 'a bug'. Explains why the dissociation is perfectly cell-aligned, but FORBIDS the word 'fix' and forbids presenting notrunc as a corrected metric.",
+   "claim_overstates_the_true_effect_lower_bound": "the 'claim' key and PROPOSAL.md both say '+70 to +84 pp', but established_measurements.true_effect_on_retrieval_closed_ruler_pp = [58.0, 54.0, 84.0, 84.0], whose minimum is 54. Correct range is +54 to +84 pp (the narrowed claim conservatively states +58 to +84 using the two cells that carry the ladder). FLAGGED, NOT EDITED -- the existing key is append-only."
+  },
+  "additional_forbidden_claims": [
+   "'Novel: preprocessing changes model ranking' -- NOT novel. Owned by Alzahrani et al. ACL 2024 and Sanz-Guerrero et al. EMNLP 2025. Only the (generative scorer + one-operation ablation on byte-fixed generations + within-model arm ladder) combination is open.",
+   "'We fix the metric' / presenting notrunc as a corrected metric -- it is a trade-off; notrunc LOWERS qa5.",
+   "'+70 pp' as the lower bound of the true effect -- the evidence minimum is 54 pp.",
+   "'BABILong's scorer is uniquely broken' -- NOT tested; that is K3, still open."
+  ],
+  "gate_status_after_k1": {
+   "K1": "RELEASED for the narrowed_claim ONLY, under the citation and additional_forbidden_claims obligations. NOT released for the 'claim' key as written.",
+   "gpu_policy_now": "satisfied -- K2 (cross-family replication) MAY now spend GPU. K2 remains blocking for promotion.",
+   "K2_added_requirement": "the second family must be measured on per-arm LIST-FORMAT RATE as a PRE-REGISTERED covariate, because the mechanism is now explicitly an interaction with format habit. A second family with asymmetry BUT no inversion is also informative and must not be silently discarded.",
+   "K3": "unchanged, still blocking:false. The upstream-report exit is unclaimed (no babilong issue on metrics.py)."
+  }
+ }
 }
