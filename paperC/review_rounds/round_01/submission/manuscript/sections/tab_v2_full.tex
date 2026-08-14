@@ -1,0 +1,40 @@
+\begin{table*}[t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3.2pt}
+\begin{tabular}{llrrrrrl}
+\toprule
+Family & Cell & Acc. & $\widehat{\mathrm{acc}}$ & $\Delta_{\mathrm{perm}}$ & Half-width & $p$ & Verdict \\
+\midrule
+Qwen3 & heal@5000 & 0.115276 & 0.115993 & $-0.072$ & 0.231 & 0.5412 & no signal \\
+Qwen3 & heal@5500 & 0.115691 & 0.115654 & $+0.004$ & 0.316 & 0.9810 & no signal \\
+Qwen3 & heal@6000 & 0.114860 & 0.115857 & $-0.100$ & 0.281 & 0.4932 & no signal \\
+Qwen3 & heal@6500 & 0.114943 & 0.115864 & $-0.092$ & 0.287 & 0.5204 & no signal \\
+Qwen3 & heal@7000 & 0.115775 & 0.115995 & $-0.022$ & 0.241 & 0.8522 & no signal \\
+OLMo-2 & \texttt{keep8}@45000 & 0.117271 & 0.114046 & $+0.322$ & 0.370 & 0.0856 & no signal \\
+OLMo-2 & \texttt{keep8}@121000 & 0.115442 & 0.113152 & $+0.229$ & 0.446 & 0.3122 & no signal \\
+Qwen3 & \texttt{k8}, unhealed & 0.107796 & 0.109185 & $-0.139$ & 0.162 & 0.0964 & no signal \\
+Qwen3 & intact & 0.461104 & 0.112212 & $+34.889$ & 0.844 & 0.0001 & item-level signal \\
+OLMo-2 & intact & 0.271858 & 0.112324 & $+15.953$ & 0.761 & 0.0001 & item-level signal \\
+OLMo-2 & \texttt{keep10}@83500 & 0.112450 & 0.111508 & $+0.094$ & 0.481 & 0.6966 & no signal \\
+OLMo-2 & \texttt{keep12}@124000 & 0.113115 & 0.112219 & $+0.090$ & 0.471 & 0.7026 & no signal \\
+OLMo-2 & \texttt{keep14}@200000 & 0.119847 & 0.113766 & $+0.608$ & 0.500 & 0.0172 & trace signal \\
+OLMo-2 & \texttt{shortgpt16}@200000 & 0.153341 & 0.112797 & $+4.054$ & 0.575 & 0.0001 & item-level signal \\
+Qwen3 & \texttt{k10}, unhealed & 0.118185 & 0.116155 & $+0.203$ & 0.228 & 0.0804 & no signal \\
+Qwen3 & \texttt{k12}, unhealed & 0.115027 & 0.114880 & $+0.015$ & 0.379 & 0.9432 & no signal \\
+Qwen3 & \texttt{k14}, unhealed & 0.118933 & 0.116263 & $+0.267$ & 0.188 & 0.0066 & trace signal \\
+Llama-2 & intact & 0.131981 & 0.112392 & $+1.959$ & 0.525 & 0.0001 & anchor blocked \\
+Llama-2 & \texttt{k8}, unhealed & 0.107463 & 0.111620 & $-0.416$ & 0.495 & 0.1002 & no signal \\
+Llama-2 & \texttt{k10}, unhealed & 0.113198 & 0.114575 & $-0.138$ & 0.356 & 0.4510 & no signal \\
+Llama-2 & \texttt{k12}, unhealed & 0.115858 & 0.116528 & $-0.067$ & 0.081 & 0.1052 & no signal \\
+Llama-2 & \texttt{k14}, unhealed & 0.116772 & 0.116408 & $+0.036$ & 0.085 & 0.3950 & no signal \\
+Llama-3 & intact & 0.329205 & 0.112014 & $+21.719$ & 0.813 & 0.0001 & item-level signal \\
+Llama-3 & \texttt{k8}, unhealed & 0.113531 & 0.115399 & $-0.187$ & 0.351 & 0.2894 & no signal \\
+Llama-3 & \texttt{k10}, unhealed & 0.111951 & 0.112269 & $-0.032$ & 0.366 & 0.8746 & no signal \\
+Llama-3 & \texttt{k12}, unhealed & 0.111868 & 0.111851 & $+0.002$ & 0.514 & 0.9968 & no signal \\
+Llama-3 & \texttt{k14}, unhealed & 0.114694 & 0.110945 & $+0.375$ & 0.446 & 0.0970 & no signal \\
+\bottomrule
+\end{tabular}
+\caption{Complete 27-cell read-out v2. Deltas and half-widths are percentage points. ``Anchor blocked'' denotes absolute item-level signal but no admissible relative-recovery claim. Numbers are from \texttt{paperC/tcodex\_out/EVIDENCE\_PACK.md}, Section D.}
+\label{tab:v2-full}
+\end{table*}

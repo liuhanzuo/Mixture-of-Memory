@@ -1,0 +1,138 @@
+{
+  "schema_version": "1.0.0",
+  "n_draws": 200000,
+  "seed": 20260814,
+  "method": "balanced (exactly uniform) multinomial null at each construct's own (n,k); f_const=max_L of the k sampled marginals; p = P(max_L >= observed floor)",
+  "rows": [
+    {
+      "construct": "MMLU-Pro letter, naive",
+      "n": 12032,
+      "k": 10,
+      "floor": 0.116606,
+      "chance": 0.1,
+      "E_max_balanced": 0.104457,
+      "q95_balanced": 0.107048,
+      "p_one_sided": 0.0,
+      "survives": true,
+      "gap_pp": 1.661,
+      "E_max_minus_chance_pp": 0.446
+    },
+    {
+      "construct": "MMLU-Pro letter, item-avg.",
+      "n": 12032,
+      "k": 10,
+      "floor": 0.116606,
+      "chance": 0.110877,
+      "E_max_balanced": 0.10446,
+      "q95_balanced": 0.107131,
+      "p_one_sided": 0.0,
+      "survives": true,
+      "gap_pp": 0.573,
+      "E_max_minus_chance_pp": 0.446
+    },
+    {
+      "construct": "MMLU letter",
+      "n": 14042,
+      "k": 4,
+      "floor": 0.268908,
+      "chance": 0.25,
+      "E_max_balanced": 0.254355,
+      "q95_balanced": 0.258225,
+      "p_one_sided": 0.0,
+      "survives": true,
+      "gap_pp": 1.891,
+      "E_max_minus_chance_pp": 0.436
+    },
+    {
+      "construct": "OpenBookQA letter",
+      "n": 500,
+      "k": 4,
+      "floor": 0.276,
+      "chance": 0.25,
+      "E_max_balanced": 0.273191,
+      "q95_balanced": 0.294,
+      "p_one_sided": 0.3834,
+      "survives": false,
+      "gap_pp": 2.6,
+      "E_max_minus_chance_pp": 2.319
+    },
+    {
+      "construct": "ARC-Easy letter",
+      "n": 2376,
+      "k": 4,
+      "floor": 0.266414,
+      "chance": 0.250161,
+      "E_max_balanced": 0.260611,
+      "q95_balanced": 0.270202,
+      "p_one_sided": 0.13972,
+      "survives": false,
+      "gap_pp": 1.625,
+      "E_max_minus_chance_pp": 1.061
+    },
+    {
+      "construct": "ARC-Challenge letter",
+      "n": 1172,
+      "k": 4,
+      "floor": 0.265358,
+      "chance": 0.250156,
+      "E_max_balanced": 0.265105,
+      "q95_balanced": 0.27901,
+      "p_one_sided": 0.45252,
+      "survives": false,
+      "gap_pp": 1.52,
+      "E_max_minus_chance_pp": 1.511
+    },
+    {
+      "construct": "CommonsenseQA letter",
+      "n": 1221,
+      "k": 5,
+      "floor": 0.208845,
+      "chance": 0.2,
+      "E_max_balanced": 0.215006,
+      "q95_balanced": 0.226863,
+      "p_one_sided": 0.85332,
+      "survives": false,
+      "gap_pp": 0.884,
+      "E_max_minus_chance_pp": 1.501
+    },
+    {
+      "construct": "PIQA letter",
+      "n": 1838,
+      "k": 2,
+      "floor": 0.504897,
+      "chance": 0.5,
+      "E_max_balanced": 0.509307,
+      "q95_balanced": 0.522851,
+      "p_one_sided": 0.65791,
+      "survives": false,
+      "gap_pp": 0.49,
+      "E_max_minus_chance_pp": 0.931
+    },
+    {
+      "construct": "BoolQ",
+      "n": 3270,
+      "k": 2,
+      "floor": 0.621713,
+      "chance": 0.5,
+      "E_max_balanced": 0.506981,
+      "q95_balanced": 0.517125,
+      "p_one_sided": 0.0,
+      "survives": true,
+      "gap_pp": 12.171,
+      "E_max_minus_chance_pp": 0.698
+    }
+  ],
+  "survives": [
+    "MMLU-Pro letter, naive",
+    "MMLU-Pro letter, item-avg.",
+    "MMLU letter",
+    "BoolQ"
+  ],
+  "inside_noise": [
+    "OpenBookQA letter",
+    "ARC-Easy letter",
+    "ARC-Challenge letter",
+    "CommonsenseQA letter",
+    "PIQA letter"
+  ]
+}
