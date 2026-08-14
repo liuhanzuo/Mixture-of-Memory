@@ -35,3 +35,7 @@
 - [One sample is not a trend or a state](one-sample-is-not-a-trend-or-state.md) — ★★瞬时采样不能判趋势/状态: tqdm s/it≠cadence(用elapsed/iter), GPU mem需≥3次采样, 卡死从resume banner起算; 2026-08-12 一天同类错4次全是自己推翻
 - [Read the trainer docstring before designing a control](read-the-trainer-docstring-before-designing-a-control.md) — ★派对照实验前先读trainer docstring: 退化性常已写在源码(train_qcmem_distill.py:37 明文 teacher==student at resume_j=0); "NOT tested yet"是某人判断非代码断言; 怀疑退化先跑1GPU/20step GATE0探针
 - [L20A name string is really B200 (sm_100)](l20a-name-string-is-really-b200-sm100.md) — ★★「NVIDIA L20A」只是name显示问题, LOCAL/.21 真实硬件=B200(sm_100/148SM/178GB); 判代际看capability不看name; 我曾按name误"纠正"过, 旧记录才是对的
+- [numpy version split breaks cross-node bootstrap](numpy-version-split-breaks-cross-node-bootstrap.md) — ★五节点三个 numpy 版本(LOCAL 2.3.5/.82 2.4.6/其余 2.5.1); 同 seed multinomial 19/10000 行不同 → 跨节点 bootstrap 非确定, 且 5.3e-3pp drift 比 A04 的 5e-4pp 硬校验松一个量级 = 换节点就 assert-fail
+- [A range is not a measurement until it clears its floor](a-range-is-not-a-measurement-until-it-clears-its-floor.md) — ★★两 range 的比值在两者未过各自 noise floor 时 undefined 非"方向"; E[range of k]/σ 与 k 强相关(k=2:1.1284/k=3:1.6926/k=8:2.8472), 错用 k 让 floor 低 40.6% 并翻转布尔
+- [Reporting a gap is not closing it](reporting-a-gap-is-not-closing-it.md) — ★连续两个 heartbeat 把同一协议缺口当 caveat 报而不派任务修; 缺口能派就当轮派, 且派出去常会发现缺口比自己以为的更大
+- [Persist artifacts on wzc1 or diskB](persist-artifacts-on-wzc1-or-diskb.md) — ★用户2026-08-14: 需保留的放wzc1/diskB; /tmp+conda env+/usr/bin/sshpass 都已被重启证明会清空; 判据=「重启后还需要它吗」
