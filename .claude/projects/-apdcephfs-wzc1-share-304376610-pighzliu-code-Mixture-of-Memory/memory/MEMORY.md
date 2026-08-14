@@ -39,3 +39,4 @@
 - [A range is not a measurement until it clears its floor](a-range-is-not-a-measurement-until-it-clears-its-floor.md) — ★★两 range 的比值在两者未过各自 noise floor 时 undefined 非"方向"; E[range of k]/σ 与 k 强相关(k=2:1.1284/k=3:1.6926/k=8:2.8472), 错用 k 让 floor 低 40.6% 并翻转布尔
 - [Reporting a gap is not closing it](reporting-a-gap-is-not-closing-it.md) — ★连续两个 heartbeat 把同一协议缺口当 caveat 报而不派任务修; 缺口能派就当轮派, 且派出去常会发现缺口比自己以为的更大
 - [Persist artifacts on wzc1 or diskB](persist-artifacts-on-wzc1-or-diskb.md) — ★用户2026-08-14: 需保留的放wzc1/diskB; /tmp+conda env+/usr/bin/sshpass 都已被重启证明会清空; 判据=「重启后还需要它吗」
+- [Read env, not source defaults, for running procs](read-env-not-source-defaults-for-running-procs.md) — ★跑着的进程配置在 /proc/<pid>/environ, 不在源码 ${VAR:-default}; 2026-08-14 照默认值判 watcher 盯着 21h 前死 log, 差点 kill 掉 union-9 唯一产出路径; grep 环境别只 grep 自己想到的变量名; 自相矛盾的证据(阈值早该触发)是"我读错了"的线索
