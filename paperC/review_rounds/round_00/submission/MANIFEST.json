@@ -2,7 +2,7 @@
   "schema_version": "1.0.0",
   "round": 0,
   "paper": "paperC",
-  "snapshot_sha256": "15d63f95b49f2727f8b5162a83398818a4bc7218bbc5c8a31ab40cad8b3c390d",
+  "snapshot_sha256": "e1a4f5db43c2945dd72ec231651868994841672cb2f41d16edd7bb9702706eed",
   "n_files": 31,
   "missing_dependencies": [],
   "excluded_by_blindness_rule": [
@@ -18,20 +18,20 @@
     {
       "snapshot_path": "evidence/EVIDENCE_PACK.md",
       "source_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/paperC/tcodex_out/EVIDENCE_PACK.md",
-      "sha256": "964de4b3fa95a56e1763a5d02c2290556e9e4ab09b0966a60a85082b9e448b87",
-      "size_bytes": 77793
+      "sha256": "39c4160b890b4214e980ae0bc6719fd7e74ad11c592b0877c93e27013a54a879",
+      "size_bytes": 77766
     },
     {
       "snapshot_path": "evidence/build_record.json",
-      "source_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/paperC/build/build_record.json",
-      "sha256": "278a55dd6c61eed3355078ab15f3e97079ad5f8d4b01fb12e3632cfdf2225943",
+      "source_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/paperC/gate/build_record.json",
+      "sha256": "e9525781ff38cd89f2ae4f6724c396761de7e8465e845f16b373ece929b2505f",
       "size_bytes": 2447
     },
     {
       "snapshot_path": "evidence/numbers_check.json",
-      "source_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/paperC/build/numbers_check.json",
-      "sha256": "97d98e264d218aaeb1108f3d8b316ebd0e22a3a149378eda9edbd1f7eff9bc56",
-      "size_bytes": 5388
+      "source_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/paperC/gate/numbers_check.json",
+      "sha256": "35d3c5250090b22868a40ad3d3139551d19fe63c74f291f3a364530bd1eded4f",
+      "size_bytes": 4936
     },
     {
       "snapshot_path": "manuscript/fancyhdr.sty",
@@ -54,8 +54,8 @@
     {
       "snapshot_path": "manuscript/main.pdf",
       "source_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/paperC/main.pdf",
-      "sha256": "de928e57ed36dd05b1c518d920d9b6d3f1c331fa0c94bc6e8766b91a19bbfd68",
-      "size_bytes": 293609
+      "sha256": "8178babfffe783d902d253ba066a6dfb5b2d14e09d408937a9b26afd13fdb797",
+      "size_bytes": 293570
     },
     {
       "snapshot_path": "manuscript/main.tex",
@@ -72,8 +72,8 @@
     {
       "snapshot_path": "manuscript/refs.bib",
       "source_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/paperC/refs.bib",
-      "sha256": "59ba04cea05e18cea1bbe5a94301060a756db5eb9ebb3be8bfa548e095d5cb36",
-      "size_bytes": 3739
+      "sha256": "0dee0cbae5a5531095d36c7244ee02e53972a1daa3f2082ce88f287221c2bf6e",
+      "size_bytes": 3710
     },
     {
       "snapshot_path": "manuscript/sections/00_abstract.tex",

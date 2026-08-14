@@ -1,0 +1,162 @@
+{
+  "schema_version": "1.0.0",
+  "family": "openreview",
+  "verified_at_utc": "2026-08-14T11:48:42Z",
+  "authority_used": [
+    "api2.openreview.net (notes/search — venueid + venue + invitations + _bibtex)",
+    "api.openreview.net (API1, required for pre-2023 venues: Ding et al. NeurIPS 2021)",
+    "dblp.org/search/publ/api + dblp.org/rec/*.bib (cross-check only, not authoritative)",
+    "proceedings.neurips.cc (official proceedings, cross-check for Ding et al.)",
+    "export.arxiv.org/api/query (author-list and title cross-check only)"
+  ],
+  "method_notes": [
+    "Authority per project rule: venueid must be <Conf>.cc/<Year>/... AND a Camera_Ready_Revision invitation must exist. Submission/Withdrawn/Rejected venueid = not accepted.",
+    "OpenReview 'notes?forum=<id>' and 'notes?id=<id>' are behind a bot challenge from this network (HTTP 403 ChallengeRequiredError, reqId 2026-08-14-5411245). 'notes/search?query=' works and returns the full content dict including _bibtex, so all fields below were read from the search endpoint.",
+    "DBLP-mirrored OpenReview records (venueid = dblp.org/conf/... or dblp.org/journals/CORR/...) were explicitly EXCLUDED as authority; they exist for 4 of the 6 papers and reading them alone would produce a false 'preprint' verdict.",
+    "Semantic Scholar was NOT used as a judgement basis (and was returning HTTP 429 anyway). Per project rule S2/DBLP lag on 2026 venues — confirmed again here: DBLP has ZERO record for cho2026choices and lists oostermeijer2026length as 'CoRR 2026' only, while both are OpenReview-confirmed accepted with Camera_Ready_Revision.",
+    "decoration was read from the OpenReview 'venue' string, which for these venues carries the decoration token (e.g. 'ICLR 2025 Oral', 'ICLR 2024 spotlight', 'ICLR 2026 Poster', 'NeurIPS 2021 Poster').",
+    "GPU usage: zero. No SSH to any compute node. Network + local file reads only."
+  ],
+  "entries": [
+    {
+      "bib_key": "zheng2025cheating",
+      "claimed_venue": "ICLR 2025 Oral",
+      "verdict": "CONFIRMED",
+      "openreview_venueid": "ICLR.cc/2025/Conference",
+      "openreview_venue_string": "ICLR 2025 Oral",
+      "has_camera_ready_revision": true,
+      "authors_match": true,
+      "author_mismatch_detail": null,
+      "year_match": true,
+      "doi_checked": null,
+      "corrected_bib_entry": "@inproceedings{zheng2025cheating,\n  author = {Xiaosen Zheng and Tianyu Pang and Chao Du and Qian Liu and Jing Jiang and Min Lin},\n  title = {Cheating Automatic {LLM} Benchmarks: Null Models Achieve High Win Rates},\n  booktitle = {ICLR 2025 Oral},\n  year = {2025}\n}",
+      "evidence_url": "https://openreview.net/forum?id=syThiTmWWm",
+      "notes": "VENUE AND DECORATION ARE CORRECT AND FULLY VERIFIED. venueid = ICLR.cc/2025/Conference, venue string literally 'ICLR 2025 Oral', invitations include ICLR.cc/2025/Conference/Submission6258/-/Camera_Ready_Revision, pdate 2026-01-22 (1737562455590). DBLP conf/iclr/ZhengPDLJL25 = 'ICLR 2025'. arXiv:2410.07137 comment = 'ICLR 2025 (Oral)'. Authors match exactly, 6/6, in order. ***HOWEVER THE TITLE IN refs.bib IS WRONG*** and that is why a corrected_bib_entry is supplied despite verdict=CONFIRMED (the verdict field grades the VENUE claim, which is what this gate tests). refs.bib says 'Null Models That Always Output a Constant Beat LLM Benchmarks'; the real title in every authority is 'Null Models Achieve High Win Rates'. The string 'Always Output a Constant' appears in ZERO OpenReview records, is absent from the arXiv abs page (checked v1 and v2, only two versions exist), and arXiv citation_title = 'Cheating Automatic LLM Benchmarks: Null Models Achieve High Win Rates'. So the bib title is not arXiv-vs-camera-ready drift — it is a paraphrase of the paper's claim substituted for its title, i.e. a fabricated title string. It has propagated to paperC/tcodex_out/EVIDENCE_PACK.md:688 and the FROZEN review snapshot at paperC/review_rounds/round_00/submission/{manuscript/refs.bib,evidence/EVIDENCE_PACK.md} — MAIN should fix all four sites, not just refs.bib. Note the same paper also has a NeurIPS 2024 SafeGenAi WORKSHOP record (venueid NeurIPS.cc/2024/Workshop/SafeGenAi, no camera-ready) — do not cite that one."
+    },
+    {
+      "bib_key": "zheng2024selectors",
+      "claimed_venue": "ICLR 2024 Spotlight",
+      "verdict": "CONFIRMED",
+      "openreview_venueid": "ICLR.cc/2024/Conference",
+      "openreview_venue_string": "ICLR 2024 spotlight",
+      "has_camera_ready_revision": true,
+      "authors_match": true,
+      "author_mismatch_detail": null,
+      "year_match": true,
+      "doi_checked": null,
+      "corrected_bib_entry": null,
+      "evidence_url": "https://openreview.net/forum?id=shr9PXz7T0",
+      "notes": "Title, venue AND decoration all verified. venueid = ICLR.cc/2024/Conference, venue string 'ICLR 2024 spotlight' (bib capitalises it 'Spotlight' — cosmetic, not a defect), invitations include ICLR.cc/2024/Conference/Submission215/-/Camera_Ready_Revision, pdate 2024-01-16. Authors 5/5 exact and in order (Chujie Zheng, Hao Zhou, Fandong Meng, Jie Zhou, Minlie Huang). Title matches the camera-ready exactly. DBLP conf/iclr/Zheng0M0H24 = 'ICLR 2024' (cross-check). Distinct from the CoRR 2023 mirror (journals/corr/abs-2309-03882) and from the similarly-titled COLM 2024 paper by Wang et al. ('Look at the Text: Instruction-Tuned Language Models are More Robust Multiple Choice Selectors than You Think'), which surfaced in the same search and must not be conflated."
+    },
+    {
+      "bib_key": "cho2026choices",
+      "claimed_venue": "ICLR 2026 Poster",
+      "verdict": "CONFIRMED",
+      "openreview_venueid": "ICLR.cc/2026/Conference",
+      "openreview_venue_string": "ICLR 2026 Poster",
+      "has_camera_ready_revision": true,
+      "authors_match": true,
+      "author_mismatch_detail": null,
+      "year_match": true,
+      "doi_checked": null,
+      "corrected_bib_entry": null,
+      "evidence_url": "https://openreview.net/forum?id=LzpzC4gd4G",
+      "notes": "FLAGGED AS MOST SUSPICIOUS IN THE TASK BRIEF — IT IS REAL, NOT FABRICATED. venueid = ICLR.cc/2026/Conference, venue string literally 'ICLR 2026 Poster', invitations include ICLR.cc/2026/Conference/Submission17078/-/Camera_Ready_Revision, pdate 2026-01-26T14:05:29Z. The short title is genuine. Authors 3/3 exact and in order: Gyeongje Cho, Yeonkyoung So, Jaejin Lee — independently corroborated by arXiv:2502.18798 (v4, updated 2026-01-12), same three names, same order. OpenReview's own _bibtex generates the key 'cho2026choices', identical to the bib key in use, and booktitle 'The Fourteenth International Conference on Learning Representations' (14th = 2026, consistent). ***THIS IS THE ENTRY THAT PROVES THE S2/DBLP LAG RULE***: DBLP returns ZERO hits for this title (queried 2026-08-14), so anything routed through DBLP or S2 would have reported NOT_FOUND / preprint. Only OpenReview venueid answers correctly."
+    },
+    {
+      "bib_key": "oostermeijer2026length",
+      "claimed_venue": "ICML 2026",
+      "verdict": "CONFIRMED",
+      "openreview_venueid": "ICML.cc/2026/Conference",
+      "openreview_venue_string": "ICML 2026 regular",
+      "has_camera_ready_revision": true,
+      "authors_match": true,
+      "author_mismatch_detail": null,
+      "year_match": true,
+      "doi_checked": null,
+      "corrected_bib_entry": null,
+      "evidence_url": "https://openreview.net/forum?id=SbSFZ9N6DN",
+      "notes": "FLAGGED AS MOST SUSPICIOUS (single author, 2026) — IT IS REAL. venueid = ICML.cc/2026/Conference, venue string 'ICML 2026 regular', invitations include ICML.cc/2026/Conference/Submission34463/-/Camera_Ready_Revision, pdate 2026-04-30T19:22:54Z. Full title matches character-for-character. The SINGLE-AUTHOR claim is genuine and independently corroborated: arXiv:2607.12767 (published 2026-07-14) lists exactly one author, Koen Oostermeijer, with comment 'Accepted at ICML 2026'. The bib claims no decoration ('ICML 2026'), which is the SAFE and correct choice — 'regular' is a track/paper-type token, not an Oral/Spotlight decoration, so nothing needs de-decorating here. OpenReview's own _bibtex uses key 'oostermeijer2026accuracy' (paperC uses 'oostermeijer2026length'); key choice is the author's prerogative, not a defect. DBLP lag confirmed again: DBLP knows this only as 'CoRR 2026' (journals/corr/abs-2607-12767) with no ICML record."
+    },
+    {
+      "bib_key": "bean2025measuring",
+      "claimed_venue": "NeurIPS 2025 Datasets & Benchmarks",
+      "verdict": "CONFIRMED",
+      "openreview_venueid": "NeurIPS.cc/2025/Datasets_and_Benchmarks_Track",
+      "openreview_venue_string": "NeurIPS 2025 Datasets and Benchmarks Track poster",
+      "has_camera_ready_revision": true,
+      "authors_match": true,
+      "author_mismatch_detail": "Count matches exactly (42 vs 42) and order matches exactly. Two name-form variants only, both benign and both attributable to how each source records the same person: [33] bib 'Jakob Foerster' vs OpenReview 'Jakob Nicolaus Foerster' (arXiv agrees with bib: 'Jakob Foerster'); [38] bib 'Philip H. S. Torr' vs OpenReview 'Philip Torr' (arXiv agrees with bib: 'Philip H. S. Torr'). DBLP additionally records 'Negar Foroutan Eghlidi' for [6] 'Negar Foroutan' and 'Sophia Simeng Han' for [16] 'Simeng Han'. No wrong, missing, invented or reordered author. No action required.",
+      "year_match": true,
+      "doi_checked": null,
+      "corrected_bib_entry": null,
+      "evidence_url": "https://openreview.net/forum?id=mdA5lVvNcU",
+      "notes": "venueid = NeurIPS.cc/2025/Datasets_and_Benchmarks_Track (the correct D&B-track venueid, NOT the main-conference one), invitations include NeurIPS.cc/2025/Datasets_and_Benchmarks_Track/Submission1976/-/Camera_Ready_Revision, pdate 2025-09-18. Title exact. The bib's 'NeurIPS 2025 Datasets & Benchmarks' faithfully renders the track; OpenReview's string adds 'poster', so paperC is if anything UNDER-claiming — safe. Cross-checks: DBLP conf/nips/BeanKRHMBESKBDB25 = 'NeurIPS 2025'; arXiv:2511.04703 comment = '39th Conference on Neural Information Processing Systems (NeurIPS 2025) Track on Datasets and Benchmarks'. CAVEAT ON YEAR, NOT A DEFECT IN paperC: OpenReview's auto-generated _bibtex for this note says 'year={2026}' and keys it 'bean2026measuring', while its own venue string, its pdate (2025-09-18), DBLP and arXiv all say NeurIPS 2025. paperC's year=2025 is the correct one; do NOT 'fix' it to 2026 on the strength of the auto-bibtex."
+    },
+    {
+      "bib_key": "ding2021grounding",
+      "claimed_venue": "NeurIPS 2021 Poster",
+      "verdict": "CONFIRMED",
+      "openreview_venueid": "NeurIPS.cc/2021/Conference",
+      "openreview_venue_string": "NeurIPS 2021 Poster",
+      "has_camera_ready_revision": false,
+      "authors_match": true,
+      "author_mismatch_detail": null,
+      "year_match": true,
+      "doi_checked": "No DOI in the bib entry and none required — NeurIPS proceedings papers of this era carry no Crossref DOI. Identity is pinned instead by the official proceedings hash URL and DBLP key (both verified below).",
+      "evidence_url": "https://openreview.net/forum?id=_kwj6V53ZqB",
+      "notes": "ACCEPTANCE VERIFIED, but note the camera-ready criterion cannot apply here and its 'false' value must NOT be read as a failure. In 2021 OpenReview used the single-invitation model: this note's invitation is 'NeurIPS.cc/2021/Conference/-/Blind_Submission' and per-submission Camera_Ready_Revision invitations did not exist yet, so has_camera_ready_revision is structurally unavailable for ALL NeurIPS 2021 papers. Acceptance is instead proven three independent ways: (1) OpenReview venueid = NeurIPS.cc/2021/Conference with venue = 'NeurIPS 2021 Poster' (decoration = Poster, matching the bib) and a non-null pdate (1636492709113 = 2021-11-09) which OpenReview only sets on acceptance; (2) DBLP conf/nips/DingDS21, booktitle 'Advances in Neural Information Processing Systems 34', pages 1556--1568 — EXACTLY the pages claimed in refs.bib, so the page range is verified; (3) the official proceedings page proceedings.neurips.cc/paper/2021/hash/0c0bf917c7942b5a08df71f9da626f97 returns HTTP 200 with <title> 'Grounding Representation Similarity Through Statistical Testing' and 'Advances in Neural Information Processing Systems 34 (NeurIPS 2021)'. Authors 3/3 exact. API1 (api.openreview.net) was required — API2 returns nothing relevant for this pre-2023 venue. TITLE TRAP CONFIRMED STILL HANDLED CORRECTLY: refs.bib says 'Through', which matches the camera-ready in all three authorities; the arXiv:2108.01661 record says 'with'. Keep 'Through'. Two DBLP-mirrored OpenReview decoys exist for this paper (FifdmcZVOV venueid dblp.org/conf/NIPS/2021, and Sov1eh9hYog venueid dblp.org/journals/CORR/2021 which carries the WRONG 'with' title) — neither is authority."
+    }
+  ],
+  "summary": {
+    "confirmed": 6,
+    "decoration_unverified": 0,
+    "wrong": 0,
+    "not_found": 0,
+    "fabricated": 0
+  },
+  "gate_pass": true,
+  "gate_pass_criterion": "gate_pass is true iff zero entries are WRONG_VENUE / NOT_FOUND / FABRICATED. DECORATION_UNVERIFIED does NOT fail the gate but MUST be listed so the citation can be de-decorated before submission.",
+  "decorations_verified": {
+    "zheng2025cheating": "Oral — verified in OpenReview venue string 'ICLR 2025 Oral' AND arXiv comment 'ICLR 2025 (Oral)'. Two independent sources.",
+    "zheng2024selectors": "Spotlight — verified in OpenReview venue string 'ICLR 2024 spotlight'.",
+    "cho2026choices": "Poster — verified in OpenReview venue string 'ICLR 2026 Poster'.",
+    "oostermeijer2026length": "no decoration claimed by the bib; OpenReview says 'ICML 2026 regular' ('regular' = paper type, not an award decoration). Nothing to verify or remove.",
+    "bean2025measuring": "bib claims no decoration; OpenReview says '... Track poster'. paperC under-claims, which is safe.",
+    "ding2021grounding": "Poster — verified in OpenReview venue string 'NeurIPS 2021 Poster'."
+  },
+  "defects_found_outside_gate_scope": [
+    {
+      "severity": "MUST_FIX_BEFORE_SUBMISSION",
+      "bib_key": "zheng2025cheating",
+      "field": "title",
+      "claimed": "Cheating Automatic LLM Benchmarks: Null Models That Always Output a Constant Beat LLM Benchmarks",
+      "actual": "Cheating Automatic LLM Benchmarks: Null Models Achieve High Win Rates",
+      "why_not_a_gate_failure": "This gate grades the VENUE claim; the venue and the Oral decoration are both correct. The title is a separate integrity defect and is reported here rather than silently folded into the verdict.",
+      "evidence": [
+        "https://openreview.net/forum?id=syThiTmWWm (OpenReview _bibtex title)",
+        "https://dblp.org/rec/conf/iclr/ZhengPDLJL25 (DBLP title)",
+        "https://arxiv.org/abs/2410.07137 (citation_title meta tag; only v1 and v2 exist, neither contains the string 'Always Output a Constant')"
+      ],
+      "propagation_sites_main_must_also_fix": [
+        "paperC/refs.bib:12",
+        "paperC/tcodex_out/EVIDENCE_PACK.md:688",
+        "paperC/review_rounds/round_00/submission/manuscript/refs.bib:12",
+        "paperC/review_rounds/round_00/submission/evidence/EVIDENCE_PACK.md:688"
+      ],
+      "note": "Because refs.bib is cited from sections/01_introduction.tex and sections/02_related.tex, fixing it changes the rendered bibliography and therefore invalidates the frozen round_00 review snapshot. MAIN decides whether to re-freeze; this agent did not edit refs.bib."
+    },
+    {
+      "severity": "INFO_NO_ACTION",
+      "bib_key": "bean2025measuring",
+      "field": "year",
+      "note": "OpenReview's auto-generated _bibtex claims year=2026 for this note. That is an OpenReview artifact. paperC's year=2025 agrees with the OpenReview venue string, the pdate (2025-09-18), DBLP conf/nips/BeanKRHMBESKBDB25 and the arXiv comment. Keep 2025."
+    }
+  ],
+  "rules_revalidated_by_this_run": [
+    "S2/DBLP lag on 2026 venues is REAL and was reproduced: cho2026choices has ZERO DBLP records despite being an accepted ICLR 2026 Poster with Camera_Ready_Revision; oostermeijer2026length appears in DBLP only as 'CoRR 2026'. Routing either through DBLP/S2 would have produced a false preprint verdict.",
+    "DBLP-mirrored OpenReview notes are a live trap: 4 of 6 papers have such mirrors, and Ding's CoRR mirror even carries a different (arXiv) title. Filter on venueid starting with '<Conf>.cc/'.",
+    "The Camera_Ready_Revision criterion is anachronistic for pre-2022 OpenReview venues (single Blind_Submission invitation era). For those, acceptance must be established via venueid + non-null pdate + official proceedings, as done for ding2021grounding. Applying the criterion blindly would have failed a genuine NeurIPS 2021 poster.",
+    "Workshop-vs-conference collision is live: zheng2025cheating also has a NeurIPS 2024 SafeGenAi workshop record for the same title."
+  ]
+}

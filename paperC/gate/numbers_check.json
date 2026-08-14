@@ -25,9 +25,9 @@
       "line": 12,
       "value": "2.02",
       "context": "``Longest'' may mean characters or continuation tokens. On identical items, \\texttt{split} changes by as much as 2.02 points across the studied tasks,",
-      "evidence_full_precision": "2.0196",
+      "evidence_full_precision": "2.0225039168209658",
       "evidence_files": [
-        "mmlu_pro_power_nulls_v2.csv"
+        "gate2_crossfamily_nulls.json"
       ]
     },
     {
@@ -45,11 +45,9 @@
       "line": 35,
       "value": "0.0033",
       "context": "For OLMo-2 \\texttt{keep8} on MMLU, fp32 removes all 4,303 bf16 exact top-two ties and changes 2,532 of 14,042 letter argmax decisions, or 18.03\\%. Let",
-      "evidence_full_precision": "0.003276003276003276",
+      "evidence_full_precision": "0.0033471",
       "evidence_files": [
-        "gate2_crossfamily_nulls.json",
-        "gate2_crossfamily_nulls.json",
-        "gate2_crossfamily_nulls.json"
+        "EVIDENCE_PACK.md"
       ]
     },
     {
@@ -81,9 +79,8 @@
       "line": 17,
       "value": "0.621713",
       "context": "BoolQ & 3270 & always-B 0.621713 & 0.500000 & +12.17 & 1.2434$\\times$ \\\\",
-      "evidence_full_precision": "0.6217125382",
+      "evidence_full_precision": "0.62171254",
       "evidence_files": [
-        "EVIDENCE_PACK.md",
         "EVIDENCE_PACK.md"
       ]
     },
@@ -103,11 +100,11 @@
       "line": 28,
       "value": "0.4510",
       "context": "Llama-2 & \\texttt{k10}, unhealed & 0.113198 & 0.114575 & $-0.138$ & 0.356 & 0.4510 & no signal \\\\",
-      "evidence_full_precision": "0.450968",
+      "evidence_full_precision": "0.4509675405742821",
       "evidence_files": [
-        "gate2_letter_content_nulls.csv",
-        "gate2_letter_content_nulls.csv",
-        "gate2_letter_content_nulls.csv"
+        "gate2_letter_content_nulls.json",
+        "gate2_letter_content_nulls.json",
+        "gate2_letter_content_nulls.json"
       ]
     },
     {
@@ -140,9 +137,9 @@
       "line": 17,
       "value": "1.2434",
       "context": "BoolQ & 3270 & always-B 0.621713 & 0.500000 & +12.17 & 1.2434$\\times$ \\\\",
-      "derivation": "0.0032 - -1.2402198752393307"
+      "derivation": "0.013427420606414678 - -1.229929561616707"
     }
   ],
-  "gate_max_unmatched": 5,
+  "gate_max_unmatched": 0,
   "numbers_gate_pass": true
 }
