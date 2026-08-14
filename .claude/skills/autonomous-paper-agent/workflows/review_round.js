@@ -329,7 +329,7 @@ ${JSON.stringify(reviews, null, 1)}
 
 Return ONE valid JSON object per the enforced schema.`
 
-const meta = await agent(metaPrompt, {
+const metaReview = await agent(metaPrompt, {
   label: 'meta-review',
   phase: 'Meta',
   schema: META_SCHEMA,
@@ -448,8 +448,8 @@ const summary = {
     not_verified_this_round: Math.max(0, heavy.length - toVerify.length),
     unresolved_after_verification: unresolved.length,
   },
-  meta_score: meta ? meta.meta_score : null,
-  meta_recommendation: meta ? meta.recommendation : null,
+  meta_score: metaReview ? metaReview.meta_score : null,
+  meta_recommendation: metaReview ? metaReview.recommendation : null,
   // The review-gate booleans. Deliberately computed here rather than narrated,
   // and deliberately NOT combined with the integrity gates -- passing the score
   // gate never overrides a failed integrity gate (SKILL.md:517).
@@ -460,11 +460,11 @@ const summary = {
     no_unresolved_critical: !verdicts.some(v =>
       v.severity === 'critical' &&
       (v.verdict === 'not_resolved' || v.verdict === 'regression_introduced')),
-    meta_at_least_weak_accept: !!(meta && /accept/i.test(meta.recommendation || '')),
+    meta_at_least_weak_accept: !!(metaReview && /accept/i.test(metaReview.recommendation || '')),
     note: 'Integrity gates (build_record.json:build_gate_pass, numbers_check.json:numbers_gate_pass) are SEPARATE and must both pass. A score gate never overrides them.',
   },
   reviews,
-  meta_review: meta,
+  meta_review: metaReview,
   verification: verdicts,
 }
 
