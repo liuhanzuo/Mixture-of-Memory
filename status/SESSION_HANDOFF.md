@@ -2,11 +2,74 @@
 
 > **本文件是 compact 后或新会话启动时的第一手交接。** 读完这份 + `status/RUN_REGISTRY.md` §3/§4 + `status/TRAINER_ACTIVITY.jsonl` 尾部，就能接上当前研究状态。
 > 维护规则：main agent 每当方向/结论/在跑实验有重大变化时，**覆盖更新本文件的「当前快照」区**（保持精简，旧结论沉淀到 RUN_REGISTRY）。
-> 最后更新：2026-08-09 00:07 GMT+8（Direction A **ESTABLISHED** 于 B04 eval-fragility n=6 max-significance；.73 A01 gate-3 fp32-vs-bf16 已启动；`.21` A01 agent stall 已 kill；5 节点全部有活）。
+> 最后更新：2026-08-15 05:25 GMT+8（#246 ±SLoRB 收官：slorb 9/9 更好但 +26.2% 活参数、2:4 全破；paperC 自审修两处；ready_queue 0 ready_gpu / 11 ready_cpu，16 张 B200 空闲但**不该**填）。
 
 ---
 
-## ⚡ 当前快照（2026-08-09 00:07 GMT+8）—— Direction A ESTABLISHED + A01 gate-3 on .73
+## ⚡ 当前快照（2026-08-15 05:25 GMT+8）—— #246 ±SLoRB 收官 + paperC 自审两处修正；16 张 B200 空闲但**不该**填
+
+**一句话现状**：SparseForge #246（±SLoRB token-matched pair）**已完全收官**——slorb 的 union-9 于 05:00 全 6 stage 跑完，与 noslorb 在**完全同口径**下配对（harness 字符串逐字节相同、同 9 task、每 task 同 primary_metric 与 n_samples、`source_iter=7501` **两臂相同**）。slorb **9/9 task 更好**，union9 mean_primary 0.5955→**0.6154**（+0.0199），ppl@4096 6.6795→**6.1938**（−7.27%）。**但这不是等参数对照**：SLoRB 折叠后 `exact_2of4_violations = 1619001344 = elems/4`（**每一个 tile 都被破坏**）、`zero_ratio 0.5→1.08e-9`，且从 ckpt 实测多出 **848,429,056 个活参数（+26.2%）**——所以它**永远不得进 2:4 列**，且增益是买来的。
+
+**★ 当前 GPU 现实（实测，不是台账）**：
+| 节点 | 盘 | 状态 |
+|---|---|---|
+| LOCAL | wzc1 | **idle 8×0 MiB**（union-9 watcher 05:00 退出） |
+| `.212` | wzc1 | **idle 8×~2 MiB** |
+| `.73` | zwfy6 | `train_olmo2_arch_probe2` 8×96421 MiB @100% |
+| `.82` | zwfy6 | `train_olmo2_arch_probe2` 8×78461 MiB @99-100% |
+| `.104` | zwfy6 | `train_qwen3_arch_probe2` 8×78775 MiB @98-100% |
+
+> ⚠️ **16 张 B200 空闲不是启动理由。** `proposal/ready_queue.py` 实测 **0 ready_gpu / 11 ready_cpu**，
+> 它自己的结论就是「An idle GPU is NOT a reason to idle: there are 11 zero-GPU tasks blocking their own gates」。
+> 判据是「paperC / proposal 是不是真没活了」，**不是「哪台卡空了」**。目前真正的瓶颈是
+> **10/11 提案缺 `RELATED_WORK.md`**（`ready_queue.py:504` 硬检查 `os.path.exists`，且它是 promotion 硬门槛）。
+> 已派 2 个 **0-GPU** background agent 写：A02+B01、A01+B03。
+
+**★ 本轮 paperC 自审发现的两处缺陷（都是我自己上一轮留下的）**：
+
+1. **被撤回的 38.44× 仍活在证据文件里**。正文已删，但 `paperC/evidence/s2_02_stratified_ordering.json`
+   的 `empirical_status_of_the_claim.ratio_slack_over_observed_margin` 还留着它，**而同一个文件的
+   `round_01_review_findings` 明写「remove the 38x framing」**——只看那一块的人会把 category error 再抄回去。
+   已改名 `..._RETRACTED` 并加 `per_cell_attainable_ratio = 10.869`。两个替代数字都是我自己从整数计数重算的：
+   A-argmax strata 权重 **11409/12032 = 94.82%**，0.0846/0.0077836 = **10.87×**。
+2. **`ROUND_01_FROZEN.json` 的 `snapshot_sha256_prefix = 96304267e30d79c3` 不可复算**。试了 7 种口径
+   （concat / per-file-sha-then-sha × sections / main+sections / main+sections+bib / evidence）**全不匹配**。
+   `n_files=23` 确实等于 `main.tex + refs.bib + sections/*.tex`，所以文件**集合**几乎确定，但 hash
+   **只记录了意图、不记录状态**。已 pin 明确 recipe，新基线 `ab26fdbd0c0948e6`（**不声称**可与旧值比较）。
+   顺带 discharge 了 `paperC/tcodex_out/WRITER_NOTES.md` §D.4（freeze + checksum + 重跑 numeral audit）。
+
+**★ 已核实站得住的（03_method.tex 分层序关系段，8/8 条全过）**：`f_const=1403/12032`、
+UB`=1439/12032`、gap = **恰好 36 items** = 9/3008 = 0.2992021277 pp、argmax 恰在 `n_opt=5,6,7,8`
+偏离且为 **B,E,B,E**（623/12032 items）、emitter 向量 **A,A,B,E,B,E,A,A**。
+**额外验了 emitter 合法性**：每个 stratum 的 argmax 都落在 `A..LET[n_opt-1]` 内——所以反例
+**必须**是 n_opt-conditional 的；固定的 always-E 在 `n_opt=3,4`（合计 627 items）上**非法**。
+
+**⚡ 下一步动作（按优先级）**：
+1. 等两个 RELATED_WORK agent 回来 → **必须自己核实**它们的 venue 判定（OpenReview `venueid` 用于
+   ICLR/NeurIPS/ICML；ACL 系含 Findings 必须 aclanthology+DBLP），并确认 `ready_queue.py` 里
+   `RELATED_WORK.md absent` 警告真的消失（这是唯一实测证据）。**不要**因为 agent 说写完了就当过了。
+2. **#245 ALPS+SLoRB 仍 withheld**：GATE0 已 PASS（224/224 两次，1.12 GPU-h），但长跑 **211 GPU-h**
+   = 我 12 GPU-h 上限的 17×。两个前置问题未解：(a) 可能已存在 ALPS+SLoRB 臂
+   （`alps_slorb_accuracy_curve.csv` 有 33.5M/625M token 行，avg9 53.19/53.78 vs `ALPS_native` 51.24）；
+   (b) 它不是 drop-in 可比（`SLoRB_init_type=zero`、c4_llama 非 dolmino、block 2048、lr 1e-6）。
+3. `alps_slorb_accuracy_curve.csv` **provenance 混杂**（已标记未改）：625M 行的 7.6195 与其 `eval.json`
+   （7.6232）不符，且来源 log 有 traceback；其 task list 是 **7**-task 集。
+4. 长期未动：#10 #84 #99 #101 #147/#148 #192 #199 #200 #241。
+
+**★ 本轮踩到的坑（同族第 N 次）**：
+- `pgrep -f "lm_eval"` **匹配到我自己的 shell**；`/proc/<pid>/environ` 在进程退出后消失 →
+  「watcher 还活着」和「watcher 已死」都不能靠单次采样断言。权威句柄是
+  `nvidia-smi --query-compute-apps` 的 PID + progress log 的 **mtime**。
+- `torch.load(...).get('model', sd)` 静默拿到 5-key 外层 dict → 我一度测出 SLoRB 参数量 **0**，
+  而 exporter 明明 fold 成功。真正的键是 **`model_state_dict`**。**「测出 0」先怀疑自己的取键路径。**
+- `tail -c 400 | json.loads` 从中间截断，报「JSONL 尾行非法」——**是我的校验器错，不是文件错**。
+- `TRAINER_ACTIVITY.jsonl` 有 69 行不以 `{` 开头（早期 agent 写的 pretty-print JSON）。查过消费者
+  （`build_null_calibration_table.py` 的 per-line `json.loads` 读的是 `SQUAD_VAL`，不是本文件）→
+  **实际无害，不重写 append-only 文件。**
+
+---
+
+## ⚡ 历史快照（2026-08-09 00:07 GMT+8）—— Direction A ESTABLISHED + A01 gate-3 on .73（已被上方 08-15 快照覆盖）
 
 **一句话现状**：B04 eval-fragility 已判死点通过——OLMo-2-7B keepN+shortgpt16 六 rung bs16 acc_norm 口径上，Spearman(core6, median_margin)=**+1.00** & Spearman(core6, frac<0.005)=**−1.00** 都达到 n=6 exact-permutation 下限 **p=0.0028**。B04 从 backlog `incubator` 升为 `SURVIVING`，仅欠 novelty check 即可晋升 paper<X>。同时 `.21` A01 gate-3 agent（`af78e84c4dc4d16b4`）确认 silent stall（progress log 从未创建 90+ min），已 kill；改由 MAIN 亲自把 gate-3 launch 到 `.73`。
 
