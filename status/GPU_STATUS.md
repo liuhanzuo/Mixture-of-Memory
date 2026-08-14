@@ -2,6 +2,70 @@
 > 每次启动/kill GPU 任务更新。heartbeat 先读→对照 nvidia-smi→台账说跑但空=补卡。★29.162.226.120=dllm 绝不碰。
 > 2026-08-08 15:03 更新：用户指令「B200跑resume，H20跑新方向」→ Paper B resume 迁移到 .21/.73。
 
+## 🔄 2026-08-14 20:00 — 40/40 忙、五臂全健康；paperC round_00 三门全绿已开跑评审
+
+| 节点 | 任务 | 实测 | 状态 |
+|---|---|---|---|
+| **LOCAL** | SparseForge **noslorb** | iter **7192/7500** (95.9%)、剩 308、**54.53**(200-iter)/**53.57**(400-iter) s/it、8×111-117 GB @100%、ETA **4.67 h** | ▶️ 健康 |
+| **`.212`** | SparseForge **slorb** | iter **6986/7500** (93.1%)、剩 514、**53.47**/**53.36** s/it、8×114-121 GB @98-100%、ETA **7.63 h** | ▶️ 健康 |
+| **`.73`** | Paper B **keep12** | step **167120/200000**、loss 2.4339、ppl 11.40、7.81 s/step、96.4 GB @100% | ▶️ 健康 |
+| **`.82`** | Paper B **keep8** | step **132500/200000**、loss 2.5434、ppl 12.72、5.78 s/step、78.5 GB @100% | ▶️ 健康 |
+| **`.104`** | paperC heal | step **32920/200000**（primary read-out **121000**）、loss 2.7140、ppl 15.09、5.74 s/step、78.8 GB @100% | ▶️ 健康（勿动） |
+
+Monitor **http200 OK**（5/5 节点 × 8 卡）。5 份 log **0 error**。每节点 8 个 compute-app、**一卡一主**无抢卡。
+
+### ✅ 速率测量再简化：tqdm 自带累计 elapsed，**一次读取**就能算可公度窗口
+
+不用再隔 120 s 采两次。tqdm 每行是 `| 7188/7500 [7:08:40<4:16:38, 49.35s/it, ...]` ——
+**`[` 后第一个时间是累计 elapsed**。解析 (iter, elapsed) 对、在**精确** 200/400-iter 跨度上做差即可，
+比"隔两分钟采两次"既快又准（窗口保证是 100 的整数倍，而不是近似）。
+交叉验证：noslorb 54.53 vs 53.57（差 1.8%）、slorb 53.47 vs 53.36（差 0.2%），与 19:27/18:57 的 ~53.5 一致。
+
+> ⚠️ 顺带纠正一个**长期错误基线**：`45-48 s/it` 从来不是吞吐，它是 **eval 之间**的瞬时值
+> （上面 tqdm 行里的 `49.35s/it` 就是这个）。真实吞吐 ~53.5。以前拿 45-48 当基线，
+> 才会一看到 53 就误以为"被抢卡拖慢"。
+
+### ❌ 本轮两个我自己的读数错误（都当场发现并修）
+
+**1. iter 正则锚错，返回空**：我写 `^ *N/7500`，而真实格式是 `Training:  96%|...| 7188/7500 [...]`。
+**空的 grep 结果和"健康安静的 log"长得一模一样** —— 若不查，我会沿用上一轮的进度数字当本轮结果。
+治法：先 `tail | tr '\r' '\n'` 看清真实格式，再写解析。
+
+**2. ★ zwfy6 是共享盘 → `ls -t logs/ | head -1` 会跨节点串台**：三个节点只返回**两个**不同 run，
+且把 `.73` 标成 paperC 的 log、`.104` 标成 keep8 的 log。
+**根因**：`.73/.82/.104` 共享同一个 zwfy6 盘，`logs/` 里最新的文件是**全集群最新**，
+不是"我 ssh 进去那台机器的 job"。heartbeat 手册说"按 mtime 找最新 log、别写死名字" ——
+**这条对 LOCAL/`.212` 对，对共享的 zwfy6 盘错。**
+治法：**从各节点自己的进程表**认任务：
+```bash
+pgrep -af "train_olmo2|torch.distributed.run" | grep -oE "output_dir [^ ]+" | sort -u
+```
+结果证明**台账一直是对的**：`.73`=keep12、`.82`=keep8、`.104`=paperC。然后按**显式文件名**读各自的 log。
+> **泛化**：在共享文件系统上，**文件 mtime 只能告诉你"什么时候"，不能告诉你"在哪台机器"**。
+> 节点归属必须来自进程表，不能来自目录列表。
+
+### ✅ paperC round_00：三门全绿 → 已启动 6 审盲评（0 GPU）
+
+| gate | 结果 |
+|---|---|
+| build | **PASS** — 16 页、0 undefined ref/citation、0 LaTeX error |
+| numbers | **PASS** — 524 个数值全部可溯源，**0 untraceable** |
+| venue | **PASS ×2** — 11/11 条目核实（OpenReview `venueid` 6 条 + ACL Anthology/DBLP 5 条） |
+
+snapshot `e1a4f5db43c2945d`、31 文件、0 missing dependency。
+**venue gate 抓到的真缺陷不是 venue 而是一个编造的标题**（`zheng2025cheating`：
+"Null Models **That Always Output a Constant Beat LLM Benchmarks**" → 真实是
+"Null Models **Achieve High Win Rates**"），已修 + 重新编译 + **重新冻结**（见 commit `adc127d`）。
+
+**⚠️ 启动前先修了 workflow 自己的一个致命 bug**（commit `f429509`）：
+`review_round.js:332` 声明 `const meta = await agent(...)`，与第 1 行**必需的** `export const meta = {...}`
+**重名** → 每次调用都在 parse 期就死（`Identifier 'meta' has already been declared`）。
+我此前只对三个 Python 脚本做了负向测试（喂坏论文、确认非 0 退出），**从没 parse 过那个 JS**。
+**一个 parse 不了的 workflow 不是"评审很严格"，而是"根本没有评审"** —— 正是该文件自己的注释
+警告 `.claude/agents/` 会有的静默退化。`node --check` 毫秒级就能抓到，本机有 node，**已纳入流程**。
+
+Action: **GPU 无操作**（纯测量）；启动 paperC round_00 评审 workflow（`wf_ec538a86-f61`，CPU/API only）。
+
 ## 🔄 2026-08-14 19:27 — 40/40 忙、节拍稳定；⚠️ **撤回我前三轮的「finalize 已武装、覆盖 7 任务」**
 
 | 节点 | 任务 | 实测 | 状态 |
