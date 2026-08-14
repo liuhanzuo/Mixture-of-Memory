@@ -86,7 +86,7 @@
       "verdict_impact": "NONE on the HOLD verdict; both refinements make the novelty case marginally STRONGER"
     }
   },
-  "lifecycle": "ready_gpu",
+  "lifecycle": "ready_cpu",
   "needs_arch": "sm_100",
   "needs_arch_reason": "Gate G1's noise floor sigma_hat and the entire comparison ladder are sm_100 (LOCAL/.212, B200). The seed pair keep14_s42/s1234_step200000_sv181 was produced on LOCAL per paperB/SEEDVAR_KEEP14_VERDICT.md line 3 ('Node: LOCAL (8xL20A, wzc1) only', L20A name string = B200 sm_100 per memory/l20a-name-string-is-really-b200-sm100.md). The 6 wzc1 ladder dirs are the same disk+arch. New arms MUST be sm_100 or the run-to-run term and the hardware term are confounded and even a FAIL is uninterpretable (LIFECYCLE_SCHEMA.md sec 3). The zwfy6/sm_90 _bs16 dirs that DIRECTION_A_VERDICT.md:97 cites are NOT admissible as G1 comparators for the same reason.",
   "novelty_checked": true,
@@ -200,5 +200,13 @@
     "PROPOSAL.md:9-15 still quotes numbers that disagree with evidence/B04_6rung_bs16_analysis.json on every rung; G0 step (c) must land before any external write-up quotes a threshold.",
     "The 40 cards are all occupied as of 2026-08-14 (LOCAL/.212 SparseForge, .73/.82 Paper B resume, .104 paperC heal). G1 needs 8x sm_100 for ~121 s x 4 = ~8 min of exclusive wall time, so it is a queue-slot problem, not a capacity problem.",
     "sigma_hat rests on n=2 (df=1). It is deliberately used only as a floor with a 6x safety factor, never reported as a run-to-run sd -- paperB/SEEDVAR_KEEP14_VERDICT.md sec 5 explicitly forbids the latter."
-  ]
+  ],
+  "lifecycle_reason": "3/3 adversarial lenses returned NEEDS_REVISION (wf_c2a3b490-e40, 2026-08-14 23:0x). The decidability lens found the gate NOT decidable: phi uses rescale span 116500 while the read-out's own span is 175000, so the statistic as written is not the measured quantity. The falsifiability and affordability lenses each require a different decision statistic (max-guarded, and shape-agnostic range ratio). lifecycle:ready_gpu was written by the drafting agent BEFORE its own gate was refuted.",
+  "lifecycle_corrected_by_MAIN_20260814": {
+    "was": "ready_gpu",
+    "now": "ready_cpu",
+    "why": "the workflow that drafted this gate returned n_gates_survived_adversarial=0 and would_become_ready_gpu=[]; this proposal is in its stays_ready_cpu list. The ready_gpu value on disk predated that verdict.",
+    "authority": "adversarial verdicts in the workflow result, not MAIN's opinion",
+    "actionable_task": "apply the specific_fix from each lens, THEN re-run the adversarial pass; only promote if all lenses return SOUND"
+  }
 }

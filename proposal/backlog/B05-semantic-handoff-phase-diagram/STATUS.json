@@ -81,8 +81,8 @@
   "novelty_checked": true,
   "novelty_status_detail": "SUPERSEDED 2026-08-14: RELATED_WORK.md now EXISTS and the verdict is recorded in novelty_verdict. Prior text said the file was absent -- that is no longer true.",
   "updated_20260814": "2026-08-14 -- STATUS made decidable (next_gate, gpu_cost_estimate=UNKNOWN with reasons, kill_gate=NO_KILL_GATE_DEFINED, exit_clause from PROPOSAL, established_measurements with provenance, novelty_checked added). No scientific conclusion changed. 0 GPU.",
-  "lifecycle": "ready_gpu",
-  "lifecycle_reason": "Kill gate written PRE-DATA (PHASE_SEPARATION_PREREG.md sec 3.2), RELATED_WORK.md written (novelty adjudicated: hold_in_backlog, no candidate is identical/plagiarised), next_gate operationalised to 16 concrete cells with a measured 3.3 GPU-h cost. Zero B05 cells have run. DISPATCH PRECONDITION that is NOT satisfiable from LOCAL: /apdcephfs_zwfy6 is not mounted here, so the 5 comparator result dirs must be ls-confirmed at 8/8 *.records.json on .73/.82/.104 before launch (see needs_arch and remaining_blockers).",
+  "lifecycle": "ready_cpu",
+  "lifecycle_reason": "3/3 adversarial lenses returned NEEDS_REVISION (wf_c2a3b490-e40, 2026-08-14 23:0x). TWO lenses found the gate NOT decidable: PHASE_SEPARATION_PREREG.md has no CELL->RUNG mapping rule (so a rung's phase label is undefined when its 4 cells disagree) and the cross-task clause lacks a monotonicity guard. The cost basis also needs a j-weighted sum rather than a flat 4 x 0.8144 GPU-h. lifecycle:ready_gpu was written by the drafting agent BEFORE its own gate was refuted.",
   "needs_arch": "sm_90",
   "needs_arch_why": "The comparator arms B05 pairs against were measured on 8x H20 (sm_90): A02_READ_TAX_RULER_VERDICT.md:3 '78 min wall, .82 only (8x H20, zwfy6)'. A same-harness paired comparison must not straddle architectures or stack drift confounds with hardware drift. Additionally the comparator raw cells (ruler_results/a02_rtax_ruler_*, a02_dvr_ruler_j0_top12) are zwfy6-resident (verdict line 324) and VERIFIED ABSENT on wzc1 from LOCAL (`ls -d ruler_results/a02_*` -> no match). Native readout needs no adapter, so the 5 wzc1-absent A02 adapters do not block B05 -- but the comparator result dirs do. => .73 / .82 / .104 only. NOT B200 (LOCAL/.212).",
   "next_gate_executable_20260814": {
@@ -123,5 +123,12 @@
     "The B05 driver + analyzer forks are NOT WRITTEN YET (they are 0-GPU CPU work: fork run_a02_read_tax_eval.sh -> 4 native arms with no --lora_adapter; fork analyze_a02_read_tax.py -> add the 4 native arms to ARMS with adapter=None and emit the phase assignment of prereg 3.1).",
     "40/40 GPUs are currently occupied (LOCAL/.212 SparseForge +/-SLoRB; .73/.82 Paper B resume; .104 paperC heal). B05 needs one 8xH20 node for ~25 min. Per CLAUDE.md the three Paper B resumes are explicitly LOWER priority than paperC/proposal work and carry full optimizer state, so interrupting one is permitted -- but that is a scheduling decision, not a B05 blocker."
   ],
-  "updated_20260814_kill_gate_pass": "2026-08-14 second edit, 0 GPU: added kill_gate (was the sentinel NO_KILL_GATE_DEFINED), next_gate_executable_20260814, costed gpu_cost_estimate from two agreeing measured anchors (was UNKNOWN), readout_preregistration, lifecycle=ready_gpu, needs_arch=sm_90, novelty_checked=true + novelty_verdict. New files: PHASE_SEPARATION_PREREG.md, RELATED_WORK.md. NO scientific conclusion changed and NO B05 cell was run -- the phase diagram still has 0 cells."
+  "updated_20260814_kill_gate_pass": "2026-08-14 second edit, 0 GPU: added kill_gate (was the sentinel NO_KILL_GATE_DEFINED), next_gate_executable_20260814, costed gpu_cost_estimate from two agreeing measured anchors (was UNKNOWN), readout_preregistration, lifecycle=ready_gpu, needs_arch=sm_90, novelty_checked=true + novelty_verdict. New files: PHASE_SEPARATION_PREREG.md, RELATED_WORK.md. NO scientific conclusion changed and NO B05 cell was run -- the phase diagram still has 0 cells.",
+  "lifecycle_corrected_by_MAIN_20260814": {
+    "was": "ready_gpu",
+    "now": "ready_cpu",
+    "why": "the workflow that drafted this gate returned n_gates_survived_adversarial=0 and would_become_ready_gpu=[]; this proposal is in its stays_ready_cpu list. The ready_gpu value on disk predated that verdict.",
+    "authority": "adversarial verdicts in the workflow result, not MAIN's opinion",
+    "actionable_task": "apply the specific_fix from each lens, THEN re-run the adversarial pass; only promote if all lenses return SOUND"
+  }
 }
