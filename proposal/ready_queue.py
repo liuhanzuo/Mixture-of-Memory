@@ -186,6 +186,47 @@ KILL_KEYS = [
 # search finds 40+ `*kill*`/`*next_gate*` paths, of which exactly one
 # (gate_design.kill_condition_verbatim) is an actual gate.
 NESTED_GATE_CONTAINERS = ("gate_design", "gates", "prereg", "preregistration")
+# Keys whose value states what the NEXT gate costs. A proposal declaring its own
+# next step free must be surfaced as ready_cpu, never ready_gpu -- see the
+# `_next_gate_is_free` call in the lifecycle inference. Added 2026-08-15 after
+# measuring that pure bookkeeping could promote B06 past its own free kill test.
+NEXT_GATE_COST_KEYS = ("next_gate_gpu", "next_gate_cost", "gate_gpu",
+                       "next_gate_gpu_cost")
+_FREE_MARKERS = ("0 gpu", "zero gpu", "no gpu", "0-gpu", "cpu only", "cpu-only",
+                 "0 gpu-h", "0gpu")
+
+
+def _next_gate_is_free(d):
+    """Return a short quote if the doc says its next gate needs no GPU, else ''.
+
+    Read for CONTENT: `next_gate_gpu` is prose, and a value like "The drift leg is
+    0 GPU ... Only the replication and second-compressor legs need GPU" means the
+    NEXT step is free even though later steps are not. A free first leg is exactly
+    the case that must run before any card is spent, so a mixed value counts as
+    free. Deliberately conservative in the safe direction: a false "free" costs a
+    delay, a false "needs GPU" spends GPU-h on an untested claim.
+    """
+    for k in NEXT_GATE_COST_KEYS:
+        v = d.get(k)
+        if isinstance(v, dict):
+            v = " ".join(str(x) for x in v.values())
+        if not isinstance(v, str) or not v.strip():
+            continue
+        vl = v.lower()
+        if any(m in vl for m in _FREE_MARKERS):
+            return f"{k}: {v.strip()[:120]}"
+    # gpu_cost_estimate sometimes carries the per-leg breakdown instead.
+    gce = d.get("gpu_cost_estimate")
+    if isinstance(gce, dict):
+        for kk, vv in gce.items():
+            if not isinstance(vv, str):
+                continue
+            vvl = vv.lower()
+            if any(m in vvl for m in _FREE_MARKERS) and (
+                    "leg" in kk.lower() or "drift" in kk.lower()
+                    or "first" in kk.lower() or "next" in kk.lower()):
+                return f"gpu_cost_estimate.{kk}: {vv.strip()[:120]}"
+    return ""
 # Containers one level down that may hold a BLOCK_KEYS clause. Prefix-matched, so
 # a dated wrapper like `disposition_2026_08_12` is covered by "disposition".
 # Added 2026-08-15 after measuring that A02's nested `gpu_policy` was invisible
@@ -698,7 +739,28 @@ def read_one(path):
         lc = "ready_gpu"
         why = ("gate + kill gate + adjudicated novelty all present (" +
                rec["novelty_evidence"] + "), no un-discharged blocker")
-        if rec.get("lifecycle_declared") == "needs_prior_gate":
+        # A FREE next gate must not be dispatched as a GPU task, even when every
+        # paperwork check passes. MEASURED 2026-08-15 on B06: appending
+        # `related_work_status: "audited"` -- pure bookkeeping -- flipped it
+        # ready_cpu -> ready_gpu, while its own record says
+        #   next_gate_gpu = "The drift leg is 0 GPU if the canonical predictions
+        #                    are already on disk (rejudge = OpenAI API + CPU)."
+        #   kill_gate.condition_1_status = "PARTIALLY TESTABLE FROM DISK NOW, and
+        #                                   it is the one at real risk."
+        # So the scheduler would have spent cards on a proposal whose free test
+        # could KILL the claim first. That is the worst possible ordering, and no
+        # amount of novelty adjudication licenses it: a novelty verdict says
+        # "not preempted", never "worth a card now".
+        _ng_free = _next_gate_is_free(d)
+        if _ng_free:
+            lc = "ready_cpu"
+            why = ("gate + kill gate + novelty all OK, but this proposal's OWN "
+                   "next gate costs no GPU (" + _ng_free + ") -- run the free "
+                   "test before spending a card; it may settle or kill the claim")
+            rec["problems"].append(
+                "next gate is 0-GPU by its own record; held in ready_cpu so the "
+                "free test runs first (not a paperwork deficiency)")
+        elif rec.get("lifecycle_declared") == "needs_prior_gate":
             # Same "declaration can downgrade, not upgrade" rule the ready_cpu
             # branch above already applies. Whether a prior gate is closed is a
             # property of that gate's outcome, which no presence check can see;

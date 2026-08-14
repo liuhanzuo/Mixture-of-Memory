@@ -575,6 +575,43 @@ def main():
                       r_k["lifecycle"] == "ready_gpu",
                       f"lifecycle={r_k['lifecycle']}")
 
+        print("\n(l) a FREE next gate outranks complete paperwork")
+        # MEASURED on B06 2026-08-15: appending `related_work_status: "audited"`
+        # -- pure bookkeeping -- flipped ready_cpu -> ready_gpu while its own
+        # record said the next leg is 0 GPU and its kill condition 1 was
+        # "PARTIALLY TESTABLE FROM DISK NOW, and it is the one at real risk".
+        r_l = read_fixture(tmp, "free-next-gate", base_doc(
+            related_work_status="audited",
+            next_gate_gpu=("The drift leg is 0 GPU if the canonical predictions are "
+                           "already on disk (rejudge = API + CPU). Only the "
+                           "replication and second-compressor legs need GPU."),
+        ), related_work=True)
+        ok_l1 = check("a 0-GPU next gate is held in ready_cpu, not promoted",
+                      r_l["lifecycle"] == "ready_cpu",
+                      f"lifecycle={r_l['lifecycle']}")
+        ok_l2 = check("and the reason names the free gate, not a paperwork gap",
+                      "costs no GPU" in r_l["lifecycle_reason"],
+                      f"reason={r_l['lifecycle_reason'][:140]!r}")
+        ok_l3 = check("the hold is flagged as NOT a paperwork deficiency",
+                      any("not a paperwork deficiency" in p for p in r_l["problems"]),
+                      f"problems={r_l['problems']}")
+
+        print("\n(m) a genuinely GPU-costing next gate is still ready_gpu")
+        # The mirror case: this fix must not silently park everything in
+        # ready_cpu, which would recreate the under-report stall it exists to
+        # avoid. Same doc, cost string says the next step needs a card.
+        r_m = read_fixture(tmp, "paid-next-gate", base_doc(
+            related_work_status="audited",
+            next_gate_gpu="1 node x 8 H20 for ~4 GPU-h; no free leg exists.",
+        ), related_work=True)
+        ok_m1 = check("a paid next gate remains dispatchable as ready_gpu",
+                      r_m["lifecycle"] == "ready_gpu",
+                      f"lifecycle={r_m['lifecycle']}")
+        ok_m2 = check("_next_gate_is_free returns '' for a paid gate",
+                      ready_queue._next_gate_is_free(
+                          {"next_gate_gpu": "1 node x 8 H20 for ~4 GPU-h"}) == "",
+                      "expected empty string")
+
         print("\n(control) a fully specified, unblocked proposal IS ready_gpu")
         r = read_fixture(tmp, "clean", base_doc(), related_work=True)
         ok_ctl = check("control reaches ready_gpu (checks are not vacuous)",
@@ -599,6 +636,7 @@ def main():
         del ok_h1, ok_h2
         del ok_i1, ok_i2, ok_i3
         del ok_j1, ok_j2, ok_k1, ok_k2
+        del ok_l1, ok_l2, ok_l3, ok_m1, ok_m2
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
 
