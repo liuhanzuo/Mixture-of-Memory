@@ -1,5 +1,98 @@
 {
   "id": "B06",
   "status": "backlog_confirmed_seed",
-  "updated": "2026-08-08"
+  "updated": "2026-08-08",
+  "headline": "CONFIRMED SINGLE-VARIABLE RESULT. Self-distilled LoRA buys +23.12 pp LoCoMo Judge_1:4 on a retrieval-FREE HCache read path (16.69 -> 39.81), McNemar exact two-sided p=2.6e-67. PROPOSAL.md calls it suitable as a Paper A extension or a short paper. This is NOT a thin backlog item and must not be ranked as one.",
+  "next_gate": "Same-harness rejudge of the canonical HCache predictions to remove the 8.11-vs-13.29 cross-node drift. SCALE TRAP, MANDATORY: convert the canonical 8.11 to the Judge_1:4 (n=1540) scale BEFORE comparing, otherwise the comparison uses two different rulers -- 8.11 is a mixed-instrument n=1986 blend and 16.69/39.81 are single-instrument n=1540. The Judge_1:4 counterpart of the canonical row is already published as 10.13 (status/PAPERA_RESULTS_CONSOLIDATED.md:175), and 10.13 is arithmetically consistent with 8.11 as the SAME run (uniquely: 156 of 1540 judge-correct + 5 of 446 regex-correct gives 8.1067 blended and 10.1299 on Judge_1:4), so the conversion may already be done -- verify that before spending anything. Then: BABILong/RULER/LongEval replication; a second residual/checkpoint compressor; adapter size / layer-band ablation.",
+  "next_gate_gpu": "The drift leg is 0 GPU if the canonical predictions are already on disk (rejudge = OpenAI API + CPU). Only the replication and second-compressor legs need GPU.",
+  "gpu_cost_estimate": {
+    "drift_resolution_leg": "0 GPU-h. Two of the three relevant judge caches are on wzc1 with 1540 records each; a rejudge is an API call plus a CPU merge. Confirmed by re-deriving all four numbers this session with no GPU.",
+    "locomo_replication_per_arm": "~0.9 GPU-h. Basis: measured -- locomo_results/hcache_j12_noLoRA_chatFALSE eval_config written 20:58:52, last preds shard written 21:16:43 = 17.9 min wall on 3 shards = 0.89 GPU-h. Judge is API, not GPU.",
+    "second_compressor_leg": "~2.9 GPU-h per new adapter IF the second compressor reuses the distill recipe. Basis: measured -- outputs/qcmem_distill_qwen_j12_r32_4k trained 4000 steps on world_size=8 in 21.8 min wall (distill_args.json 00:04:02 -> final/ 00:25:50) = 2.9 GPU-h. If the second compressor needs continued pretraining instead, add ~6.3 GPU-h per endpoint (measured: outputs/qwenbott_funnel_L12_d512, 2000 steps @2.83 s/step, ws=4).",
+    "babilong_ruler_longeval_replication": "UNKNOWN -- needs a 1-cell timing. The task-pool scheduler (scripts/_eval_taskpool_2group.sh) makes throughput depend on the cell mix, and the long lengths (16k/32k) dominate. Do not extrapolate from the LoCoMo rate: LoCoMo is max_new_tokens=48 on 1986 short items.",
+    "total_to_close_the_kill_gate": "~4-7 GPU-h (LoCoMo arms + one second compressor), because the decisive leg (unified-harness drift) is free"
+  },
+  "kill_gate": {
+    "source": "PROPOSAL.md 'Kill 条件', copied verbatim (3 conditions)",
+    "conditions": [
+      "只在 LoCoMo open-domain category 有益",
+      "统一 harness 后增益消失",
+      "换 compressor 完全不迁移"
+    ],
+    "condition_1_status": "PARTIALLY TESTABLE FROM DISK NOW, and it is the one at real risk. status/PAPERA_RESULTS_CONSOLIDATED.md:403 records cat4 (open_domain, n=841 = 55% of the 1540) moving 23.31 -> 55.77 = +32.46, described there as '最大驱动' (the largest driver). A per-category breakdown of the +23.12 on the corrected instrument is 0 GPU and should be run before any generalisation leg, because if the gain is cat4-only this condition fires.",
+    "condition_2_status": "the drift is ~1.0 pp on the blended scale (12.286 canonical vs 13.293 local, both from scores.json overall_judge, re-read this session) against a +23.12 pp effect, so a same-harness rejudge is very unlikely to erase the gain -- but it has NOT been run, so the condition is OPEN, not cleared.",
+    "condition_3_status": "UNTESTED -- no second compressor has been run"
+  },
+  "established_measurements": {
+    "_instrument": "GPT-4o LLM judge on the 1,540 answerable LoCoMo items (categories 1-4) = 'Judge_1:4'. Single instrument. Both arms graded from the identical 1,540 ids, so the contrast is exactly paired.",
+    "_provenance": "Recomputed from locomo_results/hcache_j12_{noLoRA,LoRA}_chatFALSE/judge_cache.jsonl in this session (2026-08-14), NOT copied from PROPOSAL.md or from the errata. Both caches: exactly 1540 records, 0 duplicate ids, all records model='gpt-4o', and the two id sets are identical (perfect pairing) -- all four properties asserted programmatically.",
+    "no_lora_judge_1_4": 16.6883,
+    "no_lora_judge_1_4_rounded": 16.69,
+    "no_lora_n_correct": "257 / 1540",
+    "lora_judge_1_4": 39.8052,
+    "lora_judge_1_4_rounded": 39.81,
+    "lora_n_correct": "613 / 1540",
+    "gain_pp": 23.1169,
+    "gain_pp_rounded": 23.12,
+    "mcnemar_discordant": "b=414 (LoRA correct, noLoRA wrong) / c=58 (reverse)",
+    "mcnemar_exact_two_sided_p": 2.575e-67,
+    "mcnemar_chi2_continuity_corrected": 267.0,
+    "paired_item_bootstrap_95ci_pp": [
+      20.58,
+      25.58
+    ],
+    "bootstrap_protocol": "10,000 resamples, seed 1, per-item paired. Independently reproduced this session to the printed 2 decimals ([20.58, 25.58]) with a different RNG (python random vs numpy), which is evidence the interval is not RNG-specific.",
+    "single_variable_verified": "the two eval_config json differ in exactly two fields -- lora_adapter ('' vs outputs/qcmem_distill_qwen_j12_r32_4k/final) and force_lora_with_baseline (false vs true). All others identical, including use_chat_template=false, selector=bm25, topk=12, no_retrieval=true, chunk_size=512, max_new_tokens=48, resume_j=12, baseline=hcache, num_shards=3. Field-by-field this session.",
+    "why_the_gain_cannot_be_retrieval": "no_retrieval=true in BOTH arms, so there is no selector in the path; the contrast isolates the adapter",
+    "protocol_note_selector": "selector=bm25 in both arms. This does NOT violate memory/qcmem-eval-selector-iterbm25 in the way it would for a retrieval claim, because no_retrieval=true makes the selector inert on this path -- but any cross-table comparison to an iter_bm25 retrieval arm is still off-protocol.",
+    "caveat_from_errata": "LoCoMo items are nested in only 10 conversations, so the per-item bootstrap interval is NOT dependence-aware. A conversation-clustered bootstrap is the honest version and is 0 GPU (status/PAPERA_RESULTS_CONSOLIDATED.md 9.2)."
+  },
+  "retracted_measurements": {
+    "_retraction_date": "2026-08-10",
+    "_authority": "paperA/ERRATA_LOCOMO_MIXED_INSTRUMENT_20260810.md",
+    "_rule": "Per CLAUDE.md / README, a retraction is recorded, never silently deleted. These values must not be re-cited as current.",
+    "no_lora_retracted": 13.293051359516618,
+    "no_lora_retracted_rounded": 13.29,
+    "lora_retracted": 31.168177240684795,
+    "lora_retracted_rounded": 31.17,
+    "gain_retracted_pp": 17.88,
+    "reason": "These are scores.json's overall_judge, which is a WEIGHTED BLEND OF TWO INSTRUMENTS over n=1986: categories 1-4 (1,540 items) are graded by the GPT-4o judge, while category 5 (446 items, 22.5% of the weight) NEVER reaches the judge and is graded locally by a refusal regex. Publishing that blend under a single-instrument header ('LoCoMo Judge') in a table whose whole purpose is a single-variable LoRA ablation changed the measuring instrument between the header and the data, and diluted the effect with a constant unrelated to the adapter.",
+    "mechanism_in_code": "scripts/eval_qcmem_locomo.py -- cat-5 short-circuit at lines 687-690 (verified this session: line 687 'if item.get(\"is_abstention\", False):', 688-689 the _REFUSAL_RE search, 690 'item[\"judge\"] = 1.0 if refused else 0.0'); the single-list blend at lines 434-435 (verified: overall['judge'].append + by_cat[cat]['judge'].append into one list).",
+    "blend_reproduced_this_session": "noLoRA (257 judge-correct + 7 regex-correct)/1986 = 13.293051359517 == scores.json overall_judge to 12 decimals; LoRA (613 + 6)/1986 = 31.168177240685 == scores.json to 12 decimals. The cat-5 term moves the WRONG WAY for the treatment arm (7 -> 6), so the blend does not merely shrink the effect, it adds a term of opposite sign.",
+    "direction_of_the_correction": "the correction makes the claim STRONGER (+17.88 -> +23.12, 2.4x). The errata discloses this explicitly as a reason for a reader to scrutinise it, which is why the arithmetic is written out reproducibly rather than asserted.",
+    "still_in_circulation_on_purpose": "frozen submission snapshots (paperA/review_history/v*_source/, paperA/venue_versions/*/source/, paperA/submission_source*/) still contain 13.29/31.17 and are correct AS HISTORY. paperA/sections/tab_hcache_lora.tex has been corrected to 16.69/39.81 with the errata cited in its caption (verified this session). B06's own PROPOSAL.md carries the errata banner above the retained original text."
+  },
+  "third_measurement_found_20260814": {
+    "why_recorded": "The drift in the next_gate is usually described as a two-way 8.11-vs-13.29 disagreement. There is a THIRD number on wzc1, and whoever executes the gate needs to know it exists or they will compare the wrong pair.",
+    "run": "locomo_results/hcache/ (older run, 2026-07-09/10, judged 07-18)",
+    "overall_judge_blended_n1986": 12.28600201409869,
+    "judge_1_4_n1540": 15.4545,
+    "n_correct": "238 / 1540",
+    "derived_this_session": "from its own judge_cache.jsonl (1540 records, 0 duplicates, all gpt-4o, and its id set is IDENTICAL to the two B06 arms -> it is exactly pairable against them with no re-generation)",
+    "config_differences_vs_the_B06_noLoRA_arm": "same baseline=hcache, resume_j=12, chunk_size=512, topk=12, no_retrieval=true, max_new_tokens=48, use_chat_template=false, selector=bm25, num_shards=3. Differs in: model_path spelled as the absolute models/Qwen--Qwen3-8b vs the models/Qwen3-8b-local symlink (the symlink resolves to the same weights), and the older run predates the enable_thinking / iter_* / judge_* / force_lora_with_baseline arguments entirely.",
+    "consequence": "On the Judge_1:4 scale the three noLoRA measurements are 15.45 (older local run), 16.69 (B06 control arm) and 10.13 (canonical, per status/PAPERA_RESULTS_CONSOLIDATED.md:175). So the spread among noLoRA measurements is up to ~6.6 pp on the SAME instrument, against a +23.12 pp effect. The effect survives comfortably, but the gate should report all three rather than a single 'drift' number.",
+    "not_a_retraction": "This does not contradict anything published; it is an additional same-instrument replicate that was not previously enumerated in B06's own files."
+  },
+  "canonical_8_11_conversion_status": {
+    "claim_to_verify_before_spending": "status/PAPERA_RESULTS_CONSOLIDATED.md:175 already prints the canonical HCache row as judge(n=1986)=8.11 AND judge(cat1-4, n=1540)=10.13.",
+    "arithmetic_check_this_session": "Searching integer (cat1-4 correct, cat5 correct) pairs, the ONLY pair giving both 8.11 and 10.13 to 2 decimals is (156, 5): 100*(156+5)/1986 = 8.1067 and 100*156/1540 = 10.1299. So the two published cells are mutually consistent as one run under the documented instrument split, and 10.13 is the Judge_1:4 conversion the gate asks for.",
+    "what_is_still_missing": "This is an arithmetic consistency check, NOT a rejudge. The canonical run's own judge_cache.jsonl lives on zwfy6 (.73/.104) and was NOT read here -- zwfy6 is not mounted on this node (verified: /apdcephfs_zwfy6 does not exist locally). Per memory/two-disk-rule-applies-to-main-too, 'not found' is only valid after searching BOTH disks, so the honest statement is 'not checked on zwfy6', not 'absent'.",
+    "so_the_gate_shrinks_to": "(a) confirm 10.13 against the canonical judge_cache on zwfy6 (0 GPU, needs ssh to .73/.104 or an scp -O of a ~109 KB file), and (b) compare 10.13 vs 16.69 vs 15.45 as three same-instrument noLoRA replicates."
+  },
+  "novelty_checked": false,
+  "novelty_status_detail": "RELATED_WORK.md does NOT exist here. proposal/shared/literature/RELATED_WORK_GAP_AUDIT_20260808.md:96 rates B06 '不足' and lists the collision families: activation decompression adapter; split-compute reconstruction; adapter transfer; intermediate self-distillation; cross-codec portability. Its stated bar is that 'portable' requires at least multi-task, multi-compressor, multi-model, or an explicit layer/module transfer -- which is the same thing B06's own success conditions demand. Same audit line 163 requires this before promotion.",
+  "success_conditions_from_proposal": [
+    "多任务、多 compressor 保持显著 lift",
+    "layer/module ablation 定位共享 readout repair",
+    "不依赖特定 retrieval pack"
+  ],
+  "claim_scope_discipline": {
+    "may_claim": "On a retrieval-free HCache read path at 8B j=12, a self-distilled LoRA recovers +23.12 pp Judge_1:4 (paired, p=2.6e-67), so the adapter is not a CoMem-retrieval-pack specialisation.",
+    "must_not_claim_yet": [
+      "'portable' -- one task, one compressor, one model so far; both the proposal's own success conditions and the related-work audit require more",
+      "any number on the n=1986 blended scale (retracted)",
+      "that the gain is not concentrated in cat4 -- the per-category breakdown on the corrected instrument has not been computed, and the old blended breakdown shows cat4 (55% of the judged items) supplying +32.46 of the movement"
+    ]
+  },
+  "updated_20260814": "2026-08-14 -- STATUS made decidable. This proposal's STATUS previously carried only id/status/updated (83 bytes) even though the direction holds a p=2.6e-67 confirmed result, which caused it to be mis-ranked as a thin backlog item. Added headline, next_gate (with the two-rulers scale trap), gpu_cost_estimate, kill_gate, established_measurements (correct instrument only), retracted_measurements, a newly found third same-instrument replicate, and novelty_checked. Every number re-derived from raw judge caches. No scientific conclusion changed. 0 GPU."
 }

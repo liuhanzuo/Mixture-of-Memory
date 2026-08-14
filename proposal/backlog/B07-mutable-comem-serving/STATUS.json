@@ -1,5 +1,37 @@
 {
   "id": "B07",
   "status": "backlog",
-  "updated": "2026-08-08"
+  "updated": "2026-08-08",
+  "next_gate": "NOT_SPECIFIED -- PROPOSAL.md describes two experiments in detail but states no decidable gate: it gives no threshold, no comparator to beat, and no outcome that would stop the work. The two experiments as written are MEASUREMENT PROGRAMMES, not gates. Writing an operationalised gate is a prerequisite for GPU under README's rule '新方向先写 PROPOSAL.md 和 kill gate, 再启动 GPU'.",
+  "next_gate_candidate_not_yet_adopted": {
+    "_disclaimer": "NOT from PROPOSAL.md. Recorded as a suggestion so the next agent has a starting point; it has NOT been adopted and must not be cited as this proposal's gate.",
+    "concurrency_leg": "PROPOSAL.md already fixes the design (document 32k/128k, generation 128, concurrency 1/8/32, CoMem vs matched j=0; metrics TTFT p50/p95/p99, QPS, queue, OOM, HBM/host, real Q*). What is missing is the decision rule -- e.g. 'if CoMem's TTFT p99 advantage over matched j=0 vanishes at concurrency 32, the serving thesis fails at realistic load'.",
+    "edit_leg": "same shape -- the four update strategies are specified, the pass/fail bar is not."
+  },
+  "gpu_cost_estimate": {
+    "value": "UNKNOWN -- 需先做 1-cell 计时",
+    "why": "The existing component benchmarks do NOT measure what B07 proposes, so there is no rate to extrapolate from. scripts/bench_p1_8_serving_curve.py sweeps GENERATION LENGTH (--gen_lengths, per_G keys 1/32/128/512) at store sizes {32k,128k,1M} x {cpu,gpu}; it has no concurrency axis and reports no TTFT percentiles (verified this session: the aggregate json's cells carry per_G with fetch_s/read_s/decode_s/per_query_s medians and p90, plus peak GPU/host and a crossover, but nothing concurrency-indexed). scripts/bench_persistent_store_io.py DOES sweep 1/4/16 threads for QPS, but with NO MODEL LOADED (synthetic bf16 store) -- so it cannot produce TTFT under generation either. Neither existing artefact is a valid anchor for a concurrent end-to-end serving benchmark.",
+    "measured_facts_that_do_transfer": [
+      "store geometry: chunk = 512 tok x 4096 x 2 B = 4 MiB; top-12 pack = 50.33 MB; h12 store = 8192 B/token (status/P2_2_PERSISTENT_STORE_IO.md)",
+      "store capacity: 128k -> 1.00 GiB, 1M -> 8.00 GiB, 4M -> 32.00 GiB, 8M -> 64.00 GiB, 16M -> 128.00 GiB (same file, verified vs P1.1)",
+      "at 128k|cpu: comem write-once 6.82 s median vs j0 index 0.021 s; comem_store_bytes 1,073,741,824 vs j0_store_bytes 524,288; peak GPU serve 17.29 GB (comem) vs 17.57 GB (j0) (paperA/artifacts/p1_8_serving/p1_8_serving_aggregate.json, read this session)"
+    ],
+    "first_action": "Time ONE cell of the concurrency grid (e.g. 128k document, generation 128, concurrency 8) end-to-end with the model loaded. Until then any total is invented."
+  },
+  "kill_gate": "NO_KILL_GATE_DEFINED -- PROPOSAL.md has no Kill section. It has a '关键设计' (key design) section listing mechanisms (chunk/version/content hash, compatibility hash, fail-closed stale object, dependency graph for overlap, mixed-version read only with explicit fallback), which are requirements, not falsification conditions.",
+  "established_measurements": {
+    "_status": "NONE FOR B07'S OWN CLAIMS. The direction has no measurement of concurrency, versioning, incremental edit, or tiering -- i.e. of anything it proposes. PROPOSAL.md says so itself: '现有是组件 benchmark, 不是生产端到端系统'.",
+    "what_exists_is_adjacent_not_this": {
+      "p1_8_serving": "generation-length x store-size x cpu/gpu amortisation curve, single-stream. 18 files aggregated, query_counts [1,4,16,32,64], gen lengths [1,32,128,512], cells {32k,128k,1M} x {cpu,gpu}. paperA/artifacts/p1_8_serving/p1_8_serving_aggregate.json",
+      "p2_2_store_io": "storage-backend I/O benchmark, 60+ cells, 4 backends x 5 store sizes, median-of-7, O_DIRECT, QPS at 1/4/16 threads -- but NO MODEL LOADED (synthetic deterministic bf16 store, seed 42) and it times the fetch, not BM25 and not generation. Done 2026-08-01 on .104. status/P2_2_PERSISTENT_STORE_IO.md; raw ruler_results/p2_2/*.json",
+      "why_this_distinction_matters": "Reading either artefact as evidence for a serving claim would be exactly the mixed-construct error this repo has already made elsewhere. They bound components; B07 claims a system."
+    }
+  },
+  "blocking_dependency": {
+    "statement": "Every mechanism in '关键设计' (versioning, content/compatibility hashes, fail-closed stale objects, overlap dependency graph, mixed-version fallback) is a system that does not exist yet. B07 is an ENGINEERING project before it is an experiment.",
+    "consequence_for_ranking": "B07 cannot be picked up as a short GPU task. It needs implementation first, and its cost is dominated by engineering time, not GPU-h."
+  },
+  "novelty_checked": false,
+  "novelty_status_detail": "RELATED_WORK.md does NOT exist here. proposal/shared/literature/RELATED_WORK_GAP_AUDIT_20260808.md:98 rates B07 '不足' and lists heavy systems collisions: prefix/KV caching; paged/disaggregated KV; versioning/invalidation; memory tiering; reuse-aware admission; incremental recompute. It demands a FEATURE-BY-FEATURE systems collision table. Line 146 of the same audit warns explicitly that B07/B08 cannot rest on a feature list ('可版本化/可更新/分层 memory') as a novelty claim -- which is precisely what B07's PROPOSAL.md currently is.",
+  "updated_20260814": "2026-08-14 -- STATUS made decidable (honestly: recorded that it is NOT yet decidable). next_gate=NOT_SPECIFIED, kill_gate=NO_KILL_GATE_DEFINED, gpu_cost_estimate=UNKNOWN with the reason that neither existing benchmark has a concurrency axis, established_measurements documenting that the existing artefacts measure something else, blocking_dependency, novelty_checked. No gate was invented on the proposal's behalf. 0 GPU."
 }

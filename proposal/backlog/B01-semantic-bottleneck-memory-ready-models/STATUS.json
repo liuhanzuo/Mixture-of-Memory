@@ -2,5 +2,91 @@
   "id": "B01",
   "status": "backlog",
   "updated": "2026-08-08",
-  "next_gate": "persist the actual bottleneck latent and run long-memory quality"
+  "next_gate": "persist the actual bottleneck latent and run long-memory quality",
+  "next_gate_executable_20260814": "Four-arm comparison at ONE scale, with the bottleneck latent ACTUALLY PERSISTED: (1) stock + Read-LoRA, (2) bottleneck only, (3) bottleneck + Read-LoRA, (4) bottleneck + Read-LoRA + Write-LoRA. Mandatory reported quantity: bytes/token of what is written to the store (not of the restored hidden). Gate is only meaningful AFTER the blocking dependency below is fixed, because today all four arms would write the same full-width h_j and the storage axis would be constant across arms.",
+  "next_gate_original_preserved": "The pre-existing next_gate ('persist the actual bottleneck latent and run long-memory quality') is retained UNCHANGED and is NOT superseded. next_gate_executable_20260814 is its operationalisation: the same two requirements (persist the latent; measure long-memory quality), now with the arm set, the mandatory reported quantity (bytes/token of what is WRITTEN, not of the restored hidden), and the ordering constraint relative to blocking_dependency. No conflict between the two was found.",
+  "gpu_cost_estimate": {
+    "value": "~25-40 GPU-h for the four arms at 8B if the two existing 8B j=12/d512 CPT endpoints are reused; ~60-80 GPU-h if the CPT legs must be re-run at more than 2000 steps",
+    "basis": [
+      "8B funnel CPT measured: outputs/qwenbott_funnel_L12_d512 ran 2000 steps at 2.83 s/step on world_size=4 (logs/qwenbott_funnel.out) = 1.57 h wall = 6.3 GPU-h. Its matched stock-continued control outputs/qwenbott_baseline_L12 measured 2.82 s/step, same shape = 6.3 GPU-h. Both final.pt are on wzc1 (16.4 GB / 16.4 GB).",
+      "Read-LoRA measured: outputs/qcmem_distill_qwen_j12_r32_4k ran 4000 steps on world_size=8 in 21.8 min wall (distill_args.json 00:04:02 -> final/ 00:25:50, logs/qcmem_distill_qwen_j12_r32_4k.log) = 2.9 GPU-h per adapter. Four arms need at most 3 adapter trainings.",
+      "LoCoMo eval measured: one arm = 3 shards, 20:58:52 -> 21:16:43 = 17.9 min wall = 0.89 GPU-h (locomo_results/hcache_j12_*_chatFALSE file mtimes). Judge is an OpenAI API call, not GPU.",
+      "Write-LoRA has NO measured rate in this repo, so the upper end of the range is an extrapolation from the Read-LoRA rate, not a measurement."
+    ],
+    "excluded_from_this_estimate": "RULER/LongEval/BABILong replication and any second scale. Those are generalisation, not this gate."
+  },
+  "kill_gate": {
+    "source": "PROPOSAL.md 'Kill 条件', copied verbatim (3 conditions)",
+    "conditions": [
+      "低秩 latent 在 RULER/LongEval 上不保留精确 evidence",
+      "fixed LM tax 在强模型上扩大而非缩小",
+      "full-depth RAG 在同存储预算下严格支配"
+    ],
+    "note_on_condition_2": "The existing 1B->3B evidence points the RIGHT way (tax shrinks with scale), so this condition is currently NOT firing; but it has only been tested at 1B and 3B from-scratch, never at 8B. See established_measurements.lm_tax_ppl_pct."
+  },
+  "established_measurements": {
+    "_provenance_note": "Every number below was re-derived from the named file in this session (2026-08-14), not copied from PROPOSAL.md.",
+    "pca_dim99_1B": {
+      "vanilla": 1825,
+      "bottleneck_d512": 438,
+      "source": "outputs/e2e_1b_deltanll/ctx2048_gpu0.json baseline.pca_dim99 / bottleneck.pca_dim99",
+      "reproduced_at_other_ctx": "ctx3072 and ctx4096 give 1829/439 and 1829/439 -- stable, so the 1825/438 pair is not a ctx artefact"
+    },
+    "pca_dim99_3B": {
+      "vanilla": 2790,
+      "bottleneck_d512": 467,
+      "source": "outputs/e2e_3b_deltanll/ctx2048_gpu0.json",
+      "reproduced_at_other_ctx": "ctx3072 2797/467, ctx4096 2800/467"
+    },
+    "delta_nll_at_rank128": {
+      "1B": {
+        "vanilla": 0.0304,
+        "bottleneck": 0.0022
+      },
+      "3B": {
+        "vanilla": 0.0669,
+        "bottleneck": 0.0135
+      },
+      "source": "same two json, by_rank['128'].dNLL",
+      "reading": "the bottleneck arm is far more truncation-robust at rank128 at BOTH scales; at rank256 the bottleneck arm's dNLL is slightly NEGATIVE (-0.0028 / -0.0015), i.e. truncation is free"
+    },
+    "lm_tax_ppl_pct": {
+      "1B_16k_steps_layer6": {
+        "baseline_ppl": 25.28,
+        "d1024": "+4.5%",
+        "d512": "+5.9%",
+        "d256": "+8.5%"
+      },
+      "3B_16k_steps_layer6": {
+        "baseline_ppl": 27.44,
+        "d512": "+4.7%",
+        "d256": "+5.8%"
+      },
+      "source": "status/QCMEM_PAPER_DRAFT.md:223-224 = status/RUN_REGISTRY.md dim-sweep table; ckpts outputs/sembott_{1b,3b}_{base,d256,d512,d1024}_16k/final.pt on wzc1",
+      "arithmetic_rechecked": "26.42/25.28=+4.51%, 26.78=+5.93%, 27.42=+8.46%, 28.73/27.44=+4.70%, 29.04=+5.83% -- all match",
+      "IMPORTANT_scale_mismatch": "PROPOSAL.md says '固定 LM tax 约 4-8.5%'. That range is TRAINING PPL tax from the 16k-step from-scratch dim sweep. It is NOT the same quantity as the r_max NLL gap in outputs/e2e_*_deltanll/ (which is +0.16%/-0.19%/-0.13% at 1B and +0.73%/+0.82%/+0.84% at 3B). Do not mix the two when writing.",
+      "monotone_depth_tax": "a separate layer sweep at fixed d512 gives L1 +4.2% / L3 +5.8% / L6 +6.0% / L9 +9.5% / L12 +9.6% (status/RUN_REGISTRY.md) -- tax rises monotonically with bottleneck depth; see memory/bottleneck-layer-sweep-monotone"
+    },
+    "assets_on_wzc1_for_the_next_gate": {
+      "8B_funnel_j12_d512": "outputs/qwenbott_funnel_L12_d512/final.pt (16,390,019,143 B) + arch_meta.json (bottleneck_layer 12, bottleneck_dim 512, unfreeze_from 12, n_params 8.195B)",
+      "8B_matched_stock_control": "outputs/qwenbott_baseline_L12/final.pt (16,381,629,495 B)",
+      "both_trained_on": "data/pg19_train.jsonl, 2000 steps, eff_bs 64, seq_len 2048, lr 1e-4 (train_args.json)",
+      "NEVER_EVALUATED": "grep over the whole repo for 'qwenbott_funnel_L12_d512' returns 0 hits outside the launch script -- these two 8B endpoints have no eval results anywhere. That makes an 8B leg CHEAPER than PROPOSAL.md implies, and it is the first thing to check before budgeting new CPT.",
+      "eval_support_exists": "scripts/eval_qcmem_locomo.py --bottleneck_ckpt already loads a funnel-Qwen arm (lines 1023-1051) and requires arch_meta.json next to the ckpt, which is present"
+    }
+  },
+  "blocking_dependency": {
+    "statement": "The store still holds the RESTORED full-width hidden, not the d_bottle latent, so the storage-saving claim is currently unmeasurable end-to-end.",
+    "mechanism_verified_in_code": "scripts/train_qwen_bottleneck_continued.py:113-133 inject_bottleneck wraps layer j in BottleneckLayer (down->GELU->up, NO residual). The wrapper's OUTPUT is back at hidden_size, and QCMemModel caches that layer output (h_j). So the funnel constrains the RANK of what is stored but not the WIDTH of the bytes stored.",
+    "consequence": "bytes/token is identical between the bottleneck and vanilla arms today. Until a d_bottle-width persist path exists, arms 2/3/4 of the next_gate differ only in quality, not in storage, and the proposal's headline ('可压缩的可持久化 latent') cannot be demonstrated -- only its precondition (low rank) can.",
+    "from_proposal": "PROPOSAL.md '当前缺口' item 1 states this; recorded here so the gate is not launched before it is fixed"
+  },
+  "other_gaps_from_proposal": [
+    "no complete quality/storage/latency frontier on a natural long-memory task",
+    "never combined with Read-LoRA + Write-LoRA jointly",
+    "strong-model / A13B leg blocked by implementation, init and MoE system issues"
+  ],
+  "novelty_checked": false,
+  "novelty_status_detail": "RELATED_WORK.md does NOT exist in this directory. proposal/shared/literature/RELATED_WORK_GAP_AUDIT_20260808.md:91 rates B01 '不足' and lists the required collision families (bottleneck Transformer; activation/KV codec; split-inference compression; recurrent/compressive memory; semantic/latent codec) plus the required distinction (pretraining-time FORMATION of a persistable latent vs post-hoc compression). README.md names B01 as a current highest-priority gap-filling item (A04 -> B01). Per README's Related Work gate, this must be written BEFORE new GPU spend.",
+  "updated_20260814": "2026-08-14 -- STATUS made decidable (next_gate made executable; kill_gate, gpu_cost_estimate, established_measurements, blocking_dependency, novelty_checked added). No scientific conclusion changed; all numbers re-derived from disk. 0 GPU."
 }

@@ -1,5 +1,33 @@
 {
   "id": "B08",
   "status": "backlog_portfolio",
-  "updated": "2026-08-08"
+  "updated": "2026-08-08",
+  "next_gate": "NOT_SPECIFIED -- PROPOSAL.md is a three-part portfolio (query-conditioned notes + raw evidence; typed personal memory ledger; multi-tier pyramid memory) with goals and Kill conditions but no sequenced first step, no chosen sub-direction, and no decidable gate. It does state one sequencing constraint ('先做两层 MVP' -- build a two-tier MVP first, because the full pyramid is high-risk), which is the closest thing to a next step but is not a gate.",
+  "next_gate_blocked_by_portfolio_shape": "The three sub-directions have different risk and different literature, and the related-work audit says they should be split. Choosing WHICH of the three to gate is a prerequisite decision, and it is not made anywhere in the proposal.",
+  "gpu_cost_estimate": {
+    "value": "UNKNOWN -- 需先做 1-cell 计时, and it is not even well-posed until one of the three sub-directions is chosen",
+    "why": "The three sub-directions have costs that differ qualitatively: sub-direction 1 (notes) is dominated by generation over retrieval candidates plus a faithfulness evaluation that has no harness here; sub-direction 2 (typed ledger) is mostly CPU/system work plus LongMemEval update/temporal evaluation; sub-direction 3 (pyramid) is explicitly flagged high-risk in the proposal itself. No arm of any of the three has ever been run, so there is no rate to extrapolate from.",
+    "asset_status_checked_this_session": {
+      "longmemeval_data_PRESENT": "data/longmemeval/longmemeval_s.json (278,025,796 B) and the longmemeval/ harness (backends.py, compressor.py, reader.py, run_baseline.py, scoring.py, data.py) plus scripts/eval_qcmem_longmemeval.py are on wzc1",
+      "no_results": "no longmemeval results directory exists on wzc1 -- so sub-direction 2's evaluation surface is available but has never been run here. NOTE: zwfy6 was NOT searched (not mounted on this node), so per memory/two-disk-rule-applies-to-main-too this is 'not found on wzc1', not 'does not exist'.",
+      "ledger_and_pyramid_code_PRESENT": "src/memory/l2/{aggregator,merger,object_store,retriever,types}.py and src/memory/l3/{formatter,profile_store,reviser,summarizer}.py exist; also src/agents/memory_agent.py, src/tasks/synthetic_update_task.py, src/eval/update_eval.py",
+      "caution": "presence of code is not evidence it runs or is current -- src/agents and src/tasks/src/eval files are dated 2026-05-14, well before the current QCMem stack"
+    }
+  },
+  "kill_gate": {
+    "source": "PROPOSAL.md 'Kill 条件', copied verbatim (3 conditions, one per sub-direction)",
+    "conditions": [
+      "notes-only 幻觉率高且 notes+raw 不优于 raw",
+      "typed ledger 不降低 stale/conflict error",
+      "pyramid 的 far memory 读取成本吞没固定 Read 优势"
+    ],
+    "structural_problem_recorded_not_adjudicated": "These are three SEPARATE kill conditions for three separate sub-directions, so no single one of them can kill B08 as a whole. As written, the portfolio has no kill gate at the portfolio level -- it can only be narrowed, never killed. Whoever picks this up should either split B08 into three proposals (which the related-work audit also recommends) or add a portfolio-level rule.",
+    "note": "the proposal also states a non-negotiable measurement requirement for sub-direction 1 -- '必须测 notes faithfulness, 不能让 summary 成为唯一事实源' -- which is a protocol invariant, not a kill condition, but must not be dropped."
+  },
+  "established_measurements": null,
+  "established_measurements_note": "No arm of any of the three sub-directions has been run, so there is nothing to record. This is 'no data yet', NOT 'data lost' and NOT 'measured null'.",
+  "novelty_checked": false,
+  "novelty_status_detail": "RELATED_WORK.md does NOT exist here. proposal/shared/literature/RELATED_WORK_GAP_AUDIT_20260808.md:98 rates B08 '严重不足' (SEVERELY insufficient) -- the worst rating of any proposal in that audit -- and lists collisions across query-focused context compression; grounded notes/provenance; personal/conversational memory; temporal KG/event sourcing; hierarchical memory. It requires the three sub-directions be SPLIT and each given its own Related Work. Line 146 warns that a feature-list novelty claim ('可版本化/可更新/分层 memory') will not survive.",
+  "priority_note": "Highest literature risk of the five thin-STATUS backlog proposals and no data, so it should rank LAST among them for GPU. That is a resource statement, not a verdict on the science -- per README, backlog means 'not currently scheduled', not 'not allowed'.",
+  "updated_20260814": "2026-08-14 -- STATUS made decidable (honestly: recorded that it is NOT yet decidable). next_gate=NOT_SPECIFIED, kill_gate copied verbatim with its portfolio-level structural gap recorded, gpu_cost_estimate=UNKNOWN, established_measurements=null with an explanation, asset audit, novelty_checked. No gate was invented on the proposal's behalf. 0 GPU."
 }

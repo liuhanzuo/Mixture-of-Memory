@@ -1,5 +1,75 @@
 {
   "id": "B05",
   "status": "backlog",
-  "updated": "2026-08-08"
+  "updated": "2026-08-08",
+  "next_gate": "On Qwen3-8B, run the phase diagram j={shallow,native,content,deep} x readout={native suffix, affine/tuned lens, LoRA, small decoder} x task={copy,retrieval,composition,format}. Decidable outcome: either the cells separate into readable phases (-> standalone paper) or they do not (-> exit_clause fires and this folds into a Paper A/B mechanism section).",
+  "gpu_cost_estimate": {
+    "value": "UNKNOWN -- needs a 1-cell timing first",
+    "why": "The grid is 4 j x 4 readout x 4 task = 64 cells, but the four readouts have costs that differ by orders of magnitude and only one of them has a measured rate in this repo. 'native suffix' is forward-only; 'affine/tuned lens' is a cheap fit; 'LoRA' has a measured 2.9 GPU-h per adapter (4000 steps, world_size=8, logs/qcmem_distill_qwen_j12_r32_4k.log); 'small decoder' has NO measured rate at all. Multiplying an unmeasured per-cell cost by 64 would be an invented number.",
+    "measured_anchors_that_do_exist": [
+      "LoRA readout at 8B j=12: 2.9 GPU-h per adapter (outputs/qcmem_distill_qwen_j12_r32_4k, 4000 steps, ws=8)",
+      "forward-only logit-lens over all layers, n_mmlu=1000: already done for two models, see results/knowledge_logit_lens_*.json (its extract_sec field carries the measured extraction time)",
+      "N1 note (ops/research_notes/N1_three_depth_table_20260727.md:6) estimates the phase-diagram experiment N3 at '1 node ~1 day' = ~192 GPU-h, but that is an ESTIMATE written before any cell ran, and it is recorded here as such, not adopted as the number."
+    ],
+    "first_action_is_free": "Order the 64 cells cheapest-first and time ONE cell (native-suffix readout on the retrieval task) before committing. Most of the j_native column may already be readable off the bracket sweep in status/QCMEM_J_DETERMINATION.md."
+  },
+  "kill_gate": "NO_KILL_GATE_DEFINED -- PROPOSAL.md has no 'Kill 条件' section. It has a '必须避免' (methodological prohibitions) section and an exit clause (see exit_clause), which are NOT kill gates: the prohibitions constrain HOW to measure, and the exit clause routes the result rather than terminating the direction. Per README's rule '新方向先写 PROPOSAL.md 和 kill gate, 再启动 GPU', a kill gate must be written before this proposal spends GPU.",
+  "exit_clause": {
+    "text_from_proposal": "若 phase diagram 不清晰，则并入 Paper A/B 机制小节，不独立成篇。",
+    "translation": "If the phase diagram is not clear, merge into a Paper A/B mechanism subsection; do not make it a standalone paper.",
+    "status": "PRE-DATA -- written in PROPOSAL.md before the phase diagram ran",
+    "why_this_matters_for_ranking": "B05 can succeed as an input to another paper even if it fails as a standalone. A reader of this STATUS must not treat 'phase diagram unclear' as the direction dying.",
+    "unspecified": "'不清晰' is not operationalised. Before the run, decide what separation counts as clear (e.g. a required monotone ordering, or a minimum cell-to-cell gap relative to the measurement's own noise floor) -- otherwise the exit clause is unfalsifiable. Compare memory/a-range-is-not-a-measurement-until-it-clears-its-floor."
+  },
+  "established_measurements": {
+    "_status": "NOT EMPTY -- but every number here is PRIOR observation that MOTIVATES the phase diagram, not a cell of the phase diagram itself. The phase diagram (j x readout x task) has NOT been run.",
+    "_provenance_note": "re-read from the named files in this session (2026-08-14)",
+    "depth_spectrum_qwen3_8b_36L": {
+      "semantic_feature_onset": "0.13L",
+      "j_native_zero_shot_readout": "0.25L (j9)",
+      "task_semantic_content_peak": "0.44L (j16)",
+      "knowledge_decodability_sat95": "0.694L (layer 25 of 36)",
+      "next_token_sat95": "0.94L (layer 34)",
+      "source_for_knowledge_band": "results/knowledge_logit_lens_Qwen3-8b-local.json summary.sat95_top_layer=25, sat95_frac_depth=0.694, peak_layer=34, peak_acc=0.638, n_mmlu=1000, chance=0.25 -- verified this session",
+      "source_for_others": "ops/research_notes/N1_three_depth_table_20260727.md table 1, citing status/QCMEM_J_DETERMINATION.md + results/probe_linguistic_qwen3_8b.json"
+    },
+    "olmo2_7b_mirror": {
+      "knowledge_sat95": "0.594L (layer 19 of 32)",
+      "source": "results/knowledge_logit_lens_OLMo-2-1124-7B.json summary.sat95_top_layer=19, sat95_frac_depth=0.594, peak_acc=0.551 -- verified this session"
+    },
+    "content_j_cross_family": {
+      "Meta-Llama-3-8B": "content_j_layer_mean 8.6 (frac 0.2688, CI95 [0.2037,0.3338]), n_points=15",
+      "OLMo-2-1124-7B": "content_j_layer_mean 9.13 (frac 0.2854, CI95 [0.2138,0.357]), n_points=15",
+      "Qwen3-8B": "content_j_layer_mean 14.13 (frac 0.3926, CI95 [0.3193,0.4659]), n_points=15",
+      "source": "results/p1_2/p1_2_summary.json -- verified this session; tasks are RTE/SST2/WiC knee98, and the file also carries the lexical_only / position_only / random_label_peak / majority null baselines per task, which any claim here MUST clear"
+    },
+    "readability_gap_scale_law": {
+      "gap_j_content_minus_j_native": {
+        "0.6B": "~0.39L",
+        "1.7B": "~0.26L",
+        "4B": "~0.13L",
+        "8B": "~0.14L",
+        "14B": "~0.085L",
+        "32B": "~0 (native already at content)"
+      },
+      "source": "ops/research_notes/N1_three_depth_table_20260727.md F1, from status/QCMEM_J_DETERMINATION.md bracket table (niah_single 16k, n=100, bm25, topk12, chunk512)",
+      "underlying_bracket_verified": "status/QCMEM_J_DETERMINATION.md records the 50%-cliff j and the deepest j with recall>=90 per scale: 0.6B j2 (0.07L) / 1.7B j3 (0.11L) / 4B j9 (0.25L) / 8B j9 (0.25L) / 14B j13 (0.325L) / 32B >=j27 (0.42L)",
+      "caveat_recorded_in_the_source": "the same file RETRACTS its own earlier '~0.25L is scale-invariant' claim -- the readout cliff moves monotonically with scale. Do not cite the old constant.",
+      "protocol_warning": "these recall numbers are selector=bm25. The standing project rule (memory/qcmem-eval-selector-iterbm25, user 2026-07-17) is that QCMem eval uses selector=iter_bm25 and old bm25 results are void. So this gap ladder is MOTIVATION ONLY and must be re-measured under iter_bm25 before it is reported as a result."
+    },
+    "task_dependence_findings": {
+      "F2_j_adapt_is_task_dependent": "a distilled cap at content depth recovers retrieval (NIAH single 95-100) at every scale, but composition (multikey, variable-tracking) only recovers for large models (14B yes; 8B/4B partial; 0.6B/1.7B fail)",
+      "F3_copy_tasks_INVERT_the_ordering": "content-j adapter HURTS literal exact match: LongEval 0.6B 37->1, RULER-vt 0.6B 81->1, 1.7B vt 48->21 -- so the best cache depth is task-dependent, which is exactly why the diagram has a task axis",
+      "source": "ops/research_notes/N1_three_depth_table_20260727.md F2/F3, citing status/QCMEM_J_DETERMINATION.md adapter table"
+    }
+  },
+  "must_avoid_from_proposal": [
+    "universal semantic cut",
+    "treating logit-lens onset as causal storage",
+    "using a forward-only probe to predict the best graft depth"
+  ],
+  "distinct_from_dead_direction": "PROPOSAL.md states B05 is NOT the dead 'forward probe predicts best adaptation depth' line (archive/paperC-v1-frozen-cap). The '必须避免' list encodes that separation; violating item 3 would collapse B05 back into the dead direction.",
+  "novelty_checked": false,
+  "novelty_status_detail": "RELATED_WORK.md does NOT exist here. proposal/shared/literature/RELATED_WORK_GAP_AUDIT_20260808.md:95 rates B05 '不足但自限' (insufficient but self-limiting) and lists the collision families: logit/tuned lens; layerwise emergence; causal tracing; early exit; split computing; model stitching/readout adapter. Required framing: the j_content/j_native/j_adapt phase diagram, NOT a universal semantic cut. Same audit line 163 says B05 must complete this before promotion.",
+  "updated_20260814": "2026-08-14 -- STATUS made decidable (next_gate, gpu_cost_estimate=UNKNOWN with reasons, kill_gate=NO_KILL_GATE_DEFINED, exit_clause from PROPOSAL, established_measurements with provenance, novelty_checked added). No scientific conclusion changed. 0 GPU."
 }
