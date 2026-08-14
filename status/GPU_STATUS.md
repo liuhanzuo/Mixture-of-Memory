@@ -1,45 +1,46 @@
 # GPU_STATUS.md — 5 节点 GPU 台账（40 卡）
 > 每次启动/kill GPU 任务更新。heartbeat 先读→对照 nvidia-smi→台账说跑但空=补卡。★29.162.226.120=dllm 绝不碰。
-> 2026-08-08 15:03 更新：用户指令「B200跑resume，H20跑新方向」→ Paper B resume 迁移到 .21/.73。
 
-## 🔄 2026-08-15 01:30 — LOCAL 空出（noslorb 全链条完成）；32/40 忙
+## 🔄 2026-08-15 02:00 — 32/40 忙；LOCAL 全空但 **GPU 4-7 被 watcher 契约预留**
 
 | 节点 | 任务 | 实测 | 状态 |
 |---|---|---|---|
-| **LOCAL** | SparseForge **noslorb** ✅ **完成并干净退出** | 7500/7500 → finalization(224 masks) → union-9 eval，01:19 `ALL STAGES COMPLETE`；实测 **8×0 MiB / 0% / 0 PID** | 🆕 已派 #245 AST+SLoRB 对照（0-GPU 侦察先行） |
-| **`.212`** | SparseForge **slorb** | iter **7300/7500**、剩 200、**55.10**(100it)/**56.22**(200it)/**55.23**(400it) s/it、ETA **~3.1 h** | ▶️ 健康（**勿动：±SLoRB 对比的另一半**） |
-| **`.73`** | Paper B **keep12fresh2** | step **169120/200000**、loss 2.4100、ppl 11.13、**7.81 s/step**、maxmem 91.9GB | ▶️ 健康 |
-| **`.82`** | Paper B **keep8fresh2** | step **135200/200000**、loss 2.5833、ppl 13.24、**5.78 s/step**、maxmem 73.5GB | ▶️ 健康 |
-| **`.104`** | paperC **qwen3base_heal_k8f2** | step **35620/200000**、loss 2.7449、ppl 15.56、**5.74 s/step**、maxmem 77.5GB | ▶️ 健康（**勿动**） |
+| **LOCAL** | 空（noslorb 已完成收口） | **8×0 MiB / 0% / 0 PID** | ⚠️ **只有 GPU 0-3 可用**（见下）；已派 ALPS+SLoRB（STEP1 mask 生成 → GATE0） |
+| **`.212`** | SparseForge **slorb** | iter **7366/7500**、剩 **134**、**57.64**(100it)/**57.63**(200it)/**56.47**(400it) s/it、ETA **~2.15 h** | ▶️ 健康（**勿动：±SLoRB 对比的另一半**） |
+| **`.73`** | Paper B **keep12fresh2** | step **169840/200000**、loss 2.4207、ppl 11.25、**7.81 s/step**、maxmem 91.9GB | ▶️ 健康 |
+| **`.82`** | Paper B **keep8fresh2** | step **136180/200000**、loss 2.5520、ppl 12.83、**5.78 s/step**、maxmem 73.5GB | ▶️ 健康 |
+| **`.104`** | paperC **qwen3base_heal_k8f2** | step **36600/200000**、loss 2.7199、ppl 15.18、**5.74 s/step**、maxmem 77.5GB | ▶️ 健康（**勿动**） |
 
-Monitor **http200 OK**。5 份 log **0 error**。每节点恰好 8 个 compute-app PID，**无抢卡**。
+Monitor **http200 OK**。4 份在跑的 log **全 0 error**。每节点恰好 8 PID，**无抢卡**。
 
-### ✅ noslorb 臂完整收口（provenance 齐全）
+### ⚠️ LOCAL 的 GPU 4-7 不是空闲，是被预留
 
-- `eval.json`: iter **7501**, train 1.6357, val 1.6691, **wiki_ppl 6.6798**, `finalization_done: true`
-- `args.json`: **`SLoRB=False`** 确认、`sparsity_ratio=0.5`、`mask_penalty_mode=nm_2_4`、`max_iters=7500`
-- `model.pt` 39.4 GB（< `legacy_ckpt.pt` 43.8 GB，因 mask 已 finalize）
-- union-9: `outputs/cast_eval_spec/sparseforge_tokenmatched_noslorb/tokenmatched_union9_summary.json`
-  → **union9 mean_primary 0.5955 / mean_plain_acc 0.5586**；cast7 0.5676；ast7 0.6065
-  → 完整性：`verify_pre_rc=0`、`verify_post_rc=0`、`exact_2of4_tile_ratio=1.0`、9/9 task
-- log 尾 `[Prefetcher] Stopped.` + `Finalizing masks: 7501it`，**无 Traceback/OOM**
-- watcher（PID 176642）全程正确报「still alive; waiting」，**没有在计数器到 7500 时提前 fire**
+watcher **PID 176751**（`ARM=slorb`、`GPUS=4,5,6,7`）**仍然活着**（实测 etimes 42070、状态 `Ss`）。
+它在等 `.212` 的 slorb 臂收尾，且**只要它那半边被占 >8000 MiB 就拒绝打分**。
+⇒ 现在只能用 **GPU 0-3**；占 4-7 会毁掉 ±SLoRB 对比的另一半。`.212` 约 2.15 h 后释放。
 
-### ±SLoRB 配对结果（PARTIAL —— slorb 未跑完，不得当最终结论）
+> 本轮教训：我一条 `echo "(空=已退出)"` 是**无条件打印**的，紧邻的 `ps` 输出其实显示进程活着。
+> **提示字符串不是判据** —— 判据是 `ps` 那一行本身。
 
-**严格同 iter 配对**（不是拿 noslorb@7500 比 slorb@7300）：7 个共有 eval 点 slorb **全部更低**，
-且差距**单调扩大**：−0.276 → −0.428 → −0.451 → −0.464 → −0.475 → −0.478 → **−0.488** ppl。
+### 🔀 task #245 已重定向：AST+SLoRB → **ALPS+SLoRB**
 
-⚠️ 必须同时陈述的 caveat：(1) slorb 仍在跑（7300/7500）；(2) 两臂 **resume 起点不同**
-（noslorb 6700 / slorb 6500，见 `status/SPARSEFORGE_SLORB_ONLY_DIFFERENCE_ERRATUM.md`），
-所以「唯一差别是 ±SLoRB」**as written 是假的**；(3) 这些 eval 只覆盖 resume 段。
+`SPARSEFORGE_RESUBMISSION_PLAN.md:471` 原文：「其中 reviewer 明确要求的实验为: **ALPS + SLoRB**」（:528 复述）。
+原任务名 "AST+SLoRB" 是**转录错误**，照它做等于花 ~226 GPU-h 跑一个没人要的实验。
 
-### 为什么 LOCAL 没有被塞 Paper B resume
-
-按 heartbeat 契约的三问顺序：`proposal/ready_queue.py` 报 **0 ready_gpu**（11 ready_cpu 全是 0-GPU 活），
-A04 是 `needs_prior_gate` 且其自身记录写明 **「USER APPROVAL for GPU，全 gate 1,077-4,309 GPU-h」**
-未解除 → 没有合规的 proposal GPU 活。故 LOCAL 给 **SparseForge #245**（主表已知缺口、需 sm_100 同架构），
-**不是**给已降级的 Paper B keep8/keep10/keep12 resume。
+- **AST+SLoRB 另有两条硬伤**（0-GPU 侦察 + MAIN 复核）：
+  (1) 事后给 AST ckpt 加 SLoRB 是**数学上的 no-op** —— AST ckpt 恰好 2:4（nnz 直方图 `{2: 11272192}`、
+  zero fraction 0.500000），`init_type=sum` 令 `SLoRB_Weight=(W*(1-mask)).sum(dim=2)`，实测
+  `max|W*(1-mask)| = 0.0` ⇒ 只多出 848M 个**全零**参数，指标与现有 `ast_official` 行完全相同；
+  (2) 于是必须训练，而 AST 的规则**就是 SR-STE**，撞上 `status/SRSTE_SILENT_DEGRADATION_HAZARD.md`
+  记录的静默降级隐患。
+- **ALPS+SLoRB 更便宜且是 reviewer 真正要的**：走 fixed-mask 路径、**不开 SR-STE**，天然绕开该隐患；
+  `--initial_mask_path`（`main_llama.py:221`）+ `--freeze_non_slorb`（`:228`）已存在。
+- ⚠️ **前置缺口**：`SparseForge_Data/results/alps_mask_dense_init/` 里**只有 615 字节的
+  `cast9_summary.json`，没有 `mask.pt`**。但生成器 `baselines/run_alps_llama2_nm.py` 在盘上且
+  **training-free**（官方 ADMM 逐层、固定校准集、明写 no LM retraining），
+  `save_mask_artifact()`（:216-221）直接产出 `--initial_mask_path` 要的格式。故先生成 mask。
+- **强制 GATE0**：长 run 前必须跑 20 步探针断言 **224/224** SparseLinear mask 对齐 ——
+  因为该失败模式**静默**（CAST 就是这样烧到 PPL 23.45 才暴露）。
 
 
 ## 🔄 2026-08-14 22:57 — ★**`ready_gpu` 从 0 变成 2**（Persist 修复生效）；⚠️ **我推翻了自己上一轮的磁盘假设**
