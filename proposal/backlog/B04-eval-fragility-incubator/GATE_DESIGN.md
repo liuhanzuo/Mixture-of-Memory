@@ -219,9 +219,32 @@ These y-vectors are **hypothetical**, written before the 4 arms are evaluated. T
 gate *can* return each verdict; they do not predict which it will. The already-measured
 step200000 endpoint is 0.108500 (`keep14_s1234_step200000_sv181`), so the single-number
 boundary is direct: **with max(y) = 0.1085, any min(y) ≤ 0.095408 is a KILL** and any
-min(y) ≥ 0.101954 is a PASS. For scale, the damaged ladder's own keep8 rung sits at
-0.094779 — i.e. the KILL region is reached if budget alone spans what damage spans, which is
-neither a straw man nor guaranteed.
+min(y) ≥ **0.102923** is a PASS **regardless of shape**. For scale, the damaged ladder's own
+keep8 rung sits at 0.094779 — i.e. the KILL region is reached if budget alone spans what damage
+spans, which is neither a straw man nor guaranteed.
+
+> **⚠️ Shape-safety of the PASS number (corrected by MAIN 2026-08-15, 0 GPU, PRE-DATA).**
+> This line previously said `min(y) ≥ 0.101954`, derived from the range term alone. That is
+> wrong, because φ = max(range, |β|·175000) and the slope term can exceed the range term by up
+> to `SLOPE_TERM_SUP_RATIO = 1.173627` on this fixed x-grid. Measured on the sup-attaining step
+> shape `y = [min, min, min, 0.1085, 0.1085]`:
+>
+> | min(y) | measured φ | verdict | |
+> |---|---|---|---|
+> | 0.101954 | 0.352088 | NARROWED | range-only value that was on disk |
+> | 0.102922 | 0.300023 | NARROWED | 6-dp **truncation** — still fails |
+> | 0.1029224187071361 | 0.300000 | PASS | exact boundary |
+> | **0.102923** | 0.299969 | **PASS** | **adopted (ceiling)** |
+>
+> Because the rule has the form `min(y) ≥ T`, a **larger** T is the conservative direction, so T
+> must be rounded **up**; 6-dp truncation lands below the true boundary and reproduces the very
+> defect this corrects. The unproven band is `0.102923 − 0.101954 = 0.000969 = 1.79·σ̂`
+> (σ̂ = 0.000541). The condition is **sufficient, not necessary**: a read-out with
+> `min(y) < 0.102923` may still PASS if its shape is not slope-dominated. The KILL side needs no
+> correction — `max() ≥ range` makes `min(y) ≤ 0.095408` sufficient (measured φ = 0.704176).
+> **Only `phi_budget()` is authoritative**; these numbers are now regression-tested in
+> `selftest_phi()`.
+
 
 ### 3.4 Denominator guard (φ is a ratio)
 

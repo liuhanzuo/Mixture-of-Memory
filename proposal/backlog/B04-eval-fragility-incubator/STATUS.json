@@ -127,9 +127,10 @@
     },
     "comparator": "The damaged-rung span of the wzc1 sm_100 6-rung ladder: olmo2_downstream_results/{7B_shortgpt16_step200000_wzc1, 7B_keep14_step200000_wzc1_v2, 7B_keep12_step111500_wzc1, 7B_keep10_step83500_wzc1, 7B_keep8_step121000_wzc1}, median_margin 0.116599 -> 0.094779, range 0.021820 (this range is the DENOMINATOR of phi). NOT compared against 'a baseline' -- against this named 5-arm set. NOTE: that comparator set also has a heal-step span of 116500, but per revision_2 that number is DESCRIPTIVE ONLY and must never enter phi; the span in phi is the READ-OUT's own 175000.",
     "denominator_guard": "phi is a ratio; its denominator is the damaged-ladder range D = 0.021820. (a) D is only admissible if it clears the floor: D >= 6*sigma_hat = 0.0032435. Measured 0.021820 = 6.73x the guard. PASS. (b) If D <= 0 or D < 6*sigma_hat, phi is UNDEFINED, not large and not small, and the gate returns DENOMINATOR_UNRESOLVED -- which blocks the family-ladder spend exactly as a KILL would, because a ratio against an unresolved range cannot license 244-2560 GPU-h. code/analyze_b04_wzc1_floor.py's phi_budget() returns this branch WITHOUT computing a number, so no phi can be quoted off an inadmissible denominator. (c) sigma_hat itself is a denominator (in the floor check and in the sigma_hat-units column of the thresholds) and is ill-defined at n=1: it may only be formed from >= 2 arms holding damage depth AND heal step EXACTLY constant, using divisor E[range of k]/sigma = 1.1284 at k=2 (1.6926 at k=3, 2.3259 at k=5, 2.8472 at k=8; using 1.0 understates the floor by 11.4% and can flip the boolean -- memory/a-range-is-not-a-measurement-until-it-clears-its-floor.md). (d) If sigma_hat computes to exactly 0 -- the normal outcome for same-driver re-runs per status/PAPERB_WITHIN_DISK_FLOOR_V3.md -- the gate returns FLOOR_UNMEASURABLE and does NOT pass; that means the contrast is not a real nuisance contrast. The seed pair is safe here: it varies init seed and gives non-zero sigma_hat on all 4 metrics (median_margin |delta|=0.000610 -> 0.000541). (e) NEW in revision 2 -- NUMERATOR/DENOMINATOR k-MATCHING. phi is now range/range, so both sides must be at the same k or the ratio silently carries an E[range of k]/sigma factor. Both are k=5 and it cancels. If the read-out ever loses an arm (a ckpt fails to load), a k=4 numerator over a k=5 denominator is biased toward PASS by construction (E[range]/sigma 2.0588 at k=4 vs 2.3259 at k=5 = -11.5%), so the gate must return PROTOCOL_VIOLATION rather than compute phi at k=4. Enforced in code: phi_budget() asserts the read-out steps equal G1_READOUT_STEPS exactly, which blocks dropping AND adding points.",
-    "what_result_stops_the_work": "An excursion large enough that phi >= 0.60. Concretely: if median_margin over the 5 fixed-damage read-out points spans >= 0.013092 (either as a raw max-min range, or as |OLS slope| * 175000), then heal budget alone reproduces >= 60% of what B04 attributes to damage depth, the OLMo leg falls to the SAME defect that retired the Qwen leg (DIRECTION_A_QWEN_LADDER_CONFOUND_ADDENDUM.md), and B04 folds into the Paper B methods appendix per olmo_only_finding.recommended_home. The 244-2560 GPU-h matched-family ladder is then never run. Single-number form: the step200000 endpoint is ALREADY MEASURED at median_margin = 0.108500, so if that stays the max, any read-out whose minimum is <= 0.095408 is a KILL (for scale, the damaged ladder's own keep8 rung sits at 0.094779 -- so KILL means budget alone spans about what damage spans, which is neither a straw man nor guaranteed), and any read-out whose minimum is >= 0.101954 is a PASS.",
+    "what_result_stops_the_work": "An excursion large enough that phi >= 0.60. Concretely: if median_margin over the 5 fixed-damage read-out points spans >= 0.013092 (either as a raw max-min range, or as |OLS slope| * 175000), then heal budget alone reproduces >= 60% of what B04 attributes to damage depth, the OLMo leg falls to the SAME defect that retired the Qwen leg (DIRECTION_A_QWEN_LADDER_CONFOUND_ADDENDUM.md), and B04 folds into the Paper B methods appendix per olmo_only_finding.recommended_home. The 244-2560 GPU-h matched-family ladder is then never run. Single-number form: the step200000 endpoint is ALREADY MEASURED at median_margin = 0.108500, so if that stays the max, any read-out whose minimum is <= 0.095408 is a KILL (for scale, the damaged ladder's own keep8 rung sits at 0.094779 -- so KILL means budget alone spans about what damage spans, which is neither a straw man nor guaranteed), and any read-out whose minimum is >= 0.102923 is a PASS REGARDLESS OF SHAPE. The range-only value 0.101954 is not shape-safe (measured phi=0.352088=NARROWED at that min), and neither is the 6dp truncation 0.102922 (measured phi=0.300023=NARROWED); a `min(y) >= T` threshold must be rounded UP from the exact boundary 0.1029224187071361. The KILL boundary 0.095408 needs no such correction because max() >= range makes it sufficient.",
     "this_kill_is_reachable_not_decorative": "Two independent pre-registered reachability checks, both 0 GPU, both PRE-DATA. (1) EMPIRICAL PRECEDENT: the ONLY fixed-damage budget ladder that exists anywhere in this project is the Qwen f12k2/14L cell (steps 2000/20000/200000) in evidence/B04_Qwen_6rung_bs16_analysis.json. Scored at ITS OWN span 198000 (using a foreign span is exactly the defect revision 2 fixes): range term 0.038752, slope term |beta|*198000 = 0.033065, binding term = RANGE, phi = 1.7760 -- far above the 0.60 kill line. Its median_margin is also non-monotone in budget (0.107388 -> 0.095181 -> 0.133933), i.e. it is precisely the shape a slope-only statistic under-reads. So the single most relevant empirical precedent predicts KILL. (2) CONSTRUCTED VERDICT REACHABILITY, machine-checked by code/analyze_b04_wzc1_floor.py --selftest, which sys.exits if any of KILL/NARROWED/PASS is unreachable: monotone [0.0902,0.0951,0.1005,0.1042,0.1085] -> phi 0.8387 KILL; non-monotone V [0.1085,0.0905,0.0885,0.0975,0.1090] -> phi 0.9395 KILL (revision 1 scored this same vector 0.1895 = PASS); mid [0.1000,0.1030,0.1055,0.1070,0.1085] -> 0.3896 NARROWED; early-convergence [0.1062,0.1071,0.1078,0.1081,0.1085] -> 0.1054 PASS; noise-scale wobble -> 0.0495 PASS. This gate is not one that can only pass, and equally not one that can only kill.",
-    "mandatory_disclosure_on_any_report": "Any quotation of Spearman(core6, median_margin)=+1.00 must print beside it (i) Spearman(core6, heal_steps) for the SAME ladder with the ladder named (+0.6669 wzc1 / +0.8721 zwfy6), (ii) sigma_hat and R, and (iii) the phi from clause 5. Standing requirement from STATUS.json.olmo_only_finding.budget_caveat_2026_08_10."
+    "mandatory_disclosure_on_any_report": "Any quotation of Spearman(core6, median_margin)=+1.00 must print beside it (i) Spearman(core6, heal_steps) for the SAME ladder with the ladder named (+0.6669 wzc1 / +0.8721 zwfy6), (ii) sigma_hat and R, and (iii) the phi from clause 5. Standing requirement from STATUS.json.olmo_only_finding.budget_caveat_2026_08_10.",
+    "pass_boundary_if_max_stays_0.1085": "min(y) >= 0.102923  [SHAPE-SAFE, SUFFICIENT not necessary]. = ceil6(0.108500 - 0.30*0.021820/SLOPE_TERM_SUP_RATIO) with SLOPE_TERM_SUP_RATIO=1.173627. The range-only value 0.101954 previously written here is WRONG: phi = max(range, |slope|*175000), and the slope term can exceed the range term by up to 1.173627x on this fixed x-grid, so a step-shaped read-out y=[0.101954,0.101954,0.101954,0.1085,0.1085] has phi=0.352088 (slope binding) = NARROWED, not PASS. MAIN 2026-08-15 also rejects the truncated 0.102922: measured phi=0.300023 > PHI_PASS=0.30 -> still NARROWED. The exact boundary is 0.1029224187071361, so for a `min(y) >= T` rule T must be ROUNDED UP; 6dp truncation lands BELOW the boundary and reproduces the very bug this fixes. KILL side needs no correction: max() >= range makes min(y) <= 0.095408 sufficient (measured phi=0.704176). Only phi_budget() is authoritative."
   },
   "next_gate": {
     "id": "G1-budget-discrimination-at-fixed-damage",
@@ -198,7 +199,13 @@
     "damaged_range_median_margin": 0.02182,
     "damaged_heal_step_span": 116500,
     "damaged_heal_step_span_IS_DESCRIPTIVE_ONLY": "116500 is a property of the COMPARATOR (the 5 damaged rungs at steps 200000/200000/111500/83500/121000). Revision 2 BARS it from entering phi: the decidability lens found that rescaling a slope measured over the read-out's 175000 down to 116500 makes the printed number not the measured quantity, understating the excursion by 175000/116500 = 1.5021x. Only 0.02182 (the damaged RANGE) is used, as phi's denominator.",
-    "G1_readout_steps": [25000, 50000, 100000, 128000, 200000],
+    "G1_readout_steps": [
+      25000,
+      50000,
+      100000,
+      128000,
+      200000
+    ],
     "readout_span_USED_IN_PHI": 175000,
     "readout_span_over_damaged_span_ratio": 1.5021,
     "E_range_over_sigma_at_k5": 2.3259,
@@ -261,5 +268,37 @@
     "why": "the workflow that drafted this gate returned n_gates_survived_adversarial=0 and would_become_ready_gpu=[]; this proposal is in its stays_ready_cpu list. The ready_gpu value on disk predated that verdict.",
     "authority": "adversarial verdicts in the workflow result, not MAIN's opinion",
     "actionable_task": "apply the specific_fix from each lens, THEN re-run the adversarial pass; only promote if all lenses return SOUND"
+  },
+  "pass_boundary_shape_safety_fix_MAIN_20260815": {
+    "who": "MAIN, 0 GPU, PRE-DATA (no read-out arm has been evaluated).",
+    "defect": "The single-number PASS rule was derived from the range term alone, but phi takes max(range, |slope|*span).",
+    "two_lenses_disagreed": "the adversarial workflow returned 0.102922 (one lens) and 0.102923 (another) for the same threshold; MAIN recomputed instead of picking one",
+    "measured_phi_at_each_candidate_worst_shape_y_min_min_min_max_max": {
+      "0.101954": {
+        "phi": 0.352088,
+        "verdict": "NARROWED",
+        "note": "the value that was on disk"
+      },
+      "0.102922": {
+        "phi": 0.300023,
+        "verdict": "NARROWED",
+        "note": "6dp TRUNCATION -- still fails"
+      },
+      "0.1029224187071361": {
+        "phi": 0.3,
+        "verdict": "PASS",
+        "note": "exact boundary"
+      },
+      "0.102923": {
+        "phi": 0.299969,
+        "verdict": "PASS",
+        "note": "ADOPTED (ceiling)"
+      }
+    },
+    "why_ceiling": "the rule is `min(y) >= T`, so a larger T is the conservative direction (harder to PASS). Truncating lands below the true boundary.",
+    "unproven_band_width": "0.102923 - 0.101954 = 0.000969 = 1.79 * sigma_hat (sigma_hat=0.000541)",
+    "kill_side_unchanged": "0.095408 verified sufficient, measured phi=0.704176",
+    "no_measured_value_changed": true,
+    "lifecycle_stays": "ready_cpu -- 3/3 adversarial lenses were NEEDS_REVISION; this closes one of them, not all"
   }
 }

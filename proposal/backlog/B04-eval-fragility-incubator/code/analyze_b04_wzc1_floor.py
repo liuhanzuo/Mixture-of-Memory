@@ -510,6 +510,33 @@ def selftest_phi(dam_range: float = 0.02181999999999995) -> None:
                      f"in that direction")
     print("[ok] all three verdicts are reachable -> the gate is falsifiable both ways")
 
+    # ---- the documented single-number boundaries must be SHAPE-SAFE -------------------
+    # Added by MAIN 2026-08-15 (0 GPU, PRE-DATA). The prose PASS boundary was originally
+    # derived from the range term alone, but phi = max(range, |beta|*span), so a step-shaped
+    # read-out can be slope-dominated and land in NARROWED at a min the range-only arithmetic
+    # calls PASS. Two adversarial lenses proposed 0.102922 and 0.102923 for the SAME threshold;
+    # the truncated one FAILS (phi=0.300023 > PHI_PASS=0.30). Because the rule has the form
+    # `min(y) >= T`, T must be rounded UP -- truncation lands below the exact boundary
+    # 0.1029224187071361 and reproduces the very defect this corrects. Pinned so it cannot rot.
+    MAX_MEASURED = 0.108500
+    PASS_MIN = 0.102923   # ceil6(MAX_MEASURED - PHI_PASS*dam_range/SLOPE_TERM_SUP_RATIO)
+    KILL_MIN = 0.095408   # MAX_MEASURED - PHI_KILL*dam_range  (max() >= range => sufficient)
+    for mn, want in ((PASS_MIN, "PASS"), (0.102922, "NARROWED"), (0.101954, "NARROWED")):
+        # step shape = the shape maximising |slope| at fixed (min, max)
+        got = phi_budget([mn, mn, mn, MAX_MEASURED, MAX_MEASURED], dam_range)
+        if got["verdict"] != want:
+            sys.exit(f"FATAL: single-number PASS boundary is not shape-safe: at min={mn} the "
+                     f"worst shape gives phi={got['phi']:.6f} -> {got['verdict']}, expected "
+                     f"{want}. Fix the prose in STATUS.json + GATE_DESIGN.md sec 3.2.")
+    kr = phi_budget([KILL_MIN, KILL_MIN, KILL_MIN, MAX_MEASURED, MAX_MEASURED], dam_range)
+    if kr["verdict"] != "KILL":
+        sys.exit(f"FATAL: single-number KILL boundary is not sufficient: phi={kr['phi']:.6f} "
+                 f"-> {kr['verdict']}")
+    print(f"[ok] single-number boundaries shape-safe: KILL min<={KILL_MIN:.6f} "
+          f"(phi={kr['phi']:.6f}), PASS min>={PASS_MIN:.6f}; the range-only 0.101954 and the "
+          f"6dp truncation 0.102922 are both correctly rejected as NARROWED")
+
+
 
 if __name__ == "__main__":
     if "--selftest" in sys.argv:
