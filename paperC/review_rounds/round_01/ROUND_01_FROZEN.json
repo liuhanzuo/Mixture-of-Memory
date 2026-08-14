@@ -1,0 +1,28 @@
+{
+ "round": 1,
+ "snapshot_sha256_prefix": "96304267e30d79c3",
+ "n_files": 23,
+ "frozen_at": "2026-08-15T03:03+08:00",
+ "build_gate": {
+  "pages": 17,
+  "undefined_refs_cites": 0,
+  "overfull_hbox": 0,
+  "errors": 0,
+  "result": "PASS"
+ },
+ "what_changed_since_round_00": [
+  "7d39546 retracted the v2 novelty claim (it is a stratified Cohen kappa numerator); defined 'designated'; disclosed multiplicity",
+  "626cf55 retracted 'the v2 null is ALWAYS at or below the v1 floor' -- argmax_L differs in 4/8 n_opt strata, proof slack 0.2992 pp vs tightest observed margin 0.0078 pp",
+  "6194beb gave the CHANCE side of the flip claim the same inference the floor side had -> 3/12 vs 1/12 under one standard, not 10/12 vs 1/12",
+  "3c7a874 closed round_00 with all three criticals MAIN-adjudicated"
+ ],
+ "round_00_failure_to_avoid": {
+  "reason": "only 3/6 reviews returned",
+  "causes": [
+   "1 subagent never called StructuredOutput",
+   "2 subagents stalled on all 6 attempts (180s no-progress)"
+  ],
+  "cost": "980358 subagent tokens, 8042s wall",
+  "design_change_for_round_01": "one defect per reviewer with the numbers inlined, instead of 'read the whole paper and find problems' -- the round_00 reviewers had to read 32 files each"
+ }
+}
