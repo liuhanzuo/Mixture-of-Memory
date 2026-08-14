@@ -13,7 +13,17 @@ so the .md and the JSON cannot disagree.
 The BRANCH-DEPENDENT prose is selected by `BRANCH`, which the analysis computed
 from the pre-registered rule -- not chosen by whoever runs this.
 
-CPU only. Reads the evidence JSON, writes one .md. No GPU, no network.
+OPTIONAL 4th ARG: the §2.0.2 disposition companion
+(`evidence/a04_shallow_ladder_neighbour_disposition.json`, produced by
+`a04_shallow_ladder_neighbour_disposition.py`). This renderer was committed at
+21:41 on 2026-08-13; `A04_SHALLOW_LADDER_NEIGHBOUR_ADMISSIBILITY.md` landed at
+22:09, i.e. AFTER it, so the original could not render the §2.0.2 disposition or
+the per-range noise floors. When the companion is supplied, §§4.1 and 5.1 are
+rendered FROM IT -- including whether the precondition was triggered at all, and
+each range's own k, its own constant and whether it clears its own floor. The
+companion is optional so the script still runs against an older evidence pair.
+
+CPU only. Reads the evidence JSON(s), writes one .md. No GPU, no network.
 """
 from __future__ import annotations
 
@@ -35,10 +45,13 @@ def num(x, nd=4):
 
 
 def main():
-    if len(sys.argv) != 4:
-        raise SystemExit(f"usage: {sys.argv[0]} EVIDENCE.json OUT.md SHA256")
+    if len(sys.argv) not in (4, 5):
+        raise SystemExit(f"usage: {sys.argv[0]} EVIDENCE.json OUT.md SHA256 "
+                         "[DISPOSITION.json]")
     ev_path, out_path, sha = sys.argv[1], sys.argv[2], sys.argv[3]
     d = json.load(open(ev_path))
+    disp_path = sys.argv[4] if len(sys.argv) == 5 else None
+    DP = json.load(open(disp_path)) if disp_path else None
 
     conv = d["mmlu_tie_convention"]
     cells = d["per_convention"][conv]["cells"]
@@ -82,9 +95,16 @@ def main():
       f"`{d['prereg']['commit']}`, committed **before the first margin existed** — "
       f"{d['prereg']['state_at_commit']}.")
     W(f"**Evidence:** `evidence/{os.path.basename(ev_path)}` (sha256 `{sha}`)")
+    if DP:
+        W(f"**§2.0.2 disposition companion:** "
+          f"`evidence/{os.path.basename(disp_path)}` — read-only on the file above "
+          "(whose sha256 `STATUS.json` pins), so the pre-registered analysis output is "
+          "never rewritten to bolt on a disclosure.")
     W("**Code:** `code/a04_shallow_rung_ladder_ni.py`, "
       "`code/a04_shallow_ladder_eval_driver.sh`, `code/a04_shallow_ladder_chain.sh`, "
-      "`scripts/_run_a04_shallow_ladder.sh`")
+      "`scripts/_run_a04_shallow_ladder.sh`"
+      + (", `code/a04_shallow_ladder_neighbour_disposition.py`, "
+         "`code/_a04_shallow_integrity_probe.py`" if DP else ""))
     W("")
     W("> **Every number in this document is rendered from the evidence JSON by "
       "`code/a04_render_shallow_ladder_verdict.py`.** Nothing is hand-transcribed. "
@@ -311,6 +331,61 @@ def main():
           "**not discharged**.")
     W("")
 
+    # ---- 4.1 §2.0.2 disposition, rendered from the companion --------------
+    if DP:
+        s = DP["section_2_0_2_disposition"]
+        rd = s["reconciliation_document"]
+        W("### 4.1 `A04_GATE_DESIGN.md` §2.0.2 — the neighbour precondition, and why "
+          "it is **not triggered**")
+        W("")
+        W(f"§2.0.2 **does bind this ladder** (`binds_this_ladder = "
+          f"{s['binds_this_ladder']}`): {s['why_it_binds']} That reading was fixed "
+          f"**pre-data** in `{rd['file']}` (commit `{rd['commit']}`) — "
+          f"{rd['pre_data_evidence']}.")
+        W("")
+        W("But §2.0.2 **gates accepts only**, and this pass has "
+          f"**{s['n_accepting_decision_axis_cells']}** accepting decision-axis cells, "
+          f"so `TRIGGERED = {s['TRIGGERED']}`:")
+        W("")
+        W(f"> {s['disposition']}")
+        W("")
+        W("**The precondition is NOT vacuously satisfied — it is not triggered.** "
+          "The distinction matters: a vacuous satisfaction would let a later reader "
+          "infer that a neighbour check was passed. None was run, because none was "
+          "owed.")
+        W("")
+        W("`CERTIFIED` was in any case **structurally unreachable** for this ladder, "
+          f"decided pre-data: {s['CERTIFIED_is_structurally_unreachable']['why']}")
+        W("")
+        W("**The lower neighbour exists on disk and was NOT scored.** Per the "
+          "admissibility document §6.5 that is the weaker of the two available "
+          "disclosures and it is the honest one; **which one applies is decided by "
+          "whether the eval was run, not by what the step5000 numbers turned out to "
+          "be** — and under Branch B it is not owed at all.")
+        W("")
+        W("| arm | lower neighbour `step2500.pt` | scored? | upper neighbour | "
+          "`n_neighbours_present` |")
+        W("|---|---|:--:|---|---:|")
+        for arm, inv in s["neighbour_inventory_per_arm"].items():
+            ln = inv["lower_neighbour"]
+            lower = (f"exists, {ln['size_bytes']:,} B" if ln["exists"]
+                     else "**absent**")
+            W(f"| `{arm}` | {lower} | "
+              f"{'yes' if inv['lower_neighbour_was_SCORED'] else '**no**'} | "
+              f"**cannot exist** (`final.pt` is the *same* step) | "
+              f"{inv['n_neighbours_present']} |")
+        W("")
+        W(f"**2500 steps is NOT a neighbourhood** "
+          f"(`{s['2500_steps_is_NOT_a_neighbourhood']['verdict']}`): "
+          f"{s['2500_steps_is_NOT_a_neighbourhood']['why']}")
+        W("")
+        W("Forbidden by name, so the temptation is closed in writing:")
+        for f in s["2500_steps_is_NOT_a_neighbourhood"]["forbidden_comparisons"]:
+            W(f"* {f}")
+        W("")
+        W(f"{s['one_process_provenance_no_resume_seam']}")
+        W("")
+
     # ---- 5. the ladder ---------------------------------------------------
     W("## 5. The 1B depth ladder, now four points instead of two")
     W("")
@@ -342,6 +417,58 @@ def main():
           " | " + ", ".join(f"{100*x:+.2f}pp" for x in m["successive_diffs"]) +
           f" | {m['all_same_sign']} | {m['n_sign_reversals']} |")
     W("")
+
+    # ---- 5.1 every range against ITS OWN floor, with ITS OWN k ------------
+    if DP:
+        rc = DP["range_constants_used"]
+        W("### 5.1 Every range with **its own** noise floor and **its own** *k*")
+        W("")
+        W("`E[range of k iid N(0,σ)]/σ` is **k-dependent**. "
+          f"{rc['why_k_matters']}")
+        W("")
+        W(f"| k | constant | closed form | used for |")
+        W("|---:|---|---|---|")
+        for key, lbl in (("c_2", 2), ("c_3", 3)):
+            e = rc[key]
+            W(f"| {lbl} | `{e['value']:.16f}` | `{e['expr']}` | {e['used_for']} |")
+        W(f"| 8 | `{rc['c_8_recorded_but_unused']:.4f}` | Monte Carlo (no closed "
+          "form) | **recorded, unused** |")
+        W("")
+        W("σ is the **mean of the participating cells' own `bootstrap_se_pp`** — the "
+          "per-cell recipe that reproduces `A04_GATE_DESIGN.md` §2.0.2's worked "
+          "example exactly. **The pooled variant is the one `PROPOSAL.md` §4.3 "
+          "retracted as \"1.69× off\". It is not used.**")
+        W("")
+        for grp, per_ax in DP["range_disclosures"].items():
+            first = per_ax[AX[0]]
+            W(f"**`{grp}`** — {first['label']}, **k={first['k']}** "
+              f"(`k_matches_n_cells = {first['k_matches_n_cells']}`), "
+              f"c_k = `{first['c_k']:.16f}`")
+            W("")
+            W("| axis | range | its floor (c_k·σ) | range/floor | clears its floor? | "
+              "floor if the **wrong** c_k had been used |")
+            W("|---|---:|---:|---:|:--:|---|")
+            for ax in AX:
+                r = per_ax[ax]
+                wrong = "; ".join(
+                    f"`{kk}` → {v['floor_pp']:.4f} pp "
+                    f"({v['floor_error_vs_correct_pct']:+.1f}%, would clear="
+                    f"{v['would_have_cleared']})"
+                    for kk, v in r["if_wrong_c_k_had_been_used"].items())
+                W(f"| `{ax}` | {r['range_pp']:.4f} pp | {r['noise_floor_pp']:.4f} pp | "
+                  f"{r['range_over_floor']:.3f}× | "
+                  f"{'**YES**' if r['CLEARS_ITS_OWN_FLOOR'] else 'no'} | {wrong} |")
+            W("")
+            W(f"**NOT decision-bearing.** {first['why_not_decision_bearing']}")
+            W("")
+            W(f"`is_a_neighbour_range = {first['is_a_neighbour_range']}`, "
+              f"`is_a_sigma_run = {first['is_a_sigma_run']}`. "
+              f"{first['clearing_an_item_noise_floor_is_NOT_resolution_against_seed_variance']}")
+            W("")
+        W(f"**{DP['no_ratio_of_ranges_is_formed']}**")
+        W("")
+        W(f"{DP['nothing_here_is_decision_bearing']}")
+        W("")
 
     # ---- 6. adjacent-rung differences -----------------------------------
     W("## 6. Are the rungs even distinguishable from each other?")

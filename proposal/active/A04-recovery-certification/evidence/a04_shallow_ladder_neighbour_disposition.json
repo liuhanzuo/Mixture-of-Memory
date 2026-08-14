@@ -1,0 +1,517 @@
+{
+  "scope": "A04 shallow-rung ladder -- the \u00a72.0.2 DISPOSITION and every range's own noise floor, as an evidence file so the verdict .md can be RENDERED rather than hand-written.",
+  "companion_to": {
+    "file": "a04_shallow_rung_ladder.json",
+    "BRANCH": "B",
+    "headline": "NI_ACCEPT_REGION_AT_1B_CONTAINS_NO_DAMAGED_RUNG -- both new rungs are constant-REJECT down to a 12.5% cut, the lightest the family admits",
+    "node_of_record": "TENCENT64.site",
+    "numpy": "2.5.1",
+    "note": "that file is the output of the PRE-REGISTERED analysis and its sha256 is pinned in STATUS.json; this probe is read-only on it and writes a companion rather than editing it."
+  },
+  "this_file_is_deterministic_and_node_independent": "every number here is float arithmetic over SEs already computed by the pinned analysis -- no RNG, so unlike the bootstrap it does not depend on the numpy version. Run on the node of record anyway for provenance.",
+  "gpu_h": 0.0,
+  "section_2_0_2_disposition": {
+    "precondition": "A04_GATE_DESIGN.md \u00a72.0.2 (neighbour precondition on ACCEPTS)",
+    "reconciliation_document": {
+      "file": "A04_SHALLOW_LADDER_NEIGHBOUR_ADMISSIBILITY.md",
+      "commit": "46ea84d",
+      "written_PRE_DATA": true,
+      "pre_data_evidence": "committed 2026-08-13 14:06:10 UTC with keep14 at step 3740-3800/5000 and keep13 at 3900-3960/5000, no step5000.pt, no A04_1B_shallow_* eval dir and no analysis JSON on either disk"
+    },
+    "binds_this_ladder": true,
+    "why_it_binds": "\u00a72.0.2 is scoped to 'any NI(Delta) accept reported by this gate', and this ladder's accepts would come from the same IMPORTED ni_rule under the same frozen Delta. Prereg \u00a75.5 renounces a CLAIM; \u00a72.0.2 imposes a DISCLOSURE duty, and renouncing a claim cannot discharge a duty.",
+    "gates_accepts_only": true,
+    "n_accepting_decision_axis_cells": 0,
+    "accepting_cells_per_arm": {
+      "keep13f2_step5000": [],
+      "keep14f2_step5000": [],
+      "keep12f2_step5000_REF": []
+    },
+    "TRIGGERED": false,
+    "disposition": "NOT_TRIGGERED -- no cell accepts on any decision axis. Per the reconciliation document \u00a75 (fixed pre-data, phrasing adopted verbatim from the full32 pass): 'under Branch B (both arms constant-REJECT) \u00a72.0.2 is NOT triggered at all -- it gates accepts only ... The precondition is not vacuously satisfied -- it is not triggered.' Branch B needs nothing from that document.",
+    "CERTIFIED_is_structurally_unreachable": {
+      "value": true,
+      "why": "\u00a72.0.2 conditions a certified reading on the immediately adjacent saved checkpoints on BOTH sides. No upper neighbour of step5000 can exist (max_steps=5000; final.pt is the SAME step). Decided pre-data in the admissibility document \u00a72.3 -- no datum can change it.",
+      "consequence": "no cell of this ladder may be labelled CERTIFIED, whatever the numbers are. Here it is moot: nothing accepts."
+    },
+    "label_rule_evaluated_per_accepting_cell": {},
+    "label_rule_source": "A04_SHALLOW_LADDER_NEIGHBOUR_ADMISSIBILITY.md \u00a72.3, three labels with mechanical triggers, no free parameter",
+    "why_the_empty_dict_is_the_correct_output": "the label rule is defined ONLY over cells with ni_accept == True. It is evaluated here rather than skipped by assertion, so an accept could not have been silently passed over; the dict is empty because the set of accepting decision-axis cells is empty.",
+    "neighbour_inventory_per_arm": {
+      "keep13": {
+        "output_dir": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/outputs/olmo2_probe2_1B_keep13f2_dolmino_shallow_seed101",
+        "lower_neighbour_step": 2500,
+        "lower_neighbour": {
+          "exists": true,
+          "path": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/outputs/olmo2_probe2_1B_keep13f2_dolmino_shallow_seed101/step2500.pt",
+          "size_bytes": 17013823232,
+          "mtime": 1786625511
+        },
+        "this_checkpoint_step": 5000,
+        "this_checkpoint": {
+          "exists": true,
+          "path": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/outputs/olmo2_probe2_1B_keep13f2_dolmino_shallow_seed101/step5000.pt",
+          "size_bytes": 17013823232,
+          "mtime": 1786633420
+        },
+        "final_pt": {
+          "exists": true,
+          "path": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/outputs/olmo2_probe2_1B_keep13f2_dolmino_shallow_seed101/final.pt",
+          "size_bytes": 17013812147,
+          "mtime": 1786633438
+        },
+        "upper_neighbour": {
+          "exists": false,
+          "why": "max_steps=5000 and the trainer's save condition is `step % save_every == 0 and step > 0` plus a terminal _save(..., final=True). `final.pt` is named by 'final' if final else f'step{step}' at the SAME step value, so it is the SAME point as step5000.pt, not a checkpoint beyond it. No upper neighbour can exist without new training.",
+          "final_pt_is_same_step_not_a_neighbour": true
+        },
+        "n_neighbours_present": 1,
+        "lower_neighbour_was_SCORED": false,
+        "lower_neighbour_scored_detail": {
+          "mmlu": false,
+          "cb": false
+        },
+        "lower_neighbour_disclosure_grammar": "the lower neighbour EXISTS ON DISK but was NOT SCORED (no step2500 eval dir on either disk, and admissibility \u00a76.5 authorises no GPU for one). Per \u00a76.5 that is the weaker disclosure and it is the honest one."
+      },
+      "keep14": {
+        "output_dir": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/outputs/olmo2_probe2_1B_keep14f2_dolmino_shallow_seed101",
+        "lower_neighbour_step": 2500,
+        "lower_neighbour": {
+          "exists": true,
+          "path": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/outputs/olmo2_probe2_1B_keep14f2_dolmino_shallow_seed101/step2500.pt",
+          "size_bytes": 17819242212,
+          "mtime": 1786625803
+        },
+        "this_checkpoint_step": 5000,
+        "this_checkpoint": {
+          "exists": true,
+          "path": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/outputs/olmo2_probe2_1B_keep14f2_dolmino_shallow_seed101/step5000.pt",
+          "size_bytes": 17819242212,
+          "mtime": 1786634184
+        },
+        "final_pt": {
+          "exists": true,
+          "path": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/outputs/olmo2_probe2_1B_keep14f2_dolmino_shallow_seed101/final.pt",
+          "size_bytes": 17819230995,
+          "mtime": 1786634204
+        },
+        "upper_neighbour": {
+          "exists": false,
+          "why": "max_steps=5000 and the trainer's save condition is `step % save_every == 0 and step > 0` plus a terminal _save(..., final=True). `final.pt` is named by 'final' if final else f'step{step}' at the SAME step value, so it is the SAME point as step5000.pt, not a checkpoint beyond it. No upper neighbour can exist without new training.",
+          "final_pt_is_same_step_not_a_neighbour": true
+        },
+        "n_neighbours_present": 1,
+        "lower_neighbour_was_SCORED": false,
+        "lower_neighbour_scored_detail": {
+          "mmlu": false,
+          "cb": false
+        },
+        "lower_neighbour_disclosure_grammar": "the lower neighbour EXISTS ON DISK but was NOT SCORED (no step2500 eval dir on either disk, and admissibility \u00a76.5 authorises no GPU for one). Per \u00a76.5 that is the weaker disclosure and it is the honest one."
+      }
+    },
+    "step2500_was_NOT_scored_and_no_GPU_was_authorised_for_it": "admissibility \u00a76.5: 'Does not spend GPU. No step2500 eval is requested or authorised by this file.' Under Branch B the disclosure is not owed at all (\u00a72.0.2 gates accepts only), so not scoring it costs nothing here.",
+    "2500_steps_is_NOT_a_neighbourhood": {
+      "verdict": true,
+      "why": "2500 steps is 50 % of this run's 5000-step horizon and spans LR 1.143706e-05 -> 2.000000e-06, a factor 5.7185 (half a cosine of annealed training). Admissibility \u00a73 answers this question against us: the k=2 gate is NECESSARY-but-not-sufficient and a move that clears it must NOT be read as instability.",
+      "forbidden_comparisons": [
+        "comparing a 2500-step move to the 500-step keep8/keep10 ranges (7B, different spacing, different scale, different corpus)",
+        "writing 'wider spacing is more convincing' -- wider spacing makes a neighbour check WEAKER because it admits training progress as an explanation (banned by name in admissibility \u00a73 consequence 4)"
+      ]
+    },
+    "one_process_provenance_no_resume_seam": "`grep -c resume` on both trainer logs returns 0: each arm is a single uninterrupted process, so no range here straddles a resume seam (\u00a72.0.2 trap 2)."
+  },
+  "range_disclosures": {
+    "ladder_k3_margin_range_keep12_keep13_keep14": {
+      "triviaqa": {
+        "label": "3-rung 1B depth-ladder margin range (keep12/keep13/keep14)",
+        "k": 3,
+        "k_matches_n_cells": true,
+        "c_k": 1.692568750643269,
+        "c_k_source": "read from the analysis JSON's gate_constant_selftest (closed form, re-derived) and re-checked here",
+        "c_k_closed_form_expr": "3/sqrt(pi)",
+        "arms": [
+          "keep12f2_step5000_REF",
+          "keep13f2_step5000",
+          "keep14f2_step5000"
+        ],
+        "axis": "triviaqa",
+        "margins_pp": [
+          -28.001003120820336,
+          -25.331587160053502,
+          -16.55427998216674
+        ],
+        "per_cell_bootstrap_se_pp": [
+          0.37268865085986963,
+          0.3591363362831439,
+          0.3455840217064225
+        ],
+        "sigma_pp": 0.3591363362831454,
+        "sigma_recipe": "mean of the participating cells' OWN bootstrap_se_pp -- the per-cell recipe that reproduces GATE_DESIGN \u00a72.0.2's worked example exactly. The POOLED variant is the one PROPOSAL.md \u00a74.3 retracted as 1.69x off. Do NOT pool.",
+        "range_pp": 11.446723138653596,
+        "noise_floor_pp": 0.6078629400133643,
+        "range_over_floor": 18.8310923156492,
+        "CLEARS_ITS_OWN_FLOOR": true,
+        "if_wrong_c_k_had_been_used": {
+          "c_2": {
+            "c": 1.1283791670955126,
+            "floor_pp": 0.4052419600089095,
+            "would_have_cleared": true,
+            "floor_error_vs_correct_pct": -33.333333333333336
+          }
+        },
+        "NOT_DECISION_BEARING": true,
+        "why_not_decision_bearing": "prereg \u00a75.3 / \u00a75.5: the 3-rung spread is across arms of DIFFERENT DEPTH -- it is the quantity the design VARIES, not a repeat measurement, so it is not a neighbour range and not a sigma_run. The verdict is decided by per-cell NI margins (all 12 decision-axis cells reject), never by this range.",
+        "clearing_an_item_noise_floor_is_NOT_resolution_against_seed_variance": "sigma here is the ITEM-sample bootstrap SE. ONE seed (101) per arm, so no sd_run exists at these rungs and no range here may be read as resolved against run-to-run variance.",
+        "is_a_neighbour_range": false,
+        "is_a_sigma_run": false
+      },
+      "popqa": {
+        "label": "3-rung 1B depth-ladder margin range (keep12/keep13/keep14)",
+        "k": 3,
+        "k_matches_n_cells": true,
+        "c_k": 1.692568750643269,
+        "c_k_source": "read from the analysis JSON's gate_constant_selftest (closed form, re-derived) and re-checked here",
+        "c_k_closed_form_expr": "3/sqrt(pi)",
+        "arms": [
+          "keep12f2_step5000_REF",
+          "keep13f2_step5000",
+          "keep14f2_step5000"
+        ],
+        "axis": "popqa",
+        "margins_pp": [
+          -9.053409967056844,
+          -8.499334127707296,
+          -7.125534450129669
+        ],
+        "per_cell_bootstrap_se_pp": [
+          0.27719627052541235,
+          0.2684606463197692,
+          0.2514155259185141
+        ],
+        "sigma_pp": 0.26569081425456526,
+        "sigma_recipe": "mean of the participating cells' OWN bootstrap_se_pp -- the per-cell recipe that reproduces GATE_DESIGN \u00a72.0.2's worked example exactly. The POOLED variant is the one PROPOSAL.md \u00a74.3 retracted as 1.69x off. Do NOT pool.",
+        "range_pp": 1.927875516927175,
+        "noise_floor_pp": 0.44969996954024233,
+        "range_over_floor": 4.287026122990776,
+        "CLEARS_ITS_OWN_FLOOR": true,
+        "if_wrong_c_k_had_been_used": {
+          "c_2": {
+            "c": 1.1283791670955126,
+            "floor_pp": 0.29979997969349487,
+            "would_have_cleared": true,
+            "floor_error_vs_correct_pct": -33.333333333333336
+          }
+        },
+        "NOT_DECISION_BEARING": true,
+        "why_not_decision_bearing": "prereg \u00a75.3 / \u00a75.5: the 3-rung spread is across arms of DIFFERENT DEPTH -- it is the quantity the design VARIES, not a repeat measurement, so it is not a neighbour range and not a sigma_run. The verdict is decided by per-cell NI margins (all 12 decision-axis cells reject), never by this range.",
+        "clearing_an_item_noise_floor_is_NOT_resolution_against_seed_variance": "sigma here is the ITEM-sample bootstrap SE. ONE seed (101) per arm, so no sd_run exists at these rungs and no range here may be read as resolved against run-to-run variance.",
+        "is_a_neighbour_range": false,
+        "is_a_sigma_run": false
+      },
+      "mmlu_content": {
+        "label": "3-rung 1B depth-ladder margin range (keep12/keep13/keep14)",
+        "k": 3,
+        "k_matches_n_cells": true,
+        "c_k": 1.692568750643269,
+        "c_k_source": "read from the analysis JSON's gate_constant_selftest (closed form, re-derived) and re-checked here",
+        "c_k_closed_form_expr": "3/sqrt(pi)",
+        "arms": [
+          "keep12f2_step5000_REF",
+          "keep13f2_step5000",
+          "keep14f2_step5000"
+        ],
+        "axis": "mmlu_content",
+        "margins_pp": [
+          -6.653076484831221,
+          -5.22877795185871,
+          -3.5623486682808725
+        ],
+        "per_cell_bootstrap_se_pp": [
+          0.37234217023509547,
+          0.3463648095210196,
+          0.30306920833089207
+        ],
+        "sigma_pp": 0.34059206269566905,
+        "sigma_recipe": "mean of the participating cells' OWN bootstrap_se_pp -- the per-cell recipe that reproduces GATE_DESIGN \u00a72.0.2's worked example exactly. The POOLED variant is the one PROPOSAL.md \u00a74.3 retracted as 1.69x off. Do NOT pool.",
+        "range_pp": 3.0907278165503485,
+        "noise_floor_pp": 0.5764754820358224,
+        "range_over_floor": 5.361421106124838,
+        "CLEARS_ITS_OWN_FLOOR": true,
+        "if_wrong_c_k_had_been_used": {
+          "c_2": {
+            "c": 1.1283791670955126,
+            "floor_pp": 0.38431698802388164,
+            "would_have_cleared": true,
+            "floor_error_vs_correct_pct": -33.333333333333336
+          }
+        },
+        "NOT_DECISION_BEARING": true,
+        "why_not_decision_bearing": "prereg \u00a75.3 / \u00a75.5: the 3-rung spread is across arms of DIFFERENT DEPTH -- it is the quantity the design VARIES, not a repeat measurement, so it is not a neighbour range and not a sigma_run. The verdict is decided by per-cell NI margins (all 12 decision-axis cells reject), never by this range.",
+        "clearing_an_item_noise_floor_is_NOT_resolution_against_seed_variance": "sigma here is the ITEM-sample bootstrap SE. ONE seed (101) per arm, so no sd_run exists at these rungs and no range here may be read as resolved against run-to-run variance.",
+        "is_a_neighbour_range": false,
+        "is_a_sigma_run": false
+      },
+      "nq_open": {
+        "label": "3-rung 1B depth-ladder margin range (keep12/keep13/keep14)",
+        "k": 3,
+        "k_matches_n_cells": true,
+        "c_k": 1.692568750643269,
+        "c_k_source": "read from the analysis JSON's gate_constant_selftest (closed form, re-derived) and re-checked here",
+        "c_k_closed_form_expr": "3/sqrt(pi)",
+        "arms": [
+          "keep12f2_step5000_REF",
+          "keep13f2_step5000",
+          "keep14f2_step5000"
+        ],
+        "axis": "nq_open",
+        "margins_pp": [
+          -7.396121883656509,
+          -6.869806094182825,
+          -5.484764542936288
+        ],
+        "per_cell_bootstrap_se_pp": [
+          0.5052272841372043,
+          0.4883863746659635,
+          0.4883863746659641
+        ],
+        "sigma_pp": 0.4940000111563773,
+        "sigma_recipe": "mean of the participating cells' OWN bootstrap_se_pp -- the per-cell recipe that reproduces GATE_DESIGN \u00a72.0.2's worked example exactly. The POOLED variant is the one PROPOSAL.md \u00a74.3 retracted as 1.69x off. Do NOT pool.",
+        "range_pp": 1.9113573407202207,
+        "noise_floor_pp": 0.8361289817007105,
+        "range_over_floor": 2.2859599207199643,
+        "CLEARS_ITS_OWN_FLOOR": true,
+        "if_wrong_c_k_had_been_used": {
+          "c_2": {
+            "c": 1.1283791670955126,
+            "floor_pp": 0.557419321133807,
+            "would_have_cleared": true,
+            "floor_error_vs_correct_pct": -33.333333333333336
+          }
+        },
+        "NOT_DECISION_BEARING": true,
+        "why_not_decision_bearing": "prereg \u00a75.3 / \u00a75.5: the 3-rung spread is across arms of DIFFERENT DEPTH -- it is the quantity the design VARIES, not a repeat measurement, so it is not a neighbour range and not a sigma_run. The verdict is decided by per-cell NI margins (all 12 decision-axis cells reject), never by this range.",
+        "clearing_an_item_noise_floor_is_NOT_resolution_against_seed_variance": "sigma here is the ITEM-sample bootstrap SE. ONE seed (101) per arm, so no sd_run exists at these rungs and no range here may be read as resolved against run-to-run variance.",
+        "is_a_neighbour_range": false,
+        "is_a_sigma_run": false
+      }
+    },
+    "adjacent_pair_k2_margin_range_keep13_keep14": {
+      "triviaqa": {
+        "label": "adjacent-rung margin range (keep13 vs keep14)",
+        "k": 2,
+        "k_matches_n_cells": true,
+        "c_k": 1.1283791670955126,
+        "c_k_source": "read from the analysis JSON's gate_constant_selftest (closed form, re-derived) and re-checked here",
+        "c_k_closed_form_expr": "2/sqrt(pi)",
+        "arms": [
+          "keep13f2_step5000",
+          "keep14f2_step5000"
+        ],
+        "axis": "triviaqa",
+        "margins_pp": [
+          -25.331587160053502,
+          -16.55427998216674
+        ],
+        "per_cell_bootstrap_se_pp": [
+          0.3591363362831439,
+          0.3455840217064225
+        ],
+        "sigma_pp": 0.3523601789947832,
+        "sigma_recipe": "mean of the participating cells' OWN bootstrap_se_pp -- the per-cell recipe that reproduces GATE_DESIGN \u00a72.0.2's worked example exactly. The POOLED variant is the one PROPOSAL.md \u00a74.3 retracted as 1.69x off. Do NOT pool.",
+        "range_pp": 8.777307177886762,
+        "noise_floor_pp": 0.3975958852917592,
+        "range_over_floor": 22.075950739394347,
+        "CLEARS_ITS_OWN_FLOOR": true,
+        "if_wrong_c_k_had_been_used": {
+          "c_3": {
+            "c": 1.692568750643269,
+            "floor_pp": 0.5963938279376388,
+            "would_have_cleared": true,
+            "floor_error_vs_correct_pct": 50.0
+          }
+        },
+        "NOT_DECISION_BEARING": true,
+        "why_not_decision_bearing": "prereg \u00a75.7 makes the PAIRED item bootstrap the test of record for a keep13-vs-keep14 difference (see the paired CI table), not a range-vs-floor heuristic. This k=2 block is a disclosure so that the floor is stated with the constant that matches k=2, and so that 1.6926 can never be silently reused here.",
+        "clearing_an_item_noise_floor_is_NOT_resolution_against_seed_variance": "sigma here is the ITEM-sample bootstrap SE. ONE seed (101) per arm, so no sd_run exists at these rungs and no range here may be read as resolved against run-to-run variance.",
+        "is_a_neighbour_range": false,
+        "is_a_sigma_run": false,
+        "test_of_record_is_the_paired_bootstrap_CI": {
+          "diff_mean_pp": 8.75501560410165,
+          "ci95_pp": [
+            8.253455193936691,
+            9.245430227374053
+          ],
+          "boot_p": 0.0001,
+          "resolved": true,
+          "direction": "higher_at_keep14"
+        }
+      },
+      "popqa": {
+        "label": "adjacent-rung margin range (keep13 vs keep14)",
+        "k": 2,
+        "k_matches_n_cells": true,
+        "c_k": 1.1283791670955126,
+        "c_k_source": "read from the analysis JSON's gate_constant_selftest (closed form, re-derived) and re-checked here",
+        "c_k_closed_form_expr": "2/sqrt(pi)",
+        "arms": [
+          "keep13f2_step5000",
+          "keep14f2_step5000"
+        ],
+        "axis": "popqa",
+        "margins_pp": [
+          -8.499334127707296,
+          -7.125534450129669
+        ],
+        "per_cell_bootstrap_se_pp": [
+          0.2684606463197692,
+          0.2514155259185141
+        ],
+        "sigma_pp": 0.25993808611914165,
+        "sigma_recipe": "mean of the participating cells' OWN bootstrap_se_pp -- the per-cell recipe that reproduces GATE_DESIGN \u00a72.0.2's worked example exactly. The POOLED variant is the one PROPOSAL.md \u00a74.3 retracted as 1.69x off. Do NOT pool.",
+        "range_pp": 1.3737996775776278,
+        "noise_floor_pp": 0.2933087211115187,
+        "range_over_floor": 4.683800987476593,
+        "CLEARS_ITS_OWN_FLOOR": true,
+        "if_wrong_c_k_had_been_used": {
+          "c_3": {
+            "c": 1.692568750643269,
+            "floor_pp": 0.43996308166727804,
+            "would_have_cleared": true,
+            "floor_error_vs_correct_pct": 50.0
+          }
+        },
+        "NOT_DECISION_BEARING": true,
+        "why_not_decision_bearing": "prereg \u00a75.7 makes the PAIRED item bootstrap the test of record for a keep13-vs-keep14 difference (see the paired CI table), not a range-vs-floor heuristic. This k=2 block is a disclosure so that the floor is stated with the constant that matches k=2, and so that 1.6926 can never be silently reused here.",
+        "clearing_an_item_noise_floor_is_NOT_resolution_against_seed_variance": "sigma here is the ITEM-sample bootstrap SE. ONE seed (101) per arm, so no sd_run exists at these rungs and no range here may be read as resolved against run-to-run variance.",
+        "is_a_neighbour_range": false,
+        "is_a_sigma_run": false,
+        "test_of_record_is_the_paired_bootstrap_CI": {
+          "diff_mean_pp": 1.3457629494637975,
+          "ci95_pp": [
+            1.0093222120978482,
+            1.682203686829747
+          ],
+          "boot_p": 0.0001,
+          "resolved": true,
+          "direction": "higher_at_keep14"
+        }
+      },
+      "mmlu_content": {
+        "label": "adjacent-rung margin range (keep13 vs keep14)",
+        "k": 2,
+        "k_matches_n_cells": true,
+        "c_k": 1.1283791670955126,
+        "c_k_source": "read from the analysis JSON's gate_constant_selftest (closed form, re-derived) and re-checked here",
+        "c_k_closed_form_expr": "2/sqrt(pi)",
+        "arms": [
+          "keep13f2_step5000",
+          "keep14f2_step5000"
+        ],
+        "axis": "mmlu_content",
+        "margins_pp": [
+          -5.22877795185871,
+          -3.5623486682808725
+        ],
+        "per_cell_bootstrap_se_pp": [
+          0.3463648095210196,
+          0.30306920833089207
+        ],
+        "sigma_pp": 0.32471700892595584,
+        "sigma_recipe": "mean of the participating cells' OWN bootstrap_se_pp -- the per-cell recipe that reproduces GATE_DESIGN \u00a72.0.2's worked example exactly. The POOLED variant is the one PROPOSAL.md \u00a74.3 retracted as 1.69x off. Do NOT pool.",
+        "range_pp": 1.6664292835778376,
+        "noise_floor_pp": 0.36640390807361617,
+        "range_over_floor": 4.5480663466150215,
+        "CLEARS_ITS_OWN_FLOOR": true,
+        "if_wrong_c_k_had_been_used": {
+          "c_3": {
+            "c": 1.692568750643269,
+            "floor_pp": 0.5496058621104243,
+            "would_have_cleared": true,
+            "floor_error_vs_correct_pct": 50.0
+          }
+        },
+        "NOT_DECISION_BEARING": true,
+        "why_not_decision_bearing": "prereg \u00a75.7 makes the PAIRED item bootstrap the test of record for a keep13-vs-keep14 difference (see the paired CI table), not a range-vs-floor heuristic. This k=2 block is a disclosure so that the floor is stated with the constant that matches k=2, and so that 1.6926 can never be silently reused here.",
+        "clearing_an_item_noise_floor_is_NOT_resolution_against_seed_variance": "sigma here is the ITEM-sample bootstrap SE. ONE seed (101) per arm, so no sd_run exists at these rungs and no range here may be read as resolved against run-to-run variance.",
+        "is_a_neighbour_range": false,
+        "is_a_sigma_run": false,
+        "test_of_record_is_the_paired_bootstrap_CI": {
+          "diff_mean_pp": 1.5952143569292123,
+          "ci95_pp": [
+            1.0682238997293834,
+            2.129504344110523
+          ],
+          "boot_p": 0.0001,
+          "resolved": true,
+          "direction": "higher_at_keep14"
+        }
+      },
+      "nq_open": {
+        "label": "adjacent-rung margin range (keep13 vs keep14)",
+        "k": 2,
+        "k_matches_n_cells": true,
+        "c_k": 1.1283791670955126,
+        "c_k_source": "read from the analysis JSON's gate_constant_selftest (closed form, re-derived) and re-checked here",
+        "c_k_closed_form_expr": "2/sqrt(pi)",
+        "arms": [
+          "keep13f2_step5000",
+          "keep14f2_step5000"
+        ],
+        "axis": "nq_open",
+        "margins_pp": [
+          -6.869806094182825,
+          -5.484764542936288
+        ],
+        "per_cell_bootstrap_se_pp": [
+          0.4883863746659635,
+          0.4883863746659641
+        ],
+        "sigma_pp": 0.4883863746659638,
+        "sigma_recipe": "mean of the participating cells' OWN bootstrap_se_pp -- the per-cell recipe that reproduces GATE_DESIGN \u00a72.0.2's worked example exactly. The POOLED variant is the one PROPOSAL.md \u00a74.3 retracted as 1.69x off. Do NOT pool.",
+        "range_pp": 1.3850415512465366,
+        "noise_floor_pp": 0.5510850106663772,
+        "range_over_floor": 2.5132992631603814,
+        "CLEARS_ITS_OWN_FLOOR": true,
+        "if_wrong_c_k_had_been_used": {
+          "c_3": {
+            "c": 1.692568750643269,
+            "floor_pp": 0.8266275159995659,
+            "would_have_cleared": true,
+            "floor_error_vs_correct_pct": 50.0
+          }
+        },
+        "NOT_DECISION_BEARING": true,
+        "why_not_decision_bearing": "prereg \u00a75.7 makes the PAIRED item bootstrap the test of record for a keep13-vs-keep14 difference (see the paired CI table), not a range-vs-floor heuristic. This k=2 block is a disclosure so that the floor is stated with the constant that matches k=2, and so that 1.6926 can never be silently reused here.",
+        "clearing_an_item_noise_floor_is_NOT_resolution_against_seed_variance": "sigma here is the ITEM-sample bootstrap SE. ONE seed (101) per arm, so no sd_run exists at these rungs and no range here may be read as resolved against run-to-run variance.",
+        "is_a_neighbour_range": false,
+        "is_a_sigma_run": false,
+        "test_of_record_is_the_paired_bootstrap_CI": {
+          "diff_mean_pp": 1.3850415512465373,
+          "ci95_pp": [
+            0.775623268698061,
+            1.9944598337950137
+          ],
+          "boot_p": 0.0001,
+          "resolved": true,
+          "direction": "higher_at_keep14"
+        }
+      }
+    }
+  },
+  "range_constants_used": {
+    "c_2": {
+      "value": 1.1283791670955126,
+      "expr": "2/sqrt(pi)",
+      "used_for": "the k=2 adjacent pair"
+    },
+    "c_3": {
+      "value": 1.692568750643269,
+      "expr": "3/sqrt(pi)",
+      "used_for": "the k=3 3-rung ladder"
+    },
+    "c_8_recorded_but_unused": 2.8476515938836635,
+    "why_k_matters": "E[range of k]/sigma is k-dependent. c_3 at k=8 makes a floor 40.6 % TOO LOW and manufactured a finding once; c_3 at k=2 inflates a floor by 50.0 % and can suppress a real move. Each range above records its own k, its own constant, AND what the wrong constant would have done."
+  },
+  "no_ratio_of_ranges_is_formed": "no ratio of two ranges appears anywhere in this pass. A ratio of two ranges neither of which clears its own floor is UNDEFINED, not a direction -- the error that voided within_arm_lr_refutation_20260813.",
+  "nothing_here_is_decision_bearing": "prereg \u00a74.2 / \u00a75.5. The verdict is the per-cell NI margin table; every range above is a disclosure carrying its own floor."
+}
