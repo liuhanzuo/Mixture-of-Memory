@@ -612,6 +612,42 @@ def main():
                           {"next_gate_gpu": "1 node x 8 H20 for ~4 GPU-h"}) == "",
                       "expected empty string")
 
+        print("\n(n) a MOVED pointer stub is not reported as a missing-paperwork gap")
+        # B04-eval-fragility/ holds one README.md titled "# MOVED -- this directory
+        # was a bookkeeping split, not a second proposal", merged 2026-08-14. The
+        # reader flagged it "no STATUS.json -> invisible to the scheduler", which
+        # sent MAIN to re-investigate a closed question this session.
+        stub = os.path.join(tmp, "moved-stub")
+        os.makedirs(stub, exist_ok=True)
+        with open(os.path.join(stub, "README.md"), "w") as f:
+            f.write("# MOVED - this directory was a bookkeeping split\n\n"
+                    "The canonical home is proposal/backlog/X-canonical/.\n")
+        ok_n1 = check("a single MOVED-titled .md with no STATUS.json is a stub",
+                      ready_queue._is_moved_stub(stub) is True,
+                      "expected True")
+
+        # And the three ways a REAL gap must not hide behind this rule.
+        gap1 = os.path.join(tmp, "real-gap-no-md")
+        os.makedirs(gap1, exist_ok=True)
+        open(os.path.join(gap1, "PROPOSAL.md"), "w").write("# A real proposal\n")
+        ok_n2 = check("a .md that does NOT say MOVED is not a stub",
+                      ready_queue._is_moved_stub(gap1) is False,
+                      "expected False")
+        gap2 = os.path.join(tmp, "real-gap-extra-files")
+        os.makedirs(gap2, exist_ok=True)
+        open(os.path.join(gap2, "README.md"), "w").write("# MOVED somewhere\n")
+        open(os.path.join(gap2, "run.py"), "w").write("# live code\n")
+        ok_n3 = check("a MOVED note sitting beside real files is NOT a stub",
+                      ready_queue._is_moved_stub(gap2) is False,
+                      "expected False -- code present means work lives here")
+        gap3 = os.path.join(tmp, "real-gap-two-mds")
+        os.makedirs(gap3, exist_ok=True)
+        open(os.path.join(gap3, "README.md"), "w").write("# MOVED somewhere\n")
+        open(os.path.join(gap3, "PROPOSAL.md"), "w").write("# still a proposal\n")
+        ok_n4 = check("two .md files means it is not a bare pointer",
+                      ready_queue._is_moved_stub(gap3) is False,
+                      "expected False")
+
         print("\n(control) a fully specified, unblocked proposal IS ready_gpu")
         r = read_fixture(tmp, "clean", base_doc(), related_work=True)
         ok_ctl = check("control reaches ready_gpu (checks are not vacuous)",
@@ -637,6 +673,7 @@ def main():
         del ok_i1, ok_i2, ok_i3
         del ok_j1, ok_j2, ok_k1, ok_k2
         del ok_l1, ok_l2, ok_l3, ok_m1, ok_m2
+        del ok_n1, ok_n2, ok_n3, ok_n4
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
 

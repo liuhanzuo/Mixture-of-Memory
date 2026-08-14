@@ -785,6 +785,37 @@ def read_one(path):
     return rec
 
 
+def _is_moved_stub(d):
+    """True if `d` is a resolved MOVED/merged pointer, not a proposal missing paperwork.
+
+    Deliberately strict on all three counts, because the cost of a false positive
+    here is a real proposal going invisible:
+      * no STATUS.json (caller already checked),
+      * EXACTLY ONE .md in the directory and no subdirectory holding more,
+      * that file says MOVED or MERGED within its first 3 lines.
+    `B04-eval-fragility/README.md` matches: its title line is
+    "# MOVED -- this directory was a bookkeeping split, not a second proposal",
+    the merge happened 2026-08-14, and it names the canonical home. Flagging it
+    as "invisible to the scheduler" is a false positive that costs the next agent
+    a re-investigation of a closed question (it cost MAIN one this session).
+    """
+    try:
+        entries = os.listdir(d)
+    except OSError:
+        return False
+    mds = [f for f in entries if f.endswith(".md")]
+    others = [f for f in entries
+              if not f.endswith(".md") and not f.startswith(".")]
+    if len(mds) != 1 or others:
+        return False
+    try:
+        with open(os.path.join(d, mds[0]), encoding="utf-8") as f:
+            head = "".join(f.readline() for _ in range(3)).upper()
+    except OSError:
+        return False
+    return "MOVED" in head or "MERGED" in head
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--json", action="store_true")
@@ -796,13 +827,23 @@ def main():
     recs = [read_one(p) for p in paths]
 
     # A proposal directory with NO STATUS.json is invisible to the scheduler,
-    # which is its own failure mode -- report it.
+    # which is its own failure mode -- report it. EXCEPT a MOVED/merged pointer
+    # stub: `B04-eval-fragility/` holds one README.md whose first line is
+    # "# MOVED -- this directory was a bookkeeping split, not a second proposal"
+    # and which names its canonical home. That is a resolved tombstone, and
+    # flagging it as a gap sends the next agent to re-solve a 2026-08-14 merge.
+    # Recognised by CONTENT, not by name, so a real gap can never hide behind an
+    # empty directory: the stub must be the ONLY .md, carry no STATUS.json, and
+    # say MOVED/MERGED near the top.
     for d in sorted(glob.glob(os.path.join(ROOT, "active", "*")) +
                     glob.glob(os.path.join(ROOT, "backlog", "*"))):
-        if os.path.isdir(d) and not os.path.exists(os.path.join(d, "STATUS.json")):
-            recs.append({"id": os.path.basename(d), "path": d,
-                         "lifecycle": "NO_STATUS_JSON", "problems":
-                         ["no STATUS.json -> invisible to the scheduler"]})
+        if not os.path.isdir(d) or os.path.exists(os.path.join(d, "STATUS.json")):
+            continue
+        if _is_moved_stub(d):
+            continue
+        recs.append({"id": os.path.basename(d), "path": d,
+                     "lifecycle": "NO_STATUS_JSON", "problems":
+                     ["no STATUS.json -> invisible to the scheduler"]})
 
     # needs_prior_gate sorts BELOW ready_cpu: schema sec 1.1 already folds the
     # 0-GPU prior gates into ready_cpu, so what is left here genuinely cannot be
