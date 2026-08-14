@@ -2173,6 +2173,11 @@
     "updated": "2026-08-13"
   },
   "blockers_discharged_20260813": {
+    "discharges": [
+      "blocked_by.still_blocking_before_any_gate_gpu[0]",
+      "blocked_by.still_blocking_before_any_gate_gpu[1]"
+    ],
+    "discharges_convention_20260815": "Machine-readable form of this record's OWN first sentence ('Discharges blocked_by.still_blocking_before_any_gate_gpu items [0] and [1]'), which until 2026-08-15 was prose only: ready_queue.py read the 3-item list for CONTENT and reported ALL THREE as live, so the verdict (A04 may not take a card) was right while the stated reason overstated it by two, and the next agent would have been sent to redo the PROPOSAL.md narrowing and a sampler fix that landed 2026-08-09 as ce5c298. Convention is LIFECYCLE_SCHEMA.md 2.1: discharge is by POINTER at the exact dotted path this tool prints -- never by writing a shorter blocked_by_v2, because omission would then discharge item [2] ('USER APPROVAL for GPU. The full gate is 1,077-4,309 GPU-h') silently and unauditably. Item [2] is deliberately NOT listed here and REMAINS LIVE; A04 stays needs_prior_gate. The three original strings are BYTE-IDENTICAL (LIFECYCLE_SCHEMA.md 0). Evidence for [1] re-verified on disk 2026-08-15, 0 GPU: scripts/train_olmo2_arch_probe2.py line 869 reads `sampler = DistributedSampler(ds, shuffle=True, seed=args.seed)` under a 6-line load-bearing comment -- the pre-fix line number 863 quoted by the blocker no longer exists. Evidence for [0] is item_0_PROPOSAL_rewrite.state = 'DONE 2026-08-13, 0 GPU' in this same record.",
     "what": "ADDITIVE, ZERO GPU. Discharges blocked_by.still_blocking_before_any_gate_gpu items [0] and [1] and next_gate items [1] and [2]. Those four entries are LEFT BYTE-IDENTICAL (retraction history must not be silently rewritten); this key is the disposition record that must be read with them.",
     "item_0_PROPOSAL_rewrite": {
       "state": "DONE 2026-08-13, 0 GPU.",

@@ -76,6 +76,37 @@ Both were *under*-reads, and they were only harmless as a pair:
    closure ("CLEARED 2026-08-09 … NO LONGER BLOCKING.") do not count, or the
    reader would hold proposals out citing gates that already passed.
 
+Three more, all the same shape (fixed 2026-08-15, later the same day)
+--------------------------------------------------------------------
+Each is "the answer was on disk and this reader's key list did not reach it",
+and each is a direct consequence of append-only (LIFECYCLE_SCHEMA.md sec 0):
+a record that must CHANGE can only be corrected by appending a SIBLING key, so
+a reader that resolves the OLDEST spelling first is pinned to the WORST version.
+
+3. **`KILL_KEYS` had no dated-priority slot** although `NEXT_GATE_KEYS[0]` did.
+   B07 wrote a four-clause pre-registered gate as `kill_gate_executable_20260814`
+   and could not overwrite the earlier honest `"NO_KILL_GATE_DEFINED"`, so the
+   reader kept reporting B07 as gate-less. **B07's own `_precedence_warning`
+   predicted this exact bug**, named the one-line fix, and it sat unapplied.
+   Fix: dated keys first, newest first, EXPLICIT (see KILL_KEYS).
+
+4. **A discharged blocker could not be expressed.** Same cause: A04's items
+   [0]/[1] were closed on 2026-08-13 in the sibling key
+   `blockers_discharged_20260813`, but the original strings may not be edited, so
+   the reader reported 3 live blockers where 1 was live — right verdict (A04 may
+   not take a card), reason overstated by two, and the next agent would be sent
+   to redo a PROPOSAL.md narrowing and a sampler fix that landed as `ce5c298`
+   four days before it was requested. Fix: `discharges` POINTERS at exact dotted
+   paths (LIFECYCLE_SCHEMA.md sec 2.1), fail-closed by omission.
+
+5. **A DECLARED lifecycle could delete a disk-fact warning.** The missing
+   RELATED_WORK.md problem was raised only on the inference path, which the
+   early return for a declared lifecycle skips — so adding `"lifecycle":
+   "ready_cpu"` to a STATUS.json silently removed a standing promotion blocker
+   from the report (measured on B02/B04/B07/B11, all four genuinely lacking the
+   file). Paperwork must not be able to retire an unmet requirement by changing
+   one field. Fix: raise it where the file is stat()ed.
+
 Usage:
   python proposal/ready_queue.py                 # human table
   python proposal/ready_queue.py --json          # machine-readable
@@ -105,7 +136,36 @@ NEXT_GATE_WEAK = [                     # present but explicitly NOT adopted
     "next_gate_candidate_not_yet_adopted",
     "next_gate_blocked_by_portfolio_shape",
 ]
-KILL_KEYS = ["kill_gate", "kill_gates", "kill_criteria", "kill_gate_verbatim",
+KILL_KEYS = [
+             # ---- dated-priority slots: NEWEST FIRST, exactly mirroring
+             # NEXT_GATE_KEYS[0]="next_gate_executable_20260814". The asymmetry
+             # (next_gate had a dated slot, kill_gate did not) was PREDICTED by
+             # the very file it broke: B07's
+             # kill_gate_executable_20260814._precedence_warning says
+             #   "KILL_KEYS ... has NO dated-priority slot (unlike
+             #    NEXT_GATE_KEYS[0]=...). STATUS.json is append-only per
+             #    LIFECYCLE_SCHEMA.md section 0, so the older honest
+             #    'NO_KILL_GATE_DEFINED' string above CANNOT be overwritten --
+             #    therefore this key will NOT be picked up until KILL_KEYS gains
+             #    a matching entry."
+             # That is the whole mechanism: append-only means a later, BETTER
+             # gate can only be added ALONGSIDE the earlier honest sentinel, so
+             # a reader that resolves `kill_gate` first is permanently pinned to
+             # the worst version of the record. B07 wrote a four-clause
+             # pre-registered gate (K1 123.2 ms retention / K2 deployability
+             # floor / K3 tiering headroom / K4 edit leg) on 2026-08-14 and the
+             # reader kept reporting NO_KILL_GATE_DEFINED.
+             #
+             # MAINTENANCE RULE: a new dated key goes ABOVE the existing ones,
+             # and is added EXPLICITLY. Do NOT replace this list with a
+             # glob/regex over `kill_gate_*` -- same reason `_first_nested` is an
+             # allow-list and not a recursive walk: `kill_gate_verdict` (B02) is
+             # an OUTCOME, `updated_20260814_kill_gate_pass` (B05) is a
+             # changelog line, and `original_kill_reassessment` (B10) is prose.
+             # A pattern match would promote all three to gate-hood, which is
+             # the paperwork-counts-as-readiness bug this file exists to stop.
+             "kill_gate_executable_20260814",
+             "kill_gate", "kill_gates", "kill_criteria", "kill_gate_verbatim",
              # A04 spells it `kill_condition_verbatim` and files it one level
              # down under `gate_design`. Measured 2026-08-15: the reader
              # therefore printed "no kill_gate field" for the ONE proposal in
@@ -165,9 +225,55 @@ BLOCKER_DISCHARGED = ("no longer blocking", "no longer blocks", "not blocking",
 BLOCKER_NOT_DISCHARGED = ("not cleared", "uncleared", "not yet cleared",
                           "not resolved", "unresolved", "not discharged",
                           "still blocking", "still outstanding")
+# ---- cross-reference discharge (LIFECYCLE_SCHEMA.md sec 2.1) -----------------
+# The text-based `_is_discharged` above can only close a blocker whose OWN string
+# says it is closed. Under append-only (schema sec 0) that is often impossible:
+# A04's `blocked_by.still_blocking_before_any_gate_gpu` is a 3-item list whose
+# items [0] and [1] were discharged on 2026-08-13 -- item [1] because the
+# sampler fix it demands had ALREADY landed four days earlier (ce5c298;
+# verified on disk 2026-08-15 at scripts/train_olmo2_arch_probe2.py:869 =
+# `DistributedSampler(ds, shuffle=True, seed=args.seed)`) -- and the closure is
+# recorded in a SIBLING key, `blockers_discharged_20260813`, because the
+# original strings may not be edited. A reader that only looks inside each
+# blocker string therefore reports 3 live blockers when 1 is live: the verdict
+# (A04 may not take a card) is right, the stated reason overstates by two, and
+# the next agent is sent to redo work already done.
+#
+# So a discharge may be declared by POINTER: any record may carry
+#   "discharges": ["blocked_by.still_blocking_before_any_gate_gpu[0]", ...]
+# listing EXACT dotted blocker paths -- the same paths this file prints.
+#
+# Properties that make this safe, and why it is a pointer rather than a
+# `blocked_by_v2` restatement:
+#   * FAIL-CLOSED BY OMISSION. Only a path explicitly named is discharged. A
+#     `blocked_by_v2` list would discharge by SILENCE, so a shorter v2 could
+#     retire "USER APPROVAL for GPU. The full gate is 1,077-4,309 GPU-h" by
+#     simply not mentioning it -- an unauditable amnesty. Precedence-by-recency
+#     is safe for GATES (a newer gate still has to pass _is_unspec) and unsafe
+#     for BLOCKERS, where newer-and-shorter means fewer constraints.
+#   * SAME NAMESPACE AS THE REPORT, so it is self-checking: you discharge a
+#     blocker by copying the path this tool printed, and a typo matches nothing
+#     and is reported as dangling instead of silently closing the wrong clause.
+#   * CO-LOCATED WITH EVIDENCE. The pointer lives inside the record that
+#     documents the discharge, so following it lands on the md5/commit/verbatim
+#     proof rather than on a bare assertion in a second list.
+DISCHARGE_POINTER_KEY = "discharges"
 
 UNSPEC = ("NOT_SPECIFIED", "UNKNOWN", "NO_KILL_GATE_DEFINED",
           "NO_KILL_GATE_BY_DESIGN")
+
+# Why a DECLARED lifecycle needs its own spelling list. Censused 2026-08-15:
+# B02/B04/B05/B11 spell the justification `lifecycle_reason`, but B03 and B07
+# use `lifecycle_why_20260815` / `lifecycle_why_20260814` -- so the reader
+# printed "DECLARED lifecycle=ready_cpu (authoritative; no reason field)" for
+# B07 while a 400-word justification sat in the file naming BOTH of its 0-GPU
+# blockers. Same class of defect as the missing dated kill-gate slot: the
+# information was on disk and the reader's key list did not reach it, and the
+# visible symptom was a proposal that looked emptier than it is. Explicit list,
+# newest-dated first, for the reason given at KILL_KEYS.
+LIFECYCLE_REASON_KEYS = ["lifecycle_reason",
+                         "lifecycle_why_20260815", "lifecycle_why_20260814",
+                         "lifecycle_why"]
 
 
 def _txt(v, n=400):
@@ -217,6 +323,73 @@ def _is_discharged(v):
     return any(p in s for p in BLOCKER_DISCHARGED)
 
 
+def _discharge_pointers(d):
+    """Collect every explicitly-pointed-at blocker path in the document.
+
+    Searched at the top level and ONE level down -- the same depth discipline as
+    `_first_nested`, and for the same reason: the discharge record is a sibling
+    key of the blocker (A04's `blockers_discharged_20260813`), never buried
+    arbitrarily deep, and a recursive walk would start honouring the word
+    "discharges" wherever prose happens to use it.
+
+    Returns (set_of_paths, list_of_(container, path)) so the report can name WHO
+    discharged WHAT, and so a pointer matching no blocker can be flagged as
+    dangling rather than disappearing.
+    """
+    paths, claims = set(), []
+
+    def _take(container, v):
+        if isinstance(v, str):
+            v = [v]
+        if not isinstance(v, list):
+            return
+        for item in v:
+            if isinstance(item, str) and item.strip():
+                paths.add(item.strip())
+                claims.append((container, item.strip()))
+
+    if DISCHARGE_POINTER_KEY in d:
+        _take(DISCHARGE_POINTER_KEY, d[DISCHARGE_POINTER_KEY])
+    for k, v in d.items():
+        if isinstance(v, dict) and DISCHARGE_POINTER_KEY in v:
+            _take(k, v[DISCHARGE_POINTER_KEY])
+    return paths, claims
+
+
+def _walk_blockers(d):
+    """Yield (dotted_path, raw_value) for every blocker clause in the document.
+
+    ONE traversal with TWO consumers, deliberately: `_live_blockers` filters it
+    by discharge state, and the dangling-pointer check needs the SAME namespace
+    unfiltered. Deriving the pointer target namespace from a second, separate
+    walk is how a pointer ends up "dangling" against a path that does exist.
+
+    Container paths (`blocked_by.still_blocking_before_any_gate_gpu`) are yielded
+    alongside their indexed clauses, so a pointer may discharge either one item
+    or the whole list.
+    """
+    for k in BLOCK_KEYS:
+        if k not in d:
+            continue
+        v = d[k]
+        if isinstance(v, dict):
+            for sk, sv in v.items():
+                if isinstance(sv, list):
+                    yield f"{k}.{sk}", sv          # the container itself
+                    for i, item in enumerate(sv):
+                        yield f"{k}.{sk}[{i}]", item
+                elif isinstance(sv, str) and sv.strip():
+                    yield f"{k}.{sk}", sv
+                elif isinstance(sv, dict) and sv:
+                    yield f"{k}.{sk}", sv
+        elif isinstance(v, list):
+            yield k, v
+            for i, sv in enumerate(v):
+                yield f"{k}[{i}]", sv
+        elif isinstance(v, str) and v.strip():
+            yield k, v
+
+
 def _live_blockers(d):
     """Enumerate blockers that are still blocking, with a citable path each.
 
@@ -229,35 +402,32 @@ def _live_blockers(d):
     moment its (already-written) kill gate became visible. Making the gate
     visible without making the blocker binding converts one reporting bug into
     a four-thousand-GPU-hour dispatch.
+
+    Two independent ways a blocker can be closed:
+      1. its own text says so (`_is_discharged`);
+      2. some record in the same document POINTS at its exact dotted path
+         (`_discharge_pointers`) -- required because append-only forbids editing
+         (1) into the original string.
+    Discharge by omission is deliberately NOT a third way: see
+    DISCHARGE_POINTER_KEY's comment.
     """
+    discharged_paths, _ = _discharge_pointers(d)
     out = []
-    for k in BLOCK_KEYS:
-        if k not in d:
+    for path, value in _walk_blockers(d):
+        if isinstance(value, list):
+            # The container line is a grouping handle for pointers, not a
+            # blocker in its own right -- its clauses are enumerated separately
+            # and reporting both would double-count every A04 clause.
             continue
-        v = d[k]
-        if isinstance(v, dict):
-            for sk, sv in v.items():
-                if _is_discharged(sv):
-                    continue
-                if isinstance(sv, list):
-                    # Enumerate each clause separately rather than collapsing to
-                    # "[+2 more]": A04's third clause is "USER APPROVAL for GPU.
-                    # The full gate is 1,077-4,309 GPU-h" -- the single most
-                    # important line in the record, and the one a truncated
-                    # summary would hide.
-                    for i, item in enumerate(sv):
-                        if not _is_discharged(item):
-                            out.append((f"{k}.{sk}[{i}]", _txt(item, 200)))
-                elif isinstance(sv, str) and sv.strip():
-                    out.append((f"{k}.{sk}", _txt(sv, 200)))
-                elif isinstance(sv, dict) and sv:
-                    out.append((f"{k}.{sk}", _txt(sv, 200)))
-        elif isinstance(v, list):
-            for i, sv in enumerate(v):
-                if not _is_discharged(sv):
-                    out.append((f"{k}[{i}]", _txt(sv, 200)))
-        elif isinstance(v, str) and v.strip() and not _is_discharged(v):
-            out.append((k, _txt(v, 200)))
+        if path in discharged_paths:
+            continue
+        # A pointer at the CONTAINER discharges all of its clauses at once, so a
+        # wholesale closure need not enumerate every index.
+        if path.endswith("]") and path.rsplit("[", 1)[0] in discharged_paths:
+            continue
+        if _is_discharged(value):
+            continue
+        out.append((path, _txt(value, 200)))
     return out
 
 
@@ -333,6 +503,16 @@ def read_one(path):
                 break
     rel = os.path.join(os.path.dirname(path), "RELATED_WORK.md")
     rec["related_work_md"] = os.path.exists(rel)
+    if not rec["related_work_md"]:
+        # Raised HERE, not down in the inference block, because it is a fact
+        # about the DISK and is true regardless of lifecycle. Measured
+        # 2026-08-15: it used to be raised only on the inference path, so the
+        # early return for a DECLARED lifecycle skipped it -- meaning the act of
+        # declaring `"lifecycle": "ready_cpu"` in B03's STATUS.json DELETED a
+        # standing promotion blocker from the report. Paperwork must never be
+        # able to retire an unmet requirement by changing one field.
+        rec["problems"].append(
+            "RELATED_WORK.md absent (blocks PROMOTION; 0-GPU task)")
 
     ck2, cost = _first(d, ["gpu_cost_estimate", "cost", "cost_to_first_result"])
     if isinstance(cost, dict):
@@ -351,6 +531,20 @@ def read_one(path):
     # LIVE. This list is load-bearing for lifecycle inference below.
     live = _live_blockers(d)
     rec["live_blockers"] = [{"path": p, "text": t} for p, t in live]
+    # A discharge pointer that matches no blocker path is a silent no-op, and
+    # that is the worst outcome for an audit trail: it READS as though the
+    # blocker was closed. So check every pointer against the SAME namespace
+    # `_live_blockers` walks (unfiltered) and report the ones that hit nothing.
+    # Reported, never fatal: a stale pointer to a blocker that has since been
+    # removed is untidy, not unsafe.
+    all_paths = {p for p, _ in _walk_blockers(d)}
+    ptrs, claims = _discharge_pointers(d)
+    rec["discharged_blockers"] = sorted(ptrs)
+    for container, p in claims:
+        if p not in all_paths:
+            rec["problems"].append(
+                f"discharge pointer [{container}.{DISCHARGE_POINTER_KEY}] "
+                f"-> {p!r} matches no blocker path (dangling; no effect)")
 
     st = str(d.get("status", "")).lower()
     promoted = ("promoted" in st) or ("promoted_to" in d)
@@ -371,6 +565,8 @@ def read_one(path):
     explicit = d.get("lifecycle")
     VALID_LC = ("ready_gpu", "ready_cpu", "needs_prior_gate", "running",
                 "promoted", "dead")
+    _, _lc_why = _first(d, LIFECYCLE_REASON_KEYS)
+    _lc_why = _lc_why if _lc_why else "no reason field"
     if isinstance(explicit, str) and explicit in VALID_LC:
         rec["lifecycle_declared"] = explicit
         if explicit in ("dead", "promoted", "running"):
@@ -379,7 +575,7 @@ def read_one(path):
             rec["lifecycle"] = explicit
             rec["lifecycle_reason"] = (
                 f"DECLARED lifecycle={explicit} in STATUS.json (authoritative; "
-                + _txt(d.get("lifecycle_reason", "no reason field"), 200) + ")")
+                + _txt(_lc_why, 200) + ")")
             if explicit == "running" and not d.get("running_on"):
                 rec["problems"].append(
                     "lifecycle=running without running_on (schema sec 1)")
@@ -400,7 +596,7 @@ def read_one(path):
             rec["lifecycle"] = "ready_cpu"
             rec["lifecycle_reason"] = (
                 "DECLARED lifecycle=ready_cpu in STATUS.json (authoritative; "
-                + _txt(d.get("lifecycle_reason", "no reason field"), 260) + ")")
+                + _txt(_lc_why, 260) + ")")
             rec["needs_arch"] = d.get("needs_arch", "UNRECORDED")
             return rec
         # A declared ready_gpu is NOT taken on faith: it still has to pass the
@@ -420,9 +616,6 @@ def read_one(path):
     # first version of this file report 13/13 as CPU-only, which is as useless
     # to a scheduler as reporting all of them ready.
     rw_ok = rec["novelty_checked"]
-    if not rec["related_work_md"]:
-        rec["problems"].append(
-            "RELATED_WORK.md absent (blocks PROMOTION; 0-GPU task)")
     if promoted:
         lc, why = "promoted", "status/promoted_to says promoted"
     elif dead:
@@ -483,7 +676,7 @@ def read_one(path):
                    "inferred ready_gpu; prior_gate_needs_gpu=" + repr(pgg) +
                    (" -> schema sec 1.1 folds a 0-GPU prior gate into ready_cpu"
                     if pgg is False else "") + "): " +
-                   _txt(d.get("prior_gate", d.get("lifecycle_reason", "-")), 260))
+                   _txt(d.get("prior_gate", _lc_why), 260))
     rec["lifecycle"] = lc
     rec["lifecycle_reason"] = why
 

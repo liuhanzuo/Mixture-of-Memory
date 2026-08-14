@@ -70,6 +70,67 @@
 
 **没有消费者的字段不许存在。** 否则它就是下一个 `backlog_confirmed_seed`——存在但没人读，等于不存在。
 
+### 2.0 gate 的**带日期优先槽**（append-only 的必然产物）
+
+§0 不许改字符串，所以「后来写出了更好的 gate」只能**追加**一个新键，旧的诚实占位符（`NOT_SPECIFIED` / `NO_KILL_GATE_DEFINED`）必须原地留着。于是 reader 必须知道**新的赢**：
+
+```
+next_gate_executable_20260814  >  next_gate  >  next_gate_gpu
+kill_gate_executable_20260814  >  kill_gate  >  kill_gates > kill_criteria > kill_gate_verbatim
+```
+
+**实测事故（B07，2026-08-15）**：`kill_gate_executable_20260814` 里写着四条已预注册的 kill 条件（K1 retention 123.2 ms / K2 deployability floor / K3 tiering headroom / K4 edit leg），但 `KILL_KEYS` 当时**只有 next_gate 侧有带日期槽**，kill 侧没有 → reader 一直解析到旧的 `"NO_KILL_GATE_DEFINED"`，B07 被永久报成「没有 kill gate」。**这个 bug 是 B07 自己在 `_precedence_warning` 里预言的**，写下来六天没人加那一行。
+
+规则：
+- 新的带日期键**加在列表最前面**（更新的在前），并且**显式列举**。
+- **不许**改成 `kill_gate_*` 这类通配/正则扫描 —— 理由同 `_first_nested` 不做递归：`kill_gate_verdict`（B02，是**结果**）、`updated_20260814_kill_gate_pass`（B05，是 changelog）、`original_kill_reassessment`（B10，是散文）都会被通配抓成 gate，这正是「刷文书=可派」那个失效模式。
+
+---
+
+## 2.1 解除一条 blocker：只能用**指针**，不许用「新版列表」
+
+**2026-08-15 立为约定**（不是某个 agent 临时发明的写法；`proposal/ready_queue.py:_discharge_pointers` 已实现它）。
+
+§0 是 append-only，所以**一条 blocker 一旦写下就不能改、不能删**。于是产生一个必然的矛盾：blocker 解除了，但记着它的那个字符串必须保持字节不变。
+
+**实测事故（A04，2026-08-15）**：`blocked_by.still_blocking_before_any_gate_gpu` 有 3 条，其中 [0]（PROPOSAL.md 窄化）和 [1]（sampler `seed=`）**早已解除** —— [1] 甚至在被要求之前四天就已修好（commit `ce5c298`；2026-08-15 实测 `scripts/train_olmo2_arch_probe2.py:869` = `DistributedSampler(ds, shuffle=True, seed=args.seed)`）。解除记录写在**兄弟键** `blockers_discharged_20260813` 里，因为原字符串不许改。结果 `ready_queue.py` 如实报「3 条 live blocker」：**结论对（A04 不得拿卡），理由夸大两条**，并且会把下一个 agent 派去重做已经做完的事。
+
+### 约定
+
+任何记录（顶层键，或顶层键下一层的 dict）都可以带一个 `discharges` 数组，里面是**精确的 dotted blocker path** —— 就是 `ready_queue.py` 打印出来的那个路径：
+
+```json
+"blockers_discharged_20260813": {
+  "what": "ADDITIVE, ZERO GPU. ...",
+  "discharges": [
+    "blocked_by.still_blocking_before_any_gate_gpu[0]",
+    "blocked_by.still_blocking_before_any_gate_gpu[1]"
+  ]
+}
+```
+
+指向容器路径（不带 `[i]`）= 一次解除该 list 的全部条目。
+
+### 为什么是「指针」而不是 `blocked_by_v2`
+
+这是本约定唯一需要论证的地方，两种方案都想过：
+
+| | `discharges` 指针（**采纳**） | `blocked_by_v2` 重述 |
+|---|---|---|
+| 漏写一条的后果 | **fail-closed**：没被点到的条目**仍然 live** | **fail-open**：没被重述的条目**静默消失** |
+| A04 的具体风险 | 无 | 一个更短的 v2 可以靠「不提」就退掉 **"USER APPROVAL for GPU. The full gate is 1,077-4,309 GPU-h"** —— 无人可审计的特赦 |
+| 打错字 | 匹配不到任何 blocker → 报 `dangling; no effect` | 无从检测 |
+| 证据位置 | 指针**与证据同处一个记录**（md5 / commit / verbatim），跟着指针就落到证明上 | v2 是第二份列表里的裸断言 |
+
+关键的不对称：**「越新越优先」对 gate 安全，对 blocker 不安全。** 新 gate 仍要过 `_is_unspec` 检查；而新 blocker 列表「更短」直接意味着「约束更少」。所以 §2 里 `next_gate` / `kill_gate` 用带日期的优先槽（`next_gate_executable_20260814` / `kill_gate_executable_20260814`），blocker **不用**。
+
+### 铁律
+
+- **只加不改**：原 blocker 字符串保持字节不变，`discharges` 是**追加**的兄弟键。
+- **必须逐条点名**。不许写 `"discharges": ["all"]` 或靠省略。
+- 指针必须**附带证据**（commit hash / 实测行号 + md5 / verbatim 引用）。`"state": "DONE"` 单独一句不够 —— A04 的 [1] 正是因为有 `ce5c298` + 行号 + md5 才可核。
+- 解除**不改 lifecycle**：A04 解掉 [0]/[1] 后仍是 `needs_prior_gate`，因为 [2]（GPU 审批）真的还没解除。**指针机制只让理由变准，不让门变松。**
+
 ---
 
 ## 3. admissibility 必须由机器判定，不靠人记

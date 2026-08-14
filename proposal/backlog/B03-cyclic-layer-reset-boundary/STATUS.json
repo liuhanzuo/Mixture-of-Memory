@@ -2,5 +2,37 @@
   "id": "B03",
   "status": "hold_gate_only",
   "updated": "2026-08-08",
-  "priority": "low"
+  "priority": "low",
+  "lifecycle": "ready_cpu",
+  "lifecycle_why_20260815": "Both remaining blockers are 0 GPU, so LIFECYCLE_SCHEMA.md 1.1 puts this in ready_cpu rather than parking it: (1) the read-out/decision rule for the 1B core gate does not exist (see next_gate), (2) novelty is unadjudicated and RELATED_WORK.md is absent. NOT claiming ready_gpu, and next_gate is deliberately left at the NOT_SPECIFIED sentinel so that clearing (2) alone cannot make this inferable as ready_gpu. Before this append the file had FOUR keys (id/status/updated/priority) and was therefore invisible to proposal/ready_queue.py as anything but a pile of missing fields, despite carrying a PROPOSAL.md with a stated experiment design and closure conditions.",
+  "_provenance_20260815": "ADDITIVE, 0 GPU, no ssh, no node touched. Every field below is either EXTRACTED VERBATIM from proposal/backlog/B03-cyclic-layer-reset-boundary/PROPOSAL.md (section named per field) or an explicit honest sentinel. NO threshold, n, effect size, alpha, GPU-h or comparator was invented on this proposal's behalf: PROPOSAL.md contains none, and manufacturing one is the 'paperwork makes a dead direction look dispatchable' failure that proposal/ready_queue.py's header exists to block. The four pre-existing keys are byte-identical.",
+  "next_gate": "NOT_SPECIFIED -- PROPOSAL.md section '1B 核心 gate' specifies a 2x3 DESIGN (see next_gate_design_extracted_from_PROPOSAL_20260815) but no decision rule: no n, no statistic, no alpha, no effect-size threshold, no null floor magnitude, and no comparator to beat. Its survival clauses say '显著 reset x data-regime interaction' and 'PPL 与知识恢复曲线显著分离' -- they name a statistic FAMILY (an interaction, a curve separation) without saying at what n or against what threshold, so no outcome of the 2x3 run would decide the question as written. Writing that read-out is the blocking prerequisite and it is 0 GPU (README: '新方向先写 PROPOSAL.md 和 kill gate, 再启动 GPU').",
+  "next_gate_design_extracted_from_PROPOSAL_20260815": {
+    "_source": "PROPOSAL.md section '1B 核心 gate' (lines 25-38). EXTRACTED, NOT ADOPTED as a gate -- a design is not a gate. Recorded here so the design is in the scheduler's view instead of only in prose (LIFECYCLE_SCHEMA.md 0: B06 vanished because its STATUS.json held three words while PROPOSAL.md held the result).",
+    "factorial": "2 x 3. Axis 1 = data regime {single-pass, repeated-data}. Axis 2 = reset count N in {0, 1, 3}. Scale: 1B.",
+    "shared_conditions_verbatim": [
+      "明确标注为 LLF operator",
+      "matched token presentations",
+      "matched LR/final architecture",
+      "reset layers 的 optimizer moments 同时重置",
+      "PPL + MMLU-content + closed-book QA + null floors"
+    ],
+    "what_is_missing_before_this_is_executable": [
+      "n / sample count per cell and the null-floor construction (PROPOSAL.md says 'null floors' but not how they are built or how wide they are)",
+      "the statistic for '显著 interaction' and its alpha / multiple-comparison handling across 6 cells x 4 metric families",
+      "the threshold separating clause 1 (interaction) from the stated closure '普通统一退化' -- as written both are compatible with the same numbers",
+      "a GPU-h estimate: no 1B reset run exists in this repo to extrapolate a rate from"
+    ]
+  },
+  "kill_gate": "EXTRACTED VERBATIM from PROPOSAL.md section '关闭条件' (lines 49-53), which is a genuine closure section, so LIFECYCLE_SCHEMA.md 2's rule '有就照搬' applies rather than the NO_KILL_GATE_DEFINED sentinel. Three clauses, ANY of which closes the direction: (1) 'N=0/1/3 只是单调统一退化' -- if the three reset counts produce only a monotone uniform degradation; (2) 'single-pass/repeated-data 无交互' -- if the two data regimes do not interact with reset count; (3) '两轴不分离' -- if the PPL axis and the knowledge axis do not separate. PROPOSAL.md section '存活条件' adds the positive mirror ('至少满足一项': a significant reset x data-regime interaction, OR a PPL-vs-knowledge-recovery separation that widens with N or damage onset) and states that '普通统一退化或普通 null 不足以独立成篇'. CAVEAT, NOT A PATCH: all three clauses are QUALITATIVE -- no threshold, no n, no alpha. They state the right directions and are NOT yet decidable; quantifying them is part of the same 0-GPU read-out work that next_gate is waiting on. That gap is recorded rather than filled, because a number invented here would be indistinguishable from a pre-registered one to every later reader.",
+  "kill_gate_scope_note_20260815": "PROPOSAL.md section '不是新方法' is a standing SCOPE constraint, not a kill clause, but it binds any future write-up: top-K block reset is the LLF / layerwise-reinitialisation family, and the claims 'cyclic prune-regrow 新方法', 'depth cycling' and '新 plasticity 机制' are explicitly forbidden. The surviving scientific question (PROPOSAL.md '存活的科学问题') is narrow: does forget-and-relearn, which works in small-data vision, still work in single-pass knowledge-dense decoder-only LM pretraining -- and if not, does the cost show up as recoverable PPL alongside persistent parametric knowledge loss that grows with reset count or data regime.",
+  "gpu_cost_estimate": {
+    "value": "UNKNOWN -- 需先做 1-cell 计时",
+    "why": "No layer-reset / LLF run exists in this repository at any scale, so there is no measured s/step to extrapolate from, and the 2x3 design's per-cell token budget is itself unspecified (PROPOSAL.md fixes 'matched token presentations' but no token count). Quoting a total here would be invention. The repo's own 1B anchor (A04 STATUS.json measured_anchors: median 2.02 s/step at 1B on 8xH20, world_size=8 bs=16 gaccum=1) is a CONTINUE-TRAIN rate for a different arch-probe trainer and is NOT a valid anchor for 6 from-scratch-regime cells with resets; it is cited only to show an anchor was looked for and rejected.",
+    "first_action": "Once the read-out is written, time ONE cell (e.g. N=0, single-pass) for a few hundred steps and multiply by 6."
+  },
+  "needs_arch": "NOT_SPECIFIED -- no run has been designed yet, so the architecture cannot be fixed before the read-out is. It must NOT default to 'any': LIFECYCLE_SCHEMA.md 3 requires same-arch reproduction, and a 6-cell factorial whose cells landed on a mix of sm_100 and sm_90 would confound the reset x data-regime interaction (the primary effect) with hardware drift.",
+  "novelty_checked": false,
+  "novelty_status_detail_20260815": "false. RELATED_WORK.md does NOT exist in this directory. What DOES exist is substantial and must be read before any new literature work is commissioned: literature/AUDIT0_venue_verification.md (31.9 KB), literature/KILLCHECK_forward_citations.md (21.1 KB), and three adversarial reviews -- literature/SKEPTIC1_vs_monotonic.md (36.3 KB), SKEPTIC2_vs_cyclic.md (45.3 KB), SKEPTIC3_vs_plasticity.md (42.2 KB), all dated 2026-08-06. The 0-GPU task is to ADJUDICATE those into a RELATED_WORK.md verdict, not to re-search. NOT read or summarised in this pass (this task was scoped to scheduler correctness, and summarising a 176 KB adversarial corpus from its filenames is how a fake verdict gets written).",
+  "hold_reason_20260815": "PROPOSAL.md section '状态' says verbatim 'HOLD / GATE-ONLY。最低优先级。' and the pre-existing keys say status=hold_gate_only, priority=low. This append does NOT change that ranking; it only makes the hold and its two 0-GPU prerequisites legible to proposal/ready_queue.py instead of presenting as four bare missing-field warnings."
 }
