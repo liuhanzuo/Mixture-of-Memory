@@ -2,6 +2,73 @@
 > 每次启动/kill GPU 任务更新。heartbeat 先读→对照 nvidia-smi→台账说跑但空=补卡。★29.162.226.120=dllm 绝不碰。
 > 2026-08-08 15:03 更新：用户指令「B200跑resume，H20跑新方向」→ Paper B resume 迁移到 .21/.73。
 
+## 🔄 2026-08-14 19:27 — 40/40 忙、节拍稳定；⚠️ **撤回我前三轮的「finalize 已武装、覆盖 7 任务」**
+
+| 节点 | 任务 | 实测 | 状态 |
+|---|---|---|---|
+| **LOCAL** | SparseForge **noslorb** | iter **7156/7500** (95.4%)、剩 344、**53.85 s/it**（200-iter）/ **53.59**（382-iter）、8×111-117 GB @100%、ETA **5.15 h** | ▶️ 健康 |
+| **`.212`** | SparseForge **slorb** | iter **6948/7500** (92.6%)、剩 552、**53.41 s/it**（200-iter）/ **53.66**（376-iter）、8×114-121 GB @100%、ETA **8.19 h** | ▶️ 健康 |
+| **`.73`** | Paper B **keep12** | step **166880/200000**、loss 2.3915、ppl 10.93、7.81 s/step、96.4 GB @100% | ▶️ 健康 |
+| **`.82`** | Paper B **keep8** | step **132160/200000**、loss 2.5429、ppl 12.72、5.78 s/step、78.5 GB @99-100% | ▶️ 健康 |
+| **`.104`** | paperC heal | step **32580/200000**（primary read-out 121000）、loss 2.7559、ppl 15.73、5.74 s/step、77.5 GB @99% | ▶️ 健康（勿动） |
+
+Monitor: **http200 OK**，`latest` 里 5 节点各 8 卡。5 份 log 全部 0 error。Action: **none**（纯测量）。
+
+### ✅ 18:57 引入的「可公度窗口」估计量本轮通过交叉验证
+
+同一时刻用两个不同长度的窗口量同一个 run，**只要两者都是 100 的整数倍**就应该一致。实测：
+
+| 臂 | 200-iter 窗口 | ~380-iter 窗口 | 差异 |
+|---|---|---|---|
+| noslorb | 53.85 | 53.59 | **0.5%** |
+| slorb | 53.41 | 53.66 | **0.5%** |
+
+对比 18:57 之前用 last-60 时，同一个 run 在相邻两轮之间能摆到 **47 ↔ 59（±11%）**。
+**估计量修好了，不是运气。** 两臂真实吞吐就是 ~53.5 s/it，**45-48 s/it 那个「单跑基线」是 eval 之间的
+瞬时速率，从来不是吞吐**——之前把它当基线，才会一看到 53 就以为「被抢卡拖慢」。
+
+### ❌ 撤回：`--finalize_lm_eval True` 是**死 flag**，in-run 覆盖 **0/9 而非 7/9**
+
+17:57 / 18:27 / 18:57 三轮我都写「收尾阶段已武装、覆盖 union-9 的 7 个任务」。**错了。**
+
+**源码判据**（`/apdcephfs_wzc1/share_304376610/pighzliu_code/main_llama.py`，非本仓库）：
+
+| 行 | 内容 | 后果 |
+|---|---|---|
+| `:2248` | `if finalization_done and args.finalize_lm_eval:` ← lm_eval 唯一入口 | **在 `while True:` 训练循环内部** |
+| `:3215` | `finalization_done = True` | 置位发生在循环**之后**的收尾段 |
+| `:3469` | `extra = int(args.final_finetune_iters)`；`extra<=0` 时 `else: break` | **直接跳出 `while True:`** → `:2248` 再也不会被执行 |
+
+运行中进程实证 `--final_finetune_iters 0` ⇒ 走的正是 `break` 那条。
+**经验判据**：`out_llama_tokenmatched_{noslorb,slorb}` 两个目录里 **lm_eval 文件数 = 0**；
+而那个 17000-iter 的旧 run（`final_finetune_iters=3000`，真的进过收尾微调）**有** `best_lm_eval.json`。
+
+**我错在哪**：我从**进程参数**读到 flag=True，然后**推断了行为**。
+**flag 被传进去 ≠ 那段代码会被走到。** 这与今天 paperC E1（「没有 python 有 pyarrow」= 真于所查、
+假于磁盘）和 18:57 的窗口伪影是**同一类**：把「我观察到的那一层」当成「我想知道的那一层」。
+`_run_sparseforge_tokenmatched_union9_watcher.sh` 的文件头**从 08-13 起就写着这条**，我只读了用法段。
+
+### ✅ 但真正的机制**是活的**，无需补任何东西（先核实，再判断）
+
+LOCAL 上两个 offline watcher 都在跑（`.212` 上正确地没有）：
+
+| PID | ARM | 状态 | 已存活 | 最近一次轮询 |
+|---|---|---|---|---|
+| **176642** | `noslorb` | `Ss` | ~5.2 h | 19:28:40 `remote training log advanced 29s ago (< 1800s); still running; waiting` |
+| **176751** | `slorb` | `Ss` | ~5.2 h | 同上 |
+
+- 轮询 **300 s**，staleness 触发阈 **1800 s**；训练一停就自动开始离线打分。
+- 覆盖 **全部 9 个任务**：`boolq,rte,hellaswag,race,piqa,winogrande,arc_easy,arc_challenge,openbookqa`
+  —— 即 in-run 缺的 BoolQ + RTE **本来就在 watcher 里**，从头到尾没有缺口。
+- 按臂分别处理 SLoRB：`slorb → --mask hard --slorb fold`、`noslorb → --mask hard --slorb drop`。
+- PPL 在 **2048 与 4096 两个长度**上各打一遍，seqlen 写进各自的 `ppl_metrics.json`。
+- **必须在 LOCAL 打分**，因为 LOCAL **就是 `.21`**，是唯一装了 pinned harness（transformers 4.57.6 /
+  git `b86c479`）的机器——所有归档 arm 的 `results_*.json` 都是这个版本打的，换机器数字不可比。
+
+⇒ **本轮不需要动作。** 我把它当缺口去查，结果发现机制已经正确且武装 ——
+**「先核实再判断」这次省掉了一次多余的手工 eval，也纠正了一条我自己传播了三轮的错误结论。**
+noslorb 约 **5.1 h** 后落地（≈ 08-15 00:35），watcher 会自动接手。
+
 ## 🔄 2026-08-14 18:57 — ✅ ckpt 保存已验证；⚠️ **撤回我自己前两轮的「变快了」结论**
 
 | 节点 | 任务 | 实测 | 状态 |
@@ -79,10 +146,16 @@ zwfy6 余量 **36 T**，无磁盘风险。
 **两个新臂无相互干扰**：keep12 实测 7.81 s/step vs 瞬时 7.81、keep8 实测 5.78 vs 瞬时 5.78 —— 完全一致，
 说明两个 H20 job 之间、以及与 `.104` 之间都没有争抢。
 
-**收尾阶段已验证（从运行中进程的参数读，不是从 log 正文猜）**：两个 SparseForge 臂都带
-`--finalize_lm_eval True` + 7 个任务（hellaswag,winogrande,arc_easy,arc_challenge,openbookqa,piqa,race）。
-pinned harness `venv_union9` 完好：**lm_eval 0.4.8 + transformers 4.57.6 + torch 2.13.0 + datasets 5.0.1**。
-⚠️ **已知缺口仍在**：in-run finalize 只覆盖 union-9 的 **7/9**，**BoolQ + RTE 需另跑**。
+~~**收尾阶段已验证（从运行中进程的参数读，不是从 log 正文猜）**：两个 SparseForge 臂都带~~
+~~`--finalize_lm_eval True` + 7 个任务（hellaswag,winogrande,arc_easy,arc_challenge,openbookqa,piqa,race）。~~
+~~⚠️ **已知缺口仍在**：in-run finalize 只覆盖 union-9 的 **7/9**，**BoolQ + RTE 需另跑**。~~
+
+> **❌ 划掉的三行是错的（2026-08-14 19:27 撤回，证据见本文件顶部 19:27 节）。**
+> `--finalize_lm_eval` 在 `--final_finetune_iters 0` 下是**死 flag**：in-run 覆盖 **0/9，不是 7/9**。
+> 我读了进程的 **flag**，然后推断了它的 **behaviour**——**flag 被传进去 ≠ 那段代码会被走到**。
+> 真正的机制是 LOCAL 上两个还活着的 offline watcher（19:27 节有 PID）。
+
+pinned harness `venv_union9` 完好：**lm_eval 0.4.8 + transformers 4.57.6 + torch 2.13.0 + datasets 5.0.1**（**这条仍成立**）。
 
 ## 🔄 2026-08-14 17:35 — **16 张空闲 H20 补上 Paper B resume**（40/40 卡全忙）
 
