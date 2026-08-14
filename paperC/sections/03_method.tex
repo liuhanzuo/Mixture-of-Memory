@@ -47,6 +47,24 @@ materiality bar rather than as an agreement score. We report $\Delta_{\mathrm{pe
 than $\kappa$ to keep it on the same percentage-point scale as the v1 floor, which is what
 makes the two nulls directly comparable.
 
+\paragraph{Option-count-aware chance correction is decades old; only the varying-$k$ stratification is ours.}
+Claim (i) above must be stated narrowly, because the \emph{idea} that a chance term should depend
+on how many options an item offers long predates this work. Bennett's $S$ sets
+$p_e=1/k$ for $k$ response categories \citep{bennett1954communications};
+\citet{brennan1981kappa} recommend exactly that free-marginal alternative wherever $\kappa$'s
+marginal dependence misleads; formula scoring corrects for guessing as an explicit function of the
+per-item option count \citep{frary1988formula}; and \citet{brenner1996weightedkappa} show that a
+weighted $\kappa$ drifts systematically with the number of categories --- the very pathology our
+stratification is designed to avoid. Pooling an agreement coefficient across heterogeneous item
+groups is likewise established \citep{devries2008pooledkappa}. We therefore claim \emph{none} of
+the following: correcting for the number of options, choosing $p_e$ as a methodological decision,
+or noticing that $\kappa$-family statistics depend on $k$. What we are not aware of in that
+literature is a null in which $k$ \emph{varies item to item} ($\texttt{n\_opt}\in\{3,\dots,10\}$,
+eight strata here), with the permutation confined within strata so that a letter illegal for an
+item can never be credited to it; the works above assume a single global $k$. That is a
+loophole-closing construction, not a new statistic, and its measured footprint on MMLU-Pro is the
+$36$ items quantified below.
+
 \paragraph{Constant-collapse identity.}
 For a pure always-$L$ emitter, $P(\hat{y}=L')=\delta_{L'L}$. Writing $m_{L'}$ for the relevant gold marginal,
 \begin{equation}
