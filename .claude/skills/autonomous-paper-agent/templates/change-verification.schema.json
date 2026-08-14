@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "change-verification.schema.json",
+  "title": "Paper Change Verification",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "issue_id",
+    "verdict",
+    "operational_issue",
+    "evidence_checked",
+    "locations_checked",
+    "reasoning_summary",
+    "regressions",
+    "remaining_action"
+  ],
+  "properties": {
+    "issue_id": {"type": "string"},
+    "verdict": {
+      "type": "string",
+      "enum": ["resolved", "partially_resolved", "not_resolved", "regression_introduced", "cannot_verify"]
+    },
+    "operational_issue": {"type": "string"},
+    "evidence_checked": {"type": "array", "items": {"type": "string"}},
+    "locations_checked": {"type": "array", "items": {"type": "string"}},
+    "reasoning_summary": {"type": "string"},
+    "regressions": {"type": "array", "items": {"type": "string"}},
+    "remaining_action": {"type": "string"}
+  }
+}

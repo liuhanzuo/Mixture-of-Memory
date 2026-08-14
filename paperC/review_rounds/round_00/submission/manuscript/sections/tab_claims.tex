@@ -1,0 +1,29 @@
+\begin{table*}[p]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3.5pt}
+\begin{tabular}{p{0.05\linewidth}p{0.37\linewidth}p{0.19\linewidth}p{0.31\linewidth}}
+\toprule
+\# & Claim previously considered & Current status & Manuscript-safe form \\
+\midrule
+1 & Letter behavior is a family-general step function or sharp phase transition. & Retracted & Report per-family descriptions only. \\
+2 & Damage turns the letter interface into a constant predictor. & Narrowed & Damage drives the letter score to or below its best-constant floor; modal share is separate. \\
+3 & Exact ties are the family-general causal mechanism. & Retracted & Precision changes ties and argmaxes but not accuracy; mechanisms are family-specific. \\
+4 & Letter MC is generally an unreliable instrument. & Retracted & Intact models can favor letter or content; calibrate each reported construct. \\
+5 & Accuracy-versus-normalized-accuracy length sensitivity is our finding. & Preempted & Attribute generic over-correction and tokenizer dependence to Oostermeijer; our result is floor inheritance. \\
+6 & Content is within $\pm3$ pp of letter on every damaged arm. & Re-scoped & False off MMLU; ARC-Easy reaches $+38.76$ pp. \\
+7 & Damaged letter scores are significantly below floor across small non-MMLU benchmarks. & Retracted & Only ARC-Easy \texttt{keep10} in OLMo-2; accompany other nulls with power. \\
+8 & \texttt{k14} is the last arm above floor in every family. & Retracted & Descriptive only for healed OLMo-2; other ladders are cliff-like and regime-confounded. \\
+9 & A pooled floor verdict can be read per benchmark. & Prohibited & Pool only per-item deviations and label the aggregate scope. \\
+10 & A content floor is a dataset property. & Narrowed & Token floors require dataset, convention, unit, and tokenizer; letter floors are dataset properties. \\
+11 & Larger BPE vocabularies create more option-length ties. & Retracted & Tokenizer dependence stands; the vocabulary-size mechanism is non-monotone. \\
+12 & Significant below-floor behavior is MMLU-specific. & Retracted and reinterpreted & MMLU-Pro has v1 below-floor cells, but v2 shows no negative item-level signal. \\
+13 & Damage universally drives letter to or below floor. & Narrowed & The honest MMLU-Pro count is 14/15; Qwen3 \texttt{k14} is a real but immaterial exception. \\
+14 & First-launch cross-family MMLU-Pro numbers are usable. & Retracted & Use only the 2048-token corrected launch and canonical v2 evidence. \\
+15 & Clearing the floor certifies validity. & Retracted & Clearing is necessary, not sufficient; failure disqualifies, success does not certify. \\
+16 & Deprecated numeric claims remain usable. & Prohibited & Do not resurrect 4.8$\times$, 0.2822, 58/91, MMLU 0.25, BoolQ 0.50, or 45.74 pp. \\
+\bottomrule
+\end{tabular}
+\caption{Flat current-status ledger. The 16 rows and their status are from \texttt{paperC/tcodex\_out/EVIDENCE\_PACK.md}, Section K.}
+\label{tab:claims}
+\end{table*}

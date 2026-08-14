@@ -1,0 +1,61 @@
+{
+  "schema_version": "1.0.0",
+  "paper_dir": "paperC",
+  "main_tex": "main.tex",
+  "engine": "latexmk",
+  "toolchain": {
+    "texlive_dir": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/.texlive/2026/bin/x86_64-linux",
+    "texlive_dir_exists": true,
+    "n_binaries": 142,
+    "tools": {
+      "pdflatex": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/.texlive/2026/bin/x86_64-linux/pdflatex",
+      "lualatex": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/.texlive/2026/bin/x86_64-linux/lualatex",
+      "xelatex": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/.texlive/2026/bin/x86_64-linux/xelatex",
+      "latexmk": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/.texlive/2026/bin/x86_64-linux/latexmk",
+      "bibtex": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/.texlive/2026/bin/x86_64-linux/bibtex",
+      "biber": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/.texlive/2026/bin/x86_64-linux/biber"
+    }
+  },
+  "static": {
+    "n_input_targets": 21,
+    "missing_input_targets": [],
+    "n_cite_keys": 11,
+    "unresolved_cite_keys": [],
+    "style_files_present": [
+      "fancyhdr.sty",
+      "iclr2026_conference.sty",
+      "natbib.sty"
+    ],
+    "bib_files_present": [
+      "refs.bib"
+    ]
+  },
+  "command": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/.texlive/2026/bin/x86_64-linux/latexmk -pdf -bibtex -norc -gg -interaction=nonstopmode main.tex",
+  "passes": [
+    {
+      "pass": 1,
+      "rc": 0
+    }
+  ],
+  "diagnostics": {
+    "undefined_references": [],
+    "n_undefined_references": 0,
+    "undefined_citations": [],
+    "n_undefined_citations": 0,
+    "n_overfull_hbox": 0,
+    "n_overfull_vbox": 0,
+    "n_underfull_hbox": 29,
+    "n_latex_errors": 0,
+    "first_errors": [],
+    "n_missing_file": 0
+  },
+  "compiled": true,
+  "pdf": "main.pdf",
+  "pdf_bytes": 293609,
+  "pdf_sha256": "de928e57ed36dd05b1c518d920d9b6d3f1c331fa0c94bc6e8766b91a19bbfd68",
+  "pdf_pages": 16,
+  "build_gate_pass": true,
+  "build_gate_blockers": [],
+  "pdf_visually_inspected": false,
+  "pdf_visual_inspection_note": "NOT DONE BY THIS SCRIPT. No pdftoppm/gs/mutool/PyMuPDF on this host (measured 2026-08-14), so page images cannot be rendered here. The skill's integrity gate item 'PDF visually inspected' therefore remains OPEN unless a human or a PDF-capable host confirms it."
+}

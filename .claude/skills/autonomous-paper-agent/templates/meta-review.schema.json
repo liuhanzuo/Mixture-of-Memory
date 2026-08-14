@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meta-review.schema.json",
+  "title": "Paper Meta-Review",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "round",
+    "snapshot_sha256",
+    "reviewer_count",
+    "consensus_strengths",
+    "consensus_weaknesses",
+    "material_disagreements",
+    "unsupported_reviewer_claims",
+    "meta_score",
+    "meta_recommendation",
+    "evidence_ceiling",
+    "prioritized_actions",
+    "must_resolve_before_accept",
+    "decision_rationale"
+  ],
+  "properties": {
+    "round": {"type": "integer", "minimum": 0},
+    "snapshot_sha256": {"type": "string", "minLength": 16},
+    "reviewer_count": {"type": "integer", "minimum": 1},
+    "consensus_strengths": {"type": "array", "items": {"type": "string"}},
+    "consensus_weaknesses": {"type": "array", "items": {"type": "string"}},
+    "material_disagreements": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["topic", "positions", "recommended_resolution"],
+        "properties": {
+          "topic": {"type": "string"},
+          "positions": {"type": "array", "items": {"type": "string"}},
+          "recommended_resolution": {"type": "string"},
+          "needs_adjudicator": {"type": "boolean"}
+        }
+      }
+    },
+    "unsupported_reviewer_claims": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["reviewer_issue_id", "reason"],
+        "properties": {
+          "reviewer_issue_id": {"type": "string"},
+          "reason": {"type": "string"}
+        }
+      }
+    },
+    "meta_score": {"type": "number", "minimum": 1, "maximum": 10},
+    "meta_recommendation": {
+      "type": "string",
+      "enum": ["strong_reject", "reject", "weak_reject", "borderline", "weak_accept", "accept", "strong_accept"]
+    },
+    "evidence_ceiling": {"type": "number", "minimum": 1, "maximum": 10},
+    "prioritized_actions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "action_id",
+          "issue_ids",
+          "action_type",
+          "description",
+          "expected_impact",
+          "confidence",
+          "cost",
+          "dependencies",
+          "verification_criterion",
+          "possible_with_current_evidence"
+        ],
+        "properties": {
+          "action_id": {"type": "string"},
+          "issue_ids": {"type": "array", "items": {"type": "string"}},
+          "action_type": {
+            "type": "string",
+            "enum": ["writing", "analysis", "experiment", "code", "citation", "method", "figure", "claim_narrowing"]
+          },
+          "description": {"type": "string"},
+          "expected_impact": {"type": "string", "enum": ["high", "medium", "low"]},
+          "confidence": {"type": "string", "enum": ["high", "medium", "low"]},
+          "cost": {"type": "string", "enum": ["high", "medium", "low"]},
+          "dependencies": {"type": "array", "items": {"type": "string"}},
+          "verification_criterion": {"type": "string"},
+          "possible_with_current_evidence": {"type": "boolean"}
+        }
+      }
+    },
+    "must_resolve_before_accept": {"type": "array", "items": {"type": "string"}},
+    "score_gaming_suggestions_to_reject": {"type": "array", "items": {"type": "string"}},
+    "decision_rationale": {"type": "string"}
+  }
+}

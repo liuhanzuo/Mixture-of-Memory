@@ -1,0 +1,135 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "review.schema.json",
+  "title": "Independent Paper Review",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "reviewer_id",
+    "round",
+    "snapshot_sha256",
+    "role",
+    "overall_score",
+    "confidence",
+    "recommendation",
+    "dimension_scores",
+    "paper_summary",
+    "strongest_verified_contribution",
+    "strengths",
+    "issues",
+    "score_ceiling_under_current_evidence",
+    "predicted_score_after_required_changes",
+    "evidence_that_would_raise_score",
+    "evidence_that_would_lower_score"
+  ],
+  "properties": {
+    "reviewer_id": {"type": "string", "minLength": 1},
+    "round": {"type": "integer", "minimum": 0},
+    "snapshot_sha256": {"type": "string", "minLength": 16},
+    "role": {
+      "type": "string",
+      "enum": [
+        "novelty_positioning",
+        "technical_soundness",
+        "experimental_rigor",
+        "clarity_presentation",
+        "reproducibility_provenance",
+        "adjudicator"
+      ]
+    },
+    "overall_score": {"type": "number", "minimum": 1, "maximum": 10},
+    "confidence": {"type": "integer", "minimum": 1, "maximum": 5},
+    "recommendation": {
+      "type": "string",
+      "enum": ["strong_reject", "reject", "weak_reject", "borderline", "weak_accept", "accept", "strong_accept"]
+    },
+    "dimension_scores": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "novelty",
+        "significance",
+        "technical_soundness",
+        "experimental_rigor",
+        "clarity",
+        "reproducibility",
+        "citation_integrity",
+        "limitations_responsible_claims"
+      ],
+      "properties": {
+        "novelty": {"type": "integer", "minimum": 1, "maximum": 5},
+        "significance": {"type": "integer", "minimum": 1, "maximum": 5},
+        "technical_soundness": {"type": "integer", "minimum": 1, "maximum": 5},
+        "experimental_rigor": {"type": "integer", "minimum": 1, "maximum": 5},
+        "clarity": {"type": "integer", "minimum": 1, "maximum": 5},
+        "reproducibility": {"type": "integer", "minimum": 1, "maximum": 5},
+        "citation_integrity": {"type": "integer", "minimum": 1, "maximum": 5},
+        "limitations_responsible_claims": {"type": "integer", "minimum": 1, "maximum": 5}
+      }
+    },
+    "paper_summary": {"type": "string", "minLength": 1},
+    "strongest_verified_contribution": {"type": "string", "minLength": 1},
+    "strengths": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "issues": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "issue_id",
+          "severity",
+          "dimensions",
+          "location",
+          "claim_ids",
+          "evidence_ids",
+          "observed_evidence",
+          "why_it_matters",
+          "required_fix",
+          "verification_test",
+          "evidence_needed",
+          "expected_impact",
+          "confidence"
+        ],
+        "properties": {
+          "issue_id": {"type": "string", "minLength": 1},
+          "severity": {"type": "string", "enum": ["critical", "major", "minor"]},
+          "dimensions": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "enum": [
+                "novelty",
+                "significance",
+                "technical_soundness",
+                "experimental_rigor",
+                "clarity",
+                "reproducibility",
+                "citation_integrity",
+                "limitations_responsible_claims"
+              ]
+            }
+          },
+          "location": {"type": "string", "minLength": 1},
+          "claim_ids": {"type": "array", "items": {"type": "string"}},
+          "evidence_ids": {"type": "array", "items": {"type": "string"}},
+          "observed_evidence": {"type": "string", "minLength": 1},
+          "why_it_matters": {"type": "string", "minLength": 1},
+          "required_fix": {"type": "string", "minLength": 1},
+          "verification_test": {"type": "string", "minLength": 1},
+          "evidence_needed": {"type": "string"},
+          "expected_impact": {"type": "string", "enum": ["high", "medium", "low"]},
+          "confidence": {"type": "string", "enum": ["high", "medium", "low"]}
+        }
+      }
+    },
+    "score_ceiling_under_current_evidence": {"type": "number", "minimum": 1, "maximum": 10},
+    "predicted_score_after_required_changes": {"type": "number", "minimum": 1, "maximum": 10},
+    "evidence_that_would_raise_score": {"type": "array", "items": {"type": "string"}},
+    "evidence_that_would_lower_score": {"type": "array", "items": {"type": "string"}},
+    "review_limitations": {"type": "array", "items": {"type": "string"}}
+  }
+}

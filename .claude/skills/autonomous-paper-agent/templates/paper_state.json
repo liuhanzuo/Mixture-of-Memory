@@ -1,0 +1,43 @@
+{
+  "schema_version": "2.0.0",
+  "project": {
+    "title": null,
+    "target_venue": null,
+    "venue_rubric_source": null,
+    "paper_identity": null
+  },
+  "runtime": {
+    "host": null,
+    "subagents_available": false,
+    "reviewer_agent": null,
+    "meta_reviewer_agent": null,
+    "change_verifier_agent": null,
+    "max_parallel_reviewers": null,
+    "degraded_mode": false,
+    "degraded_mode_reason": null
+  },
+  "review_config": {
+    "reviewer_count": 5,
+    "target_median_overall": 7.0,
+    "minimum_individual_score": 6.0,
+    "max_full_rounds": 5,
+    "min_full_rounds": 2,
+    "plateau_window": 2,
+    "minimum_meaningful_median_improvement": 0.25
+  },
+  "current_phase": "initialize",
+  "current_round": 0,
+  "best_round": null,
+  "integrity_gates": {
+    "claims_traceable": false,
+    "numbers_traceable": false,
+    "methods_traceable": false,
+    "citations_verified": false,
+    "build_passed": false,
+    "pdf_visually_inspected": false,
+    "venue_compliance_passed": false
+  },
+  "rounds": [],
+  "blockers": [],
+  "last_updated": null
+}
