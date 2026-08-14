@@ -24,5 +24,34 @@
   ],
   "cost": "980358 subagent tokens, 8042s wall",
   "design_change_for_round_01": "one defect per reviewer with the numbers inlined, instead of 'read the whole paper and find problems' -- the round_00 reviewers had to read 32 files each"
+ },
+ "snapshot_recipe_ADDED_20260815": {
+  "problem": "`snapshot_sha256_prefix` = 96304267e30d79c3 was recorded WITHOUT the recipe that produced it. MAIN tried 7 plausible recipes (concat / per-file-sha-then-sha, over sections only / main+sections / main+sections+bib / evidence) and reproduced NONE. n_files=23 does match `main.tex + sections/*.tex + refs.bib` exactly, so that is very likely the intended set, but the hash is not verifiable as recorded.",
+  "consequence": "the round_01 freeze cannot be independently checked; it documents intent, not state",
+  "recipe_now_pinned": "sha256 over sorted(files), each contributing: relpath bytes + NUL + file bytes + NUL; files = main.tex + refs.bib + sections/*.tex (n=23)",
+  "value_under_pinned_recipe_at_20260815_0513": "ab26fdbd0c0948e6",
+  "note": "this value is NOT comparable to 96304267e30d79c3 and is not claimed to be. It is the new baseline. Three evidence files were also edited after the 03:03 freeze (s2_02_strata_raw 03:27, s2_03_symmetric_inference 03:34, s2_02_stratified_ordering 05:13), so the pack itself has drifted -- see post_freeze_drift below.",
+  "discharges": "WRITER_NOTES.md section D item 4 (freeze + checksum the pack, then re-run a numeral audit)"
+ },
+ "post_freeze_drift_20260815": {
+  "evidence_files_modified_after_freeze": [
+   {
+    "file": "evidence/s2_02_strata_raw.json",
+    "mtime": "2026-08-15 03:27",
+    "why": "raw strata rescue copy persisted out of /tmp"
+   },
+   {
+    "file": "evidence/s2_03_symmetric_inference.json",
+    "mtime": "2026-08-15 03:34",
+    "why": "re-emitted with the R-7 mid-p bootstrap estimator fix"
+   },
+   {
+    "file": "evidence/s2_02_stratified_ordering.json",
+    "mtime": "2026-08-15 05:13",
+    "why": "retracted the 38.44x category-error ratio; added per_cell_attainable_ratio=10.869"
+   }
+  ],
+  "manuscript_impact": "NONE -- no reported number changed; the 05:13 edit removed a number the manuscript had already stopped citing",
+  "numeral_audit_redone": "MAIN re-verified all 8 numeric assertions of the 03_method.tex ordering paragraph directly from per_stratum_ALL_8 integer counts on 2026-08-15: f_const=1403/12032, UB=1439/12032, gap=36 items=9/3008=0.2992021277 pp, argmax differs in exactly strata n_opt=5,6,7,8 with letters B,E,B,E over 623 items, emitter vector A,A,B,E,B,E,A,A, and emitter legality per stratum (every argmax lies in A..LET[n_opt-1]). All 8 PASS. Also re-derived the two replacement figures: A-argmax weight 94.82% (11409/12032) and 0.0846/0.0077836=10.87x."
  }
 }

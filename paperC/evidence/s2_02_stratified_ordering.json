@@ -140,7 +140,22 @@
   "cells_violating_ordering": 0,
   "tightest_cell": "llama2/k12 UN-healed",
   "tightest_margin_pp": 0.007783590975318777,
-  "ratio_slack_over_observed_margin": 38.44011441612533
+  "ratio_slack_over_observed_margin_RETRACTED": {
+   "value": 38.44011441612533,
+   "status": "RETRACTED 2026-08-15 -- DO NOT CITE",
+   "why": "category error: divides a PER-CELL margin (0.007783590975318777 pp, llama2/k12) by the UNCONDITIONAL GLOBAL stratified gap (0.2992021277 pp = 36/12032 items). The two have different conditioning, so their ratio is not a quantity. Removed from 03_method.tex.",
+   "replacement": "per_cell_attainable_ratio",
+   "cross_ref": "round_01_review_findings.MAIN_error_1_the_38x_is_a_category_error"
+  },
+  "per_cell_attainable_ratio": {
+   "value": 10.869,
+   "numerator_pp": 0.0846,
+   "denominator_pp": 0.007783590975318777,
+   "what": "largest ordering violation attainable at llama2/k12's OWN observed letter marginal (p_A=0.98828125), divided by its observed margin",
+   "why_bounded": "94.82% of the item weight lies in A-argmax strata (measured: 11409/12032), so only 5.18% of the weight sits where switching off A could gain anything, and only 1.171875% of this arm's prediction mass is non-A and therefore displaceable",
+   "note": "0.0846 pp is itself an UPPER bound, so 10.869 is an upper bound on the ratio",
+   "reverified_by": "MAIN 2026-08-15 from per_stratum_ALL_8 integer counts (94.82% and 10.87 both reproduced)"
+  }
  },
  "verdict": "The 'always' is FALSE as a theorem: argmax_L differs from the global best letter in 4 of 8 n_opt strata (n_opt=5,6,7,8). The ordering nevertheless HOLDS in 27/27 measured cells, but the tightest cell clears the floor by 0.0078 pp while the unproven region is 0.2992 pp wide -- 38x the observed margin. So the claim must be restated as an empirical property of these cells with its margin reported, not asserted as an identity.",
  "same_class_as": "memory/a-range-is-not-a-measurement-until-it-clears-its-floor.md",
