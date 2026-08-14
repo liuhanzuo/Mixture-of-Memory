@@ -236,7 +236,8 @@ def main() -> int:
         rec["gate_max_unmatched"] = a.max_unmatched
         rec["numbers_gate_pass"] = len(unmatched) <= a.max_unmatched
 
-    out = Path(a.out) if a.out else pd / "build" / "numbers_check.json"
+    # see paper_build.py: `build/` is gitignored, gate artifacts are evidence
+    out = Path(a.out) if a.out else pd / "gate" / "numbers_check.json"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(rec, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 

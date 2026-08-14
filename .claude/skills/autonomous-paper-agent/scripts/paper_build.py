@@ -48,7 +48,7 @@ What it checks (all counted, none inferred)
 
 Usage:
   python paper_build.py paperC
-  python paper_build.py paperC --engine pdflatex --out paperC/build/build_record.json
+  python paper_build.py paperC --engine pdflatex --out paperC/gate/build_record.json
   python paper_build.py paperC --check-only     # static checks, no compile
 """
 from __future__ import annotations
@@ -315,7 +315,10 @@ def main() -> int:
         return 2
 
     rec = build(pd, a.engine, a.main, a.check_only)
-    out = Path(a.out) if a.out else pd / "build" / "build_record.json"
+    # NOT `build/`: .gitignore:8 has a generic `build/` rule, so gate artifacts
+    # written there are invisible to review and to git. These files ARE evidence
+    # (they are what makes the integrity gate auditable), so they go in `gate/`.
+    out = Path(a.out) if a.out else pd / "gate" / "build_record.json"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(rec, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 

@@ -1,0 +1,148 @@
+{
+  "schema_version": "1.0.0",
+  "paper": "paperC",
+  "evidence_sources": [
+    "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/paperC/tcodex_out/EVIDENCE_PACK.md",
+    "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/paperC/evidence"
+  ],
+  "n_evidence_numbers": 18669,
+  "filters_applied": [
+    "lines containing LaTeX structural/typographic macros (see SKIP_LINE_PAT)",
+    "4-digit years 19xx/20xx/21xx/26xx",
+    "bare integers with |n| <= 12 (section/table/column indices)"
+  ],
+  "counts": {
+    "scanned": 524,
+    "direct_match": 513,
+    "match_after_correct_rounding": 10,
+    "derived_as_difference": 1,
+    "unmatched_needs_human": 0
+  },
+  "unmatched_needs_human": [],
+  "match_after_correct_rounding": [
+    {
+      "file": "sections/03b_nulls.tex",
+      "line": 12,
+      "value": "2.02",
+      "context": "``Longest'' may mean characters or continuation tokens. On identical items, \\texttt{split} changes by as much as 2.02 points across the studied tasks,",
+      "evidence_full_precision": "2.0196",
+      "evidence_files": [
+        "mmlu_pro_power_nulls_v2.csv"
+      ]
+    },
+    {
+      "file": "sections/05_analysis.tex",
+      "line": 35,
+      "value": "-0.0064",
+      "context": "For OLMo-2 \\texttt{keep8} on MMLU, fp32 removes all 4,303 bf16 exact top-two ties and changes 2,532 of 14,042 letter argmax decisions, or 18.03\\%. Let",
+      "evidence_full_precision": "-0.0064093",
+      "evidence_files": [
+        "EVIDENCE_PACK.md"
+      ]
+    },
+    {
+      "file": "sections/05_analysis.tex",
+      "line": 35,
+      "value": "0.0033",
+      "context": "For OLMo-2 \\texttt{keep8} on MMLU, fp32 removes all 4,303 bf16 exact top-two ties and changes 2,532 of 14,042 letter argmax decisions, or 18.03\\%. Let",
+      "evidence_full_precision": "0.003276003276003276",
+      "evidence_files": [
+        "gate2_crossfamily_nulls.json",
+        "gate2_crossfamily_nulls.json",
+        "gate2_crossfamily_nulls.json"
+      ]
+    },
+    {
+      "file": "sections/tab_mmlupro.tex",
+      "line": 12,
+      "value": "0.7072",
+      "context": "Llama-2 & \\texttt{k14}, truncation & 0.116772 & $+0.017$ & 0.083 & 0.7072 & at floor \\\\",
+      "evidence_full_precision": "0.7071999999999999",
+      "evidence_files": [
+        "EVIDENCE_PACK.md",
+        "EVIDENCE_PACK.md",
+        "heal_readout_v2_permutation_null.json"
+      ]
+    },
+    {
+      "file": "sections/tab_mmlupro.tex",
+      "line": 19,
+      "value": "0.1872",
+      "context": "Qwen3 & \\texttt{k10}, truncation & 0.118185 & $+0.158$ & 0.233 & 0.1872 & at floor \\\\",
+      "evidence_full_precision": "0.18719999999999998",
+      "evidence_files": [
+        "EVIDENCE_PACK.md",
+        "EVIDENCE_PACK.md",
+        "heal_readout_v2_permutation_null.json"
+      ]
+    },
+    {
+      "file": "sections/tab_nulls.tex",
+      "line": 17,
+      "value": "0.621713",
+      "context": "BoolQ & 3270 & always-B 0.621713 & 0.500000 & +12.17 & 1.2434$\\times$ \\\\",
+      "evidence_full_precision": "0.6217125382",
+      "evidence_files": [
+        "EVIDENCE_PACK.md",
+        "EVIDENCE_PACK.md"
+      ]
+    },
+    {
+      "file": "sections/tab_v2_full.tex",
+      "line": 10,
+      "value": "0.9810",
+      "context": "Qwen3 & heal@5500 & 0.115691 & 0.115654 & $+0.004$ & 0.316 & 0.9810 & no signal \\\\",
+      "evidence_full_precision": "0.981",
+      "evidence_files": [
+        "EVIDENCE_PACK.md",
+        "heal_readout_v2_permutation_null.json"
+      ]
+    },
+    {
+      "file": "sections/tab_v2_full.tex",
+      "line": 28,
+      "value": "0.4510",
+      "context": "Llama-2 & \\texttt{k10}, unhealed & 0.113198 & 0.114575 & $-0.138$ & 0.356 & 0.4510 & no signal \\\\",
+      "evidence_full_precision": "0.450968",
+      "evidence_files": [
+        "gate2_letter_content_nulls.csv",
+        "gate2_letter_content_nulls.csv",
+        "gate2_letter_content_nulls.csv"
+      ]
+    },
+    {
+      "file": "sections/tab_v2_full.tex",
+      "line": 30,
+      "value": "0.3950",
+      "context": "Llama-2 & \\texttt{k14}, unhealed & 0.116772 & 0.116408 & $+0.036$ & 0.085 & 0.3950 & no signal \\\\",
+      "evidence_full_precision": "0.395",
+      "evidence_files": [
+        "EVIDENCE_PACK.md",
+        "heal_readout_v2_permutation_null.json",
+        "gate2_letter_content_nulls.json"
+      ]
+    },
+    {
+      "file": "sections/tab_v2_full.tex",
+      "line": 35,
+      "value": "0.0970",
+      "context": "Llama-3 & \\texttt{k14}, unhealed & 0.114694 & 0.110945 & $+0.375$ & 0.446 & 0.0970 & no signal \\\\",
+      "evidence_full_precision": "0.097",
+      "evidence_files": [
+        "EVIDENCE_PACK.md",
+        "heal_readout_v2_permutation_null.json"
+      ]
+    }
+  ],
+  "derived_as_difference": [
+    {
+      "file": "sections/tab_nulls.tex",
+      "line": 17,
+      "value": "1.2434",
+      "context": "BoolQ & 3270 & always-B 0.621713 & 0.500000 & +12.17 & 1.2434$\\times$ \\\\",
+      "derivation": "0.0032 - -1.2402198752393307"
+    }
+  ],
+  "gate_max_unmatched": 5,
+  "numbers_gate_pass": true
+}

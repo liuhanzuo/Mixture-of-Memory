@@ -27,8 +27,8 @@ model: opus
 > the scoring loop as though it were submission-ready."*
 
 ```
-[1] 编译          paper_build.py <paper>              → build_record.json   rc≠0 就停
-[2] 数字可溯源     check_numbers.py <paper> --evidence …→ numbers_check.json  超阈值就停
+[1] 编译          paper_build.py <paper>              → gate/build_record.json   rc≠0 就停
+[2] 数字可溯源     check_numbers.py <paper> --evidence …→ gate/numbers_check.json  超阈值就停
 [3] venue 双家族核实（见 §4）                                                有编造就停
         ↓  以上全过才允许进入打分
 [4] 冻结快照      freeze_round.py <paper> --round NN
@@ -122,7 +122,7 @@ Workflow 脚本：`.claude/skills/autonomous-paper-agent/workflows/review_round.
 | 用途 | 落点 | 写法 |
 |---|---|---|
 | 本轮快照 + 6 审 + meta + ledger | `paper<X>/review_rounds/round_NN/` | 新建，**目录名必须是 `round_NN`** 才能被 `select_best_round.py` 的 `round_(\d+)$` 认出 |
-| 构建/数字 gate 产物 | `paper<X>/build/` | 覆写（每轮重算） |
+| 构建/数字 gate 产物 | `paper<X>/gate/` | 覆写（每轮重算） |
 | ARR 分数趋势 | `paper<X>/review_history/SCORE_HISTORY.md` | **追加**，带 calibration 代际标注 |
 | 判定书 | `paper<X>/<TOPIC>_VERDICT.md` | 一 gate 一份，**第一行是大写枚举 verdict**，不覆盖 |
 | 心跳/运维 | `status/TRAINER_ACTIVITY.jsonl` | append-only；写错**追加 correction 行**，禁 edit |
