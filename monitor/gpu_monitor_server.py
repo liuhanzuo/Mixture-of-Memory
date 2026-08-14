@@ -64,19 +64,25 @@ CURVE_CMD = (
 )
 
 NODES = [
-    {"id": "local", "label": "本机 LOCAL (wzc1, 8xL20A/B200级 183GB)", "mode": "local"},
+    {"id": "local", "label": "本机 LOCAL = 28.89.19.21 (wzc1, 8xB200 sm_100 183GB)", "mode": "local"},
     {
-        # 2026-08-09: .252 retired, replaced by .21. The old entry pointed at
-        # 28.89.19.252:22 with configs/password_b200_19252.txt -- that password file
-        # was deleted in 46abe8a, so this panel showed a permanently-broken node
-        # while the live .21 was invisible. Port is 36000 (global ssh_config sets it;
-        # port 22 on these hosts is a different sshd with different accounts).
-        "id": "21",
-        "label": ".21 (28.89.19.21:36000, wzc1, 8xL20A 183GB)",
+        # 2026-08-14: the ".21" REMOTE entry is GONE, because LOCAL *is* 28.89.19.21.
+        # Verified by `ifconfig` on this box listing 28.89.19.21 among its own
+        # addresses. The 08-09 note below was correct at the time (.252 -> .21), but
+        # after the 08-13 restart the box we run on IS .21, so keeping a separate ssh
+        # entry made the monitor ssh into itself and double-count one node's 8 GPUs
+        # while the genuinely new node was invisible.
+        #
+        # The new second B200 is .212. It shares the SAME physical wzc1 disk as LOCAL
+        # (verified: random stamp written on LOCAL read back byte-identical on .212,
+        # both `df` -> dop-fuse 120T/109T/91%), so no rsync between them. It has NO
+        # /apdcephfs_zwfy6 mount.
+        "id": "212",
+        "label": ".212 (28.89.18.212:36000, wzc1, 8xB200 sm_100 192GB)",
         "mode": "ssh",
-        "host": "28.89.19.21",
+        "host": "28.89.18.212",
         "port": "36000",
-        "pwfile": os.path.join(PROJECT, "configs/password_b200_19021.txt"),
+        "pwfile": os.path.join(PROJECT, "configs/password_b200_18212.txt"),
     },
     {
         "id": "73",
