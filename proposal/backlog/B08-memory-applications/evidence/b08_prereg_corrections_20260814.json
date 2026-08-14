@@ -1,0 +1,184 @@
+{
+ "what_this_file_fixes": "Two defects in the 2026-08-14 B08 leg-1 prereg, both measured 0-GPU on wzc1 this session.",
+ "defect_1_closure_premise_measured_at_wrong_budget": {
+  "problem": "evidence/b08_lme_bm25_recall_topk{5,10,20,50}.json all carry evidence_token_budget=0, but the gate FREEZES --evidence_token_budget 4000. longmemeval/run_baseline.py:142 applies _apply_token_budget BEFORE recall_at_k at line 144, so truncation can DROP gold sessions. The retrieval-closure premise was therefore never verified at the gate's own config.",
+  "resolution": "RE-MEASURED at budget=4000. Closure SURVIVES on the chosen stratum; it does NOT survive elsewhere. Stratum choice is now validated at the gate's actual config.",
+  "measured_budget0_vs_budget4000_top_k_10": {
+   "0": {
+    "single-session-user": {
+     "n": 70,
+     "any_hit": 0.9857142857142858,
+     "cov": 0.9857142857142858,
+     "mean_n_ev": 10.0
+    },
+    "multi-session": {
+     "n": 133,
+     "any_hit": 0.9849624060150376,
+     "cov": 0.8528822055137845,
+     "mean_n_ev": 10.0
+    },
+    "single-session-preference": {
+     "n": 30,
+     "any_hit": 0.7666666666666667,
+     "cov": 0.7666666666666667,
+     "mean_n_ev": 10.0
+    },
+    "temporal-reasoning": {
+     "n": 133,
+     "any_hit": 0.9548872180451128,
+     "cov": 0.8889724310776942,
+     "mean_n_ev": 10.0
+    },
+    "knowledge-update": {
+     "n": 78,
+     "any_hit": 1.0,
+     "cov": 0.9935897435897436,
+     "mean_n_ev": 10.0
+    },
+    "single-session-assistant": {
+     "n": 56,
+     "any_hit": 1.0,
+     "cov": 1.0,
+     "mean_n_ev": 10.0
+    },
+    "__overall__": {
+     "n": 500,
+     "any_hit": 0.968,
+     "cov": 0.9143333333333333,
+     "mean_n_ev": 10.0
+    }
+   },
+   "4000": {
+    "single-session-user": {
+     "n": 70,
+     "any_hit": 0.9857142857142858,
+     "cov": 0.9857142857142858,
+     "mean_n_ev": 8.185714285714285
+    },
+    "multi-session": {
+     "n": 133,
+     "any_hit": 0.9699248120300752,
+     "cov": 0.8013784461152882,
+     "mean_n_ev": 7.924812030075188
+    },
+    "single-session-preference": {
+     "n": 30,
+     "any_hit": 0.7,
+     "cov": 0.7,
+     "mean_n_ev": 7.9
+    },
+    "temporal-reasoning": {
+     "n": 133,
+     "any_hit": 0.9548872180451128,
+     "cov": 0.8720551378446115,
+     "mean_n_ev": 7.7443609022556394
+    },
+    "knowledge-update": {
+     "n": 78,
+     "any_hit": 1.0,
+     "cov": 0.9935897435897436,
+     "mean_n_ev": 7.923076923076923
+    },
+    "single-session-assistant": {
+     "n": 56,
+     "any_hit": 1.0,
+     "cov": 1.0,
+     "mean_n_ev": 8.964285714285714
+    },
+    "__overall__": {
+     "n": 500,
+     "any_hit": 0.96,
+     "cov": 0.8921333333333333,
+     "mean_n_ev": 8.028
+    }
+   }
+  },
+  "stratum_verdict": "knowledge-update any_hit 1.000 -> 1.000 (cov 0.99359 -> 0.99359); single-session-assistant 1.000 -> 1.000 (cov 1.00000 -> 1.00000). mean evidence blocks drops 10.0 -> 7.923 / 8.964, i.e. truncation IS active on the stratum yet removes no gold session.",
+  "off_stratum_degradation": "overall any_hit 0.9680 -> 0.9600; single-session-preference 0.7667 -> 0.7000; multi-session 0.98496 -> 0.96992 (cov 0.85288 -> 0.80138); temporal-reasoning any_hit unchanged 0.95489 but cov 0.88897 -> 0.87206. Confirms closure must be measured per cell at the deployed budget, never assumed."
+ },
+ "defect_2_cost_anchor_used_the_wrong_A02_arm": {
+  "problem": "prereg cited latency_decomposition/comem = 0.1097 ms/prefill-token. `comem` is the COMPRESSED depth-j read path. longmemeval/reader.py LocalHFReader._build_prompt does a PLAIN full raw-text prefill, which is A02's j0_top12 arm (matched-pack raw-text RAG, per code/bench_a02_storage_readcompute.py:56).",
+  "correct_anchor_arm": "j0_top12",
+  "same_file_same_cell": "proposal/backlog/A02-comem-write-read-repair/evidence/a02_storage_readcompute_verdict.json -> cost/32k|gpu/per_G/32/latency_decomposition/j0_top12",
+  "j0_top12_measured": {
+   "read_s": 0.9376699887216091,
+   "read_len": 6177,
+   "ms_per_prefill_token": 0.1518,
+   "decode_s": 1.2480681203305721,
+   "decode_new_tokens": 32,
+   "ms_per_decode_token": 39.0
+  },
+  "comem_measured_WRONG_arm": {
+   "read_s": 0.6774476431310177,
+   "read_len": 6177,
+   "ms_per_prefill_token": 0.10967
+  },
+  "impact": "prefill understated by 38.4%. Total barely moves because decode dominates (334 s decode vs 80 s prefill at n=134), so the ~1.1 GPU-h headline SURVIVES -- but the basis must cite j0_top12, not comem."
+ },
+ "measured_token_counts_real_llama3_tokenizer_real_prompt": {
+  "knowledge-update": {
+   "n": 78,
+   "mean": 4086.0,
+   "p90": 4386,
+   "max": 4609,
+   "sum": 318706
+  },
+  "single-session-assistant": {
+   "n": 56,
+   "mean": 3766.3,
+   "p90": 4407,
+   "max": 4554,
+   "sum": 210914
+  },
+  "STRATUM": {
+   "n": 134,
+   "mean": 3952.4,
+   "p90": 4387,
+   "max": 4609,
+   "sum": 529620
+  }
+ },
+ "full_500_escalation_prefill_sum_tokens": 2010736,
+ "corrected_cost_arithmetic": {
+  "formula": "3 answer arms x (sum_prefill*0.15180ms + n*64*39.00ms) + 1 notes pass (sum_prefill*0.15180ms + n*128*39.00ms)",
+  "n134_core_s": 1993.9,
+  "n134_core_gpu_h": 0.554,
+  "n134_x2_slack_gpu_h": 1.108,
+  "n134_judge_gpu_h": 0.045,
+  "n134_TOTAL_gpu_h": 1.15,
+  "n500_core_gpu_h": 2.072,
+  "n500_x2_slack_gpu_h": 4.145,
+  "n500_judge_gpu_h": 0.168,
+  "n500_TOTAL_gpu_h": 4.31
+ },
+ "defect_3_K2_is_not_evaluable_at_n134_KILL_branch_can_be_unreachable": {
+  "problem": "K2 as written fires iff the Delta_U 95% CI UPPER BOUND < +5.0 pp. At n=134 the paired half-width is 1.96*sqrt(disc_U/134). Even with a TRUE Delta_U of exactly 0, the UB lands below +5.0 pp only if disc_U <= 0.0872. For any unsupported-claim discordance above 8.72% -- entirely plausible for a hallucination metric on a base model -- K2 can NEVER fire, so the ALL-THREE KILL branch becomes UNREACHABLE. The gate would then be one that can only pass or abstain: not a gate.",
+  "measured_half_widths_pp": {
+   "n134_disc0.05": 3.79,
+   "n134_disc0.0872": 5.0,
+   "n134_disc0.10": 5.35,
+   "n134_disc0.20": 7.57,
+   "n500_disc0.10": 2.77,
+   "n500_disc0.20": 3.92
+  },
+  "required_fix": "An EVALUABILITY PRECONDITION pre-committed before scoring: compute disc_U (the observed unsupported-claim discordance between A-notes-only and A-raw) FIRST. If disc_U > 0.0872, n=134 cannot resolve K2 and the stratum is extended to the full n=500 (measured 4.31 GPU-h, same three arms, same frozen retrieval), which holds the half-width at 3.92 pp even at disc_U=0.20. The escalation must be decided from disc_U ALONE and BEFORE Delta_aug's sign is inspected, so it is a pre-registered precondition and not an n-hack.",
+  "min_n_for_5pp_half_width": {
+   "disc0.10": 154,
+   "disc0.20": 308
+  }
+ },
+ "abstention_verified": {
+  "knowledge-update": 6,
+  "single-session-assistant": 0,
+  "repo_wide_total": 30,
+  "primary_ACC_denominator": 128,
+  "note": "128 = 134 - 6; the 6 KU abstention items are scored by the refusal rule only."
+ },
+ "provenance": {
+  "node": "LOCAL (wzc1)",
+  "gpu_used": 0,
+  "python": "/opt/conda/envs/torch-base/bin/python",
+  "zwfy6_mounted": false,
+  "scope_caveat": "/apdcephfs_zwfy6 is NOT mounted here and ssh was barred, so every presence claim is wzc1-scoped."
+ }
+}

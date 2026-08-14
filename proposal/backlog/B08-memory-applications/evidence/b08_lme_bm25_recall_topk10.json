@@ -1,0 +1,50 @@
+{
+  "n_questions": 500,
+  "retriever_mode_requested": "bm25",
+  "retriever_mode_effective": "bm25",
+  "degraded": false,
+  "degraded_reason": "",
+  "reader": "stub",
+  "reranker": "none",
+  "compressor": "none",
+  "top_k": 10,
+  "evidence_token_budget": 0,
+  "overall_recall": {
+    "n": 500,
+    "any_hit_recall": 0.968,
+    "mean_covered": 0.9143333333333333
+  },
+  "recall_by_type": {
+    "single-session-user": {
+      "n": 70,
+      "any_hit_recall": 0.9857142857142858,
+      "mean_covered": 0.9857142857142858
+    },
+    "multi-session": {
+      "n": 133,
+      "any_hit_recall": 0.9849624060150376,
+      "mean_covered": 0.8528822055137845
+    },
+    "single-session-preference": {
+      "n": 30,
+      "any_hit_recall": 0.7666666666666667,
+      "mean_covered": 0.7666666666666667
+    },
+    "temporal-reasoning": {
+      "n": 133,
+      "any_hit_recall": 0.9548872180451128,
+      "mean_covered": 0.8889724310776942
+    },
+    "knowledge-update": {
+      "n": 78,
+      "any_hit_recall": 1.0,
+      "mean_covered": 0.9935897435897436
+    },
+    "single-session-assistant": {
+      "n": 56,
+      "any_hit_recall": 1.0,
+      "mean_covered": 1.0
+    }
+  },
+  "submission_path": "/tmp/b08_k10.jsonl"
+}

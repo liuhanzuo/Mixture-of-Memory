@@ -1,0 +1,50 @@
+{
+  "n_questions": 500,
+  "retriever_mode_requested": "bm25",
+  "retriever_mode_effective": "bm25",
+  "degraded": false,
+  "degraded_reason": "",
+  "reader": "stub",
+  "reranker": "none",
+  "compressor": "none",
+  "top_k": 50,
+  "evidence_token_budget": 0,
+  "overall_recall": {
+    "n": 500,
+    "any_hit_recall": 0.996,
+    "mean_covered": 0.9819666666666667
+  },
+  "recall_by_type": {
+    "single-session-user": {
+      "n": 70,
+      "any_hit_recall": 1.0,
+      "mean_covered": 1.0
+    },
+    "multi-session": {
+      "n": 133,
+      "any_hit_recall": 0.9924812030075187,
+      "mean_covered": 0.9637844611528822
+    },
+    "single-session-preference": {
+      "n": 30,
+      "any_hit_recall": 1.0,
+      "mean_covered": 1.0
+    },
+    "temporal-reasoning": {
+      "n": 133,
+      "any_hit_recall": 0.9924812030075187,
+      "mean_covered": 0.9721804511278196
+    },
+    "knowledge-update": {
+      "n": 78,
+      "any_hit_recall": 1.0,
+      "mean_covered": 0.9935897435897436
+    },
+    "single-session-assistant": {
+      "n": 56,
+      "any_hit_recall": 1.0,
+      "mean_covered": 1.0
+    }
+  },
+  "submission_path": "/tmp/b08_k50.jsonl"
+}
