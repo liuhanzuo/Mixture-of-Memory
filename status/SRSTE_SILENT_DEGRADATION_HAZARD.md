@@ -37,6 +37,26 @@ showed up as a garbage PPL (23.45) at the end. The CAST path was subsequently ha
 
 ## Why it is currently inert — and exactly when it stops being inert
 
+> ### ⚠️ CORRECTION 2026-08-15 (same day, by MAIN): this section UNDERSTATED the risk
+>
+> I originally framed the path as inert because `srste_decay = 0.0`, calling that a
+> "configuration accident". **The accident runs the other way.** Measured in source:
+>
+> ```
+> main_llama.py:200   parser.add_argument('--srste_decay', type=float, default=6e-5)
+> ```
+>
+> **The argparse default is `6e-5`, not `0`.** The silent SR-STE branch is therefore **armed by
+> default**; it is inert only for runs that *explicitly* pass `--srste_decay 0`. Omitting the flag
+> does not disable SR-STE — it enables it. `main_llama.py:989` even carries a comment
+> acknowledging this ("*than let a stray default (--srste_decay defaults to 6e-5) through*"), so
+> the trap was known locally but never recorded as a project-level hazard.
+>
+> ⇒ **Any run that does not explicitly pin `--srste_decay 0` must be treated as having SR-STE ON
+> until its cmdline is checked.** Surfaced by the ALPS+SLoRB GATE0
+> (`status/ALPS_SLORB_GATE0_VERDICT.md`), which now enforces `srste_decay != 0 -> refuse` on the
+> fixed-mask path.
+
 `SPARSEFORGE_TOKENMATCHED_PREP.md` §TASK 3 concludes FSDP is safe *for SparseForge*, and that is
 correct, but the **stated reason is that `srste_decay = 0.0` makes this code path unreachable**.
 So the protection is a *configuration* accident, not a code property:
