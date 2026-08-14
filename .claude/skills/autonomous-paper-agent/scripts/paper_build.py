@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""paper_build.py — compile a paper and emit a machine-readable build_record.json.
+r"""paper_build.py — compile a paper and emit a machine-readable build_record.json.
 
 Why this exists
 ---------------
