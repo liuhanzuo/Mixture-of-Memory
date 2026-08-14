@@ -2,6 +2,48 @@
 > 每次启动/kill GPU 任务更新。heartbeat 先读→对照 nvidia-smi→台账说跑但空=补卡。★29.162.226.120=dllm 绝不碰。
 > 2026-08-08 15:03 更新：用户指令「B200跑resume，H20跑新方向」→ Paper B resume 迁移到 .21/.73。
 
+## 🔄 2026-08-14 17:35 — **16 张空闲 H20 补上 Paper B resume**（40/40 卡全忙）
+
+**★ 台账与实测冲突，已按实测更正**：上一节记 `.73` 在跑 B02 confirmatory，实测 **8×0 MiB / napps=0**。
+原因：B02 于 ~16:15 跑完，且**它自己的 kill gate 在两个长度上都触发** → `lifecycle: dead`。
+于是 `.73` + `.82` = **16 张 H20** 同时空闲。
+
+| 节点 | 任务 | 实测 | 状态 |
+|---|---|---|---|
+| **LOCAL** | SparseForge **noslorb** | iter **7013/7500** (93.5%)、8×111-117 GB @100%、**53.41 s/it**(113-iter)、wiki_ppl 6.6506 | ▶️ 健康 |
+| **`.212`** | SparseForge **slorb** | iter **6802/7500** (90.7%)、8×114-121 GB @100%、**57.88 s/it**(112-iter)、wiki_ppl 6.1612 | ▶️ 健康 |
+| **`.73`** | **Paper B keep12+fresh2 resume**（本轮新起） | step **166020/200000**、loss 2.3887、ppl 10.90、**7.90 s/step**、96.4 GB @100% | ▶️ 新起 |
+| **`.82`** | **Paper B keep8+fresh2 resume**（本轮新起） | step **131020/200000**、loss 2.5240、ppl 12.48、**5.87 s/step**、78.5 GB @100% | ▶️ 新起 |
+| **`.104`** | paperC Qwen3 heal | step **31300/200000**、ppl 17.57、77.5 GB @100%、5.74 s/step | ▶️ 健康（勿动） |
+
+### 为什么这次可以跑 Paper B（三问全过，且是今天第一次真的过）
+
+CODEBUddy 优先级铁律是「paperC / proposal 有活就不许碰 Paper B」，判据是**它们是不是真没活了**：
+1. **proposal**：`ready_queue.py` 实测 **0 ready_gpu / 12 ready_cpu** —— 12 项全卡在自己的 0-GPU 前置门上，
+   没有一项是 GPU-eligible。B02 已 dead，B11 收窄后判「不值得做」。
+2. **paperC**：manuscript 今天已由 tcodex 产出并**通过 build + numbers gate**（16 页、525/525 数字可溯源）；
+   `SUBMISSION_GAP_AUDIT` 里唯一的 GPU 项是 `~1 GPU-h` 且标注「可选、不要阻塞」。
+3. **架构对**：keep8/keep10/keep12 的 ckpt + trainer + 126.9 GB 数据**全在 zwfy6（sm_90）**，
+   与它们当初训练的架构一致。
+
+### ⚠️ 发现并关闭的陷阱：既有 launch 脚本钉死了**过期 ckpt**
+
+`launch_keep8_resume_h20_73.sh` 钉 `step121000_full.pt`、`_82.sh` 钉 `step124500.pt`、
+`launch_keep12_resume_b200_21.sh` 钉 `step124000.pt`。而实测 **keep8 已在 131000、keep12 已在 166000**
+⇒ 照原样跑会**静默丢掉 ~10k / ~42k 步**，并画出一条看着完全正常的 loss 曲线。
+与今晨 SparseForge 的悬空 `last` symlink 是同一类陷阱。
+
+新脚本 `launch_{keep12_73,keep8_82}_..._0814.sh`：
+- **发现**最新 ckpt（`ls -t`），**断言** `>= 记录步数`，若 `>= 200000` 直接 exit 0；
+- 由 **H20 实证配方**（`launch_keep8_resume_h20_73.sh`）**机械替换**生成，**15 个超参逐一断言相同**；
+- **不**用 `launch_keep12_resume_b200_21.sh`（那是 B200 配方 batch 8×accum 2）——keep12 比 keep8 更深，
+  97.8 GB 的 H20 上用 batch 8 有 OOM 风险；改用 batch 4×accum 4，`eff_batch = 128` 不变；
+- 启动前 `napps != 0` 就拒绝启动（防两 agent 同占一节点）；
+- 跨盘 `scp -O` + md5 双向核对。
+
+实测 preflight 日志：`Resuming from DISCOVERED newest ckpt: .../step166000.pt (step 166000)` /
+`.../step131000.pt (step 131000)` —— **拿到的是最新的，不是钉死的那个**。
+
 ## 🔄 2026-08-14 15:58 — heartbeat 实测（覆盖上一节的 12:34 台账数字）
 
 | 节点 | 硬件/盘 | 任务 | 实测 | 状态 |
