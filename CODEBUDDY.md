@@ -92,6 +92,78 @@ export no_proxy="mirrors.cloud.tencent.com,tlinux-mirror.tencent-cloud.com,local
 
 ---
 
+## tcodex 配置（2026-08-14 用户指令，权威）
+
+**★ `CODEX_HOME` 一律是这个，不要用别的、不要在 `/tmp` 里另建：**
+
+```bash
+export CODEX_HOME=/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/.codex
+```
+
+用户原话：「codex home一致是这个 `/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/.codex` 写到你的claude.md里面」。
+
+它在**项目盘（wzc1）**上，所以随盘持久 —— 这正是要点：`/root/.codex` 会被节点重启抹掉
+（2026-08-14 实测整个目录消失），而旧归档配方里写的 `CODEX_HOME=/tmp/tcx/ch` 同样会被清空。
+见 `memory/persist-artifacts-on-wzc1-or-diskb.md`。
+
+### 可用配方（每条都是踩坑换来的，见 `memory/tcodex-exec-no-dash-c-flag.md`）
+
+```bash
+( unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY all_proxy ALL_PROXY   # ★ 必须 unset：连的是内网 gateway
+  export no_proxy="localhost,127.0.0.1"; export NO_PROXY="$no_proxy"
+  export CODEX_HOME=/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/.codex
+  tcodex exec --skip-git-repo-check -m <model> \
+    -o /path/to/output.md "$(cat prompt.txt)" > run.log 2>&1 < /dev/null )
+```
+
+- **绝对不要传 `-c`**：它会覆盖 tcodex 注入的 `model_providers.tencent` → header 翻成
+  `provider: openai` → 去拨硬编码的 `wss://api.openai.com/v1/responses` → 无限 `request timed out`。
+  **表现像超时，根因是 provider 被清掉**，加长 timeout 没用。配置一律写进 `$CODEX_HOME/config.toml`。
+- **`--search` 这个 flag 不存在**。真正的开关是配置里的 `tools.web_search = true`。
+- **必须 `-o <file>`**：一次无关的 tcodex 启动会 SIGKILL 掉所有在跑的 gateway，没有 `-o` 输出全丢
+  （实测 15 分钟的活白干）。
+- **stdin 给 `< /dev/null`**，否则挂在等输入。
+- **`effort=max` 单次跑 50-80 分钟**。不要用 200s/150s 的 `timeout` 去包（rc=143 是自己杀的），
+  放后台轮询或分段。
+
+### ⚠️ 重装与登录
+
+`tcodex` 本身也会被重启抹掉（2026-08-14 实测 `npm ls -g` 只剩 `@tencent/tclaude`）。重装：
+
+```bash
+export http_proxy=http://hy-proxy.woa.com:3128 https_proxy=$http_proxy   # 装包才要代理
+npm install -g @tencent/tcodex          # registry 已指向 mirrors.tencent.com/npm
+```
+
+**但凭据（`$CODEX_HOME/auth.json`）无法由 agent 恢复** —— 它是浏览器 OAuth。
+`.codex/` 里有 config/history/sessions 却**没有** `auth.json` 时（2026-08-14 实测就是这个状态），
+任何 `tcodex exec` 都会打印 `https://copilot.tencent.com/login?platform=CLI&...` 然后卡到 timeout。
+此时必须请用户在会话里执行：
+
+```
+! CODEX_HOME=/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/.codex tcodex login
+```
+
+### 报告回来后必须自己核实引用
+
+这类报告会给出看似精确的 venue/细节但**偶有编造**（曾出现凭空的 "RSLoRA" 细节）。
+`.bib` 条目**不得直接入库**，venue 必须按家族核：OpenReview 系用 `venueid`；
+**ACL 系（含 Findings）必须 aclanthology + DBLP**。见 `memory/venue-verify-acl-family-needs-anthology.md`。
+
+---
+
+## 论文模板（2026-08-14 用户指令）
+
+- **paperC 先用 ICLR 模板。** 用户原话：「然后paperC先用ICLR的模板」。
+  即 `iclr20XX_conference.sty` + `\documentclass{article}`，**不是** paperB 的 `acl.sty`。
+  > ⚠️ 这**覆盖**了 `paperC/SUBMISSION_GAP_AUDIT.md` 里「骨架复用 paperB」的建议 ——
+  > 那条建议的理由是 ACL 系适合 measurement paper，但**模板选择是用户的决定**，不是 agent 的。
+  > 该 audit 的另一条仍然有效且必须遵守：**只抄骨架，绝不抄 paperB 的正文** ——
+  > keep8/keep10/keep12 就是 paperB 的臂，粘贴等于同一批 run 在两篇投稿里重复报告。
+
+
+---
+
 ## Benchmark 结果汇总（2026-05-18）
 
 **`status/BENCHMARK_RESULTS.md`** 是所有实验结果的永久记录文件，包含：
