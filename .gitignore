@@ -182,3 +182,13 @@ configs/*deploy_key.pub
 # ★ 2026-08-06: 含 verbatim MMLU question 原文(其余 8 个 sibling 是 hash-only 安全) —— 绝不可进公开仓
 bench_results/olmo2_dolmino_contamination/examples.json
 bench_results/**/examples.json
+
+# LaTeX build detritus from paper_build.py (the /paper skill). The gate's own
+# verdicts live in paper*/gate/ and ARE tracked; these are regenerable aux files.
+paper*/main.aux
+paper*/main.bbl
+paper*/main.blg
+paper*/main.fdb_latexmk
+paper*/main.fls
+paper*/main.out
+paper*/main.log

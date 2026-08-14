@@ -1,0 +1,304 @@
+You are writing a complete, submission-shaped ICLR 2026 conference paper draft in LaTeX.
+You are the WRITER. A separate agent has already done the evidence extraction, the venue
+verification, and the gap audit. Your job is prose + LaTeX, not re-measurement.
+
+WORKING DIRECTORY: /apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory
+
+=====================================================================
+READ THESE FIRST, IN THIS ORDER. They are on disk. Read them fully.
+=====================================================================
+1. paperC/tcodex_out/EVIDENCE_PACK.md   <-- ★★ THE AUTHORITATIVE NUMBER SOURCE (752 lines).
+   Machine-extracted directly from the evidence JSON/CSV by the driving agent.
+   EVERY number you write must come from this file. Sections A-N cover:
+   A construct nulls, B MMLU-Pro 21 cells, C MMLU-Pro structure, D read-out v2 (27 cells),
+   E gate-3 fp32-vs-bf16, F five non-MMLU benchmarks, G cross-family, H MMLU-Pro content,
+   I integrity defects, J the one evidence hole (E1), K retraction ledger,
+   L step121000 status, M protocol, N related work with VERIFIED venue strings.
+2. paperC/SUBMISSION_GAP_AUDIT.md   (382 lines; the audit that re-derived 10/11 nulls first-hand)
+3. paperC/README.md                 (the claim at the scope it survives + retraction ledger)
+4. paperC/READOUT_V2_PREREGISTRATION.md   (the permutation null; the algebraic identity)
+5. paperC/VENUE_AND_NOVELTY_VERIFICATION.md   (venue authority per paper; full-text novelty pass)
+6. paperC/evidence/POWER_WALL_VERDICT.md, paperC/evidence/SECOND_MC_BENCHMARK_VERDICT.md,
+   paperC/evidence/GATE2_CROSSFAMILY_VERDICT.md   (skim for context; numbers are in the pack)
+
+If EVIDENCE_PACK.md and any other file disagree, EVIDENCE_PACK.md wins — it was extracted
+programmatically. If you find a genuine contradiction, write a note about it in
+paperC/tcodex_out/WRITER_NOTES.md rather than silently picking one.
+
+=====================================================================
+DELIVERABLES — write these files. Nothing else.
+=====================================================================
+paperC/main.tex
+paperC/refs.bib
+paperC/sections/00_abstract.tex
+paperC/sections/01_introduction.tex
+paperC/sections/02_related.tex
+paperC/sections/03_method.tex
+paperC/sections/03b_nulls.tex          <-- the four under-specifications. paperC's sharpest owned material.
+paperC/sections/04_experiments.tex
+paperC/sections/05_analysis.tex
+paperC/sections/06_discussion.tex
+paperC/sections/07_limitations.tex
+paperC/sections/08_ethics.tex
+paperC/sections/09_appendix.tex
+paperC/sections/tab_*.tex              <-- one file per table, \input-ed from the sections
+paperC/tcodex_out/WRITER_NOTES.md      <-- anything you could not do, any contradiction you found
+
+TEMPLATE — ICLR 2026, already installed in paperC/. USE IT AS-IS.
+  paperC/iclr2026_conference.sty, .bst, fancyhdr.sty, natbib.sty, math_commands.tex
+main.tex must be:
+  \documentclass{article}
+  \usepackage{iclr2026_conference,times}     % NO \iclrfinalcopy — this is an anonymous submission
+  plus: \usepackage{booktabs} \usepackage{amsmath} \usepackage{amssymb} \usepackage{graphicx}
+        \usepackage{multirow} \usepackage{hyperref} \usepackage{url} \usepackage{enumitem}
+        \usepackage{placeins} \usepackage{xcolor}
+  \title{...}   \author{Anonymous authors \\ Paper under double-blind review}
+  Bibliography: \bibliography{refs} \bibliographystyle{iclr2026_conference}
+DO NOT write your own .sty. DO NOT use paperB's acl.sty. DO NOT invent an author list —
+ICLR submission is double-blind, so use the anonymous author block.
+Page budget: ICLR main text is 9 pages + unlimited appendix. Aim for ~9 pages of main text
+and put the big tables in the appendix. Do not pad.
+
+⛔ ABSOLUTELY DO NOT read or copy any text from paperB/ or paperA/. paperC shares some
+experimental ARMS with paperB (keep8/keep10/keep12 are literally paperB's arms), so copying
+paperB prose would mean the same runs are reported verbatim in two submissions. You may not
+open paperB/sections/ at all.
+
+=====================================================================
+THE SCIENTIFIC CONTENT — HARD CONSTRAINTS. Do not deviate.
+=====================================================================
+
+CORE CONTRIBUTION (this is the paper's thesis, and it is a MEASUREMENT/METHODOLOGY claim):
+  Report every construct against its **construct-appropriate null** — the best-constant,
+  input-blind predictor computed from the benchmark's own label statistics — NOT against
+  chance, BEFORE comparing arms. Clearing the floor is NECESSARY, NOT SUFFICIENT (cite Feng
+  et al. ACL 2019 for the constructive proof that the converse is unsound).
+
+The paper has FOUR pillars, in this order of prominence:
+
+P1. THE NULLS THEMSELVES ARE NOT CHANCE, AND ARE UNDER-SPECIFIED IN FOUR WAYS.
+    11 constructs, nulls in EVIDENCE_PACK section A. Report BOTH the pp gap AND the ratio
+    (pp alone understates 10-way; ratio alone overstates 2-way). Be honest that on the five
+    small 4/5/2-way letter constructs the gap is only +0.43 to +2.60 pp — the dramatic
+    absolute cases are BoolQ (+12.17 pp) and, relatively, MMLU-Pro (1.1661x).
+    The FOUR under-specifications (section 03b_nulls.tex, paperC's sharpest owned material):
+      (a) TIE CONVENTION — split/first/last/credit/wrong. Reverses verdicts: on arc_challenge
+          `credit` flips 5 of 6 arms from significantly-above to significantly-below.
+          The `credit` reductio at its best: `0.532164` on MMLU-Pro, 4.6x the `wrong`
+          convention, a 40.6 pp span on ONE dataset with ONE tokenizer, and it BEATS the
+          intact base model's content_norm (`0.207613`) by 32.5 pp.
+      (b) LENGTH UNIT — characters vs continuation tokens. Moves `split` by up to 2.0 pp and
+          `credit` by up to 35 pp (winogrande).
+      (c) TOKENIZER — within the token unit. `split` moves 0.9003 pp, `credit` up to 10.6 pp
+          at 4-way and 9.26 pp at 10-way, on IDENTICAL items. ⚠️ The vocab-size EXPLANATION
+          is RETRACTED (not monotone: 32k Llama-2 and 152k Qwen3 tie LESS than 100k OLMo-2
+          and 128k Llama-3). Keep the fact, drop the mechanism.
+      (d) WHAT "CHANCE" EVEN MEANS when `n_opt` varies — naive `1/10 = 0.100000` vs
+          `mean(1/n_opt) = 0.110877`. Report both.
+    => A CONTENT floor is a property of (dataset, convention, unit, tokenizer), NOT of the
+       dataset alone. A LETTER floor IS a pure dataset property (asserted invariant across
+       all 15 arms; bit-identical across all 21 MMLU-Pro cells) — state this asymmetry.
+
+P2. THE WRONG-NULL VERDICT FLIP, AT MMLU-SCALE POWER, IN FOUR FAMILIES.
+    Under structural depth damage the letter MC interface degenerates to at or below its own
+    best-constant floor while reading "above chance".
+    Best-powered result (MMLU-Pro, n=12032, 21 cells, ALL 21 powered, hw 0.083-0.968 pp):
+      10/12 damaged non-OLMo cells above chance under `mean(1/n_opt)`, 12/12 under naive 0.10,
+      yet only 1/12 clears its floor; plus 3/3 on OLMo-2 => 15 damaged cells at MMLU-scale
+      power in four families where the null choice ALONE flips the verdict.
+    Off MMLU on five smaller benchmarks: 10/15 flipped, 0/15 above floor (NEVER write
+    "all fifteen"). Cross-family: 0/60 clear their floor, 25/60 read "above chance".
+    ⛔ HONEST FORM IS 14/15, NOT UNIVERSAL. `qwen3_8b_base/k14` is significantly ABOVE its
+    floor (+0.233 pp, p=0.0192, hw 0.191). Report it as a real but IMMATERIAL exception
+    (v2 = TRACE_SIGNAL, recovery_fraction 0.049 = 9.1% of its family's intact anchor, under
+    the 10% bar, while emitting `A` on 94.6% of items). NEVER as "k14 retains competence".
+    ⛔ 16 damaged cross-family cells are LITERAL constant emitters whose accuracy equals the
+    marginal of the emitted letter to machine precision, TWO of them landing exactly on the
+    OPTIMAL constant (`0.276000`, delta = 0.000 pp, CI95 [0,0]) — completely INVISIBLE
+    against chance. This is the single most vivid illustration of the thesis; feature it.
+    ⛔ THE POWER TABLE IS MANDATORY wherever a null result from a small set is mentioned.
+    And state that this was NEVER an effect-size problem: arc_challenge's median damaged
+    effect (-3.840 pp) is LARGER than MMLU's (-3.603 pp) and still n.s. because hw = 3.92 pp.
+
+P3. READ-OUT V2: THE INDEPENDENCE MODEL PROMOTED FROM DIAGNOSTIC TO NULL.
+    This is the paper's methodological crown jewel and must be given a full subsection.
+    The defect it fixes: `always-<L>` accuracy is a NON-FLAT dataset property
+    (A `.1166` ... J `.0785`), so `always-A` IS the floor BY CONSTRUCTION => the v1 statistic
+    gives THREE DIFFERENT VERDICTS for the SAME (zero) competence depending only on which
+    letter a degenerate model collapses onto: always-A `0.000` pp (AT floor),
+    always-E `-2.111` pp (BELOW), always-J `-3.807` pp (BELOW) — a 2.193 pp span.
+    The fix: null = E[acc | the arm's own prediction vector permuted uniformly at random
+    WITHIN `n_opt` strata] = sum_s (1/(n*n_s)) sum_L cnt_pred[s,L]*cnt_gold[s,L];
+    statistic Delta_perm = acc - acc_hat.
+    ★ WRITE THE PROOF EXPLICITLY AS AN ALGEBRAIC IDENTITY, IT IS THE KEY MOVE:
+      for a pure always-L emitter P(pred) = delta_L, so
+      acc_hat = sum_{L'} delta_{L'L} m_{L'} = m_L, and acc = m_L too, hence
+      **Delta_perm == 0 EXACTLY, for every collapse letter L.**
+      This is ALGEBRA, NOT an empirical regularity. The loophole "just collapse onto a
+      different letter" is closed BY CONSTRUCTION, not by hope. MEASURED to <1e-12 for all
+      10 letters and asserted in code.
+    Two nulls, two questions, TWO SCOPES — make this table explicit:
+      v1 (headline): *Is this INTERFACE valid?* null = best-constant, must be arm-INDEPENDENT,
+        else arms are not mutually comparable.
+      v2: *Does THIS ARM know anything?* null = permutation of the arm's own predictions, must
+        be arm-CONDITIONAL, else the statistic confounds "which letter it collapsed onto" with
+        "what it knows".
+    ⛔ v2 MUST NEVER be quoted as "the arm cleared paperC's floor": since
+      sum_L p_L m_L <= max_L m_L, `acc_hat <=` the best-constant floor ALWAYS, with equality
+      iff all prediction mass sits on A. v2 is a LOWER ABSOLUTE BAR answering a DIFFERENT
+      question. Say this in the text.
+    Report the negative results honestly and prominently:
+      - BELOW-floor count: v1 = 2, v2 = 0. Both v1 BELOW-floor cells DISSOLVE under v2.
+      - One published ABOVE-floor label WITHDRAWN (`qwen3/k14` -> TRACE_SIGNAL).
+      - v2 is NOT uniformly conservative — `olmo2/keep14` moves the OTHER way (AT floor ->
+        TRACE_SIGNAL). It RE-SORTS rather than deflates. Say so; it is evidence the criterion
+        is doing work rather than just shrinking everything.
+      - G6 FIRES: `llama2_7b` intact has recovery_fraction 0.0545 — MMLU-Pro barely separates
+        an INTACT Llama-2-7B from its own permutation null, so relative-recovery claims are
+        BLOCKED for that family. Under v1 that same cell reads a comfortable ABOVE floor
+        +1.538 pp. v1 could not see this. It is a real finding ABOUT THE BENCHMARK.
+      - MATERIALITY: at n=12032, p<0.05 is reachable far below anything nameable as
+        competence (`qwen3/k14`: p=0.0066 at +0.267 pp while emitting `A` on 94.6% of items).
+        So significance-only would re-import the defect one level up. Hence
+        recovery_fraction >= 0.10 x (same-family intact anchor).
+      - Also report the REJECTED alternatives with their measured reasons: A01's `own_modal`
+        null OVER-CREDITS by 1.37 pp and FLIPS THE SIGN on P1; the content interface is MORE
+        negative than letter under the same null; entropy/modal-share are demoted to
+        descriptive columns because `llama3/k12` has modal 0.339 / entropy 0.614 yet
+        Delta_perm = +0.002 pp (p=0.997) — maximally un-degenerate-looking and completely empty.
+    ⚠️ PRE-REGISTRATION HONESTY, state it plainly in the paper: the v2 RULE is pre-hoc (fixed
+    in a committed document before the re-judging), but the NUMBERS it produces on the 27
+    already-scored cells are POST-HOC BY CONSTRUCTION. The criterion is pre-registered against
+    all FUTURE unscored milestones and is a post-hoc re-analysis of the existing 27 cells. Also
+    disclose that the designer had already seen the shape of the defect. Do not overclaim.
+
+P4. IT IS NOT A NUMERICAL BUG — the fp32 mechanism falsification (EVIDENCE_PACK section E).
+    Full-fp32 forward removes 100% of bf16 exact ties and changes 18.03% (2532/14042) of the
+    damaged arm's letter argmax decisions, yet letter accuracy does not move
+    (Delta = -0.0015, CI95 [-0.0064, +0.0033], exact McNemar p = 0.570), and the arm sits
+    below its floor MORE significantly in fp32 (-1.538 pp, p = 0.0060) than in bf16
+    (-1.389 pp, p = 0.0190).
+    "A defect that fp32 can fix is an engineering note. One it cannot fix is a
+    construct-validity problem. Reshuffling 2,532 coin-flips does not recover information
+    that is not there." — you may use this framing but rewrite it in your own words.
+
+ALSO REPORT (these are contributions, not embarrassments):
+ - The R-7 bootstrap-p bug and its structural fix (an ILLEGAL p = 1.042 caught, root-caused to
+   double-counting the zero atom in `2*min((bs<=0).mean(),(bs>=0).mean())`, fixed with a mid-p
+   estimator that makes p<=1 STRUCTURAL; 0 of 24 verdicts changed, 0 of 30 p-values crossed
+   alpha=0.05, every non-p field byte-identical).
+ - The two integrity defects of the first cross-family launch (silent tokenizer-specific
+   left-truncation of 10/15 cells; and the Llama-2 no-GQA OOM where the merge guard correctly
+   REFUSED a 3/8 partial merge) and the HARDENING that followed (`n_trunc` promoted from
+   WARNING to a hard per-shard assert). Say explicitly the truncation defect turned out benign
+   (0/14 verdicts changed) but that this was NOT KNOWABLE IN ADVANCE.
+ - The readout-vs-knowledge dissociation: arc_easy `keep8` sits AT its letter floor (`0.2584`)
+   while scoring `0.6460` on content (+38.76 pp, McNemar p = 9.8e-148). The competence is
+   demonstrably present and the letter readout cannot express it.
+ - Symmetry honesty: "chance inflates the claim" is CONSTRUCT-SPECIFIC, not universal. OBQA
+   content_norm inflation is 2.11x, but PIQA (0.90x) and arc_easy (0.98x) go the OTHER way
+   because their token-longest floors are BELOW chance, so there the chance line UNDERSTATES
+   the residual. State it symmetrically.
+
+=====================================================================
+LIMITATIONS — ALL FOUR OF THESE MUST APPEAR IN 07_limitations.tex, EXPLICITLY
+=====================================================================
+L1. THE E1 EVIDENCE HOLE (EVIDENCE_PACK section J). OpenBookQA's CHARACTER-unit
+    longest-option null `0.3635` is NOT recomputable from the records on disk: the per-item
+    records store continuation-token counts only, not option TEXT, and no python on any
+    cluster node has `pyarrow`/`datasets`, so the raw parquet could not be re-read. Report the
+    TOKEN-unit values (`0.368000`) as primary; cite the character-unit values only as
+    previously-reported-and-not-re-derived, and use them in NO test. The same applies to the
+    other character-unit values in the ledger, one of which (`0.491713`) even collides with an
+    arm accuracy in the CSV. ⛔ DO NOT print `0.3635` as if verified. Write this as a known
+    limitation with the reason. Do NOT pretend the number is confirmed.
+L2. n = 1 FAMILY AT 1 DEPTH for the heal contrast. Llama-2/Llama-3 and k10/k12/k14 stay
+    confounded. One arm at one depth in one family cannot fit a depth curve.
+L3. THE CORPUS IS UNMATCHED AND UNFIXABLY SO. The healed Qwen3 arm heals on SlimPajama
+    (5.72 epochs of 5.541B tokens) vs OLMo-2's 1.0 epoch of 31.7B Dolmino; Qwen3 cannot
+    consume OLMo-2-token Dolmino and raw Dolmino text is on NEITHER disk. Also relative depth
+    is untested (Qwen3 has 36 layers vs OLMo-2's 32, so k8 = 22.2% vs 25.0%).
+L4. H_heal IS NOT AVAILABLE, AND IS NOT MERELY UNMEASURED. Its antecedent is FALSE: it
+    required the un-healed twin to sit below its floor, and under the collapse-proof
+    permutation null it does not (-0.139 pp, p = 0.0964). The contrast has DISSOLVED, and no
+    amount of further training makes it measurable BECAUSE THE FAILURE IS IN THE COMPARATOR,
+    NOT THE ARM. H_family is equally unavailable (0 of 27 cells are significantly below their
+    permutation null).
+Plus: the ladder is a cliff not a gradient (no depth curve may be fitted); pooled verdicts
+must never be read per-benchmark; the damaged cross-family arms are truncate-only while
+OLMo-2's are prune-then-heal (a REGIME CONFOUND that must be stated wherever they share a
+table); and the Cho et al. camera-ready could not be diffed (read at arXiv v4, 14 days
+pre-camera-ready).
+
+⛔ THE HEALED-ARM READ-OUT AT step121000 IS NOT IN THIS PAPER. Write the paper as complete
+without it (EVIDENCE_PACK section L). You may mention in one or two sentences that a healed
+non-OLMo arm is in training and that its narrowed question is whether it shows material
+item-level signal — but the paper must NOT depend on it, and must NOT print the
+H_heal/H_family dichotomy as though it had been tested.
+
+=====================================================================
+WRITING DISCIPLINE — VIOLATIONS ARE FATAL
+=====================================================================
+1. ⛔ DO NOT INVENT A SINGLE NUMBER. Every numeral must come from EVIDENCE_PACK.md or from a
+   named file. If you want a number you cannot find, write "\todo{not available}" and list it
+   in WRITER_NOTES.md. NEVER interpolate, NEVER round to a "nicer" value, NEVER estimate.
+2. ⛔ DO NOT OVERSTATE. Use "14/15", never "universal". Use "10/15 flipped, 0/15 above floor",
+   never "all fifteen". Use "we are not aware of a prior X", never "the first X". Use
+   "necessary, not sufficient" for the floor test, always.
+3. ⛔ NO FABRICATED CITATIONS. refs.bib may contain ONLY the entries in EVIDENCE_PACK
+   section N. Do not add a single paper you cannot see there. Copy the venue strings EXACTLY
+   as given (they were verified at the family-correct authority: OpenReview `venueid` for
+   ICLR/NeurIPS/ICML, ACL Anthology + DBLP for the ACL family). Specifically:
+     - Zheng et al. arXiv:2309.03882 = ICLR 2024 **Spotlight** (this citation is currently
+       MISSING from paperC and its absence is a citation hole a reviewer will find immediately;
+       cite it for "selection bias"/"token bias"/PriDe and re-argue the permuted-option
+       rejection AGAINST PriDe BY NAME, on grounds other than mere cost).
+     - Ding et al.: the camera-ready title says "**Through**" Statistical Testing, not "with".
+     - arXiv:2602.02182 is a PREPRINT (DBLP: `CoRR 2026`, informal) — mark it as such.
+     - arXiv:2603.21016 is `claimed ACL 2026, unverified` — cite as arXiv preprint or omit.
+     - TWO different Zhengs exist (ICLR 2025 Oral "null model" vs ICLR 2024 Spotlight
+       "selection bias"). Give them clearly distinct keys.
+   Use `@inproceedings` with explicit `booktitle` for published venues and `@article` with
+   `journal = {arXiv preprint arXiv:XXXX.XXXXX}` for preprints. Never label a preprint as a
+   conference paper.
+4. ⛔ THE PROTOCOL SENTENCE IS MANDATORY: state in the experimental-setup section that ALL
+   results use `chat_template = False`, and state WHY — the models evaluated are BASE LMs with
+   no SFT and no RLHF, so applying a chat template would be an unfair, non-comparable
+   measurement. Also state that scoring is likelihood-based throughout (summed token
+   log-probability over candidate continuations, argmax) with NO sampling, NO decoding and NO
+   regex over generated text.
+5. Include a FLAT "what we claim / what we retract" table with ONE ROW PER CLAIM and a
+   current-status column (EVIDENCE_PACK section K, 16 items). The self-falsification history
+   is part of the contribution, but a reviewer must be able to see in one table what is
+   CURRENTLY claimed. Put it in the appendix if it does not fit the main body. ⛔ Do NOT
+   reproduce the source ledger's nested retractions-of-retractions prose — flatten it.
+6. Tables: use `booktabs` (\toprule/\midrule/\bottomrule), one `tab_*.tex` file per table,
+   \input-ed. Every table caption must name the evidence file the numbers came from.
+7. NO FIGURES. There is no plotting environment available. Do not write \includegraphics for a
+   file that does not exist. If a figure would help, describe it in WRITER_NOTES.md instead.
+8. Do not use emoji anywhere in the .tex output.
+9. Escape LaTeX specials properly: `_` in identifiers must be `\_` (or wrapped in \texttt{}),
+   `%` must be `\%`, `&` must be `\&`. Percent signs in numbers: `18.03\%`. Underscored
+   identifiers appear a LOT here (`n_opt`, `content_norm`, `Delta_perm`, `always-A`,
+   `mean(1/n_opt)`, `recovery_fraction`) — wrap them in \texttt{} and escape the underscores.
+   A single unescaped `_` outside math mode breaks the build.
+10. There is NO LaTeX toolchain on this machine (verified: no pdflatex, no latexmk, no
+    tectonic, on this node and on the remote nodes). You CANNOT compile. So be conservative:
+    only use packages listed above, define no exotic macros, and keep the LaTeX simple and
+    robust. Do not claim you compiled it.
+
+TITLE: propose something accurate and measurement-flavoured. It must NOT overclaim. Something
+in the shape of "Null Calibration for Multiple-Choice Evaluation: ..." is appropriate; you may
+do better.
+
+Write real, publication-quality prose — not bullet dumps, not a restructured README. The intro
+should open with the in-the-wild instance (arXiv:2602.02182 found the flip by accident because
+its authors happened to print both baselines) and with the fact that the field's canonical
+construct-validity checklist (Bean et al., NeurIPS 2025 D&B) has ZERO of 27 items mentioning a
+baseline/null/chance/constant predictor — so paperC's contribution is the MISSING ITEM. That is
+a stronger opening than a purely methodological argument.
+
+When you are done, write paperC/tcodex_out/WRITER_NOTES.md listing: (a) any number you wanted
+and could not source, (b) any place you judged the evidence too weak for the claim you were
+asked to make, (c) any internal contradiction you found between the source documents, (d) what
+a human must check before submission.

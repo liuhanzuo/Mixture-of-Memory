@@ -1,0 +1,22 @@
+\begin{table*}[t]
+\centering
+\small
+\setlength{\tabcolsep}{4.3pt}
+\begin{tabular}{lrrrrr}
+\toprule
+Construct & $n$ & Best-constant/input-blind floor & Chance & Gap (pp) & Ratio \\
+\midrule
+MMLU-Pro letter, naive & 12032 & always-A 0.116606 & 0.100000 & +1.661 & 1.1661$\times$ \\
+MMLU-Pro letter, item-avg. & 12032 & always-A 0.116606 & 0.110877 & +0.573 & 1.0517$\times$ \\
+MMLU letter & 14042 & always-D 0.268908 & 0.250000 & +1.891 & 1.0756$\times$ \\
+OpenBookQA letter & 500 & always-A 0.276000 & 0.250000 & +2.600 & 1.1040$\times$ \\
+ARC-Easy letter & 2376 & always-C 0.266414 & 0.250161 & +1.625 & 1.0650$\times$ \\
+ARC-Challenge letter & 1172 & always-B 0.265358 & 0.250156 & +1.520 & 1.0608$\times$ \\
+CommonsenseQA letter & 1221 & always-B 0.208845 & 0.200000 & +0.885 & 1.0442$\times$ \\
+PIQA letter & 1838 & always-B 0.504897 & 0.500000 & +0.490 & 1.0098$\times$ \\
+BoolQ & 3270 & always-B 0.621713 & 0.500000 & +12.17 & 1.2434$\times$ \\
+\bottomrule
+\end{tabular}
+\caption{Construct floors compared with chance. Both percentage-point gaps and ratios are needed across option counts. Numbers are from \texttt{paperC/tcodex\_out/EVIDENCE\_PACK.md}, Section A.}
+\label{tab:nulls}
+\end{table*}

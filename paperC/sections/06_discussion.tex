@@ -1,0 +1,17 @@
+\section{Discussion}
+
+\paragraph{A reporting rule, not a universal theory of failure.}
+The practical recommendation is small: define the strongest construct-appropriate constant or input-blind predictor, report its value and specification, test the arm against it, and only then compare arms. The rule does not say every damaged model becomes constant, every MC interface is invalid, or every chance line inflates a claim. It says that an arm score without its appropriate floor can support the wrong verdict.
+
+The letter-floor and permutation read-outs partition scope. V1 must be arm-independent because it certifies mutual comparability of an interface. V2 must be arm-conditional because it asks whether one prediction vector aligns with its items beyond its own output marginal. Substituting one for the other creates the defects we observe: chance credits constants, while a best-constant competence test confounds knowledge with collapse-letter identity.
+
+\paragraph{Relationship to prediction debiasing.}
+PriDe-style option permutations estimate and remove a model's selection bias \citep{zheng2024selectors}. This is complementary, not redundant. A corrected predictor can still be evaluated against the wrong reference; an explicit floor remains necessary. Conversely, a floor test does not repair a biased predictor. A complete evaluation can report both predictor-side debiasing and reference-side null calibration.
+
+\paragraph{Power is part of construct validity.}
+Small benchmarks produce apparently reassuring at-floor results even when observed effects are large. Any interpretation of a null result must include the achieved interval. MMLU-Pro changes the evidential status: OLMo-2 \texttt{keep8}'s interval excludes an MMLU-sized below-floor effect, so this is a powered non-replication, not an absence of evidence. The broader ladder remains a cliff rather than a gradient; no depth curve should be fitted to the sparse rungs.
+
+\paragraph{Current claim versus retracted claims.}
+The flat ledger in Appendix~\ref{app:ledger} records the self-falsification history. The surviving claim is narrower and stronger: under structural damage, the letter interface frequently fails its own arm-independent best-constant floor while remaining above a conventional chance line. This is 14/15 rather than universal at MMLU-Pro, is not equivalent to literal constant emission, and does not by itself identify healing or family as a cause.
+
+A healed non-OLMo arm is in training, but it is not part of this paper's evidence. Its remaining question is only whether it develops material item-level signal. The original \texttt{H\_heal}/\texttt{H\_family} dichotomy is unavailable because its unhealed comparator does not fall below the collapse-proof permutation null.

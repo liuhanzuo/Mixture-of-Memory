@@ -1,0 +1,18 @@
+\begin{table*}[t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3.0pt}
+\begin{tabular}{p{0.15\linewidth}p{0.17\linewidth}p{0.17\linewidth}p{0.15\linewidth}p{0.26\linewidth}}
+\toprule
+Alternative & Cell & Null/statistic (pp) & Comparator (pp) & Measured reason for rejection \\
+\midrule
+Own-modal null & Qwen3 \texttt{k8} & $+1.230$ vs always-E & v2 $-0.139$ & Over-credits by 1.37 pp and flips the sign \\
+Content interface & Qwen3 heal@7000 & content $-3.610$ & letter $-0.022$ & More negative under the same permutation null \\
+Content interface & Qwen3 \texttt{k8} & content $-1.076$ & letter $-0.139$ & More negative under the same permutation null \\
+Content interface & OLMo-2 \texttt{keep8}@121000 & content $-0.086$ & letter $+0.229$ & Does not rescue the damaged read-out \\
+Entropy/modal share & Llama-3 \texttt{k12} & $\Delta_{\mathrm{perm}}=+0.002$ & $p=0.997$ & Modal share 0.339 and entropy 0.614 still contain no signal \\
+\bottomrule
+\end{tabular}
+\caption{Measured reasons for rejecting simpler v2 alternatives. Numbers are from \texttt{paperC/tcodex\_out/EVIDENCE\_PACK.md}, Section D.}
+\label{tab:v2-alternatives}
+\end{table*}
