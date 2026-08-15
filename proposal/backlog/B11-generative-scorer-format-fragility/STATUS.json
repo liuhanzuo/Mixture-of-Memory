@@ -1,365 +1,448 @@
 {
- "id": "B11",
- "name": "generative-scorer-format-fragility",
- "status": "BACKLOG_UNVERIFIED_NOVELTY_UNCHECKED",
- "created": "2026-08-12",
- "origin": {
-  "produced_by": "A02 read-tax gate (commit 3c9f8f9) + A02 misorder gate (this one)",
-  "why_not_owned_by_A02": "separable: the claim concerns any base LM scored by babilong.metrics on a generative task, with or without CoMem or a depth knob. A02 retains provenance and the source generations, not ownership.",
-  "why_not_owned_by_B04": "B04's construct is per-item acc_norm decision-margin compression under model damage -- a likelihood-ranking metric over MC options, no generation, no retrieval, no string matching, status NARROWED_TO_OLMO_2_ONLY. This is a generative string-matching scorer's TEXT PREPROCESSING interacting with output format. Same umbrella word 'eval fragility', different measured construct, different mechanism, different failure surface. Merging would let the OLMo-2-only margin claim borrow support from an unrelated mechanism.",
-  "verdict_doc": "proposal/backlog/A02-comem-write-read-repair/A02_BABILONG_MISORDER_VERDICT.md"
- },
- "claim": "A generative long-context benchmark scorer's text preprocessing can encode output-format conventions strongly enough to destroy the RANKING of a true effect of +70 to +84 pp, and the failure localises to specific auditable lines of the metric.",
- "established_measurements": {
-  "true_effect_on_retrieval_closed_ruler_pp": [
-   58.0,
-   54.0,
-   84.0,
-   84.0
+  "id": "B11",
+  "name": "generative-scorer-format-fragility",
+  "status": "BACKLOG_UNVERIFIED_NOVELTY_UNCHECKED",
+  "created": "2026-08-12",
+  "origin": {
+    "produced_by": "A02 read-tax gate (commit 3c9f8f9) + A02 misorder gate (this one)",
+    "why_not_owned_by_A02": "separable: the claim concerns any base LM scored by babilong.metrics on a generative task, with or without CoMem or a depth knob. A02 retains provenance and the source generations, not ownership.",
+    "why_not_owned_by_B04": "B04's construct is per-item acc_norm decision-margin compression under model damage -- a likelihood-ranking metric over MC options, no generation, no retrieval, no string matching, status NARROWED_TO_OLMO_2_ONLY. This is a generative string-matching scorer's TEXT PREPROCESSING interacting with output format. Same umbrella word 'eval fragility', different measured construct, different mechanism, different failure surface. Merging would let the OLMo-2-only margin claim borrow support from an unrelated mechanism.",
+    "verdict_doc": "proposal/backlog/A02-comem-write-read-repair/A02_BABILONG_MISORDER_VERDICT.md"
+  },
+  "claim": "A generative long-context benchmark scorer's text preprocessing can encode output-format conventions strongly enough to destroy the RANKING of a true effect of +70 to +84 pp, and the failure localises to specific auditable lines of the metric.",
+  "established_measurements": {
+    "true_effect_on_retrieval_closed_ruler_pp": [
+      58.0,
+      54.0,
+      84.0,
+      84.0
+    ],
+    "babilong_cells_failing_to_recover_ordering": "6 of 6",
+    "babilong_cells_with_inverted_point_estimate": "4 of 6 (qa1x16k, qa1x32k, qa2x16k, qa2x32k)",
+    "inversion_significance": "NOT significant: best exact McNemar p = 0.0703 on 8 discordant items (b=1,c=7); Holm-adjusted within the 6-cell family = 0.4219",
+    "claim_strength": "RANKING FAILURE, not demonstrated sign error",
+    "list_format_rate_A4_vs_A5_pct": {
+      "qa1_16k": [
+        62.0,
+        31.0
+      ],
+      "qa1_32k": [
+        75.0,
+        42.0
+      ],
+      "qa2_16k": [
+        60.0,
+        25.0
+      ],
+      "qa2_32k": [
+        74.0,
+        32.0
+      ],
+      "qa5_16k": [
+        2.0,
+        6.0
+      ],
+      "qa5_32k": [
+        2.0,
+        5.0
+      ]
+    },
+    "truncation_kill_rate_A4_vs_A5_pct": {
+      "qa1_16k": [
+        40.0,
+        12.0
+      ],
+      "qa1_32k": [
+        43.0,
+        16.0
+      ],
+      "qa2_16k": [
+        25.0,
+        9.0
+      ],
+      "qa2_32k": [
+        22.0,
+        5.0
+      ],
+      "qa5_16k": [
+        4.0,
+        4.0
+      ],
+      "qa5_32k": [
+        3.0,
+        4.0
+      ]
+    },
+    "one_operation_ablation": "removing ONLY preprocess_output's first-period truncation (uniqueness requirement retained, so multiple-choice lists still score 0 and chance inflation is removed by construction) repairs the inversion on 2 of 6 cells and makes qa1x32k a perfect ladder rho=-1.000 p=0.0167; qa2 is unrepairable (floor, A4=1%)",
+    "cell_level_dissociation": "the 4 inverting cells are EXACTLY the 4 high-list-format cells; [[4,0],[0,2]], Fisher exact p=0.0667 = the minimum attainable with 6 cells, so DESCRIPTIVE dissociation, not a powered test"
+  },
+  "refuted_hypotheses": {
+    "retrieval_domination": "REFUTED as the mechanism for the inversion. Conditioning on the arm-independent retrieval HIT/MISS label, the inversion is LARGER on HIT (qa1x16k HIT -6.67 vs MISS +8.57; qa2x32k -13.64 vs -5.41). Low recall@12 (22.9-63.2%) remains the correct reason these cells cannot support depth inference IN GENERAL, but it does not explain the inversion.",
+    "retracted_intermediate_number": "a lenient format-insensitive read (target_in_raw) showed 4/6 sign flips, but it is chance-inflated for multiple-choice outputs and A4 emits lists far more often. The strict ablation gives 2/6. 2/6 is the number that stands."
+  },
+  "not_identified": "retrieval vs floor cannot be separated across 6 cells: Spearman(A0_acc, signed_sep) = +0.943 exact p=0.0167 (n=6 lower bound) but Spearman(recall, A0_acc) = +0.714, i.e. substantially collinear. Floor has the better sign, p and story, but the mechanism is NOT IDENTIFIED and must not be claimed.",
+  "kill_gates": [
+    {
+      "id": "K1",
+      "type": "novelty",
+      "gpu": 0,
+      "blocking": true,
+      "test": "check answer-extraction / metric-robustness literature: lm-evaluation-harness answer extraction, exact_match variants, MCQ answer-parsing robustness, LLM-as-judge vs string match. Venue rules: OpenReview venueid for ICLR/NeurIPS/ICML; aclanthology+DBLP for the ACL family incl. Findings.",
+      "kill_if": "the literature already covers 'preprocessing truncation changes model ranking'"
+    },
+    {
+      "id": "K2",
+      "type": "cross-family replication",
+      "blocking": true,
+      "test": "a second model family; output-format habit is a family property",
+      "kill_if": "no arm-wise list-format asymmetry in the second family AND the inversion disappears -> degrades to 'Qwen3 format habit + one scorer bug', archive as an A02 appendix negative result"
+    },
+    {
+      "id": "K3",
+      "type": "cross-benchmark",
+      "blocking": false,
+      "test": "do LongBench / RULER / LongEval scorers have the same class of preprocessing?",
+      "kill_if": "no other generative long-context scorer does -> downgrade to an upstream bug report"
+    }
   ],
-  "babilong_cells_failing_to_recover_ordering": "6 of 6",
-  "babilong_cells_with_inverted_point_estimate": "4 of 6 (qa1x16k, qa1x32k, qa2x16k, qa2x32k)",
-  "inversion_significance": "NOT significant: best exact McNemar p = 0.0703 on 8 discordant items (b=1,c=7); Holm-adjusted within the 6-cell family = 0.4219",
-  "claim_strength": "RANKING FAILURE, not demonstrated sign error",
-  "list_format_rate_A4_vs_A5_pct": {
-   "qa1_16k": [
-    62.0,
-    31.0
-   ],
-   "qa1_32k": [
-    75.0,
-    42.0
-   ],
-   "qa2_16k": [
-    60.0,
-    25.0
-   ],
-   "qa2_32k": [
-    74.0,
-    32.0
-   ],
-   "qa5_16k": [
-    2.0,
-    6.0
-   ],
-   "qa5_32k": [
-    2.0,
-    5.0
-   ]
+  "forbidden_claims": [
+    "'BABILong inverts conclusions' -- the inversion is NOT significant (p=0.0703, Holm 0.4219)",
+    "retrieval is the mechanism -- refuted, inversion is larger on HIT",
+    "attributing to retrieval OR floor separately -- collinear across 6 cells, not identified",
+    "the 4/6 figure from target_in_raw -- chance-inflated, superseded by 2/6",
+    "merging with B04 -- different construct and mechanism"
+  ],
+  "gpu_policy": "NO GPU until K1 (novelty, 0 GPU) passes.",
+  "evidence_files": [
+    "proposal/backlog/A02-comem-write-read-repair/evidence/babilong_misorder/a02_babilong_misorder.json",
+    "proposal/backlog/A02-comem-write-read-repair/evidence/babilong_misorder/a02_babilong_format_diagnosis.json",
+    "proposal/backlog/A02-comem-write-read-repair/evidence/babilong_misorder/a02_format_mechanism.json",
+    "proposal/backlog/A02-comem-write-read-repair/evidence/babilong_misorder/a02_truncation_ablation.json"
+  ],
+  "source_generations": "zwfy6 babilong_results/a02_{rtax,dvr,babilong_c2}_* (8 shards/cell, n=100)",
+  "protocol_invariants": [
+    "chat_template=False",
+    "selector=iter_bm25",
+    "per-cell only, never pooled",
+    "canonical scorers imported, never reimplemented"
+  ],
+  "k1_novelty": {
+    "gate": "K1",
+    "date": "2026-08-14",
+    "gpu_spent": "ZERO",
+    "verdict": "NEEDS_NARROWING",
+    "doc": "proposal/backlog/B11-generative-scorer-format-fragility/K1_NOVELTY_CHECK.md",
+    "raw_artefacts": "proposal/backlog/B11-generative-scorer-format-fragility/k1_raw/ (arXiv Atom XML, ACL Anthology HTML, DBLP JSON, OpenReview JSON, HELMET camera-ready HTML)",
+    "why_not_pass": "the claim AS WRITTEN in this file's 'claim' key asserts a general 'scorer preprocessing destroys ranking', which IS covered: Alzahrani et al. ACL 2024 (2024.acl-long.744) moves leaderboard rank up to 8 positions by changing the answer-SELECTION method; Sanz-Guerrero et al. EMNLP 2025 (2025.emnlp-main.988) reshuffles rankings via tokenization of the 'Answer:' suffix; arXiv:2510.05152 states one can put any model in the lead by changing the single delimiter character. Proceeding unnarrowed walks into K1's kill_if.",
+    "why_not_fully_preempted": "no located work varies ONE operation inside an existing GENERATIVE scorer while holding the generations BYTE-FIXED, and no located work breaks a ladder over ARMS OF ONE MODEL differing in output-format habit. All prior art varies the prompt (delimiter/tokenization/demonstrations/format constraints), swaps the extraction module wholesale (RegEx->model, extra inference pass), changes the metric FAMILY (EM->sMAPE, ROUGE->judge, EM->judge), or perturbs the benchmark (choice order, input-context truncation). Those are between-model leaderboard claims; B11's is a within-model between-arm claim.",
+    "narrowed_claim": "In a generative long-context benchmark whose scorer matches free-form output against a closed task-label vocabulary (babilong.metrics.compare_answers), a SINGLE text-preprocessing operation in the scorer's source -- truncation of the model output at the first period, metrics.py:27 -- interacts with an ARM-DEPENDENT output-format habit strongly enough that the scorer FAILS TO RECOVER THE ORDERING of a within-model architectural manipulation whose true effect is +58 to +84 pp on a retrieval-closed reference task. Demonstrated by re-scoring BYTE-FIXED generations with that one operation removed and nothing else changed: on 2 of 6 cells the inverted point estimate is removed, and on qa1x32k the 5-point ladder becomes rho = -1.000 (exact permutation p = 0.0167). The operation is NOT a one-directional bug -- it LOWERS scores for arms emitting choice-lists (list-format rate 62-75%) and RAISES them for arms emitting continuations -- and the four inverting cells are EXACTLY the four high-list-format cells ([[4,0],[0,2]], Fisher exact p = 0.0667, the minimum attainable at 6 cells, hence descriptive). The scorer contains a SECOND, independently verifiable defect: the guard intended to stop continuation leakage, metrics.py:31 split('Question'), is UNREACHABLE because metrics.py:25 lowercases first.",
+    "venue_verified_prior_art": [
+      {
+        "cite": "Alzahrani et al., When Benchmarks are Targets, arXiv:2402.01781",
+        "venue": "ACL 2024 Long",
+        "authority": "aclanthology 2024.acl-long.744 metadata block (pp. 13787-13805, DOI 10.18653/v1/2024.acl-long.744) + DBLP 'ACL 2024'",
+        "relation": "MUST CITE -- owns 'answer-selection method changes leaderboard rank'"
+      },
+      {
+        "cite": "Molfese et al., Right Answer Wrong Score, arXiv:2503.14996v2",
+        "venue": "Findings of ACL 2025",
+        "authority": "aclanthology 2025.findings-acl.950 metadata block (pp. 18477-18494, DOI 10.18653/v1/2025.findings-acl.950) + DBLP 'ACL 2025'",
+        "relation": "adjacent -- MCQA only; full-text check: 0 occurrences of generative/long-context/ablation/BABILong/first sentence/source code; 'ranking' appears once, citing Alzahrani"
+      },
+      {
+        "cite": "Yu et al., xFinder, arXiv:2405.11874",
+        "venue": "ICLR 2025 Poster",
+        "authority": "OpenReview venueid=ICLR.cc/2025/Conference, forum 7UqQJUKaLM, invitations include Submission5699/-/Camera_Ready_Revision",
+        "relation": "MUST CITE -- closest stance (harness RegEx extraction is 74.38% accurate and is itself the defect), but replaces the module rather than ablating one operation, and shows no ranking destruction"
+      },
+      {
+        "cite": "Sanz-Guerrero et al., Mind the Gap: Tokenization for MCQA, arXiv:2509.15020",
+        "venue": "EMNLP 2025 Main",
+        "authority": "aclanthology 2025.emnlp-main.988 metadata block (pp. 19573-19583) + DBLP 'EMNLP 2025'",
+        "relation": "MUST CITE -- prompt-side 'reshuffled model rankings'; distinguish prompt side vs scorer side in the abstract"
+      },
+      {
+        "cite": "Yen et al., HELMET, arXiv:2410.02694v3",
+        "venue": "ICLR 2025 Poster",
+        "authority": "OpenReview venueid=ICLR.cc/2025/Conference, forum 293V3bJbmE, invitations include Submission12024/-/Camera_Ready_Revision. NOTE: DBLP still returns only 'CoRR 2024' for this title -- the two-family rule was load-bearing here",
+        "relation": "MUST CITE -- most dangerous neighbour: names 'Unreliable metrics' + 'inconsistent output formats' for long-context benchmarks. Read camera-ready 2.2/2.3 in full: its metric fix REPLACES ROUGE with a GPT-4o reference-based judge (human kappa 0.91/0.76), its format fix is PROMPT-SIDE two-shot demos, and it uses substring EM (SubEM) for RAG WITHOUT auditing SubEM's own preprocessing. Argues 'pick a better metric'; B11 argues 'the metric you already use has an identifiable line that inverts your ladder'"
+      },
+      {
+        "cite": "Su/Zhang/Ullrich/Bottou/Ibrahim, A Single Character can Make or Break Your LLM Evals, arXiv:2510.05152",
+        "venue": "CoRR 2025 only (DBLP: Informal and Other Publications; no conference venue located)",
+        "authority": "DBLP",
+        "relation": "MUST CITE -- strongest published 'one character controls ranking', but the character is in the PROMPT. SOURCES.md already flags this exact prompt/scorer distinction as the whole novelty question"
+      },
+      {
+        "cite": "Arjmandi, Distractor-Aware Truncation, arXiv:2608.03297",
+        "venue": "arXiv 2026-08-04 (10 days before this gate = CONCURRENT, does not constitute preemption per project rule)",
+        "authority": "arXiv",
+        "relation": "MUST CITE -- same benchmark (BABILong), same word 'truncation', OPPOSITE side of the pipeline (truncates the INPUT CONTEXT, not the model output inside the scorer). Cite or a reviewer will conflate the two truncations"
+      },
+      {
+        "cite": "Time to Revisit Exact Match, arXiv:2509.16720",
+        "venue": "arXiv only (DBLP total=0 for this title)",
+        "authority": "DBLP",
+        "relation": "adjacent -- EM->sMAPE/MASE 'reshuffles model rankings' on temporal QA; changes the metric FAMILY, not a preprocessing operation"
+      },
+      {
+        "cite": "Reassessing Extractive QA Datasets at Scale, arXiv:2504.11972v3",
+        "venue": "arXiv only (DBLP total=0)",
+        "authority": "DBLP",
+        "relation": "adjacent -- canonical 'judge beats string match' (EM r=0.22, F1 0.40, judge up to 0.85)"
+      },
+      {
+        "cite": "Garg & Sagtani, Unsolvability Ceiling in Multi-LLM Routing, arXiv:2605.07395",
+        "venue": "arXiv only",
+        "authority": "arXiv",
+        "relation": "adjacent -- lists 'output format mismatches' among lumped eval artifacts in routing-headroom estimation; no per-operation ablation"
+      }
+    ],
+    "empty_searches_documenting_the_gap": [
+      "abs:'generative' AND abs:'scorer' AND abs:'output format' -> 0",
+      "abs:'string matching' AND abs:'long context' AND abs:'evaluation' -> 0",
+      "abs:'scorer' AND abs:'benchmark' AND abs:'artifact' AND abs:'conclusion' -> 0",
+      "abs:'lenient' AND abs:'strict' AND abs:'match' AND abs:'benchmark' -> 0",
+      "abs:'LongBench' AND abs:'metric' AND abs:'reliab' -> 0",
+      "abs:'RULER' AND abs:'recall' AND abs:'string match' -> 0",
+      "booydar/babilong: 18 issues, NONE about metrics.py / preprocess_output / first-period truncation (issue #16 is Gemma chat-template/attention-backend, zero comments); GitHub issue search 'babilong metrics truncation' -> 0. The upstream-bug-report exit (K3) is UNCLAIMED."
+    ],
+    "new_findings_this_gate": {
+      "dead_code_second_defect": "metrics.py:31 output.split('Question')[0] is UNREACHABLE: metrics.py:25 lowercases first, so the token is already 'question'. Executed check: input '...kitchen Question: Where is the football? Answer: garden' -> preprocess_output returns '...kitchen question: where is the football? answer: garden', i.e. 'question' in output is True and the guard did not fire. Same applies to <CONTEXT>/<EXAMPLE> in any non-lowercase casing. This STRENGTHENS the surviving 'localises to auditable lines' half of the claim: the authors' intended defence against continuation leakage does not run at all. Was already noted in this repo's scripts/score_with_stopfix.py docstring (2026-06-30) as a Llama-3 diagnostic; re-confirmed here on the current canonical package.",
+      "truncation_is_a_tradeoff_not_a_bug": "CORRECTION to framing, unfavourable to the current wording. Executed on the canonical scorer: 'Choices: A. In the kitchen B. In the garden. The answer is kitchen.' scores False (truncation KILLS a correct list-format answer), while 'kitchen. Question: Where is the football? Answer: garden' scores True canonically and False under notrunc (truncation SAVES a correct continuation-leak answer). The evidence JSON agrees at cell level: notrunc raises qa1/qa2 but LOWERS qa5 (qa5x32k A0 61.0->59.0, A3 57.0->52.0). Correct description = 'a scorer operation whose sign depends on the arm's output-format habit', NOT 'a bug'. Explains why the dissociation is perfectly cell-aligned, but FORBIDS the word 'fix' and forbids presenting notrunc as a corrected metric.",
+      "claim_overstates_the_true_effect_lower_bound": "the 'claim' key and PROPOSAL.md both say '+70 to +84 pp', but established_measurements.true_effect_on_retrieval_closed_ruler_pp = [58.0, 54.0, 84.0, 84.0], whose minimum is 54. Correct range is +54 to +84 pp (the narrowed claim conservatively states +58 to +84 using the two cells that carry the ladder). FLAGGED, NOT EDITED -- the existing key is append-only."
+    },
+    "additional_forbidden_claims": [
+      "'Novel: preprocessing changes model ranking' -- NOT novel. Owned by Alzahrani et al. ACL 2024 and Sanz-Guerrero et al. EMNLP 2025. Only the (generative scorer + one-operation ablation on byte-fixed generations + within-model arm ladder) combination is open.",
+      "'We fix the metric' / presenting notrunc as a corrected metric -- it is a trade-off; notrunc LOWERS qa5.",
+      "'+70 pp' as the lower bound of the true effect -- the evidence minimum is 54 pp.",
+      "'BABILong's scorer is uniquely broken' -- NOT tested; that is K3, still open."
+    ],
+    "gate_status_after_k1": {
+      "K1": "RELEASED for the narrowed_claim ONLY, under the citation and additional_forbidden_claims obligations. NOT released for the 'claim' key as written.",
+      "gpu_policy_now": "satisfied -- K2 (cross-family replication) MAY now spend GPU. K2 remains blocking for promotion.",
+      "K2_added_requirement": "the second family must be measured on per-arm LIST-FORMAT RATE as a PRE-REGISTERED covariate, because the mechanism is now explicitly an interaction with format habit. A second family with asymmetry BUT no inversion is also informative and must not be silently discarded.",
+      "K3": "unchanged, still blocking:false. The upstream-report exit is unclaimed (no babilong issue on metrics.py)."
+    }
   },
-  "truncation_kill_rate_A4_vs_A5_pct": {
-   "qa1_16k": [
-    40.0,
-    12.0
-   ],
-   "qa1_32k": [
-    43.0,
-    16.0
-   ],
-   "qa2_16k": [
-    25.0,
-    9.0
-   ],
-   "qa2_32k": [
-    22.0,
-    5.0
-   ],
-   "qa5_16k": [
-    4.0,
-    4.0
-   ],
-   "qa5_32k": [
-    3.0,
-    4.0
-   ]
+  "lifecycle": "ready_cpu",
+  "lifecycle_set": "2026-08-14",
+  "lifecycle_reason": "K1 (novelty, 0 GPU, blocking) is RUN and RELEASED for the narrowed claim, so gpu_policy no longer blocks. But the recommended next step is deliberately 0-GPU: file the unclaimed upstream bug report (K3 exit) for the metrics.py:31 dead-code guard, which is B11's most solid finding and needs no statistics, no GPU and no second family. K2 is cheap (~1.0-2.4 GPU-h measured) but low-information: with 6 cells the best attainable Fisher p is already 0.0667, so a second family can only tell us whether the SIGN reproduces. See K1_NARROWING.md sec 3.1.",
+  "needs_arch": "sm_90",
+  "novelty_checked": true,
+  "next_gate": "K3-EXIT FIRST (0 GPU): re-check that booydar/babilong still has no issue on metrics.py / preprocess_output / first-period truncation, then FILE that issue, reporting (a) line 31 split('Question') is unreachable because line 25 lowercases first -- mechanically provable, 'Question' in s.lower() is False for every s -- and (b) that line 27's first-period truncation is a SIGN-DEPENDENT TRADE-OFF, not a bug (it kills correct list-format answers and rescues correct continuation-leak answers), with the executed two-row demonstration. ONLY IF a maintainer indicates the behaviour is intentional, escalate to K2 (cross-family replication, ~1.0 GPU-h for the 2 contrast arms over 6 cells) with per-arm LIST-FORMAT RATE as a pre-registered covariate. Otherwise B11's content is 'a scorer line is dead code', which belongs in an issue tracker plus an A02 appendix, NOT a paper.",
+  "claim_narrowed_20260814": {
+    "supersedes": "the 'claim' key (retained verbatim above, append-only). The original is WITHDRAWN as the operative claim; it is kept only as the dated record of what was originally asserted.",
+    "doc": "proposal/backlog/B11-generative-scorer-format-fragility/K1_NARROWING.md",
+    "operative_claim": "In a generative long-context benchmark whose scorer matches free-form output against a closed task-label vocabulary (babilong.metrics.compare_answers), a SINGLE text-preprocessing operation in the scorer's source -- truncation of the model output at the first period, metrics.py:27 -- interacts with an ARM-DEPENDENT output-format habit strongly enough that the scorer FAILS TO RECOVER THE ORDERING of a within-model architectural manipulation whose true effect is +58 to +84 pp on a retrieval-closed reference task. Demonstrated by re-scoring BYTE-FIXED generations with that one operation removed and nothing else changed: on 2 of 6 cells the inverted point estimate is removed, and on qa1x32k the 5-point ladder becomes rho = -1.000 (exact permutation p = 0.0167, which is the MINIMUM ATTAINABLE p over 120 orderings). The operation is NOT a one-directional bug -- it LOWERS scores for arms emitting choice-lists (list-format rate 62-75%) and RAISES them for arms emitting continuations -- and the four inverting cells are EXACTLY the four high-list-format cells ([[4,0],[0,2]], Fisher exact p = 0.0667, the minimum attainable at 6 cells, hence DESCRIPTIVE). The scorer contains a SECOND, independently verifiable defect: the guard intended to stop continuation leakage, metrics.py:31 split('Question'), is UNREACHABLE because metrics.py:25 lowercases first.",
+    "three_forces_that_narrowed_it": {
+      "1_literature": "'Scorer/extraction preprocessing changes model ranking' is OWNED: Alzahrani et al. ACL 2024 (2024.acl-long.744) moves leaderboard rank up to 8 positions via the answer-SELECTION method; Sanz-Guerrero et al. EMNLP 2025 (2025.emnlp-main.988) reshuffles rankings via tokenization of the 'Answer:' suffix; arXiv:2510.05152 states one can put any model in the lead by changing a single delimiter character. => 'destroy the RANKING' became 'fail to recover the ORDERING of a within-model architectural manipulation'.",
+      "2_our_own_numbers_contradicted_our_own_claim": "established_measurements.true_effect_on_retrieval_closed_ruler_pp = [58.0, 54.0, 84.0, 84.0], minimum 54, yet the claim and PROPOSAL.md both said '+70 to +84'. => '+58 to +84', and '+70 as a lower bound' is now a forbidden claim.",
+      "3_the_mechanism_is_a_tradeoff_not_a_bug": "Re-verified by execution: truncation KILLS a correct list-format answer and SAVES a correct continuation-leak answer; notrunc raises qa1/qa2 but LOWERS qa5 (qa5x32k A0 61.0->59.0, A3 57.0->52.0). => the word 'fix' is forbidden and notrunc must never be presented as a corrected metric."
+    }
   },
-  "one_operation_ablation": "removing ONLY preprocess_output's first-period truncation (uniqueness requirement retained, so multiple-choice lists still score 0 and chance inflation is removed by construction) repairs the inversion on 2 of 6 cells and makes qa1x32k a perfect ladder rho=-1.000 p=0.0167; qa2 is unrepairable (floor, A4=1%)",
-  "cell_level_dissociation": "the 4 inverting cells are EXACTLY the 4 high-list-format cells; [[4,0],[0,2]], Fisher exact p=0.0667 = the minimum attainable with 6 cells, so DESCRIPTIVE dissociation, not a powered test"
- },
- "refuted_hypotheses": {
-  "retrieval_domination": "REFUTED as the mechanism for the inversion. Conditioning on the arm-independent retrieval HIT/MISS label, the inversion is LARGER on HIT (qa1x16k HIT -6.67 vs MISS +8.57; qa2x32k -13.64 vs -5.41). Low recall@12 (22.9-63.2%) remains the correct reason these cells cannot support depth inference IN GENERAL, but it does not explain the inversion.",
-  "retracted_intermediate_number": "a lenient format-insensitive read (target_in_raw) showed 4/6 sign flips, but it is chance-inflated for multiple-choice outputs and A4 emits lists far more often. The strict ablation gives 2/6. 2/6 is the number that stands."
- },
- "not_identified": "retrieval vs floor cannot be separated across 6 cells: Spearman(A0_acc, signed_sep) = +0.943 exact p=0.0167 (n=6 lower bound) but Spearman(recall, A0_acc) = +0.714, i.e. substantially collinear. Floor has the better sign, p and story, but the mechanism is NOT IDENTIFIED and must not be claimed.",
- "kill_gates": [
-  {
-   "id": "K1",
-   "type": "novelty",
-   "gpu": 0,
-   "blocking": true,
-   "test": "check answer-extraction / metric-robustness literature: lm-evaluation-harness answer extraction, exact_match variants, MCQ answer-parsing robustness, LLM-as-judge vs string match. Venue rules: OpenReview venueid for ICLR/NeurIPS/ICML; aclanthology+DBLP for the ACL family incl. Findings.",
-   "kill_if": "the literature already covers 'preprocessing truncation changes model ranking'"
+  "dead_code_recheck_20260814": {
+    "claim": "metrics.py:31 output.split('Question')[0] is UNREACHABLE",
+    "status": "CONFIRMED on the current canonical package third_party/babilong-pkg/babilong/metrics.py",
+    "mechanical_proof": "'Question' in s.lower() is False for EVERY s, because .lower() cannot produce a capital Q. Line 25 lowercases before line 31 splits on the capitalised literal. Contrast lines 29/30, which use the LOWERCASE tags '<context>'/'<example>' and therefore DO fire: preprocess_output('kitchen <CONTEXT> blah') -> 'kitchen '. So the defect is specific to line 31, and it is the one guard the authors wrote against continuation leakage.",
+    "corrected_demonstration": "in='the football is in the kitchen Question: Where is Mary? Answer: garden' -> out='the football is in the kitchen question: where is mary? answer: garden'; 'question' survives, guard did NOT fire.",
+    "CORRECTION_to_K1": "K1_NOVELTY_CHECK.md sec 3.1's demonstration string is FLAWED and its printed output is wrong. It used '...kitchen Question: ...', whose leading '...' makes LINE 27 truncate at the first period and return the EMPTY STRING -- so under that input the guard 'does not fire' for the wrong reason, and the output shown there ('...kitchen question: where is...') is not what the function returns. The CLAIM is true; the evidence originally offered for it was not. Flagged, not edited, because K1's file is the dated record."
   },
-  {
-   "id": "K2",
-   "type": "cross-family replication",
-   "blocking": true,
-   "test": "a second model family; output-format habit is a family property",
-   "kill_if": "no arm-wise list-format asymmetry in the second family AND the inversion disappears -> degrades to 'Qwen3 format habit + one scorer bug', archive as an A02 appendix negative result"
+  "gpu_cost_estimate": {
+    "value": "0 GPU-h for the recommended next step (upstream bug report). K2, if it is ever escalated to: ~1.0 GPU-h for the 2 contrast arms over the 6 cells, ~2.4 GPU-h for all 5 ladder arms.",
+    "basis": "MEASURED from the A02 BABILong generations that produced B11's own evidence, on .73 (8xH20 sm_90), 8 shards/cell, n=100/cell: 216 shard JSONs at 16k mean 33.2 s/shard => 0.0739 GPU-h per 100-sample cell; 216 shard JSONs at 32k mean 38.2 s/shard => 0.0848 GPU-h per cell. Six cells (qa1/qa2/qa5 x {16k,32k}) = 0.4761 GPU-h per ARM; x2 contrast arms = 0.95 GPU-h; x5 ladder arms = 2.38 GPU-h. Total already-spent A02 BABILong generation across 9 arm dirs / 60 cells = 4.551 GPU-h.",
+    "why_cost_is_NOT_the_blocker": "K2 is cheap. The problem is EXPECTED INFORMATION: with 6 cells the best attainable Fisher exact p is already 0.0667, so a second family CANNOT make the dissociation significant -- it can only report whether the SIGN reproduces. Worth ~1 GPU-h only if we would publish 'the sign reproduced in 2 families, still not significant'."
   },
-  {
-   "id": "K3",
-   "type": "cross-benchmark",
-   "blocking": false,
-   "test": "do LongBench / RULER / LongEval scorers have the same class of preprocessing?",
-   "kill_if": "no other generative long-context scorer does -> downgrade to an upstream bug report"
+  "honest_sizing_20260814": {
+    "verdict": "THIN. Recommendation: do NOT pursue B11 as a paper.",
+    "weaknesses_worst_first": [
+      "headline inversion is NOT statistically significant: best exact McNemar p=0.0703 (b=1,c=7, 8 discordant); Holm-adjusted within the 6-cell family p=0.4219",
+      "the one-operation ablation repairs 2 of 6 cells; qa2 is unrepairable (floor, A4=1%)",
+      "the dissociation's Fisher exact p=0.0667 is the FLOOR of what 6 cells can produce => descriptive, not a powered test",
+      "mechanism NOT IDENTIFIED: retrieval vs floor collinear, Spearman(recall, A0_acc)=+0.714 over 6 cells",
+      "ONE model family (Qwen3); K2 unrun",
+      "the strongest surviving sub-result is a 5-point ladder on a SINGLE cell (qa1x32k, rho=-1.000, p=0.0167 = the minimum attainable over 120 orderings, so it cannot become more significant however real it is)"
+    ],
+    "what_is_actually_solid": "The two CODE facts: (a) metrics.py:31 is unreachable, (b) metrics.py:27's truncation is a sign-dependent trade-off. Both are deterministic, CPU-checkable in five lines, and require no statistics. Everything QUANTITATIVE about ranking damage rests on 6 cells of one model family with a non-significant headline => appendix or workshop-scale measurement note, not a paper.",
+    "dominant_cheap_path": "File the upstream bug report (K3 exit), 0 GPU. K1 sec 1 established the exit is UNCLAIMED: booydar/babilong has 18 issues, none about metrics.py / preprocess_output / first-period truncation, and a GitHub issue search returns 0. The dead-code guard needs no statistics, no GPU and no second family -- it either is unreachable or it isn't, and it is. This converts B11's most solid finding into its natural artefact."
+  },
+  "venue_reverify_20260814": {
+    "method": "by family; S2 NOT used as an authority (it returned HTTP 429 on this pass)",
+    "acl_family_rechecked_today": [
+      {
+        "cite": "arXiv:2402.01781 Alzahrani et al.",
+        "authority": "aclanthology.org/2024.acl-long.744/ HTTP 200, title 'When Benchmarks are Targets: Revealing the Sensitivity of Large Language Model Leaderboards', venue field ACL",
+        "venue": "ACL 2024 Long CONFIRMED"
+      },
+      {
+        "cite": "arXiv:2503.14996 Molfese et al.",
+        "authority": "aclanthology.org/2025.findings-acl.950/ HTTP 200, venue field Findings",
+        "venue": "Findings of ACL 2025 CONFIRMED"
+      },
+      {
+        "cite": "arXiv:2509.15020 Sanz-Guerrero et al.",
+        "authority": "aclanthology.org/2025.emnlp-main.988/ HTTP 200, venue field EMNLP",
+        "venue": "EMNLP 2025 Main CONFIRMED"
+      }
+    ],
+    "openreview_family_CARRIED_NOT_REFETCHED": "xFinder (arXiv:2405.11874, venueid ICLR.cc/2025/Conference, forum 7UqQJUKaLM, Submission5699/-/Camera_Ready_Revision) and HELMET (arXiv:2410.02694, venueid ICLR.cc/2025/Conference, forum 293V3bJbmE, Submission12024/-/Camera_Ready_Revision) were verified by K1 earlier today with forum IDs and Camera_Ready_Revision invitations recorded in k1_raw/, and were NOT re-fetched in this pass. Labelled rather than implying a fresh check. NOTE: DBLP returns only 'CoRR 2024' for HELMET, so the two-family rule was load-bearing.",
+    "CORRECTION_P6_author_attribution": "K1_NOVELTY_CHECK.md sec 1 lists P6 as 'Kim & Kim (et al.)'. That attribution is WRONG. DBLP and the arXiv Atom record both give the authors of arXiv:2510.14773 ('Finding Answers in Thought Matters: Revisiting Evaluation on Large Language Models with Reasoning') as Hwiyeol Jo, Joosung Lee, Jaehone Lee, Sang-Woo Lee, Joonsuk Park, Kang Min Yoo -- there is NO author named Kim. Venue IS correctly recorded (DBLP: CoRR 2025, Informal and Other Publications; arXiv comment 'ARR Submitted', so no accepted venue). A .bib entry MUST NOT be generated from that row. Its substantive relation to B11 is unchanged: it shows reasoning-model SCORES are sensitive to the extraction algorithm and proposes an extra inference pass; no ranking-destruction demonstration, not long-context, no code-line localisation."
+  },
+  "not_verified_in_this_pass": [
+    "K1's statistics (McNemar p=0.0703, Holm 0.4219, Fisher 0.0667, Spearman +0.714, qa1x32k rho=-1.000 p=0.0167) were NOT recomputed from the A02 per-item vectors. They are consistent between STATUS.json and K1_NOVELTY_CHECK.md, but that is internal consistency, not independent replication.",
+    "the two OpenReview venue IDs were carried from K1's artefacts, not re-fetched (see venue_reverify_20260814)",
+    "the upstream-issue check ('booydar/babilong has 18 issues, none about metrics.py') was carried from K1, not re-run. Since the sec-3.1 recommendation depends on that exit still being unclaimed, it MUST be re-checked immediately before filing."
+  ],
+  "abandoned": {
+    "original_claim": "A generative long-context benchmark scorer's text preprocessing can encode output-format conventions strongly enough to DESTROY THE RANKING of a true effect of +70 to +84 pp, and the failure localises to specific auditable lines of the metric. (Verbatim from the 'claim' key, which is retained above unmodified.)",
+    "killed_by": "K1 (novelty gate, 0 GPU) plus our own evidence, in three separate places. (1) LITERATURE: the general form 'scorer/extraction preprocessing changes model ranking' is already owned -- Alzahrani et al. ACL 2024 (aclanthology 2024.acl-long.744, venue field ACL) moves leaderboard rank by up to 8 positions via the answer-selection method; Sanz-Guerrero et al. EMNLP 2025 (aclanthology 2025.emnlp-main.988) reshuffles rankings via tokenization of the 'Answer:' suffix; arXiv:2510.05152 puts any model in the lead by changing one delimiter character. Asserting the claim unnarrowed walks straight into K1's own kill_if. (2) OUR OWN NUMBERS: '+70 pp' is not supported as a lower bound -- established_measurements gives [58.0, 54.0, 84.0, 84.0], minimum 54. (3) THE MECHANISM: executed re-verification shows first-period truncation is a SIGN-DEPENDENT TRADE-OFF, not a bug -- it kills correct list-format answers and rescues correct continuation-leak answers, and removing it LOWERS qa5 -- so 'the failure' cannot be described as a defect with a fix. Additionally the headline inversion is not significant (McNemar p=0.0703, Holm 0.4219).",
+    "surviving_scope": "TWO code-level facts about ONE scorer, both deterministic and CPU-checkable, plus a weak 6-cell descriptive pattern in ONE model family. SURVIVING: (a) babilong metrics.py:31 split('Question') is UNREACHABLE because line 25 lowercases first -- mechanically provable, no statistics; (b) metrics.py:27's first-period truncation is a sign-dependent trade-off whose direction depends on the arm's output-format habit, demonstrated on byte-fixed generations with one operation removed; (c) descriptively, the 4 cells whose point estimate inverts are exactly the 4 high-list-format cells (Fisher p=0.0667 = the floor for 6 cells), and removing truncation repairs 2 of 6 cells with qa1x32k becoming rho=-1.000 (p=0.0167 = the minimum attainable over 120 orderings). NOT SURVIVING: 'destroys ranking' (owned by prior art in the general form, and not significant in ours); '+70 pp' as a lower bound; 'we fix the metric' (it is a trade-off); any claim that BABILong's scorer is uniquely broken (K3 untested); any general claim about generative scorers (n=1 scorer, n=1 model family). HONEST SIZING: this is an appendix or an upstream issue report, NOT a paper -- the recommendation recorded in next_gate is to file the (unclaimed) upstream bug report at 0 GPU and to escalate to K2 only if a maintainer says the behaviour is intentional. Judging the direction not worth a paper is the deliberate output here, not a failure to finish it."
+  },
+  "k3_exit_verification_20260815": {
+    "gate": "K3-EXIT step 1 (re-verify the two source-code assertions + re-check the upstream issue tracker). 0 GPU.",
+    "date": "2026-08-15",
+    "gpu_spent": "ZERO -- no GPU touched, no node contacted. All checks are pure-CPU string operations on the canonical package plus HTTPS to api.github.com via the hy-proxy.",
+    "verdict_summary": "assertion (a) AMENDED (true but mis-worded: the line IS executed, it is a guaranteed no-op, not 'unreachable'); assertion (b) CONFIRMED and strengthened with an empirical sign split. Upstream exit STILL UNCLAIMED. Issue drafted, NOT filed.",
+    "code_under_test": {
+      "path": "third_party/babilong-pkg/babilong/metrics.py",
+      "md5": "0a5ecc52ade4e337d35b8f9c97c38310",
+      "local_checkout_head": "f09a184b43316a751d5059e13de7c557b6daca86 (booydar/babilong, remote http://github.com/booydar/babilong.git)",
+      "upstream_head_today": "7a6efee29f5c (2026-06-01, 'Merge pull request #18 from RodkinIvan/add-results-gemini-3-flash-prev')",
+      "upstream_file_identical": "YES -- raw.githubusercontent.com/booydar/babilong/main/babilong/metrics.py fetched HTTP 200, md5 0a5ecc52ade4e337d35b8f9c97c38310, BYTE-IDENTICAL to our checkout. So although our checkout is 2 commits behind HEAD, metrics.py itself is current and the line numbers we quote ARE the maintainer's line numbers.",
+      "line_numbers_on_disk": "EXACT MATCH to the assertion: 25 = output.lower(); 27 = output.split('.')[0]; 31 = output.split('Question')[0]. No drift. Verified by inspect.getsourcelines(preprocess_output) printing 24-32.",
+      "git_blame": "lines 25/27/29/30/32 = 1e7893a4 (yurakuratov 2024-05-22); line 31 = 58e5d20b (booydar 2024-06-04, commit message 'add split by \"Question\" in preprocess + fix lowercase bug'). metrics.py last touched upstream 2025-04-05 (93d7bfe6); only 5 commits ever touched it.",
+      "second_disk_check": "zwfy6 is NOT MOUNTED on LOCAL (`ls /apdcephfs_zwfy6` -> No such file or directory; `mount | grep apdcephfs` shows only /apdcephfs_wzc1 and /apdcephfs_wzc1_304376610, and the latter is the SAME device+inode 215/10762798397938020997 for metrics.py, i.e. an alias of wzc1, not a second checkout). Cross-disk verification of the FILE was therefore not possible from this node WITHOUT SSH, which this task forbids. It is not needed: the authoritative comparison is against UPSTREAM, which was fetched and is byte-identical. Two additional in-repo copies were located and checked: /apdcephfs_wzc1/share_304376610/pighzliu_code/babilong/babilong/metrics.py (separate clone, same HEAD f09a184, md5 IDENTICAL) and .venv (no babilong package installed -- repo-scoped find only, never `find /`)."
+    },
+    "assertion_a": {
+      "as_written_in_next_gate": "\"line 31 split('Question') is unreachable because line 25 lowercases first -- mechanically provable, 'Question' in s.lower() is False for every s\"",
+      "verdict": "AMENDED",
+      "what_is_CONFIRMED": "The substantive content. 'Question' in s.lower() is False for EVERY s, and line 31 therefore can NEVER alter the value. Brute-forced over the full Unicode range on python 3.11.6: [cp for cp in range(0x110000) if 'Q' in chr(cp).lower()] == [] ; the same list for ANY character of 'QUESTION' == [] ; exactly ONE codepoint lowers to >1 char and it contains no ASCII uppercase; str.lower is IDEMPOTENT for every codepoint ([cp for cp in range(0x110000) if chr(cp).lower().lower()!=chr(cp).lower()] == []), so the chained splits on lines 27/29/30 cannot reintroduce a capital either; the one context-sensitive rule (Greek final sigma) yields no uppercase ('ODOS'.lower()=='odos'); and 0/300000 random+adversarial trials (pool incl. dotted-I U+0130, dotless-i U+0131, Sigma U+03A3, capital-sharp-s U+1E9E, Kelvin U+212A, Angstrom U+212B) produced 'Question' in s.lower().",
+      "what_is_WRONG_and_why_it_matters": "The WORD 'unreachable'. Line 31 IS REACHED AND EXECUTED on every call. Measured with sys.settrace on preprocess_output('kitchen Question: x'): lines executed inside the function = [25, 27, 29, 30, 31, 32] -- 31 is in the list. It is a GUARANTEED NO-OP, not dead code in the control-flow sense. Filing an upstream issue that says 'this line is unreachable' invites a maintainer to reply 'no, it runs' and close it. The draft therefore says 'the guard can never fire' and adds an explicit terminology note. This is a wording defect in OUR record, inherited from dead_code_recheck_20260814.claim and lifecycle_reason ('metrics.py:31 dead-code guard'), not an error in the underlying finding.",
+      "class_check_other_reachable_paths": "DONE -- 'this path is unreachable' != 'this line is unreachable'. (1) The .lower() at line 25 is the function's FIRST statement and is UNCONDITIONAL, so no argument value can bypass it. (2) preprocess_output has exactly ONE definition in this repo (grep -rn 'def preprocess_output' --include=*.py --include=*.ipynb -> 1 hit, metrics.py:24) and exactly ONE in-repo caller (metrics.py:36, compare_answers). (3) Upstream-wide `git grep preprocess_output` finds no other caller either; all 14 upstream notebooks call compare_answers, never preprocess_output directly. (4) A SECOND, INDEPENDENT scorer exists upstream -- babilong/babilong_utils.py:8 compare_answers(target, output) -- which lowercases, truncates at the first period and splits <context>/<example>, but has NO 'Question' guard at all, so it is unaffected rather than an alternative reachable path. So there is no caller and no input that reaches line 31 with un-lowercased text.",
+      "executed_output": "preprocess_output('kitchen Question: Where is the football? Answer: garden') -> 'kitchen question: where is the football? answer: garden' (the substring 'question' SURVIVES; guard did not fire). Control that lines 29/30 DO fire: preprocess_output('kitchen <CONTEXT> blah') -> 'kitchen ' and ('kitchen <EXAMPLE> blah') -> 'kitchen '. Note the input carries NO period before 'Question', which is what makes the no-op OBSERVABLE -- this is the flaw dead_code_recheck_20260814.CORRECTION_to_K1 already identified in K1's string, and the corrected string in that key is the one that works.",
+      "observable_consequence_added_this_gate": "The previous records proved the line does nothing but never showed a SCORE changing, which is what an upstream maintainer will ask for. Executed: with target='kitchen', question='Where is John?', raw='kitchen Question: where is Mary? Answer: garden' -> canonical compare_answers = False, but with the SINGLE character fix 'Question'->'question' = True. So the no-op has a measurable false-negative consequence, and the one-character fix is NOT score-neutral. Scale on this repo's own generations (400 randomly-sampled babilong_results/*/qa*_*.csv, 37801 items, canonical scorer imported): 832 items (2.20%) would have been truncated had the guard worked, of which 56 flip correctness; 81/400 CSV files contain at least one such item."
+    },
+    "assertion_b": {
+      "as_written_in_next_gate": "\"line 27's first-period truncation is a SIGN-DEPENDENT TRADE-OFF, not a bug (it kills correct list-format answers and rescues correct continuation-leak answers), with the executed two-row demonstration\"",
+      "verdict": "CONFIRMED as to the trade-off; the SPECIFIC TWO-ROW DEMONSTRATION CURRENTLY IN THE RECORD IS AMENDED (row 1 does not show what it claims).",
+      "row2_reproduces_exactly": "'kitchen. Question: Where is the football? Answer: garden' -> canonical TRUE, notrunc FALSE. Truncation RESCUES a correct continuation-leak answer. Matches k1_novelty.new_findings_this_gate.truncation_is_a_tradeoff_not_a_bug.",
+      "row1_DOES_NOT_REPRODUCE": "The recorded row 1 is 'Choices: A. In the kitchen B. In the garden. The answer is kitchen.' scoring False, described as 'truncation KILLS a correct list-format answer'. Executed: canonical=False, notrunc=ALSO False. It scores 0 EITHER WAY -- notrunc leaves 'choices: a. in the kitchen b. in the garden. the answer is kitchen.', in which BOTH 'kitchen' and 'garden' survive, so compare_answers' UNIQUENESS requirement (len(labels_in_output)==1) rejects it. Truncation is not what killed that item. The string demonstrates the uniqueness requirement, NOT the truncation. Any upstream issue built on it would be refuted on first execution.",
+      "row1_REPLACED_BY_working_examples": "Executed, target='kitchen', question='Where is John?' (contains no task label): (i) 'The answer is A. kitchen' -> canonical FALSE / notrunc TRUE (truncation kills a correct ENUMERATED answer -- preprocess gives 'the answer is a'); (ii) 'John moved several times. He is in the kitchen' -> canonical FALSE / notrunc TRUE (kills a correct REASON-THEN-ANSWER answer). These are the minimal cases that isolate line 27 with the uniqueness requirement held harmless.",
+      "third_direction_found_this_gate": "Truncation does not merely 'rescue' correct answers, it can MANUFACTURE them: 'kitchen is wrong. the answer is garden' with target 'kitchen' -> canonical TRUE (preprocess gives 'kitchen is wrong'), notrunc FALSE. That is a FALSE POSITIVE created by line 27. So the two directions are not symmetric-but-harmless: the harmful direction penalises enumerating/reasoning styles, the 'helpful' direction includes a false-positive mode. Not previously recorded.",
+      "net_sign_depends_on": "The MIX of output formats in the arm being scored, because the two directions are driven by different, non-overlapping surface features: (1) HARM requires the correct label to appear AFTER some period, which is what enumerated ('A. x B. y') and reason-then-answer styles do; (2) HELP requires a period BEFORE post-answer scaffold/other labels, which is what a leaked 'X. Question: ... Answer: Y' continuation does. An arm whose habit is enumeration is net-penalised; an arm whose habit is a short answer followed by leakage is net-rewarded. Hence the net effect over a cell has NO fixed sign and is confounded with format habit rather than with task ability.",
+      "empirical_sign_split_measured_this_gate": "New evidence, independent of the A02 cells. 500 randomly-sampled babilong_results/*/qa*_*.csv (46241 items), canonical compare_answers vs the same scorer with ONLY line 27 removed, is_list_format() taken verbatim from analyze_a02_truncation_ablation.py: overall HARMS 61 (0.13%), HELPS 136 (0.29%), net of KEEPING truncation = +0.16 pp. SPLIT BY FORMAT: LIST-format items n=429 -> HARMS 39 (9.09%), HELPS 1 (0.23%), net -8.86 pp; NON-LIST items n=45812 -> HARMS 22 (0.05%), HELPS 135 (0.29%), net +0.25 pp. The SIGN OF THE NET EFFECT FLIPS with format. This is the assertion's mechanism reproduced on a much larger and differently-sourced item pool, and it is the cleanest single number B11 has for the trade-off. CAVEAT: this pool is a heterogeneous mix of this repo's historical runs across many models/configs, NOT a controlled arm contrast, so it supports the SIGN-FLIP claim and must NOT be quoted as an effect size for any arm comparison."
+    },
+    "upstream_issue_recheck": {
+      "network": "REACHED. proxy http://hy-proxy.woa.com:3128 worked; GET https://api.github.com/repos/booydar/babilong -> HTTP 200.",
+      "repo_state": "full_name booydar/babilong, open_issues_count 6 (GitHub counts open PRs in this figure), pushed_at 2026-06-01T18:13:38Z, updated_at 2026-08-06T15:35:37Z, default_branch main, stars 253, has_issues true.",
+      "enumeration": "GET /issues?state=all&per_page=100 -> 18 records = 10 ISSUES + 8 PULL REQUESTS. NOTE: K1 recorded '18 issues'; the correct decomposition is 10 issues + 8 PRs. Both open AND closed were retrieved, as required.",
+      "all_issues": "#1 open 2024-03-13 heatmap figure; #3 open 2024-06-13 add Claude/Google models; #4 closed 2024-06-13 clarify GPT-4 model; #5 closed 2024-11-04 leaderboard down; #7 closed 2024-11-19 create_tasks.py qa3; #8 open 2024-12-19 batch evaluations; #9 closed 2024-12-25 mamba 130m recipe; #10 closed 2025-01-03 babilong training data impairs model; #11 open 2025-01-07 test exaone; #16 open 2026-02-05 gemma performance mismatch.",
+      "all_prs": "#2,#6,#12,#13,#14,#15,#18 merged (all results/leaderboard additions); #17 open 2026-05-28 'Add BABILong results for Aegyx 0.1' (unmerged).",
+      "keyword_scan": "Ran over EVERY title AND body of all 18 records for: metrics.py, preprocess_output, compare_answers, truncat, first sentence, split('.'), lowercase, lower(), split('Question'), scorer, first period, dead code, unreachable. TWO hits, BOTH FALSE POSITIVES on inspection: #16 body contains 'lower()' only in the phrase 'consistently lower than the reported metrics' (it is a Gemma reproduction question about chat template vs SDPA/FA2 attention backend); PR #17 body contains 'scorer' only in 'The official BABILong scorer was not modified'. NEITHER concerns metrics.py preprocessing.",
+      "github_issue_search": "repo:booydar/babilong+metrics.py -> total_count 0; +preprocess_output -> 0; +truncation -> 0; +lowercase -> 0; +scorer -> 1 (only PR #17, the false positive above).",
+      "commits_since": "Upstream added 2 commits after our checkout (c058d06f 2026-05-31 gemini-3-flash results, 7a6efee2 2026-06-01 merge). NEITHER touches metrics.py. GET /commits?path=babilong/metrics.py returns exactly 5 commits ever, newest 93d7bfe6 (2025-04-05). So the defect has NOT been fixed.",
+      "conclusion": "K3-EXIT PREMISE HOLDS UNCHANGED. The upstream report is still unclaimed and the code is still current. not_verified_in_this_pass item 3 ('the upstream-issue check was carried from K1, MUST be re-checked immediately before filing') is hereby DISCHARGED as of 2026-08-15."
+    },
+    "issue_draft": {
+      "path": "proposal/backlog/B11-generative-scorer-format-fragility/UPSTREAM_ISSUE_DRAFT.md",
+      "filing_status": "DRAFT -- NOT FILED. Filing an issue on a third-party repository is an irreversible outward action and was NOT authorised in this pass. The file's first line is an HTML comment stating this.",
+      "content_rules_applied": "Every claim carries upstream HEAD sha + file md5 + line number + an executable snippet, so a maintainer can reproduce from a clean clone with no data and no GPU. Point 1 is framed as a defect with a one-character fix AND an explicit warning that the fix is not score-neutral. Point 2 is framed as a design/documentation question and EXPLICITLY does not propose deleting line 27 (per additional_forbidden_claims: notrunc must never be presented as a corrected metric). Scan for leaks returned zero hits for internal paths, node IPs, disk names, model families, arm labels, proposal IDs and every unpublished statistic (McNemar/Holm/rho/pp figures).",
+      "what_the_draft_does_NOT_say": "No mention of the A02 arm ladder, no pp effect sizes from our runs, no p-values, no model family, no claim that the scorer inverts conclusions."
+    },
+    "corrections_to_prior_keys_FLAGGED_NOT_EDITED": [
+      "dead_code_recheck_20260814.claim and lifecycle_reason both use 'UNREACHABLE'/'dead-code'. Measured wrong: sys.settrace shows line 31 executes. Correct wording = 'a guaranteed no-op' / 'the guard can never fire'. Substance unaffected. Kept verbatim as the dated record.",
+      "k1_novelty.new_findings_this_gate.truncation_is_a_tradeoff_not_a_bug and claim_narrowed_20260814.three_forces_that_narrowed_it.3 both cite 'Choices: A. In the kitchen B. In the garden. The answer is kitchen.' as truncation KILLING a correct list-format answer. Executed: it is False under BOTH canonical and notrunc -- the uniqueness requirement kills it, not the truncation. The trade-off claim is TRUE; that particular string is not evidence for it. Working replacements are in assertion_b.row1_REPLACED_BY_working_examples. This is the SECOND time a demonstration string in this proposal has been found not to show what it claims (the first was dead_code_recheck_20260814.CORRECTION_to_K1 on K1 sec 3.1) -- both times the mechanism was line 27 silently doing the work. Any future demonstration in this proposal MUST be executed and its printed output pasted, never composed by hand.",
+      "k1_novelty.empty_searches_documenting_the_gap says 'booydar/babilong: 18 issues'. The API returns 18 RECORDS = 10 issues + 8 PRs. The conclusion (no issue on metrics.py) is unaffected and re-verified today."
+    ],
+    "what_this_gate_does_NOT_establish": [
+      "Nothing about whether the trade-off changes any RANKING. That rests on the 6 A02 cells and is unchanged by this pass; honest_sizing_20260814's THIN verdict stands.",
+      "The 46241-item sign split is NOT a controlled arm contrast (heterogeneous historical runs, many models/configs) -- it supports the SIGN FLIP only, never an effect size.",
+      "K1's statistics were again NOT recomputed from per-item vectors (unchanged from not_verified_in_this_pass item 1).",
+      "K3 as originally written ('do LongBench / RULER / LongEval scorers have the same class of preprocessing?') was NOT tested. This pass executed only the K3-EXIT step from next_gate. 'BABILong's scorer is uniquely broken' remains a forbidden claim."
+    ],
+    "recommended_next_action": "Obtain approval, then file UPSTREAM_ISSUE_DRAFT.md. No GPU. Do NOT escalate to K2 unless a maintainer replies that the behaviour is intentional (per next_gate). Lifecycle stays ready_cpu -- this gate did not change readiness, it verified the premise of the already-declared next step."
+  },
+  "k3_exit_MAIN_independent_verification_20260815": {
+    "who": "MAIN, re-derived from source rather than accepting the subagent report",
+    "why": "the subagent REFUTED part of its own brief (assertion (a)'s wording). A self-refutation is the case where independent reproduction matters most, because the brief it contradicted was written by MAIN.",
+    "reproduced": {
+      "line_31_executes": {
+        "method": "sys.settrace over preprocess_output",
+        "executed_lines": [
+          25,
+          27,
+          29,
+          30,
+          31,
+          32
+        ],
+        "verdict": "CONFIRMED the subagent's REFUTATION: line 31 IS executed on every call. 'unreachable' is the wrong word; it is a guaranteed no-op. MAIN's own brief repeated the wrong word from STATUS.json and the agent was right to reject it."
+      },
+      "byte_identity_with_upstream": {
+        "method": "curl raw.githubusercontent.com/booydar/babilong/main/babilong/metrics.py via hy-proxy, HTTP 200, then md5 + diff",
+        "md5_both": "0a5ecc52ade4e337d35b8f9c97c38310",
+        "diff": "empty",
+        "consequence": "lines 25/27/31 are the MAINTAINER'S OWN line numbers, so the draft needs no line-drift caveat"
+      },
+      "four_demo_cases": {
+        "note": "MAIN's first attempt errored: compare_answers has a REQUIRED 4th arg task_labels (metrics.py:35), which is exactly the uniqueness mechanism at issue. Read the signature instead of guessing it.",
+        "task_labels_used": [
+          "kitchen",
+          "garden",
+          "bathroom",
+          "bedroom",
+          "hallway",
+          "office"
+        ],
+        "rows": [
+          {
+            "case": "STATUS row1 'Choices: A. In the kitchen B. In the garden. The answer is kitchen.'",
+            "canonical": false,
+            "no_trunc": false,
+            "verdict": "CONFIRMED the subagent: does NOT isolate line 27",
+            "mechanism_detail_MAIN_adds": "the two Falses have DIFFERENT causes -- canonical truncates to 'choices: a' (no label survives at all), while no-trunc keeps BOTH kitchen and garden and dies on the uniqueness test at metrics.py:56. Neither cause is line 27's harm direction."
+          },
+          {
+            "case": "'The answer is A. kitchen'",
+            "canonical": false,
+            "no_trunc": true,
+            "verdict": "truncation KILLS a correct answer -- reproduces"
+          },
+          {
+            "case": "'John moved several times. He is in the kitchen'",
+            "canonical": false,
+            "no_trunc": true,
+            "verdict": "reproduces"
+          },
+          {
+            "case": "'kitchen is wrong. the answer is garden' target=kitchen",
+            "canonical": true,
+            "no_trunc": false,
+            "verdict": "truncation MANUFACTURES a correct answer (false positive) -- reproduces"
+          }
+        ]
+      },
+      "append_only_integrity": {
+        "method": "git show HEAD~1:<path> vs current, per-key ==",
+        "keys": "29 -> 30",
+        "prefix_order_preserved": true,
+        "old_values_mutated": 0,
+        "verdict": "CONFIRMED, the agent's self-assertion holds under MAIN's independent diff"
+      },
+      "draft_hygiene": {
+        "draft_marker_line1": true,
+        "internal_leak_grep_hits": 0,
+        "unreachable_wording": "appears once, inside the sentence that DISCLAIMS it",
+        "proposes_deleting_line_27": false,
+        "verdict": "clean; forbidden claims respected"
+      }
+    },
+    "not_verified_by_MAIN": [
+      "the 46241-item / 400-CSV net-effect numbers (+0.16pp overall, -8.86pp LIST vs +0.25pp non-LIST). MAIN verified the MECHANISM and the four hand cases, not the corpus aggregate. The agent itself flagged the corpus as heterogeneous historical runs supporting only the SIGN FLIP, never an effect size -- that caveat must travel with the numbers.",
+      "the Unicode-exhaustive and 300000-trial adversarial claims (MAIN accepts these as low-risk: str.lower idempotence is checkable in principle and the conclusion does not depend on the trial count).",
+      "upstream issue/PR enumeration (10 issues + 8 PRs, 0 true hits). MAIN confirmed the proxy path works via the raw.githubusercontent fetch but did not re-enumerate the issue tracker."
+    ],
+    "filing_status": "STILL NOT FILED. Filing to a third-party repo is an irreversible outward action; MAIN has verified the CONTENT is filable but is not treating content-verification as filing authorisation.",
+    "lesson_recorded": "memory/hand-composed-demo-strings-must-be-executed.md -- B11 has now produced TWO hand-composed demo strings that did not demonstrate the mechanism they were filed under, both times because line 27 silently did the work."
   }
- ],
- "forbidden_claims": [
-  "'BABILong inverts conclusions' -- the inversion is NOT significant (p=0.0703, Holm 0.4219)",
-  "retrieval is the mechanism -- refuted, inversion is larger on HIT",
-  "attributing to retrieval OR floor separately -- collinear across 6 cells, not identified",
-  "the 4/6 figure from target_in_raw -- chance-inflated, superseded by 2/6",
-  "merging with B04 -- different construct and mechanism"
- ],
- "gpu_policy": "NO GPU until K1 (novelty, 0 GPU) passes.",
- "evidence_files": [
-  "proposal/backlog/A02-comem-write-read-repair/evidence/babilong_misorder/a02_babilong_misorder.json",
-  "proposal/backlog/A02-comem-write-read-repair/evidence/babilong_misorder/a02_babilong_format_diagnosis.json",
-  "proposal/backlog/A02-comem-write-read-repair/evidence/babilong_misorder/a02_format_mechanism.json",
-  "proposal/backlog/A02-comem-write-read-repair/evidence/babilong_misorder/a02_truncation_ablation.json"
- ],
- "source_generations": "zwfy6 babilong_results/a02_{rtax,dvr,babilong_c2}_* (8 shards/cell, n=100)",
- "protocol_invariants": [
-  "chat_template=False",
-  "selector=iter_bm25",
-  "per-cell only, never pooled",
-  "canonical scorers imported, never reimplemented"
- ],
- "k1_novelty": {
-  "gate": "K1",
-  "date": "2026-08-14",
-  "gpu_spent": "ZERO",
-  "verdict": "NEEDS_NARROWING",
-  "doc": "proposal/backlog/B11-generative-scorer-format-fragility/K1_NOVELTY_CHECK.md",
-  "raw_artefacts": "proposal/backlog/B11-generative-scorer-format-fragility/k1_raw/ (arXiv Atom XML, ACL Anthology HTML, DBLP JSON, OpenReview JSON, HELMET camera-ready HTML)",
-  "why_not_pass": "the claim AS WRITTEN in this file's 'claim' key asserts a general 'scorer preprocessing destroys ranking', which IS covered: Alzahrani et al. ACL 2024 (2024.acl-long.744) moves leaderboard rank up to 8 positions by changing the answer-SELECTION method; Sanz-Guerrero et al. EMNLP 2025 (2025.emnlp-main.988) reshuffles rankings via tokenization of the 'Answer:' suffix; arXiv:2510.05152 states one can put any model in the lead by changing the single delimiter character. Proceeding unnarrowed walks into K1's kill_if.",
-  "why_not_fully_preempted": "no located work varies ONE operation inside an existing GENERATIVE scorer while holding the generations BYTE-FIXED, and no located work breaks a ladder over ARMS OF ONE MODEL differing in output-format habit. All prior art varies the prompt (delimiter/tokenization/demonstrations/format constraints), swaps the extraction module wholesale (RegEx->model, extra inference pass), changes the metric FAMILY (EM->sMAPE, ROUGE->judge, EM->judge), or perturbs the benchmark (choice order, input-context truncation). Those are between-model leaderboard claims; B11's is a within-model between-arm claim.",
-  "narrowed_claim": "In a generative long-context benchmark whose scorer matches free-form output against a closed task-label vocabulary (babilong.metrics.compare_answers), a SINGLE text-preprocessing operation in the scorer's source -- truncation of the model output at the first period, metrics.py:27 -- interacts with an ARM-DEPENDENT output-format habit strongly enough that the scorer FAILS TO RECOVER THE ORDERING of a within-model architectural manipulation whose true effect is +58 to +84 pp on a retrieval-closed reference task. Demonstrated by re-scoring BYTE-FIXED generations with that one operation removed and nothing else changed: on 2 of 6 cells the inverted point estimate is removed, and on qa1x32k the 5-point ladder becomes rho = -1.000 (exact permutation p = 0.0167). The operation is NOT a one-directional bug -- it LOWERS scores for arms emitting choice-lists (list-format rate 62-75%) and RAISES them for arms emitting continuations -- and the four inverting cells are EXACTLY the four high-list-format cells ([[4,0],[0,2]], Fisher exact p = 0.0667, the minimum attainable at 6 cells, hence descriptive). The scorer contains a SECOND, independently verifiable defect: the guard intended to stop continuation leakage, metrics.py:31 split('Question'), is UNREACHABLE because metrics.py:25 lowercases first.",
-  "venue_verified_prior_art": [
-   {
-    "cite": "Alzahrani et al., When Benchmarks are Targets, arXiv:2402.01781",
-    "venue": "ACL 2024 Long",
-    "authority": "aclanthology 2024.acl-long.744 metadata block (pp. 13787-13805, DOI 10.18653/v1/2024.acl-long.744) + DBLP 'ACL 2024'",
-    "relation": "MUST CITE -- owns 'answer-selection method changes leaderboard rank'"
-   },
-   {
-    "cite": "Molfese et al., Right Answer Wrong Score, arXiv:2503.14996v2",
-    "venue": "Findings of ACL 2025",
-    "authority": "aclanthology 2025.findings-acl.950 metadata block (pp. 18477-18494, DOI 10.18653/v1/2025.findings-acl.950) + DBLP 'ACL 2025'",
-    "relation": "adjacent -- MCQA only; full-text check: 0 occurrences of generative/long-context/ablation/BABILong/first sentence/source code; 'ranking' appears once, citing Alzahrani"
-   },
-   {
-    "cite": "Yu et al., xFinder, arXiv:2405.11874",
-    "venue": "ICLR 2025 Poster",
-    "authority": "OpenReview venueid=ICLR.cc/2025/Conference, forum 7UqQJUKaLM, invitations include Submission5699/-/Camera_Ready_Revision",
-    "relation": "MUST CITE -- closest stance (harness RegEx extraction is 74.38% accurate and is itself the defect), but replaces the module rather than ablating one operation, and shows no ranking destruction"
-   },
-   {
-    "cite": "Sanz-Guerrero et al., Mind the Gap: Tokenization for MCQA, arXiv:2509.15020",
-    "venue": "EMNLP 2025 Main",
-    "authority": "aclanthology 2025.emnlp-main.988 metadata block (pp. 19573-19583) + DBLP 'EMNLP 2025'",
-    "relation": "MUST CITE -- prompt-side 'reshuffled model rankings'; distinguish prompt side vs scorer side in the abstract"
-   },
-   {
-    "cite": "Yen et al., HELMET, arXiv:2410.02694v3",
-    "venue": "ICLR 2025 Poster",
-    "authority": "OpenReview venueid=ICLR.cc/2025/Conference, forum 293V3bJbmE, invitations include Submission12024/-/Camera_Ready_Revision. NOTE: DBLP still returns only 'CoRR 2024' for this title -- the two-family rule was load-bearing here",
-    "relation": "MUST CITE -- most dangerous neighbour: names 'Unreliable metrics' + 'inconsistent output formats' for long-context benchmarks. Read camera-ready 2.2/2.3 in full: its metric fix REPLACES ROUGE with a GPT-4o reference-based judge (human kappa 0.91/0.76), its format fix is PROMPT-SIDE two-shot demos, and it uses substring EM (SubEM) for RAG WITHOUT auditing SubEM's own preprocessing. Argues 'pick a better metric'; B11 argues 'the metric you already use has an identifiable line that inverts your ladder'"
-   },
-   {
-    "cite": "Su/Zhang/Ullrich/Bottou/Ibrahim, A Single Character can Make or Break Your LLM Evals, arXiv:2510.05152",
-    "venue": "CoRR 2025 only (DBLP: Informal and Other Publications; no conference venue located)",
-    "authority": "DBLP",
-    "relation": "MUST CITE -- strongest published 'one character controls ranking', but the character is in the PROMPT. SOURCES.md already flags this exact prompt/scorer distinction as the whole novelty question"
-   },
-   {
-    "cite": "Arjmandi, Distractor-Aware Truncation, arXiv:2608.03297",
-    "venue": "arXiv 2026-08-04 (10 days before this gate = CONCURRENT, does not constitute preemption per project rule)",
-    "authority": "arXiv",
-    "relation": "MUST CITE -- same benchmark (BABILong), same word 'truncation', OPPOSITE side of the pipeline (truncates the INPUT CONTEXT, not the model output inside the scorer). Cite or a reviewer will conflate the two truncations"
-   },
-   {
-    "cite": "Time to Revisit Exact Match, arXiv:2509.16720",
-    "venue": "arXiv only (DBLP total=0 for this title)",
-    "authority": "DBLP",
-    "relation": "adjacent -- EM->sMAPE/MASE 'reshuffles model rankings' on temporal QA; changes the metric FAMILY, not a preprocessing operation"
-   },
-   {
-    "cite": "Reassessing Extractive QA Datasets at Scale, arXiv:2504.11972v3",
-    "venue": "arXiv only (DBLP total=0)",
-    "authority": "DBLP",
-    "relation": "adjacent -- canonical 'judge beats string match' (EM r=0.22, F1 0.40, judge up to 0.85)"
-   },
-   {
-    "cite": "Garg & Sagtani, Unsolvability Ceiling in Multi-LLM Routing, arXiv:2605.07395",
-    "venue": "arXiv only",
-    "authority": "arXiv",
-    "relation": "adjacent -- lists 'output format mismatches' among lumped eval artifacts in routing-headroom estimation; no per-operation ablation"
-   }
-  ],
-  "empty_searches_documenting_the_gap": [
-   "abs:'generative' AND abs:'scorer' AND abs:'output format' -> 0",
-   "abs:'string matching' AND abs:'long context' AND abs:'evaluation' -> 0",
-   "abs:'scorer' AND abs:'benchmark' AND abs:'artifact' AND abs:'conclusion' -> 0",
-   "abs:'lenient' AND abs:'strict' AND abs:'match' AND abs:'benchmark' -> 0",
-   "abs:'LongBench' AND abs:'metric' AND abs:'reliab' -> 0",
-   "abs:'RULER' AND abs:'recall' AND abs:'string match' -> 0",
-   "booydar/babilong: 18 issues, NONE about metrics.py / preprocess_output / first-period truncation (issue #16 is Gemma chat-template/attention-backend, zero comments); GitHub issue search 'babilong metrics truncation' -> 0. The upstream-bug-report exit (K3) is UNCLAIMED."
-  ],
-  "new_findings_this_gate": {
-   "dead_code_second_defect": "metrics.py:31 output.split('Question')[0] is UNREACHABLE: metrics.py:25 lowercases first, so the token is already 'question'. Executed check: input '...kitchen Question: Where is the football? Answer: garden' -> preprocess_output returns '...kitchen question: where is the football? answer: garden', i.e. 'question' in output is True and the guard did not fire. Same applies to <CONTEXT>/<EXAMPLE> in any non-lowercase casing. This STRENGTHENS the surviving 'localises to auditable lines' half of the claim: the authors' intended defence against continuation leakage does not run at all. Was already noted in this repo's scripts/score_with_stopfix.py docstring (2026-06-30) as a Llama-3 diagnostic; re-confirmed here on the current canonical package.",
-   "truncation_is_a_tradeoff_not_a_bug": "CORRECTION to framing, unfavourable to the current wording. Executed on the canonical scorer: 'Choices: A. In the kitchen B. In the garden. The answer is kitchen.' scores False (truncation KILLS a correct list-format answer), while 'kitchen. Question: Where is the football? Answer: garden' scores True canonically and False under notrunc (truncation SAVES a correct continuation-leak answer). The evidence JSON agrees at cell level: notrunc raises qa1/qa2 but LOWERS qa5 (qa5x32k A0 61.0->59.0, A3 57.0->52.0). Correct description = 'a scorer operation whose sign depends on the arm's output-format habit', NOT 'a bug'. Explains why the dissociation is perfectly cell-aligned, but FORBIDS the word 'fix' and forbids presenting notrunc as a corrected metric.",
-   "claim_overstates_the_true_effect_lower_bound": "the 'claim' key and PROPOSAL.md both say '+70 to +84 pp', but established_measurements.true_effect_on_retrieval_closed_ruler_pp = [58.0, 54.0, 84.0, 84.0], whose minimum is 54. Correct range is +54 to +84 pp (the narrowed claim conservatively states +58 to +84 using the two cells that carry the ladder). FLAGGED, NOT EDITED -- the existing key is append-only."
-  },
-  "additional_forbidden_claims": [
-   "'Novel: preprocessing changes model ranking' -- NOT novel. Owned by Alzahrani et al. ACL 2024 and Sanz-Guerrero et al. EMNLP 2025. Only the (generative scorer + one-operation ablation on byte-fixed generations + within-model arm ladder) combination is open.",
-   "'We fix the metric' / presenting notrunc as a corrected metric -- it is a trade-off; notrunc LOWERS qa5.",
-   "'+70 pp' as the lower bound of the true effect -- the evidence minimum is 54 pp.",
-   "'BABILong's scorer is uniquely broken' -- NOT tested; that is K3, still open."
-  ],
-  "gate_status_after_k1": {
-   "K1": "RELEASED for the narrowed_claim ONLY, under the citation and additional_forbidden_claims obligations. NOT released for the 'claim' key as written.",
-   "gpu_policy_now": "satisfied -- K2 (cross-family replication) MAY now spend GPU. K2 remains blocking for promotion.",
-   "K2_added_requirement": "the second family must be measured on per-arm LIST-FORMAT RATE as a PRE-REGISTERED covariate, because the mechanism is now explicitly an interaction with format habit. A second family with asymmetry BUT no inversion is also informative and must not be silently discarded.",
-   "K3": "unchanged, still blocking:false. The upstream-report exit is unclaimed (no babilong issue on metrics.py)."
-  }
- },
- "lifecycle":  "ready_cpu",
- "lifecycle_set":  "2026-08-14",
- "lifecycle_reason":  "K1 (novelty, 0 GPU, blocking) is RUN and RELEASED for the narrowed claim, so gpu_policy no longer blocks. But the recommended next step is deliberately 0-GPU: file the unclaimed upstream bug report (K3 exit) for the metrics.py:31 dead-code guard, which is B11's most solid finding and needs no statistics, no GPU and no second family. K2 is cheap (~1.0-2.4 GPU-h measured) but low-information: with 6 cells the best attainable Fisher p is already 0.0667, so a second family can only tell us whether the SIGN reproduces. See K1_NARROWING.md sec 3.1.",
- "needs_arch":  "sm_90",
- "novelty_checked":  true,
- "next_gate":  "K3-EXIT FIRST (0 GPU): re-check that booydar/babilong still has no issue on metrics.py / preprocess_output / first-period truncation, then FILE that issue, reporting (a) line 31 split('Question') is unreachable because line 25 lowercases first -- mechanically provable, 'Question' in s.lower() is False for every s -- and (b) that line 27's first-period truncation is a SIGN-DEPENDENT TRADE-OFF, not a bug (it kills correct list-format answers and rescues correct continuation-leak answers), with the executed two-row demonstration. ONLY IF a maintainer indicates the behaviour is intentional, escalate to K2 (cross-family replication, ~1.0 GPU-h for the 2 contrast arms over 6 cells) with per-arm LIST-FORMAT RATE as a pre-registered covariate. Otherwise B11's content is 'a scorer line is dead code', which belongs in an issue tracker plus an A02 appendix, NOT a paper.",
- "claim_narrowed_20260814":  {
-  "supersedes": "the 'claim' key (retained verbatim above, append-only). The original is WITHDRAWN as the operative claim; it is kept only as the dated record of what was originally asserted.",
-  "doc": "proposal/backlog/B11-generative-scorer-format-fragility/K1_NARROWING.md",
-  "operative_claim": "In a generative long-context benchmark whose scorer matches free-form output against a closed task-label vocabulary (babilong.metrics.compare_answers), a SINGLE text-preprocessing operation in the scorer's source -- truncation of the model output at the first period, metrics.py:27 -- interacts with an ARM-DEPENDENT output-format habit strongly enough that the scorer FAILS TO RECOVER THE ORDERING of a within-model architectural manipulation whose true effect is +58 to +84 pp on a retrieval-closed reference task. Demonstrated by re-scoring BYTE-FIXED generations with that one operation removed and nothing else changed: on 2 of 6 cells the inverted point estimate is removed, and on qa1x32k the 5-point ladder becomes rho = -1.000 (exact permutation p = 0.0167, which is the MINIMUM ATTAINABLE p over 120 orderings). The operation is NOT a one-directional bug -- it LOWERS scores for arms emitting choice-lists (list-format rate 62-75%) and RAISES them for arms emitting continuations -- and the four inverting cells are EXACTLY the four high-list-format cells ([[4,0],[0,2]], Fisher exact p = 0.0667, the minimum attainable at 6 cells, hence DESCRIPTIVE). The scorer contains a SECOND, independently verifiable defect: the guard intended to stop continuation leakage, metrics.py:31 split('Question'), is UNREACHABLE because metrics.py:25 lowercases first.",
-  "three_forces_that_narrowed_it": {
-   "1_literature": "'Scorer/extraction preprocessing changes model ranking' is OWNED: Alzahrani et al. ACL 2024 (2024.acl-long.744) moves leaderboard rank up to 8 positions via the answer-SELECTION method; Sanz-Guerrero et al. EMNLP 2025 (2025.emnlp-main.988) reshuffles rankings via tokenization of the 'Answer:' suffix; arXiv:2510.05152 states one can put any model in the lead by changing a single delimiter character. => 'destroy the RANKING' became 'fail to recover the ORDERING of a within-model architectural manipulation'.",
-   "2_our_own_numbers_contradicted_our_own_claim": "established_measurements.true_effect_on_retrieval_closed_ruler_pp = [58.0, 54.0, 84.0, 84.0], minimum 54, yet the claim and PROPOSAL.md both said '+70 to +84'. => '+58 to +84', and '+70 as a lower bound' is now a forbidden claim.",
-   "3_the_mechanism_is_a_tradeoff_not_a_bug": "Re-verified by execution: truncation KILLS a correct list-format answer and SAVES a correct continuation-leak answer; notrunc raises qa1/qa2 but LOWERS qa5 (qa5x32k A0 61.0->59.0, A3 57.0->52.0). => the word 'fix' is forbidden and notrunc must never be presented as a corrected metric."
-  }
- },
- "dead_code_recheck_20260814":  {
-  "claim": "metrics.py:31 output.split('Question')[0] is UNREACHABLE",
-  "status": "CONFIRMED on the current canonical package third_party/babilong-pkg/babilong/metrics.py",
-  "mechanical_proof": "'Question' in s.lower() is False for EVERY s, because .lower() cannot produce a capital Q. Line 25 lowercases before line 31 splits on the capitalised literal. Contrast lines 29/30, which use the LOWERCASE tags '<context>'/'<example>' and therefore DO fire: preprocess_output('kitchen <CONTEXT> blah') -> 'kitchen '. So the defect is specific to line 31, and it is the one guard the authors wrote against continuation leakage.",
-  "corrected_demonstration": "in='the football is in the kitchen Question: Where is Mary? Answer: garden' -> out='the football is in the kitchen question: where is mary? answer: garden'; 'question' survives, guard did NOT fire.",
-  "CORRECTION_to_K1": "K1_NOVELTY_CHECK.md sec 3.1's demonstration string is FLAWED and its printed output is wrong. It used '...kitchen Question: ...', whose leading '...' makes LINE 27 truncate at the first period and return the EMPTY STRING -- so under that input the guard 'does not fire' for the wrong reason, and the output shown there ('...kitchen question: where is...') is not what the function returns. The CLAIM is true; the evidence originally offered for it was not. Flagged, not edited, because K1's file is the dated record."
- },
- "gpu_cost_estimate":  {
-  "value": "0 GPU-h for the recommended next step (upstream bug report). K2, if it is ever escalated to: ~1.0 GPU-h for the 2 contrast arms over the 6 cells, ~2.4 GPU-h for all 5 ladder arms.",
-  "basis": "MEASURED from the A02 BABILong generations that produced B11's own evidence, on .73 (8xH20 sm_90), 8 shards/cell, n=100/cell: 216 shard JSONs at 16k mean 33.2 s/shard => 0.0739 GPU-h per 100-sample cell; 216 shard JSONs at 32k mean 38.2 s/shard => 0.0848 GPU-h per cell. Six cells (qa1/qa2/qa5 x {16k,32k}) = 0.4761 GPU-h per ARM; x2 contrast arms = 0.95 GPU-h; x5 ladder arms = 2.38 GPU-h. Total already-spent A02 BABILong generation across 9 arm dirs / 60 cells = 4.551 GPU-h.",
-  "why_cost_is_NOT_the_blocker": "K2 is cheap. The problem is EXPECTED INFORMATION: with 6 cells the best attainable Fisher exact p is already 0.0667, so a second family CANNOT make the dissociation significant -- it can only report whether the SIGN reproduces. Worth ~1 GPU-h only if we would publish 'the sign reproduced in 2 families, still not significant'."
- },
- "honest_sizing_20260814":  {
-  "verdict": "THIN. Recommendation: do NOT pursue B11 as a paper.",
-  "weaknesses_worst_first": [
-   "headline inversion is NOT statistically significant: best exact McNemar p=0.0703 (b=1,c=7, 8 discordant); Holm-adjusted within the 6-cell family p=0.4219",
-   "the one-operation ablation repairs 2 of 6 cells; qa2 is unrepairable (floor, A4=1%)",
-   "the dissociation's Fisher exact p=0.0667 is the FLOOR of what 6 cells can produce => descriptive, not a powered test",
-   "mechanism NOT IDENTIFIED: retrieval vs floor collinear, Spearman(recall, A0_acc)=+0.714 over 6 cells",
-   "ONE model family (Qwen3); K2 unrun",
-   "the strongest surviving sub-result is a 5-point ladder on a SINGLE cell (qa1x32k, rho=-1.000, p=0.0167 = the minimum attainable over 120 orderings, so it cannot become more significant however real it is)"
-  ],
-  "what_is_actually_solid": "The two CODE facts: (a) metrics.py:31 is unreachable, (b) metrics.py:27's truncation is a sign-dependent trade-off. Both are deterministic, CPU-checkable in five lines, and require no statistics. Everything QUANTITATIVE about ranking damage rests on 6 cells of one model family with a non-significant headline => appendix or workshop-scale measurement note, not a paper.",
-  "dominant_cheap_path": "File the upstream bug report (K3 exit), 0 GPU. K1 sec 1 established the exit is UNCLAIMED: booydar/babilong has 18 issues, none about metrics.py / preprocess_output / first-period truncation, and a GitHub issue search returns 0. The dead-code guard needs no statistics, no GPU and no second family -- it either is unreachable or it isn't, and it is. This converts B11's most solid finding into its natural artefact."
- },
- "venue_reverify_20260814":  {
-  "method": "by family; S2 NOT used as an authority (it returned HTTP 429 on this pass)",
-  "acl_family_rechecked_today": [
-   {
-    "cite": "arXiv:2402.01781 Alzahrani et al.",
-    "authority": "aclanthology.org/2024.acl-long.744/ HTTP 200, title 'When Benchmarks are Targets: Revealing the Sensitivity of Large Language Model Leaderboards', venue field ACL",
-    "venue": "ACL 2024 Long CONFIRMED"
-   },
-   {
-    "cite": "arXiv:2503.14996 Molfese et al.",
-    "authority": "aclanthology.org/2025.findings-acl.950/ HTTP 200, venue field Findings",
-    "venue": "Findings of ACL 2025 CONFIRMED"
-   },
-   {
-    "cite": "arXiv:2509.15020 Sanz-Guerrero et al.",
-    "authority": "aclanthology.org/2025.emnlp-main.988/ HTTP 200, venue field EMNLP",
-    "venue": "EMNLP 2025 Main CONFIRMED"
-   }
-  ],
-  "openreview_family_CARRIED_NOT_REFETCHED": "xFinder (arXiv:2405.11874, venueid ICLR.cc/2025/Conference, forum 7UqQJUKaLM, Submission5699/-/Camera_Ready_Revision) and HELMET (arXiv:2410.02694, venueid ICLR.cc/2025/Conference, forum 293V3bJbmE, Submission12024/-/Camera_Ready_Revision) were verified by K1 earlier today with forum IDs and Camera_Ready_Revision invitations recorded in k1_raw/, and were NOT re-fetched in this pass. Labelled rather than implying a fresh check. NOTE: DBLP returns only 'CoRR 2024' for HELMET, so the two-family rule was load-bearing.",
-  "CORRECTION_P6_author_attribution": "K1_NOVELTY_CHECK.md sec 1 lists P6 as 'Kim & Kim (et al.)'. That attribution is WRONG. DBLP and the arXiv Atom record both give the authors of arXiv:2510.14773 ('Finding Answers in Thought Matters: Revisiting Evaluation on Large Language Models with Reasoning') as Hwiyeol Jo, Joosung Lee, Jaehone Lee, Sang-Woo Lee, Joonsuk Park, Kang Min Yoo -- there is NO author named Kim. Venue IS correctly recorded (DBLP: CoRR 2025, Informal and Other Publications; arXiv comment 'ARR Submitted', so no accepted venue). A .bib entry MUST NOT be generated from that row. Its substantive relation to B11 is unchanged: it shows reasoning-model SCORES are sensitive to the extraction algorithm and proposes an extra inference pass; no ranking-destruction demonstration, not long-context, no code-line localisation."
- },
- "not_verified_in_this_pass":  [
-  "K1's statistics (McNemar p=0.0703, Holm 0.4219, Fisher 0.0667, Spearman +0.714, qa1x32k rho=-1.000 p=0.0167) were NOT recomputed from the A02 per-item vectors. They are consistent between STATUS.json and K1_NOVELTY_CHECK.md, but that is internal consistency, not independent replication.",
-  "the two OpenReview venue IDs were carried from K1's artefacts, not re-fetched (see venue_reverify_20260814)",
-  "the upstream-issue check ('booydar/babilong has 18 issues, none about metrics.py') was carried from K1, not re-run. Since the sec-3.1 recommendation depends on that exit still being unclaimed, it MUST be re-checked immediately before filing."
- ],
- "abandoned":  {
-  "original_claim": "A generative long-context benchmark scorer's text preprocessing can encode output-format conventions strongly enough to DESTROY THE RANKING of a true effect of +70 to +84 pp, and the failure localises to specific auditable lines of the metric. (Verbatim from the 'claim' key, which is retained above unmodified.)",
-  "killed_by": "K1 (novelty gate, 0 GPU) plus our own evidence, in three separate places. (1) LITERATURE: the general form 'scorer/extraction preprocessing changes model ranking' is already owned -- Alzahrani et al. ACL 2024 (aclanthology 2024.acl-long.744, venue field ACL) moves leaderboard rank by up to 8 positions via the answer-selection method; Sanz-Guerrero et al. EMNLP 2025 (aclanthology 2025.emnlp-main.988) reshuffles rankings via tokenization of the 'Answer:' suffix; arXiv:2510.05152 puts any model in the lead by changing one delimiter character. Asserting the claim unnarrowed walks straight into K1's own kill_if. (2) OUR OWN NUMBERS: '+70 pp' is not supported as a lower bound -- established_measurements gives [58.0, 54.0, 84.0, 84.0], minimum 54. (3) THE MECHANISM: executed re-verification shows first-period truncation is a SIGN-DEPENDENT TRADE-OFF, not a bug -- it kills correct list-format answers and rescues correct continuation-leak answers, and removing it LOWERS qa5 -- so 'the failure' cannot be described as a defect with a fix. Additionally the headline inversion is not significant (McNemar p=0.0703, Holm 0.4219).",
-  "surviving_scope": "TWO code-level facts about ONE scorer, both deterministic and CPU-checkable, plus a weak 6-cell descriptive pattern in ONE model family. SURVIVING: (a) babilong metrics.py:31 split('Question') is UNREACHABLE because line 25 lowercases first -- mechanically provable, no statistics; (b) metrics.py:27's first-period truncation is a sign-dependent trade-off whose direction depends on the arm's output-format habit, demonstrated on byte-fixed generations with one operation removed; (c) descriptively, the 4 cells whose point estimate inverts are exactly the 4 high-list-format cells (Fisher p=0.0667 = the floor for 6 cells), and removing truncation repairs 2 of 6 cells with qa1x32k becoming rho=-1.000 (p=0.0167 = the minimum attainable over 120 orderings). NOT SURVIVING: 'destroys ranking' (owned by prior art in the general form, and not significant in ours); '+70 pp' as a lower bound; 'we fix the metric' (it is a trade-off); any claim that BABILong's scorer is uniquely broken (K3 untested); any general claim about generative scorers (n=1 scorer, n=1 model family). HONEST SIZING: this is an appendix or an upstream issue report, NOT a paper -- the recommendation recorded in next_gate is to file the (unclaimed) upstream bug report at 0 GPU and to escalate to K2 only if a maintainer says the behaviour is intentional. Judging the direction not worth a paper is the deliberate output here, not a failure to finish it."
- },
- "k3_exit_verification_20260815": {
-  "gate": "K3-EXIT step 1 (re-verify the two source-code assertions + re-check the upstream issue tracker). 0 GPU.",
-  "date": "2026-08-15",
-  "gpu_spent": "ZERO -- no GPU touched, no node contacted. All checks are pure-CPU string operations on the canonical package plus HTTPS to api.github.com via the hy-proxy.",
-  "verdict_summary": "assertion (a) AMENDED (true but mis-worded: the line IS executed, it is a guaranteed no-op, not 'unreachable'); assertion (b) CONFIRMED and strengthened with an empirical sign split. Upstream exit STILL UNCLAIMED. Issue drafted, NOT filed.",
-  "code_under_test": {
-   "path": "third_party/babilong-pkg/babilong/metrics.py",
-   "md5": "0a5ecc52ade4e337d35b8f9c97c38310",
-   "local_checkout_head": "f09a184b43316a751d5059e13de7c557b6daca86 (booydar/babilong, remote http://github.com/booydar/babilong.git)",
-   "upstream_head_today": "7a6efee29f5c (2026-06-01, 'Merge pull request #18 from RodkinIvan/add-results-gemini-3-flash-prev')",
-   "upstream_file_identical": "YES -- raw.githubusercontent.com/booydar/babilong/main/babilong/metrics.py fetched HTTP 200, md5 0a5ecc52ade4e337d35b8f9c97c38310, BYTE-IDENTICAL to our checkout. So although our checkout is 2 commits behind HEAD, metrics.py itself is current and the line numbers we quote ARE the maintainer's line numbers.",
-   "line_numbers_on_disk": "EXACT MATCH to the assertion: 25 = output.lower(); 27 = output.split('.')[0]; 31 = output.split('Question')[0]. No drift. Verified by inspect.getsourcelines(preprocess_output) printing 24-32.",
-   "git_blame": "lines 25/27/29/30/32 = 1e7893a4 (yurakuratov 2024-05-22); line 31 = 58e5d20b (booydar 2024-06-04, commit message 'add split by \"Question\" in preprocess + fix lowercase bug'). metrics.py last touched upstream 2025-04-05 (93d7bfe6); only 5 commits ever touched it.",
-   "second_disk_check": "zwfy6 is NOT MOUNTED on LOCAL (`ls /apdcephfs_zwfy6` -> No such file or directory; `mount | grep apdcephfs` shows only /apdcephfs_wzc1 and /apdcephfs_wzc1_304376610, and the latter is the SAME device+inode 215/10762798397938020997 for metrics.py, i.e. an alias of wzc1, not a second checkout). Cross-disk verification of the FILE was therefore not possible from this node WITHOUT SSH, which this task forbids. It is not needed: the authoritative comparison is against UPSTREAM, which was fetched and is byte-identical. Two additional in-repo copies were located and checked: /apdcephfs_wzc1/share_304376610/pighzliu_code/babilong/babilong/metrics.py (separate clone, same HEAD f09a184, md5 IDENTICAL) and .venv (no babilong package installed -- repo-scoped find only, never `find /`)."
-  },
-  "assertion_a": {
-   "as_written_in_next_gate": "\"line 31 split('Question') is unreachable because line 25 lowercases first -- mechanically provable, 'Question' in s.lower() is False for every s\"",
-   "verdict": "AMENDED",
-   "what_is_CONFIRMED": "The substantive content. 'Question' in s.lower() is False for EVERY s, and line 31 therefore can NEVER alter the value. Brute-forced over the full Unicode range on python 3.11.6: [cp for cp in range(0x110000) if 'Q' in chr(cp).lower()] == [] ; the same list for ANY character of 'QUESTION' == [] ; exactly ONE codepoint lowers to >1 char and it contains no ASCII uppercase; str.lower is IDEMPOTENT for every codepoint ([cp for cp in range(0x110000) if chr(cp).lower().lower()!=chr(cp).lower()] == []), so the chained splits on lines 27/29/30 cannot reintroduce a capital either; the one context-sensitive rule (Greek final sigma) yields no uppercase ('ODOS'.lower()=='odos'); and 0/300000 random+adversarial trials (pool incl. dotted-I U+0130, dotless-i U+0131, Sigma U+03A3, capital-sharp-s U+1E9E, Kelvin U+212A, Angstrom U+212B) produced 'Question' in s.lower().",
-   "what_is_WRONG_and_why_it_matters": "The WORD 'unreachable'. Line 31 IS REACHED AND EXECUTED on every call. Measured with sys.settrace on preprocess_output('kitchen Question: x'): lines executed inside the function = [25, 27, 29, 30, 31, 32] -- 31 is in the list. It is a GUARANTEED NO-OP, not dead code in the control-flow sense. Filing an upstream issue that says 'this line is unreachable' invites a maintainer to reply 'no, it runs' and close it. The draft therefore says 'the guard can never fire' and adds an explicit terminology note. This is a wording defect in OUR record, inherited from dead_code_recheck_20260814.claim and lifecycle_reason ('metrics.py:31 dead-code guard'), not an error in the underlying finding.",
-   "class_check_other_reachable_paths": "DONE -- 'this path is unreachable' != 'this line is unreachable'. (1) The .lower() at line 25 is the function's FIRST statement and is UNCONDITIONAL, so no argument value can bypass it. (2) preprocess_output has exactly ONE definition in this repo (grep -rn 'def preprocess_output' --include=*.py --include=*.ipynb -> 1 hit, metrics.py:24) and exactly ONE in-repo caller (metrics.py:36, compare_answers). (3) Upstream-wide `git grep preprocess_output` finds no other caller either; all 14 upstream notebooks call compare_answers, never preprocess_output directly. (4) A SECOND, INDEPENDENT scorer exists upstream -- babilong/babilong_utils.py:8 compare_answers(target, output) -- which lowercases, truncates at the first period and splits <context>/<example>, but has NO 'Question' guard at all, so it is unaffected rather than an alternative reachable path. So there is no caller and no input that reaches line 31 with un-lowercased text.",
-   "executed_output": "preprocess_output('kitchen Question: Where is the football? Answer: garden') -> 'kitchen question: where is the football? answer: garden' (the substring 'question' SURVIVES; guard did not fire). Control that lines 29/30 DO fire: preprocess_output('kitchen <CONTEXT> blah') -> 'kitchen ' and ('kitchen <EXAMPLE> blah') -> 'kitchen '. Note the input carries NO period before 'Question', which is what makes the no-op OBSERVABLE -- this is the flaw dead_code_recheck_20260814.CORRECTION_to_K1 already identified in K1's string, and the corrected string in that key is the one that works.",
-   "observable_consequence_added_this_gate": "The previous records proved the line does nothing but never showed a SCORE changing, which is what an upstream maintainer will ask for. Executed: with target='kitchen', question='Where is John?', raw='kitchen Question: where is Mary? Answer: garden' -> canonical compare_answers = False, but with the SINGLE character fix 'Question'->'question' = True. So the no-op has a measurable false-negative consequence, and the one-character fix is NOT score-neutral. Scale on this repo's own generations (400 randomly-sampled babilong_results/*/qa*_*.csv, 37801 items, canonical scorer imported): 832 items (2.20%) would have been truncated had the guard worked, of which 56 flip correctness; 81/400 CSV files contain at least one such item."
-  },
-  "assertion_b": {
-   "as_written_in_next_gate": "\"line 27's first-period truncation is a SIGN-DEPENDENT TRADE-OFF, not a bug (it kills correct list-format answers and rescues correct continuation-leak answers), with the executed two-row demonstration\"",
-   "verdict": "CONFIRMED as to the trade-off; the SPECIFIC TWO-ROW DEMONSTRATION CURRENTLY IN THE RECORD IS AMENDED (row 1 does not show what it claims).",
-   "row2_reproduces_exactly": "'kitchen. Question: Where is the football? Answer: garden' -> canonical TRUE, notrunc FALSE. Truncation RESCUES a correct continuation-leak answer. Matches k1_novelty.new_findings_this_gate.truncation_is_a_tradeoff_not_a_bug.",
-   "row1_DOES_NOT_REPRODUCE": "The recorded row 1 is 'Choices: A. In the kitchen B. In the garden. The answer is kitchen.' scoring False, described as 'truncation KILLS a correct list-format answer'. Executed: canonical=False, notrunc=ALSO False. It scores 0 EITHER WAY -- notrunc leaves 'choices: a. in the kitchen b. in the garden. the answer is kitchen.', in which BOTH 'kitchen' and 'garden' survive, so compare_answers' UNIQUENESS requirement (len(labels_in_output)==1) rejects it. Truncation is not what killed that item. The string demonstrates the uniqueness requirement, NOT the truncation. Any upstream issue built on it would be refuted on first execution.",
-   "row1_REPLACED_BY_working_examples": "Executed, target='kitchen', question='Where is John?' (contains no task label): (i) 'The answer is A. kitchen' -> canonical FALSE / notrunc TRUE (truncation kills a correct ENUMERATED answer -- preprocess gives 'the answer is a'); (ii) 'John moved several times. He is in the kitchen' -> canonical FALSE / notrunc TRUE (kills a correct REASON-THEN-ANSWER answer). These are the minimal cases that isolate line 27 with the uniqueness requirement held harmless.",
-   "third_direction_found_this_gate": "Truncation does not merely 'rescue' correct answers, it can MANUFACTURE them: 'kitchen is wrong. the answer is garden' with target 'kitchen' -> canonical TRUE (preprocess gives 'kitchen is wrong'), notrunc FALSE. That is a FALSE POSITIVE created by line 27. So the two directions are not symmetric-but-harmless: the harmful direction penalises enumerating/reasoning styles, the 'helpful' direction includes a false-positive mode. Not previously recorded.",
-   "net_sign_depends_on": "The MIX of output formats in the arm being scored, because the two directions are driven by different, non-overlapping surface features: (1) HARM requires the correct label to appear AFTER some period, which is what enumerated ('A. x B. y') and reason-then-answer styles do; (2) HELP requires a period BEFORE post-answer scaffold/other labels, which is what a leaked 'X. Question: ... Answer: Y' continuation does. An arm whose habit is enumeration is net-penalised; an arm whose habit is a short answer followed by leakage is net-rewarded. Hence the net effect over a cell has NO fixed sign and is confounded with format habit rather than with task ability.",
-   "empirical_sign_split_measured_this_gate": "New evidence, independent of the A02 cells. 500 randomly-sampled babilong_results/*/qa*_*.csv (46241 items), canonical compare_answers vs the same scorer with ONLY line 27 removed, is_list_format() taken verbatim from analyze_a02_truncation_ablation.py: overall HARMS 61 (0.13%), HELPS 136 (0.29%), net of KEEPING truncation = +0.16 pp. SPLIT BY FORMAT: LIST-format items n=429 -> HARMS 39 (9.09%), HELPS 1 (0.23%), net -8.86 pp; NON-LIST items n=45812 -> HARMS 22 (0.05%), HELPS 135 (0.29%), net +0.25 pp. The SIGN OF THE NET EFFECT FLIPS with format. This is the assertion's mechanism reproduced on a much larger and differently-sourced item pool, and it is the cleanest single number B11 has for the trade-off. CAVEAT: this pool is a heterogeneous mix of this repo's historical runs across many models/configs, NOT a controlled arm contrast, so it supports the SIGN-FLIP claim and must NOT be quoted as an effect size for any arm comparison."
-  },
-  "upstream_issue_recheck": {
-   "network": "REACHED. proxy http://hy-proxy.woa.com:3128 worked; GET https://api.github.com/repos/booydar/babilong -> HTTP 200.",
-   "repo_state": "full_name booydar/babilong, open_issues_count 6 (GitHub counts open PRs in this figure), pushed_at 2026-06-01T18:13:38Z, updated_at 2026-08-06T15:35:37Z, default_branch main, stars 253, has_issues true.",
-   "enumeration": "GET /issues?state=all&per_page=100 -> 18 records = 10 ISSUES + 8 PULL REQUESTS. NOTE: K1 recorded '18 issues'; the correct decomposition is 10 issues + 8 PRs. Both open AND closed were retrieved, as required.",
-   "all_issues": "#1 open 2024-03-13 heatmap figure; #3 open 2024-06-13 add Claude/Google models; #4 closed 2024-06-13 clarify GPT-4 model; #5 closed 2024-11-04 leaderboard down; #7 closed 2024-11-19 create_tasks.py qa3; #8 open 2024-12-19 batch evaluations; #9 closed 2024-12-25 mamba 130m recipe; #10 closed 2025-01-03 babilong training data impairs model; #11 open 2025-01-07 test exaone; #16 open 2026-02-05 gemma performance mismatch.",
-   "all_prs": "#2,#6,#12,#13,#14,#15,#18 merged (all results/leaderboard additions); #17 open 2026-05-28 'Add BABILong results for Aegyx 0.1' (unmerged).",
-   "keyword_scan": "Ran over EVERY title AND body of all 18 records for: metrics.py, preprocess_output, compare_answers, truncat, first sentence, split('.'), lowercase, lower(), split('Question'), scorer, first period, dead code, unreachable. TWO hits, BOTH FALSE POSITIVES on inspection: #16 body contains 'lower()' only in the phrase 'consistently lower than the reported metrics' (it is a Gemma reproduction question about chat template vs SDPA/FA2 attention backend); PR #17 body contains 'scorer' only in 'The official BABILong scorer was not modified'. NEITHER concerns metrics.py preprocessing.",
-   "github_issue_search": "repo:booydar/babilong+metrics.py -> total_count 0; +preprocess_output -> 0; +truncation -> 0; +lowercase -> 0; +scorer -> 1 (only PR #17, the false positive above).",
-   "commits_since": "Upstream added 2 commits after our checkout (c058d06f 2026-05-31 gemini-3-flash results, 7a6efee2 2026-06-01 merge). NEITHER touches metrics.py. GET /commits?path=babilong/metrics.py returns exactly 5 commits ever, newest 93d7bfe6 (2025-04-05). So the defect has NOT been fixed.",
-   "conclusion": "K3-EXIT PREMISE HOLDS UNCHANGED. The upstream report is still unclaimed and the code is still current. not_verified_in_this_pass item 3 ('the upstream-issue check was carried from K1, MUST be re-checked immediately before filing') is hereby DISCHARGED as of 2026-08-15."
-  },
-  "issue_draft": {
-   "path": "proposal/backlog/B11-generative-scorer-format-fragility/UPSTREAM_ISSUE_DRAFT.md",
-   "filing_status": "DRAFT -- NOT FILED. Filing an issue on a third-party repository is an irreversible outward action and was NOT authorised in this pass. The file's first line is an HTML comment stating this.",
-   "content_rules_applied": "Every claim carries upstream HEAD sha + file md5 + line number + an executable snippet, so a maintainer can reproduce from a clean clone with no data and no GPU. Point 1 is framed as a defect with a one-character fix AND an explicit warning that the fix is not score-neutral. Point 2 is framed as a design/documentation question and EXPLICITLY does not propose deleting line 27 (per additional_forbidden_claims: notrunc must never be presented as a corrected metric). Scan for leaks returned zero hits for internal paths, node IPs, disk names, model families, arm labels, proposal IDs and every unpublished statistic (McNemar/Holm/rho/pp figures).",
-   "what_the_draft_does_NOT_say": "No mention of the A02 arm ladder, no pp effect sizes from our runs, no p-values, no model family, no claim that the scorer inverts conclusions."
-  },
-  "corrections_to_prior_keys_FLAGGED_NOT_EDITED": [
-   "dead_code_recheck_20260814.claim and lifecycle_reason both use 'UNREACHABLE'/'dead-code'. Measured wrong: sys.settrace shows line 31 executes. Correct wording = 'a guaranteed no-op' / 'the guard can never fire'. Substance unaffected. Kept verbatim as the dated record.",
-   "k1_novelty.new_findings_this_gate.truncation_is_a_tradeoff_not_a_bug and claim_narrowed_20260814.three_forces_that_narrowed_it.3 both cite 'Choices: A. In the kitchen B. In the garden. The answer is kitchen.' as truncation KILLING a correct list-format answer. Executed: it is False under BOTH canonical and notrunc -- the uniqueness requirement kills it, not the truncation. The trade-off claim is TRUE; that particular string is not evidence for it. Working replacements are in assertion_b.row1_REPLACED_BY_working_examples. This is the SECOND time a demonstration string in this proposal has been found not to show what it claims (the first was dead_code_recheck_20260814.CORRECTION_to_K1 on K1 sec 3.1) -- both times the mechanism was line 27 silently doing the work. Any future demonstration in this proposal MUST be executed and its printed output pasted, never composed by hand.",
-   "k1_novelty.empty_searches_documenting_the_gap says 'booydar/babilong: 18 issues'. The API returns 18 RECORDS = 10 issues + 8 PRs. The conclusion (no issue on metrics.py) is unaffected and re-verified today."
-  ],
-  "what_this_gate_does_NOT_establish": [
-   "Nothing about whether the trade-off changes any RANKING. That rests on the 6 A02 cells and is unchanged by this pass; honest_sizing_20260814's THIN verdict stands.",
-   "The 46241-item sign split is NOT a controlled arm contrast (heterogeneous historical runs, many models/configs) -- it supports the SIGN FLIP only, never an effect size.",
-   "K1's statistics were again NOT recomputed from per-item vectors (unchanged from not_verified_in_this_pass item 1).",
-   "K3 as originally written ('do LongBench / RULER / LongEval scorers have the same class of preprocessing?') was NOT tested. This pass executed only the K3-EXIT step from next_gate. 'BABILong's scorer is uniquely broken' remains a forbidden claim."
-  ],
-  "recommended_next_action": "Obtain approval, then file UPSTREAM_ISSUE_DRAFT.md. No GPU. Do NOT escalate to K2 unless a maintainer replies that the behaviour is intentional (per next_gate). Lifecycle stays ready_cpu -- this gate did not change readiness, it verified the premise of the already-declared next step."
- }
 }
