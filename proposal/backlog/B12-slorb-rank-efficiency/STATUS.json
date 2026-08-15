@@ -1,0 +1,131 @@
+{
+  "id": "B12",
+  "name": "slorb-rank-efficiency",
+  "slug": "B12-slorb-rank-efficiency",
+  "status": "BACKLOG_DESIGN_COMPLETE_NOVELTY_UNCHECKED_ZERO_GPU_SPENT",
+  "created": "2026-08-16",
+  "updated": "2026-08-16",
+  "origin": "User hypothesis, verbatim: 'SLoRB's effect doesn't feel like it needs to be this big -- try a SMALLER SLoRB.' Tests whether SparseForge's 848,429,056-parameter low-rank bypass (26.2% of surviving weights, 13.1011 density points) is over-provisioned, using post-hoc surgery on an already-trained checkpoint so that NO TRAINING is required.",
+
+  "claim_under_test": "The trained SLoRB branch of the SparseForge 5B headline checkpoint contains enough redundancy that a fraction of its parameters reproduces most of its union-9 contribution, moving the model to a better quality-vs-density point WITHOUT retraining.",
+
+  "lifecycle": "ready_cpu",
+  "lifecycle_set": "2026-08-16",
+  "lifecycle_reason": "Two 0-GPU blockers, both strictly prior to any card. (1) NOVELTY IS UNCHECKED and RELATED_WORK.md is absent; proposal/README.md makes Related Work a precondition for new GPU, and this direction sits in a crowded area (LoRA rank ablations, AdaLoRA, post-training SVD compression of adapters, structured-basis coarsening) so the check is substantive, not a formality. (2) The tool the ladder depends on, baselines/cast_repro/tools/emit_slorb_ladder.py, HAS NEVER BEEN EXECUTED -- its first run must be the CPU-only export of rung A, which has a known answer (manifest density must be exactly 56.2500% and branch_live exactly 404,750,336). Both legs are CPU-only and together they are the entire actionable next step. Declaring ready_cpu rather than letting inference decide because the declaration is in the SAFE direction: it can only free a card, never spend one.",
+  "needs_arch": "sm_100",
+  "needs_arch_why": "Every row of the 5B same-harness table was scored on compute_cap 10.0 (B200; memory fingerprint 190.84e9 bytes/GPU = 177.7 GiB). Scoring a new rung on H20 sm_90 would inject the measured 0.03-0.16 pp cross-architecture offset (status/PAPERB_CORE6_CROSSARCH_FLOOR.md, on BIT-IDENTICAL weights) on top of an effect whose whole decision threshold is 1.79 pp. Enforced by scripts/launch_slorb_rank_sweep.sh REQUIRE_SM=10.0, mirroring scripts/launch_union9_gapfill_212.sh.",
+  "needs_disk": "wzc1 ONLY. MEASURED: /apdcephfs_zwfy6/share_304376610/pighzliu_code/outputs/cast_eval_spec does NOT exist, and neither does .../Mixture-of-Memory/outputs/cast_eval_spec on either disk. The 41 GB checkpoint and all SparseForge union-9 evidence are wzc1-resident, so only LOCAL and .212 are eligible.",
+
+  "novelty_checked": false,
+  "novelty_status_detail": "NOT CHECKED. This is the primary blocking 0-GPU task. The specific prior-art surfaces that must be cleared before any GPU: (a) post-hoc SVD/low-rank truncation of trained adapters; (b) adapter-rank over-provisioning ablations (LoRA rank sweeps, AdaLoRA, ALoRA); (c) structured/block-basis coarsening of a low-rank correction as opposed to SVD; (d) prior work on low-rank bypasses specifically ATTACHED TO N:M-sparse weights, which is the narrow surface where this could be novel. RELATED_WORK.md is absent from the proposal directory.",
+  "related_work_status": "ABSENT -- RELATED_WORK.md not on disk. Blocks PROMOTION and (per gpu_policy) blocks GPU.",
+
+  "next_gate": "G0 (0 GPU, BLOCKING, two legs, do BOTH before requesting a card). LEG 1 -- novelty: write proposal/backlog/B12-slorb-rank-efficiency/RELATED_WORK.md clearing surfaces (a)-(d) in novelty_status_detail; the load-bearing question is whether 'block-basis coarsening of a low-rank branch bolted onto 2:4-sparse weights' is distinct from generic post-hoc adapter-rank reduction. LEG 2 -- tool self-check: run baselines/cast_repro/tools/emit_slorb_ladder.py with CUDA_VISIBLE_DEVICES='' --mode ladder --rung A on the 5B checkpoint and ASSERT the emitted slorb_variant_manifest.json reports density_two_matmul_deployment_form == 0.5625 exactly and live_branch_params == 404750336 exactly. That tool has never been executed (the predecessor emit_small_slorb_variants.py says so in its own docstring), and rung A has an independently known answer, so this is a free correctness gate. ONLY IF BOTH PASS: request 1.46 GPU-h on .212/LOCAL for the PILOT PAIR (rung P + control Dctl) via scripts/launch_slorb_rank_sweep.sh with DRY_RUN=0. Rungs Q/R/S are NOT authorised by this document and require the pilot verdict first.",
+  "next_gate_gpu": "0 GPU for G0. Both legs of the next gate are CPU-only: the novelty write-up needs no compute, and the rung-A export self-check runs under CUDA_VISIBLE_DEVICES='' on CPU. The FIRST GPU spend after G0 is the pilot pair at 1.46 GPU-h.",
+
+  "kill_gate": {
+    "_preregistered": "2026-08-16, PRE-DATA. No rung has been evaluated. All constants below are frozen and were computed from evidence already on disk.",
+    "noise_floor_measured": "0.8953 pp = the widest paired-CI95 half-width among the three completed union-9 contrasts (0.7274 / 0.8123 / 0.8953), from paired item-level bootstrap within task, B=4000, seed 0, same resample applied to all cells simultaneously. Source: status/sparseforge_union9_closeout.json .deltas_union9_pp.",
+    "tau_pp": 1.79,
+    "tau_derivation": "tau = 2 x 0.8953 = 1.7906, rounded down to 1.79 pp.",
+    "tau_as_fraction_of_available_window": "33.4% -- the entire R0->R1 window is only 5.3657 pp (62.4335 - 57.0678), so tau consumes a third of it. This is why n=1-per-rung forces an explicit INDETERMINATE band rather than a binary read.",
+    "pass_bar_union9_primary": 60.64,
+    "pass_bar_derivation": "62.4335 (R0 anchor, sparseforge_hard_fold, ON DISK) - 1.79.",
+    "qualifying_rungs": "psi >= 0.60, i.e. giving back at least 60% of the branch's 13.1011 density points: P (psi 0.6159), Q (0.6572), R (0.6869), S (0.7765). Rung A (psi 0.5229) does NOT qualify and cannot be used to support a rank claim.",
+    "clause_1_OVER_PROVISIONED": "at least one qualifying rung scores >= 60.64.",
+    "clause_2_NOT_OVER_PROVISIONED": "every qualifying rung loses more than tau AND the loss is monotone in psi.",
+    "clause_3_INDETERMINATE": "a qualifying rung lands in the (1.79, 3.58) pp loss band. That is 1-2 CI widths at n=1 run per rung and MUST NOT be called either way.",
+    "clause_4_KILL_ON_PILOT": "If PILOT rung P scores < 60.64, the cheapest step on the measured frontier has already failed and no deeper rung can succeed. STOP; do NOT launch Q/R/S. Cost to reach this verdict is 1.46 GPU-h.",
+    "clause_5_KILL_ON_CONTROL": "If the density-matched SVD control Dctl scores >= rung P, the verdict is 'basis coarsening is the wrong operator', NOT 'SLoRB is over-provisioned'. Pre-registered because outputs/slorb_rank/op_matched_density_sample.json already shows SVD winning the density-matched W_eff comparison in 12/35 projections at c=4 and 24/35 at c=16, so Dctl is a genuine competitor and must not be described as a foregone loss.",
+    "clause_6_KILL_ON_RUNG_A": "If rung A itself loses more than tau, even the parameter-free x_proj substitution is unaffordable, and the x_proj result in clause_7 is void as well.",
+    "clause_7_PREREGISTERED_THIRD_OUTCOME": "Rung A passing while P/Q/R/S all fail is NOT 'over-provisioned rank'. It is 'x_proj is free, rank is not' -- 443,678,720 parameters deleted for a global W_eff perturbation of 12.3% of the delete-branch level. Recorded now, PRE-DATA, because the measured evidence (flat spectrum, exactly-1.0 on-block x_proj) makes it the likeliest outcome and it must not be reframed as a rank finding after the fact."
+  },
+
+  "gpu_cost_estimate": {
+    "value": "1.46 GPU-h to a go/no-go verdict (pilot pair: rung P + control Dctl). 4.38 GPU-h for the full 6-cell ladder (A, P, Q, R, S, Dctl) IF the pilot passes. Both anchors R0/R1 are already on disk at 0 additional GPU.",
+    "basis": "MEASURED per-cell cost 0.73 GPU-h, from the completed union-9 gap-fill's own stage timestamps: 11m02s wall on 4 GPUs across 6 stages (export 2m03s / verify-pre 50s / ppl 43s / union-9 zero-shot 5m07s / aggregate 2s / verify-post 41s). Cross-checked: the two prior arms took 9m15s and 10m15s for the identical pipeline. Source: status/sparseforge_union9_closeout.json .measured_per_cell_cost_breakdown.",
+    "next_gate_cost": "0 GPU -- G0 is CPU-only (novelty write-up + rung-A CPU export self-check).",
+    "generalisation_leg_cost": "NOT ESTIMATED, deliberately. See gpu_policy.qwen35_leg: the Qwen3.5-9B leg needs a sparse_modeling.py port to a multimodal hybrid-attention architecture plus a full SparseForge training run before any rung exists. Estimating it would imply the port is scoped; it is not."
+  },
+
+  "gpu_policy": "NO GPU until G0 (next_gate) passes -- both legs, novelty write-up AND the CPU rung-A export self-check. G0 is 0 GPU and is the entire actionable next step. When G0 passes, the authorised spend is the PILOT PAIR ONLY (rung P + Dctl, 1.46 GPU-h) on sm_100/wzc1 (.212 or LOCAL); rungs Q/R/S are NOT authorised by this document and require the pilot verdict. The driver scripts/launch_slorb_rank_sweep.sh defaults to DRY_RUN=1 and refuses to run if any GPU on the node is already busy.",
+
+  "gpu_policy_qwen35_leg": "QUEUED, NOT READY, and explicitly NOT authorised for any GPU. The Qwen3.5-9B generalisation leg is blocked on a 0-GPU design note that must first answer: what does SLoRB even mean on a Qwen3_5GatedDeltaNet layer? 24 of 32 layers are linear-attention/Gated DeltaNet (Mamba-class recurrent, conv1d + A_log + dt_bias), not transformer blocks, so the q/k/v/o/gate/up/down projection set SLoRB is defined on does not exist in the same form. See PROPOSAL.md section 9 for all 7 measured blockers.",
+
+  "established_measurements": {
+    "_note": "All values below were re-derived from source in this pass and reproduce the brief EXACTLY unless flagged as a CORRECTION.",
+    "branch_size": "SLoRB_Weight 404,750,336 + x_proj 443,678,720 = 848,429,056 live params = 26.2% of the 3,238,002,688 surviving 2:4 weights = 13.1011 density points. Independently recomputed from measured shapes (32 layers x {q,k,v,o: W(4096,4096) r=256; gate,up: W(11008,4096) r=256; down: W(4096,11008) r=688}); scope 6,476,005,376 and surviving 3,238,002,688 also reproduce exactly.",
+    "rank_is_not_a_free_hyperparameter": "r = in_features // SLoRB_k with SLoRB_k=16 MEASURED from the checkpoint's own args (SLoRB_k=16, SLoRB=true, SLoRB_init_type='sum', trainable_projection=true); sparse_modeling.py:415-427. Every projection is already at maximum rank for k=16. The ONLY knob the trainer exposes for 'a smaller SLoRB' is k.",
+    "spectrum_is_flat": "Exact svdvals of E = SLoRB_Weight @ x_proj in float64 via QR of both factors (r x r core; the identity svdvals(S@B)==sqrt(k)*svdvals(S) holds to 1.5e-15, an independent check on the QR path). r90/r median 0.836. Versus a Gaussian product null of identical shapes, r90(measured)/r90(null) median 0.995 and >= 0.95 in 32/35 projections. Only L0.q_proj (0.400) and L0.k_proj (0.237) are genuinely concentrated. Source outputs/slorb_rank/slorb_rank_5b_headline.json.",
+    "block_structure_is_exact": "x_proj on-block entries are EXACTLY 1.0 in 12/12 sampled projections (x_proj_on_block_min == max == 1.0, n_exactly_one == n_total), off-block meanabs 0.0030-0.0061. So x @ B^T is a segment-sum needing ZERO stored parameters -- that is where the 443,678,720 x_proj params go. Source outputs/slorb_rank/slorb_xproj_struct_5b.json.",
+    "global_perturbation_all_224_tensors": "Exact, no sampling, from branch_importance_all224.json x global_operator_basis_all224.json: ||E||/||W_eff|| = 0.200010 for deleting the branch; blocksum with LS-refit coefficients = 0.024523 (12.26% of delete); blocksum with naive revert = 0.025603 (12.80%). The LS refit is 4.22% better and costs nothing, so the protocol uses LS.",
+    "svd_costs_more_than_no_reduction": "Half-rank SVD stores both factors: (out+in)*r/2 summed over the model = 424,214,528 params, which is 4.81% MORE than the FULL-RANK blocksum branch at 404,750,336. Verified. This is why a naive t=r/2 SVD control is dominated on both axes and was replaced by a density-matched control."
+  },
+
+  "corrections_to_the_brief": {
+    "correction_1_the_5p37pp_window_is_the_export_variant_axis": "62.4335 - 57.0678 = 5.3657 pp is arithmetically correct but the rows are sparseforge_hard_fold and sparseforge_hard_drop. hard_fold has linear_zero_ratio = 1.0809132472221097e-09, exact_2of4_tile_ratio = 0.0, and 1,619,001,344 of 1,619,001,344 tiles violating 2:4 -- it is a DENSE model, and status/sparseforge_union9_closeout.json marks it barred_from_2of4_column: true. On the token-matched pair the same-checkpoint variant-only contrast is +4.4393 pp [3.5298, 5.3203] = 2.23x the entire originally-reported SLoRB effect, and the honest variant-matched +/-SLoRB contrast is -2.4515 pp [-3.2432, -1.6187], i.e. +SLoRB is WORSE. The window is still the right y-axis span for this ladder (both endpoints are on disk and are the two extremes of the transformation being titrated) but it must be labelled 'folded-dense -> true-2:4', never 'the value of SLoRB'.",
+    "correction_2_the_under_6_percent_figure_is_squared": "frac_energy_from_learned_delta (min 0.0114 / median 0.0188 / max 0.0585) is a SQUARED Frobenius share. The relative error is its square root and is in the same file: rel_fro_err_if_xproj_reverted_to_init = min 0.1067 / median 0.1368 / max 0.2418. '<6%' understates branch-level damage by about 4x. Rung A survives anyway, but on the W_eff measure (12.3% of delete-branch), not on the squared branch-level measure.",
+    "correction_3_svd_is_not_uniformly_the_weak_operator": "outputs/slorb_rank/op_matched_density_sample.json already compares the two operators AT MATCHED PARAMETER BUDGET (svd_t chosen so (out+in)*t ~= out*r_eff; match verified to <2% on 160/175 cells). On the deployed W_eff, SVD wins in 1/35 at c=1, 2/35 at c=2, but 12/35 at c=4, 15/35 at c=8 and 24/35 at c=16 -- because coarsening SATURATES (median pert 0.1841 at c=4 rising only to 0.2055 at c=16, against a delete-branch ceiling of 0.2000) while SVD degrades gracefully. So the control cannot be pre-registered as a foregone loss, and the ladder is deliberately shallow to stay out of the regime where SVD takes over.",
+    "correction_4_the_brief_path_is_not_in_this_repo": "outputs/cast_eval_spec/... resolves against /apdcephfs_wzc1/share_304376610/pighzliu_code/ (one level ABOVE the checkout), not against the repo. Neither disk has .../Mixture-of-Memory/outputs/cast_eval_spec.",
+    "correction_5_uniform_ladders_are_off_the_frontier": "An exhaustive scan of all 5^7 = 78,125 coarsening maps over c in {1,2,4,8,16}, scoring global ||dW_eff||/||W_eff|| with per-family medians weighted by per-family ||W_eff||^2, shows the frontier contains NO uniform map above psi ~ 0.52. At psi >= 0.76 the uniform c=2 ladder costs 0.1423 where the frontier costs 0.1241 (+14.7% unnecessary damage); at psi >= 0.88 uniform c=4 costs 0.1734 vs 0.1623. The adopted ladder is asymmetric for this reason."
+  },
+
+  "chosen_protocol_summary": "BASIS COARSENING of x_proj with an LS refit, asymmetric per projection family. Three nested ops, all from the trained checkpoint, NO TRAINING: (1) blocksum-LS -- replace trained x_proj by its exact block-sum init B (sparse_modeling.py:883-886) and re-fit SLoRB_Weight by least squares in the new basis; x_proj becomes parameter-free. (2) coarsen -- additionally k -> k*c, exactly the branch that training with SLoRB_k = k*c would have used as a basis; LS-optimal coefficient for the coarser basis is the block MEAN of the c adjacent columns, NOT the sum (summing inflates scale by c). (3) asymmetric -- a different c per projection family, justified by measured per-family cost/damage: down_proj holds 22.28% of SLoRB_Weight yet has the LOWEST relE/W_eff (median 0.1546) and the lowest coarsening perturbation at every c, with o_proj next (0.1806).",
+
+  "ladder_frozen_20260816": {
+    "psi_definition": "psi = (63.1011 - density) / (63.1011 - 50.0) = fraction of the branch's 13.1011 density points GIVEN BACK. R0 psi=0, R1 psi=1.",
+    "R0_anchor_hard_fold_ON_DISK": "c=-- | branch_live 848,429,056 | density 63.1011% | psi 0.0000 | union9 62.4335 | *** DENSE, linear_zero_ratio 1.08e-9, barred_from_2of4_column ***",
+    "A_blocksum_LS": "c=1,1,1,1,1,1,1 | branch_live 404,750,336 | density 56.2500% | psi 0.5229 | global pert 0.0245 = 12.3% of delete | DOES NOT QUALIFY for a rank claim",
+    "P_PILOT_down_c8": "c=1,1,1,1,1,1,8 | branch_live 325,844,992 | density 55.0316% | psi 0.6159 | global pert 0.0676 = 33.8% of delete",
+    "Q_down_c16_o_c8": "c=1,1,1,8,1,1,16 | branch_live 290,848,768 | density 54.4912% | psi 0.6572 | global pert 0.0802 = 40.1%",
+    "R_down_c16_o_c8_v_c4": "c=1,1,4,8,1,1,16 | branch_live 265,682,944 | density 54.1026% | psi 0.6869 | global pert 0.0913 = 45.7%",
+    "S_deepest": "c=1,1,16,16,1,4,16 | branch_live 189,661,184 | density 52.9287% | psi 0.7765 | global pert 0.1241 = 62.0%",
+    "Dctl_density_matched_SVD_at_P": "t=128,128,128,128,187,187,23 | branch_live 326,098,944 | density 55.0355% | psi 0.6156 | global pert 0.1170 = 58.5% | matched to P within 0.0039 density points (0.08% of params)",
+    "R1_anchor_hard_drop_ON_DISK": "c=-- | branch_live 0 | density 50.0000% | psi 1.0000 | union9 57.0678 | true 2:4",
+    "pilot_rung": "P",
+    "pilot_rationale": "Cheapest psi-per-perturbation step on the measured frontier (psi 0.523 -> 0.616 for pert 0.0245 -> 0.0676, still only a third of the delete-branch damage), and it exercises BOTH new code paths (LS refit AND per-projection coarsening) in a single export. If it fails, the ladder is dead at its cheapest point.",
+    "density_honesty": "EVERY rung is FOLDED (W*mask + E) and therefore DENSE ON DISK. Forced: lm_eval only reads standard HF weights, and folding is exact algebra (export_sparseforge_to_hf.py:62,:123,:283). The density column is the two-matmul DEPLOYMENT count and any table must carry that distinction IN THE ROW, not a footnote.",
+    "hard_floor": "No SLoRB rung can go below 50.0% -- that is pure 2:4 with zero branch."
+  },
+
+  "must_not_claim": [
+    "That a post-hoc truncation of a trained branch is a TRAINING-TIME rank ablation. Every rung is surgery on model_best_lm_eval.pt at iter_num 17900. A model trained from scratch with SLoRB_k=128 could reallocate capacity during training and land anywhere, plausibly BETTER than this ladder's rung at the same density. This experiment cannot bound that. The supportable claim is 'the trained branch contains this much extractable redundancy'; it may NEVER be phrased as 'SLoRB only needs rank r' or 'SparseForge should be trained with SLoRB_k = ...'.",
+    "That the 5.3657 pp window is 'the value of SLoRB'. It is folded-dense vs true-2:4. The honest variant-matched +/-SLoRB contrast is -2.4515 pp, i.e. +SLoRB is WORSE.",
+    "Any placement of any rung, or of R0, in a 2:4 column, table or sentence. All are folded and dense on disk (R0 linear_zero_ratio 1.08e-9). The existing bar at logs/sparseforge_tm_union9_slorb_progress.log:314 is ADVISORY ONLY with zero programmatic enforcement, so this is a human obligation.",
+    "That any rung is Pareto-superior to CAST-repro pure 2:4. CAST-repro scores 62.0919 at density EXACTLY 50.0% -- the hard floor, below every rung, and only 0.3415 pp under R0 itself. R0 with the entire branch and 13.1 extra density points beats it by less than tau. The Pareto claim is unreachable BY CONSTRUCTION.",
+    "frac_energy_from_learned_delta (<6%) reported as if it were a perturbation. It is squared; the relative error is ~13.7% median at branch level and 12.3%-of-delete at W_eff level.",
+    "That the spectrum of E is concentrated, or that SVD 'does not work'. Flat vs the null in 32/35, BUT SVD wins the density-matched W_eff comparison in 12/35 at c=4 and 24/35 at c=16.",
+    "That Dctl is a control expected to lose (see kill_gate.clause_5_KILL_ON_CONTROL).",
+    "Any rung reported as a measurement without stating n=1 and that tau is 33.4% of the entire available window.",
+    "That these rungs are 'what training with SLoRB_k = k*c would give'. The BASIS is identical; the COEFFICIENTS are an LS refit of a k=16-trained tensor, not trained in the coarse basis.",
+    "Anything about differential learning rates or node placement from the SparseForge trainer -- no training happens in B12 at all."
+  ],
+
+  "not_verified": [
+    "No rung has been evaluated. Every union-9 number attributed to a rung in any future document must come from a run, not from the perturbation model in this file. The global ||dW_eff||/||W_eff|| column is a WEIGHT-SPACE proxy with NO calibrated relationship to union-9 pp; it was used only to ORDER candidate rungs, never to predict a score.",
+    "The per-family perturbations at c>1 are medians over the 35-projection sample (layers 0,7,15,23,31), not all 224 tensors. Only the c=1 row and the branch-size counts are exact over all 224.",
+    "The harness commit b86c479 recorded for the CAST-repro row is NOT resolvable in this checkout (git merge-base --is-ancestor returns 'fatal: Not a valid object name'), so that harness build cannot be re-verified from git and must be treated as an unverified provenance pointer.",
+    "baselines/cast_repro/tools/emit_slorb_ladder.py has NEVER been executed. Its predecessor emit_small_slorb_variants.py was also never executed (its own docstring says so) and carries a real defect: a bare torch.save of a hand-built state dict, skipping the load_state_dict key-set round-trip against the dense reference index (export_sparseforge_to_hf.py:217-235) and the post-cast 2:4 re-verification (:238-253) that the working exporter performs.",
+    "scripts/launch_slorb_rank_sweep.sh has NEVER been executed. It was written with DRY_RUN=1 as the default and was not run in any mode during this pass."
+  ],
+
+  "evidence_files": [
+    "outputs/slorb_rank/slorb_rank_5b_headline.json -- exact svdvals of E, 35 projections + Gaussian null",
+    "outputs/slorb_rank/slorb_xproj_struct_5b.json -- x_proj block structure, coarsen and svd_truncate errors, 12 projections",
+    "outputs/slorb_rank/branch_importance_all224.json -- per-tensor relE/W_eff, ls/revert error and W_eff perturbation, ALL 224",
+    "outputs/slorb_rank/global_operator_basis_all224.json -- per-tensor Weff2/Wm2/E2/ls_resid2 + singular values, ALL 224",
+    "outputs/slorb_rank/block_energies_all224.json -- per-block energies, ALL 224",
+    "outputs/slorb_rank/op_matched_density_sample.json -- DENSITY-MATCHED coarsen-vs-SVD comparison, 35 projections (the file that refutes 'SVD is the weak mode')",
+    "status/sparseforge_union9_closeout.json -- cells, deltas, paired bootstrap noise floors, must_not_claim, measured per-cell cost",
+    "/apdcephfs_wzc1/share_304376610/pighzliu_code/outputs/cast_eval_spec/sparseforge_5b/sparseforge_same_harness_table.json -- the 7-row 5B same-harness table (NOTE: above the repo, wzc1 only)"
+  ],
+
+  "files_created_20260816": [
+    "proposal/backlog/B12-slorb-rank-efficiency/PROPOSAL.md",
+    "proposal/backlog/B12-slorb-rank-efficiency/STATUS.json",
+    "scripts/launch_slorb_rank_sweep.sh",
+    "baselines/cast_repro/tools/emit_slorb_ladder.py"
+  ],
+
+  "gpu_used_by_this_design_pass": "ZERO. All analysis was CPU-only reads of JSON evidence already on disk plus arithmetic. No checkpoint was loaded, no export was emitted, no eval was run."
+}
