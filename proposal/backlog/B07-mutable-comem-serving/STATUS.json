@@ -62,7 +62,6 @@
   },
   "novelty_checked_still_false_20260814": "UNCHANGED = false, and this is B07's true critical path. RELATED_WORK.md still absent; RELATED_WORK_GAP_AUDIT_20260808.md:97 rates B07 '不足' and :146 demands a per-feature systems collision table (prefix/KV caching; paged/disaggregated KV; versioning/invalidation; memory tiering; reuse-aware admission; incremental recompute) x {closest prior system, what it does NOT do, our measured difference}. NOT A KILL REASON: per memory/prior-work-differentiate-dont-abandon.md (2026-08-07 user correction) overlap != preemption; the bar is identical/plagiarism. Likewise status/scout_21/lane4_cheapest_killer.md:33,282 ('NO -- systems measurement, no scientific kill') describes the OLD PROPOSAL.md text, not a falsification: no B07 experiment has ever run; do not upgrade that triage line into a death certificate. BLOCKER ON THE 0-GPU WORK ITSELF: venue verification is not executable from this node right now -- api2.openreview.net returned HTTP 403 and aclanthology.org timed out through hy-proxy.woa.com:3128; per memory/venue-verify-acl-family-needs-anthology.md ACL-family needs aclanthology+DBLP and OpenReview-family needs venueid, so the table cannot be finalised until one is reachable. No .bib entry from an LLM report may be admitted unchecked.",
   "updated_20260814_gate_written": "2026-08-14 -- kill gate (K1 retention 123.2 ms / K2 deployability floor / K3 tiering headroom / K4 edit leg) + next_gate + read-out preregistration + measured-anchor GPU cost + lifecycle + needs_arch + needs_disk all WRITTEN, 0 GPU, PRE-DATA, no launch script touched, no commit. Full contract: B07_SERVING_GATE_PREREG.md. Lifecycle stays ready_cpu: RELATED_WORK.md and the concurrency-axis implementation are still missing, and both are 0-GPU.",
-
   "next_gate_prereg_20260815": {
     "_relationship_to_20260814": "REV-1. SUPERSEDES the STATISTIC of kill_gate_executable_20260814 / next_gate_executable_20260814 / readout_preregistration_20260814; those keys are append-only and are NOT edited. Their arithmetic was re-derived from the RAW per-process artefacts this session and is CORRECT in every figure. What is superseded is which statistic the gate may be scored on. Full audit table: B07_GATE_PREREG.md section 0.",
     "prereg_doc": "proposal/backlog/B07-mutable-comem-serving/B07_GATE_PREREG.md",
@@ -107,5 +106,73 @@
   },
   "updated_20260815_gate_rev1": "2026-08-15 -- B07_GATE_PREREG.md written (REV-1 of the 08-14 prereg). 0 GPU, 0 ssh, PRE-DATA, no launch script touched, no harness edited. WHAT CHANGED AND WHY: the 08-14 gate was decidable in FORM but two of its four clauses were scored on statistics the protocol cannot estimate. (1) K1 gated TTFT p99 at n=45 where p99 IS the maximum order statistic -> replaced by Delta of TTFT MEDIANS with an unpaired bootstrap (the harness's two sequential _measure calls at :517/:524 mean the draws were never paired either). (2) K2 gated the G=128 TOTAL-latency margin, of which 71% is decode -- a term identical in both arms by construction -- and concluded effect/floor = 1.09x, i.e. it nearly killed the direction on a common-mode number; on TTFT the same cell gives 201.9x. K2 is replaced by a resolution floor computed from the TRUE per-request p90 (the 08-14 summed-component-p90 construct overstates dispersion by 1.11x) and its outcome is INCONCLUSIVE, never dead. (3) K4's kill bar sat AT the point estimate (6.0 pp) -> moved to the measured CI95 lower bound (3.0 pp). (4) K3 kept, with the NVMe 256.5-vs-272.2 two-file provenance split fixed. The 123.2 ms threshold is UNCHANGED and pre-data (50% of the measured 246.447 ms), deliberately not re-tuned in the same revision as the statistic. Cost restated as a RANGE 0.5-1.9 GPU-h (ceiling 3) because the 08-14 point estimate assumed C=8 = 8 sequential requests, which assumes the answer; and C=8 verified feasible ONLY in-process (8 procs x 17.29 GiB OOMs a 95 GiB H20). Lifecycle UNCHANGED at ready_cpu: the in-process concurrency harness and the (newly line-numbered) absent mutable-store path are both still missing, and both are 0 GPU.",
   "reader_precedence_note_20260815": "proposal/ready_queue.py resolves NEXT_GATE_KEYS[0]='next_gate_executable_20260814' and KILL_KEYS[0]='kill_gate_executable_20260814' (the dated kill slot landed 2026-08-15, ready_queue.py:139-179, exactly the one-line fix that kill_gate_executable_20260814._precedence_warning predicted). This REV-1 key is deliberately NOT named to outrank them: append-only means the reader would then show REV-1 while the 08-14 text stayed silently underneath, and a human reading the scheduler output would not learn that the STATISTIC changed. Both keys point at a prereg doc, and B07_GATE_PREREG.md section 0 is the audit table reconciling them; B07_SERVING_GATE_PREREG.md remains on disk, unedited, marked SUPERSEDED there. STILL OUTSTANDING, one line, deliberately not made here (it edits the scheduler, not the proposal): the cost-key list at ready_queue.py:596 ['gpu_cost_estimate','cost','cost_to_first_result'] has NO dated slot, so the report shows the stale 'UNKNOWN -- 需先做 1-cell 计时' even though gpu_cost_estimate_20260814 and now next_gate_prereg_20260815.gpu_cost are on disk. Reporting artefact, not a real blocker.",
-  "premise_correction_20260815": "The task that commissioned B07_GATE_PREREG.md was briefed that next_gate == 'NOT_SPECIFIED' and that no gate existed. THAT BRIEF WAS STALE, and the reason is structural, not careless: 'NOT_SPECIFIED' is the v0 sentinel written 2026-08-08, append-only forbids overwriting it, and it is still the first next_gate* string in this file. A gate has existed on disk since 2026-08-14 (commit 22a0c07, B07_SERVING_GATE_PREREG.md + the dated STATUS keys) and RELATED_WORK.md since 2026-08-15 (commit 463dca4). Recorded here because the same stale brief will be regenerated for any proposal whose v0 sentinel survives underneath a dated fix -- the fix is to read the DATED keys and the directory listing, not the first matching key name."
+  "premise_correction_20260815": "The task that commissioned B07_GATE_PREREG.md was briefed that next_gate == 'NOT_SPECIFIED' and that no gate existed. THAT BRIEF WAS STALE, and the reason is structural, not careless: 'NOT_SPECIFIED' is the v0 sentinel written 2026-08-08, append-only forbids overwriting it, and it is still the first next_gate* string in this file. A gate has existed on disk since 2026-08-14 (commit 22a0c07, B07_SERVING_GATE_PREREG.md + the dated STATUS keys) and RELATED_WORK.md since 2026-08-15 (commit 463dca4). Recorded here because the same stale brief will be regenerated for any proposal whose v0 sentinel survives underneath a dated fix -- the fix is to read the DATED keys and the directory listing, not the first matching key name.",
+  "gate_rev1_MAIN_independent_verification_20260815": {
+    "who": "MAIN, re-derived from paperA/artifacts/p1_8_serving/p1_8_serving_aggregate.json and from source, not accepting the subagent report",
+    "my_dispatch_premise_was_STALE": {
+      "what_I_told_the_agent": "B07's next_gate is the literal string NOT_SPECIFIED, so no gate exists and the direction can never legally reach GPU. Write one.",
+      "what_is_true": "next_gate IS still 'NOT_SPECIFIED', but that is the v0 sentinel from 2026-08-08 which append-only forbids overwriting. A real gate has been on disk since 2026-08-14: B07_SERVING_GATE_PREREG.md, commit 22a0c07 (MAIN verified via git log, not mtime). RELATED_WORK.md landed 2026-08-15 in 463dca4.",
+      "my_error": "I read the bare 'next_gate' key and did not check the dated-priority keys -- even though proposal/ready_queue.py:130-134 (NEXT_GATE_KEYS) resolves 'next_gate_executable_20260814' BEFORE 'next_gate' precisely because of this pattern. The tool I ran every round already knew.",
+      "lesson": "same class as fix-the-class-not-the-instance: when a reader has a dated-key priority list, a bare-key read is not the record. Read what the consumer reads."
+    },
+    "defects_MAIN_reproduced": {
+      "K1_p99_at_n45_is_one_observation": {
+        "method": "arithmetic",
+        "n": 45,
+        "index": "0.99*(45-1)=43.56",
+        "result": "p99 = 0.56*max + 0.44*second-largest, i.e. 1-2 observations of 45",
+        "verdict": "CONFIRMED"
+      },
+      "K1_draws_were_never_paired": {
+        "method": "read scripts/bench_p1_8_serving_curve.py:517 and :524",
+        "result": "_measure(...) is called ONCE PER ARM in two sequential loops (comem_g then j0_g), with reset_peak_memory_stats between. There is no per-draw correspondence between arms.",
+        "consequence": "the old clause demanded a PAIRED bootstrap 4x; a paired statistic is UNESTIMABLE from this design",
+        "verdict": "CONFIRMED"
+      },
+      "K2_gated_a_common_mode_number": {
+        "method": "MAIN recomputed per-G deltas from the archived aggregate (128k|cpu)",
+        "table_ms": {
+          "G=1": {
+            "d_TTFT": 246.45,
+            "d_decode": -0.0,
+            "d_total": 246.45,
+            "d_total_pct": 26.36
+          },
+          "G=32": {
+            "d_TTFT": 250.82,
+            "d_decode": -21.39,
+            "d_total": 229.43,
+            "d_total_pct": 10.48
+          },
+          "G=128": {
+            "d_TTFT": 251.31,
+            "d_decode": -69.33,
+            "d_total": 181.98,
+            "d_total_pct": 3.0
+          },
+          "G=512": {
+            "d_TTFT": 251.78,
+            "d_decode": -238.7,
+            "d_total": 13.08,
+            "d_total_pct": 0.06
+          }
+        },
+        "reading": "d_TTFT is FLAT at 246-252 ms across all four G. d_total collapses 246 -> 13 ms ONLY because comem's decode is slower and decode's share of the metric grows with G. Decode is identical in both arms BY CONSTRUCTION (same model, same tokens), so gating d_total at G=128 measures decode dilution, not the prefill mechanism the direction is about.",
+        "verdict": "CONFIRMED. The old K2 would have KILLED B07 on a number that cannot express its hypothesis."
+      }
+    },
+    "same_failure_class_as_todays_two_retractions": "all three are a statistic that moves for a reason unrelated to what it is supposed to test: (1) my resume-defect check series moved with training progress; (2) my corpus-confound flag rested on an artifact nothing had read; (3) B07's K2 moved with decode share. See status/RESUME_DATA_POSITION_DEFECT.md sections 12-13.",
+    "MAIN_endorses": [
+      "gating the Delta of TTFT MEDIANS (TTFT = fetch_s + read_s, where the entire effect lives)",
+      "keeping the 123.2 ms threshold UNCHANGED while changing the statistic -- re-tuning the bar alongside the statistic would make the revision unfalsifiable. This is the right call and MAIN would have insisted on it.",
+      "K2 demoted to a resolution floor whose outcome is INCONCLUSIVE, never dead",
+      "recording the missing mutable-update path as blocking_dependency rather than hiding it inside the gate"
+    ],
+    "not_verified_by_MAIN": [
+      "the 15 archived per-proc draws' within-arm dispersion (45.30 ms) and bootstrap half-width (17.41 ms) -- MAIN verified the aggregate medians and the per-G structure, not the draw-level resampling",
+      "the C=8 memory feasibility arithmetic (8x17.29 GiB > 95 GiB OOM vs in-process 31.5 GiB fits)",
+      "the zero-match greps for concurrency/mutation APIs (plausible and consistent with the O_TRUNC finding, but not re-run)"
+    ],
+    "gpu_status": "0 GPU consumed. B07 stays ready_cpu with 2 live 0-GPU blockers; ready_gpu remains 0 repo-wide."
+  }
 }
