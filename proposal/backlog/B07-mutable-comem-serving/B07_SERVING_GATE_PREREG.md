@@ -1,5 +1,24 @@
 # B07 — Kill gate + next gate, PRE-REGISTERED (written 2026-08-14, 0 GPU, PRE-DATA)
 
+> ## ⚠️ SUPERSEDED 2026-08-15 by `B07_GATE_PREREG.md` (REV-1). Read that first.
+>
+> **This text is retained unedited** per `proposal/README.md` («改写 gate，并在 proposal 里
+> 记下为什么改（旧文本保留、标 SUPERSEDED）»). **Every number below was re-derived from the
+> raw per-process artefacts on 2026-08-15 and is arithmetically CORRECT.** What is
+> superseded is *which statistic the gate is scored on*:
+>
+> | clause | disposition in REV-1 |
+> |---|---|
+> | **K1** (TTFT **p99**, "45 **paired** draws") | **statistic replaced.** p99 at n=45 **is the maximum order statistic** (`ceil(0.99·44)=44`), so it is a single observation, not a percentile; and the draws are **not paired** — `bench_p1_8_serving_curve.py:517` and `:524` call `_measure` once per arm in two sequential loops. REV-1 gates the **Δ of TTFT medians** with an **unpaired** bootstrap. **The 123.2 ms threshold is unchanged.** |
+> | **K2** (G=128 **total-latency** margin vs dispersion, 1.09×) | **replaced.** 71 % of that margin is *decode*, which is identical in both arms by construction; on **TTFT** the same cell gives **201.9×**, not 1.09×. Also the summed-component-p90 dispersion construct **overstates** the true per-request p90 by **1.11×**. REV-1's K2 is a resolution floor on TTFT whose outcome is **INCONCLUSIVE, never dead**. |
+> | **K3** (tiering headroom) | **kept**; NVMe 256.5 vs 272.2 two-file provenance split fixed. |
+> | **K4** (edit leg, **< 6.0 pp**) | **bar moved to 3.0 pp** = the measured CI95 lower bound. 6.0 pp *is the point estimate*, so a bar there fires on ~half of faithful re-cohorts by noise alone. |
+> | **cost 1.84 GPU-h** | **restated as 0.5–1.9 GPU-h, ceiling 3.** The C=8 term here is `17×8×13.584` = **8 sequential requests**, which presumes the very serialisation the experiment is meant to measure. Also **C=8 is infeasible as 8 processes**: 8 × 17.29 GiB = 138.3 GiB > 95 GiB usable H20 → OOM; it must be **in-process**. |
+> | `needs_arch: sm_90`, `c1_all` forbidden, "edited chunk only" struck | **kept verbatim.** |
+>
+> § 6's blocker list is still accurate, and its `_precedence_warning` about `KILL_KEYS`
+> **was correct and has since been fixed** (`ready_queue.py:139-179`).
+
 > **Status of this file.** This is the falsification contract B07 did not have. It is
 > written BEFORE any B07 GPU is spent, per `proposal/README.md` («新方向先写 PROPOSAL.md
 > 和 kill gate，再启动 GPU»). Every threshold below is a **number with units** taken from
