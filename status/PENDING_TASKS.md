@@ -725,9 +725,68 @@ setsid nohup bash -c "
 ```
 (其他 probe 类比,改 EXTRA_ARGS 即可。注意 .7.53 / .245.174 / 本机 / .196 / B200 用各自的 PROJECT_ROOT 和 PYTHON_BIN。)
 
-## [BLOCKED] #99 keep14-distill heal — auto_launch: **false**（2026-08-13 决定不在 .73 恢复，原因不是「没有空节点」）
+## [RUNNING] #99 keep14-distill heal — **已在 `.212` 8×B200 跑起来**（2026-08-15 21:31:20 启，取舍选项 (b)）
+
+**状态：RUNNING。** 2026-08-13 的 BLOCKED 判定里，**两个阻塞理由都已实测解除**，选项 **(b) 迁 B200** 成立并已执行。
+step **5000 → 200000**，实测 **2.359 s/step**，ETA **5.32 d**（~1021 GPU-h）。**忠实 resume，不是新 run。**
+
+- 节点 `.212`（8×B200 sm_100，178.4GB/卡，wzc1 盘），torchrun **PID 524842**，worker 525664-525671
+- launcher `scripts/launch_keep14_distill_resume_212_0815.sh`；log `logs/olmo2_7B_keep14_distill_212_0815.log`
+- 落账 `status/gpu_runs.jsonl`（commit `371b114`）、`status/GPU_STATUS.md`、`status/TRAINER_ACTIVE.md`
+
+### 解除阻塞 1：「bnb 把 distill 锁死在 .73/.104」——**这条记载是错的**
+
+旧记载（CLAUDE.md + 本条 08-13 版）说 module 级 `import bitsandbytes` + 硬编码 `AdamW8bit` ⇒ B200 不能跑。
+**源码注释自证反面**：line 63 原文 `# 8-bit AdamW to fit keep14 train-all + teacher in H20 95GB`
+⇒ **bnb 存在的唯一目的是塞进 H20 的 95GB**，与 178.4GB 的 B200 无关。
+实测：`.212` 上 `pip install bitsandbytes` → **0.50.1**，`AdamW8bit` 在 **sm_100 (10,0) 构造 + step 成功**。
+⇒ **保留 bnb 反而是忠实 resume 的前提**（ckpt 里 optimizer state 是 bnb 8-bit 格式；
+换 fp32 AdamW 只能从 step0 重跑、丢掉已跑的 5000 步）。log 实证
+`[resume] optimizer state restored (179 param states) -> Adam momentum preserved`，
+loss 从 **3.169 / ppl 23.79** 接续（从头跑在单卡探针里是 ppl≈2.9e6）。
+
+### 解除阻塞 2：`save_every` —— 这才是真阻塞，已改 **500**
+
+08-13 的分析正确：`save_every 5000` + resume 起点正好 5000 ⇒ 下一次落盘在 10000，
+而 07-31 死于 step5200、08-05 只到 step7780 ⇒ **两次烧完预算、0 ckpt**。
+本轮 `--save_every 500` ⇒ 约 **20 min 一个 ckpt**，不可能再重演。
+**这只改落盘节奏、不改优化路径**，故与 keep8/keep10/keep12/keep14-NTP **仍同口径可比**。
+retention 实测（`select_rotation_victims` 干跑）：`keep_last_n=3` + `milestone_every=5000` 全留
+⇒ 到 step25000 只留 7 个（step5000/10000/15000/20000 + 最后 3 个），**磁盘有界**，不会被 500 步一存撑爆。
+
+### 08-13 记载里**仍然有效**的几条（不要推翻）
+
+- **teacher 必须是 HF 目录** `/apdcephfs_wzc1/share_304376610/pighzliu_code/models/OLMo-2-1124-7B`（32L），
+  **不是** `outputs/olmo2_probe2_7B_keep14fresh2/step200000.pt`（那是 16L 学生自己）。launcher 已 preflight 断言 32 层。
+- **不得声称差分 LR**：`_classify_param` 没剥 `module.` 前缀 + `build_param_groups` 在 DDP wrap 之后
+  ⇒ 8 卡 log 只有 `inh_decay 4060.1M @2e-5` + `inh_nodecay 0.3M @2e-5`，**实际均匀 2e-5**（与 ladder 同 bug 故可比）。
+- 该 trainer **无 inline eval / 无 `--eval_interval`** ⇒ 传了会崩，NCCL desync 风险结构性不存在。
+- ⚠️ 08-13 记的「两盘 trainer 不同、zwfy6 版没有 rotation flags」仍成立，但**本轮跑的是 wzc1 版**（md5 `228812e8`），
+  rotation flags 齐全。**照 zwfy6 的 flag 写命令行会崩，反之亦然。**
+
+### 新增实测（B200 特有，08-13 时无法得知）
+
+- **`gradient_checkpointing` 在 B200 上也必须开**：单卡 40-step 探针
+  （`scripts/_probe_distill_gc_b200.sh`）GC=1 bs=16 → 2.26 s/step / 115.7GB 正常；
+  **GC=0 bs=16 → OOM**（178.35 GiB 已用 177.84）。bs 受**激活**限制，不是静态显存（静态仅 51.41 GiB）。
+- **`bs=16 GA=1 → eff_bs=128`，与 H20 配方逐位相同**，没有为了吃满显存去改 batch（改了就不可比）。
+- **`.212` 与 LOCAL 共享 wzc1 项目盘，但 `/dev/shm` 是 node-local** ⇒ 118 GiB 语料在 `.212` 上
+  必须**本地重建**（150 s，`scripts/build_dolmino_corpus_wzc1.py`），md5
+  `7df19b217e5b0670d58bf6e01e6559d0` 与 keep8/keep12 所用**逐字节一致**。
+- ckpt `step5000.pt` 从 `.82` 6 路并行 `ssh dd` 搬到 wzc1，**~4 min**（~102 MB/s），
+  md5 `0ec4481adde2314a470616d49aa922e9` 两盘一致（`scripts/pull_distill_step5000_to_wzc1.sh`，0 GPU、源端只读）。
+
+### 下一步（无需审批）
+
+1. **监控首个 ckpt 落在 step5500**（#99 的历史失败模式正是「跑了但没落盘」）。
+2. 到 step10000/15000 等 milestone 时，可按 base 协议（chat=False / no-BOS / LL-MC）排 eval，
+   与 `olmo2_*_results/7B_keep14distill_step5000/` 同口径对照。
+3. `.212` 若重启 → `/dev/shm` 语料消失，先重建再 resume；launcher 会挡住拿错语料静默开跑。
+
+<details><summary>原 [BLOCKED] 记录（2026-08-13，两个阻塞理由均已于 08-15 解除，保留作 provenance）</summary>
 
 **结论：`.73` 已空闲，但 resume 仍不该跑。阻塞原因是 `save_every` 与预算不相容，不是节点可用性。改 auto_launch=false，需要用户就下面的取舍拍板后才动。**
+
 
 **证据（全部在 .73 = zwfy6 实测，log=`logs/olmo2_7B_keep14_distill.log`）**：
 
@@ -766,6 +825,8 @@ setsid nohup bash -c "
    - B200 183GB 装得下 fp32 adam (56GB) + model(42GB) + teacher(14GB) = 112GB, 可不用 8bit
 
 **决策点** (ShortGPT 完成时): distill 迁 B200 (7天完成) vs .73 继续 H20 (33天) + B200 跑其他。用户 2026-07-30 指令: "先跑着吧 B200空出来可以迁移" → 迁移。
+</details>
+
 </details>
 
 ## [DONE] Paper B P0.6 content-MMLU 全 sweep (2026-08-02，9 arms 全跑完，.73 + .104 并行)

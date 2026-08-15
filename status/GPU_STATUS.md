@@ -1,6 +1,75 @@
 # GPU_STATUS.md — 5 节点 GPU 台账（40 卡）
 > 每次启动/kill GPU 任务更新。heartbeat 先读→对照 nvidia-smi→台账说跑但空=补卡。★29.162.226.120=dllm 绝不碰。
 
+## 🔄 2026-08-15 21:44 — **40/40 全忙**；`.212` 启动 **Paper B #99 keep14-distill**（最后一个缺的臂）
+
+| 节点 | 卡 | 任务 | 实测（nvidia-smi + **log 自带时间戳**） | 状态 |
+|---|---|---|---|---|
+| **`.212`** | **0-7** | **Paper B #99 keep14-distill heal** ★21:31:20 启 | step **5180**/200000、loss 3.1438、ppl 23.19、ntp_ppl 16.36、kl 0.581、**2.359 s/step**、maxmem 131.9GB、8×151162 MiB @100%、ETA **5.32 d** | ▶️ **本轮新启** |
+| LOCAL | 0-7 | Paper B keep10fresh2 resume | 1.200 s/step、maxmem 106.7GB、ETA ~1.5 d | ▶️ 健康 **未碰** |
+| `.73` | 0-7 | Paper B **keep12fresh2** | 7.92 s/step、maxmem 91.9GB、ETA ~2.6 d | ▶️ 健康 **未碰** |
+| `.82` | 0-7 | Paper B **keep8fresh2** | 5.85 s/step、maxmem 73.5GB、ETA ~4.2 d | ▶️ 健康 **未碰** |
+| `.104` | 0-7 | paperC **qwen3base_heal_k8f2** | 5.84 s/step、maxmem 77.5GB、ETA ~10.9 d | ▶️ 健康 **未碰（勿动）** |
+
+`torchrun PID 524842`，worker `525664-525671`。launcher `scripts/launch_keep14_distill_resume_212_0815.sh`，
+log `logs/olmo2_7B_keep14_distill_212_0815.log`。**save_every=500**（首个 ckpt 在 step5500）。
+
+### ★★ 「distill trainer 锁死 .73/.104」这条记载是**错的**，已实测推翻
+
+CLAUDE.md 与 PENDING_TASKS #99 都写「`train_olmo2_arch_probe2_distill.py` 在 module 级
+`import bitsandbytes` + 硬编码 `bnb.optim.AdamW8bit`，而 B200 无 bnb → #99 不能迁 B200」。
+**根因看源码注释就破了**：line 63 原文 `# 8-bit AdamW to fit keep14 train-all + teacher in H20 95GB`
+—— **bnb 存在的唯一理由是塞进 H20 的 95GB**，与 178.4GB 的 B200 无关。
+实测 `pip install bitsandbytes` → **0.50.1**，且 `AdamW8bit` 在 **sm_100 (10,0) 构造并 step 成功**。
+⇒ **保留 bnb = 忠实 resume**（ckpt 里的 optimizer state 是 bnb 8-bit 格式；换 fp32 AdamW 就只能从
+step0 重跑、丢掉已跑的 5000 步）。log 实证：`[resume] optimizer state restored (179 param states)
+-> Adam momentum preserved`，且 loss 从 3.169/ppl 23.79 接续（**不是**重启——重启在探针里是 ppl 2.9e6）。
+
+### #99 真正的阻塞是 **ckpt cadence**，不是节点
+
+`--save_every 5000` + resume 起点正好 5000 → 下一次落盘在 10000，而 07-31 死在 step5200、
+08-05 只到 step7780 → **两次烧完预算、0 ckpt**。本轮 **`--save_every 500`**（~20 min 一个）。
+这只改落盘节奏、不改优化路径，故与 keep8/keep10/keep12/keep14-NTP **仍同口径可比**。
+
+### ⚠️ 写作红线：**不得声称差分 LR**
+
+`_classify_param`(line 293) 没剥 DDP 的 `module.` 前缀，而 `build_param_groups`(line 627) 在
+DDP wrap(line 600) **之后** → 全部参数落入 inherited。8 卡 log 实证只有
+`inh_decay 4060.1M @2e-5` + `inh_nodecay 0.3M @2e-5`，**没有 fresh 组** → 实际是**均匀 2e-5**。
+与 keepN ladder 同 bug 同行为（故可比），但论文**不得写差分 LR**。
+
+### gradient_checkpointing：**实测**必须开（不是沿用默认）
+
+趁 ckpt 传输的空窗，用 2 个单卡 40-step 探针实测（`scripts/_probe_distill_gc_b200.sh`）：
+**GC=1 bs=16 → 2.26 s/step / maxmem 115.7GB / 正常**；**GC=0 bs=16 → OOM**
+（178.35 GiB 里已用 177.84 GiB）。⇒ B200 上也**不能**关 checkpointing；
+bs 受**激活**而非静态显存限制（静态仅 51.41 GiB：student fp32 15.13 + grads 15.13 + AdamW8bit 7.56 + teacher bf16 13.59）。
+故保持 **bs=16 GA=1 → eff_bs=128，与 H20 配方逐位相同**。
+
+### 两个「只在 zwfy6」的资产：一个搬、一个本地重建（沿用 keep10 的配方）
+
+| 资产 | 处置 | 耗时 | 校验 |
+|---|---|---|---|
+| distill `step5000.pt`（24.5 GB） | **搬**：6 路并行 `ssh dd` 字节区间 from `.82`（0 GPU、源端只读） | **~4 min**（聚合 ~102 MB/s） | md5 `0ec4481adde2314a470616d49aa922e9` **两盘一致** |
+| 15,491,607 行 dolmino（118 GiB） | **不搬，在 `.212` 本地重建** | **150 s** | md5 `7df19b217e5b0670d58bf6e01e6559d0` 与 keep8/keep12 所用语料**逐字节一致** |
+
+> ⚠️ **`.212` 与 LOCAL 共享 wzc1 项目盘，但 `/dev/shm` 是 node-local**：LOCAL 那份 118 GiB 语料
+> 在 `.212` 上**看不见**，必须重建。`data/dolmino_now15b.npy` 是 **7,570,911 行 PARTIAL PREFIX**，禁用。
+
+### 速率口径
+
+`2.359 s/step` = log 自带时间戳的 Δt/Δstep，窗口 **140 step / 330.3 s**（5040→5180，剔除 resume 后第一段）；
+整段 160 step 窗口给 2.360。**是 compute rate**，不是 ckpt-interval rate（后者被 flush 高估 ~13%），
+也不是 trainer 自报 postfix。vs H20 **13.11 → 5.56×**：H20 需 **29.6 d**，B200 **5.32 d**（~1021 GPU-h）
+—— 这就是 #99 在 H20 上永远跑不完、在 B200 上能跑完的全部原因。
+
+### 允许跑 Paper B 的判据（不是「卡空了」）
+
+`proposal/ready_queue.py` → **0 ready_gpu**（8 ready_cpu 全 0-GPU）⇒ paperC/proposal 无待跑 GPU 项，
+按 CLAUDE.md 方可动 Paper B。**其余 4 节点 32 卡一张未碰。**
+
+---
+
 ## 🔄 2026-08-15 10:40 — 32/40 忙；**LOCAL 启动 Paper B keep10 resume**，`.212` 仍空（故意）
 
 | 节点 | 卡 | 任务 | 实测（nvidia-smi + **log 自带时间戳**） | 状态 |
