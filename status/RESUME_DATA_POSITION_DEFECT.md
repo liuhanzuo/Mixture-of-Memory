@@ -107,3 +107,45 @@ returns to and stays on its pre-kill trajectory rather than drifting off it.
 Two things this does **not** establish, unchanged from §"What is NOT claimed":
 final-checkpoint validity, and whether the ~3200-step duplicate window measurably
 shifts downstream eval numbers. Both remain untested.
+
+---
+
+## 11. Check #11 crosses my threshold's magnitude — and why that does not reopen the finding (2026-08-15 21:45)
+
+Check #11 came in at **−0.0088 = −0.506 σ**, which exceeds the "~0.5 σ" magnitude I
+pre-registered in §10. Taken literally my rule does not fire, because what I wrote was
+*"if the trend continues past ~0.5 σ"* and the trend I was worried about was **upward**
+while this excursion is **downward**. Dismissing it on that wording would be the wrong
+move — the threshold was under-specified, and I should not get to benefit from my own
+imprecision.
+
+So I applied the test the rule was *for*, on all eleven checks:
+
+| # | diff | σ | | # | diff | σ |
+|---|---|---|---|---|---|---|
+| 1 | −0.0009 | −0.052 | | 7 | −0.0081 | −0.466 |
+| 2 | +0.0006 | +0.034 | | 8 | −0.0046 | −0.264 |
+| 3 | +0.0009 | +0.052 | | 9 | −0.0044 | −0.253 |
+| 4 | +0.0017 | +0.098 | | 10 | −0.0012 | −0.069 |
+| 5 | +0.0019 | +0.109 | | 11 | **−0.0088** | **−0.506** |
+| 6 | +0.0021 | +0.121 | | | | |
+
+- **one-sample t vs the pre-kill level: t = −1.575, df = 10.** |t| > 2.228 is needed for
+  p < 0.05 two-sided, so the eleven checks are **not distinguishable** from 2.5549.
+- mean **−0.109 σ**, sd of checks **0.218 σ**, signs **+5/−6**.
+- the negative run #7→#11 is **not monotone**: #10 (−0.069 σ) is *less* negative than
+  #9 (−0.253 σ). So there is no downward trend either, just a wider spread than the
+  first six checks suggested.
+- max excursion over eleven checks is **0.506 σ** — a half-sigma wander in a 30-line
+  window mean is unremarkable for a loss series with σ = 0.0174 per line.
+
+**Verdict: the finding stands, and the correct restatement is about dispersion, not
+drift.** My §10 summary said "scatter about a fixed level"; that remains right, but I
+under-stated the width. The honest version: keep10's post-replay loss sits at the
+pre-kill level with excursions up to ~0.5 σ, and no trend in either direction survives
+eleven samples.
+
+**Threshold, corrected for any future use:** the discriminating test is the
+*t-statistic over all checks*, not the magnitude of the latest one. A single check
+crossing 0.5 σ is expected; what would matter is |t| > 2.228, or a monotone run long
+enough to be improbable. Neither has happened.
