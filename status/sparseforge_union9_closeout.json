@@ -1,0 +1,440 @@
+{
+  "_doc": "Machine-readable closeout for the SparseForge token-matched +/-SLoRB union-9 comparison. Companion to status/SPARSEFORGE_UNION9_CLOSEOUT.md. All values re-derived from raw lm_eval results_*.json / samples_*.jsonl / ppl_metrics.json on wzc1 by a 0-GPU audit.",
+  "written_ts": "2026-08-15T21:30:00+08:00",
+  "written_by": "closeout adjudication subagent (0 GPU: no ssh, no card touched)",
+  "gpu_used_by_this_audit": 0,
+  "reportability": {
+    "verdict": "with_qualifier",
+    "headline_plus_slorb_1p99pp": "RETRACTED — not a +/-SLoRB effect; it is dense-fold vs true-2:4",
+    "variant_matched_result": "as_is — reportable now, no further GPU needed",
+    "variant_matched_sign": "negative (+SLoRB is WORSE by 2.4515 pp union-9 at matched variant)",
+    "blocking_cells_remaining": 0,
+    "note": "The repairing cell (slorb ckpt exported hard_drop) completed 2026-08-15 21:10 and is on disk; it was NOT available when this task was dispatched and it reverses the sign."
+  },
+  "harness": {
+    "string": "lm_eval 0.4.8, --model hf, dtype=bfloat16, parallelize=True, add_bos_token=False, --batch_size auto, --num_fewshot 0, --seed 0",
+    "byte_identical_across_all_three_cells": true,
+    "per_task_n_identical_across_all_three_cells": true,
+    "doc_id_sets_identical_across_all_three_cells_all_9_tasks": true,
+    "contrasts_are_genuinely_paired": true,
+    "n_samples": {
+      "boolq": 3270,
+      "rte": 277,
+      "hellaswag": 10042,
+      "race": 1045,
+      "piqa": 1838,
+      "winogrande": 1267,
+      "arc_easy": 2376,
+      "arc_challenge": 1172,
+      "openbookqa": 500
+    },
+    "primary_metric_map": {
+      "hellaswag": "acc_norm",
+      "arc_easy": "acc_norm",
+      "arc_challenge": "acc_norm",
+      "openbookqa": "acc_norm",
+      "boolq": "acc",
+      "rte": "acc",
+      "race": "acc",
+      "piqa": "acc",
+      "winogrande": "acc"
+    },
+    "slice_definitions_source": "baselines/cast_repro/tools/aggregate_zeroshot_union9.py:34-39 (UNION9/CAST7/AST7), :41 PRIMARY_METRIC, :52 self-assert"
+  },
+  "cells": {
+    "A_noslorb_hard_drop": {
+      "arm": "noslorb",
+      "variant": "hard_drop",
+      "source_iter": 7501,
+      "source_ckpt": "/apdcephfs_wzc1/share_304376610/pighzliu_code/out_llama_tokenmatched_noslorb/models_Llama--Llama2-7b_mask-unstructured_s0.5_m-hessian_obd_20260814_124534/model.pt",
+      "summary_file": "outputs/cast_eval_spec/sparseforge_tokenmatched_noslorb/tokenmatched_union9_summary.json",
+      "raw_results_json": "outputs/cast_eval_spec/sparseforge_tokenmatched_noslorb/hard_drop/lm_eval_out/__apdcephfs_wzc1__share_304376610__pighzliu_code__outputs__sparseforge_tokenmatched_noslorb_hf__hard_drop/results_2026-08-15T01-18-08.307732.json",
+      "union9_mean_primary": 0.5955350236110553,
+      "cast7_mean_primary": 0.5676033425170955,
+      "ast7_mean_primary": 0.6065311173472242,
+      "union9_mean_plain_acc": 0.5585805282770221,
+      "ppl_4096": 6.679523982397766,
+      "ppl_2048": 7.147421061277703,
+      "linear_zero_ratio": 0.5,
+      "exact_2of4_tile_ratio": 1.0,
+      "exact_2of4_violations": 0,
+      "is_true_2of4": true,
+      "2of4_eligible": true,
+      "verify_pre_rc": 0,
+      "verify_post_rc": 0,
+      "verify_verdict": "PASS",
+      "surviving_weights": 3238002688,
+      "extra_live_params_from_slorb": 0,
+      "compute_cap": "10.0",
+      "compute_cap_evidence": "indirect: lm_eval.log 'max memory per GPU to {0..3: 190842798080}' = 177.7 GiB/GPU (B200-class; H20=95GB, real L20A=48GB)",
+      "eval_completed": "2026-08-15T01:18:08"
+    },
+    "B_slorb_hard_fold": {
+      "arm": "slorb",
+      "variant": "hard_fold",
+      "source_iter": 7501,
+      "source_ckpt": "/apdcephfs_wzc1/share_304376610/pighzliu_code/out_llama_tokenmatched_slorb/models_Llama--Llama2-7b_mask-unstructured_s0.5_m-hessian_obd_20260814_125037/model.pt",
+      "summary_file": "outputs/cast_eval_spec/sparseforge_tokenmatched_slorb/tokenmatched_union9_summary.json",
+      "raw_results_json": "outputs/cast_eval_spec/sparseforge_tokenmatched_slorb/hard_fold/lm_eval_out/__apdcephfs_wzc1__share_304376610__pighzliu_code__outputs__sparseforge_tokenmatched_slorb_hf__hard_fold/results_2026-08-15T04-59-08.890123.json",
+      "union9_mean_primary": 0.6154132598915839,
+      "cast7_mean_primary": 0.5855391568362236,
+      "ast7_mean_primary": 0.6262992495823552,
+      "union9_mean_plain_acc": 0.5761362524468564,
+      "ppl_4096": 6.193778987680964,
+      "ppl_2048": 6.604781759218246,
+      "linear_zero_ratio": 1.0809132472221097e-09,
+      "exact_2of4_tile_ratio": 0.0,
+      "exact_2of4_violations": 1619001344,
+      "is_true_2of4": false,
+      "is_dense": true,
+      "2of4_eligible": false,
+      "verify_pre_rc": 2,
+      "verify_post_rc": 2,
+      "verify_verdict": "FAIL (by design, expected)",
+      "surviving_weights": 3238002688,
+      "extra_live_params_from_slorb": 848429056,
+      "extra_live_params_pct": 26.2,
+      "max_abs_fold_delta": 0.02929961,
+      "zeros_surviving": 7,
+      "total_elements": 6476005376,
+      "compute_cap": "10.0",
+      "compute_cap_evidence": "indirect: lm_eval.log 'max memory per GPU to {0..3: 190842863616}' = 177.7 GiB/GPU",
+      "eval_completed": "2026-08-15T04:59:08",
+      "barred_from_2of4_column": true,
+      "bar_source": "logs/sparseforge_tm_union9_slorb_progress.log:314 and :288"
+    },
+    "C_slorb_hard_drop_GAPFILL": {
+      "arm": "slorb",
+      "variant": "hard_drop",
+      "source_iter": 7501,
+      "source_ckpt": "/apdcephfs_wzc1/share_304376610/pighzliu_code/out_llama_tokenmatched_slorb/models_Llama--Llama2-7b_mask-unstructured_s0.5_m-hessian_obd_20260814_125037/model.pt",
+      "summary_file": "outputs/cast_eval_spec/sparseforge_tokenmatched_slorb/gapfill_union9_summary_hard_drop.json",
+      "raw_results_json": "outputs/cast_eval_spec/sparseforge_tokenmatched_slorb/hard_drop/lm_eval_out/__apdcephfs_wzc1__share_304376610__pighzliu_code__outputs__sparseforge_tokenmatched_slorb_hf__hard_drop/results_2026-08-15T21-10-07.401070.json",
+      "union9_mean_primary": 0.571019872430261,
+      "cast7_mean_primary": 0.5540044463534524,
+      "ast7_mean_primary": 0.5756951642569481,
+      "union9_mean_plain_acc": 0.5369404656128681,
+      "ppl_4096": 8.103113271879325,
+      "ppl_2048": 8.552948311931825,
+      "linear_zero_ratio": 0.5,
+      "exact_2of4_tile_ratio": 1.0,
+      "exact_2of4_violations": 0,
+      "is_true_2of4": true,
+      "2of4_eligible": true,
+      "verify_pre_rc": 0,
+      "verify_post_rc": 0,
+      "verify_verdict": "PASS",
+      "surviving_weights": 3238002688,
+      "extra_live_params_from_slorb": 0,
+      "compute_cap": "10.0",
+      "compute_cap_evidence": "DIRECT: summary records compute_caps='10.0'; preflight P4 log 'compute_cap(s)=[10.0] name(s)=[NVIDIA L20A] (name is NOT authoritative)'; plus memory fingerprint 190842863616",
+      "comparable_only_to": "arms measured on compute_cap 10.0 (sm_100/B200)",
+      "eval_completed": "2026-08-15T21:10:07",
+      "is_post_hoc_amputation": true,
+      "amputation_caveat": "discards a branch the model trained to depend on; ppl@4096 degrades 6.194 -> 8.103. Same error class as SPARSEFORGE_SAME_HARNESS.md Defect 1 (which retracted a headline)."
+    }
+  },
+  "deltas_union9_pp": {
+    "_method": "paired item-level bootstrap, B=4000, seed=0, stratified by task, same resample applied to all cells simultaneously (retains per-item correlation). Unpaired stderr-based SE given for comparison and is ~1.8x looser.",
+    "B_minus_A_ORIGINAL_HEADLINE": {
+      "label": "slorb(hard_fold, DENSE) - noslorb(hard_drop, 2:4)",
+      "delta_pp": 1.9878,
+      "paired_ci95": [
+        1.2527,
+        2.7074
+      ],
+      "unpaired_se_pp": 0.7218,
+      "unpaired_sigma": 2.75,
+      "excludes_zero": true,
+      "cast7_delta_pp": 1.7936,
+      "ast7_delta_pp": 1.9768,
+      "interpretation": "CONFOUNDED — mixes +/-SLoRB with sparse-vs-dense AND with +26.2% live params. RETRACTED as a +/-SLoRB claim."
+    },
+    "C_minus_A_VARIANT_MATCHED": {
+      "label": "slorb(hard_drop, 2:4) - noslorb(hard_drop, 2:4)",
+      "delta_pp": -2.4515,
+      "paired_ci95": [
+        -3.2432,
+        -1.6187
+      ],
+      "unpaired_se_pp": 0.7371,
+      "unpaired_sigma": 3.33,
+      "excludes_zero": true,
+      "cast7_delta_pp": -1.3599,
+      "ast7_delta_pp": -3.0836,
+      "interpretation": "THE HONEST +/-SLoRB CONTRAST. Matched on export variant, on 2:4 legality, and on capacity (both 3,238,002,688 surviving weights, branch discarded). SIGN IS REVERSED vs the original headline.",
+      "per_task_pp": {
+        "boolq": 1.896,
+        "rte": -14.44,
+        "hellaswag": -1.723,
+        "race": -0.478,
+        "piqa": 0.0,
+        "winogrande": -0.947,
+        "arc_easy": -5.008,
+        "arc_challenge": -1.962,
+        "openbookqa": 0.6
+      },
+      "per_task_sigma": {
+        "boolq": 1.7,
+        "rte": 3.52,
+        "hellaswag": 2.62,
+        "race": 0.23,
+        "piqa": 0.0,
+        "winogrande": 0.5,
+        "arc_easy": 3.73,
+        "arc_challenge": 0.97,
+        "openbookqa": 0.2
+      },
+      "tasks_against_plus_slorb": 7,
+      "tasks_total": 9,
+      "caveat": "rte n=277 so -14.44pp is ~40 items; do not quote alone. arc_easy (n=2376, -5.008pp, 3.73sigma) is the most trustworthy single-task signal."
+    },
+    "B_minus_C_SAME_CKPT_VARIANT_ONLY": {
+      "label": "slorb(hard_fold, DENSE) - slorb(hard_drop, 2:4) — one checkpoint, variant is the only change",
+      "delta_pp": 4.4393,
+      "paired_ci95": [
+        3.5298,
+        5.3203
+      ],
+      "unpaired_se_pp": 0.7321,
+      "unpaired_sigma": 6.06,
+      "excludes_zero": true,
+      "cast7_delta_pp": 3.1535,
+      "ast7_delta_pp": 5.0604,
+      "ratio_to_original_headline": 2.23,
+      "interpretation": "The export-variant axis alone moves union-9 by 2.23x the entire originally-reported +/-SLoRB effect. This is the deciding evidence that the headline measured the wrong axis."
+    }
+  },
+  "sparsity_asymmetry": {
+    "stated_plainly": "The two originally-completed arms differed in TWO things at once: the +/-SLoRB training decision AND the export variant (hard_drop=true 2:4 vs hard_fold=dense). Folding SLoRB_Weight @ x_proj into W is exact linear algebra that fills the zeroed positions, so the +SLoRB arm's export is dense.",
+    "deciding_evidence": [
+      "linear_zero_ratio: A=0.500000000, B=1.0809132472221097e-09, C=0.500000000",
+      "exact_2of4_tile_ratio: A=1.0, B=0.0, C=1.0",
+      "2:4 violations of 1,619,001,344 tiles: A=0, B=1,619,001,344 (all), C=0",
+      "verify_2of4_hf_export.py VERDICT: A=PASS, B=FAIL, C=PASS",
+      "B export log: '[export] in-scope zero_fraction=0.000000001 exact-2:4 violations=1619001344' + 'folded SLoRB into 224 tensors; max |SLoRB_eff| = 2.929961e-02'",
+      "independent second harness eval_hf_sparse_model.py agrees on B's 1.0809132472221097e-09",
+      "only 7 zeros survive out of 6,476,005,376 elements in B"
+    ],
+    "why_matrix_was_asymmetric": "FORCED, not chosen. The noslorb ckpt contains no SLoRB tensors, so --slorb fold hard-exits at baselines/cast_repro/tools/export_sparseforge_to_hf.py:181. The cell noslorb/hard_fold is impossible in principle. The other missing cell, slorb/hard_drop, was always possible and is the minimal sufficient repair — it ran 2026-08-15 21:05-21:10.",
+    "exporter_guards_are_real_not_rubber_stamps": {
+      "line_181": "--slorb fold requested but SLoRB_Weight/x_proj missing -> hard exit",
+      "line_213": "mask=hard slorb=drop must yield exact 2:4 -- it did not; refusing to write",
+      "line_215": "folding SLoRB left the weight exactly 2:4, which is impossible unless the branch is a no-op -- investigate"
+    },
+    "capacity_confound": {
+      "slorb_weight_params": 404750336,
+      "x_proj_params": 443678720,
+      "total_extra_live_params": 848429056,
+      "surviving_weights_base": 3238002688,
+      "pct_extra": 26.2,
+      "source": "status/SPARSEFORGE_TOKENMATCHED_PAIR_COMPLETE.md:120-125",
+      "resolved_by_gapfill": true,
+      "note": "Cells A and C both discard the branch, so C-A is matched on capacity as well as variant."
+    },
+    "training_side_isolation": {
+      "args_json_keys_differing": 3,
+      "keys": [
+        "SLoRB (False vs True)",
+        "out_dir",
+        "resume_dir"
+      ],
+      "identical_keys_verified": [
+        "max_iters=7500",
+        "seed=1234",
+        "sparsity_ratio=0.5",
+        "mask_penalty_mode=nm_2_4",
+        "mask_hardening_start=5294",
+        "srste_decay=0.0",
+        "global_batch_size=256",
+        "block_size=4096"
+      ],
+      "residual_caveat": "arms resumed from different iters (noslorb@6700, slorb@6500) so slorb ran 200 extra iterations of that segment; this pair cannot separate that from the SLoRB effect.",
+      "direction_of_residual_bias": "favours slorb — and slorb still LOSES by 2.4515 pp on the variant-matched contrast"
+    }
+  },
+  "noise_floors": {
+    "sampling_noise": {
+      "method": "paired item-level bootstrap within task, B=4000, seed=0",
+      "all_three_contrasts_exclude_zero": true,
+      "largest_leg_is_variant_not_slorb": true,
+      "variant_leg_over_headline_ratio": 2.23
+    },
+    "cross_architecture_noise": {
+      "applies_here": false,
+      "reason": "all three cells scored on compute_cap 10.0 (sm_100), so the offset is 0 by construction",
+      "magnitude_if_it_had_applied_pp": [
+        0.03,
+        0.16
+      ],
+      "source": "status/PAPERB_CORE6_CROSSARCH_FLOOR.md — measured on BIT-IDENTICAL weights, 28 net item flips, symmetric in sign",
+      "source_caveat": "that doc carries a partial revision: the 28-flip figure was v1-harness on one side; matched-harness counts are 7/23/29 per rung. Magnitude is <=0.16 pp either way."
+    }
+  },
+  "reproduction_fidelity": {
+    "per_task_primary_values_matching_summaries": "27 of 27 (9 tasks x 3 cells) exact",
+    "cell_C_union9_recomputed_minus_summary": 0.0,
+    "cell_A_union9_recomputed_minus_summary": 1.11e-16,
+    "cell_B_union9_recomputed_minus_summary": 1.11e-16,
+    "per_item_mean_reproduces_headline": "yes, to the same 1-ULP tolerance, from samples_*.jsonl",
+    "ppl_files_match_summaries": "exact, all three cells, both seqlens",
+    "CORRECTION_to_phase1": "Phase-1 claimed cells A and B reproduce 'bit-exactly ... exact float equality'. Not reproducible as stated: a plain left-to-right sum(values)/9 differs by 1 ULP (1.11e-16) for A and B. Scientifically irrelevant but the wording is wrong and must not be repeated."
+  },
+  "context_reference_not_same_harness": {
+    "cast_repro_step7500": {
+      "union9_mean_primary_pp": 62.0919,
+      "cast7_pp": 59.2661,
+      "ast7_pp": 63.2818,
+      "ppl_4096": 6.137203734304916,
+      "linear_zero_ratio": 0.5,
+      "exact_2of4_tile_ratio": 1.0,
+      "is_true_2of4": true,
+      "harness_version": "b86c479",
+      "WARNING": "DIFFERENT harness build from cells A/B/C (which carry no harness_version field). Context only, NOT a same-harness row. Cross-harness drift already cost this project a retraction (-0.346 pp AST-7).",
+      "why_it_matters": "A genuinely-2:4 model at the same 7500-step budget scores 62.0919, ABOVE the dense-fold B at 61.5413 — so 'dense should beat 50%-sparse' is empirically false on this disk at matched budget."
+    }
+  },
+  "invalid_controls": {
+    "sparseforge_5b_and_dolmino_link2_triplets": {
+      "proposed_use": "isolate 'variant choice alone'",
+      "verdict": "INVALID — rank-deficient for this purpose",
+      "reason": "In each triplet all three variants are exports of a SINGLE SLoRB-trained checkpoint. soft_fold and hard_fold are BOTH dense; only hard_drop is true 2:4. The one leg that moves density is the same leg that removes SLoRB, so no density coefficient is identifiable.",
+      "measured_legs_5b_union9_primary_pp": {
+        "hard_drop": 57.06784499478439,
+        "hard_fold": 62.433454051757096,
+        "soft_fold": 62.5211091824788,
+        "mask_hardening_leg_soft_fold_to_hard_fold_pp": -0.0877,
+        "slorb_removal_leg_hard_fold_to_hard_drop_pp": -5.3656
+      },
+      "metric_consistency_warning": "Do not mix link2's plain_acc with 5b's union9_primary — that produced a bogus ratio in an earlier pass."
+    }
+  },
+  "must_not_claim": [
+    "'+SLoRB improves union-9 by +1.99 pp' — RETRACTED; at matched variant it is -2.45 pp.",
+    "Any placement of the slorb/hard_fold row in a 2:4 column, table or sentence. The run log bars it verbatim (logs/sparseforge_tm_union9_slorb_progress.log:314). NOTE: the bar is ADVISORY ONLY — 2of4_eligible has zero programmatic consumers, so nothing prevents a future aggregator from pulling it in.",
+    "That the +/-SLoRB pair is single-variable, without stating the 200-iteration resume asymmetry (noslorb@6700 vs slorb@6500).",
+    "That cell C is 'the deployable +SLoRB model' without the post-hoc-amputation caveat (ppl@4096 6.194 -> 8.103).",
+    "That the sparseforge_5b / dolmino_link2 triplets isolate variant choice — they are rank-deficient (density and SLoRB-presence perfectly collinear).",
+    "That 'a dense model is expected to beat a 50%-sparse model so this is fine' — empirically false: true-2:4 CAST-repro-7500 scores 62.0919 > dense B's 61.5413.",
+    "That CAST-repro-7500 is same-harness with cells A/B/C — it is harness_version b86c479.",
+    "The rte -14.44 pp per-task swing as a standalone finding (n=277, ~40 items).",
+    "That cells A/B/C 'reproduce bit-exactly' or with 'exact float equality' — A and B differ by 1 ULP."
+  ],
+  "remaining_work": [
+    {
+      "id": "R1",
+      "cell": "NONE — the blocking cell is already DONE",
+      "why": "slorb/hard_drop completed 2026-08-15 21:10; the variant-matched +/-SLoRB contrast now exists on disk. No GPU is required to fix the headline.",
+      "measured_cost": "0 GPU-h",
+      "arch": "n/a",
+      "blocking": false
+    },
+    {
+      "id": "R2",
+      "cell": "noslorb/soft_drop + slorb/soft_drop (2 cells)",
+      "why": "The only variant combination never run anywhere on either disk. Separates mask-hardening from SLoRB-removal on a 2:4-legal export, confirming on the token-matched pair that the hardening leg is as free as in the 5b/link2 triplets (-0.09 pp). Supported by the exporter (--mask soft --slorb drop). OPTIONAL robustness, not blocking.",
+      "measured_cost": "0.73 GPU-h per cell (11 min wall x 4 GPUs, measured) -> ~1.5 GPU-h total",
+      "arch": "B200 sm_100 (compute_cap 10.0) — MANDATORY for comparability with the 3 existing cells",
+      "blocking": false
+    },
+    {
+      "id": "R3",
+      "cell": "2nd seed of the token-matched pair (+/-SLoRB), then re-export both hard_drop",
+      "why": "The -2.45 pp is n=1 run per arm. No same-arch run-to-run replicate exists for these arms, so run-level (as opposed to item-level) variance is unmeasured. Only needed if a run-level variance claim is wanted.",
+      "measured_cost": "eval 2 x 0.73 = 1.5 GPU-h; the 7500-step TRAINING cost was NOT measured by me",
+      "arch": "B200 sm_100 for the evals; training node per SparseForge ownership",
+      "blocking": false
+    },
+    {
+      "id": "R4",
+      "cell": "make the 2:4 bar programmatic (code change, 0 GPU)",
+      "why": "2of4_eligible currently has no consumers — it is a log print plus an unread JSON string. Add an assertion in the aggregator/table builder so a dense row cannot silently enter a 2:4 column.",
+      "measured_cost": "0 GPU",
+      "arch": "n/a — CPU",
+      "blocking": false,
+      "priority": "do first, it is free"
+    },
+    {
+      "id": "R5",
+      "cell": "retract/rewrite the +1.99 pp framing wherever it appears (0 GPU)",
+      "why": "status/SPARSEFORGE_TOKENMATCHED_PAIR_COMPLETE.md presents the +0.0199 union-9 delta as the +/-SLoRB result; it now has a variant-matched refutation. This audit did NOT edit it (out of scope) — MAIN should.",
+      "measured_cost": "0 GPU",
+      "arch": "n/a — CPU",
+      "blocking": false,
+      "priority": "do before any write-up"
+    }
+  ],
+  "arch_requirement_rationale": {
+    "required": "B200 / sm_100 (compute_cap 10.0)",
+    "forbidden": "H20 sm_90",
+    "why": "All three existing cells were scored on cc10.0 (memory fingerprint 190.84e9 bytes/GPU = 177.7 GiB, B200-class). Scoring a new cell on H20 sm_90 would add the 0.03-0.16 pp cross-architecture offset measured in status/PAPERB_CORE6_CROSSARCH_FLOOR.md on BIT-IDENTICAL weights, on top of the effect being estimated — the exact error class that already forced one retraction here.",
+    "enforced_by": "scripts/launch_union9_gapfill_212.sh REQUIRE_SM=10.0 (refuses to proceed otherwise)",
+    "correct_node": ".212 (8x B200, sm_100, wzc1 disk) — reserved and idle",
+    "do_not_touch": "LOCAL/.73/.82/.104 — all 32 cards carrying four 200k-step trainings"
+  },
+  "measured_per_cell_cost_breakdown": {
+    "_source": "logs/union9_gapfill_slorb_hard_drop.log own stage timestamps, 2026-08-15 21:00:24 -> 21:11:26",
+    "stage1_export": "2m03s",
+    "stage2_verify_2of4_pre": "50s",
+    "stage3_ppl_4096_and_2048": "43s",
+    "stage4_union9_zeroshot_4gpu": "5m07s",
+    "stage5_aggregate": "2s",
+    "stage6_verify_2of4_post": "41s",
+    "total_wall": "11m02s on 4 GPUs",
+    "gpu_hours": 0.73,
+    "cross_check": "the two original arms took 9m15s and 10m15s for the identical 6-stage pipeline — cost is stable and reproducible"
+  },
+  "not_verified": [
+    "Run-to-run (same-arch, same-weights) variance for these arms — no replicate exists. The bootstrap CIs quantify ITEM sampling noise only. memory/same-harness-runs-bit-identical.md suggests run-level jitter ~0 elsewhere in this project, but that was not measured here and is not asserted.",
+    "Physical node identity of cells A and B. Their compute_cap was verified INDIRECTLY via the 190.84e9-bytes/GPU memory fingerprint. Only cell C records compute_caps explicitly. SPARSEFORGE_TOKENMATCHED_PAIR_COMPLETE.md says LOCAL and .212 (both sm_100) — consistent, but that is a ledger claim, not my measurement.",
+    "Bit-identity of the two slorb HF exports' shared checkpoint. Both name the same model.pt and report iter_num=7501, and the gap-fill preflight asserts ckpt bytes=41078402630 matches; I did NOT hash it myself.",
+    "Whether SLoRB is deployable as '2:4 weight + separate low-rank branch at inference'. deploy_sparse_24/convert.py:186-190 lists .SLoRB_Weight and .x_proj as training-auxiliary and DROPS them (matching cell C, not B). I did NOT trace the training-time forward pass to determine whether the branch is a genuine parallel path vs a reparameterisation. DO NOT claim SLoRB 'cannot' be deployed with 2:4 on my authority — I only verified that the two exporters on disk either fold it (destroying 2:4) or discard it.",
+    "The effect size of the 200 extra resume iterations. Confirmed it exists from args.json; did not quantify it.",
+    "zwfy6 beyond one path: /apdcephfs_zwfy6/share_304376610/pighzliu_code/outputs/cast_eval_spec/ DOES NOT EXIST, so all SparseForge union-9 evidence is wzc1-resident (this satisfies the two-disk rule for the 'no soft_drop cell exists' claim). Other zwfy6 subtrees not searched.",
+    "sparseforge_5b / dolmino_link2 per-item data — triplet legs came from summary JSONs, not re-derived from raw results the way cells A/B/C were.",
+    "Novelty / prior-art status of any claim here — out of scope."
+  ],
+  "MAIN_verification_and_self_correction_20260815": {
+    "who": "MAIN, after reading the persisted JSON rather than the workflow transcript",
+    "verified_myself": {
+      "files_persisted": "status/SPARSEFORGE_UNION9_CLOSEOUT.md (21473 B, 21:30) + this JSON (22946 B, 21:32) both on disk -- an agent return value that is not persisted does not exist",
+      "matched_variant_delta": "I independently computed 57.1020-59.5535 = -2.4515 pp union9 and 8.1031-6.6795 = +1.4236 ppl from the three summary JSONs before the audit landed; the audit agrees",
+      "2of4_legality": "three cells' own verify blocks: A noslorb/hard_drop PASS (zero 0.5, exact 1.0), B slorb/hard_fold FAIL by design (zero 1.08e-9, exact 0.0), C slorb/hard_drop PASS (zero 0.5, exact 1.0)"
+    },
+    "THE_AUDIT_CORRECTED_ME": {
+      "what_I_claimed_to_the_user": "that the sparseforge_5b and dolmino_link2 three-variant triplets isolate 'variant effect alone' at +5.37 and +5.53 pp, and that this was independent replication across three checkpoints",
+      "why_that_was_wrong": "RANK-DEFICIENT. All three variants in each triplet are exports of a SINGLE SLoRB-trained checkpoint. soft_fold AND hard_fold are both DENSE; the only leg that changes density (hard_fold -> hard_drop) is the SAME leg that removes SLoRB. No density coefficient is identifiable from that design.",
+      "the_correct_decomposition_within_one_ckpt": {
+        "soft_fold_to_hard_fold_mask_hardening_only": -0.0877,
+        "hard_fold_to_hard_drop_slorb_removal_and_densify": -5.3656
+      },
+      "second_error_of_mine": "I quoted +4.44 / +5.37 / +5.53 as three comparable numbers. The audit explicitly warns that link2's plain_acc must not be mixed with 5b's union9_primary -- doing so produced a bogus ratio in an earlier pass. I had mixed metrics.",
+      "the_single_defensible_number": {
+        "delta_pp": 4.4393,
+        "label": "slorb hard_fold(DENSE) - slorb hard_drop(2:4), ONE checkpoint, variant is the only change",
+        "paired_ci95": [
+          3.5298,
+          5.3203
+        ],
+        "sigma": 6.06,
+        "excludes_zero": true,
+        "ratio_to_original_headline": 2.23,
+        "why_paired_is_legitimate": "the audit asserted set(doc_id) IDENTICAL between arms for all 9 tasks across 18 samples_*.jsonl files -- item-level pairing, not just matching n"
+      }
+    },
+    "harness_confound_excluded_properly": {
+      "harness_string": "byte-identical between arms (Python string equality True)",
+      "17_of_18_config_keys_identical": "including batch_sizes [64] auto-detected the SAME on both, all four seeds, transformers 4.57.6, task_hashes, chat_template null",
+      "model_num_parameters": "6738415616 IDENTICAL on both arms -- self-evidence that SLoRB folds into W rather than appending parameters",
+      "git_hash_drift_investigated_not_waved_through": "a7940d4 (noslorb, 01:18) vs ae4a934 (slorb, 04:59). Former is an ancestor of the latter. All 18 changed files are paperC/*, status/*, memory notes, and an unrelated ALPS gate-0 script; filtering the diff for eval|lm_eval|harness|export|verify|score returns ZERO. Neither baselines/cast_repro/tools/* nor eval_hf_sparse_model.py changed."
+    },
+    "final_standing": {
+      "reportability": "with_qualifier",
+      "blocking_cells_remaining": 0,
+      "retracted": "the +1.99 pp '+SLoRB wins' headline -- it compared dense-fold against true-2:4",
+      "reportable_now_no_further_gpu": "the variant-matched result: +SLoRB is WORSE by 2.4515 pp union-9 (and +1.4236 ppl) when both arms are true 2:4",
+      "still_undetermined": "a clean TRAINING-TIME +/-SLoRB direction. The repairing cell is a post-hoc amputation of a branch the model trained to depend on; #245 (from-scratch ALPS+SLoRB matched control) is what settles it."
+    },
+    "timestamp": "2026-08-15T21:37:00"
+  }
+}
