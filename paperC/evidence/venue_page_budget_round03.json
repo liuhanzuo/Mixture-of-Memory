@@ -1,0 +1,102 @@
+{
+  "evidence_id": "E-VENUE-01",
+  "created": "2026-08-15T20:34:36",
+  "created_by": "MAIN (autonomous-paper-agent phase 6, round 3 pre-review audit)",
+  "what_this_measures": "ICLR 2026 main-text page budget compliance for paperC, and unreferenced-float defects, both derived from the build artifacts of the round_03 snapshot.",
+  "method": {
+    "page_count": "count LaTeX shipout markers (regex '\\\\[\\\\d+ ... \\\\]') in main.log BEFORE the position where main.bbl is read. The bbl is read exactly when \\bibliography executes (main.tex:32), so markers before it == pages of main text (incl. the Ethics Statement, which precedes it).",
+    "why_not_pdf": "this host has NO pdftoppm/gs/mutool/PyMuPDF, so pages cannot be counted by rendering; and grepping the PDF for '/Type /Page' returns 0 because the pages live in compressed /ObjStm (a bug already hit once and recorded in SKILL_LOCAL.md 3).",
+    "unreferenced_floats": "for every \\newlabel in main.aux, count \\ref/\\autoref/\\cref/\\Cref occurrences across sections/*.tex"
+  },
+  "measured": {
+    "pages_main_text": 10,
+    "pages_total_incl_refs_and_appendix": 18,
+    "iclr2026_main_text_limit": 9,
+    "over_by_pages": 1,
+    "verdict": "FAIL",
+    "label_pages": {
+      "sec:v2": 4,
+      "tab:two-nulls": 5,
+      "sec:nulls": 6,
+      "tab:nulls": 7,
+      "tab:conventions": 7,
+      "tab:power": 8,
+      "tab:mmlupro": 10,
+      "tab:v2-resort": 10,
+      "tab:v2-full": 14,
+      "tab:v2-alternatives": 15,
+      "tab:integrity": 16,
+      "app:generated-nulls": 16,
+      "tab:app-construct-nulls": 17,
+      "app:ledger": 17,
+      "tab:claims": 18
+    },
+    "tables_never_referenced_in_prose": [
+      "tab:claims",
+      "tab:conventions",
+      "tab:integrity",
+      "tab:mmlupro",
+      "tab:power",
+      "tab:two-nulls",
+      "tab:v2-alternatives",
+      "tab:v2-resort"
+    ],
+    "n_tables_never_referenced": 8,
+    "SUPERSEDED_SEE_CORRECTION": true
+  },
+  "why_the_build_gate_missed_the_unreferenced_floats": "latexmk reports 0 undefined references because every \\label EXISTS. An unreferenced label is the OPPOSITE failure -- a float the prose never points the reader to -- and no LaTeX warning covers it. paper_build.py counts undefined refs, not unused ones.",
+  "consequence_for_revision": "The over-length is ~1 page and 8 of 11 tables are unreferenced. These interact: the cheapest compliant fix is to move unreferenced main-text tables to the appendix and add explicit \\ref for the ones that stay. This deletes NO evidence -- it relocates it -- so it does not weaken any claim. Recorded in decision_log.md.",
+  "not_verified": [
+    "the exact page on which the main text would end after relocation (must be re-measured by rebuilding, not predicted)",
+    "whether ICLR 2026's CFP excludes the Ethics Statement / Reproducibility Statement from the 9 pages. The .sty carries no such text (grepped: 0 hits for 'page limit'/'ethics'). If they ARE excluded, the overage may already be smaller than 1 page. This must be checked against the official CFP before the fix is sized.",
+    "PDF visual inspection (impossible on this host)"
+  ],
+  "CORRECTION_20260815_MAIN": {
+    "what_was_wrong": "The first version of this file reported pages_main_text=10 and total=18, over_by=1. BOTH were undercounts.",
+    "root_cause": "My shipout regex '\\[\\d+\\s*(?:<[^>]*>\\s*)*\\]' was applied to the RAW log. TeX hard-wraps the log at ~79 columns, so a shipout marker whose bracket contains long embedded font paths gets a NEWLINE inside it and the pattern fails to match. Dropped markers -> undercount.",
+    "how_it_was_caught": "The log's own authoritative line 'Output written on main.pdf (19 pages, 342809 bytes)' disagreed with my 18, and grep showed a literal '[19]' present. A self-inconsistency between my derived number and the tool's own report is the signal.",
+    "corrected_method": "flatten the log (remove ALL newlines) BEFORE matching, then take the maximal monotonically-increasing marker run 1..N.",
+    "corrected_values": {
+      "pages_main_text": 11,
+      "pages_total": 19,
+      "iclr2026_main_text_limit": 9,
+      "over_by_pages": 2,
+      "verdict": "FAIL"
+    },
+    "why_this_matters": "the overage is 2 pages, not 1 -- twice what I first recorded. Sizing the fix from the wrong number would have under-cut and left the paper non-compliant.",
+    "generalisable_lesson": "Never derive a count from a wrapped log with a pattern that can straddle the wrap; and when the tool reports the same quantity itself, cross-check against it before recording."
+  },
+  "ATTEMPT_1_ETHICS_RELOCATION_20260815": {
+    "limit_now_VERIFIED": {
+      "pages": 9,
+      "scope": "main text only, initial submission (10 for rebuttal/camera-ready)",
+      "source": "ICLR 2026 Author Guide, HTTP 200",
+      "evidence_file": "gate/venue_page_limit.json",
+      "verbatim": "At the time of submission, the main text should be 9 pages or fewer... This limit will be strictly enforced. Papers with main text beyond the page limit will be desk-rejected.",
+      "excluded": [
+        "references (unlimited)",
+        "appendices (after bibliography)",
+        "Ethics Statement (<=1 page)",
+        "Reproducibility Statement",
+        "Acknowledgements",
+        "LLM-usage disclosure"
+      ],
+      "note_that_kills_the_guess": "ICLR 2025 was DIFFERENT -- a hard cap of 10 with 9 only encouraged. So 'ICLR is usually 9' was INFERRED, happens to be right for 2026, and would have been WRONG for 2025. Assumption A-01 is now discharged with a quote instead of prior knowledge."
+    },
+    "what_I_changed": [
+      "moved \\input{sections/08_ethics} from BEFORE \\bibliography to AFTER it (main.tex), since the guide excludes it only when it is not inside the main text",
+      "added sections/10_reproducibility.tex (the paper had NO Reproducibility Statement -- 0 grep hits -- and it is strongly encouraged and costs zero pages)",
+      "added \\label{sec:setup} to 04_experiments.tex, because the new statement references it and the label did not exist"
+    ],
+    "MEASURED_OUTCOME": "THE FREE WIN DID NOT MATERIALISE. Main text is STILL 11 pages pre-bibliography; total went 19 -> 20.",
+    "why": "the Ethics Statement is only ~137 words. Removing it from the main-text region freed well under a page, and the floats (8 unreferenced tables) reflowed to occupy the space. Page count in a float-heavy document is governed by the FLOATS, not by short prose blocks.",
+    "what_this_proves": "the binding constraint is the table load, exactly as the unreferenced-float measurement suggested. Relocating unreferenced tables to the appendix is not merely the cheapest lever -- after this test it is the ONLY remaining lever that does not delete evidence.",
+    "gates_after_the_edit": {
+      "build": "PASS -- rc=0, 0 undefined refs, 0 undefined cites, 0 overfull, 0 errors, 20 pp",
+      "numbers": "PASS -- 612 scanned (was 610), 470 direct (was 468), 0 needing a human. The 2 new numerals are the ones I wrote into the Reproducibility Statement and both bound DIRECTLY to evidence."
+    },
+    "self_check_that_caught_a_defect_before_the_build": "I first wrote \\ref{sec:setup} into the new statement, then checked whether that label existed. It did NOT (only sec:nulls and sec:v2 were defined). Had I not checked, the build gate would have gone from 0 undefined references to 1 -- i.e. my compliance fix would have broken the gate it was meant to serve.",
+    "still_open": "2 pages over. Next lever: relocate unreferenced main-text tables (tab:two-nulls, tab:conventions, tab:power, tab:mmlupro, tab:v2-resort) into the appendix, keeping the ones the prose actually points at. A concurrent agent is adding \\ref for the ones that stay, which will change which tables are legitimately main-text.",
+    "timestamp": "2026-08-15T20:55:45"
+  }
+}

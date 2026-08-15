@@ -27,10 +27,18 @@
 \input{sections/05_analysis}
 \input{sections/06_discussion}
 \input{sections/07_limitations}
-\input{sections/08_ethics}
 
+% --- ICLR 2026 page budget -------------------------------------------------
+% The Ethics Statement and the Reproducibility Statement are EXCLUDED from the
+% 9-page main-text limit by the ICLR 2026 Author Guide, but only read as excluded
+% when they do not sit inside the main text. Both are therefore emitted after the
+% bibliography. Verbatim source + quote: paperC/gate/venue_page_limit.json.
+% ---------------------------------------------------------------------------
 \bibliography{refs}
 \bibliographystyle{iclr2026_conference}
+
+\input{sections/08_ethics}
+\input{sections/10_reproducibility}
 
 \appendix
 \input{sections/09_appendix}

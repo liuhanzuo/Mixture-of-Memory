@@ -1,0 +1,239 @@
+{
+  "schema_version": "1.0.0",
+  "status": "VERIFIED",
+  "venue": "ICLR 2026",
+  "year_actually_verified": "2026",
+
+  "limit_pages": 9,
+  "limit_scope": "MAIN TEXT ONLY, at the time of initial submission. Counted from page 1 through the last page of main-text prose (the main text ends before the bibliography). Raised to 10 pages for the discussion/rebuttal phase and for the camera-ready version.",
+  "limit_pages_rebuttal_and_camera_ready": 10,
+
+  "excluded_from_limit": [
+    "references / bibliography (explicitly: unlimited additional pages allowed)",
+    "appendices (unlimited, must be placed after the bibliography)",
+    "supplementary material / supplementary text (appears after the references)",
+    "Ethics Statement (optional; does not count, but must not exceed 1 page)",
+    "Reproducibility Statement (optional; explicitly 'not part of the main text')",
+    "Acknowledgements section (FAQ answers 'No' to whether it is included in the page limit)",
+    "LLM-usage disclosure section (new for 2026; may be placed in the appendix and does not count)"
+  ],
+  "counts_toward_limit": [
+    "all main-text sections: abstract, introduction, related work, method, experiments, results, analysis, discussion, limitations",
+    "all figures and tables placed in the main text",
+    "footnotes in the main text"
+  ],
+
+  "source_url": "https://iclr.cc/Conferences/2026/AuthorGuide",
+  "source_kind": "author-guide",
+  "fetched_at": "2026-08-15T12:47:08Z",
+  "http_status": 200,
+  "response_bytes": 86443,
+  "fetch_method": "curl -L via http://hy-proxy.woa.com:3128 (WebFetch tool refuses the iclr.cc domain)",
+
+  "verbatim_quote": "Paper length\n\nAt the time of submission, the main text should be 9 pages or fewer. During the discussion/rebuttal phase and for the camera ready, the page limit will be increased to 10 pages to allow for new results/discussions. This limit will be strictly enforced. Papers with main text beyond the page limit will be desk-rejected.\n\nThe list of references does not count towards the page limit, and unlimited additional pages are allowed for the bibliography/references.\n\nAuthors may use as many pages of appendices (after the bibliography) as they wish, but reviewers are not required to read the appendix.",
+
+  "verbatim_quotes_by_exclusion": {
+    "ethics_statement": {
+      "quote": "The optional ethics statement will not count toward the page limit, but should not be more than 1 page.",
+      "context_quote": "If authors feel that their paper submission raises questions regarding the Code of Ethics, they are encouraged to include a paragraph of Ethics Statement (at the end of the main text before references) to address potential concerns where appropriate.",
+      "section_heading": "Recommended: Ethics statement",
+      "source_url": "https://iclr.cc/Conferences/2026/AuthorGuide"
+    },
+    "reproducibility_statement": {
+      "quote": "This optional reproducibility statement is not part of the main text and therefore will not count toward the page limit.",
+      "context_quote": "Authors are strongly encouraged to include a paragraph-long Reproducibility Statement at the end of the main text (before references) to discuss the efforts that have been made to ensure reproducibility.",
+      "section_heading": "Recommended: Reproducibility statement",
+      "source_url": "https://iclr.cc/Conferences/2026/AuthorGuide"
+    },
+    "references": {
+      "quote": "The list of references does not count towards the page limit, and unlimited additional pages are allowed for the bibliography/references.",
+      "source_url": "https://iclr.cc/Conferences/2026/AuthorGuide"
+    },
+    "appendix": {
+      "quote": "Authors may use as many pages of appendices (after the bibliography) as they wish, but reviewers are not required to read the appendix.",
+      "source_url": "https://iclr.cc/Conferences/2026/AuthorGuide"
+    },
+    "acknowledgements": {
+      "quote": "Q. Is the acknowledgement section included in the page limit?\nNo.",
+      "source_url": "https://iclr.cc/Conferences/2026/AuthorGuide",
+      "note": "FAQ Re:submission section. Also stated under Camera-ready Submissions: 'Similarly, ethics statements and acknowledgement etc. do not count for page limit.'"
+    },
+    "llm_usage_section": {
+      "quote": "This section can appear in the appendix, and will not be considered as part of the page limit.",
+      "context_quote": "However, new this year, if LLMs played a significant role in research ideation and/or writing to the extent that they could be regarded as a contributor, then authors should describe the precise role of the LLM in a separate section on LLM usage.",
+      "source_url": "https://iclr.cc/Conferences/2026/AuthorGuide"
+    },
+    "camera_ready": {
+      "quote": "page limit is identical with the submission version (10 pages)\nSimilarly, ethics statements and acknowledgement etc. do not count for page limit.",
+      "section_heading": "Camera-ready Submissions",
+      "source_url": "https://iclr.cc/Conferences/2026/AuthorGuide"
+    }
+  },
+
+  "corroborating_sources": [
+    {
+      "source_kind": "style-example",
+      "description": "Official ICLR 2026 LaTeX template, downloaded from the URL given in the Author Guide's 'Style files and Templates' section. The shipped example paper iclr2026_conference.tex states the limit in its own body text.",
+      "source_url": "https://github.com/ICLR/Master-Template/raw/master/iclr2026.zip",
+      "resolved_url": "https://raw.githubusercontent.com/ICLR/Master-Template/master/iclr2026.zip",
+      "fetched_at": "2026-08-15T12:47:15Z",
+      "http_status": 200,
+      "response_bytes": 241296,
+      "zip_sha256": "b6d63b29992e153f804bb6d170c57db156c011b5bedf96a9f31d58813b909acf",
+      "file": "iclr2026/iclr2026_conference.tex",
+      "file_sha256": "941b58de6e52f5538de0ebfe2d20425a79e1768cb271d453b7436904b5159859",
+      "line": 131,
+      "verbatim_quote": "There will be a strict upper limit of \\textbf{9 pages} for the main text of the initial submission, with unlimited additional pages for citations. This limit will be expanded to \\textbf{10 pages} for rebuttal/camera ready.",
+      "note": "Independent of the Author Guide HTML and agrees with it exactly (9 initial / 10 rebuttal-camera-ready). The zip contents are: fancyhdr.sty, iclr2026_conference.{bib,bst,log,pdf,sty,tex}, math_commands.tex, natbib.sty. No example .tex was previously on disk in this repo; only the .sty and .bst had been copied into paperC/."
+    },
+    {
+      "source_kind": "local-style-integrity-check",
+      "description": "paperC/iclr2026_conference.sty is byte-identical to the .sty in the freshly downloaded official zip, so paperC is using the unmodified official 2026 style. This also confirms (consistent with the user's grep) that the .sty legitimately carries no page-limit text -- the limit lives in the guide and in the example .tex, not in the style package.",
+      "md5_both": "a040392a6cfee8dc54aae17eb2635282",
+      "local_path": "paperC/iclr2026_conference.sty"
+    }
+  ],
+
+  "sources_attempted": [
+    {
+      "url": "https://iclr.cc/Conferences/2026/CallForPapers",
+      "source_kind": "cfp",
+      "fetched_at": "2026-08-15T12:47:12Z",
+      "http_status": 200,
+      "response_bytes": 49729,
+      "result": "NO page-limit information. Confirms the user's finding qualitatively, though our fetch returned a full 49.7 KB page rather than a 3835-char stub -- keyword counts in the HTML were: 'page limit' 0, 'pages' 0, 'appendix' 0, 'reference' 0, 'supplement' 0. The page explicitly defers: 'Please see the author guide for all submission instructions and policies.' with href https://iclr.cc/Conferences/2026/AuthorGuide. Following that link is what yielded the authoritative text.",
+      "outgoing_link_followed": "https://iclr.cc/Conferences/2026/AuthorGuide"
+    },
+    {
+      "url": "https://api2.openreview.net/groups?id=ICLR.cc/2026/Conference",
+      "source_kind": "openreview-group",
+      "fetched_at": "2026-08-15T12:47:31Z",
+      "http_status": 200,
+      "response_bytes": 10608,
+      "result": "NO page-limit information. Returned the venue group JSON (submission_id, meta_invitation_id, decision_heading_map, etc.) plus a 1901-char .web webfield that is pure JS tab-rendering logic. Keyword counts in the full JSON: 'limit' 0, '9 pages' 0, '10 pages' 0. The webfield does NOT state the limit, contrary to the hypothesis in the task brief."
+    },
+    {
+      "url": "https://api2.openreview.net/invitations?id=ICLR.cc/2026/Conference/-/Submission",
+      "source_kind": "openreview-invitation",
+      "fetched_at": "2026-08-15T12:47:31Z",
+      "http_status": 400,
+      "response_bytes": 184,
+      "result": "FAILED (expected). Body: {\"name\":\"InvitationExpiredError\",\"message\":\"The Invitation ICLR.cc/2026/Conference/-/Submission has expired\",\"status\":400}. The ICLR 2026 submission deadline (Sept 24, 2025) is in the past relative to today (2026-08-15), so the invitation is no longer served. Its description/webfield could not be read.",
+      "variants_tried": [
+        "?invitation=ICLR.cc/2026/Conference/-/Submission -> HTTP 200 with empty list {\"invitations\":[]}"
+      ]
+    },
+    {
+      "url": "https://iclr.cc/Conferences/2027/AuthorGuidelines",
+      "source_kind": "author-guide",
+      "fetched_at": "2026-08-15T12:47:17Z",
+      "http_status": 200,
+      "response_bytes": 65466,
+      "result": "SUCCESS -- see 'forward_looking_2027' below. Note the 2027 URL slug is AuthorGuidelines (plural), not AuthorGuide; https://iclr.cc/Conferences/2027/AuthorGuide returns HTTP 404 (38055 bytes of 404 page)."
+    },
+    {
+      "url": "https://iclr.cc/Conferences/2025/CallForPapers",
+      "source_kind": "cfp",
+      "fetched_at": "2026-08-15T12:47:29Z",
+      "http_status": 200,
+      "response_bytes": 56838,
+      "result": "SUCCESS, retrieved only as a historical cross-check (NOT used for the headline number). ICLR 2025 had a DIFFERENT rule: 'New this year, the main text must be between 6 and 10 pages (inclusive). This limit will be strictly enforced. Papers with main text on the 11th page will be desk rejected. The page limit applies to both the initial and final camera ready version.' followed by 'We encourage authors to be crisp in their writing by submitting papers with 9 pages of main text.' So for 2025 the hard cap was 10 (with 9 merely encouraged); for 2026 the hard cap at submission is 9. This is exactly the kind of year-to-year change that made guessing unsafe."
+    },
+    {
+      "url": "https://iclr.cc/Conferences/2025/AuthorGuide",
+      "source_kind": "author-guide",
+      "fetched_at": "2026-08-15T12:41:00Z",
+      "http_status": 200,
+      "response_bytes": 63953,
+      "result": "PARTIAL. The 2025 Author Guide does not itself state the numeric limit; it says 'For detailed submission instructions, including paper length and style file, please refer to the call for papers'. It does confirm the 2025 exclusions (ethics statement <=1 page not counted; reproducibility statement not counted; acknowledgements not counted). Note the 2025 page structure is the mirror image of 2026: in 2025 the number lives in the CFP, in 2026 it lives in the Author Guide."
+    },
+    {
+      "source_kind": "local-disk-search",
+      "result": "No ICLR example/formatting-instructions .tex was on disk. Searched paperC/, paperA/, paperB/, paper/ and .texlive/texmf-dist/tex/latex (scoped; no find / was run). Only paperC/iclr2026_conference.sty and paperC/iclr2026_conference.bst existed, plus copies of the .sty under paperC/review_rounds/round_0{0,1,2,3}/submission/manuscript/. paperA uses colm2026_conference.sty (different venue)."
+    }
+  ],
+
+  "forward_looking_2027": {
+    "why_included": "The ICLR 2026 submission deadline (Sept 24, 2025 AOE) has already passed as of 2026-08-15, and the 2026 OpenReview Submission invitation is expired. If paperC is being sized for a real upcoming submission, the live venue is ICLR 2027 (abstract Sep 18 2026, paper Sep 25 2026 AOE). This block is provided so the compliance fix is not sized against a closed venue.",
+    "verdict": "The 2027 rule is IDENTICAL to 2026: 9 pages at submission, 10 for rebuttal/camera-ready, with the same exclusions. So the fix target does not change either way.",
+    "source_url": "https://iclr.cc/Conferences/2027/AuthorGuidelines",
+    "fetched_at": "2026-08-15T12:47:17Z",
+    "http_status": 200,
+    "verbatim_quote": "At the time of submission, the main text should be 9 pages or fewer. During the discussion/rebuttal phase and for the camera ready, the page limit will be increased to 10 pages to allow for new results/discussions. This limit will be strictly enforced. Papers with main text beyond the page limit will be desk-rejected.",
+    "verbatim_quote_exclusions": [
+      "The list of references does not count towards the page limit, and unlimited additional pages are allowed for the bibliography/references.",
+      "Authors may use as many pages of appendices (after the bibliography) as they wish, but reviewers are not required to read the appendix.",
+      "The optional ethics statement will not count toward the page limit, but should not be more than 1 page.",
+      "This optional reproducibility statement is not part of the main text and therefore will not count toward the page limit."
+    ],
+    "template_2027": {
+      "source_url": "https://media.iclr.cc/Conferences/ICLR2027/iclr-2027-style-files.zip",
+      "http_status": 200,
+      "response_bytes": 39348,
+      "zip_sha256": "0d940dfa9398ae99a18f24a85a8a683f367204b6af6d17d2899e60a67102529e",
+      "file": "iclr2027/iclr2027_conference.tex",
+      "line": 131,
+      "verbatim_quote": "There will be a strict upper limit of \\textbf{9 pages} for the main text of the initial submission, with unlimited additional pages for citations. This limit will be expanded to \\textbf{10 pages} for rebuttal/camera ready.",
+      "sty_diff_vs_2026": "iclr2027_conference.sty differs from iclr2026_conference.sty in exactly 2 lines, both being the year string in \\lhead ('Published as a conference paper at ICLR 2026/2027' and 'Under review as a conference paper at ICLR 2026/2027'). No geometry, font, or margin change. Migrating paperC 2026->2027 is therefore a filename/year change only.",
+      "key_dates_2027": "Abstract deadline Sep 18, 2026 AOE; Paper deadline Sep 25, 2026 AOE; Reviews released Nov 05, 2026; Final decisions Dec 16, 2026."
+    }
+  },
+
+  "paperc_current_state_measured": {
+    "measurement_source": "paperC/main.log ('Output written on main.pdf (19 pages') and paperC/main.aux \\contentsline section start pages, from the build recorded in paperC/gate/build_record.json",
+    "total_pdf_pages": 19,
+    "section_start_pages": {
+      "1 Introduction": 1,
+      "2 Related Work": 3,
+      "3 Null-Calibrated Measurement": 3,
+      "4 Four Under-Specifications of the Reference": 6,
+      "5 Experimental Setup": 7,
+      "6 Results and Analysis": 8,
+      "7 Discussion": 11,
+      "8 Limitations": 12,
+      "9 Ethics Statement": 12,
+      "A Appendix": 14
+    },
+    "bibliography_starts_page": 12,
+    "bibliography_evidence": "main.log shipout trace: '(./sections/08_ethics.tex) (./main.bbl [12]) (./sections/09_appendix.tex [13]' -- i.e. the ethics section and the start of the bibliography both fall on page 12, and page 12 is the last page containing .bbl output before the appendix begins on page 13/14.",
+    "main_text_pages_countable": 12,
+    "main_text_pages_countable_note": "MEASURED-WITH-CAVEAT, not exact. Pages 1-12 contain main text; page 12 is shared between the tail of the main text (Limitations + Ethics Statement) and the start of the bibliography. Because the Ethics Statement is EXCLUDED from the limit per the guide, the true countable main text is 'page 1 through wherever the main text ends once the Ethics Statement is moved/ignored', i.e. approximately 11.x-12 pages. This is consistent with the user's own measurement of 11 main-text pages. An exact figure requires re-measuring the PDF with the Ethics Statement relocated after the bibliography.",
+    "overage_vs_9": "approximately 2-3 pages must be cut (target 9 for initial submission)",
+    "free_wins_available": [
+      "The Ethics Statement (paperC/sections/08_ethics.tex, 137 words, currently \\input at main.tex:30, i.e. INSIDE the main text before \\bibliography) does not count toward the limit. It may remain where it is for the reader, but it must not be counted; if the reviewer/PC counts by page, moving it after the bibliography makes compliance unambiguous.",
+      "paperC currently has NO Reproducibility Statement (grep for 'reproducibility statement' in main.tex and sections/ returned 0 hits). One can be added at zero page-limit cost, and it is 'strongly encouraged' by the guide.",
+      "The appendix (sections/09_appendix.tex, pages 13/14-19) is already after \\bibliography and is unlimited -- material can be moved there freely.",
+      "No acknowledgements section exists yet; if added it is also excluded."
+    ],
+    "no_pdf_tooling_note": "pdftotext/pdfinfo/qpdf/mutool are not available on this node and the repo TeX Live 2026 bin dir does not ship them; main.pdf also appears to use compressed object streams so naive regex extraction of /Type /Page found 0 matches. Page numbers above were therefore taken from main.log and main.aux, which are authoritative for this build."
+  },
+
+  "measured_vs_inferred": {
+    "MEASURED": [
+      "limit_pages = 9 at initial submission, 10 at rebuttal/camera-ready (ICLR 2026 Author Guide HTML, HTTP 200, quoted verbatim; independently corroborated by line 131 of the official iclr2026_conference.tex in the official template zip, HTTP 200, sha256 recorded)",
+      "references excluded (verbatim)",
+      "appendix excluded and must go after the bibliography (verbatim)",
+      "Ethics Statement excluded, <=1 page (verbatim)",
+      "Reproducibility Statement excluded (verbatim)",
+      "acknowledgements excluded (verbatim FAQ)",
+      "LLM-usage section excluded (verbatim)",
+      "ICLR 2025 had a different rule: hard cap 10, with 9 only 'encouraged' (verbatim from the 2025 CFP)",
+      "ICLR 2027 wording is identical to 2026 (verbatim from the 2027 Author Guidelines + 2027 template)",
+      "paperC builds to 19 total pages with the bibliography starting on page 12 (paperC/main.log, paperC/main.aux)"
+    ],
+    "INFERRED_NOT_USED_AS_EVIDENCE": [
+      "Prior/training-data belief that 'ICLR is usually 9 pages' -- this happens to match the 2026 rule, but it was NOT the basis for limit_pages and would have been WRONG for ICLR 2025 (whose hard cap was 10). Labelled INFERRED and deliberately not used.",
+      "The exact integer for paperC's countable main text (11 vs 12) is partly inferential because page 12 is shared between main text and bibliography; the interval 11-12 is what the build files support."
+    ]
+  },
+
+  "notes": [
+    "AMBIGUITY 1 (which number to size against): the guide gives TWO numbers for the same paper at different lifecycle stages -- 9 at initial submission, 10 during rebuttal and camera-ready. For a compliance fix aimed at submission, the binding number is 9. Sizing to 10 would pass camera-ready but be desk-rejected at submission.",
+    "AMBIGUITY 2 (which year is live): ICLR 2026's deadline has passed and its OpenReview submission invitation returns InvitationExpiredError. If paperC targets a real venue, that venue is ICLR 2027, whose rule is textually identical, so limit_pages = 9 holds regardless. But the paperC directory's style files say 2026, which will render 'Under review as a conference paper at ICLR 2026' -- a year mismatch to resolve separately from the page count.",
+    "AMBIGUITY 3 (where the main text 'ends'): the guide says the Ethics and Reproducibility statements go 'at the end of the main text before references' yet are not counted. So a page that mixes counted main text with an excluded statement is genuinely ambiguous to count. The safe reading (and what a PC page-counter would do) is: keep counted main text within 9 pages and place excluded statements so they do not push counted content onto page 10.",
+    "The Author Guide fetch behaved differently from the user's reported CFP fetch: our CFP fetch returned the full 49.7 KB page, not a 3835-char stub. The stub was likely a transient proxy/CDN artifact. Either way the CFP genuinely contains no page-limit text, so following the author-guide link was necessary, not optional.",
+    "The task brief hypothesised the OpenReview submission invitation's description/webfield would state the limit. MEASURED: it does not -- the venue group webfield is only JS tab logic, and the invitation itself is expired. Do not rely on OpenReview for ICLR page limits.",
+    "The .sty file legitimately contains no page-limit text (confirmed: paperC's copy is byte-identical to the official one, md5 a040392a6cfee8dc54aae17eb2635282). Grepping the .sty is not a valid way to discover the limit for any ICLR year.",
+    "No GPU was touched and no ssh was performed for this task. All work was HTTP fetches via hy-proxy plus reads of local build artifacts."
+  ]
+}
