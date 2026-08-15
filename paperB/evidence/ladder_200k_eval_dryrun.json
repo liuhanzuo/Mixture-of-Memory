@@ -1,0 +1,197 @@
+{
+  "doc": "Dry-run + negative-test evidence for the Paper B depth-ladder step200000 eval driver.",
+  "created": "2026-08-15T17:55+08:00",
+  "gpu_cost": "0 GPU-h. No model was ever loaded; no eval process was started; the four training nodes were never touched. Every python invocation ran with CUDA_VISIBLE_DEVICES='' or under DRY_RUN=1, which returns before the GPU section. nvidia-smi was queried read-only (--query-gpu / --query-compute-apps).",
+  "artifacts_under_test": {
+    "driver": "scripts/eval_paperb_ladder_200k.sh",
+    "driver_md5": "649b602738666b4719a514e8d2b09b84",
+    "assert_helper": "scripts/_ladder200k_assert.py",
+    "assert_helper_md5": "a5b8a6bea896eb90186174efbd120fea",
+    "protocol": "paperB/LADDER_200K_EVAL_PROTOCOL.md",
+    "task_board_entries": "status/PENDING_TASKS.md #253 (keep12), #254 (keep10), #255 (keep8)",
+    "synced_to_zwfy6": "yes, via scp -O to .73; md5 verified identical on both disks"
+  },
+
+  "positive_controls": {
+    "note": "Assertions must PASS on real, known-good artifacts. If they failed here, they would be useless (an assertion that always fires is not an assertion).",
+    "ckpt_probe_real": {
+      "cmd": "_ladder200k_assert.py ckpt --path outputs/olmo2_probe2_7B_keep8fresh2/step121000.pt --expect-step 121000 --expect-keep 8 --expect-fresh 2",
+      "rc": 0,
+      "read_back": {
+        "step": 121000,
+        "keep_front_layers": 8,
+        "n_fresh_layers": 2,
+        "num_hidden_layers": 10,
+        "n_model_tensors": 113,
+        "has_optimizer": true,
+        "size_bytes": 34152195666,
+        "train_batch_size": 16,
+        "train_grad_accum": 1
+      },
+      "cost": "5.6 s wall via torch.load(mmap=True) on a 34 GiB file; no weights materialised"
+    },
+    "battery_real_wzc1": [
+      {"name": "7B_keep14_step200000", "kind": "core6", "root": "olmo2_downstream_results", "rc": 0, "result": "6/6 tasks at full n_scored"},
+      {"name": "7B_keep14_step200000_know", "kind": "know5", "root": "olmo2_downstream_results", "rc": 0, "result": "5/5 tasks at full n_scored"},
+      {"name": "7B_keep14_step200000", "kind": "ppl", "root": "olmo2_ppl_results", "rc": 0, "result": "ppl=10.5613, n_windows=4096, n_tokens=8384512"}
+    ],
+    "battery_real_zwfy6_v2_reference_batteries": {
+      "note": "All 9 batteries of the clean single-protocol `_v2` set (the set PAPERB_FLIP_BOUNDARY_RESOLVED.md designates as the version of Table 4 to publish) pass unchanged. This is what pins the expected item counts.",
+      "results": [
+        {"name": "7B_keep8_step121000_v2", "core6": "PASS", "know5": "PASS", "ppl": "PASS (13.3329)"},
+        {"name": "7B_keep10_step83500_v2", "core6": "PASS", "know5": "PASS", "ppl": "PASS (12.8159)"},
+        {"name": "7B_keep12_step124000_v2", "core6": "PASS", "know5": "PASS", "ppl": "PASS (11.4425)"}
+      ]
+    },
+    "driver_dryrun_wzc1_pass": {
+      "cmd": "DRY_RUN=1 ARM=keep8 CKPT=.../step121000.pt EXPECT_STEP=121000 NAME=7B_DRYRUN_keep8_probe CKPT_MD5_MODE=head SKIP_ARCH_GUARD=1 PROJECT_ROOT=<wzc1> bash scripts/eval_paperb_ladder_200k.sh",
+      "rc": 0,
+      "preflight": "PASSED 8/8",
+      "recorded": {"torch": "2.13.0", "compute_caps": "10.0", "val_md5": "f2ea48a2074a2f38fc3b4477fceecf11", "ckpt_md5_first2GiB": "28e15fe30fdc9801aa1f8347c2925d06", "chat_template": false, "add_bos": 0},
+      "stopped_before": "any GPU work; log line 'DRY_RUN=1 -> stopping before any GPU work. No model was loaded, no GPU touched.'"
+    },
+    "driver_dryrun_zwfy6_H20_pass_with_arch_guard_ACTIVE": {
+      "node": ".73 (28.85.35.73), H20, compute_cap 9.0",
+      "cmd": "DRY_RUN=1 ARM=keep12 PROJECT_ROOT=<zwfy6> PYTHON_BIN=/opt/conda/envs/torch-base/bin/python CKPT=outputs/olmo2_probe2_7B_keep12fresh2/step124000.pt EXPECT_STEP=124000 NAME=7B_DRYRUN_keep12_probe CKPT_MD5_MODE=head bash scripts/eval_paperb_ladder_200k.sh",
+      "rc": 0,
+      "preflight": "PASSED 8/8, arch guard NOT bypassed (cc 9.0 == REQUIRE_SM 9.0)",
+      "recorded": {"torch": "2.13.0", "compute_caps": "9.0", "ckpt_step_readback": 124000, "keep_front_readback": 12, "n_model_tensors": 157, "ckpt_md5_first2GiB": "8fe2cadf576d90533bc9a2c3499af1cb", "free_GiB": 34223},
+      "significance": "This is the exact invocation shape the real keep12 run will use, differing only in CKPT=step200000.pt / EXPECT_STEP=200000 / NAME / DRY_RUN=0."
+    }
+  },
+
+  "negative_controls": {
+    "note": "Each row injects ONE deliberate defect and records the observed refusal. All 11 refused with rc=2 and a message naming the defect. None silently proceeded.",
+    "cases": [
+      {
+        "id": "N1_wrong_step",
+        "injected": "real keep8 ckpt at step121000, asserted with --expect-step 200000 (i.e. the exact mislabelling this driver exists to prevent)",
+        "observed": "ASSERT-FAIL: ckpt step is 121000, expected 200000: outputs/olmo2_probe2_7B_keep8fresh2/step121000.pt. Refusing to evaluate a non-endpoint checkpoint under a 200k label.",
+        "rc": 2
+      },
+      {
+        "id": "N2_wrong_keep_front",
+        "injected": "keep8 ckpt asserted with --expect-keep 12 (arm/ckpt mismatch)",
+        "observed": "ASSERT-FAIL: ckpt keep_front_layers is 8, expected 12",
+        "rc": 2
+      },
+      {
+        "id": "N3_missing_ckpt",
+        "injected": "path outputs/olmo2_probe2_7B_keep8fresh2/step200000.pt (does not exist yet -- this is the real current state)",
+        "observed": "ASSERT-FAIL: ckpt does not exist: outputs/olmo2_probe2_7B_keep8fresh2/step200000.pt",
+        "rc": 2
+      },
+      {
+        "id": "N4_partial_6of8_merge",
+        "injected": "copied 6 of the 8 REAL keep14@200k shard files into a scratch dir and ran the harness's own --merge",
+        "harness_behaviour_observed": "the harness merged WITHOUT complaint and printed plausible numbers with n_nan=0 for all 6 tasks; arc_easy n=1782, which is byte-for-byte the historic keep12 defect (1782 = 6x297)",
+        "observed_from_our_assertion": "13 DEFECTs listed, including 'n_shards=6 EXPECT 8' and 'arc_easy: n_scored=1782 EXPECT 2376 (=6.00/8 shards)'; then ASSERT-FAIL ... is INCOMPLETE (13 defects). Do NOT use these numbers.",
+        "rc": 2,
+        "significance": "Confirms empirically that eval_olmo2_probe2_downstream.py's merge() does NOT refuse a partial shard set, so the n_scored assertion is load-bearing and not redundant."
+      },
+      {
+        "id": "N5_nan_only_defect",
+        "injected": "summary with full n=10042 for hellaswag but n_nan=3, n_scored=10039 (items dropped from the accuracy denominator while the item count looks right)",
+        "observed": "DEFECT: hellaswag: n_scored=10039 EXPECT 10042 (=8.00/8 shards) + DEFECT: hellaswag: n_nan=3 EXPECT 0 -> ASSERT-FAIL",
+        "rc": 2,
+        "significance": "This is the case a shard-file-count check alone would miss: 8/8 shard files present, merge clean, but 3 fewer items scored."
+      },
+      {
+        "id": "N6_add_bos_true",
+        "injected": "summary with add_bos=true (base-protocol violation)",
+        "observed": "DEFECT: add_bos=True EXPECT False (Paper B base protocol: OLMo-2 gets no BOS) -> ASSERT-FAIL",
+        "rc": 2
+      },
+      {
+        "id": "N7_task_skipped",
+        "injected": "openbookqa marked skipped with error 'HF 429 rate limit' (the real failure mode behind the historic keep12 partial merge)",
+        "observed": "DEFECT: openbookqa: SKIPPED (HF 429 rate limit) -> ASSERT-FAIL",
+        "rc": 2
+      },
+      {
+        "id": "N8_torch_version_2_7_0",
+        "injected": "PYTHON_BIN=<zwfy6>/olmo2_venv/bin/python on .73, which is a real symlink to /opt/conda/envs/elsa/bin/python = torch 2.7.0+cu126 -- the exact interpreter identified as the historic flip boundary",
+        "observed": "P0 torch=2.7.0+cu126 then FATAL: torch=2.7.0+cu126 but the clean single-protocol batteries are torch 2.13.x. A version change alone moves ~20 items (PAPERB_FLIP_BOUNDARY_RESOLVED.md). Use /opt/conda/envs/torch-base/bin/python.",
+        "rc": 2,
+        "significance": "Tested against the real offending interpreter, not a mock."
+      },
+      {
+        "id": "N9_wrong_gpu_architecture",
+        "injected": "ran on LOCAL (compute_cap 10.0, B200) with the arch guard active",
+        "observed": "P4 compute_cap(s) on this node: 10.0, then FATAL: this node reports compute_cap=[10.0] but the ladder protocol requires 9.0 (H20) ... Run on .73/.82/.104, or set SKIP_ARCH_GUARD=1 AND record the deviation",
+        "rc": 2,
+        "significance": "This is the guard that keeps keep10's eval off the B200 it is TRAINING on. See protocol section 4."
+      },
+      {
+        "id": "N10_output_name_collision",
+        "injected": "NAME=7B_keep8_step121000_wzc1, which is a real published measurement directory on wzc1",
+        "observed": "FATAL: olmo2_ppl_results/7B_keep8_step121000_wzc1/summary.json already exists. Refusing to overwrite an existing measurement.",
+        "rc": 2
+      },
+      {
+        "id": "N11_wrong_heldout_val_array",
+        "injected": "VAL=/tmp/_fake_val.npy (33554560 random bytes, same size as the real array)",
+        "observed": "P3 ... md5=fd9ef5ed3150c85d3d1a2c00afb32b4e then FATAL: held-out val array md5=... but every ladder PPL on record was measured on f2ea48a2074a2f38fc3b4477fceecf11 ... A different val array makes the PPL column non-comparable.",
+        "rc": 2,
+        "significance": "Size alone would not have caught this; the md5 pin does."
+      },
+      {
+        "id": "N12_unknown_arm",
+        "injected": "ARM=keep16",
+        "observed": "FATAL: unknown ARM=keep16 (expected keep8|keep10|keep12). To add a rung, extend this case and paperB/LADDER_200K_EVAL_PROTOCOL.md.",
+        "rc": 2
+      },
+      {
+        "id": "N13_broken_interpreter",
+        "injected": "PYTHON_BIN=/usr/bin/python3 (no torch)",
+        "observed": "FATAL: cannot import torch with /usr/bin/python3",
+        "rc": 2
+      }
+    ]
+  },
+
+  "pinned_expected_counts": {
+    "provenance": "read 2026-08-15 from zwfy6:olmo2_downstream_results/7B_{keep8_step121000,keep10_step83500,keep12_step124000}_v2{,_know}/summary.json and zwfy6:olmo2_ppl_results/*_v2/summary.json. All three arms agree exactly, so these are the protocol's item inventory rather than one run's accident.",
+    "core6": {"hellaswag": 10042, "arc_challenge": 1172, "arc_easy": 2376, "piqa": 1838, "winogrande": 1267, "openbookqa": 500},
+    "know5": {"mmlu": 14042, "lambada_openai": 5153, "boolq": 3270, "commonsense_qa": 1221, "social_iqa": 1954},
+    "ppl": {"n_windows": 4096, "n_tokens": 8384512}
+  },
+
+  "measured_etas_for_launch_ordering": {
+    "method": "delta(log timestamp) / delta(step) over the last 60 and last 200 logged step lines. NOT the tqdm/postfix s/step field, and not a single sample. Windows agree to <1%.",
+    "as_of": "2026-08-15 ~17:44 +08:00",
+    "keep12": {"node": ".73", "step": 177000, "s_per_step": 7.903, "days_to_200k": 2.10, "window": "last 60 pts (1200 steps)"},
+    "keep8": {"node": ".82", "step": 145860, "s_per_step": 5.852, "days_to_200k": 3.67, "window": "last 60 pts"},
+    "keep10": {"node": "LOCAL", "step": 109000, "s_per_step": 1.336, "days_to_200k": 1.41, "window": "last 60 pts (1200 steps)"},
+    "arrival_order": ["keep10 (~1.4 d)", "keep12 (~2.1 d)", "keep8 (~3.7 d)"],
+    "note": "keep10 arrives FIRST despite being furthest back in steps, because it is on a B200 at 1.34 s/step vs 5.9-7.9 s/step on H20. But keep10 must be evaluated on H20 (protocol section 4), and no H20 will be free until keep12 finishes -- see protocol section 7 for the resulting launch order."
+  },
+
+  "cross_disk_transfer_measurement": {
+    "method": "scp -O of a 400 MiB random file from LOCAL(wzc1) to .73(zwfy6), timed twice",
+    "to_tmp": {"seconds": 33.6, "MB_per_s": 12.5},
+    "to_zwfy6_ceph": {"seconds": 26.6, "MB_per_s": 15.8},
+    "implication": "a 39.0 GiB keep10 step200000.pt would take ~42-53 min single-stream. This is the cost of the protocol-mandated move of keep10's ckpt to zwfy6; it is acceptable (unlike the 45.4 GiB x2 / 42 h case recorded in CLAUDE.md for B-P0.4, which was rejected)."
+  },
+
+  "gpu_state_at_time_of_dryrun": {
+    "LOCAL": "8x123870 MiB, train_olmo2_arch_probe2 keep10 resume (pid 2937858 + 8 workers) -- untouched",
+    ".73": "train_olmo2_arch_probe2 keep12 resume (pid 3913545) -- untouched",
+    ".82": "train_olmo2_arch_probe2 keep8 resume (pid 1329294) -- untouched",
+    ".104": "train_qwen3_arch_probe2 (paperC) -- not contacted at all",
+    "verification": "nvidia-smi memory.used on LOCAL was 123884 MiB before and after all tests (only the training job); no eval_olmo2_* or eval_paperb_ladder_* process ever existed."
+  },
+
+  "residue": {
+    "removed": [
+      "/tmp/_dryrun_partial (synthetic partial-merge + defect fixtures)",
+      "/tmp/_fake_val.npy, /tmp/_xfer_test.bin, /tmp/_probe_v2.py, /tmp/_cad.py",
+      ".73:/tmp/* copies of the above and the 400 MiB transfer test on both /tmp and zwfy6 ceph",
+      "paperB/evidence/ladder200k_keep{8,12}_{preflight,ckptmeta}.json dry-run scratch records (their contents are transcribed into this file)"
+    ],
+    "left_in_place": [
+      "scripts/eval_paperb_ladder_200k.sh and scripts/_ladder200k_assert.py on BOTH disks (md5-verified identical)"
+    ],
+    "no_results_directory_was_created_or_modified": true
+  }
+}

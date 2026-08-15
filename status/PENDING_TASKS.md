@@ -47,6 +47,65 @@ an arm name whose provenance no longer matches.
 
 ---
 
+## 🟢 [PLAN 2026-08-15] Paper B depth-ladder step200000 eval — 三臂，driver 已写好并 negative-test 过
+
+**Driver + 协议 + dry-run 证据（0 GPU 预备工作已完成，2026-08-15）**：
+- driver：`scripts/eval_paperb_ladder_200k.sh`（一次一臂，全参数化；**两盘都已 scp -O，md5 一致**）
+- 断言：`scripts/_ladder200k_assert.py`（纯 CPU）
+- 协议：`paperB/LADDER_200K_EVAL_PROTOCOL.md`（battery 定义含 file:line、chat=False、base 口径、**同架构可比性裁决**、每臂盘位/搬运、断言清单、投放顺序）
+- dry-run 证据：`paperB/evidence/ladder_200k_eval_dryrun.json`（**13 条 negative control 全部 rc=2 拒绝运行**，含真实 6/8 partial-merge 复现）
+
+**★ 三条通用铁律（三个任务都适用，不要逐条重读协议才发现）**：
+1. **必须在 H20 上评（`.73`/`.82`/`.104`，compute_cap 9.0）。** 干净单协议 `_v2` 阶梯六行全是 H20 cc9.0 / torch 2.13.0 / BS=8；core6 有 0.03–0.16pp 跨架构地板（bit-identical 权重实测 7–29 items 翻转）。driver 的 preflight P4 会自己挡住 B200。**keep10 的 ckpt 在 wzc1 也一样要搬到 zwfy6 评，不许在 B200 上评。**
+2. **python 必须 `/opt/conda/envs/torch-base/bin/python`（torch 2.13.x）。** `.73` 上的 `olmo2_venv/bin/python` 是 torch 2.7.0，单独换版本就动 ~20 个 item（`status/PAPERB_FLIP_BOUNDARY_RESOLVED.md`），driver preflight P0 会拒。
+3. **该臂自己的训练进程退出后才评**，不要和训练抢卡（现在每卡 78–96 GB 占满）。
+
+**投放顺序（实测 ETA，Δ(timestamp)/Δ(step) 双窗口一致，2026-08-15 17:44）**：keep10 训练最先完成（1.41 d，B200 1.336 s/step）但**评测排在 keep12 之后**，因为它必须等一台 H20 空出来；keep12 2.10 d；keep8 3.67 d。
+
+### #253 [PENDING] keep12@200k eval — auto_launch: true
+- **触发条件**：`zwfy6:outputs/olmo2_probe2_7B_keep12fresh2/step200000.pt` 出现 **且** `.73` 上的 `train_olmo2_arch_probe2 --keep_front_layers 12` 进程已退出。（2026-08-15 17:42 实测 step177000/200000，7.903 s/step → 约 **2.10 天**）
+- **节点**：`.73`（H20）。**零搬运** —— ckpt 训练时就写在 zwfy6。
+- **命令**：
+  ```bash
+  cd /apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory
+  DRY_RUN=1 ARM=keep12 PROJECT_ROOT=$PWD PYTHON_BIN=/opt/conda/envs/torch-base/bin/python \
+    bash scripts/eval_paperb_ladder_200k.sh      # 先 dry-run，几秒、0 GPU
+  ARM=keep12 PROJECT_ROOT=$PWD PYTHON_BIN=/opt/conda/envs/torch-base/bin/python \
+    setsid nohup bash scripts/eval_paperb_ladder_200k.sh > logs/ladder200k_eval_keep12.log 2>&1 &
+  ```
+- **产出**：`olmo2_ppl_results/7B_keep12_step200000/`、`olmo2_downstream_results/7B_keep12_step200000{,_know}/`、`paperB/evidence/ladder200k_keep12_run.json`。约 45–75 min。
+- 三臂里**最先可评**，`.73` 空出来第一件事就是它。
+
+### #254 [PENDING] keep10@200k eval — auto_launch: true（**含跨盘搬运前置步骤**）
+- **触发条件**：`wzc1:outputs/olmo2_probe2_7B_keep10fresh2/step200000.pt` 出现 **且** LOCAL 的 keep10 训练进程已退出。（2026-08-15 17:43 实测 step108500/200000，1.336 s/step → 约 **1.41 天**，三臂中训练最先完成）
+- **前置（0 GPU，LOCAL 上做，可在等 H20 时先做完）**：ckpt 在 **wzc1**，必须 `scp -O` 到 **zwfy6**（协议 §4.3 裁决：keep10 也必须在 H20 上评，不许用它正在训练的 B200）。39.0 GiB @ 实测 12–16 MB/s 单流 ≈ **42–53 min**；搬完核 md5。配方见 `paperB/LADDER_200K_EVAL_PROTOCOL.md` §5。
+- **节点**：任一 H20。现实排队 = `.73` 跑完 #253 之后（或 `.104` 若从 paperC 空出）。
+- **命令**（搬运完成 + md5 核过之后）：
+  ```bash
+  cd /apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory
+  ARM=keep10 PROJECT_ROOT=$PWD PYTHON_BIN=/opt/conda/envs/torch-base/bin/python \
+    setsid nohup bash scripts/eval_paperb_ladder_200k.sh > logs/ladder200k_eval_keep10.log 2>&1 &
+  ```
+- ⚠️ **zwfy6 上的 `keep10fresh2/` 只到 step90000**（2026-08-15 实测），别以为 ckpt 已经在那边 —— 先 `ls` 再说。
+- ⚠️ LOCAL 的 8 张 B200 会在 1.41 d 时空出来，但按 CLAUDE.md 优先级它们归 paperC/proposal，**不是**归这个必须跑在 H20 上的 eval。
+
+### #255 [PENDING] keep8@200k eval — auto_launch: true
+- **触发条件**：`zwfy6:outputs/olmo2_probe2_7B_keep8fresh2/step200000.pt` 出现 **且** `.82` 上的 keep8 训练进程已退出。（2026-08-15 17:44 实测 step145860/200000，5.852 s/step → 约 **3.67 天**，最后到）
+- **节点**：`.82`（H20）。**零搬运**。⚠️ `.82` 上 `/apdcephfs_wzc1` **不存在**，PROJECT_ROOT 必须写 zwfy6 路径。
+- **命令**：
+  ```bash
+  cd /apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory
+  ARM=keep8 PROJECT_ROOT=$PWD PYTHON_BIN=/opt/conda/envs/torch-base/bin/python \
+    setsid nohup bash scripts/eval_paperb_ladder_200k.sh > logs/ladder200k_eval_keep8.log 2>&1 &
+  ```
+
+**这三行 eval 能结算什么 / 不能结算什么**（详见协议 §8，写作前必读）：
+- **能**：depth ladder 在**真正等 step 预算**（四臂全 200k）下的对照；且 keep8/10/12 三臂现在训练语料**已统一**（三条 resume log 全是 `rows=15491607` md5 `7df19b...`，实测 LOCAL/.73/.82 一致），`status/PAPERB_TWO_CORPORA_DEFECT.md` 的双语料缺陷在**这三臂之间**消除。
+- **不能**：(a) keep14/ShortGPT/freeze_front 仍在 7,570,911 行**字节前缀**语料上，跑到 200k **不能**修 epoch 数差异（3.38 vs 1.65），阶梯跨这三臂仍有语料混淆；(b) 三臂 resume 都经过 Adam 动量 warm-restart + dataloader 位置不恢复，各自断点在不同进度分数上，**必须披露**，不得写成"全部 200k 所以 matched"；(c) 不得声称差分 LR（`_classify_param` 前缀 bug，实际均匀 2e-5）。
+- **不要覆盖**已有的 `_v2` 121k/83.5k/124k 行 —— 它们是新 200k 点的同臂轨迹前驱。新输出名 `7B_<arm>_step200000{,_know}` 两盘均无冲突（2026-08-15 实测），preflight P7 也会挡。
+
+---
+
 ## 🔴 [PLAN 2026-07-31] Paper B #1 reviewer control — full-32L continued-pretraining（用户确认最高优先训练）
 
 ### #100 [PENDING, auto_launch=TRUE @ ShortGPT-frees-LOCAL-B200] Full-32L + Dolmino 200k
