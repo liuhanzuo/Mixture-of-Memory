@@ -1,6 +1,56 @@
 # GPU_STATUS.md — 5 节点 GPU 台账（40 卡）
 > 每次启动/kill GPU 任务更新。heartbeat 先读→对照 nvidia-smi→台账说跑但空=补卡。★29.162.226.120=dllm 绝不碰。
 
+## 🔄 2026-08-15 10:40 — 32/40 忙；**LOCAL 启动 Paper B keep10 resume**，`.212` 仍空（故意）
+
+| 节点 | 卡 | 任务 | 实测（nvidia-smi + **log 自带时间戳**） | 状态 |
+|---|---|---|---|---|
+| **LOCAL** | **0-7** | **Paper B keep10fresh2 resume** ★10:32:57 启 | step **90200**/200000、loss 2.4669、ppl 11.79、**1.200 s/step**、maxmem 106.7GB、8×123870 MiB @99-100%、ETA **1.52 d** | ▶️ **本轮新启** |
+| `.212` | 0-7 | **空** | 8×0 MiB / 0 PID（启动前后各复核一次） | ⬜ **故意不填**，见下 |
+| `.73` | 0-7 | Paper B **keep12fresh2** | ~step 171400+、7.92 s/step、maxmem 91.9GB、ETA ~2.6 d | ▶️ 健康 **未碰** |
+| `.82` | 0-7 | Paper B **keep8fresh2** | step **141160**、loss 2.6070、ppl 13.56、5.85 s/step、maxmem 73.5GB、ETA ~4.2 d | ▶️ 健康 **未碰** |
+| `.104` | 0-7 | paperC **qwen3base_heal_k8f2** | ~step 38800+、5.84 s/step、maxmem 77.5GB、ETA ~10.9 d | ▶️ 健康 **未碰（勿动）** |
+
+**keep10 = 四个降级臂里最后一个没有节点的**（`.73`=keep12、`.82`=keep8、`.104`=paperC）。
+起始 step 90000 → 剩 110000 步。**torchrun PID 2937858**，worker 2938285-2938292。
+launcher `scripts/launch_keep10_resume_b200_local_0815.sh`，log
+`logs/olmo2_7B_keep10fresh2_resume200k_local_0815.log`。
+
+### 允许跑 Paper B 的判据（不是「卡空了」）
+
+`proposal/ready_queue.py` → **0 ready_gpu**（9 ready_cpu 全 0-GPU）；
+`paperC/SUBMISSION_GAP_AUDIT.md:4` 自述「compute: CPU + web only. **ZERO GPU**」且其训练已在 `.104`；
+B10 gate 2/3 要 GPU 但 gate 1 刚判 **KILL** → 未授权。**三条同时成立才动 Paper B。**
+
+### 两个「只在 zwfy6」的资产：一个搬、一个本地重建
+
+| 资产 | 处置 | 耗时 | 校验 |
+|---|---|---|---|
+| `step90000.pt`（36.3 GB） | **搬**：6 路并行 `ssh dd` 字节区间 from `.82` | **6.7 min**（聚合 ~92 MB/s；**单流仅 17.7 MB/s**） | md5 `0112936ed6bb1e3549269bb8b6461a17` **两盘一致** |
+| 15,491,607 行 dolmino（118 GiB） | **不搬，本地重建**（wzc1 有全部 84 shard） | **153 s**（走线要 ~3.2 h） | md5 `7df19b217e5b0670d58bf6e01e6559d0` 与 `.82:/dev/shm/dolmino_now15b.npy` **逐字节一致** |
+
+- 重建配方（实测）：`concat(sorted 84 shards)` = 15,495,703 行；`[0:4096]` == `data/dolmino_now_val.npy`；
+  `[4096:]` == 训练语料。重建器 `scripts/build_dolmino_corpus_wzc1.py`。
+- ⚠️ **两个同名陷阱**：wzc1 的 `data/dolmino_now15b.npy` 只有 **7,570,911 行 = PARTIAL PREFIX**（不可用）；
+  wzc1 的 `step83500.pt` 比 zwfy6 的 step90000 **旧 6500 步**（从它起跑=静默丢步+同名 run 分叉）。
+  launcher 因此 preflight **核 rows+md5**、且**发现最新 ckpt 再断言 ≥90000**，不信写死文件名。
+- `/dev/shm` 的语料**重启即失**，一行重建，preflight 会挡住「拿错语料静默开跑」。
+
+### ⛔ `.212` 8 卡空闲仍不填 —— 16 卡会更慢一个量级
+
+该 trainer 是 **plain DDP**：每 optimizer step all-reduce **13.0 GB** fp32 梯度（ring 26.0 GB/rank）。
+实测 LOCAL↔`.212` TCP **14.4 Gbps** → 纯网络 **~14.5 s/step**（假设 4 路多流也 ~3.6 s/step），
+**比整步 1.2 s 还大**。同盘 ≠ 该合并；**稳 > 快**，8 卡单机既快又稳。
+且 `ready_queue.py` 仍 0 ready_gpu，`.212` 也没有别的该跑的东西。
+
+### 速率口径（沿用上一版的教训）
+
+`1.200 s/step` = **log 自带时间戳**的 Δelapsed/Δiter，窗口 **180 step / 216 s**（90020→90200），
+丢掉前 2 个点仍是 1.200。**不用** trainer 自报 postfix（上一版实测那是冻结值）。
+vs H20 的 5.78 → **4.82×**，7.35 d 压到 **1.52 d** —— 这就是把 keep10 放 B200 的全部收益。
+
+---
+
 ## 🔄 2026-08-15 05:47 — 24/40 忙；**LOCAL + `.212` 全空（16×B200）且预留已解除**
 
 | 节点 | 任务 | 实测（nvidia-smi + **log 自带时间戳**） | 状态 |
