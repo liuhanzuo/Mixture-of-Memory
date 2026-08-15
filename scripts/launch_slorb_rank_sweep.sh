@@ -63,8 +63,12 @@ OUT="${OUT:-$PROJECT_ROOT/outputs/cast_eval_spec/slorb_rank_ladder}"
 EXPDIR="${EXPDIR:-$PROJECT_ROOT/outputs/slorb_rank_ladder_hf}"
 PROG="$REPO/logs/slorb_rank_sweep_${RUNG}.log"
 
-PY="${PY:-$REPO/venv_union9/bin/python}"
-LM_EVAL="${LM_EVAL:-$REPO/venv_union9/bin/lm_eval}"
+# venv_union9 lives under PROJECT_ROOT, one level ABOVE the checkout -- not under $REPO.
+# Measured 2026-08-16: $REPO/venv_union9/bin/python does not exist, $PROJECT_ROOT/venv_union9/bin/python
+# does and carries the union-9 harness (lm_eval 0.4.8 / transformers 4.57.6). With the old $REPO paths the
+# `[ -x "$PY" ]` guard below fired immediately, so this driver had never been runnable as written.
+PY="${PY:-$PROJECT_ROOT/venv_union9/bin/python}"
+LM_EVAL="${LM_EVAL:-$PROJECT_ROOT/venv_union9/bin/lm_eval}"
 EMIT="$TOOLS/emit_slorb_ladder.py"
 AGG9="$TOOLS/aggregate_zeroshot_union9.py"
 VERIFY="$TOOLS/../verify_2of4_hf_export.py"
