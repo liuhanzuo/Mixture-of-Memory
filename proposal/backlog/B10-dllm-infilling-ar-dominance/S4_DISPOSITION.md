@@ -98,6 +98,48 @@ Venue: **CoRR / arXiv-only** — DBLP `CoRR 2025`, DOI `10.48550/ARXIV.2508.0081
 Comments field carries only a code URL, **no acceptance note**. *(OpenReview unreachable this
 pass, so an OpenReview-family acceptance cannot be excluded; treat as preprint and re-check
 before citing a venue.)*
+
+> **⚠️ CORRECTION 2026-08-15 — the venue line above is WRONG; the caveat it flagged has now been
+> resolved against it. DAEDAL is `ICLR 2026 Poster`.** (Original assertion retained above as the
+> record of what this pass concluded; do **not** cite it.)
+>
+> Authority: OpenReview api2 **`/notes/search`** (note `id = forum = Ic2A2gCseC`) —
+> `"venue": "ICLR 2026 Poster"`, `"venueid": "ICLR.cc/2026/Conference"`, `Submission1382`, and
+> `ICLR.cc/2026/Conference/Submission1382/-/Camera_Ready_Revision` present in `invitations[]`.
+> Author list matches arXiv 6/6, so not a title collision. Decision published (`pdate`)
+> **2026-01-26**. Cite as `@inproceedings{li2026beyond, booktitle={The Fourteenth International
+> Conference on Learning Representations}, year={2026}, url={https://openreview.net/forum?id=Ic2A2gCseC}}`.
+>
+> **What this pass got right:** both stated observations were factually correct and re-confirmed —
+> DBLP really does say `CoRR 2025`, and arXiv `comment` really is only the code URL with **no**
+> acceptance note and **no** `journal_ref` (arXiv v2 is dated 2025-08-18, i.e. it predates the
+> 2026-01-26 decision and was never refreshed). **Only OpenReview knows.** Refusing to assert
+> absence was correct.
+>
+> **The one mistake, worth internalising:** "OpenReview unreachable" was inferred from a 403 on
+> `api2 /notes?`. That path *is* challenge-gated (`ChallengeRequiredError`, reproduced verbatim
+> 2026-08-15, incl. with browser UA), **but `api2 /notes/search?term=…&source=forum&limit=100` is
+> NOT gated and returns 200.** Filter client-side on `content.title`. Also: **api v1**
+> (`api.openreview.net`) returns only DBLP-mirror records and gives **0 title hits** for DAEDAL — a
+> v1-only pass is exactly how one wrongly concludes "arXiv-only".
+>
+> **Effect on this disposition: the preemption gets STRONGER, not weaker** — it is now a
+> peer-reviewed accepted ICLR 2026 result rather than an unreviewed preprint. The Table 1 numbers
+> below were re-verified cell-by-cell against `arxiv.org/html/2508.00819v2` and are **correct as
+> written (12/12)**; the swept columns sit under the paper's own column-group header
+> **`Fixed-Length Denoising (Baseline)`**, confirming this is a sweep of the fixed-length
+> **baseline** (DAEDAL itself is a single separate column at `L_init=64`), and the same design is
+> repeated on a **second** checkpoint in Table 2 (`LLaDA-1.5-8B`: MBPP `20.6 30.2 39.2 38.6 39.8
+> 39.6`, HUMANEVAL `18.3 22.0 37.8 45.1 49.4 50.0`).
+>
+> P2 (ρ-EOS, `2601.22527`) was also spot-checked and **exists**, with its MBPP baseline sweeps
+> `21.0→36.7` (LLaDA-Instruct-8B) and `21.2→39.2` (LLaDA-1.5-8B) verified — but **its own venue
+> was not re-run** through `/notes/search` and is therefore `NOT-FOUND`, **not**
+> confirmed-preprint. Same applies to every other `CoRR`-from-DBLP venue in this file: DAEDAL
+> proves a DBLP `CoRR` record **coexists** with an accepted ICLR-2026 record.
+>
+> Full evidence + verbatim quotes: `dllm_draft/proposal/VENUE_RESOLUTION_20260815.md`.
+
 **Judgement: YES — this is a direct preemption, and it is ~12.5 months old, so the
 concurrency clause does not apply.** Its **Table 1** is a fixed-length sweep of
 LLaDA-Instruct-8B on exactly the two benchmarks S4 uses, at exactly the operating points
