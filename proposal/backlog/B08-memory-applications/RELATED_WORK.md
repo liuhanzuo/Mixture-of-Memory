@@ -400,3 +400,98 @@ the `U` scorer — **are** the novelty per §3.4). The append was still not made
 `memory/a-declared-lifecycle-is-not-an-adjudicated-one.md`: an agent writing its own clearance field
 is not the clearance being reviewed. **B06 is the one where that append WOULD auto-promote to
 `ready_gpu`; see B06's §6.1.**
+
+---
+
+## 11. INDEPENDENT VENUE RE-VERIFICATION (2026-08-15, second agent, 0 GPU, 0 ssh)
+
+A second agent re-verified every load-bearing citation in this file from a live network
+(proxy `hy-proxy.woa.com:3128`). **The verification is APPENDED, not merged into the tables
+above** — §1-§10 stay byte-stable as the original adjudication.
+
+### 11.1 ACL-family rows — all 6 CONFIRMED by Anthology page fetch
+
+`curl https://aclanthology.org/<id>/`, HTTP 200, `<title>` compared to the claimed title:
+
+| Anthology ID | fetched title | claim in this file | verdict |
+|---|---|---|---|
+| `2024.emnlp-main.813` | *Chain-of-Note: Enhancing Robustness in Retrieval-Augmented Language Models* | EMNLP 2024 main | ✅ |
+| `2023.emnlp-main.398` | *Enabling Large Language Models to Generate Text with Citations* (ALCE) | EMNLP 2023 main | ✅ |
+| `2023.emnlp-main.741` | *FActScore: Fine-grained Atomic Evaluation of Factual Precision…* | EMNLP 2023 main | ✅ |
+| `2024.findings-acl.57` | *LLMLingua-2: … Efficient and **Faithful** Task-Agnostic Prompt Compression* | Findings of ACL 2024 | ✅ (and the word "Faithful" **is** in the real title) |
+| `2024.acl-long.91` | *LongLLMLingua: Accelerating and Enhancing LLMs in Long Context Scenarios via Prompt Compression* | ACL 2024 main long | ✅ |
+| `2023.emnlp-main.825` | *LLMLingua: Compressing Prompts for Accelerated Inference…* | EMNLP 2023 main | ✅ |
+
+### 11.2 OpenReview rows — all CONFIRMED by `venueid`
+
+`api2.openreview.net/notes/search?term=…`, reading `content.venueid`:
+
+| work | measured `venueid` | measured `venue` | claim | verdict |
+|---|---|---|---|---|
+| RECOMP | `ICLR.cc/2024/Conference` | `ICLR 2024 poster` | ICLR 2024 poster | ✅ |
+| Provence | `ICLR.cc/2025/Conference` | `ICLR 2025 Poster` | ICLR 2025 poster | ✅ |
+| xRAG | `NeurIPS.cc/2024/Conference` | `NeurIPS 2024 poster` | NeurIPS 2024 poster | ✅ |
+| HippoRAG | `NeurIPS.cc/2024/Conference` | `NeurIPS 2024 poster` | NeurIPS 2024 poster | ✅ |
+| **G-Memory** | `NeurIPS.cc/2025/Conference` | **`NeurIPS 2025 spotlight`** | NeurIPS 2025 spotlight | ✅ — the leg-3 foreclosure holds |
+| LongMemEval | `ICLR.cc/2025/Conference` | `ICLR 2025 Poster` | ICLR 2025 poster | ✅ |
+| A-Mem | `NeurIPS.cc/2025/Conference` | `NeurIPS 2025 poster` | NeurIPS 2025 poster | ✅ |
+
+### 11.3 All 11 arXiv IDs resolve to the EXACT claimed titles
+
+`export.arxiv.org/api/query?id_list=<id>` (**https**, not http — plain http returned an empty
+body through this proxy, which is what made a first pass look like 11 dead IDs):
+
+`2607.17545` Retain or Consolidate? (pub 2026-07-20) · `2607.21962` Ground Truth First (2026-07-24) ·
+`2605.12493` LongMemEval-V2 (2026-05-12) · `2512.14244` From Context to EDUs (2025-12-16) ·
+`2603.01455` From Verbatim to Gist (2026-03-02) · `2605.20926` MemConflict (2026-05-20) ·
+`2607.01071` MemSyco-Bench (2026-07-01) · `2606.22030` When Does Belief-Based Agent Memory Help?
+(2026-06-20) · `2608.08236` LatticeMind (2026-08-08) · `2604.01670` Hierarchical Memory
+Orchestration (2026-04-02) · `2602.21477` Pancake (2026-02-25). **0 fabricated IDs, 0 title
+mismatches.** The concurrency argument is confirmed from the real `<published>` dates: the three
+most dangerous hits are 2026-03 / 2026-07 / 2026-07, i.e. within 1-5 months of the 2026-08-14
+prereg → **concurrent, cannot preempt.**
+
+### 11.4 ⚠️ §9.2 RESOLVED AGAINST leg 3 — MM-Mem **is** ACL 2026 Main
+
+§9.2 recorded MM-Mem's "Accepted by ACL 2026 Main" as an **arXiv comment only, unverified**,
+because an Anthology search returned nothing. **That is now resolved and it was the honest call at
+the time — ACL 2026 proceedings have since been indexed.** Measured:
+
+- `https://aclanthology.org/events/acl-2026/` → 200, **573** `2026.acl` links present.
+- `volumes/2026.acl-long/` → **605** papers; `2026.acl-short/` → 76; `2026.findings-acl/` → 662.
+- Exact title match in the **long** volume only (2 raw hits, 0 in short, 0 in Findings):
+  **`2026.acl-long.533`**, `curl` → HTTP 200, title verbatim
+  *"From Verbatim to Gist: Distilling Pyramidal Multimodal Memory via Semantic Information
+  Bottleneck for Long-Horizon Video Agents"*, DOI **`10.18653/v1/2026.acl-long.533`**,
+  volume header *"Annual Meeting of the Association for Computational Linguistics (Volume 1: …)"*.
+
+**Consequence, exactly as §9.2 predicted:** leg 3's foreclosure gets *stronger*. The verbatim→gist
+axis and the word "pyramidal" are now held by a **peer-reviewed ACL 2026 Main long paper**, not a
+preprint. The `MUST-NOT-CLAIM` item 13 is upgraded from arXiv-backed to Anthology-backed.
+**Any B08 `.bib` must cite `2026.acl-long.533`, not `arXiv:2603.01455`.**
+
+Cross-checked for the same reason: **none** of Retain-or-Consolidate, Ground Truth First,
+MemConflict, MemSyco-Bench, LatticeMind, HMO, LongMemEval-V2, Nous, Pancake, or From-Context-to-EDUs
+appears in any of the three ACL 2026 volumes → they remain **arXiv-only**, so §9.5's caveat stands
+and leg 1's residual gap is **not** newly foreclosed by an ACL 2026 camera-ready.
+
+### 11.5 §9.3 CONFIRMED — Zep really is CoRR-only
+
+DBLP `publ/api?q=Zep+temporal+knowledge+graph+memory` → `hits.@total = **1**`:
+*"Zep: A Temporal Knowledge Graph Architecture for Agent Memory."* · **CoRR 2025** ·
+type *"Informal and Other Publications"*. So §9.3's self-flagged "weakest venue attribution for a
+load-bearing paper" is **accurate, not pessimistic** — Zep has no peer-reviewed venue findable from
+here. It stays `arXiv-only`. Since it is load-bearing for §4.3 (leg 2), and leg 2 is already
+**FOLDED** rather than gated, nothing downstream changes.
+
+### 11.6 What this re-verification did NOT do
+
+- **No full texts read.** §9.6's caveat is untouched: the three papers that decide leg 1's fate
+  (`2607.17545`, `2607.21962`, Chain-of-Note) were still adjudicated from abstracts. In particular
+  **"does Retain-or-Consolidate pin retrieval?" is still open, and if it does, leg 1's residual
+  claim collapses** (§9.6). That is the single highest-value remaining 0-GPU literature task.
+- **No arXiv-vs-camera-ready diff** for any row, including the newly-promoted `2026.acl-long.533`
+  (§9.9 stands).
+- **No cross-disk check.** §9.8 stands: `/apdcephfs_zwfy6` is not mounted here and this agent was
+  barred from ssh, so every asset-presence claim remains **wzc1-scoped**.
+- Semantic Scholar was not retried (§9.1).
