@@ -470,5 +470,37 @@
     ],
     "lifecycle_still_unset_deliberately": "The disposition is now CHOSEN but the note is NOT YET WRITTEN. lifecycle stays unset until the note exists on disk, so that no reader mistakes a decision for a deliverable. This is the same distinction as memory/a-declared-lifecycle-is-not-an-adjudicated-one.md. next_gate_gpu remains '0 GPU', so ready_queue.py keeps B10 in ready_cpu, which is correct.",
     "next_concrete_step": "write PROTOCOL_NOTE.md carrying only the allow-listed content above, then set lifecycle."
-  }
+  },
+  "protocol_note_20260815": {
+    "what": "B10's TERMINAL DOCUMENT is on disk: PROTOCOL_NOTE.md. This discharges kill_gate.gate_1.if_killed via the first of its two branches, as chosen in disposition_20260815_MAIN ('PROTOCOL NOTE, not archive').",
+    "file": "proposal/backlog/B10-dllm-infilling-ar-dominance/PROTOCOL_NOTE.md",
+    "md5": "91bdec5a90ad835d033d1698012d5007",
+    "lines": 353,
+    "written": "2026-08-15",
+    "gpu_used": "0 -- writing only. No measurement was made for the note; every number in it is quoted from gate_1_result, gold_ceiling_discrepancy_ROOTCAUSED_20260815, robust_findings_that_survive, NUMBER_AUDIT.md or GATE1_BASE_AXIS_VERDICT.md, all of which pre-date it.",
+    "sections": [
+      "1. What this is not (the KILL, with the verbatim thresholds)",
+      "2. The four results that survive the kill (+ 2.1 the framing-level reading of the suffix-visibility result)",
+      "3. The protocol finding this gate produced: cross-host gold-ceiling irreproducibility (3.1 evalplus 0.3.1 find_zero, 3.2 4 GiB RLIMIT_AS, 3.3 the reusable lesson, 3.4 which ceiling is authoritative)",
+      "4. Scope of this note (the allow-list, quoted)",
+      "5. What this note forecloses (binding)",
+      "6. Provenance",
+      "7. Terminal state"
+    ],
+    "carries_only_the_allow_list": "YES. Section 4 reproduces disposition_20260815_MAIN.what_the_note_may_carry item by item and maps each to the section that discharges it. No claim outside that list was added.",
+    "forbid_list_honoured": [
+      "No alternative ranking is derived from the six arms; the pairwise matrix is cited as provenance and explicitly labelled 'NOT a menu' (note section 5 item 2).",
+      "The four non-primary arms' base-axis pass@1 values are deliberately NOT tabulated in the note, so it cannot be read as a leaderboard; they remain in GATE1_BASE_AXIS_VERDICT.md section 3 as provenance.",
+      "gate_4's standing rule is restated as binding on every pass@1 in the note (section 5 item 3)."
+    ],
+    "lifecycle_set_now_and_why": "lifecycle := 'dead'. Per LIFECYCLE_SCHEMA.md sec 1 table row 'dead' = '已证伪 / 已关闭 ... claim 不自动复活' -- the only terminal value in the enum VALID_LC that fits 'own pre-registered kill gate FIRED'. 'promoted' is false (nothing went to paper<X>/) and every other value asserts remaining work. Same precedent as B02, which set lifecycle='dead' on its own FIRED kill gate. Until now lifecycle was deliberately UNSET (see lifecycle_note_20260815 and disposition_20260815_MAIN.lifecycle_still_unset_deliberately) because the note was a DECISION, not yet a DELIVERABLE; the deliverable now exists on disk with the md5 above, so the terminal state is adjudicated rather than declared.",
+    "kill_gate_fired_plus_residue_sealed": "kill gate FIRED (gate_1, 2026-08-15, exact McNemar p=1.0000, b=39 c=38, discordant=77, delta=+0.00096805, 95% CI [-0.0164,+0.0183], alpha=0.05 and |delta|<0.02 both retained verbatim) AND the residual value has been sealed into a citable protocol note. Nothing further is owed: Gate 2 (2-4 GPU-h) and Gate 3 (1-2 GPU-h) were conditioned on Gate 1 saying PROCEED and are NOT authorised, so B10 has no GPU-costing next step and must not reappear as ready_gpu.",
+    "archive_move_deliberately_not_done": "PROPOSAL.md sec 5 'Standing rule' says a killed gate means POSTMORTEM.md + move to proposal/archive/. kill_gate.gate_1.if_killed is the MORE SPECIFIC instruction and offers protocol-note as a co-equal branch; MAIN chose it (disposition_20260815_MAIN). The directory therefore stays at backlog/ so that PROTOCOL_NOTE.md and evidence/gate1_base/ keep their current paths, which SOURCES.md, NUMBER_AUDIT.md and GATE1_BASE_AXIS_VERDICT.md all cite. lifecycle='dead' is what makes the closure machine-readable; the physical location is not the carrier of that fact.",
+    "no_new_claims_introduced": true,
+    "append_only_compliance": "Nothing above this key was read-modified-written. The only byte change to pre-existing content is the closing '}' of the previous top-level key gaining a ',', per LIFECYCLE_SCHEMA.md sec 0. Verified by asserting that the new key list's prefix equals the old key list exactly (old 30 keys -> new keys), and that every old key's value is byte-identical under json.dumps.",
+    "status_string_untouched": "top-level 'status' still reads 'backlog_headline_not_significant_motivation_false' (2026-08-11 wording), preserved per LIFECYCLE_SCHEMA.md sec 0; 'lifecycle' is the machine-readable state."
+  },
+  "lifecycle": "dead",
+  "lifecycle_set": "2026-08-15",
+  "lifecycle_reason": "Own pre-registered kill gate FIRED (gate_1, base-axis re-score, 2026-08-15: exact McNemar p=1.0000, b=39 c=38, |delta|=0.00096805 < 0.02; both KILL conditions hold, thresholds unmodified). Not killed by prior art; killed by our own null measurement, and reproduced independently by MAIN. Residual value is SEALED as PROTOCOL_NOTE.md (protocol-note branch of gate_1.if_killed, chosen in disposition_20260815_MAIN), not discarded. Gates 2 and 3 were conditioned on PROCEED and are NOT authorised -> zero GPU-costing work remains. See GATE1_BASE_AXIS_VERDICT.md and PROTOCOL_NOTE.md."
 }

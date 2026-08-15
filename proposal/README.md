@@ -308,6 +308,28 @@ shared/literature/RELATED_WORK_GAP_AUDIT_20260808.md
     驱动、默认就开，实测 84.3% 的题输出长度被改过；且 README 从未 advertise 那两个 kwarg。
   - **Gate 1 花 0 GPU**（把已存在的 solutions 用 `--which base` 重打分），
     且大概率直接杀掉方向 → 先跑它再谈任何 GPU。详见 `NUMBER_AUDIT.md`。
+  - ⛔ **`lifecycle: dead`（2026-08-15）——Gate 1 已跑，`FIRED = KILL`。**
+    base 轴重打分（0 GPU，solutions 原样读盘）：`qwen_fim` vs `dreamon_oracle`
+    exact McNemar **p=1.0000**（b=39, c=38, discordant=77, n=1033）、
+    **Δ=+0.00096805**（= 1033 题里差 **1 题**）、95% CI [−0.0164, +0.0183]。
+    两个 kill 条件同时成立，阈值 α=0.05 / |Δ|<0.02 **逐字未改**。三个轴现在一致
+    （plus +0.0048 p=0.635；plus-feasible −0.0012 p=1.000；base +0.00097 p=1.0000），
+    且**方向都不稳定**（wzc1 1022 题 feasible 子集上符号翻转 −0.00098）。
+    → **Gate 2（2-4 GPU-h）与 Gate 3（1-2 GPU-h）不再被授权**，B10 无任何耗卡下一步。
+    MAIN 已独立复算 McNemar 与 evalplus 源码差异（`GATE1_BASE_AXIS_VERDICT.md` §9）。
+  - 残值按 `gate_1.if_killed` 的**第一个分支**封存为 **`PROTOCOL_NOTE.md`**（非 archive）：
+    4 条存活结论（最强的是 suffix visibility +0.2314 AR / +0.2991 diffusion，both
+    **p<1e-56**，且解释是「bidirectional context 是 FIM task **framing** 的 affordance，
+    AR 也能用，**不是 model class 的属性**」）+ 本 gate 新产出的**跨主机 gold ceiling
+    不可复现**（base 0.9894 wzc1 vs 1.0000 zwfy6 = PyPI evalplus 0.3.1 的 `find_zero`
+    分支裸 `continue` 漏了 `details[i]=True`；plus 0.8025→0.8122 = sandbox 4 GiB
+    `RLIMIT_AS` 把 `MemoryError` 记成 wrong answer）+ 一条可复用教训：
+    **「vendored 文件两盘 byte-identical」不能证明解释器加载了它**。
+    ⛔ 禁止从同 6 臂再捞 ranking（nested-ladder，已 retract 两次 = Retractions 6/7）；
+    pairwise matrix 只是 provenance 不是菜单；gate_4 常驻规则仍生效
+    （无 decontaminated companion 不得把 absolute pass@1 当 capability）。
+  - 目录**留在 `backlog/` 不移 archive**：`PROTOCOL_NOTE.md` 与 `evidence/gate1_base/`
+    的路径被 SOURCES/NUMBER_AUDIT/VERDICT 三处引用，`lifecycle: dead` 已承载关闭事实。
 
 ### Archive
 

@@ -566,3 +566,30 @@ and §8's earlier md5-based exculpation of the grader was the wrong inference.
 "≥98 % of items feasible", so the base axis remains the correct axis to judge on and
 the KILL stands *a fortiori*. The thresholds α=0.05 and |Δ|<0.02 were **not** altered.
 `NUMBER_AUDIT.md:284` stays byte-intact with its dated append-only note.
+
+---
+
+## 10. Disposition executed (appended 2026-08-15; nothing above this line was modified)
+
+`kill_gate.gate_1.if_killed` offers two branches. MAIN chose the **first**
+(`STATUS.json` `disposition_20260815_MAIN`: *"PROTOCOL NOTE, not archive"*), and
+that branch is now **discharged**: the terminal document exists at
+
+    proposal/backlog/B10-dllm-infilling-ar-dominance/PROTOCOL_NOTE.md
+
+(353 lines, md5 `91bdec5a90ad835d033d1698012d5007`, 0 GPU — writing only). It
+carries only the allow-listed residue: the four `robust_findings_that_survive`
+verbatim with their p-values, the cross-host gold-ceiling irreproducibility with
+both root causes (§"Ceiling discrepancy vs `NUMBER_AUDIT.md:284`" above is its
+source), and the methodological point that byte-identity of a vendored file is
+not evidence about which file the interpreter loaded. It restates §7's
+foreclosures as binding.
+
+`STATUS.json` `lifecycle` — deliberately left UNSET by this gate's executor, and
+still unset when the disposition was merely *chosen* — is now **`dead`**
+(`LIFECYCLE_SCHEMA.md` §1: *已证伪 / 已关闭 … claim 不自动复活*), recorded at key
+`protocol_note_20260815` together with `lifecycle_set` / `lifecycle_reason`. The
+sequencing was intentional: a decision is not a deliverable, so the terminal state
+was declared only after the deliverable was on disk. `proposal/ready_queue.py`
+now classifies B10 under `dead` with **0 `ready_gpu`**, as required — Gates 2 and 3
+remain unauthorised.
