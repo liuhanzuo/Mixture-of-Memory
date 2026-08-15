@@ -290,3 +290,56 @@ plausible name sitting next to a 118.2 GiB one is suggestive, not probative -- a
 
 **Standing rule:** before carrying a confound into a writeup, produce the log line that
 proves the bad path was taken. "The bad artifact exists" is not that line.
+
+---
+
+## §14 (2026-08-15 20:0x) — the §13 residual uncertainty is now CLOSED, with a
+## stronger evidence class than §13 itself used.
+
+§13 retracted the corpus-confound flag but left one gap open and said so: keep14's original
+200k *training* log was not on either disk, so its corpus was **canonical-by-inference** (via
+its sibling `freeze_front`) rather than canonical-by-banner. That gap is now closed by a
+better source than the one §13 relied on.
+
+### The source: `train_args` inside the checkpoint
+
+`scripts/train_olmo2_arch_probe2.py:535` writes `"train_args": vars(args)` into every
+checkpoint. This is **strictly stronger than the log banner**:
+
+- it is written by the trainer at save time, so it cannot drift from what actually ran;
+- it **survives log deletion / rotation** -- which is exactly the failure mode that left §13
+  with a gap (the log was gone; the checkpoint was not);
+- it records the *resolved* `--data_path`, not a source default.
+
+`arch_meta.json` was checked first and does **not** carry it (only `base_model_path`), so the
+checkpoint is the only in-band record.
+
+### Result: four more arms, all canonical
+
+Read with `torch.load(..., mmap=True, weights_only=False)` on wzc1:
+
+| arm | `train_args.data_path` |
+|---|---|
+| `keep14fresh2` | `/dev/shm/dolmino_now15b.npy` |
+| `keep14fresh2_freezefront` | `/dev/shm/dolmino_now15b.npy` |
+| `keep14fresh2_fromscratch` | `/dev/shm/dolmino_now15b.npy` |
+| `7B_shortgpt16` | `/dev/shm/dolmino_now15b.npy` |
+
+That file was measured at **15,491,607 rows / 118.2 GiB** (§13, on zwfy6). None of the four
+points at `data/dolmino_now15b.npy` (7,570,911 rows).
+
+**keep14 is therefore canonical-by-checkpoint-args, not canonical-by-inference. The §13
+retraction is confirmed on an independent and stronger evidence class, and every ladder arm
+now has direct provenance rather than sibling inference.**
+
+### What this changes about how to check provenance here
+
+For any future "which corpus did arm X train on?" question the order is:
+1. **`train_args` in the checkpoint** -- authoritative, log-independent;
+2. the trainer's `rows=` banner in the log -- authoritative but perishable;
+3. `/proc/<pid>/cmdline` -- authoritative only while the process lives;
+4. filename / directory listing -- **not evidence at all** (that was the §13 error).
+
+I reached for (2) and (3) first and only found (1) when I went looking for a way to close the
+gap I had honestly flagged. **The flagged gap is what led to the better method** -- which is
+the argument for writing residual uncertainty down instead of rounding it off.
