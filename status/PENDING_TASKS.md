@@ -790,3 +790,64 @@ TAG=7B_shortgpt16 CKDIR=outputs/olmo2_probe2_7B_shortgpt16           STEPS=20000
 ```
 跨臂对比: `eval_olmo2_mmlu_content.py --compare --file_a <arm> --file_b <base> --protocol content_norm`。跑完 MAIN 回填 paperB/TODOList.md P0.6 表 + status，不碰 `.tex`。⚠️ ShortGPT `KEEP_INDICES="0-12,31"` 是占位 provenance，用前核对真实选层。优先级: Paper A 待跑项 > 此项 (P0.6 是 Paper B REQUIRED 但仅推理)。
 </details>
+
+---
+
+## [PENDING] union-9 gap-fill: `slorb` × `hard_drop` on `.212` (variant-matched ±SLoRB)
+`auto_launch: false`  ← **由 MAIN 决定何时投；要等 ±SLoRB 混淆审计结论。**
+登记 2026-08-15 by subagent。**前置工作全部 0 GPU 已完成并实测通过。**
+
+### 为什么需要这一格
+token-matched union-9 两臂在 2026-08-15 跑完，但矩阵**不对称**，两臂同时差了**两件事**：
+
+| arm | variant | zero_ratio | exact_2of4 | union9_primary | ppl@4096 |
+|---|---|---|---|---|---|
+| noslorb | hard_drop | 0.500000000 | 1.0 | 59.5535 | 6.6795 |
+| slorb | hard_fold | 1.08e-9 | 0.0 | **61.5413** | 6.1938 |
+
+所以「+SLoRB 赢 1.99 pp union9」里混着 **真 2:4 vs 稠密** 的 export variant 差异。
+slorb 臂自己的 run log 就写着 `2:4 COLUMN: BARRED`
+（`logs/sparseforge_tm_union9_slorb_progress.log:314`）。
+
+**混淆有多大——有现成同 ckpt 对照**（`outputs/cast_eval_spec/sparseforge_5b/sparseforge_same_harness_table.json` → `headline`）：
+同一个 ckpt 只换 variant，`hard_drop` 57.0678 → `hard_fold` 62.4335 = **+5.37 pp union9 primary**；
+第二个 ckpt 复现（`sparseforge_dolmino_link2/link2_summary.json`，plain-acc）53.8748 → 58.9594 = **+5.08 pp**。
+**5.37 / 5.08 pp 都远大于归给 SLoRB 的 1.99 pp** → 现有跨臂 gap 在 variant 固定前不可解释为 ±SLoRB 效应。
+
+### 补哪一格（只有一格可能）
+- ✅ **`ARM=slorb VARIANT=hard_drop`** —— 唯一最小充分补格。0 GPU 实测（`.212`，2026-08-15）：
+  对 slorb ckpt 自己的 mask 施加 `nm_2_4_hard()` 再 drop 分支，得 `zero_frac=0.500000000`、
+  12 抽样张量 **0 bad tiles**、in-scope 张量数 224（export 期望 224）→ `export_sparseforge_to_hf.py:213`
+  的 `mask=hard slorb=drop must yield exact 2:4` 断言会 **PASS**。可与现有 noslorb/hard_drop 组成
+  variant-matched、2:4-legal 的 ±SLoRB 对照。
+- ❌ **`ARM=noslorb VARIANT=hard_fold`** —— **技术上不可能**。该 ckpt 1411 张量、
+  `SLoRB_Weight=0`/`x_proj=0`（0 GPU 实测），`export_sparseforge_to_hf.py:181` 硬退出
+  `--slorb fold requested but ...SLoRB_Weight/...x_proj missing`。没有分支可 fold。launcher 已显式拒绝该组合。
+
+### ⚠️ 解读警告（必须与数字同时引用）
+`slorb/hard_drop` 是对「训练时依赖该分支的模型」做**事后截肢**，正是
+`baselines/cast_repro/SPARSEFORGE_SAME_HARNESS.md` CORRECTION 的 **Defect 1**（该 block 已
+**RETRACT** 一条基于此混淆的 headline 结论），亦见
+`scripts/_run_sparseforge_tokenmatched_union9_watcher.sh:56-74`。
+→ 这一格让 2:4 列 variant-matched，但**它本身不是干净的「训练时 ±SLoRB」数字**，不得如此引用。
+
+### 怎么投（launcher 已写好，默认 DRY_RUN=1 不碰卡）
+```bash
+# 在 .212 上（28.89.18.212，密码 configs/password_b200_18212.txt，省略 -p）
+M=/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory
+bash $M/scripts/launch_union9_gapfill_212.sh                    # 只做 preflight，0 GPU
+DRY_RUN=0 bash $M/scripts/launch_union9_gapfill_212.sh          # 真跑
+```
+- **只能在 `.212` 或 LOCAL（sm_100/B200）跑**：两个已完成臂都是 cc-10.0 上打的
+  （其 `lm_eval.log` 记 `190842863616` B = 177.7 GiB/卡 × 4 卡）。Paper B 实测 bit-identical
+  权重上有 0.03-0.16 pp 跨架构地板 → H20 行会带架构偏移。launcher 有硬 `REQUIRE_SM=10.0` 守卫。
+- **实测成本**：约 **10 分钟 wall、4 卡（≈0.7 GPU-h）**。从两个已完成 run 的 stage 时间戳实测：
+  export 2m10s–3m03s / verify 51-53s / PPL 42-45s / union-9 4m53s–4m56s / aggregate <1s / verify 37-40s
+  → noslorb 总 9m15s、slorb 总 10m15s。
+- **不需要装任何东西**：`.212` 已有钉死的 harness，在**项目盘**上 → `$ROOT/venv_union9`
+  （`lm_eval 0.4.8` + `transformers 4.57.6` + torch 2.13.0），随盘持久。裸 conda env **没有** lm_eval。
+- 已实测通过（`.212`，2026-08-15，0 GPU）：preflight 全链 exit 0；9/9 task 数据集加载且
+  per-task n 与已完成臂逐一相等；piqa override hash-identical（1838 docs，0 mismatch）；
+  5 个否定守卫全部正确触发（不可能格 / 已测格 / 卡数≠4 / 架构不符 / 非法 variant）。
+
+⚠️ **禁碰 LOCAL/.73/.82/.104** —— 32 卡在跑 4 个 200k 训练（keep8/keep10/keep12/paperC）。
