@@ -228,3 +228,65 @@ resid σ = 0.0188. **Direction as predicted, magnitude 4.15 σ, t = −48.7.**
   shift. The writeup consequence remains the one already recorded — the three arms had
   warm restarts at different progress fractions, so "all arms at 200k" is not a matched
   budget claim.
+
+---
+
+## §13 (2026-08-15 19:3x) — RETRACTING my own "corpus confound only half-fixed" flag.
+## No OLMo-2 ladder arm ever trained on the 7,570,911-row prefix.
+
+For several heartbeats I carried a writeup consequence worded roughly as: *"the corpus
+confound is only half-fixed -- keep8/10/12 share rows=15491607 but keep14 / ShortGPT /
+freeze_front remain on the 7,570,911-row prefix (3.38 vs 1.65 epochs)."* I went to close
+it and **it does not survive its own evidence check.**
+
+### What is actually on disk
+
+| file | disk | rows | size |
+|---|---|---|---|
+| `data/dolmino_now15b.npy` | wzc1 | **7,570,911** | 57.8 GiB |
+| `/dev/shm/dolmino_now15b_wzc1.npy` | wzc1 (shm) | **15,491,607** | 118.2 GiB |
+| `/dev/shm/dolmino_now15b.npy` | zwfy6 (shm) | **15,491,607** | 118.2 GiB |
+
+The 7.57M file is real. My error was inferring **from its existence** that some arm had
+consumed it. Existence of a truncated artifact is not evidence that anything read it.
+
+### What every arm actually trained on
+
+Method: `grep -l 'rows='` over **all** logs on **both** disks, then list every log whose
+banner value is NOT 15491607. (The banner is emitted by the trainer at load time, so it
+reports the array actually opened -- not a source default.)
+
+- **zwfy6: 38 logs at rows=15491607.** Non-canonical hits: `llama2_rank1_*` /
+  `llama2_rank2_*` at rows=32 -- a different model family, 2026-04 calibration sweeps.
+- **wzc1: 1 log at rows=15491607.** Non-canonical hits: Hunyuan A13B (rows=1016774),
+  hyv3 probes (55419), `dolmino_contam_audit` (8000), llama2/llama3 calib (32 / 8).
+  **All different model families or tiny audits.**
+- The three live arms self-report canonical: keep10 `rows=15491607` (its own log banner),
+  keep12 and keep8 likewise.
+- **`freeze_front` trained at rows=15491607** (`olmo2_7B_keep14fresh2_freezefront.log`),
+  which is the specific arm my flag named as being on the prefix. **Directly contradicted.**
+
+**Conclusion: zero OLMo-2 ladder arms on the 7.57M prefix. The "3.38 vs 1.65 epochs"
+mismatch I was going to caveat in the writeup does not exist. Retracted.**
+
+### Residual uncertainty, stated rather than buried
+
+I did **not** find the original `keep14fresh2` 200k *training* log on either disk in this
+pass -- the keyword matches were SFT (`p24_sft_*`, rows=107740, 842 steps) and eval shards.
+So keep14's corpus is **canonical-by-inference** (its sibling `freeze_front`, forked from
+the same launch generation, is confirmed canonical) rather than canonical-by-banner. That is
+weaker than the other four arms and is the one thing here worth one more check before the
+writeup asserts uniformity. It does **not** revive the flag: the flag claimed the prefix WAS
+used, and there is no positive evidence of that anywhere on either disk.
+
+### Why I got it wrong
+
+Same shape as §12, one level up in the stack. In §12 I built a statistic on a reference that
+looked authoritative and wasn't; here I built a caveat on an artifact that looked consumed
+and wasn't. Both times the missing step was the same: **I never asked what evidence would
+show the thing I was asserting, and then went and looked for it.** A 57.8 GiB file with a
+plausible name sitting next to a 118.2 GiB one is suggestive, not probative -- and
+`/proc/<pid>/cmdline` plus the trainer's own `rows=` banner were available the whole time.
+
+**Standing rule:** before carrying a confound into a writeup, produce the log line that
+proves the bad path was taken. "The bad artifact exists" is not that line.
