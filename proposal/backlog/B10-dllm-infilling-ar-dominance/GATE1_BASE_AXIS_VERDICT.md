@@ -478,3 +478,91 @@ CUDA_VISIBLE_DEVICES="" $D/.venv_dream/bin/python $D/scripts/gate1_stats.py \
     $D/outputs/infilling_single_line/gate1_base_stats.json \
     $D/outputs/infilling_single_line/gold_ceiling_SingleLine_wzc1.json
 ```
+
+---
+
+## 9. MAIN independent verification (2026-08-15, after agent delivery)
+
+MAIN did not accept the two claims above on the agent's word. Both were re-derived
+from primary sources, because a **pre-registered constant** (`gold_ceiling_base`)
+and the **KILL arithmetic** are the two things a wrong agent report would most
+easily corrupt.
+
+### 9.1 The paired contrast, recomputed from the raw per-item files
+
+Recomputed directly from the six `evidence/gate1_base/score_base/*_score_base.json`,
+reading `per_task[].pass` and ignoring every summary field the agent wrote:
+
+| arm | `n_pass` | recomputed pass@1 | `pass_at_1` in file | agree |
+|---|---|---|---|---|
+| `qwen_fim` | 966 | 0.935140 | 0.935140 | ✅ |
+| `dreamon_oracle` | 965 | 0.934172 | 0.934172 | ✅ |
+| `dream_fim` | 909 | 0.879961 | 0.879961 | ✅ |
+| `dreamon_fim` | 895 | 0.866409 | 0.866409 | ✅ |
+| `qwen_prefix` | 682 | 0.660213 | 0.660213 | ✅ |
+| `dream_prefix` | 519 | 0.502420 | 0.502420 | ✅ |
+
+All six arms carry an **identical 1033-element `task_id` set** (asserted, not assumed),
+and each file's `n` is 1033.
+
+MAIN's own exact two-sided McNemar, hand-computed as
+`2 * sum(C(n,i) for i in 0..min(b,c)) / 2**n` on the discordant pairs:
+
+```
+b (qwen-only) = 39   c (dreamon-only) = 38   discordant = 77
+exact two-sided McNemar p = 1.000000
+Delta = +0.00096805   |Delta| = 0.00096805 < 0.02  -> True
+```
+
+**Both KILL conditions reproduce on MAIN's independent arithmetic.** The verdict
+does not rest on the agent's statistics code.
+
+### 9.2 The evalplus version defect, verified at source level
+
+The claim "PyPI 0.3.1 `continue`s before recording the pass" is a source-level
+assertion, so MAIN read both files rather than trusting the quoted snippet.
+
+`/opt/.../dllm_draft/vendor/evalplus/evalplus/eval/__init__.py` (zwfy6, **vendored**):
+
+```
+187:  if "find_zero" == entry_point:
+188:      assert abs(_poly(*inp, out)) <= atol
+189:      details[i] = True
+190:      progress.value += 1
+191:      continue
+```
+
+`dllm_draft/.venv_b200/lib/python3.11/site-packages/evalplus/eval/__init__.py`
+(wzc1, **PyPI**, `evalplus-0.3.1.dist-info` → `Version: 0.3.1`):
+
+```
+187:  if "find_zero" == entry_point:
+188:      assert abs(_poly(*inp, out)) <= atol
+189:      continue
+```
+
+The two lines are **absent** in 0.3.1 at exactly the stated position. MAIN further
+confirmed the import actually resolves that way, rather than inferring it:
+
+```
+$ dllm_draft/.venv_b200/bin/python -c "import evalplus.eval as E; print(E.__file__)"
+.../dllm_draft/.venv_b200/lib/python3.11/site-packages/evalplus/eval/__init__.py
+```
+
+and that **no** `site-packages/evalplus` exists on `.73` at all, so the zwfy6 run
+could only have loaded the vendored copy. Confirmed: `zwfy6` is authoritative,
+and §8's earlier md5-based exculpation of the grader was the wrong inference.
+
+### 9.3 What MAIN did NOT re-verify
+
+- The plus-axis `RLIMIT_AS` mechanism (agent-measured; not load-bearing for Gate 1,
+  which is adjudicated on the **base** axis).
+- The 10 000-resample bootstrap (the **exact** McNemar is the pre-registered primary
+  and it reproduces; the bootstrap is corroborative).
+
+### 9.4 Standing consequence
+
+`gold_ceiling_base = 1.0` is **more permissive** than the pre-registered
+"≥98 % of items feasible", so the base axis remains the correct axis to judge on and
+the KILL stands *a fortiori*. The thresholds α=0.05 and |Δ|<0.02 were **not** altered.
+`NUMBER_AUDIT.md:284` stays byte-intact with its dated append-only note.
