@@ -465,3 +465,56 @@ names are `7B_<arm>_step200000{,_know}`, which collide with nothing on either di
 | cross-disk transfer rate | measured 2026-08-15, `scp -O` of 400 MiB LOCAL→.73: 26.6 s to ceph (15.8 MB/s), 33.6 s to /tmp (12.5 MB/s) |
 | ckpt sizes / which disk | `ls -la` on both disks, 2026-08-15 |
 | assertions actually fire | `paperB/evidence/ladder_200k_eval_dryrun.json` — 13 negative controls, all rc=2 |
+
+---
+
+## MAIN independent verification (2026-08-15, after agent delivery)
+
+I did not accept the load-bearing claims on the agent's word. The two that could
+corrupt published numbers were re-derived from primary sources.
+
+### 1. The silent 6/8 shard merge is REAL — verified at source
+
+`scripts/eval_olmo2_probe2_downstream.py`:
+- line **507**: `a["n_skipped_shards"] += 1` — the counter *is* incremented
+- lines **553-559**: the `summary` dict carries only `output_name`, `n_shards`,
+  `add_bos`, `meta`, `tasks` — **`n_skipped_shards` is never surfaced**
+
+So a partial merge produces a summary with `n_nan=0`, plausible accuracies, and no
+warning. The agent's reproduction (6 real keep14 shards → `arc_easy n=1782`) is
+arithmetically exact: 2376/8 = 297 per shard, 6 × 297 = **1782**. And 1782 is not a
+number the agent constructed — it appears independently in **four** pre-existing
+records: `paperB/P0_7_AGGREGATE_AUDIT.md`, `status/PAPERB_192_TABLE4_BUDGET_DECISION.md`,
+`status/PAPERB_P24_SFT_KEEP12_EVAL.md`. It is the documented historic keep12 defect.
+
+**Consequence:** `n_nan == 0` is *not* sufficient as an integrity check on this
+harness, and never was. Only a per-task `n_scored == expected` assertion catches it.
+
+### 2. know5 is NOT the harness's `KNOWLEDGE_TASKS` constant — verified
+
+`eval_olmo2_probe2_downstream.py:91`:
+```python
+KNOWLEDGE_TASKS = ["mmlu", "mmlu_pro", "lambada_openai", "boolq", "commonsense_qa", "social_iqa"]
+```
+That is **six** tasks. know5 as actually run is the five passed explicitly by every
+driver: `mmlu, lambada_openai, boolq, commonsense_qa, social_iqa` — no `mmlu_pro`.
+Also confirmed `ALL_TASKS` at line **79** is exactly the core6 six in the stated order.
+
+**Consequence:** "simplifying" the driver to use `KNOWLEDGE_TASKS` would silently add
+a 7th task and break comparability with every existing row. The explicit `--tasks`
+list is load-bearing, not verbosity.
+
+### 3. The architecture guard is executable, not advisory
+
+`scripts/eval_paperb_ladder_200k.sh:165-171` reads
+`nvidia-smi --query-gpu=compute_cap`, and `die`s unless every GPU reports the required
+capability. `SKIP_ARCH_GUARD=1` exists as an escape but logs a warning that the run
+will not be comparable. I checked this is real control flow because a prose-only
+"should run on H20" would have been worthless the first time a B200 was free and idle.
+
+### 4. What I did NOT verify
+
+The 13 negative controls individually, the 12–16 MB/s transfer measurement, and the
+0.03–0.16 pp cross-arch floor magnitudes. These are agent-measured and recorded as
+such; the two claims above are the ones that gate whether the published table is
+correct, so those are the ones I re-derived.
