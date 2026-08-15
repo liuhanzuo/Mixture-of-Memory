@@ -64,6 +64,36 @@ SKIP_LINE_PAT = re.compile(
     r"columnwidth|textwidth|linewidth|arraystretch|tabcolsep|scalebox|"
     r"multirow|multicolumn|cmidrule|midrule|toprule|bottomrule)"
 )
+
+# The macros whose ARGUMENTS carry typography/structure rather than claims, plus the
+# bare length units. Used by strip_macro_args() to blank out just those spans so the
+# rest of the line still gets audited.
+#
+# WHY THIS EXISTS: SKIP_LINE_PAT was originally applied to whole lines. That made the
+# gate silently audit LESS whenever a \ref or \cite shared a physical line with a real
+# number, while still reporting "pass". A gate that gets quieter as you cross-reference
+# your tables is worse than no gate, because the pass is what you act on.
+MACRO_ARG_PAT = re.compile(
+    r"\\(?:usepackage|documentclass|vspace|hspace|setlength|addtolength|includegraphics|"
+    r"label|ref|eqref|pageref|autoref|Cref|cref|cite[a-zA-Z]*|bibliography|input|include|"
+    r"newcommand|renewcommand|def|fontsize|selectfont|arraystretch|tabcolsep|scalebox|"
+    r"multirow|multicolumn|cmidrule)\s*(?:\[[^\]]*\])*(?:\{[^{}]*\})*"
+)
+# `0.62\linewidth`, `3.5pt`, `1.2ex`, `\p{0.05\linewidth}` -- lengths, not measurements.
+LENGTH_PAT = re.compile(
+    r"-?\d*\.?\d+\s*(?:\\(?:linewidth|columnwidth|textwidth|textheight|baselineskip)"
+    r"|pt|pc|in|bp|cm|mm|dd|cc|sp|ex|em)\b"
+)
+
+
+def strip_macro_args(line: str) -> str:
+    """Blank the arguments of structural/typographic macros and bare LaTeX lengths,
+    leaving the surrounding prose (and its numeric claims) intact for auditing."""
+    line = MACRO_ARG_PAT.sub(" ", line)
+    line = LENGTH_PAT.sub(" ", line)
+    return line
+
+
 NUM_PAT = re.compile(r"(?<![\w.])(-?\d+(?:\.\d+)?)(?![\w])")
 
 # LaTeX en-dash/em-dash ranges make a tokenizer see a NEGATIVE number.
@@ -170,7 +200,20 @@ def main() -> int:
             continue
         text = strip_comments(tex.read_text(encoding="utf-8", errors="replace"))
         for lineno, line in enumerate(text.splitlines(), 1):
-            if SKIP_LINE_PAT.search(line):
+            # A whole-line skip used to be applied here whenever the line matched
+            # SKIP_LINE_PAT. That silently removed REAL numeric claims from the audit
+            # as soon as a \ref or \cite landed on the same physical line as a number
+            # -- and the gate still reported "pass" while checking less. Measured on
+            # paperC at the time of the fix: 87 numerals on 35 lines were being hidden,
+            # including load-bearing ones (BoolQ 0.6217 vs 0.50; 1403/12032; 623/12032;
+            # 1439/12032; the 0.9003/10.6/9.26 tokenizer deltas).
+            #
+            # What the pattern was actually protecting against is the ARGUMENTS of
+            # typographic/structural macros (0.62\linewidth, tabcolsep 3.5pt, cite keys,
+            # label names) -- not the surrounding prose. So strip those arguments and
+            # keep auditing the rest of the line.
+            line = strip_macro_args(line)
+            if not line.strip():
                 continue
             for m in NUM_PAT.finditer(normalise_for_tokens(line)):
                 tok = m.group(1)
