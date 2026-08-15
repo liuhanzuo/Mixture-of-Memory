@@ -479,9 +479,10 @@ caveat.
 
 ---
 
-## 7. Commit provenance — a concurrent-commit race, recorded not hidden
+## 7. Commit provenance — a concurrent-commit race that RESOLVED ITSELF
 
-The four artifacts of this task —
+**Final state (authoritative): all four artifacts of this task live in commit `c55090d`**, whose
+subject is `prereg(B08): record that dd6a4bd mislabels the B08 leg-1 artifacts` —
 
 ```
 proposal/backlog/B08-memory-applications/LEG1_IMPL_PLAN.md      (this file)
@@ -490,24 +491,29 @@ proposal/backlog/B08-memory-applications/STATUS.json            (+4 keys, byte-p
 proposal/shared/code/b08_append_status_keys_20260815.py         (the append script)
 ```
 
-— were physically committed in **`dd6a4bd`**, whose message reads
-*"experiment(B06): drift resolution leg — the 8.11-vs-13.29 drift is judge-side, not node drift"*.
+`git log -- proposal/backlog/B08-memory-applications/` shows `c55090d` on top. Nothing further is
+needed; the rest of this section is the audit trail for a transient anomaly.
 
-**That message describes a different task.** A concurrent B06 agent ran `git commit` in the same
-repository between this task's `git add` and its own `git commit`, and swept the staged B08 files
-into its commit. Verified: `dd6a4bd` contains **exactly** the four files above and **1119
-insertions / 0 deletions**, with none of B06's own files (B06's `STATUS.json`,
-`DRIFT_RESOLUTION_VERDICT.md` and `evidence/` were still uncommitted afterwards).
-Content integrity confirmed — `git diff dd6a4bd` against the working tree is empty, and
-`STATUS.json` in that commit parses with **24 keys** including all four
-`*_20260815` additions.
+**What happened.** A concurrent B06 agent was committing in the same working tree. Its first
+commit, `dd6a4bd`, ran between this task's `git add` and its own `git commit` and **swept the
+staged B08 files into itself** — it contained exactly the four B08/shared files (1119 insertions,
+0 deletions) and **none of B06's own**. This section was originally written to record that
+mislabelling, on the explicit decision **not** to amend someone else's hash.
 
-**`dd6a4bd` was deliberately NOT amended.** It was unpushed, so amending was technically
-available, but the concurrent agent may already have recorded that hash in its own verdict files —
-rewriting it would break *their* provenance to fix a cosmetic problem with *ours*. Per the
-project's append-a-correction convention (`CLAUDE.md`: append-only files written wrong get a
-correction row, not an edit), the mislabelling is recorded here instead.
+**Then it self-corrected.** The B06 agent amended its commit to hold its own five files
+(`80bf6d3`, 2509 insertions: `DRIFT_RESOLUTION_VERDICT.md`, its `STATUS.json`, and three
+`evidence/` files), which removed the B08 files from its tree. `dd6a4bd` is now **dangling** —
+unreachable from any branch, pending GC. The B08 files landed in `c55090d` instead, correctly
+titled. So the anomaly the commit message names **no longer exists in reachable history**, and
+`c55090d`'s own subject line is now self-referentially stale.
 
-**Consequence for anyone auditing B08:** `git log --oneline -- proposal/backlog/B08-memory-applications/`
-will show this work under a B06 subject line. The content is correct and complete; only the
-subject line is wrong. This section is the pointer.
+**Why this is recorded rather than rewritten.** Amending `c55090d` to a cleaner subject would be
+cosmetic, and the whole reason the race was survivable is that nobody rewrote a hash out from
+under a concurrently-running agent. Applying that rule to my own commit too is the consistent
+choice. Verified integrity: `git diff c55090d` against the working tree is empty, and its
+`STATUS.json` parses with **24 keys** including all four `*_20260815` additions.
+
+**Operational lesson worth keeping:** `git add` followed later by `git commit` is **not atomic**
+when another agent shares the working tree. Two agents were committing to one checkout, and the
+index is global. Staging and committing should be one step, and a task should verify
+`git show --name-only HEAD` lists *its own* files before reporting a commit.
