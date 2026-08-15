@@ -1,0 +1,18 @@
+\begin{table*}[t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{2.8pt}
+\begin{tabular}{lrrlrrl}
+\toprule
+Cell & v1 $\Delta$ & v1 $p$ & v1 verdict & $\Delta_{\mathrm{perm}}$ & v2 $p$ & v2 verdict \\
+\midrule
+Qwen3 \texttt{k8}, unhealed & $-0.881$ & 0.0362 & below floor & $-0.139$ & 0.0964 & no item-level signal \\
+Llama-2 \texttt{k8}, unhealed & $-0.914$ & 0.0168 & below floor & $-0.416$ & 0.1002 & no item-level signal \\
+Qwen3 \texttt{k14}, unhealed & $+0.233$ & 0.0192 & above floor & $+0.267$ & 0.0066 & trace signal \\
+OLMo-2 \texttt{keep14}, healed & $+0.324$ & 0.3234 & at floor & $+0.608$ & 0.0172 & trace signal \\
+Llama-2 intact & $+1.538$ & 0.0001 & above floor & $+1.959$ & 0.0001 & anchor blocked, recovery 0.0545 \\
+\bottomrule
+\end{tabular}
+\caption{V2 re-sorts rather than uniformly deflates the read-out. All deltas are percentage points. Numbers are from \texttt{paperC/tcodex\_out/EVIDENCE\_PACK.md}, Section D.}
+\label{tab:v2-resort}
+\end{table*}

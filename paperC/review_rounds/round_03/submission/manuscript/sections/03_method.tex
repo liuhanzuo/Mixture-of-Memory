@@ -1,0 +1,91 @@
+\section{Null-Calibrated Measurement}
+
+Let a benchmark contain items $i=1,\ldots,n$, gold answers $y_{i}$, and a scored interface producing predictions $\hat{y}_{i}$. Its empirical accuracy is
+\begin{equation}
+    \mathrm{acc}=\frac{1}{n}\sum_{i=1}^{n}\mathbf{1}[\hat{y}_{i}=y_{i}].
+\end{equation}
+
+\subsection{Read-out v1: the arm-independent interface floor}
+
+For a letter construct with legal labels $\mathcal{L}$, define the input-blind constant family $h_{L}(x)=L$. The construct floor is
+\begin{equation}
+    f_{\mathrm{const}}=\max_{L\in\mathcal{L}}\frac{1}{n}\sum_{i=1}^{n}\mathbf{1}[y_{i}=L].
+\end{equation}
+The v1 statistic is $\Delta_{\mathrm{floor}}=\mathrm{acc}-f_{\mathrm{const}}$. Because $f_{\mathrm{const}}$ depends only on the evaluated item set, every arm is compared to the same reference. This arm independence is essential: otherwise arm-to-arm comparisons can change because the null changes with the arm.
+
+For content likelihood, we use an input-blind longest-option family. Its prediction is determined solely by option length, but the family is not fully specified until a tie convention and length unit are fixed; token-based variants additionally require a tokenizer. Section~\ref{sec:nulls} treats these choices as part of the construct definition.
+
+Our decision rule is intentionally asymmetric. An arm that fails to beat the floor cannot support a claim that the interface expresses arm-specific capability above the strongest constant reference. An arm that clears it has passed only a necessary test. It may still exploit other artifacts that no single null enumerates \citep{feng2019misleading}.
+
+\subsection{Read-out v2: an arm-conditional independence null}
+\label{sec:v2}
+
+The v1 floor asks whether an interface is suitable for mutually comparable arm scores. It is not collapse-invariant as a competence statistic: on the full MMLU-Pro item set, always-A, always-E, and always-J contain the same item-level information---none---yet v1 assigns 0.000, $-2.111$, and $-3.807$ percentage points respectively because the gold marginals are non-uniform. The separate ten-letter implementation self-test below conditions each letter on items where it is legal.
+
+For the arm-specific question, we preserve the arm's own prediction multiset and remove its alignment with items. MMLU-Pro has variable option count, so permutations are uniform \emph{within} \texttt{n\_opt} strata $s$. If $n_{s}$ is the stratum size and $c^{\mathrm{pred}}_{s,L}$ and $c^{\mathrm{gold}}_{s,L}$ are prediction and gold counts, then
+\begin{equation}
+\widehat{\mathrm{acc}}
+=\mathbb{E}[\mathrm{acc}\mid \hat{\boldsymbol y}\ \text{permuted within }s]
+=\sum_s\frac{1}{n n_{s}}\sum_L c^{\mathrm{pred}}_{s,L}c^{\mathrm{gold}}_{s,L},
+\end{equation}
+and
+\begin{equation}
+    \Delta_{\mathrm{perm}}=\mathrm{acc}-\widehat{\mathrm{acc}}.
+\end{equation}
+
+\paragraph{The statistic is not new; the stratification and its use are.}
+$\Delta_{\mathrm{perm}}$ is the \emph{numerator} of Cohen's $\kappa$ evaluated within
+\texttt{n\_opt} strata: writing $p_o=\mathrm{acc}$ and $p_e=\widehat{\mathrm{acc}}$, one has
+$\kappa=(p_o-p_e)/(1-p_e)$ and hence $\Delta_{\mathrm{perm}}=\kappa\,(1-p_e)$ identically.
+We verified the identity on all 27 cells of Table~\ref{tab:v2-full}; it holds to the printing
+precision in every row. We therefore claim neither this statistic nor the collapse identity
+below as new: that chance-corrected agreement vanishes for a constant rater is the textbook
+property, since $p_o=p_e$ there. Our contribution is (i) stratifying the permutation within
+variable option count, so letters that are illegal for an item are never credited, and (ii)
+using the quantity as an \emph{arm-conditional pre-comparison gate} with an explicit
+materiality bar rather than as an agreement score. We report $\Delta_{\mathrm{perm}}$ rather
+than $\kappa$ to keep it on the same percentage-point scale as the v1 floor, which is what
+makes the two nulls directly comparable.
+
+\paragraph{Option-count-aware chance correction is decades old; only the varying-$k$ stratification is ours.}
+Claim (i) above must be stated narrowly, because the \emph{idea} that a chance term should depend
+on how many options an item offers long predates this work. Bennett's $S$ sets
+$p_e=1/k$ for $k$ response categories \citep{bennett1954communications};
+\citet{brennan1981kappa} recommend exactly that free-marginal alternative wherever $\kappa$'s
+marginal dependence misleads; formula scoring corrects for guessing as an explicit function of the
+per-item option count \citep{frary1988formula}; and \citet{brenner1996weightedkappa} show that a
+weighted $\kappa$ drifts systematically with the number of categories --- the very pathology our
+stratification is designed to avoid. Pooling an agreement coefficient across heterogeneous item
+groups is likewise established \citep{devries2008pooledkappa}. We therefore claim \emph{none} of
+the following: correcting for the number of options, choosing $p_e$ as a methodological decision,
+or noticing that $\kappa$-family statistics depend on $k$. What we are not aware of in that
+literature is a null in which $k$ \emph{varies item to item} ($\texttt{n\_opt}\in\{3,\dots,10\}$,
+eight strata here), with the permutation confined within strata so that a letter illegal for an
+item can never be credited to it; the works above assume a single global $k$. That is a
+loophole-closing construction, not a new statistic, and its measured footprint on MMLU-Pro is the
+$36$ items quantified below.
+
+\paragraph{Constant-collapse identity.}
+For a pure always-$L$ emitter, $P(\hat{y}=L')=\delta_{L'L}$. Writing $m_{L'}$ for the relevant gold marginal,
+\begin{equation}
+\widehat{\mathrm{acc}}
+=\sum_{L'}\delta_{L'L}m_{L'}
+=m_{L}
+=\mathrm{acc},
+\qquad
+\therefore\quad \Delta_{\mathrm{perm}}=0.
+\end{equation}
+This is an algebraic identity for every legal collapse letter, not an empirical regularity, and it is the $\kappa=0$ property specialised to our stratified estimator. The implementation asserts zero to below $10^{-12}$ for all ten letters. The loophole ``collapse onto a different letter'' is therefore closed by construction.
+
+The two nulls must not be conflated, and their ordering is weaker than it first appears. Unstratified, $\sum_L p_{L}m_{L}\leq\max_Lm_{L}$ places the v2 null at or below the v1 best-constant floor. Our estimator, however, permutes \emph{within} \texttt{n\_opt} strata, and stratification only yields $\widehat{\mathrm{acc}}\leq\sum_s w_s\max_L m_{s,L}$, whose right-hand side dominates $f_{\mathrm{const}}=\max_L\sum_s w_s m_{s,L}$. The v1 ordering is therefore recovered only if $\arg\max_L m_{s,L}$ is the same letter in every stratum, which on MMLU-Pro it is not: the global best constant is always-A ($1403/12032$), but the per-stratum argmax is B, E, B, E for $\texttt{n\_opt}=5,6,7,8$ (4 of 8 strata, 623 of 12032 items), giving $\sum_s w_s\max_L m_{s,L}=1439/12032$ and a gap of exactly $36$ items, or $0.299$ pp. Empirically the ordering holds in all 27 cells of Table~\ref{tab:v2-full}, but that count overstates the evidence: 13 of the 27 clear the floor by more than $0.299$ pp and so could not have violated it under \emph{any} prediction vector, while the remaining 14 come from four base models, five of them one healing run sampled 500 steps apart. The binding comparison is per-cell: for the tightest cell (Llama-2 keep-12, un-healed, margin $0.0078$ pp) the largest violation attainable at its own observed letter marginal is $0.085$ pp, because $94.8\%$ of its weight lies in A-argmax strata. The ordering does become a theorem under a condition we can state but not assume --- that the arm's letter distribution not vary with \texttt{n\_opt}, since $p_{s,L}=p_{L}$ gives $\widehat{\mathrm{acc}}=\sum_L p_{L}f_{L}\leq f_{\mathrm{const}}$ exactly --- so these cells are evidence for \emph{that condition}, not for the bound. Nor is the inversion confined to other benchmarks: on MMLU-Pro itself the \texttt{n\_opt}-conditional emitter A,A,B,E,B,E,A,A is legal on every item and attains $f_{\mathrm{const}}+0.299$ pp. We therefore state the ordering as a measured property of these cells under an explicit regularity condition, not as an identity. Passing v2 must never be described as clearing the paper's floor.
+
+\input{sections/tab_two_nulls}
+
+We estimate uncertainty with 10,000 paired bootstrap resamples, recomputing $\widehat{\mathrm{acc}}$ inside every resample, and verify the decision with 10,000 within-stratum permutations; both use seed 7 and must agree at $\alpha=0.05$. Significance is not enough at $n=12032$. We define
+\begin{equation}
+\text{\texttt{recovery\_fraction}}=\frac{\Delta_{\mathrm{perm}}}{\Delta_{\max}},
+\end{equation}
+where $\Delta_{\max}$ is the best alignment achievable by reassigning the observed prediction multiset, and require at least 0.10 times the same-family intact anchor for a material signal. If the intact anchor itself has \texttt{recovery\_fraction}$<0.10$, relative claims are blocked.
+
+\paragraph{Pre-registration status.}
+The v2 rule, gates, stratification, and materiality constant were committed before re-judging the existing cells and before future unscored milestones. The 27 numbers reported here are nevertheless post-hoc by construction because those cells had already been scored, and the designer had already seen the shape of the collapse defect. We therefore present v2 as a pre-registered rule for future read-outs and a transparent post-hoc re-analysis of the existing cells.

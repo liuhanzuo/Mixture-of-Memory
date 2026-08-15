@@ -1,0 +1,27 @@
+\section{Four Under-Specifications of the Reference}
+\label{sec:nulls}
+
+The phrase ``compare to a baseline'' hides choices large enough to reverse a verdict. These choices are part of the measured construct and must be printed with the score.
+
+\subsection{Tie convention}
+
+For a longest-option heuristic, tied maxima can be split fractionally, resolved by the first or last option, credited whenever gold belongs to the tied set, or counted as wrong. On ARC-Challenge, \texttt{split}, \texttt{first}, \texttt{last}, and \texttt{wrong} place all six OLMo-2 arms significantly above the content floor; \texttt{credit} moves five of six significantly below it. On MMLU-Pro, the same dataset, tokenizer, and length unit yield 0.125914 under \texttt{wrong} and 0.532164 under \texttt{credit}, a 40.6-point span. The \texttt{credit} value is 4.6$\times$ the \texttt{wrong} value and exceeds the intact base model's \texttt{content\_norm} score, 0.207613, by 32.5 points. A convention that lets an oracle harvest every tie is useful as a reductio, not as a neutral default.
+
+\subsection{Length unit}
+
+``Longest'' may mean characters or continuation tokens. On identical items, \texttt{split} changes by as much as 2.02 points across the studied tasks, while \texttt{credit} changes by 14.53--35.20 points. For OpenBookQA, \texttt{credit} is 0.416 under characters and 0.644 under tokens. The reason is visible in the tie sets: ARC-Challenge has 18.60\% tied-longest items under characters and 50.85\% under tokens. Thus printing the convention without the unit is not reproducible specification.
+
+The character-unit values were recomputed from raw parquet under $\mathrm{len}(\text{option text})$. Counting the continuation's leading space gives the same OpenBookQA value, 0.363500, because the shift is uniform across options. The character and token legs are item-matched by the shared loader and a 12/12 self-test.
+
+\subsection{Tokenizer}
+
+Within the token unit, the floor is tokenizer-valued. On identical items, the \texttt{split} floor moves by 0.9003 points in the audited comparison and \texttt{credit} moves by up to 10.6 points on four-way tasks and 9.26 points on MMLU-Pro. This is a floor-level consequence of the known tokenizer dependence of length-based scoring \citep{oostermeijer2026length}. We make no vocabulary-size explanation: the ordering is not monotone. The 32k Llama-2 and 152k Qwen3 tokenizers produce fewer MMLU-Pro longest-option ties than the 100k OLMo-2 and 128k Llama-3 tokenizers.
+
+This degree of freedom creates an asymmetry. A token-based content floor is a property of $(\text{dataset},\text{convention},\text{unit},\text{tokenizer})$. A character-based floor is tokenizer-free under its stated character convention. By contrast, the letter floor is a pure property of the item set's gold labels: it is invariant across all 15 cross-family arms and bit-identical across all 21 MMLU-Pro cells.
+
+\subsection{What ``chance'' means when option count varies}
+
+MMLU-Pro is described as up to ten-way, but \texttt{n\_opt} ranges from three to ten. Naive $1/10$ chance is 0.100000, whereas the item average $\mathrm{mean}(1/\texttt{n\_opt})$ is 0.110877. Against the same always-A floor, 0.116606, the gap is therefore either $+1.661$ points and 1.1661$\times$, or $+0.573$ points and 1.0517$\times$. Both are defensible descriptions of a chance line, so both must be reported. The floor remains a dataset property; its gap to an under-specified chance line does not.
+
+\input{sections/tab_nulls}
+\input{sections/tab_conventions}

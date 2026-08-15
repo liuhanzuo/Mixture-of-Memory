@@ -1,0 +1,16 @@
+\begin{table*}[t]
+\centering
+\small
+\setlength{\tabcolsep}{4.2pt}
+\begin{tabular}{p{0.18\linewidth}p{0.24\linewidth}p{0.29\linewidth}p{0.19\linewidth}}
+\toprule
+Defect & Consequence & Repair/hardening & Measured impact \\
+\midrule
+Bootstrap zero atom counted in both tails & Illegal $p=1.042$ & Two-sided mid-$p$ splits zero mass evenly; $p\leq1$ structurally & 0/24 verdicts changed; 0/30 crossed 0.05; non-$p$ fields byte-identical \\
+Tokenizer-specific left truncation & 10/15 first-launch cells lost part of labelled option body & Raise cap to 2048; \texttt{n\_trunc} becomes a hard per-shard assertion & 0/14 verdicts changed; maximum 0.0083 pp; all nine flips on affected items \\
+Llama-2 KV-cache OOM & 5/8 shards failed; partial 3/8 result unavailable & Merge guard refused output; \texttt{use\_cache=False} for teacher-forced pass & Peak memory 94 GiB to 41--50 GiB; intact cell recovered \\
+\bottomrule
+\end{tabular}
+\caption{Integrity defects and repairs. Numbers are from \texttt{paperC/tcodex\_out/EVIDENCE\_PACK.md}, Sections E and I.}
+\label{tab:integrity}
+\end{table*}

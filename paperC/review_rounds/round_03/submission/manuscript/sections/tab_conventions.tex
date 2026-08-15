@@ -1,0 +1,20 @@
+\begin{table*}[t]
+\centering
+\small
+\setlength{\tabcolsep}{4.5pt}
+\begin{tabular}{llrrrrr}
+\toprule
+Dataset & Unit/tokenizer & \texttt{split} & \texttt{first} & \texttt{last} & \texttt{credit} & \texttt{wrong} \\
+\midrule
+MMLU-Pro & token, OLMo-2 & 0.193150 & 0.195894 & 0.190824 & \textbf{0.532164} & 0.125914 \\
+OpenBookQA & character & 0.363500 & 0.362000 & 0.362000 & 0.416000 & 0.320000 \\
+OpenBookQA & token, OLMo-2 & 0.368000 & 0.384000 & 0.360000 & \textbf{0.644000} & 0.228000 \\
+ARC-Challenge & character & 0.274104 & 0.272184 & 0.274744 & 0.347270 & 0.220990 \\
+ARC-Challenge & token, OLMo-2 & 0.283902 & 0.265358 & 0.296075 & \textbf{0.543515} & 0.142491 \\
+Winogrande, control & character & 0.491713 & 0.492502 & 0.490923 & 0.581689 & 0.401736 \\
+Winogrande, control & token, OLMo-2 & 0.501184 & 0.494081 & 0.508287 & \textbf{0.933702} & 0.068666 \\
+\bottomrule
+\end{tabular}
+\caption{The content floor changes with tie convention and length unit. Numbers are from \texttt{paperC/tcodex\_out/EVIDENCE\_PACK.md}, Sections F, H, and the August 14 addendum.}
+\label{tab:conventions}
+\end{table*}

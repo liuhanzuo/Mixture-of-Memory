@@ -1,0 +1,70 @@
+\section{Appendix}
+
+\subsection{Complete read-out v2 table}
+
+Table~\ref{tab:v2-full} reports all 27 cells used in the post-hoc v2 re-analysis. G1 and G2 fire on no cell; all 27 pass the integrity gate; the permutation and bootstrap decisions disagree on 0/27 cells at $\alpha=0.05$. The largest absolute difference between their $p$-values is 0.0371, away from the decision boundary. Stratification is nevertheless load-bearing: for unhealed Qwen3 \texttt{k8}, the stratified statistic differs from the unstratified one by $-1.271$ points because E is not legal on every item.
+
+\input{sections/tab_v2_full}
+
+\FloatBarrier
+
+\subsection{Rejected v2 alternatives}
+
+\input{sections/tab_v2_alternatives}
+
+\FloatBarrier
+
+\subsection{Integrity repairs}
+
+\input{sections/tab_integrity}
+
+\FloatBarrier
+
+\subsection{Generated construct-null manifest}
+\label{app:generated-nulls}
+
+Table~\ref{tab:app-construct-nulls} restates the construct nulls of
+Table~\ref{tab:nulls} as a \emph{generated} artefact. It is written by
+\texttt{paperC/code/emit\_tab\_construct\_nulls.py} directly from
+\texttt{paperC/evidence/floor\_winners\_curse\_calibration.json}, the single
+machine-readable source for these nine rows, and the emitter contains no numeric
+literal for any floor or chance line. The emitter refuses to write on any
+inconsistency: it checks that each stored percentage-point gap equals
+$100\,(\text{Floor}-\text{Chance})$, that each floor is a label count divided by
+$n$, that no floor falls below $1/k$, that each row's balanced-null verdict
+agrees both with its $p$-value and with the file's own partition of the
+constructs, and that the row identities agree with a second, independently
+recorded evidence file. It also re-parses every number in the hand-authored
+Table~\ref{tab:nulls} and in its own output and re-verifies each against the
+source at the precision that table chose. A companion script,
+\texttt{paperC/code/check\_prose\_vs\_evidence.py}, extends the same
+tolerance-based comparison to the prose. Both exit non-zero on any mismatch, so a
+typed number that drifts from the evidence becomes a build failure rather than a
+reading error.
+
+\input{sections/tab_construct_nulls}
+
+\FloatBarrier
+
+\subsection{What we claim and what we retract}
+\label{app:ledger}
+
+\input{sections/tab_claims}
+
+\FloatBarrier
+
+\subsection{Reporting checklist}
+
+For each reported multiple-choice construct, we recommend the following minimal record:
+\begin{enumerate}[leftmargin=*]
+    \item Define the input-blind predictor family and report the best member on the evaluated item set.
+    \item Report the score, null value, paired effect, confidence interval, and test.
+    \item For content length nulls, print tie convention, length unit, and tokenizer. If option count varies, print the definition of chance.
+    \item Establish that the experiment could resolve the effect under discussion; otherwise describe the result as a non-observation.
+    \item Keep arm-independent interface validity separate from arm-conditional item-level information.
+    \item Treat a floor pass as necessary, not sufficient.
+\end{enumerate}
+
+\subsection{Evidence provenance}
+
+The construct floors, MMLU-Pro cell table, read-out v2 values, fp32 comparison, small-benchmark power analysis, integrity repairs, and claim ledger are transcribed from the machine-extracted \texttt{paperC/tcodex\_out/EVIDENCE\_PACK.md}. The character-versus-token table additionally uses the pack's August 14 addendum, which records the raw-parquet reconstruction and 12/12 self-test. No healed Qwen3 step-121000 result is included.
