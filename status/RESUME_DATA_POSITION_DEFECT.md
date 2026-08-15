@@ -64,3 +64,46 @@ at least deterministic. **Do not edit the script while the three arms are runnin
 
 Relates to open task #199 ("ckpt save/resume 机制深调 + 忠实 resume 方案") — this is a concrete,
 measured instance of exactly what that task was opened to investigate.
+
+---
+
+## 10. Follow-up: the monotone-trend concern, raised and then resolved (2026-08-15 18:25)
+
+At heartbeat 17:45 I flagged a problem with my own reporting. The six checks to that
+point were `-0.0009, +0.0006, +0.0009, +0.0017, +0.0019, +0.0021` — every magnitude
+tiny, but **all six same-signed and monotonically increasing**. I had been describing
+that as "the account keeps passing," which was true of the magnitudes and quietly
+ignored the direction. Six same-signed increments are not six independent
+confirmations, and a slow monotone climb is also what a real divergence looks like
+early on.
+
+So I pre-registered a discriminating test rather than continuing to report
+confirmations: re-evaluate around check #8-10, and **if the trend continues past
+~0.5 σ, treat it as a live signal** rather than noise around a fixed level.
+
+**Check #7 settled it in the opposite direction, one round later.**
+
+| check | diff from pre-kill 2.5549 | in σ (σ = 0.0174) |
+|---|---|---|
+| 1 | −0.0009 | −0.05 |
+| 2 | +0.0006 | +0.03 |
+| 3 | +0.0009 | +0.05 |
+| 4 | +0.0017 | +0.10 |
+| 5 | +0.0019 | +0.11 |
+| 6 | +0.0021 | +0.12 |
+| **7** | **−0.0081** | **−0.46** |
+
+The monotone run is broken, the sign flipped, and the excursion went *below* the
+pre-kill level instead of continuing up. Over all seven checks: **mean −0.00026
+(−0.015 σ)**, sd of the checks 0.00334. That is scatter about a **fixed** level with
+both signs represented — precisely what the replayed-data account predicts, and
+something a genuine divergence cannot produce.
+
+**Status: the loss-recovery half of this finding is now settled.** The defect itself
+(unrestored data position, `epoch > 0` guard skipping `set_epoch` at `epoch=0`) is
+unchanged and still unfixed; what is settled is that keep10's post-resume loss
+returns to and stays on its pre-kill trajectory rather than drifting off it.
+
+Two things this does **not** establish, unchanged from §"What is NOT claimed":
+final-checkpoint validity, and whether the ~3200-step duplicate window measurably
+shifts downstream eval numbers. Both remain untested.
