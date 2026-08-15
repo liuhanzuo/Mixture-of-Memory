@@ -337,5 +337,122 @@
   },
   "next_gate": "REWRITE B10 AS A PROTOCOL NOTE, OR ARCHIVE IT. 0 GPU. This is the verbatim if_killed action of kill_gate.gate_1, which FIRED on 2026-08-15 (see gate_1_result and GATE1_BASE_AXIS_VERDICT.md). Concretely: (a) decide protocol-note vs archive; (b) if archive, write POSTMORTEM.md and move to proposal/archive/ per PROPOSAL.md section 5 'Standing rule'; (c) if protocol note, it may carry ONLY the survivors already recorded in robust_findings_that_survive -- the benchmark's own feasibility ceiling on the axis it grades, the cost-unit sensitivity, the suffix-gain result -- PLUS the new cross-host ceiling irreproducibility on HumanEval/32 measured by this gate. FORBIDDEN: re-framing B10 to hunt a different ranking from the same six arms (the nested-ladder error already retracted twice, Retractions 6 and 7); the full pairwise base-axis matrix in gate1_base_stats.json is provenance, NOT a menu. Gate 4's standing rule still binds: no absolute pass@1 from this surface may be reported as a capability measurement without a decontaminated companion.",
   "next_gate_gpu": "0 GPU -- CPU only. The next action is a writing/filing decision (protocol note vs archive), not a measurement. Gate 2 and Gate 3 were conditioned on Gate 1 saying PROCEED and are therefore NOT authorised, so there is no GPU-costing next step at all. This key is recorded explicitly because B10's novelty_verdict parses as CLEARED and it carries no live blocker -- so adding next_gate alone would have let ready_queue.py infer ready_gpu for a direction whose own kill gate just fired.",
-  "lifecycle_note_20260815": "lifecycle deliberately left UNSET by the Gate-1 executor. The kill gate FIRED, so the honest terminal state is arguably 'dead', but gate_1.if_killed offers TWO dispositions (rewrite as a protocol note OR archive) and choosing between them is an owner decision, not an adjudication this gate performed. Declaring a lifecycle here would be a declared-not-adjudicated state of exactly the kind memory/a-declared-lifecycle-is-not-an-adjudicated-one.md warns about. next_gate_gpu='0 GPU' is sufficient to keep the reader in ready_cpu, which is the correct and safe classification: the remaining work is free."
+  "lifecycle_note_20260815": "lifecycle deliberately left UNSET by the Gate-1 executor. The kill gate FIRED, so the honest terminal state is arguably 'dead', but gate_1.if_killed offers TWO dispositions (rewrite as a protocol note OR archive) and choosing between them is an owner decision, not an adjudication this gate performed. Declaring a lifecycle here would be a declared-not-adjudicated state of exactly the kind memory/a-declared-lifecycle-is-not-an-adjudicated-one.md warns about. next_gate_gpu='0 GPU' is sufficient to keep the reader in ready_cpu, which is the correct and safe classification: the remaining work is free.",
+
+  "gold_ceiling_discrepancy_ROOTCAUSED_20260815": {
+    "why_this_key_exists": "APPEND-ONLY CORRECTION of gate_1_result.gold_ceiling_discrepancy (left byte-intact per LIFECYCLE_SCHEMA.md sec 0). That key states the vendored evalplus/eval/*.py md5s are byte-identical across both disks and infers the grader is excluded as the cause. The md5 claim is TRUE but the inference is WRONG: the wzc1 ceiling run never imported the vendored copy -- its venv resolves `import evalplus` to site-packages PyPI 0.3.1. Byte-identity of a file on disk is not evidence about which file the interpreter loaded. That key also floated wall-clock flakiness of a special-oracle task as the explanation; the discrepancy is deterministic. It also did not address the PLUS axis, which moved too (0.8025 -> 0.8122) by a DIFFERENT mechanism. Both axes are now root-caused.",
+    "discrepancy_restated": {
+      "wzc1_record_NUMBER_AUDIT_line_284": {
+        "gold_ceiling_base": 0.989351403678606,
+        "gold_ceiling_plus": 0.8025169409486931,
+        "n_base_pass": 1022,
+        "n_plus_pass": 829
+      },
+      "zwfy6_gate1_remeasurement": {
+        "gold_ceiling_base": 1.0,
+        "gold_ceiling_plus": 0.8121974830590513,
+        "n_base_pass": 1033,
+        "n_plus_pass": 839
+      },
+      "n_rows_both": 1033,
+      "task_id_sets_identical": true,
+      "both_axes_moved": true,
+      "direction_of_every_one_of_the_21_discordant_items": "wzc1 FAIL -> zwfy6 PASS",
+      "closure_asserted": "1033-1022=11 and 839-829=10 exactly match the per-item diff sets; no unexplained residual"
+    },
+    "base_axis_root_cause": {
+      "n_items": 11,
+      "items": "every line L0-L10 of HumanEval/32 (entry_point find_zero); it is the split's ONLY find_zero task, which is exactly why the diff is 11 rows",
+      "mechanism": "EVALPLUS VERSION. PyPI evalplus 0.3.1's find_zero special-oracle branch in eval/__init__.py:unsafe_execute does `assert abs(_poly(*inp,out))<=atol; continue` WITHOUT first setting details[i]=True / progress.value+=1. progress.value stays 0, untrusted_check returns details=[], and its own guard `if len(details)!=len(inputs): stat=FAIL` rewrites a genuine PASS into FAIL. The repo's vendored evalplus (upstream commit 26d6d00) carries the two missing lines before its continue.",
+      "which_grader_each_run_actually_imported": {
+        "wzc1_ceiling": "PyPI evalplus 0.3.1 in dllm_draft/.venv_b200/lib/python3.11/site-packages/evalplus",
+        "zwfy6_gate1": "vendored dllm_draft/vendor/evalplus/evalplus (26d6d00, reports version 0.1.0.dev1)"
+      },
+      "measured_single_host_only_pythonpath_differs": {
+        "probe_item": "SingleLineInfilling/HumanEval/32/L0",
+        "pypi_0_3_1": {
+          "status": "fail",
+          "n_details": 0,
+          "n_inputs": 100,
+          "n_pass": 0
+        },
+        "vendored_26d6d00": {
+          "status": "pass",
+          "n_details": 100,
+          "n_inputs": 100,
+          "n_pass": 100
+        }
+      },
+      "deterministic": "3 repeats per version give identical results -- NOT host load, NOT wall-clock jitter"
+    },
+    "plus_axis_root_cause": {
+      "n_items": 10,
+      "items": "9 lines of HumanEval/130 (tri) + HumanEval/15/L0 (string_sequence)",
+      "mechanism": "SANDBOX 4 GiB RLIMIT_AS, HOST-dependent and NOT a version difference. evalplus query_maximum_memory_bytes() defaults to 4 GiB and reliability_guard() applies it as RLIMIT_AS/RLIMIT_DATA inside the grading subprocess. These tasks' plus_input contains n ~ 1e6 whose reference outputs are ~1e6-element lists; materialising them exceeds 4 GiB of address space once the interpreter's own footprint counts. The bare MemoryError is swallowed by unsafe_execute's `except BaseException` and booked as a WRONG ANSWER rather than an error.",
+      "measured_same_vendored_evalplus_cross_host": {
+        "LOCAL_wzc1": "fail 118/125",
+        "node_73_zwfy6": "pass 125/125",
+        "implication": "version is NOT the variable on this axis"
+      },
+      "measured_rlimit_causal_test_on_LOCAL": {
+        "probe_item": "SingleLineInfilling/HumanEval/130/L0",
+        "rlimit_as_4GiB_default": {
+          "n_fail": 7,
+          "n_inputs": 125,
+          "exception": "MemoryError",
+          "failing_args": "n=999999, 999997, 999998, 999996"
+        },
+        "rlimit_as_unlimited": {
+          "n_fail": 0,
+          "n_inputs": 125,
+          "status": "pass"
+        }
+      },
+      "note_humaneval_63": "the wzc1 record additionally marks 7 rows of HumanEval/63 'timeout' on the plus axis where zwfy6 marks them 'fail'; both readings agree those 7 are infeasible, so they do not move the ceiling"
+    },
+    "ruled_out_by_measurement_not_assumption": {
+      "split_file_md5": "30129634e180d80c19d6ddcd4cf43f9c on BOTH disks",
+      "humanevalplus_v0_1_10_md5": "fe585eb4df8c88d844eeb463ea4d0302 on BOTH disks",
+      "get_human_eval_plus_hash": "fe585eb4df8c88d844eeb463ea4d0302 on BOTH disks",
+      "decoded_expected_outputs": "md5(repr(gt[bid][axis])) identical on both disks for HumanEval/{32,130,15,63} x {base,plus} -- all 8 match",
+      "grade_wrapper_semantics": "wzc1 spanlen_gold_ceiling._grade and zwfy6 score_infilling.grade_one build inputs/expected/ref_time identically, both min_time_limit=1.0 gt_time_limit_factor=4.0 fast_check=False, same `status==PASS and len(details)>0 and n_pass==len(details)` acceptance rule",
+      "numpy_version": "LOCAL 2.4.6 vs .73 1.26.4 -- NOT causal: the failing comparisons raise MemoryError before any allclose, and lifting RLIMIT_AS on the SAME numpy 2.4.6 makes them pass",
+      "groundtruth_pickle_md5": "DOES differ across disks (7f1bfa50... vs ded78f78...) at identical byte size, but the decoded values are identical -> pickle container nondeterminism, not a data difference"
+    },
+    "authoritative_ceiling": {
+      "verdict": "zwfy6 / Gate 1: gold_ceiling_base = 1.0, gold_ceiling_plus = 0.8121974830590513 (n_gold_base_pass 1033, n_gold_plus_pass 839)",
+      "why": "both wzc1 deviations are harness defects with identified mechanisms (an upstream grader bug fixed in the vendored tree, and a sandbox address-space cap that silently converts MemoryError into a wrong answer). Neither is a property of the benchmark.",
+      "NUMBER_AUDIT_line_284": "SUPERSEDED. Original line left byte-intact; a dated append-only note was added at the end of NUMBER_AUDIT.md per LIFECYCLE_SCHEMA.md sec 0.",
+      "NUMBER_AUDIT_section_7_side_effect": "section 7's 'restricting to the 829 gold-feasible items' denominator becomes 839 under the corrected plus ceiling, so that table's gold-feasible-only and raw/ceiling columns are stale by ~10 items and must be recomputed before reuse. Its qualitative conclusion (raw plus-axis pass@1 is not comparable to a published 92.6; the feasible-subset sign is unstable) is unaffected and strengthened."
+    },
+    "effect_on_gate_1_decidability": {
+      "kill_condition_depends_on_ceiling_value": false,
+      "why": "kill_gate.gate_1.kill_if is a function of the qwen_fim vs dreamon_oracle paired contrast ONLY (not significant at alpha=0.05 AND |delta|<0.02). The ceiling appears solely as the parenthetical precondition 'gold ceiling 0.9894, so >=98% of items feasible'.",
+      "precondition_under_corrected_number": "base ceiling 1.0 = 100% feasible, STRICTLY MORE PERMISSIVE than the pre-registered >=98%; satisfied a fortiori. The change is FAVOURABLE to Gate 1, not adverse.",
+      "thresholds": "alpha=0.05 and |delta|<0.02 RETAINED VERBATIM. They were NOT rewritten because the ceiling moved -- doing so would be a post-hoc threshold edit of the kind this proposal's retraction history forbids.",
+      "adjudicated_on_both_ceiling_readings": true,
+      "under_zwfy6_ceiling_all_1033_items": {
+        "delta": 0.0009680542110358514,
+        "p_exact_mcnemar_two_sided": 1.0,
+        "abs_delta_lt_0.02": true,
+        "both_kill_conditions_hold": true
+      },
+      "under_wzc1_ceiling_1022_feasible_items": {
+        "delta": -0.0009784735812133905,
+        "p_exact_mcnemar_two_sided": 1.0,
+        "abs_delta_lt_0.02": true,
+        "both_kill_conditions_hold": true
+      },
+      "conclusion": "Gate 1 remains fully decidable. KILL is identical under either ceiling and does not depend on which one is authoritative."
+    },
+    "new_survivor_for_the_protocol_note": "Cross-host gold-ceiling irreproducibility on HumanEval-Infilling with TWO independent, separately demonstrated SILENT mechanisms: (a) an upstream special-oracle bug that turns a passing program into a failure by returning an empty details array, and (b) a 4 GiB sandbox address-space cap that turns an out-of-memory event into a wrong answer. Both move a CEILING -- the denominator every arm is normalised against -- and neither surfaces as an error to the caller.",
+    "evidence": [
+      "evidence/gate1_base/ceiling_discrepancy_rootcause.py",
+      "evidence/gate1_base/ceiling_discrepancy_rootcause.json",
+      "GATE1_BASE_AXIS_VERDICT.md section 'Ceiling discrepancy vs NUMBER_AUDIT.md:284'",
+      "NUMBER_AUDIT.md appended note dated 2026-08-15"
+    ],
+    "gpu_used": "0 -- every probe ran with CUDA_VISIBLE_DEVICES=\"\" on LOCAL and on .73; .73 stayed at exactly 8 nvidia-smi compute-apps (the pre-existing train_olmo2_arch_probe2.py DDP) before and after",
+    "lifecycle_unchanged": "still UNSET by deliberate decision (see lifecycle_note_20260815); this correction does NOT promote anything to ready_gpu"
+  }
 }

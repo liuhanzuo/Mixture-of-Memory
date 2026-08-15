@@ -101,17 +101,14 @@ sandbox:
 | wzc1 record (quoted in the gate) | 0.989351404 | 11 | 0.802516941 |
 | **zwfy6 re-measurement (this gate)** | **1.0000000** | **0** | 0.812197483 |
 
-**The 11-item difference is entirely `HumanEval/32`** (`find_zero`, all 11 of its
-`L0`–`L10` rows). `find_zero` is one of EvalPlus's *special-oracle* tasks
-(`_special_oracle._poly`, `atol=1e-4`, 100 base inputs each wall-clock-limited),
-i.e. exactly the kind of item whose pass/fail can move with host load. The inputs
-were ruled out as the cause: the split file (md5 `30129634e180…`),
-`HumanEvalPlus-v0.1.10.jsonl` (md5 `fe585eb4df8c…`) and the vendored
-`evalplus/eval/*.py` (md5 `bcd21dfd…`, `8d95f931…`, `e9ff521c…`, commit `26d6d00`)
-are **byte-identical across both disks**. Both ceilings are ≥98 % feasible, so
-the gate's stated precondition ("gold ceiling 0.9894, so ≥98 % of items feasible")
-holds under either reading. **To keep the adjudication independent of which
-ceiling is authoritative, the contrast is reported on both feasible sets** (§4).
+Both axes moved, so this is not one flaky item. **The root cause of each axis has
+since been isolated to a specific mechanism** — see
+§ *Ceiling discrepancy vs `NUMBER_AUDIT.md:284`* below, and
+`evidence/gate1_base/ceiling_discrepancy_rootcause.json`. Both readings are
+≥98 % feasible, so the gate's stated precondition ("gold ceiling 0.9894, so
+≥98 % of items feasible") holds under either. **To keep the adjudication
+independent of which ceiling is authoritative, the contrast is reported on both
+feasible sets** (§4).
 
 ---
 
@@ -210,6 +207,154 @@ plus-axis feasible subset Δ = −0.0012 (p = 1.000), and now **base axis
 conclusion-reversal framing is dead for good.
 
 ## VERDICT: **KILL**
+
+---
+
+## Ceiling discrepancy vs `NUMBER_AUDIT.md:284`
+
+`NUMBER_AUDIT.md:284` records, for the **same split and the same `n_rows = 1033`**:
+
+```
+n_rows 1033   gold_ceiling_base = 0.9894   gold_ceiling_plus = 0.8025
+```
+
+`PROPOSAL.md:204` and `STATUS.json.kill_gate.gate_1.kill_if` both quote the
+`0.9894` figure verbatim. Gate 1's zwfy6 re-measurement gives `1.0` / `0.8122`.
+**Both axes moved**, so this was treated as a possible grader/data/protocol
+change and root-caused before any p-value was accepted. Full evidence:
+`evidence/gate1_base/ceiling_discrepancy_rootcause.{py,json}` (**0 GPU**).
+
+### Old vs new, and the exact items
+
+| axis | wzc1 (`NUMBER_AUDIT.md:284`) | zwfy6 (this gate) | Δ items | which items |
+|---|---|---|---|---|
+| base | 0.989351404 (1022/1033) | **1.0** (1033/1033) | **11** | every line `L0`–`L10` of **`HumanEval/32`** (`find_zero`) |
+| plus | 0.802516941 (829/1033) | **0.812197483** (839/1033) | **10** | 9 lines of **`HumanEval/130`** (`tri`) + **`HumanEval/15/L0`** (`string_sequence`) |
+
+Closure is asserted, not eyeballed: `1033 − 1022 = 11` and `839 − 829 = 10`
+exactly match the per-item diff sets, and the `task_id` sets are identical
+(1033 = 1033, no extras on either side). In every one of the 21 discordant items
+the direction is the same: **wzc1 FAIL → zwfy6 PASS.**
+
+### Root cause — base axis: an evalplus **version** difference (not data)
+
+The wzc1 ceiling was produced by `dllm_draft/scripts/spanlen_gold_ceiling.py`
+under `.venv_b200`, where `import evalplus` resolves to **PyPI evalplus 0.3.1**
+in `site-packages`. Gate 1 on zwfy6 resolved it to the repo's **vendored**
+evalplus (upstream commit `26d6d00`). In 0.3.1, `eval/__init__.py:unsafe_execute`
+has:
+
+```python
+if dataset == "humaneval":
+    if "find_zero" == entry_point:
+        assert abs(_poly(*inp, out)) <= atol
+        continue                      # <-- returns WITHOUT details[i] = True
+```
+
+It `continue`s **before** `details[i] = True` / `progress.value += 1`. So
+`progress.value` stays 0, `untrusted_check` returns `details = []`, and its own
+guard `if len(details) != len(inputs): stat = FAIL` rewrites a genuine PASS into
+FAIL. The vendored copy carries the two missing lines before its `continue`.
+Measured on **one host, same data files, same grade wrapper, only `PYTHONPATH`
+differing**:
+
+| grader | status | `n_details` | `n_inputs` | `n_pass` |
+|---|---|---|---|---|
+| PyPI evalplus **0.3.1** | `fail` | **0** | 100 | 0 |
+| vendored (`26d6d00`) | `pass` | **100** | 100 | 100 |
+
+`HumanEval/32` is the **only** `find_zero` task in the split, which is exactly why
+the base-axis discrepancy is exactly its 11 rows and nothing else. This is
+deterministic across 3 repeats per version — it is **not** host load or
+wall-clock flakiness.
+
+> This corrects an earlier reading in this same document, which noted that the
+> *vendored* `evalplus/eval/*.py` are byte-identical across both disks (md5
+> `bcd21dfd…`, true) and inferred from that the grader could not be the cause.
+> The vendored copies do match; the wzc1 ceiling run simply **never imported the
+> vendored copy**. Byte-identity of a file on disk is not evidence about which
+> file the interpreter loaded.
+
+### Root cause — plus axis: the sandbox's **4 GiB `RLIMIT_AS`** (host-dependent)
+
+The plus-axis 10 are a *different* mechanism, and it is **not** a version
+difference: with the **same vendored evalplus**, LOCAL/wzc1 still fails these and
+zwfy6/`.73` passes them. `query_maximum_memory_bytes()` defaults to 4 GiB and
+`reliability_guard()` applies it as `RLIMIT_AS`/`RLIMIT_DATA` inside the grading
+subprocess. `HumanEval/130` and `HumanEval/15` have `plus_input` entries with
+n ≈ 10⁶ whose reference outputs are ~10⁶-element lists; materialising them
+exceeds 4 GiB of address space once the interpreter's own footprint counts. The
+allocation raises a bare `MemoryError`, which `unsafe_execute`'s
+`except BaseException` silently books as a **wrong answer** rather than an error.
+Measured on LOCAL, vendored evalplus, numpy 2.4.6,
+`SingleLineInfilling/HumanEval/130/L0`:
+
+| `RLIMIT_AS` | result | exception |
+|---|---|---|
+| 4 GiB (evalplus default) | 7 / 125 inputs fail | `MemoryError` at `n=999999, 999997, …` |
+| unlimited (`EVALPLUS_MAX_MEMORY_BYTES=-1`) | **0 / 125 fail, status `pass`** | — |
+
+Because the trip point depends on the host's baseline footprint, this is a
+**cross-host reproducibility defect of the harness**, not a property of the
+benchmark or of any arm. (The wzc1 record additionally marks 7 rows of
+`HumanEval/63` `timeout` on the plus axis where zwfy6 marks them `fail`; both
+readings agree those 7 are infeasible, so they do not move the ceiling.)
+
+### Ruled out by measurement (not by assumption)
+
+| candidate | wzc1 | zwfy6 | verdict |
+|---|---|---|---|
+| split file md5 | `30129634e180d80c19d6ddcd4cf43f9c` | same | **identical** |
+| `HumanEvalPlus-v0.1.10.jsonl` md5 | `fe585eb4df8c88d844eeb463ea4d0302` | same | **identical** |
+| `get_human_eval_plus_hash()` | `fe585eb4df8c…` | same | **identical** |
+| expected outputs, `md5(repr(gt[bid][axis]))` for `HumanEval/{32,130,15,63}` × {base, plus} | — | — | **identical, all 8** |
+| vendored `evalplus/eval/__init__.py` md5 | `bcd21dfd412e10b6825fab093428d579` | same | identical — but **not the file wzc1 loaded** |
+| grade wrapper semantics | `spanlen_gold_ceiling._grade` | `score_infilling.grade_one` | same inputs/expected/ref_time assembly, same `min_time_limit=1.0`, `gt_time_limit_factor=4.0`, same acceptance rule |
+| numpy | 2.4.6 | 1.26.4 | **not the cause** — the failing comparisons raise `MemoryError` before any `allclose`; lifting `RLIMIT_AS` on the *same* numpy 2.4.6 makes them pass |
+| wall-clock flakiness | — | — | **not the cause** — deterministic across 3 repeats per (host, version) |
+
+One genuine difference that is *not* causal: the on-disk groundtruth pickle md5
+differs across disks (`7f1bfa50…` vs `ded78f78…`) despite identical byte size.
+The **decoded** expected values are identical (row above), so this is pickle
+container nondeterminism, not a data difference.
+
+### Which ceiling is authoritative
+
+**zwfy6 / Gate 1** (base `1.0`, plus `0.8122`). Both discrepancies are wzc1-side
+defects with identified mechanisms — a grader bug fixed upstream, and a sandbox
+address-space cap that silently converts `MemoryError` into a wrong answer.
+Neither is a property of the benchmark. `NUMBER_AUDIT.md:284` is therefore
+**superseded**; per `LIFECYCLE_SCHEMA.md` §0 the original line is left
+byte-intact and a dated note is appended below it.
+
+### Does this change Gate 1's decidability? **No.**
+
+- The pre-registered `kill_if` is a function of the `qwen_fim` vs
+  `dreamon_oracle` paired contrast **only** (significant at α=0.05 **and**
+  |Δ| < 0.02). The ceiling enters the clause solely as the parenthetical
+  precondition *"gold ceiling 0.9894, so ≥98 % of items feasible"*.
+- Under the measured base ceiling of **1.0**, that precondition is **100 %
+  feasible** — *strictly more permissive* than the pre-registered ≥98 %, i.e.
+  satisfied a fortiori. The ceiling change is **favourable** to Gate 1's
+  decidability, not adverse.
+- **α=0.05 and |Δ|<0.02 are retained verbatim.** They were *not* rewritten
+  because the ceiling moved; doing so would be exactly the kind of
+  post-hoc threshold edit this proposal's own retraction history forbids.
+- The contrast is adjudicated on **both** feasible sets (§4.1 all 1033 items
+  under the zwfy6 ceiling; §4.2 the 1022-item wzc1 feasible subset). Both give
+  exact-McNemar **p = 1.0000** and |Δ| < 0.001. **The verdict is identical under
+  either ceiling**, so nothing about the KILL depends on which one is
+  authoritative.
+
+### Bonus finding, recorded for the protocol note
+
+This is a **cross-host gold-ceiling irreproducibility on HumanEval-Infilling**
+with two independent, separately demonstrated mechanisms — an upstream
+special-oracle bug that turns a passing program into a failure, and a 4 GiB
+sandbox cap that turns an out-of-memory event into a wrong answer. Both are
+silent: neither surfaces as an error to the caller, and both move a *ceiling*,
+i.e. the denominator every arm is normalised against. It belongs in the
+survivors list alongside the existing ceiling/cost-unit observations.
 
 ---
 

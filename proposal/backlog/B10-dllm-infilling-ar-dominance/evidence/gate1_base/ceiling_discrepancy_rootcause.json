@@ -1,0 +1,339 @@
+{
+  "purpose": "root-cause the gold-ceiling discrepancy between NUMBER_AUDIT.md:284 (wzc1) and Gate 1's zwfy6 re-measurement",
+  "gpu_used": "ZERO",
+  "n_rows_both": 1033,
+  "task_id_sets_identical": true,
+  "ceilings": {
+    "wzc1_quoted_in_kill_gate": {
+      "gold_ceiling_base": 0.989351403678606,
+      "gold_ceiling_plus": 0.8025169409486931,
+      "source": "data/infilling/HumanEval-SingleLineInfilling.jsonl",
+      "sha256_of_record": "007baa0924f9e750ae14b043f9f545da23c01e2f4768e4ecb2bdbe05ff30423f"
+    },
+    "zwfy6_gate1_remeasurement": {
+      "gold_ceiling_base": 1.0,
+      "gold_ceiling_plus": 0.8121974830590513,
+      "source": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/dllm_draft_104/data/humaneval_infilling/HumanEval-SingleLineInfilling.jsonl"
+    }
+  },
+  "base_axis_discrepancy": {
+    "n_items": 11,
+    "distinct_base_problems": [
+      "HumanEval/32"
+    ],
+    "entry_point": "find_zero",
+    "direction": "wzc1 FAIL -> zwfy6 PASS (zwfy6 is the correct one)",
+    "items": [
+      {
+        "task_id": "SingleLineInfilling/HumanEval/32/L0",
+        "base_problem": "HumanEval/32",
+        "wzc1_pass": false,
+        "wzc1_why": "fail",
+        "zwfy6_pass": true,
+        "zwfy6_why": null
+      },
+      {
+        "task_id": "SingleLineInfilling/HumanEval/32/L1",
+        "base_problem": "HumanEval/32",
+        "wzc1_pass": false,
+        "wzc1_why": "fail",
+        "zwfy6_pass": true,
+        "zwfy6_why": null
+      },
+      {
+        "task_id": "SingleLineInfilling/HumanEval/32/L10",
+        "base_problem": "HumanEval/32",
+        "wzc1_pass": false,
+        "wzc1_why": "fail",
+        "zwfy6_pass": true,
+        "zwfy6_why": null
+      },
+      {
+        "task_id": "SingleLineInfilling/HumanEval/32/L2",
+        "base_problem": "HumanEval/32",
+        "wzc1_pass": false,
+        "wzc1_why": "fail",
+        "zwfy6_pass": true,
+        "zwfy6_why": null
+      },
+      {
+        "task_id": "SingleLineInfilling/HumanEval/32/L3",
+        "base_problem": "HumanEval/32",
+        "wzc1_pass": false,
+        "wzc1_why": "fail",
+        "zwfy6_pass": true,
+        "zwfy6_why": null
+      },
+      {
+        "task_id": "SingleLineInfilling/HumanEval/32/L4",
+        "base_problem": "HumanEval/32",
+        "wzc1_pass": false,
+        "wzc1_why": "fail",
+        "zwfy6_pass": true,
+        "zwfy6_why": null
+      },
+      {
+        "task_id": "SingleLineInfilling/HumanEval/32/L5",
+        "base_problem": "HumanEval/32",
+        "wzc1_pass": false,
+        "wzc1_why": "fail",
+        "zwfy6_pass": true,
+        "zwfy6_why": null
+      },
+      {
+        "task_id": "SingleLineInfilling/HumanEval/32/L6",
+        "base_problem": "HumanEval/32",
+        "wzc1_pass": false,
+        "wzc1_why": "fail",
+        "zwfy6_pass": true,
+        "zwfy6_why": null
+      },
+      {
+        "task_id": "SingleLineInfilling/HumanEval/32/L7",
+        "base_problem": "HumanEval/32",
+        "wzc1_pass": false,
+        "wzc1_why": "fail",
+        "zwfy6_pass": true,
+        "zwfy6_why": null
+      },
+      {
+        "task_id": "SingleLineInfilling/HumanEval/32/L8",
+        "base_problem": "HumanEval/32",
+        "wzc1_pass": false,
+        "wzc1_why": "fail",
+        "zwfy6_pass": true,
+        "zwfy6_why": null
+      },
+      {
+        "task_id": "SingleLineInfilling/HumanEval/32/L9",
+        "base_problem": "HumanEval/32",
+        "wzc1_pass": false,
+        "wzc1_why": "fail",
+        "zwfy6_pass": true,
+        "zwfy6_why": null
+      }
+    ],
+    "ROOT_CAUSE": "evalplus VERSION. wzc1 ceiling ran PyPI evalplus 0.3.1, whose find_zero special-oracle branch in eval/__init__.py:unsafe_execute `continue`s WITHOUT setting details[i]=True / progress.value+=1. untrusted_check therefore returns details=[] and the `len(details) != len(inputs)` guard rewrites PASS as FAIL. zwfy6 ran the repo's vendored evalplus (upstream 26d6d00), which sets both before continue.",
+    "measured_proof": {
+      "probe_item": "SingleLineInfilling/HumanEval/32/L0",
+      "pypi_0_3_1": {
+        "status": "fail",
+        "n_details": 0,
+        "n_inputs": 100,
+        "n_pass": 0
+      },
+      "vendored_26d6d00": {
+        "status": "pass",
+        "n_details": 100,
+        "n_inputs": 100,
+        "n_pass": 100
+      },
+      "note": "same host, same data files, same grade wrapper; only PYTHONPATH differs -> version is the sole variable"
+    },
+    "arithmetic_check": {
+      "n_rows": 1033,
+      "wzc1_n_base_pass": 1022,
+      "wzc1_ceiling_recomputed": 0.989351403678606,
+      "zwfy6_n_base_pass": 1033,
+      "zwfy6_ceiling_recomputed": 1.0
+    }
+  },
+  "plus_axis_discrepancy": {
+    "n_items": 10,
+    "distinct_base_problems": [
+      "HumanEval/130",
+      "HumanEval/15"
+    ],
+    "entry_points": [
+      "tri (HumanEval/130)",
+      "string_sequence (HumanEval/15)"
+    ],
+    "direction": "wzc1 FAIL -> zwfy6 PASS (zwfy6 is the correct one)",
+    "items": [
+      {
+        "task_id": "SingleLineInfilling/HumanEval/130/L0",
+        "base_problem": "HumanEval/130",
+        "wzc1_pass": false,
+        "wzc1_why": "fail",
+        "zwfy6_pass": true,
+        "zwfy6_why": null
+      },
+      {
+        "task_id": "SingleLineInfilling/HumanEval/130/L1",
+        "base_problem": "HumanEval/130",
+        "wzc1_pass": false,
+        "wzc1_why": "fail",
+        "zwfy6_pass": true,
+        "zwfy6_why": null
+      },
+      {
+        "task_id": "SingleLineInfilling/HumanEval/130/L2",
+        "base_problem": "HumanEval/130",
+        "wzc1_pass": false,
+        "wzc1_why": "fail",
+        "zwfy6_pass": true,
+        "zwfy6_why": null
+      },
+      {
+        "task_id": "SingleLineInfilling/HumanEval/130/L3",
+        "base_problem": "HumanEval/130",
+        "wzc1_pass": false,
+        "wzc1_why": "fail",
+        "zwfy6_pass": true,
+        "zwfy6_why": null
+      },
+      {
+        "task_id": "SingleLineInfilling/HumanEval/130/L4",
+        "base_problem": "HumanEval/130",
+        "wzc1_pass": false,
+        "wzc1_why": "fail",
+        "zwfy6_pass": true,
+        "zwfy6_why": null
+      },
+      {
+        "task_id": "SingleLineInfilling/HumanEval/130/L5",
+        "base_problem": "HumanEval/130",
+        "wzc1_pass": false,
+        "wzc1_why": "fail",
+        "zwfy6_pass": true,
+        "zwfy6_why": null
+      },
+      {
+        "task_id": "SingleLineInfilling/HumanEval/130/L6",
+        "base_problem": "HumanEval/130",
+        "wzc1_pass": false,
+        "wzc1_why": "fail",
+        "zwfy6_pass": true,
+        "zwfy6_why": null
+      },
+      {
+        "task_id": "SingleLineInfilling/HumanEval/130/L7",
+        "base_problem": "HumanEval/130",
+        "wzc1_pass": false,
+        "wzc1_why": "fail",
+        "zwfy6_pass": true,
+        "zwfy6_why": null
+      },
+      {
+        "task_id": "SingleLineInfilling/HumanEval/130/L8",
+        "base_problem": "HumanEval/130",
+        "wzc1_pass": false,
+        "wzc1_why": "fail",
+        "zwfy6_pass": true,
+        "zwfy6_why": null
+      },
+      {
+        "task_id": "SingleLineInfilling/HumanEval/15/L0",
+        "base_problem": "HumanEval/15",
+        "wzc1_pass": false,
+        "wzc1_why": "fail",
+        "zwfy6_pass": true,
+        "zwfy6_why": null
+      }
+    ],
+    "ROOT_CAUSE": "SANDBOX MEMORY CAP, not version. evalplus's query_maximum_memory_bytes() defaults to 4 GiB and reliability_guard() applies it as RLIMIT_AS/RLIMIT_DATA inside the grading subprocess. These tasks' plus_input includes n ~ 1e6 whose reference output is a ~1e6-element list; allocating it exceeds 4 GiB of address space once the interpreter's own footprint counts. The resulting MemoryError is swallowed by unsafe_execute's `except BaseException` and recorded as a wrong answer. Whether it trips depends on the host's baseline footprint, so it is HOST-dependent and reproduces on LOCAL even with the vendored evalplus.",
+    "measured_proof": {
+      "probe_item": "SingleLineInfilling/HumanEval/130/L0",
+      "host": "LOCAL (wzc1), vendored evalplus, numpy 2.4.6",
+      "rlimit_as_4GiB_default": {
+        "n_fail": 7,
+        "n_inputs": 125,
+        "exception": "MemoryError",
+        "failing_arg": "n=999999 etc."
+      },
+      "rlimit_as_unlimited": {
+        "n_fail": 0,
+        "n_inputs": 125,
+        "status": "pass"
+      },
+      "cross_host_same_version": {
+        "LOCAL_wzc1_vendored": "fail 118/125",
+        "node_73_zwfy6_vendored": "pass 125/125"
+      },
+      "determinism": "3 repeats on LOCAL all give fail 118/125 -> deterministic per host, not wall-clock jitter"
+    }
+  },
+  "ruled_out_by_measurement": {
+    "split_data_file_md5": {
+      "wzc1": "30129634e180d80c19d6ddcd4cf43f9c",
+      "zwfy6": "30129634e180d80c19d6ddcd4cf43f9c",
+      "identical": true
+    },
+    "humanevalplus_v0_1_10_md5": {
+      "wzc1": "fe585eb4df8c88d844eeb463ea4d0302",
+      "zwfy6": "fe585eb4df8c88d844eeb463ea4d0302",
+      "identical": true
+    },
+    "get_human_eval_plus_hash": {
+      "wzc1": "fe585eb4df8c88d844eeb463ea4d0302",
+      "zwfy6": "fe585eb4df8c88d844eeb463ea4d0302",
+      "identical": true
+    },
+    "expected_outputs_md5_repr": {
+      "checked": [
+        "HumanEval/32",
+        "HumanEval/130",
+        "HumanEval/15",
+        "HumanEval/63"
+      ],
+      "axes": [
+        "base",
+        "plus"
+      ],
+      "identical_on_both_disks": true,
+      "note": "the on-disk groundtruth .pkl md5 DOES differ across disks (7f1bfa50... vs ded78f78...), but that is pickle container nondeterminism -- the decoded expected values are byte-identical, so it is not the cause"
+    },
+    "vendored_evalplus_eval_init_md5": {
+      "wzc1": "bcd21dfd412e10b6825fab093428d579",
+      "zwfy6": "bcd21dfd412e10b6825fab093428d579",
+      "identical": true,
+      "note": "the vendored copies match; the wzc1 CEILING RUN simply did not import the vendored copy -- its venv resolves `import evalplus` to site-packages 0.3.1"
+    },
+    "grade_wrapper_semantics": "wzc1 spanlen_gold_ceiling._grade and zwfy6 score_infilling.grade_one build inputs/expected/ref_time identically, both use min_time_limit=1.0, gt_time_limit_factor=4.0, fast_check=False, and the same acceptance rule",
+    "numpy_version": {
+      "LOCAL_wzc1": "2.4.6",
+      "node_73_zwfy6": "1.26.4",
+      "is_the_cause": false,
+      "note": "the ~1e6 comparisons that fail raise MemoryError before any allclose; lifting RLIMIT_AS on the SAME numpy 2.4.6 makes them pass"
+    }
+  },
+  "which_ceiling_is_authoritative": {
+    "verdict": "zwfy6 / Gate 1 (base 1.0, plus 0.8122)",
+    "why": "both discrepancies are wzc1-side defects with identified mechanisms (a fixed upstream grader bug, and a sandbox address-space cap that silently converts MemoryError into a wrong answer). Neither is a property of the benchmark.",
+    "NUMBER_AUDIT_line_284_status": "SUPERSEDED -- flagged via dated append-only note, original line left byte-intact per LIFECYCLE_SCHEMA.md sec 0"
+  },
+  "effect_on_gate_1_decidability": {
+    "kill_condition_depends_on_ceiling": false,
+    "why": "kill_gate.gate_1.kill_if is a function of the qwen_fim vs dreamon_oracle paired contrast only (significance at alpha=0.05 AND |delta|<0.02). The ceiling appears in the condition solely as the parenthetical precondition 'gold ceiling 0.9894, so >=98% of items feasible'.",
+    "precondition_under_new_number": "base ceiling 1.0 = 100% feasible, which is STRICTLY MORE PERMISSIVE than the pre-registered >=98%. The precondition is satisfied a fortiori.",
+    "thresholds_unchanged": "alpha=0.05 and |delta|<0.02 retained verbatim; NOT rewritten because the ceiling moved",
+    "adjudicated_on_both_readings": true,
+    "conclusion": "Gate 1 remains fully decidable and the verdict is identical under either ceiling (see gate1_base_stats.json PRIMARY_base_axis_all_items and ROBUSTNESS_base_axis_wzc1_gold_feasible_subset)"
+  },
+  "per_axis_why_counters": {
+    "wzc1_base": {
+      "null": 1022,
+      "fail": 11
+    },
+    "wzc1_plus": {
+      "null": 829,
+      "fail": 197,
+      "timeout": 7
+    },
+    "zwfy6_base": {
+      "null": 1033
+    },
+    "zwfy6_plus": {
+      "null": 839,
+      "fail": 194
+    }
+  },
+  "closure_assertions": {
+    "base_delta_fully_explained": true,
+    "plus_delta_fully_explained": true,
+    "n_base_pass_wzc1": 1022,
+    "n_base_pass_zwfy6": 1033,
+    "n_plus_pass_wzc1": 829,
+    "n_plus_pass_zwfy6": 839
+  }
+}
