@@ -1,0 +1,126 @@
+{
+ "aggregate": {
+  "stratum": "ALL",
+  "n": 195064,
+  "destroyed": 979,
+  "rescued": 2039,
+  "net_pp": 0.5434,
+  "canon_acc": 23.9486,
+  "notrunc_acc": 23.4051
+ },
+ "LIST": {
+  "stratum": "is_list=1 (LIST format)",
+  "n": 6337,
+  "destroyed": 558,
+  "rescued": 18,
+  "net_pp": -8.5214,
+  "canon_acc": 1.8621,
+  "notrunc_acc": 10.3835
+ },
+ "NONLIST": {
+  "stratum": "is_list=0 (non-LIST)",
+  "n": 188727,
+  "destroyed": 421,
+  "rescued": 2021,
+  "net_pp": 0.8478,
+  "canon_acc": 24.6902,
+  "notrunc_acc": 23.8424
+ },
+ "by_task": [
+  {
+   "stratum": "task=qa1",
+   "n": 47225,
+   "destroyed": 296,
+   "rescued": 804,
+   "net_pp": 1.0757,
+   "canon_acc": 29.5183,
+   "notrunc_acc": 28.4426
+  },
+  {
+   "stratum": "task=qa10",
+   "n": 2475,
+   "destroyed": 0,
+   "rescued": 0,
+   "net_pp": 0.0,
+   "canon_acc": 47.6768,
+   "notrunc_acc": 47.6768
+  },
+  {
+   "stratum": "task=qa2",
+   "n": 47317,
+   "destroyed": 199,
+   "rescued": 693,
+   "net_pp": 1.044,
+   "canon_acc": 17.0171,
+   "notrunc_acc": 15.9731
+  },
+  {
+   "stratum": "task=qa3",
+   "n": 19500,
+   "destroyed": 4,
+   "rescued": 6,
+   "net_pp": 0.0103,
+   "canon_acc": 5.9026,
+   "notrunc_acc": 5.8923
+  },
+  {
+   "stratum": "task=qa4",
+   "n": 19082,
+   "destroyed": 1,
+   "rescued": 27,
+   "net_pp": 0.1363,
+   "canon_acc": 6.4563,
+   "notrunc_acc": 6.3201
+  },
+  {
+   "stratum": "task=qa5",
+   "n": 49690,
+   "destroyed": 459,
+   "rescued": 509,
+   "net_pp": 0.1006,
+   "canon_acc": 35.2163,
+   "notrunc_acc": 35.1157
+  },
+  {
+   "stratum": "task=qa6",
+   "n": 2600,
+   "destroyed": 3,
+   "rescued": 0,
+   "net_pp": -0.1154,
+   "canon_acc": 56.6538,
+   "notrunc_acc": 56.7692
+  },
+  {
+   "stratum": "task=qa7",
+   "n": 2125,
+   "destroyed": 1,
+   "rescued": 0,
+   "net_pp": -0.0471,
+   "canon_acc": 9.7882,
+   "notrunc_acc": 9.8353
+  },
+  {
+   "stratum": "task=qa8",
+   "n": 2525,
+   "destroyed": 2,
+   "rescued": 0,
+   "net_pp": -0.0792,
+   "canon_acc": 21.6238,
+   "notrunc_acc": 21.703
+  },
+  {
+   "stratum": "task=qa9",
+   "n": 2525,
+   "destroyed": 14,
+   "rescued": 0,
+   "net_pp": -0.5545,
+   "canon_acc": 56.7921,
+   "notrunc_acc": 57.3465
+  }
+ ],
+ "sign_differs_between_strata": true,
+ "n_csv_files_scanned": 4258,
+ "n_csv_files_found": 5372,
+ "duplicates_removed": 1114,
+ "files_skipped": 18
+}

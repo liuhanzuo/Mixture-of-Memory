@@ -1,0 +1,357 @@
+{
+ "aggregate": [
+  {
+   "stratum": "ALL",
+   "n": 3000,
+   "rescued": 39,
+   "destroyed": 101,
+   "net_pp": -2.0667,
+   "canon_acc": 28.5667,
+   "notrunc_acc": 30.6333
+  }
+ ],
+ "by_is_list": [
+  {
+   "stratum": "is_list=1 (choice-list habit)",
+   "n": 1109,
+   "rescued": 3,
+   "destroyed": 92,
+   "net_pp": -8.0252,
+   "canon_acc": 1.1722,
+   "notrunc_acc": 9.1975
+  },
+  {
+   "stratum": "is_list=0 (non-list)",
+   "n": 1891,
+   "rescued": 36,
+   "destroyed": 9,
+   "net_pp": 1.4278,
+   "canon_acc": 44.6325,
+   "notrunc_acc": 43.2047
+  }
+ ],
+ "by_task": [
+  {
+   "stratum": "task=qa1",
+   "n": 1000,
+   "rescued": 13,
+   "destroyed": 64,
+   "net_pp": -5.1,
+   "canon_acc": 20.7,
+   "notrunc_acc": 25.8
+  },
+  {
+   "stratum": "task=qa2",
+   "n": 1000,
+   "rescued": 2,
+   "destroyed": 25,
+   "net_pp": -2.3,
+   "canon_acc": 7.9,
+   "notrunc_acc": 10.2
+  },
+  {
+   "stratum": "task=qa5",
+   "n": 1000,
+   "rescued": 24,
+   "destroyed": 12,
+   "net_pp": 1.2,
+   "canon_acc": 57.1,
+   "notrunc_acc": 55.9
+  }
+ ],
+ "by_task_x_islist": [
+  {
+   "stratum": "task=qa1, is_list=1",
+   "n": 577,
+   "rescued": 3,
+   "destroyed": 62,
+   "net_pp": -10.2253,
+   "canon_acc": 1.5598,
+   "notrunc_acc": 11.7851
+  },
+  {
+   "stratum": "task=qa1, is_list=0",
+   "n": 423,
+   "rescued": 10,
+   "destroyed": 2,
+   "net_pp": 1.8913,
+   "canon_acc": 46.8085,
+   "notrunc_acc": 44.9173
+  },
+  {
+   "stratum": "task=qa2, is_list=1",
+   "n": 501,
+   "rescued": 0,
+   "destroyed": 25,
+   "net_pp": -4.99,
+   "canon_acc": 0.5988,
+   "notrunc_acc": 5.5888
+  },
+  {
+   "stratum": "task=qa2, is_list=0",
+   "n": 499,
+   "rescued": 2,
+   "destroyed": 0,
+   "net_pp": 0.4008,
+   "canon_acc": 15.2305,
+   "notrunc_acc": 14.8297
+  },
+  {
+   "stratum": "task=qa5, is_list=1",
+   "n": 31,
+   "rescued": 0,
+   "destroyed": 5,
+   "net_pp": -16.129,
+   "canon_acc": 3.2258,
+   "notrunc_acc": 19.3548
+  },
+  {
+   "stratum": "task=qa5, is_list=0",
+   "n": 969,
+   "rescued": 24,
+   "destroyed": 7,
+   "net_pp": 1.7544,
+   "canon_acc": 58.8235,
+   "notrunc_acc": 57.0691
+  }
+ ],
+ "by_arm": [
+  {
+   "stratum": "arm=A0",
+   "n": 600,
+   "rescued": 12,
+   "destroyed": 14,
+   "net_pp": -0.3333,
+   "canon_acc": 35.0,
+   "notrunc_acc": 35.3333
+  },
+  {
+   "stratum": "arm=A2",
+   "n": 600,
+   "rescued": 4,
+   "destroyed": 21,
+   "net_pp": -2.8333,
+   "canon_acc": 30.6667,
+   "notrunc_acc": 33.5
+  },
+  {
+   "stratum": "arm=A3",
+   "n": 600,
+   "rescued": 7,
+   "destroyed": 20,
+   "net_pp": -2.1667,
+   "canon_acc": 27.5,
+   "notrunc_acc": 29.6667
+  },
+  {
+   "stratum": "arm=A4",
+   "n": 600,
+   "rescued": 8,
+   "destroyed": 31,
+   "net_pp": -3.8333,
+   "canon_acc": 25.6667,
+   "notrunc_acc": 29.5
+  },
+  {
+   "stratum": "arm=A5",
+   "n": 600,
+   "rescued": 8,
+   "destroyed": 15,
+   "net_pp": -1.1667,
+   "canon_acc": 24.0,
+   "notrunc_acc": 25.1667
+  }
+ ],
+ "by_arm_x_islist": [
+  {
+   "stratum": "arm=A0, is_list=1",
+   "n": 187,
+   "rescued": 0,
+   "destroyed": 12,
+   "net_pp": -6.4171,
+   "canon_acc": 2.139,
+   "notrunc_acc": 8.5561
+  },
+  {
+   "stratum": "arm=A0, is_list=0",
+   "n": 413,
+   "rescued": 12,
+   "destroyed": 2,
+   "net_pp": 2.4213,
+   "canon_acc": 49.8789,
+   "notrunc_acc": 47.4576
+  },
+  {
+   "stratum": "arm=A2, is_list=1",
+   "n": 239,
+   "rescued": 0,
+   "destroyed": 20,
+   "net_pp": -8.3682,
+   "canon_acc": 0.4184,
+   "notrunc_acc": 8.7866
+  },
+  {
+   "stratum": "arm=A2, is_list=0",
+   "n": 361,
+   "rescued": 4,
+   "destroyed": 1,
+   "net_pp": 0.831,
+   "canon_acc": 50.6925,
+   "notrunc_acc": 49.8615
+  },
+  {
+   "stratum": "arm=A3, is_list=1",
+   "n": 267,
+   "rescued": 1,
+   "destroyed": 18,
+   "net_pp": -6.367,
+   "canon_acc": 1.4981,
+   "notrunc_acc": 7.8652
+  },
+  {
+   "stratum": "arm=A3, is_list=0",
+   "n": 333,
+   "rescued": 6,
+   "destroyed": 2,
+   "net_pp": 1.2012,
+   "canon_acc": 48.3483,
+   "notrunc_acc": 47.1471
+  },
+  {
+   "stratum": "arm=A4, is_list=1",
+   "n": 275,
+   "rescued": 2,
+   "destroyed": 27,
+   "net_pp": -9.0909,
+   "canon_acc": 1.0909,
+   "notrunc_acc": 10.1818
+  },
+  {
+   "stratum": "arm=A4, is_list=0",
+   "n": 325,
+   "rescued": 6,
+   "destroyed": 4,
+   "net_pp": 0.6154,
+   "canon_acc": 46.4615,
+   "notrunc_acc": 45.8462
+  },
+  {
+   "stratum": "arm=A5, is_list=1",
+   "n": 141,
+   "rescued": 0,
+   "destroyed": 15,
+   "net_pp": -10.6383,
+   "canon_acc": 0.7092,
+   "notrunc_acc": 11.3475
+  },
+  {
+   "stratum": "arm=A5, is_list=0",
+   "n": 459,
+   "rescued": 8,
+   "destroyed": 0,
+   "net_pp": 1.7429,
+   "canon_acc": 31.1547,
+   "notrunc_acc": 29.4118
+  }
+ ],
+ "by_cell": [
+  {
+   "stratum": "cell=qa1|16k",
+   "n": 500,
+   "rescued": 8,
+   "destroyed": 29,
+   "net_pp": -4.2,
+   "canon_acc": 22.6,
+   "notrunc_acc": 26.8
+  },
+  {
+   "stratum": "cell=qa1|32k",
+   "n": 500,
+   "rescued": 5,
+   "destroyed": 35,
+   "net_pp": -6.0,
+   "canon_acc": 18.8,
+   "notrunc_acc": 24.8
+  },
+  {
+   "stratum": "cell=qa2|16k",
+   "n": 500,
+   "rescued": 2,
+   "destroyed": 10,
+   "net_pp": -1.6,
+   "canon_acc": 11.0,
+   "notrunc_acc": 12.6
+  },
+  {
+   "stratum": "cell=qa2|32k",
+   "n": 500,
+   "rescued": 0,
+   "destroyed": 15,
+   "net_pp": -3.0,
+   "canon_acc": 4.8,
+   "notrunc_acc": 7.8
+  },
+  {
+   "stratum": "cell=qa5|16k",
+   "n": 500,
+   "rescued": 9,
+   "destroyed": 6,
+   "net_pp": 0.6,
+   "canon_acc": 57.0,
+   "notrunc_acc": 56.4
+  },
+  {
+   "stratum": "cell=qa5|32k",
+   "n": 500,
+   "rescued": 15,
+   "destroyed": 6,
+   "net_pp": 1.8,
+   "canon_acc": 57.2,
+   "notrunc_acc": 55.4
+  }
+ ],
+ "list_format_rate_pct": {
+  "qa1|16k": {
+   "A0": 48.0,
+   "A2": 58.0,
+   "A3": 65.0,
+   "A4": 62.0,
+   "A5": 31.0
+  },
+  "qa1|32k": {
+   "A0": 54.0,
+   "A2": 67.0,
+   "A3": 75.0,
+   "A4": 75.0,
+   "A5": 42.0
+  },
+  "qa2|16k": {
+   "A0": 42.0,
+   "A2": 56.0,
+   "A3": 59.0,
+   "A4": 60.0,
+   "A5": 25.0
+  },
+  "qa2|32k": {
+   "A0": 37.0,
+   "A2": 53.0,
+   "A3": 63.0,
+   "A4": 74.0,
+   "A5": 32.0
+  },
+  "qa5|16k": {
+   "A0": 2.0,
+   "A2": 2.0,
+   "A3": 2.0,
+   "A4": 2.0,
+   "A5": 6.0
+  },
+  "qa5|32k": {
+   "A0": 4.0,
+   "A2": 3.0,
+   "A3": 3.0,
+   "A4": 2.0,
+   "A5": 5.0
+  }
+ }
+}
