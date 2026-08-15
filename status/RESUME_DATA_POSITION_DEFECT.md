@@ -149,3 +149,82 @@ eleven samples.
 *t-statistic over all checks*, not the magnitude of the latest one. A single check
 crossing 0.5 σ is expected; what would matter is |t| > 2.228, or a monotone run long
 enough to be improbable. Neither has happened.
+
+---
+
+## §12 (2026-08-15 19:0x) — check #12 crossed the t-threshold's neighbourhood, and
+## the test turned out to be **structurally invalid**. Retracting the check series.
+
+Check #12 came in at diff **−0.0126 = −0.726 σ**, the largest excursion yet, and it
+pushed the running t to **−1.969** (df = 11, crit 2.201). That is close enough to my own
+§11 threshold that I stopped and asked what would happen if it crossed — and found the
+test cannot support the conclusion either way.
+
+### The defect in my own test
+
+Every check compared a 30-line window mean against the **fixed** pre-kill reference
+2.5549 ± 0.0174, measured at **step 90000**. But keep10 is *training*. The reference is a
+constant while the quantity being compared to it is on a descending learning curve. So
+the test accumulates bias in proportion to distance from step 90000:
+
+| quantity | value |
+|---|---|
+| clean-tail fit (steps 93540-112400, n = 946) | loss = 2.6553 **−0.00098 / 1000 steps** |
+| steps elapsed since the reference | 22400 |
+| **bias from learning progress alone** | **−0.0222 = −1.27 σ** |
+| observed diff at check #12 | −0.0116 = −0.66 σ |
+| **residual (observed − expected)** | **+0.0106 = +0.61 σ** |
+
+The drift I was tracking as a possible signal is **smaller than the bias built into the
+test**. Worse, once the bias is removed the residual is *positive* — loss slightly above
+the curve, i.e. the **opposite** sign to what the defect predicts. Checks 1-12 measured
+"how far has training progressed since step 90000", with the defect's effect buried
+inside it. **The series is retracted, not merely re-thresholded.**
+
+This is the same error as §11 one level up: there I fixed an under-specified *threshold*
+while leaving the *statistic* unexamined. A threshold cannot rescue a biased estimator.
+
+### The test the defect actually predicts
+
+The defect is that `iter(loader)` restarts at batch 0, so the first ~3200 steps after a
+resume **re-consume data the model has already seen**. The prediction is therefore local
+and specific: the **replay window** should read *low* against the model's own learning
+curve, and the tail should not. Fitting the curve on the clean tail (which excludes the
+replay window by construction) and evaluating the replay window against it:
+
+| window | steps | n | mean residual | in resid-σ | t |
+|---|---|---|---|---|---|
+| clean tail | 93540-112400 | 946 | 0 (by construction) | — | — |
+| **replay** | **90020-93520** | **176** | **−0.0778** | **−4.15 σ** | **−48.7** (df 175) |
+
+resid σ = 0.0188. **Direction as predicted, magnitude 4.15 σ, t = −48.7.**
+
+### Two confounds, both killed at source rather than argued away
+
+1. **Curve convexity.** A straight line fitted to the tail and extrapolated *backwards*
+   under a convex-decreasing loss curve under-predicts the earlier loss, i.e. biases the
+   replay residual **positive**. Convexity therefore works *against* the finding; the
+   −4.15 σ survives it rather than being produced by it.
+2. **LR re-warm.** A lower LR during replay would also lower loss. Testable, because the
+   trainer logs `lr` per line — not inferable, and I did not infer it:
+   - lr is **monotone non-increasing across the entire post-resume span** → no re-warm.
+     (Consistent with `train_olmo2_arch_probe2.py:983`, "LR resumes on cosine curve at
+     ckpt step".)
+   - replay window lr = **1.190e-05 … 1.240e-05**; tail lr = **9.260e-06 … 1.190e-05**.
+   - the replay window holds the **highest** LR in the span. A high LR *raises* loss, so
+     this confound also pushes against the finding.
+
+### Standing corrections
+
+- **Do not resume the fixed-reference check series.** It is a progress meter, not a
+  defect probe. If it appears in any writeup, it must be cited as retracted.
+- The defect's evidence is the **replay-window residual against a clean-tail fit**,
+  re-derived from the log each time (the fit's intercept moves as the tail grows).
+- Generalisation: *comparing a moving quantity to a fixed historical reference measures
+  the motion, not the effect.* Before pre-registering a threshold, check whether the
+  statistic is unbiased under the null — a threshold on a biased estimator is decoration.
+- What this does **not** establish: any downstream harm. ~3200 duplicated steps out of
+  110000 is 2.9% of the resume segment; the tail returns to its own curve with no level
+  shift. The writeup consequence remains the one already recorded — the three arms had
+  warm restarts at different progress fractions, so "all arms at 200k" is not a matched
+  budget claim.
