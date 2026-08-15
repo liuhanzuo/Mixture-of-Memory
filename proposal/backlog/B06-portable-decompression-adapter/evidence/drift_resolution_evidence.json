@@ -1,0 +1,875 @@
+{
+  "_what": "B06 drift-resolution leg. Every number recomputed from per-item raw records; nothing copied from STATUS.json.",
+  "_generated": "2026-08-15T23:20:06+08:00",
+  "_generator": "proposal/backlog/B06-portable-decompression-adapter/evidence/build_drift_evidence.py",
+  "_git_commit": "b0c5ea1",
+  "_gpu_used": "none. CPU only. No ssh to any node. No judge API call.",
+  "_python": "3.14.6",
+  "the_four_numbers": {
+    "_ruler_warning": "8.11 and 13.29 live on the blended n=1986 ruler (mixed instrument); 16.69 / 39.81 / 10.13 / 15.45 live on the single-instrument Judge_1:4 n=1540 ruler.",
+    "canonical_hcache_8_11": {
+      "published_as": 8.11,
+      "published_at": "status/PAPERA_RESULTS_CONSOLIDATED.md:175, status/LOCOMO_JUDGE_AGGREGATE.md:21",
+      "recomputed": 8.1067472306143,
+      "n": 1986,
+      "instrument": "MIXED (1540 gpt-4o + 446 refusal regex)",
+      "status_json_claim_mixed_instrument_n1986": "CONFIRMED",
+      "provenance_of_raw_records": "locomo_results/hcache_8b_chatFALSE/ on zwfy6 (.73/.104). NOT on wzc1: an exhaustive scan of all 32 judge_cache*.jsonl and all 67 scores.json under the wzc1 root found no run with 156/1540. zwfy6 is not mounted on this node and ssh was forbidden for this task.",
+      "recovered_on_wzc1_instead": "locomo_results_openjudge_qwen3_MIRROR/hcache_8b_chatFALSE/ -- a second judge over the SAME predictions, whose judge-independent columns (f1 4.67 / acc 6.29 / em 0.25) match the published canonical row exactly."
+    },
+    "canonical_judge_1_4_counterpart_10_13": {
+      "published_as": 10.13,
+      "published_at": "status/PAPERA_RESULTS_CONSOLIDATED.md:175",
+      "recomputed": 10.12987012987013,
+      "n": 1540,
+      "instrument": "single (gpt-4o)",
+      "status_json_claim_already_converted": "CONFIRMED",
+      "derivation": {
+        "method": "brute-force inversion of published rounded percentages; uniqueness asserted rather than assumed",
+        "route_A_per_category": {
+          "1": {
+            "published_pct": 6.74,
+            "n": 282,
+            "integer_counts_consistent": [
+              19
+            ],
+            "unique": true
+          },
+          "2": {
+            "published_pct": 2.49,
+            "n": 321,
+            "integer_counts_consistent": [
+              8
+            ],
+            "unique": true
+          },
+          "3": {
+            "published_pct": 9.38,
+            "n": 96,
+            "integer_counts_consistent": [
+              9
+            ],
+            "unique": true
+          },
+          "4": {
+            "published_pct": 14.27,
+            "n": 841,
+            "integer_counts_consistent": [
+              120
+            ],
+            "unique": true
+          },
+          "5": {
+            "published_pct": 1.12,
+            "n": 446,
+            "integer_counts_consistent": [
+              5
+            ],
+            "unique": true
+          }
+        },
+        "route_A_implies_cat1_4_correct": 156,
+        "route_A_implies_cat5_correct": 5,
+        "route_B_from_blended_8_11": {
+          "solutions": [
+            156
+          ],
+          "unique": true
+        },
+        "route_C_from_published_judge_1_4_10_13": {
+          "solutions": [
+            156
+          ],
+          "unique": true
+        },
+        "all_three_routes_agree": true,
+        "canonical_judge_1_4_n_correct": 156,
+        "canonical_cat5_regex_n_correct": 5,
+        "canonical_blended_n1986_RECOMPUTED": 8.1067472306143,
+        "canonical_judge_1_4_RECOMPUTED": 10.12987012987013
+      }
+    },
+    "b06_control_16_69": {
+      "published_as": 16.69,
+      "recomputed": 16.68831168831169,
+      "n": 1540,
+      "instrument": "single (gpt-4o)",
+      "status_json_claim_single_instrument_n1540": "CONFIRMED"
+    },
+    "b06_treatment_39_81": {
+      "published_as": 39.81,
+      "recomputed": 39.8051948051948,
+      "n": 1540,
+      "instrument": "single (gpt-4o)",
+      "status_json_claim_single_instrument_n1540": "CONFIRMED"
+    },
+    "third_replicate_15_45": {
+      "published_as": 15.4545,
+      "recomputed": 15.454545454545455,
+      "n": 1540,
+      "instrument": "single (gpt-4o)"
+    }
+  },
+  "same_ruler_comparison": {
+    "_the_gate_question": "how much of the 8.11-vs-13.29 'cross-node drift' survives once both endpoints are on the Judge_1:4 n=1540 ruler?",
+    "blended_n1986_ruler": {
+      "canonical_vs_b06_control_pp": 5.186304128902318,
+      "canonical_vs_older_local_pp": 4.1792547834843905,
+      "older_local_vs_b06_control_pp": 1.0070493454179275
+    },
+    "judge_1_4_n1540_ruler": {
+      "canonical_vs_b06_control_pp": 6.558441558441556,
+      "canonical_vs_older_local_pp": 5.324675324675326,
+      "older_local_vs_b06_control_pp": 1.2337662337662305
+    },
+    "does_the_drift_vanish_on_one_ruler": false,
+    "it_gets_LARGER": "5.1863 pp blended -> 6.5584 pp on Judge_1:4, because the two endpoints are deflated unequally by the constant cat-5 term."
+  },
+  "attribution": {
+    "logic": "F1 and acc are deterministic functions of the predictions ONLY -- no judge, no API, no sampling. A real change in generation quality must move them. A judge artefact cannot.",
+    "calibration_on_a_known_real_change_the_LoRA_arm": {
+      "judge_1_4_delta_pp": 23.116883116883116,
+      "f1_1_4_delta_pp": 3.8375567904599297,
+      "acc_1_4_delta_pp": 14.675324675324678,
+      "slope_f1_pp_per_judge_pp": 0.16600667014910933,
+      "slope_acc_pp_per_judge_pp": 0.6348314606741574
+    },
+    "applied_to_the_canonical_drift": {
+      "judge_1_4_drift_pp": 6.558441558441556,
+      "predicted_f1_movement_if_real_pp": 1.088745044484418,
+      "observed_f1_movement_pp": 0.004452002300683766,
+      "observed_over_predicted_f1_pct": 0.40891137215619106,
+      "predicted_acc_movement_if_real_pp": 4.163505034291551,
+      "observed_acc_movement_pp": 0.324675324675324,
+      "observed_over_predicted_acc_pct": 7.798124945237872,
+      "generation_attributable_share_via_f1_pct": 0.40891137215619106,
+      "generation_attributable_share_via_acc_pct": 7.798124945237871,
+      "judge_attributable_share_via_f1_pct": 99.5910886278438,
+      "judge_attributable_share_via_acc_pct": 92.20187505476213
+    },
+    "three_noLoRA_replicates_on_the_n1540_ruler": {
+      "canonical": {
+        "f1_1_4": 5.697789981587834,
+        "acc_1_4": 7.792207792207792,
+        "gpt4o_judge_1_4": 10.12987012987013
+      },
+      "older_local": {
+        "f1_1_4": 5.707033150025883,
+        "acc_1_4": 7.857142857142857,
+        "gpt4o_judge_1_4": 15.454545454545455
+      },
+      "b06_control": {
+        "f1_1_4": 5.702241983888518,
+        "acc_1_4": 8.116883116883116,
+        "gpt4o_judge_1_4": 16.688311688311686
+      }
+    },
+    "relative_spread_across_the_three_replicates_pct": {
+      "f1_1_4": 0.1622237475919235,
+      "acc_1_4": 4.166666666666658,
+      "gpt4o_judge_1_4": 64.74358974358972
+    }
+  },
+  "judge_noise_floor": {
+    "design": "hcache (generated 07-09/10, judged 07-18) vs hcache_j12_noLoRA_chatFALSE (generated + judged 07-25). Both gpt-4o, both n=1540, identical id sets. On the subset where the prediction STRING is byte-identical the judge input is literally the same, so any verdict change is judge non-determinism.",
+    "n_paired": 1540,
+    "n_byte_identical_predictions": 879,
+    "pct_byte_identical": 57.077922077922075,
+    "n_differing_predictions": 661,
+    "identical_subset_flips": {
+      "zero_to_one": 13,
+      "one_to_zero": 14,
+      "total": 27,
+      "pct_of_subset": 3.0716723549488054,
+      "net": -1
+    },
+    "differing_subset_flips": {
+      "zero_to_one": 37,
+      "one_to_zero": 17,
+      "net": 20
+    },
+    "per_item_flip_probability": 0.030716723549488054,
+    "flips_are_symmetric": true,
+    "sd_of_net_change_at_n1540_items": 6.877772478514508,
+    "interpretation": "judge non-determinism is ~3% per item but SYMMETRIC, so it moves the aggregate by only ~+-0.45 pp (1 sd), NOT by 6.6 pp. It explains the 1.23 pp local-vs-local wobble, not the canonical gap.",
+    "sigma_of_each_observed_gap": {
+      "canonical_vs_B06_control_101_items": 14.684987082011533,
+      "canonical_vs_older_local_82_items": 11.922464759652929,
+      "older_local_vs_B06_control_19_items": 2.7625223223586053
+    },
+    "local_vs_local_gap_decomposition": {
+      "net_items": 19,
+      "from_byte_identical_predictions_pure_judge_noise": -1,
+      "from_differing_predictions": 20
+    }
+  },
+  "cross_judge_outlier_test": {
+    "what_this_tests": "If the canonical gpt-4o HCache score were a faithful measurement, its open-judge/gpt-4o ratio should sit inside the range spanned by the five sibling methods graded in the SAME two judge passes.",
+    "per_method": {
+      "qcmem_8b_iter_chatFALSE": {
+        "gpt4o_judge_1_4": 48.63636363636363,
+        "open_judge_1_4": 66.42857142857143,
+        "ratio_open_over_gpt4o": 1.3658210947930576
+      },
+      "kvdirect_8b_chatFALSE": {
+        "gpt4o_judge_1_4": 43.83116883116883,
+        "open_judge_1_4": 64.0909090909091,
+        "ratio_open_over_gpt4o": 1.4622222222222223
+      },
+      "streamingllm_8b_chatFALSE": {
+        "gpt4o_judge_1_4": 31.038961038961038,
+        "open_judge_1_4": 51.03896103896104,
+        "ratio_open_over_gpt4o": 1.6443514644351467
+      },
+      "infllm_8b_chatFALSE": {
+        "gpt4o_judge_1_4": 26.428571428571427,
+        "open_judge_1_4": 44.41558441558441,
+        "ratio_open_over_gpt4o": 1.6805896805896805
+      },
+      "memoryllm_chatFALSE": {
+        "gpt4o_judge_1_4": 20.649350649350648,
+        "open_judge_1_4": 32.5974025974026,
+        "ratio_open_over_gpt4o": 1.578616352201258
+      },
+      "hcache_8b_chatFALSE": {
+        "gpt4o_judge_1_4": 10.12987012987013,
+        "open_judge_1_4": 34.48051948051948,
+        "ratio_open_over_gpt4o": 3.403846153846154
+      }
+    },
+    "sibling_ratios": [
+      1.3658,
+      1.4622,
+      1.5786,
+      1.6444,
+      1.6806
+    ],
+    "sibling_ratio_mean": 1.546320162848273,
+    "sibling_ratio_sd": 0.13070373035838975,
+    "hcache_ratio": 3.403846153846154,
+    "hcache_ratio_z_vs_siblings": 14.211728968289911,
+    "hcache_ratio_over_max_sibling": 2.025387989203779,
+    "implied_gpt4o_judge_1_4_if_hcache_followed_sibling_mapping": {
+      "point": 22.298434896565958,
+      "range_over_sibling_ratios": [
+        20.516917293233085,
+        25.245267928552384
+      ],
+      "vs_published_canonical_judge_1_4": 10.12987012987013,
+      "vs_local_replicates": [
+        15.454545454545455,
+        16.688311688311686
+      ]
+    },
+    "rank_inversion": {
+      "gpt4o_order": [
+        "qcmem_8b_iter_chatFALSE",
+        "kvdirect_8b_chatFALSE",
+        "streamingllm_8b_chatFALSE",
+        "infllm_8b_chatFALSE",
+        "memoryllm_chatFALSE",
+        "hcache_8b_chatFALSE"
+      ],
+      "open_order": [
+        "qcmem_8b_iter_chatFALSE",
+        "kvdirect_8b_chatFALSE",
+        "streamingllm_8b_chatFALSE",
+        "infllm_8b_chatFALSE",
+        "hcache_8b_chatFALSE",
+        "memoryllm_chatFALSE"
+      ],
+      "note": "under the open judge HCache overtakes MemoryLLM; under gpt-4o it is last"
+    }
+  },
+  "canonical_number_derivation": {
+    "method": "brute-force inversion of published rounded percentages; uniqueness asserted rather than assumed",
+    "route_A_per_category": {
+      "1": {
+        "published_pct": 6.74,
+        "n": 282,
+        "integer_counts_consistent": [
+          19
+        ],
+        "unique": true
+      },
+      "2": {
+        "published_pct": 2.49,
+        "n": 321,
+        "integer_counts_consistent": [
+          8
+        ],
+        "unique": true
+      },
+      "3": {
+        "published_pct": 9.38,
+        "n": 96,
+        "integer_counts_consistent": [
+          9
+        ],
+        "unique": true
+      },
+      "4": {
+        "published_pct": 14.27,
+        "n": 841,
+        "integer_counts_consistent": [
+          120
+        ],
+        "unique": true
+      },
+      "5": {
+        "published_pct": 1.12,
+        "n": 446,
+        "integer_counts_consistent": [
+          5
+        ],
+        "unique": true
+      }
+    },
+    "route_A_implies_cat1_4_correct": 156,
+    "route_A_implies_cat5_correct": 5,
+    "route_B_from_blended_8_11": {
+      "solutions": [
+        156
+      ],
+      "unique": true
+    },
+    "route_C_from_published_judge_1_4_10_13": {
+      "solutions": [
+        156
+      ],
+      "unique": true
+    },
+    "all_three_routes_agree": true,
+    "canonical_judge_1_4_n_correct": 156,
+    "canonical_cat5_regex_n_correct": 5,
+    "canonical_blended_n1986_RECOMPUTED": 8.1067472306143,
+    "canonical_judge_1_4_RECOMPUTED": 10.12987012987013
+  },
+  "canonical_mirror_on_wzc1": {
+    "dir": "locomo_results_openjudge_qwen3_MIRROR/hcache_8b_chatFALSE",
+    "what_it_is": "second judge (open-weight qwen3-8b, non-thinking, greedy) applied to the SAME canonical hcache_8b_chatFALSE predictions. Mirrored to wzc1 per paperA/TODOList.md:170. preds/judge_cache themselves stayed on zwfy6.",
+    "judge_meta": {
+      "judge_model": "qwen3-8b-judge",
+      "judge_base_url": "http://127.0.0.1:8412/v1",
+      "non_thinking": true,
+      "prompt_template": "You are grading a model's answer against the gold answer for a question about a long, multi-session dialogue (the LoCoMo benchmark).\n\nQuestion: {question}\nGold answer: {gold}\nModel answer: {pred}\n\nGrade whether the model answer is CORRECT. It is CORRECT if it conveys the same key information as the gold answer (a semantic match), even if phrased differently, more verbosely, or with extra correct context. It is WRONG if it contradicts the gold answer, omits the key information, or is empty / refuses when an answer exists. For date/time answers, accept any unambiguous equivalent phrasing.\n\nRespond with ONLY one word: CORRECT or WRONG.",
+      "sampling": {
+        "seed": 1,
+        "temperature": 0.0,
+        "top_p": 1.0,
+        "max_tokens": 8,
+        "chat_template_kwargs": {
+          "enable_thinking": false
+        },
+        "prompt_suffix": "/no_think"
+      },
+      "refusal_regex": "\\b(i don'?t know|not (mentioned|sure|provided|available|specified)|no (information|mention|record)|cannot (find|determine|answer)|unanswerable|isn'?t (mentioned|provided)|wasn'?t mentioned)\\b",
+      "written_at": "2026-08-04T19:55:19"
+    },
+    "n_samples": 1986,
+    "open_judge_1_4": 34.48051948051948,
+    "open_judge_blended_n1986": 26.988922457200403,
+    "cat5_judge_pct": 1.1210762331838564,
+    "cat5_implied_integer_count": [
+      5
+    ],
+    "cat5_is_judge_independent_regex_short_circuit": true,
+    "judge_independent_1_4": {
+      "f1": 5.697789981587834,
+      "acc": 7.792207792207792
+    },
+    "identifies_same_run_as_published_canonical_row": {
+      "published_row": "status/PAPERA_RESULTS_CONSOLIDATED.md:175 -> f1 4.67 acc 6.29 em 0.25",
+      "mirror_rounded": {
+        "f1": 4.67,
+        "acc": 6.29,
+        "em": 0.25
+      },
+      "match": true
+    },
+    "sha256_scores_json": "f523a10f54126f9ada0e9f039c48003722678301b917b4c609b089d569843b50"
+  },
+  "recomputed_runs": {
+    "hcache": {
+      "dir": "locomo_results/hcache",
+      "n_preds": 1986,
+      "n_unique_pred_ids": 1986,
+      "n_judge_cache_records": 1540,
+      "n_duplicate_cache_ids": 0,
+      "judge_models_in_cache": [
+        "gpt-4o"
+      ],
+      "cache_id_set_equals_non_abstention_id_set": true,
+      "abstention_set_equals_cat5_set": true,
+      "instrument": "MIXED: cat1-4 gpt-4o judge, cat5 local refusal regex",
+      "n_judged_by_llm": 1540,
+      "n_graded_by_regex": 446,
+      "judge_1_4_n_correct": 238,
+      "judge_1_4_pct_RECOMPUTED": 15.454545454545455,
+      "cat5_regex_n_correct": 6,
+      "cat5_regex_pct_RECOMPUTED": 1.345291479820628,
+      "blended_n1986_pct_RECOMPUTED": 12.28600201409869,
+      "blended_n1986_pct_PUBLISHED_scores_json": 12.28600201409869,
+      "blended_matches_published_to_1e_9": true,
+      "per_category_judge_1_4": {
+        "1": {
+          "n": 282,
+          "n_correct": 28,
+          "pct": 9.929078014184396,
+          "published_pct": 9.929078014184398,
+          "matches_published": true
+        },
+        "2": {
+          "n": 321,
+          "n_correct": 18,
+          "pct": 5.607476635514018,
+          "published_pct": 5.607476635514018,
+          "matches_published": true
+        },
+        "3": {
+          "n": 96,
+          "n_correct": 14,
+          "pct": 14.583333333333334,
+          "published_pct": 14.583333333333334,
+          "matches_published": true
+        },
+        "4": {
+          "n": 841,
+          "n_correct": 178,
+          "pct": 21.16527942925089,
+          "published_pct": 21.16527942925089,
+          "matches_published": true
+        }
+      },
+      "judge_independent_1_4": {
+        "f1": 5.707033150025883,
+        "acc": 7.857142857142857
+      },
+      "sha256": {
+        "judge_cache.jsonl": "5c60a03258eb328bf44ee24ee0350b3e60e3dbac933fa3a3206fde30fcb108c8",
+        "scores.json": "14ff2cbe7270c8ef6bb73ae27e765d8ebff5115ae2fca287dca01fd94c9059aa"
+      },
+      "eval_config": {
+        "model_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/models/Qwen--Qwen3-8b",
+        "resume_j": 12,
+        "top_prepay_b": 0,
+        "reuse_kv_blockdiag": false,
+        "lora_adapter": "",
+        "bottleneck_ckpt": "",
+        "baseline": "hcache",
+        "selector": "bm25",
+        "topk": 12,
+        "sink_tokens": "bos",
+        "chunk_size": 512,
+        "max_new_tokens": 48,
+        "locomo_data": "locomo/data/locomo10.json",
+        "categories": null,
+        "output_dir": "locomo_results/hcache",
+        "max_samples": -1,
+        "num_shards": 3,
+        "shard_index": 0,
+        "use_bertscore": false,
+        "use_chat_template": false,
+        "device": "cuda:0",
+        "dtype": "bfloat16",
+        "attn_impl": "sdpa",
+        "score_only": false,
+        "self_test": false,
+        "no_retrieval": true,
+        "num_layers": 36,
+        "resolved_model_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/models/Qwen--Qwen3-8b",
+        "resolved_data_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/locomo/data/locomo10.json"
+      }
+    },
+    "hcache_j12_noLoRA_chatFALSE": {
+      "dir": "locomo_results/hcache_j12_noLoRA_chatFALSE",
+      "n_preds": 1986,
+      "n_unique_pred_ids": 1986,
+      "n_judge_cache_records": 1540,
+      "n_duplicate_cache_ids": 0,
+      "judge_models_in_cache": [
+        "gpt-4o"
+      ],
+      "cache_id_set_equals_non_abstention_id_set": true,
+      "abstention_set_equals_cat5_set": true,
+      "instrument": "MIXED: cat1-4 gpt-4o judge, cat5 local refusal regex",
+      "n_judged_by_llm": 1540,
+      "n_graded_by_regex": 446,
+      "judge_1_4_n_correct": 257,
+      "judge_1_4_pct_RECOMPUTED": 16.68831168831169,
+      "cat5_regex_n_correct": 7,
+      "cat5_regex_pct_RECOMPUTED": 1.5695067264573992,
+      "blended_n1986_pct_RECOMPUTED": 13.293051359516616,
+      "blended_n1986_pct_PUBLISHED_scores_json": 13.293051359516618,
+      "blended_matches_published_to_1e_9": true,
+      "per_category_judge_1_4": {
+        "1": {
+          "n": 282,
+          "n_correct": 30,
+          "pct": 10.638297872340425,
+          "published_pct": 10.638297872340425,
+          "matches_published": true
+        },
+        "2": {
+          "n": 321,
+          "n_correct": 16,
+          "pct": 4.984423676012461,
+          "published_pct": 4.984423676012461,
+          "matches_published": true
+        },
+        "3": {
+          "n": 96,
+          "n_correct": 15,
+          "pct": 15.625,
+          "published_pct": 15.625,
+          "matches_published": true
+        },
+        "4": {
+          "n": 841,
+          "n_correct": 196,
+          "pct": 23.305588585017837,
+          "published_pct": 23.305588585017837,
+          "matches_published": true
+        }
+      },
+      "judge_independent_1_4": {
+        "f1": 5.702241983888518,
+        "acc": 8.116883116883116
+      },
+      "sha256": {
+        "judge_cache.jsonl": "ba4c6778f004e64be04f81b8096b54ecd0295530956f94f6760afc9e1510623a",
+        "scores.json": "b36e7637479abbc0452658600fde83846d7d57a615280cdae7a07bdd79df1078"
+      },
+      "eval_config": {
+        "model_path": "models/Qwen3-8b-local",
+        "resume_j": 12,
+        "top_prepay_b": 0,
+        "reuse_kv_blockdiag": false,
+        "lora_adapter": "",
+        "bottleneck_ckpt": "",
+        "baseline": "hcache",
+        "force_lora_with_baseline": false,
+        "selector": "bm25",
+        "topk": 12,
+        "iter_rounds": 0,
+        "iter_hop_topk": 4,
+        "iter_score": "meanpool",
+        "iter_conf_ratio": 0.3,
+        "iter_max_chunks": 64,
+        "sink_tokens": "bos",
+        "chunk_size": 512,
+        "max_new_tokens": 48,
+        "locomo_data": "locomo/data/locomo10.json",
+        "categories": null,
+        "output_dir": "locomo_results/hcache_j12_noLoRA_chatFALSE",
+        "max_samples": -1,
+        "num_shards": 3,
+        "shard_index": 0,
+        "use_bertscore": false,
+        "use_chat_template": false,
+        "enable_thinking": false,
+        "device": "cuda:0",
+        "dtype": "bfloat16",
+        "attn_impl": "sdpa",
+        "score_only": false,
+        "use_llm_judge": false,
+        "judge_model": "gpt-4o",
+        "judge_base_url": null,
+        "judge_api_key": null,
+        "judge_workers": 8,
+        "self_test": false,
+        "no_retrieval": true,
+        "num_layers": 36,
+        "resolved_model_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/models/Qwen3-8b-local",
+        "resolved_data_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/locomo/data/locomo10.json"
+      }
+    },
+    "hcache_j12_LoRA_chatFALSE": {
+      "dir": "locomo_results/hcache_j12_LoRA_chatFALSE",
+      "n_preds": 1986,
+      "n_unique_pred_ids": 1986,
+      "n_judge_cache_records": 1540,
+      "n_duplicate_cache_ids": 0,
+      "judge_models_in_cache": [
+        "gpt-4o"
+      ],
+      "cache_id_set_equals_non_abstention_id_set": true,
+      "abstention_set_equals_cat5_set": true,
+      "instrument": "MIXED: cat1-4 gpt-4o judge, cat5 local refusal regex",
+      "n_judged_by_llm": 1540,
+      "n_graded_by_regex": 446,
+      "judge_1_4_n_correct": 613,
+      "judge_1_4_pct_RECOMPUTED": 39.8051948051948,
+      "cat5_regex_n_correct": 6,
+      "cat5_regex_pct_RECOMPUTED": 1.345291479820628,
+      "blended_n1986_pct_RECOMPUTED": 31.168177240684795,
+      "blended_n1986_pct_PUBLISHED_scores_json": 31.16817724068479,
+      "blended_matches_published_to_1e_9": true,
+      "per_category_judge_1_4": {
+        "1": {
+          "n": 282,
+          "n_correct": 73,
+          "pct": 25.886524822695037,
+          "published_pct": 25.886524822695034,
+          "matches_published": true
+        },
+        "2": {
+          "n": 321,
+          "n_correct": 43,
+          "pct": 13.39563862928349,
+          "published_pct": 13.395638629283487,
+          "matches_published": true
+        },
+        "3": {
+          "n": 96,
+          "n_correct": 28,
+          "pct": 29.166666666666668,
+          "published_pct": 29.166666666666668,
+          "matches_published": true
+        },
+        "4": {
+          "n": 841,
+          "n_correct": 469,
+          "pct": 55.76694411414982,
+          "published_pct": 55.76694411414982,
+          "matches_published": true
+        }
+      },
+      "judge_independent_1_4": {
+        "f1": 9.539798774348448,
+        "acc": 22.792207792207794
+      },
+      "sha256": {
+        "judge_cache.jsonl": "58718ad568feca042e1eee836ae2801934b72f887012ffbb5e4496284095d778",
+        "scores.json": "4307754efbf2995263fef8503bddd059a510bdd320e72a4539344db89cacd35a"
+      },
+      "eval_config": {
+        "model_path": "models/Qwen3-8b-local",
+        "resume_j": 12,
+        "top_prepay_b": 0,
+        "reuse_kv_blockdiag": false,
+        "lora_adapter": "outputs/qcmem_distill_qwen_j12_r32_4k/final",
+        "bottleneck_ckpt": "",
+        "baseline": "hcache",
+        "force_lora_with_baseline": true,
+        "selector": "bm25",
+        "topk": 12,
+        "iter_rounds": 0,
+        "iter_hop_topk": 4,
+        "iter_score": "meanpool",
+        "iter_conf_ratio": 0.3,
+        "iter_max_chunks": 64,
+        "sink_tokens": "bos",
+        "chunk_size": 512,
+        "max_new_tokens": 48,
+        "locomo_data": "locomo/data/locomo10.json",
+        "categories": null,
+        "output_dir": "locomo_results/hcache_j12_LoRA_chatFALSE",
+        "max_samples": -1,
+        "num_shards": 3,
+        "shard_index": 0,
+        "use_bertscore": false,
+        "use_chat_template": false,
+        "enable_thinking": false,
+        "device": "cuda:0",
+        "dtype": "bfloat16",
+        "attn_impl": "sdpa",
+        "score_only": false,
+        "use_llm_judge": false,
+        "judge_model": "gpt-4o",
+        "judge_base_url": null,
+        "judge_api_key": null,
+        "judge_workers": 8,
+        "self_test": false,
+        "no_retrieval": true,
+        "num_layers": 36,
+        "resolved_model_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/models/Qwen3-8b-local",
+        "resolved_data_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/locomo/data/locomo10.json"
+      }
+    }
+  },
+  "headline_and_kill_condition_1": {
+    "noLoRA_judge_1_4": 16.68831168831169,
+    "lora_judge_1_4": 39.8051948051948,
+    "gain_pp": 23.116883116883116,
+    "mcnemar_b": 414,
+    "mcnemar_c": 58,
+    "mcnemar_exact_two_sided_p": 2.574659190851855e-67,
+    "mcnemar_chi2_continuity_corrected": 267.0021186440678,
+    "paired_item_bootstrap_95ci_pp": [
+      20.584415584415584,
+      25.584415584415584
+    ],
+    "conversation_clustered_bootstrap_95ci_pp": [
+      20.525059665871122,
+      25.9131633356306
+    ],
+    "conversation_clustered_bootstrap_frac_le_zero": 0.0,
+    "n_conversations": 10,
+    "bootstrap_protocol": "10000 resamples, seed 1, paired per item / per conversation",
+    "locomo_category_semantics_from_raw_data": {
+      "1": {
+        "n": 282,
+        "mean_evidence_items": 3.1347517730496453,
+        "pct_exactly_one_evidence": 2.127659574468085,
+        "pct_multi_evidence": 97.87234042553192,
+        "pct_zero_evidence": 0.0,
+        "mean_distinct_sessions_cited": 2.673758865248227,
+        "pct_question_starts_when_or_what_year": 1.4184397163120568
+      },
+      "2": {
+        "n": 321,
+        "mean_evidence_items": 1.1682242990654206,
+        "pct_exactly_one_evidence": 87.53894080996885,
+        "pct_multi_evidence": 12.461059190031152,
+        "pct_zero_evidence": 0.0,
+        "mean_distinct_sessions_cited": 1.0996884735202492,
+        "pct_question_starts_when_or_what_year": 77.57009345794393
+      },
+      "3": {
+        "n": 96,
+        "mean_evidence_items": 2.0833333333333335,
+        "pct_exactly_one_evidence": 46.875,
+        "pct_multi_evidence": 48.958333333333336,
+        "pct_zero_evidence": 4.166666666666667,
+        "mean_distinct_sessions_cited": 1.65625,
+        "pct_question_starts_when_or_what_year": 0.0
+      },
+      "4": {
+        "n": 841,
+        "mean_evidence_items": 1.065398335315101,
+        "pct_exactly_one_evidence": 94.53032104637336,
+        "pct_multi_evidence": 5.469678953626635,
+        "pct_zero_evidence": 0.0,
+        "mean_distinct_sessions_cited": 1.0011890606420928,
+        "pct_question_starts_when_or_what_year": 0.8323424494649228
+      },
+      "5": {
+        "n": 446,
+        "mean_evidence_items": 1.031390134529148,
+        "pct_exactly_one_evidence": 96.8609865470852,
+        "pct_multi_evidence": 3.1390134529147984,
+        "pct_zero_evidence": 0.0,
+        "mean_distinct_sessions_cited": 1.0,
+        "pct_question_starts_when_or_what_year": 1.1210762331838564
+      }
+    },
+    "per_category_on_corrected_instrument": {
+      "1": {
+        "data_grounded_label": "multi-hop",
+        "label_in_eval_script_CATEGORY_NAMES": "multi_hop",
+        "n": 282,
+        "noLoRA_pct": 10.638297872340425,
+        "lora_pct": 25.886524822695037,
+        "within_cat_delta_pp": 15.24822695035461,
+        "contribution_to_overall_gain_pp": 2.792207792207792,
+        "share_of_overall_gain_pct": 12.07865168539326,
+        "mcnemar_b": 52,
+        "mcnemar_c": 9,
+        "mcnemar_exact_two_sided_p": 1.802802378388091e-08,
+        "significantly_positive_at_0_05": true
+      },
+      "2": {
+        "data_grounded_label": "temporal",
+        "label_in_eval_script_CATEGORY_NAMES": "single_hop",
+        "n": 321,
+        "noLoRA_pct": 4.984423676012461,
+        "lora_pct": 13.39563862928349,
+        "within_cat_delta_pp": 8.411214953271028,
+        "contribution_to_overall_gain_pp": 1.7532467532467533,
+        "share_of_overall_gain_pct": 7.584269662921348,
+        "mcnemar_b": 35,
+        "mcnemar_c": 8,
+        "mcnemar_exact_two_sided_p": 4.1934157934520044e-05,
+        "significantly_positive_at_0_05": true
+      },
+      "3": {
+        "data_grounded_label": "open-domain",
+        "label_in_eval_script_CATEGORY_NAMES": "temporal",
+        "n": 96,
+        "noLoRA_pct": 15.625,
+        "lora_pct": 29.166666666666668,
+        "within_cat_delta_pp": 13.541666666666666,
+        "contribution_to_overall_gain_pp": 0.8441558441558441,
+        "share_of_overall_gain_pct": 3.651685393258427,
+        "mcnemar_b": 16,
+        "mcnemar_c": 3,
+        "mcnemar_exact_two_sided_p": 0.004425048828125,
+        "significantly_positive_at_0_05": true
+      },
+      "4": {
+        "data_grounded_label": "single-hop",
+        "label_in_eval_script_CATEGORY_NAMES": "open_domain",
+        "n": 841,
+        "noLoRA_pct": 23.305588585017837,
+        "lora_pct": 55.76694411414982,
+        "within_cat_delta_pp": 32.461355529131986,
+        "contribution_to_overall_gain_pp": 17.727272727272727,
+        "share_of_overall_gain_pct": 76.68539325842697,
+        "mcnemar_b": 311,
+        "mcnemar_c": 38,
+        "mcnemar_exact_two_sided_p": 1.988952190651945e-54,
+        "significantly_positive_at_0_05": true
+      }
+    },
+    "kill_condition_1_fires": false
+  },
+  "verdict": {
+    "drift_is_real_or_instrument": "INSTRUMENT (judge-side), not node/harness/generation.",
+    "primary_evidence": "F1 and acc on the identical n=1540 ruler agree across the three noLoRA replicates to 0.16% / 4.2% relative, while the gpt-4o judge on the SAME items disagrees by 64.7% relative. F1 and acc are deterministic functions of the predictions alone.",
+    "generation_attributable_share_of_the_6_56_pp": "0.4%-7.8%",
+    "corroboration": "the canonical run's open-judge/gpt-4o ratio is 3.404 vs 1.366-1.681 for the five sibling methods graded in the same two judge passes (z=+14.2), i.e. the canonical gpt-4o HCache score is the outlier, not the local replicates.",
+    "rejudge_needed": false,
+    "why_no_rejudge": "A rejudge cannot be same-harness in the sense the gate wants: the gpt-4o endpoint is not a frozen instrument (measured 3.07% per-item verdict instability on byte-identical inputs) and the canonical per-item records are not on this disk. The judge-independent columns already settle the question at zero cost and zero API risk.",
+    "kill_condition_2_verdict": "DOES NOT FIRE. Effect +23.12 pp; worst-case same-ruler drift 6.56 pp, of which <=0.5 pp is generation-attributable.",
+    "kill_condition_1_verdict": "DOES NOT FIRE. All four judged categories individually significant (p 1.99e-54 to 4.43e-3). The category the clause names (open-domain = cat3) is the SMALLEST contributor at 3.7% of the gain.",
+    "kill_condition_3_verdict": "STILL UNTESTED (needs a second compressor; GPU)."
+  },
+  "discrepancies_vs_status_json": [
+    {
+      "status_json_key": "kill_gate.condition_2_status",
+      "status_json_text": "the drift is ~1.0 pp on the blended scale (12.286 canonical vs 13.293 local, both from scores.json overall_judge)",
+      "finding": "WRONG PAIR. 12.286 is locomo_results/hcache, an OLDER LOCAL run -- STATUS.json's own key third_measurement_found_20260814 labels that same 12.28600201409869 as 'older run (2026-07-09/10)'. The canonical blended value is 8.1067. So condition_2_status compares local-vs-local and calls one of them canonical.",
+      "correct_value": "canonical vs B06 control = 5.1863 pp blended / 6.5584 pp on Judge_1:4, i.e. 5.2x-6.5x larger than the stated ~1.0 pp.",
+      "changes_the_conclusion": false,
+      "why_not": "the drift is still small vs +23.12 pp AND is now shown to be judge-side."
+    },
+    {
+      "status_json_key": "kill_gate.condition_1_status",
+      "status_json_text": "cat4 (open_domain, n=841 = 55% of the 1540)",
+      "finding": "MISLABEL. cat4 is SINGLE-HOP, not open-domain. From locomo10.json: cat4 has 1.07 evidence items on average, 94.5% of its items cite exactly one evidence turn, and 1.00 distinct sessions. Open-domain is cat3 (n=96, 2.08 evidence items, the only category with 0-evidence items). The mislabel is inherited from scripts/eval_qcmem_locomo.py:126-132 CATEGORY_NAMES, which is itself wrong for cats 2/3/4 and disagrees with status/LOCOMO_JUDGE_AGGREGATE.md:31-32.",
+      "correct_value": "kill condition 1 names open-domain = cat3, which supplies only +0.84 pp (3.7%) of the 23.12 pp gain. Reading cat4 as 'open_domain' makes the clause look near-fired when it is not.",
+      "changes_the_conclusion": true,
+      "why": "it flips the reading of kill condition 1 from 'at real risk' to 'does not fire' -- all four judged categories are individually significant."
+    },
+    {
+      "status_json_key": "next_gate / gpu_cost_estimate.drift_resolution_leg",
+      "status_json_text": "Same-harness rejudge ... rejudge = OpenAI API + CPU",
+      "finding": "The rejudge is UNNECESSARY and would not be same-instrument anyway. Measured judge non-determinism is 3.07% per item on byte-identical inputs, so a fresh pass is a NEW instrument draw, not a fixed ruler.",
+      "correct_value": "0 GPU and 0 API calls. The judge-independent columns (F1/acc) settle the attribution.",
+      "changes_the_conclusion": false
+    },
+    {
+      "status_json_key": "canonical_8_11_conversion_status.what_is_still_missing",
+      "status_json_text": "The canonical run's own judge_cache.jsonl lives on zwfy6 ... and was NOT read here",
+      "finding": "Still true for the judge cache, but an ARTEFACT OF THE SAME RUN IS ON wzc1 and was missed: locomo_results_openjudge_qwen3_MIRROR/hcache_8b_chatFALSE/ (mirrored per paperA/TODOList.md:170). Its judge-independent columns identify the run exactly and its cat-5 cell recovers 5/446, matching the 8.11 arithmetic independently.",
+      "correct_value": "the conversion 8.11 -> 10.13 is confirmed by three mutually independent routes plus a same-run artefact on this disk.",
+      "changes_the_conclusion": false
+    },
+    {
+      "status_json_key": "established_measurements.caveat_from_errata",
+      "status_json_text": "A conversation-clustered bootstrap is the honest version and is 0 GPU",
+      "finding": "DONE in this leg. 10-conversation clustered paired bootstrap (10000 resamples, seed 1) = the interval reported under headline_and_kill_condition_1; 0/10000 resamples <= 0.",
+      "correct_value": "see conversation_clustered_bootstrap_95ci_pp",
+      "changes_the_conclusion": false
+    }
+  ],
+  "not_verified": [
+    "The canonical run's per-item judge_cache.jsonl and preds were never read: they are on zwfy6 and ssh was forbidden. The canonical counts (156/1540, 5/446) are pinned by inverting published rounded percentages -- uniqueness is asserted programmatically, but this is arithmetic recovery, not a read of the raw records.",
+    "The 101-item deficit is CONSISTENT with silent judge API failures (scripts/eval_qcmem_locomo.py:713-715 sets judge=0.0 on failure and does NOT cache the record), but that mechanism was NOT confirmed: it requires counting records in the canonical judge_cache.jsonl on zwfy6. If that file has ~1439 records instead of 1540, the mechanism is proven. This is the single highest-value 0-GPU follow-up.",
+    "Whether the canonical predictions themselves are byte-identical to the local ones was not checked (canonical preds are on zwfy6). The judge-independent metrics agree to 0.16% relative, which bounds any difference as immaterial, but is not byte equality.",
+    "The open-judge cross-check uses PUBLISHED gpt-4o per-category percentages for the five sibling methods (status/LOCOMO_JUDGE_AGGREGATE.md:34-41), not their raw caches; four of the six sibling judge caches are not on wzc1.",
+    "Kill condition 3 (second compressor) is untouched and needs GPU.",
+    "No claim is made about 'portability' -- still one task, one compressor, one model."
+  ]
+}

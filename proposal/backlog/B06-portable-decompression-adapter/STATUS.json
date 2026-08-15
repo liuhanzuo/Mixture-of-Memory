@@ -94,5 +94,305 @@
       "that the gain is not concentrated in cat4 -- the per-category breakdown on the corrected instrument has not been computed, and the old blended breakdown shows cat4 (55% of the judged items) supplying +32.46 of the movement"
     ]
   },
-  "updated_20260814": "2026-08-14 -- STATUS made decidable. This proposal's STATUS previously carried only id/status/updated (83 bytes) even though the direction holds a p=2.6e-67 confirmed result, which caused it to be mis-ranked as a thin backlog item. Added headline, next_gate (with the two-rulers scale trap), gpu_cost_estimate, kill_gate, established_measurements (correct instrument only), retracted_measurements, a newly found third same-instrument replicate, and novelty_checked. Every number re-derived from raw judge caches. No scientific conclusion changed. 0 GPU."
+  "updated_20260814": "2026-08-14 -- STATUS made decidable. This proposal's STATUS previously carried only id/status/updated (83 bytes) even though the direction holds a p=2.6e-67 confirmed result, which caused it to be mis-ranked as a thin backlog item. Added headline, next_gate (with the two-rulers scale trap), gpu_cost_estimate, kill_gate, established_measurements (correct instrument only), retracted_measurements, a newly found third same-instrument replicate, and novelty_checked. Every number re-derived from raw judge caches. No scientific conclusion changed. 0 GPU.",
+  "drift_resolution_leg_20260815": {
+    "_verdict_doc": "proposal/backlog/B06-portable-decompression-adapter/DRIFT_RESOLUTION_VERDICT.md",
+    "_evidence_json": "proposal/backlog/B06-portable-decompression-adapter/evidence/drift_resolution_evidence.json",
+    "_generator": "proposal/backlog/B06-portable-decompression-adapter/evidence/build_drift_evidence.py (CPU only, deterministic, verified byte-identical across two runs)",
+    "_cost": "0 GPU-h, 0 ssh, 0 judge API calls",
+    "_git_commit": "b0c5ea1",
+    "VERDICT": "The 8.11-vs-13.29 'cross-node drift' is NOT node drift and NOT generation drift. It is a JUDGE-SIDE (instrument) artefact. Kill condition 2 DOES NOT FIRE, and it is closed without GPU and without a rejudge.",
+    "the_gate_question_answered": {
+      "asked": "how much of the drift survives once both endpoints are on the Judge_1:4 (n=1540) ruler?",
+      "answer": "it does not shrink -- it GROWS 26%, from 5.1863 pp (blended n=1986) to 6.5584 pp (Judge_1:4 n=1540), because the constant cat-5 term deflates the two endpoints unequally.",
+      "blended_n1986_canonical_vs_b06_control_pp": 5.186304128902318,
+      "judge_1_4_canonical_vs_b06_control_pp": 6.558441558441556,
+      "scale_trap_warning_in_next_gate_was_correct": true,
+      "but_it_concealed_the_opposite_of_what_was_assumed": "the trap was not hiding a comparison that would vanish on one ruler; it was hiding that the drift is LARGER than STATUS.json recorded."
+    },
+    "four_numbers_recomputed_from_raw_per_item_records": {
+      "canonical_hcache_8_11": {
+        "published_as": 8.11,
+        "recomputed": 8.1067472306143,
+        "n": 1986,
+        "instrument": "MIXED (1540 gpt-4o + 446 refusal regex)"
+      },
+      "canonical_judge_1_4_counterpart_10_13": {
+        "published_as": 10.13,
+        "recomputed": 10.12987012987013,
+        "n": 1540,
+        "instrument": "single (gpt-4o)"
+      },
+      "b06_control_16_69": {
+        "published_as": 16.69,
+        "recomputed": 16.68831168831169,
+        "n": 1540,
+        "instrument": "single (gpt-4o)"
+      },
+      "b06_treatment_39_81": {
+        "published_as": 39.81,
+        "recomputed": 39.8051948051948,
+        "n": 1540,
+        "instrument": "single (gpt-4o)"
+      },
+      "third_replicate_15_45": {
+        "published_as": 15.4545,
+        "recomputed": 15.454545454545455,
+        "n": 1540,
+        "instrument": "single (gpt-4o)"
+      }
+    },
+    "attribution_judge_vs_generation": {
+      "method": "F1 and accuracy are deterministic functions of the predictions ALONE (no judge, no API, no sampling), so a real generation-quality change must move them. Calibrate the judge-vs-lexical slope on a change known to be real (the +LoRA arm), then ask how much lexical movement the drift shows.",
+      "slope_f1_pp_per_judge_pp": 0.16600667014910933,
+      "slope_acc_pp_per_judge_pp": 0.6348314606741574,
+      "observed_over_predicted_f1_pct": 0.40891137215619106,
+      "observed_over_predicted_acc_pct": 7.798124945237872,
+      "generation_attributable_share_pct_range": [
+        0.40891137215619106,
+        7.798124945237871
+      ],
+      "judge_attributable_share_pct_range": [
+        92.20187505476213,
+        99.5910886278438
+      ],
+      "generation_attributable_absolute_upper_bound_pp": 0.5114,
+      "three_replicates_relative_spread_pct": {
+        "f1_1_4": 0.1622237475919235,
+        "acc_1_4": 4.166666666666658,
+        "gpt4o_judge_1_4": 64.74358974358972
+      },
+      "headline": "on the SAME n=1540 items the two judge-free metrics agree to 0.16% (F1) and 4.17% (acc) relative, while the gpt-4o judge disagrees by 64.74% relative."
+    },
+    "judge_noise_floor_measured": {
+      "design": "hcache (generated 07-09/10, judged 07-18) vs hcache_j12_noLoRA_chatFALSE (generated + judged 07-25). Both gpt-4o, both n=1540, identical id sets. On the subset where the prediction STRING is byte-identical the judge input is literally the same, so any verdict change is judge non-determinism.",
+      "n_byte_identical_predictions": 879,
+      "pct_byte_identical": 57.077922077922075,
+      "flip_rate_on_identical_input_pct": 3.0716723549488054,
+      "flips_symmetric": true,
+      "sd_of_net_change_items_at_n1540": 6.877772478514508,
+      "sigma_of_each_gap": {
+        "canonical_vs_B06_control_101_items": 14.684987082011533,
+        "canonical_vs_older_local_82_items": 11.922464759652929,
+        "older_local_vs_B06_control_19_items": 2.7625223223586053
+      },
+      "consequence": "per-call judge noise fully explains the 1.23 pp local-vs-local wobble (net -1 item from the 879 identical-prediction items, net +20 from the 661 differing ones) but is +14.7 sigma short of explaining the canonical gap, which is therefore systematic."
+    },
+    "cross_judge_outlier_test": {
+      "design": "the same six canonical baseline prediction sets were graded by TWO judges (gpt-4o and open-weight qwen3-8b). The open/gpt-4o ratio should be comparable across methods if each gpt-4o cell is a faithful measurement.",
+      "sibling_ratios": [
+        1.3658,
+        1.4622,
+        1.5786,
+        1.6444,
+        1.6806
+      ],
+      "sibling_ratio_mean": 1.546320162848273,
+      "sibling_ratio_sd": 0.13070373035838975,
+      "hcache_canonical_ratio": 3.403846153846154,
+      "hcache_z_vs_siblings": 14.211728968289911,
+      "implied_gpt4o_judge_1_4_under_sibling_mapping": {
+        "point": 22.298434896565958,
+        "range_over_sibling_ratios": [
+          20.516917293233085,
+          25.245267928552384
+        ],
+        "vs_published_canonical_judge_1_4": 10.12987012987013,
+        "vs_local_replicates": [
+          15.454545454545455,
+          16.688311688311686
+        ]
+      },
+      "conclusion": "the CANONICAL gpt-4o HCache cell is the outlier (z=+14.2, 2.03x the next highest sibling ratio), not the local replicates. Under the open judge HCache overtakes MemoryLLM; under gpt-4o it is last."
+    },
+    "rejudge_decision": {
+      "rejudge_run": false,
+      "rejudge_needed": false,
+      "api_calls_made": 0,
+      "reasons": [
+        "it would not be same-instrument: measured 3.07% per-item verdict instability on byte-identical inputs means a fresh gpt-4o pass is a NEW instrument draw, not a fixed ruler -- 'same-harness rejudge' is unattainable against a non-deterministic remote endpoint",
+        "the judge-independent columns already settle the attribution at zero cost and zero API risk",
+        "the canonical per-item records are on zwfy6 and ssh was forbidden for this leg, so the rejudge as described could not be executed anyway"
+      ],
+      "judge_model_and_version_note": "all local caches record model='gpt-4o' with no dated snapshot pinned; the open-weight cross-check judge is recorded in locomo_results_openjudge_qwen3_MIRROR/hcache_8b_chatFALSE/judge_meta.json as 'qwen3-8b-judge', non_thinking=true, temperature 0, top_p 1, seed 1, written_at 2026-08-04T19:55:19. Changing judge version IS changing instrument."
+    },
+    "canonical_records_located_on_wzc1_after_all": {
+      "artefact": "locomo_results_openjudge_qwen3_MIRROR/hcache_8b_chatFALSE/",
+      "what": "a SECOND judge over the SAME canonical predictions, mirrored back to wzc1 per paperA/TODOList.md:170",
+      "identifies_the_same_run": "its judge-independent columns round to f1 4.67 / acc 6.29 / em 0.25, matching the published canonical row at status/PAPERA_RESULTS_CONSOLIDATED.md:175 exactly",
+      "independently_recovers_cat5": "its cat5 cell = 1.121076233184 = exactly 5/446, a fourth confirmation of the 8.11 arithmetic",
+      "corrects": "canonical_8_11_conversion_status.what_is_still_missing said the canonical records were not on this disk. True of the judge cache; but this same-run artefact WAS on wzc1 and was missed."
+    },
+    "canonical_conversion_confirmed_three_independent_routes": {
+      "route_A_invert_published_per_category_percentages": 156,
+      "route_B_solve_blended_8_11": [
+        156
+      ],
+      "route_C_solve_judge_1_4_10_13": [
+        156
+      ],
+      "all_agree": true,
+      "each_route_solution_is_unique": true,
+      "conclusion": "10.13 IS the Judge_1:4 conversion the gate asked for, and it is confirmed. The next_gate's suspicion that 'the conversion may already be done' is correct."
+    },
+    "conversation_clustered_bootstrap_now_done": {
+      "why": "established_measurements.caveat_from_errata flagged the per-item interval as not dependence-aware (only 10 conversations) and noted the honest version is 0 GPU. Done here.",
+      "n_conversations": 10,
+      "protocol": "10000 resamples, seed 1, paired per item / per conversation",
+      "clustered_95ci_pp": [
+        20.525059665871122,
+        25.9131633356306
+      ],
+      "per_item_95ci_pp_reproduced": [
+        20.584415584415584,
+        25.584415584415584
+      ],
+      "frac_resamples_le_zero": 0.0,
+      "conclusion": "the clustered interval is essentially the per-item interval; the nesting caveat does NOT threaten this effect."
+    },
+    "kill_condition_1_ADJUDICATED_does_not_fire": {
+      "clause": "只在 LoCoMo open-domain category 有益",
+      "verdict": "DOES NOT FIRE",
+      "basis": "per-category McNemar on the CORRECTED instrument (Judge_1:4): all four judged categories are individually significantly positive at p<0.05.",
+      "per_category": {
+        "1": {
+          "label": "multi-hop",
+          "n": 282,
+          "noLoRA_pct": 10.638297872340425,
+          "lora_pct": 25.886524822695037,
+          "delta_pp": 15.24822695035461,
+          "share_of_gain_pct": 12.07865168539326,
+          "mcnemar_exact_p": 1.802802378388091e-08,
+          "significant_positive": true
+        },
+        "2": {
+          "label": "temporal",
+          "n": 321,
+          "noLoRA_pct": 4.984423676012461,
+          "lora_pct": 13.39563862928349,
+          "delta_pp": 8.411214953271028,
+          "share_of_gain_pct": 7.584269662921348,
+          "mcnemar_exact_p": 4.1934157934520044e-05,
+          "significant_positive": true
+        },
+        "3": {
+          "label": "open-domain",
+          "n": 96,
+          "noLoRA_pct": 15.625,
+          "lora_pct": 29.166666666666668,
+          "delta_pp": 13.541666666666666,
+          "share_of_gain_pct": 3.651685393258427,
+          "mcnemar_exact_p": 0.004425048828125,
+          "significant_positive": true
+        },
+        "4": {
+          "label": "single-hop",
+          "n": 841,
+          "noLoRA_pct": 23.305588585017837,
+          "lora_pct": 55.76694411414982,
+          "delta_pp": 32.461355529131986,
+          "share_of_gain_pct": 76.68539325842697,
+          "mcnemar_exact_p": 1.988952190651945e-54,
+          "significant_positive": true
+        }
+      },
+      "the_named_category_is_the_smallest_contributor": "open-domain = cat3, n=96, contributes only 3.7% of the 23.12 pp gain"
+    },
+    "CORRECTION_cat4_is_single_hop_not_open_domain": {
+      "severity": "CONCLUSION-CHANGING",
+      "what_status_json_said": "kill_gate.condition_1_status: 'cat4 (open_domain, n=841 = 55% of the 1540)' and called condition 1 'the one at real risk'",
+      "what_is_true": "cat4 is SINGLE-HOP. Measured from locomo/data/locomo10.json: cat4 averages 1.07 evidence items, 94.5% of its items cite exactly one evidence turn, and 1.00 distinct sessions. Open-domain is cat3 (n=96, 2.08 evidence items, the ONLY category with zero-evidence inference items).",
+      "data_grounded_semantics": {
+        "1": {
+          "n": 282,
+          "mean_evidence_items": 3.1347517730496453,
+          "pct_exactly_one_evidence": 2.127659574468085,
+          "pct_multi_evidence": 97.87234042553192,
+          "pct_zero_evidence": 0.0,
+          "mean_distinct_sessions_cited": 2.673758865248227,
+          "pct_question_starts_when_or_what_year": 1.4184397163120568
+        },
+        "2": {
+          "n": 321,
+          "mean_evidence_items": 1.1682242990654206,
+          "pct_exactly_one_evidence": 87.53894080996885,
+          "pct_multi_evidence": 12.461059190031152,
+          "pct_zero_evidence": 0.0,
+          "mean_distinct_sessions_cited": 1.0996884735202492,
+          "pct_question_starts_when_or_what_year": 77.57009345794393
+        },
+        "3": {
+          "n": 96,
+          "mean_evidence_items": 2.0833333333333335,
+          "pct_exactly_one_evidence": 46.875,
+          "pct_multi_evidence": 48.958333333333336,
+          "pct_zero_evidence": 4.166666666666667,
+          "mean_distinct_sessions_cited": 1.65625,
+          "pct_question_starts_when_or_what_year": 0.0
+        },
+        "4": {
+          "n": 841,
+          "mean_evidence_items": 1.065398335315101,
+          "pct_exactly_one_evidence": 94.53032104637336,
+          "pct_multi_evidence": 5.469678953626635,
+          "pct_zero_evidence": 0.0,
+          "mean_distinct_sessions_cited": 1.0011890606420928,
+          "pct_question_starts_when_or_what_year": 0.8323424494649228
+        },
+        "5": {
+          "n": 446,
+          "mean_evidence_items": 1.031390134529148,
+          "pct_exactly_one_evidence": 96.8609865470852,
+          "pct_multi_evidence": 3.1390134529147984,
+          "pct_zero_evidence": 0.0,
+          "mean_distinct_sessions_cited": 1.0,
+          "pct_question_starts_when_or_what_year": 1.1210762331838564
+        }
+      },
+      "root_cause": "scripts/eval_qcmem_locomo.py:126-132 CATEGORY_NAMES maps {1:multi_hop, 2:single_hop, 3:temporal, 4:open_domain}, which is wrong for cats 2/3/4 and contradicts status/LOCOMO_JUDGE_AGGREGATE.md:31-32 (right for cat3/cat4). The mislabel propagated into B06's STATUS.",
+      "effect": "reading cat4 as 'open_domain' makes kill condition 1 look near-fired when it in fact does not fire at all.",
+      "note": "this is a LABELLING correction, not a numerical retraction -- every number in condition_1_status (23.31 -> 55.77, +32.46) is arithmetically correct and reproduced here; only the category NAME attached to it was wrong."
+    },
+    "CORRECTION_condition_2_status_compared_the_wrong_pair": {
+      "severity": "understates the drift 5.2x-6.5x; does not change the conclusion",
+      "what_status_json_said": "kill_gate.condition_2_status: 'the drift is ~1.0 pp on the blended scale (12.286 canonical vs 13.293 local)'",
+      "what_is_true": "12.286 is NOT canonical. It is locomo_results/hcache, the older LOCAL run -- STATUS.json's own key third_measurement_found_20260814 labels that same value 12.28600201409869 as 'older run (2026-07-09/10)'. The canonical blended value is 8.1067. So condition_2_status compared local-vs-local and called one of them canonical.",
+      "correct_drift": {
+        "canonical_vs_b06_control_blended_pp": 5.186304128902318,
+        "canonical_vs_b06_control_judge_1_4_pp": 6.558441558441556,
+        "what_condition_2_actually_measured_blended_pp": 1.0070493454179275
+      },
+      "conclusion_unchanged_because": "even the corrected 6.5584 pp is small against the +23.12 pp effect, AND it is now shown to be judge-side rather than a property of the arms."
+    },
+    "kill_gate_status_after_this_leg": {
+      "condition_1_只在_open_domain_有益": "DOES NOT FIRE (all 4 judged categories individually significant; the named category, cat3 open-domain, supplies only 3.7% of the gain)",
+      "condition_2_统一harness后增益消失": "DOES NOT FIRE. CLOSED at 0 GPU / 0 API. Drift is judge-side; <=0.51 pp generation-attributable against a +23.12 pp effect.",
+      "condition_3_换compressor完全不迁移": "STILL UNTESTED -- needs GPU (second compressor)",
+      "remaining_blocker_for_promotion": "unchanged and it was never the drift: novelty_checked=false plus kill condition 3."
+    },
+    "headline_reverified_unchanged": {
+      "noLoRA_judge_1_4": 16.68831168831169,
+      "lora_judge_1_4": 39.8051948051948,
+      "gain_pp": 23.116883116883116,
+      "mcnemar_b": 414,
+      "mcnemar_c": 58,
+      "mcnemar_exact_two_sided_p": 2.574659190851855e-67,
+      "mcnemar_chi2_continuity_corrected": 267.0021186440678,
+      "note": "reproduced from raw per-item records; matches established_measurements exactly. No published B06 number is retracted by this leg."
+    },
+    "not_verified": [
+      "The canonical run's per-item judge_cache.jsonl and preds were never read: they are on zwfy6 and ssh was forbidden. The canonical counts (156/1540, 5/446) are pinned by inverting published rounded percentages -- uniqueness is asserted programmatically, but this is arithmetic recovery, not a read of the raw records.",
+      "The 101-item deficit is CONSISTENT with silent judge API failures (scripts/eval_qcmem_locomo.py:713-715 sets judge=0.0 on failure and does NOT cache the record), but that mechanism was NOT confirmed: it requires counting records in the canonical judge_cache.jsonl on zwfy6. If that file has ~1439 records instead of 1540, the mechanism is proven. This is the single highest-value 0-GPU follow-up.",
+      "Whether the canonical predictions themselves are byte-identical to the local ones was not checked (canonical preds are on zwfy6). The judge-independent metrics agree to 0.16% relative, which bounds any difference as immaterial, but is not byte equality.",
+      "The open-judge cross-check uses PUBLISHED gpt-4o per-category percentages for the five sibling methods (status/LOCOMO_JUDGE_AGGREGATE.md:34-41), not their raw caches; four of the six sibling judge caches are not on wzc1.",
+      "Kill condition 3 (second compressor) is untouched and needs GPU.",
+      "No claim is made about 'portability' -- still one task, one compressor, one model."
+    ],
+    "highest_value_next_0_gpu_followup": {
+      "action": "wc -l on the canonical judge cache, locomo_results/hcache_8b_chatFALSE/judge_cache.jsonl, on zwfy6 (.73/.104)",
+      "why": "scripts/eval_qcmem_locomo.py:713-715 sets judge=0.0 on a judge-API failure and does NOT write that record to the cache. The canonical deficit is exactly 101 items vs the B06 control. If that file holds ~1439 records instead of 1540, silent judge-API failures are the proven mechanism and the canonical 8.11 is a partially-failed judge pass rather than a node/harness difference.",
+      "cost": "0 GPU, one ssh + one wc -l",
+      "status": "NOT DONE -- ssh was forbidden for this leg. Stated as a consistent, cheaply testable hypothesis, NOT as an established cause."
+    }
+  }
 }
