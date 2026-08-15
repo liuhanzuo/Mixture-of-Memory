@@ -436,5 +436,60 @@
       "still_undetermined": "a clean TRAINING-TIME +/-SLoRB direction. The repairing cell is a post-hoc amputation of a branch the model trained to depend on; #245 (from-scratch ALPS+SLoRB matched control) is what settles it."
     },
     "timestamp": "2026-08-15T21:37:00"
+  },
+  "MAIN_CORRECTION_2_fold_is_exact_not_a_cheat_20260815": {
+    "user_challenge": "「2:4+SLoRB 的 sparseforge 不是很好么 表里有么」 -- and they were right to push.",
+    "what_I_had_implied_and_it_was_TOO_STRONG": "I repeatedly described hard_fold as 'DENSE, BARRED from any 2:4 column' in a way that reads as 'this number is not a legitimate score for the method'. That conflates the EXPORT ARTIFACT with the METHOD.",
+    "what_the_source_actually_says": {
+      "export_sparseforge_to_hf.py:62": "W_eff = W*mask + SLoRB_Weight @ x_proj reproduces the two-matmul forward",
+      ":123": "fold = add SLoRB_Weight@x_proj into W (exact, ...)",
+      ":283": "SLoRB_Weight @ x_proj folded into W (exact linear algebra)",
+      "probe_slorb_branch.py:8": "out = masked_linear(x, W, mask) + (x @ x_proj.T) @ SLoRB_Weight.T",
+      "conclusion": "The fold is an EXACT algebraic identity, not an approximation. SparseForge at deployment is TWO matmuls: a genuinely 2:4-sparse W plus a low-rank bypass. Folding to one dense matrix is forced by lm_eval only accepting standard HF weights -- an eval-container limitation, NOT the method's form."
+    },
+    "therefore": "union9 62.4335 IS the legitimate score of '2:4 + SLoRB'. The BARRED note remains correct about one thing only: that exported FILE cannot be put in a column whose header promises exact 2:4 storage. It is wrong as a judgement of the method.",
+    "the_correct_way_to_table_it": {
+      "must_report_effective_density_alongside": true,
+      "rows": [
+        {
+          "method": "dense Llama-2-7B (upper bound)",
+          "effective_density_pct": 100.0,
+          "union9": 63.2101,
+          "ppl4096": 5.2004
+        },
+        {
+          "method": "SparseForge = 2:4 + SLoRB",
+          "effective_density_pct": 63.1,
+          "union9": 62.4335,
+          "ppl4096": 6.2115
+        },
+        {
+          "method": "CAST repro @7500, pure 2:4",
+          "effective_density_pct": 50.0,
+          "union9": 62.0919,
+          "ppl4096": 6.1372
+        },
+        {
+          "method": "SparseForge 2:4 with SLoRB removed",
+          "effective_density_pct": 50.0,
+          "union9": 57.0678,
+          "ppl4096": 8.829
+        },
+        {
+          "method": "Wanda 2:4",
+          "effective_density_pct": 50.0,
+          "union9": 52.2335,
+          "ppl4096": 11.7733
+        }
+      ],
+      "density_derivation": "in-scope linear elements 6,476,005,376; true 2:4 survivors 3,238,002,688; SLoRB extra live params 848,429,056 (= 26.2% of survivors, matching the file's own figure) -> (3,238,002,688 + 848,429,056)/6,476,005,376 = 63.1%"
+    },
+    "the_three_readings_that_are_all_true_simultaneously": [
+      "SparseForge 2:4+SLoRB beats CAST on union9 by +0.34 pp and sits only 0.78 pp below the dense upper bound -- the user's intuition is correct, it IS good",
+      "but it is NOT an equal-budget win: 63.1% effective density vs CAST's 50.0%, and CAST is also better on ppl (6.1372 vs 6.2115). At equal budget CAST compresses harder",
+      "SLoRB is genuinely effective: removing it from the SAME checkpoint costs 5.37 pp (62.43 -> 57.07), consistent with the file's measurement that 50% of SLoRB energy sits on PRUNED positions. Meanwhile SparseForge's 2:4 skeleton alone is 5.02 pp WEAKER than CAST's (57.07 vs 62.09) -- it trails on the sparse half and recovers via the bypass"
+    ],
+    "scope_of_the_earlier_retraction_UNCHANGED": "The +1.99 pp retraction stands and is a DIFFERENT comparison: it paired the token-matched slorb arm against the token-matched noslorb arm WITHOUT holding export variant fixed. That number is still void. It does not touch the 5B table's 62.4335 vs 62.0919, which is same-harness across two different METHODS with the density difference disclosed.",
+    "timestamp": "2026-08-15T21:45:00"
   }
 }
