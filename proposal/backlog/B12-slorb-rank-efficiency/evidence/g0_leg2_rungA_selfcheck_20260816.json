@@ -1,0 +1,265 @@
+{
+  "_what": "B12 G0 LEG 2 -- the CPU rung-A export self-check. RUN, not planned. ZERO GPU.",
+  "_when": "2026-08-16",
+  "_gate": "G0 leg 2 of proposal/backlog/B12-slorb-rank-efficiency/STATUS.json.next_gate",
+  "_repo_commit_at_run": "5aba878",
+  "verdict": "PASS",
+  "verdict_basis": "Both pre-registered constants matched EXACTLY on the tool's FIRST EVER execution (branch_live == 404,750,336 int-exact; density == 56.2500%), all guards in the reused exporter save path passed, and the exact-2:4 property of the mask the rung is built on was independently re-verified over ALL 224 in-scope tensors with ZERO violations.",
+  "what_was_run": {
+    "mode_1_dry_run": {
+      "cmd": "CUDA_VISIBLE_DEVICES='' python baselines/cast_repro/tools/emit_slorb_ladder.py --rung A --dry-run --ckpt <5B ckpt> --output /tmp/b12_dryrun_A",
+      "log": "logs/b12_g0_leg2_rungA_dryrun.log",
+      "result": "PASS -- prereg_match true"
+    },
+    "mode_2_full_export": {
+      "cmd": "CUDA_VISIBLE_DEVICES='' python baselines/cast_repro/tools/emit_slorb_ladder.py --rung A --ckpt <5B ckpt> --model <Llama--Llama2-7b> --output /tmp/b12_rungA_export",
+      "log": "logs/b12_g0_leg2_rungA_fullexport.log",
+      "result": "PASS -- weights materialised, all guards cleared, manifest written",
+      "note": "The dry-run alone CANNOT produce zero_fraction or 2:4 violations (emit_slorb_ladder.py:410-415 returns before the post-cast block at :446-464), so the full export was ALSO run. That is what makes this a real export self-check rather than a bookkeeping check."
+    },
+    "mode_3_independent_mask_verification": {
+      "script": "proposal/backlog/B12-slorb-rank-efficiency/evidence/g0_leg2_verify_mask_exact2of4.py",
+      "log": "logs/b12_g0_leg2_maskverify.log",
+      "result": "PASS -- 0 violations over all 224 tensors",
+      "why": "The FOLDED export is dense by construction, so its own zero_fraction cannot certify 2:4. The 2:4 claim lives in the MASK. This re-derives the mask with the same nm_2_4_hard used by the exporter and asserts exactness over the full scope, no sampling."
+    }
+  },
+  "stack": {
+    "python": "/opt/conda/envs/torch-base/bin/python 3.14.6",
+    "torch": "2.13.0",
+    "transformers": "5.15.0",
+    "numpy": "2.5.1",
+    "device": "CPU ONLY -- CUDA_VISIBLE_DEVICES='' on every invocation; torch.cuda.is_available() == False",
+    "gpu_hours_spent": 0.0,
+    "node": "LOCAL (wzc1). No ssh to any node; no GPU touched. All 40 cards left to their multi-day training."
+  },
+  "source": {
+    "checkpoint": "/apdcephfs_wzc1/share_304376610/pighzliu_code/out_llama/models_Llama--Llama2-7b_mask-unstructured_s0.5_m-hessian_obd_20260413_201320/model_best_lm_eval.pt",
+    "iter_num": 17900,
+    "SLoRB_k": 16,
+    "SLoRB_init_type": "sum",
+    "trainable_projection": true,
+    "dense_reference": "/apdcephfs_wzc1/share_304376610/pighzliu_code/models/Llama--Llama2-7b"
+  },
+  "PREREGISTRATION_ASSERTIONS": {
+    "_frozen_in": "STATUS.json .ladder_frozen_20260816.A_blocksum_LS, PRE-DATA",
+    "live_branch_params": {
+      "expected": 404750336,
+      "measured": 404750336,
+      "match": "EXACT (integer equality)"
+    },
+    "density_two_matmul_deployment_form_pct": {
+      "expected": 56.25,
+      "measured": 56.25,
+      "match": "EXACT"
+    },
+    "psi": {
+      "expected": 0.5229,
+      "measured": 0.5229408,
+      "match": "agrees to 4dp"
+    },
+    "scope_elements": {
+      "expected": 6476005376,
+      "measured": 6476005376,
+      "match": "EXACT"
+    },
+    "surviving_2of4": {
+      "expected": 3238002688,
+      "measured": 3238002688,
+      "match": "EXACT"
+    },
+    "tool_prereg_match_flag": true
+  },
+  "EXPORTER_GUARDS": {
+    "_note": "emit_slorb_ladder.py deliberately reuses export_sparseforge_to_hf.py's verified save sequence. Line refs are to emit_slorb_ladder.py.",
+    "scope_assertion_344_349": "PASS -- scope_elements 6,476,005,376 and surviving 3,238,002,688 both hit exactly. (Mirrors the exporter's :202-204 EXPECTED_SCOPE_TENSORS=224 / EXPECTED_SCOPE_ELEMENTS=6,476,005,376; this tool checks elements+surviving rather than a tensor count, and 224 in-scope tensors were processed -- confirmed by len(per_tensor)==224 and 32 per each of the 7 families.)",
+    "prereg_assertion_363_373": "PASS -- no SystemExit; printed 'OK pre-registration match'",
+    "keyset_vs_dense_reference_422_430": "PASS -- 'key set matches dense reference (modulo rotary inv_freq)'. This is the exporter's :219-224 invariant.",
+    "load_state_dict_roundtrip_435_442": "PASS -- 0 unexpected keys, 0 missing keys beyond rotary_emb.inv_freq. 291 tensors loaded.",
+    "post_cast_not_exactly_2of4_460_464": "PASS (did NOT fire, correctly) -- a folded export MUST NOT be exactly 2:4; if it were, the branch would be a no-op. zero_frac 0.0 and 1,619,001,344 violations, so the guard's condition (post_viol==0 AND |zero_frac-0.5|<1e-6) is false and the rung is meaningful.",
+    "tokenizer_model_required_475_477": "PASS -- tokenizer.model present and copied. All 5 files copied: tokenizer.model, tokenizer.json, tokenizer_config.json, special_tokens_map.json, generation_config.json",
+    "_all_three_guards_the_task_named": "scope mismatch, exact key-set match vs dense reference, and tokenizer.model requirement: ALL THREE PASSED."
+  },
+  "RUNG_A_MEASURED": {
+    "post_cast_zero_fraction": 0.0,
+    "post_cast_exact_2of4_violations": 1619001344,
+    "is_dense_on_disk": true,
+    "_reading_this_correctly": "zero_fraction == 0.0 EXACTLY and ALL 1,619,001,344 tiles violate 2:4. That is the CORRECT and EXPECTED result, not a failure: the export is FOLDED (W*mask + E), and E is dense, so every masked-out entry is overwritten by a nonzero branch contribution. STATUS.json .ladder_frozen_20260816.density_honesty and PROPOSAL.md sec 4.3 pre-registered exactly this. Any table placing rung A in a 2:4 column would be the retraction-forcing defect (must_not_claim[2]).",
+    "in_scope_tensors": 224,
+    "in_scope_tensors_per_family": 32,
+    "branch_perturbation_all224_no_sampling": {
+      "rel_fro_err_vs_trained_branch": {
+        "min": 0.081719,
+        "median": 0.112428,
+        "max": 0.298371
+      },
+      "rel_pert_of_deployed_W_eff": {
+        "min": 0.016302,
+        "median": 0.024,
+        "max": 0.102683
+      },
+      "rel_pert_if_branch_deleted": {
+        "min": 0.145148,
+        "median": 0.208667,
+        "max": 0.413717
+      }
+    },
+    "per_family": {
+      "q_proj": {
+        "n": 32,
+        "live_branch_params": 33554432,
+        "median_rel_fro_err_vs_trained_branch": 0.113053,
+        "median_rel_pert_of_deployed_W_eff": 0.02432,
+        "median_rel_pert_if_branch_deleted": 0.21508
+      },
+      "k_proj": {
+        "n": 32,
+        "live_branch_params": 33554432,
+        "median_rel_fro_err_vs_trained_branch": 0.111281,
+        "median_rel_pert_of_deployed_W_eff": 0.02487,
+        "median_rel_pert_if_branch_deleted": 0.219184
+      },
+      "v_proj": {
+        "n": 32,
+        "live_branch_params": 33554432,
+        "median_rel_fro_err_vs_trained_branch": 0.112787,
+        "median_rel_pert_of_deployed_W_eff": 0.024017,
+        "median_rel_pert_if_branch_deleted": 0.210672
+      },
+      "o_proj": {
+        "n": 32,
+        "live_branch_params": 33554432,
+        "median_rel_fro_err_vs_trained_branch": 0.105271,
+        "median_rel_pert_of_deployed_W_eff": 0.020503,
+        "median_rel_pert_if_branch_deleted": 0.180638
+      },
+      "gate_proj": {
+        "n": 32,
+        "live_branch_params": 90177536,
+        "median_rel_fro_err_vs_trained_branch": 0.110019,
+        "median_rel_pert_of_deployed_W_eff": 0.02248,
+        "median_rel_pert_if_branch_deleted": 0.207576
+      },
+      "up_proj": {
+        "n": 32,
+        "live_branch_params": 90177536,
+        "median_rel_fro_err_vs_trained_branch": 0.112742,
+        "median_rel_pert_of_deployed_W_eff": 0.023502,
+        "median_rel_pert_if_branch_deleted": 0.20657
+      },
+      "down_proj": {
+        "n": 32,
+        "live_branch_params": 90177536,
+        "median_rel_fro_err_vs_trained_branch": 0.166546,
+        "median_rel_pert_of_deployed_W_eff": 0.025273,
+        "median_rel_pert_if_branch_deleted": 0.154588
+      }
+    }
+  },
+  "EXACT_2OF4_WHERE_IT_ACTUALLY_LIVES": {
+    "_scope": "ALL 224 in-scope tensors, no sampling, mask re-derived by the same nm_2_4_hard the exporter uses",
+    "mask_elements": 6476005376,
+    "mask_ones": 3238002688,
+    "mask_ones_fraction": 0.5,
+    "mask_exact_2of4_violations": 0,
+    "columns_outside_any_group_of_4": 0,
+    "W_times_mask_zero_fraction": 0.5,
+    "W_times_mask_exact_2of4_violations": 0,
+    "_verdict": "The 2:4 substrate rung A is built on is EXACT: mask_ones_fraction 0.500000 to full float precision, ZERO violations out of 1,619,001,344 tiles, ZERO tail columns outside a group of 4. So 'the rung still satisfies exact 2:4 where it claims to' is TRUE -- and the place it claims it is the mask/two-matmul deployment form, NOT the folded tensor on disk."
+  },
+  "ANCHOR_COMPARISON": {
+    "_source": "the on-disk exports' own sparseforge_export_meta.json, same checkpoint iter_num 17900, produced by export_sparseforge_to_hf.py",
+    "R0_hard_fold": {
+      "path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/outputs/sparseforge_5b_hf/hard_fold",
+      "in_scope_zero_fraction": 1.6985779599204583e-09,
+      "exact_2of4_violations": 1619001344,
+      "exact_2of4_violations_post_cast": 1619001344,
+      "is_exact_2of4": false,
+      "density_pct": 63.1011,
+      "psi": 0.0,
+      "union9": 62.4335,
+      "_note": "DENSE. STATUS.json quotes linear_zero_ratio 1.0809132472221097e-09 (= 7 zeros / 6,476,005,376) from status/sparseforge_union9_closeout.json; the export meta records 1.6985779599204583e-09 (= 11 zeros). Both are effectively zero and both certify DENSE; the 7-vs-11 difference is between two different recorded artefacts and is NOT reconciled here. barred_from_2of4_column: true."
+    },
+    "R1_hard_drop": {
+      "path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/outputs/sparseforge_5b_hf/hard_drop",
+      "in_scope_zero_fraction": 0.5,
+      "exact_2of4_violations": 0,
+      "exact_2of4_violations_post_cast": 0,
+      "is_exact_2of4": true,
+      "density_pct": 50.0,
+      "psi": 1.0,
+      "union9": 57.0678,
+      "_note": "TRUE 2:4 on disk -- the only row in this family that may appear in a 2:4 column."
+    },
+    "A_rung_this_run": {
+      "path": "/tmp/b12_rungA_export (OVERLAY FS, NOT PERSISTED -- see caveat)",
+      "in_scope_zero_fraction": 0.0,
+      "exact_2of4_violations": 1619001344,
+      "is_exact_2of4": false,
+      "density_pct": 56.25,
+      "psi": 0.5229,
+      "union9": "NOT MEASURED -- requires GPU"
+    },
+    "_interpretation": "Rung A sits between the anchors on the DEPLOYMENT-density axis (63.1011 -> 56.2500 -> 50.0000) while being, like R0, DENSE ON DISK. Its zero_fraction (0.0) is even lower than R0's (1.70e-9) because the LS-refitted block-sum branch happens to leave no exact zero at all. The zero_fraction axis therefore does NOT order the ladder and must never be used as a sparsity claim for any rung except R1."
+  },
+  "GLOBAL_PERTURBATION_CROSS_CHECK": {
+    "_why": "An export that passes its own assertions could still implement the wrong operator. This checks the operator against evidence computed by a DIFFERENT tool in a DIFFERENT pass.",
+    "from_prior_evidence_global_operator_basis_all224": {
+      "delete_branch": 0.20001,
+      "blocksum_LS": 0.024523,
+      "ls_as_pct_of_delete": 12.2607
+    },
+    "recomputed_from_THIS_run_manifest": {
+      "blocksum_LS": 0.024523,
+      "n_tensors_matched": 224
+    },
+    "STATUS_json_claims": {
+      "delete_branch": 0.20001,
+      "blocksum_LS": 0.024523,
+      "pct_of_delete": 12.26
+    },
+    "verdict": "ALL THREE AGREE TO 6 DECIMAL PLACES. 0.200010 / 0.024523 / 12.2607%. The tool implements the operator STATUS.json describes.",
+    "per_family_relE_over_Weff_reproduces_PROPOSAL_sec_4": "YES -- down_proj median 0.154588 (PROPOSAL sec 4 says 'lowest, median 0.1546'), o_proj 0.180638 (says 'next, 0.1806'). Independently reproduced from this run's own per-tensor rows."
+  },
+  "WHAT_THIS_DOES_NOT_ESTABLISH": [
+    "NO union-9 score for rung A, or any rung. Scoring needs lm_eval on GPU. Every union-9 number in this file is an ON-DISK ANCHOR (R0 62.4335 / R1 57.0678), never a prediction for a rung.",
+    "The global ||dW_eff||/||W_eff|| column is a WEIGHT-SPACE proxy with NO calibrated relationship to union-9 pp. It ordered candidate rungs; it does not predict a score.",
+    "Rung A does NOT qualify for a rank claim (psi 0.5229 < the 0.60 bar). If it passes while P/Q/R/S fail, kill_gate.clause_7 applies: that is 'x_proj is free, rank is not', NOT 'over-provisioned rank'.",
+    "Only rung A was exported. P/Q/R/S/Dctl remain UNEXECUTED -- in particular the c>1 coarsening path and the whole svd path (_branch_svd, _svd_t_density_matched) are still untested. Rung A exercises the LS refit at c=1 only. The PILOT rung P is the first cell that exercises per-projection coarsening.",
+    "CORRECTED: an earlier draft of this file said 'the scoring env is unverified' on the basis that lm_eval is not importable in /opt/conda/envs/torch-base. That was OVER-BROAD -- the conda env is the EXPORT env, not the scoring env. The driver has its own: PY/LM_EVAL point at venv_union9, and measured at its true path (/apdcephfs_wzc1/share_304376610/pighzliu_code/venv_union9/bin/python) it is lm_eval 0.4.8 / transformers 4.57.6 / torch 2.13.0 -- EXACTLY the want={lm_eval 0.4.8, transformers 4.57.6} the driver asserts at launch_slorb_rank_sweep.sh:132. The real defect is the PATH the driver builds, not a missing dependency: see .DRIVER_DEFECT_FOUND."
+  ],
+  "CAVEATS": [
+    "The 13 GB rung-A export was written to /tmp/b12_rungA_export, which is on the OVERLAY filesystem and will NOT survive a node restart (memory/persist-artifacts-on-wzc1-or-diskb.md). This is deliberate: the weights are reproducible in ~7 minutes of CPU from the checkpoint, and the DELIVERABLE (this JSON + the 224-row manifest) is on wzc1. Do not cite the /tmp path as an asset.",
+    "scripts/launch_slorb_rank_sweep.sh remains UNEXECUTED in any mode (STATUS.json .not_verified[4] still stands; this gate only discharges .not_verified[3] for rung A).",
+    "The b86c479 harness commit is still unresolvable in this checkout (STATUS.json .not_verified[2] unchanged)."
+  ],
+  "artefacts_on_wzc1": {
+    "manifest_224_rows": {
+      "path": "proposal/backlog/B12-slorb-rank-efficiency/evidence/g0_leg2_rungA_manifest_20260816.json",
+      "sha256": "46afe107819f96692de7a52e24b0f4726b971a23d78292e97fb9b4ad1023f338"
+    },
+    "mask_verifier": "proposal/backlog/B12-slorb-rank-efficiency/evidence/g0_leg2_verify_mask_exact2of4.py",
+    "logs": [
+      "logs/b12_g0_leg2_rungA_dryrun.log",
+      "logs/b12_g0_leg2_rungA_fullexport.log",
+      "logs/b12_g0_leg2_maskverify.log"
+    ]
+  },
+  "DRIVER_DEFECT_FOUND": {
+    "severity": "would hard-fail the pilot launch at its first guard, before any export",
+    "what": "scripts/launch_slorb_rank_sweep.sh:66-67 default PY=\"$REPO/venv_union9/bin/python\" and LM_EVAL=\"$REPO/venv_union9/bin/lm_eval\", with REPO=$PROJECT_ROOT/Mixture-of-Memory (:48). Resolves to .../pighzliu_code/Mixture-of-Memory/venv_union9/bin/python, WHICH DOES NOT EXIST.",
+    "where_it_is": "/apdcephfs_wzc1/share_304376610/pighzliu_code/venv_union9/bin/python -- under $PROJECT_ROOT, one level ABOVE the checkout. Same off-by-one-directory as corrections_to_the_brief.correction_4.",
+    "consequence": "the guard at :114 ([ -x \"$PY\" ] || die) fires immediately; the driver could never reach an export, let alone an eval.",
+    "harness_itself_is_correct": "measured at the true path: lm_eval 0.4.8, transformers 4.57.6, torch 2.13.0 -- exactly what :132 asserts. One-line path fix, not a missing dependency.",
+    "status": "REPORTED, NOT FIXED in this pass -- it is a change to a GPU-spending launch script and belongs with the pilot launch."
+  },
+  "READER_FIX_APPLIED": {
+    "_what": "proposal/ready_queue.py gained dated-priority slots for `lifecycle` and NEXT_GATE_COST_KEYS, so that a gate which WAS free and has been DISCHARGED can be expressed under append-only.",
+    "why": "MEASURED, not assumed: with the G0 evidence appended and every pre-existing key byte-intact, the reader still classified B12 ready_cpu and told the next agent to run a gate that had already been run. Same class as the B07 kill-gate slot (LIFECYCLE_SCHEMA.md sec 2.0) which stalled six days.",
+    "pins_found": "FIVE. (1) `lifecycle` read as a bare key at the declaration site, and a declared ready_cpu is an authoritative EARLY RETURN. (2) top-level next_gate_gpu, byte-frozen at '0 GPU for G0'. (3) gpu_cost_estimate.next_gate_cost, byte-frozen at '0 GPU -- G0 is CPU-only'. (4) _next_gate_is_free was first-MATCH not first-PRESENT, so a dated slot was unreachable because the frozen sibling always still matches. (5) a SUBSTRING HAZARD I hit twice myself: a dated cost value that NARRATES what the discharged gate cost re-pins the proposal, because '0 gpu' / 'cpu-only' match inside the narration.",
+    "novelty_pin_closed_without_a_reader_change": "related_work_status is byte-frozen at 'ABSENT' and novelty_checked at false, but NOVELTY_VERDICT_KEYS already ranks the sibling `novelty_verdict` above related_work_status -- so appending it was sufficient. No reader change was needed there.",
+    "regression_test": "With the reader fixed and NO dated key present, the report is BYTE-IDENTICAL to the pre-fix report across all 15 proposals (diff empty). After appending the dated keys to B12 only, exactly ONE lifecycle changes: B12 ready_cpu -> ready_gpu. All 14 others unchanged.",
+    "summary_line_before": "SUMMARY: 0 ready_gpu, 9 ready_cpu (0 GPU, dispatchable NOW), 3 needs_prior_gate",
+    "summary_line_after": "SUMMARY: 1 ready_gpu, 8 ready_cpu (0 GPU, dispatchable NOW), 3 needs_prior_gate"
+  }
+}

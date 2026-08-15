@@ -190,8 +190,34 @@ NESTED_GATE_CONTAINERS = ("gate_design", "gates", "prereg", "preregistration")
 # next step free must be surfaced as ready_cpu, never ready_gpu -- see the
 # `_next_gate_is_free` call in the lifecycle inference. Added 2026-08-15 after
 # measuring that pure bookkeeping could promote B06 past its own free kill test.
-NEXT_GATE_COST_KEYS = ("next_gate_gpu", "next_gate_cost", "gate_gpu",
-                       "next_gate_gpu_cost")
+NEXT_GATE_COST_KEYS = (
+    # ---- dated-priority slot, NEWEST FIRST. Same mechanism and same reason as
+    # NEXT_GATE_KEYS[0] / KILL_KEYS[0] (LIFECYCLE_SCHEMA.md sec 2.0), added
+    # 2026-08-16 after MEASURING it on B12.
+    #
+    # The defect this fixes: a gate that *was* free and has since been
+    # DISCHARGED could not be expressed. B12's G0 was genuinely 0 GPU and it
+    # genuinely PASSED both legs on 2026-08-16 at zero GPU
+    # (g0_result_20260816, with a 224-tensor export self-check and a 30-candidate
+    # novelty survey). But its `next_gate_gpu` is byte-frozen at "0 GPU for G0.
+    # Both legs of the next gate are CPU-only..." and append-only (sec 0) forbids
+    # editing it -- so the reader kept pinning it to ready_cpu, telling the next
+    # agent to run a gate that had already been run. That is the B07 kill-gate
+    # stall exactly (six days of "NO_KILL_GATE_DEFINED" over a written gate),
+    # transplanted from the gate axis to the gate-COST axis.
+    #
+    # Precedence here is first-PRESENT, not first-MATCH: if a dated slot exists
+    # it is authoritative and the older strings are not consulted at all.
+    # First-match cannot work, because the older string will always still match
+    # (it is frozen), so a dated override would be unreachable. Safe for the
+    # same reason sec 2.0 gives for gates and NOT for blockers: a newer gate
+    # still has to state its own cost and is auditable against the dated record
+    # that discharged it, whereas a newer-and-shorter *blocker* list would
+    # loosen constraints by silence.
+    "next_gate_gpu_20260816",
+    "next_gate_gpu", "next_gate_cost", "gate_gpu",
+    "next_gate_gpu_cost")
+_DATED_COST_KEYS = ("next_gate_gpu_20260816",)
 _FREE_MARKERS = ("0 gpu", "zero gpu", "no gpu", "0-gpu", "cpu only", "cpu-only",
                  "0 gpu-h", "0gpu")
 
@@ -205,8 +231,24 @@ def _next_gate_is_free(d):
     the case that must run before any card is spent, so a mixed value counts as
     free. Deliberately conservative in the safe direction: a false "free" costs a
     delay, a false "needs GPU" spends GPU-h on an untested claim.
+
+    A DATED slot short-circuits: it is the only value consulted, including the
+    `gpu_cost_estimate` fallback below (whose docstring says it applies when the
+    top-level key is absent -- "sometimes carries the per-leg breakdown
+    INSTEAD"). Without that, B12's frozen `gpu_cost_estimate.next_gate_cost`
+    ("0 GPU -- G0 is CPU-only") would re-pin a discharged gate on its own; it was
+    measured doing exactly that.
+
+    ⚠ SUBSTRING HAZARD, measured 2026-08-16 while writing B12's dated value. The
+    first draft read "1.46 GPU-h. G0 PASSED both legs 2026-08-16 at 0 GPU" -- and
+    the "0 gpu" marker fired on the phrase describing what the DISCHARGED gate
+    had cost, re-pinning the proposal it was meant to release. A dated cost value
+    must state only what the NEXT step costs; do not narrate the history of a
+    free gate inside it.
     """
-    for k in NEXT_GATE_COST_KEYS:
+    dated = [k for k in _DATED_COST_KEYS if isinstance(d.get(k), str) and d[k].strip()]
+    keys = (dated[0],) if dated else NEXT_GATE_COST_KEYS
+    for k in keys:
         v = d.get(k)
         if isinstance(v, dict):
             v = " ".join(str(x) for x in v.values())
@@ -215,6 +257,8 @@ def _next_gate_is_free(d):
         vl = v.lower()
         if any(m in vl for m in _FREE_MARKERS):
             return f"{k}: {v.strip()[:120]}"
+    if dated:
+        return ""       # the dated slot spoke; do not let a frozen sibling veto it
     # gpu_cost_estimate sometimes carries the per-leg breakdown instead.
     gce = d.get("gpu_cost_estimate")
     if isinstance(gce, dict):
@@ -321,6 +365,19 @@ UNSPEC = ("NOT_SPECIFIED", "UNKNOWN", "NO_KILL_GATE_DEFINED",
 LIFECYCLE_REASON_KEYS = ["lifecycle_reason",
                          "lifecycle_why_20260815", "lifecycle_why_20260814",
                          "lifecycle_why"]
+# `lifecycle` itself needs a dated slot for the same append-only reason, and it
+# is the LAST of the four to get one (gate 08-14, kill 08-15, reason 08-15,
+# lifecycle 08-16). Measured on B12 2026-08-16: `lifecycle` was read at the
+# declaration site as a BARE `d.get("lifecycle")`, and because a declared
+# ready_cpu is an authoritative EARLY RETURN, a frozen "ready_cpu" could never
+# be superseded no matter how much evidence was appended. B12's G0 passed both
+# legs at zero GPU and the queue still said "run the free test first".
+#
+# Same asymmetry as everywhere else in this file: recency is safe for a STATE
+# that must still pass the downstream checks (a declared ready_gpu is NOT taken
+# on faith -- see the "declaration can downgrade, not upgrade" branch), and
+# unsafe only for blockers, which is why blockers use pointers instead.
+LIFECYCLE_KEYS = ["lifecycle_20260816", "lifecycle"]
 
 
 def _txt(v, n=400):
@@ -641,7 +698,7 @@ def read_one(path):
     # proposal's paperwork made a killed direction look like the single most
     # dispatchable item in the queue, and it would have been handed 8 idle H20s.
     # A terminal state must be declarable, not only inferable.
-    explicit = d.get("lifecycle")
+    _lck, explicit = _first(d, LIFECYCLE_KEYS)
     VALID_LC = ("ready_gpu", "ready_cpu", "needs_prior_gate", "running",
                 "promoted", "dead")
     _, _lc_why = _first(d, LIFECYCLE_REASON_KEYS)

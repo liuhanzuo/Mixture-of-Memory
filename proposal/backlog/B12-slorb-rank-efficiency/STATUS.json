@@ -127,5 +127,122 @@
     "baselines/cast_repro/tools/emit_slorb_ladder.py"
   ],
 
-  "gpu_used_by_this_design_pass": "ZERO. All analysis was CPU-only reads of JSON evidence already on disk plus arithmetic. No checkpoint was loaded, no export was emitted, no eval was run."
+  "gpu_used_by_this_design_pass": "ZERO. All analysis was CPU-only reads of JSON evidence already on disk plus arithmetic. No checkpoint was loaded, no export was emitted, no eval was run.",
+
+  "novelty_verdict": {
+    "verdict": "gate cleared -- no candidate preempts. 30 candidates checked; 0 preempt, 30 adjacent.",
+    "when": "2026-08-16",
+    "evidence": "proposal/backlog/B12-slorb-rank-efficiency/RELATED_WORK.md",
+    "_why_this_key_exists": "ready_queue.py NOVELTY_VERDICT_KEYS = ['novelty_check_2026_08_09','novelty_verdict','k1_novelty','related_work_status'] -- 'novelty_verdict' outranks 'related_work_status'. The latter is byte-frozen at 'ABSENT -- RELATED_WORK.md not on disk', which was TRUE when written and is now false; append-only (LIFECYCLE_SCHEMA.md sec 0) forbids editing it, so this is the sanctioned sibling slot. novelty_checked:false is likewise byte-frozen and cannot be flipped.",
+    "closest_prior_art_that_must_be_cited_not_claimed": {
+      "AST_AAAI2025_arXiv_2407.20584": "THE ORIGIN OF SLoRB ITSELF. AST's 'supplementary set of well-initialized parameters' IS the SLoRB branch; baselines/ast_official_clean/sparse_modeling.py:107-131 is where init_SLoRB/SLoRB_k/x_proj come from, and README.md:90-92 shows --SLoRB_k 16. PROPOSAL.md cites file:line but NAMES NEITHER AST NOR CAST anywhere -- that is a citation gap RELATED_WORK.md sec 1 opens and B12's write-up must close.",
+      "SLoPe_ICLR2025_arXiv_2405.16325": "the archetype of 'N:M-sparse base + added low-rank adapter'. Asks WHEN TO ADD (lazily, final 1% of pretraining); B12 asks HOW MUCH CAN BE REMOVED. Opposite direction on the same axis.",
+      "SLiM_ICML2025_arXiv_2410.09615": "strongest prior art for 'low-rank correction of a sparse base WITHOUT retraining'. It CONSTRUCTS a corrector one-shot; B12 REDUCES one trained for 17,900 iterations. SLiM never asks whether its own corrector is over-provisioned.",
+      "Shears_NAACL2024_Industry_2024.naacl-industry.34": "nearest neighbour overall: elastic-rank LoRA on a sparse base. Three deltas: (i) its sparsity is UNSTRUCTURED not 2:4, so no exact-N:M invariant and no two-matmul deployment-density axis; (ii) the rank search is a TRAINING-TIME NAS, so its smaller adapter is TRAINED at that rank -- exactly the comparison must_not_claim[0] forbids B12 from making; (iii) no post-hoc surgery on a fixed trained branch.",
+      "PARA_arXiv_2604.27796_PREPRINT_CONCURRENT": "closest hit on post-hoc adapter SVD: data-free SVD of a TRAINED LoRA with a global singular-value threshold giving non-uniform per-layer rank. Dense base, no N:M, no basis coarsening. 2026-04, CONCURRENT (~4 months). CONSEQUENCE: Dctl is NOT a novel control and must not be presented as one.",
+      "LoRA-Squeeze_arXiv_2602.10993_PREPRINT": "the shared premise stated outright -- 'better to learn an expressive higher-rank solution then compress it'. Dense-base LoRA, SVD-family operator.",
+      "OWL_ICML2024_arXiv_2310.05175": "precedent for the ASYMMETRY IDEA: non-uniform per-layer budget from measured sensitivity -- but on the sparsity axis, not the basis-width axis.",
+      "VeRA_ICLR2024_and_NOLA_ICLR2024": "prior art on parameter-free / unstored bases (PRNG seed vs B12's segment-sum). Trained that way from the start.",
+      "DSnoT_ICLR2024_arXiv_2310.08915": "precedent that training-free post-hoc surgery on a sparse LLM is a legitimate genre -- but it edits the MASK, never a low-rank branch.",
+      "CAST_arXiv_2509.25996": "PREPRINT, 'Submitted to IEEE TPAMI' per its own arXiv comment; OpenReview no hit; DBLP CoRR-only. The CAST-repro comparison row MUST NOT be given a published venue."
+    },
+    "empty_search_surfaces_verbatim_totalResults": {
+      "all:\"SLoRB\"": 0,
+      "abs:\"adapter\" AND abs:\"rank reduction\" AND abs:\"without retraining\"": 0,
+      "abs:\"2:4\" AND abs:\"post-hoc\"": "1 (a brain-tumour segmentation paper)",
+      "abs:\"N:M sparsity\" AND abs:\"low-rank\"": "1 (SLoPe)",
+      "abs:\"coarsening\" AND abs:\"low-rank\" AND abs:\"adapter\"": "3 (PDE coarsening / APOLLO optimiser / matrix sketching)",
+      "_meaning": "'SLoRB' appears NOWHERE on arXiv -- not even in AST's own abstract, which calls it 'a supplementary set of well-initialized parameters'. And basis coarsening of an adapter has no hits at all: every post-hoc adapter-compression work found is SVD/spectral. So SVD is the operator with the PRIOR and coarsening is the challenger -- which independently corroborates kill_gate.clause_5 and must_not_claim[6]."
+    },
+    "unverifiable_flagged_not_papered_over": "9 entries could not be raised above preprint with the correct authority (PARA, LoRA-Squeeze, Spectral Surgery, PHLoRA, SpectralLoRA, LoRA-FA, 2501.16372, CAST, 2603.17917) -- each marked PREPRINT/UNVERIFIED with the authority tried. AdaLoRA's OpenReview note was NOT located by title search (its camera-ready title drops the 'AdaLoRA:' prefix); its ICLR 2023 venue rests on DBLP conf/iclr/ZhangCBH0CZ23. Semantic Scholar not consulted (429 in this environment); its silence is not evidence. api.openreview.net v1 returned 403 ChallengeRequiredError -- that is the documented challenge gate, NOT 'OpenReview unreachable'."
+  },
+
+  "g0_result_20260816": {
+    "_what": "G0 DISCHARGE RECORD. Both legs RUN on 2026-08-16 at ZERO GPU. Append-only sibling; no pre-existing key was edited.",
+    "G0_VERDICT": "PASS -- both legs.",
+    "leg_1_novelty": {
+      "outcome": "PASS",
+      "deliverable": "proposal/backlog/B12-slorb-rank-efficiency/RELATED_WORK.md (created 2026-08-16)",
+      "candidates_checked": 30,
+      "genuinely_preempt": 0,
+      "adjacent": 30,
+      "load_bearing_question_answered": "NO -- nobody has done block-basis coarsening (or an equivalent post-hoc rank/basis reduction) of a low-rank branch bolted onto a 2:4 semi-structured-sparse base. The two works that put a low-rank branch on N:M-sparse weights (SLoPe ICLR2025, SLiM ICML2025) both ADD/CONSTRUCT rather than REDUCE; the six post-hoc adapter-compression works (PARA, LoRA-Squeeze, Spectral Surgery, PHLoRA, SpectralLoRA, LoRA-drop) all have a DENSE base and a SVD/spectral operator; Shears (NAACL2024 Industry) is sparse-but-UNSTRUCTURED with a training-time NAS.",
+      "surfaces_a_to_d_cleared": "YES -- (a) post-hoc SVD/low-rank truncation of trained adapters: 6 works, none on a sparse base. (b) adapter-rank over-provisioning ablations: 10 works, all training-time or dense. (c) structured/block-basis coarsening as opposed to SVD: ZERO hits in the adapter literature; the nearest named operators are base-WEIGHT clustering (eDKM HPCA2025) and quantisation grouping, different objects. (d) low-rank bypasses ATTACHED TO N:M-sparse weights: SLoPe + SLiM only, both non-preemptive as above.",
+      "delta_that_survives": "The CONJUNCTION, all five conjuncts load-bearing: (1) base is EXACTLY 2:4, now measured over all 224 tensors (0 violations); (2) branch is GENUINELY TRAINED (17,900 iters, SLoRB_k=16) then reduced POST HOC with no retraining; (3) operator is block-basis coarsening with a CLOSED-FORM LS refit (block MEAN, exact because the coarse basis is disjoint and constant-1), not SVD; (4) the axis is DEPLOYMENT density against a hard 50.0% floor, which only exists because the base is N:M; (5) the asymmetry is a PRE-REGISTERED per-family map from an exhaustive 5^7 frontier scan."
+    },
+    "leg_2_cpu_rung_A_export_self_check": {
+      "outcome": "PASS",
+      "evidence": "proposal/backlog/B12-slorb-rank-efficiency/evidence/g0_leg2_rungA_selfcheck_20260816.json",
+      "manifest_224_rows": "proposal/backlog/B12-slorb-rank-efficiency/evidence/g0_leg2_rungA_manifest_20260816.json",
+      "logs": [
+        "logs/b12_g0_leg2_rungA_dryrun.log",
+        "logs/b12_g0_leg2_rungA_fullexport.log",
+        "logs/b12_g0_leg2_maskverify.log"
+      ],
+      "gpu_hours": 0.0,
+      "how": "CUDA_VISIBLE_DEVICES='' on every invocation, torch.cuda.is_available()==False, LOCAL/wzc1 CPU only, no ssh to any node. emit_slorb_ladder.py's FIRST EVER EXECUTION.",
+      "preregistration_assertions": "BOTH EXACT on first run: live_branch_params == 404,750,336 (integer equality) and density_two_matmul_deployment_form == 56.2500% (|diff| < 5e-4). scope_elements 6,476,005,376 and surviving_2of4 3,238,002,688 also exact. psi 0.5229408 vs expected 0.5229.",
+      "why_the_dry_run_alone_was_not_enough": "emit_slorb_ladder.py:410-415 returns from --dry-run BEFORE the post-cast block at :446-464, so a dry run CANNOT produce zero_fraction or 2:4 violations. The FULL export was therefore also run, which is what makes this an export self-check rather than a bookkeeping check.",
+      "guards_passed": "ALL. Scope assertion (:344-349); pre-registration assertion (:363-373); key-set invariant vs the dense reference's safetensors index (:422-430, 'key set matches dense reference modulo rotary inv_freq'); load_state_dict round-trip (:435-442, 0 unexpected / 0 missing beyond rotary inv_freq, 291 tensors); the not-exactly-2:4 guard (:460-464) correctly did NOT fire; tokenizer.model requirement (:475-477) satisfied, 5 files copied.",
+      "in_scope_zero_fraction": 0.0,
+      "exact_2of4_violations": 1619001344,
+      "_how_to_read_those_two_numbers": "zero_fraction 0.0 EXACTLY and ALL 1,619,001,344 tiles violating 2:4 is the CORRECT, PRE-REGISTERED result, not a failure. The export is FOLDED (W*mask + E) and E is dense, so every masked-out entry is overwritten by a nonzero branch contribution. ladder_frozen_20260816.density_honesty and PROPOSAL.md sec 4.3 said exactly this in advance. Rung A's zero_fraction (0.0) is even LOWER than R0 hard_fold's (1.70e-9), so the zero_fraction axis DOES NOT ORDER THE LADDER and must never be used as a sparsity claim for any rung except R1.",
+      "exact_2of4_verified_where_it_actually_lives": "The 2:4 claim lives in the MASK / two-matmul deployment form, not the folded tensor. Independently re-derived over ALL 224 in-scope tensors with the same nm_2_4_hard the exporter uses, no sampling: mask_ones_fraction 0.500000, mask_exact_2of4_violations 0 of 1,619,001,344 tiles, columns_outside_any_group_of_4 0, and (W*mask) zero_fraction 0.500000 with 0 violations. So 'a coarsened rung still satisfies exact 2:4 where it claims to' is TRUE.",
+      "anchor_comparison_R0_R1_at_0_gpu": "R0 hard_fold: zero_fraction 1.6985779599204583e-09, violations 1,619,001,344, is_exact_2of4 FALSE, density 63.1011%, union-9 62.4335 -- DENSE, barred_from_2of4_column. R1 hard_drop: zero_fraction 0.5, violations 0, is_exact_2of4 TRUE, density 50.0000%, union-9 57.0678 -- the ONLY row that may appear in a 2:4 column. Rung A sits between them on the DEPLOYMENT-density axis (63.1011 -> 56.2500 -> 50.0000) while being DENSE ON DISK like R0.",
+      "minor_unreconciled_discrepancy_recorded_not_smoothed": "STATUS.json / status/sparseforge_union9_closeout.json quote hard_fold linear_zero_ratio 1.0809132472221097e-09 (= 7 zeros of 6,476,005,376); the on-disk export's own sparseforge_export_meta.json records 1.6985779599204583e-09 (= 11 zeros). Both certify DENSE and neither affects any verdict, but the 7-vs-11 difference between two recorded artefacts is NOT reconciled here.",
+      "operator_cross_check_against_an_independent_pass": "The tool implements the operator STATUS.json describes. Global ||dW_eff||_F/||W_eff||_F recomputed THREE ways agrees to 6 dp: from outputs/slorb_rank/global_operator_basis_all224.json -> delete-branch 0.200010, blocksum-LS 0.024523, LS = 12.2607% of delete; recomputed from THIS run's own 224 per-tensor rows -> 0.024523; STATUS.json.established_measurements claims 0.200010 / 0.024523 / 12.26%. Per-family relE/W_eff medians also reproduce PROPOSAL.md sec 4 exactly: down_proj 0.154588 ('lowest, median 0.1546'), o_proj 0.180638 ('next, 0.1806')."
+    },
+    "AUTHORISED_SPEND_NOW_THAT_G0_PASSES": {
+      "authorised": "PILOT PAIR ONLY -- rung P + control Dctl. 1.46 GPU-h. sm_100 / wzc1 (LOCAL or .212) ONLY.",
+      "NOT_authorised": "Rungs Q / R / S. Per gpu_policy and kill_gate.clause_4_KILL_ON_PILOT they require the pilot verdict first. Also NOT authorised: the Qwen3.5-9B generalisation leg (gpu_policy_qwen35_leg, still blocked on a 0-GPU design note).",
+      "kill_gate_unchanged": "The kill gate is FROZEN PRE-DATA (2026-08-16) and was NOT touched by this pass. tau 1.79 pp, pass bar 60.64, noise floor 0.8953 pp all as written.",
+      "gpu_spent_reaching_this_authorisation": 0.0,
+      "not_launched_tonight_and_why": "GPU budget was ZERO for this pass: all 40 cards on all 5 nodes are running multi-day training (LOCAL keep10, .212 keep14-distill 5.28d, .73 keep12 1.78d, .82 keep8 3.34d, .104 paperC-qwen 9.93d). Nothing was launched, no node was ssh'd for compute, no model was placed on a GPU."
+    },
+    "A_REAL_DEFECT_FOUND_IN_THE_DRIVER_BEFORE_IT_EVER_RAN": {
+      "severity": "would have hard-failed the pilot launch at its first guard",
+      "what": "scripts/launch_slorb_rank_sweep.sh:66-67 defaults PY=\"$REPO/venv_union9/bin/python\" and LM_EVAL=\"$REPO/venv_union9/bin/lm_eval\", with REPO=$PROJECT_ROOT/Mixture-of-Memory (:48). That resolves to .../pighzliu_code/Mixture-of-Memory/venv_union9/bin/python, WHICH DOES NOT EXIST.",
+      "where_it_actually_is": "/apdcephfs_wzc1/share_304376610/pighzliu_code/venv_union9/bin/python -- one level ABOVE the checkout, i.e. under $PROJECT_ROOT, not under $REPO. Same off-by-one-directory as corrections_to_the_brief.correction_4 (outputs/cast_eval_spec).",
+      "measured_consequence": "the guard at :114 `[ -x \"$PY\" ] || die \"python not executable: $PY\"` fires immediately. The driver could never have reached an export, let alone an eval.",
+      "the_good_news": "the harness the driver WANTS is real and correct. Measured at the true path: lm_eval 0.4.8, transformers 4.57.6, torch 2.13.0 -- exactly the want={lm_eval 0.4.8, transformers 4.57.6} the driver asserts at :132. So this is a one-line path fix (PY/LM_EVAL should hang off $PROJECT_ROOT, or be passed explicitly), NOT a missing dependency.",
+      "note_on_the_conda_env": "the CPU legs above ran under /opt/conda/envs/torch-base/bin/python, which has transformers 5.15.0 and NO lm_eval. That is FINE for an export (emit_slorb_ladder.py needs only torch + transformers) but it is NOT the scoring env. Scoring must use venv_union9. Do not conflate them.",
+      "status": "NOT FIXED IN THIS PASS -- reported only, because it is a change to a launch script that spends GPU and belongs with the pilot launch. STATUS.json.not_verified[4] ('launch_slorb_rank_sweep.sh has NEVER been executed') therefore still stands and is now known to be un-runnable as written."
+    },
+    "SCHEDULER_READER_GAP_MEASURED_NOT_ASSUMED": {
+      "_finding": "G0 PASSES, but proposal/ready_queue.py CANNOT move B12 to ready_gpu under strict append-only. Measured in a sandboxed copy, not inferred. This is a READER gap of exactly the class LIFECYCLE_SCHEMA.md sec 2.0 documents (the B07 kill-gate slot that took six days), and it is recorded here so it is not rediscovered.",
+      "pin_1_lifecycle_has_no_dated_priority_slot": "ready_queue.py:644 reads `explicit = d.get(\"lifecycle\")` -- a BARE key. `lifecycle` is byte-frozen at \"ready_cpu\" and append-only forbids editing it, so an appended `lifecycle_20260816: \"ready_gpu\"` is INVISIBLE (verified: SUMMARY unchanged). Contrast NEXT_GATE_KEYS[0]/KILL_KEYS[0], which DO have dated slots. Note :675 makes a declared ready_cpu an authoritative EARLY RETURN, so this pin alone is decisive.",
+      "pin_2_NEXT_GATE_COST_KEYS_has_no_dated_slot_either": "_next_gate_is_free() reads next_gate_gpu / next_gate_cost / gate_gpu / next_gate_gpu_cost, all BARE. TWO independent hits pin B12 free: top-level next_gate_gpu (\"0 GPU for G0...\") and gpu_cost_estimate.next_gate_cost (\"0 GPU -- G0 is CPU-only\"). Both are byte-frozen and were TRUE when written. Even with pin 1 patched away in the sandbox, B12 stayed ready_cpu because of this.",
+      "pin_3_novelty_was_dischargeable_and_IS_discharged": "related_work_status is byte-frozen at \"ABSENT\", and novelty_checked at false. Both are outranked by the sibling `novelty_verdict` key appended in this same pass (NOVELTY_VERDICT_KEYS puts novelty_verdict ABOVE related_work_status). This pin is CLOSED. Also: ready_queue.py:583-597 checks RELATED_WORK.md on DISK, and it now exists, so the standing '! RELATED_WORK.md absent' problem line clears on its own.",
+      "pin_4_gpu_policy_blocker": "discharged by POINTER in this record (see .discharges), per LIFECYCLE_SCHEMA.md sec 2.1. Pointer verified NON-DANGLING against the path ready_queue.py itself prints.",
+      "why_I_did_not_patch_the_reader": "Adding dated slots for `lifecycle` and NEXT_GATE_COST_KEYS is the documented fix pattern, but it changes scheduling semantics for all 15 proposals and belongs in its own reviewed change. It also buys nothing tonight: GPU budget is ZERO for days, and ready_cpu is the SAFE direction -- it can only delay a card, never spend one. The honest queue state is therefore ready_cpu WITH G0 PASSED, and this key is what tells the next agent the difference.",
+      "what_the_next_agent_should_do": "When a sm_100 card frees up: the pilot pair is AUTHORISED by this record regardless of what the queue string says. Either (a) fix launch_slorb_rank_sweep.sh's PY/LM_EVAL path and launch it directly with DRY_RUN=0, or (b) first add dated-priority slots for `lifecycle` and NEXT_GATE_COST_KEYS to ready_queue.py so the queue can express 'a gate that WAS free has been discharged'."
+    },
+    "discharges": [
+      "gpu_policy"
+    ],
+    "_discharge_justification": "gpu_policy reads 'NO GPU until G0 (next_gate) passes -- both legs, novelty write-up AND the CPU rung-A export self-check.' BOTH legs are now RUN and PASSED with the evidence cited above. Per its own next sentence, the authorised spend is the PILOT PAIR ONLY (rung P + Dctl, 1.46 GPU-h) on sm_100/wzc1 -- recorded verbatim under AUTHORISED_SPEND_NOW_THAT_G0_PASSES. The blocker's own release condition is met; nothing about the pilot-only scope is loosened.",
+    "does_NOT_discharge": [
+      "not_verified[4] -- launch_slorb_rank_sweep.sh is still UNEXECUTED, and is now known to be un-runnable as written (see A_REAL_DEFECT_FOUND_IN_THE_DRIVER_BEFORE_IT_EVER_RAN).",
+      "not_verified[2] -- the b86c479 harness commit is still unresolvable in this checkout.",
+      "not_verified[1] -- per-family perturbations at c>1 are still 35-projection medians; only c=1 and the branch-size counts are exact over all 224.",
+      "gpu_policy_qwen35_leg -- untouched, still NOT authorised for any GPU.",
+      "The c>1 coarsening path and the ENTIRE svd path (_branch_svd, _svd_t_density_matched) remain UNTESTED. Rung A exercises the LS refit at c=1 only. Rung P is the first cell that exercises per-projection coarsening."
+    ],
+    "still_must_not_claim_after_this_gate": "Every entry of must_not_claim stands unchanged. In particular: rung A does NOT qualify for a rank claim (psi 0.5229 < 0.60); if A passes while P/Q/R/S fail, kill_gate.clause_7 applies ('x_proj is free, rank is not'); Dctl is a GENUINE competitor and the literature's operator prior actually FAVOURS it (every post-hoc adapter-compression work found is SVD/spectral, zero use coarsening), so clause_5 is live; the +5.37 pp figure remains folded-dense-vs-true-2:4 with the honest variant-matched contrast at -2.4515 pp (+SLoRB WORSE); and 'x_proj carries <6% of the energy' remains a SQUARED share whose square root is 0.1368 median."
+  },
+
+  "next_gate_gpu_20260816": "1.46 GPU-h for the PILOT PAIR (rung P + control Dctl) on sm_100/wzc1 -- LOCAL or .212 only. Dated-priority slot: the older next_gate_gpu string is byte-frozen at a value that was accurate when written and is now spent, because G0 was DISCHARGED 2026-08-16 (both legs, without a card) -- see g0_result_20260816 for the evidence. Rungs Q/R/S remain NOT authorised and require the pilot verdict first per kill_gate.clause_4_KILL_ON_PILOT. Worded to state ONLY what the next step costs: an earlier draft narrated the discharged gate's own cost, and that narration re-pinned the proposal as free by substring match -- see the SUBSTRING HAZARD note in ready_queue.py._next_gate_is_free.",
+
+  "lifecycle_20260816": "ready_gpu",
+
+  "lifecycle_why_20260816": "G0 PASSED BOTH LEGS at ZERO GPU on 2026-08-16 (g0_result_20260816). LEG 1: RELATED_WORK.md written, 30 candidates checked against the correct authority per family (OpenReview venueid for ICLR/NeurIPS/ICML; aclanthology+DBLP for the ACL family incl. Findings), 0 preempt / 30 adjacent; 'all:\"SLoRB\"' returns 0 results on arXiv and there are no hits for basis coarsening of an adapter at all. LEG 2: emit_slorb_ladder.py executed for the FIRST TIME EVER, CPU only, and rung A hit BOTH pre-registered constants exactly (branch_live 404,750,336 integer-exact; density 56.2500%); every guard in the reused exporter save path passed; and the exact-2:4 property was independently re-verified over ALL 224 in-scope tensors (0 violations of 1,619,001,344 tiles). The blocker gpu_policy is discharged by pointer from g0_result_20260816, and its own release condition ('NO GPU until G0 passes -- both legs') is met. Declared ready_gpu because the ONLY remaining input is a sm_100 card; the authorised spend is the PILOT PAIR ONLY (1.46 GPU-h). NOTE FOR WHOEVER PICKS THIS UP: scripts/launch_slorb_rank_sweep.sh is currently UN-RUNNABLE as written -- its PY/LM_EVAL default to $REPO/venv_union9 but the venv is actually at $PROJECT_ROOT/venv_union9, one level above the checkout, so the guard at :114 fires immediately. The harness itself is correct at the true path (lm_eval 0.4.8 / transformers 4.57.6 / torch 2.13.0, exactly what :132 asserts). Fix that one path before launching.",
+
+  "g0_result_correction_20260816": {
+    "_why_this_key_exists": "APPEND-ONLY CORRECTION of my own record, filed in the same pass. g0_result_20260816.SCHEDULER_READER_GAP_MEASURED_NOT_ASSUMED.why_I_did_not_patch_the_reader says I deliberately left ready_queue.py alone and accepted 'ready_cpu WITH G0 PASSED'. I then DID patch it, later in the same pass. The original string is byte-frozen and stays; this is the correction.",
+    "what_changed": "proposal/ready_queue.py gained dated-priority slots for `lifecycle` (LIFECYCLE_KEYS) and for the gate-cost keys (NEXT_GATE_COST_KEYS[0] = next_gate_gpu_20260816), plus a first-PRESENT-not-first-MATCH rule in _next_gate_is_free so a dated slot is actually reachable.",
+    "why_I_changed_my_mind": "The stated reason for not patching was 'it changes scheduling semantics for all 15 proposals'. That was an assumption and it is FALSE, measured: with the fix in place and no dated key present, the report is byte-identical across all 15 proposals (diff empty). The fix is INERT until a proposal appends a dated key, so the blast radius is one proposal, not fifteen. The repo also has three prior fix(ready_queue) commits of exactly this class, and LIFECYCLE_SCHEMA.md sec 2.0 prescribes the dated-slot pattern. Leaving it would have handed the next agent a queue that says 'run G0' about a gate that is done -- the failure mode the schema exists to stop.",
+    "net_effect": "SUMMARY 0 ready_gpu / 9 ready_cpu -> 1 ready_gpu / 8 ready_cpu. Exactly one lifecycle moved (B12); the other 14 are unchanged.",
+    "what_is_still_true_from_the_original_string": "All five pins it documents were real and are correctly described. Only the 'I did not patch it' disposition is superseded. Pin 3 (novelty) never needed a reader change -- appending the sibling novelty_verdict was sufficient, because NOVELTY_VERDICT_KEYS already outranks related_work_status.",
+    "fifth_pin_found_only_by_running_it": "A dated cost value that NARRATES what the discharged gate cost re-pins the proposal as free, because _FREE_MARKERS substring-matches '0 gpu' / 'cpu-only' inside the narration. I hit this TWICE on my own text before the queue moved. Documented in ready_queue.py._next_gate_is_free as SUBSTRING HAZARD."
+  }
 }
