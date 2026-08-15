@@ -309,7 +309,10 @@ zwfy6 was searched from `.73` by running a metadata scan over
 The checkpoints themselves are present and healthy on wzc1 —
 `outputs/olmo2_probe2_7B_keep14fresh2_seed1234/` holds
 `step{25000,50000,100000,128000,153500,165000,170000,175000,180000,185000,190000,195000,199000,199500,200000}.pt`
-(48 724 473 567 – 48 724 474 298 B each). **Only the evaluation is missing, not the models.**
+(sizes, MAIN's own `ls` census 2026-08-16: **12 x 48 724 474 298 B, 2 x 48 724 473 567 B
+(step25000/step50000), and 1 x 48 724 468 275 B (step200000)**). An earlier draft of this line gave
+the range as "48 724 473 567 – 48 724 474 298 B each", which **excludes step200000** — the one
+checkpoint that does have an eval. Corrected. **Only the evaluation is missing, not the models.**
 
 > ### THE STATISTIC, NEXT TO ITS THRESHOLD
 >

@@ -39,14 +39,20 @@ second disk was searched read-only over ssh on `.73`. No `find /` was ever run.
 | wzc1 | `/apdcephfs_wzc1/share_304376610/pighzliu_code` (outer) | 5 | 22 | 1 irrelevant |
 | zwfy6 | `/apdcephfs_zwfy6/share_304376610/pighzliu_code` (via `.73`) | 5 | 22 | **0** |
 
-Patterns (22, superset of the 08-10 audit's ~15): `*agent*traj*`, `*traj*agent*`,
+Patterns (**25** — corrected 2026-08-16 by MAIN, who counted the enumerated list; three places in
+an earlier draft said 22 while the list below has 25. Superset of the 08-10 audit's ~15): `*agent*traj*`, `*traj*agent*`,
 `*toolbench*`, `*toolllama*`, `*xlam*`, `*swe_gym*`, `*swe-gym*`, `*agentinstruct*`,
 `*webarena*`, `*glaive*`, `*nemotron*`, `*rollout*`, `*tool_use*`, `*tooluse*`,
 `*func*call*`, `*agentbench*`, `*api_bank*`, `*apibank*`, `*tau_bench*`, `*taubench*`,
 `*mind2web*`, `*miniwob*`, `*alfworld*`, `*webshop*`, `*react*`.
-**Nine of these (`mind2web`, `miniwob`, `alfworld`, `webshop`, `tau_bench`, `api_bank`,
-`rollout`, `tool_use`, `func*call`) were NOT in the 08-10 audit's pattern list** — so this is
-an independent widening of that search, not a repeat of it. It still finds nothing.
+**Eight of these (`mind2web`, `miniwob`, `alfworld`, `webshop`, `tau_bench`, `api_bank`,
+`rollout`, `func*call`) were NOT in the 08-10 audit's pattern list** — so this is an independent
+widening of that search, not a repeat of it. It still finds nothing.
+
+> **CORRECTED 2026-08-16 by MAIN.** The draft said *nine*, including `tool_use`. But
+> `grep -c tool_use DATA_AUDIT_VERDICT_20260810.md` returns 1 — `tool_use` **was** already in the
+> 08-10 list, so the count of genuinely-new patterns is **eight**, not nine. The
+> "independently widens that search" conclusion is unaffected; only the tally was wrong.
 
 The only `*rollout*` hits on wzc1 are:
 
@@ -312,7 +318,7 @@ Then, in order:
    with the Llama-3.1 licence if using model outputs. Anyone shipping a model trained on it
    must read those, not this file.
 5. **The disk search is filenames and directories, not a content scan.** Same limitation the
-   08-10 audit disclosed. Mitigated by both disks being searched with 22 patterns and by
+   08-10 audit disclosed. Mitigated by both disks being searched with 25 patterns and by
    `data/` being small and fully enumerated on both. The burden remains on producing a path.
 
 ## 8. Provenance

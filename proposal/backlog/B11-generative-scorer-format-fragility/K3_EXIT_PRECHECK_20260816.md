@@ -136,8 +136,25 @@ as needing re-checking immediately before filing) is now **re-verified by me, to
 | last commit to touch `metrics.py` | `93d7bfe67ad0` (2025-04-05) | `GET /commits?path=babilong/metrics.py` — agrees with local `git log` |
 | commit that INTRODUCED line 31 | **`58e5d20b775b`** (2024-06-04, booydar), *"add split by \"Question\" in preprocess + fix lowercase bug"* | `git blame -L 24,32` |
 
-The introducing commit message is worth quoting in the issue: the same commit that added the
-`'Question'` split also "fixed a lowercase bug" — the two changes collided.
+The introducing commit message is worth quoting in the issue, but **only with the correction
+below** — the message misleads about *which* lowercasing it means.
+
+> **CORRECTED 2026-08-16 by MAIN**, from `git show 58e5d20b -- babilong/metrics.py` (2 insertions,
+> 1 deletion — the whole diff). An earlier draft of this document, and its ready-to-file issue body,
+> said *"the same commit that added the guard also moved/added the lowercasing, which is how the two
+> came to collide."* **That is false.** It was inferred from the commit *message* instead of read
+> off the *diff*. What `58e5d20b` actually changed:
+>
+> - `preprocess_output`: **added** `output = output.split('Question')[0]` — the guard, now line 31.
+> - `compare_answers`: `label in question` → `label in question.lower()`. **This is the "lowercase
+>   bug" the message names, and it is in a different function.**
+> - It did **not** touch `output = output.lower()` (now line 25). `git blame -L 25,25` attributes
+>   that line to **`1e7893a4`** (yurakuratov, **2024-05-22**) — **13 days earlier**.
+>
+> The corrected framing is also the stronger one: the lowercasing already existed upstream, and the
+> guard was added on top of it by an author who — per their own commit message — was thinking about
+> case handling at that very moment and still did not notice. Unlike the false version, this
+> survives a maintainer running `git blame`. **Do not restore the deleted sentence.**
 
 **The code, at upstream lines 24–32 of `7a6efee2`:**
 
@@ -429,9 +446,11 @@ data and no GPU:
 - `babilong/metrics.py`, md5 **`0a5ecc52ade4e337d35b8f9c97c38310`** at that HEAD; line numbers below
   are that file's.
 - `metrics.py` last changed in `93d7bfe67ad0` (2025-04-05). Line 31 was added in
-  **`58e5d20b775b`** (2024-06-04), *"add split by \"Question\" in preprocess + fix lowercase bug"* —
-  the same commit that added the guard also moved/added the lowercasing, which is how the two came
-  to collide.
+  **`58e5d20b775b`** (2024-06-04), *"add split by \"Question\" in preprocess + fix lowercase bug"*.
+  Note that the "lowercase bug" fixed in that same commit is a **different** one — `label in
+  question` → `label in question.lower()` inside `compare_answers`. The `output = output.lower()`
+  on line 25 predates it: `git blame` attributes that line to `1e7893a4` (2024-05-22), 13 days
+  earlier. So the guard was added on top of an already-existing lowercasing.
 - Verified on Python 3.14.6. The argument in point 1 is version-independent (it is quantified over
   all Unicode codepoints).
 
