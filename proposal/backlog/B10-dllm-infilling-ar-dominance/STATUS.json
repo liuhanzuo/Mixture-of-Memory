@@ -267,5 +267,75 @@
     "F3_scaffold_contamination": "DOES NOT FIRE. 0 of 8 Scaffold cells reach the buggy indent branch; 162/164 Scaffold Medium HE+ programs already contain a top-level def so they would short-circuit it anyway. Scaffold's numbers are NOT understated.",
     "consequence_for_A05": "A05 stays dead and on firmer ground. K1 clauses recomputed against measured Scaffold: HE+ -30.49 pp, MBPP+ -0.00 pp, both still fire. The one thing that could have revived A05 is now measured and excluded.",
     "still_open": "single round only -- re-grading fixes provenance, not seed variance. Closing that needs a second Scaffold Medium generation with a different seed on LOCAL or .21 (wzc1, where the ckpt lives), ~1-2 GPU-h. Judged NOT worth spending against a 30 pp / 0.00 pp pair."
-  }
+  },
+  "gate_1_result": {
+    "verdict": "KILL",
+    "date": "2026-08-15",
+    "gate": "Gate 1 -- base-axis re-score of all 6 existing arms (score_infilling.py --which base)",
+    "gpu_used": "0 -- CPU only. Ran on .73 with CUDA_VISIBLE_DEVICES=\"\" forced; all 8 H20s stayed 99-100% occupied by the pre-existing train_olmo2_arch_probe2.py DDP job before and after. Nothing was regenerated; solutions.jsonl read as-is.",
+    "verdict_doc": "GATE1_BASE_AXIS_VERDICT.md",
+    "kill_condition_verbatim": "on the base axis (gold ceiling 0.9894, so >=98% of items feasible), the qwen_fim vs dreamon_oracle paired contrast is not significant at alpha=0.05 AND |delta| < 0.02",
+    "delta_definition": "delta = pass@1(qwen_fim) - pass@1(dreamon_oracle) = AR minus best-diffusion; positive = AR advantage",
+    "primary_contrast_base_axis_all_1033_items": {
+      "n_paired_items": 1033,
+      "qwen_fim_pass_at_1": 0.9351403678606002,
+      "qwen_fim_n_pass": 966,
+      "dreamon_oracle_pass_at_1": 0.9341723136495643,
+      "dreamon_oracle_n_pass": 965,
+      "delta": 0.0009680542110358514,
+      "test_primary": "exact McNemar (two-sided exact binomial on discordant pairs; no chi-square, no continuity correction)",
+      "mcnemar_b_qwen_only": 39,
+      "mcnemar_c_dreamon_only": 38,
+      "mcnemar_discordant": 77,
+      "mcnemar_both_pass": 927,
+      "mcnemar_both_fail": 29,
+      "p_exact_mcnemar_two_sided": 1.0,
+      "delta_ci95_clopper_pearson": [
+        -0.01639147856324337,
+        0.018250882652327525
+      ],
+      "test_secondary": "paired bootstrap, 10000 resamples of ITEMS (pairing preserved), seed 20260815, numpy 1.26.4",
+      "bootstrap_delta_ci95": [
+        -0.01645692158760892,
+        0.01742497579864477
+      ],
+      "p_paired_bootstrap_two_sided": 0.9498
+    },
+    "condition_1_not_significant_at_alpha_0.05": true,
+    "condition_2_abs_delta_lt_0.02": true,
+    "both_kill_conditions_hold": true,
+    "gold_ceiling_base_measured_on_zwfy6": 1.0,
+    "gold_ceiling_base_wzc1_record_quoted_by_the_gate": 0.989351403678606,
+    "gold_ceiling_discrepancy": "11 items, ALL of them HumanEval/32 (find_zero, an EvalPlus special-oracle task: _special_oracle._poly, atol=1e-4, 100 wall-clock-limited base inputs). Split file md5 30129634e180d80c19d6ddcd4cf43f9c, HumanEvalPlus-v0.1.10.jsonl md5 fe585eb4df8c88d844eeb463ea4d0302 and vendored evalplus/eval/*.py md5s are BYTE-IDENTICAL on both disks, so the inputs are excluded as the cause. Both readings are >=98% feasible, so the gate's stated precondition holds either way.",
+    "robustness_on_wzc1_feasible_subset_1022_items": {
+      "n": 1022,
+      "delta": -0.0009784735812133905,
+      "sign_flips_vs_full_set": true,
+      "mcnemar_b": 37,
+      "mcnemar_c": 38,
+      "p_exact_mcnemar_two_sided": 1.0,
+      "bootstrap_p_two_sided": 0.9528,
+      "note": "KILL holds under either gold-ceiling reading, and the DIRECTION is not stable between them -- which independently fails the gate's PROCEED requirement of a 'directionally stable' AR advantage."
+    },
+    "strongest_diffusion_arm_on_base_axis": "dreamon_oracle (0.9342 > dream_fim 0.8800 > dreamon_fim 0.8664 > dream_prefix 0.5024), so the pre-registered contrast is against the right arm; no arm substitution needed",
+    "arm_pass_at_1_base": {
+      "dream_fim": 0.8799612778315585,
+      "dreamon_fim": 0.8664085188770572,
+      "dreamon_oracle": 0.9341723136495643,
+      "dream_prefix": 0.5024201355275896,
+      "qwen_fim": 0.9351403678606002,
+      "qwen_prefix": 0.6602129719264279
+    },
+    "data_integrity_asserted_before_statistics": "PASS -- 6 arms x 1033 rows; 0 duplicate ids; arm id sets identical to each other AND to the split; 0 missing/non-str solutions; grader self-test 10/10 canonical-pass + 10/10 stub-fail trustworthy on all 6 arms. evidence/gate1_base/gate1_integrity.json",
+    "grading_determinism": "Both primary arms independently re-scored: qwen_fim 966->966, dreamon_oracle 965->965, 0 per-item flips, byte-identical score files. The 1-item delta is not grader jitter.",
+    "three_axes_now_agree": "plus axis delta=+0.0048 p=0.635; plus-axis feasible subset delta=-0.0012 p=1.000; base axis delta=+0.00097 p=1.000. Per PROPOSAL.md section 5, 'AR vs diffusion' has no measurable answer on this surface at n=1033 and the conclusion-reversal framing is dead for good.",
+    "gates_2_and_3_now_unauthorised": "Gate 2 (lineage repair, 2-4 GPU-h) and Gate 3 (matched suffix-gain, 1-2 GPU-h) were both conditioned on Gate 1 saying PROCEED. They are NOT authorised.",
+    "new_protocol_observation_produced_by_this_gate": "The base-axis gold ceiling is not reproducible across hosts on the special-oracle task HumanEval/32 (0.9894 on wzc1 vs 1.0000 on zwfy6 from byte-identical inputs, grader and dataset). A statement about find_zero's wall-clock-limited oracle, not about any model.",
+    "evidence_dir": "proposal/backlog/B10-dllm-infilling-ar-dominance/evidence/gate1_base/ (score_base/*.json per arm, gate1_base_stats.json md5 804056f7f9dbb015c4c05dc483d03fa6, gate1_gold_ceiling_zwfy6.json, gate1_integrity.json, replicate/, scorer_logs/, and the four scripts). Copied zwfy6->wzc1 with scp -O, every md5 verified identical.",
+    "provenance": "scorer scripts/score_infilling.py md5 41a5dd1816a7ef8a51e66f43d33ef730 (unmodified; --which base is an existing flag); grader evalplus.eval.untrusted_check, vendored evalplus @ commit 26d6d00; python .venv_dream = 3.11.6, numpy 1.26.4, NO scipy (hand-rolled exact tests validated in-run against textbook Clopper-Pearson values and the definitional tail invariants, exact_stat_implementation_selfcheck.all_ok=true); node .73 = 28.85.35.73 (8xH20, zwfy6); dllm_draft_104 commit 3555dc79.",
+    "note_non_destructive": "Base-axis output written to score_base.json; the pre-existing plus-axis score.json -- provenance for the numbers already in this STATUS.json -- was NOT overwritten."
+  },
+  "next_gate": "REWRITE B10 AS A PROTOCOL NOTE, OR ARCHIVE IT. 0 GPU. This is the verbatim if_killed action of kill_gate.gate_1, which FIRED on 2026-08-15 (see gate_1_result and GATE1_BASE_AXIS_VERDICT.md). Concretely: (a) decide protocol-note vs archive; (b) if archive, write POSTMORTEM.md and move to proposal/archive/ per PROPOSAL.md section 5 'Standing rule'; (c) if protocol note, it may carry ONLY the survivors already recorded in robust_findings_that_survive -- the benchmark's own feasibility ceiling on the axis it grades, the cost-unit sensitivity, the suffix-gain result -- PLUS the new cross-host ceiling irreproducibility on HumanEval/32 measured by this gate. FORBIDDEN: re-framing B10 to hunt a different ranking from the same six arms (the nested-ladder error already retracted twice, Retractions 6 and 7); the full pairwise base-axis matrix in gate1_base_stats.json is provenance, NOT a menu. Gate 4's standing rule still binds: no absolute pass@1 from this surface may be reported as a capability measurement without a decontaminated companion.",
+  "next_gate_gpu": "0 GPU -- CPU only. The next action is a writing/filing decision (protocol note vs archive), not a measurement. Gate 2 and Gate 3 were conditioned on Gate 1 saying PROCEED and are therefore NOT authorised, so there is no GPU-costing next step at all. This key is recorded explicitly because B10's novelty_verdict parses as CLEARED and it carries no live blocker -- so adding next_gate alone would have let ready_queue.py infer ready_gpu for a direction whose own kill gate just fired.",
+  "lifecycle_note_20260815": "lifecycle deliberately left UNSET by the Gate-1 executor. The kill gate FIRED, so the honest terminal state is arguably 'dead', but gate_1.if_killed offers TWO dispositions (rewrite as a protocol note OR archive) and choosing between them is an owner decision, not an adjudication this gate performed. Declaring a lifecycle here would be a declared-not-adjudicated state of exactly the kind memory/a-declared-lifecycle-is-not-an-adjudicated-one.md warns about. next_gate_gpu='0 GPU' is sufficient to keep the reader in ready_cpu, which is the correct and safe classification: the remaining work is free."
 }

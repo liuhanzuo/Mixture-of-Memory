@@ -1,0 +1,436 @@
+{
+  "gate": "B10 Gate 1 -- base-axis re-score",
+  "primary_contrast": "qwen_fim minus dreamon_oracle (AR minus best diffusion)",
+  "kill_condition_verbatim": "on the base axis (gold ceiling 0.9894, so >=98% of items feasible), the qwen_fim vs dreamon_oracle paired contrast is not significant at alpha=0.05 AND |delta| < 0.02",
+  "n_items_all": 1033,
+  "gold_ceiling_base_measured": 1.0,
+  "gold_ceiling_plus_measured": 0.8121974830590513,
+  "gold_ceiling_base_prereg_quoted": 0.9894,
+  "n_gold_base_infeasible": 0,
+  "n_gold_plus_infeasible": 194,
+  "arm_pass_at_1_base": {
+    "dream_fim": 0.8799612778315585,
+    "dreamon_fim": 0.8664085188770572,
+    "dreamon_oracle": 0.9341723136495643,
+    "dream_prefix": 0.5024201355275896,
+    "qwen_fim": 0.9351403678606002,
+    "qwen_prefix": 0.6602129719264279
+  },
+  "arm_n_pass_base": {
+    "dream_fim": 909,
+    "dreamon_fim": 895,
+    "dreamon_oracle": 965,
+    "dream_prefix": 519,
+    "qwen_fim": 966,
+    "qwen_prefix": 682
+  },
+  "arm_pass_at_1_plus_for_reference": {
+    "dream_fim": 0.7115198451113263,
+    "dreamon_fim": 0.7018393030009681,
+    "dreamon_oracle": 0.7589545014520813,
+    "dream_prefix": 0.41239109390125844,
+    "qwen_fim": 0.7637947725072604,
+    "qwen_prefix": 0.5324298160696999
+  },
+  "score_files_base": {
+    "dream_fim": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/dllm_draft_104/outputs/infilling_single_line/dream_fim/score_base.json",
+    "dreamon_fim": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/dllm_draft_104/outputs/infilling_single_line/dreamon_fim/score_base.json",
+    "dreamon_oracle": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/dllm_draft_104/outputs/infilling_single_line/dreamon_oracle/score_base.json",
+    "dream_prefix": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/dllm_draft_104/outputs/infilling_single_line/dream_prefix/score_base.json",
+    "qwen_fim": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/dllm_draft_104/outputs/infilling_single_line/qwen_fim/score_base.json",
+    "qwen_prefix": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/dllm_draft_104/outputs/infilling_single_line/qwen_prefix/score_base.json"
+  },
+  "grader_self_test_base": {
+    "dream_fim": {
+      "n": 10,
+      "canonical_pass": 10,
+      "stub_fail": 10,
+      "trustworthy": true
+    },
+    "dreamon_fim": {
+      "n": 10,
+      "canonical_pass": 10,
+      "stub_fail": 10,
+      "trustworthy": true
+    },
+    "dreamon_oracle": {
+      "n": 10,
+      "canonical_pass": 10,
+      "stub_fail": 10,
+      "trustworthy": true
+    },
+    "dream_prefix": {
+      "n": 10,
+      "canonical_pass": 10,
+      "stub_fail": 10,
+      "trustworthy": true
+    },
+    "qwen_fim": {
+      "n": 10,
+      "canonical_pass": 10,
+      "stub_fail": 10,
+      "trustworthy": true
+    },
+    "qwen_prefix": {
+      "n": 10,
+      "canonical_pass": 10,
+      "stub_fail": 10,
+      "trustworthy": true
+    }
+  },
+  "exact_stat_implementation_selfcheck": {
+    "all_ok": true,
+    "checks": [
+      {
+        "test": "clopper_pearson(0,10)",
+        "got": [
+          0.0,
+          0.3084971078187606
+        ],
+        "ref": [
+          0.0,
+          0.30849678
+        ],
+        "ok": true
+      },
+      {
+        "test": "clopper_pearson(1,10)",
+        "got": [
+          0.0025285785444617848,
+          0.4450161170281952
+        ],
+        "ref": [
+          0.00252858,
+          0.44501612
+        ],
+        "ok": true
+      },
+      {
+        "test": "clopper_pearson(5,10)",
+        "got": [
+          0.18708602844739852,
+          0.8129139715526013
+        ],
+        "ref": [
+          0.18708603,
+          0.81291397
+        ],
+        "ok": true
+      },
+      {
+        "test": "clopper_pearson_invariant(2,20)",
+        "got": [
+          0.025000000000000036,
+          0.0250000000000001
+        ],
+        "ref": [
+          0.025,
+          0.025
+        ],
+        "ok": true
+      },
+      {
+        "test": "clopper_pearson_invariant(31,63)",
+        "got": [
+          0.024999999999999963,
+          0.02500000000000009
+        ],
+        "ref": [
+          0.025,
+          0.025
+        ],
+        "ok": true
+      },
+      {
+        "test": "clopper_pearson_invariant(55,108)",
+        "got": [
+          0.024999999999999852,
+          0.025000000000000147
+        ],
+        "ref": [
+          0.025,
+          0.025
+        ],
+        "ok": true
+      },
+      {
+        "test": "clopper_pearson_invariant(100,400)",
+        "got": [
+          0.024999999999999883,
+          0.024999999999999793
+        ],
+        "ref": [
+          0.025,
+          0.025
+        ],
+        "ok": true
+      },
+      {
+        "test": "exact_mcnemar(0,0)",
+        "got": 1.0,
+        "ref": 1.0,
+        "ok": true
+      },
+      {
+        "test": "exact_mcnemar(5,5)",
+        "got": 1.0,
+        "ref": 1.0,
+        "ok": true
+      },
+      {
+        "test": "exact_mcnemar(10,0)",
+        "got": 0.001953125,
+        "ref": 0.001953125,
+        "ok": true
+      },
+      {
+        "test": "exact_mcnemar(9,1)",
+        "got": 0.021484375,
+        "ref": 0.021484375,
+        "ok": true
+      },
+      {
+        "test": "exact_mcnemar(31,32)",
+        "got": 1.0,
+        "ref": 1.0,
+        "ok": true
+      }
+    ]
+  },
+  "PRIMARY_base_axis_all_items": {
+    "arm_a": "qwen_fim",
+    "arm_b": "dreamon_oracle",
+    "n_items": 1033,
+    "pass_a": 0.9351403678606002,
+    "pass_b": 0.9341723136495643,
+    "n_pass_a": 966,
+    "n_pass_b": 965,
+    "delta_a_minus_b": 0.0009680542110358514,
+    "mcnemar": {
+      "b_a_only": 39,
+      "c_b_only": 38,
+      "discordant": 77,
+      "both_pass": 927,
+      "both_fail": 29,
+      "p_exact_two_sided": 1.0,
+      "delta_ci95_clopper_pearson": [
+        -0.01639147856324337,
+        0.018250882652327525
+      ]
+    },
+    "paired_bootstrap": {
+      "delta": 0.0009680542110358514,
+      "ci95": [
+        -0.01645692158760892,
+        0.01742497579864477
+      ],
+      "p_two_sided": 0.9498,
+      "n_boot": 10000,
+      "seed": 20260815,
+      "numpy_version": "1.26.4"
+    }
+  },
+  "SECONDARY_base_axis_gold_feasible_subset": {
+    "arm_a": "qwen_fim",
+    "arm_b": "dreamon_oracle",
+    "n_items": 1033,
+    "pass_a": 0.9351403678606002,
+    "pass_b": 0.9341723136495643,
+    "n_pass_a": 966,
+    "n_pass_b": 965,
+    "delta_a_minus_b": 0.0009680542110358514,
+    "mcnemar": {
+      "b_a_only": 39,
+      "c_b_only": 38,
+      "discordant": 77,
+      "both_pass": 927,
+      "both_fail": 29,
+      "p_exact_two_sided": 1.0,
+      "delta_ci95_clopper_pearson": [
+        -0.01639147856324337,
+        0.018250882652327525
+      ]
+    },
+    "paired_bootstrap": {
+      "delta": 0.0009680542110358514,
+      "ci95": [
+        -0.01645692158760892,
+        0.01742497579864477
+      ],
+      "p_two_sided": 0.9498,
+      "n_boot": 10000,
+      "seed": 20260815,
+      "numpy_version": "1.26.4"
+    }
+  },
+  "alt_gold_ceiling_source": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/dllm_draft_104/outputs/infilling_single_line/gold_ceiling_SingleLine_wzc1.json",
+  "alt_gold_ceiling_base": 0.989351403678606,
+  "alt_n_gold_base_infeasible": 11,
+  "alt_gold_base_infeasible_ids": [
+    "SingleLineInfilling/HumanEval/32/L0",
+    "SingleLineInfilling/HumanEval/32/L1",
+    "SingleLineInfilling/HumanEval/32/L10",
+    "SingleLineInfilling/HumanEval/32/L2",
+    "SingleLineInfilling/HumanEval/32/L3",
+    "SingleLineInfilling/HumanEval/32/L4",
+    "SingleLineInfilling/HumanEval/32/L5",
+    "SingleLineInfilling/HumanEval/32/L6",
+    "SingleLineInfilling/HumanEval/32/L7",
+    "SingleLineInfilling/HumanEval/32/L8",
+    "SingleLineInfilling/HumanEval/32/L9"
+  ],
+  "ROBUSTNESS_base_axis_wzc1_gold_feasible_subset": {
+    "arm_a": "qwen_fim",
+    "arm_b": "dreamon_oracle",
+    "n_items": 1022,
+    "pass_a": 0.9354207436399217,
+    "pass_b": 0.9363992172211351,
+    "n_pass_a": 956,
+    "n_pass_b": 957,
+    "delta_a_minus_b": -0.0009784735812133905,
+    "mcnemar": {
+      "b_a_only": 37,
+      "c_b_only": 38,
+      "discordant": 75,
+      "both_pass": 919,
+      "both_fail": 28,
+      "p_exact_two_sided": 1.0,
+      "delta_ci95_clopper_pearson": [
+        -0.01822189376291081,
+        0.01634457261376917
+      ]
+    },
+    "paired_bootstrap": {
+      "delta": -0.0009784735812133905,
+      "ci95": [
+        -0.017612524461839474,
+        0.015655577299412915
+      ],
+      "p_two_sided": 0.9528,
+      "n_boot": 10000,
+      "seed": 20260815,
+      "numpy_version": "1.26.4"
+    }
+  },
+  "strongest_diffusion_arm_on_base_axis": "dreamon_oracle",
+  "SENSITIVITY_vs_strongest_diffusion_arm": {
+    "arm_a": "qwen_fim",
+    "arm_b": "dreamon_oracle",
+    "n_items": 1033,
+    "pass_a": 0.9351403678606002,
+    "pass_b": 0.9341723136495643,
+    "n_pass_a": 966,
+    "n_pass_b": 965,
+    "delta_a_minus_b": 0.0009680542110358514,
+    "mcnemar": {
+      "b_a_only": 39,
+      "c_b_only": 38,
+      "discordant": 77,
+      "both_pass": 927,
+      "both_fail": 29,
+      "p_exact_two_sided": 1.0,
+      "delta_ci95_clopper_pearson": [
+        -0.01639147856324337,
+        0.018250882652327525
+      ]
+    },
+    "paired_bootstrap": {
+      "delta": 0.0009680542110358514,
+      "ci95": [
+        -0.01645692158760892,
+        0.01742497579864477
+      ],
+      "p_two_sided": 0.9498,
+      "n_boot": 10000,
+      "seed": 20260815,
+      "numpy_version": "1.26.4"
+    }
+  },
+  "all_pairwise_base_axis": [
+    {
+      "pair": "dream_fim-dreamon_fim",
+      "delta": 0.013552758954501365,
+      "p_exact_mcnemar": 0.2648929904058214
+    },
+    {
+      "pair": "dream_fim-dreamon_oracle",
+      "delta": -0.05421103581800579,
+      "p_exact_mcnemar": 2.2820957834873613e-08
+    },
+    {
+      "pair": "dream_fim-dream_prefix",
+      "delta": 0.37754114230396896,
+      "p_exact_mcnemar": 5.023525791461646e-95
+    },
+    {
+      "pair": "dream_fim-qwen_fim",
+      "delta": -0.055179090029041644,
+      "p_exact_mcnemar": 8.249999988962805e-07
+    },
+    {
+      "pair": "dream_fim-qwen_prefix",
+      "delta": 0.21974830590513061,
+      "p_exact_mcnemar": 1.0599301269856297e-35
+    },
+    {
+      "pair": "dreamon_fim-dreamon_oracle",
+      "delta": -0.06776379477250716,
+      "p_exact_mcnemar": 5.137564699362503e-16
+    },
+    {
+      "pair": "dreamon_fim-dream_prefix",
+      "delta": 0.3639883833494676,
+      "p_exact_mcnemar": 9.214236461901129e-88
+    },
+    {
+      "pair": "dreamon_fim-qwen_fim",
+      "delta": -0.06873184898354301,
+      "p_exact_mcnemar": 1.178445298472636e-10
+    },
+    {
+      "pair": "dreamon_fim-qwen_prefix",
+      "delta": 0.20619554695062925,
+      "p_exact_mcnemar": 2.7169033350062205e-34
+    },
+    {
+      "pair": "dreamon_oracle-dream_prefix",
+      "delta": 0.43175217812197475,
+      "p_exact_mcnemar": 8.279595347983823e-123
+    },
+    {
+      "pair": "dreamon_oracle-qwen_fim",
+      "delta": -0.0009680542110358514,
+      "p_exact_mcnemar": 1.0
+    },
+    {
+      "pair": "dreamon_oracle-qwen_prefix",
+      "delta": 0.2739593417231364,
+      "p_exact_mcnemar": 1.7849889518791143e-65
+    },
+    {
+      "pair": "dream_prefix-qwen_fim",
+      "delta": -0.4327202323330106,
+      "p_exact_mcnemar": 5.948615799589703e-117
+    },
+    {
+      "pair": "dream_prefix-qwen_prefix",
+      "delta": -0.15779283639883834,
+      "p_exact_mcnemar": 9.924342754986696e-32
+    },
+    {
+      "pair": "qwen_fim-qwen_prefix",
+      "delta": 0.27492739593417226,
+      "p_exact_mcnemar": 4.894012919224944e-72
+    }
+  ],
+  "adjudication": {
+    "delta_a_minus_b": 0.0009680542110358514,
+    "abs_delta": 0.0009680542110358514,
+    "p_exact_mcnemar": 1.0,
+    "p_paired_bootstrap": 0.9498,
+    "condition_1_not_significant_at_alpha_0.05": true,
+    "condition_2_abs_delta_lt_0.02": true,
+    "both_kill_conditions_hold": true,
+    "VERDICT": "KILL"
+  }
+}

@@ -1,0 +1,61 @@
+Load from ground-truth from /root/.cache/evalplus/fe585eb4df8c88d844eeb463ea4d0302.pkl
+GRADER SELF-TEST: {"n": 10, "canonical_pass": 10, "stub_fail": 10, "trustworthy": true}
+Load from ground-truth from /root/.cache/evalplus/fe585eb4df8c88d844eeb463ea4d0302.pkl
+Load from ground-truth from /root/.cache/evalplus/fe585eb4df8c88d844eeb463ea4d0302.pkl
+Load from ground-truth from /root/.cache/evalplus/fe585eb4df8c88d844eeb463ea4d0302.pkl
+Load from ground-truth from /root/.cache/evalplus/fe585eb4df8c88d844eeb463ea4d0302.pkl
+Load from ground-truth from /root/.cache/evalplus/fe585eb4df8c88d844eeb463ea4d0302.pkl
+Load from ground-truth from /root/.cache/evalplus/fe585eb4df8c88d844eeb463ea4d0302.pkl
+Load from ground-truth from /root/.cache/evalplus/fe585eb4df8c88d844eeb463ea4d0302.pkl
+Load from ground-truth from /root/.cache/evalplus/fe585eb4df8c88d844eeb463ea4d0302.pkl
+Load from ground-truth from /root/.cache/evalplus/fe585eb4df8c88d844eeb463ea4d0302.pkl
+Load from ground-truth from /root/.cache/evalplus/fe585eb4df8c88d844eeb463ea4d0302.pkl
+Load from ground-truth from /root/.cache/evalplus/fe585eb4df8c88d844eeb463ea4d0302.pkl
+Load from ground-truth from /root/.cache/evalplus/fe585eb4df8c88d844eeb463ea4d0302.pkl
+Load from ground-truth from /root/.cache/evalplus/fe585eb4df8c88d844eeb463ea4d0302.pkl
+Load from ground-truth from /root/.cache/evalplus/fe585eb4df8c88d844eeb463ea4d0302.pkl
+Load from ground-truth from /root/.cache/evalplus/fe585eb4df8c88d844eeb463ea4d0302.pkl
+Load from ground-truth from /root/.cache/evalplus/fe585eb4df8c88d844eeb463ea4d0302.pkl
+Load from ground-truth from /root/.cache/evalplus/fe585eb4df8c88d844eeb463ea4d0302.pkl
+Load from ground-truth from /root/.cache/evalplus/fe585eb4df8c88d844eeb463ea4d0302.pkl
+Load from ground-truth from /root/.cache/evalplus/fe585eb4df8c88d844eeb463ea4d0302.pkl
+Load from ground-truth from /root/.cache/evalplus/fe585eb4df8c88d844eeb463ea4d0302.pkl
+Load from ground-truth from /root/.cache/evalplus/fe585eb4df8c88d844eeb463ea4d0302.pkl
+Load from ground-truth from /root/.cache/evalplus/fe585eb4df8c88d844eeb463ea4d0302.pkl
+Load from ground-truth from /root/.cache/evalplus/fe585eb4df8c88d844eeb463ea4d0302.pkl
+Load from ground-truth from /root/.cache/evalplus/fe585eb4df8c88d844eeb463ea4d0302.pkl
+Load from ground-truth from /root/.cache/evalplus/fe585eb4df8c88d844eeb463ea4d0302.pkl
+Load from ground-truth from /root/.cache/evalplus/fe585eb4df8c88d844eeb463ea4d0302.pkl
+Load from ground-truth from /root/.cache/evalplus/fe585eb4df8c88d844eeb463ea4d0302.pkl
+Load from ground-truth from /root/.cache/evalplus/fe585eb4df8c88d844eeb463ea4d0302.pkl
+Load from ground-truth from /root/.cache/evalplus/fe585eb4df8c88d844eeb463ea4d0302.pkl
+Load from ground-truth from /root/.cache/evalplus/fe585eb4df8c88d844eeb463ea4d0302.pkl
+Load from ground-truth from /root/.cache/evalplus/fe585eb4df8c88d844eeb463ea4d0302.pkl
+Load from ground-truth from /root/.cache/evalplus/fe585eb4df8c88d844eeb463ea4d0302.pkl
+Load from ground-truth from /root/.cache/evalplus/fe585eb4df8c88d844eeb463ea4d0302.pkl
+Load from ground-truth from /root/.cache/evalplus/fe585eb4df8c88d844eeb463ea4d0302.pkl
+Load from ground-truth from /root/.cache/evalplus/fe585eb4df8c88d844eeb463ea4d0302.pkl
+Load from ground-truth from /root/.cache/evalplus/fe585eb4df8c88d844eeb463ea4d0302.pkl
+Load from ground-truth from /root/.cache/evalplus/fe585eb4df8c88d844eeb463ea4d0302.pkl
+Load from ground-truth from /root/.cache/evalplus/fe585eb4df8c88d844eeb463ea4d0302.pkl
+Load from ground-truth from /root/.cache/evalplus/fe585eb4df8c88d844eeb463ea4d0302.pkl
+Load from ground-truth from /root/.cache/evalplus/fe585eb4df8c88d844eeb463ea4d0302.pkl
+Load from ground-truth from /root/.cache/evalplus/fe585eb4df8c88d844eeb463ea4d0302.pkl
+Load from ground-truth from /root/.cache/evalplus/fe585eb4df8c88d844eeb463ea4d0302.pkl
+Load from ground-truth from /root/.cache/evalplus/fe585eb4df8c88d844eeb463ea4d0302.pkl
+Load from ground-truth from /root/.cache/evalplus/fe585eb4df8c88d844eeb463ea4d0302.pkl
+Load from ground-truth from /root/.cache/evalplus/fe585eb4df8c88d844eeb463ea4d0302.pkl
+Load from ground-truth from /root/.cache/evalplus/fe585eb4df8c88d844eeb463ea4d0302.pkl
+Load from ground-truth from /root/.cache/evalplus/fe585eb4df8c88d844eeb463ea4d0302.pkl
+Load from ground-truth from /root/.cache/evalplus/fe585eb4df8c88d844eeb463ea4d0302.pkl
+{
+  "arm": "qwen_fim",
+  "n": 1033,
+  "which_tests": "base",
+  "pass_at_1": 0.9351403678606002,
+  "n_pass": 966,
+  "parseable_rate": 0.9912875121006777,
+  "exact_match_rate": 0.7289448209099709,
+  "generation_errors": 0,
+  "tokens_fed_per_task": 238.9
+}

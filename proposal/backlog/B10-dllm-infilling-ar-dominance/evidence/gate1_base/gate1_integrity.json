@@ -1,0 +1,65 @@
+{
+  "expect_n": 1033,
+  "arms": {
+    "dream_fim": {
+      "path": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/dllm_draft_104/outputs/infilling_single_line/dream_fim/solutions.jsonl",
+      "n": 1033,
+      "n_unique_ids": 1033,
+      "n_duplicate_ids": 0,
+      "n_solution_not_str": 0,
+      "n_middle_none": 0,
+      "n_empty_solution": 0
+    },
+    "dreamon_fim": {
+      "path": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/dllm_draft_104/outputs/infilling_single_line/dreamon_fim/solutions.jsonl",
+      "n": 1033,
+      "n_unique_ids": 1033,
+      "n_duplicate_ids": 0,
+      "n_solution_not_str": 0,
+      "n_middle_none": 0,
+      "n_empty_solution": 0
+    },
+    "dreamon_oracle": {
+      "path": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/dllm_draft_104/outputs/infilling_single_line/dreamon_oracle/solutions.jsonl",
+      "n": 1033,
+      "n_unique_ids": 1033,
+      "n_duplicate_ids": 0,
+      "n_solution_not_str": 0,
+      "n_middle_none": 0,
+      "n_empty_solution": 0
+    },
+    "dream_prefix": {
+      "path": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/dllm_draft_104/outputs/infilling_single_line/dream_prefix/solutions.jsonl",
+      "n": 1033,
+      "n_unique_ids": 1033,
+      "n_duplicate_ids": 0,
+      "n_solution_not_str": 0,
+      "n_middle_none": 0,
+      "n_empty_solution": 0
+    },
+    "qwen_fim": {
+      "path": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/dllm_draft_104/outputs/infilling_single_line/qwen_fim/solutions.jsonl",
+      "n": 1033,
+      "n_unique_ids": 1033,
+      "n_duplicate_ids": 0,
+      "n_solution_not_str": 0,
+      "n_middle_none": 0,
+      "n_empty_solution": 0
+    },
+    "qwen_prefix": {
+      "path": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/dllm_draft_104/outputs/infilling_single_line/qwen_prefix/solutions.jsonl",
+      "n": 1033,
+      "n_unique_ids": 1033,
+      "n_duplicate_ids": 0,
+      "n_solution_not_str": 0,
+      "n_middle_none": 0,
+      "n_empty_solution": 0
+    }
+  },
+  "failures": [],
+  "bench_n": 1033,
+  "bench_unique_ids": 1033,
+  "all_arm_id_sets_identical": true,
+  "arm_ids_equal_bench_ids": true,
+  "PASS": true
+}
