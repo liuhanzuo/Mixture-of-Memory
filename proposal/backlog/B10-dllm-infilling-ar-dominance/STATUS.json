@@ -338,7 +338,6 @@
   "next_gate": "REWRITE B10 AS A PROTOCOL NOTE, OR ARCHIVE IT. 0 GPU. This is the verbatim if_killed action of kill_gate.gate_1, which FIRED on 2026-08-15 (see gate_1_result and GATE1_BASE_AXIS_VERDICT.md). Concretely: (a) decide protocol-note vs archive; (b) if archive, write POSTMORTEM.md and move to proposal/archive/ per PROPOSAL.md section 5 'Standing rule'; (c) if protocol note, it may carry ONLY the survivors already recorded in robust_findings_that_survive -- the benchmark's own feasibility ceiling on the axis it grades, the cost-unit sensitivity, the suffix-gain result -- PLUS the new cross-host ceiling irreproducibility on HumanEval/32 measured by this gate. FORBIDDEN: re-framing B10 to hunt a different ranking from the same six arms (the nested-ladder error already retracted twice, Retractions 6 and 7); the full pairwise base-axis matrix in gate1_base_stats.json is provenance, NOT a menu. Gate 4's standing rule still binds: no absolute pass@1 from this surface may be reported as a capability measurement without a decontaminated companion.",
   "next_gate_gpu": "0 GPU -- CPU only. The next action is a writing/filing decision (protocol note vs archive), not a measurement. Gate 2 and Gate 3 were conditioned on Gate 1 saying PROCEED and are therefore NOT authorised, so there is no GPU-costing next step at all. This key is recorded explicitly because B10's novelty_verdict parses as CLEARED and it carries no live blocker -- so adding next_gate alone would have let ready_queue.py infer ready_gpu for a direction whose own kill gate just fired.",
   "lifecycle_note_20260815": "lifecycle deliberately left UNSET by the Gate-1 executor. The kill gate FIRED, so the honest terminal state is arguably 'dead', but gate_1.if_killed offers TWO dispositions (rewrite as a protocol note OR archive) and choosing between them is an owner decision, not an adjudication this gate performed. Declaring a lifecycle here would be a declared-not-adjudicated state of exactly the kind memory/a-declared-lifecycle-is-not-an-adjudicated-one.md warns about. next_gate_gpu='0 GPU' is sufficient to keep the reader in ready_cpu, which is the correct and safe classification: the remaining work is free.",
-
   "gold_ceiling_discrepancy_ROOTCAUSED_20260815": {
     "why_this_key_exists": "APPEND-ONLY CORRECTION of gate_1_result.gold_ceiling_discrepancy (left byte-intact per LIFECYCLE_SCHEMA.md sec 0). That key states the vendored evalplus/eval/*.py md5s are byte-identical across both disks and infers the grader is excluded as the cause. The md5 claim is TRUE but the inference is WRONG: the wzc1 ceiling run never imported the vendored copy -- its venv resolves `import evalplus` to site-packages PyPI 0.3.1. Byte-identity of a file on disk is not evidence about which file the interpreter loaded. That key also floated wall-clock flakiness of a special-oracle task as the explanation; the discrepancy is deterministic. It also did not address the PLUS axis, which moved too (0.8025 -> 0.8122) by a DIFFERENT mechanism. Both axes are now root-caused.",
     "discrepancy_restated": {
@@ -454,5 +453,22 @@
     ],
     "gpu_used": "0 -- every probe ran with CUDA_VISIBLE_DEVICES=\"\" on LOCAL and on .73; .73 stayed at exactly 8 nvidia-smi compute-apps (the pre-existing train_olmo2_arch_probe2.py DDP) before and after",
     "lifecycle_unchanged": "still UNSET by deliberate decision (see lifecycle_note_20260815); this correction does NOT promote anything to ready_gpu"
+  },
+  "disposition_20260815_MAIN": {
+    "decided_by": "MAIN, 2026-08-15, after independently reproducing the Gate-1 KILL arithmetic and the evalplus root cause (see GATE1_BASE_AXIS_VERDICT.md section 9)",
+    "choice": "PROTOCOL NOTE, not archive",
+    "why_this_and_not_archive": "gate_1.if_killed offers exactly two dispositions. Archiving would discard four measured, independently-asserted results plus one new protocol finding, none of which depend on the dead AR-dominance claim. The suffix-visibility result in particular (+0.2314 AR / +0.2991 diffusion, both p<1e-56) is framing-level and survives the kill untouched. A protocol note keeps the evidence citable; archive would bury it.",
+    "what_the_note_may_carry": [
+      "the four entries of robust_findings_that_survive, verbatim, with their p-values",
+      "the cross-host gold-ceiling irreproducibility on HumanEval/32 (base 0.9894 wzc1 vs 1.0000 zwfy6), with BOTH root causes named: PyPI evalplus 0.3.1's find_zero branch missing details[i]=True/progress.value+=1 before its continue, and the 4 GiB RLIMIT_AS converting MemoryError into a wrong answer on the plus axis",
+      "the methodological point that byte-identity of a vendored file is not evidence about which file the interpreter loaded"
+    ],
+    "forbidden_in_the_note": [
+      "any re-framing that hunts a different ranking from the same six arms (nested-ladder error, already retracted twice: Retractions 6 and 7)",
+      "the full pairwise base-axis matrix as a menu -- it is provenance only",
+      "any absolute pass@1 from this surface as a capability measurement without a decontaminated companion (gate_4 standing rule still binds)"
+    ],
+    "lifecycle_still_unset_deliberately": "The disposition is now CHOSEN but the note is NOT YET WRITTEN. lifecycle stays unset until the note exists on disk, so that no reader mistakes a decision for a deliverable. This is the same distinction as memory/a-declared-lifecycle-is-not-an-adjudicated-one.md. next_gate_gpu remains '0 GPU', so ready_queue.py keeps B10 in ready_cpu, which is correct.",
+    "next_concrete_step": "write PROTOCOL_NOTE.md carrying only the allow-listed content above, then set lifecycle."
   }
 }
