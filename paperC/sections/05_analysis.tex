@@ -2,7 +2,7 @@
 
 \subsection{Wrong-null verdict flips at MMLU-scale power}
 
-MMLU-Pro provides the cleanest test (Table~\ref{tab:mmlupro}).
+MMLU-Pro provides the cleanest test (per-cell values in Table~\ref{tab:mmlupro}, Appendix~\ref{app:mmlupro-and-resort}).
 Under $\mathrm{mean}(1/\texttt{n\_opt})$, 10/12 damaged non-OLMo cells read above chance; under naive 0.10, 12/12 do. Yet only 1/12 clears the best-constant floor. The three designated damaged OLMo-2 cells are also above either chance line but not above the floor. Across these 15 cells, the reference changes the interpretation; the exact chance-line counts are reported rather than compressed into a universal categorical flip.
 
 \paragraph{Both sides of the flip, held to one standard.}
@@ -21,15 +21,13 @@ Best-constant floor & 3/12 & \textbf{1/12} \\
 
 So the flip survives a symmetric test but is about a third of its advertised size: 3/12 versus 1/12 rather than 10/12 versus 1/12. Seven of the ten cells that read ``above chance'' were never above chance by any tested standard --- their intervals cover zero. This does not weaken the paper's rule, which is that the \emph{reference} must be stated and calibrated; it removes an asymmetry that inflated the apparent effect of choosing the wrong one. We report both columns throughout and hold the two references to the same standard: the criterion is the two-sided 95\% interval on \emph{both} sides, matching the verdict rule already used for the floor.
 
-Two qualifications belong with this table. First, one instrument does not transfer: the floor comparison also carries an exact McNemar test, which has no analogue here because $\mathrm{mean}(1/\texttt{n\_opt})$ is not a $0/1$ predictor and so generates no discordant pairs. Second, these remain per-cell decisions in the sense of the Multiplicity paragraph, and here the qualification bites harder than it does for the near-unanimous aggregates: with 12 tests at $\alpha=0.05$ the expected false-positive yield is $0.60$, and under Benjamini--Hochberg at $q=0.05$ --- or Bonferroni --- \emph{neither} reference retains a single cell (0/12 both sides), so the corrected comparison is undefined rather than 3/12 versus 1/12. What survives correction is the count itself: observing 3 or more rejections out of 12 has binomial probability $0.0196$ under the global null. We therefore read this table as evidence that the chance side is not uniformly null, not as a set of three simultaneously valid per-cell claims.
+Two qualifications belong with this two-reference comparison. First, one instrument does not transfer: the floor comparison also carries an exact McNemar test, which has no analogue here because $\mathrm{mean}(1/\texttt{n\_opt})$ is not a $0/1$ predictor and so generates no discordant pairs. Second, these remain per-cell decisions in the sense of the Multiplicity paragraph, and here the qualification bites harder than it does for the near-unanimous aggregates: with 12 tests at $\alpha=0.05$ the expected false-positive yield is $0.60$, and under Benjamini--Hochberg at $q=0.05$ --- or Bonferroni --- \emph{neither} reference retains a single cell (0/12 both sides), so the corrected comparison is undefined rather than 3/12 versus 1/12. What survives correction is the count itself: observing 3 or more rejections out of 12 has binomial probability $0.0196$ under the global null. We therefore read this comparison as evidence that the chance side is not uniformly null, not as a set of three simultaneously valid per-cell claims.
 
 The result is strong but not universal. Fourteen of the 15 cells are at or below the floor. The exception, \texttt{qwen3\_8b\_base/k14}, is $+0.233$ points above it ($p=0.0192$, half-width 0.191). V2 confirms a small alignment effect, $+0.267$ points at $p=0.0066$, but assigns \texttt{recovery\_fraction}=0.049, only 9.1\% of the intact-family anchor and below the 10\% materiality bar. It is a real but immaterial exception, not evidence that \texttt{k14} retains MMLU-Pro competence.
 
 The most vivid small-benchmark cases are literal constant emitters. Sixteen damaged cross-family cells have accuracy equal to the marginal of the emitted letter to machine precision. Two OpenBookQA cells emit A on every item, score exactly 0.276000, have $\Delta=0.000$ points and CI95 $[0,0]$, and therefore land exactly on the optimal constant. Against chance 0.25, the same empty behavior appears 2.6 points above chance.
 
 Off MMLU, the designated OLMo-2 subset gives the honest count 10/15 above chance and 0/15 above floor. Across the broader non-OLMo replication, 0/60 damaged cells clear their floor while 25/60 read above chance. Only 7/60 are significantly below because 52/60 are underpowered for the MMLU reference effect. This is not an effect-size explanation: ARC-Challenge's median damaged effect is $-3.840$ points, larger than MMLU's $-3.603$, but its half-width is 3.92 rather than 1.18 points.
-
-\input{sections/tab_mmlupro}
 
 \subsection{Read-out versus retained knowledge}
 
@@ -41,15 +39,13 @@ The residual-fraction effect is also construct-specific. On OpenBookQA \texttt{c
 
 Under v1, two MMLU-Pro cells are significantly below the best-constant floor. Under v2, the below-null count is zero. \texttt{qwen3/k8} moves from $-0.881$ points ($p=0.0362$) to $-0.139$ ($p=0.0964$), and \texttt{llama2/k8} from $-0.914$ to $-0.416$ ($p=0.1002$). Their v1 verdicts remain valid statements about an arm-independent interface floor, but they are not evidence that either arm is worse than its own input-blind prediction marginal. Both competence claims dissolve.
 
-V2 is not uniformly conservative (Table~\ref{tab:v2-resort}). It withdraws the published above-floor capability label for \texttt{qwen3/k14}, replacing it with \texttt{TRACE\_SIGNAL}, while \texttt{olmo2/keep14} moves from at-floor to \texttt{TRACE\_SIGNAL}. Re-sorting in both directions is evidence that the criterion is doing more than shrinking effects.
+V2 is not uniformly conservative (Table~\ref{tab:v2-resort}, Appendix~\ref{app:mmlupro-and-resort}). It withdraws the published above-floor capability label for \texttt{qwen3/k14}, replacing it with \texttt{TRACE\_SIGNAL}, while \texttt{olmo2/keep14} moves from at-floor to \texttt{TRACE\_SIGNAL}. Re-sorting in both directions is evidence that the criterion is doing more than shrinking effects.
 
 It also exposes a benchmark-level limitation invisible to v1. Intact Llama-2-7B has \texttt{recovery\_fraction}=0.0545 on MMLU-Pro, even though v1 calls it comfortably above floor by $+1.538$ points. Because the intact anchor itself is below 0.10, relative-recovery claims for the Llama-2 family are blocked.
 
 Significance alone would re-import the defect. At $n=12032$, \texttt{qwen3/k14} reaches $p=0.0066$ at only $+0.267$ points while A wins the likelihood argmax on 94.6\% of items. The same data reject simpler diagnostics
 (Table~\ref{tab:v2-alternatives}):
 the A01 own-modal null over-credits P1 by 1.37 points and flips its sign; for Qwen3 heal@7000 and unhealed \texttt{k8}, content is $-3.610$ and $-1.076$ points under the same permutation null, compared with letter at $-0.022$ and $-0.139$; and \texttt{llama3/k12} has modal share 0.339 and normalized entropy 0.614 yet $\Delta_{\mathrm{perm}}=+0.002$ points ($p=0.997$). Entropy and modal share are descriptive, not competence metrics.
-
-\input{sections/tab_v2_resort}
 
 \subsection{Full precision falsifies the numerical-tie mechanism}
 

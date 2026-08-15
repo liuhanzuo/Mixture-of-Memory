@@ -1,5 +1,24 @@
 \section{Appendix}
 
+\subsection{Per-cell MMLU-Pro read-out and the v2 re-sort}
+\label{app:mmlupro-and-resort}
+
+The two per-cell tables cited from the Results and Analysis section are placed here
+for space. Table~\ref{tab:mmlupro} is the MMLU-Pro letter read-out for all 12
+cross-family cells against the always-A floor, supporting
+``Wrong-null verdict flips at MMLU-scale power''. Table~\ref{tab:v2-resort} gives the
+paired v1/v2 verdicts for the five cells whose labels the arm-conditional null moves,
+supporting ``V2 re-sorts the 27-cell read-out''. Every value in both tables is
+unchanged from the version those subsections discuss.
+
+\input{sections/tab_mmlupro}
+
+\FloatBarrier
+
+\input{sections/tab_v2_resort}
+
+\FloatBarrier
+
 \subsection{Complete read-out v2 table}
 
 Table~\ref{tab:v2-full} reports all 27 cells used in the post-hoc v2 re-analysis. G1 and G2 fire on no cell; all 27 pass the integrity gate; the permutation and bootstrap decisions disagree on 0/27 cells at $\alpha=0.05$. The largest absolute difference between their $p$-values is 0.0371, away from the decision boundary. Stratification is nevertheless load-bearing: for unhealed Qwen3 \texttt{k8}, the stratified statistic differs from the unstratified one by $-1.271$ points because E is not legal on every item.

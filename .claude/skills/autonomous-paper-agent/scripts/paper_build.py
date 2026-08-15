@@ -237,14 +237,15 @@ def build(paper_dir: Path, engine: str, main_name: str, check_only: bool) -> dic
         n_pass = 1 if engine == "latexmk" else 3   # plain engines need 3 for refs
         for i in range(n_pass):
             p = subprocess.run(cmd, cwd=paper_dir, env=texenv(),
-                               capture_output=True, text=True, timeout=900)
+                               capture_output=True, text=True,
+                               errors="replace", timeout=900)
             passes.append({"pass": i + 1, "rc": p.returncode})
             if engine != "latexmk" and i == 0:
                 bib = shutil.which("bibtex", path=texenv()["PATH"])
                 if bib and bibs:
                     b = subprocess.run([bib, Path(main_name).stem], cwd=paper_dir,
                                        env=texenv(), capture_output=True,
-                                       text=True, timeout=300)
+                                       text=True, errors="replace", timeout=300)
                     passes.append({"pass": "bibtex", "rc": b.returncode})
     except subprocess.TimeoutExpired:
         rec.update(compiled=False, reason="build timed out (900s)", passes=passes)
