@@ -320,5 +320,144 @@
   "promotion": "NO. Promotion needs (a) an independent adversarial pass returning SOUND on the revised gate, (b) clause 5 run and not firing, (c) a budget-matched second family, (d) an a-priori mechanism-level hypothesis, and now (e) a regenerated novelty table including arXiv:2605.07271.",
   "addresses_gap_audit": "proposal/shared/literature/RELATED_WORK_GAP_AUDIT_20260808.md:94 (rating 不足; five required collision families; boundary '新意只能是 model damage 是否系统性放大 nuisance sensitivity'). It also closes remaining_blockers_after_this_design[1] ('RELATED_WORK.md still absent').",
   "discharges_note_20260815": "MAIN: the prose above was filed under `discharges`, which ready_queue.py defines as a POINTER at a blocker path INSIDE this file (LIFECYCLE_SCHEMA sec 2.1). A citation of another document's line numbers matches no blocker path, so the reader printed 'dangling; no effect' -- the field did nothing. Renamed to `addresses_gap_audit`, which is what it actually records. No blocker was discharged by writing RELATED_WORK.md, and none should be: the gap audit is not a blocker in either record."
+ },
+ "decidability_fix_2026_08_16": {
+  "authored": "2026-08-16, 0 GPU, PRE-DATA. Deliverable: DECIDABILITY_FIX_20260816.md (read it first; this key is the machine-readable summary).",
+  "scope": "Repairs the decidability of clause 5 / next_gate ONLY. Does NOT touch kill_gate.clause_2/clause_3 (banked PASSes), does NOT re-litigate the dead general cross-family claim, does NOT change status (stays NARROWED_TO_OLMO_2_ONLY).",
+  "headline": "The span defect the 2026-08-14 decidability lens found is REAL and revision 2 did not fix it -- it inverted it. But the larger, previously unstated defect is that phi CANNOT BE COMPUTED AT ALL: 4 of the 5 named read-out arms have NO evaluation on EITHER physical disk. phi does not evaluate to a wrong number; it does not evaluate. Verdict today = READOUT_ABSENT.",
+  "lifecycle_unchanged": "ready_cpu. This document does NOT self-promote. Promotion is the next independent adversarial pass's call -- self-promotion is precisely what went wrong in revision 1 (git 45980ad).",
+  "span_provenance": {
+   "span_116500_is": "the COMPARATOR's heal-step span: max-min over the 5 damaged rungs' ckpt_step {200000,200000,111500,83500,121000} = interval I=[83500,200000], |I|=116500.",
+   "span_116500_where": "code/analyze_b04_wzc1_floor.py:357 ('damaged_heal_step_span': max(dstep)-min(dstep)); dstep built at :335 from LADDER rows :100-104; emitted to evidence/B04_wzc1_floor_analysis.json -> clause5_budget_discrimination.damaged_heal_step_span. Each rung's ckpt_step independently confirmed against olmo2_downstream_results/<dir>/summary.json.meta on disk.",
+   "span_175000_is": "the revision-2 READ-OUT GRID's own span: max-min over G1_READOUT_STEPS {25000,50000,100000,128000,200000} = 175000.",
+   "span_175000_where": "code/analyze_b04_wzc1_floor.py:121 (READOUT_SPAN = max(G1_READOUT_STEPS)-min(G1_READOUT_STEPS)); grid at :120; enters phi at :128 (span= default) and :147 (slope_term); emitted as clause5_budget_discrimination.readout_span_USED_IN_PHI.",
+   "ratio": "175000/116500 = 1.502146",
+   "both_reproduced": "Full re-run of analyze_b04_wzc1_floor.py this session reproduced the evidence JSON: damaged_heal_step_span 116500, readout_span_USED_IN_PHI 175000, damaged_range 0.021820, guard 0.003244 OK, sigma_hat 0.000541, rho +1.0000 p 0.0028."
+  },
+  "which_span_is_correct": {
+   "answer": "NEITHER. The correct span belongs to a read-out grid whose points all lie INSIDE the comparator's interval I=[83500,200000], and it must equal that grid's own hull. No prior revision had such a grid.",
+   "invariant": "phi's denominator D=0.021820 is the depth-attributed range measured over models whose budgets lie in I. So the numerator must be a budget excursion over THAT SAME interval. Both revisions asked 'whose span is it?'; the right question is 'what must the statistic explain away?'.",
+   "why_116500_alone_is_wrong": "UPHELD, revision-1 defect. Multiplying a slope measured over the read-out's points by a FOREIGN interval width makes the printed number not the measured quantity; it understates the read-out's own excursion by 1.502146x, in the direction favouring B04.",
+   "why_175000_alone_is_also_wrong": "NEW FINDING. Revision 2 made the slope term self-consistent but left the grid, which puts 2 of its 5 points (25000, 50000) BELOW I's floor of 83500 -- 58500 steps of budget territory NO damaged rung occupies. Only 3/5 land inside I. Healing curves are steepest early, so those 2 points inflate the numerator with movement that cannot explain any damaged rung's position. Revision 2 traded a numerator that UNDER-read the nuisance for one that OVER-reads it: same class of error, opposite sign.",
+   "why_the_grid_must_change_not_just_the_constant": "Rescaling revision 2's grid back to 116500 reproduces revision 1's defect AND, measured on that x-grid, drops the slope-term sup ratio from 1.173627 to 0.781300 -- sup<1 means the slope term can NEVER bind, silently disabling the max-guard the falsifiability lens demanded.",
+   "best_available_grid": "GRID_I = {100000,128000,153500,175000,200000}, S_I = 100000, all 5 points inside I, covering S_I/|I| = 0.8584 of I.",
+   "its_disclosed_shortfall": "GRID_I does NOT reach I's floor: [83500,100000] = 16500 steps = 14.16% of |I| uncovered, because no seed1234 ckpt exists between 50000 and 100000. phi_I is therefore a LOWER BOUND on the budget excursion across I, and the shortfall is exactly the region nearest keep10@83500. Closing it would need a re-heal with denser saves -- the 244-2560 GPU-h class this gate exists to DECIDE, not to presuppose. Disclosed and accepted."
+  },
+  "rewritten_gate_revision_3": {
+   "verbatim_text_location": "DECIDABILITY_FIX_20260816.md sec 3 (the authoritative verbatim block).",
+   "statistic": "Per grid G: phi_G = max( max(y_G)-min(y_G), |OLS slope of y_G on heal_step| * S_G ) / D. verdict_G = KILL if phi_G>=0.60; PASS if <=0.30; else NARROWED. FINAL VERDICT = the MORE SEVERE of verdict_I and verdict_W (KILL > NARROWED > PASS).",
+   "grid_I_primary": [
+    100000,
+    128000,
+    153500,
+    175000,
+    200000
+   ],
+   "grid_I_span": 100000,
+   "grid_I_sup_ratio": 1.22039,
+   "grid_W_secondary": [
+    25000,
+    50000,
+    100000,
+    128000,
+    200000
+   ],
+   "grid_W_span": 175000,
+   "grid_W_sup_ratio": 1.173627,
+   "grid_W_retained_why": "Revision 2's grid is kept VERBATIM as the secondary rather than discarded, so revision 2 stays auditable and the early-heal region (where a healing model moves fastest) cannot be quietly excluded. If median_margin moves materially between 25k and 100k, phi_W alone can carry the combined verdict even when phi_I is small.",
+   "why_take_the_worse_of_two_grids": "Neither grid is BOTH interval-matched and fully supported. Choosing one commits either the revision-1 error (foreign interval) or the revision-2 error (off-support points). Taking the worse is monotone in severity and machine-verified never laxer than either grid alone: 0/20000 random 5-point shapes had combined < max(individual).",
+   "116500_status": "DESCRIPTIVE ONLY and explicitly BARRED from multiplying any slope. |I| is used ONLY to test whether a grid's points are on-support.",
+   "mandatory_reporting": "Every phi MUST print its grid, its span, its binding term (range|slope), D, sigma_hat, and Spearman(core6, heal_steps) for the NAMED ladder (+0.6669 wzc1 / +0.8721 zwfy6). A phi without its span is the artefact the decidability lens caught: 116500 vs 175000 vs 100000 differ by up to 1.75x, so the same data can print as three different numbers.",
+   "hard_aborts": [
+    "READOUT_ABSENT -- any named arm of a grid lacks a margin-computable eval dir (all 6 core6 per_example_{task}.jsonl) on EITHER disk. phi is then UNDEFINED, not small and not large. NON-PASS. THIS IS THE VERDICT TODAY.",
+    "PROTOCOL_VIOLATION -- evaluated step set differs in ANY way from a grid's prereg set (adding biases toward PASS since unused seed1234 ckpts cluster near 200000; dropping breaks k=5-vs-k=5, E[range]/sigma 2.0588 at k=4 vs 2.3259 at k=5 = -11.5%, also toward PASS); or not 8/8 shards; or pooled n_scored != 17195; or any per-task n_scored != its HF cardinality; or n_nan != 0.",
+    "FIELD_ASYMMETRY -- any arm lacking norm_scores/norm_lens on all 6 tasks. An asymmetric-field paired comparison already produced a 56x artefact (status/PAPERF_ACCNORM_VERIFIED.md:43-67, reported 34.7% flip rate whose true value was 0.62%).",
+    "DENOMINATOR_UNRESOLVED -- D<=0 or D<6*sigma_hat=0.0032435. Measured D=0.021820 = 6.73x guard, currently OK.",
+    "FLOOR_UNMEASURABLE -- sigma_hat==0. Does NOT pass.",
+    "SHARD_SAMPLES_ARE_NOT_A_READOUT -- the samples[] arrays in shard*of8.json MUST NOT substitute for per_example. Capped at 6 rows/shard/task (scripts/eval_olmo2_probe2_downstream.py:476) = 48/task = 288 pooled vs 17195, and no item_id. Bootstrap SD of the median at n=288 = 0.008202 = 15.2*sigma_hat = 37.6% of D -> noise-dominated by construction."
+   ],
+   "narrowed_claim_only": "All arms are OLMo-2-7B, same base, same harness, same arch sm_100. This gate tests the LIVE OLMo-2-ONLY claim. The general cross-family claim is already dead (Qwen rho=+0.4286 p=0.42) and is NOT re-litigated. The Qwen f12k2/14L cell appears ONLY as an illustration that KILL is reachable, never as a prediction for OLMo-2.",
+   "no_rank_statistic": "phi is a range ratio deliberately. With k=3 monotone points Spearman is +1.000000 as an ARITHMETIC IDENTITY (exact two-sided p floor at n=3 is 2/6=0.3333, unreachable at any alpha). No Spearman may be quoted from any budget read-out of k<5, and none is used.",
+   "unchanged_from_revision_2": "max-guard, k=5-vs-k=5 matching, 6*sigma_hat denominator guard, PHI_KILL=0.60 / PHI_PASS=0.30, median_margin as PRIMARY, no-metric-substitution, and the shape-safe rounding-UP rule for single-number boundaries. All sound, all kept."
+  },
+  "firability_precheck_2026_08_16": {
+   "command": "python3 /tmp/b04_repair_precheck.py  (0 GPU, CPU on wzc1; reads evidence/B04_wzc1_floor_analysis.json regenerated this session plus on-disk per_example_*.jsonl and summary.json). Full output tabulated in DECIDABILITY_FIX_20260816.md sec 4.",
+   "statistic_value_phi_I": "NOT COMPUTABLE -- y has 4 holes; max(y)-min(y) undefined, ols_slope(steps,y) undefined.",
+   "statistic_value_phi_W": "NOT COMPUTABLE -- same 4 holes.",
+   "threshold": "KILL >= 0.60 / PASS <= 0.30",
+   "verdict": "READOUT_ABSENT",
+   "CAN_THE_GATE_FIRE": "NO. Not with the data now on disk. This is a STRONGER failure than the one the decidability lens named: the lens said the statistic was not the quantity measured; the truth is the quantity was NEVER MEASURED. phi does not evaluate to a wrong number -- it does not evaluate.",
+   "readout_arm_census": {
+    "union_of_both_grids": [
+     25000,
+     50000,
+     100000,
+     128000,
+     153500,
+     175000,
+     200000
+    ],
+    "margin_computable": {
+     "200000": "olmo2_downstream_results/keep14_s1234_step200000_sv181 (median_margin 0.108500, n=17195)"
+    },
+    "absent_everywhere": [
+     25000,
+     50000,
+     100000,
+     128000,
+     153500,
+     175000
+    ],
+    "absent_count": "6 of 7 union arms; 4 of 5 on GRID_I; 4 of 5 on GRID_W",
+    "wzc1_search": "45 dirs in olmo2_downstream_results scanned by summary.json.meta.ckpt + presence of all 6 per_example_{task}.jsonl.",
+    "zwfy6_search": "165 dirs in /apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/olmo2_downstream_results scanned the same way from .73 (read-only CPU metadata scan, 0 GPU). NO dir on that disk references any ..._seed1234/step*.pt checkpoint at all. Per the two-disk rule, absence is now established on BOTH disks.",
+    "checkpoints_are_present": "outputs/olmo2_probe2_7B_keep14fresh2_seed1234/ on wzc1 holds step{25000,50000,100000,128000,153500,165000,170000,175000,180000,185000,190000,195000,199000,199500,200000}.pt, 48724473567-48724474298 B each. ONLY THE EVALUATION IS MISSING, NOT THE MODELS."
+   },
+   "why_the_existing_selftest_did_not_catch_this": "selftest_phi() at code/analyze_b04_wzc1_floor.py:485-537 passes today, and passed on 08-14 and 08-15, because it feeds HAND-WRITTEN HYPOTHETICAL y-vectors. A selftest over invented inputs proves the FUNCTION is falsifiable; it says nothing about whether the GATE can run. revision_2_applied_20260814.verdict_reachability_machine_checked and pass_boundary_shape_safety_fix_MAIN_20260815 are both correct AND both about a function with no data to consume.",
+   "verdict_reachability_after_repair": "All three reachable, machine-checked on 5 constructed y-vectors (hypothetical, PRE-DATA), reported as phi_I/phi_W: monotone 0.8483/0.8387 KILL; non-monotone V 0.9395/0.9395 KILL; mid 0.3914/0.3896 NARROWED; early-convergence 0.1054/0.1054 PASS; noise wobble 0.0495/0.0495 PASS. Conservatism of the combine rule: 0/20000 random shapes where combined < max(individual)."
+  },
+  "repaired_gate_constants": {
+   "D": 0.02182,
+   "sigma_hat": 0.000541,
+   "guard_6sigma": 0.0032435,
+   "D_over_guard": "6.73x -> admissible",
+   "comparator_interval_I": [
+    83500,
+    200000
+   ],
+   "abs_I": 116500,
+   "phi_under_pure_noise": 0.0576,
+   "noise_margin_below_pass": "5.2x -- PASS is a measurement of a small effect, not a threshold set above the noise",
+   "excursion_kill_absolute": 0.013092,
+   "excursion_pass_absolute": 0.006546,
+   "excursion_kill_in_sigma_hat": 24.2,
+   "excursion_pass_in_sigma_hat": 12.1,
+   "beta_kill_per_step_grid_I": 1.3092e-07,
+   "beta_pass_per_step_grid_I": 6.546e-08,
+   "beta_kill_per_step_grid_W": 7.4811e-08,
+   "beta_pass_per_step_grid_W": 3.7406e-08,
+   "kill_boundary_if_max_stays_0.1085": "min(y) <= 0.095408 (both grids; sufficient since max() >= range)",
+   "pass_boundary_grid_I_if_max_stays_0.1085": "min(y) >= 0.103137 = ceil6(0.108500 - 0.30*0.021820/1.220390). LARGER than GRID_W's 0.102923 because GRID_I's sup ratio is larger. Rounded UP, per the 2026-08-15 shape-safety rule.",
+   "pass_boundary_grid_W_if_max_stays_0.1085": "min(y) >= 0.102923 (unchanged from pass_boundary_shape_safety_fix_MAIN_20260815)"
+  },
+  "auxiliary_evidence_not_the_gate": {
+   "E1_keep8_fixed_damage_budget_trio": "The ONLY fixed-damage multi-budget OLMo cell with core6 on disk (both disks scanned): outputs/olmo2_probe2_7B_keep8fresh2 at steps 100000/110000/121000 -> dirs 7B_keep8_step{100000,110000,121000}, all 8/8 shards, n_scored exact on all 6 tasks. core6 = 0.516788/0.521836/0.523775, range 0.006987, D_core6 = 0.098167 -> phi-analogue ON CORE6 = 0.0712, binding term range, leans PASS. DISQUALIFYING CAVEATS: (i) core6 is NOT the primary and these 3 dirs have NO per_example, so median_margin is not computable on them; (ii) k=3, so no rank statistic is admissible; (iii) own span 21000 = 18.03% of |I|, so 0.0712 is a LOWER BOUND and cannot be read as 'budget is negligible across I'.",
+   "E2_equal_budget_damage_contrast_on_the_primary": "shortgpt16@200k = 0.116599 vs keep14@200k = 0.107890, budget held EXACTLY equal at heal step 200000: |diff| = 0.008709 = 16.1*sigma_hat = 39.91% of D. The one place on disk where depth moves the PRIMARY metric with budget fixed, and it clears the floor. CAVEAT: those arms differ by more than depth (fresh=0/16L vs fresh=2/16L, both 16 total layers), so this is 'structural change at fixed budget', not 'pure depth'; and n=2.",
+   "E3_qwen_precedent": "Qwen f12k2/14L fixed-damage cell: phi = 1.7760 -> KILL at its own span 198000. Retained as proof KILL is reachable. NOT a prediction for OLMo-2: B04's live claim is OLMo-2-only and Qwen's general claim is already dead (rho=+0.4286, p=0.42).",
+   "E4_shard_samples_shortcut_closed": "shard*of8.json does carry per-sample lls/norm_lls, which LOOKS substitutable for per_example. It is not: capped at 6 rows/shard/task (eval_olmo2_probe2_downstream.py:476) = 48/task = 288 pooled vs 17195, no item_id. Bootstrap SD of the pooled median: 0.019956 at n=48, 0.008202 at n=288, 0.001000 at n=17195 = 36.9x / 15.2x / 1.9x sigma_hat. Hence the SHARD_SAMPLES_ARE_NOT_A_READOUT abort.",
+   "net_lean": "E1 leans PASS but on the wrong metric over 18% of the interval; E2 is mildly favourable to B04; E3 is out of family. These do NOT sum to a verdict. The gate still returns READOUT_ABSENT."
+  },
+  "what_would_make_it_fire": {
+   "grid_I_arms_needed": "seed1234 step 100000, 128000, 153500, 175000 -> 4 arms x 0.268889 = 1.076 GPU-h",
+   "grid_W_additional_arms": "seed1234 step 25000, 50000 -> +2 arms = +0.538 GPU-h",
+   "total_both_grids": "6 arms = 1.613 GPU-h, EVALUATION ONLY, no training",
+   "cost_anchor": "logs/sv181_main.log lines 5-6: '[2026-08-12 01:12:18] (2) core6 downstream -> keep14_s42_step200000_sv181' -> '[2026-08-12 01:14:19] OK 8/8 shards' = 121 s on 8 GPUs = 0.268889 GPU-h/rung. Same harness, same arch, same driver (scripts/_run_paperB_keep14_seedvar_local.sh:116-125, only --ckpt changes) as the arm that produced the one read-out point in hand.",
+   "arch_requirement": "sm_100 MANDATORY (LOCAL or .21). paperB/SEEDVAR_KEEP14_VERDICT.md line 3 puts sigma_hat and the whole comparator ladder on LOCAL only, so a non-sm_100 arm confounds the run-to-run term with a hardware term and makes even a FAIL uninterpretable.",
+   "save_per_example_required": "--save_per_example is REQUIRED or the run reproduces 7B_keep8_step100000: correct core6, primary metric still not computable.",
+   "spend_still_unauthorised": "READOUT_ABSENT is a NON-PASS, so the 244-2560 GPU-h matched-family ladder remains unauthorised."
+  },
+  "expected_outcome_honest": "If the 6 arms are evaluated I expect NARROWED, with PASS next most likely and KILL genuinely possible. Weights: E1 weak->PASS (small excursion but wrong metric, 18% of I); E2 weak->PASS (depth does move the primary at fixed budget, 16.1 sigma_hat); against that, healing curves are steepest early and GRID_W deliberately includes 25k/50k, so phi_W alone can carry the combined verdict into NARROWED/KILL even if phi_I is small; E3 very weak for OLMo-2. I am NOT confident in this expectation and it is not part of the gate. The one thing I am confident in: TODAY the gate returns READOUT_ABSENT, a non-pass, so the family ladder stays unauthorised, and the next step is 1.613 GPU-h of evaluation only.",
+  "lesson_for_the_next_agent": "Three separate passes checked whether phi's FORMULA was right; none checked whether phi's INPUTS EXISTED. A pre-registered, fully-disclosed, machine-selftested, adversarially-revised gate can still be incapable of firing -- because the selftest was fed invented numbers. Any future gate revision must run a FIRABILITY PRECHECK on the actual named on-disk data before the revision is accepted.",
+  "gpu_used": "none. Nothing written to olmo2_downstream_results/. zwfy6 was touched only by a read-only CPU metadata scan over its olmo2_downstream_results."
  }
 }
