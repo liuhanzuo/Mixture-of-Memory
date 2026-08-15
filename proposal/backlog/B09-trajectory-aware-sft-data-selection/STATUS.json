@@ -1,9 +1,9 @@
 {
   "id": "B09",
   "slug": "trajectory-aware-sft-data-selection",
-  "status": "backlog_blocked_data_does_not_exist",
-  "status_superseded": "backlog_ready_for_data_audit (2026-08-08) -> backlog_blocked_data_does_not_exist (2026-08-10)",
-  "updated": "2026-08-10T19:15+0800",
+  "status": "backlog_gate_minus1_resolved_download_task_0_gpu",
+  "status_superseded": "backlog_ready_for_data_audit (2026-08-08) -> backlog_blocked_data_does_not_exist (2026-08-10) -> backlog_gate_minus1_resolved_download_task_0_gpu (2026-08-16)",
+  "updated": "2026-08-16T07:20+0800",
   "blocker_2026_08_10": {
     "finding": "The ~10K agent trajectories / ~100K derived SFT rows candidate pool that PROPOSAL.md section 1 (lines 47-58) treats as an existing, VISIBLE asset (line 168: 'Candidate U | 100K candidate pool | visible') DOES NOT EXIST ON EITHER DISK. next_gate[0] was therefore not executable: there is nothing to audit.",
     "search_scope": "both physical disks -- /apdcephfs_wzc1/share_304376610/pighzliu_code/ locally, and /apdcephfs_zwfy6/share_304376610/pighzliu_code/ read-only over ssh on .73 (zwfy6 is not mounted on LOCAL). Patterns: *trajector*; dirs *agent*/*swe*/*toolbench*/*tool_use*/*tulu*; named corpora *agentinstruct*/*toolllama*/*webarena*/*react*traj*/*agentbench*/*swe_gym*/*nemotron*tool*/*glaive*; *traj*.{jsonl,parquet,json}. Full data/ enumerated on both disks (18 entries wzc1, 14 zwfy6).",
@@ -13,6 +13,54 @@
     "audit_limitation_disclosed": "This was a filename/directory search, not a content scan of every file on both disks. Bounded by: both disks searched to depth 4-6, and data/ fully enumerated on both (all entries accounted for as C4 / dolmino / fineweb / redpajama / wikitext / hf_datasets MC benchmarks / tulu3 SFT / instruct-prep scripts). If a pool is later found, correct this record rather than ignoring it -- but the burden is now on producing the path.",
     "verdict_file": "DATA_AUDIT_VERDICT_20260810.md",
     "gpu_used": "none"
+  },
+  "gate_minus1_feasibility_2026_08_16": {
+    "verdict": "(a) A DOWNLOADABLE CORPUS SATISFIES ALL FOUR REQUIRED FIELDS NATIVELY. GATE -1 is a 1.0 GiB download + CPU derive task, NOT a rollout-generation project. Outcome (c) (blocked on GPU rollouts) is REFUTED.",
+    "verdict_file": "GATE_MINUS1_FEASIBILITY_20260816.md",
+    "gpu_used": "none (0 GPU-seconds; .73 used read-only over ssh for a filesystem listing only)",
+    "recommended_corpus": "SWE-bench/SWE-smith-trajectories, tool split, licence MIT, 1.0 GiB (1077271863 B parquet, 8 shards data/tool-*)",
+    "four_field_check_RETRIEVED": {
+      "parent_trajectory_id": "PRESENT -- traj_id unique per rollout, nested under instance_id; measured 1-13 rollouts per instance across 10 probed instances (MONAI.pr_7187=13, MONAI.pr_6735=8, MONAI.lm_rewrite__roex7dhi=5, conan.pr_13390=5, voluptuous=4, flake8=3, schedule.6=3, django-money=2, conan.pr_12880=1, starlette=1); parent task pool SWE-bench/SWE-smith train = 59136 instances",
+      "step_decision_type": "PRESENT on 9285/24100 rows -- message_type in {system_prompt, action, observation}; plus a free positional step index. NOTE the 8-way PLAN/CRITICAL_OBSERVATION/... taxonomy is assigned BY THE METHOD (PROPOSAL Stage 1), not required from the corpus",
+      "success_reward": "PRESENT on 100% of rows -- resolved bool; 9427 true / 14673 false (sums to 24100). Within the structured subset: 3452 resolved / 5664 unresolved",
+      "tool_family": "PRESENT on 9116/24100 rows -- tool_calls[].function.name in {bash, str_replace_editor, submit}"
+    },
+    "operative_subset": "9116 rows carry BOTH message_type and tool_calls (verified two ways: LIKE '%tool_calls%' = 9116 == LIKE '%\"thought\"%' = 9116, and 3452+5664 = 9116). A 169-row gap vs the 9285 message_type count is real and reported, not conflated.",
+    "scale_vs_proposal": "9116 parents is within 9% of PROPOSAL section 1's |G|~=10000. INFERRED |U|: mean n_messages 65.9 over n=9 structured rows -> ~32.4 action turns/traj -> ~2.95e5 derivable decision rows, ~3x the |U|~=100000 target. The |U| figure is INFERRED from n=9 and must be recomputed on the downloaded parquet.",
+    "complementary_corpus": "nebius/SWE-agent-trajectories, CC-BY-4.0, 1.04 GiB, 80036 rows -- RICHEST reward signal of any candidate (target bool 13389/66647 + 9-category exit_status + raw eval_logs), 11-17 rollouts/instance measured, but NO step-type field and NO tool-family field (both 0-GPU reconstructable: 261/261 = 100% of ai turns carry a parseable fenced command, 67% in the 9-verb SWE-agent ACI vocabulary)",
+    "licence_flags": [
+      "AgentGym/AgentTraj-L -- NO LICENCE DECLARED (cardData.license is null). Do not use.",
+      "israel-adewuyi/kwaiklear-sample-level-agent-trajectories-2.2M -- NO LICENCE DECLARED. Do not use.",
+      "Salesforce/APIGen-MT-5k -- CC-BY-NC-4.0, NON-COMMERCIAL ONLY. Flagged.",
+      "Salesforce/xlam-function-calling-60k -- CC-BY-4.0 but gated:auto.",
+      "nebius/SWE-agent-trajectories -- CC-BY-4.0 PLUS two extra card conditions: respect each source repo's licence (per-instance licences live in nebius/SWE-bench-extra), and comply with the Llama-3.1 licence when using model outputs."
+    ],
+    "rejected_for_missing_fields": {
+      "Kwai-Klear/SWE-smith-mini_swe_agent_plus-trajectories-66k": "MIT, 65994 rows, but features are only [instance_id, messages] -- NO success/reward field at all, no step type, no tool family",
+      "israel-adewuyi/kwaiklear-...-2.2M": "has parent (instance_id) AND step index (assistant_turn_index, target_message_index) but NO success/reward and NO tool family; also unlicenced",
+      "AgentGym/AgentTraj-L, Solaris99/AgentBank, agent-eto/eto-sft-trajectory": "multi-environment (12 / 16+ / 3 envs) so they WOULD give benchmark breadth, but all three carry NO per-row success/reward field; tool family only at env/config/split granularity",
+      "Salesforce/xlam-function-calling-60k, nvidia/Llama-Nemotron-Post-Training-Dataset": "flat SFT pairs, no parent-trajectory linkage -- exactly the failure mode GATE -1 exists to exclude",
+      "SWE-Gym/SWE-Gym, R2E-Gym/R2E-Gym-V1": "these are TASK/ENVIRONMENT sets, not trajectory corpora"
+    },
+    "unverified_with_exact_error": [
+      "SWE-Gym/SWE-Gym-Trajectories -- /api/datasets: 'Invalid username or password'; datasets-server: 'The dataset does not exist, or is not accessible without authentication (private or gated).'",
+      "ToolBench/ToolBench -- /api/datasets: 'Invalid username or password'",
+      "THUDM/AgentInstruct -- datasets-server: 'The dataset has been renamed. Please use the current dataset name.' New name not resolved.",
+      "NOTE: configs/password_hf_token.txt exists but was deliberately NOT used -- authenticating would change what 'publicly downloadable' means, which is the gate's own criterion."
+    ],
+    "surviving_limitation_NOT_a_field_gap": "Both viable corpora are SINGLE-BENCHMARK (SWE / Python repo repair) with a 3-verb tool vocabulary. GATE -1 asks for four FIELDS and they are all there, so the gate passes. But downstream: (1) PROPOSAL Stage 5 F_meta's benchmark term is degenerate at B=1 and its tool term near-degenerate (repo/task-family and decision-type coverage remain meaningful over 59136 parent instances); (2) section 4.3 strict benchmark-OOD and H3 are UNDEFINED at B=1 and must be re-scoped to repo-family holdout. There is no drop-in fix: the multi-environment corpora that would give breadth all lack a per-row reward field and two of them are unlicenced. Breadth and reward are mutually exclusive in the currently downloadable public set.",
+    "two_disk_search": "Re-searched BOTH disks with 22 patterns (9 of them -- mind2web, miniwob, alfworld, webshop, tau_bench, api_bank, rollout, tool_use, func*call -- were NOT in the 2026-08-10 pattern list, so this independently WIDENS that search). wzc1 depth 6 on Mixture-of-Memory + depth 5 on the outer pighzliu_code; zwfy6 depth 5 via read-only ssh on .73 (zwfy6 is NOT mounted on LOCAL: ls /apdcephfs_zwfy6 -> No such file or directory). ZERO agent-trajectory corpora on either disk. Only *rollout* hits are vendored verl unit tests and tcodex CLI session transcripts. The 2026-08-10 DATA_AUDIT_VERDICT STANDS and needs no correction.",
+    "proxy_positive_controls": "3/3 PASS before any not-found claim: HF control plane (/api/datasets/allenai/tulu-3-sft-mixture -> sha b14afda6), datasets-server (/info -> feature tree), and the HF DATA plane (range GET 0-2097151 of nebius data/train-00000-of-00012.parquet -> http 206, 2097152 B, magic PAR1, 1.02 MB/s). One 404 was my own wrong shard name, corrected via the tree API -- not a proxy failure.",
+    "landing_disk": "wzc1 -- /apdcephfs_wzc1/.../Mixture-of-Memory/data/agent_traj/. Rationale: B09's records live on wzc1; Phase 0 is CPU-only; wzc1 has 11T free of 120T and 1.0 GiB is negligible. If a later SFT arm needs the H20s, scp -O to zwfy6 (33T free of 689T) then -- at 1.0 GiB that is minutes. /tmp is FORBIDDEN (proven wiped on reboot).",
+    "download_trap": "data/train-* (8 shards, 0.98 GiB) exists in the repo tree but 'train' is NOT in /splits -- undeclared dead weight, do not download. Also skip xml/ticks: only ~266 rows each carry structured fields (provisional -- two splits returning an identical 266 is suspicious and is flagged in the verdict file; the verdict rests on the tool split alone, which cross-checked cleanly).",
+    "next_action": [
+      "1. Download SWE-bench/SWE-smith-trajectories data/tool-0000{0..7}-of-00008.parquet (1.0 GiB) to data/agent_traj/ on wzc1. Optionally also nebius/SWE-agent-trajectories data/train-000{00..11}-of-00012.parquet (1.04 GiB).",
+      "2. ASSERT, do not assume: recompute n_rows==24100, resolved true/false==9427/14673, rows with both message_type and tool_calls==9116. If any differs, STOP -- the HF index and the parquet disagree and every number here is suspect.",
+      "3. Emit the flat pool with PROPOSAL section 1's required columns: g(i)=traj_id, instance_id, t(i)=message_type, step index, resolved, tool_name, c_i=assistant target-token count.",
+      "4. THEN run next_gate[1] (the verbatim-kept audit).",
+      "5. PRE-REGISTER the section 4.3 / H3 re-scope from benchmark-holdout to repo-family holdout BEFORE looking at any outcome -- deciding it afterwards is exactly the leakage section 4.3 exists to prevent.",
+      "DO NOT schedule rollout generation. DO NOT substitute data/olmo2_sft/tulu3_general_* -- the 2026-08-10 verdict on that is unchanged and correct."
+    ]
   },
   "evidence_level": "literature_design_and_novelty_collision_audit; NO internal data asset (SOURCES.md cites only literature plus status/RESEARCHER_REPORTS.jsonl and names no internal data path -- the tell that the pool was never located)",
   "novelty_status": "combination_gap_found_but_strong_component_collisions",
