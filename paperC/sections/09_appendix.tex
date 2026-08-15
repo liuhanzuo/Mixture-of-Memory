@@ -20,6 +20,32 @@ Table~\ref{tab:v2-full} reports all 27 cells used in the post-hoc v2 re-analysis
 
 \FloatBarrier
 
+\subsection{Generated construct-null manifest}
+\label{app:generated-nulls}
+
+Table~\ref{tab:app-construct-nulls} restates the construct nulls of
+Table~\ref{tab:nulls} as a \emph{generated} artefact. It is written by
+\texttt{paperC/code/emit\_tab\_construct\_nulls.py} directly from
+\texttt{paperC/evidence/floor\_winners\_curse\_calibration.json}, the single
+machine-readable source for these nine rows, and the emitter contains no numeric
+literal for any floor or chance line. The emitter refuses to write on any
+inconsistency: it checks that each stored percentage-point gap equals
+$100\,(\text{Floor}-\text{Chance})$, that each floor is a label count divided by
+$n$, that no floor falls below $1/k$, that each row's balanced-null verdict
+agrees both with its $p$-value and with the file's own partition of the
+constructs, and that the row identities agree with a second, independently
+recorded evidence file. It also re-parses every number in the hand-authored
+Table~\ref{tab:nulls} and in its own output and re-verifies each against the
+source at the precision that table chose. A companion script,
+\texttt{paperC/code/check\_prose\_vs\_evidence.py}, extends the same
+tolerance-based comparison to the prose. Both exit non-zero on any mismatch, so a
+typed number that drifts from the evidence becomes a build failure rather than a
+reading error.
+
+\input{sections/tab_construct_nulls}
+
+\FloatBarrier
+
 \subsection{What we claim and what we retract}
 \label{app:ledger}
 

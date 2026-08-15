@@ -17,9 +17,9 @@
     }
   },
   "static": {
-    "n_input_targets": 21,
+    "n_input_targets": 22,
     "missing_input_targets": [],
-    "n_cite_keys": 12,
+    "n_cite_keys": 17,
     "unresolved_cite_keys": [],
     "style_files_present": [
       "fancyhdr.sty",
@@ -44,16 +44,16 @@
     "n_undefined_citations": 0,
     "n_overfull_hbox": 0,
     "n_overfull_vbox": 0,
-    "n_underfull_hbox": 29,
+    "n_underfull_hbox": 36,
     "n_latex_errors": 0,
     "first_errors": [],
     "n_missing_file": 0
   },
   "compiled": true,
   "pdf": "main.pdf",
-  "pdf_bytes": 328885,
-  "pdf_sha256": "dcb3328ab20569895a5732649912d8483028a737cc5dedda1940de8da3c2cae9",
-  "pdf_pages": 17,
+  "pdf_bytes": 342809,
+  "pdf_sha256": "2d9e546f2572bbe7d4a871a9881fe9e22305826da956a5bbe38466e49cd219ac",
+  "pdf_pages": 19,
   "build_gate_pass": true,
   "build_gate_blockers": [],
   "pdf_visually_inspected": false,
