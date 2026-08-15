@@ -2,7 +2,8 @@
 
 \subsection{Wrong-null verdict flips at MMLU-scale power}
 
-MMLU-Pro provides the cleanest test. Under $\mathrm{mean}(1/\texttt{n\_opt})$, 10/12 damaged non-OLMo cells read above chance; under naive 0.10, 12/12 do. Yet only 1/12 clears the best-constant floor. The three designated damaged OLMo-2 cells are also above either chance line but not above the floor. Across these 15 cells, the reference changes the interpretation; the exact chance-line counts are reported rather than compressed into a universal categorical flip.
+MMLU-Pro provides the cleanest test (Table~\ref{tab:mmlupro}).
+Under $\mathrm{mean}(1/\texttt{n\_opt})$, 10/12 damaged non-OLMo cells read above chance; under naive 0.10, 12/12 do. Yet only 1/12 clears the best-constant floor. The three designated damaged OLMo-2 cells are also above either chance line but not above the floor. Across these 15 cells, the reference changes the interpretation; the exact chance-line counts are reported rather than compressed into a universal categorical flip.
 
 \paragraph{Both sides of the flip, held to one standard.}
 The counts above are not symmetric in their evidentiary standard: the floor comparison carries a bootstrap CI, a bootstrap $p$, and an exact McNemar test, whereas ``above chance'' was a bare point comparison. Since $\mathrm{mean}(1/\texttt{n\_opt})$ is, like the floor, a deterministic function of the evaluated item set, the matching test needs no new measurement --- the paired item bootstrap with the reference recomputed inside each resample. Applying it (10{,}000 resamples, seed 7) to the same 12 damaged non-OLMo cells:
@@ -40,11 +41,13 @@ The residual-fraction effect is also construct-specific. On OpenBookQA \texttt{c
 
 Under v1, two MMLU-Pro cells are significantly below the best-constant floor. Under v2, the below-null count is zero. \texttt{qwen3/k8} moves from $-0.881$ points ($p=0.0362$) to $-0.139$ ($p=0.0964$), and \texttt{llama2/k8} from $-0.914$ to $-0.416$ ($p=0.1002$). Their v1 verdicts remain valid statements about an arm-independent interface floor, but they are not evidence that either arm is worse than its own input-blind prediction marginal. Both competence claims dissolve.
 
-V2 is not uniformly conservative. It withdraws the published above-floor capability label for \texttt{qwen3/k14}, replacing it with \texttt{TRACE\_SIGNAL}, while \texttt{olmo2/keep14} moves from at-floor to \texttt{TRACE\_SIGNAL}. Re-sorting in both directions is evidence that the criterion is doing more than shrinking effects.
+V2 is not uniformly conservative (Table~\ref{tab:v2-resort}). It withdraws the published above-floor capability label for \texttt{qwen3/k14}, replacing it with \texttt{TRACE\_SIGNAL}, while \texttt{olmo2/keep14} moves from at-floor to \texttt{TRACE\_SIGNAL}. Re-sorting in both directions is evidence that the criterion is doing more than shrinking effects.
 
 It also exposes a benchmark-level limitation invisible to v1. Intact Llama-2-7B has \texttt{recovery\_fraction}=0.0545 on MMLU-Pro, even though v1 calls it comfortably above floor by $+1.538$ points. Because the intact anchor itself is below 0.10, relative-recovery claims for the Llama-2 family are blocked.
 
-Significance alone would re-import the defect. At $n=12032$, \texttt{qwen3/k14} reaches $p=0.0066$ at only $+0.267$ points while A wins the likelihood argmax on 94.6\% of items. The same data reject simpler diagnostics: the A01 own-modal null over-credits P1 by 1.37 points and flips its sign; for Qwen3 heal@7000 and unhealed \texttt{k8}, content is $-3.610$ and $-1.076$ points under the same permutation null, compared with letter at $-0.022$ and $-0.139$; and \texttt{llama3/k12} has modal share 0.339 and normalized entropy 0.614 yet $\Delta_{\mathrm{perm}}=+0.002$ points ($p=0.997$). Entropy and modal share are descriptive, not competence metrics.
+Significance alone would re-import the defect. At $n=12032$, \texttt{qwen3/k14} reaches $p=0.0066$ at only $+0.267$ points while A wins the likelihood argmax on 94.6\% of items. The same data reject simpler diagnostics
+(Table~\ref{tab:v2-alternatives}):
+the A01 own-modal null over-credits P1 by 1.37 points and flips its sign; for Qwen3 heal@7000 and unhealed \texttt{k8}, content is $-3.610$ and $-1.076$ points under the same permutation null, compared with letter at $-0.022$ and $-0.139$; and \texttt{llama3/k12} has modal share 0.339 and normalized entropy 0.614 yet $\Delta_{\mathrm{perm}}=+0.002$ points ($p=0.997$). Entropy and modal share are descriptive, not competence metrics.
 
 \input{sections/tab_v2_resort}
 
@@ -54,6 +57,7 @@ For OLMo-2 \texttt{keep8} on MMLU, fp32 removes all 4,303 bf16 exact top-two tie
 
 \subsection{Auditing the audit}
 
-The analysis uncovered and repaired defects without changing the substantive verdicts. A doubled-tail bootstrap formula counted zero-valued resamples in both tails and produced an illegal $p=1.042$. Splitting the zero atom evenly makes $p\leq1$ structural; re-emitting the summaries changed 0/24 verdicts, moved 0/30 $p$-values across 0.05, and left every non-$p$ field byte-identical.
+The analysis uncovered and repaired defects without changing the substantive verdicts; Table~\ref{tab:integrity} collects them with their measured impact.
+A doubled-tail bootstrap formula counted zero-valued resamples in both tails and produced an illegal $p=1.042$. Splitting the zero atom evenly makes $p\leq1$ structural; re-emitting the summaries changed 0/24 verdicts, moved 0/30 $p$-values across 0.05, and left every non-$p$ field byte-identical.
 
 The first cross-family MMLU-Pro launch also had two integrity failures. A sequence cap validated on the OLMo-2 tokenizer silently left-truncated 10/15 cells; raising it to 2048 and making \texttt{n\_trunc} a hard per-shard assertion changed 0/14 verdicts and at most 0.0083 points, but benignity was unknowable in advance. Separately, intact Llama-2 exhausted memory on 5/8 shards because it lacks grouped-query attention; the merge guard correctly refused the 3/8 partial result. Setting \texttt{use\_cache=False} recovered the cell. All reported cross-family MMLU-Pro results use the corrected launch.

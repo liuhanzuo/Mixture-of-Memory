@@ -16,7 +16,8 @@ All results use \texttt{chat\_template = False}. The evaluated systems are base 
 For deterministic per-item null predictions we report 10,000-resample paired-bootstrap intervals and two-sided mid-$p$ values with seed 7, plus exact McNemar tests. V2 additionally uses 10,000 within-stratum permutations. Every cell requires shard indices exactly $\{0,\ldots,7\}$, expected cardinality, zero duplicate IDs, zero NaNs, zero truncations, and \texttt{chat\_template is False}; partial merges raise an error.
 
 \paragraph{Power design.}
-The five smaller evidence benchmarks are unable to resolve every effect of interest, so null results are never interpreted without the power table. MMLU-Pro supplies $n=12032$ and makes all 21 letter-floor cells capable of detecting MMLU's $-1.389$-point reference effect; their 95\% half-widths range from 0.083 to 0.968 points.
+The five smaller evidence benchmarks are unable to resolve every effect of interest, so null results are never interpreted without the power table (Table~\ref{tab:power}).
+MMLU-Pro supplies $n=12032$ and makes all 21 letter-floor cells capable of detecting MMLU's $-1.389$-point reference effect; their 95\% half-widths range from 0.083 to 0.968 points.
 
 \input{sections/tab_power}
 

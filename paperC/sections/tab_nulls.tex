@@ -25,14 +25,15 @@ labels are exactly uniform, so a positive Gap is not by itself evidence that the
 chance. $\mathbb{E}[\hat f]$ and $q_{95}$ are the mean and 95th percentile of $\hat f$ under an
 exactly balanced null at that construct's own $(n,k)$, and $p=\Pr(\hat f\ge\text{observed floor})$
 under that null ($2\times10^{5}$ multinomial draws per construct, seed 20260814;
-\texttt{paperC/evidence/floor\_winners\_curse\_calibration.json}). \textbf{Only MMLU-Pro, MMLU and
+evidence \textsf{E-CAL}, the single machine-readable source for these rows). \textbf{Only MMLU-Pro, MMLU and
 BoolQ have floors a balanced null could not plausibly produce} ($p<10^{-5}$). For the five
 remaining letter constructs the observed floor lies inside the estimator's own noise
 ($p=0.140$--$0.853$), and on CommonsenseQA and PIQA it is in fact \emph{below} $\mathbb{E}[\hat f]$.
 Those five rows therefore support the weaker claim that chance is the wrong \emph{reference},
 while providing no evidence that the floor \emph{differs from} chance in magnitude; the
-$+0.43$--$+2.60$~pp gaps there are the regime our own evidence pack marks ``do not oversell''
-(\texttt{EVIDENCE\_PACK.md} \S A). Floors and chance values are from
-\texttt{paperC/tcodex\_out/EVIDENCE\_PACK.md}, Section A.}
+$+0.43$--$+2.60$~pp gaps there are the regime our own evidence record marks ``do not oversell''
+(evidence \textsf{E-A}). Floors and chance values are the label-marginal floors re-derived
+first-hand from the raw per-item records (evidence \textsf{E-A}; see the reproducibility
+statement for the artifact paths).}
 \label{tab:nulls}
 \end{table*}

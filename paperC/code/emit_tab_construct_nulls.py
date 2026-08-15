@@ -343,9 +343,9 @@ def build(ev: dict, sha12: str) -> list[str]:
         )
     caption = (
         r"\textbf{Construct-null manifest (generated, not transcribed).} "
-        r"Every value in this table is emitted programmatically from "
-        r"\texttt{paperC/evidence/floor\_winners\_curse\_calibration.json} by "
-        r"\texttt{paperC/code/emit\_tab\_construct\_nulls.py}; no number in it "
+        r"Every value in this table is emitted programmatically from the "
+        r"balanced-null calibration record (evidence \textsf{E-CAL}) by the "
+        r"manifest emitter; no number in it "
         r"is typed by hand. $k$ is the nominal option count and Chance is the "
         r"chance line used for that row, so the two MMLU-Pro rows differ only "
         r"in whether chance is naive $1/10$ or the item average "

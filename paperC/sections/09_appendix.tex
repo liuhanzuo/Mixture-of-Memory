@@ -25,8 +25,8 @@ Table~\ref{tab:v2-full} reports all 27 cells used in the post-hoc v2 re-analysis
 
 Table~\ref{tab:app-construct-nulls} restates the construct nulls of
 Table~\ref{tab:nulls} as a \emph{generated} artefact. It is written by
-\texttt{paperC/code/emit\_tab\_construct\_nulls.py} directly from
-\texttt{paperC/evidence/floor\_winners\_curse\_calibration.json}, the single
+the manifest emitter directly from the balanced-null calibration record
+(evidence \textsf{E-CAL}), the single
 machine-readable source for these nine rows, and the emitter contains no numeric
 literal for any floor or chance line. The emitter refuses to write on any
 inconsistency: it checks that each stored percentage-point gap equals
@@ -36,11 +36,11 @@ agrees both with its $p$-value and with the file's own partition of the
 constructs, and that the row identities agree with a second, independently
 recorded evidence file. It also re-parses every number in the hand-authored
 Table~\ref{tab:nulls} and in its own output and re-verifies each against the
-source at the precision that table chose. A companion script,
-\texttt{paperC/code/check\_prose\_vs\_evidence.py}, extends the same
+source at the precision that table chose. A companion checker extends the same
 tolerance-based comparison to the prose. Both exit non-zero on any mismatch, so a
 typed number that drifts from the evidence becomes a build failure rather than a
-reading error.
+reading error. Both are named with their repository paths in
+Table~\ref{tab:artifact-map}.
 
 \input{sections/tab_construct_nulls}
 
@@ -66,5 +66,38 @@ For each reported multiple-choice construct, we recommend the following minimal 
 \end{enumerate}
 
 \subsection{Evidence provenance}
+\label{app:provenance}
 
-The construct floors, MMLU-Pro cell table, read-out v2 values, fp32 comparison, small-benchmark power analysis, integrity repairs, and claim ledger are transcribed from the machine-extracted \texttt{paperC/tcodex\_out/EVIDENCE\_PACK.md}. The character-versus-token table additionally uses the pack's August 14 addendum, which records the raw-parquet reconstruction and 12/12 self-test. No healed Qwen3 step-121000 result is included.
+The construct floors, MMLU-Pro cell table, read-out v2 values, fp32 comparison, small-benchmark power analysis, integrity repairs, and claim ledger are transcribed from a single machine-extracted evidence record, whose lettered sections are the identifiers \textsf{E-A} through \textsf{E-K} used in the table captions. The character-versus-token table additionally uses that record's August 14 addendum, which records the raw-parquet reconstruction and 12/12 self-test. No healed Qwen3 step-121000 result is included.
+
+Table~\ref{tab:artifact-map} resolves every evidence identifier used in a caption to the
+file that carries it in the released artifact, together with the emitters and checkers named
+above. Captions cite the identifier rather than the path so that the claim remains legible
+without the artifact in hand; this table is the one place where the identifiers become
+literal paths, so a reader who does have the artifact can follow any caption to its source.
+Paths are relative to the repository's \texttt{paperC/} directory.
+
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lp{0.62\linewidth}}
+\toprule
+Identifier & Artifact path (relative to \texttt{paperC/}) \\
+\midrule
+\textsf{E-A} & \texttt{tcodex\_out/EVIDENCE\_PACK.md}, Section A, re-derived from \texttt{evidence/SECOND\_MC\_BENCHMARK\_VERDICT.md} \\
+\textsf{E-B} & \texttt{tcodex\_out/EVIDENCE\_PACK.md}, Section B; per-cell records in \texttt{evidence/mmlu\_scale\_power/} and \texttt{evidence/POWER\_WALL\_VERDICT.md} \\
+\textsf{E-D} & \texttt{evidence/heal\_readout\_v2\_permutation\_null.json} (\texttt{tcodex\_out/EVIDENCE\_PACK.md}, Section D) \\
+\textsf{E-E} & \texttt{evidence/R7\_BOOTSTRAP\_P\_FIX.md} (\texttt{tcodex\_out/EVIDENCE\_PACK.md}, Section E) \\
+\textsf{E-F} & \texttt{evidence/second\_mc\_benchmark/} and \texttt{evidence/SECOND\_MC\_BENCHMARK\_VERDICT.md} (\texttt{tcodex\_out/EVIDENCE\_PACK.md}, Section F) \\
+\textsf{E-H} & \texttt{evidence/construct\_nulls\_length\_unit.json} (\texttt{tcodex\_out/EVIDENCE\_PACK.md}, Section H) \\
+\textsf{E-I} & \texttt{tcodex\_out/EVIDENCE\_PACK.md}, Section I \\
+\textsf{E-K} & \texttt{tcodex\_out/EVIDENCE\_PACK.md}, Section K; row-by-row map in \texttt{evidence/claim\_evidence\_map.tsv} \\
+\textsf{E-CAL} & \texttt{evidence/floor\_winners\_curse\_calibration.json} \\
+Emitter & \texttt{code/emit\_tab\_construct\_nulls.py} \\
+Prose checker & \texttt{code/check\_prose\_vs\_evidence.py} \\
+\bottomrule
+\end{tabular}
+\caption{Evidence identifiers used in the captions, resolved to artifact paths. The identifiers are stable; the paths are where those records live in the released repository.}
+\label{tab:artifact-map}
+\end{table}
