@@ -1,11 +1,19 @@
 {
   "generated_utc": "2026-08-16",
   "purpose": "Census of load-bearing COUNT assertions in sections/*.tex not covered by check_prose_vs_evidence.py (MIN_DP=3, decimals only) or gate_count_claims.py (7 hand-registered CLAIMS).",
-  "status": "IN_PROGRESS",
-  "n_audited": 34,
-  "n_mismatch": 2,
-  "n_cannot_verify": 1,
-  "method_caveats": [],
+  "status": "COMPLETE (partial coverage -- see scope)",
+  "n_audited": 48,
+  "n_mismatch": 4,
+  "n_cannot_verify": 2,
+  "method_caveats": [
+    "Per-item records were preferred over rollup/_summary fields throughout. Two places where both exist and AGREE: (a) trunc_fix_before_after.json summary.n_cells_with_before_and_after==14 matches the per-cell predicate 'has integrity_before' (14 of 15); (b) construct_nulls_length_unit.json self_test '6 char + 6 token' matches the 6 tasks x 2 unit blocks actually present. No disagreement between a summary and its per-item records was found.",
+    "One place where three sources DISAGREE and the manuscript quotes the non-cited one: the ARC directionality dp/sigma (see the MISMATCH entry). E-CAL says -3.34 and -7.34 sigma; MMLUPRO_NULL_FIX_20260816.md says -16.6 and -22.6; the row-level p differences imply a third pair. The .md is not in evidence/ and is not a cited artifact.",
+    "Emitter hardcoded-list audit: code/mmlu_pro_power_nulls.py DAMAGED_OLMO is now the full 5-arm set and XF_DAMAGED the full 4-rung set, so 5+3*4=17 and 17*5=85 match the manuscript's declared designated set. The narrowed {keep8,keep10,keep12} list that silently produced the retracted 14/15 and 0/15 is fixed and documented in-source at lines 96-105. code/emit_tab_construct_nulls.py contains no hardcoded arm or row list (it derives rows from the evidence file and cross-checks against a second record).",
+    "check_prose_vs_evidence.py cannot reach any of these by construction: min_decimals=3 restricts it to >=3-decimal literals carrying a floor/null marker, and excluded_label_prefixes explicitly drops p-value literals -- which is why the 0.447-vs-0.448 prose/table disagreement survives its PASS.",
+    "gate_count_claims.py grew from 7 to 10 registered claims DURING this audit: a concurrent agent registered the appendix pointer (12->17) and both constant-emitter counts after I reported them. Commits 7bfed47 and 8ae0cf9 applied those two fixes to the .tex. My verdicts for them are retained as MISMATCH because that is what the manuscript said when audited; the 'fix_status' field records the current state.",
+    "Two counts in 03b_nulls.tex:37 remain unfixed at the time of writing: the -17/-23 sigma pair and the 0.447 rounding.",
+    "ZERO GPU used. No .tex file was modified by this audit."
+  ],
   "audits": [
     {
       "claim": "Among 17 designated damaged cells in four model families ... the honest aggregate is 15/17 at or below the floor",
@@ -277,7 +285,8 @@
       "how_recomputed": "tab_mmlupro's own caption says 'over all 17 designated damaged cells'; expanding its rows (OLMo-2 5 rows + Llama-2 4 + Llama-3 'k14--k8' collapsed row = 4 + Qwen3 4) gives 17. 12 is the NON-OLMo subtotal only, i.e. it silently drops the five OLMo-2 rows that are physically printed in the very table it is describing (shortgpt16, keep14, keep12, keep10, keep8).",
       "verdict": "MISMATCH",
       "load_bearing": "SAME CLASS AS THE RETRACTED 14/15. This is the last surviving pre-remedy narrowed denominator: the R1-01 remedy was full inclusion of the five OLMo-2 arms, and 09a_relocated.tex:24 promises 'any damaged arm excluded from that denominator is named at the point of exclusion'. Here five arms are excluded and none is named. A reviewer who reads the appendix pointer then counts the table finds a 12-vs-17 contradiction inside the same appendix, and the paper's own integrity promise broken a second time.",
-      "cross_file_consistent": false
+      "cross_file_consistent": false,
+      "fix_status": "FIXED during audit by commit 7bfed47 (09_appendix.tex:16 now reads 17); also now registered in gate_count_claims.py as \"appendix pointer: cells in tab_mmlupro\""
     },
     {
       "claim": "13 of the 27 clear the floor by more than 0.299 pp and so could not have violated it under any prediction vector, while the remaining 14 come from four base models, five of them one healing run sampled 500 steps apart",
@@ -332,7 +341,8 @@
       "how_recomputed": "universe = families[f].rungs[r!=base].tasks[t].interfaces.letter over the 5 evidence tasks; emit=argmax(pred_hist); marginal from task_letter_nulls[t].gold_letter_marginal/n; criterion of the source verdict (GATE2_CROSSFAMILY_VERDICT.md:5e) = modal_pred_share>=0.99 AND abs(acc-marginal)<1e-12. Over the 5 EVIDENCE tasks this yields 9. It yields 16 ONLY if Winogrande is added to the universe: modal>=0.99 goes 19->28 (matching the verdict's '28 damaged non-OLMo cells') and exact goes 9->16. Seven of the sixteen are Winogrande cells: llama2/k12, llama2/k14, llama3/k12, llama3/k14, llama3/k8, qwen3/k10, qwen3/k12.",
       "verdict": "MISMATCH",
       "load_bearing": "09a_relocated.tex:24 states 'Winogrande is the sole negative control and ENTERS NO DENOMINATOR', and 04_experiments.tex:5 repeats it. This count silently puts 7 negative-control cells into a headline count, and both host sentences frame them as 'small-BENCHMARK' evidence for the paper's constant-emitter thesis. Excluding the control gives 9 (or 10 if MMLU is admitted, 12 without the modal>=0.99 filter). A reviewer who checks this finds the paper's own exclusion rule violated in the direction that makes its illustration look 78% more abundant. Note also that the source verdict's own printed table lists only 7 of the 16 rows, so the number was never auditable from the .md alone.",
-      "cross_file_consistent": true
+      "cross_file_consistent": true,
+      "fix_status": "FIXED during audit by commit 8ae0cf9 (both sites now say nine in the designated set, sixteen with the control named as such); now registered in gate_count_claims.py as two claims"
     },
     {
       "claim": "two OpenBookQA cells emit A on every item, score exactly 0.276000, and land on the optimal constant with Delta=0.000 points and CI95 [0,0]",
@@ -502,12 +512,225 @@
         "sections/03b_nulls.tex:37"
       ],
       "asserted": 4,
-      "recomputed": null,
-      "evidence_file": "evidence/construct_nulls_legality_aware.json (searched); evidence/second_mc_benchmark/gate2_letter_content_nulls.json (searched)",
-      "how_recomputed": "NOT RECOMPUTED. task_letter_nulls[arc_easy].gold_letter_marginal has only 4 keys (A-D) and sums to 2376, so the GOLD labels never exceed D; the claim is about n_opt (number of OPTIONS presented), which no evidence file in paperC/evidence/ exposes as a per-item or histogram field for ARC. The legality-aware record's ARC rows do encode a non-constant n_opt implicitly (their blind and legal p differ: 0.140 vs 0.136 and 0.453 vs 0.448), which CONFIRMS n_opt varies but does not pin the counts to 4 and 3.",
-      "verdict": "CANNOT_VERIFY",
-      "load_bearing": "medium. These two integers are the paper's evidence that the legality fix moves SOME rows in its own favour -- the 'we report them rather than absorbing them' honesty claim. A reviewer cannot audit 4 and 3 from the shipped evidence. Missing: a per-construct n_opt histogram for arc_easy and arc_challenge (the analogue of s2_02_strata_raw.json for MMLU-Pro).",
+      "recomputed": 4,
+      "evidence_file": "evidence/construct_nulls_legality_aware.json",
+      "how_recomputed": "CORRECTS MY EARLIER CANNOT_VERIFY -- the histogram IS on disk, in rows[].n_opt_hist. ARC-Easy n_opt_hist={3:7,4:2365,5:4} sums to 2376, n_opt==5 count is 4, and n_items_with_more_than_k_options==4. ARC-Challenge n_opt_hist={3:4,4:1165,5:3} sums to 1172, n_opt==5 count is 3, n_items_with_more_than_k_options==3. Both match, and both files' per-item fields agree with the rollup field.",
+      "verdict": "MATCHES",
+      "load_bearing": "the paper's evidence that the fix moves some rows in its own favour. Note the SAME rows also have 7 and 4 items with FEWER than 4 options, which the prose does not mention -- the net sign is empirical, and the evidence record says so explicitly.",
       "cross_file_consistent": null
+    },
+    {
+      "claim": "Those two rows move slightly in our favour, by -0.0025 and -0.0063 in p --- real rather than Monte-Carlo error at roughly -17 and -23 standard errors",
+      "files": [
+        "sections/03b_nulls.tex:37"
+      ],
+      "asserted": 17,
+      "recomputed": 3,
+      "evidence_file": "evidence/construct_nulls_legality_aware.json (rows[].directionality) ; the -17/-23 figures trace only to MMLUPRO_NULL_FIX_20260816.md, which is NOT in evidence/ and is not a cited artifact",
+      "how_recomputed": "E-CAL (the file the paper names as 'the single machine-readable source for these rows') records ARC-Easy directionality.dp_aware_minus_blind = -0.001205 at dp_sigma = -3.34 (sem 3.61e-4), and ARC-Challenge -0.005213 at dp_sigma = -7.34 (sem 7.11e-4), over seeds_checked=[20260814,7,99] x n_draws_per_seed=200000. The prose's -0.0025/-0.0063 at -17/-23 sigma come from a DIFFERENT run recorded only in MMLUPRO_NULL_FIX_20260816.md (its table: -0.00247 @ -16.6 and -0.00634 @ -22.6, '8 seeds x 1e6 draws'). Also inconsistent: the row-level p_aware - p_blind_shipped differences are -0.003999 and -0.004873, a THIRD pair of values.",
+      "verdict": "MISMATCH",
+      "load_bearing": "medium-high. Three different (dp, sigma) pairs exist for the same two rows and the manuscript quotes the one that is NOT in the cited evidence file. The sigma is 5.0x and 3.1x larger than E-CAL's, i.e. the prose overstates how far from Monte-Carlo noise these two moves are. Nothing about a VERDICT changes (both rows are far from 0.05 under every variant) but the sentence is precisely the paper's 'real rather than Monte-Carlo error' honesty claim, so a reviewer opening E-CAL sees -3.34 sigma where the text promised -17. Fix is either to quote E-CAL's own numbers or to promote the 8-seed run into evidence/ and cite it.",
+      "cross_file_consistent": false,
+      "fix_status": "OPEN at time of writing"
+    },
+    {
+      "claim": "(0.140 -> 0.136 and 0.453 -> 0.447)",
+      "files": [
+        "sections/03b_nulls.tex:37"
+      ],
+      "asserted": 447,
+      "recomputed": 448,
+      "evidence_file": "evidence/construct_nulls_legality_aware.json + sections/tab_nulls.tex:14 + sections/tab_construct_nulls.tex:21",
+      "how_recomputed": "rows[ARC-Challenge].p_aware = 0.447647, which rounds at 3dp to 0.448. Both shipped tables print 0.448 (tab_nulls col p, tab_construct_nulls col 'legal'). The prose prints 0.447, i.e. truncated not rounded. ARC-Easy is fine: 0.135721 -> 0.136 everywhere.",
+      "verdict": "MISMATCH",
+      "load_bearing": "low-medium as science, but it is a literal self-disagreement between the prose and the paper's own two tables on the same page-family, and the prose checker cannot catch it because check_prose_vs_evidence.py's excluded_label_prefixes explicitly drops p-value literals. Same failure class as the 14/15-vs-15/17 defect (prose vs table), just smaller.",
+      "cross_file_consistent": false,
+      "fix_status": "OPEN at time of writing"
+    },
+    {
+      "claim": "Only 7/60 are significantly below because 52/60 are underpowered for the MMLU reference effect / 25/60 read above chance",
+      "files": [
+        "sections/05_analysis.tex:29",
+        "sections/09a_relocated.tex:44"
+      ],
+      "asserted": 52,
+      "recomputed": 52,
+      "evidence_file": "evidence/designated_damaged_denominators.json (7/60, 25/60) + evidence/second_mc_benchmark_crossfamily/gate2_crossfamily_nulls.csv (52/60)",
+      "how_recomputed": "non-OLMo off-MMLU cells = 60. Counter(verdict) = {'AT the floor (n.s.)':53, 'BELOW the floor':7} -> 7/60 significantly below. sum(above_chance)==25 -> 25/60. From the CSV, dedup per (family,rung,task) over the 5 evidence tasks: 60 cells, of which could_have_detected_mmlu_effect==False on 52 -> 52/60 underpowered. Note 7+52=59 != 60, which is correct: the sets overlap/differ (one cell is both powered and not-significantly-below).",
+      "verdict": "MATCHES",
+      "load_bearing": "the power-wall argument that keeps the 0/60 from being read as 'no effect'. All three integers recompute from per-cell records, from two independent files.",
+      "cross_file_consistent": true
+    },
+    {
+      "claim": "four base-model families / 17 designated damaged cells in four model families / four families are OLMo-2-7B, Llama-2-7B, Llama-3-8B, and Qwen3-8B-Base",
+      "files": [
+        "sections/00_abstract.tex:2",
+        "sections/01_introduction.tex:16",
+        "sections/01_introduction.tex:21",
+        "sections/04_experiments.tex:8",
+        "sections/03b_nulls_summary.tex:4"
+      ],
+      "asserted": 4,
+      "recomputed": 4,
+      "evidence_file": "evidence/designated_damaged_denominators.json",
+      "how_recomputed": "len({c['family'] for c in cells_mmlupro})==4 == len({c['family'] for c in cells_offmmlu}); the set is {olmo2_7b, llama2_7b, llama3_8b, qwen3_8b_base}",
+      "verdict": "MATCHES",
+      "load_bearing": "scope of the whole paper; also the '5 benchmarks' companion: len({c['bench'] for c in cells_offmmlu})==5 and Winogrande is correctly ABSENT from that set.",
+      "cross_file_consistent": true
+    },
+    {
+      "claim": "Qwen3 has 36 layers whereas the other families have 32; consequently k8 retains 22.2% versus 25.0% / keep8 retains 22.2% versus 25.0%",
+      "files": [
+        "sections/04_experiments.tex:8",
+        "sections/07_limitations.tex:10"
+      ],
+      "asserted": 36,
+      "recomputed": 36,
+      "evidence_file": "evidence/designated_damaged_denominators.json (n_layers per family) + evidence/second_mc_benchmark_crossfamily/gate2_crossfamily_nulls.json (depth_caveat)",
+      "how_recomputed": "n_layers: olmo2_7b=32, llama2_7b=32, llama3_8b=32, qwen3_8b_base=36. 8/36=22.222% and 8/32=25.0%. depth_caveat field states the same verbatim.",
+      "verdict": "MATCHES",
+      "load_bearing": "the relative-vs-absolute-depth confound in 07_limitations. NOTE a naming inconsistency, not a count error: 07_limitations.tex:10 writes 'keep8 retains 22.2% versus 25.0%' but keep8 is the OLMo-2 (32-layer) arm; the 22.2% belongs to Qwen3's k8. 04_experiments.tex:8 says 'k8' correctly.",
+      "cross_file_consistent": true
+    },
+    {
+      "claim": "shortgpt16 retains 16 of 32 layers, more than any keepN rung / the OLMo-2 arm retaining 16 of 32 layers / all nine retain at least 14 of 32 layers",
+      "files": [
+        "sections/01_introduction.tex:21",
+        "sections/05_analysis.tex:27",
+        "sections/05_analysis.tex:29",
+        "sections/06_discussion.tex:15",
+        "sections/tab_mmlupro.tex:25",
+        "sections/09a_relocated.tex:26",
+        "sections/09a_relocated.tex:44"
+      ],
+      "asserted": 16,
+      "recomputed": 16,
+      "evidence_file": "evidence/designated_damaged_denominators.json",
+      "how_recomputed": "cells_mmlupro shortgpt16: retained_layers==16, n_layers==32. Max retained_layers among keepN rungs is 14 (keep14), so 'more than any keepN rung' holds. All 9 above-floor off-MMLU cells have retained_layers in {14,16}, so 'at least 14 of 32' holds.",
+      "verdict": "MATCHES",
+      "load_bearing": "the exception that the paper reads as a POSITIVE result; if shortgpt16 retained fewer layers than a keepN rung the 'floor test tracks capability' reading would collapse.",
+      "cross_file_consistent": true
+    },
+    {
+      "claim": "H_family is equally unavailable because 0/27 cells are significantly below the permutation null / Under v1, two MMLU-Pro cells are significantly below the best-constant floor. Under v2, the below-null count is zero",
+      "files": [
+        "sections/07_limitations.tex:13",
+        "sections/05_analysis.tex:39",
+        "sections/09_appendix.tex:35"
+      ],
+      "asserted": 0,
+      "recomputed": 0,
+      "evidence_file": "sections/tab_v2_full.tex + evidence/MAIN_BH_27cell_adjudication.json",
+      "how_recomputed": "over the 27 rows: sum(1 for r if Delta_perm<0 and p<0.05) == 0. The two v1 below-floor cells (qwen3/k8 p=0.0362, llama2/k8 p=0.0168 in tab_mmlupro) move to p=0.0964 and 0.1002 in tab_v2_full, both >0.05 -> below-null count 0.",
+      "verdict": "MATCHES",
+      "load_bearing": "HIGH -- this single 0 is what dissolves the paper's originally planned causal contrast (H_family). It recomputes from the shipped table's own p and Delta columns.",
+      "cross_file_consistent": true
+    },
+    {
+      "claim": "The 16 rows and their status are the retraction/narrowing ledger maintained with the claim-to-evidence map, whose retracted-claim rows correspond one-to-one with the rows here",
+      "files": [
+        "sections/tab_claims.tex:27"
+      ],
+      "asserted": 16,
+      "recomputed": 16,
+      "evidence_file": "evidence/claim_evidence_map.tsv",
+      "how_recomputed": "tab_claims: 16 numbered rows, statuses Counter({Retracted:8, Narrowed:3, Prohibited:2, Preempted:1, Re-scoped:1, 'Retracted and reinterpreted':1}). claim_evidence_map.tsv: 20 rows of which 16 carry claim_id C-01..C-16 (the other 4 are H-01..H-04 headline rows) and the C- statuses are the IDENTICAL multiset. So the one-to-one correspondence claim is exact, including the 9 rows whose status contains 'Retracted'.",
+      "verdict": "MATCHES",
+      "load_bearing": "medium: the caption makes a verifiable structural promise about a companion artifact, and it holds exactly.",
+      "cross_file_consistent": true
+    },
+    {
+      "claim": "Bonferroni (alpha/27=0.001852) neither trace cell clears and only the five p=0.0001 anchors do / six cells have q_BH<=0.05 and five clear Bonferroni",
+      "files": [
+        "sections/05_analysis.tex:41",
+        "sections/tab_v2_full.tex:38"
+      ],
+      "asserted": 5,
+      "recomputed": 5,
+      "evidence_file": "evidence/MAIN_BH_27cell_adjudication.json + sections/tab_v2_full.tex",
+      "how_recomputed": "n_bonferroni_reject==5 and n_bh_reject==6 in the adjudication file; independently from the table: sum(p<=0.001852)==5 (all five are the p=0.0001 anchors) and sum(q_BH<=0.05)==6. qwen3/k14 q=0.0297 survives BH but p=0.0066>0.001852 fails Bonferroni; olmo2/keep14 q=0.0663 fails both. Per-item rows[] and the rollup fields AGREE.",
+      "verdict": "MATCHES",
+      "load_bearing": "HIGH -- this 6-vs-5 split is the whole basis for 'the corrected read-out re-sorts in one direction rather than two'. Note the adjudication file records that BOTH round-05 reviewers wrote summary sentences claiming NEITHER trace cell survives correction, which is false for BH; the manuscript uses the correct version.",
+      "cross_file_consistent": true
+    },
+    {
+      "claim": "Across ten target constructs and one negative control / ten target constructs plus Winogrande as a negative control / The target inventory comprises ten constructs plus the control",
+      "files": [
+        "sections/00_abstract.tex:2",
+        "sections/01_introduction.tex:16",
+        "sections/04_experiments.tex:5"
+      ],
+      "asserted": 10,
+      "recomputed": null,
+      "evidence_file": "none -- no evidence file enumerates a construct list, and no shipped table has 10 rows or 10 distinct entities",
+      "how_recomputed": "Attempted every enumeration the shipped artifacts support. tab_nulls: 9 rows / 8 distinct letter constructs. tab_conventions: 7 rows / 3 non-control datasets. 04_experiments.tex:5's own prose lists 7 letter datasets + Winogrande, adds BoolQ, then puts content on 'MMLU, MMLU-Pro, and the five non-MMLU evidence tasks' = 7 content, and explicitly forbids counting OpenBookQA content twice. Distinct non-control DATASETS = 8. (dataset,interface) PAIRS = 15. Neither is 10. 10 is reachable only under an unstated hybrid (e.g. 8 letter constructs + MMLU content + MMLU-Pro content), and at least two different such hybrids give 10, so nothing on disk determines it.",
+      "verdict": "CANNOT_VERIFY",
+      "load_bearing": "medium-high as a REVIEWER-FACING number: first quantitative scope claim in the abstract and in the intro's evidence sentence. A reviewer who counts the paper's own tables gets 8, not 10, with nothing to point them at. NOT necessarily wrong -- 'construct' is a (dataset, interface) pair, under which 15 is the count and 10 needs a stated subsetting rule. Missing: one enumerating sentence, or an evidence field listing the ten.",
+      "cross_file_consistent": true
+    },
+    {
+      "claim": "The re-analysis withdraws one above-floor capability label, dissolves both below-floor competence labels, and exposes a weak intact-family anchor",
+      "files": [
+        "sections/00_abstract.tex:2"
+      ],
+      "asserted": 1,
+      "recomputed": 1,
+      "evidence_file": "sections/tab_v2_resort.tex + sections/tab_v2_full.tex + sections/tab_mmlupro.tex",
+      "how_recomputed": "tab_v2_resort's 5 rows by (v1->v2): above floor -> trace signal = 1 (qwen3/k14, the withdrawal); below floor -> no item-level signal = 2 (qwen3/k8, llama2/k8); above floor -> anchor blocked = 1 (llama2 intact). 'both' is verifiable as exactly 2 because tab_mmlupro carries precisely two rows with v1 verdict 'below floor'.",
+      "verdict": "MATCHES",
+      "load_bearing": "the abstract's summary of the v2 contribution. The abstract omits the fourth move (olmo2/keep14 at-floor -> trace), which is deliberate and consistent with 05_analysis:41 resting no conclusion on the upward move.",
+      "cross_file_consistent": true
+    },
+    {
+      "claim": "A systematic construct-validity review of 445 language-model benchmarks offers 27 actionable checklist items",
+      "files": [
+        "sections/01_introduction.tex:3"
+      ],
+      "asserted": 445,
+      "recomputed": null,
+      "evidence_file": "external (Bean et al. 2025, bean2025measuring); no paperC evidence file",
+      "how_recomputed": "NOT RECOMPUTED -- a citation-borne count about a third-party paper, explicitly deprioritised by the audit brief. Recorded so the census does not silently imply it was checked.",
+      "verdict": "CANNOT_VERIFY",
+      "load_bearing": "medium as rhetoric (the paper's opening motivation) but out of scope for on-disk recomputation. Verify against the cited PDF, not evidence/. Note the coincidence that '27 checklist items' and 'our 27 cells' are unrelated 27s appearing 19 lines apart.",
+      "cross_file_consistent": null
+    },
+    {
+      "claim": "The implementation asserts zero to below 10^{-12} for all ten letters (constant-collapse invariance)",
+      "files": [
+        "sections/03_method.tex:71"
+      ],
+      "asserted": 10,
+      "recomputed": 10,
+      "evidence_file": "evidence/A03_local_support_verification.json",
+      "how_recomputed": "numeric_check field: 'constant emitter tested for all 10 letters on the synthetic set, each restricted to items where the letter is legal: |Delta| <= 2.8e-17 in all 10 cases.' Ten = A-J, consistent with LETTERS='ABCDEFGHIJ' at code/mmlu_pro_power_nulls.py:74. 2.8e-17 < 1e-12, so the prose bound holds and is conservative.",
+      "verdict": "MATCHES",
+      "load_bearing": "the algebraic identity the paper claims as its collapse-loophole closure; if it held for fewer than all ten letters the abstract's 'independent of collapse letter' would fail.",
+      "cross_file_consistent": true
+    },
+    {
+      "claim": "We verified the identity on all 27 cells of Table~ref{tab:v2-full}; it holds to the printing precision in every row",
+      "files": [
+        "sections/03_method.tex:40"
+      ],
+      "asserted": 27,
+      "recomputed": 27,
+      "evidence_file": "sections/tab_v2_full.tex",
+      "how_recomputed": "27 data rows; Delta_perm should equal (Acc - acc_hat)*100. Spot-recomputed: Qwen3 intact (0.461104-0.112212)*100=+34.8892 vs printed +34.889; OLMo-2 keep14 (0.119847-0.113766)*100=+0.6081 vs +0.608; llama3/k12 (0.111868-0.111851)*100=+0.0017 vs +0.002. Holds to printing precision on every row checked.",
+      "verdict": "MATCHES",
+      "load_bearing": "medium. NOTE evidence/mmlupro_legality_aware_null_MAIN.json records a reviewer saying 'the kappa identity holds to printing precision on 8/27 rows' -- that is how many rows the REVIEWER checked, not a failure rate; a careless reader could invert it.",
+      "cross_file_consistent": true
     }
-  ]
+  ],
+  "scope": {
+    "census_universe": "~180 count-shaped assertions across sections/*.tex, enumerated by regex over 'N/M', 'N of M', 'all N', 'N rows/cells/constructs/arms/flips/layers'.",
+    "n_audited_here": 48,
+    "coverage_statement": "48 of ~180 audited. NOT complete. Selection was by load-bearing-ness: every count in 00_abstract, 01_introduction, 06_discussion, 07_limitations that is not a \\ref/\\cite, plus every count asserted in more than one file, plus every count defining a denominator behind a headline.",
+    "already_covered_by_existing_checkers": "3 of the 48 were already inside gate_count_claims.py's registry when this census began (abstract construct census 8/2/6, argmax flips 8/0, verdicts changed 0/14). The other 45 were unchecked by either checker.",
+    "recomputed_from_evidence_vs_merely_cross_file_consistent": {
+      "recomputed_from_on_disk_evidence_with_code": 42,
+      "cannot_verify": 2,
+      "checked_only_as_cross_file_or_cross_table_agreement": 4,
+      "note": "the 4 are: tab_claims 16 rows (structural, checked against claim_evidence_map.tsv), the 27-cell kappa identity (spot-recomputed, not all 27), the 445-benchmark citation (external), and the ten-construct scope claim (unresolvable). Every headline denominator (15/17, 9/85, 45/85, 3/12, 1/12, 10/12, 12/12, 0/15, 0/60, 25/60, 7/60, 52/60, 0/27, 27, 21) was recomputed with code from per-cell records, not read from a summary field."
+    }
+  }
 }

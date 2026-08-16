@@ -241,7 +241,84 @@ CLAIMS = [
      lambda doc: n_constant_emitters(doc, exclude_negative_control=False),
      "the control-inclusive figure, so that BOTH numbers in the sentence are pinned "
      "and the difference between them cannot silently drift"),
+    # ---- ARC directionality sigmas + the rounding (found 2026-08-16) ---------------
+    # 03b_nulls.tex:37 is the paper's own honesty sentence -- "we report them rather than
+    # absorbing them because the general claim that such a fix can only ever move against
+    # the authors is false". It carried THREE wrong numbers, all on the
+    # authors-FAVOURABLE side, so the overstatement inflated our own disclosure:
+    #
+    #   prose dp      -0.0025 / -0.0063   ->  E-CAL  -0.001205 / -0.005213
+    #   prose sigma   "roughly -17/-23"   ->  E-CAL  -3.34 / -7.34
+    #   prose p       0.453 -> 0.447      ->  p_aware 0.447647, i.e. 0.448
+    #
+    # The -17/-23 pair traces to MMLUPRO_NULL_FIX_20260816.md:40-41 (an 8-seed x 1e6 run
+    # reporting -16.6/-22.6). That file is at the paperC ROOT, is NOT in evidence/, and is
+    # cited by no .tex and by no claim-map row -- so the paper quoted a number a reviewer
+    # could not reach. Worse, that same file CONTRADICTS ITSELF: its own summary table at
+    # lines 105-106 prints -3.3/-7.3 and '0.453 -> 0.448', agreeing with E-CAL against its
+    # own lines 40-41. So no source anywhere on disk supported 0.447.
+    #
+    # -17/-23 is also the wrong STATISTIC even in the 8-seed run's own terms: E-CAL's
+    # dE_max_sigma is -9.78/-17.75, and that is E[max], not p. Mixing the two is how a
+    # sigma for one quantity gets printed as the sigma for another.
+    #
+    # check_prose_vs_evidence.py cannot reach any of this: excluded_label_prefixes drops
+    # p-value literals by design.
+    ("ARC-Easy dp sigma", "03b_nulls.tex",
+     r"at \$-(\d+\.\d)\$ and \$-\d+\.\d\$ standard errors",
+     "construct_nulls_legality_aware.json",
+     lambda doc: _arc_sigma(doc, "ARC-Easy"),
+     "E-CAL rows[ARC-Easy].directionality.dp_sigma, |.| to 1dp; NOT dE_max_sigma, "
+     "which is a different statistic (-9.78) and is where the retracted -17 came from"),
+    ("ARC-Challenge dp sigma", "03b_nulls.tex",
+     r"at \$-\d+\.\d\$ and \$-(\d+\.\d)\$ standard errors",
+     "construct_nulls_legality_aware.json",
+     lambda doc: _arc_sigma(doc, "ARC-Challenge"),
+     "E-CAL rows[ARC-Challenge].directionality.dp_sigma, |.| to 1dp"),
+    ("ARC-Challenge p_aware, 3dp", "03b_nulls.tex",
+     r"0\.453\\rightarrow0\.(\d{3})",
+     "construct_nulls_legality_aware.json",
+     lambda doc: int(round(round(_arc_p(doc, "ARC-Challenge"), 3) * 1000)),
+     "p_aware=0.447647 ROUNDS to 0.448; both shipped tables print 0.448 "
+     "(tab_nulls.tex:14, tab_construct_nulls.tex:21). The prose truncated."),
+    # The dp magnitudes themselves. Registered after a control showed they were the one
+    # part of this sentence still unguarded: reverting them to the retracted -0.0025 /
+    # -0.0063 left the gate green. Captured as ten-thousandths so the comparison is exact.
+    ("ARC-Easy dp (1e-4)", "03b_nulls.tex",
+     r"by \$-0\.(\d{4})\$ and \$-0\.\d{4}\$ in \$p\$",
+     "construct_nulls_legality_aware.json",
+     lambda doc: _arc_dp_1e4(doc, "ARC-Easy"),
+     "E-CAL dp_aware_minus_blind = -0.001205 -> 0.0012 at 4dp"),
+    ("ARC-Challenge dp (1e-4)", "03b_nulls.tex",
+     r"by \$-0\.\d{4}\$ and \$-0\.(\d{4})\$ in \$p\$",
+     "construct_nulls_legality_aware.json",
+     lambda doc: _arc_dp_1e4(doc, "ARC-Challenge"),
+     "E-CAL dp_aware_minus_blind = -0.005213 -> 0.0052 at 4dp"),
 ]
+
+
+def _arc_row(doc, name):
+    for r in doc["rows"]:
+        if str(r.get("construct", "")).startswith(name):
+            return r
+    raise KeyError(name)
+
+
+def _arc_sigma(doc, name):
+    """|dp_sigma| to one decimal, as an integer of tenths so the gate compares ints."""
+    s = abs(_arc_row(doc, name)["directionality"]["dp_sigma"])
+    return round(s, 1)
+
+
+def _arc_p(doc, name):
+    return _arc_row(doc, name)["p_aware"]
+
+
+def _arc_dp_1e4(doc, name):
+    """|dp_aware_minus_blind| in ten-thousandths, matching the prose's 4 decimals."""
+    dp = abs(_arc_row(doc, name)["directionality"]["dp_aware_minus_blind"])
+    return int(round(dp * 10000))
+
 
 NEG_CONTROL_TASK = "winogrande"
 
@@ -322,9 +399,20 @@ WORDS = {"zero": 0, "one": 1, "two": 2, "three": 3, "four": 4, "five": 5,
 
 
 def as_int(token):
+    """Parse a prose numeral into a comparable number.
+
+    Named as_int for history; it now also accepts ONE-DECIMAL values, because the ARC
+    directionality claims are sigmas (-3.3, -7.3) and this gate was built for integers.
+    Returning a float there is safe: the recomputations for those claims return
+    `round(x, 1)`, so both sides carry exactly one decimal and compare exactly. Anything
+    with more precision than the prose prints would make an exact comparison meaningless,
+    which is why this deliberately does NOT accept arbitrary floats.
+    """
     token = token.strip().lower()
     if token.isdigit():
         return int(token)
+    if re.fullmatch(r"\d+\.\d", token):
+        return float(token)
     return WORDS.get(token)
 
 
