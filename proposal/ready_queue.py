@@ -1136,6 +1136,50 @@ def main():
             print("  => An idle GPU is NOT a reason to idle: there are "
                   f"{nc} zero-GPU tasks that are blocking their own gates.")
 
+        # Stale-absence tripwire, surfaced HERE rather than left opt-in.
+        #
+        # 2026-08-17: proposal/check_stale_absence_claims.py existed, was correct, and would
+        # have caught this exact mistake -- it names B06 and B09 with byte counts, and its own
+        # output warns "each row above tells the next agent to produce a file that exists".
+        # I dispatched an agent to WRITE two RELATED_WORK.md files that had been on disk since
+        # 2026-08-15, and never ran the checker. A tripwire that only fires when someone
+        # remembers to pull it is not a tripwire. The queue is the tool that IS run every
+        # round, so the warning belongs in its output.
+        #
+        # Advisory only: it must never change an exit code or a lifecycle. Presence is not
+        # sufficiency -- a blocker genuinely about a file's CONTENT stays valid; what is being
+        # flagged is only the claim that the file is MISSING.
+        try:
+            import subprocess
+            chk = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                               "check_stale_absence_claims.py")
+            if os.path.exists(chk):
+                p = subprocess.run([sys.executable, chk], capture_output=True, text=True,
+                                   timeout=60)
+                # Parse ONLY the checker's own count line. Do not re-derive the count by
+                # filtering its table rows: that is the loose-match failure the checker's
+                # own postmortem warns about (a keyword hit inside a banner got counted as
+                # a data row). Anchor on the line format, and if the line is absent, say so
+                # rather than inferring zero.
+                n = None
+                for l in p.stdout.splitlines():
+                    if l.startswith("stale absence assertions:"):
+                        n = int(l.split(":", 1)[1].strip() or 0)
+                        break
+                if n is None:
+                    print("\n  (stale-absence tripwire: could not find the count line in the"
+                          " checker's output -- run it by hand rather than assuming zero)")
+                elif n:
+                    print(f"\n  ⚠ {n} STALE ABSENCE ASSERTION(S): some STATUS.json still says a"
+                          " file is missing that is ON DISK.")
+                    print("    Before you dispatch an agent to CREATE any file, run:"
+                          " python3 proposal/check_stale_absence_claims.py")
+                    print("    (measured 2026-08-17: relaying one of these cost an agent most"
+                          " of its run disproving the premise)")
+        except Exception as e:
+            print(f"\n  (stale-absence tripwire could not run: {e}; "
+                  "run proposal/check_stale_absence_claims.py by hand)")
+
     if a.strict and any(r["lifecycle"] in ("UNREADABLE", "NO_STATUS_JSON")
                         for r in recs):
         return 1
