@@ -164,6 +164,36 @@ NEXT_GATE_KEYS = [
     "next_gate",
     "next_gate_gpu",
 ]
+# 2026-08-17: the two lists below still PIN the date 20260814, so a
+# next_gate_executable_20260817 or kill_gate_executable_20260817 would be invisible and the
+# reader would silently fall back to the older, worse record. Same defect class as the
+# lifecycle / lifecycle_why / cost / novelty enumerations resolved earlier today.
+#
+# The KILL_KEYS comment below states a MAINTENANCE RULE against replacing the list with a
+# glob over `kill_gate_*`, and that rule is CORRECT and is kept: `kill_gate_verdict` is an
+# OUTCOME, `updated_20260814_kill_gate_pass` is a CHANGELOG, `original_kill_reassessment` is
+# PROSE, and promoting any of them to gate-hood is the paperwork-counts-as-readiness bug.
+#
+# So this is deliberately NOT a wildcard. It is anchored to the two `*_executable` spellings
+# followed by an 8-digit date, which is exactly the dated-priority slot the rule describes,
+# and nothing else. VERIFIED before use against all 8 keys the rule protects (including the
+# three named counterexamples) plus 4 dated forms that must match: 0 failures.
+_DATED_EXECUTABLE_RE = re.compile(
+    r"^(?:kill_gate_executable|next_gate_executable)_(20\d{6})(?:_[a-z0-9]+)?$")
+
+
+def dated_executable_keys(doc, base):
+    """Dated `<base>_executable_<date>` keys in THIS doc, newest first.
+
+    `base` is "next_gate" or "kill_gate". Recency wins for the reason LIFECYCLE_SCHEMA.md
+    sec 2.0 gives: append-only means a later, better gate can only be ADDED alongside the
+    earlier honest sentinel, so resolving the undated key first pins the reader permanently
+    to the worst version of the record.
+    """
+    want = base + "_executable_"
+    return sorted((k for k in doc
+                   if k.startswith(want) and _DATED_EXECUTABLE_RE.match(k)),
+                  reverse=True)
 NEXT_GATE_WEAK = [                     # present but explicitly NOT adopted
     "next_gate_candidate_not_yet_adopted",
     "next_gate_blocked_by_portfolio_shape",
@@ -250,6 +280,32 @@ NEXT_GATE_COST_KEYS = (
     "next_gate_gpu", "next_gate_cost", "gate_gpu",
     "next_gate_gpu_cost")
 _DATED_COST_KEYS = ("next_gate_gpu_20260816",)
+# 2026-08-17: the tuple above is a PINNED DATE and cannot see next_gate_gpu_20260817 or
+# anything later. Measured by an agent that first CLAIMED a dated cost key would guard
+# B09's inference path, then tested the claim and found it false. Same defect class as the
+# lifecycle / lifecycle_why enumerations fixed earlier today, and as the emitter whose
+# hardcoded damaged_rungs silently defined a headline: a hardcoded list standing in for a
+# structural query over an append-only file whose whole purpose is new dated keys. Resolve
+# by pattern so no future date needs a code edit -- the edit is exactly the step that gets
+# forgotten, and the failure is silent (the reader keeps serving a superseded value).
+_DATED_COST_RE = re.compile(r"^(?:next_gate_gpu|next_gate_cost|gate_gpu)_(20\d{6})(?:_[a-z0-9]+)?$")
+
+
+def dated_cost_keys(doc):
+    """Dated next-gate-cost keys present in THIS doc with a NON-EMPTY string value, newest first.
+
+    Newest-first is safe here for the same reason it is safe for lifecycle: this value can
+    only DOWNGRADE a proposal from ready_gpu to ready_cpu (a gate declared free is surfaced
+    as CPU work), never upgrade it past a check. So recency can only free a card.
+
+    The non-empty filter is inherited from the code this replaces and is load-bearing: the
+    caller takes only dated[0], so a dated key present but blank would SHADOW a perfectly
+    good undated `next_gate_gpu` and silently lose the free-gate signal.
+    """
+    return sorted((k for k in doc
+                   if _DATED_COST_RE.match(k)
+                   and isinstance(doc.get(k), str) and doc[k].strip()),
+                  reverse=True)
 _FREE_MARKERS = ("0 gpu", "zero gpu", "no gpu", "0-gpu", "cpu only", "cpu-only",
                  "0 gpu-h", "0gpu")
 
@@ -278,7 +334,7 @@ def _next_gate_is_free(d):
     must state only what the NEXT step costs; do not narrate the history of a
     free gate inside it.
     """
-    dated = [k for k in _DATED_COST_KEYS if isinstance(d.get(k), str) and d[k].strip()]
+    dated = dated_cost_keys(d)
     keys = (dated[0],) if dated else NEXT_GATE_COST_KEYS
     for k in keys:
         v = d.get(k)
@@ -319,6 +375,24 @@ NOVELTY_OTHER = ["novelty_status", "novelty_status_detail", "k1_novelty",
 # exists to prevent, so these are read for their verdict rather than ignored.
 NOVELTY_VERDICT_KEYS = ["novelty_check_2026_08_09", "novelty_verdict",
                         "k1_novelty", "related_work_status"]
+# 2026-08-17: the list above has NO dated slot, so a `novelty_verdict_20260817` was
+# invisible -- measured on /tmp copies by an agent that wrote one: the dated key alone left
+# novelty_checked=False and evidence="absent", i.e. an adjudicated gate still read as unrun.
+# Fourth instance of the same defect class today (lifecycle, lifecycle_why, next_gate cost,
+# and now this). Resolved by pattern, dated newest-first ahead of the undated spellings.
+#
+# Deliberately anchored and narrow: it must match `novelty_verdict_<date>` but NOT
+# `novelty_status_detail` (prose), `novelty_checked` (the boolean read separately), or
+# `novelty_verdict_why_*` (a reason field, not a verdict). This is the same reason
+# LIFECYCLE_SCHEMA.md sec 2.0 forbids a wildcard scan over kill_gate_*: `kill_gate_verdict`
+# is a RESULT and `updated_..._kill_gate_pass` is a CHANGELOG, and a glob would eat both.
+_DATED_NOVELTY_RE = re.compile(r"^(?:novelty_verdict|k1_novelty)_(20\d{6})(?:_[a-z0-9]+)?$")
+
+
+def novelty_verdict_keys(doc):
+    """Dated novelty-verdict keys in THIS doc (newest first), then the undated spellings."""
+    dated = sorted((k for k in doc if _DATED_NOVELTY_RE.match(k)), reverse=True)
+    return dated + NOVELTY_VERDICT_KEYS
 # A finished check can legitimately conclude "not yet promotable". That is a
 # CLEARED gate with a hold, not an unrun gate -- the distinction determines
 # whether the actionable task is "write related work" or "satisfy the hold".
@@ -671,7 +745,7 @@ def read_one(path):
     rec["status_prose"] = _txt(d.get("status", ""), 120)
     rec["n_keys"] = len(d)
 
-    gk, gate = _first_nested(d, NEXT_GATE_KEYS)
+    gk, gate = _first_nested(d, dated_executable_keys(d, "next_gate") + NEXT_GATE_KEYS)
     rec["next_gate_key"] = gk
     rec["next_gate"] = _txt(gate) if gate is not None else None
     if gate is None:
@@ -684,7 +758,7 @@ def read_one(path):
     if gate is None and not rec.get("next_gate_key"):
         rec["problems"].append("no next_gate field at all")
 
-    ck, kill = _first_nested(d, KILL_KEYS)
+    ck, kill = _first_nested(d, dated_executable_keys(d, "kill_gate") + KILL_KEYS)
     rec["kill_gate_key"] = ck
     kill_ok = kill is not None and not _is_unspec(kill)
     if kill is None:
@@ -702,7 +776,7 @@ def read_one(path):
         # used in this repo, and read its verdict.
         rec["novelty_checked"] = False
         rec["novelty_evidence"] = "absent"
-        for k in NOVELTY_VERDICT_KEYS:
+        for k in novelty_verdict_keys(d):
             if k not in d:
                 continue
             v = d[k]
