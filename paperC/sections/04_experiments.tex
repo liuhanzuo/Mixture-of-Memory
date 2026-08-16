@@ -16,12 +16,8 @@ All results use \texttt{chat\_template = False}. The evaluated systems are base 
 For deterministic per-item null predictions we report 10,000-resample paired-bootstrap intervals and two-sided mid-$p$ values with seed 7, plus exact McNemar tests. V2 additionally uses 10,000 within-stratum permutations. Every cell requires shard indices exactly $\{0,\ldots,7\}$, expected cardinality, zero duplicate IDs, zero NaNs, zero truncations, and \texttt{chat\_template is False}; partial merges raise an error.
 
 \paragraph{Power design.}
-The five smaller evidence benchmarks are unable to resolve every effect of interest, so null results are never interpreted without the power table (Table~\ref{tab:power}).
+The five smaller evidence benchmarks are unable to resolve every effect of interest, so null results are never interpreted without the power table (Table~\ref{tab:power}, Appendix~\ref{app:designated}).
 MMLU-Pro supplies $n=12032$ and makes all 21 letter-floor cells capable of detecting MMLU's $-1.389$-point reference effect; their 95\% half-widths range from 0.083 to 0.968 points.
 
-\input{sections/tab_power}
-
-\paragraph{Designated damaged cells.} Throughout, \emph{designated damaged} means an arm that was structurally pruned and is reported as a damaged rung of its family; the designation is fixed by the arm's construction, not by its measured score. Where a denominator such as 14/15 or 10/15 is quoted, it is over exactly this set, and any damaged arm excluded from that denominator is named at the point of exclusion together with its own floor delta, so that no ratio is computed over an undisclosed subset.
-
-\paragraph{Multiplicity.} We report per-cell $\alpha=0.05$ decisions across many cells without a family-wise correction, and the headline counts are therefore counts of per-cell decisions rather than simultaneously valid claims. This is a deliberate and stated limitation: the cells share items, nest arms, and share a null, so the tests are neither independent nor exchangeable, and an off-the-shelf Bonferroni or Benjamini--Hochberg adjustment would not have a defensible family definition here. Readers should treat any individual borderline cell as a per-cell decision. The paper's conclusions rest on the direction and near-unanimity of the aggregate (for instance 0/60 damaged cells clearing their floor), not on any single cell crossing $\alpha$.
-
+\paragraph{Designated damaged cells, and multiplicity.}
+Every denominator below is over \emph{designated damaged} cells: arms structurally pruned and reported as damaged rungs of their family. The designation is fixed by construction, never by a measured score, so counts such as 14/15 and 10/15 are over exactly this set and cannot be inflated by selecting on outcome. Across such cells we report per-cell $\alpha=0.05$ decisions with no family-wise correction, so the headline counts are counts of per-cell decisions rather than simultaneously valid claims; the conclusions rest on the aggregate's near-unanimity (0/60 damaged cells clear their floor), not on one cell. Appendix~\ref{app:designated} states both.
