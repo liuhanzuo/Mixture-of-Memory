@@ -237,11 +237,29 @@ log "P7 hub probe HTTP $CODE" | tee -a "$PROG"
 [ "$CODE" = "200" ] || log "P7 WARNING: hub returned $CODE; boolq/rte may not resolve." | tee -a "$PROG"
 
 # P8. COMPLETENESS PRE-CHECK: all 9 tasks must LOAD with n identical to the table.
-log "P8 probing all 9 task datasets (0 GPU)..." | tee -a "$PROG"
+#
+# ★ BOUNDED. Measured 2026-08-17 on LOCAL: with no HF proxy exported, this probe does not
+# fail -- it HANGS. In 600 s it completed 0 of 9 tasks, still retrying `super_glue` (boolq,
+# the first one) with 10 recorded "Retrying in Ns" lines; huggingface.co is simply
+# unreachable from here without hy-proxy. Unbounded, that hang sits on the node forever,
+# and P6 has already declared the node ours by this point -- so an indefinite wait is worse
+# than an error, because nothing ever reports and nothing ever releases. 900 s is ~7x the
+# measured 130 s the probe takes when the proxy IS set and all 9 tasks resolve.
+P8_TIMEOUT="${P8_TIMEOUT:-900}"
+log "P8 probing all 9 task datasets (0 GPU, ${P8_TIMEOUT}s cap)..." | tee -a "$PROG"
 CUDA_VISIBLE_DEVICES="" HF_ALLOW_CODE_EVAL=1 HF_DATASETS_TRUST_REMOTE_CODE=1 \
-  "$PY" "$DATAPROBE" 2>&1 | tee -a "$PROG"
-[ "${PIPESTATUS[0]}" -eq 0 ] || die "dataset preflight FAILED -- a task does not load, or loads a
-      different number of docs than the completed arms. Launching would produce a well-formed
+  timeout "$P8_TIMEOUT" "$PY" "$DATAPROBE" 2>&1 | tee -a "$PROG"
+p8_rc=${PIPESTATUS[0]}
+if [ "$p8_rc" -eq 124 ]; then
+  die "dataset preflight TIMED OUT after ${P8_TIMEOUT}s -- it did not fail, it hung. The
+      overwhelmingly likely cause is no HF proxy: probe_union9_datasets.py reaches
+      huggingface.co, and without hy-proxy every request retries until something kills it.
+      Export before launching (see CLAUDE.md):
+        export http_proxy=http://hy-proxy.woa.com:3128 https_proxy=\$http_proxy
+      Check the tail of $PROG for 'Network is unreachable' to confirm."
+fi
+[ "$p8_rc" -eq 0 ] || die "dataset preflight FAILED (rc=$p8_rc) -- a task does not load, or loads
+      a different number of docs than the completed arms. Launching would produce a well-formed
       results json on a DIFFERENT measurement basis."
 
 # P9. ★ 0-GPU EMIT SELF-CHECK. Runs the emit tool in --dry-run on THIS rung and
