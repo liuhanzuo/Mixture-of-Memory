@@ -3971,11 +3971,11 @@
     "TRIGGERED": false,
     "n_accepting_decision_axis_cells": 0,
     "binds_this_ladder": true,
-    "why_it_binds": "§2.0.2 is scoped to 'any NI(Delta) accept reported by this gate', and this ladder's accepts would come from the same IMPORTED ni_rule under the same frozen Delta. Prereg §5.5 renounces a CLAIM; §2.0.2 imposes a DISCLOSURE duty, and renouncing a claim cannot discharge a duty.",
-    "disposition": "NOT_TRIGGERED -- no cell accepts on any decision axis. Per the reconciliation document §5 (fixed pre-data, phrasing adopted verbatim from the full32 pass): 'under Branch B (both arms constant-REJECT) §2.0.2 is NOT triggered at all -- it gates accepts only ... The precondition is not vacuously satisfied -- it is not triggered.' Branch B needs nothing from that document.",
+    "why_it_binds": "\u00a72.0.2 is scoped to 'any NI(Delta) accept reported by this gate', and this ladder's accepts would come from the same IMPORTED ni_rule under the same frozen Delta. Prereg \u00a75.5 renounces a CLAIM; \u00a72.0.2 imposes a DISCLOSURE duty, and renouncing a claim cannot discharge a duty.",
+    "disposition": "NOT_TRIGGERED -- no cell accepts on any decision axis. Per the reconciliation document \u00a75 (fixed pre-data, phrasing adopted verbatim from the full32 pass): 'under Branch B (both arms constant-REJECT) \u00a72.0.2 is NOT triggered at all -- it gates accepts only ... The precondition is not vacuously satisfied -- it is not triggered.' Branch B needs nothing from that document.",
     "CERTIFIED_is_structurally_unreachable": {
       "value": true,
-      "why": "§2.0.2 conditions a certified reading on the immediately adjacent saved checkpoints on BOTH sides. No upper neighbour of step5000 can exist (max_steps=5000; final.pt is the SAME step). Decided pre-data in the admissibility document §2.3 -- no datum can change it.",
+      "why": "\u00a72.0.2 conditions a certified reading on the immediately adjacent saved checkpoints on BOTH sides. No upper neighbour of step5000 can exist (max_steps=5000; final.pt is the SAME step). Decided pre-data in the admissibility document \u00a72.3 -- no datum can change it.",
       "consequence": "no cell of this ladder may be labelled CERTIFIED, whatever the numbers are. Here it is moot: nothing accepts."
     },
     "label_rule_evaluated_not_skipped": {
@@ -4021,7 +4021,7 @@
           "mmlu": false,
           "cb": false
         },
-        "lower_neighbour_disclosure_grammar": "the lower neighbour EXISTS ON DISK but was NOT SCORED (no step2500 eval dir on either disk, and admissibility §6.5 authorises no GPU for one). Per §6.5 that is the weaker disclosure and it is the honest one."
+        "lower_neighbour_disclosure_grammar": "the lower neighbour EXISTS ON DISK but was NOT SCORED (no step2500 eval dir on either disk, and admissibility \u00a76.5 authorises no GPU for one). Per \u00a76.5 that is the weaker disclosure and it is the honest one."
       },
       "keep14": {
         "output_dir": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/outputs/olmo2_probe2_1B_keep14f2_dolmino_shallow_seed101",
@@ -4056,20 +4056,20 @@
           "mmlu": false,
           "cb": false
         },
-        "lower_neighbour_disclosure_grammar": "the lower neighbour EXISTS ON DISK but was NOT SCORED (no step2500 eval dir on either disk, and admissibility §6.5 authorises no GPU for one). Per §6.5 that is the weaker disclosure and it is the honest one."
+        "lower_neighbour_disclosure_grammar": "the lower neighbour EXISTS ON DISK but was NOT SCORED (no step2500 eval dir on either disk, and admissibility \u00a76.5 authorises no GPU for one). Per \u00a76.5 that is the weaker disclosure and it is the honest one."
       }
     },
     "lower_neighbour_exists_but_was_NOT_scored": "step2500.pt is on disk for BOTH arms (keep13 17,013,823,232 B; keep14 17,819,242,212 B) and NEITHER was scored -- no step2500 eval dir exists on either disk, and the admissibility document 6.5 authorises no GPU for one. Per 6.5 that is the WEAKER of the two available disclosures and it is the honest one, and WHICH one applies is decided by whether the eval was run, NOT by what the step5000 numbers turned out to be. Under Branch B the disclosure is not owed at all.",
     "upper_neighbour_cannot_exist": "max_steps=5000 and the save condition is `step % save_every == 0 and step > 0` plus a terminal _save(..., final=True). final.pt is named by \"final\" if final else f\"step{step}\" at the SAME step value, so it is the SAME point as step5000.pt, not a checkpoint beyond it. Hence CERTIFIED is structurally unreachable for this ladder -- decided PRE-DATA, no datum can change it.",
     "2500_steps_is_NOT_a_neighbourhood": {
       "verdict": true,
-      "why": "2500 steps is 50 % of this run's 5000-step horizon and spans LR 1.143706e-05 -> 2.000000e-06, a factor 5.7185 (half a cosine of annealed training). Admissibility §3 answers this question against us: the k=2 gate is NECESSARY-but-not-sufficient and a move that clears it must NOT be read as instability.",
+      "why": "2500 steps is 50 % of this run's 5000-step horizon and spans LR 1.143706e-05 -> 2.000000e-06, a factor 5.7185 (half a cosine of annealed training). Admissibility \u00a73 answers this question against us: the k=2 gate is NECESSARY-but-not-sufficient and a move that clears it must NOT be read as instability.",
       "forbidden_comparisons": [
         "comparing a 2500-step move to the 500-step keep8/keep10 ranges (7B, different spacing, different scale, different corpus)",
-        "writing 'wider spacing is more convincing' -- wider spacing makes a neighbour check WEAKER because it admits training progress as an explanation (banned by name in admissibility §3 consequence 4)"
+        "writing 'wider spacing is more convincing' -- wider spacing makes a neighbour check WEAKER because it admits training progress as an explanation (banned by name in admissibility \u00a73 consequence 4)"
       ]
     },
-    "one_process_provenance_no_resume_seam": "`grep -c resume` on both trainer logs returns 0: each arm is a single uninterrupted process, so no range here straddles a resume seam (§2.0.2 trap 2).",
+    "one_process_provenance_no_resume_seam": "`grep -c resume` on both trainer logs returns 0: each arm is a single uninterrupted process, so no range here straddles a resume seam (\u00a72.0.2 trap 2).",
     "range_constants_used": {
       "c_2": {
         "value": 1.1283791670955126,
@@ -4090,9 +4090,9 @@
         "c_k": 1.692568750643269,
         "c_k_closed_form_expr": "3/sqrt(pi)",
         "k_matches_n_cells": true,
-        "sigma_recipe": "mean of the participating cells' OWN bootstrap_se_pp -- the per-cell recipe that reproduces GATE_DESIGN §2.0.2's worked example exactly. The POOLED variant is the one PROPOSAL.md §4.3 retracted as 1.69x off. Do NOT pool.",
+        "sigma_recipe": "mean of the participating cells' OWN bootstrap_se_pp -- the per-cell recipe that reproduces GATE_DESIGN \u00a72.0.2's worked example exactly. The POOLED variant is the one PROPOSAL.md \u00a74.3 retracted as 1.69x off. Do NOT pool.",
         "NOT_DECISION_BEARING": true,
-        "why_not_decision_bearing": "prereg §5.3 / §5.5: the 3-rung spread is across arms of DIFFERENT DEPTH -- it is the quantity the design VARIES, not a repeat measurement, so it is not a neighbour range and not a sigma_run. The verdict is decided by per-cell NI margins (all 12 decision-axis cells reject), never by this range.",
+        "why_not_decision_bearing": "prereg \u00a75.3 / \u00a75.5: the 3-rung spread is across arms of DIFFERENT DEPTH -- it is the quantity the design VARIES, not a repeat measurement, so it is not a neighbour range and not a sigma_run. The verdict is decided by per-cell NI margins (all 12 decision-axis cells reject), never by this range.",
         "per_axis": {
           "triviaqa": {
             "range_pp": 11.446723138653596,
@@ -4161,9 +4161,9 @@
         "c_k": 1.1283791670955126,
         "c_k_closed_form_expr": "2/sqrt(pi)",
         "k_matches_n_cells": true,
-        "sigma_recipe": "mean of the participating cells' OWN bootstrap_se_pp -- the per-cell recipe that reproduces GATE_DESIGN §2.0.2's worked example exactly. The POOLED variant is the one PROPOSAL.md §4.3 retracted as 1.69x off. Do NOT pool.",
+        "sigma_recipe": "mean of the participating cells' OWN bootstrap_se_pp -- the per-cell recipe that reproduces GATE_DESIGN \u00a72.0.2's worked example exactly. The POOLED variant is the one PROPOSAL.md \u00a74.3 retracted as 1.69x off. Do NOT pool.",
         "NOT_DECISION_BEARING": true,
-        "why_not_decision_bearing": "prereg §5.7 makes the PAIRED item bootstrap the test of record for a keep13-vs-keep14 difference (see the paired CI table), not a range-vs-floor heuristic. This k=2 block is a disclosure so that the floor is stated with the constant that matches k=2, and so that 1.6926 can never be silently reused here.",
+        "why_not_decision_bearing": "prereg \u00a75.7 makes the PAIRED item bootstrap the test of record for a keep13-vs-keep14 difference (see the paired CI table), not a range-vs-floor heuristic. This k=2 block is a disclosure so that the floor is stated with the constant that matches k=2, and so that 1.6926 can never be silently reused here.",
         "per_axis": {
           "triviaqa": {
             "range_pp": 8.777307177886762,
@@ -4229,7 +4229,24 @@
       }
     },
     "no_ratio_of_ranges_is_formed": "no ratio of two ranges appears anywhere in this pass. A ratio of two ranges neither of which clears its own floor is UNDEFINED, not a direction -- the error that voided within_arm_lr_refutation_20260813.",
-    "nothing_here_is_decision_bearing": "prereg §4.2 / §5.5. The verdict is the per-cell NI margin table; every range above is a disclosure carrying its own floor.",
+    "nothing_here_is_decision_bearing": "prereg \u00a74.2 / \u00a75.5. The verdict is the per-cell NI margin table; every range above is a disclosure carrying its own floor.",
     "generalisable_lesson": "a range that clears an ITEM-noise floor is NOT thereby resolved against RUN-TO-RUN variance. All 8 ranges here clear their own floors, but there is ONE seed (101) per arm, so no sd_run exists at these rungs and none of them may be read as a seed-robust effect. The floors are stated so that the reverse error -- quoting a sub-floor range as 'a direction' -- is also closed off. Each range records its own k AND what the wrong c_k would have done, because c_3 at k=8 makes a floor 40.6 % too low (that manufactured a finding once) and c_3 at k=2 inflates one by 50.0 %."
+  },
+  "d4_adjudication_20260816": {
+    "who": "MAIN, under the user's standing delegation ('D1\u5148\u4e0d\u7ba1\u4e86 D2\u4e0d\u63d0 \u5176\u4ed6\u7684\u4f60\u81ea\u5df1\u51b3\u5b9a', 2026-08-16 22:4x)",
+    "APPROVED": "PILOT ZERO ONLY -- CPU + <=3 GPU-h, off checkpoints already on disk.",
+    "NOT_APPROVED": [
+      "the full gate (1,077-4,309 GPU-h = 5.6-22 days of all 40 cards). Rationale: Pilot Zero exists precisely to test whether the PLATEAU-accepts / NI-rejects disagreement EXISTS. Committing the full gate before that is answered inverts the cheap-discriminating-experiment-first rule.",
+      "the Qwen3.5-9B generalisation leg. Its own gpu_cost_estimate says 'NOT ESTIMATED, deliberately' because it needs a sparse_modeling.py port to a multimodal hybrid-attention architecture plus a full SparseForge training run first. An unscoped item cannot be approved."
+    ],
+    "blocker_3_status": "DISCHARGED to the extent of Pilot Zero. It remains in force for anything beyond it.",
+    "blocker_2_IS_STALE": {
+      "claim_in_this_record": "scripts/train_olmo2_arch_probe2.py:863 is DistributedSampler(ds, shuffle=True) with NO seed=, so --seed moves only the fresh-tail init and data order is identical across seeds.",
+      "measured_2026_08_16": "FIXED, and not by me. Commit ce5c298 'fix: pass seed=args.seed to every shuffling DistributedSampler (20 sites)'. Line 869 now reads DistributedSampler(ds, shuffle=True, seed=args.seed) and lines 863-868 carry a load-bearing comment explaining that DistributedSampler.__iter__ builds its own generator so the global torch RNG cannot reach it.",
+      "repo_wide_audit": "13 shuffling DistributedSampler sites carry seed=. Three initially looked bare to a one-line grep; two (train_h_v2.py:705, train_h_v2_babilong.py:414) are multi-line calls that DO pass seed=args.seed on the continuation line. The one genuine omission is scripts/train_slot_memory.py:282, which belongs to the ABANDONED slot-memory direction and is not A04's trainer -- so it is not A04's blocker. Recorded here rather than fixed, because touching a dead trainer to satisfy a live proposal's bookkeeping would be the wrong repair.",
+      "why_this_matters_beyond_A04": "this is the same shape as the 8 stale absence assertions the new proposal/check_stale_absence_claims.py reports: an append-only record keeps asserting a defect that was repaired. Verify blockers against the code, not against the record."
+    },
+    "blocker_1_remains": "PROPOSAL.md still needs the rewrite to the narrowed safe_residual_claim. That is 0 GPU and mine; it is NOT discharged by this key.",
+    "note": "This key is ADDITIVE. No existing key was edited or removed; the stale blocker_2 sentinel is deliberately left byte-intact because the history is evidence."
   }
 }
