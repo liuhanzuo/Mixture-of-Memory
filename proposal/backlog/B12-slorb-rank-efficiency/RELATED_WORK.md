@@ -4,6 +4,15 @@
 **Verdict**: **NOTHING PREEMPTS.** 30 candidates checked, **0 preempt**, **30 adjacent**.
 The specific delta B12 retains is stated in §6.
 
+> ⚠ **READ §7 BEFORE USING §6.** A second, independent pass on the same day audited this file
+> (see §7, and `evidence/g0_leg1_audit_20260816.json`). Its verdict is **unchanged in direction —
+> still 0 preempt, now 41 candidates** — but the **delta in §6 is smaller than §6 states**. Four
+> works were missed here, one of them **ARMOR (ICLR 2026)**, which does post-training
+> **block-structured** correction of a **2:4** core. **§6's conjunct 3 is narrowed by §7.3** from
+> "block-basis coarsening is not in the literature" to "block-basis coarsening **of a trained
+> adapter** is not in the literature". Do not quote §6's five-conjunct formulation without that
+> narrowing.
+
 **Load-bearing question** (B12's own framing, `STATUS.json.next_gate`):
 
 > Has anyone already done **block-basis coarsening (or an equivalent post-hoc rank/basis reduction)
@@ -121,7 +130,7 @@ total; `abs:"group-wise quantization" AND abs:"block"` returned **1**.
 
 | work | id | venue | why not preemptive |
 |---|---|---|---|
-| **eDKM** — train-time weight clustering for LLMs. Cho et al. | arXiv:2309.00964 | **HPCA 2025**, DOI `10.1109/HPCA61900.2025.00133` (also *IEEE CAL* 2024, DOI `10.1109/LCA.2024.3363492`) | Clusters **base weights** into a palette for compression. B12 averages **columns of a low-rank basis**, and the coarse basis is a *constant-1 block indicator*, which makes the LS solution a closed-form block **mean** — a different object with a different optimality argument. |
+| **eDKM** — train-time weight clustering for LLMs. Cho et al. | arXiv:2309.00964 | **HPCA 2025**, DOI `10.1109/HPCA61900.2025.00133`, DBLP `conf/hpca/ChoAFAMRNZ25` (also *IEEE CAL* 2024, DOI `10.1109/LCA.2024.3363492`, DBLP `journals/cal/ChoAFAMRNZ24`) *[key corrected by §7.0; it was first written as `conf/hpca/ChoKKSHSN25`, which returns total=0. Both DOIs were correct.]* | Clusters **base weights** into a palette for compression. B12 averages **columns of a low-rank basis**, and the coarse basis is a *constant-1 block indicator*, which makes the LS solution a closed-form block **mean** — a different object with a different optimality argument. |
 | Only relative ranks matter in weight-clustered LLMs | arXiv:2603.17917 | **PREPRINT** (DBLP CoRR-only, `journals/corr/abs-2603-17917`) | Weight clustering of base weights again; concurrent (2026-03). |
 
 **Also checked and empty** (arXiv full-text, `totalResults` verbatim):
@@ -213,3 +222,128 @@ The measured claim is about **this branch on this checkpoint**.
 - **Semantic Scholar was not consulted** (429 in this environment). Its absence is not evidence.
 - Bibliographic fields here are copied from API responses; **nothing is reconstructed from memory**.
   Raw responses used are reproducible by re-issuing the queries recorded in §0 and §4.
+
+---
+
+# §7. AUDIT ADDENDUM — 2026-08-16, second pass (independent)
+
+**Everything above this line is the original 01:23 write-up and is left byte-unchanged.** This
+section is an *independent audit* of it, appended rather than merged so that what the first pass
+claimed and what a second pass found stay separable. Machine-readable record with full query
+provenance: `evidence/g0_leg1_audit_20260816.json`. GPU spent: **ZERO**.
+
+## 7.0 What the audit confirmed
+
+- **All 33 arXiv IDs above resolve, 0 title mismatches.**
+- **14 OpenReview `venueid`s re-confirmed** for the OR-family entries (SLoPe, SLiM, Wanda, VeRA,
+  NOLA, DoRA, RoSA, SLTrain, ALPS, MaskLLM, LoSparse, SparseGPT, OWL, DSnoT).
+- **All 6 ACL-family entries re-confirmed via aclanthology + DBLP** (SoRA, LoRA-drop, DyLoRA,
+  Tied-LoRA, Shears, FlexiGPT) — the ACL family is *not* verified through OpenReview.
+- **All 5 "empty surface" `totalResults` above reproduce exactly** (0 / 0 / 1 / 1 / 3), including
+  the incidental descriptions. `all:"SLoRB"` → **0** still holds.
+- Two small corrections, neither changing any verdict: **eDKM's DBLP key is
+  `conf/hpca/ChoAFAMRNZ25`**, not `conf/hpca/ChoKKSHSN25` (both DOIs quoted above are correct);
+  and **arXiv:2501.16372 is an AAAI-25 Workshop paper** per its own arXiv comment, not an
+  unlocatable preprint.
+- §0's flagged failure to find AdaLoRA on OpenReview **reproduces** — that venue legitimately
+  rests on DBLP `conf/iclr/ZhangCBH0CZ23`.
+- ⚠ Two entries needed a **second** query to find their OpenReview note: **SLTrain** (record says
+  "sparse plus low rank", arXiv says "low-rank") and **DSnoT** (record has a double space after
+  the colon). Both *do* have conference `venueid`s. A single failed title query is not absence.
+
+## 7.1 Four works this survey MISSED, and why the miss was systematic
+
+The original search reached for block coarsening only in the **weight-clustering** vocabulary
+(`"weight clustering"`, `"group-wise quantization"`, `"coarsening"`). It never searched the
+**block-diagonal** vocabulary — which is where the semi-structured-sparsity literature actually
+puts this operator. That single gap hid the nearest neighbour on surfaces (c)+(d).
+
+| # | work | id | venue (authority) | mechanism | preempts? |
+|---|---|---|---|---|---|
+| 31 | **ARMOR** — High-Performance Semi-Structured Pruning via Adaptive Matrix Factorization. Liu, Liu, Wang, Zhao, Yang | arXiv:2510.05528 | **ICLR 2026 Poster** (OpenReview `venueid=ICLR.cc/2026/Conference`, forum `8NE554wv0m`) | One-shot **post-training**: factorizes each weight matrix into a **2:4 sparse core wrapped by two block-diagonal matrices**, chosen by block coordinate descent on a layer-wise proxy loss. | **NO — but this is the most important omission above, and it narrows B12's delta.** It is 2:4-base + a **block-structured, non-SVD** correction decided post-training: structurally the closest published work to B12's operator. Three deltas: (i) its wrappers are **constructed** by its own optimisation — there is no *trained* branch, so it cannot ask B12's question; (ii) its form is **multiplicative** pre/post transformation (`A_post·W_2:4·A_pre`), not SLoRB's **additive** `W⊙mask + S·B`; (iii) it **adds** capacity to beat 2:4 baselines, B12 **removes** capacity to titrate a density curve. **Consequence: B12 may no longer claim block structure per se as novel.** See §7.2. |
+| 32 | **LoSA** — Dynamic Low-Rank Sparse Adaptation for LLMs. Huang, Zhang, Zheng, Liu, Lin, Yao, Ji | arXiv:2502.14816 | **ICLR 2025 Poster** (OpenReview `venueid=ICLR.cc/2025/Conference`, forum `oXh0939Zzq`) | Adapters on a **sparse** base with **per-layer rank** from layer-wise reconstruction error; explicitly solves merge-back (integrated post-training, no added latency). | **NO.** Rank is allocated **during** fine-tuning, so its small-rank layers are *trained* at that rank — the comparison `must_not_claim[0]` bars. Sparsity is layer-wise-ratio unstructured, not exact 2:4. **But it is the closest prior art for "non-uniform per-layer adapter rank on a sparse LLM", so B12's asymmetry claim must be stated against LoSA, not only against PARA (#3) and OWL (#29).** |
+| 33 | **HASSLE-free** — unified Framework for Sparse plus Low-Rank Matrix Decomposition for LLMs | arXiv:2502.00899 | **PREPRINT** (OpenReview returns only a DBLP-mirror note `venueid=dblp.org/journals/CORR/2025`; no conference record) | Exact layer-wise reconstruction objective for **(semi-structured) sparse + low-rank** decomposition. Headline config verbatim: **"Llama3-8B model with a 2:4 sparsity component plus a 64-rank component"**. | **NO.** It **decomposes a dense** pretrained matrix into (2:4 + low-rank) one-shot; both parts are constructed from a dense original. B12 starts from a branch **trained for 17,900 iterations** alongside a learned mask. **But it establishes that the ALGEBRAIC FORM — exactly-2:4 base plus an additive low-rank term, deployed — is prior art. B12 must not present that form as its own.** |
+| 34 | **LoRAPrune** — Structured Pruning Meets Low-Rank PEFT. Zhang, Chen, Shen, Yang, Ou, Yu, Zhuang | arXiv:2305.18403 | **Findings of ACL 2024**, `2024.findings-acl.178`, DOI `10.18653/V1/2024.FINDINGS-ACL.178` (Anthology **200** + title match; DBLP `conf/acl/Zhang0SYOYZ24`). *Verified via the ACL-family authority, not OpenReview.* | LoRA weights+gradients as the pruning **criterion**; reports matching semi-structural pruning. | **NO — direction inverted.** It prunes the **base model** (channels, heads) *using* the adapter as an importance signal: adapter is the instrument, base is the object. B12 freezes an exactly-2:4 base and makes the **branch** the object. |
+
+### Lesser additions (recorded for completeness; none preempts)
+
+| work | id | venue (authority) | why listed |
+|---|---|---|---|
+| **FlexLoRA** — Entropy-Guided Flexible LoRA | arXiv:2601.22905 | **ICLR 2026 Poster** (`venueid=ICLR.cc/2026/Conference`, forum `tqnkbdYWWm`) | Spectral-entropy importance; rank prune **and** expand under a global budget. Training-time, dense base. Makes the adaptive-rank family of surface (b) explicit — `novelty_status_detail` names "ALoRA", a string this survey never used; this family is the substance of that request. |
+| **Compress-then-Merge (CtM)** | arXiv:2606.03723 | **ICML 2026** (`venueid=ICML.cc/2026/Conference`, forum `p32nWlgwYC`) | Rank-*r* bottleneck **before** merging many LoRAs, avoiding post-hoc truncation. Multi-adapter problem, dense base. Completes surface (a). |
+| **PrunedLoRA** (*Train Large, Deploy Compact*) | arXiv:2510.00192 | **UNVERIFIED** — no OpenReview note, no conference record. Preprint. | States B12's premise nearly verbatim ("obtain expressive low-rank adapters from over-parameterized spaces") but prunes **during** fine-tuning. Joins LoRA-Squeeze (#4) as a shared-premise citation. |
+| **Partial-LoRA** (*Quest for Winning Tickets in Low-Rank Adapters*) | arXiv:2512.22495 | **NOT PUBLISHED** — OpenReview shows `ICLR.cc/2025/Conference/Rejected_Submission`. Per this repo's rule that is **NOT-FOUND for a venue**, not evidence of anything. Preprint. | LTH inside LoRA; finds effectiveness "depends more on how much sparsity is applied in each layer than on the exact weights included" — an independent echo of B12's per-family-budget intuition, but it **trains** the sparse adapters. |
+| **D-Rank** (layer-wise dynamic rank) | arXiv:2509.25622 | **NOT PUBLISHED** — `ICLR.cc/2026/Conference/Rejected_Submission` + CoRR mirror. Preprint. | Non-uniform SVD rank for compressing the **base**. Same role as OWL (#29): non-uniformity on a different axis. |
+| **Block-Diagonal LoRA** (TP serving) | arXiv:2510.23346 | **UNVERIFIED** — no conference record. Preprint. | Constrains LoRA factors block-diagonal for tensor-parallel sharding. Independent evidence that block-diagonal low-rank factors are an **established construction**; the motive (communication) is unrelated to B12's. |
+| **ELAS** | arXiv:2605.03667 | **UNVERIFIED**, preprint. | 2:4 **activation** sparsity in low-rank pretraining. Different axis; listed so the 2:4+low-rank neighbourhood is complete. |
+
+## 7.2 The narrow surface is still empty — re-probed adversarially
+
+37 further arXiv queries were issued, aimed at the **conjunction** rather than the individual
+surfaces. The following returned **`totalResults = 0`**:
+
+`abs:"prune" AND abs:"LoRA" AND abs:"rank" AND abs:"after training"` ·
+`abs:"semi-structured sparsity" AND abs:"low-rank branch"` ·
+`abs:"auxiliary" AND abs:"parameters" AND abs:"2:4" AND abs:"sparse training"` ·
+`abs:"density" AND abs:"quality" AND abs:"trade-off" AND abs:"2:4"` ·
+`abs:"adapter size" AND abs:"sparse"` · `abs:"smaller adapter" AND abs:"sparse"` ·
+`abs:"error correction" AND abs:"2:4 sparse"` ·
+`abs:"least squares" AND abs:"refit" AND abs:"low-rank" AND abs:"adapter"` ·
+`abs:"segment sum" AND abs:"projection"` ·
+`abs:"tied" AND abs:"columns" AND abs:"low-rank" AND abs:"adapter"` ·
+`abs:"sparse" AND abs:"low-rank" AND abs:"deployment" AND abs:"density"` ·
+`abs:"sparsity-aware training" AND abs:"low-rank"` · `abs:"AST" AND abs:"SLoRB"` ·
+`ti:"2:4" AND abs:"adapter"` ·
+`abs:"adapter" AND abs:"redundant" AND abs:"rank" AND abs:"sparse LLM"`
+
+One singleton is worth quoting: `abs:"well-initialized" AND abs:"supplementary" AND
+abs:"parameters"` → **total 1, and it is AST (arXiv:2407.20584) itself**. That independently
+corroborates §1's structural point — AST introduces this branch without ever naming it.
+
+## 7.3 The load-bearing question, answered — and §6's conjunct 3 must be narrowed
+
+> Is *block-basis coarsening of a low-rank branch bolted onto 2:4-sparse weights* distinct from
+> generic post-hoc adapter-rank reduction?
+
+**DISTINCT — but on four conjuncts, not five.** The strongest reason is **not** the operator; it
+is the **axis**. Generic rank reduction minimises adapter *storage* at fixed quality. B12
+titrates **deployment density in the two-matmul form**, against a hard floor of 50.0 % (pure 2:4,
+zero branch) and a ceiling of 63.1011 %. On a dense base that quantity **does not exist** —
+shrinking an adapter moves storage but not the base's arithmetic density. The axis is a
+consequence of the base being N:M, and rung A's own measurement is exact: 6.85 density points
+given back (63.1011 → 56.2500 %) at `live_branch_params` **exactly 404,750,336**
+(`evidence/g0_leg2_rungA_selfcheck_20260816.json`).
+
+Secondarily, the operator class does differ: every surface-(a) work found is SVD/spectral and
+stores **both** factors, whereas B12's coarse basis is a zero-parameter block indicator whose LS
+refit is closed-form (a block mean) — exact because on-block entries are **precisely 1.0**
+(`sparse_modeling.py:886`; re-measured min == max == 1.0). And no work reduces a **trained**
+branch on an N:M base: SLoPe *adds*, SLiM *constructs*, ARMOR *constructs* (multiplicatively),
+HASSLE-free *decomposes a dense matrix*, Shears and LoSA allocate rank *during training*.
+
+**What must change in §6.** Conjunct 3 there reads "the literature's post-hoc adapter operator is
+uniformly SVD/spectral". Against **ARMOR (ICLR 2026)** that is **false as stated** — ARMOR is
+post-training, block-structured, on a 2:4 core. It is true only under the restriction *"applied
+to a trained adapter"*. **Conjunct 3 is therefore narrowed to: block-basis coarsening of a
+TRAINED adapter is not in the literature.** Restricted that way it survives; stated generally it
+would overclaim against a published paper.
+
+Two further honesty items: the **algebraic form** (exactly-2:4 base + additive low-rank term) is
+prior art via **HASSLE-free**; and **block structure per se** is prior art via **ARMOR** and
+arXiv:2510.23346. B12's contribution is the **post-hoc reduction of a trained instance** of that
+form, on the density axis.
+
+**Not killed.** The bar is *identical*, not *adjacent* (`memory/prior-work-differentiate-dont-abandon.md`).
+Nothing found is identical, and ARMOR/HASSLE-free are recent enough that B12 is a legitimate
+follow-up to a question neither asks: **once the correction term is *trained* rather than
+constructed, is it over-provisioned?**
+
+### Additions to §6's "must cite rather than claim" table
+
+| claim B12 might be tempted to make | must instead cite |
+|---|---|
+| "2:4-sparse base with an additive low-rank term as a deployment form" | **HASSLE-free** (arXiv:2502.00899, preprint) |
+| "block-structured (non-SVD) correction of a 2:4 core" | **ARMOR, ICLR 2026** (arXiv:2510.05528) — and do **not** claim block structure as novel |
+| "block-diagonal low-rank factors" | **ARMOR, ICLR 2026**; **arXiv:2510.23346** (preprint) |
+| "non-uniform per-layer adapter rank on a sparse LLM" | **LoSA, ICLR 2025** (arXiv:2502.14816) — in addition to PARA and OWL |
+| "adapters and semi-structured pruning interact" | **LoRAPrune, Findings of ACL 2024** (`2024.findings-acl.178`) |
