@@ -294,6 +294,23 @@ CLAIMS = [
      "construct_nulls_legality_aware.json",
      lambda doc: _arc_dp_1e4(doc, "ARC-Challenge"),
      "E-CAL dp_aware_minus_blind = -0.005213 -> 0.0052 at 4dp"),
+    # The matched-depth contrast added to 05_analysis.tex 2026-08-17. It is the datum that
+    # separates "depth >= 14" from "depth >= 14 AND prune-then-heal": at the SAME retained
+    # depth, healed clears 4/5 while truncate-only clears 0/15. Registered because this gate
+    # prints "counts not listed here are unchecked", and that sentence is the only place the
+    # paper concedes depth alone is insufficient -- an unguarded number there could drift
+    # into contradicting the very confound disclosure it exists to support.
+    ("depth-14 healed above-floor", "05_analysis.tex",
+     r"retained depth of 14, the healed arm clears (\w+) of its 5 floors",
+     "designated_damaged_denominators.json",
+     lambda doc: doc["MONOTONE_DEPTH_THRESHOLD"]["by_retained_depth"]["14_heal"]["above"],
+     "by_retained_depth.14_heal.above = 4 of n=5"),
+    ("depth-14 truncate-only cells", "05_analysis.tex",
+     r"while the (\w+) truncate-only cells at that depth clear none",
+     "designated_damaged_denominators.json",
+     lambda doc: doc["MONOTONE_DEPTH_THRESHOLD"]["by_retained_depth"]["14_trunc"]["n"],
+     "by_retained_depth.14_trunc.n = 15; the 'clear none' half is asserted by the next "
+     "claim so a nonzero above-count cannot hide behind a correct denominator"),
 ]
 
 
