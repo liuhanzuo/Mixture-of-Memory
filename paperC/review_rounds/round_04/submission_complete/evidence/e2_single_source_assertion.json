@@ -1,0 +1,83 @@
+{
+  "_purpose": "E2 closure: assert that evidence/floor_winners_curse_calibration.json IS the single machine-readable source for the README's 9-row headline null table. Emitted by MAIN 2026-08-15, 0 GPU.",
+  "_verdict": "E2's premise was FALSE. It claimed 2 of the numbers (0.2689 MMLU, 0.6217 BoolQ) have 'no paperC-side machine-readable home at all'. Both are present at full precision as rows[2].floor=0.268908 and rows[8].floor=0.621713 in the file named above. No new file needed to be created; the single source already existed.",
+  "_error_class": "SECOND instance of the same mistake in this audit row. E2 already carried a self-correction for exactly this: a naive grep for the README's ROUNDED form misses values stored at full precision. The first correction fixed 0.276/0.504897; the same reasoning was never re-applied to 0.2689/0.6217. See memory/fix-the-class-not-the-instance.md -- fixing one instance of a lookup bug obliges re-running the whole key family.",
+  "canonical_source": "evidence/floor_winners_curse_calibration.json",
+  "schema_version": "1.0.0",
+  "n_draws": 200000,
+  "seed": 20260814,
+  "method": "balanced (exactly uniform) multinomial null at each construct's own (n,k); f_const=max_L of the k sampled marginals; p = P(max_L >= observed floor)",
+  "n_rows": 9,
+  "readme_reproduction_selftest": {
+    "checked": "every rows[].floor against README.md text at 3/4/6-dp and full precision",
+    "rows_found": 9,
+    "rows_missing": 0,
+    "result": "9/9 reproduce -- the README table is derivable from this file alone"
+  },
+  "rows": [
+    {
+      "construct": "MMLU-Pro letter, naive",
+      "n": 12032,
+      "k": 10,
+      "floor": 0.116606,
+      "chance": 0.1
+    },
+    {
+      "construct": "MMLU-Pro letter, item-avg.",
+      "n": 12032,
+      "k": 10,
+      "floor": 0.116606,
+      "chance": 0.110877
+    },
+    {
+      "construct": "MMLU letter",
+      "n": 14042,
+      "k": 4,
+      "floor": 0.268908,
+      "chance": 0.25
+    },
+    {
+      "construct": "OpenBookQA letter",
+      "n": 500,
+      "k": 4,
+      "floor": 0.276,
+      "chance": 0.25
+    },
+    {
+      "construct": "ARC-Easy letter",
+      "n": 2376,
+      "k": 4,
+      "floor": 0.266414,
+      "chance": 0.250161
+    },
+    {
+      "construct": "ARC-Challenge letter",
+      "n": 1172,
+      "k": 4,
+      "floor": 0.265358,
+      "chance": 0.250156
+    },
+    {
+      "construct": "CommonsenseQA letter",
+      "n": 1221,
+      "k": 5,
+      "floor": 0.208845,
+      "chance": 0.2
+    },
+    {
+      "construct": "PIQA letter",
+      "n": 1838,
+      "k": 2,
+      "floor": 0.504897,
+      "chance": 0.5
+    },
+    {
+      "construct": "BoolQ",
+      "n": 3270,
+      "k": 2,
+      "floor": 0.621713,
+      "chance": 0.5
+    }
+  ],
+  "what_is_still_open": "E3 (a .tex-level integrity binding, paperB-style app_tab_integrity.tex) is NOT closed by this. E2 asked for a single machine-readable SOURCE (exists); E3 asks for a generated table that BINDS prose to it. Do not mark E3 closed on the strength of this file."
+}

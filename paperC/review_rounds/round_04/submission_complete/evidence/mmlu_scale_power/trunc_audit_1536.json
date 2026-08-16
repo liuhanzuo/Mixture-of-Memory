@@ -1,0 +1,107 @@
+{
+  "task": "mmlu_pro",
+  "n_items": 12032,
+  "max_len_probed": 1536,
+  "num_shards": 8,
+  "families": {
+    "llama2_7b": {
+      "model_path": "<WORKSPACE>/models/Llama--Llama2-7b",
+      "vocab_size": 32000,
+      "n_trunc_at_probe": 40,
+      "n_trunc_letter": 30,
+      "n_trunc_content": 10,
+      "max_encoded_tokens": 1678,
+      "max_letter_prompt_tokens": 1678,
+      "max_content_pair_tokens": 1553,
+      "affected_item_ids": [
+        10500,
+        11603,
+        11790
+      ],
+      "affected_detail": {
+        "10500": {
+          "L": 10,
+          "C": 0,
+          "max_tok": 1587,
+          "n_opt": 10,
+          "shard": 4
+        },
+        "11603": {
+          "L": 10,
+          "C": 0,
+          "max_tok": 1548,
+          "n_opt": 10,
+          "shard": 3
+        },
+        "11790": {
+          "L": 10,
+          "C": 10,
+          "max_tok": 1678,
+          "n_opt": 10,
+          "shard": 6
+        }
+      }
+    },
+    "llama3_8b": {
+      "model_path": "<WORKSPACE>/models/Llama--Llama3-8b",
+      "vocab_size": 128256,
+      "n_trunc_at_probe": 0,
+      "n_trunc_letter": 0,
+      "n_trunc_content": 0,
+      "max_encoded_tokens": 1226,
+      "max_letter_prompt_tokens": 1226,
+      "max_content_pair_tokens": 1132,
+      "affected_item_ids": [],
+      "affected_detail": {}
+    },
+    "qwen3_8b_base": {
+      "model_path": "<WORKSPACE>/models/Qwen3-8B-Base",
+      "vocab_size": 151669,
+      "n_trunc_at_probe": 20,
+      "n_trunc_letter": 20,
+      "n_trunc_content": 0,
+      "max_encoded_tokens": 1660,
+      "max_letter_prompt_tokens": 1660,
+      "max_content_pair_tokens": 1535,
+      "affected_item_ids": [
+        11603,
+        11790
+      ],
+      "affected_detail": {
+        "11603": {
+          "L": 10,
+          "C": 0,
+          "max_tok": 1537,
+          "n_opt": 10,
+          "shard": 3
+        },
+        "11790": {
+          "L": 10,
+          "C": 0,
+          "max_tok": 1660,
+          "n_opt": 10,
+          "shard": 6
+        }
+      }
+    },
+    "olmo2_7b": {
+      "model_path": "<WORKSPACE>/models/OLMo-2-1124-7B",
+      "vocab_size": 100278,
+      "n_trunc_at_probe": 0,
+      "n_trunc_letter": 0,
+      "n_trunc_content": 0,
+      "max_encoded_tokens": 1226,
+      "max_letter_prompt_tokens": 1226,
+      "max_content_pair_tokens": 1132,
+      "affected_item_ids": [],
+      "affected_detail": {}
+    }
+  },
+  "union_affected_item_ids": [
+    10500,
+    11603,
+    11790
+  ],
+  "n_union_affected": 3,
+  "global_max_encoded_tokens": 1678
+}

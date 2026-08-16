@@ -1,0 +1,52 @@
+{
+ "IMPORTANT_no_tex_ran": "NO LaTeX COMPILE WAS PERFORMED. TeX Live is absent from this machine and, measured 2026-08-15, from .212 as well: `command -v pdflatex latexmk xelatex tectonic` returns nothing and /usr/local/texlive, /opt/texlive, /root/texlive, /usr/share/texlive are all absent on both. paperC/main.pdf (mtime 2026-08-15 03:35) and main.log ('pdfTeX ... TeX Live 2026') show the toolchain existed earlier the same day and was removed by a node restart. These checks are structural only and CANNOT establish that the document typesets.",
+ "checks": {
+  "C1": "every \\begin{X} matched by \\end{X}, correctly nested",
+  "C2": "brace balance (escaped \\{ \\} and comment tails ignored)",
+  "C3": "inline-math $ parity (escaped \\$ and $$ ignored)",
+  "C4": "tabular row cell count == column count from the tabular's own column spec, with \\multicolumn{n} counted as n",
+  "C5": "every data row inside a tabular ends with \\\\",
+  "C6": "every \\input{...} resolves to an existing file"
+ },
+ "findings": [],
+ "findings_per_file": {
+  "main.tex": 0,
+  "sections/00_abstract.tex": 0,
+  "sections/01_introduction.tex": 0,
+  "sections/02_related.tex": 0,
+  "sections/03_method.tex": 0,
+  "sections/03b_nulls.tex": 0,
+  "sections/03b_nulls_summary.tex": 0,
+  "sections/04_experiments.tex": 0,
+  "sections/05_analysis.tex": 0,
+  "sections/06_discussion.tex": 0,
+  "sections/07_limitations.tex": 0,
+  "sections/08_ethics.tex": 0,
+  "sections/09_appendix.tex": 0,
+  "sections/09a_relocated.tex": 0,
+  "sections/10_reproducibility.tex": 0,
+  "sections/tab_claims.tex": 0,
+  "sections/tab_construct_nulls.tex": 0,
+  "sections/tab_conventions.tex": 0,
+  "sections/tab_integrity.tex": 0,
+  "sections/tab_mmlupro.tex": 0,
+  "sections/tab_nulls.tex": 0,
+  "sections/tab_power.tex": 0,
+  "sections/tab_two_nulls.tex": 0,
+  "sections/tab_v2_alternatives.tex": 0,
+  "sections/tab_v2_full.tex": 0,
+  "sections/tab_v2_resort.tex": 0
+ },
+ "gpu_used": "NONE",
+ "n_files": 26,
+ "n_findings": 0,
+ "require_clean": {},
+ "verbatim_envs_skipped": [
+  "Verbatim",
+  "lstlisting",
+  "minted",
+  "verbatim"
+ ],
+ "verdict": "PASS",
+ "what": "static structural validation of paperC .tex sources"
+}

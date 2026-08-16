@@ -1,0 +1,25 @@
+\begin{table*}[t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{2.6pt}
+\begin{tabular}{llrrrrl}
+\toprule
+Family & Arm/regime & Accuracy & $\Delta$ vs floor (pp) & CI95 half-width & $p$ & v1 verdict \\
+\midrule
+OLMo-2 & \texttt{keep12}, heal & 0.113115 & $-0.349$ & 0.765 & 0.3805 & at floor \\
+OLMo-2 & \texttt{keep10}, heal & 0.112450 & $-0.416$ & 0.727 & 0.2662 & at floor \\
+OLMo-2 & \texttt{keep8}, heal & 0.115442 & $-0.116$ & 0.582 & 0.7118 & at floor \\
+Llama-2 & \texttt{k14}, truncation & 0.116772 & $+0.017$ & 0.083 & 0.7072 & at floor \\
+Llama-2 & \texttt{k12}, truncation & 0.115858 & $-0.075$ & 0.083 & 0.0693 & at floor \\
+Llama-2 & \texttt{k10}, truncation & 0.113198 & $-0.341$ & 0.416 & 0.1132 & at floor \\
+Llama-2 & \texttt{k8}, truncation & 0.107463 & $-0.914$ & 0.736 & 0.0168 & below floor \\
+Llama-3 & \texttt{k14--k8}, truncation & 0.111868--0.114694 & $-0.474$--$-0.191$ & 0.407--0.852 & 0.1296--0.6631 & all at floor \\
+Qwen3 & \texttt{k14}, truncation & 0.118933 & $+0.233$ & 0.191 & 0.0192 & above floor \\
+Qwen3 & \texttt{k12}, truncation & 0.115027 & $-0.158$ & 0.428 & 0.4645 & at floor \\
+Qwen3 & \texttt{k10}, truncation & 0.118185 & $+0.158$ & 0.233 & 0.1872 & at floor \\
+Qwen3 & \texttt{k8}, truncation & 0.107796 & $-0.881$ & 0.819 & 0.0362 & below floor \\
+\bottomrule
+\end{tabular}
+\caption{MMLU-Pro letter read-out against the bit-identical always-A floor 0.116606. OLMo-2 arms are prune-then-heal; the other families are truncate-only, so regime and family are confounded. Numbers are the per-cell MMLU-scale power records for the letter-floor cells (evidence \textsf{E-B}; see the reproducibility statement for the artifact path).}
+\label{tab:mmlupro}
+\end{table*}

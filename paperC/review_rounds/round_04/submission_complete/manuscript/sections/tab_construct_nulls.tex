@@ -1,0 +1,26 @@
+% GENERATED FILE -- DO NOT EDIT BY HAND.
+% Emitted by paperC/code/emit_tab_construct_nulls.py from
+% paperC/evidence/floor_winners_curse_calibration.json (sha256 275112623d05).
+% Regenerate with:  python paperC/code/emit_tab_construct_nulls.py
+\begin{table}[t]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3.4pt}
+\begin{tabular}{lrrrrrrl}
+\toprule
+Construct & $n$ & $k$ & Chance & Floor & Gap (pp) & $p$ & Verdict \\
+\midrule
+MMLU-Pro letter, naive & 12032 & 10 & 0.100000 & 0.116606 & +1.661 & $<10^{-5}$ & above balanced null \\
+MMLU-Pro letter, item-avg. & 12032 & 10 & 0.110877 & 0.116606 & +0.573 & $<10^{-5}$ & above balanced null \\
+MMLU letter & 14042 & 4 & 0.250000 & 0.268908 & +1.891 & $<10^{-5}$ & above balanced null \\
+OpenBookQA letter & 500 & 4 & 0.250000 & 0.276000 & +2.600 & 0.383 & inside estimator noise \\
+ARC-Easy letter & 2376 & 4 & 0.250161 & 0.266414 & +1.625 & 0.140 & inside estimator noise \\
+ARC-Challenge letter & 1172 & 4 & 0.250156 & 0.265358 & +1.520 & 0.453 & inside estimator noise \\
+CommonsenseQA letter & 1221 & 5 & 0.200000 & 0.208845 & +0.884 & 0.853 & inside estimator noise \\
+PIQA letter & 1838 & 2 & 0.500000 & 0.504897 & +0.490 & 0.658 & inside estimator noise \\
+BoolQ & 3270 & 2 & 0.500000 & 0.621713 & +12.171 & $<10^{-5}$ & above balanced null \\
+\bottomrule
+\end{tabular}
+\caption{\textbf{Construct-null manifest (generated, not transcribed).} Every value in this table is emitted programmatically from the balanced-null calibration record (evidence \textsf{E-CAL}) by the manifest emitter; no number in it is typed by hand. $k$ is the nominal option count and Chance is the chance line used for that row, so the two MMLU-Pro rows differ only in whether chance is naive $1/10$ or the item average $\mathrm{mean}(1/\texttt{n\_opt})$. Gap is $100\,(\text{Floor}-\text{Chance})$, recomputed here rather than read. The $p$-value is $\Pr(\hat f \ge \text{Floor})$ under an exactly balanced multinomial null at that construct's own $(n,k)$, and Verdict states only whether that null could plausibly have produced the observed floor; a floor inside the estimator's noise still shows that chance is the wrong reference to report. Provenance, from the same file: \texttt{schema\_version}~1.0.0, \texttt{seed}~20260814, \texttt{n\_draws}~$200000$, \texttt{sha256}~\texttt{275112623d05}. Method: \texttt{balanced (exactly uniform) multinomial null at each construct's own (n,k)}; \texttt{f\_const=max\_L of the k sampled marginals}; \texttt{p = P(max\_L >= observed floor)}.}
+\label{tab:app-construct-nulls}
+\end{table}

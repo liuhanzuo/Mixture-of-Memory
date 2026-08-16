@@ -1,0 +1,48 @@
+{
+  "evidence_id": "E-GATE-01",
+  "created": "2026-08-15T21:34:40",
+  "title": "The numbers gate was auditing LESS as the paper got better cross-referenced. Fixed at source.",
+  "found_by": "a subagent doing the \\ref fix; MAIN then verified the mechanism at source and measured the exposure",
+  "the_defect": {
+    "where": ".claude/skills/autonomous-paper-agent/scripts/check_numbers.py, SKIP_LINE_PAT defined at line 60 and applied as a WHOLE-LINE skip at line 173",
+    "mechanism": "the pattern matches \\ref, \\cite, \\label, \\input and typographic macros. When it matched, the ENTIRE physical line was skipped. So any real numeric claim sharing a line with a cross-reference silently left the audit.",
+    "why_it_is_worse_than_a_missing_check": "the gate still printed numbers_gate_pass: true. It got QUIETER as the manuscript got better cross-referenced -- the pass is what one acts on, so a shrinking denominator reads as success.",
+    "measured_exposure_before_fix": {
+      "numerals_hidden": 87,
+      "lines": 35,
+      "load_bearing_examples": [
+        "BoolQ best constant 0.6217 rather than 0.50 (01_introduction.tex:19)",
+        "global best constant 1403/12032, per-stratum 1439/12032, 623/12032 items (03_method.tex:80)",
+        "tokenizer floor deltas 0.9003 / 10.6 / 9.26 (03b_nulls.tex:18)",
+        "all 27 cells + G1 0.0371 / 1.271 (09_appendix.tex:5)"
+      ],
+      "benign_examples": [
+        "0.62\\linewidth",
+        "tabcolsep 3.5pt",
+        "p{0.05\\linewidth}"
+      ]
+    }
+  },
+  "the_fix": {
+    "approach": "stop skipping the line; strip only the ARGUMENTS of structural/typographic macros plus bare LaTeX lengths (pt/ex/em/\\linewidth...), then audit the rest of the line",
+    "new_code": "MACRO_ARG_PAT + LENGTH_PAT + strip_macro_args(); SKIP_LINE_PAT retained but no longer used as a whole-line veto",
+    "selftest": "6 hand cases, all PASS: keeps 0.6217/0.50 next to a \\ref; keeps 623/12032 next to a \\citep; drops 0.05/0.37 from a tabular preamble; drops 3.5 from tabcolsep; does not mistake a citation year 2024/2026 for a claim",
+    "result_on_paperC": {
+      "scanned_before": 612,
+      "scanned_after": 653,
+      "newly_audited": 41,
+      "direct_before": 470,
+      "direct_after": 506,
+      "needs_human_after": 0,
+      "verdict": "the gate got STRICTER by 41 numerals and the paper STILL passes at --max-unmatched 0. Every previously-hidden load-bearing numeral traces to evidence."
+    }
+  },
+  "failure_class": "same family as today's other four: a measurement instrument that moves for a reason unrelated to what it is supposed to measure. Here the instrument's COVERAGE shrank silently as an unrelated property (cross-referencing) improved.",
+  "generalisable_rule": "a gate must report its own denominator, and a change in that denominator must be surfaced. 'PASS' without 'n audited' cannot distinguish a clean paper from a quiet checker.",
+  "second_defect_reported_by_the_agent_NOT_yet_fixed": {
+    "where": "paper_build.py, subprocess.run(..., text=True) at ~line 240 decodes as strict UTF-8",
+    "symptom": "pdfTeX writes the TS1 section glyph to main.log as raw latin-1 0xa7, so a \\S anywhere in the document raises UnicodeDecodeError and CRASHES THE BUILD GATE -- not the document, which compiles fine",
+    "status": "OPEN. The agent worked around it by writing 'Section' instead of \\S. Fix is errors='replace' on the decode. Any future \\S, \\pounds, or other TS1 glyph will crash the gate again.",
+    "MAIN_verified": "text=True confirmed at source; the raw-byte claim is the agent's and is plausible but I did not reproduce the crash"
+  }
+}

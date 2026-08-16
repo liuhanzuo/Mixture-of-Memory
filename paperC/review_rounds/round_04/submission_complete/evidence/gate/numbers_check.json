@@ -1,0 +1,994 @@
+{
+  "schema_version": "1.0.0",
+  "paper": "paperC",
+  "evidence_sources": [
+    "<REPO_ROOT>/paperC/evidence"
+  ],
+  "n_evidence_numbers": 18570,
+  "filters_applied": [
+    "lines containing LaTeX structural/typographic macros (see SKIP_LINE_PAT)",
+    "4-digit years 19xx/20xx/21xx/26xx",
+    "bare integers with |n| <= 12 (section/table/column indices)"
+  ],
+  "counts": {
+    "scanned": 653,
+    "direct_match": 506,
+    "match_after_correct_rounding": 131,
+    "derived_as_difference": 16,
+    "unmatched_needs_human": 0
+  },
+  "unmatched_needs_human": [],
+  "match_after_correct_rounding": [
+    {
+      "file": "sections/03_method.tex",
+      "line": 23,
+      "value": "-2.111",
+      "context": "The v1 floor asks whether an interface is suitable for mutually comparable arm scores. It is not collapse-invariant as a competence statistic: on the ",
+      "evidence_full_precision": "-2.1110372340425525",
+      "evidence_files": [
+        "heal_degeneracy_decomposition.json"
+      ]
+    },
+    {
+      "file": "sections/03_method.tex",
+      "line": 80,
+      "value": "0.085",
+      "context": "The two nulls must not be conflated, and their ordering is weaker than it first appears. Unstratified, $\\sum_L p_{L}m_{L}\\leq\\max_Lm_{L}$ places the v",
+      "evidence_full_precision": "0.08532423208191127",
+      "evidence_files": [
+        "gate2_crossfamily_nulls.json",
+        "gate2_crossfamily_nulls.json",
+        "gate2_crossfamily_nulls.json"
+      ]
+    },
+    {
+      "file": "sections/03_method.tex",
+      "line": 80,
+      "value": "94.8",
+      "context": "The two nulls must not be conflated, and their ordering is weaker than it first appears. Unstratified, $\\sum_L p_{L}m_{L}\\leq\\max_Lm_{L}$ places the v",
+      "evidence_full_precision": "94.82",
+      "evidence_files": [
+        "s2_02_stratified_ordering.json",
+        "s2_02_stratified_ordering.json",
+        "s2_02_stratified_ordering.json"
+      ]
+    },
+    {
+      "file": "sections/03b_nulls.tex",
+      "line": 12,
+      "value": "2.02",
+      "context": "``Longest'' may mean characters or continuation tokens. On identical items, \\texttt{split} changes by as much as 2.02 points across the studied tasks,",
+      "evidence_full_precision": "2.0196",
+      "evidence_files": [
+        "mmlu_pro_power_nulls_v2.csv"
+      ]
+    },
+    {
+      "file": "sections/03b_nulls.tex",
+      "line": 12,
+      "value": "18.60",
+      "context": "``Longest'' may mean characters or continuation tokens. On identical items, \\texttt{split} changes by as much as 2.02 points across the studied tasks,",
+      "evidence_full_precision": "18.602693602693606",
+      "evidence_files": [
+        "gate2_crossfamily_nulls.json"
+      ]
+    },
+    {
+      "file": "sections/05_analysis.tex",
+      "line": 26,
+      "value": "0.267",
+      "context": "The result is strong but not universal. Fourteen of the 15 cells are at or below the floor. The exception, \\texttt{qwen3\\_8b\\_base/k14}, is $+0.233$ p",
+      "evidence_full_precision": "0.267042",
+      "evidence_files": [
+        "gate2_letter_content_nulls.csv",
+        "gate2_letter_content_nulls.csv",
+        "gate2_letter_content_nulls.csv"
+      ]
+    },
+    {
+      "file": "sections/05_analysis.tex",
+      "line": 26,
+      "value": "0.049",
+      "context": "The result is strong but not universal. Fourteen of the 15 cells are at or below the floor. The exception, \\texttt{qwen3\\_8b\\_base/k14}, is $+0.233$ p",
+      "evidence_full_precision": "0.048996",
+      "evidence_files": [
+        "gate2_crossfamily_nulls.csv"
+      ]
+    },
+    {
+      "file": "sections/05_analysis.tex",
+      "line": 26,
+      "value": "9.1",
+      "context": "The result is strong but not universal. Fourteen of the 15 cells are at or below the floor. The exception, \\texttt{qwen3\\_8b\\_base/k14}, is $+0.233$ p",
+      "evidence_full_precision": "9.1007",
+      "evidence_files": [
+        "mmlu_pro_power_nulls.csv",
+        "mmlu_pro_power_nulls_v2.csv"
+      ]
+    },
+    {
+      "file": "sections/05_analysis.tex",
+      "line": 42,
+      "value": "-0.139",
+      "context": "Under v1, two MMLU-Pro cells are significantly below the best-constant floor. Under v2, the below-null count is zero. \\texttt{qwen3/k8} moves from $-0",
+      "evidence_full_precision": "-0.13892256688430998",
+      "evidence_files": [
+        "heal_readout_v2_permutation_null.json"
+      ]
+    },
+    {
+      "file": "sections/05_analysis.tex",
+      "line": 42,
+      "value": "-0.914",
+      "context": "Under v1, two MMLU-Pro cells are significantly below the best-constant floor. Under v2, the below-null count is zero. \\texttt{qwen3/k8} moves from $-0",
+      "evidence_full_precision": "-0.9142287234042553",
+      "evidence_files": [
+        "heal_readout_v2_permutation_null.json",
+        "s2_03_symmetric_inference.json",
+        "trunc_fix_before_after.json"
+      ]
+    },
+    {
+      "file": "sections/05_analysis.tex",
+      "line": 42,
+      "value": "-0.416",
+      "context": "Under v1, two MMLU-Pro cells are significantly below the best-constant floor. Under v2, the below-null count is zero. \\texttt{qwen3/k8} moves from $-0",
+      "evidence_full_precision": "-0.41562185518756595",
+      "evidence_files": [
+        "heal_readout_v2_permutation_null.json"
+      ]
+    },
+    {
+      "file": "sections/05_analysis.tex",
+      "line": 48,
+      "value": "0.267",
+      "context": "Significance alone would re-import the defect. At $n=12032$, \\texttt{qwen3/k14} reaches $p=0.0066$ at only $+0.267$ points while A wins the likelihood",
+      "evidence_full_precision": "0.267042",
+      "evidence_files": [
+        "gate2_letter_content_nulls.csv",
+        "gate2_letter_content_nulls.csv",
+        "gate2_letter_content_nulls.csv"
+      ]
+    },
+    {
+      "file": "sections/05_analysis.tex",
+      "line": 50,
+      "value": "1.37",
+      "context": "the A01 own-modal null over-credits P1 by 1.37 points and flips its sign; for Qwen3 heal@7000 and unhealed \\texttt{k8}, content is $-3.610$ and $-1.07",
+      "evidence_full_precision": "1.3651877133105803",
+      "evidence_files": [
+        "gate2_crossfamily_nulls.json"
+      ]
+    },
+    {
+      "file": "sections/05_analysis.tex",
+      "line": 50,
+      "value": "-0.022",
+      "context": "the A01 own-modal null over-credits P1 by 1.37 points and flips its sign; for Qwen3 heal@7000 and unhealed \\texttt{k8}, content is $-3.610$ and $-1.07",
+      "evidence_full_precision": "-0.02208277546330434",
+      "evidence_files": [
+        "heal_readout_v2_permutation_null.json"
+      ]
+    },
+    {
+      "file": "sections/05_analysis.tex",
+      "line": 50,
+      "value": "-0.139",
+      "context": "the A01 own-modal null over-credits P1 by 1.37 points and flips its sign; for Qwen3 heal@7000 and unhealed \\texttt{k8}, content is $-3.610$ and $-1.07",
+      "evidence_full_precision": "-0.13892256688430998",
+      "evidence_files": [
+        "heal_readout_v2_permutation_null.json"
+      ]
+    },
+    {
+      "file": "sections/05_analysis.tex",
+      "line": 50,
+      "value": "0.997",
+      "context": "the A01 own-modal null over-credits P1 by 1.37 points and flips its sign; for Qwen3 heal@7000 and unhealed \\texttt{k8}, content is $-3.610$ and $-1.07",
+      "evidence_full_precision": "0.9972",
+      "evidence_files": [
+        "gate2_crossfamily_nulls.json",
+        "gate2_crossfamily_nulls.csv"
+      ]
+    },
+    {
+      "file": "sections/05_analysis.tex",
+      "line": 56,
+      "value": "0.0033",
+      "context": "For OLMo-2 \\texttt{keep8} on MMLU, fp32 removes all 4,303 bf16 exact top-two ties and changes 2,532 of 14,042 letter argmax decisions, or 18.03\\%. Let",
+      "evidence_full_precision": "0.003276",
+      "evidence_files": [
+        "gate2_crossfamily_nulls.csv",
+        "gate2_crossfamily_nulls.csv",
+        "gate2_crossfamily_nulls.csv"
+      ]
+    },
+    {
+      "file": "sections/07_limitations.tex",
+      "line": 10,
+      "value": "5.72",
+      "context": "The Qwen3 arm heals on 5.72 epochs of 5.541B SlimPajama tokens, whereas OLMo-2 used 1.0 epoch of 31.7B Dolmino tokens. Qwen3 cannot consume OLMo-2-tok",
+      "evidence_full_precision": "5.7167",
+      "evidence_files": [
+        "gate2_crossfamily_nulls.csv"
+      ]
+    },
+    {
+      "file": "sections/07_limitations.tex",
+      "line": 13,
+      "value": "-0.139",
+      "context": "\\texttt{H\\_heal} is not merely unmeasured. Its antecedent required the unhealed Qwen3 \\texttt{k8} comparator to sit below an arm-conditional null; it ",
+      "evidence_full_precision": "-0.13892256688430998",
+      "evidence_files": [
+        "heal_readout_v2_permutation_null.json"
+      ]
+    },
+    {
+      "file": "sections/09_appendix.tex",
+      "line": 5,
+      "value": "-1.271",
+      "context": "Table~  reports all 27 cells used in the post-hoc v2 re-analysis. G1 and G2 fire on no cell; all 27 pass the integrity gate; the permutation and boots",
+      "evidence_full_precision": "-1.27086499125266",
+      "evidence_files": [
+        "heal_readout_v2_permutation_null.json"
+      ]
+    },
+    {
+      "file": "sections/tab_conventions.tex",
+      "line": 12,
+      "value": "0.274744",
+      "context": "ARC-Challenge & character & 0.274104 & 0.272184 & 0.274744 & 0.347270 & 0.220990 \\\\",
+      "evidence_full_precision": "0.27474402730375425",
+      "evidence_files": [
+        "construct_nulls_length_unit.json",
+        "construct_nulls_length_unit.json"
+      ]
+    },
+    {
+      "file": "sections/tab_conventions.tex",
+      "line": 12,
+      "value": "0.347270",
+      "context": "ARC-Challenge & character & 0.274104 & 0.272184 & 0.274744 & 0.347270 & 0.220990 \\\\",
+      "evidence_full_precision": "0.34726962457337884",
+      "evidence_files": [
+        "construct_nulls_length_unit.json",
+        "construct_nulls_length_unit.json",
+        "construct_nulls_length_unit.json"
+      ]
+    },
+    {
+      "file": "sections/tab_conventions.tex",
+      "line": 12,
+      "value": "0.220990",
+      "context": "ARC-Challenge & character & 0.274104 & 0.272184 & 0.274744 & 0.347270 & 0.220990 \\\\",
+      "evidence_full_precision": "0.22099",
+      "evidence_files": [
+        "gate2_crossfamily_nulls.csv",
+        "gate2_crossfamily_nulls.csv",
+        "gate2_crossfamily_nulls.csv"
+      ]
+    },
+    {
+      "file": "sections/tab_conventions.tex",
+      "line": 14,
+      "value": "0.490923",
+      "context": "Winogrande, control & character & 0.491713 & 0.492502 & 0.490923 & 0.581689 & 0.401736 \\\\",
+      "evidence_full_precision": "0.4909234411996843",
+      "evidence_files": [
+        "construct_nulls_length_unit.json",
+        "construct_nulls_length_unit.json",
+        "gate2_crossfamily_nulls.json"
+      ]
+    },
+    {
+      "file": "sections/tab_conventions.tex",
+      "line": 14,
+      "value": "0.401736",
+      "context": "Winogrande, control & character & 0.491713 & 0.492502 & 0.490923 & 0.581689 & 0.401736 \\\\",
+      "evidence_full_precision": "0.40173638516179955",
+      "evidence_files": [
+        "construct_nulls_length_unit.json",
+        "construct_nulls_length_unit.json"
+      ]
+    },
+    {
+      "file": "sections/tab_mmlupro.tex",
+      "line": 9,
+      "value": "-0.349",
+      "context": "OLMo-2 & \\texttt{keep12}, heal & 0.113115 & $-0.349$ & 0.765 & 0.3805 & at floor \\\\",
+      "evidence_full_precision": "-0.3491",
+      "evidence_files": [
+        "mmlu_pro_power_nulls.csv",
+        "mmlu_pro_power_nulls_v2.csv"
+      ]
+    },
+    {
+      "file": "sections/tab_mmlupro.tex",
+      "line": 10,
+      "value": "-0.416",
+      "context": "OLMo-2 & \\texttt{keep10}, heal & 0.112450 & $-0.416$ & 0.727 & 0.2662 & at floor \\\\",
+      "evidence_full_precision": "-0.41562185518756595",
+      "evidence_files": [
+        "heal_readout_v2_permutation_null.json"
+      ]
+    },
+    {
+      "file": "sections/tab_mmlupro.tex",
+      "line": 11,
+      "value": "-0.116",
+      "context": "OLMo-2 & \\texttt{keep8}, heal & 0.115442 & $-0.116$ & 0.582 & 0.7118 & at floor \\\\",
+      "evidence_full_precision": "-0.11635638297872314",
+      "evidence_files": [
+        "heal_trajectory_mmlu_pro.json",
+        "heal_degeneracy_decomposition.json"
+      ]
+    },
+    {
+      "file": "sections/tab_mmlupro.tex",
+      "line": 12,
+      "value": "0.7072",
+      "context": "Llama-2 & \\texttt{k14}, truncation & 0.116772 & $+0.017$ & 0.083 & 0.7072 & at floor \\\\",
+      "evidence_full_precision": "0.7071999999999999",
+      "evidence_files": [
+        "heal_readout_v2_permutation_null.json",
+        "s2_03_symmetric_inference.json",
+        "s2_03_symmetric_inference.json"
+      ]
+    },
+    {
+      "file": "sections/tab_mmlupro.tex",
+      "line": 13,
+      "value": "-0.075",
+      "context": "Llama-2 & \\texttt{k12}, truncation & 0.115858 & $-0.075$ & 0.083 & 0.0693 & at floor \\\\",
+      "evidence_full_precision": "-0.07480053191489255",
+      "evidence_files": [
+        "s2_03_symmetric_inference.json"
+      ]
+    },
+    {
+      "file": "sections/tab_mmlupro.tex",
+      "line": 14,
+      "value": "-0.341",
+      "context": "Llama-2 & \\texttt{k10}, truncation & 0.113198 & $-0.341$ & 0.416 & 0.1132 & at floor \\\\",
+      "evidence_full_precision": "-0.3408",
+      "evidence_files": [
+        "mmlu_pro_power_nulls_v2.csv"
+      ]
+    },
+    {
+      "file": "sections/tab_mmlupro.tex",
+      "line": 15,
+      "value": "-0.914",
+      "context": "Llama-2 & \\texttt{k8}, truncation & 0.107463 & $-0.914$ & 0.736 & 0.0168 & below floor \\\\",
+      "evidence_full_precision": "-0.9142287234042553",
+      "evidence_files": [
+        "heal_readout_v2_permutation_null.json",
+        "s2_03_symmetric_inference.json",
+        "trunc_fix_before_after.json"
+      ]
+    },
+    {
+      "file": "sections/tab_mmlupro.tex",
+      "line": 16,
+      "value": "-0.474",
+      "context": "Llama-3 & \\texttt{k14--k8}, truncation & 0.111868--0.114694 & $-0.474$--$-0.191$ & 0.407--0.852 & 0.1296--0.6631 & all at floor \\\\",
+      "evidence_full_precision": "-0.4737367021276596",
+      "evidence_files": [
+        "heal_readout_v2_permutation_null.json",
+        "s2_03_symmetric_inference.json",
+        "trunc_fix_before_after.json"
+      ]
+    },
+    {
+      "file": "sections/tab_mmlupro.tex",
+      "line": 16,
+      "value": "-0.191",
+      "context": "Llama-3 & \\texttt{k14--k8}, truncation & 0.111868--0.114694 & $-0.474$--$-0.191$ & 0.407--0.852 & 0.1296--0.6631 & all at floor \\\\",
+      "evidence_full_precision": "-0.19115691489361708",
+      "evidence_files": [
+        "s2_03_symmetric_inference.json"
+      ]
+    },
+    {
+      "file": "sections/tab_mmlupro.tex",
+      "line": 18,
+      "value": "-0.158",
+      "context": "Qwen3 & \\texttt{k12}, truncation & 0.115027 & $-0.158$ & 0.428 & 0.4645 & at floor \\\\",
+      "evidence_full_precision": "-0.15791223404255234",
+      "evidence_files": [
+        "s2_03_symmetric_inference.json"
+      ]
+    },
+    {
+      "file": "sections/tab_mmlupro.tex",
+      "line": 19,
+      "value": "0.1872",
+      "context": "Qwen3 & \\texttt{k10}, truncation & 0.118185 & $+0.158$ & 0.233 & 0.1872 & at floor \\\\",
+      "evidence_full_precision": "0.18719999999999998",
+      "evidence_files": [
+        "heal_readout_v2_permutation_null.json",
+        "s2_03_symmetric_inference.json",
+        "s2_03_symmetric_inference.json"
+      ]
+    },
+    {
+      "file": "sections/tab_power.tex",
+      "line": 10,
+      "value": "-0.800",
+      "context": "ARC-Easy & 2376 & $-0.800$ & 1.305 & yes, borderline \\\\",
+      "evidence_full_precision": "-0.8",
+      "evidence_files": [
+        "gate2_letter_content_nulls.json",
+        "gate2_crossfamily_nulls.json",
+        "gate2_crossfamily_nulls.json"
+      ]
+    },
+    {
+      "file": "sections/tab_power.tex",
+      "line": 15,
+      "value": "-1.800",
+      "context": "OpenBookQA & 500 & $-1.800$ & 6.400 & no \\\\",
+      "evidence_full_precision": "-1.7999999999999998",
+      "evidence_files": [
+        "gate2_letter_content_nulls.json",
+        "gate2_letter_content_nulls.json",
+        "gate2_letter_content_nulls.json"
+      ]
+    },
+    {
+      "file": "sections/tab_v2_alternatives.tex",
+      "line": 9,
+      "value": "-0.139",
+      "context": "Own-modal null & Qwen3 \\texttt{k8} & $+1.230$ vs always-E & v2 $-0.139$ & Over-credits by 1.37 pp and flips the sign \\\\",
+      "evidence_full_precision": "-0.13892256688430998",
+      "evidence_files": [
+        "heal_readout_v2_permutation_null.json"
+      ]
+    },
+    {
+      "file": "sections/tab_v2_alternatives.tex",
+      "line": 9,
+      "value": "1.37",
+      "context": "Own-modal null & Qwen3 \\texttt{k8} & $+1.230$ vs always-E & v2 $-0.139$ & Over-credits by 1.37 pp and flips the sign \\\\",
+      "evidence_full_precision": "1.3651877133105803",
+      "evidence_files": [
+        "gate2_crossfamily_nulls.json"
+      ]
+    },
+    {
+      "file": "sections/tab_v2_alternatives.tex",
+      "line": 10,
+      "value": "-0.022",
+      "context": "Content interface & Qwen3 heal@7000 & content $-3.610$ & letter $-0.022$ & More negative under the same permutation null \\\\",
+      "evidence_full_precision": "-0.02208277546330434",
+      "evidence_files": [
+        "heal_readout_v2_permutation_null.json"
+      ]
+    },
+    {
+      "file": "sections/tab_v2_alternatives.tex",
+      "line": 11,
+      "value": "-0.139",
+      "context": "Content interface & Qwen3 \\texttt{k8} & content $-1.076$ & letter $-0.139$ & More negative under the same permutation null \\\\",
+      "evidence_full_precision": "-0.13892256688430998",
+      "evidence_files": [
+        "heal_readout_v2_permutation_null.json"
+      ]
+    },
+    {
+      "file": "sections/tab_v2_alternatives.tex",
+      "line": 12,
+      "value": "-0.086",
+      "context": "Content interface & OLMo-2 \\texttt{keep8}@121000 & content $-0.086$ & letter $+0.229$ & Does not rescue the damaged read-out \\\\",
+      "evidence_full_precision": "-0.0861",
+      "evidence_files": [
+        "gate2_crossfamily_nulls.csv"
+      ]
+    },
+    {
+      "file": "sections/tab_v2_alternatives.tex",
+      "line": 12,
+      "value": "0.229",
+      "context": "Content interface & OLMo-2 \\texttt{keep8}@121000 & content $-0.086$ & letter $+0.229$ & Does not rescue the damaged read-out \\\\",
+      "evidence_full_precision": "0.229454",
+      "evidence_files": [
+        "gate2_crossfamily_nulls.csv",
+        "GATE2_CROSSFAMILY_VERDICT.md"
+      ]
+    },
+    {
+      "file": "sections/tab_v2_alternatives.tex",
+      "line": 13,
+      "value": "0.997",
+      "context": "Entropy/modal share & Llama-3 \\texttt{k12} & $\\Delta_{\\mathrm{perm}}=+0.002$ & $p=0.997$ & Modal share 0.339 and entropy 0.614 still contain no signal",
+      "evidence_full_precision": "0.9972",
+      "evidence_files": [
+        "gate2_crossfamily_nulls.json",
+        "gate2_crossfamily_nulls.csv"
+      ]
+    },
+    {
+      "file": "sections/tab_v2_full.tex",
+      "line": 9,
+      "value": "0.115276",
+      "context": "Qwen3 & heal@5000 & 0.115276 & 0.115993 & $-0.072$ & 0.231 & 0.5412 & no signal \\\\",
+      "evidence_full_precision": "0.11527593085106383",
+      "evidence_files": [
+        "heal_trajectory_mmlu_pro.json",
+        "heal_degeneracy_decomposition.json",
+        "heal_readout_v2_permutation_null.json"
+      ]
+    },
+    {
+      "file": "sections/tab_v2_full.tex",
+      "line": 9,
+      "value": "0.115993",
+      "context": "Qwen3 & heal@5000 & 0.115276 & 0.115993 & $-0.072$ & 0.231 & 0.5412 & no signal \\\\",
+      "evidence_full_precision": "0.11599253954835909",
+      "evidence_files": [
+        "heal_readout_v2_permutation_null.json"
+      ]
+    },
+    {
+      "file": "sections/tab_v2_full.tex",
+      "line": 9,
+      "value": "-0.072",
+      "context": "Qwen3 & heal@5000 & 0.115276 & 0.115993 & $-0.072$ & 0.231 & 0.5412 & no signal \\\\",
+      "evidence_full_precision": "-0.07191780821917804",
+      "evidence_files": [
+        "gate2_crossfamily_nulls.json"
+      ]
+    },
+    {
+      "file": "sections/tab_v2_full.tex",
+      "line": 9,
+      "value": "0.231",
+      "context": "Qwen3 & heal@5000 & 0.115276 & 0.115993 & $-0.072$ & 0.231 & 0.5412 & no signal \\\\",
+      "evidence_full_precision": "0.230958",
+      "evidence_files": [
+        "gate2_crossfamily_nulls.csv",
+        "gate2_crossfamily_nulls.csv",
+        "gate2_crossfamily_nulls.csv"
+      ]
+    },
+    {
+      "file": "sections/tab_v2_full.tex",
+      "line": 10,
+      "value": "0.115691",
+      "context": "Qwen3 & heal@5500 & 0.115691 & 0.115654 & $+0.004$ & 0.316 & 0.9810 & no signal \\\\",
+      "evidence_full_precision": "0.11569148936170212",
+      "evidence_files": [
+        "heal_trajectory_mmlu_pro.json",
+        "heal_degeneracy_decomposition.json",
+        "heal_readout_v2_permutation_null.json"
+      ]
+    },
+    {
+      "file": "sections/tab_v2_full.tex",
+      "line": 10,
+      "value": "0.115654",
+      "context": "Qwen3 & heal@5500 & 0.115691 & 0.115654 & $+0.004$ & 0.316 & 0.9810 & no signal \\\\",
+      "evidence_full_precision": "0.1156544303413562",
+      "evidence_files": [
+        "heal_readout_v2_permutation_null.json"
+      ]
+    },
+    {
+      "file": "sections/tab_v2_full.tex",
+      "line": 10,
+      "value": "0.9810",
+      "context": "Qwen3 & heal@5500 & 0.115691 & 0.115654 & $+0.004$ & 0.316 & 0.9810 & no signal \\\\",
+      "evidence_full_precision": "0.981",
+      "evidence_files": [
+        "heal_readout_v2_permutation_null.json"
+      ]
+    },
+    {
+      "file": "sections/tab_v2_full.tex",
+      "line": 11,
+      "value": "0.114860",
+      "context": "Qwen3 & heal@6000 & 0.114860 & 0.115857 & $-0.100$ & 0.281 & 0.4932 & no signal \\\\",
+      "evidence_full_precision": "0.11486037234042554",
+      "evidence_files": [
+        "heal_trajectory_mmlu_pro.json",
+        "heal_degeneracy_decomposition.json",
+        "heal_readout_v2_permutation_null.json"
+      ]
+    },
+    {
+      "file": "sections/tab_v2_full.tex",
+      "line": 11,
+      "value": "0.115857",
+      "context": "Qwen3 & heal@6000 & 0.114860 & 0.115857 & $-0.100$ & 0.281 & 0.4932 & no signal \\\\",
+      "evidence_full_precision": "0.11585738996624578",
+      "evidence_files": [
+        "heal_readout_v2_permutation_null.json"
+      ]
+    },
+    {
+      "file": "sections/tab_v2_full.tex",
+      "line": 11,
+      "value": "-0.100",
+      "context": "Qwen3 & heal@6000 & 0.114860 & 0.115857 & $-0.100$ & 0.281 & 0.4932 & no signal \\\\",
+      "evidence_full_precision": "-0.09985119047619047",
+      "evidence_files": [
+        "gate2_crossfamily_nulls.json"
+      ]
+    },
+    {
+      "file": "sections/tab_v2_full.tex",
+      "line": 11,
+      "value": "0.281",
+      "context": "Qwen3 & heal@6000 & 0.114860 & 0.115857 & $-0.100$ & 0.281 & 0.4932 & no signal \\\\",
+      "evidence_full_precision": "0.2805197524706715",
+      "evidence_files": [
+        "heal_readout_v2_permutation_null.json"
+      ]
+    },
+    {
+      "file": "sections/tab_v2_full.tex",
+      "line": 12,
+      "value": "0.115864",
+      "context": "Qwen3 & heal@6500 & 0.114943 & 0.115864 & $-0.092$ & 0.287 & 0.5204 & no signal \\\\",
+      "evidence_full_precision": "0.11586431186721219",
+      "evidence_files": [
+        "heal_readout_v2_permutation_null.json"
+      ]
+    },
+    {
+      "file": "sections/tab_v2_full.tex",
+      "line": 12,
+      "value": "-0.092",
+      "context": "Qwen3 & heal@6500 & 0.114943 & 0.115864 & $-0.092$ & 0.287 & 0.5204 & no signal \\\\",
+      "evidence_full_precision": "-0.0920827824658993",
+      "evidence_files": [
+        "heal_readout_v2_permutation_null.json"
+      ]
+    },
+    {
+      "file": "sections/tab_v2_full.tex",
+      "line": 12,
+      "value": "0.287",
+      "context": "Qwen3 & heal@6500 & 0.114943 & 0.115864 & $-0.092$ & 0.287 & 0.5204 & no signal \\\\",
+      "evidence_full_precision": "0.286690758018449",
+      "evidence_files": [
+        "heal_readout_v2_permutation_null.json"
+      ]
+    },
+    {
+      "file": "sections/tab_v2_full.tex",
+      "line": 13,
+      "value": "0.115775",
+      "context": "Qwen3 & heal@7000 & 0.115775 & 0.115995 & $-0.022$ & 0.241 & 0.8522 & no signal \\\\",
+      "evidence_full_precision": "0.1157746010638298",
+      "evidence_files": [
+        "heal_trajectory_mmlu_pro.json",
+        "heal_degeneracy_decomposition.json",
+        "heal_readout_v2_permutation_null.json"
+      ]
+    },
+    {
+      "file": "sections/tab_v2_full.tex",
+      "line": 13,
+      "value": "0.115995",
+      "context": "Qwen3 & heal@7000 & 0.115775 & 0.115995 & $-0.022$ & 0.241 & 0.8522 & no signal \\\\",
+      "evidence_full_precision": "0.11599542881846284",
+      "evidence_files": [
+        "heal_readout_v2_permutation_null.json"
+      ]
+    },
+    {
+      "file": "sections/tab_v2_full.tex",
+      "line": 13,
+      "value": "-0.022",
+      "context": "Qwen3 & heal@7000 & 0.115775 & 0.115995 & $-0.022$ & 0.241 & 0.8522 & no signal \\\\",
+      "evidence_full_precision": "-0.02208277546330434",
+      "evidence_files": [
+        "heal_readout_v2_permutation_null.json"
+      ]
+    },
+    {
+      "file": "sections/tab_v2_full.tex",
+      "line": 13,
+      "value": "0.241",
+      "context": "Qwen3 & heal@7000 & 0.115775 & 0.115995 & $-0.022$ & 0.241 & 0.8522 & no signal \\\\",
+      "evidence_full_precision": "0.24050632911392406",
+      "evidence_files": [
+        "gate2_letter_content_nulls.json"
+      ]
+    },
+    {
+      "file": "sections/tab_v2_full.tex",
+      "line": 14,
+      "value": "0.117271",
+      "context": "OLMo-2 & \\texttt{keep8}@45000 & 0.117271 & 0.114046 & $+0.322$ & 0.370 & 0.0856 & no signal \\\\",
+      "evidence_full_precision": "0.11727061170212766",
+      "evidence_files": [
+        "heal_trajectory_mmlu_pro.json",
+        "heal_degeneracy_decomposition.json",
+        "heal_readout_v2_permutation_null.json"
+      ]
+    },
+    {
+      "file": "sections/tab_v2_full.tex",
+      "line": 14,
+      "value": "0.114046",
+      "context": "OLMo-2 & \\texttt{keep8}@45000 & 0.117271 & 0.114046 & $+0.322$ & 0.370 & 0.0856 & no signal \\\\",
+      "evidence_full_precision": "0.11404611489476507",
+      "evidence_files": [
+        "heal_readout_v2_permutation_null.json"
+      ]
+    },
+    {
+      "file": "sections/tab_v2_full.tex",
+      "line": 14,
+      "value": "0.322",
+      "context": "OLMo-2 & \\texttt{keep8}@45000 & 0.117271 & 0.114046 & $+0.322$ & 0.370 & 0.0856 & no signal \\\\",
+      "evidence_full_precision": "0.3224496807362587",
+      "evidence_files": [
+        "heal_readout_v2_permutation_null.json"
+      ]
+    },
+    {
+      "file": "sections/tab_v2_full.tex",
+      "line": 14,
+      "value": "0.370",
+      "context": "OLMo-2 & \\texttt{keep8}@45000 & 0.117271 & 0.114046 & $+0.322$ & 0.370 & 0.0856 & no signal \\\\",
+      "evidence_full_precision": "0.3703176185728529",
+      "evidence_files": [
+        "gate2_crossfamily_nulls.json"
+      ]
+    },
+    {
+      "file": "sections/tab_v2_full.tex",
+      "line": 15,
+      "value": "0.113152",
+      "context": "OLMo-2 & \\texttt{keep8}@121000 & 0.115442 & 0.113152 & $+0.229$ & 0.446 & 0.3122 & no signal \\\\",
+      "evidence_full_precision": "0.1131515807249856",
+      "evidence_files": [
+        "heal_readout_v2_permutation_null.json"
+      ]
+    },
+    {
+      "file": "sections/tab_v2_full.tex",
+      "line": 15,
+      "value": "0.229",
+      "context": "OLMo-2 & \\texttt{keep8}@121000 & 0.115442 & 0.113152 & $+0.229$ & 0.446 & 0.3122 & no signal \\\\",
+      "evidence_full_precision": "0.229454",
+      "evidence_files": [
+        "gate2_crossfamily_nulls.csv",
+        "GATE2_CROSSFAMILY_VERDICT.md"
+      ]
+    },
+    {
+      "file": "sections/tab_v2_full.tex",
+      "line": 16,
+      "value": "0.109185",
+      "context": "Qwen3 & \\texttt{k8}, unhealed & 0.107796 & 0.109185 & $-0.139$ & 0.162 & 0.0964 & no signal \\\\",
+      "evidence_full_precision": "0.10918510332841756",
+      "evidence_files": [
+        "heal_readout_v2_permutation_null.json"
+      ]
+    },
+    {
+      "file": "sections/tab_v2_full.tex",
+      "line": 16,
+      "value": "-0.139",
+      "context": "Qwen3 & \\texttt{k8}, unhealed & 0.107796 & 0.109185 & $-0.139$ & 0.162 & 0.0964 & no signal \\\\",
+      "evidence_full_precision": "-0.13892256688430998",
+      "evidence_files": [
+        "heal_readout_v2_permutation_null.json"
+      ]
+    },
+    {
+      "file": "sections/tab_v2_full.tex",
+      "line": 16,
+      "value": "0.162",
+      "context": "Qwen3 & \\texttt{k8}, unhealed & 0.107796 & 0.109185 & $-0.139$ & 0.162 & 0.0964 & no signal \\\\",
+      "evidence_full_precision": "0.16189144795048782",
+      "evidence_files": [
+        "heal_readout_v2_permutation_null.json"
+      ]
+    },
+    {
+      "file": "sections/tab_v2_full.tex",
+      "line": 17,
+      "value": "0.112212",
+      "context": "Qwen3 & intact & 0.461104 & 0.112212 & $+34.889$ & 0.844 & 0.0001 & item-level signal \\\\",
+      "evidence_full_precision": "0.11221228228901119",
+      "evidence_files": [
+        "heal_readout_v2_permutation_null.json"
+      ]
+    },
+    {
+      "file": "sections/tab_v2_full.tex",
+      "line": 17,
+      "value": "34.889",
+      "context": "Qwen3 & intact & 0.461104 & 0.112212 & $+34.889$ & 0.844 & 0.0001 & item-level signal \\\\",
+      "evidence_full_precision": "34.88914411152441",
+      "evidence_files": [
+        "heal_readout_v2_permutation_null.json",
+        "heal_readout_v2_permutation_null.json",
+        "heal_readout_v2_permutation_null.json"
+      ]
+    },
+    {
+      "file": "sections/tab_v2_full.tex",
+      "line": 18,
+      "value": "0.112324",
+      "context": "OLMo-2 & intact & 0.271858 & 0.112324 & $+15.953$ & 0.761 & 0.0001 & item-level signal \\\\",
+      "evidence_full_precision": "0.11232449297971919",
+      "evidence_files": [
+        "gate2_crossfamily_nulls.json"
+      ]
+    },
+    {
+      "file": "sections/tab_v2_full.tex",
+      "line": 18,
+      "value": "15.953",
+      "context": "OLMo-2 & intact & 0.271858 & 0.112324 & $+15.953$ & 0.761 & 0.0001 & item-level signal \\\\",
+      "evidence_full_precision": "15.953461248820611",
+      "evidence_files": [
+        "heal_readout_v2_permutation_null.json",
+        "heal_readout_v2_permutation_null.json",
+        "heal_readout_v2_permutation_null.json"
+      ]
+    },
+    {
+      "file": "sections/tab_v2_full.tex",
+      "line": 18,
+      "value": "0.761",
+      "context": "OLMo-2 & intact & 0.271858 & 0.112324 & $+15.953$ & 0.761 & 0.0001 & item-level signal \\\\",
+      "evidence_full_precision": "0.7606093579978237",
+      "evidence_files": [
+        "gate2_letter_content_nulls.json"
+      ]
+    },
+    {
+      "file": "sections/tab_v2_full.tex",
+      "line": 19,
+      "value": "0.111508",
+      "context": "OLMo-2 & \\texttt{keep10}@83500 & 0.112450 & 0.111508 & $+0.094$ & 0.481 & 0.6966 & no signal \\\\",
+      "evidence_full_precision": "0.11150778275929525",
+      "evidence_files": [
+        "heal_readout_v2_permutation_null.json"
+      ]
+    },
+    {
+      "file": "sections/tab_v2_full.tex",
+      "line": 19,
+      "value": "0.094",
+      "context": "OLMo-2 & \\texttt{keep10}@83500 & 0.112450 & 0.111508 & $+0.094$ & 0.481 & 0.6966 & no signal \\\\",
+      "evidence_full_precision": "0.09406657018813312",
+      "evidence_files": [
+        "gate2_crossfamily_nulls.json"
+      ]
+    },
+    {
+      "file": "sections/tab_v2_full.tex",
+      "line": 19,
+      "value": "0.481",
+      "context": "OLMo-2 & \\texttt{keep10}@83500 & 0.112450 & 0.111508 & $+0.094$ & 0.481 & 0.6966 & no signal \\\\",
+      "evidence_full_precision": "0.4811083130323803",
+      "evidence_files": [
+        "heal_readout_v2_permutation_null.json"
+      ]
+    }
+  ],
+  "derived_as_difference": [
+    {
+      "file": "sections/00_abstract.tex",
+      "line": 2,
+      "value": "18.03",
+      "context": "Multiple-choice scores are commonly interpreted against chance. We argue that this comparison is often insufficient: before an arm is compared with an",
+      "derivation": "18.01801801801802 - -0.0143769968051118"
+    },
+    {
+      "file": "sections/03_method.tex",
+      "line": 23,
+      "value": "-3.807",
+      "context": "The v1 floor asks whether an interface is suitable for mutually comparable arm scores. It is not collapse-invariant as a competence statistic: on the ",
+      "derivation": "-3.7298817832217632 - 0.07734806629834254"
+    },
+    {
+      "file": "sections/03b_nulls.tex",
+      "line": 12,
+      "value": "14.53",
+      "context": "``Longest'' may mean characters or continuation tokens. On identical items, \\texttt{split} changes by as much as 2.02 points across the studied tasks,",
+      "derivation": "5.092592592592593 - -9.441489361702128"
+    },
+    {
+      "file": "sections/03b_nulls.tex",
+      "line": 12,
+      "value": "35.20",
+      "context": "``Longest'' may mean characters or continuation tokens. On identical items, \\texttt{split} changes by as much as 2.02 points across the studied tasks,",
+      "derivation": "-8.10580204778157 - -43.30119680851064"
+    },
+    {
+      "file": "sections/03b_nulls.tex",
+      "line": 18,
+      "value": "0.9003",
+      "context": "Within the token unit, the floor is tokenizer-valued. On identical items, the \\texttt{split} floor moves by 0.9003 points in the audited comparison an",
+      "derivation": "0.906 - 0.005733005733005733"
+    },
+    {
+      "file": "sections/05_analysis.tex",
+      "line": 50,
+      "value": "-3.610",
+      "context": "the A01 own-modal null over-credits P1 by 1.37 points and flips its sign; for Qwen3 heal@7000 and unhealed \\texttt{k8}, content is $-3.610$ and $-1.07",
+      "derivation": "-2.9963 - 0.6135951165980784"
+    },
+    {
+      "file": "sections/05_analysis.tex",
+      "line": 50,
+      "value": "-1.076",
+      "context": "the A01 own-modal null over-credits P1 by 1.37 points and flips its sign; for Qwen3 heal@7000 and unhealed \\texttt{k8}, content is $-3.610$ and $-1.07",
+      "derivation": "-0.23145400593471824 - 0.8447852760736195"
+    },
+    {
+      "file": "sections/05_analysis.tex",
+      "line": 56,
+      "value": "18.03",
+      "context": "For OLMo-2 \\texttt{keep8} on MMLU, fp32 removes all 4,303 bf16 exact top-two ties and changes 2,532 of 14,042 letter argmax decisions, or 18.03\\%. Let",
+      "derivation": "18.01801801801802 - -0.0143769968051118"
+    },
+    {
+      "file": "sections/05_analysis.tex",
+      "line": 56,
+      "value": "-0.0015",
+      "context": "For OLMo-2 \\texttt{keep8} on MMLU, fp32 removes all 4,303 bf16 exact top-two ties and changes 2,532 of 14,042 letter argmax decisions, or 18.03\\%. Let",
+      "derivation": "-4.587765957446808 - -4.586241276171486"
+    },
+    {
+      "file": "sections/05_analysis.tex",
+      "line": 56,
+      "value": "-0.0064",
+      "context": "For OLMo-2 \\texttt{keep8} on MMLU, fp32 removes all 4,303 bf16 exact top-two ties and changes 2,532 of 14,042 letter argmax decisions, or 18.03\\%. Let",
+      "derivation": "0.515391 - 0.521763"
+    },
+    {
+      "file": "sections/05_analysis.tex",
+      "line": 56,
+      "value": "0.5702",
+      "context": "For OLMo-2 \\texttt{keep8} on MMLU, fp32 removes all 4,303 bf16 exact top-two ties and changes 2,532 of 14,042 letter argmax decisions, or 18.03\\%. Let",
+      "derivation": "0.09906001446131604 - -0.4711388455538224"
+    },
+    {
+      "file": "sections/05_analysis.tex",
+      "line": 56,
+      "value": "-1.538",
+      "context": "For OLMo-2 \\texttt{keep8} on MMLU, fp32 removes all 4,303 bf16 exact top-two ties and changes 2,532 of 14,042 letter argmax decisions, or 18.03\\%. Let",
+      "derivation": "-0.40625 - 1.1319424243683498"
+    },
+    {
+      "file": "sections/09_appendix.tex",
+      "line": 5,
+      "value": "0.0371",
+      "context": "Table~  reports all 27 cells used in the post-hoc v2 re-analysis. G1 and G2 fire on no cell; all 27 pass the integrity gate; the permutation and boots",
+      "derivation": "0.906 - 0.8688792165397171"
+    },
+    {
+      "file": "sections/tab_v2_alternatives.tex",
+      "line": 9,
+      "value": "1.230",
+      "context": "Own-modal null & Qwen3 \\texttt{k8} & $+1.230$ vs always-E & v2 $-0.139$ & Over-credits by 1.37 pp and flips the sign \\\\",
+      "derivation": "1.5690516392289293 - 0.339"
+    },
+    {
+      "file": "sections/tab_v2_alternatives.tex",
+      "line": 10,
+      "value": "-3.610",
+      "context": "Content interface & Qwen3 heal@7000 & content $-3.610$ & letter $-0.022$ & More negative under the same permutation null \\\\",
+      "derivation": "-2.9963 - 0.6135951165980784"
+    },
+    {
+      "file": "sections/tab_v2_alternatives.tex",
+      "line": 11,
+      "value": "-1.076",
+      "context": "Content interface & Qwen3 \\texttt{k8} & content $-1.076$ & letter $-0.139$ & More negative under the same permutation null \\\\",
+      "derivation": "-0.23145400593471824 - 0.8447852760736195"
+    }
+  ],
+  "gate_max_unmatched": 0,
+  "numbers_gate_pass": true
+}

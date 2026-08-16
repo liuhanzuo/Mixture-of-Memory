@@ -1,0 +1,24 @@
+{
+  "_purpose": "paperC-side machine-readable home for the MMLU content null quoted at README.md:23. Emitted by MAIN 2026-08-15, 0 GPU, in response to a provenance gap the E3 checker self-reported (paperC/evidence/prose_vs_evidence_check.json).",
+  "_why_this_file_exists": "README.md:23 quotes `longest-option split = 0.2845 (token unit)` for MMLU content. Before this file, that value had NO paperC-side machine-readable home -- it lived only in A01's evidence. Same fragmentation class as gap E2, but for a value E2's 9-row table does not cover, so closing E2 did not close this.",
+  "_main_verification": "I first grepped paperC/evidence/ for 0.2845 and got THREE hits, which looked like the gap did not exist. It does. The hit in second_mc_benchmark/gate2_letter_content_nulls.json is /tasks/arc_challenge/arms/7B_keep14_step200000/interfaces/content_raw/vs_null/longest_last/residual_fraction = 0.28453608247422674 -- a DIFFERENT task and a DIFFERENT quantity that merely agrees to 4 dp. The third hit is the checker's own report of the gap. Matching on a rounded value nearly manufactured a false negative here, the mirror image of the failure that E2's own self-correction warned about.",
+  "construct": "MMLU, content interface",
+  "convention": "longest-option, split credit",
+  "unit": "token",
+  "value_full_precision": 0.28445022076627263,
+  "value_as_quoted_in_readme": 0.2845,
+  "chance": 0.25,
+  "invariant_across_arms": true,
+  "n_arms_checked": 6,
+  "per_arm": {
+    "7B_base": 0.28445022076627263,
+    "7B_shortgpt16_step200000": 0.28445022076627263,
+    "7B_keep14_step200000": 0.28445022076627263,
+    "7B_keep12_step124000": 0.28445022076627263,
+    "7B_keep10_step83500": 0.28445022076627263,
+    "7B_keep8_step121000": 0.28445022076627263
+  },
+  "canonical_upstream_source": "proposal/active/A01-null-calibration-methodology/evidence/gate3_content_null_conventions.json",
+  "_not_a_recomputation": "This file COPIES A01's measured value; it does not re-derive it. The authority remains the upstream source named above. Asserted here: all 6 A01 arms agree to 1e-12.",
+  "_scope": "Closes the provenance gap only. Does NOT alter any number, and does not touch README.md."
+}

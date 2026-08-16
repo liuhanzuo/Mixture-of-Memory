@@ -1,0 +1,23 @@
+\section{Experimental Setup}
+\label{sec:setup}
+
+\paragraph{Benchmarks and constructs.}
+We evaluate letter constructs on MMLU, ARC-Challenge, ARC-Easy, OpenBookQA, CommonsenseQA, PIQA, MMLU-Pro, and Winogrande as a negative control; BoolQ supplies an additional binary label floor. Content-side longest-option constructs are evaluated on MMLU, MMLU-Pro, and the five non-MMLU evidence tasks, with Winogrande retained only as a control. The target inventory comprises ten constructs plus the control; OpenBookQA content is reported under both character and token units rather than counted twice.
+
+\paragraph{Models and structural damage.}
+The four families are OLMo-2-7B, Llama-2-7B, Llama-3-8B, and Qwen3-8B-Base. OLMo-2 arms are prune-then-heal checkpoints, including \texttt{keep8}, \texttt{keep10}, \texttt{keep12}, \texttt{keep14}, and \texttt{shortgpt16}. Non-OLMo damage is evaluation-time front-$N$ truncation: the intact base model is loaded and its layer list is replaced by the first $N$ blocks, with no fresh block, optimizer, gradient, healing, or damaged checkpoint. This is a regime confound, not a clean family contrast, and every joint table labels it. Qwen3 has 36 layers whereas the other families have 32; consequently \texttt{k8} retains 22.2\% versus 25.0\% of the stack.
+
+\paragraph{Interfaces and scoring protocol.}
+The letter prompt is the content prompt with the labelled option body inserted before \texttt{Answer:}; the letter interface scores the candidate continuations `` A'', `` B'', and so forth. The content interface omits the labelled body and scores option text. Scoring is likelihood-based throughout: summed token log-probability over each candidate continuation followed by argmax. There is no sampling, no decoding, and no regular expression over generated text.
+
+All results use \texttt{chat\_template = False}. The evaluated systems are base language models with no supervised fine-tuning and no reinforcement learning from human feedback, so applying a chat template would be an unfair and non-comparable measurement. We also use \texttt{add\_bos = 0}, \texttt{desc\_style = none}, fp32 master weights with bf16-autocast forward, and batch size 48. MMLU-Pro cross-family runs use maximum length 2048; every final cell has zero truncation.
+
+\paragraph{Statistics and integrity.}
+For deterministic per-item null predictions we report 10,000-resample paired-bootstrap intervals and two-sided mid-$p$ values with seed 7, plus exact McNemar tests. V2 additionally uses 10,000 within-stratum permutations. Every cell requires shard indices exactly $\{0,\ldots,7\}$, expected cardinality, zero duplicate IDs, zero NaNs, zero truncations, and \texttt{chat\_template is False}; partial merges raise an error.
+
+\paragraph{Power design.}
+The five smaller evidence benchmarks are unable to resolve every effect of interest, so null results are never interpreted without the power table (Table~\ref{tab:power}, Appendix~\ref{app:designated}).
+MMLU-Pro supplies $n=12032$ and makes all 21 letter-floor cells capable of detecting MMLU's $-1.389$-point reference effect; their 95\% half-widths range from 0.083 to 0.968 points.
+
+\paragraph{Designated damaged cells, and multiplicity.}
+Every denominator below is over \emph{designated damaged} cells: arms structurally pruned and reported as damaged rungs of their family. The designation is fixed by construction, never by a measured score, so counts such as 14/15 and 10/15 are over exactly this set and cannot be inflated by selecting on outcome. Across such cells we report per-cell $\alpha=0.05$ decisions with no family-wise correction, so the headline counts are counts of per-cell decisions rather than simultaneously valid claims; the conclusions rest on the aggregate's near-unanimity (0/60 damaged cells clear their floor), not on one cell. Appendix~\ref{app:designated} states both.

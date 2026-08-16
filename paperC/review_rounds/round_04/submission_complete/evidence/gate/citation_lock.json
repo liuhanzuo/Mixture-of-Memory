@@ -1,0 +1,82 @@
+{
+  "schema_version": "1.0.0",
+  "created": "2026-08-15T20:42:16",
+  "round": 3,
+  "n_bib_entries": 17,
+  "n_cited_in_manuscript": 17,
+  "n_uncited_dead_weight": 0,
+  "dead_weight_note": "ZERO uncited entries -- every bib key is actually \\cite'd. Verified by parsing all \\cite/\\citet/\\citep across sections/*.tex + main.tex.",
+  "families_and_status": {
+    "openreview_family": {
+      "file": "gate/venue_verification_openreview.json",
+      "n_keys_covered": 6,
+      "rule": "ICLR/NeurIPS/ICML require venueid + Camera_Ready_Revision on api2.openreview.net; DBLP/S2 lag and will misreport 2026 conference papers as preprints",
+      "status": "verified in an earlier pass; NOT re-verified this round"
+    },
+    "acl_family": {
+      "file": "gate/venue_verification_acl.json",
+      "n_keys_covered": 5,
+      "rule": "ACL family INCLUDING Findings requires aclanthology + DBLP, NOT OpenReview. Do not generalise the OpenReview rule here.",
+      "status": "verified in an earlier pass; NOT re-verified this round"
+    },
+    "classical_statistics": {
+      "n_keys": 6,
+      "keys": [
+        "bennett1954communications",
+        "brennan1981kappa",
+        "brenner1996weightedkappa",
+        "cohen1960kappa",
+        "devries2008pooledkappa",
+        "frary1988formula"
+      ],
+      "why_not_covered_by_either_file": "These are pre-digital-era statistics/psychometrics references (kappa and formula-scoring literature). They are NOT in OpenReview and NOT in the ACL Anthology, so neither family's verification path applies to them. Their absence from those two files is CORRECT, not an oversight.",
+      "required_path": "journal metadata via DOI/Crossref or the publisher of record; plus LOCAL-SUPPORT verification that each supports the sentence citing it",
+      "status": "UNVERIFIED -- neither metadata nor local support checked this round",
+      "entries": {
+        "bennett1954communications": {
+          "type": "article",
+          "title": "Communications Through Limited Response Questioning",
+          "year": "1954",
+          "venue": "Public Opinion Quarterly"
+        },
+        "brennan1981kappa": {
+          "type": "article",
+          "title": "Coefficient Kappa: Some Uses, Misuses, and Alternatives",
+          "year": "1981",
+          "venue": "Educational and Psychological Measurement"
+        },
+        "brenner1996weightedkappa": {
+          "type": "article",
+          "title": "Dependence of Weighted Kappa Coefficients on the Number of Categories",
+          "year": "1996",
+          "venue": "Epidemiology"
+        },
+        "cohen1960kappa": {
+          "type": "article",
+          "title": "A Coefficient of Agreement for Nominal Scales",
+          "year": "1960",
+          "venue": "Educational and Psychological Measurement"
+        },
+        "devries2008pooledkappa": {
+          "type": "article",
+          "title": "Using Pooled Kappa to Summarize Interrater Agreement across Many Items",
+          "year": "2008",
+          "venue": "Field Methods"
+        },
+        "frary1988formula": {
+          "type": "article",
+          "title": "Formula Scoring of Multiple-Choice Tests (Correction for Guessing)",
+          "year": "1988",
+          "venue": "Educational Measurement: Issues and Practice"
+        }
+      }
+    }
+  },
+  "gate_verdict": "PARTIAL. 11/17 covered by a family file from an earlier pass; 6/17 (classical statistics) have no verification at all. The citation integrity gate therefore does NOT pass at round 3.",
+  "why_this_matters_for_this_paper_specifically": "paperC's contribution is a MEASUREMENT rule that leans on the psychometric notion of a best-constant/chance baseline. The classical kappa and formula-scoring citations are exactly where a reviewer would probe whether the paper has correctly attributed a prior idea. An unverified local-support claim there is a higher risk than an unverified conference venue string.",
+  "not_done": [
+    "metadata verification for the 6 classical refs",
+    "local-support verification for ALL 17 (no round has done this)",
+    "re-verification of the 11 previously-checked venue strings"
+  ]
+}

@@ -1,0 +1,782 @@
+{
+  "schema_version": "2.0.0",
+  "round": 4,
+  "paper": "/tmp/r04era/paperC",
+  "snapshot_sha256": "ffd5fd7d8c3d8b30d44c684f03fb7261972e378e30eb33b032a5640788ab162f",
+  "n_files": 76,
+  "n_evidence_files": 30,
+  "n_sanitized_files": 12,
+  "freeze_gate_pass": true,
+  "missing_dependencies": [],
+  "explicit_requests_denied": [],
+  "named_artifacts_missing": [],
+  "named_artifacts_present": [
+    "code/check_prose_vs_evidence.py",
+    "code/emit_tab_construct_nulls.py",
+    "evidence/POWER_WALL_VERDICT.md",
+    "evidence/R7_BOOTSTRAP_P_FIX.md",
+    "evidence/SECOND_MC_BENCHMARK_VERDICT.md",
+    "evidence/claim_evidence_map.tsv",
+    "evidence/construct_nulls_length_unit.json",
+    "evidence/floor_winners_curse_calibration.json",
+    "evidence/heal_readout_v2_permutation_null.json",
+    "evidence/mmlu_scale_power/",
+    "evidence/second_mc_benchmark/"
+  ],
+  "named_artifacts_dangling_by_blindness_rule": [
+    {
+      "named_path": "tcodex_out/EVIDENCE_PACK.md",
+      "cited_in": [
+        "/tmp/r04era/paperC/sections/09_appendix.tex"
+      ],
+      "reason": "target is excluded from every blind snapshot by rule; the prose points reviewers at a file they cannot open"
+    }
+  ],
+  "blindness_violations": [],
+  "blindness_warnings": [
+    {
+      "file": "code/check_prose_vs_evidence.py",
+      "kind": "content-warn",
+      "pattern": "tcodex_out",
+      "line": 277,
+      "match": "tcodex_out"
+    },
+    {
+      "file": "code/measure_page_budget.py",
+      "kind": "content-warn",
+      "pattern": "review_rounds",
+      "line": 257,
+      "match": "review_rounds"
+    },
+    {
+      "file": "code/measure_page_budget.py",
+      "kind": "content-warn",
+      "pattern": "tcodex_out",
+      "line": 257,
+      "match": "tcodex_out"
+    },
+    {
+      "file": "evidence/claim_evidence_map.tsv",
+      "kind": "content-warn",
+      "pattern": "tcodex_out",
+      "line": 6,
+      "match": "tcodex_out"
+    },
+    {
+      "file": "evidence/prose_vs_evidence_check.json",
+      "kind": "content-warn",
+      "pattern": "tcodex_out",
+      "line": 1299,
+      "match": "tcodex_out"
+    }
+  ],
+  "internal_leak_violations": [],
+  "excluded_by_blindness_rule": [
+    "review_rounds",
+    "review_history",
+    "tcodex_out",
+    "SCORE_HISTORY",
+    "review_prompts",
+    "WRITER_NOTES"
+  ],
+  "excluded_files": [
+    {
+      "path": "evidence/internal_paths_in_submission.json",
+      "reason": "blindness screen: content discloses the review process or carries author-side steering (\\bround[_ -]?0?\\d+\\b(?=.{0,60}(?i:review|reviewer|submission|snapshot|audit|pre-review)) @L4; round_\\d @L4; (?<!double-)\\bblind reviewers?\\b @L4) -- withheld whole rather than redacted, because redacting it would destroy the record's meaning",
+      "named_by_prose": false,
+      "explicitly_requested": false
+    },
+    {
+      "path": "evidence/repository_inventory.md",
+      "reason": "blindness screen: content discloses the review process or carries author-side steering (round_\\d @L23) -- withheld whole rather than redacted, because redacting it would destroy the record's meaning",
+      "named_by_prose": false,
+      "explicitly_requested": false
+    },
+    {
+      "path": "evidence/s2_02_stratified_ordering.json",
+      "reason": "blindness screen: content discloses the review process or carries author-side steering (\\bround[_ -]?0?\\d+\\b(?=.{0,60}(?i:review|reviewer|submission|snapshot|audit|pre-review)) @L134; round_\\d @L134) -- withheld whole rather than redacted, because redacting it would destroy the record's meaning",
+      "named_by_prose": false,
+      "explicitly_requested": false
+    },
+    {
+      "path": "evidence/s2_03_symmetric_inference.json",
+      "reason": "blindness screen: content discloses the review process or carries author-side steering (\\bround[_ -]?0?\\d+\\b(?=.{0,60}(?i:review|reviewer|submission|snapshot|audit|pre-review)) @L10; round_\\d @L10) -- withheld whole rather than redacted, because redacting it would destroy the record's meaning",
+      "named_by_prose": false,
+      "explicitly_requested": false
+    },
+    {
+      "path": "evidence/venue_page_budget_round03.json",
+      "reason": "blindness screen: content discloses the review process or carries author-side steering (\\bround[_ -]?0?\\d+\\b(?=.{0,60}(?i:review|reviewer|submission|snapshot|audit|pre-review)) @L4; round_\\d @L5; (?i)\\b(?:pre-review|prior[- ]round|previous round|earlier round)\\b @L4) -- withheld whole rather than redacted, because redacting it would destroy the record's meaning",
+      "named_by_prose": false,
+      "explicitly_requested": false
+    },
+    {
+      "path": "gate/venue_page_limit.json",
+      "reason": "blindness screen: content discloses the review process or carries author-side steering (\\bround[_ -]?0?\\d+\\b(?=.{0,60}(?i:review|reviewer|submission|snapshot|audit|pre-review)) @L152; round_\\d @L152) -- withheld whole rather than redacted, because redacting it would destroy the record's meaning",
+      "named_by_prose": false,
+      "explicitly_requested": false
+    },
+    {
+      "path": "gate/venue_verification_openreview.json",
+      "reason": "blindness screen: content discloses the review process or carries author-side steering (\\bround[_ -]?0?\\d+\\b(?=.{0,60}(?i:review|reviewer|submission|snapshot|audit|pre-review)) @L34; round_\\d @L34) -- withheld whole rather than redacted, because redacting it would destroy the record's meaning",
+      "named_by_prose": false,
+      "explicitly_requested": false
+    }
+  ],
+  "sanitize_rules": [
+    {
+      "pattern": "/apdcephfs_[A-Za-z0-9]+/share_\\d+/pighzliu_code/Mixture-of-Memory",
+      "replacement": "<REPO_ROOT>"
+    },
+    {
+      "pattern": "/apdcephfs_[A-Za-z0-9]+/share_\\d+/pighzliu_code",
+      "replacement": "<WORKSPACE>"
+    },
+    {
+      "pattern": "/apdcephfs_[A-Za-z0-9_]+",
+      "replacement": "<INTERNAL_MOUNT>"
+    },
+    {
+      "pattern": "\\b(?:28\\.89\\.19\\.21|28\\.89\\.18\\.212|28\\.85\\.35\\.73|28\\.82\\.250\\.82|28\\.83\\.24\\.104)\\b(?::\\d+)?",
+      "replacement": "<NODE>"
+    },
+    {
+      "pattern": "\\b[A-Za-z0-9][A-Za-z0-9.-]*\\.(?:woa|oa)\\.com(?::\\d+)?",
+      "replacement": "<INTERNAL_HOST>"
+    },
+    {
+      "pattern": "(?i)\\btencent[A-Za-z0-9_-]*\\.(?:site|com|net|local)\\b",
+      "replacement": "<INTERNAL_HOST>"
+    },
+    {
+      "pattern": "(?i)\\bpighzliu[A-Za-z0-9_-]*",
+      "replacement": "<WORKSPACE_OWNER>"
+    },
+    {
+      "pattern": "(?i)\\btencent[A-Za-z0-9_-]*",
+      "replacement": "<INTERNAL_ORG>"
+    },
+    {
+      "pattern": "(?i)\\b(?:lhz24|liuhanzuo)[A-Za-z0-9_-]*",
+      "replacement": "<AUTHOR>"
+    },
+    {
+      "pattern": "(?i)\\btsinghua[A-Za-z0-9_-]*",
+      "replacement": "<AFFILIATION>"
+    }
+  ],
+  "artifact_policy": "default-include: <paper>/{evidence,gate,code} are packed recursively; --exclude withholds. Inverted from the v1 --evidence whitelist on 2026-08-16 after round_04 shipped 2 of 25 artifact records with missing_dependencies=[].",
+  "blindness_note": "This snapshot deliberately contains NO previous reviews, scores, response letters, writer notes, or target thresholds. Reviewers must see only this directory and the rubric. Two tiers are enforced: blindness_violations (prior-round disclosure or author-side steering) are FATAL and the file is withheld; blindness_warnings (a bare mention of an excluded directory name, with no prior-round content) are recorded and shipped, per the adjudication in evidence/internal_paths_in_submission.json.",
+  "sanitize_note": "Snapshot copies of text artifacts are redacted for internal absolute paths, node addresses, internal hostnames and affiliation. SOURCE files are byte-unchanged; each redacted record carries source_sha256 of the original.",
+  "files": [
+    {
+      "snapshot_path": "code/check_prose_vs_evidence.py",
+      "source_path": "/tmp/r04era/paperC/code/check_prose_vs_evidence.py",
+      "sanitized": false,
+      "sha256": "047405c89ae8463c8729730e33054487351c40ac5183a42d48b31ed13ed72b59",
+      "size_bytes": 29739
+    },
+    {
+      "snapshot_path": "code/construct_nulls_length_unit.py",
+      "source_path": "/tmp/r04era/paperC/code/construct_nulls_length_unit.py",
+      "sanitized": true,
+      "sanitize_rules_applied": [
+        "(?i)\\bpighzliu[A-Za-z0-9_-]* -> <WORKSPACE_OWNER>"
+      ],
+      "n_substitutions": 1,
+      "source_sha256": "140d16a3b0efe3fe2f095d28b022e594a1a968c0b01c5786feb79af170954b34",
+      "sanitize_note": "snapshot copy is redacted; the SOURCE file is byte-unchanged and its sha256 is source_sha256",
+      "sha256": "d954466cc0174dd68aa7f123d71ee376ad7fcee1442f14990903ed06519b5724",
+      "size_bytes": 11923
+    },
+    {
+      "snapshot_path": "code/emit_tab_construct_nulls.py",
+      "source_path": "/tmp/r04era/paperC/code/emit_tab_construct_nulls.py",
+      "sanitized": false,
+      "sha256": "2d4e8ef1c95458d689b50f7f359cba23b3c3c10341dbd2256b67dafcaa8aabc4",
+      "size_bytes": 19978
+    },
+    {
+      "snapshot_path": "code/gate2_crossfamily_nulls.py",
+      "source_path": "/tmp/r04era/paperC/code/gate2_crossfamily_nulls.py",
+      "sanitized": false,
+      "sha256": "950d58fe63be0659ecde992a18871fac0accca3a15ed3a4be7e03aa4ad89a726",
+      "size_bytes": 34413
+    },
+    {
+      "snapshot_path": "code/heal_degeneracy_decomposition.py",
+      "source_path": "/tmp/r04era/paperC/code/heal_degeneracy_decomposition.py",
+      "sanitized": false,
+      "sha256": "987c6bbbe80c518e5edb92f2e608705142ab7e8b7a43d9242c8836f1f4df7a60",
+      "size_bytes": 5470
+    },
+    {
+      "snapshot_path": "code/heal_readout_v2_permutation_null.py",
+      "source_path": "/tmp/r04era/paperC/code/heal_readout_v2_permutation_null.py",
+      "sanitized": false,
+      "sha256": "fd93dae03f10e4fe652e9b6259fd9506708ddd09e90bdbf1c3d3c8e2ce54113b",
+      "size_bytes": 30074
+    },
+    {
+      "snapshot_path": "code/heal_trajectory_nulls.py",
+      "source_path": "/tmp/r04era/paperC/code/heal_trajectory_nulls.py",
+      "sanitized": false,
+      "sha256": "7957d22c397dd056910aeca6d1c1771b0bc95af7546a7241696b9e6184cf1991",
+      "size_bytes": 13616
+    },
+    {
+      "snapshot_path": "code/measure_page_budget.py",
+      "source_path": "/tmp/r04era/paperC/code/measure_page_budget.py",
+      "sanitized": false,
+      "sha256": "4012ef845f86cef324029745eba0609ca0eee4c8d39089b7154b4551fcf6022e",
+      "size_bytes": 35728
+    },
+    {
+      "snapshot_path": "code/mmlu_pro_power_nulls.py",
+      "source_path": "/tmp/r04era/paperC/code/mmlu_pro_power_nulls.py",
+      "sanitized": false,
+      "sha256": "35ecae361e7f4edc8dbce619dd3c0c98c488c59441187aca22d39c102707a285",
+      "size_bytes": 37569
+    },
+    {
+      "snapshot_path": "code/mmlu_pro_trunc_audit.py",
+      "source_path": "/tmp/r04era/paperC/code/mmlu_pro_trunc_audit.py",
+      "sanitized": true,
+      "sanitize_rules_applied": [
+        "/apdcephfs_[A-Za-z0-9]+/share_\\d+/pighzliu_code -> <WORKSPACE>"
+      ],
+      "n_substitutions": 2,
+      "source_sha256": "e1afe824e2d9522a339295d26134b451de56ef993abdfce223148780c2e2ae6d",
+      "sanitize_note": "snapshot copy is redacted; the SOURCE file is byte-unchanged and its sha256 is source_sha256",
+      "sha256": "ef098469175fe1ee7f3de543601860c4187294f9e3d84214830512b76f55562b",
+      "size_bytes": 6209
+    },
+    {
+      "snapshot_path": "code/mmlu_pro_trunc_fix_compare.py",
+      "source_path": "/tmp/r04era/paperC/code/mmlu_pro_trunc_fix_compare.py",
+      "sanitized": false,
+      "sha256": "01da2590740277aa27da992b216095237a1297ac7f5ae40bf6d6c6f64cc00147",
+      "size_bytes": 10364
+    },
+    {
+      "snapshot_path": "code/s2_02_stratified_ordering.py",
+      "source_path": "/tmp/r04era/paperC/code/s2_02_stratified_ordering.py",
+      "sanitized": true,
+      "sanitize_rules_applied": [
+        "/apdcephfs_[A-Za-z0-9]+/share_\\d+/pighzliu_code/Mixture-of-Memory -> <REPO_ROOT>"
+      ],
+      "n_substitutions": 1,
+      "source_sha256": "a0d03a787bb97700daf1b47f4eaa47ad9ab9b6e6c1ecd8caed97bf0c581061f9",
+      "sanitize_note": "snapshot copy is redacted; the SOURCE file is byte-unchanged and its sha256 is source_sha256",
+      "sha256": "c7fc7c89f555822ad012c92ab9ea0aa6a7c4ffe4a77d17c01b93e207b5232484",
+      "size_bytes": 3625
+    },
+    {
+      "snapshot_path": "code/s2_03_symmetric_inference.py",
+      "source_path": "/tmp/r04era/paperC/code/s2_03_symmetric_inference.py",
+      "sanitized": true,
+      "sanitize_rules_applied": [
+        "/apdcephfs_[A-Za-z0-9]+/share_\\d+/pighzliu_code/Mixture-of-Memory -> <REPO_ROOT>"
+      ],
+      "n_substitutions": 1,
+      "source_sha256": "60e05ebae2cbce47a7852db23b587616268c2e3d2e3b6f9250de0cd8fed0abb8",
+      "sanitize_note": "snapshot copy is redacted; the SOURCE file is byte-unchanged and its sha256 is source_sha256",
+      "sha256": "8157e478df16a536dca32ab7373a0bdad92a6f988139225cd9f76ed2d8eb2e4f",
+      "size_bytes": 5637
+    },
+    {
+      "snapshot_path": "code/validate_tex_static.py",
+      "source_path": "/tmp/r04era/paperC/code/validate_tex_static.py",
+      "sanitized": false,
+      "sha256": "67bb728023a4867884cbf7341187b8b2668137f1c2d41d0c4ffc59588127c26e",
+      "size_bytes": 15037
+    },
+    {
+      "snapshot_path": "evidence/GATE2_CROSSFAMILY_VERDICT.md",
+      "source_path": "/tmp/r04era/paperC/evidence/GATE2_CROSSFAMILY_VERDICT.md",
+      "sanitized": true,
+      "sanitize_rules_applied": [
+        "/apdcephfs_[A-Za-z0-9]+/share_\\d+/pighzliu_code -> <WORKSPACE>"
+      ],
+      "n_substitutions": 1,
+      "source_sha256": "ab21a99def33e4f04d77f070411d940f6a1ebb1d7b35def5fbc6fbc3b29e0228",
+      "sanitize_note": "snapshot copy is redacted; the SOURCE file is byte-unchanged and its sha256 is source_sha256",
+      "sha256": "0ae8fc9ee1892be320b7412e03074b928b992e4de9d7a9f5d43302f3866c50a4",
+      "size_bytes": 27856
+    },
+    {
+      "snapshot_path": "evidence/POWER_WALL_VERDICT.md",
+      "source_path": "/tmp/r04era/paperC/evidence/POWER_WALL_VERDICT.md",
+      "sanitized": true,
+      "sanitize_rules_applied": [
+        "/apdcephfs_[A-Za-z0-9]+/share_\\d+/pighzliu_code/Mixture-of-Memory -> <REPO_ROOT>"
+      ],
+      "n_substitutions": 1,
+      "source_sha256": "0023f0dfffe0b54bbb81b58d707241a135ded9129ea0493ab00ff4cd47f9b1af",
+      "sanitize_note": "snapshot copy is redacted; the SOURCE file is byte-unchanged and its sha256 is source_sha256",
+      "sha256": "7c125f4312e3632e7b568d6525d0a3fbf2363c7df82cdce314658ce734f04016",
+      "size_bytes": 48610
+    },
+    {
+      "snapshot_path": "evidence/R7_BOOTSTRAP_P_FIX.md",
+      "source_path": "/tmp/r04era/paperC/evidence/R7_BOOTSTRAP_P_FIX.md",
+      "sanitized": false,
+      "sha256": "c74e439b8d58a425455cb8f225f4c45529d9f959bf173bfa117bd855d9a3c6b5",
+      "size_bytes": 12557
+    },
+    {
+      "snapshot_path": "evidence/SECOND_MC_BENCHMARK_VERDICT.md",
+      "source_path": "/tmp/r04era/paperC/evidence/SECOND_MC_BENCHMARK_VERDICT.md",
+      "sanitized": true,
+      "sanitize_rules_applied": [
+        "/apdcephfs_[A-Za-z0-9]+/share_\\d+/pighzliu_code/Mixture-of-Memory -> <REPO_ROOT>"
+      ],
+      "n_substitutions": 2,
+      "source_sha256": "8fcba6f0cac960e8510ba518aed5ef982fa475ab9c99e1d9140b184322e06b62",
+      "sanitize_note": "snapshot copy is redacted; the SOURCE file is byte-unchanged and its sha256 is source_sha256",
+      "n_editorial_notes_redacted": 1,
+      "editorial_notes_redacted": [
+        "Do not write \"all fifteen\": the honest count\n   is 10/15 flipped, 0/15 above floor."
+      ],
+      "editorial_note_reason": "the prose names this artifact, so withholding it would recreate the round_04 defect; the author-side editorial asides are removed instead and listed here in full",
+      "sha256": "22ac3f8a73b8bb4ea3c33502d405f4576463b0ae02f5fdf8c6d0e348b051a345",
+      "size_bytes": 26312
+    },
+    {
+      "snapshot_path": "evidence/claim_evidence_map.tsv",
+      "source_path": "/tmp/r04era/paperC/evidence/claim_evidence_map.tsv",
+      "sanitized": false,
+      "sha256": "0a8f9908eef3cfc042bd051b2ac8cac938959579084274ee959d7a2da7933f62",
+      "size_bytes": 5388
+    },
+    {
+      "snapshot_path": "evidence/construct_nulls_length_unit.json",
+      "source_path": "/tmp/r04era/paperC/evidence/construct_nulls_length_unit.json",
+      "sanitized": false,
+      "sha256": "ec8a7f69db01f13acad20a4bfb55fe00d6052bca02470c114ed649cc54d948fc",
+      "size_bytes": 8253
+    },
+    {
+      "snapshot_path": "evidence/e2_single_source_assertion.json",
+      "source_path": "/tmp/r04era/paperC/evidence/e2_single_source_assertion.json",
+      "sanitized": false,
+      "sha256": "ef6e4130ba7ea7e5d14920c8d4eea5fb19d77b1cc1166c5af0e16a77ccc3b71d",
+      "size_bytes": 3030
+    },
+    {
+      "snapshot_path": "evidence/floor_winners_curse_calibration.json",
+      "source_path": "/tmp/r04era/paperC/evidence/floor_winners_curse_calibration.json",
+      "sanitized": false,
+      "sha256": "275112623d057406811f5d77071d3c139b0ffa74d46fc6c8ed33d08c380cd399",
+      "size_bytes": 3296
+    },
+    {
+      "snapshot_path": "evidence/gate/build_record.json",
+      "source_path": "/tmp/r04era/paperC/gate/build_record.json",
+      "sanitized": true,
+      "sanitize_rules_applied": [
+        "/apdcephfs_[A-Za-z0-9]+/share_\\d+/pighzliu_code/Mixture-of-Memory -> <REPO_ROOT>"
+      ],
+      "n_substitutions": 8,
+      "source_sha256": "2ce3b63c1a484bfef8853423acc0ae9f3c8151d1c1012ec3f963c694ecf638d1",
+      "sanitize_note": "snapshot copy is redacted; the SOURCE file is byte-unchanged and its sha256 is source_sha256",
+      "sha256": "872ed41abce9105d18e874b6c9af5d2c2489afaa38aac3801e743578b03d47dd",
+      "size_bytes": 2031
+    },
+    {
+      "snapshot_path": "evidence/gate/citation_lock.json",
+      "source_path": "/tmp/r04era/paperC/gate/citation_lock.json",
+      "sanitized": false,
+      "sha256": "d531e7605d640e8aa67dda3d62dc187de04ebb59e37b18282dbe08237e6a6657",
+      "size_bytes": 4133
+    },
+    {
+      "snapshot_path": "evidence/gate/numbers_check.json",
+      "source_path": "/tmp/r04era/paperC/gate/numbers_check.json",
+      "sanitized": true,
+      "sanitize_rules_applied": [
+        "/apdcephfs_[A-Za-z0-9]+/share_\\d+/pighzliu_code/Mixture-of-Memory -> <REPO_ROOT>"
+      ],
+      "n_substitutions": 1,
+      "source_sha256": "222b3c9354f5639b7714762cf1fa1321cce0b73619c2c31b9902da84c012ba08",
+      "sanitize_note": "snapshot copy is redacted; the SOURCE file is byte-unchanged and its sha256 is source_sha256",
+      "sha256": "b7e884b1a015713be38120ec1367f385ab8899cf4cc76a6b0bfb64233da986d8",
+      "size_bytes": 36916
+    },
+    {
+      "snapshot_path": "evidence/gate/venue_verification_acl.json",
+      "source_path": "/tmp/r04era/paperC/gate/venue_verification_acl.json",
+      "sanitized": false,
+      "sha256": "0b3b3ca60b87f7165058714ed72ec5f8e7687368168fbc3ee7089fd73a7b1793",
+      "size_bytes": 16024
+    },
+    {
+      "snapshot_path": "evidence/gate_coverage_defect.json",
+      "source_path": "/tmp/r04era/paperC/evidence/gate_coverage_defect.json",
+      "sanitized": false,
+      "sha256": "a1046f8acb84d3df869bf7baca295eadae6046aa70625c37b999a3baac1aee27",
+      "size_bytes": 3629
+    },
+    {
+      "snapshot_path": "evidence/heal_degeneracy_decomposition.json",
+      "source_path": "/tmp/r04era/paperC/evidence/heal_degeneracy_decomposition.json",
+      "sanitized": false,
+      "sha256": "e15c6b83284c6f2d8ddf4ddef4a2f8b21c9d5e28b3ce7a115ecaa281748b4d42",
+      "size_bytes": 7752
+    },
+    {
+      "snapshot_path": "evidence/heal_readout_v2_permutation_null.json",
+      "source_path": "/tmp/r04era/paperC/evidence/heal_readout_v2_permutation_null.json",
+      "sanitized": true,
+      "sanitize_rules_applied": [
+        "/apdcephfs_[A-Za-z0-9]+/share_\\d+/pighzliu_code -> <WORKSPACE>"
+      ],
+      "n_substitutions": 15,
+      "source_sha256": "22480221e65f7c27c77c79da1e8fb9bdbaea2f285d98f45a3288771edd09c466",
+      "sanitize_note": "snapshot copy is redacted; the SOURCE file is byte-unchanged and its sha256 is source_sha256",
+      "sha256": "daf02eab44a25de9b1b02507f305939e2933c8eb110673776bc0ba878c3b7fc8",
+      "size_bytes": 91030
+    },
+    {
+      "snapshot_path": "evidence/heal_trajectory_mmlu_pro.json",
+      "source_path": "/tmp/r04era/paperC/evidence/heal_trajectory_mmlu_pro.json",
+      "sanitized": true,
+      "sanitize_rules_applied": [
+        "/apdcephfs_[A-Za-z0-9]+/share_\\d+/pighzliu_code -> <WORKSPACE>"
+      ],
+      "n_substitutions": 2,
+      "source_sha256": "4cbb16e86f4df0f880f0cccea48cb282b53413a3afb925bdf5089001bcf0d282",
+      "sanitize_note": "snapshot copy is redacted; the SOURCE file is byte-unchanged and its sha256 is source_sha256",
+      "sha256": "56a110f37559e9c068a46af1c112a60d17e96e9febeb5c0226dbe571b57be494",
+      "size_bytes": 20032
+    },
+    {
+      "snapshot_path": "evidence/mmlu_content_null_readme_line23.json",
+      "source_path": "/tmp/r04era/paperC/evidence/mmlu_content_null_readme_line23.json",
+      "sanitized": false,
+      "sha256": "e34b5b33172b05b67e23f3f0dbb8d8e0d9a094548b27746cd2cc4651f88f7f4a",
+      "size_bytes": 2196
+    },
+    {
+      "snapshot_path": "evidence/mmlu_scale_power/mmlu_pro_power_nulls.csv",
+      "source_path": "/tmp/r04era/paperC/evidence/mmlu_scale_power/mmlu_pro_power_nulls.csv",
+      "sanitized": false,
+      "sha256": "2e4954ad73e4b737cc876f47a8cc82aac80ca69c334955acaee2a70ce875181b",
+      "size_bytes": 14069
+    },
+    {
+      "snapshot_path": "evidence/mmlu_scale_power/mmlu_pro_power_nulls.json",
+      "source_path": "/tmp/r04era/paperC/evidence/mmlu_scale_power/mmlu_pro_power_nulls.json",
+      "sanitized": false,
+      "sha256": "6b090afb46bae53c8f4f20e263aff61b39574d3c6291a345bc547c92c178b1ec",
+      "size_bytes": 101002
+    },
+    {
+      "snapshot_path": "evidence/mmlu_scale_power/mmlu_pro_power_nulls_v2.csv",
+      "source_path": "/tmp/r04era/paperC/evidence/mmlu_scale_power/mmlu_pro_power_nulls_v2.csv",
+      "sanitized": false,
+      "sha256": "006b2f335688ce50683b37b40011c43f038ee95cdc0b887529af8163730b6ed1",
+      "size_bytes": 50996
+    },
+    {
+      "snapshot_path": "evidence/mmlu_scale_power/mmlu_pro_power_nulls_v2.json",
+      "source_path": "/tmp/r04era/paperC/evidence/mmlu_scale_power/mmlu_pro_power_nulls_v2.json",
+      "sanitized": false,
+      "sha256": "317727f73782111965b6e645947565a2d28355ae730dff11f5af43c6a8cefdbb",
+      "size_bytes": 260165
+    },
+    {
+      "snapshot_path": "evidence/mmlu_scale_power/trunc_audit_1536.json",
+      "source_path": "/tmp/r04era/paperC/evidence/mmlu_scale_power/trunc_audit_1536.json",
+      "sanitized": true,
+      "sanitize_rules_applied": [
+        "/apdcephfs_[A-Za-z0-9]+/share_\\d+/pighzliu_code -> <WORKSPACE>"
+      ],
+      "n_substitutions": 4,
+      "source_sha256": "5df209776d38e35209a9c4ea4e22c9b24f9736f520f4d30a6144a37c85ac6d81",
+      "sanitize_note": "snapshot copy is redacted; the SOURCE file is byte-unchanged and its sha256 is source_sha256",
+      "sha256": "ecc665c3e8b39469e89ed4bf7972e4c921e0b6c36cb4f81baf1787db1e6ef5fa",
+      "size_bytes": 2507
+    },
+    {
+      "snapshot_path": "evidence/mmlu_scale_power/trunc_fix_before_after.json",
+      "source_path": "/tmp/r04era/paperC/evidence/mmlu_scale_power/trunc_fix_before_after.json",
+      "sanitized": false,
+      "sha256": "dcdc3b7565dcf5589fff8456839e2d097fd7c08182ca49e7ce903e94ae2d2fd2",
+      "size_bytes": 29038
+    },
+    {
+      "snapshot_path": "evidence/prose_vs_evidence_check.json",
+      "source_path": "/tmp/r04era/paperC/evidence/prose_vs_evidence_check.json",
+      "sanitized": false,
+      "sha256": "59a3fb0673cef943e6ce5abd22094e85afe30d94d9a6f511007fe249e9cf4a16",
+      "size_bytes": 58980
+    },
+    {
+      "snapshot_path": "evidence/s2_02_strata_raw.json",
+      "source_path": "/tmp/r04era/paperC/evidence/s2_02_strata_raw.json",
+      "sanitized": false,
+      "sha256": "72836e98830fe4971c6eebb69f6f432388e92ea4a9fed17c74026bc3d6c25800",
+      "size_bytes": 1278
+    },
+    {
+      "snapshot_path": "evidence/second_mc_benchmark/gate2_letter_content_nulls.csv",
+      "source_path": "/tmp/r04era/paperC/evidence/second_mc_benchmark/gate2_letter_content_nulls.csv",
+      "sanitized": false,
+      "sha256": "29b9b895a2c788cd93c4261389be5bb453243531ae0b60684029a110c5559508",
+      "size_bytes": 72401
+    },
+    {
+      "snapshot_path": "evidence/second_mc_benchmark/gate2_letter_content_nulls.json",
+      "source_path": "/tmp/r04era/paperC/evidence/second_mc_benchmark/gate2_letter_content_nulls.json",
+      "sanitized": false,
+      "sha256": "34efbdf10939d598fcb223542b5b6ed95f18d91f80aa86db9ac7de6cd50edb97",
+      "size_bytes": 339134
+    },
+    {
+      "snapshot_path": "evidence/second_mc_benchmark_crossfamily/gate2_crossfamily_nulls.csv",
+      "source_path": "/tmp/r04era/paperC/evidence/second_mc_benchmark_crossfamily/gate2_crossfamily_nulls.csv",
+      "sanitized": false,
+      "sha256": "0d90b68a4141fc1e3ac3b8a8821060ea85725ce879e9d6f6d32ee19f02a9814b",
+      "size_bytes": 203150
+    },
+    {
+      "snapshot_path": "evidence/second_mc_benchmark_crossfamily/gate2_crossfamily_nulls.json",
+      "source_path": "/tmp/r04era/paperC/evidence/second_mc_benchmark_crossfamily/gate2_crossfamily_nulls.json",
+      "sanitized": false,
+      "sha256": "921cdf2e4fef245d2cf1e6775ffd0929a33bd55280009af10a2b67c2cc68fa0e",
+      "size_bytes": 1176542
+    },
+    {
+      "snapshot_path": "evidence/tex_static_validation.json",
+      "source_path": "/tmp/r04era/paperC/evidence/tex_static_validation.json",
+      "sanitized": false,
+      "sha256": "c5de27e906fe26ed3bc375a2e37b9aa0b7c6e78644735c1cc0cc8ba9f429a55a",
+      "size_bytes": 2177
+    },
+    {
+      "snapshot_path": "manuscript/fancyhdr.sty",
+      "source_path": "/tmp/r04era/paperC/fancyhdr.sty",
+      "sanitized": false,
+      "sha256": "b56ec4434b9f4607529a4b23dc68ad8d4b94f1f631c8cddaf7da78140d53a5ea",
+      "size_bytes": 20521
+    },
+    {
+      "snapshot_path": "manuscript/iclr2026_conference.bst",
+      "source_path": "/tmp/r04era/paperC/iclr2026_conference.bst",
+      "sanitized": false,
+      "sha256": "2d67552db7ed38ccfccb5957b52f95656e25c249724761d3cf5f7922ad1844c5",
+      "size_bytes": 26973
+    },
+    {
+      "snapshot_path": "manuscript/iclr2026_conference.sty",
+      "source_path": "/tmp/r04era/paperC/iclr2026_conference.sty",
+      "sanitized": false,
+      "sha256": "a4852f68e080d6c5245057ca2039100b409e31727898aa93c03d78ddb84374a3",
+      "size_bytes": 9025
+    },
+    {
+      "snapshot_path": "manuscript/main.pdf",
+      "source_path": "/tmp/r04era/paperC/main.pdf",
+      "sanitized": false,
+      "sha256": "1fbaaf9983220fd83e10ff772fbea15ea0f6131e9f913a20b1d69911fd863acf",
+      "size_bytes": 366583
+    },
+    {
+      "snapshot_path": "manuscript/main.tex",
+      "source_path": "/tmp/r04era/paperC/main.tex",
+      "sanitized": false,
+      "sha256": "713c68c103a84f6ba92cb00822bf4bbee78240f40d7496a85b0e3f981f888621",
+      "size_bytes": 2046
+    },
+    {
+      "snapshot_path": "manuscript/natbib.sty",
+      "source_path": "/tmp/r04era/paperC/natbib.sty",
+      "sanitized": false,
+      "sha256": "88bc70c0e48461934cab5b2accef06b74a8b3ac45ad03ccd3f2a6b7e0d6d530d",
+      "size_bytes": 45154
+    },
+    {
+      "snapshot_path": "manuscript/refs.bib",
+      "source_path": "/tmp/r04era/paperC/refs.bib",
+      "sanitized": false,
+      "sha256": "3f952d3bb791f1cd74ac7beeaea68db4ad8c093a6d12fd3b7a6a79c11b2a28b8",
+      "size_bytes": 5587
+    },
+    {
+      "snapshot_path": "manuscript/sections/00_abstract.tex",
+      "source_path": "/tmp/r04era/paperC/sections/00_abstract.tex",
+      "sanitized": false,
+      "sha256": "bf51a63f4a49e637d727cfeacd03a8648e64414eb9bc5accc2fb72fd107d5193",
+      "size_bytes": 2858
+    },
+    {
+      "snapshot_path": "manuscript/sections/01_introduction.tex",
+      "source_path": "/tmp/r04era/paperC/sections/01_introduction.tex",
+      "sanitized": false,
+      "sha256": "8a2588e7a154b84e7e4ada6665596d4d133ec0e5926611c9fcee7d96f6881b15",
+      "size_bytes": 5498
+    },
+    {
+      "snapshot_path": "manuscript/sections/02_related.tex",
+      "source_path": "/tmp/r04era/paperC/sections/02_related.tex",
+      "sanitized": false,
+      "sha256": "7fffc04430c233cff6aae731e92b1f46a4df9b4ba4cf3ae594fffe476046ae1d",
+      "size_bytes": 4159
+    },
+    {
+      "snapshot_path": "manuscript/sections/03_method.tex",
+      "source_path": "/tmp/r04era/paperC/sections/03_method.tex",
+      "sanitized": false,
+      "sha256": "8ce89bdbe96d961c71a543c671aada69e256f7b5955983722dc6f49c1ddfdc3d",
+      "size_bytes": 7677
+    },
+    {
+      "snapshot_path": "manuscript/sections/03b_nulls.tex",
+      "source_path": "/tmp/r04era/paperC/sections/03b_nulls.tex",
+      "sanitized": false,
+      "sha256": "46737ad6338c3f3f1a41fd8f8493812899dca271fc1025697a64ac3c4305e312",
+      "size_bytes": 4078
+    },
+    {
+      "snapshot_path": "manuscript/sections/03b_nulls_summary.tex",
+      "source_path": "/tmp/r04era/paperC/sections/03b_nulls_summary.tex",
+      "sanitized": false,
+      "sha256": "971fb488ac0ceba04221d8c7da6c25fd9132b4fceb993c052fb5206b94a866a2",
+      "size_bytes": 1840
+    },
+    {
+      "snapshot_path": "manuscript/sections/04_experiments.tex",
+      "source_path": "/tmp/r04era/paperC/sections/04_experiments.tex",
+      "sanitized": false,
+      "sha256": "05c336226f61b06c5040d8e3708498ed25e2d0fdda0a4e6ec1ac482e3fa2bd8c",
+      "size_bytes": 3870
+    },
+    {
+      "snapshot_path": "manuscript/sections/05_analysis.tex",
+      "source_path": "/tmp/r04era/paperC/sections/05_analysis.tex",
+      "sanitized": false,
+      "sha256": "5c0b73d70da4b0b475690508015fc959313ac61e4b06a4c3887f381f32a0eff2",
+      "size_bytes": 8454
+    },
+    {
+      "snapshot_path": "manuscript/sections/06_discussion.tex",
+      "source_path": "/tmp/r04era/paperC/sections/06_discussion.tex",
+      "sanitized": false,
+      "sha256": "64fecf709252a0dfc8ce919abd74ce45008d04a809a985b746910e4261448e8c",
+      "size_bytes": 2796
+    },
+    {
+      "snapshot_path": "manuscript/sections/07_limitations.tex",
+      "source_path": "/tmp/r04era/paperC/sections/07_limitations.tex",
+      "sanitized": false,
+      "sha256": "6e585e42d4bb574bf2eb71672c178fd221286725cdab1e155ec6d48038a0fe34",
+      "size_bytes": 2473
+    },
+    {
+      "snapshot_path": "manuscript/sections/08_ethics.tex",
+      "source_path": "/tmp/r04era/paperC/sections/08_ethics.tex",
+      "sanitized": false,
+      "sha256": "f30f00510771abf76531a63eb807e552d1425a78a4086a25b71bf1a079e33623",
+      "size_bytes": 997
+    },
+    {
+      "snapshot_path": "manuscript/sections/09_appendix.tex",
+      "source_path": "/tmp/r04era/paperC/sections/09_appendix.tex",
+      "sanitized": false,
+      "sha256": "0bc951c3c19e62774463e1c6fceb0fff812684f25e30ff87cdcaba97d449f729",
+      "size_bytes": 7083
+    },
+    {
+      "snapshot_path": "manuscript/sections/09a_relocated.tex",
+      "source_path": "/tmp/r04era/paperC/sections/09a_relocated.tex",
+      "sanitized": false,
+      "sha256": "12c5d588be10e490306198782f779843f9455628603f08f185e2073fa07c1fda",
+      "size_bytes": 8955
+    },
+    {
+      "snapshot_path": "manuscript/sections/10_reproducibility.tex",
+      "source_path": "/tmp/r04era/paperC/sections/10_reproducibility.tex",
+      "sanitized": false,
+      "sha256": "6bd0f0f64ce4157291d2452f9a85917598c3dbd127ba89c9f6467cf289cea006",
+      "size_bytes": 2534
+    },
+    {
+      "snapshot_path": "manuscript/sections/tab_claims.tex",
+      "source_path": "/tmp/r04era/paperC/sections/tab_claims.tex",
+      "sanitized": false,
+      "sha256": "196883e81947c79cd06a46424d1fa08e3c6ceec52fb10ea1b126e489fc3464ea",
+      "size_bytes": 3118
+    },
+    {
+      "snapshot_path": "manuscript/sections/tab_construct_nulls.tex",
+      "source_path": "/tmp/r04era/paperC/sections/tab_construct_nulls.tex",
+      "sanitized": false,
+      "sha256": "c90ecc569fd88f3e2d1859bc98de359306e15971576fa192d037b8541d0dff69",
+      "size_bytes": 2563
+    },
+    {
+      "snapshot_path": "manuscript/sections/tab_conventions.tex",
+      "source_path": "/tmp/r04era/paperC/sections/tab_conventions.tex",
+      "sanitized": false,
+      "sha256": "42b002b2afbe20f4f51d5e7793ab0a4b5d6b888b8f984f4954de7c4b233ac07b",
+      "size_bytes": 1353
+    },
+    {
+      "snapshot_path": "manuscript/sections/tab_integrity.tex",
+      "source_path": "/tmp/r04era/paperC/sections/tab_integrity.tex",
+      "sanitized": false,
+      "sha256": "e954f2c3e6ccfbd8bb22c47ea59e963c21380167dbbf75151a02e81bb0b2f61e",
+      "size_bytes": 1234
+    },
+    {
+      "snapshot_path": "manuscript/sections/tab_mmlupro.tex",
+      "source_path": "/tmp/r04era/paperC/sections/tab_mmlupro.tex",
+      "sanitized": false,
+      "sha256": "3a368e37ac69c77ebcf23056b4f2fbb9c397c9932d402840ceaf15041f8c3d42",
+      "size_bytes": 1707
+    },
+    {
+      "snapshot_path": "manuscript/sections/tab_nulls.tex",
+      "source_path": "/tmp/r04era/paperC/sections/tab_nulls.tex",
+      "sanitized": false,
+      "sha256": "c84530f55d707c2e7667e282769dfeeee24701acf246727b34aba4bc8e8d01a1",
+      "size_bytes": 2878
+    },
+    {
+      "snapshot_path": "manuscript/sections/tab_power.tex",
+      "source_path": "/tmp/r04era/paperC/sections/tab_power.tex",
+      "sanitized": false,
+      "sha256": "8b6887256c6591a725f6f5b6db081a69f497b4ced48bd564f87f419f025ab94f",
+      "size_bytes": 845
+    },
+    {
+      "snapshot_path": "manuscript/sections/tab_two_nulls.tex",
+      "source_path": "/tmp/r04era/paperC/sections/tab_two_nulls.tex",
+      "sanitized": false,
+      "sha256": "ac8e780e1cac163ee13067963d85dcfa57f1ec72b945a64d04249bf16a3ca107",
+      "size_bytes": 797
+    },
+    {
+      "snapshot_path": "manuscript/sections/tab_v2_alternatives.tex",
+      "source_path": "/tmp/r04era/paperC/sections/tab_v2_alternatives.tex",
+      "sanitized": false,
+      "sha256": "7fe87bedc9f4725e1c1071b44d65d88ddc320a1cdc1281399d6a16fbe519f8ad",
+      "size_bytes": 1239
+    },
+    {
+      "snapshot_path": "manuscript/sections/tab_v2_full.tex",
+      "source_path": "/tmp/r04era/paperC/sections/tab_v2_full.tex",
+      "sanitized": false,
+      "sha256": "14b6b29d02730eef769a326866152265677005df0acf8e37b0ccf49812770d55",
+      "size_bytes": 3189
+    },
+    {
+      "snapshot_path": "manuscript/sections/tab_v2_resort.tex",
+      "source_path": "/tmp/r04era/paperC/sections/tab_v2_resort.tex",
+      "sanitized": false,
+      "sha256": "a799c40660a5f41b62d0ef170b9109326d0d69173711e6a99b16921c6e42c0ff",
+      "size_bytes": 1054
+    }
+  ]
+}
