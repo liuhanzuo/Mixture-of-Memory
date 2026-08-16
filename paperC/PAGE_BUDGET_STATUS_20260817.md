@@ -82,3 +82,40 @@ confirms the summary stub is already compact.
 `memory/numeric-census-misses-scoping-sentences.md`, compression must be verified sentence
 by sentence — scoping and epistemic-limitation sentences carry no digits and so survive a
 numeric census while being exactly the content that must not be silently dropped.
+
+
+---
+
+## ★ SUPERSEDED 07:10 — the overflow is CLOSED (10 -> 9 pages)
+
+The 0.48-page overflow described above was closed by commit `ac59854` (subagent) plus
+`623fefd` (MAIN, build record). **Main text now ends on page 9; `extent` 8.996.** The numbers
+above remain the correct record of the *pre-compression* state.
+
+MAIN verified independently, from a clean `git archive` of the commit rather than the agent's
+working tree:
+
+| check | result |
+|---|---|
+| `\label` probe before `\bibliography` (the designated method) | `main.aux` -> **page 9** |
+| `main.log` | 26 pages, `latexmk` rc=0, 0 errors, 0 undefined |
+| PyMuPDF block scan above the REFERENCES heading on p10 | only line numbers + ICLR header; **no prose** |
+| numeric literals, per-file sorted multiset | **481 across 9 files, identical** — not one digit moved |
+| 5 must-survive hedges | byte-identical |
+| "loophole-closing construction" sentence | present (the one a prior compression silently dropped) |
+| `gate_count_claims` / `check_prose_vs_evidence` | 17/17 rc=0 / 93-93-0 rc=0 |
+
+**Two things the agent got wrong, both caught by re-checking rather than relaying:**
+
+1. It called `gate_build_record_matches_pdf` **pre-existing**. It is not: rc=0 on `ac59854^`,
+   rc=2 on `ac59854`. Fixed in `623fefd`. Its sibling `gate2_crossfamily_nulls` *is* genuinely
+   pre-existing (rc=2 on both; needs argparse positionals).
+2. It declined to refresh the build record, citing the reviewed-snapshot-provenance rule. That
+   rule protects `review/round_*/` snapshots; a *build* record must describe the artefact beside
+   it, and the stale sha256 appears in no snapshot manifest at all.
+
+**Method finding worth keeping** (the agent's, verified by its own build trajectory): word cuts
+do not reduce `extent` — a paragraph only shrinks when a trim pushes its **last line** off.
+Four builds registered exactly 0.000 change despite real cuts. Per-paragraph last-line *slack*
+has to be measured from the PDF to aim trims; `paperC/code/_measure_now.py` is the reusable
+probe. Trajectory: 9.480 -> 9.455 -> 9.231 -> (3 builds at 0.000) -> 9.126 -> 8.996.
