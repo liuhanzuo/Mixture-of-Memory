@@ -1,0 +1,27 @@
+{
+  "id": "MAIN_PIQA_ATTRIBUTION_AND_E3_REGEN_20260816_1815",
+  "computed_by": "MAIN, from the two shipped .tex tables and a re-run of the emitter",
+  "PART_1_E3_BINDING_VERIFIED_END_TO_END": {
+    "question": "The meta-review's X1/X2/X5/X6 all noted that 'files present' is weaker than 'the artifact regenerates its own tables'. Nobody had run the regeneration.",
+    "test": "copied the shipped sections/tab_construct_nulls.tex aside, re-ran code/emit_tab_construct_nulls.py, diffed",
+    "TRUE_RC": 0,
+    "result": "BYTE-IDENTICAL. md5 003fb58cdc261c807edb69d33a6eb379 before and after.",
+    "meaning": "For this table the E3 evidence->prose binding is real and currently holding: every number is a dict lookup into evidence/floor_winners_curse_calibration.json, not a hand-typed digit.",
+    "scope_limit": "This verifies ONE of the paper's tables. tab_nulls.tex, tab_v2_full.tex, tab_mmlupro.tex, tab_power.tex and the rest are still hand-typed and have no emitter. Do not generalise this to 'the artifact regenerates its tables'."
+  },
+  "PART_2_PIQA_ATTRIBUTION_SETTLED": {
+    "history": "The round_04 meta-reviewer wrote that PIQA's printed p matches the STRICT tail (0.657647) rather than the defined >= event (0.691725). I then 'corrected' it, saying printed 0.691 is the inclusive tail. BOTH framings were wrong, and mine was wrong twice: earlier today I also wrote that tab_nulls prints 0.658.",
+    "what_the_two_tables_actually_print": {
+      "tab_nulls.tex:16": "PIQA ... floor 0.504897, chance 0.500000, gap +0.490, ratio 1.0098x, E[f_hat] 0.509300, q95 0.522851, p = 0.691",
+      "tab_construct_nulls.tex:23": "PIQA letter ... chance 0.500000, floor 0.504897, gap +0.490, p_blind = 0.658, p_legal = 0.691"
+    },
+    "CORRECT_ATTRIBUTION": "0.658 and 0.691 are not two tail conventions on one null. They are TWO DIFFERENT NULLS: 0.658 is the blind (uniform-over-k) null and 0.691 is the legality-aware null. tab_nulls prints the legality-aware value 0.691, consistent with tab_construct_nulls' p_legal column. The two shipped tables AGREE.",
+    "the_exact_rational_hazard_is_still_real_but_separate": {
+      "exact_floor": "928/1838 = 0.504896627",
+      "stored": "0.504897, which is strictly greater",
+      "consequence": "P(max >= 0.504897) requires count >= 929 while the observation is 928, so thresholding on the PRINTED decimal excludes the observed outcome",
+      "status": "this is what gate_exact_floor_tail.py flags (rc=1, PIQA among 5 rows). It is a hazard in any emitter that thresholds on the printed value. It is NOT the explanation for the 0.658-vs-0.691 pair."
+    },
+    "MAIN_SELF_ASSESSMENT": "I got this cell wrong twice in one day, in both directions, before reading the two tables side by side. The lesson is not about PIQA: when two numbers for one construct differ, first ask WHICH QUANTITY each column is, before theorising about why they differ. Column semantics beat plausible mechanisms."
+  }
+}
