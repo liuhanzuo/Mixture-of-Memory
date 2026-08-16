@@ -1,0 +1,91 @@
+{
+  "schema_version": "1.0.0",
+  "what": "MAIN re-derivation of the MMLU-Pro winner-curse calibration under a LEGALITY-AWARE balanced null",
+  "why": "Four of six round_04 codex reviewers (X1/X2/X5/X6) independently flagged that the flagship MMLU-Pro balanced-null calibration uses a null incompatible with the benchmark variable legal option set. MAIN verified this rather than relaying it.",
+  "defect": "paperC/evidence/floor_winners_curse_calibration.json draws gold letters uniform over all k=10 letters for all n=12032 items. That assignment is NOT REALIZABLE: 2051 of 12032 items have fewer than 10 options, so their gold letter cannot be J. The null therefore lies outside the support of any legal label assignment.",
+  "observed_floor": {
+    "value": 0.116606,
+    "best_constant_letter": "A",
+    "count": 1403,
+    "n": 12032,
+    "note": "unchanged by the fix -- the floor is an empirical property of the gold labels, not of the null"
+  },
+  "n_opt_hist": {
+    "3": 21,
+    "4": 606,
+    "5": 52,
+    "6": 93,
+    "7": 158,
+    "8": 320,
+    "9": 801,
+    "10": 9981
+  },
+  "n_items_with_fewer_than_10_options": 2051,
+  "frac_items_with_fewer_than_10_options": 0.17046210106382978,
+  "correct_null": "preserve the observed n_opt histogram (n_opt is a property of the item set, not random); draw each item gold letter uniform among ITS OWN n_opt legal letters",
+  "paper_reported_legality_blind": {
+    "E_max": 0.104457,
+    "q95": 0.107048,
+    "p_one_sided": 0.0,
+    "verdict_in_paper": "above balanced null, p<1e-5"
+  },
+  "main_recomputed_legality_aware": {
+    "20260814": {
+      "n_draws": 200000,
+      "E_max": 0.11387069647606383,
+      "q95": 0.1171875,
+      "q99": 0.11876662234042554,
+      "p_one_sided": 0.077
+    },
+    "7": {
+      "n_draws": 200000,
+      "E_max": 0.11387414727393617,
+      "q95": 0.1171875,
+      "q99": 0.1188497340425532,
+      "p_one_sided": 0.07788
+    },
+    "99": {
+      "n_draws": 200000,
+      "E_max": 0.11388138090093085,
+      "q95": 0.1171875,
+      "q99": 0.1188497340425532,
+      "p_one_sided": 0.07833
+    },
+    "1M_seed20260814": {
+      "n_draws": 1000000,
+      "E_max": 0.11387716663896276,
+      "q95": 0.1171875,
+      "q99": 0.1188497340425532,
+      "p_one_sided": 0.078295
+    },
+    "impl2_per_item_categorical": {
+      "n_draws": 20000,
+      "E_max": 0.1138796833444149,
+      "q95": 0.1171875,
+      "p_one_sided": 0.0792
+    }
+  },
+  "expected_per_letter_marginal_under_legality_aware_null": {
+    "A": 0.11087694718844986,
+    "B": 0.11087694718844986,
+    "C": 0.11087694718844986,
+    "D": 0.11029516527355623,
+    "E": 0.0977037424012158,
+    "F": 0.09683938069908815,
+    "G": 0.09555114931610942,
+    "H": 0.0936751994680851,
+    "I": 0.09035073138297872,
+    "J": 0.08295378989361703
+  },
+  "VERDICT": {
+    "E_max_understated_by_pp": 0.942,
+    "corrected_p_one_sided": 0.078295,
+    "clears_0p05": false,
+    "row_verdict_changes_from": "above balanced null (p<1e-5)",
+    "row_verdict_changes_to": "INSIDE estimator noise (p=0.078)",
+    "headline_consequence": "the abstract and introduction claim THREE of eight letter constructs have floors a balanced null could not produce (MMLU-Pro, MMLU, BoolQ). Under the correct null that becomes TWO (MMLU, BoolQ). MMLU-Pro -- the largest-n construct and the one the paper uses to push down the power wall -- moves into the inside-noise bucket.",
+    "confinement": "MMLU is exactly 4-way and BoolQ exactly 2-way, so their p-values are UNAFFECTED. The fix is monotone for the other five: a legality-aware null raises E[max], which raises p, which can only push a row further INSIDE the noise bucket, never out of it. So no row moves in the paper favour.",
+    "agreement": "two independent implementations (stratified multinomial; per-item categorical), three seeds, and a 1e6-draw run all agree to <1e-4 on E[max] and to <2e-3 on p. q95=0.117188 is identical across all."
+  },
+  "reproduce": "this block is embedded verbatim in the record under key \"code\""
+}

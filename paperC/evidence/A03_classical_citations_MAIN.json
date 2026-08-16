@@ -1,0 +1,72 @@
+{
+  "schema_version": "1.0.0",
+  "what": "MAIN verification of paperC assumption A-03 -- the 6 classical-statistics citations",
+  "date": "2026-08-16",
+  "verified_by": "MAIN (not delegated); Crossref CSL-JSON via doi.org, OpenAlex, Semantic Scholar",
+  "why_this_matters": "A-03 is the highest-risk assumption in paperC/state/assumptions.md. Unlike the ICLR/ACL citations, these six are pre-digital works covered by NEITHER family verification file. The paper's contribution IS a measurement rule resting on the psychometric best-constant idea, so this is exactly where a reviewer probes attribution.",
+  "IMPORTANT_risk_direction_correction": "MAIN re-read the citing sentences before verifying and found the risk runs the OPPOSITE way to what A-03 assumes. All six are cited inside a DISCLAIMER passage (09a_relocated.tex:8 and 03_method.tex:52) whose function is to give ground away: 'We therefore claim NONE of the following: correcting for the number of options, choosing p_e as a methodological decision, or noticing that kappa-family statistics depend on k.' cohen1960kappa at 02_related.tex:15 likewise says the constant-emitter zero 'is that literature's standard property rather than a new result.' So the failure mode is NOT the paper stealing credit. It is the paper (a) conceding ground that may not belong to these works, and (b) drawing its own novelty boundary in the wrong place as a result. A-03 as written says the danger is 'whether the paper is claiming as novel something Frary (1988) already said'. That danger is structurally ABSENT here -- the paper explicitly disclaims Frary's content. The real danger is over-disclaiming.",
+  "axis_1_metadata": {
+    "method": "curl -sL -H 'Accept: application/vnd.citationstyles.csl+json' https://doi.org/<DOI>, field-by-field diff vs refs.bib",
+    "result": "6 of 6 PASS -- title, authors, journal, volume, issue, pages, year all match refs.bib exactly",
+    "per_entry": {
+      "bennett1954communications": {
+        "doi_resolves": true,
+        "title_match": true,
+        "note": "Crossref title is 'Communications Through Limited Response Questioning'; Semantic Scholar renders it hyphenated ('Limited-Response'). refs.bib matches CROSSREF. Crossref gives page as start-page 303 only; refs.bib's 303--308 is the full range and is not contradicted.",
+        "authors": "Bennett, E. M.; Alpert, R.; Goldstein, A. C. -- matches",
+        "verdict": "PASS"
+      },
+      "brennan1981kappa": {
+        "doi_resolves": true,
+        "exact_match": true,
+        "verdict": "PASS"
+      },
+      "brenner1996weightedkappa": {
+        "doi_resolves": true,
+        "exact_match": true,
+        "verdict": "PASS"
+      },
+      "cohen1960kappa": {
+        "doi_resolves": true,
+        "exact_match": true,
+        "verdict": "PASS"
+      },
+      "devries2008pooledkappa": {
+        "doi_resolves": true,
+        "exact_match": true,
+        "verdict": "PASS"
+      },
+      "frary1988formula": {
+        "doi_resolves": true,
+        "exact_match": true,
+        "note": "Crossref title uses a Unicode non-breaking hyphen in 'Multiple-Choice'; refs.bib uses ASCII. Not a metadata error.",
+        "verdict": "PASS"
+      }
+    }
+  },
+  "axis_2_local_support": {
+    "status": "PARTIAL -- MAIN could NOT complete this axis and is NOT claiming to have read the primary texts",
+    "obstruction": "all six are paywalled. Semantic Scholar returns openAccessPdf.status=CLOSED with the abstract field explicitly elided by the publisher for both entries probed. Only Bennett's abstract was recoverable (via OpenAlex abstract_inverted_index).",
+    "bennett_abstract_recovered_verbatim": "The extent of consistency between information from two methods of communication, the interview and the limited-response question, was investigated. Thirty questions showed consistencies greater than could be expected on the basis of chance. The questions were classified into four general categories, and the mean coefficients of consistency for these categories ranged from 0.46 to 1.00.",
+    "bennett_assessment": "INSUFFICIENT to support the paper's specific claim. The paper asserts \"Bennett's S sets p_e=1/k for k response categories\". The abstract establishes only that a chance correction exists ('greater than could be expected on the basis of chance'); it does NOT state the functional form of p_e. Consistent with the claim, does not establish it. MAIN will not upgrade this to VERIFIED on an abstract.",
+    "not_attempted_or_failed": [
+      "brennan1981kappa: abstract elided",
+      "brenner1996weightedkappa: not probed for abstract",
+      "cohen1960kappa: abstract elided",
+      "devries2008pooledkappa: not probed",
+      "frary1988formula: not probed"
+    ],
+    "citation_counts_as_context": {
+      "bennett1954": 253,
+      "brennan1981": 1502,
+      "cohen1960": "canonical",
+      "note": "high citation counts are evidence the works EXIST and are load-bearing in their field. They are NOT evidence that any one of them supports a specific local sentence. Do not conflate."
+    }
+  },
+  "VERDICT": {
+    "metadata_axis": "CLOSED -- 6/6 PASS, A-03's metadata half is now verified",
+    "local_support_axis": "OPEN -- delegated, must not be recorded as closed",
+    "a03_framing_defect": "A-03's stated failure mode ('claiming as novel something Frary already said') is the WRONG risk for this passage and should be rewritten. The passage disclaims rather than claims.",
+    "what_a_reviewer_will_actually_probe": "whether the disclaimer is TOO BROAD -- i.e. whether these six really do establish everything the paper hands them, because if they do not, the paper has surrendered a contribution it in fact has, and has drawn its own boundary in the wrong place. X1 (novelty, the only reviewer above 4) already wrote that 'the novelty is narrower than presented, its boundary against the closest work is incomplete' -- consistent with a mis-drawn boundary in either direction."
+  }
+}
