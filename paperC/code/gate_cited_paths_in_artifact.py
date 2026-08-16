@@ -99,7 +99,38 @@ def cited_paths():
                 path += nxt
                 j += 1
             found.add(path)
+    found |= cited_by_claim_map()
     return found
+
+
+def cited_by_claim_map():
+    """Evidence paths named by claim_evidence_map.tsv.
+
+    ADDED 2026-08-16 after a round_05 reviewer found two files that this gate could not
+    see. `evidence/s2_03_symmetric_inference.json` (claim map row H-02, the source for
+    'the flip is 3/12 vs 1/12') and `evidence/s2_02_stratified_ordering.json` (row H-04,
+    the v1>=v2 ordering) exist in the live tree and were ABSENT from the frozen snapshot,
+    while this gate reported 'PASS: all 17 cited paths resolve inside the frozen
+    artifact'.
+
+    Both statements were true. The gate only ever extracted `\\texttt{evidence/...}` from
+    sections/*.tex, so a file cited ONLY by the claim map was structurally outside its
+    target space -- the failure mode in
+    memory/a-green-checker-covers-only-what-it-targets.md. And the claim map is itself a
+    SHIPPED artifact: a reviewer reads it, follows the pointer, and finds nothing. That is
+    worse than an uncited file, because the map promises the number is verifiable.
+
+    The map is read from the LIVE tree, not the snapshot, deliberately: the question is
+    whether the freeze captured everything the current claim architecture depends on.
+    """
+    m = ROOT / "evidence" / "claim_evidence_map.tsv"
+    if not m.exists():
+        return set()
+    out = set()
+    for line in m.read_text(encoding="utf-8").splitlines():
+        for tok in re.findall(r"(?:evidence|code)/[A-Za-z0-9_./-]+", line):
+            out.add(tok.rstrip(".,;"))
+    return out
 
 
 def main():

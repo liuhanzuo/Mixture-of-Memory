@@ -59,11 +59,21 @@ def unescape(s):
 
 
 def cited_paths():
-    """Every evidence/ or code/ path named in the prose, split groups rejoined.
+    """Every evidence/ or code/ path named in the prose OR in the claim map.
 
     Same extraction as gate_cited_paths_in_artifact.py, deliberately: the gate that
     judges the snapshot and the tool that builds it must agree on what "cited" means,
     or the gate will fail its own artifact.
+
+    UPDATED 2026-08-16, and this is why the agreement clause above matters. A round_05
+    reviewer found two files -- s2_03_symmetric_inference.json (claim map row H-02, the
+    source for "the flip is 3/12 vs 1/12") and s2_02_stratified_ordering.json (row H-04)
+    -- present in the live tree and ABSENT from the frozen snapshot, while the gate
+    reported "PASS: all 17 cited paths resolve". Both tools extracted only
+    \\texttt{evidence/...} from sections/*.tex, so a file cited ONLY by
+    claim_evidence_map.tsv was invisible to both. Fixing the gate alone would have made
+    the freezer produce artifacts its own gate rejects, so the claim-map source is added
+    to BOTH in the same commit. See memory/fix-the-class-not-the-instance.md.
     """
     found = set()
     for tex in sorted(SECTIONS.glob("*.tex")):
@@ -82,6 +92,14 @@ def cited_paths():
                 path += nxt
                 j += 1
             found.add(path.rstrip("/"))
+    # The claim map is itself a SHIPPED artifact: a reviewer reads it, follows the
+    # pointer, and must find the file. A dangling pointer there is worse than an
+    # uncited file, because the map promises the number is verifiable.
+    cmap = ROOT / "evidence" / "claim_evidence_map.tsv"
+    if cmap.exists():
+        for line in cmap.read_text(encoding="utf-8").splitlines():
+            for tok in re.findall(r"(?:evidence|code)/[A-Za-z0-9_./-]+", line):
+                found.add(tok.rstrip(".,;").rstrip("/"))
     return sorted(found)
 
 
