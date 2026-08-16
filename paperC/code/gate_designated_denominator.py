@@ -237,35 +237,61 @@ def run_gate(mmlupro_doc, off_olmo_doc, off_xf_doc, verbose=True):
     # cannot catch a headline that quotes a retracted ratio.
     #
     # A retracted ratio may still appear where the paper explicitly names it AS
-    # retracted, so a line carrying a retraction marker is exempt.
+    # retracted, so text carrying a retraction marker is exempt.
+    #
+    # THE EXEMPTION IS SENTENCE-SCOPED, NOT LINE-SCOPED. Corrected 2026-08-16 after
+    # measuring the hole with this gate's own code: LaTeX paragraphs here are single
+    # lines up to 1743 characters (09a_relocated.tex:24), so a line-scoped exemption
+    # let ONE legitimate mention of truncation or of the retraction excuse an entire
+    # paragraph. Demonstrated on a mutated copy of sections/ with the real CHECK 6:
+    #
+    #   B. bare "14/15", no marker                  -> rc=2  CAUGHT
+    #   C. "14/15" in a line that says "truncation"  -> rc=0  MISSED
+    #   D. "14/15" appended to the 1743-char exempt paragraph -> rc=0  MISSED
+    #
+    # C and D are exactly how the original 14/15 survived a full review round. The
+    # fix splits on sentence boundaries and asks whether the marker is in the SAME
+    # sentence as the retracted ratio, so a paragraph that legitimately discusses
+    # the retraction no longer shelters an unrelated headline claim inside itself.
     #
     # '0/15' is deliberately NOT listed: it also names a legitimate subset (the
     # OLMo-2 arms retaining 12 layers or fewer, 3 arms x 5 benchmarks).
     retracted = ("14/15", "10/15")
     exempt_markers = ("earlier version", "silently omitted", "retract", "Retract",
                       "RETRACT", "no longer", "previously quoted")
+    # Sentence split on '. ' / '; ' etc. Deliberately crude but conservative in the
+    # SAFE direction: over-splitting can only make the gate stricter (a marker stops
+    # covering text it never described), never laxer.
+    _SENT = re.compile(r'(?<=[.;:!?])\s+')
+
+    def _sentence_is_exempt(sent):
+        if any(m in sent for m in exempt_markers):
+            return True
+        # left-truncation counts are a different quantity that happens to share the
+        # digits: they count cells lost to a cap, not floors. Same sentence-scoping.
+        return ("truncat" in sent) or (r"n\_trunc" in sent)
+
     prose_fails = []
     for fname in sorted(os.listdir(SECTIONS)):
         if not fname.endswith(".tex"):
             continue
         with open(os.path.join(SECTIONS, fname), encoding="utf-8") as fh:
             for i, line in enumerate(fh, 1):
-                if any(m in line for m in exempt_markers):
+                if line.lstrip().startswith("%"):
                     continue
-                # left-truncation counts are a different quantity that happens to
-                # share the digits: they count cells lost to a cap, not floors.
-                if "truncat" in line or r"n\_trunc" in line:
-                    continue
-                for bad in retracted:
-                    if bad in line:
-                        prose_fails.append((fname, i, bad, line.strip()[:110]))
+                for sent in _SENT.split(line):
+                    if _sentence_is_exempt(sent):
+                        continue
+                    for bad in retracted:
+                        if bad in sent:
+                            prose_fails.append((fname, i, bad, sent.strip()[:110]))
     for fname, i, bad, snippet in prose_fails:
         fails.append(f"CHECK 6 FAIL: {fname}:{i} quotes the retracted denominator "
                      f"{bad!r} without marking it as retracted. The designated set "
                      f"has 17 MMLU-Pro cells and 85 off-MMLU cells, so the current "
-                     f"ratios are 15/17 and 9/85. Line: {snippet}")
+                     f"ratios are 15/17 and 9/85. Sentence: {snippet}")
     if not prose_fails:
-        notes.append("CHECK 6 pass: no prose line quotes a retracted denominator "
+        notes.append("CHECK 6 pass: no prose SENTENCE quotes a retracted denominator "
                      "outside an explicit retraction.")
 
     return fails, notes, dict(declared_olmo2=sorted(declared),
@@ -351,6 +377,66 @@ def main():
         print(f"NC-4 positive control (unmutated) -> CHECK 4/5 spurious failures: "
               f"{len(spurious)} {'OK' if not spurious else '<-- FALSE POSITIVE'}")
         rc |= 1 if spurious else 0
+
+        # ---- NC-5..NC-7: CHECK 6's prose scan -----------------------------------
+        # Added 2026-08-16. CHECK 6 previously had NO negative control at all, and it
+        # is the check that licenses the one legal '14/15' in the manuscript -- so an
+        # unexercised assertion was guarding the most delicate sentence in the paper.
+        # Exercising it immediately found a real hole: the exemption was LINE-scoped
+        # while LaTeX paragraphs here run to 1743 characters, so a single mention of
+        # truncation excused an entire paragraph. Measured before the fix:
+        #   bare '14/15'                        -> rc=2 CAUGHT
+        #   '14/15' in a line saying 'truncat'  -> rc=0 MISSED
+        #   '14/15' inside the 1743-char para   -> rc=0 MISSED
+        # The exemption is now sentence-scoped and the last two are caught.
+        import shutil as _sh, tempfile as _tf, io as _io, contextlib as _cl
+        from pathlib import Path as _P
+
+        def _scan_with_sections(dirpath):
+            global SECTIONS
+            old = SECTIONS
+            SECTIONS = str(dirpath)
+            try:
+                f, _n, _p = run_gate(mp, oo, ox, verbose=False)
+                return [x for x in f if "CHECK 6" in x]
+            finally:
+                SECTIONS = old
+
+        _base = _P(_tf.mkdtemp()) / "sections"
+        _sh.copytree(SECTIONS, _base)
+
+        # NC-5: unmutated copy must produce NO CHECK 6 failure (positive control).
+        hit5 = _scan_with_sections(_base)
+        print(f"NC-5 CHECK 6 on unmutated sections/ -> CHECK 6 failures: "
+              f"{len(hit5)} {'OK' if not hit5 else '<-- FALSE POSITIVE'}")
+        rc |= 1 if hit5 else 0
+
+        # NC-6: a bare retracted ratio in a clean paragraph must be caught.
+        _p6 = _base / "06_discussion.tex"
+        _o6 = _p6.read_text(encoding="utf-8")
+        _p6.write_text(_o6 + "\nThe aggregate is 14/15 at or below the floor.\n",
+                       encoding="utf-8")
+        hit6 = _scan_with_sections(_base)
+        _p6.write_text(_o6, encoding="utf-8")
+        print(f"NC-6 bare '14/15' in clean prose -> "
+              f"{'CAUGHT' if hit6 else 'NOT CAUGHT <-- GATE IS BLIND'}")
+        rc |= 0 if hit6 else 1
+
+        # NC-7: THE REGRESSION TEST. A retracted ratio appended to the long paragraph
+        # that legitimately discusses the retraction must still be caught, because the
+        # offending SENTENCE carries no marker even though the paragraph does.
+        _p7 = _base / "09a_relocated.tex"
+        _o7 = _p7.read_text(encoding="utf-8")
+        _ls = _o7.splitlines(True)
+        _idx = max(range(len(_ls)), key=lambda i: len(_ls[i]))
+        _ls[_idx] = (_ls[_idx].rstrip("\n") +
+                     " Separately, the headline aggregate is 14/15 at or below the floor.\n")
+        _p7.write_text("".join(_ls), encoding="utf-8")
+        hit7 = _scan_with_sections(_base)
+        _p7.write_text(_o7, encoding="utf-8")
+        print(f"NC-7 '14/15' inside the exempt paragraph (len={len(_o7.splitlines(True)[_idx])}) -> "
+              f"{'CAUGHT' if hit7 else 'NOT CAUGHT <-- LINE-SCOPED HOLE IS BACK'}")
+        rc |= 0 if hit7 else 1
 
         print()
         print("NEGATIVE CONTROL " + ("PASSED" if rc == 0 else "FAILED"))
