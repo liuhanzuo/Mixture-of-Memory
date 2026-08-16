@@ -1,0 +1,50 @@
+\begin{table*}[t]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{2.4pt}
+\begin{tabular}{lrcrrrrrrl}
+\toprule
+Construct & $n$ & $L^\star$ & Floor & Chance & Gap (pp) & Ratio & $\mathbb{E}[\hat f]$ & $q_{95}$ & $p$ \\
+\midrule
+MMLU-Pro, naive & 12032 & A & 0.116606 & 0.100000 & +1.661 & 1.1661$\times$ & 0.113873 & 0.117188 & 0.083 \\
+MMLU-Pro, item-avg. & 12032 & A & 0.116606 & 0.110877 & +0.573 & 1.0517$\times$ & 0.113873 & 0.117188 & 0.083 \\
+MMLU & 14042 & D & 0.268908 & 0.250000 & +1.891 & 1.0756$\times$ & 0.254350 & 0.258225 & $<10^{-5}$ \\
+OpenBookQA & 500 & A & 0.276000 & 0.250000 & +2.600 & 1.1040$\times$ & 0.273190 & 0.294000 & 0.384 \\
+ARC-Easy & 2376 & C & 0.266414 & 0.250161 & +1.625 & 1.0650$\times$ & 0.260523 & 0.269781 & 0.136 \\
+ARC-Challenge & 1172 & B & 0.265358 & 0.250156 & +1.520 & 1.0608$\times$ & 0.264984 & 0.278157 & 0.448 \\
+CommonsenseQA & 1221 & B & 0.208845 & 0.200000 & +0.884 & 1.0442$\times$ & 0.214994 & 0.226863 & 0.853 \\
+PIQA & 1838 & B & 0.504897 & 0.500000 & +0.490 & 1.0098$\times$ & 0.509300 & 0.522851 & 0.691 \\
+BoolQ & 3270 & B & 0.621713 & 0.500000 & +12.17 & 1.2434$\times$ & 0.506972 & 0.517125 & $<10^{-5}$ \\
+\bottomrule
+\end{tabular}
+\caption{Construct floors compared with chance, \emph{and with the sampling distribution of the
+floor estimator itself}. Both percentage-point gaps and ratios are needed across option counts.
+The last three columns calibrate the estimator. Because $\hat f=\max_L \hat m_L$ is a maximum over
+$k$ noisy marginals estimated on a single finite item set, it is upward biased even when the gold
+labels are exactly uniform, so a positive Gap is not by itself evidence that the floor differs from
+chance. $\mathbb{E}[\hat f]$ and $q_{95}$ are the mean and 95th percentile of $\hat f$ under a
+balanced null \emph{that the construct can actually realise}: the observed
+$\texttt{n\_opt}$ histogram is held fixed and each item's gold letter is drawn uniformly among
+\emph{its own} legal letters, so an item with four options is never assigned gold letter~J. Where
+$\texttt{n\_opt}$ is constant this coincides exactly with drawing uniformly over all $k$ letters;
+where it varies --- both MMLU-Pro rows, ARC-Easy and ARC-Challenge --- it does not, and the
+uniform-over-$k$ version we reported previously lies outside the support of any legal labelling
+(Appendix~\ref{tab:app-construct-nulls} keeps that superseded column beside this one, and
+Section~\ref{sec:legality-aware-null} states what it changed and in which direction).
+$p=\Pr(\hat f\ge\text{observed floor})$ under the realisable null, evaluated at the floor's exact
+rational value $\text{count}/n$ ($10^{6}$ draws per construct, three seeds, two independent
+implementations; the reported $p<10^{-5}$ bound is the more conservative one carried over from the
+earlier $2\times10^{5}$-draw run; evidence \textsf{E-CAL}, the single machine-readable source for
+these rows). \textbf{Only MMLU and BoolQ have floors a balanced null could not plausibly produce}
+($p<10^{-5}$); both are constructs with a genuinely fixed option count, so for them the choice of
+null is not in question. For the six remaining letter constructs the observed floor lies inside the
+estimator's own noise ($p=0.083$--$0.853$), and on CommonsenseQA and PIQA it is in fact
+\emph{below} $\mathbb{E}[\hat f]$. Those six rows therefore support the weaker claim that chance is
+the wrong \emph{reference}, while providing no evidence that the floor \emph{differs from} chance in
+magnitude; the $+0.49$--$+2.60$~pp gaps there are the regime our own evidence record marks ``do not
+oversell'' (evidence \textsf{E-A}). MMLU-Pro is the closest of the six to the conventional
+threshold and should be read as unresolved at this $n$ rather than as settled either way. Floors and
+chance values are the label-marginal floors re-derived first-hand from the raw per-item records
+(evidence \textsf{E-A}; see the reproducibility statement for the artifact paths).}
+\label{tab:nulls}
+\end{table*}

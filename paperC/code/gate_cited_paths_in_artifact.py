@@ -50,7 +50,22 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 SECTIONS = ROOT / "sections"
-SUBMISSION = ROOT / "review_rounds" / "round_04" / "submission_complete"
+# Which frozen round to judge. Defaults to the newest round_NN/submission_complete that
+# exists, so the gate follows the re-freeze instead of being pinned to a stale round --
+# round_04 was the one that shipped WITHOUT E-CAL, and a gate hard-pinned to it would keep
+# reporting that failure forever after the artifact was repaired, or worse, be edited to
+# point at the new round and silently stop checking the old finding.
+# Override with PAPERC_SUBMISSION_DIR for a control run.
+def _newest_submission():
+    import os
+    override = os.environ.get("PAPERC_SUBMISSION_DIR")
+    if override:
+        return Path(override)
+    rounds = sorted((ROOT / "review_rounds").glob("round_*/submission_complete"))
+    return rounds[-1] if rounds else ROOT / "review_rounds" / "round_04" / "submission_complete"
+
+
+SUBMISSION = _newest_submission()
 
 TEXTTT = re.compile(r"\\texttt\{((?:evidence|code)/[^}]*)\}")
 # a \texttt group that continues in the next one: paperC breaks long paths at _ or /
