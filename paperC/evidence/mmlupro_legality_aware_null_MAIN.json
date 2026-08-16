@@ -79,13 +79,38 @@
   },
   "VERDICT": {
     "E_max_understated_by_pp": 0.942,
-    "corrected_p_one_sided": 0.078295,
+    "corrected_p_one_sided": 0.083,
     "clears_0p05": false,
     "row_verdict_changes_from": "above balanced null (p<1e-5)",
     "row_verdict_changes_to": "INSIDE estimator noise (p=0.078)",
     "headline_consequence": "the abstract and introduction claim THREE of eight letter constructs have floors a balanced null could not produce (MMLU-Pro, MMLU, BoolQ). Under the correct null that becomes TWO (MMLU, BoolQ). MMLU-Pro -- the largest-n construct and the one the paper uses to push down the power wall -- moves into the inside-noise bucket.",
     "confinement": "MMLU is exactly 4-way and BoolQ exactly 2-way, so their p-values are UNAFFECTED. The fix is monotone for the other five: a legality-aware null raises E[max], which raises p, which can only push a row further INSIDE the noise bucket, never out of it. So no row moves in the paper favour.",
-    "agreement": "two independent implementations (stratified multinomial; per-item categorical), three seeds, and a 1e6-draw run all agree to <1e-4 on E[max] and to <2e-3 on p. q95=0.117188 is identical across all."
+    "agreement": "two independent implementations (stratified multinomial; per-item categorical), three seeds, and a 1e6-draw run all agree to <1e-4 on E[max] and to <2e-3 on p. q95=0.117188 is identical across all.",
+    "SUPERSEDED_claims": [
+      "'no row moves in the paper favour' -- FALSE, see MAIN_SELF_CORRECTION_20260816_1440",
+      "p=0.078295 -- superseded by p=0.083 under the exact floor"
+    ]
   },
-  "reproduce": "this block is embedded verbatim in the record under key \"code\""
+  "reproduce": "this block is embedded verbatim in the record under key \"code\"",
+  "MAIN_SELF_CORRECTION_20260816_1440": {
+    "raised_by": "agent a0a5ef9a4d99c3ea9, which was told to verify my claims rather than repeat them, and whose sign self-test refused to write when my claim failed",
+    "MAIN_verified_both_independently": true,
+    "correction_1": {
+      "what_I_wrote_that_was_WRONG": "'the fix is monotone ... no row moves in the paper favour' and 'a legality-aware null raises E[max], which raises p, which can only push a row further INSIDE the noise bucket, never out of it'",
+      "why_it_is_wrong": "I generalised from MMLU-Pro's ONE direction. MMLU-Pro's excess items have n_opt < k (fewer options than the nominal 10), which raises E[max] and so raises p. But items with n_opt > k do the OPPOSITE: they divert probability mass to a letter that is legal almost nowhere and therefore can essentially never win the maximum, which LOWERS E[max] and so LOWERS p -- i.e. moves the row toward 'survives', in the authors' favour.",
+      "MAIN_own_verification": "I built a clean toy independent of the agent's numbers: n=2000, nominal k=4, sweeping the fraction of items with n_opt=5. frac=0.00 gives E[max]=0.261571, q95=0.272000; frac=0.05 gives E[max]=0.259010, q95=0.269500. E[max] FALLS when n_opt>k items are added. Mechanism confirmed.",
+      "why_ARC_is_affected": "ARC-Easy chance 0.250161 and ARC-Challenge 0.250156 are both ABOVE exactly 0.25, which means some items have n_opt < 4. But the agent also reports observed max(n_opt)=5 against a stored k=4, so BOTH kinds of item are present and the net sign is empirical, not derivable from the chance value alone. The agent measures ARC-Easy dp = -0.0025 (-17 sigma) and ARC-Challenge dp = -0.0063 (-23 sigma) over 8 seeds x 1e6 draws -- moving in the authors' favour.",
+      "does_my_headline_survive": "YES. Neither ARC row approaches 0.05, so no verdict turns on them, and MMLU-Pro still moves from p<1e-5 to inside-noise. The FINDING stands; the BLANKET CLAIM does not and must not be printed.",
+      "what_I_should_have_done": "stated the direction only for the rows I actually computed, and marked the general case as unverified. I had the tool to check it (I had already written a working sampler) and did not."
+    },
+    "correction_2": {
+      "what": "a SECOND, independent defect I missed entirely: the floor-rounding convention",
+      "the_fact": "the floor is exactly 1403/12032 = 0.116605718085. Stored at 6 dp as 0.116606 it is LARGER by 2.819e-07. So P(max >= 0.116606) requires a count of at least 1404, and the OBSERVED OUTCOME (1403) is excluded from its own tail event.",
+      "MAIN_own_verification": "exact rational arithmetic: Fraction(1403,12032) < Fraction('0.116606') is True; the smallest integer c with c/12032 >= 0.116606 is 1404; so the observed count 1403 does NOT satisfy the event. Confirmed.",
+      "why_it_matters": "a one-sided p-value P(X >= x_obs) must INCLUDE x_obs. Excluding it biases every affected row toward 'survives' -- again in the authors' favour. The agent reports this affects 5 of 9 rows.",
+      "consequence_for_my_number": "my reported p = 0.078295 is TOO LOW. The correct value with the exact floor is p = 0.083, and the abstract's range becomes 0.083--0.853, not 0.078--0.853."
+    },
+    "net_effect_on_the_finding": "unchanged in substance: MMLU-Pro's floor is inside the estimator's noise, the surviving count is two (MMLU, BoolQ) not three, and both survivors have a fixed option count. Two of my supporting statements were wrong -- one over-generalised direction claim and one p-value low by 0.005 -- and both errors were in the direction of making my own case look tidier than it is.",
+    "process_note": "This is the correct outcome of instructing an agent to VERIFY rather than IMPLEMENT. Its sign self-test refused to write output when my monotonicity claim failed, which is why the error surfaced at all. An agent told to 'apply MAIN's fix' would have propagated both errors into the manuscript."
+  }
 }
