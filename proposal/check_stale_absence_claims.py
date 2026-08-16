@@ -53,11 +53,54 @@ ROOT = Path(__file__).resolve().parent
 
 # "<file>.md ... does not exist" and friends. Bounded lookahead so we do not span
 # sentences and match an unrelated absence claim later in the same blob.
+#
+# The character class EXCLUDES anything that looks like another filename, because the
+# 90-char lookahead otherwise bridges straight past an intervening file and pins the
+# absence on the wrong subject. Measured false positive (2026-08-16), B03:
+#
+#   "...and GATE_PREREGISTRATION.md 9.1/11 cite the anchor as bare
+#    'logs/olmo2_1B_keep7fresh2_1node.log'. THAT PATH DOES NOT EXIST ON wzc1."
+#
+# The absent thing is the .log. GATE_PREREGISTRATION.md is merely the file doing the
+# citing, and it is present -- so the guard reported a stale claim where the record was
+# CORRECT (verified: `ls logs/olmo2_1B_keep7fresh2_1node.log` -> rc=2 on wzc1; the file
+# is zwfy6-only, exactly as B03 says). Two separate mistakes had to coincide:
+#   (a) the lookahead crossed a filename boundary, and
+#   (b) `.log` is not in the extension list, so the REAL subject was invisible and could
+#       not out-compete the wrong one.
+# (a) is the fix below. (b) is deliberately left alone as a SUBJECT: adding `.log` to the
+# capture group would make the guard resolve run logs against the proposal directory, where
+# they never live, so every such row would be a fresh false positive in the other direction.
+# This checker's scope is proposal-local documents; cross-disk log provenance is a different
+# question and `memory/two-disk-rule-applies-to-main-too.md` is where that lives. But `.log`
+# and friends DO appear in BARRIER_EXT below, because a filename we refuse to accuse must
+# still be able to stop the lookahead from reaching past it.
+#
+# First attempt at (a) excluded only quote and slash characters from the gap. That passed the
+# B03 case -- but for the wrong reason: the log path there happens to be single-quoted. A
+# bare filename in the gap was still crossed, which the fixture
+#   "see foo.json; separately bar.md does not exist"
+# caught by pinning the absence on foo.json. So the barrier has to be the filename TOKEN,
+# not the punctuation that sometimes surrounds it.
+BARRIER_EXT = ("md|py|json|jsonl|tsv|csv|log|txt|sh|npy|pt|bin|safetensors|"
+               "yaml|yml|tex|bib|ini|cfg|out|err|pdf|aux")
+# A position where some other filename begins. Extensions are enumerated rather than matched
+# as [a-z]{2,6} so that "e.g.", "i.e." and version strings like "9.1/11" are not mistaken for
+# files -- treating those as barriers would suppress genuine stale claims (a false NEGATIVE,
+# which is the direction that actually costs a dispatch).
+_FILE_AHEAD = r'(?![A-Za-z0-9_.-]*\.(?:' + BARRIER_EXT + r')\b)'
 ABSENCE = re.compile(
     r'([A-Za-z0-9_./-]+\.(?:md|py|json|tsv|csv))'
-    r'[^"]{0,90}?(?:does not exist|do not exist|is absent|are absent|'
+    r'(?![A-Za-z0-9_.-])'
+    r'(?:' + _FILE_AHEAD + r'[^"])' + r'{0,90}?'
+    r'(?:does not exist|do not exist|is absent|are absent|'
     r'is missing|not on disk|does NOT exist)',
     re.IGNORECASE)
+# KNOWN LIMITATION, measured not assumed: on "RELATED_WORK.md and SOURCES.md do not exist"
+# only SOURCES.md is captured, because the barrier stops RELATED_WORK.md from reaching the
+# predicate. That under-reports a genuine double claim. Verified absent from the live tree
+# (see the conjunction probe in this file's control block), and the failure direction is
+# under-reporting, so it is left documented rather than patched with a wider net.
 
 # A sentence that QUOTES a stale claim in order to refute it is the repair, not the defect.
 # This guard's own recommended fix -- "add a dated superseding key" -- necessarily restates
