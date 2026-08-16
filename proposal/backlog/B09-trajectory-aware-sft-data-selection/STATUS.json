@@ -97,5 +97,87 @@
     "RDS+ dominates TA-Coreset in both performance and total cost",
     "untouched-test gains disappear after leakage controls",
     "results are driven only by additional target tokens"
-  ]
+  ],
+
+  "novelty_verdict_20260817": {
+    "verdict": "hold_in_backlog -- novelty gate CLEARED for the NARROWED claim of RELATED_WORK.md section 5; NOT preempted (no candidate is 完全相同/抄袭)",
+    "when": "2026-08-17",
+    "evidence": "proposal/backlog/B09-trajectory-aware-sft-data-selection/RELATED_WORK_ADJUDICATION_20260817.md (this pass) + RELATED_WORK.md (2026-08-15, 33942 B) + NOVELTY.md (2026-08-08, 16669 B)",
+    "n_candidates": 29,
+    "n_preempt": 0,
+    "n_adjacent": 11,
+    "venue_authority_used": "ACL FAMILY -> ACL Anthology, fetched first-hand HTTP 200 with <title> read, for all five Findings rows: ATLAS 2025.findings-acl.1299, MDS 2026.findings-acl.130, CSO 2026.findings-acl.1974, MIG 2025.findings-acl.515, SMART 2024.findings-acl.766. All five are the rows DBLP and the arXiv API return as journals/corr CoRR records, so auditing through DBLP alone would have under-rated B09's three sharpest collisions -- independently reproducing the warning in memory/venue-verify-acl-family-needs-anthology.md. OPENREVIEW FAMILY -> venueid, for Weasel: venueid=ICML.cc/2026/Conference, venue='ICML 2026 regular', forum EXCUyr6hhZ (DBLP has it only as journals/corr/abs-2605-20291 = the 2026-conference lag).",
+    "_READER_WARNING": "ready_queue.py:320-321 NOVELTY_VERDICT_KEYS is HARDCODED with NO dated-priority slot. MEASURED 2026-08-17 on temp copies in /tmp: this dated key ALONE is INVISIBLE (novelty_checked=False, evidence='absent'). Hence the sibling undated `novelty_verdict` key below. Same verdict; this one is the provenance record.",
+    "_the_premise_of_the_task_that_produced_this_was_false": "The dispatch said RELATED_WORK.md does not exist here and asked for it to be written. It has existed since 2026-08-15 (33942 B), alongside NOVELTY.md since 2026-08-08. The queue line 'novelty gate not adjudicated (absent)' reports a missing verdict KEY, not a missing FILE. Nothing was overwritten."
+  },
+  "novelty_verdict": {
+    "verdict": "hold_in_backlog",
+    "when": "2026-08-17",
+    "_why_this_undated_duplicate_exists": "ready_queue.py's NOVELTY_VERDICT_KEYS cannot see novelty_verdict_20260817 (hardcoded, no dated slot). This is the reader-visible copy; read novelty_verdict_20260817 for the full record. A duplicate rather than an edit, per LIFECYCLE_SCHEMA.md sec 0 append-only.",
+    "evidence": "proposal/backlog/B09-trajectory-aware-sft-data-selection/RELATED_WORK_ADJUDICATION_20260817.md",
+    "n_candidates": 29,
+    "n_preempt": 0,
+    "n_adjacent": 11,
+    "_DOES_NOT_RELEASE_GPU": "CRITICAL. A novelty verdict says 'not preempted', NEVER 'worth a card'. B09's candidate pool DOES NOT EXIST ON EITHER DISK and its next_gate[0] is GATE -1 = a 1.0 GiB DOWNLOAD + CPU derive (0 GPU), which is NOT DONE. Measured 2026-08-17 with ready_queue.read_one() on temp copies: a cleared novelty verdict alone flips B09's INFERRED lifecycle to ready_gpu, because B09 has no gpu_policy/blocked_by key and -- decisively -- no next_gate_gpu key, so _next_gate_is_free finds nothing to read and cannot hold it (this is the mechanism that correctly holds B06). That inference would be WRONG. lifecycle_20260817 below declares ready_cpu explicitly to prevent it."
+  },
+  "lifecycle_20260817": "ready_cpu",
+  "lifecycle_why_20260817": "Novelty is now adjudicated CLEARED (novelty_verdict_20260817), so PAPERWORK no longer blocks B09 -- but DATA still does, and the remaining work is 0 GPU. GATE -1 resolved on 2026-08-16 to 'a 1.0 GiB download + CPU derive task, NOT a rollout-generation project' (gate_minus1_feasibility_2026_08_16), and that download HAS NOT BEEN RUN: the candidate pool is still absent from both physical disks. The entire actionable next step is the 6-item next_action list in gate_minus1_feasibility_2026_08_16 -- download the SWE-bench/SWE-smith-trajectories tool split (MIT, 8 parquet shards) to data/agent_traj/ on wzc1, ASSERT n_rows==24100 / resolved 9427-14673 / 9116 rows with both message_type and tool_calls rather than trusting the HF index, emit the flat pool with PROPOSAL section 1's columns, and PRE-REGISTER the section 4.3/H3 re-scope from benchmark-holdout to repo-family holdout BEFORE looking at any outcome. All of that is CPU + network. DO NOT schedule rollout generation; DO NOT substitute data/olmo2_sft/tulu3_general_* (the 2026-08-10 verdict on that stands). This declaration is deliberately in the SAFE direction per ready_queue.py:805-822.",
+  "novelty_reverification_20260817": {
+    "what": "Independent re-verification of the venue claims RELATED_WORK.md section 7 listed as its main open item, plus five NEW searches on B09's residual surface. 0 GPU, 0 ssh. Proxy positive control run FIRST (arXiv all:electron -> HTTP 200, totalResults=184943) so no empty result could be mistaken for a dead endpoint.",
+    "acl_family_confirmed_via_anthology": {
+      "2025.findings-acl.1299": "ATLAS: Agent Tuning via Learning Critical Steps -- CONFIRMED Findings of ACL 2025. NOTE the Anthology reads 'ATLAS' while arXiv 2503.02197 capitalises 'ATLaS'; cite the Anthology spelling.",
+      "2026.findings-acl.130": "Data Selection for Multi-turn Dialogue Instruction Tuning (MDS) -- CONFIRMED Findings of ACL 2026",
+      "2026.findings-acl.1974": "Verified Critical Step Optimization for LLM Agents (CSO) -- CONFIRMED Findings of ACL 2026",
+      "2025.findings-acl.515": "MIG -- CONFIRMED Findings of ACL 2025",
+      "2024.findings-acl.766": "SMART -- CONFIRMED Findings of ACL 2024"
+    },
+    "openreview_family_confirmed_via_venueid": {
+      "Weasel arXiv:2605.20291": "venueid=ICML.cc/2026/Conference, venue='ICML 2026 regular', forum EXCUyr6hhZ -> CONFIRMED published, main conference. Second record ICLR.cc/2026/Workshop/LLA forum ixNDssFCkd is the workshop version; cite the ICML one. 2026-05 = three months before this pass, so NOT concurrent and cannot be set aside under the 2-3 month rule. This is the row that forced RELATED_WORK.md's narrowing and it holds up."
+    },
+    "still_arxiv_only_answer_unchanged": {
+      "TopoCurate 2603.01714": "DBLP total=1, journals/corr/abs-2603-01714, CoRR 2026; OpenReview search returned 0 titled notes",
+      "RDS+ 2503.01807": "DBLP CoRR 2025. An OpenReview note DOES exist (forum Widxp7XGYm) but its venueid is dblp.org/journals/CORR/2025 -- an ARCHIVE MIRROR, not a conference venueid. TRAP WORTH NAMING: an OpenReview hit is not an OpenReview acceptance; only a venueid naming a conference is.",
+      "SWE-TRACE 2604.14820": "DBLP journals/corr/abs-2604-14820, CoRR 2026",
+      "note": "arXiv-only means 'no peer-reviewed venue verifiable from this node', NEVER 'no venue exists'."
+    },
+    "residual_surface_retested": {
+      "why": "B09's residual claim after the Weasel narrowing is the hard parent-multiplicity cap + the row-multiplicity stress test (RELATED_WORK.md sec 5/5.1). The 08-15 file could only support it with EMPTY searches, which is weak evidence, so five NEW queries were run.",
+      "abs:\"trajectory-level\" AND abs:\"data selection\" AND abs:\"agent\"": 0,
+      "abs:\"constraint-matched\" AND abs:\"random baseline\"": 0,
+      "abs:\"group constraint\" AND abs:\"data selection\" AND abs:\"language model\"": 0,
+      "abs:\"per-trajectory\" AND abs:\"budget\" AND abs:\"selection\"": "3 hits, none relevant (VLA RL chunk masking 2605.16154, Scratch repair 2603.29624, CodeMonkeys 2501.14723)",
+      "abs:\"redundancy\" AND abs:\"trajectories\" AND abs:\"fine-tuning\" AND abs:\"agent\"": "27 hits, 1 new candidate (CurateEvo, below); rest are RL credit assignment / GUI agents / benchmarks, plus Weasel and TopoCurate already adjudicated",
+      "conclusion": "Surface (g) remains UNOCCUPIED and the residual claim stands as written. CAVEAT NOT SMOOTHED OVER: these are abs:/all: field queries, so a group-constrained coreset paper phrased in active-learning, dataset-distillation or matroid-submodular vocabulary would be missed. Searched and not found != does not exist."
+    },
+    "new_candidate_CurateEvo": {
+      "cite": "CurateEvo: Data-Curation Evolving for Agentic Post-Training, arXiv:2607.06140, 2026-07-07",
+      "venue": "arXiv-only",
+      "venue_authority": "arXiv API; NO arxiv:comment at all (so no self-reported acceptance to weigh); 2026-07 is inside the window where DBLP/S2 lag, so a missing DBLP conference record would not be evidence either way. Not ACL family.",
+      "relation": "ADJACENT",
+      "why": "Closest work found to B09's PROBLEM FRAMING rather than its mechanism: agentic post-training curation that explicitly 'prun[es] redundant or low-utility training turns under a cost-aware objective' at TURN granularity on agent data (ACEBench-Agent, BFCL-V4, tau^2-Bench). Does NOT preempt: (1) its selector is an EVOLVING LLM-WRITTEN PROGRAM rewritten each epoch from failed dev-set trajectories = meta-selection, same category as DataMaster in RELATED_WORK.md sec 3.9, and a moving target, the opposite of B09's pre-registered frozen-weight objective; (2) no hard parent-multiplicity bound -- cost-aware turn pruning is a soft penalty and B09's H1 is exactly soft-penalty vs hard-cap; (3) no constraint-matched null -- comparators are 'prior curation methods' (+3.2/+2.7 avg points), never a random subset under the same cap/quota/length/token constraints; (4) it is a pipeline paper that also emits RL data and an inference-time memory bank, not a selection-mechanism study.",
+      "consequence": "Adds one MUST-NOT-CLAIM item: 'first to prune redundant/low-utility agent training turns under a cost-aware objective' is foreclosed. B09's token-budget track SURVIVES as the axis on which 'the win is just more tokens' is falsifiable (its own kill criterion #5), but the IDEA of cost-aware turn pruning on agent data is no longer available as a novelty claim."
+    },
+    "still_open_not_discharged_by_this_pass": [
+      "NO FULL TEXT was read. Every characterisation is abstract + venue metadata. RELATED_WORK.md sec 7 item 6 already flags that the Weasel/TopoCurate/MDS/ATLAS/CSO differences turn on design details an abstract can hide (is the cap hard or soft? is a token budget present anywhere?). THAT REQUIREMENT IS NOT DISCHARGED and remains the largest risk in B09's novelty position.",
+      "Surfaces (a)-(f) searches were NOT re-run, only their venue claims re-verified.",
+      "SOURCES.md item 2 (official implementations + licence compatibility) still NOT DONE -- no repo cloned, no LICENSE read. Downstream of GATE -1.",
+      "promotion_criteria[4] still needs amending per RELATED_WORK.md sec 5.3: it names 'ATLAS, RDS+, and facility location' and must add Weasel (ICML 2026) and CSO (Findings ACL 2026); CSO's inclusion removes the escape route the criterion was written to permit. STATUS.json is append-only so it is NOT edited -- recorded here as a required amendment.",
+      "Zero cross-disk verification: /apdcephfs_zwfy6 is not mounted on LOCAL and ssh was forbidden. Every disk fact is carried from DATA_AUDIT_VERDICT_20260810.md and gate_minus1_feasibility_2026_08_16, which did search both disks."
+    ],
+    "gpu_used": "none. 0 GPU, 0 ssh, 0 GPU-seconds."
+  },
+  "next_gate_gpu_20260817": "0 GPU. GATE -1 is a 1.0 GiB HTTP download plus a CPU derive (gate_minus1_feasibility_2026_08_16.next_action, 6 items). Every gate in next_gate[] is downstream of it. Nothing in B09 may take a card until a trajectory-structured pool exists on disk AND next_gate[1] (the verbatim-kept audit) has run on it. Added 2026-08-17 because B09 had NO next_gate_gpu-family key at all, which meant ready_queue.py's _next_gate_is_free had nothing to read and could not hold the proposal out of the GPU queue -- measured: a cleared novelty verdict alone flipped the inferred lifecycle to ready_gpu.",
+
+  "next_gate_gpu": "0 GPU. GATE -1 is a 1.0 GiB HTTP download plus a CPU derive; every gate in next_gate[] is downstream of it and the candidate pool is still absent from both disks. [WHY THIS UNDATED DUPLICATE OF next_gate_gpu_20260817 EXISTS: I wrote the dated key first and asserted it would also hold B09 on ready_queue.py's INFERENCE path. I then TESTED that and it was FALSE. NEXT_GATE_COST_KEYS is hardcoded ('next_gate_gpu_20260816','next_gate_gpu','next_gate_cost','gate_gpu','next_gate_gpu_cost') and _DATED_COST_KEYS only knows the 08-16 date, so next_gate_gpu_20260817 is INVISIBLE exactly as novelty_verdict_20260817 is -- _next_gate_is_free(B09) returned '' and, with the lifecycle declaration stripped, inference re-derived ready_gpu. This is memory/fix-the-class-not-the-instance: I found the dated-slot defect on the novelty key family and walked straight into it on the cost key family in the same session. This key is the reader-visible copy; read next_gate_gpu_20260817 for the full record.]",
+  "reader_dated_slot_defect_20260817": {
+    "what": "ready_queue.py resolves FIVE key families by explicit hardcoded lists. THREE of them have a dated-priority slot (NEXT_GATE_KEYS, KILL_KEYS, NEXT_GATE_COST_KEYS) and two are resolved by REGEX so any future date works (_DATED_LIFECYCLE, _DATED_LIFECYCLE_WHY). But the dated slots that exist are pinned to SPECIFIC PAST DATES ('next_gate_executable_20260814', 'kill_gate_executable_20260814', 'next_gate_gpu_20260816'), and NOVELTY_VERDICT_KEYS has no dated slot at all.",
+    "measured_2026_08_17": {
+      "novelty_verdict_20260817": "INVISIBLE -> novelty_checked stays False, evidence 'absent'",
+      "next_gate_gpu_20260817": "INVISIBLE -> _next_gate_is_free returns '', cannot hold the proposal in ready_cpu"
+    },
+    "consequence": "Any append-only record filed on a date the code does not already enumerate is a SILENT NO-OP. The file's own docstring memorialises three instances of this (kill_gate_executable_20260814 unread for six days and PREDICTED by B07's own _precedence_warning; lifecycle_20260817 unread; lifecycle_why_20260817 unread) and the fix applied in two of them was to switch from an enumeration to a REGEX. The two families still enumerated by date are the two that bit today.",
+    "recommended_fix": "Resolve NOVELTY_VERDICT_KEYS and NEXT_GATE_COST_KEYS by dated PATTERN, newest first, undated last -- i.e. the same treatment _DATED_LIFECYCLE and _DATED_LIFECYCLE_WHY already received on 2026-08-17. Per the file's own reasoning this is safe for GATES and COSTS (a newer gate still has to pass _is_unspec; a newer cost still has to state what the NEXT step costs) and unsafe only for BLOCKERS, which is why blockers use discharge pointers instead.",
+    "NOT_DONE_and_why": "I did NOT edit ready_queue.py. It re-scores all 15 proposals and must not land as a side effect of a B06/B09 novelty task. This is a 0-GPU follow-up for someone with an adversarial pass on the whole queue. Until then, ANY agent appending a dated key to ANY STATUS.json must also append the undated sibling the reader can actually see, and must VERIFY with python3 proposal/ready_queue.py rather than assuming the append landed.",
+    "gpu_used": "none"
+  }
 }

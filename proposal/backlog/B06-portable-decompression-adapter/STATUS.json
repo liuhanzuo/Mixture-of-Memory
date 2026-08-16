@@ -409,5 +409,53 @@
     "presence_is_not_sufficiency": "This key discharges exactly ONE thing: the false claim that the file is missing. It does NOT assert the file's content is adequate, does NOT adjudicate novelty, and does NOT release any GPU. Any blocker that is really about CONTENT stands.",
     "note": "novelty_status_detail still opens 'RELATED_WORK.md does NOT exist here.' The file exists. Whether its CONTENT clears the five collision families that RELATED_WORK_GAP_AUDIT_20260808.md:96 lists is a separate question and is NOT settled by this key.",
     "found_by": "proposal/check_stale_absence_claims.py, which sweeps every STATUS.json for absence assertions about files that are on disk. It reported 6 rows; one (B03 GATE_PREREGISTRATION.md) was the checker's own false positive from a lookahead that crossed a filename boundary, fixed in commit 548e9e1."
+  },
+
+  "novelty_verdict_20260817": {
+    "verdict": "hold_in_backlog -- novelty gate CLEARED for the narrowed claim; NOT preempted (no candidate is 完全相同/抄袭)",
+    "when": "2026-08-17",
+    "evidence": "proposal/backlog/B06-portable-decompression-adapter/RELATED_WORK_ADJUDICATION_20260817.md (this pass) + proposal/backlog/B06-portable-decompression-adapter/RELATED_WORK.md (2026-08-15, 28761 B, the substantive write-up)",
+    "n_candidates": 22,
+    "n_preempt": 0,
+    "n_adjacent": 4,
+    "_READER_WARNING": "ready_queue.py:320-321 NOVELTY_VERDICT_KEYS is a HARDCODED list ['novelty_check_2026_08_09','novelty_verdict','k1_novelty','related_work_status'] with NO dated-priority slot, unlike NEXT_GATE_KEYS / KILL_KEYS / NEXT_GATE_COST_KEYS / _DATED_LIFECYCLE / _DATED_LIFECYCLE_WHY. MEASURED 2026-08-17 on temp copies in /tmp: this dated key ALONE is INVISIBLE to the reader (novelty_checked=False, evidence='absent'). That is why the sibling undated key `novelty_verdict` below also exists. The two are the SAME verdict; if they ever disagree, this dated key is the provenance record and the undated one is the reader-facing copy.",
+    "_the_premise_of_the_task_that_produced_this_was_false": "The dispatch said RELATED_WORK.md does not exist here and asked for it to be written. It has existed since 2026-08-15 (28761 B) and related_work_presence_correction_20260816 already recorded that. The queue line 'novelty gate not adjudicated (absent)' reports a missing verdict KEY, not a missing FILE -- the file-absence problem is a separate printed line which is NOT printed for B06. Nothing was overwritten."
+  },
+  "novelty_verdict": {
+    "verdict": "hold_in_backlog",
+    "when": "2026-08-17",
+    "_why_this_undated_duplicate_exists": "ready_queue.py's NOVELTY_VERDICT_KEYS cannot see novelty_verdict_20260817 (hardcoded, no dated slot). This key is the reader-visible copy of novelty_verdict_20260817; read that one for the full record. Written as a duplicate rather than editing anything, per LIFECYCLE_SCHEMA.md sec 0 append-only.",
+    "evidence": "proposal/backlog/B06-portable-decompression-adapter/RELATED_WORK_ADJUDICATION_20260817.md",
+    "n_candidates": 22,
+    "n_preempt": 0,
+    "n_adjacent": 4,
+    "_does_not_release_gpu": "A novelty verdict says 'not preempted'. It NEVER says 'worth a card now'. B06's own next_gate is 0 GPU (next_gate_gpu: 'The drift leg is 0 GPU...') and ready_queue.py:_next_gate_is_free correctly holds it in ready_cpu. Kill condition 3 (second compressor) is still UNTESTED."
+  },
+  "lifecycle_20260817": "ready_cpu",
+  "lifecycle_why_20260817": "Novelty gate adjudicated CLEARED 2026-08-17 (see novelty_verdict_20260817), so paperwork no longer blocks B06. It stays ready_cpu because its OWN next steps are 0 GPU and two of them can still NARROW or KILL the claim: (1) `wc -l` on the canonical judge cache locomo_results/hcache_8b_chatFALSE/judge_cache.jsonl on zwfy6 -- if it holds ~1439 records instead of 1540 then silent judge-API failures are the PROVEN mechanism for the canonical 8.11 outlier (highest_value_next_0_gpu_followup; NOT DONE, ssh was forbidden for this leg too); (2) full-text differential read of SeDeM 2608.00311, RAC 2608.04991 and the newly found KV Packet 2604.13226, all three of which were adjudicated from ABSTRACTS ONLY. Kill condition 3 (second compressor) is the only remaining GPU item and it is downstream of both. This declaration is deliberately in the SAFE direction per ready_queue.py:805-822 -- declaring ready_cpu can only free a card, never waste one.",
+  "surface_e_closed_20260817": {
+    "what": "RELATED_WORK.md sec 5 item 2 flagged THREE cross-codec-portability arXiv queries that died on HTTP 429 and were never retried, and called sec 2.5's 'no direct hit' the weakest finding in the file. Re-run 2026-08-17 via hy-proxy.woa.com:3128; all three returned HTTP 200. Plus 8 further queries on the same surface, all HTTP 200. Proxy positive control run FIRST (all:electron -> HTTP 200, totalResults=184943) so an empty result could not be confused with a dead endpoint.",
+    "queries_that_had_died": {
+      "all:\"KV cache\" AND all:\"repair\" AND all:\"LoRA\"": 0,
+      "all:\"CacheBlend\" AND all:\"adapter\"": 1,
+      "all:\"cross-method\" AND all:\"cache reuse\" AND all:\"generalization\"": 0
+    },
+    "new_candidate_KV_Packet": {
+      "cite": "KV Packet: Recomputation-Free Context-Independent KV Caching for LLMs, arXiv:2604.13226 v2, 2026-04-14",
+      "venue": "arXiv-only",
+      "venue_authority": "DBLP dblp.org/search/publ/api HTTP 200 -> total=1, journals/corr/abs-2604-13226, venue=CoRR, year=2026, type='Informal and Other Publications'. OpenReview api2.openreview.net HTTP 200 checked BECAUSE the repo rule says DBLP lags 2026 conferences -- returned 8 notes, NONE a paper record (they are anonymous REVIEW notes about an unrelated system 'CrossKV'), no venueid on any. So OpenReview does not upgrade it. Not ACL family.",
+      "relation": "ADJACENT",
+      "why": "Wraps cached documents in light-weight TRAINABLE SOFT-TOKEN ADAPTERS trained via SELF-SUPERVISED DISTILLATION to bridge context discontinuities, positioned explicitly against CacheBlend/EPIC/SAM-KV recomputation. Same idea SHAPE as B06. Differs on three load-bearing axes: (1) operates on the KV cache, not mid-layer hidden states at fixed depth j=12; (2) trains the CACHE side (soft tokens wrapping it), B06 trains the READER side (rank-32 LoRA on upper layers) -- the same dichotomy RELATED_WORK.md sec 2.4 draws against Cartridges ICLR 2026, and KV Packet lands on the Cartridges side; (3) portability is NOT tested -- evaluated only on its own packet format.",
+      "consequence": "TIGHTENS the MUST-NOT-CLAIM list by one item. 'A trained adapter is a cheaper alternative to recomputation-based cache repair' is now PRIOR ART at 2026-04, four months before B06's measurement, so it is NOT concurrent and cannot be waved off under the 2-3 month rule. B06 may still claim the TRANSFER/portability property; it may no longer claim the adapter-instead-of-recompute FRAMING."
+    },
+    "new_candidate_LongAttnComp": {
+      "cite": "LongAttnComp: Cross-Family Context Compression for Long-Context Reasoning, arXiv:2606.01336 v2",
+      "venue": "arXiv-only",
+      "venue_authority": "the paper's OWN arxiv:comment field reads verbatim 'Under review' -- the authors themselves state it is unpublished, which is the strongest available signal and needs no third-party lookup",
+      "relation": "ADJACENT",
+      "why": "Headline claims it 'transfers across four target models from three families' -- the nearest existing use of the word 'transfers' in this literature. But it compresses at the TOKEN level (write-side selection, same disposition as PromptDistill), and what transfers is THE COMPRESSOR ACROSS READERS, whereas B06 asks whether ONE READER ADAPTER SURVIVES ACROSS COMPRESSORS. The axes are transposed. No reader-side adapter at all."
+    },
+    "revised_finding_on_surface_e": "RELATED_WORK.md sec 2.5 called this 'the family where I could not find a direct hit, and that is B06's opening'. After closing the 429s the accurate statement is NARROWER: no work performs B06's MEASUREMENT (one trained reader-side repair held fixed across >=2 cache production rules), but the adapter-instead-of-recompute IDEA is occupied by KV Packet at the KV level and the word 'transfers' is occupied by LongAttnComp at the compressor level. The opening is the TRANSFER EXPERIMENT, not the mechanism and not the framing. This is a narrowing, not a kill.",
+    "gpu_used": "none. 0 GPU, 0 ssh, 0 GPU-seconds."
   }
 }
