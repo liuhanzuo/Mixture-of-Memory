@@ -81,21 +81,39 @@ done
 
 ## Step 1b：训练 log（对照 GPU 实测）
 
-**⚠️ 不要硬编码 log 文件名——run 换了名字，写死的路径只会静默返回空。每次先按 mtime 找最新的：**
+**⚠️ 不要硬编码 log 文件名——run 换了名字，写死的路径只会静默返回空。**
+
+### ★★ 但「按 mtime 找最新」在共享盘的节点上会拿到别人的 log（2026-08-16 实测）
+
+`logs/` 在**同盘节点之间是同一个目录**（wzc1 = LOCAL + `.212`；zwfy6 = `.73/.82/.104`）。
+`ls -t` 只会选出「最近写盘的那台」，**与你登录的是哪台无关**。
+
+2026-08-16 我 ssh 到 `.212` 跑 `ls -t logs/*.log | head -1`，拿到的是 **LOCAL 的 keep10 log** ——
+有 step、有 loss、还在推进，**看起来完全正常**。照它报账会让两个节点报出同一份数字，且都显示「健康」，
+而 `.212` 真正在跑的 distill 完全没被看到。
+
+**正解：先认进程，再由进程反查 log。**
 
 ```bash
-ls -t logs/*.log | head -5                       # 本机最新 log
-L=$(ls -t logs/<本轮 run 关键字>*.log | head -1)  # 例: sparseforge_tm_*RESUME*
-echo "mtime=$(stat -c %y "$L")"                  # ★ mtime 比内容更早暴露 stall
-tail -c 4000 "$L" | tr '\r' '\n' | grep -aoE "loss=[0-9.]+|[0-9]+/[0-9]+" | tail -3
+R=/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory   # zwfy6 节点换成 /apdcephfs_zwfy6/...
+# ⚠️ ssh 落地在 /root，不是仓库根 —— 必须显式 cd，否则 ls: logs/*.log: No such file or directory
+pgrep -af 'torch.distributed.run|train_' | head -2        # ★ 先拿到这台自己在跑什么 + --output_dir
+# 从上面的 --output_dir 反推 run 名，再据此定位它自己的 log；不要用 mtime，也不要猜文件名
+cd $R && L=logs/<从 output_dir 推出的 run 名>*.log
+echo "mtime=$(stat -c %y $L)"
+tail -c 4000 "$L" | tr '\r' '\n' | grep -aE '\[step [0-9]+' | tail -4
 grep -aiE "Traceback|out of memory|ChildFailedError|NaN" "$L" | grep -viE "No NaN" | head -3
 ```
+
+**自查判据：log 里的 run 名 / output_dir 必须和你以为在查的那台的任务对得上。对不上就是拿错了文件。**
+（猜 log 名同样危险：`.212` 的实际文件叫 `olmo2_7B_keep14_distill_212_0815.log`，我按 `*distill*` glob
+在**远程**返回空，因为我没 cd；而它在本机能直读，因为同盘。）
 
 **速率一律用 elapsed/iter 自己算，不要信 tqdm 的瞬时 `s/it`：** 隔 ≥120 s 采两次 iter 号，`Δt/Δiter`。
 **且必须提取单个数值**——2026-08-14 我的 grep 匹配到两行，shell 代入多行值，脚本打印出
 「0.0 s/it → 没有变慢」，而同一份输出里的原始 iter 号是 60.0 s/it。**脚本的 VERDICT 行在输入畸形时不是证据。**
 
-当前 5 节点的 log 位置（会变，以 mtime 为准）：
+当前 5 节点的 log 位置（会变；**同盘节点之间不能用 mtime 区分归属，见上方 Step 1b 的纠正**）：
 
 | 节点 | 盘 | log 路径 |
 |---|---|---|
@@ -245,6 +263,8 @@ curl -s -m 8 -o /dev/null -w "%{http_code}" http://127.0.0.1:8088/api/data
 - ⚠️ **`29.162.226.120`（dllm）已归还，绝不连。**
 
 **当前活跃训练**：**不要信本节的静态列表**——用 `head -40 status/GPU_STATUS.md` +
-`ls -t logs/*.log | head` 现查。这里只记长期基线：`.104` 的 paperC heal 是 5.74 s/step、
+**每节点 `pgrep -af 'torch.distributed.run|train_'`** 现查（**不要用 `ls -t logs/*.log`** 来认归属：
+同盘节点共享 `logs/`，mtime 只会给出「最近写盘的那台」，见 Step 1b）。
+这里只记长期基线：`.104` 的 paperC heal 是 5.74 s/step、
 LOCAL/`.212` 的 SparseForge 臂是 45-48 s/it（单跑）。
 
