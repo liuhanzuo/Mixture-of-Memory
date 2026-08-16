@@ -1,6 +1,34 @@
 # GPU_STATUS.md — 5 节点 GPU 台账（40 卡）
 > 每次启动/kill GPU 任务更新。heartbeat 先读→对照 nvidia-smi→台账说跑但空=补卡。★29.162.226.120=dllm 绝不碰。
 
+## 🔄 2026-08-16 17:20 — **40/40 全忙，0 空卡，本轮无 GPU 操作**（5 个 run 全部实测健康）
+
+速率一律用 **log 自带时间戳** 算 Δt/Δiter（窗口长度已标注），不信 tqdm 瞬时值。
+
+| 节点 | 卡 | 任务 | step | loss | 实测速率（窗口） | ETA | 状态 |
+|---|---|---|---|---|---|---|---|
+| LOCAL | 0-7 | Paper B keep10fresh2 resume | 170420/200000 | 2.5081 | **1.2033** s/step（300 步/361 s）= 基线 1.20 | 08-17 03:09 | ▶️ 健康 |
+| **`.212`** | 0-7 | Paper B #99 keep14-distill | 33900/200000 | 2.7715 | **2.3600** s/step（300 步/708 s）= 自报 2.36 | 08-21 06:09 | ▶️ 健康 |
+| `.73` | 0-7 | Paper B keep12fresh2（自 step166000） | 187700/200000 | 2.3819 | **7.99** s/step（300 步/2397 s），自报 7.81 | **08-17 20:33** | ▶️ 健康 |
+| `.82` | 0-7 | Paper B keep8fresh2 resume | 160320/200000 | 2.5713 | **5.7867** s/step（300 步/1736 s）= 自报 5.78 | 08-19 09:04 | ▶️ 健康 |
+| `.104` | 0-7 | paperC qwen3base_heal_k8f2 | 60800/200000 | 2.6215 | **5.90** s/step，自报 5.74 | 08-26 05:24 | ▶️ 健康（勿动） |
+
+每节点 `--query-compute-apps` 恰好 **8 个 PID**（一卡一主，无抢卡）。Monitor http200 OK。
+
+**`.73` / `.104` 高出自报 2-3% 的原因已定位为 ckpt flush，不是变慢**（第 13、14 次实例）：
+`.73` step187500 落盘于 **16:49:06**、`.104` step60500 落盘于 **16:48:09**，
+两者都**落在 16:35→17:15 的测量窗口内**。诊断顺序是**先查 ckpt mtime**（比重采 util 便宜），
+见 `memory/ckpt-interval-rate-is-not-compute-rate.md`。
+
+**下一棒（`.73`，约 27 h 后）**：keep12 到 step200000 → 立即跑已预验的 eval driver
+`scripts/eval_paperb_ladder_200k.sh`（dry-run 已确认它在 ckpt 缺失时正确 `ASSERT-FAIL` + 真实 rc=2）。
+
+**认归属的正确方法**：`pgrep -af 'scripts/train_'` 取 `--output_dir` 再反推 log。
+**不要用 `ls -t logs/*.log`** —— 同盘节点共享 `logs/`，mtime 只会给出「最近写盘的那台」。
+本轮 `.73` 的 `pgrep -af 'train_'` 还匹配到了我自己的探针命令串，所以改用 `pgrep -af arch_probe2` 才认准。
+
+---
+
 ## 🔄 2026-08-15 21:44 — **40/40 全忙**；`.212` 启动 **Paper B #99 keep14-distill**（最后一个缺的臂）
 
 | 节点 | 卡 | 任务 | 实测（nvidia-smi + **log 自带时间戳**） | 状态 |

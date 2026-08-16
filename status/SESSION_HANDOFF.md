@@ -2,11 +2,76 @@
 
 > **本文件是 compact 后或新会话启动时的第一手交接。** 读完这份 + `status/RUN_REGISTRY.md` §3/§4 + `status/TRAINER_ACTIVITY.jsonl` 尾部，就能接上当前研究状态。
 > 维护规则：main agent 每当方向/结论/在跑实验有重大变化时，**覆盖更新本文件的「当前快照」区**（保持精简，旧结论沉淀到 RUN_REGISTRY）。
-> 最后更新：2026-08-15 05:25 GMT+8（#246 ±SLoRB 收官：slorb 9/9 更好但 +26.2% 活参数、2:4 全破；paperC 自审修两处；ready_queue 0 ready_gpu / 11 ready_cpu，16 张 B200 空闲但**不该**填）。
+> 最后更新：2026-08-16 17:25 GMT+8（paperC round_04 收官 + BH-27 裁决：**没有 reviewer 分歧，是我误读了 "RETAINED"**；两位 reviewer 的摘要句都错；40/40 全忙、0 空卡）。
 
 ---
 
-## ⚡ 当前快照（2026-08-15 05:25 GMT+8）—— #246 ±SLoRB 收官 + paperC 自审两处修正；16 张 B200 空闲但**不该**填
+## ⚡ 当前快照（2026-08-16 17:25 GMT+8）—— paperC round_04 已闭环；**40/40 全忙、0 空卡**
+
+**一句话现状**：paperC round_04（12 份盲审 + 独立 meta-review）已走完，五类缺陷全部由我自己重算确立并已修；
+本轮最后一件悬案「BH over 27 cells 两位 reviewer 结论相反」经独立重算 **判定为不存在——是我把
+"the null is RETAINED" 读成了「结论保住了」**。真正该修的缺陷反而被那场假争议挡住（见下）。5 个 run 实测全健康，
+下一棒是 `.73` keep12 约 27 h 后到 200k。
+
+**★ GPU 现实（实测，非台账）**：**5 节点 40 卡全忙，每节点恰好 8 个 compute PID，无抢卡，0 空卡。**
+
+| 节点 | 盘 | run | step | 实测速率（窗口） | ETA |
+|---|---|---|---|---|---|
+| LOCAL | wzc1 | Paper B keep10fresh2 | 170420/200000 | **1.2033** s/step（300 步/361 s） | 08-17 03:09 |
+| `.212` | wzc1 | Paper B #99 keep14-distill | 33900/200000 | **2.3600**（300 步/708 s） | 08-21 06:09 |
+| `.73` | zwfy6 | Paper B keep12fresh2 | 187700/200000 | **7.99**（自报 7.81） | **08-17 20:33** ← 下一棒 |
+| `.82` | zwfy6 | Paper B keep8fresh2 | 160320/200000 | **5.7867** | 08-19 09:04 |
+| `.104` | zwfy6 | paperC qwen3base_heal_k8f2 | 60800/200000 | **5.90**（自报 5.74） | 08-26 05:24 |
+
+`.73`/`.104` 高出自报 2-3% = **ckpt flush（第 13、14 次实例）**：step187500 落盘 16:49:06、step60500 落盘 16:48:09，
+都在 16:35→17:15 窗口内。**诊断顺序永远是先查 ckpt mtime，再考虑重采 util。**
+
+**★ BH-27 裁决（`paperC/evidence/MAIN_BH_27cell_adjudication.json`）**
+
+用 tie-aware BH step-up、以 `sections/tab_v2_full.tex` 为唯一输入重算：**m=27，BH q=0.05 拒 6，Bonferroni 拒 5**。
+
+1. **没有分歧。** R-claude-stats V13 与 meta-review §3.7 字面一致，我的算术也一致：`olmo2/keep14`
+   (p=0.0172, rank 7, 阈值 0.0130, **q=0.0663**) 不过校正。我上一轮把 "RETAINED" 读成「发现保住了」，
+   于是虚构出一场争议、还准备派 adjudicator。**统计语境里 retain = 零假设保住 = 该格没信号。**
+2. **两位 reviewer 的摘要句都错，且错在对作者有利的方向。** 都写「neither trace-signal cell survives」——
+   这只在 **Bonferroni** 下成立；**BH 下 `qwen3/k14` (p=0.0066, rank 6, 阈值 0.011111, q=0.0297) 是过的**。
+   两人各自的逐 rank 枚举都写着 rank 6 拒，**自相矛盾于自己的摘要**。照抄任一句就会印一句假话。
+3. **§5.3 已改**：只 claim 存活的那一半——`qwen3/k14` 的降级在校正后成立，故 v2 不是单纯缩放 v1；
+   而 `olmo2/keep14` 是**唯一向上动的格**，于是「双向 re-sort」降为一条未校正的 per-cell 观察，**不承载任何结论**。
+   `tab_v2_full` 新增 `q_BH` 列；新 gate `paperC/code/gate_bh_27cell_consistency.py`（6 个负控全过）
+   会在任何句子「在 BH 语境下断言两格全灭」时 rc=2。
+
+**★ 顺带抓到一个一直在出货的缺陷**：`gate_build_record_matches_pdf.py` **在 HEAD 上就是 FAIL**——
+用 `git archive HEAD` 干净树复跑，已提交的 PDF 实测 **26 页**而 record 写 **19 页**（rc=2）。
+「投稿页数上限所校验的那个字段」少报了 7 页。已按 3-pass 收敛构建刷新。
+
+**★ 我自己的测量 bug（已记 memory）**：gate sweep 报 5/5 rc=0，而 `gate_exact_floor_tail` 确定性 rc=1。
+根因 `printf "%s rc=%s" "$(basename $g)" "$?"` —— **`$(...)` 先跑并把 `$?` 重置为 0**，那一轮**所有** rc 都是伪造的。
+这是管道 bug 的第二套外衣；一般规则：**`$?` 与它所指的命令之间不能有管道、不能有命令替换、不能有任何东西。**
+
+**★ proposal 队列**：`ready_queue.py` 实测 **1 ready_gpu / 8 ready_cpu / 3 needs_prior_gate**。
+唯一 ready_gpu 是 **B12-slorb-rank-efficiency**，但它自己的 `gpu_policy` 要求先过 **G0（0 GPU，两条腿）**：
+leg 1 novelty（`RELATED_WORK.md` 已在盘上，待核是否真清了 (a)-(d)）、leg 2 **从未执行过的
+`emit_slorb_ladder.py` 自检**（断言 `density_two_matmul_deployment_form == 0.5625`、
+`live_branch_params == 404750336`）。**已派 0-GPU agent `a7ecc0fec5ab09ed4` 跑 leg 2**（prompt 写死
+「你没有 GPU、40 卡全忙、不要 kill 任何东西」）。**G0 过了也不要直接启 pilot。**
+
+**★ 仍待用户决定（未动任何文件）**：diskB 清盘。建议清 `data`(2.12 TiB) + `models`(1.08 TiB，可重下)，
+**不要清 ckpt**——96% 属于十几位同事的共享目录、我们的 ckpt 只占其中约 1%，且最大的三个 ckpt 目录
+正是在跑的三个 run 的 resume 源。
+
+**★ paperC round_04 未闭合项**（详见 `paperC/review_rounds/round_04/meta/META_REVIEW.md` 的 17 条排序动作）：
+- `needs_adjudicator`：shortgpt16 的排除是**披露失误**还是**按结果选样**。我 14:00 说了「实质上是按结果选样」，
+  而从未读过那句话的独立 meta-reviewer **不肯走那么远**。**应由第三方裁决，不是我。**
+- 重新 freeze `submission_complete`（sha `ffd5fd7d`，76 文件）后再评一轮——但 meta 的排序是**先修校准、再重打包**。
+- agent A 的合并项（abstract 14/15→15/17、intro:21、`03b_nulls.tex:12` 的 4.6×→4.2264），合并后**必须重测页数**。
+- `E-I` 指向空（唯一来源 `EVIDENCE_PACK.md`）；**从 artifact 端到端重建全表**从未跑过（X1/X2/X5/X6 都依赖它）。
+
+---
+
+## ⚡ 上一版快照（已被上方 08-16 快照覆盖，保留备查）
+
+## ⚡ 快照（2026-08-15 05:25 GMT+8）—— #246 ±SLoRB 收官 + paperC 自审两处修正；16 张 B200 空闲但**不该**填
 
 **一句话现状**：SparseForge #246（±SLoRB token-matched pair）**已完全收官**——slorb 的 union-9 于 05:00 全 6 stage 跑完，与 noslorb 在**完全同口径**下配对（harness 字符串逐字节相同、同 9 task、每 task 同 primary_metric 与 n_samples、`source_iter=7501` **两臂相同**）。slorb **9/9 task 更好**，union9 mean_primary 0.5955→**0.6154**（+0.0199），ppl@4096 6.6795→**6.1938**（−7.27%）。**但这不是等参数对照**：SLoRB 折叠后 `exact_2of4_violations = 1619001344 = elems/4`（**每一个 tile 都被破坏**）、`zero_ratio 0.5→1.08e-9`，且从 ckpt 实测多出 **848,429,056 个活参数（+26.2%）**——所以它**永远不得进 2:4 列**，且增益是买来的。
 
