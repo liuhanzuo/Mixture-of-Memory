@@ -59,9 +59,25 @@ ABSENCE = re.compile(
     r'is missing|not on disk|does NOT exist)',
     re.IGNORECASE)
 
+# A sentence that QUOTES a stale claim in order to refute it is the repair, not the defect.
+# This guard's own recommended fix -- "add a dated superseding key" -- necessarily restates
+# the old sentence, so without this the checker penalises the only correct repair. Measured:
+# of the 8 rows the first version reported, A01/SOURCES.md and B01/RELATED_WORK.md are
+# refutation-only, i.e. pure false positives; B08 is mixed (2 bare sentinels + 1 correction);
+# the other 5 are bare claims.
+REFUTED_NEARBY = re.compile(
+    r'\b(IT DOES|IT EXISTS|THEY DO|STALE|SUPERSED\w*|was stale|no longer (?:true|blocking)|'
+    r'PREMISE_OF_THE_TASK_WAS_STALE|已存在|实际存在|已经存在)\b',
+    re.IGNORECASE)
+REFUTE_WINDOW = 260
+
 
 def scan(status_path):
-    """Return [(claimed_file, resolved_path, size)] for absences that are false."""
+    """Return [(claimed_file, resolved_path, size)] for absences that are false.
+
+    A hit is dropped when a refutation sits within REFUTE_WINDOW characters on either
+    side, because that is a correction quoting its own stale sentinel.
+    """
     try:
         text = status_path.read_text(encoding="utf-8")
     except OSError:
@@ -73,8 +89,13 @@ def scan(status_path):
         # Resolve against the proposal directory: these records name files relative to
         # their own proposal, and a bare basename is the common case.
         cand = status_path.parent / name
-        if cand.exists() and cand.is_file():
-            out.append((raw, cand, cand.stat().st_size))
+        if not (cand.exists() and cand.is_file()):
+            continue
+        before = text[max(0, m.start() - REFUTE_WINDOW):m.start()]
+        after = text[m.end():m.end() + REFUTE_WINDOW]
+        if REFUTED_NEARBY.search(before) or REFUTED_NEARBY.search(after):
+            continue  # a correction, not a live stale claim
+        out.append((raw, cand, cand.stat().st_size))
     return out
 
 
