@@ -1,0 +1,219 @@
+{
+  "schema_version": "1.0.0",
+  "what": "paperC assumption A-03, AXIS 2 (LOCAL SUPPORT): do the 6 classical-statistics citations actually support the sentences that cite them?",
+  "date": "2026-08-16",
+  "verified_by": "delegated agent (0 GPU, literature-only). Companion to paperC/evidence/A03_classical_citations_MAIN.json which closed AXIS 1 (metadata, 6/6 PASS).",
+  "scope_note": "This file does NOT re-verify metadata. It answers two questions per citation: (i) does the source support the assertion the paper assigns it? (ii) if not, does the disclaimed ground actually belong to the paper (over-disclaiming)?",
+
+  "evidence_grade_legend": {
+    "PRIMARY_FULL_TEXT": "I read the source's own full text",
+    "PRIMARY_ABSTRACT_ONLY": "I read the source's own publisher/author abstract, verbatim, but not the body",
+    "SECONDARY_REVIEW": "A peer-reviewed third-party work restates the source's content; I read that third party's full text",
+    "MATHEMATICAL_DERIVATION_BY_ME": "settled by derivation/computation, not by reading a source",
+    "UNVERIFIABLE": "no authority I could reach establishes it"
+  },
+
+  "authorities_tried_globally": {
+    "proxy_positive_control": "PASSED before any lookup: doi.org CSL-JSON, api.openalex.org, api.unpaywall.org all returned live payloads for 10.1177/001316446002000104",
+    "doi_org_crossref_csl_json": "used for all 6; returns metadata; abstract present ONLY for brennan1981",
+    "unpaywall": "all 6 queried. is_oa=false for 5. brennan1981 reports is_oa=true but the single OA location is a SAGE publisher URL that returns http=000 (blocked) -- the OA flag has evidence='deprecated' and is not honoured",
+    "openalex_abstract_inverted_index": "all 6 queried. Abstract recovered for 5 (bennett, brennan, frary, brenner, devries). cohen1960 has NO abstract in OpenAlex (the 1960 article has none)",
+    "semantic_scholar_graph": "queried for brennan/frary/devries: openAccessPdf.status=CLOSED, abstract field explicitly elided by publisher",
+    "eric_api_ies_ed_gov": "queried. brennan1981=EJ253083, frary1988=EJ374435. Both are EJ (journal) records with truncated descriptions and NO full text. Enumerated all 25 Frary ERIC records: no ED-numbered full-text document covers the 1988 module",
+    "eric_files_fulltext": "https://files.eric.ed.gov/fulltext/EJ374435.pdf -> http=404; ED255575, ED189126 -> http=404",
+    "publisher_direct": "journals.sagepub.com (brennan, devries) -> http=000/blocked; onlinelibrary.wiley.com (frary) -> http=403",
+    "ncme_items_module": "frary1988 is NCME Instructional Module #4; tried ncme.org canonical + docs paths -> http=404",
+    "fatcat_scholar_archive": "attempted for frary/devries/brennan; request did not complete",
+    "archive_org_advancedsearch": "http=000",
+    "core_api": "http=000 (unreachable through this proxy)",
+    "acl_anthology": "SUCCESS -- yielded the key secondary source (see secondary_sources)",
+    "openalex_cites_filter": "enumerated 64 OA works citing frary1988; fetched the 4 most promising; all publisher PDF endpoints returned 403 through this proxy",
+    "two_disk_repo_search": "BOTH disks searched, bounded (no find /). wzc1: find {papers,refs,literature,paperC,paperB,paperA,docs,external,third_party} -maxdepth 4 -iname '*.pdf' -> only project-generated PDFs, no classical sources. zwfy6 via .73: /apdcephfs_zwfy6/.../Mixture-of-Memory, no papers|refs|literature|pdfs dirs, no name match for bennett|brennan|frary|brenner|devries. CONCLUSION: no local copy of any of the 6 exists on either disk"
+  },
+
+  "secondary_sources": {
+    "artstein_poesio_2008": {
+      "cite": "Ron Artstein and Massimo Poesio. Inter-Coder Agreement for Computational Linguistics. Computational Linguistics 34(4):555-596, 2008.",
+      "doi": "10.1162/coli.07-034-r2",
+      "how_obtained": "https://aclanthology.org/J08-4004.pdf , http=200, 291595 bytes, md5=d79331aab8017c87f144a46cface467c, 42 pages, text extracted with pymupdf",
+      "why_authoritative": "peer-reviewed survey in the ACL journal of record, whose explicit purpose is to 'expose the mathematics and underlying assumptions of agreement coefficients'. It cites Bennett/Alpert/Goldstein 1954 and Brennan/Prediger 1981 in its own reference list and restates their formulas.",
+      "grade": "SECONDARY_REVIEW (full text read)"
+    }
+  },
+
+  "per_citation": {
+
+    "bennett1954communications": {
+      "paper_assertion": "Bennett's $S$ sets $p_e=1/k$ for $k$ response categories",
+      "assertion_site": "paperC/sections/09a_relocated.tex:8",
+      "verdict": "SUPPORTED",
+      "evidence_grade": "SECONDARY_REVIEW",
+      "primary_abstract_verbatim": "The extent of consistency between information from two methods of communication, the interview and the limited-response question, was investigated. Thirty questions showed consistencies greater than could be expected on the basis of chance. The questions were classified into four general categories, and the mean coefficients of consistency for these categories ranged from 0.46 to 1.00.",
+      "primary_abstract_assessment": "INSUFFICIENT on its own -- establishes only that a chance correction exists, never the functional form. MAIN's earlier assessment is confirmed, not overturned.",
+      "secondary_evidence_verbatim": "Artstein & Poesio 2008, Sec 2.4.1 (PDF p.6), titled 'All Categories Are Equally Likely: S': 'The simplest way of discounting for chance is the one adopted to compute the coefficient S (Bennett, Alpert, and Goldstein 1954), also known in the literature as C, kappa_n, G, and RE ... the computation of S is based on an interpretation of chance as a random choice of category from a uniform distribution -- that is, all categories are equally likely. If coders classify the items into k categories, then the chance P(k|c_i) of any coder assigning an item to category k under the uniformity assumption is 1/k; hence the total agreement expected by chance is A_e^S = sum_{k in K} (1/k)(1/k) = k(1/k)^2 = 1/k'",
+      "resolution": "A&P attribute S to Bennett/Alpert/Goldstein 1954 by name and give A_e^S = 1/k with k = number of categories. paperC's sentence is a faithful restatement. The paper writes p_e where A&P write A_e; same object.",
+      "over_disclaiming_check": "No. This attribution is correct and costs the paper nothing it should keep.",
+      "action": "none"
+    },
+
+    "brennan1981kappa": {
+      "paper_assertion": "\\citet{brennan1981kappa} recommend exactly that free-marginal alternative wherever $\\kappa$'s marginal dependence misleads",
+      "assertion_site": "paperC/sections/09a_relocated.tex:8",
+      "verdict": "SUPPORTED",
+      "evidence_grade": "PRIMARY_ABSTRACT_ONLY (corroborated by SECONDARY_REVIEW)",
+      "primary_abstract_verbatim": "This paper considers some appropriate and inappropriate uses of coefficient kappa and alternative kappa-like statistics. Discussion is restricted to the descriptive characteristics of these statistics for measuring agreement with categorical data in studies of reliability and validity. Special consideration is given to assumptions about whether marginals are fixed a priori, or free to vary. In reliability studies, when marginals are fixed, coefficient kappa is found to be appropriate. When either or both of the marginals are free to vary, however, it is suggested that the \"chance\" term in kappa be replaced by 1/ n, where n is the number of categories. In validity studies, we suggest considering whether one wants an index of improvement beyond \"chance\" or beyond the best a priori strategy employing base rates. In the former case, considerations are similar to those in reliability studies with the marginals for the criterion measure considered as fixed. In the latter case, it is suggested that the largest marginal proportion for the criterion measure be used in place of the \"chance\" term in kappa. Similarities and differences among these statistics are discussed and illustrated with synthetic data.",
+      "abstract_provenance": "recovered from TWO authorities returning byte-identical text: (a) Crossref CSL-JSON via doi.org, in a <jats:p> wrapper; (b) OpenAlex abstract_inverted_index. Semantic Scholar has it elided. ERIC EJ253083 carries only the first two sentences.",
+      "resolution": "The words 'it is suggested that the \"chance\" term in kappa be replaced by 1/n, where n is the number of categories' are a RECOMMENDATION in the authors' own voice, conditioned exactly on marginals being 'free to vary' -- i.e. precisely 'wherever kappa's marginal dependence misleads'. The paper's strong verb 'recommend' is earned, and the conditional clause is faithful. 'free-marginal' is the standard downstream name for this statistic (Brennan-Prediger coefficient / Randolph's free-marginal kappa; cf. Warrens 2010 abstract, 'Randolph's kappa generalizes Bennett et al. S to multiple raters').",
+      "secondary_corroboration": "Artstein & Poesio 2008 p.7: 'It has been argued that uniformity is the best model for a chance distribution of items among categories if we have no independent prior knowledge of the distribution (Brennan and Prediger 1981).' Also p.~ (Sec 4): 'reservations about the use of kappa have been noted by Brennan and Prediger (1981)'. Both corroborate direction: they advocate the uniform/free-marginal alternative AND criticise kappa's marginal dependence. NOT reversed.",
+      "over_disclaiming_check": "NO for the sentence as written -- but see finding_1. The SAME abstract contains a SECOND recommendation that paperC does not cite and that bears on paperC's v1 floor, which the paper does NOT disclaim. This is the one material result of this audit.",
+      "action": "keep sentence; act on finding_1 separately"
+    },
+
+    "frary1988formula": {
+      "paper_assertion": "formula scoring corrects for guessing as an explicit function of the per-item option count",
+      "assertion_site": "paperC/sections/09a_relocated.tex:8",
+      "verdict": "PARTIALLY_SUPPORTED",
+      "evidence_grade": "PRIMARY_ABSTRACT_ONLY",
+      "primary_abstract_verbatim": "Formula scoring is a procedure designed to reduce multiple-choice test score irregularities due to guessing. Typically, a formula score is obtained by subtracting a proportion of the number of wrong responses from the number correct. Examinees are instructed to omit items when their answers would be sheer guesses among all choices but otherwise to guess when unsure of an answer. Thus, formula scoring is not intended to discourage guessing when an examinee can rule out one or more of the options within a multiple-choice item. Examinees who, contrary to the instructions, do guess blindly among all choices are not penalized by formula scoring on the average; depending on luck, they may obtain better or worse scores than if they had refrained from this guessing. In contrast, examinees with partial information who refrain from answering tend to obtain lower formula scores than if they had guessed among the remaining choices. (Examinees with misinformation may be exceptions.) Formula scoring is viewed as inappropriate for most classroom testing but may be desirable for speeded tests and for difficult tests with low passing scores. Formula scores do not approximate scores from comparable fill-in-the-blank tests, nor can formula scoring preclude unrealistically high scores for examinees who are very lucky.",
+      "what_the_abstract_supports": "'formula scoring corrects for guessing' -- YES, fully and explicitly ('a procedure designed to reduce multiple-choice test score irregularities due to guessing'; 'a formula score is obtained by subtracting a proportion of the number of wrong responses from the number correct').",
+      "what_the_abstract_does_NOT_support": "'as an explicit function of the PER-ITEM option count'. The abstract says 'a proportion' and never names the proportion, never writes S = R - W/(k-1), and never states that k may vary item to item. The classical formula is universally reported as S = R - W/(k-1) with k the option count, so the 'function of the option count' half is near-certainly true of the body; but the qualifier 'per-item' -- i.e. k indexed by item -- is NOT established by any authority I reached, and it is the load-bearing word, because paperC's own novelty claim two sentences later is precisely that 'those works assume a single global k'.",
+      "internal_tension_flagged": "paperC asserts in the SAME passage both (a) Frary's correction is a function of the PER-ITEM option count and (b) 'The works above assume a single global $k$'. Read literally these are in tension: if Frary's k is genuinely per-item, the paper's stated novelty boundary ('what we are not aware of ... is a null in which k varies item to item') is undercut by its own attribution sentence. Either 'per-item' is too strong, or the 'single global k' claim is too strong. A novelty reviewer who reads the appendix closely can use this against the paper. It is a self-inflicted wound and costs nothing to remove.",
+      "authorities_exhausted_for_body": ["unpaywall(is_oa=false)","semantic_scholar(abstract elided, CLOSED)","openalex(abstract only)","ERIC EJ374435(description truncated, no fulltext)","files.eric.ed.gov(404)","wiley publisher pdf(403)","NCME ITEMS module pdf(404 on two paths)","64 OA citing works enumerated; 4 fetched, all 403","targeted OpenAlex full-text search for a restatement of S=R-W/(k-1): no relevant hit","both repo disks: absent"],
+      "over_disclaiming_check": "YES, mildly. By asserting Frary's correction is per-item, the paper hands Frary more than the abstract shows, and in doing so weakens its own varying-k novelty claim. Fixing this RETURNS ground to the paper.",
+      "action": "rewrite -- see recommended_rewrites.frary1988formula"
+    },
+
+    "brenner1996weightedkappa": {
+      "paper_assertion": "\\citet{brenner1996weightedkappa} show that a weighted $\\kappa$ drifts systematically with the number of categories",
+      "assertion_site": "paperC/sections/09a_relocated.tex:8",
+      "verdict": "PARTIALLY_SUPPORTED",
+      "evidence_grade": "PRIMARY_ABSTRACT_ONLY",
+      "primary_abstract_verbatim": "Weighted kappa coefficients are commonly used to quantify inter- or intra-rater reliability or test-retest reliability of ordinal ratings in clinical and epidemiologic applications. In this paper, we assess the dependence of weighted kappa coefficients on the number of categories and the type of weighting scheme, which vary between applications. The most commonly used weights are weights that are proportional to the deviation of individual ratings (\"linear weights\") or to the square of the deviation of individual ratings (\"quadratic weights\"). Quadratically weighted kappa coefficients are equivalent to the intraclass correlation coefficient and to the product-moment correlation coefficient under certain conditions. We illustrate that an increase of quadratically weighted kappa coefficients with the number of categories is expected under a broad variety of conditions, whereas linearly weighted kappa coefficients appear to be less sensitive to the number of categories. Number of categories and type of weighting scheme therefore require careful consideration in the interpretation of weighted kappa coefficients.",
+      "direction_check": "CORRECT and signed. The drift exists, it is an INCREASE, and it is 'expected under a broad variety of conditions' -- which licenses 'systematically'. The concluding sentence ('require careful consideration in the interpretation') licenses paperC's framing of it as a pathology to be avoided.",
+      "why_only_partial": "The abstract's result is explicitly STRATIFIED BY WEIGHTING SCHEME, and paperC's unqualified 'a weighted kappa' erases that stratification. Verbatim: the increase holds for QUADRATICALLY weighted kappa, 'whereas linearly weighted kappa coefficients appear to be LESS SENSITIVE to the number of categories'. Also note the scope is ORDINAL ratings; paperC's letters are nominal, and for nominal unweighted kappa this paper says nothing. So 'a weighted kappa drifts' overstates: the specific quadratic form drifts, the linear form largely does not.",
+      "over_disclaiming_check": "YES, mildly -- same shape as Frary. The paper concedes 'kappa-family statistics depend on k' as fully established, but Brenner & Kliebsch establish it for quadratically-weighted ordinal kappa, not for the nominal unweighted kappa that paperC's Delta_perm actually is. The concession is broader than the cited evidence.",
+      "action": "rewrite -- see recommended_rewrites.brenner1996weightedkappa"
+    },
+
+    "devries2008pooledkappa": {
+      "paper_assertion": "Pooling an agreement coefficient across heterogeneous item groups is likewise established",
+      "assertion_site": "paperC/sections/09a_relocated.tex:8",
+      "verdict": "PARTIALLY_SUPPORTED",
+      "evidence_grade": "PRIMARY_ABSTRACT_ONLY (+ MATHEMATICAL_DERIVATION_BY_ME for the identity in finding_2)",
+      "primary_abstract_verbatim": "We propose the pooled estimator of kappa, an efficient estimator when summarizing the interrater agreement for qualitative data with many items but few subjects. We evaluate this estimator through a simulation of proposed and alternative (average kappa) estimators and subsequently apply our method to calculate pooled and average kappas over 2,176 rated items from six semistructured interviews with sponsors of the CAHPS. The proposed pooled kappa estimator efficiently summarizes interrater agreement by domain. It is more widely applicable and makes better use of scarce subjects than simply averaging item-level kappas.",
+      "what_is_supported": "'Pooling an agreement coefficient across item groups is established' -- YES. They propose exactly a pooled kappa estimator, aggregate over 2,176 rated items, and summarise 'by domain', i.e. pooling within groups of items. 'Established' is fair for a 2008 paper with 231-256 citations.",
+      "what_is_NOT_supported": "the word 'HETEROGENEOUS'. The abstract's motivation is statistical EFFICIENCY under 'many items but few subjects', and its comparator is 'average kappa'. It says nothing about the groups differing in their category count k, nor about heterogeneity as the reason to pool. paperC's word 'heterogeneous' silently imports paperC's own motivation (strata differing in n_opt) into De Vries's paper. Pooling across groups: established. Pooling across groups that are heterogeneous IN THE NUMBER OF RESPONSE CATEGORIES: not established by any authority I reached.",
+      "over_disclaiming_check": "YES -- and this is the second-most consequential item after finding_1. See finding_2: my own derivation shows paperC's stratified statistic IS the De Vries pooled estimator, which means the correct relationship here is not 'we concede this ground' but 'our estimator instantiates their estimator with strata defined by option count'. That is a stronger and more accurate position: it inherits their statistical justification instead of merely deferring to them.",
+      "action": "rewrite -- see recommended_rewrites.devries2008pooledkappa"
+    },
+
+    "cohen1960kappa": {
+      "paper_assertion_a": "$\\Delta_{\\mathrm{perm}}$ equals the numerator of Cohen's $\\kappa$ computed within option-count strata",
+      "paper_assertion_b": "the constant-emitter zero we rely on is that literature's standard property rather than a new result",
+      "assertion_site": "paperC/sections/02_related.tex:15 (also 03_method.tex:37-43)",
+      "verdict": "SUPPORTED",
+      "evidence_grade": "MATHEMATICAL_DERIVATION_BY_ME (assertion a) + SECONDARY_REVIEW (assertion b)",
+      "note_on_primary": "Cohen 1960 has NO abstract in OpenAlex or Crossref (the 1960 article carries none); Semantic Scholar elides it; unpaywall is_oa=false. No abstract exists to quote. This claim did not need one.",
+      "assertion_a_derivation": {
+        "paperC_estimator": "acc_hat = sum_s (1/(n*n_s)) sum_L c^pred_{s,L} c^gold_{s,L}   [03_method.tex eq.1; implemented at paperC/code/heal_readout_v2_permutation_null.py:171 _acc_hat]",
+        "step1": "(1/(n*n_s)) sum_L cp*cg = (n_s/n) * (1/n_s^2) sum_L cp*cg = w_s * sum_L Ppred(L|s)*Pgold(L|s)  where w_s = n_s/n",
+        "step2": "sum_L Ppred(L|s)*Pgold(L|s) is exactly Cohen's p_e within stratum s (two-rater independence with each rater's OWN marginal), i.e. A_e^kappa of Artstein&Poesio Sec 2.4.3",
+        "step3": "so acc_hat = sum_s w_s * p_{e,s}, and acc = sum_s w_s * p_{o,s}",
+        "step4": "Delta_perm = acc - acc_hat = sum_s w_s (p_{o,s} - p_{e,s}) = the w_s-weighted sum of per-stratum Cohen kappa NUMERATORS.  QED",
+        "numeric_check": "verified on synthetic variable-n_opt data (n_opt in 3..10, 8 strata, mirroring MMLU-Pro) at seeds 7/42/1234: |Delta_perm - sum_s w_s(p_o,s-p_e,s)| = 2.7e-17, 1.4e-17, 3.8e-17; |acc_hat - sum_s w_s p_e,s| <= 2.8e-17. Machine precision.",
+        "conclusion": "assertion (a) is TRUE, exactly, with the reading 'the w_s-weighted aggregate of the within-stratum kappa numerators'. The paper's own gloss at 03_method.tex:37-39 ('writing p_o=acc and p_e=acc_hat, one has kappa=(p_o-p_e)/(1-p_e) and hence Delta_perm=kappa(1-p_e) identically') is also true and self-consistent."
+      },
+      "assertion_b_evidence": {
+        "secondary_verbatim": "Artstein & Poesio 2008 p.5: 'All three coefficients therefore yield values of agreement between -A_e/1-A_e (no observed agreement) and 1 (observed agreement = 1), with the value 0 signifying chance agreement (observed agreement = expected agreement).'",
+        "my_derivation": "For a constant emitter of letter L: within every stratum s, p_{o,s} = m_{s,L} and p_{e,s} = sum_{L'} delta_{L'L} m_{s,L'} = m_{s,L}. Every per-stratum numerator vanishes, so Delta_perm = 0 exactly, for EVERY legal letter -- not merely the modal one.",
+        "numeric_check": "constant emitter tested for all 10 letters on the synthetic set, each restricted to items where the letter is legal: |Delta| <= 2.8e-17 in all 10 cases.",
+        "conclusion": "assertion (b) is TRUE. kappa=0 at p_o=p_e is textbook (A&P state it as a definitional property of the whole S/pi/kappa family), and the constant emitter is exactly the p_o=p_e case. The paper is right to disclaim it."
+      },
+      "over_disclaiming_check": "No. Both halves are correctly attributed. The paper's residual claims here (stratification + use as a pre-comparison gate) are properly reserved.",
+      "action": "none. This is the strongest-supported of the six and the only one settled to certainty."
+    }
+  },
+
+  "findings": {
+    "finding_1": {
+      "id": "OVER-DISCLAIM / MISSING-ATTRIBUTION, MATERIAL, acts in BOTH directions",
+      "severity": "HIGH -- the single most consequential result of this audit",
+      "grade": "PRIMARY_ABSTRACT_ONLY, two independent authorities, byte-identical",
+      "statement": "Brennan & Prediger (1981) contains a SECOND recommendation, in the authors' own voice, that paperC never cites and that is the direct psychometric precedent for paperC's v1 BEST-CONSTANT FLOOR -- the statistic the paper presents as its headline and does NOT disclaim.",
+      "verbatim": "'In validity studies, we suggest considering whether one wants an index of improvement beyond \"chance\" or beyond the best a priori strategy employing base rates. ... In the latter case, it is suggested that the largest marginal proportion for the criterion measure be used in place of the \"chance\" term in kappa.'",
+      "why_this_is_paperC_v1": "paperC defines f_const = max_L (1/n) sum_i 1[y_i = L] (03_method.tex:12) -- the largest gold-label marginal -- and uses it in place of chance. Brennan & Prediger recommend 'the largest marginal proportion for the criterion measure be used in place of the \"chance\" term'. In paperC's setting the criterion measure IS the gold label, so 'largest marginal proportion for the criterion measure' IS f_const. The correspondence is exact, including the chance-vs-best-a-priori-strategy framing that paperC's introduction uses ('Chance can credit a literal constant emitter as competent').",
+      "current_state_of_the_paper": "paperC cites brennan1981kappa ONLY inside the v2 disclaimer, and attributes the majority-class/best-constant idea in ML terms to balepur2024artifacts (02_related.tex:4, 01_introduction.tex:7). No psychometric precedent is credited for v1. grep confirms brennan1981kappa appears at exactly two sites, both about v2/1-over-k.",
+      "risk_direction_1_citation_integrity": "The paper cites Brennan for the 1/n free-marginal recommendation but is silent on the same paper's largest-marginal recommendation, while independently proposing the largest-marginal statistic as its own headline gate. A reviewer who opens Brennan -- a 1502-cite classic in exactly this area, already in the paper's own bibliography -- will find the paper's central reference anticipated in a source the paper already cites for something else. That is the worst possible way for it to surface. This is NOT plagiarism and NOT a false statement; the paper never claims the best-constant statistic as new (01_introduction.tex:7 credits balepur2024artifacts). But an uncited precedent inside a cited source is a real attribution gap.",
+      "risk_direction_2_this_also_HELPS": "Handled correctly this is a net GAIN. It (a) shows the v1 floor is not an ad-hoc ML heuristic but the psychometrically recommended reference for validity studies, with a 1981 pedigree; (b) sharpens the paper's boundary in the direction X1 asked for -- the paper's contribution is the PROTOCOL (pre-comparison gate, degrees-of-freedom audit, two-reference separation), not the statistic, and this makes that separation cleaner rather than muddier; (c) supplies the missing 'closest prior work' that X1 flagged as incomplete.",
+      "confidence": "HIGH on the verbatim text (Crossref + OpenAlex byte-identical, plus ERIC first-two-sentences match). MEDIUM-HIGH on 'this is exactly v1': it rests on the abstract's own summary sentence, not on the body, and I could not read the body. The mapping criterion-measure->gold-label is mine, but it is forced by paperC's own setup (single gold label per item).",
+      "recommended_action": "ADD a citation and one sentence. Do NOT weaken any existing claim. See recommended_rewrites.finding_1."
+    },
+    "finding_2": {
+      "id": "UNDER-CLAIMED IDENTITY -- paperC's stratified kappa IS the De Vries pooled estimator",
+      "severity": "MEDIUM (opportunity, not a defect)",
+      "grade": "MATHEMATICAL_DERIVATION_BY_ME",
+      "statement": "The kappa that paperC forms from its stratified estimator is EXACTLY De Vries et al.'s POOLED kappa over n_opt strata -- not the 'average kappa' that De Vries et al. argue against.",
+      "derivation": "With w_s=n_s/n: paperC's kappa = (acc-acc_hat)/(1-acc_hat) = [sum_s w_s(p_o,s-p_e,s)] / [sum_s w_s(1-p_e,s)] (using sum_s w_s = 1). That ratio-of-weighted-sums is the pooled-kappa form, distinct from mean_s kappa_s.",
+      "numeric_check": "seeds 7/42/1234 on synthetic variable-n_opt data: |paperC_kappa - pooled_kappa| = 3.4e-17, 1.7e-17, 4.7e-17. The average-of-strata kappa DIFFERS materially in all three (e.g. seed 7: -0.00148 pooled vs -0.01273 averaged), confirming the identity picks out pooled specifically and is not a trivial coincidence.",
+      "why_it_matters": "paperC currently treats devries2008pooledkappa as ground it concedes ('pooling ... is likewise established'). In fact the paper's estimator INSTANTIATES that estimator, which means it inherits De Vries et al.'s efficiency argument for free -- a positive justification for the design choice, and a better answer to 'why pool rather than average per-stratum kappas?' than the paper currently gives (it gives none).",
+      "recommended_action": "convert the concession into a positive statement of inheritance. See recommended_rewrites.devries2008pooledkappa."
+    },
+    "finding_3": {
+      "id": "SELF-UNDERCUTTING QUALIFIER in the Frary sentence",
+      "severity": "MEDIUM",
+      "grade": "PRIMARY_ABSTRACT_ONLY + internal textual analysis",
+      "statement": "Within one paragraph paperC asserts Frary's correction is a function of the PER-ITEM option count AND that 'the works above assume a single global k'. The first concession weakens the second, which is the paper's actual novelty claim. Dropping 'per-item' -- which no authority I reached supports anyway -- removes the tension and restores the boundary.",
+      "recommended_action": "see recommended_rewrites.frary1988formula"
+    },
+    "finding_4": {
+      "id": "NO FATAL CITATION-INTEGRITY ERROR FOUND",
+      "severity": "INFO",
+      "statement": "Explicitly checked for direction reversals (paper says A recommends X while A opposes X). NONE found in any of the six. Brennan & Prediger genuinely recommend the 1/n replacement (not oppose it); Brenner & Kliebsch genuinely find an increase with category count (correct sign); De Vries et al. genuinely propose pooling (not warn against it); Bennett's S genuinely uses 1/k; Cohen's kappa numerator identity and the constant-emitter zero are both mathematically true. The four rewrite recommendations below are precision and boundary issues, not integrity failures."
+    }
+  },
+
+  "recommended_rewrites": {
+    "note": "TEXT ONLY -- I did not edit any .tex (another agent is editing paperC/sections for the MMLU-Pro null correction). MAIN to merge.",
+
+    "finding_1": {
+      "target": "paperC/sections/02_related.tex (Nulls-as-interpretive-controls paragraph) or 03_method.tex after the v1 floor definition at line 14",
+      "current": "no psychometric precedent is credited for the v1 best-constant floor",
+      "proposed_addition": "The best-constant reference itself has a psychometric precedent: for validity studies \\citet{brennan1981kappa} recommend replacing the chance term with ``the largest marginal proportion for the criterion measure'', which is exactly $f_{\\mathrm{const}}$ when the criterion is the gold label. We therefore claim neither the statistic nor the idea of referencing against a best a priori strategy; what we add is its use as a pre-comparison gate, the audit of the degrees of freedom inside it, and the separation of the arm-independent from the arm-conditional question.",
+      "evidence_backing": "PRIMARY_ABSTRACT_ONLY, verbatim quote is from the author abstract, confirmed byte-identical on Crossref and OpenAlex",
+      "caveat_for_MAIN": "The quoted clause is from the ABSTRACT. If a co-author can obtain the body, cite a page. If not, the sentence above is still safe because it quotes the authors' own summary verbatim and does not assert anything about the body.",
+      "why_do_this": "closes X1's 'boundary against the closest work is incomplete', pre-empts a reviewer discovering the precedent inside an already-cited source, and strengthens rather than weakens the paper"
+    },
+
+    "frary1988formula": {
+      "current": "formula scoring corrects for guessing as an explicit function of the per-item option count \\citep{frary1988formula}",
+      "proposed": "formula scoring corrects for guessing as an explicit function of the number of options \\citep{frary1988formula}",
+      "rationale": "the abstract supports 'corrects for guessing' and (via the universally reported S = R - W/(k-1)) a dependence on the option count, but NOT the per-item indexing of k. Removing 'per-item' also removes the tension with the paper's own 'those works assume a single global k' two sentences later, i.e. it RETURNS the varying-k boundary to the paper.",
+      "alternative_if_a_coauthor_reads_the_body": "keep 'per-item' only if Frary's text actually indexes k by item; otherwise the shorter form is strictly safer",
+      "evidence_backing": "PRIMARY_ABSTRACT_ONLY for the retained part; the deleted part is UNVERIFIABLE"
+    },
+
+    "brenner1996weightedkappa": {
+      "current": "\\citet{brenner1996weightedkappa} show that a weighted $\\kappa$ drifts systematically with the number of categories",
+      "proposed": "\\citet{brenner1996weightedkappa} show that quadratically weighted $\\kappa$ increases systematically with the number of categories (linear weights being far less sensitive)",
+      "rationale": "faithful to the abstract's own stratification by weighting scheme, and states the SIGN. Verbatim support: 'an increase of quadratically weighted kappa coefficients with the number of categories is expected under a broad variety of conditions, whereas linearly weighted kappa coefficients appear to be less sensitive to the number of categories.' Note their scope is ordinal ratings; paperC's letters are nominal, so if space allows, the honest framing is that the k-dependence pathology is documented for weighted ordinal kappa and motivates -- rather than already covers -- paperC's nominal, variable-k case. That is a mild net gain in novelty.",
+      "evidence_backing": "PRIMARY_ABSTRACT_ONLY, verbatim"
+    },
+
+    "devries2008pooledkappa": {
+      "current": "Pooling an agreement coefficient across heterogeneous item groups is likewise established \\citep{devries2008pooledkappa}",
+      "proposed": "Pooling an agreement coefficient across item groups is likewise established \\citep{devries2008pooledkappa}, and our stratified statistic is exactly their pooled (not averaged) estimator with strata defined by option count.",
+      "rationale": "TWO fixes. (1) Drop 'heterogeneous': De Vries et al.'s stated motivation is efficiency under 'many items but few subjects', with 'average kappa' as the comparator; nothing in any reachable authority says the groups differ in category count. (2) Add the identity from finding_2, verified to 1e-17: paperC's kappa = sum_s w_s(p_o,s-p_e,s) / sum_s w_s(1-p_e,s), which is the pooled form and demonstrably NOT the average form. This converts a bare concession into an inherited justification for the design.",
+      "evidence_backing": "PRIMARY_ABSTRACT_ONLY for (1); MATHEMATICAL_DERIVATION_BY_ME for (2)"
+    },
+
+    "bennett1954communications": {"action": "no change -- SUPPORTED"},
+    "cohen1960kappa": {"action": "no change -- SUPPORTED, and the only one settled to certainty"}
+  },
+
+  "a03_status_recommendation": {
+    "axis_1_metadata": "CLOSED (6/6 PASS, by MAIN)",
+    "axis_2_local_support": "CLOSED WITH FINDINGS -- 3 SUPPORTED, 3 PARTIALLY_SUPPORTED, 0 NOT_SUPPORTED, 0 UNVERIFIABLE, 0 FATAL",
+    "residual_limitation_to_state_honestly": "No full text of ANY of the six was obtained; all six are paywalled and absent from both project disks. Five of six rest on publisher/author ABSTRACTS (verbatim, multi-authority where available); Bennett's formula rests on a peer-reviewed SECONDARY restatement (Artstein & Poesio 2008, ACL journal, full text read); the Cohen claims rest on my own derivation, which is the strongest grade available here and does not need the original. Any claim about what the BODIES of Frary 1988 or Brenner 1996 say beyond their abstracts remains unverified.",
+    "a03_reframing": "MAIN's risk-direction correction is CONFIRMED and should be written into assumptions.md. The original A-03 failure mode ('claiming as novel something Frary already said') is structurally absent -- the passage disclaims Frary's content explicitly. The realised failure mode is the OPPOSITE one MAIN predicted: over-disclaiming, in 3 of 6 sentences, plus one uncited precedent (finding_1) for the statistic the paper does NOT disclaim. Both defects are fixed by ADDING precision, and all four fixes are net-positive for the paper's novelty boundary."
+  }
+}
