@@ -1,0 +1,58 @@
+{
+  "schema_version": "1.0.0",
+  "what": "MAIN adjudication of round_04 issue R1-01 -- an undisclosed exclusion from the headline denominator",
+  "date": "2026-08-16",
+  "raised_by": "R1-claude-novelty (severity: major). MAIN verified independently and found it MORE severe than reported.",
+  "VERDICT": "CONFIRMED -- and this is an INTEGRITY-class defect, not a presentation one. It must be fixed before submission.",
+  "the_promise_that_is_broken": {
+    "location": "sections/09a_relocated.tex:24 (App: Designated damaged cells)",
+    "verbatim": "Where a denominator such as 14/15 or 10/15 is quoted, it is over exactly this set, and any damaged arm excluded from that denominator is named at the point of exclusion together with its own floor delta, so that no ratio is computed over an undisclosed subset.",
+    "second_promise": {
+      "location": "sections/04_experiments.tex:23",
+      "verbatim": "The designation is fixed by construction, never by a measured score, so counts such as 14/15 and 10/15 are over exactly this set and cannot be inflated by selecting on outcome."
+    }
+  },
+  "the_fact": {
+    "arm": "olmo2 / shortgpt16 @ step200000",
+    "designated_damaged": true,
+    "evidence_that_it_is_designated": "sections/04_experiments.tex:8 lists it among the OLMo-2 prune-then-heal arms verbatim: 'including keep8, keep10, keep12, keep14, and shortgpt16'",
+    "mmlu_pro_letter_acc": 0.153341,
+    "floor": 0.116606,
+    "floor_delta_pp": 3.6735,
+    "ci95_half_width_pp": 0.702,
+    "boot_p": 0.0001,
+    "verdict_string_in_evidence": "above the floor",
+    "delta_over_half_width": 5.23,
+    "source": "paperC/evidence/mmlu_scale_power/mmlu_pro_power_nulls_v2.json -> head_to_head_248.shortgpt16.mmlu_pro"
+  },
+  "why_this_is_integrity_class": [
+    "It is the ONLY arm besides the intact base that SIGNIFICANTLY clears the floor -- exactly the outcome the paper's headline says does not happen.",
+    "The paper's reported sole exception, qwen3_8b_base/k14, is +0.233 pp. shortgpt16 is +3.6735 pp = 15.8x larger, and 5.23x its own half-width, so it cannot be dismissed as borderline the way k14 is.",
+    "It is excluded from the 15-cell denominator with NO stated rule. paperC/evidence/.../rollup.olmo2_7b hardcodes damaged_rungs = [keep12, keep10, keep8]; the evidence file contains no criterion that would exclude shortgpt16 (or keep14) from the damaged set.",
+    "shortgpt16 appears exactly TWICE in the entire manuscript (04_experiments.tex:8 arm list; one tab_v2_full row) and its v1 floor delta is printed ZERO times.",
+    "An arm that clears the floor being dropped from the denominator is, in effect, selection on outcome -- the precise failure the paper declares itself immune to in the same section."
+  ],
+  "headline_statements_affected": [
+    {
+      "claim": "'the honest aggregate is 14/15 at or below the floor'",
+      "where": "00_abstract.tex, 01_introduction.tex, 06_discussion.tex"
+    },
+    {
+      "claim": "'0/60 damaged cells clear their floor' near-unanimity, explicitly offered IN PLACE OF a multiplicity correction",
+      "where": "04_experiments.tex:23, 05_analysis.tex:29, 09a_relocated.tex:26 and :44",
+      "note": "09a:26 says the conclusions 'rest on the direction and near-unanimity of the aggregate (for instance 0/60 damaged cells clearing their floor), not on any single cell'. If a designated damaged arm does clear its floor, that substitute for multiplicity control is weakened."
+    },
+    {
+      "claim": "'a real but immaterial exception'",
+      "where": "05_analysis.tex:27",
+      "note": "true of k14 at +0.233 pp; NOT true of shortgpt16 at +3.6735 pp"
+    }
+  ],
+  "what_MAIN_did_NOT_determine": [
+    "Whether shortgpt16 SHOULD be in the 15-cell denominator on scientific grounds. There may be a defensible reason to treat ShortGPT-16 differently -- it is a BASELINE pruning method (a different damage operator), not a rung of the paper's own keepN ladder, and it keeps 16 of 32 layers, more than any keepN arm. That is a real structural distinction.",
+    "BUT: whatever the reason, it is not stated anywhere, and App A.4 promised it would be. The defect is the SILENCE, not necessarily the exclusion.",
+    "Whether keep14 (+0.324 pp, p=0.3234, n.s.) is inside or outside the 15. It is at least PRINTED in tab_mmlupro, unlike shortgpt16."
+  ],
+  "the_honest_fix": "Either (a) include shortgpt16 in the denominator and report 14/16 with its +3.6735 pp named, or (b) state explicitly and in advance why a baseline pruning operator is not a rung of the ladder, name it at the point of exclusion, and print its floor delta -- which is what App A.4 already promises. Option (b) is likely correct on the science AND satisfies the promise. What is NOT acceptable is leaving it unmentioned. Note that (a) does not destroy the paper: 14/16 at-or-below with a named, explained +3.67 pp baseline outlier is still a strong result, and disclosing it is strictly better for the paper than having a reviewer find it -- which is exactly what just happened.",
+  "meta_lesson": "This is the SECOND round_04 finding where the paper's own evidence file contained the disconfirming number all along (cf. mmlupro_legality_aware_null_MAIN.json, where n_opt_is_not_constant=True sat next to a k=10 null). The pattern: a hardcoded list in an evidence emitter silently defines a denominator, and no check asserts that the list matches the set the prose claims. A gate should assert rollup.damaged_rungs == the arms the manuscript designates."
+}
