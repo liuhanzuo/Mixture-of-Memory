@@ -108,3 +108,49 @@ zwfy6 的 97% **不是我们造成的**（我们 3.4%，`hunyuan/` 单独 322 Ti
 - proposal 的 0-GPU lane（B08 leg-1 代码正在跑）
 - `.104` 那个 1.13× 的可证伪预测下轮验
 - 磁盘：**一个字节都没删**，也不会在 D1 之前删
+
+---
+
+# RESOLVED 2026-08-16 22:45 — user答复 + 我据授权的裁定
+
+用户原话：**「D1先不管了 D2不提 其他的你自己决定」**
+
+| | 决定 | 谁定的 | 执行 |
+|---|---|---|---|
+| **D1** `out_llama/` 4.69 TiB | **不管，全留** | 用户 | 停手。**一个字节都没删，也不再提**。wzc1 继续 92%/剩 10 T —— 够用，不构成风险。#245 的 Llama-2-7B family 因此完整保留，这也顺带消除了它的资产风险。 |
+| **D2** B11 上游 issue | **不提** | 用户 | 不提。草稿 `K3_EXIT_UPSTREAM_ISSUE_DRAFT.md` 留在盘上作内部记录（它含已执行的可达性证据，本身有价值）。**B11 的 K3 exit 就此按「不对外」结案**，不再挂着等。 |
+| **D3** #192 Table 4 | **A+（0 GPU 修数字）** | 我，据授权 | 已派 agent。明确禁止选项 B（kill+resume 三臂）。 |
+| **D4** A04 GPU | **只批 Pilot Zero（CPU + ≤3 GPU-h）；全 gate 1,077–4,309 GPU-h 不批** | 我，据授权 | 见下。 |
+
+## D3 的执行边界（已写进派活 prompt）
+
+选 A+ 的理由是**它修的是一个错的数字，不是一个难看的标签**：Table 4 的 keep12 ARC-E `.689`
+来自 **6/8 shard**（1782=6×297），干净 v2 是满额 2376 = `.6936`。0 GPU，因为结果已在盘上。
+
+三条硬约束：
+1. **整表必须同源同盘** —— 半切的表比现状更糟。做不到就什么都不改并报告。
+2. **keep12 MMLU 会 `.2752`→`.2717`，与 keep10 完全相等** —— 依赖「keep12 > keep10」的措辞必须一起改。
+3. **每个引入的目录都要断言 per-task `n_scored == expected`** —— 正在修的就是静默 partial merge，
+   不能顺手引进第二个。
+
+## D4 的裁定与理由
+
+**批 Pilot Zero，不批全 gate。** 理由：
+- Pilot Zero 的**设计目的**就是先判断「PLATEAU-accepts / NI-rejects 的分歧到底存不存在」，
+  用的是**已在盘上的 checkpoint**，CPU + ≤3 GPU-h。这是一个 kill-gate 性质的探针，不是投资。
+- 全 gate 是 **1,077–4,309 GPU-h** = 40 卡满载 **5.6–22 天**。在分歧是否存在都没确认前投入，
+  违反「先跑便宜的判别性实验」。
+- 另两条 blocker 是 0 GPU 且**归我**，我会做（下面）。第 3 条 USER APPROVAL 现在按授权由我批到 Pilot Zero 为止。
+
+**明确不批的**：rungs 之外的任何扩展、Qwen3.5-9B generalisation leg（它的成本
+`NOT ESTIMATED, deliberately`，因为需要先把 `sparse_modeling.py` 移植到多模态 hybrid-attention
+架构 —— 未 scope 的东西不能批）。
+
+## 顺带自己决的两件（不在原四件里）
+
+- **B12 pilot 授权跑**：它的 G0 **两条腿都已 PASS（0 GPU）**，自己的 `gpu_policy` 释放条件已满足，
+  pilot 是 **1.46 GPU-h 实测**（0.73 GPU-h/cell，来自 union-9 closeout 自己的 stage 时间戳）。
+  要求 **sm_100 + wzc1 = LOCAL 或 .212**。**LOCAL 约 6.1 h 后 keep10 到 200k 自然空出** ——
+  不需要 kill 任何东西。已修它的 argparse 缺陷（见下）。
+- **`.104` 的 1.13× 我自己的假设被自己的测试推翻了**，已如实记录为「未解释的单窗口波动，已自愈」，
+  不再追。见 `TRAINER_ACTIVITY.jsonl` 22:40 的 `MY_HYPOTHESIS_REFUTED`。
