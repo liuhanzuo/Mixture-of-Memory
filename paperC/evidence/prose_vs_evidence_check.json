@@ -54,13 +54,13 @@
   },
   "near_miss": {
    "mismatch": 0,
-   "ok": 71,
+   "ok": 73,
    "skipped": 22
   }
  },
- "n_checked": 89,
+ "n_checked": 91,
  "n_mismatch": 0,
- "n_ok": 89,
+ "n_ok": 91,
  "n_skipped_low_precision_or_unmarked": 24,
  "n_targets": 23,
  "n_targets_uncovered": 0,
@@ -1047,6 +1047,34 @@
    "line": 13,
    "prose_literal": "0.265358",
    "prose_value": 0.265358,
+   "quantity": "floor",
+   "tier": "near_miss"
+  },
+  {
+   "abs_diff": 0.0,
+   "construct": "MMLU-Pro letter, naive",
+   "context": "\\caption{MMLU-Pro letter read-out against the bit-identical always-A floor 0.116606, over all 17 designated damaged cells. OLMo-2 arms are prune-then-heal; the other families are truncate-only, so regime and family are c",
+   "decimals": 6,
+   "evidence_source": "floor_winners_curse_calibration.json",
+   "evidence_value": 0.116606,
+   "file": "paperC/sections/tab_mmlupro.tex",
+   "line": 25,
+   "prose_literal": "0.116606",
+   "prose_value": 0.116606,
+   "quantity": "floor",
+   "tier": "near_miss"
+  },
+  {
+   "abs_diff": 0.0,
+   "construct": "MMLU-Pro letter, item-avg.",
+   "context": "\\caption{MMLU-Pro letter read-out against the bit-identical always-A floor 0.116606, over all 17 designated damaged cells. OLMo-2 arms are prune-then-heal; the other families are truncate-only, so regime and family are c",
+   "decimals": 6,
+   "evidence_source": "floor_winners_curse_calibration.json",
+   "evidence_value": 0.116606,
+   "file": "paperC/sections/tab_mmlupro.tex",
+   "line": 25,
+   "prose_literal": "0.116606",
+   "prose_value": 0.116606,
    "quantity": "floor",
    "tier": "near_miss"
   },

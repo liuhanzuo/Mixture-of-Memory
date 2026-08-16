@@ -16,7 +16,7 @@
   },
   "mmlu_pro_n_opt_hist": {
    "path": "paperC/evidence/mmlu_scale_power/mmlu_pro_power_nulls_v2.json",
-   "sha256": "317727f73782111965b6e645947565a2d28355ae730dff11f5af43c6a8cefdbb",
+   "sha256": "b0c86c9042c7afc46364fec22e2df5aa3369b60fff6281544752a2bd869e9ea6",
    "key": "letter_null.n_opt_hist"
   },
   "small_benchmark_floors": {
@@ -49,21 +49,52 @@
  },
  "floor_invariance_verified": {
   "checked_file": "paperC/evidence/mmlu_scale_power/mmlu_pro_power_nulls_v2.json",
-  "sha256": "317727f73782111965b6e645947565a2d28355ae730dff11f5af43c6a8cefdbb",
+  "sha256": "b0c86c9042c7afc46364fec22e2df5aa3369b60fff6281544752a2bd869e9ea6",
   "F1_all_floor_used_equal_1403_over_12032": true,
   "F1_distinct_floor_used_values": [
    0.11660571808510638
   ],
   "F1_expected": 0.11660571808510638,
+  "F1_is_fatal": true,
   "F2_no_null_moment_key_appears_in_that_file": true,
   "F2_forbidden_tokens_found": [],
-  "F3_aggregate_at_or_below_floor": "14/15",
-  "F3_matches_paper_14_of_15": true,
+  "F2_is_fatal": true,
+  "F2_note": "checks BOTH nulls' moments, so neither the null being removed nor the one being installed may leak into a downstream count",
+  "F3_aggregate_at_or_below_floor": "15/17",
+  "F3_per_family_damaged_rungs": {
+   "olmo2_7b": [
+    "shortgpt16",
+    "keep14",
+    "keep12",
+    "keep10",
+    "keep8"
+   ],
+   "llama2_7b": [
+    "k14",
+    "k12",
+    "k10",
+    "k8"
+   ],
+   "llama3_8b": [
+    "k14",
+    "k12",
+    "k10",
+    "k8"
+   ],
+   "qwen3_8b_base": [
+    "k14",
+    "k12",
+    "k10",
+    "k8"
+   ]
+  },
+  "F3_is_fatal": false,
+  "F3_note": "DIAGNOSTIC ONLY, deliberately not compared to a literal. This aggregate is a function of the observed floor and the DESIGNATED ARM SET, so it legitimately changes when the arm set is corrected -- as happened on 2026-08-16, when a concurrent independent fix to an undisclosed denominator exclusion moved it from 14/15 to 15/17 with the floor untouched. Asserting a literal here would make this check fail on honest denominator fixes, which is the opposite of its purpose.",
   "chance_used_values_present": [
    0.1,
    0.11087694718844986
   ],
-  "conclusion": "the downstream counts are functions of the OBSERVED floor and the arm scores only; they never read a null moment, so correcting the null cannot move them. The 14/15 aggregate, the 3/12-versus-1/12 symmetric-standard flip and the off-MMLU 10/15 are all unaffected and are left untouched by this fix.",
+  "conclusion": "the downstream counts are functions of the OBSERVED floor and the arm scores only; they never read a null moment, so correcting the null cannot move them. Whatever the current aggregate is, it is not a function of the null, and this fix leaves it untouched.",
   "all_pass": true
  },
  "floor_invariance": "every floor in this file is the shipped floor, byte-for-byte. The floor is max_L (count_L / n) over the observed gold labels; no null enters its computation, so correcting the null cannot move it. Verified downstream too: mmlu_pro_power_nulls_v2.json:rollup uses floor_used=0.11660571808510638 = 1403/12032, which is letter_null.gold_letter_marginal_frac.A and does not reference any E_max, so the 14/15, 3/12-vs-1/12 and 10/15 counts are unaffected.",

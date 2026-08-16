@@ -467,10 +467,24 @@ def verify_floor_invariance() -> dict:
 
       F1 every `floor_used` in mmlu_pro_power_nulls_v2.json:rollup is the single value
          1403/12032, i.e. max_L(count_L)/n from the gold labels;
-      F2 the string 'E_max' (and the superseded file's moment key names) appear
-         NOWHERE in that file -- so no rollup number can be reading one;
-      F3 the aggregate re-derived from the rollup's own per-family fields still equals
-         the 14/15 the paper reports.
+      F2 the string 'E_max' (and the superseded file's moment key names, and the
+         legality-aware moment we just computed) appear NOWHERE in that file -- so no
+         rollup number can be reading a null moment, under EITHER null;
+      F3 the aggregate re-derived from the rollup's own per-family fields is reported.
+
+    F1 and F2 are the load-bearing ones and are FATAL: they are what makes the claim
+    "the downstream counts cannot move when the null is corrected" true. F3 is
+    diagnostic only and is deliberately NOT compared against a hardcoded literal.
+
+    Why F3 must not be a literal (learned the hard way, 2026-08-16): this check was
+    first written to assert the aggregate equals 14/15, the value the paper reported.
+    It fired within the hour -- not because of anything to do with the null, but because
+    a CONCURRENT, INDEPENDENT fix to a different round_04 defect (an undisclosed
+    exclusion of `shortgpt16` and `keep14` from the OLMo-2 denominator) legitimately
+    moved the aggregate to 15/17. Coupling a null-independence check to the current
+    value of a denominator makes it fail on every honest change to that denominator,
+    which is the opposite of what it is for. The invariant is `floor_used` and the
+    absence of null moments; the aggregate is an output of those plus the arm set.
 
     A negative on F1 or F2 is escalated, not patched: the record gets
     ESCALATE_DO_NOT_PATCH and the caller refuses to write.
@@ -485,15 +499,17 @@ def verify_floor_invariance() -> dict:
     expect = 1403 / 12032
     f1 = len(floors) == 1 and abs(floors[0] - expect) < 1e-12
 
+    # Both nulls' moments, so the check is symmetric: neither the null we are removing
+    # nor the null we are installing may leak into a downstream count.
     forbidden = ["E_max", "E_max_balanced", "q95_balanced", "winners_curse",
-                 "0.104457", "0.10446", "0.107048", "0.107131"]
+                 "0.104457", "0.10446", "0.107048", "0.107131",
+                 "0.113873", "0.117188", "legality_aware", "legality-aware"]
     present = [t for t in forbidden if t in raw]
     f2 = not present
 
     primary = {k: v for k, v in fams.items() if not k.endswith("naive_chance")}
     n_below = sum(v["n_damaged_at_or_below_floor"] for v in primary.values())
     n_tot = sum(v["n_damaged"] for v in primary.values())
-    f3 = (n_below, n_tot) == (14, 15)
 
     out = {
         "checked_file": os.path.relpath(MMLUPRO_V2, REPO),
@@ -501,23 +517,36 @@ def verify_floor_invariance() -> dict:
         "F1_all_floor_used_equal_1403_over_12032": bool(f1),
         "F1_distinct_floor_used_values": floors,
         "F1_expected": expect,
+        "F1_is_fatal": True,
         "F2_no_null_moment_key_appears_in_that_file": bool(f2),
         "F2_forbidden_tokens_found": present,
+        "F2_is_fatal": True,
+        "F2_note": ("checks BOTH nulls' moments, so neither the null being removed nor "
+                    "the one being installed may leak into a downstream count"),
         "F3_aggregate_at_or_below_floor": f"{n_below}/{n_tot}",
-        "F3_matches_paper_14_of_15": bool(f3),
+        "F3_per_family_damaged_rungs": {
+            k: v.get("damaged_rungs") for k, v in primary.items()},
+        "F3_is_fatal": False,
+        "F3_note": ("DIAGNOSTIC ONLY, deliberately not compared to a literal. This "
+                    "aggregate is a function of the observed floor and the DESIGNATED "
+                    "ARM SET, so it legitimately changes when the arm set is corrected "
+                    "-- as happened on 2026-08-16, when a concurrent independent fix to "
+                    "an undisclosed denominator exclusion moved it from 14/15 to 15/17 "
+                    "with the floor untouched. Asserting a literal here would make this "
+                    "check fail on honest denominator fixes, which is the opposite of "
+                    "its purpose."),
         "chance_used_values_present": sorted(
             {v["chance_used"] for v in fams.values()}),
         "conclusion": (
             "the downstream counts are functions of the OBSERVED floor and the arm "
-            "scores only; they never read a null moment, so correcting the null "
-            "cannot move them. The 14/15 aggregate, the 3/12-versus-1/12 symmetric-"
-            "standard flip and the off-MMLU 10/15 are all unaffected and are left "
-            "untouched by this fix."
-            if (f1 and f2 and f3) else
+            "scores only; they never read a null moment, so correcting the null cannot "
+            "move them. Whatever the current aggregate is, it is not a function of the "
+            "null, and this fix leaves it untouched."
+            if (f1 and f2) else
             "ESCALATE_DO_NOT_PATCH: a downstream count appears to depend on the null "
             "being corrected. That is a strictly more serious defect than the one "
             "this script fixes and must be adjudicated before any number is edited."),
-        "all_pass": bool(f1 and f2 and f3),
+        "all_pass": bool(f1 and f2),
     }
     return out
 
@@ -549,9 +578,10 @@ def main() -> int:
         raise SystemExit("ESCALATE_DO_NOT_PATCH -- see the record above; a downstream "
                          "count may depend on the null being corrected. Do not edit "
                          "any number until this is adjudicated.")
-    print(f"[floor-invariance] OK: all floor_used == 1403/12032, no null-moment key "
-          f"appears in {os.path.basename(MMLUPRO_V2)}, aggregate "
-          f"{finv['F3_aggregate_at_or_below_floor']} reproduces")
+    print(f"[floor-invariance] OK (F1,F2 fatal): all floor_used == 1403/12032, no "
+          f"null-moment key of EITHER null appears in {os.path.basename(MMLUPRO_V2)}; "
+          f"aggregate {finv['F3_aggregate_at_or_below_floor']} reported as diagnostic "
+          f"only (it is a function of the arm set, not of the null)")
 
     bad = selftest_sampler()
     if bad:

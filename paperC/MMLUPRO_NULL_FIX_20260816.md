@@ -194,18 +194,62 @@ null. I implemented this as `verify_floor_invariance()`, which runs on every inv
 to write with `ESCALATE_DO_NOT_PATCH` on failure. Against
 `evidence/mmlu_scale_power/mmlu_pro_power_nulls_v2.json`:
 
-- **F1** every `floor_used` in `rollup` is the single value `0.11660571808510638` = **1403/12032**
-  = `letter_null.gold_letter_marginal_frac.A`. **PASS**
-- **F2** none of `E_max`, `E_max_balanced`, `q95_balanced`, `winners_curse`, `0.104457`, `0.10446`,
-  `0.107048`, `0.107131` appears **anywhere** in that file — so no rollup number can be reading a
-  null moment. **PASS**
-- **F3** the aggregate re-derived from the rollup's own per-family fields is **14/15**, matching the
-  paper. **PASS**
+- **F1 (fatal)** every `floor_used` in `rollup` is the single value `0.11660571808510638` =
+  **1403/12032** = `letter_null.gold_letter_marginal_frac.A`. **PASS**
+- **F2 (fatal)** no moment key of **either** null — `E_max`, `E_max_balanced`, `q95_balanced`,
+  `winners_curse`, `0.104457`, `0.10446`, `0.107048`, `0.107131`, and also the legality-aware
+  `0.113873` / `0.117188` — appears **anywhere** in that file. So no rollup number can be reading a
+  null moment, under either null. **PASS**
+- **F3 (diagnostic only, deliberately not asserted against a literal)** the aggregate re-derived
+  from the rollup's own per-family fields, currently **15/17**.
 
 Conclusion: the downstream counts are functions of the observed floor and the arm scores only.
 **Correcting the null cannot move them, and they were not touched.** The power analysis is likewise
 unaffected: `power_verdict` is defined on CI half-widths against MMLU's own effect size, with no
 null moment involved.
+
+### 4.1 The guard fired, and what that taught me
+
+Worth recording because it is the most instructive thing that happened. I first wrote F3 to *assert*
+the aggregate equals **14/15**, the value the paper reports. Within the hour it failed, and the
+script correctly refused to write:
+
+```
+F3_aggregate_at_or_below_floor: "15/17"   F3_matches_paper_14_of_15: false
+ESCALATE_DO_NOT_PATCH
+```
+
+My first reading was the alarming one — a downstream count moving is exactly the "worse defect" the
+brief told me to stop and escalate on. It is not that. Diagnosis:
+
+- `F1` and `F2` — the checks that actually establish null-independence — **both still passed**.
+  `floor_used` was still exactly 1403/12032 and no null moment appeared anywhere.
+- The aggregate moved because a **concurrent, independent agent** was fixing a *different* round_04
+  defect in the same window (commits `51a8277`, `b18ce53`: an undisclosed exclusion of `shortgpt16`
+  and `keep14` from the OLMo-2 denominator). Measured: `olmo2_7b.damaged_rungs` grew from
+  `[keep12, keep10, keep8]` to `[shortgpt16, keep14, keep12, keep10, keep8]`, i.e. `n_damaged` 3→5.
+  Denominator change, floor untouched.
+
+So the failure was in **my check**, not in the paper. Coupling a null-independence assertion to the
+current value of a denominator makes it fail on every honest change to that denominator — the
+opposite of its purpose, and an instance of the class in
+`memory/fix-the-class-not-the-instance.md`. F3 is now diagnostic, records the per-family
+`damaged_rungs` alongside the aggregate so a future reader can see *why* it has whatever value it
+has, and carries a note explaining the 2026-08-16 event. F1/F2 remain fatal. F2 was also
+strengthened while I was there: it now forbids the **legality-aware** moments too, so the check is
+symmetric — neither the null being removed nor the one being installed may leak downstream.
+
+**Interaction with the concurrent work.** That agent's edits (`04_experiments.tex`,
+`05_analysis.tex`, `06_discussion.tex`, `09a_relocated.tex`, `tab_mmlupro.tex`,
+`mmlu_pro_power_nulls_v2.json`) were never staged by me and are untouched; my commit contains only
+the twelve files listed in §5. My committed `main.pdf` was built at 14:03:30, before their first
+edit at 14:07:32, so it is internally self-consistent — but note that it therefore does **not**
+include their prose. Whoever lands next should rebuild once both changes are in the tree. My
+recomputation is unaffected by their work: re-running after their change produces **byte-identical**
+primary numbers (verified by diffing against the committed JSON), because the two fixes touch
+disjoint quantities — they change which arms are in the denominator, I change what the floor is
+compared against.
+
 
 ## 5. Manuscript changes
 
@@ -274,12 +318,12 @@ the clean-tree baseline first, via `git stash`, then restored):
 
 | | clean tree | after fix |
 |---|---|---|
-| `check_prose_vs_evidence.py` | n_checked=86, n_ok=86, **n_mismatch=0**, rc=0 | n_checked=**89**, n_ok=89, **n_mismatch=0**, rc=0 |
+| `check_prose_vs_evidence.py` | n_checked=86, n_ok=86, **n_mismatch=0**, rc=0 | n_checked=**91**, n_ok=91, **n_mismatch=0**, rc=0 |
 | `validate_tex_static.py` | all OK, 0 issues, rc=0 | all OK, 0 issues, rc=0 |
 
-n_checked rose 86→89 because the new section adds numbers under coverage. **n_mismatch is 0**, which
-is the invariant that matters. (The brief said the clean baseline was 81/81/0; the measured value is
-86/86/0. I used the measured one.)
+n_checked rose 86→91 (my new section plus the concurrent agent's additions, §4.1). **n_mismatch is
+0**, which is the invariant that matters. (The brief said the clean baseline was 81/81/0; the
+measured value is 86/86/0. I used the measured one.)
 
 **Verbatim scoping-sentence diff.** Per
 `memory/numeric-census-misses-scoping-sentences.md`, a numeric census passing does not mean nothing
