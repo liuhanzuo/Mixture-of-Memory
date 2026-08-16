@@ -1,0 +1,79 @@
+{
+  "schema_version": "1.0.0",
+  "what": "MAIN verification of the independent meta-review's two NEW findings, plus one correction to it",
+  "date": "2026-08-16T15:55+08:00",
+  "meta_review": {
+    "agent": "a266fb5c4483b25e3",
+    "outputs": [
+      "round_04/meta/META_REVIEW.md (666 lines)",
+      "round_04/meta/meta_review.json (schema-valid, 0 errors)"
+    ],
+    "meta_score": 4.5,
+    "recommendation": "weak_reject",
+    "ceiling": 6.0,
+    "positioning": "deliberately BELOW the pooled median 5.0 and ABOVE the codex median 4.0 -- it states this choice explicitly rather than landing on either panel",
+    "isolation_held": "it confirms it never opened any *_MAIN.json, PANEL_AGGREGATE_FINAL.json, paperC/state/, an earlier round, or the live sections. So its agreement with my adjudications is independent, not derived."
+  },
+  "FINDING_1_stored_vs_exact_floor_tail": {
+    "meta_reviewers_claim": "PIQA's printed p matches the STRICT tail (0.657647) not the DEFINED inclusive one (0.691725)",
+    "MAIN_verification": "PARTLY WRONG, and I am recording the correction. PIQA prints p=0.691. My 2e6-draw check: inclusive tail against the exact rational 928/1838 = 0.691218; strict tail = 0.657285. The printed 0.691 therefore matches the INCLUSIVE (correct) convention. The meta-reviewer has the two numbers right and the attribution backwards.",
+    "but_the_MECHANISM_it_names_is_real_and_I_extended_it": "this is the same class as the floor-rounding defect found earlier today on MMLU-Pro. I ran the census across all nine rows: FIVE have stored > exact and therefore carry the hazard -- MMLU-Pro naive, MMLU-Pro item-avg., MMLU, PIQA, BoolQ. On those rows P(max >= stored) excludes the observed outcome and biases p downward, toward 'survives'.",
+    "the_five_with_their_arithmetic": {
+      "MMLU-Pro (both rows)": "1403/12032 = 0.116605718 vs stored 0.116606; c/12032 >= 0.116606 needs c >= 1404, observed 1403",
+      "MMLU": "3776/14042 = 0.268907563 vs 0.268908; needs 3777, observed 3776",
+      "PIQA": "928/1838 = 0.504896627 vs 0.504897; needs 929, observed 928",
+      "BoolQ": "2033/3270 = 0.621712538 vs 0.621713; needs 2034, observed 2033"
+    },
+    "why_PIQA_matters_pedagogically": "PIQA carries the hazard AND has the right p. So the presence of the hazard on a row does NOT by itself mean that row's p was computed wrongly. That is precisely why this needs a guard rather than an assumption in either direction -- and why I did not simply propagate the meta-reviewer's reading.",
+    "MAIN_made_it_a_gate": {
+      "file": "paperC/code/gate_exact_floor_tail.py",
+      "live_run": "rc=1, correctly flags exactly those 5 rows and prints the required count for each",
+      "discriminator_control": "a table stripped to only the safe rows gives rc=0 -- so the check discriminates rather than flagging everything"
+    }
+  },
+  "FINDING_2_BH_over_the_27_v2_pvalues": {
+    "meta_reviewers_claim": "BH over the 27 v2 p-values rejects 6 and RETAINS olmo2/keep14, which kills the bidirectionality claim",
+    "MAIN_status": "NOT VERIFIED BY ME. It contradicts R-claude-stats' V13, which reports the two trace-signal cells do NOT survive BH over the same 27-cell family. Two reviewers, opposite conclusions, same family. I am not adjudicating this from the summaries -- it needs the 27 p-values recomputed once, carefully, by someone who has not already taken a position.",
+    "why_it_matters": "if the meta-reviewer is right, the 'the re-analysis re-sorts in both directions' claim loses its only upward-moving cell. If R-claude-stats is right, a different pair of cells falls. Either way something in that paragraph is wrong, but WHICH determines the rewrite."
+  },
+  "the_2_of_24_snapshot_question_META_DECIDED_IT_AGAINST_THE_REVIEWERS": {
+    "its_finding": "all five load-bearing records EXIST on disk and PRE-DATE the freeze (it checked mtimes only, never contents). MANIFEST.json's excluded_by_blindness_rule does NOT list evidence/, and it declares missing_dependencies: [] while omitting eight-plus named records -- a packaging bug with a lying self-check.",
+    "its_adjudication": "X5's 'the artifacts do not exist' is REFUTED; X2's 'unverified rather than refuted' is exactly right. The median-2 reproducibility score measures the SNAPSHOT, not the paper.",
+    "MAIN_agrees_and_this_matches_my_own_finding": "I found the same packaging bug at 14:45 from the other direction (my freeze call enumerated --evidence by hand, shipping 2 of 24). The meta-reviewer reached it independently from the MANIFEST's own lying missing_dependencies field.",
+    "three_defects_it_says_SURVIVE_repackaging": [
+      "the artifact map resolving to internal tcodex_out/ paths",
+      "the stale build record (it verified 1fbaaf99/366583 B shipped vs 56a376e1/355196 B/22 pages certified -- matches my own measurement)",
+      "four in-snapshot numerals the checker misses"
+    ],
+    "its_consequence_for_the_plan": "repackaging makes the calibration defect CONFIRMABLE rather than reconstructed -- so fix the calibration FIRST, then repackage. I accept this ordering."
+  },
+  "it_rejected_9_reviewer_claims_including_the_fatal": {
+    "ADV-1_fatal_downgraded": "the adversary's own review_limitations call the magnitude unpinnable, so a fatal rating is not supported by its own evidence. MAIN agrees: I reached the same conclusion at 15:20 -- the DIRECTION is established deductively, the MAGNITUDE is not, because the per-item n_opt vector is not in the artifact.",
+    "all_reconstructed_p_values": "0.06-0.12 range across five derivations establishes direction, not magnitude. Recorded as such.",
+    "citation_integrity_2s": "scored on absence of ACCESS rather than defects FOUND -- a reviewer who could not check a citation should not score citation integrity low for that reason."
+  },
+  "self_retraction_adjudication": {
+    "its_position": "R-claude-stats' retraction of its own power finding (80.3% for the worst cell, which the meta-reviewer reproduced as 0.803) REFUTES the strong form of X2/X3/X4's claim that 'all 21 cells are powered' is unestablished.",
+    "so_one_retraction_corrects_four_reviewers": "and part of the codex 4s rest on a now-refuted power finding. That is a substantive reason the codex/claude gap is not purely calibration.",
+    "MAIN_position": "accept. This is the strongest argument in the meta-review that the pooled median understates the paper."
+  },
+  "systematic_pattern_it_found": "codex mean 4.17 vs claude mean 5.25, +1.08, single overlap point. Same defects found; divergence is severity calibration. BOTH self-retractions and ALL finding-level 'I am not alleging X' brackets came from the claude side, while the codex 4s rest partly on a refuted power finding.",
+  "revision_plan_shape": {
+    "total": 17,
+    "analysis_on_existing_data": 5,
+    "claim_narrowing": 3,
+    "writing": 3,
+    "code_packaging": 3,
+    "citation": 2,
+    "experiments": 1,
+    "the_one_experiment": "E1, flagged possible_with_current_evidence: false and explicitly NOT required for acceptance",
+    "ceiling_is_limited_by": "the EVIDENCE, not the writing. Going above ~6.5 needs a second variable-k construct surviving a legality-respecting null.",
+    "its_honest_prediction": "the required fixes make the paper more trustworthy and simultaneously SMALLER -- MMLU-Pro probably joins the inside-noise partition, leaving MMLU and BoolQ, neither of which carries a headline count."
+  },
+  "it_pre_rejected_8_score_gaming_moves": "including deleting the retraction ledger and deleting the (correct) 21-cell power sentence. Both would raise the score and lower the paper's honesty.",
+  "STILL_OPEN": [
+    "the BH-over-27 disagreement (needs one careful recomputation by a third party)",
+    "8 unresolved items in its section 7, each naming what would resolve it",
+    "1 needs_adjudicator: whether shortgpt16's exclusion is disclosure failure or selection on outcome -- two reviewers explicitly DECLINED to allege selection, and it preserved that rather than averaging. MAIN's own adjudication at 14:00 called it 'in effect, selection on outcome'; the meta-reviewer, which never read that, declined to go that far. That disagreement is now between MAIN and an independent adjudicator and should be settled by a third."
+  ]
+}
