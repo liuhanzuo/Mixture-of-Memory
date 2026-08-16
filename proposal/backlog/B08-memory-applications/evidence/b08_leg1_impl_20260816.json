@@ -1,0 +1,176 @@
+{
+  "artifact": "B08 leg-1 blockers (2)(3)(4) implementation + fixture-level verification",
+  "when": "2026-08-16",
+  "gpu_spent": "ZERO. 0 GPU, 0 ssh, no model loaded. All 40 cards on 5 nodes were committed to other training when this ran.",
+  "commit_at_start": "eb67220",
+  "scope": "Implements the three CPU blockers that NOVELTY_VERDICT.md (c9feb4b) left as B08's ENTIRE remaining contribution: the A-notes-only arm, the U scorer, and the SelfNotesCompressor. Blocker (1) RELATED_WORK.md was NOT touched: it has been on disk since 2026-08-15 (59,799 B, commit 463dca4).",
+
+  "prereg_fidelity": {
+    "doc": "proposal/backlog/B08-memory-applications/B08_LEG1_GATE_PREREG.md",
+    "U_definition_implemented_verbatim": "section 5.2: 'U -- unsupported-claim rate. Fraction of non-abstention answers containing a factual claim not present in THAT ARM'S OWN CONTEXT. Denominator 128.'",
+    "three_load_bearing_clauses": {
+      "non-abstention": "the 6 _abs items are EXCLUDED from U's denominator (128 = 134 - 6). Enforced by score_arm(expect_scored=...) and by a per-item in_U_denominator flag.",
+      "that_arms_own_context": "the support set is per-ARM and per-ITEM, read from run_baseline's --context_log, never re-derived and never pooled across arms.",
+      "containing_a_factual_claim": "per-claim decision aggregated to a per-answer boolean; both levels are emitted."
+    },
+    "what_the_prereg_does_NOT_fix_and_was_pinned_here_PRE_DATA": [
+      "the claim unit (chosen: sentence, SummaC granularity)",
+      "the operationalisation of 'present in the context' (chosen: salient-token grounding, a LEXICAL PROXY for entailment, with an entailment_fn seam and a mandatory {1,2,3} threshold sensitivity sweep emitted next to the primary number)",
+      "the salience floor (min_salient_len=4; numerals always salient) and a conservative plural fold"
+    ],
+    "prior_art_acknowledgement_is_in_the_code_and_the_output_json": "RELATED_WORK.md section 7 item 5 FORBIDS claiming a new faithfulness metric. The module docstring and every emitted JSON credit ALCE (2023.emnlp-main.398), FActScore (2023.emnlp-main.741) and SummaC (TACL 2022), and state that the true claim is 'no such scorer existed in THIS repo'.",
+    "could_not_implement": {
+      "ACC_and_the_judge_adapter": "blocker (5) / NEW_BLOCKER_8. Out of scope for this task (which named (2)(3)(4)). ACC therefore does not exist yet, so Delta_aug and Delta_sub cannot be computed; only Delta_U can.",
+      "the_notes_generation_pass_itself": "SelfNotesCompressor.compress's generate() path needs a card. It is written and its guard-rails, cache, label and instruction are tested; the single torch generate call is not executed. This is the stated GPU budget, not an oversight.",
+      "zwfy6_asset_verification": "blocker (6), unchanged. Everything here is wzc1-scoped."
+    }
+  },
+
+  "code_changes": {
+    "longmemeval/run_baseline.py": {
+      "blocker_2_withhold_path": "the hardcoded `reader_evidence = [notes_block] + list(evidence)` (old :162) is replaced by a 3-branch selection on --reader_evidence_mode {notes_plus_evidence,notes_only,evidence_only}. Default notes_plus_evidence reproduces the old line exactly.",
+      "new_flags": ["--reader_evidence_mode", "--notes_cache", "--notes_cache_readonly", "--context_log", "--question_types", "--expect_n"],
+      "compressor_choices": "none | self_notes | mom_notes (self_notes ADDED; mom_notes unchanged)",
+      "stratum_selector": "--question_types filters by question_type AFTER load (--limit takes a PREFIX and the stratum is a SUFFIX, so --limit cannot express it); --expect_n raises SystemExit BEFORE any model work. This is NEW_BLOCKER_7, which STATUS.json says makes the gate unrunnable as written.",
+      "context_log": "per-item JSONL of the EXACT context blocks the reader saw + the hypothesis. Required because U is defined against that arm's own context and run_baseline's notes_examples field keeps only 3 entries (NEW_BLOCKER_9).",
+      "arm_label": "derived from (compressor, evidence_mode) and written into the report AND every context record, so the arm is recoverable from the artifact rather than from shell history.",
+      "MoM_label_fix": "session_id and text now use the compressor's `label` property. With self-notes the old hardcoded 'MoM-NOTES' / 'MoM NOTES:' strings were factually wrong MODEL INPUT, because Evidence.as_block renders session= into the prompt. mom_notes keeps label='MoM' so its prompt is byte-identical."
+    },
+    "longmemeval/compressor.py": {
+      "blocker_4_SelfNotesCompressor": "shares the reader's ALREADY-LOADED model/tokenizer (no second from_pretrained, so 'same model' is a fact not a claim); generates from the same post-token-budget evidence list; greedy (do_sample=False, num_beams=1) matching the reader; max_new_tokens=128.",
+      "notes_cache": "{question_id, notes, n_evidence, evidence_round_ids, source, max_new_tokens} JSONL. Generate ONCE, then BOTH notes arms read the same strings -- 'same notes text' is part of the frozen single variable, and regenerating per arm would leak decoder nondeterminism into the contrast.",
+      "notes_cache_readonly": "a cache MISS raises instead of silently regenerating.",
+      "instruction_shared_verbatim": "_NOTES_INSTRUCTION is byte-identical to the literal MoMNotesCompressor previously inlined, and both classes now use it, so the notes PROMPT does not become a second uncontrolled variable when the generator changes.",
+      "label_property": "added to the Compressor ABC, defaulting to 'MoM'."
+    },
+    "longmemeval/faithfulness.py": "NEW. The U scorer. numpy-free by design (three numpy versions across the five nodes make same-seed multinomial node-dependent), paired bootstrap with the pre-registered seed=42 / 10,000 resamples, reports disc_U and the K2 disc_U <= 0.0872 evaluability precondition alongside Delta_U."
+  },
+
+  "auditability": {
+    "per_item_records_not_just_an_aggregate": "score_arm emits one record per item (question_id, question_type, arm, is_abstention, in_U_denominator, hypothesis, n_context_blocks, n_context_tokens, n_claims, n_unsupported_claims, unsupported) and one record per CLAIM (claim text, is_refusal, n_salient, ungrounded_salient, supported, rule).",
+    "aggregate_is_recomputable_from_the_trail": "asserted in the tests: item['unsupported'] == any(not c['supported'] for c in item['claims']).",
+    "the_CLI_cannot_emit_an_aggregate_without_a_trail": "if --per_item_out is not given, the per-item records are inlined into the output JSON.",
+    "determinism": "no model, no sampling, sorted iteration, stdlib RNG. Two calls to paired_bootstrap_gap on the same pairs are equal (tested)."
+  },
+
+  "fail_loud_behaviour_deliberately_broken_inputs": {
+    "why": "memory/selftest-over-invented-inputs-proves-nothing-about-the-pipeline.md -- B04's --selftest passed daily while no code path fed real data to the metric, and a fixture selftest caught a str/int key bug on its first run that did not crash but printed 'found X' and 'all missing' together.",
+    "cases_all_RAISE_with_the_field_the_line_and_why_it_matters": [
+      "int question_id in a context log -> TypeError naming the line, the field and the type (the exact B04 shape: parses fine, then misses every str-keyed lookup)",
+      "int question_id in the notes cache -> ValueError",
+      "context record with no context_blocks -> KeyError ('refusing to score a partial log')",
+      "context block with no 'text' -> KeyError ('protocol failure, not a skippable row')",
+      "notes-cache record missing 'notes' -> ValueError",
+      "duplicate question_id -> ValueError ('would be double-counted in the denominator and would break pairing')",
+      "arm shorter than expect_n -> ValueError ('No metric may be computed on a partial arm')",
+      "wrong non-abstention count vs expect_scored -> ValueError",
+      "unpaired arms -> ValueError listing the asymmetric ids",
+      "--question_types naming a type absent from the data -> SystemExit (a typo, not an empty cell)",
+      "--expect_n mismatch -> SystemExit before the reader is built",
+      "a fixture record whose answer_session_ids points at a nonexistent session -> recall 0.0, NOT the free-1.0 branch (which fires only on an EMPTY gold list)"
+    ]
+  },
+
+  "tests": {
+    "file": "tests/test_b08_leg1_notes_arms.py",
+    "runner": "self-contained (NO interpreter on this node has pytest: checked .venv/bin/python, /opt/conda/envs/torch-base/bin/python, /usr/bin/python3, /usr/bin/python3.11 -- all ModuleNotFoundError)",
+    "result": "18/18 PASS, rc=0",
+    "fixture": {
+      "path": "tests/fixtures/longmemeval_b08_stratum_fixture.json",
+      "bytes": 196904,
+      "sha256": "2c50015c3d45cf5f91afa89e238bf55e6a8081e9284097da3547a99261bea14d",
+      "builder": "proposal/backlog/B08-memory-applications/code/build_b08_fixture.py",
+      "carved_from": "data/longmemeval/longmemeval_s.json (278,025,796 B), STREAMED with JSONDecoder.raw_decode -- the 278 MB file is never fully loaded",
+      "records": 5,
+      "question_ids": ["6a1eabeb", "6aeb4375", "6aeb4375_abs", "7161e7e2", "c4f10528"],
+      "source_indices": [366, 367, 436, 444, 445],
+      "composition": "3 knowledge-update (1 of them _abs) + 2 single-session-assistant; all on-stratum",
+      "trim": "haystacks reduced to gold sessions + <=3 distractors, <=8 turns/session. Gold sessions ALWAYS kept so answer_session_ids stays resolvable and retrieval can still hit; the trim is recorded per record in _fixture_provenance.",
+      "real_shapes_preserved": "real field names, real _abs id suffix, real gold answer strings, real answer_session_ids linkage. The _abs item carries BOTH a gold answer string and 2 gold sessions, so the naive 'no gold answer => abstention' heuristic would miss it -- which is why abstention is detected by the id suffix."
+    },
+    "stratum_quantities_reproduced_from_the_real_file": {
+      "n_records": 500,
+      "stratum_n": 134,
+      "knowledge_update_n": 78,
+      "single_session_assistant_n": 56,
+      "abs_in_stratum": 6,
+      "abs_repo_wide": 30,
+      "primary_denominator": 128,
+      "stratum_load_order_indices": "366..499, contiguous, a SUFFIX (so --limit cannot express it -- confirms NEW_BLOCKER_7)",
+      "verdict": "all 7 match STATUS.json exactly"
+    }
+  },
+
+  "negative_controls_THE_LOAD_BEARING_VERIFICATION": {
+    "why": "memory/selftest-over-invented-inputs-proves-nothing-about-the-pipeline.md and memory/a-green-checker-covers-only-what-it-targets.md: a green suite proves nothing until you have watched it go red. Eight bugs were injected one at a time into the shipped code, the suite re-run, and each file restored and md5-verified byte-identical afterwards.",
+    "results": [
+      {"id": "NEG1", "injected": "revert the withhold path to the old hardcoded [notes_block] + list(evidence)", "caught_by": ["test_three_arms_differ_ONLY_in_context_composition"], "rc": 1},
+      {"id": "NEG2", "injected": "widen the U support set with tokens from OUTSIDE the item's own context", "caught_by": ["test_support_set_is_EXACTLY_the_items_own_context"], "rc": 1, "FINDING": "NEG2 initially PASSED 17/17. The aggregate inequality U(notes-only) > U(raw) survived a leaked support set, i.e. the test that claimed to check 'that arm's own context' did not. test_support_set_is_EXACTLY_the_items_own_context was ADDED in response: it recomputes the expected ungrounded set from the context alone and demands EQUALITY per claim. This is the one place the negative control changed the deliverable rather than confirming it."},
+      {"id": "NEG3", "injected": "coerce an int question_id to str instead of raising (the B04 shape)", "caught_by": ["test_broken_int_question_id_fails_loudly_not_silently"], "rc": 1},
+      {"id": "NEG4", "injected": "let abstention items into the U denominator", "caught_by": ["test_U_is_computed_against_THAT_ARMS_OWN_context", "test_refusals_and_abstention_are_different_things"], "rc": 1},
+      {"id": "NEG5", "injected": "remove the expect_n partial-arm assert in the scorer", "caught_by": ["test_partial_arm_and_unpaired_arms_are_refused"], "rc": 1},
+      {"id": "NEG6", "injected": "revert the self-notes label to 'MoM' (wrong provenance inside the reader's prompt)", "caught_by": ["test_self_notes_label_is_not_MoM_in_the_prompt", "test_self_notes_binds_to_the_readers_own_weights"], "rc": 1},
+      {"id": "NEG7", "injected": "let a readonly notes cache silently regenerate on a miss", "caught_by": ["test_notes_cache_freezes_the_notes_text_across_arms"], "rc": 1},
+      {"id": "NEG8", "injected": "remove the --expect_n stratum assert in run_baseline", "caught_by": ["test_stratum_selector_and_expect_n_assert_at_input_time"], "rc": 1}
+    ],
+    "restoration_verified": "md5 of run_baseline.py, compressor.py and faithfulness.py identical to the pre-injection backups; clean tree re-run = 18/18 PASS rc=0; `python3 -m longmemeval.run_baseline --self_test` rc=0."
+  },
+
+  "end_to_end_3_arm_run_on_real_records_0_GPU": {
+    "how": "the REAL CLI over the fixture with --reader stub, notes supplied from a pre-seeded cache read-only (so no card is needed and the cross-arm notes-identity mechanism is the real one)",
+    "context_blocks_per_item": {
+      "A-raw": [6, 10, 8, 10, 10],
+      "A-notes+raw": [7, 11, 9, 11, 11],
+      "A-notes-only": [1, 1, 1, 1, 1]
+    },
+    "interpretation": "notes+raw is exactly raw+1 with the raw blocks BYTE-IDENTICAL; notes-only is the single notes block with the raw withheld (asserted per item: no raw block's text appears anywhere in the notes-only context). This is the arm that did not previously exist.",
+    "retrieval_frozen": "any_hit_recall == 1.0 identical across all three arms -- retrieval is a constant, not a covariate.",
+    "compressor_stats": "notes_cache_hits=5, notes_generated=0 in BOTH notes arms, i.e. the notes text is provably the same string in both.",
+    "U_and_Delta_U_computed": "U(A-raw)=100.0%, U(A-notes-only)=100.0%, Delta_U=0.0 pp CI [0.0, 0.0], disc_U=0.0, k2_resolvable_at_n134=True, 10 per-item records emitted.",
+    "WHY_U_IS_100_PERCENT_AND_WHY_IT_IS_NOT_A_RESULT": "StubReader (reader.py:93-107) prefixes its output with '[stub|session=<id>|date=<d>]' scaffolding that by construction does not occur in the evidence text, so every stub answer contains ungrounded salient tokens ('stub', 'session', the id, the date digits). This is a PROPERTY OF THE STUB READER, not a measurement. It is recorded because a reader who saw 100.0% without this note might mistake it for a B08 number. NO B08 QUALITY OR FAITHFULNESS NUMBER EXISTS: that requires Meta-Llama-3-8B on a card, plus the ACC judge adapter (blocker 5).",
+    "per_item_trail_shows_the_mechanism_working_correctly_underneath": "on qid 6a1eabeb the stub-scaffolding claim is UNSUPPORTED (ungrounded: 05, 13, 2023, 53, a25d4a91, answer, session, stub) while the substantive claim quoting the evidence ('personal best time of 25:50') is SUPPORTED with an EMPTY ungrounded set."
+  },
+
+  "verification_outputs": {
+    "ready_queue.py": {
+      "rc": 0,
+      "B08_classification": "ready_cpu (section '=== ready_cpu  (8) ===')",
+      "B08_reason_literal": "novelty gate not adjudicated (novelty_verdict.verdict=NEEDS_NARROWING -- not preempted (nothing is 完全相同/抄袭; all four newly found hits... (PENDING)) -> the actionable task is 0 GPU: run it",
+      "before_vs_after_diff": "BYTE-IDENTICAL. Adding two keys moved nothing, which is EXPECTED and is itself the finding recorded in ready_queue_visibility_defect_20260815: B08's blockers live under `prior_gate` and `remaining_blockers_all_CPU`, neither of which is in ready_queue.py's BLOCK_KEYS, so the scheduler has never seen them (live_blockers=0 before and after). It reaches ready_cpu on the novelty ground instead. Right answer, different reason. Implementing code cannot move B08 in this queue, and it must not: ACC still does not exist."
+    },
+    "check_stale_absence_claims.py": {
+      "rc": 1,
+      "rc_1_is_EXPECTED": "It reports 8 stale absence assertions across 7 proposals and returns 1 if ANY remain. B08's row persists because the ORIGINAL sentinels are append-only and were deliberately NOT edited; the repair is the new dated key. rc reaches 0 only when all seven other proposals get the same treatment.",
+      "output_before_vs_after": "identical (the row is driven by the old sentinels, which are untouched by design)"
+    }
+  },
+
+  "TOOLING_FINDING_the_recommended_repair_trips_the_checker": {
+    "what": "check_stale_absence_claims.py matches an absence phrase next to a filename ANYWHERE in a STATUS.json. A superseding key that QUOTES the stale sentence verbatim -- the natural way to write such a record -- therefore trips the checker itself.",
+    "measured": "The first draft of blocker_1_premise_STALE_20260816 quoted the sentinel and produced 2 ABSENCE-regex hits IN ISOLATION; after paraphrasing (identify the stale claim BY LOCATION -- the two key paths -- instead of reproducing its text) it produces 0. Both new keys now measure CLEAN in isolation.",
+    "consequence_if_unnoticed": "B08's row would have stayed red forever, even after the original sentinels were repaired, and the redness would have been caused by the repair. Whoever fixes the other seven proposals needs either paraphrasing keys or a suppression mechanism in the checker.",
+    "how_it_was_found": "by importing the checker's own ABSENCE regex and running it over the new key alone, rather than trusting that a superseding key is by construction clean."
+  },
+
+  "append_only_discipline": {
+    "script": "proposal/shared/code/b08_append_status_keys_20260816.py",
+    "method": "BYTE-PREFIX splice, not a json.dumps round-trip: STATUS.json carries deliberate blank lines between keys that re-serialisation would silently delete, turning an append into 'N insertions / M deletions' -- the exact signal a reviewer uses to detect tampering.",
+    "assertion": "the 25 pre-existing keys asserted byte-identical (name, order, canonical value) before and after; 58,718-byte prefix preserved VERBATIM (58,721 -> 74,898 bytes)",
+    "git_numstat": "88 insertions, 0 deletions",
+    "old_sentinel_NOT_edited": "remaining_blockers_all_CPU[0] and prior_gate still assert the absence, as they must: they are the record of when the blocker was real."
+  },
+
+  "blocker_status_after_this_session": {
+    "1_RELATED_WORK": "STALE PREMISE, not work. On disk since 2026-08-15, 59,799 B, committed 463dca4. Recorded as a new dated key rather than by editing the old sentinel (append-only). proposal/check_stale_absence_claims.py flags this and 7 other proposals.",
+    "2_notes_only_arm": "IMPLEMENTED + TESTED (NEG1 confirms the test bites).",
+    "3_U_scorer": "IMPLEMENTED + TESTED (NEG2/3/4/5 confirm the tests bite). Lexical proxy with an NLI seam and a mandatory sensitivity sweep -- stated as a limitation, not hidden.",
+    "4_SelfNotesCompressor": "IMPLEMENTED + TESTED except the single torch generate() call, which needs a card (NEG6/7 confirm the tests bite).",
+    "5_judge_adapter": "OPEN, untouched. ACC does not exist, so Delta_aug and Delta_sub are not yet computable.",
+    "6_zwfy6_verification": "OPEN, untouched. Everything here is wzc1-scoped.",
+    "7_stratum_selector": "IMPLEMENTED + TESTED (NEG8 confirms). Was listed as making the gate unrunnable as written.",
+    "8_judge_field_loss": "OPEN (same as 5).",
+    "9_notes_not_auditable": "CLOSED by --context_log + the notes cache: all notes and all contexts are persisted verbatim, not 3 examples."
+  },
+
+  "lifecycle_deliberately_unchanged": "B08 stays ready_cpu. novelty_checked stays false and lifecycle stays needs_prior_gate. Blockers 5, 6 and 8 remain open, ACC does not exist, and per memory/a-declared-lifecycle-is-not-an-adjudicated-one.md an agent must not write itself a clearance token. This session implemented code; it did not adjudicate a gate."
+}
