@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "what": "MAIN partial verification of R-claude-soundness issue S-01c: the 0/60 sentence's component counts do not sum to 60",
+  "date": "2026-08-16T14:20+08:00",
+  "raised_by": "R-claude-soundness (6/10, weak accept, ceiling 7 -- highest score on the panel so far)",
+  "WHAT_I_VERIFIED": {
+    "the_arithmetic_gap": "CONFIRMED, and it is deterministic. 05_analysis.tex:29 and 09a_relocated.tex:44 both state '0/60 damaged cells clear their floor while 25/60 read above chance, and only 7/60 are significantly below because 52/60 are underpowered'. 7 + 52 = 59. One cell of 60 has no stated disposition.",
+    "verbatim_both_sites": [
+      "05_analysis.tex: '25/60 read above chance and only 7/60 are significantly below, because 52/60 are underpowered for the MMLU reference effect.'",
+      "09a_relocated.tex: '25/60 read above chance and only 7/60 are significantly below because 52/60 are underpowered for the MMLU reference effect.'"
+    ],
+    "why_it_matters": "the 0/60 near-unanimity is offered TWICE as the aggregate the conclusions rest on, explicitly in place of a family-wise multiplicity correction (09a_relocated.tex:26). A denominator whose parts do not sum is not yet an audited denominator."
+  },
+  "WHAT_I_COULD_NOT_VERIFY": {
+    "the_identity_of_the_60th_cell": "NOT DETERMINED. The reviewer inferred it is the one cell that clears its floor (qwen3/k14, p=0.0192). That is plausible but I did not confirm it, and I am not recording an inference as a finding.",
+    "why_not": "The 60-cell tally is not in mmlu_pro_power_nulls_v2.json. That file's reference_250_pooled holds only 12 POOLED cells (3 families x 4 damaged rungs), each aggregating 5 benchmarks into one n_pooled=7107-style row -- not 60 per-benchmark cells. evidence/second_mc_benchmark_crossfamily/gate2_crossfamily_nulls.json contains 1329 verdict-bearing cells (499 above / 429 at / 401 below the floor) including intact bases and the winogrande negative control, so it is a superset, not the tally. Neither file carries an underpowered flag that is ever true, so the '52/60 underpowered' figure is computed somewhere I did not locate.",
+    "what_would_settle_it": "find the #250 60-cell tally artifact itself -- the emitter that produced 25/7/52 -- and enumerate its 60 rows with their verdicts and underpowered flags. Until then the 60th cell's disposition is unknown, not 'the one that clears'."
+  },
+  "relation_to_the_other_denominator_defects": "This is the THIRD denominator in the paper found to be unaudited today, after the MMLU-Pro 14/15 and the off-MMLU 0/15 (both traced to rollup.damaged_rungs=[keep12,keep10,keep8]; see R1_01_shortgpt16_exclusion_MAIN.json). Unlike those two, this one I have NOT traced to a cause. It may share the same cause, or it may be an independent rounding/reporting slip. Do not assume it is the same bug.",
+  "dispatched_to": "agent a154e4cbd0151ec95, which already owns the denominator work and was told to check 0/60 as part of it. This record narrows its task: the gap is real, the cause is open.",
+  "REVIEWER_QUALITY_NOTE": "R-claude-soundness scored 6/10 weak accept with ceiling 7 -- the highest on the panel -- while independently rediscovering the MMLU-Pro legality-blind null that MAIN found at 13:00 and that 4 of 6 codex reviewers flagged. It reproduced all 9 rows of Table 1 exactly at the stated seed before attacking it, then swept every admissible n_opt allocation and got p = 0.068-0.118 across 3 seeds -- bracketing MAIN's 0.0783 from an independent implementation. It also correctly recomputed 4.6x -> 4.226. Its honest-gaps section states it opened NO primary evidence because the snapshot ships only 2 files, and that 12 of 17 citations went unchecked. That is the right way to report a reconstruction."
+}
