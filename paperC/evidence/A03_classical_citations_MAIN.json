@@ -45,7 +45,7 @@
     }
   },
   "axis_2_local_support": {
-    "status": "PARTIAL -- MAIN could NOT complete this axis and is NOT claiming to have read the primary texts",
+    "status": "DELEGATED AND RETURNED -- 3 SUPPORTED / 3 PARTIALLY_SUPPORTED / 0 NOT_SUPPORTED / 0 FATAL",
     "obstruction": "all six are paywalled. Semantic Scholar returns openAccessPdf.status=CLOSED with the abstract field explicitly elided by the publisher for both entries probed. Only Bennett's abstract was recoverable (via OpenAlex abstract_inverted_index).",
     "bennett_abstract_recovered_verbatim": "The extent of consistency between information from two methods of communication, the interview and the limited-response question, was investigated. Thirty questions showed consistencies greater than could be expected on the basis of chance. The questions were classified into four general categories, and the mean coefficients of consistency for these categories ranged from 0.46 to 1.00.",
     "bennett_assessment": "INSUFFICIENT to support the paper's specific claim. The paper asserts \"Bennett's S sets p_e=1/k for k response categories\". The abstract establishes only that a chance correction exists ('greater than could be expected on the basis of chance'); it does NOT state the functional form of p_e. Consistent with the claim, does not establish it. MAIN will not upgrade this to VERIFIED on an abstract.",
@@ -61,12 +61,23 @@
       "brennan1981": 1502,
       "cohen1960": "canonical",
       "note": "high citation counts are evidence the works EXIST and are load-bearing in their field. They are NOT evidence that any one of them supports a specific local sentence. Do not conflate."
-    }
+    },
+    "artifact": "paperC/evidence/A03_local_support_verification.json + paperC/A03_LOCAL_SUPPORT_20260816.md (commit 03a157a)",
+    "no_primary_full_text_obtained": "All six remain paywalled. No local copy on either disk (bounded search, no find /). Bennett rests on Artstein & Poesio 2008 (ACL journal, full text read) as SECONDARY. Frary was pursued through 11 routes including all 25 ERIC Frary records and 64 OA citing papers, and its full text was still not obtained."
   },
   "VERDICT": {
     "metadata_axis": "CLOSED -- 6/6 PASS, A-03's metadata half is now verified",
-    "local_support_axis": "OPEN -- delegated, must not be recorded as closed",
+    "local_support_axis": "CLOSED -- 3 SUPPORTED / 3 PARTIALLY (all over-disclaiming) / 0 NOT_SUPPORTED / 0 FATAL. No citation reverses direction.",
     "a03_framing_defect": "A-03's stated failure mode ('claiming as novel something Frary already said') is the WRONG risk for this passage and should be rewritten. The passage disclaims rather than claims.",
-    "what_a_reviewer_will_actually_probe": "whether the disclaimer is TOO BROAD -- i.e. whether these six really do establish everything the paper hands them, because if they do not, the paper has surrendered a contribution it in fact has, and has drawn its own boundary in the wrong place. X1 (novelty, the only reviewer above 4) already wrote that 'the novelty is narrower than presented, its boundary against the closest work is incomplete' -- consistent with a mis-drawn boundary in either direction."
+    "what_a_reviewer_will_actually_probe": "whether the disclaimer is TOO BROAD -- i.e. whether these six really do establish everything the paper hands them, because if they do not, the paper has surrendered a contribution it in fact has, and has drawn its own boundary in the wrong place. X1 (novelty, the only reviewer above 4) already wrote that 'the novelty is narrower than presented, its boundary against the closest work is incomplete' -- consistent with a mis-drawn boundary in either direction.",
+    "A03_can_be_retired": "A-03 is resolved on BOTH axes and should be rewritten in state/assumptions.md: metadata 6/6 PASS; local support returns no fatal and no reversal. Its replacement should record the ACTUAL finding -- that the paper under-attributes v1 to Brennan & Prediger 1981 -- which is an additive fix, not a risk."
+  },
+  "MAIN_INDEPENDENT_CHECK_1430": {
+    "what": "MAIN re-fetched the Brennan & Prediger 1981 abstract itself via OpenAlex rather than trusting the agent's quotation",
+    "verbatim_confirmed": "In validity studies, we suggest considering whether one wants an index of improvement beyond \"chance\" or beyond the best a priori strategy employing base rates. In the former case, considerations are similar to those in reliability studies with the marginals for the criterion measure considered as fixed. In the latter case, it is suggested that the largest marginal proportion for the criterion measure be used in place of the \"chance\" term in kappa.",
+    "verdict": "The agent's central finding is CORRECT and MAIN verified it from the source, not from the agent's report. This sentence is paperC's v1 floor: f_const = max_L (1/n) sum 1[y_i = L] is the largest gold-label marginal used in place of chance. The criterion measure is the gold label (one correct answer per item), so the correspondence is exact, and even the chance-vs-best-a-priori framing matches the paper's own introduction.",
+    "attribution_gap": "brennan1981kappa appears exactly twice in the manuscript, both inside the v2 paragraph disclaiming the 1/k choice. v1 -- the paper's flagship, which it does NOT disclaim -- credits only the ML-side balepur2024artifacts. So the paper cites this work for the lesser of its two recommendations and misses the one that is its own headline's direct antecedent.",
+    "this_is_a_NET_GAIN_not_a_defect": "Not plagiarism: the paper never claims the statistic is new. But an uncited antecedent INSIDE AN ALREADY-CITED reference is a real attribution gap a reviewer will hit on opening a 1502-citation classic already in the bibliography. Handled correctly it UPGRADES the paper: v1 stops being an ad-hoc ML heuristic and becomes a 1981 psychometric recommendation with a citation -- which is exactly the repair X1 asked for when it wrote that the 'boundary against the closest work is incomplete'. The edit is ADDITIVE (one sentence), removing nothing.",
+    "risk_direction_prediction_CONFIRMED": "MAIN predicted at 13:20 that A-03's stated failure mode was backwards -- that the risk was over-disclaiming, not over-claiming. All three PARTIALLY_SUPPORTED verdicts are over-disclaiming, and all four recommended edits ADD precision and favour the paper. The prediction held."
   }
 }
