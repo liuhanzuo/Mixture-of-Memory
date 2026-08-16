@@ -1,14 +1,20 @@
 # GPU_STATUS.md — 5 节点单一事实来源
 
-**最后实测 2026-08-17 07:28 GMT+8（heartbeat）。32/40 卡占用，LOCAL 8 卡空闲（**故意**）。每节点 8 个 compute PID + 单一 owning script = 无抢卡。**
+**最后实测 2026-08-17 07:58 GMT+8（heartbeat）。32/40 卡占用，LOCAL 8 卡空闲（**故意**）。每节点 8 个 compute PID + 单一 owning script = 无抢卡。四臂全部 0 个 Traceback/OOM/ChildFailedError。**
 
-| 节点 | 硬件 | 盘 | 在跑 | step | 显存/卡 | util | amortised s/step（**ckpt mtime**） | baseline | 判定 |
-|---|---|---|---|---|---|---|---|---|---|
-| LOCAL(=.21) | 8×B200 sm_100 | wzc1 | **IDLE** | — | 0 MiB | 0% | — | — | 三判据齐（0 MiB + 0% + 0 PID）；**故意空闲 → 见下方章节** |
-| `.212` | 8×B200 sm_100 | wzc1 | `olmo2_probe2_7B_keep14fresh2_distill` | 54500/200000 | 157.8 GB | 100% | **2.4506 / 2.4506 / 2.4507** | 2.4500 | healthy 1.000× — ETA 08-21 10:16 |
-| `.73` | 8×H20 sm_90 | zwfy6 | `olmo2_probe2_7B_keep12fresh2` + eval watcher | 194000/200000 | 96.4 GB | 99-100% | **7.9171 / 7.9194 / 7.9131** | 7.9160 | healthy 1.000× — ETA ~20:41 |
-| `.82` | 8×H20 sm_90 | zwfy6 | `olmo2_probe2_7B_keep8fresh2` | 169000/200000 | 78.5 GB | 100% | **5.8606 / 5.8609 / 5.8571** | 5.8640 | healthy 0.999× — ETA 08-19 09:43 |
-| `.104` | 8×H20 sm_90 | zwfy6 | `paperC_qwen3base_heal_k8f2` | 69480/200000（log） | 78.8 GB | 99-100% | **5.8480 / 5.8363 / 5.8426** | 5.8380 | healthy 1.001× — ETA 08-26 03:33 |
+| 节点 | 硬件 | 盘 | 在跑 | step | 显存/卡 | util | amortised s/step（**ckpt mtime**） | baseline | ckpt 年龄/周期 | 判定 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| LOCAL(=.21) | 8×B200 sm_100 | wzc1 | **IDLE** | — | 0 MiB | 0% | — | — | — | 三判据齐（0 MiB + 0% + 0 PID）；**故意空闲 → 见下方章节** |
+| `.212` | 8×B200 | wzc1 | `olmo2_probe2_7B_keep14fresh2_distill` | 55000 ckpt | 157.8 GB | 100% | **2.4506 / 2.4507 / 2.4497** | 2.4500 | 19.0 / 20.4 min | healthy 1.000× — ETA 08-21 10:16 |
+| `.73` | 8×H20 | zwfy6 | `olmo2_probe2_7B_keep12fresh2` + eval watcher | **194380** (log) | 96.4 GB | 100% | **7.9171 / 7.9194 / 7.9131** | 7.9160 | 51.1 / 65.9 min | healthy 1.000× — ETA ~20:41 |
+| `.82` | 8×H20 | zwfy6 | `olmo2_probe2_7B_keep8fresh2` | **169320** (log) | 78.5 GB | 100% | **5.8606 / 5.8609 / 5.8571** | 5.8640 | 32.0 / 48.8 min | healthy 0.999× — ETA 08-19 09:43 |
+| `.104` | 8×H20 | zwfy6 | `paperC_qwen3base_heal_k8f2` | **69780** (log) | 78.8 GB | 98-100% | **5.8463 / 5.8426 / 5.8455** | 5.8380 | 27.7 / 48.7 min | healthy 1.001× — ETA 08-26 03:33 |
+
+> ### 07:58：上一轮 `.104` 的「ckpt 号没动」已确认是正常周期
+> 07:28 我看到 `.104` 两轮最新 ckpt 都是 `step69000`，按 ckpt 年龄 46.6 min vs 48.7 min 周期判为**非 stall**。
+> 本轮它已落 `step69500`（年龄 27.7 min）、log 到 `step69780` —— **判断得到证实**。
+> 表里新增「ckpt 年龄/周期」一列，就是为了让下一个 agent 一眼看出「号没变」是否落在周期内，
+> 不必重新推导。**四臂的 ckpt 年龄全部小于各自周期。**
 
 > ### 07:28 补记：`.104` 的 ckpt 号两轮没动 ≠ stall（已排除）
 > 上一轮和本轮最新 ckpt 都是 `step69000`。**没有据此报 stall**，而是查了两件事：
