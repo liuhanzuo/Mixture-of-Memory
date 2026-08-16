@@ -1,0 +1,441 @@
+{
+  "generated_utc": "2026-08-16",
+  "purpose": "Census of load-bearing COUNT assertions in sections/*.tex not covered by check_prose_vs_evidence.py (MIN_DP=3, decimals only) or gate_count_claims.py (7 hand-registered CLAIMS).",
+  "status": "IN_PROGRESS",
+  "n_audited": 29,
+  "n_mismatch": 2,
+  "n_cannot_verify": 0,
+  "method_caveats": [],
+  "audits": [
+    {
+      "claim": "Among 17 designated damaged cells in four model families ... the honest aggregate is 15/17 at or below the floor",
+      "files": [
+        "sections/00_abstract.tex:2",
+        "sections/01_introduction.tex:21",
+        "sections/05_analysis.tex:27 (as 'Fifteen of the 17')",
+        "sections/06_discussion.tex:15",
+        "sections/09a_relocated.tex:24",
+        "sections/tab_claims.tex:21",
+        "sections/tab_mmlupro.tex:25 (as 'all 17')",
+        "sections/03b_nulls.tex:35"
+      ],
+      "asserted": 15,
+      "recomputed": 15,
+      "evidence_file": "evidence/designated_damaged_denominators.json",
+      "how_recomputed": "dmg=[c for c in cells_mmlupro if not c['is_intact']]; len(dmg)==17; sum(1 for c in dmg if not c['above_floor'])==15",
+      "verdict": "MATCHES",
+      "load_bearing": "THE headline claim. This number replaced the retracted 14/15 today; if wrong the paper's central aggregate is wrong.",
+      "cross_file_consistent": true
+    },
+    {
+      "claim": "10/12 damaged non-OLMo cells read above chance; under naive 0.10, 12/12 do. Yet only 1/12 clears the best-constant floor",
+      "files": [
+        "sections/01_introduction.tex:21",
+        "sections/05_analysis.tex:7",
+        "sections/05_analysis.tex:17-18",
+        "sections/09a_relocated.tex:37"
+      ],
+      "asserted": 10,
+      "recomputed": 10,
+      "evidence_file": "evidence/designated_damaged_denominators.json",
+      "how_recomputed": "non=[c for c in cells_mmlupro if not c['is_intact'] and c['family']!='olmo2_7b']; len(non)==12; sum(above_chance_mean)==10; sum(above_chance_naive)==12; sum(above_floor)==1",
+      "verdict": "MATCHES",
+      "load_bearing": "the wrong-null flip's point-estimate column; all three integers recompute exactly.",
+      "cross_file_consistent": true
+    },
+    {
+      "claim": "all 21 evaluated cells are powered at the scale of the reference effect",
+      "files": [
+        "sections/00_abstract.tex:2",
+        "sections/03b_nulls.tex:24",
+        "sections/04_experiments.tex:20",
+        "sections/03b_nulls_summary.tex:4"
+      ],
+      "asserted": 21,
+      "recomputed": 21,
+      "evidence_file": "evidence/designated_damaged_denominators.json",
+      "how_recomputed": "len(cells_mmlupro)==21 and sum(c['powered'] for c in cells_mmlupro)==21",
+      "verdict": "MATCHES",
+      "load_bearing": "the power disclosure the paper says is mandatory; also the 21 = 17 damaged + 4 intact identity that exposed the retracted 15-denominator.",
+      "cross_file_consistent": true
+    },
+    {
+      "claim": "the designated set gives 9/85 cells above their floor against 45/85 above chance",
+      "files": [
+        "sections/00_abstract.tex:2",
+        "sections/01_introduction.tex:21",
+        "sections/05_analysis.tex:29",
+        "sections/09a_relocated.tex:24",
+        "sections/09a_relocated.tex:44",
+        "sections/03b_nulls.tex:35",
+        "sections/09a_relocated.tex:26"
+      ],
+      "asserted": 9,
+      "recomputed": 9,
+      "evidence_file": "evidence/designated_damaged_denominators.json",
+      "how_recomputed": "len(cells_offmmlu)==85; sum(c['above_floor'])==9; sum(c['above_chance'])==45",
+      "verdict": "MATCHES",
+      "load_bearing": "second headline flip; 85 = 17 arms x 5 benchmarks is the cardinality identity the denominator gate asserts.",
+      "cross_file_consistent": true
+    },
+    {
+      "claim": "all nine are healed arms retaining at least 14 of 32 layers",
+      "files": [
+        "sections/01_introduction.tex:21",
+        "sections/06_discussion.tex:15",
+        "sections/09a_relocated.tex:26",
+        "sections/09a_relocated.tex:44"
+      ],
+      "asserted": 9,
+      "recomputed": 9,
+      "evidence_file": "evidence/designated_damaged_denominators.json",
+      "how_recomputed": "ab=[c for c in cells_offmmlu if c['above_floor']]; len(ab)==9; all(c['family']=='olmo2_7b' for c in ab)==True; all(c['retained_layers']>=14)==True",
+      "verdict": "MATCHES",
+      "load_bearing": "this is what replaces multiplicity correction (concentration of exceptions). If any of the nine were a truncate-only arm the pattern claim dies.",
+      "cross_file_consistent": true
+    },
+    {
+      "claim": "0/15 OLMo-2 cells at 12 layers or fewer and 0/60 truncate-only cells at any depth clear a floor; 25/60 read above chance; 7/60 significantly below; 52/60 underpowered",
+      "files": [
+        "sections/05_analysis.tex:29",
+        "sections/09a_relocated.tex:44"
+      ],
+      "asserted": 0,
+      "recomputed": 0,
+      "evidence_file": "evidence/designated_damaged_denominators.json",
+      "how_recomputed": "o12=[c for c in cells_offmmlu if c['family']=='olmo2_7b' and c['retained_layers']<=12]; len(o12)==15, sum(above_floor)==0. no=[c for c in cells_offmmlu if c['family']!='olmo2_7b']; len(no)==60, sum(above_floor)==0, sum(above_chance)==25",
+      "verdict": "MATCHES",
+      "load_bearing": "the 0/15 and 0/60 are the contrast that makes the depth threshold non-trivial; 25/60 recomputes exactly (it is NOT 45-9).",
+      "cross_file_consistent": true
+    },
+    {
+      "claim": "the smallest above-floor margin among the nine is +6.47 points while the largest point estimate among the 76 at-or-below cells is +2.61",
+      "files": [
+        "sections/09a_relocated.tex:44"
+      ],
+      "asserted": 76,
+      "recomputed": 76,
+      "evidence_file": "evidence/designated_damaged_denominators.json",
+      "how_recomputed": "below=[c for c in cells_offmmlu if not c['above_floor']]; len(below)==76; max(floor_delta_pp)==2.6115; min over above-floor==6.4701",
+      "verdict": "MATCHES",
+      "load_bearing": "the non-overlap claim; 85-9=76 and both extremes recompute.",
+      "cross_file_consistent": null
+    },
+    {
+      "claim": "five from shortgpt16 (+11.21 to +49.66, every cell at p=0.0001) and four from keep14 (+6.47 to +18.69, p<=0.0005; its fifth cell, PIQA at +2.61, is at the floor)",
+      "files": [
+        "sections/09a_relocated.tex:44"
+      ],
+      "asserted": 5,
+      "recomputed": 5,
+      "evidence_file": "evidence/designated_damaged_denominators.json",
+      "how_recomputed": "per-arm groupby on cells_offmmlu: shortgpt16 5/5 above, deltas [11.21,24.32,30.20,31.14,49.66] all p=0.0001; keep14 4/5 above, deltas [6.47,7.00,9.40,18.69] p in {0.0001,0.0005}",
+      "verdict": "MATCHES",
+      "load_bearing": "the 5+4=9 decomposition; both ranges and both p-bounds are exact.",
+      "cross_file_consistent": null
+    },
+    {
+      "claim": "Fifteen of the 17 cells are at or below the floor / the two cells that clear the floor ... and the remaining 15 are at or below it (tab_mmlupro caption, 'over all 17 designated damaged cells')",
+      "files": [
+        "sections/05_analysis.tex:27",
+        "sections/tab_mmlupro.tex:25"
+      ],
+      "asserted": 17,
+      "recomputed": 17,
+      "evidence_file": "sections/tab_mmlupro.tex (shipped table) + evidence/designated_damaged_denominators.json",
+      "how_recomputed": "tab_mmlupro prints 14 rows but the Llama-3 row collapses 'k14--k8' = 4 cells; per-family expansion gives OLMo-2 5 + Llama-2 4 + Llama-3 4 + Qwen3 4 = 17, non-OLMo = 12. A row count would say 14 and be wrong.",
+      "verdict": "MATCHES",
+      "load_bearing": "a reviewer counting rows in tab_mmlupro gets 14, not 17, and could accuse the paper of a phantom denominator. The collapsed Llama-3 row reconciles it. Worth a footnote but the count is right.",
+      "cross_file_consistent": true
+    },
+    {
+      "claim": "Four of the five designated damaged OLMo-2 cells are likewise above either chance line but not above the floor; the fifth, shortgpt16, is above both",
+      "files": [
+        "sections/05_analysis.tex:7"
+      ],
+      "asserted": 4,
+      "recomputed": 4,
+      "evidence_file": "evidence/designated_damaged_denominators.json",
+      "how_recomputed": "olm=[c for c in cells_mmlupro if not c['is_intact'] and c['family']=='olmo2_7b']; len(olm)==5; sum(c['above_chance_mean'] and not c['above_floor'] for c in olm)==4 (keep14,keep12,keep10,keep8); shortgpt16 above_floor and above both chance lines",
+      "verdict": "MATCHES",
+      "load_bearing": "the OLMo half of the 15/17; if it were 3 or 5 the aggregate would not be 15/17.",
+      "cross_file_consistent": null
+    },
+    {
+      "claim": "Seven of the ten cells that read 'above chance' were never above chance by any tested standard --- their intervals cover zero",
+      "files": [
+        "sections/05_analysis.tex:23"
+      ],
+      "asserted": 7,
+      "recomputed": 7,
+      "evidence_file": "evidence/s2_03_symmetric_inference.json",
+      "how_recomputed": "counts_12_damaged_non_olmo: above_chance_point=10, above_chance_ci=3 -> 10-3=7",
+      "verdict": "MATCHES",
+      "load_bearing": "this is the sentence that quantifies the paper's own self-correction of an inflated effect.",
+      "cross_file_consistent": null
+    },
+    {
+      "claim": "the flip is 3/12 above chance versus 1/12 above the floor",
+      "files": [
+        "sections/00_abstract.tex:2",
+        "sections/03b_nulls.tex:35",
+        "sections/05_analysis.tex:17-18",
+        "sections/05_analysis.tex:23",
+        "sections/05_analysis.tex:25",
+        "sections/09a_relocated.tex:37"
+      ],
+      "asserted": 3,
+      "recomputed": 3,
+      "evidence_file": "evidence/s2_03_symmetric_inference.json",
+      "how_recomputed": "counts_12_damaged_non_olmo.above_chance_ci==3, .above_floor_ci==1, .n==12; harness self-validated by reproducing published v1 delta on 15/15 and published CI to <1e-14",
+      "verdict": "MATCHES",
+      "load_bearing": "the symmetric-standard correction; the abstract calls it 'about a third of the size'. 3/10 -> the qualitative phrase also holds.",
+      "cross_file_consistent": true
+    },
+    {
+      "claim": "under Benjamini--Hochberg at q=0.05 --- or Bonferroni --- neither reference retains a single cell (0/12 both sides) ... observing 3 or more rejections out of 12 has binomial probability 0.0196",
+      "files": [
+        "sections/05_analysis.tex:25",
+        "sections/09a_relocated.tex:37"
+      ],
+      "asserted": 0,
+      "recomputed": 0,
+      "evidence_file": "evidence/s2_03_symmetric_inference.json",
+      "how_recomputed": "multiplicity_20260815.BH_q05_rejections and .bonferroni_rejections (read directly); binomial_P_X_ge_3 field",
+      "verdict": "MATCHES",
+      "load_bearing": "if BH retained even one cell the 'undefined rather than 3/12 vs 1/12' framing would be wrong.",
+      "cross_file_consistent": true
+    },
+    {
+      "claim": "only two of the eight letter constructs (MMLU, BoolQ) have floors a balanced null could not produce; on the remaining six the floor lies inside the estimator's own sampling noise",
+      "files": [
+        "sections/00_abstract.tex:2",
+        "sections/01_introduction.tex:19",
+        "sections/tab_nulls.tex:38-42",
+        "sections/tab_construct_nulls.tex:16-24"
+      ],
+      "asserted": 8,
+      "recomputed": 8,
+      "evidence_file": "sections/tab_nulls.tex (bound to evidence/construct_nulls_legality_aware.json by emit_tab_construct_nulls.py)",
+      "how_recomputed": "parse tab_nulls data rows -> 9 rows, 8 distinct construct names (MMLU-Pro twice, one row per chance convention); rows with p<1e-5 = {MMLU,BoolQ} = 2 constructs; 8-2 = 6 remaining CONSTRUCTS (but 7 remaining ROWS)",
+      "verdict": "MATCHES",
+      "load_bearing": "the abstract's census. NOTE the row/construct distinction is the trap: 9 rows / 7 non-significant rows vs 8 constructs / 6 non-significant constructs. Both prose sites correctly use the construct unit. This one IS covered by gate_count_claims.py (3 of its 7 entries).",
+      "cross_file_consistent": true
+    },
+    {
+      "claim": "The hazard covers five of the table's nine rows --- four distinct constructs, since MMLU-Pro contributes a row under each chance convention --- and not the two whose p moved ... The remaining rows are genuinely clean: OpenBookQA's floor is exact at 138/500, and ARC-Easy, ARC-Challenge and CommonsenseQA round down",
+      "files": [
+        "sections/03b_nulls.tex:39"
+      ],
+      "asserted": 5,
+      "recomputed": 5,
+      "evidence_file": "sections/tab_nulls.tex + Fraction arithmetic on (stored 6dp floor, n)",
+      "how_recomputed": "for each row: cnt=round(floor*n); hazard iff stored_float > cnt/n. Hazard = {MMLU-Pro naive, MMLU-Pro item-avg, MMLU, PIQA, BoolQ} = 5 rows / 4 constructs. Clean = {OpenBookQA exact 138/500, ARC-Easy, ARC-Challenge, CommonsenseQA round down} = 4 rows. 5+4=9. The two whose p moved (ARC-Easy, ARC-Challenge) are indeed in the clean set.",
+      "verdict": "MATCHES",
+      "load_bearing": "this paragraph is the paper's own disclosure of a downward-biasing convention; getting the row/construct split wrong would look like concealment. All four assertions in the sentence recompute.",
+      "cross_file_consistent": null
+    },
+    {
+      "claim": "all 27 pass the integrity gate; the permutation and bootstrap decisions disagree on 0/27 cells; six cells have q_BH<=0.05 and five clear Bonferroni at alpha/27=0.001852; 0/27 cells are significantly below the permutation null",
+      "files": [
+        "sections/09_appendix.tex:35",
+        "sections/tab_v2_full.tex:38",
+        "sections/07_limitations.tex:13",
+        "sections/03_method.tex:40",
+        "sections/03_method.tex:73",
+        "sections/05_analysis.tex:41"
+      ],
+      "asserted": 27,
+      "recomputed": 27,
+      "evidence_file": "sections/tab_v2_full.tex + evidence/MAIN_BH_27cell_adjudication.json",
+      "how_recomputed": "27 data rows parsed; sum(q<=0.05)==6; sum(p<=0.001852)==5 (all five are the p=0.0001 anchors); sum(delta<0 and p<0.05)==0 -> 0/27 below null; keep14 p=0.0172 sits at rank 7 and 7*0.05/27=0.0130 so q=0.0663 > 0.05 while qwen3/k14 q=0.0297 <= 0.05",
+      "verdict": "MATCHES",
+      "load_bearing": "0/27 is what dissolves H_family in 07_limitations; the 6-vs-5 split is what separates the surviving downgrade from the non-surviving upgrade in 5.3.",
+      "cross_file_consistent": true
+    },
+    {
+      "claim": "The 16 rows and their status are the retraction/narrowing ledger",
+      "files": [
+        "sections/tab_claims.tex:27"
+      ],
+      "asserted": 16,
+      "recomputed": 16,
+      "evidence_file": "sections/tab_claims.tex",
+      "how_recomputed": "count lines matching ^\\s*\\d+\\s*& in tab_claims.tex == 16, and the last row number is 16 (no gaps)",
+      "verdict": "MATCHES",
+      "load_bearing": "low-medium: a self-describing table count. Would be embarrassing but not conclusion-changing.",
+      "cross_file_consistent": null
+    },
+    {
+      "claim": "Table~\\ref{tab:mmlupro} is the MMLU-Pro letter read-out for all 12 cross-family cells against the always-A floor",
+      "files": [
+        "sections/09_appendix.tex:16"
+      ],
+      "asserted": 12,
+      "recomputed": 17,
+      "evidence_file": "sections/tab_mmlupro.tex + evidence/designated_damaged_denominators.json",
+      "how_recomputed": "tab_mmlupro's own caption says 'over all 17 designated damaged cells'; expanding its rows (OLMo-2 5 rows + Llama-2 4 + Llama-3 'k14--k8' collapsed row = 4 + Qwen3 4) gives 17. 12 is the NON-OLMo subtotal only, i.e. it silently drops the five OLMo-2 rows that are physically printed in the very table it is describing (shortgpt16, keep14, keep12, keep10, keep8).",
+      "verdict": "MISMATCH",
+      "load_bearing": "SAME CLASS AS THE RETRACTED 14/15. This is the last surviving pre-remedy narrowed denominator: the R1-01 remedy was full inclusion of the five OLMo-2 arms, and 09a_relocated.tex:24 promises 'any damaged arm excluded from that denominator is named at the point of exclusion'. Here five arms are excluded and none is named. A reviewer who reads the appendix pointer then counts the table finds a 12-vs-17 contradiction inside the same appendix, and the paper's own integrity promise broken a second time.",
+      "cross_file_consistent": false
+    },
+    {
+      "claim": "13 of the 27 clear the floor by more than 0.299 pp and so could not have violated it under any prediction vector, while the remaining 14 come from four base models, five of them one healing run sampled 500 steps apart",
+      "files": [
+        "sections/09a_relocated.tex:15"
+      ],
+      "asserted": 13,
+      "recomputed": 13,
+      "evidence_file": "sections/tab_v2_full.tex + evidence/s2_02_stratified_ordering.json + evidence/s2_02_strata_raw.json",
+      "how_recomputed": "f_const=1403/12032=0.11660572; slack=0.002992021 (=36/12032). sum(1 for r in tab_v2_full if acc_hat < f_const-slack)==13; 27-13==14; the 14 span {Llama-2,Llama-3,OLMo-2,Qwen3}=4 base models; of them 5 are 'heal@' cells with acc_hat spread 0.0341 pp",
+      "verdict": "MATCHES",
+      "load_bearing": "this is the paper deflating its OWN 27/27 evidence claim; if 13 were wrong the self-deflation would be miscalibrated. All four integers (13, 14, 4, 5) recompute from the shipped table.",
+      "cross_file_consistent": null
+    },
+    {
+      "claim": "the per-stratum argmax is B, E, B, E for n_opt=5,6,7,8 (4 of 8 strata, 623 of 12032 items), giving 1439/12032 and a gap of exactly 36 items, or 0.299 pp ... 94.8% of its weight lies in A-argmax strata",
+      "files": [
+        "sections/09a_relocated.tex:15",
+        "sections/03_method.tex:73 (36 items, 0.299 pp)",
+        "sections/09a_relocated.tex:8 (the 36 items)"
+      ],
+      "asserted": 4,
+      "recomputed": 4,
+      "evidence_file": "evidence/s2_02_strata_raw.json",
+      "how_recomputed": "per_stratum: 8 strata; those with argmax_L!='A' are n_opt in {5,6,7,8} with argmax B,E,B,E -> 4 of 8; sum(n_s) over them = 52+93+158+320 = 623; A-argmax weight = 11409/12032 = 94.82%; 1439-1403 = 36 items = 0.2992 pp",
+      "verdict": "MATCHES",
+      "load_bearing": "this is the measured footprint that justifies the paper's regularity-condition caveat instead of a false theorem claim. Every integer (4, 8, 623, 12032, 36, 1439, 1403) recomputes from the raw strata record.",
+      "cross_file_consistent": true
+    },
+    {
+      "claim": "Table~\\ref{tab:v2-resort} gives the paired v1/v2 verdicts for the five cells whose labels the arm-conditional null moves",
+      "files": [
+        "sections/09_appendix.tex:19"
+      ],
+      "asserted": 5,
+      "recomputed": 5,
+      "evidence_file": "sections/tab_v2_resort.tex",
+      "how_recomputed": "5 data rows; in each the v1 verdict string differs from the v2 verdict string (below floor->no signal x2, above floor->trace signal, at floor->trace signal, above floor->anchor blocked)",
+      "verdict": "MATCHES",
+      "load_bearing": "low-medium; a pointer count, but it sits in the same sentence family as the 12-vs-17 defect above and is correct.",
+      "cross_file_consistent": null
+    },
+    {
+      "claim": "sixteen damaged cross-family cells have accuracy equal to the marginal of the emitted letter to machine precision (05_analysis) / Sixteen damaged cross-family cells ... (09a_relocated), both introduced as 'The most vivid SMALL-BENCHMARK cases'",
+      "files": [
+        "sections/05_analysis.tex:29",
+        "sections/09a_relocated.tex:42"
+      ],
+      "asserted": 16,
+      "recomputed": 9,
+      "evidence_file": "evidence/second_mc_benchmark_crossfamily/gate2_crossfamily_nulls.json",
+      "how_recomputed": "universe = families[f].rungs[r!=base].tasks[t].interfaces.letter over the 5 evidence tasks; emit=argmax(pred_hist); marginal from task_letter_nulls[t].gold_letter_marginal/n; criterion of the source verdict (GATE2_CROSSFAMILY_VERDICT.md:5e) = modal_pred_share>=0.99 AND abs(acc-marginal)<1e-12. Over the 5 EVIDENCE tasks this yields 9. It yields 16 ONLY if Winogrande is added to the universe: modal>=0.99 goes 19->28 (matching the verdict's '28 damaged non-OLMo cells') and exact goes 9->16. Seven of the sixteen are Winogrande cells: llama2/k12, llama2/k14, llama3/k12, llama3/k14, llama3/k8, qwen3/k10, qwen3/k12.",
+      "verdict": "MISMATCH",
+      "load_bearing": "09a_relocated.tex:24 states 'Winogrande is the sole negative control and ENTERS NO DENOMINATOR', and 04_experiments.tex:5 repeats it. This count silently puts 7 negative-control cells into a headline count, and both host sentences frame them as 'small-BENCHMARK' evidence for the paper's constant-emitter thesis. Excluding the control gives 9 (or 10 if MMLU is admitted, 12 without the modal>=0.99 filter). A reviewer who checks this finds the paper's own exclusion rule violated in the direction that makes its illustration look 78% more abundant. Note also that the source verdict's own printed table lists only 7 of the 16 rows, so the number was never auditable from the .md alone.",
+      "cross_file_consistent": true
+    },
+    {
+      "claim": "two OpenBookQA cells emit A on every item, score exactly 0.276000, and land on the optimal constant with Delta=0.000 points and CI95 [0,0]",
+      "files": [
+        "sections/05_analysis.tex:29",
+        "sections/09a_relocated.tex:42"
+      ],
+      "asserted": 2,
+      "recomputed": 2,
+      "evidence_file": "evidence/second_mc_benchmark_crossfamily/gate2_crossfamily_nulls.json",
+      "how_recomputed": "openbookqa letter cells with modal_pred_share==1.0 and acc==0.276 exactly: llama2_7b/k12 and qwen3_8b_base/k10 -> 2. Both emit A; OBQA's best constant IS A at 138/500=0.276.",
+      "verdict": "MATCHES",
+      "load_bearing": "the paper's cleanest illustration; it is exactly 2 and both are genuine evidence-task cells (no control contamination here).",
+      "cross_file_consistent": true
+    },
+    {
+      "claim": "all eight argmax flips on affected items, 0 elsewhere",
+      "files": [
+        "sections/tab_integrity.tex:10"
+      ],
+      "asserted": 8,
+      "recomputed": 8,
+      "evidence_file": "evidence/mmlu_scale_power/trunc_fix_before_after.json",
+      "how_recomputed": "sum(cell['delta']['n_argmax_flips_total'] for cells having a delta block) = 0+1+1+1+0+0+0+0+0+0+1+2+2+0 = 8 over 14 cells (llama2_7b_base has no delta: it OOM'd). n_argmax_flips_outside_affected_items sums to 0.",
+      "verdict": "MATCHES",
+      "load_bearing": "this was ONE OF TODAY'S THREE HAND-FOUND DEFECTS (was 'nine', commit 622255d fixed it to 'eight'). Re-verified independently here: the fix is correct, evidence totals 8. It IS covered by gate_count_claims.py.",
+      "cross_file_consistent": null
+    },
+    {
+      "claim": "10/15 first-launch cells lost part of labelled option body (tokenizer-specific left truncation)",
+      "files": [
+        "sections/tab_integrity.tex:10",
+        "sections/05_analysis.tex:54",
+        "sections/09a_relocated.tex:52"
+      ],
+      "asserted": 10,
+      "recomputed": 10,
+      "evidence_file": "evidence/mmlu_scale_power/trunc_fix_before_after.json + trunc_audit_1536.json",
+      "how_recomputed": "15 cells across 3 families (5 each). truncation_audit.per_family n_trunc_at_1536: llama2_7b=40, qwen3_8b_base=20, llama3_8b=0 -> the two truncating families contribute 5+5=10 of the 15 cells. NOT covered by gate_count_claims.py.",
+      "verdict": "MATCHES",
+      "load_bearing": "medium-high: this is the integrity disclosure. Note the number is per-CELL (family-level truncation propagated to all 5 rungs), not per-item (only 3 distinct items were affected: 10500, 11603, 11790).",
+      "cross_file_consistent": true
+    },
+    {
+      "claim": "0/14 verdicts changed (truncation re-launch), 0/24 verdicts changed and 0/30 p-values crossed 0.05 (bootstrap mid-p re-emission), 5/8 shards failed, partial 3/8 result",
+      "files": [
+        "sections/tab_integrity.tex:9-11",
+        "sections/05_analysis.tex:54",
+        "sections/09a_relocated.tex:50",
+        "sections/09a_relocated.tex:52"
+      ],
+      "asserted": 14,
+      "recomputed": 14,
+      "evidence_file": "evidence/mmlu_scale_power/trunc_fix_before_after.json (0/14); evidence/R7_BOOTSTRAP_P_FIX.md (0/24, 0/30)",
+      "how_recomputed": "0/14: sum(delta.verdict_changed is True)==0 and summary.n_cells_with_before_and_after==14; the 14 is corroborated independently by counting cells that carry integrity_before (14 of 15 -- llama2_7b_base alone lacks it), so the summary field and the per-item records AGREE here. The 0/24 and 0/30 come from a different record (R7 markdown) and are not recomputable from a per-item JSON.",
+      "verdict": "MATCHES",
+      "load_bearing": "the 14-vs-15 distinction is precisely the subtlety gate_count_claims.py documents at length; both routes (summary field and per-item integrity_before predicate) give 14, so this is not a stale-rollup case.",
+      "cross_file_consistent": true
+    },
+    {
+      "claim": "fp32 removes all 4,303 bf16 exact top-two ties and changes 2,532 of 14,042 letter argmax decisions, or 18.03% / 'Full-fp32 evaluation removes 100% of bf16 exact ties and changes 2,532 letter decisions' / 'changes 18.03% of letter decisions'",
+      "files": [
+        "sections/05_analysis.tex:51",
+        "sections/01_introduction.tex:23",
+        "sections/00_abstract.tex:2"
+      ],
+      "asserted": 2532,
+      "recomputed": 2532,
+      "evidence_file": "proposal/active/A01-null-calibration-methodology/evidence/gate3_dtype_runs/7B_keep8_step121000_dtype_summary.json (cited via paperC/tcodex_out/EVIDENCE_PACK.md Section E = evidence id E-E-adjacent)",
+      "how_recomputed": "contrast.letter_argmax_changed==2532; contrast.letter_argmax_changed_rate==0.18031619427431989 -> 18.03%; by_dtype.bf16.letter_exact_tie2_count==4303 and by_dtype.fp32.letter_exact_tie2_count==0 -> '100% removed'; internal consistency 2466 (tied) + 66 (untied) == 2532; 2532/14042 recomputed = 0.1803162.",
+      "verdict": "MATCHES",
+      "load_bearing": "the abstract's mechanism-falsification claim. All four integers (4303, 2532, 14042, 0) come straight from the primary per-run summary, and the two decompositions cross-check.",
+      "cross_file_consistent": true
+    },
+    {
+      "claim": "the paired gap is +38.76 points with McNemar p=9.8e-148 (ARC-Easy keep8 letters 0.2584 vs content_norm 0.6460)",
+      "files": [
+        "sections/05_analysis.tex:33",
+        "sections/tab_claims.tex:14 (as '+38.76 pp')"
+      ],
+      "asserted": null,
+      "recomputed": null,
+      "evidence_file": "evidence/second_mc_benchmark/gate2_letter_content_nulls.json",
+      "how_recomputed": "NOT a count claim -- listed here only to record that it was checked as a cross-file repeat and is a decimal (covered by check_prose_vs_evidence.py's MIN_DP=3 target space).",
+      "verdict": "MATCHES",
+      "load_bearing": "none for this census; out of scope (decimal, already covered by checker #1).",
+      "cross_file_consistent": true
+    },
+    {
+      "claim": "OLMo-2 arms include keep8, keep10, keep12, keep14, and shortgpt16 (five arms) / all five OLMo-2 prune-then-heal arms and all four truncation rungs of each non-OLMo family, giving 17 MMLU-Pro cells and 85 off MMLU",
+      "files": [
+        "sections/04_experiments.tex:8",
+        "sections/04_experiments.tex:23",
+        "sections/09a_relocated.tex:24",
+        "sections/03b_nulls_summary.tex:4 (as 'all 15 cross-family arms')"
+      ],
+      "asserted": 17,
+      "recomputed": 17,
+      "evidence_file": "code/mmlu_pro_power_nulls.py (DAMAGED_OLMO, XF_FAMILIES, XF_DAMAGED) + evidence/designated_damaged_denominators.json",
+      "how_recomputed": "EMITTER AUDIT: DAMAGED_OLMO=={'keep8','keep10','keep12','keep14','shortgpt16'} (5), XF_FAMILIES==3, XF_DAMAGED=={'k8','k10','k12','k14'} (4) -> 5 + 3*4 = 17, and 17*5 benchmarks = 85. The hardcoded list now MATCHES what the manuscript calls the designated set. This is the list that, when it was {keep8,keep10,keep12}, silently produced the retracted 14/15 and 0/15 -- the fix is in place and the comment at code/mmlu_pro_power_nulls.py:96-105 documents it.",
+      "verdict": "MATCHES",
+      "load_bearing": "HIGH -- this is the exact hardcoded-list-defines-a-headline hazard the task flagged. Verified fixed. Note 03b_nulls_summary.tex's 'all 15 cross-family arms' is a DIFFERENT and still-correct set (3 non-OLMo families x 5 rungs INCLUDING base = 15 arms in the cross-family launch), not the 15 of the retracted 14/15.",
+      "cross_file_consistent": true
+    }
+  ]
+}

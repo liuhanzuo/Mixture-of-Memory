@@ -190,7 +190,59 @@ CLAIMS = [
      r"on the remaining (\w+) the floor lies inside",
      None, n_remaining_constructs,
      "distinct minus significant; the two must sum to the eight"),
+    # ---- appendix pointer vs the table it points at (found 2026-08-16) -------------
+    # 09_appendix.tex described tab_mmlupro as "the MMLU-Pro letter read-out for all 12
+    # cross-family cells" while that table PRINTS 17 cells and its own caption says
+    # "over all 17 designated damaged cells". 12 is the non-OLMo subtotal -- the SAME
+    # narrowing retracted as 14/15, silently dropping the five OLMo-2 rows that are
+    # physically in the table being described.
+    #
+    # It survived all eight gates. gate_designated_denominator's CHECK 6 scans prose for
+    # the retracted literals '14/15' and '10/15'; '12' is not a ratio and is not on that
+    # list, so the class was only half closed. Registering the count here closes the
+    # other half: it is recomputed from the table's own rows.
+    #
+    # 'cross-family' could NOT be read as legitimately scoping to non-OLMo, because the
+    # manuscript uses it both ways: 07_limitations.tex:16 writes "Non-OLMo cross-family
+    # arms", making cross-family the superset, and 09a_relocated.tex:52 calls the whole
+    # 15-cell first launch "the first cross-family MMLU-Pro launch". On either reading
+    # 12 is wrong.
+    ("appendix pointer: cells in tab_mmlupro", "09_appendix.tex",
+     r"MMLU-Pro letter read-out for all (\d+)",
+     None, lambda _doc: n_cells_in_tab_mmlupro(),
+     "recounted from tab_mmlupro's own data rows, expanding the collapsed Llama-3 "
+     "'k14--k8' row into the 4 cells it represents"),
 ]
+
+
+def n_cells_in_tab_mmlupro():
+    """Count the cells tab_mmlupro actually prints.
+
+    NOT a hardcoded 17. A hardcoded arm list inside an emitter is precisely how this
+    paper's denominator defect happened, so the count is parsed from the table.
+
+    One row is a RANGE row: 'Llama-3 & \\texttt{k14--k8}' collapses four rungs onto one
+    printed line for space. A naive row count gives 14, not 17, and would make this gate
+    assert a third wrong number. Range rows are expanded from the rung span, stepping by
+    2 (k14, k12, k10, k8).
+    """
+    path = SECTIONS / "tab_mmlupro.tex"
+    n = 0
+    for line in path.read_text(encoding="utf-8").splitlines():
+        s = line.strip()
+        if s.startswith("%") or s.startswith("\\") or "&" not in s:
+            continue
+        cols = [c.strip() for c in s.split("&")]
+        if cols[0] == "Family":
+            continue
+        arm = cols[1] if len(cols) > 1 else ""
+        m = re.search(r"k(\d+)--k(\d+)", arm)
+        if m:
+            hi, lo = int(m.group(1)), int(m.group(2))
+            n += len(range(lo, hi + 1, 2))
+        else:
+            n += 1
+    return n
 
 WORDS = {"zero": 0, "one": 1, "two": 2, "three": 3, "four": 4, "five": 5,
          "six": 6, "seven": 7, "eight": 8, "nine": 9, "ten": 10,
@@ -217,9 +269,20 @@ def main():
         m = re.search(pattern, text)
         # ev_rel is None for claims recomputed from a shipped .tex table rather than
         # from an evidence JSON; those recomputations take no document argument.
+        # The source label is derived from the recomputation's own name rather than
+        # hardcoded to tab_nulls: with more than one .tex-derived claim, a fixed label
+        # misattributes the evidence. Measured 2026-08-16 -- the tab_mmlupro claim's
+        # failure message named sections/tab_nulls.tex, which is not where its number
+        # comes from, and a reviewer chasing that pointer would find nothing.
         if ev_rel is None:
             doc = None
-            source = "sections/tab_nulls.tex"
+            fn = getattr(recompute, "__name__", "")
+            if "tab_mmlupro" in fn:
+                source = "sections/tab_mmlupro.tex"
+            elif "tab_mmlupro" in (note or ""):
+                source = "sections/tab_mmlupro.tex"
+            else:
+                source = "sections/tab_nulls.tex"
         else:
             try:
                 doc = load(ev_rel)
