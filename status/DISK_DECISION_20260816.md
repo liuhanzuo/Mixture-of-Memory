@@ -151,3 +151,71 @@ The other three are mine to settle and I have: 5.2 moot, 5.3 keep, 5.4 too small
 
 **And the honest framing on zwfy6: its 97% is not our doing and not ours to fix.** I should not
 have been implying a cleanup decision from us would relieve it.
+
+---
+
+## 8. Adversarial pass (17-agent workflow, 2026-08-16 21:0x) — 16 candidates, 1 survived
+
+A parallel survey + adversarial-verification workflow re-derived the ownership census
+independently and then tried to REFUTE each deletion candidate. Result: **1 SAFE, 8
+conditional, 3 blocked** out of 16 considered. The refutations are the valuable part.
+
+### It confirmed the §2 correction with a better method
+
+It validated the recursive-`st_size` trick three ways rather than two, including **at
+checkpoint scale**: `stat outputs/olmo2_probe2_7B_keep10fresh2` = 585144334902 B vs a
+420-second `du -sb` = 585144334902 B, exact. And it caught something I did not: the sum of
+wzc1 top-level `rbytes` falls **0.32% short of `df` Used** (380330344637 B), which matches to
+within 4 MB the rstat propagation lag measured inside our own actively-written tree. Two
+independent quantities agreeing to 4 MB out of 380 GB means `rbytes` is in `df`'s unit with no
+replication multiplier — so our wzc1 total is properly a **range, 17.113–17.459 TiB**, reading
+~2% low while writes are in flight. Conclusions are identical at either bound.
+
+It also found **zwfy6's `hunyuan/` is 81 sub-users**, of which `rukizheng` alone holds
+**79.58 TiB — 3.4× our entire zwfy6 footprint**. Our slice inside it is 0.0002 TiB.
+
+### The only SAFE item
+
+`cache/hmt_pg19_full` on zwfy6, **82.24 GiB verified present**. A dead HMT/pg19 tokenisation
+cache; the only things that reference it are two launchers, one of which is already in
+`legacy/`. Regenerating means re-downloading 6.58 GiB of parquet and re-tokenising ~11.5 GB.
+**But per §2 this is on zwfy6, so it buys 0.01pp of Use%.** Correct to delete on tidiness
+grounds, irrelevant to pressure.
+
+### Refutations worth recording (these were proposed as "safe" and are not)
+
+- **`data/dolmino-mix-1124-llama2/` (579.15 GiB)** — pinned by task **#245**, whose GATE0
+  **passed on 2026-08-15** at 1.12 GPU-h (`aligned=224/224 misaligned=0`, rc=0, twice). I
+  checked the apparent contradiction between `ALPS_SLORB_GATE0_FAILED.md` and
+  `..._VERDICT.md`: the FAILED file carries a retraction banner, and both of its failure
+  signals are the rank-local-counter and gated-postfix artifacts already in memory. **GATE0
+  really passed, so this directory is a live dependency of a pending task.**
+- **`data/dolmino_now15b.npy` (57.8 GiB)** — `paperB/REPRO_SHA256.txt:1` pins
+  `4c1a2c89…41b` for exactly this path, and the same line appears in
+  `sha256_repro_artifacts.txt`, `submission_source_v7`, and six review-history snapshots.
+  Deleting it breaks a **submitted** reproducibility manifest. Verified the pin myself.
+- **`models/` on either disk** — `models/Qwen3-8b-local` is the repo-relative default for
+  every harness invoked without an override. *(Correction to the agent's own number: it
+  reported "192 places across 126 files"; I measured **73 occurrences in 55 `.py`/`.sh`
+  files**. Still load-bearing; the count was inflated ~2.3×.)* `bge-large-en-v1.5` is the
+  only copy of the weights behind paperA's dense-retrieval leg.
+- **`.venv` on zwfy6** — the interesting one: deleting it would **not** crash anything, it
+  would **silently change benchmark inputs**, because `scripts/eval_ruler_cwe.py:48-95` wraps
+  its `wonderwords` import in try/except and falls back to `nltk.corpus.words` and then to a
+  hand-rolled synthesiser. A silent input change is worse than a crash.
+
+### One claim I had to overturn
+
+The verifier for `data/slimpajama_chunks_4096.npy.BROKEN_llama2tok_uint16overflow`
+(11.95 GiB) wrote that deleting the wzc1 copy is fine because "a byte-identical twin survives
+on zwfy6 — but ONLY on that condition, and the survey lane did not check it." **I checked:
+there is no twin.** `stat` on the zwfy6 path returns `No such file or directory`. So this is
+the only copy of a file whose own name records that it is corrupt. It is still probably
+deletable — it is a known-broken uint16-overflow artifact — but the stated *reason* was wrong,
+and it should be retired deliberately (with the overflow bug written down somewhere durable)
+rather than as a no-cost duplicate.
+
+**Net after the adversarial pass: still zero bytes deleted, and the one question in §7 is
+unchanged.** What changed is that four "obvious wins" are now documented as live
+dependencies, which is the outcome that saves a future agent from a bad deletion.
+
