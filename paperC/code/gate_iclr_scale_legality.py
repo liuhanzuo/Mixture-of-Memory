@@ -51,8 +51,26 @@ ICLR_GATES = {"median": 6, "lower_quartile": 5, "no_rating_of": 1}
 
 
 def declares_iclr(doc):
-    blob = json.dumps(doc).lower()
-    return "iclr" in blob and "scale" in blob
+    """True only for a file that IS a scoring aggregate on the ICLR scale.
+
+    Originally this was `"iclr" in blob and "scale" in blob`, which is a test for MENTIONING
+    the scale, not for BEING scored on it. Measured 2026-08-17: writing
+    MAIN_ADJUDICATION_20260817.json -- an adjudication that discusses the round_05 scale in
+    prose and carries no ratings at all -- flipped this gate from rc=0 to rc=2 with
+    "declares the ICLR scale but has no per_reviewer ratings". The gate was right that the
+    file had no ratings and wrong that it should have any.
+
+    The discriminator is now structural: a top-level `scale` key naming the ladder, AND a
+    `per_reviewer` map. A prose mention cannot satisfy either. Renaming the adjudication
+    file would also have silenced the gate, which is exactly the wrong repair -- it would
+    leave the loose test in place for the next non-aggregate document.
+    """
+    if not isinstance(doc, dict):
+        return False
+    scale = doc.get("scale")
+    if not (isinstance(scale, str) and "iclr" in scale.lower()):
+        return False
+    return isinstance(doc.get("per_reviewer"), dict)
 
 
 def ratings_of(doc):

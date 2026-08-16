@@ -1,0 +1,25 @@
+{
+ "what": "MAIN's own re-check of two round_05 claims, written because the meta-review and I disagree about one of them.",
+ "why_this_file_exists": "The meta-reviewer's false_reviewer_claims_found list ends by naming allegations it TESTED AND CONFIRMED, and 'the PIQA caption falsification' is in that confirmed list. I had independently concluded an hour earlier that the caption was consistent. One of us is wrong about a specific, checkable claim, and an unchallenged false allegation propagates into the revision ledger, so it gets adjudicated here rather than averaged away.",
+ "adjudications": [
+  {
+   "id": "R1-item-4 / meta-confirmed 'PIQA caption falsification'",
+   "allegation": "R1-novelty: 'fix Table 10's caption or evaluate both p columns at the exact rational floor, so the PIQA row stops falsifying the caption's stated invariant'",
+   "meta_reviewer_disposition": "listed among allegations that HELD",
+   "MAIN_verdict": "NOT SUSTAINED",
+   "test": "The caption's only PIQA-specific invariant is 'on CommonsenseQA and PIQA it [the observed floor] is in fact BELOW E[f-hat]'. Read straight off tab_nulls.tex's own rows: PIQA floor 0.504897 < E[f] 0.509300 -> TRUE. CommonsenseQA 0.208845 < 0.214994 -> TRUE. The caption's other quantitative claim, p = 0.083--0.853 for the six remaining constructs, is exactly the min and max of the six non-significant p values in the table (0.083, 0.083, 0.384, 0.136, 0.448, 0.853, 0.691 -> min 0.083, max 0.853). No stated invariant is violated by the PIQA row.",
+   "what_R1_did_detect": "A real PRESENTATION defect, which is why the allegation felt right. The Floor column prints the stored six-decimal value (PIQA 0.504897) while the caption describes p as computed at count/n (928/1838 = 0.504896627). Those differ, and tab_nulls cross-referenced the LEGALITY correction but never the ROUNDING one, so a reader had no pointer to 03b_nulls.tex:39, which already discloses the hazard in full (five rows, four constructs, PIQA 0.691 vs 0.658) and states that p IS evaluated at the exact rational.",
+   "action_taken": "commit 2fcdf93 -- caption now states the printed Floor is the stored value, that on five of nine rows it is strictly above count/n, that p is not computed from the printed figure, and where the effect is quantified. No number changed.",
+   "residual_risk": "None to any verdict. gate_exact_floor_tail stays rc=1 (its designed hazard flag) and reports no prose contradiction."
+  },
+  {
+   "id": "R3-item-5 / claim-map-cited evidence absent from the snapshot",
+   "allegation": "R3-stats: evidence/s2_03_symmetric_inference.json (claim map H-02) and evidence/s2_02_stratified_ordering.json (H-04) are not in the frozen artifact",
+   "MAIN_verdict": "SUSTAINED, and my gate was at fault",
+   "test": "Both files exist in the live tree; neither is in round_05/submission_complete/evidence/ (10 entries). gate_cited_paths_in_artifact.py had reported 'PASS: all 17 cited paths resolve' -- true and irrelevant, because it extracted paths only from \\texttt{} in sections/*.tex, so a file cited ONLY by claim_evidence_map.tsv was outside its target space.",
+   "action_taken": "commit 77fce22 -- gate AND refreeze_from_manuscript.py both now read the claim map (fixing only the gate would have made the freezer emit artifacts its own gate rejects). Gate now reports 19 cited / 17 present / 2 missing, rc=2, which is the correct state until a re-freeze."
+  }
+ ],
+ "meta_reviewer_credit": "Its false-claims audit is otherwise strong and I did not re-derive most of it: it caught R6 conflating a |Delta| < 0.2733pp count with a |Delta| < own-CI-half-width count (7 of 17, not 13), R6 presenting a point-estimate 8/17 as the correction to a CI-verdict 15/17 (the honest analogue is 12/17, and it still moves against the paper), R1 miscounting intact-regime cells as five when four are intact and the fifth is shortgpt16, a designated damaged arm, and R2 asserting power 0.399 where its own premise gives 0.5006. Those are the kind of findings that justify the panel.",
+ "scale_note": "round_05 is the ICLR six-point ladder. Not comparable to round_04's median 5.0, which used the generic rubric."
+}
