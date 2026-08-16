@@ -51,13 +51,14 @@
   },
   "compiled": true,
   "pdf": "main.pdf",
-  "pdf_bytes": 385503,
-  "pdf_sha256": "407e8ee209195f7dfc0c898279ca63d621be5764bbbaa730f46e8dbe4e9016d1",
-  "pdf_pages": 26,
+  "pdf_bytes": 387071,
+  "pdf_sha256": "ca2339b892e25a522aaab0745a77763c4ea7a47fe428a723f2d5e41ec6e1d767",
+  "pdf_pages": 27,
   "build_gate_pass": true,
   "build_gate_blockers": [],
   "pdf_visually_inspected": false,
   "pdf_visual_inspection_note": "NOT DONE BY THIS SCRIPT. No pdftoppm/gs/mutool/PyMuPDF on this host (measured 2026-08-14), so page images cannot be rendered here. The skill's integrity gate item 'PDF visually inspected' therefore remains OPEN unless a human or a PDF-capable host confirms it.",
   "stale_record_note_20260816": "The pdf_* fields were stale AT HEAD, not merely in the working tree: on a clean `git archive HEAD` checkout the committed main.pdf measured 26 pages / 379817 bytes while this record claimed 19 pages / 342809 bytes, and gate_build_record_matches_pdf.py returned rc=2 there. So the gate had been failing on committed state, and the field a venue page limit would be checked against understated the document by 7 pages. Refreshed here from the 3-pass-converged build (previous values {'pdf_bytes': 355196, 'pdf_sha256': '56a376e128c358e9f09f2daeee7f543a3717c5cab318e113d28c4102a56e2485', 'pdf_pages': 22}). The page count is read from pdflatex's own 'Output written on main.pdf (N pages' line because pdfinfo is not on this host's PATH.",
-  "stale_record_note_20260816_2": "Refreshed 2026-08-16 21:3x after MAIN's own prose edit to 03b_nulls.tex (the rounding paragraph, 5-of-9 hazard rows) changed the PDF. The gate caught it: it FAILed with record=384935 vs actual=385503. Rebuilt with the recorded command verbatim (latexmk -pdf -bibtex -norc -gg), NOT the bare pdflatex used for the quick check, so the record describes an artifact built the documented way. Page count unchanged at 26."
+  "stale_record_note_20260816_2": "Refreshed 2026-08-16 21:3x after MAIN's own prose edit to 03b_nulls.tex (the rounding paragraph, 5-of-9 hazard rows) changed the PDF. The gate caught it: it FAILed with record=384935 vs actual=385503. Rebuilt with the recorded command verbatim (latexmk -pdf -bibtex -norc -gg), NOT the bare pdflatex used for the quick check, so the record describes an artifact built the documented way. Page count unchanged at 26.",
+  "stale_record_note_20260817": "Refreshed 2026-08-17 03:1x after MAIN added the matched-depth contrast to 05_analysis.tex (commit 351cc26). Page count 26 -> 27. THE LIMIT IS NOT BREACHED and the growth is not in the main text: gate/venue_page_limit.json records ICLR 2026 as 9 pages of MAIN TEXT ONLY with references and appendices explicitly unlimited, and main.aux puts the last main-text label (sec:flips, 5.1) on page 7 with the first appendix label (app:nulls, A.1) on page 12 -- the bibliography sits between them. The page that appeared is at the APPENDIX TAIL: tab:artifact-map moved 26 -> 27. Verified by rebuilding twice with pdflatex -halt-on-error: rc=0 both passes, 0 overfull boxes, 0 undefined references."
 }
