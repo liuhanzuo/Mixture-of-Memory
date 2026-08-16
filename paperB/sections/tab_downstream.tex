@@ -1,0 +1,53 @@
+% Downstream zero-shot MC + MMLU per arm (7B).
+% Source: PAPER_B_DATA.md secs. 3(b), 8.1--8.2.
+\begin{table*}[t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{2.2pt}
+\begin{tabular}{@{}llccccccccccc@{}}
+\toprule
+\textbf{Arm} & \textbf{step} & \textbf{MMLU} & \textbf{HS} &
+\textbf{ARC-C} & \textbf{ARC-E} & \textbf{PIQA} & \textbf{WinoG} &
+\textbf{OBQA} & \textbf{LAMB.} & \textbf{BoolQ} & \textbf{CSQA} &
+\textbf{SIQA} \\
+\midrule
+7B base full (32L)       & ---    & \textbf{.6054} & .805 & .571 & .829 & .811 & .744 & .462 & .732 & .815 & .665 & .502 \\
+full32 (32L)             & 25k & \textbf{.5877} & .785 & .551 & .824 & .808 & .742 & .470 & .715 & .817 & .655 & .495 \\
+keep8 (10L)              & 121k & \textbf{.2550} & .517 & .363 & .655 & .715 & .522 & .368 & .446 & .594 & .456 & .397 \\
+keep10 (12L)             & 83.5k & \textbf{.2720} & .547 & .363 & .648 & .726 & .544 & .352 & .496 & .607 & .452 & .415 \\
+keep12 (14L)             & 124k & \textbf{.2728} & .598 & .398 & .694 & .738 & .605 & .380 & .534 & .588 & .491 & .414 \\
+keep14 (16L)             & 200k & \textbf{.3184} & .645 & .438 & .705 & .745 & .626 & .404 & .577 & .638 & .499 & .434 \\
+ShortGPT-16              & 200k & \textbf{.4742} & .685 & .476 & .746 & .758 & .655 & .408 & .619 & .729 & .534 & .442 \\
+frozen-front (16L)       & 200k & \textbf{.2624} & .595 & .381 & .666 & .724 & .646 & .366 & .513 & .592 & .453 & .414 \\
+fully random-init (16L)  & 200k & \textbf{.2470} & .578 & .414 & .697 & .733 & .545 & .384 & .484 & .614 & .450 & .416 \\
+\bottomrule
+\end{tabular}
+\caption{\textbf{Complete 11-task likelihood/MC endpoint profile.}
+Benchmarks are HellaSwag~\citep{hellaswag}, ARC~\citep{arc},
+PIQA~\citep{piqa}, WinoGrande~\citep{winogrande},
+OpenBookQA~\citep{openbookqa}, LAMBADA~\citep{lambada},
+BoolQ~\citep{boolq}, CommonsenseQA~\citep{commonsenseqa}, and
+SocialIQA~\citep{socialiqa}, alongside MMLU~\citep{hendrycks2021mmlu}.
+MMLU uses the same-item dual-interface letter snapshot as Table~\ref{tab:interface-audit}; all endpoint MMLU comparisons therefore share one set of 14,042 per-item records, so the MMLU column is single-source across all nine rows.
+\texttt{acc\_norm} is used for HS, ARC-C/E, PIQA, and OBQA; raw accuracy is
+used for MMLU, WinoG, LAMBADA, BoolQ, CSQA, and SIQA. Here
+\texttt{acc\_norm} means accuracy from \emph{character-normalized} candidate
+log-likelihood. Appendix Table~\ref{tab:app-metric-sensitivity} reports raw
+and character-normalized sensitivity for the final three tasks. Abbreviations: HS = HellaSwag;
+ARC-C/E = ARC-Challenge/Easy; WinoG = WinoGrande; OBQA = OpenBookQA; LAMB. =
+LAMBADA; CSQA = CommonsenseQA; SIQA = SocialIQA. ShortGPT improves every
+reported task over the keep14 endpoint, but the gain ranges from 0.4 points on
+OBQA to 15.6 on MMLU. Rows use their actual retained checkpoints; the separate keep14 trajectory appears in Table~\ref{tab:trajectory-audit}.
+The ten non-MMLU columns are not all produced by one software stack: keep8,
+keep10, and keep12 are re-measured under one pinned protocol (\texttt{torch}
+2.13, eval batch 8, all eight shards merged, full per-task counts), while the
+other rows are retained from \texttt{torch} 2.7 at the same batch size and
+counts. Re-scoring fixed checkpoints under both stacks moves individual tasks by
+up to 0.5 points, or 0.9 when the compute architecture also changes, by flipping
+near-ties rather than in a consistent direction. That is below the 2.5--3.9
+point gaps separating keep10, keep12, keep14, and ShortGPT, but \emph{not} below
+the 0.7-point keep8-to-keep10 gap, which we therefore do not treat as an
+ordering. We claim no single measurement pipeline across rows and read no
+sub-point between-row difference as a result.}
+\label{tab:downstream}
+\end{table*}

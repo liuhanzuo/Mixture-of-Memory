@@ -1,0 +1,33 @@
+\begin{table}[t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+\textbf{Arm} & \textbf{MMLU} & \textbf{SE} & \textbf{approx.\ 95\% CI} \\
+\midrule
+full 7B base & .6054 & .0041 & $[.5973,.6135]$ \\
+keep8, 121k & .2550 & .0037 & $[.2478,.2622]$ \\
+keep10, 83.5k & .2720 & .0038 & $[.2647,.2794]$ \\
+keep12, 124k & .2728 & .0038 & $[.2654,.2801]$ \\
+keep14, 128k & .3012 & .0039 & $[.2936,.3088]$ \\
+keep14, 153.5k & .3124 & .0039 & $[.3048,.3201]$ \\
+keep14, 200k & .3184 & .0039 & $[.3107,.3261]$ \\
+ShortGPT-16, 200k & .4742 & .0042 & $[.4660,.4825]$ \\
+frozen-front, 200k & .2624 & .0037 & $[.2551,.2696]$ \\
+fully random init, 200k & .2470 & .0036 & $[.2398,.2541]$ \\
+\bottomrule
+\end{tabular}
+\caption{\textbf{Marginal MMLU uncertainty across the 7B frontier.} Standard
+errors and Wald intervals use $n=14{,}042$ questions. keep8 and
+fully random init include the $.25$ chance floor; keep10/keep12,
+frozen-front, all keep14 checkpoints, and ShortGPT are above it. keep10 and
+keep12 differ by $0.08$ points with heavily overlapping intervals, so this
+table orders them only nominally and not distinguishably. These marginal intervals summarize each
+arm separately; Table~\ref{tab:paired-operating-points} gives the stronger item-paired
+three-control comparisons. All rows except the keep14 128k and 153.5k
+checkpoints are read from the single dual-interface letter snapshot of
+Table~\ref{tab:interface-audit}; those two intermediate checkpoints were never
+re-scored under that snapshot and come from the downstream aggregate instead.}
+\label{tab:app-mmlu-ci}
+\end{table}

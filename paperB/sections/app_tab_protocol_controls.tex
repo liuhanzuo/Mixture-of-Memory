@@ -1,0 +1,64 @@
+\begin{table}[t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+\textbf{Arm} & \textbf{letter} & \textbf{content raw} & \textbf{content norm.} \\
+\midrule
+Full base & .6054 & .4400 & .4706 \\
+Full32 at 25k & .5877 & .4344 & .4662 \\
+keep8, 121k & .2550 & .3219 & .3423 \\
+keep10, 83.5k & .2720 & .3230 & .3445 \\
+keep12, 124k & .2728 & .3419 & .3629 \\
+keep14 at 200k & .3184 & .3548 & .3832 \\
+Frozen front at 200k & .2624 & .3349 & .3604 \\
+Random init at 200k & .2470 & .3439 & .3598 \\
+ShortGPT-16 at 200k & .4742 & .3764 & .4012 \\
+\bottomrule
+\end{tabular}%
+}
+\caption{\textbf{Paired MMLU scoring interfaces on all 14,042 items.} Letter
+scores one of A/B/C/D after displaying the options. Content scores the complete
+option text. ``Content raw'' selects by summed continuation log-likelihood;
+``content norm.'' selects by mean log-likelihood per continuation token and is
+the reported content headline. The two protocols change prompt, candidate
+string, tokenization, and normalization together. For keep14, the paired
+content-norm minus letter difference is $+6.48$ points (item-bootstrap 95\% CI
+$[5.43,7.56]$); for random-init it is $+11.28$ points
+($[10.24,12.31]$). These item-level intervals condition on the fixed
+checkpoints and do not isolate which interface factor causes the shift. The
+keep14, frozen-front, random-init, and ShortGPT rows are at step 200k; the
+three shallower prefix rows are at their deepest retained checkpoints (keep8
+121k, keep10 83.5k, keep12 124k), as in Table~\ref{tab:downstream}.}
+\label{tab:app-protocol-controls}
+\end{table}
+
+\begin{table}[t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+\textbf{Arm} & \textbf{PopQA contains} & \textbf{TriviaQA EM} & \textbf{NQ EM} \\
+\midrule
+Full base & .2571 & .6355 & .2050 \\
+Full32 at 25k & .2280 & .5715 & .1582 \\
+keep14 at 200k & .1415 & .2940 & .0598 \\
+Frozen front at 200k & .1283 & .2477 & .0496 \\
+Random init at 200k & .1112 & .2086 & .0632 \\
+keep8, 121k & .1246 & .1577 & .0368 \\
+\bottomrule
+\end{tabular}%
+}
+\caption{\textbf{Zero-shot, no-retrieval closed-book evaluation.} PopQA
+($n{=}14{,}267$) reports normalized-answer containment; TriviaQA
+($n{=}17{,}944$) and NQ-open ($n{=}3{,}610$) report exact match. All arms use
+the same plain \texttt{Question:/Answer:} prompt, greedy 32-token decoding,
+first-line extraction, and lowercasing/punctuation/article/whitespace
+normalization against all aliases. All full32 cells are reported as the intact 32-layer 25k checkpoint. Aligned per-item files were not consolidated into the
+paper bundle, so no new paired intervals are reported. keep8 has a different 10-layer shape and is included only as a depth reference; it is reported at its deepest retained checkpoint, step 121k, not at 200k.}
+\label{tab:app-closedbook}
+\end{table}

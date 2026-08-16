@@ -1,0 +1,42 @@
+\begin{table}[t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{2.5pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}llrrrrr@{}}
+\toprule
+\textbf{Task} & \textbf{metric} & \textbf{10k} & \textbf{25k} & \textbf{44k} &
+\textbf{121k} & $\boldsymbol{\Delta}_{44\to121k}$ \\
+\midrule
+MMLU & raw & .2542 & .2502 & .2463 & .2535 & $+0.72$ \\
+HellaSwag & norm. & .3915 & .4390 & .4694 & .5169 & $+4.75$ \\
+ARC-Challenge & norm. & .2654 & .3114 & .3140 & .3601 & $+4.61$ \\
+ARC-Easy & norm. & .5581 & .5930 & .6103 & .6519 & $+4.16$ \\
+PIQA & norm. & .6632 & .6801 & .6937 & .7165 & $+2.28$ \\
+WinoGrande & raw & .5209 & .5083 & .5185 & .5312 & $+1.27$ \\
+OpenBookQA & norm. & .3000 & .3360 & .3320 & .3660 & $+3.40$ \\
+LAMBADA & raw & .3429 & .3827 & .4333 & .4463 & $+1.31$ \\
+BoolQ & raw & .5713 & .6080 & .5881 & .5948 & $+0.67$ \\
+CommonsenseQA & raw & .3923 & .4103 & .4423 & .4521 & $+0.98$ \\
+SocialIQA & raw & .3767 & .3874 & .4002 & .3976 & $-0.26$ \\
+\bottomrule
+\end{tabular}%
+}
+\caption{\textbf{Complete 11-task keep8 downstream trajectory.}
+The final column is the accuracy-point change from $44$k to the deepest
+retained keep8 checkpoint, step $121$k, under the
+reported metric shown in column two; ``norm.'' denotes accuracy from
+character-normalized candidate log-likelihood. MMLU remains near chance while most
+other tasks improve. Earlier PPL checkpoints use a separate grid; the endpoint
+held-out PPL is reported at the same $121$k checkpoint in
+Table~\ref{tab:app-ppl}. keep8 never reached $200$k: checkpoint rotation
+deleted the intermediate states and $121$k is the deepest one retained, so this
+trajectory is a lower bound on what this depth reaches under this recipe. This table reports
+aggregate checkpoints, not a paired 44k--121k test or a replicated trajectory.
+The MMLU row is the downstream-aggregate letter score in all four columns,
+because the earlier keep8 checkpoints were never re-scored under the
+dual-interface snapshot that Table~\ref{tab:downstream} uses; at $121$k the two
+give $.2535$ here and $.2550$ there. Read this row for its within-arm shape
+rather than against that table's MMLU column.}
+\label{tab:app-keep8}
+\end{table}
