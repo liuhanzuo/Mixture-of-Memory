@@ -1,41 +1,77 @@
 {
-  "schema_version": "1.0.0",
-  "note": "ROUND 0 HAS NO SCORE -- it aborted at 3/6 returned reviews. Rounds 1 and 2 were frozen but never reviewed. Round 3 is the first round with a real panel. Do not interpolate or backfill missing scores.",
-  "calibration_warning": "Per paperA/paperB review_history/SCORE_HISTORY.md: scores from different prompt generations are NOT longitudinally comparable. Round 3 uses the round_01 prompt design (one defect per reviewer, numbers inlined), which differs from round_00's.",
-  "rounds": [
-    {
-      "round": 0,
-      "median_overall": null,
-      "status": "aborted_3_of_6"
-    },
-    {
-      "round": 1,
-      "median_overall": null,
-      "status": "frozen_not_reviewed"
-    },
-    {
-      "round": 2,
-      "median_overall": null,
-      "status": "frozen_not_reviewed"
-    },
-    {
-      "round": 3,
-      "median_overall": null,
-      "status": "in_flight"
-    }
-  ],
-  "BLINDNESS_BREACH_ANNOTATION_20260816": {
-    "affects": [
-      "round_00",
-      "round_01",
-      "round_02"
-    ],
-    "verdict": "COMPROMISED -- these three snapshots shipped evidence/EVIDENCE_PACK.md, byte-identical (md5 4d0013b52eed, 77766 B) to the author-side tcodex_out/ copy, which contains writer-steering imperatives including 'DO NOT claim differential learning rates' and 'attacking it would be an easy referee kill'.",
-    "rule": "Do NOT use rounds 00-02 in any median, lower quartile, ceiling, trajectory or round-over-round improvement claim. Any 'the score improved from round N' statement crossing the 00-02 boundary is not like-for-like.",
-    "not_affected": {
-      "round_03": "shipped 0 evidence files, so this vector was absent (separately defective for that reason)",
-      "round_04": "EVIDENCE_PACK.md absent; its defect is that only 2 of 24 artifacts shipped"
-    },
-    "evidence": "paperC/evidence/BLINDNESS_BREACH_ROUNDS_00_02_MAIN.json"
+ "schema_version": "1.0.0",
+ "note": "ROUND 0 HAS NO SCORE -- it aborted at 3/6 returned reviews. Rounds 1 and 2 were frozen but never reviewed. Round 3 is the first round with a real panel. Do not interpolate or backfill missing scores.",
+ "calibration_warning": "Per paperA/paperB review_history/SCORE_HISTORY.md: scores from different prompt generations are NOT longitudinally comparable. Round 3 uses the round_01 prompt design (one defect per reviewer, numbers inlined), which differs from round_00's.",
+ "rounds": [
+  {
+   "round": 0,
+   "median_overall": null,
+   "status": "aborted_3_of_6"
+  },
+  {
+   "round": 1,
+   "median_overall": null,
+   "status": "frozen_not_reviewed"
+  },
+  {
+   "round": 2,
+   "median_overall": null,
+   "status": "frozen_not_reviewed"
+  },
+  {
+   "round": 3,
+   "median_overall": null,
+   "status": "in_flight"
+  },
+  {
+   "round": 4,
+   "median_overall": 5.0,
+   "lower_quartile": 4.0,
+   "min": 4,
+   "max": 6,
+   "median_ceiling": 6.5,
+   "n_reviews": 12,
+   "status": "reviewed_12_of_12",
+   "gates": {
+    "median>=7.0": "FAIL (5.0)",
+    "lower_quartile>=6.0": "FAIL (4.0)",
+    "no_score_below_5": "FAIL (min 4)"
+   },
+   "recommendation_distribution": {
+    "reject": 5,
+    "weak_reject": 5,
+    "borderline": 1,
+    "weak_accept": 1
+   },
+   "panel_split": {
+    "codex_median": 4.0,
+    "claude_median": 5.0,
+    "note": "reported separately because the two panels differ by a full point; the aggregate's own text gives two candidate causes and does not pick one"
+   },
+   "MUST_BE_READ_WITH": "all 12 reviewers scored an INCOMPLETE artifact -- the freeze shipped 2 of 24 evidence files because the --evidence flag was hand-enumerated. Multiple reviewers say in writing that they opened files that were not there. review_rounds/round_04/PACKAGING_DEFECT_20260816.md is attribution-only and explicitly does NOT revise any score. So 5.0 is a LOWER BOUND on what this manuscript would score with its evidence attached, and it is NOT comparable to a future round_05 number.",
+   "source": "review_rounds/round_04/PANEL_AGGREGATE_FINAL.json (snapshot 7fcb9ccc55c5)",
+   "why_this_entry_was_missing": "MAIN never appended it. The trajectory has said 'round 3 in_flight' since 2026-08-16 13:55 while round_04's full 12-review panel completed at 15:15. Recorded 22:5x on discovering the gap while answering a status question -- the aggregate existed the whole time; only the index was stale."
+  },
+  {
+   "round": 5,
+   "median_overall": null,
+   "status": "frozen_not_reviewed",
+   "what_changed_vs_round_04": "the artifact, not the science: review_rounds/round_05/submission_complete is built by code/refreeze_from_manuscript.py, which DERIVES the file list from sections/*.tex instead of a hand-typed manifest. 17 cited paths, 17 present, 0 absent, 49 files. This removes the exact defect that made round_04's 12 scores a lower bound.",
+   "not_yet_done": "no panel has read it. Do NOT compare any round_05 number to round_04 without noting that round_04 read 2 of 24 evidence files."
   }
+ ],
+ "BLINDNESS_BREACH_ANNOTATION_20260816": {
+  "affects": [
+   "round_00",
+   "round_01",
+   "round_02"
+  ],
+  "verdict": "COMPROMISED -- these three snapshots shipped evidence/EVIDENCE_PACK.md, byte-identical (md5 4d0013b52eed, 77766 B) to the author-side tcodex_out/ copy, which contains writer-steering imperatives including 'DO NOT claim differential learning rates' and 'attacking it would be an easy referee kill'.",
+  "rule": "Do NOT use rounds 00-02 in any median, lower quartile, ceiling, trajectory or round-over-round improvement claim. Any 'the score improved from round N' statement crossing the 00-02 boundary is not like-for-like.",
+  "not_affected": {
+   "round_03": "shipped 0 evidence files, so this vector was absent (separately defective for that reason)",
+   "round_04": "EVIDENCE_PACK.md absent; its defect is that only 2 of 24 artifacts shipped"
+  },
+  "evidence": "paperC/evidence/BLINDNESS_BREACH_ROUNDS_00_02_MAIN.json"
+ }
 }
