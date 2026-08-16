@@ -149,6 +149,7 @@ import argparse
 import glob
 import json
 import os
+import re
 import sys
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -393,6 +394,27 @@ UNSPEC = ("NOT_SPECIFIED", "UNKNOWN", "NO_KILL_GATE_DEFINED",
 # information was on disk and the reader's key list did not reach it, and the
 # visible symptom was a proposal that looked emptier than it is. Explicit list,
 # newest-dated first, for the reason given at KILL_KEYS.
+#
+# 2026-08-17: SAME BUG AS THE LIFECYCLE LIST, TWICE OVER. (a) The dated entries were a
+# hardcoded ["..._20260815", "..._20260814"], so a `lifecycle_why_20260817` was invisible.
+# (b) Worse, undated `lifecycle_reason` was listed FIRST, so even a legible dated reason
+# lost to whatever prose happened to be in the original field. Measured on B12: the queue
+# reported the pilot-killed proposal alongside its 08-16 reason string ("Two 0-GPU blockers
+# ... NOVELTY IS UNCHECKED"), which had been superseded twice over -- novelty cleared 08-16,
+# the pilot ran and failed 08-17. Reason and state must be resolved by the SAME rule, or the
+# report pairs a fresh state with a stale justification, which is harder to catch than a
+# plainly stale row. Resolve by pattern, newest date first, undated LAST.
+_DATED_LIFECYCLE_WHY = re.compile(r"^lifecycle_why_(20\d{6})(?:_[a-z0-9]+)?$")
+
+
+def lifecycle_reason_keys(doc):
+    """Dated lifecycle_why keys in THIS doc, newest first, then the undated fallbacks."""
+    dated = sorted((k for k in doc if _DATED_LIFECYCLE_WHY.match(k)), reverse=True)
+    return dated + ["lifecycle_reason", "lifecycle_why"]
+
+
+# Static fallback for any caller without a doc in hand. lifecycle_reason_keys(doc) is
+# authoritative -- same relationship as LIFECYCLE_KEYS to lifecycle_keys(doc).
 LIFECYCLE_REASON_KEYS = ["lifecycle_reason",
                          "lifecycle_why_20260815", "lifecycle_why_20260814",
                          "lifecycle_why"]
@@ -408,6 +430,38 @@ LIFECYCLE_REASON_KEYS = ["lifecycle_reason",
 # that must still pass the downstream checks (a declared ready_gpu is NOT taken
 # on faith -- see the "declaration can downgrade, not upgrade" branch), and
 # unsafe only for blockers, which is why blockers use pointers instead.
+#
+# 2026-08-17: THE ENUMERATION ITSELF WAS THE BUG. This read
+# ["lifecycle_20260816", "lifecycle"], so when B12's pilot actually RAN, FAILED its own
+# pre-registered gate (clause_4 + clause_5), and I appended
+# `lifecycle_20260817 = killed_by_own_gate`, the queue went right on printing `ready_gpu`.
+# A hardcoded list of dates cannot track an append-only file whose entire purpose is new
+# dated keys: every future date needs a code edit, and the edit is exactly the step that
+# gets forgotten -- so the reader silently keeps serving a superseded state. Same class as
+# the emitter whose hardcoded damaged_rungs silently defined a headline, and as the
+# NEXT_GATE_KEYS list two slots above. Resolve by PATTERN, newest date first.
+#
+# The optional `_<suffix>` accepts a SECOND record filed on the SAME day, which append-only
+# forces the moment a same-day entry needs correcting: sec 0 forbids editing
+# `lifecycle_20260817`, and dating the correction 20260818 would be a false timestamp. Plain
+# reverse string sort already orders `lifecycle_20260817_corrected` above bare
+# `lifecycle_20260817` (verified, not assumed -- the suffix sorts after the bare form because
+# it is a strict prefix), so a same-day correction wins without special-casing.
+_DATED_LIFECYCLE = re.compile(r"^lifecycle_(20\d{6})(?:_[a-z0-9]+)?$")
+
+
+def lifecycle_keys(doc):
+    """Dated lifecycle keys present in THIS doc, newest first, then the bare key.
+
+    Preferring the newest date is safe for the reason the comment above already gives: a
+    declared lifecycle is not taken on faith. A declaration can DOWNGRADE freely, while an
+    upgrade still has to survive every downstream check. So recency can only tighten.
+    """
+    dated = sorted((k for k in doc if _DATED_LIFECYCLE.match(k)), reverse=True)
+    return dated + ["lifecycle"]
+
+
+# Static fallback for any caller without a doc in hand. lifecycle_keys(doc) is authoritative.
 LIFECYCLE_KEYS = ["lifecycle_20260816", "lifecycle"]
 
 
@@ -729,10 +783,10 @@ def read_one(path):
     # proposal's paperwork made a killed direction look like the single most
     # dispatchable item in the queue, and it would have been handed 8 idle H20s.
     # A terminal state must be declarable, not only inferable.
-    _lck, explicit = _first(d, LIFECYCLE_KEYS)
+    _lck, explicit = _first(d, lifecycle_keys(d))
     VALID_LC = ("ready_gpu", "ready_cpu", "needs_prior_gate", "running",
                 "promoted", "dead")
-    _, _lc_why = _first(d, LIFECYCLE_REASON_KEYS)
+    _, _lc_why = _first(d, lifecycle_reason_keys(d))
     _lc_why = _lc_why if _lc_why else "no reason field"
     if isinstance(explicit, str) and explicit in VALID_LC:
         rec["lifecycle_declared"] = explicit
@@ -771,8 +825,34 @@ def read_one(path):
         # kill-gate / novelty requirements that the README makes prerequisites
         # for spending GPU. Declaration can downgrade, not upgrade.
     elif explicit is not None:
+        # FAIL CLOSED. Measured on B12, 2026-08-17: after the pilot ran and FAILED its own
+        # pre-registered gate, I declared `lifecycle_20260817 = "killed_by_own_gate"` -- a
+        # word that is not in VALID_LC (the schema's terminal word is `dead`). The reader
+        # appended exactly this warning and then FELL THROUGH to inference, which re-derived
+        # **ready_gpu** and listed the killed direction as the queue's only dispatchable GPU
+        # item. The warning was printed and the wrong answer was served in the same breath.
+        #
+        # This is the same accident the B02 comment above memorialises -- paperwork
+        # out-voting a fired kill gate -- reached through a bad enum value instead of a
+        # missing field. So the repair has to be the same shape: an unparseable declaration
+        # is NOT an absent declaration. Someone wrote a state down; we could not read it;
+        # the one thing we must not do is substitute our own inference and spend a card on
+        # it. Park it in needs_prior_gate, where the prior "gate" is a human fixing the word.
+        #
+        # Deliberately not lenient (no fuzzy match to `dead`, no substring test): guessing
+        # what an owner meant by an unknown terminal word is how `blocked` -- the one string
+        # LIFECYCLE_SCHEMA.md sec 1 outright bans -- came to mean three different things.
         rec["problems"].append(
-            f"lifecycle={_txt(explicit, 40)!r} is not one of {VALID_LC}")
+            f"lifecycle={_txt(explicit, 40)!r} is not one of {VALID_LC}"
+            " -- UNPARSEABLE declaration, parked (fix the word in STATUS.json;"
+            " the schema's terminal state is 'dead' with the reason in lifecycle_why_*)")
+        rec["lifecycle"] = "needs_prior_gate"
+        rec["lifecycle_reason"] = (
+            f"DECLARED lifecycle={_txt(explicit, 60)!r} is not in the schema vocabulary, so"
+            " it cannot be honoured OR ignored: inference is suppressed and this proposal is"
+            " parked until the declaration is legible. Declared reason: " + _txt(_lc_why, 200))
+        rec["needs_arch"] = d.get("needs_arch", "UNRECORDED")
+        return rec
 
     # ---- lifecycle inference -------------------------------------------------
     # The novelty gate is satisfied by an ADJUDICATED verdict (in STATUS.json)

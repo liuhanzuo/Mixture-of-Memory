@@ -1,0 +1,82 @@
+{
+  "_what": "B12 PILOT VERDICT. Both authorised cells (rung P + control Dctl) measured 2026-08-17 on LOCAL (sm_100/wzc1). 0.61 GPU-h wall.",
+  "VERDICT": "KILL, and NOT the kill the proposal was hoping to rule out. Two pre-registered clauses fire, and clause_5 REFRAMES clause_4: the finding is about the OPERATOR, not about SLoRB's rank being over-provisioned.",
+  "measured": {
+    "rung_P": {
+      "union9_mean_primary_pp": 60.05342574059202,
+      "loss_vs_R0_pp": 2.3801,
+      "operator": "coarsen (down_proj c=8, LS refit)",
+      "density_pct": 55.0316,
+      "live_branch_params": 325844992
+    },
+    "rung_Dctl": {
+      "union9_mean_primary_pp": 60.871853639523316,
+      "loss_vs_R0_pp": 1.5616,
+      "operator": "svd (density-matched)",
+      "density_pct": 55.0355,
+      "live_branch_params": 326098944
+    },
+    "anchors_on_disk": {
+      "R0_hard_fold_DENSE": 62.4335,
+      "R1_hard_drop_2of4": 57.0678
+    },
+    "pass_bar": 60.6435,
+    "tau_pp": 1.79,
+    "noise_floor_pp": 0.8953
+  },
+  "clause_4_KILL_ON_PILOT": {
+    "text": "If PILOT rung P scores < 60.64, the cheapest step on the measured frontier has already failed and no deeper rung can succeed. STOP; do NOT launch Q/R/S.",
+    "TRIGGERED": true,
+    "evidence": "P 60.0534 < 60.6435",
+    "consequence": "Q/R/S remain UNAUTHORISED and must not be launched."
+  },
+  "clause_5_KILL_ON_CONTROL": {
+    "text": "If the density-matched SVD control Dctl scores >= rung P, the verdict is 'basis coarsening is the wrong operator', NOT 'SLoRB is over-provisioned'.",
+    "TRIGGERED": true,
+    "evidence": "Dctl 60.8719 >= P 60.0534, margin +0.8184 pp",
+    "consequence": "This is the load-bearing clause. Because the control BEATS the treatment at matched density (0.08% apart in live params), the pilot does NOT license any statement about how much rank SLoRB needs. What failed is block-basis coarsening as an operator, at this one density, on this one checkpoint."
+  },
+  "THE_MARGIN_IS_INSIDE_THE_NOISE_FLOOR": {
+    "Dctl_minus_P_pp": 0.8184,
+    "noise_floor_pp": 0.8953,
+    "exceeds_floor": false,
+    "why_this_matters": "clause_5 is written as a bare inequality (>=) and it IS satisfied. But +0.8184 pp is BELOW the 0.8953 pp noise floor the proposal itself measured, so the direction is real per the pre-registered rule while the MAGNITUDE is not resolvable at n=1. State the clause as triggered; do NOT additionally claim SVD is measurably better by 0.82 pp. Reporting only the clause and hiding the floor comparison would overstate it.",
+    "recorded_by": "MAIN, unprompted -- the clause would have read as a clean win without this line."
+  },
+  "clause_3_INDETERMINATE_also_applies_to_P": {
+    "P_loss_pp": 2.3801,
+    "band": "(1.79, 3.58)",
+    "inside": true,
+    "note": "The emitter's own row says INDETERMINATE for P: 2.3801 pp is 1-2 CI widths at n=1. So even the clause_4 failure is 'failed to clear the bar', not 'measurably worse by 2.38 pp'."
+  },
+  "what_this_does_NOT_establish": [
+    "NOT 'SLoRB rank is over-provisioned' -- clause_5 explicitly forbids that reading when the control wins.",
+    "NOT 'SLoRB rank is necessary' either. Only ONE density was tested (55.03%), by ONE operator family, post hoc.",
+    "NOT a training-time rank ablation. Post-hoc surgery on a checkpoint trained at SLoRB_k=16; a model TRAINED at lower k could reallocate capacity and land anywhere.",
+    "NOT a 2:4 result. Both cells are FOLDED and dense on disk (verify_2of4 rc=2, zero_frac 0.000000 on every sampled tensor)."
+  ],
+  "provenance": {
+    "rows": [
+      "outputs/cast_eval_spec/slorb_rank_ladder/rung_P/slorb_ladder_row_P.json",
+      "outputs/cast_eval_spec/slorb_rank_ladder/rung_Dctl/slorb_ladder_row_Dctl.json"
+    ],
+    "union9": [
+      "outputs/cast_eval_spec/slorb_rank_ladder/rung_P/zeroshot_union9.json",
+      "outputs/cast_eval_spec/slorb_rank_ladder/rung_Dctl/zeroshot_union9.json"
+    ],
+    "driver_logs": [
+      "logs/slorb_rank_sweep_P.log",
+      "logs/slorb_rank_sweep_Dctl.log"
+    ],
+    "watcher_log": "logs/chain_b12_pilot_local.log",
+    "n_scored_assertion": "PASSED on both cells -- all 9 tasks, per-task n_scored == expected",
+    "harness": "lm_eval 0.4.8, --model hf, bfloat16, parallelize=True, add_bos_token=False, batch_size auto, num_fewshot 0, seed 0",
+    "arch": "compute_cap 10.0 (sm_100/B200); comparable only to cells measured on sm_100"
+  },
+  "gpu_h_spent": {
+    "estimate_was": 1.46,
+    "actual_wall": "36m31s across both rungs (04:47:58 -> 05:24:29) on 4 of 8 cards",
+    "note": "under budget"
+  },
+  "next_step": "NO further GPU on B12. Q/R/S unauthorised by clause_4. The direction needs a different operator or a training-time design, not more rungs of this ladder."
+}

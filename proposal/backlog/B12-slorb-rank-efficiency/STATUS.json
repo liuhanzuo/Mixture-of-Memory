@@ -443,5 +443,35 @@
     "gpu_hours": 0.0,
     "does_not_change_lifecycle": "Still ready_gpu, still pilot-pair-only. This ADDS pre-GPU confidence; it does not authorise rungs Q/R/S, which remain gated on kill_gate.clause_4_KILL_ON_PILOT.",
     "correction_recorded": "MAIN re-ran rung A redundantly on 2026-08-17 by reading the bare `next_gate` key (which still narrates G0 as un-run) instead of `lifecycle_20260816` / `g0_result_20260816`, which record it DISCHARGED. Cost ~0 GPU. Noted so the next reader does not repeat it: in this file the DATED keys supersede the bare ones."
-  }
+  },
+  "lifecycle_20260817": "killed_by_own_gate",
+  "lifecycle_why_20260817": "PILOT RAN AND FAILED ITS OWN PRE-REGISTERED GATE. rung P 60.0534 < pass_bar 60.6435 (clause_4_KILL_ON_PILOT), AND the density-matched SVD control Dctl 60.8719 >= P (clause_5_KILL_ON_CONTROL). clause_5 reframes clause_4: the finding is 'block-basis coarsening is the wrong operator at this density', NOT 'SLoRB rank is over-provisioned'. Q/R/S remain UNAUTHORISED and must not be launched. Full adjudication + the caveats that cut against a clean story: evidence/pilot_verdict_20260817.json.",
+  "pilot_verdict_20260817": {
+    "verdict": "KILL (clause_4 + clause_5, the latter reframing the former)",
+    "rung_P": {
+      "union9": 60.0534,
+      "loss_vs_R0_pp": 2.3801,
+      "emitter_own_row": "INDETERMINATE -- 1-2 CI widths at n=1"
+    },
+    "rung_Dctl": {
+      "union9": 60.8719,
+      "loss_vs_R0_pp": 1.5616,
+      "role": "density-matched SVD control, 0.08% apart in live params"
+    },
+    "margin_Dctl_minus_P_pp": 0.8184,
+    "margin_vs_noise_floor": "0.8184 < 0.8953 -- the clause is a bare >= and IS satisfied, but the MAGNITUDE is not resolvable at n=1. Do not claim SVD is better by 0.82 pp.",
+    "gpu_h": "36m31s wall on 4 cards, under the 1.46 GPU-h estimate",
+    "evidence": "proposal/backlog/B12-slorb-rank-efficiency/evidence/pilot_verdict_20260817.json",
+    "supersedes_lifecycle": "lifecycle_20260816 = ready_gpu is now spent; this proposal has no further authorised GPU."
+  },
+  "dead_record_20260817": {
+    "_schema": "LIFECYCLE_SCHEMA.md sec 6 requires original_claim / killed_by / surviving_scope on a terminal record -- it calls that trio the only handle for judging whether a narrowing was honest. Filed here because lifecycle=dead was declared above.",
+    "original_claim": "The trained SLoRB branch of the SparseForge 5B headline checkpoint contains enough redundancy that a fraction of its 848,429,056 parameters reproduces most of its union-9 contribution, moving the model to a better density/quality point.",
+    "killed_by": "Its own pre-registered kill gate, clauses 4 and 5, on the ONE authorised pilot pair (rung P + control Dctl), measured 2026-08-17 on LOCAL sm_100/wzc1, 0.61 GPU-h. Not killed by prior art: the novelty gate had CLEARED (30 candidates, 0 preempt).",
+    "surviving_scope": "NARROW and negative: at 55.03% density on this one checkpoint, a density-matched SVD control beats block-basis coarsening, so basis coarsening is the wrong operator. This does NOT establish that SLoRB's rank is necessary -- only one density and one operator family were tested, post hoc, at n=1 per cell. The 'x_proj is free, rank is not' third outcome (clause_7) remains UNTESTED on union-9: rung A was only ever CPU export-self-checked, never scored, so clause_6 and clause_7 were never evaluated. Anyone reviving this must not cite the pilot as evidence about rank.",
+    "unspent_authorisation": "clause_4 says STOP, so the 2.92 GPU-h that the full 6-cell ladder would have cost is deliberately NOT spent. Rungs Q/R/S are UNAUTHORISED.",
+    "archive_move": "NOT performed in this pass. Schema sec 1 line 44 glosses dead as '移入 proposal/archive/', but B10 set the precedent that the physical move is a separate, owner-visible step (see its archive_move_deferred_20260815_MAIN), and moving the directory now would break the paths this record and the SparseForge task #245/#246 notes point at. Left in backlog/ with lifecycle=dead, which the queue already honours as terminal."
+  },
+  "lifecycle_20260817_corrected": "dead",
+  "lifecycle_why_20260817_corrected": "SUPERSEDES lifecycle_20260817 ONLY IN ITS VOCABULARY, not in its content. That key is left byte-unchanged per LIFECYCLE_SCHEMA.md sec 0 (append-only); it says 'killed_by_own_gate', which is NOT one of the six legal lifecycle values -- the schema's terminal word is 'dead' (sec 1 line 44) and the cause belongs in a reason field, which is what this key is. I invented a value the vocabulary does not have, and the reader's response was worse than the mistake: it printed the warning AND fell through to inference, re-deriving ready_gpu, so a direction killed by its own pre-registered gate was still advertised as the queue's only dispatchable GPU item. Fixed in proposal/ready_queue.py the same pass (an unparseable declaration now parks the proposal instead of being ignored; 6/6 controls, including that a legal ready_gpu still passes). THE VERDICT ITSELF IS UNCHANGED: rung P 60.0534 < pass_bar 60.64 (clause_4_KILL_ON_PILOT) and density-matched SVD control Dctl 60.8719 >= P (clause_5_KILL_ON_CONTROL); clause_5 reframes clause_4, so the finding is 'block-basis coarsening is the wrong operator at this density', NOT 'SLoRB rank is over-provisioned'. Q/R/S remain UNAUTHORISED. Full adjudication incl. the two caveats that cut against a clean story (the +0.8184 pp control margin is BELOW the proposal's own 0.8953 pp noise floor; and the emitter's own row calls P INDETERMINATE): evidence/pilot_verdict_20260817.json."
 }
