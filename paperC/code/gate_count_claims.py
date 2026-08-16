@@ -212,7 +212,78 @@ CLAIMS = [
      None, lambda _doc: n_cells_in_tab_mmlupro(),
      "recounted from tab_mmlupro's own data rows, expanding the collapsed Llama-3 "
      "'k14--k8' row into the 4 cells it represents"),
+    # ---- constant emitters, negative control EXCLUDED (found 2026-08-16) -----------
+    # 05_analysis.tex:29 and 09a_relocated.tex:42 both said "sixteen damaged
+    # cross-family cells have accuracy equal to the marginal of the emitted letter to
+    # machine precision". Sixteen is arithmetically right over all six evidence tasks --
+    # but SEVEN of them are Winogrande, the paper's declared negative control, which
+    # 09a_relocated.tex:24 and 04_experiments.tex:5 both say "enters no denominator".
+    # Both host sentences frame the count as small-BENCHMARK evidence for the paper's
+    # constant-emission claim, so the control was doing headline work while being
+    # formally excluded. Verified by recomputing the source's own criterion
+    # (modal_pred_share >= 0.99 AND |acc - marginal| < 1e-6) over the 72 damaged letter
+    # cells: 16 total = 7 winogrande + 3 arc_challenge + 3 openbookqa + 2 commonsense_qa
+    # + 1 arc_easy, i.e. NINE in the designated set.
+    #
+    # Both sentences now lead with nine and report sixteen as the control-inclusive
+    # figure. The prose had to be disambiguated as well as corrected: 05_analysis.tex
+    # already contains "the nine" meaning the 9/85 ABOVE-FLOOR cells, a different
+    # quantity that happens to share the integer.
+    ("constant emitters, designated set only", "05_analysis.tex",
+     r"literal constant emitters: (\w+) damaged cells in the designated set",
+     "second_mc_benchmark_crossfamily/gate2_crossfamily_nulls.json",
+     lambda doc: n_constant_emitters(doc, exclude_negative_control=True),
+     "the paper's own criterion, with Winogrande removed because it enters no "
+     "denominator; 16 including it is also asserted and is checked separately"),
+    ("constant emitters, control included", "05_analysis.tex",
+     r"\((\w+) if the negative control is included",
+     "second_mc_benchmark_crossfamily/gate2_crossfamily_nulls.json",
+     lambda doc: n_constant_emitters(doc, exclude_negative_control=False),
+     "the control-inclusive figure, so that BOTH numbers in the sentence are pinned "
+     "and the difference between them cannot silently drift"),
 ]
+
+NEG_CONTROL_TASK = "winogrande"
+
+
+def n_constant_emitters(doc, exclude_negative_control):
+    """Cells that are literal constant emitters, by the source verdict's own criterion.
+
+    modal_pred_share >= 0.99 AND |acc - marginal(emitted letter)| < 1e-6.
+
+    The marginal is recomputed from `task_letter_nulls[task].gold_letter_marginal`
+    rather than read from any summary, and `base` rungs are excluded because the claim
+    is about DAMAGED cells.
+    """
+    tln = doc.get("task_letter_nulls", {})
+
+    def marginal(task, letter):
+        g = (tln.get(task) or {}).get("gold_letter_marginal") or {}
+        n = sum(g.values())
+        return (g.get(letter, 0) / n) if n else None
+
+    n = 0
+    for _fam, fv in (doc.get("families") or {}).items():
+        for rung, rv in (fv.get("rungs") or {}).items():
+            if rung == "base":
+                continue
+            for task, tv in (rv.get("tasks") or {}).items():
+                if exclude_negative_control and task == NEG_CONTROL_TASK:
+                    continue
+                it = (tv.get("interfaces") or {}).get("letter")
+                if not it:
+                    continue
+                hist = it.get("pred_hist") or {}
+                acc = it.get("acc")
+                if not hist or acc is None:
+                    continue
+                total = sum(hist.values())
+                emitted = max(hist, key=hist.get)
+                share = hist[emitted] / total
+                m = marginal(task, emitted)
+                if m is not None and share >= 0.99 and abs(acc - m) < 1e-6:
+                    n += 1
+    return n
 
 
 def n_cells_in_tab_mmlupro():

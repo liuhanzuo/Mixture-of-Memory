@@ -2,9 +2,9 @@
   "generated_utc": "2026-08-16",
   "purpose": "Census of load-bearing COUNT assertions in sections/*.tex not covered by check_prose_vs_evidence.py (MIN_DP=3, decimals only) or gate_count_claims.py (7 hand-registered CLAIMS).",
   "status": "IN_PROGRESS",
-  "n_audited": 29,
+  "n_audited": 34,
   "n_mismatch": 2,
-  "n_cannot_verify": 0,
+  "n_cannot_verify": 1,
   "method_caveats": [],
   "audits": [
     {
@@ -436,6 +436,78 @@
       "verdict": "MATCHES",
       "load_bearing": "HIGH -- this is the exact hardcoded-list-defines-a-headline hazard the task flagged. Verified fixed. Note 03b_nulls_summary.tex's 'all 15 cross-family arms' is a DIFFERENT and still-correct set (3 non-OLMo families x 5 rungs INCLUDING base = 15 arms in the cross-family launch), not the 15 of the retracted 14/15.",
       "cross_file_consistent": true
+    },
+    {
+      "claim": "On ARC-Challenge, split, first, last and wrong place all six OLMo-2 arms significantly above the content floor; credit moves five of six significantly below it",
+      "files": [
+        "sections/03b_nulls.tex:12",
+        "sections/03b_nulls_summary.tex:4 (as 'credit alone moves five of six OLMo-2 arms from significantly above the floor to significantly below it')"
+      ],
+      "asserted": 6,
+      "recomputed": 6,
+      "evidence_file": "evidence/second_mc_benchmark/gate2_letter_content_nulls.json",
+      "how_recomputed": "tasks.arc_challenge.arms has exactly 6 OLMo-2 arms (7B_base + shortgpt16 + keep14 + keep12 + keep10 + keep8). For each, interfaces.content_norm.vs_null[longest_{split,first,last,wrong}]: verdict=='above the floor' and boot_p<0.05 on 6/6 for all four conventions. longest_credit: verdict=='BELOW the floor' with boot_p<0.05 on 5/6 (the exception is 7B_base at 'AT the floor'). So 'all six above' = 6/6 and 'five of six below' = 5/6 exactly.",
+      "verdict": "MATCHES",
+      "load_bearing": "the tie-convention degree of freedom is the paper's flagship under-specification demo, and the verdict-reversal count is the whole point. Both integers exact, and the one non-reversing arm being the INTACT base is the scientifically coherent pattern.",
+      "cross_file_consistent": true
+    },
+    {
+      "claim": "it is now recomputed from raw parquet and passes a 12/12 character/token self-test / item-matched by the shared loader and a 12/12 self-test / that record's August 14 addendum, which records the raw-parquet reconstruction and 12/12 self-test",
+      "files": [
+        "sections/07_limitations.tex:4",
+        "sections/03b_nulls.tex:18",
+        "sections/09_appendix.tex:105"
+      ],
+      "asserted": 12,
+      "recomputed": 12,
+      "evidence_file": "evidence/construct_nulls_length_unit.json",
+      "how_recomputed": "self_test field: 'PASSED -- reproduces all 6 character-unit values and all 6 token-unit values' -> 6+6=12. Independently: tasks dict has 6 entries, each carrying BOTH a 'char' block and a 'token_from_per_item_records' block, and each carrying both a01_recorded_char_split and a01_recorded_token_split -> 6 tasks x 2 units = 12 reproduced values. Summary field and per-item structure AGREE.",
+      "verdict": "MATCHES",
+      "load_bearing": "07_limitations uses this to retire an earlier 'unrecomputable' status. 12 = 6 tasks x 2 units, which includes Winogrande -- legitimate here because this is a specification/reproducibility self-test, not a denominator over evidence arms.",
+      "cross_file_consistent": true
+    },
+    {
+      "claim": "MMLU is exactly four-way on all 14042 items and BoolQ exactly two-way on all 3270; the floor is max_L(count_L/n)=1403/12032; 2033/3270; 3776/14042; 138/500",
+      "files": [
+        "sections/03b_nulls.tex:35",
+        "sections/03b_nulls.tex:37",
+        "sections/03b_nulls.tex:39",
+        "sections/09a_relocated.tex:15"
+      ],
+      "asserted": 1403,
+      "recomputed": 1403,
+      "evidence_file": "evidence/second_mc_benchmark_crossfamily/gate2_crossfamily_nulls.json (mmlu_letter_null.gold_letter_marginal) + evidence/construct_nulls_legality_aware.json + sections/tab_nulls.tex",
+      "how_recomputed": "mmlu_letter_null.gold_letter_marginal = {A:3222,B:3462,C:3582,D:3776}; sum=14042 (so 'all 14042 items' checks) and max=3776=D -> 3776/14042=0.2689076 == tab_nulls floor. task_letter_nulls[arc_challenge].gold_letter_marginal sums to 1172 with max B=311 -> 311/1172. OpenBookQA floor 0.276*500=138 exactly. MMLU-Pro 0.116606*12032 rounds to 1403 and 1403/12032=0.11660572. BoolQ 0.621713*3270 -> 2033.",
+      "verdict": "MATCHES",
+      "load_bearing": "these integer floors are the exact-rational threshold the paper evaluates p at; if any were off by one the whole exact-tail argument (and the 0.083-vs-0.078 disclosure) would break.",
+      "cross_file_consistent": true
+    },
+    {
+      "claim": "2051 of 12032 items (17.05%) have fewer than ten options and cannot have gold letter J at all / uniform-over-ten-letters assigns gold letters 17% of MMLU-Pro items cannot have",
+      "files": [
+        "sections/03b_nulls.tex:33",
+        "sections/01_introduction.tex:19"
+      ],
+      "asserted": 2051,
+      "recomputed": 2051,
+      "evidence_file": "evidence/s2_02_strata_raw.json",
+      "how_recomputed": "per_stratum n_s for n_opt<10: 21+606+52+93+158+320+801 = 2051; total 2051+9981 = 12032; 2051/12032 = 0.170462 -> 17.05%. Independent of the legality-aware file.",
+      "verdict": "MATCHES",
+      "load_bearing": "HIGH -- this is the paper's self-falsification of its own largest construct's null. Recomputes exactly from the raw n_opt histogram.",
+      "cross_file_consistent": true
+    },
+    {
+      "claim": "ARC-Easy, where 4 of 2376 items are five-way, and ARC-Challenge, where 3 of 1172 are",
+      "files": [
+        "sections/03b_nulls.tex:37"
+      ],
+      "asserted": 4,
+      "recomputed": null,
+      "evidence_file": "evidence/construct_nulls_legality_aware.json (searched); evidence/second_mc_benchmark/gate2_letter_content_nulls.json (searched)",
+      "how_recomputed": "NOT RECOMPUTED. task_letter_nulls[arc_easy].gold_letter_marginal has only 4 keys (A-D) and sums to 2376, so the GOLD labels never exceed D; the claim is about n_opt (number of OPTIONS presented), which no evidence file in paperC/evidence/ exposes as a per-item or histogram field for ARC. The legality-aware record's ARC rows do encode a non-constant n_opt implicitly (their blind and legal p differ: 0.140 vs 0.136 and 0.453 vs 0.448), which CONFIRMS n_opt varies but does not pin the counts to 4 and 3.",
+      "verdict": "CANNOT_VERIFY",
+      "load_bearing": "medium. These two integers are the paper's evidence that the legality fix moves SOME rows in its own favour -- the 'we report them rather than absorbing them' honesty claim. A reviewer cannot audit 4 and 3 from the shipped evidence. Missing: a per-construct n_opt histogram for arc_easy and arc_challenge (the analogue of s2_02_strata_raw.json for MMLU-Pro).",
+      "cross_file_consistent": null
     }
   ]
 }
