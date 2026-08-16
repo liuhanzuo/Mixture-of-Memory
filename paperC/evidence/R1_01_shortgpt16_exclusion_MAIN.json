@@ -3,7 +3,7 @@
   "what": "MAIN adjudication of round_04 issue R1-01 -- an undisclosed exclusion from the headline denominator",
   "date": "2026-08-16",
   "raised_by": "R1-claude-novelty (severity: major). MAIN verified independently and found it MORE severe than reported.",
-  "VERDICT": "CONFIRMED and ESCALATED -- integrity-class, and now affecting BOTH headline denominators. 0/15 off-MMLU becomes 9/25 when the two excluded arms are restored. Blocking for submission.",
+  "VERDICT": "CONFIRMED, ESCALATED, and REMEDY DECIDED: full inclusion. Four same-class instances found; the fourth (family-specific designation of retained depth 14 inside one ratio) rules out any stated-exclusion repair. Denominators become 15/17 on MMLU-Pro and 20/25 above chance off-MMLU. The 0/60 arithmetic gap is a reporting slip, not an exclusion.",
   "the_promise_that_is_broken": {
     "location": "sections/09a_relocated.tex:24 (App: Designated damaged cells)",
     "verbatim": "Where a denominator such as 14/15 or 10/15 is quoted, it is over exactly this set, and any damaged arm excluded from that denominator is named at the point of exclusion together with its own floor delta, so that no ratio is computed over an undisclosed subset.",
@@ -79,5 +79,47 @@
     ],
     "the_honest_fix": "State the designated set ONCE, explicitly, with a stated inclusion rule, and report every arm in it. If ShortGPT-16 is excluded as a different damage operator (a baseline pruning method, not a rung of this paper's keepN ladder), say so at the point of exclusion and print its deltas -- which App A.4 already promises. If keep14 is excluded for retaining too much of the stack to count as damaged, say that too, with its number. A monotone story -- arms retaining more of the stack clear the floor, arms retaining less do not -- is a BETTER paper than an unexplained 0/15, because it shows the floor test tracks capability instead of merely failing everything.",
     "gate_required": "assert that every arm the manuscript designates as damaged appears in the rollup denominator, and that the denominator's cardinality equals arms x benchmarks. This single assertion catches both the 14/15 and the 0/15 instance. Third occurrence of the same class this round; see the meta_lesson field."
+  },
+  "FOURTH_INSTANCE_AND_REMEDY_DECIDED_20260816_1500": {
+    "found_by": "agent a154e4cbd0151ec95",
+    "MAIN_verified_from_git_history": true,
+    "the_fourth_instance": {
+      "where": "paperC/code/mmlu_pro_power_nulls.py, pre-fix state confirmed at commit 4c7666d lines 96 and 100",
+      "verbatim_pre_fix": [
+        "DAMAGED_OLMO = {\"keep8\", \"keep10\", \"keep12\"}  # #248's damaged set, verbatim",
+        "XF_DAMAGED = {\"k8\", \"k10\", \"k12\", \"k14\"}  # #250 counts k14 as damaged (no heal)"
+      ],
+      "what_it_means": "retained depth 14 is designated damaged for llama2/llama3/qwen3 and NOT for OLMo-2 -- INSIDE THE SAME 15-cell ratio (15 = 3 OLMo-2 + 3 families x 4 rungs). This is not a silent omission; it is FAMILY-SPECIFIC designation, which sections/04_experiments.tex:23 explicitly forbids: 'The designation is fixed by construction, never by a measured score'.",
+      "why_it_is_worse_than_silence": "a silent omission can be repaired by naming it. A family-specific rule inside one ratio cannot be stated without contradicting the paper's own definition of designated damaged. There is no wording that makes 14 layers damaged for three families and undamaged for the fourth."
+    },
+    "MAIN_preferred_option_b_is_DEAD": {
+      "what_I_preferred": "option (b) -- keep the exclusion but state an inclusion rule and print the excluded arms' floor deltas at the point of exclusion",
+      "why_it_cannot_work": "(b) requires a non-family-specific rule. None exists: any rule that excludes OLMo-2 keep14 also has to exclude llama2/llama3/qwen3 k14, which are already counted. The agent adopted FULL INCLUSION instead.",
+      "MAIN_position": "I accept the overruling. The argument is stronger than my preference was, and it is grounded in the paper's own text rather than in taste."
+    },
+    "third_denominator_found": "the abstract's 'all 21 evaluated cells are powered' minus 4 intact bases = 17 damaged cells. So the paper used 21 where it was favourable and 15 where it was not, and the two excluded arms sat INSIDE the first and OUTSIDE the second. Now consistent at 17.",
+    "chance_side_which_MAIN_did_not_compute": {
+      "off_MMLU": "10/15 -> 20/25",
+      "mmlu_pro": "13/15 -> 15/17",
+      "interpretation": "changes LESS than the floor side, because both restored arms read above chance wherever they clear the floor. So the defect damages the NEAR-UNANIMITY claim, not the flip claim. This is the gap I explicitly handed over as uncomputed, and it came back smaller than the floor side -- which is the good direction for the paper."
+    },
+    "monotonicity_result_with_the_nuance_that_matters": {
+      "positive": "all nine above-floor cells retain >=14/32 layers; clean separation (+6.47 pp minimum above vs +2.61 pp maximum at-or-below); Spearman rho = +0.816",
+      "the_nuance": "the 15 truncate-only cells at the SAME retained depth 14 clear nothing. So the effect is REGIME-AND-DEPTH, not depth alone. The agent recorded DEPTH_ALONE_IS_INSUFFICIENT in the evidence JSON and rewrote three manuscript sentences to be regime-scoped.",
+      "not_claimed": "per-benchmark monotonicity is FALSE (strictly_decreasing=False on all five) and the threshold is benchmark-dependent (>=16 on MMLU-Pro). Neither is claimed.",
+      "MAIN_note": "I suggested the monotone story as a possible way to turn the defect into a positive result. It IS one, but only in the regime-scoped form. My unqualified 'arms retaining more stack clear the floor' would have been another over-generalisation of exactly the kind I made on the null direction an hour earlier."
+    },
+    "agent_retracted_its_own_finding": "it first wrote that my '14/16' was wrong arithmetic, then retracted -- 14/16 is correct for restoring shortgpt16 alone (the full fix restores keep14 too, giving 15/17). It left the retraction in place in the deliverable rather than deleting it. Correct handling.",
+    "the_0of60_gap_RESOLVED": "0/60, 7/60, 25/60, 52/60 all reproduce EXACTLY. There is no hidden exclusion inside the 60 -- but the 60 INCLUDES k14. So the 7+52=59 arithmetic gap is a reporting slip in the sentence, not a fourth exclusion. This closes the question I left open at 14:20 in S01c_0of60_arithmetic_gap_MAIN.json, and closes it in the LESS alarming direction.",
+    "gates_landed_with_passing_negative_controls": {
+      "gate_designated_denominator.py": "5 checks; PARSES the declared arm set from the .tex instead of hardcoding it -- so it cannot drift the way the thing it guards did. Caught the live defect (rc=2) before the fix. NCs: drop keep12 CAUGHT, drop keep10 CAUGHT, break rectangularity CAUGHT, unmutated 0 spurious.",
+      "gate_build_record_matches_pdf.py": "build_record still certifies 22p/355196B vs actual 25p/376227B; assertion written without touching agent A's file. 3/3 NCs CAUGHT."
+    },
+    "STILL_OPEN_for_MAIN": [
+      "abstract 14/15 -> 15/17 and 10/15 -> the new counts (agent A's file, exact text supplied in its section 6)",
+      "01_introduction.tex:21",
+      "03b_nulls.tex:12 the 4.6x -> 4.2264 fix",
+      "RE-MEASURE PAGE COUNT after merging all three agents' edits -- body pages are a 7-byte step function at this margin, and agent A's committed main.pdf predates the prose edits"
+    ]
   }
 }

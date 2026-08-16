@@ -112,5 +112,38 @@
     },
     "net_effect_on_the_finding": "unchanged in substance: MMLU-Pro's floor is inside the estimator's noise, the surviving count is two (MMLU, BoolQ) not three, and both survivors have a fixed option count. Two of my supporting statements were wrong -- one over-generalised direction claim and one p-value low by 0.005 -- and both errors were in the direction of making my own case look tidier than it is.",
     "process_note": "This is the correct outcome of instructing an agent to VERIFY rather than IMPLEMENT. Its sign self-test refused to write output when my monotonicity claim failed, which is why the error surfaced at all. An agent told to 'apply MAIN's fix' would have propagated both errors into the manuscript."
+  },
+  "ADV1_BOUNDARY_CHECK_MAIN_VERIFIED_20260816_1520": {
+    "found_by": "R-claude-adversary (5/10, weak_reject, ceiling 5.5 -- the lowest ceiling on the panel). It filed this as FATAL.",
+    "why_it_is_sharper_than_the_legality_argument": "Everyone else (MAIN at 13:00, 4 of 6 codex, R-claude-soundness, R-claude-repro) showed the null is OUTSIDE THE LEGAL SUPPORT. This shows WHICH null it actually is, by boundary reconstruction -- and the answer indicts the paper on its own terms.",
+    "MAIN_reproduction": {
+      "paper_prints": {
+        "E_max": 0.104457,
+        "q95": 0.107048
+      },
+      "paper_own_n_opt_hist": {
+        "E_max": 0.113871,
+        "q95": 0.117188,
+        "implied_mean_1_over_n_opt": 0.110877
+      },
+      "all_items_at_10": {
+        "E_max": 0.104463,
+        "q95": 0.107131,
+        "implied_mean_1_over_n_opt": 0.1
+      },
+      "verdict": "the printed numbers are reproduced by the ALL-10 histogram to 5 decimals, NOT by the paper's own n_opt histogram"
+    },
+    "THE_INDICTMENT": "the calibration null is silently anchored at naive 1/10 chance. Section A.1.4 of the same paper reports mean(1/n_opt) = 0.110877 for this construct AND argues that naive 1/10 is the WRONG chance definition when n_opt varies. So the error the paper exists to criticise is embedded in the statistic it uses to prove the criticism. That is a far more damaging framing than 'the null is misspecified', and it is correct.",
+    "adversary_quantification": "legal selection noise alone accounts for 55% of the reported +0.573 pp gap (75% under its extremal design); its legal-support p range is 0.061-0.085 across 6 reconstructions, 0.168 extremal",
+    "consistency_across_four_independent_derivations": {
+      "MAIN_13:00": 0.078295,
+      "MAIN_after_exact_floor_correction": 0.083,
+      "R-claude-soundness": "0.068-0.118 across 3 seeds and every admissible allocation",
+      "R-claude-adversary": "0.061-0.085 across 6 reconstructions",
+      "agent_a0a5ef9a4d99c3ea9": 0.083,
+      "note": "four independent implementations, none clearing 0.05. The convergence is on the CONCLUSION; the exact p needs the per-item n_opt vector, which only the authors hold."
+    },
+    "why_the_adversary_ceiling_is_lowest": "it rates ceiling 5.5 rather than 6-7 because it judges the defect STRUCTURAL: MMLU-Pro carries ALL the flip evidence (14/15, the 21 powered cells, 3/12-vs-1/12, all 27 v2 cells). Remove its calibration and the only calibrated constructs left are MMLU (k=4) and BoolQ (k=2) -- which it independently confirmed are UNAFFECTED because fixed k makes legal == balanced -- and neither carries a single headline count. That is a coherent argument for a lower ceiling and must be preserved for the meta-reviewer, not averaged against the 6-7 ceilings.",
+    "attacks_that_FAILED_equal_value": "it reports the winner's-curse calibration reproduces to MC error on all 8 constructs, the kappa identity holds to printing precision on 8/27 rows, and the 36-item slack, P(X>=3|Bin(12,.05))=0.0196, 2532/14042=18.03%, ARC-Easy +38.76 pp and keep14 +0.324 pp all recompute exactly; bibliography 17/17 clean. Its words: 'this paper's internal arithmetic is in better shape than most'."
   }
 }
