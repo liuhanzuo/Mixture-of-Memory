@@ -1,9 +1,17 @@
 # Designated-damaged denominator disclosure (paperC, 2026-08-16)
 
-> **STATUS: IN PROGRESS -- preliminary section written to disk immediately per instruction.**
-> Independent re-derivation by agent, 0 GPU. Script: `paperC/code/recount_designated_denominators.py`.
+> **STATUS: COMPLETE.** Implemented and committed as `387dc90`. Independent re-derivation by
+> agent, 0 GPU. Scripts: `paperC/code/recount_designated_denominators.py`,
+> `paperC/code/gate_designated_denominator.py`, `paperC/code/gate_build_record_matches_pdf.py`.
+> Evidence: `paperC/evidence/designated_damaged_denominators.json`.
+> The §"STOP-AND-REPORT" block below was written to disk before implementation began, per
+> instruction; NEW-1 was retracted 5 minutes later and the retraction is kept in place.
 
-## 🔴 STOP-AND-REPORT: two findings BEYOND what MAIN adjudicated
+## 🔴 STOP-AND-REPORT: findings BEYOND what MAIN adjudicated
+
+**Headline: there IS a fourth same-class instance (NEW-2), and it is the one that decides the
+remedy. The chance side DOES change (10/15 → 20/25 off MMLU), but LESS than the floor side, and
+in a direction that leaves the flip claim intact.**
 
 ### ~~NEW-1~~ RETRACTED (my error, 5 min after writing it). MAIN's 14/16 is CORRECT.
 
