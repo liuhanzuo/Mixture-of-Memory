@@ -1,0 +1,317 @@
+{
+  "id": "MAIN_BH_27CELL_ADJUDICATION_20260816",
+  "question": "Does the 27-cell v2 family survive multiplicity correction, and does the bidirectionality claim in sec 5.3 survive?",
+  "computed_by": "MAIN, independently, from sections/tab_v2_full.tex as the sole input",
+  "method": "tie-aware Benjamini-Hochberg step-up q-values: q_(i) = min_{j>=i} m*p_(j)/j, enforced monotone; Bonferroni at alpha/m",
+  "m": 27,
+  "alpha": 0.05,
+  "bonferroni_threshold": 0.001851851851851852,
+  "n_bh_reject": 6,
+  "n_bonferroni_reject": 5,
+  "rows": [
+    {
+      "family": "Qwen3",
+      "cell": "intact",
+      "p": 0.0001,
+      "verdict": "item-level signal",
+      "q_bh": 0.00054,
+      "bh_rank": 1,
+      "bh_reject": true,
+      "bonferroni_reject": true
+    },
+    {
+      "family": "OLMo-2",
+      "cell": "intact",
+      "p": 0.0001,
+      "verdict": "item-level signal",
+      "q_bh": 0.00054,
+      "bh_rank": 2,
+      "bh_reject": true,
+      "bonferroni_reject": true
+    },
+    {
+      "family": "OLMo-2",
+      "cell": "shortgpt16@200000",
+      "p": 0.0001,
+      "verdict": "item-level signal",
+      "q_bh": 0.00054,
+      "bh_rank": 3,
+      "bh_reject": true,
+      "bonferroni_reject": true
+    },
+    {
+      "family": "Llama-2",
+      "cell": "intact",
+      "p": 0.0001,
+      "verdict": "anchor blocked",
+      "q_bh": 0.00054,
+      "bh_rank": 4,
+      "bh_reject": true,
+      "bonferroni_reject": true
+    },
+    {
+      "family": "Llama-3",
+      "cell": "intact",
+      "p": 0.0001,
+      "verdict": "item-level signal",
+      "q_bh": 0.00054,
+      "bh_rank": 5,
+      "bh_reject": true,
+      "bonferroni_reject": true
+    },
+    {
+      "family": "Qwen3",
+      "cell": "k14, unhealed",
+      "p": 0.0066,
+      "verdict": "trace signal",
+      "q_bh": 0.0297,
+      "bh_rank": 6,
+      "bh_reject": true,
+      "bonferroni_reject": false
+    },
+    {
+      "family": "OLMo-2",
+      "cell": "keep14@200000",
+      "p": 0.0172,
+      "verdict": "trace signal",
+      "q_bh": 0.066343,
+      "bh_rank": 7,
+      "bh_reject": false,
+      "bonferroni_reject": false
+    },
+    {
+      "family": "Qwen3",
+      "cell": "k10, unhealed",
+      "p": 0.0804,
+      "verdict": "no signal",
+      "q_bh": 0.218492,
+      "bh_rank": 8,
+      "bh_reject": false,
+      "bonferroni_reject": false
+    },
+    {
+      "family": "OLMo-2",
+      "cell": "keep8@45000",
+      "p": 0.0856,
+      "verdict": "no signal",
+      "q_bh": 0.218492,
+      "bh_rank": 9,
+      "bh_reject": false,
+      "bonferroni_reject": false
+    },
+    {
+      "family": "Qwen3",
+      "cell": "k8, unhealed",
+      "p": 0.0964,
+      "verdict": "no signal",
+      "q_bh": 0.218492,
+      "bh_rank": 10,
+      "bh_reject": false,
+      "bonferroni_reject": false
+    },
+    {
+      "family": "Llama-3",
+      "cell": "k14, unhealed",
+      "p": 0.097,
+      "verdict": "no signal",
+      "q_bh": 0.218492,
+      "bh_rank": 11,
+      "bh_reject": false,
+      "bonferroni_reject": false
+    },
+    {
+      "family": "Llama-2",
+      "cell": "k8, unhealed",
+      "p": 0.1002,
+      "verdict": "no signal",
+      "q_bh": 0.218492,
+      "bh_rank": 12,
+      "bh_reject": false,
+      "bonferroni_reject": false
+    },
+    {
+      "family": "Llama-2",
+      "cell": "k12, unhealed",
+      "p": 0.1052,
+      "verdict": "no signal",
+      "q_bh": 0.218492,
+      "bh_rank": 13,
+      "bh_reject": false,
+      "bonferroni_reject": false
+    },
+    {
+      "family": "Llama-3",
+      "cell": "k8, unhealed",
+      "p": 0.2894,
+      "verdict": "no signal",
+      "q_bh": 0.558129,
+      "bh_rank": 14,
+      "bh_reject": false,
+      "bonferroni_reject": false
+    },
+    {
+      "family": "OLMo-2",
+      "cell": "keep8@121000",
+      "p": 0.3122,
+      "verdict": "no signal",
+      "q_bh": 0.56196,
+      "bh_rank": 15,
+      "bh_reject": false,
+      "bonferroni_reject": false
+    },
+    {
+      "family": "Llama-2",
+      "cell": "k14, unhealed",
+      "p": 0.395,
+      "verdict": "no signal",
+      "q_bh": 0.666563,
+      "bh_rank": 16,
+      "bh_reject": false,
+      "bonferroni_reject": false
+    },
+    {
+      "family": "Llama-2",
+      "cell": "k10, unhealed",
+      "p": 0.451,
+      "verdict": "no signal",
+      "q_bh": 0.716294,
+      "bh_rank": 17,
+      "bh_reject": false,
+      "bonferroni_reject": false
+    },
+    {
+      "family": "Qwen3",
+      "cell": "heal@6000",
+      "p": 0.4932,
+      "verdict": "no signal",
+      "q_bh": 0.73062,
+      "bh_rank": 18,
+      "bh_reject": false,
+      "bonferroni_reject": false
+    },
+    {
+      "family": "Qwen3",
+      "cell": "heal@6500",
+      "p": 0.5204,
+      "verdict": "no signal",
+      "q_bh": 0.73062,
+      "bh_rank": 19,
+      "bh_reject": false,
+      "bonferroni_reject": false
+    },
+    {
+      "family": "Qwen3",
+      "cell": "heal@5000",
+      "p": 0.5412,
+      "verdict": "no signal",
+      "q_bh": 0.73062,
+      "bh_rank": 20,
+      "bh_reject": false,
+      "bonferroni_reject": false
+    },
+    {
+      "family": "OLMo-2",
+      "cell": "keep10@83500",
+      "p": 0.6966,
+      "verdict": "no signal",
+      "q_bh": 0.862282,
+      "bh_rank": 21,
+      "bh_reject": false,
+      "bonferroni_reject": false
+    },
+    {
+      "family": "OLMo-2",
+      "cell": "keep12@124000",
+      "p": 0.7026,
+      "verdict": "no signal",
+      "q_bh": 0.862282,
+      "bh_rank": 22,
+      "bh_reject": false,
+      "bonferroni_reject": false
+    },
+    {
+      "family": "Qwen3",
+      "cell": "heal@7000",
+      "p": 0.8522,
+      "verdict": "no signal",
+      "q_bh": 0.983925,
+      "bh_rank": 23,
+      "bh_reject": false,
+      "bonferroni_reject": false
+    },
+    {
+      "family": "Llama-3",
+      "cell": "k10, unhealed",
+      "p": 0.8746,
+      "verdict": "no signal",
+      "q_bh": 0.983925,
+      "bh_rank": 24,
+      "bh_reject": false,
+      "bonferroni_reject": false
+    },
+    {
+      "family": "Qwen3",
+      "cell": "k12, unhealed",
+      "p": 0.9432,
+      "verdict": "no signal",
+      "q_bh": 0.9968,
+      "bh_rank": 25,
+      "bh_reject": false,
+      "bonferroni_reject": false
+    },
+    {
+      "family": "Qwen3",
+      "cell": "heal@5500",
+      "p": 0.981,
+      "verdict": "no signal",
+      "q_bh": 0.9968,
+      "bh_rank": 26,
+      "bh_reject": false,
+      "bonferroni_reject": false
+    },
+    {
+      "family": "Llama-3",
+      "cell": "k12, unhealed",
+      "p": 0.9968,
+      "verdict": "no signal",
+      "q_bh": 0.9968,
+      "bh_rank": 27,
+      "bh_reject": false,
+      "bonferroni_reject": false
+    }
+  ],
+  "VERDICT_ON_THE_DISPUTE": {
+    "there_was_no_dispute": "My pre-compaction note framed R-claude-stats V13 and the meta-review 3.7 as reaching OPPOSITE conclusions on the same 27 numbers. That was MY error, not theirs. Both say BH rejects 6 and that olmo2/keep14 is RETAINED. I had read 'retained' as 'the finding is retained'; in multiple testing it means the NULL is retained, i.e. the cell FAILS correction. The two reviewers agree exactly, and my arithmetic reproduces both.",
+    "olmo2_keep14": {
+      "p": 0.0172,
+      "bh_rank": 7,
+      "bh_threshold": 0.012963,
+      "q_bh": 0.066343,
+      "survives_bh": false,
+      "survives_bonferroni": false
+    },
+    "qwen3_k14": {
+      "p": 0.0066,
+      "bh_rank": 6,
+      "bh_threshold": 0.011111,
+      "q_bh": 0.0297,
+      "survives_bh": true,
+      "survives_bonferroni": false
+    }
+  },
+  "CORRECTION_TO_BOTH_REVIEWERS": {
+    "severity": "precision defect that would have propagated into the paper had I copied their wording",
+    "R-claude-stats_wrote": "'The 27-cell v2 re-analysis receives no multiplicity correction, and neither \\'trace signal\\' cell survives one over the paper\\'s own tabulated family.'",
+    "meta_review_wrote": "'Bonferroni (alpha/27 = 0.001852) rejects only the 5 anchors, so both \\'trace signal\\' cells fail.'",
+    "why_wrong": "Under BH at q=0.05, Qwen3/k14 DOES survive (rank 6, p=0.0066 <= 6*0.05/27 = 0.011111, q_BH = 0.029700). Only under Bonferroni do both fail. Each reviewer's own step-by-step enumeration states that rank 6 rejects, so each contradicts its own summary sentence.",
+    "consequence_if_uncorrected": "Writing 'neither trace-signal cell survives correction' into the paper would be FALSE for BH, i.e. it would understate the paper's own surviving evidence -- an error against the authors, but an error.",
+    "what_is_actually_true": "BH over the 27-cell family retains ONE of the two trace-signal cells (Qwen3/k14) and drops the other (OLMo-2/keep14). Since OLMo-2/keep14 is the ONLY cell moving in the upward direction, the surviving half of the bidirectionality claim is the downgrade only."
+  },
+  "IMPLICATION_FOR_SEC_5_3": {
+    "current_sentence": "'It withdraws the published above-floor capability label for qwen3/k14, replacing it with TRACE_SIGNAL, while olmo2/keep14 moves from at-floor to TRACE_SIGNAL. Re-sorting in both directions is evidence that the criterion is doing more than shrinking effects.'",
+    "defect": "The upward direction is carried by exactly one cell whose q_BH = 0.0663. Under correction over the family the table itself defines (one table, one null, one statistic, one item set), the read-out re-sorts in ONE direction only, so 'doing more than shrinking effects' has no BH-surviving support.",
+    "downgrade_direction_survives": "qwen3/k14's v2 p=0.0066 has q_BH=0.0297, so the withdrawal of its above-floor label IS supported after correction.",
+    "required_fix": "Report q_BH per cell; state the bidirectionality as an uncorrected per-cell observation; rest no conclusion on it."
+  },
+  "SCOPE_LIMIT_STATED_HONESTLY": "BH assumes p-values that are independent or positively-regression-dependent. These 27 cells share the MMLU-Pro item axis and nest arms within families, so PRDS is plausible but unverified here. This computation shows what the paper's own stated correction yields on its own tabulated family; it does not establish that BH is the right correction for this dependence structure. The paper's existing objection to off-the-shelf correction (Appendix app:designated) still applies -- but it cannot be used to avoid reporting the number, because the paper already applies BH to its 12-cell comparison."
+}

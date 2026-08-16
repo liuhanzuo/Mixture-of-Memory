@@ -17,7 +17,7 @@
     }
   },
   "static": {
-    "n_input_targets": 22,
+    "n_input_targets": 23,
     "missing_input_targets": [],
     "n_cite_keys": 17,
     "unresolved_cite_keys": [],
@@ -44,18 +44,19 @@
     "n_undefined_citations": 0,
     "n_overfull_hbox": 0,
     "n_overfull_vbox": 0,
-    "n_underfull_hbox": 36,
+    "n_underfull_hbox": 32,
     "n_latex_errors": 0,
     "first_errors": [],
     "n_missing_file": 0
   },
   "compiled": true,
   "pdf": "main.pdf",
-  "pdf_bytes": 342809,
-  "pdf_sha256": "2d9e546f2572bbe7d4a871a9881fe9e22305826da956a5bbe38466e49cd219ac",
-  "pdf_pages": 19,
+  "pdf_bytes": 383874,
+  "pdf_sha256": "b30e0648b6501c932fe0ebffab11f1eded0400bc2d772f254f647455bdb20f2a",
+  "pdf_pages": 26,
   "build_gate_pass": true,
   "build_gate_blockers": [],
   "pdf_visually_inspected": false,
-  "pdf_visual_inspection_note": "NOT DONE BY THIS SCRIPT. No pdftoppm/gs/mutool/PyMuPDF on this host (measured 2026-08-14), so page images cannot be rendered here. The skill's integrity gate item 'PDF visually inspected' therefore remains OPEN unless a human or a PDF-capable host confirms it."
+  "pdf_visual_inspection_note": "NOT DONE BY THIS SCRIPT. No pdftoppm/gs/mutool/PyMuPDF on this host (measured 2026-08-14), so page images cannot be rendered here. The skill's integrity gate item 'PDF visually inspected' therefore remains OPEN unless a human or a PDF-capable host confirms it.",
+  "stale_record_note_20260816": "The pdf_* fields were stale AT HEAD, not merely in the working tree: on a clean `git archive HEAD` checkout the committed main.pdf measured 26 pages / 379817 bytes while this record claimed 19 pages / 342809 bytes, and gate_build_record_matches_pdf.py returned rc=2 there. So the gate had been failing on committed state, and the field a venue page limit would be checked against understated the document by 7 pages. Refreshed here from the 3-pass-converged build (previous values {'pdf_bytes': 355196, 'pdf_sha256': '56a376e128c358e9f09f2daeee7f543a3717c5cab318e113d28c4102a56e2485', 'pdf_pages': 22}). The page count is read from pdflatex's own 'Output written on main.pdf (N pages' line because pdfinfo is not on this host's PATH."
 }
