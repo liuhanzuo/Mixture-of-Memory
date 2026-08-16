@@ -1,14 +1,22 @@
 # GPU_STATUS.md — 5 节点单一事实来源
 
-**最后实测 2026-08-17 06:40 GMT+8（heartbeat）。32/40 卡占用，LOCAL 8 卡空闲（**故意**，理由见表下）。每节点 8 个 compute PID + 单一 owning script = 无抢卡。**
+**最后实测 2026-08-17 07:00 GMT+8（heartbeat）。32/40 卡占用，LOCAL 8 卡空闲（**故意**）。每节点 8 个 compute PID + 单一 owning script = 无抢卡。**
 
-| 节点 | 硬件 | 盘 | 在跑 | step | 显存/卡 | util | amortised s/step | baseline | 判定 |
+| 节点 | 硬件 | 盘 | 在跑 | step | 显存/卡 | util | amortised s/step（**ckpt mtime**） | baseline | 判定 |
 |---|---|---|---|---|---|---|---|---|---|
-| LOCAL(=.21) | 8×B200 sm_100 | wzc1 | **IDLE**（keep10 已到 step200000 自行退出） | — | 0 MiB | 0% | — | — | 三判据齐（0 MiB + 0% + 0 PID）；**故意空闲 → 见下方「为什么不填 LOCAL」** |
-| `.212` | 8×B200 sm_100 | wzc1 | `olmo2_probe2_7B_keep14fresh2_distill` | 53000/200000 | 157.8 GB | 99-100% | **2.4501 / 2.4510 / 2.4508**（连续 3 个 ckpt 区间） | 2.4500 | healthy 1.000× — ETA 08-21 10:16 |
-| `.73` | 8×H20 sm_90 | zwfy6 | `olmo2_probe2_7B_keep12fresh2` + `chain_keep12_eval_200k` watcher | 193720/200000 | 96.4 GB | 99-100% | **7.9167–7.9215**（**ckpt mtime**，连续 5 个区间） | 7.9160 | healthy **1.0004×** — ETA **~20:41** |
-| `.82` | 8×H20 sm_90 | zwfy6 | `olmo2_probe2_7B_keep8fresh2`（resume from step131000） | 168000/200000 | 78.5 GB | 100% | **5.8580–5.8648**（连续 3 个 ckpt 区间） | 5.8640 | healthy 1.000× — ETA 08-19 09:43 |
-| `.104` | 8×H20 sm_90 | zwfy6 | `paperC_qwen3base_heal_k8f2` | 68500/200000 | 78.8 GB | 99-100% | **5.8363–5.8518**（连续 3 个 ckpt 区间） | 5.8380 | healthy 1.001× — ETA 08-26 03:33 |
+| LOCAL(=.21) | 8×B200 sm_100 | wzc1 | **IDLE** | — | 0 MiB | 0% | — | — | 三判据齐（0 MiB + 0% + 0 PID）；**故意空闲 → 见下方章节** |
+| `.212` | 8×B200 sm_100 | wzc1 | `olmo2_probe2_7B_keep14fresh2_distill` | 54000/200000 | 157.8 GB | 98-100% | **2.4504 / 2.4521 / 2.4506** | 2.4500 | healthy 1.000× — ETA 08-21 10:16 |
+| `.73` | 8×H20 sm_90 | zwfy6 | `olmo2_probe2_7B_keep12fresh2` + eval watcher | 193920/200000 | 96.4 GB | 100% | **7.9172 / 7.9167 / 7.9194** | 7.9160 | healthy 1.0004× — ETA ~20:41；log 内 0 个 Traceback/OOM |
+| `.82` | 8×H20 sm_90 | zwfy6 | `olmo2_probe2_7B_keep8fresh2` | 168500/200000 | 78.5 GB | 100% | **5.8611 / 5.8580 / 5.8609** | 5.8640 | healthy 0.999× — ETA 08-19 09:43 |
+| `.104` | 8×H20 sm_90 | zwfy6 | `paperC_qwen3base_heal_k8f2` | 69000/200000 | 78.8 GB | 98-100% | **5.8480 / 5.8363 / 5.8426** | 5.8380 | healthy 1.001× — ETA 08-26 03:33 |
+
+> ### 07:00 补记：`.212` GPU0 读到 0% —— 是 ckpt flush，不是 straggler，已证
+> 首次采样 GPU0 = **0%**，其余 7 张 100%。**没有据此下结论**，而是连采 4 次（间隔 ~8 s）：
+> `0% → 8% → 4% → 100% → 98%` —— GPU0 自行恢复。
+> **决定性证据不是 util 而是 ckpt 间隔**：最新 ckpt `step54000` 当时**只有 0.5 分钟大**，
+> 即我正好采样在 rank-0 写盘期间；而 ckpt 间隔 2.4504/2.4521/2.4506 s/step **完全没有变慢**。
+> 参见 `memory/ckpt-interval-rate-is-not-compute-rate.md`：低 util 的单次读数总落在 GPU0，
+> 因为 rank-0 干额外活。**单点 util 不是状态**；要判生死看 artifact 的推进。
 
 > ## ⚠️⚠️ `.73` 速率：我今天报错了**两次**，方向相反，两次都是 watcher 采样伪影
 >
