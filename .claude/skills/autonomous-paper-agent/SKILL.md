@@ -157,7 +157,7 @@ These are internal quality-control defaults, not claims about any venue's actual
 
 Inspect the repository, notes, drafts, venue template, experiment outputs, configurations, figures, tables, and bibliography.
 
-Identify the target venue and review rubric from explicit context. If absent, use the generic rubric in `references/review-rubric.md` and record that assumption.
+Identify the target venue and review rubric from explicit context. **Detect the venue from the LaTeX template, not from memory**: if `main.tex` loads `iclr*_conference`, use `references/review-rubric-iclr.md` (six-point ladder {1,3,5,6,8,10}, boundary 5|6, confidence 1-5). Otherwise use the generic rubric in `references/review-rubric.md` and record that assumption. As of 2026-08-16 `paperC/` is ICLR (verified: it loads `iclr2026_conference`); `paperA/` and `paperB/` are ACL-family and stay on the generic rubric.
 
 Create the persistent state files, a dependency-ordered plan, and an immutable baseline checkpoint.
 
@@ -301,7 +301,7 @@ Do not include previous reviews, previous scores, response letters, hidden autho
 
 ### Phase 8: Parallel Independent Review
 
-Read `references/review-protocol.md` and `references/review-rubric.md`.
+Read `references/review-protocol.md`, and the rubric that matches the venue: `references/review-rubric-iclr.md` for an ICLR-template paper, otherwise `references/review-rubric.md`. **Give the reviewer exactly one rubric.** Handing over both invites a score that is legal on neither scale.
 
 Spawn five fresh reviewer subagents in parallel, one per role. Give each reviewer:
 
@@ -463,6 +463,8 @@ Do not automatically keep the newest manuscript. Preserve every round checkpoint
 ## Scoring Rubric
 
 Use the venue rubric when available. Otherwise use `references/review-rubric.md`.
+
+**For ICLR-template papers the scale is the ICLR six-point ladder and the generic 1-10 scale below does NOT apply.** The allowed ratings are {1, 3, 5, 6, 8, 10} with the accept/reject boundary between 5 and 6; 2/4/7/9 and half-points are not on the form. The gates become median>=6, lower quartile>=5, no rating of 1 -- the generic `median>=7.0` is *unattainable* there because 7 is not a legal value. `paperC/code/gate_iclr_scale_legality.py` enforces this numerically. **Never rescale historical rounds between the two conventions**; record the boundary instead.
 
 Overall score uses a generic 1-10 internal scale:
 
