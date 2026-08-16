@@ -1,0 +1,43 @@
+{
+  "id": "MAIN_ARTIFACT_STILL_MISSING_ECAL_20260816_2010",
+  "found_by": "MAIN, by auditing every evidence/code path the manuscript names against the frozen artifact",
+  "SEVERITY": "the same defect class four of six round_04 reviewers made a MAJOR issue, recurring on the REPLACEMENT files",
+  "what_is_missing_from_review_rounds/round_04/submission_complete": {
+    "evidence/construct_nulls_legality_aware.json": {
+      "live_bytes": 62825,
+      "live_sha256": "5ee8fa39d5fba849f66766126d404e286ea632900dc443e105825ecab98164f3",
+      "cited_as": "E-CAL in sections/09_appendix.tex tab:artifact-map",
+      "why_it_matters": "E-CAL is the CORRECTED legality-aware calibration -- the paper's central fix, described in its own appendix as 'the single machine-readable source for these nine rows'. A reviewer following the pointer in the frozen artifact does not find it."
+    },
+    "code/recompute_legality_aware_nulls.py": {
+      "live_bytes": 54073,
+      "live_sha256": "ed99519519437b3f298498e0034f3d5c7a66b86aa3b7fc9199fa063ef3109368",
+      "cited_as": "'Null recomputation' row of tab:artifact-map",
+      "why_it_matters": "the script that produces E-CAL"
+    }
+  },
+  "WHAT_THE_ARTIFACT_SHIPS_INSTEAD": {
+    "path": "evidence/floor_winners_curse_calibration.json",
+    "shipped_mtime": "2026-08-14 22:26:12",
+    "status": "SUPERSEDED. construct_nulls_legality_aware.json names it, with sha256 275112623d0574068..., in its own 'supersedes' field.",
+    "consequence": "the frozen artifact contains the record the paper argues is WRONG (it used a null MMLU-Pro cannot produce) and omits the record that replaced it. That is worse than an absence: a reviewer who opens the artifact finds a calibration whose numbers the manuscript has retracted."
+  },
+  "WHY_IT_RECURRED": {
+    "root_cause": "identical to PACKAGING_DEFECT_20260816.md: the freeze manifest is hand-enumerated. submission_complete was frozen to repair the first instance and correctly restored the 10 files named at that time -- but the calibration fix landed 2026-08-16 14:13, AFTER that freeze, so the new E-CAL target was never added.",
+    "timeline": {
+      "submission_complete_frozen": "2026-08-14 22:26 (mtime of the shipped calibration record)",
+      "legality_aware_calibration_produced": "2026-08-16 14:13:31",
+      "gap": "the artifact predates the fix it is supposed to document"
+    },
+    "the_general_lesson": "A hand-enumerated manifest is not repaired by enumerating more paths; it is repaired by deriving the manifest from the manuscript. Every evidence change re-opens the same hole, and the second instance looks exactly like the first."
+  },
+  "REMEDY_IMPLEMENTED": {
+    "gate": "code/gate_cited_paths_in_artifact.py",
+    "what_it_does": "extracts every \\texttt{evidence/...} and \\texttt{code/...} path from sections/*.tex, rejoins the ones LaTeX line-breaking splits across adjacent \\texttt groups, and asserts each resolves inside the frozen submission",
+    "TRUE_RC_on_current_state": 2,
+    "measured": "17 cited paths, 15 present, 2 missing, 0 unresolved fragments",
+    "parsing_note": "a naive extraction reported 4 additional 'missing' paths that were line-break fragments of my own making (evidence/mmlu_scale_, code/mmlu_pro_, ...). The rejoin step removes all four. A gate that cries wolf on its own parsing gets ignored, so this was fixed before the verdict was trusted.",
+    "scope_limit": "PRESENCE only. A stale file at the right path passes this gate. It does not check content, hashes, or freshness."
+  },
+  "WHAT_I_AM_NOT_DOING": "I am not re-freezing the artifact in this pass. The meta-review's own ordering is to fix the calibration FIRST and repackage after, and the calibration work is still open (BH q-column, denominator corrections, and the count gates all landed today). Re-freezing now would produce a third snapshot that goes stale the next time an evidence file changes. The gate makes the staleness visible so the eventual re-freeze can be verified rather than asserted."
+}
