@@ -43,11 +43,42 @@ forbids.
 The load-bearing rule this encodes
 ----------------------------------
 `proposal/README.md`: **Related Work must be written BEFORE new GPU is spent.**
-Five backlog proposals (B01/B05/B06/B07/B08) have `novelty_checked: false` and
-no `RELATED_WORK.md` on disk. They are therefore NOT `ready_gpu` no matter how
-well-specified their gate is — they are `ready_cpu`, and the CPU task is the
+A proposal with no `RELATED_WORK.md` on disk is NOT `ready_gpu` no matter how
+well-specified its gate is — it is `ready_cpu`, and the CPU task is the
 related-work write-up. That is the difference between "idle because blocked" and
 "idle because nobody dispatched the free work", which is the whole point.
+
+**Presence is read from the DISK at each run** (see `related_work_md` below), not
+from any list in this file. That distinction is not pedantic — it is the second
+defect this section has carried:
+
+> CORRECTED 2026-08-16. Until today this paragraph read "Five backlog proposals
+> (B01/B05/B06/B07/B08) have `novelty_checked: false` and no `RELATED_WORK.md` on
+> disk." **All five files are present** — 48124 / 10737 / 28761 / 35965 / 59799 B
+> respectively. Of the 18 proposal directories on disk, 15 have one. The three
+> that do not are `archive/A03`, `archive/A05` — both in `archive/`, which THIS
+> READER DOES NOT SCAN (see the globs in `main`: `active/` + `backlog/` only) —
+> and the superseded `backlog/B04-eval-fragility` shell, which has no STATUS.json
+> either and so is invisible here too. **In other words: among the proposals this
+> tool actually reports on, the count of missing RELATED_WORK.md is ZERO.** The
+> sentence was true when written and became false as the files were written, and
+> because it sits in the section headed "the load-bearing rule this encodes",
+> every reader was handed a false premise about which proposals are blocked and why.
+>
+> It also propagated. `B07-mutable-comem-serving/STATUS.json` `lifecycle_why_20260814`
+> states that "ready_queue.py:46-51 hard-codes B07 among B01/B05/B06/B07/B08 whose
+> missing RELATED_WORK.md forbids GPU regardless of gate quality". **There is no
+> such hard-coding.** Lines 46-51 are inside this module docstring — verified with
+> `ast.get_docstring` — and `grep -nE '"(B01|B05|B06|B07|B08)"'` over the file
+> returns nothing. A comment was read as a code path, and a proposal wrote a
+> blocker against it. The real gate for those proposals is the novelty VERDICT
+> (`NOVELTY_VERDICT_KEYS`), which is a separate question from file presence and is
+> genuinely unadjudicated for some of them.
+>
+> Lesson, and the reason this correction is verbose rather than a silent edit: a
+> docstring that names specific proposals will rot, and prose in the section a
+> reader trusts most is the worst place for a fact with a shelf life. State the
+> RULE here; let the code state the FACTS.
 
 Two reader defects that cancelled each other (fixed 2026-08-15)
 ---------------------------------------------------------------
