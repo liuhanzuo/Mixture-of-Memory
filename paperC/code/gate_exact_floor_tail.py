@@ -46,7 +46,8 @@ import sys
 from fractions import Fraction
 from pathlib import Path
 
-TABLE = Path(__file__).resolve().parent.parent / "sections" / "tab_nulls.tex"
+SECTIONS = Path(__file__).resolve().parent.parent / "sections"
+TABLE = SECTIONS / "tab_nulls.tex"
 COL_N, COL_FLOOR = 1, 3
 
 
@@ -100,10 +101,50 @@ def main():
                 need += 1
             print(f"  {name}: observed count {count}, but c/{n} >= {float(stored):.6f} "
                   f"requires c >= {need}")
-        return 1
+
+        # A row-list the prose contradicts is a defect, not an informational note.
+        # rc=1 alone made this gate indistinguishable from a real failure in a sweep, and
+        # that is exactly how the defect below survived: 03b_nulls.tex asserted "the other
+        # seven rows are unaffected because their stored floors round down" while this gate
+        # was printing FOUR hazard rows on every run. MMLU and BoolQ round UP too; they are
+        # merely at p<1e-5, where a one-count shift cannot reach the verdict. So the prose
+        # was wrong about the mechanism and right about the conclusion, which is the kind of
+        # error a reviewer finds and an author cannot explain.
+        rc = 1
+        prose = SECTIONS / "03b_nulls.tex"
+        if prose.exists():
+            text = " ".join(prose.read_text(encoding="utf-8").split())
+            claimed = re.search(r"the other (\w+) rows are unaffected", text)
+            if claimed:
+                print()
+                print("PROSE CONTRADICTION: 03b_nulls.tex still says "
+                      f"'the other {claimed.group(1)} rows are unaffected', which implies "
+                      f"{len(rows) - len(flagged)} clean rows, but {len(flagged)} of "
+                      f"{len(rows)} carry the hazard.")
+                rc = 2
+            named = [n for n, *_ in flagged if _prose_names(text, n)]
+            missing = [n for n, *_ in flagged if n not in named]
+            if missing:
+                print()
+                print("PROSE OMISSION: these hazard rows are not named in the rounding "
+                      f"paragraph: {missing}")
+                print("      Naming only the rows whose verdict moved understates the "
+                      "scope of the convention.")
+                rc = 2
+        return rc
 
     print(f"All {len(rows)} rows have stored floor <= exact rational; the inclusive tail is safe.")
     return 0
+
+
+def _prose_names(text, row_label):
+    """Is this table row's construct named in the rounding paragraph?
+
+    Row labels carry a chance-convention suffix ('MMLU-Pro, naive'); the prose names the
+    construct once and covers both of its rows, so match on the construct only.
+    """
+    construct = row_label.split(",")[0].strip()
+    return construct in text
 
 
 if __name__ == "__main__":
