@@ -99,6 +99,55 @@ def n_verdicts_changed(doc):
 
 TRUNC = "mmlu_scale_power/trunc_fix_before_after.json"
 
+# ---- the abstract's construct census, recomputed from tab_nulls.tex ------------
+# These four numbers are the abstract's headline framing of the calibration result and
+# nothing checked them. They are derived from the SHIPPED table rather than an evidence
+# JSON because the table is what a reader counts, and the table is itself bound to the
+# evidence by code/emit_tab_construct_nulls.py plus code/check_prose_vs_evidence.py.
+#
+# The subtlety worth encoding: tab_nulls has NINE rows but EIGHT distinct constructs,
+# because MMLU-Pro appears twice, once per chance convention (naive 1/10 and
+# item-averaged mean(1/n_opt)). A census that counts rows says nine and eight, and both
+# would be wrong.
+NULLS_TABLE = SECTIONS / "tab_nulls.tex"
+SIG_MARK = "10^{-5}"
+
+
+def _nulls_rows():
+    rows = []
+    for line in NULLS_TABLE.read_text(encoding="utf-8").splitlines():
+        stripped = line.strip()
+        if "&" not in line or stripped.startswith("%") or stripped.startswith("\\"):
+            continue
+        cells = [c.strip() for c in line.split("&")]
+        if len(cells) < 10 or cells[0] == "Construct":
+            continue
+        rows.append((cells[0].split(",")[0].strip(),
+                     cells[9].replace("\\\\", "").strip()))
+    return rows
+
+
+def _by_construct():
+    out = {}
+    for name, p in _nulls_rows():
+        out.setdefault(name, []).append(p)
+    return out
+
+
+def n_distinct_constructs(_doc=None):
+    return len(_by_construct())
+
+
+def n_significant_constructs(_doc=None):
+    """A construct counts as significant only if EVERY one of its rows is p<1e-5."""
+    return sum(1 for ps in _by_construct().values()
+               if all(SIG_MARK in p for p in ps))
+
+
+def n_remaining_constructs(_doc=None):
+    return n_distinct_constructs() - n_significant_constructs()
+
+
 CLAIMS = [
     # (label, section file, regex whose group(1) is the asserted count,
     #  evidence file, recomputation, human note)
@@ -127,6 +176,20 @@ CLAIMS = [
      TRUNC, n_cells_with_pair,
      "the denominator must equal the number of cells that HAVE a before/after pair, "
      "which is 14 rather than 15 because llama2_7b_base OOM'd and has no 'before'"),
+    # ---- abstract construct census (evidence file is None -> derived from tab_nulls) --
+    ("abstract: distinct letter constructs", "00_abstract.tex",
+     r"only two of the (\w+) letter constructs",
+     None, n_distinct_constructs,
+     "tab_nulls has NINE rows but EIGHT distinct constructs: MMLU-Pro appears twice, "
+     "once per chance convention. A row count would say nine and be wrong."),
+    ("abstract: constructs with p<1e-5", "00_abstract.tex",
+     r"only (\w+) of the \w+ letter constructs",
+     None, n_significant_constructs,
+     "a construct is significant only if EVERY one of its rows is p<1e-5"),
+    ("abstract: remaining constructs", "00_abstract.tex",
+     r"on the remaining (\w+) the floor lies inside",
+     None, n_remaining_constructs,
+     "distinct minus significant; the two must sum to the eight"),
 ]
 
 WORDS = {"zero": 0, "one": 1, "two": 2, "three": 3, "four": 4, "five": 5,
@@ -152,11 +215,18 @@ def main():
             return 3
         text = sec_path.read_text(encoding="utf-8")
         m = re.search(pattern, text)
-        try:
-            doc = load(ev_rel)
-        except FileNotFoundError as exc:
-            print(f"CANNOT READ evidence: {exc}")
-            return 3
+        # ev_rel is None for claims recomputed from a shipped .tex table rather than
+        # from an evidence JSON; those recomputations take no document argument.
+        if ev_rel is None:
+            doc = None
+            source = "sections/tab_nulls.tex"
+        else:
+            try:
+                doc = load(ev_rel)
+            except FileNotFoundError as exc:
+                print(f"CANNOT READ evidence: {exc}")
+                return 3
+            source = ev_rel
         expected = recompute(doc)
         if not m:
             failures.append(f"{label}: pattern {pattern!r} found no match in {sec}. "
@@ -172,7 +242,7 @@ def main():
         ok = claimed == expected
         if not ok:
             failures.append(f"{label}: prose in {sec} says {claimed}, evidence "
-                            f"{ev_rel} says {expected}. {note}")
+                            f"{source} says {expected}. {note}")
         rows.append((label, claimed, expected, "ok" if ok else "FAIL"))
 
     print(f"{'count claim':40}{'prose':>10}{'evidence':>10}{'':>7}")
