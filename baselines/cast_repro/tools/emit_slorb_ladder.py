@@ -218,7 +218,17 @@ def _svd_t_density_matched(out_dim: int, in_dim: int, r_eff: int) -> int:
 
 
 def main() -> int:
+    # allow_abbrev=False is load-bearing, not style. With argparse's default
+    # allow_abbrev=True a wrong flag whose name is a prefix of a real one binds to it
+    # SILENTLY and the process exits 0. Measured on this parser's own option set:
+    # `--mode ladder` parses cleanly and sets model='ladder', because --model is the only
+    # option beginning "--mo". A rung exported under a bogus --model would then be scored
+    # and reported as if it were the requested one, and the wrong flag leaves no trace.
+    # Verified both directions before changing anything: default parser accepts
+    # `--mode ladder` (model='ladder'); allow_abbrev=False rejects it with SystemExit 2.
+    # B12's own G0 record flagged this at line 220 and it had not been fixed.
     ap = argparse.ArgumentParser(
+        allow_abbrev=False,
         description="Emit a B12 SLoRB rank-ladder rung (CPU only; no training).")
     ap.add_argument("--ckpt", required=True)
     ap.add_argument("--output", required=True)
