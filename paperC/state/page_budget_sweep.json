@@ -1,0 +1,318 @@
+[
+  {
+    "variant": "baseline",
+    "desc": "on-disk state, unmodified",
+    "drop_sections": [],
+    "move_tables": [],
+    "applied": [],
+    "build": {
+      "rc": 0,
+      "secs": 2.7,
+      "pdf_exists": true,
+      "n_latex_error": 0,
+      "n_undef_ref": 0,
+      "n_undef_cite": 0,
+      "n_overfull_hbox": 0,
+      "n_overfull_vbox": 0,
+      "first_error": "",
+      "stderr_tail": "Latexmk: Missing bbl file 'main.bbl' in following:\n No file main.bbl.\nLatexmk: Using bibtex to make bibliography file(s).\nLatexmk: Using bibtex to make bibliography file(s).\nLatexmk: Using bibtex to make bibliography file(s).\n"
+    },
+    "total_pdf_pages": 27,
+    "ref_page": 10,
+    "ref_y": 395.9,
+    "n_body_blocks_before_refs_on_refpage": 5,
+    "main_pages": 10,
+    "main_pages_refpage": 10,
+    "main_pages_occupied": 10,
+    "extent": 9.48,
+    "pdf_sha256": "debedf062536a377"
+  },
+  {
+    "variant": "drop_00_abstract",
+    "desc": "section 00_abstract \\input removed",
+    "drop_sections": [
+      "00_abstract"
+    ],
+    "move_tables": [],
+    "applied": [
+      "main.tex: commented out \\input{sections/00_abstract}"
+    ],
+    "build": {
+      "rc": 0,
+      "secs": 3.5,
+      "pdf_exists": true,
+      "n_latex_error": 0,
+      "n_undef_ref": 0,
+      "n_undef_cite": 0,
+      "n_overfull_hbox": 0,
+      "n_overfull_vbox": 0,
+      "first_error": "",
+      "stderr_tail": "Latexmk: Missing bbl file 'main.bbl' in following:\n No file main.bbl.\nLatexmk: Using bibtex to make bibliography file(s).\nLatexmk: Using bibtex to make bibliography file(s).\nLatexmk: Using bibtex to make bibliography file(s).\nLatexmk: Using bibtex to make bibliography file(s).\n"
+    },
+    "total_pdf_pages": 26,
+    "ref_page": 9,
+    "ref_y": 564.3,
+    "n_body_blocks_before_refs_on_refpage": 8,
+    "main_pages": 9,
+    "main_pages_refpage": 9,
+    "main_pages_occupied": 9,
+    "extent": 8.74,
+    "pdf_sha256": "f1cfe56975d45204"
+  },
+  {
+    "variant": "drop_01_introduction",
+    "desc": "section 01_introduction \\input removed",
+    "drop_sections": [
+      "01_introduction"
+    ],
+    "move_tables": [],
+    "applied": [
+      "main.tex: commented out \\input{sections/01_introduction}"
+    ],
+    "build": {
+      "rc": 0,
+      "secs": 3.5,
+      "pdf_exists": true,
+      "n_latex_error": 0,
+      "n_undef_ref": 0,
+      "n_undef_cite": 0,
+      "n_overfull_hbox": 0,
+      "n_overfull_vbox": 0,
+      "first_error": "",
+      "stderr_tail": "Latexmk: Missing bbl file 'main.bbl' in following:\n No file main.bbl.\nLatexmk: Using bibtex to make bibliography file(s).\nLatexmk: Using bibtex to make bibliography file(s).\nLatexmk: Using bibtex to make bibliography file(s).\nLatexmk: Using bibtex to make bibliography file(s).\n"
+    },
+    "total_pdf_pages": 25,
+    "ref_page": 9,
+    "ref_y": 234.7,
+    "n_body_blocks_before_refs_on_refpage": 2,
+    "main_pages": 9,
+    "main_pages_refpage": 9,
+    "main_pages_occupied": 9,
+    "extent": 8.231,
+    "pdf_sha256": "abd74afd2491b726"
+  },
+  {
+    "variant": "drop_02_related",
+    "desc": "section 02_related \\input removed",
+    "drop_sections": [
+      "02_related"
+    ],
+    "move_tables": [],
+    "applied": [
+      "main.tex: commented out \\input{sections/02_related}"
+    ],
+    "build": {
+      "rc": 0,
+      "secs": 2.7,
+      "pdf_exists": true,
+      "n_latex_error": 0,
+      "n_undef_ref": 0,
+      "n_undef_cite": 0,
+      "n_overfull_hbox": 0,
+      "n_overfull_vbox": 0,
+      "first_error": "",
+      "stderr_tail": "Latexmk: Missing bbl file 'main.bbl' in following:\n No file main.bbl.\nLatexmk: Using bibtex to make bibliography file(s).\nLatexmk: Using bibtex to make bibliography file(s).\nLatexmk: Using bibtex to make bibliography file(s).\n"
+    },
+    "total_pdf_pages": 25,
+    "ref_page": 9,
+    "ref_y": 395.9,
+    "n_body_blocks_before_refs_on_refpage": 5,
+    "main_pages": 9,
+    "main_pages_refpage": 9,
+    "main_pages_occupied": 9,
+    "extent": 8.48,
+    "pdf_sha256": "6dc57f6383ce3064"
+  },
+  {
+    "variant": "drop_03_method",
+    "desc": "section 03_method \\input removed",
+    "drop_sections": [
+      "03_method"
+    ],
+    "move_tables": [],
+    "applied": [
+      "main.tex: commented out \\input{sections/03_method}"
+    ],
+    "build": {
+      "rc": 0,
+      "secs": 3.3,
+      "pdf_exists": true,
+      "n_latex_error": 0,
+      "n_undef_ref": 2,
+      "n_undef_cite": 0,
+      "n_overfull_hbox": 0,
+      "n_overfull_vbox": 0,
+      "first_error": "",
+      "stderr_tail": "Latexmk: Missing bbl file 'main.bbl' in following:\n No file main.bbl.\nLatexmk: Using bibtex to make bibliography file(s).\nLatexmk: Using bibtex to make bibliography file(s).\nLatexmk: Using bibtex to make bibliography file(s).\nLatexmk: Using bibtex to make bibliography file(s).\nLatexmk: ====Problematic refs and citations with line #s in .tex file:\n  Reference `sec:v2' on page 14 undefined on input line 8\n  Reference `sec:v2' on page 14 undefined on input line 13\n"
+    },
+    "total_pdf_pages": 25,
+    "ref_page": 8,
+    "ref_y": 502.0,
+    "n_body_blocks_before_refs_on_refpage": 7,
+    "main_pages": 8,
+    "main_pages_refpage": 8,
+    "main_pages_occupied": 8,
+    "extent": 7.644,
+    "pdf_sha256": "2895e4ae25d73b7a"
+  },
+  {
+    "variant": "drop_03b_nulls_summary",
+    "desc": "section 03b_nulls_summary \\input removed",
+    "drop_sections": [
+      "03b_nulls_summary"
+    ],
+    "move_tables": [],
+    "applied": [
+      "main.tex: commented out \\input{sections/03b_nulls_summary}"
+    ],
+    "build": {
+      "rc": 0,
+      "secs": 2.6,
+      "pdf_exists": true,
+      "n_latex_error": 0,
+      "n_undef_ref": 2,
+      "n_undef_cite": 0,
+      "n_overfull_hbox": 0,
+      "n_overfull_vbox": 0,
+      "first_error": "",
+      "stderr_tail": "Latexmk: Missing bbl file 'main.bbl' in following:\n No file main.bbl.\nLatexmk: Using bibtex to make bibliography file(s).\nLatexmk: Using bibtex to make bibliography file(s).\nLatexmk: Using bibtex to make bibliography file(s).\nLatexmk: ====Problematic refs and citations with line #s in .tex file:\n  Reference `sec:nulls' on page 4 undefined on input line 16\n  Reference `sec:nulls' on page 11 undefined on input line 8\n"
+    },
+    "total_pdf_pages": 26,
+    "ref_page": 10,
+    "ref_y": 167.1,
+    "n_body_blocks_before_refs_on_refpage": 1,
+    "main_pages": 10,
+    "main_pages_refpage": 10,
+    "main_pages_occupied": 10,
+    "extent": 9.126,
+    "pdf_sha256": "fe0dfdbda4ac561d"
+  },
+  {
+    "variant": "drop_04_experiments",
+    "desc": "section 04_experiments \\input removed",
+    "drop_sections": [
+      "04_experiments"
+    ],
+    "move_tables": [],
+    "applied": [
+      "main.tex: commented out \\input{sections/04_experiments}"
+    ],
+    "build": {
+      "rc": 0,
+      "secs": 2.7,
+      "pdf_exists": true,
+      "n_latex_error": 0,
+      "n_undef_ref": 3,
+      "n_undef_cite": 0,
+      "n_overfull_hbox": 0,
+      "n_overfull_vbox": 0,
+      "first_error": "",
+      "stderr_tail": "Latexmk: Missing bbl file 'main.bbl' in following:\n No file main.bbl.\nLatexmk: Using bibtex to make bibliography file(s).\nLatexmk: Using bibtex to make bibliography file(s).\nLatexmk: Using bibtex to make bibliography file(s).\nLatexmk: ====Problematic refs and citations with line #s in .tex file:\n  Reference `sec:setup' on page 10 undefined on input line 13\n  Reference `sec:setup' on page 16 undefined on input line 24\n  Reference `sec:setup' on page 16 undefined on input line 28\n"
+    },
+    "total_pdf_pages": 26,
+    "ref_page": 9,
+    "ref_y": 461.3,
+    "n_body_blocks_before_refs_on_refpage": 6,
+    "main_pages": 9,
+    "main_pages_refpage": 9,
+    "main_pages_occupied": 9,
+    "extent": 8.581,
+    "pdf_sha256": "040e4c0f68257ca0"
+  },
+  {
+    "variant": "drop_05_analysis",
+    "desc": "section 05_analysis \\input removed",
+    "drop_sections": [
+      "05_analysis"
+    ],
+    "move_tables": [],
+    "applied": [
+      "main.tex: commented out \\input{sections/05_analysis}"
+    ],
+    "build": {
+      "rc": 0,
+      "secs": 2.7,
+      "pdf_exists": true,
+      "n_latex_error": 0,
+      "n_undef_ref": 1,
+      "n_undef_cite": 0,
+      "n_overfull_hbox": 0,
+      "n_overfull_vbox": 0,
+      "first_error": "",
+      "stderr_tail": "Latexmk: Missing bbl file 'main.bbl' in following:\n No file main.bbl.\nLatexmk: Using bibtex to make bibliography file(s).\nLatexmk: Using bibtex to make bibliography file(s).\nLatexmk: Using bibtex to make bibliography file(s).\nLatexmk: ====Problematic refs and citations with line #s in .tex file:\n  Reference `sec:flips' on page 15 undefined on input line 37\n"
+    },
+    "total_pdf_pages": 24,
+    "ref_page": 8,
+    "ref_y": 234.7,
+    "n_body_blocks_before_refs_on_refpage": 2,
+    "main_pages": 8,
+    "main_pages_refpage": 8,
+    "main_pages_occupied": 8,
+    "extent": 7.231,
+    "pdf_sha256": "f1e25e8f7700d128"
+  },
+  {
+    "variant": "drop_06_discussion",
+    "desc": "section 06_discussion \\input removed",
+    "drop_sections": [
+      "06_discussion"
+    ],
+    "move_tables": [],
+    "applied": [
+      "main.tex: commented out \\input{sections/06_discussion}"
+    ],
+    "build": {
+      "rc": 0,
+      "secs": 2.6,
+      "pdf_exists": true,
+      "n_latex_error": 0,
+      "n_undef_ref": 0,
+      "n_undef_cite": 0,
+      "n_overfull_hbox": 0,
+      "n_overfull_vbox": 0,
+      "first_error": "",
+      "stderr_tail": "Latexmk: Missing bbl file 'main.bbl' in following:\n No file main.bbl.\nLatexmk: Using bibtex to make bibliography file(s).\nLatexmk: Using bibtex to make bibliography file(s).\nLatexmk: Using bibtex to make bibliography file(s).\n"
+    },
+    "total_pdf_pages": 26,
+    "ref_page": 9,
+    "ref_y": 599.8,
+    "n_body_blocks_before_refs_on_refpage": 8,
+    "main_pages": 9,
+    "main_pages_refpage": 9,
+    "main_pages_occupied": 9,
+    "extent": 8.795,
+    "pdf_sha256": "2d3d925a282e7323"
+  },
+  {
+    "variant": "drop_07_limitations",
+    "desc": "section 07_limitations \\input removed",
+    "drop_sections": [
+      "07_limitations"
+    ],
+    "move_tables": [],
+    "applied": [
+      "main.tex: commented out \\input{sections/07_limitations}"
+    ],
+    "build": {
+      "rc": 0,
+      "secs": 2.7,
+      "pdf_exists": true,
+      "n_latex_error": 0,
+      "n_undef_ref": 0,
+      "n_undef_cite": 0,
+      "n_overfull_hbox": 0,
+      "n_overfull_vbox": 0,
+      "first_error": "",
+      "stderr_tail": "Latexmk: Missing bbl file 'main.bbl' in following:\n No file main.bbl.\nLatexmk: Using bibtex to make bibliography file(s).\nLatexmk: Using bibtex to make bibliography file(s).\nLatexmk: Using bibtex to make bibliography file(s).\n"
+    },
+    "total_pdf_pages": 26,
+    "ref_page": 9,
+    "ref_y": 679.9,
+    "n_body_blocks_before_refs_on_refpage": 9,
+    "main_pages": 9,
+    "main_pages_refpage": 9,
+    "main_pages_occupied": 9,
+    "extent": 8.919,
+    "pdf_sha256": "18d2b45bcbad83e6"
+  }
+]

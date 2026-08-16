@@ -139,6 +139,33 @@ APPENDIX_STUB = r"""
 """
 
 
+def _appendix_file_set(paper_dir: Path) -> set:
+    """Section files reachable from 09_appendix.tex, transitively, plus itself.
+
+    Needed because "is this table in the appendix?" cannot be answered from a filename.
+    09_appendix.tex \\input's 03b_nulls.tex and 09a_relocated.tex, so a table living in
+    either of those is appendix content even though neither name starts with 09_appendix.
+    Following the \\input graph is the only way to get this right, and getting it wrong
+    produced five variants that reported a false null (see the note at the move loop).
+    """
+    sections = paper_dir / "sections"
+    root = "09_appendix.tex"
+    seen, queue = set(), [root]
+    while queue:
+        name = queue.pop()
+        if name in seen:
+            continue
+        seen.add(name)
+        f = sections / name
+        if not f.exists():
+            continue
+        for m in re.findall(r'\\input\{sections/([^}]+)\}', f.read_text()):
+            child = m if m.endswith(".tex") else m + ".tex"
+            if child not in seen:
+                queue.append(child)
+    return seen
+
+
 def excise(paper_dir: Path, spec: list, notes: list) -> str:
     """Cut inclusive 1-based line ranges out of section files, replacing each with
     an optional stub, and return the excised material as appendix body text.
@@ -176,6 +203,7 @@ def apply_variant(paper_dir: Path, drop_sections: list[str],
     """Mutate the scratch copy in place. Returns a list of applied-change notes."""
     notes = []
     app_extra = []
+    already_applied = []
 
     # whole-section relocation: \input moves from main body to the appendix,
     # optionally replaced in place by a short summary stub.
@@ -184,7 +212,34 @@ def apply_variant(paper_dir: Path, drop_sections: list[str],
         t = main_p.read_text()
         pat = "\\input{sections/%s}" % sec
         if pat not in t:
-            raise SystemExit(f"relocate: not found in main.tex: {pat}")
+            # MEASURED 2026-08-17: this used to `raise SystemExit`, which killed the
+            # WHOLE sweep on the FIRST variant naming a relocated section -- so C4
+            # through C16 (every variant carrying relocate_sections=[("03b_nulls",...)])
+            # were never evaluated, and the tool exited rc=1 after printing only the
+            # four `drop_*` baselines. The cause is not a missing file: `03b_nulls` was
+            # ALREADY MOVED to the appendix (that was option C4, and it was applied), so
+            # main.tex now inputs `03b_nulls_summary`. The variant's premise is satisfied,
+            # not violated.
+            #
+            # A hard exit is right for a typo and wrong for an applied change, and the
+            # tool cannot tell them apart from the name alone -- so check the appendix.
+            # If the section is already there, this variant measures nothing new: record
+            # it as already-applied and skip it, so the remaining variants still run.
+            app_txt = (paper_dir / "sections" / "09_appendix.tex").read_text()
+            secfile = paper_dir / "sections" / (sec + ".tex")
+            if pat in app_txt or ("sections/%s}" % sec) in app_txt:
+                already_applied.append(sec)
+                notes.append(f"SKIPPED: sections/{sec} is already in the appendix; "
+                             f"this variant's saving is present in the baseline")
+                continue
+            if not secfile.exists():
+                raise SystemExit(f"relocate: sections/{sec}.tex does not exist "
+                                 f"(genuine typo in the variant definition, not an "
+                                 f"applied relocation)")
+            raise SystemExit(
+                f"relocate: {pat} is not in main.tex, and sections/{sec}.tex exists but "
+                f"is not \\input from 09_appendix.tex either. The section is orphaned: "
+                f"resolve by hand rather than guessing.")
         repl = ("%% PROBE-RELOCATED " + pat +
                 ("\n" + stub if stub else ""))
         main_p.write_text(t.replace(pat, repl))
@@ -216,17 +271,39 @@ def apply_variant(paper_dir: Path, drop_sections: list[str],
     main.write_text(txt)
 
     moved = []
+    # MEASURED 2026-08-17: the appendix test below used to be
+    # `not f.name.startswith("09_appendix")`, i.e. only the appendix ROOT file counted
+    # as appendix. But the appendix root \input's OTHER section files
+    # (03b_nulls.tex and 09a_relocated.tex), and all four MAIN_TABLES now live in those.
+    # So every movetab_* variant "succeeded" while moving a table from one appendix
+    # location to another -- and reported extent 9.48, byte-identical to baseline, for
+    # all five table variants including movetab_all4. That reads as "relocating tables
+    # buys nothing", a real-looking null, when in fact no main-text table was moved.
+    # Resolve by computing the appendix file set transitively from the appendix root,
+    # rather than pattern-matching one filename.
+    appendix_files = _appendix_file_set(paper_dir)
     for tab in move_tables:
         pat = "\\input{sections/%s}" % tab
         hit = None
+        skipped_in_appendix = []
         for f in sorted((paper_dir / "sections").glob("*.tex")):
             s = f.read_text()
-            if pat in s and not f.name.startswith("09_appendix"):
-                f.write_text(s.replace(pat, "%% PROBE-MOVED " + pat))
-                hit = f.name
-                break
+            if pat not in s:
+                continue
+            if f.name in appendix_files:
+                skipped_in_appendix.append(f.name)
+                continue
+            f.write_text(s.replace(pat, "%% PROBE-MOVED " + pat))
+            hit = f.name
+            break
         if hit is None:
-            raise SystemExit(f"table input not found outside appendix: {pat}")
+            if skipped_in_appendix:
+                raise SystemExit(
+                    f"table {tab} is ALREADY in the appendix (found in "
+                    f"{', '.join(skipped_in_appendix)}, reachable from 09_appendix.tex). "
+                    f"Moving it cannot save main-text pages, so this variant would report "
+                    f"a false null equal to baseline. Drop it from MAIN_TABLES.")
+            raise SystemExit(f"table input not found anywhere: {pat}")
         moved.append(tab)
         notes.append(f"{hit}: removed \\input{{sections/{tab}}} -> appendix")
 
@@ -282,7 +359,16 @@ def run_variant(name: str, scratch: Path, drop_sections=(), move_tables=(),
 # strings that were compiled -- a stub costs lines too, so measuring with a
 # fake short stub would understate the page count.
 # --------------------------------------------------------------------------- #
-MAIN_TABLES = ["tab_nulls", "tab_conventions", "tab_two_nulls", "tab_power"]
+# 2026-08-17: EMPTIED. Was ["tab_nulls", "tab_conventions", "tab_two_nulls", "tab_power"].
+# All four are now \input from 03b_nulls.tex / 09a_relocated.tex, both of which the
+# appendix root \input's -- i.e. all four are ALREADY in the appendix (verified with
+# _appendix_file_set, 6/6 controls). The movetab_* variants were therefore relocating
+# appendix tables to the appendix, and reported extent 9.48 for all five variants
+# including movetab_all4 -- byte-identical to baseline. Read naively that says "moving
+# main-text tables buys nothing", which is a false null about a lever that does not exist.
+# There is no main-text table left to move. Re-populate this list only with tables that
+# _appendix_file_set says are OUTSIDE the appendix.
+MAIN_TABLES = []
 
 STUB_METHOD_PRIORART = (
     r"\paragraph{Option-count-aware chance correction is decades old; only the "
@@ -645,8 +731,12 @@ def main():
     scratch = Path(args.scratch)
     scratch.mkdir(parents=True, exist_ok=True)
 
+    # 2026-08-17: was "03b_nulls". main.tex has inputted `03b_nulls_summary` since the
+    # C4 relocation was applied (the full nulls body now lives in the appendix), so the
+    # old name made the sweep die at `drop_03b_nulls` before reaching any C-variant.
+    # The measurable main-text section is the SUMMARY -- that is what still costs pages.
     SECTIONS = ["00_abstract", "01_introduction", "02_related", "03_method",
-                "03b_nulls", "04_experiments", "05_analysis", "06_discussion",
+                "03b_nulls_summary", "04_experiments", "05_analysis", "06_discussion",
                 "07_limitations"]
 
     variants = []
@@ -660,9 +750,14 @@ def main():
             variants.append((f"movetab_{t}",
                              dict(move_tables=[t],
                                   desc=f"{t} relocated to appendix")))
-        variants.append(("movetab_all4",
-                         dict(move_tables=MAIN_TABLES,
-                              desc="all 4 remaining main-text tables to appendix")))
+        # Guarded: with MAIN_TABLES empty this variant would move nothing and report
+        # extent == baseline, i.e. a measurement-shaped no-op. Emit it only if there is
+        # actually something to move.
+        if MAIN_TABLES:
+            variants.append((f"movetab_all{len(MAIN_TABLES)}",
+                             dict(move_tables=MAIN_TABLES,
+                                  desc=f"all {len(MAIN_TABLES)} remaining main-text "
+                                       f"tables to appendix")))
     if args.mode in ("all", "candidates"):
         variants.extend(CANDIDATES.items())
 
@@ -678,9 +773,24 @@ def main():
     prev = json.loads(op.read_text()) if op.exists() else []
     by = {r["variant"]: r for r in prev}
     by.update({r["variant"]: r for r in out})
+    # Drop records for variants this build no longer defines. `by.update()` alone MERGES,
+    # so a retired variant keeps its last number forever: measured 2026-08-17, the file
+    # still carried movetab_tab_{nulls,conventions,two_nulls,power} at extent 9.48 after
+    # those variants had been removed for being no-ops, and the summary line said
+    # "15 variants" while only 11 had run. A stale row is worse than a missing one --
+    # it reads as a current measurement. Only prune on a FULL sweep: with --only the
+    # non-selected variants were never attempted, so their prior records are still valid.
+    dropped = []
+    if not keep:
+        defined = {name for name, _ in variants}
+        dropped = sorted(set(by) - defined)
+        for name in dropped:
+            del by[name]
     op.write_text(json.dumps(sorted(by.values(), key=lambda r: r["variant"]),
                              indent=2))
-    print(f"wrote {op}  ({len(by)} variants)", file=sys.stderr)
+    print(f"wrote {op}  ({len(by)} variants"
+          + (f"; pruned {len(dropped)} retired: {', '.join(dropped)}" if dropped else "")
+          + ")", file=sys.stderr)
 
 
 if __name__ == "__main__":
