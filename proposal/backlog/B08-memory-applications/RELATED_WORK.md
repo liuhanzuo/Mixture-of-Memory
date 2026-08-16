@@ -495,3 +495,125 @@ here. It stays `arXiv-only`. Since it is load-bearing for §4.3 (leg 2), and leg
 - **No cross-disk check.** §9.8 stands: `/apdcephfs_zwfy6` is not mounted here and this agent was
   barred from ssh, so every asset-presence claim remains **wzc1-scoped**.
 - Semantic Scholar was not retried (§9.1).
+
+---
+
+## 12. ADJUDICATION ROUND 2 (2026-08-16, third agent) — the §9.6 open question is RESOLVED, and four NEW papers were found
+
+**0 GPU, 0 ssh. Network via `hy-proxy.woa.com:3128`; positive control `arXiv:2310.08560` → HTTP 200
+before any claim below.** §1-§11 are left **byte-stable**; this section is APPENDED.
+
+This round was commissioned to adjudicate the novelty gate (write
+`NOVELTY_VERDICT.md`). It did two things §1-§11 did not:
+
+1. **Read the FULL TEXT of `arXiv:2607.17545`** — the single task §9.6 flagged as able to collapse
+   leg 1. It collapses one of the two differentiators. See `NOVELTY_VERDICT.md` §2.
+2. **Ran fresh queries and found FOUR papers absent from §1-§11**, two of which are closer to leg 1's
+   *methodology* than anything in §3.
+
+### 12.1 `arXiv:2607.17545` (Retain or Consolidate?) **DOES pin retrieval** — recorded here against §3.3
+
+`https://arxiv.org/html/2607.17545v1`, HTTP 200, 347,897 B. Verbatim:
+
+> *Experiments → Setup*: "In the controlled evaluation, **every action receives the same gold
+> evidence** and differs only in its budgeted representation. … This pairing **isolates the
+> when–which decision from evidence discovery**."
+>
+> *Full-History Retrieval Stress Test → Controlled setting*: "Throughout, "retention," each
+> operator, and the oracle gate receive the **same gold evidence per question**; the study measures
+> the consolidation decision **in isolation**."
+
+⚠️ **§3.3's stated difference "(a) it never pins retrieval at a measured `any_hit = 1.000`, so its
+deltas mix retrieval with composition" is FALSE and is hereby STRUCK.** ROC's controlled protocol
+supplies **gold evidence**, i.e. recall = 1.000 *by construction* — a stronger closure than B08's
+measured-1.000 stratum. ROC *also* runs a separate BM25 top-20 / 2,048-token "retrieval stress test",
+so it deliberately reports the closed and open regimes side by side, and it breaks out
+**Knowledge-update (n=40)** as its own row (ROC Table 7) — the same LongMemEval type as 78 of B08's
+134 items. On that row every generative operator is **negative** vs retention at the loose budget
+(Abstract −0.125, Merge −0.233, Rewrite −0.142).
+
+**What ROC still does NOT do** (verified by term census over the 73,821-char extracted text):
+`faithful` 0 hits, `hallucinat` 0, `fabricat` 0, `entail` 0, `attribut` 0, `unsupported` **1** — and
+that one hit is a *motivating clause in the related-work paragraph* ("generation may … introduce
+unsupported content"), **not a metric**. ROC's read-outs are answer accuracy and a *utility/harm*
+quantity. Also, ROC's operators **replace** the raw records ("Each generative operator in our study
+**replaces the packed constituents** in the answer context (freeing budget)"), so **ROC has no
+notes-ALONGSIDE-raw arm** — its contrast is raw-vs-generated, never raw-vs-(notes+raw)-vs-notes-only.
+
+### 12.2 FOUR papers not in §1-§11
+
+| work | date | venue (verified, this round) | what it does | relationship to B08 |
+|---|---|---|---|---|
+| **WhenLoss — Diagnosing Write and Retrieval Bottlenecks in Long-Context Memory Systems** | 2026-05-23 | `arXiv:2605.24579`; DBLP **CoRR 2026** → **arXiv-only** | ⚠️⚠️⚠️ A **four-condition diagnostic protocol on LongMemEval with a FIXED reader**: truncated full context (TFC), **oracle evidence (OE)**, complete stored memory (CSM), retrieved memory (RM) — explicitly built so one can tell "whether evidence was discarded during compression or preserved but never retrieved". Decomposes `Δ_write` vs `Δ_retr`; finds write-side gaps exceed retrieval-side gaps for 4/6 baselines. All 500 LongMemEval questions, 3 readers. `Summary (LLM)` is its strongest baseline. | **The closest work to leg 1's METHODOLOGY, closer than anything in §3, and it is the one differentiator leg 1 had left.** Holding the reader fixed and separating the retrieval axis from the write/compression axis on LongMemEval **is this paper's entire contribution**, and its OE condition is a retrieval-closed condition. Differences that remain: it scores **accuracy decomposed into two gaps**, never an unsupported-claim rate; it has **no notes-only-vs-notes+raw arm** (CSM/RM are storage conditions, not context-composition arms); its closure is *oracle-supplied*, not *measured-on-a-BM25-stratum*. **CONCURRENT (2026-05 vs prereg 2026-08-14), so it cannot preempt — but "we isolate the composition axis by pinning retrieval" is no longer an available framing.** |
+| **Supersede — Diagnosing and Training the Memory-Update Gap in LLM Agents** | 2026-06-25 | `arXiv:2606.27472`; DBLP **CoRR 2026** → **arXiv-only** | ⚠️⚠️ Isolates fact-supersession **on the knowledge-update subset of LongMemEval**: replacing full context with a bounded self-maintained memory drops accuracy **92% → 77%** (paired McNemar p<0.005), persists across scale; more memory buys nothing (28%→28%); releases an RL environment and trains the gap down (9.0%→16.7%). | **Occupies leg 2 outright and dents leg 1's chosen cell.** B08's 134-item stratum is 78 `knowledge-update` items = 58% of it, and Supersede's headline contrast (**full raw context vs a bounded generated memory, same reader, paired test on that exact subset**) is B08's `A-raw` vs `A-notes-only` in all but name. It even uses a **paired** test. Differences: its bounded memory is a *self-maintained agent memory across sessions*, not a *query-conditioned note over a frozen retrieved set*; it reports **accuracy**, not an unsupported-claim rate; it does not pin BM25 recall (it compares against *full* context). **Concurrent. But `MUST-NOT-CLAIM` item 9 is now much harder: "stale/contradiction failure is unmeasured" was already dead, and now the specific 92→77 substitution penalty on our own cell is on record.** |
+| **LazyMem — Retrieve Broadly, Construct Selectively** | 2026-07-17 | `arXiv:2607.22690` (comment: "29 pages, **under review**"); DBLP **CoRR 2026** → **arXiv-only** | Defers memory construction to query time: retrieve a broad candidate pool, then a 4B model selectively retains/compresses **only query-relevant content**, trained SFT+RL with a reward that "jointly encourages … compressions that are **faithful to the source** and useful for answering". LongMemEval LLM-judge acc 0.85 at 213 answer-context tokens (21.0× fewer than baseline). | ⚠️ **"Query-conditioned notes built at query time from a retrieved pool, with faithfulness in the objective" — that is leg 1's mechanism with a trained model on top.** Difference: faithfulness is a **training reward**, not a **measured read-out**; and LazyMem is a *substitution* system (compressed content replaces raw), so it also has no notes+raw vs notes-only contrast. Concurrent (2026-07). **Kills any framing of "faithfulness of query-time notes" as an unexamined concern.** |
+| **Fixed RAG Compression Collapses Measured Reader Scaling** | 2026-06-20 | `arXiv:2606.21807`; DBLP **CoRR 2026** → **arXiv-only** | Compression gain **decreases with reader strength** (9/10 settings p<0.05) across **20 readers**; "generic summarization flips **31% of pairwise model rankings on LongMemEval-S**"; a fixed compressor hid 80% of a raw reader upgrade. Releases `ragscale` over 177k row-level compression transitions; audits nine published compression papers. | ⚠️ **Not a novelty threat — a DESIGN THREAT to B08's gate as prereg'd.** B08's gate uses **exactly one reader** (`models/Meta-Llama-3-8B`) on **LongMemEval-S**, the precise benchmark where this paper measures a 31% ranking flip from generic summarisation. A single-reader `Δ_aug` is therefore **not** a claim about notes, it is a claim about notes *at Llama-3-8B's competence*. This must be written into the gate's scope sentence or a reviewer will supply it. |
+
+### 12.3 Fresh negative searches (arXiv API, `sortBy=relevance`, `max_results=15`)
+
+`all:"summary" AND all:"raw evidence" AND all:"LongMemEval"` → **total 0**;
+`abs:"notes" AND abs:"raw" AND abs:"substitute" AND abs:"memory"` → **total 0**;
+`all:"memory" AND all:"summary" AND all:"complement" AND all:"raw records"` → **total 0**;
+`all:"unsupported claims" AND all:"memory" AND all:"agent"` → total 4, **none relevant**;
+`abs:"memory" AND abs:"summary" AND abs:"hallucination" AND abs:"long-term"` → total 2, none relevant.
+Positive-yield queries: `all:"LongMemEval" AND all:"compression"` → **total 24** (source of three of
+the four rows above); `all:"faithfulness" AND all:"agent memory"` → total 6 (source of LazyMem).
+
+**§9.7's caveat stands and got worse**: the vocabulary is unsettled, and this round found four
+missed papers using words §9.7 did not query (`bottleneck`, `write-side`, `supersede`,
+`reader scaling`). **A zero-hit query is not evidence of a gap.** Two of the four were found by a
+query as plain as `LongMemEval AND compression`, which §1-§11 never ran.
+
+### 12.4 Full-text reads of the two closest new papers (not abstract-only — §9.6's complaint, fixed for these three)
+
+**`arXiv:2605.24579` WhenLoss** (`https://arxiv.org/html/2605.24579v1`, HTTP 200, 303,373 B →
+58,176 chars). Verbatim condition definitions (§3.2):
+
+> "**OE (Oracle Evidence)**: The reader receives only the gold evidence turns E_q — distractors
+> removed, no truncation. **CSM (Complete Stored Memory)**: The reader receives all content in memory
+> M after the write stage. **RM (Retrieved Memory)**: The reader receives the retrieved subset R ⊆ M.
+> Two gaps localize where performance drops within the memory pipeline: OE→CSM defines the
+> **write-side gap**, and CSM→RM the **retrieval-side gap**."
+
+Term census over the 58,176 chars: `hallucinat` **0**, `unsupported` **0**, `fabricat` **0**,
+`entail` **0**, `alongside` **0**, `hybrid` **0**, `adjunct` **0**, `supplement` **0**; `faithful`
+**1** (a *reference-list* hit — the LLMLingua-2 title). Its reader-independent check is
+**omission-only** by construction (§6.3 verbatim): *"Turn recall: fraction of gold evidence turns
+**preserved** … Span recall: fraction of gold answer entities … **found as exact substrings in
+memory**."* ⚠️ **So WhenLoss measures what compression DROPS and never what generation ADDS.** It is
+the closest work to leg 1's *design* (fixed reader, axis separation, LongMemEval, an oracle-closed
+condition) and simultaneously the clearest evidence that **the fabrication direction is still
+unmeasured in this family**.
+
+**`arXiv:2606.27472` Supersede** (HTTP 200, 163,841 B → 40,915 chars). Its rollout, verbatim:
+
+> "the agent … maintains a bounded memory (**a notes field** capped at B characters); crucially,
+> **raw sessions are never re-fed**. After the final session, the agent answers the query **using its
+> memory alone**."
+
+Census: `retriev` **0** (no retrieval stage at all — the contrast is bounded-notes vs *full context*,
+not vs a retrieved set), `hallucinat` 0, `unsupported` 0, `fabricat` 0, `entail` 0, `alongside` 0,
+`faithful` 1 (reference list). Its reward is `r_cur = 1[answer conveys the current value]`.
+⚠️ **Supersede is `A-notes-only` vs full-context on our own cell, measured and paired (92%→77%,
+McNemar p=0.0033), with no retrieval axis and no faithfulness metric.** It therefore pre-empts the
+*accuracy* half of the substitution question and leaves the *fabrication* half untouched.
+
+### 12.5 Two more rows (venue-verified this round)
+
+| work | date | venue (verified) | relationship to B08 |
+|---|---|---|---|
+| **An Empirical Study on Prompt Compression for LLMs** | 2025-04-24 | `arXiv:2505.00019`; DBLP **CoRR 2025** → **arXiv-only** | Six compression methods × 13 datasets, and its stated analysis axes include **"model hallucinations"** and **"word omission analysis"**. ⚠️ **The closest existing artefact to measuring fabrication-under-compression.** Difference: it is a *survey of compressors on generic benchmarks*, not a paired notes-only/notes+raw contrast on a retrieval-closed memory stratum, and its hallucination axis is one panel among many rather than the decision variable. **B08 must cite it and must not imply nobody has looked.** |
+| **MemFail — Stress-Testing Failure Modes of LLM Memory Systems** | 2026-05-26 | `arXiv:2605.26667`; DBLP **CoRR 2026** → **arXiv-only** | Formalises memory as **summarization + storage + retrieval** and builds five adversarial datasets to attribute an error to **one operation**, incl. the summarization operation. Same *decomposition* instinct as leg 1 and as WhenLoss. Difference: adversarially constructed datasets, four memory *systems* as units of analysis; not a fixed-reader context-composition contrast on a measured-closed real stratum. Concurrent. |
+
+### 12.6 Venue-verification method note (why the CoRR labels above are trustworthy)
+
+All six new rows return DBLP `total=1`, `CoRR 20XX`, `Informal and Other Publications`. **Positive
+control that DBLP is not merely lagging on 2026 venues**: the same DBLP endpoint returns **two** rows
+for MM-Mem — `ACL 2026 | Conference and Workshop Papers | 10.18653/V1/2026.ACL-LONG.533` *and*
+`CoRR 2026` — so DBLP **does** index ACL 2026 proceedings, and a CoRR-only result is a **verified
+negative** rather than an indexing artefact. Cross-checked against the Anthology volume indexes
+directly (`2026.acl-long` 5,079,040 B and `2026.acl-short` 210,861 B fetched, HTTP 200; `2026.findings-acl`
+**partial 1,343,488 / 6,675,019 B — truncated by a 120 s timeout, so the Findings check is INCOMPLETE**):
+zero title matches for WhenLoss / Supersede / LazyMem / Reader-Scaling / Retain-or-Consolidate in the
+volumes fully retrieved. Per `memory/venue-verify-acl-family-needs-anthology.md` the Anthology is the
+ACL-family authority; **the Findings-ACL-2026 negative rests on DBLP alone and is labelled as such.**
