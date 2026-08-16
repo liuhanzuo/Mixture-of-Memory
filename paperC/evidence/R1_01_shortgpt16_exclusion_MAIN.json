@@ -3,7 +3,7 @@
   "what": "MAIN adjudication of round_04 issue R1-01 -- an undisclosed exclusion from the headline denominator",
   "date": "2026-08-16",
   "raised_by": "R1-claude-novelty (severity: major). MAIN verified independently and found it MORE severe than reported.",
-  "VERDICT": "CONFIRMED -- and this is an INTEGRITY-class defect, not a presentation one. It must be fixed before submission.",
+  "VERDICT": "CONFIRMED and ESCALATED -- integrity-class, and now affecting BOTH headline denominators. 0/15 off-MMLU becomes 9/25 when the two excluded arms are restored. Blocking for submission.",
   "the_promise_that_is_broken": {
     "location": "sections/09a_relocated.tex:24 (App: Designated damaged cells)",
     "verbatim": "Where a denominator such as 14/15 or 10/15 is quoted, it is over exactly this set, and any damaged arm excluded from that denominator is named at the point of exclusion together with its own floor delta, so that no ratio is computed over an undisclosed subset.",
@@ -54,5 +54,30 @@
     "Whether keep14 (+0.324 pp, p=0.3234, n.s.) is inside or outside the 15. It is at least PRINTED in tab_mmlupro, unlike shortgpt16."
   ],
   "the_honest_fix": "Either (a) include shortgpt16 in the denominator and report 14/16 with its +3.6735 pp named, or (b) state explicitly and in advance why a baseline pruning operator is not a rung of the ladder, name it at the point of exclusion, and print its floor delta -- which is what App A.4 already promises. Option (b) is likely correct on the science AND satisfies the promise. What is NOT acceptable is leaving it unmentioned. Note that (a) does not destroy the paper: 14/16 at-or-below with a named, explained +3.67 pp baseline outlier is still a strong result, and disclosing it is strictly better for the paper than having a reviewer find it -- which is exactly what just happened.",
-  "meta_lesson": "This is the SECOND round_04 finding where the paper's own evidence file contained the disconfirming number all along (cf. mmlupro_legality_aware_null_MAIN.json, where n_opt_is_not_constant=True sat next to a k=10 null). The pattern: a hardcoded list in an evidence emitter silently defines a denominator, and no check asserts that the list matches the set the prose claims. A gate should assert rollup.damaged_rungs == the arms the manuscript designates."
+  "meta_lesson": "This is the SECOND round_04 finding where the paper's own evidence file contained the disconfirming number all along (cf. mmlupro_legality_aware_null_MAIN.json, where n_opt_is_not_constant=True sat next to a k=10 null). The pattern: a hardcoded list in an evidence emitter silently defines a denominator, and no check asserts that the list matches the set the prose claims. A gate should assert rollup.damaged_rungs == the arms the manuscript designates.",
+  "ESCALATION_20260816_1400": {
+    "found_by": "agent a9d5395dd4e1e75d5 flagged it in one line before terminating early; MAIN then verified it in full",
+    "severity": "THIS IS LARGER THAN THE MMLU-PRO NULL DEFECT. It changes the paper's central narrative, not one table row.",
+    "what": "The same hardcoded damaged_rungs=[keep12,keep10,keep8] also drives the OFF-MMLU count. 05_analysis.tex:29 and 09a_relocated.tex:44 both state 'the designated OLMo-2 subset gives 10/15 above chance and 0/15 above floor'. That 15 = 3 arms x 5 small benchmarks (winogrande is the excluded negative control). 01_introduction.tex:21 repeats 'Off MMLU, 10/15 designated cells flip and 0/15 clear their floor'.",
+    "measured_by_MAIN": {
+      "as_reported": "0/15 above floor over [keep12, keep10, keep8]",
+      "with_excluded_arms_restored": "9/25 above floor over [keep12, keep10, keep8, shortgpt16, keep14]",
+      "shortgpt16": "5 of 5 small benchmarks ABOVE the floor, all p=0.0001: arc_challenge +31.143 pp, arc_easy +49.663 pp, openbookqa +30.200 pp, commonsense_qa +24.324 pp, piqa +11.208 pp",
+      "keep14": "4 of 5 ABOVE the floor: arc_challenge +6.997 pp p=0.0001, arc_easy +18.687 pp p=0.0001, openbookqa +9.400 pp p=0.0005, commonsense_qa +6.470 pp p=0.0001; piqa +2.612 pp not above",
+      "the_three_counted_arms_for_contrast": "all 15 cells within +-5 pp of the floor and 14 of 15 n.s.; the single exception is keep10/arc_easy at -2.694 pp p=0.0290, which is BELOW the floor"
+    },
+    "why_this_is_worse_than_the_null_defect": [
+      "The MMLU-Pro null error moved ONE table row from 'above balanced null' to 'inside noise' and cost the abstract the word 'three' -> 'two'. It was self-contained.",
+      "This one moves 0/15 to 9/25. The claim it damages -- near-unanimity of the aggregate -- is the SAME claim 09a_relocated.tex:26 explicitly offers IN PLACE OF a family-wise multiplicity correction. So the substitute for multiplicity control is what fails.",
+      "It is not a borderline reclassification. shortgpt16's smallest above-floor margin is +11.208 pp, and every one of its five cells is p=0.0001. keep14's four are +6.47 to +18.69 pp. These are not cells that could plausibly be read either way.",
+      "It affects BOTH headline denominators (14/15 on MMLU-Pro and 0/15 off MMLU) through a single hardcoded list, which is why one gate assertion can catch the whole class."
+    ],
+    "what_this_does_NOT_establish": [
+      "It does NOT show the paper's rule is wrong. shortgpt16 keeps 16 of 32 layers and keep14 keeps 14 -- both retain far more of the stack than keep8/10/12, so an arm that retains more capability clearing the floor is EXPECTED, not anomalous. The scientific reading may be entirely benign.",
+      "It does NOT show intent. The likeliest history is that damaged_rungs was written for the MMLU-Pro power analysis, where 3 arms were the relevant contrast, and then reused as a general 'designated damaged' set without anyone re-deriving it.",
+      "MAIN did not determine whether the 10/15 above-CHANCE half changes too -- that needs the same recomputation against the chance line and was not done here."
+    ],
+    "the_honest_fix": "State the designated set ONCE, explicitly, with a stated inclusion rule, and report every arm in it. If ShortGPT-16 is excluded as a different damage operator (a baseline pruning method, not a rung of this paper's keepN ladder), say so at the point of exclusion and print its deltas -- which App A.4 already promises. If keep14 is excluded for retaining too much of the stack to count as damaged, say that too, with its number. A monotone story -- arms retaining more of the stack clear the floor, arms retaining less do not -- is a BETTER paper than an unexplained 0/15, because it shows the floor test tracks capability instead of merely failing everything.",
+    "gate_required": "assert that every arm the manuscript designates as damaged appears in the rollup denominator, and that the denominator's cardinality equals arms x benchmarks. This single assertion catches both the 14/15 and the 0/15 instance. Third occurrence of the same class this round; see the meta_lesson field."
+  }
 }
