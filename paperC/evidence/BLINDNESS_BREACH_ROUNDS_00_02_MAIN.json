@@ -1,0 +1,70 @@
+{
+  "schema_version": "1.0.0",
+  "what": "MAIN adjudication -- rounds 00/01/02 of paperC shipped a BLINDNESS BREACH, not merely an incomplete artifact",
+  "date": "2026-08-16T14:45+08:00",
+  "raised_by": "agent ac669a92489e67719, while fixing the freeze packaging. MAIN verified every element from the files, not from the report.",
+  "SEVERITY": "BLINDNESS BREACH. Scores from rounds 00, 01 and 02 are COMPROMISED and must not be used in any trajectory, median or trend.",
+  "the_fact": {
+    "file": "evidence/EVIDENCE_PACK.md",
+    "md5": "4d0013b52eed (12-char prefix)",
+    "size_bytes": 77766,
+    "present_in": [
+      "review_rounds/round_00/submission/evidence/",
+      "review_rounds/round_01/submission/evidence/",
+      "review_rounds/round_02/submission/evidence/"
+    ],
+    "absent_in": [
+      "round_03 (packaged 0 evidence files)",
+      "round_04 (packaged 2)"
+    ],
+    "byte_identical_to": "paperC/tcodex_out/EVIDENCE_PACK.md -- same md5, same 77766 bytes",
+    "verified_how": "md5sum on all four copies plus the author-side original; all five agree"
+  },
+  "what_it_disclosed_to_reviewers": [
+    {
+      "line": 649,
+      "verbatim": "DO NOT claim differential learning rates on either side.",
+      "why_fatal": "the authors knew of a defect and instructed the writer to omit it. A reviewer reading this learns both the defect AND that it was deliberately suppressed."
+    },
+    {
+      "line": 690,
+      "verbatim": "DO NOT describe OLMES's rule as SIZE-keyed -- that rule does not exist and attacking it would be an easy referee kill",
+      "why_fatal": "names the paper's soft spot and the authors' plan to route around it. This is the single most protocol-violating sentence in the file."
+    },
+    {
+      "line": 758,
+      "verbatim": "the corresponding limitation L1 in the writer prompt",
+      "why_fatal": "reveals the existence and structure of an author-side writer prompt -- i.e. that the manuscript is being produced against a hidden plan."
+    },
+    {
+      "line": 548,
+      "verbatim": "MUST NOT be claimed (each was claimed at some point by this direction and then killed)",
+      "why_fatal": "hands over the full self-falsification history plus the authors' tactical framing of it."
+    },
+    {
+      "line": 628,
+      "verbatim": "The manuscript MUST NOT print the H_heal / H_family dichotomy as though it had been ...",
+      "why_fatal": "another suppression instruction"
+    }
+  ],
+  "why_the_existing_check_missed_it": {
+    "the_assertion": "paperC/state/assumptions.md A-07 states: 'I grepped the frozen tree for reviewer, round_0, verdict, strict_[0-9], meta.review, target.median, overall_score, panel median. Result: zero leaks.' and then generalises: 'freeze_round.py additionally excludes review_rounds/, review_history/, tcodex_out/, SCORE_HISTORY, review_prompts/, WRITER_NOTES by rule.'",
+    "failure_1_wrong_vocabulary": "MAIN ran A-07's own eight terms against the leaked file. They DO hit -- verdict 16 times, reviewer twice -- and A-07 dismissed every hit as 'the paper's own vocabulary' (its result tables carry a Verdict column), which for those particular hits is correct. But the actually-fatal lines contain NONE of the eight terms: line 649 has zero hits for 'reviewer' and zero for 'verdict'. The word list was built from REVIEW-PROCESS vocabulary and contains no WRITER-STEERING imperative -- no 'DO NOT', no 'MUST NOT', no 'referee kill', no 'writer prompt'. A leak that steers the author is invisible to a grep that only looks for leaks that reveal the panel.",
+    "failure_2_verified_on_the_one_safe_instance": "A-07 is titled 'The frozen round_03 snapshot is genuinely blind' and round_03 packaged ZERO evidence files (MAIN measured: 30 files total, 0 under any evidence path). So its grep was TRUE for round_03 -- vacuously, because the vector did not exist there. From that it wrote a claim about freeze_round.py's behaviour 'by rule', which was FALSE for rounds 00-02, where the same script had already shipped the file three times. This is verifying on the one instance that happens to be safe and then recording it as a guarantee about the class.",
+    "failure_3_the_exclusion_was_real_but_bypassed": "tcodex_out/ WAS on the exclusion list. v1 applied the list only to the manuscript closure; the --evidence loop bypassed it entirely. So the rule existed, was correct, and was not enforced on the path that mattered."
+  },
+  "residual_risk_note_was_backwards": "A-07's own 'Residual risk' paragraph says: 'the manuscript cites paperC/tcodex_out/EVIDENCE_PACK.md by path in a caption. A reviewer CANNOT READ IT (it is excluded), so this is a dangling internal reference -- a presentation defect worth fixing, NOT a blindness breach.' Both halves are wrong for rounds 00-02: the reviewer COULD read it, because it was shipped, and it therefore WAS a blindness breach. The paragraph correctly identified the exact file that mattered and then reasoned from an unverified premise about whether it had been excluded.",
+  "consequences": {
+    "rounds_00_01_02": "scores COMPROMISED -- do not use in any score trajectory, median, ceiling or improvement claim",
+    "round_03": "NOT affected by this vector (0 evidence files shipped). Separately defective: it shipped no evidence at all.",
+    "round_04": "NOT affected (EVIDENCE_PACK.md absent). Its defect is the opposite -- 2 of 24 artifacts shipped.",
+    "state_score_trajectory_json": "must be annotated; any round-over-round improvement computed across the 00-02 boundary is not a like-for-like comparison"
+  },
+  "what_MAIN_did_NOT_determine": [
+    "Whether any round 00-02 reviewer ACTUALLY read EVIDENCE_PACK.md or was influenced by it. Presence in the snapshot is sufficient to void the blindness guarantee regardless, so this does not need answering to reach the verdict -- but it does mean the practical harm is unquantified.",
+    "Whether the other rounds' snapshots contain a DIFFERENT steering leak that neither A-07's word list nor the agent's new patterns cover. The new gates were measured tree-wide, but absence of a hit is not proof of absence of a leak.",
+    "Whether round_00's abort (A-06 notes it 'aborted' with no median) interacts with this."
+  ],
+  "the_class_lesson": "A blindness check must grep for BOTH families: (i) review-process vocabulary that reveals the panel, and (ii) WRITER-STEERING imperatives that reveal the author's hidden plan. The second family is what actually leaked, and it is the more damaging of the two -- a reviewer who learns the panel exists is mildly unblinded; a reviewer handed 'attacking it would be an easy referee kill' has been told where to aim and that the authors know.",
+  "credit": "The agent found this while doing something else, disclosed it as LARGER than its brief rather than burying it, and did not adjust any reviewer score on its own authority. That is the correct handling."
+}

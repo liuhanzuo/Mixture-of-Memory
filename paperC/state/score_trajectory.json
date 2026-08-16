@@ -1,0 +1,41 @@
+{
+  "schema_version": "1.0.0",
+  "note": "ROUND 0 HAS NO SCORE -- it aborted at 3/6 returned reviews. Rounds 1 and 2 were frozen but never reviewed. Round 3 is the first round with a real panel. Do not interpolate or backfill missing scores.",
+  "calibration_warning": "Per paperA/paperB review_history/SCORE_HISTORY.md: scores from different prompt generations are NOT longitudinally comparable. Round 3 uses the round_01 prompt design (one defect per reviewer, numbers inlined), which differs from round_00's.",
+  "rounds": [
+    {
+      "round": 0,
+      "median_overall": null,
+      "status": "aborted_3_of_6"
+    },
+    {
+      "round": 1,
+      "median_overall": null,
+      "status": "frozen_not_reviewed"
+    },
+    {
+      "round": 2,
+      "median_overall": null,
+      "status": "frozen_not_reviewed"
+    },
+    {
+      "round": 3,
+      "median_overall": null,
+      "status": "in_flight"
+    }
+  ],
+  "BLINDNESS_BREACH_ANNOTATION_20260816": {
+    "affects": [
+      "round_00",
+      "round_01",
+      "round_02"
+    ],
+    "verdict": "COMPROMISED -- these three snapshots shipped evidence/EVIDENCE_PACK.md, byte-identical (md5 4d0013b52eed, 77766 B) to the author-side tcodex_out/ copy, which contains writer-steering imperatives including 'DO NOT claim differential learning rates' and 'attacking it would be an easy referee kill'.",
+    "rule": "Do NOT use rounds 00-02 in any median, lower quartile, ceiling, trajectory or round-over-round improvement claim. Any 'the score improved from round N' statement crossing the 00-02 boundary is not like-for-like.",
+    "not_affected": {
+      "round_03": "shipped 0 evidence files, so this vector was absent (separately defective for that reason)",
+      "round_04": "EVIDENCE_PACK.md absent; its defect is that only 2 of 24 artifacts shipped"
+    },
+    "evidence": "paperC/evidence/BLINDNESS_BREACH_ROUNDS_00_02_MAIN.json"
+  }
+}
