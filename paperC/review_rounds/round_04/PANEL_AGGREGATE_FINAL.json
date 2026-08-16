@@ -1,0 +1,161 @@
+{
+  "schema_version": "1.0.0",
+  "what": "paperC round_04 FINAL panel aggregate -- 12 of 12 reviews landed",
+  "date": "2026-08-16T15:15+08:00",
+  "snapshot_reviewed": "7fcb9ccc55c5c1d6ad1de868215b1d9253d0695a2f996340226aa6a6fa10db5a",
+  "IMPORTANT_all_12_read_an_INCOMPLETE_artifact": "every reviewer read the frozen snapshot, which shipped 2 of 24 evidence files because MAIN's freeze call enumerated --evidence by hand. Multiple reviewers state explicitly that they opened NO primary evidence and that their central findings are reconstructions. This does NOT invalidate the findings -- five independent derivations converged on the MMLU-Pro null -- but it means the reproducibility scores in particular are scores of a packaging failure, not of the paper's actual provenance.",
+  "scores_sorted": [
+    4,
+    4,
+    4,
+    4,
+    4,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5.5,
+    6
+  ],
+  "ceilings_sorted": [
+    5.5,
+    6,
+    6,
+    6,
+    6,
+    6.5,
+    6.5,
+    6.5,
+    6.5,
+    6.5,
+    7,
+    7
+  ],
+  "median": 5.0,
+  "lower_quartile": 4.0,
+  "upper_quartile": 5.0,
+  "min": 4,
+  "max": 6,
+  "median_ceiling": 6.5,
+  "min_ceiling": 5.5,
+  "gates": {
+    "median>=7.0": "FAIL (5.0)",
+    "lower_quartile>=6.0": "FAIL (4.0)",
+    "no_score_below_5": "FAIL (min 4)"
+  },
+  "per_reviewer": {
+    "codex/X1-novelty": {
+      "overall": 5,
+      "ceiling": 7,
+      "recommendation": "weak_reject"
+    },
+    "codex/X2-soundness": {
+      "overall": 4,
+      "ceiling": 6,
+      "recommendation": "reject"
+    },
+    "codex/X3-stats": {
+      "overall": 4,
+      "ceiling": 6,
+      "recommendation": "reject"
+    },
+    "codex/X4-clarity": {
+      "overall": 4,
+      "ceiling": 6,
+      "recommendation": "reject"
+    },
+    "codex/X5-repro": {
+      "overall": 4,
+      "ceiling": 6,
+      "recommendation": "reject"
+    },
+    "codex/X6-adversary": {
+      "overall": 4,
+      "ceiling": 6.5,
+      "recommendation": "reject"
+    },
+    "claude/R1-novelty": {
+      "overall": 5,
+      "ceiling": 6.5,
+      "recommendation": "weak_reject"
+    },
+    "claude/R4-clarity": {
+      "overall": 5,
+      "ceiling": 6.5,
+      "recommendation": "weak_reject"
+    },
+    "claude/R5-repro": {
+      "overall": 5,
+      "ceiling": 6.5,
+      "recommendation": "weak_reject"
+    },
+    "claude/R-soundness": {
+      "overall": 6,
+      "ceiling": 7,
+      "recommendation": "weak_accept"
+    },
+    "claude/R-adversary": {
+      "overall": 5,
+      "ceiling": 5.5,
+      "recommendation": "weak_reject"
+    },
+    "claude/R-stats": {
+      "overall": 5.5,
+      "ceiling": 6.5,
+      "recommendation": "borderline"
+    }
+  },
+  "by_panel": {
+    "codex": {
+      "scores": [
+        4,
+        4,
+        4,
+        4,
+        4,
+        5
+      ],
+      "median": 4.0,
+      "ceiling_median": 6.0
+    },
+    "claude": {
+      "scores": [
+        5,
+        5,
+        5,
+        5,
+        5.5,
+        6
+      ],
+      "median": 5.0,
+      "ceiling_median": 6.5
+    }
+  },
+  "recommendation_distribution": {
+    "reject": 5,
+    "weak_reject": 5,
+    "borderline": 1,
+    "weak_accept": 1
+  },
+  "the_offset_and_its_two_candidate_causes": "claude median 5.25 vs codex 4.0. (a) calibration difference on the same evidence; (b) three of six claude lanes ran LATER, after some remediation had landed in the live tree -- though all read the same frozen snapshot, so (b) can only act through reviewers consulting the live tree, which the blindness rules forbid and which several explicitly declined to do. MAIN has NOT determined which. Preserve for the meta-reviewer; do not average.",
+  "convergence_that_matters_more_than_the_scores": {
+    "MMLU_Pro_null": "FIVE independent derivations (MAIN 0.083; codex X2/X3/X5/X6; claude soundness 0.068-0.118; claude adversary 0.061-0.085; claude stats 0.068/0.093/0.120). None clears 0.05. Two reviewers found it WITHOUT Monte Carlo.",
+    "the_MC_free_proof": "R-claude-stats: E[max_L m_L] >= E[m_A] is forced for any process. The frozen table printed Chance=0.110877 (which the paper itself defines as mean(1/n_opt) = E[m_A]) alongside E[f_hat]=0.104460. 0.104460 < 0.110877 is the expectation of a maximum below one of its own arguments -- internally impossible, no simulation needed. 8 of 9 rows passed this test; the one violation was the flagship row.",
+    "MAIN_turned_it_into_a_permanent_guard": "paperC/code/gate_null_expectation_bound.py -- live tree 9/9 PASS rc=0; NC1 (pre-fix numbers restored) rc=2 naming the correct row and deficit 0.006417; NC2 (unmutated) rc=0 zero spurious; NC3 (missing table) rc=3 not a silent pass. This gate WOULD have caught the defect before round_04 and costs milliseconds."
+  },
+  "verified_strengths_reported_by_multiple_reviewers": [
+    "winner's-curse calibration reproduces to MC error on all 8 constructs",
+    "the kappa collapse identity holds (adversary: 8/27 rows to printing precision; stats: Delta_perm = 0 to <=1.4e-15 for all ten letters, stronger than the paper claims)",
+    "27/27 and 11/11 rows of the two per-cell tables reproduce with CI/p/verdict coherence",
+    "the 36-item ordering slack is exact (1439-1403 = 36 = 0.2992 pp) and the paper volunteers that its own ordering is not a theorem",
+    "bibliography 17/17 resolve; citation_integrity is the strongest dimension on one reviewer's card (5/5)",
+    "adversary's own words: 'this paper's internal arithmetic is in better shape than most'"
+  ],
+  "two_reviewers_retracted_their_own_findings": "R-claude-stats withdrew its 50%-power objection after computing that the worst 21-cell reaches 80.3%; R-claude-soundness and the fixing agent likewise corrected themselves mid-run. The stats retraction survived ONLY because MAIN mandated incremental disk writes after three failed attempts -- had it died between the claim and the retraction, MAIN would have inherited a wrong major as its last word.",
+  "NEXT": [
+    "independent meta-reviewer seeing ONLY the 12 reviews + the rubric -- not MAIN's plan, not prior scores, not this file",
+    "the meta-reviewer must be told: (i) all 12 read a 2-of-24 artifact, (ii) stats had one codex + one claude reviewer and five of X3's majors are unverified, (iii) the codex/claude offset is unexplained",
+    "then re-freeze COMPLETE (submission_complete, sha ffd5fd7d, 76 files) and re-review -- the reproducibility scores in particular cannot be read as final until reviewers see the real artifact"
+  ]
+}
