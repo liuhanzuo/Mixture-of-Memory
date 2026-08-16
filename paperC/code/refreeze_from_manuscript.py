@@ -49,7 +49,57 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 SECTIONS = ROOT / "sections"
-DEST = ROOT / "review_rounds" / "round_05" / "submission_complete"
+ROUNDS = ROOT / "review_rounds"
+
+# A REVIEWED round is immutable. Deciding the destination is therefore not a constant.
+#
+# This was `DEST = ROOT / "review_rounds" / "round_05" / "submission_complete"`, and the
+# docstring above still says "This writes a NEW round_05 directory" -- true when written,
+# false the moment round_05 was reviewed. Measured 2026-08-17: MAIN ran this tool intending
+# to create round_06 and it silently overwrote round_05's snapshot AFTER six reviewers had
+# read it -- 5 manuscript files modified, 2 evidence files added, snapshot_sha256
+# 4a2235e8 -> 16171eef. Recovered from git (f694741) because the snapshot was committed;
+# had it not been, the artifact those six reviews were written against would be gone.
+#
+# The destination is now COMPUTED, and a round that already contains reviews is refused.
+# A hardcoded path in a writer silently defines what gets destroyed -- cf.
+# memory/a-hardcoded-list-in-an-emitter-silently-defines-a-headline.md.
+
+
+def _has_reviews(round_dir):
+    """True if this round has been reviewed, i.e. is immutable."""
+    if any(round_dir.glob("reviews*/*.json")):
+        return True
+    return any(round_dir.glob("PANEL_AGGREGATE*.json"))
+
+
+def resolve_dest():
+    """The round to write. Newest unreviewed round, else the next round number.
+
+    Override with PAPERC_FREEZE_DEST for a deliberate target. Even then a reviewed round
+    is refused: the override exists to choose among unreviewed destinations, not to permit
+    overwriting evidence a review was written against.
+    """
+    import os
+    override = os.environ.get("PAPERC_FREEZE_DEST")
+    if override:
+        d = Path(override)
+        rd = d.parent if d.name == "submission_complete" else d
+        if rd.exists() and _has_reviews(rd):
+            raise SystemExit(
+                f"REFUSING to write {rd.name}: it contains reviews. A reviewed snapshot is "
+                f"the artifact those reviews were written against and must not change. "
+                f"Unset PAPERC_FREEZE_DEST to let the tool pick the next round.")
+        return rd / "submission_complete"
+
+    existing = sorted(ROUNDS.glob("round_[0-9][0-9]"))
+    if existing and not _has_reviews(existing[-1]):
+        return existing[-1] / "submission_complete"
+    nxt = (int(existing[-1].name.split("_")[1]) + 1) if existing else 0
+    return ROUNDS / f"round_{nxt:02d}" / "submission_complete"
+
+
+DEST = resolve_dest()
 
 CONTINUES = re.compile(r"[_/]$")
 

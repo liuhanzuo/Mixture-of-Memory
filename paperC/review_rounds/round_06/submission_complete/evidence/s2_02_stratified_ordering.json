@@ -1,0 +1,188 @@
+{
+ "what": "S2-02 adjudication: the v1>=v2 ordering claim (03_method.tex:62) is proved only for the UNSTRATIFIED mixture bound, while the estimator is stratified within n_opt.",
+ "verified_by": "MAIN, 2026-08-15, 0 GPU. Per-stratum gold marginals read from the 8 per-item shards of 7B_base on zwfy6 (.73); shard set == {0..7}, n=12032, 0 dup, 0 nan.",
+ "algebra": {
+  "papers_proof": "sum_L p_L m_L <= max_L m_L   [unstratified]",
+  "what_stratification_gives": "acc_hat <= sum_s w_s max_L m_(s,L)   [per-stratum argmax]",
+  "why_that_is_weaker": "max_L sum_s w_s m_(s,L) <= sum_s w_s max_L m_(s,L); the ordering is recovered IFF argmax_L m_(s,L) is the same letter in every stratum",
+  "reviewer_counterexample_reproduced": "2 strata, w=(.5,.5), gold all-A in one and all-B in the other: f_const=0.5 but acc_hat=1.0, so acc_hat>f_const"
+ },
+ "measured_on_mmlu_pro": {
+  "n_strata": 8,
+  "global_best_constant_letter": "A",
+  "argmax_identical_across_strata": false,
+  "strata_where_argmax_differs": [
+   {
+    "n_opt": 5,
+    "n_s": 52,
+    "argmax_L": "B",
+    "m_argmax": 0.25,
+    "m_global_best": 0.17307692307692307
+   },
+   {
+    "n_opt": 6,
+    "n_s": 93,
+    "argmax_L": "E",
+    "m_argmax": 0.21505376344086022,
+    "m_global_best": 0.1827956989247312
+   },
+   {
+    "n_opt": 7,
+    "n_s": 158,
+    "argmax_L": "B",
+    "m_argmax": 0.18354430379746836,
+    "m_global_best": 0.11392405063291139
+   },
+   {
+    "n_opt": 8,
+    "n_s": 320,
+    "argmax_L": "E",
+    "m_argmax": 0.165625,
+    "m_global_best": 0.109375
+   }
+  ],
+  "f_const_v1": 0.11660571808510639,
+  "stratified_upper_bound": 0.11959773936170214,
+  "proof_slack_pp": 0.2992021276595744,
+  "per_stratum_ALL_8": [
+   {
+    "n_opt": 3,
+    "n_s": 21,
+    "argmax_L": "A",
+    "count_argmax": 9,
+    "count_global_best_A": 9,
+    "m_argmax": 0.42857142857142855,
+    "m_global_best": 0.42857142857142855,
+    "differs_from_global": false
+   },
+   {
+    "n_opt": 4,
+    "n_s": 606,
+    "argmax_L": "A",
+    "count_argmax": 166,
+    "count_global_best_A": 166,
+    "m_argmax": 0.2739273927392739,
+    "m_global_best": 0.2739273927392739,
+    "differs_from_global": false
+   },
+   {
+    "n_opt": 5,
+    "n_s": 52,
+    "argmax_L": "B",
+    "count_argmax": 13,
+    "count_global_best_A": 9,
+    "m_argmax": 0.25,
+    "m_global_best": 0.17307692307692307,
+    "differs_from_global": true
+   },
+   {
+    "n_opt": 6,
+    "n_s": 93,
+    "argmax_L": "E",
+    "count_argmax": 20,
+    "count_global_best_A": 17,
+    "m_argmax": 0.21505376344086022,
+    "m_global_best": 0.1827956989247312,
+    "differs_from_global": true
+   },
+   {
+    "n_opt": 7,
+    "n_s": 158,
+    "argmax_L": "B",
+    "count_argmax": 29,
+    "count_global_best_A": 18,
+    "m_argmax": 0.18354430379746836,
+    "m_global_best": 0.11392405063291139,
+    "differs_from_global": true
+   },
+   {
+    "n_opt": 8,
+    "n_s": 320,
+    "argmax_L": "E",
+    "count_argmax": 53,
+    "count_global_best_A": 35,
+    "m_argmax": 0.165625,
+    "m_global_best": 0.109375,
+    "differs_from_global": true
+   },
+   {
+    "n_opt": 9,
+    "n_s": 801,
+    "argmax_L": "A",
+    "count_argmax": 101,
+    "count_global_best_A": 101,
+    "m_argmax": 0.12609238451935081,
+    "m_global_best": 0.12609238451935081,
+    "differs_from_global": false
+   },
+   {
+    "n_opt": 10,
+    "n_s": 9981,
+    "argmax_L": "A",
+    "count_argmax": 1048,
+    "count_global_best_A": 1048,
+    "m_argmax": 0.10499949904819156,
+    "m_global_best": 0.10499949904819156,
+    "differs_from_global": false
+   }
+  ],
+  "integer_form": {
+   "f_const": "1403/12032",
+   "stratified_upper_bound": "1439/12032",
+   "slack_items": 36,
+   "slack_pp": "3600/12032",
+   "note": "exact rationals; reproduced from integer counts independently by the round_01 reviewer and re-verified by MAIN"
+  },
+  "persisted_from_tmp_20260815": "the 4 NON-differing rows (n_opt=3,4,9,10) previously existed only in /tmp/s2_02_strata_result.json, which a reboot wipes (memory/persist-artifacts-on-wzc1-or-diskb.md). Copied here so the 8-row table printed in 03_method.tex is reconstructible from wzc1."
+ },
+ "empirical_status_of_the_claim": {
+  "cells_checked": 27,
+  "cells_violating_ordering": 0,
+  "tightest_cell": "llama2/k12 UN-healed",
+  "tightest_margin_pp": 0.007783590975318777,
+  "ratio_slack_over_observed_margin_RETRACTED": {
+   "value": 38.44011441612533,
+   "status": "RETRACTED 2026-08-15 -- DO NOT CITE",
+   "why": "category error: divides a PER-CELL margin (0.007783590975318777 pp, llama2/k12) by the UNCONDITIONAL GLOBAL stratified gap (0.2992021277 pp = 36/12032 items). The two have different conditioning, so their ratio is not a quantity. Removed from 03_method.tex.",
+   "replacement": "per_cell_attainable_ratio",
+   "cross_ref": "round_01_review_findings.MAIN_error_1_the_38x_is_a_category_error"
+  },
+  "per_cell_attainable_ratio": {
+   "value": 10.869,
+   "numerator_pp": 0.0846,
+   "denominator_pp": 0.007783590975318777,
+   "what": "largest ordering violation attainable at llama2/k12's OWN observed letter marginal (p_A=0.98828125), divided by its observed margin",
+   "why_bounded": "94.82% of the item weight lies in A-argmax strata (measured: 11409/12032), so only 5.18% of the weight sits where switching off A could gain anything, and only 1.171875% of this arm's prediction mass is non-A and therefore displaceable",
+   "note": "0.0846 pp is itself an UPPER bound, so 10.869 is an upper bound on the ratio",
+   "reverified_by": "MAIN 2026-08-15 from per_stratum_ALL_8 integer counts (94.82% and 10.87 both reproduced)"
+  }
+ },
+ "verdict": "The 'always' is FALSE as a theorem: argmax_L differs from the global best letter in 4 of 8 n_opt strata (n_opt=5,6,7,8). The ordering nevertheless HOLDS in 27/27 measured cells, but the tightest cell clears the floor by 0.0078 pp while the unproven region is 0.2992 pp wide -- 38x the observed margin. So the claim must be restated as an empirical property of these cells with its margin reported, not asserted as an identity.",
+ "same_class_as": "memory/a-range-is-not-a-measurement-until-it-clears-its-floor.md",
+ "round_01_review_findings": {
+  "reviewer_verdict": "NEEDS_REVISION -- the retraction is arithmetically exact and must stand; two of MAIN's NEW numbers are wrong",
+  "retraction_confirmed": "f_const=1403/12032, UB=1439/12032, 36 excess items, slack 0.2992021277 pp -- reproduced from integer counts, agreement 1.4e-17",
+  "MAIN_error_1_the_38x_is_a_category_error": {
+   "what_I_wrote": "the proof slack 0.2992 pp is 38x the tightest observed margin 0.0078 pp",
+   "why_wrong": "it divides a PER-CELL margin by the UNCONDITIONAL GLOBAL gap. The largest violation attainable at llama2/k12's own observed letter marginal (p_A=0.9883) is +0.0846 pp, because 94.82% of the weight sits in A-argmax strata so only 4.01% of A-mass can be displaced. So the honest per-cell ratio is 10.9x, and 0.0846 pp is itself an upper bound.",
+   "action": "remove the 38x framing"
+  },
+  "MAIN_error_2_margin_is_not_sub_noise": {
+   "what_I_asked": "is 0.0078 pp below sigma_hat, making 'holds empirically' itself unfloored?",
+   "answer": "NO. In paperC's own frame f_const is an exact property of the gold labels so sigma_hat=0 and the margin is exact. Under superpopulation item resampling sigma_hat=0.0039 pp -> margin/sigma = 2.01.",
+   "mechanism": "margin -> 0 iff the arm -> pure always-A, which is line 60's IDENTITY case where the ordering holds with EQUALITY. The four tightest cells are the 92-99% modal-A cells, so a small margin is the SAFE degenerate limit, not proximity to violation."
+  },
+  "MAIN_error_3_caveat_mislocates_the_risk": {
+   "what_I_wrote": "a stratified read-out on a benchmark with a stronger per-stratum marginal could invert it",
+   "why_wrong": "the inversion is realizable ON MMLU-PRO ITSELF: the n_opt-conditional emitter (A,A,B,E,B,E,A,A) is legal on every item (index(B)=1 < 5,7; index(E)=4 < 6,8) and attains acc_hat = f_const + 0.2992 pp",
+   "the_real_condition": "p_{s,L} = p_L for all s => acc_hat = sum_L p_L f_L <= f_const EXACTLY. So the defect is a MISSING REGULARITY CONDITION (arm output independent of n_opt), and the 27 cells are evidence FOR THAT CONDITION, not for the bound."
+  },
+  "pseudo_replication": {
+   "claimed": "27/27",
+   "reviewer": "overstates by ~5x: 13 of 27 clear the floor by MORE than the entire 0.2992 pp unproven region so carry ZERO information; the remaining 14 come from 4 base models, 5 of them ONE Qwen3 heal run sampled 500 steps apart (spread 0.0341 pp); all 27 share one item set, one f_const, one gold marginal, and the gap itself has n=1",
+   "effective_independent": "~5-6"
+  },
+  "leftover_dependency_I_worried_about": "03_method.tex:62 'Passing v2 must never be described as clearing the paper's floor' STILL STANDS -- checked both branches: if the ordering holds, passing v2 does not imply clearing the floor (sentence needed); if it inverts, the inference would be valid so the sentence is merely over-conservative, not wrong. Also independently grounded on scope at 06_discussion.tex:6 and tab_two_nulls.tex:9-10.",
+  "prereg_still_asserts_it": "paperC/READOUT_V2_PREREGISTRATION.md:144-146 still says 'acc_hat <= the best-constant floor always' and 'v2 is therefore a lower absolute bar'; 03_method.tex:72-73 cites that doc as the prereg. Must NOT be edited (dated provenance) -- needs a dated addendum."
+ }
+}

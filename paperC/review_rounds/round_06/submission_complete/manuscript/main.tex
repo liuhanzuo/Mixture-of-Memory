@@ -1,0 +1,54 @@
+\documentclass{article}
+\usepackage{iclr2026_conference,times}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{multirow}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{enumitem}
+\usepackage{placeins}
+\usepackage{xcolor}
+
+\title{Null Calibration for Multiple-Choice Evaluation: When ``Above Chance'' Fails the Input-Blind Floor}
+\author{Anonymous authors \\ Paper under double-blind review}
+
+\begin{document}
+
+\maketitle
+
+\input{sections/00_abstract}
+\input{sections/01_introduction}
+\input{sections/02_related}
+\input{sections/03_method}
+% --- ICLR 2026 page budget ---------------------------------------------------
+% Section 4 "Four Under-Specifications of the Reference" is DEVELOPED in the
+% appendix (sections/03b_nulls.tex, \input from 09_appendix.tex, i.e. after the
+% bibliography). The main text keeps a self-contained summary that names all four
+% degrees of freedom and states every headline number, so a reader who never opens
+% the appendix still learns what the four under-specifications are. Nothing was
+% deleted. Provenance + measured page budget: paperC/C9_APPLIED_20260816.md.
+% -----------------------------------------------------------------------------
+\input{sections/03b_nulls_summary}
+\input{sections/04_experiments}
+\input{sections/05_analysis}
+\input{sections/06_discussion}
+\input{sections/07_limitations}
+
+% --- ICLR 2026 page budget -------------------------------------------------
+% The Ethics Statement and the Reproducibility Statement are EXCLUDED from the
+% 9-page main-text limit by the ICLR 2026 Author Guide, but only read as excluded
+% when they do not sit inside the main text. Both are therefore emitted after the
+% bibliography. Verbatim source + quote: paperC/gate/venue_page_limit.json.
+% ---------------------------------------------------------------------------
+\bibliography{refs}
+\bibliographystyle{iclr2026_conference}
+
+\input{sections/08_ethics}
+\input{sections/10_reproducibility}
+
+\appendix
+\input{sections/09_appendix}
+
+\end{document}

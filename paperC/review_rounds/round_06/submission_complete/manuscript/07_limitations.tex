@@ -1,0 +1,16 @@
+\section{Limitations}
+
+\paragraph{Character-unit reconstruction.}
+The OpenBookQA character floor was added after the original audit identified an evidence hole. It is now recomputed from raw parquet and passes a 12/12 character/token self-test, so we do not use the earlier ``unrecomputable'' status. The remaining limitation is narrower: the character values are reconstructed from raw option text rather than retained as per-item fields in the scored records. Item matching to the token leg therefore follows the shared loader and self-test rather than a stored character-count column. The convention of excluding the continuation's leading space was explicit; including it yielded the identical 0.363500 value.
+
+\paragraph{One family at one depth cannot identify healing.}
+The prospective healed contrast contains one non-OLMo family at one absolute depth. Llama-2, Llama-3, and the \texttt{k10}/\texttt{k12}/\texttt{k14} rungs remain confounded. The observed ladder is a cliff, not a gradient, and we fit no depth curve.
+
+\paragraph{The healing corpora are unmatched and cannot be matched from available data.}
+The Qwen3 arm heals on 5.72 epochs of 5.541B SlimPajama tokens, whereas OLMo-2 used 1.0 epoch of 31.7B Dolmino tokens. Qwen3 cannot consume OLMo-2-token Dolmino and raw Dolmino text is on neither disk. Relative depth is also untested: Qwen3 has 36 layers and OLMo-2 has 32, so \texttt{keep8} retains 22.2\% versus 25.0\%.
+
+\paragraph{The planned causal contrast has dissolved.}
+\texttt{H\_heal} is not merely unmeasured. Its antecedent required the unhealed Qwen3 \texttt{k8} comparator to sit below an arm-conditional null; it does not ($-0.139$ points, $p=0.0964$). No amount of further training repairs a comparator that fails the criterion. \texttt{H\_family} is equally unavailable because 0/27 cells are significantly below the permutation null. A future read-out can ask only whether the healed arm has material item-level signal.
+
+\paragraph{Regime, pooling, and literature scope.}
+Non-OLMo cross-family arms are truncate-only, whereas OLMo-2 arms are prune-then-heal; tables that include both cannot identify a family effect. Pooled results average per-item deviations over disjoint benchmarks and must not be read as per-benchmark verdicts. Finally, the Cho et al. overlap audit used arXiv v4 dated January 12, 2026; the January 26, 2026 camera-ready could not be diffed because the OpenReview PDF endpoint was inaccessible from the audit network.

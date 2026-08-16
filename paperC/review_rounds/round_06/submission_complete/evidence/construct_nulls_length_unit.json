@@ -1,0 +1,279 @@
+{
+ "char_unit_definition": "len(option_text) exactly as recorded at scripts/eval_olmo2_mc_letter_content.py:331 (third tuple element); the leading space of the continuation is NOT counted. char_with_space is emitted alongside so the convention is visible, not assumed.",
+ "closes": "paperC/SUBMISSION_GAP_AUDIT.md gap E1",
+ "gpu_used": "NONE",
+ "headline_for_readme": {
+  "openbookqa_char_split": 0.36350000000000005,
+  "openbookqa_token_split": 0.36800000000000016
+ },
+ "self_test": "PASSED -- reproduces all 6 character-unit values and all 6 token-unit values recorded in A01 STATUS.json key NEW_degree_of_freedom_length_unit",
+ "tasks": {
+  "arc_challenge": {
+   "a01_recorded_char_split": 0.274104,
+   "a01_recorded_token_split": 0.283902,
+   "char": {
+    "credit": 0.34726962457337884,
+    "first": 0.2721843003412969,
+    "last": 0.27474402730375425,
+    "split": 0.2741040955631399,
+    "wrong": 0.22098976109215018
+   },
+   "char_diagnostics": {
+    "frac_items_gold_in_winner_set": 0.34726962457337884,
+    "frac_items_with_tied_longest": 0.18600682593856654,
+    "n": 1172
+   },
+   "char_with_space": {
+    "credit": 0.34726962457337884,
+    "first": 0.2721843003412969,
+    "last": 0.27474402730375425,
+    "split": 0.2741040955631399,
+    "wrong": 0.22098976109215018
+   },
+   "char_with_space_diagnostics": {
+    "frac_items_gold_in_winner_set": 0.34726962457337884,
+    "frac_items_with_tied_longest": 0.18600682593856654,
+    "n": 1172
+   },
+   "n": 1172,
+   "token_from_per_item_records": {
+    "all": {
+     "credit": 0.5435153583617748,
+     "first": 0.26535836177474403,
+     "last": 0.2960750853242321,
+     "split": 0.28390216154721276,
+     "wrong": 0.14249146757679182
+    },
+    "diag": {
+     "frac_items_gold_in_winner_set": 0.5435153583617748,
+     "frac_items_with_tied_longest": 0.5085324232081911,
+     "n": 1172
+    },
+    "split": 0.28390216154721276
+   }
+  },
+  "arc_easy": {
+   "a01_recorded_char_split": 0.255296,
+   "a01_recorded_token_split": 0.238054,
+   "char": {
+    "credit": 0.3181818181818182,
+    "first": 0.26557239057239057,
+    "last": 0.2478956228956229,
+    "split": 0.25529601571268246,
+    "wrong": 0.20707070707070707
+   },
+   "char_diagnostics": {
+    "frac_items_gold_in_winner_set": 0.3181818181818182,
+    "frac_items_with_tied_longest": 0.1914983164983165,
+    "n": 2376
+   },
+   "char_with_space": {
+    "credit": 0.3181818181818182,
+    "first": 0.26557239057239057,
+    "last": 0.2478956228956229,
+    "split": 0.25529601571268246,
+    "wrong": 0.20707070707070707
+   },
+   "char_with_space_diagnostics": {
+    "frac_items_gold_in_winner_set": 0.3181818181818182,
+    "frac_items_with_tied_longest": 0.1914983164983165,
+    "n": 2376
+   },
+   "n": 2376,
+   "token_from_per_item_records": {
+    "all": {
+     "credit": 0.5071548821548821,
+     "first": 0.23863636363636365,
+     "last": 0.23526936026936027,
+     "split": 0.2380541526374857,
+     "wrong": 0.10648148148148148
+    },
+    "diag": {
+     "frac_items_gold_in_winner_set": 0.5071548821548821,
+     "frac_items_with_tied_longest": 0.5180976430976431,
+     "n": 2376
+    },
+    "split": 0.2380541526374857
+   }
+  },
+  "commonsense_qa": {
+   "a01_recorded_char_split": 0.221977,
+   "a01_recorded_token_split": 0.201775,
+   "char": {
+    "credit": 0.2571662571662572,
+    "first": 0.2194922194922195,
+    "last": 0.2244062244062244,
+    "split": 0.221976521976522,
+    "wrong": 0.19000819000819
+   },
+   "char_diagnostics": {
+    "frac_items_gold_in_winner_set": 0.2571662571662572,
+    "frac_items_with_tied_longest": 0.13513513513513514,
+    "n": 1221
+   },
+   "char_with_space": {
+    "credit": 0.2571662571662572,
+    "first": 0.2194922194922195,
+    "last": 0.2244062244062244,
+    "split": 0.221976521976522,
+    "wrong": 0.19000819000819
+   },
+   "char_with_space_diagnostics": {
+    "frac_items_gold_in_winner_set": 0.2571662571662572,
+    "frac_items_with_tied_longest": 0.13513513513513514,
+    "n": 1221
+   },
+   "n": 1221,
+   "token_from_per_item_records": {
+    "all": {
+     "credit": 0.43407043407043405,
+     "first": 0.20802620802620803,
+     "last": 0.20475020475020475,
+     "split": 0.20177450177450162,
+     "wrong": 0.09254709254709255
+    },
+    "diag": {
+     "frac_items_gold_in_winner_set": 0.43407043407043405,
+     "frac_items_with_tied_longest": 0.5290745290745291,
+     "n": 1221
+    },
+    "split": 0.20177450177450162
+   }
+  },
+  "openbookqa": {
+   "a01_recorded_char_split": 0.3635,
+   "a01_recorded_token_split": 0.368,
+   "char": {
+    "credit": 0.416,
+    "first": 0.362,
+    "last": 0.362,
+    "split": 0.36350000000000005,
+    "wrong": 0.32
+   },
+   "char_diagnostics": {
+    "frac_items_gold_in_winner_set": 0.416,
+    "frac_items_with_tied_longest": 0.146,
+    "n": 500
+   },
+   "char_with_space": {
+    "credit": 0.416,
+    "first": 0.362,
+    "last": 0.362,
+    "split": 0.36350000000000005,
+    "wrong": 0.32
+   },
+   "char_with_space_diagnostics": {
+    "frac_items_gold_in_winner_set": 0.416,
+    "frac_items_with_tied_longest": 0.146,
+    "n": 500
+   },
+   "n": 500,
+   "token_from_per_item_records": {
+    "all": {
+     "credit": 0.644,
+     "first": 0.384,
+     "last": 0.36,
+     "split": 0.36800000000000016,
+     "wrong": 0.228
+    },
+    "diag": {
+     "frac_items_gold_in_winner_set": 0.644,
+     "frac_items_with_tied_longest": 0.484,
+     "n": 500
+    },
+    "split": 0.36800000000000016
+   }
+  },
+  "piqa": {
+   "a01_recorded_char_split": 0.475245,
+   "a01_recorded_token_split": 0.465452,
+   "char": {
+    "credit": 0.5326441784548422,
+    "first": 0.484766050054407,
+    "last": 0.4657236126224157,
+    "split": 0.47524483133841133,
+    "wrong": 0.4178454842219804
+   },
+   "char_diagnostics": {
+    "frac_items_gold_in_winner_set": 0.5326441784548422,
+    "frac_items_with_tied_longest": 0.1147986942328618,
+    "n": 1838
+   },
+   "char_with_space": {
+    "credit": 0.5326441784548422,
+    "first": 0.484766050054407,
+    "last": 0.4657236126224157,
+    "split": 0.47524483133841133,
+    "wrong": 0.4178454842219804
+   },
+   "char_with_space_diagnostics": {
+    "frac_items_gold_in_winner_set": 0.5326441784548422,
+    "frac_items_with_tied_longest": 0.1147986942328618,
+    "n": 1838
+   },
+   "n": 1838,
+   "token_from_per_item_records": {
+    "all": {
+     "credit": 0.6779107725788901,
+     "first": 0.470076169749728,
+     "last": 0.46082698585418935,
+     "split": 0.46545157780195867,
+     "wrong": 0.2529923830250272
+    },
+    "diag": {
+     "frac_items_gold_in_winner_set": 0.6779107725788901,
+     "frac_items_with_tied_longest": 0.4249183895538629,
+     "n": 1838
+    },
+    "split": 0.46545157780195867
+   }
+  },
+  "winogrande": {
+   "a01_recorded_char_split": 0.491713,
+   "a01_recorded_token_split": 0.501184,
+   "char": {
+    "credit": 0.5816890292028414,
+    "first": 0.4925019731649566,
+    "last": 0.4909234411996843,
+    "split": 0.49171270718232046,
+    "wrong": 0.40173638516179955
+   },
+   "char_diagnostics": {
+    "frac_items_gold_in_winner_set": 0.5816890292028414,
+    "frac_items_with_tied_longest": 0.17995264404104183,
+    "n": 1267
+   },
+   "char_with_space": {
+    "credit": 0.5816890292028414,
+    "first": 0.4925019731649566,
+    "last": 0.4909234411996843,
+    "split": 0.49171270718232046,
+    "wrong": 0.40173638516179955
+   },
+   "char_with_space_diagnostics": {
+    "frac_items_gold_in_winner_set": 0.5816890292028414,
+    "frac_items_with_tied_longest": 0.17995264404104183,
+    "n": 1267
+   },
+   "n": 1267,
+   "token_from_per_item_records": {
+    "all": {
+     "credit": 0.9337016574585635,
+     "first": 0.4940805051302289,
+     "last": 0.5082872928176796,
+     "split": 0.5011838989739542,
+     "wrong": 0.06866614048934491
+    },
+    "diag": {
+     "frac_items_gold_in_winner_set": 0.9337016574585635,
+     "frac_items_with_tied_longest": 0.8650355169692187,
+     "n": 1267
+    },
+    "split": 0.5011838989739542
+   }
+  }
+ },
+ "tie_conventions": "split/first/last/credit/wrong, behaviour copied from paperC/code/gate2_crossfamily_nulls.py:231-255",
+ "token_unit_definition": "continuation-token count, recomputed here from the per-item records' cont_tokens, so both units are shown on the same items.",
+ "what": "longest-option null in BOTH length units (character and continuation-token), five tie conventions, from raw parquet"
+}

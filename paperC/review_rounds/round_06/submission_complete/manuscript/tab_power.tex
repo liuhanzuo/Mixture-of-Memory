@@ -1,0 +1,20 @@
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{4.5pt}
+\begin{tabular}{lrrrr}
+\toprule
+Task & $n$ & \texttt{keep8} $\Delta$ & CI95 half-width & Detect $-1.389$ pp? \\
+\midrule
+MMLU & 14042 & $-1.389$ & 1.154 & reference \\
+ARC-Easy & 2376 & $-0.800$ & 1.305 & yes, borderline \\
+Winogrande, control & 1267 & $+0.552$ & 1.184 & yes \\
+PIQA & 1838 & $+2.503$ & 2.775 & no \\
+CommonsenseQA & 1221 & $-1.065$ & 3.399 & no \\
+ARC-Challenge & 1172 & $-0.939$ & 3.882 & no \\
+OpenBookQA & 500 & $-1.800$ & 6.400 & no \\
+\bottomrule
+\end{tabular}
+\caption{Mandatory power disclosure for small-benchmark null results. Numbers are the paired-bootstrap half-widths recorded per cell in the five-benchmark letter/content null records (evidence \textsf{E-F}; see the reproducibility statement for the artifact path).}
+\label{tab:power}
+\end{table}
