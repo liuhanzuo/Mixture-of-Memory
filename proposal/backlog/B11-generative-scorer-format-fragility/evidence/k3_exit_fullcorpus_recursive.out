@@ -1,0 +1,21 @@
+recursive glob files: 10886
+unique by content: 10647 (dups removed: 239 )
+skipped files (unknown task/bad schema): 0 skipped rows: 800
+ITEMS SCORED: 418367
+
+     stratum        n  destroyed   rescued    net_pp
+   is_list=1    10377       1332        13    -12.71
+   is_list=0   407990       1248      8233      1.71
+         ALL   418367       2580      8246      1.35
+
+per task:
+    qa1 n= 135589 destroyed= 928 rescued= 2628 net=  +1.25 pp
+   qa10 n=    500 destroyed=   0 rescued=    0 net=  +0.00 pp
+    qa2 n= 114330 destroyed= 426 rescued= 1779 net=  +1.18 pp
+    qa3 n=  16900 destroyed=   8 rescued=   13 net=  +0.03 pp
+    qa4 n=  16800 destroyed=   6 rescued=   43 net=  +0.22 pp
+    qa5 n= 131308 destroyed=1191 rescued= 3773 net=  +1.97 pp
+    qa6 n=    980 destroyed=   4 rescued=    7 net=  +0.31 pp
+    qa7 n=    910 destroyed=   1 rescued=    3 net=  +0.22 pp
+    qa8 n=    525 destroyed=   2 rescued=    0 net=  -0.38 pp
+    qa9 n=    525 destroyed=  14 rescued=    0 net=  -2.67 pp

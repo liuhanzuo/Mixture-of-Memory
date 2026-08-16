@@ -444,5 +444,73 @@
     ],
     "filing_status": "STILL NOT FILED. Filing to a third-party repo is an irreversible outward action; MAIN has verified the CONTENT is filable but is not treating content-verification as filing authorisation.",
     "lesson_recorded": "memory/hand-composed-demo-strings-must-be-executed.md -- B11 has now produced TWO hand-composed demo strings that did not demonstrate the mechanism they were filed under, both times because line 27 silently did the work."
+  },
+  "k3_exit_MAIN_reverification_20260816": {
+    "gate": "K3-EXIT: independently re-verify the two source-code assertions by EXECUTION, re-check the upstream tracker, and PREPARE (not file) the issue. 0 GPU.",
+    "date": "2026-08-16",
+    "who": "MAIN-dispatched pass, re-derived from source. Did NOT inherit the 08-15 or the earlier 08-16 findings; every claim re-executed.",
+    "gpu_spent": "ZERO. No node contacted, no CUDA device touched, no training/eval launched. All work = CPU string ops on files already on disk + read-only HTTPS via hy-proxy.",
+    "verdict_summary": "Claim A: substance SURVIVED and is provable, but the WORD 'unreachable' is REFUTED BY MEASUREMENT (line 31 executes on 7/7 traced inputs); file it as 'executed but can never fire' = guaranteed no-op. Claim B: SURVIVED in a real two-arm comparison, both directions, on hand cases AND on 418367 stored items. Upstream exit STILL UNCLAIMED. Issue PREPARED, NOT FILED.",
+    "deliverables_on_disk": {
+      "issue_draft": "proposal/backlog/B11-generative-scorer-format-fragility/K3_EXIT_UPSTREAM_ISSUE_DRAFT.md",
+      "runnable_evidence": "proposal/backlog/B11-generative-scorer-format-fragility/evidence/k3_exit_reachability_check.py",
+      "recorded_output": "proposal/backlog/B11-generative-scorer-format-fragility/evidence/k3_exit_reachability_check.out (rc=0, captured directly not through a pipe)",
+      "corpus_output": "proposal/backlog/B11-generative-scorer-format-fragility/evidence/k3_exit_fullcorpus_recursive.{out,json}"
+    },
+    "claim_A_verdict": {
+      "as_worded_in_next_gate": "line 31 split('Question') is unreachable because line 25 lowercases first -- mechanically provable, 'Question' in s.lower() is False for every s",
+      "verdict": "SUBSTANCE SURVIVED / WORDING REFUTED -- do not file the word 'unreachable'",
+      "A1_reachability": "REFUTED. sys.settrace line-level over preprocess_output: executed lines = [25,27,29,30,31,32] on 7/7 inputs (incl. empty string, bare 'Question', and Turkish dotted/dotless I + Sigma + capital sharp-s adversarials). Line 31 IS executed on every call. This independently reproduces the 08-15 refutation of MAIN's own brief.",
+      "A2_effect": "SUPPORTED. Value entering vs leaving line 31 differed on 0/10 probes. Method note: the step-by-step reimplementation used for the probe is ASSERTED equal to the real preprocess_output on every input, so this is the real code path and not a paraphrase.",
+      "A3_impossibility": "PROVED, exhaustively over all 0x110000 codepoints: codepoints whose .lower() contains ASCII 'Q' = []; contains any char of 'QUESTION' = []; multi-char lowerings retaining an ASCII capital = []; non-idempotent lowerings = []. Greek final sigma yields no capital ('ΟΔΟΣ'.lower()=='οδος').",
+      "specificity_control": "PASSED. Lines 29/30 DO fire on their lowercase literals (preprocess_output('kitchen <CONTEXT> blah')=='kitchen ') while 31 does not fire on its capitalised one ('kitchen Question: blah'->'kitchen question: blah'). So the defect is line 31, not a dead tail.",
+      "no_other_path": "git grep preprocess_output in the upstream checkout = 2 hits (def metrics.py:24, single caller metrics.py:36 inside compare_answers). Line 25 is the function's first and unconditional statement, so no argument can bypass it.",
+      "observable_consequence": "compare_answers('kitchen','kitchen Question: where is Mary? Answer: garden','Where is John?',TASK_LABELS['qa1']) = False as shipped, True with the one-character fix -> the dead guard causes false negatives and the fix is NOT score-neutral."
+    },
+    "claim_B_verdict": {
+      "as_worded_in_next_gate": "line 27's first-period truncation is a SIGN-DEPENDENT TRADE-OFF, not a bug, with the executed two-row demonstration",
+      "verdict": "SURVIVED",
+      "arm_definition": "CANON = shipped compare_answers; NOTRUNC = identical with ONLY line 27 removed. Lowercase, <context>/<example>, the labels_in_question subtraction and the UNIQUENESS requirement len(labels_in_output)==1 are held fixed in BOTH arms.",
+      "arm_sanity_asserted": "On period-free inputs the two arms are byte-identical (3/3 probes) -- this is what makes them differ by line 27 alone.",
+      "accepted_demos_arms_disagree": [
+        "'The answer is A. kitchen' -> canon False / notrunc True (DESTROYS a correct enumerated answer; canon preprocess = 'the answer is a')",
+        "'John moved several times. He is in the kitchen' -> canon False / notrunc True (DESTROYS a correct reason-then-answer)",
+        "'kitchen. Question: Where is Mary? Answer: garden' -> canon True / notrunc False (RESCUES a correct scaffold-leaking answer)",
+        "'kitchen is wrong. the answer is garden', target kitchen -> canon True / notrunc False (MANUFACTURES a correct answer = false positive)"
+      ],
+      "rejected_demo_negative_control": "'Choices: A. In the kitchen B. In the garden. The answer is kitchen.' -> canon False AND notrunc False. Re-executed rather than trusting the 08-15 catch: CONFIRMED it does not isolate line 27. Without truncation BOTH 'kitchen' and 'garden' survive, so it dies on the uniqueness test at metrics.py:56. EXCLUDED from the issue body.",
+      "real_data_two_arm": "Recursive glob babilong_results/**/qa*.csv = 10886 files -> 10647 unique by content -> 418367 scoreable items, both arms, stratified by is_list_format() copied verbatim from analyze_a02_truncation_ablation.py. RESULT: is_list=1 n=10377 destroyed 1332 rescued 13 net -12.71pp; is_list=0 n=407990 destroyed 1248 rescued 8233 net +1.71pp; pooled n=418367 net +1.35pp. STRATIFIED SIGNS ARE OPPOSITE. Per-task pooled signs also disagree (qa5 +1.97, qa1 +1.25, qa9 -2.67, qa8 -0.38).",
+      "skipped_rows_inspected_not_assumed": "800 rows skipped. Inspected: they belong to retrieval-diagnostic CSVs whose columns are idx,length,n_candidates,n_chunks,needle_chunks,needle_in_candidates/needle_evicted and which have NO target/output/question field, i.e. not scoreable rows. 0 files skipped for unknown task or bad schema.",
+      "caveat_that_must_travel": "Heterogeneous mix of this repo's historical runs across many models/configs, NOT a controlled arm contrast. Supports the SIGN DEPENDENCE only; must NEVER be quoted as an effect size for any comparison."
+    },
+    "upstream_recheck_20260816": {
+      "network": "REACHED via hy-proxy. POSITIVE CONTROLS RUN FIRST so that zero-results are distinguishable from a broken proxy: GET /rate_limit HTTP 200 (60/60), GET /repos/booydar/babilong HTTP 200 (open_issues_count 6, pushed_at 2026-06-01T18:13:38Z, stars 253).",
+      "duplicate_verdict": "NO DUPLICATE -- the K3 exit is STILL UNCLAIMED as of 2026-08-16.",
+      "enumeration": "GET /issues?state=all&per_page=100 (2 pages) = 18 records = 10 issues + 8 PRs, i.e. open AND closed. Plus GET /issues/comments?per_page=100 = 20 comments, also scanned.",
+      "keyword_scan": "20 keywords over all 18 titles + 18 bodies + 20 comments -> 4 hits, ALL READ IN FULL, ALL FALSE POSITIVES: ISS#16 body 'lower()' x8 occurs inside the reporter's own pasted inference script (gemma chat-template/attention-backend question); PR#17 body 'scorer'/'scoring' says 'The official BABILong scorer was not modified'; PR#17 comment 'scorer' says 'scored with the unmodified official BABILong collector/scorer'. None concerns metrics.py preprocessing.",
+      "search_api": "8 repo-scoped queries: metrics.py 0, preprocess_output 0, compare_answers 0, truncation 0, lowercase 0, 'first sentence' 0, split 1 (ISS#16), scorer 1 (PR#17). The two NON-ZERO rows are the endpoint's positive control, so the six zeros are real absences. Cross-repo: 'babilong preprocess_output' 0, 'babilong metrics.py truncation' 0; a third cross-repo query hit the 60/h unauthenticated rate limit and is NOT counted as a zero.",
+      "nobody_fixed_it": "9 branches + 27 forks enumerated. metrics.py fetched from main, from the pinned HEAD sha, from dev, and from the 4 most-recently-pushed forks (adam-suliman/babilong-cl, RodkinIvan/babilong, Voresot/babilong, sylee21/babilong): ALL 7 fetches md5 0a5ecc52ade4e337d35b8f9c97c38310 and all still carry split('Question') at line 31.",
+      "byte_identity": "raw.githubusercontent.com main / pinned sha 7a6efee29f5cac03c3c410e6799c80fd2ffe3610 / dev all md5 0a5ecc52...; diff against third_party/babilong-pkg/babilong/metrics.py EMPTY. So lines 25/27/31 are the maintainer's own line numbers."
+    },
+    "defects_found_in_our_own_record_this_pass": [
+      "THE EARLIER 08-16 PRECHECK'S CORPUS FIGURE IS NOT THE FULL CORPUS IT CLAIMS. K3_EXIT_PRECHECK_20260816.md sec 3.3 says it measured 'every qa*.csv under babilong_results/' and 'removed the sampling', but k3_precheck/stratify_line27_fullcorpus.py globs os.path.join(root,'*','qa*.csv') -- NON-RECURSIVE. Measured on wzc1: depth-1 glob = 973 files, recursive = 10886 (973 at depth 3, 9885 at depth 4, 28 at depth 5). So its n=195064 and its -8.52/+0.85pp pair cover a fraction of the files. CONCLUSION UNCHANGED, magnitude larger: recursive re-run gives n=418367, LIST -12.71pp vs non-LIST +1.71pp. The issue body quotes the recursive numbers. Flagged, NOT edited -- the precheck is the dated record.",
+      "TWO md5 VALUES FOR THE SAME 'BYTE-IDENTICAL' FILE, RESOLVED. K3_EXIT_PRECHECK_20260816.md sec 1.5 reports the fork/upstream metrics.py md5 as f0118396c611e5d0b2e440413f1c4a67 while sec 2.1 reports 0a5ecc52ade4e337d35b8f9c97c38310 for the same file. Reproduced the discrepancy: f0118396... is md5 of the SAME BYTES WITH THE TRAILING NEWLINE STRIPPED, i.e. a $(curl ...) command-substitution artifact ($( ) eats trailing newlines). md5(raw)=0a5ecc52..., md5(raw.rstrip(b'\\n'))=f0118396... Same file, two hashing procedures. 0a5ecc52... is the hash of the file as served and as stored and is the one quoted in the issue body.",
+      "'18 issues' in k1_novelty.empty_searches_documenting_the_gap is 18 RECORDS = 10 issues + 8 PRs (already flagged 08-15; re-confirmed today). Also note repo.open_issues_count=6 includes open PRs. Bookkeeping only; the no-duplicate conclusion is unaffected."
+    ],
+    "what_this_pass_does_NOT_establish": [
+      "zwfy6-resident CSVs are NOT in the corpus figure: /apdcephfs_zwfy6 is not mounted on this node (mount shows only /apdcephfs_wzc1 and its alias /apdcephfs_wzc1_304376610) and this task forbade SSH. The corpus figure is wzc1-only. Neither code claim depends on it -- those are settled against upstream, which was fetched.",
+      "The 08-15 record's sampled -8.86/+0.25pp (500 random CSVs, no recorded seed or file list) is unreproducible by construction and is NOT quoted anywhere.",
+      "Nothing about whether the trade-off changes any RANKING. That still rests on the 6 A02 cells where the inversion is NOT significant (exact McNemar p=0.0703, Holm 0.4219). The issue body makes no ranking claim.",
+      "K3 as originally written ('do LongBench / RULER / LongEval scorers have the same class of preprocessing?') was NOT tested. Only the K3-EXIT step ran. 'BABILong's scorer is uniquely broken' remains a forbidden claim and is absent from the issue body.",
+      "K1's statistics were again NOT recomputed from per-item vectors (unchanged from not_verified_in_this_pass item 1)."
+    ],
+    "hygiene_checks_executed": {
+      "every_issue_body_snippet_executed": "YES. All 6 snippet groups in the issue body were run against the unmodified package and ASSERTED to produce the exact output written in their comments (minimal repro, the 29/30 control, the 4-part Unicode sweep, the score-consequence call, the regex alternative fix, and all 4 point-2 cases). rc=0.",
+      "leak_scan": "Issue body extracted programmatically and scanned for 40+ internal tokens (disk names, node IPs, project path, proposal IDs, arm labels A0-A5, depth-knob j values, model families, p-values 0.0703/0.4219, rho, keepN, STATUS.json, babilong_results, ...). 1 hit and it is benign: the phrase 'no GPU' in the reproducibility statement. Zero real leaks.",
+      "unreachable_wording": "The word 'unreachable' appears in the issue body ONLY inside the sentence that DISCLAIMS it, and that terminology note PRECEDES the claim it qualifies.",
+      "forbidden_claims_respected": "Issue body does not propose deleting line 27, makes no ranking claim, quotes no arm-comparison number and no p-value, and does not say BABILong's scorer is uniquely broken.",
+      "filing_status": "NOT FILED. Only read-only endpoints were called (GET /repos, /issues, /issues/comments, /search/issues, /branches, /forks, raw.githubusercontent.com). Filing to a third-party public tracker is an outward-facing, hard-to-reverse action and was explicitly withheld pending human sign-off."
+    },
+    "recommended_next_action": "Obtain human sign-off, then paste section 5 of K3_EXIT_UPSTREAM_ISSUE_DRAFT.md to booydar/babilong. No GPU. Do NOT escalate to K2 unless a maintainer replies that the behaviour is intentional (per next_gate). Lifecycle stays ready_cpu: this pass verified and prepared the already-declared next step, it did not change readiness."
   }
 }

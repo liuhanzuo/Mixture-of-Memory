@@ -1,0 +1,170 @@
+
+==============================================================================
+PROVENANCE -- which bytes are under test
+==============================================================================
+module file : /apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/third_party/babilong-pkg/babilong/metrics.py
+module md5  : 0a5ecc52ade4e337d35b8f9c97c38310
+python      : 3.14.6
+preprocess_output occupies lines 24..32; printed with real line numbers:
+   24 | def preprocess_output(output):
+   25 |     output = output.lower()
+   26 |     # take only the first sentence from output
+   27 |     output = output.split('.')[0]
+   28 |     # filter responses when model tries to generate examples
+   29 |     output = output.split('<context>')[0]
+   30 |     output = output.split('<example>')[0]
+   31 |     output = output.split('Question')[0]
+   32 |     return output
+
+asserting the three lines the claims name are where the claims say they are
+  line 25 = output.lower()            OK
+  line 27 = output.split('.')[0]      OK
+  line 31 = output.split('Question')[0] OK
+
+==============================================================================
+CLAIM A1 -- IS LINE 31 EXECUTED?  (this is what 'unreachable' would mean)
+==============================================================================
+Method: sys.settrace, line-level, recording every line number executed INSIDE
+preprocess_output. If 31 never appears, the line is unreachable/dead code.
+If it appears, 'unreachable' is factually wrong however true the rest may be.
+
+  lines=[25, 27, 29, 30, 31, 32]  line31_executed=True   input='kitchen Question: Where is Mary? Answer: garden'
+  lines=[25, 27, 29, 30, 31, 32]  line31_executed=True   input='kitchen. Question: Where is Mary?'
+  lines=[25, 27, 29, 30, 31, 32]  line31_executed=True   input='plain kitchen'
+  lines=[25, 27, 29, 30, 31, 32]  line31_executed=True   input=''
+  lines=[25, 27, 29, 30, 31, 32]  line31_executed=True   input='QUESTION'
+  lines=[25, 27, 29, 30, 31, 32]  line31_executed=True   input='Question'
+  lines=[25, 27, 29, 30, 31, 32]  line31_executed=True   input='İıΣẞ kitchen Question'
+
+  inputs where line 31 executed: 7/7
+  VERDICT A1: 'line 31 is UNREACHABLE' -> REFUTED (the line executes every time)
+
+==============================================================================
+CLAIM A2 -- CAN LINE 31 EVER CHANGE THE VALUE?  ('guaranteed no-op')
+==============================================================================
+Method: re-implement the function step by step, ASSERT the reimplementation equals
+the real preprocess_output on every probe (so we are not testing a paraphrase),
+then compare the value entering line 31 with the value leaving it.
+
+  changed=False  before='kitchen question: where is mary? answer: garden' -> after='kitchen question: where is mary? answer: garden'
+  changed=False  before='kitchen' -> after='kitchen'
+  changed=False  before='plain kitchen' -> after='plain kitchen'
+  changed=False  before='' -> after=''
+  changed=False  before='question' -> after='question'
+  changed=False  before='question' -> after='question'
+  changed=False  before='i̇ıσß kitchen question' -> after='i̇ıσß kitchen question'
+  changed=False  before='question at the very start' -> after='question at the very start'
+  changed=False  before='answer kitchen question question question' -> after='answer kitchen question question question'
+  changed=False  before='kå question' -> after='kå question'
+
+  probes where line 31 changed the value: 0/10
+  VERDICT A2: 'line 31 is a guaranteed no-op' -> SUPPORTED
+
+==============================================================================
+CLAIM A3 -- WHY it can never fire: str.lower() cannot emit an ASCII capital
+==============================================================================
+Exhaustive over the entire Unicode codepoint range, so this is a proof and not a sample.
+
+  codepoints whose .lower() contains ASCII 'Q'               : []
+  codepoints whose .lower() contains ANY char of 'QUESTION'  : []
+  multi-char lowerings still containing an ASCII capital     : []
+  codepoints where .lower() is NOT idempotent                : []
+  Greek final-sigma context rule: 'OΔOΣ'.lower() -> 'ΟΔΟΣ' -> 'οδος'
+
+  VERDICT A3: 'no input can put a capital Q past line 25' -> PROVED
+
+==============================================================================
+CLAIM A -- CONTROL: do the SIBLING guards on lines 29/30 fire?
+==============================================================================
+If they did not either, the defect would be 'the whole tail is dead', not 'line 31'.
+
+  preprocess_output('kitchen <CONTEXT> blah'          ) = 'kitchen '
+  preprocess_output('kitchen <EXAMPLE> blah'          ) = 'kitchen '
+  preprocess_output('kitchen <context> blah'          ) = 'kitchen '
+  preprocess_output('kitchen Question: blah'          ) = 'kitchen question: blah'
+
+  CONTROL PASSED: 29/30 fire on their lowercase literals, 31 does not fire on its capitalised one.
+
+==============================================================================
+CLAIM A -- 'no other reachable path': callers of preprocess_output, repo-wide
+==============================================================================
+babilong/metrics.py:24:def preprocess_output(output):
+babilong/metrics.py:36:    output = preprocess_output(output)
+  hits: 2
+  Note: line 25 (.lower()) is the function's FIRST and UNCONDITIONAL statement,
+  so no argument value can reach line 31 with un-lowercased text.
+
+==============================================================================
+CLAIM A -- OBSERVABLE CONSEQUENCE: does the dead guard change a SCORE?
+==============================================================================
+Two arms: shipped scorer vs the SAME scorer with the single character fixed.
+If scores are identical the defect would be cosmetic; a maintainer will ask.
+
+  raw output      : 'kitchen Question: where is Mary? Answer: garden'
+  preprocess (now): 'kitchen question: where is mary? answer: garden'
+  shipped scorer  : False
+  with 1-char fix : True
+
+  VERDICT: fixing the guard is score-neutral? False.  -> the dead guard has a MEASURABLE false-negative consequence: True
+
+==============================================================================
+CLAIM B -- TWO-ARM COMPARISON, line 27 removed and NOTHING else changed
+==============================================================================
+ARM SANITY: on period-free inputs the two arms are identical -> the arms differ
+            by line 27 alone. (3/3 probes)
+
+   canon  notrunc  isolates_l27  case
+   False     True          True  truncation DESTROYS a correct enumerated answer
+         raw     = 'The answer is A. kitchen'
+         canon   -> 'the answer is a'
+         notrunc -> 'the answer is a. kitchen'
+   False     True          True  truncation DESTROYS a correct reason-then-answer
+         raw     = 'John moved several times. He is in the kitchen'
+         canon   -> 'john moved several times'
+         notrunc -> 'john moved several times. he is in the kitchen'
+    True    False          True  truncation RESCUES a correct scaffold-leaking answer
+         raw     = 'kitchen. Question: Where is Mary? Answer: garden'
+         canon   -> 'kitchen'
+         notrunc -> 'kitchen. question: where is mary? answer: garden'
+    True    False          True  truncation MANUFACTURES a correct answer (false positive)
+         raw     = 'kitchen is wrong. the answer is garden'
+         canon   -> 'kitchen is wrong'
+         notrunc -> 'kitchen is wrong. the answer is garden'
+   False    False         False  RECORD'S STRING -- claimed 'truncation kills a list-format answer'
+         raw     = 'Choices: A. In the kitchen B. In the garden. The answer is kitchen.'
+         canon   -> 'choices: a'
+         notrunc -> 'choices: a. in the kitchen b. in the garden. the answer is kitchen.'
+
+  ACCEPTED as evidence for line 27 (arms disagree): 4
+  REJECTED (arms agree -> some OTHER filter did the work): 1
+    - 'Choices: A. In the kitchen B. In the garden. The answer is kitchen.'
+      canon=False notrunc=False; labels surviving without truncation=['garden', 'kitchen'] -> dies on the UNIQUENESS test len(labels)==1, NOT on line 27.
+
+  VERDICT B (hand cases): line 27 changes scoring IN BOTH DIRECTIONS -> True
+
+==============================================================================
+CLAIM B -- ON REAL STORED GENERATIONS (no GPU: rescoring CSVs already on disk)
+==============================================================================
+  prediction CSVs found under babilong_results/: 10886
+  CSVs scored: 1200 (cap B11_MAX_CSV=1200)   items: 85101
+
+         stratum        n  destroyed   rescued  net_pp_of_keeping_l27
+       is_list=1      714         61         0                  -8.54
+       is_list=0    84387         46       328                   0.33
+      ALL pooled    85101        107       328                   0.26
+
+  sign(is_list=1) = - ,  sign(is_list=0) = +   -> STRATIFIED SIGNS DIFFER: True
+  CAVEAT: heterogeneous historical runs, many models/configs. Supports the SIGN
+  DEPENDENCE only. Must NEVER be quoted as an effect size for any comparison.
+
+==============================================================================
+SUMMARY OF VERDICTS
+==============================================================================
+  A1 line 31 is UNREACHABLE / dead code ....... REFUTED -- it executes on every call
+  A2 line 31 is a GUARANTEED NO-OP ........... SUPPORTED
+  A3 impossible by Unicode exhaustion ............ PROVED
+  A  fixing it changes at least one score ........ True
+  B  line 27 changes scoring, both directions .... True
+
+  => FILE AS: 'the guard is executed but can never fire (a guaranteed no-op)'.
+     DO NOT FILE the word 'unreachable': A1 is REFUTED by measurement.
